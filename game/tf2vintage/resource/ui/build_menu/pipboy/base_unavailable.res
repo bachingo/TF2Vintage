@@ -1,4 +1,4 @@
-"Resource/UI/build_menu/base.res"
+"Resource/UI/build_menu/base_unavailable.res"
 {
 	"ItemNameLabel"
 	{	
@@ -21,8 +21,8 @@
 		"brighttext"	"0"
 		"fgcolor"		"0 255 0 255"
 	}
-
-	"ItemBackground"
+	
+	"ItemBackground"	
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"ItemBackground"
@@ -34,24 +34,28 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"hud_menu_item_bg"
+		"icon"			"hud_menu_item_bg_outline"
 		"iconColor"		"0 0 0 255"
 	}
 	
-	"BuildingIcon"	
-	{
-		"ControlName"	"CIconPanel"
-		"fieldName"		"BuildingIcon"
-		"xpos"			"22"
-		"ypos"			"33"
+	"CantBuildReason"
+	{	
+		"ControlName"	"CExLabel"
+		"fieldName"		"CantBuildReason"
+		"font"			"Default"
+		"xpos"			"10"
+		"ypos"			"48"
 		"zpos"			"2"
-		"wide"			"56"
-		"tall"			"56"
+		"wide"			"80"
+		"tall"			"18"
+		"autoResize"	"0"
+		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"scaleImage"	"1"	
-		"icon"			"hud_menu_sentry_build"
-		"iconColor"		"0 255 0 255"
+		"labelText"		"#Hud_Menu_Build_Unavailable"
+		"textAlignment"	"Center"
+		"dulltext"		"0"
+		"brighttext"	"0"
 	}
 	
 	"MetalIcon"	
@@ -94,7 +98,7 @@
 		"ControlName"	"CExLabel"
 		"fieldName"		"ModeLabel"
 		"font"			"DefaultSmall"
-		"fgcolor"		"TanDarker"
+		"fgcolor"		"TanDark"
 		"xpos"			"33"
 		"ypos"			"17"
 		"zpos"			"1"
@@ -107,7 +111,7 @@
 		"labelText"		""
 		"textAlignment"	"East"	
 	}
-	
+		
 	"NumberBg"	
 	{
 		"ControlName"	"CIconPanel"
