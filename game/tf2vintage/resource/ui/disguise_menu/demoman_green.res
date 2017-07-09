@@ -1,4 +1,4 @@
-"Resource/UI/disguise_menu/demoman_blue.res"
+"Resource/UI/disguise_menu/demoman_green.res"
 {
 	"ItemNameLabel"
 	{	
@@ -32,7 +32,7 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"hud_menu_demoman_blu"
+		"icon"			"hud_menu_demoman_grn"
 	}
 	
 	"NumberBg"	

@@ -1,4 +1,4 @@
-"Resource/UI/disguise_menu/demoman_blue.res"
+"Resource/UI/disguise_menu/soldier_red.res"
 {
 	"ItemNameLabel"
 	{	
@@ -14,12 +14,12 @@
 		"pinCorner"		"0"
 		"visible"		"0"
 		"enabled"		"1"
-		"labelText"		"#TF_Class_Name_Demoman"
+		"labelText"		"#TF_Class_Name_Soldier"
 		"textAlignment"	"Center"
 		"dulltext"		"0"
 		"brighttext"	"0"
 	}
-		
+	
 	"ClassIcon"	
 	{
 		"ControlName"	"CIconPanel"
@@ -32,9 +32,9 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"hud_menu_demoman_blu"
+		"icon"			"hud_menu_soldier_red"
 	}
-	
+		
 	"NumberBg"	
 	{
 		"ControlName"	"CIconPanel"
@@ -66,7 +66,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"4"
+		"labelText"		"2"
 		"textAlignment"	"Center"
 		"dulltext"		"1"
 		"brighttext"	"0"
