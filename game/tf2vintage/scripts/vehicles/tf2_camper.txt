@@ -7,7 +7,7 @@
 	{
 		"countertorquefactor"	"1"
 		"massCenterOverride"	"0 -0.01 0"
-		"massoverride"		"800"		// kg
+		"massoverride"		"1500"		// kg
 		"addgravity"		"0.33"
 	}
 	"engine"

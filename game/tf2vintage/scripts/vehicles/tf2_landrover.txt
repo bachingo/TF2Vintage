@@ -68,7 +68,7 @@
 	{
 		"wheel"
 		{
-			"radius"	"17"
+			"radius"	"20.5"
 			"mass"		"100"
 			"inertia"	"1.5"		// steady the car (fixes the oscillation of the axles about z)
 			"damping"	"0"
@@ -95,7 +95,7 @@
 	{
 		"wheel"
 		{
-			"radius"	"17"
+			"radius"	"20.5"
 			"mass"		"100"
 			"inertia"	"1.5"		// steady the car (fixes the oscillation of the axles about z)
 			"damping"	"0"

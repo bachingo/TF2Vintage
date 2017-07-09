@@ -12,10 +12,10 @@
 	}
 	"engine"
 	{
-		"horsepower"		"350"
-		"maxrpm"		"3000"
-		"maxspeed"		"35"		// mph
-		"maxReverseSpeed"	"20"		// mph
+		"horsepower"		"550"
+		"maxrpm"		"4000"
+		"maxspeed"		"55"		// mph
+		"maxReverseSpeed"	"30"		// mph
 		"autobrakeSpeedGain"	"1.1"		// 10% speed gain while coasting, put on the brakes after that
 		"autobrakeSpeedFactor"	"3.0"		// Brake is this times the speed gain
 		"autotransmission"	"1"
@@ -30,11 +30,11 @@
 	
 		"boost"
 		{
-//			"force"		"1.5"	// 1.5 car body mass * gravity * inches / second ^ 2
-			"duration"	"1.0"	// 1 second of boost
+//			"force"		"2.5"	// 1.5 car body mass * gravity * inches / second ^ 2
+			"duration"	"1.5"	// 1 second of boost
 			"delay"		"15"	// 15 seconds before you can use it again
 			"torqueboost"	"1"	// enable "sprint" mode of vehicle, not	force type booster			
-			"maxspeed"	"50"	// maximum turbo speed
+			"maxspeed"	"70"	// maximum turbo speed
 		}
 	}
 	"steering"
@@ -68,7 +68,7 @@
 	{
 		"wheel"
 		{
-			"radius"	"17"
+			"radius"	"18"
 			"mass"		"100"
 			"inertia"	"1.5"		// steady the car (fixes the oscillation of the axles about z)
 			"damping"	"0"
@@ -95,7 +95,7 @@
 	{
 		"wheel"
 		{
-			"radius"	"17"
+			"radius"	"18"
 			"mass"		"100"
 			"inertia"	"1.5"		// steady the car (fixes the oscillation of the axles about z)
 			"damping"	"0"
