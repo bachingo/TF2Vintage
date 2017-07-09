@@ -73,18 +73,13 @@ DESCRIPTION SERVER_OPTIONS
 	{
 		"#TF_WinLimit"
 		{ NUMBER 0 -1 }
-		{ "0" }
+		{ "2" }
 	}
+	
 	"mp_maxrounds"
 	{
 		"#TF_MaxRounds"
 		{ NUMBER 0 -1 }
-		{ "0" }
-	}
-	"mp_fraglimit"
-	{
-		"#TF_DMFragLimit"
-		{ NUMBER 0 -1 }
-		{ "50" }
+		{ "3" }
 	}
 }
