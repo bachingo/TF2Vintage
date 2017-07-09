@@ -1,4 +1,4 @@
-"Resource/UI/notifications/base_notification.res"
+"Resource/UI/notifications/notify_how_to_control_kart.res"
 {
 	"Notification_Background"
 	{
@@ -8,12 +8,12 @@
 		"ypos"			"0"
 		"zpos"			"-1"
 		"wide"			"140"
-		"tall"			"44"
+		"tall"			"120"
 		"autoResize"	"0"
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"image"			"../hud/score_panel_blue_bg"
+		"image"			"../hud/notification_black"
 		"scaleImage"	"1"
 	}
 	
@@ -21,14 +21,14 @@
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"Notification_Icon"
-		"xpos"			"7"
-		"ypos"			"9"
-		"wide"			"20"
-		"tall"			"20"
+		"xpos"			"-5"
+		"ypos"			"35"
+		"wide"			"30"
+		"tall"			"30"
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"ico_notify_sixty_seconds"
+		"icon"			"ico_kart"
 	}
 	
 	"Notification_Label"
@@ -37,15 +37,15 @@
 		"fieldName"		"Notification_Label"
 		"font"			"Default"
 		"xpos"			"30"
-		"ypos"			"9"
+		"ypos"			"27"
 		"wide"			"200"
-		"tall"			"20"
+		"tall"			"300"
 		"autoResize"	"0"
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"60 seconds until gates open"
-		"textAlignment"	"West"
+		"labelText"		"#TF_How_To_Control_Kart"
+		"textAlignment"	"North-West"
 		"dulltext"		"0"
 		"brighttext"	"0"
 	}

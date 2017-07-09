@@ -1,4 +1,4 @@
-"Resource/UI/notifications/base_notification.res"
+"Resource/UI/notifications/notify_golden_wrench.res"
 {
 	"Notification_Background"
 	{
@@ -13,7 +13,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"image"			"../hud/score_panel_blue_bg"
+		"image"			"../hud/notification_black"
 		"scaleImage"	"1"
 	}
 	
@@ -22,13 +22,13 @@
 		"ControlName"	"CIconPanel"
 		"fieldName"		"Notification_Icon"
 		"xpos"			"7"
-		"ypos"			"9"
-		"wide"			"20"
-		"tall"			"20"
+		"ypos"			"12"
+		"wide"			"36"
+		"tall"			"12"
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"ico_notify_sixty_seconds"
+		"icon"			"ico_notify_golden_wrench"
 	}
 	
 	"Notification_Label"
