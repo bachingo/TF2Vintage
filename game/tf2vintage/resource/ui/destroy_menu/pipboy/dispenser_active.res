@@ -1,4 +1,4 @@
-"Resource/UI/destroy_menu/base_active.res"
+"Resource/UI/destroy_menu/dispenser_active.res"
 {
 	"ItemNameLabel"
 	{	
@@ -18,6 +18,7 @@
 		"textAlignment"	"Left"
 		"dulltext"		"0"
 		"brighttext"	"0"
+		"fgcolor"		"0 255 0 255"
 	}
 	
 	"ItemBackground"	
@@ -33,7 +34,7 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"hud_menu_item_bg_outline"
-		"iconColor"		"ProgressOffWhite"
+		"iconColor"		"0 0 0 255"
 	}
 	
 	"DestroyIcon"	
@@ -49,7 +50,7 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"ico_demolish"
-		"iconColor"		"255 255 255 255"
+		"iconColor"		"0 255 0 255"
 	}
 		
 	"BuildingIcon"	
@@ -65,7 +66,7 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"obj_status_dispenser"
-		"iconColor"		"255 255 255 128"
+		"iconColor"		"0 255 0 255"
 	}
 		
 	"NumberBg"	
@@ -81,7 +82,7 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"ico_key_blank"
-		"iconColor"		"255 255 255 255"
+		"iconColor"		"0 255 0 255"
 	}
 	
 	"NumberLabel"
@@ -103,5 +104,6 @@
 		"textAlignment"	"Center"
 		"dulltext"		"1"
 		"brighttext"	"0"
+		"fgcolor"		"0 255 0 255"
 	}
 }

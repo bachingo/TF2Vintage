@@ -1,4 +1,4 @@
-"Resource/UI/destroy_menu/base_active.res"
+"Resource/UI/destroy_menu/tele_entrance_active.res"
 {
 	"ItemNameLabel"
 	{	
@@ -14,10 +14,11 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"#TF_Object_Dispenser"
+		"labelText"		"#TF_Object_Tele_Entrance_360"
 		"textAlignment"	"Left"
 		"dulltext"		"0"
 		"brighttext"	"0"
+		"fgcolor"		"0 255 0 255"
 	}
 	
 	"ItemBackground"	
@@ -33,7 +34,7 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"hud_menu_item_bg_outline"
-		"iconColor"		"ProgressOffWhite"
+		"iconColor"		"0 0 0 255"
 	}
 	
 	"DestroyIcon"	
@@ -49,23 +50,23 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"ico_demolish"
-		"iconColor"		"255 255 255 255"
+		"iconColor"		"0 255 0 255"
 	}
 		
 	"BuildingIcon"	
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"BuildingIcon"
-		"xpos"			"10"
-		"ypos"			"16"
+		"xpos"			"20"
+		"ypos"			"30"
 		"zpos"			"2"
-		"wide"			"80"
-		"tall"			"80"
+		"wide"			"60"
+		"tall"			"60"
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"obj_status_dispenser"
-		"iconColor"		"255 255 255 128"
+		"icon"			"obj_status_tele_entrance"
+		"iconColor"		"0 255 0 128"
 	}
 		
 	"NumberBg"	
@@ -81,7 +82,7 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"ico_key_blank"
-		"iconColor"		"255 255 255 255"
+		"iconColor"		"0 255 0 255"
 	}
 	
 	"NumberLabel"
@@ -99,9 +100,10 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"2"
+		"labelText"		"3"
 		"textAlignment"	"Center"
 		"dulltext"		"1"
 		"brighttext"	"0"
+		"fgcolor"		"0 255 0 255"
 	}
 }
