@@ -5,6 +5,39 @@
 // TF2 game definition file (.fgd)
 //
 
+@MaterialExclusion
+[
+	// Names of the sub-directories we don't want to load materials from
+	"autumnal/props"
+	"ambulance"
+	"backpack"
+	"cable"
+	"console"
+	"customcubemaps"
+	"detail"
+	"debug"
+	"effects"
+	"engine"
+	"environment maps"
+	"halflife"
+	"matsys_regressiontest"
+	"hlmv"
+	"hud"
+	"logo"
+	"maps"
+	"models"
+	"overviews"
+	"particle"
+	"particles"
+	"perftest"
+	"scripted"
+	"shadertest"
+	"sprites"
+	"sun"
+	"vgui"
+	"voice"
+]
+
 //
 // Base Classes
 //
@@ -1199,6 +1232,7 @@
 [
 	WeaponNumber(Choices) : "Weapon (OBSOLETE)" : 0 =
 	[
+		0 : "None"
 		15 : "Scattergun ( Primary )"
 		16 : "Sniper rifle ( Primary )"
 		17 : "Minigun ( Primary )"
@@ -1213,7 +1247,7 @@
 		37 : "Pistol ( Secondary )"
 		69 : "Six Shooter ( Secondary )"
 		5 : "Crowbar ( Melee )"
-
+	]
 	itemid(Choices) : "Weapon" : 0 =
 	[
 		14 : "Sniper rifle ( Primary )"
@@ -1232,6 +1266,8 @@
 	]
 	
 	RespawnTime(integer) : "Respawn delay (in seconds)" : 10
+	StaticSpawner(integer) : "Disable spinning/rotating weapon effect" : 0
+	DisableWeaponOutline(integer) : "Disable weapon outline glows" : 0
 ]
 
 @PointClass base(Targetname) size(-8 -8 -8, 8 8 8) = tf_player_equip : 
@@ -1306,21 +1342,21 @@
 	//input EquipWeapons(void) : "Equips all of the players on the current server with the specified weapons."
 ]
 
-@PointClass base(Item) studio("models/items/powerup_crit.mdl") = item_powerup_critdamage : "Powerup Crit" 
+@PointClass base(Item,Parentname) studio("models/items/powerup_crit.mdl") = item_powerup_critdamage : "Powerup Crit" 
 [
 	ModelName(string)    : "Model override" : "models/items/powerup_crit.mdl"
 	PickupSound(sound)  : "Pickup sound" : "HealthKit.Touch"
 	RespawnTime(integer) : "Respawn delay (in seconds)" : 30
 ]
 
-@PointClass base(Item) studio("models/items/powerup_uber.mdl") = item_powerup_shortuber : "Powerup uber" 
+@PointClass base(Item,Parentname) studio("models/items/powerup_uber.mdl") = item_powerup_shortuber : "Powerup uber" 
 [
 	ModelName(string)    : "Model override" : "models/items/powerup_uber.mdl"
 	PickupSound(sound)  : "Pickup sound" : "HealthKit.Touch"
 	RespawnTime(integer) : "Respawn delay (in seconds)" : 30
 ]
 
-@PointClass base(Item) studio("models/class_menu/random_class_icon.mdl") = item_powerup_ragemode : "Berserk mode" 
+@PointClass base(Item,Parentname) studio("models/class_menu/random_class_icon.mdl") = item_powerup_ragemode : "Berserk mode" 
 [
 	ModelName(string)    : "Model override" : "models/class_menu/random_class_icon.mdl"
 	PickupSound(sound)  : "Pickup sound" : "HealthKit.Touch"
