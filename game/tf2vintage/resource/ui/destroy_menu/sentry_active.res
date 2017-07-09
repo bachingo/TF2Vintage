@@ -1,4 +1,4 @@
-"Resource/UI/destroy_menu/base_active.res"
+"Resource/UI/destroy_menu/sentry_active.res"
 {
 	"ItemNameLabel"
 	{	
@@ -14,7 +14,8 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"#TF_Object_Dispenser"
+		"labelText"		"#TF_Object_Sentry"
+		"labelText_lodef"		"#TF_Object_Sentry_360"
 		"textAlignment"	"Left"
 		"dulltext"		"0"
 		"brighttext"	"0"
@@ -57,14 +58,14 @@
 		"ControlName"	"CIconPanel"
 		"fieldName"		"BuildingIcon"
 		"xpos"			"10"
-		"ypos"			"16"
+		"ypos"			"8"
 		"zpos"			"2"
 		"wide"			"80"
 		"tall"			"80"
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"obj_status_dispenser"
+		"icon"			"obj_status_sentrygun_1"
 		"iconColor"		"255 255 255 128"
 	}
 		
@@ -99,7 +100,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"2"
+		"labelText"		"1"
 		"textAlignment"	"Center"
 		"dulltext"		"1"
 		"brighttext"	"0"

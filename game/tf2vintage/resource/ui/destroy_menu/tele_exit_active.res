@@ -1,4 +1,4 @@
-"Resource/UI/destroy_menu/base_active.res"
+"Resource/UI/destroy_menu/tele_exit_active.res"
 {
 	"ItemNameLabel"
 	{	
@@ -14,7 +14,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"#TF_Object_Dispenser"
+		"labelText"		"#TF_Object_Tele_Exit_360"
 		"textAlignment"	"Left"
 		"dulltext"		"0"
 		"brighttext"	"0"
@@ -56,15 +56,15 @@
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"BuildingIcon"
-		"xpos"			"10"
-		"ypos"			"16"
+		"xpos"			"20"
+		"ypos"			"30"
 		"zpos"			"2"
-		"wide"			"80"
-		"tall"			"80"
+		"wide"			"60"
+		"tall"			"60"
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"obj_status_dispenser"
+		"icon"			"obj_status_tele_exit"
 		"iconColor"		"255 255 255 128"
 	}
 		
@@ -99,7 +99,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"2"
+		"labelText"		"4"
 		"textAlignment"	"Center"
 		"dulltext"		"1"
 		"brighttext"	"0"

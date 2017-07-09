@@ -1,4 +1,4 @@
-"Resource/UI/destroy_menu/base_active.res"
+"Resource/UI/build_menu/tele_entrance_inactive.res"
 {
 	"ItemNameLabel"
 	{	
@@ -14,7 +14,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"#TF_Object_Dispenser"
+		"labelText"		"#TF_Object_tele_entrance_360"
 		"textAlignment"	"Left"
 		"dulltext"		"0"
 		"brighttext"	"0"
@@ -33,41 +33,49 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"hud_menu_item_bg_outline"
-		"iconColor"		"ProgressOffWhite"
+		"iconColor"		"ProgressOffWhiteTransparent"
 	}
 	
-	"DestroyIcon"	
-	{
-		"ControlName"	"CIconPanel"
-		"fieldName"		"DestroyIcon"
-		"xpos"			"13"
-		"ypos"			"18"
-		"zpos"			"1"
-		"wide"			"70"
-		"tall"			"70"
-		"visible"		"1"
-		"enabled"		"1"
-		"scaleImage"	"1"	
-		"icon"			"ico_demolish"
-		"iconColor"		"255 255 255 255"
-	}
-		
-	"BuildingIcon"	
-	{
-		"ControlName"	"CIconPanel"
-		"fieldName"		"BuildingIcon"
+	"NotBuiltLabel"
+	{	
+		"ControlName"	"CExLabel"
+		"fieldName"		"NotBuiltLabel"
+		"font"			"Default"
 		"xpos"			"10"
-		"ypos"			"16"
+		"ypos"			"48"
 		"zpos"			"2"
 		"wide"			"80"
-		"tall"			"80"
+		"tall"			"18"
+		"autoResize"	"0"
+		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"scaleImage"	"1"	
-		"icon"			"obj_status_dispenser"
-		"iconColor"		"255 255 255 128"
-	}
-		
+		"labelText"		"#TF_NotBuilt"
+		"textAlignment"	"Center"
+		"dulltext"		"0"
+		"brighttext"	"0"
+	}	
+
+	"UnavailableLabel"
+	{	
+		"ControlName"	"CExLabel"
+		"fieldName"		"UnavailableLabel"
+		"font"			"Default"
+		"xpos"			"10"
+		"ypos"			"48"
+		"zpos"			"2"
+		"wide"			"80"
+		"tall"			"18"
+		"autoResize"	"0"
+		"pinCorner"		"0"
+		"visible"		"0"
+		"enabled"		"1"
+		"labelText"		"#Hud_Menu_Build_Unavailable"
+		"textAlignment"	"Center"
+		"dulltext"		"0"
+		"brighttext"	"0"
+	}	
+			
 	"NumberBg"	
 	{
 		"ControlName"	"CIconPanel"
@@ -81,7 +89,7 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"ico_key_blank"
-		"iconColor"		"255 255 255 255"
+		"iconColor"		"255 255 255 128"
 	}
 	
 	"NumberLabel"
@@ -99,7 +107,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"2"
+		"labelText"		"3"
 		"textAlignment"	"Center"
 		"dulltext"		"1"
 		"brighttext"	"0"
