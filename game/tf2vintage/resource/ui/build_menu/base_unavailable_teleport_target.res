@@ -1,4 +1,4 @@
-"Resource/UI/build_menu/base.res"
+"Resource/UI/build_menu/base_unavailable.res"
 {
 	"ItemNameLabel"
 	{	
@@ -20,8 +20,8 @@
 		"dulltext"		"0"
 		"brighttext"	"0"
 	}
-
-	"ItemBackground"
+	
+	"ItemBackground"	
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"ItemBackground"
@@ -33,67 +33,36 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"hud_menu_item_bg"
-		"iconColor"		"ProgressOffWhite"
+		"icon"			"hud_menu_item_bg_outline"
+		"iconColor"		"ProgressOffWhiteTransparent"
 	}
 	
-	"BuildingIcon"	
-	{
-		"ControlName"	"CIconPanel"
-		"fieldName"		"BuildingIcon"
-		"xpos"			"22"
-		"ypos"			"33"
-		"zpos"			"2"
-		"wide"			"56"
-		"tall"			"56"
-		"visible"		"1"
-		"enabled"		"1"
-		"scaleImage"	"1"	
-		"icon"			"hud_menu_sentry_build"
-		"iconColor"		"255 255 255 255"
-	}
-	
-	"MetalIcon"	
-	{
-		"ControlName"	"CIconPanel"
-		"fieldName"		"MetalIcon"
-		"xpos"			"10"
-		"ypos"			"18"
-		"zpos"			"1"
-		"wide"			"10"
-		"tall"			"10"
-		"visible"		"1"
-		"enabled"		"1"
-		"scaleImage"	"1"	
-		"icon"			"ico_metal"
-		"iconColor"		"TanDarker"
-	}
-	
-	"CostLabel"
+	"CantBuildReason"
 	{	
 		"ControlName"	"CExLabel"
-		"fieldName"		"CostLabel"
-		"font"			"HudFontSmall"
-		"fgcolor"		"TanDarker"
-		"xpos"			"23"
-		"ypos"			"17"
-		"zpos"			"1"
-		"wide"			"84"
-		"tall"			"13"
+		"fieldName"		"CantBuildReason"
+		"font"			"Default"
+		"xpos"			"10"
+		"ypos"			"48"
+		"zpos"			"2"
+		"wide"			"80"
+		"tall"			"18"
 		"autoResize"	"0"
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"%metal%"
-		"textAlignment"	"Left"	
+		"labelText"		"#Hud_Menu_Build_Unavailable"
+		"textAlignment"	"Center"
+		"dulltext"		"0"
+		"brighttext"	"0"
 	}
-	
+
 	"ModeLabel"
 	{	
 		"ControlName"	"CExLabel"
 		"fieldName"		"ModeLabel"
 		"font"			"DefaultSmall"
-		"fgcolor"		"TanDarker"
+		"fgcolor"		"TanDark"
 		"xpos"			"33"
 		"ypos"			"17"
 		"zpos"			"1"
@@ -106,7 +75,7 @@
 		"labelText"		""
 		"textAlignment"	"East"	
 	}
-	
+		
 	"NumberBg"	
 	{
 		"ControlName"	"CIconPanel"
