@@ -1,4 +1,4 @@
-"Resource/UI/build_menu/base.res"
+"Resource/UI/build_menu/base_cant_afford.res"
 {
 	"ItemNameLabel"
 	{	
@@ -14,13 +14,13 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"#TF_Object_Sentry"
+		"labelText"		"#TF_Object_Sentry_360"
 		"textAlignment"	"Left"
 		"dulltext"		"0"
 		"brighttext"	"0"
 	}
-
-	"ItemBackground"
+	
+	"ItemBackground"	
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"ItemBackground"
@@ -32,24 +32,27 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"hud_menu_item_bg"
-		"iconColor"		"ProgressOffWhite"
+		"icon"			"hud_menu_item_bg_outline"
+		"iconColor"		"ProgressOffWhiteTransparent"
 	}
 	
-	"BuildingIcon"	
-	{
-		"ControlName"	"CIconPanel"
-		"fieldName"		"BuildingIcon"
-		"xpos"			"22"
-		"ypos"			"33"
+	"CantBuildReason"
+	{	
+		"ControlName"	"CExLabel"
+		"fieldName"		"CantBuildReason"
+		"font"			"Default"
+		"fgcolor"		"RedSolid"
+		"xpos"			"10"
+		"ypos"			"40"
 		"zpos"			"2"
-		"wide"			"56"
-		"tall"			"56"
+		"wide"			"80"
+		"tall"			"24"
+		"autoResize"	"0"
+		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"scaleImage"	"1"	
-		"icon"			"hud_menu_sentry_build"
-		"iconColor"		"255 255 255 255"
+		"labelText"		"#Hud_Menu_Build_Cant_Afford"
+		"textAlignment"	"Center"
 	}
 	
 	"MetalIcon"	
@@ -65,25 +68,25 @@
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"ico_metal"
-		"iconColor"		"TanDarker"
+		"iconColor"		"RedSolid"
 	}
 	
 	"CostLabel"
 	{	
 		"ControlName"	"CExLabel"
 		"fieldName"		"CostLabel"
-		"font"			"HudFontMediumSmallSecondary"
-		"fgcolor"		"TanDarker"
+		"font"			"HudFontSmall"
+		"fgcolor"		"RedSolid"
 		"xpos"			"23"
 		"ypos"			"17"
 		"zpos"			"1"
 		"wide"			"84"
-		"tall"			"19"
+		"tall"			"13"
 		"autoResize"	"0"
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
 		"labelText"		"%metal%"
-		"textAlignment"	"Left"	
+		"textAlignment"	"Left"
 	}
 }

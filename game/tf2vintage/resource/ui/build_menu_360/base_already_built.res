@@ -1,4 +1,4 @@
-"Resource/UI/build_menu/base.res"
+"Resource/UI/destroy_menu/tele_exit_active.res"
 {
 	"ItemNameLabel"
 	{	
@@ -14,13 +14,13 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"#TF_Object_Sentry"
+		"labelText"		"#TF_Object_Tele_Exit_360"
 		"textAlignment"	"Left"
 		"dulltext"		"0"
 		"brighttext"	"0"
 	}
-
-	"ItemBackground"
+	
+	"ItemBackground"	
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"ItemBackground"
@@ -32,26 +32,42 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"hud_menu_item_bg"
+		"icon"			"hud_menu_item_bg_outline"
 		"iconColor"		"ProgressOffWhite"
 	}
 	
+	"DestroyIcon"	
+	{
+		"ControlName"	"CIconPanel"
+		"fieldName"		"DestroyIcon"
+		"xpos"			"13"
+		"ypos"			"18"
+		"zpos"			"1"
+		"wide"			"70"
+		"tall"			"70"
+		"visible"		"1"
+		"enabled"		"1"
+		"scaleImage"	"1"	
+		"icon"			"ico_demolish"
+		"iconColor"		"255 255 255 255"
+	}
+		
 	"BuildingIcon"	
 	{
 		"ControlName"	"CIconPanel"
 		"fieldName"		"BuildingIcon"
-		"xpos"			"22"
-		"ypos"			"33"
+		"xpos"			"20"
+		"ypos"			"30"
 		"zpos"			"2"
-		"wide"			"56"
-		"tall"			"56"
+		"wide"			"60"
+		"tall"			"60"
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"hud_menu_sentry_build"
-		"iconColor"		"255 255 255 255"
+		"icon"			"obj_status_tele_exit"
+		"iconColor"		"255 255 255 128"
 	}
-	
+		
 	"MetalIcon"	
 	{
 		"ControlName"	"CIconPanel"
@@ -61,27 +77,27 @@
 		"zpos"			"1"
 		"wide"			"10"
 		"tall"			"10"
-		"visible"		"1"
+		"visible"		"0"
 		"enabled"		"1"
 		"scaleImage"	"1"	
 		"icon"			"ico_metal"
-		"iconColor"		"TanDarker"
+		"iconColor"		"ProgressOffWhite"
 	}
 	
 	"CostLabel"
 	{	
 		"ControlName"	"CExLabel"
 		"fieldName"		"CostLabel"
-		"font"			"HudFontMediumSmallSecondary"
-		"fgcolor"		"TanDarker"
+		"font"			"HudFontSmall"
+		"fgcolor"		"ProgressOffWhite"
 		"xpos"			"23"
 		"ypos"			"17"
 		"zpos"			"1"
 		"wide"			"84"
-		"tall"			"19"
+		"tall"			"13"
 		"autoResize"	"0"
 		"pinCorner"		"0"
-		"visible"		"1"
+		"visible"		"0"
 		"enabled"		"1"
 		"labelText"		"%metal%"
 		"textAlignment"	"Left"	
