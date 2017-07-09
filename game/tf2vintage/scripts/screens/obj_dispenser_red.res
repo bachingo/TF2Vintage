@@ -12,7 +12,7 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"scaleImage"	"1"	
-		"icon"			"dispenser_meter_bg_blue"
+		"icon"			"dispenser_meter_bg_red"
 		"iconColor"		"255 255 255 255"
 	}
 	
