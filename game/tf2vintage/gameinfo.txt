@@ -1,11 +1,11 @@
 "GameInfo"
 {
-	game		"Team Fortress 2 Classic" 
+	game		"Team Fortress 2 Vintage"
 	gamelogo 	1 
 	type 		multiplayer_only 
 	icon		"resource/game"		
-	developer 	"Team Fortress 2 Classic Team"
-	developer_url 	"http://tf2classic.com/"
+	developer 	"Infinity Development"
+	developer_url 	""
 	nomodels 	1 
 	nohimodel 	1	
 	nocrosshair 	0 
@@ -58,7 +58,7 @@
 			// Add the HL2 directory as a game search path.  This is also where where writes			
 			// to the "game" path go.			
 			//game+game_write			hl2mp			
-			game+mod			sourcetest/sourcetest_pak.vpk
+			//game+mod			sourcetest/sourcetest_pak.vpk
 			
 			// Mount in shared HL2 loose files			
 			//game				|all_source_engine_paths|hl2mp			
