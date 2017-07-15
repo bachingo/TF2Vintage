@@ -230,12 +230,6 @@
 	round_yellowspawn(target_destination) : "Yellow spawn for round" : : "Yellow spawn point when the associated round is being played."
 ]
 
-@PointClass base(PlayerClass, Angles) studio("models/player/merc_deathmatch.mdl") = info_player_deathmatch :
-	"This entity indicates the position and facing direction at which the player will spawn during a deathmatch map. Any number of "+
-	"info_player_deathmatch entities may be placed in a map."
-[
-]
-
 @PointClass base(Targetname) = game_forcerespawn :
 	"Removes buildings, grenades, etc., from the world and forces all players to respawn " +
 	"(without being killed)."
@@ -450,8 +444,6 @@
     7 : "Pyro"
     8 : "Spy"
     9 : "Engineer"
-    10 : "Civilian"
-    11 : "Mercenary"
 	]
 ]
 
@@ -1058,10 +1050,6 @@
 	input Enable(void) : "Enable this entity."
 	input Disable(void) : "Disable this entity."
 ]
-
-@PointClass base(Targetname) = tf_logic_deathmatch :
-	"Deathmatch mode entity. Use this to set the map to DM mode" []
-	
 	
 @PointClass base(Targetname,Parentname,BaseObject) iconsprite("editor/bullseye.vmt") = mapobj_cart_dispenser : 
 	"TF2 Dispenser" 
