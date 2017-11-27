@@ -202,10 +202,8 @@ void CTFHudWeaponAmmo::OnThink()
 				bShowIcon = true;
 			}
 		}
-		if ( m_pWeaponBucket && m_pWeaponBucket->IsVisible() != bShowIcon )
-		{
+		if ( m_pWeaponBucket )
 			m_pWeaponBucket->SetVisible( bShowIcon );
-		}
 
 		hudlcd->SetGlobalStat( "(weapon_print_name)", pWeapon ? pWeapon->GetPrintName() : " " );
 		hudlcd->SetGlobalStat( "(weapon_name)", pWeapon ? pWeapon->GetName() : " " );

@@ -305,21 +305,40 @@ void CObjectTeleporter::Precache()
 	PrecacheScriptSound( "Building_Teleporter.Ready" );
 	PrecacheScriptSound( "Building_Teleporter.Send" );
 	PrecacheScriptSound( "Building_Teleporter.Receive" );
-	PrecacheScriptSound( "Building_Teleporter.SpinLevel1" );
-	PrecacheScriptSound( "Building_Teleporter.SpinLevel2" );
-	PrecacheScriptSound( "Building_Teleporter.SpinLevel3" );
+	PrecacheScriptSound( "Building_Teleporter.Spin" );
 
-	PrecacheTeamParticles( "teleporter_%s_charged" );
-	PrecacheTeamParticles( "teleporter_%s_entrance" );
-	PrecacheTeamParticles( "teleporter_%s_exit" );
-	PrecacheTeamParticles( "teleporter_arms_circle_%s" );
-	PrecacheTeamParticles( "teleported_%s" );
-	PrecacheTeamParticles( "teleportedin_%s" );
-	PrecacheTeamParticles( "player_sparkles_%s" );
+	PrecacheParticleSystem( "teleporter_red_charged" );
+	PrecacheParticleSystem( "teleporter_blue_charged" );
+	PrecacheParticleSystem( "teleporter_green_charged");
+	PrecacheParticleSystem( "teleporter_yellow_charged");
+	PrecacheParticleSystem( "teleporter_red_entrance" );
+	PrecacheParticleSystem( "teleporter_blue_entrance" );
+	PrecacheParticleSystem( "teleporter_green_entrance" );
+	PrecacheParticleSystem( "teleporter_yellow_entrance" );
+	PrecacheParticleSystem( "teleporter_red_exit" );
+	PrecacheParticleSystem( "teleporter_blue_exit" );
+	PrecacheParticleSystem( "teleporter_green_exit" );
+	PrecacheParticleSystem( "teleporter_yellow_exit" );
+	PrecacheParticleSystem( "teleporter_arms_circle_red" );
+	PrecacheParticleSystem( "teleporter_arms_circle_blue" );
+	PrecacheParticleSystem( "teleporter_arms_circle_green" );
+	PrecacheParticleSystem( "teleporter_arms_circle_yellow" );
 	PrecacheParticleSystem( "tpdamage_1" );
 	PrecacheParticleSystem( "tpdamage_2" );
 	PrecacheParticleSystem( "tpdamage_3" );
 	PrecacheParticleSystem( "tpdamage_4" );
+	PrecacheParticleSystem( "teleported_red" );
+	PrecacheParticleSystem( "player_sparkles_red" );
+	PrecacheParticleSystem( "teleported_blue" );
+	PrecacheParticleSystem( "player_sparkles_blue" );
+	PrecacheParticleSystem( "teleported_green" );
+	PrecacheParticleSystem( "player_sparkles_green" );
+	PrecacheParticleSystem( "teleported_yellow" );
+	PrecacheParticleSystem( "player_sparkles_yellow" );
+	PrecacheParticleSystem( "teleportedin_red" );
+	PrecacheParticleSystem( "teleportedin_blue" );
+	PrecacheParticleSystem( "teleportedin_green" );
+	PrecacheParticleSystem( "teleportedin_yellow" );
 }
 
 //-----------------------------------------------------------------------------
@@ -655,9 +674,9 @@ void CObjectTeleporter::TeleporterThink( void )
 				m_iUpgradeLevel = 1;
 
 				// We need to adjust for any damage received if we downgraded
-				float flHealthPercentage = GetHealth() / GetMaxHealthForCurrentLevel();
+				float iHealthPercentage = GetHealth() / GetMaxHealthForCurrentLevel();
 				SetMaxHealth( GetMaxHealthForCurrentLevel() );
-				SetHealth( (int)( GetMaxHealthForCurrentLevel() * flHealthPercentage ) );
+				SetHealth( (int)floorf( GetMaxHealthForCurrentLevel() * iHealthPercentage ) );
 				m_iUpgradeMetal = 0;
 			}
 		}
@@ -899,7 +918,7 @@ char *CObjectTeleporter::GetPlacementModel( void )
 //-----------------------------------------------------------------------------
 int CObjectTeleporter::GetMaxUpgradeLevel(void)
 {
-	return ( tf2c_building_upgrades.GetBool() ? 3 : 1 );
+	return 3;
 }
 
 //-----------------------------------------------------------------------------

@@ -15,11 +15,10 @@
 //=============================================================================
 float PackRatios[POWERUP_SIZES] =
 {
-	0.1,	// TF2C TINY
 	0.2,	// SMALL
 	0.5,	// MEDIUM
 	1.0,	// FULL
-	2.0,	// TF2C MEGA
+	0.08,	// TF2C TINY
 };
 
 //=============================================================================
@@ -145,26 +144,6 @@ bool CTFPowerup::ValidTouch( CBasePlayer *pPlayer )
 bool CTFPowerup::MyTouch( CBasePlayer *pPlayer )
 {
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPowerup::DropSingleInstance( const Vector &vecVelocity, CBaseCombatCharacter *pOwner, float flUnknown, float flRestTime )
-{
-	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
-	SetAbsVelocity( vecVelocity );
-	SetSolid( SOLID_BBOX );
-
-	if ( flRestTime != 0.0f )
-		ActivateWhenAtRest( flRestTime );
-
-	AddSpawnFlags( SF_NORESPAWN );
-	
-	SetOwnerEntity( pOwner );
-
-	// Remove after 30 seconds.
-	SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 30.0f, "PowerupRemoveThink" );
 }
 
 //-----------------------------------------------------------------------------

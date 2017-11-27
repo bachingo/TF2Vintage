@@ -61,10 +61,10 @@ public:
 class CHealthKitMega : public CHealthKit
 {
 public:
-	DECLARE_CLASS( CHealthKitMega, CHealthKit );
-	powerupsize_t	GetPowerupSize( void ) { return POWERUP_MEGA; }
+	DECLARE_CLASS(CHealthKitMega, CHealthKit);
+	powerupsize_t	GetPowerupSize(void) { return POWERUP_MEGA; }
 
-	virtual const char *GetPowerupModel( void ) { return "models/items/medkit_large.mdl"; }
+	virtual const char *GetPowerupModel(void) { return "models/items/medkit_large.mdl"; }
 };
 
 #endif // ENTITY_HEALTHKIT_H

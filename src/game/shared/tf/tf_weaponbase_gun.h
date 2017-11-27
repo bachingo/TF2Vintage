@@ -37,11 +37,9 @@ public:
 
 	CTFWeaponBaseGun();
 
-	virtual void ItemPostFrame( void );
 	virtual void PrimaryAttack();
 	virtual void SecondaryAttack( void );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
-	virtual void WeaponReset( void );
 
 	// Derived classes call this to fire a bullet.
 	//bool TFBaseGunFire( void );
@@ -51,17 +49,17 @@ public:
 	void ToggleZoom( void );
 
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
-	virtual void		GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true, bool bUseHitboxes = false );
-	void				GetProjectileReflectSetup( CTFPlayer *pPlayer, const Vector &vecPos, Vector *vecDeflect, bool bHitTeammates = true, bool bUseHitboxes = false );
+	void				GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true );
+	void				GetProjectileReflectSetup( CTFPlayer *pPlayer, const Vector &vecPos, Vector *vecDeflect, bool bHitTeammates = true );
 
 	void FireBullet( CTFPlayer *pPlayer );
-	CBaseEntity *FireRocket( CTFPlayer *pPlayer, int iType );
+	CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	CBaseEntity *FireNail( CTFPlayer *pPlayer, int iSpecificNail );
-	CBaseEntity *FireGrenade( CTFPlayer *pPlayer, int iType );
+	CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate );
+	CBaseEntity *FireFlare(CTFPlayer *pPlayer);
 
 	virtual float GetWeaponSpread( void );
 	virtual float GetProjectileSpeed( void );
-	virtual float GetProjectileGravity( void );
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
 	virtual float GetProjectileDamage( void );
@@ -73,7 +71,6 @@ public:
 	virtual void PlayWeaponShootSound( void );
 
 private:
-	CNetworkVar( int, m_iBurstSize );
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );
 };

@@ -124,7 +124,6 @@ public:
 	void SetObject( C_BaseObject *pObj );
 
 	bool IsActive( void ) { return m_bActive; }
-	bool IsUpgradable( void );
 
 private:
 

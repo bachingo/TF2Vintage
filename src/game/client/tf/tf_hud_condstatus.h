@@ -11,28 +11,17 @@
 #pragma once
 #endif
 
-#include "tf_hud_objectivestatus.h"
-
-//-----------------------------------------------------------------------------
-// Purpose:  
-//-----------------------------------------------------------------------------
-class CTFPowerupPanel : public vgui::EditablePanel
+struct powerupinfo_t
 {
-public:
-	DECLARE_CLASS_SIMPLE( CTFPowerupPanel, vgui::EditablePanel );
-
-	CTFPowerupPanel( vgui::Panel *parent, const char *name );
-	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void UpdateStatus( void );
-
-	void SetData( int cond, float dur, float initdur );
-
-	int m_nCond;
-	float m_flDuration;
-	float m_flInitDuration;
-
-private:
-	CTFProgressBar *m_pProgressBar;
+	powerupinfo_t(int id, float dur, float initdur)
+	{
+		ID = id;
+		fDuration = dur;
+		fInitDuration = initdur;
+	}
+	int ID;
+	float fDuration;
+	float fInitDuration;
 };
 
 //-----------------------------------------------------------------------------
@@ -44,16 +33,17 @@ class CTFHudCondStatus : public CHudElement, public vgui::EditablePanel
 
 public:
 	CTFHudCondStatus( const char *pElementName );
-	~CTFHudCondStatus();
+	virtual ~CTFHudCondStatus();
 
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	virtual void ApplySettings( KeyValues *inResourceData );
-	virtual void PerformLayout( void );
+	virtual void PerformLayout();
 	virtual bool ShouldDraw( void );
-	virtual void OnTick( void );
 
-private:
-	CUtlVector<CTFPowerupPanel *>	m_pPowerups;
+private:	
+	void UpdateStatus( void );
+	CUtlVector<EditablePanel*>	m_pPowerups;
+	CUtlVector<powerupinfo_t>	powerups;
 };
 
 #endif	// TF_HUD_CONDSTATUS_H

@@ -21,11 +21,6 @@ class CTFWearable : public CEconWearable
 public:
 	DECLARE_CLASS( CTFWearable, CEconWearable );
 	DECLARE_NETWORKCLASS();
-
-#ifdef GAME_DLL
-	virtual void	Equip( CBasePlayer *pPlayer );
-	void			UpdateModelToClass( void );
-#endif
 };
 
 #endif // TF_WEARABLE_H

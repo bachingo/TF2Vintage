@@ -59,8 +59,7 @@ ConVar obj_damage_factor( "obj_damage_factor","0", FCVAR_CHEAT | FCVAR_DEVELOPME
 ConVar obj_child_damage_factor( "obj_child_damage_factor","0.25", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Factor applied to damage done to objects that are built on a buildpoint" );
 ConVar tf_fastbuild("tf_fastbuild", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_obj_ground_clearance( "tf_obj_ground_clearance", "32", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Object corners can be this high above the ground" );
-
-ConVar tf2c_building_upgrades( "tf2c_building_upgrades", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the ability to upgrade buildings other than Sentry Gun." );
+ConVar tf2c_building_upgrades( "tf2c_building_upgrades", "1", FCVAR_REPLICATED, "Toggles the ability to upgrade buildings other than the sentrygun" );
 
 extern short g_sModelIndexFireball;
 
@@ -294,6 +293,9 @@ bool CBaseObject::CanBeUpgraded( CTFPlayer *pPlayer )
 	{
 		return false;
 	}
+
+	if ( !tf2c_building_upgrades.GetBool() && GetType() != OBJ_SENTRYGUN )
+		return false;
 
 	return true;
 }
@@ -1869,8 +1871,6 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 		}
 	}
 
-	int iOldHealth = m_iHealth;
-
 	if ( flDamage )
 	{
 		// Recheck our death possibility, because our objects may have all been blown off us by now
@@ -1880,24 +1880,6 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 			// Reduce health
 			SetHealth( m_flHealth - flDamage );
 		}
-	}
-
-	IGameEvent *event = gameeventmanager->CreateEvent( "npc_hurt" );
-
-	if ( event )
-	{
-		CTFPlayer *pTFAttacker = ToTFPlayer( info.GetAttacker() );
-		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
-
-		event->SetInt( "entindex", entindex() );
-		event->SetInt( "attacker_player", pTFAttacker ? pTFAttacker->GetUserID() : 0 );
-		event->SetInt( "weaponid", pTFWeapon ? pTFWeapon->GetWeaponID() : TF_WEAPON_NONE );
-		event->SetInt( "damageamount", iOldHealth - m_iHealth );
-		event->SetInt( "health", max( 0, m_iHealth ) );
-		event->SetBool( "crit", false );
-		event->SetBool( "boss", false );
-
-		gameeventmanager->FireEvent( event );
 	}
 
 	m_OnDamaged.FireOutput(info.GetAttacker(), this);

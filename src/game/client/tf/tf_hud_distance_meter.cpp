@@ -44,10 +44,16 @@ DECLARE_HUDELEMENT( CDistanceMeter );
 // Purpose: 
 // Input  : *parent - 
 //-----------------------------------------------------------------------------
-CDistanceMeter::CDistanceMeter( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudDistanceMeter" )
+CDistanceMeter::CDistanceMeter( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "CDistanceMeter" )
 {
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
+
+	SetVisible( false );
+	SetCursor( null );
+
+	SetFgColor( Color( 0, 0, 0, 255 ) );
+	SetPaintBackgroundEnabled( false );
 
 	m_hFont = 0;
 }
@@ -64,8 +70,8 @@ void CDistanceMeter::ApplySchemeSettings( vgui::IScheme *pScheme )
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	m_hFont = pScheme->GetFont( "Default" );
+	Assert( m_hFont );
 
-	SetPaintBackgroundEnabled( false );
 	SetSize( ScreenWidth(), ScreenHeight() );
 }
 

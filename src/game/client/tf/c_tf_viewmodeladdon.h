@@ -18,21 +18,20 @@ class C_ViewmodelAttachmentModel : public C_BaseViewModel
 	DECLARE_CLASS( C_ViewmodelAttachmentModel, C_BaseViewModel );
 public:
 
-	virtual bool InitializeAsClientEntity( const char *pszModelName, RenderGroup_t renderGroup );
+	virtual int	InternalDrawModel(int flags);
 
-	virtual int	InternalDrawModel( int flags );
 	virtual int	DrawModel( int flags );
+
 	virtual int DrawOverriddenViewmodel( int flags );
 
 	void SetViewmodel( C_TFViewModel *vm );
 
+	CHandle< C_TFViewModel > m_viewmodel;
+
 	virtual bool			IsViewModel() const { return true; }
+
 	virtual RenderGroup_t	GetRenderGroup( void ) { return RENDER_GROUP_VIEW_MODEL_TRANSLUCENT; }
 
-	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetOwner(); }
-
-private:
-	CHandle< C_TFViewModel > m_viewmodel;
 };
 
 #endif

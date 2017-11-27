@@ -130,8 +130,6 @@ private:
 
 #ifdef GAME_DLL
 	CHandle<CSniperDot>		m_hSniperDot;
-#else
-	bool m_bDinged;
 #endif
 
 	// Handles rezooming after the post-fire unzoom

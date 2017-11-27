@@ -231,9 +231,12 @@ void CWeaponMedigun::Precache()
 	PrecacheScriptSound( "WeaponMedigun.NoTarget" );
 	PrecacheScriptSound( "WeaponMedigun.Charged" );
 
-	PrecacheTeamParticles( g_MedigunParticles[iType].fullcharge );
-	PrecacheTeamParticles( g_MedigunParticles[iType].beam );
-	PrecacheTeamParticles( g_MedigunParticles[iType].beam_invlun );
+	for ( int i = TF_TEAM_RED; i < TF_TEAM_COUNT; i++ )
+	{
+		PrecacheParticleSystem( ConstructTeamParticle( g_MedigunParticles[iType].fullcharge, i ) );
+		PrecacheParticleSystem( ConstructTeamParticle( g_MedigunParticles[iType].beam, i ) );
+		PrecacheParticleSystem( ConstructTeamParticle( g_MedigunParticles[iType].beam_invlun, i ) );
+	}
 
 	// Precache charge sounds.
 	for ( int i = 0; i < TF_CHARGE_COUNT; i++ )
@@ -417,7 +420,7 @@ bool CWeaponMedigun::AllowedToHealTarget( CBaseEntity *pTarget )
 	if ( !pTFPlayer )
 		return false;
 
-	bool bStealthed = pTFPlayer->m_Shared.IsStealthed();
+	bool bStealthed = pTFPlayer->m_Shared.InCond( TF_COND_STEALTHED );
 	bool bDisguised = pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED );
 
 	// We can heal teammates and enemies that are disguised as teammates

@@ -35,7 +35,6 @@
 #if defined( TF_CLASSIC_CLIENT )
 #include "tf_mainmenu.h"
 #include "tf_mainmenu_interface.h"
-#include "tier0/icommandline.h"
 #endif
 
 using namespace vgui;
@@ -216,12 +215,9 @@ void VGui_CreateGlobalPanels( void )
 	loadingdisc->Create( gameToolParent );
 	messagechars->Create( gameToolParent );
 
-#ifdef TF_CLASSIC_CLIENT
-	if ( CommandLine()->CheckParm( "-nonewmenu" ) == NULL )
-	{
-		MainMenu->Create( NULL );
-		OverrideMainMenu();
-	}
+#if defined (TF_CLASSIC_CLIENT)
+	MainMenu->Create(NULL);
+	OverrideMainMenu();
 #endif
 
 	// Debugging or related tool

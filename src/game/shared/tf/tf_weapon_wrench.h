@@ -32,7 +32,6 @@ public:
 	CTFWrench();
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_WRENCH; }
 	virtual void		Smack( void );
-	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
 
 #ifdef GAME_DLL
 	virtual void OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector vecHitPos );

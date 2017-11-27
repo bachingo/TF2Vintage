@@ -52,7 +52,7 @@
 #endif
 
 ConVar default_fov( "default_fov", "75", FCVAR_CHEAT );
-ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 75.0, true, MAX_FOV );
+ConVar fov_desired( "fov_desired", "75", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 75.0, true, 100.0 );
 
 void HUDMinModeChangedCallBack( IConVar *var, const char *pOldString, float flOldValue )
 {
@@ -235,7 +235,7 @@ void ClientModeTFNormal::OverrideView( CViewSetup *pSetup )
 	// Let the player override the view.
 	pPlayer->OverrideView( pSetup );
 
-	if ( ::input->CAM_IsThirdPerson() && !pPlayer->IsObserver() )
+	if ( ::input->CAM_IsThirdPerson() )
 	{
 		const Vector& cam_ofs = g_ThirdPersonManager.GetCameraOffsetAngles();
 		Vector cam_ofs_distance;
@@ -256,6 +256,7 @@ void ClientModeTFNormal::OverrideView( CViewSetup *pSetup )
 		camAngles[ROLL] = 0;
 
 		Vector camForward, camRight, camUp;
+
 
 		if ( g_ThirdPersonManager.IsOverridingThirdPerson() == false )
 		{

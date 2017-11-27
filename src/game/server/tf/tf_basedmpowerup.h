@@ -12,7 +12,6 @@
 #endif
 
 #include "tf_powerup.h"
-#include "tf_shareddefs.h"
 
 //=============================================================================
 
@@ -27,30 +26,24 @@ public:
 
 	void	Spawn( void );
 	void	Precache( void );
-	CBaseEntity* Respawn( void );
-	void	Materialize( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
 	float	GetRespawnDelay( void );
-	float	GetEffectDuration( void ) { return m_flEffectDuration; }
-	void	SetEffectDuration( float flTime ) { m_flEffectDuration = flTime; }
 
-	virtual const char *GetDefaultPickupSound( void ) { return "HealthKit.Touch"; }
-	virtual const char *GetDefaultPowerupModel( void ) { return "models/class_menu/random_class_icon.mdl"; }
+	virtual const char *GetPowerupModel( void ) { return STRING( m_strModelName ); }
+	virtual const char *GetPickupSound( void ) { return STRING( m_strPickupSound ); }
 
-	virtual int GetCondition( void ) { return TF_COND_LAST; } // Should trigger an assert.
+	virtual int	GetEffectDuration( void ) { return 0; }
+	virtual int GetCondition( void ) { return TF_COND_AIMING; }
 
-	static CTFBaseDMPowerup *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszClassname, float flDuration );
+	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 
 protected:
-	float		m_flEffectDuration;
 
-private:
-	string_t	m_strPickupSound;
+	string_t m_strModelName;
 
-	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_bRespawning );
+	string_t m_strPickupSound;
 
-	CNetworkVar( float, m_flRespawnTime );
-	CNetworkVar( float, m_flRespawnAtTime );
+	int		m_iRespawnTime;
 };
 
 #endif // BASE_DM_POWERUP_H

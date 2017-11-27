@@ -248,13 +248,11 @@ void CTFMinigun::SharedAttack()
 
 
 				// Only fire if we're actually shooting
-				if ( gpGlobals->curtime >= m_flNextPrimaryAttack )
-				{
-					BaseClass::PrimaryAttack();		// fire and do timers
-					m_bCritShot = IsCurrentAttackACrit();
-					pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-					m_flTimeWeaponIdle = gpGlobals->curtime + 0.2;
-				}
+				BaseClass::PrimaryAttack();		// fire and do timers
+				CalcIsAttackCritical();
+				m_bCritShot = IsCurrentAttackACrit();
+				pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+				m_flTimeWeaponIdle = gpGlobals->curtime + 0.2;
 			}
 			break;
 		}

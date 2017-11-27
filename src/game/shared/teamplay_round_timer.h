@@ -84,6 +84,7 @@ public:
 
 private:
 	void CalculateOutputMessages( void );
+	bool SetOvertimeEscort( void );
 
 #ifdef CLIENT_DLL
 	virtual void ClientThink();
@@ -165,6 +166,9 @@ private:
 	bool			m_bPauseDueToWin;
 	bool			m_bResetTimeOnRoundStart;
 	int				m_nTimeToUseAfterSetupFinished;
+
+	//Overtime fix
+	float			m_flExtraOvertime;
 #endif 
 };
 

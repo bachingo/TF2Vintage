@@ -88,11 +88,12 @@ public:
 	bool IsHoldingAfterScreenShot( void ) { return m_bHoldingAfterScreenshot; }
 
 protected:
-	CTFFreezePanelCallout *TestAndAddCallout( Vector &origin, Vector &vMins, Vector &vMaxs, CUtlVector<Vector> *vecCalloutsTL, 
+	CTFFreezePanelCallout *CTFFreezePanel::TestAndAddCallout( Vector &origin, Vector &vMins, Vector &vMaxs, CUtlVector<Vector> *vecCalloutsTL, 
 		CUtlVector<Vector> *vecCalloutsBR, Vector &vecFreezeTL, Vector &vecFreezeBR, Vector &vecStatTL, Vector &vecStatBR, int *iX, int *iY );
 
 private:
 	void ShowNemesisPanel( bool bShow );
+	void SetColorForTargetTeam( int iTeamNumber );
 
 	int						m_iYBase;
 	int						m_iKillerIndex;

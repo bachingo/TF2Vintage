@@ -5,6 +5,7 @@
 #include "vgui_controls/SectionedListPanel.h"
 #include "vgui_controls/ImagePanel.h"
 #include "tf_notificationmanager.h"
+#include "c_sdkversionchecker.h"
 #include "engine/IEngineSound.h"
 #include "vgui_avatarimage.h"
 
@@ -19,7 +20,7 @@ static void OnBlogToggle(IConVar *var, const char *pOldValue, float flOldValue)
 	GET_MAINMENUPANEL(CTFMainMenuPanel)->ShowBlogPanel(((ConVar*)var)->GetBool());
 }
 ConVar tf2c_mainmenu_music("tf2c_mainmenu_music", "1", FCVAR_ARCHIVE, "Toggle music in the main menu");
-ConVar tf2c_mainmenu_showblog("tf2c_mainmenu_showblog", "0", FCVAR_ARCHIVE, "Toggle blog in the main menu", OnBlogToggle);
+ConVar tf2c_mainmenu_showblog("tf2c_mainmenu_showblog", "1", FCVAR_ARCHIVE, "Toggle blog in the main menu", OnBlogToggle);
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -92,7 +93,7 @@ void CTFMainMenuPanel::PerformLayout()
 		(steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown"));
 	SetDialogVariable("nickname", szNickName);
 
-	ShowBlogPanel(tf2c_mainmenu_showblog.GetBool() || GetNotificationManager()->IsOutdated());
+	ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
 	OnNotificationUpdate();
 	AutoLayout();
 
@@ -158,9 +159,9 @@ void CTFMainMenuPanel::OnCommand(const char* command)
 	}
 	else if (!Q_strcmp(command, "testnotification"))
 	{
-		wchar_t resultString[128];
-		V_snwprintf(resultString, sizeof(resultString), L"test %d", GetNotificationManager()->GetNotificationsCount());
-		MessageNotification Notification(L"Yoyo", resultString, time( NULL ) );
+		char resultString[128];
+		Q_snprintf(resultString, sizeof(resultString), "test %d", GetNotificationManager()->GetNotificationsCount());
+		MessageNotification Notification("Yoyo", resultString);
 		GetNotificationManager()->SendNotification(Notification);
 	}
 	else if (!Q_strcmp(command, "randommusic"))
@@ -181,7 +182,7 @@ void CTFMainMenuPanel::OnTick()
 	{
 		if ((m_psMusicStatus == MUSIC_FIND || m_psMusicStatus == MUSIC_STOP_FIND) && !enginesound->IsSoundStillPlaying(m_nSongGuid))
 		{
-			GetRandomMusic(m_pzMusicLink, sizeof(m_pzMusicLink));
+			Q_strncpy(m_pzMusicLink, GetRandomMusic(), sizeof(m_pzMusicLink));
 			m_psMusicStatus = MUSIC_PLAY;
 		}
 		else if ((m_psMusicStatus == MUSIC_PLAY || m_psMusicStatus == MUSIC_STOP_PLAY)&& m_pzMusicLink[0] != '\0')
@@ -284,34 +285,45 @@ void CTFMainMenuPanel::SetVersionLabel()  //GetVersionString
 	if (m_pVersionLabel)
 	{
 		char verString[64];
-		Q_snprintf(verString, sizeof(verString), "Version: %s", GetNotificationManager()->GetVersionName());
+		Q_snprintf(verString, sizeof(verString), "Version: %s\nSDK branch: %s", GetNotificationManager()->GetVersionString(), GetSDKVersionChecker()->GetKey());
 		m_pVersionLabel->SetText(verString);
 	}
 };
 
-void CTFMainMenuPanel::GetRandomMusic(char *pszBuf, int iBufLength)
+char* CTFMainMenuPanel::GetRandomMusic()
 {
-	Assert(iBufLength);
+	char* pszBasePath = "sound/ui/gamestartup";
+	int iCount = 0;
 
-	char szPath[MAX_PATH];
-
-	// Check that there's music available
-	if (!g_pFullFileSystem->FileExists("sound/ui/gamestartup1.mp3"))
+	for (int i = 0; i < 27; i++)
 	{
-		Assert(false);
-		*pszBuf = '\0';
+		char szPath[MAX_PATH];
+		char szNumber[5];
+		Q_snprintf(szNumber, sizeof(szNumber), "%d", iCount + 1);
+		Q_strncpy(szPath, pszBasePath, sizeof(szPath));
+		Q_strncat(szPath, szNumber, sizeof(szPath));
+		Q_strncat(szPath, ".mp3", sizeof(szPath));
+		if (!g_pFullFileSystem->FileExists(szPath))
+		{
+			if (iCount)
+				break;
+			else
+				return "";
+		}
+		iCount++;
 	}
 
-	// Discover tracks, 1 through n
-	int iLastTrack = 0;
-	do
-	{
-		Q_snprintf(szPath, sizeof(szPath), "sound/ui/gamestartup%d.mp3", ++iLastTrack);
-	} while (g_pFullFileSystem->FileExists(szPath));
-
-	// Pick a random one
-	Q_snprintf(szPath, sizeof(szPath), "ui/gamestartup%d.mp3", RandomInt(1, iLastTrack - 1));
-	Q_strncpy(pszBuf, szPath, iBufLength);
+	char* pszSoundPath = "ui/gamestartup";
+	int iRand = rand() % iCount;
+	char szPath[MAX_PATH];
+	char szNumber[5];
+	Q_snprintf(szNumber, sizeof(szNumber), "%d", iRand + 1);
+	Q_strncpy(szPath, pszSoundPath, sizeof(szPath));
+	Q_strncat(szPath, szNumber, sizeof(szPath));
+	Q_strncat(szPath, ".mp3", sizeof(szPath));
+	char *szResult = (char*)malloc(sizeof(szPath));
+	Q_strncpy(szResult, szPath, sizeof(szPath));
+	return szResult;	
 }
 
 void CTFMainMenuPanel::SetServerlistSize(int size)

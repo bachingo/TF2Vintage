@@ -91,13 +91,12 @@ void CTFAdvItemButton::SetItemDefinition(CEconItemDefinition *pItemData)
 	m_pItemDefinition = pItemData;
 
 	char szIcon[128];
-	Q_snprintf( szIcon, sizeof( szIcon ), "../%s_large", pItemData->image_inventory );
-	SetImage( szIcon );
+	Q_snprintf(szIcon, sizeof(szIcon), "../%s_large", pItemData->image_inventory);
+	SetImage(szIcon);
 
-	SetText( pItemData->item_name );
-
-	pButton->SetDepressedSound( pItemData->mouse_pressed_sound );
-	pButton->SetReleasedSound( NULL );
+	char szWeaponName[32];
+	Q_snprintf(szWeaponName, sizeof(szWeaponName), "%s", pItemData->item_name);
+	SetText(szWeaponName);
 }
 
 void CTFAdvItemButton::SetLoadoutSlot( int iSlot, int iPreset )

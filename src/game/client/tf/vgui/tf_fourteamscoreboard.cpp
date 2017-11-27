@@ -45,9 +45,7 @@ using namespace vgui;
 #define SCOREBOARD_MAX_LIST_ENTRIES 12
 
 extern bool IsInCommentaryMode( void );
-extern const char *GetMapDisplayName( const char *mapName );
-
-vgui::IImage* GetDefaultAvatarImage( C_BasePlayer *pPlayer );
+extern const char *GetMapDisplayName(const char *mapName);
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -589,7 +587,6 @@ void CTFFourTeamScoreBoardDialog::UpdatePlayerDetails()
 	SetDialogVariable( "teleports", roundStats.m_iStat[TFSTAT_TELEPORTS] );
 	SetDialogVariable( "headshots", roundStats.m_iStat[TFSTAT_HEADSHOTS] );
 	SetDialogVariable( "backstabs", roundStats.m_iStat[TFSTAT_BACKSTABS] );
-	SetDialogVariable( "bonus", roundStats.m_iStat[TFSTAT_BONUS] );
 	SetDialogVariable( "playername", tf_PR->GetPlayerName( playerIndex ) );
 	SetDialogVariable( "playerscore", GetPointsString( tf_PR->GetTotalScore( playerIndex ) ) );
 	Color clr = g_PR->GetTeamColor( g_PR->GetTeam( playerIndex ) );
@@ -598,7 +595,7 @@ void CTFFourTeamScoreBoardDialog::UpdatePlayerDetails()
 
 	int iClass = pLocalPlayer->m_Shared.GetDesiredPlayerClassIndex();
 	int iTeam = pLocalPlayer->GetTeamNumber();
-	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass < TF_CLASS_COUNT_ALL ) )
+	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass < TF_CLASS_MERCENARY ) )
 	{
 		m_pClassImage->SetClass( iTeam, iClass, 0 );
 		m_pClassImage->SetVisible( true );
@@ -606,6 +603,45 @@ void CTFFourTeamScoreBoardDialog::UpdatePlayerDetails()
 	else
 	{
 		m_pClassImage->SetVisible( false );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFFourTeamScoreBoardDialog::UpdatePlayerAvatar(int playerIndex, KeyValues *kv)
+{
+	// Update their avatar
+	if (kv && ShowAvatars() && steamapicontext->SteamFriends() && steamapicontext->SteamUtils())
+	{
+		player_info_t pi;
+		if (engine->GetPlayerInfo(playerIndex, &pi))
+		{
+			if (pi.friendsID)
+			{
+				CSteamID steamIDForPlayer(pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual);
+
+				// See if we already have that avatar in our list
+				int iMapIndex = m_mapAvatarsToImageList.Find(steamIDForPlayer);
+				int iImageIndex;
+				if (iMapIndex == m_mapAvatarsToImageList.InvalidIndex())
+				{
+					CAvatarImage *pImage = new CAvatarImage();
+					pImage->SetAvatarSteamID(steamIDForPlayer);
+					pImage->SetAvatarSize(32, 32);	// Deliberately non scaling
+					pImage->SetDrawFriend(false);
+					iImageIndex = m_pImageList->AddImage(pImage);
+
+					m_mapAvatarsToImageList.Insert(steamIDForPlayer, iImageIndex);
+				}
+				else
+				{
+					iImageIndex = m_mapAvatarsToImageList[iMapIndex];
+				}
+
+				kv->SetInt("avatar", iImageIndex);
+			}
+		}
 	}
 }
 

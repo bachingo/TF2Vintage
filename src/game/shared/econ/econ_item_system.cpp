@@ -3,9 +3,6 @@
 #include "script_parser.h"
 #include "activitylist.h"
 
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
-
 const char *g_TeamVisualSections[TF_TEAM_COUNT] =
 {
 	"visuals",			// TEAM_UNASSIGNED
@@ -42,6 +39,13 @@ const char *g_EffectTypes[] =
 	"negative"
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: for the UtlMap
+//-----------------------------------------------------------------------------
+static bool schemaLessFunc( const int &lhs, const int &rhs )
+{
+	return lhs < rhs;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -59,10 +63,10 @@ public:
 
 #define GET_STRING(copyto, from, name)													\
 		if (from->GetString(#name, NULL))												\
-			V_strncpy(copyto->name, from->GetString(#name), sizeof(copyto->name))
+			Q_strncpy(copyto->name, from->GetString(#name), sizeof(copyto->name))
 
 #define GET_STRING_DEFAULT(copyto, from, name, defaultstring)		\
-		V_strncpy(copyto->name, from->GetString(#name, #defaultstring), sizeof(copyto->name))
+		Q_strncpy(copyto->name, from->GetString(#name, #defaultstring), sizeof(copyto->name))
 
 #define GET_BOOL(copyto, from, name)													\
 		copyto->name = from->GetBool(#name, copyto->name)
@@ -199,7 +203,7 @@ public:
 		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
 			// Skip over default item, not sure why it's there.
-			if ( !V_stricmp( pSubData->GetName(), "default" ) )
+			if ( !Q_stricmp( pSubData->GetName(), "default" ) )
 				continue;
 
 			CEconItemDefinition *Item = new CEconItemDefinition;
@@ -226,18 +230,17 @@ public:
 		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
 			EconAttributeDefinition *pAttribute = new EconAttributeDefinition;
-			int index = atoi( pSubData->GetName() );
+			int index = V_atoi( pSubData->GetName() );
 
 			GET_STRING_DEFAULT( pAttribute, pSubData, name, ( unnamed ) );
 			GET_STRING( pAttribute, pSubData, attribute_class );
 			GET_STRING( pAttribute, pSubData, description_string );
-			pAttribute->string_attribute = ( V_stricmp( pSubData->GetString( "attribute_type" ), "string" ) == 0 );
 
-			const char *pszFormat = pSubData->GetString( "description_format" );
-			pAttribute->description_format = UTIL_StringFieldToInt( pszFormat, g_AttributeDescriptionFormats, ARRAYSIZE( g_AttributeDescriptionFormats ) );
+			const char *szFormat = pSubData->GetString( "description_format" );
+			pAttribute->description_format = UTIL_StringFieldToInt( szFormat, g_AttributeDescriptionFormats, ARRAYSIZE( g_AttributeDescriptionFormats ) );
 
-			const char *pszEffect = pSubData->GetString( "effect_type" );
-			pAttribute->effect_type = UTIL_StringFieldToInt( pszEffect, g_EffectTypes, ARRAYSIZE( g_EffectTypes ) );
+			const char *szEffect = pSubData->GetString( "effect_type" );
+			pAttribute->effect_type = UTIL_StringFieldToInt( szEffect, g_EffectTypes, ARRAYSIZE( g_EffectTypes ) );
 
 			GET_BOOL( pAttribute, pSubData, hidden );
 			GET_BOOL( pAttribute, pSubData, stored_as_integer );
@@ -252,15 +255,15 @@ public:
 
 		for ( KeyValues *pVisualData = pData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
 		{
-			if ( !V_stricmp( pVisualData->GetName(), "player_bodygroups" ) )
+			if ( !Q_stricmp( pVisualData->GetName(), "player_bodygroups" ) )
 			{
 				GET_VALUES_FAST_BOOL( pVisuals->player_bodygroups, pVisualData );
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "attached_models" ) )
+			else if ( !Q_stricmp( pVisualData->GetName(), "attached_models" ) )
 			{
 				// TODO
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
+			else if ( !Q_stricmp( pVisualData->GetName(), "animation_replacement" ) )
 			{
 				for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
 				{
@@ -273,22 +276,24 @@ public:
 					}
 				}
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "playback_activity" ) )
+			else if ( !Q_stricmp( pVisualData->GetName(), "playback_activity" ) )
 			{
 				GET_VALUES_FAST_STRING( pVisuals->playback_activity, pVisualData );
 			}
-			else if ( !V_strnicmp( pVisualData->GetName(), "sound_", 6 ) )
+			else if ( !Q_strnicmp( pVisualData->GetName(), "sound_", 6 ) )
 			{
 				// Fetching this similar to weapon script file parsing.
+				const char *szSoundName = pVisualData->GetString();
+
 				// Advancing pointer past sound_ prefix... why couldn't they just make a subsection for sounds?
 				int iSound = GetWeaponSoundFromString( pVisualData->GetName() + 6 );
 
 				if ( iSound != -1 )
 				{
-					V_strncpy( pVisuals->aWeaponSounds[iSound], pVisualData->GetString(), MAX_WEAPON_STRING );
+					Q_strncpy( pVisuals->aWeaponSounds[iSound], szSoundName, MAX_WEAPON_STRING );
 				}
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "styles" ) )
+			else if ( !Q_stricmp( pVisualData->GetName(), "styles" ) )
 			{
 				/*
 				for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
@@ -313,7 +318,7 @@ public:
 
 				for (KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey())
 				{
-				if (!V_stricmp(pStyleModelData->GetName(), "model_player_per_class"))
+				if (!Q_stricmp(pStyleModelData->GetName(), "model_player_per_class"))
 				{
 				GET_VALUES_FAST_STRING(style->model_player_per_class, pStyleModelData);
 				}
@@ -372,7 +377,7 @@ public:
 		const char *pszAnimSlot = pData->GetString( "anim_slot" );
 		if ( pszAnimSlot[0] )
 		{
-			if ( V_strcmp( pszAnimSlot, "FORCE_NOT_USED" ) != 0 )
+			if ( Q_strcmp( pszAnimSlot, "FORCE_NOT_USED" ) != 0 )
 			{
 				pItem->anim_slot = UTIL_StringFieldToInt( pszAnimSlot, g_AnimSlots, TF_WPN_TYPE_COUNT );
 			}
@@ -396,33 +401,21 @@ public:
 		GET_INT( pItem, pData, attach_to_hands );
 		GET_BOOL( pItem, pData, act_as_wearable );
 
-		GET_STRING( pItem, pData, mouse_pressed_sound );
-		GET_STRING( pItem, pData, drop_sound );
-
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
-			if ( !V_stricmp( pSubData->GetName(), "capabilities" ) )
+			if ( !Q_stricmp( pSubData->GetName(), "capabilities" ) )
 			{
 				GET_VALUES_FAST_BOOL( pItem->capabilities, pSubData );
 			}
-			else if ( !V_stricmp( pSubData->GetName(), "tags" ) )
+			else if ( !Q_stricmp( pSubData->GetName(), "tags" ) )
 			{
 				GET_VALUES_FAST_BOOL( pItem->tags, pSubData );
 			}
-			else if ( !V_stricmp( pSubData->GetName(), "model_player_per_class" ) )
+			else if ( !Q_stricmp( pSubData->GetName(), "model_player_per_class" ) )
 			{
-				for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
-				{
-					const char *pszClass = pClassData->GetName();
-					int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-
-					if ( iClass != -1 )
-					{
-						V_strncpy( pItem->model_player_per_class[iClass], pClassData->GetString(), 128 );
-					}
-				}
+				GET_VALUES_FAST_STRING( pItem->model_player_per_class, pSubData );
 			}
-			else if ( !V_stricmp( pSubData->GetName(), "used_by_classes" ) )
+			else if ( !Q_stricmp( pSubData->GetName(), "used_by_classes" ) )
 			{
 				for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
 				{
@@ -436,12 +429,15 @@ public:
 
 						if ( pszSlotname[0] != '1' )
 						{
-							pItem->item_slot_per_class[iClass] = UTIL_StringFieldToInt( pszSlotname, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
+							int iSlot = UTIL_StringFieldToInt( pszSlotname, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
+							
+							if ( iSlot != -1 )
+								pItem->item_slot_per_class[iClass] = iSlot;
 						}
 					}
 				}
 			}
-			else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
+			else if ( !Q_stricmp( pSubData->GetName(), "attributes" ) )
 			{
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
@@ -450,25 +446,18 @@ public:
 					if ( iAttributeID == -1 )
 						continue;
 
-					EconAttributeDefinition *pAttribDef = GetItemSchema()->GetAttributeDefinition( iAttributeID );
-
-					if ( pAttribDef->string_attribute )
-					{
-						CEconItemAttribute attribute( iAttributeID, pAttribData->GetString( "value" ), pAttribData->GetString( "attribute_class" ) );
-						pItem->attributes.AddToTail( attribute );
-					}
-					else
-					{
-						CEconItemAttribute attribute( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
-						pItem->attributes.AddToTail( attribute );
-					}
+					CEconItemAttribute attribute;
+					attribute.m_iAttributeDefinitionIndex = iAttributeID;
+					GET_STRING( ( &attribute ), pAttribData, attribute_class );
+					GET_FLOAT( ( &attribute ), pAttribData, value );
+					pItem->attributes.AddToTail( attribute );
 				}
 			}
-			else if ( !V_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
+			else if ( !Q_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
 			{
 				// Deliberately skipping this.
 			}
-			else if ( !V_strnicmp( pSubData->GetName(), "visuals", 7 ) )
+			else if ( !Q_strnicmp( pSubData->GetName(), "visuals", 7 ) )
 			{
 				// Figure out what team is this meant for.
 				int iVisuals = UTIL_StringFieldToInt( pSubData->GetName(), g_TeamVisualSections, TF_TEAM_COUNT );
@@ -496,6 +485,8 @@ public:
 
 		return true;
 	};
+
+private:
 };
 CEconSchemaParser g_EconSchemaParser;
 
@@ -504,8 +495,8 @@ CEconSchemaParser g_EconSchemaParser;
 //-----------------------------------------------------------------------------
 CEconItemSchema::CEconItemSchema()
 {
-	SetDefLessFunc( m_Items );
-	SetDefLessFunc( m_Attributes );
+	m_Items.SetLessFunc( schemaLessFunc );
+	m_Attributes.SetLessFunc( schemaLessFunc );
 
 	m_bInited = false;
 }
@@ -525,14 +516,7 @@ bool CEconItemSchema::Init( void )
 		ActivityList_Free();
 		ActivityList_RegisterSharedActivities();
 
-		float flStartTime = engine->Time();
 		g_EconSchemaParser.InitParser( "scripts/items/items_game.txt", true, false );
-		float flEndTime = engine->Time();
-		Msg( "[%s] Processing item schema took %.02fms. Parsed %d items and %d attributes.\n",
-			CBaseEntity::IsServer() ? "SERVER" : "CLIENT",
-			( flEndTime - flStartTime ) * 1000.0f,
-			m_Items.Count(),
-			m_Attributes.Count() );
 
 		m_bInited = true;
 	}
@@ -540,31 +524,19 @@ bool CEconItemSchema::Init( void )
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Runs on level start, precaches models and sounds from schema.
-//-----------------------------------------------------------------------------
 void CEconItemSchema::Precache( void )
 {
-	string_t strPrecacheAttribute = AllocPooledString( "custom_projectile_model" );
-
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
 	{
 		CEconItemDefinition *pItem = m_Items[i];
 
 		// Precache models.
-		if ( pItem->model_world[0] != '\0' )
+		if ( pItem->model_world[0] )
 			CBaseEntity::PrecacheModel( pItem->model_world );
 
-		if ( pItem->model_player[0] != '\0' )
+		if ( pItem->model_player[0] )
 			CBaseEntity::PrecacheModel( pItem->model_player );
-
-		for ( int iClass = 0; iClass < TF_CLASS_COUNT_ALL; iClass++ )
-		{
-			const char *pszModel = pItem->model_player_per_class[iClass];
-			if ( pszModel[0] != '\0' )
-				CBaseEntity::PrecacheModel( pszModel );
-		}
 
 		// Precache visuals.
 		for ( int i = 0; i < TF_TEAM_COUNT; i++ )
@@ -581,51 +553,23 @@ void CEconItemSchema::Precache( void )
 					CBaseEntity::PrecacheScriptSound( pVisuals->aWeaponSounds[i] );
 			}
 		}
-
-		// Cache all attrbute names.
-		for ( int i = 0; i < pItem->attributes.Count(); i++ )
-		{
-			CEconItemAttribute *pAttribute = &pItem->attributes[i];
-			pAttribute->m_strAttributeClass = AllocPooledString( pAttribute->attribute_class );
-
-			// Special case for custom_projectile_model attribute.
-			if ( pAttribute->m_strAttributeClass == strPrecacheAttribute )
-			{
-				CBaseEntity::PrecacheModel( pAttribute->value_string.Get() );
-			}
-		}
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 CEconItemDefinition* CEconItemSchema::GetItemDefinition( int id )
 {
-	if ( id < 0 )
-		return NULL;
-
 	CEconItemDefinition *itemdef = NULL;
 	FIND_ELEMENT( m_Items, id, itemdef );
 	return itemdef;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
 {
-	if ( id < 0 )
-		return NULL;
-
 	EconAttributeDefinition *attribdef = NULL;
 	FIND_ELEMENT( m_Attributes, id, attribdef );
 	return attribdef;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const char *name )
 {
 	//unsigned int index = m_Attributes.Find(name);
@@ -635,7 +579,7 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const ch
 	//}
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
-		if ( !V_stricmp( m_Attributes[i]->name, name ) )
+		if ( !Q_stricmp( m_Attributes[i]->name, name ) )
 		{
 			return m_Attributes[i];
 		}
@@ -644,9 +588,6 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const ch
 	return NULL;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const char *classname )
 {
 	//unsigned int index = m_Attributes.Find(name);
@@ -656,7 +597,7 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const c
 	//}
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
-		if ( !V_stricmp( m_Attributes[i]->attribute_class, classname ) )
+		if ( !Q_stricmp( m_Attributes[i]->attribute_class, classname ) )
 		{
 			return m_Attributes[i];
 		}
@@ -665,9 +606,6 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const c
 	return NULL;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 int CEconItemSchema::GetAttributeIndex( const char *name )
 {
 	if ( !name )
@@ -675,7 +613,7 @@ int CEconItemSchema::GetAttributeIndex( const char *name )
 
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
-		if ( !V_stricmp( m_Attributes[i]->name, name ) )
+		if ( !Q_stricmp( m_Attributes[i]->name, name ) )
 		{
 			return m_Attributes.Key( i );
 		}

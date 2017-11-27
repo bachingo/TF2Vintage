@@ -22,7 +22,16 @@
 //
 // Weapon Wrench tables.
 //
-CREATE_SIMPLE_WEAPON_TABLE( TFWrench, tf_weapon_wrench )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFWrench, DT_TFWeaponWrench )
+
+BEGIN_NETWORK_TABLE( CTFWrench, DT_TFWeaponWrench )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFWrench )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_wrench, CTFWrench );
+PRECACHE_WEAPON_REGISTER( tf_weapon_wrench );
 
 //=============================================================================
 //
@@ -106,15 +115,4 @@ void CTFWrench::Smack( void )
 		// if we cannot, Smack as usual for player hits
 		BaseClass::Smack();
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-float CTFWrench::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
-{
-	float flDamage = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
-	iCustomDamage = TF_DMG_WRENCH_FIX;
-
-	return flDamage;
 }

@@ -109,7 +109,6 @@ public:
 	bool			IsBeingCarried(void) const { return m_bCarried; }
 	bool			IsBuilding( void ) const { return m_bBuilding; }
 	virtual bool	IsUpgrading( void ) const { return false; }
-	bool			IsRedeploying( void ) const { return m_bCarryDeploy; }
 
 	virtual void	FinishedBuilding( void ) { return; }
 
@@ -141,7 +140,6 @@ public:
 	// Upgrades
 	int GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
 	int GetUpgradeMetal( void ) { return m_iUpgradeMetal; }
-	int GetMaxUpgradeLevel( void ) { return m_iHighestUpgradeLevel; }
 
 	int GetUpgradeMetalRequired( void ) { return SENTRYGUN_UPGRADE_METAL; }
 

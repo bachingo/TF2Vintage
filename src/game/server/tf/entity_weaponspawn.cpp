@@ -66,24 +66,24 @@ static WeaponTranslation_t g_aWeaponTranslations[] =
 
 //#define RESPAWN_PARTICLE "particlename"
 
-BEGIN_DATADESC( CWeaponSpawner )
-	DEFINE_KEYFIELD( m_nWeaponID, FIELD_INTEGER, "WeaponNumber" ),
-	DEFINE_KEYFIELD( m_nItemID, FIELD_INTEGER, "itemid" ),
-	DEFINE_KEYFIELD( m_flRespawnTime, FIELD_FLOAT, "RespawnTime" ),
-	DEFINE_KEYFIELD( m_bStaticSpawner, FIELD_BOOLEAN, "StaticSpawner" ),
-	DEFINE_KEYFIELD( m_bOutlineDisabled, FIELD_BOOLEAN, "DisableWeaponOutline" ),
+BEGIN_DATADESC(CWeaponSpawner)
+DEFINE_KEYFIELD(m_nWeaponID, FIELD_INTEGER, "WeaponNumber"),
+DEFINE_KEYFIELD(m_nItemID, FIELD_INTEGER, "itemid"),
+DEFINE_KEYFIELD(m_flRespawnTime, FIELD_FLOAT, "RespawnTime"),
+DEFINE_KEYFIELD(m_bStaticSpawner, FIELD_BOOLEAN, "StaticSpawner"),
+DEFINE_KEYFIELD(m_bOutlineDisabled, FIELD_BOOLEAN, "DisableWeaponOutline"),
 END_DATADESC()
 
-IMPLEMENT_SERVERCLASS_ST( CWeaponSpawner, DT_WeaponSpawner )
-	SendPropBool( SENDINFO( m_bDisabled ) ),
-	SendPropBool( SENDINFO( m_bRespawning ) ),
-	SendPropBool( SENDINFO( m_bStaticSpawner ) ),
-	SendPropBool( SENDINFO( m_bOutlineDisabled ) ),
-	SendPropTime( SENDINFO( m_flRespawnTime ) ),
-	SendPropTime( SENDINFO( m_flRespawnAtTime ) ),
+IMPLEMENT_SERVERCLASS_ST(CWeaponSpawner, DT_WeaponSpawner)
+SendPropBool(SENDINFO(m_bDisabled)),
+SendPropBool(SENDINFO(m_bRespawning)),
+SendPropBool(SENDINFO(m_bStaticSpawner)),
+SendPropBool(SENDINFO(m_bOutlineDisabled)),
+SendPropTime(SENDINFO(m_flRespawnTime)),
+SendPropTime(SENDINFO(m_flRespawnAtTime)),
 END_SEND_TABLE()
 
-LINK_ENTITY_TO_CLASS( tf_weaponspawner, CWeaponSpawner );
+LINK_ENTITY_TO_CLASS(tf_weaponspawner, CWeaponSpawner);
 
 
 CWeaponSpawner::CWeaponSpawner()
@@ -100,32 +100,32 @@ CWeaponSpawner::CWeaponSpawner()
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function 
 //-----------------------------------------------------------------------------
-void CWeaponSpawner::Spawn( void )
+void CWeaponSpawner::Spawn(void)
 {
-	CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition( m_nItemID );
-	if ( !pItemDef )
+	CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition(m_nItemID);
+	if (!pItemDef)
 	{
-		Warning( "tf_weaponspawner has incorrect item ID %d. DELETED\n", m_nItemID );
-		UTIL_Remove( this );
+		Warning("tf_weaponspawner has incorrect item ID %d. DELETED\n", m_nItemID);
+		UTIL_Remove(this);
 		return;
 	}
 
-	m_Item.SetItemDefIndex( m_nItemID );
+	m_Item.SetItemDefIndex(m_nItemID);
 
 	Precache();
 
-	SetModel( m_Item.GetWorldDisplayModel() );
+	SetModel(m_Item.GetWorldDisplayModel());
 
 	BaseClass::Spawn();
 
 	// Ensures consistent trigger bounds for all weapons. (danielmm8888)
-	SetSolid( SOLID_BBOX );
-	SetCollisionBounds( -Vector( 22, 22, 15 ), Vector( 22, 22, 15 ) );
+	SetSolid(SOLID_BBOX);
+	SetCollisionBounds(-Vector(22, 22, 15), Vector(22, 22, 15));
 
-	AddEffects( EF_ITEM_BLINK );
+	AddEffects(EF_ITEM_BLINK);
 }
 
-float CWeaponSpawner::GetRespawnDelay( void )
+float CWeaponSpawner::GetRespawnDelay(void)
 {
 	return m_flRespawnTime;
 }
@@ -133,31 +133,31 @@ float CWeaponSpawner::GetRespawnDelay( void )
 //-----------------------------------------------------------------------------
 // Purpose: Precache function 
 //-----------------------------------------------------------------------------
-void CWeaponSpawner::Precache( void )
+void CWeaponSpawner::Precache(void)
 {
-	PrecacheModel( m_Item.GetWorldDisplayModel() );
+	PrecacheModel(m_Item.GetWorldDisplayModel());
 	//PrecacheParticleSystem( RESPAWN_PARTICLE );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CWeaponSpawner::KeyValue( const char *szKeyName, const char *szValue )
+bool CWeaponSpawner::KeyValue(const char *szKeyName, const char *szValue)
 {
-	if ( FStrEq( szKeyName, "WeaponNumber" ) )
+	if (FStrEq(szKeyName, "WeaponNumber"))
 	{
-		int iInputID = atoi( szValue );
+		int iInputID = atoi(szValue);
 
-		if ( iInputID == 0 )
+		if (iInputID == 0)
 			return true;
 
-		Warning( "tf_weaponspawner is using obsolete keyvalue \"WeaponNumber\"! Remove it and use the new key \"itemid\" (item ID from schema).\n" );
+		Warning("tf_weaponspawner is using obsolete keyvalue \"WeaponNumber\"! Remove it and use the new key \"itemid\" (item ID from schema).\n");
 
-		for ( int i = 0; i < ARRAYSIZE( g_aWeaponTranslations ); i++ )
+		for (int i = 0; i < ARRAYSIZE(g_aWeaponTranslations); i++)
 		{
-			if ( g_aWeaponTranslations[i].iWeaponID == iInputID )
+			if (g_aWeaponTranslations[i].iWeaponID == iInputID)
 			{
-				Warning( "Weapon ID %d corresponds to item ID %d.\n", iInputID, g_aWeaponTranslations[i].iItemID );
+				Warning("Weapon ID %d corresponds to item ID %d.\n", iInputID, g_aWeaponTranslations[i].iItemID);
 				m_nItemID = g_aWeaponTranslations[i].iItemID;
 			}
 		}
@@ -165,18 +165,18 @@ bool CWeaponSpawner::KeyValue( const char *szKeyName, const char *szValue )
 		return true;
 	}
 
-	return BaseClass::KeyValue( szKeyName, szValue );
+	return BaseClass::KeyValue(szKeyName, szValue);
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:  Override to get rid of EF_NODRAW
 //-----------------------------------------------------------------------------
-CBaseEntity* CWeaponSpawner::Respawn( void )
+CBaseEntity* CWeaponSpawner::Respawn(void)
 {
 	CBaseEntity *pRet = BaseClass::Respawn();
 
-	RemoveEffects( EF_NODRAW );
-	RemoveEffects( EF_ITEM_BLINK );
+	RemoveEffects(EF_NODRAW);
+	RemoveEffects(EF_ITEM_BLINK);
 	m_nRenderFX = kRenderFxDistort;
 	//m_nRenderMode = kRenderTransColor;
 	//SetRenderColor( 246, 232, 99, 128 );
@@ -189,16 +189,16 @@ CBaseEntity* CWeaponSpawner::Respawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CWeaponSpawner::Materialize( void )
+void CWeaponSpawner::Materialize(void)
 {
 	BaseClass::Materialize();
 
-	if ( !IsDisabled() )
+	if (!IsDisabled())
 	{
-		EmitSound( "Item.Materialize" );
-		CPVSFilter filter( GetAbsOrigin() );
+		EmitSound("Item.Materialize");
+		CPVSFilter filter(GetAbsOrigin());
 		//TE_TFParticleEffect( filter, 0.0f, RESPAWN_PARTICLE, GetAbsOrigin(), QAngle( 0,0,0 ) );
-		AddEffects( EF_ITEM_BLINK );
+		AddEffects(EF_ITEM_BLINK);
 		m_nRenderFX = kRenderFxNone;
 	}
 }
@@ -206,16 +206,16 @@ void CWeaponSpawner::Materialize( void )
 //-----------------------------------------------------------------------------
 // Purpose:  
 //-----------------------------------------------------------------------------
-void CWeaponSpawner::EndTouch( CBaseEntity *pOther )
+void CWeaponSpawner::EndTouch(CBaseEntity *pOther)
 {
-	CTFPlayer *pTFPlayer = dynamic_cast<CTFPlayer*>( pOther );
+	CTFPlayer *pTFPlayer = dynamic_cast<CTFPlayer*>(pOther);
 
-	if ( ValidTouch( pTFPlayer ) && pTFPlayer->IsPlayerClass( TF_CLASS_MERCENARY ) )
+	if (ValidTouch(pTFPlayer) && pTFPlayer->IsPlayerClass(TF_CLASS_MERCENARY))
 	{
 		int iCurrentWeaponID = pTFPlayer->m_Shared.GetDesiredWeaponIndex();
-		if ( iCurrentWeaponID == m_nItemID )
+		if (iCurrentWeaponID == m_nItemID)
 		{
-			pTFPlayer->m_Shared.SetDesiredWeaponIndex( -1 );
+			pTFPlayer->m_Shared.SetDesiredWeaponIndex(-1);
 		}
 	}
 
@@ -224,75 +224,75 @@ void CWeaponSpawner::EndTouch( CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
+bool CWeaponSpawner::MyTouch(CBasePlayer *pPlayer)
 {
 	bool bSuccess = false;
 
-	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
 
-	if ( ValidTouch( pTFPlayer ) && pTFPlayer->IsPlayerClass( TF_CLASS_MERCENARY ) )
+	if (ValidTouch(pTFPlayer) && pTFPlayer->IsPlayerClass(TF_CLASS_MERCENARY))
 	{
 #ifndef DM_WEAPON_BUCKET
-		int iSlot = m_Item.GetStaticData()->GetLoadoutSlot( TF_CLASS_MERCENARY );
-		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GetEntityForLoadoutSlot( iSlot );
+		int iSlot = m_Item.GetStaticData()->GetLoadoutSlot(TF_CLASS_MERCENARY);
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GetEntityForLoadoutSlot(iSlot);
 
-		if ( pWeapon )
+		if (pWeapon)
 		{
-			if ( pTFPlayer->ItemsMatch( pWeapon->GetItem(), &m_Item, pWeapon ) )
+			if (pTFPlayer->ItemsMatch(pWeapon->GetItem(), &m_Item, pWeapon))
 			{
-				if ( pTFPlayer->GiveAmmo( pWeapon->GetInitialAmmo(), pWeapon->GetPrimaryAmmoType(), true, TF_AMMO_SOURCE_AMMOPACK ) )
+				if (pTFPlayer->GiveAmmo(pWeapon->GetInitialAmmo(), pWeapon->GetPrimaryAmmoType(), true, TF_AMMO_SOURCE_AMMOPACK))
 					bSuccess = true;
 			}
-			else if ( !( pTFPlayer->m_nButtons & IN_ATTACK ) &&
-				( pTFPlayer->m_nButtons & IN_USE ||
-				( TFGameRules()->IsDeathmatch() && pWeapon->GetWeaponID() == TF_WEAPON_PISTOL ) ) ) // Check Use button, always replace pistol.
+			else if (!(pTFPlayer->m_nButtons & IN_ATTACK) &&
+				(pTFPlayer->m_nButtons & IN_USE ||
+				(TFGameRules()->IsDeathmatch() && pWeapon->GetWeaponID() == TF_WEAPON_PISTOL))) // Check Use button, always replace pistol.
 			{
 				// Drop a usable weapon
-				pTFPlayer->DropWeapon( pWeapon );
+				//pTFPlayer->DropWeapon(pWeapon);
 
-				pWeapon->UnEquip( pTFPlayer );
+				//pWeapon->UnEquip(pTFPlayer);
 				pWeapon = NULL;
 			}
 			else
 			{
-				pTFPlayer->m_Shared.SetDesiredWeaponIndex( m_nItemID );
+				pTFPlayer->m_Shared.SetDesiredWeaponIndex(m_nItemID);
 			}
 		}
 #else
-		CTFWeaponBase *pWeapon = pTFPlayer->Weapon_OwnsThisID( m_nWeaponID );
-		const char *pszWeaponName = WeaponIdToClassname( m_nWeaponID );
+		CTFWeaponBase *pWeapon = pTFPlayer->Weapon_OwnsThisID(m_nWeaponID);
+		const char *pszWeaponName = WeaponIdToClassname(m_nWeaponID);
 
-		if ( pWeapon )
+		if (pWeapon)
 		{
-			if ( pPlayer->GiveAmmo(999, m_pWeaponInfo->iAmmoType) )
+			if (pPlayer->GiveAmmo(999, m_pWeaponInfo->iAmmoType))
 				bSuccess = true;
 		}
 #endif
 
-		if ( !pWeapon )
+		if (!pWeapon)
 		{
 			const char *pszWeaponName = m_Item.GetEntityName();
-			CTFWeaponBase *pNewWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( pszWeaponName, 0, &m_Item );
+			CTFWeaponBase *pNewWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem(pszWeaponName, 0, &m_Item);
 
-			if ( pNewWeapon )
+			if (pNewWeapon)
 			{
-				pPlayer->SetAmmoCount( pNewWeapon->GetInitialAmmo(), pNewWeapon->GetPrimaryAmmoType() );
-				pNewWeapon->GiveTo( pPlayer );
-				pTFPlayer->m_Shared.SetDesiredWeaponIndex( -1 );
+				pPlayer->SetAmmoCount(pNewWeapon->GetInitialAmmo(), pNewWeapon->GetPrimaryAmmoType());
+				pNewWeapon->GiveTo(pPlayer);
+				pTFPlayer->m_Shared.SetDesiredWeaponIndex(-1);
 				bSuccess = true;
 			}
 		}
 
-		if ( bSuccess )
+		if (bSuccess)
 		{
-			CSingleUserRecipientFilter user( pPlayer );
+			CSingleUserRecipientFilter user(pPlayer);
 			user.MakeReliable();
 
-			UserMessageBegin( user, "ItemPickup" );
-				WRITE_STRING( GetClassname() );
+			UserMessageBegin(user, "ItemPickup");
+			WRITE_STRING(GetClassname());
 			MessageEnd();
 
-			pPlayer->EmitSound( "BaseCombatCharacter.AmmoPickup" );
+			pPlayer->EmitSound("BaseCombatCharacter.AmmoPickup");
 		}
 	}
 

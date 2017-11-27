@@ -36,7 +36,7 @@ LINK_ENTITY_TO_CLASS( tf_weaponbase_melee, CTFWeaponBaseMelee );
 // Server specific.
 #if !defined( CLIENT_DLL ) 
 BEGIN_DATADESC( CTFWeaponBaseMelee )
-	DEFINE_THINKFUNC( Smack )
+DEFINE_THINKFUNC( Smack )
 END_DATADESC()
 #endif
 
@@ -46,7 +46,6 @@ ConVar tf_meleeattackforcescale( "tf_meleeattackforcescale", "80.0", FCVAR_CHEAT
 
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
 extern ConVar tf_weapon_criticals;
-extern ConVar tf_debug_criticals;
 
 //=============================================================================
 //
@@ -107,8 +106,7 @@ void CTFWeaponBaseMelee::Spawn()
 // -----------------------------------------------------------------------------
 bool CTFWeaponBaseMelee::CanHolster( void ) const
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_CANNOT_SWITCH_FROM_MELEE ) )
+	if ( GetTFPlayerOwner()->m_Shared.InCond( TF_COND_CANNOT_SWITCH_FROM_MELEE ) )
 		return false;
 
 	return BaseClass::CanHolster();
@@ -149,10 +147,6 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 	Swing( pPlayer );
 
 #if !defined( CLIENT_DLL ) 
-	pPlayer->RemoveInvisibility();
-	pPlayer->RemoveDisguise();
-	pPlayer->RemoveSpawnProtection();
-
 	pPlayer->SpeakWeaponFire();
 	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACritical() );
 #endif
@@ -343,7 +337,7 @@ void CTFWeaponBaseMelee::Smack( void )
 			iDmgType |= DMG_CRITICAL;
 		}
 
-		CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
+		CTakeDamageInfo info( pPlayer, pPlayer, flDamage, iDmgType, iCustomDamage );
 		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * tf_meleeattackforcescale.GetFloat() );
 		trace.m_pEnt->DispatchTraceAttack( info, vecForward, &trace ); 
 		ApplyMultiDamage();
@@ -393,10 +387,6 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 	if ( !pPlayer )
 		return false;
 
-	// Random crits are disabled in DM because the crowbar appearently has 75% crit chance.
-	if ( TFGameRules()->IsDeathmatch() )
-		return false;
-
 	int nCvarValue = tf_weapon_criticals_melee.GetInt();
 
 	if ( nCvarValue == 0 )
@@ -414,21 +404,5 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 	if ( flCritChance == 0.0f )
 		return false;
 
-#ifdef GAME_DLL
-	if ( tf_debug_criticals.GetBool() )
-	{
-		Msg( "Rolling crit: %.02f%% chance... ", flCritChance * 100.0f );
-	}
-#endif
-
-	bool bSuccess = ( RandomInt( 0, WEAPON_RANDOM_RANGE - 1 ) <= flCritChance * WEAPON_RANDOM_RANGE );
-
-#ifdef GAME_DLL
-	if ( tf_debug_criticals.GetBool() )
-	{
-		Msg( "%s\n", bSuccess ? "SUCCESS" : "FAILURE" );
-	}
-#endif
-
-	return bSuccess;
+	return ( RandomInt( 0, WEAPON_RANDOM_RANGE-1 ) <= flCritChance * WEAPON_RANDOM_RANGE );
 }

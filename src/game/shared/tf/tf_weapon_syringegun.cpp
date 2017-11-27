@@ -18,7 +18,22 @@
 //
 // Weapon Syringe Gun tables.
 //
-CREATE_SIMPLE_WEAPON_TABLE( TFSyringeGun, tf_weapon_syringegun_medic )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFSyringeGun, DT_WeaponSyringeGun )
+
+BEGIN_NETWORK_TABLE( CTFSyringeGun, DT_WeaponSyringeGun )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFSyringeGun )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_syringegun_medic, CTFSyringeGun );
+PRECACHE_WEAPON_REGISTER( tf_weapon_syringegun_medic );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFSyringeGun )
+END_DATADESC()
+#endif
 
 //=============================================================================
 //
@@ -29,7 +44,13 @@ void CTFSyringeGun::Precache()
 	BaseClass::Precache();
 
 #ifndef CLIENT_DLL
-	PrecacheTeamParticles( "nailtrails_medic_%s" );
-	PrecacheTeamParticles( "nailtrails_medic_%s_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_blue_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_blue" );
+	PrecacheParticleSystem( "nailtrails_medic_red_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_red" );
+	PrecacheParticleSystem( "nailtrails_medic_green_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_green" );
+	PrecacheParticleSystem( "nailtrails_medic_yellow_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_yellow" );
 #endif
 }

@@ -13,13 +13,13 @@
 
 IMPLEMENT_NETWORKCLASS_ALIASED( EconEntity, DT_EconEntity )
 
-BEGIN_NETWORK_TABLE( CEconEntity, DT_EconEntity )
+BEGIN_NETWORK_TABLE(CEconEntity, DT_EconEntity)
 #ifdef CLIENT_DLL
-	RecvPropDataTable( RECVINFO_DT( m_Item ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
-	RecvPropDataTable( RECVINFO_DT( m_AttributeManager ), 0, &REFERENCE_RECV_TABLE( DT_AttributeContainer ) ),
+RecvPropDataTable(RECVINFO_DT(m_Item), 0, &REFERENCE_RECV_TABLE(DT_ScriptCreatedItem)),
+RecvPropDataTable(RECVINFO_DT(m_AttributeManager), 0, &REFERENCE_RECV_TABLE(DT_AttributeContainer)),
 #else
-	SendPropDataTable( SENDINFO_DT( m_Item ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
-	SendPropDataTable( SENDINFO_DT( m_AttributeManager ), &REFERENCE_SEND_TABLE( DT_AttributeContainer ) ),
+SendPropDataTable(SENDINFO_DT(m_Item), &REFERENCE_SEND_TABLE(DT_ScriptCreatedItem)),
+SendPropDataTable(SENDINFO_DT(m_AttributeManager), &REFERENCE_SEND_TABLE(DT_AttributeContainer)),
 #endif
 END_NETWORK_TABLE()
 
@@ -34,15 +34,8 @@ CEconEntity::CEconEntity()
 	m_pAttributes = this;
 }
 
-CEconEntity::~CEconEntity()
-{
-}
-
 #ifdef CLIENT_DLL
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconEntity::OnPreDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnPreDataChanged( updateType );
@@ -50,9 +43,6 @@ void CEconEntity::OnPreDataChanged( DataUpdateType_t updateType )
 	m_AttributeManager.OnPreDataChanged( updateType );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconEntity::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
@@ -60,22 +50,16 @@ void CEconEntity::OnDataChanged( DataUpdateType_t updateType )
 	m_AttributeManager.OnDataChanged( updateType );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconEntity::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
 	{
-		// Something?
+		
 	}
 	else
 		BaseClass::FireEvent( origin, angles, event, options );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
@@ -87,25 +71,16 @@ bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin
 
 #endif
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconEntity::SetItem( CEconItemView &newItem )
 {
 	m_Item = newItem;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 CEconItemView *CEconEntity::GetItem( void )
 {
 	return &m_Item;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool CEconEntity::HasItemDefinition( void ) const
 {
 	return ( m_Item.GetItemDefIndex() >= 0 );
@@ -161,4 +136,9 @@ void CEconEntity::UpdateOnRemove( void )
 	SetOwnerEntity( NULL );
 	ReapplyProvision();
 	BaseClass::UpdateOnRemove();
+}
+
+CEconEntity::~CEconEntity()
+{
+
 }

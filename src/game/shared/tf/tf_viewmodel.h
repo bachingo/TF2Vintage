@@ -88,8 +88,6 @@ public:
 
 	virtual void			FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 
-	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetOwner(); }
-
 #endif
 
 private:

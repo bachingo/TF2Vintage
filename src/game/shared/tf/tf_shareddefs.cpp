@@ -43,38 +43,22 @@ const char *g_aTeamParticleNames[TF_TEAM_COUNT] =
 	"yellow"
 };
 
-const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
+const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride /*= false*/ )
 {
 	if ( bDeathmatchOverride && TFGameRules() && TFGameRules()->IsDeathmatch() )
 	{
 		return "dm";
 	}
 
-	return pNames[iTeam];
+	return g_aTeamParticleNames[iTeam];
 }
 
-const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
+const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride /*= false*/ )
 {
-	static char szParticleName[128];
+	static char szParticleName[256];
 
-	V_snprintf( szParticleName, sizeof( szParticleName ), pszFormat, GetTeamParticleName( iTeam, bDeathmatchOverride, pNames ) );
+	Q_snprintf( szParticleName, 256, pszFormat, GetTeamParticleName( iTeam, bDeathmatchOverride ) );
 	return szParticleName;
-}
-
-void PrecacheTeamParticles( const char *pszFormat, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
-{
-	for ( int i = FIRST_GAME_TEAM; i < TF_TEAM_COUNT; i++ )
-	{
-		const char *pszParticle = ConstructTeamParticle( pszFormat, i, false, pNames );
-		PrecacheParticleSystem( pszParticle );
-	}
-
-	if ( bDeathmatchOverride )
-	{
-		char szParticle[128];
-		V_snprintf( szParticle, sizeof( szParticle ), pszFormat, "dm" );
-		PrecacheParticleSystem( szParticle );
-	}
 }
 
 color32 g_aTeamColors[TF_TEAM_COUNT] = 
@@ -408,18 +392,13 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SENTRY_ROCKET",
 	"TF_WEAPON_DISPENSER",
 	"TF_WEAPON_INVIS",
-	"TF_WEAPON_FLAG",
-	"TF_WEAPON_FLAREGUN",
-	"TF_WEAPON_LUNCHBOX",
-	"TF_WEAPON_COMPOUND_BOW",
-	// ADD TF2C WEAPONS AFTER THIS
+	"TF_WEAPON_FLAG", // ADD NEW WEAPONS AFTER THIS
 	"TF_WEAPON_HUNTERRIFLE",
 	"TF_WEAPON_UMBRELLA",
+	"TF_WEAPON_FLAREGUN",
 	"TF_WEAPON_HAMMERFISTS",
 	"TF_WEAPON_CHAINSAW",
 	"TF_WEAPON_HEAVYARTILLERY",
-	"TF_WEAPON_ASSAULTRIFLE",
-	"TF_WEAPON_DISPLACER",
 
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -480,18 +459,13 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC,	// TF_WEAPON_SENTRY_ROCKET
 	DMG_GENERIC,	// TF_WEAPON_DISPENSER
 	DMG_GENERIC,	// TF_WEAPON_INVIS
-	DMG_GENERIC,	// TF_WEAPON_FLAG
+	DMG_GENERIC,	// TF_WEAPON_FLAG // ADD NEW WEAPONS AFTER THIS
+	DMG_BULLET | DMG_USE_HITLOCATIONS,//TF_WEAPON_HUNTERRIFLE,
+	DMG_CLUB, // TF_WEAPON_UMBRELLA,
 	DMG_IGNITE,		// TF_WEAPON_FLAREGUN,
-	DMG_GENERIC,	// TF_WEAPON_LUNCHBOX,
-	DMG_BULLET,		// TF_WEAPON_COMPOUND_BOW
-	// ADD TF2C WEAPONS AFTER THIS
-	DMG_BULLET | DMG_USE_HITLOCATIONS,	//TF_WEAPON_HUNTERRIFLE
-	DMG_CLUB, // TF_WEAPON_UMBRELLA
-	DMG_CLUB,		// TF_WEAPON_HAMMERFISTS
-	DMG_SLASH,		// TF_WEAPON_CHAINSAW
-	DMG_BULLET | DMG_USEDISTANCEMOD,		// TF_WEAPON_HEAVYARTILLERY
-	DMG_BULLET | DMG_USEDISTANCEMOD,		// TF_WEAPON_ASSAULTRIFLE
-	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,	// TF_WEAPON_DISPLACER
+	DMG_CLUB,		// TF_WEAPON_HAMMERFISTS,
+	DMG_SLASH,		// TF_WEAPON_CHAINSAW,
+	DMG_BULLET | DMG_USEDISTANCEMOD,		// TF_WEAPON_HEAVYARTILLERY,
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -544,11 +518,8 @@ const char *g_szProjectileNames[] =
 	"projectile_grapplinghook",
 	"projectile_sentry_rocket",
 	"projectile_bread_monster",
-	// Add new projectiles here.
 	"projectile_nail",
 	"projectile_dart",
-	"projectile_mirv",
-	"projectile_plasma",
 };
 
 // these map to the projectiles named in g_szProjectileNames
@@ -663,8 +634,8 @@ const char *WeaponIdToClassname( int iWeapon )
 		return NULL;
 
 	static char szEntName[256];
-	V_strcpy( szEntName, pszWeaponAlias );
-	V_strlower( szEntName );
+	Q_strcpy( szEntName, pszWeaponAlias );
+	Q_strlower( szEntName );
 
 	return szEntName;
 }
@@ -730,31 +701,10 @@ int condition_to_attribute_translation[] =
 	TF_COND_HEALTH_OVERHEALED,
 	TF_COND_URINE,
 	TF_COND_ENERGY_BUFF,
-	TF_COND_LAST
+	TF_COND_LAST,
 };
 
-int g_aPowerupConds[] =
-{
-	TF_COND_POWERUP_CRITDAMAGE,
-	TF_COND_POWERUP_SHIELD,
-	TF_COND_POWERUP_SPEEDBOOST,
-	TF_COND_POWERUP_CLOAK,
-	TF_COND_POWERUP_RAGEMODE,
-	TF_COND_LAST
-};
-
-const char *g_aPowerupNames[] =
-{
-	"item_powerup_critdamage", // TF_COND_POWERUP_CRITDAMAGE,
-	"item_powerup_shield", // TF_COND_POWERUP_SHIELD,
-	"item_powerup_speedboost", // TF_COND_POWERUP_SPEEDBOOST,
-	"item_powerup_cloak", // TF_COND_POWERUP_CLOAK,
-	"item_powerup_ragemode", // TF_COND_POWERUP_RAGEMODE,
-};
-
-COMPILE_TIME_ASSERT( ( ARRAYSIZE( g_aPowerupConds ) - 1 ) == ARRAYSIZE( g_aPowerupNames ) );
-
-bool ConditionExpiresFast( int nCond )
+int ConditionExpiresFast( int nCond )
 {
 	// Damaging conds
 	if ( nCond == TF_COND_BURNING ||

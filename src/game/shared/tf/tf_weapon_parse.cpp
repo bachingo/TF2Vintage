@@ -36,6 +36,8 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_bHasTeamSkins_Viewmodel = false;
 	m_bHasTeamSkins_Worldmodel = false;
 
+	m_szViewModelDM[0] = '\0';
+
 	m_szMuzzleFlashModel[0] = '\0';
 	m_flMuzzleFlashModelDuration = 0;
 	m_flMuzzleFlashModelScale = 0;
@@ -50,9 +52,6 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_szExplosionEffect[0] = '\0';
 	m_szExplosionPlayerEffect[0] = '\0';
 	m_szExplosionWaterEffect[0] = '\0';
-	m_szExplosionEffect_Crit[0] = '\0';
-	m_szExplosionPlayerEffect_Crit[0] = '\0';
-	m_szExplosionWaterEffect_Crit[0] = '\0';
 
 	m_iWeaponType = TF_WPN_TYPE_PRIMARY;
 
@@ -76,8 +75,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage				= pKeyValuesData->GetInt( "Damage", 0 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flRange				= pKeyValuesData->GetFloat( "Range", 8192.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBulletsPerShot		= pKeyValuesData->GetInt( "BulletsPerShot", 0 );
-	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize			= pKeyValuesData->GetInt( "BurstSize", 0 );
-	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstDelay			= pKeyValuesData->GetFloat( "BurstDelay", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flSpread				= pKeyValuesData->GetFloat( "Spread", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flPunchAngle			= pKeyValuesData->GetFloat( "PunchAngle", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay		= pKeyValuesData->GetFloat( "TimeFireDelay", 0.0f );
@@ -165,6 +162,13 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );
 	m_bHasTeamSkins_Worldmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Worldmodel", 0 ) != 0 );
 
+	// DM Viewmodel override
+	const char *pszVMData = pKeyValuesData->GetString("viewmodel_dm", NULL);
+	if (pszVMData)
+	{
+		Q_strncpy( m_szViewModelDM, pszVMData, sizeof(m_szViewModelDM) );
+	}
+
 
 	// Model muzzleflash
 	const char *pszMuzzleFlashModel = pKeyValuesData->GetString( "MuzzleFlashModel", NULL );
@@ -217,24 +221,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	if ( pszEffect )
 	{
 		Q_strncpy( m_szExplosionWaterEffect, pszEffect, sizeof( m_szExplosionWaterEffect ) );
-	}
-
-	pszEffect = pKeyValuesData->GetString( "ExplosionEffect_Crit", NULL );
-	if ( pszEffect )
-	{
-		Q_strncpy( m_szExplosionEffect_Crit, pszEffect, sizeof( m_szExplosionEffect_Crit ) );
-	}
-
-	pszEffect = pKeyValuesData->GetString( "ExplosionPlayerEffect_Crit", NULL );
-	if ( pszEffect )
-	{
-		Q_strncpy( m_szExplosionPlayerEffect_Crit, pszEffect, sizeof( m_szExplosionPlayerEffect_Crit ) );
-	}
-
-	pszEffect = pKeyValuesData->GetString( "ExplosionWaterEffect_Crit", NULL );
-	if ( pszEffect )
-	{
-		Q_strncpy( m_szExplosionWaterEffect_Crit, pszEffect, sizeof( m_szExplosionWaterEffect_Crit ) );
 	}
 
 	m_bDontDrop = ( pKeyValuesData->GetInt( "DontDrop", 0 ) > 0 );

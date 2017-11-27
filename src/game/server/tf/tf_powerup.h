@@ -14,10 +14,10 @@
 
 enum powerupsize_t
 {
-	POWERUP_TINY,
 	POWERUP_SMALL,
 	POWERUP_MEDIUM,
 	POWERUP_FULL,
+	POWERUP_TINY,
 	POWERUP_MEGA,
 
 	POWERUP_SIZES,
@@ -50,8 +50,6 @@ public:
 
 	virtual float	GetRespawnDelay( void ) { return g_pGameRules->FlItemRespawnTime( this ); }
 
-	void			DropSingleInstance( const Vector &vecVelocity, CBaseCombatCharacter *pOwner, float flUnknown, float flRestTime );
-
 	// Input handlers
 	void			InputEnable( inputdata_t &inputdata );
 	void			InputDisable( inputdata_t &inputdata );
@@ -59,7 +57,6 @@ public:
 
 	virtual powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 
-public:
 	CNetworkVarForDerived( bool, m_bDisabled );
 	CNetworkVarForDerived( bool, m_bRespawning );
 };

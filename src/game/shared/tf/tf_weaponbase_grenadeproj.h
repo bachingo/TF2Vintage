@@ -34,7 +34,7 @@ public:
 	virtual void			Spawn();
 	virtual void			Precache();
 
-	void					InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pWeapon );
+	void					InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo );
 
 	// Unique identifier.
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_NONE; }
@@ -66,8 +66,6 @@ public:
 	virtual void			OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void			OnDataChanged( DataUpdateType_t type );
 
-	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetThrower(); }
-
 	float					m_flSpawnTime;
 	bool					m_bCritical;
 	int						m_iOldTeamNum;
@@ -81,8 +79,8 @@ public:
 
 	static CTFWeaponBaseGrenadeProj *Create( const char *szName, const Vector &position, const QAngle &angles, 
 				const Vector &velocity, const AngularImpulse &angVelocity, 
-				CBaseCombatCharacter *pOwner, CBaseEntity *pWeapon );
-	 
+				CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags );
+
 	int						OnTakeDamage( const CTakeDamageInfo &info );
 
 	virtual void			DetonateThink( void );
@@ -111,18 +109,15 @@ public:
 	virtual void			Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 	virtual void			IncremenentDeflected( void );
 
-	virtual void			BlipSound( void ) { }
-	void					SetNextBlipTime( float flTime ) { m_flNextBlipTime = flTime; }
-
 protected:
+
 	void					DrawRadius( float flRadius );
 
 	bool					m_bUseImpactNormal;
 	Vector					m_vecImpactNormal;
 
-	float					m_flNextBlipTime;
-
 private:
+
 	// Custom collision to allow for constant elasticity on hit surfaces.
 	virtual void			ResolveFlyCollisionCustom( trace_t &trace, Vector &vecVelocity );
 

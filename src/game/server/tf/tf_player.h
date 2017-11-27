@@ -146,11 +146,8 @@ public:
 	float				GetNextRegenTime( void ){ return m_flNextRegenerateTime; }
 	void				SetNextRegenTime( float flTime ){ m_flNextRegenerateTime = flTime; }
 
-	float				GetNextChangeClassTime(void){ return m_flNextChangeClassTime; }
-	void				SetNextChangeClassTime(float flTime){ m_flNextChangeClassTime = flTime; }
-
-	float				GetNextChangeTeamTime(void){ return m_flNextChangeTeamTime; }
-	void				SetNextChangeTeamTime(float flTime){ m_flNextChangeTeamTime = flTime; }
+	float				GetNextChangeClassTime( void ){ return m_flNextChangeClassTime; }
+	void				SetNextChangeClassTime( float flTime ){ m_flNextChangeClassTime = flTime; }
 
 	virtual	void		RemoveAllItems( bool removeSuit );
 	virtual void		RemoveAllWeapons( void );
@@ -159,6 +156,8 @@ public:
 	void				DropFlag( void );
 	void				TFWeaponRemove( int iWeaponID );
 	bool				TFWeaponDrop( CTFWeaponBase *pWeapon, bool bThrowForward );
+
+	void			setAirblastState(bool bAirblastState) { m_bIsAirblast = bAirblastState; }
 
 	// Class.
 	CTFPlayerClass		*GetPlayerClass( void ) 					{ return &m_PlayerClass; }
@@ -282,7 +281,7 @@ public:
 
 	// Death & Ragdolls.
 	virtual void CreateRagdollEntity( void );
-	void CreateRagdollEntity( bool bGib, bool bBurning, int iDamageCustom );
+	void CreateRagdollEntity( bool bGib, bool bBurning );
 	void DestroyRagdoll( void );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );	// networked entity handle 
 	virtual bool ShouldGib( const CTakeDamageInfo &info );
@@ -291,13 +290,13 @@ public:
 	void DropAmmoPack( void );
 	void DropWeapon( CTFWeaponBase *pWeapon, bool bKilled = false );
 	void DropFakeWeapon( CTFWeaponBase *pWeapon );
-	void DropPowerups( void );
 
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );
 	void RemoveInvisibility( void );
 
 	void RemoveDisguise( void );
+	void PrintTargetWeaponInfo( void );
 
 	bool DoClassSpecialSkill( void );
 
@@ -354,13 +353,12 @@ public:
 	virtual void		PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force );
 	virtual bool		IsDeflectable( void ) { return true; }
 
-	virtual CAttributeManager *GetAttributeManager( void ) { return &m_AttributeManager; }
-	virtual CAttributeContainer *GetAttributeContainer( void ) { return NULL; }
-	virtual CBaseEntity *GetAttributeOwner( void ) { return NULL; }
+	virtual CAttributeManager *GetAttributeManager() { return &m_AttributeManager; }
+	virtual CAttributeContainer *GetAttributeContainer() { return NULL; }
+	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void ReapplyProvision( void ) { /*Do nothing*/ };
 
 	void UpdatePlayerColor( void );
-	void RemoveSpawnProtection( void );
 
 	// Entity inputs
 	void	InputIgnitePlayer( inputdata_t &inputdata );
@@ -455,13 +453,15 @@ public:
 	CEconEntity			*GetEntityForLoadoutSlot( int iSlot );
 	CEconWearable		*GetWearableForLoadoutSlot( int iSlot );
 
-	bool CalculateAmmoPackPositionAndAngles( CTFWeaponBase *pWeapon, Vector &vecOrigin, QAngle &vecAngles );
+	float	m_flSpawnProtectTime;
 
-	bool				SelectFurthestSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot, bool bTelefrag = true );
+	bool CalculateAmmoPackPositionAndAngles( CTFWeaponBase *pWeapon, Vector &vecOrigin, QAngle &vecAngles );
 
 private:
 
 	int					GetAutoTeam( void );
+	bool				m_bIsAirblast;
+	float				m_flStunTime;
 
 	// Creation/Destruction.
 	void				InitClass( void );
@@ -540,7 +540,6 @@ private:
 
 	float					m_flNextRegenerateTime;
 	float					m_flNextChangeClassTime;
-	float					m_flNextChangeTeamTime;
 
 	// Ragdolls.
 	Vector					m_vecTotalBulletForce;
@@ -560,9 +559,7 @@ private:
 	CTFPlayerAnimState	*m_PlayerAnimState;
 	int					m_iLastWeaponFireUsercmd;				// Firing a weapon.  Last usercmd we shot a bullet on.
 	int					m_iLastSkin;
-
-	CNetworkVar( float, m_flLastDamageTime );
-
+	float				m_flLastDamageTime;
 	float				m_flNextPainSoundTime;
 	int					m_LastDamageType;
 	int					m_iDeathFlags;				// TF_DEATH_* flags with additional death info
@@ -610,7 +607,6 @@ private:
 	bool				m_bJumpEffect;
 
 	CNetworkVar( int, m_nForceTauntCam );
-	CNetworkVar( bool, m_bTyping );
 
 	CAttributeManager	m_AttributeManager;
 

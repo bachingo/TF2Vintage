@@ -19,14 +19,14 @@
 //=============================================================================
 
 BEGIN_DATADESC( CTFBaseDMPowerup )
+
+	DEFINE_KEYFIELD( m_strModelName, FIELD_STRING, "ModelName" ),
 	DEFINE_KEYFIELD( m_strPickupSound, FIELD_SOUNDNAME, "PickupSound" ),
-	DEFINE_KEYFIELD( m_flRespawnTime, FIELD_FLOAT, "RespawnTime" ),
+	DEFINE_KEYFIELD( m_iRespawnTime, FIELD_INTEGER, "RespawnTime" ),
+
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CTFBaseDMPowerup, DT_TFBaseDMPowerup )
-	SendPropBool( SENDINFO( m_bRespawning ) ),
-	SendPropTime( SENDINFO( m_flRespawnTime ) ),
-	SendPropTime( SENDINFO( m_flRespawnAtTime ) ),
 END_SEND_TABLE()
 
 //=============================================================================
@@ -36,27 +36,9 @@ END_SEND_TABLE()
 //-----------------------------------------------------------------------------
 CTFBaseDMPowerup::CTFBaseDMPowerup()
 {
-	m_flRespawnTime = 30.0f;
-}
-
-CTFBaseDMPowerup *CTFBaseDMPowerup::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszClassname, float flDuration )
-{
-	CTFBaseDMPowerup *pPowerup = dynamic_cast<CTFBaseDMPowerup *>( CBaseEntity::CreateNoSpawn( pszClassname, vecOrigin, vecAngles, pOwner ) );
-
-	if ( pPowerup )
-	{
-		pPowerup->SetEffectDuration( flDuration );
-		pPowerup->AddSpawnFlags( SF_NORESPAWN );
-
-		DispatchSpawn( pPowerup );
-
-		pPowerup->SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
-
-		pPowerup->SetThink( &CBaseEntity::SUB_Remove );
-		pPowerup->SetNextThink( gpGlobals->curtime + 30.0f );
-	}
-
-	return pPowerup;
+	m_iRespawnTime = 0;
+	m_strModelName = MAKE_STRING("models/class_menu/random_class_icon.mdl");
+	m_strPickupSound = MAKE_STRING( "HealthKit.Touch" );
 }
 
 //-----------------------------------------------------------------------------
@@ -64,12 +46,8 @@ CTFBaseDMPowerup *CTFBaseDMPowerup::Create( const Vector &vecOrigin, const QAngl
 //-----------------------------------------------------------------------------
 void CTFBaseDMPowerup::Precache( void )
 {
-	UTIL_ValidateSoundName( m_strPickupSound, GetDefaultPickupSound() );
-	if ( GetModelName() == NULL_STRING )
-		SetModelName( AllocPooledString( GetDefaultPowerupModel() ) );
-
-	PrecacheModel( STRING( GetModelName() ) );
-	PrecacheScriptSound( STRING( m_strPickupSound ) );
+	PrecacheModel( GetPowerupModel() );	
+	PrecacheScriptSound( GetPickupSound() );
 
 	BaseClass::Precache();
 }
@@ -80,8 +58,7 @@ void CTFBaseDMPowerup::Precache( void )
 void CTFBaseDMPowerup::Spawn( void )
 {
 	Precache();
-	SetModel( STRING( GetModelName() ) );
-	SetRenderMode( kRenderTransColor );
+	SetModel( GetPowerupModel() );
 
 	BaseClass::Spawn();
 
@@ -89,42 +66,11 @@ void CTFBaseDMPowerup::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:  Override to get rid of EF_NODRAW
-//-----------------------------------------------------------------------------
-CBaseEntity* CTFBaseDMPowerup::Respawn( void )
-{
-	CBaseEntity *pRet = BaseClass::Respawn();
-
-	RemoveEffects( EF_NODRAW );
-	RemoveEffects( EF_ITEM_BLINK );
-	SetRenderColorA( 80 );
-
-	m_flRespawnAtTime = GetNextThink();
-
-	return pRet;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBaseDMPowerup::Materialize( void )
-{
-	BaseClass::Materialize();
-
-	if ( !IsDisabled() )
-	{
-		EmitSound( "Item.Materialize" );
-		AddEffects( EF_ITEM_BLINK );
-		SetRenderColorA( 255 );
-	}
-}
-
-//-----------------------------------------------------------------------------
 // Purpose:  
 //-----------------------------------------------------------------------------
 float CTFBaseDMPowerup::GetRespawnDelay( void )
 {
-	return m_flRespawnTime;
+	return (float)m_iRespawnTime;
 }
 
 //-----------------------------------------------------------------------------
@@ -134,36 +80,23 @@ bool CTFBaseDMPowerup::MyTouch( CBasePlayer *pPlayer )
 {
 	bool bSuccess = false;
 
-	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-	if ( pTFPlayer && ValidTouch( pPlayer ) )
+	CTFPlayer *pTFPlayer = dynamic_cast<CTFPlayer*>( pPlayer );
+	if  ( pTFPlayer && ValidTouch( pPlayer ) )
 	{
-		// Add the condition and duration from derived classes
+		//Add the condition and duration from derived classes
 		pTFPlayer->m_Shared.AddCond( GetCondition(), GetEffectDuration() );
+		
+		//Give full health
+		SetHealth( GetMaxHealth() );
 
-		// Give full health
-		int iHealthRestored = pTFPlayer->TakeHealth( pTFPlayer->GetMaxHealth(), DMG_GENERIC );
-
-		if ( iHealthRestored )
-		{
-			IGameEvent *event_healonhit = gameeventmanager->CreateEvent( "player_healonhit" );
-			if ( event_healonhit )
-			{
-				event_healonhit->SetInt( "amount", iHealthRestored );
-				event_healonhit->SetInt( "entindex", pTFPlayer->entindex() );
-
-				gameeventmanager->FireEvent( event_healonhit );
-			}
-		}
-
-		CSingleUserRecipientFilter user( pTFPlayer );
+		CSingleUserRecipientFilter user( pPlayer );
 		user.MakeReliable();
 
 		UserMessageBegin( user, "ItemPickup" );
-			WRITE_STRING( GetClassname() );
+		WRITE_STRING( GetClassname() );
 		MessageEnd();
 
-		if ( m_strPickupSound != NULL_STRING )
-			pTFPlayer->EmitSound( STRING( m_strPickupSound ) );
+		EmitSound( user, entindex(), GetPickupSound() );
 
 		bSuccess = true;
 	}
