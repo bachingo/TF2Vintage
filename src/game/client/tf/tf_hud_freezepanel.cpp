@@ -27,8 +27,6 @@
 
 DECLARE_HUDELEMENT_DEPTH( CTFFreezePanel, 1 );
 
-vgui::IImage* GetDefaultAvatarImage( C_BasePlayer *pPlayer );
-
 #define CALLOUT_WIDE		(XRES(100))
 #define CALLOUT_TALL		(XRES(50))
 
@@ -240,7 +238,7 @@ void CTFFreezePanel::FireGameEvent( IGameEvent * event )
 				CTFPlayer *pTFKiller = ToTFPlayer( pKiller );
 
 				// Set the BG according to the team they're on
-				m_pFreezePanelBG->SetBGImage( pTFKiller->GetTeamNumber() );
+				SetColorForTargetTeam( pTFKiller->GetTeamNumber() );
 
 				//If this was just a regular kill but this guy is our nemesis then just show it.
 				if ( pVictim && pTFKiller && pTFKiller->m_Shared.IsPlayerDominated( pVictim->entindex() ) )
@@ -270,10 +268,7 @@ void CTFFreezePanel::FireGameEvent( IGameEvent * event )
 
 				if ( m_pAvatar )
 				{
-					m_pAvatar->SetDefaultAvatar( GetDefaultAvatarImage( (C_BasePlayer*)pKiller ) );
-
 					m_pAvatar->SetPlayer( (C_BasePlayer*)pKiller );
-					m_pAvatar->SetShouldDrawFriendIcon( false );
 				}
 			}
 			else if ( pKiller->IsBaseObject() )
@@ -284,7 +279,7 @@ void CTFFreezePanel::FireGameEvent( IGameEvent * event )
 				Assert( pOwner && "Why does this object not have an owner?" );
 				
 				// Set the BG according to the team it's on
-				m_pFreezePanelBG->SetBGImage( pObj->GetTeamNumber() );
+				SetColorForTargetTeam( pObj->GetTeamNumber() );
 
 				if ( pOwner )
 				{
@@ -294,10 +289,7 @@ void CTFFreezePanel::FireGameEvent( IGameEvent * event )
 
 					if ( m_pAvatar )
 					{
-						m_pAvatar->SetDefaultAvatar( GetDefaultAvatarImage( pOwner ) );
-
 						m_pAvatar->SetPlayer( pOwner );
-						m_pAvatar->SetShouldDrawFriendIcon( false );
 					}
 
 					pKiller = pOwner;
@@ -758,6 +750,28 @@ void CTFFreezePanel::ShowNemesisPanel( bool bShow )
 		}
 	}
 #endif
+}
+
+void CTFFreezePanel::SetColorForTargetTeam( int iTeamNumber )
+{
+	switch ( iTeamNumber )
+	{
+	case TF_TEAM_RED:
+		m_pFreezePanelBG->SetImage("../hud/freezecam_red_bg");
+		break;
+	case TF_TEAM_BLUE:
+		m_pFreezePanelBG->SetImage("../hud/freezecam_blue_bg");
+		break;
+	case TF_TEAM_GREEN:
+		m_pFreezePanelBG->SetImage("../hud/freezecam_green_bg");
+		break;
+	case TF_TEAM_YELLOW:
+		m_pFreezePanelBG->SetImage("../hud/freezecam_yellow_bg");
+		break;
+	default:
+		m_pFreezePanelBG->SetImage("../hud/freezecam_black_bg");
+		break;
+	}
 }
 
 //-----------------------------------------------------------------------------

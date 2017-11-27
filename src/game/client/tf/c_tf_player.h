@@ -23,7 +23,6 @@
 #include "iinput.h"
 #include "tf_weapon_medigun.h"
 #include "ihasattributes.h"
-#include "c_tf_spymask.h"
 
 class C_MuzzleFlashModel;
 class C_BaseObject;
@@ -130,7 +129,6 @@ public:
 	bool			StartGestureSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget );
 	void			TurnOnTauntCam( void );
 	void			TurnOffTauntCam( void );
-	void			TauntCamInterpolation( void );
 	bool			InTauntCam( void ) { return m_bWasTaunting; }
 	virtual void	ThirdPersonSwitch( bool bThirdperson );
 
@@ -140,7 +138,7 @@ public:
 
 	// Gibs.
 	void InitPlayerGibs( void );
-	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning = false );
+	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale );
 	void DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
 
 	int	GetObjectCount( void );
@@ -219,7 +217,7 @@ public:
 	CTFWeaponBase		*Weapon_GetWeaponByType( int iType );
 	virtual bool		Weapon_SlotOccupied( CBaseCombatWeapon *pWeapon );
 	virtual CBaseCombatWeapon *Weapon_GetSlot( int slot ) const;
-	C_EconEntity		*GetEntityForLoadoutSlot( int iSlot );
+	C_EconEntity			*GetEntityForLoadoutSlot( int iSlot );
 	C_EconWearable		*GetWearableForLoadoutSlot( int iSlot );
 
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
@@ -228,13 +226,9 @@ public:
 	bool	DoClassSpecialSkill( void );
 	bool	CanGoInvisible( void );
 
-	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
-
-	bool	CanPickupBuilding( C_BaseObject *pObject );
-
-	virtual CAttributeManager *GetAttributeManager( void ) { return &m_AttributeManager; }
-	virtual CAttributeContainer *GetAttributeContainer( void ) { return NULL; }
-	virtual CBaseEntity *GetAttributeOwner( void ) { return NULL; }
+	virtual CAttributeManager *GetAttributeManager() { return &m_AttributeManager; }
+	virtual CAttributeContainer *GetAttributeContainer() { return NULL; }
+	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void ReapplyProvision( void ) { /*Do nothing*/ };
 
 public:
@@ -264,12 +258,6 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 
-	void UpdateSpyMask( void );
-
-	void UpdateTypingBubble( void );
-
-	virtual const Vector &GetItemTintColor( void ) { return m_vecPlayerColor; }
-
 protected:
 
 	void ResetFlexWeights( CStudioHdr *pStudioHdr );
@@ -286,7 +274,6 @@ private:
 	void InitInvulnerableMaterial( void );
 
 	bool				m_bWasTaunting;
-	float				m_flTauntOffTime;
 	CameraThirdData_t	m_TauntCameraData;
 
 	QAngle				m_angTauntPredViewAngles;
@@ -335,7 +322,6 @@ private:
 
 	// Medic callout particle effect
 	CNewParticleEffect	*m_pSaveMeEffect;
-	CNewParticleEffect	*m_pTypingEffect;
 
 	bool m_bUpdateObjectHudState;
 
@@ -359,6 +345,8 @@ public:
 
 	int				m_iOldPlayerClass;	// Used to detect player class changes
 	bool			m_bIsDisplayingNemesisIcon;
+
+	int				m_nForceTauntCam;
 
 	int				m_iSpawnCounter;
 
@@ -397,15 +385,10 @@ public:
 
 	int GetNumActivePipebombs( void );
 
+	int				m_iSpyMaskBodygroup;
+
 	bool			m_bUpdatePartyHat;
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
-
-	int				m_nForceTauntCam;
-	float			m_flLastDamageTime;
-
-	bool			m_bTyping;
-
-	CHandle<C_TFSpyMask> m_hSpyMask;
 
 	CAttributeManager m_AttributeManager;
 

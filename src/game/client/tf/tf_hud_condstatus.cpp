@@ -12,75 +12,16 @@
 
 #include "tf_hud_condstatus.h"
 #include "tf_hud_freezepanel.h"
+#include "tf_hud_objectivestatus.h"
 #include "tf_gamerules.h"
 
 using namespace vgui;
 
-DECLARE_HUDELEMENT( CTFHudCondStatus );
+DECLARE_HUDELEMENT(CTFHudCondStatus);
 
-//-----------------------------------------------------------------------------
-// Purpose:  
-//-----------------------------------------------------------------------------
-CTFPowerupPanel::CTFPowerupPanel( Panel *parent, const char *name ) : EditablePanel( parent, name )
-{
-	m_pProgressBar = new CTFProgressBar( this, "TimePanelProgressBar" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:  
-//-----------------------------------------------------------------------------
-void CTFPowerupPanel::ApplySchemeSettings( IScheme *pScheme )
-{
-	LoadControlSettings( "resource/UI/PowerupPanel.res" );
-
-	if ( m_pProgressBar )
-	{
-		for ( int i = 0; g_aPowerupConds[i] != TF_COND_LAST; i++ )
-		{
-			int nCond = g_aPowerupConds[i];
-			if ( nCond == m_nCond )
-			{
-				// Skipping "item_" prefix.
-				char szIcon[64];
-				V_snprintf( szIcon, sizeof( szIcon ), "hud/%s", g_aPowerupNames[i] + 5 );
-
-				m_pProgressBar->SetIcon( szIcon );
-			}
-		}
-	}
-
-	BaseClass::ApplySchemeSettings( pScheme );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:  
-//-----------------------------------------------------------------------------
-void CTFPowerupPanel::UpdateStatus( void )
-{
-	// Update remaining power-up time.
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-
-	if ( pPlayer )
-	{
-		m_flDuration = pPlayer->m_Shared.GetConditionDuration( m_nCond );
-		m_flInitDuration = max( m_flDuration, m_flInitDuration );
-	}
-
-	if ( m_pProgressBar )
-	{
-		m_pProgressBar->SetPercentage( ( m_flInitDuration - m_flDuration ) / m_flInitDuration );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:  
-//-----------------------------------------------------------------------------
-void CTFPowerupPanel::SetData( int cond, float dur, float initdur )
-{
-	m_nCond = cond;
-	m_flDuration = dur;
-	m_flInitDuration = initdur;
-}
+#define POWERUP_FIRST TF_COND_POWERUP_CRITDAMAGE
+#define POWERUP_LAST  TF_COND_POWERUP_RAGEMODE
+#define POWERUP_SIZE  ( POWERUP_LAST - POWERUP_FIRST + 1 )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -90,16 +31,14 @@ CTFHudCondStatus::CTFHudCondStatus( const char *pElementName ) : CHudElement( pE
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
-	for ( int i = 0; g_aPowerupConds[i] != TF_COND_LAST; i++ )
+	for ( int i = POWERUP_FIRST; i <= POWERUP_LAST; i++ )
 	{
-		CTFPowerupPanel *pPowerup = new CTFPowerupPanel( this, "PowerupPanel" );
-		pPowerup->SetData( g_aPowerupConds[i], 0.0f, 0.0f );
-		m_pPowerups.AddToTail( pPowerup );
+		m_pPowerups.AddToTail( new EditablePanel( this, "PowerupPanel" ) );
+		powerupinfo_t powerup( i, 0.0f, 0.0f );
+		powerups.AddToTail( powerup );
 	}
 
-	SetHiddenBits( HIDEHUD_MISCSTATUS );
-
-	vgui::ivgui()->AddTickSignal( GetVPanel() );
+	vgui::ivgui()->AddTickSignal( GetVPanel(), 100 );
 }
 
 //-----------------------------------------------------------------------------
@@ -107,7 +46,7 @@ CTFHudCondStatus::CTFHudCondStatus( const char *pElementName ) : CHudElement( pE
 //-----------------------------------------------------------------------------
 CTFHudCondStatus::~CTFHudCondStatus()
 {
-	m_pPowerups.PurgeAndDeleteElements();
+	m_pPowerups.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------
@@ -115,10 +54,26 @@ CTFHudCondStatus::~CTFHudCondStatus()
 //-----------------------------------------------------------------------------
 bool CTFHudCondStatus::ShouldDraw( void )
 {
+	if( IsTakingAFreezecamScreenshot() )
+		return false;
+
 	if ( !TFGameRules() || !TFGameRules()->IsDeathmatch() )
 		return false;
 
-	return CHudElement::ShouldDraw();
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalTFPlayer )
+		return false;
+
+	for ( int i = POWERUP_FIRST; i <= POWERUP_LAST; i++ )
+	{
+		if ( pLocalTFPlayer->m_Shared.InCond( i ) )
+		{
+			UpdateStatus();
+			return true;
+		}
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -135,11 +90,18 @@ void CTFHudCondStatus::ApplySchemeSettings( IScheme *pScheme )
 void CTFHudCondStatus::ApplySettings( KeyValues *inResourceData )
 {
 	BaseClass::ApplySettings( inResourceData );
-}
 
-static int DurationSort( CTFPowerupPanel* const *a, CTFPowerupPanel* const *b )
-{
-	return ( ( *a )->m_flDuration < ( *b )->m_flDuration );
+	for ( KeyValues *pData = inResourceData->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey() )
+	{
+		if ( !Q_stricmp( pData->GetName(), "PowerupPanel" ) )
+		{
+			for ( int i = 0; i < POWERUP_SIZE; i++ )
+			{
+				m_pPowerups[i]->ApplySettings( pData );
+			}
+		}
+	}
+
 }
 
 //-----------------------------------------------------------------------------
@@ -149,53 +111,64 @@ void CTFHudCondStatus::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
-	int count = m_pPowerups.Count();
-
-	int totalWide = 0;
-	for ( int i = 0; i < count; i++ )
+	int wide = (float)GetWide() / (float)POWERUP_SIZE;
+	int tall = GetTall();
+	for ( int i = 0; i < POWERUP_SIZE; i++ )
 	{
-		m_pPowerups[i]->SetPos( totalWide, 0 );
-
-		// Skip inactive powerups.
-		if ( m_pPowerups[i]->IsVisible() )
-		{
-			totalWide += m_pPowerups[i]->GetWide();
-		}
+		m_pPowerups[i]->SetBounds( i * wide, 0, wide, tall );
 	}
+}
 
-	SetWide( totalWide );
+int DurationSort( const powerupinfo_t *a, const powerupinfo_t *b )
+{
+	return ( a->fDuration < b->fDuration );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHudCondStatus::OnTick( void )
+void CTFHudCondStatus::UpdateStatus( void )
 {
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( pPlayer )
+	for ( int i = POWERUP_FIRST; i <= POWERUP_LAST; i++ )
 	{
-		for ( int i = 0; i < m_pPowerups.Count(); i++ )
+		for ( int j = 0; j < POWERUP_SIZE; j++ )
 		{
-			m_pPowerups[i]->UpdateStatus();
+			if ( powerups[j].ID == i )
+			{
+				powerups[j].fDuration = pLocalTFPlayer->m_Shared.GetConditionDuration(i);
+				if ( powerups[j].fDuration > powerups[j].fInitDuration )
+				{
+					powerups[j].fInitDuration = pLocalTFPlayer->m_Shared.GetConditionDuration(i);
+				}
+			}
 		}
 	}
+	powerups.Sort( DurationSort );
 
-	bool bUpdateLayout = false;
-
-	for ( int i = 0; i < m_pPowerups.Count(); i++ )
+	for ( int i = 0; i < POWERUP_SIZE; i++ )
 	{
-		// Show indicators for active power-ups.
-		bool bWasVisible = m_pPowerups[i]->IsVisible();
-		bool bVisible = m_pPowerups[i]->m_flDuration != 0.0f;
+		EditablePanel *m_pPowerupPanel = m_pPowerups[i];
+		if ( powerups[i].fDuration == 0.0 )
+		{ 
+			m_pPowerupPanel->SetVisible( false );
+			continue;
+		}
 
-		if ( bVisible != bWasVisible )
+		m_pPowerupPanel->SetVisible( true );
+
+		int ID = powerups[i].ID - POWERUP_FIRST;
+		float fDuration = powerups[i].fDuration;
+		float fInitDuration = powerups[i].fInitDuration;
+
+		CTFProgressBar *m_pProgressBar = dynamic_cast<CTFProgressBar *>( m_pPowerupPanel->FindChildByName( "TimePanelProgressBar" ) );
+		if ( m_pProgressBar )
 		{
-			m_pPowerups[i]->SetVisible( bVisible );
-			bUpdateLayout = true;
+			char szIcon[64];
+			Q_snprintf( szIcon, sizeof( szIcon ), "hud/powerup_%i", ID );
+			m_pProgressBar->SetIcon( szIcon );
+			m_pProgressBar->SetPercentage( (fInitDuration - fDuration) / fInitDuration );
 		}
 	}
-
-	if ( bUpdateLayout )
-		InvalidateLayout( true );
 }

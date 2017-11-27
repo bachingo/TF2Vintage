@@ -28,6 +28,10 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
+#if !defined( CLIENT_DLL ) 
+	DECLARE_DATADESC();
+#endif
+
 	CTFWeaponPDA();
 
 	virtual void	Spawn();

@@ -8,6 +8,7 @@
 #include "cbase.h"
 #include "teamplay_round_timer.h"
 #include "teamplayroundbased_gamerules.h"
+#include "tf_gamerules.h"
 
 #ifdef CLIENT_DLL
 #include "iclientmode.h"
@@ -254,6 +255,7 @@ CTeamRoundTimer::CTeamRoundTimer( void )
 	m_nTimeToUseAfterSetupFinished = 0;
 	m_flNextOvertimeNag = 0;
 	m_flLastTime = 0.f;
+	m_flExtraOvertime = 0;
 #endif
 }
 
@@ -980,41 +982,64 @@ void CTeamRoundTimer::RoundTimerThink( void )
 		m_bPauseDueToWin = false;
 	}
 
+	//Overtime Fix for Escort
+	/*if (TFGameRules()->IsInEscortMode())
+	{
+		if (ShowInHud() && TeamplayRoundBasedRules()->InOvertime())
+		{
+			if (!TeamplayGameRules()->TimerMayExpire())
+			{
+				//add 5 seconds to the timer
+				m_flExtraOvertime = gpGlobals->curtime + 5.05f;
+				SetContextThink(&CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK);
+				return;
+			}
+			else
+			{
+				SetOvertimeEscort();
+			}
+		}
+	}*/
+
 	float flTime = GetTimeRemaining();
 
 	if ( flTime > 0 && ShowInHud() ) // is this the timer we're showing in the HUD?
 	{
-		TeamplayRoundBasedRules()->SetOvertime( false );
+		TeamplayRoundBasedRules()->SetOvertime(false);
 	}
 
-	if ( flTime <= 0.0f && m_bFireFinished )
+	if (flTime <= 0.0f && m_bFireFinished)
 	{
 		// Allow the gamerules to prevent timer expiration (i.e. while a control point is contested)
-		if ( !TeamplayGameRules()->TimerMayExpire() )
+		
+		if (!TeamplayGameRules()->TimerMayExpire())
 		{
 			// we don't want the timer to keep going (negative time)
 			m_flTimerEndTime = gpGlobals->curtime;
 
+			//add 5 seconds to the timer
+			m_flExtraOvertime = gpGlobals->curtime + 5.05f;
+
 			// is this the timer we're showing in the HUD?
-			if ( ShowInHud() )
+			if (ShowInHud())
 			{
-				if ( !TeamplayRoundBasedRules()->InOvertime() )
+				if (!TeamplayRoundBasedRules()->InOvertime())
 				{
-					TeamplayRoundBasedRules()->SetOvertime( true );
+					TeamplayRoundBasedRules()->SetOvertime(true);
 				}
 #if defined( TF_DLL ) || defined( TF_CLASSIC )
 				else
 				{
-					if ( tf_overtime_nag.GetBool() && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
+					if (tf_overtime_nag.GetBool() && (gpGlobals->curtime > m_flNextOvertimeNag))
 					{
 						m_flNextOvertimeNag = gpGlobals->curtime + 1.0f;
 
-						if ( RandomInt( 0, 1 ) > 0 )
+						if (RandomInt(0, 1) > 0)
 						{
-							IGameEvent *event = gameeventmanager->CreateEvent( "overtime_nag" );
-							if ( event )
+							IGameEvent *event = gameeventmanager->CreateEvent("overtime_nag");
+							if (event)
 							{
-								gameeventmanager->FireEvent( event );
+								gameeventmanager->FireEvent(event);
 							}
 						}
 					}
@@ -1022,8 +1047,17 @@ void CTeamRoundTimer::RoundTimerThink( void )
 #endif
 			}
 
-			SetContextThink( &CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK );
+			SetContextThink(&CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK);
 			return;
+		}
+		else
+		{
+			//set overtime on TimerMayExpire() for Payload gametype
+			if (SetOvertimeEscort())
+			{
+				SetContextThink(&CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK);
+				return;
+			}
 		}
 
 		m_OnFinished.FireOutput( this, this );
@@ -1168,6 +1202,19 @@ void CTeamRoundTimer::SetStopWatchTimeStamp( void )
 	m_flTimerEndTime = gpGlobals->curtime;
 
 	CalculateOutputMessages();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: To set the initial timer duration
+//-----------------------------------------------------------------------------
+bool CTeamRoundTimer::SetOvertimeEscort(void)
+{
+		if (gpGlobals->curtime <= m_flExtraOvertime)
+		{
+			SetTimeRemaining(6);
+			return true;
+		}
+	return false;
 }
 
 //-----------------------------------------------------------------------------

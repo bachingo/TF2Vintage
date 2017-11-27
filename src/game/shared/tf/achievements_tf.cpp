@@ -17,8 +17,6 @@
 
 CAchievementMgr g_AchievementMgrTF;	// global achievement mgr for TF
 
-#if 0
-
 bool CheckWinNoEnemyCaps( IGameEvent *event, int iRole );
 
 // Grace period that we allow a player to start after level init and still consider them to be participating for the full round.  This is fairly generous
@@ -561,8 +559,6 @@ bool IsLocalTFPlayerClass( int iClass )
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 	return( pLocalPlayer && pLocalPlayer->IsPlayerClass( iClass ) );
 }
-
-#endif
 
 
 #endif // CLIENT_DLL

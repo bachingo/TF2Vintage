@@ -15,21 +15,19 @@
 #ifndef CLIENT_DLL
 // Server specific.
 #include "smoke_trail.h"
-#include "iscorer.h"
 #endif
 
 #ifdef CLIENT_DLL
 #define CTFBaseRocket C_TFBaseRocket
 #endif
 
+#define TF_ROCKET_RADIUS	146.0f	// Matches grenade radius.
+
 //=============================================================================
 //
 // TF Base Rocket.
 //
 class CTFBaseRocket : public CBaseProjectile
-#ifdef GAME_DLL
-	, public IScorer
-#endif
 {
 
 //=============================================================================
@@ -37,7 +35,8 @@ class CTFBaseRocket : public CBaseProjectile
 // Shared (client/server).
 //
 public:
-	DECLARE_CLASS( CTFBaseRocket, CBaseProjectile );
+
+	DECLARE_CLASS( CTFBaseRocket, CBaseAnimating );
 	DECLARE_NETWORKCLASS();
 
 			CTFBaseRocket();
@@ -50,10 +49,9 @@ public:
 	CNetworkHandle( CBaseEntity, m_hLauncher );
 
 protected:
+
 	// Networked.
 	CNetworkVector( m_vInitialVelocity );
-	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_vecVelocity );
-	CNetworkVar( bool, m_bCritical );
 
 //=============================================================================
 //
@@ -62,15 +60,16 @@ protected:
 #ifdef CLIENT_DLL
 
 public:
+
 	virtual int		DrawModel( int flags );
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	PostDataUpdate( DataUpdateType_t type );
-	virtual void	Simulate( void );
 
 protected:
 	int		m_iOldTeamNum;
 
 private:
+
 	float	 m_flSpawnTime;
 
 //=============================================================================
@@ -80,28 +79,19 @@ private:
 #else
 
 public:
+
 	DECLARE_DATADESC();
 
-	static CTFBaseRocket *Create( CBaseEntity *pWeapon, const char *szClassname, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL );
-
-	// IScorer interface
-	virtual CBasePlayer *GetScorer( void );
-	virtual CBasePlayer *GetAssistant( void ) { return NULL; }
-
-	void			SetScorer( CBaseEntity *pScorer );
+	static CTFBaseRocket *Create( CBaseEntity *pWeapon, const char *szClassname, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL );	
 
 	virtual void	RocketTouch( CBaseEntity *pOther );
 	virtual void	Explode( trace_t *pTrace, CBaseEntity *pOther );
 
-	void			SetCritical( bool bCritical ) { m_bCritical = bCritical; }
-	virtual float	GetDamage( void ) { return m_flDamage; }
-	virtual int		GetDamageType( void );
+	virtual float	GetDamage() { return m_flDamage; }
+	virtual int		GetDamageType() { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
 	virtual void	SetDamage(float flDamage) { m_flDamage = flDamage; }
-	virtual bool	UseStockSelfDamage( void ) { return true; }
-	virtual float	GetRadius( void );
-	virtual float	GetSelfDamageRadius( void );
+	virtual float	GetRadius();	
 	void			DrawRadius( float flRadius );
-	virtual float	GetRocketSpeed( void );
 
 	unsigned int	PhysicsSolidMaskForEntity( void ) const;
 
@@ -111,8 +101,8 @@ public:
 
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 
-	virtual bool	IsDeflectable() { return true; }
-	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+	void			SetHomingTarget( CBaseEntity *pHomingTarget );
+
 	virtual void	IncremenentDeflected( void );
 	virtual void	SetLauncher( CBaseEntity *pLauncher );
 
@@ -121,6 +111,7 @@ protected:
 	void			FlyThink( void );
 
 protected:
+
 	// Not networked.
 	float					m_flDamage;
 
@@ -129,7 +120,6 @@ protected:
 
 	CHandle<CBaseEntity>	m_hEnemy;
 
-	EHANDLE					m_hScorer;
 #endif
 };
 

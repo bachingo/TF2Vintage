@@ -21,7 +21,16 @@
 //
 // Weapon Fists tables.
 //
-CREATE_SIMPLE_WEAPON_TABLE( TFFists, tf_weapon_fists )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFFists, DT_TFWeaponFists )
+
+BEGIN_NETWORK_TABLE( CTFFists, DT_TFWeaponFists )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFFists )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_fists, CTFFists );
+PRECACHE_WEAPON_REGISTER( tf_weapon_fists );
 
 //=============================================================================
 //

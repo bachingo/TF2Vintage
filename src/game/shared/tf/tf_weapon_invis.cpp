@@ -21,7 +21,22 @@ extern ConVar tf_spy_invis_unstealth_time;
 //
 // TFWeaponBase Melee tables.
 //
-CREATE_SIMPLE_WEAPON_TABLE( TFWeaponInvis, tf_weapon_invis )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponInvis, DT_TFWeaponInvis )
+
+BEGIN_NETWORK_TABLE( CTFWeaponInvis, DT_TFWeaponInvis )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFWeaponInvis )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_invis, CTFWeaponInvis );
+PRECACHE_WEAPON_REGISTER( tf_weapon_invis );
+
+// Server specific.
+#if !defined( CLIENT_DLL ) 
+	BEGIN_DATADESC( CTFWeaponInvis )
+	END_DATADESC()
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Use the offhand view model
@@ -100,17 +115,6 @@ void CTFWeaponInvis::SecondaryAttack( void )
 void CTFWeaponInvis::ItemBusyFrame( void )
 {
 	// do nothing
-}
-
-float CTFWeaponInvis::GetEffectBarProgress( void )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner )
-	{
-		return ( pOwner->m_Shared.GetSpyCloakMeter() / 100.0f );
-	}
-
-	return 1.0f;
 }
 
 #ifndef CLIENT_DLL

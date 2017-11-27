@@ -70,6 +70,4 @@ public:
 #endif
 };
 
-CHudChat *GetTFChatHud( void );
-
 #endif	//CS_HUD_CHAT_H

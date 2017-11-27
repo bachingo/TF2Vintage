@@ -1,9 +1,3 @@
-//=============================================================================
-//
-// Purpose: Applies attributes.
-//
-//=============================================================================
-
 #ifndef ATTRIBUTE_MANAGER_H
 #define ATTRIBUTE_MANAGER_H
 
@@ -32,34 +26,33 @@ public:
 	CAttributeManager();
 
 	template <typename type>
-	static type AttribHookValue( type value, const char *pszClass, const CBaseEntity *pEntity )
+	static type AttribHookValue( type iValue, const char* text, const CBaseEntity *pEntity )
 	{
 		if ( !pEntity )
-			return value;
+			return iValue;
 
 		IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
 
 		if ( pAttribInteface )
 		{
-			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( pszClass );
-			float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( (float)value, pEntity, strAttributeClass );
-			value = (type)flResult;
+			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
+			float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( iValue, pEntity, strAttributeClass );
+			iValue = (type)flResult;
 		}
 
-		return value;
+		return iValue;
 	}
 
 #ifdef CLIENT_DLL
-	virtual void		OnPreDataChanged( DataUpdateType_t updateType );
-	virtual void		OnDataChanged( DataUpdateType_t updatetype );
+	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
+	virtual void	OnDataChanged( DataUpdateType_t updatetype );
 #endif
-	void				AddProvider( CBaseEntity *pEntity );
-	void				RemoveProvider( CBaseEntity *pEntity );
-	void				ProviteTo( CBaseEntity *pEntity );
-	void				StopProvidingTo( CBaseEntity *pEntity );
-	virtual void		InitializeAttributes( CBaseEntity *pEntity );
-	virtual float		ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
-	virtual string_t	ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass );
+	void			AddProvider( CBaseEntity *pEntity );
+	void			RemoveProvider( CBaseEntity *pEntity );
+	void			ProviteTo( CBaseEntity *pEntity );
+	void			StopProvidingTo( CBaseEntity *pEntity );
+	virtual void	InitializeAttributes( CBaseEntity *pEntity );
+	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
 
 protected:
 	CNetworkHandle( CBaseEntity, m_hOuter );
@@ -74,9 +67,6 @@ private:
 	CUtlVector<EHANDLE> m_AttributeProviders;
 };
 
-template <>
-string_t CAttributeManager::AttribHookValue<string_t>( string_t strValue, const char *pszClass, const CBaseEntity *pEntity );
-
 
 class CAttributeContainer : public CAttributeManager
 {
@@ -89,8 +79,7 @@ public:
 
 	CAttributeContainer();
 
-	float		ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
-	string_t	ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass );
+	float ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
 };
 
 #endif // ATTRIBUTE_MANAGER_H

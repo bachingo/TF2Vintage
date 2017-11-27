@@ -61,10 +61,11 @@
 	extern ConVar tf2c_muzzlelight;
 #endif
 
-ConVar  tf2c_airblast( "tf2c_airblast", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable/Disable the Airblast function of the Flamethrower." );
-ConVar  tf2c_airblast_players( "tf2c_airblast_players", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
+ConVar  tf2v_airblast( "tf2c_airblast", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = tf2c (default), 2 = tf2v" );
+ConVar  tf2c_airblast_players( "tf2c_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
+
 #ifdef GAME_DLL
-ConVar	tf2c_debug_airblast( "tf2c_debug_airblast", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Visualize airblast box." );
+ConVar	tf2c_debug_airblast( "tf2c_debug_airblast", "0", FCVAR_CHEAT, "Visualize airblast box." );
 #endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrower, DT_WeaponFlameThrower )
@@ -410,7 +411,6 @@ void CTFFlameThrower::PrimaryAttack()
 #endif
 
 	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-	CALL_ATTRIB_HOOK_FLOAT( flFiringInterval, mult_postfiredelay );
 
 	// Don't attack if we're underwater
 	if ( pOwner->GetWaterLevel() != WL_Eyes )
@@ -487,12 +487,11 @@ void CTFFlameThrower::PrimaryAttack()
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::SecondaryAttack()
 {
-	if ( !tf2c_airblast.GetBool() )
+	if (tf2v_airblast.GetInt() != 1 && tf2v_airblast.GetInt() != 2)
 		return;
 
-	int iNoAirblast = 0;
-	CALL_ATTRIB_HOOK_FLOAT( iNoAirblast, set_flamethrower_push_disabled );
-	if ( iNoAirblast )
+	// Are we capable of firing again?
+	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
 		return;
 
 	// Get the player owning the weapon.
@@ -569,18 +568,18 @@ void CTFFlameThrower::SecondaryAttack()
 			continue;
 
 
-		if ( pEntity->IsPlayer() )
+		if ( pEntity->IsPlayer() && pEntity->IsAlive() )
 		{
-			if ( !pEntity->IsAlive() )
-				continue;
-
 			CTFPlayer *pTFPlayer = ToTFPlayer( pEntity );
 
 			Vector vecPushDir;
 			QAngle angPushDir = angDir;
 
-			// Push them at least 45 degrees up.
-			angPushDir[PITCH] = min( -45, angPushDir[PITCH] );
+			// If the victim is on the ground assume that shooter is looking at least 45 degrees up.
+			if ( pTFPlayer->GetGroundEntity() != NULL )
+			{
+				angPushDir[PITCH] = min( -45, angPushDir[PITCH] );
+			}
 
 			AngleVectors( angPushDir, &vecPushDir );
 
@@ -627,18 +626,7 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 	if ( !pVictim )
 		return;
 
-	if ( pVictim->InSameTeam( pAttacker ) && !TFGameRules()->IsDeathmatch() )
-	{
-		if ( pVictim->m_Shared.InCond( TF_COND_BURNING ) )
-		{
-			// Extinguish teammates.
-			pVictim->m_Shared.RemoveCond( TF_COND_BURNING );
-			pVictim->EmitSound( "TFPlayer.FlameOut" );
-
-			CTF_GameStats.Event_PlayerAwardBonusPoints( pAttacker, pVictim, 1 );
-		}
-	}
-	else if ( tf2c_airblast_players.GetBool() )
+	if ( ( !pVictim->InSameTeam( pAttacker ) || TFGameRules()->IsDeathmatch() ) && tf2c_airblast_players.GetBool() )
 	{
 		// Don't push players if they're too far off to the side. Ignore Z.
 		Vector vecVictimDir = pVictim->WorldSpaceCenter() - pAttacker->WorldSpaceCenter();
@@ -654,11 +642,30 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 		{
 			// Push enemy players.
 			pVictim->SetGroundEntity( NULL );
-			pVictim->ApplyAbsVelocityImpulse( vecDir * 500 );
-			pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
 
-			// Add pusher as recent damager so he can get a kill credit for pushing a player to his death.
-			pVictim->AddDamagerToHistory( pAttacker );
+			//tf2c airblast
+			if (tf2v_airblast.GetInt() == 1)
+			{
+				pVictim->ApplyAbsVelocityImpulse(vecDir * 500);
+				pVictim->EmitSound("TFPlayer.AirBlastImpact");
+			}
+			//tf2v airblast [EXPERIMENTAL]
+			else if (tf2v_airblast.GetInt() == 2)
+			{
+				pVictim->SetAbsVelocity(vecDir * 500);
+				pVictim->EmitSound("TFPlayer.AirBlastImpact");
+				pVictim->setAirblastState(true);
+			}
+			
+		}
+	}
+	else if ( pVictim->InSameTeam( pAttacker ) )
+	{
+		if ( pVictim->m_Shared.InCond( TF_COND_BURNING ) )
+		{
+			// Extinguish teammates.
+			pVictim->m_Shared.RemoveCond( TF_COND_BURNING );
+			pVictim->EmitSound( "TFPlayer.FlameOut" );
 		}
 	}
 }
@@ -1066,9 +1073,8 @@ void CTFFlameEntity::Spawn( void )
 	SetMoveType( MOVETYPE_NOCLIP, MOVECOLLIDE_DEFAULT );
 	AddEFlags( EFL_NO_WATER_VELOCITY_CHANGE );
 
-	float flBoxSize = tf_flamethrower_boxsize.GetFloat();
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOwnerEntity(), flBoxSize, mult_flame_size );
-	UTIL_SetSize( this, -Vector( flBoxSize, flBoxSize, flBoxSize ), Vector( flBoxSize, flBoxSize, flBoxSize ) );
+	float iBoxSize = tf_flamethrower_boxsize.GetFloat();
+	UTIL_SetSize( this, -Vector( iBoxSize, iBoxSize, iBoxSize ), Vector( iBoxSize, iBoxSize, iBoxSize ) );
 
 	// Setup attributes.
 	m_takedamage = DAMAGE_NO;

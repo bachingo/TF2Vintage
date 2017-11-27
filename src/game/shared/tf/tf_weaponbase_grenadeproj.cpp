@@ -34,7 +34,7 @@ extern ConVar sv_gravity;
 // Server specific.
 #ifdef GAME_DLL
 BEGIN_DATADESC( CTFWeaponBaseGrenadeProj )
-	DEFINE_THINKFUNC( DetonateThink ),
+DEFINE_THINKFUNC( DetonateThink ),
 END_DATADESC()
 
 ConVar tf_grenade_show_radius( "tf_grenade_show_radius", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Render radius of grenades" );
@@ -53,17 +53,16 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #ifdef CLIENT_DLL
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 	RecvPropBool( RECVINFO( m_bCritical ) ),
-	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
 	RecvPropInt( RECVINFO( m_iDeflected ) ),
 	RecvPropEHandle( RECVINFO( m_hDeflectOwner ) ),
+
 #else
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropBool( SENDINFO( m_bCritical ) ),
-	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 
 	SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
 	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
@@ -87,8 +86,6 @@ CTFWeaponBaseGrenadeProj::CTFWeaponBaseGrenadeProj()
 #ifndef CLIENT_DLL
 	m_bUseImpactNormal = false;
 	m_vecImpactNormal.Init();
-
-	m_flNextBlipTime = 0.0f;
 #endif
 }
 
@@ -196,14 +193,15 @@ void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, const Vector &position, const QAngle &angles,
-	const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pWeapon )
+CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, const Vector &position, const QAngle &angles, 
+													   const Vector &velocity, const AngularImpulse &angVelocity, 
+													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags )
 {
 	CTFWeaponBaseGrenadeProj *pGrenade = static_cast<CTFWeaponBaseGrenadeProj*>( CBaseEntity::Create( szName, position, angles, pOwner ) );
 	if ( pGrenade )
 	{
-		pGrenade->InitGrenade( velocity, angVelocity, pOwner, pWeapon );
-		//pGrenade->SetDetonateTimerLength( timer );
+		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo );
+		pGrenade->SetDetonateTimerLength( timer );
 	}
 
 	return pGrenade;
@@ -212,8 +210,8 @@ CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity,
-	CBaseCombatCharacter *pOwner, CBaseEntity *pWeapon )
+void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, 
+									CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo )
 {
 	// We can't use OwnerEntity for grenades, because then the owner can't shoot them with his hitscan weapons (due to collide rules)
 	// Thrower is used to store the person who threw the grenade, for damage purposes.
@@ -226,22 +224,8 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetFriction( 0.2f/*BaseClass::GetGrenadeFriction()*/ );
 	SetElasticity( 0.45f/*BaseClass::GetGrenadeElasticity()*/ );
 
-	SetLauncher( pWeapon );
-
-	CTFWeaponBaseGun *pTFWeapon = dynamic_cast<CTFWeaponBaseGun *>( pWeapon );
-	if ( pTFWeapon )
-	{
-		SetDamage( pTFWeapon->GetProjectileDamage() );
-		SetDamageRadius( pTFWeapon->GetTFWpnData().m_flDamageRadius );
-	}
-
-	string_t strModelOverride = NULL_STRING;
-	CALL_ATTRIB_HOOK_STRING_ON_OTHER( m_hLauncher.Get(), strModelOverride, custom_projectile_model );
-	if ( strModelOverride != NULL_STRING )
-	{
-		SetModel( STRING( strModelOverride ) );
-	}
-
+	SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
+	SetDamageRadius( weaponInfo.m_flDamageRadius );
 	ChangeTeam( pOwner->GetTeamNumber() );
 
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
@@ -279,10 +263,10 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 
 	m_takedamage = DAMAGE_EVENTS_ONLY;
 
-	if ( GetThrower() )
+	if (GetThrower())
 	{
 		// Set the team.
-		ChangeTeam( GetThrower()->GetTeamNumber() );
+		ChangeTeam(GetThrower()->GetTeamNumber());
 	}
 
 	// Set skin based on team ( red = 1, blue = 2 )
@@ -293,7 +277,7 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 
 	// Setup the think and touch functions (see CBaseEntity).
 	SetThink( &CTFWeaponBaseGrenadeProj::DetonateThink );
-	SetNextThink( gpGlobals->curtime + 0.1 );
+	SetNextThink( gpGlobals->curtime + 0.2 );
 }
 
 //-----------------------------------------------------------------------------
@@ -317,27 +301,26 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	// Explosion effect on client
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
-	CTFPlayer *pTFAttacker = ToTFPlayer( GetThrower() );
 	if ( UseImpactNormal() )
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), pTrace->m_pEnt->entindex(), pTFAttacker, GetTeamNumber(), m_bCritical );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), pTrace->m_pEnt->entindex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), -1, pTFAttacker, GetTeamNumber(), m_bCritical );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), -1 );
 		}
 	}
 	else
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pTrace->m_pEnt->entindex(), pTFAttacker, GetTeamNumber(), m_bCritical );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pTrace->m_pEnt->entindex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), -1, pTFAttacker, GetTeamNumber(), m_bCritical );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), -1 );
 		}
 	}
 
@@ -403,8 +386,6 @@ void CTFWeaponBaseGrenadeProj::DetonateThink( void )
 		Remove( );
 		return;
 	}
-	
-	BlipSound();
 
 	if ( gpGlobals->curtime > m_flCollideWithTeammatesTime && m_bCollideWithTeammates == false )
 	{
@@ -417,7 +398,8 @@ void CTFWeaponBaseGrenadeProj::DetonateThink( void )
 		return;
 	}
 
-	SetNextThink( gpGlobals->curtime + 0.1 );
+
+	SetNextThink( gpGlobals->curtime + 0.2 );
 }
 
 //-----------------------------------------------------------------------------
@@ -425,9 +407,6 @@ void CTFWeaponBaseGrenadeProj::DetonateThink( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::Detonate( void )
 {
-	// Putting this here just in case we're inside prediction to make sure all effects show up.
-	CDisablePredictionFiltering disabler;
-
 	trace_t		tr;
 	Vector		vecSpot;// trace starts here!
 
@@ -641,9 +620,9 @@ void CTFWeaponBaseGrenadeProj::Deflected( CBaseEntity *pDeflectedBy, Vector &vec
 	m_hDeflectOwner = pDeflectedBy;
 	SetThrower( pBCC );
 	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-
 	if ( !TFGameRules()->IsDeathmatch() )
 		m_nSkin = pDeflectedBy->GetTeamNumber() - 2;
+	// TODO: Live TF2 adds white trail to reflected pipes and stickies. We need one as well.
 }
 
 //-----------------------------------------------------------------------------
@@ -685,8 +664,6 @@ public:
 			if ( pEntity->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
 				return false;
 			if ( pEntity->GetCollisionGroup() == COLLISION_GROUP_NONE )
-				return false;
-			if ( pEntity->GetCollisionGroup() == TFCOLLISION_GROUP_RESPAWNROOMS )
 				return false;
 
 			return true;

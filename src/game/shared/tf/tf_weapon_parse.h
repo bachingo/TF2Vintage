@@ -22,8 +22,6 @@ struct WeaponData_t
 {
 	int		m_nDamage;
 	int		m_nBulletsPerShot;
-	int		m_nBurstSize;
-	float	m_flBurstDelay;
 	float	m_flRange;
 	float	m_flSpread;
 	float	m_flPunchAngle;
@@ -43,8 +41,6 @@ struct WeaponData_t
 	{
 		m_nDamage = 0;
 		m_nBulletsPerShot = 0;
-		m_nBurstSize = 0;
-		m_flBurstDelay = 0.0f;
 		m_flRange = 0.0f;
 		m_flSpread = 0.0f;
 		m_flPunchAngle = 0.0f;
@@ -109,9 +105,6 @@ public:
 	char	m_szExplosionEffect[128];
 	char	m_szExplosionPlayerEffect[128];
 	char	m_szExplosionWaterEffect[128];
-	char	m_szExplosionEffect_Crit[128];
-	char	m_szExplosionPlayerEffect_Crit[128];
-	char	m_szExplosionWaterEffect_Crit[128];
 
 	bool	m_bDontDrop;
 
@@ -119,6 +112,8 @@ public:
 	int		m_iMaxAmmo;
 	int		m_iSpawnAmmo;
 
+	// DM Viewmodel
+	char	m_szViewModelDM[MAX_WEAPON_STRING];
 #ifdef DM_WEAPON_BUCKET
 	// DM Weapon menu slot overrides
 	int		m_iSlotDM;

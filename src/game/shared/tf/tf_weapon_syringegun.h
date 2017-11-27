@@ -29,6 +29,11 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
+// Server specific.
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
 	CTFSyringeGun() {}
 	~CTFSyringeGun() {}
 

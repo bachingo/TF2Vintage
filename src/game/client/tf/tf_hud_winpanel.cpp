@@ -27,8 +27,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-vgui::IImage* GetDefaultAvatarImage( C_BasePlayer *pPlayer );
-
 DECLARE_HUDELEMENT_DEPTH( CTFWinPanel, 1 );
 
 //-----------------------------------------------------------------------------
@@ -342,13 +340,10 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 			if ( pPlayerAvatar )
 			{
 				pPlayerAvatar->ClearAvatar();
-				pPlayerAvatar->SetShouldScaleImage( true );
-				pPlayerAvatar->SetShouldDrawFriendIcon( false );
-
 				if ( bShow )
-				{
-					pPlayerAvatar->SetDefaultAvatar( GetDefaultAvatarImage( UTIL_PlayerByIndex( iPlayerIndex ) ) );
-					pPlayerAvatar->SetPlayer( iPlayerIndex );
+				{					
+					pPlayerAvatar->SetPlayer(GetSteamIDForPlayerIndex(iPlayerIndex), k_EAvatarSize32x32);
+					pPlayerAvatar->SetAvatarSize(32, 32);
 				}
 				pPlayerAvatar->SetVisible( bShow );
 			}

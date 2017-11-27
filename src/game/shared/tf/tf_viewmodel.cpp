@@ -7,7 +7,6 @@
 #include "tf_viewmodel.h"
 #include "tf_shareddefs.h"
 #include "tf_weapon_minigun.h"
-#include "tf_gamerules.h"
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
@@ -129,7 +128,9 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 		}
 	}
 
-	pAddon = new C_ViewmodelAttachmentModel();
+	pAddon = new class C_ViewmodelAttachmentModel;
+	if ( !pAddon )
+		return;
 
 	if ( pAddon->InitializeAsClientEntity( pszModelname, RENDER_GROUP_VIEW_MODEL_TRANSLUCENT ) == false )
 	{
@@ -138,12 +139,11 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 	}
 
 	m_hViewmodelAddon = pAddon;
-
 	pAddon->m_nSkin = GetSkin();
-	pAddon->SetOwner( GetOwner() );
 	pAddon->FollowEntity( this );
+	pAddon->UpdatePartitionListEntry();
+	pAddon->CollisionProp()->MarkPartitionHandleDirty();
 	pAddon->UpdateVisibility();
-
 	pAddon->SetViewmodel( this );
 }
 
@@ -408,14 +408,9 @@ int CTFViewModel::GetSkin()
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( pPlayer )
 	{
-		if ( TFGameRules()->IsDeathmatch() )
+		if ( pWeapon->GetTFWpnData().m_bHasTeamSkins_Viewmodel )
 		{
-			// Merc arms are team colored so use the colored skin for all weapons.
-			nSkin = 4;
-		}
-		else if ( pWeapon->GetTFWpnData().m_bHasTeamSkins_Viewmodel )
-		{
-			switch ( pPlayer->GetTeamNumber() )
+			switch( pPlayer->GetTeamNumber() )	
 			{
 			case TF_TEAM_RED:
 				nSkin = 0;
@@ -442,9 +437,9 @@ int CTFViewModel::GetSkin()
 void CTFViewModel::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	// Don't process animevents if it's not drawn.
-	C_BasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 
-	if ( !pOwner || pOwner->ShouldDrawThisPlayer() )
+	if ( pOwner->ShouldDrawThisPlayer() )
 		return;
 
 	BaseClass::FireEvent( origin, angles, event, options );
@@ -513,7 +508,16 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 	if ( !pEnt )
 		return;
 
-	C_BaseViewModel *pVM = dynamic_cast<C_BaseViewModel *>( pEnt );
+	C_TFViewModel *pVM;
+	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>(pEnt);
+	if (pVMAddon)
+	{
+		pVM = dynamic_cast<C_TFViewModel *>(pVMAddon->m_viewmodel.Get());
+	}
+	else
+	{
+		pVM = dynamic_cast<C_TFViewModel *>(pEnt);
+	}
 
 	if ( !pVM )
 	{
@@ -521,7 +525,7 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 		return;
 	}
 
-	C_TFPlayer *pPlayer = ToTFPlayer( pVM->GetOwner() );
+	CTFPlayer *pPlayer = ToTFPlayer( pVM->GetOwner() );
 
 	if ( !pPlayer )
 	{

@@ -39,9 +39,8 @@ extern const char *g_aTeamParticleNames[TF_TEAM_COUNT];
 extern color32 g_aTeamColors[TF_TEAM_COUNT];
 extern color32 g_aTeamSkinColors[TF_TEAM_COUNT];
 
-const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
-const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
-void PrecacheTeamParticles( const char *pszFormat, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
+const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride = false );
+const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride = false );
 
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
@@ -357,18 +356,13 @@ enum
 	TF_WEAPON_SENTRY_ROCKET,
 	TF_WEAPON_DISPENSER,
 	TF_WEAPON_INVIS,
-	TF_WEAPON_FLAG,
-	TF_WEAPON_FLAREGUN,
-	TF_WEAPON_LUNCHBOX,
-	TF_WEAPON_COMPOUND_BOW,
-	// ADD TF2C WEAPONS AFTER THIS
+	TF_WEAPON_FLAG, // ADD NEW WEAPONS AFTER THIS
 	TF_WEAPON_HUNTERRIFLE,
 	TF_WEAPON_UMBRELLA,
+	TF_WEAPON_FLAREGUN,
 	TF_WEAPON_HAMMERFISTS,
 	TF_WEAPON_CHAINSAW,
 	TF_WEAPON_HEAVYARTILLERY,
-	TF_WEAPON_ASSAULTRIFLE,
-	TF_WEAPON_DISPLACER,
 
 	TF_WEAPON_COUNT
 };
@@ -418,11 +412,8 @@ enum
 	TF_PROJECTILE_GRAPPLINGHOOK,
 	TF_PROJECTILE_SENTRY_ROCKET,
 	TF_PROJECTILE_BREAD_MONSTER,
-	// Add new projectiles here.
 	TF_PROJECTILE_NAIL,
 	TF_PROJECTILE_DART,
-	TF_PROJECTILE_MIRV,
-	TF_PROJECTILE_PLASMA,
 
 	TF_NUM_PROJECTILES
 };
@@ -568,25 +559,21 @@ enum
 	// Add TF2C conds here
 	TF_COND_SMOKE_BOMB,
 	TF_COND_SLOWED,
-	TF_COND_INVULNERABLE_SPAWN_PROTECT,
 
 	// Powerup conditions
 	TF_COND_POWERUP_CRITDAMAGE,
-	TF_COND_POWERUP_SHIELD,
-	TF_COND_POWERUP_SPEEDBOOST,
+	TF_COND_POWERUP_SHORTUBER,
+	TF_COND_POWERUP_FASTRELOAD,
 	TF_COND_POWERUP_CLOAK,
 	TF_COND_POWERUP_RAGEMODE,
+	TF_COND_POWERUP_CLASSCHANGE,
 
 	TF_COND_LAST
 };
 
 extern int condition_to_attribute_translation[];
-extern const char *g_aPowerupNames[];
-extern int g_aPowerupConds[];
 
-#define TF_POWERUP_COND_COUNT ARRAYSIZE( g_aPowerupConds )
-
-bool ConditionExpiresFast( int nCond );
+int ConditionExpiresFast( int nCond );
 
 //-----------------------------------------------------------------------------
 // Mediguns.
@@ -656,13 +643,12 @@ enum {
 // Class data
 //-----------------------------------------------------------------------------
 #define TF_MEDIC_REGEN_TIME			1.0		// Number of seconds between each regen.
-#define TF_MEDIC_REGEN_AMOUNT		3 		// Amount of health regenerated each regen.
+#define TF_MEDIC_REGEN_AMOUNT		1 		// Amount of health regenerated each regen.
 
 //-----------------------------------------------------------------------------
 // Assist-damage constants
 //-----------------------------------------------------------------------------
 #define TF_TIME_ASSIST_KILL				3.0f	// Time window for a recent damager to get credit for an assist for a kill
-#define TF_TIME_ENV_DEATH_KILL_CREDIT	5.0f
 #define TF_TIME_SUICIDE_KILL_CREDIT		10.0f	// Time window for a recent damager to get credit for a kill if target suicides
 
 //-----------------------------------------------------------------------------
@@ -964,7 +950,6 @@ typedef enum
 #define TF_SCORE_KILL_ASSISTS_PER_POINT			2
 #define TF_SCORE_TELEPORTS_PER_POINT			2	
 #define TF_SCORE_HEAL_HEALTHUNITS_PER_POINT		600
-#define TF_SCORE_BONUS_PER_POINT				1
 
 //-------------------------
 // Shared Teleporter State
@@ -1184,12 +1169,9 @@ enum
 	TF_TAUNT_NONE,
 	TF_TAUNT_PYRO,
 	TF_TAUNT_HEAVY,
-	TF_TAUNT_LUNCHBOX,
 	TF_TAUNT_SPY1,
 	TF_TAUNT_SPY2,
 	TF_TAUNT_SPY3,
-	TF_TAUNT_SNIPER_STUN,
-	TF_TAUNT_SNIPER_KILL,
 };
 
 typedef enum
@@ -1254,25 +1236,16 @@ public:
 	}
 };
 
-// Unused death flags
+// Unused
 #define TF_DEATH_FIRST_BLOOD	0x0010
 #define TF_DEATH_FEIGN_DEATH	0x0020
-#define TF_DEATH_GIB			0x0080
 #define TF_DEATH_PURGATORY		0x0100
 #define TF_DEATH_AUSTRALIUM		0x0400
 
 #define HUD_ALERT_SCRAMBLE_TEAMS 0
 
-// Third person camera settings
 #define TF_CAMERA_DIST 64
 #define TF_CAMERA_DIST_RIGHT 30
 #define TF_CAMERA_DIST_UP 0
-
-// Player attached models
-#define TF_SPY_MASK_MODEL "models/player/items/spy_mask.mdl"
-#define TF_POWERUP_SHIELD_MODEL "models/items/powerup_merc_shield.mdl"
-
-
-#define IN_TYPING ( 1 << 31 )
 
 #endif // TF_SHAREDDEFS_H

@@ -18,7 +18,22 @@
 //
 // Weapon Tranq tables.
 //
-CREATE_SIMPLE_WEAPON_TABLE( TFTranq, tf_weapon_tranq )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFTranq, DT_WeaponTranq )
+
+BEGIN_NETWORK_TABLE( CTFTranq, DT_WeaponTranq )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFTranq )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_tranq, CTFTranq );
+PRECACHE_WEAPON_REGISTER( tf_weapon_tranq );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFTranq )
+END_DATADESC()
+#endif
 
 //=============================================================================
 //
@@ -28,9 +43,12 @@ void CTFTranq::Precache()
 {
 	BaseClass::Precache();
 #ifndef CLIENT_DLL
-	PrecacheTeamParticles( "tranq_tracer_teamcolor_%s", true );
-	PrecacheTeamParticles( "tranq_tracer_teamcolor_%s_crit", true );
-	PrecacheParticleSystem( "tranq_distortion_trail" );
-	PrecacheParticleSystem( "tranq_tracer_red" );
+	PrecacheParticleSystem("tranq_tracer_teamcolor_red");
+	PrecacheParticleSystem("tranq_tracer_teamcolor_blue");
+	PrecacheParticleSystem("tranq_tracer_teamcolor_green");
+	PrecacheParticleSystem("tranq_tracer_teamcolor_yellow");
+	PrecacheParticleSystem("tranq_tracer_teamcolor_dm");
+	PrecacheParticleSystem("tranq_distortion_trail");
+	PrecacheParticleSystem("tranq_tracer_red");
 #endif
 }

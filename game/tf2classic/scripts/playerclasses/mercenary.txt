@@ -1,0 +1,44 @@
+//
+// The Mercenary
+//
+PlayerClass
+{
+	// Attributes.
+	"name"			"mercenary"
+	"model"			"models/player/merc_deathmatch.mdl"
+	"model_hwm"		"models/player/hwm/merc_deathmatch.mdl"
+	"model_hands"		"models/weapons/c_models/c_merc_arms.mdl"
+	"localize_name"		"TF_Class_Name_Mercenary"
+	"speed_max"		"320"
+	"health_max"		"150"
+	"armor_max"		"0"
+
+	// Grenades.
+	"grenade1"		""
+	"grenade2"		""
+
+	// Weapons.
+	"weapon1"		"TF_WEAPON_CROWBAR"
+	"weapon2"		"TF_WEAPON_PISTOL_SCOUT"
+	"weapon3"		""
+
+	//Thirdperson
+	"cameraoffset_forward"	"85"
+	"cameraoffset_right"	"25"
+	"cameraoffset_up"	"0"
+
+	AmmoMax
+	{
+		"tf_ammo_primary"	"32"
+		"tf_ammo_secondary"	"36"
+		"tf_ammo_metal"		"100"
+		"tf_ammo_grenades1"	"0"
+		"tf_ammo_grenades2"	"0"	
+	}	
+
+	// Death Sounds
+	"sound_death"				"Mercenary.Death"
+	"sound_crit_death"			"Mercenary.CritDeath"
+	"sound_melee_death"			"Mercenary.MeleeDeath"
+	"sound_explosion_death"			"Mercenary.ExplosionDeath"	
+}

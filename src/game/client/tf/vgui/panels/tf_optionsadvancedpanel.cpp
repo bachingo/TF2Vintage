@@ -120,7 +120,7 @@ void CTFOptionsAdvancedPanel::GatherCurrentValues()
 
 	char szValue[256];
 	char strValue[256];
-	float flValue;
+	int iValue;
 
 	pList = m_pList;
 	while (pList)
@@ -147,8 +147,8 @@ void CTFOptionsAdvancedPanel::GatherCurrentValues()
 			break;
 		case O_SLIDER:
 			pScroll = (CTFAdvSlider *)pList->pControl;
-			flValue = pScroll->GetValue();
-			sprintf(szValue, "%f", flValue);
+			iValue = pScroll->GetValue();
+			sprintf(szValue, "%i", iValue);
 			break;
 		case O_STRING:
 			pEdit = (TextEntry *)pList->pControl;
@@ -262,7 +262,6 @@ void CTFOptionsAdvancedPanel::CreateControls()
 			break;
 		case O_SLIDER:
 			pScroll = new CTFAdvSlider(pCtrl, "DescScrollEntry", pObj->prompt);
-			pScroll->ShowInt( false );
 			pScroll->SetValue(pObj->fcurValue);
 			pScroll->SetCommandString(pObj->cvarname);
 			pScroll->SetMinMax(pObj->fMin, pObj->fMax);

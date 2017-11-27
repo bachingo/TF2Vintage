@@ -697,15 +697,19 @@ surfacedata_t* C_BasePlayer::GetGroundSurface()
 	VectorCopy( start, end );
 
 	// Straight down
+	start.z += 1;
 	end.z -= 64;
 
 	// Fill in default values, just in case.
 	
 	Ray_t ray;
-	ray.Init( start, end, GetPlayerMins(), GetPlayerMaxs() );
+	Vector mins = GetPlayerMins();
+	Vector maxs = GetPlayerMaxs();
+	maxs.z = mins.z + 1;
+	ray.Init(start, end, mins, maxs);
 
 	trace_t	trace;
-	UTIL_TraceRay( ray, MASK_PLAYERSOLID_BRUSHONLY, this, COLLISION_GROUP_PLAYER_MOVEMENT, &trace );
+	UTIL_TraceRay(ray, MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &trace);
 
 	if ( trace.fraction == 1.0f )
 		return NULL;	// no ground
@@ -1549,7 +1553,7 @@ void C_BasePlayer::CalcChaseCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 
 	m_flObserverChaseDistance = clamp( m_flObserverChaseDistance, flMinDistance, flMaxDistance );
 	
-	AngleVectors( viewangles, &forward );
+	//AngleVectors( viewangles, &forward );
 
 	VectorNormalize( forward );
 
@@ -1567,7 +1571,7 @@ void C_BasePlayer::CalcChaseCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 		m_flObserverChaseDistance = VectorLength(origin - eyeOrigin);
 	}
 	
-	VectorCopy( viewangles, eyeAngles );
+	//VectorCopy( viewangles, eyeAngles );
 	VectorCopy( viewpoint, eyeOrigin );
 
 	fov = GetFOV();

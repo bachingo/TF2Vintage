@@ -68,7 +68,6 @@ public:
 	float m_flSelfDamageRadius;
 	int m_iClassIgnore;
 	CBaseEntity *m_pEntityIgnore;
-	bool m_bStockSelfDamage;
 };
 #endif
 
@@ -233,7 +232,7 @@ public:
 
 	virtual bool	AllowDamage( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 
-	virtual int		GetClassLimit( int iDesiredClassIndex, int iTeam );
+	virtual int		GetClassLimit( int iDesiredClassIndex );
 	virtual bool	CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClassIndex );
 
 	void			SetTeamGoalString( int iTeam, const char *pszGoal );
@@ -253,7 +252,7 @@ public:
 	void			SetGreenKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hGreenKothTimer.Set( pTimer ); }
 	void			SetYellowKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hYellowKothTimer.Set( pTimer ); }
 
-	virtual bool	ClientConnected(edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen);
+	virtual bool ClientConnected(edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen);
 
 protected:
 	virtual void	InitTeams( void );
@@ -297,12 +296,13 @@ public:
 
 	virtual bool	IsMultiplayer( void ){ return true; };
 
-	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer );
+	virtual bool	IsConnectedUserInfoChangeAllowed(CBasePlayer *pPlayer){ return true; };
 
-	virtual bool	IsFourTeamGame( void ){ return m_bFourTeamMode; };
-	virtual bool	IsDeathmatch( void ){ return m_nGameType == TF_GAMETYPE_DM; };
+	virtual bool	IsFourTeamGame( void ){ return false; };
+	virtual bool	IsDeathmatch(void){ return false; };
 	virtual bool    IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
+	virtual bool    IsInEscortMode(void) { return m_nGameType == TF_GAMETYPE_ESCORT; }
 	virtual bool	IsInKothMode( void ) { return m_bPlayingKoth; }
 	virtual bool    IsHalloweenScenario( int iEventType ) { return false; };
 	virtual bool	IsPVEModeActive( void ) { return false; };
@@ -392,6 +392,8 @@ public:
 	void	SendHudNotification( IRecipientFilter &filter, HudNotification_t iType );
 	void	SendHudNotification( IRecipientFilter &filter, const char *pszText, const char *pszIcon, int iTeam = TEAM_UNASSIGNED );
 
+	virtual void PlayerSpawn( CBasePlayer *pPlayer );
+
 private:
 
 	int DefaultFOV( void ) { return 75; }
@@ -417,8 +419,6 @@ private:
 
 	bool m_bFirstBlood;
 	int	m_iArenaTeamCount;
-
-	KeyValues *m_pAuthData;
 #endif
 
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)

@@ -6,59 +6,100 @@
 #include "cbase.h"
 #include "tf_weaponbase.h"
 #include "tf_gamerules.h"
+#include "npcevent.h"
 #include "engine/IEngineSound.h"
 #include "tf_weapon_grenade_mirv.h"
 
 // Server specific.
 #ifdef GAME_DLL
 #include "tf_player.h"
+#include "items.h"
 #include "tf_weaponbase_grenadeproj.h"
 #include "soundent.h"
-#include "particle_parse.h"
+#include "KeyValues.h"
 #endif
 
-#define MIRV_WARN_TIME				0.5f
+#define GRENADE_MIRV_TIMER	3.0f // seconds
+#define	GRENADE_MIRV_LEADIN	2.0f 
 
-#define MIRV_LEADIN_SOUND			"Weapon_Grenade_Mirv.LeadIn"
+//=============================================================================
+//
+// TF Demoman Mirv Grenade tables.
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadeMirv_Demoman, DT_TFGrenadeMirv_Demoman )
+
+BEGIN_NETWORK_TABLE( CTFGrenadeMirv_Demoman, DT_TFGrenadeMirv_Demoman )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFGrenadeMirv_Demoman )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_grenade_mirv_demoman, CTFGrenadeMirv_Demoman );
+PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_mirv_demoman );
+
+//=============================================================================
+//
+// TF Mirv Grenade tables.
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadeMirv, DT_TFGrenadeMirv )
+
+BEGIN_NETWORK_TABLE( CTFGrenadeMirv, DT_TFGrenadeMirv )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFGrenadeMirv )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_grenade_mirv, CTFGrenadeMirv );
+PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_mirv );
+
+//=============================================================================
+//
+// TF Mirv Grenade functions.
+//
+
+// Server specific.
+#ifdef GAME_DLL
+
+BEGIN_DATADESC( CTFGrenadeMirv )
+END_DATADESC()
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFWeaponBaseGrenadeProj *CTFGrenadeMirv::EmitGrenade( Vector vecSrc, QAngle vecAngles, Vector vecVel, 
+							      AngularImpulse angImpulse, CBasePlayer *pPlayer, float flTime, int iflags )
+{
+	return CTFGrenadeMirvProjectile::Create( vecSrc, vecAngles, vecVel, angImpulse,
+									  pPlayer, GetTFWpnData(), flTime );
+}
+
+#endif
 
 //=============================================================================
 //
 // TF Mirv Grenade Projectile functions (Server specific).
 //
-IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadeMirvProjectile, DT_TFProjectile_Mirv );
-BEGIN_NETWORK_TABLE( CTFGrenadeMirvProjectile, DT_TFProjectile_Mirv )
-END_NETWORK_TABLE()
+#ifdef GAME_DLL
+
+BEGIN_DATADESC( CTFGrenadeMirvProjectile )
+DEFINE_THINKFUNC( DetonateThink ),
+END_DATADESC()
+
+#define GRENADE_MODEL "models/weapons/w_models/w_grenade_mirv.mdl"
 
 LINK_ENTITY_TO_CLASS( tf_weapon_grenade_mirv_projectile, CTFGrenadeMirvProjectile );
 PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_mirv_projectile );
 
-CTFGrenadeMirvProjectile::CTFGrenadeMirvProjectile()
-{
-#ifdef GAME_DLL
-	m_bPlayedLeadIn = false;
-	m_bDefused = false;
-#endif
-}
-
-CTFGrenadeMirvProjectile::~CTFGrenadeMirvProjectile()
-{
-#ifdef CLIENT_DLL
-	ParticleProp()->StopEmission();
-#endif
-}
-
-#ifdef GAME_DLL
-
-#define GRENADE_MODEL "models/weapons/w_models/w_grenade_mirv.mdl"
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFGrenadeMirvProjectile* CTFGrenadeMirvProjectile::Create( const Vector &position, const QAngle &angles,
-	const Vector &velocity, const AngularImpulse &angVelocity,
-	CBaseCombatCharacter *pOwner, CBaseEntity *pWeapon )
+CTFGrenadeMirvProjectile* CTFGrenadeMirvProjectile::Create( const Vector &position, const QAngle &angles, 
+															const Vector &velocity, const AngularImpulse &angVelocity, 
+															CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags )
 {
-	CTFGrenadeMirvProjectile *pGrenade = static_cast<CTFGrenadeMirvProjectile *>( CTFWeaponBaseGrenadeProj::Create( "tf_weapon_grenade_mirv_projectile", position, angles, velocity, angVelocity, pOwner, pWeapon ) );
+	CTFGrenadeMirvProjectile *pGrenade = static_cast<CTFGrenadeMirvProjectile*>( CTFWeaponBaseGrenadeProj::Create( "tf_weapon_grenade_mirv_projectile", position, angles, velocity, angVelocity, pOwner, weaponInfo, timer, iFlags ) );
 	return pGrenade;
 }
 
@@ -68,12 +109,12 @@ CTFGrenadeMirvProjectile* CTFGrenadeMirvProjectile::Create( const Vector &positi
 void CTFGrenadeMirvProjectile::Spawn()
 {
 	SetModel( GRENADE_MODEL );
-	SetDetonateTimerLength( TF_MIRV_TIMER );
 
 	BaseClass::Spawn();
 
-	// Players need to be able to hit it with their weapons.
-	AddSolidFlags( FSOLID_TRIGGER );
+	m_bPlayedLeadIn = false;
+
+	SetThink( &CTFGrenadeMirvProjectile::DetonateThink );
 }
 
 //-----------------------------------------------------------------------------
@@ -82,39 +123,9 @@ void CTFGrenadeMirvProjectile::Spawn()
 void CTFGrenadeMirvProjectile::Precache()
 {
 	PrecacheModel( GRENADE_MODEL );
-	PrecacheScriptSound( MIRV_LEADIN_SOUND );
-	PrecacheScriptSound( TF_MIRV_BLIP_SOUND );
-
-	PrecacheTeamParticles( "MIRV_trail_%s" );
+	PrecacheScriptSound( "Weapon_Grenade_Mirv.LeadIn" );
 
 	BaseClass::Precache();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-int CTFGrenadeMirvProjectile::OnTakeDamage( const CTakeDamageInfo &info )
-{
-	if ( !info.GetAttacker() )
-		return 0;
-
-	if ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() )
-		return 0;
-
-	// Wrench hit defuses the dynamite pack.
-	if ( info.GetDamageCustom() == TF_DMG_WRENCH_FIX )
-	{
-		m_bDefused = true;
-		EmitSound( "Weapon_Grenade_Mirv.Disarm" );
-		StopParticleEffects( this );
-
-		SetThink( &CBaseEntity::SUB_Remove );
-		SetNextThink( gpGlobals->curtime + 5.0f );
-
-		return 1;
-	}
-
-	return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -142,10 +153,32 @@ void CTFGrenadeMirvProjectile::Detonate()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+void CTFGrenadeMirvProjectile::DetonateThink( void )
+{
+	if ( !m_bPlayedLeadIn && gpGlobals->curtime > GetDetonateTime() - GRENADE_MIRV_LEADIN )
+	{
+		Vector soundPosition = GetAbsOrigin() + Vector( 0, 0, 5 );
+		CPASAttenuationFilter filter( soundPosition );
+
+		EmitSound( filter, entindex(), "Weapon_Grenade_Mirv.LeadIn" );
+		m_bPlayedLeadIn = true;
+	}
+
+	BaseClass::DetonateThink();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CTFGrenadeMirvProjectile::Explode( trace_t *pTrace, int bitsDamageType )
 {
 	// Pass through.
 	BaseClass::Explode( pTrace, bitsDamageType );
+
+	m_bPlayedLeadIn = false;
+
+// Server specific.
+#ifdef GAME_DLL
 
 	// Create the bomblets.
 	for ( int iBomb = 0; iBomb < TF_WEAPON_GRENADE_MIRV_BOMB_COUNT; ++iBomb )
@@ -158,74 +191,25 @@ void CTFGrenadeMirvProjectile::Explode( trace_t *pTrace, int bitsDamageType )
 		CTFPlayer *pPlayer = ToTFPlayer( GetThrower() );
 		float flTime = 2.0f + random->RandomFloat( 0.0f, 1.0f );
 
-		CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, flTime );
-		pBomb->SetDamage( GetDamage() * 0.5f );
-		pBomb->SetDamageRadius( GetDamageRadius() );
+		CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, flTime );
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeMirvProjectile::BlipSound( void )
-{
-	if ( GetDetonateTime() - gpGlobals->curtime <= MIRV_WARN_TIME )
-	{
-		if ( !m_bPlayedLeadIn )
-		{
-			EmitSound( MIRV_LEADIN_SOUND );
-			m_bPlayedLeadIn = true;
-		}
-	}
-	else if ( gpGlobals->curtime >= m_flNextBlipTime )
-	{
-		EmitSound( TF_MIRV_BLIP_SOUND );
-		m_flNextBlipTime = gpGlobals->curtime + TF_MIRV_BLIP_FREQUENCY;
-	}
-}
-
-#else
-
-void CTFGrenadeMirvProjectile::OnDataChanged( DataUpdateType_t updateType )
-{
-	if ( updateType == DATA_UPDATE_CREATED )
-	{
-		CreateTrails();
-	}
-	else if ( m_iOldTeamNum && m_iOldTeamNum != m_iTeamNum )
-	{
-		ParticleProp()->StopEmission();
-		CreateTrails();
-	}
-}
-
-void CTFGrenadeMirvProjectile::CreateTrails( void )
-{
-	const char *pszParticle = ConstructTeamParticle( "MIRV_trail_%s", GetTeamNumber(), false );
-	ParticleProp()->Create( pszParticle, PATTACH_ABSORIGIN_FOLLOW );
-}
 
 #endif
+}
 
 //=============================================================================
 //
 // TF Mirv Bomb functions (Server specific).
 //
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadeMirvBomb, DT_TFProjectile_MirvBomb );
-BEGIN_NETWORK_TABLE( CTFGrenadeMirvBomb, DT_TFProjectile_MirvBomb )
-END_NETWORK_TABLE()
-
-LINK_ENTITY_TO_CLASS( tf_weapon_grenade_mirv_bomb, CTFGrenadeMirvBomb );
-PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_mirv_bomb );
-
-#ifdef GAME_DLL
-
 #define GRENADE_MODEL_BOMBLET "models/weapons/w_models/w_grenade_bomblet.mdl"
 
 #define TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY		0.5f
 #define TF_WEAPON_GRENADE_MIRV_BOMB_FRICTION	0.8f
 #define TF_WEAPON_GRENADE_MIRV_BOMB_ELASTICITY	0.45f
+
+LINK_ENTITY_TO_CLASS( tf_weapon_grenade_mirv_bomb, CTFGrenadeMirvBomb );
+PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_mirv_bomb );
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -245,12 +229,10 @@ CTFGrenadeMirvBomb *CTFGrenadeMirvBomb::Create( const Vector &position, const QA
 		pBomb->SetFriction( TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY );
 		pBomb->SetElasticity( TF_WEAPON_GRENADE_MIRV_BOMB_ELASTICITY );
 
-		// To be overriden.
 		pBomb->m_flDamage = 180.0f;
 		pBomb->m_DmgRadius = 198.0f;
-		
-		if ( pOwner )
-			pBomb->ChangeTeam( pOwner->GetTeamNumber() );
+
+		pBomb->ChangeTeam( pOwner->GetTeamNumber() );
 
 		pBomb->SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
 
@@ -272,8 +254,6 @@ void CTFGrenadeMirvBomb::Spawn()
 	SetModel( GRENADE_MODEL_BOMBLET );
 
 	BaseClass::Spawn();
-
-	EmitSound( "Weapon_Grenade_Mirv.Fuse" );
 }
 
 //-----------------------------------------------------------------------------
@@ -282,18 +262,8 @@ void CTFGrenadeMirvBomb::Spawn()
 void CTFGrenadeMirvBomb::Precache()
 {
 	PrecacheModel( GRENADE_MODEL_BOMBLET );
-	PrecacheScriptSound( "Weapon_Grenade_Mirv.Fuse" );
 
 	BaseClass::Precache();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeMirvBomb::UpdateOnRemove( void )
-{
-	StopSound( "Weapon_Grenade_Mirv.Fuse" );
-	BaseClass::UpdateOnRemove();
 }
 
 //-----------------------------------------------------------------------------

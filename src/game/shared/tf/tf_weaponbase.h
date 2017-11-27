@@ -98,8 +98,8 @@ class ITFChargeUpWeapon
 {
 public:
 	virtual float GetChargeBeginTime( void ) = 0;
+
 	virtual float GetChargeMaxTime( void ) = 0;
-	virtual const char *GetChargeSound( void ) = 0;
 };
 
 //=============================================================================
@@ -149,13 +149,9 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int	 GetPosition( void ) const;
 #endif
 	virtual void Drop( const Vector &vecVelocity );
-	virtual bool CanHolster( void ) const;
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	virtual bool Deploy( void );
 	virtual void Equip( CBaseCombatCharacter *pOwner );
-#ifdef GAME_DLL
-	virtual void UnEquip( CBaseCombatCharacter *pOwner );
-#endif
 	bool IsViewModelFlipped( void );
 
 	virtual void ReapplyProvision( void );
@@ -192,7 +188,6 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Activities.
 	virtual void ItemBusyFrame( void );
 	virtual void ItemPostFrame( void );
-	virtual void ItemHolsterFrame( void );
 
 	virtual void SetWeaponVisible( bool visible );
 
@@ -252,13 +247,6 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	float				GetLastFireTime( void ) { return m_flLastFireTime; }
 
-	virtual bool		HasChargeBar( void ) { return false; }
-	void				StartEffectBarRegen( void );
-	void				EffectBarRegenFinished( void );
-	void				CheckEffectBarRegen( void );
-	virtual float		GetEffectBarProgress( void );
-	virtual const char	*GetEffectLabelText( void ) { return ""; }
-
 // Server specific.
 #if !defined( CLIENT_DLL )
 
@@ -300,8 +288,6 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	bool OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options );
 
-	virtual C_BaseEntity *GetItemTintColorOwner( void ) { return GetOwner(); }
-
 	// Model muzzleflashes
 	CHandle<C_MuzzleFlashModel>		m_hMuzzleFlashModel[2];
 
@@ -318,18 +304,16 @@ protected:
 	bool ReloadSingly( void );
 	void ReloadSinglyPostFrame( void );
 
-	virtual float InternalGetEffectBarRechargeTime( void ) { return 0.0f; }
-
 protected:
 
 	int				m_iWeaponMode;
-	CNetworkVar( int, m_iReloadMode );
+	CNetworkVar(	int,	m_iReloadMode );
 	CTFWeaponInfo	*m_pWeaponInfo;
 	bool			m_bInAttack;
 	bool			m_bInAttack2;
 	bool			m_bCurrentAttackIsCrit;
 
-	CNetworkVar( bool, m_bLowered );
+	CNetworkVar(	bool,	m_bLowered );
 
 	int				m_iAltFireHint;
 
@@ -340,38 +324,22 @@ protected:
 	int				m_iLastCritCheckFrame;
 	int				m_iCurrentSeed;
 
+	CNetworkVar(	float,	m_flLastFireTime );
+
 	char			m_szTracerName[MAX_TRACER_NAME];
 
-	CNetworkVar( bool, m_bResetParity );
+	CNetworkVar(	bool, m_bResetParity );
 
 #ifdef CLIENT_DLL
 	bool m_bOldResetParity;
 #endif
 
-	CNetworkVar( bool, m_bReloadedThroughAnimEvent );
-	CNetworkVar( float, m_flLastFireTime );
-	CNetworkVar( float, m_flEffectBarRegenTime );
-
+	CNetworkVar(	bool,	m_bReloadedThroughAnimEvent );
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
 };
 
 #define WEAPON_RANDOM_RANGE 10000
-
-
-#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
-																	\
-	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
-															\
-	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
-	END_NETWORK_TABLE()										\
-															\
-	BEGIN_PREDICTION_DATA( C##WpnName )						\
-	END_PREDICTION_DATA()									\
-															\
-	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
-	PRECACHE_WEAPON_REGISTER( entityname );
-
 
 // Mercenary needs a different activity set for each weapon so use these in stock weapons code.
 #define DECLARE_DM_ACTTABLE()		static acttable_t m_acttable[];\

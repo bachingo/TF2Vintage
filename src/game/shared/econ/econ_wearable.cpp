@@ -21,9 +21,8 @@ BEGIN_NETWORK_TABLE( CEconWearable, DT_EconWearable )
 #endif
 END_NETWORK_TABLE()
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+LINK_ENTITY_TO_CLASS( econ_wearable, CEconWearable )
+
 void CEconWearable::Spawn( void )
 {
 	GetAttributeContainer()->InitializeAttributes( this );
@@ -39,70 +38,58 @@ void CEconWearable::Spawn( void )
 	SetBlocksLOS( false );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 int CEconWearable::GetSkin( void )
 {
 	switch ( GetTeamNumber() )
 	{
-	case TF_TEAM_RED:
-		return 0;
-		break;
+		case TF_TEAM_BLUE:
+			return 1;
+			break;
 
-	case TF_TEAM_BLUE:
-		return 1;
-		break;
+		case TF_TEAM_RED:
+			return 0;
+			break;
 
-	case TF_TEAM_GREEN:
-		return 2;
-		break;
+		case TF_TEAM_GREEN:
+			return 2;
+			break;
 
-	case TF_TEAM_YELLOW:
-		return 3;
-		break;
+		case TF_TEAM_YELLOW:
+			return 3;
+			break;
 
-	default:
-		return 0;
-		break;
+		default:
+			return 0;
+			break;
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )
 {
 	EconItemVisuals *visual = GetItem()->GetStaticData()->GetVisuals( GetTeamNumber() );
-	for ( unsigned int i = 0; i < visual->player_bodygroups.Count(); i++ )
+ 	for ( unsigned int i = 0; i < visual->player_bodygroups.Count(); i++ )
 	{
-		const char *szBodyGroupName = visual->player_bodygroups.GetElementName( i );
+		const char *szBodyGroupName = visual->player_bodygroups.GetElementName(i);
 
 		if ( szBodyGroupName )
 		{
 			int iBodyGroup = pPlayer->FindBodygroupByName( szBodyGroupName );
-			int iBodyGroupValue = visual->player_bodygroups.Element( i );
+			int iBodyGroupValue = visual->player_bodygroups.Element(i);
 
 			pPlayer->SetBodygroup( iBodyGroup, iBodyGroupValue );
 		}
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CEconWearable::SetParticle( const char* name )
+void CEconWearable::SetParticle(const char* name)
 {
 #ifdef GAME_DLL
-	Q_snprintf( m_ParticleName.GetForModify(), PARTICLE_MODIFY_STRING_SIZE, name );
+	Q_snprintf(m_ParticleName.GetForModify(), PARTICLE_MODIFY_STRING_SIZE, name);
 #else
 	Q_snprintf(m_ParticleName, PARTICLE_MODIFY_STRING_SIZE, name);
 #endif
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconWearable::GiveTo( CBaseEntity *pEntity )
 {
 #ifdef GAME_DLL
@@ -116,9 +103,6 @@ void CEconWearable::GiveTo( CBaseEntity *pEntity )
 }
 
 #ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconWearable::Equip( CBasePlayer *pPlayer )
 {
 	if ( pPlayer )
@@ -131,9 +115,6 @@ void CEconWearable::Equip( CBasePlayer *pPlayer )
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CEconWearable::UnEquip( CBasePlayer *pPlayer )
 {
 	if ( pPlayer )
@@ -144,11 +125,8 @@ void CEconWearable::UnEquip( CBasePlayer *pPlayer )
 		ReapplyProvision();
 	}
 }
-
 #else
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
+
 void CEconWearable::OnDataChanged( DataUpdateType_t type )
 {
 	BaseClass::OnDataChanged( type );
@@ -161,9 +139,6 @@ void CEconWearable::OnDataChanged( DataUpdateType_t type )
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 ShadowType_t CEconWearable::ShadowCastType( void )
 {
 	if ( ShouldDraw() )
@@ -174,9 +149,6 @@ ShadowType_t CEconWearable::ShadowCastType( void )
 	return SHADOWS_NONE;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool CEconWearable::ShouldDraw( void )
 {
 	CBasePlayer *pOwner = ToBasePlayer( GetOwnerEntity() );

@@ -14,6 +14,7 @@
 #include "physics_npc_solver.h"
 #include "vphysics/friction.h"
 #include "hierarchy.h"
+#include "tf_gamerules.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -2679,11 +2680,10 @@ void CFuncTrackTrain::Spawn( void )
 	SetMoveType( MOVETYPE_PUSH );
 
 #ifdef HL1_DLL
-	// BUGBUG: For now, just force this for testing.  Remove if we want to tag all of the trains in the levels
+	 BUGBUG: For now, just force this for testing.  Remove if we want to tag all of the trains in the levels
 	SetSolid( SOLID_BSP );
 #else
 	SetSolid( HasSpawnFlags( SF_TRACKTRAIN_HL1TRAIN ) ? SOLID_BSP : SOLID_VPHYSICS );
-	//SetSolid( SOLID_VPHYSICS );
 #endif
 
 	if ( HasSpawnFlags( SF_TRACKTRAIN_UNBLOCKABLE_BY_PLAYER ) )
@@ -2710,7 +2710,7 @@ void CFuncTrackTrain::Spawn( void )
 
 bool CFuncTrackTrain::CreateVPhysics( void )
 {
-	VPhysicsInitShadow( false, false );
+	VPhysicsInitShadow(false, false);
 	return true;
 }
 

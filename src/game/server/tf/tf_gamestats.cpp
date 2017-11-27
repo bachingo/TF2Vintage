@@ -34,7 +34,6 @@ const char *g_aClassNames[] =
 	"TF_CLASS_SPY",
 	"TF_CLASS_ENGINEER",
 	"TF_CLASS_CIVILIAN",
-	"TF_CLASS_MERCENARY"
 };
 
 //-----------------------------------------------------------------------------
@@ -772,6 +771,9 @@ void CTFGameStats::Event_RoundEnd( int iWinningTeam, bool bFullRound, float flRo
 		break;
 	}
 
+	//reset stats for the next round 
+	ResetRoundStats();
+
 	// add current game data in to data for this level
 	AccumulateGameData();
 }
@@ -908,20 +910,20 @@ void CTFGameStats::Event_PlayerKilled( CBasePlayer *pPlayer, const CTakeDamageIn
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameStats::Event_PlayerAwardBonusPoints( CTFPlayer *pPlayer, CBaseEntity *pAwarder, int iAmount )
+void CTFGameStats::Event_PlayerAwardBonusPoints(CTFPlayer *pPlayer, CBaseEntity *pAwarder, int iAmount)
 {
-	IncrementStat( pPlayer, TFSTAT_BONUS, iAmount );
+	IncrementStat(pPlayer, TFSTAT_BONUS, iAmount);
 
 #if 0
-	if ( pAwarder )
+	if (pAwarder)
 	{
-		CSingleUserRecipientFilter filter( pPlayer );
+		CSingleUserRecipientFilter filter(pPlayer);
 		filter.MakeReliable();
 
-		UserMessageBegin( filter, "PlayerBonusPoints" );
-			WRITE_BYTE( iAmount );
-			WRITE_BYTE( pPlayer->entindex() );
-			WRITE_BYTE( pAwarder->entindex() );
+		UserMessageBegin(filter, "PlayerBonusPoints");
+		WRITE_BYTE(iAmount);
+		WRITE_BYTE(pPlayer->entindex());
+		WRITE_BYTE(pAwarder->entindex());
 		MessageEnd();
 	}
 #endif

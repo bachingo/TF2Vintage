@@ -11,4 +11,14 @@
 //
 // Weapon FireAxe tables.
 //
-CREATE_SIMPLE_WEAPON_TABLE( TFFireAxe, tf_weapon_fireaxe )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFFireAxe, DT_TFWeaponFireAxe )
+
+BEGIN_NETWORK_TABLE( CTFFireAxe, DT_TFWeaponFireAxe )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFFireAxe )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_fireaxe, CTFFireAxe );
+
+PRECACHE_WEAPON_REGISTER( tf_weapon_fireaxe );

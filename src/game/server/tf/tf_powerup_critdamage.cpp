@@ -5,6 +5,12 @@
 //
 //=============================================================================//
 #include "cbase.h"
+#include "items.h"
+#include "tf_gamerules.h"
+#include "tf_shareddefs.h"
+#include "tf_player.h"
+#include "tf_team.h"
+#include "engine/IEngineSound.h"
 #include "tf_powerup_critdamage.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -23,6 +29,33 @@ LINK_ENTITY_TO_CLASS( item_powerup_critdamage, CTFPowerupCritdamage );
 // Purpose: Constructor 
 //-----------------------------------------------------------------------------
 CTFPowerupCritdamage::CTFPowerupCritdamage()
+{	
+	m_iRespawnTime = 30;
+	m_strModelName = MAKE_STRING("models/items/powerup_crit.mdl");
+	m_strPickupSound = MAKE_STRING("HealthKit.Touch");
+//	m_iEffectDuration = 15;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawn function 
+//-----------------------------------------------------------------------------
+void CTFPowerupCritdamage::Spawn( void )
 {
-	m_flEffectDuration = 15.0f;
+	BaseClass::Spawn();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Precache 
+//-----------------------------------------------------------------------------
+void CTFPowerupCritdamage::Precache( void )
+{
+	BaseClass::Precache();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Touch function
+//-----------------------------------------------------------------------------
+bool CTFPowerupCritdamage::MyTouch( CBasePlayer *pPlayer )
+{
+	return BaseClass::MyTouch( pPlayer );
 }
