@@ -158,6 +158,7 @@ public:
 	bool				TFWeaponDrop( CTFWeaponBase *pWeapon, bool bThrowForward );
 
 	void			setAirblastState(bool bAirblastState) { m_bIsAirblast = bAirblastState; }
+	void			setUnmoveable(bool bMoveable) { m_bIsUnmoveable = bMoveable; }
 
 	// Class.
 	CTFPlayerClass		*GetPlayerClass( void ) 					{ return &m_PlayerClass; }
@@ -461,6 +462,7 @@ private:
 
 	int					GetAutoTeam( void );
 	bool				m_bIsAirblast;
+	bool				m_bIsUnmoveable;
 	float				m_flStunTime;
 
 	// Creation/Destruction.

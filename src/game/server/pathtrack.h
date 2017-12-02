@@ -13,6 +13,7 @@
 
 #include "entityoutput.h"
 #include "shareddefs.h"
+#include "tf_gamerules.h"
 
 
 //-----------------------------------------------------------------------------

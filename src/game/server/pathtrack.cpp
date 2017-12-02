@@ -563,18 +563,22 @@ CPathTrack *CPathTrack::Instance( edict_t *pent )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CPathTrack::InputPass( inputdata_t &inputdata )
+void CPathTrack::InputPass(inputdata_t &inputdata)
 {
-	m_OnPass.FireOutput( inputdata.pActivator, this );
+	m_OnPass.FireOutput(inputdata.pActivator, this);
 
-#ifdef TF_DLL
-	IGameEvent * event = gameeventmanager->CreateEvent( "path_track_passed" );
-	if ( event )
+
+	//#ifdef TF_DLL
+	if (TFGameRules()->IsInEscortMode())
 	{
-		event->SetInt( "index", entindex() );
-		gameeventmanager->FireEvent( event, true );
+		IGameEvent * event = gameeventmanager->CreateEvent("path_track_passed");
+		if (event)
+		{
+			event->SetInt("index", entindex());
+			gameeventmanager->FireEvent(event, true);
+		}
 	}
-#endif
+	//#endif
 }
 
 //-----------------------------------------------------------------------------
