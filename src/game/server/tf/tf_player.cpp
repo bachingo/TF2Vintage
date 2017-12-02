@@ -454,11 +454,13 @@ void CTFPlayer::TFPlayerThink()
 		SetMaxSpeed(-1);
 		m_flStunTime = gpGlobals->curtime + 0.5f;
 		setAirblastState(false);
+		setUnmoveable(true);
 	}
 
-	if (gpGlobals->curtime > m_flStunTime)
+	if (gpGlobals->curtime > m_flStunTime && m_bIsUnmoveable)
 	{
 		TeamFortress_SetSpeed();
+		setUnmoveable(true);
 	}
 
 	// Time to finish the current random expression? Or time to pick a new one?
