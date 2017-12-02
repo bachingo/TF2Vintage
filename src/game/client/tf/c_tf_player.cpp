@@ -2514,6 +2514,7 @@ void C_TFPlayer::ClientThink()
 	// Clear our healer, it'll be reset by the medigun client think if we're being healed
 	m_hHealer = NULL;
 
+
 	if ( CanLightCigarette() )
 	{
 		if ( !m_bCigaretteSmokeActive )

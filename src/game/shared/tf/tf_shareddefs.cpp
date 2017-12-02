@@ -987,6 +987,13 @@ float g_flDispenserAmmoRates[] =
 	0.4
 };
 
+float g_flDispenserCloakRates[] =
+{
+	5.0,
+	10.0,
+	15.0
+};
+
 float g_flDispenserHealRates[] =
 {
 	10.0,

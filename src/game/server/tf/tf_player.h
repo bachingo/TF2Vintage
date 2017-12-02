@@ -636,7 +636,4 @@ inline int CTFPlayer::StateGet( void ) const
 {
 	return m_Shared.m_nPlayerState;
 }
-
-
-
-#endif	// TF_PLAYER_H
+#endif //TF_PLAYER

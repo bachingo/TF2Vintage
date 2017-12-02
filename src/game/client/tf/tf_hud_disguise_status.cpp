@@ -107,7 +107,7 @@ bool CDisguiseStatus::ShouldDraw(void)
 
 	if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED))
 	{
-		if (!m_bVisible || m_iCurrentDisguiseTeam != pPlayer->m_Shared.GetDisguiseTeam())
+		if ( !m_bVisible || m_iCurrentDisguiseTeam != pPlayer->m_Shared.GetDisguiseTeam() )
 			ShowAndUpdateStatus();
 
 		return true;
@@ -148,9 +148,12 @@ void CDisguiseStatus::CheckWeapon(void)
 	if (!pPlayer)
 		return;
 
-	CEconItemDefinition *pItem = pPlayer->m_Shared.GetDisguiseItem()->GetStaticData();
-	if (pItem)
-		SetDialogVariable("weaponname", g_pVGuiLocalize->Find(pItem->item_name));
+	//TODO: Properly get the econ weapon name instead of the regular script wep. name
+	CTFWeaponInfo *pWeaponInfo = pPlayer->m_Shared.GetDisguiseWeaponInfo();
+	if (pWeaponInfo)
+	{
+		SetDialogVariable("weaponname", g_pVGuiLocalize->Find(pWeaponInfo->szPrintName));
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -180,7 +183,13 @@ void CDisguiseStatus::ShowAndUpdateStatus(void)
 		m_pDisguiseNameLabel->SetVisible(true);
 		C_BasePlayer *pDisguiseTarget = ToBasePlayer(pPlayer->m_Shared.GetDisguiseTarget());
 		if (pDisguiseTarget)
-			SetDialogVariable("disguisename", pDisguiseTarget->GetPlayerName());
+		{ 
+			const char *nameError = PLAYER_ERROR_NAME, *nameUnconnected = PLAYER_UNCONNECTED_NAME;
+			if (pPlayer->GetPlayerName() == nameError || pPlayer->GetPlayerName() == nameUnconnected || pDisguiseTarget->GetTeamNumber() != pPlayer->m_Shared.GetDisguiseTeam()) //check for undefined player names
+				SetDialogVariable("disguisename", pPlayer->GetPlayerName());
+			else
+				SetDialogVariable("disguisename", pDisguiseTarget->GetPlayerName());
+		}
 	}
 
 	if (m_pWeaponNameLabel)

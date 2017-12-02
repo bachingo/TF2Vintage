@@ -456,6 +456,9 @@ enum
 	TF_COND_INVULNERABLE,
 	TF_COND_TELEPORTED,
 	TF_COND_TAUNTING,
+	TF_COND_DISPENSER_HEALING_1,
+	TF_COND_DISPENSER_HEALING_2,
+	TF_COND_DISPENSER_HEALING_3,
 	TF_COND_INVULNERABLE_WEARINGOFF,
 	TF_COND_STEALTHED_BLINK,
 	TF_COND_SELECTED_TO_TELEPORT,
@@ -974,6 +977,7 @@ enum
 
 extern float g_flTeleporterRechargeTimes[];
 extern float g_flDispenserAmmoRates[];
+extern float g_flDispenserCloakRates[];
 extern float g_flDispenserHealRates[];
 
 //-------------------------

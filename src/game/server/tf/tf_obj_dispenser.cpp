@@ -759,6 +759,9 @@ void CObjectDispenser::StopHealing( CBaseEntity *pOther )
 		if ( pPlayer )
 		{
 			pPlayer->m_Shared.StopHealing( GetOwner() );
+			pPlayer->m_Shared.RemoveCond(TF_COND_DISPENSER_HEALING_1);
+			pPlayer->m_Shared.RemoveCond(TF_COND_DISPENSER_HEALING_2);
+			pPlayer->m_Shared.RemoveCond(TF_COND_DISPENSER_HEALING_3);
 		}
 	}
 }
@@ -787,6 +790,18 @@ bool CObjectDispenser::CouldHealTarget( CBaseEntity *pTarget )
 		if ( iPlayerTeam != iTeam )
 		{
 			return false;
+		}
+
+		switch (GetUpgradeLevel())
+		{
+		case 1:
+			pTFPlayer->m_Shared.AddCond(TF_COND_DISPENSER_HEALING_1);
+		case 2:
+			pTFPlayer->m_Shared.AddCond(TF_COND_DISPENSER_HEALING_2);
+		case 3:
+			pTFPlayer->m_Shared.AddCond(TF_COND_DISPENSER_HEALING_3);
+		default:
+		pTFPlayer->m_Shared.AddCond(TF_COND_DISPENSER_HEALING_1);
 		}
 
 		return true;

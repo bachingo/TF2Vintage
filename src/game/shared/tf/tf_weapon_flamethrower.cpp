@@ -61,7 +61,7 @@
 	extern ConVar tf2c_muzzlelight;
 #endif
 
-ConVar  tf2v_airblast( "tf2c_airblast", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = tf2c (default), 2 = tf2v" );
+ConVar  tf2v_airblast( "tf2c_airblast", "2", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = tf2c (default), 2 = tf2v" );
 ConVar  tf2c_airblast_players( "tf2c_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
 
 #ifdef GAME_DLL

@@ -1209,7 +1209,7 @@ void CTeamRoundTimer::SetStopWatchTimeStamp( void )
 //-----------------------------------------------------------------------------
 bool CTeamRoundTimer::SetOvertimeEscort(void)
 {
-		if (gpGlobals->curtime <= m_flExtraOvertime)
+		if (gpGlobals->curtime <= m_flExtraOvertime && TFGameRules()->IsInEscortMode())
 		{
 			SetTimeRemaining(6);
 			return true;

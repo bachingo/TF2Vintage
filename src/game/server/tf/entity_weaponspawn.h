@@ -17,35 +17,34 @@
 class CWeaponSpawner : public CTFPowerup
 {
 public:
-	DECLARE_CLASS(CWeaponSpawner, CTFPowerup);
+	DECLARE_CLASS( CWeaponSpawner, CTFPowerup );
 	DECLARE_DATADESC();
 	DECLARE_SERVERCLASS();
 
 	CWeaponSpawner();
 
-	void	Spawn(void);
-	void	Precache(void);
-	virtual bool KeyValue(const char *szKeyName, const char *szValue);
-	virtual CBaseEntity* Respawn(void);
-	virtual void	Materialize(void);
-	bool	MyTouch(CBasePlayer *pPlayer);
-	void	EndTouch(CBaseEntity *pOther);
-	float	GetRespawnDelay(void);
-
-private:
-	CEconItemView m_Item;
-
-	CNetworkVar(bool, m_bStaticSpawner);
-	CNetworkVar(bool, m_bOutlineDisabled);
-
-	IMPLEMENT_NETWORK_VAR_FOR_DERIVED(m_bDisabled);
-	IMPLEMENT_NETWORK_VAR_FOR_DERIVED(m_bRespawning);
-
-	CNetworkVar(float, m_flRespawnTime);
-	CNetworkVar(float, m_flRespawnAtTime);
+	void	Spawn( void );
+	void	Precache( void );
+	virtual bool KeyValue( const char *szKeyName, const char *szValue );
+	virtual CBaseEntity* Respawn( void );
+	virtual void	Materialize( void );
+	bool	MyTouch( CBasePlayer *pPlayer );
+	void	EndTouch( CBaseEntity *pOther );
+	float	GetRespawnDelay( void );
 
 	int		m_nWeaponID;
 	int		m_nItemID;
+	int		m_iRespawnTime;
+
+	CNetworkVar( bool, m_bStaticSpawner );
+	CNetworkVar( bool, m_bOutlineDisabled );
+
+	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_bDisabled );
+	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_bRespawning );
+
+private:
+	CEconItemView m_Item;
+	CTFWeaponInfo *m_pWeaponInfo;
 };
 
 #endif // ENTITY_HEALTHKIT_H
