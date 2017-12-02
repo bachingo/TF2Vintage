@@ -3262,10 +3262,10 @@ CTFWeaponInfo *GetTFWeaponInfo(int iWeapon)
 	return pWeaponInfo;
 }
 
-CTFWeaponInfo *GetTFWeaponInfoForItem( CEconItemView *pItem, int iClass )
+CTFWeaponInfo *GetTFWeaponInfoForItem( int iItemID, int iClass )
 {
 	// Get the weapon information.
-	CEconItemDefinition *pItemDef = pItem->GetStaticData();
+	CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition( iItemID );
 
 	if ( !pItemDef )
 		return NULL;

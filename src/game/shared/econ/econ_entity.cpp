@@ -11,15 +11,21 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef CLIENT_DLL
+EXTERN_RECV_TABLE( DT_ScriptCreatedItem )
+#else
+EXTERN_SEND_TABLE( DT_ScriptCreatedItem )
+#endif
+
 IMPLEMENT_NETWORKCLASS_ALIASED( EconEntity, DT_EconEntity )
 
-BEGIN_NETWORK_TABLE(CEconEntity, DT_EconEntity)
+BEGIN_NETWORK_TABLE( CEconEntity, DT_EconEntity )
 #ifdef CLIENT_DLL
-RecvPropDataTable(RECVINFO_DT(m_Item), 0, &REFERENCE_RECV_TABLE(DT_ScriptCreatedItem)),
-RecvPropDataTable(RECVINFO_DT(m_AttributeManager), 0, &REFERENCE_RECV_TABLE(DT_AttributeContainer)),
+	RecvPropDataTable( RECVINFO_DT( m_Item ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
+	RecvPropDataTable( RECVINFO_DT( m_AttributeManager ), 0, &REFERENCE_RECV_TABLE( DT_AttributeContainer ) ),
 #else
-SendPropDataTable(SENDINFO_DT(m_Item), &REFERENCE_SEND_TABLE(DT_ScriptCreatedItem)),
-SendPropDataTable(SENDINFO_DT(m_AttributeManager), &REFERENCE_SEND_TABLE(DT_AttributeContainer)),
+	SendPropDataTable( SENDINFO_DT( m_Item ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
+	SendPropDataTable( SENDINFO_DT( m_AttributeManager ), &REFERENCE_SEND_TABLE( DT_AttributeContainer ) ),
 #endif
 END_NETWORK_TABLE()
 

@@ -17,12 +17,6 @@ public:
 };
 
 
-#ifdef CLIENT_DLL
-EXTERN_RECV_TABLE(DT_ScriptCreatedItem)
-#else
-EXTERN_SEND_TABLE(DT_ScriptCreatedItem)
-#endif
-
 class CEconItemView
 {
 public:

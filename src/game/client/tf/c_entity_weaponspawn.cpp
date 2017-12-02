@@ -34,24 +34,15 @@ private:
 	bool				m_bTouchingPlayer;
 	bool				m_bStaticSpawner;
 	bool				m_bOutlineDisabled;
-
-	float				m_flRespawnTime;
-	float				m_flRespawnAtTime;
-
-	IMaterial	*m_pReturnProgressMaterial_Empty;		// For labels above players' heads.
-	IMaterial	*m_pReturnProgressMaterial_Full;
 };
 
 LINK_ENTITY_TO_CLASS( tf_weaponspawner, C_WeaponSpawner );
 
-
-IMPLEMENT_CLIENTCLASS_DT(C_WeaponSpawner, DT_WeaponSpawner, CWeaponSpawner)
-	RecvPropBool(RECVINFO(m_bDisabled)),
-	RecvPropBool(RECVINFO(m_bRespawning)),
-	RecvPropBool(RECVINFO(m_bStaticSpawner)),	// Mapper var that disables the hovering weapon rotation
-	RecvPropBool(RECVINFO(m_bOutlineDisabled)), // Mapper var that disables the weapon outlines
-	RecvPropTime(RECVINFO(m_flRespawnTime)),
-	RecvPropTime(RECVINFO(m_flRespawnAtTime)),
+IMPLEMENT_CLIENTCLASS_DT( C_WeaponSpawner, DT_WeaponSpawner, CWeaponSpawner )
+	RecvPropBool( RECVINFO( m_bDisabled ) ),
+	RecvPropBool( RECVINFO( m_bRespawning ) ),
+	RecvPropBool( RECVINFO( m_bStaticSpawner ) ),	// Mapper var that disables the hovering weapon rotation
+	RecvPropBool( RECVINFO( m_bOutlineDisabled ) ), // Mapper var that disables the weapon outlines
 END_RECV_TABLE()
 
 C_WeaponSpawner::C_WeaponSpawner()

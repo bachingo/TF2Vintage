@@ -458,8 +458,7 @@ void CTFPlayer::TFPlayerThink()
 
 	if (gpGlobals->curtime > m_flStunTime)
 	{
-		if (MaxSpeed() != GetPlayerClass()->GetMaxSpeed())
-			SetMaxSpeed(GetPlayerClass()->GetMaxSpeed());
+		TeamFortress_SetSpeed();
 	}
 
 	// Time to finish the current random expression? Or time to pick a new one?
@@ -3924,6 +3923,13 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 		// Take damage - round to the nearest integer.
 		m_iHealth -= ( flDamage + 0.5f );
+		if (m_Shared.InCond(TF_COND_DISGUISED))
+		{
+			if ((m_Shared.m_iDisguiseHealth - (flDamage + 0.5f)) <= 0)
+				m_Shared.m_iDisguiseHealth = 1;
+			else
+				m_Shared.m_iDisguiseHealth -= (flDamage + 0.5f);
+		}
 	}
 
 	m_flLastDamageTime = gpGlobals->curtime;
