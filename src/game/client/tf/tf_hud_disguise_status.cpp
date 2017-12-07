@@ -184,8 +184,10 @@ void CDisguiseStatus::ShowAndUpdateStatus(void)
 		C_BasePlayer *pDisguiseTarget = ToBasePlayer(pPlayer->m_Shared.GetDisguiseTarget());
 		if (pDisguiseTarget)
 		{ 
-			const char *nameError = PLAYER_ERROR_NAME, *nameUnconnected = PLAYER_UNCONNECTED_NAME;
-			if (pPlayer->GetPlayerName() == nameError || pPlayer->GetPlayerName() == nameUnconnected || pDisguiseTarget->GetTeamNumber() != pPlayer->m_Shared.GetDisguiseTeam()) //check for undefined player names
+			//const char *nameError = PLAYER_ERROR_NAME, *nameUnconnected = PLAYER_UNCONNECTED_NAME;
+			//if (pPlayer->GetPlayerName() == nameError || pPlayer->GetPlayerName() == nameUnconnected || pDisguiseTarget->GetTeamNumber() != pPlayer->m_Shared.GetDisguiseTeam()) //check for undefined player names
+				//SetDialogVariable("disguisename", pPlayer->GetPlayerName());
+			if (pPlayer->m_Shared.GetDisguiseTarget() == NULL)
 				SetDialogVariable("disguisename", pPlayer->GetPlayerName());
 			else
 				SetDialogVariable("disguisename", pDisguiseTarget->GetPlayerName());

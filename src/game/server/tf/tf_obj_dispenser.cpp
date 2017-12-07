@@ -800,8 +800,6 @@ bool CObjectDispenser::CouldHealTarget( CBaseEntity *pTarget )
 			pTFPlayer->m_Shared.AddCond(TF_COND_DISPENSER_HEALING_2);
 		case 3:
 			pTFPlayer->m_Shared.AddCond(TF_COND_DISPENSER_HEALING_3);
-		default:
-		pTFPlayer->m_Shared.AddCond(TF_COND_DISPENSER_HEALING_1);
 		}
 
 		return true;

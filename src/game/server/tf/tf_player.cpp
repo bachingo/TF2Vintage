@@ -3282,10 +3282,15 @@ EHANDLE CTFPlayer::TeamFortress_GetDisguiseTarget(int nTeam, int nClass)
 		return NULL;
 	}
 
-	CBaseEntity *pLastTarget = ToTFPlayer(m_Shared.GetDisguiseTarget()); // don't redisguise self as this person
-
+	//CTFPlayer *pLastTarget = ToTFPlayer(m_Shared.GetDisguiseTarget()); // don't redisguise self as this person
+	CTFPlayer *pLastTarget = ToTFPlayer(m_Shared.m_hDisguiseTarget.Get());
 	// Find a player on the team the spy is disguised as to pretend to be
 	CTFPlayer *pPlayer = NULL;
+	int foundPlayers = 0;
+	foundPlayer *root = new foundPlayer(), *current;
+	root->next = NULL;
+	root->player = pLastTarget;
+	current = root;
 
 	// Loop through players
 	int i;
@@ -3294,35 +3299,68 @@ EHANDLE CTFPlayer::TeamFortress_GetDisguiseTarget(int nTeam, int nClass)
 		pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
 		if (pPlayer)
 		{
-			if (pPlayer == pLastTarget){}
 			// choose someone else, we're trying to rid ourselves of a disguise as this one
+			if (pPlayer == pLastTarget)
+			{
+				continue;
+			}
 
 			// First, try to find a player with the same color AND skin
 			else if (pPlayer->GetTeamNumber() == nTeam && pPlayer->GetPlayerClass()->GetClassIndex() == nClass)
-				return pPlayer;
+			{
+				foundPlayer *newPlayer = new foundPlayer();
+				newPlayer->player = pPlayer;
+				newPlayer->next = NULL;
+				current->next = newPlayer;
+				current = current->next;
+				foundPlayers++;
+			}
 		}
 	}
-	if (pPlayer && pPlayer != pLastTarget)
-		return pPlayer;
 
+	if (foundPlayers > 0)
+	{
+		current = root;
+		for (i = 1; i <= random->RandomInt(1, foundPlayers); i++)
+			current = current->next;
+		return current->player;
+	}
+
+	foundPlayers = 0;
 	// we didn't find someone with the same skin, so just find someone with the same color
 	for (i = 1; i <= gpGlobals->maxClients; i++)
 	{
 		pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
 		if (pPlayer)
 		{
-			if (pPlayer != pLastTarget){}
 			//choose someone else, we're trying to rid ourselves of a disguise as this one
+			if (pPlayer == pLastTarget)
+			{
+				continue;
+			}
 
 			else if (pPlayer->GetTeamNumber() == nTeam)
 			{
-				return pPlayer;
+				foundPlayer *newPlayer = new foundPlayer();
+				newPlayer->player = pPlayer;
+				newPlayer->next = NULL;
+				current->next = newPlayer;
+				current = current->next;
+				foundPlayers++;
 			}
 		}
 	}
 
+	if (foundPlayers > 0)
+	{
+		current = root;
+		for (i = 1; i <= random->RandomInt(1, foundPlayers); i++)
+			current = current->next;
+		return current->player;
+	}
+
 	// we didn't find anyone
-	return NULL;
+	return root->player;
 }
 
 static float DamageForce( const Vector &size, float damage, float scale )
@@ -3925,7 +3963,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 		// Take damage - round to the nearest integer.
 		m_iHealth -= ( flDamage + 0.5f );
-		if (m_Shared.InCond(TF_COND_DISGUISED))
+		if (m_Shared.InCond(TF_COND_DISGUISED) && !pAttacker->IsPlayer())
 		{
 			if ((m_Shared.m_iDisguiseHealth - (flDamage + 0.5f)) <= 0)
 				m_Shared.m_iDisguiseHealth = 1;

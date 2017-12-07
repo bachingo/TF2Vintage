@@ -16,6 +16,12 @@
 #include "tf_weapon_medigun.h"
 #include "ihasattributes.h"
 
+struct foundPlayer
+{
+	foundPlayer *next;
+	CTFPlayer *player;
+};
+
 class CTFPlayer;
 class CTFTeam;
 class CTFGoal;
