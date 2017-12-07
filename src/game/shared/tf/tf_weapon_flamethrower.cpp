@@ -575,10 +575,16 @@ void CTFFlameThrower::SecondaryAttack()
 			Vector vecPushDir;
 			QAngle angPushDir = angDir;
 
+			if (tf2v_airblast.GetInt() == 2)
+				angPushDir[PITCH] = min(-45, angPushDir[PITCH]);
+
 			// If the victim is on the ground assume that shooter is looking at least 45 degrees up.
-			if ( pTFPlayer->GetGroundEntity() != NULL )
+			else if (tf2v_airblast.GetInt() == 1)
 			{
-				angPushDir[PITCH] = min( -45, angPushDir[PITCH] );
+				if (pTFPlayer->GetGroundEntity() != NULL)
+				{
+					angPushDir[PITCH] = min(-45, angPushDir[PITCH]);
+				}
 			}
 
 			AngleVectors( angPushDir, &vecPushDir );

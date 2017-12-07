@@ -28,6 +28,8 @@
 #include "materialsystem/imaterial.h"
 #include "tier0/dbg.h"
 #include "cdll_int.h"
+#include "tf_player_shared.h"
+#include "tf_shareddefs.h"
 #include <vgui/IPanel.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -227,6 +229,9 @@ void CVoiceStatus::DrawHeadLabels()
 			continue;
 
 		C_BasePlayer *pPlayer = dynamic_cast<C_BasePlayer*>(pClient);
+
+
+
 		if( !pPlayer )
 			continue;
 
@@ -234,8 +239,6 @@ void CVoiceStatus::DrawHeadLabels()
 		if( pPlayer->IsPlayerDead() )
 			continue;
 
-		if ( pPlayer->IsTransparent() )
-			continue;
 
 		// Place it 20 units above his head.
 		Vector vOrigin = pPlayer->WorldSpaceCenter();

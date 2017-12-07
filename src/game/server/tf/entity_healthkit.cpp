@@ -91,9 +91,16 @@ bool CHealthKit::MyTouch(CBasePlayer *pPlayer)
 			// Restore disguise health.
 			if (pTFPlayer->m_Shared.InCond(TF_COND_DISGUISED))
 			{
+				bool isHealthKit = false;
+
+				if (GetPowerupSize() == POWERUP_SMALL || GetPowerupSize() == POWERUP_MEDIUM || GetPowerupSize() == POWERUP_FULL)
+					isHealthKit = true;
+				if (GetPowerupSize() == POWERUP_TINY || POWERUP_MEGA)
+					isHealthKit = false;
+
 				int iFakeHealthToAdd = ceil(pTFPlayer->m_Shared.GetDisguiseMaxHealth() * PackRatios[GetPowerupSize()]);
 
-				if (pTFPlayer->m_Shared.AddDisguiseHealth(iFakeHealthToAdd, !(bTiny && bMega)))
+				if (pTFPlayer->m_Shared.AddDisguiseHealth(iFakeHealthToAdd, isHealthKit))
 					bSuccess = true;
 			}
 

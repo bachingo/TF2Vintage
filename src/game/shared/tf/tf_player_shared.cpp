@@ -1898,7 +1898,6 @@ void CTFPlayerShared::CompleteDisguise(void)
 	{
 		m_nMaskClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS);
 	}
-
 	// Update the player model and skin.
 	m_pOuter->UpdateModel();
 
@@ -1928,7 +1927,12 @@ int CTFPlayerShared::AddDisguiseHealth(int iHealthToAdd, bool bOverheal /*= fals
 {
 	Assert(InCond(TF_COND_DISGUISED));
 
-	int iMaxHealth = !bOverheal ? GetDisguiseMaxBuffedHealth() : GetDisguiseMaxHealth();
+	int iMaxHealth;
+	if (!bOverheal)
+		iMaxHealth = GetDisguiseMaxHealth();
+	else
+		iMaxHealth = GetDisguiseMaxBuffedHealth();
+
 	iHealthToAdd = clamp(iHealthToAdd, 0, iMaxHealth - m_iDisguiseHealth);
 	if (iHealthToAdd <= 0)
 		return 0;
