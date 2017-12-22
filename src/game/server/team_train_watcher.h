@@ -23,16 +23,18 @@ class CTeamControlPoint;
 #define TEAM_TRAIN_ALERT_DISTANCE	750   // alert is the VO warning
 #define TEAM_TRAIN_ALARM_DISTANCE	200   // alarm is the looping sound played at the control point
 
-#define TEAM_TRAIN_ALERT			"Announcer.Cart.Warning"
-#define TEAM_TRAIN_FINAL_ALERT		"Announcer.Cart.FinalWarning"
 #define TEAM_TRAIN_ALARM			"Cart.Warning"
 #define TEAM_TRAIN_ALARM_SINGLE		"Cart.WarningSingle"
+#define TEAM_TRAIN_ALERT_DEFENSE	"Announcer.Cart.DefenseWarning"
+#define TEAM_TRAIN_ALERT_ATTACK		"Announcer.Cart.AttackWarning"
+#define TEAM_TRAIN_FINAL_ALERT_DEFENSE	"Announcer.Cart.DefenseFinalWarning"
+#define TEAM_TRAIN_FINAL_ALERT_ATTACK	"Announcer.Cart.AttackFinalWarning"
 
 #define TW_THINK		"CTeamTrainWatcherThink"
 #define TW_ALARM_THINK	"CTeamTrainWatcherAlarmThink"
 #define TW_ALARM_THINK_INTERVAL	8.0
 
-// #define TWMASTER_THINK	"CTeamTrainWatcherMasterThink"
+//#define TWMASTER_THINK	"CTeamTrainWatcherMasterThink"
 
 DECLARE_AUTO_LIST( ITFTeamTrainWatcher );
 
@@ -49,6 +51,7 @@ public:
 	virtual void UpdateOnRemove( void );
 	virtual int UpdateTransmitState();
 
+	void Precache( void );
 	void InputRoundActivate( inputdata_t &inputdata );
 	void InputEnable( inputdata_t &inputdata );
 	void InputDisable( inputdata_t &inputdata );
@@ -153,7 +156,8 @@ private:
 	// === Networked Data ===
 
 	// current total progress, percentage
-	CNetworkVar( float, m_flTotalProgress );
+	//CNetworkVar( float, m_flTotalProgress );
+	float m_flTotalProgress;
 
 	CNetworkVar( int, m_iTrainSpeedLevel );
 
@@ -202,8 +206,8 @@ inline int CTeamTrainWatcher::GetCapturerCount( void ) const
 }
 
 
-/*
-class CTeamTrainWatcherMaster : public CBaseEntity, public CGameEventListener
+
+/*class CTeamTrainWatcherMaster : public CBaseEntity, public CGameEventListener
 {
 	DECLARE_CLASS( CTeamTrainWatcherMaster, CBaseEntity );
 
@@ -227,7 +231,7 @@ private:
 	float m_flRedProgress;
 };
 
-extern EHANDLE g_hTeamTrainWatcherMaster;
-*/
+extern EHANDLE g_hTeamTrainWatcherMaster;*/
+
 
 #endif //TEAM_TRAIN_WATCHER_H

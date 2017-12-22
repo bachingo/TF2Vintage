@@ -44,7 +44,9 @@ public:
 
 private:
 
-	int m_iAmmoMetal;
+	int  m_iAmmoMetal;
+	bool m_bStealthed;
+	bool m_bStealthedLast;
 
 	bool m_bPlayingSound;
 

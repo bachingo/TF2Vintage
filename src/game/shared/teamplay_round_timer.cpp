@@ -22,6 +22,7 @@
 #else
 #include "team.h"
 #include "team_objectiveresource.h"
+#include "team_train_watcher.h"
 #if defined( TF_DLL ) || defined ( TF_CLASSIC )
 #include "tf_player.h"
 #endif // TF_DLL
@@ -1012,13 +1013,13 @@ void CTeamRoundTimer::RoundTimerThink( void )
 	{
 		// Allow the gamerules to prevent timer expiration (i.e. while a control point is contested)
 		
-		if (!TeamplayGameRules()->TimerMayExpire())
+		if (!TeamplayGameRules()->TimerMayExpire() || (TFGameRules()->IsInEscortMode() && ObjectiveResource()->GetRecedeTime(TF_TEAM_BLUE) > gpGlobals->curtime))
 		{
 			// we don't want the timer to keep going (negative time)
 			m_flTimerEndTime = gpGlobals->curtime;
 
 			//add 5 seconds to the timer
-			m_flExtraOvertime = gpGlobals->curtime + 5.05f;
+			//m_flExtraOvertime = gpGlobals->curtime + 5.05f;
 
 			// is this the timer we're showing in the HUD?
 			if (ShowInHud())
@@ -1050,7 +1051,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 			SetContextThink(&CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK);
 			return;
 		}
-		else
+		/*else
 		{
 			//set overtime on TimerMayExpire() for Payload gametype
 			if (SetOvertimeEscort())
@@ -1058,7 +1059,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 				SetContextThink(&CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK);
 				return;
 			}
-		}
+		}*/
 
 		m_OnFinished.FireOutput( this, this );
 		m_bFireFinished = false;

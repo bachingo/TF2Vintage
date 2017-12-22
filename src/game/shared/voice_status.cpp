@@ -18,6 +18,7 @@
 #include "c_playerresource.h"
 #include "cliententitylist.h"
 #include "c_baseplayer.h"
+#include "c_tf_player.h"
 #include "materialsystem/imesh.h"
 #include "view.h"
 #include "convar.h"
@@ -230,8 +231,6 @@ void CVoiceStatus::DrawHeadLabels()
 
 		C_BasePlayer *pPlayer = dynamic_cast<C_BasePlayer*>(pClient);
 
-
-
 		if( !pPlayer )
 			continue;
 
@@ -239,6 +238,8 @@ void CVoiceStatus::DrawHeadLabels()
 		if( pPlayer->IsPlayerDead() )
 			continue;
 
+		if (ToTFPlayer(pPlayer)->m_Shared.InCond(TF_COND_STEALTHED) && pPlayer->GetTeamNumber() != GetLocalPlayerTeam())
+			continue;
 
 		// Place it 20 units above his head.
 		Vector vOrigin = pPlayer->WorldSpaceCenter();

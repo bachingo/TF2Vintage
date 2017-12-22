@@ -29,6 +29,7 @@
 #include "tf_hud_flagstatus.h"
 #include "tf_hud_objectivestatus.h"
 #include "tf_hud_deathmatchstatus.h"
+#include "tf_hud_escortobjectivestatus.h"
 #include "tf_spectatorgui.h"
 #include "teamplayroundbased_gamerules.h"
 #include "tf_gamerules.h"
@@ -713,8 +714,8 @@ CTFHudObjectiveStatus::CTFHudObjectiveStatus( const char *pElementName ) : CHudE
 	m_pDMPanel = new CTFHudDeathMatchObjectives( this, "ObjectiveStatusDeathMatchPanel" );
 	m_pControlPointIconsPanel = NULL;
 	m_pControlPointProgressBar = new CControlPointProgressBar( this );
-	//m_pEscortPanel = new CTFHudEscort( this, "ObjectiveStatusEscort" );
-	//m_pEscortRacePanel = new CTFHudMultipleEscort( this, "ObjectiveStatusMultipleEscort" );
+	m_pEscortPanel = new CTFHudEscort( this, "ObjectiveStatusEscort" );
+	m_pEscortRacePanel = new CTFHudMultipleEscort( this, "ObjectiveStatusMultipleEscort" );
 	//m_pTrainingPanel = new CTFHudTraining( this, "ObjectiveStatusTraining" );
 	//m_pRobotDestructionPanel = new CTFHUDRobotDestruction( this, "ObjectiveStatusRobotDestruction" );
 
@@ -764,6 +765,16 @@ void CTFHudObjectiveStatus::Reset()
 	{
 		m_pDMPanel->Reset();
 	}
+
+	if ( m_pEscortPanel )
+	{
+		m_pEscortPanel->Reset();
+	}
+
+	if ( m_pEscortRacePanel )
+	{
+		m_pEscortRacePanel->Reset();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -808,12 +819,22 @@ void CTFHudObjectiveStatus::SetVisiblePanels( void )
 			break;
 
 		case TF_GAMETYPE_ESCORT:
-			// turn on the payload panel
 
-			// turn on the control point icons because we don't have a payload hud yet
-			if (m_pControlPointIconsPanel && !m_pControlPointIconsPanel->IsVisible())
+			if (TeamplayRoundBasedRules()->HasMultipleTrains())
 			{
-				m_pControlPointIconsPanel->SetVisible(true);
+				// turn on the payload race panel
+				if (m_pEscortRacePanel && !m_pEscortRacePanel->IsVisible())
+				{
+					m_pEscortRacePanel->SetVisible(true);
+				}
+			}
+			else
+			{
+				// turn on the payload panel
+				if (m_pEscortPanel && !m_pEscortPanel->IsVisible())
+				{
+					m_pEscortPanel->SetVisible(true);
+				}
 			}
 			return;
 			break;
@@ -862,12 +883,21 @@ void CTFHudObjectiveStatus::SetVisiblePanels( void )
 			break;
 
 		case TF_GAMETYPE_ESCORT:
-			// turn on the payload panel
-			
-			// turn on the control point icons because we don't have a payload hud yet
-			if (m_pControlPointIconsPanel && !m_pControlPointIconsPanel->IsVisible())
+			if (TeamplayRoundBasedRules()->HasMultipleTrains())
 			{
-				m_pControlPointIconsPanel->SetVisible(true);
+				// turn on the payload race panel
+				if (m_pEscortRacePanel && !m_pEscortRacePanel->IsVisible())
+				{
+					m_pEscortRacePanel->SetVisible(true);
+				}
+			}
+			else
+			{
+				// turn on the payload panel
+				if (m_pEscortPanel && !m_pEscortPanel->IsVisible())
+				{
+					m_pEscortPanel->SetVisible(true);
+				}
 			}
 			break;
 
@@ -897,6 +927,18 @@ void CTFHudObjectiveStatus::TurnOffPanels()
 	if ( m_pControlPointIconsPanel && m_pControlPointIconsPanel->IsVisible() )
 	{
 		m_pControlPointIconsPanel->SetVisible( false );
+	}
+
+	// turn off the escort panel
+	if (m_pEscortPanel && m_pEscortPanel->IsVisible())
+	{
+		m_pEscortPanel->SetVisible( false );
+	}
+
+	// turn off the escort race panel
+	if (m_pEscortRacePanel && m_pEscortRacePanel->IsVisible())
+	{
+		m_pEscortRacePanel->SetVisible( false );
 	}
 
 	// turn off the DM score panel

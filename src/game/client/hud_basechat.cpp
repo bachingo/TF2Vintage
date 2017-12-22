@@ -38,6 +38,7 @@ ConVar cl_showtextmsg( "cl_showtextmsg", "1", 0, "Enable/disable text messages p
 ConVar cl_chatfilters( "cl_chatfilters", "63", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Stores the chat filter settings " );
 ConVar cl_chatfilter_version( "cl_chatfilter_version", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN, "Stores the chat filter version" );
 ConVar cl_mute_all_comms("cl_mute_all_comms", "1", FCVAR_ARCHIVE, "If 1, then all communications from a player will be blocked when that player is muted, including chat messages.");
+ConVar cl_use_text_formatting("cl_use_text_formatting", "1", FCVAR_CLIENTDLL, "Use special text formatting");
 
 const int kChatFilterVersion = 1;
 
@@ -47,6 +48,9 @@ Color g_ColorGreen( 153, 255, 153, 255 );
 Color g_ColorDarkGreen( 64, 255, 64, 255 );
 Color g_ColorYellow( 255, 178, 0, 255 );
 Color g_ColorGrey( 204, 204, 204, 255 );
+Color g_ColorGreenText( 120, 153, 34, 255 );
+Color g_ColorFaggotText( 231, 153, 163, 255 );
+//Color g_ColorRedText( 159, 0, 15, 255 );
 
 
 // removes all color markup characters, so Msg can deal with the string properly
@@ -1459,58 +1463,58 @@ void CBaseHudChatLine::InsertAndColorizeText( wchar_t *buf, int clientIndex )
 				++txt;
 			}
 
-			if ( bDone )
-			{
-				break;
-			}
+if (bDone)
+{
+	break;
+}
 
-			if ( bFoundColorCode )
-			{
-				int count = m_textRanges.Count();
-				if ( count )
-				{
-					m_textRanges[count-1].end = nBytesIn;
-				}
+if (bFoundColorCode)
+{
+	int count = m_textRanges.Count();
+	if (count)
+	{
+		m_textRanges[count - 1].end = nBytesIn;
+	}
 
-				m_textRanges.AddToTail( range );
-			}
+	m_textRanges.AddToTail(range);
+}
 		}
 	}
 
-	if ( !m_textRanges.Count() && m_iNameLength > 0 && m_text[0] == COLOR_USEOLDCOLORS )
+	if (!m_textRanges.Count() && m_iNameLength > 0 && m_text[0] == COLOR_USEOLDCOLORS)
 	{
 		TextRange range;
 		range.start = 0;
 		range.end = m_iNameStart;
-		range.color = pChat->GetTextColorForClient( COLOR_NORMAL, clientIndex );
-		m_textRanges.AddToTail( range );
+		range.color = pChat->GetTextColorForClient(COLOR_NORMAL, clientIndex);
+		m_textRanges.AddToTail(range);
 
 		range.start = m_iNameStart;
 		range.end = m_iNameStart + m_iNameLength;
-		range.color = pChat->GetTextColorForClient( COLOR_PLAYERNAME, clientIndex );
-		m_textRanges.AddToTail( range );
+		range.color = pChat->GetTextColorForClient(COLOR_PLAYERNAME, clientIndex);
+		m_textRanges.AddToTail(range);
 
 		range.start = range.end;
-		range.end = wcslen( m_text );
-		range.color = pChat->GetTextColorForClient( COLOR_NORMAL, clientIndex );
-		m_textRanges.AddToTail( range );
+		range.end = wcslen(m_text);
+		range.color = pChat->GetTextColorForClient(COLOR_NORMAL, clientIndex);
+		m_textRanges.AddToTail(range);
 	}
 
-	if ( !m_textRanges.Count() )
+	if (!m_textRanges.Count())
 	{
 		TextRange range;
 		range.start = 0;
-		range.end = wcslen( m_text );
-		range.color = pChat->GetTextColorForClient( COLOR_NORMAL, clientIndex );
-		m_textRanges.AddToTail( range );
+		range.end = wcslen(m_text);
+		range.color = pChat->GetTextColorForClient(COLOR_NORMAL, clientIndex);
+		m_textRanges.AddToTail(range);
 	}
 
-	for ( int i=0; i<m_textRanges.Count(); ++i )
+	for (int i = 0; i < m_textRanges.Count(); ++i)
 	{
 		wchar_t * start = m_text + m_textRanges[i].start;
-		if ( *start > 0 && *start < COLOR_MAX )
+		if (*start > 0 && *start < COLOR_MAX)
 		{
-			Assert( *start != COLOR_HEXCODE && *start != COLOR_HEXCODE_ALPHA );
+			Assert(*start != COLOR_HEXCODE && *start != COLOR_HEXCODE_ALPHA);
 			m_textRanges[i].start += 1;
 		}
 	}
@@ -1521,34 +1525,47 @@ void CBaseHudChatLine::InsertAndColorizeText( wchar_t *buf, int clientIndex )
 //-----------------------------------------------------------------------------
 // Purpose: Inserts colored text into the RichText control at the given alpha
 //-----------------------------------------------------------------------------
-void CBaseHudChatLine::Colorize( int alpha )
+void CBaseHudChatLine::Colorize(int alpha)
 {
 	// clear out text
-	SetText( "" );
+	SetText("");
 
-	CBaseHudChat *pChat = dynamic_cast<CBaseHudChat*>(GetParent() );
+	CBaseHudChat *pChat = dynamic_cast<CBaseHudChat*>(GetParent());
 
-	if ( pChat && pChat->GetChatHistory() )
-	{	
-		pChat->GetChatHistory()->InsertString( "\n" );
+	if (pChat && pChat->GetChatHistory())
+	{
+		pChat->GetChatHistory()->InsertString("\n");
 	}
 
 	wchar_t wText[4096];
 	Color color;
-	for ( int i=0; i<m_textRanges.Count(); ++i )
+	for (int i = 0; i < m_textRanges.Count(); ++i)
 	{
 		wchar_t * start = m_text + m_textRanges[i].start;
 		int len = m_textRanges[i].end - m_textRanges[i].start + 1;
-		if ( len > 1 && len <= ARRAYSIZE( wText ) )
+		if (len > 1 && len <= ARRAYSIZE(wText))
 		{
-			wcsncpy( wText, start, len );
-			wText[len-1] = 0;
+			wcsncpy(wText, start, len);
+			wText[len - 1] = 0;
 			color = m_textRanges[i].color;
-			if ( !m_textRanges[i].preserveAlpha )
+			if (!m_textRanges[i].preserveAlpha)
 			{
 				color[3] = alpha;
 			}
 
+			//HACK text formatting for greentext and pinktext
+			if (cl_use_text_formatting.GetBool())
+			{
+				if (wText[1] == ':' && wText[4] == '>' && color[0] == 251 && color[1] == 235 && color[2] == 202)
+				{
+					color = g_ColorGreenText;
+				}
+				else if (wText[1] == ':' && wText[4] == '<' && color[0] == 251 && color[1] == 235 && color[2] == 202)
+				{
+					color = g_ColorFaggotText;
+				}
+			}
+				
 			InsertColorChange( color );
 			InsertString( wText );
 

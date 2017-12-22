@@ -104,11 +104,13 @@ private:
 	CUtlVector< EHANDLE >	m_hTouchingEntities;
 
 	CNetworkVar( int, m_iAmmoMetal );
+	CNetworkVar( bool, m_bStealthed );
 
 	// Time when the upgrade animation will complete
 	float m_flUpgradeCompleteTime;
 
 	float m_flNextAmmoDispense;
+	float m_flNextStealthThink;
 
 	bool m_bIsUpgrading;
 

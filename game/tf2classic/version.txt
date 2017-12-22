@@ -1,1 +1,1 @@
-version=TF2V-2.9.31 HOTFIX
+version=TF2V-V3RC

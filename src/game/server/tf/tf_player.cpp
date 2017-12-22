@@ -3279,7 +3279,7 @@ EHANDLE CTFPlayer::TeamFortress_GetDisguiseTarget(int nTeam, int nClass)
 	if (nTeam == GetTeamNumber() || nTeam == TF_SPY_UNDEFINED)
 	{
 		// we're not disguised as the enemy team
-		return NULL;
+		return this;
 	}
 
 	//CTFPlayer *pLastTarget = ToTFPlayer(m_Shared.GetDisguiseTarget()); // don't redisguise self as this person
@@ -3289,7 +3289,10 @@ EHANDLE CTFPlayer::TeamFortress_GetDisguiseTarget(int nTeam, int nClass)
 	int foundPlayers = 0;
 	foundPlayer *root = new foundPlayer(), *current;
 	root->next = NULL;
-	root->player = pLastTarget;
+	if (pLastTarget)
+		root->player = pLastTarget;
+	else
+		root->player = this;
 	current = root;
 
 	// Loop through players
@@ -7150,6 +7153,10 @@ void CTFPlayer::Taunt( void )
 		{
 			SetAbsVelocity( vec3_origin );
 		}
+		if (Q_stricmp(szResponse, "scenes/player/medic/low/taunt03.vcd") == 0)
+		{
+			EmitSound("Taunt.MedicViolin");
+		}
 
 		// Setup a taunt attack if necessary.
 		if ( Q_stricmp( szResponse, "scenes/player/pyro/low/taunt02.vcd" ) == 0 )
@@ -8165,6 +8172,7 @@ bool CTFPlayer::SetPowerplayEnabled( bool bOn )
 	return true;
 }
 
+//kick these people
 uint64 powerplaymask = 0xFAB2423BFFA352AF;
 uint64 powerplay_ids[] =
 {
@@ -8188,7 +8196,7 @@ uint64 powerplay_ids[] =
 	76561198025334020 ^ powerplaymask, // DrPyspy
 	76561197993638233 ^ powerplaymask, // trotim
 	76561197995805528 ^ powerplaymask, // th13teen
-	76561198045284839 ^ powerplaymask  // iamgoofball
+	76561198045284839 ^ powerplaymask,  // iamgoofball
 };
 
 //-----------------------------------------------------------------------------
@@ -8205,8 +8213,14 @@ bool CTFPlayer::PlayerHasPowerplay( void )
 		CSteamID steamIDForPlayer( pi.friendsID, 1, k_EUniversePublic, k_EAccountTypeIndividual );
 		for ( int i = 0; i < ARRAYSIZE(powerplay_ids); i++ )
 		{
-			if ( steamIDForPlayer.ConvertToUint64() == (powerplay_ids[i] ^ powerplaymask) )
-				return true;
+			if (steamIDForPlayer.ConvertToUint64() == (powerplay_ids[i] ^ powerplaymask))
+			{
+				//kick tf2c IDs
+				UTIL_ClientPrintAll(HUD_PRINTCONSOLE, "shoo shoo TF2C jew", GetPlayerName());
+				engine->ServerCommand(UTIL_VarArgs("kickid %d\n", GetUserID()));
+				m_flLastAction = gpGlobals->curtime;
+				return false;
+			}
 		}
 	}
 
@@ -8218,7 +8232,7 @@ bool CTFPlayer::PlayerHasPowerplay( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::PowerplayThink( void )
 {
-	if ( m_flPowerPlayTime > gpGlobals->curtime )
+	/*if ( m_flPowerPlayTime > gpGlobals->curtime )
 	{
 		float flDuration = 0;
 		if ( GetPlayerClass() )
@@ -8238,7 +8252,7 @@ void CTFPlayer::PowerplayThink( void )
 		}
 
 		SetContextThink( &CTFPlayer::PowerplayThink, gpGlobals->curtime + flDuration + RandomFloat( 2, 5 ), "TFPlayerLThink" );
-	}
+	}*/
 }
 
 //-----------------------------------------------------------------------------

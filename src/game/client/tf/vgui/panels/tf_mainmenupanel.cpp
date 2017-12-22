@@ -13,14 +13,13 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define BLOG_URL "http://tf2classic.com/?nolinks=1&noheader=1&nofooter=1&fillwrapper=1"
 
 static void OnBlogToggle(IConVar *var, const char *pOldValue, float flOldValue)
 {
 	GET_MAINMENUPANEL(CTFMainMenuPanel)->ShowBlogPanel(((ConVar*)var)->GetBool());
 }
-ConVar tf2c_mainmenu_music("tf2c_mainmenu_music", "1", FCVAR_ARCHIVE, "Toggle music in the main menu");
-ConVar tf2c_mainmenu_showblog("tf2c_mainmenu_showblog", "1", FCVAR_ARCHIVE, "Toggle blog in the main menu", OnBlogToggle);
+ConVar tf2v_mainmenu_music("tf2v_mainmenu_music", "1", FCVAR_ARCHIVE, "Toggle music in the main menu");
+//ConVar tf2c_mainmenu_showblog("tf2c_mainmenu_showblog", "1", FCVAR_ARCHIVE, "Toggle blog in the main menu", OnBlogToggle);
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -93,7 +92,7 @@ void CTFMainMenuPanel::PerformLayout()
 		(steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown"));
 	SetDialogVariable("nickname", szNickName);
 
-	ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
+	//ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
 	OnNotificationUpdate();
 	AutoLayout();
 
@@ -122,7 +121,7 @@ void CTFMainMenuPanel::ShowBlogPanel(bool show)
 		m_pBlogPanel->SetVisible(show);
 		if (show)
 		{
-			m_pBlogPanel->LoadBlogPost(BLOG_URL);
+			//m_pBlogPanel->LoadBlogPost(BLOG_URL);
 		}
 	}
 }
@@ -178,7 +177,7 @@ void CTFMainMenuPanel::OnTick()
 {
 	BaseClass::OnTick();
 
-	if (tf2c_mainmenu_music.GetBool() && !bInGameLayout)
+	if (tf2v_mainmenu_music.GetBool() && !bInGameLayout)
 	{
 		if ((m_psMusicStatus == MUSIC_FIND || m_psMusicStatus == MUSIC_STOP_FIND) && !enginesound->IsSoundStillPlaying(m_nSongGuid))
 		{
@@ -236,7 +235,7 @@ void CTFMainMenuPanel::Hide()
 void CTFMainMenuPanel::DefaultLayout()
 {
 	BaseClass::DefaultLayout();
-	ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
+	//ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
 };
 
 void CTFMainMenuPanel::GameLayout()
@@ -362,7 +361,7 @@ void CTFBlogPanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
-	LoadBlogPost(BLOG_URL);
+	//LoadBlogPost(BLOG_URL);
 }
 
 void CTFBlogPanel::LoadBlogPost(const char* URL)

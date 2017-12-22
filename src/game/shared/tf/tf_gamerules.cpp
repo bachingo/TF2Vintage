@@ -1232,6 +1232,8 @@ bool CTFGameRules::CanGoToStalemate( void )
 		if ( CheckCapsPerRound() )
 			return false;
 	}
+	if (m_nGameType == TF_GAMETYPE_ESCORT)
+		return false;
 
 	return BaseClass::CanGoToStalemate();
 }
@@ -1292,6 +1294,8 @@ void CTFGameRules::Activate()
 	tf_gamemode_passtime.SetValue( 0 );
 	tf_gamemode_dm.SetValue( 0 );
 
+	TeamplayRoundBasedRules()->SetMultipleTrains(false);
+
 	if ( gEntList.FindEntityByClassname( NULL, "tf_logic_deathmatch" ) || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
 	{
 		m_nGameType.Set( TF_GAMETYPE_DM );
@@ -1345,12 +1349,10 @@ void CTFGameRules::Activate()
 	}
 
 	CTeamTrainWatcher *pTrain = dynamic_cast< CTeamTrainWatcher* > (gEntList.FindEntityByClassname(NULL, "team_train_watcher"));
-	if ( pTrain )
+	if (pTrain)
 	{
-		m_nGameType.Set( TF_GAMETYPE_ESCORT );
-		//if ( gEntList.FindEntityByClassname( NULL, "tf_logic_multiple_escort" ) )
-
-		tf_gamemode_payload.SetValue( 1 );
+		m_nGameType.Set(TF_GAMETYPE_ESCORT);
+		tf_gamemode_payload.SetValue(1);
 		return;
 	}
 
@@ -2739,7 +2741,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 		}
 	}
-	else if ( pTFPlayer->m_bIsPlayerADev )
+	/*else if ( pTFPlayer->m_bIsPlayerADev )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
@@ -2756,7 +2758,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 				pszFormat = "TF_Chat_Dev";
 			}
 		}
-	}
+	}*/
 	else
 	{	
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
