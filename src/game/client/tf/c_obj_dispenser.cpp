@@ -7,6 +7,7 @@
 #include "cbase.h"
 #include "c_baseobject.h"
 #include "c_tf_player.h"
+#include "tf_player_shared.h"
 #include "vgui/ILocalize.h"
 #include "c_obj_dispenser.h"
 
@@ -46,6 +47,7 @@ void RecvProxyArrayLength_HealingArray( void *pStruct, int objectID, int current
 
 IMPLEMENT_CLIENTCLASS_DT(C_ObjectDispenser, DT_ObjectDispenser, CObjectDispenser)
 	RecvPropInt( RECVINFO( m_iAmmoMetal ) ),
+	RecvPropBool(RECVINFO( m_bStealthed ) ),
 	RecvPropArray2( 
 		RecvProxyArrayLength_HealingArray,
 		RecvPropInt( "healing_array_element", 0, SIZEOF_IGNORE, 0, RecvProxy_HealingList ), 
@@ -62,6 +64,7 @@ C_ObjectDispenser::C_ObjectDispenser()
 {
 	m_bUpdateHealingTargets = false;
 	m_bPlayingSound = false;
+	m_bStealthedLast = false;
 
 	m_pDamageEffects = NULL;
 }
@@ -103,6 +106,12 @@ void C_ObjectDispenser::GetStatusText( wchar_t *pStatus, int iMaxStatusLen )
 void C_ObjectDispenser::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
+
+	if (m_bStealthed || (!m_bStealthed && m_bStealthedLast))
+	{
+		UpdateEffects();
+		m_bStealthedLast = m_bStealthed;
+	}
 
 	if ( m_bUpdateHealingTargets )
 	{
@@ -173,8 +182,26 @@ void C_ObjectDispenser::UpdateEffects( void )
 				}
 			}
 
-			if ( bHaveEffect )
+			if (bHaveEffect)
+			{
+				if (ToTFPlayer(pTarget)->m_Shared.InCond(TF_COND_STEALTHED))
+				{
+					ParticleProp()->StopEmission(m_hHealingTargetEffects[i].pEffect);
+					m_hHealingTargetEffects.Remove(i);
+					if (m_hHealingTargets.Count() == 1)
+						StopSound("Building_Dispenser.Heal");
+					continue;
+				}
+				else
+					continue;
+			}
+
+			if (ToTFPlayer(pTarget)->m_Shared.InCond(TF_COND_STEALTHED))
+			{
 				continue;
+			}
+
+
 
 			const char *pszEffectName = ConstructTeamParticle( "dispenser_heal_%s", GetTeamNumber() );
 			CNewParticleEffect *pEffect = NULL;

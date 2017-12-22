@@ -1265,6 +1265,11 @@ int CTeamControlPointMaster::CalcNumRoundsRemaining( int iTeam )
 //-----------------------------------------------------------------------------
 float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 {
+	if (TFGameRules()->IsInEscortMode())
+		m_flPartialCapturePointsRate = 10.0;
+	else
+		m_flPartialCapturePointsRate = 0.0;
+
 	return m_flPartialCapturePointsRate;
 }
 

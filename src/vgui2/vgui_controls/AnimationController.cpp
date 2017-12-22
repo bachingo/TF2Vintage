@@ -802,7 +802,7 @@ void AnimationController::UpdateActiveAnimations(bool bRunToCompletion)
 		// apply the new value to the panel
 		SetValue(anim, anim.panel, anim.variable, val);
 
-		// Msg( "Animate value: %s => %.2f for panel '%s'\n", g_ScriptSymbols.String(anim.variable), val.a, anim.panel->GetName());
+		//Msg( "Animate value: %s => %.2f for panel '%s'\n", g_ScriptSymbols.String(anim.variable), val.a, anim.panel->GetName());
 
 		// see if we can remove the animation
 		if (m_flCurrentTime >= anim.endTime || bRunToCompletion)

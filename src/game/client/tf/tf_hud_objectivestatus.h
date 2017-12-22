@@ -15,6 +15,7 @@
 #include "tf_imagepanel.h"
 #include "tf_hud_flagstatus.h"
 #include "tf_hud_deathmatchstatus.h"
+#include "tf_hud_escortobjectivestatus.h"
 #include "hud_controlpointicons.h"
 #include "GameEventListener.h"
 #include "c_tf_player.h"
@@ -203,6 +204,8 @@ private:
 	CTFHudFlagObjectives	*m_pFlagPanel;
 	CTFHudTimeStatus		*m_pTimePanel;
 //	CTFHudKothTimeStatus	*m_pKothTimePanel;
+	CTFHudEscort			*m_pEscortPanel;
+	CTFHudMultipleEscort	*m_pEscortRacePanel;
 	CTFHudDeathMatchObjectives *m_pDMPanel;
 	CHudControlPointIcons	*m_pControlPointIconsPanel;
 	CControlPointProgressBar *m_pControlPointProgressBar;

@@ -21,7 +21,7 @@
 //-----------------------------------------------------------------------------
 class CBaseTeamObjectiveResource : public CBaseEntity
 {
-	DECLARE_CLASS( CBaseTeamObjectiveResource, CBaseEntity );
+	DECLARE_CLASS(CBaseTeamObjectiveResource, CBaseEntity);
 public:
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
@@ -29,140 +29,167 @@ public:
 	CBaseTeamObjectiveResource();
 	~CBaseTeamObjectiveResource();
 
-	virtual void Spawn( void );
+	virtual void Spawn(void);
 	virtual int  UpdateTransmitState(void);
 
-	virtual void ObjectiveThink( void );
+	virtual void ObjectiveThink(void);
 
 	//--------------------------------------------------------------------
 	// CONTROL POINT DATA
 	//--------------------------------------------------------------------
 public:
-	void ResetControlPoints( void );
+	void ResetControlPoints(void);
 
 	// Data functions, called to set up the state at the beginning of a round
-	void SetNumControlPoints( int num );
-	int	 GetNumControlPoints( void ) { return m_iNumControlPoints; }
-	void SetCPIcons( int index, int iTeam, int iIcon );
-	void SetCPOverlays( int index, int iTeam, int iIcon );
-	void SetTeamBaseIcons( int iTeam, int iBaseIcon );
-	void SetCPPosition( int index, const Vector& vPosition );
-	void SetCPVisible( int index, bool bVisible );
-	void SetCPRequiredCappers( int index, int iTeam, int iReqPlayers );
-	void SetCPCapTime( int index, int iTeam, float flTime );
-	void SetCPCapPercentage( int index, float flTime );
-	float GetCPCapPercentage( int index );
-	void SetTeamCanCap( int index, int iTeam, bool bCanCap );
-	void SetBaseCP( int index, int iTeam );
-	void SetPreviousPoint( int index, int iTeam, int iPrevIndex, int iPrevPoint );
-	int GetPreviousPointForPoint( int index, int team, int iPrevIndex );
-	bool TeamCanCapPoint( int index, int team );
-	void SetCapLayoutInHUD( const char *pszLayout ) { Q_strncpy(m_pszCapLayoutInHUD.GetForModify(), pszLayout, MAX_CAPLAYOUT_LENGTH ); }
-	void SetCapLayoutCustomPosition( float flPositionX, float flPositionY ) { m_flCustomPositionX = flPositionX; m_flCustomPositionY = flPositionY; }
-	void SetWarnOnCap( int index, int iWarnLevel );
-	void SetWarnSound( int index, string_t iszSound );
-	void SetCPGroup( int index, int iCPGroup );
-	void SetCPLocked( int index, bool bLocked );
-	void SetTrackAlarm( int index, bool bAlarm );
-	void SetCPUnlockTime( int index, float flTime );
-	void SetCPTimerTime( int index, float flTime );
-	void SetCPCapTimeScalesWithPlayers( int index, bool bScales );
+	void SetNumControlPoints(int num);
+	int	 GetNumControlPoints(void) { return m_iNumControlPoints; }
+	void SetCPIcons(int index, int iTeam, int iIcon);
+	void SetCPOverlays(int index, int iTeam, int iIcon);
+	void SetTeamBaseIcons(int iTeam, int iBaseIcon);
+	void SetCPPosition(int index, const Vector& vPosition);
+	void SetCPVisible(int index, bool bVisible);
+	void SetCPRequiredCappers(int index, int iTeam, int iReqPlayers);
+	void SetCPCapTime(int index, int iTeam, float flTime);
+	void SetCPCapPercentage(int index, float flTime);
+	float GetCPCapPercentage(int index);
+	void SetTeamCanCap(int index, int iTeam, bool bCanCap);
+	void SetBaseCP(int index, int iTeam);
+	void SetPreviousPoint(int index, int iTeam, int iPrevIndex, int iPrevPoint);
+	int GetPreviousPointForPoint(int index, int team, int iPrevIndex);
+	bool TeamCanCapPoint(int index, int team);
+	void SetCapLayoutInHUD(const char *pszLayout) { Q_strncpy(m_pszCapLayoutInHUD.GetForModify(), pszLayout, MAX_CAPLAYOUT_LENGTH); }
+	void SetCapLayoutCustomPosition(float flPositionX, float flPositionY) { m_flCustomPositionX = flPositionX; m_flCustomPositionY = flPositionY; }
+	void SetWarnOnCap(int index, int iWarnLevel);
+	void SetWarnSound(int index, string_t iszSound);
+	void SetCPGroup(int index, int iCPGroup);
+	void SetCPLocked(int index, bool bLocked);
+	void SetTrackAlarm(int index, bool bAlarm);
+	void SetCPUnlockTime(int index, float flTime);
+	void SetCPTimerTime(int index, float flTime);
+	void SetCPCapTimeScalesWithPlayers(int index, bool bScales);
 
 	// State functions, called many times
-	void SetNumPlayers( int index, int team, int iNumPlayers );
-	void StartCap( int index, int team );
-	void SetOwningTeam( int index, int team );
-	void SetCappingTeam( int index, int team );
-	void SetTeamInZone( int index, int team );
-	void SetCapBlocked( int index, bool bBlocked );
-	int  GetOwningTeam( int index );
+	void SetNumPlayers(int index, int team, int iNumPlayers);
+	void StartCap(int index, int team);
+	void SetOwningTeam(int index, int team);
+	void SetCappingTeam(int index, int team);
+	void SetTeamInZone(int index, int team);
+	void SetCapBlocked(int index, bool bBlocked);
+	int  GetOwningTeam(int index);
 
-	void AssertValidIndex( int index )
+	void AssertValidIndex(int index)
 	{
-		Assert( 0 <= index && index <= MAX_CONTROL_POINTS && index < m_iNumControlPoints );
+		Assert(0 <= index && index <= MAX_CONTROL_POINTS && index < m_iNumControlPoints);
 	}
 
-	int GetBaseControlPointForTeam( int iTeam ) 
-	{ 
-		Assert( iTeam < MAX_TEAMS );
-		return m_iBaseControlPoints[iTeam]; 
+	int GetBaseControlPointForTeam(int iTeam)
+	{
+		Assert(iTeam < MAX_TEAMS);
+		return m_iBaseControlPoints[iTeam];
 	}
 
-	int GetCappingTeam( int index )
+	int GetCappingTeam(int index)
 	{
-		if ( index >= m_iNumControlPoints )
+		if (index >= m_iNumControlPoints)
 			return TEAM_UNASSIGNED;
 
 		return m_iCappingTeam[index];
 	}
 
-	void SetTimerInHUD( CBaseEntity *pTimer )
+	void SetTimerInHUD(CBaseEntity *pTimer)
 	{
 		m_iTimerToShowInHUD = pTimer ? pTimer->entindex() : 0;
 	}
 
 
-	void SetStopWatchTimer( CBaseEntity *pTimer )
+	void SetStopWatchTimer(CBaseEntity *pTimer)
 	{
 		m_iStopWatchTimer = pTimer ? pTimer->entindex() : 0;
 	}
 
-	int GetTimerInHUD( void ) { return m_iTimerToShowInHUD; }
+	int GetTimerInHUD(void) { return m_iTimerToShowInHUD; }
 
 	// Mini-rounds data
-	void SetPlayingMiniRounds( bool bPlayingMiniRounds ){ m_bPlayingMiniRounds = bPlayingMiniRounds; }
-	bool PlayingMiniRounds( void ){ return m_bPlayingMiniRounds; }
-	void SetInMiniRound( int index, bool bInRound ) { m_bInMiniRound.Set( index, bInRound ); }
-	bool IsInMiniRound( int index ) { return m_bInMiniRound[index]; }
+	void SetPlayingMiniRounds(bool bPlayingMiniRounds){ m_bPlayingMiniRounds = bPlayingMiniRounds; }
+	bool PlayingMiniRounds(void){ return m_bPlayingMiniRounds; }
+	void SetInMiniRound(int index, bool bInRound) { m_bInMiniRound.Set(index, bInRound); }
+	bool IsInMiniRound(int index) { return m_bInMiniRound[index]; }
 
-	void UpdateCapHudElement( void );
+	void UpdateCapHudElement(void);
 
 	// Train Path data
-	void SetTrainPathDistance( int index, float flDistance );
+	void SetTrainPathDistance(int index, float flDistance);
 
-	bool GetCPLocked( int index )
+	void SetTotalProgress(int team, float flProgress) 
 	{
-		Assert( index < m_iNumControlPoints );
+		if (team < TEAM_TRAIN_MAX_TEAMS)
+			m_flTotalProgress.Set( team, flProgress); 
+	}
+	void SetTrainSpeedLevel(int team, int iSpeedLevel)
+	{
+		if (team < TEAM_TRAIN_MAX_TEAMS)
+			m_iTrainSpeedLevel.Set(team, iSpeedLevel);
+	}
+	void SetNumCappers(int team, int iNumCappers)
+	{
+		if (team < TEAM_TRAIN_MAX_TEAMS)
+			m_nNumCappers.Set(team, iNumCappers);
+	}
+	void SetRecedeTime(int team, int flRecedeTIme)
+	{
+		if (team < TEAM_TRAIN_MAX_TEAMS)
+			m_flRecedeTime.Set(team, flRecedeTIme);
+	}
+	float GetRecedeTime(int team)
+	{
+		if (team < TEAM_TRAIN_MAX_TEAMS)
+			return m_flRecedeTime.Get(team);
+		else
+			return 0;
+	}
+
+	bool GetCPLocked(int index)
+	{
+		Assert(index < m_iNumControlPoints);
 		return m_bCPLocked[index];
 	}
 
-	void ResetHillData( int team )
+	void ResetHillData(int team)
 	{
-		if ( team < TEAM_TRAIN_MAX_TEAMS )
+		if (team < TEAM_TRAIN_MAX_TEAMS)
 		{
-			m_nNumNodeHillData.Set( team, 0 );
+			m_nNumNodeHillData.Set(team, 0);
 
-			int nNumEntriesPerTeam = TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL; 
+			int nNumEntriesPerTeam = TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL;
 			int iStartingIndex = team * nNumEntriesPerTeam;
-			for ( int i = 0 ; i < nNumEntriesPerTeam ; i++ )
+			for (int i = 0; i < nNumEntriesPerTeam; i++)
 			{
-				m_flNodeHillData.Set( iStartingIndex + i, 0 );
+				m_flNodeHillData.Set(iStartingIndex + i, 0);
 			}
 
 			iStartingIndex = team * TEAM_TRAIN_MAX_HILLS;
-			for ( int i = 0; i < TEAM_TRAIN_MAX_HILLS; i++ )
+			for (int i = 0; i < TEAM_TRAIN_MAX_HILLS; i++)
 			{
-				m_bHillIsDownhill.Set( iStartingIndex + i, 0 );
+				m_bHillIsDownhill.Set(iStartingIndex + i, 0);
 			}
 		}
 	}
 
-	void SetHillData( int team, float flStart, float flEnd, bool bDownhill )
+	void SetHillData(int team, float flStart, float flEnd, bool bDownhill)
 	{
-		if ( team < TEAM_TRAIN_MAX_TEAMS )
+		if (team < TEAM_TRAIN_MAX_TEAMS)
 		{
-			int index = ( m_nNumNodeHillData[team] * TEAM_TRAIN_FLOATS_PER_HILL ) + ( team * TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL );
-			if ( index < TEAM_TRAIN_HILLS_ARRAY_SIZE - 1 ) // - 1 because we want to add 2 entries
+			int index = (m_nNumNodeHillData[team] * TEAM_TRAIN_FLOATS_PER_HILL) + (team * TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL);
+			if (index < TEAM_TRAIN_HILLS_ARRAY_SIZE - 1) // - 1 because we want to add 2 entries
 			{
-				m_flNodeHillData.Set( index, flStart );
-				m_flNodeHillData.Set( index + 1, flEnd );
+				m_flNodeHillData.Set(index, flStart);
+				m_flNodeHillData.Set(index + 1, flEnd);
 
-				if ( m_nNumNodeHillData[team] < TEAM_TRAIN_MAX_HILLS )
+				if (m_nNumNodeHillData[team] < TEAM_TRAIN_MAX_HILLS)
 				{
-					m_bHillIsDownhill.Set( m_nNumNodeHillData[team] + ( team * TEAM_TRAIN_MAX_HILLS ), bDownhill );
+					m_bHillIsDownhill.Set(m_nNumNodeHillData[team] + (team * TEAM_TRAIN_MAX_HILLS), bDownhill);
 				}
-
-				m_nNumNodeHillData.Set( team, m_nNumNodeHillData[team] + 1);
+				m_nNumNodeHillData.Set(team, m_nNumNodeHillData[team] + 1);
 			}
 		}
 	}
@@ -228,6 +255,12 @@ private:
 
 	CNetworkArray( bool, m_bTrackAlarm, TEAM_TRAIN_MAX_TEAMS );
 	CNetworkArray( bool, m_bHillIsDownhill, TEAM_TRAIN_MAX_HILLS*TEAM_TRAIN_MAX_TEAMS );
+
+	//Escort Variables
+	CNetworkArray(float, m_flTotalProgress, TEAM_TRAIN_MAX_TEAMS);
+	CNetworkArray(int, m_iTrainSpeedLevel, TEAM_TRAIN_MAX_TEAMS);
+	CNetworkArray(int, m_nNumCappers, TEAM_TRAIN_MAX_TEAMS);
+	CNetworkArray(float, m_flRecedeTime, TEAM_TRAIN_MAX_TEAMS);
 };
 
 extern CBaseTeamObjectiveResource *g_pObjectiveResource;

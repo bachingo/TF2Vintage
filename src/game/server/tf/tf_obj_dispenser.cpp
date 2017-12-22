@@ -63,6 +63,7 @@ int SendProxyArrayLength_HealingArray( const void *pStruct, int objectID )
 
 IMPLEMENT_SERVERCLASS_ST( CObjectDispenser, DT_ObjectDispenser )
 	SendPropInt( SENDINFO( m_iAmmoMetal ), 10 ),
+	SendPropBool(SENDINFO(m_bStealthed)),
 	SendPropArray2( 
 		SendProxyArrayLength_HealingArray,
 		SendPropInt("healing_array_element", 0, SIZEOF_IGNORE, NUM_NETWORKED_EHANDLE_BITS, SPROP_UNSIGNED, SendProxy_HealingList), 
@@ -179,6 +180,8 @@ void CObjectDispenser::Spawn()
 	m_takedamage = DAMAGE_YES;
 
 	m_iAmmoMetal = 0;
+	m_bStealthed = false;
+	m_flNextStealthThink = 0.0f;
 
 	BaseClass::Spawn();
 }
@@ -559,7 +562,14 @@ bool CObjectDispenser::DispenseAmmo( CTFPlayer *pPlayer )
 
 	if ( iTotalPickedUp > 0 )
 	{
-		EmitSound( "BaseCombatCharacter.AmmoPickup" );
+		if (pPlayer->m_Shared.InCond(TF_COND_STEALTHED))
+		{
+			CRecipientFilter filter;
+			filter.AddRecipient(pPlayer);
+			EmitSound(filter, entindex(), "BaseCombatCharacter.AmmoPickup");
+		}
+		else
+			EmitSound( "BaseCombatCharacter.AmmoPickup" );
 		return true;
 	}
 
@@ -682,6 +692,13 @@ void CObjectDispenser::ResetHealingTargets( void )
 		bool bHealingTarget = IsHealingTarget( pEnt );
 		bool bValidHealTarget = CouldHealTarget( pEnt );
 
+		if (ToTFPlayer(pEnt)->m_Shared.InCond(TF_COND_STEALTHED) && m_flNextStealthThink < gpGlobals->curtime)
+		{
+			m_bStealthed = true;
+			NetworkStateChanged();
+			m_flNextStealthThink = gpGlobals->curtime + 1.0f;
+		}
+
 		if ( bHealingTarget && !bValidHealTarget )
 		{
 			// if we can't see them, remove them from healing list
@@ -694,6 +711,13 @@ void CObjectDispenser::ResetHealingTargets( void )
 			// does nothing if we are healing them already
 			StartHealing( pEnt );
 		}	
+	}
+
+	if (m_flNextStealthThink < gpGlobals->curtime)
+	{
+		if (m_bStealthed)
+			NetworkStateChanged();
+		m_bStealthed = false;
 	}
 }
 

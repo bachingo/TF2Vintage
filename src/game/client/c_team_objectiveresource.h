@@ -228,7 +228,10 @@ public:
 		return m_bTrackAlarm[index];
 	}
 
-	int GetNumNodeHillData( int team ){ return ( team < TEAM_TRAIN_MAX_TEAMS ) ? m_nNumNodeHillData[team] : 0; }
+	int GetNumNodeHillData( int team )
+	{ 
+		return ( team < TEAM_TRAIN_MAX_TEAMS ) ? m_nNumNodeHillData[team] : 0; 
+	}
 
 	void GetHillData( int team, int hill, float &flStart, float &flEnd )
 	{
@@ -271,6 +274,13 @@ public:
 
 		return true;
 	}
+
+
+	float GetTotalProgress(int team) { return m_flTotalProgress[team]; }
+	float GetRecedeTime(int team){ return m_flRecedeTime[team]; }
+	int GetNumCappers(int team){ return m_nNumCappers[team]; }
+	int GetTrainSpeedLevel(int team){ return m_iTrainSpeedLevel[team]; }
+
 
 protected:
 	int		m_iTimerToShowInHUD;
@@ -327,6 +337,12 @@ protected:
 	float	m_flOldCustomPositionY;
 	float	m_flCustomPositionX;
 	float	m_flCustomPositionY;
+
+	//Escort data variables
+	float   m_flTotalProgress[TEAM_TRAIN_MAX_TEAMS];
+	int		m_iTrainSpeedLevel[TEAM_TRAIN_MAX_TEAMS];
+	int		m_nNumCappers[TEAM_TRAIN_MAX_TEAMS];
+	float   m_flRecedeTime[TEAM_TRAIN_MAX_TEAMS];
 
 	// hill data for multi-escort payload maps
 	int		m_nNumNodeHillData[TEAM_TRAIN_MAX_TEAMS];

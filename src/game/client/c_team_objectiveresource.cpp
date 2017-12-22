@@ -52,7 +52,12 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE(C_BaseTeamObjectiveResource, DT_BaseTeamObjectiv
 	RecvPropInt( RECVINFO(m_iTimerToShowInHUD) ),
 	RecvPropInt( RECVINFO(m_iStopWatchTimer) ),
 
-	RecvPropInt( RECVINFO(m_iNumControlPoints) ),
+	RecvPropArray3(RECVINFO_ARRAY(m_iTrainSpeedLevel), RecvPropInt(RECVINFO(m_iTrainSpeedLevel[0]) ) ),
+	RecvPropArray3(RECVINFO_ARRAY(m_nNumCappers),	   RecvPropInt(RECVINFO(m_nNumCappers[0]) ) ),
+	RecvPropArray3(RECVINFO_ARRAY(m_flRecedeTime),	   RecvPropFloat(RECVINFO(m_flRecedeTime[0]) ) ),
+	RecvPropArray3(RECVINFO_ARRAY(m_flTotalProgress), RecvPropFloat(RECVINFO(m_flTotalProgress[0]) ) ),
+
+	RecvPropInt(RECVINFO(m_iNumControlPoints)),
 	RecvPropBool( RECVINFO(m_bPlayingMiniRounds) ),
 	RecvPropBool( RECVINFO(m_bControlPointsReset) ),
 	RecvPropInt( RECVINFO(m_iUpdateCapHudParity) ),
@@ -93,6 +98,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE(C_BaseTeamObjectiveResource, DT_BaseTeamObjectiv
 	RecvPropFloat( RECVINFO(m_flCustomPositionY) ),
 END_RECV_TABLE()
 
+
 C_BaseTeamObjectiveResource *g_pObjectiveResource = NULL;
 
 //-----------------------------------------------------------------------------
@@ -105,6 +111,7 @@ C_BaseTeamObjectiveResource::C_BaseTeamObjectiveResource()
 	m_pszCapLayoutInHUD[0] = 0;
 	m_iUpdateCapHudParity = 0;
 	m_bControlPointsReset = false;
+
 
 	int i;
 
@@ -145,6 +152,10 @@ C_BaseTeamObjectiveResource::C_BaseTeamObjectiveResource()
 
 	for ( i=0; i < TEAM_TRAIN_MAX_TEAMS; i++ )
 	{
+		m_flTotalProgress[i] = 0;
+		m_flRecedeTime[i] = 0;
+		m_iTrainSpeedLevel[i] = 0;
+		m_nNumCappers[i] = 0;
 		m_nNumNodeHillData[i] = 0;
 		m_bTrainOnHill[i] = false;
 	}

@@ -3022,7 +3022,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// Engineer moves slower while a hauling an object.
 	if (playerclass == TF_CLASS_ENGINEER && m_Shared.IsCarryingObject())
 	{
-		maxfbspeed *= 0.9f;
+		maxfbspeed *= 0.75f;
 	}
 
 	if (m_Shared.InCond(TF_COND_STEALTHED))

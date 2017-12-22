@@ -168,10 +168,10 @@ void CTFNotificationManager::OnHTTPRequestCompleted(HTTPRequestCompleted_t *Call
 		case REQUEST_IDLE:
 			break;
 		case REQUEST_VERSION:
-			OnVersionCheckCompleted(result);
+			//OnVersionCheckCompleted(result);
 			break;
 		case REQUEST_MESSAGE:
-			OnMessageCheckCompleted(result);
+			//OnMessageCheckCompleted(result);
 			break;
 		case REQUEST_SERVERLIST:
 			OnServerlistCheckCompleted(result);
