@@ -684,19 +684,24 @@ void CObjectDispenser::ResetHealingTargets( void )
 {
 	// for each player in touching list
 	int iSize = m_hTouchingEntities.Count();
-	for ( int i = iSize-1; i >= 0; i-- )
+	for (int i = iSize - 1; i >= 0; i--)
 	{
 		EHANDLE hOther = m_hTouchingEntities[i];
 
 		CBaseEntity *pEnt = hOther.Get();
-		bool bHealingTarget = IsHealingTarget( pEnt );
-		bool bValidHealTarget = CouldHealTarget( pEnt );
+		bool bHealingTarget = IsHealingTarget(pEnt);
+		bool bValidHealTarget = CouldHealTarget(pEnt);
 
-		if (ToTFPlayer(pEnt)->m_Shared.InCond(TF_COND_STEALTHED) && m_flNextStealthThink < gpGlobals->curtime)
+		CTFPlayer *pPlayer;
+		pPlayer = ToTFPlayer(pEnt);
+		if (pPlayer)
 		{
-			m_bStealthed = true;
-			NetworkStateChanged();
-			m_flNextStealthThink = gpGlobals->curtime + 1.0f;
+			if (pPlayer->m_Shared.InCond(TF_COND_STEALTHED) && m_flNextStealthThink < gpGlobals->curtime)
+			{
+				m_bStealthed = true;
+				NetworkStateChanged();
+				m_flNextStealthThink = gpGlobals->curtime + 1.0f;
+			}
 		}
 
 		if ( bHealingTarget && !bValidHealTarget )
