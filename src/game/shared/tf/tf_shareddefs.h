@@ -143,6 +143,7 @@ enum
 extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
 
+extern const char *g_aDominationEmblems[];
 extern const char *g_aPlayerClassEmblems[];
 extern const char *g_aPlayerClassEmblemsDead[];
 
@@ -946,13 +947,15 @@ typedef enum
 #define TF_SCORE_CAPTURE						2
 #define TF_SCORE_DEFEND							1
 #define TF_SCORE_DESTROY_BUILDING				1
-#define TF_SCORE_HEADSHOT						1
+#define TF_SCORE_HEADSHOT_PER_POINT				2
 #define TF_SCORE_BACKSTAB						1
 #define TF_SCORE_INVULN							1
 #define TF_SCORE_REVENGE						1
 #define TF_SCORE_KILL_ASSISTS_PER_POINT			2
 #define TF_SCORE_TELEPORTS_PER_POINT			2	
 #define TF_SCORE_HEAL_HEALTHUNITS_PER_POINT		600
+#define TF_SCORE_DAMAGE_PER_POINT				600
+#define TF_SCORE_BONUS_PER_POINT				1
 
 //-------------------------
 // Shared Teleporter State

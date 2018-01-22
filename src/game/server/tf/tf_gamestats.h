@@ -88,6 +88,7 @@ public:
 	void						ResetPlayerStats( CTFPlayer *pPlayer );
 	void						ResetKillHistory( CTFPlayer *pPlayer );
 	void						ResetRoundStats();
+	void						ResetRoundScores();
 protected:	
 	void						IncrementStat( CTFPlayer *pPlayer, TFStatType_t statType, int iValue );
 	void						SendStatsToPlayer( CTFPlayer *pPlayer, int iMsgType );

@@ -152,18 +152,32 @@ void CHudStalemate::SetupStalematePanel( int iReason )
 {
 	if ( m_pStalemateLabel )
 	{
-		if ( iReason == STALEMATE_JOIN_MID )
+		if (TFGameRules()->IsInArenaMode())
 		{
-			m_pStalemateLabel->SetText( g_pVGuiLocalize->Find( "#TF_suddendeath_mode" ) );
+			m_pStalemateLabel->SetText(g_pVGuiLocalize->Find("#TF_Arena_SuddenDeathPanel"));
 		}
 		else
 		{
-			m_pStalemateLabel->SetText( g_pVGuiLocalize->Find( "#TF_suddendeath" ) );
+			if (iReason == STALEMATE_JOIN_MID)
+			{
+				m_pStalemateLabel->SetText(g_pVGuiLocalize->Find("#TF_suddendeath_mode"));
+			}
+			else
+			{
+				m_pStalemateLabel->SetText(g_pVGuiLocalize->Find("#TF_suddendeath"));
+			}
 		}
 	}
 
 	if ( m_pReasonLabel && iReason >= 0 && iReason < NUM_STALEMATE_REASONS )
 	{
-		m_pReasonLabel->SetText( g_pVGuiLocalize->Find( pszStalemateReasons[iReason] ) );
+		if (TFGameRules()->IsInArenaMode())
+		{
+			m_pReasonLabel->SetText(g_pVGuiLocalize->Find("#TF_Arena_SuddenDeathPanelReason"));
+		}
+		else
+		{
+			m_pReasonLabel->SetText(g_pVGuiLocalize->Find(pszStalemateReasons[iReason]));
+		}
 	}
 }

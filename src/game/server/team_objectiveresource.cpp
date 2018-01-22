@@ -150,6 +150,8 @@ CBaseTeamObjectiveResource::~CBaseTeamObjectiveResource()
 void CBaseTeamObjectiveResource::Spawn( void )
 {
 	m_iNumControlPoints = 0;
+	m_bWaitingToRecede = false;
+	m_bCapBlocked = false;
 
 	// If you hit this, you've got too many teams for the control point system to handle.
 	Assert( GetNumberOfTeams() < MAX_CONTROL_POINT_TEAMS );

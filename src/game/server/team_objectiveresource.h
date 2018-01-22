@@ -194,6 +194,11 @@ public:
 		}
 	}
 
+	void SetWaitingToRecede( bool bWaiting ) { m_bWaitingToRecede = bWaiting; }
+ 	bool GetWaitingToRecede( void ) { return m_bWaitingToRecede; }
+	void SetCapBlocked(bool bBlocked) { m_bCapBlocked = bBlocked; }
+	bool GetCapBlocked(void) { return m_bCapBlocked; }
+
 private:
 	CNetworkVar( int, m_iTimerToShowInHUD );	
 	CNetworkVar( int, m_iStopWatchTimer );	
@@ -261,6 +266,9 @@ private:
 	CNetworkArray(int, m_iTrainSpeedLevel, TEAM_TRAIN_MAX_TEAMS);
 	CNetworkArray(int, m_nNumCappers, TEAM_TRAIN_MAX_TEAMS);
 	CNetworkArray(float, m_flRecedeTime, TEAM_TRAIN_MAX_TEAMS);
+
+	bool m_bWaitingToRecede;
+	bool m_bCapBlocked;
 };
 
 extern CBaseTeamObjectiveResource *g_pObjectiveResource;

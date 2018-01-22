@@ -96,6 +96,26 @@ const char *g_aPlayerClassNames[] =
 	"#TF_Class_Name_Mercenary"
 };
 
+const char *g_aDominationEmblems[] =
+{
+	"../hud/leaderboard_dom1",
+	"../hud/leaderboard_dom2",
+	"../hud/leaderboard_dom3",
+	"../hud/leaderboard_dom4",
+	"../hud/leaderboard_dom5",
+	"../hud/leaderboard_dom6",
+	"../hud/leaderboard_dom7",
+	"../hud/leaderboard_dom8",
+	"../hud/leaderboard_dom9",
+	"../hud/leaderboard_dom10",
+	"../hud/leaderboard_dom11",
+	"../hud/leaderboard_dom12",
+	"../hud/leaderboard_dom13",
+	"../hud/leaderboard_dom14",
+	"../hud/leaderboard_dom15",
+	"../hud/leaderboard_dom16",
+};
+
 const char *g_aPlayerClassEmblems[] =
 {
 	"../hud/leaderboard_class_scout",

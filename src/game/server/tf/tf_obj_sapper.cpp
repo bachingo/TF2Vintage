@@ -12,6 +12,7 @@
 #include "tf_obj_sentrygun.h"
 #include "tf_obj_sapper.h"
 #include "ndebugoverlay.h"
+#include "tf_gamestats.h"
 
 // ------------------------------------------------------------------------ //
 
@@ -258,6 +259,24 @@ int CObjectSapper::OnTakeDamage( const CTakeDamageInfo &info )
 
 	return BaseClass::OnTakeDamage( info );
 }
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CObjectSapper::Killed(const CTakeDamageInfo &info)
+ {
+		// If the sapper is removed by someone other than builder, award bonus points.
+		CTFPlayer *pScorer = ToTFPlayer(TFGameRules()->GetDeathScorer(info.GetAttacker(), info.GetInflictor(), this));
+	if (pScorer)
+		{
+		CBaseObject *pObject = GetParentObject();
+		if (pObject && pScorer != pObject->GetBuilder())
+			 {
+			CTF_GameStats.Event_PlayerAwardBonusPoints(pScorer, this, 1);
+			}
+		}
+	
+		BaseClass::Killed(info);
+	}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
