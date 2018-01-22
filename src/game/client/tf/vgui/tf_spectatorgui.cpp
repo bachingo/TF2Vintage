@@ -111,7 +111,14 @@ void CTFSpectatorGUI::UpdateReinforcements( void )
 	
 	if ( TFGameRules()->InStalemate() )
 	{
-		g_pVGuiLocalize->ConstructString( wLabel, sizeof( wLabel ), g_pVGuiLocalize->Find( "#game_respawntime_stalemate" ), 0 );
+		if (TFGameRules()->IsInArenaMode())
+		{
+			g_pVGuiLocalize->ConstructString(wLabel, sizeof(wLabel), g_pVGuiLocalize->Find("#TF_Arena_NoRespawning"), 0);
+		}
+		else
+		{
+			g_pVGuiLocalize->ConstructString(wLabel, sizeof(wLabel), g_pVGuiLocalize->Find("#game_respawntime_stalemate"), 0);
+		}
 	}
 	else if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 	{

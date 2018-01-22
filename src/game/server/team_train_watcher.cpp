@@ -657,6 +657,7 @@ void CTeamTrainWatcher::InternalSetNumTrainCappers( int iNumCappers, CBaseEntity
 	if ( pAreaCap )
 	{
 		m_bCapBlocked = pAreaCap->IsBlocked();
+		if (m_bCapBlocked)
 		m_hAreaCap = pAreaCap;
 	}
 
@@ -666,6 +667,7 @@ void CTeamTrainWatcher::InternalSetNumTrainCappers( int iNumCappers, CBaseEntity
 		{
 			// start receding in [tf_escort_cart_recede_time] seconds
 			m_bWaitingToRecede = true;
+			ObjectiveResource()->SetWaitingToRecede(true);
 			if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->InOvertime() )
 			{
 				m_flRecedeTotalTime = tf_escort_recede_time_overtime.GetFloat();
@@ -688,7 +690,8 @@ void CTeamTrainWatcher::InternalSetNumTrainCappers( int iNumCappers, CBaseEntity
 	{
 		// cancel receding
 		m_bWaitingToRecede = false;
-		m_flRecedeTime = 0;
+		//ObjectiveResource()->SetWaitingToRecede(false);
+		m_flRecedeTime = -1;
 		ObjectiveResource()->SetRecedeTime(GetTeamNumber(), m_flRecedeTime);
 	}
 
@@ -718,7 +721,7 @@ void CTeamTrainWatcher::InputSetTrainRecedeTime( inputdata_t &inputdata )
 	}
 	else
 	{
-		m_nTrainRecedeTime = 0;
+		m_nTrainRecedeTime = -1;
 	}
 }
 
@@ -852,8 +855,6 @@ void CTeamTrainWatcher::WatcherActivate( void )
 		Warning("%s failed to find train named '%s'\n", GetClassname(), STRING( m_iszTrain ) );
 	}
 
-	if (GetTeamNumber() != TF_TEAM_BLUE)
-		TFGameRules()->SetMultipleTrains(true);
 
 	// find the trigger area that will give us movement updates and find the sparks (if we're going to handle the train movement)
 	if ( m_bHandleTrainMovement )
@@ -1082,7 +1083,7 @@ void CTeamTrainWatcher::PlayCaptureAlert( CTeamControlPoint *pPoint, bool bFinal
 	if ( !pPoint )
 		return;
 
-	IGameEvent *event = gameeventmanager->CreateEvent("escort_play_alert");
+	/*IGameEvent *event = gameeventmanager->CreateEvent("escort_play_alert");
 						if (event && TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING)
 						{
 							event->SetBool("final", bFinalPointInMap);
@@ -1093,11 +1094,36 @@ void CTeamTrainWatcher::PlayCaptureAlert( CTeamControlPoint *pPoint, bool bFinal
 							//event->SetInt("team", GetTeamNumber());
 
 							gameeventmanager->FireEvent(event);
-						}
-	/*if ( TeamplayRoundBasedRules() )
+						}*/
+	if (TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING)
 	{
-		TeamplayRoundBasedRules()->PlayTrainCaptureAlert( pPoint, bFinalPointInMap );
-	}*/
+		if (bFinalPointInMap)
+		{
+			if (GetTeamNumber() == TF_TEAM_BLUE)
+			{
+				TFGameRules()->BroadcastSound(TF_TEAM_BLUE, TEAM_TRAIN_FINAL_ALERT_ATTACK);
+				TFGameRules()->BroadcastSound(TF_TEAM_RED, TEAM_TRAIN_FINAL_ALERT_DEFENSE);
+			}
+			else
+			{
+				TFGameRules()->BroadcastSound(TF_TEAM_RED, TEAM_TRAIN_FINAL_ALERT_ATTACK);
+				TFGameRules()->BroadcastSound(TF_TEAM_BLUE, TEAM_TRAIN_FINAL_ALERT_DEFENSE);
+			}
+		}
+		else
+		{
+			if (GetTeamNumber() == TF_TEAM_BLUE)
+			{
+				TFGameRules()->BroadcastSound(TF_TEAM_BLUE, TEAM_TRAIN_ALERT_ATTACK);
+				TFGameRules()->BroadcastSound(TF_TEAM_RED, TEAM_TRAIN_ALERT_DEFENSE);
+			}
+			else
+			{
+				TFGameRules()->BroadcastSound(TF_TEAM_RED, TEAM_TRAIN_ALERT_ATTACK);
+				TFGameRules()->BroadcastSound(TF_TEAM_BLUE, TEAM_TRAIN_ALERT_DEFENSE);
+			}
+		}
+	}
 }
 
 
@@ -1110,6 +1136,7 @@ void CTeamTrainWatcher::WatcherThink( void )
 		if ( m_flRecedeTime < gpGlobals->curtime )
 		{
 			m_bWaitingToRecede = false;
+			//ObjectiveResource()->SetWaitingToRecede(false);
 
 			// don't actually recede in overtime
 			if ( TeamplayRoundBasedRules() && !TeamplayRoundBasedRules()->InOvertime() )

@@ -1636,6 +1636,24 @@ void CTFPlayerShared::SetPlayerDominatingMe(CTFPlayer *pPlayer, bool bDominated)
 	m_bPlayerDominatingMe.Set(iPlayerIndex, bDominated);
 }
 
+#ifndef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Gets the number of players currently dominated
+//-----------------------------------------------------------------------------
+int CTFPlayerShared::GetDominationCount( void )
+{
+	int iDominationCount = 0;
+	for (int playerIndex = 1; playerIndex <= MAX_PLAYERS; playerIndex++)
+	{
+		if (IsPlayerDominated(playerIndex))
+		{
+			iDominationCount++;
+		}
+	}
+	return iDominationCount;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Returns whether this player is dominating the specified other player
 //-----------------------------------------------------------------------------

@@ -339,13 +339,13 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 
 			if ( pPlayerAvatar )
 			{
-				pPlayerAvatar->ClearAvatar();
-				if ( bShow )
-				{					
-					pPlayerAvatar->SetPlayer(GetSteamIDForPlayerIndex(iPlayerIndex), k_EAvatarSize32x32);
-					pPlayerAvatar->SetAvatarSize(32, 32);
+				if (bShow)
+				{
+					pPlayerAvatar->SetShouldDrawFriendIcon(false);
+					pPlayerAvatar->SetPlayer(iPlayerIndex);
 				}
-				pPlayerAvatar->SetVisible( bShow );
+
+				pPlayerAvatar->SetVisible(bShow);
 			}
 #endif
 			vgui::Label *pPlayerName = dynamic_cast<Label *>( FindChildByName( CFmtStr( "Player%dName", i ) ) );

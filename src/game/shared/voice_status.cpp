@@ -238,8 +238,15 @@ void CVoiceStatus::DrawHeadLabels()
 		if( pPlayer->IsPlayerDead() )
 			continue;
 
-		if (ToTFPlayer(pPlayer)->m_Shared.InCond(TF_COND_STEALTHED) && pPlayer->GetTeamNumber() != GetLocalPlayerTeam())
-			continue;
+		C_TFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+		if (pTFPlayer)
+		{
+			if (pTFPlayer->m_Shared.InCond(TF_COND_STEALTHED) && pPlayer->GetTeamNumber() != GetLocalPlayerTeam())
+				continue;
+
+			if (pTFPlayer->m_Shared.InCond(TF_COND_DISGUISED) && pTFPlayer->m_Shared.GetDisguiseTeam() == GetLocalPlayerTeam() && pPlayer->GetTeamNumber() != GetLocalPlayerTeam())
+				continue;
+		}
 
 		// Place it 20 units above his head.
 		Vector vOrigin = pPlayer->WorldSpaceCenter();

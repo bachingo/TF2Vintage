@@ -125,7 +125,7 @@ bool CTFHudEscort::IsVisible(void)
 		return false;
 	}
 
-	if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
+	if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND )
 	{
 		return false;
 	}
@@ -180,6 +180,8 @@ void CTFHudEscort::Refresh(void)
 		m_Hills[i]->MarkForDeletion();
 	}
 	m_Hills.RemoveAll();
+	if (m_pTeardrop)
+		UpdateTeardrop(m_iCurrentCP); 
 }
 
 
@@ -195,7 +197,7 @@ void CTFHudEscort::SetPlayingToLabelVisible(bool bVisible)
 //-----------------------------------------------------------------------------
 bool CTFHudEscort::SetControlSettings(void)
 {
-	if (!TFGameRules()->HasMultipleTrains())
+	if (!TeamplayRoundBasedRules()->HasMultipleTrains())
 	{
 		KeyValues *pCond = new KeyValues("Escort");
 		if (ObjectiveResource()->GetNumNodeHillData(TF_TEAM_BLUE) > 0)
@@ -351,7 +353,7 @@ void CTFHudEscort::SetupHills(void)
 				m_pHill->SetImage(m_pHillArrow);
 			}
 
-			m_pHill->SetAlpha(120);
+			m_pHill->SetAlpha(50);
 			m_Hills.AddToTail(m_pHill);
 			if (m_Hills.IsValidIndex(i))
 				m_Hills[i]->SetVisible(true);
@@ -392,12 +394,12 @@ void CTFHudEscort::OnThink(void)
 {
 	if (IsVisible() && m_flNextThink < gpGlobals->curtime)
 	{
-		m_iTrainSpeedLevel = ObjectiveResource()->GetTrainSpeedLevel(iTeamCart);
-		m_nNumCappers = ObjectiveResource()->GetNumCappers(iTeamCart);
-		m_flRecedeTime = ObjectiveResource()->GetRecedeTime(iTeamCart) - gpGlobals->curtime;
-
 		UpdateStatus();
 		m_flNextThink = gpGlobals->curtime + 0.1;
+	}
+	else if (!IsVisible() && TFGameRules()->IsInEscortMode())
+	{
+		Refresh();
 	}
 }
 
@@ -417,24 +419,25 @@ void CTFHudEscort::UpdateStatus(void)
 			}
 		}*/
 
-		if (cl_hud_minmode.IsValid() && cl_hud_minmode.GetInt() != 0 && !b_InMinHud)
+		if (cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() && !b_InMinHud)
 		{
 			Refresh();
 			b_InMinHud = true;
+			//return; 
 		}
-		else if (cl_hud_minmode.IsValid() && !cl_hud_minmode.GetInt() == 0 && b_InMinHud)
+		else if (cl_hud_minmode.IsValid() && !cl_hud_minmode.GetBool() && b_InMinHud)
 		{
 			Refresh();
 			b_InMinHud = false;
+			//return;
 		}
 	}
-
-	if (TeamplayRoundBasedRules()->State_Get() == GR_STATE_PREROUND)
+	/*if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
 	{
 		Refresh();
-	}
+	}*/
 
-	if (!b_Visible && TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING)
+	if (!b_Visible && (TeamplayRoundBasedRules()->State_Get() == GR_STATE_PREROUND || TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING))
 	{
 		if (SetControlSettings())
 		{
@@ -449,6 +452,9 @@ void CTFHudEscort::UpdateStatus(void)
 		{
 			m_pProgressBar->SetProgress(ObjectiveResource()->GetTotalProgress(iTeamCart) * BarLength);
 		}
+		m_iTrainSpeedLevel = ObjectiveResource()->GetTrainSpeedLevel(iTeamCart);
+		m_nNumCappers = ObjectiveResource()->GetNumCappers(iTeamCart);
+		m_flRecedeTime = ObjectiveResource()->GetRecedeTime(iTeamCart) - gpGlobals->curtime;
 
 		UpdateItemPanel();
 		UpdateTeardrop(m_iCurrentCP);
@@ -533,24 +539,24 @@ void CTFHudEscort::UpdateItemPanel(void)
 		m_pRecedeCountDown->SetVisible(false);
 	}
 
-	if (TFGameRules()->HasMultipleTrains())
+	if (TeamplayRoundBasedRules()->HasMultipleTrains())
 	{
 		if (ObjectiveResource()->GetTrackAlarm(iTeamCart))
 		{
 			if (m_flNextAlphaDecrease <= gpGlobals->curtime)
 			{
 				m_pAlert->SetVisible(1);
-				vgui::GetAnimationController()->RunAnimationCommand(m_pAlert, "alpha", 0, 0.0f, 1.0f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
+				vgui::GetAnimationController()->RunAnimationCommand(m_pAlert, "alpha", 0, 0.0f, 0.3f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
 				//vgui::GetAnimationController()->RunAnimationCommand(m_pAlert, "alpha", 255, 3.0f, 2.0f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
-				m_flNextAlphaDecrease = gpGlobals->curtime + 2.0f;
-				m_flNextAlphaIncrease = gpGlobals->curtime + 1.0f;
+				m_flNextAlphaDecrease = gpGlobals->curtime + 1.2f;
+				m_flNextAlphaIncrease = gpGlobals->curtime + 0.6f;
 			}
 			else if (m_flNextAlphaIncrease <= gpGlobals->curtime)
 			{
 				m_pAlert->SetVisible(1);
-				vgui::GetAnimationController()->RunAnimationCommand(m_pAlert, "alpha", 255, 0.0f, 1.0f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
-				m_flNextAlphaIncrease = gpGlobals->curtime + 2.0f;
-				m_flNextAlphaDecrease = gpGlobals->curtime + 1.0f;
+				vgui::GetAnimationController()->RunAnimationCommand(m_pAlert, "alpha", 255, 0.0f, 0.3f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
+				m_flNextAlphaIncrease = gpGlobals->curtime + 1.2f;
+				m_flNextAlphaDecrease = gpGlobals->curtime + 0.6f;
 			}
 		}
 		else
@@ -708,7 +714,7 @@ void CTFHudEscort::FireGameEvent(IGameEvent *event)
 			}
 			return;
 		}
-		else if (FStrEq("escort_play_alert", eventname))
+		/*else if (FStrEq("escort_play_alert", eventname))
 		{
 			C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 			if (pLocalPlayer && ObjectiveResource()->GetTotalProgress(iTeamCart) > 0.0)
@@ -732,7 +738,7 @@ void CTFHudEscort::FireGameEvent(IGameEvent *event)
 				}
 			}
 			return;
-		}
+		}*/
 	}
 }
 
@@ -769,7 +775,7 @@ bool CTFHudMultipleEscort::IsVisible(void)
 		return false;
 	}
 
-	if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
+	if ( TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND )
 	{
 		return false;
 	}
@@ -792,7 +798,7 @@ void CTFHudMultipleEscort::ApplySchemeSettings(IScheme *pScheme)
 //-----------------------------------------------------------------------------
 void CTFHudMultipleEscort::SetControlSettings(void)
 {
-	if (TFGameRules()->HasMultipleTrains())
+	if (TeamplayRoundBasedRules()->HasMultipleTrains())
 	{
 		KeyValues *pCond = new KeyValues("MultipleEscort");
 		if (GetLocalPlayerTeam() == TF_TEAM_BLUE)
@@ -830,6 +836,10 @@ void CTFHudMultipleEscort::OnThink()
 		UpdateStatus();
 		m_flNextThink = gpGlobals->curtime + 0.1;
 	}
+	else if (!IsVisible() && TeamplayRoundBasedRules()->HasMultipleTrains())
+	{
+		b_Visible = false;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -847,23 +857,23 @@ void CTFHudMultipleEscort::UpdateStatus(void)
 		}
 	}*/
 
-	if (cl_hud_minmode.IsValid() && cl_hud_minmode.GetInt() != 0 && !b_InMinHud)
+	if (cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() && !b_InMinHud)
 	{
 		b_Visible = false;
 		b_InMinHud = true;
 	}
-	else if (cl_hud_minmode.IsValid() && !cl_hud_minmode.GetInt() == 0 && b_InMinHud)
+	else if (cl_hud_minmode.IsValid() && !cl_hud_minmode.GetBool() && b_InMinHud)
 	{
 		b_Visible = false;
 		b_InMinHud = false;
 	}
 
-	if (TeamplayRoundBasedRules()->State_Get() == GR_STATE_PREROUND)
+	/*if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
 	{
 		b_Visible = false;
-	}
+	}*/
 
-	if (!b_Visible && TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING)
+	if (!b_Visible && (TeamplayRoundBasedRules()->State_Get() == GR_STATE_PREROUND || TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING))
 	{
 		SetControlSettings();
 	}

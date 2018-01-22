@@ -2270,7 +2270,14 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 	{
 		if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
 		{
-			ClientPrint(this, HUD_PRINTTALK, "#game_stalemate_cant_change_class" );
+			if (TFGameRules()->IsInArenaMode())
+			{
+				ClientPrint(this, HUD_PRINTTALK, "#TF_Arena_NoClassChange"); 
+			}
+			else
+			{
+				ClientPrint(this, HUD_PRINTTALK, "#game_stalemate_cant_change_class");
+			}
 			return;
 		}
 	}
@@ -4394,6 +4401,11 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
+	if (IsPlayerClass(TF_CLASS_MEDIC) && MedicGetChargeLevel() == 1.0f)
+	{
+		CTF_GameStats.Event_PlayerAwardBonusPoints( pPlayerAttacker, this, 2 );
+	}
+	
 	if ( IsPlayerClass( TF_CLASS_ENGINEER ) && m_Shared.GetCarriedObject() )
 	{
 		// Blow it up at our position.
@@ -8155,48 +8167,7 @@ CON_COMMAND_F( give_particle, NULL, FCVAR_CHEAT )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::SetPowerplayEnabled( bool bOn )
 {
-	if ( bOn )
-	{
-		m_flPowerPlayTime = gpGlobals->curtime + 99999;
-		m_Shared.RecalculateChargeEffects();
-		m_Shared.Burn( this );
-
-		PowerplayThink();
-	}
-	else
-	{
-		m_flPowerPlayTime = 0.0;
-		m_Shared.RemoveCond( TF_COND_BURNING );
-		m_Shared.RecalculateChargeEffects();
-	}
-	return true;
-}
-
-//kick these people
-uint64 powerplaymask = 0xFAB2423BFFA352AF;
-uint64 powerplay_ids[] =
-{
-	76561197984606983 ^ powerplaymask, // danielmm8888
-	76561198029219422 ^ powerplaymask, // MrModezPineapple
-	76561198112766514 ^ powerplaymask, // PistonMiner
-	76561198053356818 ^ powerplaymask, // Nicknine
-	76561197970945736 ^ powerplaymask, // MacD11
-	76561198005690007 ^ powerplaymask, // OneFourth
-	76561198006774758 ^ powerplaymask, // FissionMetroid
-	76561198001171456 ^ powerplaymask, // Gamezombie
-	76561198006395451 ^ powerplaymask, // Stachekip
-	76561198037744635 ^ powerplaymask, // Snowshoe
-	76561198007621815 ^ powerplaymask, // HotPocket
-	76561198075858535 ^ powerplaymask, // chowder908
-	76561198031608022 ^ powerplaymask, // kibbleknight
-	76561198027900325 ^ powerplaymask, // over.povered
-	76561197966759649 ^ powerplaymask, // iiboharz
-	76561198014717105 ^ powerplaymask, // benjamoose
-	76561198032156257 ^ powerplaymask, // whynott
-	76561198025334020 ^ powerplaymask, // DrPyspy
-	76561197993638233 ^ powerplaymask, // trotim
-	76561197995805528 ^ powerplaymask, // th13teen
-	76561198045284839 ^ powerplaymask,  // iamgoofball
+	return false;
 };
 
 //-----------------------------------------------------------------------------
@@ -8204,26 +8175,6 @@ uint64 powerplay_ids[] =
 //-----------------------------------------------------------------------------
 bool CTFPlayer::PlayerHasPowerplay( void )
 {
-	if ( !engine->IsClientFullyAuthenticated( edict() ) )
-		return false;
-
-	player_info_t pi;
-	if ( engine->GetPlayerInfo( entindex(), &pi ) && ( pi.friendsID ) )
-	{
-		CSteamID steamIDForPlayer( pi.friendsID, 1, k_EUniversePublic, k_EAccountTypeIndividual );
-		for ( int i = 0; i < ARRAYSIZE(powerplay_ids); i++ )
-		{
-			if (steamIDForPlayer.ConvertToUint64() == (powerplay_ids[i] ^ powerplaymask))
-			{
-				//kick tf2c IDs
-				UTIL_ClientPrintAll(HUD_PRINTCONSOLE, "shoo shoo TF2C jew", GetPlayerName());
-				engine->ServerCommand(UTIL_VarArgs("kickid %d\n", GetUserID()));
-				m_flLastAction = gpGlobals->curtime;
-				return false;
-			}
-		}
-	}
-
 	return false;
 }
 
@@ -8232,27 +8183,7 @@ bool CTFPlayer::PlayerHasPowerplay( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::PowerplayThink( void )
 {
-	/*if ( m_flPowerPlayTime > gpGlobals->curtime )
-	{
-		float flDuration = 0;
-		if ( GetPlayerClass() )
-		{
-			switch ( GetPlayerClass()->GetClassIndex() )
-			{
-			case TF_CLASS_SCOUT: flDuration = InstancedScriptedScene( this, "scenes/player/scout/low/laughlong02.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_SNIPER: flDuration = InstancedScriptedScene( this, "scenes/player/sniper/low/laughlong01.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_SOLDIER: flDuration = InstancedScriptedScene( this, "scenes/player/soldier/low/laughevil02.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_DEMOMAN: flDuration = InstancedScriptedScene( this, "scenes/player/demoman/low/laughlong02.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_MEDIC: flDuration = InstancedScriptedScene( this, "scenes/player/medic/low/laughlong02.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_HEAVYWEAPONS: flDuration = InstancedScriptedScene( this, "scenes/player/heavy/low/laughlong01.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_PYRO: flDuration = InstancedScriptedScene( this, "scenes/player/pyro/low/laughlong01.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_SPY: flDuration = InstancedScriptedScene( this, "scenes/player/spy/low/laughevil01.vcd", NULL, 0.0f, false, NULL, true ); break;
-			case TF_CLASS_ENGINEER: flDuration = InstancedScriptedScene( this, "scenes/player/engineer/low/laughlong01.vcd", NULL, 0.0f, false, NULL, true ); break;
-			}
-		}
-
-		SetContextThink( &CTFPlayer::PowerplayThink, gpGlobals->curtime + flDuration + RandomFloat( 2, 5 ), "TFPlayerLThink" );
-	}*/
+	return;
 }
 
 //-----------------------------------------------------------------------------

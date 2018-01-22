@@ -810,19 +810,23 @@ void CArenaLogic::Spawn( void )
 void CArenaLogic::ArenaLogicThink( void )
 {
 	// Live TF2 checks m_fCapEnableTime from TFGameRules here.
-#if 0
 	SetNextThink( gpGlobals->curtime + 0.1 );
 
+#ifdef GAME_DLL
 	if ( TFGameRules()->State_Get() == GR_STATE_STALEMATE )
 	{
-		if ( ObjectiveResource()->GetCPLocked( m_iCapIndex ) )
+		float flElapsedTime = gpGlobals->curtime - TFGameRules()->GetRoundStartTime();
+		for (int m_iCapIndex = 0; m_iCapIndex < ObjectiveResource()->GetNumControlPoints(); m_iCapIndex++)
 		{
-			m_bCapUnlocked = false;
-		}
-		else if ( !m_bCapUnlocked )
-		{
-			m_bCapUnlocked = true;
-			m_OnCapEnabled.FireOutput( this, this );
+			if (ObjectiveResource()->GetCPLocked(m_iCapIndex) && flElapsedTime < 60.0)
+			{
+				m_bCapUnlocked = false;
+			}
+			else if (!m_bCapUnlocked)
+			{
+				m_bCapUnlocked = true;
+				m_OnCapEnabled.FireOutput(this, this);
+			}
 		}
 	}
 #endif
@@ -1032,6 +1036,20 @@ void CHybridMap_CTF_CP::Spawn( void )
 {
 	BaseClass::Spawn();
 }
+
+class CMultipleEscortLogic : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CMultipleEscortLogic, CBaseEntity );
+	void Spawn(void);
+};
+
+void CMultipleEscortLogic::Spawn(void)
+{
+	BaseClass::Spawn();
+}
+
+LINK_ENTITY_TO_CLASS(tf_logic_multiple_escort, CMultipleEscortLogic);
 
 #endif
 
@@ -1345,6 +1363,15 @@ void CTFGameRules::Activate()
 	{
 		m_nGameType.Set( TF_GAMETYPE_CTF );
 		tf_gamemode_ctf.SetValue( 1 );
+		return;
+	}
+
+	CMultipleEscortLogic *pMultipleEscort = dynamic_cast< CMultipleEscortLogic* > (gEntList.FindEntityByClassname(NULL, "tf_logic_multiple_escort"));
+	if (pMultipleEscort)
+	{
+		m_nGameType.Set(TF_GAMETYPE_ESCORT);
+		tf_gamemode_payload.SetValue(1);
+		TeamplayRoundBasedRules()->SetMultipleTrains(true);
 		return;
 	}
 
@@ -3079,6 +3106,10 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	{
 		pAssister = ToTFPlayer( GetAssister( pVictim, pScorer, pInflictor ) );
 	}	
+	else if ((pVictim == pScorer) && pKiller)
+	{
+		pScorer = ToTFPlayer(GetAssister(pVictim, pScorer, pInflictor));
+	}
 
 	//find the area the player is in and see if his death causes a block
 	CTriggerAreaCapture *pArea = dynamic_cast<CTriggerAreaCapture *>(gEntList.FindEntityByClassname( NULL, "trigger_capture_area" ) );
@@ -3353,8 +3384,8 @@ CBasePlayer *CTFGameRules::GetAssister( CBasePlayer *pVictim, CBasePlayer *pScor
 	if ( pTFScorer && pTFVictim )
 	{
 		// if victim killed himself, don't award an assist to anyone else, even if there was a recent damager
-		if ( pTFScorer == pTFVictim )
-			return NULL;
+		//if ( pTFScorer == pTFVictim )
+			//return NULL;
 
 		// If a player is healing the scorer, give that player credit for the assist
 		CTFPlayer *pHealer = ToTFPlayer( static_cast<CBaseEntity *>( pTFScorer->m_Shared.GetFirstHealer() ) );
@@ -4051,6 +4082,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 
 		if ( bStreakReached )
 		{
+			HandleScrambleTeams();
 			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
 				BroadcastSound( i, "Announcer.AM_TeamScrambleRandom" );
@@ -4498,13 +4530,15 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 			(pRoundStats->m_iStat[TFSTAT_CAPTURES] * TF_SCORE_CAPTURE) +
 			(pRoundStats->m_iStat[TFSTAT_DEFENSES] * TF_SCORE_DEFEND) +
 			(pRoundStats->m_iStat[TFSTAT_BUILDINGSDESTROYED] * TF_SCORE_DESTROY_BUILDING) +
-			(pRoundStats->m_iStat[TFSTAT_HEADSHOTS] * TF_SCORE_HEADSHOT) +
+			(pRoundStats->m_iStat[TFSTAT_HEADSHOTS] / TF_SCORE_HEADSHOT_PER_POINT) +
 			(pRoundStats->m_iStat[TFSTAT_BACKSTABS] * TF_SCORE_BACKSTAB) +
 			(pRoundStats->m_iStat[TFSTAT_HEALING] / TF_SCORE_HEAL_HEALTHUNITS_PER_POINT) +
 			(pRoundStats->m_iStat[TFSTAT_KILLASSISTS] / TF_SCORE_KILL_ASSISTS_PER_POINT) +
 			(pRoundStats->m_iStat[TFSTAT_TELEPORTS] / TF_SCORE_TELEPORTS_PER_POINT) +
 			(pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN) +
-			(pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE);
+			(pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE) +
+			(pRoundStats->m_iStat[TFSTAT_DAMAGE] / TF_SCORE_DAMAGE_PER_POINT) +
+			(pRoundStats->m_iStat[TFSTAT_BONUS] / TF_SCORE_BONUS_PER_POINT);
 		return max(iScore, 0);
 	}
 }

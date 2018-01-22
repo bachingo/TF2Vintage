@@ -24,6 +24,7 @@ public:
 	virtual ~C_TF_PlayerResource();
 
 	int	GetTotalScore( int iIndex ) { return GetArrayValue( iIndex, m_iTotalScore, 0 ); }
+	int GetDominations( int iIndex ) { return GetArrayValue( iIndex, m_iDomination, 0 ); }
 	int GetMaxHealth( int iIndex )   { return GetArrayValue( iIndex, m_iMaxHealth, TF_HEALTH_UNDEFINED ); }
 	int GetPlayerClass( int iIndex ) { return GetArrayValue( iIndex, m_iPlayerClass, TF_CLASS_UNDEFINED ); }
 	Color GetPlayerColor(int iIndex);
@@ -34,6 +35,7 @@ public:
 protected:
 	int GetArrayValue( int iIndex, int *pArray, int defaultVal );
 
+	int		m_iDomination[MAX_PLAYERS+1];
 	int		m_iTotalScore[MAX_PLAYERS+1];
 	int		m_iMaxHealth[MAX_PLAYERS+1];
 	int		m_iPlayerClass[MAX_PLAYERS + 1];

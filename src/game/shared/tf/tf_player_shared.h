@@ -224,6 +224,10 @@ public:
 	bool	IsPlayerDominatingMe( int iPlayerIndex );
 	void	SetPlayerDominatingMe( CTFPlayer *pPlayer, bool bDominated );
 
+#ifndef CLIENT_DLL
+	int     GetDominationCount( void );
+#endif
+
 	bool	IsCarryingObject( void ) { return m_bCarryingObject; }
 
 #ifdef GAME_DLL
@@ -372,7 +376,9 @@ private:
 
 	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS+1 );		// array of state per other player whether player is dominating other players
 	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS+1 );	// array of state per other player whether other players are dominating this player
-	
+
+	//CNetworkVar( int, m_iDominationCount );
+
 	CNetworkHandle( CBaseObject, m_hCarriedObject );
 	CNetworkVar( bool, m_bCarryingObject );
 

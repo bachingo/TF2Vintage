@@ -109,6 +109,11 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 		m_iImageDominated = m_pImageList->AddImage( scheme()->GetImage( "../hud/leaderboard_dominated", true ) );
 		m_iImageNemesis = m_pImageList->AddImage( scheme()->GetImage( "../hud/leaderboard_nemesis", true ) );
 
+		for (int i = 0; i < MAX_PLAYERS / 2; i++)
+		{
+			m_iImageDominating[i] = m_pImageList->AddImage(scheme()->GetImage(g_aDominationEmblems[i], true));
+		}
+
 		// We're skipping the mercenary, as he shouldn't have a visible class emblem during regular gameplay
 		for (int i = TF_CLASS_SCOUT; i < TF_CLASS_MERCENARY; i++)
 		{
@@ -249,7 +254,7 @@ void CTFClientScoreBoardDialog::InitPlayerList( SectionedListPanel *pPlayerList 
 
 	pPlayerList->AddColumnToSection( 0, "name", "#TF_Scoreboard_Name", 0, m_iNameWidth );	
 	pPlayerList->AddColumnToSection( 0, "dominating", "", SectionedListPanel::COLUMN_IMAGE, m_iNemesisWidth );
-	//pPlayerList->AddColumnToSection( 0, "status", "", SectionedListPanel::COLUMN_IMAGE | SectionedListPanel::COLUMN_CENTER, m_iStatusWidth );
+	//pPlayerList->AddColumnToSection(0, "status", "", SectionedListPanel::COLUMN_IMAGE | SectionedListPanel::COLUMN_CENTER, m_iStatusWidth);
 	pPlayerList->AddColumnToSection( 0, "nemesis", "", SectionedListPanel::COLUMN_IMAGE, m_iNemesisWidth );
 	pPlayerList->AddColumnToSection( 0, "class", "", SectionedListPanel::COLUMN_IMAGE, m_iClassWidth );
 	pPlayerList->AddColumnToSection( 0, "score", "#TF_Scoreboard_Score", SectionedListPanel::COLUMN_RIGHT, m_iScoreWidth );
@@ -462,6 +467,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList( void )
 
 	bool bMadeSelection = false;
 
+
 	for( int playerIndex = 1 ; playerIndex <= MAX_PLAYERS; playerIndex++ )
 	{
 		if( g_PR->IsConnected( playerIndex ) )
@@ -543,6 +549,12 @@ void CTFClientScoreBoardDialog::UpdatePlayerList( void )
 				}
 			}
 
+			int domCount = tf_PR->GetDominations(playerIndex);
+			if (domCount > 0)
+			{
+				pKeyValues->SetInt( "dominating", m_iImageDominating[domCount-1] );
+			}
+
 			// display whether player is alive or dead (all players see this for all other players on both teams)
 			//pKeyValues->SetInt( "status", tf_PR->IsAlive( playerIndex ) ?  0 : m_iImageDead );
 
@@ -561,6 +573,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList( void )
 			{
 				pKeyValues->SetInt( "ping", g_PR->GetPing( playerIndex ) );
 			}
+
 
 
 			UpdatePlayerAvatar( playerIndex, pKeyValues );
@@ -625,7 +638,15 @@ void CTFClientScoreBoardDialog::UpdateSpectatorList( void )
 	wchar_t wzSpectators[512] = L"";
 	if ( nSpectators > 0 )
 	{
-		const char *pchFormat = ( 1 == nSpectators ? "#ScoreBoard_Spectator" : "#ScoreBoard_Spectators" );
+		const char *pchFormat;
+		if (TFGameRules()->IsInArenaMode())
+		{
+			pchFormat = (1 == nSpectators ? "#TF_Arena_ScoreBoard_Spectator" : "#TF_Arena_ScoreBoard_Spectators");
+		}
+		else
+		{
+			pchFormat = (1 == nSpectators ? "#ScoreBoard_Spectator" : "#ScoreBoard_Spectators");
+		}
 
 		wchar_t wzSpectatorCount[16];
 		wchar_t wzSpectatorList[1024];
@@ -681,7 +702,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails( void )
 		m_pLocalPlayerStatsPanel->SetDialogVariable( "teleports", roundStats.m_iStat[TFSTAT_TELEPORTS] );
 		m_pLocalPlayerStatsPanel->SetDialogVariable( "headshots", roundStats.m_iStat[TFSTAT_HEADSHOTS] );
 		m_pLocalPlayerStatsPanel->SetDialogVariable( "backstabs", roundStats.m_iStat[TFSTAT_BACKSTABS] );
-		m_pLocalPlayerStatsPanel->SetDialogVariable( "bonus", 0 );
+		m_pLocalPlayerStatsPanel->SetDialogVariable( "bonus", roundStats.m_iStat[TFSTAT_BONUS] );
 		m_pLocalPlayerStatsPanel->SetDialogVariable( "support", 0 );
 		m_pLocalPlayerStatsPanel->SetDialogVariable( "damage", roundStats.m_iStat[TFSTAT_DAMAGE] );
 

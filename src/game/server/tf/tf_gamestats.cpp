@@ -202,12 +202,24 @@ void CTFGameStats::ResetRoundStats()
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Resets accumulated scores for the round for all players
+//-----------------------------------------------------------------------------
+void CTFGameStats::ResetRoundScores()
+{
+	/*r (int i = 0; i < ARRAYSIZE(m_aPlayerStats); i++)
+	{
+		m_aPlayerStats[i].statsCurrentRound.ResetPoints();
+	}*/
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Increments specified stat for specified player by specified amount
 //-----------------------------------------------------------------------------
 void CTFGameStats::IncrementStat( CTFPlayer *pPlayer, TFStatType_t statType, int iValue )
 {
 	PlayerStats_t &stats = m_aPlayerStats[pPlayer->entindex()];
 	stats.statsCurrentRound.m_iStat[statType] += iValue;
+	stats.statsCurrentGame.m_iStat[statType] += iValue;
 	stats.statsAccumulated.m_iStat[statType] += iValue;	
 
 	// if this stat should get sent to client, mark it as dirty
@@ -262,7 +274,7 @@ void CTFGameStats::SendStatsToPlayer( CTFPlayer *pPlayer, int iMsgType )
 	{
 		if ( iSendBits & 1 )
 		{
-			WRITE_LONG( stats.statsCurrentRound.m_iStat[iStat] );
+			WRITE_LONG( stats.statsCurrentGame.m_iStat[iStat] );
 		}
 		iSendBits >>= 1;
 		iStat ++;
@@ -297,6 +309,7 @@ void CTFGameStats::AccumulateAndResetPerLifeStats( CTFPlayer *pPlayer )
 		m_reportedStats.m_pCurrentGame->m_aClassStats[iClass].iScore += iScore;
 	}
 	stats.statsCurrentRound.m_iStat[TFSTAT_POINTSSCORED] += iScore;
+	stats.statsCurrentGame.m_iStat[TFSTAT_POINTSSCORED] += iScore;
 	stats.statsAccumulated.m_iStat[TFSTAT_POINTSSCORED] += iScore;
 	stats.statsCurrentLife.Reset();	
 }
@@ -742,6 +755,10 @@ void CTFGameStats::Event_RoundEnd( int iWinningTeam, bool bFullRound, float flRo
 	m_reportedStats.m_pCurrentGame->m_Header.m_iTotalTime += (int) flRoundTime;
 	m_reportedStats.m_pCurrentGame->m_flRoundStartTime = gpGlobals->curtime;
 
+
+	//reset stats for the next round 
+	ResetRoundStats();
+
 	// only record full rounds, not mini-rounds
 	if ( !bFullRound )
 		return;
@@ -770,9 +787,6 @@ void CTFGameStats::Event_RoundEnd( int iWinningTeam, bool bFullRound, float flRo
 		Assert( false );
 		break;
 	}
-
-	//reset stats for the next round 
-	ResetRoundStats();
 
 	// add current game data in to data for this level
 	AccumulateGameData();
@@ -830,6 +844,7 @@ void CTFGameStats::Event_MaxSentryKills( CTFPlayer *pAttacker, int iMaxKills )
 	if ( iCur != iMaxKills )
 	{
 		stats.statsCurrentRound.m_iStat[TFSTAT_MAXSENTRYKILLS] = iMaxKills;
+		stats.statsCurrentGame.m_iStat[TFSTAT_MAXSENTRYKILLS] = iMaxKills;
 		stats.iStatsChangedBits |= ( 1 << ( TFSTAT_MAXSENTRYKILLS - TFSTAT_FIRST ) );
 	}
 }

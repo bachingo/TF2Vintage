@@ -79,6 +79,7 @@ private:
 	int							m_iImageDead;
 	int							m_iImageDominated;
 	int							m_iImageNemesis;
+	int							m_iImageDominating[MAX_PLAYERS / 2];
 	int							m_iClassEmblem[TF_CLASS_COUNT_ALL];
 	int							m_iClassEmblemDead[TF_CLASS_COUNT_ALL];
 	

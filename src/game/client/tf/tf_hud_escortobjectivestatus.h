@@ -18,10 +18,10 @@
 #include "IconPanel.h"
 
 
-#define TEAM_TRAIN_ALERT_DEFENSE	"Announcer.Cart.DefenseWarning"
-#define TEAM_TRAIN_ALERT_ATTACK		"Announcer.Cart.AttackWarning"
-#define TEAM_TRAIN_FINAL_ALERT_DEFENSE	"Announcer.Cart.DefenseFinalWarning"
-#define TEAM_TRAIN_FINAL_ALERT_ATTACK	"Announcer.Cart.AttackFinalWarning"
+//#define TEAM_TRAIN_ALERT_DEFENSE	"Announcer.Cart.DefenseWarning"
+//#define TEAM_TRAIN_ALERT_ATTACK		"Announcer.Cart.AttackWarning"
+//#define TEAM_TRAIN_FINAL_ALERT_DEFENSE	"Announcer.Cart.DefenseFinalWarning"
+//#define TEAM_TRAIN_FINAL_ALERT_ATTACK	"Announcer.Cart.AttackFinalWarning"
 
 class CTFHudEscortProgressBar;
 
