@@ -392,14 +392,13 @@ void CTFHudEscort::UpdateOwners(int capIndex)
 //-----------------------------------------------------------------------------
 void CTFHudEscort::OnThink(void)
 {
-	if (IsVisible() && m_flNextThink < gpGlobals->curtime)
+	if (TFGameRules() && TeamplayRoundBasedRules())
 	{
-		UpdateStatus();
-		m_flNextThink = gpGlobals->curtime + 0.1;
-	}
-	else if (!IsVisible() && TFGameRules()->IsInEscortMode())
-	{
-		Refresh();
+		if (TFGameRules()->IsInEscortMode() && m_flNextThink < gpGlobals->curtime)
+		{
+			UpdateStatus();
+			m_flNextThink = gpGlobals->curtime + 0.1;
+		}
 	}
 }
 
@@ -432,10 +431,10 @@ void CTFHudEscort::UpdateStatus(void)
 			//return;
 		}
 	}
-	/*if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
+	if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
 	{
 		Refresh();
-	}*/
+	}
 
 	if (!b_Visible && (TeamplayRoundBasedRules()->State_Get() == GR_STATE_PREROUND || TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING))
 	{
@@ -831,14 +830,13 @@ void CTFHudMultipleEscort::SetControlSettings(void)
 //-----------------------------------------------------------------------------
 void CTFHudMultipleEscort::OnThink()
 {
-	if (IsVisible() && m_flNextThink < gpGlobals->curtime)
+	if (TFGameRules() && TeamplayRoundBasedRules())
 	{
-		UpdateStatus();
-		m_flNextThink = gpGlobals->curtime + 0.1;
-	}
-	else if (!IsVisible() && TeamplayRoundBasedRules()->HasMultipleTrains())
-	{
-		b_Visible = false;
+		if (TeamplayRoundBasedRules()->HasMultipleTrains() && m_flNextThink < gpGlobals->curtime)
+		{
+			UpdateStatus();
+			m_flNextThink = gpGlobals->curtime + 0.1;
+		}
 	}
 }
 
@@ -868,10 +866,10 @@ void CTFHudMultipleEscort::UpdateStatus(void)
 		b_InMinHud = false;
 	}
 
-	/*if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
+	if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
 	{
 		b_Visible = false;
-	}*/
+	}
 
 	if (!b_Visible && (TeamplayRoundBasedRules()->State_Get() == GR_STATE_PREROUND || TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING))
 	{
