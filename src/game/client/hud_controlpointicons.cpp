@@ -1837,7 +1837,8 @@ void CControlPointCountdown::OnTick( void )
 	{
 		if ( TeamplayRoundBasedRules()->IsInWaitingForPlayers() || TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING )
 		{
-			return;
+			if (!(TeamplayRoundBasedRules()->State_Get() == GR_STATE_STALEMATE && TeamplayGameRules()->GetGameType() == TF_GAMETYPE_ARENA))
+				return;
 		}
 	}
 

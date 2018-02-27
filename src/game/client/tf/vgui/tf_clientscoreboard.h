@@ -16,6 +16,8 @@
 #include "tf_hud_playerstatus.h"
 #include "clientscoreboarddialog.h"
 
+#define MAX_DOMINATIONS 16
+
 bool AreEnemyTeams(int iTeam1, int iTeam2);
 const wchar_t *GetPointsString(int iPoints);
 
@@ -79,7 +81,7 @@ private:
 	int							m_iImageDead;
 	int							m_iImageDominated;
 	int							m_iImageNemesis;
-	int							m_iImageDominating[MAX_PLAYERS / 2];
+	int							m_iImageDominating[MAX_DOMINATIONS];
 	int							m_iClassEmblem[TF_CLASS_COUNT_ALL];
 	int							m_iClassEmblemDead[TF_CLASS_COUNT_ALL];
 	

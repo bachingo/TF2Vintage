@@ -3388,6 +3388,9 @@ bool CTFPlayer::CanPickupBuilding(CBaseObject *pObject)
 	if (pObject->IsBuilding() || pObject->IsUpgrading() || pObject->IsRedeploying())
 		return false;
 
+	if (pObject->HasSapper())
+		return false;
+
 	return true;
 }
 

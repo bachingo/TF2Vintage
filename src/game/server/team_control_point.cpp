@@ -1115,12 +1115,14 @@ void CTeamControlPoint::InputSetUnlockTime( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CTeamControlPoint::UnlockThink( void )
 {
-	if ( m_flUnlockTime > 0 && 
-		 m_flUnlockTime < gpGlobals->curtime && 
-		 ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING ) )
+	if (m_flUnlockTime > 0 && m_flUnlockTime < gpGlobals->curtime && TeamplayRoundBasedRules())
 	{
-		InternalSetLocked( false );
-		return;
+		if ((TeamplayGameRules()->GetGameType() == TF_GAMETYPE_ARENA && TeamplayRoundBasedRules()->State_Get() == GR_STATE_STALEMATE)
+			|| (TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING))
+		{
+			InternalSetLocked(false);
+			return;
+		}
 	}
 
 	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1, CONTROL_POINT_UNLOCK_THINK );

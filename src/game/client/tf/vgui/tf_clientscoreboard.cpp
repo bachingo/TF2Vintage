@@ -109,7 +109,7 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 		m_iImageDominated = m_pImageList->AddImage( scheme()->GetImage( "../hud/leaderboard_dominated", true ) );
 		m_iImageNemesis = m_pImageList->AddImage( scheme()->GetImage( "../hud/leaderboard_nemesis", true ) );
 
-		for (int i = 0; i < MAX_PLAYERS / 2; i++)
+		for (int i = 0; i < MAX_DOMINATIONS; i++)
 		{
 			m_iImageDominating[i] = m_pImageList->AddImage(scheme()->GetImage(g_aDominationEmblems[i], true));
 		}
@@ -552,7 +552,10 @@ void CTFClientScoreBoardDialog::UpdatePlayerList( void )
 			int domCount = tf_PR->GetDominations(playerIndex);
 			if (domCount > 0)
 			{
-				pKeyValues->SetInt( "dominating", m_iImageDominating[domCount-1] );
+				if (domCount <= MAX_DOMINATIONS)
+					pKeyValues->SetInt( "dominating", m_iImageDominating[domCount-1] );
+				else
+					pKeyValues->SetInt("dominating", m_iImageDominating[MAX_DOMINATIONS-1]);
 			}
 
 			// display whether player is alive or dead (all players see this for all other players on both teams)
