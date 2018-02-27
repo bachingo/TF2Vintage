@@ -761,32 +761,36 @@ void CTFLogicVIP::Spawn(void)
 class CArenaLogic : public CBaseEntity
 {
 public:
-	DECLARE_CLASS( CArenaLogic, CBaseEntity );
+	DECLARE_CLASS(CArenaLogic, CBaseEntity);
 	DECLARE_DATADESC();
 
 	CArenaLogic();
 
-	void	Spawn( void );
-	void	ArenaLogicThink( void );
+	void	Spawn(void);
+	void	FireOnCapEnabled(void);
+	//void	ArenaLogicThink(void);
 
-	COutputEvent	m_OnArenaRoundStart;
+	virtual void	InputRoundActivate(inputdata_t &inputdata);
+
+	//COutputEvent m_OnArenaRoundStart;
+	COutputEvent m_OnCapEnabled;
 
 private:
-	float			m_flCapEnableDelay;
-	bool			m_bCapUnlocked;
+	int		m_iUnlockPoint;
+	bool	m_bCapUnlocked;
 
-	COutputEvent	m_OnCapEnabled;
 };
 
 BEGIN_DATADESC( CArenaLogic )
 
-	DEFINE_KEYFIELD( m_flCapEnableDelay, FIELD_FLOAT, "CapEnableDelay" ),
+	DEFINE_KEYFIELD(m_iUnlockPoint, FIELD_INTEGER, "unlock_point"),
 
-	// Outputs
-	DEFINE_OUTPUT(	m_OnArenaRoundStart, "OnArenaRoundStart" ),
-	DEFINE_OUTPUT(	m_OnCapEnabled, "OnCapEnabled" ),
+	DEFINE_INPUTFUNC(FIELD_VOID, "RoundActivate", InputRoundActivate),
 
-	DEFINE_THINKFUNC( ArenaLogicThink ),
+	//DEFINE_OUTPUT(m_OnArenaRoundStart, "OnArenaRoundStart"),
+	DEFINE_OUTPUT(m_OnCapEnabled, "OnCapEnabled"),
+
+	//DEFINE_THINKFUNC(ArenaLogicThink),
 
 END_DATADESC()
 
@@ -794,44 +798,57 @@ LINK_ENTITY_TO_CLASS( tf_logic_arena, CArenaLogic );
 
 CArenaLogic::CArenaLogic()
 {
-	m_flCapEnableDelay = 0.0f;
+	m_iUnlockPoint = 60;
 	m_bCapUnlocked = false;
 }
 
-void CArenaLogic::Spawn( void )
+void CArenaLogic::Spawn(void)
 {
 	BaseClass::Spawn();
-#if 0
-	SetThink( &CArenaLogic::ArenaLogicThink );
-	SetNextThink( gpGlobals->curtime );
-#endif
+	//SetThink(&CArenaLogic::ArenaLogicThink);
+	//SetNextThink(gpGlobals->curtime);
 }
 
-void CArenaLogic::ArenaLogicThink( void )
+void CArenaLogic::FireOnCapEnabled(void)
+{
+	if (m_bCapUnlocked == false)
+	{
+		m_bCapUnlocked = true; 
+		m_OnCapEnabled.FireOutput(this, this);
+	}
+}
+
+/*void CArenaLogic::ArenaLogicThink(void)
 {
 	// Live TF2 checks m_fCapEnableTime from TFGameRules here.
-	SetNextThink( gpGlobals->curtime + 0.1 );
+	SetNextThink(gpGlobals->curtime + 0.1);
 
 #ifdef GAME_DLL
-	if ( TFGameRules()->State_Get() == GR_STATE_STALEMATE )
+	if (TFGameRules()->State_Get() == GR_STATE_STALEMATE)
 	{
-		float flElapsedTime = gpGlobals->curtime - TFGameRules()->GetRoundStartTime();
-		for (int m_iCapIndex = 0; m_iCapIndex < ObjectiveResource()->GetNumControlPoints(); m_iCapIndex++)
-		{
-			if (ObjectiveResource()->GetCPLocked(m_iCapIndex) && flElapsedTime < 60.0)
-			{
-				m_bCapUnlocked = false;
-			}
-			else if (!m_bCapUnlocked)
-			{
+
 				m_bCapUnlocked = true;
 				m_OnCapEnabled.FireOutput(this, this);
-			}
-		}
 	}
 #endif
-}
+}*/
 
+void CArenaLogic::InputRoundActivate(inputdata_t &inputdata)
+{
+	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+	if (!pMaster)
+		return;
+
+	for (int i = 0; i < pMaster->GetNumPoints(); i++)
+	{
+		CTeamControlPoint *pPoint = pMaster->GetControlPoint(i);
+
+		variant_t sVariant;
+		sVariant.SetInt(m_iUnlockPoint);
+		pPoint->AcceptInput("SetLocked", NULL, NULL, sVariant, 0);
+		g_EventQueue.AddEvent(pPoint, "SetUnlockTime", sVariant, 0.1, NULL, NULL);
+	}
+}
 
 class CKothLogic : public CBaseEntity
 {
@@ -1145,6 +1162,7 @@ CTFGameRules::CTFGameRules()
 	ListenForGameEvent( "teamplay_capture_blocked" );	
 	ListenForGameEvent( "teamplay_round_win" );
 	ListenForGameEvent( "teamplay_flag_event" );
+	ListenForGameEvent("teamplay_point_unlocked");
 
 	Q_memset( m_vecPlayerPositions,0, sizeof(m_vecPlayerPositions) );
 
@@ -1769,7 +1787,7 @@ void CTFGameRules::SetupOnStalemateStart( void )
 		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 		if ( pArena )
 		{
-			pArena->m_OnArenaRoundStart.FireOutput( pArena, pArena );
+			//pArena->m_OnArenaRoundStart.FireOutput( pArena, pArena );
 
 			IGameEvent *event = gameeventmanager->CreateEvent( "arena_round_start" );
 			if ( event )
@@ -1780,6 +1798,7 @@ void CTFGameRules::SetupOnStalemateStart( void )
 			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
 				BroadcastSound( i, "Announcer.AM_RoundStartRandom" );
+				BroadcastSound(i, "Ambient.Siren");
 			}
 
 		}
@@ -3106,10 +3125,6 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	{
 		pAssister = ToTFPlayer( GetAssister( pVictim, pScorer, pInflictor ) );
 	}	
-	else if ((pVictim == pScorer) && pKiller)
-	{
-		pScorer = ToTFPlayer(GetAssister(pVictim, pScorer, pInflictor));
-	}
 
 	//find the area the player is in and see if his death causes a block
 	CTriggerAreaCapture *pArea = dynamic_cast<CTriggerAreaCapture *>(gEntList.FindEntityByClassname( NULL, "trigger_capture_area" ) );
@@ -3384,8 +3399,8 @@ CBasePlayer *CTFGameRules::GetAssister( CBasePlayer *pVictim, CBasePlayer *pScor
 	if ( pTFScorer && pTFVictim )
 	{
 		// if victim killed himself, don't award an assist to anyone else, even if there was a recent damager
-		//if ( pTFScorer == pTFVictim )
-			//return NULL;
+		if ( pTFScorer == pTFVictim )
+			return NULL;
 
 		// If a player is healing the scorer, give that player credit for the assist
 		CTFPlayer *pHealer = ToTFPlayer( static_cast<CBaseEntity *>( pTFScorer->m_Shared.GetFirstHealer() ) );
@@ -4791,6 +4806,19 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 			int iPlayerIndex = event->GetInt( "player" );
 			m_szMostRecentCappers[0] = iPlayerIndex;
 			m_szMostRecentCappers[1] = 0;
+		}
+#endif
+	}
+	else if ( !Q_strcmp( eventName, "teamplay_point_unlocked" ) )
+	{
+		Msg("\nteamplay_point_unlocked");
+#ifdef GAME_DLL
+		// if this is an unlock event and we're in arena, fire OnCapEnabled		
+		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>(gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
+		if (pArena)
+		{
+			Msg("\nFIRE CAP ENABLED");
+			pArena->FireOnCapEnabled();
 		}
 #endif
 	}
