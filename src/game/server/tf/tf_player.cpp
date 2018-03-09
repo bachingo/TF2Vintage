@@ -4401,7 +4401,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-	if (IsPlayerClass(TF_CLASS_MEDIC) && MedicGetChargeLevel() == 1.0f)
+	if (IsPlayerClass(TF_CLASS_MEDIC) && MedicGetChargeLevel() == 1.0f && pPlayerAttacker)
 	{
 		CTF_GameStats.Event_PlayerAwardBonusPoints( pPlayerAttacker, this, 2 );
 	}
