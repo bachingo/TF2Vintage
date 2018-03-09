@@ -772,7 +772,7 @@ public:
 
 	virtual void	InputRoundActivate(inputdata_t &inputdata);
 
-	//COutputEvent m_OnArenaRoundStart;
+	COutputEvent m_OnArenaRoundStart;
 	COutputEvent m_OnCapEnabled;
 
 private:
@@ -787,7 +787,7 @@ BEGIN_DATADESC( CArenaLogic )
 
 	DEFINE_INPUTFUNC(FIELD_VOID, "RoundActivate", InputRoundActivate),
 
-	//DEFINE_OUTPUT(m_OnArenaRoundStart, "OnArenaRoundStart"),
+	DEFINE_OUTPUT(m_OnArenaRoundStart, "OnArenaRoundStart"),
 	DEFINE_OUTPUT(m_OnCapEnabled, "OnCapEnabled"),
 
 	//DEFINE_THINKFUNC(ArenaLogicThink),
@@ -1787,7 +1787,7 @@ void CTFGameRules::SetupOnStalemateStart( void )
 		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 		if ( pArena )
 		{
-			//pArena->m_OnArenaRoundStart.FireOutput( pArena, pArena );
+			pArena->m_OnArenaRoundStart.FireOutput( pArena, pArena );
 
 			IGameEvent *event = gameeventmanager->CreateEvent( "arena_round_start" );
 			if ( event )
@@ -4811,13 +4811,11 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 	}
 	else if ( !Q_strcmp( eventName, "teamplay_point_unlocked" ) )
 	{
-		Msg("\nteamplay_point_unlocked");
 #ifdef GAME_DLL
 		// if this is an unlock event and we're in arena, fire OnCapEnabled		
 		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>(gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
 		if (pArena)
 		{
-			Msg("\nFIRE CAP ENABLED");
 			pArena->FireOnCapEnabled();
 		}
 #endif

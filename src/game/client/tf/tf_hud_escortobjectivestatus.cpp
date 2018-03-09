@@ -140,6 +140,7 @@ void CTFHudEscort::ApplySchemeSettings(IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings(pScheme);
 
+	Refresh();
 	 //load control settings...
 	//SetControlSettings();
 	//LoadControlSettings("resource/UI/objectivestatusescort.res");
@@ -407,6 +408,8 @@ void CTFHudEscort::OnThink(void)
 //-----------------------------------------------------------------------------
 void CTFHudEscort::UpdateStatus(void)
 {
+	int iState = TeamplayRoundBasedRules()->State_Get();
+
 	ConVarRef cl_hud_minmode("cl_hud_minmode", true);
 	if (!TeamplayRoundBasedRules()->HasMultipleTrains())
 	{
@@ -431,12 +434,12 @@ void CTFHudEscort::UpdateStatus(void)
 			//return;
 		}
 	}
-	if (TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && TeamplayRoundBasedRules()->State_Get() != GR_STATE_RND_RUNNING)
+	if (iState != GR_STATE_PREROUND && iState != GR_STATE_RND_RUNNING)
 	{
 		Refresh();
 	}
 
-	if (!b_Visible && (TeamplayRoundBasedRules()->State_Get() == GR_STATE_PREROUND || TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING))
+	if (!b_Visible && (iState == GR_STATE_PREROUND || iState == GR_STATE_RND_RUNNING))
 	{
 		if (SetControlSettings())
 		{
@@ -538,6 +541,7 @@ void CTFHudEscort::UpdateItemPanel(void)
 		m_pRecedeCountDown->SetVisible(false);
 	}
 
+	//flashing alarm on hud (plr only)
 	if (TeamplayRoundBasedRules()->HasMultipleTrains())
 	{
 		if (ObjectiveResource()->GetTrackAlarm(iTeamCart))
