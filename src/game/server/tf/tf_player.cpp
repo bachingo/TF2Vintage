@@ -762,34 +762,15 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "crit_text" );
 	PrecacheParticleSystem( "cig_smoke" );
 	PrecacheParticleSystem( "speech_mediccall" );
-	PrecacheParticleSystem( "player_recent_teleport_blue" );
-	PrecacheParticleSystem( "player_recent_teleport_red" );
-	PrecacheParticleSystem( "player_recent_teleport_green" );
-	PrecacheParticleSystem( "player_recent_teleport_yellow" );
-	PrecacheParticleSystem( "particle_nemesis_red" );
-	PrecacheParticleSystem( "particle_nemesis_blue" );
-	PrecacheParticleSystem( "particle_nemesis_green" );
-	PrecacheParticleSystem( "particle_nemesis_yellow" );
-	PrecacheParticleSystem( "particle_nemesis_dm" );
-	PrecacheParticleSystem( "spy_start_disguise_red" );
-	PrecacheParticleSystem( "spy_start_disguise_blue" );
-	PrecacheParticleSystem( "spy_start_disguise_green" );
-	PrecacheParticleSystem( "spy_start_disguise_yellow" );
-	PrecacheParticleSystem( "burningplayer_red" );
-	PrecacheParticleSystem( "burningplayer_blue" );
-	PrecacheParticleSystem( "burningplayer_green" );
-	PrecacheParticleSystem( "burningplayer_yellow" );
-	PrecacheParticleSystem( "burningplayer_dm" );
-	PrecacheParticleSystem( "critgun_weaponmodel_blu" );
-	PrecacheParticleSystem( "critgun_weaponmodel_blu_glow" );
-	PrecacheParticleSystem( "critgun_weaponmodel_red" );
-	PrecacheParticleSystem( "critgun_weaponmodel_red_glow" );
-	PrecacheParticleSystem( "critgun_weaponmodel_grn" );
-	PrecacheParticleSystem( "critgun_weaponmodel_grn_glow" );
-	PrecacheParticleSystem( "critgun_weaponmodel_ylw" );
-	PrecacheParticleSystem( "critgun_weaponmodel_ylw_glow" );
-	PrecacheParticleSystem( "critgun_weaponmodel_dm" );
-	PrecacheParticleSystem( "critgun_weaponmodel_dm_glow" );
+	PrecacheTeamParticles("player_recent_teleport_%s");
+	PrecacheTeamParticles("particle_nemesis_%s", true);
+	PrecacheTeamParticles("spy_start_disguise_%s");
+	PrecacheTeamParticles("burningplayer_%s", true);
+	PrecacheTeamParticles("critgun_weaponmodel_%s", true, g_aTeamNamesShort);
+	PrecacheTeamParticles("critgun_weaponmodel_%s_glow", true, g_aTeamNamesShort);
+	PrecacheTeamParticles("healthlost_%s", false, g_aTeamNamesShort);
+	PrecacheTeamParticles("healthgained_%s", false, g_aTeamNamesShort);
+	PrecacheTeamParticles("healthgained_%s_large", false, g_aTeamNamesShort);
 	PrecacheParticleSystem( "blood_spray_red_01" );
 	PrecacheParticleSystem( "blood_spray_red_01_far" );
 	PrecacheParticleSystem( "water_blood_impact_red_01" );
@@ -1201,6 +1182,14 @@ bool CTFPlayer::ItemsMatch( CEconItemView *pItem1, CEconItemView *pItem2, CTFWea
 {
 	if ( pItem1 && pItem2 )
 	{
+		// Item might have different entities for each class (i.e. shotgun).
+		int iClass = m_PlayerClass.GetClassIndex();
+		const char *pszClass1 = TranslateWeaponEntForClass(pItem1->GetEntityName(), iClass);
+		const char *pszClass2 = TranslateWeaponEntForClass(pItem2->GetEntityName(), iClass);
+		
+			if (V_strcmp(pszClass1, pszClass2) != 0)
+			 return false;
+
 		return ( pItem1->GetItemDefIndex() == pItem2->GetItemDefIndex() );
 	}
 
@@ -1436,13 +1425,6 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		}
 	}
 
-	if ( m_bRegenerating == false )
-	{
-		SetActiveWeapon( NULL );
-		Weapon_Switch( Weapon_GetSlot( 0 ) );
-		Weapon_SetLast( Weapon_GetSlot( 1 ) );
-	}
-
 	PostInventoryApplication();
 }
 
@@ -1511,13 +1493,6 @@ void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 				UTIL_Remove( pCarriedWeapon );
 			}
 		}
-	}
-
-	if ( m_bRegenerating == false )
-	{
-		SetActiveWeapon( NULL );
-		Weapon_Switch( Weapon_GetSlot( 0 ) );
-		Weapon_SetLast( Weapon_GetSlot( 1 ) );
 	}
 }
 
@@ -3145,7 +3120,9 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 					// play the critical shot sound to the shooter	
 					if ( pWpn )
 					{
-						pWpn->WeaponSound( BURST );
+						if (pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE ) )
+							pWpn->WeaponSound( BURST );
+
 						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWpn, flDamage, headshot_damage_modify );
 					}
 				}
@@ -4200,7 +4177,7 @@ void CTFPlayer::AddDamagerToHistory( EHANDLE hDamager )
 	// sanity check: ignore damager if it is on our team.  (Catch-all for 
 	// damaging self in rocket jumps, etc.)
 	CTFPlayer *pDamager = ToTFPlayer(hDamager);
-	if (!pDamager || (pDamager->GetTeam() == GetTeam() && !TFGameRules()->IsDeathmatch()))
+	if (!pDamager || pDamager == this || (InSameTeam(pDamager) && !TFGameRules()->IsDeathmatch() ) ) 
 		return;
 
 	// If this damager is different from the most recent damager, shift the
@@ -4342,27 +4319,25 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
+void CTFPlayer::Event_Killed(const CTakeDamageInfo &info)
 {
-	SpeakConceptIfAllowed( MP_CONCEPT_DIED );
+	SpeakConceptIfAllowed(MP_CONCEPT_DIED);
 
-	StateTransition( TF_STATE_DYING );	// Transition into the dying state.
+	StateTransition(TF_STATE_DYING);	// Transition into the dying state.
 
-	CTFPlayer *pPlayerAttacker = NULL;
-	if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() )
-	{
-		pPlayerAttacker = ToTFPlayer( info.GetAttacker() );
-	}
+	CBaseEntity *pAttacker = info.GetAttacker();
+	CBaseEntity *pInflictor = info.GetInflictor();
+	CTFPlayer *pTFAttacker = ToTFPlayer(pAttacker);
 
-	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
+	bool bDisguised = m_Shared.InCond(TF_COND_DISGUISED);
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)
-	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() );
+	bool bBurning = m_Shared.InCond(TF_COND_BURNING) && (TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex());
 
 	// Remove all conditions...
-	m_Shared.RemoveAllCond( NULL );
+	m_Shared.RemoveAllCond(NULL);
 
 	// Reset our model if we were disguised
-	if ( bDisguised )
+	if (bDisguised)
 	{
 		UpdateModel();
 	}
@@ -4370,12 +4345,12 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	RemoveTeleportEffect();
 
 	// Stop being invisible
-	m_Shared.RemoveCond( TF_COND_STEALTHED );
+	m_Shared.RemoveCond(TF_COND_STEALTHED);
 
-	if ( TFGameRules()->IsDeathmatch() )
+	if (TFGameRules()->IsDeathmatch())
 	{
 		// Drop our weapon in DM
-		DropWeapon( GetActiveTFWeapon(), true );
+		DropWeapon(GetActiveTFWeapon(), true);
 	}
 	else
 	{
@@ -4384,56 +4359,56 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
-	if ( HasItem() && pPlayerAttacker && ( pPlayerAttacker != this ) )
+	if (HasItem() && pTFAttacker && (pTFAttacker != this))
 	{
-		CCaptureFlag *pCaptureFlag = dynamic_cast<CCaptureFlag *>( GetItem() );
-		if ( pCaptureFlag )
+		CCaptureFlag *pCaptureFlag = dynamic_cast<CCaptureFlag *>(GetItem());
+		if (pCaptureFlag)
 		{
-			IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_flag_event" );
-			if ( event )
+			IGameEvent *event = gameeventmanager->CreateEvent("teamplay_flag_event");
+			if (event)
 			{
-				event->SetInt( "player", pPlayerAttacker->entindex() );
-				event->SetInt( "eventtype", TF_FLAGEVENT_DEFEND );
-				event->SetInt( "priority", 8 );
-				gameeventmanager->FireEvent( event );
+				event->SetInt("player", pTFAttacker->entindex());
+				event->SetInt("eventtype", TF_FLAGEVENT_DEFEND);
+				event->SetInt("priority", 8);
+				gameeventmanager->FireEvent(event);
 			}
-			CTF_GameStats.Event_PlayerDefendedPoint( pPlayerAttacker );
+			CTF_GameStats.Event_PlayerDefendedPoint(pTFAttacker);
 		}
 	}
 
-	if (IsPlayerClass(TF_CLASS_MEDIC) && MedicGetChargeLevel() == 1.0f && pPlayerAttacker)
+	if (IsPlayerClass(TF_CLASS_MEDIC) && MedicGetChargeLevel() == 1.0f && pTFAttacker)
 	{
-		CTF_GameStats.Event_PlayerAwardBonusPoints( pPlayerAttacker, this, 2 );
+		CTF_GameStats.Event_PlayerAwardBonusPoints(pTFAttacker, this, 2);
 	}
-	
-	if ( IsPlayerClass( TF_CLASS_ENGINEER ) && m_Shared.GetCarriedObject() )
+
+	if (IsPlayerClass(TF_CLASS_ENGINEER) && m_Shared.GetCarriedObject())
 	{
 		// Blow it up at our position.
 		CBaseObject *pObject = m_Shared.GetCarriedObject();
-		pObject->Teleport( &WorldSpaceCenter(), &GetAbsAngles(), &vec3_origin );
-		pObject->DropCarriedObject( this );
-		CTakeDamageInfo newInfo( info.GetInflictor(), info.GetAttacker(), (float)pObject->GetHealth(), DMG_GENERIC, TF_DMG_BUILDING_CARRIED );
-		pObject->Killed( newInfo );
+		pObject->Teleport(&WorldSpaceCenter(), &GetAbsAngles(), &vec3_origin);
+		pObject->DropCarriedObject(this);
+		CTakeDamageInfo newInfo(pInflictor, pAttacker, (float)pObject->GetHealth(), DMG_GENERIC, TF_DMG_BUILDING_CARRIED);
+		pObject->Killed(newInfo);
 	}
 
 	// Remove all items...
-	RemoveAllItems( true );
+	RemoveAllItems(true);
 
-	for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
+	for (int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon)
 	{
-		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(iWeapon);
 
-		if ( pWeapon )
+		if (pWeapon)
 		{
 			pWeapon->WeaponReset();
 		}
 	}
 
-	if ( GetActiveWeapon() )
+	if (GetActiveWeapon())
 	{
-		GetActiveWeapon()->SendViewModelAnim( ACT_IDLE );
+		GetActiveWeapon()->SendViewModelAnim(ACT_IDLE);
 		GetActiveWeapon()->Holster();
-		SetActiveWeapon( NULL );
+		SetActiveWeapon(NULL);
 	}
 
 	ClearZoomOwner();
@@ -4447,15 +4422,15 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	bool bGib = false;
 
 	// See if we should gib.
-	if ( ShouldGib( info ) )
+	if (ShouldGib(info))
 	{
 		bGib = true;
 		bRagdoll = false;
 	}
 	else
-	// See if we should play a custom death animation.
+		// See if we should play a custom death animation.
 	{
-		if ( PlayDeathAnimation( info, info_modified ) )
+		if (PlayDeathAnimation(info, info_modified))
 		{
 			bRagdoll = false;
 		}
@@ -4463,61 +4438,76 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check
-	if( pPlayerAttacker )
+	if (pTFAttacker)
 	{
 		// See if we were killed by a sentrygun. If so, look at that instead of the player
-		if ( info.GetInflictor() && info.GetInflictor()->IsBaseObject() )
+		if (pInflictor && pInflictor->IsBaseObject())
 		{
 			// Catches the case where we're killed directly by the sentrygun (i.e. bullets)
 			// Look at the sentrygun
-			m_hObserverTarget.Set( info.GetInflictor() ); 
+			m_hObserverTarget.Set(pInflictor);
 		}
 		// See if we were killed by a projectile emitted from a base object. The attacker
 		// will still be the owner of that object, but we want the deathcam to point to the 
 		// object itself.
-		else if ( info.GetInflictor() && info.GetInflictor()->GetOwnerEntity() && 
-					info.GetInflictor()->GetOwnerEntity()->IsBaseObject() )
+		else if (pInflictor && pInflictor->GetOwnerEntity() &&
+			pInflictor->GetOwnerEntity()->IsBaseObject())
 		{
-			m_hObserverTarget.Set( info.GetInflictor()->GetOwnerEntity() );
+			m_hObserverTarget.Set(pInflictor->GetOwnerEntity());
 		}
 		else
 		{
 			// Look at the player
-			m_hObserverTarget.Set( info.GetAttacker() ); 
+			m_hObserverTarget.Set(pAttacker);
 		}
 
 		// reset fov to default
-		SetFOV( this, 0 );
+		SetFOV(this, 0);
 	}
-	else if ( info.GetAttacker() && info.GetAttacker()->IsBaseObject() )
+	else if (pAttacker && pAttacker->IsBaseObject())
 	{
 		// Catches the case where we're killed by entities spawned by the sentrygun (i.e. rockets)
 		// Look at the sentrygun. 
-		m_hObserverTarget.Set( info.GetAttacker() ); 
+		m_hObserverTarget.Set(pAttacker);
 	}
 	else
 	{
-		m_hObserverTarget.Set( NULL );
+		m_hObserverTarget.Set(NULL);
 	}
 
-	if ( info_modified.GetDamageCustom() == TF_DMG_CUSTOM_SUICIDE )
+	if (info_modified.GetDamageCustom() == TF_DMG_CUSTOM_SUICIDE)
 	{
 		// if this was suicide, recalculate attacker to see if we want to award the kill to a recent damager
-		info_modified.SetAttacker( TFGameRules()->GetDeathScorer( info.GetAttacker(), info.GetInflictor(), this ) );
+		info_modified.SetAttacker(TFGameRules()->GetDeathScorer(info.GetAttacker(), pInflictor, this));
+	}
+	else if (!TFGameRules()->IsDeathmatch() && (!pAttacker || pAttacker == this || pAttacker->IsBSPModel()))
+	{
+		// Recalculate attacker if player killed himself or this was environmental death.
+		CBasePlayer *pDamager = TFGameRules()->GetRecentDamager(this, 0, TF_TIME_ENV_DEATH_KILL_CREDIT);
+		if (pDamager)
+		{
+			info_modified.SetAttacker(pDamager);
+			info_modified.SetInflictor(NULL);
+			info_modified.SetWeapon(NULL);
+			info_modified.SetDamageType(DMG_GENERIC);
+			info_modified.SetDamageCustom(TF_DMG_CUSTOM_SUICIDE);
+		}
 	}
 
-	m_OnDeath.FireOutput(this, this);
+	m_OnDeath.FireOutput( this, this );
 
 	BaseClass::Event_Killed( info_modified );
 
-	CTFPlayer *pInflictor = ToTFPlayer( info.GetInflictor() );
-	if ( ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() ) && pInflictor )
-	{				
-		CTF_GameStats.Event_Headshot( pInflictor );
-	}
-	else if ( ( TF_DMG_CUSTOM_BACKSTAB == info.GetDamageCustom() ) && pInflictor )
+	if ( pTFAttacker )
 	{
-		CTF_GameStats.Event_Backstab( pInflictor );
+		if ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() )
+		{
+			CTF_GameStats.Event_Headshot( pTFAttacker );
+		}
+		else if ( TF_DMG_CUSTOM_BACKSTAB == info.GetDamageCustom() )
+		{
+			CTF_GameStats.Event_Backstab( pTFAttacker );
+		}
 	}
 
 	// Create the ragdoll entity.
@@ -4545,6 +4535,25 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 
 	m_Shared.SetKillstreak(0);
+
+	if (pAttacker && pAttacker == pInflictor && pAttacker->IsBSPModel())
+	{
+		CTFPlayer *pDamager = TFGameRules()->GetRecentDamager(this, 0, TF_TIME_ENV_DEATH_KILL_CREDIT);
+		
+		if (pDamager)
+		{
+			IGameEvent *event = gameeventmanager->CreateEvent("environmental_death");
+			
+			if (event)
+			{
+				event->SetInt("killer", pDamager->GetUserID());
+				event->SetInt("victim", GetUserID());
+				event->SetInt("priority", 9); // HLTV event priority, not transmitted
+				
+				gameeventmanager->FireEvent(event);
+			}
+		}
+	}
 }
 
 bool CTFPlayer::Event_Gibbed( const CTakeDamageInfo &info )
@@ -5551,6 +5560,12 @@ bool CTFPlayer::SetObserverMode(int mode)
 //-----------------------------------------------------------------------------
 void CTFPlayer::StateEnterOBSERVER( void )
 {
+	// Drop flag when switching to spec.
+	if (HasTheFlag())
+	{
+		DropFlag();
+	}
+
 	// Always start a spectator session in chase mode
 	m_iObserverLastMode = OBS_MODE_CHASE;
 

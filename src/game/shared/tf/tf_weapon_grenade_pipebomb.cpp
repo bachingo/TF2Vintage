@@ -69,6 +69,7 @@ END_NETWORK_TABLE()
 static string_t s_iszTrainName;
 static string_t s_iszSawBlade01;
 static string_t s_iszSawBlade02;
+static string_t s_iszLochModel;
 #endif
 
 //-----------------------------------------------------------------------------
@@ -79,10 +80,12 @@ CTFGrenadePipebombProjectile::CTFGrenadePipebombProjectile()
 {
 	m_bTouched = false;
 	m_flChargeTime = 0.0f;
+
 #ifdef GAME_DLL
 	s_iszTrainName  = AllocPooledString( "models/props_vehicles/train_enginecar.mdl" );
 	s_iszSawBlade01 = AllocPooledString( "sawmovelinear01" );
 	s_iszSawBlade02 = AllocPooledString( "sawmovelinear02" );
+	s_iszLochModel = AllocPooledString( "models/workshop/weapons/c_models/c_lochnload/c_lochnload.mdl" );
 #endif
 }
 
@@ -290,6 +293,9 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( bRemoteDetonate ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
 	{
+		//weapon viewmodel for loch and load hack
+		pGrenade->SetPrimaryWeapon(AllocPooledString(pGrenade->GetThrower()->GetActiveWeapon()->GetWorldModel()));
+
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
 		pGrenade->SetPipebombMode( bRemoteDetonate );
 		DispatchSpawn( pGrenade );
@@ -357,11 +363,7 @@ void CTFGrenadePipebombProjectile::Precache()
 {
 	PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
 	PrecacheModel( TF_WEAPON_PIPEGRENADE_MODEL );
-	PrecacheParticleSystem( "stickybombtrail_blue" );
-	PrecacheParticleSystem( "stickybombtrail_red" );
-	PrecacheParticleSystem( "stickybombtrail_green" );
-	PrecacheParticleSystem( "stickybombtrail_yellow" );
-	PrecacheParticleSystem( "stickybombtrail_dm" );
+	PrecacheTeamParticles("stickybombtrail_%s", true);
 
 	BaseClass::Precache();
 }
@@ -502,7 +504,14 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 			SetThink( &CTFGrenadePipebombProjectile::Detonate );
 			SetNextThink( gpGlobals->curtime );
 		}
-		
+
+		//Loch n' Load hack: kill pills that hit anything other than enemy entities
+		if (m_sPrimaryWep.operator==(s_iszLochModel))
+		{
+			Fizzle();
+			Detonate();
+		}
+
 		m_bTouched = true;
 		return;
 	}

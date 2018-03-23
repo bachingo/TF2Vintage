@@ -43,22 +43,37 @@ const char *g_aTeamParticleNames[TF_TEAM_COUNT] =
 	"yellow"
 };
 
-const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride /*= false*/ )
+const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
 {
 	if ( bDeathmatchOverride && TFGameRules() && TFGameRules()->IsDeathmatch() )
 	{
 		return "dm";
 	}
 
-	return g_aTeamParticleNames[iTeam];
+	return pNames[iTeam];
 }
 
-const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride /*= false*/ )
+const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
 {
 	static char szParticleName[256];
 
-	Q_snprintf( szParticleName, 256, pszFormat, GetTeamParticleName( iTeam, bDeathmatchOverride ) );
+	V_snprintf( szParticleName, 256, pszFormat, GetTeamParticleName( iTeam, bDeathmatchOverride, pNames ) );
 	return szParticleName;
+}
+
+void PrecacheTeamParticles(const char *pszFormat, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/)
+{
+	for (int i = FIRST_GAME_TEAM; i < TF_TEAM_COUNT; i++)
+	{
+		const char *pszParticle = ConstructTeamParticle(pszFormat, i, false, pNames);
+		PrecacheParticleSystem(pszParticle);
+	}
+	
+	if (bDeathmatchOverride)
+	{
+		const char *pszParticle = ConstructTeamParticle(pszFormat, FIRST_GAME_TEAM, true, pNames);
+		PrecacheParticleSystem(pszParticle);
+	}
 }
 
 color32 g_aTeamColors[TF_TEAM_COUNT] = 
@@ -413,9 +428,10 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_DISPENSER",
 	"TF_WEAPON_INVIS",
 	"TF_WEAPON_FLAG", // ADD NEW WEAPONS AFTER THIS
+	"TF_WEAPON_FLAREGUN",
+	"TF_WEAPON_COMPOUND_BOW", //TF2C WEAPONS AFTER THIS
 	"TF_WEAPON_HUNTERRIFLE",
 	"TF_WEAPON_UMBRELLA",
-	"TF_WEAPON_FLAREGUN",
 	"TF_WEAPON_HAMMERFISTS",
 	"TF_WEAPON_CHAINSAW",
 	"TF_WEAPON_HEAVYARTILLERY",
@@ -480,9 +496,12 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC,	// TF_WEAPON_DISPENSER
 	DMG_GENERIC,	// TF_WEAPON_INVIS
 	DMG_GENERIC,	// TF_WEAPON_FLAG // ADD NEW WEAPONS AFTER THIS
+	DMG_IGNITE,		// TF_WEAPON_FLAREGUN,
+	DMG_BULLET,		// TF_WEAPON_COMPOUND_BOW,
+
+	//TF2C WEAPONS AFTER THIS
 	DMG_BULLET | DMG_USE_HITLOCATIONS,//TF_WEAPON_HUNTERRIFLE,
 	DMG_CLUB, // TF_WEAPON_UMBRELLA,
-	DMG_IGNITE,		// TF_WEAPON_FLAREGUN,
 	DMG_CLUB,		// TF_WEAPON_HAMMERFISTS,
 	DMG_SLASH,		// TF_WEAPON_CHAINSAW,
 	DMG_BULLET | DMG_USEDISTANCEMOD,		// TF_WEAPON_HEAVYARTILLERY,
@@ -654,8 +673,8 @@ const char *WeaponIdToClassname( int iWeapon )
 		return NULL;
 
 	static char szEntName[256];
-	Q_strcpy( szEntName, pszWeaponAlias );
-	Q_strlower( szEntName );
+	V_strcpy( szEntName, pszWeaponAlias );
+	V_strlower( szEntName );
 
 	return szEntName;
 }

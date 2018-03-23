@@ -51,6 +51,10 @@ public:
 
 	void			FireArrow( void );	
 
+#ifdef CLIENT_DLL
+	void			CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles );
+#endif
+
 public:
 	// ITFChargeUpWeapon
 	virtual float	GetChargeBeginTime( void ) { return m_flChargeBeginTime; }

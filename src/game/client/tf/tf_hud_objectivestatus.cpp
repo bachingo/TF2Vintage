@@ -808,6 +808,7 @@ void CTFHudObjectiveStatus::SetVisiblePanels( void )
 			return;
 			break;
 
+		case TF_GAMETYPE_MEDIEVAL:
 		case TF_GAMETYPE_ARENA:
 		case TF_GAMETYPE_CP:
 			// turn on the control point icons
@@ -863,6 +864,7 @@ void CTFHudObjectiveStatus::SetVisiblePanels( void )
 			}
 			break;
 
+		case TF_GAMETYPE_MEDIEVAL:
 		case TF_GAMETYPE_ARENA:
 		case TF_GAMETYPE_CP:
 			// turn on the control point icons

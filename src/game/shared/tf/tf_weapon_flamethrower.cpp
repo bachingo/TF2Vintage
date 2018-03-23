@@ -581,10 +581,7 @@ void CTFFlameThrower::SecondaryAttack()
 			// If the victim is on the ground assume that shooter is looking at least 45 degrees up.
 			else if (tf2v_airblast.GetInt() == 1)
 			{
-				if (pTFPlayer->GetGroundEntity() != NULL)
-				{
-					angPushDir[PITCH] = min(-45, angPushDir[PITCH]);
-				}
+				angPushDir[PITCH] = min( -45, angPushDir[PITCH] );
 			}
 
 			AngleVectors( angPushDir, &vecPushDir );
@@ -654,6 +651,9 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 			{
 				pVictim->ApplyAbsVelocityImpulse(vecDir * 500);
 				pVictim->EmitSound("TFPlayer.AirBlastImpact");
+
+				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
+				pVictim->AddDamagerToHistory( pAttacker );
 			}
 			//tf2v airblast [EXPERIMENTAL]
 			else if (tf2v_airblast.GetInt() == 2)
@@ -661,6 +661,9 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 				pVictim->SetAbsVelocity(vecDir * 500);
 				pVictim->EmitSound("TFPlayer.AirBlastImpact");
 				pVictim->setAirblastState(true);
+
+				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
+				pVictim->AddDamagerToHistory( pAttacker );
 			}
 			
 		}

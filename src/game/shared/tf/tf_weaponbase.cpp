@@ -1585,10 +1585,22 @@ int CTFWeaponBase::GetActivityWeaponRole( void )
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pPlayer->IsEnemyPlayer() )
 	{
-		CTFWeaponInfo *pWeaponInfo = pPlayer->m_Shared.GetDisguiseWeaponInfo();
-		if ( pWeaponInfo )
+		CEconItemView *pItem = pPlayer->m_Shared.GetDisguiseItem();
+		if ( pItem->GetItemDefIndex() >= 0 )
 		{
-			iWeaponRole = pWeaponInfo->m_iWeaponType;
+			int iSchemaRole = pItem->GetAnimationSlot();
+			if ( iSchemaRole >= 0 )
+			{
+				iWeaponRole = iSchemaRole;
+			}
+			else
+			{
+				CTFWeaponInfo *pWeaponInfo = pPlayer->m_Shared.GetDisguiseWeaponInfo();
+				if (pWeaponInfo)
+				{
+					iWeaponRole = pWeaponInfo->m_iWeaponType;
+				}
+			}
 		}
 	}
 #endif
@@ -1843,7 +1855,20 @@ void CTFWeaponBase::ApplyOnHitAttributes( CTFPlayer *pVictim, const CTakeDamageI
 		CALL_ATTRIB_HOOK_FLOAT( flAddHealth, add_onhit_addhealth );
 		if ( flAddHealth )
 		{
-			pOwner->TakeHealth( flAddHealth, DMG_GENERIC );
+			int iHealthRestored = pOwner->TakeHealth(flAddHealth, DMG_GENERIC);
+			
+			if (iHealthRestored)
+			{
+				IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
+				
+				if ( event )
+				{
+					event->SetInt( "amount", iHealthRestored );
+					event->SetInt( "entindex", pOwner->entindex() );
+					
+					gameeventmanager->FireEvent( event );
+				}
+			}
 		}
 	}
 }
@@ -2169,6 +2194,7 @@ acttable_t CTFWeaponBase::s_acttablePrimary[] =
 	{ ACT_MP_RELOAD_STAND_LOOP,	ACT_MP_RELOAD_STAND_PRIMARY_LOOP,	false },
 	{ ACT_MP_RELOAD_STAND_END,	ACT_MP_RELOAD_STAND_PRIMARY_END,	false },
 	{ ACT_MP_RELOAD_CROUCH,		ACT_MP_RELOAD_CROUCH_PRIMARY,		false },
+	{ ACT_MP_CROUCH_DEPLOYED, ACT_MP_CROUCHWALK_DEPLOYED, false },
 	{ ACT_MP_RELOAD_CROUCH_LOOP,ACT_MP_RELOAD_CROUCH_PRIMARY_LOOP,	false },
 	{ ACT_MP_RELOAD_CROUCH_END,	ACT_MP_RELOAD_CROUCH_PRIMARY_END,	false },
 	{ ACT_MP_RELOAD_SWIM,		ACT_MP_RELOAD_SWIM_PRIMARY,			false },

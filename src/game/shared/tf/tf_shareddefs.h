@@ -39,8 +39,9 @@ extern const char *g_aTeamParticleNames[TF_TEAM_COUNT];
 extern color32 g_aTeamColors[TF_TEAM_COUNT];
 extern color32 g_aTeamSkinColors[TF_TEAM_COUNT];
 
-const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride = false );
-const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride = false );
+const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
+const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
+void PrecacheTeamParticles( const char *pszFormat, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
 
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
@@ -175,6 +176,7 @@ enum
 	TF_GAMETYPE_PD,
 	TF_GAMETYPE_DM,
 	TF_GAMETYPE_VIP,
+	TF_GAMETYPE_MEDIEVAL,
 };
 extern const char *g_aGameTypeNames[];	// localized gametype names
 
@@ -358,9 +360,11 @@ enum
 	TF_WEAPON_DISPENSER,
 	TF_WEAPON_INVIS,
 	TF_WEAPON_FLAG, // ADD NEW WEAPONS AFTER THIS
+	TF_WEAPON_FLAREGUN,
+	TF_WEAPON_COMPOUND_BOW,
+	//TF2C AFTER THIS
 	TF_WEAPON_HUNTERRIFLE,
 	TF_WEAPON_UMBRELLA,
-	TF_WEAPON_FLAREGUN,
 	TF_WEAPON_HAMMERFISTS,
 	TF_WEAPON_CHAINSAW,
 	TF_WEAPON_HEAVYARTILLERY,
@@ -653,6 +657,7 @@ enum {
 // Assist-damage constants
 //-----------------------------------------------------------------------------
 #define TF_TIME_ASSIST_KILL				3.0f	// Time window for a recent damager to get credit for an assist for a kill
+#define TF_TIME_ENV_DEATH_KILL_CREDIT	5.0f	// Time window for a recent damager to get credit for an environmental kill
 #define TF_TIME_SUICIDE_KILL_CREDIT		10.0f	// Time window for a recent damager to get credit for a kill if target suicides
 
 //-----------------------------------------------------------------------------
@@ -1246,6 +1251,7 @@ public:
 // Unused
 #define TF_DEATH_FIRST_BLOOD	0x0010
 #define TF_DEATH_FEIGN_DEATH	0x0020
+#define TF_DEATH_GIB			0x0080
 #define TF_DEATH_PURGATORY		0x0100
 #define TF_DEATH_AUSTRALIUM		0x0400
 

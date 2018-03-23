@@ -141,6 +141,16 @@ bool CHealthKit::MyTouch(CBasePlayer *pPlayer)
 
 			EmitSound(user, entindex(), pszSound);
 
+			IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
+			
+			if (event)
+			{
+				event->SetInt("amount", iHealthRestored);
+				event->SetInt("entindex", pPlayer->entindex());
+				
+				gameeventmanager->FireEvent(event);
+			}
+
 			CTFPlayer *pTFOwner = ToTFPlayer(GetOwnerEntity());
 			if (pTFOwner && pTFOwner->InSameTeam(pTFPlayer))
 			{

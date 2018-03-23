@@ -5,6 +5,7 @@
 //=============================================================================
 #include "cbase.h"
 #include "tf_weapon_compound_bow.h"
+#include "in_buttons.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -304,3 +305,19 @@ float CTFCompoundBow::GetChargeMaxTime( void )
 {
 	return TF_BOW_MAX_CHARGE_TIME;
 }
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCompoundBow::CreateMove(float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles)
+{
+	// Prevent jumping while aiming
+	if (GetTFPlayerOwner()->m_Shared.InCond(TF_COND_AIMING))
+	{
+		pCmd->buttons &= ~IN_JUMP;
+	}
+
+	BaseClass::CreateMove(flInputSampleTime, pCmd, vecOldViewAngles);
+}
+#endif

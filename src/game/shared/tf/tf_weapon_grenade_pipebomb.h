@@ -81,6 +81,8 @@ public:
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
+	
+	void			SetPrimaryWeapon( string_t PrimaryWep ) { m_sPrimaryWep = PrimaryWep; }
 
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
@@ -88,6 +90,8 @@ private:
 
 	
 	bool		m_bFizzle;
+
+	string_t	m_sPrimaryWep;
 
 	float		m_flMinSleepTime;
 
