@@ -549,7 +549,7 @@ void C_TFRagdoll::CreateTFGibs( void )
 	{
 		Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
 		VectorNormalize( vecVelocity );
-		pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length() );
+		pPlayer->CreatePlayerGibs(m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning);
 	}
 
 	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
@@ -1790,6 +1790,11 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 			m_iOldPlayerClass != m_PlayerClass.GetClassIndex() )
 		{
 			pActiveWpn->SetViewModel();
+
+			if (ShouldDrawThisPlayer())
+			{
+				m_Shared.UpdateCritBoostEffect();
+			}
 		}
 	}
 
@@ -2355,8 +2360,6 @@ void C_TFPlayer::TurnOnTauntCam( void )
 	{
 		m_hItem->UpdateVisibility();
 	}
-
-	m_Shared.UpdateCritBoostEffect();
 }
 
 //-----------------------------------------------------------------------------
@@ -2400,8 +2403,6 @@ void C_TFPlayer::TurnOffTauntCam( void )
 	{
 		m_hItem->UpdateVisibility();
 	}
-
-	m_Shared.UpdateCritBoostEffect();
 }
 
 //-----------------------------------------------------------------------------
@@ -2476,6 +2477,8 @@ void C_TFPlayer::ThirdPersonSwitch( bool bThirdPerson )
 			g_ThirdPersonManager.SetDesiredCameraOffset( vecOffset );
 		}
 	}
+
+	m_Shared.UpdateCritBoostEffect();
 }
 
 //-----------------------------------------------------------------------------
@@ -3436,7 +3439,7 @@ void C_TFPlayer::InitPlayerGibs( void )
 //			&vecVelocity - 
 //			&vecImpactVelocity - 
 //-----------------------------------------------------------------------------
-void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale )
+void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning )
 {
 	// Make sure we have Gibs to create.
 	if ( m_aGibs.Count() == 0 )
@@ -3461,7 +3464,7 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 
 	// Break up the player.
 	m_hSpawnedGibs.Purge();
-	m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1 , false, true, &m_hSpawnedGibs );
+	m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
 
 	DropPartyHat( breakParams, vecBreakVelocity );
 }
@@ -3734,22 +3737,14 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 void C_TFPlayer::CreateSaveMeEffect( void )
 {
 	// Don't create them for the local player
-	if ( IsLocalPlayer() && !ShouldDrawLocalPlayer() )
+	if ( !ShouldDrawThisPlayer() )
 		return;
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	// If I'm disguised as the enemy, play to all players
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) && m_Shared.GetDisguiseTeam() != GetTeamNumber() )
-	{
-		// play to all players
-	}
-	else
-	{
-		// only play to teammates
-		if ( pLocalPlayer && pLocalPlayer->GetTeamNumber() != GetTeamNumber() )
-			return;
-	}
+	// Only show the bubble to teammates and players who are on the our disguise team.
+	if ( GetTeamNumber() != pLocalPlayer->GetTeamNumber() && !( m_Shared.InCond( TF_COND_DISGUISED ) && m_Shared.GetDisguiseTeam() == pLocalPlayer->GetTeamNumber() ) )
+		return;
 
 	if ( m_pSaveMeEffect )
 	{
@@ -3758,6 +3753,13 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 	}
 
 	m_pSaveMeEffect = ParticleProp()->Create( "speech_mediccall", PATTACH_POINT_FOLLOW, "head" );
+
+	if (m_pSaveMeEffect)
+	{
+		// Set "redness" of the bubble based on player's health.
+		float flHealthRatio = clamp((float)GetHealth() / (float)GetMaxHealth(), 0.0f, 1.0f);
+		m_pSaveMeEffect->SetControlPoint(1, Vector(flHealthRatio));
+	}
 
 	// If the local player is a medic, add this player to our list of medic callers
 	if ( pLocalPlayer && pLocalPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && pLocalPlayer->IsAlive() == true )

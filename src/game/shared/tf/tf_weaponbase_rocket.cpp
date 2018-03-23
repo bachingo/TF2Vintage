@@ -60,6 +60,11 @@ END_DATADESC()
 
 ConVar tf_rocket_show_radius( "tf_rocket_show_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT /*| FCVAR_DEVELOPMENTONLY*/, "Render rocket radius." );
 
+#ifdef GAME_DLL
+ConVar tf2c_homing_rockets("tf2c_homing_rockets", "0", FCVAR_CHEAT, "What is \"Rocket + x = Death\"?");
+ConVar tf2c_homing_deflected_rockets("tf2c_homing_deflected_rockets", "0", FCVAR_CHEAT, "Homing Crit Rockets 2: Back with Vengeance");
+#endif
+
 //=============================================================================
 //
 // Shared (client/server) functions.
@@ -472,7 +477,50 @@ void CTFBaseRocket::FlyThink( void )
 		m_bCollideWithTeammates = true;
 	}
 
-	SetNextThink( gpGlobals->curtime + 0.1 );
+	if ( tf2c_homing_rockets.GetBool() )
+	{
+		// Find the closest visible enemy player.
+		CUtlVector<CTFPlayer *> vecPlayers;
+		int count = CollectPlayers(&vecPlayers, TEAM_ANY, true);
+		CTFPlayer *pClosest = NULL;
+		float flClosest = FLT_MAX;
+		for (int i = 0; i < count; i++)
+		{
+			CTFPlayer *pPlayer = vecPlayers[i];
+			if (pPlayer == GetOwnerEntity())
+				 continue;
+			
+			if (pPlayer->GetTeamNumber() == GetTeamNumber() && !TFGameRules()->IsDeathmatch())
+				 continue;
+			
+			Vector vecTarget = pPlayer->BodyTarget(GetAbsOrigin(), false);
+			if (FVisible(vecTarget))
+			{
+				float flDist = (vecTarget - GetAbsOrigin()).Length();
+				if (flDist < flClosest)
+				{
+					flClosest = flDist;
+					pClosest = pPlayer;
+				}
+			}
+		}
+		
+		// Head towards him.
+		if (pClosest)
+		{
+			Vector vecTarget = pClosest->BodyTarget(GetAbsOrigin(), false);
+			Vector vecDir = vecTarget - GetAbsOrigin();
+			VectorNormalize(vecDir);
+			
+			float flSpeed = GetAbsVelocity().Length();
+			QAngle angForward;
+			VectorAngles(vecDir, angForward);
+			SetAbsAngles(angForward);
+			SetAbsVelocity(vecDir * flSpeed);
+		}
+	}
+	
+	SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
 #endif

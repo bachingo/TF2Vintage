@@ -45,39 +45,39 @@
 #include "tf_weapon_builder.h"
 #endif
 
-ConVar tf_spy_invis_time("tf_spy_invis_time", "1.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0);
-ConVar tf_spy_invis_unstealth_time("tf_spy_invis_unstealth_time", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0);
+ConVar tf_spy_invis_time( "tf_spy_invis_time", "1.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0 );
+ConVar tf_spy_invis_unstealth_time( "tf_spy_invis_unstealth_time", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0 );
 
-ConVar tf_spy_max_cloaked_speed("tf_spy_max_cloaked_speed", "999", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED);	// no cap
-ConVar tf_max_health_boost("tf_max_health_boost", "1.5", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max health factor that players can be boosted to by healers.", true, 1.0, false, 0);
-ConVar tf2c_dm_max_health_boost("tf2c_dm_max_health_boost", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max health factor that players can be boosted to by overheal pickups.", true, 1.0, false, 0);
-ConVar tf_invuln_time("tf_invuln_time", "1.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Time it takes for invulnerability to wear off.");
+ConVar tf_spy_max_cloaked_speed( "tf_spy_max_cloaked_speed", "999", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );	// no cap
+ConVar tf_max_health_boost( "tf_max_health_boost", "1.5", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max health factor that players can be boosted to by healers.", true, 1.0, false, 0 );
+ConVar tf2c_dm_max_health_boost( "tf2c_dm_max_health_boost", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max health factor that players can be boosted to by overheal pickups.", true, 1.0, false, 0 );
+ConVar tf_invuln_time( "tf_invuln_time", "1.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Time it takes for invulnerability to wear off." );
 
 #ifdef GAME_DLL
-ConVar tf_boost_drain_time("tf_boost_drain_time", "15.0", FCVAR_DEVELOPMENTONLY, "Time it takes for a full health boost to drain away from a player.", true, 0.1, false, 0);
-ConVar tf2c_dm_boost_drain_time("tf2c_dm_boost_drain_time", "30.0", FCVAR_DEVELOPMENTONLY, "Time it takes for a full health boost to drain away from a player in Deathmatch.", true, 0.1, false, 0);
-ConVar tf_debug_bullets("tf_debug_bullets", "0", FCVAR_DEVELOPMENTONLY, "Visualize bullet traces.");
-ConVar tf_damage_events_track_for("tf_damage_events_track_for", "30", FCVAR_DEVELOPMENTONLY);
+ConVar tf_boost_drain_time( "tf_boost_drain_time", "15.0", FCVAR_DEVELOPMENTONLY, "Time it takes for a full health boost to drain away from a player.", true, 0.1, false, 0 );
+ConVar tf2c_dm_boost_drain_time( "tf2c_dm_boost_drain_time", "30.0", FCVAR_DEVELOPMENTONLY, "Time it takes for a full health boost to drain away from a player in Deathmatch.", true, 0.1, false, 0 );
+ConVar tf_debug_bullets( "tf_debug_bullets", "0", FCVAR_DEVELOPMENTONLY, "Visualize bullet traces." );
+ConVar tf_damage_events_track_for( "tf_damage_events_track_for", "30", FCVAR_DEVELOPMENTONLY );
 #endif
 
-ConVar tf_useparticletracers("tf_useparticletracers", "1", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Use particle tracers instead of old style ones.");
-ConVar tf_spy_cloak_consume_rate("tf_spy_cloak_consume_rate", "10.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "cloak to use per second while cloaked, from 100 max )");	// 10 seconds of invis
-ConVar tf_spy_cloak_regen_rate("tf_spy_cloak_regen_rate", "3.3", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "cloak to regen per second, up to 100 max");		// 30 seconds to full charge
-ConVar tf_spy_cloak_no_attack_time("tf_spy_cloak_no_attack_time", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "time after uncloaking that the spy is prohibited from attacking");
+ConVar tf_useparticletracers( "tf_useparticletracers", "1", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Use particle tracers instead of old style ones." );
+ConVar tf_spy_cloak_consume_rate( "tf_spy_cloak_consume_rate", "10.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "cloak to use per second while cloaked, from 100 max )" );	// 10 seconds of invis
+ConVar tf_spy_cloak_regen_rate( "tf_spy_cloak_regen_rate", "3.3", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "cloak to regen per second, up to 100 max" );		// 30 seconds to full charge
+ConVar tf_spy_cloak_no_attack_time( "tf_spy_cloak_no_attack_time", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "time after uncloaking that the spy is prohibited from attacking" );
 
 //ConVar tf_spy_stealth_blink_time( "tf_spy_stealth_blink_time", "0.3", FCVAR_DEVELOPMENTONLY, "time after being hit the spy blinks into view" );
 //ConVar tf_spy_stealth_blink_scale( "tf_spy_stealth_blink_scale", "0.85", FCVAR_DEVELOPMENTONLY, "percentage visible scalar after being hit the spy blinks into view" );
 
-ConVar tf_tournament_hide_domination_icons("tf_tournament_hide_domination_icons", "0", FCVAR_REPLICATED, "Tournament mode server convar that forces clients to not display the domination icons above players dominating them.");
+ConVar tf_tournament_hide_domination_icons( "tf_tournament_hide_domination_icons", "0", FCVAR_REPLICATED, "Tournament mode server convar that forces clients to not display the domination icons above players dominating them." );
 
-ConVar tf_damage_disablespread("tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage.");
-ConVar tf_always_loser("tf_always_loser", "0", FCVAR_REPLICATED | FCVAR_CHEAT, "Force loserstate to true.");
+ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
+ConVar tf_always_loser( "tf_always_loser", "0", FCVAR_REPLICATED | FCVAR_CHEAT, "Force loserstate to true." );
 
-ConVar sv_showimpacts("sv_showimpacts", "0", FCVAR_REPLICATED, "Shows client (red) and server (blue) bullet impact point (1=both, 2=client-only, 3=server-only)");
-ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Show lag compensated hitboxes for the specified player index whenever a player fires.");
+ConVar sv_showimpacts( "sv_showimpacts", "0", FCVAR_REPLICATED, "Shows client (red) and server (blue) bullet impact point (1=both, 2=client-only, 3=server-only)" );
+ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Show lag compensated hitboxes for the specified player index whenever a player fires." );
 
-ConVar tf2c_building_hauling("tf2c_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability.");
-ConVar tf2c_disable_player_shadows("tf2c_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings.");
+ConVar tf2c_building_hauling( "tf2c_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
+ConVar tf2c_disable_player_shadows( "tf2c_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
 #define TF_SPY_STEALTH_BLINKSCALE  0.85f
@@ -112,6 +112,11 @@ const char *g_pszBDayGibs[22] =
 	"models/player/gibs/gibs_tire.mdl"
 };
 
+#ifdef CLIENT_DLL
+EXTERN_RECV_TABLE(DT_ScriptCreatedItem)
+#else
+EXTERN_SEND_TABLE(DT_ScriptCreatedItem)
+#endif
 //=============================================================================
 //
 // Tables.
@@ -158,7 +163,7 @@ RecvPropInt(RECVINFO(m_iDisguiseTargetIndex)),
 RecvPropInt(RECVINFO(m_iDisguiseHealth)),
 RecvPropInt(RECVINFO(m_iDisguiseMaxHealth)),
 RecvPropFloat(RECVINFO(m_flDisguiseChargeLevel)),
-RecvPropInt(RECVINFO(m_iDisguiseWeaponID)),
+RecvPropDataTable(RECVINFO_DT(m_DisguiseItem), 0, &REFERENCE_RECV_TABLE(DT_ScriptCreatedItem)),
 // Local Data.
 RecvPropDataTable("tfsharedlocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFPlayerSharedLocal)),
 END_RECV_TABLE()
@@ -204,8 +209,8 @@ SendPropInt(SENDINFO(m_nNumHealers), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
 SendPropInt(SENDINFO(m_iCritMult), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
 SendPropInt(SENDINFO(m_bAirDash), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
 SendPropInt(SENDINFO(m_nAirDucked), 2, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_nPlayerState), Q_log2(TF_STATE_COUNT) + 1, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_iDesiredPlayerClass), Q_log2(TF_CLASS_COUNT_ALL) + 1, SPROP_UNSIGNED),
+SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT ) + 1, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL ) + 1, SPROP_UNSIGNED ),
 SendPropEHandle(SENDINFO(m_hCarriedObject)),
 SendPropBool(SENDINFO(m_bCarryingObject)),
 SendPropInt(SENDINFO(m_nTeamTeleporterUsed), 3, SPROP_UNSIGNED),
@@ -219,9 +224,9 @@ SendPropInt(SENDINFO(m_iDisguiseTargetIndex), 7, SPROP_UNSIGNED),
 SendPropInt(SENDINFO(m_iDisguiseHealth), 10),
 SendPropInt(SENDINFO(m_iDisguiseMaxHealth), 10),
 SendPropFloat(SENDINFO(m_flDisguiseChargeLevel), 0, SPROP_NOSCALE),
-SendPropInt(SENDINFO(m_iDisguiseWeaponID), Q_log2(TF_WEAPON_COUNT) + 1, SPROP_UNSIGNED),
+SendPropDataTable( SENDINFO_DT( m_DisguiseItem ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 // Local Data.
-SendPropDataTable("tfsharedlocaldata", 0, &REFERENCE_SEND_TABLE(DT_TFPlayerSharedLocal), SendProxy_SendLocalDataTable),
+SendPropDataTable( "tfsharedlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFPlayerSharedLocal ), SendProxy_SendLocalDataTable ),
 END_SEND_TABLE()
 
 #endif
@@ -248,8 +253,6 @@ CTFPlayerShared::CTFPlayerShared()
 
 	m_iDesiredWeaponID = -1;
 	m_iRespawnParticleID = 0;
-
-	m_iDisguiseWeaponID = TF_WEAPON_NONE;
 
 	m_nTeamTeleporterUsed = TEAM_UNASSIGNED;
 
@@ -478,7 +481,7 @@ void CTFPlayerShared::OnPreDataChanged(void)
 	m_nOldDisguiseClass = GetDisguiseClass();
 	m_nOldDisguiseTeam = GetDisguiseTeam();
 	m_iOldDisguiseWeaponModelIndex = m_iDisguiseWeaponModelIndex;
-	m_iOldDisguiseWeaponID = m_iDisguiseWeaponID;
+	m_iOldDisguiseWeaponID = m_DisguiseItem.GetItemDefIndex();
 	m_bWasCritBoosted = IsCritBoosted();
 }
 
@@ -508,7 +511,7 @@ void CTFPlayerShared::OnDataChanged(void)
 		OnDisguiseChanged();
 	}
 
-	if (m_iOldDisguiseWeaponID != m_iDisguiseWeaponID)
+	if (m_iOldDisguiseWeaponID != m_DisguiseItem.GetItemDefIndex())
 	{
 		RecalcDisguiseWeapon();
 	}
@@ -567,7 +570,7 @@ void CTFPlayerShared::SyncConditions(int nCond, int nOldCond, int nUnused, int i
 void CTFPlayerShared::RemoveAllCond(CTFPlayer *pPlayer)
 {
 	int i;
-	for (i = 0; i<TF_COND_LAST; i++)
+	for (i = 0; i < TF_COND_LAST; i++)
 	{
 		if (InCond(i))
 		{
@@ -770,7 +773,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	}
 
 	int i;
-	for (i = 0; i<TF_COND_LAST; i++)
+	for (i = 0; i < TF_COND_LAST; i++)
 	{
 		if (InCond(i))
 		{
@@ -858,7 +861,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 
 			// Cap it to the max we'll boost a player's health
 			nHealthToAdd = clamp(nHealthToAdd, 0, iBoostMax - m_pOuter->GetHealth());
-
 
 			m_pOuter->TakeHealth(nHealthToAdd, DMG_IGNORE_MAXHEALTH);
 
@@ -1014,22 +1016,25 @@ void CTFPlayerShared::ConditionThink(void)
 	bIsLocalPlayer = true;
 #endif
 
-	if (m_pOuter->IsPlayerClass(TF_CLASS_SPY) && bIsLocalPlayer)
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_SPY ) && bIsLocalPlayer )
 	{
-		if (InCond(TF_COND_STEALTHED))
+		if ( InCond( TF_COND_STEALTHED ) )
 		{
-			if (InCond(TF_COND_DISPENSER_HEALING_1))
+			if ( InCond( TF_COND_DISPENSER_HEALING_1 ) )
 				m_flCloakMeter += gpGlobals->frametime *g_flDispenserCloakRates[0];
-			else if (InCond(TF_COND_DISPENSER_HEALING_2))
+			else if ( InCond( TF_COND_DISPENSER_HEALING_2 ) )
 				m_flCloakMeter += gpGlobals->frametime *g_flDispenserCloakRates[1];
-			else if (InCond(TF_COND_DISPENSER_HEALING_3))
+			else if ( InCond( TF_COND_DISPENSER_HEALING_3 ) )
 				m_flCloakMeter += gpGlobals->frametime *g_flDispenserCloakRates[2];
 			else
 				m_flCloakMeter -= gpGlobals->frametime * tf_spy_cloak_consume_rate.GetFloat();
 
-			if (m_flCloakMeter <= 0.0f)
+			if ( m_flCloakMeter >= 100 )
+				m_flCloakMeter = 100;
+
+			if ( m_flCloakMeter <= 0.0f )
 			{
-				RemoveCond(TF_COND_STEALTHED);
+				RemoveCond( TF_COND_STEALTHED );
 				FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
 			}
 		}
@@ -1553,7 +1558,7 @@ void CTFPlayerShared::OnRemoveDisguised(void)
 	m_iDisguiseHealth = 0;
 	m_iDisguiseMaxHealth = 0;
 	m_flDisguiseChargeLevel = 0.0f;
-	m_iDisguiseWeaponID = TF_WEAPON_NONE;
+	m_DisguiseItem.SetItemDefIndex( -1 );
 
 	// Update the player model and skin.
 	m_pOuter->UpdateModel();
@@ -1923,7 +1928,7 @@ void CTFPlayerShared::CompleteDisguise(void)
 
 	m_pOuter->ClearExpression();
 
-	m_iDisguiseWeaponID = TF_WEAPON_NONE;
+	m_DisguiseItem.SetItemDefIndex( -1 );
 
 	RecalcDisguiseWeapon();
 #endif
@@ -1982,57 +1987,48 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 #ifndef CLIENT_DLL
 	// IMPORTANT!!! - This whole function will need to be rewritten if we switch to using item schema.
 	// So please remind me about this when we do. (Nicknine)
-	if (!InCond(TF_COND_DISGUISED))
+	if ( !InCond( TF_COND_DISGUISED ) )
 	{
-		m_iDisguiseWeaponID = TF_WEAPON_NONE;
+		m_DisguiseItem.SetItemDefIndex( -1 );
 		return;
 	}
 
 	Assert(m_pOuter->GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY);
 
-	int iWeaponID = TF_WEAPON_NONE;
-
-#if 0
-	// Use disguise target's weapons if possible.
+	CEconItemView *pDisguiseItem = NULL;
 	CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 
-	if (pDisguiseTarget && pDisguiseTarget->IsPlayerClass(m_nDisguiseClass))
+	// Find the weapon in the same slot
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; i++ )	
 	{
-		if (iSlot < TF_PLAYER_WEAPON_COUNT)
-			iWeaponID = GetTFInventory()->GetWeapon(pDisguiseTarget->GetPlayerClass()->GetClassIndex(), iSlot, pDisguiseTarget->GetWeaponPreset(iSlot));
-	}
-	else
-#endif
-	{
-		TFPlayerClassData_t *pData = GetPlayerClassData(m_nDisguiseClass);
+		// Use disguise target's weapons if possible.
+		CEconItemView *pItem = NULL;
 
-		Assert(pData);
-		// Find the weapon in the same slot
-		for (int i = 0; i < TF_PLAYER_WEAPON_COUNT; i++)
-		{
-			if (pData->m_aWeapons[i] != TF_WEAPON_NONE)
+		if ( pDisguiseTarget && pDisguiseTarget->IsPlayerClass( m_nDisguiseClass ) )
+			pItem = pDisguiseTarget->GetLoadoutItem( m_nDisguiseClass, i );
+		else
+			pItem = GetTFInventory()->GetItem( m_nDisguiseClass, i, 0 );
+
+		if ( !pItem )
+			continue;
+
+			CTFWeaponInfo *pWeaponInfo = GetTFWeaponInfoForItem( pItem->GetItemDefIndex(), m_nDisguiseClass );
+		if ( pWeaponInfo && pWeaponInfo->iSlot == iSlot )
 			{
-				CTFWeaponInfo *pWeaponInfo = GetTFWeaponInfo(pData->m_aWeapons[i]);;
-
-				// find the weapon with matching slot
-				if (pWeaponInfo && pWeaponInfo->iSlot == iSlot)
-				{
-					iWeaponID = pData->m_aWeapons[i];
-					break;
-				}
+				pDisguiseItem = pItem;
+				break;
 			}
 		}
-	}
 
 	if ( iSlot == 0 )
 	{
-		AssertMsg( iWeaponID != TF_WEAPON_NONE, "Cannot find primary disguise weapon for desired disguise class %d\n", m_nDisguiseClass );
+		AssertMsg( pDisguiseItem, "Cannot find primary disguise weapon for desired disguise class %d\n", m_nDisguiseClass );
 	}
 
 	// Don't switch to builder as it's too complicated.
-	if ( iWeaponID != TF_WEAPON_NONE && iWeaponID != TF_WEAPON_BUILDER )
+	if ( pDisguiseItem )
 	{
-		m_iDisguiseWeaponID = iWeaponID;
+		m_DisguiseItem = *pDisguiseItem;
 	}
 #else
 	if ( !InCond( TF_COND_DISGUISED ) )
@@ -2042,14 +2038,14 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 		return;
 	}
 
-	CTFWeaponInfo *pDisguiseWeaponInfo = GetTFWeaponInfo(m_iDisguiseWeaponID);
+	CTFWeaponInfo *pDisguiseWeaponInfo = GetTFWeaponInfoForItem(m_DisguiseItem.GetItemDefIndex(), m_nDisguiseClass);
 
 	m_pDisguiseWeaponInfo = pDisguiseWeaponInfo;
 	m_iDisguiseWeaponModelIndex = -1;
 
 	if ( pDisguiseWeaponInfo )
 	{
-		m_iDisguiseWeaponModelIndex = modelinfo->GetModelIndex( pDisguiseWeaponInfo->szWorldModel );
+		m_iDisguiseWeaponModelIndex = modelinfo->GetModelIndex(m_DisguiseItem.GetWorldDisplayModel());
 	}
 #endif
 }
@@ -2102,7 +2098,17 @@ void CTFPlayerShared::UpdateCritBoostEffect( bool bForceHide /*= false*/ )
 		}
 		else
 		{
-			m_hCritEffectHost = m_pOuter->GetActiveWeapon();
+			C_BaseCombatWeapon *pWeapon = m_pOuter->GetActiveWeapon();
+			
+			// Don't add crit effect to weapons without a model.
+			if (pWeapon && pWeapon->GetWorldModelIndex() != 0)
+			{
+				m_hCritEffectHost = pWeapon;
+			}
+			else
+			{
+				m_hCritEffectHost = m_pOuter;
+			}
 		}
 
 		if ( m_hCritEffectHost.Get() )
@@ -2417,14 +2423,6 @@ void CTFPlayerShared::TestAndExpireChargeEffect(medigun_charge_types chargeType)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::RecalculateCrits(bool bInstantRemove)
-{
-	// Remove me.
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 int	CTFPlayerShared::FindHealerIndex(CTFPlayer *pPlayer)
 {
 	for (int i = 0; i < m_aHealers.Count(); i++)
@@ -2519,6 +2517,9 @@ bool CTFPlayerShared::IsAlly(CBaseEntity *pEntity)
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::IsLoser(void)
 {
+	if (!m_pOuter->IsAlive())
+		return false;
+
 	if (tf_always_loser.GetBool())
 		return true;
 
@@ -2869,8 +2870,7 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 		// Server specific.
 #ifndef CLIENT_DLL
 		// See what material we hit.
-		CTakeDamageInfo dmgInfo(this, info.m_pAttacker, info.m_flDamage, nDamageType);
-		dmgInfo.SetDamageCustom(nCustomDamageType);
+		CTakeDamageInfo dmgInfo( this, info.m_pAttacker, GetActiveWeapon(), info.m_flDamage, nDamageType, nCustomDamageType );
 		CalculateBulletDamageForce(&dmgInfo, info.m_iAmmoType, info.m_vecDirShooting, trace.endpos, 1.0);	//MATTTODO bullet forces
 		trace.m_pEnt->DispatchTraceAttack(dmgInfo, info.m_vecDirShooting, &trace);
 #endif
@@ -3506,12 +3506,16 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 			// Toggle invisibility
 			if (m_Shared.InCond(TF_COND_STEALTHED))
 			{
+#ifdef GAME_DLL
 				m_Shared.FadeInvis(tf_spy_invis_unstealth_time.GetFloat());
+#endif
 				bDoSkill = true;
 			}
 			else if (CanGoInvisible() && (m_Shared.GetSpyCloakMeter() > 8.0f))	// must have over 10% cloak to start
 			{
+#ifdef GAME_DLL
 				m_Shared.AddCond(TF_COND_STEALTHED);
+#endif
 				bDoSkill = true;
 			}
 

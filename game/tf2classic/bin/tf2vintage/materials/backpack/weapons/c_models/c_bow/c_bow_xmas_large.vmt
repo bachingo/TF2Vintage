@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "backpack/weapons/c_models/c_bow/c_bow_xmas_large"
+	$translucent 1
+	$vertexcolor 1
+}

@@ -1068,6 +1068,20 @@ void CMultipleEscortLogic::Spawn(void)
 
 LINK_ENTITY_TO_CLASS(tf_logic_multiple_escort, CMultipleEscortLogic);
 
+class CMedievalLogic : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CMedievalLogic, CBaseEntity);
+	void Spawn(void);
+};
+
+void CMedievalLogic::Spawn(void)
+{
+	BaseClass::Spawn();
+}
+
+LINK_ENTITY_TO_CLASS(tf_logic_medieval, CMedievalLogic);
+
 #endif
 
 // (We clamp ammo ourselves elsewhere).
@@ -1339,6 +1353,13 @@ void CTFGameRules::Activate()
 		Msg( "Executing server deathmatch config file\n", 1 );
 		engine->ServerCommand( "exec config_deathmatch.cfg \n" );
 		engine->ServerExecute();
+		return;
+	}
+
+	CMedievalLogic *pMedieval = dynamic_cast< CMedievalLogic* >( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval") );
+	if ( pMedieval )
+	{
+		m_nGameType.Set( TF_GAMETYPE_MEDIEVAL );
 		return;
 	}
 
@@ -3232,6 +3253,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 
 	switch ( info.GetDamageCustom() )
 	{
+	case TF_DMG_CUSTOM_SUICIDE:
+		pszCustomKill = "world";
+		break;
 	case TF_DMG_TAUNT_PYRO:
 		pszCustomKill = "taunt_pyro";
 		break;
@@ -3350,8 +3374,8 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	for ( int i = 0; i< ARRAYSIZE( prefix ); i++ )
 	{
 		// if prefix matches, advance the string pointer past the prefix
-		int len = Q_strlen( prefix[i] );
-		if ( strncmp( killer_weapon_name, prefix[i], len ) == 0 )
+		int len = V_strlen( prefix[i] );
+		if ( V_strncmp( killer_weapon_name, prefix[i], len ) == 0 )
 		{
 			killer_weapon_name += len;
 			break;
@@ -3359,9 +3383,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	}
 
 	// In case of a sentry kill change the icon according to sentry level.
-	if ( 0 == Q_strcmp( killer_weapon_name, "obj_sentrygun" ) )
+	if ( 0 == V_strcmp( killer_weapon_name, "obj_sentrygun" ) == 0 )
 	{
-		CBaseObject* pObject = assert_cast<CBaseObject *>( pInflictor );
+		CBaseObject *pObject = assert_cast<CBaseObject *>( pInflictor );
 
 		if ( pObject )
 		{
@@ -3376,7 +3400,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 			}
 		}
 	}
-	else if ( 0 == Q_strcmp( killer_weapon_name, "tf_projectile_sentryrocket" ) )
+	else if ( 0 == V_strcmp( killer_weapon_name, "tf_projectile_sentryrocket" ) == 0 )
 	{
 		// look out for sentry rocket as weapon and map it to sentry gun, so we get the L3 sentry death icon
 		killer_weapon_name = "obj_sentrygun3";
@@ -4597,10 +4621,15 @@ bool CTFGameRules::IsBirthday( void )
 bool CTFGameRules::AllowThirdPersonCamera( void )
 {
 #ifdef CLIENT_DLL
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if (pPlayer)
+	{
+		if( pPlayer->IsObserver() )
+			return false;
 
-	if ( pPlayer && pPlayer->IsObserver() )
-		return false;
+		if (pPlayer->m_Shared.InCond(TF_COND_ZOOMED))
+			return false;
+	}
 #endif
 
 	return tf2c_allow_thirdperson.GetBool();

@@ -27,11 +27,14 @@ const char *g_pszArrowModels[] =
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
+
 BEGIN_NETWORK_TABLE( CTFProjectile_Arrow, DT_TFProjectile_Arrow )
 #ifdef CLIENT_DLL
+	RecvPropBool( RECVINFO( m_bCritical ) ),
 	RecvPropInt( RECVINFO( m_iType ) ),
 #else
-	SendPropInt( SENDINFO( m_iType ), 6, SPROP_UNSIGNED ),
+	SendPropBool( SENDINFO( m_bCritical ) ),
+	SendPropInt( SENDINFO( m_iType ), 3, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -61,13 +64,28 @@ CTFProjectile_Arrow::~CTFProjectile_Arrow()
 
 CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, float flSpeed, float flGravity, CBaseEntity *pOwner, CBaseEntity *pScorer, int iType )
 {
-	CTFProjectile_Arrow *pArrow = static_cast<CTFProjectile_Arrow *>( CTFBaseRocket::Create( pWeapon, "tf_projectile_arrow", vecOrigin, vecAngles, pOwner ) );
+	CTFProjectile_Arrow *pArrow = static_cast<CTFProjectile_Arrow *>( CBaseEntity::CreateNoSpawn( "tf_projectile_arrow", vecOrigin, vecAngles, pOwner ) );
 
 	if ( pArrow )
 	{
-		// Overriding speed.
-		Vector vecForward;
-		AngleVectors( vecAngles, &vecForward );
+		// Set team.
+		pArrow->ChangeTeam( pOwner->GetTeamNumber() );
+
+		// Set scorer.
+		pArrow->SetScorer( pScorer );
+
+		// Set firing weapon.
+		pArrow->SetLauncher( pWeapon );
+
+		// Set arrow type.
+		pArrow->SetType( iType );
+
+		// Spawn.
+		DispatchSpawn( pArrow );
+
+		// Setup the initial velocity.
+		Vector vecForward, vecRight, vecUp;
+		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
 
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flSpeed, mult_projectile_speed );
 
@@ -75,11 +93,14 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		pArrow->SetAbsVelocity( vecVelocity );
 		pArrow->SetupInitialTransmittedGrenadeVelocity( vecVelocity );
 
+		// Setup the initial angles.
+		QAngle angles;
+		VectorAngles( vecVelocity, angles );
+		pArrow->SetAbsAngles( angles );
+
 		pArrow->SetGravity( flGravity );
 
-		pArrow->SetScorer( pScorer );
-
-		pArrow->SetType( iType );
+		return pArrow;
 	}
 
 	return pArrow;
@@ -134,10 +155,12 @@ void CTFProjectile_Arrow::Spawn( void )
 
 	BaseClass::Spawn();
 
+#ifdef TF_ARROW_FIX
 	SetSolidFlags( FSOLID_NOT_SOLID | FSOLID_TRIGGER );
+#endif
 
 	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
-	SetGravity( 0.3f );
+	SetGravity( 0.3f ); // TODO: Check again later.
 
 	UTIL_SetSize( this, -Vector( 1, 1, 1 ), Vector( 1, 1, 1 ) );
 
@@ -146,6 +169,22 @@ void CTFProjectile_Arrow::Spawn( void )
 	SetTouch( &CTFProjectile_Arrow::ArrowTouch );
 
 	// TODO: Set skin here...
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFProjectile_Arrow::SetScorer( CBaseEntity *pScorer )
+{
+	m_Scorer = pScorer;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CBasePlayer *CTFProjectile_Arrow::GetScorer( void )
+{
+	return dynamic_cast<CBasePlayer *>( m_Scorer.Get() );
 }
 
 //-----------------------------------------------------------------------------
@@ -188,66 +227,65 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 
 	if ( pPlayer )
 	{
-#if 0
-		CStudioHdr *pStudioHdr = pPlayer->GetModelPtr();
-		if ( !pStudioHdr )
-			return;
-
-		mstudiohitboxset_t *set = pStudioHdr->pHitboxSet( pPlayer->GetHitboxSet() );
-		if ( !set )
-			return;
-
-		Vector vecDir = GetAbsVelocity();
-		VectorNormalize( vecDir );
-
-		// Oh boy... we gotta figure out the closest hitbox on player model to land a hit on.
-		// Trace a bit ahead, to get closer to player's body.
-		trace_t trFly;
-		UTIL_TraceLine( vecOrigin, vecOrigin + vecDir * 16.0f, MASK_SHOT, this, COLLISION_GROUP_NONE, &trFly );
-
-		QAngle angHit;
-		trace_t trHit;
-		float flClosest = FLT_MAX;
-		for ( int i = 0; i < set->numhitboxes; i++ )
-		{
-			mstudiobbox_t *pBox = set->pHitbox( i );
-
-			Vector boxPosition;
-			QAngle boxAngles;
-			pPlayer->GetBonePosition( pBox->bone, boxPosition, boxAngles );
-
-			trace_t tr;
-			UTIL_TraceLine( trFly.endpos, boxPosition, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
-			float flLengthSqr = ( tr.endpos - trFly.endpos ).LengthSqr();
-
-			if ( flLengthSqr < flClosest )
-			{
-				flClosest = flLengthSqr;
-				trHit = tr;
-			}
-		}
-
-
-		if ( tf_debug_arrows.GetBool() )
-		{
-			NDebugOverlay::Line( trHit.endpos, trFly.endpos, 0, 255, 0, true, 5.0f );
-		}
-
-		// Place arrow at hitbox.
-		SetAbsOrigin( trHit.endpos );
-
-		Vector vecHitDir = trHit.plane.normal * -1.0f;
-		AngleVectors( angHit, &vecHitDir );
-		SetAbsAngles( angHit );
-#else
 		trace_t trPlayerHit;
 		// Trace ahead to see if we're going to hit player's hitbox.
-		UTIL_TraceLine( vecOrigin, vecOrigin + vecDir * gpGlobals->frametime, MASK_SHOT, this, COLLISION_GROUP_NONE, &trPlayerHit );
-		if ( trPlayerHit.m_pEnt != pOther ) // Didn't hit, keep going.
-			return;
+		UTIL_TraceLine(vecOrigin, vecOrigin + vecDir * gpGlobals->frametime, MASK_SHOT, this, COLLISION_GROUP_NONE, &trPlayerHit);
+		if (trPlayerHit.m_pEnt != pOther) // Didn't hit, keep going.
+		{
+			CStudioHdr *pStudioHdr = pPlayer->GetModelPtr();
+			if (!pStudioHdr)
+				return;
 
-		trHit = trPlayerHit;
-#endif
+			mstudiohitboxset_t *set = pStudioHdr->pHitboxSet(pPlayer->GetHitboxSet());
+			if (!set)
+				return;
+
+			Vector vecDir = GetAbsVelocity();
+			VectorNormalize(vecDir);
+
+			// Oh boy... we gotta figure out the closest hitbox on player model to land a hit on.
+			// Trace a bit ahead, to get closer to player's body.
+			UTIL_TraceLine(vecOrigin, vecOrigin + vecDir * 16.0f, MASK_SHOT, this, COLLISION_GROUP_NONE, &trPlayerHit);
+
+			QAngle angHit;
+			trace_t trHit;
+			float flClosest = FLT_MAX;
+			for (int i = 0; i < set->numhitboxes; i++)
+			{
+				mstudiobbox_t *pBox = set->pHitbox(i);
+
+				Vector boxPosition;
+				QAngle boxAngles;
+				pPlayer->GetBonePosition(pBox->bone, boxPosition, boxAngles);
+
+				trace_t tr;
+				UTIL_TraceLine(trPlayerHit.endpos, boxPosition, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
+				float flLengthSqr = (tr.endpos - trPlayerHit.endpos).LengthSqr();
+
+				if (flLengthSqr < flClosest)
+				{
+					flClosest = flLengthSqr;
+					trHit = tr;
+				}
+			}
+
+
+			if (tf_debug_arrows.GetBool())
+			{
+				NDebugOverlay::Line(trHit.endpos, trPlayerHit.endpos, 0, 255, 0, true, 5.0f);
+			}
+
+			// Place arrow at hitbox.
+			SetAbsOrigin(trHit.endpos);
+
+			Vector vecHitDir = trHit.plane.normal * -1.0f;
+			AngleVectors(angHit, &vecHitDir);
+			SetAbsAngles(angHit);
+		}
+		else
+			trHit = trPlayerHit;
+
+		
 		pPlayer->EmitSound( "Weapon_Arrow.ImpactFlesh" );
 	}
 	else if ( pOther->IsBaseObject() )
@@ -268,7 +306,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	ApplyMultiDamage();
 
 	// Remove.
-	UTIL_Remove( this );
+	//UTIL_Remove( this );
 }
 
 //-----------------------------------------------------------------------------
@@ -277,7 +315,10 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 int	CTFProjectile_Arrow::GetDamageType()
 {
 	int iDmgType = BaseClass::GetDamageType();
-
+	if ( m_bCritical )
+	{
+		iDmgType |= DMG_CRITICAL;
+	}
 	if ( CanHeadshot() )
 	{
 		iDmgType |= DMG_USE_HITLOCATIONS;
@@ -291,7 +332,21 @@ int	CTFProjectile_Arrow::GetDamageType()
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	BaseClass::Deflected( pDeflectedBy, vecDir );
+	// Get arrow's speed.
+	float flVel = GetAbsVelocity().Length();
+
+	QAngle angForward;
+	VectorAngles( vecDir, angForward );
+
+	// Now change arrow's direction.
+	SetAbsAngles( angForward );
+	SetAbsVelocity( vecDir * flVel );
+
+	// And change owner.
+	IncremenentDeflected();
+	SetOwnerEntity( pDeflectedBy );
+	ChangeTeam( pDeflectedBy->GetTeamNumber() );
+	SetScorer( pDeflectedBy );
 
 	// Change trail color.
 	if ( m_hSpriteTrail.Get() )
