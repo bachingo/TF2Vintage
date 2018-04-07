@@ -10,11 +10,35 @@ BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
 	RecvPropFloat( RECVINFO( value ) ),
+	RecvPropString( RECVINFO( attribute_class ) ),
 #else
 	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ) ),
 	SendPropFloat( SENDINFO( value ) ),
+	SendPropString( SENDINFO( attribute_class ) ),
 #endif
 END_NETWORK_TABLE()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttributeClass /*= NULL*/ )
+{
+	m_iAttributeDefinitionIndex = iIndex;
+	value = flValue;
+
+	if ( pszAttributeClass )
+	{
+		V_strncpy( attribute_class.GetForModify(), pszAttributeClass, sizeof( attribute_class ) );
+	}
+	else
+	{
+		EconAttributeDefinition *pAttribDef = GetStaticData();
+		if ( pAttribDef )
+		{
+			V_strncpy( attribute_class.GetForModify(), pAttribDef->attribute_class, sizeof( attribute_class ) );
+		}
+	}
+}
 
 EconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 {
@@ -72,9 +96,8 @@ CEconItemAttribute *CEconItemDefinition::IterateAttributes( string_t strClass )
 	for ( int i = 0; i < attributes.Count(); i++ )
 	{
 		CEconItemAttribute *pAttribute = &attributes[i];
-		string_t strMyClass = AllocPooledString( pAttribute->attribute_class );
 
-		if ( strMyClass == strClass )
+		if ( pAttribute->m_strAttributeClass == strClass )
 		{
 			return pAttribute;
 		}

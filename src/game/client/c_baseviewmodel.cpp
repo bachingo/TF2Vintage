@@ -43,6 +43,7 @@
 	ConVar cl_flipviewmodels( "cl_flipviewmodels", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED, "Flip view models." );
 #endif
 
+
 void PostToolMessage( HTOOLHANDLE hEntity, KeyValues *msg );
 
 void FormatViewModelAttachment( Vector &vOrigin, bool bInverse )
@@ -211,7 +212,11 @@ bool C_BaseViewModel::ShouldFlipViewModel()
 	CBaseCombatWeapon *pWeapon = m_hWeapon.Get();
 	if ( pWeapon )
 	{
-		return pWeapon->m_bFlipViewModel != cl_flipviewmodels.GetBool();
+		// HACK: Fix for flipped huntsman model
+		if( !V_stricmp( pWeapon->GetName(), "tf_weapon_compound_bow" ) )
+			return pWeapon->m_bFlipViewModel == cl_flipviewmodels.GetBool();
+		else
+			return pWeapon->m_bFlipViewModel != cl_flipviewmodels.GetBool();
 	}
 #endif
 

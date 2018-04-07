@@ -190,6 +190,7 @@ ConVar cl_ragdoll_physics_enable( "cl_ragdoll_physics_enable", "1", 0, "Enable/d
 ConVar cl_ragdoll_fade_time( "cl_ragdoll_fade_time", "15", FCVAR_CLIENTDLL );
 ConVar cl_ragdoll_forcefade( "cl_ragdoll_forcefade", "0", FCVAR_CLIENTDLL );
 ConVar cl_ragdoll_pronecheck_distance( "cl_ragdoll_pronecheck_distance", "64", FCVAR_GAMEDLL );
+ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Force death anims to always play." );
 
 class C_TFRagdoll : public C_BaseFlex
 {
@@ -222,6 +223,7 @@ public:
 	float GetBurnStartTime() { return m_flBurnEffectStartTime; }
 
 	virtual void SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
+	virtual float FrameAdvance( float flInterval = 0.0f );
 
 private:
 	
@@ -240,21 +242,24 @@ private:
 	bool  m_bFadingOut;
 	bool  m_bGib;
 	bool  m_bBurning;
+	int   m_iDamageCustom;
 	int	  m_iTeam;
 	int	  m_iClass;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
+	float m_flDeathAnimEndTIme;
 };
 
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
-	RecvPropVector( RECVINFO(m_vecRagdollOrigin) ),
+	RecvPropVector( RECVINFO( m_vecRagdollOrigin ) ),
 	RecvPropInt( RECVINFO( m_iPlayerIndex ) ),
-	RecvPropVector( RECVINFO(m_vecForce) ),
-	RecvPropVector( RECVINFO(m_vecRagdollVelocity) ),
+	RecvPropVector( RECVINFO( m_vecForce ) ),
+	RecvPropVector( RECVINFO( m_vecRagdollVelocity ) ),
 	RecvPropInt( RECVINFO( m_nForceBone ) ),
 	RecvPropBool( RECVINFO( m_bGib ) ),
 	RecvPropBool( RECVINFO( m_bBurning ) ),
+	RecvPropInt( RECVINFO( m_iDamageCustom ) ),
 	RecvPropInt( RECVINFO( m_iTeam ) ),
-	RecvPropInt( RECVINFO( m_iClass ) )
+	RecvPropInt( RECVINFO( m_iClass ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -268,10 +273,12 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bFadingOut = false;
 	m_bGib = false;
 	m_bBurning = false;
+	m_iDamageCustom = 0;
 	m_flBurnEffectStartTime = 0.0f;
 	m_iTeam = -1;
 	m_iClass = -1;
 	m_nForceBone = -1;
+	m_flDeathAnimEndTIme = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -366,11 +373,48 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 	m_pRagdoll->ResetRagdollSleepAfterTime();
 }
 
+// ---------------------------------------------------------------------------- -
+// Purpose: 
+// Input  : flInterval - 
+// Output : float
+//-----------------------------------------------------------------------------
+float C_TFRagdoll::FrameAdvance( float flInterval )
+{
+	float flRet = BaseClass::FrameAdvance( flInterval );
+
+	// Turn into a ragdoll once animation is over.
+	if ( m_flDeathAnimEndTIme != 0.0f && gpGlobals->curtime >= m_flDeathAnimEndTIme )
+	{
+		if ( cl_ragdoll_physics_enable.GetBool() )
+		{
+			m_flDeathAnimEndTIme = 0.0f;
+
+			// Make us a ragdoll..
+			m_nRenderFX = kRenderFxRagdoll;
+
+			matrix3x4_t boneDelta0[MAXSTUDIOBONES];
+			matrix3x4_t boneDelta1[MAXSTUDIOBONES];
+			matrix3x4_t currentBones[MAXSTUDIOBONES];
+			const float boneDt = 0.05f;
+
+			GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
+			InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt );
+			SetAbsVelocity( vec3_origin );
+		}
+		else
+		{
+			ClientLeafSystem()->SetRenderGroup( GetRenderHandle(), RENDER_GROUP_TRANSLUCENT_ENTITY );
+		}
+	}
+
+	return flRet;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :  - 
 //-----------------------------------------------------------------------------
-void C_TFRagdoll::CreateTFRagdoll(void)
+void C_TFRagdoll::CreateTFRagdoll( void )
 {
 	// Get the player.
 	C_TFPlayer *pPlayer = NULL;
@@ -392,7 +436,7 @@ void C_TFRagdoll::CreateTFRagdoll(void)
 		}
 		else
 		{
-			switch (m_iTeam)
+			switch ( m_iTeam )
 			{
 			case TF_TEAM_RED:
 				m_nSkin = 0;
@@ -469,50 +513,84 @@ void C_TFRagdoll::CreateTFRagdoll(void)
 		Interp_Reset( GetVarMapping() );
 	}
 
-	// Turn it into a ragdoll.
-	if ( cl_ragdoll_physics_enable.GetBool() )
+	
+	bool bPlayDeathAnim = false;
+	if ( pPlayer && ( tf_always_deathanim.GetBool() || RandomFloat() < 0.25f ) )
 	{
-		// Make us a ragdoll..
-		m_nRenderFX = kRenderFxRagdoll;
-
-		matrix3x4_t boneDelta0[MAXSTUDIOBONES];
-		matrix3x4_t boneDelta1[MAXSTUDIOBONES];
-		matrix3x4_t currentBones[MAXSTUDIOBONES];
-		const float boneDt = 0.05f;
-
-		// We have to make sure that we're initting this client ragdoll off of the same model.
-		// GetRagdollInitBoneArrays uses the *player* Hdr, which may be a different model than
-		// the ragdoll Hdr, if we try to create a ragdoll in the same frame that the player
-		// changes their player model.
-		CStudioHdr *pRagdollHdr = GetModelPtr();
-		CStudioHdr *pPlayerHdr = NULL;
-		if ( pPlayer )
-			pPlayerHdr = pPlayer->GetModelPtr();
-
-		bool bChangedModel = false;
-
-		if ( pRagdollHdr && pPlayerHdr )
+		int iSeq = pPlayer->m_Shared.GetSequenceForDeath( this, m_iDamageCustom );
+		if ( iSeq != -1 )
 		{
-			bChangedModel = pRagdollHdr->GetVirtualModel() != pPlayerHdr->GetVirtualModel();
+			bPlayDeathAnim = true;
 
-			Assert( !bChangedModel && "C_TFRagdoll::CreateTFRagdoll: Trying to create ragdoll with a different model than the player it's based on" );
+			// Doing this here since the server doesn't send the value over.
+			ForceClientSideAnimationOn();
+
+			// Slame velocity when doing death animation.
+			SetAbsOrigin( pPlayer->GetNetworkOrigin() );
+			SetAbsAngles( pPlayer->GetRenderAngles() );
+			SetAbsVelocity( vec3_origin );
+			m_vecForce = vec3_origin;
+
+			ClientLeafSystem()->SetRenderGroup( GetRenderHandle(), RENDER_GROUP_OPAQUE_ENTITY );
+			UpdateVisibility();
+
+			SetSequence( iSeq );
+			m_flDeathAnimEndTIme = gpGlobals->curtime + SequenceDuration();
+
+			SetCycle( 0.0f );
+
+			ResetSequenceInfo();
 		}
+	}
 
-		if ( pPlayer && !pPlayer->IsDormant() && !bChangedModel )
+	// Turn it into a ragdoll.
+	if ( !bPlayDeathAnim )
+	{
+		if ( cl_ragdoll_physics_enable.GetBool() )
 		{
-			pPlayer->GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
+			// Make us a ragdoll..
+			m_nRenderFX = kRenderFxRagdoll;
+
+			matrix3x4_t boneDelta0[MAXSTUDIOBONES];
+			matrix3x4_t boneDelta1[MAXSTUDIOBONES];
+			matrix3x4_t currentBones[MAXSTUDIOBONES];
+			const float boneDt = 0.05f;
+
+			// We have to make sure that we're initting this client ragdoll off of the same model.
+			// GetRagdollInitBoneArrays uses the *player* Hdr, which may be a different model than
+			// the ragdoll Hdr, if we try to create a ragdoll in the same frame that the player
+			// changes their player model.
+			CStudioHdr *pRagdollHdr = GetModelPtr();
+			CStudioHdr *pPlayerHdr = NULL;
+			if ( pPlayer )
+				pPlayerHdr = pPlayer->GetModelPtr();
+
+			bool bChangedModel = false;
+
+			if ( pRagdollHdr && pPlayerHdr )
+			{
+				bChangedModel = pRagdollHdr->GetVirtualModel() != pPlayerHdr->GetVirtualModel();
+
+				Assert( !bChangedModel && "C_TFRagdoll::CreateTFRagdoll: Trying to create ragdoll with a different model than the player it's based on" );
+			}
+
+			if ( pPlayer && !pPlayer->IsDormant() && !bChangedModel )
+			{
+				pPlayer->GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
+			}
+			else
+			{
+				GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
+			}
+
+			InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt );
 		}
 		else
 		{
-			GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
+			ClientLeafSystem()->SetRenderGroup( GetRenderHandle(), RENDER_GROUP_TRANSLUCENT_ENTITY );
 		}
-
-		InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt );
 	}
-	else
-	{
-		ClientLeafSystem()->SetRenderGroup( GetRenderHandle(), RENDER_GROUP_TRANSLUCENT_ENTITY );
-	}		
+
 
 	if ( m_bBurning )
 	{
@@ -1566,6 +1644,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_bIsDisplayingNemesisIcon = false;
 
 	m_bWasTaunting = false;
+	m_flTauntOffTime = 0.0f;
 	m_angTauntPredViewAngles.Init();
 	m_angTauntEngViewAngles.Init();
 
@@ -2367,6 +2446,9 @@ void C_TFPlayer::TurnOnTauntCam( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::TurnOffTauntCam( void )
 {
+	m_bWasTaunting = false;
+	m_flTauntOffTime = 0.0f;
+
 	if ( !IsLocalPlayer() )
 		return;	
 
@@ -2413,8 +2495,9 @@ void C_TFPlayer::HandleTaunting( void )
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	// Clear the taunt slot.
-	if ( !m_bWasTaunting && (
+	if ( ( !m_bWasTaunting || m_flTauntOffTime != 0.0f ) && (
 		m_Shared.InCond( TF_COND_TAUNTING ) ||
+		m_Shared.InCond( TF_COND_STUNNED ) ||
 		m_Shared.IsLoser() ||
 		m_nForceTauntCam || 
 		m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) ||
@@ -2423,6 +2506,7 @@ void C_TFPlayer::HandleTaunting( void )
 		m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) ) )
 	{
 		m_bWasTaunting = true;
+		m_flTauntOffTime = 0.0f;
 
 		// Handle the camera for the local player.
 		if ( pLocalPlayer )
@@ -2431,8 +2515,9 @@ void C_TFPlayer::HandleTaunting( void )
 		}
 	}
 
-	if ( m_bWasTaunting && (
+	if ( m_bWasTaunting && m_flTauntOffTime == 0.0f &&  (
 		!m_Shared.InCond( TF_COND_TAUNTING ) &&
+		!m_Shared.InCond( TF_COND_STUNNED ) &&
 		!m_Shared.IsLoser() && 
 		!m_nForceTauntCam &&
 		!m_Shared.InCond( TF_COND_PHASE ) &&
@@ -2442,15 +2527,33 @@ void C_TFPlayer::HandleTaunting( void )
 		!m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) &&
 		!m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) ) )
 	{
-		m_bWasTaunting = false;
+		m_flTauntOffTime = gpGlobals->curtime;
 
 		// Clear the vcd slot.
 		m_PlayerAnimState->ResetGestureSlot( GESTURE_SLOT_VCD );
+	}
 
-		// Handle the camera for the local player.
-		if ( pLocalPlayer )
+	TauntCamInterpolation();
+}
+
+//---------------------------------------------------------------------------- -
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::TauntCamInterpolation( void )
+{
+	if ( m_flTauntOffTime != 0.0f )
+	{
+		// Pull the camera back in over the course of half a second.
+		float flDist = RemapValClamped( gpGlobals->curtime - m_flTauntOffTime, 0.0f, 0.5f, tf_tauntcam_dist.GetFloat(), 0.0f );
+
+		// Snap the camera back into first person
+		if ( flDist == 0.0f || !m_bWasTaunting || !IsAlive() || g_ThirdPersonManager.WantToUseGameThirdPerson() )
+ 		{
+ 			TurnOffTauntCam();
+ 		}
+		else
 		{
-			TurnOffTauntCam();
+			g_ThirdPersonManager.SetDesiredCameraOffset( Vector( flDist, 0.0f, 0.0f ) );
 		}
 	}
 }
@@ -2949,7 +3052,7 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 	static QAngle angMoveAngle( 0.0f, 0.0f, 0.0f );
 	
 	bool bNoTaunt = true;
-	if ( m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( m_Shared.InCond( TF_COND_TAUNTING ) || m_Shared.InCond( TF_COND_STUNNED ) )
 	{
 		// show centerprint message 
 		pCmd->forwardmove = 0.0f;
@@ -2960,7 +3063,7 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		pCmd->weaponselect = 0;
 
 		// Re-add IN_ATTACK2 if player is Demoman with sticky launcher. This is done so they can detonate stickies while taunting.
-		if ( (nOldButtons & IN_ATTACK2) && IsPlayerClass( TF_CLASS_DEMOMAN ) )
+		if ( ( nOldButtons & IN_ATTACK2 ) && IsPlayerClass( TF_CLASS_DEMOMAN ) )
 		{
 			C_TFWeaponBase *pWeapon = Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER );
 			if ( pWeapon )
@@ -2971,6 +3074,12 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 
 		VectorCopy( angMoveAngle, pCmd->viewangles );
 		bNoTaunt = false;
+	}
+	else if ( m_Shared.InCond( TF_COND_NO_MOVE ) )
+	{
+		pCmd->forwardmove = 0.0f;
+		pCmd->sidemove = 0.0f;
+		VectorCopy( pCmd->viewangles, angMoveAngle );
 	}
 	else
 	{
@@ -3704,6 +3813,7 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		//ResetLatched();
 
 		// Reset the camera.
+		m_bWasTaunting = false;
 		HandleTaunting();
 
 		ResetToneMapping(1.0);

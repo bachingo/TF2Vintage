@@ -104,7 +104,7 @@ public:
 			physenv->CreateBallsocketConstraint( pReference, pPhysicsObject, NULL, ballsocket );
 
 			//Play a sound
-			CPASAttenuationFilter filter( pEnt );
+			/*CPASAttenuationFilter filter( pEnt );
 
 			EmitSound_t ep;
 			ep.m_nChannel = CHAN_VOICE;
@@ -113,7 +113,7 @@ public:
 			ep.m_SoundLevel = SNDLVL_NORM;
 			ep.m_pOrigin = &pEnt->GetAbsOrigin();
 
-			C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, ep );
+			C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, ep );*/
 	
 			return ITERATION_STOP;
 		}
@@ -128,7 +128,10 @@ private:
 
 void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 {
-	model_t *pModel = (model_t *)engine->LoadModel( "models/crossbow_bolt.mdl" );
+	//model_t *pModel = (model_t *)engine->LoadModel( "models/crossbow_bolt.mdl" );
+
+	//repurpose old crossbow collision code for huntsman collisions
+	model_t *pModel = (model_t *)engine->LoadModel( "models/weapons/w_models/w_arrow.mdl" );
 
 	QAngle vAngles;
 
@@ -136,11 +139,11 @@ void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 	
 	if ( gpGlobals->maxClients > 1 )
 	{
-		tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector(0, 0, 0 ), 30.0f, FTENT_NONE );
+		tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 30.0f, FTENT_NONE );
 	}
 	else
 	{
-		tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector(0, 0, 0 ), 1, FTENT_NEVERDIE );
+		tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 1, FTENT_NEVERDIE );
 	}
 }
 

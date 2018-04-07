@@ -218,7 +218,7 @@ void CTFPlayerAnimState::Update( float eyeYaw, float eyePitch )
 	// Compute the player sequences.
 	ComputeSequences( pStudioHdr );
 
-	if ( SetupPoseParameters( pStudioHdr ) && !pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( SetupPoseParameters( pStudioHdr ) && !pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) && !pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
 	{
 		// Pose parameter - what direction are the player's legs running in.
 		ComputePoseParam_MoveYaw( pStudioHdr );
@@ -465,6 +465,21 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 			{
 				RestartGesture( GESTURE_SLOT_JUMP, ACT_MP_DOUBLEJUMP );
 			}
+			break;
+		}
+			case PLAYERANIMEVENT_STUN_BEGIN:
+		{
+			RestartGesture( GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_MP_STUN_BEGIN );
+			break;
+		}
+			case PLAYERANIMEVENT_STUN_MIDDLE:
+		{
+			RestartGesture( GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_MP_STUN_MIDDLE );
+			break;
+		}
+			case PLAYERANIMEVENT_STUN_END:
+		{
+			RestartGesture( GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_MP_STUN_END );
 			break;
 		}
 	default:

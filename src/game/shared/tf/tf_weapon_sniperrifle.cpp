@@ -208,7 +208,7 @@ void CTFSniperRifle::HandleZooms( void )
 		return;
 
 	// Handle the zoom when taunting.
-	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || pPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
 	{
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
 		{

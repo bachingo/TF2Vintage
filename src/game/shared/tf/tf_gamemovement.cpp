@@ -373,7 +373,7 @@ bool CTFGameMovement::CheckJumpButton()
 		return false;
 
 	// Cannot jump while taunting
-	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
 		return false;
 
 	// Check to see if the player is a scout.

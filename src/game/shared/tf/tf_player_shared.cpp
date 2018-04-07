@@ -154,6 +154,7 @@ RecvPropEHandle(RECVINFO(m_hCarriedObject)),
 RecvPropBool(RECVINFO(m_bCarryingObject)),
 RecvPropInt(RECVINFO(m_nTeamTeleporterUsed)),
 RecvPropInt(RECVINFO(m_iRespawnParticleID)),
+RecvPropInt(RECVINFO(m_iMaxHealth)),
 // Spy.
 RecvPropTime(RECVINFO(m_flInvisChangeCompleteTime)),
 RecvPropInt(RECVINFO(m_nDisguiseTeam)),
@@ -215,6 +216,7 @@ SendPropEHandle(SENDINFO(m_hCarriedObject)),
 SendPropBool(SENDINFO(m_bCarryingObject)),
 SendPropInt(SENDINFO(m_nTeamTeleporterUsed), 3, SPROP_UNSIGNED),
 SendPropInt(SENDINFO(m_iRespawnParticleID), 0, SPROP_UNSIGNED),
+SendPropInt(SENDINFO(m_iMaxHealth), 10),
 // Spy
 SendPropTime(SENDINFO(m_flInvisChangeCompleteTime)),
 SendPropInt(SENDINFO(m_nDisguiseTeam), 3, SPROP_UNSIGNED),
@@ -626,6 +628,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		break;
 
 	case TF_COND_TAUNTING:
+	case TF_COND_STUNNED:
 		OnAddTaunting();
 		break;
 
@@ -702,6 +705,7 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		break;
 
 	case TF_COND_TAUNTING:
+	case TF_COND_STUNNED:
 		OnRemoveTaunting();
 		break;
 
@@ -730,30 +734,35 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 	}
 }
 
-int CTFPlayerShared::GetMaxBuffedHealth(void)
+int CTFPlayerShared::GetMaxBuffedHealth( void )
 {
 	float flBoostMax = m_pOuter->GetMaxHealth() * tf_max_health_boost.GetFloat();
-	if (TFGameRules()->GetGameType() == TF_GAMETYPE_DM)
+	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_DM )
 	{
 		flBoostMax = m_pOuter->GetMaxHealth() * tf2c_dm_max_health_boost.GetFloat();
 	}
 
-	int iRoundDown = floor(flBoostMax / 5);
+	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;
 
 	return iRoundDown;
 }
 
-int	CTFPlayerShared::GetDisguiseMaxHealth(void)
+int CTFPlayerShared::GetMaxHealth( void )
 {
-	return GetPlayerClassData(m_nDisguiseClass)->m_nMaxHealth;
+	return m_iMaxHealth;
 }
 
-int CTFPlayerShared::GetDisguiseMaxBuffedHealth(void)
+int	CTFPlayerShared::GetDisguiseMaxHealth( void )
+{
+	return GetPlayerClassData( m_nDisguiseClass )->m_nMaxHealth;
+}
+
+int CTFPlayerShared::GetDisguiseMaxBuffedHealth( void )
 {
 	float flBoostMax = GetDisguiseMaxHealth() * tf_max_health_boost.GetFloat();
 
-	int iRoundDown = floor(flBoostMax / 5);
+	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;
 
 	return iRoundDown;
@@ -766,7 +775,7 @@ int CTFPlayerShared::GetDisguiseMaxBuffedHealth(void)
 void CTFPlayerShared::ConditionGameRulesThink(void)
 {
 #ifdef GAME_DLL
-	if (m_flNextCritUpdate < gpGlobals->curtime)
+	if ( m_flNextCritUpdate < gpGlobals->curtime )
 	{
 		UpdateCritMult();
 		m_flNextCritUpdate = gpGlobals->curtime + 0.5;
@@ -775,30 +784,30 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	int i;
 	for (i = 0; i < TF_COND_LAST; i++)
 	{
-		if (InCond(i))
+		if ( InCond( i ) )
 		{
 			// Ignore permanent conditions
-			if (m_flCondExpireTimeLeft[i] != PERMANENT_CONDITION)
+			if ( m_flCondExpireTimeLeft[i] != PERMANENT_CONDITION )
 			{
 				float flReduction = gpGlobals->frametime;
 
-				if (ConditionExpiresFast(i))
+				if ( ConditionExpiresFast( i ) )
 				{
 					// If we're being healed, we reduce bad conditions faster
-					if (m_aHealers.Count() > 0)
+					if ( m_aHealers.Count() > 0 )
 					{
-						if (i == TF_COND_URINE)
+						if ( i == TF_COND_URINE )
 							flReduction *= m_aHealers.Count() + 1;
 						else
-							flReduction += (m_aHealers.Count() * flReduction * 4);
+							flReduction += ( m_aHealers.Count() * flReduction * 4 );
 					}
 				}
 
-				m_flCondExpireTimeLeft.Set(i, max(m_flCondExpireTimeLeft[i] - flReduction, 0));
+				m_flCondExpireTimeLeft.Set( i, max( m_flCondExpireTimeLeft[i] - flReduction, 0 ) );
 
-				if (m_flCondExpireTimeLeft[i] == 0)
+				if ( m_flCondExpireTimeLeft[i] == 0 )
 				{
-					RemoveCond(i);
+					RemoveCond( i );
 				}
 			}
 		}
@@ -809,19 +818,19 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	bool bDecayHealth = true;
 
 	// If we're being healed, heal ourselves
-	if (InCond(TF_COND_HEALTH_BUFF))
+	if ( InCond( TF_COND_HEALTH_BUFF ) )
 	{
 		// Heal faster if we haven't been in combat for a while
 		float flTimeSinceDamage = gpGlobals->curtime - m_pOuter->GetLastDamageTime();
-		float flScale = RemapValClamped(flTimeSinceDamage, 10, 15, 1.0, 3.0);
+		float flScale = RemapValClamped( flTimeSinceDamage, 10, 15, 1.0, 3.0 );
 
 		bool bHasFullHealth = m_pOuter->GetHealth() >= m_pOuter->GetMaxHealth();
 
 		float fTotalHealAmount = 0.0f;
-		for (int i = 0; i < m_aHealers.Count(); i++)
+		for ( int i = 0; i < m_aHealers.Count(); i++ )
 		{
 			// Dispensers don't heal above 100%
-			if (bHasFullHealth && m_aHealers[i].bDispenserHeal)
+			if ( bHasFullHealth && m_aHealers[i].bDispenserHeal )
 			{
 				continue;
 			}
@@ -830,7 +839,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			bDecayHealth = false;
 
 			// Dispensers heal at a constant rate
-			if (m_aHealers[i].bDispenserHeal)
+			if ( m_aHealers[i].bDispenserHeal )
 			{
 				// Dispensers heal at a slower rate, but ignore flScale
 				m_flHealFraction += gpGlobals->frametime * m_aHealers[i].flAmount;
@@ -843,46 +852,46 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			fTotalHealAmount += m_aHealers[i].flAmount;
 		}
 
-		int nHealthToAdd = (int)m_flHealFraction;
-		if (nHealthToAdd > 0)
+		int nHealthToAdd = ( int )m_flHealFraction;
+		if ( nHealthToAdd > 0 )
 		{
 			m_flHealFraction -= nHealthToAdd;
 
 			int iBoostMax = GetMaxBuffedHealth();
 
-			if (InCond(TF_COND_DISGUISED))
+			if ( InCond( TF_COND_DISGUISED ) )
 			{
 				// Separate cap for disguised health
 				//int iFakeBoostMax = GetDisguiseMaxBuffedHealth();
 				//int nFakeHealthToAdd = clamp(nHealthToAdd, 0, iFakeBoostMax - m_iDisguiseHealth);
 				//m_iDisguiseHealth += nFakeHealthToAdd;
-				AddDisguiseHealth(nHealthToAdd, true);
+				AddDisguiseHealth( nHealthToAdd, true );
 			}
 
 			// Cap it to the max we'll boost a player's health
-			nHealthToAdd = clamp(nHealthToAdd, 0, iBoostMax - m_pOuter->GetHealth());
+			nHealthToAdd = clamp( nHealthToAdd, 0, iBoostMax - m_pOuter->GetHealth() );
 
-			m_pOuter->TakeHealth(nHealthToAdd, DMG_IGNORE_MAXHEALTH);
+			m_pOuter->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
 
 			// split up total healing based on the amount each healer contributes
-			for (int i = 0; i < m_aHealers.Count(); i++)
+			for ( int i = 0; i < m_aHealers.Count(); i++ )
 			{
-				if (m_aHealers[i].pPlayer.IsValid())
+				if ( m_aHealers[i].pPlayer.IsValid() )
 				{
-					CTFPlayer *pPlayer = static_cast<CTFPlayer *>(static_cast<CBaseEntity *>(m_aHealers[i].pPlayer));
-					if (IsAlly(pPlayer))
+					CTFPlayer *pPlayer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
+					if ( IsAlly( pPlayer ) )
 					{
-						CTF_GameStats.Event_PlayerHealedOther(pPlayer, nHealthToAdd * (m_aHealers[i].flAmount / fTotalHealAmount));
+						CTF_GameStats.Event_PlayerHealedOther( pPlayer, nHealthToAdd * ( m_aHealers[i].flAmount / fTotalHealAmount ) );
 					}
 					else
 					{
-						CTF_GameStats.Event_PlayerLeachedHealth(m_pOuter, m_aHealers[i].bDispenserHeal, nHealthToAdd * (m_aHealers[i].flAmount / fTotalHealAmount));
+						CTF_GameStats.Event_PlayerLeachedHealth( m_pOuter, m_aHealers[i].bDispenserHeal, nHealthToAdd * ( m_aHealers[i].flAmount / fTotalHealAmount ) );
 					}
 				}
 			}
 		}
 
-		if (InCond(TF_COND_BURNING))
+		if ( InCond( TF_COND_BURNING ) )
 		{
 			// Reduce the duration of this burn 
 			float flReduction = 2;	 // ( flReduction + 1 ) x faster reduction
@@ -893,21 +902,21 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	if (bDecayHealth)
 	{
 		// If we're not being buffed, our health drains back to our max
-		if (m_pOuter->GetHealth() > m_pOuter->GetMaxHealth())
+		if ( m_pOuter->GetHealth() > m_pOuter->GetMaxHealth() )
 		{
 			float flBoostMaxAmount = GetMaxBuffedHealth() - m_pOuter->GetMaxHealth();
 			// TF2C DM has slower overheal decay
-			if (TFGameRules()->GetGameType() == TF_GAMETYPE_DM)
+			if ( TFGameRules()->GetGameType() == TF_GAMETYPE_DM )
 			{
-				m_flHealFraction += (gpGlobals->frametime * (flBoostMaxAmount / tf2c_dm_boost_drain_time.GetFloat()));
+				m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / tf2c_dm_boost_drain_time.GetFloat() ) );
 			}
 			else
 			{
-				m_flHealFraction += (gpGlobals->frametime * (flBoostMaxAmount / tf_boost_drain_time.GetFloat()));
+				m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / tf_boost_drain_time.GetFloat() ) );
 			}
 
-			int nHealthToDrain = (int)m_flHealFraction;
-			if (nHealthToDrain > 0)
+			int nHealthToDrain = ( int )m_flHealFraction;
+			if ( nHealthToDrain > 0 )
 			{
 				m_flHealFraction -= nHealthToDrain;
 
@@ -916,13 +925,13 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			}
 		}
 
-		if (InCond(TF_COND_DISGUISED) && m_iDisguiseHealth > m_iDisguiseMaxHealth)
+		if ( InCond( TF_COND_DISGUISED ) && m_iDisguiseHealth > m_iDisguiseMaxHealth )
 		{
 			float flBoostMaxAmount = GetDisguiseMaxBuffedHealth() - m_iDisguiseMaxHealth;
-			m_flDisguiseHealFraction += (gpGlobals->frametime * (flBoostMaxAmount / tf_boost_drain_time.GetFloat()));
+			m_flDisguiseHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / tf_boost_drain_time.GetFloat() ) );
 
-			int nHealthToDrain = (int)m_flDisguiseHealFraction;
-			if (nHealthToDrain > 0)
+			int nHealthToDrain = ( int )m_flDisguiseHealFraction;
+			if ( nHealthToDrain > 0 )
 			{
 				m_flDisguiseHealFraction -= nHealthToDrain;
 
@@ -933,9 +942,9 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	}
 
 	// Taunt
-	if (InCond(TF_COND_TAUNTING))
+	if ( InCond( TF_COND_TAUNTING ) )
 	{
-		if (gpGlobals->curtime > m_flTauntRemoveTime)
+		if ( gpGlobals->curtime > m_flTauntRemoveTime )
 		{
 			m_pOuter->ResetTauntHandle();
 
@@ -943,7 +952,16 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			//m_pOuter->SetAbsAngles( m_pOuter->m_angTauntCamera );
 			//m_pOuter->SetLocalAngles( m_pOuter->m_angTauntCamera );
 
-			RemoveCond(TF_COND_TAUNTING);
+			RemoveCond( TF_COND_TAUNTING );
+		}
+	}
+
+	if ( InCond( TF_COND_STUNNED ) )
+	{
+		if ( gpGlobals->curtime > m_flTauntRemoveTime )
+		{
+			m_pOuter->ResetTauntHandle();
+			RemoveCond( TF_COND_STUNNED );
 		}
 	}
 
@@ -1241,6 +1259,20 @@ void CTFPlayerShared::OnRemoveTaunting(void)
 #ifdef GAME_DLL
 	m_pOuter->ClearTauntAttack();
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddStunned(void)
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveStunned(void)
+{
 }
 
 
@@ -1786,49 +1818,49 @@ float CTFPlayerShared::GetPercentInvisible(void)
 //-----------------------------------------------------------------------------
 // Purpose: Start the process of disguising
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::Disguise(int nTeam, int nClass)
+void CTFPlayerShared::Disguise( int nTeam, int nClass )
 {
 #ifndef CLIENT_DLL
 	int nRealTeam = m_pOuter->GetTeamNumber();
 	int nRealClass = m_pOuter->GetPlayerClass()->GetClassIndex();
 
-	Assert((nClass >= TF_CLASS_SCOUT) && (nClass <= TF_CLASS_ENGINEER));
+	Assert( ( nClass >= TF_CLASS_SCOUT ) && ( nClass <= TF_CLASS_ENGINEER ) );
 
 	// we're not a spy
-	if (nRealClass != TF_CLASS_SPY)
+	if ( nRealClass != TF_CLASS_SPY )
 	{
 		return;
 	}
 
 	// Can't disguise while taunting.
-	if (InCond(TF_COND_TAUNTING))
+	if ( InCond( TF_COND_TAUNTING ) || InCond( TF_COND_STUNNED ) )
 	{
 		return;
 	}
 
 	// we're not disguising as anything but ourselves (so reset everything)
-	if (nRealTeam == nTeam && nRealClass == nClass)
+	if ( nRealTeam == nTeam && nRealClass == nClass )
 	{
 		RemoveDisguise();
 		return;
 	}
 
 	// Ignore disguise of the same type, switch disguise weapon instead.
-	if (nTeam == m_nDisguiseTeam && nClass == m_nDisguiseClass)
+	if ( nTeam == m_nDisguiseTeam && nClass == m_nDisguiseClass )
 	{
 		CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
-		RecalcDisguiseWeapon(pWeapon ? pWeapon->GetSlot() : 0);
+		RecalcDisguiseWeapon( pWeapon ? pWeapon->GetSlot() : 0 );
 		return;
 	}
 
 	// invalid team
-	if (nTeam <= TEAM_SPECTATOR || nTeam >= TF_TEAM_COUNT)
+	if ( nTeam <= TEAM_SPECTATOR || nTeam >= TF_TEAM_COUNT )
 	{
 		return;
 	}
 
 	// invalid class
-	if (nClass <= TF_CLASS_UNDEFINED || nClass >= TF_CLASS_COUNT)
+	if ( nClass <= TF_CLASS_UNDEFINED || nClass >= TF_CLASS_COUNT )
 	{
 		return;
 	}
@@ -1836,12 +1868,12 @@ void CTFPlayerShared::Disguise(int nTeam, int nClass)
 	m_nDesiredDisguiseClass = nClass;
 	m_nDesiredDisguiseTeam = nTeam;
 
-	AddCond(TF_COND_DISGUISING);
+	AddCond( TF_COND_DISGUISING );
 
 	// Start the think to complete our disguise
 
 	// Switching disguises is faster if we're already disguised
-	if (InCond(TF_COND_DISGUISED))
+	if ( InCond(TF_COND_DISGUISED ) )
 		m_flDisguiseCompleteTime = gpGlobals->curtime + TF_TIME_TO_CHANGE_DISGUISE;
 	else
 		m_flDisguiseCompleteTime = gpGlobals->curtime + TF_TIME_TO_DISGUISE;
@@ -2581,6 +2613,37 @@ void CTFPlayerShared::ResetAirDucks(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+int CTFPlayerShared::GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCustom )
+{
+	const char *pszSequence = NULL;
+
+	switch( iDamageCustom )
+	{
+	case TF_DMG_CUSTOM_BACKSTAB:
+		pszSequence = "primary_death_backstab";
+		break;
+	case TF_DMG_CUSTOM_HEADSHOT:
+		pszSequence = "primary_death_headshot";
+		break;
+
+	// Unused in live TF2
+	/*case TF_DMG_CUSTOM_BURNING:
+		pszSequence = "primary_death_burning";
+		break;*/
+	}
+
+	if ( pszSequence != NULL )
+	{
+		return pAnim->LookupSequence( pszSequence );
+	}
+
+	return -1;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFPlayerShared::GetCritMult(void)
 {
 	float flRemapCritMul = RemapValClamped(m_iCritMult, 0, 255, 1.0, TF_DAMAGE_CRITMOD_MAXMULT);
@@ -2933,13 +2996,13 @@ void CTFPlayer::ImpactWaterTrace(trace_t &trace, const Vector &vecStart)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFWeaponBase *CTFPlayer::GetActiveTFWeapon(void) const
+CTFWeaponBase *CTFPlayer::GetActiveTFWeapon( void ) const
 {
 	CBaseCombatWeapon *pRet = GetActiveWeapon();
-	if (pRet)
+	if ( pRet )
 	{
-		Assert(dynamic_cast< CTFWeaponBase* >(pRet) != NULL);
-		return static_cast< CTFWeaponBase * >(pRet);
+		Assert( dynamic_cast< CTFWeaponBase* >( pRet ) != NULL );
+		return static_cast< CTFWeaponBase * >( pRet );
 	}
 
 	return NULL;
@@ -2948,7 +3011,7 @@ CTFWeaponBase *CTFPlayer::GetActiveTFWeapon(void) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFPlayer::IsActiveTFWeapon(int iWeaponID)
+bool CTFPlayer::IsActiveTFWeapon( int iWeaponID )
 {
 	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 	if (pWeapon)
@@ -2961,9 +3024,9 @@ bool CTFPlayer::IsActiveTFWeapon(int iWeaponID)
 //-----------------------------------------------------------------------------
 // Purpose: How much build resource ( metal ) does this player have
 //-----------------------------------------------------------------------------
-int CTFPlayer::GetBuildResources(void)
+int CTFPlayer::GetBuildResources( void )
 {
-	return GetAmmoCount(TF_AMMO_METAL);
+	return GetAmmoCount( TF_AMMO_METAL );
 }
 
 //-----------------------------------------------------------------------------
@@ -2975,44 +3038,44 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	float maxfbspeed;
 
 	// Spectators can move while in Classic Observer mode
-	if (IsObserver())
+	if ( IsObserver() )
 	{
-		if (GetObserverMode() == OBS_MODE_ROAMING)
-			SetMaxSpeed(GetPlayerClassData(TF_CLASS_SCOUT)->m_flMaxSpeed);
+		if ( GetObserverMode() == OBS_MODE_ROAMING )
+			SetMaxSpeed( GetPlayerClassData( TF_CLASS_SCOUT )->m_flMaxSpeed );
 		else
-			SetMaxSpeed(0);
+			SetMaxSpeed( 0 );
 		return;
 	}
 
 	// Check for any reason why they can't move at all
-	if (playerclass == TF_CLASS_UNDEFINED || GameRules()->InRoundRestart())
+	if ( playerclass == TF_CLASS_UNDEFINED || GameRules()->InRoundRestart() )
 	{
-		SetAbsVelocity(vec3_origin);
-		SetMaxSpeed(1);
+		SetAbsVelocity( vec3_origin );
+		SetMaxSpeed( 1 );
 		return;
 	}
 
 	// First, get their max class speed
-	maxfbspeed = GetPlayerClassData(playerclass)->m_flMaxSpeed;
+	maxfbspeed = GetPlayerClassData( playerclass )->m_flMaxSpeed;
 
-	CALL_ATTRIB_HOOK_FLOAT(maxfbspeed, mult_player_movespeed);
+	CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
 
 	// Slow us down if we're disguised as a slower class
 	// unless we're cloaked..
-	if (m_Shared.InCond(TF_COND_DISGUISED) && !m_Shared.InCond(TF_COND_STEALTHED))
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
 	{
-		float flMaxDisguiseSpeed = GetPlayerClassData(m_Shared.GetDisguiseClass())->m_flMaxSpeed;
-		maxfbspeed = min(flMaxDisguiseSpeed, maxfbspeed);
+		float flMaxDisguiseSpeed = GetPlayerClassData( m_Shared.GetDisguiseClass() )->m_flMaxSpeed;
+		maxfbspeed = min( flMaxDisguiseSpeed, maxfbspeed );
 	}
 
 	// Second, see if any flags are slowing them down
-	if (HasItem() && GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG)
+	if ( HasItem() && GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG )
 	{
-		CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*>(GetItem());
+		CCaptureFlag *pFlag = dynamic_cast< CCaptureFlag *>( GetItem() );
 
-		if (pFlag)
+		if ( pFlag )
 		{
-			if (pFlag->GetGameType() == TF_FLAGTYPE_ATTACK_DEFEND || pFlag->GetGameType() == TF_FLAGTYPE_TERRITORY_CONTROL)
+			if ( pFlag->GetGameType() == TF_FLAGTYPE_ATTACK_DEFEND || pFlag->GetGameType() == TF_FLAGTYPE_TERRITORY_CONTROL )
 			{
 				maxfbspeed *= 0.5;
 			}
@@ -3020,59 +3083,59 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	}
 
 	// if they're aiming or spun up, reduce their speed
-	if (m_Shared.InCond(TF_COND_AIMING))
+	if ( m_Shared.InCond( TF_COND_AIMING ) )
 	{
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 
 		// Heavy moves slightly faster spun-up
-		if (pWeapon && pWeapon->IsWeapon(TF_WEAPON_MINIGUN))
+		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) )
 		{
-			if (maxfbspeed > 110)
+			if ( maxfbspeed > 110 )
 				maxfbspeed = 110;
 		}
 		else
 		{
-			if (maxfbspeed > 80)
+			if ( maxfbspeed > 80 )
 				maxfbspeed = 80;
 		}
 	}
 
 	// Engineer moves slower while a hauling an object.
-	if (playerclass == TF_CLASS_ENGINEER && m_Shared.IsCarryingObject())
+	if ( playerclass == TF_CLASS_ENGINEER && m_Shared.IsCarryingObject() )
 	{
 		maxfbspeed *= 0.75f;
 	}
 
-	if (m_Shared.InCond(TF_COND_STEALTHED))
+	if ( m_Shared.InCond( TF_COND_STEALTHED ) )
 	{
-		if (maxfbspeed > tf_spy_max_cloaked_speed.GetFloat())
+		if ( maxfbspeed > tf_spy_max_cloaked_speed.GetFloat() )
 			maxfbspeed = tf_spy_max_cloaked_speed.GetFloat();
 	}
 
-	if (m_Shared.InCond(TF_COND_POWERUP_RAGEMODE))
+	if ( m_Shared.InCond( TF_COND_POWERUP_RAGEMODE ) )
 	{
 		maxfbspeed *= 1.3f;
 	}
 
-	if (m_Shared.InCond(TF_COND_DISGUISED_AS_DISPENSER))
+	if ( m_Shared.InCond( TF_COND_DISGUISED_AS_DISPENSER ) )
 	{
 		maxfbspeed *= 2.0f;
 	}
 
 	// Reduce our speed if we were tranquilized
-	if (m_Shared.InCond(TF_COND_SLOWED))
+	if ( m_Shared.InCond( TF_COND_SLOWED ) )
 	{
 		maxfbspeed *= 0.6f;
 	}
 
 	// if we're in bonus time because a team has won, give the winners 110% speed and the losers 90% speed
-	if (TFGameRules()->State_Get() == GR_STATE_TEAM_WIN)
+	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 	{
 		int iWinner = TFGameRules()->GetWinningTeam();
 
-		if (iWinner != TEAM_UNASSIGNED)
+		if ( iWinner != TEAM_UNASSIGNED )
 		{
-			if (iWinner == GetTeamNumber())
+			if ( iWinner == GetTeamNumber() )
 			{
 				maxfbspeed *= 1.1f;
 			}
@@ -3084,7 +3147,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	}
 
 	// Set the speed
-	SetMaxSpeed(maxfbspeed);
+	SetMaxSpeed( maxfbspeed );
 }
 
 //-----------------------------------------------------------------------------

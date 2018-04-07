@@ -129,6 +129,7 @@ public:
 	bool			StartGestureSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget );
 	void			TurnOnTauntCam( void );
 	void			TurnOffTauntCam( void );
+	void			TauntCamInterpolation( void ); 
 	bool			InTauntCam( void ) { return m_bWasTaunting; }
 	virtual void	ThirdPersonSwitch( bool bThirdperson );
 
@@ -190,7 +191,7 @@ public:
 	bool			GetMedigunAutoHeal( void ){ return tf_medigun_autoheal.GetBool(); }
 	bool			ShouldAutoRezoom( void ){ return cl_autorezoom.GetBool(); }
 	bool			ShouldAutoReload( void ){ return cl_autoreload.GetBool(); }
-	bool			ShouldFlipViewModel( void ) { return cl_flipviewmodels.GetBool(); }
+	bool			ShouldFlipViewModel( void ){ return cl_flipviewmodels.GetBool(); }
 
 public:
 	// Shared functions
@@ -274,6 +275,7 @@ private:
 	void InitInvulnerableMaterial( void );
 
 	bool				m_bWasTaunting;
+	float				m_flTauntOffTime;
 	CameraThirdData_t	m_TauntCameraData;
 
 	QAngle				m_angTauntPredViewAngles;

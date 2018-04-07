@@ -218,15 +218,15 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 				}
 
 				// compose the string
-				if (m_DeathNotices[iDeathNoticeMsg].Victim.szName[0])
+				if ( m_DeathNotices[iDeathNoticeMsg].Victim.szName[0] )
 				{
 					char szVictimBuf[MAX_PLAYER_NAME_LENGTH*2];
-					Q_snprintf(szVictimBuf, ARRAYSIZE(szVictimBuf), "%s (%s)", szLocalizedObjectName, m_DeathNotices[iDeathNoticeMsg].Victim.szName);
-					Q_strncpy(m_DeathNotices[iDeathNoticeMsg].Victim.szName, szVictimBuf, ARRAYSIZE(m_DeathNotices[iDeathNoticeMsg].Victim.szName));
+					Q_snprintf( szVictimBuf, ARRAYSIZE( szVictimBuf), "%s (%s)", szLocalizedObjectName, m_DeathNotices[iDeathNoticeMsg].Victim.szName );
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].Victim.szName, szVictimBuf, ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].Victim.szName ) );
 				}
 				else
 				{
-					Q_strncpy(m_DeathNotices[iDeathNoticeMsg].Victim.szName, szLocalizedObjectName, ARRAYSIZE(m_DeathNotices[iDeathNoticeMsg].Victim.szName));
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].Victim.szName, szLocalizedObjectName, ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].Victim.szName ) );
 				}
 				
 			}
@@ -237,14 +237,33 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 		}
 
 		const wchar_t *pMsg = NULL;
-		switch ( iCustomDamage )
+		switch (iCustomDamage)
 		{
 		case TF_DMG_CUSTOM_BACKSTAB:
-			Q_strncpy(m_DeathNotices[iDeathNoticeMsg].szIcon, "d_backstab", ARRAYSIZE(m_DeathNotices[iDeathNoticeMsg].szIcon));
+			Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_backstab", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
 			break;
 		case TF_DMG_CUSTOM_HEADSHOT:
-			Q_strncpy(m_DeathNotices[iDeathNoticeMsg].szIcon, "d_headshot", ARRAYSIZE(m_DeathNotices[iDeathNoticeMsg].szIcon));
-			break;
+			if ( FStrEq( event->GetString( "weapon" ), "huntsman" ) )
+			{
+				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_huntsman_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+			}
+			else if ( FStrEq( event->GetString( "weapon" ), "huntsman_flyingburn" ) )
+			{
+				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_huntsman_flyingburn_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+			}
+			else if ( FStrEq( event->GetString( "weapon" ), "deflect_arrow" ) )
+			{
+				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_deflect_huntsman_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+			}
+			else if ( FStrEq( event->GetString( "weapon" ), "deflect_huntsman_flyingburn" ) )
+			{
+				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_deflect_huntsman_flyingburn_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+			}
+			else 
+			{
+				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+			}
+				break;
 		case TF_DMG_CUSTOM_SUICIDE:
 			{
 				// display a different message if this was suicide, or assisted suicide (suicide w/recent damage, kill awarded to damager)

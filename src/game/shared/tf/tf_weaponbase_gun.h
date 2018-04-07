@@ -63,6 +63,7 @@ public:
 	virtual float GetWeaponSpread( void );
 	virtual float GetProjectileSpeed( void );
 	virtual float GetProjectileGravity( void );
+	virtual bool  IsFlameArrow( void );
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
 	virtual float GetProjectileDamage( void );

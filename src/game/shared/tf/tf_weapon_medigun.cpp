@@ -1058,7 +1058,7 @@ void CWeaponMedigun::ManageChargeEffect( void )
 {
 	bool bOwnerTaunting = false;
 
-	if ( GetTFPlayerOwner() && GetTFPlayerOwner()->m_Shared.InCond( TF_COND_TAUNTING ) == true )
+	if ( GetTFPlayerOwner() && ( GetTFPlayerOwner()->m_Shared.InCond( TF_COND_TAUNTING ) == true  || GetTFPlayerOwner()->m_Shared.InCond( TF_COND_STUNNED ) == true) )
 	{
 		bOwnerTaunting = true;
 	}

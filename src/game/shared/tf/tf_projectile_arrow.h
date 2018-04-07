@@ -38,11 +38,12 @@ public:
 	~CTFProjectile_Arrow();
 
 	void	SetType( int iType ) { m_iType = iType; }
+	void	SetFlameArrow( bool bFlame ) { m_bFlame = bFlame; }
 
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_COMPOUND_BOW; }
 
 #ifdef GAME_DLL
-	static CTFProjectile_Arrow *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, float flSpeed, float flGravity, CBaseEntity *pOwner, CBaseEntity *pScorer, int iType );
+	static CTFProjectile_Arrow *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, float flSpeed, float flGravity, bool bFlame, CBaseEntity *pOwner, CBaseEntity *pScorer, int iType );
 
 	// IScorer interface
 	virtual CBasePlayer *GetScorer( void );
@@ -61,6 +62,7 @@ public:
 
 	bool			CanHeadshot( void );
 	void			ArrowTouch( CBaseEntity *pOther );
+	void			FlyThink( void );
 	const char		*GetTrailParticleName( void );
 	void			CreateTrail( void );
 
@@ -74,10 +76,12 @@ private:
 	EHANDLE m_Scorer;
 	CNetworkVar( bool, m_bCritical );
 	CNetworkVar( int, m_iType );
+	CNetworkVar( bool, m_bFlame);
 
 	EHANDLE m_hSpriteTrail;
 #else
 	bool		m_bCritical;
+	bool		m_bFlame;
 	int			m_iType;
 #endif
 };

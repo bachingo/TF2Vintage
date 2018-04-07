@@ -50,6 +50,7 @@
 #include "cdll_int.h"
 #include "tf_weaponbase.h"
 #include "econ_wearable.h"
+#include "tf_wearable.h"
 #include "tf_dropped_weapon.h"
 #include "econ_item_schema.h"
 #include "baseprojectile.h"
@@ -177,8 +178,10 @@ public:
 		m_iPlayerIndex.Set( TF_PLAYER_INDEX_NONE );
 		m_bGib = false;
 		m_bBurning = false;
+		m_iDamageCustom = 0;
 		m_vecRagdollOrigin.Init();
 		m_vecRagdollVelocity.Init();
+		UseClientSideAnimation();
 	}
 
 	// Transmit ragdolls to everyone.
@@ -192,6 +195,7 @@ public:
 	CNetworkVector( m_vecRagdollOrigin );
 	CNetworkVar( bool, m_bGib );
 	CNetworkVar( bool, m_bBurning );
+	CNetworkVar( int, m_iDamageCustom );
 	CNetworkVar( int, m_iTeam );
 	CNetworkVar( int, m_iClass );
 };
@@ -199,15 +203,16 @@ public:
 LINK_ENTITY_TO_CLASS( tf_ragdoll, CTFRagdoll );
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTFRagdoll, DT_TFRagdoll )
-	SendPropVector( SENDINFO( m_vecRagdollOrigin ), -1,  SPROP_COORD ),
+	SendPropVector( SENDINFO( m_vecRagdollOrigin ), -1, SPROP_COORD ),
 	SendPropInt( SENDINFO( m_iPlayerIndex ), 7, SPROP_UNSIGNED ),
-	SendPropVector	( SENDINFO(m_vecForce), -1, SPROP_NOSCALE ),
+	SendPropVector( SENDINFO( m_vecForce ), -1, SPROP_NOSCALE ),
 	SendPropVector( SENDINFO( m_vecRagdollVelocity ), 13, SPROP_ROUNDDOWN, -2048.0f, 2048.0f ),
 	SendPropInt( SENDINFO( m_nForceBone ) ),
 	SendPropBool( SENDINFO( m_bGib ) ),
 	SendPropBool( SENDINFO( m_bBurning ) ),
+	SendPropInt( SENDINFO( m_iDamageCustom ) ),
 	SendPropInt( SENDINFO( m_iTeam ), 3, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iClass ), 4, SPROP_UNSIGNED ),	
+	SendPropInt( SENDINFO( m_iClass ), 4, SPROP_UNSIGNED ),
 END_SEND_TABLE()
 
 // -------------------------------------------------------------------------------- //
@@ -392,6 +397,7 @@ CTFPlayer::CTFPlayer()
 	m_iMaxSentryKills = 0;
 	m_flNextNameChangeTime = 0;
 
+	m_flNextHealthRegen = 0;
 	m_flNextTimeCheck = gpGlobals->curtime;
 	m_flSpawnTime = 0;
 
@@ -449,18 +455,19 @@ void CTFPlayer::TFPlayerThink()
 		(this->*m_pStateInfo->pfnThink)();
 	}
 
-	if (m_bIsAirblast)
+	if ( m_bIsAirblast )
 	{
-		SetMaxSpeed(-1);
+		//SetMaxSpeed( -1 );
 		m_flStunTime = gpGlobals->curtime + 0.5f;
-		setAirblastState(false);
-		setUnmoveable(true);
+		setAirblastState( false );
+		//setUnmoveable( true );
 	}
 
-	if (gpGlobals->curtime > m_flStunTime && m_bIsUnmoveable)
+	if ( gpGlobals->curtime > m_flStunTime && m_Shared.InCond( TF_COND_NO_MOVE ) )
 	{
-		TeamFortress_SetSpeed();
-		setUnmoveable(true);
+		m_Shared.RemoveCond( TF_COND_NO_MOVE );
+		//TeamFortress_SetSpeed();
+		//setUnmoveable( true );
 	}
 
 	// Time to finish the current random expression? Or time to pick a new one?
@@ -522,6 +529,17 @@ void CTFPlayer::TFPlayerThink()
 		}
 	}
 
+	if( !IsPlayerClass( TF_CLASS_MEDIC ) && gpGlobals->curtime > m_flNextHealthRegen )
+	{
+		int iHealthDrain = 0;
+		CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
+		if( iHealthDrain )
+		{
+			MedicRegenThink();
+			m_flNextHealthRegen = gpGlobals->curtime + TF_MEDIC_REGEN_TIME;
+		}			
+	}
+
 	SetContextThink( &CTFPlayer::TFPlayerThink, gpGlobals->curtime, "TFPlayerThink" );
 }
 
@@ -530,6 +548,10 @@ void CTFPlayer::TFPlayerThink()
 //-----------------------------------------------------------------------------
 void CTFPlayer::MedicRegenThink( void )
 {
+	// Health drain attribute
+	int iHealthDrain = 0;
+	CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
+
 	if ( IsPlayerClass( TF_CLASS_MEDIC ) )
 	{
 		if ( IsAlive() )
@@ -539,10 +561,28 @@ void CTFPlayer::MedicRegenThink( void )
 			float flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 3.0, 6.0 );
 
 			int iHealAmount = ceil(TF_MEDIC_REGEN_AMOUNT * flScale);
-			TakeHealth( iHealAmount, DMG_GENERIC );
+			TakeHealth( iHealAmount + iHealthDrain, DMG_GENERIC );
 		}
-
 		SetContextThink( &CTFPlayer::MedicRegenThink, gpGlobals->curtime + TF_MEDIC_REGEN_TIME, "MedicRegenThink" );
+	}
+	else
+	{
+		if( IsAlive() )
+		{
+			int iHealthRestored = TakeHealth( iHealthDrain, DMG_GENERIC );
+			if (iHealthRestored)
+			{
+				IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
+				
+				if ( event )
+				{
+					event->SetInt( "amount", iHealthRestored );
+					event->SetInt( "entindex", entindex() );
+					
+					gameeventmanager->FireEvent( event );
+				}
+			}	
+		}
 	}
 }
 
@@ -1081,12 +1121,13 @@ void CTFPlayer::RemoveNemesisRelationships()
 void CTFPlayer::Regenerate( void )
 {
 	// We may have been boosted over our max health. If we have, 
-	// restore it after we reset out class values.
-	int iCurrentHealth = GetHealth();
+	// restore it after we reset out class values
+	// unless our max health has changed.
+	int iCurrentHealth = GetHealth(), iMaxHealth = GetMaxHealth();
 	m_bRegenerating = true;
 	InitClass();
 	m_bRegenerating = false;
-	if ( iCurrentHealth > GetHealth() )
+	if ( iCurrentHealth > GetHealth() && iMaxHealth == GetMaxHealth() )
 	{
 		SetHealth( iCurrentHealth );
 	}
@@ -1111,18 +1152,32 @@ void CTFPlayer::Regenerate( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::InitClass( void )
 {
-	// Set initial health and armor based on class.
-	SetMaxHealth( GetPlayerClass()->GetMaxHealth() );
-	SetHealth( GetMaxHealth() );
-
-	SetArmorValue( GetPlayerClass()->GetMaxArmor() );
-
 	// Init the anim movement vars
 	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
 	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
 
 	// Give default items for class.
 	GiveDefaultItems();
+
+	// Set initial health and armor based on class.
+	int iHealthToAdd = 0;
+	CALL_ATTRIB_HOOK_INT( iHealthToAdd, add_maxhealth );
+	if( iHealthToAdd != 0 )
+	{
+		SetMaxHealth( GetPlayerClass()->GetMaxHealth() + iHealthToAdd );
+	}
+	else
+	{
+		SetMaxHealth( GetPlayerClass()->GetMaxHealth() );
+	}
+
+	SetHealth( GetMaxHealth() );
+
+	// Update network variables
+	m_Shared.SetMaxHealth( GetMaxHealth() );
+
+	SetArmorValue( GetPlayerClass()->GetMaxArmor() );
+
 
 	// Update player's color.
 	if ( TFGameRules()->IsDeathmatch() )
@@ -1371,7 +1426,7 @@ void CTFPlayer::ValidateWearables( void )
 
 	for ( int i = 0; i < GetNumWearables(); i++ )
 	{
-		CEconWearable *pWearable = GetWearable( i );
+		CTFWearable *pWearable = static_cast<CTFWearable *>( GetWearable( i ) );
 
 		if ( !pWearable )
 			continue;
@@ -1387,6 +1442,10 @@ void CTFPlayer::ValidateWearables( void )
 			{
 				// Not supposed to carry this wearable, nuke it.
 				RemoveWearable( pWearable );
+			}
+			else
+			{
+				pWearable->UpdateModelToClass();
 			}
 		}
 	}
@@ -3167,7 +3226,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 //-----------------------------------------------------------------------------
 int CTFPlayer::TakeHealth( float flHealth, int bitsDamageType )
 {
-	int bResult = false;
+	int iResult = 0;
 
 	// If the bit's set, add over the max health
 	if ( bitsDamageType & DMG_IGNORE_MAXHEALTH )
@@ -3175,7 +3234,12 @@ int CTFPlayer::TakeHealth( float flHealth, int bitsDamageType )
 		int iTimeBasedDamage = g_pGameRules->Damage_GetTimeBased();
 		m_bitsDamageType &= ~(bitsDamageType & ~iTimeBasedDamage);
 		m_iHealth += flHealth;
-		bResult = true;
+		iResult = ( int ) flHealth;
+	}
+	else if ( flHealth <= 0)
+	{
+		int iHealthToAdd = -flHealth;
+		iResult = BaseClass::TakeHealth( -Clamp( m_iHealth - 1, 0, iHealthToAdd ) , bitsDamageType );
 	}
 	else
 	{
@@ -3188,17 +3252,18 @@ int CTFPlayer::TakeHealth( float flHealth, int bitsDamageType )
 			flHealthToAdd = flMaxHealth - m_iHealth;
 		}
 
-		if ( flHealthToAdd <= 0 )
+		if (flHealthToAdd <= 0)
 		{
-			bResult = false;
+			iResult = 0;
 		}
+
 		else
 		{
-			bResult = BaseClass::TakeHealth( flHealthToAdd, bitsDamageType );
+			iResult = BaseClass::TakeHealth( flHealthToAdd, bitsDamageType );
 		}
 	}
 
-	return bResult;
+	return iResult;
 }
 
 //-----------------------------------------------------------------------------
@@ -4006,7 +4071,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	}
 
 	//No bleeding while invul or disguised.
-	bool bBleed = ( m_Shared.InCond( TF_COND_DISGUISED ) == false && m_Shared.InCond( TF_COND_INVULNERABLE ) == false );
+	bool bBleed = ( ( m_Shared.InCond( TF_COND_DISGUISED ) == false || m_Shared.GetDisguiseTeam() == GetTeamNumber() ) && m_Shared.InCond( TF_COND_INVULNERABLE ) == false );
 	if ( bBleed && pAttacker->IsPlayer() )
 	{
 		CTFWeaponBase *pWeapon = ToTFPlayer( pAttacker )->GetActiveTFWeapon();
@@ -4307,11 +4372,28 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 	{
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 
-		float flCritOnKill = 0.0f;
+		float flCritOnKill = 0.0f, flHealthOnKill = 0.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCritOnKill, add_onkill_critboost_time );
 		if ( flCritOnKill )
 		{
 			m_Shared.AddCond( TF_COND_CRITBOOSTED_ON_KILL, flCritOnKill );
+		}
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHealthOnKill, heal_on_kill );
+		if( flHealthOnKill )
+		{
+			int iHealthRestored = TakeHealth( flHealthOnKill, DMG_GENERIC );
+			if (iHealthRestored)
+			{
+				IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
+				
+				if ( event )
+				{
+					event->SetInt( "amount", iHealthRestored );
+					event->SetInt( "entindex", entindex() );
+					
+					gameeventmanager->FireEvent( event );
+				}
+			}
 		}
 	}
 }
@@ -4427,14 +4509,14 @@ void CTFPlayer::Event_Killed(const CTakeDamageInfo &info)
 		bGib = true;
 		bRagdoll = false;
 	}
-	else
-		// See if we should play a custom death animation.
-	{
-		if (PlayDeathAnimation(info, info_modified))
-		{
-			bRagdoll = false;
-		}
-	}
+	//else
+	//	// See if we should play a custom death animation.
+	//{
+	//	if (PlayDeathAnimation(info, info_modified))
+	//	{
+	//		bRagdoll = false;
+	//	}
+	//}
 
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check
@@ -4513,7 +4595,7 @@ void CTFPlayer::Event_Killed(const CTakeDamageInfo &info)
 	// Create the ragdoll entity.
 	if ( bGib || bRagdoll )
 	{
-		CreateRagdollEntity( bGib, bBurning );
+		CreateRagdollEntity( bGib, bBurning, info.GetDamageCustom() );
 	}
 
 	// Don't overflow the value for this.
@@ -5913,6 +5995,8 @@ void CTFPlayer::ForceRespawn( void )
 		GetPlayerClass()->Init( iDesiredClass );
 
 		CTF_GameStats.Event_PlayerChangedClass( this );
+
+		m_PlayerAnimState = CreateTFPlayerAnimState(this);
 	}
 
 	m_Shared.RemoveAllCond( NULL );
@@ -6482,13 +6566,13 @@ void CTFPlayer::PlayerUse( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::CreateRagdollEntity( void )
 {
-	CreateRagdollEntity( false, false );
+	CreateRagdollEntity( false, false, 0 );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Create a ragdoll entity to pass to the client.
 //-----------------------------------------------------------------------------
-void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning )
+void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, int iDamageCustom )
 {
 	// If we already have a ragdoll destroy it.
 	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll*>( m_hRagdoll.Get() );
@@ -6511,6 +6595,7 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning )
 		pRagdoll->m_iPlayerIndex.Set( entindex() );
 		pRagdoll->m_bGib = bGib;
 		pRagdoll->m_bBurning = bBurning;
+		pRagdoll->m_iDamageCustom = iDamageCustom;
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
 	}
@@ -7180,9 +7265,9 @@ void CTFPlayer::Taunt( void )
 		{
 			SetAbsVelocity( vec3_origin );
 		}
-		if (Q_stricmp(szResponse, "scenes/player/medic/low/taunt03.vcd") == 0)
+		if ( Q_stricmp( szResponse, "scenes/player/medic/low/taunt03.vcd" ) == 0 )
 		{
-			EmitSound("Taunt.MedicViolin");
+			EmitSound( "Taunt.MedicViolin" );
 		}
 
 		// Setup a taunt attack if necessary.
@@ -7200,6 +7285,11 @@ void CTFPlayer::Taunt( void )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 1.8;
 			m_iTauntAttack = TF_TAUNT_SPY1;
+		}
+		else if ( Q_strnicmp( szResponse, "scenes/player/sniper/low/taunt04", 32 ) == 0)
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 0.5;
+			m_iTauntAttack = TF_TAUNT_SNIPER1;
 		}
 	}
 
@@ -7224,6 +7314,8 @@ void CTFPlayer::DoTauntAttack( void )
 	case TF_TAUNT_SPY1:
 	case TF_TAUNT_SPY2:
 	case TF_TAUNT_SPY3:
+	case TF_TAUNT_SNIPER1:
+	case TF_TAUNT_SNIPER2:
 	{
 		Vector vecAttackDir = BodyDirection2D();
 		Vector vecOrigin = WorldSpaceCenter() + vecAttackDir * 64;
@@ -7251,6 +7343,18 @@ void CTFPlayer::DoTauntAttack( void )
 			nDamageType = DMG_SLASH;
 			iDamageCustom = TF_DMG_TAUNT_SPY;
 			break;
+		case TF_TAUNT_SNIPER1:
+			vecForce *= 0.0f;
+			flDamage = 1.0f;
+			nDamageType = DMG_SLASH;
+			iDamageCustom = TF_DMG_TAUNT_SNIPER;
+			break;
+		case TF_TAUNT_SNIPER2:
+			vecForce *= -1000.0f;
+			flDamage = 500.0f;
+			nDamageType = DMG_SLASH;
+			iDamageCustom = TF_DMG_TAUNT_SNIPER;
+		break;
 		default:
 			vecForce *= 100.0f;
 			flDamage = 25.0f;
@@ -7270,6 +7374,11 @@ void CTFPlayer::DoTauntAttack( void )
 			m_flTauntAttackTime = gpGlobals->curtime + 1.73;
 			m_iTauntAttack = TF_TAUNT_SPY3;
 		}
+		else if ( iTauntType == TF_TAUNT_SNIPER1 )
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 1.75;
+			m_iTauntAttack = TF_TAUNT_SNIPER2;
+		}
 
 		CBaseEntity *pList[256];
 
@@ -7286,12 +7395,21 @@ void CTFPlayer::DoTauntAttack( void )
 
 			if ( pEntity == this || !pEntity->IsAlive() || InSameTeam( pEntity ) || !FVisible( pEntity, MASK_SOLID ) )
 				continue;
+			if ( iTauntType == TF_TAUNT_SNIPER1 )
+			{
+				CTFPlayer *pOther = ToTFPlayer( pEntity );
+				if( pOther )
+				{
+					pOther->Stun();
+				}
+			}
 
 			Vector vecDamagePos = WorldSpaceCenter();
 			vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
 
 			CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, nDamageType, iDamageCustom );
 			pEntity->TakeDamage( info );
+			break;
 		}
 
 		break;
@@ -7342,6 +7460,46 @@ void CTFPlayer::ClearTauntAttack( void )
 {
 	m_flTauntAttackTime = 0.0f;
 	m_iTauntAttack = TF_TAUNT_NONE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Stun the player
+//-----------------------------------------------------------------------------
+void CTFPlayer::Stun( void )
+{
+	// Check to see if we are in water (above our waist).
+	if ( GetWaterLevel() > WL_Waist )
+		return;
+
+	//Don't stun us again
+	if( m_Shared.InCond( TF_COND_STUNNED ) )
+	{
+		return;
+	}
+
+	m_Shared.AddCond( TF_COND_STUNNED );
+
+	GetActiveTFWeapon()->AddEffects( EF_NODRAW );
+
+	//play the first stun animation sequence
+	//FIXME: this rest of the stun sequence should follow this
+	DoAnimationEvent(PLAYERANIMEVENT_STUN_BEGIN);
+
+	// Clear disguising state.
+	if ( m_Shared.InCond( TF_COND_DISGUISING ) )
+	{
+		m_Shared.RemoveCond( TF_COND_DISGUISING );
+	}
+
+	m_Shared.m_flTauntRemoveTime = gpGlobals->curtime + 2.0f;
+
+	m_angTauntCamera = EyeAngles();
+
+	// Slam velocity to zero.
+	if ( !tf_allow_sliding_taunt.GetBool() )
+	{
+		SetAbsVelocity( vec3_origin );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -8109,7 +8267,7 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 		float flValue = V_atof( args[i + 1] );
 
 		CEconItemAttribute econAttribute( iAttribIndex, flValue );
-
+		econAttribute.m_strAttributeClass = AllocPooledString( econAttribute.attribute_class );
 		bAddedAttributes = econItem.AddAttribute( &econAttribute );
 	}
 

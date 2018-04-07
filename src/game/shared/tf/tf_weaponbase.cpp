@@ -463,7 +463,7 @@ void CTFWeaponBase::UpdateViewModel(void)
 	{
 		if ( HasItemDefinition() )
 		{
-			pszModel = m_Item.GetPlayerDisplayModel();
+			pszModel = m_Item.GetPlayerDisplayModel( pTFPlayer->GetPlayerClass()->GetClassIndex() );
 		}
 		else
 		{
@@ -511,10 +511,11 @@ const char *CTFWeaponBase::DetermineViewModelType( const char *vModel ) const
 const char *CTFWeaponBase::GetViewModel( int iViewModel ) const
 {
 	const char *pszModelName = NULL;
+	CTFPlayer *pOwner = GetTFPlayerOwner();
 
-	if ( HasItemDefinition() )
+	if ( pOwner && HasItemDefinition() )
 	{
-		pszModelName = m_Item.GetPlayerDisplayModel();
+		pszModelName = m_Item.GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 	}
 	else
 	{
@@ -1831,43 +1832,50 @@ void CTFWeaponBase::ApplyOnHitAttributes( CTFPlayer *pVictim, const CTakeDamageI
 	{
 		pVictim->m_Shared.AddCond( TF_COND_SLOWED, flStunTime );
 	}
-
-	CTFPlayer *pOwner = GetTFPlayerOwner();
+	CTFPlayer *pOwner = GetTFPlayerOwner(), *pAttacker = ToTFPlayer( info.GetAttacker() );
 	if ( !pOwner || !pOwner->IsAlive() )
 		return;
 
-	// Afterburn shouldn't trigger on-hit effects.
-	if ( !( info.GetDamageType() & DMG_BURN ) )
+	if (pAttacker)
 	{
-		float flAddCharge = 0.0f;
-		CALL_ATTRIB_HOOK_FLOAT( flAddCharge, add_onhit_ubercharge );
-		if ( flAddCharge )
-		{
-			CWeaponMedigun *pMedigun = pOwner->GetMedigun();
+		if( pOwner != pAttacker )
+			pOwner = pAttacker;
+	}
 
-			if ( pMedigun )
-			{
-				pMedigun->AddCharge( flAddCharge );
-			}
+	// Afterburn shouldn't trigger on-hit effects.
+	// Disguised spies shouldn't trigger on-hit effects.
+	if ( ( info.GetDamageType() & DMG_BURN ) ||
+		( pVictim->m_Shared.InCond( TF_COND_DISGUISED ) && pVictim->m_Shared.GetDisguiseTeam() == pOwner->GetTeamNumber() ) )
+		return;
+
+	float flAddCharge = 0.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flAddCharge, add_onhit_ubercharge );
+	if ( flAddCharge )
+	{
+		CWeaponMedigun *pMedigun = pOwner->GetMedigun();
+
+		if ( pMedigun )
+		{
+			pMedigun->AddCharge( flAddCharge );
 		}
+	}
 
-		float flAddHealth = 0.0f;
-		CALL_ATTRIB_HOOK_FLOAT( flAddHealth, add_onhit_addhealth );
-		if ( flAddHealth )
+	float flAddHealth = 0.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flAddHealth, add_onhit_addhealth );
+	if ( flAddHealth )
+	{
+		int iHealthRestored = pOwner->TakeHealth( flAddHealth, DMG_GENERIC );
+
+		if ( iHealthRestored )
 		{
-			int iHealthRestored = pOwner->TakeHealth(flAddHealth, DMG_GENERIC);
-			
-			if (iHealthRestored)
+			IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+
+			if ( event )
 			{
-				IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
-				
-				if ( event )
-				{
-					event->SetInt( "amount", iHealthRestored );
-					event->SetInt( "entindex", pOwner->entindex() );
-					
-					gameeventmanager->FireEvent( event );
-				}
+				event->SetInt( "amount", iHealthRestored );
+				event->SetInt( "entindex", pOwner->entindex() );
+
+				gameeventmanager->FireEvent( event );
 			}
 		}
 	}
@@ -2104,6 +2112,7 @@ void CTFWeaponBase::OnDataChanged( DataUpdateType_t type )
 	{
 		//And he is NOT taunting
 		if ( pOwner->m_Shared.InCond ( TF_COND_TAUNTING ) == false &&
+			pOwner->m_Shared.InCond ( TF_COND_STUNNED ) == false &&
 			pOwner->m_Shared.IsLoser() == false )
 		{
 			//Then why the hell am I NODRAW?

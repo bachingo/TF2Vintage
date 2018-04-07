@@ -531,7 +531,7 @@ void CTFHudPlayerHealth::OnThink()
 
 		if ( pPlayer )
 		{
-			SetHealth( pPlayer->GetHealth(), pPlayer->GetPlayerClass()->GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
+			SetHealth( pPlayer->GetHealth(), pPlayer->m_Shared.GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.05f;

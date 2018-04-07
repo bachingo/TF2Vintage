@@ -505,7 +505,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 			SetNextThink( gpGlobals->curtime );
 		}
 
-		//Loch n' Load hack: kill pills that hit anything other than enemy entities
+		//Loch n' Load hack: kill pipes that hit anything other than enemy entities
 		if (m_sPrimaryWep.operator==(s_iszLochModel))
 		{
 			Fizzle();

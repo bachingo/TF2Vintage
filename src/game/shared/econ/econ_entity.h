@@ -62,6 +62,8 @@ public:
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void ReapplyProvision( void );
 
+	void UpdatePlayerModelToClass( void );
+
 	virtual void UpdateOnRemove( void );
 
 protected:

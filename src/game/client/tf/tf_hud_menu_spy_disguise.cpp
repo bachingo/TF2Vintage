@@ -179,7 +179,7 @@ bool CHudMenuSpyDisguise::ShouldDraw( void )
 	if ( pPlayer != pWpn->GetOwner() )
 		return false;
 
-	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || pPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
 		return false;
 
 	return ( pWpn->GetWeaponID() == TF_WEAPON_PDA_SPY );
