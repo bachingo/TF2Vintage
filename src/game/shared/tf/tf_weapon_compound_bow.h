@@ -48,7 +48,9 @@ public:
 	virtual float	GetProjectileGravity( void );
 	virtual void	GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true, bool bUseHitboxes = false );
 	virtual bool	CalcIsAttackCriticalHelper( void );
+	virtual bool    IsFlameArrow( void ) { return bFlame; }
 
+	void			LightArrow( void );
 	void			FireArrow( void );	
 
 #ifdef CLIENT_DLL
@@ -63,6 +65,8 @@ public:
 
 private:
 	CNetworkVar( float, m_flChargeBeginTime );
+	
+	bool bFlame;
 };
 
 #endif // TF_WEAPON_COMPOUND_BOW_H

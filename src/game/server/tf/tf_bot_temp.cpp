@@ -371,7 +371,7 @@ void Bot_Think( CTFPlayer *pBot )
 
 		if ( !pBot->IsEFlagSet(EFL_BOT_FROZEN) )
 		{
-			if ( !bot_dontmove.GetBool() )
+			if ( !bot_dontmove.GetBool() && !pBot->IsTaunting() )
 			{
 				forwardmove = 600 * ( botdata->backwards ? -1 : 1 );
 				if ( botdata->sidemove != 0.0f )
@@ -390,7 +390,7 @@ void Bot_Think( CTFPlayer *pBot )
 			}
 		}
 
-		if ( !pBot->IsEFlagSet(EFL_BOT_FROZEN) && !bot_dontmove.GetBool() )
+		if ( !pBot->IsEFlagSet(EFL_BOT_FROZEN) && !bot_dontmove.GetBool() && !pBot->IsTaunting() )
 		{
 			Vector vecEnd;
 			Vector forward;
@@ -727,6 +727,19 @@ CON_COMMAND_F( bot_refill, "Refill all bot ammo counts", FCVAR_CHEAT )
 			pPlayer->GiveAmmo( 1000, TF_AMMO_SECONDARY );
 			pPlayer->GiveAmmo( 1000, TF_AMMO_METAL );
 			pPlayer->TakeHealth( 999, DMG_GENERIC );
+		}
+	}
+}
+
+CON_COMMAND_F(bot_taunt, "Force bots to taunt", FCVAR_CHEAT)
+{
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		CTFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
+
+		if (pPlayer && pPlayer->IsFakeClient())
+		{
+			pPlayer->Taunt();
 		}
 	}
 }

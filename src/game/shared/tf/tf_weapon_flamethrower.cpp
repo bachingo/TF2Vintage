@@ -31,6 +31,7 @@
 	#include "collisionutils.h"
 	#include "tf_team.h"
 	#include "tf_obj.h"
+	#include "tf_weapon_compound_bow.h"
 
 	ConVar	tf_debug_flamethrower("tf_debug_flamethrower", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Visualize the flamethrower damage." );
 	ConVar  tf_flamethrower_velocity( "tf_flamethrower_velocity", "2300.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Initial velocity of flame damage entities." );
@@ -61,7 +62,7 @@
 	extern ConVar tf2c_muzzlelight;
 #endif
 
-ConVar  tf2v_airblast( "tf2c_airblast", "2", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = tf2c (default), 2 = tf2v" );
+ConVar  tf2v_airblast( "tf2v_airblast", "2", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = tf2c (default), 2 = tf2v" );
 ConVar  tf2c_airblast_players( "tf2c_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
 
 #ifdef GAME_DLL
@@ -575,14 +576,9 @@ void CTFFlameThrower::SecondaryAttack()
 			Vector vecPushDir;
 			QAngle angPushDir = angDir;
 
-			if (tf2v_airblast.GetInt() == 2)
-				angPushDir[PITCH] = min(-45, angPushDir[PITCH]);
-
-			// If the victim is on the ground assume that shooter is looking at least 45 degrees up.
-			else if (tf2v_airblast.GetInt() == 1)
-			{
+			// assume that shooter is looking at least 45 degrees up.
+			if ( tf2v_airblast.GetInt() > 0 )
 				angPushDir[PITCH] = min( -45, angPushDir[PITCH] );
-			}
 
 			AngleVectors( angPushDir, &vecPushDir );
 
@@ -647,20 +643,21 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 			pVictim->SetGroundEntity( NULL );
 
 			//tf2c airblast
-			if (tf2v_airblast.GetInt() == 1)
+			if ( tf2v_airblast.GetInt() == 1 )
 			{
-				pVictim->ApplyAbsVelocityImpulse(vecDir * 500);
-				pVictim->EmitSound("TFPlayer.AirBlastImpact");
+				pVictim->ApplyAbsVelocityImpulse( vecDir * 500 );
+				pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
 
 				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
 				pVictim->AddDamagerToHistory( pAttacker );
 			}
 			//tf2v airblast [EXPERIMENTAL]
-			else if (tf2v_airblast.GetInt() == 2)
+			else if ( tf2v_airblast.GetInt() == 2 )
 			{
-				pVictim->SetAbsVelocity(vecDir * 500);
-				pVictim->EmitSound("TFPlayer.AirBlastImpact");
-				pVictim->setAirblastState(true);
+				pVictim->SetAbsVelocity( vecDir * 500 );
+				pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
+				pVictim->setAirblastState( true );
+				pVictim->m_Shared.AddCond( TF_COND_NO_MOVE );
 
 				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
 				pVictim->AddDamagerToHistory( pAttacker );
@@ -1158,10 +1155,13 @@ void CTFFlameEntity::FlameThink( void )
 		if ( !pAttacker )
 			return;
 
-		CUtlVector<CTFTeam *> pTeamList;
-		CTFTeam *pTeam = pAttacker->GetTFTeam();
-		if ( pTeam )
+		CUtlVector<CTFTeam *> pTeamList, pTeamListOther;
+		CTFTeam *pTeam = pAttacker->GetTFTeam(), *pTeamOther = pAttacker->GetOpposingTFTeam();
+		if ( pTeam && pTeamOther )
+		{
 			pTeam->GetOpposingTFTeamList(&pTeamList);
+			pTeamOther->GetOpposingTFTeamList(&pTeamListOther);
+		}
 		else
 			return;
 
@@ -1195,6 +1195,19 @@ void CTFFlameEntity::FlameThink( void )
 					if (pObject)
 					{
 						CheckCollision(pObject, &bHitWorld);
+						if (bHitWorld)
+							return;
+					}
+				}
+
+				// check collision against all players on our team
+				for (int iPlayer = 0; iPlayer < pTeamListOther[i]->GetNumPlayers(); iPlayer++)
+				{
+					CBasePlayer *pPlayer = pTeamListOther[i]->GetPlayer(iPlayer);
+					// Is this player connected, alive, and an enemy?
+					if (pPlayer && pPlayer->IsConnected() && pPlayer->IsAlive() && pPlayer!=pAttacker)
+					{
+						CheckCollision(pPlayer, &bHitWorld);
 						if (bHitWorld)
 							return;
 					}
@@ -1302,40 +1315,55 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 	// remember that we've burnt this player
 	m_hEntitiesBurnt.AddToTail( pOther );
 
-	float flDistance = GetAbsOrigin().DistTo( m_vecInitialPos );
-	float flMultiplier;
-	if ( flDistance <= 125 )
+	//is this entity on our team?
+	if(pOther->GetTeam() == GetTeam())
 	{
-		// at very short range, apply short range damage multiplier
-		flMultiplier = tf_flamethrower_shortrangedamagemultiplier.GetFloat();
+		CTFPlayer *pPlayer = ToTFPlayer(pOther);
+		CTFCompoundBow *bBow = dynamic_cast<CTFCompoundBow *>(pPlayer->GetActiveTFWeapon());
+		if(bBow)
+		{
+			bBow->LightArrow();
+		}
+		return;
 	}
+
 	else
 	{
-		// make damage ramp down from 100% to 60% from half the max dist to the max dist
-		flMultiplier = RemapValClamped( flDistance, tf_flamethrower_maxdamagedist.GetFloat()/2, tf_flamethrower_maxdamagedist.GetFloat(), 1.0, 0.6 );
+		float flDistance = GetAbsOrigin().DistTo( m_vecInitialPos );
+		float flMultiplier;
+		if ( flDistance <= 125 )
+		{
+			// at very short range, apply short range damage multiplier
+			flMultiplier = tf_flamethrower_shortrangedamagemultiplier.GetFloat();
+		}
+		else
+		{
+			// make damage ramp down from 100% to 60% from half the max dist to the max dist
+			flMultiplier = RemapValClamped( flDistance, tf_flamethrower_maxdamagedist.GetFloat()/2, tf_flamethrower_maxdamagedist.GetFloat(), 1.0, 0.6 );
+		}
+		float flDamage = m_flDmgAmount * flMultiplier;
+		flDamage = max( flDamage, 1.0 );
+		if ( tf_debug_flamethrower.GetInt() )
+		{
+			Msg( "Flame touch dmg: %.1f\n", flDamage );
+		}
+
+		CBaseEntity *pAttacker = m_hAttacker;
+		if ( !pAttacker )
+			return;
+
+		SetHitTarget();
+
+		CTakeDamageInfo info( GetOwnerEntity(), pAttacker, GetOwnerEntity(), flDamage, m_iDmgType, TF_DMG_CUSTOM_BURNING );
+		info.SetReportedPosition( pAttacker->GetAbsOrigin() );
+
+		// We collided with pOther, so try to find a place on their surface to show blood
+		trace_t pTrace;
+		UTIL_TraceLine( WorldSpaceCenter(), pOther->WorldSpaceCenter(), MASK_SOLID|CONTENTS_HITBOX, this, COLLISION_GROUP_NONE, &pTrace );
+
+		pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
+		ApplyMultiDamage();
 	}
-	float flDamage = m_flDmgAmount * flMultiplier;
-	flDamage = max( flDamage, 1.0 );
-	if ( tf_debug_flamethrower.GetInt() )
-	{
-		Msg( "Flame touch dmg: %.1f\n", flDamage );
-	}
-
-	CBaseEntity *pAttacker = m_hAttacker;
-	if ( !pAttacker )
-		return;
-
-	SetHitTarget();
-
-	CTakeDamageInfo info( GetOwnerEntity(), pAttacker, GetOwnerEntity(), flDamage, m_iDmgType, TF_DMG_CUSTOM_BURNING );
-	info.SetReportedPosition( pAttacker->GetAbsOrigin() );
-
-	// We collided with pOther, so try to find a place on their surface to show blood
-	trace_t pTrace;
-	UTIL_TraceLine( WorldSpaceCenter(), pOther->WorldSpaceCenter(), MASK_SOLID|CONTENTS_HITBOX, this, COLLISION_GROUP_NONE, &pTrace );
-
-	pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
-	ApplyMultiDamage();
 }
 
 void CTFFlameEntity::SetHitTarget( void )

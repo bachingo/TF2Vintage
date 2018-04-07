@@ -19,6 +19,7 @@
 #include "filesystem.h" 
 #if defined( CLIENT_DLL )
 #include "c_tf_player.h"
+#include "filesystem.h"
 #endif
 
 #define INVENTORY_WEAPONS		5

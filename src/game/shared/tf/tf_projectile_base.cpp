@@ -166,7 +166,7 @@ CTFBaseProjectile *CTFBaseProjectile::Create( const char *pszClassname, const Ve
 
 	if ( pszDispatchEffect )
 	{
-		// we'd like to just send this projectile to a person in the shooter's PAS. However 
+		/*// we'd like to just send this projectile to a person in the shooter's PAS. However 
 		// the projectile won't be sent to a player outside of water if shot from inside water
 		// and vice-versa, so we do a trace here to figure out if the trace starts or stops in water.
 		// if it crosses contents, we'll just broadcast the projectile. Otherwise, just send to PVS
@@ -185,7 +185,7 @@ CTFBaseProjectile *CTFBaseProjectile::Create( const char *pszClassname, const Ve
 		{
 			// just the PVS of where the projectile will hit.
 			pFilter = new CPASFilter( tr.endpos );
-		}
+		}*/
 
 		CEffectData data;
 		data.m_vOrigin = vecOrigin;
@@ -353,6 +353,7 @@ void CTFBaseProjectile::ProjectileTouch( CBaseEntity *pOther )
 	CTakeDamageInfo info;
 	info.SetAttacker( GetOwnerEntity() );		// the player who operated the thing that emitted nails
 	info.SetInflictor( pInflictor );	// the weapon that emitted this projectile
+	info.SetWeapon( pInflictor );
 	info.SetDamage( GetDamage() );
 	info.SetDamageForce( GetDamageForce() );
 	info.SetDamagePosition( GetAbsOrigin() );

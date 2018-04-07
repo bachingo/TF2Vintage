@@ -114,6 +114,10 @@ public:
 	void	InvisibilityThink( void );
 
 	int		GetMaxBuffedHealth( void );
+	
+	// Max Health
+	int		GetMaxHealth( void );	
+	void	SetMaxHealth( int iMaxHealth ) { m_iMaxHealth = iMaxHealth; }
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -244,6 +248,8 @@ public:
 	bool	ShouldShowRecentlyTeleported( void );
 #endif
 
+	int GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCustom );
+
 private:
 
 	void ImpactWaterTrace( trace_t &trace, const Vector &vecStart );
@@ -255,6 +261,7 @@ private:
 	void OnAddDisguising( void );
 	void OnAddDisguised( void );
 	void OnAddTaunting( void );
+	void OnAddStunned( void );
 	void OnAddSlowed( void );
 	void OnAddCritboosted( void );
 	void OnAddHalloweenGiant( void );
@@ -269,6 +276,7 @@ private:
 	void OnRemoveInvulnerable( void );
 	void OnRemoveTeleported( void );
 	void OnRemoveTaunting( void );
+	void OnRemoveStunned( void );
 	void OnRemoveSlowed( void );
 	void OnRemoveCritboosted( void );
 	void OnRemoveHalloweenGiant( void );
@@ -313,6 +321,8 @@ private:
 	CNetworkVar( int, m_nDesiredDisguiseClass );
 	CNetworkVar( int, m_nDesiredDisguiseTeam );
 	CEconItemView m_DisguiseItem;
+
+	CNetworkVar( int, m_iMaxHealth );
 
 	bool m_bEnableSeparation;		// Keeps separation forces on when player stops moving, but still penetrating
 	Vector m_vSeparationVelocity;	// Velocity used to keep player seperate from teammates

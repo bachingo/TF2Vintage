@@ -288,7 +288,7 @@ public:
 
 	// Death & Ragdolls.
 	virtual void CreateRagdollEntity( void );
-	void CreateRagdollEntity( bool bGib, bool bBurning );
+	void CreateRagdollEntity( bool bGib, bool bBurning, int iDamageCustom );
 	void DestroyRagdoll( void );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );	// networked entity handle 
 	virtual bool ShouldGib( const CTakeDamageInfo &info );
@@ -327,7 +327,10 @@ public:
 	bool ShouldAutoReload( void ) { return m_bAutoReload; }
 	void SetAutoReload( bool bAutoReload ) { m_bAutoReload = bAutoReload; }
 
-	bool ShouldFlipViewModel( void ) { return m_bFlipViewModel; }
+	bool ShouldFlipViewModel( void )
+	{
+		return m_bFlipViewModel;
+	}
 	void SetFlipViewModel( bool bFlip ) { m_bFlipViewModel = bFlip; }
 
 	virtual void	ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet );
@@ -430,6 +433,7 @@ public:
 
 	// Taunts.
 	void				Taunt( void );
+	void				Stun( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }
 	void				DoTauntAttack( void );
 	void				ClearTauntAttack( void );
@@ -480,7 +484,7 @@ private:
 
 	// Think.
 	void				TFPlayerThink();
-	void				MedicRegenThink();
+	void				MedicRegenThink( void );
 	void				UpdateTimers( void );
 
 	// Taunt.
@@ -548,6 +552,7 @@ private:
 
 	float					m_flNextRegenerateTime;
 	float					m_flNextChangeClassTime;
+	float					m_flNextHealthRegen;
 
 	// Ragdolls.
 	Vector					m_vecTotalBulletForce;

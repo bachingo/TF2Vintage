@@ -62,7 +62,6 @@ void ImpactCallback( const CEffectData &data )
 
 DECLARE_CLIENT_EFFECT( "Impact", ImpactCallback );
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

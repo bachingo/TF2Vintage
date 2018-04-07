@@ -50,6 +50,7 @@ END_DATADESC()
 
 CTFCompoundBow::CTFCompoundBow()
 {
+	bFlame = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -58,6 +59,11 @@ CTFCompoundBow::CTFCompoundBow()
 void CTFCompoundBow::Precache( void )
 {
 	PrecacheScriptSound( "ArrowLight" );
+
+	PrecacheParticleSystem( "v_flaming_arrow" );
+	PrecacheParticleSystem( "v_flaming_arrow_smoke" );
+	PrecacheParticleSystem( "flaming_arrow" );
+	PrecacheParticleSystem( "flaming_arrow_smoke" );
 
 	BaseClass::Precache();
 }
@@ -68,6 +74,7 @@ void CTFCompoundBow::Precache( void )
 bool CTFCompoundBow::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 	LowerBow();
+	bFlame = false;
 
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -87,6 +94,7 @@ bool CTFCompoundBow::Deploy( void )
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::WeaponReset( void )
 {
+	bFlame = false;
 	BaseClass::WeaponReset();
 
 	LowerBow();
@@ -211,6 +219,10 @@ void CTFCompoundBow::FireArrow( void )
 	if ( !pPlayer )
 		return;
 
+	// Make sure we're aiming already
+	if( !pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
+		return;
+
 	CalcIsAttackCritical();
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
@@ -236,6 +248,30 @@ void CTFCompoundBow::FireArrow( void )
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 
 	m_flChargeBeginTime = 0.0f;
+	bFlame = false;
+}
+
+// ---------------------------------------------------------------------------- -
+// Purpose: Set arrow on fire
+//-----------------------------------------------------------------------------
+void CTFCompoundBow::LightArrow( void )
+{
+	//don't light if we're already lit.
+	if( bFlame )
+		return;
+	bFlame = true;
+	EmitSound( "ArrowLight" );
+
+#ifdef CLIENT_DLL
+	//FIXME: this isn't working and I don't know why
+	C_BaseEntity *pModel = GetWeaponForEffect();
+
+		if ( pModel )
+		{
+			pModel->ParticleProp()->Create( "flaming_arrow", PATTACH_POINT_FOLLOW, "muzzle" );
+			pModel->ParticleProp()->Create( "flaming_arrow_smoke", PATTACH_POINT_FOLLOW, "muzzle" );
+		}
+#endif
 }
 
 //-----------------------------------------------------------------------------

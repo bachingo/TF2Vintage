@@ -2522,6 +2522,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			// Deathmatch results panel needs this.
 			SendWinPanelInfo();
 		}
+		CTF_GameStats.Event_GameEnd();
 
 		BaseClass::GoToIntermission();
 	}
@@ -3265,6 +3266,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	case TF_DMG_TAUNT_SPY:
 		pszCustomKill = "taunt_spy";
 		break;
+	case TF_DMG_TAUNT_SNIPER:
+		pszCustomKill = "taunt_sniper";
+		break;
 	case TF_DMG_TELEFRAG:
 		pszCustomKill = "telefrag";
 		break;
@@ -3337,6 +3341,12 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 				case TF_WEAPON_ROCKETLAUNCHER:
 					killer_weapon_name = "deflect_rocket";
 					break;
+				case TF_WEAPON_COMPOUND_BOW: //does this go here?
+					if( info.GetDamageType() & DMG_IGNITE )
+						killer_weapon_name = "deflect_huntsman_flyingburn";
+					else
+						killer_weapon_name = "deflect_arrow";
+					break;
 				}
 			}
 		}
@@ -3383,7 +3393,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	}
 
 	// In case of a sentry kill change the icon according to sentry level.
-	if ( 0 == V_strcmp( killer_weapon_name, "obj_sentrygun" ) == 0 )
+	if ( 0 == V_strcmp( killer_weapon_name, "obj_sentrygun" ) )
 	{
 		CBaseObject *pObject = assert_cast<CBaseObject *>( pInflictor );
 
@@ -3400,11 +3410,21 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 			}
 		}
 	}
-	else if ( 0 == V_strcmp( killer_weapon_name, "tf_projectile_sentryrocket" ) == 0 )
+	else if ( 0 == V_strcmp( killer_weapon_name, "tf_projectile_sentryrocket" )  )
 	{
 		// look out for sentry rocket as weapon and map it to sentry gun, so we get the L3 sentry death icon
 		killer_weapon_name = "obj_sentrygun3";
 	}
+
+	// make sure arrow kills are mapping to the huntsman
+	else if ( 0 == V_strcmp( killer_weapon_name, "tf_projectile_arrow" ) )
+	{
+		if( info.GetDamageType() & DMG_IGNITE )
+			killer_weapon_name = "huntsman_flyingburn";
+		else
+			killer_weapon_name = "huntsman";
+	}
+
 	else if ( iWeaponID )
 	{
 		iOutputID = iWeaponID;
@@ -4162,6 +4182,7 @@ void CTFGameRules::RoundRespawn( void )
 
 		pTeam->SetFlagCaptures( 0 );
 	}
+	CTF_GameStats.ResetRoundStats();
 
 	BaseClass::RoundRespawn();
 
@@ -4195,6 +4216,13 @@ void CTFGameRules::InternalHandleTeamWin( int iWinningTeam )
 					if ( pPlayer->HasTheFlag() )
 					{
 						pPlayer->DropFlag();
+					}
+
+					// Hide their weapon.
+					CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+					if ( pWeapon )
+					{
+						pWeapon->SetWeaponVisible( false );
 					}
 				}
 				else if ( pPlayer->IsAlive() )

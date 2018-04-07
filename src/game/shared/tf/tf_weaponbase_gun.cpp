@@ -10,6 +10,7 @@
 #include "effect_dispatch_data.h"
 #include "takedamageinfo.h"
 #include "tf_projectile_nail.h"
+#include "tf_projectile_arrow.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -21,7 +22,6 @@
 	#include "tf_projectile_rocket.h"
 	#include "tf_weapon_grenade_pipebomb.h"
 	#include "tf_projectile_flare.h"
-	#include "tf_projectile_arrow.h"
 	#include "te.h"
 
 #else	// Client specific.
@@ -574,6 +574,7 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare(CTFPlayer *pPlayer)
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
+
 	CTFProjectile_Flare *pProjectile = CTFProjectile_Flare::Create( this, vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
 	{
@@ -601,14 +602,14 @@ CBaseEntity *CTFWeaponBaseGun::FireArrow(CTFPlayer *pPlayer, int iType)
 	{
 		vecOffset.z = 8.0f;
 	}
-	if (IsWeapon(TF_WEAPON_COMPOUND_BOW))
+	/*if (IsWeapon(TF_WEAPON_COMPOUND_BOW))
 	{
 		// Valve were apparently too lazy to fix the viewmodel and just flipped it through the code.
 		vecOffset.y *= -1.0f;
-	}
-	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, true );
+	}*/
+	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false, true);
 
-	CTFProjectile_Arrow *pProjectile = CTFProjectile_Arrow::Create( this, vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), pPlayer, pPlayer, iType );
+	CTFProjectile_Arrow *pProjectile = CTFProjectile_Arrow::Create(this, vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), IsFlameArrow(), pPlayer, pPlayer, iType);
 	if (pProjectile)
 	{
 		pProjectile->SetCritical(IsCurrentAttackACrit());
@@ -689,13 +690,20 @@ float CTFWeaponBaseGun::GetProjectileSpeed( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Accessor for damage, so sniper etc can modify damage
+// Purpose: Accessor for gravity, so sniper etc can modify gravity
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseGun::GetProjectileGravity(void)
 {
 	return 0.001f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Accessor for huntsman flame arrow
+//-----------------------------------------------------------------------------
+bool CTFWeaponBaseGun::IsFlameArrow(void)
+{
+	return false;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -758,6 +766,16 @@ void CTFWeaponBaseGun::DoFireEffects()
 			bMuzzleFlash = false;
 		}
 	}*/
+
+	if (pPlayer->IsPlayerClass(TF_CLASS_SNIPER))
+	{
+		//CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+		//if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN )
+		if (pPlayer->IsActiveTFWeapon(TF_WEAPON_COMPOUND_BOW))
+		{
+			bMuzzleFlash = false;
+		}
+	}
 
 	if ( bMuzzleFlash )
 	{

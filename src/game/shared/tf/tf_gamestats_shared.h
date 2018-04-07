@@ -277,7 +277,6 @@ struct PlayerStats_t
 	{
 		statsCurrentLife.Reset();
 		statsCurrentRound.Reset();
-		statsCurrentGame.Reset();
 		statsAccumulated.Reset();
 		statsKills.Reset();
 	}
@@ -286,13 +285,11 @@ struct PlayerStats_t
 	{
 		statsCurrentLife	= other.statsCurrentLife;
 		statsCurrentRound	= other.statsCurrentRound;
-		statsCurrentGame = other.statsCurrentGame;
 		statsAccumulated	= other.statsAccumulated;
 	}
 
 	RoundStats_t	statsCurrentLife;
 	RoundStats_t	statsCurrentRound;
-	RoundStats_t    statsCurrentGame;
 	RoundStats_t	statsAccumulated;
 	int				iStatsChangedBits;			// bit mask of which stats have changed
 	float			m_flTimeLastSend;			// time we last sent stat update to this player

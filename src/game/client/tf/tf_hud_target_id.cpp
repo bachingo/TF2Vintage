@@ -448,8 +448,9 @@ void CTargetID::UpdateID( void )
 		// Setup avatar
 		if ( tf_hud_target_id_show_avatars.GetBool() && m_pAvatar )
 		{
-			m_pAvatar->SetPlayer( (C_BasePlayer *)pAvatarPlayer );
+			m_pAvatar->SetPlayer( pAvatarPlayer );
 			m_pAvatar->SetShouldDrawFriendIcon( false );
+			m_pTargetNameLabel->SetTextInset( XRES( 12 ), 0 );
 		}
 		else if ( m_pAvatar )
 		{

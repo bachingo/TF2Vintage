@@ -236,9 +236,9 @@ static int		g_nCommandClientIndex = 0;
 // The chapter number of the current
 static int		g_nCurrentChapterIndex = -1;
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 static ConVar sv_showhitboxes( "sv_showhitboxes", "-1", FCVAR_CHEAT, "Send server-side hitboxes for specified entity to client (NOTE:  this uses lots of bandwidth, use on listen server only)." );
-#endif
+//#endif
 
 void PrecachePointTemplates();
 
@@ -1303,7 +1303,7 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 	
 	IGameSystem::PreClientUpdateAllSystems();
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	if ( sv_showhitboxes.GetInt() == -1 )
 		return;
 
@@ -1333,7 +1333,7 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 		return;
 
 	anim->DrawServerHitboxes();
-#endif
+//#endif
 }
 
 void CServerGameDLL::Think( bool finalTick )

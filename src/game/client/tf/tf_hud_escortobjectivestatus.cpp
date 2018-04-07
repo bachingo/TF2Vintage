@@ -282,7 +282,6 @@ bool CTFHudEscort::SetControlSettings(void)
 			m_pCart->SetVisible(false);
 			m_pCartBottom->SetVisible(true);
 		}
-
 		b_Visible = true;
 		return true;
 	}
@@ -338,7 +337,7 @@ void CTFHudEscort::SetupHills(void)
 			if (TeamplayRoundBasedRules()->HasMultipleTrains())
 				m_pHill->SetZPos(4);
 			else
-				m_pHill->SetZPos(3);
+				m_pHill->SetZPos(1);
 			m_pHill->SetHorizontalTile(true);
 			m_flRatio = static_cast<float>(BarTall) / static_cast<float>(iArrowTall);
 			//m_pHillArrow->SetSize(scheme()->GetProportionalScaledValue(iArrowWide * m_flRatio), scheme()->GetProportionalScaledValue(BarTall) - 1);

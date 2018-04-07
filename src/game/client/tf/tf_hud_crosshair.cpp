@@ -100,7 +100,7 @@ bool CHudTFCrosshair::ShouldDraw()
 	if ( !pWeapon )
 		return false;
 
-	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || pPlayer->m_Shared.IsLoser() )
+	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || pPlayer->m_Shared.InCond( TF_COND_STUNNED ) || pPlayer->m_Shared.IsLoser() )
 		return false;
 
 	return pWeapon->ShouldDrawCrosshair();
