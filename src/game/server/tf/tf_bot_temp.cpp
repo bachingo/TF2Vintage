@@ -34,13 +34,17 @@ ConVar bot_forceattackon( "bot_forceattackon", "1", 0, "When firing, don't tap f
 ConVar bot_flipout( "bot_flipout", "0", 0, "When on, all bots fire their guns." );
 ConVar bot_defend( "bot_defend", "0", 0, "Set to a team number, and that team will all keep their combat shields raised." );
 ConVar bot_changeclass( "bot_changeclass", "0", 0, "Force all bots to change to the specified class." );
-ConVar bot_dontmove( "bot_dontmove", "0", FCVAR_CHEAT );
+ConVar bot_dontmove( "bot_dontmove", "1", FCVAR_CHEAT );
 ConVar bot_saveme( "bot_saveme", "0", FCVAR_CHEAT );
 static ConVar bot_mimic( "bot_mimic", "0", 0, "Bot uses usercmd of player by index." );
 static ConVar bot_mimic_yaw_offset( "bot_mimic_yaw_offset", "180", 0, "Offsets the bot yaw." );
 ConVar bot_selectweaponslot( "bot_selectweaponslot", "-1", FCVAR_CHEAT, "set to weapon slot that bot should switch to." );
 ConVar bot_randomnames( "bot_randomnames", "0", FCVAR_CHEAT );
 ConVar bot_jump( "bot_jump", "0", FCVAR_CHEAT, "Force all bots to repeatedly jump." );
+ConVar bot_forward( "bot_forward", "0", FCVAR_CHEAT, "Force all bots to walk forward" );
+ConVar bot_backward( "bot_backward", "0", FCVAR_CHEAT, "Force all bots to walk backward" );
+ConVar bot_strafeleft( "bot_strafeleft", "0", FCVAR_CHEAT, "Force all bots to strafe left" );
+ConVar bot_straferight( "bot_straferight", "0", FCVAR_CHEAT, "Force all bots to strafe right" );
 
 static int BotNumber = 1;
 static int g_iNextBotTeam = -1;
@@ -259,7 +263,6 @@ static void RunPlayerMove( CTFPlayer *fakeclient, const QAngle& viewangles, floa
 		return;
 
 	CUserCmd cmd;
-
 	// Store off the globals.. they're gonna get whacked
 	float flOldFrametime = gpGlobals->frametime;
 	float flOldCurtime = gpGlobals->curtime;
@@ -387,6 +390,26 @@ void Bot_Think( CTFPlayer *pBot )
 			if ( bot_jump.GetBool() && pBot->GetFlags() & FL_ONGROUND )
 			{
 				buttons |= IN_JUMP;
+			}
+			if( bot_forward.GetBool() )
+			{
+				//buttons |= IN_FORWARD;
+				forwardmove = 600;
+			}
+			else if( bot_backward.GetBool() )
+			{
+				//buttons |= IN_BACK;
+				forwardmove = -600;
+			}
+			if( bot_strafeleft.GetBool() )
+			{
+				//buttons |= IN_MOVELEFT;
+				sidemove = -600;
+			}
+			else if( bot_straferight.GetBool() )
+			{
+				//buttons |= IN_MOVERIGHT;
+				sidemove = 600;
 			}
 		}
 
