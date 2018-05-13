@@ -49,5 +49,4 @@ private:
 
 	DECLARE_DATADESC();
 };
-
 #endif //TF_AMMO_PACK_H

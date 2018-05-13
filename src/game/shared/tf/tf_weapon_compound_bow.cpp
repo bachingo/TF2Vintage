@@ -6,12 +6,14 @@
 #include "cbase.h"
 #include "tf_weapon_compound_bow.h"
 #include "in_buttons.h"
+#include "engine/IEngineSound.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
 // Server specific.
 #else
+#include "te_effect_dispatch.h"
 #include "tf_player.h"
 #include "tf_gamestats.h"
 #endif
@@ -28,8 +30,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFCompoundBow, DT_WeaponCompoundBow )
 BEGIN_NETWORK_TABLE( CTFCompoundBow, DT_WeaponCompoundBow )
 #ifdef CLIENT_DLL
 	RecvPropTime( RECVINFO( m_flChargeBeginTime ) ),
+	RecvPropBool( RECVINFO( m_bFlame ) ),
 #else
 	SendPropTime( SENDINFO( m_flChargeBeginTime ) ),
+	SendPropBool( SENDINFO ( m_bFlame ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -50,7 +54,11 @@ END_DATADESC()
 
 CTFCompoundBow::CTFCompoundBow()
 {
-	bFlame = false;
+	Extinguish();
+#ifdef CLIENT_DLL
+	bEmitting = false;
+	bFirstPerson = false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -61,9 +69,7 @@ void CTFCompoundBow::Precache( void )
 	PrecacheScriptSound( "ArrowLight" );
 
 	PrecacheParticleSystem( "v_flaming_arrow" );
-	PrecacheParticleSystem( "v_flaming_arrow_smoke" );
 	PrecacheParticleSystem( "flaming_arrow" );
-	PrecacheParticleSystem( "flaming_arrow_smoke" );
 
 	BaseClass::Precache();
 }
@@ -73,8 +79,8 @@ void CTFCompoundBow::Precache( void )
 //-----------------------------------------------------------------------------
 bool CTFCompoundBow::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+	Extinguish();
 	LowerBow();
-	bFlame = false;
 
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -94,7 +100,7 @@ bool CTFCompoundBow::Deploy( void )
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::WeaponReset( void )
 {
-	bFlame = false;
+	Extinguish();
 	BaseClass::WeaponReset();
 
 	LowerBow();
@@ -248,31 +254,91 @@ void CTFCompoundBow::FireArrow( void )
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 
 	m_flChargeBeginTime = 0.0f;
-	bFlame = false;
+	Extinguish();
 }
 
-// ---------------------------------------------------------------------------- -
+void CTFCompoundBow::Extinguish( void )
+{
+#ifndef CLIENT_DLL
+	m_bFlame = false;
+#else CLIENT_DLL
+	if ( m_hFlameEffectHost.Get() )
+	{
+		m_hFlameEffectHost->ParticleProp()->StopEmission();
+		m_hFlameEffectHost = NULL;
+	}
+	//ParticleProp()->StopEmission();
+	bEmitting = false;
+#endif
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Set arrow on fire
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::LightArrow( void )
 {
-	//don't light if we're already lit.
-	if( bFlame )
+	// don't light if we're already lit.
+#ifndef CLIENT_DLL
+	if ( m_bFlame || m_flNextPrimaryAttack > gpGlobals->curtime )
+	{
 		return;
-	bFlame = true;
+	}
+	m_bFlame = true;
 	EmitSound( "ArrowLight" );
-
-#ifdef CLIENT_DLL
-	//FIXME: this isn't working and I don't know why
+#else
 	C_BaseEntity *pModel = GetWeaponForEffect();
+	if ( pModel )
+	{
+		CTFPlayer *pOwner = GetTFPlayerOwner();
 
-		if ( pModel )
+		// if the local player is the carrier and is in first person, use the v flame effects
+		if ( pOwner == C_BasePlayer::GetLocalPlayer() && pOwner->InFirstPersonView() )
+		{
+			pModel->ParticleProp()->Create( "v_flaming_arrow", PATTACH_POINT_FOLLOW, "muzzle" );
+			bFirstPerson = true;
+		}
+		else
 		{
 			pModel->ParticleProp()->Create( "flaming_arrow", PATTACH_POINT_FOLLOW, "muzzle" );
-			pModel->ParticleProp()->Create( "flaming_arrow_smoke", PATTACH_POINT_FOLLOW, "muzzle" );
+			bFirstPerson = false;
 		}
+		m_hFlameEffectHost = pModel;
+	}
+
+	bEmitting = true;
+	SetNextClientThink( gpGlobals->frametime + 1.0f );
 #endif
 }
+
+#ifdef CLIENT_DLL
+void C_TFCompoundBow::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+	if ( !bEmitting && m_bFlame )
+	{
+		LightArrow();
+	}
+}
+
+void C_TFCompoundBow::ClientThink( void )
+{
+	if ( !IsCarriedByLocalPlayer() || !IsActiveByLocalPlayer() || !m_bFlame )
+	{
+		Extinguish();
+		SetNextClientThink( CLIENT_THINK_NEVER );
+		return;
+	}
+
+	if ( ( GetTFPlayerOwner()->InFirstPersonView() && !bFirstPerson ) || ( !GetTFPlayerOwner()->InFirstPersonView() && bFirstPerson ) )
+	{
+		Extinguish();
+		LightArrow();
+		return;
+	}
+
+	SetNextClientThink( gpGlobals->curtime + 1.0f );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
