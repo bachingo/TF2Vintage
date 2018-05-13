@@ -267,7 +267,7 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 			y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
 		}
 
-		// Initialize the varialbe firing information.
+		// Initialize the variable firing information.
 		fireInfo.m_vecDirShooting = vecShootForward + ( x *  flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
 		fireInfo.m_vecDirShooting.NormalizeInPlace();
 

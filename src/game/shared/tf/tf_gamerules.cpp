@@ -4688,6 +4688,11 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		return false;
 	}
 
+	// For arrow collisions
+	if ( ( collisionGroup0 == TFCOLLISION_GROUP_ROCKETS ) && 
+		( collisionGroup1 == TFCOLLISION_GROUP_ROCKETS ) )
+		return true;
+
 	// Rockets need to collide with players when they hit, but
 	// be ignored by player movement checks
 	if ( ( collisionGroup0 == COLLISION_GROUP_PLAYER ) && 

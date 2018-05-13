@@ -6,6 +6,7 @@
 #include "cbase.h"
 #include "tf_weaponbase_rocket.h"
 #include "tf_gamerules.h"
+#include "tf_projectile_arrow.h"
 
 // Server specific.
 #ifdef GAME_DLL
@@ -265,10 +266,21 @@ CTFBaseRocket *CTFBaseRocket::Create( CBaseEntity *pWeapon, const char *pszClass
 //-----------------------------------------------------------------------------
 void CTFBaseRocket::RocketTouch( CBaseEntity *pOther )
 {
+	if( pOther->GetCollisionGroup() == TFCOLLISION_GROUP_ROCKETS )
+	{
+		CTFProjectile_Arrow *pArrow = dynamic_cast< CTFProjectile_Arrow* >( pOther );
+		if( !pArrow )
+		{
+			return;
+		}
+	}
+
 	// Verify a correct "other."
 	Assert( pOther );
 	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
+	{
 		return;
+	}
 
 	// Handle hitting skybox (disappear).
 	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();

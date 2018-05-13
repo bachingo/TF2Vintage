@@ -69,6 +69,9 @@ public:
 	virtual void	UpdateOnRemove( void );
 #else
 
+	virtual void	ClientThink( void );
+	virtual void	OnDataChanged( DataUpdateType_t updateType );
+	virtual void	Light( void );
 #endif
 
 private:
@@ -80,6 +83,7 @@ private:
 
 	EHANDLE m_hSpriteTrail;
 #else
+	bool		bEmitting;
 	bool		m_bCritical;
 	bool		m_bFlame;
 	int			m_iType;

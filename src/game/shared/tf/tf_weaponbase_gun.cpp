@@ -343,7 +343,8 @@ void CTFWeaponBaseGun::GetProjectileReflectSetup( CTFPlayer *pPlayer, const Vect
 	// Find angles that will get us to our desired end point
 	// Only use the trace end if it wasn't too close, which results
 	// in visually bizarre forward angles
-	if ( tr.fraction > 0.1 || bUseHitboxes )
+	//if ( tr.fraction > 0.1 || bUseHitboxes )
+	if ( tr.fraction > 0.1 )
 	{
 		*vecDeflect = tr.endpos - vecPos;
 	}
@@ -425,7 +426,8 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 	// Find angles that will get us to our desired end point
 	// Only use the trace end if it wasn't too close, which results
 	// in visually bizarre forward angles
-	if ( tr.fraction > 0.1 || bUseHitboxes )
+	//if ( tr.fraction > 0.1 || bUseHitboxes )
+	if ( tr.fraction > 0.1 )
 	{
 		VectorAngles( tr.endpos - *vecSrc, *angForward );
 	}
@@ -444,10 +446,24 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 
 	// Server only - create the rocket.
 #ifdef GAME_DLL
-
 	Vector vecSrc;
+	Vector vecOffset( 0.0f, 0.0f, 0.0f );
 	QAngle angForward;
-	Vector vecOffset( 23.5f, 12.0f, -3.0f );
+
+	int isQuakeRL = 0;
+	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
+
+	if( isQuakeRL > 0 )
+	{
+		vecOffset.z = -3.0f;
+	}
+	else
+	{
+		vecOffset.x = 23.5f;
+		vecOffset.y = 12.0f;
+		vecOffset.z = -3.0f;
+	}
+
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
 		vecOffset.z = 8.0f;
@@ -769,8 +785,6 @@ void CTFWeaponBaseGun::DoFireEffects()
 
 	if (pPlayer->IsPlayerClass(TF_CLASS_SNIPER))
 	{
-		//CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-		//if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN )
 		if (pPlayer->IsActiveTFWeapon(TF_WEAPON_COMPOUND_BOW))
 		{
 			bMuzzleFlash = false;

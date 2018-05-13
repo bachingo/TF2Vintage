@@ -14,6 +14,7 @@
 #include "tf_player.h"
 #include "debugoverlay_shared.h"
 #include "te_effect_dispatch.h"
+#include "decals.h"
 #endif
 
 #ifdef GAME_DLL
@@ -59,6 +60,8 @@ CTFProjectile_Arrow::~CTFProjectile_Arrow()
 {
 #ifdef CLIENT_DLL
 	ParticleProp()->StopEmission();
+	bEmitting = false;
+	SetNextClientThink( CLIENT_THINK_NEVER );
 #else
 	m_bCollideWithTeammates = false;
 #endif
@@ -134,7 +137,6 @@ void CTFProjectile_Arrow::Precache( void )
 
 	// Precache flame effects
 	PrecacheParticleSystem( "flying_flaming_arrow" );
-	PrecacheParticleSystem( "flying_flaming_arrow_smoke" );
 
 	PrecacheScriptSound( "Weapon_Arrow.ImpactFlesh" );
 	PrecacheScriptSound( "Weapon_Arrow.ImpactMetal" );
@@ -175,13 +177,6 @@ void CTFProjectile_Arrow::Spawn( void )
 
 	UTIL_SetSize( this, -Vector( 1, 1, 1 ), Vector( 1, 1, 1 ) );
 
-	//FIXME: this isn't working and I don't know why
-	if( m_bFlame )
-	{
-		DispatchParticleEffect( "flying_flaming_arrow", PATTACH_POINT_FOLLOW, this, "muzzle" );
-		DispatchParticleEffect( "flying_flaming_arrow_smoke", PATTACH_POINT_FOLLOW, this, "muzzle" );
-	}
-
 	CreateTrail();
 
 	SetTouch( &CTFProjectile_Arrow::ArrowTouch );
@@ -212,10 +207,21 @@ CBasePlayer *CTFProjectile_Arrow::GetScorer( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 {
+	if( pOther->GetCollisionGroup() == TFCOLLISION_GROUP_ROCKETS )
+	{
+		CTFProjectile_Arrow *pArrow = dynamic_cast< CTFProjectile_Arrow* >( pOther );
+		if( !pArrow )
+		{
+			return;
+		}
+	}
+
 	// Verify a correct "other."
 	Assert( pOther );
 	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
+	{
 		return;
+	}
 
 	// Handle hitting skybox (disappear).
 	trace_t *pTrace = const_cast<trace_t *>( &CBaseEntity::GetTouchTrace() );
@@ -306,20 +312,66 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			}
 
 			// Place arrow at hitbox.
-			/*SetAbsOrigin( trHit.endpos );
+			SetAbsOrigin( trHit.endpos );
 
 			Vector vecHitDir = trHit.plane.normal * -1.0f;
 			AngleVectors( angHit, &vecHitDir );
-			SetAbsAngles( angHit );*/
+			SetAbsAngles( angHit );
 		}
 		EmitSound( "Weapon_Arrow.ImpactFlesh" );
 
-		Vector vForward;
+		// Only do skewer effects if the player is going to die
+		if( GetDamage() > pPlayer->GetHealth() )
+		{
+			Vector vForward;
+
+			AngleVectors( GetAbsAngles(), &vForward );
+			VectorNormalize ( vForward );
+
+			UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + vForward * 256, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
+
+			if ( tr.fraction != 1.0f )
+			{
+				//NDebugOverlay::Box( tr.endpos, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 255, 0, 0, 10 );
+				//NDebugOverlay::Box( GetAbsOrigin(), Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 0, 255, 0, 10 );
+
+				if ( tr.m_pEnt == NULL || ( tr.m_pEnt && tr.m_pEnt->GetMoveType() == MOVETYPE_NONE ) )
+				{
+					CEffectData	data;
+
+					data.m_vOrigin = tr.endpos;
+					data.m_vNormal = vForward;
+					data.m_nEntIndex = tr.fraction != 1.0f;
+			
+					DispatchEffect( "BoltImpact", data );
+				}
+			}
+		}
+
+	}
+	else if ( pOther->GetMoveType() == MOVETYPE_NONE )
+	{	
+		surfacedata_t *psurfaceData = physprops->GetSurfaceData( trHit.surface.surfaceProps );
+		int iMaterial = psurfaceData->game.material;
+		if ( ( iMaterial == CHAR_TEX_CONCRETE ) || ( iMaterial == CHAR_TEX_TILE ) )
+		{
+			EmitSound( "Weapon_Arrow.ImpactConcrete" );
+		}
+		else if ( iMaterial == CHAR_TEX_WOOD )
+		{
+			EmitSound( "Weapon_Arrow.ImpactWood" );
+		}
+		else if ( ( iMaterial == CHAR_TEX_METAL ) || ( iMaterial == CHAR_TEX_VENT ) )
+		{
+			EmitSound( "Weapon_Arrow.ImpactMetal" );
+		}
+
+				Vector vForward;
 
 		AngleVectors( GetAbsAngles(), &vForward );
 		VectorNormalize ( vForward );
 
-		UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + vForward * 128, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
+		UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + vForward * 256, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
 
 		if ( tr.fraction != 1.0f )
 		{
@@ -333,49 +385,41 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				data.m_vOrigin = tr.endpos;
 				data.m_vNormal = vForward;
 				data.m_nEntIndex = tr.fraction != 1.0f;
-			
 				DispatchEffect( "BoltImpact", data );
 			}
 		}
 
+		UTIL_ImpactTrace( &trHit, DMG_BULLET );
+		//UTIL_Remove( this );
 	}
-	else if ( pOther->GetMoveType() == MOVETYPE_NONE )
-		{
-			if ( pOther->IsBaseObject() )
-				{
-					EmitSound( "Weapon_Arrow.ImpactMetal" );
-				}
-				else
-				{
-					EmitSound( "Weapon_Arrow.ImpactConcrete" );
-				}			
-				//FIXME: We actually want to stick (with hierarchy) to what we've hit
-				SetMoveType( MOVETYPE_NONE );
-			
-				Vector vForward;
 
-				AngleVectors( GetAbsAngles(), &vForward );
-				VectorNormalize ( vForward );
-
-				CEffectData	data;
-
-				data.m_vOrigin = tr.endpos;
-				data.m_vNormal = vForward;
-				data.m_nEntIndex = 0;
-			
-				DispatchEffect( "BoltImpact", data );
-
-				UTIL_ImpactTrace( &trHit, DMG_BULLET );
-	}
 	else
-		{
-			UTIL_ImpactTrace( &trHit, DMG_BULLET );
-			//UTIL_Remove( this );
-		}
+	{
+		Vector vForward;
+
+		AngleVectors( GetAbsAngles(), &vForward );
+		VectorNormalize ( vForward );
+
+			//NDebugOverlay::Box( tr.endpos, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 255, 0, 0, 10 );
+			//NDebugOverlay::Box( GetAbsOrigin(), Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 0, 255, 0, 10 );
+
+		CEffectData	data;
+
+		data.m_vAngles = GetAbsAngles();
+		data.m_vOrigin = vecOrigin;
+		data.m_vNormal = vForward;
+		DispatchEffect( "ArrowBreak", data );
+
+		UTIL_ImpactTrace( &trHit, DMG_BULLET );
+	}
+
+	// Stop the force from sending enemies flying
+	Vector vecForce = vecDir;
+	vecForce.z = pOther->GetAbsOrigin().z;
 
 	// Do damage.
 	CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType() );
-	CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, vecOrigin );
+	CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecForce, vecOrigin );
 	info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
 
 	pOther->DispatchTraceAttack( info, vecDir, &trHit );
@@ -516,5 +560,43 @@ void CTFProjectile_Arrow::UpdateOnRemove( void )
 
 	BaseClass::UpdateOnRemove();
 }
+#else
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_Arrow::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
 
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		SetNextClientThink( gpGlobals->curtime + 0.1f );	
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_Arrow::ClientThink( void )
+{
+	if( m_bFlame && !bEmitting )
+	{
+		Light();
+		SetNextClientThink( CLIENT_THINK_NEVER );
+		return;
+	}
+
+	SetNextClientThink( gpGlobals->curtime + 0.1f );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_Arrow::Light( void )
+{
+	if ( IsDormant() || !m_bFlame )
+		return;
+
+	ParticleProp()->Create( "flying_flaming_arrow", PATTACH_ABSORIGIN_FOLLOW );
+}
 #endif
