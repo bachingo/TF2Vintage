@@ -413,15 +413,10 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		UTIL_ImpactTrace( &trHit, DMG_BULLET );
 	}
 
-	// Stop the force from sending enemies flying
-	Vector vecForce = vecDir;
-	vecForce.z = pOther->GetAbsOrigin().z;
-
 	// Do damage.
 	CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType() );
-	CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecForce, vecOrigin );
+	CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, vecOrigin );
 	info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
-
 	pOther->DispatchTraceAttack( info, vecDir, &trHit );
 	ApplyMultiDamage();
 

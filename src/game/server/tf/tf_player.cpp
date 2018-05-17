@@ -3964,11 +3964,21 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	CBaseEntity *pAttacker = info.GetAttacker();
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CBaseEntity *pWeapon = info.GetWeapon();
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( pWeapon );
 
 	Vector vecDir = vec3_origin;
 	if ( pInflictor )
 	{
-		vecDir = pInflictor->WorldSpaceCenter() - Vector( 0.0f, 0.0f, 10.0f ) - WorldSpaceCenter();
+		// Huntsman should not do too much knockback
+		if ( pTFWeapon && pTFWeapon->GetWeaponID() == TF_WEAPON_COMPOUND_BOW )
+		{
+			vecDir = -info.GetDamageForce();
+		}
+		else
+		{
+			vecDir = pInflictor->WorldSpaceCenter() - Vector( 0.0f, 0.0f, 10.0f ) - WorldSpaceCenter();
+		}
+
 		VectorNormalize( vecDir );
 	}
 	g_vecAttackDir = vecDir;
@@ -4034,7 +4044,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	if ( bIgniting )
 	{
-		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( pWeapon );
+		//CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( pWeapon );
 		m_Shared.Burn( ToTFPlayer( pAttacker ), pTFWeapon );
 	}
 

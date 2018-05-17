@@ -74,7 +74,7 @@ private:
 	bool bEmitting;
 	bool bFirstPerson;
 
-	EHANDLE m_hFlameEffectHost;
+	EHANDLE				m_hFlameEffectHost;
 #endif
 };
 

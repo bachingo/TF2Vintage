@@ -67,7 +67,7 @@ public:
 		//Find the real object we hit.
 		if( tr.physicsbone >= 0 )
 		{
-			Msg( "\nPhysics Bone: %i\n", tr.physicsbone );
+			//Msg( "\nPhysics Bone: %i\n", tr.physicsbone );
 			if ( pModel->m_pRagdoll )
 			{
 				CRagdoll *pCRagdoll = dynamic_cast < CRagdoll * > ( pModel->m_pRagdoll );
