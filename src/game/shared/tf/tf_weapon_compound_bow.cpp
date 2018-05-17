@@ -66,12 +66,10 @@ CTFCompoundBow::CTFCompoundBow()
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::Precache( void )
 {
+		BaseClass::Precache();
 	PrecacheScriptSound( "ArrowLight" );
-
 	PrecacheParticleSystem( "v_flaming_arrow" );
 	PrecacheParticleSystem( "flaming_arrow" );
-
-	BaseClass::Precache();
 }
 
 //-----------------------------------------------------------------------------
@@ -278,19 +276,25 @@ void CTFCompoundBow::Extinguish( void )
 void CTFCompoundBow::LightArrow( void )
 {
 	// don't light if we're already lit.
-#ifndef CLIENT_DLL
 	if ( m_bFlame || m_flNextPrimaryAttack > gpGlobals->curtime )
 	{
 		return;
 	}
+#ifndef CLIENT_DLL
 	m_bFlame = true;
-	EmitSound( "ArrowLight" );
 #else
+
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+	{
+		return;
+	}
+
+	pOwner->EmitSound( "ArrowLight" );
+
 	C_BaseEntity *pModel = GetWeaponForEffect();
 	if ( pModel )
 	{
-		CTFPlayer *pOwner = GetTFPlayerOwner();
-
 		// if the local player is the carrier and is in first person, use the v flame effects
 		if ( pOwner == C_BasePlayer::GetLocalPlayer() && pOwner->InFirstPersonView() )
 		{
