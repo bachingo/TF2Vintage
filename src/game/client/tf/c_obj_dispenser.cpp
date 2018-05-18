@@ -168,6 +168,7 @@ void C_ObjectDispenser::UpdateEffects( void )
 	for ( int i = 0; i < m_hHealingTargets.Count(); i++ )
 	{
 		C_BaseEntity *pTarget = m_hHealingTargets[i].Get();
+		C_TFPlayer *pPlayer = ToTFPlayer( pTarget );
 
 		// Loops through the healing targets, and make sure we have an effect for each of them
 		if ( pTarget )
@@ -182,21 +183,21 @@ void C_ObjectDispenser::UpdateEffects( void )
 				}
 			}
 
-			if (bHaveEffect)
+			if ( bHaveEffect )
 			{
-				if (ToTFPlayer(pTarget)->m_Shared.InCond(TF_COND_STEALTHED))
+				if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) && !pPlayer->InLocalTeam() )
 				{
-					ParticleProp()->StopEmission(m_hHealingTargetEffects[i].pEffect);
-					m_hHealingTargetEffects.Remove(i);
-					if (m_hHealingTargets.Count() == 1)
-						StopSound("Building_Dispenser.Heal");
+					ParticleProp()->StopEmission( m_hHealingTargetEffects[i].pEffect );
+					m_hHealingTargetEffects.Remove( i );
+					if ( m_hHealingTargets.Count() == 1 )
+						StopSound( "Building_Dispenser.Heal" );
 					continue;
 				}
 				else
 					continue;
 			}
 
-			if (ToTFPlayer(pTarget)->m_Shared.InCond(TF_COND_STEALTHED))
+			if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) && !pPlayer->InLocalTeam() )
 			{
 				continue;
 			}
