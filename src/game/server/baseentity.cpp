@@ -1353,7 +1353,9 @@ void CBaseEntity::Activate( void )
 int CBaseEntity::TakeHealth( float flHealth, int bitsDamageType )
 {
 	if ( !edict() || m_takedamage < DAMAGE_YES )
+	{
 		return 0;
+	}
 
 	int iMax = GetMaxHealth();
 

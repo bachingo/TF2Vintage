@@ -21,11 +21,11 @@
 #define TF_HEALTHKIT_MODEL			"models/items/healthkit.mdl"
 #define TF_HEALTHKIT_PICKUP_SOUND	"HealthKit.Touch"
 
-LINK_ENTITY_TO_CLASS(item_healthkit_full, CHealthKit);
-LINK_ENTITY_TO_CLASS(item_healthkit_small, CHealthKitSmall);
-LINK_ENTITY_TO_CLASS(item_healthkit_medium, CHealthKitMedium);
-LINK_ENTITY_TO_CLASS(item_healthkit_tiny, CHealthKitTiny);
-LINK_ENTITY_TO_CLASS(item_healthkit_mega, CHealthKitMega);
+LINK_ENTITY_TO_CLASS( item_healthkit_full, CHealthKit );
+LINK_ENTITY_TO_CLASS( item_healthkit_small, CHealthKitSmall );
+LINK_ENTITY_TO_CLASS( item_healthkit_medium, CHealthKitMedium );
+LINK_ENTITY_TO_CLASS( item_healthkit_tiny, CHealthKitTiny );
+LINK_ENTITY_TO_CLASS( item_healthkit_mega, CHealthKitMega );
 
 //=============================================================================
 //
@@ -35,10 +35,10 @@ LINK_ENTITY_TO_CLASS(item_healthkit_mega, CHealthKitMega);
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the healthkit
 //-----------------------------------------------------------------------------
-void CHealthKit::Spawn(void)
+void CHealthKit::Spawn( void )
 {
 	Precache();
-	SetModel(GetPowerupModel());
+	SetModel( GetPowerupModel() );
 
 	BaseClass::Spawn();
 }
@@ -46,142 +46,143 @@ void CHealthKit::Spawn(void)
 //-----------------------------------------------------------------------------
 // Purpose: Precache function for the healthkit
 //-----------------------------------------------------------------------------
-void CHealthKit::Precache(void)
+void CHealthKit::Precache( void )
 {
-	PrecacheModel(GetPowerupModel());
-	PrecacheScriptSound(TF_HEALTHKIT_PICKUP_SOUND);
-	PrecacheScriptSound("OverhealPillRattle.Touch");
-	PrecacheScriptSound("OverhealPillNoRattle.Touch");
+	PrecacheModel( GetPowerupModel() );
+	PrecacheScriptSound( TF_HEALTHKIT_PICKUP_SOUND );
+	PrecacheScriptSound( "OverhealPillRattle.Touch" );
+	PrecacheScriptSound( "OverhealPillNoRattle.Touch" );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: MyTouch function for the healthkit
 //-----------------------------------------------------------------------------
-bool CHealthKit::MyTouch(CBasePlayer *pPlayer)
+bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 {
 	bool bSuccess = false;
 
-	if (ValidTouch(pPlayer))
+	if ( ValidTouch( pPlayer ) )
 	{
-		CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-		Assert(pTFPlayer);
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+		Assert( pTFPlayer );
 
-		int iHealthToAdd = ceil(pPlayer->GetMaxHealth() * PackRatios[GetPowerupSize()]);
+		int iHealthToAdd = ceil( pPlayer->GetMaxHealth() * PackRatios[GetPowerupSize()] );
 		bool bTiny = GetPowerupSize() == POWERUP_TINY;
 		bool bMega = GetPowerupSize() == POWERUP_MEGA;
 		int iHealthRestored = 0;
 
 		// Don't heal the player who dropped this healthkit.
-		if (pTFPlayer != GetOwnerEntity())
+		if ( pTFPlayer != GetOwnerEntity() )
 		{
 			// Overheal pellets, well, overheal.
-			if (bTiny || bMega)
+			if ( bTiny || bMega )
 			{
-				iHealthToAdd = clamp(iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetHealth());
-				iHealthRestored = pPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
+				iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetHealth() );
+				iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_IGNORE_MAXHEALTH );
 			}
 			else
 			{
-				iHealthRestored = pPlayer->TakeHealth(iHealthToAdd, DMG_GENERIC);
+				iHealthRestored = pTFPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
+				//iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
 			}
 
-			if (iHealthRestored)
+			if ( iHealthRestored )
 				bSuccess = true;
 
 			// Restore disguise health.
-			if (pTFPlayer->m_Shared.InCond(TF_COND_DISGUISED))
+			if ( pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 			{
 				bool isHealthKit = false;
 
-				if (GetPowerupSize() == POWERUP_SMALL || GetPowerupSize() == POWERUP_MEDIUM || GetPowerupSize() == POWERUP_FULL)
+				if ( GetPowerupSize() == POWERUP_SMALL || GetPowerupSize() == POWERUP_MEDIUM || GetPowerupSize() == POWERUP_FULL )
 					isHealthKit = true;
-				if (GetPowerupSize() == POWERUP_TINY || POWERUP_MEGA)
+				if ( GetPowerupSize() == POWERUP_TINY || POWERUP_MEGA )
 					isHealthKit = false;
 
-				int iFakeHealthToAdd = ceil(pTFPlayer->m_Shared.GetDisguiseMaxHealth() * PackRatios[GetPowerupSize()]);
+				int iFakeHealthToAdd = ceil( pTFPlayer->m_Shared.GetDisguiseMaxHealth() * PackRatios[ GetPowerupSize() ] );
 
-				if (pTFPlayer->m_Shared.AddDisguiseHealth(iFakeHealthToAdd, isHealthKit))
+				if ( pTFPlayer->m_Shared.AddDisguiseHealth( iFakeHealthToAdd, isHealthKit ) )
 					bSuccess = true;
 			}
 
-			if (!bTiny)
+			if ( !bTiny )
 			{
 				// Remove any negative conditions whether player got healed or not.
-				if (pTFPlayer->m_Shared.InCond(TF_COND_BURNING))
+				if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
 				{
-					pTFPlayer->m_Shared.RemoveCond(TF_COND_BURNING);
+					pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
 					bSuccess = true;
 				}
-				if (pTFPlayer->m_Shared.InCond(TF_COND_SLOWED))
+				if ( pTFPlayer->m_Shared.InCond( TF_COND_SLOWED ) )
 				{
-					pTFPlayer->m_Shared.RemoveCond(TF_COND_SLOWED);
+					pTFPlayer->m_Shared.RemoveCond( TF_COND_SLOWED );
 					bSuccess = true;
 				}
 			}
 		}
 
-		if (bSuccess)
+		if ( bSuccess )
 		{
-			CSingleUserRecipientFilter user(pPlayer);
+			CSingleUserRecipientFilter user( pPlayer );
 			user.MakeReliable();
 
-			UserMessageBegin(user, "ItemPickup");
-			WRITE_STRING(GetClassname());
+			UserMessageBegin( user, "ItemPickup" );
+			WRITE_STRING( GetClassname() );
 			MessageEnd();
 
 			const char *pszSound = TF_HEALTHKIT_PICKUP_SOUND;
 
-			if (bTiny)
+			if ( bTiny )
 			{
-				if (pPlayer->GetHealth() > pPlayer->GetMaxHealth())
+				if ( pPlayer->GetHealth() > pPlayer->GetMaxHealth() )
 					pszSound = "OverhealPillRattle.Touch";
 				else
 					pszSound = "OverhealPillNoRattle.Touch";
 			}
 
-			EmitSound(user, entindex(), pszSound);
+			EmitSound( user, entindex(), pszSound );
 
-			IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
+			IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
 			
-			if (event)
+			if ( event )
 			{
-				event->SetInt("amount", iHealthRestored);
-				event->SetInt("entindex", pPlayer->entindex());
+				event->SetInt( "amount", iHealthRestored );
+				event->SetInt( "entindex", pPlayer->entindex() );
 				
-				gameeventmanager->FireEvent(event);
+				gameeventmanager->FireEvent( event );
 			}
 
-			CTFPlayer *pTFOwner = ToTFPlayer(GetOwnerEntity());
-			if (pTFOwner && pTFOwner->InSameTeam(pTFPlayer))
+			CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
+			if ( pTFOwner && pTFOwner->InSameTeam( pTFPlayer ) )
 			{
 				// BONUS DUCKS!
-				CTF_GameStats.Event_PlayerAwardBonusPoints(pTFOwner, pPlayer, 1);
+				CTF_GameStats.Event_PlayerAwardBonusPoints( pTFOwner, pPlayer, 1 );
 			}
 
 			// Disabled for overheal pills since they'll cause too much spam.
-			if (iHealthRestored && !bTiny)
+			if ( iHealthRestored && !bTiny )
 			{
-				IGameEvent *event_healonhit = gameeventmanager->CreateEvent("player_healonhit");
-				if (event_healonhit)
+				IGameEvent *event_healonhit = gameeventmanager->CreateEvent( "player_healonhit" );
+				if ( event_healonhit )
 				{
-					event_healonhit->SetInt("amount", iHealthRestored);
-					event_healonhit->SetInt("entindex", pPlayer->entindex());
+					event_healonhit->SetInt( "amount", iHealthRestored );
+					event_healonhit->SetInt( "entindex", pPlayer->entindex() );
 
-					gameeventmanager->FireEvent(event_healonhit);
+					gameeventmanager->FireEvent( event_healonhit );
 				}
 
 				// Show healing to the one who dropped the healthkit.
-				CBasePlayer *pOwner = ToBasePlayer(GetOwnerEntity());
-				if (pOwner)
+				CBasePlayer *pOwner = ToBasePlayer( GetOwnerEntity() );
+				if ( pOwner )
 				{
-					IGameEvent *event_healed = gameeventmanager->CreateEvent("player_healed");
-					if (event_healed)
+					IGameEvent *event_healed = gameeventmanager->CreateEvent( "player_healed" );
+					if ( event_healed )
 					{
-						event_healed->SetInt("patient", pPlayer->GetUserID());
-						event_healed->SetInt("healer", pOwner->GetUserID());
-						event_healed->SetInt("amount", iHealthRestored);
+						event_healed->SetInt( "patient", pPlayer->GetUserID() );
+						event_healed->SetInt( "healer", pOwner->GetUserID() );
+						event_healed->SetInt( "amount", iHealthRestored );
 
-						gameeventmanager->FireEvent(event_healed);
+						gameeventmanager->FireEvent( event_healed );
 					}
 				}
 			}
@@ -189,8 +190,8 @@ bool CHealthKit::MyTouch(CBasePlayer *pPlayer)
 		else
 		{
 			/*// Recharge lunchbox if player's at full health.
-			CTFWeaponBase *pLunch = pTFPlayer->Weapon_OwnsThisID(TF_WEAPON_LUNCHBOX);
-			if (pLunch && pLunch->GetEffectBarProgress() < 1.0f)
+			CTFWeaponBase *pLunch = pTFPlayer->Weapon_OwnsThisID( TF_WEAPON_LUNCHBOX );
+			if ( pLunch && pLunch->GetEffectBarProgress() < 1.0f )
 			{
 				pLunch->EffectBarRegenFinished();
 				bSuccess = true;
