@@ -418,11 +418,11 @@ int CTFWeaponBase::TranslateViewmodelHandActivity( int iActivity )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::SetViewModel()
 {
-	CTFPlayer *pTFPlayer = ToTFPlayer(GetOwner());
+	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
 	if ( pTFPlayer == NULL )
 		return;
 
-	CTFViewModel *vm = dynamic_cast<CTFViewModel*>(pTFPlayer->GetViewModel(m_nViewModelIndex, false));
+	CTFViewModel *vm = dynamic_cast< CTFViewModel* >( pTFPlayer->GetViewModel( m_nViewModelIndex, false ) );
 	if ( vm == NULL )
 		return;
 

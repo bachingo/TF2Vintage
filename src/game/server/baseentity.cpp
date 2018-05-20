@@ -1358,14 +1358,18 @@ int CBaseEntity::TakeHealth( float flHealth, int bitsDamageType )
 	int iMax = GetMaxHealth();
 
 // heal
-	if ( m_iHealth >= iMax && flHealth >= 0)
+	if ( m_iHealth >= iMax && flHealth >= 0.0f )
 		return 0;
 
 	const int oldHealth = m_iHealth;
 
 	m_iHealth += flHealth;
-	if (m_iHealth > iMax)
+
+	// if we're losing health don't clamp to the max health
+	if ( flHealth >= 0.0f && m_iHealth > iMax )
+	{
 		m_iHealth = iMax;
+	}
 
 	return m_iHealth - oldHealth;
 }

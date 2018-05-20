@@ -30,13 +30,13 @@ LINK_ENTITY_TO_CLASS( tf_weapon_bonesaw, CTFBonesaw );
 PRECACHE_WEAPON_REGISTER( tf_weapon_bonesaw );
 
 #ifdef CLIENT_DLL
-void CTFBonesaw::OnDataChanged( DataUpdateType_t updateType )
+void C_TFBonesaw::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 	UpdateChargePoseParam();
 }
 
-bool CTFBonesaw::Deploy( void )
+bool C_TFBonesaw::Deploy( void )
 {
 	if ( BaseClass::Deploy() )
 	{
@@ -47,20 +47,22 @@ bool CTFBonesaw::Deploy( void )
 	return false;
 }
 
-void CTFBonesaw::UpdateChargePoseParam( void )
+void C_TFBonesaw::UpdateChargePoseParam( void )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
+	C_TFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
 		return;
 
-	CWeaponMedigun *pMedigun = pOwner->GetMedigun();
+	C_WeaponMedigun *pMedigun = pOwner->GetMedigun();
 	if ( pMedigun )
 	{
 		SetPoseParameter( "syringe_charge_level", pMedigun->GetChargeLevel() );
 
-		CBaseViewModel *vm = pOwner->GetViewModel( m_nViewModelIndex );
+		C_BaseViewModel *vm = pOwner->GetViewModel( m_nViewModelIndex );
 		if ( vm )
+		{
 			vm->SetPoseParameter( "syringe_charge_level", pMedigun->GetChargeLevel() );
+		}
 	}
 }
 
