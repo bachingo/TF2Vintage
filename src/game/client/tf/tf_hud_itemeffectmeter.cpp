@@ -47,6 +47,7 @@ private:
 	ContinuousProgressBar *m_pEffectMeter;
 	CExLabel *m_pEffectMeterLabel;
 
+	bool m_bMinHud;
 	int m_iSlot;
 	C_TFWeaponBase *m_pWeapon;
 	float m_flOldCharge;
@@ -62,6 +63,7 @@ CHudItemEffectMeter::CHudItemEffectMeter( Panel *pParent, const char *pElementNa
 	m_iSlot = 0;
 	m_flOldCharge = 1.0f;
 	m_pWeapon = NULL;
+	m_bMinHud = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -80,6 +82,16 @@ void CHudItemEffectMeter::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 void CHudItemEffectMeter::UpdateStatus( void )
 {
+	// HACK: Work around the scheme application order failing
+	// to reload the player class hud element's scheme in minmode.
+	
+	ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
+	if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() != m_bMinHud )
+	{
+		m_pWeapon = NULL;
+		m_bMinHud = cl_hud_minmode.GetBool();
+	}
+
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if ( !pPlayer || !pPlayer->IsAlive() )
@@ -97,7 +109,6 @@ void CHudItemEffectMeter::UpdateStatus( void )
 			// Weapon changed, reset the label and progress.
 			m_pWeapon = static_cast<C_TFWeaponBase *>( pEntity );
 			m_flOldCharge = m_pWeapon->GetEffectBarProgress();
-
 			if ( m_pEffectMeterLabel )
 			{
 				wchar_t *pszLocalized = g_pVGuiLocalize->Find( m_pWeapon->GetEffectLabelText() );
@@ -127,7 +138,9 @@ void CHudItemEffectMeter::UpdateStatus( void )
 	}
 
 	if ( !IsVisible() )
+	{
 		SetVisible( true );
+	}
 
 	if ( m_pEffectMeter )
 	{
@@ -157,6 +170,7 @@ public:
 	virtual void PerformLayout( void );
 	virtual bool ShouldDraw( void );
 	virtual void OnTick( void );
+	virtual void ApplySchemeSettings( IScheme *scheme );
 
 private:
 	CUtlVector<CHudItemEffectMeter *> m_pEffectBars;
@@ -172,7 +186,7 @@ CHudItemEffects::CHudItemEffects( const char *pElementName ) : CHudElement( pEle
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
-	// Create effect bars for primary, secondary and melee slots.
+	// Create effect bars for primary, secondary, melee and pda slots.
 	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; i++ )
 	{
 		CHudItemEffectMeter *pMeter = new CHudItemEffectMeter( this, "HudItemEffectMeter" );
@@ -188,6 +202,14 @@ CHudItemEffects::CHudItemEffects( const char *pElementName ) : CHudElement( pEle
 CHudItemEffects::~CHudItemEffects()
 {
 	m_pEffectBars.PurgeAndDeleteElements();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudItemEffects::ApplySchemeSettings( IScheme *pScheme )
+{
+	BaseClass::ApplySchemeSettings( pScheme );
 }
 
 //-----------------------------------------------------------------------------

@@ -277,6 +277,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			QAngle angHit;
 			float flClosest = FLT_MAX;
 			mstudiobbox_t *pBox;
+			//int bone = -1;
 			//int group = 0;
 			//Msg( "\nNum of Hitboxes: %i", set->numhitboxes );
 
@@ -300,6 +301,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 					//group = pBox->group;
 					flClosest = flLengthSqr;
 					trHit = tr;
+					//bone = pBox->bone;
 				}
 			}
 			//Msg("\nClosest: %i\n", group);
@@ -317,6 +319,14 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			Vector vecHitDir = trHit.plane.normal * -1.0f;
 			AngleVectors( angHit, &vecHitDir );
 			SetAbsAngles( angHit );
+
+			// Transmit data for arrow attachment
+			// TODO: Make this work 
+			/*CEffectData data;
+			data.m_vAngles = angHit;
+			data.m_vOrigin = trHit.endpos;
+			data.m_nEntIndex = pPlayer->GetClientIndex() + 1; // Client Index is the entity index - 1
+			DispatchEffect( "ArrowAttach", data );*/
 		}
 		EmitSound( "Weapon_Arrow.ImpactFlesh" );
 
@@ -353,20 +363,25 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	{	
 		surfacedata_t *psurfaceData = physprops->GetSurfaceData( trHit.surface.surfaceProps );
 		int iMaterial = psurfaceData->game.material;
+		bool bArrowSound = false;
+
 		if ( ( iMaterial == CHAR_TEX_CONCRETE ) || ( iMaterial == CHAR_TEX_TILE ) )
 		{
 			EmitSound( "Weapon_Arrow.ImpactConcrete" );
+			bArrowSound = true;
 		}
 		else if ( iMaterial == CHAR_TEX_WOOD )
 		{
 			EmitSound( "Weapon_Arrow.ImpactWood" );
+			bArrowSound = true;
 		}
 		else if ( ( iMaterial == CHAR_TEX_METAL ) || ( iMaterial == CHAR_TEX_VENT ) )
 		{
 			EmitSound( "Weapon_Arrow.ImpactMetal" );
+			bArrowSound = true;
 		}
 
-				Vector vForward;
+		Vector vForward;
 
 		AngleVectors( GetAbsAngles(), &vForward );
 		VectorNormalize ( vForward );
@@ -389,7 +404,16 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			}
 		}
 
-		UTIL_ImpactTrace( &trHit, DMG_BULLET );
+		// If we didn't play a collision sound already, play a bullet collision sound for this prop
+		if( !bArrowSound )
+		{
+			UTIL_ImpactTrace( &trHit, DMG_BULLET );
+		}
+		else
+		{
+			UTIL_ImpactTrace( &trHit, DMG_BULLET, "ImpactArrow" );
+		}
+
 		//UTIL_Remove( this );
 	}
 
@@ -410,7 +434,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		data.m_vNormal = vForward;
 		DispatchEffect( "ArrowBreak", data );
 
-		UTIL_ImpactTrace( &trHit, DMG_BULLET );
+		//UTIL_ImpactTrace( &trHit, DMG_BULLET );
 	}
 
 	// Do damage.

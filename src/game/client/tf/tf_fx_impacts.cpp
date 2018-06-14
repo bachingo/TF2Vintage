@@ -63,6 +63,51 @@ void ImpactCallback( const CEffectData &data )
 DECLARE_CLIENT_EFFECT( "Impact", ImpactCallback );
 
 //-----------------------------------------------------------------------------
+// Purpose: Handle arrow impacts
+//-----------------------------------------------------------------------------
+void ImpactArrowCallback( const CEffectData &data )
+{
+	trace_t tr;
+	Vector vecOrigin, vecStart, vecShotDir;
+	int iMaterial, iDamageType, iHitbox;
+	short nSurfaceProp;
+
+	C_BaseEntity *pEntity = ParseImpactData( data, &vecOrigin, &vecStart, &vecShotDir, nSurfaceProp, iMaterial, iDamageType, iHitbox );
+
+	if ( !pEntity )
+		return;
+
+	bool bImpact = ( data.m_nDamageType != pEntity->GetTeamNumber() || pEntity->GetTeamNumber() < FIRST_GAME_TEAM );
+
+	if ( data.m_nDamageType != pEntity->GetTeamNumber() && pEntity->IsPlayer() )
+	{	
+		C_TFPlayer *pPlayer = ToTFPlayer( pEntity );
+
+		// Don't impact spies disguised as the same team as this syringe/projectile
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
+		{
+			if ( pPlayer->m_Shared.GetDisguiseTeam() == data.m_nDamageType )
+			{
+				bImpact = false;
+			}
+		}
+	}
+
+	if ( bImpact )
+	{	
+		// If we hit, perform our custom effects and play the sound
+		if ( Impact( vecOrigin, vecStart, iMaterial, iDamageType, iHitbox, pEntity, tr ) )
+		{
+			// Check for custom effects based on the Decal index
+			PerformCustomEffects( vecOrigin, tr, vecShotDir, iMaterial, 1.0 );
+		}
+		//PlayImpactSound( pEntity, tr, vecOrigin, nSurfaceProp );
+	}
+}
+
+DECLARE_CLIENT_EFFECT( "ImpactArrow", ImpactArrowCallback );
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void TFSplashCallbackHelper( const CEffectData &data, const char *pszEffectName )
