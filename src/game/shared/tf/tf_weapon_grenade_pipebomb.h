@@ -63,7 +63,7 @@ public:
 
 	// Creation.
 	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-		                                         const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate, float flDamageMult );
+		                                         const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult );
 
 	// Overrides.
 	virtual void	Spawn();
@@ -73,7 +73,7 @@ public:
 	virtual void	Detonate();
 	virtual void	Fizzle();
 
-	void			SetPipebombMode( bool bRemoteDetonate );
+	void			SetPipebombMode( int iMode );
 
 	virtual void	PipebombTouch( CBaseEntity *pOther );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
@@ -82,16 +82,12 @@ public:
 
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 	
-	void			SetPrimaryWeapon( string_t PrimaryWep ) { m_sPrimaryWep = PrimaryWep; }
-
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 private:
 
 	
 	bool		m_bFizzle;
-
-	string_t	m_sPrimaryWep;
 
 	float		m_flMinSleepTime;
 

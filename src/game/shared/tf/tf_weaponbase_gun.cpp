@@ -543,6 +543,14 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 
 #ifdef GAME_DLL
 
+	int iMode = TF_GL_MODE_REGULAR, iNoSpin = 0;
+	CALL_ATTRIB_HOOK_INT( iMode, set_detonate_mode );
+
+	if ( bRemoteDetonate )
+	{
+		iMode = TF_GL_MODE_REMOTE_DETONATE;
+	}
+
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
@@ -556,9 +564,17 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	float flDamageMult = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flDamageMult, mult_dmg );
 
+	CALL_ATTRIB_HOOK_INT ( iNoSpin, grenade_no_spin );
+
+	AngularImpulse spin( 600, 0, 0 );
+
+	if ( iNoSpin == 0 )
+	{
+		spin = AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 );
+	}
+
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
-		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
-		pPlayer, GetTFWpnData(), bRemoteDetonate, flDamageMult );
+		spin, pPlayer, GetTFWpnData(), iMode, flDamageMult );
 
 
 	if ( pProjectile )

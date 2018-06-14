@@ -69,7 +69,6 @@ END_NETWORK_TABLE()
 static string_t s_iszTrainName;
 static string_t s_iszSawBlade01;
 static string_t s_iszSawBlade02;
-static string_t s_iszLochModel;
 #endif
 
 //-----------------------------------------------------------------------------
@@ -85,7 +84,6 @@ CTFGrenadePipebombProjectile::CTFGrenadePipebombProjectile()
 	s_iszTrainName  = AllocPooledString( "models/props_vehicles/train_enginecar.mdl" );
 	s_iszSawBlade01 = AllocPooledString( "sawmovelinear01" );
 	s_iszSawBlade02 = AllocPooledString( "sawmovelinear02" );
-	s_iszLochModel = AllocPooledString( "models/workshop/weapons/c_models/c_lochnload/c_lochnload.mdl" );
 #endif
 }
 
@@ -288,16 +286,14 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
 //-----------------------------------------------------------------------------
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
-																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate, float flDamageMult )
+																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult )
 {
-	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( bRemoteDetonate ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
+	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( ( iMode == TF_GL_MODE_REMOTE_DETONATE ) ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
 	{
-		//weapon viewmodel for loch and load hack
-		pGrenade->SetPrimaryWeapon(AllocPooledString(pGrenade->GetThrower()->GetActiveWeapon()->GetWorldModel()));
 
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
-		pGrenade->SetPipebombMode( bRemoteDetonate );
+		pGrenade->SetPipebombMode( iMode );
 		DispatchSpawn( pGrenade );
 
 		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo );
@@ -371,16 +367,14 @@ void CTFGrenadePipebombProjectile::Precache()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGrenadePipebombProjectile::SetPipebombMode( bool bRemoteDetonate )
+void CTFGrenadePipebombProjectile::SetPipebombMode( int iMode )
 {
-	if ( bRemoteDetonate )
-	{
-		m_iType.Set( TF_GL_MODE_REMOTE_DETONATE );
-	}
-	else
+	if ( iMode != TF_GL_MODE_REMOTE_DETONATE )
 	{
 		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
 	}
+
+	m_iType.Set( iMode );
 }
 
 //-----------------------------------------------------------------------------
@@ -494,7 +488,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 	if ( !pHitEntity )
 		return;
 
-	if (m_iType == TF_GL_MODE_REGULAR)
+	if ( m_iType != TF_GL_MODE_REMOTE_DETONATE )
 	{
 		// Blow up if we hit an enemy we can damage
 		if ( pHitEntity->GetTeamNumber() && pHitEntity->GetTeamNumber() != GetTeamNumber() && pHitEntity->m_takedamage != DAMAGE_NO )
@@ -504,10 +498,9 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 			SetThink( &CTFGrenadePipebombProjectile::Detonate );
 			SetNextThink( gpGlobals->curtime );
 		}
-
-		//Loch n' Load hack: kill pipes that hit anything other than enemy entities
-		if (m_sPrimaryWep.operator==(s_iszLochModel))
+		else if ( m_iType == TF_GL_MODE_FIZZLE )
 		{
+			// Fizzle on contact with a surface if the we're running loch
 			Fizzle();
 			Detonate();
 		}
