@@ -68,6 +68,7 @@ public:
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
 	virtual float GetProjectileDamage( void );
 
+
 	virtual void ZoomIn( void );
 	virtual void ZoomOut( void );
 	void ZoomOutIn( void );

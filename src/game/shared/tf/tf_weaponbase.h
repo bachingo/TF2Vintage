@@ -98,7 +98,6 @@ class ITFChargeUpWeapon
 {
 public:
 	virtual float GetChargeBeginTime( void ) = 0;
-
 	virtual float GetChargeMaxTime( void ) = 0;
 };
 
@@ -149,6 +148,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int	 GetPosition( void ) const;
 #endif
 	virtual void Drop( const Vector &vecVelocity );
+	virtual bool CanHolster( void ) const;
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	virtual bool Deploy( void );
 	virtual void Equip( CBaseCombatCharacter *pOwner );
@@ -181,6 +181,9 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual bool CanDrop( void ) { return false; }
 
+	// Accessor
+	virtual void SwitchBodyGroups( void ) {}
+
 	// Sound.
 	bool PlayEmptySound();
 	virtual const char *GetShootSound( int iIndex ) const;
@@ -188,6 +191,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Activities.
 	virtual void ItemBusyFrame( void );
 	virtual void ItemPostFrame( void );
+	virtual void ItemHolsterFrame( void );
 
 	virtual void SetWeaponVisible( bool visible );
 
@@ -247,6 +251,13 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	float				GetLastFireTime( void ) { return m_flLastFireTime; }
 
+	virtual bool		HasChargeBar( void ) { return false; }
+	void				StartEffectBarRegen( void );
+	void				EffectBarRegenFinished( void );
+	void				CheckEffectBarRegen( void );
+	virtual float		GetEffectBarProgress( void );
+	virtual const char *GetEffectLabelText( void ) { return ""; }
+
 // Server specific.
 #if !defined( CLIENT_DLL )
 
@@ -304,6 +315,8 @@ protected:
 	bool ReloadSingly( void );
 	void ReloadSinglyPostFrame( void );
 
+	virtual float InternalGetEffectBarRechargeTime( void ) { return 0.0f; }
+
 protected:
 
 	int				m_iWeaponMode;
@@ -334,7 +347,9 @@ protected:
 	bool m_bOldResetParity;
 #endif
 
-	CNetworkVar(	bool,	m_bReloadedThroughAnimEvent );
+	CNetworkVar( bool,	m_bReloadedThroughAnimEvent );
+	CNetworkVar( float, m_flEffectBarRegenTime );
+
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
 };

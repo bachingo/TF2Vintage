@@ -53,6 +53,8 @@ public:
 	virtual int GetMaxClip1( void ) const;
 	virtual int GetDefaultClip1( void ) const;
 
+	virtual void SwitchBodyGroups( void );
+
 public:
 
 	void LaunchGrenade( void );

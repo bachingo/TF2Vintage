@@ -500,14 +500,14 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 void CTFLoadoutPanel::Show()
 {
 	BaseClass::Show();
-	MAINMENU_ROOT->ShowPanel(SHADEBACKGROUND_MENU);
+	MAINMENU_ROOT->ShowPanel( SHADEBACKGROUND_MENU );
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if (pPlayer)
+	if ( pPlayer )
 	{
 		int iClass = pPlayer->m_Shared.GetDesiredPlayerClassIndex();
-		if (iClass >= TF_CLASS_SCOUT)
-			SetCurrentClass(pPlayer->m_Shared.GetDesiredPlayerClassIndex());
+		if ( iClass >= TF_CLASS_SCOUT )
+			SetCurrentClass( pPlayer->m_Shared.GetDesiredPlayerClassIndex() );
 	}
 	DefaultLayout();
 };
@@ -515,7 +515,7 @@ void CTFLoadoutPanel::Show()
 void CTFLoadoutPanel::Hide()
 {
 	BaseClass::Hide();
-	MAINMENU_ROOT->HidePanel(SHADEBACKGROUND_MENU);
+	MAINMENU_ROOT->HidePanel( SHADEBACKGROUND_MENU );
 };
 
 
@@ -529,9 +529,9 @@ void CTFLoadoutPanel::OnThink()
 	BaseClass::OnThink();
 };
 
-void CTFLoadoutPanel::SetModelClass(int iClass)
+void CTFLoadoutPanel::SetModelClass( int iClass )
 {
-	m_pClassModelPanel->SetModelName(strdup(pszClassModels[iClass]), 0);
+	m_pClassModelPanel->SetModelName( strdup( pszClassModels[iClass]), 0 );
 }
 
 void CTFLoadoutPanel::UpdateModelPanels()
@@ -540,25 +540,25 @@ void CTFLoadoutPanel::UpdateModelPanels()
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if (iClassIndex == TF_CLASS_MERCENARY)
+	if ( iClassIndex == TF_CLASS_MERCENARY )
 	{
 		m_pClassModelPanel->SetVisible(false);
 		m_pGameModelPanel->SetVisible(true);
 		m_pWeaponSetPanel->SetVisible(false);
 		m_pRGBPanel->SetVisible(true);
 
-		if (pLocalPlayer && m_pGameModelPanel)
+		if ( pLocalPlayer && m_pGameModelPanel )
 		{
 			CModelPanelModel *pPanelModel = m_pGameModelPanel->m_hModel.Get();
-			if (pPanelModel)
+			if ( pPanelModel )
 			{
 				int iRed = 0, iGreen = 0, iBlue = 0;
 				ConVar *pColorRed = cvar->FindVar("tf2c_setmerccolor_r");
 				ConVar *pColorGreen = cvar->FindVar("tf2c_setmerccolor_g");
 				ConVar *pColorBlue = cvar->FindVar("tf2c_setmerccolor_b");
-				if (pColorRed) iRed = pColorRed->GetInt();
-				if (pColorGreen) iGreen = pColorGreen->GetInt();
-				if (pColorBlue) iBlue = pColorBlue->GetInt();
+				if ( pColorRed ) iRed = pColorRed->GetInt();
+				if ( pColorGreen ) iGreen = pColorGreen->GetInt();
+				if ( pColorBlue ) iBlue = pColorBlue->GetInt();
 				Vector vec = Vector(iRed / 255.0f, iGreen / 255.0f, iBlue / 255.0f);
 				pPanelModel->m_nSkin = 8;
 				pPanelModel->m_vecModelColor = vec;
@@ -567,12 +567,12 @@ void CTFLoadoutPanel::UpdateModelPanels()
 	}
 	else
 	{
-		m_pClassModelPanel->SetVisible(true);
-		m_pGameModelPanel->SetVisible(false);
-		m_pWeaponSetPanel->SetVisible(true);
-		m_pRGBPanel->SetVisible(false);
+		m_pClassModelPanel->SetVisible( true );
+		m_pGameModelPanel->SetVisible( false );
+		m_pWeaponSetPanel->SetVisible( true );
+		m_pRGBPanel->SetVisible( false );
 
-		SetModelClass(iClassIndex);
+		SetModelClass( iClassIndex );
 		UpdateModelWeapons();
 	}
 }
@@ -630,11 +630,11 @@ void CTFLoadoutPanel::DefaultLayout()
 					int iWeaponPreset = GetTFInventory()->GetWeaponPreset( iClassIndex, iSlot );
 					if ( iColumn == iWeaponPreset )
 					{
-						m_pWeaponButton->SetBorderByString("AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed");
+						m_pWeaponButton->SetBorderByString( "AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed" );
 					}
 					else
 					{
-						m_pWeaponButton->SetBorderByString("AdvRoundedButtonDisabled", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed");
+						m_pWeaponButton->SetBorderByString( "AdvRoundedButtonDisabled", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed" );
 					}
 					m_pWeaponButton->GetButton()->SetSelected( ( iColumn == iWeaponPreset ) );
 

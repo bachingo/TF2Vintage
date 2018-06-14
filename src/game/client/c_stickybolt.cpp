@@ -200,7 +200,7 @@ void SpawnGib( const CEffectData &data, const char *pszModelName )
 	if ( !pModel )
 		return;
 	
-	int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL | FTENT_ROTATE;
+	int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL;
 
 	Assert( pModel );	
 
@@ -215,20 +215,21 @@ void SpawnGib( const CEffectData &data, const char *pszModelName )
 
 	pTemp->SetGravity( 0.4 );
 
+	pTemp->SetPlayerSimulated( C_BasePlayer::GetLocalPlayer() );
 	pTemp->m_flSpriteScale = 10;
 
 	pTemp->flags = flags;
 
 	// don't collide with owner
-	pTemp->clientIndex = data.entindex();
+	/*pTemp->clientIndex = data.entindex();
 	if ( pTemp->clientIndex < 0 )
 	{
 		pTemp->clientIndex = 0;
-	}
+	}*/
 
 	// ::ShouldCollide decides what this collides with
-	pTemp->flags |= FTENT_COLLISIONGROUP;
-	pTemp->SetCollisionGroup( COLLISION_GROUP_PLAYER );
+	//pTemp->flags |= FTENT_COLLISIONGROUP;
+	//pTemp->SetCollisionGroup( COLLISION_GROUP_PLAYER );
 }
 
 //-----------------------------------------------------------------------------
@@ -244,6 +245,15 @@ void ArrowBreakCallback( const CEffectData &data )
 DECLARE_CLIENT_EFFECT( "ArrowBreak", ArrowBreakCallback );
 
 
-void AttachArrowToBone( const CEffectData &data )
+void ArrowAttachCallback( const CEffectData &data )
 {
+	//C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( data.m_nMaterial ) );
+
+	model_t *pModel = (model_t *)engine->LoadModel( "models/weapons/w_models/w_arrow.mdl" );
+	C_LocalTempEntity *pArrow = tempents->SpawnTempModel( pModel, data.m_vOrigin, data.m_vAngles, Vector( 0,0,0 ), 30.0f, FTENT_PLYRATTACHMENT );
+	pArrow->clientIndex = data.entindex();
+
+	//pPlayer->AttachEntityToBone( pArrow, data.m_nHitBox, data.m_vOrigin, data.m_vAngles );
 }
+
+DECLARE_CLIENT_EFFECT( "ArrowAttach", ArrowAttachCallback );

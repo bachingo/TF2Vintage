@@ -135,6 +135,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bResetParity ) ), 
 	RecvPropBool( RECVINFO( m_bReloadedThroughAnimEvent ) ),
 	RecvPropTime( RECVINFO( m_flLastFireTime ) ),
+	RecvPropTime( RECVINFO( m_flEffectBarRegenTime ) ),
 
 	RecvPropInt( RECVINFO( m_nSequence ), 0, RecvProxy_WeaponSequence ),
 // Server specific.
@@ -144,6 +145,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropInt( SENDINFO( m_iReloadMode ), 4, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bReloadedThroughAnimEvent ) ),
 	SendPropTime( SENDINFO( m_flLastFireTime ) ),
+	SendPropTime( SENDINFO( m_flEffectBarRegenTime ) ),
 
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropInt( SENDINFO( m_nSequence ), ANIMATION_SEQUENCE_BITS, SPROP_UNSIGNED ),
@@ -156,6 +158,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD_TOL( m_flLastFireTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),
+	DEFINE_PRED_FIELD( m_flEffectBarRegenTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 #endif
 END_PREDICTION_DATA()
 
@@ -580,6 +583,20 @@ void CTFWeaponBase::Drop( const Vector &vecVelocity )
 #endif
 
 	BaseClass::Drop( vecVelocity );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanHolster( void ) const
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	// Not while taunting.
+	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
+		return false;
+
+	return BaseClass::CanHolster();
 }
 
 //-----------------------------------------------------------------------------
@@ -1044,11 +1061,11 @@ bool CTFWeaponBase::ReloadSingly( void )
 
 			if (SendWeaponAnim(ACT_VM_RELOAD))
 			{
-				if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
+				/*if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
 				{
 					SetReloadTimer( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload );
 				}
-				else
+				else*/
 				{
 					SetReloadTimer( SequenceDuration() );
 				}
@@ -1081,6 +1098,8 @@ bool CTFWeaponBase::ReloadSingly( void )
 				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
 				pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
+
+			SwitchBodyGroups(); // Update number of pills in the launcher
 
 			if ( Clip1() == GetMaxClip1() || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 			{
@@ -1335,6 +1354,8 @@ void CTFWeaponBase::ItemBusyFrame( void )
 		m_bInAttack2 = false;
 	}
 
+	CheckEffectBarRegen();
+
 	// Interrupt a reload.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer )
@@ -1376,6 +1397,8 @@ void CTFWeaponBase::ItemPostFrame( void )
 		m_bInAttack2 = false;
 	}
 
+	CheckEffectBarRegen();
+
 	// If we're lowered, we're not allowed to fire
 	if ( m_bLowered )
 		return;
@@ -1388,6 +1411,15 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		ReloadSinglyPostFrame();
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::ItemHolsterFrame( void )
+{
+	CheckEffectBarRegen();
+	BaseClass::ItemHolsterFrame();
 }
 
 //-----------------------------------------------------------------------------
@@ -1705,6 +1737,90 @@ const char *CTFWeaponBase::GetTracerType( void )
 	return BaseClass::GetTracerType();
 }
 
+//-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ void CTFWeaponBase::StartEffectBarRegen( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( !pOwner )
+ 		return;
+ 
+ 	// Don't recharge unless we actually need recharging.
+ 	if ( gpGlobals->curtime > m_flEffectBarRegenTime ||
+ 		pOwner->GetAmmoCount( m_iPrimaryAmmoType ) + 1 <= pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ 	{
+ 		m_flEffectBarRegenTime = gpGlobals->curtime + InternalGetEffectBarRechargeTime();
+ 	}
+ }
+ 
+ //-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ void CTFWeaponBase::EffectBarRegenFinished( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( !pOwner )
+ 		return;
+ 
+ #ifdef GAME_DLL
+ 	pOwner->GiveAmmo( 1, m_iPrimaryAmmoType, true, TF_AMMO_SOURCE_RESUPPLY );
+ #endif
+	// Keep recharging until we're full on ammo.
+ #ifdef GAME_DLL
+ 	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) < pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ #else
+ 	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) + 1 < pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ #endif
+ 	{
+ 		StartEffectBarRegen();
+ 	}
+ 	else
+ 	{
+ 		m_flEffectBarRegenTime = 0.0f;
+ 	}
+ }
+ 
+ //-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ void CTFWeaponBase::CheckEffectBarRegen( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( !pOwner )
+ 		return;
+ 
+ 	if ( m_flEffectBarRegenTime != 0.0f )
+ 	{
+ 		// Stop recharging if we're restocked on ammo.
+ 		if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) == pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ 		{
+ 			m_flEffectBarRegenTime = 0.0f;
+ 		}
+ 		else if ( gpGlobals->curtime >= m_flEffectBarRegenTime )
+ 		{
+ 			m_flEffectBarRegenTime = 0.0f;
+ 			EffectBarRegenFinished();
+ 		}
+ 	}
+ }
+ 
+ //-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ float CTFWeaponBase::GetEffectBarProgress( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( pOwner && pOwner->GetAmmoCount( m_iPrimaryAmmoType ) < pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ 	{
+ 		float flTimeLeft = m_flEffectBarRegenTime - gpGlobals->curtime;
+ 		float flRechargeTime = InternalGetEffectBarRechargeTime();
+ 		return clamp( ( ( flRechargeTime - flTimeLeft ) / flRechargeTime ), 0.0f, 1.0f );
+ 	}
+ 
+ 	return 1.0f;
+}
+
 //=============================================================================
 //
 // TFWeaponBase functions (Server specific).
@@ -1810,6 +1926,8 @@ void CTFWeaponBase::WeaponReset( void )
 	m_iReloadMode.Set( TF_RELOAD_START );
 
 	m_bResetParity = !m_bResetParity;
+
+	m_flEffectBarRegenTime = 0.0f;
 }
 
 //-----------------------------------------------------------------------------

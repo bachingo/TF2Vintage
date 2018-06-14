@@ -227,6 +227,8 @@ public:
 	bool	DoClassSpecialSkill( void );
 	bool	CanGoInvisible( void );
 
+	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
+
 	virtual CAttributeManager *GetAttributeManager() { return &m_AttributeManager; }
 	virtual CAttributeContainer *GetAttributeContainer() { return NULL; }
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
