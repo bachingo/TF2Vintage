@@ -2120,7 +2120,6 @@ void CBaseCombatWeapon::CheckReload( void )
 {
 	if ( m_bReloadsSingly )
 	{
-		Msg("\nSingly\n");
 		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 		if ( !pOwner )
 			return;

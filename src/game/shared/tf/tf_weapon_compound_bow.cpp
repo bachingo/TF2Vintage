@@ -216,6 +216,8 @@ void CTFCompoundBow::ItemPostFrame( void )
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::FireArrow( void )
 {
+	m_bReloadedThroughAnimEvent = false; // Huntsman reload fix
+
 	// Get the player owning the weapon.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )
