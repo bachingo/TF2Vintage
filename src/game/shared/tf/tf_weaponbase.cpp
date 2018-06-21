@@ -1148,8 +1148,9 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 				pOperator->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
 
-			if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
+			//if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
 				m_bReloadedThroughAnimEvent = true;
+
 			return;
 		}
 	}
@@ -3294,7 +3295,7 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 		DispatchEffect( "TF_EjectBrass", data );
 		return true;
 	}
-	if ( event == AE_WPN_INCREMENTAMMO )
+	if ( event == AE_WPN_INCREMENTAMMO && GetWeaponID() )
 	{
 		CTFPlayer *pPlayer = GetTFPlayerOwner();
 
@@ -3304,8 +3305,7 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 			pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
 		}
 
-		if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
-			m_bReloadedThroughAnimEvent = true;
+		m_bReloadedThroughAnimEvent = true;
 
 		return true;
 	}

@@ -480,6 +480,10 @@ int	CTFProjectile_Arrow::GetDamageType()
 	{
 		iDmgType |= DMG_IGNITE;	
 	}
+	if ( m_iDeflected > 0 )
+	{
+		iDmgType |= DMG_MINICRITICAL;
+	}
 
 	return iDmgType;
 }

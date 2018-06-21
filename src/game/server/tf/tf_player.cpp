@@ -800,6 +800,7 @@ void CTFPlayer::Precache()
 
 	// Precache particle systems
 	PrecacheParticleSystem( "crit_text" );
+	PrecacheParticleSystem( "minicrit_text" );
 	PrecacheParticleSystem( "cig_smoke" );
 	PrecacheParticleSystem( "speech_mediccall" );
 	PrecacheTeamParticles("player_recent_teleport_%s");
@@ -3588,17 +3589,22 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 			}
 		}
-
-		int nCritWhileAirborne = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
-
 		CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
 
+		int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMiniCritWhileAirborne, mini_crit_airborne );
+		
 		if ( nCritWhileAirborne && pTFAttacker && pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
 		{
 			bitsDamage |= DMG_CRITICAL;
 			info.AddDamageType( DMG_CRITICAL );
 		}
+		/*else if ( nMiniCritWhileAirborne && this && this->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+		{
+			bitsDamage |= DMG_MINICRITICAL;
+			info.AddDamageType( DMG_MINICRITICAL );
+		}*/
 		
 		// Notify the damaging weapon.
 		pWeapon->ApplyOnHitAttributes( this, info );
@@ -3632,6 +3638,39 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				EmitSound_t params;
 				params.m_flSoundTime = 0;
 				params.m_pSoundName = "TFPlayer.CritHit";
+				EmitSound( filter, info.GetAttacker()->entindex(), params );
+			}
+
+			// Burn sounds are handled in ConditionThink()
+			if ( !(bitsDamage & DMG_BURN ) )
+			{
+				SpeakConceptIfAllowed( MP_CONCEPT_HURT, "damagecritical:1" );
+			}
+		}
+		else if ( bitsDamage & DMG_MINICRITICAL )
+		{
+			if ( bDebug )
+			{
+				Warning( "    MINI CRITICAL!\n");
+			}
+
+			flDamage = info.GetDamage() * TF_DAMAGE_MINICRIT_MULTIPLIER;
+
+			// Show the attacker, unless the target is a disguised spy
+			if ( pAttacker && pAttacker->IsPlayer() && !m_Shared.InCond( TF_COND_DISGUISED ) )
+			{
+				CEffectData	data;
+				data.m_nHitBox = GetParticleSystemIndex( "minicrit_text" );
+				data.m_vOrigin = WorldSpaceCenter() + Vector(0,0,32);
+				data.m_vAngles = vec3_angle;
+				data.m_nEntIndex = 0;
+
+				CSingleUserRecipientFilter filter( (CBasePlayer*)pAttacker );
+				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
+
+				EmitSound_t params;
+				params.m_flSoundTime = 0;
+				params.m_pSoundName = "TFPlayer.CritHitMini";
 				EmitSound( filter, info.GetAttacker()->entindex(), params );
 			}
 
@@ -4055,7 +4094,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		event->SetInt( "userid", GetUserID() );
 		event->SetInt( "health", max( 0, m_iHealth ) );
 		event->SetInt( "damageamount", ( iOldHealth - m_iHealth ) );
-		event->SetInt( "crit", info.GetDamageType() & DMG_CRITICAL ? 1 : 0 );
+		event->SetInt( "crit", ( info.GetDamageType() & DMG_CRITICAL || info.GetDamageType() & DMG_MINICRITICAL ) ? 1 : 0 );
 
 		// HLTV event priority, not transmitted
 		event->SetInt( "priority", 5 );	
@@ -6357,7 +6396,7 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 	}
 
 	// play a crit sound to the victim ( us )
-	if ( info.GetDamageType() & DMG_CRITICAL )
+	if ( info.GetDamageType() & DMG_CRITICAL || info.GetDamageType() & DMG_MINICRITICAL )
 	{
 		flPainLength = PlayCritReceivedSound();
 

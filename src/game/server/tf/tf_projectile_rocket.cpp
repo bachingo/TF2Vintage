@@ -97,6 +97,10 @@ int	CTFProjectile_Rocket::GetDamageType()
 	{
 		iDmgType |= DMG_CRITICAL;
 	}
+	if ( m_iDeflected > 0 )
+	{
+		iDmgType |= DMG_MINICRITICAL;
+	}
 
 	return iDmgType;
 }
