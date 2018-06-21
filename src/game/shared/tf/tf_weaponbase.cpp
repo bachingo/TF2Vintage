@@ -668,6 +668,8 @@ bool CTFWeaponBase::Deploy( void )
 
 
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
+
+		SwitchBodyGroups();
 	}
 
 	return bDeploy;
@@ -966,7 +968,6 @@ bool CTFWeaponBase::Reload( void )
 	// Sorry, people, no speeding it up.
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return false;
-
 	// If we're not already reloading, check to see if we have ammo to reload and check to see if we are max ammo.
 	if ( m_iReloadMode == TF_RELOAD_START ) 
 	{
@@ -1147,7 +1148,8 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 				pOperator->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
 
-			m_bReloadedThroughAnimEvent = true;
+			if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
+				m_bReloadedThroughAnimEvent = true;
 			return;
 		}
 	}
@@ -1541,8 +1543,8 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 		// Weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
 		// Also auto-reload if owner has auto-reload enabled.
 		if ( UsesClipsForAmmo1() && !AutoFiresFullClip() && 
-			(m_iClip1 == 0 || (pOwner && pOwner->ShouldAutoReload() && m_iClip1 < GetMaxClip1() && CanAutoReload())) && 
-			(GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD) == false && 
+			(m_iClip1 == 0 || ( pOwner && pOwner->ShouldAutoReload() && m_iClip1 < GetMaxClip1() && CanAutoReload() ) ) && 
+			( GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD ) == false && 
 			m_flNextPrimaryAttack < gpGlobals->curtime && 
 			m_flNextSecondaryAttack < gpGlobals->curtime )
 		{
@@ -3302,7 +3304,8 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 			pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
 		}
 
-		m_bReloadedThroughAnimEvent = true;
+		if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
+			m_bReloadedThroughAnimEvent = true;
 
 		return true;
 	}

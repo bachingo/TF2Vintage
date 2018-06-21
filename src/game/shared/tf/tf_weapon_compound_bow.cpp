@@ -172,9 +172,7 @@ void CTFCompoundBow::LowerBow( void )
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::WeaponIdle( void )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-
-	if ( m_flChargeBeginTime > 0 && pOwner->GetAmmoCount( GetPrimaryAmmoType() ) > 0 )
+	if ( m_flChargeBeginTime > 0 && m_iClip1 > 0 )
 	{
 		FireArrow();
 	}
