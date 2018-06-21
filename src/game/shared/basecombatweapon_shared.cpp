@@ -2120,6 +2120,7 @@ void CBaseCombatWeapon::CheckReload( void )
 {
 	if ( m_bReloadsSingly )
 	{
+		Msg("\nSingly\n");
 		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 		if ( !pOwner )
 			return;
@@ -2160,7 +2161,7 @@ void CBaseCombatWeapon::CheckReload( void )
 	}
 	else
 	{
-		if ( (m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+		if ( (m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
 		{
 			FinishReload();
 			m_flNextPrimaryAttack	= gpGlobals->curtime;
@@ -2269,7 +2270,6 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 	// If my clip is empty (and I use clips) start reload
 	if ( UsesClipsForAmmo1() && !m_iClip1 ) 
 	{
-		Reload();
 		return;
 	}
 

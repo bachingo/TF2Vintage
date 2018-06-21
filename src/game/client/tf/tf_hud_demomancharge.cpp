@@ -76,7 +76,7 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || !pPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) || !pPlayer->IsAlive() )
+	if ( !pPlayer || ( !pPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) && !pPlayer->IsPlayerClass( TF_CLASS_SNIPER ) ) || !pPlayer->IsAlive() )
 	{
 		return false;
 	}
@@ -90,7 +90,7 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 
 	int iWeaponID = pWpn->GetWeaponID();
 
-	if ( iWeaponID != TF_WEAPON_PIPEBOMBLAUNCHER )
+	if ( iWeaponID != TF_WEAPON_PIPEBOMBLAUNCHER && iWeaponID != TF_WEAPON_COMPOUND_BOW )
 	{
 		return false;
 	}
