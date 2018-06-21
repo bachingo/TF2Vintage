@@ -3600,11 +3600,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			bitsDamage |= DMG_CRITICAL;
 			info.AddDamageType( DMG_CRITICAL );
 		}
-		/*else if ( nMiniCritWhileAirborne && this && this->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+		else if ( nMiniCritWhileAirborne && this && this->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
 		{
 			bitsDamage |= DMG_MINICRITICAL;
 			info.AddDamageType( DMG_MINICRITICAL );
-		}*/
+		}
 		
 		// Notify the damaging weapon.
 		pWeapon->ApplyOnHitAttributes( this, info );
