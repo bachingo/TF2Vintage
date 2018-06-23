@@ -464,7 +464,7 @@ public:
 
 inline CTFGameRules* TFGameRules()
 {
-	return static_cast<CTFGameRules*>(g_pGameRules);
+	return static_cast<CTFGameRules*>( g_pGameRules );
 }
 
 #ifdef GAME_DLL

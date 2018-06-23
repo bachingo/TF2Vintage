@@ -15,6 +15,7 @@
 
 CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 
+#define TF_BODYGROUP_STATE_BITE 1
 #define TF_SANDVICH_PLATE_MODEL "models/items/plate.mdl"
 
 //-----------------------------------------------------------------------------
@@ -22,13 +23,32 @@ CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 //-----------------------------------------------------------------------------
 void CTFLunchBox::PrimaryAttack( void )
 {
+	bool bHealth = false;
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
+	{
 		return;
+	}
+
+	if ( pOwner->HealthFraction() < 1.0f )
+	{
+		Msg("\nbHealth\n");
+		bHealth = true;
+	}
 
 #ifdef GAME_DLL
 	pOwner->Taunt();
 #endif
+
+	if ( bHealth )
+	{
+		Msg("\nRemoveAmmo\n");
+		// Switch away from it immediately, don't want it to stick around.
+		pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+		pOwner->SwitchToNextBestWeapon( this );
+
+		StartEffectBarRegen();
+	}
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 }
@@ -102,14 +122,19 @@ void CTFLunchBox::Precache( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLunchBox::ApplyBiteEffects( void )
+void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 {
-	// Heal 30 HP per second for a total 120 HP.
+	if ( !bHurt )
+		return;
+
+	// Heal 25% of the player's max health per second for a total of 100%.
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
 	if ( pOwner )
 	{
-		pOwner->TakeHealth( 30, DMG_GENERIC );
+		pOwner->TakeHealth( ( GetTFPlayerOwner()->GetMaxHealth() ) / 4, DMG_GENERIC );
+		// Apply a bite effect to the model
+	    SetBodygroup( 0, TF_BODYGROUP_STATE_BITE );
 	}
 }
 

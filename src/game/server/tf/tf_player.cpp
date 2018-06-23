@@ -55,6 +55,7 @@
 #include "econ_item_schema.h"
 #include "baseprojectile.h"
 #include "tf_weapon_flamethrower.h"
+#include "tf_weapon_lunchbox.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -429,7 +430,8 @@ CTFPlayer::CTFPlayer()
 
 	m_bSpeakingConceptAsDisguisedSpy = false;
 
-	ClearTauntAttack();
+	m_flTauntAttackTime = 0.0f;
+	m_iTauntAttack = TF_TAUNT_NONE;
 
 	m_nBlastJumpFlags = 0;
 	m_bBlastLaunched = false;
@@ -804,15 +806,15 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "minicrit_text" );
 	PrecacheParticleSystem( "cig_smoke" );
 	PrecacheParticleSystem( "speech_mediccall" );
-	PrecacheTeamParticles("player_recent_teleport_%s");
-	PrecacheTeamParticles("particle_nemesis_%s", true);
-	PrecacheTeamParticles("spy_start_disguise_%s");
-	PrecacheTeamParticles("burningplayer_%s", true);
-	PrecacheTeamParticles("critgun_weaponmodel_%s", true, g_aTeamNamesShort);
-	PrecacheTeamParticles("critgun_weaponmodel_%s_glow", true, g_aTeamNamesShort);
-	PrecacheTeamParticles("healthlost_%s", false, g_aTeamNamesShort);
-	PrecacheTeamParticles("healthgained_%s", false, g_aTeamNamesShort);
-	PrecacheTeamParticles("healthgained_%s_large", false, g_aTeamNamesShort);
+	PrecacheTeamParticles( "player_recent_teleport_%s" );
+	PrecacheTeamParticles( "particle_nemesis_%s", true );
+	PrecacheTeamParticles( "spy_start_disguise_%s" );
+	PrecacheTeamParticles( "burningplayer_%s", true );
+	PrecacheTeamParticles( "critgun_weaponmodel_%s", true, g_aTeamNamesShort );
+	PrecacheTeamParticles( "critgun_weaponmodel_%s_glow", true, g_aTeamNamesShort );
+	PrecacheTeamParticles( "healthlost_%s", false, g_aTeamNamesShort );
+	PrecacheTeamParticles( "healthgained_%s", false, g_aTeamNamesShort );
+	PrecacheTeamParticles( "healthgained_%s_large", false, g_aTeamNamesShort );
 	PrecacheParticleSystem( "blood_spray_red_01" );
 	PrecacheParticleSystem( "blood_spray_red_01_far" );
 	PrecacheParticleSystem( "water_blood_impact_red_01" );
@@ -4498,8 +4500,17 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 	else
 	{
-		// Drop a pack with their leftover ammo
-		DropAmmoPack();
+		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+		if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LUNCHBOX )
+		{
+			// If the player died holding the sandvich drop a special health kit that heals 50hp (75hp for scout)
+			DropLunchbox();
+		}
+		else
+		{
+			// Drop a pack with their leftover ammo
+			DropAmmoPack();
+		}
 	}
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
@@ -4966,6 +4977,97 @@ void CTFPlayer::DropAmmoPack( void )
 		pAmmoPack->GiveAmmo( iPrimary, TF_AMMO_PRIMARY );
 		pAmmoPack->GiveAmmo( iSecondary, TF_AMMO_SECONDARY );
 		pAmmoPack->GiveAmmo( iMetal, TF_AMMO_METAL );
+
+		Vector vecRight, vecUp;
+		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
+
+		// Calculate the initial impulse on the weapon.
+		Vector vecImpulse( 0.0f, 0.0f, 0.0f );
+		vecImpulse += vecUp * random->RandomFloat( -0.25, 0.25 );
+		vecImpulse += vecRight * random->RandomFloat( -0.25, 0.25 );
+		VectorNormalize( vecImpulse );
+		vecImpulse *= random->RandomFloat( tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat() );
+		vecImpulse += GetAbsVelocity();
+
+		// Cap the impulse.
+		float flSpeed = vecImpulse.Length();
+		if ( flSpeed > tf_weapon_ragdoll_maxspeed.GetFloat() )
+		{
+			VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
+		}
+
+		if ( pAmmoPack->VPhysicsGetObject() )
+		{
+			// We can probably remove this when the mass on the weapons is correct!
+			pAmmoPack->VPhysicsGetObject()->SetMass( 25.0f );
+			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
+			pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+		}
+
+		pAmmoPack->SetInitialVelocity( vecImpulse );
+
+		switch ( GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+				pAmmoPack->m_nSkin = 0;
+				break;
+			case TF_TEAM_BLUE:
+				pAmmoPack->m_nSkin = 1;
+				break;
+			case TF_TEAM_GREEN:
+				pAmmoPack->m_nSkin = 2;
+				break;
+			case TF_TEAM_YELLOW:
+				pAmmoPack->m_nSkin = 3;
+				break;
+		}
+
+		// Give the ammo pack some health, so that trains can destroy it.
+		pAmmoPack->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+		pAmmoPack->m_takedamage = DAMAGE_YES;		
+		pAmmoPack->SetHealth( 900 );
+		
+		pAmmoPack->SetBodygroup( 1, 1 );
+	
+		// Clean up old ammo packs if they exist in the world
+		AmmoPackCleanUp();	
+	}	
+	pWeapon->SetModel( pWeapon->GetViewModel() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::DropLunchbox( void )
+{
+	// Since weapon is hidden in loser state don't drop lunchbox.
+	if ( m_Shared.IsLoser() )
+		return;
+
+	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+	if ( !pWeapon )
+		return;
+
+	// We need to find bones on the world model, so switch the weapon to it.
+	const char *pszWorldModel = pWeapon->GetWorldModel();
+	pWeapon->SetModel( pszWorldModel );
+
+
+	// Find the position and angle of the weapons so the "ammo box" matches.
+	Vector vecPackOrigin;
+	QAngle vecPackAngles;
+	if( !CalculateAmmoPackPositionAndAngles( pWeapon, vecPackOrigin, vecPackAngles ) )
+		return;
+
+	// Create the ammo pack.
+	CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );
+	Assert( pAmmoPack );
+	if ( pAmmoPack )
+	{
+		// Remove all of the players ammo.
+		RemoveAllAmmo();
+
+		pAmmoPack->SetIsLunchbox( true );
 
 		Vector vecRight, vecUp;
 		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
@@ -7270,24 +7372,30 @@ void CTFPlayer::Taunt( void )
 		}
 
 		// Setup a taunt attack if necessary.
+		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )	
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
+			m_iTauntAttack = TF_TAUNT_LUNCHBOX;
+		}
 		if ( Q_stricmp( szResponse, "scenes/player/pyro/low/taunt02.vcd" ) == 0 )
 		{
-			m_flTauntAttackTime = gpGlobals->curtime + 2.0;
+			m_flTauntAttackTime = gpGlobals->curtime + 2.0f;
 			m_iTauntAttack = TF_TAUNT_PYRO;
 		}
 		else if ( Q_stricmp( szResponse, "scenes/player/heavy/low/taunt03_v1.vcd" ) == 0 )
 		{
-			m_flTauntAttackTime = gpGlobals->curtime + 1.8;
+			m_flTauntAttackTime = gpGlobals->curtime + 1.8f;
 			m_iTauntAttack = TF_TAUNT_HEAVY;
 		}
 		else if ( Q_strnicmp( szResponse, "scenes/player/spy/low/taunt03", 29 ) == 0 )
 		{
-			m_flTauntAttackTime = gpGlobals->curtime + 1.8;
+			m_flTauntAttackTime = gpGlobals->curtime + 1.8f;
 			m_iTauntAttack = TF_TAUNT_SPY1;
 		}
 		else if ( Q_strnicmp( szResponse, "scenes/player/sniper/low/taunt04", 32 ) == 0)
 		{
-			m_flTauntAttackTime = gpGlobals->curtime + 0.5;
+			m_flTauntAttackTime = gpGlobals->curtime + 0.5f;
 			m_iTauntAttack = TF_TAUNT_SNIPER1;
 		}
 	}
@@ -7309,146 +7417,167 @@ void CTFPlayer::DoTauntAttack( void )
 
 	switch ( iTauntType )
 	{
-	case TF_TAUNT_PYRO:
-	case TF_TAUNT_SPY1:
-	case TF_TAUNT_SPY2:
-	case TF_TAUNT_SPY3:
-	case TF_TAUNT_SNIPER1:
-	case TF_TAUNT_SNIPER2:
-	{
-		Vector vecAttackDir = BodyDirection2D();
-		Vector vecOrigin = WorldSpaceCenter() + vecAttackDir * 64;
-		Vector mins = vecOrigin - Vector( 24, 24, 24 );
-		Vector maxs = vecOrigin + Vector( 24, 24, 24 );
-
-		QAngle angForce( -45.0f, EyeAngles()[YAW], 0 );
-		Vector vecForce;
-		AngleVectors( angForce, &vecForce );
-		float flDamage = 0.0f;
-		int nDamageType = DMG_GENERIC;
-		int iDamageCustom = 0;
-
-		switch ( iTauntType )
-		{
 		case TF_TAUNT_PYRO:
-			vecForce *= 25000.0f;
-			flDamage = 500.0f;
-			nDamageType = DMG_IGNITE;
-			iDamageCustom = TF_DMG_TAUNT_PYRO;
-			break;
+		case TF_TAUNT_SPY1:
+		case TF_TAUNT_SPY2:
 		case TF_TAUNT_SPY3:
-			vecForce *= 20000.0f;
-			flDamage = 500.0f;
-			nDamageType = DMG_SLASH;
-			iDamageCustom = TF_DMG_TAUNT_SPY;
-			break;
 		case TF_TAUNT_SNIPER1:
-			vecForce *= 0.0f;
-			flDamage = 1.0f;
-			nDamageType = DMG_SLASH;
-			iDamageCustom = TF_DMG_TAUNT_SNIPER;
-			break;
 		case TF_TAUNT_SNIPER2:
-			vecForce *= -1000.0f;
-			flDamage = 500.0f;
-			nDamageType = DMG_SLASH;
-			iDamageCustom = TF_DMG_TAUNT_SNIPER;
-		break;
-		default:
-			vecForce *= 100.0f;
-			flDamage = 25.0f;
-			nDamageType = DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE;
-			iDamageCustom = TF_DMG_TAUNT_SPY;
+		{
+			Vector vecAttackDir = BodyDirection2D();
+			Vector vecOrigin = WorldSpaceCenter() + vecAttackDir * 64;
+			Vector mins = vecOrigin - Vector( 24, 24, 24 );
+			Vector maxs = vecOrigin + Vector( 24, 24, 24 );
+
+			QAngle angForce( -45.0f, EyeAngles()[YAW], 0 );
+			Vector vecForce;
+			AngleVectors( angForce, &vecForce );
+			float flDamage = 0.0f;
+			int nDamageType = DMG_GENERIC;
+			int iDamageCustom = 0;
+
+			switch ( iTauntType )
+			{
+			case TF_TAUNT_PYRO:
+				vecForce *= 25000.0f;
+				flDamage = 500.0f;
+				nDamageType = DMG_IGNITE;
+				iDamageCustom = TF_DMG_TAUNT_PYRO;
+				break;
+			case TF_TAUNT_SPY3:
+				vecForce *= 20000.0f;
+				flDamage = 500.0f;
+				nDamageType = DMG_SLASH;
+				iDamageCustom = TF_DMG_TAUNT_SPY;
+				break;
+			case TF_TAUNT_SNIPER1:
+				vecForce *= 0.0f;
+				flDamage = 1.0f;
+				nDamageType = DMG_SLASH;
+				iDamageCustom = TF_DMG_TAUNT_SNIPER;
+				break;
+			case TF_TAUNT_SNIPER2:
+				vecForce *= -1000.0f;
+				flDamage = 500.0f;
+				nDamageType = DMG_SLASH;
+				iDamageCustom = TF_DMG_TAUNT_SNIPER;
+			break;
+			default:
+				vecForce *= 100.0f;
+				flDamage = 25.0f;
+				nDamageType = DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE;
+				iDamageCustom = TF_DMG_TAUNT_SPY;
+				break;
+			}
+
+			// Spy taunt has 3 hits, set up the next one.
+			if ( iTauntType == TF_TAUNT_SPY1 )
+			{
+				m_flTauntAttackTime = gpGlobals->curtime + 0.47;
+				m_iTauntAttack = TF_TAUNT_SPY2;
+			}
+			else if ( iTauntType == TF_TAUNT_SPY2 )
+			{
+				m_flTauntAttackTime = gpGlobals->curtime + 1.73;
+				m_iTauntAttack = TF_TAUNT_SPY3;
+			}
+			else if ( iTauntType == TF_TAUNT_SNIPER1 )
+			{
+				m_flTauntAttackTime = gpGlobals->curtime + 1.75;
+				m_iTauntAttack = TF_TAUNT_SNIPER2;
+			}
+
+			CBaseEntity *pList[256];
+
+			int count = UTIL_EntitiesInBox( pList, 256, mins, maxs, FL_CLIENT|FL_OBJECT );
+
+			if ( tf_debug_damage.GetBool() )
+			{
+				NDebugOverlay::Box( vecOrigin, -Vector( 24, 24, 24 ), Vector( 24, 24, 24 ), 0, 255, 0, 40, 10.0f );
+			}
+
+			for ( int i = 0; i < count; i++ )
+			{
+				CBaseEntity *pEntity = pList[i];
+
+				if ( pEntity == this || !pEntity->IsAlive() || InSameTeam( pEntity ) || !FVisible( pEntity, MASK_SOLID ) )
+					continue;
+				if ( iTauntType == TF_TAUNT_SNIPER1 )
+				{
+					CTFPlayer *pOther = ToTFPlayer( pEntity );
+					if( pOther )
+					{
+						pOther->Stun();
+					}
+				}
+
+				Vector vecDamagePos = WorldSpaceCenter();
+				vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
+
+				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, nDamageType, iDamageCustom );
+				pEntity->TakeDamage( info );
+				break;
+			}
+
 			break;
 		}
-
-		// Spy taunt has 3 hits, set up the next one.
-		if ( iTauntType == TF_TAUNT_SPY1 )
+		case TF_TAUNT_HEAVY:
 		{
-			m_flTauntAttackTime = gpGlobals->curtime + 0.47;
-			m_iTauntAttack = TF_TAUNT_SPY2;
-		}
-		else if ( iTauntType == TF_TAUNT_SPY2 )
-		{
-			m_flTauntAttackTime = gpGlobals->curtime + 1.73;
-			m_iTauntAttack = TF_TAUNT_SPY3;
-		}
-		else if ( iTauntType == TF_TAUNT_SNIPER1 )
-		{
-			m_flTauntAttackTime = gpGlobals->curtime + 1.75;
-			m_iTauntAttack = TF_TAUNT_SNIPER2;
-		}
+			// Fire a bullet in the direction player was looking at.
+			Vector vecSrc, vecShotDir, vecEnd;
+			QAngle angShot = EyeAngles();
+			AngleVectors( angShot, &vecShotDir );
+			vecSrc = Weapon_ShootPosition();
+			vecEnd = vecSrc + vecShotDir * 500;
 
-		CBaseEntity *pList[256];
+			trace_t tr;
+			UTIL_TraceLine( vecSrc, vecEnd, MASK_SOLID|CONTENTS_HITBOX, this, COLLISION_GROUP_PLAYER, &tr );
 
-		int count = UTIL_EntitiesInBox( pList, 256, mins, maxs, FL_CLIENT|FL_OBJECT );
-
-		if ( tf_debug_damage.GetBool() )
-		{
-			NDebugOverlay::Box( vecOrigin, -Vector( 24, 24, 24 ), Vector( 24, 24, 24 ), 0, 255, 0, 40, 10.0f );
-		}
-
-		for ( int i = 0; i < count; i++ )
-		{
-			CBaseEntity *pEntity = pList[i];
-
-			if ( pEntity == this || !pEntity->IsAlive() || InSameTeam( pEntity ) || !FVisible( pEntity, MASK_SOLID ) )
-				continue;
-			if ( iTauntType == TF_TAUNT_SNIPER1 )
+			if ( tf_debug_damage.GetBool() )
 			{
-				CTFPlayer *pOther = ToTFPlayer( pEntity );
-				if( pOther )
+				NDebugOverlay::Line( vecSrc, tr.endpos, 0, 255, 0, true, 10.0f );
+			}
+
+			if ( tr.fraction < 1.0f )
+			{
+				CBaseEntity *pEntity = tr.m_pEnt;
+				if ( pEntity && pEntity->IsPlayer() && !InSameTeam( pEntity ) )
 				{
-					pOther->Stun();
+					Vector vecForce, vecDamagePos;
+					QAngle angForce( -45.0, angShot[YAW], 0.0 );
+					AngleVectors( angForce, &vecForce );
+					vecForce *= 25000.0f;
+
+					vecDamagePos = tr.endpos;
+
+					CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, 500, DMG_BULLET, TF_DMG_TAUNT_HEAVY );
+					pEntity->TakeDamage( info );
 				}
 			}
 
-			Vector vecDamagePos = WorldSpaceCenter();
-			vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
-
-			CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, nDamageType, iDamageCustom );
-			pEntity->TakeDamage( info );
 			break;
 		}
-
-		break;
-	}
-	case TF_TAUNT_HEAVY:
-	{
-		// Fire a bullet in the direction player was looking at.
-		Vector vecSrc, vecShotDir, vecEnd;
-		QAngle angShot = EyeAngles();
-		AngleVectors( angShot, &vecShotDir );
-		vecSrc = Weapon_ShootPosition();
-		vecEnd = vecSrc + vecShotDir * 500;
-
-		trace_t tr;
-		UTIL_TraceLine( vecSrc, vecEnd, MASK_SOLID|CONTENTS_HITBOX, this, COLLISION_GROUP_PLAYER, &tr );
-
-		if ( tf_debug_damage.GetBool() )
+		case TF_TAUNT_LUNCHBOX:
 		{
-			NDebugOverlay::Line( vecSrc, tr.endpos, 0, 255, 0, true, 10.0f );
-		}
-
-		if ( tr.fraction < 1.0f )
-		{
-			CBaseEntity *pEntity = tr.m_pEnt;
-			if ( pEntity && pEntity->IsPlayer() && !InSameTeam( pEntity ) )
+			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+			if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
 			{
-				Vector vecForce, vecDamagePos;
-				QAngle angForce( -45.0, angShot[YAW], 0.0 );
-				AngleVectors( angForce, &vecForce );
-				vecForce *= 25000.0f;
+				CTFLunchBox *pLunch = static_cast<CTFLunchBox *>( pWeapon );
 
-				vecDamagePos = tr.endpos;
+				if ( HealthFraction() != 1.0f )
+				{
+					pLunch->ApplyBiteEffects( true );
+				}
+				else
+				{
+					pLunch->ApplyBiteEffects( false );
+				}
 
-				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, 500, DMG_BULLET, TF_DMG_TAUNT_HEAVY );
-				pEntity->TakeDamage( info );
+				m_iTauntAttack = TF_TAUNT_LUNCHBOX;
+				m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
 			}
+			break;
 		}
-
-		break;
-	}
 	}
 }
 
@@ -7457,6 +7586,14 @@ void CTFPlayer::DoTauntAttack( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ClearTauntAttack( void )
 {
+	if ( m_iTauntAttack == TF_TAUNT_LUNCHBOX )
+	{
+		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
+		{
+			SpeakConceptIfAllowed( MP_CONCEPT_ATE_FOOD );
+		}
+	}
 	m_flTauntAttackTime = 0.0f;
 	m_iTauntAttack = TF_TAUNT_NONE;
 }
@@ -7618,6 +7755,11 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 			{
 				criteriaSet.AppendCriteria( "minigunfiretime", UTIL_VarArgs("%.1f", pMinigun->GetFiringTime() ) );
 			}
+		}
+		CEconItemDefinition *pItemDef = pActiveWeapon->GetItem()->GetStaticData();
+		if ( pItemDef )
+		{
+			criteriaSet.AppendCriteria( "item_name", pItemDef->name );
 		}
 	}
 
