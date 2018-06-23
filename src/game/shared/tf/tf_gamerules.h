@@ -380,6 +380,7 @@ public:
 	virtual void ClientDisconnected( edict_t *pClient );
 
 	void	RadiusDamage( CTFRadiusDamageInfo &radiusInfo );
+	bool   RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond );
 	virtual void  RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
 
 	virtual float FlPlayerFallDamage( CBasePlayer *pPlayer );

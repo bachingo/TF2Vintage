@@ -173,6 +173,9 @@ public:
 	int		FindHealerIndex( CTFPlayer *pPlayer );
 	EHANDLE	GetFirstHealer();
 	void	HealthKitPickupEffects( int iAmount );
+
+	// Jarate Player
+	EHANDLE	m_hUrineAttacker;
 #endif
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
@@ -267,6 +270,7 @@ private:
 	void OnAddHalloweenGiant( void );
 	void OnAddHalloweenTiny( void );
 	void OnAddRagemode( void );
+	void OnAddUrine( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -282,6 +286,7 @@ private:
 	void OnRemoveHalloweenGiant( void );
 	void OnRemoveHalloweenTiny( void );
 	void OnRemoveRagemode( void );
+	void OnRemoveUrine( void );
 
 	float GetCritMult( void );
 
@@ -362,6 +367,7 @@ private:
 	float					m_flTauntRemoveTime;
 
 
+
 	float m_flDisguiseCompleteTime;
 
 	CNetworkVar( int, m_iDesiredPlayerClass );
@@ -394,6 +400,7 @@ private:
 	CNetworkVar( int, m_nTeamTeleporterUsed );
 
 #ifdef GAME_DLL
+
 	float	m_flNextCritUpdate;
 	CUtlVector<CTFDamageEvent> m_DamageEvents;
 #else
