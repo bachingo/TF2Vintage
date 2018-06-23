@@ -2055,6 +2055,92 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Logic for jar-based throwable object collisions
+//-----------------------------------------------------------------------------
+bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
+{
+	bool bExtinguished = false;
+	CTakeDamageInfo &info = radiusInfo.info;
+	CBaseEntity *pAttacker = info.GetAttacker();
+
+	CBaseEntity *pEntity = NULL;
+	for ( CEntitySphereQuery sphere( radiusInfo.m_vecSrc, radiusInfo.m_flRadius ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+	{
+		if ( pEntity == radiusInfo.m_pEntityIgnore )
+			continue;
+
+		if ( pEntity->m_takedamage == DAMAGE_NO )
+			continue;
+
+		// UNDONE: this should check a damage mask, not an ignore
+		if ( radiusInfo.m_iClassIgnore != CLASS_NONE && pEntity->Classify() == radiusInfo.m_iClassIgnore )
+		{
+			continue;
+		}
+
+		// Skip the attacker as we'll handle him separately.
+		//if ( pEntity == pAttacker && radiusInfo.m_flSelfDamageRadius != 0.0f )
+			//continue;
+
+		// Checking distance from source because Valve were apparently too lazy to fix the engine function.
+		Vector vecHitPoint;
+		pEntity->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
+		Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
+
+		if ( vecDir.LengthSqr() > ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+			continue;
+
+		CTFPlayer *pTFPlayer = ToTFPlayer( pEntity );
+		if ( pTFPlayer )
+		{
+			if ( !pTFPlayer->InSameTeam( pAttacker ) )
+			{
+				pTFPlayer->m_Shared.AddCond( TF_COND_URINE, 10.0f );
+				pTFPlayer->m_Shared.m_hUrineAttacker.Set( pAttacker );
+			}
+			else
+			{
+				if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
+				{
+					pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
+					pTFPlayer->EmitSound( "TFPlayer.FlameOut" );
+
+					if ( pEntity != pAttacker )
+					{
+						bExtinguished = true;
+					}
+				}
+			}
+		}
+	}
+	// For attacker, radius and damage need to be consistent so custom weapons don't screw up rocket jumping.
+	/*if ( radiusInfo.m_flSelfDamageRadius != 0.0f )
+	{
+		if ( pAttacker )
+		{
+			// Get stock damage.
+			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
+			if ( pWeapon )
+			{
+				info.SetDamage( (float)pWeapon->GetTFWpnData().GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
+			}
+
+			// Use stock radius.
+			radiusInfo.m_flRadius = radiusInfo.m_flSelfDamageRadius;
+
+			Vector vecHitPoint;
+			pAttacker->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
+			Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
+
+			if ( vecDir.LengthSqr() <= ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+			{
+				radiusInfo.ApplyToEntity( pAttacker );
+			}
+		}
+	}*/
+	return bExtinguished;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3142,7 +3228,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 		}
 	}
 
-	// if not killed by  suicide or killed by world, see if the scorer had an assister, and if so give the assister credit
+	// if not killed by suicide or killed by world, see if the scorer had an assister, and if so give the assister credit
 	if ( ( pVictim != pScorer ) && pKiller )
 	{
 		pAssister = ToTFPlayer( GetAssister( pVictim, pScorer, pInflictor ) );
@@ -3420,7 +3506,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	else if ( 0 == V_strcmp( killer_weapon_name, "tf_projectile_arrow" ) )
 	{
 		if( info.GetDamageType() & DMG_IGNITE )
+		{
 			killer_weapon_name = "huntsman_flyingburn";
+		}
 		else
 			killer_weapon_name = "huntsman";
 	}
@@ -3453,6 +3541,12 @@ CBasePlayer *CTFGameRules::GetAssister( CBasePlayer *pVictim, CBasePlayer *pScor
 		if ( pHealer && ( TF_CLASS_MEDIC == pHealer->GetPlayerClass()->GetClassIndex() ) && ( NULL == dynamic_cast<CObjectSentrygun *>( pInflictor ) ) )
 		{
 			return pHealer;
+		}
+		// Players who apply jarate should get next priority
+		CTFPlayer *pThrower = ToTFPlayer( static_cast<CBaseEntity *>( pTFVictim->m_Shared.m_hUrineAttacker.Get() ) );
+		if( pThrower && pThrower != pTFScorer )
+		{
+			return pThrower;
 		}
 
 		// See who has damaged the victim 2nd most recently (most recent is the killer), and if that is within a certain time window.

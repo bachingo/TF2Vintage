@@ -396,7 +396,7 @@ void CTFWeaponBaseGrenadeProj::DetonateThink( void )
 		m_bCollideWithTeammates = true;
 	}
 
-	if ( gpGlobals->curtime > m_flDetonateTime )
+	if ( gpGlobals->curtime > GetDetonateTime() )
 	{
 		Detonate();
 		return;

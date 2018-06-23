@@ -83,6 +83,24 @@ ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "Whe
 
 ConVar cl_autoreload( "cl_autoreload", "1",  FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, clip-using weapons will automatically be reloaded whenever they're not being fired." );
 
+CON_COMMAND_F( addcond, "Add a condition", FCVAR_CHEAT )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( GetLocalPlayerIndex() ) );
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.AddCond( atoi( args[1] ), atoi( args[2] ) );
+	}
+}
+
+CON_COMMAND_F( removecond, "Remove a condition", FCVAR_CHEAT )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( GetLocalPlayerIndex() ) );
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.RemoveCond( atoi( args[1] ) );
+	}
+}
+
 ConVar tf2c_model_muzzleflash("tf2c_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash");
 ConVar tf2c_muzzlelight("tf2c_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower");
 

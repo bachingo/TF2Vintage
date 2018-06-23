@@ -98,6 +98,7 @@ ConVar tf_allow_player_use( "tf_allow_player_use", "0", FCVAR_NOTIFY, "Allow pla
 
 ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player to slide for a bit after taunting." );
 
+
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
@@ -1139,9 +1140,14 @@ void CTFPlayer::Regenerate( void )
 	}
 
 	// Remove tranq condition
-	if  (m_Shared.InCond( TF_COND_SLOWED ) )
+	if (m_Shared.InCond( TF_COND_SLOWED ) )
 	{
 		m_Shared.RemoveCond( TF_COND_SLOWED );
+	}
+
+	if ( m_Shared.InCond( TF_COND_URINE ) )
+	{
+		m_Shared.RemoveCond( TF_COND_URINE );
 	}
 
 	//Fill Spy cloak
@@ -3567,6 +3573,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 			return 0;
 		}
+	}
+
+	if ( this->m_Shared.InCond( TF_COND_URINE ) )
+	{
+		// Jarated players take mini crits
+		bitsDamage |= DMG_MINICRITICAL;
+		info.AddDamageType( DMG_MINICRITICAL );
 	}
 
 	// Handle on-hit effects.

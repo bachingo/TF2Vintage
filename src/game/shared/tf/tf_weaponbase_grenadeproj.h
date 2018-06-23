@@ -92,13 +92,13 @@ public:
 	void					RemoveGrenade( bool bBlinkOut = true );
 
 	void					SetTimer( float time ){ m_flDetonateTime = time; }
-	float					GetDetonateTime( void ){ return m_flDetonateTime; }
+	virtual float			GetDetonateTime( void ){ return m_flDetonateTime; }
 
 	void					SetDetonateTimerLength( float timer );
 
 	void					VPhysicsUpdate( IPhysicsObject *pPhysics );
 
-	void					Explode( trace_t *pTrace, int bitsDamageType );
+	virtual void			Explode( trace_t *pTrace, int bitsDamageType );
 
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }

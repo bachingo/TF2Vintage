@@ -11,6 +11,7 @@
 #include "takedamageinfo.h"
 #include "tf_projectile_nail.h"
 #include "tf_projectile_arrow.h"
+#include "tf_projectile_jar.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -206,7 +207,8 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 	case TF_PROJECTILE_FESTITIVE_URINE:
 	case TF_PROJECTILE_BREADMONSTER_JARATE:
 	case TF_PROJECTILE_BREADMONSTER_MADMILK:
-		// TO-DO: Implement 'grenade' support
+		pProjectile = FireThrowable(pPlayer, iProjectile);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
 	case TF_PROJECTILE_ARROW:
@@ -592,7 +594,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 //-----------------------------------------------------------------------------
 // Purpose: Fire a flare
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireFlare(CTFPlayer *pPlayer)
+CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 {
 	PlayWeaponShootSound();
 
@@ -622,30 +624,64 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare(CTFPlayer *pPlayer)
 //-----------------------------------------------------------------------------
 // Purpose: Fire an Arrow
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireArrow(CTFPlayer *pPlayer, int iType)
+CBaseEntity *CTFWeaponBaseGun::FireThrowable( CTFPlayer *pPlayer, int iType )
+{
+	PlayWeaponShootSound();
+
+#ifdef GAME_DLL
+	AngularImpulse spin = AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 );
+
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+	// Create grenades here!!
+	Vector vecSrc = pPlayer->Weapon_ShootPosition();
+	vecSrc +=  vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
+	
+	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
+		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
+
+	//GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, false );
+
+	CTFProjectile_Jar *pProjectile = CTFProjectile_Jar::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
+	}
+	return pProjectile;
+#endif
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fire an Arrow
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireArrow( CTFPlayer *pPlayer, int iType )
 {
 	PlayWeaponShootSound();
 
 #ifdef GAME_DLL
 	Vector vecSrc;
 	QAngle angForward;
-	Vector vecOffset(23.5f, 12.0f, -3.0f);
-	if (pPlayer->GetFlags() & FL_DUCKING)
+	Vector vecOffset( 23.5f, 12.0f, -3.0f );
+	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
 		vecOffset.z = 8.0f;
 	}
-	/*if (IsWeapon(TF_WEAPON_COMPOUND_BOW))
+	/*if ( IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
 	{
 		// Valve were apparently too lazy to fix the viewmodel and just flipped it through the code.
 		vecOffset.y *= -1.0f;
 	}*/
-	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false, true);
+	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, true );
 
-	CTFProjectile_Arrow *pProjectile = CTFProjectile_Arrow::Create(this, vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), IsFlameArrow(), pPlayer, pPlayer, iType);
-	if (pProjectile)
+	CTFProjectile_Arrow *pProjectile = CTFProjectile_Arrow::Create( this, vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), IsFlameArrow(), pPlayer, pPlayer, iType );
+	if ( pProjectile )
 	{
-		pProjectile->SetCritical(IsCurrentAttackACrit());
-		pProjectile->SetDamage(GetProjectileDamage());
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
 	}
 	return pProjectile;
 #endif
@@ -656,37 +692,37 @@ CBaseEntity *CTFWeaponBaseGun::FireArrow(CTFPlayer *pPlayer, int iType)
 //-----------------------------------------------------------------------------
 // Purpose: Use this for any old grenades: MIRV, Frag, etc
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireGrenade(CTFPlayer *pPlayer)
+CBaseEntity *CTFWeaponBaseGun::FireGrenade( CTFPlayer *pPlayer )
 {
 	PlayWeaponShootSound();
 
 #ifdef GAME_DLL
 
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors(pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp);
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
 	// Create grenades here!!
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
 	vecSrc += vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
 
-	Vector vecVelocity = (vecForward * GetProjectileSpeed()) + (vecUp * 200.0f) + (random->RandomFloat(-10.0f, 10.0f) * vecRight) +
-		(random->RandomFloat(-10.0f, 10.0f) * vecUp);
+	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f) * vecRight ) +
+		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
 
 	float flDamageMult = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT(flDamageMult, mult_dmg);
+	CALL_ATTRIB_HOOK_FLOAT( flDamageMult, mult_dmg );
 
 	char szEntName[256];
-	V_snprintf(szEntName, sizeof(szEntName), "%s_projectile", WeaponIdToClassname(GetWeaponID()));
+	V_snprintf( szEntName, sizeof( szEntName ), "%s_projectile", WeaponIdToClassname( GetWeaponID() ) );
 
-	CTFWeaponBaseGrenadeProj *pProjectile = CTFWeaponBaseGrenadeProj::Create(szEntName, vecSrc, pPlayer->EyeAngles(), vecVelocity,
-		AngularImpulse(600, random->RandomInt(-1200, 1200), 0),
-		pPlayer, GetTFWpnData(), 3.0f, flDamageMult);
+	CTFWeaponBaseGrenadeProj *pProjectile = CTFWeaponBaseGrenadeProj::Create( szEntName, vecSrc, pPlayer->EyeAngles(), vecVelocity,
+		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
+		pPlayer, GetTFWpnData(), 3.0f, flDamageMult );
 
 
-	if (pProjectile)
+	if ( pProjectile )
 	{
-		pProjectile->SetCritical(IsCurrentAttackACrit());
-		pProjectile->SetLauncher(this);
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetLauncher( this );
 	}
 	return pProjectile;
 

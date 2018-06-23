@@ -655,6 +655,11 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 
 	case TF_COND_POWERUP_RAGEMODE:
 		OnAddRagemode();
+		break;
+
+	case TF_COND_URINE:
+		OnAddUrine();
+		break;
 
 	default:
 		break;
@@ -728,6 +733,11 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_POWERUP_RAGEMODE:
 		OnRemoveRagemode();
+		break;
+
+	case TF_COND_URINE:
+		OnRemoveUrine();
+		break;
 
 	default:
 		break;
@@ -899,7 +909,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
-	if (bDecayHealth)
+	if ( bDecayHealth )
 	{
 		// If we're not being buffed, our health drains back to our max
 		if ( m_pOuter->GetHealth() > m_pOuter->GetMaxHealth() )
@@ -965,57 +975,62 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
-	if (InCond(TF_COND_BURNING) && (m_pOuter->m_flPowerPlayTime < gpGlobals->curtime))
+	if ( InCond( TF_COND_BURNING ) && ( m_pOuter->m_flPowerPlayTime < gpGlobals->curtime ) )
 	{
 		// If we're underwater, put the fire out
-		if (gpGlobals->curtime > m_flFlameRemoveTime || m_pOuter->GetWaterLevel() >= WL_Waist)
+		if ( gpGlobals->curtime > m_flFlameRemoveTime || m_pOuter->GetWaterLevel() >= WL_Waist )
 		{
-			RemoveCond(TF_COND_BURNING);
+			RemoveCond( TF_COND_BURNING );
 		}
-		else if ((gpGlobals->curtime >= m_flFlameBurnTime) && (TF_CLASS_PYRO != m_pOuter->GetPlayerClass()->GetClassIndex()))
+		else if ( ( gpGlobals->curtime >= m_flFlameBurnTime ) && ( TF_CLASS_PYRO != m_pOuter->GetPlayerClass()->GetClassIndex() ) )
 		{
 			float flBurnDamage = TF_BURNING_DMG;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hBurnWeapon, flBurnDamage, mult_wpn_burndmg);
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hBurnWeapon, flBurnDamage, mult_wpn_burndmg );
 
 			// Burn the player (if not pyro, who does not take persistent burning damage)
-			CTakeDamageInfo info(m_hBurnAttacker, m_hBurnAttacker, m_hBurnWeapon, flBurnDamage, DMG_BURN | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BURNING);
-			m_pOuter->TakeDamage(info);
+			CTakeDamageInfo info( m_hBurnAttacker, m_hBurnAttacker, m_hBurnWeapon, flBurnDamage, DMG_BURN | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BURNING );
+			m_pOuter->TakeDamage( info );
 			m_flFlameBurnTime = gpGlobals->curtime + TF_BURNING_FREQUENCY;
 		}
 
-		if (m_flNextBurningSound < gpGlobals->curtime)
+		if ( m_flNextBurningSound < gpGlobals->curtime )
 		{
-			m_pOuter->SpeakConceptIfAllowed(MP_CONCEPT_ONFIRE);
+			m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_ONFIRE );
 			m_flNextBurningSound = gpGlobals->curtime + 2.5;
 		}
 	}
 
-	if (InCond(TF_COND_DISGUISING))
+	if (InCond( TF_COND_URINE ) && m_pOuter->GetWaterLevel() >= WL_Waist )
 	{
-		if (gpGlobals->curtime > m_flDisguiseCompleteTime)
+		RemoveCond( TF_COND_URINE );
+	}
+
+	if ( InCond(TF_COND_DISGUISING ) )
+	{
+		if ( gpGlobals->curtime > m_flDisguiseCompleteTime )
 		{
 			CompleteDisguise();
 		}
 	}
 
 	// Stops the drain hack.
-	if (m_pOuter->IsPlayerClass(TF_CLASS_MEDIC))
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) )
 	{
 		CWeaponMedigun *pWeapon = m_pOuter->GetMedigun();
-		if (pWeapon && pWeapon->IsReleasingCharge())
+		if ( pWeapon && pWeapon->IsReleasingCharge() )
 		{
 			pWeapon->DrainCharge();
 		}
 	}
 
-	TestAndExpireChargeEffect(TF_CHARGE_INVULNERABLE);
-	TestAndExpireChargeEffect(TF_CHARGE_CRITBOOSTED);
+	TestAndExpireChargeEffect( TF_CHARGE_INVULNERABLE );
+	TestAndExpireChargeEffect( TF_CHARGE_CRITBOOSTED );
 
-	if (InCond(TF_COND_STEALTHED_BLINK))
+	if ( InCond( TF_COND_STEALTHED_BLINK ) )
 	{
-		if (TF_SPY_STEALTH_BLINKTIME/*tf_spy_stealth_blink_time.GetFloat()*/ < (gpGlobals->curtime - m_flLastStealthExposeTime))
+		if (TF_SPY_STEALTH_BLINKTIME/*tf_spy_stealth_blink_time.GetFloat()*/ < ( gpGlobals->curtime - m_flLastStealthExposeTime ) )
 		{
-			RemoveCond(TF_COND_STEALTHED_BLINK);
+			RemoveCond( TF_COND_STEALTHED_BLINK );
 		}
 	}
 
@@ -1025,7 +1040,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 //-----------------------------------------------------------------------------
 // Purpose: Do CLIENT/SERVER SHARED condition thinks.
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::ConditionThink(void)
+void CTFPlayerShared::ConditionThink( void )
 {
 	bool bIsLocalPlayer = false;
 #ifdef CLIENT_DLL
@@ -1135,18 +1150,23 @@ void CTFPlayerShared::OnDisguiseChanged( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::OnAddInvulnerable(void)
+void CTFPlayerShared::OnAddInvulnerable( void )
 {
 #ifndef CLIENT_DLL
 	// Stock uber removes negative conditions.
-	if (InCond(TF_COND_BURNING))
+	if ( InCond( TF_COND_BURNING ) )
 	{
-		RemoveCond(TF_COND_BURNING);
+		RemoveCond( TF_COND_BURNING );
 	}
 
-	if (InCond(TF_COND_SLOWED))
+	if ( InCond( TF_COND_SLOWED ) )
 	{
-		RemoveCond(TF_COND_SLOWED);
+		RemoveCond( TF_COND_SLOWED );
+	}
+
+	if ( InCond( TF_COND_URINE ) )
+	{
+		RemoveCond( TF_COND_URINE );
 	}
 #else
 	if ( m_pOuter->IsLocalPlayer() )
@@ -1398,6 +1418,50 @@ void CTFPlayerShared::OnRemoveRagemode(void)
 
 	m_pOuter->TeamFortress_SetSpeed();
 #else
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		view->SetScreenOverlayMaterial( NULL );
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddUrine(void)
+{
+#ifdef GAME_DLL
+	m_pOuter->SetRenderColor( 255, 255, 108 );
+	m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
+#else
+	m_pOuter->ParticleProp()->Create( "peejar_drips", PATTACH_ABSORIGIN_FOLLOW );
+
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		IMaterial *pMaterial = materials->FindMaterial( "effects/jarate_overlay", TEXTURE_GROUP_CLIENT_EFFECTS, false );
+		if ( !IsErrorMaterial( pMaterial ) )
+		{
+			view->SetScreenOverlayMaterial( pMaterial );
+		}
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveUrine(void)
+{
+#ifdef GAME_DLL
+	m_pOuter->SetRenderColor( 255, 255, 255 );
+
+	if( m_nPlayerState != TF_STATE_DYING )
+	{
+		m_hUrineAttacker = NULL;
+	}
+#else
+	m_pOuter->ParticleProp()->StopParticlesNamed( "peejar_drips" );
+
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		view->SetScreenOverlayMaterial( NULL );

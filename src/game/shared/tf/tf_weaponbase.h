@@ -257,6 +257,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	void				CheckEffectBarRegen( void );
 	virtual float		GetEffectBarProgress( void );
 	virtual const char *GetEffectLabelText( void ) { return ""; }
+	void				ReduceEffectBarRegenTime( float flTime ) { m_flEffectBarRegenTime -= flTime; }
 
 // Server specific.
 #if !defined( CLIENT_DLL )

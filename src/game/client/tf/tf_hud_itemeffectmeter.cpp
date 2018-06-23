@@ -144,7 +144,7 @@ void CHudItemEffectMeter::UpdateStatus( void )
 
 	if ( m_pEffectMeter )
 	{
-		float flCharge = m_pWeapon->GetEffectBarProgress();
+		float flCharge = m_pWeapon->GetEffectBarProgress();;
 		m_pEffectMeter->SetProgress( flCharge );
 		
 		// Play a ding when full charged.
