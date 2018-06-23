@@ -1082,7 +1082,7 @@ public:
 
 	// Health accessors.
 	virtual int		GetMaxHealth()  const	{ return m_iMaxHealth; }
-	void	SetMaxHealth( int amt )	{ m_iMaxHealth = amt; }
+	void			SetMaxHealth( int amt )	{ m_iMaxHealth = amt; }
 
 	int		GetHealth() const		{ return m_iHealth; }
 	void	SetHealth( int amt )	{ m_iHealth = amt; }

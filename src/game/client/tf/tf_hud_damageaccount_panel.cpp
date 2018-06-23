@@ -62,6 +62,7 @@ public:
 
 	virtual void	FireGameEvent( IGameEvent *event );
 	void			OnDamaged( IGameEvent *event );
+	void			OnHealed( IGameEvent *event );
 	void			PlayHitSound( int iAmount, bool bKill );
 
 private:
@@ -138,6 +139,10 @@ void CDamageAccountPanel::FireGameEvent( IGameEvent *event )
 	if ( V_strcmp( type, "player_hurt" ) == 0 || V_strcmp( type, "npc_hurt" ) == 0 )
 	{
 		OnDamaged( event );
+	}
+	else if ( V_strcmp( type, "player_healed" ) == 0 )
+	{
+		OnHealed( event );
 	}
 	else
 	{
@@ -267,6 +272,9 @@ void CDamageAccountPanel::OnDamaged( IGameEvent *event )
 			vecTextPos = pVictim->EyePosition();
 		}
 
+		bool bBatch = false;
+		dmg_account_delta_t *pDelta = NULL;
+
 		if ( hud_combattext_batching.GetBool() )
 		{
 			// Cycle through deltas and search for one that belongs to this player.
@@ -278,29 +286,73 @@ void CDamageAccountPanel::OnDamaged( IGameEvent *event )
 					float flCreateTime = m_AccountDeltaItems[i].m_flDieTime - m_flDeltaLifetime;
 					if ( gpGlobals->curtime - flCreateTime < hud_combattext_batching_window.GetFloat() )
 					{
-						// Update it's die time and damage.
-						m_AccountDeltaItems[i].m_flDieTime = gpGlobals->curtime + m_flDeltaLifetime;
-						m_AccountDeltaItems[i].m_iAmount += iDmgAmount;
-						m_AccountDeltaItems[i].m_vDamagePos = vecTextPos + Vector( 0, 0, 18 );
-						m_AccountDeltaItems[i].bCrit = event->GetInt( "crit" );
-						return;
+						pDelta = &m_AccountDeltaItems[i];
+						bBatch = true;
+						break;
 					}
 				}
 			}
 		}
 
-		// create a delta item that floats off the top
-		dmg_account_delta_t *pNewDeltaItem = &m_AccountDeltaItems[iAccountDeltaHead];
+		if ( !pDelta )
+		{
+			pDelta = &m_AccountDeltaItems[iAccountDeltaHead];
+			iAccountDeltaHead++;
+			iAccountDeltaHead %= NUM_ACCOUNT_DELTA_ITEMS;
+		}
 
-		iAccountDeltaHead++;
-		iAccountDeltaHead %= NUM_ACCOUNT_DELTA_ITEMS;
-
-		pNewDeltaItem->m_flDieTime = gpGlobals->curtime + m_flDeltaLifetime;
-		pNewDeltaItem->m_iAmount = iDmgAmount;
-		pNewDeltaItem->m_hEntity = pVictim;
-		pNewDeltaItem->m_vDamagePos = vecTextPos + Vector( 0, 0, 18 );
-		pNewDeltaItem->bCrit = event->GetInt( "crit" );
+		pDelta->m_flDieTime = gpGlobals->curtime + m_flDeltaLifetime;
+		pDelta->m_iAmount = bBatch ? pDelta->m_iAmount - iDmgAmount : -iDmgAmount;
+		pDelta->m_hEntity = pVictim;
+		pDelta->m_vDamagePos = vecTextPos + Vector( 0, 0, 18 );
+		pDelta->bCrit = event->GetInt( "crit" );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CDamageAccountPanel::OnHealed( IGameEvent *event )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer || !pPlayer->IsAlive() )
+		return;
+
+	if ( !hud_combattext.GetBool() )
+		return;
+
+	int iPatient = event->GetInt( "patient" );
+	int iHealer = event->GetInt( "healer" );
+	int iAmount = event->GetInt( "amount" );
+
+	// Did we heal this guy?
+	if ( pPlayer->GetUserID() != iHealer )
+		return;
+
+	// Just in case.
+	if ( iAmount == 0 )
+		return;
+
+	C_BasePlayer *pPatient = UTIL_PlayerByUserId( iPatient );
+	if ( !pPatient )
+		return;
+
+	// Don't show the numbers if we can't see the patient.
+	trace_t tr;
+	UTIL_TraceLine( pPlayer->EyePosition(), pPatient->WorldSpaceCenter(), MASK_VISIBLE, NULL, COLLISION_GROUP_NONE, &tr );
+	if ( tr.fraction != 1.0f )
+		return;
+
+	Vector vecTextPos = pPatient->EyePosition();
+	dmg_account_delta_t *pDelta = &m_AccountDeltaItems[iAccountDeltaHead];
+	iAccountDeltaHead++;
+	iAccountDeltaHead %= NUM_ACCOUNT_DELTA_ITEMS;
+
+	pDelta->m_flDieTime = gpGlobals->curtime + m_flDeltaLifetime;
+	pDelta->m_iAmount = iAmount;
+	pDelta->m_hEntity = pPatient;
+	pDelta->m_vDamagePos = vecTextPos + Vector( 0, 0, 18 );
+	pDelta->bCrit = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -361,7 +413,7 @@ void CDamageAccountPanel::Paint( void )
 			// position and alpha are determined from the lifetime
 			// color is determined by the delta - green for positive, red for negative
 
-			Color c = m_DeltaNegativeColor;
+			Color c = m_AccountDeltaItems[i].m_iAmount > 0 ? m_DeltaPositiveColor : m_DeltaNegativeColor;
 
 			float flLifetimePercent = ( m_AccountDeltaItems[i].m_flDieTime - gpGlobals->curtime ) / m_flDeltaLifetime;
 
@@ -371,23 +423,34 @@ void CDamageAccountPanel::Paint( void )
 				c[3] = (int)( 255.0f * ( flLifetimePercent / 0.5 ) );
 			}
 
-			int iX, iY;
-			bool bOnscreen = GetVectorInScreenSpace( m_AccountDeltaItems[i].m_vDamagePos, iX, iY );
+			int x, y; 
+			bool bOnscreen = GetVectorInScreenSpace( m_AccountDeltaItems[i].m_vDamagePos, x, y );
 
 			if ( !bOnscreen )
 				continue;
 
 			float flHeight = 50.0f;
-			float flYPos = (float)iY - ( 1.0 - flLifetimePercent ) * flHeight;
+			y -= (int)( ( 1.0f - flLifetimePercent ) * flHeight );
 
 			// Use BIGGER font for crits.
-			vgui::surface()->DrawSetTextFont( m_AccountDeltaItems[i].bCrit ? m_hDeltaItemFontBig : m_hDeltaItemFont );
-			vgui::surface()->DrawSetTextColor( c );
-			vgui::surface()->DrawSetTextPos( iX, (int)flYPos );
+			vgui::HFont hFont = m_AccountDeltaItems[i].bCrit ? m_hDeltaItemFontBig : m_hDeltaItemFont;
 
 			wchar_t wBuf[20];
+			if ( m_AccountDeltaItems[i].m_iAmount > 0 )
+			{
+				_snwprintf( wBuf, sizeof( wBuf ) / sizeof( wchar_t ), L"+%d", m_AccountDeltaItems[i].m_iAmount );
+			}
+			else
+			{
+				_snwprintf( wBuf, sizeof( wBuf ) / sizeof( wchar_t ), L"%d", m_AccountDeltaItems[i].m_iAmount );
+			}
 
-			_snwprintf( wBuf, sizeof( wBuf ) / sizeof( wchar_t ), L"-%d", m_AccountDeltaItems[i].m_iAmount );
+			// Offset x pos so the text is centered.
+			x -= UTIL_ComputeStringWidth( hFont, wBuf ) / 2;
+
+			vgui::surface()->DrawSetTextFont( hFont );
+			vgui::surface()->DrawSetTextColor( c );
+			vgui::surface()->DrawSetTextPos( x, y );
 
 			vgui::surface()->DrawPrintText( wBuf, wcslen( wBuf ), FONT_DRAW_NONADDITIVE );
 		}

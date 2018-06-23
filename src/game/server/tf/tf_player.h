@@ -298,6 +298,9 @@ public:
 	void DropWeapon( CTFWeaponBase *pWeapon, bool bKilled = false );
 	void DropFakeWeapon( CTFWeaponBase *pWeapon );
 
+	// Dropping Sandvich
+	void DropLunchbox( void );
+
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );
 	void RemoveInvisibility( void );

@@ -71,7 +71,7 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		bool bMega = GetPowerupSize() == POWERUP_MEGA;
 		int iHealthRestored = 0;
 
-		// Don't heal the player who dropped this healthkit.
+		// Don't heal the player who dropped this healthkit, recharge his lunchbox instead
 		if ( pTFPlayer != GetOwnerEntity() )
 		{
 			// Overheal pellets, well, overheal.
@@ -92,16 +92,9 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			// Restore disguise health.
 			if ( pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 			{
-				bool isHealthKit = false;
-
-				if ( GetPowerupSize() == POWERUP_SMALL || GetPowerupSize() == POWERUP_MEDIUM || GetPowerupSize() == POWERUP_FULL )
-					isHealthKit = true;
-				if ( GetPowerupSize() == POWERUP_TINY || POWERUP_MEGA )
-					isHealthKit = false;
-
 				int iFakeHealthToAdd = ceil( pTFPlayer->m_Shared.GetDisguiseMaxHealth() * PackRatios[ GetPowerupSize() ] );
 
-				if ( pTFPlayer->m_Shared.AddDisguiseHealth( iFakeHealthToAdd, isHealthKit ) )
+				if ( pTFPlayer->m_Shared.AddDisguiseHealth( iFakeHealthToAdd ) )
 					bSuccess = true;
 			}
 
@@ -189,13 +182,15 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		}
 		else
 		{
-			/*// Recharge lunchbox if player's at full health.
+			// Recharge lunchbox if player's at full health.
 			CTFWeaponBase *pLunch = pTFPlayer->Weapon_OwnsThisID( TF_WEAPON_LUNCHBOX );
 			if ( pLunch && pLunch->GetEffectBarProgress() < 1.0f )
 			{
+				CDisablePredictionFiltering disabler;
+
 				pLunch->EffectBarRegenFinished();
 				bSuccess = true;
-			}*/
+			}
 		}
 	}
 

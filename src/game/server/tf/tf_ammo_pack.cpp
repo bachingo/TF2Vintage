@@ -147,39 +147,80 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 	if ( !pTFPlayer )
 		return;
-	if ( !m_bUseCustomAmmoCount )
+
+	if ( !m_bIsLunchbox )
 	{
-		int iMaxPrimary = pTFPlayer->GetMaxAmmo( TF_AMMO_PRIMARY );
-		if ( pPlayer->GiveAmmo( ceil(iMaxPrimary * PackRatios[POWERUP_MEDIUM]), TF_AMMO_PRIMARY ) )
+		if ( !m_bUseCustomAmmoCount )
 		{
-			bSuccess = true;
-		}
+			int iMaxPrimary = pTFPlayer->GetMaxAmmo( TF_AMMO_PRIMARY );
+			if ( pPlayer->GiveAmmo( ceil(iMaxPrimary * PackRatios[POWERUP_MEDIUM]), TF_AMMO_PRIMARY ) )
+			{
+				bSuccess = true;
+			}
 
-		int iMaxSecondary = pTFPlayer->GetMaxAmmo( TF_AMMO_SECONDARY );
-		if ( pPlayer->GiveAmmo( ceil(iMaxSecondary * PackRatios[POWERUP_MEDIUM]), TF_AMMO_SECONDARY ) )
-		{
-			bSuccess = true;
-		}
+			int iMaxSecondary = pTFPlayer->GetMaxAmmo( TF_AMMO_SECONDARY );
+			if ( pPlayer->GiveAmmo( ceil(iMaxSecondary * PackRatios[POWERUP_MEDIUM]), TF_AMMO_SECONDARY ) )
+			{
+				bSuccess = true;
+			}
 
-		//int iMaxMetal = pTFPlayer->GetPlayerClass()->GetData()->m_aAmmoMax[TF_AMMO_METAL];
-		// Unlike other ammo, give fixed amount of metal that was given to us at spawn.
-		if ( pPlayer->GiveAmmo( m_iAmmo[TF_AMMO_METAL], TF_AMMO_METAL ) )
-		{
-			bSuccess = true;
-		}
+			//int iMaxMetal = pTFPlayer->GetPlayerClass()->GetData()->m_aAmmoMax[TF_AMMO_METAL];
+			// Unlike other ammo, give fixed amount of metal that was given to us at spawn.
+			if ( pPlayer->GiveAmmo( m_iAmmo[TF_AMMO_METAL], TF_AMMO_METAL ) )
+			{
+				bSuccess = true;
+			}
 
-		// Unlike medium ammo packs, restore only 25% cloak.
-		if (pTFPlayer->m_Shared.GetSpyCloakMeter() < 100.0f)
+			// Unlike medium ammo packs, restore only 25% cloak.
+			if (pTFPlayer->m_Shared.GetSpyCloakMeter() < 100.0f)
+			{
+				pTFPlayer->m_Shared.SetSpyCloakMeter(min(100.0f, pTFPlayer->m_Shared.GetSpyCloakMeter() + ceil(100.0f * 0.25f)));
+				bSuccess = true;
+			}
+		}
+		else
 		{
-			pTFPlayer->m_Shared.SetSpyCloakMeter(min(100.0f, pTFPlayer->m_Shared.GetSpyCloakMeter() + ceil(100.0f * 0.25f)));
+			for ( int i = 0; i < TF_AMMO_COUNT; ++i )
+			{
+				pPlayer->GiveAmmo( m_iAmmo[i], i );
+			}
 			bSuccess = true;
 		}
 	}
 	else
 	{
-		for ( int i = 0; i < TF_AMMO_COUNT; ++i )
+		int iHealthRestored = 0;
+		// If the player is a scout give them 75hp, otherwise give them 50hp
+		if ( pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) )
 		{
-			pPlayer->GiveAmmo( m_iAmmo[i], i );
+			pPlayer->TakeHealth( 75.0f, DMG_GENERIC );
+			iHealthRestored = 75;
+		}
+		else
+		{
+			pPlayer->TakeHealth( 50.0f, DMG_GENERIC );
+			iHealthRestored = 50;
+		}
+
+		CSingleUserRecipientFilter user( pPlayer );
+		user.MakeReliable();
+
+		UserMessageBegin( user, "ItemPickup" );
+		WRITE_STRING( GetClassname() );
+		MessageEnd();
+
+		const char *pszSound = "HealthKit.Touch";
+
+		EmitSound( user, entindex(), pszSound );
+
+		IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+			
+		if ( event )
+		{
+			event->SetInt( "amount", iHealthRestored );
+			event->SetInt( "entindex", pPlayer->entindex() );
+				
+			gameeventmanager->FireEvent( event );
 		}
 		bSuccess = true;
 	}
