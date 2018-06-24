@@ -3099,6 +3099,23 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		pCmd->sidemove = 0.0f;
 		VectorCopy( pCmd->viewangles, angMoveAngle );
 	}
+	else if ( m_Shared.InCond( TF_COND_PHASE ) )
+	{
+		pCmd->weaponselect = 0;
+		int nOldButtons = pCmd->buttons;
+		pCmd->buttons = 0;
+
+		// Scout can jump and duck while phased
+		if ( ( nOldButtons & IN_JUMP ) )
+		{
+			pCmd->buttons |= IN_JUMP;
+		}
+
+		if ( ( nOldButtons & IN_DUCK ) )
+		{
+			pCmd->buttons |= IN_DUCK;
+		}
+	}
 	else
 	{
 		VectorCopy( pCmd->viewangles, angMoveAngle );

@@ -561,6 +561,10 @@ void CCaptureFlag::FlagTouch( CBaseEntity *pOther )
 	if ( pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE ) )
 		return;
 
+	// Don't let bonked players pickup flags
+	if ( pPlayer->m_Shared.InCond( TF_COND_PHASE ) )
+		return;
+
 #ifdef GAME_DLL
 	if ( PointInRespawnRoom(pPlayer,pPlayer->WorldSpaceCenter()) )
 		return;

@@ -3540,7 +3540,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	int bitsDamage = inputInfo.GetDamageType();
 
 	// If we're invulnerable, force ourselves to only take damage events only, so we still get pushed
-	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) )
+	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) || m_Shared.InCond( TF_COND_PHASE) )
 	{
 		bool bAllowDamage = false;
 
@@ -3572,6 +3572,20 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( !(bitsDamage & DMG_BURN ) )
 			{
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
+			}
+
+			if( m_Shared.InCond( TF_COND_PHASE ) )
+			{
+				CEffectData	data;
+				data.m_nHitBox = GetParticleSystemIndex( "miss_text" );
+				data.m_vOrigin = WorldSpaceCenter() + Vector(0,0,32);
+				data.m_vAngles = vec3_angle;
+				data.m_nEntIndex = 0;
+
+				CSingleUserRecipientFilter filter( (CBasePlayer*)pAttacker );
+				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
+
+				SpeakConceptIfAllowed( MP_CONCEPT_DODGE_SHOT );
 			}
 			return 0;
 		}
@@ -7373,11 +7387,20 @@ void CTFPlayer::Taunt( void )
 
 		// Setup a taunt attack if necessary.
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
-		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )	
+		if ( pWeapon )	
 		{
-			m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
-			m_iTauntAttack = TF_TAUNT_LUNCHBOX;
+			if ( pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
+			{
+				m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
+				m_iTauntAttack = TF_TAUNT_LUNCHBOX;
+			}
+			else if ( pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX_DRINK ) )
+			{
+				m_flTauntAttackTime = gpGlobals->curtime + 1.2f;
+				m_iTauntAttack = TF_TAUNT_LUNCHBOX_DRINK;
+			}
 		}
+
 		if ( Q_stricmp( szResponse, "scenes/player/pyro/low/taunt02.vcd" ) == 0 )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 2.0f;
@@ -7558,23 +7581,25 @@ void CTFPlayer::DoTauntAttack( void )
 			break;
 		}
 		case TF_TAUNT_LUNCHBOX:
+		case TF_TAUNT_LUNCHBOX_DRINK:
 		{
 			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
-			if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
+			if ( pWeapon && ( pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) ) )
 			{
 				CTFLunchBox *pLunch = static_cast<CTFLunchBox *>( pWeapon );
 
-				if ( HealthFraction() != 1.0f )
+				if ( HealthFraction() <= 1.0f )
 				{
 					pLunch->ApplyBiteEffects( true );
-				}
-				else
-				{
-					pLunch->ApplyBiteEffects( false );
 				}
 
 				m_iTauntAttack = TF_TAUNT_LUNCHBOX;
 				m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
+			}
+			else if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX_DRINK ) )
+			{
+				m_iTauntAttack = TF_TAUNT_LUNCHBOX_DRINK;
+				m_flTauntAttackTime = gpGlobals->curtime + 0.1f;
 			}
 			break;
 		}
@@ -7594,6 +7619,17 @@ void CTFPlayer::ClearTauntAttack( void )
 			SpeakConceptIfAllowed( MP_CONCEPT_ATE_FOOD );
 		}
 	}
+	else if ( m_iTauntAttack == TF_TAUNT_LUNCHBOX_DRINK )
+	{
+		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX_DRINK ) )
+		{
+			m_Shared.AddCond( TF_COND_PHASE, 8.0f );
+			SpeakConceptIfAllowed( MP_CONCEPT_DODGING );
+			m_angTauntCamera = EyeAngles();
+		}
+	}
+
 	m_flTauntAttackTime = 0.0f;
 	m_iTauntAttack = TF_TAUNT_NONE;
 }
