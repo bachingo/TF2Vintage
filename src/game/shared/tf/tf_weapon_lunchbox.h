@@ -30,6 +30,9 @@ public:
 	virtual void	PrimaryAttack( void );
 	virtual void	SecondaryAttack( void );
 
+	virtual void	DepleteAmmo( void );
+
+
 	virtual bool	HasChargeBar( void ) { return true; }
 	virtual float	InternalGetEffectBarRechargeTime( void ) { return 30.0f; }
 	virtual const char	*GetEffectLabelText( void ) { return "#TF_Sandwich"; }
