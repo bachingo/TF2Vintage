@@ -32,7 +32,6 @@ void CTFLunchBox::PrimaryAttack( void )
 
 	if ( pOwner->HealthFraction() < 1.0f )
 	{
-		Msg("\nbHealth\n");
 		bHealth = true;
 	}
 
@@ -42,7 +41,6 @@ void CTFLunchBox::PrimaryAttack( void )
 
 	if ( bHealth )
 	{
-		Msg("\nRemoveAmmo\n");
 		// Switch away from it immediately, don't want it to stick around.
 		pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
 		pOwner->SwitchToNextBestWeapon( this );

@@ -271,6 +271,7 @@ private:
 	void OnAddHalloweenTiny( void );
 	void OnAddRagemode( void );
 	void OnAddUrine( void );
+	void OnAddPhase( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -287,6 +288,7 @@ private:
 	void OnRemoveHalloweenTiny( void );
 	void OnRemoveRagemode( void );
 	void OnRemoveUrine( void );
+	void OnRemovePhase( void );
 
 	float GetCritMult( void );
 
