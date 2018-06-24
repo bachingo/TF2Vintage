@@ -7399,6 +7399,7 @@ void CTFPlayer::Taunt( void )
 				m_flTauntAttackTime = gpGlobals->curtime + 1.2f;
 				m_iTauntAttack = TF_TAUNT_LUNCHBOX_DRINK;
 			}
+			pWeapon->DepleteAmmo();
 		}
 
 		if ( Q_stricmp( szResponse, "scenes/player/pyro/low/taunt02.vcd" ) == 0 )

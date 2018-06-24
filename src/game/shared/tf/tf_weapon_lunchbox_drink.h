@@ -31,6 +31,8 @@ public:
 
 	virtual bool	Deploy( void );
 
+	virtual void	DepleteAmmo( void );
+
 	virtual bool	HasChargeBar( void ) { return true; }
 	virtual float	InternalGetEffectBarRechargeTime( void ) { return 22.2f; }
 	virtual const char	*GetEffectLabelText( void ) { return "#TF_EnergyDrink"; }

@@ -41,13 +41,25 @@ void CTFLunchBox_Drink::PrimaryAttack( void )
 	pOwner->Taunt();
 #endif
 
+	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLunchBox_Drink::DepleteAmmo( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+	{
+		return;
+	}
+
 	// Switch away from it immediately, don't want it to stick around.
 	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
 	pOwner->SwitchToNextBestWeapon( this );
 
 	StartEffectBarRegen();
-
-	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 }
 
 #ifdef GAME_DLL

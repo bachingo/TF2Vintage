@@ -23,31 +23,15 @@ CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 //-----------------------------------------------------------------------------
 void CTFLunchBox::PrimaryAttack( void )
 {
-	bool bHealth = false;
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
 	{
 		return;
 	}
 
-	if ( pOwner->HealthFraction() < 1.0f )
-	{
-		bHealth = true;
-	}
-
 #ifdef GAME_DLL
 	pOwner->Taunt();
 #endif
-
-	if ( bHealth )
-	{
-		// Switch away from it immediately, don't want it to stick around.
-		pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
-		pOwner->SwitchToNextBestWeapon( this );
-
-		StartEffectBarRegen();
-	}
-
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 }
 
@@ -96,6 +80,29 @@ void CTFLunchBox::SecondaryAttack( void )
 
 	m_hDroppedLunch = pPowerup;
 #endif
+
+	// Switch away from it immediately, don't want it to stick around.
+	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+	pOwner->SwitchToNextBestWeapon( this );
+
+	StartEffectBarRegen();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLunchBox::DepleteAmmo( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+	{
+		return;
+	}
+
+	if ( pOwner->HealthFraction() >= 1.0f )
+	{
+		return;
+	}
 
 	// Switch away from it immediately, don't want it to stick around.
 	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
