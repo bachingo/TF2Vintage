@@ -78,7 +78,7 @@ private:
 	//CPanelAnimationVarAliasType( float, m_flDeltaItemX, "delta_item_x", "0", "proportional_float" );
 
 	CPanelAnimationVar( Color, m_DeltaPositiveColor, "PositiveColor", "0 255 0 255" );
-	CPanelAnimationVar( Color, m_DeltaNegativeColor, "NegativeColor", "255 0 0 255" );
+	//CPanelAnimationVar( Color, m_DeltaNegativeColor, "NegativeColor", "255 0 0 255" );
 
 	CPanelAnimationVar( float, m_flDeltaLifetime, "delta_lifetime", "2.0" );
 
@@ -102,6 +102,10 @@ ConVar tf_dingalingaling_lasthit("tf_dingalingaling_lasthit", "0", FCVAR_ARCHIVE
 ConVar tf_dingaling_lasthit_volume("tf_dingaling_lasthit_volume", "0.75", FCVAR_ARCHIVE, "Desired volume of the last hit sound.", true, 0.0, true, 1.0);
 ConVar tf_dingaling_lasthit_pitchmindmg("tf_dingaling_lasthit_pitchmindmg", "100", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a minimal damage hit (<= 10 health) is done.", true, 1, true, 255);
 ConVar tf_dingaling_lasthit_pitchmaxdmg("tf_dingaling_lasthit_pitchmaxdmg", "100", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a maximum damage hit (>= 150 health) is done.", true, 1, true, 255);
+
+ConVar hud_combattext_red( "hud_combattext_red", "255", FCVAR_ARCHIVE, "Red modifier for color of damage indicators", true, 0, true, 255 );
+ConVar hud_combattext_green( "hud_combattext_green", "0", FCVAR_ARCHIVE, "Green modifier for color of damage indicators", true, 0, true, 255 );
+ConVar hud_combattext_blue( "hud_combattext_blue", "0", FCVAR_ARCHIVE, "Blue modifier for color of damage indicators", true, 0, true, 255 );
 
 
 //-----------------------------------------------------------------------------
@@ -411,7 +415,11 @@ void CDamageAccountPanel::Paint( void )
 		if ( m_AccountDeltaItems[i].m_flDieTime > gpGlobals->curtime )
 		{
 			// position and alpha are determined from the lifetime
-			// color is determined by the delta - green for positive, red for negative
+			// color is determined by the delta
+			// Negative damage deltas are determined by convar settings
+			// Positive damage deltas are green
+
+			Color m_DeltaNegativeColor( hud_combattext_red.GetInt(), hud_combattext_green.GetInt(), hud_combattext_blue.GetInt(), 255 );
 
 			Color c = m_AccountDeltaItems[i].m_iAmount > 0 ? m_DeltaPositiveColor : m_DeltaNegativeColor;
 
