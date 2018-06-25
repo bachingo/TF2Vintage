@@ -320,20 +320,20 @@ void CTFWeaponBase::Precache()
 		PrecacheParticleSystem( pTracerEffect );
 		PrecacheParticleSystem( pTracerEffectCrit );
 
-		Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_green", pTFInfo->m_szTracerEffect);
-		Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_green_crit", pTFInfo->m_szTracerEffect);
-		PrecacheParticleSystem(pTracerEffect);
-		PrecacheParticleSystem(pTracerEffectCrit);
+		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_green", pTFInfo->m_szTracerEffect);
+		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_green_crit", pTFInfo->m_szTracerEffect);
+		//PrecacheParticleSystem(pTracerEffect);
+		//PrecacheParticleSystem(pTracerEffectCrit);
 
-		Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_yellow", pTFInfo->m_szTracerEffect);
-		Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_yellow_crit", pTFInfo->m_szTracerEffect);
-		PrecacheParticleSystem(pTracerEffect);
-		PrecacheParticleSystem(pTracerEffectCrit);
+		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_yellow", pTFInfo->m_szTracerEffect);
+		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_yellow_crit", pTFInfo->m_szTracerEffect);
+		//PrecacheParticleSystem(pTracerEffect);
+		//PrecacheParticleSystem(pTracerEffectCrit);
 
-		Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_dm", pTFInfo->m_szTracerEffect);
-		Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_dm_crit", pTFInfo->m_szTracerEffect);
-		PrecacheParticleSystem(pTracerEffect);
-		PrecacheParticleSystem(pTracerEffectCrit);
+		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_dm", pTFInfo->m_szTracerEffect);
+		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_dm_crit", pTFInfo->m_szTracerEffect);
+		//PrecacheParticleSystem(pTracerEffect);
+		//PrecacheParticleSystem(pTracerEffectCrit);
 	}
 }
 

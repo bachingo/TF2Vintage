@@ -56,6 +56,7 @@ CTFCompoundBow::CTFCompoundBow()
 {
 	Extinguish();
 #ifdef CLIENT_DLL
+	m_bFlame = false;
 	bEmitting = false;
 	bFirstPerson = false;
 #endif
@@ -66,10 +67,11 @@ CTFCompoundBow::CTFCompoundBow()
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::Precache( void )
 {
-		BaseClass::Precache();
 	PrecacheScriptSound( "ArrowLight" );
 	PrecacheParticleSystem( "v_flaming_arrow" );
 	PrecacheParticleSystem( "flaming_arrow" );
+
+	BaseClass::Precache();
 }
 
 //-----------------------------------------------------------------------------
@@ -172,6 +174,12 @@ void CTFCompoundBow::LowerBow( void )
 //-----------------------------------------------------------------------------
 void CTFCompoundBow::WeaponIdle( void )
 {
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner->GetWaterLevel() >= WL_Waist )
+	{
+		Extinguish();
+	}
+
 	if ( m_flChargeBeginTime > 0 && m_iClip1 > 0 )
 	{
 		FireArrow();
@@ -276,25 +284,24 @@ void CTFCompoundBow::Extinguish( void )
 void CTFCompoundBow::LightArrow( void )
 {
 	// don't light if we're already lit.
+#ifndef CLIENT_DLL
 	if ( m_bFlame || m_flNextPrimaryAttack > gpGlobals->curtime )
 	{
 		return;
 	}
-#ifndef CLIENT_DLL
 	m_bFlame = true;
+	EmitSound( "ArrowLight" );
 #else
-
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( !pOwner )
+	if( bEmitting )
 	{
 		return;
 	}
 
-	pOwner->EmitSound( "ArrowLight" );
-
 	C_BaseEntity *pModel = GetWeaponForEffect();
 	if ( pModel )
 	{
+		CTFPlayer *pOwner = GetTFPlayerOwner();
+
 		// if the local player is the carrier and is in first person, use the v flame effects
 		if ( pOwner == C_BasePlayer::GetLocalPlayer() && pOwner->InFirstPersonView() )
 		{
@@ -326,14 +333,16 @@ void C_TFCompoundBow::OnDataChanged( DataUpdateType_t updateType )
 
 void C_TFCompoundBow::ClientThink( void )
 {
-	if ( !IsCarriedByLocalPlayer() || !IsActiveByLocalPlayer() || !m_bFlame )
+	C_TFPlayer *pOwner = GetTFPlayerOwner();
+
+	if (  m_iState != WEAPON_IS_ACTIVE || !m_bFlame )
 	{
 		Extinguish();
 		SetNextClientThink( CLIENT_THINK_NEVER );
 		return;
 	}
 
-	if ( ( GetTFPlayerOwner()->InFirstPersonView() && !bFirstPerson ) || ( !GetTFPlayerOwner()->InFirstPersonView() && bFirstPerson ) )
+	if ( pOwner->IsLocalPlayer() && ( ( pOwner->InFirstPersonView() && !bFirstPerson ) || ( !pOwner->InFirstPersonView() && bFirstPerson ) ) )
 	{
 		Extinguish();
 		LightArrow();
