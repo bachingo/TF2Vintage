@@ -235,16 +235,16 @@ void CCaptureFlag::Precache( void )
 
 	PrecacheParticleSystem( "player_intel_trail_blue" );
 	PrecacheParticleSystem( "player_intel_trail_red" );
-	PrecacheParticleSystem(	"player_intel_trail_green" );
-	PrecacheParticleSystem(	"player_intel_trail_yellow" );
+	//PrecacheParticleSystem(	"player_intel_trail_green" );
+	//PrecacheParticleSystem(	"player_intel_trail_yellow" );
 
 
 	// Team colored trail
 	char tempChar[ 512 ];
 	PrecacheModel( GetTrailEffect( TF_TEAM_RED, tempChar, sizeof( tempChar ) ) );
 	PrecacheModel( GetTrailEffect( TF_TEAM_BLUE, tempChar, sizeof( tempChar ) ) );
-	PrecacheModel( GetTrailEffect( TF_TEAM_GREEN, tempChar, sizeof( tempChar ) ) );
-	PrecacheModel( GetTrailEffect( TF_TEAM_YELLOW, tempChar, sizeof( tempChar ) ) );
+	//PrecacheModel( GetTrailEffect( TF_TEAM_GREEN, tempChar, sizeof( tempChar ) ) );
+	//PrecacheModel( GetTrailEffect( TF_TEAM_YELLOW, tempChar, sizeof( tempChar ) ) );
 
 }
 

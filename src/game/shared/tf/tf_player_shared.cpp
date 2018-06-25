@@ -1485,9 +1485,7 @@ void CTFPlayerShared::OnAddPhase(void)
 #ifdef GAME_DLL
 	m_pOuter->DropFlag();
 #else
-	//CNewParticleEffect *pParticle = m_pOuter->ParticleProp()->Create( "warp_version", PATTACH_ABSORIGIN_FOLLOW );
-	//m_pOuter->ParticleProp()->Create( ConstructTeamParticle( "scout_dodge_%s", m_pOuter->GetTeamNumber() ), PATTACH_ABSORIGIN_FOLLOW );
-	m_pOuter->ParticleProp()->Create( "warp_version", PATTACH_ABSORIGIN_FOLLOW ); 
+	m_pOuter->ParticleProp()->Create( "warp_version", PATTACH_ABSORIGIN_FOLLOW );
 #endif
 }
 
@@ -1499,8 +1497,6 @@ void CTFPlayerShared::OnRemovePhase(void)
 #ifdef GAME_DLL
 	m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_TIRED );
 #else
-	m_pOuter->ParticleProp()->StopParticlesNamed( "scout_dodge_red" );
-	m_pOuter->ParticleProp()->StopParticlesNamed( "scout_dodge_blue" );
 	m_pOuter->ParticleProp()->StopParticlesNamed( "warp_version" );
 #endif
 }
