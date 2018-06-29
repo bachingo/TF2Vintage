@@ -436,7 +436,11 @@ void CObjectSentrygun::OnGoActive( void )
 	bool bUnderwater = ( UTIL_PointContents( EyePosition() ) & MASK_WATER ) ? true : false;
 	SetWaterLevel( ( bUnderwater ) ? 3 : 0 );	
 
-	m_iAmmoShells = m_iMaxAmmoShells;
+	// Don't reset ammo when redeploying
+	if ( !m_bCarryDeploy )
+	{
+		m_iAmmoShells = m_iMaxAmmoShells;
+	}
 
 	// Init attachments for level 1 sentry gun
 	m_iAttachments[SENTRYGUN_ATTACHMENT_MUZZLE] = LookupAttachment( "muzzle" );
@@ -509,6 +513,9 @@ void CObjectSentrygun::StartUpgrading( void )
 {
 	BaseClass::StartUpgrading( );
 
+	int iAmmoShells = m_iAmmoShells;
+	int iAmmoRockets = m_iAmmoRockets;
+
 	switch( m_iUpgradeLevel )
 	{
 	case 2:
@@ -529,8 +536,18 @@ void CObjectSentrygun::StartUpgrading( void )
 		break;
 	}
 
-	// more ammo capability
-	m_iAmmoShells = m_iMaxAmmoShells;
+	if ( m_bCarryDeploy )
+	{
+		// keep our current ammo when redeploying
+		m_iAmmoShells = iAmmoShells;
+		m_iAmmoRockets = iAmmoRockets;
+	}
+	else
+	{
+		// more ammo capability
+		m_iAmmoShells = m_iMaxAmmoShells;
+	}
+
 
 	m_iState.Set( SENTRY_STATE_UPGRADING );
 
