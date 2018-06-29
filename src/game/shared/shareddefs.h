@@ -251,6 +251,9 @@ enum CastVote
 // Start your team numbers after this
 #define LAST_SHARED_TEAM		TEAM_SPECTATOR
 
+// lazy workaround for not caching green + yellow team particles
+#define TEAM_COUNT_NORMAL	TF_TEAM_BLUE + 1
+
 // The first team that's game specific (i.e. not unassigned / spectator)
 #define FIRST_GAME_TEAM			(LAST_SHARED_TEAM+1)
 

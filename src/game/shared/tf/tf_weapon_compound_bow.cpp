@@ -317,7 +317,7 @@ void CTFCompoundBow::LightArrow( void )
 	}
 
 	bEmitting = true;
-	SetNextClientThink( gpGlobals->frametime + 1.0f );
+	SetNextClientThink( gpGlobals->curtime + 1.0f );
 #endif
 }
 

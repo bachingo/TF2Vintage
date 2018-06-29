@@ -374,6 +374,9 @@ protected:
 	CNetworkVar( bool, m_bDisposableBuilding );
 	CNetworkVar( bool, m_bWasMapPlaced );
 
+	// Moved m_flHealth to protected for wrangler repair reduction
+	float	m_flHealth;					// Health during construction. Needed a float due to small increases in health.
+
 private:
 	// Make sure we pick up changes to these.
 	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_iHealth );
@@ -400,7 +403,6 @@ private:
 										// started, ie, incase you teleport out of a construction yard)
 
 	CNetworkVar( float, m_flPercentageConstructed );	// Used to send to client
-	float	m_flHealth;					// Health during construction. Needed a float due to small increases in health.
 	int		m_iGoalHealth;				// Used when re-deploying
 
 	// Sapper on me

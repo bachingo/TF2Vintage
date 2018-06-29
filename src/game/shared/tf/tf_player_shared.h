@@ -367,6 +367,7 @@ private:
 	float					m_flFlameBurnTime;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
+	float					m_flStunTime;
 
 
 

@@ -1976,7 +1976,6 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 					Tracer.endpos = info.m_vecSrc + ( vecEnd - info.m_vecSrc ) * fPortalFraction;
 				}
 #endif //#ifdef PORTAL
-
 				MakeTracer( vecTracerSrc, Tracer, pAmmoDef->TracerType(info.m_iAmmoType) );
 
 #ifdef PORTAL

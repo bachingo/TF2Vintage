@@ -63,7 +63,7 @@ const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeath
 
 void PrecacheTeamParticles(const char *pszFormat, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/)
 {
-	for (int i = FIRST_GAME_TEAM; i < TF_TEAM_COUNT; i++)
+	for (int i = FIRST_GAME_TEAM; i < TEAM_COUNT_NORMAL; i++)
 	{
 		const char *pszParticle = ConstructTeamParticle(pszFormat, i, false, pNames);
 		PrecacheParticleSystem(pszParticle);
@@ -432,7 +432,8 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_LUNCHBOX",
 	"TF_WEAPON_LUNCHBOX_DRINK",
 	"TF_WEAPON_COMPOUND_BOW",
-	"TF_WEAPON_JAR", //TF2C WEAPONS AFTER THIS
+	"TF_WEAPON_JAR", 
+	"TF_WEAPON_LASER_POINTER", // TF2C WEAPONS AFTER THIS
 	"TF_WEAPON_HUNTERRIFLE",
 	"TF_WEAPON_UMBRELLA",
 	"TF_WEAPON_HAMMERFISTS",
@@ -504,6 +505,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC,	// TF_WEAPON_LUNCHBOX_DRINK,
 	DMG_BULLET,		// TF_WEAPON_COMPOUND_BOW,
 	DMG_GENERIC,	// TF_WEAPON_JAR,
+	DMG_GENERIC | DMG_USEDISTANCEMOD,	// TF_WEAPON_LASER_POINTER,
 
 	//TF2C WEAPONS AFTER THIS
 	DMG_BULLET | DMG_USE_HITLOCATIONS,//TF_WEAPON_HUNTERRIFLE,
@@ -1030,13 +1032,6 @@ float g_flDispenserAmmoRates[] =
 	0.2,
 	0.3,
 	0.4
-};
-
-float g_flDispenserCloakRates[] =
-{
-	5.0,
-	10.0,
-	15.0
 };
 
 float g_flDispenserHealRates[] =
