@@ -847,6 +847,12 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		float fTotalHealAmount = 0.0f;
 		for ( int i = 0; i < m_aHealers.Count(); i++ )
 		{
+			// Dispensers refill cloak.
+			if ( m_aHealers[i].bDispenserHeal )
+			{
+				m_flCloakMeter = min( m_flCloakMeter + m_aHealers[i].flAmount * gpGlobals->frametime, 100.0f );
+			}
+
 			// Dispensers don't heal above 100%
 			if ( bHasFullHealth && m_aHealers[i].bDispenserHeal )
 			{
@@ -1061,29 +1067,18 @@ void CTFPlayerShared::ConditionThink( void )
 	{
 		if ( InCond( TF_COND_STEALTHED ) )
 		{
-			if ( InCond( TF_COND_DISPENSER_HEALING_1 ) )
-				m_flCloakMeter += gpGlobals->frametime *g_flDispenserCloakRates[0];
-			else if ( InCond( TF_COND_DISPENSER_HEALING_2 ) )
-				m_flCloakMeter += gpGlobals->frametime *g_flDispenserCloakRates[1];
-			else if ( InCond( TF_COND_DISPENSER_HEALING_3 ) )
-				m_flCloakMeter += gpGlobals->frametime *g_flDispenserCloakRates[2];
-			else
-				m_flCloakMeter -= gpGlobals->frametime * tf_spy_cloak_consume_rate.GetFloat();
-
-			if ( m_flCloakMeter >= 100 )
-				m_flCloakMeter = 100;
+			m_flCloakMeter -= gpGlobals->frametime * tf_spy_cloak_consume_rate.GetFloat();
 
 			if ( m_flCloakMeter <= 0.0f )
 			{
-				RemoveCond( TF_COND_STEALTHED );
 				FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
 			}
-		}
+		}		
 		else
 		{
 			m_flCloakMeter += gpGlobals->frametime * tf_spy_cloak_regen_rate.GetFloat();
 
-			if (m_flCloakMeter >= 100.0f)
+			if  (m_flCloakMeter >= 100.0f )
 			{
 				m_flCloakMeter = 100.0f;
 			}

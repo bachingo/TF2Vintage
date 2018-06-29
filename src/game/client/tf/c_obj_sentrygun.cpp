@@ -45,8 +45,18 @@ END_RECV_TABLE()
 C_ObjectSentrygun::C_ObjectSentrygun()
 {
 	m_pDamageEffects = NULL;
+	m_pLaserBeam = NULL;
 	m_iOldUpgradeLevel = 0;
 	m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_1;
+}
+
+C_ObjectSentrygun::~C_ObjectSentrygun() 
+{ 
+	DestroyLaserBeam();
+	if ( m_pShield )
+	{
+		DestroyShield();
+	}
 }
 
 void C_ObjectSentrygun::GetAmmoCount( int &iShells, int &iMaxShells, int &iRockets, int & iMaxRockets )
@@ -111,6 +121,12 @@ void C_ObjectSentrygun::OnDataChanged( DataUpdateType_t updateType )
 	{
 		UpgradeLevelChanged();
 		m_iOldUpgradeLevel = m_iUpgradeLevel;
+		
+		// Turn off the shield when upgrading
+		if ( m_pShield )
+		{
+			DestroyShield();
+		}
 	}
 
 	// intercept bodygroup sets from the server

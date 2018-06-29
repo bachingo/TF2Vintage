@@ -71,13 +71,37 @@ public:
 
 	virtual void	MakeCarriedObject( CTFPlayer *pPlayer );
 
+	void			SetState( int iState ) { m_iState.Set( iState ); }
+	int 			GetState( void ) { return m_iState.Get(); }
+	bool			Fire( void );
+	bool			FireRockets( void );
+
+	void			OnStopWrangling( void );
+
+	// Should Fire for wrangler
+	void			SetShouldFire( bool bFire ) { m_bShouldFire = bFire; }
+	bool			ShouldFire( void ) { return m_bShouldFire; }
+
+	virtual bool	Command_Repair( CTFPlayer *pActivator );
+	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer );
+
+	// Positioning for wrangler
+	Vector m_vecEnd;
+
 private:
+
+	// Workaround for fire effects when wrangled
+	bool m_bShouldFire;
+
+	float m_flRecoveryTime;
 
 	// Main think
 	void SentryThink( void );
 
 	void StartUpgrading( void );
 	void FinishUpgrading( void );
+
+	void WrangleThink( void );
 
 	// Target acquisition
 	bool FindTarget( void );
@@ -93,7 +117,6 @@ private:
 
 	// Attack
 	void Attack( void );
-	bool Fire( void );
 	void MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 
 	int GetBaseTurnRate( void );

@@ -14,6 +14,7 @@
 #include "c_baseobject.h"
 #include "ObjectControlPanel.h"
 #include "c_tf_projectile_rocket.h"
+#include "c_tf_player.h"
 
 class C_MuzzleFlashModel;
 
@@ -27,6 +28,7 @@ public:
 	DECLARE_CLIENTCLASS();
 
 	C_ObjectSentrygun();
+	~C_ObjectSentrygun();
 
 	void GetAmmoCount( int &iShells, int &iMaxShells, int &iRockets, int & iMaxRockets );
 
@@ -42,6 +44,8 @@ public:
 
 	int GetKills( void ) { return m_iKills; }
 	int GetAssists( void ) { return m_iAssists; }
+	int GetState( void ) { return m_iState; }
+
 
 	virtual void GetShadowRenderBounds( Vector &mins, Vector &maxs, ShadowType_t shadowType );
 
@@ -54,6 +58,77 @@ public:
 
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
+
+
+	// Laser methods
+	CNewParticleEffect	*CreateLaserBeam( void ) 
+	{
+		SetNextClientThink( gpGlobals->curtime + 0.25f );
+
+		// Don't bother creating a new shield if one already exists
+		if ( !m_pShield )
+		{
+			m_pShield = new C_BaseAnimating();
+			m_pShield->SetModel( "models/buildables/sentry_shield.mdl");
+		
+			if ( m_iUpgradeLevel == 3)
+			{
+				// Slight offset for lvl 3 sentry
+				m_pShield->SetAbsOrigin( GetAbsOrigin() + Vector( 0, 0, 4 ) );
+			}
+			else
+			{
+				m_pShield->SetAbsOrigin( GetAbsOrigin() );
+			}
+		}
+
+		switch ( GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+				m_pShield->m_nSkin = 0;
+				break;
+			case TF_TEAM_BLUE:
+				m_pShield->m_nSkin = 1;
+				break;
+		}
+
+		return m_pLaserBeam = ParticleProp()->Create( "laser_sight_beam", PATTACH_POINT_FOLLOW, "laser_origin" ); 
+	}
+
+	void DestroyLaserBeam( void ) 
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserBeam );
+		m_pLaserBeam = NULL;
+
+		// set time for shield removal
+		SetNextClientThink( gpGlobals->curtime + 3.0f );
+	}
+
+	void DestroyShield( void )
+	{
+		m_pShield->Remove();
+		m_pShield = NULL;
+	}
+
+	virtual void ClientThink( void ) 
+	{
+		if ( !GetBuilder()->IsAlive() )
+		{
+			DestroyLaserBeam();
+			return;
+		}
+
+		if ( !m_pLaserBeam && m_pShield )
+		{
+			DestroyShield();
+			SetNextClientThink( CLIENT_THINK_NEVER );
+			return;
+		}
+
+		// Check for player death four times every second
+		SetNextClientThink( gpGlobals->curtime + 0.25f );
+	}
+
 
 	// ITargetIDProvidesHint
 public:
@@ -73,7 +148,9 @@ private:
 	int m_iKills;
 	int m_iAssists;
 
+	C_BaseAnimating	   *m_pShield;
 	CNewParticleEffect *m_pDamageEffects;
+	CNewParticleEffect *m_pLaserBeam;
 
 	int m_iPlacementBodygroup;
 

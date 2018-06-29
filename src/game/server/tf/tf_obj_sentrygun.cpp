@@ -15,11 +15,15 @@
 #include "te_effect_dispatch.h"
 #include "tf_gamerules.h"
 #include "ammodef.h"
+#include "tf_fx_shared.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 extern bool IsInCommentaryMode();
+
+extern ConVar tf_cheapobjects;
+extern ConVar tf_obj_upgrade_per_hit;
 
 // Ground placed version
 #define SENTRY_MODEL_PLACEMENT			"models/buildables/sentry1_blueprint.mdl"
@@ -41,6 +45,7 @@ extern bool IsInCommentaryMode();
 #define SENTRYGUN_ADD_ROCKETS	8
 
 #define SENTRY_THINK_DELAY	0.05
+#define WRANGLER_RECOVERY_TIME 3.00f
 
 #define	SENTRYGUN_CONTEXT	"SentrygunContext"
 
@@ -118,6 +123,7 @@ ConVar tf_sentrygun_newtarget_dist( "tf_sentrygun_newtarget_dist", "200", FCVAR_
 ConVar tf_sentrygun_metal_per_shell( "tf_sentrygun_metal_per_shell", "1", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_sentrygun_metal_per_rocket( "tf_sentrygun_metal_per_rocket", "2", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_sentrygun_notarget( "tf_sentrygun_notarget", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar tf_debug_wrangler( "tf_wrangler_debug", "0", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -195,6 +201,13 @@ void CObjectSentrygun::MakeCarriedObject( CTFPlayer *pPlayer )
 	BaseClass::MakeCarriedObject( pPlayer );
 }
 
+void CObjectSentrygun::OnStopWrangling( void )
+{
+	// Wait 3 seconds before resuming function
+	m_flRecoveryTime = gpGlobals->curtime + WRANGLER_RECOVERY_TIME;
+	m_iState.Set( SENTRY_STATE_WRANGLED_RECOVERY );
+}
+
 void CObjectSentrygun::SentryThink( void )
 {
 	// Don't think while re-deploying so we don't target anything inbetween upgrades.
@@ -221,12 +234,127 @@ void CObjectSentrygun::SentryThink( void )
 		UpgradeThink();
 		break;
 
+	case SENTRY_STATE_WRANGLED:
+		WrangleThink();
+		break;
+
+	case SENTRY_STATE_WRANGLED_RECOVERY:
+		if ( gpGlobals->curtime > m_flRecoveryTime )
+		{
+			m_iState.Set( SENTRY_STATE_SEARCHING );
+		}
+		break;
+
 	default:
 		Assert( 0 );
 		break;
 	}
 
 	SetContextThink( &CObjectSentrygun::SentryThink, gpGlobals->curtime + SENTRY_THINK_DELAY, SENTRYGUN_CONTEXT );
+}
+
+//-----------------------------------------------------------------------------
+// Currently wrangled
+//-----------------------------------------------------------------------------
+void CObjectSentrygun::WrangleThink(void)
+{
+	CTFPlayer *pOwner = GetOwner();
+
+	StudioFrameAdvance( );
+
+	if ( !pOwner || !pOwner->IsAlive() )
+	{
+		OnStopWrangling();
+		SetShouldFire( false );
+		return;
+	}
+
+	trace_t tr;
+	Vector vecStart, vecEnd, vecDir;
+	AngleVectors( pOwner->EyeAngles(), &vecDir );
+
+	vecStart = pOwner->EyePosition();
+	vecEnd = vecStart + (vecDir * MAX_TRACE_LENGTH);
+
+	CTraceFilterSkipTwoEntities *pFilter = new CTraceFilterSkipTwoEntities( this, pOwner, COLLISION_GROUP_NONE );
+
+	// First pass to find where we are looking
+	UTIL_TraceLine( vecStart, vecEnd, MASK_ALL, pFilter, &tr );
+
+	vecStart = EyePosition();
+	vecEnd = tr.endpos;
+
+	// Adjust sentry angles 
+
+	vecDir = vecEnd - vecStart;
+
+	QAngle angToTarget;
+	VectorAngles( vecDir, angToTarget );
+
+	angToTarget.y = UTIL_AngleMod( angToTarget.y );
+	if (angToTarget.x < -180)
+		angToTarget.x += 360;
+	if (angToTarget.x > 180)
+		angToTarget.x -= 360;
+
+	// now all numbers should be in [1...360]
+	// pin to turret limitations to [-50...50]
+	if (angToTarget.x > 50)
+		angToTarget.x = 50;
+	else if (angToTarget.x < -50)
+		angToTarget.x = -50;
+	m_vecCurAngles.y = angToTarget.y;
+	m_vecCurAngles.x = angToTarget.x;
+	float flYaw = m_vecCurAngles.y - GetAbsAngles().y;
+
+	SetPoseParameter( m_iPitchPoseParameter, -m_vecCurAngles.x );
+	SetPoseParameter( m_iYawPoseParameter, -flYaw );
+
+	
+	// Second pass to find what we actually see
+	UTIL_TraceLine( vecStart, vecEnd, MASK_ALL, pFilter, &tr );
+	
+	// If we're looking at a player fix our position to the centermass
+	if ( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
+	{
+		CTFPlayer *pOther = static_cast< CTFPlayer * >( tr.m_pEnt );
+		if ( ValidTargetPlayer( pOther, vecStart, tr.endpos ) )
+		{
+			m_hEnemy = tr.m_pEnt;
+			m_vecEnd = m_hEnemy->WorldSpaceCenter();
+		}
+		else
+		{
+			m_hEnemy = NULL;
+			m_vecEnd = tr.endpos;
+		}
+	}
+	else
+	{
+		m_hEnemy = NULL;
+		m_vecEnd = tr.endpos;
+	}
+
+	if ( tf_debug_wrangler.GetBool() ) 
+	{
+		NDebugOverlay::Line( vecStart, m_vecEnd, 0, 255, 0, true, 0.25f );
+	}
+
+	if ( ShouldFire() && gpGlobals->curtime >= m_flNextAttack )
+	{
+		Fire();
+		SetShouldFire( false );
+
+		if ( m_iUpgradeLevel == 1 )
+		{
+			// Level 1 sentries fire slower
+			m_flNextAttack = gpGlobals->curtime + 0.1;
+		}
+		else
+		{
+			m_flNextAttack = gpGlobals->curtime + 0.05;
+		}
+	}
 }
 
 void CObjectSentrygun::StartPlacement( CTFPlayer *pPlayer )
@@ -352,6 +480,7 @@ void CObjectSentrygun::Precache()
 
 	PrecacheModel( SENTRY_ROCKET_MODEL );
 	PrecacheModel( "models/effects/sentry1_muzzle/sentry1_muzzle.mdl" );
+	PrecacheModel( "models/buildables/sentry_shield.mdl" );
 
 	// Sounds
 	PrecacheScriptSound( "Building_Sentrygun.Fire" );
@@ -370,6 +499,7 @@ void CObjectSentrygun::Precache()
 	PrecacheParticleSystem( "sentrydamage_2" );
 	PrecacheParticleSystem( "sentrydamage_3" );
 	PrecacheParticleSystem( "sentrydamage_4" );
+	PrecacheParticleSystem( "turret_shield" );
 }
 
 //-----------------------------------------------------------------------------
@@ -455,6 +585,13 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 {
 	bool bRepair = false;
 	bool bUpgrade = false;
+	bool bWrangled = false;
+
+	// Wrangled sentries have 33% of normal repair rate
+	if ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY )
+	{
+		bWrangled = true;
+	}
 
 	bRepair = Command_Repair( pPlayer/*, pWrench->GetRepairValue()*/ );
 
@@ -481,8 +618,17 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 			int iMaxShellsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_shell.GetFloat() );
 
 			// cap the amount we can add
-			int iAmountToAdd = min( SENTRYGUN_ADD_SHELLS, iMaxShellsPlayerCanAfford );
+			int iAmountToAdd;
 
+			if( !bWrangled )
+			{
+				iAmountToAdd = min( SENTRYGUN_ADD_SHELLS, iMaxShellsPlayerCanAfford );
+			}
+			else
+			{
+				// 33% of normal rate
+				iAmountToAdd = min( ( SENTRYGUN_ADD_SHELLS * .33 ), iMaxShellsPlayerCanAfford );
+			}
 			iAmountToAdd = min( ( m_iMaxAmmoShells - m_iAmmoShells ), iAmountToAdd );
 
 			pPlayer->RemoveAmmo( iAmountToAdd * tf_sentrygun_metal_per_shell.GetInt(), TF_AMMO_METAL );
@@ -500,8 +646,18 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 		if ( m_iAmmoRockets < m_iMaxAmmoRockets && m_iUpgradeLevel == 3 && iPlayerMetal > 0  )
 		{
 			int iMaxRocketsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_rocket.GetFloat() );
+			int iAmountToAdd;
 
-			int iAmountToAdd = min( ( SENTRYGUN_ADD_ROCKETS ), iMaxRocketsPlayerCanAfford );
+			if( !bWrangled )
+			{
+				iAmountToAdd = min( SENTRYGUN_ADD_ROCKETS, iMaxRocketsPlayerCanAfford );
+			}
+			else
+			{
+				// 33% of normal rate
+				iAmountToAdd = min( ( SENTRYGUN_ADD_ROCKETS * 33 ), iMaxRocketsPlayerCanAfford );
+			}
+
 			iAmountToAdd = min( ( m_iMaxAmmoRockets - m_iAmmoRockets ), iAmountToAdd );
 
 			pPlayer->RemoveAmmo( iAmountToAdd * tf_sentrygun_metal_per_rocket.GetFloat(), TF_AMMO_METAL );
@@ -515,6 +671,103 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 	}
 
 	return ( bRepair || bUpgrade );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Separated so it can be triggered by wrench hit or by vgui screen
+//-----------------------------------------------------------------------------
+bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
+{
+	if ( GetHealth() < GetMaxHealth() )
+	{
+		int iAmountToHeal;
+
+		if ( m_iState != SENTRY_STATE_WRANGLED && m_iState != SENTRY_STATE_WRANGLED_RECOVERY )
+		{
+			iAmountToHeal = min( 100, GetMaxHealth() - GetHealth() );
+		}
+		else 
+		{
+			// 33% of normal rate
+			iAmountToHeal = min( ( 33 ), GetMaxHealth() - GetHealth() );
+		}
+
+		// repair the building
+		int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );
+	
+		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
+			GetHealth(),
+			GetMaxHealth(),
+			iRepairCost ) );
+
+		if ( iRepairCost > 0 )
+		{
+			if ( iRepairCost > pActivator->GetBuildResources() )
+			{
+				iRepairCost = pActivator->GetBuildResources();
+			}
+
+			pActivator->RemoveBuildResources( iRepairCost );
+
+			float flNewHealth = min( GetMaxHealth(), m_flHealth + ( iRepairCost * 5 ) );
+			SetHealth( flNewHealth );
+	
+			return ( iRepairCost > 0 );
+		}
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CObjectSentrygun::CheckUpgradeOnHit( CTFPlayer *pPlayer )
+{
+	bool bUpgrade = false;
+
+	int iPlayerMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
+	int iAmountToAdd;
+	if ( m_iState != SENTRY_STATE_WRANGLED && m_iState != SENTRY_STATE_WRANGLED_RECOVERY )
+	{
+		iAmountToAdd = min( tf_obj_upgrade_per_hit.GetInt(), iPlayerMetal );
+	}
+	else
+	{
+		iAmountToAdd = min( ( tf_obj_upgrade_per_hit.GetInt() * .33 ), iPlayerMetal );
+	}
+
+	if ( iAmountToAdd > ( m_iUpgradeMetalRequired - m_iUpgradeMetal ) )
+		iAmountToAdd = ( m_iUpgradeMetalRequired - m_iUpgradeMetal );
+
+	if ( tf_cheapobjects.GetBool() == false )
+	{
+		pPlayer->RemoveAmmo( iAmountToAdd, TF_AMMO_METAL );
+	}
+	m_iUpgradeMetal += iAmountToAdd;
+
+	if ( iAmountToAdd > 0 )
+	{
+		bUpgrade = true;
+	}
+
+	if ( m_iUpgradeMetal >= m_iUpgradeMetalRequired )
+	{
+		StartUpgrading();
+
+		IGameEvent * event = gameeventmanager->CreateEvent( "player_upgradedobject" );
+		if ( event )
+		{
+			event->SetInt( "userid", pPlayer->GetUserID() );
+			event->SetInt( "object", ObjectType() );
+			event->SetInt( "index", entindex() );	// object entity index
+			event->SetBool( "isbuilder", pPlayer == GetBuilder() );
+			gameeventmanager->FireEvent( event, true );	// don't send to clients
+		}
+
+		m_iUpgradeMetal = 0;
+	}
+
+	return bUpgrade;
 }
 
 int CObjectSentrygun::GetBaseHealth( void )
@@ -880,6 +1133,7 @@ void CObjectSentrygun::Attack()
 	if ( m_flNextAttack <= gpGlobals->curtime && (m_vecGoalAngles - m_vecCurAngles).Length() <= 10 )
 	{
 		Fire();
+		FireRockets();
 
 		if ( m_iUpgradeLevel == 1 )
 		{
@@ -898,64 +1152,11 @@ void CObjectSentrygun::Attack()
 }
 
 //-----------------------------------------------------------------------------
-// Fire on our target
+// Fire bullets on our target
 //-----------------------------------------------------------------------------
 bool CObjectSentrygun::Fire()
 {
-	//NDebugOverlay::Cross3D( m_hEnemy->WorldSpaceCenter(), 10, 255, 0, 0, false, 0.1 );
-
 	Vector vecAimDir;
-
-	// Level 3 Turrets fire rockets every 3 seconds
-	if ( m_iUpgradeLevel == 3 &&
-		m_iAmmoRockets > 0 &&
-		m_flNextRocketAttack < gpGlobals->curtime )
-	{
-		Vector vecSrc;
-		QAngle vecAng;
-
-		// alternate between the 2 rocket launcher ports.
-		if ( m_iAmmoRockets & 1 )
-		{
-			GetAttachment( m_iAttachments[SENTRYGUN_ATTACHMENT_ROCKET_L], vecSrc, vecAng );
-		}
-		else
-		{
-			GetAttachment( m_iAttachments[SENTRYGUN_ATTACHMENT_ROCKET_R], vecSrc, vecAng );
-		}
-
-		vecAimDir = m_hEnemy->WorldSpaceCenter() - vecSrc;
-		vecAimDir.NormalizeInPlace();
-
-		// NOTE: vecAng is not actually set by GetAttachment!!!
-		QAngle angDir;
-		VectorAngles( vecAimDir, angDir );
-
-		EmitSound( "Building_Sentrygun.FireRocket" );
-
-		AddGesture( ACT_RANGE_ATTACK2 );
-
-		QAngle angAimDir;
-		VectorAngles( vecAimDir, angAimDir );
-		CTFProjectile_SentryRocket *pProjectile = CTFProjectile_SentryRocket::Create( vecSrc, angAimDir, this, GetBuilder() );
-		if ( pProjectile )
-		{
-			pProjectile->SetDamage( 100 );
-		}
-
-		// Setup next rocket shot
-		m_flNextRocketAttack = gpGlobals->curtime + 3;
-
-		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
-		{
-			m_iAmmoRockets--;
-		}
-
-		if (m_iAmmoRockets == 10)
-			ClientPrint( GetBuilder(), HUD_PRINTNOTIFY, "#Sentry_rocketslow");
-		if (m_iAmmoRockets == 0)
-			ClientPrint( GetBuilder(), HUD_PRINTNOTIFY, "#Sentry_rocketsout");
-	}
 
 	// All turrets fire shells
 	if ( m_iAmmoShells > 0)
@@ -966,7 +1167,7 @@ bool CObjectSentrygun::Fire()
 			AddGesture( ACT_RANGE_ATTACK1 );
 		}
 
-		Vector vecSrc;
+		Vector vecSrc, vecMidEnemy;
 		QAngle vecAng;
 
 		int iAttachment;
@@ -982,40 +1183,69 @@ bool CObjectSentrygun::Fire()
 		}
 
 		GetAttachment( iAttachment, vecSrc, vecAng );
+		FireBulletsInfo_t info;
 
-		Vector vecMidEnemy = m_hEnemy->WorldSpaceCenter();
-
-		// If we cannot see their WorldSpaceCenter ( possible, as we do our target finding based
-		// on the eye position of the target ) then fire at the eye position
-		trace_t tr;
-		UTIL_TraceLine( vecSrc, vecMidEnemy, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr);
-
-		if ( !tr.m_pEnt || tr.m_pEnt->IsWorld() )
+		if ( m_hEnemy )
 		{
-			// Hack it lower a little bit..
-			// The eye position is not always within the hitboxes for a standing TF Player
-			vecMidEnemy = m_hEnemy->EyePosition() + Vector(0,0,-5);
+			vecMidEnemy = m_hEnemy->WorldSpaceCenter();
+
+			// If we cannot see their WorldSpaceCenter ( possible, as we do our target finding based
+			// on the eye position of the target ) then fire at the eye position
+			trace_t tr;
+			UTIL_TraceLine( vecSrc, vecMidEnemy, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr);
+
+			if ( !tr.m_pEnt || tr.m_pEnt->IsWorld() )
+			{
+				// Hack it lower a little bit..
+				// The eye position is not always within the hitboxes for a standing TF Player
+				vecMidEnemy = m_hEnemy->EyePosition() + Vector(0,0,-5);
+			}
+
+			vecAimDir = vecMidEnemy - vecSrc;
+		}
+		else
+		{	
+			// Add a bit of randomness to shots not locked onto targets
+			vecAimDir = m_vecEnd - vecSrc;
 		}
 
-		vecAimDir = vecMidEnemy - vecSrc;
+		// Wrangled shots should have some spread
+		if ( m_iState == SENTRY_STATE_WRANGLED )
+		{
+			float x = 0.0f, y = 0.0f, flSpread = 0.01f * vecAimDir.Length();
+			Vector vecRight, vecUp;
+			VectorVectors( vecAimDir, vecRight, vecUp );
+
+			// Get circular gaussian spread.
+			x = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
+			y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
+
+			// Initialize the variable firing information.
+			vecAimDir = vecAimDir + ( x *  flSpread * vecRight ) + ( y * flSpread * vecUp );
+
+			// Use modified damage value to compensate for damage ramp-up/falloff
+			info.m_flDamage = ( tf_sentrygun_damage.GetFloat() / 1.5f );
+		}
+		else
+		{
+			info.m_flDamage = tf_sentrygun_damage.GetFloat();
+		}
 
 		float flDistToTarget = vecAimDir.Length();
 
 		vecAimDir.NormalizeInPlace();
-
+		
 		//NDebugOverlay::Cross3D( vecSrc, 10, 255, 0, 0, false, 0.1 );
 
-		FireBulletsInfo_t info;
-
+		info.m_vecSpread = vec3_origin;
 		info.m_vecSrc = vecSrc;
 		info.m_vecDirShooting = vecAimDir;
 		info.m_iTracerFreq = 1;
 		info.m_iShots = 1;
-		info.m_pAttacker = GetBuilder();
+		info.m_pAttacker = this;
+		info.m_iAmmoType = m_iAmmoType;
 		info.m_vecSpread = vec3_origin;
 		info.m_flDistance = flDistToTarget + 100;
-		info.m_iAmmoType = m_iAmmoType;
-		info.m_flDamage = tf_sentrygun_damage.GetFloat();
 
 		FireBullets( info );
 
@@ -1061,6 +1291,79 @@ bool CObjectSentrygun::Fire()
 		// Out of ammo, play a click
 		EmitSound( "Building_Sentrygun.Empty" );
 		m_flNextAttack = gpGlobals->curtime + 0.2;
+	}
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Fire rockets on our target
+//-----------------------------------------------------------------------------
+bool CObjectSentrygun::FireRockets()
+{
+	//NDebugOverlay::Cross3D( m_hEnemy->WorldSpaceCenter(), 10, 255, 0, 0, false, 0.1 );
+
+	// Only check m_flNextRocketAttack if the gun isn't wrangled
+	if ( m_iState != SENTRY_STATE_WRANGLED && m_flNextRocketAttack > gpGlobals->curtime )
+		return false;
+
+	Vector vecAimDir;
+
+	// Level 3 Turrets fire rockets every 3 seconds
+	if ( m_iUpgradeLevel == 3 &&
+		m_iAmmoRockets > 0 )
+	{
+		Vector vecSrc;
+		QAngle vecAng;
+
+		// alternate between the 2 rocket launcher ports.
+		if ( m_iAmmoRockets & 1 )
+		{
+			GetAttachment( m_iAttachments[SENTRYGUN_ATTACHMENT_ROCKET_L], vecSrc, vecAng );
+		}
+		else
+		{
+			GetAttachment( m_iAttachments[SENTRYGUN_ATTACHMENT_ROCKET_R], vecSrc, vecAng );
+		}
+
+		if ( m_hEnemy )
+		{
+			vecAimDir = m_hEnemy->WorldSpaceCenter() - vecSrc;
+		}
+		else
+		{
+			vecAimDir = m_vecEnd - vecSrc;
+		}
+
+		vecAimDir.NormalizeInPlace();
+
+		// NOTE: vecAng is not actually set by GetAttachment!!!
+		QAngle angDir;
+		VectorAngles( vecAimDir, angDir );
+
+		EmitSound( "Building_Sentrygun.FireRocket" );
+
+		AddGesture( ACT_RANGE_ATTACK2 );
+
+		QAngle angAimDir;
+		VectorAngles( vecAimDir, angAimDir );
+		CTFProjectile_SentryRocket *pProjectile = CTFProjectile_SentryRocket::Create( vecSrc, angAimDir, this, GetBuilder() );
+		if ( pProjectile )
+		{
+			pProjectile->SetDamage( 100 );
+		}
+
+		// Setup next rocket shot
+		m_flNextRocketAttack = gpGlobals->curtime + 3;
+
+		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
+		{
+			m_iAmmoRockets--;
+		}
+
+		if (m_iAmmoRockets == 10)
+			ClientPrint( GetBuilder(), HUD_PRINTNOTIFY, "#Sentry_rocketslow");
+		if (m_iAmmoRockets == 0)
+			ClientPrint( GetBuilder(), HUD_PRINTNOTIFY, "#Sentry_rocketsout");
 	}
 
 	return true;
@@ -1375,6 +1678,14 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 			float flDamage = newInfo.GetDamage() * SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER;
 			newInfo.SetDamage( flDamage );
 		}
+	}
+
+	if ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY )
+	{
+		float flDamage = newInfo.GetDamage();
+
+		// Wrangler shield absorbs 66% of damage
+		newInfo.SetDamage( flDamage * 0.34 );
 	}
 
 	int iDamageTaken = BaseClass::OnTakeDamage( newInfo );

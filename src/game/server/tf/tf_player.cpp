@@ -56,6 +56,7 @@
 #include "baseprojectile.h"
 #include "tf_weapon_flamethrower.h"
 #include "tf_weapon_lunchbox.h"
+#include "tf_weapon_laser_pointer.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -3462,6 +3463,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CTFWeaponBase *pWeapon = NULL;
 
+	// If this is a base object get the builder
+	if ( pAttacker->IsBaseObject() )
+	{
+		CBaseObject *pObject = static_cast< CBaseObject * >( pAttacker );
+		pAttacker = pObject->GetBuilder();
+	}
+
 	if ( inputInfo.GetWeapon() )
 	{
 		pWeapon = dynamic_cast<CTFWeaponBase *>( inputInfo.GetWeapon() );
@@ -3640,7 +3648,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 
 	// If we're not damaging ourselves, apply randomness
-	if ( pAttacker != this && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
+	if ( ( pAttacker != this || info.GetAttacker() != this ) && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
 	{
 		float flDamage = 0;
 		if ( bitsDamage & DMG_CRITICAL )
@@ -3719,6 +3727,16 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 			else
 			{
+				if ( info.GetAmmoType() == TF_AMMO_PRIMARY && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LASER_POINTER )
+				{
+					// Wrangled shots should have damage falloff
+					bitsDamage |= DMG_USEDISTANCEMOD;
+
+					// Distance should be calculated from sentry
+					pAttacker = info.GetAttacker();
+				}
+
+
 				float flMin = 0.40;
 				float flMax = 0.60;
 				float flCenter = 0.5;
@@ -4033,6 +4051,13 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CBaseEntity *pWeapon = info.GetWeapon();
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( pWeapon );
+
+	// If this is an object get the builder
+	if ( pAttacker->IsBaseObject() )
+	{
+		CBaseObject *pObject = static_cast< CBaseObject * >( pAttacker );
+		pAttacker = pObject->GetBuilder();
+	}
 
 	Vector vecDir = vec3_origin;
 	if ( pInflictor )
@@ -7659,6 +7684,7 @@ void CTFPlayer::Stun( void )
 	//play the first stun animation sequence
 	//FIXME: this rest of the stun sequence should follow this
 	DoAnimationEvent(PLAYERANIMEVENT_STUN_BEGIN);
+	m_Shared.m_flStunTime = SequenceDuration();
 
 	// Clear disguising state.
 	if ( m_Shared.InCond( TF_COND_DISGUISING ) )
