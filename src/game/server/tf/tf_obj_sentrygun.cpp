@@ -1420,7 +1420,15 @@ int CObjectSentrygun::GetMaxUpgradeLevel( void )
 //-----------------------------------------------------------------------------
 int	CObjectSentrygun::GetTracerAttachment( void )
 {
-	return m_iAttachments[SENTRYGUN_ATTACHMENT_MUZZLE];
+		if ( m_iUpgradeLevel > 1 && (m_iAmmoShells & 1) )
+		{
+			// level 2 and 3 turrets alternate muzzles each time they fizzy fizzy fire.
+			return m_iAttachments[SENTRYGUN_ATTACHMENT_MUZZLE_ALT];
+		}
+		else
+		{
+			return m_iAttachments[SENTRYGUN_ATTACHMENT_MUZZLE];
+		}
 }
 
 //-----------------------------------------------------------------------------
