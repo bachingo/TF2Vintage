@@ -180,7 +180,8 @@ void CTFLaser_Pointer::ItemPostFrame( void )
 	if ( pGun )
 	{
 #ifdef GAME_DLL
-		if ( !pGun->IsRedeploying() && !pGun->IsBuilding() && !pGun->IsUpgrading() )
+		//TODO: Find a better way to determine if we can wrangle
+		if ( !pGun->IsRedeploying() && !pGun->IsBuilding() && !pGun->IsUpgrading() && !pGun->HasSapper() )
 		{
 			pGun->SetState( SENTRY_STATE_WRANGLED );
 			m_vecEnd = pGun->m_vecEnd;

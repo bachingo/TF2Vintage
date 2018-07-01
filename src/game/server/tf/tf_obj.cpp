@@ -409,6 +409,7 @@ void CBaseObject::MakeCarriedObject( CTFPlayer *pPlayer )
 		m_bCarried = true;
 		m_bCarryDeploy = false;
 		DestroyScreens();
+
 		//FollowEntity( pPlayer, true );
 
 		// Save health amount building had before getting picked up. It will only heal back up to it.

@@ -1802,48 +1802,48 @@ bool CTFPlayerShared::IsPlayerDominated(int iPlayerIndex)
 	return pLocalPlayer->m_Shared.IsPlayerDominatingMe( m_pOuter->entindex() );
 #else
 	// Server has all the data.
-	return m_bPlayerDominated.Get(iPlayerIndex);
+	return m_bPlayerDominated.Get( iPlayerIndex );
 #endif
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFPlayerShared::IsPlayerDominatingMe(int iPlayerIndex)
+bool CTFPlayerShared::IsPlayerDominatingMe( int iPlayerIndex )
 {
-	return m_bPlayerDominatingMe.Get(iPlayerIndex);
+	return m_bPlayerDominatingMe.Get( iPlayerIndex );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::NoteLastDamageTime(int nDamage)
+void CTFPlayerShared::NoteLastDamageTime( int nDamage )
 {
 	// we took damage
 	if (nDamage > 5)
 	{
 		m_flLastStealthExposeTime = gpGlobals->curtime;
-		AddCond(TF_COND_STEALTHED_BLINK);
+		AddCond( TF_COND_STEALTHED_BLINK );
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::OnSpyTouchedByEnemy(void)
+void CTFPlayerShared::OnSpyTouchedByEnemy( void )
 {
 	m_flLastStealthExposeTime = gpGlobals->curtime;
-	AddCond(TF_COND_STEALTHED_BLINK);
+	AddCond( TF_COND_STEALTHED_BLINK );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::FadeInvis(float flInvisFadeTime)
+void CTFPlayerShared::FadeInvis( float flInvisFadeTime )
 {
-	RemoveCond(TF_COND_STEALTHED);
+	RemoveCond( TF_COND_STEALTHED );
 
-	if (flInvisFadeTime < 0.15)
+	if ( flInvisFadeTime < 0.15 )
 	{
 		// this was a force respawn, they can attack whenever
 	}
@@ -1859,31 +1859,31 @@ void CTFPlayerShared::FadeInvis(float flInvisFadeTime)
 //-----------------------------------------------------------------------------
 // Purpose: Approach our desired level of invisibility
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::InvisibilityThink(void)
+void CTFPlayerShared::InvisibilityThink( void )
 {
 	float flTargetInvis = 0.0f;
 	float flTargetInvisScale = 1.0f;
-	if (InCond(TF_COND_STEALTHED_BLINK))
+	if ( InCond( TF_COND_STEALTHED_BLINK ) || InCond( TF_COND_URINE ) )
 	{
 		// We were bumped into or hit for some damage.
 		flTargetInvisScale = TF_SPY_STEALTH_BLINKSCALE;/*tf_spy_stealth_blink_scale.GetFloat();*/
 	}
 
 	// Go invisible or appear.
-	if (m_flInvisChangeCompleteTime > gpGlobals->curtime)
+	if ( m_flInvisChangeCompleteTime > gpGlobals->curtime )
 	{
-		if (InCond(TF_COND_STEALTHED))
+		if ( InCond( TF_COND_STEALTHED ) )
 		{
-			flTargetInvis = 1.0f - ((m_flInvisChangeCompleteTime - gpGlobals->curtime));
+			flTargetInvis = 1.0f - ( ( m_flInvisChangeCompleteTime - gpGlobals->curtime ) );
 		}
 		else
 		{
-			flTargetInvis = ((m_flInvisChangeCompleteTime - gpGlobals->curtime) * 0.5f);
+			flTargetInvis = ( ( m_flInvisChangeCompleteTime - gpGlobals->curtime) * 0.5f );
 		}
 	}
 	else
 	{
-		if (InCond(TF_COND_STEALTHED))
+		if ( InCond( TF_COND_STEALTHED ) )
 		{
 			flTargetInvis = 1.0f;
 		}
@@ -1894,7 +1894,7 @@ void CTFPlayerShared::InvisibilityThink(void)
 	}
 
 	flTargetInvis *= flTargetInvisScale;
-	m_flInvisibility = clamp(flTargetInvis, 0.0f, 1.0f);
+	m_flInvisibility = clamp( flTargetInvis, 0.0f, 1.0f );
 }
 
 

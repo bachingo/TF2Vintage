@@ -1311,11 +1311,11 @@ EXPOSE_INTERFACE(CProxyItemTintColor, IMaterialProxy, "ItemTintColor" IMATERIAL_
 class CProxyCommunityWeapon : public CResultProxy
 {
 public:
-	virtual bool Init(IMaterial *pMaterial, KeyValues *pKeyValues)
+	virtual bool Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 	{
 		return true;
 	}
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
 	}	
 };
@@ -1328,17 +1328,17 @@ EXPOSE_INTERFACE(CProxyCommunityWeapon, IMaterialProxy, "CommunityWeapon" IMATER
 class CProxyAnimatedWeaponSheen : public CResultProxy
 {
 public:
-	virtual bool Init(IMaterial *pMaterial, KeyValues *pKeyValues)
+	virtual bool Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 	{
 		return true;
 	}
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
 		
 	}
 };
 
-EXPOSE_INTERFACE(CProxyAnimatedWeaponSheen, IMaterialProxy, "AnimatedWeaponSheen" IMATERIAL_PROXY_INTERFACE_VERSION);
+EXPOSE_INTERFACE( CProxyAnimatedWeaponSheen, IMaterialProxy, "AnimatedWeaponSheen" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: Universal proxy from live tf2 used for spy invisiblity material
@@ -1347,15 +1347,15 @@ EXPOSE_INTERFACE(CProxyAnimatedWeaponSheen, IMaterialProxy, "AnimatedWeaponSheen
 class CInvisProxy : public CEntityMaterialProxy
 {
 public:
-	CInvisProxy(void);
-	virtual				~CInvisProxy(void);
-	virtual bool		Init(IMaterial *pMaterial, KeyValues* pKeyValues);
-	virtual void		OnBind(C_BaseEntity *pC_BaseEntity);
+	CInvisProxy( void );
+	virtual				~CInvisProxy( void );
+	virtual bool		Init( IMaterial *pMaterial, KeyValues* pKeyValues );
+	virtual void		OnBind( C_BaseEntity *pC_BaseEntity );
 	virtual IMaterial *	GetMaterial();
 
-	virtual void		HandleSpyInvis(C_TFPlayer *pPlayer);
-	virtual void		HandleVMInvis(C_TFViewModel *pVM);
-	virtual void		HandleWeaponInvis(C_BaseEntity *pC_BaseEntity);
+	virtual void		HandleSpyInvis( C_TFPlayer *pPlayer );
+	virtual void		HandleVMInvis( C_TFViewModel *pVM );
+	virtual void		HandleWeaponInvis( C_BaseEntity *pC_BaseEntity );
 
 private:
 
@@ -1366,7 +1366,7 @@ private:
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CInvisProxy::CInvisProxy(void)
+CInvisProxy::CInvisProxy( void )
 {
 	m_pPercentInvisible = NULL;
 	m_pCloakColorTint = NULL;
@@ -1375,7 +1375,7 @@ CInvisProxy::CInvisProxy(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CInvisProxy::~CInvisProxy(void)
+CInvisProxy::~CInvisProxy( void )
 {
 }
 
@@ -1383,61 +1383,61 @@ CInvisProxy::~CInvisProxy(void)
 // Purpose: Get pointer to the color value
 // Input  : *pMaterial - 
 //-----------------------------------------------------------------------------
-bool CInvisProxy::Init(IMaterial *pMaterial, KeyValues* pKeyValues)
+bool CInvisProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
 {
-	Assert(pMaterial);
+	Assert( pMaterial );
 
 	// Need to get the material var
 	bool bInvis;
-	m_pPercentInvisible = pMaterial->FindVar("$cloakfactor", &bInvis);
+	m_pPercentInvisible = pMaterial->FindVar( "$cloakfactor", &bInvis );
 
 	bool bTint;
-	m_pCloakColorTint = pMaterial->FindVar("$cloakColorTint", &bTint);
+	m_pCloakColorTint = pMaterial->FindVar( "$cloakColorTint", &bTint );
 
 	// if we have $cloakColorTint, it's spy_invis
-	if (bTint)
+	if ( bTint )
 	{
-		return (bInvis && bTint);
+		return ( bInvis && bTint );
 	}
 
-	return (bTint);
+	return ( bTint );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::OnBind(C_BaseEntity *pEnt)
+void CInvisProxy::OnBind( C_BaseEntity *pEnt )
 {
-	if (!pEnt)
+	if ( !pEnt )
 		return;
 
-	m_pPercentInvisible->SetFloatValue(0.0);
+	m_pPercentInvisible->SetFloatValue( 0.0 );
 
-	C_TFPlayer *pPlayer = ToTFPlayer(pEnt);
+	C_TFPlayer *pPlayer = ToTFPlayer( pEnt );
 
 	C_TFViewModel *pVM;
-	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>(pEnt);
-	if (pVMAddon)
+	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEnt );
+	if ( pVMAddon )
 	{
-		pVM = dynamic_cast<C_TFViewModel *>(pVMAddon->m_viewmodel.Get());
+		pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_viewmodel.Get() );
 	}
 	else
 	{
-		pVM = dynamic_cast<C_TFViewModel *>(pEnt);
+		pVM = dynamic_cast< C_TFViewModel * >( pEnt );
 	}
 
-	if (pPlayer)
+	if ( pPlayer )
 	{
-		HandleSpyInvis(pPlayer);
+		HandleSpyInvis( pPlayer );
 	}
-	else if (pVM)
+	else if ( pVM )
 	{
-		HandleVMInvis(pVM);
+		HandleVMInvis( pVM );
 	}
 	else
 	{
-		HandleWeaponInvis(pEnt);
+		HandleWeaponInvis( pEnt );
 	}
 }
 
@@ -1445,16 +1445,16 @@ void CInvisProxy::OnBind(C_BaseEntity *pEnt)
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::HandleSpyInvis(C_TFPlayer *pPlayer)
+void CInvisProxy::HandleSpyInvis( C_TFPlayer *pPlayer )
 {
-	if (!m_pPercentInvisible || !m_pCloakColorTint)
+	if ( !m_pPercentInvisible || !m_pCloakColorTint )
 		return;
 
-	m_pPercentInvisible->SetFloatValue(pPlayer->GetEffectiveInvisibilityLevel());
+	m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
 
 	float r, g, b;
 
-	switch (pPlayer->GetTeamNumber())
+	switch ( pPlayer->GetTeamNumber() )
 	{
 	case TF_TEAM_RED:
 		r = 1.0; g = 0.5; b = 0.4;
@@ -1477,7 +1477,7 @@ void CInvisProxy::HandleSpyInvis(C_TFPlayer *pPlayer)
 		break;
 	}
 
-	m_pCloakColorTint->SetVecValue(r, g, b);
+	m_pCloakColorTint->SetVecValue( r, g, b );
 }
 
 extern ConVar tf_vm_min_invis;
@@ -1486,16 +1486,16 @@ extern ConVar tf_vm_max_invis;
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::HandleVMInvis(C_TFViewModel *pVM)
+void CInvisProxy::HandleVMInvis( C_TFViewModel *pVM )
 {
-	if (!m_pPercentInvisible)
+	if ( !m_pPercentInvisible )
 		return;
 
-	C_TFPlayer *pPlayer = ToTFPlayer(pVM->GetOwner());
+	C_TFPlayer *pPlayer = ToTFPlayer( pVM->GetOwner() );
 
 	if (!pPlayer)
 	{
-		m_pPercentInvisible->SetFloatValue(0.0f);
+		m_pPercentInvisible->SetFloatValue( 0.0f );
 		return;
 	}
 
@@ -1503,44 +1503,44 @@ void CInvisProxy::HandleVMInvis(C_TFViewModel *pVM)
 
 	// remap from 0.22 to 0.5
 	// but drop to 0.0 if we're not invis at all
-	float flWeaponInvis = (flPercentInvisible < 0.01) ?
+	float flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
 		0.0 :
-		RemapVal(flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat());
+		RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
 
-	m_pPercentInvisible->SetFloatValue(flWeaponInvis);
+	m_pPercentInvisible->SetFloatValue( flWeaponInvis );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::HandleWeaponInvis(C_BaseEntity *pEnt)
+void CInvisProxy::HandleWeaponInvis( C_BaseEntity *pEnt )
 {
-	if (!m_pPercentInvisible)
+	if ( !m_pPercentInvisible )
 		return;
 
 	C_BaseEntity *pMoveParent = pEnt->GetMoveParent();
-	if (!pMoveParent || !pMoveParent->IsPlayer())
+	if ( !pMoveParent || !pMoveParent->IsPlayer() )
 	{
-		m_pPercentInvisible->SetFloatValue(0.0f);
+		m_pPercentInvisible->SetFloatValue( 0.0f );
 		return;
 	}
 
-	C_TFPlayer *pPlayer = ToTFPlayer(pMoveParent);
-	Assert(pPlayer);
+	C_TFPlayer *pPlayer = ToTFPlayer( pMoveParent );
+	Assert( pPlayer );
 
-	m_pPercentInvisible->SetFloatValue(pPlayer->GetEffectiveInvisibilityLevel());
+	m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
 }
 
 IMaterial *CInvisProxy::GetMaterial()
 {
-	if (!m_pPercentInvisible)
+	if ( !m_pPercentInvisible )
 		return NULL;
 
 	return m_pPercentInvisible->GetOwningMaterial();
 }
 
-EXPOSE_INTERFACE(CInvisProxy, IMaterialProxy, "invis" IMATERIAL_PROXY_INTERFACE_VERSION);
+EXPOSE_INTERFACE( CInvisProxy, IMaterialProxy, "invis" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: RecvProxy that converts the Player's object UtlVector to entindexes
