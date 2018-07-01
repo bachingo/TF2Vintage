@@ -442,7 +442,6 @@ CTFPlayer::CTFPlayer()
 
 	m_bIsPlayerADev = false;
 
-	m_bIsAirblast = false;
 	m_flStunTime = 0.0f;
 }
 
@@ -457,21 +456,6 @@ void CTFPlayer::TFPlayerThink()
 	if ( m_pStateInfo && m_pStateInfo->pfnThink )
 	{
 		(this->*m_pStateInfo->pfnThink)();
-	}
-
-	if ( m_bIsAirblast )
-	{
-		//SetMaxSpeed( -1 );
-		m_flStunTime = gpGlobals->curtime + 0.5f;
-		setAirblastState( false );
-		//setUnmoveable( true );
-	}
-
-	if ( gpGlobals->curtime > m_flStunTime && m_Shared.InCond( TF_COND_NO_MOVE ) )
-	{
-		m_Shared.RemoveCond( TF_COND_NO_MOVE );
-		//TeamFortress_SetSpeed();
-		//setUnmoveable( true );
 	}
 
 	// Time to finish the current random expression? Or time to pick a new one?
