@@ -57,8 +57,6 @@ public:
 		
 	void			SetCritical( bool bCritical ) { m_bCritical = bCritical; }
 
-	virtual float	GetDetonateTime( void ){ return gpGlobals->curtime + 1.0f; } // jar never explodes
-
 	virtual bool	IsDeflectable() { return true; }
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 

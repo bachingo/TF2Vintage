@@ -12,6 +12,7 @@
 
 
 #define TF_WEAPON_JAR_MODEL		"models/weapons/c_models/urinejar.mdl"
+#define TF_WEAPON_JAR_LIFETIME  2.0f
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Jar, DT_TFProjectile_Jar )
 
@@ -88,6 +89,8 @@ void CTFProjectile_Jar::Precache( void )
 void CTFProjectile_Jar::Spawn( void )
 {
 	SetModel( TF_WEAPON_JAR_MODEL );
+	SetDetonateTimerLength( TF_WEAPON_JAR_LIFETIME );
+
 	BaseClass::Spawn();
 	SetTouch( &CTFProjectile_Jar::JarTouch );
 
