@@ -1080,46 +1080,53 @@ EXPOSE_INTERFACE( CProxyBurnLevel, IMaterialProxy, "BurnLevel" IMATERIAL_PROXY_I
 class CProxyYellowLevel : public CResultProxy
 {
 public:
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
-		Assert(m_pResult);
+		Assert( m_pResult );
 
 		if ( !pC_BaseEntity )
 		{
-			m_pResult->SetVecValue(1, 1, 1);
+			m_pResult->SetVecValue( 1, 1, 1 );
 			return;
 		}
 
-		C_BaseEntity *pEntity = BindArgToEntity(pC_BaseEntity);
-		if (!pEntity)
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
 			return;
 
-		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >(pEntity);
+		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
 
-		if (!pPlayer)
+		if ( !pPlayer )
 		{
-			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >(pEntity);
-			if (pWeapon)
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			if ( pWeapon )
 			{
-				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+				pPlayer = ( C_TFPlayer* )pWeapon->GetOwner();
 			}
 			else
 			{
-				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >(pEntity);
-				if (pVM)
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
 				{
-					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+					pPlayer = ( C_TFPlayer* )pVM->GetOwner();
 				}
 			}
 		}
 
-		if (pPlayer)
+		Vector vecColor = Vector( 1, 1, 1 );
+
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_URINE ) )
 		{
-			// This should be used to check if the player has the piss condition
-			// If he is, return yellow
+
+			vecColor.Init( 10, 10, 1 );
 		}
 
-		m_pResult->SetVecValue(1, 1, 1);
+		m_pResult->SetVecValue( vecColor.Base(), 3 );
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
 	}
 };
 
@@ -1131,9 +1138,9 @@ EXPOSE_INTERFACE(CProxyYellowLevel, IMaterialProxy, "YellowLevel" IMATERIAL_PROX
 class CProxyModelGlowColor: public CResultProxy
 {
 public:
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
-		Assert(m_pResult);
+		Assert( m_pResult );
 
 		if ( !pC_BaseEntity )
 		{
@@ -1141,27 +1148,27 @@ public:
 			return;
 		}
 
-		C_BaseEntity *pEntity = BindArgToEntity(pC_BaseEntity);
-		if (!pEntity)
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
 			return;
 
-		Vector vecColor = Vector(1, 1, 1);
+		Vector vecColor = Vector( 1, 1, 1 );
 
-		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >(pEntity);
+		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
 
-		if (!pPlayer)
+		if ( !pPlayer )
 		{
-			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >(pEntity);
-			if (pWeapon)
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			if ( pWeapon )
 			{
-				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+				pPlayer = ( C_TFPlayer* )pWeapon->GetOwner();
 			}
 			else
 			{
-				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >(pEntity);
-				if (pVM)
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
 				{
-					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+					pPlayer = ( C_TFPlayer* )pVM->GetOwner();
 				}
 			}
 		}
@@ -1504,10 +1511,18 @@ void CInvisProxy::HandleVMInvis( C_TFViewModel *pVM )
 	// remap from 0.22 to 0.5
 	// but drop to 0.0 if we're not invis at all
 	float flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
-		0.0 :
-		RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
+	0.0 :
+	RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
 
-	m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+	if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+	{
+		// Hacky fix to make viewmodel blink more obvious
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis - 0.1 );
+	}
+	else
+	{
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+	}
 }
 
 //-----------------------------------------------------------------------------

@@ -1205,7 +1205,6 @@ void CTFPlayer::CreateViewModel( int iViewModel )
 
 	if ( GetViewModel( iViewModel ) )
 		return;
-
 	CTFViewModel *pViewModel = ( CTFViewModel * )CreateEntityByName( "tf_viewmodel" );
 	if ( pViewModel )
 	{
