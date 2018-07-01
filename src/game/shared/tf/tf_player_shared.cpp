@@ -1434,7 +1434,6 @@ void CTFPlayerShared::OnRemoveRagemode(void)
 void CTFPlayerShared::OnAddUrine(void)
 {
 #ifdef GAME_DLL
-	m_pOuter->SetRenderColor( 255, 255, 108 );
 	m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
 #else
 	m_pOuter->ParticleProp()->Create( "peejar_drips", PATTACH_ABSORIGIN_FOLLOW );
@@ -1456,8 +1455,6 @@ void CTFPlayerShared::OnAddUrine(void)
 void CTFPlayerShared::OnRemoveUrine(void)
 {
 #ifdef GAME_DLL
-	m_pOuter->SetRenderColor( 255, 255, 255 );
-
 	if( m_nPlayerState != TF_STATE_DYING )
 	{
 		m_hUrineAttacker = NULL;
