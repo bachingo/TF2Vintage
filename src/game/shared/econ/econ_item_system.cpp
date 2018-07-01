@@ -400,6 +400,7 @@ public:
 
 		GET_INT( pItem, pData, attach_to_hands );
 		GET_BOOL( pItem, pData, act_as_wearable );
+		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{

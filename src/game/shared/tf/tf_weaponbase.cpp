@@ -615,6 +615,17 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	}
 #endif
 
+	/*CEconItemDefinition *pStatic = m_Item.GetStaticData();
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer &&  pStatic && pStatic->hide_bodygroups_deployed_only )
+	{
+		for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
+		{
+			// Reset all hidden bodygroups on holster
+			pPlayer->SetBodygroup( i , 0 );
+		}
+	}*/
+
 	AbortReload();
 
 	return BaseClass::Holster( pSwitchingTo );
@@ -670,6 +681,33 @@ bool CTFWeaponBase::Deploy( void )
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
 
 		SwitchBodyGroups();
+
+
+		// Hellish check for bodygroup disabling
+		CEconItemDefinition *pStatic = m_Item.GetStaticData();
+		if ( pStatic )
+		{
+			EconItemVisuals *pVisuals =	pStatic->GetVisuals();
+			if ( pVisuals )
+			{
+				for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
+				{
+					unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName(i) );
+					if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
+					{
+						bool bTrue = pVisuals->player_bodygroups.Element( index );
+						if ( bTrue )
+						{
+							pPlayer->SetBodygroup( i , 1 );
+						}
+					}
+					else
+					{
+						pPlayer->SetBodygroup( i , 0 );
+					}
+				}
+			}
+		}
 	}
 
 	return bDeploy;
