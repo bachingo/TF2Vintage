@@ -1165,7 +1165,17 @@ public:
 			}
 			else
 			{
-				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				C_TFViewModel *pVM;
+				C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEntity );
+				if ( pVMAddon )
+				{
+					pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_viewmodel.Get() );
+				}
+				else
+				{
+					pVM = dynamic_cast< C_TFViewModel * >( pEntity );
+				}
+
 				if ( pVM )
 				{
 					pPlayer = ( C_TFPlayer* )pVM->GetOwner();
