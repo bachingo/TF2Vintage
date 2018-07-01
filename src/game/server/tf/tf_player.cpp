@@ -1153,6 +1153,16 @@ void CTFPlayer::InitClass( void )
 	// Give default items for class.
 	GiveDefaultItems();
 
+	for ( int i = 0; i < MAX_ITEMS; i++ )
+	{
+		// player_bodygroups
+		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( Weapon_GetSlot( i ) );
+		if ( pWeapon )
+		{
+			pWeapon->UpdatePlayerBodygroups();
+		}
+	}
+
 	// Set initial health and armor based on class.
 	int iHealthToAdd = 0;
 	CALL_ATTRIB_HOOK_INT( iHealthToAdd, add_maxhealth );
@@ -1251,6 +1261,12 @@ void CTFPlayer::GiveDefaultItems()
 {
 	// Get the player class data.
 	TFPlayerClassData_t *pData = m_PlayerClass.GetData();
+
+	// Reset all bodygroups
+	for ( int i = 0; i < GetNumBodyGroups(); i++ )
+	{
+		SetBodygroup( i, 0 );
+	}
 
 	RemoveAllAmmo();
 

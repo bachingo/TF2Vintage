@@ -2864,6 +2864,7 @@ void C_BasePlayer::UpdateWearables( void )
 			pItem->ValidateModelIndex();
 			pItem->UpdateVisibility();
 			pItem->CreateShadow();
+			pItem->UpdatePlayerBodygroups();
 		}
 	}
 }

@@ -615,16 +615,15 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	}
 #endif
 
-	/*CEconItemDefinition *pStatic = m_Item.GetStaticData();
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( pPlayer &&  pStatic && pStatic->hide_bodygroups_deployed_only )
+	if ( pPlayer )
 	{
-		for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
+		for ( int i = 0; i < m_iHiddenBodygroups.Count(); i++ )
 		{
 			// Reset all hidden bodygroups on holster
-			pPlayer->SetBodygroup( i , 0 );
+			pPlayer->SetBodygroup( m_iHiddenBodygroups[i] , 0 );
 		}
-	}*/
+	}
 
 	AbortReload();
 
@@ -682,28 +681,21 @@ bool CTFWeaponBase::Deploy( void )
 
 		SwitchBodyGroups();
 
-
 		// Hellish check for bodygroup disabling
 		CEconItemDefinition *pStatic = m_Item.GetStaticData();
-		if ( pStatic )
+		if ( pStatic && pStatic->hide_bodygroups_deployed_only )
 		{
 			EconItemVisuals *pVisuals =	pStatic->GetVisuals();
 			if ( pVisuals )
 			{
 				for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
 				{
-					unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName(i) );
+					unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
 					if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
 					{
-						bool bTrue = pVisuals->player_bodygroups.Element( index );
-						if ( bTrue )
-						{
-							pPlayer->SetBodygroup( i , 1 );
-						}
-					}
-					else
-					{
-						pPlayer->SetBodygroup( i , 0 );
+						// Assume the hidden bodygroups are set to 1 
+						pPlayer->SetBodygroup( i , 1 );
+						m_iHiddenBodygroups.AddToTail( i );
 					}
 				}
 			}
@@ -727,6 +719,18 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 	if ( pTFOwner )
 	{
 		pTFOwner->TeamFortress_SetSpeed();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::UpdatePlayerBodygroups( void )
+{
+	if ( m_Item.GetStaticData() && ( !m_Item.GetStaticData()->hide_bodygroups_deployed_only || m_iState == WEAPON_IS_ACTIVE ) )
+	{
+		// Don't call for inactive weapons that hide bodygroups when deployed
+		BaseClass::UpdatePlayerBodygroups();
 	}
 }
 

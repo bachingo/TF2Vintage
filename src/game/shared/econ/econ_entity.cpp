@@ -8,6 +8,12 @@
 #include "econ_entity.h"
 #include "eventlist.h"
 
+#ifdef GAME_DLL
+#include "tf_player.h"
+#else
+#include "c_tf_player.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -130,6 +136,45 @@ void CEconEntity::ReapplyProvision( void )
 		else
 		{
 			m_hOldOwner = NULL;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update visible bodygroups
+//-----------------------------------------------------------------------------
+void CEconEntity::UpdatePlayerBodygroups( void )
+{
+	CTFPlayer *pPlayer = dynamic_cast < CTFPlayer * >( GetOwnerEntity() );
+
+	if ( !pPlayer )
+	{
+		return;
+	}
+
+	// bodygroup enabling/disabling
+	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+	if ( pStatic )
+	{
+		EconItemVisuals *pVisuals =	pStatic->GetVisuals();
+		if ( pVisuals )
+		{
+			for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
+			{
+				unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
+				if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
+				{
+					bool bTrue = pVisuals->player_bodygroups.Element( index );
+					if ( bTrue )
+					{
+						pPlayer->SetBodygroup( i , 1 );
+					}
+					else
+					{
+						pPlayer->SetBodygroup( i , 0 );
+					}
+				}
+			}
 		}
 	}
 }

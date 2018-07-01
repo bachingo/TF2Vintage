@@ -183,8 +183,10 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual bool CanDrop( void ) { return false; }
 
-	// Accessor
+	// Accessor for reload bodygroup switching
 	virtual void SwitchBodyGroups( void ) {}
+
+	virtual void UpdatePlayerBodygroups( void );
 
 	// Sound.
 	bool PlayEmptySound();
@@ -355,6 +357,8 @@ protected:
 
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
+
+	CUtlVector< int > m_iHiddenBodygroups;
 };
 
 #define WEAPON_RANDOM_RANGE 10000
