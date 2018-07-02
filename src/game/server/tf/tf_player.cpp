@@ -7441,10 +7441,20 @@ void CTFPlayer::Taunt( void )
 			m_flTauntAttackTime = gpGlobals->curtime + 1.8f;
 			m_iTauntAttack = TF_TAUNT_SPY1;
 		}
-		else if ( Q_strnicmp( szResponse, "scenes/player/sniper/low/taunt04", 32 ) == 0)
+		else if ( Q_strnicmp( szResponse, "scenes/player/sniper/low/taunt04", 32 ) == 0 )
 		{
-			m_flTauntAttackTime = gpGlobals->curtime + 0.5f;
+			m_flTauntAttackTime = gpGlobals->curtime + 0.75f;
 			m_iTauntAttack = TF_TAUNT_SNIPER1;
+		}
+		else if ( Q_strnicmp( szResponse, "scenes/player/medic/low/taunt08.vcd", 32 ) == 0 )
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 2.35f;
+			m_iTauntAttack = TF_TAUNT_MEDIC1;
+		}
+		else if (  Q_strnicmp( szResponse, "scenes/player/medic/low/taunt06.vcd", 32 ) == 0 )
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 0.35;
+			m_iTauntAttack = TF_TAUNT_OKTOBERFEST;
 		}
 	}
 
@@ -7471,6 +7481,8 @@ void CTFPlayer::DoTauntAttack( void )
 		case TF_TAUNT_SPY3:
 		case TF_TAUNT_SNIPER1:
 		case TF_TAUNT_SNIPER2:
+		case TF_TAUNT_MEDIC1:
+		case TF_TAUNT_MEDIC2:
 		{
 			Vector vecAttackDir = BodyDirection2D();
 			Vector vecOrigin = WorldSpaceCenter() + vecAttackDir * 64;
@@ -7509,7 +7521,19 @@ void CTFPlayer::DoTauntAttack( void )
 				flDamage = 500.0f;
 				nDamageType = DMG_SLASH;
 				iDamageCustom = TF_DMG_TAUNT_SNIPER;
-			break;
+				break;
+			case TF_TAUNT_MEDIC1:
+				vecForce *= 0.0f;
+				flDamage = 1.0f;
+				nDamageType = DMG_SLASH;
+				iDamageCustom = TF_DMG_TAUNT_MEDIC;
+				break;
+			case TF_TAUNT_MEDIC2:
+				vecForce *= -1000.0f;
+				flDamage = 500.0f;
+				nDamageType = DMG_SLASH;
+				iDamageCustom = TF_DMG_TAUNT_MEDIC;
+				break;
 			default:
 				vecForce *= 100.0f;
 				flDamage = 25.0f;
@@ -7531,8 +7555,13 @@ void CTFPlayer::DoTauntAttack( void )
 			}
 			else if ( iTauntType == TF_TAUNT_SNIPER1 )
 			{
-				m_flTauntAttackTime = gpGlobals->curtime + 1.75;
+				m_flTauntAttackTime = gpGlobals->curtime + 1.25;
 				m_iTauntAttack = TF_TAUNT_SNIPER2;
+			}
+			else if ( iTauntType == TF_TAUNT_MEDIC1 )
+			{
+				m_flTauntAttackTime = gpGlobals->curtime + 0.70;
+				m_iTauntAttack = TF_TAUNT_MEDIC2;
 			}
 
 			CBaseEntity *pList[256];
@@ -7550,12 +7579,24 @@ void CTFPlayer::DoTauntAttack( void )
 
 				if ( pEntity == this || !pEntity->IsAlive() || InSameTeam( pEntity ) || !FVisible( pEntity, MASK_SOLID ) )
 					continue;
-				if ( iTauntType == TF_TAUNT_SNIPER1 )
+
+				if ( iTauntType == TF_TAUNT_SNIPER1 || iTauntType == TF_TAUNT_MEDIC1 )
 				{
 					CTFPlayer *pOther = ToTFPlayer( pEntity );
 					if( pOther )
 					{
 						pOther->Stun();
+					}
+				}
+
+				if ( iTauntType == TF_TAUNT_MEDIC2 )
+				{
+					CWeaponMedigun *pMedigun = GetMedigun();
+
+					if (pMedigun)
+					{
+						// Successful kills gain +50% ubercharge
+						pMedigun->AddCharge( 0.50 );
 					}
 				}
 
@@ -7626,6 +7667,15 @@ void CTFPlayer::DoTauntAttack( void )
 				m_iTauntAttack = TF_TAUNT_LUNCHBOX_DRINK;
 				m_flTauntAttackTime = gpGlobals->curtime + 0.1f;
 			}
+			break;
+		}
+		case TF_TAUNT_OKTOBERFEST:
+		{
+			Msg("\nHEALED\n");
+			// Taunt heals 10 health over the duration
+			TakeHealth( 1.0f, DMG_GENERIC );
+			m_flTauntAttackTime = gpGlobals->curtime + 0.38;
+			m_iTauntAttack = TF_TAUNT_OKTOBERFEST;
 			break;
 		}
 	}
