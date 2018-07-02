@@ -57,6 +57,19 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_pistol_scout, CTFPistol_Scout );
 PRECACHE_WEAPON_REGISTER( tf_weapon_pistol_scout );
 
+//============================
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFHandgun_Scout_Primary, DT_WeaponHandgun_Scout_Primary )
+
+BEGIN_NETWORK_TABLE( CTFHandgun_Scout_Primary, DT_WeaponHandgun_Scout_Primary )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFHandgun_Scout_Primary )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_handgun_scout_primary, CTFHandgun_Scout_Primary );
+PRECACHE_WEAPON_REGISTER( tf_weapon_handgun_scout_primary );
+
 //=============================================================================
 //
 // Weapon Pistol functions.

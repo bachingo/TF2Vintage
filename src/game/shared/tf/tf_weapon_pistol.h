@@ -9,11 +9,13 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
+#include "tf_weapon_shotgun.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
 #define CTFPistol C_TFPistol
 #define CTFPistol_Scout C_TFPistol_Scout
+#define CTFHandgun_Scout_Primary C_TFHandgun_Scout_Primary
 #endif
 
 // The faster the player fires, the more inaccurate he becomes
@@ -59,6 +61,19 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PISTOL_SCOUT; }
+};
+
+// Scout Handgun Primary class.
+class CTFHandgun_Scout_Primary : public CTFShotgun
+{
+public:
+
+	DECLARE_CLASS( CTFHandgun_Scout_Primary, CTFShotgun );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual void	PrimaryAttack( void ) { m_bReloadsSingly = false; BaseClass::PrimaryAttack();}
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_HANDGUN_SCOUT_PRIMARY; }
 };
 
 #endif // TF_WEAPON_PISTOL_H
