@@ -3355,6 +3355,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	case TF_DMG_TAUNT_SNIPER:
 		pszCustomKill = "taunt_sniper";
 		break;
+	case TF_DMG_TAUNT_MEDIC:
+		pszCustomKill = "taunt_medic";
+		break;
 	case TF_DMG_TELEFRAG:
 		pszCustomKill = "telefrag";
 		break;
@@ -4726,7 +4729,7 @@ bool CTFGameRules::IsBirthday( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				if ( today->tm_mon == 7 && today->tm_mday == 24 )
+				if ( today->tm_mon == 7 && today->tm_mday == 4 )
 				{
 					m_iBirthdayMode = BIRTHDAY_ON;
 				}
