@@ -9,7 +9,6 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
-#include "tf_weapon_shotgun.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -64,15 +63,14 @@ public:
 };
 
 // Scout Handgun Primary class.
-class CTFHandgun_Scout_Primary : public CTFShotgun
+class CTFHandgun_Scout_Primary : public CTFPistol
 {
 public:
 
-	DECLARE_CLASS( CTFHandgun_Scout_Primary, CTFShotgun );
+	DECLARE_CLASS( CTFHandgun_Scout_Primary, CTFPistol );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	virtual void	PrimaryAttack( void ) { m_bReloadsSingly = false; BaseClass::PrimaryAttack();}
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_HANDGUN_SCOUT_PRIMARY; }
 };
 

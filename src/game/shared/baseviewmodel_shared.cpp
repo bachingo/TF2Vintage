@@ -360,7 +360,7 @@ void CBaseViewModel::SendViewModelMatchingSequence( int sequence )
 	// set this here so other weapons code knows which sequence is playing.
 	SetSequence( sequence );
 
-	m_nAnimationParity = ( m_nAnimationParity + 1 ) & ( (1<<VIEWMODEL_ANIMATION_PARITY_BITS) - 1 );
+	m_nAnimationParity = ( m_nAnimationParity + 1 ) & ( ( 1<<VIEWMODEL_ANIMATION_PARITY_BITS) - 1 );
 
 #if defined( CLIENT_DLL )
 	m_nOldAnimationParity = m_nAnimationParity;

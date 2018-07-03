@@ -491,13 +491,13 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 
 #ifdef CLIENT_DLL
 	// Make the weapon play the animation as well
-	if (iGestureActivity != ACT_INVALID && GetBasePlayer() != C_BasePlayer::GetLocalPlayer())
+	if ( iGestureActivity != ACT_INVALID && GetBasePlayer() != C_BasePlayer::GetLocalPlayer() )
 	{
 		CBaseCombatWeapon *pWeapon = GetTFPlayer()->GetActiveWeapon();
 		if ( pWeapon )
 		{
 			pWeapon->SendWeaponAnim( iGestureActivity );
-			pWeapon->DoAnimationEvents(pWeapon->GetModelPtr());
+			pWeapon->DoAnimationEvents( pWeapon->GetModelPtr() );
 		}
 	}
 #endif

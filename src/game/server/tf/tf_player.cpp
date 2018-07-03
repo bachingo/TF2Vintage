@@ -7671,7 +7671,6 @@ void CTFPlayer::DoTauntAttack( void )
 		}
 		case TF_TAUNT_OKTOBERFEST:
 		{
-			Msg("\nHEALED\n");
 			// Taunt heals 10 health over the duration
 			TakeHealth( 1.0f, DMG_GENERIC );
 			m_flTauntAttackTime = gpGlobals->curtime + 0.38;
