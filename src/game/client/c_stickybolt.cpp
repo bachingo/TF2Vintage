@@ -200,7 +200,7 @@ void SpawnGib( const CEffectData &data, const char *pszModelName )
 	if ( !pModel )
 		return;
 	
-	int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL;
+	int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL | FTENT_HITSOUND | FTENT_ROTATE;
 
 	Assert( pModel );	
 

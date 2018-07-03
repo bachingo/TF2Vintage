@@ -15,7 +15,6 @@
 
 CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 
-#define TF_BODYGROUP_STATE_BITE 1
 #define TF_SANDVICH_PLATE_MODEL "models/items/plate.mdl"
 
 //-----------------------------------------------------------------------------
@@ -138,8 +137,6 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	if ( pOwner )
 	{
 		pOwner->TakeHealth( ( GetTFPlayerOwner()->GetMaxHealth() ) / 4, DMG_GENERIC );
-		// Apply a bite effect to the model
-	    SetBodygroup( 0, TF_BODYGROUP_STATE_BITE );
 	}
 }
 

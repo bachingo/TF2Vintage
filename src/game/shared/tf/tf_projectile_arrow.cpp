@@ -61,7 +61,6 @@ CTFProjectile_Arrow::~CTFProjectile_Arrow()
 #ifdef CLIENT_DLL
 	ParticleProp()->StopEmission();
 	bEmitting = false;
-	SetNextClientThink( CLIENT_THINK_NEVER );
 #else
 	m_bCollideWithTeammates = false;
 #endif
