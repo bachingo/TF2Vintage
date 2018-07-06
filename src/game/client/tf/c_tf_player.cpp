@@ -1918,7 +1918,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		{
 			pActiveWpn->SetViewModel();
 
-			if (ShouldDrawThisPlayer())
+			if ( ShouldDrawThisPlayer() )
 			{
 				m_Shared.UpdateCritBoostEffect();
 			}
@@ -2047,7 +2047,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 			}
 		}
 
-		if ( !IsPlayerClass(m_iOldClass) )
+		if ( !IsPlayerClass( m_iOldClass ) )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "localplayer_changeclass" );
 			if ( event )

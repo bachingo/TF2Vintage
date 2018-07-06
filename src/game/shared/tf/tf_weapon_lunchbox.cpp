@@ -11,11 +11,15 @@
 #include "tf_powerup.h"
 #else
 #include "c_tf_player.h"
+#include "c_tf_viewmodeladdon.h"
 #endif
 
 CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 
 #define TF_SANDVICH_PLATE_MODEL "models/items/plate.mdl"
+#define SANDVICH_BODYGROUP_BITE 0
+#define SANDVICH_STATE_BITTEN 1
+#define SANDVICH_STATE_NORMAL 0
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -30,6 +34,12 @@ void CTFLunchBox::PrimaryAttack( void )
 
 #ifdef GAME_DLL
 	pOwner->Taunt();
+#else
+	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+	if ( pAttach )
+	{
+		pAttach->SetBodygroup( SANDVICH_BODYGROUP_BITE, SANDVICH_STATE_BITTEN );
+	}
 #endif
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 }

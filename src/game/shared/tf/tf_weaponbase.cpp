@@ -445,13 +445,13 @@ void CTFWeaponBase::SetViewModel()
 }
 
 #ifdef CLIENT_DLL
-void CTFWeaponBase::UpdateViewModel(void)
+void C_TFWeaponBase::UpdateViewModel( void )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
 	if ( pTFPlayer == NULL )
 		return;
 
-	CTFViewModel *vm = dynamic_cast<CTFViewModel*>( pTFPlayer->GetViewModel(m_nViewModelIndex, false ) );
+	CTFViewModel *vm = dynamic_cast<CTFViewModel*>( pTFPlayer->GetViewModel( m_nViewModelIndex, false ) );
 	if ( vm == NULL )
 		return;
 
@@ -482,6 +482,22 @@ void CTFWeaponBase::UpdateViewModel(void)
 	{
 		vm->RemoveViewmodelAddon();
 	}
+}
+
+C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
+{
+	C_TFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( pOwner )
+	{
+		C_TFViewModel *vm = dynamic_cast < C_TFViewModel *  >( pOwner->GetViewModel( m_nViewModelIndex ) );
+		if ( vm )
+		{
+			C_ViewmodelAttachmentModel *pAttachment = vm->GetViewmodelAddon();
+			return pAttachment;
+		}
+	}
+	return NULL;
 }
 #endif
 
@@ -675,7 +691,6 @@ bool CTFWeaponBase::Deploy( void )
 
 		m_flNextPrimaryAttack = max( flOriginalPrimaryAttack, gpGlobals->curtime + flDeployTime );
 		m_flNextSecondaryAttack = max( flOriginalSecondaryAttack, gpGlobals->curtime + flDeployTime );
-
 
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
 
