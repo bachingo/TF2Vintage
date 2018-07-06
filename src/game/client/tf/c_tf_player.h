@@ -77,7 +77,7 @@ public:
 	virtual void GetToolRecordingState( KeyValues *msg );
 
 	CTFWeaponBase *GetActiveTFWeapon( void ) const;
-	bool		 IsActiveTFWeapon(int iWeaponID);
+	bool		 IsActiveTFWeapon( int iWeaponID );
 
 	virtual void Simulate( void );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );

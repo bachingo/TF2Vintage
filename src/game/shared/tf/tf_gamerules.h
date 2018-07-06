@@ -304,6 +304,7 @@ public:
 	virtual bool    IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
+	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
 	virtual bool	IsInKothMode( void ) { return m_bPlayingKoth; }
 	virtual bool    IsHalloweenScenario( int iEventType ) { return false; };
 	virtual bool	IsPVEModeActive( void ) { return false; };

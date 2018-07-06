@@ -79,6 +79,10 @@ ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Sh
 ConVar tf2c_building_hauling( "tf2c_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
 ConVar tf2c_disable_player_shadows( "tf2c_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
 
+#ifdef GAME_DLL
+extern ConVar tf2c_random_weapons;
+#endif
+
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
 #define TF_SPY_STEALTH_BLINKSCALE  0.85f
 
@@ -3978,6 +3982,17 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 
 	case TF_AMMO_METAL:
 		CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_metal );
+
+#ifdef GAME_DLL
+		if ( tf2c_random_weapons.GetBool() )
+		{
+			CTFWeaponBase *pWeapon = dynamic_cast < CTFWeaponBase * >( GetWeapon( TF_LOADOUT_SLOT_PDA1 ) );
+			if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_BUILD )
+			{
+				iMaxAmmo = GetPlayerClassData( TF_CLASS_ENGINEER )->m_aAmmoMax[iAmmoIndex];
+			}
+		}
+#endif
 		break;
 
 	case TF_AMMO_GRENADES1:
