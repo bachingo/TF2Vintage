@@ -1058,29 +1058,29 @@ class CMultipleEscortLogic : public CBaseEntity
 {
 public:
 	DECLARE_CLASS( CMultipleEscortLogic, CBaseEntity );
-	void Spawn(void);
+	void Spawn( void );
 };
 
-void CMultipleEscortLogic::Spawn(void)
+void CMultipleEscortLogic::Spawn( void )
 {
 	BaseClass::Spawn();
 }
 
-LINK_ENTITY_TO_CLASS(tf_logic_multiple_escort, CMultipleEscortLogic);
+LINK_ENTITY_TO_CLASS( tf_logic_multiple_escort, CMultipleEscortLogic );
 
 class CMedievalLogic : public CBaseEntity
 {
 public:
-	DECLARE_CLASS(CMedievalLogic, CBaseEntity);
+	DECLARE_CLASS( CMedievalLogic, CBaseEntity );
 	void Spawn(void);
 };
 
-void CMedievalLogic::Spawn(void)
+void CMedievalLogic::Spawn( void )
 {
 	BaseClass::Spawn();
 }
 
-LINK_ENTITY_TO_CLASS(tf_logic_medieval, CMedievalLogic);
+LINK_ENTITY_TO_CLASS( tf_logic_medieval, CMedievalLogic );
 
 #endif
 
@@ -5336,6 +5336,9 @@ const char *CTFGameRules::GetGameDescription(void)
 			break;
 		case TF_GAMETYPE_MVM:
 			return "Implying we will ever have this";
+			break;
+		case TF_GAMETYPE_MEDIEVAL:
+			return "TF2V (Medieval)";
 			break;
 		default:
 			return "TF2V";

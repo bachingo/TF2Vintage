@@ -95,6 +95,11 @@ void CTFInventory::LevelInitPreEntity( void )
 	GetItemSchema()->Precache();
 }
 
+int CTFInventory::GetNumPresets(int iClass, int iSlot)
+{
+	return m_Items[iClass][iSlot].Count();
+};
+
 int CTFInventory::GetWeapon(int iClass, int iSlot)
 {
 	return Weapons[iClass][iSlot];

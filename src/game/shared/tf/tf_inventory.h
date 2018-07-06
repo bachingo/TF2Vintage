@@ -39,15 +39,16 @@ public:
 	virtual bool Init( void );
 	virtual void LevelInitPreEntity( void );
 
-	int GetWeapon(int iClass, int iSlot);
-	CEconItemView *GetItem(int iClass, int iSlot, int iNum);
-	bool CheckValidSlot(int iClass, int iSlot, bool bHudCheck = false);
-	bool CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHudCheck = false);
+	int GetNumPresets( int iClass, int iSlot );
+	int GetWeapon( int iClass, int iSlot );
+	CEconItemView *GetItem( int iClass, int iSlot, int iNum );
+	bool CheckValidSlot( int iClass, int iSlot, bool bHudCheck = false );
+	bool CheckValidWeapon( int iClass, int iSlot, int iWeapon, bool bHudCheck = false );
 
 #if defined( CLIENT_DLL )
-	int GetWeaponPreset(int iClass, int iSlot);
-	void SetWeaponPreset(int iClass, int iSlot, int iPreset);
-	const char* GetSlotName(int iSlot);
+	int GetWeaponPreset( int iClass, int iSlot );
+	void SetWeaponPreset( int iClass, int iSlot, int iPreset );
+	const char* GetSlotName( int iSlot );
 #endif
 
 private:
