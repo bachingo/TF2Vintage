@@ -3335,6 +3335,10 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 	}
 	else
 	{
+		// Saving taunt vcds
+		//pScene->SaveToFile( filename );
+		//Msg("\n%s\n", filename );
+
 		pScene->SetPrintFunc( LocalScene_Printf );
 		pScene->SetEventCallbackInterface( pCallback );
 	}

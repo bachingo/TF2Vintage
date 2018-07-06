@@ -75,6 +75,7 @@ public:
 
 	CHandle< C_ViewmodelAttachmentModel > m_hViewmodelAddon;
 
+	C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return m_hViewmodelAddon.Get(); }
 	void UpdateViewmodelAddon( const char *pszModelname );
 
 	void RemoveViewmodelAddon( void );

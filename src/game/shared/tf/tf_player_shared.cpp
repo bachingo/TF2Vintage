@@ -113,9 +113,9 @@ const char *g_pszBDayGibs[22] =
 };
 
 #ifdef CLIENT_DLL
-EXTERN_RECV_TABLE(DT_ScriptCreatedItem)
+EXTERN_RECV_TABLE( DT_ScriptCreatedItem )
 #else
-EXTERN_SEND_TABLE(DT_ScriptCreatedItem)
+EXTERN_SEND_TABLE( DT_ScriptCreatedItem )
 #endif
 //=============================================================================
 //
@@ -125,107 +125,109 @@ EXTERN_SEND_TABLE(DT_ScriptCreatedItem)
 // Client specific.
 #ifdef CLIENT_DLL
 
-BEGIN_RECV_TABLE_NOBASE(CTFPlayerShared, DT_TFPlayerSharedLocal)
-RecvPropInt(RECVINFO(m_nDesiredDisguiseTeam)),
-RecvPropInt(RECVINFO(m_nDesiredDisguiseClass)),
-RecvPropTime(RECVINFO(m_flStealthNoAttackExpire)),
-RecvPropTime(RECVINFO(m_flStealthNextChangeTime)),
-RecvPropFloat(RECVINFO(m_flCloakMeter)),
-RecvPropArray3(RECVINFO_ARRAY(m_bPlayerDominated), RecvPropBool(RECVINFO(m_bPlayerDominated[0]))),
-RecvPropArray3(RECVINFO_ARRAY(m_bPlayerDominatingMe), RecvPropBool(RECVINFO(m_bPlayerDominatingMe[0]))),
-RecvPropInt(RECVINFO(m_iDesiredWeaponID)),
-RecvPropArray3(RECVINFO_ARRAY(m_nStreaks), RecvPropInt(RECVINFO(m_nStreaks[0]))),
-RecvPropArray3(RECVINFO_ARRAY(m_flCondExpireTimeLeft), RecvPropFloat(RECVINFO(m_flCondExpireTimeLeft[0]))),
+BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
+RecvPropInt( RECVINFO( m_nDesiredDisguiseTeam ) ),
+RecvPropInt( RECVINFO( m_nDesiredDisguiseClass ) ),
+RecvPropTime( RECVINFO( m_flStealthNoAttackExpire ) ),
+RecvPropTime( RECVINFO( m_flStealthNextChangeTime ) ),
+RecvPropFloat(  RECVINFO( m_flCloakMeter ) ),
+RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominated ), RecvPropBool( RECVINFO( m_bPlayerDominated[0] ) ) ),
+RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominatingMe ), RecvPropBool( RECVINFO( m_bPlayerDominatingMe[0] ) ) ),
+RecvPropInt( RECVINFO( m_iDesiredWeaponID ) ),
+RecvPropArray3( RECVINFO_ARRAY( m_nStreaks ), RecvPropInt( RECVINFO( m_nStreaks[0] ) ) ),
+RecvPropArray3( RECVINFO_ARRAY( m_flCondExpireTimeLeft ), RecvPropFloat(RECVINFO( m_flCondExpireTimeLeft[0] ) ) ),
 END_RECV_TABLE()
 
-BEGIN_RECV_TABLE_NOBASE(CTFPlayerShared, DT_TFPlayerShared)
-RecvPropInt(RECVINFO(m_nPlayerCond)),
-RecvPropInt(RECVINFO(m_nPlayerCondEx)),
-RecvPropInt(RECVINFO(m_nPlayerCondEx2)),
-RecvPropInt(RECVINFO(m_nPlayerCondEx3)),
-RecvPropInt(RECVINFO(m_bJumping)),
-RecvPropInt(RECVINFO(m_nNumHealers)),
-RecvPropInt(RECVINFO(m_iCritMult)),
-RecvPropInt(RECVINFO(m_bAirDash)),
-RecvPropInt(RECVINFO(m_nAirDucked)),
-RecvPropInt(RECVINFO(m_nPlayerState)),
-RecvPropInt(RECVINFO(m_iDesiredPlayerClass)),
-RecvPropEHandle(RECVINFO(m_hCarriedObject)),
-RecvPropBool(RECVINFO(m_bCarryingObject)),
-RecvPropInt(RECVINFO(m_nTeamTeleporterUsed)),
-RecvPropInt(RECVINFO(m_iRespawnParticleID)),
-RecvPropInt(RECVINFO(m_iMaxHealth)),
+BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
+RecvPropInt( RECVINFO( m_nPlayerCond ) ),
+RecvPropInt( RECVINFO( m_nPlayerCondEx ) ),
+RecvPropInt( RECVINFO( m_nPlayerCondEx2 ) ),
+RecvPropInt( RECVINFO( m_nPlayerCondEx3 ) ),
+RecvPropInt( RECVINFO( m_bJumping ) ),
+RecvPropInt( RECVINFO( m_nNumHealers ) ),
+RecvPropInt( RECVINFO( m_iCritMult ) ),
+RecvPropInt( RECVINFO( m_bAirDash ) ),
+RecvPropInt( RECVINFO( m_nAirDucked ) ),
+RecvPropInt( RECVINFO( m_nPlayerState ) ),
+RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
+RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
+RecvPropBool( RECVINFO( m_bCarryingObject ) ),
+RecvPropInt( RECVINFO( m_nTeamTeleporterUsed ) ),
+RecvPropBool( RECVINFO( m_bRegenerated ) ),
+RecvPropInt( RECVINFO( m_iRespawnParticleID ) ),
+RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 // Spy.
-RecvPropTime(RECVINFO(m_flInvisChangeCompleteTime)),
-RecvPropInt(RECVINFO(m_nDisguiseTeam)),
-RecvPropInt(RECVINFO(m_nDisguiseClass)),
+RecvPropTime( RECVINFO( m_flInvisChangeCompleteTime ) ),
+RecvPropInt( RECVINFO( m_nDisguiseTeam ) ),
+RecvPropInt( RECVINFO( m_nDisguiseClass ) ),
 RecvPropInt( RECVINFO( m_nMaskClass ) ),
-RecvPropInt(RECVINFO(m_iDisguiseTargetIndex)),
-RecvPropInt(RECVINFO(m_iDisguiseHealth)),
-RecvPropInt(RECVINFO(m_iDisguiseMaxHealth)),
-RecvPropFloat(RECVINFO(m_flDisguiseChargeLevel)),
-RecvPropDataTable(RECVINFO_DT(m_DisguiseItem), 0, &REFERENCE_RECV_TABLE(DT_ScriptCreatedItem)),
+RecvPropInt( RECVINFO( m_iDisguiseTargetIndex) ),
+RecvPropInt( RECVINFO( m_iDisguiseHealth ) ),
+RecvPropInt( RECVINFO( m_iDisguiseMaxHealth ) ),
+RecvPropFloat( RECVINFO( m_flDisguiseChargeLevel ) ),
+RecvPropDataTable( RECVINFO_DT( m_DisguiseItem ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
 // Local Data.
-RecvPropDataTable("tfsharedlocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFPlayerSharedLocal)),
+RecvPropDataTable( "tfsharedlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFPlayerSharedLocal ) ),
 END_RECV_TABLE()
 
-BEGIN_PREDICTION_DATA_NO_BASE(CTFPlayerShared)
-DEFINE_PRED_FIELD(m_nPlayerState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_nPlayerCond, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_nPlayerCondEx, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_nPlayerCondEx2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_nPlayerCondEx3, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_nAirDucked, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_iDesiredWeaponID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-DEFINE_PRED_FIELD(m_iRespawnParticleID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
+BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
+DEFINE_PRED_FIELD( m_nPlayerState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_nPlayerCond, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_nPlayerCondEx, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_nPlayerCondEx2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_nPlayerCondEx3, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_nAirDucked, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_iDesiredWeaponID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_iRespawnParticleID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 
 // Server specific.
 #else
 
-BEGIN_SEND_TABLE_NOBASE(CTFPlayerShared, DT_TFPlayerSharedLocal)
-SendPropInt(SENDINFO(m_nDesiredDisguiseTeam), 3, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_nDesiredDisguiseClass), 4, SPROP_UNSIGNED),
-SendPropTime(SENDINFO(m_flStealthNoAttackExpire)),
-SendPropTime(SENDINFO(m_flStealthNextChangeTime)),
-SendPropFloat(SENDINFO(m_flCloakMeter), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0, 100.0),
-SendPropArray3(SENDINFO_ARRAY3(m_bPlayerDominated), SendPropBool(SENDINFO_ARRAY(m_bPlayerDominated))),
-SendPropArray3(SENDINFO_ARRAY3(m_bPlayerDominatingMe), SendPropBool(SENDINFO_ARRAY(m_bPlayerDominatingMe))),
-SendPropInt(SENDINFO(m_iDesiredWeaponID)),
-SendPropArray3(SENDINFO_ARRAY3(m_nStreaks), SendPropInt(SENDINFO_ARRAY(m_nStreaks))),
-SendPropArray3(SENDINFO_ARRAY3(m_flCondExpireTimeLeft), SendPropFloat(SENDINFO_ARRAY(m_flCondExpireTimeLeft))),
+BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
+SendPropInt( SENDINFO( m_nDesiredDisguiseTeam ), 3, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_nDesiredDisguiseClass ), 4, SPROP_UNSIGNED ),
+SendPropTime( SENDINFO( m_flStealthNoAttackExpire ) ),
+SendPropTime( SENDINFO( m_flStealthNextChangeTime ) ),
+SendPropFloat( SENDINFO( m_flCloakMeter ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0, 100.0 ),
+SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominated ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominated ) ) ),
+SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominatingMe ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominatingMe ) ) ),
+SendPropInt( SENDINFO( m_iDesiredWeaponID ) ),
+SendPropArray3( SENDINFO_ARRAY3( m_nStreaks ), SendPropInt( SENDINFO_ARRAY( m_nStreaks ) ) ),
+SendPropArray3( SENDINFO_ARRAY3( m_flCondExpireTimeLeft ), SendPropFloat( SENDINFO_ARRAY( m_flCondExpireTimeLeft ) ) ),
 END_SEND_TABLE()
 
-BEGIN_SEND_TABLE_NOBASE(CTFPlayerShared, DT_TFPlayerShared)
-SendPropInt(SENDINFO(m_nPlayerCond), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_nPlayerCondEx), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_nPlayerCondEx2), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_nPlayerCondEx3), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_bJumping), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_nNumHealers), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_iCritMult), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_bAirDash), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
-SendPropInt(SENDINFO(m_nAirDucked), 2, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN),
+BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
+SendPropInt( SENDINFO( m_nPlayerCond ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_nPlayerCondEx ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_nPlayerCondEx2 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_nPlayerCondEx3 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropInt( SENDINFO( m_nAirDucked ), 2, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT ) + 1, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL ) + 1, SPROP_UNSIGNED ),
-SendPropEHandle(SENDINFO(m_hCarriedObject)),
-SendPropBool(SENDINFO(m_bCarryingObject)),
-SendPropInt(SENDINFO(m_nTeamTeleporterUsed), 3, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_iRespawnParticleID), 0, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_iMaxHealth), 10),
+SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
+SendPropBool( SENDINFO( m_bCarryingObject ) ),
+SendPropInt( SENDINFO( m_nTeamTeleporterUsed ), 3, SPROP_UNSIGNED ),
+SendPropBool( SENDINFO( m_bRegenerated ) ),
+SendPropInt( SENDINFO( m_iRespawnParticleID ), 0, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_iMaxHealth ), 10 ),
 // Spy
-SendPropTime(SENDINFO(m_flInvisChangeCompleteTime)),
-SendPropInt(SENDINFO(m_nDisguiseTeam), 3, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_nDisguiseClass), 4, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_nMaskClass), 4, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_iDisguiseTargetIndex), 7, SPROP_UNSIGNED),
-SendPropInt(SENDINFO(m_iDisguiseHealth), 10),
-SendPropInt(SENDINFO(m_iDisguiseMaxHealth), 10),
-SendPropFloat(SENDINFO(m_flDisguiseChargeLevel), 0, SPROP_NOSCALE),
+SendPropTime( SENDINFO( m_flInvisChangeCompleteTime ) ),
+SendPropInt( SENDINFO( m_nDisguiseTeam ), 3, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_nDisguiseClass ), 4, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_nMaskClass ), 4, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_iDisguiseTargetIndex ), 7, SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_iDisguiseHealth ), 10 ),
+SendPropInt( SENDINFO( m_iDisguiseMaxHealth ), 10 ),
+SendPropFloat( SENDINFO(m_flDisguiseChargeLevel ), 0, SPROP_NOSCALE ),
 SendPropDataTable( SENDINFO_DT( m_DisguiseItem ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 // Local Data.
 SendPropDataTable( "tfsharedlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFPlayerSharedLocal ), SendProxy_SendLocalDataTable ),
@@ -282,16 +284,16 @@ void CTFPlayerShared::Init(CTFPlayer *pPlayer)
 // Purpose: Add a condition and duration
 // duration of PERMANENT_CONDITION means infinite duration
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::AddCond(int nCond, float flDuration /* = PERMANENT_CONDITION */)
+void CTFPlayerShared::AddCond( int nCond, float flDuration /* = PERMANENT_CONDITION */ )
 {
-	Assert(nCond >= 0 && nCond < TF_COND_LAST);
+	Assert( nCond >= 0 && nCond < TF_COND_LAST );
 	int nCondFlag = nCond;
 	int *pVar = NULL;
-	if (nCond < 96)
+	if ( nCond < 96 )
 	{
-		if (nCond < 64)
+		if ( nCond < 64 )
 		{
-			if (nCond < 32)
+			if ( nCond < 32 )
 			{
 				pVar = &m_nPlayerCond.GetForModify();
 			}
@@ -313,9 +315,9 @@ void CTFPlayerShared::AddCond(int nCond, float flDuration /* = PERMANENT_CONDITI
 		nCondFlag -= 96;
 	}
 
-	*pVar |= (1 << nCondFlag);
-	m_flCondExpireTimeLeft.Set(nCond, flDuration);
-	OnConditionAdded(nCond);
+	*pVar |= ( 1 << nCondFlag );
+	m_flCondExpireTimeLeft.Set( nCond, flDuration );
+	OnConditionAdded( nCond );
 }
 
 //-----------------------------------------------------------------------------
@@ -665,6 +667,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddPhase();
 		break;
 
+	case TF_COND_REGENERATE:
+		OnAddRegenerate();
+		break;
+
 	default:
 		break;
 	}
@@ -745,6 +751,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_PHASE:
 		OnRemovePhase();
+		break;
+
+	case TF_COND_REGENERATE:
+		OnRemoveRegenerate();
 		break;
 
 	default:
@@ -1047,7 +1057,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			RemoveCond( TF_COND_STEALTHED_BLINK );
 		}
 	}
-
 #endif
 }
 
@@ -1083,6 +1092,13 @@ void CTFPlayerShared::ConditionThink( void )
 				m_flCloakMeter = 100.0f;
 			}
 		}
+	}
+
+	// Server and client regenerate function
+	if ( m_bRegenerated && !m_bInRegenerate )
+	{
+		// Make the condition hang for a bit to let client catch up
+		AddCond( TF_COND_REGENERATE, 0.1 );
 	}
 }
 
@@ -1314,6 +1330,37 @@ void CTFPlayerShared::OnRemoveSlowed(void)
 {
 	// Set speed back to normal
 	m_pOuter->TeamFortress_SetSpeed();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddRegenerate(void)
+{
+	for ( int i = 0; i < MAX_ITEMS; i++ )
+		{		
+			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( m_pOuter->Weapon_GetSlot( i ) );
+			if ( pWeapon ) 
+			{
+				// Regenerate
+				pWeapon->WeaponRegenerate();
+
+#ifdef GAME_DLL
+				// player_bodygroups
+				pWeapon->UpdatePlayerBodygroups();
+#endif
+			}
+		}
+	m_bInRegenerate = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Don't regenerate anymore
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveRegenerate(void)
+{
+	m_bRegenerated = false;
+	m_bInRegenerate = false;
 }
 
 //-----------------------------------------------------------------------------

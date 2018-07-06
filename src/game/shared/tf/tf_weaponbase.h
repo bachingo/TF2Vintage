@@ -36,6 +36,7 @@
 #define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
 #define CTFViewModel C_TFViewModel
 #include "tf_fx_muzzleflash.h"
+#include "c_tf_viewmodeladdon.h"
 #endif
 
 #define MAX_TRACER_NAME		128
@@ -141,6 +142,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 #ifdef CLIENT_DLL
 	virtual void UpdateViewModel( void );
+
+	C_ViewmodelAttachmentModel *GetViewmodelAddon( void );
 #endif
 
 #ifdef DM_WEAPON_BUCKET
@@ -238,6 +241,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void	WeaponIdle( void );
 
 	virtual void	WeaponReset( void );
+	virtual void	WeaponRegenerate() {}
 
 	// Muzzleflashes
 	virtual const char *GetMuzzleFlashEffectName_3rd( void ) { return NULL; }

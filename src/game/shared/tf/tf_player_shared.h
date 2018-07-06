@@ -266,6 +266,7 @@ private:
 	void OnAddTaunting( void );
 	void OnAddStunned( void );
 	void OnAddSlowed( void );
+	void OnAddRegenerate( void );
 	void OnAddCritboosted( void );
 	void OnAddHalloweenGiant( void );
 	void OnAddHalloweenTiny( void );
@@ -283,6 +284,7 @@ private:
 	void OnRemoveTaunting( void );
 	void OnRemoveStunned( void );
 	void OnRemoveSlowed( void );
+	void OnRemoveRegenerate( void );
 	void OnRemoveCritboosted( void );
 	void OnRemoveHalloweenGiant( void );
 	void OnRemoveHalloweenTiny( void );
@@ -401,6 +403,12 @@ private:
 	CNetworkVar( bool, m_bCarryingObject );
 
 	CNetworkVar( int, m_nTeamTeleporterUsed );
+
+	// Have we been to resupply recently?
+	CNetworkVar( bool, m_bRegenerated );
+
+	// Hacky shit for weapon regeneration
+	bool m_bInRegenerate;
 
 #ifdef GAME_DLL
 

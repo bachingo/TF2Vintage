@@ -3358,6 +3358,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	case TF_DMG_TAUNT_MEDIC:
 		pszCustomKill = "taunt_medic";
 		break;
+	case TF_DMG_CUSTOM_STICKBOMB:
+		pszCustomKill = "ullapool_caber_explosion";
+		break;
 	case TF_DMG_TELEFRAG:
 		pszCustomKill = "telefrag";
 		break;

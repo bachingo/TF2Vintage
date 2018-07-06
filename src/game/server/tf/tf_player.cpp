@@ -1138,7 +1138,11 @@ void CTFPlayer::Regenerate( void )
 	}
 
 	//Fill Spy cloak
-	m_Shared.SetSpyCloakMeter(100.0f);
+
+	m_Shared.SetSpyCloakMeter( 100.0f );
+
+	// Regenerate Weapons
+	m_Shared.m_bRegenerated = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1152,16 +1156,6 @@ void CTFPlayer::InitClass( void )
 
 	// Give default items for class.
 	GiveDefaultItems();
-
-	for ( int i = 0; i < MAX_ITEMS; i++ )
-	{
-		// player_bodygroups
-		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( Weapon_GetSlot( i ) );
-		if ( pWeapon )
-		{
-			pWeapon->UpdatePlayerBodygroups();
-		}
-	}
 
 	// Set initial health and armor based on class.
 	int iHealthToAdd = 0;
@@ -6195,6 +6189,15 @@ void CTFPlayer::CheatImpulseCommands( int iImpulse )
 						continue;
 
 					pWeapon->GiveDefaultAmmo();
+
+					for ( int i = 0; i < this->WeaponCount(); ++i )
+					{
+						auto pTFWeapon = dynamic_cast< CTFWeaponBase * >( this->GetWeapon( i ) );
+						if ( pTFWeapon != nullptr ) 
+						{
+							pTFWeapon->WeaponRegenerate();
+						}
+					}
 				}
 
 				gEvilImpulse101 = false;
@@ -7650,7 +7653,7 @@ void CTFPlayer::DoTauntAttack( void )
 		case TF_TAUNT_LUNCHBOX_DRINK:
 		{
 			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
-			if ( pWeapon && ( pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) ) )
+			if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
 			{
 				CTFLunchBox *pLunch = static_cast<CTFLunchBox *>( pWeapon );
 
