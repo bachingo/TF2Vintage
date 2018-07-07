@@ -25,6 +25,13 @@
 
 using namespace vgui;
 
+enum 
+{
+	DELTA_TYPE_DAMAGE,
+	DELTA_TYPE_HEAL,
+	DELTA_TYPE_BONUS,
+};
+
 // Floating delta text items, float off the top of the head to 
 // show damage done
 typedef struct
@@ -41,6 +48,9 @@ typedef struct
 	Vector m_vDamagePos;
 
 	bool bCrit;
+
+	// type of indicator
+	short m_iType;
 } dmg_account_delta_t;
 
 #define NUM_ACCOUNT_DELTA_ITEMS 10
@@ -63,6 +73,7 @@ public:
 	virtual void	FireGameEvent( IGameEvent *event );
 	void			OnDamaged( IGameEvent *event );
 	void			OnHealed( IGameEvent *event );
+	void			OnBonus( IGameEvent *event );
 	void			PlayHitSound( int iAmount, bool bKill );
 
 private:
@@ -78,6 +89,7 @@ private:
 	//CPanelAnimationVarAliasType( float, m_flDeltaItemX, "delta_item_x", "0", "proportional_float" );
 
 	CPanelAnimationVar( Color, m_DeltaPositiveColor, "PositiveColor", "0 255 0 255" );
+	CPanelAnimationVar( Color, m_DeltaBonusColor, "BonusColor", "255 0 255 255" );
 	//CPanelAnimationVar( Color, m_DeltaNegativeColor, "NegativeColor", "255 0 0 255" );
 
 	CPanelAnimationVar( float, m_flDeltaLifetime, "delta_lifetime", "2.0" );
@@ -129,6 +141,7 @@ CDamageAccountPanel::CDamageAccountPanel( const char *pElementName ) : CHudEleme
 
 	ListenForGameEvent( "player_hurt" );
 	ListenForGameEvent( "player_healed" );
+	ListenForGameEvent( "player_bonuspoints" );
 	ListenForGameEvent( "npc_hurt" );
 }
 
@@ -147,6 +160,10 @@ void CDamageAccountPanel::FireGameEvent( IGameEvent *event )
 	else if ( V_strcmp( type, "player_healed" ) == 0 )
 	{
 		OnHealed( event );
+	}
+	else if ( V_strcmp ( type, "player_bonuspoints" ) == 0 )
+	{
+		OnBonus( event );
 	}
 	else
 	{
@@ -310,6 +327,7 @@ void CDamageAccountPanel::OnDamaged( IGameEvent *event )
 		pDelta->m_hEntity = pVictim;
 		pDelta->m_vDamagePos = vecTextPos + Vector( 0, 0, 18 );
 		pDelta->bCrit = event->GetInt( "crit" );
+		pDelta->m_iType = DELTA_TYPE_DAMAGE;
 	}
 }
 
@@ -357,6 +375,54 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 	pDelta->m_hEntity = pPatient;
 	pDelta->m_vDamagePos = vecTextPos + Vector( 0, 0, 18 );
 	pDelta->bCrit = false;
+	pDelta->m_iType = DELTA_TYPE_HEAL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CDamageAccountPanel::OnBonus( IGameEvent *event )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer || !pPlayer->IsAlive() )
+		return;
+
+	if ( !hud_combattext.GetBool() )
+		return;
+
+	short iTarget = event->GetInt( "player_entindex" );
+	short iAttacker = event->GetInt( "source_entindex" );
+	short iAmount = event->GetInt( "points" );
+
+	// Did we get the bonus?
+	if ( pPlayer->entindex() != iAttacker )
+		return;
+
+	// Just in case.
+	if ( iAmount == 0 )
+		return;
+
+	C_BasePlayer *pTarget = UTIL_PlayerByIndex( iTarget );
+	if ( !pTarget )
+		return;
+
+	// Don't show the numbers if we can't see the target.
+	trace_t tr;
+	UTIL_TraceLine( pPlayer->EyePosition(), pTarget->WorldSpaceCenter(), MASK_VISIBLE, NULL, COLLISION_GROUP_NONE, &tr );
+	if ( tr.fraction != 1.0f )
+		return;
+
+	Vector vecTextPos = pTarget->EyePosition();
+	dmg_account_delta_t *pDelta = &m_AccountDeltaItems[iAccountDeltaHead];
+	iAccountDeltaHead++;
+	iAccountDeltaHead %= NUM_ACCOUNT_DELTA_ITEMS;
+
+	pDelta->m_flDieTime = gpGlobals->curtime + m_flDeltaLifetime;
+	pDelta->m_iAmount = iAmount;
+	pDelta->m_hEntity = pTarget;
+	pDelta->m_vDamagePos = vecTextPos + Vector( 0, -18, 0 );
+	pDelta->bCrit = false;
+	pDelta->m_iType = DELTA_TYPE_BONUS;
 }
 
 //-----------------------------------------------------------------------------
@@ -418,17 +484,29 @@ void CDamageAccountPanel::Paint( void )
 			// color is determined by the delta
 			// Negative damage deltas are determined by convar settings
 			// Positive damage deltas are green
+			// Bonus deltas are purple
 
-			Color m_DeltaNegativeColor( hud_combattext_red.GetInt(), hud_combattext_green.GetInt(), hud_combattext_blue.GetInt(), 255 );
+			Color m_DeltaColor;
 
-			Color c = m_AccountDeltaItems[i].m_iAmount > 0 ? m_DeltaPositiveColor : m_DeltaNegativeColor;
+			switch ( m_AccountDeltaItems[i].m_iType )
+			{
+			case DELTA_TYPE_DAMAGE:
+				m_DeltaColor.SetColor( hud_combattext_red.GetInt(), hud_combattext_green.GetInt(), hud_combattext_blue.GetInt(), 255 );
+				break;
+			case DELTA_TYPE_HEAL:
+				m_DeltaColor = m_DeltaPositiveColor;
+				break;
+			case DELTA_TYPE_BONUS:
+				m_DeltaColor = m_DeltaBonusColor;
+				break;
+			}
 
 			float flLifetimePercent = ( m_AccountDeltaItems[i].m_flDieTime - gpGlobals->curtime ) / m_flDeltaLifetime;
 
 			// fade out after half our lifetime
 			if ( flLifetimePercent < 0.5 )
 			{
-				c[3] = (int)( 255.0f * ( flLifetimePercent / 0.5 ) );
+				m_DeltaColor[3] = (int)( 255.0f * ( flLifetimePercent / 0.5 ) );
 			}
 
 			int x, y; 
@@ -457,7 +535,7 @@ void CDamageAccountPanel::Paint( void )
 			x -= UTIL_ComputeStringWidth( hFont, wBuf ) / 2;
 
 			vgui::surface()->DrawSetTextFont( hFont );
-			vgui::surface()->DrawSetTextColor( c );
+			vgui::surface()->DrawSetTextColor( m_DeltaColor );
 			vgui::surface()->DrawSetTextPos( x, y );
 
 			vgui::surface()->DrawPrintText( wBuf, wcslen( wBuf ), FONT_DRAW_NONADDITIVE );

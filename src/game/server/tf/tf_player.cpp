@@ -4590,6 +4590,17 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	if ( IsPlayerClass( TF_CLASS_MEDIC ) && MedicGetChargeLevel() == 1.0f && pTFAttacker )
 	{
+		// Bonus points.
+		IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
+		if ( event_bonus )
+		{
+			event_bonus->SetInt( "player_entindex", entindex() );
+			event_bonus->SetInt( "source_entindex", pAttacker->entindex() );
+			event_bonus->SetInt( "points", 2 );
+
+			gameeventmanager->FireEvent( event_bonus );
+		}
+
 		CTF_GameStats.Event_PlayerAwardBonusPoints( pTFAttacker, this, 2 );
 	}
 
