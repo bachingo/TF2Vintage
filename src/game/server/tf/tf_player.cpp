@@ -1144,11 +1144,28 @@ void CTFPlayer::Regenerate( void )
 	}
 
 	//Fill Spy cloak
-
 	m_Shared.SetSpyCloakMeter( 100.0f );
 
 	// Regenerate Weapons
-	m_Shared.m_bRegenerated = true;
+	for ( int i = 0; i < MAX_ITEMS; i++ )
+	{		
+		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( Weapon_GetSlot( i ) );
+		if ( pWeapon ) 
+		{
+			// Regenerate
+			pWeapon->WeaponRegenerate();
+
+			// player_bodygroups
+			pWeapon->UpdatePlayerBodygroups();
+		}
+	}
+
+	// Tell the client to regenerate
+	IGameEvent *event_regenerate = gameeventmanager->CreateEvent( "player_regenerate" );
+	if ( event_regenerate )
+	{
+		gameeventmanager->FireEvent( event_regenerate );
+	}
 }
 
 //-----------------------------------------------------------------------------

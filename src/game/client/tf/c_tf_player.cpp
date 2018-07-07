@@ -1685,6 +1685,8 @@ C_TFPlayer::C_TFPlayer() :
 	m_bWaterExitEffectActive = false;
 
 	m_bUpdateObjectHudState = false;
+
+	ListenForGameEvent( "player_regenerate" );
 }
 
 C_TFPlayer::~C_TFPlayer()
@@ -1693,6 +1695,24 @@ C_TFPlayer::~C_TFPlayer()
 	m_PlayerAnimState->Release();
 }
 
+void C_TFPlayer::FireGameEvent( IGameEvent *event )
+{
+	const char * type = event->GetName();
+
+	if ( V_strcmp( type, "player_regenerate" ) == 0 )
+	{
+			// Regenerate Weapons
+		for ( int i = 0; i < MAX_ITEMS; i++ )
+		{		
+			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( Weapon_GetSlot( i ) );
+			if ( pWeapon ) 
+			{
+				// Regenerate
+				pWeapon->WeaponRegenerate();
+			}
+		}
+	}
+}
 
 C_TFPlayer* C_TFPlayer::GetLocalTFPlayer()
 {

@@ -671,10 +671,6 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddPhase();
 		break;
 
-	case TF_COND_REGENERATE:
-		OnAddRegenerate();
-		break;
-
 	default:
 		break;
 	}
@@ -755,10 +751,6 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_PHASE:
 		OnRemovePhase();
-		break;
-
-	case TF_COND_REGENERATE:
-		OnRemoveRegenerate();
 		break;
 
 	default:
@@ -1097,13 +1089,6 @@ void CTFPlayerShared::ConditionThink( void )
 			}
 		}
 	}
-
-	// Server and client regenerate function
-	if ( m_bRegenerated && !m_bInRegenerate )
-	{
-		// Make the condition hang for a bit to let client catch up
-		AddCond( TF_COND_REGENERATE, 0.1 );
-	}
 }
 
 
@@ -1334,37 +1319,6 @@ void CTFPlayerShared::OnRemoveSlowed(void)
 {
 	// Set speed back to normal
 	m_pOuter->TeamFortress_SetSpeed();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::OnAddRegenerate(void)
-{
-	for ( int i = 0; i < MAX_ITEMS; i++ )
-		{		
-			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( m_pOuter->Weapon_GetSlot( i ) );
-			if ( pWeapon ) 
-			{
-				// Regenerate
-				pWeapon->WeaponRegenerate();
-
-#ifdef GAME_DLL
-				// player_bodygroups
-				pWeapon->UpdatePlayerBodygroups();
-#endif
-			}
-		}
-	m_bInRegenerate = true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Don't regenerate anymore
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::OnRemoveRegenerate(void)
-{
-	m_bRegenerated = false;
-	m_bInRegenerate = false;
 }
 
 //-----------------------------------------------------------------------------
