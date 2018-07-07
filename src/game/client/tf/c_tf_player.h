@@ -56,6 +56,8 @@ public:
 
 	virtual void UpdateOnRemove( void );
 
+	virtual void FireGameEvent( IGameEvent *event );
+
 	virtual const QAngle& GetRenderAngles();
 	virtual void UpdateClientSideAnimation();
 	virtual void SetDormant( bool bDormant );
