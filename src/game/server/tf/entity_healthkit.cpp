@@ -148,7 +148,17 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
 			if ( pTFOwner && pTFOwner->InSameTeam( pTFPlayer ) )
 			{
-				// BONUS DUCKS!
+				// Bonus points.
+				IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
+				if ( event_bonus )
+				{
+					event_bonus->SetInt( "player_entindex", pTFPlayer->entindex() );
+					event_bonus->SetInt( "source_entindex", pTFOwner->entindex() );
+					event_bonus->SetInt( "points", 1 );
+
+					gameeventmanager->FireEvent( event_bonus );
+				}
+
 				CTF_GameStats.Event_PlayerAwardBonusPoints( pTFOwner, pPlayer, 1 );
 			}
 

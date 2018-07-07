@@ -673,6 +673,17 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 			pVictim->m_Shared.RemoveCond( TF_COND_BURNING );
 			pVictim->EmitSound( "TFPlayer.FlameOut" );
 
+			// Bonus points.
+			IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
+			if ( event_bonus )
+			{
+				event_bonus->SetInt( "player_entindex", pVictim->entindex() );
+				event_bonus->SetInt( "source_entindex", pAttacker->entindex() );
+				event_bonus->SetInt( "points", 1 );
+
+				gameeventmanager->FireEvent( event_bonus );
+			}
+
 			CTF_GameStats.Event_PlayerAwardBonusPoints(pAttacker, pVictim, 1);
 		}
 	}
