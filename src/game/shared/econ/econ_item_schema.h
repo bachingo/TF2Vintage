@@ -27,6 +27,29 @@ enum
 	ATTRIB_EFFECT_NEGATIVE,
 };
 
+enum
+{
+	QUALITY_NORMAL,
+	QUALITY_GENUINE,
+	QUALITY_RARITY2,
+	QUALITY_VINTAGE,
+	QUALITY_RARITY3,
+	QUALITY_UNUSUAL,
+	QUALITY_UNIQUE,
+	QUALITY_COMMUNITY,
+	QUALITY_VALVE,
+	QUALITY_SELFMADE,
+	QUALITY_CUSTOMIZED,
+	QUALITY_STRANGE,
+	QUALITY_COMPLETED,
+	QUALITY_HUNTED,
+	QUALITY_COLLECTOR,
+	QUALITY_DECORATED,
+};
+
+extern const char *g_szQualityColorStrings[];
+extern const char *g_szQualityLocalizationStrings[];
+
 #define CALL_ATTRIB_HOOK_INT(value, name)			\
 		value = CAttributeManager::AttribHookValue<int>(value, #name, this)
 
@@ -176,7 +199,7 @@ public:
 		CLEAR_STR(item_description);
 		item_slot = -1;
 		anim_slot = -1;
-		CLEAR_STR(item_quality);
+		item_quality = QUALITY_NORMAL;
 		baseitem = false;
 		propername = false;
 		CLEAR_STR(item_logname);
@@ -196,6 +219,7 @@ public:
 
 	EconItemVisuals *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
+	const wchar_t *GenerateLocalizedFullItemName( void );
 	CEconItemAttribute *IterateAttributes( string_t strClass );
 
 public:
@@ -211,7 +235,7 @@ public:
 	char item_description[128];
 	int  item_slot;
 	int  anim_slot;
-	char item_quality[128];
+	int  item_quality;
 	bool baseitem;
 	bool propername;
 	char item_logname[128];

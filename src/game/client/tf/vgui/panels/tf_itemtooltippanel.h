@@ -31,6 +31,7 @@ private:
 	CExLabel	*m_pAttributeText;
 	CTFAdvModelPanel *m_pClassModelPanel;
 	CUtlVector<CExLabel*> m_pAttributes;
+	Color	m_colorTitle;
 };
 
 #endif // TF_ITEMMODELTOOLTIPPANEL_H

@@ -47,6 +47,11 @@ void CTFItemToolTipPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 
 	LoadControlSettings("resource/UI/main_menu/ItemToolTipPanel.res");
+
+	if ( m_pTitle )
+	{
+		m_colorTitle = m_pTitle->GetFgColor();
+	}
 }
 
 void CTFItemToolTipPanel::PerformLayout()
@@ -85,12 +90,36 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 
 	if (m_pTitle)
 	{
-		m_pTitle->SetText(pItemData->item_name);
+		m_pTitle->SetText(  pItemData->GenerateLocalizedFullItemName() );
+
+		IScheme *pScheme = scheme()->GetIScheme( GetScheme() );
+
+		if ( pScheme )
+		{
+			Color colTitle = pScheme->GetColor( g_szQualityColorStrings[pItemData->item_quality], m_colorTitle );
+			m_pTitle->SetFgColor( colTitle );
+		}
 	}
-	if (m_pClassName)
+
+	const wchar_t *pszLocalizedType = g_pVGuiLocalize->Find( pItemData->item_type_name );
+
+	if ( m_pClassName )
 	{
-		m_pClassName->SetText(pItemData->item_type_name);
+		if ( pszLocalizedType )
+		{
+			m_pClassName->SetText( pszLocalizedType );
+		}
+		else
+		{
+			m_pClassName->SetText( pItemData->item_type_name );
+		}
 	}
+	else
+	{
+		SetDialogVariable( "attriblist", pItemData->item_type_name );
+	}
+
+
 	for (int i = 0; i < 20; i++){
 		m_pAttributes[i]->SetVisible(false);
 	}
