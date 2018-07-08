@@ -94,9 +94,7 @@ void CTFAdvItemButton::SetItemDefinition(CEconItemDefinition *pItemData)
 	Q_snprintf(szIcon, sizeof(szIcon), "../%s_large", pItemData->image_inventory);
 	SetImage(szIcon);
 
-	char szWeaponName[32];
-	Q_snprintf(szWeaponName, sizeof(szWeaponName), "%s", pItemData->item_name);
-	SetText(szWeaponName);
+	pButton->SetText( pItemData->GenerateLocalizedFullItemName() );
 }
 
 void CTFAdvItemButton::SetLoadoutSlot( int iSlot, int iPreset )
