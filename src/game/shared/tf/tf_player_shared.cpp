@@ -154,6 +154,8 @@ RecvPropInt( RECVINFO( m_bAirDash ) ),
 RecvPropInt( RECVINFO( m_nAirDucked ) ),
 RecvPropInt( RECVINFO( m_nPlayerState ) ),
 RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
+RecvPropTime( RECVINFO( m_flStunExpireTime ) ),
+RecvPropEHandle( RECVINFO( m_hStunner ) ),
 RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
 RecvPropBool( RECVINFO( m_bCarryingObject ) ),
 RecvPropInt( RECVINFO( m_nTeamTeleporterUsed ) ),
@@ -217,6 +219,8 @@ SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_nAirDucked ), 2, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT ) + 1, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL ) + 1, SPROP_UNSIGNED ),
+SendPropTime( SENDINFO( m_flStunExpireTime ) ),
+SendPropEHandle( SENDINFO( m_hStunner ) ),
 SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
 SendPropBool( SENDINFO( m_bCarryingObject ) ),
 SendPropInt( SENDINFO( m_nTeamTeleporterUsed ), 3, SPROP_UNSIGNED ),
@@ -261,6 +265,8 @@ CTFPlayerShared::CTFPlayerShared()
 
 	m_iDesiredWeaponID = -1;
 	m_iRespawnParticleID = 0;
+
+	m_iStunPhase = 0;
 
 	m_nTeamTeleporterUsed = TEAM_UNASSIGNED;
 
@@ -634,8 +640,11 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		break;
 
 	case TF_COND_TAUNTING:
-	case TF_COND_STUNNED:
 		OnAddTaunting();
+		break;
+
+	case TF_COND_STUNNED:
+		OnAddStunned();
 		break;
 
 	case TF_COND_SLOWED:
@@ -720,8 +729,11 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		break;
 
 	case TF_COND_TAUNTING:
-	case TF_COND_STUNNED:
 		OnRemoveTaunting();
+		break;
+
+	case TF_COND_STUNNED:
+		OnRemoveStunned();
 		break;
 
 	case TF_COND_SLOWED:
@@ -1053,6 +1065,14 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			RemoveCond( TF_COND_STEALTHED_BLINK );
 		}
 	}
+
+	if ( InCond( TF_COND_STUNNED ) )
+	{
+		if ( gpGlobals->curtime > m_flStunExpireTime && m_iStunPhase == STUN_PHASE_END )
+		{
+			RemoveCond( TF_COND_STUNNED );
+		}
+	}
 #endif
 }
 
@@ -1294,6 +1314,12 @@ void CTFPlayerShared::OnRemoveTaunting(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnAddStunned(void)
 {
+	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
+
+	if ( pWeapon )
+	{
+		pWeapon->OnControlStunned();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1301,6 +1327,16 @@ void CTFPlayerShared::OnAddStunned(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnRemoveStunned(void)
 {
+	m_flStunExpireTime = 0.0f;
+	m_hStunner = NULL;
+	m_iStunPhase = 0;
+
+	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
+
+	if ( pWeapon )
+	{
+		pWeapon->SetWeaponVisible( true );
+	}
 }
 
 
@@ -1547,6 +1583,13 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 
 #endif
 	}
+
+void CTFPlayerShared::StunPlayer( float flDuration, CTFPlayer *pStunner )
+{
+	m_flStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
+	m_hStunner = pStunner;
+	AddCond( TF_COND_STUNNED );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3548,6 +3591,11 @@ bool CTFPlayer::CanPickupBuilding(CBaseObject *pObject)
 		return false;
 
 	return true;
+
+	if ( m_Shared.InCond( TF_COND_STUNNED ) )
+	{
+		return false;
+	}
 }
 
 //-----------------------------------------------------------------------------

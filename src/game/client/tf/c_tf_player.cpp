@@ -3102,7 +3102,7 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 	static QAngle angMoveAngle( 0.0f, 0.0f, 0.0f );
 	
 	bool bNoTaunt = true;
-	if ( m_Shared.InCond( TF_COND_TAUNTING ) || m_Shared.InCond( TF_COND_STUNNED ) )
+	if ( m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
 		// show centerprint message 
 		pCmd->forwardmove = 0.0f;
@@ -4382,6 +4382,9 @@ int C_TFPlayer::GetNumActivePipebombs( void )
 bool C_TFPlayer::IsAllowedToSwitchWeapons( void )
 {
 	if ( IsWeaponLowered() == true )
+		return false;
+
+	if ( m_Shared.InCond( TF_COND_STUNNED ) )
 		return false;
 
 	return BaseClass::IsAllowedToSwitchWeapons();

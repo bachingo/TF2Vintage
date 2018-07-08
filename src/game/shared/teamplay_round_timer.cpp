@@ -1013,7 +1013,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 	{
 		// Allow the gamerules to prevent timer expiration (i.e. while a control point is contested)
 		
-		if ( !TeamplayGameRules()->TimerMayExpire() || ( TFGameRules()->IsInEscortMode() && ( ObjectiveResource()->GetRecedeTime( TF_TEAM_BLUE ) > gpGlobals->curtime ) || ObjectiveResource()->GetRecedeTime( TF_TEAM_BLUE ) == -1) )
+		if ( !TeamplayGameRules()->TimerMayExpire() )
 		{
 			// we don't want the timer to keep going (negative time)
 			m_flTimerEndTime = gpGlobals->curtime;

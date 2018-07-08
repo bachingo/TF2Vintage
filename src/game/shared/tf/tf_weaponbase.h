@@ -267,6 +267,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual const char *GetEffectLabelText( void ) { return ""; }
 	void				ReduceEffectBarRegenTime( float flTime ) { m_flEffectBarRegenTime -= flTime; }
 
+	void				OnControlStunned( void );
+
 // Server specific.
 #if !defined( CLIENT_DLL )
 
