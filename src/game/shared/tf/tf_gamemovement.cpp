@@ -70,6 +70,7 @@ public:
 	virtual void WalkMove( void );
 	virtual void AirMove( void );
 	virtual void FullTossMove( void );
+	virtual void StunMove( void );
 	virtual void CategorizePosition( void );
 	virtual void CheckFalling( void );
 	virtual void Duck( void );
@@ -228,6 +229,7 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 	mv->m_flMaxSpeed = TF_MAX_SPEED; /*tf_maxspeed.GetFloat();*/
 
 	// Run the command.
+	StunMove();
 	PlayerMove();
 	FinishMove();
 
@@ -1594,6 +1596,20 @@ void CTFGameMovement::FullTossMove( void )
 
 	// Check for in water
 	CheckWater();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGameMovement::StunMove( void )
+{
+	// Can't move while stunned
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+	{
+		mv->m_flForwardMove = 0.0f;
+		mv->m_flSideMove = 0.0f;
+		mv->m_flUpMove = 0.0f;
+	}
 }
 
 //-----------------------------------------------------------------------------

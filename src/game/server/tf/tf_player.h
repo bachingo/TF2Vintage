@@ -433,7 +433,6 @@ public:
 
 	// Taunts.
 	void				Taunt( void );
-	void				Stun( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }
 	void				DoTauntAttack( void );
 	void				ClearTauntAttack( void );

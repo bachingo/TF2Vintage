@@ -4111,7 +4111,7 @@ bool CTFGameRules::TimerMayExpire( void )
 			return false;
 	}
 
-	return true;
+	return BaseClass::TimerMayExpire();
 }
 
 //-----------------------------------------------------------------------------

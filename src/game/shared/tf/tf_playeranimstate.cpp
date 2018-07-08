@@ -90,6 +90,7 @@ void CTFPlayerAnimState::InitTF( CTFPlayer *pPlayer )
 	m_pTFPlayer = pPlayer;
 	m_bInAirWalk = false;
 	m_flHoldDeployedPoseUntilTime = 0.0f;
+	m_flTauntAnimTime = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -236,6 +237,15 @@ void CTFPlayerAnimState::Update( float eyeYaw, float eyePitch )
 		GetBasePlayer()->SetPlaybackRate( 1.0f );
 	}
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Activity CTFPlayerAnimState::CalcMainActivity( void )
+{
+	CheckStunAnimation();
+	return BaseClass::CalcMainActivity();
 }
 
 //-----------------------------------------------------------------------------
@@ -735,5 +745,57 @@ bool CTFPlayerAnimState::HandleJumping( Activity &idealActivity )
 		return true;
 
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerAnimState::CheckStunAnimation( void )
+{
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+	{
+		int iStunPhase = m_pTFPlayer->m_Shared.GetStunPhase();
+
+		if ( iStunPhase == STUN_PHASE_NONE )
+		{
+			// Play stun start animation.
+			int iSequence = SelectWeightedSequence( ACT_MP_STUN_BEGIN );
+			m_flTauntAnimTime = gpGlobals->curtime + m_pTFPlayer->SequenceDuration( iSequence );
+			m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_STUN_BEGIN );
+
+			m_pTFPlayer->m_Shared.SetStunPhase( STUN_PHASE_LOOP );
+		}
+		else if ( iStunPhase == STUN_PHASE_LOOP )
+		{
+			if ( gpGlobals->curtime < m_pTFPlayer->m_Shared.GetStunExpireTime() )
+			{
+				if ( gpGlobals->curtime >= m_flTauntAnimTime )
+				{
+					// Continue looping animation.
+					int iSequence = SelectWeightedSequence( ACT_MP_STUN_MIDDLE );
+					m_flTauntAnimTime = gpGlobals->curtime + m_pTFPlayer->SequenceDuration( iSequence );
+					m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_STUN_MIDDLE );
+				}
+			}
+			else
+			{
+				// Play finishing animation.
+				int iSequence = SelectWeightedSequence( ACT_MP_STUN_END );
+				m_pTFPlayer->m_Shared.SetStunExpireTime( gpGlobals->curtime + m_pTFPlayer->SequenceDuration( iSequence ) );
+				m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_STUN_END );
+
+				m_pTFPlayer->m_Shared.SetStunPhase( STUN_PHASE_END );
+			}
+		}
+	}
+	else
+	{
+		if ( m_pTFPlayer->m_Shared.GetStunPhase() == STUN_PHASE_LOOP )
+		{
+			// Clear it up.
+			m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_STUN_END );
+			m_pTFPlayer->m_Shared.SetStunPhase( STUN_PHASE_NONE );
+		}
+	}
 }
 

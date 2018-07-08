@@ -1881,6 +1881,15 @@ const char *CTFWeaponBase::GetTracerType( void )
  	return 1.0f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::OnControlStunned( void )
+{
+	AbortReload();
+	SetWeaponVisible( false );
+}
+
 //=============================================================================
 //
 // TFWeaponBase functions (Server specific).

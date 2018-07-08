@@ -38,6 +38,7 @@ public:
 	virtual void ClearAnimationState();
 	virtual Activity TranslateActivity( Activity actDesired );
 	virtual void Update( float eyeYaw, float eyePitch );
+	virtual Activity CalcMainActivity( void );
 
 	virtual void	DoAnimationEvent( PlayerAnimEvent_t event, int nData = 0 );
 	virtual void	RestartGesture( int iGestureSlot, Activity iGestureActivity, bool bAutoKill = true );
@@ -47,6 +48,8 @@ public:
 	virtual bool	HandleDucking(Activity &idealActivity);
 	virtual bool	HandleSwimming(Activity &idealActivity);
 
+	void			CheckStunAnimation( void );
+
 
 private:
 	
@@ -54,6 +57,7 @@ private:
 	bool		m_bInAirWalk;
 
 	float		m_flHoldDeployedPoseUntilTime;
+	float		m_flTauntAnimTime;
 };
 
 CTFPlayerAnimState *CreateTFPlayerAnimState( CTFPlayer *pPlayer );
