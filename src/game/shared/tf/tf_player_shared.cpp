@@ -1109,6 +1109,17 @@ void CTFPlayerShared::ConditionThink( void )
 			}
 		}
 	}
+
+	if ( InCond( TF_COND_PHASE ) )
+	{
+		if ( gpGlobals->curtime > m_flPhaseTime )
+		{
+			UpdatePhaseEffects();
+
+			// limit how often we can update in case of spam
+			m_flPhaseTime = gpGlobals->curtime + 0.25f;
+		}
+	}
 }
 
 
@@ -1517,9 +1528,8 @@ void CTFPlayerShared::OnAddPhase(void)
 {
 #ifdef GAME_DLL
 	m_pOuter->DropFlag();
-#else
-	m_pOuter->ParticleProp()->Create( "warp_version", PATTACH_ABSORIGIN_FOLLOW );
 #endif
+	UpdatePhaseEffects();
 }
 
 //-----------------------------------------------------------------------------
@@ -1529,8 +1539,15 @@ void CTFPlayerShared::OnRemovePhase(void)
 {
 #ifdef GAME_DLL
 	m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_TIRED );
+
+	for ( int i = 0; i < m_pPhaseTrails.Count(); i++ )
+	{
+		m_pPhaseTrails[i]->SUB_Remove();
+	}
+	m_pPhaseTrails.RemoveAll();
 #else
-	m_pOuter->ParticleProp()->StopParticlesNamed( "warp_version" );
+	m_pOuter->ParticleProp()->StopEmission( m_pWarp );
+	m_pWarp = NULL;
 #endif
 }
 
@@ -1582,13 +1599,114 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 	m_hBurnWeapon = pWeapon;
 
 #endif
-	}
+}
 
 void CTFPlayerShared::StunPlayer( float flDuration, CTFPlayer *pStunner )
 {
 	m_flStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
 	m_hStunner = pStunner;
 	AddCond( TF_COND_STUNNED );
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Bonk phase effects
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::AddPhaseEffects(void)
+{
+	CTFPlayer *pPlayer = m_pOuter;
+	if ( !pPlayer)
+		return;
+
+
+	// TODO: Clean this up a bit more
+	const char* pszEffect = m_pOuter->GetTeamNumber() == TF_TEAM_BLUE ? "effects/beam001_blu.vmt" : "effects/beam001_red.vmt";
+	Vector vecOrigin = pPlayer->GetAbsOrigin();
+	
+	CSpriteTrail *pPhaseTrail = CSpriteTrail::SpriteTrailCreate( pszEffect, vecOrigin, true );
+	pPhaseTrail->SetTransparency( kRenderTransAlpha, 255, 255, 255, 255, 0 );
+	pPhaseTrail->SetStartWidth( 12.0f );
+	pPhaseTrail->SetTextureResolution( 0.01416667 );
+	pPhaseTrail->SetLifeTime( 1.0 );
+	pPhaseTrail->SetAttachment( pPlayer, pPlayer->LookupAttachment( "back_upper" ) );
+	m_pPhaseTrails.AddToTail( pPhaseTrail );
+
+	pPhaseTrail = CSpriteTrail::SpriteTrailCreate( pszEffect, vecOrigin, true );
+	pPhaseTrail->SetTransparency( kRenderTransAlpha, 255, 255, 255, 255, 0 );
+	pPhaseTrail->SetStartWidth( 16.0f );
+	pPhaseTrail->SetTextureResolution( 0.01416667 );
+	pPhaseTrail->SetLifeTime( 1.0 );
+	pPhaseTrail->SetAttachment( pPlayer, pPlayer->LookupAttachment( "back_lower" ) );
+	m_pPhaseTrails.AddToTail( pPhaseTrail );
+
+	pPhaseTrail = CSpriteTrail::SpriteTrailCreate( pszEffect, vecOrigin, true );
+	pPhaseTrail->SetTransparency( kRenderTransAlpha, 255, 255, 255, 255, 0 );
+	pPhaseTrail->SetStartWidth( 8.0f );
+	pPhaseTrail->SetTextureResolution( 0.01416667 );
+	pPhaseTrail->SetLifeTime( 0.5 );
+	pPhaseTrail->SetAttachment( pPlayer, pPlayer->LookupAttachment( "foot_R" ) );
+	m_pPhaseTrails.AddToTail( pPhaseTrail );
+
+	pPhaseTrail = CSpriteTrail::SpriteTrailCreate( pszEffect, vecOrigin, true );
+	pPhaseTrail->SetTransparency( kRenderTransAlpha, 255, 255, 255, 255, 0 );
+	pPhaseTrail->SetStartWidth( 8.0f );
+	pPhaseTrail->SetTextureResolution( 0.01416667 );
+	pPhaseTrail->SetLifeTime( 0.5 );
+	pPhaseTrail->SetAttachment( pPlayer, pPlayer->LookupAttachment( "foot_L" ) );
+	m_pPhaseTrails.AddToTail( pPhaseTrail );
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: Update phase effects
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdatePhaseEffects(void)
+{
+	if ( !InCond( TF_COND_PHASE ) )
+	{
+		return;
+	}
+
+	// We're on the move
+	if(  m_pOuter->GetAbsVelocity() != vec3_origin )
+	{
+#ifdef CLIENT_DLL
+		if( m_pWarp )
+		{
+			m_pOuter->ParticleProp()->StopEmission( m_pWarp );
+			m_pWarp = NULL;
+		}
+#else
+		if ( m_pPhaseTrails.IsEmpty() )
+		{
+			AddPhaseEffects();
+		}
+		else
+		{
+			for( int i = 0; i < m_pPhaseTrails.Count(); i++ )
+			{
+				m_pPhaseTrails[i]->TurnOn();
+			}
+		}
+#endif
+	}
+	else
+	{
+#ifdef CLIENT_DLL
+		if ( !m_pWarp )
+		{
+			m_pWarp = m_pOuter->ParticleProp()->Create( "warp_version", PATTACH_ABSORIGIN_FOLLOW );
+		}
+#else
+		if ( !m_pPhaseTrails.IsEmpty() )
+		{
+			for( int i = 0; i < m_pPhaseTrails.Count(); i++ )
+			{
+				m_pPhaseTrails[i]->TurnOn();
+			}
+		}
+#endif
+	}
 }
 
 //-----------------------------------------------------------------------------

@@ -24,22 +24,23 @@ protected:
 	// Some fixup for objects pushed by rotating objects
 	virtual void	FinishRotPushedEntity(CBaseEntity *pPushedEntity, const RotatingPushMove_t &rotPushMove);
 
-	// ???
+	// Called by SpeculativelyCheckRotPush 
 	bool RotationPushTFPlayer(CPhysicsPushedEntities::PhysicsPushedInfo_t &, Vector const&, CPhysicsPushedEntities::RotatingPushMove_t const&, bool);
 
-	// ???
+	// Called by SpeculativelyCheckLinearPush 
 	bool LinearPushTFPlayer(CPhysicsPushedEntities::PhysicsPushedInfo_t &, Vector const&, bool);
 
-	// ???
+	// Called by RotationPushTFPlayer
 	bool RotationCheckPush(CPhysicsPushedEntities::PhysicsPushedInfo_t &);
 
-	// ???
+	// Called by LinearPushTFPlayer
 	bool LinearCheckPush(CPhysicsPushedEntities::PhysicsPushedInfo_t &);
 
-	// ???
+	// Called by LinearPushTFPlayer and RotationPushTFPlayer
 	void MovePlayer(CBaseEntity *pPlayer, CPhysicsPushedEntities::PhysicsPushedInfo_t &info, float flAmount, bool);
 	
 	// Check whether or not the bounding boxes of player and pusher intersect
+	// Called by RotationCheckPush (twice?)
 	bool IsPlayerAABBIntersetingPusherOBB(CBaseEntity *pPlayer, CBaseEntity *pPusher);
 };
 
@@ -104,16 +105,16 @@ bool CTFPhysicsPushEntities::SpeculativelyCheckLinearPush(const Vector &vecAbsPu
 	}
 }
 
-void CTFPhysicsPushEntities::FinishRotPushedEntity(CBaseEntity *pPushedEntity, const RotatingPushMove_t &rotPushMove)
+void CTFPhysicsPushEntities::FinishRotPushedEntity( CBaseEntity *pPushedEntity, const RotatingPushMove_t &rotPushMove )
 {
-	if (TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT)
+	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 	{
-		if (!pPushedEntity->IsPlayer())
+		if ( !pPushedEntity->IsPlayer() )
 		{
 			QAngle angles = pPushedEntity->GetAbsAngles();
 
 			angles.y += rotPushMove.amove.y;
-			pPushedEntity->SetAbsAngles(angles);
+			pPushedEntity->SetAbsAngles( angles );
 		}
 	}
 	else
@@ -122,41 +123,86 @@ void CTFPhysicsPushEntities::FinishRotPushedEntity(CBaseEntity *pPushedEntity, c
 	}
 }
 
-bool CTFPhysicsPushEntities::RotationPushTFPlayer(CPhysicsPushedEntities::PhysicsPushedInfo_t &, Vector const&, CPhysicsPushedEntities::RotatingPushMove_t const&, bool)
+bool CTFPhysicsPushEntities::RotationPushTFPlayer( PhysicsPushedInfo_t &info , Vector const&, const RotatingPushMove_t &rotPushMove, bool)
+{
+	info.m_bPusherIsGround = false;
+
+	CBaseEntity *pBlocker = info.m_pEntity;
+	if ( pBlocker && pBlocker->IsPlayer() )
+	{
+		info.m_vecStartAbsOrigin = pBlocker->GetAbsOrigin();
+
+		// Not really sure if this part is correct
+		CBaseEntity *pRoot = pBlocker->GetRootMoveParent();
+		Vector vecOrigin = pBlocker->CollisionProp()->GetCollisionOrigin(), vecRootOrigin = pRoot->CollisionProp()->GetCollisionOrigin();
+
+		if ( pRoot && IsOBBIntersectingOBB(
+			vecOrigin, pBlocker->CollisionProp()->GetCollisionAngles(), pBlocker->CollisionProp()->OBBMins(), pBlocker->CollisionProp()->OBBMaxs(),
+			vecRootOrigin, pRoot->CollisionProp()->GetCollisionAngles(), pRoot->CollisionProp()->OBBMins(), pRoot->CollisionProp()->OBBMaxs(), 0.0f ) )
+		{
+			// What the fuck is 424?
+			//v33 = pBlocker->(424);
+			//v39 = pRoot->(424);
+			vecOrigin = vecOrigin - vecRootOrigin;
+			vecOrigin.x = vecOrigin.x - vecRootOrigin.x;
+			vecOrigin.y = vecOrigin.y - vecRootOrigin.y;
+
+			if ( pBlocker->GetGroundEntity() == pRoot )
+			{
+				// Why does this init to ( 0, 0, 1 )
+				//this->(88) = 0;
+				//this->(92) = 0;
+				//this->(96) = 0;
+				if ( !rotPushMove.amove[0] )
+				{
+					//this->(84) = 0;
+				}
+				else
+				{
+					//v31 = COERCE_DOUBLE(COERCE_UNSIGNED_INT64(v39.m128_f32[0] * tan((v30 * *(&loc_1D8D8F + 10489809)))) & xmmword_C097D0);
+					//this->(84) = v31 * 1.1
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool CTFPhysicsPushEntities::LinearPushTFPlayer( PhysicsPushedInfo_t &info , Vector const&, bool)
+{
+	info.m_bPusherIsGround = false;
+
+	CBaseEntity *pBlocker = info.m_pEntity;
+	if ( pBlocker && pBlocker->IsPlayer() )
+	{
+		info.m_vecStartAbsOrigin = pBlocker->GetAbsOrigin();
+	}
+	return false;
+}
+
+bool CTFPhysicsPushEntities::RotationCheckPush( PhysicsPushedInfo_t &info )
 {
 	return false;
 }
 
-bool CTFPhysicsPushEntities::LinearPushTFPlayer(CPhysicsPushedEntities::PhysicsPushedInfo_t &, Vector const&, bool)
+bool CTFPhysicsPushEntities::LinearCheckPush( PhysicsPushedInfo_t &info )
 {
+	//CBaseEntity *pBlocker = info.m_pEntity;
 	return false;
 }
 
-bool CTFPhysicsPushEntities::RotationCheckPush(CPhysicsPushedEntities::PhysicsPushedInfo_t &)
-{
-	return false;
-}
-
-bool CTFPhysicsPushEntities::LinearCheckPush(CPhysicsPushedEntities::PhysicsPushedInfo_t &)
-{
-	return false;
-}
-
-void CTFPhysicsPushEntities::MovePlayer(CBaseEntity *, CPhysicsPushedEntities::PhysicsPushedInfo_t &, float, bool)
+void CTFPhysicsPushEntities::MovePlayer(CBaseEntity *, PhysicsPushedInfo_t &info, float, bool)
 {
 
 }
 
 bool CTFPhysicsPushEntities::IsPlayerAABBIntersetingPusherOBB(CBaseEntity *pPlayer, CBaseEntity *pPusher)
 {
-	if ( !pPlayer )
-		return false;
-
-	if ( !pPlayer->IsPlayer() )
+	if ( !pPlayer || !pPlayer->IsPlayer() )
 		return false;
 
 	return IsOBBIntersectingOBB(
 		pPlayer->CollisionProp()->GetCollisionOrigin(), pPlayer->CollisionProp()->GetCollisionAngles(), pPlayer->CollisionProp()->OBBMins(), pPlayer->CollisionProp()->OBBMaxs(),
 		pPusher->CollisionProp()->GetCollisionOrigin(), pPusher->CollisionProp()->GetCollisionAngles(), pPusher->CollisionProp()->OBBMins(), pPusher->CollisionProp()->OBBMaxs(),
-		0.f);
+		0.0f);
 }

@@ -428,7 +428,6 @@ public:
 
 	SolidType_t				GetSolid() const;
 	int			 			GetSolidFlags( void ) const;
-
 	int						GetEFlags() const;
 	void					SetEFlags( int iEFlags );
 	void					AddEFlags( int nEFlagMask );

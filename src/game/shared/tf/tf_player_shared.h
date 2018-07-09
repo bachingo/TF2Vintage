@@ -13,6 +13,9 @@
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
 #include "basegrenade_shared.h"
+#ifdef GAME_DLL
+#include "SpriteTrail.h"
+#endif
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -188,6 +191,15 @@ public:
 
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
 	void	StunPlayer( float flDuration, CTFPlayer *pStunner );
+
+#ifdef GAME_DLL
+	void	AddPhaseEffects( void );
+	CUtlVector< CSpriteTrail * > m_pPhaseTrails;
+#else
+	CNewParticleEffect *m_pWarp;
+#endif
+
+	void	UpdatePhaseEffects( void );
 
 	void	RecalculatePlayerBodygroups( void );
 
@@ -383,6 +395,7 @@ private:
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
 	float					m_flStunTime;
+	float					m_flPhaseTime;
 
 
 

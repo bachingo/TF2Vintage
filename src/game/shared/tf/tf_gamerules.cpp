@@ -3343,19 +3343,19 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	case TF_DMG_CUSTOM_SUICIDE:
 		pszCustomKill = "world";
 		break;
-	case TF_DMG_TAUNT_PYRO:
+	case TF_DMG_CUSTOM_TAUNTATK_HADOUKEN:
 		pszCustomKill = "taunt_pyro";
 		break;
-	case TF_DMG_TAUNT_HEAVY:
+	case TF_DMG_CUSTOM_TAUNTATK_HIGH_NOON:
 		pszCustomKill = "taunt_heavy";
 		break;
-	case TF_DMG_TAUNT_SPY:
+	case TF_DMG_CUSTOM_TAUNTATK_FENCING:
 		pszCustomKill = "taunt_spy";
 		break;
-	case TF_DMG_TAUNT_SNIPER:
+	case TF_DMG_CUSTOM_TAUNTATK_ARROW_STAB:
 		pszCustomKill = "taunt_sniper";
 		break;
-	case TF_DMG_TAUNT_MEDIC:
+	case TF_DMG_CUSTOM_TAUNTATK_UBERSLICE:
 		pszCustomKill = "taunt_medic";
 		break;
 	case TF_DMG_CUSTOM_STICKBOMB:
