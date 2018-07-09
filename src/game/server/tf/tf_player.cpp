@@ -7554,19 +7554,19 @@ void CTFPlayer::DoTauntAttack( void )
 				vecForce *= 25000.0f;
 				flDamage = 500.0f;
 				nDamageType = DMG_IGNITE;
-				iDamageCustom = TF_DMG_TAUNT_PYRO;
+				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_HADOUKEN;
 				break;
 			case TF_TAUNT_SPY3:
 				vecForce *= 20000.0f;
 				flDamage = 500.0f;
 				nDamageType = DMG_SLASH;
-				iDamageCustom = TF_DMG_TAUNT_SPY;
+				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_FENCING;
 				break;
 			default:
 				vecForce *= 100.0f;
 				flDamage = 25.0f;
 				nDamageType = DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE;
-				iDamageCustom = TF_DMG_TAUNT_SPY;
+				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_FENCING;
 				break;
 			}
 
@@ -7637,7 +7637,7 @@ void CTFPlayer::DoTauntAttack( void )
 
 					vecDamagePos = tr.endpos;
 
-					CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, 500, DMG_BULLET, TF_DMG_TAUNT_HEAVY );
+					CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, 500, DMG_BULLET, TF_DMG_CUSTOM_TAUNTATK_HIGH_NOON );
 					pEntity->TakeDamage( info );
 				}
 			}
@@ -7708,11 +7708,11 @@ void CTFPlayer::DoTauntAttack( void )
 					int iCustomDamage = 0;
 					if ( iTauntType == TF_TAUNT_SNIPER_STUN || iTauntType == TF_TAUNT_SNIPER_KILL )
 					{
-						iCustomDamage = TF_DMG_TAUNT_SNIPER;
+						iCustomDamage = TF_DMG_CUSTOM_TAUNTATK_ARROW_STAB;
 					}
 					else if ( iTauntType == TF_TAUNT_MEDIC_STUN || iTauntType == TF_TAUNT_MEDIC_KILL )
 					{
-						iCustomDamage = TF_DMG_TAUNT_MEDIC;
+						iCustomDamage = TF_DMG_CUSTOM_TAUNTATK_UBERSLICE;
 					}
 
 					vecDamagePos = tr.endpos;

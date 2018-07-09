@@ -342,6 +342,8 @@ public:
 	void	UpdateExpression( void );
 	void	ClearExpression( void );
 
+	void	AddPhaseEffects( void );
+
 	virtual IResponseSystem *GetResponseSystem();
 	virtual bool			SpeakConceptIfAllowed( int iConcept, const char *modifiers = NULL, char *pszOutResponseChosen = NULL, size_t bufsize = 0, IRecipientFilter *filter = NULL );
 
