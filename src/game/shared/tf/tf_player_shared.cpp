@@ -1639,7 +1639,8 @@ void CTFPlayerShared::AddPhaseEffects(void)
 	pPhaseTrail->SetAttachment( pPlayer, pPlayer->LookupAttachment( "back_lower" ) );
 	m_pPhaseTrails.AddToTail( pPhaseTrail );
 
-	pPhaseTrail = CSpriteTrail::SpriteTrailCreate( pszEffect, vecOrigin, true );
+	// White trail for socks
+	pPhaseTrail = CSpriteTrail::SpriteTrailCreate( "effects/beam001_white.vmt", vecOrigin, true );
 	pPhaseTrail->SetTransparency( kRenderTransAlpha, 255, 255, 255, 255, 0 );
 	pPhaseTrail->SetStartWidth( 8.0f );
 	pPhaseTrail->SetTextureResolution( 0.01416667 );
@@ -1647,7 +1648,7 @@ void CTFPlayerShared::AddPhaseEffects(void)
 	pPhaseTrail->SetAttachment( pPlayer, pPlayer->LookupAttachment( "foot_R" ) );
 	m_pPhaseTrails.AddToTail( pPhaseTrail );
 
-	pPhaseTrail = CSpriteTrail::SpriteTrailCreate( pszEffect, vecOrigin, true );
+	pPhaseTrail = CSpriteTrail::SpriteTrailCreate( "effects/beam001_white.vmt", vecOrigin, true );
 	pPhaseTrail->SetTransparency( kRenderTransAlpha, 255, 255, 255, 255, 0 );
 	pPhaseTrail->SetStartWidth( 8.0f );
 	pPhaseTrail->SetTextureResolution( 0.01416667 );
