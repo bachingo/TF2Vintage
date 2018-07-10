@@ -237,7 +237,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 		info.m_bPusherIsGround = true;
 	}
 
-	bool bIsUnblockable = (m_bIsUnblockableByPlayer && (pBlocker->IsPlayer() || pBlocker->MyNPCPointer())) ? true : false;
+	bool bIsUnblockable = ( m_bIsUnblockableByPlayer && ( pBlocker->IsPlayer() || pBlocker->MyNPCPointer() ) ) ? true : false;
 	if ( bIsUnblockable )
 	{
 		pBlocker->SetAbsOrigin( pushDestPosition );
@@ -257,12 +257,12 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 			return true;
 		}
 
-		if ( (!bRotationalPush) && (info.m_Trace.fraction == 1.0) )
+		if ( ( !bRotationalPush ) && ( info.m_Trace.fraction == 1.0 ) )
 		{
 			//Assert( pBlocker->PhysicsTestEntityPosition() == false );
 			if ( !IsPushedPositionValid(pBlocker) )
 			{
-				Warning("Interpenetrating entities! (%s and %s)\n",
+				Warning( "Interpenetrating entities! (%s and %s)\n",
 					pBlocker->GetClassname(), m_rgPusher[0].m_pEntity->GetClassname() );
 			}
 
@@ -272,7 +272,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 
 	// Check to see if we're still blocked by the pushers
 	// FIXME: If the trace fraction == 0 can we early out also?
-	info.m_bBlocked = !IsPushedPositionValid(pBlocker);
+	info.m_bBlocked = !IsPushedPositionValid( pBlocker );
 
 	if ( !info.m_bBlocked )
 		return true;

@@ -140,29 +140,32 @@ bool CTFPhysicsPushEntities::RotationPushTFPlayer( PhysicsPushedInfo_t &info , V
 			vecOrigin, pBlocker->CollisionProp()->GetCollisionAngles(), pBlocker->CollisionProp()->OBBMins(), pBlocker->CollisionProp()->OBBMaxs(),
 			vecRootOrigin, pRoot->CollisionProp()->GetCollisionAngles(), pRoot->CollisionProp()->OBBMins(), pRoot->CollisionProp()->OBBMaxs(), 0.0f ) )
 		{
-			// What the fuck is 424?
-			//v33 = pBlocker->(424);
-			//v39 = pRoot->(424);
+			// This doesn't make much sense
+			//bool bBlockerBlocked = pBlocker->IsPointSized(), bRootBlocked = pRoot->IsPointSized();
+
 			vecOrigin = vecOrigin - vecRootOrigin;
 			vecOrigin.x = vecOrigin.x - vecRootOrigin.x;
 			vecOrigin.y = vecOrigin.y - vecRootOrigin.y;
 
 			if ( pBlocker->GetGroundEntity() == pRoot )
 			{
-				// Why does this init to ( 0, 0, 1 )
-				//this->(88) = 0;
-				//this->(92) = 0;
-				//this->(96) = 0;
+				// Not sure at all about this
+				m_rootPusherStartLocalOrigin.Init( 0, 0, 1 );
 				if ( !rotPushMove.amove[0] )
 				{
-					//this->(84) = 0;
+					m_rootPusherStartLocalAngles[0] = 0;
 				}
 				else
 				{
 					//v31 = COERCE_DOUBLE(COERCE_UNSIGNED_INT64(v39.m128_f32[0] * tan((v30 * *(&loc_1D8D8F + 10489809)))) & xmmword_C097D0);
-					//this->(84) = v31 * 1.1
+					//m_rootPusherStartLocalAngles[0] = v31 * 1.1
 				}
 			}
+			else
+			{
+			}
+			RotationCheckPush( info );
+			return true;
 		}
 	}
 	return false;
