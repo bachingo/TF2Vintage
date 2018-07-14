@@ -24,11 +24,7 @@ bool CTFPhysicsPushEntities::SpeculativelyCheckRotPush( const RotatingPushMove_t
 		{
 			if ( m_rgMoved[i].m_pEntity && m_rgMoved[i].m_pEntity->IsPlayer() )
 			{
-				if ( !RotationPushTFPlayer( m_rgMoved[i], vecAbsPush, rotPushMove, false ) ) 
-				{
-					m_nBlocker = i;
-					return false;
-				}
+				RotationPushTFPlayer( m_rgMoved[i], vecAbsPush, rotPushMove, false );
 			}
 			else
 			{
@@ -62,11 +58,7 @@ bool CTFPhysicsPushEntities::SpeculativelyCheckLinearPush( const Vector &vecAbsP
 		{
 			if ( m_rgMoved[i].m_pEntity && m_rgMoved[i].m_pEntity->IsPlayer() )
 			{
-				if ( !LinearPushTFPlayer( m_rgMoved[i], vecAbsPush, false ) )
-				{
-					m_nBlocker = i;
-					return false;
-				}
+				LinearPushTFPlayer( m_rgMoved[i], vecAbsPush, false );
 			}
 			else
 			{
@@ -215,9 +207,9 @@ bool CTFPhysicsPushEntities::RotationCheckPush( PhysicsPushedInfo_t &info )
 
 		if ( IsPlayerAABBIntersetingPusherOBB( pBlocker, pRoot ) )
 		{
-		  UnlinkPusherList( pPusherHandles );
-		  MovePlayer( pBlocker, info, 1.0, pRoot->GetMoveParent() ? true : false );
-		  RelinkPusherList( pPusherHandles );
+			 UnlinkPusherList( pPusherHandles );
+			 MovePlayer( pBlocker, info, 1.0, pRoot->GetMoveParent() ? true : false );
+			 RelinkPusherList( pPusherHandles );
 		}
 
 		info.m_bBlocked = false;
@@ -314,10 +306,12 @@ void CTFPhysicsPushEntities::MovePlayer(CBaseEntity *pPlayer, PhysicsPushedInfo_
 		else
 		{
 			// Nothing else to do
-			return;
+			//return;
+			break;
 		}
 	}
-	pBasePlayer->CommitSuicide( true, true );
+	// Enabling this causes players to suicide when stuck in walls
+	//pBasePlayer->CommitSuicide( true, true );
 }
 
 //---------------------------------------------------------------------------------
