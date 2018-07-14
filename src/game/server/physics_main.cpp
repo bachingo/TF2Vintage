@@ -96,7 +96,7 @@ static void PhysicsCheckSweep( CBaseEntity *pEntity, const Vector& vecAbsStart, 
 }
 
 CPhysicsPushedEntities s_PushedEntities;
-#ifndef TF_DLL
+#if !( ( defined TF_DLL ) || ( defined TF_CLASSIC ) )
 CPhysicsPushedEntities *g_pPushedEntities = &s_PushedEntities;
 #endif
 
@@ -230,14 +230,14 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 	UTIL_TraceEntity( pBlocker, pBlocker->GetAbsOrigin(), pushDestPosition, 
 		pBlocker->PhysicsSolidMaskForEntity(), &pushFilter, &info.m_Trace );
 
-	RelinkPusherList(pPusherHandles);
+	RelinkPusherList( pPusherHandles );
 	info.m_bPusherIsGround = false;
 	if ( pBlocker->GetGroundEntity() && pBlocker->GetGroundEntity()->GetRootMoveParent() == m_rgPusher[0].m_pEntity )
 	{
 		info.m_bPusherIsGround = true;
 	}
 
-	bool bIsUnblockable = ( m_bIsUnblockableByPlayer && ( pBlocker->IsPlayer() || pBlocker->MyNPCPointer() ) ) ? true : false;
+	bool bIsUnblockable = (m_bIsUnblockableByPlayer && (pBlocker->IsPlayer() || pBlocker->MyNPCPointer())) ? true : false;
 	if ( bIsUnblockable )
 	{
 		pBlocker->SetAbsOrigin( pushDestPosition );
@@ -257,12 +257,12 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 			return true;
 		}
 
-		if ( ( !bRotationalPush ) && ( info.m_Trace.fraction == 1.0 ) )
+		if ( (!bRotationalPush) && (info.m_Trace.fraction == 1.0) )
 		{
 			//Assert( pBlocker->PhysicsTestEntityPosition() == false );
-			if ( !IsPushedPositionValid(pBlocker) )
+			if ( !IsPushedPositionValid( pBlocker ) )
 			{
-				Warning( "Interpenetrating entities! (%s and %s)\n",
+				Warning("Interpenetrating entities! (%s and %s)\n",
 					pBlocker->GetClassname(), m_rgPusher[0].m_pEntity->GetClassname() );
 			}
 
@@ -289,13 +289,13 @@ bool CPhysicsPushedEntities::SpeculativelyCheckPush( PhysicsPushedInfo_t &info, 
 			// alternate movements 1/2" in each direction
 			float factor = ( checkCount & 1 ) ? -0.5f : 0.5f;
 			pBlocker->SetAbsOrigin( org + move * factor );
-			info.m_bBlocked = !IsPushedPositionValid(pBlocker);
+			info.m_bBlocked = !IsPushedPositionValid( pBlocker );
 			if ( !info.m_bBlocked )
 				return true;
 		}
 		pBlocker->SetAbsOrigin( pushDestPosition );
 
-#if !(defined( TF_DLL ) || defined( TF_CLASSIC ) )
+#if !( defined( TF_DLL ) || defined( TF_CLASSIC ) )
 		DevMsg(1, "Ignoring player blocking train!\n");
 #endif
 		return true;
@@ -320,7 +320,6 @@ bool CPhysicsPushedEntities::SpeculativelyCheckRotPush( const RotatingPushMove_t
 			return false;
 		}
 	}
-
 	return true;
 }
 
@@ -333,7 +332,7 @@ bool CPhysicsPushedEntities::SpeculativelyCheckLinearPush( const Vector &vecAbsP
 	m_nBlocker = -1;
 	for (int i = m_rgMoved.Count(); --i >= 0; )
 	{
-		if (!SpeculativelyCheckPush( m_rgMoved[i], vecAbsPush, false ))
+		if (!SpeculativelyCheckPush( m_rgMoved[i], vecAbsPush, false ) )
 		{
 			m_nBlocker = i;
 			return false;
@@ -884,7 +883,7 @@ CBaseEntity *CPhysicsPushedEntities::PerformLinearPush( CBaseEntity *pRoot, floa
 	// Now we have a unique list of things that could potentially block our push
 	// and need to be pushed out of the way. Lets try to push them all out of the way.
 	// If we fail, undo it all
-	if (!SpeculativelyCheckLinearPush( vecAbsPush ))
+	if ( !SpeculativelyCheckLinearPush( vecAbsPush ) )
 	{
 		CBaseEntity *pBlocker = RegisterBlockage();
 		pRoot->SetLocalOrigin( vecPrevOrigin );

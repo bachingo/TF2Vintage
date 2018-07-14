@@ -1800,7 +1800,7 @@ void CBaseEntity::PhysicsSimulate( void )
 	// If we've got a moveparent, we must simulate that first.
 	CBaseEntity *pMoveParent = GetMoveParent();
 
-	if ( (GetMoveType() == MOVETYPE_NONE && !pMoveParent) || (GetMoveType() == MOVETYPE_VPHYSICS ) )
+	if ( ( GetMoveType() == MOVETYPE_NONE && !pMoveParent ) || ( GetMoveType() == MOVETYPE_VPHYSICS ) )
 	{
 		PhysicsNone();
 		return;
@@ -1812,7 +1812,7 @@ void CBaseEntity::PhysicsSimulate( void )
 		RemoveFlag( FL_ONGROUND );
 	}
 
-	if (pMoveParent)
+	if ( pMoveParent) 
 	{
 		VPROF( "CBaseEntity::PhysicsSimulate-MoveParent" );
 		pMoveParent->PhysicsSimulate();

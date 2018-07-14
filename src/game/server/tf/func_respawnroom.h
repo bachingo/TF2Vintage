@@ -59,4 +59,9 @@ private:
 //-----------------------------------------------------------------------------
 bool PointInRespawnRoom( CBaseEntity *pEntity, const Vector &vecOrigin );
 
+//-----------------------------------------------------------------------------
+// Check whether the line between two vectors crosses a respawn room visualizer
+//-----------------------------------------------------------------------------
+bool PointsCrossRespawnRoomVisualizer( const Vector &vecStart, const Vector &vecEnd, int iTeam );
+
 #endif // FUNC_RESPAWNROOM_H
