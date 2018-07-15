@@ -452,6 +452,7 @@ void HandleBreakModel( bf_read &msg, bool bNoAngles )
 		msg.ReadBitAngles( vecAngles );
 	}
 
+	// This looks pretty good but messing with the impulse a bit probably wouldn't hurt
 	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 1.0f ), Vector( RandomFloat( 0.0f, 1.0f), RandomFloat( 0.0f, 1.0f), 0.0f ) );
 
 	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );

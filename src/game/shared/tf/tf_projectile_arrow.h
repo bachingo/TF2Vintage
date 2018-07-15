@@ -71,10 +71,12 @@ public:
 	virtual void	UpdateOnRemove( void );
 
 #else
-
 	virtual void	ClientThink( void );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	Light( void );
+
+	virtual void    NotifyBoneAttached( C_BaseAnimating* attachTarget );
+
 #endif
 
 private:
