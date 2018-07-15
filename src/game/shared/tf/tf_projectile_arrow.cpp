@@ -418,22 +418,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 
 	else
 	{
-		/*Vector vForward;
-
-		AngleVectors( GetAbsAngles(), &vForward );
-		VectorNormalize ( vForward );
-
-			//NDebugOverlay::Box( tr.endpos, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 255, 0, 0, 10 );
-			//NDebugOverlay::Box( GetAbsOrigin(), Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 0, 255, 0, 10 );
-
-		CEffectData	data;
-
-		data.m_vAngles = GetAbsAngles();
-		data.m_vOrigin = vecOrigin;
-		data.m_vNormal = vForward;
-		DispatchEffect( "ArrowBreak", data );
-
-		//UTIL_ImpactTrace( &trHit, DMG_BULLET );*/
 		BreakArrow();
 	}
 
@@ -601,7 +585,6 @@ void CTFProjectile_Arrow::BreakArrow( void )
 	
 	UserMessageBegin( pFilter, "BreakModel" );
 	WRITE_SHORT( GetModelIndex() );
-	Msg("SERVER: GetModelIndex() = %i\n", GetModelIndex() );
 	WRITE_VEC3COORD( GetAbsOrigin() );
 	WRITE_ANGLES( GetAbsAngles() );
 	MessageEnd();

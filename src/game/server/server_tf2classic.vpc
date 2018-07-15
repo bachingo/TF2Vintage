@@ -188,7 +188,8 @@ $Project "Server (TF)"
 			$File	"tf\tf_generic_bomb.h"	
 			$File	"tf\tf_dropped_weapon.cpp"
 			$File	"tf\tf_dropped_weapon.h"
-			$File	"tf\tf_pushentity.cpp"	
+			$File	"tf\tf_pushentity.cpp"
+			$File	"tf\tf_pushentity.h"
 
 			
 			$Folder	"Unused"
