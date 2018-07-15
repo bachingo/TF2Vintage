@@ -245,6 +245,8 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_lunchbox.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_lunchbox_drink.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_lunchbox_drink.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_stickbomb.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_stickbomb.h"
 					}
 					$File	"$SRCDIR\game\shared\tf\tf_weapon_bat.cpp"
 					$File	"$SRCDIR\game\shared\tf\tf_weapon_bat.h"

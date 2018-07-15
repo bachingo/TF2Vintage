@@ -629,4 +629,16 @@ void C_TFProjectile_Arrow::Light( void )
 
 	ParticleProp()->Create( "flying_flaming_arrow", PATTACH_ABSORIGIN_FOLLOW );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_Arrow::NotifyBoneAttached( C_BaseAnimating* attachTarget )
+{
+	BaseClass::NotifyBoneAttached( attachTarget );
+	/*
+	die = gpGlobals->curtime;
+	return (*(*this + 580))(this, -996040704);
+	*/
+}
 #endif
