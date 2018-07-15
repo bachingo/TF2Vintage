@@ -46,6 +46,9 @@
 #include "clienteffectprecachesystem.h"
 #include "glow_outline_effect.h"
 #include "cam_thirdperson.h"
+#include "usermessages.h"
+#include "utlvector.h"
+#include "props_shared.h"
 
 #if defined( _X360 )
 #include "tf_clientscoreboard.h"
@@ -135,6 +138,8 @@ ClientModeTFNormal::ClientModeTFNormal()
 	m_pMenuSpyDisguise = NULL;
 	m_pGameUI = NULL;
 	m_pFreezePanel = NULL;
+
+	usermessages->HookMessage( "BreakModel", MsgFunc_BreakModel );
 
 #if defined( _X360 )
 	m_pScoreboard = NULL;
@@ -422,4 +427,33 @@ int ClientModeTFNormal::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, 
 #endif
 
 	return BaseClass::HandleSpectatorKeyInput( down, keynum, pszCurrentBinding );
+}
+
+void MsgFunc_BreakModel( bf_read &msg )
+{
+	return HandleBreakModel( msg, 0 );
+}
+
+void HandleBreakModel( bf_read &msg, bool bNoAngles )
+{
+	CUtlVector<breakmodel_t> list;
+	int iModelIndex = ( int )msg.ReadShort();
+	Msg("CLIENT: iModelIndex = %i\n", iModelIndex );
+	Vector vec3;
+	QAngle vecAngles;
+	BuildGibList( list, iModelIndex, 1.0f, 0.0f );
+
+	msg.ReadBitVec3Coord( vec3 );
+	if ( bNoAngles )
+	{
+		vecAngles = vec3_angle;
+	}
+	else
+	{
+		msg.ReadBitAngles( vecAngles );
+	}
+
+	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 1.0f ), Vector( RandomFloat( 0.0f, 1.0f), RandomFloat( 0.0f, 1.0f), 0.0f ) );
+
+	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );
 }

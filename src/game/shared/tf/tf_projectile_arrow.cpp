@@ -418,7 +418,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 
 	else
 	{
-		Vector vForward;
+		/*Vector vForward;
 
 		AngleVectors( GetAbsAngles(), &vForward );
 		VectorNormalize ( vForward );
@@ -433,7 +433,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		data.m_vNormal = vForward;
 		DispatchEffect( "ArrowBreak", data );
 
-		//UTIL_ImpactTrace( &trHit, DMG_BULLET );
+		//UTIL_ImpactTrace( &trHit, DMG_BULLET );*/
+		BreakArrow();
 	}
 
 	// Do damage.
@@ -582,6 +583,30 @@ void CTFProjectile_Arrow::UpdateOnRemove( void )
 
 	BaseClass::UpdateOnRemove();
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFProjectile_Arrow::BreakArrow( void )
+{
+	SetMoveType( MOVETYPE_NONE, MOVECOLLIDE_DEFAULT );
+	SetAbsVelocity( vec3_origin );
+	SetSolidFlags( FSOLID_NOT_SOLID );
+	AddEffects( EF_NODRAW );
+
+	SetContextThink( &CTFProjectile_Arrow::RemoveThink, gpGlobals->curtime + 3.0, "ARROW_REMOVE_THINK");
+
+	CRecipientFilter pFilter;
+	pFilter.AddRecipientsByPVS( GetAbsOrigin() );
+	
+	UserMessageBegin( pFilter, "BreakModel" );
+	WRITE_SHORT( GetModelIndex() );
+	Msg("SERVER: GetModelIndex() = %i\n", GetModelIndex() );
+	WRITE_VEC3COORD( GetAbsOrigin() );
+	WRITE_ANGLES( GetAbsAngles() );
+	MessageEnd();
+}
+
 #else
 //-----------------------------------------------------------------------------
 // Purpose: 
