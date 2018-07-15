@@ -2779,14 +2779,14 @@ void C_TFPlayer::UpdateLookAt( void )
 	// orient eyes
 	m_viewtarget = vecLookAtTarget;
 
-	/*
+	// TODO: fix blink track for player models
 	// blinking
-	if (m_blinkTimer.IsElapsed())
+	/*if (m_blinkTimer.IsElapsed())
 	{
 		m_blinktoggle = !m_blinktoggle;
 		m_blinkTimer.Start( RandomFloat( 1.5f, 4.0f ) );
-	}
-	*/
+	}*/
+	
 
 	/*
 	// Figure out where we want to look in world space.

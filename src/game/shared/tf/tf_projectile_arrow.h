@@ -51,6 +51,7 @@ public:
 
 	virtual void	Precache( void );
 	virtual void	Spawn( void );
+	virtual void	RemoveThink( void ) { UTIL_Remove( this ); }
 
 	void			SetScorer( CBaseEntity *pScorer );
 
@@ -65,8 +66,10 @@ public:
 	void			FlyThink( void );
 	const char		*GetTrailParticleName( void );
 	void			CreateTrail( void );
+	void			BreakArrow( void );
 
 	virtual void	UpdateOnRemove( void );
+
 #else
 
 	virtual void	ClientThink( void );

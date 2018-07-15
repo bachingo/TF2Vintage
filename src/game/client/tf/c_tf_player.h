@@ -310,6 +310,9 @@ private:
 
 	CNetworkVar( int, m_iPlayerModelIndex );
 
+	// blinking
+	//CountdownTimer m_blinkTimer;
+
 	// Look At
 	/*
 	int m_headYawPoseParam;
