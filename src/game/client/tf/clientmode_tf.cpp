@@ -438,7 +438,6 @@ void HandleBreakModel( bf_read &msg, bool bNoAngles )
 {
 	CUtlVector<breakmodel_t> list;
 	int iModelIndex = ( int )msg.ReadShort();
-	Msg("CLIENT: iModelIndex = %i\n", iModelIndex );
 	Vector vec3;
 	QAngle vecAngles;
 	BuildGibList( list, iModelIndex, 1.0f, 0.0f );
