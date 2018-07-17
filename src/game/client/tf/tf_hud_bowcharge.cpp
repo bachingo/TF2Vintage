@@ -17,6 +17,7 @@
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weaponbase.h"
+#include "tf_projectile_arrow.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -26,27 +27,28 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CHudDemomanChargeMeter : public CHudElement, public EditablePanel
+class CHudBowChargeMeter : public CHudElement, public EditablePanel
 {
-	DECLARE_CLASS_SIMPLE( CHudDemomanChargeMeter, EditablePanel );
+	DECLARE_CLASS_SIMPLE( CHudBowChargeMeter, EditablePanel );
 
 public:
-	CHudDemomanChargeMeter( const char *pElementName );
+	CHudBowChargeMeter( const char *pElementName );
 
 	virtual void	ApplySchemeSettings( IScheme *scheme );
 	virtual bool	ShouldDraw( void );
 	virtual void	OnTick( void );
+	virtual void	FireGameEvent( IGameEvent *event );
 
 private:
 	vgui::ContinuousProgressBar *m_pChargeMeter;
 };
 
-DECLARE_HUDELEMENT( CHudDemomanChargeMeter );
+DECLARE_HUDELEMENT( CHudBowChargeMeter );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CHudDemomanChargeMeter::CHudDemomanChargeMeter( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudDemomanCharge" )
+CHudBowChargeMeter::CHudBowChargeMeter( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudBowCharge" )
 {
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
@@ -56,12 +58,14 @@ CHudDemomanChargeMeter::CHudDemomanChargeMeter( const char *pElementName ) : CHu
 	SetHiddenBits( HIDEHUD_MISCSTATUS );
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
+
+	ListenForGameEvent( "arrow_impact" );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudDemomanChargeMeter::ApplySchemeSettings( IScheme *pScheme )
+void CHudBowChargeMeter::ApplySchemeSettings( IScheme *pScheme )
 {
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudDemomanCharge.res" );
@@ -72,11 +76,11 @@ void CHudDemomanChargeMeter::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CHudDemomanChargeMeter::ShouldDraw( void )
+bool CHudBowChargeMeter::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || ( !pPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) ) || !pPlayer->IsAlive() )
+	if ( !pPlayer || !pPlayer->IsPlayerClass( TF_CLASS_SNIPER ) || !pPlayer->IsAlive() )
 	{
 		return false;
 	}
@@ -90,7 +94,7 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 
 	int iWeaponID = pWpn->GetWeaponID();
 
-	if ( iWeaponID != TF_WEAPON_PIPEBOMBLAUNCHER  )
+	if ( iWeaponID != TF_WEAPON_COMPOUND_BOW )
 	{
 		return false;
 	}
@@ -101,7 +105,7 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudDemomanChargeMeter::OnTick( void )
+void CHudBowChargeMeter::OnTick( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
@@ -132,6 +136,28 @@ void CHudDemomanChargeMeter::OnTick( void )
 			else
 			{
 				m_pChargeMeter->SetProgress( 0.0f );
+			}
+		}
+	}
+}
+
+void CHudBowChargeMeter::FireGameEvent( IGameEvent *event )
+{
+	const char *eventName = event->GetName();
+
+	if ( !Q_strcmp( eventName, "arrow_impact" ) )
+	{
+		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer * >( cl_entitylist->GetBaseEntity( event->GetInt( "attachedEntity" ) ) );
+		if ( pPlayer )
+		{
+			C_TFProjectile_Arrow *pArrow = new C_TFProjectile_Arrow();
+			if ( pArrow )
+			{
+				pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_arrow.mdl", RENDER_GROUP_OPAQUE_ENTITY );
+				int bone = event->GetInt( "boneIndexAttached" );
+				Vector vecPosition( event->GetFloat( "bonePositionX" ), event->GetFloat( "bonePositionY" ), event->GetFloat( "bonePositionZ" ) );
+				QAngle vecAngles( event->GetFloat( "boneAnglesX" ), event->GetFloat( "boneAnglesY" ), event->GetFloat( "boneAnglesZ" ) );
+				pArrow->AttachEntityToBone( pPlayer, bone, vecPosition, vecAngles );
 			}
 		}
 	}

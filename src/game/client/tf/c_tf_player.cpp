@@ -513,6 +513,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		Interp_Reset( GetVarMapping() );
 	}
 
+	pPlayer->MoveBoneAttachments( this );
 	
 	bool bPlayDeathAnim = false;
 	if ( pPlayer && ( tf_always_deathanim.GetBool() || RandomFloat() < 0.25f ) )
@@ -2309,6 +2310,9 @@ void C_TFPlayer::ResetFlexWeights( CStudioHdr *pStudioHdr )
 CStudioHdr *C_TFPlayer::OnNewModel( void )
 {
 	CStudioHdr *hdr = BaseClass::OnNewModel();
+
+	// Reset attachments
+	DestroyBoneAttachments();
 
 	// Initialize the gibs.
 	InitPlayerGibs();
