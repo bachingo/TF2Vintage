@@ -138,15 +138,9 @@ void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 	QAngle vAngles;
 
 	VectorAngles( vecDirection, vAngles );
-	
-	//if ( gpGlobals->maxClients > 1 )
-	//{
-		tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 30.0f, FTENT_NONE );
-	//}
-	//else
-	//{
-	//	tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 1, FTENT_NEVERDIE );
-	//}
+
+	tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 30.0f, FTENT_NONE );
+
 }
 
 void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection )
@@ -179,16 +173,3 @@ void StickyBoltCallback( const CEffectData &data )
 }
 
 DECLARE_CLIENT_EFFECT( "BoltImpact", StickyBoltCallback );
-
-void ArrowAttachCallback( const CEffectData &data )
-{
-	//C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( data.m_nMaterial ) );
-
-	model_t *pModel = (model_t *)engine->LoadModel( "models/weapons/w_models/w_arrow.mdl" );
-	C_LocalTempEntity *pArrow = tempents->SpawnTempModel( pModel, data.m_vOrigin, data.m_vAngles, Vector( 0,0,0 ), 30.0f, FTENT_PLYRATTACHMENT );
-	pArrow->clientIndex = data.entindex();
-
-	//pPlayer->AttachEntityToBone( pArrow, data.m_nHitBox, data.m_vOrigin, data.m_vAngles );
-}
-
-DECLARE_CLIENT_EFFECT( "ArrowAttach", ArrowAttachCallback );
