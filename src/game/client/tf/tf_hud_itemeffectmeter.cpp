@@ -37,6 +37,9 @@ public:
 	CHudItemEffectMeter( Panel *pParent, const char *pElementName );
 
 	virtual void	ApplySchemeSettings( IScheme *scheme );
+	virtual void	PerformLayout( void );
+	virtual void	LevelInit( void );
+
 	virtual void	UpdateStatus( void );
 
 	int				GetSlot( void ) { return m_iSlot; }
@@ -49,7 +52,7 @@ private:
 
 	bool m_bMinHud;
 	int m_iSlot;
-	C_TFWeaponBase *m_pWeapon;
+	CHandle<C_TFWeaponBase> m_hWeapon;
 	float m_flOldCharge;
 };
 
@@ -62,7 +65,6 @@ CHudItemEffectMeter::CHudItemEffectMeter( Panel *pParent, const char *pElementNa
 	m_pEffectMeterLabel = new CExLabel( this, "ItemEffectMeterLabel", "" );
 	m_iSlot = 0;
 	m_flOldCharge = 1.0f;
-	m_pWeapon = NULL;
 	m_bMinHud = false;
 }
 
@@ -77,6 +79,33 @@ void CHudItemEffectMeter::ApplySchemeSettings( IScheme *pScheme )
 	LoadControlSettings( "resource/UI/HudItemEffectMeter.res" );
 }
 
+// ---------------------------------------------------------------------------- -
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudItemEffectMeter::LevelInit( void )
+{
+	m_hWeapon = NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudItemEffectMeter::PerformLayout( void )
+{
+	if ( m_pEffectMeterLabel && m_hWeapon.Get() )
+	{
+		wchar_t *pszLocalized = g_pVGuiLocalize->Find( m_hWeapon->GetEffectLabelText() );
+		if ( pszLocalized )
+		{
+			m_pEffectMeterLabel->SetText( pszLocalized );
+		}
+		else
+		{
+			m_pEffectMeterLabel->SetText( m_hWeapon->GetEffectLabelText() );
+		}
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -88,7 +117,7 @@ void CHudItemEffectMeter::UpdateStatus( void )
 	ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
 	if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() != m_bMinHud )
 	{
-		m_pWeapon = NULL;
+		m_hWeapon = NULL;
 		m_bMinHud = cl_hud_minmode.GetBool();
 	}
 
@@ -104,31 +133,20 @@ void CHudItemEffectMeter::UpdateStatus( void )
 	C_EconEntity *pEntity = pPlayer->GetEntityForLoadoutSlot( m_iSlot );
 	if ( pEntity && pEntity->IsBaseCombatWeapon() )
 	{
-		if ( pEntity != m_pWeapon )
+		if ( pEntity != m_hWeapon.Get() )
 		{
-			// Weapon changed, reset the label and progress.
-			m_pWeapon = static_cast<C_TFWeaponBase *>( pEntity );
-			m_flOldCharge = m_pWeapon->GetEffectBarProgress();
-			if ( m_pEffectMeterLabel )
-			{
-				wchar_t *pszLocalized = g_pVGuiLocalize->Find( m_pWeapon->GetEffectLabelText() );
-				if ( pszLocalized )
-				{
-					m_pEffectMeterLabel->SetText( pszLocalized );
-				}
-				else
-				{
-					m_pEffectMeterLabel->SetText( m_pWeapon->GetEffectLabelText() );
-				}
-			}
+			m_hWeapon = static_cast<C_TFWeaponBase *>( pEntity );
+			m_flOldCharge = m_hWeapon->GetEffectBarProgress();
+
+			InvalidateLayout();
 		}
 	}
 	else
 	{
-		m_pWeapon = NULL;
+		m_hWeapon = NULL;
 	}
 
-	if ( !m_pWeapon || !m_pWeapon->HasChargeBar() )
+	if ( !m_hWeapon.Get() || !m_hWeapon->HasChargeBar() )
 	{
 		m_flOldCharge = 1.0f;
 		if ( IsVisible() )
@@ -144,11 +162,11 @@ void CHudItemEffectMeter::UpdateStatus( void )
 
 	if ( m_pEffectMeter )
 	{
-		float flCharge = m_pWeapon->GetEffectBarProgress();;
+		float flCharge = m_hWeapon->GetEffectBarProgress();;
 		m_pEffectMeter->SetProgress( flCharge );
 		
 		// Play a ding when full charged.
-		if ( m_flOldCharge < 1.0f && flCharge == 1.0f && !m_pWeapon->IsWeapon( TF_WEAPON_INVIS ) )
+		if ( m_flOldCharge < 1.0f && flCharge == 1.0f && !m_hWeapon->IsWeapon( TF_WEAPON_INVIS ) )
 		{
 			CLocalPlayerFilter filter;
 			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "TFPlayer.Recharged" );

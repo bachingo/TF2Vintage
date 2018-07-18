@@ -634,10 +634,11 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer )
 	{
-		for ( int i = 0; i < m_iHiddenBodygroups.Count(); i++ )
+		while( !m_iHiddenBodygroups.IsEmpty() )
 		{
 			// Reset all hidden bodygroups on holster
-			pPlayer->SetBodygroup( m_iHiddenBodygroups[i] , 0 );
+			pPlayer->SetBodygroup( m_iHiddenBodygroups[0] , 0 );
+			m_iHiddenBodygroups.Remove( 0 );
 		}
 	}
 

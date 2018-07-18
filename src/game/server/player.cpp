@@ -6672,7 +6672,7 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 
 bool CBasePlayer::RemovePlayerItem( CBaseCombatWeapon *pItem )
 {
-	if (GetActiveWeapon() == pItem)
+	if ( GetActiveWeapon() == pItem )
 	{
 		ResetAutoaim( );
 		pItem->Holster( );

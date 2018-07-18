@@ -512,8 +512,6 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 		Interp_Reset( GetVarMapping() );
 	}
-
-	pPlayer->MoveBoneAttachments( this );
 	
 	bool bPlayDeathAnim = false;
 	if ( pPlayer && ( tf_always_deathanim.GetBool() || RandomFloat() < 0.25f ) )
@@ -597,6 +595,11 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	{
 		m_flBurnEffectStartTime = gpGlobals->curtime;
 		ParticleProp()->Create( "burningplayer_corpse", PATTACH_ABSORIGIN_FOLLOW );
+	}
+
+	if ( pPlayer )
+	{
+		pPlayer->MoveBoneAttachments( this );
 	}
 
 	// Fade out the ragdoll in a while
@@ -1664,6 +1667,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_flBurnEffectEndTime = 0;
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
+	m_pOverhealEffect = NULL;
 	
 	m_aGibs.Purge();
 
@@ -1687,6 +1691,7 @@ C_TFPlayer::C_TFPlayer() :
 
 	m_bUpdateObjectHudState = false;
 
+	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "player_regenerate" );
 }
 
@@ -1712,6 +1717,19 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 				pWeapon->WeaponRegenerate();
 			}
 		}
+	}
+	else if ( V_strcmp( event->GetName(), "localplayer_changeteam" ) == 0 )
+	{
+		if ( !IsLocalPlayer() )
+		{
+			// Update any effects affected by disguise.
+			m_Shared.UpdateCritBoostEffect();
+			UpdateOverhealEffect();
+		}
+	}
+	else
+	{
+		BaseClass::FireGameEvent( event );
 	}
 }
 
@@ -4520,6 +4538,48 @@ CBaseCombatWeapon *C_TFPlayer::Weapon_GetSlot( int slot ) const
 	}
 
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateOverhealEffect( void )
+{
+	bool bShouldShow = true;
+
+	if ( !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) )
+	{
+		bShouldShow = false;
+	}
+	else if ( InFirstPersonView() )
+	{
+		bShouldShow = false;
+	}
+	else if ( IsEnemyPlayer() )
+	{
+		if ( m_Shared.InCond( TF_COND_STEALTHED ) || m_Shared.InCond( TF_COND_DISGUISED ) )
+		{
+			// Don't give away cloaked and disguised spies.
+			bShouldShow = false;
+		}
+	}
+
+	if ( bShouldShow )
+	{
+		if ( !m_pOverhealEffect )
+		{
+			const char *pszEffect = ConstructTeamParticle( "overhealedplayer_%s_pluses", GetTeamNumber(), false );
+			m_pOverhealEffect = ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN_FOLLOW );
+		}
+	}
+	else
+	{
+		if ( m_pOverhealEffect )
+		{
+			ParticleProp()->StopEmission( m_pOverhealEffect );
+			m_pOverhealEffect = NULL;
+		}
+	}
 }
 
 #include "c_obj_sentrygun.h"
