@@ -225,6 +225,14 @@ public:
 	virtual void SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 	virtual float FrameAdvance( float flInterval = 0.0f );
 
+	float GetInvisibilityLevel( void )
+	{
+		if ( m_flUncloakCompleteTime == 0.0f )
+			return 0.0f;
+
+		return RemapValClamped( m_flUncloakCompleteTime - gpGlobals->curtime, 0.0f, 2.0f, 0.0f, 1.0f );
+	}
+
 private:
 	
 	C_TFRagdoll( const C_TFRagdoll & ) {}
@@ -242,6 +250,8 @@ private:
 	bool  m_bFadingOut;
 	bool  m_bGib;
 	bool  m_bBurning;
+	float m_flInvisibilityLevel;
+	float m_flUncloakCompleteTime;
 	int   m_iDamageCustom;
 	int	  m_iTeam;
 	int	  m_iClass;
@@ -257,6 +267,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropInt( RECVINFO( m_nForceBone ) ),
 	RecvPropBool( RECVINFO( m_bGib ) ),
 	RecvPropBool( RECVINFO( m_bBurning ) ),
+	RecvPropFloat( RECVINFO( m_flInvisibilityLevel ) ),
 	RecvPropInt( RECVINFO( m_iDamageCustom ) ),
 	RecvPropInt( RECVINFO( m_iTeam ) ),
 	RecvPropInt( RECVINFO( m_iClass ) ),
@@ -273,6 +284,8 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bFadingOut = false;
 	m_bGib = false;
 	m_bBurning = false;
+	m_flInvisibilityLevel = 0.0f;
+	m_flUncloakCompleteTime = 0.0f;
 	m_iDamageCustom = 0;
 	m_flBurnEffectStartTime = 0.0f;
 	m_iTeam = -1;
@@ -602,6 +615,11 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		pPlayer->MoveBoneAttachments( this );
 	}
 
+	if ( m_flInvisibilityLevel != 0.0f )
+	{
+		m_flUncloakCompleteTime = gpGlobals->curtime + 2.0f * m_flInvisibilityLevel;
+	}
+
 	// Fade out the ragdoll in a while
 	StartFadeOut( cl_ragdoll_fade_time.GetFloat() );
 	SetNextClientThink( gpGlobals->curtime + cl_ragdoll_fade_time.GetFloat() * 0.33f );
@@ -865,13 +883,28 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 
 	C_TFPlayer *pPlayer = ToTFPlayer( pEnt );
 
-	if ( !pPlayer )
+	if ( pPlayer )
 	{
-		m_pPercentInvisible->SetFloatValue( 0.0 );
-		return;
+		m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
+	}
+	else
+	{
+		C_TFRagdoll *pRagdoll = dynamic_cast<C_TFRagdoll *>( pEnt );
+
+		if ( pRagdoll )
+		{
+			pPlayer = ToTFPlayer( pRagdoll->GetPlayerHandle().Get() );
+			m_pPercentInvisible->SetFloatValue( pRagdoll->GetInvisibilityLevel() );
+		}
+		else
+		{
+			m_pPercentInvisible->SetFloatValue( 0.0 );
+			return;
+		}
 	}
 
-	m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
+	if ( !pPlayer )
+		return;
 
 	float r, g, b;
 
