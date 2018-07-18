@@ -263,6 +263,8 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 
+	void UpdateOverhealEffect( void );
+
 protected:
 
 	void ResetFlexWeights( CStudioHdr *pStudioHdr );
@@ -368,6 +370,8 @@ public:
 
 	CMaterialReference	m_InvulnerableMaterial;
 
+	// Overheal
+	CNewParticleEffect *m_pOverhealEffect;
 
 	// Burning
 	CSoundPatch			*m_pBurningSound;
