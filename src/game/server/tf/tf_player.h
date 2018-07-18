@@ -86,6 +86,7 @@ public:
 	static CTFPlayer	*Instance( int iEnt );
 
 	virtual void		Spawn();
+	virtual int			ShouldTransmit( const CCheckTransmitInfo *pInfo );
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
