@@ -84,7 +84,7 @@ bool CHudMedicChargeMeter::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) || !pPlayer->IsAlive() )
+	if ( !pPlayer || !pPlayer->IsAlive() )
 	{
 		return false;
 	}
@@ -96,12 +96,14 @@ bool CHudMedicChargeMeter::ShouldDraw( void )
 		return false;
 	}
 
-	C_WeaponMedigun *pMedigun = pPlayer->GetMedigun();
+	//C_WeaponMedigun *pMedigun = pPlayer->GetMedigun();
 
-	if ( !pMedigun )
+	if ( pWpn->GetWeaponID() != TF_WEAPON_MEDIGUN )
 	{
 		return false;
 	}
+
+	C_WeaponMedigun *pMedigun = static_cast< C_WeaponMedigun * >( pWpn );
 
 	// Hide the meter if the medigun can't earn uber.
 	float flChargeRate = 1.0f;

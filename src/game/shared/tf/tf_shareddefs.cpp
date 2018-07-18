@@ -355,13 +355,13 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 
 	"tf_weapon_revolver",			// Base weapon to translate
 	NULL,
-	"tf_weapon_revolver",			// Scout
-	"tf_weapon_revolver",			// Sniper
-	"tf_weapon_revolver",			// Soldier
-	"tf_weapon_revolver",			// Demoman
-	"tf_weapon_revolver",			// Medic
-	"tf_weapon_revolver",			// Heavy
-	"tf_weapon_revolver",			// Pyro
+	"tf_weapon_revolver_secondary", // Scout
+	"tf_weapon_revolver_secondary",	// Sniper
+	"tf_weapon_revolver_secondary",	// Soldier
+	"tf_weapon_revolver_secondary",	// Demoman
+	"tf_weapon_revolver_secondary",	// Medic
+	"tf_weapon_revolver_secondary",	// Heavy
+	"tf_weapon_revolver_secondary",	// Pyro
 	"tf_weapon_revolver",			// Spy
 	"tf_weapon_revolver_secondary",	// Engineer
 	"tf_weapon_revolver",			// Civilian

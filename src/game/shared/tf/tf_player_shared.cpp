@@ -1090,7 +1090,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	}
 
 	// Stops the drain hack.
-	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) )
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) || tf2c_random_weapons.GetBool() )
 	{
 		CWeaponMedigun *pWeapon = m_pOuter->GetMedigun();
 		if ( pWeapon && pWeapon->IsReleasingCharge() )
@@ -2549,17 +2549,17 @@ void CTFPlayerShared::StopHealing(CTFPlayer *pPlayer)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-medigun_charge_types CTFPlayerShared::GetChargeEffectBeingProvided(CTFPlayer *pPlayer)
+medigun_charge_types CTFPlayerShared::GetChargeEffectBeingProvided( CTFPlayer *pPlayer )
 {
-	if (!pPlayer->IsPlayerClass(TF_CLASS_MEDIC))
+	if ( !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && !tf2c_random_weapons.GetBool() )
 		return TF_CHARGE_NONE;
 
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-	if (!pWpn)
+	if ( !pWpn )
 		return TF_CHARGE_NONE;
 
-	CWeaponMedigun *pMedigun = dynamic_cast <CWeaponMedigun* >(pWpn);
-	if (pMedigun && pMedigun->IsReleasingCharge())
+	CWeaponMedigun *pMedigun = dynamic_cast < CWeaponMedigun * >( pWpn );
+	if ( pMedigun && pMedigun->IsReleasingCharge() )
 		return pMedigun->GetChargeType();
 
 	return TF_CHARGE_NONE;
@@ -3957,20 +3957,17 @@ Vector CTFPlayer::GetClassEyeHeight(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-float CTFPlayer::MedicGetChargeLevel(void)
+float CTFPlayer::MedicGetChargeLevel( void )
 {
-	if (IsPlayerClass(TF_CLASS_MEDIC))
-	{
-		CWeaponMedigun *pMedigun = GetMedigun();
+	CWeaponMedigun *pMedigun = GetMedigun();
 
-		if (pMedigun)
-			return pMedigun->GetChargeLevel();
+	if ( pMedigun )
+		return pMedigun->GetChargeLevel();
 
-		return 0.0f;
-	}
+	return 0.0f;
 
 	// Spy has a fake uber level.
-	if (IsPlayerClass(TF_CLASS_SPY))
+	if ( IsPlayerClass( TF_CLASS_SPY ) )
 	{
 		return m_Shared.m_flDisguiseChargeLevel;
 	}
@@ -3983,23 +3980,23 @@ float CTFPlayer::MedicGetChargeLevel(void)
 //-----------------------------------------------------------------------------
 CWeaponMedigun *CTFPlayer::GetMedigun(void)
 {
-	CTFWeaponBase *pWeapon = Weapon_OwnsThisID(TF_WEAPON_MEDIGUN);
-	if (pWeapon)
-		return static_cast<CWeaponMedigun *>(pWeapon);
+	CTFWeaponBase *pWeapon = Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
+	if ( pWeapon )
+		return static_cast<CWeaponMedigun *>( pWeapon );
 
 	return NULL;
 }
 
-CTFWeaponBase *CTFPlayer::Weapon_OwnsThisID(int iWeaponID)
+CTFWeaponBase *CTFPlayer::Weapon_OwnsThisID( int iWeaponID )
 {
 	for (int i = 0; i < WeaponCount(); i++)
 	{
-		CTFWeaponBase *pWpn = (CTFWeaponBase *)GetWeapon(i);
+		CTFWeaponBase *pWpn = ( CTFWeaponBase *)GetWeapon( i );
 
-		if (pWpn == NULL)
+		if ( pWpn == NULL )
 			continue;
 
-		if (pWpn->GetWeaponID() == iWeaponID)
+		if ( pWpn->GetWeaponID() == iWeaponID )
 		{
 			return pWpn;
 		}
@@ -4010,16 +4007,16 @@ CTFWeaponBase *CTFPlayer::Weapon_OwnsThisID(int iWeaponID)
 
 CTFWeaponBase *CTFPlayer::Weapon_GetWeaponByType(int iType)
 {
-	for (int i = 0; i < WeaponCount(); i++)
+	for ( int i = 0; i < WeaponCount(); i++ )
 	{
-		CTFWeaponBase *pWpn = (CTFWeaponBase *)GetWeapon(i);
+		CTFWeaponBase *pWpn = ( CTFWeaponBase * )GetWeapon( i );
 
-		if (pWpn == NULL)
+		if ( pWpn == NULL )
 			continue;
 
 		int iWeaponRole = pWpn->GetTFWpnData().m_iWeaponType;
 
-		if (iWeaponRole == iType)
+		if ( iWeaponRole == iType )
 		{
 			return pWpn;
 		}
@@ -4031,23 +4028,23 @@ CTFWeaponBase *CTFPlayer::Weapon_GetWeaponByType(int iType)
 
 CEconEntity *CTFPlayer::GetEntityForLoadoutSlot(int iSlot)
 {
-	if (iSlot >= TF_LOADOUT_SLOT_HAT)
+	if ( iSlot >= TF_LOADOUT_SLOT_HAT )
 	{
 		// Weapons don't get equipped in cosmetic slots.
-		return GetWearableForLoadoutSlot(iSlot);
+		return GetWearableForLoadoutSlot( iSlot );
 	}
 
 	int iClass = m_PlayerClass.GetClassIndex();
 
-	for (int i = 0; i < WeaponCount(); i++)
+	for ( int i = 0; i < WeaponCount(); i++ )
 	{
-		CBaseCombatWeapon *pWeapon = GetWeapon(i);
-		if (!pWeapon)
+		CBaseCombatWeapon *pWeapon = GetWeapon( i );
+		if ( !pWeapon )
 			continue;
 
 		CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
 
-		if (pItemDef && pItemDef->GetLoadoutSlot(iClass) == iSlot)
+		if ( pItemDef && pItemDef->GetLoadoutSlot(iClass) == iSlot )
 		{
 			return pWeapon;
 		}
@@ -4055,7 +4052,7 @@ CEconEntity *CTFPlayer::GetEntityForLoadoutSlot(int iSlot)
 
 	// Wearable?
 	CEconWearable *pWearable = GetWearableForLoadoutSlot(iSlot);
-	if (pWearable)
+	if ( pWearable )
 		return pWearable;
 
 	return NULL;

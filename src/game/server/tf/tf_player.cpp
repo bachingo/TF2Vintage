@@ -1620,6 +1620,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		if ( pEntity )
 		{
 			CBaseCombatWeapon *pWeapon = pEntity->MyCombatWeaponPointer();
+			CTFWearable *pWearable = static_cast<CTFWearable *>( pEntity );
 			if ( pWeapon )
 			{
 				if ( pWeapon == GetActiveWeapon() )
@@ -1628,13 +1629,13 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 				Weapon_Detach( pWeapon );
 				UTIL_Remove( pWeapon );
 			}
-			else if ( pEntity->IsWearable() )
+			else if ( pWearable )
 			{
-				CEconWearable *pWearable = static_cast<CEconWearable *>( pEntity );
 				RemoveWearable( pWearable );
 			}
 			else
 			{
+				// Something isn't working if you hit this
 				Assert( false );
 				UTIL_Remove( pEntity );
 			}
@@ -1647,15 +1648,36 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		int iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 		int iPreset = RandomInt( 0, pInv->GetNumPresets( iClass, iSlot ) - 1 );
 
-		// Give us the item
-		CEconItemView *pItem = pInv->GetItem( iClass, iSlot, iPreset );
+		CEconItemView *pItem;
+
+		// Engineers always get PDAs and PDAs come in a set
+		// Spies should get their disguise PDA
+		if ( ( m_PlayerClass.GetClassIndex()  == TF_CLASS_ENGINEER || iClass == TF_CLASS_ENGINEER || m_PlayerClass.GetClassIndex() == TF_CLASS_SPY ) 
+			&& ( iSlot == TF_LOADOUT_SLOT_PDA1 || iSlot == TF_LOADOUT_SLOT_PDA2 ) )
+		{
+			pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
+		}
+		else
+		{
+			// Give us the item
+			pItem = pInv->GetItem( iClass, iSlot, iPreset );
+		}
 
 		if ( pItem )
 		{
+			CEconEntity *pEntity;
 			const char *pszClassname = pItem->GetEntityName();
 			Assert( pszClassname );
 
-			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+			if ( V_strcmp( pszClassname, "tf_weapon_shotgun" ) )
+			{
+				// Use the shotgun for the randomized class				
+				pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( TranslateWeaponEntForClass( pszClassname, iClass ), 0, pItem ) );
+			}
+			else
+			{
+				pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+			}
 
 			if ( pEntity )
 			{
@@ -1760,7 +1782,8 @@ void CTFPlayer::HandleCommand_WeaponPreset( int iClass, int iSlotNum, int iPrese
 //-----------------------------------------------------------------------------
 CBaseEntity	*CTFPlayer::GiveNamedItem( const char *pszName, int iSubType, CEconItemView* pItem )
 {
-	const char *pszEntName = TranslateWeaponEntForClass( pszName, m_PlayerClass.GetClassIndex() );
+	const char *pszEntName;
+	pszEntName = TranslateWeaponEntForClass( pszName, m_PlayerClass.GetClassIndex() );
 
 	// If I already own this type don't create one
 	if ( Weapon_OwnsThisType( pszEntName ) )
@@ -7468,10 +7491,16 @@ void CTFPlayer::Taunt( void )
 
 	m_bInitTaunt = true;
 	char szResponse[AI_Response::MAX_RESPONSE_NAME];
-	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_TAUNT, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) )
+	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_TAUNT, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) || tf2c_random_weapons.GetBool() )
 	{
 		// Get the duration of the scene.
 		float flDuration = GetSceneDuration( szResponse ) + 0.2f;
+
+		if ( tf2c_random_weapons.GetBool() && flDuration == 0.2f )
+		{
+			flDuration += 3.0f;
+			m_Shared.StunPlayer( 3.0f, this );
+		}
 
 		// Clear disguising state.
 		if ( m_Shared.InCond( TF_COND_DISGUISING ) )
@@ -8258,10 +8287,16 @@ void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
 {
+	int iWeaponID = TF_WEAPON_NONE;
+	if ( tf2c_random_weapons.GetBool() )
+	{
+		iWeaponID = GetActiveTFWeapon()->GetWeaponID();
+	}
+
 	bool bIsMedic = false;
 
 	//Do Lag comp on medics trying to heal team mates.
-	if ( IsPlayerClass( TF_CLASS_MEDIC ) == true )
+	if ( IsPlayerClass( TF_CLASS_MEDIC ) == true || iWeaponID == TF_WEAPON_MEDIGUN )
 	{
 		bIsMedic = true;
 
