@@ -1090,6 +1090,28 @@ void CTFPlayer::Spawn()
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFPlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( CBaseEntity::Instance( pInfo->m_pClientEnt ) );
+	Assert( pPlayer );
+
+	// Always transmit all players to us if we're in spec.
+	if ( pPlayer->GetTeamNumber() < FIRST_GAME_TEAM )
+	{
+		return FL_EDICT_ALWAYS;
+	}
+	else if ( InSameTeam( pPlayer ) && !pPlayer->IsAlive() )
+	{
+		// Transmit teammates to us if we're dead.
+		return FL_EDICT_ALWAYS;
+	}
+
+	return BaseClass::ShouldTransmit( pInfo );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Removes all nemesis relationships between this player and others
 //-----------------------------------------------------------------------------
 void CTFPlayer::RemoveNemesisRelationships()
