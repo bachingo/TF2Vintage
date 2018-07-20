@@ -34,7 +34,7 @@ class CTeamControlPoint;
 #define TW_ALARM_THINK	"CTeamTrainWatcherAlarmThink"
 #define TW_ALARM_THINK_INTERVAL	8.0
 
-//#define TWMASTER_THINK	"CTeamTrainWatcherMasterThink"
+// #define TWMASTER_THINK	"CTeamTrainWatcherMasterThink"
 
 DECLARE_AUTO_LIST( ITFTeamTrainWatcher );
 
@@ -156,8 +156,7 @@ private:
 	// === Networked Data ===
 
 	// current total progress, percentage
-	//CNetworkVar( float, m_flTotalProgress );
-	float m_flTotalProgress;
+	CNetworkVar( float, m_flTotalProgress );
 
 	CNetworkVar( int, m_iTrainSpeedLevel );
 

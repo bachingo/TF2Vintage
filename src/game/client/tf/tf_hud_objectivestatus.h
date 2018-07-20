@@ -15,7 +15,7 @@
 #include "tf_imagepanel.h"
 #include "tf_hud_flagstatus.h"
 #include "tf_hud_deathmatchstatus.h"
-#include "tf_hud_escortobjectivestatus.h"
+#include "tf_hud_escort.h"
 #include "hud_controlpointicons.h"
 #include "GameEventListener.h"
 #include "c_tf_player.h"
