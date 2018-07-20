@@ -56,9 +56,9 @@
 #define TWM_FINALSTAGESTART02	"Announcer.PLR_FinalStageStart02"
 #define TWM_FINALSTAGESTART03	"Announcer.PLR_FinalStageStart03"
 #define TWM_FINALSTAGESTART05	"Announcer.PLR_FinalStageStart05"
-#define TWM_FINALSTAGESTART06	"Announcer.PLR_FinalStageStart06"*/
+#define TWM_FINALSTAGESTART06	"Announcer.PLR_FinalStageStart06"
 
-EHANDLE g_hTeamTrainWatcherMaster = NULL;
+EHANDLE g_hTeamTrainWatcherMaster = NULL;*/
 
 #define MAX_ALARM_TIME_NO_RECEDE 18 // max amount of time to play the alarm if the train isn't going to recede
 
@@ -131,7 +131,7 @@ END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST(CTeamTrainWatcher, DT_TeamTrainWatcher)
 
-	//SendPropFloat( SENDINFO( m_flTotalProgress ), 11, 0, 0.0f, 1.0f ),
+	SendPropFloat( SENDINFO( m_flTotalProgress ), 11, 0, 0.0f, 1.0f ),
 	SendPropInt( SENDINFO( m_iTrainSpeedLevel ), 4 ),
 	SendPropTime( SENDINFO( m_flRecedeTime ) ),
 	SendPropInt( SENDINFO( m_nNumCappers ) ),
@@ -267,10 +267,8 @@ void CTeamTrainWatcherMaster::FireGameEvent( IGameEvent *event )
 	}
 	else if ( FStrEq( "teamplay_round_win", eventname ) )
 	{
-		Msg("\nFIRED");
 		if ( TeamplayRoundBasedRules() )
 		{
-			Msg("\nTEAMPLAYROUNDBASEDRULES");
 			int iWinningTeam = event->GetInt( "team" );
 			int iLosingTeam = ( iWinningTeam == TF_TEAM_RED ) ? TF_TEAM_BLUE : TF_TEAM_RED;
 			bool bFullRound = event->GetBool( "full_round" );
@@ -280,13 +278,11 @@ void CTeamTrainWatcherMaster::FireGameEvent( IGameEvent *event )
 
 			if ( bFullRound )
 			{
-				Msg("\nWIN");
 				EmitSound( filterWinner, entindex(), TWM_FINALSTAGEOUTCOME01 );
 				EmitSound( filterLoser, entindex(), TWM_FINALSTAGEOUTCOME02 );
 			}
 			else
 			{
-				Msg("\nWIN MINIROUND");
 				EmitSound( filterWinner, entindex(), TWM_FIRSTSTAGEOUTCOME01 );
 				EmitSound( filterLoser, entindex(), TWM_FIRSTSTAGEOUTCOME02 );
 			}
@@ -332,7 +328,6 @@ CTeamTrainWatcher::CTeamTrainWatcher()
 	// create a CTeamTrainWatcherMaster entity
 	/*if ( g_hTeamTrainWatcherMaster.Get() == NULL )
 	{
-		Msg("\nMASTER CREATED");
 		g_hTeamTrainWatcherMaster = CreateEntityByName( "team_train_watcher_master" );
 	}*/
 
@@ -649,7 +644,6 @@ void CTeamTrainWatcher::InternalSetNumTrainCappers( int iNumCappers, CBaseEntity
 		return;
 
 	m_nNumCappers = iNumCappers;
-	ObjectiveResource()->SetNumCappers(GetTeamNumber(), m_nNumCappers);
 
 	// inputdata.pCaller is hopefully an area capture
 	// lets see if its blocked, and not start receding if it is
@@ -667,7 +661,6 @@ void CTeamTrainWatcher::InternalSetNumTrainCappers( int iNumCappers, CBaseEntity
 		{
 			// start receding in [tf_escort_cart_recede_time] seconds
 			m_bWaitingToRecede = true;
-			ObjectiveResource()->SetWaitingToRecede(true);
 			if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->InOvertime() )
 			{
 				m_flRecedeTotalTime = tf_escort_recede_time_overtime.GetFloat();
@@ -683,16 +676,13 @@ void CTeamTrainWatcher::InternalSetNumTrainCappers( int iNumCappers, CBaseEntity
 
 			m_flRecedeStartTime = gpGlobals->curtime;
 			m_flRecedeTime = m_flRecedeStartTime + m_flRecedeTotalTime;
-			ObjectiveResource()->SetRecedeTime(GetTeamNumber(), m_flRecedeTime);
 		}		
 	}
 	else
 	{
 		// cancel receding
 		m_bWaitingToRecede = false;
-		//ObjectiveResource()->SetWaitingToRecede(false);
 		m_flRecedeTime = -1;
-		ObjectiveResource()->SetRecedeTime(GetTeamNumber(), m_flRecedeTime);
 	}
 
 	HandleTrainMovement();
@@ -740,7 +730,6 @@ void CTeamTrainWatcher::InputSetTrainRecedeTimeAndUpdate(inputdata_t &inputdata)
 
 		m_flRecedeStartTime = gpGlobals->curtime;
 		m_flRecedeTime = m_flRecedeStartTime + m_flRecedeTotalTime;
-		ObjectiveResource()->SetRecedeTime(GetTeamNumber(), m_flRecedeTime);
 	}
 }
 
@@ -763,7 +752,6 @@ void CTeamTrainWatcher::InputOnStartOvertime( inputdata_t &inputdata )
 			m_flRecedeTotalTime = flOvertimeRecedeLen;
 			m_flRecedeStartTime = gpGlobals->curtime;
 			m_flRecedeTime = m_flRecedeStartTime + m_flRecedeTotalTime;
-			ObjectiveResource()->SetRecedeTime(GetTeamNumber(), m_flRecedeTime);
 		}
 	}
 }
@@ -1171,7 +1159,6 @@ void CTeamTrainWatcher::WatcherThink( void )
 		if ( flSpeed < 0 )
 		{
 			m_iTrainSpeedLevel = -1;
-			ObjectiveResource()->SetTrainSpeedLevel(GetTeamNumber(), m_iTrainSpeedLevel);
 
 			// even though our desired speed might be negative,
 			// our actual speed might be zero if we're at a dead end...
@@ -1179,28 +1166,23 @@ void CTeamTrainWatcher::WatcherThink( void )
 			if ( pTrain->GetCurrentSpeed() == 0 )
 			{
 				m_iTrainSpeedLevel = 0;
-				ObjectiveResource()->SetTrainSpeedLevel(GetTeamNumber(), m_iTrainSpeedLevel);
 			}
 		}
 		else if ( flSpeed > m_flSpeedLevels[2] )
 		{
 			m_iTrainSpeedLevel = 3;
-			ObjectiveResource()->SetTrainSpeedLevel(GetTeamNumber(), m_iTrainSpeedLevel);
 		}
 		else if ( flSpeed > m_flSpeedLevels[1] )
 		{
 			m_iTrainSpeedLevel = 2;
-			ObjectiveResource()->SetTrainSpeedLevel(GetTeamNumber(), m_iTrainSpeedLevel);
 		}
 		else if ( flSpeed > m_flSpeedLevels[0] )
 		{
 			m_iTrainSpeedLevel = 1;
-			ObjectiveResource()->SetTrainSpeedLevel(GetTeamNumber(), m_iTrainSpeedLevel);
 		}
 		else
 		{
 			m_iTrainSpeedLevel = 0;
-			ObjectiveResource()->SetTrainSpeedLevel(GetTeamNumber(), m_iTrainSpeedLevel);
 		}
 
 		if ( m_iTrainSpeedLevel != iOldTrainSpeedLevel )
@@ -1241,7 +1223,7 @@ void CTeamTrainWatcher::WatcherThink( void )
 					{
 						if ( m_hAreaCap->IsTouching( pPlayer ) )
 						{
-							m_hAreaCap->StartTouch(pPlayer);
+							//m_hAreaCap->StartTouch(pPlayer);
 							pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_CART_MOVING_FORWARD );
 						}
 					}
@@ -1294,8 +1276,6 @@ void CTeamTrainWatcher::WatcherThink( void )
 			}
 
 			m_flTotalProgress = clamp( 1.0 - ( flDistanceToGoal / m_flTotalPathDistance ), 0.0, 1.0 );
-
-			ObjectiveResource()->SetTotalProgress(GetTeamNumber(), clamp(1.0 - (flDistanceToGoal / m_flTotalPathDistance), 0.0, 1.0));
 
 			m_flTrainDistanceFromStart = m_flTotalPathDistance - flDistanceToGoal;
 
@@ -1359,7 +1339,7 @@ void CTeamTrainWatcher::WatcherThink( void )
 								}
 							}
 						}
-						PlayCaptureAlert(pCurrentPoint, bFinalPointInMap);
+						PlayCaptureAlert( pCurrentPoint, bFinalPointInMap );
 					}
 				}
 			}

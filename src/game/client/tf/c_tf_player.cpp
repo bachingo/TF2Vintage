@@ -2361,9 +2361,6 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 {
 	CStudioHdr *hdr = BaseClass::OnNewModel();
 
-	// Reset attachments
-	DestroyBoneAttachments();
-
 	// Initialize the gibs.
 	InitPlayerGibs();
 
@@ -3937,6 +3934,12 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		m_bWasTaunting = false;
 		HandleTaunting();
 
+		IGameEvent * event = gameeventmanager->CreateEvent( "localplayer_respawn" );
+		if ( event )
+		{
+			gameeventmanager->FireEventClientSide( event );
+		}
+
 		ResetToneMapping(1.0);
 
 		// Release the duck toggle key
@@ -3944,6 +3947,9 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 
 		LoadInventory();
 	}
+
+	// Reset attachments
+	DestroyBoneAttachments();
 
 	if ( TFGameRules()->IsDeathmatch() && GetTeamNumber() == TF_TEAM_RED && ( !IsLocalPlayer() || !InFirstPersonView() ) )
 	{
