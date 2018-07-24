@@ -34,13 +34,10 @@ void CTFLunchBox::PrimaryAttack( void )
 
 #ifdef GAME_DLL
 	pOwner->Taunt();
-#else
-	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
-	if ( pAttach )
-	{
-		pAttach->SetBodygroup( SANDVICH_BODYGROUP_BITE, SANDVICH_STATE_BITTEN );
-	}
 #endif
+	m_bBitten = true;
+	SwitchBodyGroups();
+
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 }
 
@@ -118,6 +115,22 @@ void CTFLunchBox::DepleteAmmo( void )
 	pOwner->SwitchToNextBestWeapon( this );
 
 	StartEffectBarRegen();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update the sandvich bite effects
+//-----------------------------------------------------------------------------
+void CTFLunchBox::SwitchBodyGroups( void )
+{
+#ifdef GAME_DLL
+#else
+	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+	if ( pAttach )
+	{
+		int iState = m_bBitten ? SANDVICH_STATE_BITTEN : SANDVICH_STATE_NORMAL;
+		pAttach->SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
+	}
+#endif
 }
 
 #ifdef GAME_DLL
