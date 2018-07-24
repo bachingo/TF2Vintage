@@ -36,6 +36,8 @@ public:
 	virtual bool	HasChargeBar( void ) { return true; }
 	virtual float	InternalGetEffectBarRechargeTime( void ) { return 30.0f; }
 	virtual const char	*GetEffectLabelText( void ) { return "#TF_Sandwich"; }
+	virtual void	SwitchBodyGroups( void );
+
 
 #ifdef GAME_DLL
 	virtual void	Precache( void );
@@ -46,6 +48,8 @@ private:
 #ifdef GAME_DLL
 	EHANDLE m_hDroppedLunch;
 #endif
+
+	bool	m_bBitten;
 };
 
 #endif // TF_WEAPON_LUNCHBOX_H

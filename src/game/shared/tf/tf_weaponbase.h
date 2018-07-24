@@ -186,7 +186,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual bool CanDrop( void ) { return false; }
 
-	// Accessor for reload bodygroup switching
+	// Accessor for bodygroup switching
 	virtual void SwitchBodyGroups( void ) {}
 
 	virtual void UpdatePlayerBodygroups( void );
