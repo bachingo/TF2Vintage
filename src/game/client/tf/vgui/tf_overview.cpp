@@ -100,7 +100,7 @@ ConVar tf_overview_voice_icon_size( "tf_overview_voice_icon_size", "64", FCVAR_A
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFMapOverview::CTFMapOverview(const char *pElementName) : CMapOverview(pElementName)
+CTFMapOverview::CTFMapOverview( const char *pElementName ) : CMapOverview(pElementName)
 {
 	InitTeamColorsAndIcons();
 	m_flIconSize = 96.0f;
