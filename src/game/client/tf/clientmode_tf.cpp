@@ -428,9 +428,10 @@ int ClientModeTFNormal::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, 
 	return BaseClass::HandleSpectatorKeyInput( down, keynum, pszCurrentBinding );
 }
 
+// FIXME: This is causing crashes for Linux and I don't know why
 void ClientModeTFNormal::MessageHooks( void )
 {
-	usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
+	//usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
 }
 
 void __MsgFunc_BreakModel( bf_read &msg )
@@ -456,7 +457,7 @@ void HandleBreakModel( bf_read &msg, bool bNoAngles )
 		msg.ReadBitAngles( vecAngles );
 	}
 
-	// This looks pretty good but messing with the impulse a bit probably wouldn't hurt
+	// Impulse doesn't apply correctly in first person for some reason
 	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), Vector( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0f ) );
 
 	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );

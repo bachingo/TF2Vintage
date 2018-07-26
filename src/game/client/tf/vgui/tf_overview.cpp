@@ -19,6 +19,7 @@
 #include "voice_status.h"
 #include "spectatorgui.h"
 #include "c_team_objectiveresource.h"
+#include "clientmode_tf.h"
 
 using namespace vgui;
 
@@ -108,6 +109,9 @@ CTFMapOverview::CTFMapOverview( const char *pElementName ) : CMapOverview(pEleme
 	m_bDisabled = false;
 	m_nMapTextureOverlayID = -1;
 	usermessages->HookMessage( "UpdateRadar", __MsgFunc_UpdateRadar );
+
+	// Moving this here for now
+	usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
 }
 
 //-----------------------------------------------------------------------------
