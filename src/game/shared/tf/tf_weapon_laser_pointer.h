@@ -56,6 +56,8 @@ public:
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_LASER_POINTER; }
 
+	void			RemoveGun( void )					{ pGun = NULL; }
+
 private:
 #ifdef GAME_DLL
 	CObjectSentrygun *pGun;

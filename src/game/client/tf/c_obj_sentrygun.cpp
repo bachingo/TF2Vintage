@@ -12,6 +12,7 @@
 #include "eventlist.h"
 #include "hintsystem.h"
 #include <vgui_controls/ProgressBar.h>
+#include "tf_weapon_laser_pointer.h"
 #include "igameevents.h"
 
 #include "c_obj_sentrygun.h"
@@ -474,4 +475,20 @@ void C_ObjectSentrygun::DebugDamageParticles( void )
 
 	// print all particles owned by particleprop
 	ParticleProp()->DebugPrintEffects();
+}
+
+void C_ObjectSentrygun::UpdateOnRemove( void )
+{
+	C_TFPlayer *pOwner = GetBuilder();
+	if ( pOwner )
+	{
+		C_TFLaser_Pointer *pWeapon = dynamic_cast < C_TFLaser_Pointer * > ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
+		if ( pWeapon )
+		{
+			// Make sure wrangler stops updating sentry laser
+			pWeapon->RemoveGun();
+		}
+	}
+
+	BaseClass::UpdateOnRemove();
 }

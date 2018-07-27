@@ -129,6 +129,8 @@ public:
 		SetNextClientThink( gpGlobals->curtime + 0.25f );
 	}
 
+	virtual void UpdateOnRemove( void );
+
 
 	// ITargetIDProvidesHint
 public:
