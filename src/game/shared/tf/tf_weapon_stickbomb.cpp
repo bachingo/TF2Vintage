@@ -129,11 +129,7 @@ void CTFStickBomb::WeaponRegenerate()
 
 void CTFStickBomb::WeaponReset()
 {
-	m_iDetonated = TF_STICKBOMB_NORMAL;
-
-#ifdef CLIENT_DLL
-	SetNextClientThink( gpGlobals->curtime + 0.1f );
-#endif
+	BaseClass::WeaponReset();
 }
 
 #ifdef CLIENT_DLL

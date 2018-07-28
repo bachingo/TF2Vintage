@@ -2109,6 +2109,17 @@ bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
 					if ( pEntity != pAttacker )
 					{
 						bExtinguished = true;
+
+						// Bonus points.
+						IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
+						if ( event_bonus )
+						{
+							event_bonus->SetInt( "player_entindex", pEntity->entindex() );
+							event_bonus->SetInt( "source_entindex", pAttacker->entindex() );
+							event_bonus->SetInt( "points", 1 );
+
+							gameeventmanager->FireEvent( event_bonus );
+						}
 					}
 				}
 			}
@@ -3550,9 +3561,10 @@ CBasePlayer *CTFGameRules::GetAssister( CBasePlayer *pVictim, CBasePlayer *pScor
 		}
 		// Players who apply jarate should get next priority
 		CTFPlayer *pThrower = ToTFPlayer( static_cast<CBaseEntity *>( pTFVictim->m_Shared.m_hUrineAttacker.Get() ) );
-		if( pThrower && pThrower != pTFScorer )
+		if( pThrower )
 		{
-			return pThrower;
+			if ( pThrower != pTFScorer )
+				return pThrower;
 		}
 
 		// See who has damaged the victim 2nd most recently (most recent is the killer), and if that is within a certain time window.
@@ -4787,11 +4799,6 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 	{
 		return false;
 	}
-
-	// For arrow collisions
-	if ( ( collisionGroup0 == TFCOLLISION_GROUP_ROCKETS ) && 
-		( collisionGroup1 == TFCOLLISION_GROUP_ROCKETS ) )
-		return true;
 
 	// Rockets need to collide with players when they hit, but
 	// be ignored by player movement checks

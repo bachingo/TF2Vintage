@@ -15,11 +15,6 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFLaser_Pointer, DT_WeaponLaser_Pointer )
 
 BEGIN_NETWORK_TABLE( CTFLaser_Pointer, DT_WeaponLaser_Pointer )
-#ifdef CLIENT_DLL
-	RecvPropVector( RECVINFO( m_vecEnd ) ),
-#else
-	SendPropVector( SENDINFO ( m_vecEnd ) ),
-#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFLaser_Pointer )
@@ -34,26 +29,10 @@ BEGIN_DATADESC( CTFLaser_Pointer )
 END_DATADESC()
 #endif
 
-/*acttable_t CTFLaser_Pointer::m_acttable[] =
-{
-	{ ACT_MP_STAND_IDLE, ACT_MP_STAND_SECONDARY2, false },
-	{ ACT_MP_CROUCH_IDLE, ACT_MP_CROUCH_SECONDARY2, false },
-	{ ACT_MP_RUN, ACT_MP_RUN_SECONDARY2, false },
-	{ ACT_MP_AIRWALK, ACT_MP_AIRWALK_SECONDARY2, false },
-	{ ACT_MP_CROUCHWALK, ACT_MP_CROUCHWALK_SECONDARY2, false },
-	{ ACT_MP_JUMP_START, ACT_MP_JUMP_START_SECONDARY2, false },
-	{ ACT_MP_JUMP_FLOAT, ACT_MP_JUMP_FLOAT_SECONDARY2, false },
-	{ ACT_MP_JUMP_LAND, ACT_MP_JUMP_LAND_SECONDARY2, false },
-	{ ACT_MP_SWIM, ACT_MP_SWIM_SECONDARY2, false },
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE, ACT_MP_ATTACK_STAND_SECONDARY2, false },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE, ACT_MP_ATTACK_CROUCH_SECONDARY2, false },
-};*/
-
 CTFLaser_Pointer::CTFLaser_Pointer()
 {
+#ifdef GAME_DLL
 	pGun = NULL;
-#ifndef GAME_DLL
-	pLaser = NULL;
 #endif
 }
 
@@ -62,28 +41,24 @@ CTFLaser_Pointer::CTFLaser_Pointer()
 //-----------------------------------------------------------------------------
 bool CTFLaser_Pointer::Deploy( void )
 {
+#ifdef GAME_DLL
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
 	if ( pOwner )
 	{
 		for ( int i = 0; i < pOwner->GetObjectCount(); i++ )
 		{
-#ifdef GAME_DLL
+
 			CBaseObject *pObject = pOwner->GetObject( i );
-#else
-			C_BaseObject *pObject = pOwner->GetObject( i );
-#endif
+
 
 			if ( pObject->GetType() == OBJ_SENTRYGUN )
 			{
-#ifdef GAME_DLL
 				pGun = dynamic_cast< CObjectSentrygun * > ( pObject );
-#else
-				pGun = dynamic_cast< C_ObjectSentrygun * > ( pObject );
-#endif
 			}
 		}
 	}
+#endif
 
 	return BaseClass::Deploy();
 }
@@ -93,25 +68,18 @@ bool CTFLaser_Pointer::Deploy( void )
 //-----------------------------------------------------------------------------
 bool CTFLaser_Pointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+#ifdef GAME_DLL
 	if ( pGun )
 	{
-#ifdef GAME_DLL
+
 		if ( pGun->GetState() == SENTRY_STATE_WRANGLED )
 		{
 			pGun->OnStopWrangling();
 			pGun->SetShouldFire( false );
 		}
 	}
-#else
-		if ( pLaser )
-		{
-			pGun->DestroyLaserBeam();		
-		}
-	}
-	pLaser = NULL;
-#endif
-
 	pGun = NULL;
+#endif
 
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -121,10 +89,6 @@ bool CTFLaser_Pointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 void CTFLaser_Pointer::WeaponReset( void )
 {
-#ifndef GAME_DLL
-	pLaser = NULL;
-#endif
-	pGun = NULL;
 	BaseClass::WeaponReset();
 }
 
@@ -133,10 +97,13 @@ void CTFLaser_Pointer::WeaponReset( void )
 //-----------------------------------------------------------------------------
 void CTFLaser_Pointer::PrimaryAttack( void )
 {
-	if ( !CanAttack() || !pGun )
+	if ( !CanAttack() )
 		return;
 
 #ifdef GAME_DLL
+	if ( !pGun )
+		return;
+
 	if ( m_flNextPrimaryAttack < gpGlobals->curtime && pGun->GetState() == SENTRY_STATE_WRANGLED )
 	{
 		pGun->SetShouldFire( true );
@@ -145,7 +112,6 @@ void CTFLaser_Pointer::PrimaryAttack( void )
 		m_flNextPrimaryAttack = gpGlobals->curtime + 0.05f;
 	}
 #endif
-	SendWeaponAnim( ACT_SECONDARY_VM_PRIMARYATTACK_2 );
 }
 
 // ---------------------------------------------------------------------------- -
@@ -153,10 +119,13 @@ void CTFLaser_Pointer::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFLaser_Pointer::SecondaryAttack( void )
 {
-	if ( !CanAttack() || !pGun )
+	if ( !CanAttack() )
 		return;
 
 #ifdef GAME_DLL
+	if ( !pGun )
+		return;
+
 	if ( m_flNextSecondaryAttack <= gpGlobals->curtime && pGun->GetState() == SENTRY_STATE_WRANGLED )
 	{
 		int iUpgradeLevel = pGun->GetUpgradeLevel();
@@ -177,48 +146,16 @@ void CTFLaser_Pointer::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFLaser_Pointer::ItemPostFrame( void )
 {
+#ifdef GAME_DLL
 	if ( pGun )
 	{
-#ifdef GAME_DLL
 		//TODO: Find a better way to determine if we can wrangle
 		if ( !pGun->IsRedeploying() && !pGun->IsBuilding() && !pGun->IsUpgrading() && !pGun->HasSapper() )
 		{
 			pGun->SetState( SENTRY_STATE_WRANGLED );
-			m_vecEnd = pGun->m_vecEnd;
 		}
-#else
-		if ( !pLaser && pGun->GetState() == SENTRY_STATE_WRANGLED )
-		{
-			// crappy hack for team color vector
-			Vector vecColor;
-			int iTeam = GetTeamNumber();
-
-			switch ( iTeam )
-			{
-				case TF_TEAM_RED:
-					vecColor.Init( 255, -255, -255 );
-					break;
-
-				case TF_TEAM_BLUE:
-					vecColor.Init( -255, -255, 255 );
-					break;
-
-				default:
-					vecColor.Init();
-					break;
-			}
-
-			// create pLaser
-			pLaser = pGun->CreateLaserBeam();
-			pLaser->SetControlPoint( 2, vecColor );
-		}
-
-		if ( pGun->GetState() == SENTRY_STATE_WRANGLED )
-		{
-			pLaser->SetControlPoint( 1, m_vecEnd );
-		}
-#endif
 	}
+#endif
 
 	BaseClass::ItemPostFrame();
 }

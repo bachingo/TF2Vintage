@@ -6,6 +6,7 @@
 //=============================================================================//
 #include "cbase.h"
 #include "clientmode_tf.h"
+#include "tf_gamerules.h"
 #include "c_tf_objective_resource.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -128,7 +129,8 @@ void C_TFObjectiveResource::SetCappingTeam( int index, int team )
 	//Display warning that someone is capping our point.
 	//Only do this at the start of a cap and if WE own the point.
 	//Also don't warn on a point that will do a "Last Point cap" warning.
-	if (GetNumControlPoints() > 0 && GetCapWarningLevel(index) != index && GetCPCapPercentage(index) == 0.0f && team != TEAM_UNASSIGNED && GetOwningTeam(index) != TEAM_UNASSIGNED)
+	//Don't play the alert for payload
+	if ( !TFGameRules()->IsInEscortMode() && GetNumControlPoints() > 0 && GetCapWarningLevel(index) != index && GetCPCapPercentage(index) == 0.0f && team != TEAM_UNASSIGNED && GetOwningTeam(index) != TEAM_UNASSIGNED )
 	{
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
 		if ( pLocalPlayer )

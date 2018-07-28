@@ -135,6 +135,12 @@ bool CTFPowerup::ValidTouch( CBasePlayer *pPlayer )
 		return false;
 	}
 
+	// Don't collide with the owner for the first portion of our life if we're a lunchbox item
+	if ( m_flNextCollideTime > gpGlobals->curtime && pPlayer == GetOwnerEntity() )
+	{
+		return false;
+	}
+
 	return true;
 }
 

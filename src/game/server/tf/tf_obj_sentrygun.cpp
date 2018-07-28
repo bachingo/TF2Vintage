@@ -99,14 +99,15 @@ void* SendProxy_SendLocalObjectDataTable( const SendProp *pProp, const void *pSt
 REGISTER_SEND_PROXY_NON_MODIFIED_POINTER( SendProxy_SendLocalObjectDataTable );
 
 BEGIN_NETWORK_TABLE_NOBASE( CObjectSentrygun, DT_SentrygunLocalData )
-	SendPropInt( SENDINFO(m_iKills), 12, SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO(m_iAssists), 12, SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_iKills ), 12, SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_iAssists ), 12, SPROP_CHANGES_OFTEN ),
 END_NETWORK_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CObjectSentrygun, DT_ObjectSentrygun )
-	SendPropInt( SENDINFO(m_iAmmoShells), 9, SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO(m_iAmmoRockets), 6, SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO(m_iState), Q_log2( SENTRY_NUM_STATES ) + 1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iAmmoShells ), 9, SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_iAmmoRockets ), 6, SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_iState ), Q_log2( SENTRY_NUM_STATES ) + 1, SPROP_UNSIGNED ),
+	SendPropVector( SENDINFO( m_vecEnd ) ),
 	SendPropDataTable( "SentrygunLocalData", 0, &REFERENCE_SEND_TABLE( DT_SentrygunLocalData ), SendProxy_SendLocalObjectDataTable ),
 END_SEND_TABLE()
 
@@ -322,23 +323,23 @@ void CObjectSentrygun::WrangleThink(void)
 		if ( ValidTargetPlayer( pOther, vecStart, tr.endpos ) )
 		{
 			m_hEnemy = tr.m_pEnt;
-			m_vecEnd = m_hEnemy->WorldSpaceCenter();
+			m_vecEnd.Set( m_hEnemy->WorldSpaceCenter() );
 		}
 		else
 		{
 			m_hEnemy = NULL;
-			m_vecEnd = tr.endpos;
+			m_vecEnd.Set( tr.endpos );
 		}
 	}
 	else
 	{
 		m_hEnemy = NULL;
-		m_vecEnd = tr.endpos;
+		m_vecEnd.Set( tr.endpos );
 	}
 
 	if ( tf_debug_wrangler.GetBool() ) 
 	{
-		NDebugOverlay::Line( vecStart, m_vecEnd, 0, 255, 0, true, 0.25f );
+		NDebugOverlay::Line( vecStart, m_vecEnd.Get(), 0, 255, 0, true, 0.25f );
 	}
 
 	if ( ShouldFire() && gpGlobals->curtime >= m_flNextAttack )
@@ -1224,7 +1225,7 @@ bool CObjectSentrygun::Fire()
 		else
 		{	
 			// Add a bit of randomness to shots not locked onto targets
-			vecAimDir = m_vecEnd - vecSrc;
+			vecAimDir = m_vecEnd.Get() - vecSrc;
 		}
 
 		// Wrangled shots should have some spread
@@ -1349,7 +1350,7 @@ bool CObjectSentrygun::FireRockets()
 		}
 		else
 		{
-			vecAimDir = m_vecEnd - vecSrc;
+			vecAimDir = m_vecEnd.Get() - vecSrc;
 		}
 
 		vecAimDir.NormalizeInPlace();
@@ -1739,6 +1740,8 @@ void CObjectSentrygun::Killed( const CTakeDamageInfo &info )
 			pWeapon->RemoveGun();
 		}
 	}
+
+	SetState( SENTRY_STATE_INACTIVE );
 
 	// do normal handling
 	BaseClass::Killed( info );

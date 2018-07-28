@@ -1069,6 +1069,8 @@ void CTFPlayer::Spawn()
 
 	m_nBlastJumpFlags = 0;
 
+	m_Shared.m_hUrineAttacker = NULL;
+
 	// This makes the surrounding box always the same size as the standing collision box
 	// helps with parts of the hitboxes that extend out of the crouching hitbox, eg with the
 	// heavyweapons guy
@@ -7778,7 +7780,9 @@ void CTFPlayer::DoTauntAttack( void )
 
 					if ( bStun )
 					{
+						// Stun the player
 						pPlayer->m_Shared.StunPlayer( 3.0f, this );
+						pPlayer->m_iTauntAttack = TF_TAUNT_NONE;
 					}
 				
 					CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, nDamageType, iCustomDamage );

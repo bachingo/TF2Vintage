@@ -61,6 +61,8 @@ public:
 
 	CNetworkVarForDerived( bool, m_bDisabled );
 	CNetworkVarForDerived( bool, m_bRespawning );
+
+	float m_flNextCollideTime;
 };
 
 #endif // TF_POWERUP_H

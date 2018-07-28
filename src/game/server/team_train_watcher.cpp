@@ -1071,18 +1071,6 @@ void CTeamTrainWatcher::PlayCaptureAlert( CTeamControlPoint *pPoint, bool bFinal
 	if ( !pPoint )
 		return;
 
-	/*IGameEvent *event = gameeventmanager->CreateEvent("escort_play_alert");
-						if (event && TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING)
-						{
-							event->SetBool("final", bFinalPointInMap);
-							if (GetTeamNumber() == TF_TEAM_BLUE)
-								event->SetBool("teamblue", true);
-							else
-								event->SetBool("teamblue", false);
-							//event->SetInt("team", GetTeamNumber());
-
-							gameeventmanager->FireEvent(event);
-						}*/
 	if (TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING)
 	{
 		if (bFinalPointInMap)
@@ -1449,6 +1437,9 @@ bool CTeamTrainWatcher::TimerMayExpire( void )
 
 	// capture blocked so we're not receding, but game shouldn't end
 	if ( m_bCapBlocked )
+		return false;
+
+	if ( m_flRecedeTime > gpGlobals->curtime )
 		return false;
 
 	// not waiting, so we're capping, in which case the area capture
