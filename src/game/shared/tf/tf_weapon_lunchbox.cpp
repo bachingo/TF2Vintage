@@ -73,6 +73,9 @@ void CTFLunchBox::SecondaryAttack( void )
 	if ( !pPowerup )
 		return;
 
+	// Don't collide with the player owner for the first portion of its life
+	pPowerup->m_flNextCollideTime = gpGlobals->curtime + 0.5f;
+
 	pPowerup->SetModel( TF_SANDVICH_PLATE_MODEL );
 	UTIL_SetSize( pPowerup, -Vector( 17, 17, 10 ), Vector( 17, 17, 10 ) );
 

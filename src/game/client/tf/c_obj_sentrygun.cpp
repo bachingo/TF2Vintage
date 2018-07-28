@@ -37,6 +37,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_ObjectSentrygun, DT_ObjectSentrygun, CObjectSentrygu
 	RecvPropInt( RECVINFO( m_iAmmoShells ) ),
 	RecvPropInt( RECVINFO( m_iAmmoRockets ) ),
 	RecvPropInt( RECVINFO( m_iState ) ),
+	RecvPropVector( RECVINFO( m_vecEnd ) ),
 	RecvPropDataTable( "SentrygunLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_SentrygunLocalData ) ),
 END_RECV_TABLE()
 
@@ -53,11 +54,10 @@ C_ObjectSentrygun::C_ObjectSentrygun()
 
 C_ObjectSentrygun::~C_ObjectSentrygun() 
 { 
-	DestroyLaserBeam();
+	if ( m_pLaserBeam )
+			DestroyLaserBeam();
 	if ( m_pShield )
-	{
-		DestroyShield();
-	}
+			DestroyShield();
 }
 
 void C_ObjectSentrygun::GetAmmoCount( int &iShells, int &iMaxShells, int &iRockets, int & iMaxRockets )
@@ -122,12 +122,6 @@ void C_ObjectSentrygun::OnDataChanged( DataUpdateType_t updateType )
 	{
 		UpgradeLevelChanged();
 		m_iOldUpgradeLevel = m_iUpgradeLevel;
-		
-		// Turn off the shield when upgrading
-		if ( m_pShield )
-		{
-			DestroyShield();
-		}
 	}
 
 	// intercept bodygroup sets from the server
@@ -386,6 +380,11 @@ CStudioHdr *C_ObjectSentrygun::OnNewModel( void )
 
 	m_iPlacementBodygroup = FindBodygroupByName( "sentry1_range" );
 
+	Msg("Pre NEXTCLIENTTHINK\n");
+	// Start thinking on the next frame
+	SetNextClientThink( gpGlobals->frametime + 1 );
+	Msg("Post NEXTCLIENTTHINK\n");
+
 	return hdr;
 }
 
@@ -477,18 +476,65 @@ void C_ObjectSentrygun::DebugDamageParticles( void )
 	ParticleProp()->DebugPrintEffects();
 }
 
-void C_ObjectSentrygun::UpdateOnRemove( void )
+void C_ObjectSentrygun::CreateLaserBeam( void ) 
 {
-	C_TFPlayer *pOwner = GetBuilder();
-	if ( pOwner )
+	Vector vecColor;
+
+	// Don't bother creating a new shield if one already exists
+	if ( !m_pShield )
 	{
-		C_TFLaser_Pointer *pWeapon = dynamic_cast < C_TFLaser_Pointer * > ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
-		if ( pWeapon )
+		m_pShield = new C_BaseAnimating();
+		m_pShield->SetModel( "models/buildables/sentry_shield.mdl");
+		
+		if ( m_iUpgradeLevel == 3)
 		{
-			// Make sure wrangler stops updating sentry laser
-			pWeapon->RemoveGun();
+			// Slight offset for lvl 3 sentry
+			m_pShield->SetAbsOrigin( GetAbsOrigin() + Vector( 0, 0, 4 ) );
+		}
+		else
+		{
+			m_pShield->SetAbsOrigin( GetAbsOrigin() );
 		}
 	}
 
+	switch ( GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			m_pShield->m_nSkin = 0;
+			vecColor.Init( 255, -255, -255 );
+			break;
+		case TF_TEAM_BLUE:
+			m_pShield->m_nSkin = 1;
+			vecColor.Init( -255, -255, 255 );
+			break;
+	}
+
+	// create pLaser
+	m_pLaserBeam = ParticleProp()->Create( "laser_sight_beam", PATTACH_POINT_FOLLOW, "laser_origin" );
+	m_pLaserBeam->SetControlPoint( 2, vecColor );
+}
+
+void C_ObjectSentrygun::ClientThink( void ) 
+{
+	if ( m_iState != SENTRY_STATE_WRANGLED )
+	{
+		if ( m_pLaserBeam )
+			DestroyLaserBeam();
+		if ( m_pShield )
+			DestroyShield();
+	}
+	else
+	{
+		if ( !m_pLaserBeam )
+			CreateLaserBeam();
+
+		if ( m_pLaserBeam )
+			m_pLaserBeam->SetControlPoint( 1, m_vecEnd );
+	}
+	SetNextClientThink( gpGlobals->curtime + 0.05f );
+}
+
+void C_ObjectSentrygun::UpdateOnRemove( void )
+{
 	BaseClass::UpdateOnRemove();
 }

@@ -266,15 +266,6 @@ CTFBaseRocket *CTFBaseRocket::Create( CBaseEntity *pWeapon, const char *pszClass
 //-----------------------------------------------------------------------------
 void CTFBaseRocket::RocketTouch( CBaseEntity *pOther )
 {
-	if( pOther->GetCollisionGroup() == TFCOLLISION_GROUP_ROCKETS )
-	{
-		CTFProjectile_Arrow *pArrow = dynamic_cast< CTFProjectile_Arrow* >( pOther );
-		if( !pArrow )
-		{
-			return;
-		}
-	}
-
 	// Verify a correct "other."
 	Assert( pOther );
 	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )

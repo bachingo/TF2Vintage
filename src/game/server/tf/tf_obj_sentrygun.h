@@ -85,9 +85,6 @@ public:
 	virtual bool	Command_Repair( CTFPlayer *pActivator );
 	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer );
 
-	// Positioning for wrangler
-	Vector m_vecEnd;
-
 private:
 
 	// Workaround for fire effects when wrangled
@@ -122,6 +119,9 @@ private:
 	int GetBaseTurnRate( void );
 	
 private:
+	// Positioning for wrangler
+	CNetworkVar( Vector, m_vecEnd );
+
 	CNetworkVar( int, m_iState );
 
 	float m_flNextAttack;

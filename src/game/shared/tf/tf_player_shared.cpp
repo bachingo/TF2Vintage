@@ -1718,46 +1718,39 @@ void CTFPlayerShared::UpdatePhaseEffects(void)
 		return;
 	}
 
-	// We're on the move
+#ifdef CLIENT_DLL
 	if(  m_pOuter->GetAbsVelocity() != vec3_origin )
 	{
-#ifdef CLIENT_DLL
+		// We're on the move
 		if( m_pWarp )
 		{
 			m_pOuter->ParticleProp()->StopEmission( m_pWarp );
 			m_pWarp = NULL;
 		}
-#else
-		if ( m_pPhaseTrails.IsEmpty() )
-		{
-			AddPhaseEffects();
-		}
-		else
-		{
-			for( int i = 0; i < m_pPhaseTrails.Count(); i++ )
-			{
-				m_pPhaseTrails[i]->TurnOn();
-			}
-		}
-#endif
 	}
 	else
 	{
-#ifdef CLIENT_DLL
+		// We're not moving
 		if ( !m_pWarp )
 		{
 			m_pWarp = m_pOuter->ParticleProp()->Create( "warp_version", PATTACH_ABSORIGIN_FOLLOW );
 		}
-#else
-		if ( !m_pPhaseTrails.IsEmpty() )
-		{
-			for( int i = 0; i < m_pPhaseTrails.Count(); i++ )
-			{
-				m_pPhaseTrails[i]->TurnOn();
-			}
-		}
-#endif
 	}
+#else
+	if ( m_pPhaseTrails.IsEmpty() )
+	{
+		AddPhaseEffects();
+	}
+		
+	// Turn on the trails if they're not active already
+	if ( m_pPhaseTrails[0] && !m_pPhaseTrails[0]->IsOn() )
+	{
+		for( int i = 0; i < m_pPhaseTrails.Count(); i++ )
+		{
+			m_pPhaseTrails[i]->TurnOn();
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

@@ -18,8 +18,6 @@
 
 #ifdef GAME_DLL
 #include "tf_obj_sentrygun.h"
-#else
-#include "c_obj_sentrygun.h"
 #endif
 
 // Client specific.
@@ -56,19 +54,11 @@ public:
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_LASER_POINTER; }
 
+#ifdef GAME_DLL
 	void			RemoveGun( void )					{ pGun = NULL; }
 
 private:
-#ifdef GAME_DLL
 	CObjectSentrygun *pGun;
-
-
-	CNetworkVar( Vector , m_vecEnd );
-#else
-	C_ObjectSentrygun *pGun;
-
-	CNewParticleEffect *pLaser;
-	Vector m_vecEnd;
 #endif
 };
 

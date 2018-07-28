@@ -61,47 +61,14 @@ public:
 
 
 	// Laser methods
-	CNewParticleEffect	*CreateLaserBeam( void ) 
-	{
-		SetNextClientThink( gpGlobals->curtime + 0.25f );
-
-		// Don't bother creating a new shield if one already exists
-		if ( !m_pShield )
-		{
-			m_pShield = new C_BaseAnimating();
-			m_pShield->SetModel( "models/buildables/sentry_shield.mdl");
-		
-			if ( m_iUpgradeLevel == 3)
-			{
-				// Slight offset for lvl 3 sentry
-				m_pShield->SetAbsOrigin( GetAbsOrigin() + Vector( 0, 0, 4 ) );
-			}
-			else
-			{
-				m_pShield->SetAbsOrigin( GetAbsOrigin() );
-			}
-		}
-
-		switch ( GetTeamNumber() )
-		{
-			case TF_TEAM_RED:
-				m_pShield->m_nSkin = 0;
-				break;
-			case TF_TEAM_BLUE:
-				m_pShield->m_nSkin = 1;
-				break;
-		}
-
-		return m_pLaserBeam = ParticleProp()->Create( "laser_sight_beam", PATTACH_POINT_FOLLOW, "laser_origin" ); 
-	}
+	void				CreateLaserBeam( void );
+	virtual void		ClientThink( void );
+	virtual void		UpdateOnRemove( void );
 
 	void DestroyLaserBeam( void ) 
 	{
 		ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserBeam );
 		m_pLaserBeam = NULL;
-
-		// set time for shield removal
-		SetNextClientThink( gpGlobals->curtime + 3.0f );
 	}
 
 	void DestroyShield( void )
@@ -109,28 +76,6 @@ public:
 		m_pShield->Remove();
 		m_pShield = NULL;
 	}
-
-	virtual void ClientThink( void ) 
-	{
-		if ( !GetBuilder()->IsAlive() )
-		{
-			DestroyLaserBeam();
-			return;
-		}
-
-		if ( !m_pLaserBeam && m_pShield )
-		{
-			DestroyShield();
-			SetNextClientThink( CLIENT_THINK_NEVER );
-			return;
-		}
-
-		// Check for player death four times every second
-		SetNextClientThink( gpGlobals->curtime + 0.25f );
-	}
-
-	virtual void UpdateOnRemove( void );
-
 
 	// ITargetIDProvidesHint
 public:
@@ -149,6 +94,9 @@ private:
 
 	int m_iKills;
 	int m_iAssists;
+
+	// Wrangler
+	Vector m_vecEnd;
 
 	C_BaseAnimating	   *m_pShield;
 	CNewParticleEffect *m_pDamageEffects;
