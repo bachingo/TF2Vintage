@@ -2096,7 +2096,7 @@ bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
 		{
 			if ( !pTFPlayer->InSameTeam( pAttacker ) )
 			{
-				pTFPlayer->m_Shared.AddCond( TF_COND_URINE, 10.0f );
+				pTFPlayer->m_Shared.AddCond( iCond, 10.0f );
 				pTFPlayer->m_Shared.m_hUrineAttacker.Set( pAttacker );
 			}
 			else
@@ -2110,15 +2110,20 @@ bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
 					{
 						bExtinguished = true;
 
-						// Bonus points.
-						IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
-						if ( event_bonus )
+						CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
+						if ( pTFAttacker )
 						{
-							event_bonus->SetInt( "player_entindex", pEntity->entindex() );
-							event_bonus->SetInt( "source_entindex", pAttacker->entindex() );
-							event_bonus->SetInt( "points", 1 );
+							// Bonus points.
+							IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
+							if ( event_bonus )
+							{
+								event_bonus->SetInt( "player_entindex", pEntity->entindex() );
+								event_bonus->SetInt( "source_entindex", pAttacker->entindex() );
+								event_bonus->SetInt( "points", 1 );
 
-							gameeventmanager->FireEvent( event_bonus );
+								gameeventmanager->FireEvent( event_bonus );
+							}
+							CTF_GameStats.Event_PlayerAwardBonusPoints( pTFAttacker, pEntity, 1 );
 						}
 					}
 				}
@@ -4323,7 +4328,7 @@ void CTFGameRules::InternalHandleTeamWin( int iWinningTeam )
 				if ( pPlayer->GetTeamNumber() != iWinningTeam )
 				{
 					pPlayer->RemoveInvisibility();
-//					pPlayer->RemoveDisguise();
+					//pPlayer->RemoveDisguise();
 
 					if ( pPlayer->HasTheFlag() )
 					{
