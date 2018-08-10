@@ -55,7 +55,10 @@ CTFViewModel::~CTFViewModel()
 {
 	SetViewModelType( VMTYPE_NONE );
 #ifdef CLIENT_DLL
-	RemoveViewmodelAddon();
+	for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+	{
+		RemoveViewmodelAddon( i );
+	}
 #endif
 
 }
@@ -95,7 +98,12 @@ void CTFViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *wea
 
 #ifdef CLIENT_DLL
 	if ( !modelname )
-		RemoveViewmodelAddon();
+	{
+		for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+		{
+			RemoveViewmodelAddon( i );
+		}
+	}
 #endif
 }
 
@@ -103,9 +111,9 @@ void CTFViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *wea
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
+void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname, int index /*= 0*/ )
 {
-	C_ViewmodelAttachmentModel *pAddon = m_hViewmodelAddon.Get();
+	C_ViewmodelAttachmentModel *pAddon = m_hViewmodelAddon[index].Get();
 
 	if ( pAddon )
 	{
@@ -124,7 +132,7 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 		}
 		else
 		{
-			RemoveViewmodelAddon();
+			RemoveViewmodelAddon( index );
 		}
 	}
 
@@ -138,7 +146,7 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 		return;
 	}
 
-	m_hViewmodelAddon = pAddon;
+	m_hViewmodelAddon[index] = pAddon;
 	pAddon->m_nSkin = GetSkin();
 	pAddon->FollowEntity( this );
 	pAddon->UpdatePartitionListEntry();
@@ -150,12 +158,12 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFViewModel::RemoveViewmodelAddon( void )
+void CTFViewModel::RemoveViewmodelAddon( int index /*= 0*/  )
 {
-	if ( m_hViewmodelAddon.Get() )
+	if ( m_hViewmodelAddon[index].Get() )
 	{
-		m_hViewmodelAddon->SetModel( "" );
-		m_hViewmodelAddon->Remove();
+		m_hViewmodelAddon[index]->SetModel( "" );
+		m_hViewmodelAddon[index]->Remove();
 	}
 }
 
@@ -166,7 +174,7 @@ int	CTFViewModel::LookupAttachment( const char *pAttachmentName )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->LookupAttachment( pAttachmentName );
 	}
@@ -181,7 +189,7 @@ bool CTFViewModel::GetAttachment( int number, matrix3x4_t &matrix )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachment( number, matrix );
 	}
@@ -196,7 +204,7 @@ bool CTFViewModel::GetAttachment( int number, Vector &origin )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachment( number, origin );
 	}
@@ -211,7 +219,7 @@ bool CTFViewModel::GetAttachment( int number, Vector &origin, QAngle &angles )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachment( number, origin, angles );
 	}
@@ -226,7 +234,7 @@ bool CTFViewModel::GetAttachmentVelocity( int number, Vector &originVel, Quatern
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachmentVelocity( number, originVel, angleVel );
 	}

@@ -1694,20 +1694,20 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	bool bFired = false;
 
 	// Secondary attack has priority
-	if ((pOwner->m_nButtons & IN_ATTACK2) && CanPerformSecondaryAttack() )
+	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && CanPerformSecondaryAttack() )
 	{
-		if (UsesSecondaryAmmo() && pOwner->GetAmmoCount(m_iSecondaryAmmoType)<=0 )
+		if ( UsesSecondaryAmmo() && pOwner->GetAmmoCount( m_iSecondaryAmmoType )<=0 )
 		{
-			if (m_flNextEmptySoundTime < gpGlobals->curtime)
+			if ( m_flNextEmptySoundTime < gpGlobals->curtime )
 			{
-				WeaponSound(EMPTY);
+				WeaponSound( EMPTY );
 				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
 			}
 		}
-		else if (pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false)
+		else if ( pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false )
 		{
 			// This weapon doesn't fire underwater
-			WeaponSound(EMPTY);
+			WeaponSound( EMPTY );
 			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
 			return;
 		}
@@ -1717,7 +1717,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			// For instance, the crossbow doesn't have a 'real' secondary fire, but it still 
 			// stops the crossbow from firing on the 360 if the player chooses to hold down their
 			// zoom button. (sjb) Orange Box 7/25/2007
-#if !defined(CLIENT_DLL)
+#if !defined( CLIENT_DLL )
 			if( !IsX360() || !ClassMatches("weapon_crossbow") )
 #endif
 			{
@@ -1730,7 +1730,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			if ( UsesClipsForAmmo2() )
 			{
 				// reload clip2 if empty
-				if (m_iClip2 < 1)
+				if ( m_iClip2 < 1 )
 				{
 					pOwner->RemoveAmmo( 1, m_iSecondaryAmmoType );
 					m_iClip2 = m_iClip2 + 1;
@@ -1739,18 +1739,18 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 		}
 	}
 	
-	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+	if ( !bFired && ( pOwner->m_nButtons & IN_ATTACK ) && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
 	{
 		// Clip empty? Or out of ammo on a no-clip weapon?
 		if ( !IsMeleeWeapon() &&  
-			(( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && pOwner->GetAmmoCount(m_iPrimaryAmmoType)<=0 )) )
+			( ( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && pOwner->GetAmmoCount( m_iPrimaryAmmoType )<=0 ) ) )
 		{
 			HandleFireOnEmpty();
 		}
-		else if (pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false)
+		else if ( pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false )
 		{
 			// This weapon doesn't fire underwater
-			WeaponSound(EMPTY);
+			WeaponSound( EMPTY );
 			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
 			return;
 		}
@@ -1794,7 +1794,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	// -----------------------
 	//  No buttons down
 	// -----------------------
-	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD)))
+	if ( !( ( pOwner->m_nButtons & IN_ATTACK ) || ( pOwner->m_nButtons & IN_ATTACK2 ) || ( CanReload() && pOwner->m_nButtons & IN_RELOAD ) ) )
 	{
 		// no fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
@@ -1814,9 +1814,9 @@ void CBaseCombatWeapon::HandleFireOnEmpty()
 	}
 	else
 	{
-		if (m_flNextEmptySoundTime < gpGlobals->curtime)
+		if ( m_flNextEmptySoundTime < gpGlobals->curtime )
 		{
-			WeaponSound(EMPTY);
+			WeaponSound( EMPTY );
 			m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
 		}
 		m_bFireOnEmpty = true;

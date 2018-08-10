@@ -75,7 +75,7 @@ void CTFProjectile_Jar::Precache( void )
 {
 	PrecacheModel( TF_WEAPON_JAR_MODEL );
 
-	PrecacheTeamParticles( "peejar_trail_%s", true );
+	PrecacheTeamParticles( "peejar_trail_%s", false, g_aTeamNamesShort );
 	PrecacheParticleSystem( "peejar_impact" );
 
 	PrecacheScriptSound( "Jar.Explode" );
@@ -310,20 +310,6 @@ void C_TFProjectile_Jar::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		// Now stick our initial velocity into the interpolation history 
-		CInterpolatedVar< Vector > &interpolator = GetOriginInterpolator();
-
-		interpolator.ClearHistory();
-		float changeTime = GetLastChangeTime( LATCH_SIMULATION_VAR );
-
-		// Add a sample 1 second back.
-		Vector vCurOrigin = GetLocalOrigin() - m_vInitialVelocity;
-		interpolator.AddToHead( changeTime - 1.0, &vCurOrigin, false );
-
-		// Add the current sample.
-		vCurOrigin = GetLocalOrigin();
-		interpolator.AddToHead( changeTime, &vCurOrigin, false );
-
 		CreateTrails();
 	}
 

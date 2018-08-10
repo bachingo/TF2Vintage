@@ -511,7 +511,8 @@ void C_ObjectSentrygun::CreateLaserBeam( void )
 
 	// create pLaser
 	m_pLaserBeam = ParticleProp()->Create( "laser_sight_beam", PATTACH_POINT_FOLLOW, "laser_origin" );
-	m_pLaserBeam->SetControlPoint( 2, vecColor );
+	if ( m_pLaserBeam)
+		m_pLaserBeam->SetControlPoint( 2, vecColor );
 }
 
 void C_ObjectSentrygun::ClientThink( void ) 

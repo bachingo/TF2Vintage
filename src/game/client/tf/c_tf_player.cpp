@@ -2770,10 +2770,13 @@ void C_TFPlayer::ClientThink()
 	{
 		if ( GetTeamNumber() != TEAM_SPECTATOR && GetObserverMode() != OBS_MODE_IN_EYE )
 		{
-			CTFViewModel *vm = dynamic_cast<CTFViewModel*>(GetViewModel(0));
-			if (vm)
+			CTFViewModel *vm = dynamic_cast<CTFViewModel*>(GetViewModel ( 0 ) );
+			if ( vm )
 			{
-				vm->RemoveViewmodelAddon();
+				for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+				{
+					vm->RemoveViewmodelAddon( i );
+				}
 			}
 		}
 	}

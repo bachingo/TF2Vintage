@@ -269,6 +269,9 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	void				OnControlStunned( void );
 
+	// StunBall
+	virtual bool		PickedUpBall( CTFPlayer *pPlayer ) { return false; }
+
 // Server specific.
 #if !defined( CLIENT_DLL )
 

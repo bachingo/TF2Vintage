@@ -56,10 +56,10 @@ public:
 	CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	CBaseEntity *FireNail( CTFPlayer *pPlayer, int iSpecificNail );
 	CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate );
-	CBaseEntity *FireFlare(CTFPlayer *pPlayer);
-	CBaseEntity *FireArrow(CTFPlayer *pPlayer, int iType);
-	CBaseEntity *FireThrowable(CTFPlayer *pPlayer, int iType);
-	CBaseEntity *FireGrenade(CTFPlayer *pPlayer);
+	CBaseEntity *FireFlare( CTFPlayer *pPlayer );
+	CBaseEntity *FireArrow( CTFPlayer *pPlayer, int iType );
+	CBaseEntity *FireThrowable( CTFPlayer *pPlayer, int iType );
+	CBaseEntity *FireGrenade( CTFPlayer *pPlayer );
 
 	virtual float GetWeaponSpread( void );
 	virtual float GetProjectileSpeed( void );

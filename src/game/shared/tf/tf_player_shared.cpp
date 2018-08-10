@@ -504,6 +504,8 @@ void CTFPlayerShared::OnPreDataChanged(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnDataChanged(void)
 {
+	// FIXME: SyncConditions sometimes adds conditions multiple times rather than once leading to untintentional results 
+
 	// Update conditions from last network change
 	SyncConditions(m_nPlayerCond, m_nOldConditions, 0, 0);
 	SyncConditions(m_nPlayerCondEx, m_nOldConditionsEx, 0, 32);
@@ -514,6 +516,10 @@ void CTFPlayerShared::OnDataChanged(void)
 	m_nOldConditionsEx = m_nPlayerCondEx;
 	m_nOldConditionsEx = m_nPlayerCondEx2;
 	m_nOldConditionsEx = m_nPlayerCondEx3;
+
+	// TODO: Figure out how make SyncConditions work properly for this
+	if ( !InCond( TF_COND_HALF_STUN ) && m_pStun )
+		RemoveCond( TF_COND_HALF_STUN );
 
 	if ( m_bWasCritBoosted != IsCritBoosted() )
 	{
@@ -565,13 +571,13 @@ void CTFPlayerShared::SyncConditions(int nCond, int nOldCond, int nUnused, int i
 	int i;
 	for (i = 0; i < 32; i++)
 	{
-		if (nCondAdded & (1 << i))
+		if ( nCondAdded & ( 1 << i ) )
 		{
-			OnConditionAdded(i + iOffset);
+			OnConditionAdded( i + iOffset );
 		}
-		else if (nCondRemoved & (1 << i))
+		else if ( nCondRemoved & ( 1 << i ) )
 		{
-			OnConditionRemoved(i + iOffset);
+			OnConditionRemoved( i + iOffset );
 		}
 	}
 }
@@ -665,6 +671,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 
 	case TF_COND_STUNNED:
 		OnAddStunned();
+		break;
+
+	case TF_COND_HALF_STUN:
+		OnAddHalfStun();
 		break;
 
 	case TF_COND_SLOWED:
@@ -768,6 +778,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_STUNNED:
 		OnRemoveStunned();
+		break;
+
+	case TF_COND_HALF_STUN:
+		OnRemoveHalfStun();
 		break;
 
 	case TF_COND_SLOWED:
@@ -1394,6 +1408,38 @@ void CTFPlayerShared::OnRemoveStunned(void)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddHalfStun(void)
+{
+	m_pOuter->TeamFortress_SetSpeed();
+
+#ifdef CLIENT_DLL
+	if ( !m_pStun )
+		m_pStun = m_pOuter->ParticleProp()->Create( "conc_stars", PATTACH_POINT_FOLLOW, "head" );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Remove slowdown effect
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveHalfStun(void)
+{
+	m_pOuter->TeamFortress_SetSpeed();
+
+	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
+
+	if ( pWeapon )
+	{
+		pWeapon->SetWeaponVisible( true );
+	}
+
+#ifdef CLIENT_DLL
+	m_pOuter->ParticleProp()->StopEmission( m_pStun );
+	m_pStun = NULL;
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1417,8 +1463,6 @@ void CTFPlayerShared::OnRemoveSlowed(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnAddCritboosted(void)
 {
-// FIXME: This keeps being called for some reason on the KGB
-
 /*#ifdef CLIENT_DLL
 	UpdateCritBoostEffect();
 #endif*/
@@ -2823,22 +2867,22 @@ bool CTFPlayerShared::IsAlly(CBaseEntity *pEntity)
 //-----------------------------------------------------------------------------
 // Purpose: Used to determine if player should do loser animations.
 //-----------------------------------------------------------------------------
-bool CTFPlayerShared::IsLoser(void)
+bool CTFPlayerShared::IsLoser( void )
 {
-	if (!m_pOuter->IsAlive())
+	if ( !m_pOuter->IsAlive() )
 		return false;
 
-	if (tf_always_loser.GetBool())
+	if ( tf_always_loser.GetBool() )
 		return true;
 
-	if (TFGameRules() && TFGameRules()->State_Get() == GR_STATE_TEAM_WIN)
+	if ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 	{
 		int iWinner = TFGameRules()->GetWinningTeam();
-		if (iWinner != m_pOuter->GetTeamNumber())
+		if ( iWinner != m_pOuter->GetTeamNumber() )
 		{
-			if (m_pOuter->IsPlayerClass(TF_CLASS_SPY))
+			if ( m_pOuter->IsPlayerClass( TF_CLASS_SPY ) )
 			{
-				if (InCond(TF_COND_DISGUISED))
+				if ( InCond(TF_COND_DISGUISED ) )
 				{
 					return (iWinner != GetDisguiseTeam());
 				}
@@ -2846,6 +2890,10 @@ bool CTFPlayerShared::IsLoser(void)
 			return true;
 		}
 	}
+
+	if ( InCond( TF_COND_HALF_STUN ) )
+		return true;
+
 	return false;
 }
 
@@ -3404,6 +3452,12 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		maxfbspeed *= 0.6f;
 	}
 
+	// Reduce our speed if we were partially stunned
+	if ( m_Shared.InCond( TF_COND_HALF_STUN ) )
+	{
+		maxfbspeed *= 0.8f;
+	}
+
 	// if we're in bonus time because a team has won, give the winners 110% speed and the losers 90% speed
 	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 	{
@@ -3706,6 +3760,10 @@ bool CTFPlayer::CanAttack(void)
 #endif
 		return false;
 	}
+
+	// Stunned players cannot attack
+	if ( m_Shared.InCond( TF_COND_HALF_STUN ) )
+		return false;
 
 	if ((pRules->State_Get() == GR_STATE_TEAM_WIN) && (pRules->GetWinningTeam() != GetTeamNumber()))
 	{

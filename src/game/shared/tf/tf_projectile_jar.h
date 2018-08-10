@@ -74,5 +74,4 @@ private:
 	bool		m_bCritical;
 #endif
 };
-
 #endif // TF_PROJECTILE_JAR_H

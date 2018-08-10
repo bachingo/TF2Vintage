@@ -197,6 +197,7 @@ public:
 	CUtlVector< CSpriteTrail * > m_pPhaseTrails;
 #else
 	CNewParticleEffect *m_pWarp;
+	CNewParticleEffect *m_pStun;
 #endif
 
 	void	UpdatePhaseEffects( void );
@@ -290,6 +291,7 @@ private:
 	void OnAddDisguised( void );
 	void OnAddTaunting( void );
 	void OnAddStunned( void );
+	void OnAddHalfStun( void );
 	void OnAddSlowed( void );
 	void OnAddRegenerate( void );
 	void OnAddCritboosted( void );
@@ -308,6 +310,7 @@ private:
 	void OnRemoveTeleported( void );
 	void OnRemoveTaunting( void );
 	void OnRemoveStunned( void );
+	void OnRemoveHalfStun( void );
 	void OnRemoveSlowed( void );
 	void OnRemoveRegenerate( void );
 	void OnRemoveCritboosted( void );
@@ -436,9 +439,6 @@ private:
 
 	// Have we been to resupply recently?
 	CNetworkVar( bool, m_bRegenerated );
-
-	// Hacky shit for weapon regeneration
-	bool m_bInRegenerate;
 
 #ifdef GAME_DLL
 

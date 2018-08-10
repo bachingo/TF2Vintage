@@ -622,7 +622,7 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Fire an Arrow
+// Purpose: Fire a throwable
 //-----------------------------------------------------------------------------
 CBaseEntity *CTFWeaponBaseGun::FireThrowable( CTFPlayer *pPlayer, int iType )
 {
@@ -835,9 +835,9 @@ void CTFWeaponBaseGun::DoFireEffects()
 		}
 	}*/
 
-	if (pPlayer->IsPlayerClass(TF_CLASS_SNIPER))
+	if ( pPlayer->IsPlayerClass( TF_CLASS_SNIPER ) )
 	{
-		if (pPlayer->IsActiveTFWeapon(TF_WEAPON_COMPOUND_BOW))
+		if ( pPlayer->IsActiveTFWeapon( TF_WEAPON_COMPOUND_BOW ) )
 		{
 			bMuzzleFlash = false;
 		}
