@@ -198,7 +198,7 @@ void CTFStunBall::StunBallTouch( CBaseEntity *pOther )
 	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( pOther );
 
 	// Make us solid once we reach our owner
-	if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE && pPlayer == ToTFPlayer( GetThrower() ) )
+	if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE && pOther == GetThrower() )
 	{
 		SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
 	}

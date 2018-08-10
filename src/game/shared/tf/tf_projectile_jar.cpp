@@ -94,6 +94,9 @@ void CTFProjectile_Jar::Spawn( void )
 	BaseClass::Spawn();
 	SetTouch( &CTFProjectile_Jar::JarTouch );
 
+	// Don't collide with anything for a short time so that we never get stuck behind surfaces
+	SetCollisionGroup( TFCOLLISION_GROUP_NONE );
+
 	AddSolidFlags( FSOLID_TRIGGER );
 }
 
@@ -163,7 +166,14 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 void CTFProjectile_Jar::JarTouch( CBaseEntity *pOther )
 {
 	if ( pOther == GetThrower() )
+	{
+		// Make us solid if we're not already
+		if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE )
+		{
+			SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
+		}
 		return;
+	}
 
 	// Verify a correct "other."
 	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
@@ -310,6 +320,7 @@ void C_TFProjectile_Jar::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
+		m_flCreationTime = gpGlobals->curtime;
 		CreateTrails();
 	}
 
@@ -331,5 +342,16 @@ void C_TFProjectile_Jar::CreateTrails( void )
 	const char *pszEffectName = ConstructTeamParticle( "peejar_trail_%s", GetTeamNumber(), false, g_aTeamNamesShort );
 
 	ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Don't draw if we haven't yet gone past our original spawn point
+//-----------------------------------------------------------------------------
+int CTFProjectile_Jar::DrawModel( int flags )
+{
+	if ( gpGlobals->curtime - m_flCreationTime < 0.1f )
+		return 0;
+
+	return BaseClass::DrawModel( flags );
 }
 #endif
