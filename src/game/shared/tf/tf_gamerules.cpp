@@ -4835,6 +4835,10 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 	// Respawn rooms only collide with players
 	if ( collisionGroup1 == TFCOLLISION_GROUP_RESPAWNROOMS )
 		return ( collisionGroup0 == COLLISION_GROUP_PLAYER ) || ( collisionGroup0 == COLLISION_GROUP_PLAYER_MOVEMENT );
+
+	// Collide with nothing
+	if ( collisionGroup1 == TFCOLLISION_GROUP_NONE )
+		return false;
 	
 /*	if ( collisionGroup0 == COLLISION_GROUP_PLAYER )
 	{
