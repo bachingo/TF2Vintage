@@ -11,7 +11,6 @@
 #ifdef GAME_DLL
 #include "SpriteTrail.h"
 #include "props_shared.h"
-#include "tf_player.h"
 #include "debugoverlay_shared.h"
 #include "te_effect_dispatch.h"
 #include "decals.h"
@@ -241,6 +240,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
 	trace_t trHit, tr;
 	trHit = *pTrace;
+	const char* pszImpactSound = NULL;
+	bool bPlayerImpact = false;
 
 	if ( pPlayer )
 	{
@@ -295,7 +296,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			NDebugOverlay::Line( trHit.startpos, trHit.endpos, 0, 255, 0, true, 5.0f );
 			NDebugOverlay::Line( vecOrigin, vecOrigin + vecDir * 16, 255, 0, 0, true, 5.0f );
 		}
-		EmitSound( "Weapon_Arrow.ImpactFlesh" );
+		pszImpactSound = "Weapon_Arrow.ImpactFlesh";
+		bPlayerImpact = true;
 
 		if ( !PositionArrowOnBone( pBox , pPlayer ) )
 		{
@@ -368,17 +370,17 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 
 		if ( ( iMaterial == CHAR_TEX_CONCRETE ) || ( iMaterial == CHAR_TEX_TILE ) )
 		{
-			EmitSound( "Weapon_Arrow.ImpactConcrete" );
+			pszImpactSound = "Weapon_Arrow.ImpactConcrete";
 			bArrowSound = true;
 		}
 		else if ( iMaterial == CHAR_TEX_WOOD )
 		{
-			EmitSound( "Weapon_Arrow.ImpactWood" );
+			pszImpactSound = "Weapon_Arrow.ImpactWood";
 			bArrowSound = true;
 		}
 		else if ( ( iMaterial == CHAR_TEX_METAL ) || ( iMaterial == CHAR_TEX_VENT ) )
 		{
-			EmitSound( "Weapon_Arrow.ImpactMetal" );
+			pszImpactSound = "Weapon_Arrow.ImpactMetal";
 			bArrowSound = true;
 		}
 
@@ -423,6 +425,12 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		// TODO: Figure out why arrow gibs sometimes cause crashes
 		//BreakArrow();
 		UTIL_Remove( this );
+	}
+
+	// Play sound
+	if ( pszImpactSound )
+	{
+		PlayImpactSound( ToTFPlayer( pAttacker ), pszImpactSound, bPlayerImpact );
 	}
 
 	// Do damage.
@@ -650,6 +658,28 @@ void CTFProjectile_Arrow::GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnima
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::CheckRagdollPinned( Vector &, Vector &, int, int, CBaseEntity *, int, int )
 {
+}
+
+// ----------------------------------------------------------------------------
+// Purpose: Play the impact sound to nearby players of the recipient and the attacker
+//-----------------------------------------------------------------------------
+void CTFProjectile_Arrow::PlayImpactSound( CTFPlayer *pAttacker, const char *pszImpactSound, bool bIsPlayerImpact /*= false*/ )
+{
+	if ( pAttacker )
+	{
+		CRecipientFilter filter;
+		filter.AddRecipientsByPAS( GetAbsOrigin() );
+
+		// Only play the sound locally to the attacker if it's a player impact
+		if ( bIsPlayerImpact )
+		{
+			filter.RemoveRecipient( pAttacker );
+			CSingleUserRecipientFilter filterAttacker( pAttacker );
+			EmitSound( filterAttacker, pAttacker->entindex(), pszImpactSound );
+		}
+
+		EmitSound( filter, entindex(), pszImpactSound );
+	}
 }
 
 #else

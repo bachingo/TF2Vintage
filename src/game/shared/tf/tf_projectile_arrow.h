@@ -15,6 +15,7 @@
 
 #ifdef GAME_DLL
 #include "iscorer.h"
+#include "tf_player.h"
 #endif
 
 #ifdef CLIENT_DLL
@@ -74,6 +75,8 @@ public:
 	bool			PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimating *pAnim );
 	void			GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnimating *pAnim, Vector &vecOrigin, QAngle &vecAngles, int &bone, int &iPhysicsBone );
 	void			CheckRagdollPinned( Vector &, Vector &, int, int, CBaseEntity *, int, int );
+
+	void			PlayImpactSound( CTFPlayer *pAttacker, const char *pszImpactSound, bool bIsPlayerImpact = false );
 
 #else
 	virtual void	ClientThink( void );
