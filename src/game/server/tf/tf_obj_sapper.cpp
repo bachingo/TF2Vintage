@@ -275,6 +275,17 @@ void CObjectSapper::Killed(const CTakeDamageInfo &info)
 			}
 			if (pObject && pScorer != pObject->GetBuilder())
 			{
+				// Bonus points.
+				IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
+				if ( event_bonus )
+				{
+					event_bonus->SetInt( "player_entindex", pObject->GetBuilder()->entindex() );
+					event_bonus->SetInt( "source_entindex", pScorer->entindex() );
+					event_bonus->SetInt( "points", 1 );
+
+					gameeventmanager->FireEvent( event_bonus );
+				}
+
 				CTF_GameStats.Event_PlayerAwardBonusPoints(pScorer, this, 1);
 			}
 	}

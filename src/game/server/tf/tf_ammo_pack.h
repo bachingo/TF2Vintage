@@ -26,6 +26,8 @@ public:
 	void EXPORT FlyThink( void );
 	void EXPORT PackTouch( CBaseEntity *pOther );
 
+	void SetIsLunchbox( bool bIsLunchbox ) { m_bIsLunchbox = bIsLunchbox; }
+
 	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
 
 	int GiveAmmo( int iCount, int iAmmoType );
@@ -40,6 +42,7 @@ private:
 
 	float m_flCreationTime;
 
+	bool m_bIsLunchbox;
 	bool m_bUseCustomAmmoCount;
 	bool m_bAllowOwnerPickup;
 	CNetworkVector( m_vecInitialVelocity );
@@ -49,5 +52,4 @@ private:
 
 	DECLARE_DATADESC();
 };
-
 #endif //TF_AMMO_PACK_H

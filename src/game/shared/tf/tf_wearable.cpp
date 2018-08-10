@@ -25,6 +25,9 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 {
 	BaseClass::Equip( pPlayer );
 	UpdateModelToClass();
+
+	// player_bodygroups
+	UpdatePlayerBodygroups();
 }
 
 //---------------------------------------------------------------------------- -

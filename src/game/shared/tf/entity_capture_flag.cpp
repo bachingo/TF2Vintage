@@ -235,16 +235,16 @@ void CCaptureFlag::Precache( void )
 
 	PrecacheParticleSystem( "player_intel_trail_blue" );
 	PrecacheParticleSystem( "player_intel_trail_red" );
-	PrecacheParticleSystem(	"player_intel_trail_green" );
-	PrecacheParticleSystem(	"player_intel_trail_yellow" );
+	//PrecacheParticleSystem(	"player_intel_trail_green" );
+	//PrecacheParticleSystem(	"player_intel_trail_yellow" );
 
 
 	// Team colored trail
 	char tempChar[ 512 ];
 	PrecacheModel( GetTrailEffect( TF_TEAM_RED, tempChar, sizeof( tempChar ) ) );
 	PrecacheModel( GetTrailEffect( TF_TEAM_BLUE, tempChar, sizeof( tempChar ) ) );
-	PrecacheModel( GetTrailEffect( TF_TEAM_GREEN, tempChar, sizeof( tempChar ) ) );
-	PrecacheModel( GetTrailEffect( TF_TEAM_YELLOW, tempChar, sizeof( tempChar ) ) );
+	//PrecacheModel( GetTrailEffect( TF_TEAM_GREEN, tempChar, sizeof( tempChar ) ) );
+	//PrecacheModel( GetTrailEffect( TF_TEAM_YELLOW, tempChar, sizeof( tempChar ) ) );
 
 }
 
@@ -559,6 +559,10 @@ void CCaptureFlag::FlagTouch( CBaseEntity *pOther )
 
 	// Don't let invulnerable players pickup flags
 	if ( pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE ) )
+		return;
+
+	// Don't let bonked players pickup flags
+	if ( pPlayer->m_Shared.InCond( TF_COND_PHASE ) )
 		return;
 
 #ifdef GAME_DLL

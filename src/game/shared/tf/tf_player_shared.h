@@ -13,6 +13,9 @@
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
 #include "basegrenade_shared.h"
+#ifdef GAME_DLL
+#include "SpriteTrail.h"
+#endif
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -58,6 +61,13 @@ public:
 	float flDamage;
 	float flTime;
 	bool bKill;
+};
+
+enum
+{
+	STUN_PHASE_NONE,
+	STUN_PHASE_LOOP,
+	STUN_PHASE_END,
 };
 
 //=============================================================================
@@ -173,10 +183,23 @@ public:
 	int		FindHealerIndex( CTFPlayer *pPlayer );
 	EHANDLE	GetFirstHealer();
 	void	HealthKitPickupEffects( int iAmount );
+
+	// Jarate Player
+	EHANDLE	m_hUrineAttacker;
 #endif
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
+	void	StunPlayer( float flDuration, CTFPlayer *pStunner );
+
+#ifdef GAME_DLL
+	void	AddPhaseEffects( void );
+	CUtlVector< CSpriteTrail * > m_pPhaseTrails;
+#else
+	CNewParticleEffect *m_pWarp;
+#endif
+
+	void	UpdatePhaseEffects( void );
 
 	void	RecalculatePlayerBodygroups( void );
 
@@ -242,6 +265,11 @@ public:
 	void	SetKillstreak(int iKillstreak) { m_nStreaks.Set(0, iKillstreak); }
 	void	IncKillstreak() { m_nStreaks.Set(0, m_nStreaks.Get(0) + 1); }
 
+	int		GetStunPhase( void ) { return m_iStunPhase; }
+	void	SetStunPhase( int iPhase ) { m_iStunPhase = iPhase; }
+	float	GetStunExpireTime( void ) { return m_flStunExpireTime; }
+	void	SetStunExpireTime( float flTime ) { m_flStunExpireTime = flTime; }
+
 	int		GetTeleporterEffectColor( void ) { return m_nTeamTeleporterUsed; }
 	void	SetTeleporterEffectColor( int iTeam ) { m_nTeamTeleporterUsed = iTeam; }
 #ifdef CLIENT_DLL
@@ -263,10 +291,13 @@ private:
 	void OnAddTaunting( void );
 	void OnAddStunned( void );
 	void OnAddSlowed( void );
+	void OnAddRegenerate( void );
 	void OnAddCritboosted( void );
 	void OnAddHalloweenGiant( void );
 	void OnAddHalloweenTiny( void );
 	void OnAddRagemode( void );
+	void OnAddUrine( void );
+	void OnAddPhase( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -278,10 +309,13 @@ private:
 	void OnRemoveTaunting( void );
 	void OnRemoveStunned( void );
 	void OnRemoveSlowed( void );
+	void OnRemoveRegenerate( void );
 	void OnRemoveCritboosted( void );
 	void OnRemoveHalloweenGiant( void );
 	void OnRemoveHalloweenTiny( void );
 	void OnRemoveRagemode( void );
+	void OnRemoveUrine( void );
+	void OnRemovePhase( void );
 
 	float GetCritMult( void );
 
@@ -360,6 +394,9 @@ private:
 	float					m_flFlameBurnTime;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
+	float					m_flStunTime;
+	float					m_flPhaseTime;
+
 
 
 	float m_flDisguiseCompleteTime;
@@ -386,6 +423,10 @@ private:
 	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS+1 );		// array of state per other player whether player is dominating other players
 	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS+1 );	// array of state per other player whether other players are dominating this player
 
+	CNetworkHandle( CTFPlayer, m_hStunner );
+	CNetworkVar( float, m_flStunExpireTime );
+	int m_iStunPhase;
+
 	//CNetworkVar( int, m_iDominationCount );
 
 	CNetworkHandle( CBaseObject, m_hCarriedObject );
@@ -393,7 +434,14 @@ private:
 
 	CNetworkVar( int, m_nTeamTeleporterUsed );
 
+	// Have we been to resupply recently?
+	CNetworkVar( bool, m_bRegenerated );
+
+	// Hacky shit for weapon regeneration
+	bool m_bInRegenerate;
+
 #ifdef GAME_DLL
+
 	float	m_flNextCritUpdate;
 	CUtlVector<CTFDamageEvent> m_DamageEvents;
 #else
@@ -403,7 +451,7 @@ private:
 
 	WEAPON_FILE_INFO_HANDLE	m_hDisguiseWeaponInfo;
 
-	CNewParticleEffect *m_pCritEffects[2];
+	CNewParticleEffect *m_pCritEffect;
 	EHANDLE m_hCritEffectHost;
 	CSoundPatch *m_pCritSound;
 

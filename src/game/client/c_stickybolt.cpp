@@ -27,6 +27,7 @@
 #include "c_te_legacytempents.h"
 #include "engine/ivdebugoverlay.h"
 #include "c_te_effect_dispatch.h"
+#include "c_tf_player.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -66,6 +67,7 @@ public:
 		//Find the real object we hit.
 		if( tr.physicsbone >= 0 )
 		{
+			//Msg( "\nPhysics Bone: %i\n", tr.physicsbone );
 			if ( pModel->m_pRagdoll )
 			{
 				CRagdoll *pCRagdoll = dynamic_cast < CRagdoll * > ( pModel->m_pRagdoll );
@@ -136,15 +138,9 @@ void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 	QAngle vAngles;
 
 	VectorAngles( vecDirection, vAngles );
-	
-	if ( gpGlobals->maxClients > 1 )
-	{
-		tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 30.0f, FTENT_NONE );
-	}
-	else
-	{
-		tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 1, FTENT_NEVERDIE );
-	}
+
+	tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 30.0f, FTENT_NONE );
+
 }
 
 void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection )

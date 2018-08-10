@@ -304,6 +304,7 @@ public:
 	virtual bool    IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
+	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
 	virtual bool	IsInKothMode( void ) { return m_bPlayingKoth; }
 	virtual bool    IsHalloweenScenario( int iEventType ) { return false; };
 	virtual bool	IsPVEModeActive( void ) { return false; };
@@ -380,6 +381,7 @@ public:
 	virtual void ClientDisconnected( edict_t *pClient );
 
 	void	RadiusDamage( CTFRadiusDamageInfo &radiusInfo );
+	bool   RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond );
 	virtual void  RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
 
 	virtual float FlPlayerFallDamage( CBasePlayer *pPlayer );
@@ -463,7 +465,7 @@ public:
 
 inline CTFGameRules* TFGameRules()
 {
-	return static_cast<CTFGameRules*>(g_pGameRules);
+	return static_cast<CTFGameRules*>( g_pGameRules );
 }
 
 #ifdef GAME_DLL

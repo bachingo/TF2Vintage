@@ -150,7 +150,7 @@ void CDisguiseStatus::CheckWeapon(void)
 
 	CEconItemDefinition *pItem = pPlayer->m_Shared.GetDisguiseItem()->GetStaticData();
 	if (pItem)
-		SetDialogVariable( "weaponname", g_pVGuiLocalize->Find(pItem->item_name ) );
+		SetDialogVariable( "weaponname", pItem->GenerateLocalizedFullItemName() );
 }
 
 //-----------------------------------------------------------------------------

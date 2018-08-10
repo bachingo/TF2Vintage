@@ -135,6 +135,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bResetParity ) ), 
 	RecvPropBool( RECVINFO( m_bReloadedThroughAnimEvent ) ),
 	RecvPropTime( RECVINFO( m_flLastFireTime ) ),
+	RecvPropTime( RECVINFO( m_flEffectBarRegenTime ) ),
 
 	RecvPropInt( RECVINFO( m_nSequence ), 0, RecvProxy_WeaponSequence ),
 // Server specific.
@@ -144,6 +145,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropInt( SENDINFO( m_iReloadMode ), 4, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bReloadedThroughAnimEvent ) ),
 	SendPropTime( SENDINFO( m_flLastFireTime ) ),
+	SendPropTime( SENDINFO( m_flEffectBarRegenTime ) ),
 
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropInt( SENDINFO( m_nSequence ), ANIMATION_SEQUENCE_BITS, SPROP_UNSIGNED ),
@@ -156,6 +158,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD_TOL( m_flLastFireTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),
+	DEFINE_PRED_FIELD( m_flEffectBarRegenTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 #endif
 END_PREDICTION_DATA()
 
@@ -317,20 +320,20 @@ void CTFWeaponBase::Precache()
 		PrecacheParticleSystem( pTracerEffect );
 		PrecacheParticleSystem( pTracerEffectCrit );
 
-		Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_green", pTFInfo->m_szTracerEffect);
-		Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_green_crit", pTFInfo->m_szTracerEffect);
-		PrecacheParticleSystem(pTracerEffect);
-		PrecacheParticleSystem(pTracerEffectCrit);
+		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_green", pTFInfo->m_szTracerEffect);
+		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_green_crit", pTFInfo->m_szTracerEffect);
+		//PrecacheParticleSystem(pTracerEffect);
+		//PrecacheParticleSystem(pTracerEffectCrit);
 
-		Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_yellow", pTFInfo->m_szTracerEffect);
-		Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_yellow_crit", pTFInfo->m_szTracerEffect);
-		PrecacheParticleSystem(pTracerEffect);
-		PrecacheParticleSystem(pTracerEffectCrit);
+		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_yellow", pTFInfo->m_szTracerEffect);
+		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_yellow_crit", pTFInfo->m_szTracerEffect);
+		//PrecacheParticleSystem(pTracerEffect);
+		//PrecacheParticleSystem(pTracerEffectCrit);
 
-		Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_dm", pTFInfo->m_szTracerEffect);
-		Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_dm_crit", pTFInfo->m_szTracerEffect);
-		PrecacheParticleSystem(pTracerEffect);
-		PrecacheParticleSystem(pTracerEffectCrit);
+		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_dm", pTFInfo->m_szTracerEffect);
+		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_dm_crit", pTFInfo->m_szTracerEffect);
+		//PrecacheParticleSystem(pTracerEffect);
+		//PrecacheParticleSystem(pTracerEffectCrit);
 	}
 }
 
@@ -418,11 +421,11 @@ int CTFWeaponBase::TranslateViewmodelHandActivity( int iActivity )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::SetViewModel()
 {
-	CTFPlayer *pTFPlayer = ToTFPlayer(GetOwner());
+	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
 	if ( pTFPlayer == NULL )
 		return;
 
-	CTFViewModel *vm = dynamic_cast<CTFViewModel*>(pTFPlayer->GetViewModel(m_nViewModelIndex, false));
+	CTFViewModel *vm = dynamic_cast< CTFViewModel* >( pTFPlayer->GetViewModel( m_nViewModelIndex, false ) );
 	if ( vm == NULL )
 		return;
 
@@ -442,13 +445,13 @@ void CTFWeaponBase::SetViewModel()
 }
 
 #ifdef CLIENT_DLL
-void CTFWeaponBase::UpdateViewModel(void)
+void C_TFWeaponBase::UpdateViewModel( void )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
 	if ( pTFPlayer == NULL )
 		return;
 
-	CTFViewModel *vm = dynamic_cast<CTFViewModel*>( pTFPlayer->GetViewModel(m_nViewModelIndex, false ) );
+	CTFViewModel *vm = dynamic_cast<CTFViewModel*>( pTFPlayer->GetViewModel( m_nViewModelIndex, false ) );
 	if ( vm == NULL )
 		return;
 
@@ -479,6 +482,22 @@ void CTFWeaponBase::UpdateViewModel(void)
 	{
 		vm->RemoveViewmodelAddon();
 	}
+}
+
+C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
+{
+	C_TFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( pOwner )
+	{
+		C_TFViewModel *vm = dynamic_cast < C_TFViewModel *  >( pOwner->GetViewModel( m_nViewModelIndex ) );
+		if ( vm )
+		{
+			C_ViewmodelAttachmentModel *pAttachment = vm->GetViewmodelAddon();
+			return pAttachment;
+		}
+	}
+	return NULL;
 }
 #endif
 
@@ -585,6 +604,20 @@ void CTFWeaponBase::Drop( const Vector &vecVelocity )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanHolster( void ) const
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	// Not while taunting.
+	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
+		return false;
+
+	return BaseClass::CanHolster();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 #ifndef CLIENT_DLL
@@ -597,6 +630,17 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 		}
 	}
 #endif
+
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer )
+	{
+		while( !m_iHiddenBodygroups.IsEmpty() )
+		{
+			// Reset all hidden bodygroups on holster
+			pPlayer->SetBodygroup( m_iHiddenBodygroups[0] , 0 );
+			m_iHiddenBodygroups.Remove( 0 );
+		}
+	}
 
 	AbortReload();
 
@@ -649,8 +693,29 @@ bool CTFWeaponBase::Deploy( void )
 		m_flNextPrimaryAttack = max( flOriginalPrimaryAttack, gpGlobals->curtime + flDeployTime );
 		m_flNextSecondaryAttack = max( flOriginalSecondaryAttack, gpGlobals->curtime + flDeployTime );
 
-
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
+
+		SwitchBodyGroups();
+
+		// Hellish check for bodygroup disabling
+		CEconItemDefinition *pStatic = m_Item.GetStaticData();
+		if ( pStatic && pStatic->hide_bodygroups_deployed_only )
+		{
+			EconItemVisuals *pVisuals =	pStatic->GetVisuals();
+			if ( pVisuals )
+			{
+				for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
+				{
+					unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
+					if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
+					{
+						// Assume the hidden bodygroups are set to 1 
+						pPlayer->SetBodygroup( i , 1 );
+						m_iHiddenBodygroups.AddToTail( i );
+					}
+				}
+			}
+		}
 	}
 
 	return bDeploy;
@@ -670,6 +735,18 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 	if ( pTFOwner )
 	{
 		pTFOwner->TeamFortress_SetSpeed();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::UpdatePlayerBodygroups( void )
+{
+	if ( m_Item.GetStaticData() && ( !m_Item.GetStaticData()->hide_bodygroups_deployed_only || m_iState == WEAPON_IS_ACTIVE ) )
+	{
+		// Don't call for inactive weapons that hide bodygroups when deployed
+		BaseClass::UpdatePlayerBodygroups();
 	}
 }
 
@@ -949,7 +1026,6 @@ bool CTFWeaponBase::Reload( void )
 	// Sorry, people, no speeding it up.
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return false;
-
 	// If we're not already reloading, check to see if we have ammo to reload and check to see if we are max ammo.
 	if ( m_iReloadMode == TF_RELOAD_START ) 
 	{
@@ -1044,11 +1120,11 @@ bool CTFWeaponBase::ReloadSingly( void )
 
 			if (SendWeaponAnim(ACT_VM_RELOAD))
 			{
-				if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
+				/*if ( GetWeaponID() == TF_WEAPON_GRENADELAUNCHER )
 				{
 					SetReloadTimer( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload );
 				}
-				else
+				else*/
 				{
 					SetReloadTimer( SequenceDuration() );
 				}
@@ -1081,6 +1157,8 @@ bool CTFWeaponBase::ReloadSingly( void )
 				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
 				pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
+
+			SwitchBodyGroups(); // Update number of pills in the launcher
 
 			if ( Clip1() == GetMaxClip1() || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 			{
@@ -1128,7 +1206,9 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 				pOperator->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
 
-			m_bReloadedThroughAnimEvent = true;
+			//if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
+				m_bReloadedThroughAnimEvent = true;
+
 			return;
 		}
 	}
@@ -1335,6 +1415,8 @@ void CTFWeaponBase::ItemBusyFrame( void )
 		m_bInAttack2 = false;
 	}
 
+	CheckEffectBarRegen();
+
 	// Interrupt a reload.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer )
@@ -1376,6 +1458,8 @@ void CTFWeaponBase::ItemPostFrame( void )
 		m_bInAttack2 = false;
 	}
 
+	CheckEffectBarRegen();
+
 	// If we're lowered, we're not allowed to fire
 	if ( m_bLowered )
 		return;
@@ -1388,6 +1472,15 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		ReloadSinglyPostFrame();
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::ItemHolsterFrame( void )
+{
+	CheckEffectBarRegen();
+	BaseClass::ItemHolsterFrame();
 }
 
 //-----------------------------------------------------------------------------
@@ -1509,8 +1602,8 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 		// Weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
 		// Also auto-reload if owner has auto-reload enabled.
 		if ( UsesClipsForAmmo1() && !AutoFiresFullClip() && 
-			(m_iClip1 == 0 || (pOwner && pOwner->ShouldAutoReload() && m_iClip1 < GetMaxClip1() && CanAutoReload())) && 
-			(GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD) == false && 
+			(m_iClip1 == 0 || ( pOwner && pOwner->ShouldAutoReload() && m_iClip1 < GetMaxClip1() && CanAutoReload() ) ) && 
+			( GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD ) == false && 
 			m_flNextPrimaryAttack < gpGlobals->curtime && 
 			m_flNextSecondaryAttack < gpGlobals->curtime )
 		{
@@ -1705,6 +1798,99 @@ const char *CTFWeaponBase::GetTracerType( void )
 	return BaseClass::GetTracerType();
 }
 
+//-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ void CTFWeaponBase::StartEffectBarRegen( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( !pOwner )
+ 		return;
+ 
+ 	// Don't recharge unless we actually need recharging.
+ 	if ( gpGlobals->curtime > m_flEffectBarRegenTime ||
+ 		pOwner->GetAmmoCount( m_iPrimaryAmmoType ) + 1 <= pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ 	{
+ 		m_flEffectBarRegenTime = gpGlobals->curtime + InternalGetEffectBarRechargeTime();
+ 	}
+ }
+ 
+ //-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ void CTFWeaponBase::EffectBarRegenFinished( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( !pOwner )
+ 		return;
+ 
+ #ifdef GAME_DLL
+ 	pOwner->GiveAmmo( 1, m_iPrimaryAmmoType, true, TF_AMMO_SOURCE_RESUPPLY );
+ #endif
+	// Keep recharging until we're full on ammo.
+ #ifdef GAME_DLL
+ 	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) < pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ #else
+ 	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) + 1 < pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ #endif
+ 	{
+ 		StartEffectBarRegen();
+ 	}
+ 	else
+ 	{
+ 		m_flEffectBarRegenTime = 0.0f;
+ 	}
+ }
+ 
+ //-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ void CTFWeaponBase::CheckEffectBarRegen( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( !pOwner )
+ 		return;
+ 
+ 	if ( m_flEffectBarRegenTime != 0.0f )
+ 	{
+ 		// Stop recharging if we're restocked on ammo.
+ 		if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) == pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ 		{
+ 			m_flEffectBarRegenTime = 0.0f;
+ 		}
+ 		else if ( gpGlobals->curtime >= m_flEffectBarRegenTime )
+ 		{
+ 			m_flEffectBarRegenTime = 0.0f;
+ 			EffectBarRegenFinished();
+ 		}
+ 	}
+ }
+ 
+ //-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ float CTFWeaponBase::GetEffectBarProgress( void )
+ {
+ 	CTFPlayer *pOwner = GetTFPlayerOwner();
+ 	if ( pOwner && pOwner->GetAmmoCount( m_iPrimaryAmmoType ) < pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
+ 	{
+ 		float flTimeLeft = m_flEffectBarRegenTime - gpGlobals->curtime;
+ 		float flRechargeTime = InternalGetEffectBarRechargeTime();
+ 		return clamp( ( ( flRechargeTime - flTimeLeft ) / flRechargeTime ), 0.0f, 1.0f );
+ 	}
+ 
+ 	return 1.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::OnControlStunned( void )
+{
+	AbortReload();
+	SetWeaponVisible( false );
+}
+
 //=============================================================================
 //
 // TFWeaponBase functions (Server specific).
@@ -1810,6 +1996,8 @@ void CTFWeaponBase::WeaponReset( void )
 	m_iReloadMode.Set( TF_RELOAD_START );
 
 	m_bResetParity = !m_bResetParity;
+
+	m_flEffectBarRegenTime = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -3174,7 +3362,7 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 		DispatchEffect( "TF_EjectBrass", data );
 		return true;
 	}
-	if ( event == AE_WPN_INCREMENTAMMO )
+	if ( event == AE_WPN_INCREMENTAMMO && GetWeaponID() )
 	{
 		CTFPlayer *pPlayer = GetTFPlayerOwner();
 

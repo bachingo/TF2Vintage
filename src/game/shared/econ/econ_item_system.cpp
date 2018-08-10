@@ -39,6 +39,66 @@ const char *g_EffectTypes[] =
 	"negative"
 };
 
+const char *g_szQualityStrings[] =
+{
+	"normal",
+	"rarity1",
+	"rarity2",
+	"vintage",
+	"rarity3",
+	"rarity4",
+	"unique",
+	"community",
+	"developer",
+	"selfmade",
+	"customized",
+	"strange",
+	"completed",
+	"haunted",
+	"collectors",
+	"paintkitWeapon",
+};
+
+const char *g_szQualityColorStrings[] =
+{
+	"QualityColorNormal",
+	"QualityColorrarity1",
+	"QualityColorrarity2",
+	"QualityColorVintage",
+	"QualityColorrarity3",
+	"QualityColorrarity4",
+	"QualityColorUnique",
+	"QualityColorCommunity",
+	"QualityColorDeveloper",
+	"QualityColorSelfMade",
+	"QualityColorSelfMadeCustomized",
+	"QualityColorStrange",
+	"QualityColorCompleted",
+	"QualityColorHaunted",
+	"QualityColorCollectors",
+	"QualityColorPaintkitWeapon",
+};
+
+const char *g_szQualityLocalizationStrings[] =
+{
+	"#Normal",
+	"#rarity1",
+	"#rarity2",
+	"#vintage",
+	"#rarity3",
+	"#rarity4",
+	"#unique",
+	"#community",
+	"#developer",
+	"#selfmade",
+	"#customized",
+	"#strange",
+	"#completed",
+	"#haunted",
+	"#collectors",
+	"#paintkitWeapon",
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: for the UtlMap
 //-----------------------------------------------------------------------------
@@ -363,7 +423,20 @@ public:
 		GET_STRING( pItem, pData, item_name );
 		GET_STRING( pItem, pData, item_description );
 		GET_STRING( pItem, pData, item_type_name );
-		GET_STRING( pItem, pData, item_quality );
+		
+		/*const char *pszQuality = pData->GetString( "item_quality" );
+		if ( pszQuality[0] )
+		{
+			int iQuality = UTIL_StringFieldToInt( pszQuality, g_szQualityStrings, ARRAYSIZE( g_szQualityStrings ) );
+			if ( iQuality != -1 )
+			{
+				pItem->item_quality = iQuality;
+			}
+		}*/
+		
+		// All items are vintage quality
+		pItem->item_quality = QUALITY_VINTAGE;
+
 		GET_STRING( pItem, pData, item_logname );
 		GET_STRING( pItem, pData, item_iconname );
 
@@ -400,6 +473,7 @@ public:
 
 		GET_INT( pItem, pData, attach_to_hands );
 		GET_BOOL( pItem, pData, act_as_wearable );
+		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{

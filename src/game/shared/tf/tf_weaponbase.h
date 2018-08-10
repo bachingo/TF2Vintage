@@ -36,6 +36,7 @@
 #define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
 #define CTFViewModel C_TFViewModel
 #include "tf_fx_muzzleflash.h"
+#include "c_tf_viewmodeladdon.h"
 #endif
 
 #define MAX_TRACER_NAME		128
@@ -98,7 +99,6 @@ class ITFChargeUpWeapon
 {
 public:
 	virtual float GetChargeBeginTime( void ) = 0;
-
 	virtual float GetChargeMaxTime( void ) = 0;
 };
 
@@ -142,6 +142,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 #ifdef CLIENT_DLL
 	virtual void UpdateViewModel( void );
+
+	C_ViewmodelAttachmentModel *GetViewmodelAddon( void );
 #endif
 
 #ifdef DM_WEAPON_BUCKET
@@ -149,10 +151,13 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int	 GetPosition( void ) const;
 #endif
 	virtual void Drop( const Vector &vecVelocity );
+	virtual bool CanHolster( void ) const;
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	virtual bool Deploy( void );
 	virtual void Equip( CBaseCombatCharacter *pOwner );
 	bool IsViewModelFlipped( void );
+
+	virtual void DepleteAmmo( void ) {} // accessor for consumables
 
 	virtual void ReapplyProvision( void );
 	virtual void OnActiveStateChanged( int iOldState );
@@ -181,6 +186,11 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual bool CanDrop( void ) { return false; }
 
+	// Accessor for bodygroup switching
+	virtual void SwitchBodyGroups( void ) {}
+
+	virtual void UpdatePlayerBodygroups( void );
+
 	// Sound.
 	bool PlayEmptySound();
 	virtual const char *GetShootSound( int iIndex ) const;
@@ -188,6 +198,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Activities.
 	virtual void ItemBusyFrame( void );
 	virtual void ItemPostFrame( void );
+	virtual void ItemHolsterFrame( void );
 
 	virtual void SetWeaponVisible( bool visible );
 
@@ -230,6 +241,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void	WeaponIdle( void );
 
 	virtual void	WeaponReset( void );
+	virtual void	WeaponRegenerate() {}
 
 	// Muzzleflashes
 	virtual const char *GetMuzzleFlashEffectName_3rd( void ) { return NULL; }
@@ -246,6 +258,16 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool CanFireCriticalShot( bool bIsHeadshot = false ) { return true; }
 
 	float				GetLastFireTime( void ) { return m_flLastFireTime; }
+
+	virtual bool		HasChargeBar( void ) { return false; }
+	void				StartEffectBarRegen( void );
+	void				EffectBarRegenFinished( void );
+	void				CheckEffectBarRegen( void );
+	virtual float		GetEffectBarProgress( void );
+	virtual const char *GetEffectLabelText( void ) { return ""; }
+	void				ReduceEffectBarRegenTime( float flTime ) { m_flEffectBarRegenTime -= flTime; }
+
+	void				OnControlStunned( void );
 
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -304,6 +326,8 @@ protected:
 	bool ReloadSingly( void );
 	void ReloadSinglyPostFrame( void );
 
+	virtual float InternalGetEffectBarRechargeTime( void ) { return 0.0f; }
+
 protected:
 
 	int				m_iWeaponMode;
@@ -334,12 +358,29 @@ protected:
 	bool m_bOldResetParity;
 #endif
 
-	CNetworkVar(	bool,	m_bReloadedThroughAnimEvent );
+	CNetworkVar( bool,	m_bReloadedThroughAnimEvent );
+	CNetworkVar( float, m_flEffectBarRegenTime );
+
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
+
+	CUtlVector< int > m_iHiddenBodygroups;
 };
 
 #define WEAPON_RANDOM_RANGE 10000
+
+#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
+																	\
+	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
+															\
+	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
+	END_NETWORK_TABLE()										\
+															\
+	BEGIN_PREDICTION_DATA( C##WpnName )						\
+	END_PREDICTION_DATA()									\
+															\
+	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
+	PRECACHE_WEAPON_REGISTER( entityname );
 
 // Mercenary needs a different activity set for each weapon so use these in stock weapons code.
 #define DECLARE_DM_ACTTABLE()		static acttable_t m_acttable[];\

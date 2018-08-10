@@ -106,6 +106,10 @@ int	CTFWeaponBaseGrenadeProj::GetDamageType()
 	{
 		iDmgType |= DMG_CRITICAL;
 	}
+	if ( m_iDeflected > 0 )
+	{
+		iDmgType |= DMG_MINICRITICAL;
+	}
 
 	return iDmgType;
 }
@@ -392,7 +396,7 @@ void CTFWeaponBaseGrenadeProj::DetonateThink( void )
 		m_bCollideWithTeammates = true;
 	}
 
-	if ( gpGlobals->curtime > m_flDetonateTime )
+	if ( gpGlobals->curtime > GetDetonateTime() )
 	{
 		Detonate();
 		return;

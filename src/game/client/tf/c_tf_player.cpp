@@ -102,7 +102,6 @@ ConVar tf2c_setmerccolor_g( "tf2c_setmerccolor_g", "0", FCVAR_ARCHIVE | FCVAR_US
 ConVar tf2c_setmerccolor_b( "tf2c_setmerccolor_b", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, 0, true, 255 );
 ConVar tf2c_setmercparticle( "tf2c_setmercparticle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc's respawn particle index", OnMercParticleChange );
 
-
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 
 IMaterial	*g_pHeadLabelMaterial[4] = { NULL, NULL }; 
@@ -225,6 +224,14 @@ public:
 	virtual void SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 	virtual float FrameAdvance( float flInterval = 0.0f );
 
+	float GetInvisibilityLevel( void )
+	{
+		if ( m_flUncloakCompleteTime == 0.0f )
+			return 0.0f;
+
+		return RemapValClamped( m_flUncloakCompleteTime - gpGlobals->curtime, 0.0f, 2.0f, 0.0f, 1.0f );
+	}
+
 private:
 	
 	C_TFRagdoll( const C_TFRagdoll & ) {}
@@ -242,6 +249,8 @@ private:
 	bool  m_bFadingOut;
 	bool  m_bGib;
 	bool  m_bBurning;
+	float m_flInvisibilityLevel;
+	float m_flUncloakCompleteTime;
 	int   m_iDamageCustom;
 	int	  m_iTeam;
 	int	  m_iClass;
@@ -257,6 +266,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropInt( RECVINFO( m_nForceBone ) ),
 	RecvPropBool( RECVINFO( m_bGib ) ),
 	RecvPropBool( RECVINFO( m_bBurning ) ),
+	RecvPropFloat( RECVINFO( m_flInvisibilityLevel ) ),
 	RecvPropInt( RECVINFO( m_iDamageCustom ) ),
 	RecvPropInt( RECVINFO( m_iTeam ) ),
 	RecvPropInt( RECVINFO( m_iClass ) ),
@@ -273,6 +283,8 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bFadingOut = false;
 	m_bGib = false;
 	m_bBurning = false;
+	m_flInvisibilityLevel = 0.0f;
+	m_flUncloakCompleteTime = 0.0f;
 	m_iDamageCustom = 0;
 	m_flBurnEffectStartTime = 0.0f;
 	m_iTeam = -1;
@@ -512,7 +524,6 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 		Interp_Reset( GetVarMapping() );
 	}
-
 	
 	bool bPlayDeathAnim = false;
 	if ( pPlayer && ( tf_always_deathanim.GetBool() || RandomFloat() < 0.25f ) )
@@ -596,6 +607,16 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	{
 		m_flBurnEffectStartTime = gpGlobals->curtime;
 		ParticleProp()->Create( "burningplayer_corpse", PATTACH_ABSORIGIN_FOLLOW );
+	}
+
+	if ( pPlayer )
+	{
+		pPlayer->MoveBoneAttachments( this );
+	}
+
+	if ( m_flInvisibilityLevel != 0.0f )
+	{
+		m_flUncloakCompleteTime = gpGlobals->curtime + 2.0f * m_flInvisibilityLevel;
 	}
 
 	// Fade out the ragdoll in a while
@@ -861,13 +882,28 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 
 	C_TFPlayer *pPlayer = ToTFPlayer( pEnt );
 
-	if ( !pPlayer )
+	if ( pPlayer )
 	{
-		m_pPercentInvisible->SetFloatValue( 0.0 );
-		return;
+		m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
+	}
+	else
+	{
+		C_TFRagdoll *pRagdoll = dynamic_cast<C_TFRagdoll *>( pEnt );
+
+		if ( pRagdoll )
+		{
+			pPlayer = ToTFPlayer( pRagdoll->GetPlayerHandle().Get() );
+			m_pPercentInvisible->SetFloatValue( pRagdoll->GetInvisibilityLevel() );
+		}
+		else
+		{
+			m_pPercentInvisible->SetFloatValue( 0.0 );
+			return;
+		}
 	}
 
-	m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
+	if ( !pPlayer )
+		return;
 
 	float r, g, b;
 
@@ -1062,46 +1098,58 @@ EXPOSE_INTERFACE( CProxyBurnLevel, IMaterialProxy, "BurnLevel" IMATERIAL_PROXY_I
 class CProxyYellowLevel : public CResultProxy
 {
 public:
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
-		Assert(m_pResult);
+		Assert( m_pResult );
 
 		if ( !pC_BaseEntity )
 		{
-			m_pResult->SetVecValue(1, 1, 1);
+			m_pResult->SetVecValue( 1, 1, 1 );
 			return;
 		}
 
-		C_BaseEntity *pEntity = BindArgToEntity(pC_BaseEntity);
-		if (!pEntity)
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
 			return;
 
-		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >(pEntity);
+		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
 
-		if (!pPlayer)
+		if ( !pPlayer )
 		{
-			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >(pEntity);
-			if (pWeapon)
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			if ( pWeapon )
 			{
-				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+				pPlayer = ( C_TFPlayer* )pWeapon->GetOwner();
 			}
 			else
 			{
-				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >(pEntity);
-				if (pVM)
+				C_TFViewModel *pVM;
+				C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEntity );
+				if ( pVMAddon )
 				{
-					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+					pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_viewmodel.Get() );
+				}
+				else
+				{
+					pVM = dynamic_cast< C_TFViewModel * >( pEntity );
+				}
+
+				if ( pVM )
+				{
+					pPlayer = ( C_TFPlayer* )pVM->GetOwner();
 				}
 			}
 		}
 
-		if (pPlayer)
+		Vector vecColor = Vector( 1, 1, 1 );
+
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_URINE ) )
 		{
-			// This should be used to check if the player has the piss condition
-			// If he is, return yellow
+
+			vecColor.Init( 10, 10, 1 );
 		}
 
-		m_pResult->SetVecValue(1, 1, 1);
+		m_pResult->SetVecValue( vecColor.Base(), 3 );
 	}
 };
 
@@ -1113,9 +1161,9 @@ EXPOSE_INTERFACE(CProxyYellowLevel, IMaterialProxy, "YellowLevel" IMATERIAL_PROX
 class CProxyModelGlowColor: public CResultProxy
 {
 public:
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
-		Assert(m_pResult);
+		Assert( m_pResult );
 
 		if ( !pC_BaseEntity )
 		{
@@ -1123,27 +1171,37 @@ public:
 			return;
 		}
 
-		C_BaseEntity *pEntity = BindArgToEntity(pC_BaseEntity);
-		if (!pEntity)
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
 			return;
 
-		Vector vecColor = Vector(1, 1, 1);
+		Vector vecColor = Vector( 1, 1, 1 );
 
-		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >(pEntity);
+		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
 
-		if (!pPlayer)
+		if ( !pPlayer )
 		{
-			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >(pEntity);
-			if (pWeapon)
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			if ( pWeapon )
 			{
-				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+				pPlayer = ( C_TFPlayer* )pWeapon->GetOwner();
 			}
 			else
 			{
-				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >(pEntity);
-				if (pVM)
+				C_TFViewModel *pVM;
+				C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEntity );
+				if ( pVMAddon )
 				{
-					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+					pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_viewmodel.Get() );
+				}
+				else
+				{
+					pVM = dynamic_cast< C_TFViewModel * >( pEntity );
+				}
+
+				if ( pVM )
+				{
+					pPlayer = ( C_TFPlayer* )pVM->GetOwner();
 				}
 			}
 		}
@@ -1293,11 +1351,11 @@ EXPOSE_INTERFACE(CProxyItemTintColor, IMaterialProxy, "ItemTintColor" IMATERIAL_
 class CProxyCommunityWeapon : public CResultProxy
 {
 public:
-	virtual bool Init(IMaterial *pMaterial, KeyValues *pKeyValues)
+	virtual bool Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 	{
 		return true;
 	}
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
 	}	
 };
@@ -1310,17 +1368,17 @@ EXPOSE_INTERFACE(CProxyCommunityWeapon, IMaterialProxy, "CommunityWeapon" IMATER
 class CProxyAnimatedWeaponSheen : public CResultProxy
 {
 public:
-	virtual bool Init(IMaterial *pMaterial, KeyValues *pKeyValues)
+	virtual bool Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 	{
 		return true;
 	}
-	void OnBind(void *pC_BaseEntity)
+	void OnBind( void *pC_BaseEntity )
 	{
 		
 	}
 };
 
-EXPOSE_INTERFACE(CProxyAnimatedWeaponSheen, IMaterialProxy, "AnimatedWeaponSheen" IMATERIAL_PROXY_INTERFACE_VERSION);
+EXPOSE_INTERFACE( CProxyAnimatedWeaponSheen, IMaterialProxy, "AnimatedWeaponSheen" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: Universal proxy from live tf2 used for spy invisiblity material
@@ -1329,15 +1387,15 @@ EXPOSE_INTERFACE(CProxyAnimatedWeaponSheen, IMaterialProxy, "AnimatedWeaponSheen
 class CInvisProxy : public CEntityMaterialProxy
 {
 public:
-	CInvisProxy(void);
-	virtual				~CInvisProxy(void);
-	virtual bool		Init(IMaterial *pMaterial, KeyValues* pKeyValues);
-	virtual void		OnBind(C_BaseEntity *pC_BaseEntity);
+	CInvisProxy( void );
+	virtual				~CInvisProxy( void );
+	virtual bool		Init( IMaterial *pMaterial, KeyValues* pKeyValues );
+	virtual void		OnBind( C_BaseEntity *pC_BaseEntity );
 	virtual IMaterial *	GetMaterial();
 
-	virtual void		HandleSpyInvis(C_TFPlayer *pPlayer);
-	virtual void		HandleVMInvis(C_TFViewModel *pVM);
-	virtual void		HandleWeaponInvis(C_BaseEntity *pC_BaseEntity);
+	virtual void		HandleSpyInvis( C_TFPlayer *pPlayer );
+	virtual void		HandleVMInvis( C_TFViewModel *pVM );
+	virtual void		HandleWeaponInvis( C_BaseEntity *pC_BaseEntity );
 
 private:
 
@@ -1348,7 +1406,7 @@ private:
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CInvisProxy::CInvisProxy(void)
+CInvisProxy::CInvisProxy( void )
 {
 	m_pPercentInvisible = NULL;
 	m_pCloakColorTint = NULL;
@@ -1357,7 +1415,7 @@ CInvisProxy::CInvisProxy(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CInvisProxy::~CInvisProxy(void)
+CInvisProxy::~CInvisProxy( void )
 {
 }
 
@@ -1365,61 +1423,61 @@ CInvisProxy::~CInvisProxy(void)
 // Purpose: Get pointer to the color value
 // Input  : *pMaterial - 
 //-----------------------------------------------------------------------------
-bool CInvisProxy::Init(IMaterial *pMaterial, KeyValues* pKeyValues)
+bool CInvisProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
 {
-	Assert(pMaterial);
+	Assert( pMaterial );
 
 	// Need to get the material var
 	bool bInvis;
-	m_pPercentInvisible = pMaterial->FindVar("$cloakfactor", &bInvis);
+	m_pPercentInvisible = pMaterial->FindVar( "$cloakfactor", &bInvis );
 
 	bool bTint;
-	m_pCloakColorTint = pMaterial->FindVar("$cloakColorTint", &bTint);
+	m_pCloakColorTint = pMaterial->FindVar( "$cloakColorTint", &bTint );
 
 	// if we have $cloakColorTint, it's spy_invis
-	if (bTint)
+	if ( bTint )
 	{
-		return (bInvis && bTint);
+		return ( bInvis && bTint );
 	}
 
-	return (bTint);
+	return ( bTint );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::OnBind(C_BaseEntity *pEnt)
+void CInvisProxy::OnBind( C_BaseEntity *pEnt )
 {
-	if (!pEnt)
+	if ( !pEnt )
 		return;
 
-	m_pPercentInvisible->SetFloatValue(0.0);
+	m_pPercentInvisible->SetFloatValue( 0.0 );
 
-	C_TFPlayer *pPlayer = ToTFPlayer(pEnt);
+	C_TFPlayer *pPlayer = ToTFPlayer( pEnt );
 
 	C_TFViewModel *pVM;
-	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>(pEnt);
-	if (pVMAddon)
+	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEnt );
+	if ( pVMAddon )
 	{
-		pVM = dynamic_cast<C_TFViewModel *>(pVMAddon->m_viewmodel.Get());
+		pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_viewmodel.Get() );
 	}
 	else
 	{
-		pVM = dynamic_cast<C_TFViewModel *>(pEnt);
+		pVM = dynamic_cast< C_TFViewModel * >( pEnt );
 	}
 
-	if (pPlayer)
+	if ( pPlayer )
 	{
-		HandleSpyInvis(pPlayer);
+		HandleSpyInvis( pPlayer );
 	}
-	else if (pVM)
+	else if ( pVM )
 	{
-		HandleVMInvis(pVM);
+		HandleVMInvis( pVM );
 	}
 	else
 	{
-		HandleWeaponInvis(pEnt);
+		HandleWeaponInvis( pEnt );
 	}
 }
 
@@ -1427,16 +1485,16 @@ void CInvisProxy::OnBind(C_BaseEntity *pEnt)
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::HandleSpyInvis(C_TFPlayer *pPlayer)
+void CInvisProxy::HandleSpyInvis( C_TFPlayer *pPlayer )
 {
-	if (!m_pPercentInvisible || !m_pCloakColorTint)
+	if ( !m_pPercentInvisible || !m_pCloakColorTint )
 		return;
 
-	m_pPercentInvisible->SetFloatValue(pPlayer->GetEffectiveInvisibilityLevel());
+	m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
 
 	float r, g, b;
 
-	switch (pPlayer->GetTeamNumber())
+	switch ( pPlayer->GetTeamNumber() )
 	{
 	case TF_TEAM_RED:
 		r = 1.0; g = 0.5; b = 0.4;
@@ -1459,7 +1517,7 @@ void CInvisProxy::HandleSpyInvis(C_TFPlayer *pPlayer)
 		break;
 	}
 
-	m_pCloakColorTint->SetVecValue(r, g, b);
+	m_pCloakColorTint->SetVecValue( r, g, b );
 }
 
 extern ConVar tf_vm_min_invis;
@@ -1468,16 +1526,16 @@ extern ConVar tf_vm_max_invis;
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::HandleVMInvis(C_TFViewModel *pVM)
+void CInvisProxy::HandleVMInvis( C_TFViewModel *pVM )
 {
-	if (!m_pPercentInvisible)
+	if ( !m_pPercentInvisible )
 		return;
 
-	C_TFPlayer *pPlayer = ToTFPlayer(pVM->GetOwner());
+	C_TFPlayer *pPlayer = ToTFPlayer( pVM->GetOwner() );
 
 	if (!pPlayer)
 	{
-		m_pPercentInvisible->SetFloatValue(0.0f);
+		m_pPercentInvisible->SetFloatValue( 0.0f );
 		return;
 	}
 
@@ -1485,44 +1543,52 @@ void CInvisProxy::HandleVMInvis(C_TFViewModel *pVM)
 
 	// remap from 0.22 to 0.5
 	// but drop to 0.0 if we're not invis at all
-	float flWeaponInvis = (flPercentInvisible < 0.01) ?
-		0.0 :
-		RemapVal(flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat());
+	float flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
+	0.0 :
+	RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
 
-	m_pPercentInvisible->SetFloatValue(flWeaponInvis);
+	if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+	{
+		// Hacky fix to make viewmodel blink more obvious
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis - 0.1 );
+	}
+	else
+	{
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :
 //-----------------------------------------------------------------------------
-void CInvisProxy::HandleWeaponInvis(C_BaseEntity *pEnt)
+void CInvisProxy::HandleWeaponInvis( C_BaseEntity *pEnt )
 {
-	if (!m_pPercentInvisible)
+	if ( !m_pPercentInvisible )
 		return;
 
 	C_BaseEntity *pMoveParent = pEnt->GetMoveParent();
-	if (!pMoveParent || !pMoveParent->IsPlayer())
+	if ( !pMoveParent || !pMoveParent->IsPlayer() )
 	{
-		m_pPercentInvisible->SetFloatValue(0.0f);
+		m_pPercentInvisible->SetFloatValue( 0.0f );
 		return;
 	}
 
-	C_TFPlayer *pPlayer = ToTFPlayer(pMoveParent);
-	Assert(pPlayer);
+	C_TFPlayer *pPlayer = ToTFPlayer( pMoveParent );
+	Assert( pPlayer );
 
-	m_pPercentInvisible->SetFloatValue(pPlayer->GetEffectiveInvisibilityLevel());
+	m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
 }
 
 IMaterial *CInvisProxy::GetMaterial()
 {
-	if (!m_pPercentInvisible)
+	if ( !m_pPercentInvisible )
 		return NULL;
 
 	return m_pPercentInvisible->GetOwningMaterial();
 }
 
-EXPOSE_INTERFACE(CInvisProxy, IMaterialProxy, "invis" IMATERIAL_PROXY_INTERFACE_VERSION);
+EXPOSE_INTERFACE( CInvisProxy, IMaterialProxy, "invis" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: RecvProxy that converts the Player's object UtlVector to entindexes
@@ -1633,6 +1699,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_flBurnEffectEndTime = 0;
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
+	m_pOverhealEffect = NULL;
 	
 	m_aGibs.Purge();
 
@@ -1655,6 +1722,9 @@ C_TFPlayer::C_TFPlayer() :
 	m_bWaterExitEffectActive = false;
 
 	m_bUpdateObjectHudState = false;
+
+	ListenForGameEvent( "localplayer_changeteam" );
+	ListenForGameEvent( "player_regenerate" );
 }
 
 C_TFPlayer::~C_TFPlayer()
@@ -1663,6 +1733,37 @@ C_TFPlayer::~C_TFPlayer()
 	m_PlayerAnimState->Release();
 }
 
+void C_TFPlayer::FireGameEvent( IGameEvent *event )
+{
+	const char * type = event->GetName();
+
+	if ( V_strcmp( type, "player_regenerate" ) == 0 )
+	{
+			// Regenerate Weapons
+		for ( int i = 0; i < MAX_ITEMS; i++ )
+		{		
+			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( Weapon_GetSlot( i ) );
+			if ( pWeapon ) 
+			{
+				// Regenerate
+				pWeapon->WeaponRegenerate();
+			}
+		}
+	}
+	else if ( V_strcmp( event->GetName(), "localplayer_changeteam" ) == 0 )
+	{
+		if ( !IsLocalPlayer() )
+		{
+			// Update any effects affected by disguise.
+			m_Shared.UpdateCritBoostEffect();
+			UpdateOverhealEffect();
+		}
+	}
+	else
+	{
+		BaseClass::FireGameEvent( event );
+	}
+}
 
 C_TFPlayer* C_TFPlayer::GetLocalTFPlayer()
 {
@@ -1795,14 +1896,14 @@ void C_TFPlayer::SetDormant( bool bDormant )
 		{
 			ShowNemesisIcon( false );
 		}
-		// Kill crit effects.
-		m_Shared.UpdateCritBoostEffect( true );
 	}
 
 	if ( IsDormant() && !bDormant )
 	{
 		m_bUpdatePartyHat = true;
 	}
+
+	m_Shared.UpdateCritBoostEffect( true );
 
 	// Deliberately skip base combat weapon
 	C_BaseEntity::SetDormant( bDormant );
@@ -1870,7 +1971,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		{
 			pActiveWpn->SetViewModel();
 
-			if (ShouldDrawThisPlayer())
+			if ( ShouldDrawThisPlayer() )
 			{
 				m_Shared.UpdateCritBoostEffect();
 			}
@@ -1999,7 +2100,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 			}
 		}
 
-		if ( !IsPlayerClass(m_iOldClass) )
+		if ( !IsPlayerClass( m_iOldClass ) )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "localplayer_changeclass" );
 			if ( event )
@@ -2373,9 +2474,9 @@ void C_TFPlayer::ShowNemesisIcon( bool bShow )
 		// stop effects for both team colors (to make sure we remove effects in event of team change)
 		ParticleProp()->StopParticlesNamed( "particle_nemesis_red", true );
 		ParticleProp()->StopParticlesNamed( "particle_nemesis_blue", true );
-		ParticleProp()->StopParticlesNamed( "particle_nemesis_green", true );
-		ParticleProp()->StopParticlesNamed( "particle_nemesis_yellow", true );
-		ParticleProp()->StopParticlesNamed( "particle_nemesis_dm", true );
+		//ParticleProp()->StopParticlesNamed( "particle_nemesis_green", true );
+		//ParticleProp()->StopParticlesNamed( "particle_nemesis_yellow", true );
+		//ParticleProp()->StopParticlesNamed( "particle_nemesis_dm", true );
 	}
 	m_bIsDisplayingNemesisIcon = bShow;
 }
@@ -2729,14 +2830,14 @@ void C_TFPlayer::UpdateLookAt( void )
 	// orient eyes
 	m_viewtarget = vecLookAtTarget;
 
-	/*
+	// TODO: fix blink track for player models
 	// blinking
-	if (m_blinkTimer.IsElapsed())
+	/*if (m_blinkTimer.IsElapsed())
 	{
 		m_blinktoggle = !m_blinktoggle;
 		m_blinkTimer.Start( RandomFloat( 1.5f, 4.0f ) );
-	}
-	*/
+	}*/
+	
 
 	/*
 	// Figure out where we want to look in world space.
@@ -3052,7 +3153,7 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 	static QAngle angMoveAngle( 0.0f, 0.0f, 0.0f );
 	
 	bool bNoTaunt = true;
-	if ( m_Shared.InCond( TF_COND_TAUNTING ) || m_Shared.InCond( TF_COND_STUNNED ) )
+	if ( m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
 		// show centerprint message 
 		pCmd->forwardmove = 0.0f;
@@ -3080,6 +3181,23 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		pCmd->forwardmove = 0.0f;
 		pCmd->sidemove = 0.0f;
 		VectorCopy( pCmd->viewangles, angMoveAngle );
+	}
+	else if ( m_Shared.InCond( TF_COND_PHASE ) )
+	{
+		pCmd->weaponselect = 0;
+		int nOldButtons = pCmd->buttons;
+		pCmd->buttons = 0;
+
+		// Scout can jump and duck while phased
+		if ( ( nOldButtons & IN_JUMP ) )
+		{
+			pCmd->buttons |= IN_JUMP;
+		}
+
+		if ( ( nOldButtons & IN_DUCK ) )
+		{
+			pCmd->buttons |= IN_DUCK;
+		}
 	}
 	else
 	{
@@ -3816,6 +3934,12 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		m_bWasTaunting = false;
 		HandleTaunting();
 
+		IGameEvent * event = gameeventmanager->CreateEvent( "localplayer_respawn" );
+		if ( event )
+		{
+			gameeventmanager->FireEventClientSide( event );
+		}
+
 		ResetToneMapping(1.0);
 
 		// Release the duck toggle key
@@ -3823,6 +3947,9 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 
 		LoadInventory();
 	}
+
+	// Reset attachments
+	DestroyBoneAttachments();
 
 	if ( TFGameRules()->IsDeathmatch() && GetTeamNumber() == TF_TEAM_RED && ( !IsLocalPlayer() || !InFirstPersonView() ) )
 	{
@@ -3956,13 +4083,10 @@ void C_TFPlayer::SetHealer( C_TFPlayer *pHealer, float flChargeLevel )
 //-----------------------------------------------------------------------------
 CBaseEntity *C_TFPlayer::MedicGetHealTarget( void )
 {
-	if ( IsPlayerClass(TF_CLASS_MEDIC) )
-	{
-		CWeaponMedigun *pWeapon = dynamic_cast <CWeaponMedigun*>( GetActiveWeapon() );
+	CWeaponMedigun *pWeapon = dynamic_cast < CWeaponMedigun * >( GetActiveWeapon() );
 
-		if ( pWeapon )
-			return pWeapon->GetHealTarget();
-	}
+	if ( pWeapon )
+		return pWeapon->GetHealTarget();
 
 	return NULL;
 }
@@ -4317,6 +4441,9 @@ bool C_TFPlayer::IsAllowedToSwitchWeapons( void )
 	if ( IsWeaponLowered() == true )
 		return false;
 
+	if ( m_Shared.InCond( TF_COND_STUNNED ) )
+		return false;
+
 	return BaseClass::IsAllowedToSwitchWeapons();
 }
 
@@ -4446,6 +4573,48 @@ CBaseCombatWeapon *C_TFPlayer::Weapon_GetSlot( int slot ) const
 	}
 
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateOverhealEffect( void )
+{
+	bool bShouldShow = true;
+
+	if ( !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) )
+	{
+		bShouldShow = false;
+	}
+	else if ( InFirstPersonView() )
+	{
+		bShouldShow = false;
+	}
+	else if ( IsEnemyPlayer() )
+	{
+		if ( m_Shared.InCond( TF_COND_STEALTHED ) || m_Shared.InCond( TF_COND_DISGUISED ) )
+		{
+			// Don't give away cloaked and disguised spies.
+			bShouldShow = false;
+		}
+	}
+
+	if ( bShouldShow )
+	{
+		if ( !m_pOverhealEffect )
+		{
+			const char *pszEffect = ConstructTeamParticle( "overhealedplayer_%s_pluses", GetTeamNumber(), false );
+			m_pOverhealEffect = ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN_FOLLOW );
+		}
+	}
+	else
+	{
+		if ( m_pOverhealEffect )
+		{
+			ParticleProp()->StopEmission( m_pOverhealEffect );
+			m_pOverhealEffect = NULL;
+		}
+	}
 }
 
 #include "c_obj_sentrygun.h"

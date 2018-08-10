@@ -30,19 +30,26 @@ public:
 	virtual void	PrimaryAttack( void );
 	virtual void	SecondaryAttack( void );
 
+	virtual void	DepleteAmmo( void );
+
+
 	virtual bool	HasChargeBar( void ) { return true; }
 	virtual float	InternalGetEffectBarRechargeTime( void ) { return 30.0f; }
 	virtual const char	*GetEffectLabelText( void ) { return "#TF_Sandwich"; }
+	virtual void	SwitchBodyGroups( void );
+
 
 #ifdef GAME_DLL
 	virtual void	Precache( void );
-	virtual void	ApplyBiteEffects( void );
+	virtual void	ApplyBiteEffects( bool bHurt );
 #endif
 
 private:
 #ifdef GAME_DLL
 	EHANDLE m_hDroppedLunch;
 #endif
+
+	bool	m_bBitten;
 };
 
 #endif // TF_WEAPON_LUNCHBOX_H

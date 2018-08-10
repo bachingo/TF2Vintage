@@ -58,6 +58,7 @@ public:
 	CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate );
 	CBaseEntity *FireFlare(CTFPlayer *pPlayer);
 	CBaseEntity *FireArrow(CTFPlayer *pPlayer, int iType);
+	CBaseEntity *FireThrowable(CTFPlayer *pPlayer, int iType);
 	CBaseEntity *FireGrenade(CTFPlayer *pPlayer);
 
 	virtual float GetWeaponSpread( void );
@@ -67,6 +68,7 @@ public:
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
 	virtual float GetProjectileDamage( void );
+
 
 	virtual void ZoomIn( void );
 	virtual void ZoomOut( void );

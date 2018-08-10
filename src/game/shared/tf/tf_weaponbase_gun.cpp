@@ -11,6 +11,7 @@
 #include "takedamageinfo.h"
 #include "tf_projectile_nail.h"
 #include "tf_projectile_arrow.h"
+#include "tf_projectile_jar.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -206,7 +207,8 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 	case TF_PROJECTILE_FESTITIVE_URINE:
 	case TF_PROJECTILE_BREADMONSTER_JARATE:
 	case TF_PROJECTILE_BREADMONSTER_MADMILK:
-		// TO-DO: Implement 'grenade' support
+		pProjectile = FireThrowable(pPlayer, iProjectile);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
 	case TF_PROJECTILE_ARROW:
@@ -343,7 +345,8 @@ void CTFWeaponBaseGun::GetProjectileReflectSetup( CTFPlayer *pPlayer, const Vect
 	// Find angles that will get us to our desired end point
 	// Only use the trace end if it wasn't too close, which results
 	// in visually bizarre forward angles
-	if ( tr.fraction > 0.1 || bUseHitboxes )
+	//if ( tr.fraction > 0.1 || bUseHitboxes )
+	if ( tr.fraction > 0.1 )
 	{
 		*vecDeflect = tr.endpos - vecPos;
 	}
@@ -425,7 +428,8 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 	// Find angles that will get us to our desired end point
 	// Only use the trace end if it wasn't too close, which results
 	// in visually bizarre forward angles
-	if ( tr.fraction > 0.1 || bUseHitboxes )
+	//if ( tr.fraction > 0.1 || bUseHitboxes )
+	if ( tr.fraction > 0.1 )
 	{
 		VectorAngles( tr.endpos - *vecSrc, *angForward );
 	}
@@ -444,10 +448,24 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 
 	// Server only - create the rocket.
 #ifdef GAME_DLL
-
 	Vector vecSrc;
+	Vector vecOffset( 0.0f, 0.0f, 0.0f );
 	QAngle angForward;
-	Vector vecOffset( 23.5f, 12.0f, -3.0f );
+
+	int isQuakeRL = 0;
+	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
+
+	if( isQuakeRL > 0 )
+	{
+		vecOffset.z = -3.0f;
+	}
+	else
+	{
+		vecOffset.x = 23.5f;
+		vecOffset.y = 12.0f;
+		vecOffset.z = -3.0f;
+	}
+
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
 		vecOffset.z = 8.0f;
@@ -527,6 +545,14 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 
 #ifdef GAME_DLL
 
+	int iMode = TF_GL_MODE_REGULAR, iNoSpin = 0;
+	CALL_ATTRIB_HOOK_INT( iMode, set_detonate_mode );
+
+	if ( bRemoteDetonate )
+	{
+		iMode = TF_GL_MODE_REMOTE_DETONATE;
+	}
+
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
@@ -540,9 +566,17 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	float flDamageMult = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flDamageMult, mult_dmg );
 
+	CALL_ATTRIB_HOOK_INT ( iNoSpin, grenade_no_spin );
+
+	AngularImpulse spin( 600, 0, 0 );
+
+	if ( iNoSpin == 0 )
+	{
+		spin = AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 );
+	}
+
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
-		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
-		pPlayer, GetTFWpnData(), bRemoteDetonate, flDamageMult );
+		spin, pPlayer, GetTFWpnData(), iMode, flDamageMult );
 
 
 	if ( pProjectile )
@@ -560,7 +594,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 //-----------------------------------------------------------------------------
 // Purpose: Fire a flare
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireFlare(CTFPlayer *pPlayer)
+CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 {
 	PlayWeaponShootSound();
 
@@ -590,30 +624,64 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare(CTFPlayer *pPlayer)
 //-----------------------------------------------------------------------------
 // Purpose: Fire an Arrow
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireArrow(CTFPlayer *pPlayer, int iType)
+CBaseEntity *CTFWeaponBaseGun::FireThrowable( CTFPlayer *pPlayer, int iType )
+{
+	PlayWeaponShootSound();
+
+#ifdef GAME_DLL
+	AngularImpulse spin = AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 );
+
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+	// Create grenades here!!
+	Vector vecSrc = pPlayer->Weapon_ShootPosition();
+	vecSrc +=  vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
+	
+	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
+		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
+
+	//GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, false );
+
+	CTFProjectile_Jar *pProjectile = CTFProjectile_Jar::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
+	}
+	return pProjectile;
+#endif
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fire an Arrow
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireArrow( CTFPlayer *pPlayer, int iType )
 {
 	PlayWeaponShootSound();
 
 #ifdef GAME_DLL
 	Vector vecSrc;
 	QAngle angForward;
-	Vector vecOffset(23.5f, 12.0f, -3.0f);
-	if (pPlayer->GetFlags() & FL_DUCKING)
+	Vector vecOffset( 23.5f, 12.0f, -3.0f );
+	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
 		vecOffset.z = 8.0f;
 	}
-	/*if (IsWeapon(TF_WEAPON_COMPOUND_BOW))
+	/*if ( IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
 	{
 		// Valve were apparently too lazy to fix the viewmodel and just flipped it through the code.
 		vecOffset.y *= -1.0f;
 	}*/
-	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false, true);
+	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, true );
 
-	CTFProjectile_Arrow *pProjectile = CTFProjectile_Arrow::Create(this, vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), IsFlameArrow(), pPlayer, pPlayer, iType);
-	if (pProjectile)
+	CTFProjectile_Arrow *pProjectile = CTFProjectile_Arrow::Create( this, vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), IsFlameArrow(), pPlayer, pPlayer, iType );
+	if ( pProjectile )
 	{
-		pProjectile->SetCritical(IsCurrentAttackACrit());
-		pProjectile->SetDamage(GetProjectileDamage());
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
 	}
 	return pProjectile;
 #endif
@@ -624,37 +692,37 @@ CBaseEntity *CTFWeaponBaseGun::FireArrow(CTFPlayer *pPlayer, int iType)
 //-----------------------------------------------------------------------------
 // Purpose: Use this for any old grenades: MIRV, Frag, etc
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireGrenade(CTFPlayer *pPlayer)
+CBaseEntity *CTFWeaponBaseGun::FireGrenade( CTFPlayer *pPlayer )
 {
 	PlayWeaponShootSound();
 
 #ifdef GAME_DLL
 
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors(pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp);
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
 	// Create grenades here!!
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
 	vecSrc += vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
 
-	Vector vecVelocity = (vecForward * GetProjectileSpeed()) + (vecUp * 200.0f) + (random->RandomFloat(-10.0f, 10.0f) * vecRight) +
-		(random->RandomFloat(-10.0f, 10.0f) * vecUp);
+	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f) * vecRight ) +
+		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
 
 	float flDamageMult = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT(flDamageMult, mult_dmg);
+	CALL_ATTRIB_HOOK_FLOAT( flDamageMult, mult_dmg );
 
 	char szEntName[256];
-	V_snprintf(szEntName, sizeof(szEntName), "%s_projectile", WeaponIdToClassname(GetWeaponID()));
+	V_snprintf( szEntName, sizeof( szEntName ), "%s_projectile", WeaponIdToClassname( GetWeaponID() ) );
 
-	CTFWeaponBaseGrenadeProj *pProjectile = CTFWeaponBaseGrenadeProj::Create(szEntName, vecSrc, pPlayer->EyeAngles(), vecVelocity,
-		AngularImpulse(600, random->RandomInt(-1200, 1200), 0),
-		pPlayer, GetTFWpnData(), 3.0f, flDamageMult);
+	CTFWeaponBaseGrenadeProj *pProjectile = CTFWeaponBaseGrenadeProj::Create( szEntName, vecSrc, pPlayer->EyeAngles(), vecVelocity,
+		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
+		pPlayer, GetTFWpnData(), 3.0f, flDamageMult );
 
 
-	if (pProjectile)
+	if ( pProjectile )
 	{
-		pProjectile->SetCritical(IsCurrentAttackACrit());
-		pProjectile->SetLauncher(this);
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetLauncher( this );
 	}
 	return pProjectile;
 
@@ -769,8 +837,6 @@ void CTFWeaponBaseGun::DoFireEffects()
 
 	if (pPlayer->IsPlayerClass(TF_CLASS_SNIPER))
 	{
-		//CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-		//if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN )
 		if (pPlayer->IsActiveTFWeapon(TF_WEAPON_COMPOUND_BOW))
 		{
 			bMuzzleFlash = false;

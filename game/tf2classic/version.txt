@@ -1,1 +1,1 @@
-version=TF2V-V3RC
+version=TF2V-V3.4

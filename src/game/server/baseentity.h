@@ -428,7 +428,6 @@ public:
 
 	SolidType_t				GetSolid() const;
 	int			 			GetSolidFlags( void ) const;
-
 	int						GetEFlags() const;
 	void					SetEFlags( int iEFlags );
 	void					AddEFlags( int nEFlagMask );
@@ -1082,7 +1081,7 @@ public:
 
 	// Health accessors.
 	virtual int		GetMaxHealth()  const	{ return m_iMaxHealth; }
-	void	SetMaxHealth( int amt )	{ m_iMaxHealth = amt; }
+	void			SetMaxHealth( int amt )	{ m_iMaxHealth = amt; }
 
 	int		GetHealth() const		{ return m_iHealth; }
 	void	SetHealth( int amt )	{ m_iHealth = amt; }

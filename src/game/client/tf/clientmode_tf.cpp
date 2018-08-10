@@ -46,6 +46,9 @@
 #include "clienteffectprecachesystem.h"
 #include "glow_outline_effect.h"
 #include "cam_thirdperson.h"
+#include "usermessages.h"
+#include "utlvector.h"
+#include "props_shared.h"
 
 #if defined( _X360 )
 #include "tf_clientscoreboard.h"
@@ -135,6 +138,7 @@ ClientModeTFNormal::ClientModeTFNormal()
 	m_pMenuSpyDisguise = NULL;
 	m_pGameUI = NULL;
 	m_pFreezePanel = NULL;
+	MessageHooks();
 
 #if defined( _X360 )
 	m_pScoreboard = NULL;
@@ -422,4 +426,39 @@ int ClientModeTFNormal::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, 
 #endif
 
 	return BaseClass::HandleSpectatorKeyInput( down, keynum, pszCurrentBinding );
+}
+
+// FIXME: This is causing crashes for Linux and I don't know why
+void ClientModeTFNormal::MessageHooks( void )
+{
+	//usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
+}
+
+void __MsgFunc_BreakModel( bf_read &msg )
+{
+	HandleBreakModel( msg, false );
+}
+
+void HandleBreakModel( bf_read &msg, bool bNoAngles )
+{
+	CUtlVector<breakmodel_t> list;
+	int iModelIndex = ( int ) msg.ReadShort();
+	Vector vec3;
+	QAngle vecAngles;
+	BuildGibList( list, iModelIndex, 1.0f, 0.0f );
+
+	msg.ReadBitVec3Coord( vec3 );
+	if ( bNoAngles )
+	{
+		vecAngles = vec3_angle;
+	}
+	else
+	{
+		msg.ReadBitAngles( vecAngles );
+	}
+
+	// Impulse doesn't apply correctly in first person for some reason
+	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), Vector( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0f ) );
+
+	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );
 }

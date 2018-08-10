@@ -51,6 +51,7 @@ public:
 
 	virtual void	Precache( void );
 	virtual void	Spawn( void );
+	virtual void	RemoveThink( void ) { UTIL_Remove( this ); }
 
 	void			SetScorer( CBaseEntity *pScorer );
 
@@ -65,9 +66,21 @@ public:
 	void			FlyThink( void );
 	const char		*GetTrailParticleName( void );
 	void			CreateTrail( void );
+	void			BreakArrow( void );
 
 	virtual void	UpdateOnRemove( void );
+
+	// Arrow attachment functions
+	bool			PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimating *pAnim );
+	void			GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnimating *pAnim, Vector &vecOrigin, QAngle &vecAngles, int &bone, int &iPhysicsBone );
+	void			CheckRagdollPinned( Vector &, Vector &, int, int, CBaseEntity *, int, int );
+
 #else
+	virtual void	ClientThink( void );
+	virtual void	OnDataChanged( DataUpdateType_t updateType );
+	virtual void	Light( void );
+
+	virtual void    NotifyBoneAttached( C_BaseAnimating* attachTarget );
 
 #endif
 
@@ -80,9 +93,12 @@ private:
 
 	EHANDLE m_hSpriteTrail;
 #else
+	bool		bEmitting;
 	bool		m_bCritical;
 	bool		m_bFlame;
 	int			m_iType;
+	float		m_flDieTime;
+	bool		m_bAttachment;
 #endif
 };
 

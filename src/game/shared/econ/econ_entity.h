@@ -64,6 +64,8 @@ public:
 
 	void UpdatePlayerModelToClass( void );
 
+	virtual void UpdatePlayerBodygroups( void );
+
 	virtual void UpdateOnRemove( void );
 
 protected:
@@ -71,7 +73,7 @@ protected:
 	CEconItemView m_Item;
 
 private:
-	CAttributeContainer m_AttributeManager;
+	CNetworkVarEmbedded( CAttributeContainer, m_AttributeManager );
 };
 
 #endif

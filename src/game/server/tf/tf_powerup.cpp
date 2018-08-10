@@ -135,6 +135,12 @@ bool CTFPowerup::ValidTouch( CBasePlayer *pPlayer )
 		return false;
 	}
 
+	// Don't collide with the owner for the first portion of our life if we're a lunchbox item
+	if ( m_flNextCollideTime > gpGlobals->curtime && pPlayer == GetOwnerEntity() )
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -144,6 +150,26 @@ bool CTFPowerup::ValidTouch( CBasePlayer *pPlayer )
 bool CTFPowerup::MyTouch( CBasePlayer *pPlayer )
 {
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPowerup::DropSingleInstance( const Vector &vecVelocity, CBaseCombatCharacter *pOwner, float flUnknown, float flRestTime )
+{
+	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
+	SetAbsVelocity( vecVelocity );
+	SetSolid( SOLID_BBOX );
+
+	if ( flRestTime != 0.0f )
+		ActivateWhenAtRest( flRestTime );
+
+	AddSpawnFlags( SF_NORESPAWN );
+
+	SetOwnerEntity( pOwner );
+
+	// Remove after 30 seconds.
+	SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 30.0f, "PowerupRemoveThink" );
 }
 
 //-----------------------------------------------------------------------------

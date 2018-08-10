@@ -14,6 +14,7 @@
 #include "c_baseobject.h"
 #include "ObjectControlPanel.h"
 #include "c_tf_projectile_rocket.h"
+#include "c_tf_player.h"
 
 class C_MuzzleFlashModel;
 
@@ -27,6 +28,7 @@ public:
 	DECLARE_CLIENTCLASS();
 
 	C_ObjectSentrygun();
+	~C_ObjectSentrygun();
 
 	void GetAmmoCount( int &iShells, int &iMaxShells, int &iRockets, int & iMaxRockets );
 
@@ -42,6 +44,8 @@ public:
 
 	int GetKills( void ) { return m_iKills; }
 	int GetAssists( void ) { return m_iAssists; }
+	int GetState( void ) { return m_iState; }
+
 
 	virtual void GetShadowRenderBounds( Vector &mins, Vector &maxs, ShadowType_t shadowType );
 
@@ -54,6 +58,24 @@ public:
 
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
+
+
+	// Laser methods
+	void				CreateLaserBeam( void );
+	virtual void		ClientThink( void );
+	virtual void		UpdateOnRemove( void );
+
+	void DestroyLaserBeam( void ) 
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserBeam );
+		m_pLaserBeam = NULL;
+	}
+
+	void DestroyShield( void )
+	{
+		m_pShield->Remove();
+		m_pShield = NULL;
+	}
 
 	// ITargetIDProvidesHint
 public:
@@ -73,7 +95,12 @@ private:
 	int m_iKills;
 	int m_iAssists;
 
+	// Wrangler
+	Vector m_vecEnd;
+
+	C_BaseAnimating	   *m_pShield;
 	CNewParticleEffect *m_pDamageEffects;
+	CNewParticleEffect *m_pLaserBeam;
 
 	int m_iPlacementBodygroup;
 

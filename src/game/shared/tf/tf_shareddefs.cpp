@@ -63,7 +63,7 @@ const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeath
 
 void PrecacheTeamParticles(const char *pszFormat, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/)
 {
-	for (int i = FIRST_GAME_TEAM; i < TF_TEAM_COUNT; i++)
+	for (int i = FIRST_GAME_TEAM; i < TEAM_COUNT_NORMAL; i++)
 	{
 		const char *pszParticle = ConstructTeamParticle(pszFormat, i, false, pNames);
 		PrecacheParticleSystem(pszParticle);
@@ -355,13 +355,13 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 
 	"tf_weapon_revolver",			// Base weapon to translate
 	NULL,
-	"tf_weapon_revolver",			// Scout
-	"tf_weapon_revolver",			// Sniper
-	"tf_weapon_revolver",			// Soldier
-	"tf_weapon_revolver",			// Demoman
-	"tf_weapon_revolver",			// Medic
-	"tf_weapon_revolver",			// Heavy
-	"tf_weapon_revolver",			// Pyro
+	"tf_weapon_revolver_secondary", // Scout
+	"tf_weapon_revolver_secondary",	// Sniper
+	"tf_weapon_revolver_secondary",	// Soldier
+	"tf_weapon_revolver_secondary",	// Demoman
+	"tf_weapon_revolver_secondary",	// Medic
+	"tf_weapon_revolver_secondary",	// Heavy
+	"tf_weapon_revolver_secondary",	// Pyro
 	"tf_weapon_revolver",			// Spy
 	"tf_weapon_revolver_secondary",	// Engineer
 	"tf_weapon_revolver",			// Civilian
@@ -429,7 +429,13 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_INVIS",
 	"TF_WEAPON_FLAG", // ADD NEW WEAPONS AFTER THIS
 	"TF_WEAPON_FLAREGUN",
-	"TF_WEAPON_COMPOUND_BOW", //TF2C WEAPONS AFTER THIS
+	"TF_WEAPON_LUNCHBOX",
+	"TF_WEAPON_LUNCHBOX_DRINK",
+	"TF_WEAPON_COMPOUND_BOW",
+	"TF_WEAPON_JAR", 
+	"TF_WEAPON_LASER_POINTER", 
+	"TF_WEAPON_HANDGUN_SCOUT_PRIMARY",
+	"TF_WEAPON_STICKBOMB", // TF2C WEAPONS AFTER THIS
 	"TF_WEAPON_HUNTERRIFLE",
 	"TF_WEAPON_UMBRELLA",
 	"TF_WEAPON_HAMMERFISTS",
@@ -497,7 +503,13 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC,	// TF_WEAPON_INVIS
 	DMG_GENERIC,	// TF_WEAPON_FLAG // ADD NEW WEAPONS AFTER THIS
 	DMG_IGNITE,		// TF_WEAPON_FLAREGUN,
+	DMG_GENERIC,	// TF_WEAPON_LUNCHBOX,
+	DMG_GENERIC,	// TF_WEAPON_LUNCHBOX_DRINK,
 	DMG_BULLET,		// TF_WEAPON_COMPOUND_BOW,
+	DMG_GENERIC,	// TF_WEAPON_JAR,
+	DMG_GENERIC,	// TF_WEAPON_LASER_POINTER,
+	DMG_BUCKSHOT | DMG_USEDISTANCEMOD,	// TF_WEAPON_HANDGUN_SCOUT_PRIMARY,
+	DMG_CLUB,	// TF_WEAPON_STICKBOMB,
 
 	//TF2C WEAPONS AFTER THIS
 	DMG_BULLET | DMG_USE_HITLOCATIONS,//TF_WEAPON_HUNTERRIFLE,
@@ -1024,13 +1036,6 @@ float g_flDispenserAmmoRates[] =
 	0.2,
 	0.3,
 	0.4
-};
-
-float g_flDispenserCloakRates[] =
-{
-	5.0,
-	10.0,
-	15.0
 };
 
 float g_flDispenserHealRates[] =

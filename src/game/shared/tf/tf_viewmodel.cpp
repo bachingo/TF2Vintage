@@ -509,14 +509,14 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 		return;
 
 	C_TFViewModel *pVM;
-	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>(pEnt);
-	if (pVMAddon)
+	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEnt );
+	if ( pVMAddon )
 	{
-		pVM = dynamic_cast<C_TFViewModel *>(pVMAddon->m_viewmodel.Get());
+		pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_viewmodel.Get() );
 	}
 	else
 	{
-		pVM = dynamic_cast<C_TFViewModel *>(pEnt);
+		pVM = dynamic_cast< C_TFViewModel * >( pEnt );
 	}
 
 	if ( !pVM )
@@ -538,10 +538,18 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 	// remap from 0.22 to 0.5
 	// but drop to 0.0 if we're not invis at all
 	float flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
-		0.0 :
-		RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
+	0.0 :
+	RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
 
-	m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+	if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+	{
+		// Hacky fix to make viewmodel blink more obvious
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis - 0.1 );
+	}
+	else
+	{
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+	}
 }
 
 IMaterial *CViewModelInvisProxy::GetMaterial()

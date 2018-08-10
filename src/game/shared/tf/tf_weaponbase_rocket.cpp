@@ -6,6 +6,7 @@
 #include "cbase.h"
 #include "tf_weaponbase_rocket.h"
 #include "tf_gamerules.h"
+#include "tf_projectile_arrow.h"
 
 // Server specific.
 #ifdef GAME_DLL
@@ -268,7 +269,9 @@ void CTFBaseRocket::RocketTouch( CBaseEntity *pOther )
 	// Verify a correct "other."
 	Assert( pOther );
 	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
+	{
 		return;
+	}
 
 	// Handle hitting skybox (disappear).
 	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();

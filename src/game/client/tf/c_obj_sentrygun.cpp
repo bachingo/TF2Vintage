@@ -12,6 +12,7 @@
 #include "eventlist.h"
 #include "hintsystem.h"
 #include <vgui_controls/ProgressBar.h>
+#include "tf_weapon_laser_pointer.h"
 #include "igameevents.h"
 
 #include "c_obj_sentrygun.h"
@@ -36,6 +37,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_ObjectSentrygun, DT_ObjectSentrygun, CObjectSentrygu
 	RecvPropInt( RECVINFO( m_iAmmoShells ) ),
 	RecvPropInt( RECVINFO( m_iAmmoRockets ) ),
 	RecvPropInt( RECVINFO( m_iState ) ),
+	RecvPropVector( RECVINFO( m_vecEnd ) ),
 	RecvPropDataTable( "SentrygunLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_SentrygunLocalData ) ),
 END_RECV_TABLE()
 
@@ -45,8 +47,17 @@ END_RECV_TABLE()
 C_ObjectSentrygun::C_ObjectSentrygun()
 {
 	m_pDamageEffects = NULL;
+	m_pLaserBeam = NULL;
 	m_iOldUpgradeLevel = 0;
 	m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_1;
+}
+
+C_ObjectSentrygun::~C_ObjectSentrygun() 
+{ 
+	if ( m_pLaserBeam )
+			DestroyLaserBeam();
+	if ( m_pShield )
+			DestroyShield();
 }
 
 void C_ObjectSentrygun::GetAmmoCount( int &iShells, int &iMaxShells, int &iRockets, int & iMaxRockets )
@@ -369,6 +380,11 @@ CStudioHdr *C_ObjectSentrygun::OnNewModel( void )
 
 	m_iPlacementBodygroup = FindBodygroupByName( "sentry1_range" );
 
+	Msg("Pre NEXTCLIENTTHINK\n");
+	// Start thinking on the next frame
+	SetNextClientThink( gpGlobals->frametime + 1 );
+	Msg("Post NEXTCLIENTTHINK\n");
+
 	return hdr;
 }
 
@@ -458,4 +474,67 @@ void C_ObjectSentrygun::DebugDamageParticles( void )
 
 	// print all particles owned by particleprop
 	ParticleProp()->DebugPrintEffects();
+}
+
+void C_ObjectSentrygun::CreateLaserBeam( void ) 
+{
+	Vector vecColor;
+
+	// Don't bother creating a new shield if one already exists
+	if ( !m_pShield )
+	{
+		m_pShield = new C_BaseAnimating();
+		m_pShield->SetModel( "models/buildables/sentry_shield.mdl");
+		
+		if ( m_iUpgradeLevel == 3)
+		{
+			// Slight offset for lvl 3 sentry
+			m_pShield->SetAbsOrigin( GetAbsOrigin() + Vector( 0, 0, 4 ) );
+		}
+		else
+		{
+			m_pShield->SetAbsOrigin( GetAbsOrigin() );
+		}
+	}
+
+	switch ( GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			m_pShield->m_nSkin = 0;
+			vecColor.Init( 255, -255, -255 );
+			break;
+		case TF_TEAM_BLUE:
+			m_pShield->m_nSkin = 1;
+			vecColor.Init( -255, -255, 255 );
+			break;
+	}
+
+	// create pLaser
+	m_pLaserBeam = ParticleProp()->Create( "laser_sight_beam", PATTACH_POINT_FOLLOW, "laser_origin" );
+	m_pLaserBeam->SetControlPoint( 2, vecColor );
+}
+
+void C_ObjectSentrygun::ClientThink( void ) 
+{
+	if ( m_iState != SENTRY_STATE_WRANGLED )
+	{
+		if ( m_pLaserBeam )
+			DestroyLaserBeam();
+		if ( m_pShield )
+			DestroyShield();
+	}
+	else
+	{
+		if ( !m_pLaserBeam )
+			CreateLaserBeam();
+
+		if ( m_pLaserBeam )
+			m_pLaserBeam->SetControlPoint( 1, m_vecEnd );
+	}
+	SetNextClientThink( gpGlobals->curtime + 0.05f );
+}
+
+void C_ObjectSentrygun::UpdateOnRemove( void )
+{
+	BaseClass::UpdateOnRemove();
 }

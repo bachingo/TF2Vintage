@@ -40,6 +40,8 @@ END_DATADESC()
 #endif
 
 #define TF_GRENADE_LAUNCER_MIN_VEL 1200
+#define TF_GRENADES_SWITCHGROUP 2 
+#define TF_GRENADE_BARREL_SPIN 0.25 // barrel increments by one quarter for each pill
 
 //=============================================================================
 //
@@ -133,6 +135,7 @@ void CTFGrenadeLauncher::PrimaryAttack( void )
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 	
 	LaunchGrenade();
+	SwitchBodyGroups();
 }
 
 //-----------------------------------------------------------------------------
@@ -231,4 +234,29 @@ void CTFGrenadeLauncher::SecondaryAttack( void )
 bool CTFGrenadeLauncher::Reload( void )
 {
 	return BaseClass::Reload();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Change model state to reflect available pills in launcher
+//-----------------------------------------------------------------------------
+void CTFGrenadeLauncher::SwitchBodyGroups( void )
+{
+    int iState = 4;
+
+    iState = m_iClip1;
+
+    SetBodygroup( TF_GRENADES_SWITCHGROUP, iState );
+	SetPoseParameter( "barrel_spin", TF_GRENADE_BARREL_SPIN * iState );
+
+    CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
+
+    if ( pTFPlayer && pTFPlayer->GetActiveWeapon() == this )
+    {
+		CBaseViewModel *vm = pTFPlayer->GetViewModel( m_nViewModelIndex );
+        if ( vm )
+        {
+            vm->SetBodygroup( TF_GRENADES_SWITCHGROUP, iState );
+			vm->SetPoseParameter( "barrel_spin", TF_GRENADE_BARREL_SPIN * iState );
+        }
+    }
 }

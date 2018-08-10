@@ -56,6 +56,8 @@ public:
 
 	virtual void UpdateOnRemove( void );
 
+	virtual void FireGameEvent( IGameEvent *event );
+
 	virtual const QAngle& GetRenderAngles();
 	virtual void UpdateClientSideAnimation();
 	virtual void SetDormant( bool bDormant );
@@ -77,7 +79,7 @@ public:
 	virtual void GetToolRecordingState( KeyValues *msg );
 
 	CTFWeaponBase *GetActiveTFWeapon( void ) const;
-	bool		 IsActiveTFWeapon(int iWeaponID);
+	bool		 IsActiveTFWeapon( int iWeaponID );
 
 	virtual void Simulate( void );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
@@ -227,6 +229,8 @@ public:
 	bool	DoClassSpecialSkill( void );
 	bool	CanGoInvisible( void );
 
+	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
+
 	virtual CAttributeManager *GetAttributeManager() { return &m_AttributeManager; }
 	virtual CAttributeContainer *GetAttributeContainer() { return NULL; }
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
@@ -258,6 +262,8 @@ public:
 	bool ShouldShowNemesisIcon();
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
+
+	void UpdateOverhealEffect( void );
 
 protected:
 
@@ -305,6 +311,9 @@ private:
 	int					m_iOldHealth;
 
 	CNetworkVar( int, m_iPlayerModelIndex );
+
+	// blinking
+	//CountdownTimer m_blinkTimer;
 
 	// Look At
 	/*
@@ -361,6 +370,8 @@ public:
 
 	CMaterialReference	m_InvulnerableMaterial;
 
+	// Overheal
+	CNewParticleEffect *m_pOverhealEffect;
 
 	// Burning
 	CSoundPatch			*m_pBurningSound;

@@ -30,13 +30,6 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE(CBaseTeamObjectiveResource, DT_BaseTeamObjective
 	SendPropBool( SENDINFO(m_bControlPointsReset) ),
 	SendPropInt( SENDINFO(m_iUpdateCapHudParity), CAPHUD_PARITY_BITS, SPROP_UNSIGNED ),
 
-	// escort data
-	SendPropArray3(SENDINFO_ARRAY3(m_iTrainSpeedLevel), SendPropInt(SENDINFO_ARRAY(m_iTrainSpeedLevel), 4) ),
-	SendPropArray3(SENDINFO_ARRAY3(m_nNumCappers), SendPropInt(SENDINFO_ARRAY(m_nNumCappers) ) ),
-	SendPropArray3(SENDINFO_ARRAY3(m_flTotalProgress), SendPropFloat(SENDINFO_ARRAY(m_flTotalProgress), 11, 0, 0.0f, 1.0f ) ),
-	SendPropArray3(SENDINFO_ARRAY3(m_flRecedeTime), SendPropFloat(SENDINFO_ARRAY(m_flRecedeTime) ) ),
-
-
 	// data variables
 	SendPropArray( SendPropVector( SENDINFO_ARRAY(m_vCPPositions), -1, SPROP_COORD), m_vCPPositions ),
 	SendPropArray3( SENDINFO_ARRAY3(m_bCPIsVisible), SendPropInt( SENDINFO_ARRAY(m_bCPIsVisible), 1, SPROP_UNSIGNED ) ),
@@ -113,10 +106,6 @@ BEGIN_DATADESC( CBaseTeamObjectiveResource )
 	DEFINE_ARRAY( m_bTrackAlarm, FIELD_BOOLEAN, TEAM_TRAIN_MAX_TEAMS ),
 	DEFINE_ARRAY( m_flUnlockTimes, FIELD_FLOAT,  MAX_CONTROL_POINTS  ),
 	DEFINE_ARRAY( m_flCPTimerTimes, FIELD_FLOAT,  MAX_CONTROL_POINTS  ),
-	DEFINE_ARRAY(m_flTotalProgress, FIELD_FLOAT,  TEAM_TRAIN_MAX_TEAMS),
-	DEFINE_ARRAY(m_iTrainSpeedLevel, FIELD_INTEGER,  TEAM_TRAIN_MAX_TEAMS),
-	DEFINE_ARRAY(m_nNumCappers, FIELD_INTEGER,  TEAM_TRAIN_MAX_TEAMS),
-	DEFINE_ARRAY(m_flRecedeTime, FIELD_FLOAT, TEAM_TRAIN_MAX_TEAMS),
 	DEFINE_THINKFUNC( ObjectiveThink ),
 END_DATADESC()
 
@@ -150,8 +139,6 @@ CBaseTeamObjectiveResource::~CBaseTeamObjectiveResource()
 void CBaseTeamObjectiveResource::Spawn( void )
 {
 	m_iNumControlPoints = 0;
-	m_bWaitingToRecede = false;
-	m_bCapBlocked = false;
 
 	// If you hit this, you've got too many teams for the control point system to handle.
 	Assert( GetNumberOfTeams() < MAX_CONTROL_POINT_TEAMS );
@@ -162,7 +149,6 @@ void CBaseTeamObjectiveResource::Spawn( void )
 		m_vCPPositions.Set( i, vec3_origin );
 		m_bCPIsVisible.Set( i, true );
 		m_bBlocked.Set( i, false );
-
 
 		// state variables
 		m_iOwner.Set( i, TEAM_UNASSIGNED );
@@ -205,10 +191,6 @@ void CBaseTeamObjectiveResource::Spawn( void )
 	{
 		m_nNumNodeHillData.Set( i, 0 );
 		m_bTrackAlarm.Set( i, false );
-		m_flTotalProgress.Set(i, 0);
-		m_iTrainSpeedLevel.Set(i, 0);
-		m_nNumCappers.Set(i, 0);
-		m_flRecedeTime.Set(i, 0);
 
 		int iStartingIndex = i * nNumEntriesPerTeam;
 		for ( int j = 0 ; j < nNumEntriesPerTeam ; j++ )

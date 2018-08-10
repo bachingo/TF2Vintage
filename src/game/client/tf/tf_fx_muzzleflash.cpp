@@ -163,6 +163,7 @@ void TF_3rdPersonMuzzleFlashCallback_SentryGun( const CEffectData &data )
 	int iUpgradeLevel	= data.m_fFlags;
 
 	C_BaseEntity *pEnt = data.GetEntity();
+
 	if ( pEnt && !pEnt->IsDormant() )
 	{
 		// The created entity kills itself

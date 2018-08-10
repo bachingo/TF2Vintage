@@ -120,7 +120,7 @@ bool CTFDroppedWeapon::MyTouch( CBasePlayer *pPlayer )
 
 		if ( pWeapon )
 		{
-			if ( pWeapon->GetItemID() == m_Item.GetItemDefIndex() )
+			if ( pTFPlayer->ItemsMatch( pWeapon->GetItem(), &m_Item, pWeapon ) )
 			{
 				// Give however many ammo we have
 				if ( pTFPlayer->GiveAmmo( m_iAmmo, iAmmoType, true, TF_AMMO_SOURCE_AMMOPACK ) )

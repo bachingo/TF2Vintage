@@ -11,11 +11,15 @@
 #include "tf_powerup.h"
 #else
 #include "c_tf_player.h"
+#include "c_tf_viewmodeladdon.h"
 #endif
 
 CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 
 #define TF_SANDVICH_PLATE_MODEL "models/items/plate.mdl"
+#define SANDVICH_BODYGROUP_BITE 0
+#define SANDVICH_STATE_BITTEN 1
+#define SANDVICH_STATE_NORMAL 0
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -24,11 +28,15 @@ void CTFLunchBox::PrimaryAttack( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
+	{
 		return;
+	}
 
 #ifdef GAME_DLL
 	pOwner->Taunt();
 #endif
+	m_bBitten = true;
+	SwitchBodyGroups();
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 }
@@ -65,6 +73,9 @@ void CTFLunchBox::SecondaryAttack( void )
 	if ( !pPowerup )
 		return;
 
+	// Don't collide with the player owner for the first portion of its life
+	pPowerup->m_flNextCollideTime = gpGlobals->curtime + 0.5f;
+
 	pPowerup->SetModel( TF_SANDVICH_PLATE_MODEL );
 	UTIL_SetSize( pPowerup, -Vector( 17, 17, 10 ), Vector( 17, 17, 10 ) );
 
@@ -86,6 +97,45 @@ void CTFLunchBox::SecondaryAttack( void )
 	StartEffectBarRegen();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLunchBox::DepleteAmmo( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+	{
+		return;
+	}
+
+	if ( pOwner->HealthFraction() >= 1.0f )
+	{
+		return;
+	}
+
+	// Switch away from it immediately, don't want it to stick around.
+	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+	pOwner->SwitchToNextBestWeapon( this );
+
+	StartEffectBarRegen();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update the sandvich bite effects
+//-----------------------------------------------------------------------------
+void CTFLunchBox::SwitchBodyGroups( void )
+{
+#ifdef GAME_DLL
+#else
+	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+	if ( pAttach )
+	{
+		int iState = m_bBitten ? SANDVICH_STATE_BITTEN : SANDVICH_STATE_NORMAL;
+		pAttach->SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
+	}
+#endif
+}
+
 #ifdef GAME_DLL
 
 //-----------------------------------------------------------------------------
@@ -102,14 +152,17 @@ void CTFLunchBox::Precache( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLunchBox::ApplyBiteEffects( void )
+void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 {
-	// Heal 30 HP per second for a total 120 HP.
+	if ( !bHurt )
+		return;
+
+	// Heal 25% of the player's max health per second for a total of 100%.
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
 	if ( pOwner )
 	{
-		pOwner->TakeHealth( 30, DMG_GENERIC );
+		pOwner->TakeHealth( ( GetTFPlayerOwner()->GetMaxHealth() ) / 4, DMG_GENERIC );
 	}
 }
 

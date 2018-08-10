@@ -86,6 +86,7 @@ public:
 	static CTFPlayer	*Instance( int iEnt );
 
 	virtual void		Spawn();
+	virtual int			ShouldTransmit( const CCheckTransmitInfo *pInfo );
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
@@ -162,9 +163,6 @@ public:
 	void				DropFlag( void );
 	void				TFWeaponRemove( int iWeaponID );
 	bool				TFWeaponDrop( CTFWeaponBase *pWeapon, bool bThrowForward );
-
-	void			setAirblastState(bool bAirblastState) { m_bIsAirblast = bAirblastState; }
-	void			setUnmoveable(bool bMoveable) { m_bIsUnmoveable = bMoveable; }
 
 	// Class.
 	CTFPlayerClass		*GetPlayerClass( void ) 					{ return &m_PlayerClass; }
@@ -288,7 +286,7 @@ public:
 
 	// Death & Ragdolls.
 	virtual void CreateRagdollEntity( void );
-	void CreateRagdollEntity( bool bGib, bool bBurning, int iDamageCustom );
+	void CreateRagdollEntity( bool bGib, bool bBurning, float flInvisLevel, int iDamageCustom );
 	void DestroyRagdoll( void );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );	// networked entity handle 
 	virtual bool ShouldGib( const CTakeDamageInfo &info );
@@ -297,6 +295,9 @@ public:
 	void DropAmmoPack( void );
 	void DropWeapon( CTFWeaponBase *pWeapon, bool bKilled = false );
 	void DropFakeWeapon( CTFWeaponBase *pWeapon );
+
+	// Dropping Sandvich
+	void DropLunchbox( void );
 
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );
@@ -341,6 +342,8 @@ public:
 
 	void	UpdateExpression( void );
 	void	ClearExpression( void );
+
+	void	AddPhaseEffects( void );
 
 	virtual IResponseSystem *GetResponseSystem();
 	virtual bool			SpeakConceptIfAllowed( int iConcept, const char *modifiers = NULL, char *pszOutResponseChosen = NULL, size_t bufsize = 0, IRecipientFilter *filter = NULL );
@@ -433,7 +436,6 @@ public:
 
 	// Taunts.
 	void				Taunt( void );
-	void				Stun( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }
 	void				DoTauntAttack( void );
 	void				ClearTauntAttack( void );
@@ -471,8 +473,6 @@ public:
 private:
 
 	int					GetAutoTeam( void );
-	bool				m_bIsAirblast;
-	bool				m_bIsUnmoveable;
 	float				m_flStunTime;
 
 	// Creation/Destruction.
