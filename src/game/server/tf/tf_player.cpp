@@ -7578,6 +7578,7 @@ void CTFPlayer::Taunt( void )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 0.35;
 			m_iTauntAttack = TF_TAUNT_OKTOBERFEST;
+			DispatchParticleEffect( ConstructTeamParticle( "healhuff_%s", GetTeamNumber(), false, g_aTeamNamesShort ), PATTACH_POINT_FOLLOW, this, "eyes" );
 		}
 	}
 
