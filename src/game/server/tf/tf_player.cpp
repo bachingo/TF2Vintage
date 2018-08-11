@@ -7498,6 +7498,7 @@ void CTFPlayer::Taunt( void )
 		// Get the duration of the scene.
 		float flDuration = GetSceneDuration( szResponse ) + 0.2f;
 
+		// Crappy default taunt for randomizer
 		if ( tf2c_random_weapons.GetBool() && flDuration == 0.2f )
 		{
 			flDuration += 3.0f;
@@ -7568,6 +7569,11 @@ void CTFPlayer::Taunt( void )
 			m_flTauntAttackTime = gpGlobals->curtime + 2.2f;
 			m_iTauntAttack = TF_TAUNT_MEDIC_STUN;
 		}
+		else if ( Q_strnicmp( szResponse, "scenes/player/scout/low/taunt05_v1.vcd", 32 ) == 0 )
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 4.03f;
+			m_iTauntAttack = TF_TAUNT_SCOUT;
+		}
 		else if (  Q_strnicmp( szResponse, "scenes/player/medic/low/taunt06.vcd", 32 ) == 0 )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 0.35;
@@ -7592,6 +7598,7 @@ void CTFPlayer::DoTauntAttack( void )
 
 	switch ( iTauntType )
 	{
+		case TF_TAUNT_SCOUT:
 		case TF_TAUNT_PYRO:
 		case TF_TAUNT_SPY1:
 		case TF_TAUNT_SPY2:
@@ -7611,6 +7618,12 @@ void CTFPlayer::DoTauntAttack( void )
 
 			switch ( iTauntType )
 			{
+			case TF_TAUNT_SCOUT:
+				vecForce *= 130000.0f;
+				flDamage = 500.0f;
+				nDamageType = DMG_CLUB;
+				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_GRANDSLAM;
+				break;
 			case TF_TAUNT_PYRO:
 				vecForce *= 25000.0f;
 				flDamage = 500.0f;
@@ -7645,6 +7658,7 @@ void CTFPlayer::DoTauntAttack( void )
 
 			CBaseEntity *pList[256];
 
+			bool bHomerun = false;
 			int count = UTIL_EntitiesInBox( pList, 256, mins, maxs, FL_CLIENT|FL_OBJECT );
 
 			if ( tf_debug_damage.GetBool() )
@@ -7659,12 +7673,22 @@ void CTFPlayer::DoTauntAttack( void )
 				if ( pEntity == this || !pEntity->IsAlive() || InSameTeam( pEntity ) || !FVisible( pEntity, MASK_SOLID ) )
 					continue;
 
+				// Only play the stun sound one time
+				if ( iTauntType == TF_TAUNT_SCOUT && !bHomerun )
+				{
+					CTFPlayer *pVictim = ToTFPlayer( pEntity );
+					if ( pVictim )
+					{
+						bHomerun = true;
+						pVictim->PlayStunSound( this, "TFPlayer.StunImpactRange" );
+					}
+				}
+
 				Vector vecDamagePos = WorldSpaceCenter();
 				vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
 
 				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, nDamageType, iDamageCustom );
 				pEntity->TakeDamage( info );
-				break;
 			}
 
 			break;
@@ -8446,6 +8470,20 @@ int	CTFPlayer::CalculateTeamBalanceScore( void )
 	}
 
 	return iScore;
+}
+
+// ----------------------------------------------------------------------------
+// Purpose: Play the stun sound to nearby players of the victim and the attacker
+//-----------------------------------------------------------------------------
+void CTFPlayer::PlayStunSound( CTFPlayer *pOther, const char *pszStunSound )
+{
+		CRecipientFilter filter;
+		CSingleUserRecipientFilter filterAttacker( this );
+		filter.AddRecipientsByPAS( GetAbsOrigin() );
+		filter.RemoveRecipient( this );
+
+		EmitSound( filter, pOther->entindex(), pszStunSound );
+		EmitSound( filterAttacker, this->entindex(), pszStunSound );
 }
 
 //-----------------------------------------------------------------------------

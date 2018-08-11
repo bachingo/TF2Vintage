@@ -66,8 +66,6 @@ public:
 
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
 
-	void			PlayStunSound( CTFPlayer *pVictim, CTFPlayer *pAttacker, const char *pszStunSound );
-
 #else
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	CreateTrails( void );

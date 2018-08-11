@@ -3359,6 +3359,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	case TF_DMG_CUSTOM_SUICIDE:
 		pszCustomKill = "world";
 		break;
+	case TF_DMG_CUSTOM_TAUNTATK_GRANDSLAM:
+		pszCustomKill = "taunt_scout";
+		break;
 	case TF_DMG_CUSTOM_TAUNTATK_HADOUKEN:
 		pszCustomKill = "taunt_pyro";
 		break;
@@ -3376,6 +3379,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		break;
 	case TF_DMG_CUSTOM_STICKBOMB:
 		pszCustomKill = "ullapool_caber_explosion";
+		break;
+	case TF_DMG_CUSTOM_BASEBALL:
+		pszCustomKill = "ball";
 		break;
 	case TF_DMG_TELEFRAG:
 		pszCustomKill = "telefrag";

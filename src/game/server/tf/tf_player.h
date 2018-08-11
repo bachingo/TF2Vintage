@@ -470,6 +470,9 @@ public:
 
 	bool CalculateAmmoPackPositionAndAngles( CTFWeaponBase *pWeapon, Vector &vecOrigin, QAngle &vecAngles );
 
+	// Stun
+	void				PlayStunSound( CTFPlayer *pOther, const char *pszStunSound );
+
 private:
 
 	int					GetAutoTeam( void );

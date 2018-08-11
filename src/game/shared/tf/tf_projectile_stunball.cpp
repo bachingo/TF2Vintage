@@ -137,7 +137,7 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		VectorNormalize( vecDir );
 
 		// Do damage.
-		CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType() );
+		CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BASEBALL );
 		CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, GetAbsOrigin() );
 		info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
 		pPlayer->DispatchTraceAttack( info, vecDir, pTrace );
@@ -152,14 +152,14 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 			{
 				// Cap the maximum stun time to 7 seconds
 				flAirTime = 1.0f;
-				PlayStunSound( pPlayer, pAttacker, "TFPlayer.StunImpactRange" );
+				pPlayer->PlayStunSound( pPlayer, "TFPlayer.StunImpactRange" );
 
 				// 2 points for moonshots
 				iBonus++;
 			}
 			else
 			{
-				PlayStunSound( pPlayer, pAttacker, "TFPlayer.StunImpact" );
+				pPlayer->PlayStunSound( pPlayer, "TFPlayer.StunImpact" );
 			}
 
 			pPlayer->m_Shared.AddCond( TF_COND_HALF_STUN, 7.0f * ( flAirTime ) );
@@ -388,20 +388,6 @@ void CTFStunBall::CreateTrail( void )
 
 		m_hSpriteTrail.Set( pTrail );
 	}
-}
-
-// ----------------------------------------------------------------------------
-// Purpose: Play the stun sound to nearby players of the recipient and the attacker
-//-----------------------------------------------------------------------------
-void CTFStunBall::PlayStunSound( CTFPlayer *pVictim, CTFPlayer *pAttacker, const char *pszStunSound )
-{
-		CRecipientFilter filter;
-		CSingleUserRecipientFilter filterAttacker( pAttacker );
-		filter.AddRecipientsByPAS( GetAbsOrigin() );
-		filter.RemoveRecipient( pAttacker );
-
-		EmitSound( filter, pVictim->entindex(), pszStunSound );
-		EmitSound( filterAttacker, pAttacker->entindex(), pszStunSound );
 }
 #else
 //-----------------------------------------------------------------------------
