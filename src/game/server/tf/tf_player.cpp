@@ -1166,9 +1166,16 @@ void CTFPlayer::Regenerate( void )
 		m_Shared.RemoveCond( TF_COND_SLOWED );
 	}
 
+	// Remove jarate condition
 	if ( m_Shared.InCond( TF_COND_URINE ) )
 	{
 		m_Shared.RemoveCond( TF_COND_URINE );
+	}
+
+	// Remove bonk! atomic punch phase
+	if ( m_Shared.InCond( TF_COND_PHASE ) )
+	{
+		m_Shared.RemoveCond( TF_COND_PHASE );
 	}
 
 	//Fill Spy cloak
