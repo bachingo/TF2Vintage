@@ -440,6 +440,9 @@ private:
 	// Have we been to resupply recently?
 	CNetworkVar( bool, m_bRegenerated );
 
+	// Arena spectators
+	CNetworkVar( bool, m_bArenaSpectator );
+
 #ifdef GAME_DLL
 
 	float	m_flNextCritUpdate;

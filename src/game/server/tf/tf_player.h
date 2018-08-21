@@ -171,7 +171,7 @@ public:
 
 	// Team.
 	void				ForceChangeTeam( int iTeamNum );
-	virtual void		ChangeTeam( int iTeamNum );
+	virtual void		ChangeTeam( int iTeamNum, bool bAutoTeam = false, bool bSilent = false );
 
 	// mp_fadetoblack
 	void				HandleFadeToBlack( void );
@@ -472,6 +472,15 @@ public:
 
 	// Stun
 	void				PlayStunSound( CTFPlayer *pOther, const char *pszStunSound );
+
+	// Arena
+	float	m_flArenaQueueTime;
+	bool	m_bInArenaQueue;
+
+	// Not really sure why this is needed in Arena
+	bool	m_bIgnoreLastAction;
+
+	bool				IsArenaSpectator( void ) { return m_Shared.m_bArenaSpectator; }
 
 private:
 

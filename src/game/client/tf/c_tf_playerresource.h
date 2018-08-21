@@ -29,6 +29,7 @@ public:
 	int GetPlayerClass( int iIndex ) { return GetArrayValue( iIndex, m_iPlayerClass, TF_CLASS_UNDEFINED ); }
 	Color GetPlayerColor(int iIndex);
 	int GetKillstreak(int iIndex) { return GetArrayValue(iIndex, m_iKillstreak, 0); }
+	bool GetArenaSpectator( int iIndex ) { return m_bArenaSpectator[iIndex]; }
 
 	int GetCountForPlayerClass( int iTeam, int iClass, bool bExcludeLocalPlayer = false );
 	
@@ -41,6 +42,7 @@ protected:
 	int		m_iPlayerClass[MAX_PLAYERS + 1];
 	int		m_iKillstreak[MAX_PLAYERS + 1];
 	Vector	m_iColors[MAX_PLAYERS + 1];
+	bool    m_bArenaSpectator[MAX_PLAYERS + 1];
 };
 
 

@@ -54,9 +54,11 @@ private:
 	void UpdateTeamInfo();
 	void UpdatePlayerList();
 	void UpdateSpectatorList();
+	void UpdateArenaWaitingToPlayList();
 	void UpdatePlayerDetails();
 	void ClearPlayerDetails();
 	bool ShouldShowAsSpectator( int iPlayerIndex );
+	bool ShouldShowAsWaitingToPlay( int iPlayerIndex );
 	bool ShouldShowAsUnassigned( int iPlayerIndex );
 	
 	virtual void FireGameEvent( IGameEvent *event );

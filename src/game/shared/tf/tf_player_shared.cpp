@@ -160,6 +160,7 @@ RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
 RecvPropBool( RECVINFO( m_bCarryingObject ) ),
 RecvPropInt( RECVINFO( m_nTeamTeleporterUsed ) ),
 RecvPropBool( RECVINFO( m_bRegenerated ) ),
+RecvPropBool( RECVINFO( m_bArenaSpectator ) ),
 RecvPropInt( RECVINFO( m_iRespawnParticleID ) ),
 RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 // Spy.
@@ -225,6 +226,7 @@ SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
 SendPropBool( SENDINFO( m_bCarryingObject ) ),
 SendPropInt( SENDINFO( m_nTeamTeleporterUsed ), 3, SPROP_UNSIGNED ),
 SendPropBool( SENDINFO( m_bRegenerated ) ),
+SendPropBool( SENDINFO( m_bArenaSpectator ) ),
 SendPropInt( SENDINFO( m_iRespawnParticleID ), 0, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iMaxHealth ), 10 ),
 // Spy
@@ -254,7 +256,7 @@ END_SEND_TABLE()
 
 CTFPlayerShared::CTFPlayerShared()
 {
-	m_nPlayerState.Set(TF_STATE_WELCOME);
+	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
 	m_bAirDash = false;
 	m_nAirDucked = 0;
@@ -270,24 +272,26 @@ CTFPlayerShared::CTFPlayerShared()
 
 	m_nTeamTeleporterUsed = TEAM_UNASSIGNED;
 
+	m_bArenaSpectator = false;
+
 #ifdef CLIENT_DLL
 	m_iDisguiseWeaponModelIndex = -1;
 	m_pDisguiseWeaponInfo = NULL;
 	m_pCritSound = NULL;
 	m_pCritEffect = NULL;
 #else
-	memset(m_flChargeOffTime, 0, sizeof(m_flChargeOffTime));
-	memset(m_bChargeSounds, 0, sizeof(m_bChargeSounds));
+	memset( m_flChargeOffTime, 0, sizeof( m_flChargeOffTime ) );
+	memset( m_bChargeSounds, 0, sizeof( m_bChargeSounds ) );
 #endif
 }
 
-void CTFPlayerShared::Init(CTFPlayer *pPlayer)
+void CTFPlayerShared::Init( CTFPlayer *pPlayer )
 {
 	m_pOuter = pPlayer;
 
 	m_flNextBurningSound = 0;
 
-	SetJumping(false);
+	SetJumping( false );
 }
 
 //-----------------------------------------------------------------------------

@@ -99,6 +99,9 @@ ConVar tf2c_dm_spawnprotecttime( "tf2c_dm_spawnprotecttime", "5", FCVAR_REPLICAT
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
 
+ConVar tf_arena_force_class( "tf_arena_force_class", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force random classes in arena." );
+ConVar tf_arena_first_blood( "tf_arena_first_blood", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles first blood criticals");
+
 ConVar tf_gamemode_arena( "tf_gamemode_arena", "0" , FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_cp( "tf_gamemode_cp", "0" , FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_ctf( "tf_gamemode_ctf", "0" , FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
@@ -1822,6 +1825,7 @@ void CTFGameRules::SetupOnStalemateStart( void )
 				BroadcastSound(i, "Ambient.Siren");
 			}
 
+			m_flStalemateStartTime = gpGlobals->curtime;
 		}
 		return;
 	}
@@ -1859,6 +1863,8 @@ void CTFGameRules::SetupOnStalemateStart( void )
 
 		pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_SUDDENDEATH_START );
 	}
+
+	m_flStalemateStartTime = gpGlobals->curtime;
 }
 
 //-----------------------------------------------------------------------------
@@ -2464,7 +2470,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 						return;
 				}
 			}
-		}
+		} 
 
 		if ( IsDeathmatch() && CountActivePlayers() > 0 && !g_fGameOver )
 		{
@@ -2473,6 +2479,10 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 			if ( CheckTimeLimit() )
 				return;
+		}
+		else if ( IsInArenaMode() && m_flArenaNotificationSend > 0.0 && gpGlobals->curtime >= m_flArenaNotificationSend )
+		{
+			Arena_SendPlayerNotifications();
 		}
 
 		BaseClass::Think();
@@ -3672,10 +3682,10 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 
 	int iDeathFlags = pTFPlayerVictim->GetDeathFlags();
 
-	if ( IsInArenaMode() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
+	if ( IsInArenaMode() && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
 	{
 		m_bFirstBlood = true;
-		float flElapsedTime = gpGlobals->curtime - m_flRoundStartTime;
+		float flElapsedTime = gpGlobals->curtime - m_flStalemateStartTime;;
 
 		if ( flElapsedTime <= 20.0 )
 		{
@@ -3747,9 +3757,15 @@ void CTFGameRules::ClientDisconnected( edict_t *pClient )
 {
 	// clean up anything they left behind
 	CTFPlayer *pPlayer = ToTFPlayer( GetContainingEntity( pClient ) );
+	const char *pszPlayerName;
+
 	if ( pPlayer )
 	{
 		pPlayer->TeamFortress_ClientDisconnected();
+		pszPlayerName = pPlayer->GetPlayerName();
+
+		// If they're queued up take them out
+		RemovePlayerFromQueue( pPlayer );
 	}
 
 	// are any of the spies disguising as this player?
@@ -3767,6 +3783,9 @@ void CTFGameRules::ClientDisconnected( edict_t *pClient )
 	}
 
 	BaseClass::ClientDisconnected( pClient );
+
+	// Do this last so that the player isn't registered on the team anymore
+	Arena_ClientDisconnect( pPlayer->GetPlayerName() );
 }
 
 // Falling damage stuff.
@@ -4164,14 +4183,87 @@ void CTFGameRules::HandleCTFCaptureBonus( int iTeam )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::Arena_CleanupPlayerQueue( void )
+{
+	int i = 0;
+	CTFPlayer *pTFPlayer = NULL;
+
+	for ( i = 0; i < MAX_PLAYERS; i++ )
+	{
+		pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+		if ( pTFPlayer && pTFPlayer->IsReadyToPlay() && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() && pTFPlayer->GetTeamNumber() != TEAM_SPECTATOR )
+		{
+			RemovePlayerFromQueue( pTFPlayer );
+			pTFPlayer->m_bInArenaQueue = false;
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameRules::Arena_ResetLosersScore( bool bUnknown )
+void CTFGameRules::Arena_ClientDisconnect( const char *pszPlayerName )
 {
-	// TODO: Figure out what bUnknown does
-	if ( bUnknown )
+	int iLightTeam = TEAM_UNASSIGNED, iHeavyTeam = TEAM_UNASSIGNED, iPlayers;
+	CTeam *pLightTeam = NULL, *pHeavyTeam = NULL;
+	CTFPlayer *pTFPlayer = NULL;
+
+	if ( !TFGameRules()->IsInArenaMode() )
+		return;
+
+	if ( IsInWaitingForPlayers() || State_Get() != GR_STATE_PREROUND )
+		return;
+
+	if ( IsInTournamentMode() ||  !AreTeamsUnbalanced( iHeavyTeam, iLightTeam ) )
+		return;
+
+	pHeavyTeam = GetGlobalTeam( iHeavyTeam );
+	pLightTeam = GetGlobalTeam(iLightTeam);
+	if ( pHeavyTeam && pLightTeam  )
+	{
+		iPlayers = pHeavyTeam->GetNumPlayers() - pLightTeam->GetNumPlayers();
+
+		// Are there players waiting to play?
+		if ( m_hArenaQueue.Count() > 0 && iPlayers > 0 )
+		{
+			for( int i = 0; i < iPlayers; i++ )
+			{
+				pTFPlayer = m_hArenaQueue.Head();
+				if ( pTFPlayer && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() )
+				{
+					pTFPlayer->ForceChangeTeam( TF_TEAM_AUTOASSIGN );
+
+					const char *pszTeamName;
+
+					// Figure out what team the player got balanced to
+					if ( pTFPlayer->GetTeam() == pLightTeam )
+						pszTeamName = pLightTeam->GetName();
+					else
+						pszTeamName = pHeavyTeam->GetName();
+					
+					UTIL_ClientPrintAll( HUD_PRINTTALK, "#TF_Arena_ClientDisconnect", pTFPlayer->GetPlayerName(), pszTeamName, pszPlayerName );
+
+					if ( !pTFPlayer->m_bInArenaQueue )
+						pTFPlayer->m_flArenaQueueTime = gpGlobals->curtime;
+
+					RemovePlayerFromQueue( pTFPlayer );
+
+					pTFPlayer->m_bInArenaQueue = false;
+				}
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::Arena_ResetLosersScore( bool bStreakReached )
+{
+	if ( bStreakReached )
 	{
 		for ( int i = 0; i < GetNumberOfTeams(); i++ )
 		{
@@ -4188,7 +4280,7 @@ void CTFGameRules::Arena_ResetLosersScore( bool bUnknown )
 	{
 		for ( int i = 0; i < GetNumberOfTeams(); i++ )
 		{
-			if ( i != GetWinningTeam() && GetWinningTeam() > 1)
+			if ( i != GetWinningTeam() && GetWinningTeam() > TEAM_SPECTATOR )
 			{
 				CTeam *pTeam = GetGlobalTeam( i );
 
@@ -4229,8 +4321,144 @@ void CTFGameRules::Arena_NotifyTeamSizeChange( void )
 //-----------------------------------------------------------------------------
 int CTFGameRules::Arena_PlayersNeededForMatch( void )
 {
-	// stub
-	return 0;
+	int i = 0, j = 0, iReadyToPlay = 0, iNumPlayers = 0, iPlayersNeeded = 0, iMaxTeamSize = 0, iDesiredTeamSize = 0;
+	CTFPlayer *pTFPlayer = NULL, *pTFPlayerToBalance = NULL;
+
+	// 1/3 of the players in a full server spectate
+	iMaxTeamSize = gpGlobals->maxClients;
+	if ( HLTVDirector()->IsActive() )
+		iMaxTeamSize--;
+	iMaxTeamSize = ( iMaxTeamSize / 3.0 ) + 0.5;
+
+	for ( i = 1; i <= MAX_PLAYERS; i++ )
+	{
+		pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+		if ( pTFPlayer && pTFPlayer->IsReadyToPlay() )
+		{
+			iReadyToPlay++;
+		}
+	}
+
+	// **NOTE: live TF2 sets iDesiredTeamSize 
+	// to ( iPlayersNeeded + iReadyToPlay ) / 2
+	// but this isn't working due to overlap with 
+	// the arena queue and IsReadyToPlay()
+
+	iPlayersNeeded = m_hArenaQueue.Count();
+	iDesiredTeamSize = ( iReadyToPlay ) / 2;
+
+	// keep the teams even 
+	if ( iReadyToPlay % 2 != 0 )
+		iPlayersNeeded--;
+
+	if ( iDesiredTeamSize > iMaxTeamSize )
+	{
+		iPlayersNeeded += ( 2 * iMaxTeamSize ) - iReadyToPlay;
+
+		if ( iPlayersNeeded < 0 )
+			iPlayersNeeded = 0;
+	}
+
+	if ( GetWinningTeam() > TEAM_SPECTATOR )
+	{
+		iNumPlayers = GetGlobalTFTeam( GetWinningTeam() )->GetNumPlayers();
+		if ( iNumPlayers <= iMaxTeamSize )
+		{
+			// Is the winning team larger than the desired team size?
+			if ( iNumPlayers <= iDesiredTeamSize )
+				return iPlayersNeeded;
+			iMaxTeamSize = iDesiredTeamSize;
+		}
+	}
+	else
+	{
+		return iPlayersNeeded;
+	}
+	
+	// Keep going until teams are balanced
+	while ( iNumPlayers >= iMaxTeamSize ) 
+	{
+		// Shortest queue time starts very large
+		float flShortestQueueTime = 9999.9f, flTimeQueued = 0.0f;
+
+		for ( j = 1; i < MAX_PLAYERS; i++ )
+		{
+			pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( pTFPlayer && pTFPlayer->GetTeamNumber() == GetWinningTeam() && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() )
+			{
+				flTimeQueued = gpGlobals->curtime - pTFPlayer->m_flArenaQueueTime;
+				if ( flShortestQueueTime > flTimeQueued )
+				{
+					// Save the player who has been on the team for the shortest time
+					flShortestQueueTime = flTimeQueued;
+					pTFPlayerToBalance = pTFPlayer;
+				}
+			}
+		}
+
+		if ( pTFPlayerToBalance )
+		{
+			// Move the player into the front of the queue
+			pTFPlayerToBalance->ForceChangeTeam( TEAM_SPECTATOR );
+
+			pTFPlayerToBalance->m_flArenaQueueTime = gpGlobals->curtime;
+			if ( iPlayersNeeded < iMaxTeamSize )
+				++iPlayersNeeded;
+
+			// Balance the player
+			IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_teambalanced_player" );
+			if ( event )
+			{
+				event->SetInt( "team", GetWinningTeam() );
+				event->SetInt( "player", pTFPlayerToBalance->GetUserID() );
+				gameeventmanager->FireEvent( event );
+			}
+			UTIL_ClientPrintAll( HUD_PRINTTALK, "#game_player_was_team_balanced", UTIL_VarArgs( "%s", pTFPlayerToBalance->GetPlayerName() ) );
+
+			pTFPlayerToBalance = NULL;
+		}
+		iNumPlayers = GetGlobalTFTeam( GetWinningTeam() )->GetNumPlayers();
+	}
+
+	return iPlayersNeeded;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::Arena_PrepareNewPlayerQueue( bool bScramble )
+{
+	int i = 0;
+	CTFPlayer *pTFPlayer = NULL;
+
+	for ( i = 0; i < MAX_PLAYERS; i++ )
+	{
+		pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+
+		// I really don't like how this is formatted
+		if ( pTFPlayer && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() )
+		{
+			if ( GetWinningTeam() > TEAM_SPECTATOR && pTFPlayer->IsReadyToPlay() && ( pTFPlayer->GetTeamNumber() != GetWinningTeam() || bScramble ) )
+			{
+				AddPlayerToQueue( pTFPlayer );
+			}
+		}
+	}
+
+	if ( bScramble )
+		m_hArenaQueue.Sort( ScramblePlayersSort );
+	else
+	    m_hArenaQueue.Sort( SortPlayerSpectatorQueue );
+
+	for ( i = 0; i < m_hArenaQueue.Count(); ++i )
+	{
+		pTFPlayer = m_hArenaQueue.Element( i );
+		if ( pTFPlayer  && pTFPlayer->IsReadyToPlay() )
+		{
+			pTFPlayer->ChangeTeam( TEAM_SPECTATOR );
+			pTFPlayer->m_bInArenaQueue = true;
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -4241,38 +4469,222 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 	if ( !TFGameRules()->IsInArenaMode() )
 		return;
 
-	if ( tf_arena_max_streak.GetInt() > 0 )
+	bool bStreakReached = false;
+	int i = 0, iHeavyCount = 0, iLightCount = 0, iPlayersNeeded = 0, iTeam = TEAM_UNASSIGNED, iActivePlayers = CountActivePlayers();
+	CTFTeam *pTeam = GetGlobalTFTeam( GetWinningTeam() );
+
+	if ( !pTeam )
+		return;
+
+	if ( tf_arena_use_queue.GetBool() )
 	{
-		bool bStreakReached = false;
-		for ( int iTeam = TF_TEAM_RED; iTeam < TF_TEAM_COUNT; iTeam++ )
+		if ( tf_arena_max_streak.GetInt() > 0 && pTeam->GetScore() >= tf_arena_max_streak.GetInt() )
 		{
-			if (TFTeamMgr()->GetTeam(iTeam))
+			bStreakReached = true;
+			IGameEvent *event = gameeventmanager->CreateEvent( "arena_match_maxstreak" );
+			if ( event )
 			{
-				bStreakReached = TFTeamMgr()->GetTeam(iTeam)->GetScore() >= tf_arena_max_streak.GetInt();
-				if ( bStreakReached )
-				{
-					IGameEvent *event = gameeventmanager->CreateEvent("arena_match_maxstreak");
-					if (event)
-					{
-						event->SetInt( "team", iTeam );
-						event->SetInt( "streak", tf_arena_max_streak.GetInt() );
-						gameeventmanager->FireEvent(event);
-					}
-				}
+				event->SetInt( "team", iTeam );
+				event->SetInt( "streak", tf_arena_max_streak.GetInt() );
+				gameeventmanager->FireEvent( event );
 			}
 		}
 
 		if ( bStreakReached )
 		{
-			HandleScrambleTeams();
-			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
+			for ( i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
 				BroadcastSound( i, "Announcer.AM_TeamScrambleRandom" );
+			}			
+		}
+
+		if ( !IsInTournamentMode() )
+		{
+			if ( iActivePlayers > 0 )
+				Arena_ResetLosersScore( bStreakReached );
+			else
+				Arena_ResetLosersScore( true );
+		}
+
+		if ( iActivePlayers <= 0 )
+		{
+			Arena_PrepareNewPlayerQueue( true );
+			State_Transition( GR_STATE_PREGAME );
+		}
+		else
+		{
+			Arena_PrepareNewPlayerQueue( bStreakReached );
+
+			iPlayersNeeded = Arena_PlayersNeededForMatch();
+
+			if ( AreTeamsUnbalanced( iHeavyCount, iLightCount ) && iPlayersNeeded > 0 )
+			{
+				if ( iPlayersNeeded > m_hArenaQueue.Count() )
+					iPlayersNeeded = m_hArenaQueue.Count();
+
+				if ( pTeam )
+				{
+					// Everyone not on the winning team should be in spectate already
+					int iUnknown = pTeam->GetNumPlayers() + iPlayersNeeded;
+
+					iUnknown = ( iUnknown * 0.5 ) - pTeam->GetNumPlayers();
+					iTeam = pTeam->GetTeamNumber();
+
+					if ( iTeam == TEAM_UNASSIGNED )
+						iTeam = TF_TEAM_AUTOASSIGN;
+					
+					for ( i = 0; i < iPlayersNeeded; ++i )
+					{
+						CTFPlayer *pTFPlayer = m_hArenaQueue.Element( i );;
+						if ( i >= iUnknown )
+							iTeam = TF_TEAM_AUTOASSIGN;
+
+						if ( pTFPlayer )
+						{
+							pTFPlayer->ForceChangeTeam( iTeam );
+							if ( !pTFPlayer->m_bInArenaQueue )
+								pTFPlayer->m_flArenaQueueTime = gpGlobals->curtime;
+						}
+					}
+				}
+			}
+			m_flArenaNotificationSend = gpGlobals->curtime + 1.0f;
+			Arena_CleanupPlayerQueue();
+			Arena_NotifyTeamSizeChange();
+		}
+	}
+	else if ( iActivePlayers > 0
+			|| ( GetGlobalTFTeam( TF_TEAM_RED ) && GetGlobalTFTeam( TF_TEAM_RED )->GetNumPlayers() < 1 )
+			|| ( GetGlobalTFTeam( TF_TEAM_BLUE ) && GetGlobalTFTeam( TF_TEAM_BLUE )->GetNumPlayers() < 1 ) )
+	{
+		State_Transition( GR_STATE_PREGAME );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::Arena_SendPlayerNotifications( void )
+{
+	CUtlVector< CTFTeam * > pTeam;
+	pTeam.AddToTail( GetGlobalTFTeam( TF_TEAM_RED ) );
+	pTeam.AddToTail( GetGlobalTFTeam( TF_TEAM_BLUE ) );
+
+	if ( !pTeam[0] || !pTeam[1] )
+		return;
+
+	int i = 0, j = 0, iPlaying = pTeam[0]->GetNumPlayers() + pTeam[1]->GetNumPlayers(), iReady = 0, iQueued;
+	CTFPlayer *pTFPlayer = NULL;
+
+	m_flArenaNotificationSend = 0.0f;
+
+	for ( i = 0; i < MAX_PLAYERS; i++ )
+	{
+		pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+
+		if ( pTFPlayer && pTFPlayer->IsReadyToPlay() && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() )
+		{
+			if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
+			{
+				// Player is in spectator. Send a notification to the hud
+				CRecipientFilter filter;
+				filter.AddRecipient( pTFPlayer );
+				UserMessageBegin( filter, "HudArenaNotify" );
+				WRITE_BYTE( pTFPlayer->entindex() );
+				WRITE_BYTE( 1 );
+				MessageEnd();
+			}
+
+			iReady++;
+		}
+	}
+
+	if ( iPlaying != iReady )
+	{
+		iQueued = iReady - iPlaying;
+		for ( i = 0; i < pTeam.Count(); i++ )
+		{
+			if ( pTeam.Element( i ) )
+			{
+				for ( int j = 0; j < pTeam[i]->GetNumPlayers(); j++ )
+				{
+					pTFPlayer = ToTFPlayer( pTeam[i]->GetPlayer( i ) );
+					if ( pTFPlayer && pTFPlayer->IsReadyToPlay() && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() )
+					{
+						AddPlayerToQueue( pTFPlayer );
+					}
+				}
+			}
+
+			m_hArenaQueue.Sort( SortPlayerSpectatorQueue );
+
+			//TODO: This is not alerting the correct players 
+			// who might sit out the next match
+			for ( j = 0; j <= m_hArenaQueue.Count(); j++ )
+			{
+				if ( j < iQueued )
+				{
+					pTFPlayer = m_hArenaQueue.Element( j );
+
+					if ( !pTFPlayer )
+						continue;
+
+					//Msg("Player Might Have to Sit Out: %s\n", pTFPlayer->GetPlayerName() );
+					// This player might sit out the next game if they lose
+					CRecipientFilter filter;
+					filter.AddRecipient( pTFPlayer );
+					UserMessageBegin( filter, "HudArenaNotify" );
+					WRITE_BYTE( pTFPlayer->entindex() );
+					WRITE_BYTE( 0 );
+					MessageEnd();
+				}
 			}
 		}
 	}
 
-	Arena_NotifyTeamSizeChange();
+	// Clean up the player queue
+	Arena_CleanupPlayerQueue();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::AddPlayerToQueue( CTFPlayer *pPlayer )
+{	
+	if ( !pPlayer )
+		return;
+
+	if ( !pPlayer->IsArenaSpectator() )
+	{
+		// Don't know if this is alright
+		RemovePlayerFromQueue( pPlayer );
+		m_hArenaQueue.AddToTail( pPlayer );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::AddPlayerToQueueHead( CTFPlayer *pPlayer )
+{	
+	if ( !pPlayer )
+		return;
+
+	if ( !m_hArenaQueue.HasElement( pPlayer ) && !pPlayer->IsArenaSpectator() )
+	{
+		m_hArenaQueue.AddToHead( pPlayer );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::RemovePlayerFromQueue( CTFPlayer *pPlayer )
+{	
+	if ( !pPlayer )
+		return;
+
+	m_hArenaQueue.FindAndRemove( pPlayer );
 }
 
 //-----------------------------------------------------------------------------
@@ -4396,6 +4808,31 @@ int ScramblePlayersSort( CTFPlayer* const *p1, CTFPlayer* const *p2 )
 	}
 
 	return -1;
+}
+
+// sort function for the player spectator queue
+int SortPlayerSpectatorQueue(CTFPlayer* const *p1, CTFPlayer* const *p2)
+{
+	// get the queue times of both players
+	float flQueueTime1 = 0.0f, flQueueTime2 = 0.0f;
+	flQueueTime1 = (*p1)->m_flArenaQueueTime;
+	flQueueTime2 = (*p2)->m_flArenaQueueTime;
+
+	if ( flQueueTime1 == flQueueTime2 )
+	{
+		// if both players queued at the same time see who's been in the server longer
+		flQueueTime1 = (*p1)->GetConnectionTime();
+		flQueueTime2 = (*p2)->GetConnectionTime();
+		if ( flQueueTime1 < flQueueTime2 )
+			return -1;
+	}
+	else if ( flQueueTime1 > flQueueTime2 )
+	{
+		// the player with the higher queue time queued more recently (gpGlobals->curtime)
+		return -1;
+	}
+
+	return flQueueTime1 != flQueueTime2;
 }
 
 //-----------------------------------------------------------------------------
@@ -5351,10 +5788,10 @@ const char *CTFGameRules::GetGameDescription(void)
 			return "TF2V (Arena)";
 			break;
 		case TF_GAMETYPE_DM:
-			return "Go Away";
+			return "Deathmatch";
 			break;
 		case TF_GAMETYPE_VIP:
-			return "Go Away";
+			return "VIP";
 			break;
 		case TF_GAMETYPE_MVM:
 			return "Implying we will ever have this";
@@ -5387,6 +5824,36 @@ void CTFGameRules::PlayerSpawn(CBasePlayer *pPlayer)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFGameRules::CountActivePlayers( void )
+{
+	CTFPlayer *pTFPlayer = NULL;
+	int iActivePlayers = 0;
+
+	if ( IsInArenaMode() )
+	{
+		// Keep adding ready players as long as they're not HLTV or a replay
+		for ( int i = 1; i < MAX_PLAYERS; i++ )
+		{
+			pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( pTFPlayer && pTFPlayer->IsReadyToPlay() && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() )
+			{
+				iActivePlayers++;
+			}
+		}
+
+
+		if ( m_hArenaQueue.Count() > 1 )
+			return iActivePlayers;
+			
+		if ( iActivePlayers <= 1 || ( GetGlobalTFTeam( TF_TEAM_BLUE ) && GetGlobalTFTeam( TF_TEAM_BLUE )->GetNumPlayers() <= 0 ) || ( !GetGlobalTFTeam( TF_TEAM_RED ) && GetGlobalTFTeam( TF_TEAM_RED )->GetNumPlayers() <= 0 ) )
+			return 0;
+	}
+
+	return BaseClass::CountActivePlayers();
+}
 #endif
 
 float CTFGameRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleWithNumPlayers /* = true */ )

@@ -108,6 +108,8 @@ extern ConVar sv_maxunlag;
 extern ConVar sv_alltalk;
 extern ConVar tf_teamtalk;
 
+extern ConVar tf_arena_force_class;
+
 // Team Fortress 2 Classic commands
 ConVar tf2c_random_weapons( "tf2c_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
 
@@ -446,6 +448,8 @@ CTFPlayer::CTFPlayer()
 	m_bIsPlayerADev = false;
 
 	m_flStunTime = 0.0f;
+
+	m_bInArenaQueue = false;
 }
 
 
@@ -642,12 +646,14 @@ ConVar mp_idlemaxtime( "mp_idlemaxtime", "3", FCVAR_GAMEDLL, "Maximum time a pla
 
 void CTFPlayer::CheckForIdle( void )
 {
+	bool bKickPlayer = false;
+
 	if ( m_afButtonLast != m_nButtons )
 		m_flLastAction = gpGlobals->curtime;
 
 	if ( mp_idledealmethod.GetInt() )
 	{
-		if ( IsHLTV() )
+		if ( IsHLTV() || IsReplay() )
 			return;
 
 		if ( IsFakeClient() )
@@ -662,6 +668,18 @@ void CTFPlayer::CheckForIdle( void )
 			if ( StateGet() == TF_STATE_OBSERVER || StateGet() != TF_STATE_ACTIVE )
 				return;
 		}
+
+		if ( TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() )
+        {
+			if ( GetTeamNumber() > TEAM_SPECTATOR || TFGameRules()->State_Get() != GR_STATE_TEAM_WIN )
+				return;
+			
+			if ( TFGameRules()->GetWinningTeam() == GetTeamNumber() || !m_bIgnoreLastAction )
+				return;
+
+			bKickPlayer = true;
+			m_bIgnoreLastAction = false;
+        }
 		
 		float flIdleTime = mp_idlemaxtime.GetFloat() * 60;
 
@@ -672,8 +690,6 @@ void CTFPlayer::CheckForIdle( void )
 		
 		if ( (gpGlobals->curtime - m_flLastAction) > flIdleTime  )
 		{
-			bool bKickPlayer = false;
-
 			ConVarRef mp_allowspectators( "mp_allowspectators" );
 			if ( mp_allowspectators.IsValid() && ( mp_allowspectators.GetBool() == false ) )
 			{
@@ -699,13 +715,13 @@ void CTFPlayer::CheckForIdle( void )
 			{
 				bKickPlayer = true;
 			}
+		}
 
-			if ( bKickPlayer == true )
-			{
-				UTIL_ClientPrintAll( HUD_PRINTCONSOLE, "#game_idle_kick", GetPlayerName() );
-				engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", GetUserID() ) );
-				m_flLastAction = gpGlobals->curtime;
-			}
+		if ( bKickPlayer == true )
+		{
+			UTIL_ClientPrintAll( HUD_PRINTCONSOLE, " ", GetPlayerName() );
+			engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", GetUserID() ) );
+			m_flLastAction = gpGlobals->curtime;
 		}
 	}
 }
@@ -873,8 +889,26 @@ void CTFPlayer::PrecachePlayerModels( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::IsReadyToPlay( void )
 {
-	return ( ( GetTeamNumber() > LAST_SHARED_TEAM ) &&
-			 ( GetDesiredPlayerClassIndex() > TF_CLASS_UNDEFINED ) );
+	if ( GetTeamNumber() == LAST_SHARED_TEAM && IsArenaSpectator() )
+		return false;
+
+	if ( GetTeamNumber() > LAST_SHARED_TEAM && GetDesiredPlayerClassIndex() > TF_CLASS_UNDEFINED )
+		return true;
+
+	if( TFGameRules() && TFGameRules()->IsInArenaMode() )
+	{
+		if ( tf_arena_force_class.GetBool() && !tf_arena_use_queue.GetBool() )
+			return true;
+
+		// Putting this here for now in case anything else relies on the team number param
+		if ( GetDesiredPlayerClassIndex() > TF_CLASS_UNDEFINED )
+			return true;
+	}
+
+	return false;
+
+	//return ( ( GetTeamNumber() > LAST_SHARED_TEAM ) &&
+	//		 ( GetDesiredPlayerClassIndex() > TF_CLASS_UNDEFINED ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -1077,6 +1111,8 @@ void CTFPlayer::Spawn()
 	Vector mins = VEC_HULL_MIN;
 	Vector maxs = VEC_HULL_MAX;
 	CollisionProp()->SetSurroundingBoundsType( USE_SPECIFIED_BOUNDS, &mins, &maxs );
+
+	m_bIgnoreLastAction = false;
 
 	// Hack to hide the chat on the background map.
 	if (!Q_strcmp(gpGlobals->mapname.ToCStr(), "background01"))
@@ -2067,6 +2103,8 @@ int CTFPlayer::GetAutoTeam( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 {
+	bool bAutoTeam = false, bSilent = false;
+
 	if ( TFGameRules()->IsDeathmatch() && stricmp( pTeamName, "spectate" ) != 0 )
 	{
 		ChangeTeam( TF_TEAM_RED );
@@ -2074,14 +2112,30 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 		return;
 	}
 
+	m_Shared.m_bArenaSpectator = false;
 	int iTeam = TF_TEAM_RED;
+
 	if ( stricmp( pTeamName, "auto" ) == 0 )
 	{
 		iTeam = GetAutoTeam();
+		bAutoTeam = true;
 	}
 	else if ( stricmp( pTeamName, "spectate" ) == 0 )
 	{
 		iTeam = TEAM_SPECTATOR;
+	}
+	else if ( stricmp( pTeamName, "spectatearena" ) == 0 )
+	{
+		// NOTE:: "spectatearena" joins spectator in arena whereas
+		// "spectate" joins the arena queue
+
+		iTeam = TEAM_SPECTATOR;
+
+		if ( mp_allowspectators.GetBool() )
+		{
+			m_Shared.m_bArenaSpectator = true;
+			bSilent = true;
+		}
 	}
 	else
 	{
@@ -2095,13 +2149,13 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 		}
 	}
 
-	if (iTeam > TF_TEAM_BLUE && !TFGameRules()->IsFourTeamGame())
+	if ( iTeam > TF_TEAM_BLUE && !TFGameRules()->IsFourTeamGame() )
 	{
 		ClientPrint( this, HUD_PRINTCONSOLE, "Four player teams have been disabled!\n" );
 		return;
 	}
 
-	if (iTeam == GetTeamNumber())
+	if ( iTeam == GetTeamNumber() )
 	{
 		return;	// we wouldn't change the team
 	}
@@ -2111,10 +2165,10 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 		DropFlag();
 	}
 
-	if (iTeam == TEAM_SPECTATOR)
+	if ( iTeam == TEAM_SPECTATOR || ( TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() && GetTeamNumber() <= TEAM_SPECTATOR ) )
 	{
 		// Prevent this is the cvar is set
-		if ( !mp_allowspectators.GetInt() && !IsHLTV() )
+		if ( !mp_allowspectators.GetInt() && !IsHLTV() && !IsReplay() )
 		{
 			ClientPrint( this, HUD_PRINTCENTER, "#Cannot_Be_Spectator" );
 			return;
@@ -2125,7 +2179,15 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 			CommitSuicide( false, true );
 		}
 
-		ChangeTeam( TEAM_SPECTATOR );
+		ChangeTeam( TEAM_SPECTATOR, bAutoTeam, bSilent );
+
+		// don't add to the arena queue
+		if ( IsArenaSpectator() )
+		{
+			SetDesiredPlayerClassIndex( CLASS_NONE );
+			TFGameRules()->RemovePlayerFromQueue( this );
+			TFGameRules()->Arena_ClientDisconnect( GetPlayerName() );
+		}
 
 		// do we have fadetoblack on? (need to fade their screen back in)
 		if ( mp_fadetoblack.GetBool() )
@@ -2133,6 +2195,9 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 			color32_s clr = { 0,0,0,255 };
 			UTIL_ScreenFade( this, clr, 0, 0, FFADE_IN | FFADE_PURGE );
 		}
+
+		if ( TFGameRules()->IsInArenaMode() && !IsArenaSpectator() )
+			ShowViewPortPanel( PANEL_CLASS_BLUE );
 	}
 	else
 	{
@@ -2144,24 +2209,28 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 			return;
 		}
 
-		ChangeTeam( iTeam );
+		// No changing classes 
+		if ( tf_arena_force_class.GetBool() )
+			return;
 
-		switch (iTeam)
+		ChangeTeam( iTeam, bAutoTeam, bSilent );
+
+		switch ( iTeam )
 		{
 			case TF_TEAM_RED:
-				ShowViewPortPanel(PANEL_CLASS_RED);
+				ShowViewPortPanel( PANEL_CLASS_RED );
 				break;
 
 			case TF_TEAM_BLUE:
-				ShowViewPortPanel(PANEL_CLASS_BLUE);
+				ShowViewPortPanel( PANEL_CLASS_BLUE );
 				break;
 
 			case TF_TEAM_GREEN:
-				ShowViewPortPanel(PANEL_CLASS_GREEN);
+				ShowViewPortPanel( PANEL_CLASS_GREEN );
 				break;
 
 			case TF_TEAM_YELLOW:
-				ShowViewPortPanel(PANEL_CLASS_YELLOW);
+				ShowViewPortPanel( PANEL_CLASS_YELLOW );
 				break;
 		}
 	}
@@ -2293,6 +2362,11 @@ void CTFPlayer::ForceChangeTeam( int iTeamNum )
 
 		RemoveAllWeapons();
 		DestroyViewModels();
+
+		if ( TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() )
+		{
+			TFGameRules()->AddPlayerToQueueHead( this );
+		}
 	}
 
 	// Don't modify living players in any way
@@ -2313,65 +2387,70 @@ void CTFPlayer::HandleFadeToBlack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::ChangeTeam(int iTeamNum)
+void CTFPlayer::ChangeTeam( int iTeamNum, bool bAutoTeam/*= false*/, bool bSilent/*= false*/ )
 {
-	if (!GetGlobalTeam(iTeamNum))
+	if ( !GetGlobalTeam( iTeamNum ) )
 	{
-		Warning("CTFPlayer::ChangeTeam( %d ) - invalid team index.\n", iTeamNum);
+		Warning( "CTFPlayer::ChangeTeam( %d ) - invalid team index.\n", iTeamNum );
 		return;
 	}
 
-	if (iTeamNum > TF_TEAM_BLUE && !TFGameRules()->IsFourTeamGame())
+	if ( iTeamNum > TF_TEAM_BLUE && !TFGameRules()->IsFourTeamGame() )
 	{
-		ClientPrint(this, HUD_PRINTCONSOLE, "Four player teams have been disabled!\n");
+		ClientPrint( this, HUD_PRINTCONSOLE, "Four player teams have been disabled!\n" );
 		return;
 	}
 
 	int iOldTeam = GetTeamNumber();
 
 	// if this is our current team, just abort
-	if (iTeamNum == iOldTeam)
+	if ( iTeamNum == iOldTeam )
 		return;
 
-	RemoveAllOwnedEntitiesFromWorld(false);
+	RemoveAllOwnedEntitiesFromWorld( false );
 	RemoveNemesisRelationships();
 
-	BaseClass::ChangeTeam(iTeamNum);
+	BaseClass::ChangeTeam( iTeamNum, bAutoTeam, bSilent );
 
-	if (iTeamNum == TEAM_UNASSIGNED)
+	if ( iTeamNum == TEAM_UNASSIGNED )
 	{
-		StateTransition(TF_STATE_OBSERVER);
+		StateTransition( TF_STATE_OBSERVER );
 	}
-	else if (iTeamNum == TEAM_SPECTATOR)
+	else if ( iTeamNum == TEAM_SPECTATOR )
 	{
 		m_bIsIdle = false;
 
-		StateTransition(TF_STATE_OBSERVER);
+		StateTransition( TF_STATE_OBSERVER );
 
 		RemoveAllWeapons();
 		DestroyViewModels();
+
+		if ( iOldTeam > TEAM_UNASSIGNED && TFGameRules() && TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() )
+		{
+			TFGameRules()->AddPlayerToQueue( this );
+		}
 	}
 	else // active player
 	{
-		if (!IsDead() && (iOldTeam >= FIRST_GAME_TEAM))
+		if ( !IsDead() && ( iOldTeam >= FIRST_GAME_TEAM ) )
 		{
 			// Kill player if switching teams while alive
-			CommitSuicide(false, true);
+			CommitSuicide( false, true );
 		}
-		else if (IsDead() && iOldTeam < FIRST_GAME_TEAM)
+		else if ( IsDead() && iOldTeam < FIRST_GAME_TEAM )
 		{
-			SetObserverMode(OBS_MODE_CHASE);
+			SetObserverMode( OBS_MODE_CHASE );
 			HandleFadeToBlack();
 		}
 
 		// let any spies disguising as me know that I've changed teams
-		for (int i = 1; i <= gpGlobals->maxClients; i++)
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 		{
-			CTFPlayer *pTemp = ToTFPlayer(UTIL_PlayerByIndex(i));
-			if (pTemp && pTemp != this)
+			CTFPlayer *pTemp = ToTFPlayer( UTIL_PlayerByIndex(i) );
+			if ( pTemp && pTemp != this )
 			{
-				if ((pTemp->m_Shared.GetDisguiseTarget() == this) || // they were disguising as me and I've changed teams
-					(!pTemp->m_Shared.GetDisguiseTarget() && pTemp->m_Shared.GetDisguiseTeam() == iTeamNum)) // they don't have a disguise and I'm joining the team they're disguising as
+				if ( ( pTemp->m_Shared.GetDisguiseTarget() == this ) || // they were disguising as me and I've changed teams
+					( !pTemp->m_Shared.GetDisguiseTarget() && pTemp->m_Shared.GetDisguiseTeam() == iTeamNum ) ) // they don't have a disguise and I'm joining the team they're disguising as
 				{
 					// choose someone else...
 					pTemp->m_Shared.FindDisguiseTarget();
@@ -2392,7 +2471,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			return;
 
 		// can only join a class after you join a valid team
-		if ( GetTeamNumber() <= LAST_SHARED_TEAM )
+		if ( GetTeamNumber() <= LAST_SHARED_TEAM && !TFGameRules()->IsInArenaMode() )
 			return;
 
 		if ( TFGameRules()->IsDeathmatch() )
@@ -2473,6 +2552,12 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 				ForceRespawn();
 			}
 			return;
+		}
+
+		// Add the player to the join Queue
+		if ( TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() && GetTeamNumber() <= LAST_SHARED_TEAM )
+		{
+			TFGameRules()->AddPlayerToQueue( this );
 		}
 
 		SetNextChangeClassTime(gpGlobals->curtime + 2.0f);
@@ -2673,7 +2758,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 		{
 			ShowViewPortPanel( PANEL_TEAM, true );
 		}
-		else if ( IsPlayerClass( TF_CLASS_UNDEFINED ) )
+		else if ( IsPlayerClass( TF_CLASS_UNDEFINED ) && !tf_arena_force_class.GetBool() )
 		{
 			switch( GetTeamNumber() )
 			{
@@ -2701,7 +2786,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "joinclass" ) ) 
 	{
-		if ( args.ArgC() >= 2 )
+		if ( !tf_arena_force_class.GetBool() && args.ArgC() >= 2 )
 		{
 			HandleCommand_JoinClass( args[1] );
 		}
@@ -2972,6 +3057,21 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 		return true;
 	}
+	else if ( FStrEq( pcmd, "arena_changeclass") )
+    {
+		/*if ( !TFGameRules() || !TFGameRules()->IsInArenaMode() || !tf_arena_force_class.GetBool() || TFGameRules()->State_Get != GR_STATE_PREROUND )
+			return true;
+
+		if ( *(this + 1635) >= *( tf_arena_change_limit.GetBool() ) )
+			return 1;
+		(*(*this + 1700))(this, 1, 0);
+		v92 = *(this + 1635) + 1;
+		if ( !memcmp(this + 6540, &v92, 4) )
+			return 1;
+		(*(*(this + 1491) + 4))(this + 5964, this + 6540);
+		*(this + 1635) = v92;*/
+		return true;
+    }
 	else if ( FStrEq( pcmd, "extendfreeze" ) )
 	{
 		m_flDeathTime += 2.0f;
@@ -5908,7 +6008,9 @@ bool CTFPlayer::SetObserverMode(int mode)
 	}
 
 	m_iObserverMode = mode;
-	m_flLastAction = gpGlobals->curtime;
+
+	if ( !m_bIgnoreLastAction )
+		m_flLastAction = gpGlobals->curtime;
 
 	switch ( mode )
 	{
@@ -6008,6 +6110,12 @@ void CTFPlayer::StateEnterDYING( void )
 
 	m_bPlayedFreezeCamSound = false;
 	m_bAbortFreezeCam = false;
+
+	if ( TFGameRules() && TFGameRules()->IsInArenaMode() )
+	{
+		if ( m_flLastAction - TFGameRules()->GetStalemateStartTime() < 0.0 )
+			m_bIgnoreLastAction = true;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -6215,6 +6323,28 @@ void CTFPlayer::ForceRespawn( void )
 	m_flSpawnTime = gpGlobals->curtime;
 
 	int iDesiredClass = GetDesiredPlayerClassIndex();
+	bool bRandom = false;
+
+	if ( TFGameRules() && TFGameRules()->IsInArenaMode() )
+	{
+		if ( tf_arena_force_class.GetBool() )
+		{
+			bRandom = true;
+
+			if ( ( GetTeamNumber() >= TEAM_SPECTATOR && !IsAlive() ) || TFGameRules()->State_Get() != GR_STATE_STALEMATE )
+			{
+				HandleCommand_JoinClass( "random" );
+			}
+		}
+
+		if ( !tf_arena_use_queue.GetBool() && TFGameRules()->IsInWaitingForPlayers() )
+		{
+			return;
+		}
+
+		if ( TFGameRules()->State_Get() == GR_STATE_PREGAME )
+			return;
+	}
 
 	if ( iDesiredClass == TF_CLASS_UNDEFINED )
 	{
@@ -6227,6 +6357,8 @@ void CTFPlayer::ForceRespawn( void )
 		do{
 			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 		} while( iDesiredClass == GetPlayerClass()->GetClassIndex() );
+
+		bRandom = true;
 	}
 
 	if ( HasTheFlag() )
@@ -6241,7 +6373,8 @@ void CTFPlayer::ForceRespawn( void )
 
 		GetPlayerClass()->Init( iDesiredClass );
 
-		CTF_GameStats.Event_PlayerChangedClass( this );
+		if ( !bRandom )
+			CTF_GameStats.Event_PlayerChangedClass( this );
 
 		m_PlayerAnimState = CreateTFPlayerAnimState(this);
 	}
@@ -7237,7 +7370,8 @@ bool CTFPlayer::SetObserverTarget(CBaseEntity *target)
 		SetFOV( pObsPoint, pObsPoint->m_flFOV );
 	}
 
-	m_flLastAction = gpGlobals->curtime;
+	if ( !m_bIgnoreLastAction )
+		m_flLastAction = gpGlobals->curtime;
 
 	return true;
 }

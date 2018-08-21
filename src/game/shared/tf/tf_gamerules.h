@@ -221,10 +221,20 @@ public:
 
 	void			HandleCTFCaptureBonus( int iTeam );
 
+	virtual void	Arena_CleanupPlayerQueue( void );
+	virtual void	Arena_ClientDisconnect( const char *pszPlayerName );
 	virtual void	Arena_NotifyTeamSizeChange( void );
 	virtual int		Arena_PlayersNeededForMatch( void );
-	virtual void	Arena_ResetLosersScore( bool bUnknown );
+	virtual void	Arena_PrepareNewPlayerQueue( bool bScramble );
+	virtual void	Arena_ResetLosersScore( bool bStreakReached );
 	virtual void	Arena_RunTeamLogic( void );
+	virtual void	Arena_SendPlayerNotifications( void );
+
+	float			GetStalemateStartTime( void ) { return m_flStalemateStartTime; }
+
+	virtual void	AddPlayerToQueue( CTFPlayer *pPlayer );
+	virtual void	AddPlayerToQueueHead( CTFPlayer *pPlayer );
+	virtual void	RemovePlayerFromQueue( CTFPlayer *pPlayer );
 
 	virtual void	Activate();
 
@@ -268,6 +278,8 @@ protected:
 
 	virtual bool	CanChangelevelBecauseOfTimeLimit( void );
 	virtual bool	CanGoToStalemate( void );
+
+	virtual int		CountActivePlayers( void );
 #endif // GAME_DLL
 
 public:
@@ -299,8 +311,8 @@ public:
 
 	virtual bool	IsConnectedUserInfoChangeAllowed(CBasePlayer *pPlayer){ return true; };
 
-	virtual bool	IsFourTeamGame( void ){ return false; };
-	virtual bool	IsDeathmatch(void){ return false; };
+	virtual bool	IsFourTeamGame( void ){ return m_bFourTeamMode; };
+	virtual bool	IsDeathmatch(void){ return m_nGameType == TF_GAMETYPE_DM; };
 	virtual bool    IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
@@ -422,6 +434,11 @@ private:
 
 	bool m_bFirstBlood;
 	int	m_iArenaTeamCount;
+	float m_flArenaNotificationSend;
+
+	float m_flStalemateStartTime;
+
+	CUtlVector< CTFPlayer * > m_hArenaQueue;
 #endif
 
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
@@ -470,6 +487,10 @@ inline CTFGameRules* TFGameRules()
 
 #ifdef GAME_DLL
 	bool EntityPlacementTest( CBaseEntity *pMainEnt, const Vector &vOrigin, Vector &outPos, bool bDropToGround );
+
+	// Sorting methods
+	int ScramblePlayersSort( CTFPlayer* const *p1, CTFPlayer* const *p2 );
+	int SortPlayerSpectatorQueue(CTFPlayer* const *p1, CTFPlayer* const *p2);
 #endif
 
 #ifdef CLIENT_DLL
