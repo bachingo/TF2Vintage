@@ -1725,6 +1725,8 @@ C_TFPlayer::C_TFPlayer() :
 
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "player_regenerate" );
+	ListenForGameEvent( "sticky_jump" );
+	ListenForGameEvent( "rocket_jump" );
 }
 
 C_TFPlayer::~C_TFPlayer()
@@ -1757,6 +1759,25 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 			// Update any effects affected by disguise.
 			m_Shared.UpdateCritBoostEffect();
 			UpdateOverhealEffect();
+		}
+	}
+	else if ( V_strcmp( event->GetName(), "rocket_jump") == 0 || V_strcmp( event->GetName(), "sticky_jump") == 0 )
+	{
+
+		if ( event->GetBool( "playsound" ) && GetUserID() == event->GetInt("userid" ) && !m_pJumpSound )
+		{
+			C_RecipientFilter filter;
+			filter.AddAllPlayers();
+			CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+
+			if ( !m_pJumpSound )
+			{
+				CLocalPlayerFilter filter;
+				m_pJumpSound = controller.SoundCreate( filter, entindex(), "BlastJump.Whistle" );
+			}
+
+			controller.Play( m_pJumpSound, 0.0, 100 );
+			controller.SoundChangeVolume( m_pJumpSound, 1.0, 0.1 );
 		}
 	}
 	else
@@ -2010,6 +2031,15 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	if ( m_Shared.InCond( TF_COND_BURNING ) && !m_pBurningSound )
 	{
 		StartBurningSound();
+	}
+
+	if ( !m_Shared.InCond( TF_COND_BLASTJUMPING ) && m_pJumpSound )
+	{
+		if ( m_pJumpSound )
+		{
+			CSoundEnvelopeController::GetController().SoundDestroy( m_pJumpSound );
+			m_pJumpSound = NULL;
+		}
 	}
 
 	// See if we should show or hide nemesis icon for this player
