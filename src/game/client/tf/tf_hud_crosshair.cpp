@@ -175,11 +175,17 @@ void CHudTFCrosshair::Paint()
 
 		int iWidth, iHeight;
 
+		// Ambassador crosshair scaling
 		float flCrosshairScale = 1.0f;
-		if ( pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER && ( tf2v_revolver_scale_crosshair.GetBool() ) )
+		if ( pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER )
 		{
-			float flFireInterval = min( gpGlobals->curtime - pWeapon->GetLastFireTime(), 1.25f );
-			flCrosshairScale = clamp( ( flFireInterval / 1.25f ), 0.334, 1.0f );
+			int iMode = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iMode, set_weapon_mode );
+			if ( iMode == 1 || tf2v_revolver_scale_crosshair.GetBool() )
+			{
+				float flFireInterval = min( gpGlobals->curtime - pWeapon->GetLastFireTime(), 1.25f );
+				flCrosshairScale = clamp( ( flFireInterval / 1.25f ), 0.334, 1.0f );
+			}
 		}
 
 		iWidth = iHeight = cl_crosshair_scale.GetInt() / flCrosshairScale;
