@@ -3390,6 +3390,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	case TF_DMG_CUSTOM_STICKBOMB:
 		pszCustomKill = "ullapool_caber_explosion";
 		break;
+	case TF_DMG_CUSTOM_BURNING_ARROW:
+		pszCustomKill = "huntsman_flyingburn";
+		break;
 	case TF_DMG_CUSTOM_BASEBALL:
 		pszCustomKill = "ball";
 		break;
@@ -3398,6 +3401,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		break;
 	case TF_DMG_BUILDING_CARRIED:
 		pszCustomKill = "building_carried_destroyed";
+		break;
+	case TF_DMG_CUSTOM_COMBO_PUNCH:
+		pszCustomKill = "robot_arm_combo_kill";
 		break;
 	}
 
@@ -3543,11 +3549,6 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	// make sure arrow kills are mapping to the huntsman
 	else if ( 0 == V_strcmp( killer_weapon_name, "tf_projectile_arrow" ) )
 	{
-		if( info.GetDamageType() & DMG_IGNITE )
-		{
-			killer_weapon_name = "huntsman_flyingburn";
-		}
-		else
 			killer_weapon_name = "huntsman";
 	}
 
