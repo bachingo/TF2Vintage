@@ -518,7 +518,12 @@ const char *CTFWeaponBase::DetermineViewModelType( const char *vModel ) const
 			vm->SetViewModelType( iType );
 
 		if ( iType == VMTYPE_TF2 )
-			return pPlayer->GetPlayerClass()->GetHandModelName();
+		{
+			int iGunslinger = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iGunslinger, wrench_builds_minisentry );
+
+			return iGunslinger ? pPlayer->GetPlayerClass()->GetHandModelName( true ) : pPlayer->GetPlayerClass()->GetHandModelName( false );
+		}
 	}
 
 	return vModel;

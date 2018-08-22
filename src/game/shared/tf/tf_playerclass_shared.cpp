@@ -279,6 +279,20 @@ bool CTFPlayerClassShared::Init( int iClass )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Initialize the player class.
+//-----------------------------------------------------------------------------
+const char	*CTFPlayerClassShared::GetHandModelName( bool bGunslinger /*= false*/ ) const
+{
+	// hacky method to make the gunslinger show up
+	if ( bGunslinger )
+	{
+		return "models/weapons/c_models/c_engineer_gunslinger.mdl";
+	}
+
+	return GetPlayerClassData( m_iClass )->m_szModelHandsName;
+}
+
 // If needed, put this into playerclass scripts
 bool CTFPlayerClassShared::CanBuildObject( int iObjectType )
 {

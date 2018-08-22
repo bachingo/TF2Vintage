@@ -872,6 +872,9 @@ void CTFPlayer::PrecachePlayerModels( void )
 		PrecacheModel( "models/effects/bday_hat.mdl" );
 	}
 
+	// Gunslinger
+	PrecacheModel("models/weapons/c_models/c_engineer_gunslinger.mdl");
+
 	// Precache player class sounds
 	for ( i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; ++i )
 	{

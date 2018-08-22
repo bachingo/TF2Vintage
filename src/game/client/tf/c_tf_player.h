@@ -379,6 +379,10 @@ public:
 	float				m_flBurnEffectStartTime;
 	float				m_flBurnEffectEndTime;
 
+	// Jumping
+	CSoundPatch			*m_pJumpSound;
+
+
 	CNewParticleEffect	*m_pDisguisingEffect;
 	float m_flDisguiseEffectStartTime;
 	float m_flDisguiseEndEffectStartTime;
