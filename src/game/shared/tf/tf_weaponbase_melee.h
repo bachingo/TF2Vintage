@@ -57,6 +57,11 @@ public:
 	virtual void	Smack( void );
 
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
+	virtual int		GetDamageCustom( void ) { return TF_DMG_CUSTOM_NONE; }
+
+#ifndef CLIENT_DLL
+	virtual float	GetForceScale( void );
+#endif
 
 	// Call when we hit an entity. Use for special weapon effects on hit.
 	virtual void	OnEntityHit( CBaseEntity *pEntity );
