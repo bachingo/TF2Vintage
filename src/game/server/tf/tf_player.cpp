@@ -3819,6 +3819,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 			}
 		}
+
+		float flPenaltyNonBurning = info.GetDamage();
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flPenaltyNonBurning, mult_dmg_vs_nonburning );
+
+		if ( !m_Shared.InCond( TF_COND_BURNING ) )
+		{
+			info.SetDamage( flPenaltyNonBurning );
+		}
+
 		CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
 
 		int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
