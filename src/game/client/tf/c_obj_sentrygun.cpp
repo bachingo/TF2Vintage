@@ -16,7 +16,6 @@
 #include "igameevents.h"
 
 #include "c_obj_sentrygun.h"
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -380,10 +379,8 @@ CStudioHdr *C_ObjectSentrygun::OnNewModel( void )
 
 	m_iPlacementBodygroup = FindBodygroupByName( "sentry1_range" );
 
-	Msg("Pre NEXTCLIENTTHINK\n");
 	// Start thinking on the next frame
 	SetNextClientThink( gpGlobals->frametime + 1 );
-	Msg("Post NEXTCLIENTTHINK\n");
 
 	return hdr;
 }
@@ -485,6 +482,12 @@ void C_ObjectSentrygun::CreateLaserBeam( void )
 	{
 		m_pShield = new C_BaseAnimating();
 		m_pShield->SetModel( "models/buildables/sentry_shield.mdl");
+
+		// make the shield smaller
+		if ( IsMiniBuilding() )
+		{
+			m_pShield->SetModelScale( 0.8f );
+		}
 		
 		if ( m_iUpgradeLevel == 3)
 		{

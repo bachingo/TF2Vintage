@@ -1405,6 +1405,26 @@ void CTFPlayer::GiveDefaultItems()
 	{
 		gameeventmanager->FireEvent( event_regenerate );
 	}
+
+	int nMiniBuilding = 0;
+	CALL_ATTRIB_HOOK_INT( nMiniBuilding, wrench_builds_minisentry );
+
+	// If we've switched to/from gunslinger destroy all of our buildings
+	if ( nMiniBuilding != m_nMiniLastRegen)
+	{
+		for (int i = GetObjectCount()-1; i >= 0; i--)
+		{
+			CBaseObject *obj = GetObject(i);
+			Assert( obj );
+
+			if ( obj )
+			{
+				obj->DetonateObject();
+			}		
+		}
+	}
+
+	m_nMiniLastRegen = nMiniBuilding;
 }
 
 //-----------------------------------------------------------------------------

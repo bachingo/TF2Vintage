@@ -637,6 +637,9 @@ private:
 
 	COutputEvent		m_OnDeath;
 
+	// Gunslinger
+	int					m_nMiniLastRegen;
+
 public:
 	bool				SetPowerplayEnabled( bool bOn );
 	bool				PlayerHasPowerplay( void );
