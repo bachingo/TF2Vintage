@@ -268,6 +268,8 @@ protected:
 	bool m_bDisposableBuilding;
 	bool m_bWasMapPlaced;
 
+	bool IsMiniBuilding( void ) { return m_bMiniBuilding; }
+
 private:
 	C_BaseObject( const C_BaseObject & ); // not defined, not accessible
 };

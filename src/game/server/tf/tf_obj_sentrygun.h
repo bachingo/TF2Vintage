@@ -85,6 +85,10 @@ public:
 	virtual bool	Command_Repair( CTFPlayer *pActivator );
 	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer );
 
+	Vector			GetEnemyAimPosition( CBaseEntity *pEnemy ) const;
+
+	virtual float	GetConstructionMultiplier( void );
+
 private:
 
 	// Workaround for fire effects when wrangled

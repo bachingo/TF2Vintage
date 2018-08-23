@@ -48,6 +48,7 @@
 #define SCREEN_OVERLAY_MATERIAL "vgui/screens/vgui_overlay"
 
 #define ROPE_HANG_DIST	150
+#define MINI_SENTRY_LIGHT	2
 
 ConVar tf_obj_gib_velocity_min( "tf_obj_gib_velocity_min", "100", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_obj_gib_velocity_max( "tf_obj_gib_velocity_max", "450", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
@@ -198,6 +199,7 @@ CBaseObject::CBaseObject()
 	m_aGibs.Purge();
 	m_iObjectMode = 0;
 	m_iDefaultUpgrade = 0;
+	m_bMiniBuilding = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -294,6 +296,11 @@ bool CBaseObject::CanBeUpgraded( CTFPlayer *pPlayer )
 		return false;
 	}
 
+	if ( IsMiniBuilding() )
+	{
+		return false;
+	}
+
 	if ( !tf2c_building_upgrades.GetBool() && GetType() != OBJ_SENTRYGUN )
 		return false;
 
@@ -383,7 +390,7 @@ void CBaseObject::Spawn( void )
 	AddFlag( FL_OBJECT ); // So NPCs will notice it
 	SetViewOffset( WorldSpaceCenter() - GetAbsOrigin() );
 
-	if (!VPhysicsGetObject())
+	if ( !VPhysicsGetObject() )
 	{
 		VPhysicsInitStatic();
 	}
@@ -400,6 +407,34 @@ void CBaseObject::Spawn( void )
 
 	// assume valid placement
 	m_bServerOverridePlacement = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Gunslinger's Buildings
+//-----------------------------------------------------------------------------
+void CBaseObject::MakeMiniBuilding( void )
+{
+	m_bMiniBuilding = true;
+
+	// Set the skin
+	switch ( GetTeamNumber() )
+	{
+	case TF_TEAM_RED:
+		m_nSkin = 2;
+		break;
+
+	case TF_TEAM_BLUE:
+		m_nSkin = 3;
+		break;
+
+	default:
+		m_nSkin = 2;
+		break;
+	}
+
+	m_flModelScale = 0.6f;
+	SetBodygroup( MINI_SENTRY_LIGHT, 1 );
+
 }
 
 void CBaseObject::MakeCarriedObject( CTFPlayer *pPlayer )
@@ -452,6 +487,7 @@ void CBaseObject::DropCarriedObject( CTFPlayer *pPlayer )
 		pPlayer->m_Shared.SetCarriedObject( NULL );
 	}
 
+	MakeMiniBuilding();
 	//StopFollowingEntity();
 }
 
@@ -687,6 +723,12 @@ void CBaseObject::BaseObjectThink( void )
 		{
 			// Finished.
 			m_bCarryDeploy = false;
+		}
+
+		if ( IsMiniBuilding() )
+		{
+			MakeMiniBuilding();
+			return;
 		}
 	}
 }
@@ -1015,6 +1057,11 @@ void CBaseObject::StartPlacement( CTFPlayer *pPlayer )
 	default:
 		m_nSkin = 1;
 		break;
+	}
+
+	if ( IsMiniBuilding() )
+	{
+		MakeMiniBuilding();
 	}
 }
 
@@ -2010,6 +2057,10 @@ float CBaseObject::GetConstructionMultiplier( void )
 {
 	float flMultiplier = 1.0f;
 
+	// Minis deploy faster.
+	if ( IsMiniBuilding() )
+		flMultiplier *= 1.7f;
+
 	// Re-deploy twice as fast.
 	if ( IsRedeploying() )
 		flMultiplier *= 2.0f;
@@ -2141,6 +2192,11 @@ void CBaseObject::CreateObjectGibs( void )
 			pAmmoPack->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 			pAmmoPack->m_takedamage = DAMAGE_YES;		
 			pAmmoPack->SetHealth( 900 );
+
+			if ( IsMiniBuilding() )
+			{
+				pAmmoPack->SetModelScale( 0.6f );
+			}
 		}
 	}
 }
@@ -2503,10 +2559,14 @@ bool CBaseObject::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector ve
 
 	if ( !bRepair )
 	{
-		// Don't put in upgrade metal until the object is fully healed
-		if ( CanBeUpgraded( pPlayer ) )
+		// no building upgrade for minis.
+		if ( !IsMiniBuilding() )
 		{
-			bUpgrade = CheckUpgradeOnHit( pPlayer );
+			// Don't put in upgrade metal until the object is fully healed
+			if ( CanBeUpgraded( pPlayer ) )
+			{
+				bUpgrade = CheckUpgradeOnHit( pPlayer );
+			}
 		}
 	}
 
