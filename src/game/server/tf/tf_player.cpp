@@ -1429,6 +1429,7 @@ void CTFPlayer::GiveDefaultItems()
 			}		
 		}
 
+		// make sure we update the c_models
 		if ( GetActiveWeapon() )
 			GetActiveWeapon()->Deploy();
 	}

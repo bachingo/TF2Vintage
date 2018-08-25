@@ -12,24 +12,54 @@
 #include "tf_player.h"
 #endif
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFLaser_Pointer, DT_WeaponLaser_Pointer )
+ConVar tf_debug_wrangler( "tf_wrangler_debug", "0", FCVAR_CHEAT );
 
-BEGIN_NETWORK_TABLE( CTFLaser_Pointer, DT_WeaponLaser_Pointer )
+class CTraceFilterIgnoreTeammatesAndTeamObjects : public CTraceFilterSimple
+{
+public:
+	// It does have a base, but we'll never network anything below here..
+	DECLARE_CLASS( CTraceFilterIgnoreTeammatesAndTeamObjects, CTraceFilterSimple );
+
+	CTraceFilterIgnoreTeammatesAndTeamObjects( const IHandleEntity *passentity, int collisionGroup, int teamNumber )
+		: CTraceFilterSimple( passentity, collisionGroup )
+	{
+		m_iTeamNumber = teamNumber;
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{
+		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
+
+		Msg( "teamNumber = %i\n", m_iTeamNumber );
+		if ( pEntity && pEntity->GetTeamNumber() == m_iTeamNumber )
+			return false;
+
+		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
+	}
+
+private:
+	int m_iTeamNumber;
+};
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFLaserPointer, DT_WeaponLaserPointer )
+
+BEGIN_NETWORK_TABLE( CTFLaserPointer, DT_WeaponLaserPointer )
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CTFLaser_Pointer )
+BEGIN_PREDICTION_DATA( CTFLaserPointer )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_laser_pointer, CTFLaser_Pointer );
+LINK_ENTITY_TO_CLASS( tf_weapon_laser_pointer, CTFLaserPointer );
 PRECACHE_WEAPON_REGISTER( tf_weapon_laser_pointer );
 
 // Server specific.
 #ifndef CLIENT_DLL
-BEGIN_DATADESC( CTFLaser_Pointer )
+BEGIN_DATADESC( CTFLaserPointer )
 END_DATADESC()
 #endif
 
-CTFLaser_Pointer::CTFLaser_Pointer()
+CTFLaserPointer::CTFLaserPointer()
 {
 #ifdef GAME_DLL
 	pGun = NULL;
@@ -39,7 +69,7 @@ CTFLaser_Pointer::CTFLaser_Pointer()
 //-----------------------------------------------------------------------------
 // Purpose: Reset the charge when we deploy
 //-----------------------------------------------------------------------------
-bool CTFLaser_Pointer::Deploy( void )
+bool CTFLaserPointer::Deploy( void )
 {
 #ifdef GAME_DLL
 	CTFPlayer *pOwner = GetTFPlayerOwner();
@@ -66,7 +96,7 @@ bool CTFLaser_Pointer::Deploy( void )
 //-----------------------------------------------------------------------------
 // Purpose: Reset the charge when we holster
 //-----------------------------------------------------------------------------
-bool CTFLaser_Pointer::Holster( CBaseCombatWeapon *pSwitchingTo )
+bool CTFLaserPointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 #ifdef GAME_DLL
 	if ( pGun )
@@ -87,7 +117,7 @@ bool CTFLaser_Pointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::WeaponReset( void )
+void CTFLaserPointer::WeaponReset( void )
 {
 	BaseClass::WeaponReset();
 }
@@ -95,7 +125,7 @@ void CTFLaser_Pointer::WeaponReset( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::PrimaryAttack( void )
+void CTFLaserPointer::PrimaryAttack( void )
 {
 	if ( !CanAttack() )
 		return;
@@ -112,12 +142,13 @@ void CTFLaser_Pointer::PrimaryAttack( void )
 		m_flNextPrimaryAttack = gpGlobals->curtime + 0.05f;
 	}
 #endif
+	SendWeaponAnim( ACT_ITEM3_VM_RELOAD );
 }
 
 // ---------------------------------------------------------------------------- -
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::SecondaryAttack( void )
+void CTFLaserPointer::SecondaryAttack( void )
 {
 	if ( !CanAttack() )
 		return;
@@ -144,7 +175,7 @@ void CTFLaser_Pointer::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::ItemPostFrame( void )
+void CTFLaserPointer::ItemPostFrame( void )
 {
 #ifdef GAME_DLL
 	if ( pGun )
@@ -154,8 +185,70 @@ void CTFLaser_Pointer::ItemPostFrame( void )
 		{
 			pGun->SetState( SENTRY_STATE_WRANGLED );
 		}
+
+		if ( pGun->GetState() == SENTRY_STATE_WRANGLED )
+		{
+			UpdateLaserDot();
+		}
 	}
 #endif
 
 	BaseClass::ItemPostFrame();
 }
+
+#ifdef GAME_DLL
+void CTFLaserPointer::UpdateLaserDot( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	pGun->StudioFrameAdvance( );
+
+	if ( !pOwner || !pOwner->IsAlive() )
+	{
+		pGun->OnStopWrangling();
+		pGun->SetShouldFire( false );
+		return;
+	}
+
+	trace_t tr;
+	Vector vecStart, vecEnd, vecForward;
+	pOwner->EyeVectors( &vecForward );
+
+	vecStart = pOwner->EyePosition();
+	vecEnd = vecStart + ( vecForward * MAX_TRACE_LENGTH);
+
+	CTraceFilterIgnoreTeammatesAndTeamObjects *pFilter = new CTraceFilterIgnoreTeammatesAndTeamObjects( this, COLLISION_GROUP_NONE, GetTeamNumber() );
+
+	// First pass to find where we are looking
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
+
+	vecStart = pGun->EyePosition();
+	vecEnd = tr.endpos;
+
+	// Second pass to find what we actually see
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
+
+	// If we're looking at a player fix our position to the centermass
+	if ( tr.DidHitNonWorldEntity() )
+	{
+		pGun->SetEnemy( tr.m_pEnt );
+		vecEnd = pGun->GetEnemyAimPosition( tr.m_pEnt );
+	}
+	else
+	{
+		pGun->SetEnemy( NULL );
+		vecEnd = tr.endpos;
+	}
+
+	pGun->SetEndVector( vecEnd );
+
+	// Adjust sentry angles 
+	vecForward = vecEnd - vecStart;
+	pGun->UpdateSentryAngles( vecForward ); 
+
+	if ( tf_debug_wrangler.GetBool() ) 
+	{
+		NDebugOverlay::Line( vecStart, vecEnd, 0, 255, 0, true, 0.25f );
+	}
+}
+#endif

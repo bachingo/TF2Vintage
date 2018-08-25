@@ -78,9 +78,12 @@ public:
 
 	void			OnStopWrangling( void );
 
-	// Should Fire for wrangler
+	// Wrangler
 	void			SetShouldFire( bool bFire ) { m_bShouldFire = bFire; }
 	bool			ShouldFire( void ) { return m_bShouldFire; }
+	void			UpdateSentryAngles( Vector vecDir );
+	void			SetEnemy( CBaseEntity *pEnemy ) { m_hEnemy.Set( pEnemy ); }
+	void			SetEndVector( Vector vecEnd ) { m_vecEnd = vecEnd; }
 
 	virtual bool	Command_Repair( CTFPlayer *pActivator );
 	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer );

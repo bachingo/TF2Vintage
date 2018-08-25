@@ -22,18 +22,18 @@
 
 // Client specific.
 #ifdef CLIENT_DLL
-#define CTFLaser_Pointer C_TFLaser_Pointer
+#define CTFLaserPointer C_TFLaserPointer
 #endif
 
 //=============================================================================
 //
 // TF Weapon Laser_Pointer.
 //
-class CTFLaser_Pointer : public CTFWeaponBaseGun
+class CTFLaserPointer : public CTFWeaponBaseGun
 {
 public:
 
-	DECLARE_CLASS( CTFLaser_Pointer, CTFWeaponBaseGun );
+	DECLARE_CLASS( CTFLaserPointer, CTFWeaponBaseGun );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
@@ -42,7 +42,7 @@ public:
 	DECLARE_DATADESC();
 #endif
 
-	CTFLaser_Pointer();
+	CTFLaserPointer();
 
 	virtual void	ItemPostFrame( void );
 	virtual bool	Deploy( void );
@@ -55,6 +55,7 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_LASER_POINTER; }
 
 #ifdef GAME_DLL
+	void			UpdateLaserDot( void );
 	void			RemoveGun( void )					{ pGun = NULL; }
 
 private:

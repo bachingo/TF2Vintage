@@ -128,7 +128,6 @@ ConVar tf_sentrygun_newtarget_dist( "tf_sentrygun_newtarget_dist", "200", FCVAR_
 ConVar tf_sentrygun_metal_per_shell( "tf_sentrygun_metal_per_shell", "1", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_sentrygun_metal_per_rocket( "tf_sentrygun_metal_per_rocket", "2", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_sentrygun_notarget( "tf_sentrygun_notarget", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_debug_wrangler( "tf_wrangler_debug", "0", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -273,88 +272,6 @@ void CObjectSentrygun::SentryThink( void )
 //-----------------------------------------------------------------------------
 void CObjectSentrygun::WrangleThink(void)
 {
-	CTFPlayer *pOwner = GetOwner();
-
-	StudioFrameAdvance( );
-
-	if ( !pOwner || !pOwner->IsAlive() )
-	{
-		OnStopWrangling();
-		SetShouldFire( false );
-		return;
-	}
-
-	trace_t tr;
-	Vector vecStart, vecEnd, vecDir;
-	AngleVectors( pOwner->EyeAngles(), &vecDir );
-
-	vecStart = pOwner->EyePosition();
-	vecEnd = vecStart + (vecDir * MAX_TRACE_LENGTH);
-
-	CTraceFilterSkipTwoEntities *pFilter = new CTraceFilterSkipTwoEntities( this, pOwner, COLLISION_GROUP_NONE );
-
-	// First pass to find where we are looking
-	UTIL_TraceLine( vecStart, vecEnd, MASK_ALL, pFilter, &tr );
-
-	vecStart = EyePosition();
-	vecEnd = tr.endpos;
-
-	// Adjust sentry angles 
-
-	vecDir = vecEnd - vecStart;
-
-	QAngle angToTarget;
-	VectorAngles( vecDir, angToTarget );
-
-	angToTarget.y = UTIL_AngleMod( angToTarget.y );
-	if (angToTarget.x < -180)
-		angToTarget.x += 360;
-	if (angToTarget.x > 180)
-		angToTarget.x -= 360;
-
-	// now all numbers should be in [1...360]
-	// pin to turret limitations to [-50...50]
-	if (angToTarget.x > 50)
-		angToTarget.x = 50;
-	else if (angToTarget.x < -50)
-		angToTarget.x = -50;
-	m_vecCurAngles.y = angToTarget.y;
-	m_vecCurAngles.x = angToTarget.x;
-	float flYaw = m_vecCurAngles.y - GetAbsAngles().y;
-
-	SetPoseParameter( m_iPitchPoseParameter, -m_vecCurAngles.x );
-	SetPoseParameter( m_iYawPoseParameter, -flYaw );
-
-	
-	// Second pass to find what we actually see
-	UTIL_TraceLine( vecStart, vecEnd, MASK_ALL, pFilter, &tr );
-	
-	// If we're looking at a player fix our position to the centermass
-	if ( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
-	{
-		CTFPlayer *pOther = static_cast< CTFPlayer * >( tr.m_pEnt );
-		if ( ValidTargetPlayer( pOther, vecStart, tr.endpos ) )
-		{
-			m_hEnemy = tr.m_pEnt;
-			m_vecEnd.Set( GetEnemyAimPosition( tr.m_pEnt ) );
-		}
-		else
-		{
-			m_hEnemy = NULL;
-			m_vecEnd.Set( tr.endpos );
-		}
-	}
-	else
-	{
-		m_hEnemy = NULL;
-		m_vecEnd.Set( tr.endpos );
-	}
-
-	if ( tf_debug_wrangler.GetBool() ) 
-	{
-		NDebugOverlay::Line( vecStart, m_vecEnd.Get(), 0, 255, 0, true, 0.25f );
-	}
-
 	if ( ShouldFire() && gpGlobals->curtime >= m_flNextAttack )
 	{
 		Fire();
@@ -363,7 +280,14 @@ void CObjectSentrygun::WrangleThink(void)
 		if ( m_iUpgradeLevel == 1 )
 		{
 			// Level 1 sentries fire slower
-			m_flNextAttack = gpGlobals->curtime + 0.1;
+			if ( IsMiniBuilding() )
+			{
+				m_flNextAttack = gpGlobals->curtime + 0.075;
+			}
+			else
+			{
+				m_flNextAttack = gpGlobals->curtime + 0.1;
+			}
 		}
 		else
 		{
@@ -1187,7 +1111,6 @@ void CObjectSentrygun::Attack()
 		if ( m_iUpgradeLevel == 1 )
 		{
 			// Level 1 sentries fire slower
-			// Level 1 sentries fire slower
 			if ( IsMiniBuilding() )
 			{
 				m_flNextAttack = gpGlobals->curtime + 0.15;
@@ -1813,7 +1736,7 @@ void CObjectSentrygun::Killed( const CTakeDamageInfo &info )
 	CTFPlayer *pOwner = GetBuilder();
 	if ( pOwner )
 	{
-		CTFLaser_Pointer *pWeapon = dynamic_cast < CTFLaser_Pointer * > ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
+		CTFLaserPointer *pWeapon = dynamic_cast < CTFLaserPointer * > ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
 		if ( pWeapon )
 		{
 			// Make sure wrangler stops updating sentry laser
@@ -1914,6 +1837,31 @@ float CObjectSentrygun::GetConstructionMultiplier( void )
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetBuilder(), flMultiplier, sentry_build_rate_multiplier );
 
 	return BaseClass::GetConstructionMultiplier();
+}
+
+void CObjectSentrygun::UpdateSentryAngles( Vector vecDir )
+{
+	QAngle angToTarget;
+	VectorAngles( vecDir, angToTarget );
+
+	angToTarget.y = UTIL_AngleMod( angToTarget.y );
+	if (angToTarget.x < -180)
+		angToTarget.x += 360;
+	if (angToTarget.x > 180)
+		angToTarget.x -= 360;
+
+	// now all numbers should be in [1...360]
+	// pin to turret limitations to [-50...50]
+	if (angToTarget.x > 50)
+		angToTarget.x = 50;
+	else if (angToTarget.x < -50)
+		angToTarget.x = -50;
+	m_vecCurAngles.y = angToTarget.y;
+	m_vecCurAngles.x = angToTarget.x;
+	float flYaw = m_vecCurAngles.y - GetAbsAngles().y;
+
+	SetPoseParameter( m_iPitchPoseParameter, -m_vecCurAngles.x );
+	SetPoseParameter( m_iYawPoseParameter, -flYaw );
 }
 
 LINK_ENTITY_TO_CLASS( tf_projectile_sentryrocket, CTFProjectile_SentryRocket );
