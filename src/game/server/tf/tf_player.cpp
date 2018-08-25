@@ -1428,6 +1428,9 @@ void CTFPlayer::GiveDefaultItems()
 				obj->DetonateObject();
 			}		
 		}
+
+		if ( GetActiveWeapon() )
+			GetActiveWeapon()->Deploy();
 	}
 
 	m_Shared.m_bGunslinger = bMiniBuilding;
