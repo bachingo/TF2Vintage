@@ -142,14 +142,14 @@ void CHudMenuEngyBuild::ApplySchemeSettings( IScheme *pScheme )
 	}
 
 	// Set the cost label
-	for ( int i=0; i<4; i++ )
+	for ( int i = 0; i < 4; i++ )
 	{
 		int iBuilding = 0;
 		int iMode = 0;
 
 		GetBuildingIDAndModeFromSlot( i + 1, iBuilding, iMode );
 
-		int iCost = GetObjectInfo( iBuilding )->m_Cost;
+		int iCost = CalculateObjectCost( iBuilding );
 
 		m_pAvailableObjects[i]->SetDialogVariable( "metal", iCost );
 		m_pAlreadyBuiltObjects[i]->SetDialogVariable( "metal", iCost );
@@ -350,7 +350,7 @@ void CHudMenuEngyBuild::SendBuildMessage( int iSlot )
 	GetBuildingIDAndModeFromSlot( iSlot, iBuilding, iMode );
 
 	C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding, iMode );
-	int iCost = GetObjectInfo( iBuilding )->m_Cost;
+	int iCost = CalculateObjectCost( iBuilding, pLocalPlayer->HasGunslinger() );
 
 	if ( pObj == NULL && pLocalPlayer->GetAmmoCount( TF_AMMO_METAL ) >= iCost )
 	{
@@ -408,8 +408,10 @@ void CHudMenuEngyBuild::OnTick( void )
 	{
 		int iRemappedObjectID = 0;
 		int iMode = 0;
+		int iCost = 0;
 
 		GetBuildingIDAndModeFromSlot( i + 1, iRemappedObjectID, iMode );
+		iCost = CalculateObjectCost( iRemappedObjectID, pLocalPlayer->HasGunslinger() );
 
 		// update this slot
 		C_BaseObject *pObj = NULL;
@@ -429,7 +431,7 @@ void CHudMenuEngyBuild::OnTick( void )
 			m_pAlreadyBuiltObjects[i]->SetVisible( true );
 		}
 		// See if we can afford it
-		else if ( iAccount < GetObjectInfo( iRemappedObjectID )->m_Cost )
+		else if ( iAccount < iCost )
 		{
 			m_pCantAffordObjects[i]->SetVisible( true );
 		}
@@ -437,6 +439,15 @@ void CHudMenuEngyBuild::OnTick( void )
 		{
 			// we can buy it
 			m_pAvailableObjects[i]->SetVisible( true );
+		}
+
+		if ( iRemappedObjectID == OBJ_SENTRYGUN && m_bGunslinger != pLocalPlayer->HasGunslinger() )
+		{
+			m_bGunslinger = pLocalPlayer->HasGunslinger();
+
+			m_pAvailableObjects[i]->SetDialogVariable( "metal", iCost );
+			m_pAlreadyBuiltObjects[i]->SetDialogVariable( "metal", iCost );
+			m_pCantAffordObjects[i]->SetDialogVariable( "metal", iCost );
 		}
 	}
 }

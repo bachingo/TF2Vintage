@@ -1179,7 +1179,7 @@ const CObjectInfo* GetObjectInfo( int iObject );
 
 // Object utility funcs
 bool	ClassCanBuild( int iClass, int iObjectType );
-int		CalculateObjectCost( int iObjectType /*, int iNumberOfObjects, int iTeam, bool bLast = false*/ );
+int		CalculateObjectCost( int iObjectType, bool bMini = false /*, int iNumberOfObjects, int iTeam, bool bLast = false*/ );
 int		CalculateObjectUpgrade( int iObjectType, int iObjectLevel );
 
 // Shell ejections

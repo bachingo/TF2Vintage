@@ -437,11 +437,11 @@ private:
 
 	CNetworkVar( int, m_nTeamTeleporterUsed );
 
-	// Have we been to resupply recently?
-	CNetworkVar( bool, m_bRegenerated );
-
 	// Arena spectators
 	CNetworkVar( bool, m_bArenaSpectator );
+
+	// Gunslinger
+	CNetworkVar( bool, m_bGunslinger );
 
 #ifdef GAME_DLL
 

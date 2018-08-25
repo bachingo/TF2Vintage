@@ -482,6 +482,9 @@ public:
 
 	bool				IsArenaSpectator( void ) { return m_Shared.m_bArenaSpectator; }
 
+	// Gunslinger
+	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
+
 private:
 
 	int					GetAutoTeam( void );
@@ -636,9 +639,6 @@ private:
 	CAttributeManager	m_AttributeManager;
 
 	COutputEvent		m_OnDeath;
-
-	// Gunslinger
-	int					m_nMiniLastRegen;
 
 public:
 	bool				SetPowerplayEnabled( bool bOn );

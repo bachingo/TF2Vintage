@@ -236,6 +236,9 @@ public:
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void ReapplyProvision( void ) { /*Do nothing*/ };
 
+	// Gunslinger
+	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
+
 public:
 	// Ragdolls.
 	virtual C_BaseAnimating *BecomeRagdollOnClient();

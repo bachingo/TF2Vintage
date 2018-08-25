@@ -372,7 +372,11 @@ ConCommand cc_CreatePredictionError( "CreatePredictionError", cc_CreatePredictio
 // Hint callbacks
 bool HintCallbackNeedsResources_Sentrygun( CBasePlayer *pPlayer )
 {
-	return ( pPlayer->GetAmmoCount( TF_AMMO_METAL ) > CalculateObjectCost( OBJ_SENTRYGUN ) );
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	if ( !pTFPlayer )
+		return false;
+
+	return ( pPlayer->GetAmmoCount( TF_AMMO_METAL ) > CalculateObjectCost( OBJ_SENTRYGUN, pTFPlayer->HasGunslinger() ) );
 }
 bool HintCallbackNeedsResources_Dispenser( CBasePlayer *pPlayer )
 {
@@ -1409,12 +1413,14 @@ void CTFPlayer::GiveDefaultItems()
 	int nMiniBuilding = 0;
 	CALL_ATTRIB_HOOK_INT( nMiniBuilding, wrench_builds_minisentry );
 
+	bool bMiniBuilding = nMiniBuilding ? true : false;
+
 	// If we've switched to/from gunslinger destroy all of our buildings
-	if ( nMiniBuilding != m_nMiniLastRegen)
+	if ( m_Shared.m_bGunslinger != bMiniBuilding )
 	{
-		for (int i = GetObjectCount()-1; i >= 0; i--)
+		for ( int i = GetObjectCount()-1; i >= 0; i-- )
 		{
-			CBaseObject *obj = GetObject(i);
+			CBaseObject *obj = GetObject( i );
 			Assert( obj );
 
 			if ( obj )
@@ -1424,7 +1430,7 @@ void CTFPlayer::GiveDefaultItems()
 		}
 	}
 
-	m_nMiniLastRegen = nMiniBuilding;
+	m_Shared.m_bGunslinger = bMiniBuilding;
 }
 
 //-----------------------------------------------------------------------------
@@ -6592,7 +6598,8 @@ void CTFPlayer::StopPlacement( void )
 int	CTFPlayer::StartedBuildingObject( int iObjectType )
 {
 	// Deduct the cost of the object
-	int iCost = CalculateObjectCost( iObjectType );
+	int iCost = CalculateObjectCost( iObjectType, HasGunslinger() );
+
 	if ( iCost > GetBuildResources() )
 	{
 		// Player must have lost resources since he started placing

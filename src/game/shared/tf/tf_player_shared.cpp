@@ -159,8 +159,8 @@ RecvPropEHandle( RECVINFO( m_hStunner ) ),
 RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
 RecvPropBool( RECVINFO( m_bCarryingObject ) ),
 RecvPropInt( RECVINFO( m_nTeamTeleporterUsed ) ),
-RecvPropBool( RECVINFO( m_bRegenerated ) ),
 RecvPropBool( RECVINFO( m_bArenaSpectator ) ),
+RecvPropBool( RECVINFO( m_bGunslinger ) ),
 RecvPropInt( RECVINFO( m_iRespawnParticleID ) ),
 RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 // Spy.
@@ -225,8 +225,8 @@ SendPropEHandle( SENDINFO( m_hStunner ) ),
 SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
 SendPropBool( SENDINFO( m_bCarryingObject ) ),
 SendPropInt( SENDINFO( m_nTeamTeleporterUsed ), 3, SPROP_UNSIGNED ),
-SendPropBool( SENDINFO( m_bRegenerated ) ),
 SendPropBool( SENDINFO( m_bArenaSpectator ) ),
+SendPropBool( SENDINFO( m_bGunslinger ) ),
 SendPropInt( SENDINFO( m_iRespawnParticleID ), 0, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iMaxHealth ), 10 ),
 // Spy
@@ -273,6 +273,8 @@ CTFPlayerShared::CTFPlayerShared()
 	m_nTeamTeleporterUsed = TEAM_UNASSIGNED;
 
 	m_bArenaSpectator = false;
+
+	m_bGunslinger = false;
 
 #ifdef CLIENT_DLL
 	m_iDisguiseWeaponModelIndex = -1;
@@ -3592,7 +3594,7 @@ int CTFPlayer::CanBuild(int iObjectType, int iObjectMode)
 	}
 
 	// Find out how much the object should cost
-	int iCost = CalculateObjectCost(iObjectType);
+	int iCost = CalculateObjectCost( iObjectType, HasGunslinger() );
 
 	// Make sure we have enough resources
 	if (GetBuildResources() < iCost)
