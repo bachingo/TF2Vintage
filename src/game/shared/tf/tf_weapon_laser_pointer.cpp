@@ -30,7 +30,6 @@ public:
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
 
-		Msg( "teamNumber = %i\n", m_iTeamNumber );
 		if ( pEntity && pEntity->GetTeamNumber() == m_iTeamNumber )
 			return false;
 

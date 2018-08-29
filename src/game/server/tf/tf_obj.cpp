@@ -48,7 +48,6 @@
 #define SCREEN_OVERLAY_MATERIAL "vgui/screens/vgui_overlay"
 
 #define ROPE_HANG_DIST	150
-#define MINI_SENTRY_LIGHT	2
 
 ConVar tf_obj_gib_velocity_min( "tf_obj_gib_velocity_min", "100", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_obj_gib_velocity_max( "tf_obj_gib_velocity_max", "450", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
@@ -433,7 +432,6 @@ void CBaseObject::MakeMiniBuilding( void )
 	}
 
 	m_flModelScale = 0.6f;
-	SetBodygroup( MINI_SENTRY_LIGHT, 1 );
 
 }
 

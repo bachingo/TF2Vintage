@@ -59,7 +59,6 @@ public:
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 
-
 	// Laser methods
 	void				CreateLaserBeam( void );
 	virtual void		ClientThink( void );

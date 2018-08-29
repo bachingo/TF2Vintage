@@ -13,7 +13,7 @@
 #include "hintsystem.h"
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weapon_laser_pointer.h"
-#include "igameevents.h"
+
 
 #include "c_obj_sentrygun.h"
 // memdbgon must be the last include file in a .cpp file!!!
@@ -374,10 +374,17 @@ CStudioHdr *C_ObjectSentrygun::OnNewModel( void )
 	// Reset Bodygroups
 	for ( int i = GetNumBodyGroups()-1; i >= 0; i-- )
 	{
-		SetBodygroup( i, 0 );
+		if ( IsMiniBuilding() && V_strcmp( GetBodygroupName( i ), "mini_sentry_light" ) == 0 )
+			SetBodygroup( i, 1 );
+		else
+			SetBodygroup( i, 0 );
 	}
 
 	m_iPlacementBodygroup = FindBodygroupByName( "sentry1_range" );
+
+	// Apparently mini-range isn't actually changed in live tf2
+	//if ( IsMiniBuilding() )
+		//m_iPlacementBodygroup = FindBodygroupByName( "sentry1_range_mini" );
 
 	// Start thinking on the next frame
 	SetNextClientThink( gpGlobals->frametime + 1 );

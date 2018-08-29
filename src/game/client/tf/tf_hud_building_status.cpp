@@ -703,9 +703,18 @@ void CBuildingStatusItem_SentryGun::PerformLayout( void )
 	float flUpgrade = (float)iMetal / (float)iMetalRequired;
 	m_pUpgradeProgress->SetProgress( flUpgrade );
 
-	// upgrade label only in 1 or 2
-	m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
-	m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
+	if ( pSentrygun->IsMiniBuilding() )
+	{
+		// No upgrade labels for mini sentries
+		m_pUpgradeIcon->SetVisible( false);
+		m_pUpgradeProgress->SetVisible( false );
+	}
+	else
+	{
+		// upgrade label only in 1 or 2
+		m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
+		m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
+	}
 
 	// rockets label only in 3
 	m_pRocketsIcon->SetVisible( iUpgradeLevel == 3 );

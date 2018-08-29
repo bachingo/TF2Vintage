@@ -195,6 +195,9 @@ public:
 public:
 	virtual void		DisplayHintTo( C_BasePlayer *pPlayer );
 
+	// moving this to public for hud_building_status
+	bool IsMiniBuilding( void ) { return m_bMiniBuilding; }
+
 protected:
 	virtual void		UpdateDamageEffects( BuildingDamageLevel_t damageLevel ) {}	// default is no effects
 
@@ -267,8 +270,6 @@ protected:
 	int m_iObjectMode;
 	bool m_bDisposableBuilding;
 	bool m_bWasMapPlaced;
-
-	bool IsMiniBuilding( void ) { return m_bMiniBuilding; }
 
 private:
 	C_BaseObject( const C_BaseObject & ); // not defined, not accessible

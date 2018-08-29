@@ -871,7 +871,7 @@ void C_BaseObject::GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInByt
 		wszBuilderName[0] = '\0';
 	}
 
-	if (m_iUpgradeLevel >= m_iHighestUpgradeLevel)
+	if (m_iUpgradeLevel >= m_iHighestUpgradeLevel )
 	{
 		const char *printFormatString = "#TF_playerid_object_level";
 
@@ -879,7 +879,7 @@ void C_BaseObject::GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInByt
 			1,
 			wszLevel);
 	}
-	else
+	else if ( !IsMiniBuilding() )
 	{
 		// level 1 and 2 show upgrade progress
 		_snwprintf(wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, m_iUpgradeMetalRequired);
