@@ -2134,7 +2134,8 @@ void CBaseObject::CreateObjectGibs( void )
 			pAmmoPack->ActivateWhenAtRest();
 
 			// Fill up the ammo pack.
-			pAmmoPack->GiveAmmo( nMetalPerGib, TF_AMMO_METAL );
+			if ( !IsMiniBuilding() ) 
+				pAmmoPack->GiveAmmo( nMetalPerGib, TF_AMMO_METAL );
 
 			// Calculate the initial impulse on the weapon.
 			Vector vecImpulse( random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( 0.75, 1.25 ) );
