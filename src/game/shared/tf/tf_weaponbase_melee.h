@@ -77,7 +77,7 @@ public:
 
 protected:
 
-	void			Swing( CTFPlayer *pPlayer );
+	virtual void	Swing( CTFPlayer *pPlayer );
 
 protected:
 

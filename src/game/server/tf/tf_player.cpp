@@ -4653,6 +4653,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 	if ( pVictim->IsPlayer() )
 	{
 		CTFPlayer *pTFVictim = ToTFPlayer(pVictim);
+		bool bInflictor = false;
 
 		// Custom death handlers
 		const char *pszCustomDeath = "customdeath:none";
@@ -4663,6 +4664,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		else if ( info.GetInflictor() && info.GetInflictor()->IsBaseObject() )
 		{
 			pszCustomDeath = "customdeath:sentrygun";
+			bInflictor = true;
 		}
 		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT )
 		{				
@@ -4675,6 +4677,13 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BURNING )
 		{
 			pszCustomDeath = "customdeath:burning";
+		}
+
+		// special responses for mini-sentry
+		if ( V_strcmp( pszCustomDeath, "customdeath:sentrygun" ) == 0 )
+		{
+			if ( HasGunslinger() )
+				pszCustomDeath = "customdeath:minisentrygun";
 		}
 
 		// Revenge handler

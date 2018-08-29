@@ -486,8 +486,6 @@ void CBaseObject::DropCarriedObject( CTFPlayer *pPlayer )
 	{
 		pPlayer->m_Shared.SetCarriedObject( NULL );
 	}
-
-	MakeMiniBuilding();
 	//StopFollowingEntity();
 }
 

@@ -186,9 +186,8 @@ void CObjectSentrygun::Spawn()
 
 	m_iState.Set( SENTRY_STATE_INACTIVE );
 
-	int nMiniSentry = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( GetBuilder(), nMiniSentry, wrench_builds_minisentry );
-	if ( nMiniSentry == 1 )
+	// Is the wrangler currently out?
+	if ( GetBuilder() && GetBuilder()->HasGunslinger() )
 	{
 		m_bMiniBuilding = true;
 		SetMaxHealth( MINI_SENTRYGUN_MAX_HEALTH );
@@ -1189,13 +1188,11 @@ bool CObjectSentrygun::Fire()
 			vecAimDir = m_vecEnd.Get() - vecSrc;
 		}
 
+		info.m_flDamage = tf_sentrygun_damage.GetFloat();
+
 		if ( IsMiniBuilding() )
 		{
-			info.m_flDamage = 8;
-		}
-		else
-		{
-			info.m_flDamage = tf_sentrygun_damage.GetFloat();
+			info.m_flDamage /= 2;
 		}
 
 		// Wrangled shots should have some spread
@@ -1227,7 +1224,7 @@ bool CObjectSentrygun::Fire()
 		info.m_vecDirShooting = vecAimDir;
 		info.m_iTracerFreq = 1;
 		info.m_iShots = 1;
-		info.m_pAttacker = this;
+		info.m_pAttacker = GetBuilder();
 		info.m_iAmmoType = m_iAmmoType;
 		info.m_vecSpread = vec3_origin;
 		info.m_flDistance = flDistToTarget + 100;
