@@ -125,8 +125,7 @@ void CTFLunchBox::DepleteAmmo( void )
 //-----------------------------------------------------------------------------
 void CTFLunchBox::SwitchBodyGroups( void )
 {
-#ifdef GAME_DLL
-#else
+#ifndef GAME_DLL
 	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
 	if ( pAttach )
 	{

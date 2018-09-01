@@ -122,13 +122,12 @@ void CTFStickBomb::SwitchBodyGroups()
 void CTFStickBomb::WeaponRegenerate()
 {
 	m_iDetonated = TF_STICKBOMB_NORMAL;
-#ifdef CLIENT_DLL
-	SetNextClientThink( gpGlobals->curtime + 0.1f );
-#endif
+	SetContextThink( &CTFStickBomb::SwitchBodyGroups, gpGlobals->curtime + 0.01f, "SwitchBodyGroups" );
 }
 
 void CTFStickBomb::WeaponReset()
 {
+	m_iDetonated = TF_STICKBOMB_NORMAL;
 	BaseClass::WeaponReset();
 }
 
@@ -142,18 +141,5 @@ int C_TFStickBomb::GetWorldModelIndex()
 	int index = modelinfo->GetModelIndex( m_iDetonated == TF_STICKBOMB_DETONATED ? MODEL_EXPLODED : MODEL_NORMAL );
 	m_iWorldModelIndex = index;
 	return index;
-}
-
-void C_TFStickBomb::ClientThink( void )
-{
-	if ( WeaponState() == WEAPON_IS_ACTIVE )
-	{
-		SwitchBodyGroups();
-		SetNextClientThink( CLIENT_THINK_NEVER );
-		return;
-	}
-
-	// Keep checking until the weapon is deployed
-	SetNextClientThink( gpGlobals->curtime + 0.1f );
 }
 #endif

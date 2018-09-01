@@ -39,7 +39,6 @@ public:
 	virtual void WeaponReset();
 	
 #ifdef CLIENT_DLL
-	virtual void ClientThink( void );
 	virtual int GetWorldModelIndex();
 #endif
 	
