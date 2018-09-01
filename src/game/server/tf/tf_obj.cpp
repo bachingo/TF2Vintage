@@ -431,7 +431,8 @@ void CBaseObject::MakeMiniBuilding( void )
 		break;
 	}
 
-	m_flModelScale = 0.6f;
+	// Make the model small
+	SetModelScale( 0.75f );
 
 }
 
