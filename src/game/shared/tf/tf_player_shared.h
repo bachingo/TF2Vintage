@@ -147,6 +147,7 @@ public:
 	int		GetDisguiseClass( void ) 			{ return m_nDisguiseClass; }
 	int		GetDesiredDisguiseClass( void )		{ return m_nDesiredDisguiseClass; }
 	int		GetDesiredDisguiseTeam( void )		{ return m_nDesiredDisguiseTeam; }
+	float	GetDisguiseChargeLevel( void )      { return m_flDisguiseChargeLevel; }
 	int		GetMaskClass(void)				{ return m_nMaskClass; }
 	EHANDLE GetDisguiseTarget( void ) 	
 	{

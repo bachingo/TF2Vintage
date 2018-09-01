@@ -2134,6 +2134,7 @@ void CBaseObject::CreateObjectGibs( void )
 			pAmmoPack->ActivateWhenAtRest();
 
 			// Fill up the ammo pack.
+			// Mini gibs don't give any ammo
 			if ( !IsMiniBuilding() ) 
 				pAmmoPack->GiveAmmo( nMetalPerGib, TF_AMMO_METAL );
 

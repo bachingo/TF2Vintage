@@ -232,9 +232,9 @@ void CWeaponMedigun::Precache()
 	PrecacheScriptSound( "WeaponMedigun.Charged" );
 	PrecacheScriptSound( "WeaponMedigun.HealingDetach" );
 
-	PrecacheTeamParticles(g_MedigunParticles[iType].fullcharge);
-	PrecacheTeamParticles(g_MedigunParticles[iType].beam);
-	PrecacheTeamParticles(g_MedigunParticles[iType].beam_invlun);
+	PrecacheTeamParticles( g_MedigunParticles[iType].fullcharge );
+	PrecacheTeamParticles( g_MedigunParticles[iType].beam );
+	PrecacheTeamParticles( g_MedigunParticles[iType].beam_invlun );
 
 	// Precache charge sounds.
 	for ( int i = 0; i < TF_CHARGE_COUNT; i++ )
