@@ -18,6 +18,10 @@
 #include "econ_item_view.h"
 #include "attribute_manager.h"
 
+#ifdef CLIENT_DLL
+#include "c_tf_viewmodeladdon.h"
+#endif
+
 struct wearableanimplayback_t
 {
 	int iStub;
@@ -44,6 +48,9 @@ public:
 	virtual void OnDataChanged( DataUpdateType_t );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 	virtual bool OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options );
+
+	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return NULL; }
+
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }

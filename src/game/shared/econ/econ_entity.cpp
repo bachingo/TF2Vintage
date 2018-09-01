@@ -66,7 +66,12 @@ void CEconEntity::FireEvent( const Vector& origin, const QAngle& angles, int eve
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
 	{
-		
+		C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+		if ( pAttach)
+		{
+			Msg( "CEconEntity::FireEvent::AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN\n" );
+			pAttach->FireEvent( origin, angles, AE_CL_BODYGROUP_SET_VALUE, options );
+		}
 	}
 	else
 		BaseClass::FireEvent( origin, angles, event, options );
@@ -76,7 +81,13 @@ bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
 	{
-		return true;
+		C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+		if ( pAttach)
+		{
+			Msg( "CEconEntity::OnFireEvent::AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN\n" );
+			pAttach->FireEvent( origin, angles, AE_CL_BODYGROUP_SET_VALUE, options );
+			return true;
+		}
 	}
 	return false;
 }
