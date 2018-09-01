@@ -1603,20 +1603,17 @@ bool CObjectSentrygun::MoveTurret( void )
 			{
 				if ( IsMiniBuilding() )
 				{
-					if (m_flTurnRate < iBaseTurnRate * 32)
+					if ( m_flTurnRate < iBaseTurnRate * 32 )
 					{
 						m_flTurnRate += iBaseTurnRate * 4;
 					}
 				}
 				else
 				{
-				if ( IsMiniBuilding() )
-				{
-					if (m_flTurnRate < iBaseTurnRate * 30)
+					if ( m_flTurnRate < iBaseTurnRate * 30 )
 					{
 						m_flTurnRate += iBaseTurnRate * 3;
 					}
-				}
 				}
 			}
 		}
@@ -1626,16 +1623,16 @@ bool CObjectSentrygun::MoveTurret( void )
 		// if we passed over the goal, peg right to it now
 		if (flDir == -1)
 		{
-			if ( (bReversed == false && m_vecGoalAngles.y > m_vecCurAngles.y) ||
-				(bReversed == true && m_vecGoalAngles.y < m_vecCurAngles.y) )
+			if ( ( bReversed == false && m_vecGoalAngles.y > m_vecCurAngles.y ) ||
+				( bReversed == true && m_vecGoalAngles.y < m_vecCurAngles.y ) )
 			{
 				m_vecCurAngles.y = m_vecGoalAngles.y;
 			}
 		} 
 		else
 		{
-			if ( (bReversed == false && m_vecGoalAngles.y < m_vecCurAngles.y) ||
-                (bReversed == true && m_vecGoalAngles.y > m_vecCurAngles.y) )
+			if ( ( bReversed == false && m_vecGoalAngles.y < m_vecCurAngles.y ) ||
+                ( bReversed == true && m_vecGoalAngles.y > m_vecCurAngles.y ) )
 			{
 				m_vecCurAngles.y = m_vecGoalAngles.y;
 			}
