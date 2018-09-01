@@ -59,7 +59,7 @@ extern ConVar tf_obj_upgrade_per_hit;
 
 #define SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER	0.33f
 
-#define MINI_SENTRYGUN_PITCH	150
+#define MINI_SENTRYGUN_PITCH	120
 
 enum
 {	
@@ -1008,8 +1008,6 @@ void CObjectSentrygun::FoundTarget( CBaseEntity *pTarget, const Vector &vecSound
 	{
 		// Play one sound to everyone but the target.
 		CPASFilter filter( vecSoundCenter );
-		EmitSound_t params;
-		params.m_flSoundTime = 0;
 
 		if ( pTarget->IsPlayer() )
 		{
@@ -1017,14 +1015,11 @@ void CObjectSentrygun::FoundTarget( CBaseEntity *pTarget, const Vector &vecSound
 
 			// Play a specific sound just to the target and remove it from the genral recipient list.
 			CSingleUserRecipientFilter singleFilter( pPlayer );
-			params.m_pSoundName = "Building_Sentrygun.AlertTarget";
-			params.m_nPitch = m_bMiniBuilding ? MINI_SENTRYGUN_PITCH : PITCH_NORM;
-			EmitSound( singleFilter, entindex(), params );
+			EmitSentrySound( singleFilter, entindex(), "Building_Sentrygun.AlertTarget" );
 			filter.RemoveRecipient( pPlayer );
 		}
 
-		params.m_pSoundName = "Building_Sentrygun.Alert";
-		EmitSound( filter, entindex(), params );
+		EmitSentrySound( filter, entindex(), "Building_Sentrygun.Alert" );
 	}
 
 	// Update timers, we are attacking now!
@@ -1420,10 +1415,7 @@ void CObjectSentrygun::SentryRotate( void )
 		return;
 
 	CPASAttenuationFilter filter( this );
-	EmitSound_t params;
-	params.m_flSoundTime = 0;
-	params.m_pSoundName = "Building_Sentrygun.Idle";
-	params.m_nPitch = IsMiniBuilding() ? MINI_SENTRYGUN_PITCH : PITCH_NORM;
+
 	// Rotate
 	if ( !MoveTurret() )
 	{
@@ -1440,7 +1432,7 @@ void CObjectSentrygun::SentryRotate( void )
 			{
 			case 1:
 			default:
-				EmitSound( filter, entindex(), params );
+				EmitSentrySound( filter, entindex(), "Building_Sentrygun.Idle" );
 				break;
 			case 2:
 				EmitSound( "Building_Sentrygun.Idle2" );
@@ -1856,6 +1848,24 @@ void CObjectSentrygun::UpdateSentryAngles( Vector vecDir )
 
 	SetPoseParameter( m_iPitchPoseParameter, -m_vecCurAngles.x );
 	SetPoseParameter( m_iYawPoseParameter, -flYaw );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CObjectSentrygun::EmitSentrySound( IRecipientFilter &filter, int index, char const* pszSound  )
+{
+	EmitSound_t params;
+	params.m_pSoundName = pszSound;
+
+	if ( IsMiniBuilding() )
+	{
+		StopSound( pszSound );
+		params.m_nPitch = MINI_SENTRYGUN_PITCH;
+		params.m_nFlags = SND_CHANGE_PITCH;
+	}
+
+	EmitSound( filter, index, params );
 }
 
 LINK_ENTITY_TO_CLASS( tf_projectile_sentryrocket, CTFProjectile_SentryRocket );
