@@ -144,6 +144,9 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void UpdateViewModel( void );
 
 	C_ViewmodelAttachmentModel *GetViewmodelAddon( void );
+
+	// AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN
+	C_BaseAnimating *GetAppropriateWorldOrViewModel( void );
 #endif
 
 #ifdef DM_WEAPON_BUCKET

@@ -445,6 +445,9 @@ void CTFWeaponBase::SetViewModel()
 }
 
 #ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void C_TFWeaponBase::UpdateViewModel( void )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
@@ -484,6 +487,9 @@ void C_TFWeaponBase::UpdateViewModel( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
 {
 	C_TFPlayer *pOwner = GetTFPlayerOwner();
@@ -498,6 +504,38 @@ C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
 		}
 	}
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_BaseAnimating *C_TFWeaponBase::GetAppropriateWorldOrViewModel( void )
+{
+	C_TFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer && UsingViewModel() && GetItem() && GetItem()->GetStaticData() )
+	{
+		// what kind of viewmodel is this?
+		int iType = GetItem()->GetStaticData()->attach_to_hands;
+
+		// Is this a cmodel?
+		if ( iType == VMTYPE_TF2 )
+		{
+			C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+			if ( pAttach)
+				return pAttach;
+		}
+
+		// Is this a vmodel?
+		// FIXME: updating this on the client does nothing!
+		C_BaseViewModel *vm = pPlayer->GetViewModel();
+		if ( vm )
+		{
+			return vm;
+		}
+	}
+
+	// this too
+	return this;
 }
 #endif
 
