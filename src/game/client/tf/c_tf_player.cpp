@@ -1925,6 +1925,7 @@ void C_TFPlayer::SetDormant( bool bDormant )
 	}
 
 	m_Shared.UpdateCritBoostEffect( true );
+	UpdateOverhealEffect( true );
 
 	// Deliberately skip base combat weapon
 	C_BaseEntity::SetDormant( bDormant );
@@ -2713,6 +2714,7 @@ void C_TFPlayer::ThirdPersonSwitch( bool bThirdPerson )
 	}
 
 	m_Shared.UpdateCritBoostEffect();
+	UpdateOverhealEffect();
 }
 
 //-----------------------------------------------------------------------------
@@ -4636,23 +4638,44 @@ CBaseCombatWeapon *C_TFPlayer::Weapon_GetSlot( int slot ) const
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void C_TFPlayer::UpdateOverhealEffect( void )
+void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 {
-	bool bShouldShow = true;
+	bool bShouldShow = !bForceHide;
+	int iTeamNum = GetTeamNumber();
 
-	if ( !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) )
+	if ( bShouldShow )
 	{
-		bShouldShow = false;
-	}
-	else if ( InFirstPersonView() )
-	{
-		bShouldShow = false;
-	}
-	else if ( IsEnemyPlayer() )
-	{
-		if ( m_Shared.InCond( TF_COND_STEALTHED ) || m_Shared.InCond( TF_COND_DISGUISED ) )
+		if ( !IsAlive() || InFirstPersonView() )
 		{
-			// Don't give away cloaked and disguised spies.
+			bShouldShow = false;
+		}
+		else if ( IsEnemyPlayer() )
+		{
+			if ( m_Shared.InCond( TF_COND_STEALTHED ))
+			{
+				// Don't give away cloaked spies.
+				bShouldShow = false;
+			}
+
+
+			if ( m_Shared.InCond( TF_COND_DISGUISED ) )
+			{
+				if ( m_Shared.InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
+				{
+					Msg("Overhealed\n");
+					// Disguised spies should use their fake health instead.
+					bShouldShow = true;
+					iTeamNum = m_Shared.GetDisguiseTeam();
+				}
+				else
+				{
+					Msg("Not Overhealed\n");
+					bShouldShow = false;
+				}
+			}
+		}
+		else if ( !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) )
+		{
 			bShouldShow = false;
 		}
 	}
@@ -4661,7 +4684,7 @@ void C_TFPlayer::UpdateOverhealEffect( void )
 	{
 		if ( !m_pOverhealEffect )
 		{
-			const char *pszEffect = ConstructTeamParticle( "overhealedplayer_%s_pluses", GetTeamNumber(), false );
+			const char *pszEffect = ConstructTeamParticle( "overhealedplayer_%s_pluses", iTeamNum, false );
 			m_pOverhealEffect = ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN_FOLLOW );
 		}
 	}

@@ -496,13 +496,12 @@ void CTFPlayerShared::OnPreDataChanged(void)
 {
 	m_nOldConditions = m_nPlayerCond;
 	m_nOldConditionsEx = m_nPlayerCondEx;
-	m_nOldConditionsEx = m_nPlayerCondEx2;
-	m_nOldConditionsEx = m_nPlayerCondEx3;
+	m_nOldConditionsEx2 = m_nPlayerCondEx2;
+	m_nOldConditionsEx3 = m_nPlayerCondEx3;
 	m_nOldDisguiseClass = GetDisguiseClass();
 	m_nOldDisguiseTeam = GetDisguiseTeam();
 	m_iOldDisguiseWeaponModelIndex = m_iDisguiseWeaponModelIndex;
 	m_iOldDisguiseWeaponID = m_DisguiseItem.GetItemDefIndex();
-	m_bWasCritBoosted = IsCritBoosted();
 }
 
 //-----------------------------------------------------------------------------
@@ -510,8 +509,6 @@ void CTFPlayerShared::OnPreDataChanged(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnDataChanged(void)
 {
-	// FIXME: SyncConditions sometimes adds conditions multiple times rather than once leading to untintentional results 
-
 	// Update conditions from last network change
 	SyncConditions(m_nPlayerCond, m_nOldConditions, 0, 0);
 	SyncConditions(m_nPlayerCondEx, m_nOldConditionsEx, 0, 32);
@@ -520,17 +517,8 @@ void CTFPlayerShared::OnDataChanged(void)
 
 	m_nOldConditions = m_nPlayerCond;
 	m_nOldConditionsEx = m_nPlayerCondEx;
-	m_nOldConditionsEx = m_nPlayerCondEx2;
-	m_nOldConditionsEx = m_nPlayerCondEx3;
-
-	// TODO: Figure out how make SyncConditions work properly for this
-	if ( !InCond( TF_COND_HALF_STUN ) && m_pStun )
-		RemoveCond( TF_COND_HALF_STUN );
-
-	if ( m_bWasCritBoosted != IsCritBoosted() )
-	{
-		UpdateCritBoostEffect();
-	}
+	m_nOldConditionsEx2 = m_nPlayerCondEx2;
+	m_nOldConditionsEx3 = m_nPlayerCondEx3;
 
 	if (m_nOldDisguiseClass != GetDisguiseClass() || m_nOldDisguiseTeam != GetDisguiseTeam())
 	{
@@ -670,6 +658,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		break;
 
 	case TF_COND_HEALTH_OVERHEALED:
+	case TF_COND_DISGUISE_HEALTH_OVERHEALED:
 #ifdef CLIENT_DLL
 		m_pOuter->UpdateOverhealEffect();
 #endif
@@ -778,6 +767,7 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		break;
 
 	case TF_COND_HEALTH_OVERHEALED:
+	case TF_COND_DISGUISE_HEALTH_OVERHEALED:
 #ifdef CLIENT_DLL
 		m_pOuter->UpdateOverhealEffect();
 #endif
@@ -1032,6 +1022,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
+	// Overheal effects
 	if ( m_pOuter->GetHealth() > m_pOuter->GetMaxHealth() )
 	{
 		if ( !InCond( TF_COND_HEALTH_OVERHEALED ) )
@@ -1044,6 +1035,22 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		if ( InCond( TF_COND_HEALTH_OVERHEALED ) )
 		{
 			RemoveCond( TF_COND_HEALTH_OVERHEALED );
+		}
+	}
+
+	// Overheal effects for disguised spies
+	if ( InCond( TF_COND_DISGUISED ) && m_iDisguiseHealth > m_iDisguiseMaxHealth )
+	{
+		if ( !InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
+		{
+			AddCond( TF_COND_DISGUISE_HEALTH_OVERHEALED );
+		}
+	}
+	else
+	{
+		if ( InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
+		{
+			RemoveCond( TF_COND_DISGUISE_HEALTH_OVERHEALED );
 		}
 	}
 
@@ -1247,6 +1254,7 @@ void CTFPlayerShared::OnDisguiseChanged( void )
 	//RecalcDisguiseWeapon();
 	m_pOuter->UpdateRecentlyTeleportedEffect();
 	UpdateCritBoostEffect();
+	m_pOuter->UpdateOverhealEffect();
 }
 #endif
 
@@ -1469,9 +1477,9 @@ void CTFPlayerShared::OnRemoveSlowed(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnAddCritboosted(void)
 {
-/*#ifdef CLIENT_DLL
+#ifdef CLIENT_DLL
 	UpdateCritBoostEffect();
-#endif*/
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1525,9 +1533,9 @@ void CTFPlayerShared::OnRemoveHalloweenTiny(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnRemoveCritboosted(void)
 {
-/*#ifdef CLIENT_DLL
+#ifdef CLIENT_DLL
 	UpdateCritBoostEffect();
-#endif*/
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1838,6 +1846,7 @@ void CTFPlayerShared::OnAddStealthed(void)
 #ifdef CLIENT_DLL
 	m_pOuter->EmitSound( "Player.Spy_Cloak" );
 	UpdateCritBoostEffect();
+	m_pOuter->UpdateOverhealEffect();
 	m_pOuter->RemoveAllDecals();
 	m_pOuter->UpdateRecentlyTeleportedEffect();
 #else
@@ -1873,6 +1882,7 @@ void CTFPlayerShared::OnRemoveStealthed(void)
 #ifdef CLIENT_DLL
 	m_pOuter->EmitSound( "Player.Spy_UnCloak" );
 	UpdateCritBoostEffect();
+	m_pOuter->UpdateOverhealEffect();
 	m_pOuter->UpdateRecentlyTeleportedEffect();
 #endif
 
@@ -1924,6 +1934,7 @@ void CTFPlayerShared::OnRemoveDisguised(void)
 	m_pOuter->ParticleProp()->StopParticlesNamed( "speech_mediccall", true );
 
 	UpdateCritBoostEffect();
+	m_pOuter->UpdateOverhealEffect();
 
 #else
 	m_nDisguiseTeam = TF_SPY_UNDEFINED;
@@ -2263,15 +2274,15 @@ void CTFPlayerShared::CompleteDisguise(void)
 
 	// If we have a disguise target with matching class then take their values.
 	// Otherwise, generate random health and uber.
-	if (pDisguiseTarget && pDisguiseTarget->IsPlayerClass(m_nDisguiseClass))
+	if ( pDisguiseTarget && pDisguiseTarget->IsPlayerClass( m_nDisguiseClass ) )
 	{
-		int iMaxHealth = GetPlayerClassData(m_nDisguiseClass)->m_nMaxHealth;
+		int iMaxHealth = pDisguiseTarget->GetMaxHealth();
 
-		if (pDisguiseTarget->IsAlive())
+		if ( pDisguiseTarget->IsAlive() )
 			m_iDisguiseHealth = pDisguiseTarget->GetHealth();
 
 		else
-			m_iDisguiseHealth = random->RandomInt(iMaxHealth / 2, iMaxHealth);
+			m_iDisguiseHealth = random->RandomInt( iMaxHealth / 2, iMaxHealth );
 		m_iDisguiseMaxHealth = iMaxHealth;
 
 

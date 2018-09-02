@@ -266,7 +266,7 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 
-	void UpdateOverhealEffect( void );
+	void UpdateOverhealEffect( bool bForceHide = false );
 
 protected:
 
