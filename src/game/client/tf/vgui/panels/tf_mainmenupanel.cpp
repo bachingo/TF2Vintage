@@ -93,7 +93,7 @@ void CTFMainMenuPanel::PerformLayout()
 	SetDialogVariable("nickname", szNickName);
 
 	//ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
-	OnNotificationUpdate();
+	//OnNotificationUpdate();
 	AutoLayout();
 
 	if (m_iShowFakeIntro > 0)
@@ -284,7 +284,8 @@ void CTFMainMenuPanel::SetVersionLabel()  //GetVersionString
 	if (m_pVersionLabel)
 	{
 		char verString[64];
-		Q_snprintf(verString, sizeof(verString), "Version: %s\nSDK branch: %s", GetNotificationManager()->GetVersionString(), GetSDKVersionChecker()->GetKey());
+		//Q_snprintf(verString, sizeof(verString), "Version: %s\nSDK branch: %s", GetNotificationManager()->GetVersionString(), GetSDKVersionChecker()->GetKey());
+		Q_snprintf(verString, sizeof(verString), "Version: %s", GetNotificationManager()->GetVersionString() );
 		m_pVersionLabel->SetText(verString);
 	}
 };
