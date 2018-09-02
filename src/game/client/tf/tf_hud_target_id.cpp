@@ -364,12 +364,19 @@ void CTargetID::UpdateID( void )
 
 			if ( bDisguisedEnemy )
 			{
-				pMedigun = pDisguiseTarget->GetMedigun();
+				int iDisguiseClass = pPlayer->m_Shared.GetDisguiseClass();
 
-				// our disguise target doesn't have a medigun
-				if ( !pMedigun )
+				if ( !pDisguiseTarget->IsPlayerClass( iDisguiseClass ) )
 				{
-					bFakeMedigun = true;
+					if ( iDisguiseClass == TF_CLASS_MEDIC )
+					{
+						// Our disguise target is a different class than us so we should use a fake ubercharge instead
+						bFakeMedigun = true;
+					}
+				}
+				else
+				{
+					pMedigun = pDisguiseTarget->GetMedigun();
 				}
 			}
 			else
