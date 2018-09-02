@@ -267,6 +267,7 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 			CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
 			bool bIsMinigun = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_MINIGUN );
 			bool bIsSniperRifle = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE );
+			bool bIsRobotArm = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_ROBOT_ARM );
 
 			// Heavy weapons primary fire.
 			if ( bIsMinigun )
@@ -306,6 +307,27 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 
 				// Hold our deployed pose for a few seconds
 				m_flHoldDeployedPoseUntilTime = gpGlobals->curtime + 2.0;
+			}
+			else if ( bIsRobotArm && pWpn->CalcIsAttackCriticalHelper() )
+			{
+				// Play standing primary fire.
+				iGestureActivity = ACT_MP_ATTACK_STAND_HARD_ITEM2;
+
+				if ( m_bInSwim )
+				{
+					// Play swimming primary fire.
+					iGestureActivity = ACT_MP_ATTACK_SWIM_HARD_ITEM2;
+				}
+				else if ( GetBasePlayer()->GetFlags() & FL_DUCKING )
+				{
+					// Play crouching primary fire.
+					iGestureActivity = ACT_MP_ATTACK_CROUCH_HARD_ITEM2;
+				}
+
+				if ( !IsGestureSlotPlaying( GESTURE_SLOT_ATTACK_AND_RELOAD, TranslateActivity(iGestureActivity) ) )
+				{
+					RestartGesture( GESTURE_SLOT_ATTACK_AND_RELOAD, iGestureActivity );
+				}
 			}
 			else
 			{

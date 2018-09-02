@@ -55,7 +55,7 @@ public:
 
 	virtual void	PrimaryAttack( void );
 	virtual void	WeaponIdle( void );
-	virtual int		GetDamageCustom( void );
+	virtual int		GetCustomDamageType() const;
 
 #ifdef GAME_DLL
 	virtual float	GetForceScale( void );

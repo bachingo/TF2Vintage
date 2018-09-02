@@ -328,7 +328,7 @@ void CTFWeaponBaseMelee::Smack( void )
 
 #ifndef CLIENT_DLL
 		// Do Damage.
-		int iCustomDamage = GetDamageCustom();
+		int iCustomDamage = GetCustomDamageType();
 		float flDamage = GetMeleeDamage( trace.m_pEnt, iCustomDamage );
 		int iDmgType = DMG_BULLET | DMG_NEVERGIB | DMG_CLUB;
 		if ( IsCurrentAttackACrit() )

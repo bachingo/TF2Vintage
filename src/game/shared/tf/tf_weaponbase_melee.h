@@ -57,7 +57,7 @@ public:
 	virtual void	Smack( void );
 
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
-	virtual int		GetDamageCustom( void ) { return TF_DMG_CUSTOM_NONE; }
+	virtual int		GetCustomDamageType() const { return TF_DMG_CUSTOM_NONE; }
 
 #ifndef CLIENT_DLL
 	virtual float	GetForceScale( void );

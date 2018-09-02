@@ -196,7 +196,7 @@ void CTFRobotArm::WeaponIdle( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFRobotArm::GetDamageCustom( void )
+int CTFRobotArm::GetCustomDamageType( void ) const
 {
 	if ( m_iConsecutivePunches == 3 )
 		return TF_DMG_CUSTOM_COMBO_PUNCH;
