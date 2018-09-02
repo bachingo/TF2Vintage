@@ -1262,6 +1262,9 @@ void CTFPlayer::InitClass( void )
 	{
 		UpdatePlayerColor();
 	}
+
+	// Reset active contexts;
+	m_hActiveContexts.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------
@@ -8129,6 +8132,8 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 	criteriaSet.AppendCriteria( "beinghealed", m_Shared.InCond( TF_COND_HEALTH_BUFF ) ? "1" : "0" );
 	criteriaSet.AppendCriteria( "waitingforplayers", (TFGameRules()->IsInWaitingForPlayers() || TFGameRules()->IsInPreMatch()) ? "1" : "0" );
 	criteriaSet.AppendCriteria( "teamrole", GetTFTeam()->GetRole() ? "defense" : "offense" );
+	criteriaSet.AppendCriteria( "stunned", m_Shared.InCond( TF_COND_STUNNED ) ? "1" : "0" );
+	criteriaSet.AppendCriteria( "dodging", m_Shared.InCond( TF_COND_PHASE ) ? "1" : "0" );
 
 	if ( GetTFTeam() )
 	{
@@ -8292,6 +8297,23 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 
 		bool bIsRedTeam = GetTeamNumber() == TF_TEAM_RED;
 		criteriaSet.AppendCriteria( "OnRedTeam", UTIL_VarArgs( "%d", bIsRedTeam ) );
+	}
+
+	// Active Contexts
+
+	for ( int i = 0; i < m_hActiveContexts.Count(); i++ )
+	{
+		AppliedContext_t context = m_hActiveContexts.Element( i );
+		if ( context.flContextExpireTime > gpGlobals->curtime && context.pszContext[0] )
+		{
+			criteriaSet.AppendCriteria( context.pszContext, "1" );
+		}
+		else
+		{
+			// Time to remove this context
+			m_hActiveContexts.Remove( i );
+			i--;
+		}
 	}
 
 }
@@ -8642,10 +8664,30 @@ bool CTFPlayer::GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, 
 {
 	AI_Response result;
 	bool bResult = SpeakConcept( result, iConcept);
-	if (bResult)
+	if ( bResult )
 	{
 		const char *szResponse = result.GetResponsePtr();
-		Q_strncpy(chSceneBuffer, szResponse, numSceneBufferBytes);
+		Q_strncpy( chSceneBuffer, szResponse, numSceneBufferBytes );
+
+		// check if there's a context we need to save
+		const char *szContext = result.GetContext();
+		if ( szContext )
+		{
+			CUtlStringList outStrings;
+			V_SplitString( szContext, ":", outStrings );
+
+			if ( outStrings.Count() > 2 )
+			{
+				// this should be a ratio (i.e. 1:20)
+				float flContextTime = V_atoi( outStrings.Element( 2 ) ) / V_atoi( outStrings.Element( 1 ) );
+
+				AppliedContext_t context;
+				context.flContextExpireTime = gpGlobals->curtime + flContextTime;
+				V_strcpy( context.pszContext, outStrings.Element( 0 ) );
+
+				AddContext( context );
+			}
+		}
 	}
 	return bResult;
 }
@@ -8678,6 +8720,23 @@ void CTFPlayer::PlayStunSound( CTFPlayer *pOther, const char *pszStunSound )
 
 		EmitSound( filter, pOther->entindex(), pszStunSound );
 		EmitSound( filterAttacker, this->entindex(), pszStunSound );
+}
+
+// ----------------------------------------------------------------------------
+// Purpose: Ensure that duplicates aren't added to the context list
+//-----------------------------------------------------------------------------
+void CTFPlayer::AddContext( AppliedContext_t context )
+{
+	for ( int i = 0; i < m_hActiveContexts.Count(); i++ )
+	{
+		if ( V_strcmp( m_hActiveContexts[i].pszContext, context.pszContext ) == 0 )
+		{
+			// don't add another one until the current one expires
+			return;
+		}
+	}
+
+	m_hActiveContexts.AddToTail( context );
 }
 
 //-----------------------------------------------------------------------------

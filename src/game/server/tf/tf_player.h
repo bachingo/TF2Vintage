@@ -67,6 +67,12 @@ struct DamagerHistory_t
 };
 #define MAX_DAMAGER_HISTORY 2
 
+struct AppliedContext_t
+{
+	float flContextExpireTime;
+	char pszContext[256];
+};
+
 //=============================================================================
 //
 // TF Player
@@ -546,6 +552,8 @@ private:
 
 	bool				GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, int numSceneBufferBytes );
 
+	void				AddContext( AppliedContext_t context );
+
 private:
 	// Map introductions
 	int					m_iIntroStep;
@@ -639,6 +647,8 @@ private:
 	CAttributeManager	m_AttributeManager;
 
 	COutputEvent		m_OnDeath;
+
+	CUtlVector<AppliedContext_t> m_hActiveContexts;
 
 public:
 	bool				SetPowerplayEnabled( bool bOn );
