@@ -1229,6 +1229,11 @@ void CTFGameMovement::Duck( void )
 	bool bInAir = ( player->GetGroundEntity() == NULL );
 	bool bInDuck = ( player->GetFlags() & FL_DUCKING ) ? true : false;
 
+	if ( !bInAir && player->m_Local.m_bDucking && buttonsPressed & IN_DUCK )
+	{
+		mv->m_nButtons &= ~IN_DUCK;
+	}
+
 	// If player is over air ducks limit he can't air duck again until he lands.
 	bool bCanAirDuck = !tf_clamp_airducks.GetBool() || m_pTFPlayer->m_Shared.GetAirDucks() < TF_MAX_AIR_DUCKS;
 
