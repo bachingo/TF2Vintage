@@ -98,6 +98,7 @@ void CTFStunBall::Spawn( void )
 	CreateTrail();
 
 	// Don't collide with anything for a short time so that we never get stuck behind surfaces
+	// FIXME: It's possible to bypass the player completely at specific angles causing the ball to stay non-solid!
 	SetCollisionGroup( TFCOLLISION_GROUP_NONE );
 
 	AddSolidFlags( FSOLID_TRIGGER );
@@ -130,6 +131,7 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 	CTFPlayer *pAttacker = dynamic_cast< CTFPlayer * >( GetThrower() );
 	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( m_hEnemy.Get() );
 
+	// TODO: check for invuln/dodge/etc.
 	if ( pPlayer && pAttacker && pPlayer->GetTeamNumber() != pAttacker->GetTeamNumber() )
 	{
 		float flAirTime = gpGlobals->curtime - m_flCreationTime;
@@ -198,13 +200,16 @@ void CTFStunBall::StunBallTouch( CBaseEntity *pOther )
 	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( pOther );
 
 	// Make us solid once we reach our owner
-	if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE && pOther == GetThrower() )
+	if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE )
 	{
-		SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
+		if ( pOther == GetThrower() )
+			SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
+
+		return;
 	}
 
 	// Stun the person we hit
-	if ( pPlayer && ( gpGlobals->curtime - m_flCreationTime > 0.1f || GetTeamNumber() != pPlayer->GetTeamNumber() ) )
+	if ( pPlayer && ( gpGlobals->curtime - m_flCreationTime > 0.2f || GetTeamNumber() != pPlayer->GetTeamNumber() ) )
 	{
 		if ( !m_bTouched )
 		{
@@ -289,25 +294,6 @@ CBasePlayer *CTFStunBall::GetAssistant( void )
 //-----------------------------------------------------------------------------
 void CTFStunBall::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	/*// Get stunball's speed.
-	float flVel = GetAbsVelocity().Length();
-
-	QAngle angForward;
-	VectorAngles( vecDir, angForward );
-	AngularImpulse angVelocity( ( 600, random->RandomInt( -1200, 1200 ), 0 ) );
-
-	// Now change stunball's direction.
-	SetAbsAngles( angForward );
-	SetAbsVelocity( vecDir * flVel );
-
-	// Bounce it up a bit
-	ApplyLocalAngularVelocityImpulse( angVelocity );
-
-	IncremenentDeflected();
-	SetOwnerEntity( pDeflectedBy );
-	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	SetScorer( pDeflectedBy );*/
-
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )
 	{

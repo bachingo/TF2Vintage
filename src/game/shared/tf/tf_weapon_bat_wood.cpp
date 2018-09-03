@@ -15,18 +15,25 @@
 #include "in_buttons.h"
 // Server specific.
 #else
+#include "tf_gamestats.h"
 #include "tf_player.h"
 #endif
 
-#define TF_BAT_DAMAGE 15.0f
-#define TF_BAT_VEL 2990.0f
-#define TF_BAT_GRAV 1.0f
+#define TF_BASEBALL_DAMAGE 15.0f
+#define TF_BASEBALL_VEL 2990.0f
 #define TF_STUNBALL_VIEWMODEL "models/weapons/v_models/v_baseball.mdl"
 #define TF_STUNBALL_ADDON 2
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFBat_Wood, DT_TFWeaponBat_Wood )
 
 BEGIN_NETWORK_TABLE( CTFBat_Wood, DT_TFWeaponBat_Wood )
+#ifdef CLIENT_DLL
+	RecvPropTime( RECVINFO( m_flNextFireTime ) ),
+	RecvPropBool( RECVINFO( m_bFiring ) ),
+#else
+	SendPropTime( SENDINFO( m_flNextFireTime ) ),
+	SendPropBool( SENDINFO( m_bFiring ) ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFBat_Wood )
@@ -40,7 +47,6 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_bat_wood );
 //-----------------------------------------------------------------------------
 CTFBat_Wood::CTFBat_Wood()
 {
-	m_flNextFireTime = -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -61,7 +67,6 @@ bool CTFBat_Wood::Holster( CBaseCombatWeapon *pSwitchingTo )
 	UpdateViewmodelBall( GetTFPlayerOwner(), true );
 #endif
 
-	m_flNextFireTime = -1;
 	return BaseClass::Holster( pSwitchingTo );
 }
 
@@ -75,7 +80,6 @@ bool CTFBat_Wood::Deploy( void )
 	UpdateViewmodelBall( GetTFPlayerOwner() );
 #endif
 
-	m_flNextFireTime = -1;
 	return BaseClass::Deploy();
 }
 
@@ -88,7 +92,6 @@ void CTFBat_Wood::WeaponReset( void )
 	UpdateViewmodelBall( GetTFPlayerOwner(), true );
 #endif
 
-	m_flNextFireTime = -1;
 	BaseClass::WeaponReset();
 }
 //-----------------------------------------------------------------------------
@@ -97,7 +100,7 @@ void CTFBat_Wood::WeaponReset( void )
 bool CTFBat_Wood::CanCreateBall( CTFPlayer *pPlayer )
 {
 	// We need ammo to fire
-	if ( !pPlayer || !pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) )
+	if ( !pPlayer )
 		return false;
 
 	int iType = 0;
@@ -135,7 +138,7 @@ bool CTFBat_Wood::CanCreateBall( CTFPlayer *pPlayer )
 bool CTFBat_Wood::PickedUpBall( CTFPlayer *pPlayer )
 {
 	// Only one ball at a time
-	if ( !pPlayer || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) )
+	if ( !pPlayer || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) || GetEffectBarProgress() == 1.0f )
 		return false;
 
 #ifdef GAME_DLL
@@ -143,6 +146,8 @@ bool CTFBat_Wood::PickedUpBall( CTFPlayer *pPlayer )
 	pPlayer->GiveAmmo( 1, m_iPrimaryAmmoType, true, TF_AMMO_SOURCE_RESUPPLY );
 	pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_GRAB_BALL );
 	m_flEffectBarRegenTime = gpGlobals->curtime;
+#else
+	UpdateViewmodelBall( pPlayer );
 #endif
 
 	return true;
@@ -164,70 +169,74 @@ void CTFBat_Wood::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFBat_Wood::SecondaryAttack( void )
 {
-	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+	if ( m_flNextFireTime > gpGlobals->curtime || m_bFiring )
 		return;
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( !pPlayer || !pPlayer->CanAttack() || !CanCreateBall( pPlayer ) )
+	if ( !pPlayer || !pPlayer->CanAttack() || !CanCreateBall( pPlayer ) || !pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) )
 		return;
 
-	SendWeaponAnim( ACT_VM_SECONDARYATTACK );
 	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_SECONDARY );
+	SendWeaponAnim( ACT_VM_SECONDARYATTACK );
 
-	m_flNextFireTime = gpGlobals->curtime + 0.1f;
-	m_flNextPrimaryAttack = m_flNextFireTime;
+	m_flNextFireTime = gpGlobals->curtime + 0.25f;
+	SetWeaponIdleTime( m_flNextFireTime );
 
-	SetWeaponIdleTime( gpGlobals->curtime + 0.35f + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdleEmpty );
+	SetContextThink( &CTFBat_Wood::LaunchBallThink, gpGlobals->curtime, "LAUNCH_BALL_THINK" );
+	m_bFiring = true;
 
-	FireBall( pPlayer );
-	pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
-	StartEffectBarRegen();
+#ifdef GAME_DLL
+	if ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) )
+		pPlayer->RemoveInvisibility();
+#endif
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBat_Wood::WeaponIdle( void )
+void CTFBat_Wood::LaunchBallThink( void )
 {
-	if ( m_flNextFireTime > 0 && gpGlobals->curtime > m_flNextFireTime )
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if ( pPlayer )
 	{
-		WeaponSound( SPECIAL2 );
-		m_flNextFireTime = -1;
+#ifdef GAME_DLL
+		LaunchBall( GetTFPlayerOwner() );
+		pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+
+		pPlayer->SpeakWeaponFire( MP_CONCEPT_BAT_BALL );
+		CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+#else
+		UpdateViewmodelBall( GetTFPlayerOwner() );
+#endif
+		StartEffectBarRegen();
 	}
 
-	BaseClass::WeaponIdle();
+	m_bFiring = false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Launch a ball
 //-----------------------------------------------------------------------------
-void CTFBat_Wood::ItemPostFrame( void )
+CBaseEntity *CTFBat_Wood::LaunchBall( CTFPlayer *pPlayer )
 {
-#ifdef CLIENT_DLL
-	UpdateViewmodelBall( GetTFPlayerOwner() );
-#endif
+	WeaponSound( SPECIAL2 );
 
-	BaseClass::ItemPostFrame();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Fire a ball
-//-----------------------------------------------------------------------------
-CBaseEntity *CTFBat_Wood::FireBall( CTFPlayer *pPlayer )
-{
 #ifdef GAME_DLL
 	AngularImpulse spin = AngularImpulse( random->RandomInt( -1200, 1200 ), 0, 0 );
 
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
-	// Set the starting position a bit behind the player so the projectile
-	// launches out of the players view
-	Vector vecSrc = pPlayer->Weapon_ShootPosition();
-	vecSrc +=  vecForward * -64.0f + vecRight * 8.0f + vecUp * -6.0f;
+	// The ball always launches at the player's crouched eye position
+	// so that it always passes through the bbox
+	Vector vecSrc = pPlayer->GetAbsOrigin() + VEC_DUCK_VIEW_SCALED( pPlayer );
+	vecSrc +=  vecForward * -64.0f;
 
+
+	//NDebugOverlay::Line( pPlayer->EyePosition(), vecSrc, 0, 255, 0, true, 5.0f );
 	
-	Vector vecVelocity = ( vecForward * TF_BAT_VEL ) + ( vecUp * 200.0f );
+	Vector vecVelocity = ( vecForward * TF_BASEBALL_VEL ) + ( vecUp * 200.0f );
 
 	//GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, false );
 
@@ -236,7 +245,7 @@ CBaseEntity *CTFBat_Wood::FireBall( CTFPlayer *pPlayer )
 	{
 		CalcIsAttackCritical();
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( TF_BAT_DAMAGE );
+		pProjectile->SetDamage( TF_BASEBALL_DAMAGE );
 	}
 
 	return pProjectile;
@@ -310,7 +319,25 @@ bool CTFBat_Wood::SendWeaponAnim( int iActivity )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBat_Wood::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles )
+void C_TFBat_Wood::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		C_TFPlayer *pPlayer = GetTFPlayerOwner();
+	
+		if ( pPlayer->IsLocalPlayer() && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) && IsCarrierAlive() )
+		{
+			UpdateViewmodelBall( pPlayer );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFBat_Wood::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles )
 {
 	// Really hacky workaround for primary/secondary interactions
 	if ( m_flNextFireTime > gpGlobals->curtime )
@@ -337,7 +364,7 @@ void CTFBat_Wood::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAn
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBat_Wood::UpdateViewmodelBall( C_TFPlayer *pOwner, bool bHolster /*= false*/ )
+void C_TFBat_Wood::UpdateViewmodelBall( C_TFPlayer *pOwner, bool bHolster /*= false*/ )
 {
 	if ( pOwner )
 	{
@@ -351,7 +378,7 @@ void CTFBat_Wood::UpdateViewmodelBall( C_TFPlayer *pOwner, bool bHolster /*= fal
 			}
 			else
 			{
-				vm->UpdateViewmodelAddon( "", TF_STUNBALL_ADDON );
+				vm->RemoveViewmodelAddon( TF_STUNBALL_ADDON );
 			}
 		}
 	}

@@ -34,8 +34,6 @@ public:
 	virtual void		WeaponReset( void );
 	virtual void		PrimaryAttack( void );
 	virtual void		SecondaryAttack( void );
-	virtual void		WeaponIdle( void );
-	virtual void		ItemPostFrame( void );
 
 	virtual bool		HasChargeBar( void )							{ return true; }
 	virtual const char* GetEffectLabelText( void )						{ return "#TF_Ball"; }
@@ -48,9 +46,11 @@ public:
 	virtual bool		CanCreateBall( CTFPlayer *pPlayer );
 	virtual bool	    PickedUpBall( CTFPlayer *pPlayer );
 
-	CBaseEntity			*FireBall( CTFPlayer *pPlayer );
+	CBaseEntity			*LaunchBall( CTFPlayer *pPlayer );
+	virtual void		LaunchBallThink( void );
 
 #ifdef CLIENT_DLL
+	virtual void		OnDataChanged( DataUpdateType_t updateType );
 	virtual void		CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles );
 
 	void				UpdateViewmodelBall( C_TFPlayer *pOwner, bool bHolster = false );
@@ -59,6 +59,8 @@ public:
 private:
 	CTFBat_Wood( const CTFBat_Wood & ) {}
 
-	float			m_flNextFireTime;
+	// prediction
+	CNetworkVar( bool, m_bFiring );
+	CNetworkVar( float, m_flNextFireTime );
 };
 #endif // TF_WEAPON_BAT_H
