@@ -141,7 +141,7 @@ void CTFLaserPointer::PrimaryAttack( void )
 		m_flNextPrimaryAttack = gpGlobals->curtime + 0.05f;
 	}
 #endif
-	SendWeaponAnim( ACT_ITEM3_VM_RELOAD );
+	SendWeaponAnim( ACT_ITEM3_VM_CHARGE );
 }
 
 // ---------------------------------------------------------------------------- -
