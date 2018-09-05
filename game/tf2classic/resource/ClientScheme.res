@@ -412,7 +412,7 @@ Scheme
 		
 		"VguiScreenCursor"			"255 208 64 255"
 		
-		//TF2C Custom Colors
+		//Custom Colors
 		"AdvTextDefault"			"TanLight"
 		"AdvTextArmed"				"HudWhite"
 		"AdvTextDepressed"			"Gray"

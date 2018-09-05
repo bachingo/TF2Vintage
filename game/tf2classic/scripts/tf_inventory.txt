@@ -15,8 +15,8 @@
 	"scout"
 	{
 		"primary"		"0"
-		"secondary"		"0"
-		"melee"		"0"
+		"secondary"		"1"
+		"melee"		"1"
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
@@ -26,8 +26,8 @@
 	}
 	"sniper"
 	{
-		"primary"		"0"
-		"secondary"		"0"
+		"primary"		"1"
+		"secondary"		"1"
 		"melee"		"0"
 		"pda"		"0"
 		"pda2"		"0"
@@ -38,7 +38,7 @@
 	}
 	"soldier"
 	{
-		"primary"		"0"
+		"primary"		"4"
 		"secondary"		"0"
 		"melee"		"0"
 		"pda"		"0"
@@ -50,9 +50,9 @@
 	}
 	"demoman"
 	{
-		"primary"		"1"
-		"secondary"		"0"
-		"melee"		"0"
+		"primary"		"0"
+		"secondary"		"1"
+		"melee"		"1"
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
@@ -62,9 +62,9 @@
 	}
 	"medic"
 	{
-		"primary"		"0"
+		"primary"		"1"
 		"secondary"		"0"
-		"melee"		"0"
+		"melee"		"1"
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
@@ -75,8 +75,8 @@
 	"heavy"
 	{
 		"primary"		"0"
-		"secondary"		"0"
-		"melee"		"0"
+		"secondary"		"1"
+		"melee"		"2"
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
@@ -86,9 +86,9 @@
 	}
 	"pyro"
 	{
-		"primary"		"0"
-		"secondary"		"0"
-		"melee"		"0"
+		"primary"		"1"
+		"secondary"		"1"
+		"melee"		"1"
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
@@ -99,7 +99,7 @@
 	"spy"
 	{
 		"primary"		"0"
-		"secondary"		"0"
+		"secondary"		"1"
 		"melee"		"0"
 		"pda"		"0"
 		"pda2"		"0"
@@ -111,8 +111,8 @@
 	"engineer"
 	{
 		"primary"		"0"
-		"secondary"		"0"
-		"melee"		"0"
+		"secondary"		"1"
+		"melee"		"1"
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"

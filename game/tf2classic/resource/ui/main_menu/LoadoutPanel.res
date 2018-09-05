@@ -282,7 +282,7 @@
 		
 		"SubButton"
 		{
-			"labelText" 		"<< Back (&Q)"
+			"labelText" 		"#TF_Back"
 			"textAlignment"		"center"
 			"font"				"TallTextSmall"
 			"border_default"	"AdvRoundedButtonDefault"
@@ -579,31 +579,6 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/spy"	
-				"imagewidth"		"55"
-			}
-		}
-	
-		"merc_blue"
-		{
-			"ControlName"		"CTFAdvButton"
-			"fieldName"			"merc_blue"
-			"scaleimage"		"0"	
-			"visible"			"1"
-			"enabled"			"1"
-			"bordervisible"		"0"	
-			"command"			"select_merc"
-			
-			"SubButton"
-			{
-				"labelText" 		""
-				"textAlignment"		"south"
-				"font"				"TallTextSmall"
-				"selectedFgColor_override"		"HudProgressBarActive"
-			}
-			
-			"SubImage"
-			{
-				"image" 			"class_icons/allclass"	
 				"imagewidth"		"55"
 			}
 		}

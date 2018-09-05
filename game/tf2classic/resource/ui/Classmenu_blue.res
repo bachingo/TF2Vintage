@@ -397,48 +397,6 @@
 		"inactiveimage"		"class_sel_sm_spy_inactive"
 	}	
 
-	"LoadoutButton" [$WIN32] 
-	{
-		"ControlName"	"CExButton"
-		"fieldName"		"LoadoutButton"
-		"xpos"			"r350"
-		"ypos"			"r40"
-		"ypos_lodef"			"r64"
-		"zpos"			"8"
-		"wide"			"150"
-		"tall"			"30"
-		"autoResize"	"0"
-		"pinCorner"		"2"
-		"visible"		"1"
-		"enabled"		"1"
-		"tabPosition"	"0"
-		"labelText"		"#TF_Edit_Loadout"
-		"textAlignment"	"center"
-		"Command"		"showloadout"
-		"font"			"MenuSmallFont"
-	}
-
-	"CancelButton" [$WIN32] 
-	{
-		"ControlName"	"CExButton"
-		"fieldName"		"CancelButton"
-		"xpos"			"r190"
-		"ypos"			"r40"
-		"ypos_lodef"			"r64"
-		"zpos"			"8"
-		"wide"			"150"
-		"tall"			"30"
-		"autoResize"	"0"
-		"pinCorner"		"2"
-		"visible"		"1"
-		"enabled"		"1"
-		"tabPosition"	"0"
-		"labelText"		"#TF_Cancel"
-		"textAlignment"	"center"
-		"Command"		"vguicancel"
-		"font"			"MenuSmallFont"
-	}
-
 	"ClassMenuSelect"
 	{
 		"ControlName"	"CExLabel"
@@ -922,6 +880,46 @@
 		"textAlignment"	"center"
 		"font"			"MenuClassBuckets"
 		"fgcolor"		"TanLight"
-	}								
+	}	
+	"LoadoutButton" [$WIN32] 
+	{
+		"ControlName"	"CExButton"
+		"fieldName"		"LoadoutButton"
+		"xpos"			"r290"
+		"ypos"			"r40"
+		"ypos_lodef"			"r64"
+		"zpos"			"8"
+		"wide"			"150"
+		"tall"			"30"
+		"autoResize"	"0"
+		"pinCorner"		"2"
+		"visible"		"1"
+		"enabled"		"1"
+		"tabPosition"	"0"
+		"labelText"		"#EditLoadout"
+		"textAlignment"	"center"
+		"Command"		"showloadout"
+		"font"			"MenuSmallFont"
+	}	
+		"BackButton" [$WIN32] 
+	{
+		"ControlName"	"CExButton"
+		"fieldName"		"BackButton"
+		"xpos"			"230"
+		"ypos"			"r40"
+		"ypos_lodef"			"r64"
+		"zpos"			"8"
+		"wide"			"150"
+		"tall"			"30"
+		"autoResize"	"0"
+		"pinCorner"		"2"
+		"visible"		"1"
+		"enabled"		"1"
+		"tabPosition"	"0"
+		"labelText"		"#TF_Cancel"
+		"textAlignment"	"center"
+		"Command"		"vguicancel"
+		"font"			"MenuSmallFont"
+	}
 
 }

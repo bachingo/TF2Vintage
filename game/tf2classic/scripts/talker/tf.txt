@@ -188,9 +188,19 @@
 		criteria ConceptPlayerTaunt IsHeavy WeaponIsFists
 		response HeavyTauntMelee
 	}
-	rule HeavyTauntPlayerGloves
+	rule HeavyTauntPlayerKillingGloves
 	{
-		criteria ConceptPlayerTaunt IsHeavy WeaponIsGloves
+		criteria ConceptPlayerTaunt IsHeavy WeaponIsKillingGloves
+		response HeavyTauntPlayerGloves
+	}
+	rule HeavyTauntPlayerRunningGloves
+	{
+		criteria ConceptPlayerTaunt IsHeavy WeaponIsRunningGloves
+		response HeavyTauntPlayerGloves
+	}
+	rule HeavyTauntPlayerBearGloves
+	{
+		criteria ConceptPlayerTaunt IsHeavy WeaponIsBearGloves
 		response HeavyTauntPlayerGloves
 	}
 	rule HeavyTauntPlayerItem1
@@ -599,7 +609,11 @@
 		criteria ConceptPlayerTaunt IsMedic WeaponIsHealArrow
 		response MedicTauntPrimary	
 	}
-
+	rule MedicTauntPlayerMedicShotgun
+	{
+		criteria ConceptPlayerTaunt IsMedic WeaponIsMedicShotgun
+		response MedicTauntPrimary
+	}
 	Response PlayerExpressionIdleMedic
 	{
 		scene "scenes/player/medic/low/idleloop01.vcd"
@@ -1913,5 +1927,13 @@
 		criteria ConceptPlayerTaunt IsAprilFoolsTaunt IsSpy
 		response SpyTauntLaugh
 	}
+	
+	Rule KritzSpeechMedic
+{
+    criteria ConceptMedicChargeDeployed IsMedic WeaponIsNotTaggedMedigun MedicNotInvulnerableSpeech
+    ApplyContext "MedicInvulnerableSpeech:1:30"
+    Response InvulnerableSpeechMedic
+    Response KritzSpeechMedic
+}
 
 //============================================================================================================

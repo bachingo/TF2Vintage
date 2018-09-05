@@ -1781,7 +1781,7 @@
 		"tall"			"20"
 		"visible"		"1"
 		"enabled"		"1"
-		"Command"		"resetstatsbutton"
+		"Command"		"resetplayerstats"
 		
 		"SubButton"
 		{

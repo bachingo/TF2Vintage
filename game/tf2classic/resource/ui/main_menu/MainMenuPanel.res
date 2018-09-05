@@ -35,133 +35,38 @@
 		"ControlName"	"ImagePanel"
 		"fieldName"		"Logo"
 		"xpos"			"15"
-		"ypos"			"15"	
+		"ypos"			"45"	
 		"zpos"			"3"		
 		"wide"			"450"
 		"tall"			"225"
 		"visible"		"1"
 		"enabled"		"1"
-		"image"			"../vgui/main_menu/TF2_Classic_Logo_NoCircle"
+		"image"			"../vgui/main_menu/TF2_Vintage_Logo_NoCircle"
 		"alpha"			"255"
 		"scaleImage"	"1"	
 	}	
-	
-	"LogoCircle"
-	{
-		"ControlName"	"CTFRotatingImagePanel"
-		"fieldName"		"LogoCircle"
-		"xpos"			"87"
-		"ypos"			"29"
-		"zpos"			"5"
-		"wide"			"30"
-		"tall"			"30"
-		"image"			"vgui/main_menu/TF2_Classic_Logo_Circle"
-		"visible"		"1"
-		"enabled"		"1"
-	}
-	
-	"MainMenuBG"
-	{
-		"ControlName"		"EditablePanel"
-		"fieldName"			"MainMenuBG"
-		"xpos"				"25"
-		"ypos"				"135"
-		"zpos"				"3"
-		"wide"				"270"
-		"tall"				"235"
-		"visible"			"1"
-		"enabled"			"1"
-		"border"			"MainMenuAdvButtonDepressed"
-		"font"				"MenuMainTitle"
-	}
-	
-	"BlogPanel"
-	{
-		"ControlName"		"CTFBlogPanel"
-		"fieldName"			"BlogPanel"
-		"xpos"				"r420"
-		"ypos"				"135"
-		"zpos"				"3"
-		"wide"				"400"
-		"tall"				"335"
-		"visible"			"1"
-		"enabled"			"1"
-		"border"			"MainMenuAdvButtonDepressed"	
-	}
-	
-	"ServerlistPanel"
-	{
-		"ControlName"		"EditablePanel"
-		"fieldName"			"ServerlistPanel"
-		"xpos"				"25"
-		"ypos"				"375"
-		"zpos"				"3"
-		"wide"				"270"
-		"tall"				"95"
-		"visible"			"1"
-		"enabled"			"1"
-		"server_width"		"150"
-		"players_width"		"25"
-		"ping_width"		"17"
-		"map_width"			"115"
-		"scroll_width"		"3"
-		"border"			"MainMenuAdvButtonDepressed"	
-	}	
-	
-	"AvatarBG"
-	{
-		"ControlName"		"EditablePanel"
-		"fieldName"			"AvatarBG"
-		"xpos"				"35"
-		"ypos"				"145"
-		"zpos"				"5"
-		"wide"				"50"
-		"tall"				"50"
-		"visible"			"1"
-		"enabled"			"1"
-		"border"			"MainMenuBGBorderAlpha"
-		"font"				"MenuMainTitle"
-		"bgcolor_override"	"117 107 94 255"
-	}
 	
 	"AvatarImage"
 	{
 		"ControlName"	"CAvatarImagePanel"
 		"fieldName"		"AvatarImage"
-		"xpos"			"40"
-		"ypos"			"150"
+		"xpos"			"35"
+		"ypos"			"245"
 		"zpos"			"6"
-		"wide"			"40"
-		"tall"			"40"
+		"wide"			"20"
+		"tall"			"20"
 		"visible"		"1"
 		"enabled"		"1"
 		"image"			""
 		"scaleImage"		"1"	
 		"color_outline"		"52 48 45 255"
 	}	
-	
-	"WelcomeBG"
-	{
-		"ControlName"		"EditablePanel"
-		"fieldName"			"WelcomeBG"
-		"xpos"				"40"
-		"ypos"				"145"
-		"zpos"				"4"
-		"wide"				"245"
-		"tall"				"50"
-		"visible"			"1"
-		"enabled"			"1"
-		"border"			"MainMenuBGBorderAlpha"
-		"font"				"MenuMainTitle"
-		"bgcolor_override"	"36 33 32 255"
-	}
-	
 	"WelcomeLabel"
 	{
 		"ControlName"		"CExLabel"
 		"fieldName"			"WelcomeLabel"
-		"xpos"				"90"
-		"ypos"				"150"
+		"xpos"				"35"
+		"ypos"				"220"
 		"zpos"				"6"
 		"wide"				"190"
 		"tall"				"20"
@@ -180,8 +85,8 @@
 	{
 		"ControlName"		"CExLabel"
 		"fieldName"			"WelcomeLabel1"
-		"xpos"				"90"
-		"ypos"				"150"
+		"xpos"				"39"
+		"ypos"				"224"
 		"zpos"				"5"
 		"wide"				"190"
 		"tall"				"20"
@@ -200,8 +105,8 @@
 	{
 		"ControlName"		"CExLabel"
 		"fieldName"			"NicknameLabel"
-		"xpos"				"90"
-		"ypos"				"170"
+		"xpos"				"60"
+		"ypos"				"245"
 		"zpos"				"5"
 		"wide"				"190"
 		"tall"				"20"
@@ -220,59 +125,56 @@
 		"ControlName"			"CTFAdvButton"
 		"fieldName"				"ServerBrowserButton"
 		"xpos"					"35"
-		"ypos"					"200"
+		"ypos"					"275"
 		"zpos"					"5"
 		"wide"					"250"
-		"tall"					"30"
+		"tall"					"20"
 		"visible"				"1"
 		"enabled"				"1"
-		"bordervisible"			"1"		
+		"bordervisible"			"0"		
 		"command"				"gamemenucommand OpenServerBrowser"		
 		
 		"SubButton"
 		{
 			"labelText" 		"#GameUI_GameMenu_FindServers"
-			"xshift" 			"10"
+			"xshift" 			"20"
 			"yshift" 			"0"
 			"textAlignment"		"west"
 			"font"				"HudFontSmallBold"
-			"defaultFgColor_override"		"MainMenuTextDefault"
 			"armedFgColor_override"			"MainMenuTextArmed"
-			"depressedFgColor_override"		"MainMenuTextDepressed"	
+			"depressedFgColor_override"		"MainMenuTextDefault"	
 		}
 		
 		"SubImage"
 		{
 			"image" 			"../vgui/glyph_server_browser"
-			"imagewidth"		"18"	
+			"imagewidth"		"16"	
 		}
 	}
 	
-	"MultiplayerGameButton"
+		"CreateServerButton"
 	{
 		"ControlName"			"CTFAdvButton"
-		"fieldName"				"MultiplayerGameButton"
-		"xpos"					"258"
-		"ypos"					"203"
-		"zpos"					"6"
-		"wide"					"24"
-		"tall"					"24"
+		"fieldName"				"CreateServerButton"
+		"xpos"					"35"
+		"ypos"					"300"
+		"zpos"					"5"
+		"wide"					"250"
+		"tall"					"20"
 		"visible"				"1"
 		"enabled"				"1"
-		"bordervisible"			"1"
-		"command"				"gamemenucommand OpenCreateMultiplayerGameDialog"
+		"bordervisible"			"0"		
+		"command"				"gamemenucommand OpenCreateMultiplayerGameDialog"	
 		
 		"SubButton"
 		{
-			"labelText" 		""
-			"tooltip" 			"Create Server"
+			"labelText" 		"#GameUI_GameMenu_CreateServer"
+			"xshift" 			"20"
+			"yshift" 			"0"
 			"textAlignment"		"west"
 			"font"				"HudFontSmallBold"
-			"defaultFgColor_override"		"MainMenuTextArmed"
 			"armedFgColor_override"			"MainMenuTextArmed"
 			"depressedFgColor_override"		"MainMenuTextDefault"	
-			"border_default"				"MainMenuAdvButtonDepressed"
-			"border_depressed"				"MainMenuAdvButton"	
 		}
 		
 		"SubImage"
@@ -282,233 +184,57 @@
 		}
 	}
 	
-	"LoadoutButton"
+	"OptionsButton"
 	{
 		"ControlName"			"CTFAdvButton"
-		"fieldName"				"LoadoutButton"
+		"fieldName"				"OptionsButton"
 		"xpos"					"35"
-		"ypos"					"235"
+		"ypos"					"375"
 		"zpos"					"5"
 		"wide"					"250"
-		"tall"					"30"
+		"tall"					"20"
 		"visible"				"1"
 		"enabled"				"1"
-		"bordervisible"			"1"	
-		"command"				"newloadout"
-		
-		"SubButton"
-		{
-			"labelText" 		"Loadout"
-			"xshift" 			"10"
-			"yshift" 			"0"
-			"textAlignment"		"west"
-			"font"				"HudFontSmallBold"
-			"defaultFgColor_override"		"MainMenuTextDefault"
-			"armedFgColor_override"			"MainMenuTextArmed"
-			"depressedFgColor_override"		"MainMenuTextDepressed"	
-		}
-		
-		"SubImage"
-		{
-			"image" 			"../vgui/glyph_items"
-			"imagewidth"		"18"	
-		}
-	}
-	
-	"OptionsDialogButton"
-	{
-		"ControlName"			"CTFAdvButton"
-		"fieldName"				"OptionsDialogButton"
-		"xpos"					"35"
-		"ypos"					"270"
-		"zpos"					"5"
-		"wide"					"250"
-		"tall"					"30"
-		"visible"				"1"
-		"enabled"				"1"
-		"bordervisible"			"1"	
+		"bordervisible"			"0"		
 		"command"				"newoptionsdialog"
 		
 		"SubButton"
 		{
-			"labelText" 		"#GameUI_GameMenu_Options"
-			"xshift" 			"10"
-			"yshift" 			"0"	
-			"textAlignment"		"west"	
+			"labelText"			"#GameUI_GameMenu_Options"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"west"
 			"font"				"HudFontSmallBold"
-			"defaultFgColor_override"		"MainMenuTextDefault"
 			"armedFgColor_override"			"MainMenuTextArmed"
-			"depressedFgColor_override"		"MainMenuTextDepressed"	
+			"depressedFgColor_override"		"MainMenuTextDefault"	
 		}
 		
 		"SubImage"
 		{
 			"image" 			"../vgui/glyph_options"
-			"imagewidth"		"18"
-		}		
-	}			
-	
+			"imagewidth"		"16"	
+		}
+	}		
 	"OptionsOldButton"
 	{
 		"ControlName"			"CTFAdvButton"
-		"fieldName"				"OptionsOldButton"		
-		"xpos"					"258"
-		"ypos"					"273"
-		"zpos"					"6"
-		"wide"					"24"
-		"tall"					"24"
+		"fieldName"				"OptionsOldButton"	
+		"xpos"					"40"
+		"ypos"					"450"
+		"zpos"					"5"
+		"wide"					"20"
+		"tall"					"20"
 		"visible"				"1"
 		"enabled"				"1"
-		"bordervisible"			"1"	
+		"bordervisible"			"1"		
 		"command"				"gamemenucommand openoptionsdialog"
 		
 		"SubButton"
 		{
-			"labelText" 		""
-			"tooltip" 			"Options"
-			"bordervisible"		"0"
-			"textAlignment"		"west"
-			"font"				"HudFontSmallBold"
-			"defaultFgColor_override"		"MainMenuTextArmed"
-			"armedFgColor_override"			"MainMenuTextArmed"
-			"depressedFgColor_override"		"MainMenuTextDefault"
-			"border_default"				"MainMenuAdvButtonDepressed"
-			"border_depressed"				"MainMenuAdvButton"		
-		}
-		
-		"SubImage"
-		{
-			"image" 			"../vgui/glyph_steamworkshop"
-			"imagewidth"		"16"
-		}
-	}	
-	
-	"QuitButton"
-	{
-		"ControlName"			"CTFAdvButton"
-		"fieldName"				"QuitButton"
-		"xpos"					"35"
-		"ypos"					"305"
-		"zpos"					"5"
-		"wide"					"250"
-		"tall"					"30"
-		"visible"				"1"
-		"enabled"				"1"
-		"bordervisible"			"1"	
-		"command"				"newquit"
-		
-		"SubButton"
-		{
-			"labelText" 		"#GameUI_GameMenu_Quit"
-			"bordervisible"		"0"
-			"xshift" 			"10"
+			"labelText"			""
+			"tooltip" 			"Advanced Options"
+			"xshift" 			"20"
 			"yshift" 			"0"
-			"textAlignment"		"west"
-			"font"				"HudFontSmallBold"
-			"defaultFgColor_override"		"MainMenuTextDefault"
-			"armedFgColor_override"			"MainMenuTextArmed"
-			"depressedFgColor_override"		"MainMenuTextDepressed"	
-		}
-		
-		"SubImage"
-		{
-			"image" 			"../vgui/glyph_quit"
-			"imagewidth"		"18"
-		}
-	}		
-	
-	"StatsButton"
-	{
-		"ControlName"		"CTFAdvButton"
-		"fieldName"			"StatsButton"
-		"xpos"				"35"
-		"ypos"				"340"
-		"zpos"				"6"
-		"wide"				"20"
-		"tall"				"20"
-		"visible"			"1"
-		"enabled"			"1"
-		"bordervisible"		"1"
-		"labelText" 		""
-		"command"			"newstats"
-		
-		"SubButton"
-		{
-			"labelText" 		""
-			"bordervisible"		"0"
-			"tooltip" 			"Stats"
-			"textAlignment"		"center"
-			"font"				"MenuSmallFont"
-			"border_default"	"AdvRoundedButtonDefault"
-			"border_armed"		"AdvRoundedButtonArmed"
-			"border_depressed"	"AdvRoundedButtonDepressed"	
-		}
-		
-		"SubImage"
-		{
-			"image" 			"../vgui/main_menu/glyph_stats"
-			"imagewidth"		"16"
-		}
-	}	
-	
-
-	"MusicToggleCheck"
-	{
-		"ControlName"		"CTFAdvCheckButton"
-		"fieldName"			"MusicToggleCheck"
-		"xpos"				"64"		//+19
-		"ypos"				"340"
-		"zpos"				"6"
-		"wide"				"20"
-		"tall"				"20"
-		"visible"			"1"
-		"enabled"			"1"
-		"bordervisible"		"1"
-		"labelText" 		""
-		"command"			"tf2c_mainmenu_music"	
-		"valuetrue"			"0"
-		"valuefalse"		"1"		
-		
-		"SubButton"
-		{
-			"labelText" 		""
-			"bordervisible"		"0"
-			"tooltip" 			"Music Toggle"
-			"textAlignment"		"center"
-			"font"				"MenuSmallFont"
-			"border_default"	"AdvLeftButtonDefault"
-			"border_armed"		"AdvLeftButtonArmed"
-			"border_depressed"	"AdvLeftButtonDepressed"	
-		}
-		
-		"SubImage"
-		{
-			"image" 			"../vgui/main_menu/glyph_speaker"
-			"imagecheck" 		"../vgui/main_menu/glyph_disabled"	
-			"imagewidth"		"16"
-		}
-	}	
-	
-	"RandomMusicButton"
-	{
-		"ControlName"		"CTFAdvButton"
-		"fieldName"			"RandomMusicButton"
-		"xpos"				"83"
-		"ypos"				"340"
-		"zpos"				"5"
-		"wide"				"20"
-		"tall"				"20"
-		"visible"			"1"
-		"enabled"			"1"
-		"bordervisible"		"1"
-		"labelText" 		""
-		"command"			"randommusic"			
-		
-		"SubButton"
-		{
-			"labelText" 		""
-			"bordervisible"		"0"
-			"tooltip" 			"Random music"
 			"textAlignment"		"center"
 			"font"				"MenuSmallFont"
 			"border_default"	"AdvRightButtonDefault"
@@ -518,83 +244,245 @@
 		
 		"SubImage"
 		{
-			"image" 			"../vgui/main_menu/glyph_random"
-			"imagewidth"		"16"
+			"image" 			"../vgui/glyph_steamworkshop"
+			"imagewidth"		"16"	
 		}
 	}	
-	
-
-	"BlogToggleCheck"
+	"DevCommentaryButton"
 	{
-		"ControlName"		"CTFAdvCheckButton"
-		"fieldName"			"BlogToggleCheck"
-		"xpos"				"112"		//+19
-		"ypos"				"340"
-		"zpos"				"6"
-		"wide"				"20"
-		"tall"				"20"
-		"visible"			"1"
-		"enabled"			"1"
-		"bordervisible"		"1"
-		"labelText" 		""
-		"command"			"tf2c_mainmenu_showblog"	
+		"ControlName"			"CTFAdvButton"
+		"fieldName"				"DevCommentaryButton"	
+		"xpos"					"15"
+		"ypos"					"450"
+		"zpos"					"5"
+		"wide"					"20"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"1"		
+		"command"				"gamemenucommand OpenLoadSingleplayerCommentaryDialog"
+		
+		"SubButton"
+		{
+			"labelText"			""
+			"tooltip" 			"#GameUI_LoadCommentary"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"center"
+			"font"				"MenuSmallFont"
+			"border_default"	"AdvRightButtonDefault"
+			"border_armed"		"AdvRightButtonArmed"
+			"border_depressed"	"AdvRightButtonDepressed"	
+		}
+		
+		"SubImage"
+		{
+			"image" 			"../vgui/glyph_commentary"
+			"imagewidth"		"16"	
+		}
+	}
+	"QuitButton"
+	{
+		"ControlName"			"CTFAdvButton"
+		"fieldName"				"QuitButton"
+		"xpos"					"35"
+		"ypos"					"400"
+		"zpos"					"5"
+		"wide"					"250"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"0"		
+		"command"				"newquit"
+		
+		"SubButton"
+		{
+			"labelText" 		"#GameUI_GameMenu_Quit"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"west"
+			"font"				"HudFontSmallBold"
+			"armedFgColor_override"			"MainMenuTextArmed"
+			"depressedFgColor_override"		"MainMenuTextDefault"	
+		}
+		
+		
+		"SubImage"
+		{
+			"image" 			"../vgui/glyph_quit"
+			"imagewidth"		"16"	
+		}
+	}
+	"StatsButton"
+	{
+		"ControlName"			"CTFAdvButton"
+		"fieldName"				"StatsButton"
+		"xpos"					"35"
+		"ypos"					"350"
+		"zpos"					"5"
+		"wide"					"250"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"0"		
+		"command"				"newstats"
+		
+		"SubButton"
+		{
+			"labelText" 		"#GameUI_GameMenu_PlayerStats"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"west"
+			"font"				"HudFontSmallBold"
+			"armedFgColor_override"			"MainMenuTextArmed"
+			"depressedFgColor_override"		"MainMenuTextDefault"	
+		}
+		
+		
+		"SubImage"
+		{
+			"image" 			"../vgui/main_menu/glyph_stats"
+			"imagewidth"		"16"	
+		}
+	}	
+	"MusicToggleCheck"
+	{
+		"ControlName"			"CTFAdvCheckButton"
+		"fieldName"				"MusicToggleCheck"
+		"xpos"					"115"
+		"ypos"					"450"
+		"zpos"					"5"
+		"wide"					"20"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"1"		
+		"command"			"tf2c_mainmenu_music"	
 		"valuetrue"			"0"
 		"valuefalse"		"1"		
 		
 		"SubButton"
 		{
-			"labelText" 		""
-			"bordervisible"		"0"
-			"tooltip" 			"Blog panel Toggle"
+			"labelText"			""
+			"tooltip" 		"Music Toggle"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"center"
+			"font"				"MenuSmallFont"	
+			"border_default"	"AdvRightButtonDefault"
+			"border_armed"		"AdvRightButtonArmed"
+			"border_depressed"	"AdvRightButtonDepressed"
+		}
+		
+		
+		"SubImage"
+		{
+			"image" 			"../vgui/main_menu/glyph_speaker"
+			"imagecheck" 		"../vgui/main_menu/glyph_disabled"	
+			"imagewidth"		"16"	
+		}
+	}		
+	"RandomMusicButton"
+	{
+		"ControlName"			"CTFAdvButton"
+		"fieldName"				"RandomMusicButton"
+		"xpos"					"90"
+		"ypos"					"450"
+		"zpos"					"5"
+		"wide"					"20"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"1"		
+		"command"				"randommusic"	
+		
+		"SubButton"
+		{
+			"labeltext"			""
+			"tooltip" 		"Random Music"
+			"xshift" 			"20"
+			"yshift" 			"0"
 			"textAlignment"		"center"
 			"font"				"MenuSmallFont"
-			"border_default"	"AdvRoundedButtonDefault"
-			"border_armed"		"AdvRoundedButtonArmed"
-			"border_depressed"	"AdvRoundedButtonDepressed"	
+			"border_default"	"AdvRightButtonDefault"
+			"border_armed"		"AdvRightButtonArmed"
+			"border_depressed"	"AdvRightButtonDepressed"	
 		}
+		
+		
+		"SubImage"
+		{
+			"image" 			"../vgui/main_menu/glyph_random"
+			"imagewidth"		"16"	
+		}
+	}	
+	"TheaterButton"
+	{
+		"ControlName"			"CTFAdvButton"
+		"fieldName"				"TheaterButton"
+		"xpos"					"65"
+		"ypos"					"450"
+		"zpos"					"5"
+		"wide"					"20"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"1"		
+		"command"				"demoui2"
+		
+		"SubButton"
+		{
+			"labelText"			""
+			"tooltip" 		"Theater"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"center"
+			"font"				"MenuSmallFont"	
+			"border_default"	"AdvRightButtonDefault"
+			"border_armed"		"AdvRightButtonArmed"
+			"border_depressed"	"AdvRightButtonDepressed"
+		}
+		
 		
 		"SubImage"
 		{
 			"image" 			"../vgui/glyph_tv"
-			"imagecheck" 		"../vgui/main_menu/glyph_disabled"	
-			"imagewidth"		"16"
+			"imagewidth"		"16"	
 		}
 	}	
-	
-	"NotificationButton"
+	"LoadoutButton"
 	{
-		"ControlName"		"CTFAdvButton"
-		"fieldName"			"NotificationButton"
-		"xpos"				"263"
-		"ypos"				"340"
-		"zpos"				"6"
-		"wide"				"20"
-		"tall"				"20"
-		"visible"			"0"
-		"enabled"			"1"
-		"bordervisible"		"1"	
-		"command"			"shownotification"	
+		"ControlName"			"CTFAdvButton"
+		"fieldName"				"LoadoutButton"
+		"xpos"					"35"
+		"ypos"					"325"
+		"zpos"					"5"
+		"wide"					"250"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"0"		
+		"command"				"newloadout"
 		
 		"SubButton"
 		{
-			"labelText" 		""
-			"bordervisible"		"0"
-			"tooltip" 			"Show notification"
-			"textAlignment"		"center"
-			"font"				"MenuSmallFont"
-			"border_default"	"AdvRoundedButtonDefault"
-			"border_armed"		"AdvRoundedButtonArmed"
-			"border_depressed"	"AdvRoundedButtonDepressed"	
+			"labelText" 		"#GameUI_GameMenu_CharacterSetup"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"west"
+			"font"				"HudFontSmallBold"
+			"armedFgColor_override"			"MainMenuTextArmed"
+			"depressedFgColor_override"		"MainMenuTextDefault"	
 		}
+		
 		
 		"SubImage"
 		{
-			"image" 			"../vgui/glyph_alert"
-			"imagewidth"		"18"
+			"image" 			"../vgui/glyph_items"
+			"imagewidth"		"18"	
 		}
-	}		
-	
-	"VersionLabel"
+	}	
+		"VersionLabel"
 	{
 		"ControlName"		"CExLabel"
 		"fieldName"			"VersionLabel"
@@ -611,28 +499,6 @@
 		"textAlignment"		"east"
 		"fgcolor"			"HudOffWhite"
 		"font"				"MenuSmallFont"
-	}	
-	
-	"TestButton"
-	{
-		"ControlName"		"CTFAdvButton"
-		"fieldName"			"TestButton"
-		"xpos"				"r100"
-		"ypos"				"r50"
-		"zpos"				"5"
-		"wide"				"50"
-		"tall"				"20"
-		"visible"			"0"
-		"enabled"			"1"
-		"labelText" 		"Test"
-		"bgvisible"			"1"
-		"bordervisible"		"0"		
-		"textAlignment"		"center"
-		"command"			"testnotification"	
-		"DefaultTextColor"		"MainMenuTextDefault"
-		"ArmedTextColor"		"MainMenuTextArmed"
-		"DepressedTextColor"	"MainMenuTextDepressed"		
-		"font"				"HudFontSmallBold"
-	}				
+	}
 }
 		

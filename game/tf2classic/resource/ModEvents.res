@@ -621,6 +621,12 @@
 		"points"	"byte"
 	}
 
+	"escort_play_alert"
+	{
+		"final"			"bool" 
+		"teamblue"		"bool"  
+	}
+
 	"player_healonhit"
 	{
 		"amount"		"short"
