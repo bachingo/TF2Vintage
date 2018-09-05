@@ -1110,6 +1110,19 @@ enum
 	MAX_POWERUPS
 };
 
+//--------------------------------------------------------------------------
+// Stun
+//--------------------------------------------------------------------------
+enum
+{
+	STUN_BIG,
+	STUN_CONC,
+	STUN_YIKES,
+	STUN_NO_EFFECT,
+
+	STUN_COUNT
+}; // Live tf2 uses flags for this I think
+
 #define	MAX_CABLE_CONNECTIONS 4
 
 bool IsObjectAnUpgrade( int iObjectType );

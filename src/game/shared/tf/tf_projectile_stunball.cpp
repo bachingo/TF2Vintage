@@ -164,7 +164,7 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 				pPlayer->PlayStunSound( pPlayer, "TFPlayer.StunImpact" );
 			}
 
-			pPlayer->m_Shared.AddCond( TF_COND_HALF_STUN, 7.0f * ( flAirTime ) );
+			pPlayer->m_Shared.StunPlayer( 7.0f * ( flAirTime ), 0.8f, STUN_CONC, pAttacker );
 			pAttacker->SpeakConceptIfAllowed( MP_CONCEPT_STUNNED_TARGET );
 
 			// Bonus points.

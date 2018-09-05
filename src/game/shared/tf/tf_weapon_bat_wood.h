@@ -4,8 +4,8 @@
 //
 //=============================================================================
 
-#ifndef TF_WEAPON_BAT_H
-#define TF_WEAPON_BAT_H
+#ifndef TF_WEAPON_BAT_WOOD_H
+#define TF_WEAPON_BAT_WOOD_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -63,4 +63,4 @@ private:
 	CNetworkVar( bool, m_bFiring );
 	CNetworkVar( float, m_flNextFireTime );
 };
-#endif // TF_WEAPON_BAT_H
+#endif // TF_WEAPON_BAT_WOOD_H

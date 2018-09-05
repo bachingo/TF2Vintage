@@ -155,6 +155,8 @@ RecvPropInt( RECVINFO( m_nAirDucked ) ),
 RecvPropInt( RECVINFO( m_nPlayerState ) ),
 RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
 RecvPropTime( RECVINFO( m_flStunExpireTime ) ),
+RecvPropInt( RECVINFO( m_iStunType ) ),
+RecvPropTime( RECVINFO( m_flStunMovementSpeed ) ),
 RecvPropEHandle( RECVINFO( m_hStunner ) ),
 RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
 RecvPropBool( RECVINFO( m_bCarryingObject ) ),
@@ -221,6 +223,8 @@ SendPropInt( SENDINFO( m_nAirDucked ), 2, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN )
 SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT ) + 1, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL ) + 1, SPROP_UNSIGNED ),
 SendPropTime( SENDINFO( m_flStunExpireTime ) ),
+SendPropInt( SENDINFO( m_iStunType ), Q_log2( STUN_COUNT ), SPROP_UNSIGNED ),
+SendPropFloat( SENDINFO( m_flStunMovementSpeed ), 0, SPROP_NOSCALE ),
 SendPropEHandle( SENDINFO( m_hStunner ) ),
 SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
 SendPropBool( SENDINFO( m_bCarryingObject ) ),
@@ -1431,7 +1435,21 @@ void CTFPlayerShared::OnAddHalfStun(void)
 
 #ifdef CLIENT_DLL
 	if ( !m_pStun )
-		m_pStun = m_pOuter->ParticleProp()->Create( "conc_stars", PATTACH_POINT_FOLLOW, "head" );
+	{
+		if ( m_iStunType == STUN_CONC )
+		{
+			m_pStun = m_pOuter->ParticleProp()->Create( "conc_stars", PATTACH_POINT_FOLLOW, "head" );
+		}
+		else if ( m_iStunType == STUN_YIKES )
+		{
+			m_pStun = m_pOuter->ParticleProp()->Create( "yikes_fx", PATTACH_POINT_FOLLOW, "head" );
+		}
+	}
+#else
+	if ( m_iStunType == STUN_YIKES )
+	{
+		m_pOuter->EmitSound( "Halloween.PlayerScream" );
+	}
 #endif
 }
 
@@ -1440,6 +1458,7 @@ void CTFPlayerShared::OnAddHalfStun(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnRemoveHalfStun(void)
 {
+	m_hStunner = NULL;
 	m_pOuter->TeamFortress_SetSpeed();
 
 	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
@@ -1709,11 +1728,27 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 #endif
 }
 
-void CTFPlayerShared::StunPlayer( float flDuration, CTFPlayer *pStunner )
+void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, int iStunType, CTFPlayer *pStunner )
 {
+	float flStunExpireTimeOld = m_flStunExpireTime;
 	m_flStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
 	m_hStunner = pStunner;
-	AddCond( TF_COND_STUNNED );
+	m_iStunType = iStunType;
+	m_flStunMovementSpeed = flSpeed;
+
+	if ( iStunType == STUN_BIG )
+	{
+		AddCond( TF_COND_STUNNED );
+	}
+	else if ( iStunType == STUN_CONC || iStunType == STUN_YIKES || iStunType == STUN_NO_EFFECT )
+	{
+		if ( flStunExpireTimeOld < m_flStunExpireTime )
+			AddCond( TF_COND_HALF_STUN, flDuration );
+	}
+	else
+	{
+		Warning( "Invalid stun type specified!" );
+	}
 }
 
 #ifdef GAME_DLL
@@ -3469,10 +3504,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		maxfbspeed *= 0.6f;
 	}
 
-	// Reduce our speed if we were partially stunned
+	// (Potentially) Reduce our speed if we were partially stunned
 	if ( m_Shared.InCond( TF_COND_HALF_STUN ) )
 	{
-		maxfbspeed *= 0.8f;
+		maxfbspeed *= m_Shared.m_flStunMovementSpeed;
 	}
 
 	// if we're in bonus time because a team has won, give the winners 110% speed and the losers 90% speed

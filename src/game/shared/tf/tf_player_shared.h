@@ -191,7 +191,7 @@ public:
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
-	void	StunPlayer( float flDuration, CTFPlayer *pStunner );
+	void	StunPlayer( float flDuration, float flSpeed, int iStunType, CTFPlayer *pStunner );
 
 #ifdef GAME_DLL
 	void	AddPhaseEffects( void );
@@ -430,6 +430,9 @@ private:
 	CNetworkHandle( CTFPlayer, m_hStunner );
 	CNetworkVar( float, m_flStunExpireTime );
 	int m_iStunPhase;
+
+	CNetworkVar( int, m_iStunType );
+	CNetworkVar( float, m_flStunMovementSpeed );
 
 	//CNetworkVar( int, m_iDominationCount );
 

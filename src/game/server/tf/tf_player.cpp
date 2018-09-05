@@ -808,6 +808,7 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "Game.SuddenDeath" );
 	PrecacheScriptSound( "Game.Stalemate" );
 	PrecacheScriptSound( "TV.Tune" );
+	PrecacheScriptSound( "Halloween.PlayerScream" );
 
 	// Precache particle systems
 	PrecacheParticleSystem( "crit_text" );
@@ -7698,7 +7699,7 @@ void CTFPlayer::Taunt( void )
 		if ( tf2c_random_weapons.GetBool() && flDuration == 0.2f )
 		{
 			flDuration += 3.0f;
-			m_Shared.StunPlayer( 3.0f, this );
+			m_Shared.StunPlayer( 3.0f, 0.0f, STUN_BIG, this );
 		}
 
 		// Clear disguising state.
@@ -8002,7 +8003,7 @@ void CTFPlayer::DoTauntAttack( void )
 					if ( bStun )
 					{
 						// Stun the player
-						pPlayer->m_Shared.StunPlayer( 3.0f, this );
+						pPlayer->m_Shared.StunPlayer( 3.0f, 0.0f, STUN_BIG, this );
 						pPlayer->m_iTauntAttack = TF_TAUNT_NONE;
 					}
 				
