@@ -103,7 +103,7 @@ void CTriggerStun::StunThink()
 
 	if ( iStunCount > 0 )
 	{	
-		SetNextThink( gpGlobals->curtime + m_flStunDuration );
+		SetNextThink( gpGlobals->curtime + 0.5 );
 	}
 	else
 	{
