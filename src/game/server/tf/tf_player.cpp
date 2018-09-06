@@ -2018,7 +2018,7 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 						// if ent is a client, telefrag 'em (unless they are ourselves)
 						if ( ent->IsPlayer() && !( ent->edict() == edPlayer ) )
 						{
-							CTakeDamageInfo info( this, this, 1000, DMG_CRUSH, TF_DMG_TELEFRAG );
+							CTakeDamageInfo info( this, this, 1000, DMG_CRUSH, TF_DMG_CUSTOM_TELEFRAG );
 							ent->TakeDamage( info );
 						}
 					}
@@ -3793,7 +3793,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 
 		// Ubercharge does not save from telefrags.
-		if ( info.GetDamageCustom() == TF_DMG_TELEFRAG )
+		if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TELEFRAG )
 		{
 			bAllowDamage = true;
 		}
@@ -4635,7 +4635,7 @@ bool CTFPlayer::ShouldGib( const CTakeDamageInfo &info )
 	if ( info.GetDamageType() & DMG_ALWAYSGIB )
 		return true;
 
-	if ( info.GetDamageCustom() == TF_DMG_TELEFRAG )
+	if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TELEFRAG )
 		return true;
 
 	if ( ( info.GetDamageType() & DMG_BLAST ) || ( info.GetDamageType() & DMG_HALF_FALLOFF ) )
@@ -4843,7 +4843,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		CBaseObject *pObject = m_Shared.GetCarriedObject();
 		pObject->Teleport( &WorldSpaceCenter(), &GetAbsAngles(), &vec3_origin );
 		pObject->DropCarriedObject(this);
-		CTakeDamageInfo newInfo( pInflictor, pAttacker, ( float )pObject->GetHealth(), DMG_GENERIC, TF_DMG_BUILDING_CARRIED );
+		CTakeDamageInfo newInfo( pInflictor, pAttacker, ( float )pObject->GetHealth(), DMG_GENERIC, TF_DMG_CUSTOM_CARRIED_BUILDING );
 		pObject->Killed( newInfo );
 	}
 
@@ -7820,7 +7820,7 @@ void CTFPlayer::DoTauntAttack( void )
 				vecForce *= 130000.0f;
 				flDamage = 500.0f;
 				nDamageType = DMG_CLUB;
-				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_GRANDSLAM;
+				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_GRAND_SLAM;
 				break;
 			case TF_TAUNT_PYRO:
 				vecForce *= 25000.0f;
