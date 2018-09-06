@@ -1730,7 +1730,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 
 void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, int iStunType, CTFPlayer *pStunner )
 {
-	float flStunExpireTimeOld = m_flStunExpireTime;
+	//float flStunExpireTimeOld = m_flStunExpireTime;
 	m_flStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
 	m_hStunner = pStunner;
 	m_iStunType = iStunType;
