@@ -230,7 +230,8 @@ void CEntitySpawnPoint::RespawnNotifyThink( void )
 		if ( m_hManager->SpawnEntityAt( m_hManager->GetRandomUnusedIndex() ) )
 		{
 			SetThink( NULL );
-			SetNextThink( -1.0f );
+			SetNextThink( TICK_NEVER_THINK );
+			return;
 		}
 	}
 
