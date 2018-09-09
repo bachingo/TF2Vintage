@@ -1436,6 +1436,17 @@ void CTFPlayer::GiveDefaultItems()
 	// If we've switched to/from gunslinger destroy all of our buildings
 	if ( m_Shared.m_bGunslinger != bMiniBuilding )
 	{
+		// blow up any carried buildings
+		if ( IsPlayerClass( TF_CLASS_ENGINEER ) && m_Shared.GetCarriedObject() )
+		{
+			// Blow it up at our position.
+			CBaseObject *pObject = m_Shared.GetCarriedObject();
+			pObject->Teleport( &WorldSpaceCenter(), &GetAbsAngles(), &vec3_origin );
+			pObject->DropCarriedObject(this);
+			pObject->DetonateObject();
+			SwitchToNextBestWeapon( GetActiveWeapon() );
+		}
+
 		for ( int i = GetObjectCount()-1; i >= 0; i-- )
 		{
 			CBaseObject *obj = GetObject( i );
@@ -1492,6 +1503,23 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 
 			if ( pBuilder )
 			{
+				if ( TFGameRules()->IsInMedievalMode() )
+				{
+					// Medieval
+					float iAllowedInMedieval = 0;
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pBuilder, iAllowedInMedieval, allowed_in_medieval_mode );
+					if ( !iAllowedInMedieval )
+					{
+						if ( pBuilder == GetActiveWeapon() )
+						pBuilder->Holster();
+
+						Weapon_Detach( pBuilder );
+						UTIL_Remove( pBuilder );
+						pBuilder = NULL;
+						return;
+					}
+				}
+
 				pBuilder->DefaultTouch( this );				
 			}
 		}
@@ -2206,7 +2234,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 		return;
 	}
 
-	if ( iTeam == GetTeamNumber() )
+	if ( iTeam == GetTeamNumber() && !TFGameRules()->IsInArenaMode() )
 	{
 		return;	// we wouldn't change the team
 	}
