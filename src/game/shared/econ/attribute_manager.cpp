@@ -237,6 +237,7 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 			flValue *= pAttribute->value;
 			break;
 		case ATTRIB_FORMAT_OR:
+		default:
 		{
 			// Oh, man...
 			int iValue = (int)flValue;
@@ -281,6 +282,7 @@ const char *CAttributeContainer::ApplyAttributeString( const char *iszValue, con
 			case ATTRIB_FORMAT_PERCENTAGE:
 			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
 			case ATTRIB_FORMAT_OR:
+			default:
 				//Don't really know if anything uses these
 				break;
 		}
