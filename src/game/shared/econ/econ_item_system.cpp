@@ -295,6 +295,7 @@ public:
 			GET_STRING_DEFAULT( pAttribute, pSubData, name, ( unnamed ) );
 			GET_STRING( pAttribute, pSubData, attribute_class );
 			GET_STRING( pAttribute, pSubData, description_string );
+			GET_STRING( pAttribute, pSubData, attribute_type );
 
 			const char *szFormat = pSubData->GetString( "description_format" );
 			pAttribute->description_format = UTIL_StringFieldToInt( szFormat, g_AttributeDescriptionFormats, ARRAYSIZE( g_AttributeDescriptionFormats ) );
@@ -520,19 +521,32 @@ public:
 					}
 				}
 			}
-			else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
+			else if ( !V_stricmp( pSubData->GetName(), "attributes" ) || !V_stricmp( pSubData->GetName(), "static_attrs" ) )
 			{
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
 					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
+					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
 
-					if ( iAttributeID == -1 )
+					if ( !pAttrib || iAttributeID == -1 )
 						continue;
 
-					CEconItemAttribute attribute( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
+					CEconItemAttribute attribute;
+
+					if ( V_strcmp( pAttrib->attribute_type, "string" ) == 0 )
+					{
+						// Parse string attributes a bit differently
+						attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
+					}
+					else
+					{
+						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
+					}
+
 					pItem->attributes.AddToTail( attribute );
 				}
 			}
+
 			else if ( !V_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
 			{
 				// Deliberately skipping this.

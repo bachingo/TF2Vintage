@@ -327,7 +327,7 @@ void C_TFBat_Wood::OnDataChanged( DataUpdateType_t updateType )
 	{
 		C_TFPlayer *pPlayer = GetTFPlayerOwner();
 	
-		if ( pPlayer->IsLocalPlayer() && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) && IsCarrierAlive() )
+		if ( pPlayer->IsLocalPlayer() && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) && IsCarrierAlive() && WeaponState() == WEAPON_IS_ACTIVE )
 		{
 			UpdateViewmodelBall( pPlayer );
 		}

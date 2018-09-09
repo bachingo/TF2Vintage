@@ -42,6 +42,29 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconItemAttribute::Init( int iIndex, const char *iszValue, const char *pszAttributeClass /*= NULL*/ )
+{
+	m_iAttributeDefinitionIndex = iIndex;
+
+	V_strncpy( value_string.GetForModify(), iszValue, sizeof( value_string ) );
+
+	if ( pszAttributeClass )
+	{
+		V_strncpy( attribute_class.GetForModify(), pszAttributeClass, sizeof( attribute_class ) );
+	}
+	else
+	{
+		EconAttributeDefinition *pAttribDef = GetStaticData();
+		if ( pAttribDef )
+		{
+			V_strncpy( attribute_class.GetForModify(), pAttribDef->attribute_class, sizeof( attribute_class ) );
+		}
+	}
+}
+
 EconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 {
 	return GetItemSchema()->GetAttributeDefinition( m_iAttributeDefinitionIndex );

@@ -56,11 +56,17 @@ extern const char *g_szQualityLocalizationStrings[];
 #define CALL_ATTRIB_HOOK_FLOAT(value, name)			\
 		value = CAttributeManager::AttribHookValue<float>(value, #name, this)
 
+#define CALL_ATTRIB_HOOK_STRING(value, name)			\
+		value = CAttributeManager::AttribHookString<const char *>(value, #name, this)
+
 #define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name)			\
 		value = CAttributeManager::AttribHookValue<int>(value, #name, ent)
 
 #define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name)			\
 		value = CAttributeManager::AttribHookValue<float>(value, #name, ent)
+
+#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name)			\
+		value = CAttributeManager::AttribHookString<const char *>(value, #name, ent)
 
 #define CLEAR_STR(name)		\
 		name[0] = '\0'
@@ -92,6 +98,7 @@ struct EconAttributeDefinition
 		CLEAR_STR(name);
 		CLEAR_STR(attribute_class);
 		CLEAR_STR(description_string);
+		CLEAR_STR(attribute_type);
 		description_format = -1;
 		hidden = false;
 		effect_type = -1;
@@ -101,6 +108,7 @@ struct EconAttributeDefinition
 	char name[128];
 	char attribute_class[128];
 	char description_string[128];
+	char attribute_type[128];
 	int description_format;
 	int effect_type;
 	bool hidden;
@@ -135,8 +143,13 @@ public:
 	{
 		Init( iIndex, flValue, pszAttributeClass );
 	}
+	CEconItemAttribute( int iIndex, const char *iszValue, const char *pszAttributeClass )
+	{
+		Init( iIndex, iszValue, pszAttributeClass );
+	}
 
 	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
+	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
 
 public:
 	CNetworkVar( int, m_iAttributeDefinitionIndex );

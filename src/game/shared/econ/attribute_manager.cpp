@@ -145,6 +145,48 @@ float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *
 	return flValue;
 }
 
+const char *CAttributeManager::ApplyAttributeString( const char *iszValue, const CBaseEntity *pEntity, string_t strAttributeClass )
+{
+	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
+	{
+		return iszValue;
+	}
+
+	// Safeguard to prevent potential infinite loops.
+	m_bParsingMyself = true;
+
+	for ( int i = 0; i < m_AttributeProviders.Count(); i++ )
+	{
+		CBaseEntity *pProvider = m_AttributeProviders[i].Get();
+
+		if ( !pProvider || pProvider == pEntity )
+			continue;
+
+		IHasAttributes *pAttributes = pProvider->GetHasAttributesInterfacePtr();
+
+		if ( pAttributes )
+		{
+			iszValue = pAttributes->GetAttributeManager()->ApplyAttributeString( iszValue, pEntity, strAttributeClass );
+		}
+	}
+
+	IHasAttributes *pAttributes = m_hOuter->GetHasAttributesInterfacePtr();
+	CBaseEntity *pOwner = pAttributes->GetAttributeOwner();
+
+	if ( pOwner )
+	{
+		IHasAttributes *pOwnerAttrib = pOwner->GetHasAttributesInterfacePtr();
+		if ( pOwnerAttrib )
+		{
+			iszValue = pOwnerAttrib->GetAttributeManager()->ApplyAttributeString( iszValue, pEntity, strAttributeClass );
+		}
+	}
+
+	m_bParsingMyself = false;
+
+	return iszValue;
+}
+
 
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainer, DT_AttributeContainer )
 #ifdef CLIENT_DLL
@@ -211,4 +253,42 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 	flValue = BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass );
 
 	return flValue;
+}
+
+const char *CAttributeContainer::ApplyAttributeString( const char *iszValue, const CBaseEntity *pEntity, string_t strAttributeClass )
+{
+	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
+		return iszValue;
+
+	m_bParsingMyself = true;;
+
+	// This should only ever be used by econ entities.
+	CEconEntity *pEconEnt = assert_cast<CEconEntity *>( m_hOuter.Get() );
+	CEconItemView *pItem = pEconEnt->GetItem();
+
+	CEconItemAttribute *pAttribute = pItem->IterateAttributes( strAttributeClass );
+
+	if ( pAttribute )
+	{
+		EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
+
+		switch ( pStatic->description_format )
+		{
+			case ATTRIB_FORMAT_ADDITIVE:
+			case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
+				iszValue = pAttribute->value_string.Get();
+				break;
+			case ATTRIB_FORMAT_PERCENTAGE:
+			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
+			case ATTRIB_FORMAT_OR:
+				//Don't really know if anything uses these
+				break;
+		}
+	}
+
+	m_bParsingMyself = false;
+
+	iszValue = BaseClass::ApplyAttributeString( iszValue, pEntity, strAttributeClass );
+
+	return iszValue;
 }

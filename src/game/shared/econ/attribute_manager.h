@@ -43,6 +43,24 @@ public:
 		return iValue;
 	}
 
+	template <typename type>
+	static type AttribHookString( type iValue, const char* text, const CBaseEntity *pEntity )
+	{
+		if ( !pEntity )
+			return iValue;
+
+		IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+
+		if ( pAttribInteface )
+		{
+			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
+			const char *iszResult = pAttribInteface->GetAttributeManager()->ApplyAttributeString( iValue, pEntity, strAttributeClass );
+			iValue = (type)iszResult;
+		}
+
+		return iValue;
+	}
+
 #ifdef CLIENT_DLL
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updatetype );
@@ -53,6 +71,7 @@ public:
 	void			StopProvidingTo( CBaseEntity *pEntity );
 	virtual void	InitializeAttributes( CBaseEntity *pEntity );
 	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
+	virtual const char *ApplyAttributeString( const char *iszValue, const CBaseEntity *pEntity, string_t strAttributeClass );
 
 protected:
 	CNetworkHandle( CBaseEntity, m_hOuter );
@@ -80,6 +99,7 @@ public:
 	CAttributeContainer();
 
 	float ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
+	const char *ApplyAttributeString( const char *iszValue, const CBaseEntity *pEntity, string_t strAttributeClass );
 };
 
 #endif // ATTRIBUTE_MANAGER_H
