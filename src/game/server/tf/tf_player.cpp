@@ -1389,16 +1389,26 @@ void CTFPlayer::GiveDefaultItems()
 		Weapon_SetLast( Weapon_GetSlot( 1 ) );
 	}
 
-	// We may have swapped away our current weapon at resupply locker.
-	if ( GetActiveWeapon() == NULL )
-		SwitchToNextBestWeapon( NULL );
-
 	// Regenerate Weapons
 	for ( int i = 0; i < MAX_ITEMS; i++ )
 	{		
 		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( Weapon_GetSlot( i ) );
 		if ( pWeapon ) 
 		{
+			// Medieval
+			float iAllowedInMedieval = 0;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, iAllowedInMedieval, allowed_in_medieval_mode );
+			if ( TFGameRules()->IsInMedievalMode() && iAllowedInMedieval == 0 )
+			{
+				// Not allowed in medieval mode
+				if ( pWeapon == GetActiveWeapon() )
+					pWeapon->Holster();
+
+				Weapon_Detach( pWeapon );
+				UTIL_Remove( pWeapon );
+				continue;
+			}
+
 			// Regenerate
 			pWeapon->WeaponRegenerate();
 
@@ -1406,6 +1416,10 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->UpdatePlayerBodygroups();
 		}
 	}
+
+	// We may have swapped away our current weapon at resupply locker.
+	if ( GetActiveWeapon() == NULL )
+		SwitchToNextBestWeapon( NULL );
 
 	// Tell the client to regenerate
 	IGameEvent *event_regenerate = gameeventmanager->CreateEvent( "player_regenerate" );

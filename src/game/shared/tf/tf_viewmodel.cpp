@@ -488,7 +488,7 @@ void CTFViewModel::CalcMinViewmodelOffset( C_TFPlayer *owner )
 
 		if ( m_vOffset.x == 0.0f && m_vOffset.y == 0.0f && m_vOffset.z == 0.0f )
 		{
-			Warning( "No offset specified for minimal viewmodel. Defaulting to 0" );
+			Warning( "No offset specified for minimal viewmodel. Defaulting to 0\n" );
 		}
 
 	}
