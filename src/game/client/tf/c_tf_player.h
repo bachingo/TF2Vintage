@@ -135,6 +135,9 @@ public:
 	bool			InTauntCam( void ) { return m_bWasTaunting; }
 	virtual void	ThirdPersonSwitch( bool bThirdperson );
 
+	// Minimal Viewmodels
+	void			CalcMinViewmodelOffset( void );
+
 	virtual void	InitPhonemeMappings();
 
 	virtual void	GetGlowEffectColor( float *r, float *g, float *b );

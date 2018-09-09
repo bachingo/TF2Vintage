@@ -70,6 +70,7 @@ ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "5.0", FCVAR_CLIENTDLL );
 ConVar v_viewmodel_offset_x( "viewmodel_offset_x", "0", FCVAR_ARCHIVE );
 ConVar v_viewmodel_offset_y( "viewmodel_offset_y", "0", FCVAR_ARCHIVE );
 ConVar v_viewmodel_offset_z( "viewmodel_offset_z", "0", FCVAR_ARCHIVE );
+ConVar tf_use_min_viewmodels ( "tf_use_min_viewmodels", "0", FCVAR_ARCHIVE, "Use minimized viewmodels." );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -311,7 +312,16 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 	// Viewmodel offset
 	Vector	forward, right, up;
 	AngleVectors(eyeAngles, &forward, &right, &up);
-	vecNewOrigin += forward*v_viewmodel_offset_x.GetFloat() + right*v_viewmodel_offset_y.GetFloat() + up*v_viewmodel_offset_z.GetFloat();
+
+	// Don't use offsets if minimal viewmodels are active
+	if ( tf_use_min_viewmodels.GetBool() )
+	{
+		vecNewOrigin += forward*m_vOffset.x + right*m_vOffset.y + up*m_vOffset.z;
+	}
+	else
+	{
+		vecNewOrigin += forward*v_viewmodel_offset_x.GetFloat() + right*v_viewmodel_offset_y.GetFloat() + up*v_viewmodel_offset_z.GetFloat();
+	}
 
 	BaseClass::CalcViewModelView( owner, vecNewOrigin, vecNewAngles );
 
@@ -451,6 +461,34 @@ void CTFViewModel::FireEvent( const Vector& origin, const QAngle& angles, int ev
 		return;
 
 	BaseClass::FireEvent( origin, angles, event, options );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update minimal viewmodel positions
+//-----------------------------------------------------------------------------
+void CTFViewModel::CalcMinViewmodelOffset( C_TFPlayer *owner )
+{
+	if ( !owner || !tf_use_min_viewmodels.GetBool() )
+		return;
+
+	C_TFWeaponBase *pWeapon = owner->GetActiveTFWeapon();
+	if ( pWeapon )
+	{
+		vec_t vecOffset[3] = { 0.0f, 0.0f, 0.0f };
+		const char *pOffset = pWeapon->GetViewModelOffset();
+		if ( pOffset[0] )
+		{
+			UTIL_StringToVector( vecOffset, pOffset );
+		}
+
+		m_vOffset.Init( vecOffset[0], vecOffset[1], vecOffset[2] );
+
+		if ( m_vOffset.x == 0.0f && m_vOffset.y == 0.0f && m_vOffset.z == 0.0f )
+		{
+			Warning( "No offset specified for minimal viewmodel. Defaulting to 0" );
+		}
+
+	}
 }
 
 //-----------------------------------------------------------------------------

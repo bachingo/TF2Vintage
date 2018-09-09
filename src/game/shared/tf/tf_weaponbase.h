@@ -147,6 +147,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	// AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN
 	C_BaseAnimating *GetAppropriateWorldOrViewModel( void );
+
+	const char *GetViewModelOffset( void );
 #endif
 
 #ifdef DM_WEAPON_BUCKET

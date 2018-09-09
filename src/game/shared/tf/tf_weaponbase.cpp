@@ -507,7 +507,7 @@ C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Find the appropriate weapon model to update bodygroups on
 //-----------------------------------------------------------------------------
 C_BaseAnimating *C_TFWeaponBase::GetAppropriateWorldOrViewModel( void )
 {
@@ -536,6 +536,16 @@ C_BaseAnimating *C_TFWeaponBase::GetAppropriateWorldOrViewModel( void )
 
 	// this too
 	return this;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get the viewmodel offset for min-viewmodels
+//-----------------------------------------------------------------------------
+const char *C_TFWeaponBase::GetViewModelOffset( void )
+{
+	const char *pOffset = "\0";
+	CALL_ATTRIB_HOOK_STRING( pOffset, min_viewmodel_offset );
+	return pOffset;
 }
 #endif
 
@@ -716,6 +726,10 @@ bool CTFWeaponBase::Deploy( void )
 		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 		if ( !pPlayer )
 			return false;
+
+#ifdef CLIENT_DLL
+		pPlayer->CalcMinViewmodelOffset();
+#endif
 
 		// Overrides the anim length for calculating ready time.
 		// Don't override primary attacks that are already further out than this. This prevents

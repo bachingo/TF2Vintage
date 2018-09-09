@@ -53,6 +53,8 @@ public:
 	void SetViewModelType( int iType ){ this->m_iViewModelType = iType; }
 
 #if defined( CLIENT_DLL )
+	void CalcMinViewmodelOffset( C_TFPlayer *owner );
+
 	virtual bool ShouldPredict( void )
 	{
 		if ( GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer() )
@@ -105,6 +107,8 @@ private:
 	CTFViewModel( const CTFViewModel & ); // not defined, not accessible
 
 	QAngle m_vLoweredWeaponOffset;
+
+	Vector m_vOffset;
 
 #endif
 

@@ -2717,6 +2717,18 @@ void C_TFPlayer::ThirdPersonSwitch( bool bThirdPerson )
 	UpdateOverhealEffect();
 }
 
+void C_TFPlayer::CalcMinViewmodelOffset( void )
+{
+	for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+	{
+		C_TFViewModel *vm = dynamic_cast<C_TFViewModel *>( GetViewModel( i ) );
+		if ( !vm )
+			continue;
+	
+		vm->CalcMinViewmodelOffset( this );
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -3998,6 +4010,9 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 	}
 
 	UpdateVisibility();
+
+	// Update min. viewmodel
+	CalcMinViewmodelOffset();
 
 	m_hFirstGib = NULL;
 	m_hSpawnedGibs.Purge();
