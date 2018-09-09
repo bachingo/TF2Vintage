@@ -101,6 +101,7 @@ CON_COMMAND( showmapinfo, "Show map info panel" )
 			gViewPortInterface->ShowPanel( PANEL_ROUNDINFO, false );
 			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSELECT, false );
 			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHTEAMSELECT, false );
+			gViewPortInterface->ShowPanel( PANEL_ARENATEAMSELECT, false );
 
 			gViewPortInterface->ShowPanel( PANEL_MAPINFO, true );
 		}
@@ -290,6 +291,10 @@ IViewPortPanel* TFViewport::CreatePanelByName(const char *szPanelName)
 	{
 		newpanel = new CTFDeathmatchTeamMenu(this);
 	}
+	else if (Q_strcmp(PANEL_ARENATEAMSELECT, szPanelName) == 0)
+	{
+		newpanel = new CTFArenaTeamMenu(this);
+	}
 	else
 	{
 		// create a generic base panel, don't add twice
@@ -313,6 +318,7 @@ void TFViewport::CreateDefaultPanels( void )
 	AddNewPanel( CreatePanelByName( PANEL_FOURTEAMSELECT ), "PANEL_FOURTEAMSELECT" );
 	AddNewPanel( CreatePanelByName( PANEL_DEATHMATCHSCOREBOARD ), "PANEL_DEATHMATCHSCOREBOARD" );
 	AddNewPanel( CreatePanelByName( PANEL_DEATHMATCHTEAMSELECT ), "PANEL_DEATHMATCHTEAMSELECT" );
+	AddNewPanel( CreatePanelByName( PANEL_ARENATEAMSELECT ), "PANEL_ARENATEAMSELECT" );
 
 	BaseClass::CreateDefaultPanels();
 }

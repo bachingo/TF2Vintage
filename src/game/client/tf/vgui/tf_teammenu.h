@@ -173,7 +173,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Displays the arena team menu
+// Purpose: Displays the deathmatch team menu
 //-----------------------------------------------------------------------------
 class CTFDeathmatchTeamMenu : public CTeamMenu
 {
@@ -199,6 +199,8 @@ protected:
 
 	virtual void OnTick(void);
 
+	virtual void Init( void );
+
 private:
 
 	CTFTeamButton	*m_pAutoTeamButton;
@@ -211,6 +213,27 @@ private:
 	enum { NUM_TEAMS = 3 };
 
 	ButtonCode_t m_iTeamMenuKey;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: Displays the arena team menu
+//-----------------------------------------------------------------------------
+class CTFArenaTeamMenu : public CTFDeathmatchTeamMenu
+{
+private:
+	DECLARE_CLASS_SIMPLE(CTFArenaTeamMenu, CTFDeathmatchTeamMenu);
+
+public: 
+	CTFArenaTeamMenu(IViewPort *pViewPort);
+	~CTFArenaTeamMenu() {}
+
+	virtual const char *GetName(void) { return PANEL_ARENATEAMSELECT; }
+
+protected:
+	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
+
+	// command callbacks
+	virtual void OnCommand(const char *command);
 };
 
 #endif // TF_TEAMMENU_H

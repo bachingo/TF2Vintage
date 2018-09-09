@@ -314,13 +314,17 @@ void CTFTeamMenu::ShowPanel( bool bShow )
 
 	if ( bShow )
 	{
-		if (TFGameRules()->IsFourTeamGame())
+		if ( TFGameRules()->IsFourTeamGame() )
 		{
 			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSELECT, true );
 		}
-		else if (TFGameRules()->IsDeathmatch())
+		else if ( TFGameRules()->IsDeathmatch() )
 		{
 			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHTEAMSELECT, true );
+		}
+		else if ( TFGameRules()->IsInArenaMode() )
+		{
+			gViewPortInterface->ShowPanel( PANEL_ARENATEAMSELECT, true );
 		}
 		else
 		{
@@ -396,6 +400,10 @@ void CTFTeamMenu::ShowPanel( bool bShow )
 		else if ( TFGameRules()->IsDeathmatch() )
 		{
 			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHTEAMSELECT, false );
+		}
+		else if ( TFGameRules()->IsInArenaMode() )
+		{
+			gViewPortInterface->ShowPanel( PANEL_ARENATEAMSELECT, false );
 		}
 		else
 		{
@@ -1122,19 +1130,7 @@ void CTFFourTeamMenu::OnTick()
 //-----------------------------------------------------------------------------
 CTFDeathmatchTeamMenu::CTFDeathmatchTeamMenu(IViewPort *pViewPort) : CTeamMenu(pViewPort)
 {
-	SetMinimizeButtonVisible(false);
-	SetMaximizeButtonVisible(false);
-	SetCloseButtonVisible(false);
-	SetVisible(false);
-	SetKeyBoardInputEnabled(true);
-	SetMouseInputEnabled(true);
-
-	m_iTeamMenuKey = BUTTON_CODE_INVALID;
-
-	m_pAutoTeamButton = new CTFTeamButton(this, "teambutton2");
-	m_pSpecTeamButton = new CTFTeamButton(this, "teambutton3");
-	m_pSpecLabel = new CExLabel(this, "TeamMenuSpectate", "");
-	m_pCancelButton = new CExButton(this, "CancelButton", "#TF_Cancel");
+	Init();
 
 	vgui::ivgui()->AddTickSignal(GetVPanel());
 	LoadControlSettings("Resource/UI/DeathmatchTeamMenu.res");
@@ -1390,4 +1386,67 @@ void CTFDeathmatchTeamMenu::OnCommand(const char *command)
 void CTFDeathmatchTeamMenu::OnTick()
 {
 
+}
+
+//-----------------------------------------------------------------------------
+// Intialize values
+//-----------------------------------------------------------------------------
+void CTFDeathmatchTeamMenu::Init( void )
+{
+	SetMinimizeButtonVisible(false);
+	SetMaximizeButtonVisible(false);
+	SetCloseButtonVisible(false);
+	SetVisible(false);
+	SetKeyBoardInputEnabled(true);
+	SetMouseInputEnabled(true);
+
+	m_iTeamMenuKey = BUTTON_CODE_INVALID;
+
+	m_pAutoTeamButton = new CTFTeamButton(this, "teambutton2");
+	m_pSpecTeamButton = new CTFTeamButton(this, "teambutton3");
+	m_pSpecLabel = new CExLabel(this, "TeamMenuSpectate", "");
+	m_pCancelButton = new CExButton(this, "CancelButton", "#TF_Cancel");
+}
+
+//=============================================================================
+//
+// Arena
+//
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CTFArenaTeamMenu::CTFArenaTeamMenu(IViewPort *pViewPort) : CTFDeathmatchTeamMenu(pViewPort)
+{
+	Init();
+
+	vgui::ivgui()->AddTickSignal(GetVPanel());
+	LoadControlSettings("Resource/UI/HudArenaTeamMenu.res");
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFArenaTeamMenu::ApplySchemeSettings(IScheme *pScheme)
+{
+	BaseClass::ApplySchemeSettings(pScheme);
+
+	LoadControlSettings("Resource/UI/HudArenaTeamMenu.res");
+
+	Update();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called when the user picks a team
+//-----------------------------------------------------------------------------
+void CTFArenaTeamMenu::OnCommand(const char *command)
+{
+	if (Q_stricmp(command, "vguicancel"))
+	{
+		engine->ClientCmd(command);
+	}
+
+	BaseClass::OnCommand(command);
+	ShowPanel(false);
+	OnClose();
 }
