@@ -62,8 +62,8 @@ public:
 	DECLARE_DATADESC();
 
 	// Creation.
-	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-		                                         const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult );
+	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, const AngularImpulse &angVelocity, 
+												 CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult, const char *iszProjectileModel );
 
 	// Overrides.
 	virtual void	Spawn();
@@ -84,12 +84,16 @@ public:
 	
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
+	void SetProjectileModel( const char *iszModel ) { V_strcpy( m_iszProjectileModel, iszModel ); }
+
 private:
 
 	
 	bool		m_bFizzle;
 
 	float		m_flMinSleepTime;
+
+	char m_iszProjectileModel[256];
 
 	CHandle<CBaseEntity>	m_hEnemy;
 #endif

@@ -575,8 +575,12 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 		spin = AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 );
 	}
 
+	// projectile model overrides
+	const char *iszProjectileModel = "\0";
+	CALL_ATTRIB_HOOK_STRING( iszProjectileModel, custom_projectile_model );
+
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
-		spin, pPlayer, GetTFWpnData(), iMode, flDamageMult );
+		spin, pPlayer, GetTFWpnData(), iMode, flDamageMult, iszProjectileModel );
 
 
 	if ( pProjectile )

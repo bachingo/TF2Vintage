@@ -286,11 +286,14 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
 //-----------------------------------------------------------------------------
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
-																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult )
+																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo,
+																	int iMode, float flDamageMult, const char *iszProjectileModel )
 {
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( ( iMode == TF_GL_MODE_REMOTE_DETONATE ) ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
 	{
+		// model overrides
+		pGrenade->SetProjectileModel( iszProjectileModel );
 
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
 		pGrenade->SetPipebombMode( iMode );
@@ -330,15 +333,25 @@ void CTFGrenadePipebombProjectile::Spawn()
 {
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
+		if ( !m_iszProjectileModel[0] )
+			SetModel( TF_WEAPON_PIPEBOMB_MODEL );
+
 		// Set this to max, so effectively they do not self-implode.
-		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
 		SetDetonateTimerLength( FLT_MAX );
 	}
 	else
 	{
-		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
+		if ( !m_iszProjectileModel[0] )
+			SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
+
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
+	}
+
+	if ( m_iszProjectileModel[0] )
+	{
+		PrecacheModel( m_iszProjectileModel );
+		SetModel( m_iszProjectileModel );		
 	}
 
 	BaseClass::Spawn();

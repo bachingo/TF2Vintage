@@ -468,7 +468,10 @@ void CTFViewModel::FireEvent( const Vector& origin, const QAngle& angles, int ev
 //-----------------------------------------------------------------------------
 void CTFViewModel::CalcMinViewmodelOffset( C_TFPlayer *owner )
 {
-	if ( !owner || !tf_use_min_viewmodels.GetBool() )
+	// Always update this even if we're not using min viewmodels
+	// in case the player decides to activate them
+
+	if ( !owner )
 		return;
 
 	C_TFWeaponBase *pWeapon = owner->GetActiveTFWeapon();

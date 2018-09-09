@@ -532,15 +532,25 @@ public:
 						continue;
 
 					CEconItemAttribute attribute;
+					const char *iszAttributeClass = pAttribData->GetString( "attribute_class" );
 
 					if ( V_strcmp( pAttrib->attribute_type, "string" ) == 0 )
 					{
 						// Parse string attributes a bit differently
-						attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
+						if ( !iszAttributeClass[0] )
+						{
+							// This is probably a static attribute so grab the values directly
+							attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
+						}
+						else
+						{
+							// This is probably a standard attribute that takes a string
+							attribute.Init( iAttributeID, pAttribData->GetString( "value" ), iszAttributeClass );
+						}
 					}
 					else
 					{
-						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
+						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), iszAttributeClass );
 					}
 
 					pItem->attributes.AddToTail( attribute );
