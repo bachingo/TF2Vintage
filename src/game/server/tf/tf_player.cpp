@@ -1447,6 +1447,7 @@ void CTFPlayer::GiveDefaultItems()
 			SwitchToNextBestWeapon( GetActiveWeapon() );
 		}
 
+		// destroy any planted buildings
 		for ( int i = GetObjectCount()-1; i >= 0; i-- )
 		{
 			CBaseObject *obj = GetObject( i );
