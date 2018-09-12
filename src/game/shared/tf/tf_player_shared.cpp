@@ -3828,21 +3828,21 @@ bool CTFPlayer::CanAttack(void)
 #ifdef GAME_DLL
 bool CTFPlayer::CanPickupBuilding(CBaseObject *pObject)
 {
-	if (!pObject)
+	if ( !pObject )
 		return false;
 
-	if (pObject->GetBuilder() != this)
+	if ( pObject->GetBuilder() != this )
 		return false;
 
-	if (pObject->IsBuilding() || pObject->IsUpgrading() || pObject->IsRedeploying())
+	if ( pObject->IsBuilding() || pObject->IsUpgrading() || pObject->IsRedeploying() )
 		return false;
 
-	if (pObject->HasSapper())
+	if ( pObject->HasSapper() )
 		return false;
 
 	return true;
 
-	if ( m_Shared.InCond( TF_COND_STUNNED ) )
+	if ( m_Shared.InCond( TF_COND_STUNNED ) || m_Shared.InCond( TF_COND_HALF_STUN ) )
 	{
 		return false;
 	}
@@ -3851,24 +3851,24 @@ bool CTFPlayer::CanPickupBuilding(CBaseObject *pObject)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFPlayer::TryToPickupBuilding(void)
+bool CTFPlayer::TryToPickupBuilding( void )
 {
-	if (!tf2c_building_hauling.GetBool())
+	if ( !tf2c_building_hauling.GetBool() )
 		return false;
 
-	if (m_Shared.IsLoser())
+	if ( m_Shared.IsLoser() )
 		return false;
 
-	if (IsActiveTFWeapon(TF_WEAPON_BUILDER))
+	if ( IsActiveTFWeapon( TF_WEAPON_BUILDER ) )
 		return false;
 
 	int bCannotPickUpBuildings = 0;
-	CALL_ATTRIB_HOOK_INT(bCannotPickUpBuildings, cannot_pick_up_buildings);
-	if (bCannotPickUpBuildings != 0)
+	CALL_ATTRIB_HOOK_INT( bCannotPickUpBuildings, cannot_pick_up_buildings );
+	if ( bCannotPickUpBuildings != 0 )
 		return false;
 
 	Vector vecForward;
-	AngleVectors(EyeAngles(), &vecForward);
+	AngleVectors( EyeAngles(), &vecForward );
 	Vector vecSwingStart = Weapon_ShootPosition();
 	// 5500 with Rescue Ranger.
 	float flRange = 150.0f;
@@ -3879,37 +3879,37 @@ bool CTFPlayer::TryToPickupBuilding(void)
 	// See if we hit anything.
 	trace_t trace;
 
-	CTraceFilterIgnorePlayers traceFilter(NULL, COLLISION_GROUP_NONE);
-	UTIL_TraceLine(vecSwingStart, vecSwingEnd, MASK_SOLID, &traceFilter, &trace);
+	CTraceFilterIgnorePlayers traceFilter( NULL, COLLISION_GROUP_NONE );
+	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &traceFilter, &trace );
 
-	if (trace.fraction < 1.0f &&
+	if ( trace.fraction < 1.0f &&
 		trace.m_pEnt &&
 		trace.m_pEnt->IsBaseObject() &&
-		trace.m_pEnt->GetTeamNumber() == GetTeamNumber())
+		trace.m_pEnt->GetTeamNumber() == GetTeamNumber() )
 	{
-		CBaseObject *pObject = dynamic_cast<CBaseObject*>(trace.m_pEnt);
-		if (CanPickupBuilding(pObject))
+		CBaseObject *pObject = dynamic_cast<CBaseObject *>( trace.m_pEnt );
+		if ( CanPickupBuilding( pObject ) )
 		{
-			CTFWeaponBase *pWpn = Weapon_OwnsThisID(TF_WEAPON_BUILDER);
+			CTFWeaponBase *pWpn = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
 
-			if (pWpn)
+			if ( pWpn )
 			{
-				CTFWeaponBuilder *pBuilder = dynamic_cast< CTFWeaponBuilder * >(pWpn);
+				CTFWeaponBuilder *pBuilder = dynamic_cast< CTFWeaponBuilder * >( pWpn );
 
 				// Is this the builder that builds the object we're looking for?
-				if (pBuilder)
+				if ( pBuilder )
 				{
 					pObject->MakeCarriedObject(this);
 
-					pBuilder->SetSubType(pObject->ObjectType());
-					pBuilder->SetObjectMode(pObject->GetObjectMode());
+					pBuilder->SetSubType( pObject->ObjectType() );
+					pBuilder->SetObjectMode( pObject->GetObjectMode() );
 
-					SpeakConceptIfAllowed(MP_CONCEPT_PICKUP_BUILDING);
+					SpeakConceptIfAllowed( MP_CONCEPT_PICKUP_BUILDING );
 
 					// try to switch to this weapon
-					Weapon_Switch(pBuilder);
+					Weapon_Switch( pBuilder );
 
-					m_flNextCarryTalkTime = gpGlobals->curtime + RandomFloat(6.0f, 12.0f);
+					m_flNextCarryTalkTime = gpGlobals->curtime + RandomFloat( 6.0f, 12.0f );
 
 					return true;
 				}
