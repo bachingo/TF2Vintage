@@ -112,6 +112,11 @@ int	CTFGrenadePipebombProjectile::GetDamageType( void )
 			iDmgType |= DMG_USEDISTANCEMOD;
 		}
 	}
+	else if ( m_iDeflected > 0 )
+	{
+		// deflected stickies shouldn't get minicrits 
+		iDmgType |= DMG_MINICRITICAL;
+	}
 
 	return iDmgType;
 }
@@ -332,7 +337,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
 		if ( !m_iszProjectileModel[0] )
-			SetModel( TF_WEAPON_PIPEBOMB_MODEL );
+			PrecacheProjectileModel( TF_WEAPON_PIPEBOMB_MODEL );
 
 		// Set this to max, so effectively they do not self-implode.
 		SetDetonateTimerLength( FLT_MAX );
@@ -340,7 +345,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 	else
 	{
 		if ( !m_iszProjectileModel[0] )
-			SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
+			PrecacheProjectileModel( TF_WEAPON_PIPEGRENADE_MODEL );
 
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
@@ -348,8 +353,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 
 	if ( m_iszProjectileModel[0] )
 	{
-		PrecacheModel( m_iszProjectileModel );
-		SetModel( m_iszProjectileModel );		
+		PrecacheProjectileModel( m_iszProjectileModel );		
 	}
 
 	BaseClass::Spawn();
@@ -371,11 +375,19 @@ void CTFGrenadePipebombProjectile::Spawn()
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Precache()
 {
-	PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
-	PrecacheModel( TF_WEAPON_PIPEGRENADE_MODEL );
 	PrecacheTeamParticles("stickybombtrail_%s", true);
-
 	BaseClass::Precache();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGrenadePipebombProjectile::PrecacheProjectileModel( const char *iszModel )
+{
+	int index = 0;
+	index = PrecacheModel( iszModel );
+	PrecacheGibsForModel( index );
+	SetModel( iszModel );
 }
 
 //-----------------------------------------------------------------------------
@@ -383,11 +395,6 @@ void CTFGrenadePipebombProjectile::Precache()
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::SetPipebombMode( int iMode )
 {
-	if ( iMode != TF_GL_MODE_REMOTE_DETONATE )
-	{
-		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
-	}
-
 	m_iType.Set( iMode );
 }
 
@@ -418,6 +425,15 @@ void CTFGrenadePipebombProjectile::Detonate()
 	{
 		g_pEffects->Sparks( GetAbsOrigin() );
 		RemoveGrenade();
+
+		// CreatePipebombGibs
+		CPVSFilter filter( GetAbsOrigin() );
+		UserMessageBegin( filter, "CheapBreakModel" );
+		WRITE_SHORT( GetModelIndex() );
+		WRITE_VEC3COORD( GetAbsOrigin() );
+		WRITE_ANGLES( GetAbsAngles() );
+		MessageEnd();
+
 		return;
 	}
 

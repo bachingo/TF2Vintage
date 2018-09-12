@@ -84,6 +84,7 @@ public:
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	void SetProjectileModel( const char *iszModel ) { V_strcpy( m_iszProjectileModel, iszModel ); }
+	void PrecacheProjectileModel( const char *iszModel );
 
 private:
 

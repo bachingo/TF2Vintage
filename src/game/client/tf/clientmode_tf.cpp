@@ -439,6 +439,12 @@ void __MsgFunc_BreakModel( bf_read &msg )
 	HandleBreakModel( msg, false );
 }
 
+void __MsgFunc_CheapBreakModel( bf_read &msg )
+{
+	// Cheap gibs don't use angle vectors
+	HandleBreakModel( msg, true );
+}
+
 void HandleBreakModel( bf_read &msg, bool bNoAngles )
 {
 	CUtlVector<breakmodel_t> list;

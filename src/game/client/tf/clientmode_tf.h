@@ -81,6 +81,7 @@ extern IClientMode *GetClientModeNormal();
 extern ClientModeTFNormal* GetClientModeTFNormal();
 
 void __MsgFunc_BreakModel( bf_read &msg );
+void __MsgFunc_CheapBreakModel( bf_read &msg );
 void HandleBreakModel( bf_read &msg, bool bNoAngles );
 
 #endif // TF_CLIENTMODE_H

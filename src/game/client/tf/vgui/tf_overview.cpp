@@ -112,6 +112,7 @@ CTFMapOverview::CTFMapOverview( const char *pElementName ) : CMapOverview(pEleme
 
 	// Moving this here for now
 	usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
+	usermessages->HookMessage( "CheapBreakModel", __MsgFunc_CheapBreakModel );
 }
 
 //-----------------------------------------------------------------------------
