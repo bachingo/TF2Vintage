@@ -19,10 +19,8 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFStunBall, DT_TFStunBall )
 
 BEGIN_NETWORK_TABLE( CTFStunBall, DT_TFStunBall )
 #ifdef CLIENT_DLL
-	RecvPropInt( RECVINFO( m_bTouched ) ),
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 #else
-	SendPropBool( SENDINFO( m_bTouched ) ),
 	SendPropBool( SENDINFO( m_bCritical ) ),
 #endif
 END_NETWORK_TABLE()
@@ -97,8 +95,10 @@ void CTFStunBall::Spawn( void )
 
 	CreateTrail();
 
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
+
 	// Don't collide with anything for a short time so that we never get stuck behind surfaces
-	// FIXME: It's possible to bypass the player completely at specific angles causing the ball to stay non-solid!
 	SetCollisionGroup( TFCOLLISION_GROUP_NONE );
 
 	AddSolidFlags( FSOLID_TRIGGER );
@@ -247,7 +247,16 @@ void CTFStunBall::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 	BaseClass::VPhysicsCollision( index, pEvent );
 
 	int otherIndex = !index;
+	CBaseEntity *pHitEntity = pEvent->pEntities[otherIndex];
 
+	if ( !pHitEntity )
+	{
+		return;
+	}
+
+	// we've touched a surface
+	m_bTouched = true;
+	
 	// Handle hitting skybox (disappear).
 	surfacedata_t *pprops = physprops->GetSurfaceData( pEvent->surfaceProps[otherIndex] );
 	if ( pprops->game.material == 'X' )
@@ -258,19 +267,6 @@ void CTFStunBall::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 		return;
 	}
 
-	CBaseEntity *pHitEntity = pEvent->pEntities[otherIndex];
-
-	if ( !pHitEntity )
-	{
-		return;
-	}
-
-	if ( pHitEntity->GetMoveType() == MOVETYPE_NONE )
-	{
-		// we've touched a surface
-		m_bTouched = true;
-	}
-	return;
 }
 
 //-----------------------------------------------------------------------------

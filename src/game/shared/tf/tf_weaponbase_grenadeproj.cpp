@@ -51,6 +51,7 @@ PRECACHE_REGISTER( tf_weaponbase_grenade_proj );
 
 BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #ifdef CLIENT_DLL
+	RecvPropInt( RECVINFO( m_bTouched ) ),
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 
@@ -61,6 +62,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	RecvPropEHandle( RECVINFO( m_hDeflectOwner ) ),
 
 #else
+	SendPropInt( SENDINFO( m_bTouched ) ),
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropBool( SENDINFO( m_bCritical ) ),
 
@@ -149,6 +151,9 @@ void CTFWeaponBaseGrenadeProj::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::Spawn()
 {
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
+
 	m_flSpawnTime = gpGlobals->curtime;
 	BaseClass::Spawn();
 }
@@ -668,6 +673,8 @@ public:
 			if ( pEntity->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
 				return false;
 			if ( pEntity->GetCollisionGroup() == COLLISION_GROUP_NONE )
+				return false;
+			if ( pEntity->GetCollisionGroup() == TFCOLLISION_GROUP_RESPAWNROOMS )
 				return false;
 
 			return true;

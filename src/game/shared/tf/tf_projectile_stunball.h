@@ -76,12 +76,10 @@ private:
 #ifdef GAME_DLL
 	EHANDLE				    m_Scorer;
 	CNetworkVar( bool, m_bCritical );
-	CNetworkVar( bool, m_bTouched );
 
 	CHandle<CBaseEntity>	m_hEnemy;
 	EHANDLE					m_hSpriteTrail;
 #else
-	bool		m_bTouched;
 	bool		m_bCritical;
 #endif
 

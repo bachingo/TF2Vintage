@@ -55,11 +55,9 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadePipebombProjectile, DT_TFProjectile_Pip
 
 BEGIN_NETWORK_TABLE( CTFGrenadePipebombProjectile, DT_TFProjectile_Pipebomb )
 #ifdef CLIENT_DLL
-RecvPropInt( RECVINFO( m_bTouched ) ),
 RecvPropInt( RECVINFO( m_iType ) ),
 RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
-SendPropBool( SENDINFO( m_bTouched ) ),
 SendPropInt( SENDINFO( m_iType ), 2 ),
 SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
@@ -358,6 +356,9 @@ void CTFGrenadePipebombProjectile::Spawn()
 
 	m_bTouched = false;
 	m_flCreationTime = gpGlobals->curtime;
+
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
 
 	// We want to get touch functions called so we can damage enemy players
 	AddSolidFlags( FSOLID_TRIGGER );
