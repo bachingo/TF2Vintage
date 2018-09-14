@@ -867,6 +867,8 @@ extern const char *g_pszHintMessages[];
 // Special Damage types
 enum
 {
+	TF_DMG_CUSTOM_NONE, // TODO: Remove this at some point
+
 	TF_DMG_CUSTOM_HEADSHOT,
 	TF_DMG_CUSTOM_BACKSTAB,
 	TF_DMG_CUSTOM_BURNING,
@@ -950,9 +952,6 @@ enum
 	TF_DMG_CUSTOM_CROC,
 	TF_DMG_CUSTOM_TAUNTATK_GASBLAST,
 	TF_DMG_CUSTOM_AXTINGUISHER_BOOSTED,
-
-// TODO: Remove this at some point
-TF_DMG_CUSTOM_NONE,
 };
 
 #define TF_JUMP_ROCKET	( 1 << 0 )

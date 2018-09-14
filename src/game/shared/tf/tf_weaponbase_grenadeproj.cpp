@@ -147,9 +147,6 @@ void CTFWeaponBaseGrenadeProj::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::Spawn()
 {
-	// Pumpkin Bombs
-	AddFlag( FL_GRENADE );
-
 	m_flSpawnTime = gpGlobals->curtime;
 	BaseClass::Spawn();
 }
@@ -341,7 +338,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info.Set( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
+	radiusInfo.info.Set( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, TF_DMG_CUSTOM_NONE, &vecReported );
 	radiusInfo.m_vecSrc = vecOrigin;
 	radiusInfo.m_flRadius = flRadius;
 	radiusInfo.m_flSelfDamageRadius = 146.0f;
