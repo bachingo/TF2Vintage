@@ -447,6 +447,9 @@ void CObjectSentrygun::Precache()
 	PrecacheScriptSound( "Building_Sentrygun.Built" );
 	PrecacheScriptSound( "Building_Sentrygun.Empty" );
 	PrecacheScriptSound( "Building_MiniSentrygun.Fire" ); // mini-sentry
+	PrecacheScriptSound( "Building_Sentrygun.ShaftFire" ); // wrangler
+	PrecacheScriptSound( "Building_Sentrygun.ShaftFire2" );
+	PrecacheScriptSound( "Building_Sentrygun.ShaftFire3" );
 
 	PrecacheParticleSystem( "sentrydamage_1" );
 	PrecacheParticleSystem( "sentrydamage_2" );
@@ -1190,19 +1193,12 @@ bool CObjectSentrygun::Fire()
 			info.m_flDamage /= 2;
 		}
 
+		info.m_vecSpread = vec3_origin;
+
 		// Wrangled shots should have some spread
 		if ( m_iState == SENTRY_STATE_WRANGLED )
 		{
-			float x = 0.0f, y = 0.0f, flSpread = 0.01f * vecAimDir.Length();
-			Vector vecRight, vecUp;
-			VectorVectors( vecAimDir, vecRight, vecUp );
-
-			// Get circular gaussian spread.
-			x = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
-			y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
-
-			// Initialize the variable firing information.
-			vecAimDir = vecAimDir + ( x *  flSpread * vecRight ) + ( y * flSpread * vecUp );
+			info.m_vecSpread = VECTOR_CONE_3DEGREES;
 
 			// Use modified damage value to compensate for damage ramp-up/falloff
 			info.m_flDamage /= 1.5f ;
@@ -1214,14 +1210,12 @@ bool CObjectSentrygun::Fire()
 		
 		//NDebugOverlay::Cross3D( vecSrc, 10, 255, 0, 0, false, 0.1 );
 
-		info.m_vecSpread = vec3_origin;
 		info.m_vecSrc = vecSrc;
 		info.m_vecDirShooting = vecAimDir;
 		info.m_iTracerFreq = 1;
 		info.m_iShots = 1;
 		info.m_pAttacker = GetBuilder();
 		info.m_iAmmoType = m_iAmmoType;
-		info.m_vecSpread = vec3_origin;
 		info.m_flDistance = flDistToTarget + 100;
 
 		FireBullets( info );
@@ -1235,19 +1229,50 @@ bool CObjectSentrygun::Fire()
 		data.m_vOrigin = vecSrc;
 		DispatchEffect( "TF_3rdPersonMuzzleFlash_SentryGun", data );
 
-		switch( m_iUpgradeLevel )
+		CPASAttenuationFilter filter( this );
+		const char *pszSound = "";
+
+		if ( IsMiniBuilding() )
 		{
-		case 1:
-		default:
-			EmitSound( m_bMiniBuilding ? "Building_MiniSentrygun.Fire" : "Building_Sentrygun.Fire" );
-			break;
-		case 2:
-			EmitSound( "Building_Sentrygun.Fire2" );
-			break;
-		case 3:
-			EmitSound( "Building_Sentrygun.Fire3" );
-			break;
+			// Mini firing sound
+			pszSound = "Building_MiniSentrygun.Fire";
 		}
+		else if ( m_iState == SENTRY_STATE_WRANGLED )
+		{
+			// Wrangler firing sounds
+			switch( m_iUpgradeLevel )
+			{
+				case 1:
+				default:
+					pszSound = "Building_Sentrygun.ShaftFire";
+					break;
+				case 2:
+					pszSound = "Building_Sentrygun.ShaftFire2";
+					break;
+				case 3:
+					pszSound = "Building_Sentrygun.ShaftFire3";
+					break;
+			}
+		}
+		else
+		{
+			// Standard sentry firing sound
+			switch( m_iUpgradeLevel )
+			{
+				case 1:
+				default:
+					pszSound = "Building_Sentrygun.Fire";
+					break;
+				case 2:
+					pszSound = "Building_Sentrygun.Fire2";
+					break;
+				case 3:
+					pszSound = "Building_Sentrygun.Fire3";
+					break;
+			}
+		}
+
+		EmitSentrySound( filter, entindex(), pszSound );
 
 		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
 		{

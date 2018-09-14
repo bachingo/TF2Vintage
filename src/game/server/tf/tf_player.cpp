@@ -8031,7 +8031,7 @@ void CTFPlayer::DoTauntAttack( void )
 
 					float flDamage = bStun ? 1.0f : 500.0f;
 					int nDamageType = DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE;
-					int iCustomDamage = 0;
+					int iCustomDamage = TF_DMG_CUSTOM_NONE;
 					if ( iTauntType == TF_TAUNT_SNIPER_STUN || iTauntType == TF_TAUNT_SNIPER_KILL )
 					{
 						iCustomDamage = TF_DMG_CUSTOM_TAUNTATK_ARROW_STAB;
