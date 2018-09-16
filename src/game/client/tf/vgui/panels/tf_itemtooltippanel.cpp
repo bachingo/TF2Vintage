@@ -135,7 +135,7 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 
 	if ( m_pAttributeText )
 	{
-		for ( int i = 0; i < pItemData->attributes.Count(); i++ )
+		for ( int i = 0; i <= pItemData->attributes.Count(); i++ )
 		{
 			CExLabel *pLabel = m_pAttributes[i];
 
