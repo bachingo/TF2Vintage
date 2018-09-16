@@ -1444,7 +1444,6 @@ void CTFPlayer::GiveDefaultItems()
 			pObject->Teleport( &WorldSpaceCenter(), &GetAbsAngles(), &vec3_origin );
 			pObject->DropCarriedObject(this);
 			pObject->DetonateObject();
-			SwitchToNextBestWeapon( GetActiveWeapon() );
 		}
 
 		// destroy any planted buildings
@@ -1460,7 +1459,7 @@ void CTFPlayer::GiveDefaultItems()
 		}
 
 		// make sure we update the c_models
-		if ( GetActiveWeapon() )
+		if ( GetActiveWeapon() && !Weapon_Switch( Weapon_GetSlot( TF_LOADOUT_SLOT_MELEE ) ) )
 			GetActiveWeapon()->Deploy();
 	}
 
