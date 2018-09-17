@@ -12,34 +12,9 @@
 #include "tf_player.h"
 #endif
 
+#ifdef GAME_DLL
 ConVar tf_debug_wrangler( "tf_wrangler_debug", "0", FCVAR_CHEAT );
-
-class CTraceFilterIgnoreTeammatesAndTeamObjects : public CTraceFilterSimple
-{
-public:
-	// It does have a base, but we'll never network anything below here..
-	DECLARE_CLASS( CTraceFilterIgnoreTeammatesAndTeamObjects, CTraceFilterSimple );
-
-	CTraceFilterIgnoreTeammatesAndTeamObjects( const IHandleEntity *passentity, int collisionGroup, int teamNumber )
-		: CTraceFilterSimple( passentity, collisionGroup )
-	{
-		m_iTeamNumber = teamNumber;
-	}
-
-	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
-	{
-		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-
-		if ( pEntity && pEntity->GetTeamNumber() == m_iTeamNumber )
-			return false;
-
-		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
-	}
-
-private:
-	int m_iTeamNumber;
-};
-
+#endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFLaserPointer, DT_WeaponLaserPointer )
 
@@ -61,7 +36,7 @@ END_DATADESC()
 CTFLaserPointer::CTFLaserPointer()
 {
 #ifdef GAME_DLL
-	pGun = NULL;
+	m_hGun = NULL;
 #endif
 }
 
@@ -83,7 +58,7 @@ bool CTFLaserPointer::Deploy( void )
 
 			if ( pObject->GetType() == OBJ_SENTRYGUN )
 			{
-				pGun = dynamic_cast< CObjectSentrygun * > ( pObject );
+				m_hGun = dynamic_cast< CObjectSentrygun * > ( pObject );
 			}
 		}
 	}
@@ -98,16 +73,16 @@ bool CTFLaserPointer::Deploy( void )
 bool CTFLaserPointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 #ifdef GAME_DLL
-	if ( pGun )
+	if ( m_hGun )
 	{
 
-		if ( pGun->GetState() == SENTRY_STATE_WRANGLED )
+		if ( m_hGun->GetState() == SENTRY_STATE_WRANGLED )
 		{
-			pGun->OnStopWrangling();
-			pGun->SetShouldFire( false );
+			m_hGun->OnStopWrangling();
+			m_hGun->SetShouldFire( false );
 		}
 	}
-	pGun = NULL;
+	m_hGun = NULL;
 #endif
 
 	return BaseClass::Holster( pSwitchingTo );
@@ -130,18 +105,18 @@ void CTFLaserPointer::PrimaryAttack( void )
 		return;
 
 #ifdef GAME_DLL
-	if ( !pGun )
+	if ( !m_hGun )
 		return;
 
-	if ( m_flNextPrimaryAttack < gpGlobals->curtime && pGun->GetState() == SENTRY_STATE_WRANGLED )
+	if ( m_flNextPrimaryAttack < gpGlobals->curtime && m_hGun->GetState() == SENTRY_STATE_WRANGLED )
 	{
-		pGun->SetShouldFire( true );
+		m_hGun->SetShouldFire( true );
 
 		// input buffer
 		m_flNextPrimaryAttack = gpGlobals->curtime + 0.05f;
 	}
 #endif
-	SendWeaponAnim( ACT_ITEM3_VM_CHARGE );
+	SendWeaponAnim( ACT_ITEM3_VM_PRIMARYATTACK );
 }
 
 // ---------------------------------------------------------------------------- -
@@ -153,16 +128,16 @@ void CTFLaserPointer::SecondaryAttack( void )
 		return;
 
 #ifdef GAME_DLL
-	if ( !pGun )
+	if ( !m_hGun )
 		return;
 
-	if ( m_flNextSecondaryAttack <= gpGlobals->curtime && pGun->GetState() == SENTRY_STATE_WRANGLED )
+	if ( m_flNextSecondaryAttack <= gpGlobals->curtime && m_hGun->GetState() == SENTRY_STATE_WRANGLED )
 	{
-		int iUpgradeLevel = pGun->GetUpgradeLevel();
+		int iUpgradeLevel = m_hGun->GetUpgradeLevel();
 
 		if ( iUpgradeLevel == 3 )
 		{
-			pGun->FireRockets();
+			m_hGun->FireRockets();
 
 			// Rockets fire slightly faster wrangled
 			m_flNextSecondaryAttack = gpGlobals->curtime + 2.5;
@@ -177,15 +152,15 @@ void CTFLaserPointer::SecondaryAttack( void )
 void CTFLaserPointer::ItemPostFrame( void )
 {
 #ifdef GAME_DLL
-	if ( pGun )
+	if ( m_hGun )
 	{
 		//TODO: Find a better way to determine if we can wrangle
-		if ( !pGun->IsRedeploying() && !pGun->IsBuilding() && !pGun->IsUpgrading() && !pGun->HasSapper() )
+		if ( !m_hGun->IsRedeploying() && !m_hGun->IsBuilding() && !m_hGun->IsUpgrading() && !m_hGun->HasSapper() )
 		{
-			pGun->SetState( SENTRY_STATE_WRANGLED );
+			m_hGun->SetState( SENTRY_STATE_WRANGLED );
 		}
 
-		if ( pGun->GetState() == SENTRY_STATE_WRANGLED )
+		if ( m_hGun->GetState() == SENTRY_STATE_WRANGLED )
 		{
 			UpdateLaserDot();
 		}
@@ -200,12 +175,12 @@ void CTFLaserPointer::UpdateLaserDot( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
-	pGun->StudioFrameAdvance( );
+	m_hGun->StudioFrameAdvance( );
 
 	if ( !pOwner || !pOwner->IsAlive() )
 	{
-		pGun->OnStopWrangling();
-		pGun->SetShouldFire( false );
+		m_hGun->OnStopWrangling();
+		m_hGun->SetShouldFire( false );
 		return;
 	}
 
@@ -221,29 +196,42 @@ void CTFLaserPointer::UpdateLaserDot( void )
 	// First pass to find where we are looking
 	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
 
-	vecStart = pGun->EyePosition();
-	vecEnd = tr.endpos;
-
-	// Second pass to find what we actually see
-	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
+	vecStart = m_hGun->EyePosition();
 
 	// If we're looking at a player fix our position to the centermass
-	if ( tr.DidHitNonWorldEntity() )
+	if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
 	{
-		pGun->SetEnemy( tr.m_pEnt );
-		vecEnd = pGun->GetEnemyAimPosition( tr.m_pEnt );
+		trace_t trPlayer;
+		vecEnd = m_hGun->GetEnemyAimPosition( tr.m_pEnt );
+
+		// Second pass to make sure the sentry can actually see the person we're targeting 
+		UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &trPlayer );
+
+		if ( trPlayer.DidHitNonWorldEntity() && trPlayer.m_pEnt && trPlayer.m_pEnt->IsPlayer() )
+		{
+			m_hGun->SetEnemy( tr.m_pEnt );
+		}
+		else
+		{
+			m_hGun->SetEnemy( NULL );
+			vecEnd = trPlayer.endpos;
+		}
 	}
 	else
 	{
-		pGun->SetEnemy( NULL );
+		// We're not locked on to a player so make sure the laser doesn't clip through walls
+		m_hGun->SetEnemy( NULL );
+
+		// Second pass
+		UTIL_TraceLine( vecStart, tr.endpos, MASK_SOLID, pFilter, &tr );
 		vecEnd = tr.endpos;
 	}
 
-	pGun->SetEndVector( vecEnd );
+	m_hGun->SetEndVector( vecEnd );
 
 	// Adjust sentry angles 
 	vecForward = vecEnd - vecStart;
-	pGun->UpdateSentryAngles( vecForward ); 
+	m_hGun->UpdateSentryAngles( vecForward ); 
 
 	if ( tf_debug_wrangler.GetBool() ) 
 	{

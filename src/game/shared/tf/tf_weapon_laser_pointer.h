@@ -56,10 +56,10 @@ public:
 
 #ifdef GAME_DLL
 	void			UpdateLaserDot( void );
-	void			RemoveGun( void )					{ pGun = NULL; }
+	void			RemoveGun( void )					{ m_hGun = NULL; }
 
 private:
-	CObjectSentrygun *pGun;
+	CHandle<CObjectSentrygun> m_hGun;
 #endif
 };
 

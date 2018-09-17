@@ -1359,6 +1359,32 @@ public:
 	}
 };
 
+class CTraceFilterIgnoreTeammatesAndTeamObjects : public CTraceFilterSimple
+{
+public:
+	// It does have a base, but we'll never network anything below here..
+	DECLARE_CLASS( CTraceFilterIgnoreTeammatesAndTeamObjects, CTraceFilterSimple );
+
+	CTraceFilterIgnoreTeammatesAndTeamObjects( const IHandleEntity *passentity, int collisionGroup, int teamNumber )
+		: CTraceFilterSimple( passentity, collisionGroup )
+	{
+		m_iTeamNumber = teamNumber;
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{
+		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
+
+		if ( pEntity && pEntity->GetTeamNumber() == m_iTeamNumber )
+			return false;
+
+		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
+	}
+
+private:
+	int m_iTeamNumber;
+};
+
 // Unused
 #define TF_DEATH_FIRST_BLOOD	0x0010
 #define TF_DEATH_FEIGN_DEATH	0x0020
