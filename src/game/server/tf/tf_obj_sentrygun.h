@@ -105,7 +105,7 @@ private:
 	void StartUpgrading( void );
 	void FinishUpgrading( void );
 
-	void WrangleThink( void );
+	void WranglerThink( void );
 
 	// Target acquisition
 	bool FindTarget( void );

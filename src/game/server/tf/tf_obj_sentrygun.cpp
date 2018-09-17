@@ -210,7 +210,6 @@ void CObjectSentrygun::MakeCarriedObject( CTFPlayer *pPlayer )
 	m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_1;
 	m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_1;
 	SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_1 );
-
 	BaseClass::MakeCarriedObject( pPlayer );
 }
 
@@ -248,7 +247,7 @@ void CObjectSentrygun::SentryThink( void )
 		break;
 
 	case SENTRY_STATE_WRANGLED:
-		WrangleThink();
+		WranglerThink();
 		break;
 
 	case SENTRY_STATE_WRANGLED_RECOVERY:
@@ -269,7 +268,7 @@ void CObjectSentrygun::SentryThink( void )
 //-----------------------------------------------------------------------------
 // Currently wrangled
 //-----------------------------------------------------------------------------
-void CObjectSentrygun::WrangleThink(void)
+void CObjectSentrygun::WranglerThink(void)
 {
 	if ( ShouldFire() && gpGlobals->curtime >= m_flNextAttack )
 	{
