@@ -19,6 +19,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#define SENTRY_SHIELD "models/buildables/sentry_shield.mdl"
+
 using namespace vgui;
 
 
@@ -43,20 +45,25 @@ END_RECV_TABLE()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-C_ObjectSentrygun::C_ObjectSentrygun()
+C_ObjectSentrygun::C_ObjectSentrygun() :
+	m_iv_vecEnd( "C_ObjectSentrygun::m_iv_vecEnd" )
 {
 	m_pDamageEffects = NULL;
 	m_pLaserBeam = NULL;
 	m_iOldUpgradeLevel = 0;
 	m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_1;
+
+	AddVar( &m_vecEnd, &m_iv_vecEnd, LATCH_ANIMATION_VAR, true );
 }
 
 C_ObjectSentrygun::~C_ObjectSentrygun() 
 { 
 	if ( m_pLaserBeam )
-			DestroyLaserBeam();
+		DestroyLaserBeam();
 	if ( m_pShield )
-			DestroyShield();
+		DestroyShield();
+	if ( m_pSiren )
+		DestroySiren();
 }
 
 void C_ObjectSentrygun::GetAmmoCount( int &iShells, int &iMaxShells, int &iRockets, int & iMaxRockets )
@@ -370,6 +377,7 @@ CStudioHdr *C_ObjectSentrygun::OnNewModel( void )
 	CStudioHdr *hdr = BaseClass::OnNewModel();
 
 	UpdateDamageEffects( m_damageLevel );
+	DestroySiren();
 
 	// Reset Bodygroups
 	for ( int i = GetNumBodyGroups()-1; i >= 0; i-- )
@@ -427,7 +435,7 @@ void C_ObjectSentrygun::UpdateDamageEffects( BuildingDamageLevel_t damageLevel )
 		break;
 	}
 
-	if ( Q_strlen(pszEffect) > 0 )
+	if ( V_strlen(pszEffect) > 0 )
 	{
 		switch( m_iUpgradeLevel )
 		{
@@ -488,23 +496,11 @@ void C_ObjectSentrygun::CreateLaserBeam( void )
 	if ( !m_pShield )
 	{
 		m_pShield = new C_BaseAnimating();
-		m_pShield->SetModel( "models/buildables/sentry_shield.mdl");
+		m_pShield->SetModel( SENTRY_SHIELD );
+		m_pShield->SetAbsOrigin( GetAbsOrigin() );
 
-		// make the shield smaller
-		if ( IsMiniBuilding() )
-		{
-			m_pShield->SetModelScale( 0.8f );
-		}
-		
-		if ( m_iUpgradeLevel == 3)
-		{
-			// Slight offset for lvl 3 sentry
-			m_pShield->SetAbsOrigin( GetAbsOrigin() + Vector( 0, 0, 4 ) );
-		}
-		else
-		{
-			m_pShield->SetAbsOrigin( GetAbsOrigin() );
-		}
+		// TODO: Figure out how to get this to show up correctly on the shield
+		//m_pShieldEffects = m_pShield->ParticleProp()->Create( "turret_shield", PATTACH_ABSORIGIN_FOLLOW );
 	}
 
 	switch ( GetTeamNumber() )
@@ -523,6 +519,9 @@ void C_ObjectSentrygun::CreateLaserBeam( void )
 	m_pLaserBeam = ParticleProp()->Create( "laser_sight_beam", PATTACH_POINT_FOLLOW, "laser_origin" );
 	if ( m_pLaserBeam)
 		m_pLaserBeam->SetControlPoint( 2, vecColor );
+
+	if ( m_pShieldEffects )
+		m_pShieldEffects->SetControlPoint( 1, vecColor );
 }
 
 void C_ObjectSentrygun::ClientThink( void ) 
@@ -531,7 +530,8 @@ void C_ObjectSentrygun::ClientThink( void )
 	{
 		if ( m_pLaserBeam )
 			DestroyLaserBeam();
-		if ( m_pShield )
+
+		if ( m_pShield && m_iState != SENTRY_STATE_WRANGLED_RECOVERY )
 			DestroyShield();
 	}
 	else
@@ -540,9 +540,118 @@ void C_ObjectSentrygun::ClientThink( void )
 			CreateLaserBeam();
 
 		if ( m_pLaserBeam )
+		{
+			// **NOTE:: Live TF2 does something similar to what's commented out here
+			// with vecOut being interpolated instead of m_vecEnd but it's probably
+			// cheaper to use the math the server already computed
+
+			/*if ( gpGlobals->curtime > m_flUpdateEndpointTime )
+			{
+				if ( m_vecMuzzle == vec3_origin )
+				{
+					// Get the attachment for the trace
+					const char *pszAttachment = "";
+					switch( m_iUpgradeLevel )
+					{
+					case 1: 
+						pszAttachment = "muzzle";
+						break;
+					case 2:
+						pszAttachment ="muzzle_l";
+						break;
+					case 3:
+						pszAttachment = "rocket_l";
+						break;
+					};
+
+					GetAttachment( pszAttachment , m_vecMuzzle );
+				}
+
+				Vector vecEnd, vecForward, vecOut;
+
+				C_TFPlayer *pOwner = GetBuilder();
+				if ( m_vecLaser == vec3_origin && pOwner )
+				{
+					m_vecLaser = ( pOwner->GetClassEyeHeight() * 0.75 )  + pOwner->GetAbsOrigin();
+				}
+
+				trace_t tr;
+
+				// Check where the sentry is looking on the client for interpolation
+				CTraceFilterIgnoreTeammatesAndTeamObjects *pFilter = new CTraceFilterIgnoreTeammatesAndTeamObjects( this, COLLISION_GROUP_NONE, GetTeamNumber() );
+				UTIL_TraceLine( m_vecMuzzle, m_vecEnd, MASK_SOLID, pFilter, &tr );
+
+				InterpolateVector( gpGlobals->frametime * 25.0f, m_vecLaser, tr.endpos, vecOut );
+				m_vecLaser = vecOut;
+
+				m_flUpdateEndpointTime = gpGlobals->curtime + 0.2f
+			}
+			m_pLaserBeam->SetControlPoint( 1, vecOut );*/
+
 			m_pLaserBeam->SetControlPoint( 1, m_vecEnd );
+		}
 	}
-	SetNextClientThink( gpGlobals->curtime + 0.05f );
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
+}
+
+void C_ObjectSentrygun::OnStartDisabled()
+{
+	DestroySiren();
+	BaseClass::OnStartDisabled();
+}
+
+void C_ObjectSentrygun::OnEndDisabled()
+{
+	CreateSiren();
+	BaseClass::OnEndDisabled();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ObjectSentrygun::OnGoActive( void )
+{
+	CreateSiren();
+	BaseClass::OnGoActive();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ObjectSentrygun::OnGoInactive( void )
+{
+	DestroySiren();
+	BaseClass::OnGoInactive();
+}
+
+void C_ObjectSentrygun::CreateSiren( void )
+{
+	if ( !IsMiniBuilding() || m_pSiren )
+		return;
+
+	// mini-sentry siren
+	const char *pszEffect = "";
+	switch( GetTeamNumber() )
+	{
+	case TF_TEAM_RED:
+		pszEffect = "cart_flashinglight_red";
+		break;
+	case TF_TEAM_BLUE:
+	default:
+		pszEffect = "cart_flashinglight";
+		break;
+	}
+
+	m_pSiren = ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "siren" );
+}
+
+void C_ObjectSentrygun::DestroySiren( void )
+{
+	if ( m_pSiren )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pSiren );
+		m_pSiren = NULL;
+	}
 }
 
 void C_ObjectSentrygun::UpdateOnRemove( void )

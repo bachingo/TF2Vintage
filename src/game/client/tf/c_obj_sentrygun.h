@@ -15,6 +15,7 @@
 #include "ObjectControlPanel.h"
 #include "c_tf_projectile_rocket.h"
 #include "c_tf_player.h"
+#include "interpolatedvar.h"
 
 class C_MuzzleFlashModel;
 
@@ -58,6 +59,15 @@ public:
 
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
+	
+	// Siren
+	virtual void	OnGoActive( void );
+	virtual void	OnGoInactive( void );
+	virtual void	OnStartDisabled( void );
+	virtual void	OnEndDisabled( void );
+
+	void			CreateSiren( void );
+	void			DestroySiren( void );
 
 	// Laser methods
 	void				CreateLaserBeam( void );
@@ -68,10 +78,16 @@ public:
 	{
 		ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserBeam );
 		m_pLaserBeam = NULL;
+
+		m_vecLaser = vec3_origin;
+		m_vecMuzzle = vec3_origin;
 	}
 
 	void DestroyShield( void )
 	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pShieldEffects );
+		m_pShieldEffects = NULL;
+
 		m_pShield->Remove();
 		m_pShield = NULL;
 	}
@@ -95,11 +111,17 @@ private:
 	int m_iAssists;
 
 	// Wrangler
+	CInterpolatedVar<Vector> m_iv_vecEnd;
 	Vector m_vecEnd;
+	Vector m_vecMuzzle;
+	Vector m_vecLaser;
 
+	// This is getting out of hand
 	C_BaseAnimating	   *m_pShield;
 	CNewParticleEffect *m_pDamageEffects;
 	CNewParticleEffect *m_pLaserBeam;
+	CNewParticleEffect *m_pShieldEffects;
+	CNewParticleEffect *m_pSiren;
 
 	int m_iPlacementBodygroup;
 

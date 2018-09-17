@@ -201,20 +201,19 @@ void CTFLaserPointer::UpdateLaserDot( void )
 	// If we're looking at a player fix our position to the centermass
 	if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
 	{
-		trace_t trPlayer;
 		vecEnd = m_hGun->GetEnemyAimPosition( tr.m_pEnt );
 
 		// Second pass to make sure the sentry can actually see the person we're targeting 
-		UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &trPlayer );
+		UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
 
-		if ( trPlayer.DidHitNonWorldEntity() && trPlayer.m_pEnt && trPlayer.m_pEnt->IsPlayer() )
+		if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
 		{
 			m_hGun->SetEnemy( tr.m_pEnt );
 		}
 		else
 		{
 			m_hGun->SetEnemy( NULL );
-			vecEnd = trPlayer.endpos;
+			vecEnd = tr.endpos;
 		}
 	}
 	else
