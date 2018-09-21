@@ -1190,6 +1190,22 @@ enum
 	STUN_COUNT
 }; // Live tf2 uses flags for this I think
 
+//--------------------------------------------------------------------------
+// Holiday
+//--------------------------------------------------------------------------
+enum
+{
+	TF_HOLIDAY_BIRTHDAY = 1,
+	TF_HOLIDAY_HALLOWEEN,
+	TF_HOLIDAY_CHRISTMAS,
+	TF_HOLIDAY_COMMUNITYUPDATE,
+	TF_HOLIDAY_ENDOFTHELINE,
+	TF_HOLIDAY_VALENTINESDAY,
+	TF_HOLIDAY_MEETTHEPYRO,
+	TF_HOLIDAY_FULLMOON,
+	TF_HOLIDAY_APRIL_FOOLS
+};
+
 #define	MAX_CABLE_CONNECTIONS 4
 
 bool IsObjectAnUpgrade( int iObjectType );
