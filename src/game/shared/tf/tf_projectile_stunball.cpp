@@ -161,7 +161,7 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 			}
 			else
 			{
-				pPlayer->PlayStunSound( pPlayer, "TFPlayer.StunImpact" );
+				pPlayer->PlayStunSound( pAttacker, "TFPlayer.StunImpact" );
 			}
 
 			pPlayer->m_Shared.StunPlayer( 7.0f * ( flAirTime ), 0.8f, STUN_CONC, pAttacker );

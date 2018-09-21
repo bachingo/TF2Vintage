@@ -118,6 +118,10 @@ ConVar tf2c_allow_special_classes( "tf2c_allow_special_classes", "0", FCVAR_NOTI
 ConVar tf2c_force_stock_weapons( "tf2c_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
 ConVar tf2c_legacy_weapons( "tf2c_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
 
+// TF2V specific cvars
+ConVar tf2v_disable_holiday_loot( "tf2v_disable_holiday_loot", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disable loot drops in holiday gamemodes" );
+
+
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
 // -------------------------------------------------------------------------------- //
@@ -4832,17 +4836,17 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 	else
 	{
+		bool bLunchbox = false;
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 		if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LUNCHBOX )
 		{
 			// If the player died holding the sandvich drop a special health kit that heals 50hp (75hp for scout)
-			DropLunchbox();
+			bLunchbox = true;
 		}
-		else
-		{
-			// Drop a pack with their leftover ammo
-			DropAmmoPack();
-		}
+
+		// Drop a pack with their leftover ammo
+		DropAmmoPack( bLunchbox );
+
 	}
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
@@ -5247,7 +5251,7 @@ void CTFPlayer::DroppedWeaponCleanUp( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropAmmoPack( void )
+void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/ )
 {
 	// Since weapon is hidden in loser state don't drop ammo pack.
 	if ( m_Shared.IsLoser() )
@@ -5313,104 +5317,32 @@ void CTFPlayer::DropAmmoPack( void )
 	Assert( pAmmoPack );
 	if ( pAmmoPack )
 	{
+		bool bHolidayPack = false;
+		if ( !tf2v_disable_holiday_loot.GetBool() && ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_HALLOWEEN ) || TFGameRules()->IsHolidayActive( TF_HOLIDAY_CHRISTMAS ) ) )
+		{
+			// Only make a holiday pack 3 times out of 10
+			if ( rand() / float( VALVE_RAND_MAX ) < 0.3 ) 
+			{
+				pAmmoPack->MakeHolidayPack();
+				bHolidayPack = true;
+			}
+		}
+
 		// Remove all of the players ammo.
 		RemoveAllAmmo();
 
-		// Fill up the ammo pack.
-		pAmmoPack->GiveAmmo( iPrimary, TF_AMMO_PRIMARY );
-		pAmmoPack->GiveAmmo( iSecondary, TF_AMMO_SECONDARY );
-		pAmmoPack->GiveAmmo( iMetal, TF_AMMO_METAL );
-
-		Vector vecRight, vecUp;
-		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
-
-		// Calculate the initial impulse on the weapon.
-		Vector vecImpulse( 0.0f, 0.0f, 0.0f );
-		vecImpulse += vecUp * random->RandomFloat( -0.25, 0.25 );
-		vecImpulse += vecRight * random->RandomFloat( -0.25, 0.25 );
-		VectorNormalize( vecImpulse );
-		vecImpulse *= random->RandomFloat( tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat() );
-		vecImpulse += GetAbsVelocity();
-
-		// Cap the impulse.
-		float flSpeed = vecImpulse.Length();
-		if ( flSpeed > tf_weapon_ragdoll_maxspeed.GetFloat() )
+		if ( bLunchbox && !bHolidayPack )
 		{
-			VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
+			// No ammo for sandviches
+			pAmmoPack->SetIsLunchbox( true );
 		}
-
-		if ( pAmmoPack->VPhysicsGetObject() )
+		else
 		{
-			// We can probably remove this when the mass on the weapons is correct!
-			pAmmoPack->VPhysicsGetObject()->SetMass( 25.0f );
-			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
-			pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+			// Fill up the ammo pack.
+			pAmmoPack->GiveAmmo( iPrimary, TF_AMMO_PRIMARY );
+			pAmmoPack->GiveAmmo( iSecondary, TF_AMMO_SECONDARY );
+			pAmmoPack->GiveAmmo( iMetal, TF_AMMO_METAL );
 		}
-
-		pAmmoPack->SetInitialVelocity( vecImpulse );
-
-		switch ( GetTeamNumber() )
-		{
-			case TF_TEAM_RED:
-				pAmmoPack->m_nSkin = 0;
-				break;
-			case TF_TEAM_BLUE:
-				pAmmoPack->m_nSkin = 1;
-				break;
-			case TF_TEAM_GREEN:
-				pAmmoPack->m_nSkin = 2;
-				break;
-			case TF_TEAM_YELLOW:
-				pAmmoPack->m_nSkin = 3;
-				break;
-		}
-
-		// Give the ammo pack some health, so that trains can destroy it.
-		pAmmoPack->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
-		pAmmoPack->m_takedamage = DAMAGE_YES;		
-		pAmmoPack->SetHealth( 900 );
-		
-		pAmmoPack->SetBodygroup( 1, 1 );
-	
-		// Clean up old ammo packs if they exist in the world
-		AmmoPackCleanUp();	
-	}	
-	pWeapon->SetModel( pWeapon->GetViewModel() );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::DropLunchbox( void )
-{
-	// Since weapon is hidden in loser state don't drop lunchbox.
-	if ( m_Shared.IsLoser() )
-		return;
-
-	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
-	if ( !pWeapon )
-		return;
-
-	// We need to find bones on the world model, so switch the weapon to it.
-	const char *pszWorldModel = pWeapon->GetWorldModel();
-	pWeapon->SetModel( pszWorldModel );
-
-
-	// Find the position and angle of the weapons so the "ammo box" matches.
-	Vector vecPackOrigin;
-	QAngle vecPackAngles;
-	if( !CalculateAmmoPackPositionAndAngles( pWeapon, vecPackOrigin, vecPackAngles ) )
-		return;
-
-	// Create the ammo pack.
-	CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );
-	Assert( pAmmoPack );
-	if ( pAmmoPack )
-	{
-		// Remove all of the players ammo.
-		RemoveAllAmmo();
-
-		pAmmoPack->SetIsLunchbox( true );
 
 		Vector vecRight, vecUp;
 		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
@@ -8757,12 +8689,12 @@ int	CTFPlayer::CalculateTeamBalanceScore( void )
 void CTFPlayer::PlayStunSound( CTFPlayer *pOther, const char *pszStunSound )
 {
 		CRecipientFilter filter;
-		CSingleUserRecipientFilter filterAttacker( this );
+		CSingleUserRecipientFilter filterAttacker( pOther );
 		filter.AddRecipientsByPAS( GetAbsOrigin() );
-		filter.RemoveRecipient( this );
+		filter.RemoveRecipient( pOther );
 
-		EmitSound( filter, pOther->entindex(), pszStunSound );
-		EmitSound( filterAttacker, this->entindex(), pszStunSound );
+		EmitSound( filter, this->entindex(), pszStunSound );
+		EmitSound( filterAttacker, pOther->entindex(), pszStunSound );
 }
 
 // ----------------------------------------------------------------------------

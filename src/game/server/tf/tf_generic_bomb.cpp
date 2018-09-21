@@ -65,6 +65,9 @@ void CTFGenericBomb::Spawn()
 		SetCollisionGroup( TFCOLLISION_GROUP_PUMPKIN_BOMB );
 		SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
 		SetSolid( SOLID_BBOX );
+
+		m_flRadius = 200.0f;
+		m_flDamage = 80.0f;	
 	}
 
 	char *szModel = (char *)STRING( GetModelName() );

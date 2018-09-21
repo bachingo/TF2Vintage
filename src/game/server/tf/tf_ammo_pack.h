@@ -32,10 +32,13 @@ public:
 
 	int GiveAmmo( int iCount, int iAmmoType );
 
-	static CTFAmmoPack *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, bool bUseCustomAmmoCount = false);
+	static CTFAmmoPack *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, bool bUseCustomAmmoCount = false );
 
 	float GetCreationTime( void ) { return m_flCreationTime; }
 	void  SetInitialVelocity( Vector &vecVelocity );
+
+	void MakeHolidayPack( void );
+	void DropSoundThink( void );
 
 private:
 	int m_iAmmo[MAX_AMMO_SLOTS];
@@ -46,6 +49,8 @@ private:
 	bool m_bUseCustomAmmoCount;
 	bool m_bAllowOwnerPickup;
 	CNetworkVector( m_vecInitialVelocity );
+
+	int iHoliday;
 
 private:
 	CTFAmmoPack( const CTFAmmoPack & );

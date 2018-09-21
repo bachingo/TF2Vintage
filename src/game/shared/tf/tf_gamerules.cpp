@@ -88,6 +88,9 @@ extern ConVar tf_arena_max_streak;
 ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+//ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
 
 // TF2C specific cvars.
 ConVar tf2c_falldamage_disablespread( "tf2c_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
@@ -3215,6 +3218,12 @@ static const char *g_aTaggedConVars[] =
 	"tf_birthday",
 	"birthday",
 
+	"tf_halloween",
+	"halloween",
+
+	"tf_christmas",
+	"christmas",
+
 	"mp_fadetoblack",
 	"fadetoblack",
 
@@ -5367,6 +5376,31 @@ bool CTFGameRules::IsBirthday( void )
 	}
 
 	return ( m_iBirthdayMode == BIRTHDAY_ON );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsHolidayActive( int eHoliday )
+{
+	bool bActive = false;
+
+	switch ( eHoliday )
+	{
+		case TF_HOLIDAY_BIRTHDAY:
+			bActive = IsBirthday();
+			break;
+		case TF_HOLIDAY_HALLOWEEN:
+			bActive = tf_halloween.GetBool();
+			break;
+		case TF_HOLIDAY_CHRISTMAS:
+			bActive = tf_christmas.GetBool();
+			break;
+		default:
+			break;
+	}
+
+	return bActive;
 }
 
 //-----------------------------------------------------------------------------
