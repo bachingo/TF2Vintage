@@ -94,6 +94,9 @@ void CTFProjectile_Jar::Spawn( void )
 	BaseClass::Spawn();
 	SetTouch( &CTFProjectile_Jar::JarTouch );
 
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
+
 	// Don't collide with anything for a short time so that we never get stuck behind surfaces
 	SetCollisionGroup( TFCOLLISION_GROUP_NONE );
 

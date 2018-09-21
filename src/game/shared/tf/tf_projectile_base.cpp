@@ -113,6 +113,9 @@ void CTFBaseProjectile::Spawn( void )
 	m_takedamage = DAMAGE_NO;
 	SetDamage( 25.0f );
 
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
+
 	SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
 
 	// Setup the touch and think functions.

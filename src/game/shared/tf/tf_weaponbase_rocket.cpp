@@ -134,6 +134,9 @@ void CTFBaseRocket::Spawn( void )
 	AddEFlags( EFL_NO_WATER_VELOCITY_CHANGE );
 	AddEffects( EF_NOSHADOW );
 
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
+
 	SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
 
 	UTIL_SetSize( this, -Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) );

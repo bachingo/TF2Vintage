@@ -12,7 +12,8 @@
 #include "particle_parse.h"
 #include "tf_fx.h"
 #include "tf_player.h"
-#include "baseanimating.h"
+#include "tf_weaponbase_rocket.h"
+#include "tf_weaponbase_grenadeproj.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -50,26 +51,43 @@ void CTFGenericBomb::Precache()
 
 void CTFGenericBomb::Spawn()
 {
-	SetMoveType( MOVETYPE_VPHYSICS );
-	SetSolid( SOLID_VPHYSICS );
 	BaseClass::Spawn();
-	m_takedamage = DAMAGE_YES;
-}
 
-int CTFGenericBomb::OnTakeDamage( const CTakeDamageInfo &info )
-{
-	IPhysicsObject *pPhysics = VPhysicsGetObject();
-	if ( pPhysics && !pPhysics->IsMoveable() )
+	// TODO: Implement team pumpkin bombs for spells
+	if ( 1 )
 	{
-		pPhysics->EnableMotion( true );
-		VPhysicsTakeDamage( info );
+		// Normal bombs
+		VPhysicsInitNormal( SOLID_VPHYSICS, 0, false );
+	}
+	else
+	{
+		// Team bombs
+		SetCollisionGroup( TFCOLLISION_GROUP_PUMPKIN_BOMB );
+		SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
+		SetSolid( SOLID_BBOX );
 	}
 
-	return BaseClass::OnTakeDamage( info );
+	char *szModel = (char *)STRING( GetModelName() );
+	if ( !szModel || !*szModel )
+	{
+		Warning( "prop at %.0f %.0f %0.f missing modelname\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+		UTIL_Remove( this );
+		return;
+	}
+
+	int index = PrecacheModel( szModel );
+	PrecacheGibsForModel( index );
+	Precache();
+	SetModel( szModel );
+
+	m_takedamage = DAMAGE_YES;
+	SetTouch( &CTFGenericBomb::BombTouch );
 }
 
 void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 {
+	m_takedamage = DAMAGE_NO;
+
 	Vector absOrigin = WorldSpaceCenter();
 	QAngle absAngles = GetAbsAngles();
 
@@ -100,22 +118,21 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 	if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() )
 		pAttacker = info.GetAttacker();
 
-	CTakeDamageInfo info_modified( this, pAttacker, m_flDamage, DMG_BLAST );
+	CTakeDamageInfo info_modified( this, pAttacker, m_flDamage, DMG_BLAST, GetCustomDamageType() );
 
 	if ( m_bFriendlyFire )
 		info_modified.SetForceFriendlyFire( true );
 
-	RadiusDamage( info_modified, absOrigin, m_flRadius, CLASS_NONE, this );
+	TFGameRules()->RadiusDamage( info_modified, absOrigin, m_flRadius, CLASS_NONE, this );
 
 	if ( tr.m_pEnt && !tr.m_pEnt->IsPlayer() )
 		UTIL_DecalTrace( &tr, "Scorch");
 
-	/*UserMessageBegin( filter, "BreakModel" );
-		WRITE_SHORT(v17);
-		WRITE_VEC3COORD( absOrigin );
-		WRITE_ANGLES( absAngles );
-		WRITE_SHORT(*((_DWORD *)this + 222));
-	MessageEnd();*/
+	UserMessageBegin( filter, "BreakModel" );
+	WRITE_SHORT( GetModelIndex() );
+	WRITE_VEC3COORD( absOrigin );
+	WRITE_ANGLES( absAngles );
+	MessageEnd();
 
 	m_OnDetonate.FireOutput( this, this, 0.0f );
 	BaseClass::Event_Killed( info );
@@ -123,6 +140,8 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 
 void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 {
+	m_takedamage = DAMAGE_NO;
+
 	Vector absOrigin = GetAbsOrigin();
 	QAngle absAngles = GetAbsAngles();
 
@@ -147,22 +166,57 @@ void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 	if ( inputdata.pActivator && inputdata.pActivator->IsPlayer() )
 		pAttacker = inputdata.pActivator;
 
-	CTakeDamageInfo info( this, this, m_flDamage, DMG_BLAST );
+	CTakeDamageInfo info_modified( this, pAttacker, m_flDamage, DMG_BLAST );
 
 	if ( m_bFriendlyFire )
-		info.SetForceFriendlyFire( true );
+		info_modified.SetForceFriendlyFire( true );
 
-	RadiusDamage( info, absOrigin, m_flRadius, CLASS_NONE, this );
+	TFGameRules()->RadiusDamage( info_modified, absOrigin, m_flRadius, CLASS_NONE, this );
 
 	if ( tr.m_pEnt && !tr.m_pEnt->IsPlayer() )
 		UTIL_DecalTrace( &tr, "Scorch");
 
-	/*UserMessageBegin( filter, "BreakModel" );
-		WRITE_SHORT(v17);
-		WRITE_VEC3COORD( absOrigin );
-		WRITE_ANGLES( absAngles );
-		WRITE_SHORT(*((_DWORD *)this + 222));
-	MessageEnd();*/
+	UserMessageBegin( filter, "BreakModel" );
+	WRITE_SHORT( GetModelIndex() );
+	WRITE_VEC3COORD( absOrigin );
+	WRITE_ANGLES( absAngles );
+	MessageEnd();
+}
+
+void CTFGenericBomb::BombTouch( CBaseEntity *pOther )
+{
+	// Make sure this a team fortress projectile
+	if ( !pOther || !( pOther->GetFlags() & FL_GRENADE ) )
+	{
+		return;
+	}
+
+	CTFPlayer *pPlayer = NULL;
+	CBaseGrenade *pGrenade = dynamic_cast<CBaseGrenade *>( pOther );
+	if ( pGrenade )
+	{
+		pPlayer = ToTFPlayer( pGrenade->GetThrower() );
+		pGrenade->ExplodeTouch( this );
+	}
+	
+	CTFBaseRocket *pRocket = dynamic_cast<CTFBaseRocket *>( pOther );
+	if ( pRocket )
+	{
+		pPlayer = ToTFPlayer( pRocket->GetOwnerEntity() );
+		pRocket->RocketTouch( this );
+	}
+    
+	if ( !pGrenade && !pRocket )
+	{
+		CBaseProjectile *pProj = dynamic_cast<CBaseProjectile *>( pOther );
+		if ( pProj )
+		{
+			pPlayer = ToTFPlayer( pProj->GetOwnerEntity() );
+		}
+	}
+
+	CTakeDamageInfo info( pOther, pPlayer, 10.0f, DMG_GENERIC );
+	TakeDamage( info );
 }
 
 class CTFPumpkinBomb : public CTFGenericBomb
@@ -171,6 +225,8 @@ public:
 	DECLARE_CLASS( CTFPumpkinBomb, CTFGenericBomb );
 
 	virtual void	Spawn( void );
+
+	virtual int		GetCustomDamageType( void ) { return TF_DMG_CUSTOM_PUMPKIN_BOMB; }
 
 };
 
@@ -181,6 +237,7 @@ void CTFPumpkinBomb::Spawn( void )
 	m_iszExplodeSound = MAKE_STRING( "Halloween.PumpkinExplode" );
 	SetModelName( MAKE_STRING( "models/props_halloween/pumpkin_explode.mdl") );
 	m_iszParticleName = MAKE_STRING( "pumpkin_explode" );
-	m_flDamage = 140.0f;
+	m_flRadius = 300.0f; // 200.0f for MIRV pumpkin
+	m_flDamage = 150.0f; // 80.0f for MIRV pumpkin
 	BaseClass::Spawn();
 }
