@@ -58,11 +58,15 @@ public:
 	void			InputToggle( inputdata_t &inputdata );
 
 	virtual powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
+	virtual const char		*GetPowerupModel( void );
+	virtual const char		*GetDefaultPowerupModel( void ) { return NULL; }
 
 	CNetworkVarForDerived( bool, m_bDisabled );
 	CNetworkVarForDerived( bool, m_bRespawning );
 
 	float m_flNextCollideTime;
+
+	string_t m_iszModel;
 };
 
 #endif // TF_POWERUP_H

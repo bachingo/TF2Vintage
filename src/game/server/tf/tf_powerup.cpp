@@ -30,6 +30,7 @@ BEGIN_DATADESC( CTFPowerup )
 
 // Keyfields.
 DEFINE_KEYFIELD( m_bDisabled, FIELD_BOOLEAN, "StartDisabled" ),
+DEFINE_KEYFIELD( m_iszModel, FIELD_STRING, "powerup_model" ),
 
 // Inputs.
 DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
@@ -232,4 +233,16 @@ void CTFPowerup::SetDisabled( bool bDisabled )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Get map-specific powerup models 
+//-----------------------------------------------------------------------------
+const char *CTFPowerup::GetPowerupModel( void )
+{
+	if ( !m_iszModel || !g_pFullFileSystem->FileExists( STRING( m_iszModel ), "GAME" ) )
+	{
+		return GetDefaultPowerupModel();
+	}
+
+	return STRING( m_iszModel );
+}
 
