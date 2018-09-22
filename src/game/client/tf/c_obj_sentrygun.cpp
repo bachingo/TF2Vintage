@@ -654,9 +654,10 @@ void C_ObjectSentrygun::CreateSiren( void )
 
 void C_ObjectSentrygun::DestroySiren( void )
 {
+	ParticleProp()->StopEmissionAndDestroyImmediately();
+
 	if ( m_pSiren )
 	{
-		ParticleProp()->StopEmissionAndDestroyImmediately();
 		m_pSiren = NULL;
 	}
 }

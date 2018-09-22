@@ -118,6 +118,8 @@ public:
 	float	GetConditionDuration( int nCond );
 
 	bool	IsCritBoosted( void );
+	bool	IsSpeedBoosted( void );
+	bool	IsBuffed( void );
 
 	void	ConditionGameRulesThink( void );
 
@@ -199,9 +201,12 @@ public:
 #else
 	CNewParticleEffect *m_pWarp;
 	CNewParticleEffect *m_pStun;
+	CNewParticleEffect *m_pSpeedTrails;
+	CNewParticleEffect *m_pBuffAura;
 #endif
 
 	void	UpdatePhaseEffects( void );
+	void	UpdateSpeedBoostEffects( void );
 
 	void	RecalculatePlayerBodygroups( void );
 
@@ -301,6 +306,8 @@ private:
 	void OnAddRagemode( void );
 	void OnAddUrine( void );
 	void OnAddPhase( void );
+	void OnAddSpeedBoost( void );
+	void OnAddBuff( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -320,6 +327,8 @@ private:
 	void OnRemoveRagemode( void );
 	void OnRemoveUrine( void );
 	void OnRemovePhase( void );
+	void OnRemoveSpeedBoost( void );
+	void OnRemoveBuff( void );
 
 	float GetCritMult( void );
 

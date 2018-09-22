@@ -456,6 +456,28 @@ bool CTFPlayerShared::IsCritBoosted(void)
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsSpeedBoosted( void )
+{
+	if ( InCond( TF_COND_SPEED_BOOST ) ||
+		InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
+		return true;
+	return false;
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsBuffed( void )
+{
+	if ( InCond( TF_COND_OFFENSEBUFF ) ||
+		InCond( TF_COND_DEFENSEBUFF ) || 
+		InCond( TF_COND_REGENONDAMAGEBUFF ) )
+		return true;
+	return false;
+}
+
 void CTFPlayerShared::DebugPrintConditions(void)
 {
 #ifndef CLIENT_DLL
@@ -704,6 +726,17 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddPhase();
 		break;
 
+	case TF_COND_SPEED_BOOST:
+	case TF_COND_HALLOWEEN_SPEED_BOOST:
+		OnAddSpeedBoost();
+		break;
+
+	case TF_COND_OFFENSEBUFF:
+	case TF_COND_DEFENSEBUFF:
+	case TF_COND_REGENONDAMAGEBUFF:
+		OnAddBuff();
+		break;
+
 	default:
 		break;
 	}
@@ -806,6 +839,12 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_PHASE:
 		OnRemovePhase();
+		break;
+
+	case TF_COND_OFFENSEBUFF:
+	case TF_COND_DEFENSEBUFF:
+	case TF_COND_REGENONDAMAGEBUFF:
+		OnRemoveBuff();
 		break;
 
 	default:
@@ -1607,6 +1646,24 @@ void CTFPlayerShared::OnRemoveRagemode(void)
 #endif
 }
 
+void CTFPlayerShared::OnAddSpeedBoost( void )
+{
+	m_pOuter->TeamFortress_SetSpeed();
+	UpdateSpeedBoostEffects();
+}
+//-----------------------------------------------------------------------------
+ // Purpose: 
+ //-----------------------------------------------------------------------------
+ void CTFPlayerShared::OnRemoveSpeedBoost( void )
+ {
+ #ifdef GAME_DLL
+ 	CSingleUserRecipientFilter filter( m_pOuter );
+ 	m_pOuter->EmitSound( filter, m_pOuter->entindex(), "PowerupSpeedBoost.WearOff" );
+#endif
+	m_pOuter->TeamFortress_SetSpeed();
+	UpdateSpeedBoostEffects();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1675,6 +1732,36 @@ void CTFPlayerShared::OnRemovePhase(void)
 #else
 	m_pOuter->ParticleProp()->StopEmission( m_pWarp );
 	m_pWarp = NULL;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddBuff( void )
+{
+#ifdef CLIENT_DLL
+	// Start the buff effect
+	if ( !m_pBuffAura )
+	{
+		const char *pszEffectName = ConstructTeamParticle( "soldierbuff_%s_buffed", m_pOuter->GetTeamNumber(), true );
+
+		m_pBuffAura = m_pOuter->ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveBuff( void )
+{
+#ifdef CLIENT_DLL
+	if ( m_pBuffAura )
+	{
+		m_pOuter->ParticleProp()->StopEmission( m_pBuffAura );
+		m_pBuffAura = NULL;
+	}
 #endif
 }
 
@@ -1841,6 +1928,35 @@ void CTFPlayerShared::UpdatePhaseEffects(void)
 		for( int i = 0; i < m_pPhaseTrails.Count(); i++ )
 		{
 			m_pPhaseTrails[i]->TurnOn();
+		}
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update speedboost effects
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateSpeedBoostEffects(void)
+{
+	if ( !IsSpeedBoosted() )
+		return;
+
+#ifdef CLIENT_DLL
+	if(  m_pOuter->GetAbsVelocity() != vec3_origin )
+	{
+		// We're on the move
+		if ( !m_pSpeedTrails )
+		{
+			m_pSpeedTrails = m_pOuter->ParticleProp()->Create( "speed_boost_trail", PATTACH_ABSORIGIN_FOLLOW );
+		}
+	}
+	else
+	{
+		// We're not moving
+		if( m_pSpeedTrails )
+		{
+			m_pOuter->ParticleProp()->StopEmission( m_pSpeedTrails );
+			m_pSpeedTrails = NULL;
 		}
 	}
 #endif
