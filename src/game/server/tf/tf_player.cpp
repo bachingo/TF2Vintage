@@ -8642,7 +8642,7 @@ bool CTFPlayer::GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, 
 	if ( bResult )
 	{
 		const char *szResponse = result.GetResponsePtr();
-		Q_strncpy( chSceneBuffer, szResponse, numSceneBufferBytes );
+		V_strncpy( chSceneBuffer, szResponse, numSceneBufferBytes );
 
 		// check if there's a context we need to save
 		const char *szContext = result.GetContext();

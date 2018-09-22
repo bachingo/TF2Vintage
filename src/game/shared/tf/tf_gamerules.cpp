@@ -91,6 +91,7 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 //ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
+ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
 
 // TF2C specific cvars.
 ConVar tf2c_falldamage_disablespread( "tf2c_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
@@ -6129,6 +6130,31 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 	}
 
 	return strFullpath;
+}
+
+void C_TFGameRules::ModifySentChat( char *pBuf, int iBufSize )
+{
+	// Medieval mode only
+	/*if ( !IsInMedievalMode() || !tf_medieval_autorp.GetBool() )
+		return;
+
+	if ( !AutoRP() )
+	{
+		Warning( "AutoRP initialization failed!" );
+		return;
+	}
+
+	AutoRP()->ApplyRPTo( pBuf, iBufSize );
+
+	int i = 0;
+	while ( pBuf[i] )
+	{
+		if ( pBuf[i] == '"' )
+		{
+			pBuf[i] = '\'';
+		}
+		i++;
+	}*/
 }
 #endif
 

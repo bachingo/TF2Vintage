@@ -28,6 +28,7 @@
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
+#include "tf_autorp.h"
 #else
 #include "tf_player.h"
 #endif
@@ -337,6 +338,9 @@ public:
 	bool			ShouldShowTeamGoal( void );
 
 	const char *GetVideoFileForMap( bool bWithExtension = true );
+
+	// AutoRP
+	virtual void ModifySentChat( char *pBuf, int iBufSize );
 
 #else
 
