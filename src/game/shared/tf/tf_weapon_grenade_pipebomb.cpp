@@ -336,7 +336,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 {
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
-		if ( !m_iszProjectileModel[0] )
+		if ( !m_iszProjectileModel )
 			PrecacheProjectileModel( TF_WEAPON_PIPEBOMB_MODEL );
 
 		// Set this to max, so effectively they do not self-implode.
@@ -344,16 +344,16 @@ void CTFGrenadePipebombProjectile::Spawn()
 	}
 	else
 	{
-		if ( !m_iszProjectileModel[0] )
+		if ( !m_iszProjectileModel )
 			PrecacheProjectileModel( TF_WEAPON_PIPEGRENADE_MODEL );
 
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
 	}
 
-	if ( m_iszProjectileModel[0] )
+	if ( m_iszProjectileModel != NULL_STRING )
 	{
-		PrecacheProjectileModel( m_iszProjectileModel );		
+		PrecacheProjectileModel( STRING( m_iszProjectileModel ) );		
 	}
 
 	BaseClass::Spawn();

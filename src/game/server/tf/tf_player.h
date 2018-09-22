@@ -70,7 +70,7 @@ struct DamagerHistory_t
 struct AppliedContext_t
 {
 	float flContextExpireTime;
-	char pszContext[256];
+	string_t pszContext;
 };
 
 //=============================================================================

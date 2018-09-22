@@ -83,7 +83,7 @@ public:
 	
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
-	void SetProjectileModel( const char *iszModel ) { V_strcpy( m_iszProjectileModel, iszModel ); }
+	void SetProjectileModel( const char *iszModel ) { m_iszProjectileModel = AllocPooledString( iszModel ); }
 	void PrecacheProjectileModel( const char *iszModel );
 
 private:
@@ -93,7 +93,7 @@ private:
 
 	float		m_flMinSleepTime;
 
-	char m_iszProjectileModel[256];
+	string_t	m_iszProjectileModel;
 
 	CHandle<CBaseEntity>	m_hEnemy;
 #endif

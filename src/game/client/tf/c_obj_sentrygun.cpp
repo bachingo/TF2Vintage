@@ -130,6 +130,13 @@ void C_ObjectSentrygun::OnDataChanged( DataUpdateType_t updateType )
 		m_iOldUpgradeLevel = m_iUpgradeLevel;
 	}
 
+	// Check if we started carrying the sentry between updates
+	if ( IsBeingCarried() && !m_bCarriedOld )
+	{
+		DestroySiren();
+	}
+	m_bCarriedOld = IsBeingCarried();
+
 	// intercept bodygroup sets from the server
 	// we aren't clientsideanimating, but we don't want the server setting our
 	// bodygroup while we are placing
@@ -649,7 +656,7 @@ void C_ObjectSentrygun::DestroySiren( void )
 {
 	if ( m_pSiren )
 	{
-		ParticleProp()->StopEmissionAndDestroyImmediately( m_pSiren );
+		ParticleProp()->StopEmissionAndDestroyImmediately();
 		m_pSiren = NULL;
 	}
 }

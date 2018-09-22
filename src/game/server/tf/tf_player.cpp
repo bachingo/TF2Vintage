@@ -8279,9 +8279,9 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 	for ( int i = 0; i < m_hActiveContexts.Count(); i++ )
 	{
 		AppliedContext_t context = m_hActiveContexts.Element( i );
-		if ( context.flContextExpireTime > gpGlobals->curtime && context.pszContext[0] )
+		if ( context.flContextExpireTime > gpGlobals->curtime && context.pszContext != NULL_STRING )
 		{
-			criteriaSet.AppendCriteria( context.pszContext, "1" );
+			criteriaSet.AppendCriteria( STRING( context.pszContext ), "1" );
 		}
 		else
 		{
@@ -8658,7 +8658,7 @@ bool CTFPlayer::GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, 
 
 				AppliedContext_t context;
 				context.flContextExpireTime = gpGlobals->curtime + flContextTime;
-				V_strcpy( context.pszContext, outStrings.Element( 0 ) );
+				context.pszContext = AllocPooledString( outStrings.Element( 0 ) );
 
 				AddContext( context );
 			}
@@ -8704,7 +8704,7 @@ void CTFPlayer::AddContext( AppliedContext_t context )
 {
 	for ( int i = 0; i < m_hActiveContexts.Count(); i++ )
 	{
-		if ( V_strcmp( m_hActiveContexts[i].pszContext, context.pszContext ) == 0 )
+		if ( V_strcmp( STRING( m_hActiveContexts[i].pszContext ), STRING( context.pszContext ) ) == 0 )
 		{
 			// don't add another one until the current one expires
 			return;

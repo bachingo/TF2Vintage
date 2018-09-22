@@ -127,6 +127,8 @@ private:
 
 	int m_iOldBodygroups;
 
+	bool m_bCarriedOld;
+
 private:
 	C_ObjectSentrygun( const C_ObjectSentrygun & ); // not defined, not accessible
 };
