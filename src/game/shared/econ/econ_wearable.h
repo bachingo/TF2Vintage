@@ -42,10 +42,19 @@ public:
 #ifdef GAME_DLL
 	virtual void			Equip( CBasePlayer *pPlayer );
 	virtual void			UnEquip( CBasePlayer *pPlayer );
+	virtual void			SetExtraWearable( bool bExtraWearable ) { m_bExtraWearable = bExtraWearable; }
 #else
 	virtual void			OnDataChanged(DataUpdateType_t type);
 	virtual	ShadowType_t	ShadowCastType( void );
 	virtual bool			ShouldDraw( void );
+#endif
+
+protected:
+
+#ifdef GAME_DLL
+	CNetworkVar( bool, m_bExtraWearable );
+#else
+	bool m_bExtraWearable;
 #endif
 
 private:

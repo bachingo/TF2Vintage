@@ -16,8 +16,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED( EconWearable, DT_EconWearable )
 BEGIN_NETWORK_TABLE( CEconWearable, DT_EconWearable )
 #ifdef GAME_DLL
 	SendPropString( SENDINFO( m_ParticleName ) ),
+	SendPropBool( SENDINFO( m_bExtraWearable ) ),
 #else
 	RecvPropString( RECVINFO( m_ParticleName ) ),
+	RecvPropBool( RECVINFO( m_bExtraWearable ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -26,7 +28,15 @@ void CEconWearable::Spawn( void )
 	GetAttributeContainer()->InitializeAttributes( this );
 
 	Precache();
-	SetModel( m_Item.GetPlayerDisplayModel() );
+
+	if ( m_bExtraWearable && m_Item.GetStaticData() )
+	{
+		SetModel( m_Item.GetStaticData()->extra_wearable );
+	}
+	else
+	{
+		SetModel( m_Item.GetPlayerDisplayModel() );
+	}
 
 	BaseClass::Spawn();
 

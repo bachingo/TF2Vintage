@@ -36,6 +36,7 @@ public:
 	void SetCurrentSlot(int iSlot) { m_iCurrentSlot = iSlot; };
 	int  GetAnimSlot( CEconItemDefinition *pItemDef, int iClass );
 	const char *GetWeaponModel( CEconItemDefinition *pItemDef, int iClass );
+	const char *GetExtraWearableModel( CEconItemDefinition *pItemDef );
 	void UpdateModelWeapons( void );
 	void SetModelClass(int iClass);
 	void SetSlotAndPreset(int iSlot, int iPreset);

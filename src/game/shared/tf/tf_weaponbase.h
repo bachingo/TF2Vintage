@@ -277,6 +277,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// StunBall
 	virtual bool		PickedUpBall( CTFPlayer *pPlayer ) { return false; }
 
+	const char* GetExtraWearableModel( void ) const;
+
 // Server specific.
 #if !defined( CLIENT_DLL )
 

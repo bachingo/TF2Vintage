@@ -1948,6 +1948,18 @@ void CTFWeaponBase::OnControlStunned( void )
 	SetWeaponVisible( false );
 }
 
+const char *CTFWeaponBase::GetExtraWearableModel( void ) const
+{
+	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+
+	if ( pStatic )
+	{
+		return pStatic->extra_wearable;
+	}
+
+	return "\0";
+}
+
 //=============================================================================
 //
 // TFWeaponBase functions (Server specific).

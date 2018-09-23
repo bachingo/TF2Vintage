@@ -210,6 +210,13 @@ bool CTFLoadoutPanel::Init()
 					{
 						modelinfo->FindOrLoadModel( pszWeaponModel );
 					}
+
+					const char *pszExtraWearableModel = GetExtraWearableModel( pItem->GetStaticData() );
+
+					if ( pszExtraWearableModel[0] != '\0' )
+					{
+						modelinfo->FindOrLoadModel( pszExtraWearableModel );
+					}
 				}
 			}
 		}
@@ -437,6 +444,16 @@ const char *CTFLoadoutPanel::GetWeaponModel( CEconItemDefinition *pItemDef, int 
 	return pszModel;
 }
 
+const char *CTFLoadoutPanel::GetExtraWearableModel( CEconItemDefinition *pItemDef )
+{
+	if ( pItemDef && pItemDef->extra_wearable )
+	{
+		return pItemDef->extra_wearable;
+	}
+
+	return "";
+}
+
 void CTFLoadoutPanel::UpdateModelWeapons( void )
 {
 	m_pClassModelPanel->ClearMergeMDLs();
@@ -488,6 +505,12 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 			{
 				m_pClassModelPanel->SetMergeMDL( pszModel, NULL, 0 );
 			}
+		}
+
+		const char *pszExtraWearableModel = GetExtraWearableModel( pItem->GetStaticData() );
+		if ( pszExtraWearableModel[0] != '\0' )
+		{
+			m_pClassModelPanel->SetMergeMDL( pszExtraWearableModel, NULL, 0 );
 		}
 	}
 
