@@ -11,6 +11,9 @@
 #endif
 
 #include "tf_weaponbase_melee.h"
+#ifdef CLIENT_DLL
+#include "GameEventListener.h"
+#endif
 
 #ifdef CLIENT_DLL
 #define CTFBuffItem C_TFBuffItem
@@ -20,7 +23,11 @@
 //
 // BUFF item class.
 //
+#ifdef GAME_DLL
 class CTFBuffItem : public CTFWeaponBaseMelee
+#else
+class C_TFBuffItem : public C_TFWeaponBaseMelee, public CGameEventListener
+#endif
 {
 public:
 
@@ -41,18 +48,30 @@ public:
 	virtual void		PrimaryAttack( void );
 
 	int					GetBuffType( void );
+	void				BlowHorn( void );
+	void				RaiseFlag( void );
+	bool				IsFull( void ) { return GetEffectBarProgress() >= 1.0f; }
 
-	void				CheckEffectBarRegen( void );
 	virtual bool		HasChargeBar( void )							{ return true; }
 	virtual const char* GetEffectLabelText( void )						{ return "#TF_Rage"; }
-	virtual float		InternalGetEffectBarRechargeTime( void )		{ return 600.0f; }
+	virtual float		GetEffectBarProgress( void );
+	virtual bool		EffectMeterShouldFlash( void );
+
+	virtual bool		CanReload( void ) { return false; }
+
+	virtual bool		SendWeaponAnim( int iActivity );
+
+#ifdef CLIENT_DLL
+	void				CreateBanner( int iBuffType );
+
+	virtual void		FireGameEvent( IGameEvent *event );
+#endif
+
 private:
 
 	CTFBuffItem( const CTFBuffItem & ) {}
 
-	bool				bBuffUsed;
-
-	CNetworkVar( float, m_flEffectBarProgress );
+	CNetworkVar( bool, m_bBuffUsed );
 };
 
 #endif // TF_WEAPON_BUFF_ITEM_H

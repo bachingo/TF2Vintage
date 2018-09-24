@@ -1117,6 +1117,9 @@ void CTFPlayer::Spawn()
 
 	m_Shared.m_hUrineAttacker = NULL;
 
+	// Reset rage
+	m_Shared.ResetRageSystem();
+
 	// This makes the surrounding box always the same size as the standing collision box
 	// helps with parts of the hitboxes that extend out of the crouching hitbox, eg with the
 	// heavyweapons guy
@@ -1418,6 +1421,16 @@ void CTFPlayer::GiveDefaultItems()
 
 			// player_bodygroups
 			pWeapon->UpdatePlayerBodygroups();
+
+			const char *iszModel = pWeapon->GetExtraWearableModel();
+			if ( iszModel[0] )
+			{
+				CTFWearable *pWearable = ( CTFWearable* )CreateEntityByName( "tf_wearable" );
+				pWearable->SetItem( *pWeapon->GetItem() );
+				pWearable->SetExtraWearable( true );
+				pWearable->Spawn();
+				EquipWearable( pWearable );
+			}
 		}
 	}
 
@@ -1575,6 +1588,13 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 
 			if ( !ItemsMatch( pWeapon->GetItem(), pLoadoutItem, pWeapon ) )
 			{
+				// Not the best way to check for rage changes but it'll do for now
+				if ( iSlot == TF_LOADOUT_SLOT_SECONDARY )
+				{
+					// Reset rage
+					m_Shared.ResetRageSystem();
+				}
+
 				// If this is not a weapon we're supposed to have in this loadout slot then nuke it.
 				// Either changed class or changed loadout.
 				if ( pWeapon == GetActiveWeapon() )
@@ -1610,6 +1630,13 @@ void CTFPlayer::ValidateWearables( void )
 
 		if ( !pWearable )
 			continue;
+
+		// Always remove extra wearables when initializing weapons
+		if ( pWearable->IsExtraWearable() )
+		{
+			RemoveWearable( pWearable );
+			continue;
+		}
 
 		CEconItemDefinition *pItemDef = pWearable->GetItem()->GetStaticData();
 
@@ -3739,11 +3766,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CTFWeaponBase *pWeapon = NULL;
 
+	bool bObject = false;
+
 	// If this is a base object get the builder
 	if ( pAttacker->IsBaseObject() )
 	{
 		CBaseObject *pObject = static_cast< CBaseObject * >( pAttacker );
 		pAttacker = pObject->GetBuilder();
+		bObject = true;
 	}
 
 	if ( inputInfo.GetWeapon() )
@@ -3930,6 +3960,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 		// Notify the damaging weapon.
 		pWeapon->ApplyOnHitAttributes( this, info );
+
+		if ( pTFAttacker )
+		{
+			// Build rage
+			pTFAttacker->m_Shared.SetRageMeter( info.GetDamage() / 6.0f, TF_BUFF_OFFENSE );
+		}
 	}
 
 	// If we're not damaging ourselves, apply randomness
@@ -4112,8 +4148,34 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
+	// Battalion's Backup resists
+	if ( m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
+	{
+		// Battalion's Backup negates all crit damage
+		bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
+
+		float flDamage = info.GetDamage();
+		if ( bObject )
+		{
+			// 50% resistance to sentry damage
+			info.SetDamage( flDamage * 0.50f );
+		}
+		else
+		{
+			// 35% to all other sources
+			info.SetDamage( flDamage * 0.35f );
+		}
+	}
+
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
+
+	// Make sure we're not building damage off of ourself or fall damage
+	if ( pAttacker != this && !( bitsDamage & DMG_FALL ) )
+	{
+		// Build rage on damage taken
+		m_Shared.SetRageMeter( info.GetDamage() / 1.75f, TF_BUFF_DEFENSE );
+	}
 
 	// Early out if the base class took no damage
 	if ( !bTookDamage )
@@ -4502,6 +4564,23 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		( m_Shared.InCond( TF_COND_DISGUISED ) ) )
 		return;
 
+	float flDamage = info.GetDamage();
+
+	if ( m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
+	{
+		// Battalion's Backup reduces damage so make sure we compensate for that 
+		// so that the knockback isn't affected too much
+
+		if ( info.GetInflictor()->IsBaseObject() )
+		{
+			flDamage /= 0.50f;
+		}
+		else
+		{
+			flDamage /= 0.35f;
+		}
+	}
+
 	Vector vecForce;
 	vecForce.Init();
 	if ( pAttacker == this )
@@ -4522,11 +4601,11 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 				flScale = tf_damageforcescale_self_soldier_rj.GetFloat();
 			}
 
-			vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), flScale );
+			vecForce = vecDir * -DamageForce( WorldAlignSize(), flDamage, flScale );
 		}
 		else
 		{
-			vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), DAMAGE_FORCE_SCALE_SELF );
+			vecForce = vecDir * -DamageForce( WorldAlignSize(), flDamage, DAMAGE_FORCE_SCALE_SELF );
 		}
 	}
 	else
@@ -4534,11 +4613,11 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		// Sentryguns push a lot harder
 		if ( ( info.GetDamageType() & DMG_BULLET ) && info.GetInflictor()->IsBaseObject() )
 		{
-			vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), 16 );
+			vecForce = vecDir * -DamageForce( WorldAlignSize(), flDamage, 16 );
 		}
 		else
 		{
-			vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_other.GetFloat() );
+			vecForce = vecDir * -DamageForce( WorldAlignSize(), flDamage, tf_damageforcescale_other.GetFloat() );
 
 			if ( IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
 			{
@@ -8040,7 +8119,7 @@ void CTFPlayer::ClearTauntAttack( void )
 		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX_DRINK ) )
 		{
 			m_Shared.AddCond( TF_COND_PHASE, 8.0f );
-			SpeakConceptIfAllowed( MP_CONCEPT_DODGING );
+			SpeakConceptIfAllowed( MP_CONCEPT_DODGING, "started_dodging:1" );
 			m_angTauntCamera = EyeAngles();
 		}
 	}

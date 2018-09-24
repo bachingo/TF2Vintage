@@ -43,6 +43,7 @@ public:
 	virtual void			Equip( CBasePlayer *pPlayer );
 	virtual void			UnEquip( CBasePlayer *pPlayer );
 	virtual void			SetExtraWearable( bool bExtraWearable ) { m_bExtraWearable = bExtraWearable; }
+	virtual bool			IsExtraWearable( void ) { return m_bExtraWearable; }
 #else
 	virtual void			OnDataChanged(DataUpdateType_t type);
 	virtual	ShadowType_t	ShadowCastType( void );

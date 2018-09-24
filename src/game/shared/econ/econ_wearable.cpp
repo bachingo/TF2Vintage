@@ -119,7 +119,9 @@ void CEconWearable::Equip( CBasePlayer *pPlayer )
 		SetOwnerEntity( pPlayer );
 		ChangeTeam( pPlayer->GetTeamNumber() );
 
-		ReapplyProvision();
+		// Extra wearables don't provide attribute bonuses
+		if ( !IsExtraWearable() )
+			ReapplyProvision();
 	}
 }
 

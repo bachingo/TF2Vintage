@@ -109,6 +109,17 @@ int	CTFWeaponBaseGrenadeProj::GetDamageType()
 		iDmgType |= DMG_CRITICAL;
 	}
 
+	// Buff banner mini-crit calculations
+	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
+	if ( pWeapon )
+	{
+		pWeapon->CalcIsAttackMiniCritical();
+		if ( pWeapon->IsCurrentAttackAMiniCrit() )
+		{
+			iDmgType |= DMG_MINICRITICAL;
+		}
+	}
+
 	return iDmgType;
 }
 

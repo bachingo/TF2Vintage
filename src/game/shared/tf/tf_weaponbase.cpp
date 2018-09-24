@@ -920,6 +920,25 @@ void CTFWeaponBase::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: Most calls use the prediction seed
 //-----------------------------------------------------------------------------
+void CTFWeaponBase::CalcIsAttackMiniCritical( void)
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+		return;
+
+	if ( pPlayer->m_Shared.IsMiniCritBoosted() )
+	{
+		m_bCurrentAttackIsMiniCrit = true;
+	}
+	else
+	{
+		m_bCurrentAttackIsMiniCrit = false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Most calls use the prediction seed
+//-----------------------------------------------------------------------------
 void CTFWeaponBase::CalcIsAttackCritical( void)
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );

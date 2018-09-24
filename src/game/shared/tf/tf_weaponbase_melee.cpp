@@ -180,6 +180,7 @@ void CTFWeaponBaseMelee::SecondaryAttack()
 void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 {
 	CalcIsAttackCritical();
+	CalcIsAttackMiniCritical();
 
 	// Play the melee swing and miss (whoosh) always.
 	SendPlayerAnimEvent( pPlayer );
@@ -335,6 +336,12 @@ void CTFWeaponBaseMelee::Smack( void )
 		{
 			// TODO: Not removing the old critical path yet, but the new custom damage is marking criticals as well for melee now.
 			iDmgType |= DMG_CRITICAL;
+
+		}
+
+		if ( IsCurrentAttackAMiniCrit() )
+		{
+			iDmgType |= DMG_MINICRITICAL;
 		}
 
 		CTakeDamageInfo info( pPlayer, pPlayer, flDamage, iDmgType, iCustomDamage );

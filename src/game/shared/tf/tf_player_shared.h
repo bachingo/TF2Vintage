@@ -118,8 +118,8 @@ public:
 	float	GetConditionDuration( int nCond );
 
 	bool	IsCritBoosted( void );
+	bool	IsMiniCritBoosted( void );
 	bool	IsSpeedBoosted( void );
-	bool	IsBuffed( void );
 
 	void	ConditionGameRulesThink( void );
 
@@ -285,6 +285,15 @@ public:
 
 	int GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCustom );
 
+	// Banners
+	void UpdateRageBuffsAndRage( void );
+	void SetRageMeter( float flRagePercent, int iBuffType );
+	void ActivateRageBuff( CBaseEntity *pEntity, int iBuffType );
+	void PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ );
+	bool IsRageActive( void ) { return m_bRageActive; }
+	float GetRageProgress( void ) { return m_flEffectBarProgress; }
+	void ResetRageSystem( void );
+
 private:
 
 	void ImpactWaterTrace( trace_t &trace, const Vector &vecStart );
@@ -383,6 +392,8 @@ private:
 	// Vars that are not networked.
 	OuterClass			*m_pOuter;					// C_TFPlayer or CTFPlayer (client/server).
 
+	bool m_bRageActive;
+
 #ifdef GAME_DLL
 	// Healer handling
 	struct healers_t
@@ -407,8 +418,16 @@ private:
 	float					m_flFlameBurnTime;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
+
+	// Other
 	float					m_flStunTime;
 	float					m_flPhaseTime;
+
+	// Banner
+	CNetworkVar( float, m_flEffectBarProgress );
+	float					m_flNextRageCheckTime;
+	float					m_flRageTimeRemaining;
+	int						m_iActiveBuffType;
 
 
 

@@ -1207,6 +1207,17 @@ enum
 	TF_HOLIDAY_APRIL_FOOLS
 };
 
+//--------------------------------------------------------------------------
+// Rage
+//--------------------------------------------------------------------------
+enum
+{
+	TF_BUFF_OFFENSE = 1,
+	TF_BUFF_DEFENSE,
+	TF_BUFF_REGENONDAMAGE,
+};
+
+
 #define	MAX_CABLE_CONNECTIONS 4
 
 bool IsObjectAnUpgrade( int iObjectType );
