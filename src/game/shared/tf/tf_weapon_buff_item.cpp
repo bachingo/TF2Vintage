@@ -133,8 +133,8 @@ void CTFBuffItem::WeaponReset( void )
 void CTFBuffItem::PrimaryAttack( void )
 {
 	// Rage not ready
-	if ( !IsFull() )
-		return;
+	//if ( !IsFull() )
+		//return;
 
 	if ( !CanAttack() )
 		return;
@@ -144,7 +144,7 @@ void CTFBuffItem::PrimaryAttack( void )
 	if ( !pOwner )
 		return;
 
-	if ( !m_bBuffUsed )
+	if ( !m_bBuffUsed && pOwner->m_Shared.GetRageProgress() >= 100.0f )
 	{
 		if ( GetTeamNumber() == TF_TEAM_RED )
 		{
@@ -156,7 +156,10 @@ void CTFBuffItem::PrimaryAttack( void )
 		}
 
 		pOwner->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_SECONDARY );
+
+#ifdef GAME_DLL
 		SetContextThink( &CTFBuffItem::BlowHorn, gpGlobals->curtime + 0.22f, "BlowHorn" );
+#endif
 	}
 }
 
