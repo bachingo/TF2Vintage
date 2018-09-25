@@ -51,6 +51,7 @@ public:
 
 	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return NULL; }
 
+	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }
@@ -83,4 +84,7 @@ private:
 	CNetworkVarEmbedded( CAttributeContainer, m_AttributeManager );
 };
 
+#ifdef CLIENT_DLL
+void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pEconEntity, ClientModelRenderInfo_t const *pInfo, int iModelType );
+#endif
 #endif

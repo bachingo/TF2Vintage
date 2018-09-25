@@ -320,9 +320,15 @@ public:
 			{
 				GET_VALUES_FAST_BOOL( pVisuals->player_bodygroups, pVisualData );
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "attached_models" ) )
+			else if ( !V_stricmp( pVisualData->GetName(), "attached_model" ) )
 			{
-				// TODO
+				attachedmodel_t attached_model;
+				attached_model.view_model = pVisualData->GetInt( "view_model" );
+				attached_model.world_model = pVisualData->GetInt( "world_model" );
+				V_strncpy( attached_model.model, pVisualData->GetString( "model" ), sizeof( attached_model.model ) );
+				V_strncpy( attached_model.attachment, pVisualData->GetString( "attachment" ), sizeof( attached_model.attachment ) );
+
+				pVisuals->attached_models.AddToTail( attached_model );
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
 			{
@@ -667,6 +673,14 @@ void CEconItemSchema::Precache( void )
 			{
 				if ( pVisuals->aWeaponSounds[i][0] != '\0' )
 					CBaseEntity::PrecacheScriptSound( pVisuals->aWeaponSounds[i] );
+			}
+
+			// Precache attachments.
+			for ( int i = 0; i < pVisuals->attached_models.Count(); i++ )
+			{
+				const char *pszModel = pVisuals->attached_models[i].model;
+				if ( pszModel != '\0' )
+					CBaseEntity::PrecacheModel( pszModel );
 			}
 		}
 

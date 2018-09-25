@@ -495,6 +495,23 @@ void CTFViewModel::CalcMinViewmodelOffset( C_TFPlayer *owner )
 }
 
 //-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+bool CTFViewModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
+{
+	if ( BaseClass::OnPostInternalDrawModel( pInfo ) )
+	{
+		C_EconEntity *pEntity = GetOwningWeapon();
+		if ( pEntity )
+		{
+			DrawEconEntityAttachedModels( this, pEntity, pInfo, 2 );
+		}
+		return true;
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Used for spy invisiblity material
 //-----------------------------------------------------------------------------
 class CViewModelInvisProxy : public CEntityMaterialProxy

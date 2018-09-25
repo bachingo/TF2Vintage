@@ -35,6 +35,23 @@ int C_ViewmodelAttachmentModel::InternalDrawModel( int flags )
 }
 
 //-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+bool C_ViewmodelAttachmentModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
+{
+	if ( BaseClass::OnPostInternalDrawModel( pInfo ) )
+	{
+		C_EconEntity *pEntity = GetOwningWeapon();
+		if ( pEntity )
+		{
+			DrawEconEntityAttachedModels( this, pEntity, pInfo, 2 );
+		}
+		return true;
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: We're overriding this because DrawModel keeps calling the FollowEntity DrawModel function
 //			which in this case is CTFViewModel::DrawModel.
 //			This is basically just a straight copy of C_BaseAnimating::DrawModel, without the FollowEntity part
