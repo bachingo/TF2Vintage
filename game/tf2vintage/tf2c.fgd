@@ -5,39 +5,6 @@
 // TF2 game definition file (.fgd)
 //
 
-@MaterialExclusion
-[
-	// Names of the sub-directories we don't want to load materials from
-	"autumnal/props"
-	"ambulance"
-	"backpack"
-	"cable"
-	"console"
-	"customcubemaps"
-	"detail"
-	"debug"
-	"effects"
-	"engine"
-	"environment maps"
-	"halflife"
-	"matsys_regressiontest"
-	"hlmv"
-	"hud"
-	"logo"
-	"maps"
-	"models"
-	"overviews"
-	"particle"
-	"particles"
-	"perftest"
-	"scripted"
-	"shadertest"
-	"sprites"
-	"sun"
-	"vgui"
-	"voice"
-]
-
 //
 // Base Classes
 //
@@ -228,6 +195,12 @@
 	round_redspawn(target_destination) : "Red spawn for round" : : "Red spawn point when the associated round is being played."
 	round_greenspawn(target_destination) : "Green spawn for round" : : "Green spawn point when the associated round is being played."
 	round_yellowspawn(target_destination) : "Yellow spawn for round" : : "Yellow spawn point when the associated round is being played."
+]
+
+@PointClass base(PlayerClass, Angles) studio("models/player/merc_deathmatch.mdl") = info_player_deathmatch :
+	"This entity indicates the position and facing direction at which the player will spawn during a deathmatch map. Any number of "+
+	"info_player_deathmatch entities may be placed in a map."
+[
 ]
 
 @PointClass base(Targetname) = game_forcerespawn :
@@ -444,6 +417,8 @@
     7 : "Pyro"
     8 : "Spy"
     9 : "Engineer"
+    10 : "Civilian"
+    11 : "Mercenary"
 	]
 ]
 
@@ -1050,6 +1025,10 @@
 	input Enable(void) : "Enable this entity."
 	input Disable(void) : "Disable this entity."
 ]
+
+@PointClass base(Targetname) = tf_logic_deathmatch :
+	"Deathmatch mode entity. Use this to set the map to DM mode" []
+	
 	
 @PointClass base(Targetname,Parentname,BaseObject) iconsprite("editor/bullseye.vmt") = mapobj_cart_dispenser : 
 	"TF2 Dispenser" 
@@ -1220,7 +1199,6 @@
 [
 	WeaponNumber(Choices) : "Weapon (OBSOLETE)" : 0 =
 	[
-		0 : "None"
 		15 : "Scattergun ( Primary )"
 		16 : "Sniper rifle ( Primary )"
 		17 : "Minigun ( Primary )"
@@ -1235,7 +1213,7 @@
 		37 : "Pistol ( Secondary )"
 		69 : "Six Shooter ( Secondary )"
 		5 : "Crowbar ( Melee )"
-	]
+
 	itemid(Choices) : "Weapon" : 0 =
 	[
 		14 : "Sniper rifle ( Primary )"
@@ -1254,8 +1232,6 @@
 	]
 	
 	RespawnTime(integer) : "Respawn delay (in seconds)" : 10
-	StaticSpawner(integer) : "Disable spinning/rotating weapon effect" : 0
-	DisableWeaponOutline(integer) : "Disable weapon outline glows" : 0
 ]
 
 @PointClass base(Targetname) size(-8 -8 -8, 8 8 8) = tf_player_equip : 
@@ -1330,21 +1306,21 @@
 	//input EquipWeapons(void) : "Equips all of the players on the current server with the specified weapons."
 ]
 
-@PointClass base(Item,Parentname) studio("models/items/powerup_crit.mdl") = item_powerup_critdamage : "Powerup Crit" 
+@PointClass base(Item) studio("models/items/powerup_crit.mdl") = item_powerup_critdamage : "Powerup Crit" 
 [
 	ModelName(string)    : "Model override" : "models/items/powerup_crit.mdl"
 	PickupSound(sound)  : "Pickup sound" : "HealthKit.Touch"
 	RespawnTime(integer) : "Respawn delay (in seconds)" : 30
 ]
 
-@PointClass base(Item,Parentname) studio("models/items/powerup_uber.mdl") = item_powerup_shortuber : "Powerup uber" 
+@PointClass base(Item) studio("models/items/powerup_uber.mdl") = item_powerup_shortuber : "Powerup uber" 
 [
 	ModelName(string)    : "Model override" : "models/items/powerup_uber.mdl"
 	PickupSound(sound)  : "Pickup sound" : "HealthKit.Touch"
 	RespawnTime(integer) : "Respawn delay (in seconds)" : 30
 ]
 
-@PointClass base(Item,Parentname) studio("models/class_menu/random_class_icon.mdl") = item_powerup_ragemode : "Berserk mode" 
+@PointClass base(Item) studio("models/class_menu/random_class_icon.mdl") = item_powerup_ragemode : "Berserk mode" 
 [
 	ModelName(string)    : "Model override" : "models/class_menu/random_class_icon.mdl"
 	PickupSound(sound)  : "Pickup sound" : "HealthKit.Touch"

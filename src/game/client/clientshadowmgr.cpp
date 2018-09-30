@@ -1295,7 +1295,7 @@ bool CClientShadowMgr::Init()
 	bool bTools = CommandLine()->CheckParm( "-tools" ) != NULL;
 	m_nMaxDepthTextureShadows = bTools ? 4 : 1;	// Just one shadow depth texture in games, more in tools
 
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 	m_nMaxDepthTextureShadows = 10;
 #endif
 

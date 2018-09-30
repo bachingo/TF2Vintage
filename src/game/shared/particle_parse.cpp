@@ -18,7 +18,7 @@
 #include "networkstringtable_clientdll.h"
 #endif
 
-#if defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_VINTAGE_CLIENT )
 #include "tf_gamerules.h"
 #include "c_tf_playerresource.h"
 #endif

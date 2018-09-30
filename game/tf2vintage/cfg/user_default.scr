@@ -74,7 +74,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_Hitbeeps"
 		"#Tooltip_Hitbeeps"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	//"tf_dingaling_volume"
@@ -90,7 +90,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_CombatText"
 		"#Tooltip_CombatText"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
 	//"hud_combattext_doesnt_block_overhead_text"
@@ -230,7 +230,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_UseGlowEffect"
 		"#Tooltip_UseGlowEffect"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
 
 	//"cl_hud_playerclass_use_playermodel"
@@ -433,7 +433,7 @@ DESCRIPTION INFO_OPTIONS
 		"#Valve_Multiplayer_Decal_Limit"
 		"#Tooltip_Multiplayer_Decal_Limit"
 		{ SLIDER 0 4096 }
-		{ "4096" }
+		{ "2048" }
 	}
 	
 	"category5"
@@ -455,7 +455,7 @@ DESCRIPTION INFO_OPTIONS
 		"#TF_classautokill"
 		"#Tooltip_classautokill"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
 	
 	//"tf_respawn_on_loadoutchanges"
@@ -463,7 +463,7 @@ DESCRIPTION INFO_OPTIONS
 	//	"#TF_loadoutrespawn"
 	//	"#Tooltip_loadoutrespawn"
 	//	{ BOOL }
-	//	{ "0" }
+	//	{ "1" }
 	//}
 
 	"r_drawviewmodel"
@@ -554,27 +554,41 @@ DESCRIPTION INFO_OPTIONS
 	
 	"category6"
 	{
-		"#TF_OptionCategory_Classic"
+		"Team Fortress 2 Classic Options"
 		{ CATEGORY }
 	}
 	
 	"tf2c_model_muzzleflash"
 	{
-		"#TFOption_modelmuzzleflash"
+		"Enable beta model muzzleflash"
+		{ BOOL }
+		{ "0" }
+	}
+	
+	"tf2c_model_muzzleflash"
+	{
+		"Enable beta model muzzleflash"
 		{ BOOL }
 		{ "0" }
 	}
 	
 	"tf2c_ammobucket"
 	{
-		"#TFOption_ammobucket"
+		"Enable weapon icon in ammo section"
 		{ BOOL }
 		{ "0" }
 	}
 	
 	"tf2c_muzzlelight"
 	{
-		"#TFOption_muzzlelight"
+		"Enable dynamic lights for muzzleflashes and the flamethrower"
+		{ BOOL }
+		{ "0" }
+	}
+	
+	"tf2c_coloredhud"
+	{
+		"Enable colored HUD panels in Deathmatch"
 		{ BOOL }
 		{ "1" }
 	}

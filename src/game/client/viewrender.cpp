@@ -66,7 +66,7 @@
 #include "viewpostprocess.h"
 #include "viewdebug.h"
 
-#if defined ( USES_ECON_ITEMS ) || defined( TF_CLASSIC_CLIENT )
+#if defined ( USES_ECON_ITEMS ) || defined( TF_VINTAGE_CLIENT )
 #include "econ_wearable.h"
 #endif
 
@@ -110,7 +110,7 @@ static ConVar r_drawopaqueworld( "r_drawopaqueworld", "1", FCVAR_CHEAT );
 static ConVar r_drawtranslucentworld( "r_drawtranslucentworld", "1", FCVAR_CHEAT );
 static ConVar r_3dsky( "r_3dsky","1", 0, "Enable the rendering of 3d sky boxes" );
 static ConVar r_skybox( "r_skybox","1", FCVAR_CHEAT, "Enable the rendering of sky boxes" );
-#if defined( TF_CLIENT_DLL ) || defined( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
 ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_ARCHIVE );
 #else
 ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_CHEAT );
@@ -5339,7 +5339,7 @@ void MaybeInvalidateLocalPlayerAnimation()
 			pWeapon->InvalidateBoneCache();
 		}
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
 		// ...and all the things you're wearing/holding/etc
 		int NumWearables = pPlayer->GetNumWearables();
 		for ( int i = 0; i < NumWearables; ++i )

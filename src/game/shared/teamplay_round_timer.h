@@ -168,7 +168,7 @@ private:
 	int				m_nTimeToUseAfterSetupFinished;
 #endif
 
-#ifdef TF_CLASSIC
+#ifdef TF_VINTAGE
 	//Overtime fix
 	bool m_bBuffer;
 #endif 

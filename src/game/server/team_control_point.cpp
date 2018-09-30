@@ -15,7 +15,7 @@
 #include "engine/IEngineSound.h"
 #include "soundenvelope.h"
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
 #endif
@@ -84,7 +84,7 @@ CTeamControlPoint::CTeamControlPoint()
 	m_bLocked = false;
 	m_flUnlockTime = -1;
 
-#if defined ( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
 	UseClientSideAnimation();
 #endif
 }
@@ -101,7 +101,7 @@ void CTeamControlPoint::Spawn( void )
 		m_iDefaultOwner = TEAM_UNASSIGNED;
 	}
 
-#if defined ( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
 	if ( m_iszCaptureStartSound == NULL_STRING )
 	{
 		m_iszCaptureStartSound = AllocPooledString( "Hologram.Start" );
@@ -268,7 +268,7 @@ void CTeamControlPoint::Precache( void )
 		PrecacheScriptSound( STRING( m_iszWarnSound ) );
 	}
 
-#if defined ( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
 	PrecacheScriptSound( "Announcer.ControlPointContested" );
 	PrecacheScriptSound( "Announcer.ControlPointContested_Neutral" );
 #endif
@@ -308,7 +308,7 @@ void CTeamControlPoint::HandleScoring( int iTeam )
 		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 		if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
 		{
-#if defined ( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
 			if ( TeamplayRoundBasedRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 			{
 				CBroadcastRecipientFilter filter;

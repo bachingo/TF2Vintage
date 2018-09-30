@@ -20,7 +20,7 @@
 #endif
 // NVNT end extra includes
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 #include "tf_shareddefs.h"
 #endif
 
@@ -95,7 +95,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 
 	m_hWeaponFileInfo = GetInvalidWeaponInfoHandle();
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	UseClientSideAnimation();
 #endif
 
@@ -262,7 +262,7 @@ void CBaseCombatWeapon::Precache( void )
 			{
 				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
 			}
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 			// Ammo override
 			int iModUseMetalOverride = 0;
 			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
@@ -360,7 +360,7 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetMaxClip1( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 	int iModMaxClipOverride = 0;
 	CALL_ATTRIB_HOOK_INT( iModMaxClipOverride, mod_max_primary_clip_override );
 	if ( iModMaxClipOverride != 0 )
@@ -1193,7 +1193,7 @@ void CBaseCombatWeapon::SetViewModel()
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::SendWeaponAnim( int iActivity )
 {
-#if defined( USES_ECON_ITEMS ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined( USES_ECON_ITEMS ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 	iActivity = TranslateViewmodelHandActivity( (Activity)iActivity );
 #endif		
 	// NVNT notify the haptics system of this weapons new activity
@@ -2043,7 +2043,7 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 
 bool CBaseCombatWeapon::ReloadsSingly( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 	float fHasReload = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( fHasReload, mod_no_reload_display_only );
 	if ( fHasReload != 1.0f )
@@ -2806,7 +2806,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 
@@ -2832,7 +2832,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 
 	SendPropInt( SENDINFO( m_bFlipViewModel ) ),
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 

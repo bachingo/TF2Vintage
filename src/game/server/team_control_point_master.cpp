@@ -10,7 +10,7 @@
 #include "team_control_point_master.h"
 #include "teamplayroundbased_gamerules.h"
 
-#if defined ( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined ( TF_DLL ) || defined ( TF_VINTAGE )
 #include "tf_gamerules.h"
 #endif
 
@@ -676,7 +676,7 @@ void CTeamControlPointMaster::CheckWinConditions( void )
 		{
 			bool bWinner = true;
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 			if ( TFGameRules() && TFGameRules()->IsInKothMode() )
 			{
 				CTeamRoundTimer *pTimer = NULL;

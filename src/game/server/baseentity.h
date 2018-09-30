@@ -790,7 +790,7 @@ public:
 	CNetworkVar( unsigned char, m_nRenderMode );
 	CNetworkVar( short, m_nModelIndex );
 	
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	CNetworkArray( int, m_nModelIndexOverrides, MAX_VISION_MODES ); // used to override the base model index on the client if necessary
 #endif
 

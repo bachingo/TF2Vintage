@@ -33,7 +33,7 @@
 
 #include "vgui_avatarimage.h"
 
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 #include "tf_shareddefs.h"
 #endif
 

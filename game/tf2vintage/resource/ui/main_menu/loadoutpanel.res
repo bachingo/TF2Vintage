@@ -282,7 +282,7 @@
 		
 		"SubButton"
 		{
-			"labelText" 		"<< Back (&Q)"
+			"labelText" 		"#TF_Back"
 			"textAlignment"		"center"
 			"font"				"TallTextSmall"
 			"border_default"	"AdvRoundedButtonDefault"

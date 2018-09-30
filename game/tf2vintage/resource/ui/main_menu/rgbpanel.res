@@ -107,7 +107,7 @@
 		"maxvalue" 			"255"
 		"labelwidth" 		"25"
 		"bordervisible"		"0"
-		"cvar_name"			"tf2c_setmerccolor_r"
+		"cvar_name"			""
 		"command"			""
 		
 		"SubButton"
@@ -137,7 +137,7 @@
 		"labelwidth" 		"25"
 		"bordervisible"		"0"
 		"command"			""
-		"cvar_name"			"tf2c_setmerccolor_g"
+		"cvar_name"			""
 		
 		"SubButton"
 		{
@@ -166,7 +166,7 @@
 		"labelwidth" 		"25"
 		"bordervisible"		"0"
 		"command"			""
-		"cvar_name"			"tf2c_setmerccolor_b"
+		"cvar_name"			""
 		
 		"SubButton"
 		{
@@ -250,7 +250,7 @@
 		"pinCorner"			"0"
 		"visible"			"1"
 		"enabled"			"1"
-		"cvar_name"			"tf2c_setmercparticle"
+		"cvar_name"			""
 		"border_override"	"AdvRoundedButtonDefault"
 		"font"				"FontStorePromotion"
 	}
