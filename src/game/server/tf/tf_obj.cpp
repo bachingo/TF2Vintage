@@ -643,14 +643,6 @@ void CBaseObject::InitializeMapPlacedObject( void )
 		m_nSkin = 1;
 		break;
 
-	case TF_TEAM_GREEN:
-		m_nSkin = 2;
-		break;
-
-	case TF_TEAM_YELLOW:
-		m_nSkin = 3;
-		break;
-
 	default:
 		m_nSkin = 1;
 		break;
@@ -1041,14 +1033,6 @@ void CBaseObject::StartPlacement( CTFPlayer *pPlayer )
 
 	case TF_TEAM_BLUE:
 		m_nSkin = 1;
-		break;
-
-	case TF_TEAM_GREEN:
-		m_nSkin = 2;
-		break;
-
-	case TF_TEAM_YELLOW:
-		m_nSkin = 3;
 		break;
 
 	default:
@@ -2171,14 +2155,6 @@ void CBaseObject::CreateObjectGibs( void )
 
 				case TF_TEAM_BLUE:
 					pAmmoPack->m_nSkin = 1;
-					break;
-
-				case TF_TEAM_GREEN:
-					pAmmoPack->m_nSkin = 2;
-					break;
-
-				case TF_TEAM_YELLOW:
-					pAmmoPack->m_nSkin = 3;
 					break;
 
 				default:

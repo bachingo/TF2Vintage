@@ -58,25 +58,13 @@ BEGIN_DATADESC(CTeamControlPoint)
 
 	DEFINE_OUTPUT(	m_OnCapTeam1,		"OnCapTeam1" ),	// these are fired whenever the point changes modes
 	DEFINE_OUTPUT(	m_OnCapTeam2,		"OnCapTeam2" ),
-#if defined ( TF_CLASSIC )
-	DEFINE_OUTPUT(  m_OnCapTeam3,		"OnCapTeam3" ),
-	DEFINE_OUTPUT(  m_OnCapTeam4,		"OnCapTeam4" ),
-#endif
 	DEFINE_OUTPUT(	m_OnCapReset,		"OnCapReset" ),
 
 	DEFINE_OUTPUT(	m_OnOwnerChangedToTeam1,	"OnOwnerChangedToTeam1" ),	// these are fired when a team does the work to change the owner
 	DEFINE_OUTPUT(	m_OnOwnerChangedToTeam2,	"OnOwnerChangedToTeam2" ),
-#if defined ( TF_CLASSIC )
-	DEFINE_OUTPUT(	m_OnOwnerChangedToTeam3,	"OnOwnerChangedToTeam3" ),
-	DEFINE_OUTPUT(	m_OnOwnerChangedToTeam4,	"OnOwnerChangedToTeam4" ),
-#endif
 
 	DEFINE_OUTPUT(	m_OnRoundStartOwnedByTeam1,	"OnRoundStartOwnedByTeam1" ),	// these are fired when a round is starting
 	DEFINE_OUTPUT(	m_OnRoundStartOwnedByTeam2,	"OnRoundStartOwnedByTeam2" ),
-#if defined ( TF_CLASSIC )
-	DEFINE_OUTPUT(	m_OnRoundStartOwnedByTeam3, "OnRoundStartOwnedByTeam3" ),
-	DEFINE_OUTPUT(	m_OnRoundStartOwnedByTeam4, "OnRoundStartOwnedByTeam4" ),
-#endif
 
 	DEFINE_OUTPUT(	m_OnUnlocked, "OnUnlocked" ),
 
@@ -637,14 +625,6 @@ void CTeamControlPoint::InternalSetOwner( int iCapTeam, bool bMakeSound, int iNu
 		case 2: 
 			m_OnCapTeam2.FireOutput( this, this );
 			break;
-#if defined ( TF_CLASSIC )
-		case 3:
-			m_OnCapTeam3.FireOutput( this, this );
-			break;
-		case 4:
-			m_OnCapTeam4.FireOutput( this, this );
-			break;
-#endif
 		default:
 			Assert(0);
 			break;
@@ -695,14 +675,6 @@ void CTeamControlPoint::InternalSetOwner( int iCapTeam, bool bMakeSound, int iNu
 		case 2: 
 			m_OnOwnerChangedToTeam2.FireOutput( this, this );
 			break;
-#if defined ( TF_CLASSIC )
-		case 3:
-			m_OnOwnerChangedToTeam3.FireOutput( this, this );
-			break;
-		case 4:
-			m_OnOwnerChangedToTeam4.FireOutput( this, this );
-			break;
-#endif
 		}
 
 		if ( m_iTeam != TEAM_UNASSIGNED && iNumCappers )
@@ -1011,14 +983,6 @@ void CTeamControlPoint::InputRoundActivate( inputdata_t &inputdata )
 	case 2: 
 		m_OnRoundStartOwnedByTeam2.FireOutput( this, this );
 		break;
-#if defined ( TF_CLASSIC )
-	case 3:
-		m_OnRoundStartOwnedByTeam3.FireOutput( this, this );
-		break;
-	case 4:
-		m_OnRoundStartOwnedByTeam4.FireOutput( this, this );
-		break;
-#endif
 	}
 
 	InternalSetLocked( m_bLocked );

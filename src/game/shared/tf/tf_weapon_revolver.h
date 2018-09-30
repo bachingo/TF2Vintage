@@ -35,8 +35,6 @@ public:
 
 	virtual bool DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 
-	DECLARE_DM_ACTTABLE();
-
 private:
 
 	CTFRevolver( const CTFRevolver & ) {}

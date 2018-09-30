@@ -284,12 +284,6 @@ const char *CBuildingStatusItem::GetBackgroundImage( void )
 	case TF_TEAM_BLUE:
 		pResult = "obj_status_background_blue";
 		break;
-	case TF_TEAM_GREEN:
-		pResult = "obj_status_background_green";
-		break;
-	case TF_TEAM_YELLOW:
-		pResult = "obj_status_background_yellow";
-		break;
 	default:
 		break;
 	}
@@ -750,12 +744,6 @@ const char *CBuildingStatusItem_SentryGun::GetBackgroundImage( void )
 		break;
 	case TF_TEAM_BLUE:
 		pResult = "obj_status_background_tall_blue";
-		break;
-	case TF_TEAM_GREEN:
-		pResult = "obj_status_background_tall_green";
-		break;
-	case TF_TEAM_YELLOW:
-		pResult = "obj_status_background_tall_yellow";
 		break;
 	default:
 		break;

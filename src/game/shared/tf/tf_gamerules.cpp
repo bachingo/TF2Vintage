@@ -75,8 +75,6 @@ static int g_TauntCamAchievements[] =
 	0,		// TF_CLASS_SPY,
 	0,		// TF_CLASS_ENGINEER,
 
-	0,		// TF_CLASS_CIVILIAN,
-	0,		// TF_CLASS_MERCENARY,
 	0,		// TF_CLASS_COUNT_ALL,
 };
 
@@ -96,8 +94,6 @@ ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLI
 // TF2C specific cvars.
 ConVar tf2c_falldamage_disablespread( "tf2c_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
 ConVar tf2c_allow_thirdperson( "tf2c_allow_thirdperson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to switch to third person mode." );
-
-ConVar tf2c_dm_spawnprotecttime( "tf2c_dm_spawnprotecttime", "5", FCVAR_REPLICATED | FCVAR_NOTIFY, "Time (in seconds) that the DM spawn protection lasts" );
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -194,8 +190,6 @@ Vector g_TFClassViewVectors[TF_CLASS_COUNT_ALL] =
 	Vector( 0, 0, 68 ),		// TF_CLASS_PYRO,
 	Vector( 0, 0, 75 ),		// TF_CLASS_SPY,
 	Vector( 0, 0, 68 ),		// TF_CLASS_ENGINEER,
-	Vector( 0, 0, 65 ),		// TF_CLASS_CIVILIAN,			
-	Vector( 0, 0, 68 ),		// TF_CLASS_MERCENARY,
 };
 
 const CViewVectors *CTFGameRules::GetViewVectors() const
@@ -211,9 +205,6 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropInt( RECVINFO( m_nGameType ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringBlue ) ),
-	RecvPropString( RECVINFO( m_pszTeamGoalStringGreen ) ),
-	RecvPropString( RECVINFO( m_pszTeamGoalStringYellow ) ),
-	RecvPropBool( RECVINFO( m_bFourTeamMode ) ),
 	RecvPropTime( RECVINFO( m_flCapturePointEnableTime ) ),
 	RecvPropInt( RECVINFO( m_nHudType ) ),
 	RecvPropBool( RECVINFO( m_bPlayingKoth ) ),
@@ -224,19 +215,14 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bPlayingMannVsMachine ) ),
 	RecvPropBool( RECVINFO( m_bCompetitiveMode ) ),
 	RecvPropBool( RECVINFO( m_bPowerupMode ) ),
-	RecvPropBool( RECVINFO( m_bFourTeamMode ) ),
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ), 
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
-	RecvPropEHandle( RECVINFO( m_hGreenKothTimer ) ), 
-	RecvPropEHandle( RECVINFO( m_hYellowKothTimer ) )
 
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), 4, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
-	SendPropString( SENDINFO( m_pszTeamGoalStringGreen ) ),
-	SendPropString( SENDINFO( m_pszTeamGoalStringYellow ) ),
 	SendPropTime( SENDINFO( m_flCapturePointEnableTime ) ),
 	SendPropInt( SENDINFO( m_nHudType ) ),
 	SendPropBool( SENDINFO( m_bPlayingKoth ) ),
@@ -247,11 +233,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_bPlayingMannVsMachine ) ),
 	SendPropBool( SENDINFO( m_bCompetitiveMode ) ),
 	SendPropBool( SENDINFO( m_bPowerupMode ) ),
-	SendPropBool( SENDINFO( m_bFourTeamMode ) ),
 	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ), 
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
-	SendPropEHandle( SENDINFO( m_hGreenKothTimer ) ), 
-	SendPropEHandle( SENDINFO( m_hYellowKothTimer ) )
 
 #endif
 END_NETWORK_TABLE()
@@ -288,43 +271,28 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFGameRulesProxy, DT_TFGameRulesProxy )
 BEGIN_DATADESC( CTFGameRulesProxy )
 
 	DEFINE_KEYFIELD( m_iHud_Type, FIELD_INTEGER, "hud_type"),
-	DEFINE_KEYFIELD( m_bFourTeamMode, FIELD_BOOLEAN, "fourteammode"),
 	//DEFINE_KEYFIELD( m_bCTF_Overtime, FIELD_BOOLEAN, "ctf_overtime" ),
 
 	// Inputs.
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetRedTeamRespawnWaveTime", InputSetRedTeamRespawnWaveTime ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetBlueTeamRespawnWaveTime", InputSetBlueTeamRespawnWaveTime ),
-	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetGreenTeamRespawnWaveTime", InputSetGreenTeamRespawnWaveTime ),
-	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetYellowTeamRespawnWaveTime", InputSetYellowTeamRespawnWaveTime ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "AddRedTeamRespawnWaveTime", InputAddRedTeamRespawnWaveTime ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "AddBlueTeamRespawnWaveTime", InputAddBlueTeamRespawnWaveTime ),
-	DEFINE_INPUTFUNC( FIELD_FLOAT, "AddGreenTeamRespawnWaveTime", InputAddGreenTeamRespawnWaveTime ),
-	DEFINE_INPUTFUNC( FIELD_FLOAT, "AddYelloTeamRespawnWaveTime", InputAddYellowTeamRespawnWaveTime ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetRedTeamGoalString", InputSetRedTeamGoalString ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetBlueTeamGoalString", InputSetBlueTeamGoalString ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "SetGreenTeamGoalString", InputSetGreenTeamGoalString ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "SetYellowTeamGoalString", InputSetYellowTeamGoalString ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRedTeamRole", InputSetRedTeamRole ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetBlueTeamRole", InputSetBlueTeamRole ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetGreenTeamRole", InputSetGreenTeamRole ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetYellowTeamRole", InputSetYellowTeamRole ),
 	//DEFINE_INPUTFUNC( FIELD_STRING, "SetRequiredObserverTarget", InputSetRequiredObserverTarget),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddRedTeamScore", InputAddRedTeamScore ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddBlueTeamScore", InputAddBlueTeamScore ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddGreenTeamScore", InputAddGreenTeamScore ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddYellowTeamScore", InputAddYellowTeamScore) ,
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetRedKothClockActive", InputSetRedKothClockActive ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetBlueKothClockActive", InputSetBlueKothClockActive ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "SetGreenKothClockActive", InputSetGreenKothClockActive ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "SetYellowKothClockActive", InputSetYellowKothClockActive ),
 
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetCTFCaptureBonusTime", InputSetCTFCaptureBonusTime ),
 
 	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVORed", InputPlayVORed ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVOBlue", InputPlayVOBlue ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVOGreen", InputPlayVOGreen ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVOYellow", InputPlayVOYellow ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVO", InputPlayVO ),
 
 
@@ -349,22 +317,6 @@ void CTFGameRulesProxy::InputSetBlueTeamRespawnWaveTime( inputdata_t &inputdata 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetGreenTeamRespawnWaveTime(inputdata_t &inputdata)
-{
-	TFGameRules()->SetTeamRespawnWaveTime(TF_TEAM_GREEN, inputdata.value.Float());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetYellowTeamRespawnWaveTime(inputdata_t &inputdata)
-{
-	TFGameRules()->SetTeamRespawnWaveTime(TF_TEAM_YELLOW, inputdata.value.Float());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFGameRulesProxy::InputAddRedTeamRespawnWaveTime( inputdata_t &inputdata )
 {
 	TFGameRules()->AddTeamRespawnWaveTime( TF_TEAM_RED, inputdata.value.Float() );
@@ -376,22 +328,6 @@ void CTFGameRulesProxy::InputAddRedTeamRespawnWaveTime( inputdata_t &inputdata )
 void CTFGameRulesProxy::InputAddBlueTeamRespawnWaveTime( inputdata_t &inputdata )
 {
 	TFGameRules()->AddTeamRespawnWaveTime( TF_TEAM_BLUE, inputdata.value.Float() );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputAddGreenTeamRespawnWaveTime(inputdata_t &inputdata)
-{
-	TFGameRules()->AddTeamRespawnWaveTime(TF_TEAM_GREEN, inputdata.value.Float());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputAddYellowTeamRespawnWaveTime(inputdata_t &inputdata)
-{
-	TFGameRules()->AddTeamRespawnWaveTime(TF_TEAM_YELLOW, inputdata.value.Float());
 }
 
 //-----------------------------------------------------------------------------
@@ -413,22 +349,6 @@ void CTFGameRulesProxy::InputSetBlueTeamGoalString( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetGreenTeamGoalString(inputdata_t &inputdata)
-{
-	TFGameRules()->SetTeamGoalString(TF_TEAM_GREEN, inputdata.value.String());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetYellowTeamGoalString(inputdata_t &inputdata)
-{
-	TFGameRules()->SetTeamGoalString(TF_TEAM_YELLOW, inputdata.value.String());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFGameRulesProxy::InputSetRedTeamRole( inputdata_t &inputdata )
 {
 	CTFTeam *pTeam = TFTeamMgr()->GetTeam( TF_TEAM_RED );
@@ -444,30 +364,6 @@ void CTFGameRulesProxy::InputSetRedTeamRole( inputdata_t &inputdata )
 void CTFGameRulesProxy::InputSetBlueTeamRole( inputdata_t &inputdata )
 {
 	CTFTeam *pTeam = TFTeamMgr()->GetTeam( TF_TEAM_BLUE );
-	if ( pTeam )
-	{
-		pTeam->SetRole( inputdata.value.Int() );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetGreenTeamRole( inputdata_t &inputdata )
-{
-	CTFTeam *pTeam = TFTeamMgr()->GetTeam( TF_TEAM_GREEN );
-	if ( pTeam )
-	{
-		pTeam->SetRole( inputdata.value.Int() );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetYellowTeamRole( inputdata_t &inputdata )
-{
-	CTFTeam *pTeam = TFTeamMgr()->GetTeam( TF_TEAM_YELLOW );
 	if ( pTeam )
 	{
 		pTeam->SetRole( inputdata.value.Int() );
@@ -501,30 +397,6 @@ void CTFGameRulesProxy::InputAddBlueTeamScore( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputAddGreenTeamScore( inputdata_t &inputdata )
-{
-	CTFTeam *pTeam = TFTeamMgr()->GetTeam( TF_TEAM_GREEN );
-	if ( pTeam )
-	{
-		pTeam->AddScore( inputdata.value.Int() );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputAddYellowTeamScore( inputdata_t &inputdata )
-{
-	CTFTeam *pTeam = TFTeamMgr()->GetTeam( TF_TEAM_YELLOW );
-	if ( pTeam )
-	{
-		pTeam->AddScore( inputdata.value.Int() );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFGameRulesProxy::InputSetRedKothClockActive(inputdata_t &inputdata)
 {
 	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
@@ -533,15 +405,6 @@ void CTFGameRulesProxy::InputSetRedKothClockActive(inputdata_t &inputdata)
 
 		if ( TFGameRules()->GetBlueKothRoundTimer() )
 			TFGameRules()->GetBlueKothRoundTimer()->InputDisable( inputdata );
-
-		if ( TFGameRules()->IsFourTeamGame() )
-		{
-			if ( TFGameRules()->GetGreenKothRoundTimer() )
-				TFGameRules()->GetGreenKothRoundTimer()->InputDisable( inputdata );
-
-			if ( TFGameRules()->GetYellowKothRoundTimer() )
-				TFGameRules()->GetYellowKothRoundTimer()->InputDisable( inputdata );
-		}
 	}
 }
 
@@ -556,67 +419,6 @@ void CTFGameRulesProxy::InputSetBlueKothClockActive( inputdata_t &inputdata )
 
 		if ( TFGameRules()->GetRedKothRoundTimer() )
 			TFGameRules()->GetRedKothRoundTimer()->InputDisable( inputdata );
-
-		if ( TFGameRules()->IsFourTeamGame() )
-		{
-			if ( TFGameRules()->GetGreenKothRoundTimer() )
-				TFGameRules()->GetGreenKothRoundTimer()->InputDisable( inputdata );
-
-			if ( TFGameRules()->GetYellowKothRoundTimer() )
-				TFGameRules()->GetYellowKothRoundTimer()->InputDisable( inputdata );
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetGreenKothClockActive(inputdata_t &inputdata)
-{
-	if ( TFGameRules() && !TFGameRules()->IsFourTeamGame() )
-	{
-		Warning( "SetGreenKothClockActive called, but 4 team mode isn't on!\n" );
-		return;
-	}
-
-	if ( TFGameRules() && TFGameRules()->GetGreenKothRoundTimer() )
-	{
-		TFGameRules()->GetGreenKothRoundTimer()->InputEnable( inputdata );
-
-		if ( TFGameRules()->GetRedKothRoundTimer() )
-			TFGameRules()->GetRedKothRoundTimer()->InputDisable( inputdata );
-
-		if ( TFGameRules()->GetBlueKothRoundTimer() )
-			TFGameRules()->GetBlueKothRoundTimer()->InputDisable( inputdata );
-
-		if ( TFGameRules()->GetYellowKothRoundTimer() )
-			TFGameRules()->GetYellowKothRoundTimer()->InputDisable( inputdata );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputSetYellowKothClockActive( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && !TFGameRules()->IsFourTeamGame() )
-	{
-		Warning( "SetYellowKothClockActive called, but 4 team mode isn't on!\n" );
-		return;
-	}
-
-	if ( TFGameRules() && TFGameRules()->GetYellowKothRoundTimer() )
-	{
-		TFGameRules()->GetYellowKothRoundTimer()->InputEnable( inputdata );
-
-		if ( TFGameRules()->GetRedKothRoundTimer() )
-			TFGameRules()->GetRedKothRoundTimer()->InputDisable( inputdata );
-
-		if ( TFGameRules()->GetBlueKothRoundTimer() )
-			TFGameRules()->GetBlueKothRoundTimer()->InputDisable( inputdata );
-
-		if ( TFGameRules()->GetGreenKothRoundTimer() )
-			TFGameRules()->GetGreenKothRoundTimer()->InputDisable( inputdata );
 	}
 }
 
@@ -665,104 +467,17 @@ void CTFGameRulesProxy::InputPlayVOBlue( inputdata_t &inputdata )
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputPlayVOGreen( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->IsFourTeamGame() )
-	{
-		TFGameRules()->BroadcastSound( TF_TEAM_GREEN, inputdata.value.String() );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRulesProxy::InputPlayVOYellow( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->IsFourTeamGame() )
-	{
-		TFGameRules()->BroadcastSound( TF_TEAM_YELLOW, inputdata.value.String() );
-	}
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFGameRulesProxy::Activate()
 {
-	TFGameRules()->m_bFourTeamMode = m_bFourTeamMode;
-
 	TFGameRules()->Activate();
 
 	TFGameRules()->SetHudType( m_iHud_Type );
 
 	BaseClass::Activate();
-}
-
-class CTFLogicDeathmatch : public CBaseEntity
-{
-public:
-	DECLARE_CLASS(CTFLogicDeathmatch, CBaseEntity);
-	void	Spawn(void);
-};
-
-LINK_ENTITY_TO_CLASS(tf_logic_deathmatch, CTFLogicDeathmatch);
-
-void CTFLogicDeathmatch::Spawn(void)
-{
-	BaseClass::Spawn();
-}
-
-class CTFLogicVIP : public CBaseEntity
-{
-public:
-	DECLARE_CLASS( CTFLogicVIP, CBaseEntity );
-	DECLARE_DATADESC();
-
-	void	Spawn(void);
-
-	inline bool GetEnableCivilian() { return m_bEnableCivilian; }
-	inline bool GetCivilianCountStyle() { return m_bCivilianCountStyle; }
-	inline int	GetCivilianAbsoluteCount() { return m_nCivilianAbsoluteCount; }
-	inline int	GetCivilianPercentageCount() { return m_nCivilianPercentageCount; }
-	inline bool GetForceCivilian() { return m_bForceCivilian; }
-	inline bool GetEnableCivilianRed() { return m_bEnableCivilianRed; }
-	inline bool GetEnableCivilianBlue() { return m_bEnableCivilianBlue; }
-	inline bool GetEnableCivilianGreen() { return m_bEnableCivilianGreen; }
-	inline bool GetEnableCivilianYellow() { return m_bEnableCivilianYellow; }
-
-private:
-	bool	m_bEnableCivilian;
-	bool	m_bCivilianCountStyle;
-	int		m_nCivilianAbsoluteCount;
-	int		m_nCivilianPercentageCount;
-	bool	m_bForceCivilian;
-	bool	m_bEnableCivilianRed;
-	bool	m_bEnableCivilianBlue;
-	bool	m_bEnableCivilianGreen;
-	bool	m_bEnableCivilianYellow;
-};
-
-LINK_ENTITY_TO_CLASS( tf_logic_vip, CTFLogicVIP );
-
-BEGIN_DATADESC(CTFLogicVIP)
-	DEFINE_KEYFIELD( m_bEnableCivilian, FIELD_BOOLEAN, "EnableCivilian" ),
-	DEFINE_KEYFIELD( m_bCivilianCountStyle, FIELD_BOOLEAN, "CivilianCountStyle" ),
-	DEFINE_KEYFIELD( m_nCivilianAbsoluteCount, FIELD_INTEGER, "CivilianAbsoluteCount" ),
-	DEFINE_KEYFIELD( m_nCivilianPercentageCount, FIELD_INTEGER, "CivilianPercentageCount" ),
-	DEFINE_KEYFIELD( m_bForceCivilian, FIELD_BOOLEAN, "ForceCivilian" ),
-	DEFINE_KEYFIELD( m_bEnableCivilianRed, FIELD_BOOLEAN, "EnableCivilianRed" ),
-	DEFINE_KEYFIELD( m_bEnableCivilianRed, FIELD_BOOLEAN, "EnableCivilianBlue" ),
-	DEFINE_KEYFIELD( m_bEnableCivilianRed, FIELD_BOOLEAN, "EnableCivilianGreen" ),
-	DEFINE_KEYFIELD( m_bEnableCivilianRed, FIELD_BOOLEAN, "EnableCivilianYellow" ),
-END_DATADESC()
-
-void CTFLogicVIP::Spawn(void)
-{
-	BaseClass::Spawn();
 }
 
 class CArenaLogic : public CPointEntity
@@ -867,12 +582,8 @@ public:
 
 	virtual void	InputAddBlueTimer( inputdata_t &inputdata );
 	virtual void	InputAddRedTimer( inputdata_t &inputdata );
-	virtual void	InputAddGreenTimer( inputdata_t &inputdata );
-	virtual void	InputAddYellowTimer( inputdata_t &inputdata );
 	virtual void	InputSetBlueTimer( inputdata_t &inputdata );
 	virtual void	InputSetRedTimer( inputdata_t &inputdata );
-	virtual void	InputSetGreenTimer( inputdata_t &inputdata );
-	virtual void	InputSetYellowTimer( inputdata_t &inputdata );
 	virtual void	InputRoundSpawn( inputdata_t &inputdata );
 	virtual void	InputRoundActivate( inputdata_t &inputdata );
 
@@ -890,12 +601,8 @@ BEGIN_DATADESC( CKothLogic )
 	// Inputs.
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddBlueTimer", InputAddBlueTimer ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddRedTimer", InputAddRedTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddGreenTimer", InputAddGreenTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddYellowTimer", InputAddYellowTimer ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetBlueTimer", InputSetBlueTimer ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRedTimer", InputSetRedTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetGreenTimer", InputSetGreenTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetYellowTimer", InputSetYellowTimer ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "RoundSpawn", InputRoundSpawn ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
 
@@ -938,31 +645,6 @@ void CKothLogic::InputRoundSpawn( inputdata_t &inputdata )
 			TFGameRules()->GetRedKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
 			TFGameRules()->GetRedKothRoundTimer()->ChangeTeam( TF_TEAM_RED );
 		}
-
-		if ( TFGameRules()->IsFourTeamGame() )
-		{
-			TFGameRules()->SetGreenKothRoundTimer( (CTeamRoundTimer*)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
-
-			if ( TFGameRules()->GetGreenKothRoundTimer() )
-			{
-				TFGameRules()->GetGreenKothRoundTimer()->SetName( MAKE_STRING( "zz_green_koth_timer" ) );
-				TFGameRules()->GetGreenKothRoundTimer()->SetShowInHud( false );
-				TFGameRules()->GetGreenKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetGreenKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetGreenKothRoundTimer()->ChangeTeam( TF_TEAM_GREEN );
-			}
-
-			TFGameRules()->SetYellowKothRoundTimer( (CTeamRoundTimer*)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
-
-			if ( TFGameRules()->GetYellowKothRoundTimer() )
-			{
-				TFGameRules()->GetYellowKothRoundTimer()->SetName( MAKE_STRING( "zz_yellow_koth_timer" ) );
-				TFGameRules()->GetYellowKothRoundTimer()->SetShowInHud( false );
-				TFGameRules()->GetYellowKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetYellowKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetYellowKothRoundTimer()->ChangeTeam( TF_TEAM_RED );
-			}
-		}
 	}
 }
 
@@ -999,22 +681,6 @@ void CKothLogic::InputAddRedTimer( inputdata_t &inputdata )
 	}
 }
 
-void CKothLogic::InputAddGreenTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetGreenKothRoundTimer() )
-	{
-		TFGameRules()->GetGreenKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputAddYellowTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetYellowKothRoundTimer() )
-	{
-		TFGameRules()->GetYellowKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
-	}
-}
-
 void CKothLogic::InputSetBlueTimer( inputdata_t &inputdata )
 {
 	if ( TFGameRules() && TFGameRules()->GetBlueKothRoundTimer() )
@@ -1028,22 +694,6 @@ void CKothLogic::InputSetRedTimer( inputdata_t &inputdata )
 	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
 	{
 		TFGameRules()->GetRedKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputSetGreenTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetGreenKothRoundTimer() )
-	{
-		TFGameRules()->GetGreenKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputSetYellowTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetYellowKothRoundTimer() )
-	{
-		TFGameRules()->GetYellowKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
 	}
 }
 
@@ -1381,8 +1031,6 @@ CTFGameRules::CTFGameRules()
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
-	m_pszTeamGoalStringGreen.GetForModify()[0] = '\0';
-	m_pszTeamGoalStringYellow.GetForModify()[0] = '\0';
 }
 
 //-----------------------------------------------------------------------------
@@ -1477,7 +1125,6 @@ static const char *s_PreserveEnts[] =
 	"entity_sign",
 	"entity_suacer",
 	"info_ladder",
-	"info_player_deathmatch",
 	"prop_vehicle_jeep",
 	"", // END Marker
 };
@@ -1503,16 +1150,6 @@ void CTFGameRules::Activate()
 
 	TeamplayRoundBasedRules()->SetMultipleTrains(false);
 
-	if ( gEntList.FindEntityByClassname( NULL, "tf_logic_deathmatch" ) || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
-	{
-		m_nGameType.Set( TF_GAMETYPE_DM );
-		tf_gamemode_dm.SetValue( 1 );
-		Msg( "Executing server deathmatch config file\n", 1 );
-		engine->ServerCommand( "exec config_deathmatch.cfg \n" );
-		engine->ServerExecute();
-		return;
-	}
-
 	CMedievalLogic *pMedieval = dynamic_cast< CMedievalLogic* >( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval") );
 	if ( pMedieval )
 	{
@@ -1536,13 +1173,6 @@ void CTFGameRules::Activate()
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
 		m_bPlayingKoth = true;
-		return;
-	}
-
-	if ( gEntList.FindEntityByClassname( NULL, "tf_logic_vip" ) )
-	{
-		// TODO: make a global pointer to this and access its settings
-		m_nGameType.Set( TF_GAMETYPE_VIP );
 		return;
 	}
 
@@ -1593,7 +1223,7 @@ int CTFGameRules::GetClassLimit( int iDesiredClassIndex )
 
 	if ( IsInTournamentMode() /*||  *((_DWORD *)this + 462) == 7 */ )
 	{
-		if ( iDesiredClassIndex <= TF_LAST_NORMAL_CLASS )
+		if ( iDesiredClassIndex <= TF_CLASS_COUNT )
 		{
 			switch ( iDesiredClassIndex )
 			{
@@ -1735,34 +1365,6 @@ void CTFGameRules::SetTeamGoalString( int iTeam, const char *pszGoal )
 			if ( Q_stricmp( m_pszTeamGoalStringBlue.Get(), pszGoal ) )
 			{
 				Q_strncpy( m_pszTeamGoalStringBlue.GetForModify(), pszGoal, MAX_TEAMGOAL_STRING );
-			}
-		}
-	}
-	else if ( iTeam == TF_TEAM_GREEN )
-	{
-		if ( !pszGoal || !pszGoal[0] )
-		{
-			m_pszTeamGoalStringGreen.GetForModify()[0] = '\0';
-		}
-		else
-		{
-			if ( Q_stricmp( m_pszTeamGoalStringGreen.Get(), pszGoal ) )
-			{
-				Q_strncpy( m_pszTeamGoalStringGreen.GetForModify(), pszGoal, MAX_TEAMGOAL_STRING );
-			}
-		}
-	}
-	else if ( iTeam == TF_TEAM_YELLOW )
-	{
-		if ( !pszGoal || !pszGoal[0] )
-		{
-			m_pszTeamGoalStringYellow.GetForModify()[0] = '\0';
-		}
-		else
-		{
-			if (Q_stricmp( m_pszTeamGoalStringYellow.Get(), pszGoal ) )
-			{
-				Q_strncpy( m_pszTeamGoalStringYellow.GetForModify(), pszGoal, MAX_TEAMGOAL_STRING );
 			}
 		}
 	}
@@ -2626,15 +2228,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			}
 		} 
 
-		if ( IsDeathmatch() && CountActivePlayers() > 0 && !g_fGameOver )
-		{
-			if ( CheckFragLimit() )
-				return;
-
-			if ( CheckTimeLimit() )
-				return;
-		}
-		else if ( IsInArenaMode() && m_flArenaNotificationSend > 0.0 && gpGlobals->curtime >= m_flArenaNotificationSend )
+		if ( IsInArenaMode() && m_flArenaNotificationSend > 0.0 && gpGlobals->curtime >= m_flArenaNotificationSend )
 		{
 			Arena_SendPlayerNotifications();
 		}
@@ -2717,16 +2311,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				UTIL_LogPrintf( "Team \"RED\" triggered \"Intermission_Win_Limit\"\n" );
 				bWinner = true;
 			}
-			else if (TFTeamMgr()->GetTeam(TF_TEAM_GREEN)->GetScore() >= mp_winlimit.GetInt())
-			{
-				UTIL_LogPrintf("Team \"GREEN\" triggered \"Intermission_Win_Limit\"\n");
-				bWinner = true;
-			}
-			else if (TFTeamMgr()->GetTeam(TF_TEAM_YELLOW)->GetScore() >= mp_winlimit.GetInt())
-			{
-				UTIL_LogPrintf("Team \"YELLOW\" triggered \"Intermission_Win_Limit\"\n");
-				bWinner = true;
-			}
 
 			if ( bWinner )
 			{
@@ -2783,22 +2367,13 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 	void CTFGameRules::GoToIntermission( void )
 	{
-		if ( IsDeathmatch() )
-		{
-			// Deathmatch results panel needs this.
-			SendWinPanelInfo();
-		}
 		CTF_GameStats.Event_GameEnd();
 
 		BaseClass::GoToIntermission();
 	}
 
 	bool CTFGameRules::FPlayerCanTakeDamage(CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info)
-	{
-		// Friendly fire is ALWAYS on in DM.
-		if ( IsDeathmatch() )
-			return true;
-		
+	{	
 		// guard against NULL pointers if players disconnect
 		if ( !pPlayer || !pAttacker )
 			return false;
@@ -2825,9 +2400,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 	int CTFGameRules::PlayerRelationship(CBaseEntity *pPlayer, CBaseEntity *pTarget)
 	{
-		if ( IsDeathmatch() )
-			return GR_NOTTEAMMATE;
-
 		return BaseClass::PlayerRelationship(pPlayer, pTarget);
 	}
 
@@ -2912,51 +2484,14 @@ void cc_ShowRespawnTimes()
 		float flBlueScalar = pRules->GetRespawnTimeScalar( TF_TEAM_BLUE );
 		float flNextBlueRespawn = pRules->GetNextRespawnWave( TF_TEAM_BLUE, NULL ) - gpGlobals->curtime;
 
-		float flGreenMin = (pRules->m_TeamRespawnWaveTimes[TF_TEAM_GREEN] >= 0 ? pRules->m_TeamRespawnWaveTimes[TF_TEAM_GREEN] : mp_respawnwavetime.GetFloat());
-		float flGreenScalar = pRules->GetRespawnTimeScalar(TF_TEAM_GREEN);
-		float flNextGreenRespawn = pRules->GetNextRespawnWave(TF_TEAM_GREEN, NULL) - gpGlobals->curtime;
-
-		float flYellowMin = (pRules->m_TeamRespawnWaveTimes[TF_TEAM_YELLOW] >= 0 ? pRules->m_TeamRespawnWaveTimes[TF_TEAM_YELLOW] : mp_respawnwavetime.GetFloat());
-		float flYellowScalar = pRules->GetRespawnTimeScalar(TF_TEAM_YELLOW);
-		float flNextYellowRespawn = pRules->GetNextRespawnWave(TF_TEAM_YELLOW, NULL) - gpGlobals->curtime;
-
 		char tempRed[128];
 		Q_snprintf( tempRed, sizeof( tempRed ),   "Red:  Min Spawn %2.2f, Scalar %2.2f, Next Spawn In: %.2f\n", flRedMin, flRedScalar, flNextRedRespawn );
 
 		char tempBlue[128];
 		Q_snprintf( tempBlue, sizeof( tempBlue ), "Blue: Min Spawn %2.2f, Scalar %2.2f, Next Spawn In: %.2f\n", flBlueMin, flBlueScalar, flNextBlueRespawn );
 
-		char tempGreen[128];
-		Q_snprintf(tempGreen, sizeof(tempGreen), "Green: Min Spawn %2.2f, Scalar %2.2f, Next Spawn In: %.2f\n", flGreenMin, flGreenScalar, flNextGreenRespawn);
-
-		char tempYellow[128];
-		Q_snprintf(tempYellow, sizeof(tempYellow), "Yellow: Min Spawn %2.2f, Scalar %2.2f, Next Spawn In: %.2f\n", flYellowMin, flYellowScalar, flNextYellowRespawn);
-
-
 		ClientPrint( pPlayer, HUD_PRINTTALK, tempRed );
 		ClientPrint( pPlayer, HUD_PRINTTALK, tempBlue );
-
-		if ( TFGameRules()->IsFourTeamGame() )
-		{
-			float flGreenMin = (pRules->m_TeamRespawnWaveTimes[TF_TEAM_GREEN] >= 0 ? pRules->m_TeamRespawnWaveTimes[TF_TEAM_GREEN] : mp_respawnwavetime.GetFloat());
-			float flGreenScalar = pRules->GetRespawnTimeScalar(TF_TEAM_GREEN);
-			float flNextGreenRespawn = pRules->GetNextRespawnWave(TF_TEAM_GREEN, NULL) - gpGlobals->curtime;
-
-			float flYellowMin = (pRules->m_TeamRespawnWaveTimes[TF_TEAM_YELLOW] >= 0 ? pRules->m_TeamRespawnWaveTimes[TF_TEAM_YELLOW] : mp_respawnwavetime.GetFloat());
-			float flYellowScalar = pRules->GetRespawnTimeScalar(TF_TEAM_YELLOW);
-			float flNextYellowRespawn = pRules->GetNextRespawnWave(TF_TEAM_YELLOW, NULL) - gpGlobals->curtime;
-
-			char tempGreen[128];
-			Q_snprintf(tempBlue, sizeof(tempBlue), "Green: Min Spawn %2.2f, Scalar %2.2f, Next Spawn In: %.2f\n", flGreenMin, flGreenScalar, flNextGreenRespawn);
-
-			char tempYellow[128];
-			Q_snprintf(tempBlue, sizeof(tempBlue), "Yellow: Min Spawn %2.2f, Scalar %2.2f, Next Spawn In: %.2f\n", flYellowMin, flYellowScalar, flNextYellowRespawn);
-
-			ClientPrint(pPlayer, HUD_PRINTTALK, tempGreen);
-			ClientPrint(pPlayer, HUD_PRINTTALK, tempYellow);
-		}
-
-
 	}
 }
 
@@ -2990,7 +2525,7 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
 {
 	// Check the team.
-	if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() && !IsDeathmatch() )
+	if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
 		return false;
 
 	if ( !pSpot->IsTriggered( pPlayer ) )
@@ -4001,10 +3536,6 @@ void CTFGameRules::SendWinPanelInfo( void )
 		int iRedScore = GetGlobalTeam( TF_TEAM_RED )->GetScore();
 		int iBlueScorePrev = iBlueScore;
 		int iRedScorePrev = iRedScore;
-		int iGreenScore = GetGlobalTeam(TF_TEAM_GREEN)->GetScore();
-		int iYellowScore = GetGlobalTeam(TF_TEAM_YELLOW)->GetScore();
-		int iGreenScorePrev = iGreenScore;
-		int iYellowScorePrev = iYellowScore;
 
 		bool bRoundComplete = m_bForceMapReset || ( IsGameUnderTimeLimit() && ( GetTimeLeft() <= 0 ) );
 
@@ -4021,16 +3552,6 @@ void CTFGameRules::SendWinPanelInfo( void )
 				break;
 			case TF_TEAM_RED:
 				iRedScorePrev = ( iRedScore - TEAMPLAY_ROUND_WIN_SCORE >= 0 ) ? ( iRedScore - TEAMPLAY_ROUND_WIN_SCORE ) : 0;
-				break;
-			case TF_TEAM_GREEN:
-				if ( !IsFourTeamGame() )
-					break;
-				iGreenScorePrev = ( iGreenScore - TEAMPLAY_ROUND_WIN_SCORE >= 0 ) ? (iBlueScore - TEAMPLAY_ROUND_WIN_SCORE ) : 0;
-				break;
-			case TF_TEAM_YELLOW:
-				if ( !IsFourTeamGame() )
-					break;
-				iYellowScorePrev = ( iYellowScore - TEAMPLAY_ROUND_WIN_SCORE >= 0 ) ? (iRedScore - TEAMPLAY_ROUND_WIN_SCORE ) : 0;
 				break;
 
 			case TEAM_UNASSIGNED:
@@ -4211,16 +3732,6 @@ void CTFGameRules::SetupSpawnPointsForRound( void )
 			{
 				pTFSpawn->SetDisabled( false );
 				pTFSpawn->ChangeTeam( TF_TEAM_RED );
-			}
-			else if ( hRoundGreen && ( hRoundGreen == pCurrentRound ) )
-			{
-				pTFSpawn->SetDisabled(false);
-				pTFSpawn->ChangeTeam( TF_TEAM_GREEN );
-			}
-			else if ( hRoundYellow && (hRoundYellow == pCurrentRound))
-			{
-				pTFSpawn->SetDisabled(false);
-				pTFSpawn->ChangeTeam( TF_TEAM_YELLOW );
 			}
 			else
 			{
@@ -5316,34 +4827,20 @@ bool CTFGameRules::PlayerMayBlockPoint( CBasePlayer *pPlayer, int iPointIndex, c
 //-----------------------------------------------------------------------------
 int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 {
-	// DM uses a different scoring system
-	if ( TFGameRules()->IsDeathmatch() )
-	{
-		int iScore = (pRoundStats->m_iStat[TFSTAT_KILLS]) +
-					 (pRoundStats->m_iStat[TFSTAT_KILLASSISTS] / TF_SCORE_KILL_ASSISTS_PER_POINT) +
-					 (pRoundStats->m_iStat[TFSTAT_DOMINATIONS]) +
-					 (pRoundStats->m_iStat[TFSTAT_REVENGE]) -
-					 (pRoundStats->m_iStat[TFSTAT_SUICIDES]) -
-					 (pRoundStats->m_iStat[TFSTAT_ENV_DEATHS]);
-		return iScore;
-	}
-	else
-	{
-		int iScore = (pRoundStats->m_iStat[TFSTAT_KILLS] * TF_SCORE_KILL) +
-			(pRoundStats->m_iStat[TFSTAT_CAPTURES] * TF_SCORE_CAPTURE) +
-			(pRoundStats->m_iStat[TFSTAT_DEFENSES] * TF_SCORE_DEFEND) +
-			(pRoundStats->m_iStat[TFSTAT_BUILDINGSDESTROYED] * TF_SCORE_DESTROY_BUILDING) +
-			(pRoundStats->m_iStat[TFSTAT_HEADSHOTS] / TF_SCORE_HEADSHOT_PER_POINT) +
-			(pRoundStats->m_iStat[TFSTAT_BACKSTABS] * TF_SCORE_BACKSTAB) +
-			(pRoundStats->m_iStat[TFSTAT_HEALING] / TF_SCORE_HEAL_HEALTHUNITS_PER_POINT) +
-			(pRoundStats->m_iStat[TFSTAT_KILLASSISTS] / TF_SCORE_KILL_ASSISTS_PER_POINT) +
-			(pRoundStats->m_iStat[TFSTAT_TELEPORTS] / TF_SCORE_TELEPORTS_PER_POINT) +
-			(pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN) +
-			(pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE) +
-			(pRoundStats->m_iStat[TFSTAT_DAMAGE] / TF_SCORE_DAMAGE_PER_POINT) +
-			(pRoundStats->m_iStat[TFSTAT_BONUS] / TF_SCORE_BONUS_PER_POINT);
-		return max(iScore, 0);
-	}
+	int iScore = (pRoundStats->m_iStat[TFSTAT_KILLS] * TF_SCORE_KILL) +
+		(pRoundStats->m_iStat[TFSTAT_CAPTURES] * TF_SCORE_CAPTURE) +
+		(pRoundStats->m_iStat[TFSTAT_DEFENSES] * TF_SCORE_DEFEND) +
+		(pRoundStats->m_iStat[TFSTAT_BUILDINGSDESTROYED] * TF_SCORE_DESTROY_BUILDING) +
+		(pRoundStats->m_iStat[TFSTAT_HEADSHOTS] / TF_SCORE_HEADSHOT_PER_POINT) +
+		(pRoundStats->m_iStat[TFSTAT_BACKSTABS] * TF_SCORE_BACKSTAB) +
+		(pRoundStats->m_iStat[TFSTAT_HEALING] / TF_SCORE_HEAL_HEALTHUNITS_PER_POINT) +
+		(pRoundStats->m_iStat[TFSTAT_KILLASSISTS] / TF_SCORE_KILL_ASSISTS_PER_POINT) +
+		(pRoundStats->m_iStat[TFSTAT_TELEPORTS] / TF_SCORE_TELEPORTS_PER_POINT) +
+		(pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN) +
+		(pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE) +
+		(pRoundStats->m_iStat[TFSTAT_DAMAGE] / TF_SCORE_DAMAGE_PER_POINT) +
+		(pRoundStats->m_iStat[TFSTAT_BONUS] / TF_SCORE_BONUS_PER_POINT);
+	return max(iScore, 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -5722,10 +5219,6 @@ const char *CTFGameRules::GetTeamGoalString( int iTeam )
 		return m_pszTeamGoalStringRed.Get();
 	if ( iTeam == TF_TEAM_BLUE )
 		return m_pszTeamGoalStringBlue.Get();
-	if (iTeam == TF_TEAM_GREEN)
-		return m_pszTeamGoalStringGreen.Get();
-	if (iTeam == TF_TEAM_YELLOW)
-		return m_pszTeamGoalStringYellow.Get();
 
 	return NULL;
 }
@@ -5884,14 +5377,6 @@ void CTFGameRules::GetTeamGlowColor( int nTeam, float &r, float &g, float &b )
 			r = 0.74f; g = 0.23f; b = 0.23f;
 			break;
 
-		case TF_TEAM_GREEN:
-			r = 0.03f; g = 0.68f; b = 0;
-			break;
-
-		case TF_TEAM_YELLOW:
-			r = 1.0f; g = 0.62f; b = 0;
-			break;
-
 		default:
 			r = 0.76f; g = 0.76f; b = 0.76f;
 			break;
@@ -6014,12 +5499,6 @@ const char *CTFGameRules::GetGameDescription(void)
 		case TF_GAMETYPE_ARENA:
 			return "TF2V (Arena)";
 			break;
-		case TF_GAMETYPE_DM:
-			return "Deathmatch";
-			break;
-		case TF_GAMETYPE_VIP:
-			return "VIP";
-			break;
 		case TF_GAMETYPE_MVM:
 			return "Implying we will ever have this";
 			break;
@@ -6038,17 +5517,6 @@ const char *CTFGameRules::GetGameDescription(void)
 void CTFGameRules::PlayerSpawn(CBasePlayer *pPlayer)
 {
 	BaseClass::PlayerSpawn(pPlayer);
-	if ( IsDeathmatch() )
-	{
-		CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-		float flSpawnProtectTime = gpGlobals->curtime + tf2c_dm_spawnprotecttime.GetFloat();
-		pTFPlayer->AddFlag( FL_GODMODE );
-		pTFPlayer->m_nRenderFX = kRenderFxExplode;
-		pTFPlayer->AddEffects( EF_ITEM_BLINK );
-		pTFPlayer->GetViewModel()->m_nRenderFX = kRenderFxExplode;
-		pTFPlayer->GetViewModel()->AddEffects( EF_ITEM_BLINK );
-		pTFPlayer->m_flSpawnProtectTime = flSpawnProtectTime;
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -6085,21 +5553,11 @@ int CTFGameRules::CountActivePlayers( void )
 
 float CTFGameRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleWithNumPlayers /* = true */ )
 {
-	// No respawn times in deathmatch.
-	if ( IsDeathmatch() )
-		return 0.0f;
-
 	return BaseClass::GetRespawnWaveMaxLength( iTeam, bScaleWithNumPlayers );
 }
 
 bool CTFGameRules::ShouldBalanceTeams( void )
 {
-	// No team balancing in DM since everybody should be on RED.
-	if ( IsDeathmatch() )
-	{
-		return false;
-	}
-
 	return BaseClass::ShouldBalanceTeams();
 }
 

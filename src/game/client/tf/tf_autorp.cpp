@@ -117,23 +117,15 @@ void CTFAutoRP::ApplyRPTo( char *pBuf, int iBufSize )
 		iBufSize = -1;
 
 	char buf[128];
-	bool bAllowPrepend = false;
+	bool bAllowPrepend = true;
 
 	if ( pBuf[0] == '-' || pBuf[0] == '>' || pBuf[0] == '<' )
 	{
-		// Skip the first character
-		iBufSize --;
-		V_strcpy( buf, pBuf + 1 );
-	}
-	else
-	{
-		V_strcpy( buf, pBuf );
-		bAllowPrepend = true;
+		pBuf++;
+		bAllowPrepend = false;
 	}
 
-	ModifySpeech( buf, iBufSize, bAllowPrepend );
-
-	V_strcpy( pBuf, buf );*/
+	ModifySpeech( pBuf, iBufSize, bAllowPrepend );*/
 }
 
 void CTFAutoRP::ModifySpeech( char *pBuf, unsigned int iBufSize, bool bAllowPrepend )
@@ -170,5 +162,6 @@ void CTFAutoRP::ModifySpeech( char *pBuf, unsigned int iBufSize, bool bAllowPrep
 				V_strcat( pBuf, iszAppended, iBufSize );
 			}
 		}
-	}*/
+	}
+	Maybe do some sort of while loop checking for a-z/A-Z and grab that and then modify it and concatenate into new string*/
 }

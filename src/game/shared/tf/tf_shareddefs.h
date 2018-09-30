@@ -27,8 +27,6 @@ enum
 {
 	TF_TEAM_RED = LAST_SHARED_TEAM+1,
 	TF_TEAM_BLUE,
-	TF_TEAM_GREEN, 
-	TF_TEAM_YELLOW,
 	TF_TEAM_COUNT
 };
 
@@ -40,14 +38,12 @@ extern const char *g_aTeamParticleNames[TF_TEAM_COUNT];
 extern color32 g_aTeamColors[TF_TEAM_COUNT];
 extern color32 g_aTeamSkinColors[TF_TEAM_COUNT];
 
-const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
-const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
-void PrecacheTeamParticles( const char *pszFormat, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
+const char *GetTeamParticleName( int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
+const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
+void PrecacheTeamParticles( const char *pszFormat, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
 
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
-#define CONTENTS_GREENTEAM	CONTENTS_UNUSED
-#define CONTENTS_YELLOWTEAM	CONTENTS_UNUSED6
 			
 // Team roles
 enum 
@@ -81,14 +77,8 @@ enum
 //-----------------------------------------------------------------------------
 #define PANEL_CLASS_BLUE		"class_blue"
 #define PANEL_CLASS_RED			"class_red"
-#define PANEL_CLASS_GREEN		"class_green"
-#define PANEL_CLASS_YELLOW		"class_yellow"
 #define PANEL_MAPINFO			"mapinfo"
 #define PANEL_ROUNDINFO			"roundinfo"
-#define PANEL_FOURTEAMSCOREBOARD "fourteamscoreboard"
-#define PANEL_FOURTEAMSELECT	"fourteamselect"
-#define PANEL_DEATHMATCHSCOREBOARD "deathmatchscoreboard"
-#define PANEL_DEATHMATCHTEAMSELECT "deathmatchteamselect"
 #define PANEL_ARENATEAMSELECT "arenateamselect"
 
 // file we'll save our list of viewed intro movies in
@@ -106,8 +96,6 @@ enum
 
 #define COLOR_TF_BLUE	Color( 64, 64, 255, 255 )
 #define COLOR_TF_RED	Color( 255, 64, 64, 255 )
-#define COLOR_TF_GREEN	Color( 64, 255, 64, 255 )
-#define COLOR_TF_YELLOW	Color( 255, 255, 64, 255 )
 #define COLOR_TF_SPECTATOR Color( 245, 229, 196, 255 )
 
 
@@ -117,7 +105,6 @@ enum
 #define TF_CLASS_COUNT			( TF_CLASS_COUNT_ALL - 1 )
 
 #define TF_FIRST_NORMAL_CLASS	( TF_CLASS_UNDEFINED + 1 )
-#define TF_LAST_NORMAL_CLASS	( TF_CLASS_CIVILIAN - 1 )
 
 #define	TF_CLASS_MENU_BUTTONS	( TF_CLASS_RANDOM + 1 )
 
@@ -133,12 +120,7 @@ enum
 	TF_CLASS_HEAVYWEAPONS,
 	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
-	TF_CLASS_ENGINEER,		// TF_LAST_NORMAL_CLASS
-
-	// Add any new classes after Engineer.
-	// The following classes are not available in normal play.
-	TF_CLASS_CIVILIAN,
-	TF_CLASS_MERCENARY,
+	TF_CLASS_ENGINEER,		// TF_CLASS_COUNT
 	TF_CLASS_COUNT_ALL,
 
 	TF_CLASS_RANDOM
@@ -177,8 +159,6 @@ enum
 	TF_GAMETYPE_RD,
 	TF_GAMETYPE_PASSTIME,
 	TF_GAMETYPE_PD,
-	TF_GAMETYPE_DM,
-	TF_GAMETYPE_VIP,
 	TF_GAMETYPE_MEDIEVAL,
 };
 extern const char *g_aGameTypeNames[];	// localized gametype names
@@ -374,12 +354,7 @@ enum
 	TF_WEAPON_STICKBOMB, 
 	TF_WEAPON_BAT_WOOD,
 	TF_WEAPON_ROBOT_ARM,
-	TF_WEAPON_BUFF_ITEM,//TF2C AFTER THIS
-	TF_WEAPON_HUNTERRIFLE,
-	TF_WEAPON_UMBRELLA,
-	TF_WEAPON_HAMMERFISTS,
-	TF_WEAPON_CHAINSAW,
-	TF_WEAPON_HEAVYARTILLERY,
+	TF_WEAPON_BUFF_ITEM,
 
 	TF_WEAPON_COUNT
 };
@@ -429,8 +404,6 @@ enum
 	TF_PROJECTILE_GRAPPLINGHOOK,
 	TF_PROJECTILE_SENTRY_ROCKET,
 	TF_PROJECTILE_BREAD_MONSTER,
-	TF_PROJECTILE_NAIL,
-	TF_PROJECTILE_DART,
 
 	TF_NUM_PROJECTILES
 };
@@ -577,18 +550,6 @@ enum
 	TF_COND_NO_MOVE,
 	TF_COND_HALF_STUN,
 	TF_COND_DISGUISE_HEALTH_OVERHEALED,
-
-	// Add TF2C conds here
-	TF_COND_SMOKE_BOMB,
-	TF_COND_SLOWED,
-
-	// Powerup conditions
-	TF_COND_POWERUP_CRITDAMAGE,
-	TF_COND_POWERUP_SHORTUBER,
-	TF_COND_POWERUP_FASTRELOAD,
-	TF_COND_POWERUP_CLOAK,
-	TF_COND_POWERUP_RAGEMODE,
-	TF_COND_POWERUP_CLASSCHANGE,
 
 	TF_COND_LAST
 };

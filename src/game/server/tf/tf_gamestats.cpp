@@ -33,7 +33,6 @@ const char *g_aClassNames[] =
 	"TF_CLASS_PYRO",
 	"TF_CLASS_SPY",
 	"TF_CLASS_ENGINEER",
-	"TF_CLASS_CIVILIAN",
 };
 
 //-----------------------------------------------------------------------------
@@ -378,7 +377,7 @@ void CTFGameStats::Event_PlayerSpawned( CTFPlayer *pPlayer )
 	if ( !map )
 		return;
 
-	int iTeamCount = TFGameRules()->IsFourTeamGame() ? 5 : 3;
+	int iTeamCount = 3;
 
 	// calculate peak player count on each team
 	for ( iTeam = FIRST_GAME_TEAM; iTeam <= iTeamCount; iTeam++ )

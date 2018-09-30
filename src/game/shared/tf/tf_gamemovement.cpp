@@ -181,19 +181,11 @@ unsigned int CTFGameMovement::PlayerSolidMask( bool brushOnly )
 		switch( m_pTFPlayer->GetTeamNumber() )
 		{
 		case TF_TEAM_RED:
-			uMask = CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
+			uMask = CONTENTS_BLUETEAM;
 			break;
 
 		case TF_TEAM_BLUE:
-			uMask = CONTENTS_REDTEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
-			break;
-
-		case TF_TEAM_GREEN:
-			uMask = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_YELLOWTEAM;
-			break;
-
-		case TF_TEAM_YELLOW:
-			uMask = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM;
+			uMask = CONTENTS_REDTEAM;
 			break;
 		}
 	}
@@ -346,9 +338,6 @@ void CTFGameMovement::PreventBunnyJumping()
 	// Speed at which bunny jumping is limited
 	float maxscaledspeed = tf2c_bunnyjump_max_speed_factor.GetFloat() * player->m_flMaxspeed;
 
-	if (TFGameRules()->IsDeathmatch())
-		maxscaledspeed = 1.50f * player->m_flMaxspeed;
-
 	if ( maxscaledspeed <= 0.0f )
 		return;
 
@@ -387,7 +376,7 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( player->GetFlags() & FL_DUCKING )
 	{
 		// Let a scout do it.
-		bool bAllow = (bScout && !bOnGround) || tf2c_duckjump.GetBool() || TFGameRules()->IsDeathmatch();
+		bool bAllow = (bScout && !bOnGround) || tf2c_duckjump.GetBool();
 
 		if ( !bAllow )
 			return false;
@@ -398,13 +387,13 @@ bool CTFGameMovement::CheckJumpButton()
 		return false;
 
 	// Cannot jump again until the jump button has been released.
-	// Unless we're in deathmatch or we have tf2c_autojump enabled
+	// Unless autojump is enabled
 	if ( mv->m_nOldButtons & IN_JUMP )
 	{
 		if ( !bOnGround )
 			return false;
 
-		if ( !tf2c_autojump.GetBool() && !TFGameRules()->IsDeathmatch() )
+		if ( !tf2c_autojump.GetBool() )
 			return false;
 	}
 

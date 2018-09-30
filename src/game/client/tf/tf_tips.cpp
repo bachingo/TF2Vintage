@@ -31,7 +31,7 @@ bool CTFTips::Init()
 	{
 		// count how many tips there are for each class and in total
 		m_iTipCountAll = 0;
-		for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+		for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT; iClass++ )
 		{
 			// tip count per class is stored in resource file
 			wchar_t *wzTipCount = g_pVGuiLocalize->Find( CFmtStr( "Tip_%d_Count", iClass ) );
@@ -55,7 +55,7 @@ const wchar_t *CTFTips::GetRandomTip()
 	// pick a random tip
 	int iTip = RandomInt( 0, m_iTipCountAll-1 );
 	// walk through each class until we find the class this tip lands in
-	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT; iClass++ )
 	{
 		Assert( iTip >= 0 );
 		int iClassTipCount = m_iTipCount[iClass]; 
@@ -79,7 +79,7 @@ const wchar_t *CTFTips::GetNextClassTip( int iClass )
 		Init();
 
 	// OK to call this function with TF_CLASS_UNDEFINED or TF_CLASS_RANDOM, just return a random tip for any class in that case
-	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_LAST_NORMAL_CLASS )
+	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_CLASS_COUNT )
 		return GetRandomTip();
 
 	int iClassTipCount = m_iTipCount[iClass];

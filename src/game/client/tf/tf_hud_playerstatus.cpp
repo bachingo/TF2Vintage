@@ -603,18 +603,6 @@ void CTFClassImage::SetClass( int iTeam, int iClass, int iCloakstate )
 		case TF_TEAM_BLUE:
 			Q_strncpy(szImage, g_szBlueClassImages[iClass], sizeof(szImage));
 			break;
-		case TF_TEAM_GREEN:
-			Q_strncpy(szImage, g_szGreenClassImages[iClass], sizeof(szImage));
-			break;
-		case TF_TEAM_YELLOW:
-			Q_strncpy(szImage, g_szYellowClassImages[iClass], sizeof(szImage));
-			break;
-	}
-
-	// Since DM mode doesn't use teams, we only need 1 team specific image
-	if (iClass == TF_CLASS_MERCENARY)
-	{
-		Q_strncpy(szImage, "../hud/class_merc", sizeof(szImage));
 	}
 
 	switch( iCloakstate )

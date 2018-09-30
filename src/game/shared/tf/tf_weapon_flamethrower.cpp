@@ -614,7 +614,7 @@ void CTFFlameThrower::DeflectEntity( CBaseEntity *pEntity, CTFPlayer *pAttacker,
 	if ( !TFGameRules() )
 		return;
 
-	if ( ( pEntity->GetTeamNumber() == pAttacker->GetTeamNumber() ) && !TFGameRules()->IsDeathmatch() )
+	if ( ( pEntity->GetTeamNumber() == pAttacker->GetTeamNumber() ) )
 		return;
 
 	pEntity->Deflected( pAttacker, vecDir );
@@ -626,7 +626,7 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 	if ( !pVictim )
 		return;
 
-	if ( ( !pVictim->InSameTeam( pAttacker ) || TFGameRules()->IsDeathmatch() ) && tf2c_airblast_players.GetBool() )
+	if ( !pVictim->InSameTeam( pAttacker ) && tf2c_airblast_players.GetBool() )
 	{
 		// Don't push players if they're too far off to the side. Ignore Z.
 		Vector vecVictimDir = pVictim->WorldSpaceCenter() - pAttacker->WorldSpaceCenter();
@@ -1036,8 +1036,6 @@ void CTFFlameThrower::RestartParticleEffect( void )
 		m_pFlameEffect = pModel->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
 		m_hFlameEffectHost = pModel;
 	}
-
-	pOwner->m_Shared.SetParticleToMercColor( m_pFlameEffect );
 }
 
 #else

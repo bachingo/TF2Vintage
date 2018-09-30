@@ -152,7 +152,7 @@ void CTFBaseRocket::Spawn( void )
 
 	// Don't collide with players on the owner's team for the first bit of our life
 	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
-	m_bCollideWithTeammates = TFGameRules()->IsDeathmatch() ? true : false;
+	m_bCollideWithTeammates = false;
 
 #endif
 }
@@ -303,26 +303,18 @@ unsigned int CTFBaseRocket::PhysicsSolidMaskForEntity( void ) const
 		switch (GetTeamNumber())
 		{
 			case TF_TEAM_RED:
-				teamContents = CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
+				teamContents = CONTENTS_BLUETEAM;
 				break;
 
 			case TF_TEAM_BLUE:
-				teamContents = CONTENTS_REDTEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
-				break;
-
-			case TF_TEAM_GREEN:
-				teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_YELLOWTEAM;
-				break;
-
-			case TF_TEAM_YELLOW:
-				teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM;
+				teamContents = CONTENTS_REDTEAM;
 				break;
 		}
 	}
 	else
 	{
 		// Collide with all teams
-		teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
+		teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM;
 	}
 
 	return BaseClass::PhysicsSolidMaskForEntity() | teamContents;
@@ -487,23 +479,23 @@ void CTFBaseRocket::FlyThink( void )
 	{
 		// Find the closest visible enemy player.
 		CUtlVector<CTFPlayer *> vecPlayers;
-		int count = CollectPlayers(&vecPlayers, TEAM_ANY, true);
+		int count = CollectPlayers( &vecPlayers, TEAM_ANY, true );
 		CTFPlayer *pClosest = NULL;
 		float flClosest = FLT_MAX;
 		for (int i = 0; i < count; i++)
 		{
 			CTFPlayer *pPlayer = vecPlayers[i];
-			if (pPlayer == GetOwnerEntity())
+			if ( pPlayer == GetOwnerEntity() )
 				 continue;
 			
-			if (pPlayer->GetTeamNumber() == GetTeamNumber() && !TFGameRules()->IsDeathmatch())
+			if ( pPlayer->GetTeamNumber() == GetTeamNumber() )
 				 continue;
 			
-			Vector vecTarget = pPlayer->BodyTarget(GetAbsOrigin(), false);
-			if (FVisible(vecTarget))
+			Vector vecTarget = pPlayer->BodyTarget( GetAbsOrigin(), false );
+			if ( FVisible( vecTarget ) )
 			{
-				float flDist = (vecTarget - GetAbsOrigin()).Length();
-				if (flDist < flClosest)
+				float flDist = ( vecTarget - GetAbsOrigin() ).Length();
+				if ( flDist < flClosest )
 				{
 					flClosest = flDist;
 					pClosest = pPlayer;
@@ -512,21 +504,21 @@ void CTFBaseRocket::FlyThink( void )
 		}
 		
 		// Head towards him.
-		if (pClosest)
+		if ( pClosest )
 		{
-			Vector vecTarget = pClosest->BodyTarget(GetAbsOrigin(), false);
+			Vector vecTarget = pClosest->BodyTarget( GetAbsOrigin(), false );
 			Vector vecDir = vecTarget - GetAbsOrigin();
-			VectorNormalize(vecDir);
+			VectorNormalize( vecDir );
 			
 			float flSpeed = GetAbsVelocity().Length();
 			QAngle angForward;
-			VectorAngles(vecDir, angForward);
-			SetAbsAngles(angForward);
-			SetAbsVelocity(vecDir * flSpeed);
+			VectorAngles( vecDir, angForward );
+			SetAbsAngles( angForward );
+			SetAbsVelocity( vecDir * flSpeed );
 		}
 	}
 	
-	SetNextThink(gpGlobals->curtime + 0.1f);
+	SetNextThink( gpGlobals->curtime + 0.1f );
 }
 
 #endif

@@ -19,8 +19,6 @@ const char *g_aTeamNames[TF_TEAM_COUNT] =
 	"Spectator",
 	"Red",
 	"Blue",
-	"Green",
-	"Yellow"
 };
 
 const char *g_aTeamNamesShort[TF_TEAM_COUNT] =
@@ -29,8 +27,6 @@ const char *g_aTeamNamesShort[TF_TEAM_COUNT] =
 	"red", // Spectator
 	"red",
 	"blu",
-	"grn",
-	"ylw"
 };
 
 const char *g_aTeamParticleNames[TF_TEAM_COUNT] =
@@ -39,39 +35,28 @@ const char *g_aTeamParticleNames[TF_TEAM_COUNT] =
 	"red",
 	"red",
 	"blue",
-	"green",
-	"yellow"
 };
 
-const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
-{
-	if ( bDeathmatchOverride && TFGameRules() && TFGameRules()->IsDeathmatch() )
-	{
-		return "dm";
-	}
+// Putting a dummy boolean for the old dm shit for now
 
+const char *GetTeamParticleName( int iTeam, bool bDummyBoolean /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
+{
 	return pNames[iTeam];
 }
 
-const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
+const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDummyBoolean /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
 {
 	static char szParticleName[256];
 
-	V_snprintf( szParticleName, 256, pszFormat, GetTeamParticleName( iTeam, bDeathmatchOverride, pNames ) );
+	V_snprintf( szParticleName, 256, pszFormat, GetTeamParticleName( iTeam, bDummyBoolean, pNames ) );
 	return szParticleName;
 }
 
-void PrecacheTeamParticles(const char *pszFormat, bool bDeathmatchOverride /*= false*/, const char **pNames/* = g_aTeamParticleNames*/)
+void PrecacheTeamParticles(const char *pszFormat, bool bDummyBoolean /*= false*/, const char **pNames/* = g_aTeamParticleNames*/)
 {
 	for (int i = FIRST_GAME_TEAM; i < TEAM_COUNT_NORMAL; i++)
 	{
 		const char *pszParticle = ConstructTeamParticle(pszFormat, i, false, pNames);
-		PrecacheParticleSystem(pszParticle);
-	}
-	
-	if (bDeathmatchOverride)
-	{
-		const char *pszParticle = ConstructTeamParticle(pszFormat, FIRST_GAME_TEAM, true, pNames);
 		PrecacheParticleSystem(pszParticle);
 	}
 }
@@ -82,8 +67,6 @@ color32 g_aTeamColors[TF_TEAM_COUNT] =
 	{ 0, 0, 0, 0 }, // Spectator
 	{ 255, 0, 0, 0 }, // Red
 	{ 0, 0, 255, 0 }, // Blue
-	{ 0, 255, 0, 0 }, // Green
-	{ 255, 255, 0, 0 } // Yellow
 };
 
 bool IsGameTeam( int iTeam )
@@ -107,8 +90,6 @@ const char *g_aPlayerClassNames[] =
 	"#TF_Class_Name_Pyro",
 	"#TF_Class_Name_Spy",
 	"#TF_Class_Name_Engineer",
-	"#TF_Class_Name_Civilian",
-	"#TF_Class_Name_Mercenary"
 };
 
 const char *g_aDominationEmblems[] =
@@ -142,7 +123,6 @@ const char *g_aPlayerClassEmblems[] =
 	"../hud/leaderboard_class_pyro",
 	"../hud/leaderboard_class_spy",
 	"../hud/leaderboard_class_engineer",
-	"../hud/leaderboard_class_civilian",
 };
 
 const char *g_aPlayerClassEmblemsDead[] =
@@ -156,7 +136,6 @@ const char *g_aPlayerClassEmblemsDead[] =
 	"../hud/leaderboard_class_pyro_d",
 	"../hud/leaderboard_class_spy_d",
 	"../hud/leaderboard_class_engineer_d",
-	"../hud/leaderboard_class_civilian_d",
 };
 
 const char *g_aPlayerClassNames_NonLocalized[] =
@@ -171,8 +150,6 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Pyro",
 	"Spy",
 	"Engineer",
-	"Civilian",
-	"Mercenary"
 };
 
 //-----------------------------------------------------------------------------
@@ -250,8 +227,6 @@ struct pszWpnEntTranslationListEntry
 	const char *weapon_pyro;
 	const char *weapon_spy;
 	const char *weapon_engineer;
-	const char *weapon_civilian;
-	const char *weapon_mercenary;
 };
 static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 {
@@ -266,8 +241,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_shotgun_pyro",		// Pyro
 	"tf_weapon_shotgun_primary",	// Spy
 	"tf_weapon_shotgun_primary",	// Engineer
-	"tf_weapon_shotgun_primary",	// Civilian
-	"tf_weapon_shotgun_soldier",	// Mercenary
 
 	"tf_weapon_pistol",				// Base weapon to translate
 	NULL,
@@ -280,8 +253,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_pistol",				// Pyro
 	"tf_weapon_pistol",				// Spy
 	"tf_weapon_pistol",				// Engineer
-	"tf_weapon_pistol",				// Civilian
-	"tf_weapon_pistol",				// Mercenary
 
 	"tf_weapon_shovel",				// Base weapon to translate
 	NULL,
@@ -294,8 +265,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_shovel",				// Pyro
 	"tf_weapon_shovel",				// Spy
 	"tf_weapon_shovel",				// Engineer
-	"tf_weapon_shovel",				// Civilian
-	"tf_weapon_shovel",				// Mercenary
 
 	"tf_weapon_bottle",				// Base weapon to translate
 	NULL,
@@ -308,8 +277,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_bottle",				// Pyro
 	"tf_weapon_bottle",				// Spy
 	"tf_weapon_bottle",				// Engineer
-	"tf_weapon_bottle",				// Civilian
-	"tf_weapon_bottle",				// Mercenary
 
 	"saxxy",						// Base weapon to translate
 	NULL,
@@ -322,8 +289,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_fireaxe",			// Pyro
 	"tf_weapon_knife",				// Spy
 	"tf_weapon_wrench",				// Engineer
-	"tf_weapon_umbrella",			// Civilian
-	"tf_weapon_crowbar",			// Mercenary
 
 	"tf_weapon_throwable",			// Base weapon to translate
 	NULL,
@@ -332,8 +297,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_throwable", //UNK_10D88B2
 	"tf_weapon_throwable", //UNK_10D88B2
 	"tf_weapon_throwable", //UNK_10D88D0
-	"tf_weapon_throwable", //UNK_10D88B2
-	"tf_weapon_throwable", //UNK_10D88B2
 	"tf_weapon_throwable", //UNK_10D88B2
 	"tf_weapon_throwable", //UNK_10D88B2
 	"tf_weapon_throwable", //UNK_10D88B2
@@ -350,8 +313,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_parachute_secondary",	// Pyro
 	"tf_weapon_parachute_secondary",	// Spy
 	0,									// Engineer
-	"tf_weapon_parachute_secondary",	// Civilian
-	"tf_weapon_parachute_secondary",	// Mercenary
 
 	"tf_weapon_revolver",			// Base weapon to translate
 	NULL,
@@ -364,8 +325,6 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_revolver_secondary",	// Pyro
 	"tf_weapon_revolver",			// Spy
 	"tf_weapon_revolver_secondary",	// Engineer
-	"tf_weapon_revolver",			// Civilian
-	"tf_weapon_revolver",			// Mercenary
 };
 
 //-----------------------------------------------------------------------------
@@ -438,13 +397,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_STICKBOMB",
 	"TF_WEAPON_BAT_WOOD",
 	"TF_WEAPON_ROBOT_ARM",
-	"TF_WEAPON_BUFF_ITEM",// TF2C WEAPONS AFTER THIS
-	"TF_WEAPON_HUNTERRIFLE",
-	"TF_WEAPON_UMBRELLA",
-	"TF_WEAPON_HAMMERFISTS",
-	"TF_WEAPON_CHAINSAW",
-	"TF_WEAPON_HEAVYARTILLERY",
-
+	"TF_WEAPON_BUFF_ITEM",
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
 
@@ -517,13 +470,6 @@ int g_aWeaponDamageTypes[] =
 	DMG_CLUB,   // TF_WEAPON_ROBOT_ARM
 	DMG_GENERIC, // TF_WEAPON_BUFF_ITEM
 
-	//TF2C WEAPONS AFTER THIS
-	DMG_BULLET | DMG_USE_HITLOCATIONS,//TF_WEAPON_HUNTERRIFLE,
-	DMG_CLUB, // TF_WEAPON_UMBRELLA,
-	DMG_CLUB,		// TF_WEAPON_HAMMERFISTS,
-	DMG_SLASH,		// TF_WEAPON_CHAINSAW,
-	DMG_BULLET | DMG_USEDISTANCEMOD,		// TF_WEAPON_HEAVYARTILLERY,
-
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
 	TF_DMG_SENTINEL_VALUE
@@ -575,8 +521,6 @@ const char *g_szProjectileNames[] =
 	"projectile_grapplinghook",
 	"projectile_sentry_rocket",
 	"projectile_bread_monster",
-	"projectile_nail",
-	"projectile_dart",
 };
 
 // these map to the projectiles named in g_szProjectileNames
@@ -588,8 +532,6 @@ int g_iProjectileWeapons[] =
 	TF_WEAPON_PIPEBOMBLAUNCHER,
 	TF_WEAPON_GRENADELAUNCHER,
 	TF_WEAPON_SYRINGEGUN_MEDIC,
-	TF_WEAPON_NAILGUN,
-	TF_WEAPON_TRANQ,
 	TF_WEAPON_FLAREGUN,
 };
 
@@ -771,10 +713,6 @@ int ConditionExpiresFast( int nCond )
 	// Liquids
 	if ( nCond == TF_COND_URINE ||
 		nCond == TF_COND_MAD_MILK )
-		return true;
-
-	// Tranq
-	if ( nCond == TF_COND_SLOWED )
 		return true;
 
 	return false;

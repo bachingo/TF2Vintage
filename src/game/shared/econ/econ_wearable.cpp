@@ -58,14 +58,6 @@ int CEconWearable::GetSkin( void )
 			return 0;
 			break;
 
-		case TF_TEAM_GREEN:
-			return 2;
-			break;
-
-		case TF_TEAM_YELLOW:
-			return 3;
-			break;
-
 		default:
 			return 0;
 			break;

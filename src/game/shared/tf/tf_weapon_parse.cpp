@@ -36,8 +36,6 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_bHasTeamSkins_Viewmodel = false;
 	m_bHasTeamSkins_Worldmodel = false;
 
-	m_szViewModelDM[0] = '\0';
-
 	m_szMuzzleFlashModel[0] = '\0';
 	m_flMuzzleFlashModelDuration = 0;
 	m_flMuzzleFlashModelScale = 0;
@@ -54,9 +52,6 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_szExplosionWaterEffect[0] = '\0';
 
 	m_iWeaponType = TF_WPN_TYPE_PRIMARY;
-
-	m_iMaxAmmo = 0;
-	m_iSpawnAmmo = 0;
 }
 
 CTFWeaponInfo::~CTFWeaponInfo()
@@ -102,11 +97,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flSmackDelay			= pKeyValuesData->GetFloat( "SmackDelay", 0.2f );
 	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_flSmackDelay		= pKeyValuesData->GetFloat( "Secondary_SmackDelay", 0.2f );
-
-#ifdef DM_WEAPON_BUCKET
-	m_iSlotDM = pKeyValuesData->GetInt( "bucket_DM", 0 );
-	m_iPositionDM = pKeyValuesData->GetInt( "bucket_position_DM", 0 );
-#endif
 
 	m_bDoInstantEjectBrass = ( pKeyValuesData->GetInt( "DoInstantEjectBrass", 1 ) != 0 );
 	const char *pszBrassModel = pKeyValuesData->GetString( "BrassModel", NULL );
@@ -161,13 +151,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLowerWeapon			= ( pKeyValuesData->GetInt( "LowerMainWeapon", 0 ) != 0 );
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );
 	m_bHasTeamSkins_Worldmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Worldmodel", 0 ) != 0 );
-
-	// DM Viewmodel override
-	const char *pszVMData = pKeyValuesData->GetString("viewmodel_dm", NULL);
-	if (pszVMData)
-	{
-		Q_strncpy( m_szViewModelDM, pszVMData, sizeof(m_szViewModelDM) );
-	}
 
 
 	// Model muzzleflash
@@ -224,7 +207,4 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	}
 
 	m_bDontDrop = ( pKeyValuesData->GetInt( "DontDrop", 0 ) > 0 );
-
-	m_iMaxAmmo = pKeyValuesData->GetInt( "MaxAmmo", 0 );
-	m_iSpawnAmmo = pKeyValuesData->GetInt( "SpawnAmmo", 0 );
 }

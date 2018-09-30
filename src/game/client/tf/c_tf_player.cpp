@@ -442,30 +442,15 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		int nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
 		SetModelIndex( nModelIndex );	
 
-		if ( TFGameRules()->IsDeathmatch() )
+		switch ( m_iTeam )
 		{
-			m_nSkin = 8;
-		}
-		else
-		{
-			switch ( m_iTeam )
-			{
-			case TF_TEAM_RED:
-				m_nSkin = 0;
-				break;
+		case TF_TEAM_RED:
+			m_nSkin = 0;
+			break;
 
-			case TF_TEAM_BLUE:
-				m_nSkin = 1;
-				break;
-
-			case TF_TEAM_GREEN:
-				m_nSkin = 4;
-				break;
-
-			case TF_TEAM_YELLOW:
-				m_nSkin = 5;
-				break;
-			}
+		case TF_TEAM_BLUE:
+			m_nSkin = 1;
+			break;
 		}
 	}
 
@@ -917,14 +902,6 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 			r = 0.4; g = 0.5; b = 1.0;
 			break;
 
-		case TF_TEAM_GREEN:
-			r = 0.4; g = 1.0; b = 0.5;
-			break;
-
-		case TF_TEAM_YELLOW:
-			r = 1.0; g = 0.5; b = 0.5;
-			break;
-
 		default:
 			r = 0.4; g = 0.5; b = 1.0;
 			break;
@@ -1216,14 +1193,7 @@ public:
 
 		if ( pPlayer && pPlayer->m_Shared.IsCritBoosted() )
 		{
-			if ( TFGameRules() && TFGameRules()->IsDeathmatch() )
-			{
-				Vector critColor = pPlayer->m_vecPlayerColor;
-				critColor *= 255;
-				critColor *= 0.30;
-				vecColor = critColor;
-			}
-			else if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) ||
+			if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) ||
 				pPlayer->InSameTeam( C_TFPlayer::GetLocalTFPlayer() ) ||
 				pPlayer->GetTeamNumber() == pPlayer->m_Shared.GetDisguiseTeam() )
 			{
@@ -1234,12 +1204,6 @@ public:
 					break;
 				case TF_TEAM_BLUE:
 					vecColor = Vector( 6, 21, 80 );
-					break;
-				case TF_TEAM_GREEN:
-					vecColor = Vector( 1, 28, 9 );
-					break;
-				case TF_TEAM_YELLOW:
-					vecColor = Vector( 28, 28, 9 );
 					break;
 				}
 			}
@@ -1271,7 +1235,6 @@ EXPOSE_INTERFACE(CProxyModelGlowColor, IMaterialProxy, "ModelGlowColor" IMATERIA
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for coloring items 
-//			Right now, it's only used for the mercenary
 //-----------------------------------------------------------------------------
 class CProxyItemTintColor : public CResultProxy
 {
@@ -1312,36 +1275,6 @@ public:
 			if ( pWeapon )
 			{
 				pPlayer = ToTFPlayer( pWeapon->GetOwner() );
-			}
-		}
-
-		if ( !pPlayer && TFGameRules() && TFGameRules()->IsDeathmatch() )
-		{
-			C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel*>(pEntity);
-			if ( pVMAddon )
-			{
-				if ( pVMAddon->m_viewmodel.Get() )
-				{
-					pPlayer = ToTFPlayer( pVMAddon->m_viewmodel.Get()->GetOwner() );
-				}
-			}
-
-			if ( !pPlayer )
-			{
-				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >(pEntity);
-				if ( !pPlayer && pVM )
-				{
-					pPlayer = ToTFPlayer( pVM->GetOwner() );
-				}
-			}
-
-			if ( !pPlayer )
-			{
-				C_TFWeaponBaseGrenadeProj *pGrenade = dynamic_cast<C_TFWeaponBaseGrenadeProj*>(pEntity);
-				if ( pGrenade )
-				{
-					pPlayer = ToTFPlayer( pGrenade->GetThrower() );
-				}
 			}
 		}
 
@@ -1520,14 +1453,6 @@ void CInvisProxy::HandleSpyInvis( C_TFPlayer *pPlayer )
 
 	case TF_TEAM_BLUE:
 		r = 0.4; g = 0.5; b = 1.0;
-		break;
-
-	case TF_TEAM_GREEN:
-		r = 0.4; g = 1.0; b = 0.5;
-		break;
-
-	case TF_TEAM_YELLOW:
-		r = 1.0; g = 0.5; b = 0.5;
 		break;
 
 	default:
@@ -2129,14 +2054,6 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 						pTeam = "blue";
 						break;
 
-					case TF_TEAM_GREEN:
-						pTeam = "green";
-						break;
-
-					case TF_TEAM_YELLOW:
-						pTeam = "yellow";
-						break;
-
 					case TEAM_SPECTATOR:
 						pTeam = "spectate";
 						break;
@@ -2232,12 +2149,6 @@ void C_TFPlayer::InitInvulnerableMaterial( void )
 	case TF_TEAM_BLUE:	
 		pszMaterial = "models/effects/invulnfx_blue.vmt";
 		break;
-	case TF_TEAM_GREEN:
-		pszMaterial = "models/effects/invulnfx_green.vmt";
-		break;
-	case TF_TEAM_YELLOW:
-		pszMaterial = "models/effects/invulnfx_yellow.vmt";
-		break;
 	default:
 		break;
 	}
@@ -2294,14 +2205,6 @@ void C_TFPlayer::GetGlowEffectColor( float *r, float *g, float *b )
 
 		case TF_TEAM_RED:
 			*r = 0.74f; *g = 0.23f; *b = 0.23f;
-			break;
-
-		case TF_TEAM_GREEN:
-			*r = 0.03f; *g = 0.68f; *b = 0;
-			break;
-
-		case TF_TEAM_YELLOW:
-			*r = 1.0f; *g = 0.62f; *b = 0;
 			break;
 
 		default:
@@ -2487,16 +2390,10 @@ bool C_TFPlayer::IsEnemyPlayer( void )
 	switch( pLocalPlayer->GetTeamNumber() )
 	{
 	case TF_TEAM_RED:
-		return (GetTeamNumber() == TF_TEAM_BLUE || GetTeamNumber() == TF_TEAM_GREEN || GetTeamNumber() == TF_TEAM_YELLOW);
+		return (GetTeamNumber() == TF_TEAM_BLUE);
 
 	case TF_TEAM_BLUE:
-		return (GetTeamNumber() == TF_TEAM_RED || GetTeamNumber() == TF_TEAM_GREEN || GetTeamNumber() == TF_TEAM_YELLOW);
-
-	case TF_TEAM_GREEN:
-		return (GetTeamNumber() == TF_TEAM_RED || GetTeamNumber() == TF_TEAM_BLUE || GetTeamNumber() == TF_TEAM_YELLOW);
-
-	case TF_TEAM_YELLOW:
-		return (GetTeamNumber() == TF_TEAM_RED || GetTeamNumber() == TF_TEAM_BLUE || GetTeamNumber() == TF_TEAM_GREEN);
+		return (GetTeamNumber() == TF_TEAM_RED);
 
 	default:
 		break;
@@ -2513,10 +2410,7 @@ void C_TFPlayer::ShowNemesisIcon( bool bShow )
 	if ( bShow )
 	{
 		const char *pszEffect = ConstructTeamParticle( "particle_nemesis_%s", GetTeamNumber(), true );
-
-		m_Shared.SetParticleToMercColor(
-			ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "head" )
-		);
+		ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "head" );
 	}
 	else
 	{
@@ -3654,16 +3548,6 @@ void C_TFPlayer::GetTeamColor( Color &color )
 			color[1] = 109;
 			color[2] = 129;
 			break;
-		case TF_TEAM_GREEN:
-			color[0] = 59;
-			color[1] = 120;
-			color[2] = 55;
-			break;
-		case TF_TEAM_YELLOW:
-			color[0] = 145;
-			color[1] = 145;
-			color[2] = 55;
-			break;
 		default:
 			color[0] = 255;
 			color[1] = 255;
@@ -3839,12 +3723,6 @@ bool C_TFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
 	{
-		if ( TFGameRules() && TFGameRules()->IsDeathmatch() )
-		{
-			// Collide with everyone in deathmatch.
-			return BaseClass::ShouldCollide( collisionGroup, contentsMask );
-		}
-
 		switch( GetTeamNumber() )
 		{
 		case TF_TEAM_RED:
@@ -3854,16 +3732,6 @@ bool C_TFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 
 		case TF_TEAM_BLUE:
 			if ( !( contentsMask & CONTENTS_BLUETEAM ) )
-				return false;
-			break;
-
-		case TF_TEAM_GREEN:
-			if ( !(contentsMask & CONTENTS_GREENTEAM ) )
-				return false;
-			break;
-
-		case TF_TEAM_YELLOW:
-			if ( !(contentsMask & CONTENTS_YELLOWTEAM ) )
 				return false;
 			break;
 		}
@@ -3906,28 +3774,15 @@ int C_TFPlayer::GetSkin()
 			nSkin = 1;
 			break;
 
-		case TF_TEAM_GREEN:
-			nSkin = 4;
-			break;
-
-		case TF_TEAM_YELLOW:
-			nSkin = 5;
-			break;
-
 		default:
 			nSkin = 0;
 			break;
 	}
 
-	if ( TFGameRules()->IsDeathmatch() )
-		nSkin = 8;
-
 	// 3 and 4 are invulnerable
 	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) )
 	{
 		nSkin += 2;
-		if ( TFGameRules()->IsDeathmatch() )
-			nSkin = 9;
 	}
 	else if ( m_Shared.InCond( TF_COND_DISGUISED ) && !IsEnemyPlayer() )
 	{
@@ -4015,17 +3870,6 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 
 	// Reset attachments
 	DestroyBoneAttachments();
-
-	if ( TFGameRules()->IsDeathmatch() && GetTeamNumber() == TF_TEAM_RED && ( !IsLocalPlayer() || !InFirstPersonView() ) )
-	{
-		char szParticleName[128];
-		int iParticleID = m_Shared.GetRespawnParticleID();
-		Q_snprintf( szParticleName, sizeof( szParticleName ), "dm_respawn_%02d", iParticleID );
-
-		CNewParticleEffect *pEffect = ParticleProp()->Create( szParticleName, PATTACH_ABSORIGIN );
-
-		m_Shared.SetParticleToMercColor( pEffect );
-	}
 
 	UpdateVisibility();
 
@@ -4557,15 +4401,6 @@ IMaterial *C_TFPlayer::GetHeadLabelMaterial( void )
 		case TF_TEAM_BLUE:
 			return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_BLUE];
 			break;
-
-		case TF_TEAM_GREEN:
-			return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_GREEN];
-			break;
-
-		case TF_TEAM_YELLOW:
-			return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_YELLOW];
-			break;
-
 	}
 
 	return BaseClass::GetHeadLabelMaterial();

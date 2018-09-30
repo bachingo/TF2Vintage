@@ -1077,18 +1077,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 				}
 				else
 				{
-#ifdef TF_CLASSIC_CLIENT
-					if ( TFGameRules() && TFGameRules()->IsDeathmatch() && team == TF_TEAM_RED )
-					{
-						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#TF_Joined_DM" ), 1, wszPlayerName );
-					}
-					else
-					{
-						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_team" ), 2, wszPlayerName, wszTeam );
-					}
-#else
 					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_team" ), 2, wszPlayerName, wszTeam );
-#endif
 				}
 
 				char szLocalized[100];

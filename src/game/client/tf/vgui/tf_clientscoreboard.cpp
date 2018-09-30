@@ -114,8 +114,7 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 			m_iImageDominating[i] = m_pImageList->AddImage(scheme()->GetImage(g_aDominationEmblems[i], true));
 		}
 
-		// We're skipping the mercenary, as he shouldn't have a visible class emblem during regular gameplay
-		for (int i = TF_CLASS_SCOUT; i < TF_CLASS_MERCENARY; i++)
+		for (int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT; i++)
 		{
 			m_iClassEmblem[i] = m_pImageList->AddImage(scheme()->GetImage(g_aPlayerClassEmblems[i - 1], true));
 			m_iClassEmblemDead[i] = m_pImageList->AddImage(scheme()->GetImage(g_aPlayerClassEmblemsDead[i - 1], true));
@@ -176,45 +175,23 @@ void CTFClientScoreBoardDialog::ShowPanel( bool bShow )
 
 	if ( bShow )
 	{		
-		if ( TFGameRules() && TFGameRules()->IsFourTeamGame())
-		{
-			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSCOREBOARD, true );
-		}
-		else if ( TFGameRules() && TFGameRules()->IsDeathmatch())
-		{
-			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHSCOREBOARD, true );
-		}
-		else
-		{
-			SetVisible(true);
-			MoveToFront();
+		SetVisible(true);
+		MoveToFront();
 
-			gHUD.LockRenderGroup(iRenderGroup);
+		gHUD.LockRenderGroup(iRenderGroup);
 
-			// Clear the selected item, this forces the default to the local player
-			SectionedListPanel *pList = GetSelectedPlayerList();
-			if (pList)
-			{
-				pList->ClearSelection();
-			}
+		// Clear the selected item, this forces the default to the local player
+		SectionedListPanel *pList = GetSelectedPlayerList();
+		if (pList)
+		{
+			pList->ClearSelection();
 		}
 	}
 	else
 	{
-		if (TFGameRules() && TFGameRules()->IsFourTeamGame())
-		{
-			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSCOREBOARD, false );
-		}
-		else if (TFGameRules() && TFGameRules()->IsDeathmatch())
-		{
-			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHSCOREBOARD, false );
-		}
-		else
-		{
-			SetVisible(false);
+		SetVisible(false);
 
-			gHUD.UnlockRenderGroup(iRenderGroup);
-		}
+		gHUD.UnlockRenderGroup(iRenderGroup);
 	}
 }
 
@@ -411,18 +388,12 @@ void CTFClientScoreBoardDialog::UpdateTeamInfo( void )
 	}
 }
 
-bool AreEnemyTeams(int iTeam1, int iTeam2)
+bool AreEnemyTeams( int iTeam1, int iTeam2 )
 {
-	if (iTeam1 == TF_TEAM_RED && (iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_GREEN || iTeam2 == TF_TEAM_YELLOW))
+	if ( iTeam1 == TF_TEAM_RED && iTeam2 == TF_TEAM_BLUE )
 		return true;
 
-	if (iTeam1 == TF_TEAM_BLUE && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_GREEN || iTeam2 == TF_TEAM_YELLOW))
-		return true;
-
-	if (iTeam1 == TF_TEAM_GREEN && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_YELLOW))
-		return true;
-
-	if (iTeam1 == TF_TEAM_YELLOW && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_GREEN))
+	if ( iTeam1 == TF_TEAM_BLUE && iTeam2 == TF_TEAM_RED )
 		return true;
 
 	return false;
@@ -517,7 +488,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList( void )
 						iClass = tf_PR->GetPlayerClass( playerIndex );
 					}
 
-					if( iClass >= TF_FIRST_NORMAL_CLASS && iClass < TF_CLASS_MERCENARY )
+					if( iClass >= TF_FIRST_NORMAL_CLASS && iClass < TF_CLASS_COUNT )
 					{
 						//pKeyValues->SetString( "class", g_aPlayerClassNames[iClass] );
 						pKeyValues->SetInt( "class", tf_PR->IsAlive( playerIndex) ? m_iClassEmblem[iClass] : m_iClassEmblemDead[iClass] );
@@ -758,7 +729,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails( void )
 
 	int iClass = pLocalPlayer->m_Shared.GetDesiredPlayerClassIndex();
 	int iTeam = pLocalPlayer->GetTeamNumber();
-	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass < TF_CLASS_MERCENARY ) )
+	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass < TF_CLASS_COUNT ) )
 	{
 		m_pClassImage->SetClass( iTeam, iClass, 0 );
 		m_pClassImage->SetVisible( true );

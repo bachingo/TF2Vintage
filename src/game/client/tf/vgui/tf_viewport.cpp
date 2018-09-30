@@ -49,8 +49,6 @@
 #include "tf_roundinfo.h"
 
 #include "tf_overview.h"
-#include "tf_fourteamscoreboard.h"
-#include "tf_deathmatchscoreboard.h"
 
 /*
 CON_COMMAND( spec_help, "Show spectator help screen")
@@ -95,12 +93,8 @@ CON_COMMAND( showmapinfo, "Show map info panel" )
 			gViewPortInterface->ShowPanel( PANEL_TEAM, false );
 			gViewPortInterface->ShowPanel( PANEL_CLASS_RED, false );
 			gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, false );
-			gViewPortInterface->ShowPanel( PANEL_CLASS_GREEN, false );
-			gViewPortInterface->ShowPanel( PANEL_CLASS_YELLOW, false );
 			gViewPortInterface->ShowPanel( PANEL_INTRO, false );
 			gViewPortInterface->ShowPanel( PANEL_ROUNDINFO, false );
-			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSELECT, false );
-			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHTEAMSELECT, false );
 			gViewPortInterface->ShowPanel( PANEL_ARENATEAMSELECT, false );
 
 			gViewPortInterface->ShowPanel( PANEL_MAPINFO, true );
@@ -127,9 +121,6 @@ CON_COMMAND( changeclass, "Choose a new class" )
 	if ( !gViewPortInterface )
 		return;
 
-	if ( TFGameRules() && TFGameRules()->IsDeathmatch() )
-		return;
-
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if ( pPlayer && pPlayer->CanShowClassMenu() )
@@ -141,12 +132,6 @@ CON_COMMAND( changeclass, "Choose a new class" )
 			break;
 		case TF_TEAM_BLUE:
 			gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
-			break;
-		case TF_TEAM_GREEN:
-			gViewPortInterface->ShowPanel( PANEL_CLASS_GREEN, true );
-			break;
-		case TF_TEAM_YELLOW:
-			gViewPortInterface->ShowPanel( PANEL_CLASS_YELLOW, true );
 			break;
 		default:
 			break;
@@ -263,33 +248,9 @@ IViewPortPanel* TFViewport::CreatePanelByName(const char *szPanelName)
 	{
 		newpanel = new CTFClassMenu_Blue( this );	
 	}
-	else if ( Q_strcmp( PANEL_CLASS_GREEN, szPanelName ) == 0)
-	{
-		newpanel = new CTFClassMenu_Green(this);
-	}
-	else if ( Q_strcmp( PANEL_CLASS_YELLOW, szPanelName ) == 0)
-	{
-		newpanel = new CTFClassMenu_Yellow(this);
-	}
 	else if ( Q_strcmp( PANEL_INTRO, szPanelName ) == 0 )
 	{
 		newpanel = new CTFIntroMenu( this );
-	}
-	else if ( Q_strcmp( PANEL_FOURTEAMSCOREBOARD, szPanelName ) == 0 )
-	{
-		newpanel = new CTFFourTeamScoreBoardDialog(this);
-	}
-	else if ( Q_strcmp( PANEL_FOURTEAMSELECT, szPanelName) == 0 )
-	{
-		newpanel = new CTFFourTeamMenu(this);
-	}
-	else if (Q_strcmp(PANEL_DEATHMATCHSCOREBOARD, szPanelName) == 0)
-	{
-		newpanel = new CTFDeathMatchScoreBoardDialog(this);
-	}
-	else if (Q_strcmp(PANEL_DEATHMATCHTEAMSELECT, szPanelName) == 0)
-	{
-		newpanel = new CTFDeathmatchTeamMenu(this);
 	}
 	else if (Q_strcmp(PANEL_ARENATEAMSELECT, szPanelName) == 0)
 	{
@@ -310,14 +271,8 @@ void TFViewport::CreateDefaultPanels( void )
 	AddNewPanel( CreatePanelByName( PANEL_TEAM ), "PANEL_TEAM" );
 	AddNewPanel( CreatePanelByName( PANEL_CLASS_RED ), "PANEL_CLASS_RED" );
 	AddNewPanel( CreatePanelByName( PANEL_CLASS_BLUE ), "PANEL_CLASS_BLUE" );
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_GREEN ), "PANEL_CLASS_GREEN" );
-	AddNewPanel( CreatePanelByName( PANEL_CLASS_YELLOW ), "PANEL_CLASS_YELLOW" );
 	AddNewPanel( CreatePanelByName( PANEL_INTRO ), "PANEL_INTRO" );
 	AddNewPanel( CreatePanelByName( PANEL_ROUNDINFO ), "PANEL_ROUNDINFO" );
-	AddNewPanel( CreatePanelByName( PANEL_FOURTEAMSCOREBOARD ), "PANEL_FOURTEAMSCOREBOARD" );
-	AddNewPanel( CreatePanelByName( PANEL_FOURTEAMSELECT ), "PANEL_FOURTEAMSELECT" );
-	AddNewPanel( CreatePanelByName( PANEL_DEATHMATCHSCOREBOARD ), "PANEL_DEATHMATCHSCOREBOARD" );
-	AddNewPanel( CreatePanelByName( PANEL_DEATHMATCHTEAMSELECT ), "PANEL_DEATHMATCHTEAMSELECT" );
 	AddNewPanel( CreatePanelByName( PANEL_ARENATEAMSELECT ), "PANEL_ARENATEAMSELECT" );
 
 	BaseClass::CreateDefaultPanels();
@@ -369,12 +324,6 @@ void TFViewport::OnScreenSizeChanged( int iOldWide, int iOldTall )
 				break;
 			case TF_TEAM_BLUE:
 				gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
-				break;
-			case TF_TEAM_GREEN:
-				gViewPortInterface->ShowPanel( PANEL_CLASS_GREEN, true );
-				break;
-			case TF_TEAM_YELLOW:
-				gViewPortInterface->ShowPanel( PANEL_CLASS_YELLOW, true );
 				break;
 			}
 		}

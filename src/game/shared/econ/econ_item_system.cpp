@@ -9,8 +9,6 @@ const char *g_TeamVisualSections[TF_TEAM_COUNT] =
 	"",					// TEAM_SPECTATOR
 	"visuals_red",		// TEAM_RED
 	"visuals_blu",		// TEAM_BLUE
-	"visuals_grn",		// TEAM_GREEN
-	"visuals_ylw",		// TEAM_YELLOW
 	//"visuals_mvm_boss"	// ???
 };
 

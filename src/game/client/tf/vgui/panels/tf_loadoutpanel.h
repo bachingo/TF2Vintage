@@ -8,7 +8,6 @@ class CTFAdvModelPanel;
 class CTFWeaponSetPanel;
 class CModelPanel;
 class CTFAdvButton;
-class CTFRGBPanel;
 class CTFAdvItemButton;
 
 //-----------------------------------------------------------------------------
@@ -47,7 +46,6 @@ private:
 	CTFAdvModelPanel *m_pClassModelPanel;
 	CModelPanel		*m_pGameModelPanel;
 	CTFWeaponSetPanel *m_pWeaponSetPanel;
-	CTFRGBPanel		*m_pRGBPanel;
 	CUtlVector<CTFAdvItemButton*> m_pWeaponIcons;
 	CUtlVector<CTFAdvItemButton*> m_pSlideButtons;
 	CUtlVector<int> m_RawIDPos;

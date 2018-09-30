@@ -106,11 +106,6 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 					pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
 					bSuccess = true;
 				}
-				if ( pTFPlayer->m_Shared.InCond( TF_COND_SLOWED ) )
-				{
-					pTFPlayer->m_Shared.RemoveCond( TF_COND_SLOWED );
-					bSuccess = true;
-				}
 			}
 		}
 

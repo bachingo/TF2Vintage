@@ -336,80 +336,21 @@ void CHudMenuSpyDisguise::SelectDisguise( int iClass, int iTeam )
 	}
 }
 
-void CHudMenuSpyDisguise::FlipFourTeams( void )
-{
-	// flip the teams
-	m_iShowingTeam = (m_iShowingTeam + 1) % 6;
-
-	if (m_iShowingTeam == 0)
-		m_iShowingTeam = TF_TEAM_RED;
-
-	switch (m_iShowingTeam)
-	{
-	case TF_TEAM_RED:
-		for (int i = 0; i < 9; i++)
-		{
-			m_pClassItems_Red[i]->SetVisible(true);
-			m_pClassItems_Blue[i]->SetVisible(false);
-			m_pClassItems_Green[i]->SetVisible(false);
-			m_pClassItems_Yellow[i]->SetVisible(false);
-		}
-		break;
-
-	case TF_TEAM_BLUE:
-		for (int i = 0; i < 9; i++)
-		{
-			m_pClassItems_Red[i]->SetVisible(false);
-			m_pClassItems_Blue[i]->SetVisible(true);
-			m_pClassItems_Green[i]->SetVisible(false);
-			m_pClassItems_Yellow[i]->SetVisible(false);
-		}
-		break;
-
-	case TF_TEAM_GREEN:
-		for (int i = 0; i < 9; i++)
-		{
-			m_pClassItems_Red[i]->SetVisible(false);
-			m_pClassItems_Blue[i]->SetVisible(false);
-			m_pClassItems_Green[i]->SetVisible(true);
-			m_pClassItems_Yellow[i]->SetVisible(false);
-		}
-		break;
-
-	case TF_TEAM_YELLOW:
-		for (int i = 0; i < 9; i++)
-		{
-			m_pClassItems_Red[i]->SetVisible(false);
-			m_pClassItems_Blue[i]->SetVisible(false);
-			m_pClassItems_Green[i]->SetVisible(false);
-			m_pClassItems_Yellow[i]->SetVisible(true);
-		}
-		break;
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CHudMenuSpyDisguise::ToggleDisguiseTeam( void )
 {
-	if (TFGameRules() && TFGameRules()->IsFourTeamGame())
-	{
-		FlipFourTeams();
-	}
-	else
-	{
-		// flip the teams
-		m_iShowingTeam = (m_iShowingTeam == TF_TEAM_BLUE) ? TF_TEAM_RED : TF_TEAM_BLUE;
+	// flip the teams
+	m_iShowingTeam = (m_iShowingTeam == TF_TEAM_BLUE) ? TF_TEAM_RED : TF_TEAM_BLUE;
 
-		// show / hide the class items
-		bool bShowBlue = (m_iShowingTeam == TF_TEAM_BLUE);
+	// show / hide the class items
+	bool bShowBlue = (m_iShowingTeam == TF_TEAM_BLUE);
 
-		for (int i = 0; i<9; i++)
-		{
-			m_pClassItems_Red[i]->SetVisible(!bShowBlue);
-			m_pClassItems_Blue[i]->SetVisible(bShowBlue);
-		}
+	for (int i = 0; i<9; i++)
+	{
+		m_pClassItems_Red[i]->SetVisible(!bShowBlue);
+		m_pClassItems_Blue[i]->SetVisible(bShowBlue);
 	}
 }
 
@@ -445,22 +386,15 @@ void CHudMenuSpyDisguise::FireGameEvent( IGameEvent *event )
 		CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 		if ( pPlayer )
 		{
-			if (TFGameRules() && TFGameRules()->IsFourTeamGame())
-			{
-				FlipFourTeams();
-			}
-			else
-			{
-				bool bShowBlue = (pPlayer->GetTeamNumber() == TF_TEAM_RED);
+			bool bShowBlue = (pPlayer->GetTeamNumber() == TF_TEAM_RED);
 
-				for (int i = 0; i<9; i++)
-				{
-					m_pClassItems_Red[i]->SetVisible(!bShowBlue);
-					m_pClassItems_Blue[i]->SetVisible(bShowBlue);
-				}
-
-				m_iShowingTeam = (bShowBlue) ? TF_TEAM_BLUE : TF_TEAM_RED;
+			for (int i = 0; i<9; i++)
+			{
+				m_pClassItems_Red[i]->SetVisible(!bShowBlue);
+				m_pClassItems_Blue[i]->SetVisible(bShowBlue);
 			}
+
+			m_iShowingTeam = (bShowBlue) ? TF_TEAM_BLUE : TF_TEAM_RED;
 		}
 	}
 	else

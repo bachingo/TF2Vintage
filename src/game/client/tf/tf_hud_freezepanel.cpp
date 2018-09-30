@@ -762,12 +762,6 @@ void CTFFreezePanel::SetColorForTargetTeam( int iTeamNumber )
 	case TF_TEAM_BLUE:
 		m_pFreezePanelBG->SetImage("../hud/freezecam_blue_bg");
 		break;
-	case TF_TEAM_GREEN:
-		m_pFreezePanelBG->SetImage("../hud/freezecam_green_bg");
-		break;
-	case TF_TEAM_YELLOW:
-		m_pFreezePanelBG->SetImage("../hud/freezecam_yellow_bg");
-		break;
 	default:
 		m_pFreezePanelBG->SetImage("../hud/freezecam_black_bg");
 		break;

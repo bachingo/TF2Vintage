@@ -13,6 +13,7 @@
 #include <spectatorgui.h>
 #include "hudelement.h"
 #include "tf_hud_playerstatus.h"
+#include "GameEventListener.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Custom health panel used to show spectator target's health
@@ -37,7 +38,7 @@ public:
 //-----------------------------------------------------------------------------
 // Purpose: TF Spectator UI
 //-----------------------------------------------------------------------------
-class CTFSpectatorGUI : public CSpectatorGUI
+class CTFSpectatorGUI : public CSpectatorGUI, public CGameEventListener
 {
 private:
 	DECLARE_CLASS_SIMPLE( CTFSpectatorGUI, CSpectatorGUI );
@@ -55,11 +56,16 @@ public:
 	virtual Color GetBlackBarColor( void ) { return Color(52,48,45, 255); }
 	virtual const char *GetResFilename( void );
 
+	virtual void FireGameEvent( IGameEvent *event );
+
 	void		UpdateKeyLabels( void );
+	void		UpdateItemPanel( bool bUnknown );
+
 protected:	
 	int		m_nLastSpecMode;
 	CBaseEntity	*m_nLastSpecTarget;
 	float	m_flNextTipChangeTime;		// time at which to next change the tip
+	float	m_flNextPanelCycleTime;		// time at whic the item panel should cycle
 	int		m_iTipClass;				// class that current tip is for
 
 	// used to store the x and y position of the Engy and Spy build panels so we can reset them when the spec panel goes away

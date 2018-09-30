@@ -19,13 +19,13 @@
 #include <vgui_controls/EditablePanel.h>
 
 #include "vgui/ILocalize.h"
+#include "controls/tf_advbuttonbase.h"
 
 #include <string.h>
 #include "baseobject_shared.h"
 #include "tf_imagepanel.h"
 #include "c_tf_player.h"
 #include "c_tf_weapon_builder.h"
-#include "tf_hud_weaponswitch.h"
 
 #define SELECTION_TIMEOUT_THRESHOLD		2.5f	// Seconds
 #define SELECTION_FADEOUT_TIME			3.0f
@@ -35,6 +35,191 @@
 
 ConVar tf_weapon_select_demo_start_delay( "tf_weapon_select_demo_start_delay", "1.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Delay after spawning to start the weapon bucket demo." );
 ConVar tf_weapon_select_demo_time( "tf_weapon_select_demo_time", "0.5", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Time to pulse each weapon bucket upon spawning as a new class. 0 to turn off." );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CItemModelPanel : public vgui::EditablePanel
+{
+	DECLARE_CLASS_SIMPLE(CItemModelPanel, vgui::Panel);
+public:
+	CItemModelPanel(Panel *parent, const char* name);
+	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
+	virtual void PerformLayout();
+	virtual void SetWeapon(C_BaseCombatWeapon *pWeapon, int iBorderStyle = -1, int ID = -1);
+	virtual void SetWeapon(CEconItemDefinition *pItemDefinition, int iBorderStyle = -1, int ID = -1);
+private:
+	C_BaseCombatWeapon	*m_pWeapon;
+	vgui::Label			*m_pWeaponName;
+	vgui::Label			*m_pSlotID;
+	vgui::ImagePanel	*m_pWeaponImage;
+	vgui::HFont			 m_pDefaultFont;
+	vgui::HFont			 m_pSelectedFont;
+	vgui::HFont			 m_pNumberDefaultFont;
+	vgui::HFont			 m_pNumberSelectedFont;
+	vgui::IBorder		*m_pDefaultBorder;
+	vgui::IBorder		*m_pSelectedRedBorder;
+	vgui::IBorder		*m_pSelectedBlueBorder;
+	int					 m_iBorderStyle;
+	int					 m_ID;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CItemModelPanel::CItemModelPanel(Panel *parent, const char* name) : EditablePanel(parent, name)
+{
+	m_pWeapon = NULL;
+	m_pWeaponName = new vgui::Label(this, "WeaponName", "text");
+	m_pSlotID = new vgui::Label(this, "SlotID", "0");
+	m_pWeaponImage = new vgui::ImagePanel(this, "WeaponImage");
+	m_iBorderStyle = -1;
+	m_ID = -1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItemModelPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
+{
+	m_pSlotID->SetFgColor(pScheme->GetColor("TanLight", Color(255, 255, 255, 255)));
+	m_pDefaultFont = pScheme->GetFont("ItemFontNameSmallest", true);
+	m_pSelectedFont = pScheme->GetFont("ItemFontNameSmall", true);
+	m_pNumberDefaultFont = pScheme->GetFont("FontStorePromotion", true);
+	m_pNumberSelectedFont = pScheme->GetFont("HudFontSmall", true);
+	m_pDefaultBorder = pScheme->GetBorder("TFFatLineBorder");
+	m_pSelectedRedBorder = pScheme->GetBorder("TFFatLineBorderRedBG");
+	m_pSelectedBlueBorder = pScheme->GetBorder("TFFatLineBorderBlueBG");
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItemModelPanel::PerformLayout()
+{
+	if (m_iBorderStyle == -1)
+	{
+		SetPaintBorderEnabled(false);
+	}
+	else if (m_iBorderStyle == 0)
+	{
+		SetPaintBorderEnabled(true);
+		IBorder *border = m_pDefaultBorder;
+		SetBorder(border);
+	}
+	else if (m_iBorderStyle == 1)
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		IBorder *border;
+		if (!pPlayer)
+			return;
+		int iTeam = pPlayer->GetTeamNumber();
+		if (iTeam == TF_TEAM_RED)
+		{
+			border = m_pSelectedRedBorder;
+		}
+		else
+		{
+			border = m_pSelectedBlueBorder;
+		}
+		SetBorder(border);
+	}
+	m_pWeaponImage->SetShouldScaleImage(true);
+	m_pWeaponImage->SetZPos(-1);
+	m_pWeaponName->SetBounds(XRES(5), GetTall() - YRES(20), GetWide() - XRES(10), YRES(20));
+	m_pWeaponName->SetFont(m_iBorderStyle ? m_pSelectedFont : m_pDefaultFont);
+	m_pWeaponName->SetContentAlignment(CTFAdvButtonBase::GetAlignment("center"));
+	m_pWeaponName->SetCenterWrap(true);
+	if (m_pWeapon && !m_pWeapon->CanBeSelected())
+	{
+		wchar_t *pText = g_pVGuiLocalize->Find("#TF_OUT_OF_AMMO");
+		m_pWeaponName->SetText(pText);
+		m_pWeaponName->SetFgColor(GETSCHEME()->GetColor("RedSolid", Color(255, 255, 255, 255)));
+	}
+	else
+	{
+		m_pWeaponName->SetFgColor(GETSCHEME()->GetColor("TanLight", Color(255, 255, 255, 255)));
+	}
+	m_pSlotID->SetBounds(0, YRES(5), GetWide() - XRES(5), YRES(10));
+	m_pSlotID->SetFont(m_iBorderStyle ? m_pNumberSelectedFont : m_pNumberDefaultFont);
+	m_pSlotID->SetContentAlignment(CTFAdvButtonBase::GetAlignment("east"));
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItemModelPanel::SetWeapon(C_BaseCombatWeapon *pWeapon, int iBorderStyle, int ID)
+{
+	m_pWeapon = pWeapon;
+	m_ID = ID;
+	m_iBorderStyle = iBorderStyle;
+
+	int iItemID = m_pWeapon->GetItemID();
+	CEconItemDefinition *pItemDefinition = GetItemSchema()->GetItemDefinition(iItemID);
+	wchar_t *pText = NULL;
+	if (pItemDefinition)
+	{
+		pText = g_pVGuiLocalize->Find(pItemDefinition->item_name);
+		char szImage[128];
+		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->image_inventory);
+		m_pWeaponImage->SetImage(szImage);
+		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 5.0) + XRES(4), GetWide() - XRES(8), GetWide() - XRES(8));
+	}
+	else
+	{
+		pText = g_pVGuiLocalize->Find(m_pWeapon->GetWpnData().szPrintName);
+		const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
+		if (pTexture)
+		{
+			char szImage[64];
+			Q_snprintf(szImage, sizeof(szImage), "../%s", pTexture->szTextureFile);
+			m_pWeaponImage->SetImage(szImage);
+		}
+		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 10.0) + XRES(4), (GetWide() * 1.5) - XRES(8), (GetWide() * 0.75) - XRES(8));
+	}
+	m_pWeaponName->SetText(pText);
+	if (ID != -1)
+	{
+		char szSlotID[8];
+		itoa(m_ID + 1, szSlotID, sizeof(szSlotID));
+		m_pSlotID->SetText(szSlotID);
+	}
+	else
+	{
+		m_pSlotID->SetText("");
+	}
+	PerformLayout();
+}
+
+void CItemModelPanel::SetWeapon(CEconItemDefinition *pItemDefinition, int iBorderStyle, int ID)
+{
+	m_pWeapon = NULL;
+	m_ID = ID;
+	m_iBorderStyle = iBorderStyle;
+
+	wchar_t *pText = NULL;
+	if (pItemDefinition)
+	{
+		pText = g_pVGuiLocalize->Find(pItemDefinition->item_name);
+		char szImage[128];
+		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->image_inventory);
+		m_pWeaponImage->SetImage(szImage);
+		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 5.0) + XRES(4), GetWide() - XRES(8), GetWide() - XRES(8));
+	}
+
+	m_pWeaponName->SetText(pText);
+	if ( ID != -1 )
+	{
+		char szSlotID[8];
+		Q_snprintf( szSlotID, sizeof(szSlotID), "%d", m_ID + 1 );
+		m_pSlotID->SetText( szSlotID );
+	}
+	else
+	{
+		m_pSlotID->SetText("");
+	}
+	PerformLayout();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: tf weapon selection hud element
@@ -234,10 +419,6 @@ void CHudWeaponSelection::OnThink()
 bool CHudWeaponSelection::ShouldDraw()
 {
 	bool bShouldDraw = ShouldDrawInternal();
-
-	// Don't draw the weapon selection HUD while the ragemode powerup is active.
-	if ( CTFPlayer::GetLocalTFPlayer() && CTFPlayer::GetLocalTFPlayer()->m_Shared.InCond( TF_COND_POWERUP_RAGEMODE ) )
-		return false;
 
 	return bShouldDraw;
 }
@@ -623,14 +804,6 @@ void CHudWeaponSelection::DrawPlusStyleBox(int x, int y, int wide, int tall, boo
 
 			case TF_TEAM_BLUE:
 				iMaterial = m_iBGImage_Blue;
-				break;
-
-			case TF_TEAM_GREEN:
-				iMaterial = m_iBGImage_Green;
-				break;
-
-			case TF_TEAM_YELLOW:
-				iMaterial = m_iBGImage_Yellow;
 				break;
 
 			default:

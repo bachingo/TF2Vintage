@@ -176,7 +176,6 @@ public:
 	CTFWeaponInfo *GetDisguiseWeaponInfo( void );
 
 	void	UpdateCritBoostEffect( bool bForceHide = false );
-	bool	SetParticleToMercColor( CNewParticleEffect *pParticle );
 #endif
 
 #ifdef GAME_DLL

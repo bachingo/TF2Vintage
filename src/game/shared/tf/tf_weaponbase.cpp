@@ -319,21 +319,6 @@ void CTFWeaponBase::Precache()
 		Q_snprintf( pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_blue_crit", pTFInfo->m_szTracerEffect );
 		PrecacheParticleSystem( pTracerEffect );
 		PrecacheParticleSystem( pTracerEffectCrit );
-
-		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_green", pTFInfo->m_szTracerEffect);
-		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_green_crit", pTFInfo->m_szTracerEffect);
-		//PrecacheParticleSystem(pTracerEffect);
-		//PrecacheParticleSystem(pTracerEffectCrit);
-
-		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_yellow", pTFInfo->m_szTracerEffect);
-		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_yellow_crit", pTFInfo->m_szTracerEffect);
-		//PrecacheParticleSystem(pTracerEffect);
-		//PrecacheParticleSystem(pTracerEffectCrit);
-
-		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_dm", pTFInfo->m_szTracerEffect);
-		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_dm_crit", pTFInfo->m_szTracerEffect);
-		//PrecacheParticleSystem(pTracerEffect);
-		//PrecacheParticleSystem(pTracerEffectCrit);
 	}
 }
 
@@ -610,30 +595,6 @@ const char *CTFWeaponBase::GetWorldModel( void ) const
 
 	return BaseClass::GetWorldModel();
 }
-
-#ifdef DM_WEAPON_BUCKET
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetSlot( void ) const
-{
-	if ( TFGameRules()->IsDeathmatch() )
-		return GetTFWpnData().m_iSlotDM;
-
-	return GetWpnData().iSlot;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetPosition( void ) const
-{
-	if ( TFGameRules()->IsDeathmatch() )
-		return GetTFWpnData().m_iPositionDM;
-
-	return GetWpnData().iPosition;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -978,10 +939,6 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	if ( !pPlayer )
 		return false;
 
-	// Random crits are disabled in DM due to balancing reasons
-	if ( TFGameRules()->IsDeathmatch() )
-		return false;
-
 	// Don't bother checking if random crits are off.
 	if ( !tf_weapon_criticals.GetBool() )
 		return false;
@@ -1070,27 +1027,6 @@ int CTFWeaponBase::GetDefaultClip1( void ) const
 		return fDefaultClipMult;
 
 	return iDefaultClip;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetMaxAmmo( void )
-{
-	return GetTFWpnData().m_iMaxAmmo;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetInitialAmmo( void )
-{
-	int iSpawnAmmo = 0;
-	CALL_ATTRIB_HOOK_INT( iSpawnAmmo, mod_spawn_ammo_override );
-	if ( iSpawnAmmo )
-		return iSpawnAmmo;
-
-	return GetTFWpnData().m_iSpawnAmmo;
 }
 
 //-----------------------------------------------------------------------------
@@ -1833,30 +1769,17 @@ const char *CTFWeaponBase::GetTracerType( void )
 	{
 		if (GetOwner() && !m_szTracerName[0])
 		{
-			if (TFGameRules()->IsDeathmatch())
+			switch (GetOwner()->GetTeamNumber())
 			{
-				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "dm");
-			}
-			else
-			{
-				switch (GetOwner()->GetTeamNumber())
-				{
-				case TF_TEAM_RED:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
-					break;
-				case TF_TEAM_BLUE:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "blue");
-					break;
-				case TF_TEAM_GREEN:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "green");
-					break;
-				case TF_TEAM_YELLOW:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "yellow");
-					break;
-				default:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
-					break;
-				}
+			case TF_TEAM_RED:
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
+				break;
+			case TF_TEAM_BLUE:
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "blue");
+				break;
+			default:
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
+				break;
 			}
 		}
 
@@ -2102,12 +2025,6 @@ const Vector &CTFWeaponBase::GetBulletSpread( void )
 // ----------------------------------------------------------------------------
 void CTFWeaponBase::ApplyOnHitAttributes( CTFPlayer *pVictim, const CTakeDamageInfo &info )
 {
-	float flStunTime = 0.0f;
-	CALL_ATTRIB_HOOK_FLOAT( flStunTime, mult_onhit_enemyspeed_major );
-	if ( flStunTime )
-	{
-		pVictim->m_Shared.AddCond( TF_COND_SLOWED, flStunTime );
-	}
 	CTFPlayer *pOwner = GetTFPlayerOwner(), *pAttacker = ToTFPlayer( info.GetAttacker() );
 	if ( !pOwner || !pOwner->IsAlive() )
 		return;
@@ -3415,12 +3332,6 @@ int CTFWeaponBase::GetSkin()
 				break;
 			case TF_TEAM_BLUE:
 				nSkin = 1;
-				break;
-			case TF_TEAM_GREEN:
-				nSkin = 2;
-				break;
-			case TF_TEAM_YELLOW:
-				nSkin = 3;
 				break;
 			}
 		}

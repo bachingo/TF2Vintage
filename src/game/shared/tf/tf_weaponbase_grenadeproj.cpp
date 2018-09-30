@@ -285,9 +285,6 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	// Set skin based on team ( red = 1, blue = 2 )
 	m_nSkin = GetTeamNumber() - 2;
 
-	if ( TFGameRules()->IsDeathmatch() ) // Custom DM skin for coloring
-		m_nSkin = 4;
-
 	// Setup the think and touch functions (see CBaseEntity).
 	SetThink( &CTFWeaponBaseGrenadeProj::DetonateThink );
 	SetNextThink( gpGlobals->curtime + 0.2 );
@@ -632,8 +629,7 @@ void CTFWeaponBaseGrenadeProj::Deflected( CBaseEntity *pDeflectedBy, Vector &vec
 	m_hDeflectOwner = pDeflectedBy;
 	SetThrower( pBCC );
 	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	if ( !TFGameRules()->IsDeathmatch() )
-		m_nSkin = pDeflectedBy->GetTeamNumber() - 2;
+	m_nSkin = pDeflectedBy->GetTeamNumber() - 2;
 	// TODO: Live TF2 adds white trail to reflected pipes and stickies. We need one as well.
 }
 

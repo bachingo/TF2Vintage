@@ -263,7 +263,7 @@ protected:
  			if ( pPlayer->GetTeamNumber() < FIRST_GAME_TEAM )
  				return true;
  
- 			if ( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_LAST_NORMAL_CLASS  )
+ 			if ( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_CLASS_COUNT  )
  			{
  				UTIL_LogPrintf( "\"%s<%i><%s><%s>\" changed role to \"%s\"\n",  
  					pPlayer->GetPlayerName(),
@@ -281,8 +281,6 @@ protected:
 			UTIL_LogPrintf( "World triggered \"Game_Over\" reason \"%s\"\n", event->GetString( "reason" ) );
 			UTIL_LogPrintf( "Team \"Red\" final score \"%d\" with \"%d\" players\n", GetGlobalTeam( TF_TEAM_RED )->GetScore(), GetGlobalTeam( TF_TEAM_RED )->GetNumPlayers() );
 			UTIL_LogPrintf( "Team \"Blue\" final score \"%d\" with \"%d\" players\n", GetGlobalTeam( TF_TEAM_BLUE )->GetScore(), GetGlobalTeam( TF_TEAM_BLUE )->GetNumPlayers() );
-			UTIL_LogPrintf(" Team \"Green\" final score \"%d\" with \"%d\" players\n", GetGlobalTeam(TF_TEAM_GREEN)->GetScore(), GetGlobalTeam(TF_TEAM_GREEN)->GetNumPlayers());
-			UTIL_LogPrintf(" Team \"Yellow\" final score \"%d\" with \"%d\" players\n", GetGlobalTeam(TF_TEAM_YELLOW)->GetScore(), GetGlobalTeam(TF_TEAM_YELLOW)->GetNumPlayers());
  			return true;		
  		}
  		else if ( FStrEq( eventName, "player_chargedeployed" ) )
