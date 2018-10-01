@@ -22,6 +22,7 @@ public:
 	virtual int	DrawModel( int flags );
 
 	virtual int DrawOverriddenViewmodel( int flags );
+	virtual void StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 
 	void SetViewmodel( C_TFViewModel *vm );
 

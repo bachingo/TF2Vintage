@@ -274,7 +274,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// StunBall
 	virtual bool		PickedUpBall( CTFPlayer *pPlayer ) { return false; }
 
-	const char* GetExtraWearableModel( void ) const;
+	const char*			GetExtraWearableModel( void ) const;
 
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -320,6 +320,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Model muzzleflashes
 	CHandle<C_MuzzleFlashModel>		m_hMuzzleFlashModel[2];
 
+
+	void SetMuzzleAttachment( int iAttachment ) { m_iMuzzleAttachment = iAttachment; }
 #endif
 
 protected:
@@ -364,6 +366,8 @@ protected:
 
 #ifdef CLIENT_DLL
 	bool m_bOldResetParity;
+
+	int m_iMuzzleAttachment;
 #endif
 
 	CNetworkVar( bool,	m_bReloadedThroughAnimEvent );

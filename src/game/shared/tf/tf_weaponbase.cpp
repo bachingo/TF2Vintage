@@ -216,6 +216,10 @@ CTFWeaponBase::CTFWeaponBase()
 	m_bCurrentAttackIsCrit = false;
 	m_iCurrentSeed = -1;
 	m_flLastFireTime = 0.0f;
+
+#ifdef CLIENT_DLL
+	m_iMuzzleAttachment = -1;
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -2088,7 +2092,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 	Vector vecOrigin;
 	QAngle angAngles;
 
-	int iMuzzleFlashAttachment = pAttachEnt->LookupAttachment( "muzzle" );
+	int iMuzzleFlashAttachment = m_iMuzzleAttachment != -1 ? m_iMuzzleAttachment : pAttachEnt->LookupAttachment( "muzzle" );
 
 	const char *pszMuzzleFlashEffect = NULL;
 	const char *pszMuzzleFlashModel = GetMuzzleFlashModel();

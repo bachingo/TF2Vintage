@@ -102,6 +102,14 @@ bool CEconEntity::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+void CEconEntity::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
+{
+	// NUB
+}
+
 #endif
 
 void CEconEntity::SetItem( CEconItemView &newItem )

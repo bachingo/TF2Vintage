@@ -52,6 +52,7 @@ public:
 	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return NULL; }
 
 	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
+	virtual void ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }

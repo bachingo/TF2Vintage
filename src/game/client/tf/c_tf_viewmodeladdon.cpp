@@ -97,7 +97,6 @@ int C_ViewmodelAttachmentModel::DrawOverriddenViewmodel( int flags )
 	return drawn;
 }
 
-
 int C_ViewmodelAttachmentModel::DrawModel( int flags )
 {
 	if ( !IsVisible() )
@@ -117,4 +116,20 @@ int C_ViewmodelAttachmentModel::DrawModel( int flags )
 		return false;
 
 	return BaseClass::DrawModel( flags );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ViewmodelAttachmentModel::StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
+{
+	BaseClass::StandardBlendingRules( hdr, pos, q, currentTime, boneMask );
+	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_viewmodel->GetOwningWeapon();
+	if ( !pWeapon )
+		return;
+	if ( m_viewmodel->GetViewModelType() == VMTYPE_TF2 )
+	{
+		pWeapon->SetMuzzleAttachment( LookupAttachment( "muzzle" ) );
+	}
+	pWeapon->ViewModelAttachmentBlending( hdr, pos, q, currentTime, boneMask );
 }

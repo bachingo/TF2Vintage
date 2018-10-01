@@ -3419,7 +3419,16 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 
 				if (pWeapon)
 				{
-					iAttachment = pWeapon->LookupAttachment("muzzle");
+					C_TFWeaponBase *pTFWeapon = dynamic_cast< C_TFWeaponBase* >( pWeapon );
+					if ( pTFWeapon )
+					{
+						C_BaseViewModel *vm = pTFWeapon->GetViewmodelAddon();
+						iAttachment = vm ? vm->LookupAttachment( "muzzle" ) : pWeapon->LookupAttachment( "muzzle" );
+					}
+					else
+					{
+						iAttachment = pWeapon->LookupAttachment( "muzzle" );
+					}
 				}
 
 				bool bInToolRecordingMode = clienttools->IsInRecordingMode();
