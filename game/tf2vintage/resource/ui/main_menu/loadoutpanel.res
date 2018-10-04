@@ -22,14 +22,14 @@
 		"xpos"				"100"
 		"ypos"				"20"
 		"zpos"				"-2"
-		"wide"				"f+200"
-		"tall"				"f+40"
+		"wide"				"f+900"
+		"tall"				"f+"
 		"autoResize"		"0"
 		"pinCorner"			"0"
 		"scaleimage"		"1"
 		"border"			"AdvRoundedButtonArmed"
 		"visible"			"1"
-		//"fillcolor"			"46 43 42 255"
+		//"fillcolor"			"46 43 42 100"
 		"enabled"			"1"
 	}
 	
@@ -59,8 +59,8 @@
 		"font"			"HudFontSmallestBold"
 		"labelText"		"#CharacterLoadout"
 		"textAlignment"	"south-west"
-		"xpos"			"c0"
-		"ypos"			"20"
+		"xpos"			"c60"
+		"ypos"			"40"
 		"zpos"			"1"
 		"wide"			"f0"
 		"tall"			"15"
@@ -92,8 +92,8 @@
 		"ControlName"	"CTFAdvModelPanel"
 		"fieldName"		"classmodelpanel"
 		
-		"xpos"			"c-320"
-		"ypos"			"c-90"
+		"xpos"			"c80"
+		"ypos"			"c-220"
 		"zpos"			"0"		
 		"wide"			"250"
 		"tall"			"280"
@@ -188,59 +188,12 @@
 		}
 	}
 	
-	"gamemodelpanel"
-	{
-		"ControlName"	"CModelPanel"
-		"fieldName"		"gamemodelpanel"
-		
-		"xpos"			"c-320"
-		"ypos"			"c-90"
-		"zpos"			"2"		
-		"wide"			"250"
-		"tall"			"280"
-		"autoResize"	"0"
-		"pinCorner"		"0"
-		"visible"		"1"
-		"enabled"		"1"
-		"fov"			"28"
-				
-		"model"
-		{
-			"skin"	"0"
-			"angles_x" "0"
-			"angles_y" "175"
-			"angles_z" "0"
-			"origin_x" "190"
-			"origin_y" "0"
-			"origin_z" "-36"
-			"frame_origin_x"	"0"
-			"frame_origin_y"	"0"
-			"frame_origin_z"	"0"
-			"spotlight" "1"
-		
-			"modelname"		"models/player/merc_deathmatch.mdl"
-			
-			"attached_model"
-			{
-				"modelname" "models/weapons/w_models/w_crowbar.mdl"
-				"skin"	"0"
-			}
-			
-			"animation"
-			{
-				"name"		"MELEE"
-				"activity"	"ACT_MP_STAND_MELEE"
-				"default"	"1"
-			}			
-		}
-	}
-	
 	"weaponsetpanel"
 	{
 		"ControlName"	"CTFWeaponSetPanel"
 		"fieldName"		"weaponsetpanel"		
-		"xpos"			"c-70"
-		"ypos"			"c-70"
+		"xpos"			"c-320"
+		"ypos"			"c-180"
 		"zpos"			"-1"		
 		"wide"			"380"
 		"tall"			"280"
@@ -250,28 +203,12 @@
 		"enabled"		"1"
 		//"border"		"MainMenuHighlightBorder"
 	}
-
-	"rgbpanel"
-	{
-		"ControlName"	"CTFRGBPanel"
-		"fieldName"		"rgbpanel"		
-		"xpos"			"c-80"
-		"ypos"			"c-70"
-		"zpos"			"-1"		
-		"wide"			"230"
-		"tall"			"280"
-		"autoResize"	"0"
-		"pinCorner"		"0"
-		"visible"		"0"
-		"enabled"		"1"
-		"border"		"TFFatLineBorder"
-	}	
 	
 	"BackButton"
 	{
 		"ControlName"	"CTFAdvButton"
 		"fieldName"		"BackButton"
-		"xpos"			"c-245"
+		"xpos"			"c-200"
 		"ypos"			"r60"
 		"zpos"			"20"
 		"wide"			"100"
@@ -284,51 +221,13 @@
 		{
 			"labelText" 		"#TF_Back"
 			"textAlignment"		"center"
-			"font"				"TallTextSmall"
+			"font"				"tf2build"
 			"border_default"	"AdvRoundedButtonDefault"
 			"border_armed"		"AdvRoundedButtonArmed"
 			"border_depressed"	"AdvRoundedButtonDepressed"	
 		}
 	}	
 
-	"ParticleLabel"
-	{
-		"ControlName"		"CExLabel"
-		"fieldName"			"ParticleLabel"
-		"xpos"				"c-280"
-		"ypos"				"115"
-		"zpos"				"5"
-		"wide"				"500"
-		"tall"				"30"
-		"autoResize"		"0"
-		"pinCorner"			"0"
-		"visible"			"1"
-		"enabled"			"1"
-		"labelText"			"%classname%"
-		"textAlignment"		"west"
-		"font"				"TeamMenuBold"
-		"fgcolor"			"Button.ArmedTextColor"
-	}	
-	
-	"ParticleLabelShadow"
-	{
-		"ControlName"		"CExLabel"
-		"fieldName"			"ParticleLabelShadow"
-		"xpos"				"c-278"
-		"ypos"				"115"
-		"zpos"				"4"
-		"wide"				"500"
-		"tall"				"30"
-		"autoResize"		"0"
-		"pinCorner"			"0"
-		"visible"			"1"
-		"enabled"			"1"
-		"labelText"			"%classname%"
-		"textAlignment"		"west"
-		"font"				"TeamMenuBold"
-		"fgcolor"			"Black"
-	}	
-	
 	"LogoCircle"
 	{
 		"ControlName"	"CTFRotatingImagePanel"
@@ -348,7 +247,7 @@
 		"ControlName"		"CAdvTabs"
 		"fieldName"			"classselection"
 		"xpos"				"c-300"
-		"ypos"				"30"
+		"ypos"				"340"
 		"zpos"				"6"
 		"wide"				"600"
 		"tall"				"63"
