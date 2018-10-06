@@ -3968,7 +3968,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		else
 		{
 			// 35% to all other sources
-			info.SetDamage( flDamage * 0.35f );
+			info.SetDamage( flDamage * 0.65f );
 		}
 	}
 
@@ -4366,7 +4366,7 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		}
 		else
 		{
-			flDamage /= 0.35f;
+			flDamage /= 0.65f;
 		}
 	}
 
