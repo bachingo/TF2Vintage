@@ -5137,7 +5137,7 @@ void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/ )
 	if ( pAmmoPack )
 	{
 		bool bHolidayPack = false;
-		if ( !tf2v_disable_holiday_loot.GetBool() && ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_HALLOWEEN ) || TFGameRules()->IsHolidayActive( TF_HOLIDAY_CHRISTMAS ) ) )
+		if ( !tf2v_disable_holiday_loot.GetBool() && ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) )
 		{
 			// Only make a holiday pack 3 times out of 10
 			if ( rand() / float( VALVE_RAND_MAX ) < 0.3 ) 

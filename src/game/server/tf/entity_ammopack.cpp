@@ -101,7 +101,7 @@ const char *CAmmoPack::GetDefaultPowerupModel( void )
 {
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_BIRTHDAY ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
 		{
 			return "models/items/ammopack_large_bday.mdl";
 		}
@@ -117,7 +117,7 @@ const char *CAmmoPackMedium::GetDefaultPowerupModel( void )
 {
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_BIRTHDAY ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
 		{
 			return "models/items/ammopack_medium_bday.mdl";
 		}
@@ -133,7 +133,7 @@ const char *CAmmoPackSmall::GetDefaultPowerupModel( void )
 {
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_BIRTHDAY ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
 		{
 			return "models/items/ammopack_small_bday.mdl";
 		}

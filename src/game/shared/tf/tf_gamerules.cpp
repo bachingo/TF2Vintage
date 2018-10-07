@@ -4865,7 +4865,7 @@ bool CTFGameRules::IsBirthday( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				if ( today->tm_mon == 7 && today->tm_mday == 4 )
+				if ( ( today->tm_mon == 7 && today->tm_mday == 4 )  || ( today->tm_mon == 8 && today->tm_mday == 24 ) ) 
 				{
 					m_iBirthdayMode = BIRTHDAY_ON;
 				}
@@ -4882,16 +4882,15 @@ bool CTFGameRules::IsBirthday( void )
 bool CTFGameRules::IsHolidayActive( int eHoliday )
 {
 	bool bActive = false;
-
 	switch ( eHoliday )
 	{
-		case TF_HOLIDAY_BIRTHDAY:
+		case kHoliday_TF2Birthday:
 			bActive = IsBirthday();
 			break;
-		case TF_HOLIDAY_HALLOWEEN:
+		case kHoliday_Halloween:
 			bActive = tf_halloween.GetBool();
 			break;
-		case TF_HOLIDAY_CHRISTMAS:
+		case kHoliday_Christmas:
 			bActive = tf_christmas.GetBool();
 			break;
 		default:

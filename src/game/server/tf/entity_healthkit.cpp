@@ -209,11 +209,11 @@ const char *CHealthKit::GetDefaultPowerupModel( void )
 {
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_BIRTHDAY ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
 		{
 			return "models/items/medkit_large_bday.mdl";
 		}
-		else if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_HALLOWEEN ) )
+		else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		{
 			return "models/props_halloween/halloween_medkit_large.mdl";
 		}
@@ -229,11 +229,11 @@ const char *CHealthKitSmall::GetDefaultPowerupModel( void )
 {
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_BIRTHDAY ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
 		{
 			return "models/items/medkit_small_bday.mdl";
 		}
-		else if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_HALLOWEEN ) )
+		else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		{
 			return "models/props_halloween/halloween_medkit_small.mdl";
 		}
@@ -249,11 +249,11 @@ const char *CHealthKitMedium::GetDefaultPowerupModel( void )
 {
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_BIRTHDAY ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
 		{
 			return "models/items/medkit_medium_bday.mdl";
 		}
-		else if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_HALLOWEEN ) )
+		else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		{
 			return "models/props_halloween/halloween_medkit_medium.mdl";
 		}

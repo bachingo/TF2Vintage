@@ -1157,15 +1157,20 @@ enum
 //--------------------------------------------------------------------------
 enum
 {
-	TF_HOLIDAY_BIRTHDAY = 1,
-	TF_HOLIDAY_HALLOWEEN,
-	TF_HOLIDAY_CHRISTMAS,
-	TF_HOLIDAY_COMMUNITYUPDATE,
-	TF_HOLIDAY_ENDOFTHELINE,
-	TF_HOLIDAY_VALENTINESDAY,
-	TF_HOLIDAY_MEETTHEPYRO,
-	TF_HOLIDAY_FULLMOON,
-	TF_HOLIDAY_APRIL_FOOLS
+	kHoliday_None,
+	kHoliday_TF2Birthday,
+	kHoliday_Halloween,
+	kHoliday_Christmas,
+	kHoliday_CommunityUpdate,
+	kHoliday_EOTL,
+	kHoliday_ValentinesDay,
+	kHoliday_MeetThePyro,
+	kHoliday_FullMoon,
+	kHoliday_HalloweenOrFullMoon,
+	kHoliday_HalloweenOrFullMoonOrValentines,
+	kHoliday_AprilFools,
+
+	kHolidayCount,
 };
 
 //--------------------------------------------------------------------------

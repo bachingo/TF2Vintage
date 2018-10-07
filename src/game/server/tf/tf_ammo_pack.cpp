@@ -73,13 +73,13 @@ void CTFAmmoPack::Precache( void )
 
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_HALLOWEEN ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		{
 			PrecacheModel( TF_MODEL_PUMPKIN_LOOT );
 			PrecacheScriptSound( TF_PUMPKIN_LOOT_DROP );
 			PrecacheScriptSound( TF_PUMPKIN_LOOT_PICKUP );
 		}
-		else if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_CHRISTMAS ) )
+		else if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
 		{
 			PrecacheModel( TF_MODEL_GIFT );
 			PrecacheScriptSound( TF_GIFT_DROP );
@@ -212,7 +212,7 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 
 			switch ( iHoliday )
 			{
-				case TF_HOLIDAY_HALLOWEEN: // Give player crits for three seconds
+				case kHoliday_Halloween: // Give player crits for three seconds
 					if ( pTFPlayer->m_Shared.InCond( TF_COND_CRITBOOSTED_PUMPKIN ) || pTFPlayer->m_Shared.GetConditionDuration( TF_COND_CRITBOOSTED_PUMPKIN ) < 3.0f )
 					{
 						pTFPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 3.0f );
@@ -220,7 +220,7 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 					EmitSound( TF_PUMPKIN_LOOT_PICKUP );
 					bSuccess = true;
 					break;
-				case TF_HOLIDAY_CHRISTMAS: // Gifts don't do anything (for now at least)
+				case kHoliday_Christmas: // Gifts don't do anything (for now at least)
 					EmitSound( TF_GIFT_PICKUP );
 					bSuccess = true;
 					break;
@@ -296,15 +296,15 @@ void CTFAmmoPack::MakeHolidayPack( void )
 { 
 	if ( TFGameRules() )
 	{
-		if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_HALLOWEEN ) )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		{
-			iHoliday = TF_HOLIDAY_HALLOWEEN;
+			iHoliday = kHoliday_Halloween;
 			SetModel( TF_MODEL_PUMPKIN_LOOT );
 			SetContextThink( &CTFAmmoPack::DropSoundThink, gpGlobals->curtime + 0.1f, "DROP_SOUND_THINK" );
 		}
-		else if ( TFGameRules()->IsHolidayActive( TF_HOLIDAY_CHRISTMAS ) )
+		else if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
 		{
-			iHoliday = TF_HOLIDAY_CHRISTMAS;
+			iHoliday = kHoliday_Christmas;
 			SetModel( TF_MODEL_GIFT );
 			SetContextThink( &CTFAmmoPack::DropSoundThink, gpGlobals->curtime + 0.1f, "DROP_SOUND_THINK" );
 		}
@@ -320,10 +320,10 @@ void CTFAmmoPack::DropSoundThink( void )
 
 	switch ( iHoliday )
 	{
-		case TF_HOLIDAY_HALLOWEEN:
+		case kHoliday_Halloween:
 			iszSound = TF_PUMPKIN_LOOT_DROP;
 			break;
-		case TF_HOLIDAY_CHRISTMAS:
+		case kHoliday_Christmas:
 			iszSound = TF_GIFT_DROP;
 			break;
 	}
