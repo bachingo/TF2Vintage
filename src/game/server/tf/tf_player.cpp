@@ -1428,13 +1428,14 @@ void CTFPlayer::GiveDefaultItems()
 			pObject->DetonateObject();
 		}
 
-		// destroy any planted buildings
+		// Check if we have any planted buildings
 		for ( int i = GetObjectCount()-1; i >= 0; i-- )
 		{
 			CBaseObject *obj = GetObject( i );
 			Assert( obj );
 
-			if ( obj )
+			// Destroy our sentry if we have one up
+			if ( obj && obj->GetType() == OBJ_SENTRYGUN )
 			{
 				obj->DetonateObject();
 			}		
