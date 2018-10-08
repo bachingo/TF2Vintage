@@ -992,9 +992,6 @@ void CTeamRoundTimer::RoundTimerThink( void )
 		// Allow the gamerules to prevent timer expiration (i.e. while a control point is contested)
 		if ( !TeamplayGameRules()->TimerMayExpire() )
 		{
-#ifdef TF_VINTAGE
-			m_bBuffer = false;
-#endif
 			// we don't want the timer to keep going (negative time)
 			m_flTimerEndTime = gpGlobals->curtime;
 
@@ -1028,17 +1025,6 @@ void CTeamRoundTimer::RoundTimerThink( void )
 			SetContextThink( &CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK );
 			return;
 		}
-#ifdef TF_VINTAGE
-		else if ( TeamplayGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
-		{
-			if ( !m_bBuffer )
-			{
-				m_bBuffer = true;
-				SetContextThink( &CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK );
-				return;
-			}
-		}
-#endif
 
 		m_OnFinished.FireOutput( this, this );
 		m_bFireFinished = false;

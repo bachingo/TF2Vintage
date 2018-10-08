@@ -166,11 +166,6 @@ private:
 	bool			m_bPauseDueToWin;
 	bool			m_bResetTimeOnRoundStart;
 	int				m_nTimeToUseAfterSetupFinished;
-#endif
-
-#ifdef TF_VINTAGE
-	//Overtime fix
-	bool m_bBuffer;
 #endif 
 };
 
