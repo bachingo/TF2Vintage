@@ -201,6 +201,7 @@ public:
 	CUtlDict< const char*, unsigned short > misc_info;
 	CUtlVector< attachedmodel_t > attached_models;
 	char aWeaponSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
+	char custom_particlesystem[128];
 	//CUtlDict< EconItemStyle*, unsigned short > styles;
 };
 

@@ -328,6 +328,10 @@ public:
 
 				pVisuals->attached_models.AddToTail( attached_model );
 			}
+			else if ( !V_strcmp( pVisualData->GetName(), "custom_particlesystem" ) )
+			{
+				V_strncpy( pVisuals->custom_particlesystem, pVisualData->GetString( "system" ), sizeof( pVisuals->custom_particlesystem ) );
+			}
 			else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
 			{
 				for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
@@ -679,6 +683,13 @@ void CEconItemSchema::Precache( void )
 				const char *pszModel = pVisuals->attached_models[i].model;
 				if ( pszModel != '\0' )
 					CBaseEntity::PrecacheModel( pszModel );
+			}
+
+			// Precache custom particles
+			const char *pszParticle = pVisuals->custom_particlesystem;
+			if ( pszParticle[0] != '\0' )
+			{
+				PrecacheParticleSystem( pszParticle );
 			}
 		}
 
