@@ -172,6 +172,47 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 	return wszFullName;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Generate item name without qualities, prefixes, etc. for disguise HUD...
+//-----------------------------------------------------------------------------
+const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
+{
+	static wchar_t wszFullName[256];
+	wszFullName[0] = '\0';
+
+	wchar_t wszQuality[128];
+	wszQuality[0] = '\0';
+
+	// Attach "the" if necessary to unique items.
+	if ( propername )
+	{
+		const wchar_t *pszPrepend = g_pVGuiLocalize->Find( "#TF_Unique_Prepend_Proper_Quality" );
+
+		if ( pszPrepend )
+		{
+			V_wcsncpy( wszQuality, pszPrepend, sizeof( wszQuality ) );
+		}
+	}
+
+	// Attach the original item name after we're done with all the prefixes.
+	wchar_t wszItemName[256];
+
+	const wchar_t *pszLocalizedName = g_pVGuiLocalize->Find( item_name );
+	if ( pszLocalizedName && pszLocalizedName[0] )
+	{
+		V_wcsncpy( wszItemName, pszLocalizedName, sizeof( wszItemName ) );
+	}
+	else
+	{
+		g_pVGuiLocalize->ConvertANSIToUnicode( item_name, wszItemName, sizeof( wszItemName ) );
+	}
+
+	g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
+		wszQuality, wszItemName );
+
+	return wszFullName;
+}
+
 
 CEconItemAttribute *CEconItemDefinition::IterateAttributes( string_t strClass )
 {

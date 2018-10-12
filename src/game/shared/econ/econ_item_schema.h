@@ -245,6 +245,7 @@ public:
 	EconItemVisuals *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
 	const wchar_t *GenerateLocalizedFullItemName( void );
+	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
 	CEconItemAttribute *IterateAttributes( string_t strClass );
 
 public:
