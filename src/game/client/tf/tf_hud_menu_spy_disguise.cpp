@@ -46,12 +46,6 @@ CHudMenuSpyDisguise::CHudMenuSpyDisguise( const char *pElementName ) : CHudEleme
 
 		Q_snprintf( buf, sizeof(buf), "class_item_blue_%d", i+1 );
 		m_pClassItems_Blue[i] = new EditablePanel( this, buf );
-
-		Q_snprintf(buf, sizeof(buf), "class_item_green_%d", i + 1);
-		m_pClassItems_Green[i] = new EditablePanel(this, buf);
-
-		Q_snprintf(buf, sizeof(buf), "class_item_yellow_%d", i + 1);
-		m_pClassItems_Yellow[i] = new EditablePanel(this, buf);
 	}
 
 	m_iShowingTeam = TF_TEAM_RED;
@@ -133,26 +127,6 @@ void CHudMenuSpyDisguise::ApplySchemeSettings( IScheme *pScheme )
 		m_pClassItems_Blue[6]->LoadControlSettings( "resource/UI/disguise_menu/medic_blue.res" );
 		m_pClassItems_Blue[7]->LoadControlSettings( "resource/UI/disguise_menu/sniper_blue.res" );
 		m_pClassItems_Blue[8]->LoadControlSettings( "resource/UI/disguise_menu/spy_blue.res" );
-
-		m_pClassItems_Green[0]->LoadControlSettings("resource/UI/disguise_menu/scout_green.res");
-		m_pClassItems_Green[1]->LoadControlSettings("resource/UI/disguise_menu/soldier_green.res");
-		m_pClassItems_Green[2]->LoadControlSettings("resource/UI/disguise_menu/pyro_green.res");
-		m_pClassItems_Green[3]->LoadControlSettings("resource/UI/disguise_menu/demoman_green.res");
-		m_pClassItems_Green[4]->LoadControlSettings("resource/UI/disguise_menu/heavy_green.res");
-		m_pClassItems_Green[5]->LoadControlSettings("resource/UI/disguise_menu/engineer_green.res");
-		m_pClassItems_Green[6]->LoadControlSettings("resource/UI/disguise_menu/medic_green.res");
-		m_pClassItems_Green[7]->LoadControlSettings("resource/UI/disguise_menu/sniper_green.res");
-		m_pClassItems_Green[8]->LoadControlSettings("resource/UI/disguise_menu/spy_green.res");
-
-		m_pClassItems_Yellow[0]->LoadControlSettings("resource/UI/disguise_menu/scout_yellow.res");
-		m_pClassItems_Yellow[1]->LoadControlSettings("resource/UI/disguise_menu/soldier_yellow.res");
-		m_pClassItems_Yellow[2]->LoadControlSettings("resource/UI/disguise_menu/pyro_yellow.res");
-		m_pClassItems_Yellow[3]->LoadControlSettings("resource/UI/disguise_menu/demoman_yellow.res");
-		m_pClassItems_Yellow[4]->LoadControlSettings("resource/UI/disguise_menu/heavy_yellow.res");
-		m_pClassItems_Yellow[5]->LoadControlSettings("resource/UI/disguise_menu/engineer_yellow.res");
-		m_pClassItems_Yellow[6]->LoadControlSettings("resource/UI/disguise_menu/medic_yellow.res");
-		m_pClassItems_Yellow[7]->LoadControlSettings("resource/UI/disguise_menu/sniper_yellow.res");
-		m_pClassItems_Yellow[8]->LoadControlSettings("resource/UI/disguise_menu/spy_yellow.res");
 
 		m_pActiveSelection = NULL;
 	}

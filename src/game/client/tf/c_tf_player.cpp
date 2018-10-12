@@ -97,11 +97,6 @@ static void OnMercParticleChange( IConVar *var, const char *pOldValue, float flO
 	pLocalPlayer->m_Shared.SetRespawnParticleID( pCvar->GetInt() );
 }
 
-ConVar tf2c_setmerccolor_r( "tf2c_setmerccolor_r", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's red channel value", true, 0, true, 255 );
-ConVar tf2c_setmerccolor_g( "tf2c_setmerccolor_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's green channel value", true, 0, true, 255 );
-ConVar tf2c_setmerccolor_b( "tf2c_setmerccolor_b", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, 0, true, 255 );
-ConVar tf2c_setmercparticle( "tf2c_setmercparticle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc's respawn particle index", OnMercParticleChange );
-
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 
 IMaterial	*g_pHeadLabelMaterial[4] = { NULL, NULL }; 
@@ -120,8 +115,6 @@ const char *pszHeadLabelNames[] =
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
 #define TF_PLAYER_HEAD_LABEL_BLUE 1
-#define TF_PLAYER_HEAD_LABEL_GREEN 2
-#define TF_PLAYER_HEAD_LABEL_YELLOW 3
 
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheInvuln )
@@ -3784,9 +3777,18 @@ int C_TFPlayer::GetSkin()
 	{
 		nSkin += 2;
 	}
-	else if ( m_Shared.InCond( TF_COND_DISGUISED ) && !IsEnemyPlayer() )
+	else if ( m_Shared.InCond( TF_COND_DISGUISED ) )
 	{
-		nSkin += 4 + ( ( m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
+		if ( !IsEnemyPlayer() )
+		{
+			// Show team members what this player is disguised as
+			nSkin += 4 + ( ( m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
+		}
+		else if ( m_Shared.GetDisguiseClass() ==  TF_CLASS_SPY )
+		{
+			// This player is disguised as an enemy spy so enemies should see a fake mask
+			nSkin += 4 + ( ( m_Shared.GetMaskClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
+		}
 	}
 
 	return nSkin;
@@ -4077,7 +4079,7 @@ void C_TFPlayer::ValidateModelIndex( void )
 
 	if ( m_iSpyMaskBodygroup > -1 && GetModelPtr() != NULL )
 	{
-		SetBodygroup( m_iSpyMaskBodygroup, ( m_Shared.InCond( TF_COND_DISGUISED ) && !IsEnemyPlayer() ) );
+		SetBodygroup( m_iSpyMaskBodygroup, m_Shared.InCond( TF_COND_DISGUISED ) );
 	}
 
 	BaseClass::ValidateModelIndex();
@@ -4533,14 +4535,12 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 			{
 				if ( m_Shared.InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
 				{
-					Msg("Overhealed\n");
 					// Disguised spies should use their fake health instead.
 					bShouldShow = true;
 					iTeamNum = m_Shared.GetDisguiseTeam();
 				}
 				else
 				{
-					Msg("Not Overhealed\n");
 					bShouldShow = false;
 				}
 			}
