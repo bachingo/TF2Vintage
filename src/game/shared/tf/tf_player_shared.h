@@ -150,7 +150,7 @@ public:
 	int		GetDesiredDisguiseClass( void )		{ return m_nDesiredDisguiseClass; }
 	int		GetDesiredDisguiseTeam( void )		{ return m_nDesiredDisguiseTeam; }
 	float	GetDisguiseChargeLevel( void )      { return m_flDisguiseChargeLevel; }
-	int		GetMaskClass(void)				{ return m_nMaskClass; }
+	int		GetMaskClass(void)					{ return m_nMaskClass; }
 	EHANDLE GetDisguiseTarget( void ) 	
 	{
 #ifdef CLIENT_DLL

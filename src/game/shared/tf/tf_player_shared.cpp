@@ -2253,7 +2253,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass )
 	}
 
 	// Can't disguise while taunting.
-	if ( InCond( TF_COND_TAUNTING ) || InCond( TF_COND_STUNNED ) )
+	if ( InCond( TF_COND_TAUNTING ) || InCond( TF_COND_STUNNED ) || InCond( TF_COND_HALF_STUN ) )
 	{
 		return;
 	}
@@ -2280,7 +2280,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass )
 	}
 
 	// invalid class
-	if ( nClass <= TF_CLASS_UNDEFINED || nClass >= TF_CLASS_COUNT )
+	if ( nClass <= TF_CLASS_UNDEFINED || nClass >= TF_CLASS_COUNT_ALL )
 	{
 		return;
 	}
