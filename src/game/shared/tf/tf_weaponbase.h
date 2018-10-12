@@ -148,7 +148,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN
 	C_BaseAnimating *GetAppropriateWorldOrViewModel( void );
 
-	const char *GetViewModelOffset( void );
+	string_t GetViewModelOffset( void );
 #endif
 
 	virtual void Drop( const Vector &vecVelocity );

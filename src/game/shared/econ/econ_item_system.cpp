@@ -293,7 +293,7 @@ public:
 			GET_STRING_DEFAULT( pAttribute, pSubData, name, ( unnamed ) );
 			GET_STRING( pAttribute, pSubData, attribute_class );
 			GET_STRING( pAttribute, pSubData, description_string );
-			GET_STRING( pAttribute, pSubData, attribute_type );
+			pAttribute->string_attribute = ( V_stricmp( pSubData->GetString( "attribute_type" ), "string" ) == 0 );
 
 			const char *szFormat = pSubData->GetString( "description_format" );
 			pAttribute->description_format = UTIL_StringFieldToInt( szFormat, g_AttributeDescriptionFormats, ARRAYSIZE( g_AttributeDescriptionFormats ) );
@@ -531,7 +531,7 @@ public:
 					}
 				}
 			}
-			else if ( !V_stricmp( pSubData->GetName(), "attributes" ) || !V_stricmp( pSubData->GetName(), "static_attrs" ) )
+			else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
 			{
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
@@ -542,31 +542,43 @@ public:
 						continue;
 
 					CEconItemAttribute attribute;
-					const char *iszAttributeClass = pAttribData->GetString( "attribute_class" );
 
-					if ( V_strcmp( pAttrib->attribute_type, "string" ) == 0 )
+					if ( pAttrib->string_attribute )
 					{
-						// Parse string attributes a bit differently
-						if ( !iszAttributeClass[0] )
-						{
-							// This is probably a static attribute so grab the values directly
-							attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
-						}
-						else
-						{
-							// This is probably a standard attribute that takes a string
-							attribute.Init( iAttributeID, pAttribData->GetString( "value" ), iszAttributeClass );
-						}
+						attribute.Init( iAttributeID, pAttribData->GetString( "value" ), pAttribData->GetString( "attribute_class" ) );
 					}
 					else
 					{
-						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), iszAttributeClass );
+						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
 					}
 
 					pItem->attributes.AddToTail( attribute );
 				}
 			}
+			else if ( !V_stricmp( pSubData->GetName(), "static_attrs" ) )
+			{
+				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
+				{
+					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
+					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
 
+					if ( !pAttrib || iAttributeID == -1 )
+						continue;
+
+					CEconItemAttribute attribute;
+
+					if ( pAttrib->string_attribute )
+					{
+						attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
+					}
+					else
+					{
+						attribute.Init( iAttributeID, pAttribData->GetFloat(), pAttribData->GetName() );
+					}
+
+					pItem->attributes.AddToTail( attribute );
+				}
+			}
 			else if ( !V_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
 			{
 				// Deliberately skipping this.
@@ -643,6 +655,8 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
+	string_t strPrecacheAttribute = AllocPooledString( "custom_projectile_model" );
+
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
 	{
@@ -698,6 +712,12 @@ void CEconItemSchema::Precache( void )
 		{
 			CEconItemAttribute *pAttribute = &pItem->attributes[i];
 			pAttribute->m_strAttributeClass = AllocPooledString( pAttribute->attribute_class );
+
+			// Special case for custom_projectile_model attribute.
+			if ( pAttribute->m_strAttributeClass == strPrecacheAttribute )
+			{
+				CBaseEntity::PrecacheModel( pAttribute->value_string.Get() );
+			}
 		}
 	}
 }

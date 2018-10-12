@@ -278,17 +278,17 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
 																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo,
-																	int iMode, float flDamageMult, const char *iszProjectileModel )
+																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon )
 {
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( ( iMode == TF_GL_MODE_REMOTE_DETONATE ) ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
 	{
-		// model overrides
-		pGrenade->SetProjectileModel( iszProjectileModel );
-
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
 		pGrenade->SetPipebombMode( iMode );
 		DispatchSpawn( pGrenade );
+
+		// Set the launcher for model overrides
+		pGrenade->SetLauncher( pWeapon );
 
 		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo );
 
@@ -324,24 +324,15 @@ void CTFGrenadePipebombProjectile::Spawn()
 {
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
-		if ( !m_iszProjectileModel )
-			PrecacheProjectileModel( TF_WEAPON_PIPEBOMB_MODEL );
-
 		// Set this to max, so effectively they do not self-implode.
 		SetDetonateTimerLength( FLT_MAX );
+		PrecacheProjectileModel( TF_WEAPON_PIPEBOMB_MODEL );
 	}
 	else
 	{
-		if ( !m_iszProjectileModel )
-			PrecacheProjectileModel( TF_WEAPON_PIPEGRENADE_MODEL );
-
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
-	}
-
-	if ( m_iszProjectileModel != NULL_STRING )
-	{
-		PrecacheProjectileModel( STRING( m_iszProjectileModel ) );		
+		PrecacheProjectileModel( TF_WEAPON_PIPEGRENADE_MODEL );
 	}
 
 	BaseClass::Spawn();
@@ -364,6 +355,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 void CTFGrenadePipebombProjectile::Precache()
 {
 	PrecacheTeamParticles("stickybombtrail_%s", true);
+
 	BaseClass::Precache();
 }
 

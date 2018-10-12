@@ -12,10 +12,12 @@ BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
 	RecvPropFloat( RECVINFO( value ) ),
+	RecvPropString( RECVINFO( value_string ) ),
 	RecvPropString( RECVINFO( attribute_class ) ),
 #else
 	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ) ),
 	SendPropFloat( SENDINFO( value ) ),
+	SendPropString( SENDINFO( value_string ) ),
 	SendPropString( SENDINFO( attribute_class ) ),
 #endif
 END_NETWORK_TABLE()
@@ -27,6 +29,7 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 {
 	m_iAttributeDefinitionIndex = iIndex;
 	value = flValue;
+	value_string.GetForModify()[0] = '\0';
 
 	if ( pszAttributeClass )
 	{
@@ -45,11 +48,11 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconItemAttribute::Init( int iIndex, const char *iszValue, const char *pszAttributeClass /*= NULL*/ )
+void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *pszAttributeClass /*= NULL*/ )
 {
 	m_iAttributeDefinitionIndex = iIndex;
-
-	V_strncpy( value_string.GetForModify(), iszValue, sizeof( value_string ) );
+	value = 0.0f;
+	V_strncpy( value_string.GetForModify(), pszValue, sizeof( value_string ) );
 
 	if ( pszAttributeClass )
 	{

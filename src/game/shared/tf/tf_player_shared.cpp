@@ -1746,7 +1746,7 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, int iStunType
 	else if ( iStunType == STUN_CONC || iStunType == STUN_YIKES || iStunType == STUN_NO_EFFECT )
 	{
 		//if ( flStunExpireTimeOld < m_flStunExpireTime )
-			AddCond( TF_COND_HALF_STUN, flDuration );
+		AddCond( TF_COND_HALF_STUN, flDuration );
 	}
 	else
 	{

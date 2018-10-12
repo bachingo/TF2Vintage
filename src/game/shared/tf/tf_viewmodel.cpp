@@ -472,10 +472,10 @@ void CTFViewModel::CalcMinViewmodelOffset( C_TFPlayer *owner )
 	if ( pWeapon )
 	{
 		vec_t vecOffset[3] = { 0.0f, 0.0f, 0.0f };
-		const char *pOffset = pWeapon->GetViewModelOffset();
-		if ( pOffset[0] )
+		string_t strOffset = pWeapon->GetViewModelOffset();
+		if ( strOffset[0] != NULL_STRING )
 		{
-			UTIL_StringToVector( vecOffset, pOffset );
+			UTIL_StringToVector( vecOffset, strOffset );
 		}
 
 		m_vOffset.Init( vecOffset[0], vecOffset[1], vecOffset[2] );

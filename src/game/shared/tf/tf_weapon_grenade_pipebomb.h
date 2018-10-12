@@ -62,7 +62,7 @@ public:
 
 	// Creation.
 	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, const AngularImpulse &angVelocity, 
-												 CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult, const char *iszProjectileModel );
+												 CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult, CTFWeaponBase *pWeapon );
 
 	// Overrides.
 	virtual void	Spawn();
@@ -83,8 +83,7 @@ public:
 	
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
-	void SetProjectileModel( const char *iszModel ) { m_iszProjectileModel = AllocPooledString( iszModel ); }
-	void PrecacheProjectileModel( const char *iszModel );
+	void			PrecacheProjectileModel( const char *iszModel );
 
 private:
 
@@ -92,8 +91,6 @@ private:
 	bool		m_bFizzle;
 
 	float		m_flMinSleepTime;
-
-	string_t	m_iszProjectileModel;
 
 	CHandle<CBaseEntity>	m_hEnemy;
 #endif

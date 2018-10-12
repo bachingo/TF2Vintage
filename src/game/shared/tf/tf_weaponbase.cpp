@@ -530,11 +530,11 @@ C_BaseAnimating *C_TFWeaponBase::GetAppropriateWorldOrViewModel( void )
 //-----------------------------------------------------------------------------
 // Purpose: Get the viewmodel offset for min-viewmodels
 //-----------------------------------------------------------------------------
-const char *C_TFWeaponBase::GetViewModelOffset( void )
+string_t C_TFWeaponBase::GetViewModelOffset( void )
 {
-	const char *pOffset = "\0";
-	CALL_ATTRIB_HOOK_STRING( pOffset, min_viewmodel_offset );
-	return pOffset;
+	string_t strOffset = NULL_STRING;
+	CALL_ATTRIB_HOOK_STRING( strOffset, min_viewmodel_offset );
+	return strOffset;
 }
 #endif
 
