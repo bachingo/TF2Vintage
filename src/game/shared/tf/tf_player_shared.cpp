@@ -4200,6 +4200,12 @@ bool CTFPlayer::CanGoInvisible(void)
 		return false;
 	}
 
+	// Stunned players cannot go invisible
+	if ( m_Shared.InCond( TF_COND_STUNNED ) || m_Shared.InCond( TF_COND_HALF_STUN ) )
+	{
+		return false;
+	}
+
 	CTFGameRules *pRules = TFGameRules();
 
 	Assert(pRules);
