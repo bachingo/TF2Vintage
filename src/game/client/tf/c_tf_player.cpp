@@ -4079,7 +4079,7 @@ void C_TFPlayer::ValidateModelIndex( void )
 
 	if ( m_iSpyMaskBodygroup > -1 && GetModelPtr() != NULL )
 	{
-		SetBodygroup( m_iSpyMaskBodygroup, m_Shared.InCond( TF_COND_DISGUISED ) );
+		SetBodygroup( m_iSpyMaskBodygroup, ( m_Shared.InCond( TF_COND_DISGUISED ) && ( !IsEnemyPlayer() || m_Shared.GetDisguiseClass() == TF_CLASS_SPY ) ) );
 	}
 
 	BaseClass::ValidateModelIndex();
