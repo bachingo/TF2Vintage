@@ -64,40 +64,6 @@ static char *g_szRedClassImages[] =
 	"",
 };
 
-static char *g_szGreenClassImages[] =
-{
-	"",
-	"../hud/class_scoutgreen",
-	"../hud/class_snipergreen",
-	"../hud/class_soldiergreen",
-	"../hud/class_demogreen",
-	"../hud/class_medicgreen",
-	"../hud/class_heavygreen",
-	"../hud/class_pyrogreen",
-	"../hud/class_spygreen",
-	"../hud/class_engigreen",
-	"../hud/class_civgreen",
-	"../hud/class_mercgreen",
-	"",
-};
-
-static char *g_szYellowClassImages[] =
-{
-	"",
-	"../hud/class_scoutyellow",
-	"../hud/class_sniperyellow",
-	"../hud/class_soldieryellow",
-	"../hud/class_demoyellow",
-	"../hud/class_medicyellow",
-	"../hud/class_heavyyellow",
-	"../hud/class_pyroyellow",
-	"../hud/class_spyyellow",
-	"../hud/class_engiyellow",
-	"../hud/class_civyellow",
-	"../hud/class_mercyellow",
-	"",
-};
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

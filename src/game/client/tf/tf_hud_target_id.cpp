@@ -325,20 +325,37 @@ void CTargetID::UpdateID( void )
 				// is the target a disguised enemy spy?
 				if ( pPlayer->IsEnemyPlayer() )
 				{
-					if ( pDisguiseTarget )
+					// Disguising as a spy should show the fake class used for the mask
+					if ( pPlayer->m_Shared.GetDisguiseClass() == TF_CLASS_SPY )
 					{
-						bDisguisedEnemy = true;
-						// change the player name
-						g_pVGuiLocalize->ConvertANSIToUnicode( pDisguiseTarget->GetPlayerName(), wszPlayerName, sizeof(wszPlayerName) );
-						// Show their disguise team color.
-						iColorNum = pPlayer->m_Shared.GetDisguiseTeam();
-						// change the avatar
-						pAvatarPlayer = pDisguiseTarget;
-						
-						// offset the name if avatars are enabled and we're a disguised enemy bot
-						if ( tf_hud_target_id_show_avatars.GetBool() && g_PR->IsFakePlayer( m_iTargetEntIndex ) )
+						// The target is disguising as a friendly spy.  They appear to the player with no disguise.  Add the disguise
+						// team & class to the target ID element.
+						const wchar_t *wszAlignment = g_pVGuiLocalize->Find( "#TF_enemy" );
+					
+						int classindex = pPlayer->m_Shared.GetMaskClass();
+						const wchar_t *wszClassName = g_pVGuiLocalize->Find( g_aPlayerClassNames[classindex] );
+
+						// build a string with disguise information
+						g_pVGuiLocalize->ConstructString( sDataString, sizeof(sDataString), g_pVGuiLocalize->Find( "#TF_playerid_friendlyspy_disguise" ), 
+							2, wszAlignment, wszClassName );
+					}
+					else
+					{
+						if ( pDisguiseTarget )
 						{
-							m_pTargetNameLabel->SetTextInset( 32, 0 );
+							bDisguisedEnemy = true;
+							// change the player name
+							g_pVGuiLocalize->ConvertANSIToUnicode( pDisguiseTarget->GetPlayerName(), wszPlayerName, sizeof(wszPlayerName) );
+							// Show their disguise team color.
+							iColorNum = pPlayer->m_Shared.GetDisguiseTeam();
+							// change the avatar
+							pAvatarPlayer = pDisguiseTarget;
+						
+							// offset the name if avatars are enabled and we're a disguised enemy bot
+							if ( tf_hud_target_id_show_avatars.GetBool() && g_PR->IsFakePlayer( m_iTargetEntIndex ) )
+							{
+								m_pTargetNameLabel->SetTextInset( 32, 0 );
+							}
 						}
 					}
 				}
