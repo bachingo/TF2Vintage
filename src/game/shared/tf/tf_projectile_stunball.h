@@ -66,6 +66,8 @@ public:
 
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
 
+	bool			CanStun( CTFPlayer *pOther );
+
 #else
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	CreateTrails( void );

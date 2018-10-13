@@ -131,8 +131,8 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 	CTFPlayer *pAttacker = dynamic_cast< CTFPlayer * >( GetThrower() );
 	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( m_hEnemy.Get() );
 
-	// TODO: check for invuln/dodge/etc.
-	if ( pPlayer && pAttacker && pPlayer->GetTeamNumber() != pAttacker->GetTeamNumber() )
+	// Make sure the player is stunnable
+	if ( pPlayer && pAttacker && CanStun( pPlayer ) )
 	{
 		float flAirTime = gpGlobals->curtime - m_flCreationTime;
 		Vector vecDir = GetAbsOrigin();
@@ -229,6 +229,26 @@ void CTFStunBall::StunBallTouch( CBaseEntity *pOther )
 			UTIL_Remove( this );
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Check if this player can be stunned
+//-----------------------------------------------------------------------------
+bool CTFStunBall::CanStun( CTFPlayer *pOther )
+{
+	// Dead players can't be stunned
+	if ( !pOther->IsAlive() )
+		return false;
+
+	// Don't stun team members
+	if ( GetTeamNumber() != pOther->GetTeamNumber() )
+		return false;
+
+	// Don't stun players we can't damage
+	if ( pOther->m_Shared.InCond( TF_COND_INVULNERABLE ) || pOther->m_Shared.InCond( TF_COND_PHASE ) )
+		return false;
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
