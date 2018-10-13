@@ -433,13 +433,12 @@ void CTFFlameThrower::PrimaryAttack()
 		// Burn & Ignite 'em
 		int iDmgType = g_aWeaponDamageTypes[ GetWeaponID() ];
 		m_bCritFire = IsCurrentAttackACrit();
-		m_bMiniCritFire = IsCurrentAttackAMiniCrit();
 
 		if ( m_bCritFire )
 		{
 			iDmgType |= DMG_CRITICAL;
 		}
-		else if ( m_bMiniCritFire )
+		else if ( IsCurrentAttackAMiniCrit() )
 		{
 			iDmgType |= DMG_MINICRITICAL;
 		}

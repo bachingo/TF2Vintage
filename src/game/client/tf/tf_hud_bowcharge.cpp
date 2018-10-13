@@ -157,6 +157,7 @@ void CHudBowChargeMeter::FireGameEvent( IGameEvent *event )
 				int bone = event->GetInt( "boneIndexAttached" );
 				Vector vecPosition( event->GetFloat( "bonePositionX" ), event->GetFloat( "bonePositionY" ), event->GetFloat( "bonePositionZ" ) );
 				QAngle vecAngles( event->GetFloat( "boneAnglesX" ), event->GetFloat( "boneAnglesY" ), event->GetFloat( "boneAnglesZ" ) );
+				pArrow->SetDieTime( gpGlobals->curtime + 60.0f );
 				pArrow->AttachEntityToBone( pPlayer, bone, vecPosition, vecAngles );
 			}
 		}

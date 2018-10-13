@@ -751,7 +751,6 @@ void C_TFProjectile_Arrow::NotifyBoneAttached( C_BaseAnimating* attachTarget )
 {
 	BaseClass::NotifyBoneAttached( attachTarget );
 
-	m_flDieTime = gpGlobals->curtime + 60.0f;
 	m_bAttachment = true;
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }

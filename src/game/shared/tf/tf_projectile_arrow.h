@@ -85,6 +85,9 @@ public:
 
 	virtual void    NotifyBoneAttached( C_BaseAnimating* attachTarget );
 
+	// Tell the object when to die
+	void			SetDieTime( float flDieTime ) { m_flDieTime = flDieTime; }
+
 #endif
 
 private:

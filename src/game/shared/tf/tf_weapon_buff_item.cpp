@@ -352,7 +352,10 @@ void C_TFBuffItem::CreateBanner( int iBuffType )
 		// Attach the flag to the backpack
 		int bone = pWearable->LookupBone( "bip_spine_3" );
 		if ( bone != -1 )
+		{
+			pBanner->SetDieTime( gpGlobals->curtime + 10.0f );
 			pBanner->AttachEntityToBone( pWearable, bone );
+		}
 	}
 }
 

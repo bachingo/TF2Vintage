@@ -106,9 +106,6 @@ private:
 	int			m_iParticleWaterLevel;
 	float		m_flAmmoUseRemainder;
 
-	// Don't need network this as mini-crits don't use special particle effects
-	bool m_bMiniCritFire;
-
 #if defined( CLIENT_DLL )
 	CSoundPatch	*m_pFiringStartSound;
 
