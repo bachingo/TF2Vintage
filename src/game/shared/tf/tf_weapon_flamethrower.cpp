@@ -313,6 +313,7 @@ void CTFFlameThrower::PrimaryAttack()
 	}
 
 	CalcIsAttackCritical();
+	CalcIsAttackMiniCritical();
 
 	// Because the muzzle is so long, it can stick through a wall if the player is right up against it.
 	// Make sure the weapon can't fire in this condition by tracing a line between the eye point and the end of the muzzle.
@@ -432,9 +433,15 @@ void CTFFlameThrower::PrimaryAttack()
 		// Burn & Ignite 'em
 		int iDmgType = g_aWeaponDamageTypes[ GetWeaponID() ];
 		m_bCritFire = IsCurrentAttackACrit();
+		m_bMiniCritFire = IsCurrentAttackAMiniCrit();
+
 		if ( m_bCritFire )
 		{
 			iDmgType |= DMG_CRITICAL;
+		}
+		else if ( m_bMiniCritFire )
+		{
+			iDmgType |= DMG_MINICRITICAL;
 		}
 
 #ifdef CLIENT_DLL
