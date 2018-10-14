@@ -4524,25 +4524,30 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 		}
 		else if ( IsEnemyPlayer() )
 		{
-			if ( m_Shared.InCond( TF_COND_STEALTHED ))
+			if ( m_Shared.InCond( TF_COND_STEALTHED ) )
 			{
 				// Don't give away cloaked spies.
 				bShouldShow = false;
 			}
 
-
 			if ( m_Shared.InCond( TF_COND_DISGUISED ) )
 			{
+				// Disguised spies should use their fake health instead.
 				if ( m_Shared.InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
 				{
-					// Disguised spies should use their fake health instead.
-					bShouldShow = true;
+					// Use the disguise team.
 					iTeamNum = m_Shared.GetDisguiseTeam();
 				}
 				else
 				{
 					bShouldShow = false;
 				}
+			}
+
+			// If we previously had overheal and shouldn't now remove the effect
+			if ( m_bOldShowOverheal && !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) &&  !m_Shared.InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
+			{
+				bShouldShow = false;
 			}
 		}
 		else if ( !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) )
@@ -4553,6 +4558,13 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 
 	if ( bShouldShow )
 	{
+		// If we've undisguised recently change the overheal particle color
+		if ( m_pOverhealEffect && iTeamNum != m_iOldOverhealTeamNum )
+		{
+			ParticleProp()->StopEmission( m_pOverhealEffect );
+			m_pOverhealEffect = NULL;
+		}
+
 		if ( !m_pOverhealEffect )
 		{
 			const char *pszEffect = ConstructTeamParticle( "overhealedplayer_%s_pluses", iTeamNum, false );
@@ -4567,6 +4579,10 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 			m_pOverhealEffect = NULL;
 		}
 	}
+	
+	// Update our overheal state
+	m_bOldShowOverheal = bShouldShow;
+	m_iOldOverhealTeamNum = iTeamNum;
 }
 
 #include "c_obj_sentrygun.h"
