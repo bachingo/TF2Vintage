@@ -323,8 +323,16 @@ void CTargetID::UpdateID( void )
 			if ( bDisguisedTarget )
 			{
 				// is the target a disguised enemy spy?
-				if ( pPlayer->IsEnemyPlayer() )
+				if ( pPlayer->IsEnemyPlayer() && pDisguiseTarget )
 				{
+					bDisguisedEnemy = true;
+					// change the player name
+					g_pVGuiLocalize->ConvertANSIToUnicode( pDisguiseTarget->GetPlayerName(), wszPlayerName, sizeof(wszPlayerName) );
+					// Show their disguise team color.
+					iColorNum = pPlayer->m_Shared.GetDisguiseTeam();
+					// change the avatar
+					pAvatarPlayer = pDisguiseTarget;
+
 					// Disguising as a spy should show the fake class used for the mask
 					if ( pPlayer->m_Shared.GetDisguiseClass() == TF_CLASS_SPY )
 					{
@@ -338,24 +346,14 @@ void CTargetID::UpdateID( void )
 						// build a string with disguise information
 						g_pVGuiLocalize->ConstructString( sDataString, sizeof(sDataString), g_pVGuiLocalize->Find( "#TF_playerid_friendlyspy_disguise" ), 
 							2, wszAlignment, wszClassName );
+						
 					}
 					else
-					{
-						if ( pDisguiseTarget )
+					{					
+						// offset the name if avatars are enabled and we're a disguised enemy bot
+						if ( tf_hud_target_id_show_avatars.GetBool() && g_PR->IsFakePlayer( m_iTargetEntIndex ) )
 						{
-							bDisguisedEnemy = true;
-							// change the player name
-							g_pVGuiLocalize->ConvertANSIToUnicode( pDisguiseTarget->GetPlayerName(), wszPlayerName, sizeof(wszPlayerName) );
-							// Show their disguise team color.
-							iColorNum = pPlayer->m_Shared.GetDisguiseTeam();
-							// change the avatar
-							pAvatarPlayer = pDisguiseTarget;
-						
-							// offset the name if avatars are enabled and we're a disguised enemy bot
-							if ( tf_hud_target_id_show_avatars.GetBool() && g_PR->IsFakePlayer( m_iTargetEntIndex ) )
-							{
-								m_pTargetNameLabel->SetTextInset( 32, 0 );
-							}
+							m_pTargetNameLabel->SetTextInset( 32, 0 );
 						}
 					}
 				}
