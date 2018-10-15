@@ -1087,15 +1087,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
-	if ( InCond( TF_COND_STUNNED ) )
-	{
-		if ( gpGlobals->curtime > m_flTauntRemoveTime )
-		{
-			m_pOuter->ResetTauntHandle();
-			RemoveCond( TF_COND_STUNNED );
-		}
-	}
-
 	if ( InCond( TF_COND_BURNING ) && ( m_pOuter->m_flPowerPlayTime < gpGlobals->curtime ) )
 	{
 		// If we're underwater, put the fire out
@@ -1421,7 +1412,7 @@ void CTFPlayerShared::OnRemoveStunned(void)
 {
 	m_flStunExpireTime = 0.0f;
 	m_hStunner = NULL;
-	m_iStunPhase = 0;
+	m_iStunPhase = STUN_PHASE_NONE;
 
 	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
 
@@ -1733,8 +1724,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 
 void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, int iStunType, CTFPlayer *pStunner )
 {
-	//float flStunExpireTimeOld = m_flStunExpireTime;
-	m_flStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
+	float flNextStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
 	m_hStunner = pStunner;
 	m_iStunType = iStunType;
 	m_flStunMovementSpeed = flSpeed;
@@ -1742,11 +1732,15 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, int iStunType
 	if ( iStunType == STUN_BIG )
 	{
 		AddCond( TF_COND_STUNNED );
+		m_flStunExpireTime = flNextStunExpireTime;
 	}
 	else if ( iStunType == STUN_CONC || iStunType == STUN_YIKES || iStunType == STUN_NO_EFFECT )
 	{
-		//if ( flStunExpireTimeOld < m_flStunExpireTime )
-		AddCond( TF_COND_HALF_STUN, flDuration );
+		if ( m_flStunExpireTime < flNextStunExpireTime )
+		{
+			AddCond( TF_COND_HALF_STUN, flDuration );
+			m_flStunExpireTime = flNextStunExpireTime;
+		}
 	}
 	else
 	{
@@ -1758,7 +1752,7 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, int iStunType
 //-----------------------------------------------------------------------------
 // Purpose: Bonk phase effects
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::AddPhaseEffects(void)
+void CTFPlayerShared::AddPhaseEffects( void )
 {
 	CTFPlayer *pPlayer = m_pOuter;
 	if ( !pPlayer)
