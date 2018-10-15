@@ -71,11 +71,4 @@ void CTFLunchBox_Drink::Precache( void )
 	PrecacheParticleSystem( "energydrink_splash" );
 	BaseClass::Precache();
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-/*void CTFLunchBox_Drink::ApplyBiteEffects( bool bHurt )
-{
-}*/
 #endif

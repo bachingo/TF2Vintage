@@ -1387,6 +1387,7 @@ void CTFPlayer::GiveDefaultItems()
 			// player_bodygroups
 			pWeapon->UpdatePlayerBodygroups();
 
+			// Extra wearables
 			const char *iszModel = pWeapon->GetExtraWearableModel();
 			if ( iszModel[0] )
 			{

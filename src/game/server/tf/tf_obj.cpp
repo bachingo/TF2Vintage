@@ -2060,6 +2060,9 @@ float CBaseObject::GetConstructionMultiplier( void )
 		{
 			// Each player hitting it builds twice as fast
 			flMultiplier *= 2.0;
+
+			// Check if this weapon has a build modifier
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( UTIL_PlayerByIndex( m_RepairerList.Key( iThis ) ), flMultiplier, mult_construction_value );
 		}
 	}
 

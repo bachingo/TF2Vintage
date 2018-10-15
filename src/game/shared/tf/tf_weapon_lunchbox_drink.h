@@ -39,7 +39,6 @@ public:
 
 #ifdef GAME_DLL
 	virtual void	Precache( void );
-	//virtual void	ApplyBiteEffects( bool bHurt );
 #endif
 };
 
