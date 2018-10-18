@@ -6137,7 +6137,7 @@ void CTFPlayer::CheatImpulseCommands( int iImpulse )
 				// Refill clip in all weapons.
 				for ( int i = 0; i < WeaponCount(); i++ )
 				{
-					CBaseCombatWeapon *pWeapon = GetWeapon( i );
+					CTFWeaponBase *pWeapon = ( CTFWeaponBase * )GetWeapon( i );
 					if ( !pWeapon )
 						continue;
 
@@ -6150,6 +6150,13 @@ void CTFPlayer::CheatImpulseCommands( int iImpulse )
 						{
 							pTFWeapon->WeaponRegenerate();
 						}
+					}
+
+					// Refill charge meters
+					if ( pWeapon->HasChargeBar() )
+					{
+						pWeapon->EffectBarRegenFinished();
+						m_Shared.m_flEffectBarProgress = 100.0f;
 					}
 				}
 
