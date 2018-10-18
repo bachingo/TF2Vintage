@@ -241,7 +241,7 @@ bool CTFStunBall::CanStun( CTFPlayer *pOther )
 		return false;
 
 	// Don't stun team members
-	if ( GetTeamNumber() != pOther->GetTeamNumber() )
+	if ( GetTeamNumber() == pOther->GetTeamNumber() )
 		return false;
 
 	// Don't stun players we can't damage
