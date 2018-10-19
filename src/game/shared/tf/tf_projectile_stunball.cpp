@@ -15,6 +15,8 @@
 #define TF_STUNBALL_MODEL	  "models/weapons/w_models/w_baseball.mdl"
 #define TF_STUNBALL_LIFETIME  15.0f
 
+ConVar tf_scout_stunball_base_duration( "tf_scout_stunball_base_duration", "6.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stun duration of stunball" );
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFStunBall, DT_TFStunBall )
 
 BEGIN_NETWORK_TABLE( CTFStunBall, DT_TFStunBall )
@@ -135,6 +137,7 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 	if ( pPlayer && pAttacker && CanStun( pPlayer ) )
 	{
 		float flAirTime = gpGlobals->curtime - m_flCreationTime;
+		float flStunDuration = tf_scout_stunball_base_duration.GetFloat();
 		Vector vecDir = GetAbsOrigin();
 		VectorNormalize( vecDir );
 
@@ -145,26 +148,28 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		pPlayer->DispatchTraceAttack( info, vecDir, pTrace );
 		ApplyMultiDamage();
 
-		if ( flAirTime > 0.2f )
+		if ( flAirTime > 0.1f )
 		{
 
 			int iBonus = 1;
-			// TODO: Look at these values some more later
-			if ( flAirTime > 1.0f )
+			if ( flAirTime >= 1.0f )
 			{
-				// Cap the maximum stun time to 7 seconds
+				// Maximum stun is base duration + 1 second
 				flAirTime = 1.0f;
-				pPlayer->PlayStunSound( pPlayer, "TFPlayer.StunImpactRange" );
+				flStunDuration += 1.0f;
 
 				// 2 points for moonshots
 				iBonus++;
+
+				// Big stun
+				pPlayer->m_Shared.StunPlayer(flStunDuration * ( flAirTime ), 0.0f, 0.75f, TF_STUNFLAGS_BIGBONK, pAttacker );
 			}
 			else
 			{
-				pPlayer->PlayStunSound( pAttacker, "TFPlayer.StunImpact" );
+				// Small stun
+				pPlayer->m_Shared.StunPlayer(flStunDuration * ( flAirTime ), 0.8f, 0.0f, TF_STUNFLAGS_SMALLBONK, pAttacker );
 			}
 
-			pPlayer->m_Shared.StunPlayer( 7.0f * ( flAirTime ), 0.8f, STUN_CONC, pAttacker );
 			pAttacker->SpeakConceptIfAllowed( MP_CONCEPT_STUNNED_TARGET );
 
 			// Bonus points.

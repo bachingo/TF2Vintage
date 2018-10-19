@@ -4383,7 +4383,7 @@ bool C_TFPlayer::IsAllowedToSwitchWeapons( void )
 	if ( IsWeaponLowered() == true )
 		return false;
 
-	if ( m_Shared.InCond( TF_COND_STUNNED ) || m_Shared.InCond( TF_COND_HALF_STUN ) )
+	if ( m_Shared.InCond( TF_COND_STUNNED ) )
 		return false;
 
 	return BaseClass::IsAllowedToSwitchWeapons();

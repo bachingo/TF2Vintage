@@ -219,7 +219,7 @@ void CTFPlayerAnimState::Update( float eyeYaw, float eyePitch )
 	// Compute the player sequences.
 	ComputeSequences( pStudioHdr );
 
-	if ( SetupPoseParameters( pStudioHdr ) && !pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) && !pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+	if ( SetupPoseParameters( pStudioHdr ) && !pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) && ( !pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) || !( pTFPlayer->m_Shared.GetStunFlags() & TF_STUNFLAG_BONKSTUCK ) ) )
 	{
 		// Pose parameter - what direction are the player's legs running in.
 		ComputePoseParam_MoveYaw( pStudioHdr );
@@ -774,7 +774,7 @@ bool CTFPlayerAnimState::HandleJumping( Activity &idealActivity )
 //-----------------------------------------------------------------------------
 void CTFPlayerAnimState::CheckStunAnimation( void )
 {
-	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) && ( m_pTFPlayer->m_Shared.GetStunFlags() & TF_STUNFLAG_BONKSTUCK ) )
 	{
 		int iStunPhase = m_pTFPlayer->m_Shared.GetStunPhase();
 

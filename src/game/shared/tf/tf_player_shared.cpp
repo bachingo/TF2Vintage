@@ -157,8 +157,9 @@ RecvPropInt( RECVINFO( m_nAirDucked ) ),
 RecvPropInt( RECVINFO( m_nPlayerState ) ),
 RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
 RecvPropTime( RECVINFO( m_flStunExpireTime ) ),
-RecvPropInt( RECVINFO( m_iStunType ) ),
-RecvPropTime( RECVINFO( m_flStunMovementSpeed ) ),
+RecvPropInt( RECVINFO( m_nStunFlags ) ),
+RecvPropFloat( RECVINFO( m_flStunMovementSpeed ) ),
+RecvPropFloat( RECVINFO( m_flStunResistance ) ),
 RecvPropEHandle( RECVINFO( m_hStunner ) ),
 RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
 RecvPropBool( RECVINFO( m_bCarryingObject ) ),
@@ -227,8 +228,9 @@ SendPropInt( SENDINFO( m_nAirDucked ), 2, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN )
 SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT ) + 1, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL ) + 1, SPROP_UNSIGNED ),
 SendPropTime( SENDINFO( m_flStunExpireTime ) ),
-SendPropInt( SENDINFO( m_iStunType ), Q_log2( STUN_COUNT ), SPROP_UNSIGNED ),
+SendPropInt( SENDINFO( m_nStunFlags ), -1, SPROP_UNSIGNED ),
 SendPropFloat( SENDINFO( m_flStunMovementSpeed ), 0, SPROP_NOSCALE ),
+SendPropFloat( SENDINFO( m_flStunResistance ), 0, SPROP_NOSCALE ),
 SendPropEHandle( SENDINFO( m_hStunner ) ),
 SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
 SendPropBool( SENDINFO( m_bCarryingObject ) ),
@@ -698,10 +700,6 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddStunned();
 		break;
 
-	case TF_COND_HALF_STUN:
-		OnAddHalfStun();
-		break;
-
 	case TF_COND_DISGUISED_AS_DISPENSER:
 		m_pOuter->TeamFortress_SetSpeed();
 		break;
@@ -806,10 +804,6 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_STUNNED:
 		OnRemoveStunned();
-		break;
-
-	case TF_COND_HALF_STUN:
-		OnRemoveHalfStun();
 		break;
 
 	case TF_COND_HALLOWEEN_GIANT:
@@ -1148,9 +1142,13 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 
 	if ( InCond( TF_COND_STUNNED ) )
 	{
-		if ( gpGlobals->curtime > m_flStunExpireTime && m_iStunPhase == STUN_PHASE_END )
+		if ( gpGlobals->curtime > m_flStunExpireTime )
 		{
-			RemoveCond( TF_COND_STUNNED );
+			// Only check stun phase if we're unable to move
+			if ( !( m_nStunFlags & TF_STUNFLAG_BONKSTUCK ) || m_iStunPhase == STUN_PHASE_END )
+			{
+				RemoveCond( TF_COND_STUNNED );
+			}
 		}
 	}
 #endif
@@ -1403,6 +1401,32 @@ void CTFPlayerShared::OnAddStunned(void)
 	{
 		pWeapon->OnControlStunned();
 	}
+
+	// Check if effects are disabled
+	if ( !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) )
+	{
+#ifdef CLIENT_DLL
+		if ( !m_pStun )
+		{
+			if ( m_nStunFlags & TF_STUNFLAG_BONKEFFECT )
+			{
+				// Half stun
+				m_pStun = m_pOuter->ParticleProp()->Create( "conc_stars", PATTACH_POINT_FOLLOW, "head" );
+			}
+			else if ( m_nStunFlags & TF_STUNFLAG_GHOSTEFFECT )
+			{
+				// Ghost stun
+				m_pStun = m_pOuter->ParticleProp()->Create( "yikes_fx", PATTACH_POINT_FOLLOW, "head" );
+			}
+		}
+#else
+		if ( ( m_nStunFlags & TF_STUNFLAG_GHOSTEFFECT ) )
+		{
+			// Play the scream sound
+			m_pOuter->EmitSound( "Halloween.PlayerScream" );
+		}
+#endif
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1411,50 +1435,11 @@ void CTFPlayerShared::OnAddStunned(void)
 void CTFPlayerShared::OnRemoveStunned(void)
 {
 	m_flStunExpireTime = 0.0f;
+	m_flStunMovementSpeed = 0.0f;
+	m_flStunResistance = 0.0f;
 	m_hStunner = NULL;
 	m_iStunPhase = STUN_PHASE_NONE;
 
-	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
-
-	if ( pWeapon )
-	{
-		pWeapon->SetWeaponVisible( true );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::OnAddHalfStun(void)
-{
-	m_pOuter->TeamFortress_SetSpeed();
-
-#ifdef CLIENT_DLL
-	if ( !m_pStun )
-	{
-		if ( m_iStunType == STUN_CONC )
-		{
-			m_pStun = m_pOuter->ParticleProp()->Create( "conc_stars", PATTACH_POINT_FOLLOW, "head" );
-		}
-		else if ( m_iStunType == STUN_YIKES )
-		{
-			m_pStun = m_pOuter->ParticleProp()->Create( "yikes_fx", PATTACH_POINT_FOLLOW, "head" );
-		}
-	}
-#else
-	if ( m_iStunType == STUN_YIKES )
-	{
-		m_pOuter->EmitSound( "Halloween.PlayerScream" );
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Remove slowdown effect
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::OnRemoveHalfStun(void)
-{
-	m_hStunner = NULL;
 	m_pOuter->TeamFortress_SetSpeed();
 
 	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
@@ -1722,29 +1707,38 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 #endif
 }
 
-void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, int iStunType, CTFPlayer *pStunner )
+void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner )
 {
 	float flNextStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
 	m_hStunner = pStunner;
-	m_iStunType = iStunType;
+	m_nStunFlags = nStunFlags;
 	m_flStunMovementSpeed = flSpeed;
+	m_flStunResistance = flResistance;
 
-	if ( iStunType == STUN_BIG )
+	if ( m_flStunExpireTime < flNextStunExpireTime )
 	{
 		AddCond( TF_COND_STUNNED );
 		m_flStunExpireTime = flNextStunExpireTime;
-	}
-	else if ( iStunType == STUN_CONC || iStunType == STUN_YIKES || iStunType == STUN_NO_EFFECT )
-	{
-		if ( m_flStunExpireTime < flNextStunExpireTime )
+
+#ifdef GAME_DLL
+
+		// Don't play the stun sound if this is a ghost or sounds are disabled
+		if ( !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) && !( m_nStunFlags & TF_STUNFLAG_GHOSTEFFECT ) )
 		{
-			AddCond( TF_COND_HALF_STUN, flDuration );
-			m_flStunExpireTime = flNextStunExpireTime;
+			const char *pszStunSound = "\0";
+			if ( m_nStunFlags & TF_STUNFLAG_CHEERSOUND )
+			{
+				// Moonshot/Grandslam
+				pszStunSound = "TFPlayer.StunImpactRange";
+			}
+			else
+			{
+				// Normal stun
+				pszStunSound = "TFPlayer.StunImpact";
+			}
+			m_pOuter->PlayStunSound( pStunner, pszStunSound );
 		}
-	}
-	else
-	{
-		Warning( "Invalid stun type specified!" );
+#endif
 	}
 }
 
@@ -2247,7 +2241,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass )
 	}
 
 	// Can't disguise while taunting.
-	if ( InCond( TF_COND_TAUNTING ) || InCond( TF_COND_STUNNED ) || InCond( TF_COND_HALF_STUN ) )
+	if ( InCond( TF_COND_TAUNTING ) || InCond( TF_COND_STUNNED ) )
 	{
 		return;
 	}
@@ -2952,7 +2946,8 @@ bool CTFPlayerShared::IsLoser( void )
 		}
 	}
 
-	if ( InCond( TF_COND_HALF_STUN ) )
+	// Check if we should be in the loser state while stunned
+	if ( InCond( TF_COND_STUNNED ) && ( m_nStunFlags & TF_STUNFLAG_THIRDPERSON ) )
 		return true;
 
 	return false;
@@ -3680,8 +3675,8 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		maxfbspeed *= 2.0f;
 	}
 
-	// (Potentially) Reduce our speed if we were partially stunned
-	if ( m_Shared.InCond( TF_COND_HALF_STUN ) )
+	// (Potentially) Reduce our speed if we were stunned
+	if ( m_Shared.InCond( TF_COND_STUNNED ) && ( m_Shared.m_nStunFlags & TF_STUNFLAG_SLOWDOWN ) )
 	{
 		maxfbspeed *= m_Shared.m_flStunMovementSpeed;
 	}
@@ -3990,7 +3985,7 @@ bool CTFPlayer::CanAttack(void)
 	}
 
 	// Stunned players cannot attack
-	if ( m_Shared.InCond( TF_COND_HALF_STUN ) )
+	if ( m_Shared.InCond( TF_COND_STUNNED ) )
 		return false;
 
 	if ((pRules->State_Get() == GR_STATE_TEAM_WIN) && (pRules->GetWinningTeam() != GetTeamNumber()))
@@ -4018,7 +4013,7 @@ bool CTFPlayer::CanPickupBuilding(CBaseObject *pObject)
 
 	return true;
 
-	if ( m_Shared.InCond( TF_COND_STUNNED ) || m_Shared.InCond( TF_COND_HALF_STUN ) )
+	if ( m_Shared.InCond( TF_COND_STUNNED ) )
 	{
 		return false;
 	}
@@ -4195,7 +4190,7 @@ bool CTFPlayer::CanGoInvisible(void)
 	}
 
 	// Stunned players cannot go invisible
-	if ( m_Shared.InCond( TF_COND_STUNNED ) || m_Shared.InCond( TF_COND_HALF_STUN ) )
+	if ( m_Shared.InCond( TF_COND_STUNNED ) )
 	{
 		return false;
 	}

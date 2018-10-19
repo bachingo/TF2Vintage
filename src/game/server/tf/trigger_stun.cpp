@@ -10,6 +10,9 @@
 #include "tf_team.h"
 #include "tf_gamerules.h"
 
+#define TF_STUNTYPE_BIGBONK 1
+#define TF_STUNTYPE_GHOSTSCARE 2
+
 //=============================================================================
 //
 // Trigger stun tables.
@@ -60,14 +63,35 @@ bool CTriggerStun::StunEntity( CBaseEntity *pOther )
 	CTFPlayer *pPlayer = ToTFPlayer( pOther );
 
 	// Don't stun the player again if they're already stunned
-	if ( IsTouching( pOther ) && pPlayer && !pPlayer->m_Shared.InCond( TF_COND_HALF_STUN ) && !pPlayer->m_Shared.InCond( TF_COND_PHASE ) )
+	if ( IsTouching( pOther ) && pPlayer && !pPlayer->m_Shared.InCond( TF_COND_STUNNED ) && !pPlayer->m_Shared.InCond( TF_COND_PHASE ) )
 	{
-		int iStunType = m_iStunType;
+		int nStunFlags = 0;
 
-		if ( !m_bStunEffects && m_iStunType > STUN_BIG )
-			iStunType = STUN_NO_EFFECT;
+		switch ( m_iStunType )
+		{
+		case TF_STUNTYPE_BIGBONK:
+			nStunFlags = TF_STUNFLAGS_BIGBONK;
+			break;
+		case TF_STUNTYPE_GHOSTSCARE:
+			nStunFlags = TF_STUNFLAGS_GHOSTSCARE;
+			break;
+		default:
+			// No stun specified
+			return false;
+		}
 
-		pPlayer->m_Shared.StunPlayer( m_flStunDuration, 1.0 - m_flMoveSpeedReduction, iStunType, NULL );
+		if ( !m_bStunEffects )
+		{
+			// Disable effects
+			nStunFlags |= TF_STUNFLAG_NOSOUNDOREFFECT;
+		}
+
+		if ( m_flMoveSpeedReduction > 0 )
+		{
+			nStunFlags |= TF_STUNFLAG_SLOWDOWN;
+		}
+
+		pPlayer->m_Shared.StunPlayer( m_flStunDuration, 1.0 - m_flMoveSpeedReduction, 0.0f, nStunFlags, NULL );
 		m_outputOnStun.FireOutput( pOther, this );
 		m_stunEntities.AddToTail( pOther );
 

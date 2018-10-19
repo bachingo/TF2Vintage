@@ -363,8 +363,8 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( !CheckWaterJumpButton() )
 		return false;
 
-	// Cannot jump while taunting
-	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+	// Cannot jump while taunting or full stunned
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) && ( m_pTFPlayer->m_Shared.GetStunFlags() & TF_STUNFLAG_BONKSTUCK ) ) )
 		return false;
 
 	// Check to see if the player is a scout.
@@ -1598,7 +1598,7 @@ void CTFGameMovement::FullTossMove( void )
 void CTFGameMovement::StunMove( void )
 {
 	// Can't move while stunned
-	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) && ( m_pTFPlayer->m_Shared.GetStunFlags() & TF_STUNFLAG_BONKSTUCK ) )
 	{
 		mv->m_flForwardMove = 0.0f;
 		mv->m_flSideMove = 0.0f;

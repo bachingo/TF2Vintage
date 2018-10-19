@@ -192,7 +192,7 @@ public:
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
-	void	StunPlayer( float flDuration, float flSpeed, int iStunType, CTFPlayer *pStunner );
+	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
 
 #ifdef GAME_DLL
 	void	AddPhaseEffects( void );
@@ -276,6 +276,8 @@ public:
 	float	GetStunExpireTime( void ) { return m_flStunExpireTime; }
 	void	SetStunExpireTime( float flTime ) { m_flStunExpireTime = flTime; }
 
+	int   GetStunFlags( void ) { return m_nStunFlags; }
+
 	int		GetTeleporterEffectColor( void ) { return m_nTeamTeleporterUsed; }
 	void	SetTeleporterEffectColor( int iTeam ) { m_nTeamTeleporterUsed = iTeam; }
 #ifdef CLIENT_DLL
@@ -305,7 +307,6 @@ private:
 	void OnAddDisguised( void );
 	void OnAddTaunting( void );
 	void OnAddStunned( void );
-	void OnAddHalfStun( void );
 	void OnAddSlowed( void );
 	void OnAddRegenerate( void );
 	void OnAddCritboosted( void );
@@ -326,7 +327,6 @@ private:
 	void OnRemoveTeleported( void );
 	void OnRemoveTaunting( void );
 	void OnRemoveStunned( void );
-	void OnRemoveHalfStun( void );
 	void OnRemoveSlowed( void );
 	void OnRemoveRegenerate( void );
 	void OnRemoveCritboosted( void );
@@ -458,8 +458,9 @@ private:
 	CNetworkVar( float, m_flStunExpireTime );
 	int m_iStunPhase;
 
-	CNetworkVar( int, m_iStunType );
+	CNetworkVar( int, m_nStunFlags );
 	CNetworkVar( float, m_flStunMovementSpeed );
+	CNetworkVar( float, m_flStunResistance );
 
 	//CNetworkVar( int, m_iDominationCount );
 
