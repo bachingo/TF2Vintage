@@ -3573,14 +3573,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CTFWeaponBase *pWeapon = NULL;
 
-	bool bObject = false;
+	//bool bObject = false;
 
 	// If this is a base object get the builder
 	if ( pAttacker->IsBaseObject() )
 	{
 		CBaseObject *pObject = static_cast< CBaseObject * >( pAttacker );
 		pAttacker = pObject->GetBuilder();
-		bObject = true;
+		//bObject = true;
 	}
 
 	if ( inputInfo.GetWeapon() )
@@ -3969,7 +3969,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
 
 		float flDamage = info.GetDamage();
-		if ( bObject )
+		/*if ( bObject )
 		{
 			// 50% resistance to sentry damage
 			info.SetDamage( flDamage * 0.50f );
@@ -3978,7 +3978,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			// 35% to all other sources
 			info.SetDamage( flDamage * 0.65f );
-		}
+		}*/
+
+		// 35% damage resist from all sources
+		info.SetDamage( flDamage * 0.65f );
 	}
 
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
@@ -4369,14 +4372,16 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		// Battalion's Backup reduces damage so make sure we compensate for that 
 		// so that the knockback isn't affected too much
 
-		if ( info.GetInflictor()->IsBaseObject() )
+		/*if ( info.GetInflictor()->IsBaseObject() )
 		{
 			flDamage /= 0.50f;
 		}
 		else
 		{
 			flDamage /= 0.65f;
-		}
+		}*/
+
+		flDamage /= 0.65f;
 	}
 
 	Vector vecForce;
