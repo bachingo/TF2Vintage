@@ -19,10 +19,13 @@
 #include "tf_player.h"
 #endif
 
-#define TF_BASEBALL_DAMAGE 15.0f
-#define TF_BASEBALL_VEL 2990.0f
 #define TF_STUNBALL_VIEWMODEL "models/weapons/v_models/v_baseball.mdl"
 #define TF_STUNBALL_ADDON 2
+
+ConVar sv_proj_stunball_damage( "sv_proj_stunball_damage", "15", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball damage." );
+ConVar tf_scout_stunball_regen_rate( "tf_scout_stunball_regen_rate", "15.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball regen rate." );
+ConVar tf_scout_stunball_base_speed( "tf_scout_stunball_base_speed", "2990.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball base speed." );
+ConVar tf_scout_bat_launch_delay( "tf_scout_bat_launch_delay", "0.1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies delay for stunball launch" );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFBat_Wood, DT_TFWeaponBat_Wood )
 
@@ -182,7 +185,7 @@ void CTFBat_Wood::SecondaryAttack( void )
 	m_flNextFireTime = gpGlobals->curtime + 0.25f;
 	SetWeaponIdleTime( m_flNextFireTime );
 
-	SetContextThink( &CTFBat_Wood::LaunchBallThink, gpGlobals->curtime, "LAUNCH_BALL_THINK" );
+	SetContextThink( &CTFBat_Wood::LaunchBallThink, gpGlobals->curtime + tf_scout_bat_launch_delay.GetFloat(), "LAUNCH_BALL_THINK" );
 	m_bFiring = true;
 
 #ifdef GAME_DLL
@@ -236,7 +239,7 @@ CBaseEntity *CTFBat_Wood::LaunchBall( CTFPlayer *pPlayer )
 
 	//NDebugOverlay::Line( pPlayer->EyePosition(), vecSrc, 0, 255, 0, true, 5.0f );
 	
-	Vector vecVelocity = ( vecForward * TF_BASEBALL_VEL ) + ( vecUp * 200.0f );
+	Vector vecVelocity = ( vecForward * tf_scout_stunball_base_speed.GetFloat() ) + ( vecUp * 200.0f );
 
 	//GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, false );
 
@@ -245,7 +248,7 @@ CBaseEntity *CTFBat_Wood::LaunchBall( CTFPlayer *pPlayer )
 	{
 		CalcIsAttackCritical();
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( TF_BASEBALL_DAMAGE );
+		pProjectile->SetDamage( sv_proj_stunball_damage.GetFloat() );
 	}
 
 	return pProjectile;
@@ -313,6 +316,10 @@ bool CTFBat_Wood::SendWeaponAnim( int iActivity )
 	}
 
 	return BaseClass::SendWeaponAnim( iNewActivity );
+}
+float CTFBat_Wood::InternalGetEffectBarRechargeTime( void )
+{
+	return tf_scout_stunball_regen_rate.GetFloat();
 }
 
 #ifdef CLIENT_DLL

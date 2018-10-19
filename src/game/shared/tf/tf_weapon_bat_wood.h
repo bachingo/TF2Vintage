@@ -37,7 +37,7 @@ public:
 
 	virtual bool		HasChargeBar( void )							{ return true; }
 	virtual const char* GetEffectLabelText( void )						{ return "#TF_Ball"; }
-	virtual float		InternalGetEffectBarRechargeTime()				{ return 15.0; }
+	virtual float		InternalGetEffectBarRechargeTime( void );
 
 	virtual void		UpdateOnRemove( void );
 
