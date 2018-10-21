@@ -23,7 +23,7 @@ public:
 	virtual bool Init();
 	virtual char const *Name() { return "CTFTips"; }
 
-	const wchar_t *GetRandomTip();
+	const wchar_t *GetRandomTip( int &iClass );
 	const wchar_t *GetNextClassTip( int iClass );
 private:
 	const wchar_t *GetTip( int iClass, int iTip );

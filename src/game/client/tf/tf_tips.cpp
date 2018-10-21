@@ -48,14 +48,14 @@ bool CTFTips::Init()
 //-----------------------------------------------------------------------------
 // Purpose: Returns a random tip, selected from tips for all classes
 //-----------------------------------------------------------------------------
-const wchar_t *CTFTips::GetRandomTip()
+const wchar_t *CTFTips::GetRandomTip( int &iClass )
 {
 	Init();
 
 	// pick a random tip
 	int iTip = RandomInt( 0, m_iTipCountAll-1 );
 	// walk through each class until we find the class this tip lands in
-	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT; iClass++ )
+	for ( iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT; iClass++ )
 	{
 		Assert( iTip >= 0 );
 		int iClassTipCount = m_iTipCount[iClass]; 
@@ -78,9 +78,11 @@ const wchar_t *CTFTips::GetNextClassTip( int iClass )
 	if (!m_bInited)
 		Init();
 
+	int iClassNum = 0;
+
 	// OK to call this function with TF_CLASS_UNDEFINED or TF_CLASS_RANDOM, just return a random tip for any class in that case
 	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_CLASS_COUNT )
-		return GetRandomTip();
+		return GetRandomTip( iClassNum );
 
 	int iClassTipCount = m_iTipCount[iClass];
 	Assert( 0 != iClassTipCount );
