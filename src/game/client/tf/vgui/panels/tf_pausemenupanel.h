@@ -26,7 +26,6 @@ public:
 	void OnCommand(const char* command);
 	void DefaultLayout();
 	void GameLayout();
-	void OnNotificationUpdate();
 
 private:
 	CTFAdvButton	*m_pNotificationButton;

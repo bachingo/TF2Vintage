@@ -6,7 +6,6 @@
 #include "panels/tf_pausemenupanel.h"
 #include "panels/tf_backgroundpanel.h"
 #include "panels/tf_loadoutpanel.h"
-#include "panels/tf_notificationpanel.h"
 #include "panels/tf_shadebackgroundpanel.h"
 #include "panels/tf_optionsdialog.h"
 #include "panels/tf_quitdialogpanel.h"
@@ -15,7 +14,6 @@
 #include "panels/tf_itemtooltippanel.h"
 #include "engine/IEngineSound.h"
 #include "tf_hud_statpanel.h"
-#include "tf_notificationmanager.h"
 #include "tier0/icommandline.h"
 
 using namespace vgui;
@@ -82,7 +80,6 @@ CTFMainMenu::CTFMainMenu(VPANEL parent) : vgui::EditablePanel(NULL, "MainMenu")
 	AddMenuPanel(new CTFPauseMenuPanel(this, "CTFPauseMenuPanel"), PAUSE_MENU);
 	AddMenuPanel(new CTFBackgroundPanel(this, "CTFBackgroundPanel"), BACKGROUND_MENU);
 	AddMenuPanel(new CTFLoadoutPanel(this, "CTFLoadoutPanel"), LOADOUT_MENU);
-	AddMenuPanel(new CTFNotificationPanel(this, "CTFNotificationPanel"), NOTIFICATION_MENU);
 	AddMenuPanel(new CTFShadeBackgroundPanel(this, "CTFShadeBackgroundPanel"), SHADEBACKGROUND_MENU);
 	AddMenuPanel(new CTFQuitDialogPanel(this, "CTFQuitDialogPanel"), QUIT_MENU);
 	AddMenuPanel(new CTFOptionsDialog(this, "CTFOptionsDialog"), OPTIONSDIALOG_MENU);
@@ -95,7 +92,6 @@ CTFMainMenu::CTFMainMenu(VPANEL parent) : vgui::EditablePanel(NULL, "MainMenu")
 	ShowPanel(BACKGROUND_MENU);
 	HidePanel(SHADEBACKGROUND_MENU);
 	HidePanel(LOADOUT_MENU);
-	HidePanel(NOTIFICATION_MENU);
 	HidePanel(QUIT_MENU);
 	HidePanel(OPTIONSDIALOG_MENU);
 	HidePanel(STATSUMMARY_MENU);
@@ -334,14 +330,6 @@ void CTFMainMenu::ShowItemToolTip(CEconItemDefinition *pItemData)
 void CTFMainMenu::HideItemToolTip()
 {
 	dynamic_cast<CTFItemToolTipPanel*>(GetMenuPanel(ITEMTOOLTIP_MENU))->HideToolTip();
-}
-
-
-void CTFMainMenu::OnNotificationUpdate()
-{
-	GET_MAINMENUPANEL(CTFNotificationPanel)->OnNotificationUpdate();
-	GET_MAINMENUPANEL(CTFMainMenuPanel)->OnNotificationUpdate();
-	GET_MAINMENUPANEL(CTFPauseMenuPanel)->OnNotificationUpdate();
 }
 
 void CTFMainMenu::SetServerlistSize(int size)

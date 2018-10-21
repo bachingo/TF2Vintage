@@ -45,7 +45,6 @@ void CTFPauseMenuPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 void CTFPauseMenuPanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
-	OnNotificationUpdate();
 };
 
 
@@ -63,44 +62,11 @@ void CTFPauseMenuPanel::OnCommand(const char* command)
 	{
 		MAINMENU_ROOT->ShowPanel(LOADOUT_MENU);
 	}
-	else if (!Q_strcmp(command, "shownotification"))
-	{
-		if (m_pNotificationButton)
-		{
-			m_pNotificationButton->SetGlowing(false);
-		}
-		MAINMENU_ROOT->ShowPanel(NOTIFICATION_MENU);
-	}
 	else
 	{
 		BaseClass::OnCommand(command);
 	}
 }
-
-void CTFPauseMenuPanel::OnNotificationUpdate()
-{
-	if (m_pNotificationButton)
-	{
-		if (GetNotificationManager()->GetNotificationsCount() > 0)
-		{
-			m_pNotificationButton->SetVisible(true);
-		}
-		else
-		{
-			m_pNotificationButton->SetVisible(false);
-		}
-
-		if (GetNotificationManager()->GetUnreadNotificationsCount() > 0)
-		{
-			m_pNotificationButton->SetGlowing(true);
-		}
-		else
-		{
-			m_pNotificationButton->SetGlowing(false);
-		}
-	}
-};
-
 
 void CTFPauseMenuPanel::OnTick()
 {

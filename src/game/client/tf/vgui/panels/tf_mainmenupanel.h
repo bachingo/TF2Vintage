@@ -7,7 +7,6 @@
 
 class CAvatarImagePanel;
 class CTFAdvButton;
-class CTFBlogPanel;
 class CTFServerlistPanel;
 class CTFAdvSlider;
 
@@ -42,8 +41,6 @@ public:
 	void GameLayout();
 	void SetVersionLabel();
 	void PlayMusic();
-	void OnNotificationUpdate();
-	void ShowBlogPanel(bool show);
 	void SetServerlistSize(int size);
 	void UpdateServerInfo();
 
@@ -61,24 +58,7 @@ private:
 	char*				GetRandomMusic();
 
 	CSteamID			m_SteamID;
-	CTFBlogPanel		*m_pBlogPanel;
 	CTFServerlistPanel	*m_pServerlistPanel;
-};
-
-
-class CTFBlogPanel : public CTFMenuPanelBase
-{
-	DECLARE_CLASS_SIMPLE(CTFBlogPanel, CTFMenuPanelBase);
-
-public:
-	CTFBlogPanel(vgui::Panel* parent, const char *panelName);
-	virtual ~CTFBlogPanel();
-	void PerformLayout();
-	void ApplySchemeSettings(vgui::IScheme *pScheme);
-	void LoadBlogPost(const char* URL);
-
-private:
-	vgui::HTML			*m_pHTMLPanel;
 };
 
 class CTFServerlistPanel : public CTFMenuPanelBase
