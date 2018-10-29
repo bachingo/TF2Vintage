@@ -1722,8 +1722,8 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResis
 
 #ifdef GAME_DLL
 
-		// Don't play the stun sound if this is a ghost or sounds are disabled
-		if ( !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) && !( m_nStunFlags & TF_STUNFLAG_GHOSTEFFECT ) )
+		// Don't play the stun sound if sounds are disabled or the stunner isn't a player
+		if ( m_hStunner.Get() && !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) )
 		{
 			const char *pszStunSound = "\0";
 			if ( m_nStunFlags & TF_STUNFLAG_CHEERSOUND )
