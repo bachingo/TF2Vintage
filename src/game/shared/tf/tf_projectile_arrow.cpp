@@ -419,7 +419,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 
 		//UTIL_Remove( this );
 	}
-
 	else
 	{
 		// TODO: Figure out why arrow gibs sometimes cause crashes

@@ -110,7 +110,7 @@ void CTFAmmoPack::SetInitialVelocity( Vector &vecVelocity )
 		SetAbsVelocity( vecVelocity + Vector( 0.0f, 0.0f, 200.0f ) );
 		SetAbsAngles( vec3_angle );
 		UseClientSideAnimation();
-		ResetSequence( LookupSequence("idle") );
+		ResetSequence( LookupSequence( "idle" ) );
 	}
 	m_vecInitialVelocity = vecVelocity;
 }

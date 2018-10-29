@@ -238,14 +238,17 @@ void CTFProjectile_Jar::VPhysicsCollision( int index, gamevcollisionevent_t *pEv
 		return;
 	}
 
-	if ( pHitEntity->GetMoveType() == MOVETYPE_NONE )
+	// TODO: This needs to be redone properly
+	/*if ( pHitEntity->GetMoveType() == MOVETYPE_NONE )
 	{
 		// Blow up
 		SetThink( &CTFProjectile_Jar::Detonate );
 		SetNextThink( gpGlobals->curtime );
-	}
+	}*/
 
-	return;
+		// Blow up
+		SetThink( &CTFProjectile_Jar::Detonate );
+		SetNextThink( gpGlobals->curtime );
 
 }
 
