@@ -1555,8 +1555,7 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 
 			if ( !ItemsMatch( pWeapon->GetItem(), pLoadoutItem, pWeapon ) )
 			{
-				// Not the best way to check for rage changes but it'll do for now
-				if ( iSlot == TF_LOADOUT_SLOT_SECONDARY )
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_BUFF_ITEM )
 				{
 					// Reset rage
 					m_Shared.ResetRageSystem();
@@ -1598,13 +1597,6 @@ void CTFPlayer::ValidateWearables( void )
 		if ( !pWearable )
 			continue;
 
-		// Always remove extra wearables when initializing weapons
-		if ( pWearable->IsExtraWearable() )
-		{
-			RemoveWearable( pWearable );
-			continue;
-		}
-
 		CEconItemDefinition *pItemDef = pWearable->GetItem()->GetStaticData();
 
 		if ( pItemDef )
@@ -1612,7 +1604,8 @@ void CTFPlayer::ValidateWearables( void )
 			int iSlot = pItemDef->GetLoadoutSlot( iClass );
 			CEconItemView *pLoadoutItem = GetLoadoutItem( iClass, iSlot );
 
-			if ( !ItemsMatch( pWearable->GetItem(), pLoadoutItem, NULL ) )
+			if ( ( !ItemsMatch( pWearable->GetItem(), pLoadoutItem, NULL ) ) ||
+				( pWearable->IsExtraWearable() && !Weapon_GetSlot( iSlot ) ) )
 			{
 				// Not supposed to carry this wearable, nuke it.
 				RemoveWearable( pWearable );

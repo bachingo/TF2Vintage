@@ -3185,18 +3185,6 @@ void CTFPlayerShared::ResetRageSystem( void )
 	m_flRageTimeRemaining = 0.0f;
 	m_iActiveBuffType = 0;
 	m_bRageActive = false;
-
-#ifdef CLIENT_DLL
-	if ( m_pOuter )
-	{
-		// Remove the banner
-		C_EconWearable *pWearable = m_pOuter->GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_SECONDARY );
-		if ( pWearable )
-		{
-			pWearable->DestroyBoneAttachments();
-		}
-	}
-#endif
 }
 
 #ifdef GAME_DLL
