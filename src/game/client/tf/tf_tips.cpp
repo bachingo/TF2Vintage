@@ -78,11 +78,9 @@ const wchar_t *CTFTips::GetNextClassTip( int iClass )
 	if (!m_bInited)
 		Init();
 
-	int iClassNum = 0;
-
 	// OK to call this function with TF_CLASS_UNDEFINED or TF_CLASS_RANDOM, just return a random tip for any class in that case
 	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_CLASS_COUNT )
-		return GetRandomTip( iClassNum );
+		return GetRandomTip( iClass );
 
 	int iClassTipCount = m_iTipCount[iClass];
 	Assert( 0 != iClassTipCount );

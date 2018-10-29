@@ -565,7 +565,6 @@ void CTFHudPlayerHealth::SetPlayerHealthImagePanelVisibility( int iCond, CTFBuff
 		else if ( info->m_nOffset > m_nOffset )
 		{	
 			// Update our image position
-			Msg( "info: %i; m_nOffset: %i; m_iXPos: %i\n", info->m_nOffset, m_nOffset, info->m_iXPos );
 			int x, y;
 			pImage->GetPos( x, y );
 			pImage->SetPos( x + ( m_nOffset - info->m_nOffset ), y );

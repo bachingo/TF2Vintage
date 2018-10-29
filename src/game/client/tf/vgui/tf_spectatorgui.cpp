@@ -178,7 +178,7 @@ void CTFSpectatorGUI::UpdateKeyLabels( void )
 	}
 
 	// if it's time to change the tip, or the player has changed desired class, update the tip
-	if ( ( gpGlobals->curtime >= m_flNextTipChangeTime ) || ( iClass != m_iTipClass && iClass != TF_CLASS_UNDEFINED ) )
+	if ( ( gpGlobals->curtime >= m_flNextTipChangeTime ) || ( iClass != m_iTipClass ) )
 	{
 		if ( bIsHLTV )
 		{
