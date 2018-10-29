@@ -411,7 +411,6 @@ public:
 	CAttributeManager m_AttributeManager;
 
 	// Overheal particle fix for spies
-	bool			m_bOldShowOverheal;
 	int				m_iOldOverhealTeamNum;
 
 private:

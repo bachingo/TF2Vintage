@@ -4529,8 +4529,7 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 				// Don't give away cloaked spies.
 				bShouldShow = false;
 			}
-
-			if ( m_Shared.InCond( TF_COND_DISGUISED ) )
+			else if ( m_Shared.InCond( TF_COND_DISGUISED ) )
 			{
 				// Disguised spies should use their fake health instead.
 				if ( m_Shared.InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
@@ -4543,9 +4542,7 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 					bShouldShow = false;
 				}
 			}
-
-			// If we previously had overheal and shouldn't now remove the effect
-			if ( m_bOldShowOverheal && !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) &&  !m_Shared.InCond( TF_COND_DISGUISE_HEALTH_OVERHEALED ) )
+			else if ( !m_Shared.InCond( TF_COND_HEALTH_OVERHEALED ) )
 			{
 				bShouldShow = false;
 			}
@@ -4581,7 +4578,6 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 	}
 	
 	// Update our overheal state
-	m_bOldShowOverheal = bShouldShow;
 	m_iOldOverhealTeamNum = iTeamNum;
 }
 
