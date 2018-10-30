@@ -1292,10 +1292,10 @@ bool CTFPlayer::ItemsMatch( CEconItemView *pItem1, CEconItemView *pItem2, CTFWea
 	{
 		// Item might have different entities for each class (i.e. shotgun).
 		int iClass = m_PlayerClass.GetClassIndex();
-		const char *pszClass1 = TranslateWeaponEntForClass(pItem1->GetEntityName(), iClass);
-		const char *pszClass2 = TranslateWeaponEntForClass(pItem2->GetEntityName(), iClass);
+		const char *pszClass1 = TranslateWeaponEntForClass( pItem1->GetEntityName(), iClass );
+		const char *pszClass2 = TranslateWeaponEntForClass( pItem2->GetEntityName(), iClass );
 		
-			if (V_strcmp(pszClass1, pszClass2) != 0)
+			if ( V_strcmp(pszClass1, pszClass2 ) != 0)
 			 return false;
 
 		return ( pItem1->GetItemDefIndex() == pItem2->GetItemDefIndex() );
@@ -1557,6 +1557,14 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 			{
 				if ( pWeapon->GetWeaponID() == TF_WEAPON_BUFF_ITEM )
 				{
+					// **HACK: Extra wearables aren't dying correctly sometimes so
+					// try and remove them here just in case ValidateWearables() fails
+					CEconWearable *pWearable = GetWearableForLoadoutSlot( iSlot );
+					if ( pWearable )
+					{
+						RemoveWearable( pWearable );
+					}
+
 					// Reset rage
 					m_Shared.ResetRageSystem();
 				}
@@ -1604,8 +1612,7 @@ void CTFPlayer::ValidateWearables( void )
 			int iSlot = pItemDef->GetLoadoutSlot( iClass );
 			CEconItemView *pLoadoutItem = GetLoadoutItem( iClass, iSlot );
 
-			if ( ( !ItemsMatch( pWearable->GetItem(), pLoadoutItem, NULL ) ) ||
-				( pWearable->IsExtraWearable() && !Weapon_GetSlot( iSlot ) ) )
+			if ( !ItemsMatch( pWearable->GetItem(), pLoadoutItem, NULL ) )
 			{
 				// Not supposed to carry this wearable, nuke it.
 				RemoveWearable( pWearable );
@@ -1727,35 +1734,35 @@ void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 {
+	// Nuke wearables
+	for ( int i = 0; i < GetNumWearables(); i++ )
+	{
+		CTFWearable *pWearable = static_cast<CTFWearable *>( GetWearable( i ) );
+
+		if ( !pWearable )
+			continue;
+
+		RemoveWearable( pWearable );
+	}
+
+	// Nuke weapons
+	for ( int i = 0; i < WeaponCount(); i++ )
+	{
+		CTFWeaponBase *pWeapon = static_cast<CTFWeaponBase *>( GetWeapon( i ) );
+
+		if ( !pWeapon )
+			continue;
+
+		// Holster our active weapon
+		if ( pWeapon == GetActiveWeapon() )
+			pWeapon->Holster();
+
+		Weapon_Detach( pWeapon );
+		UTIL_Remove( pWeapon );
+	}
+
 	for ( int iSlot = 0; iSlot < TF_PLAYER_WEAPON_COUNT; ++iSlot )
 	{
-		// Nuke whatever we have in this slot.
-		CEconEntity *pEntity = GetEntityForLoadoutSlot( iSlot );
-
-		if ( pEntity )
-		{
-			CBaseCombatWeapon *pWeapon = pEntity->MyCombatWeaponPointer();
-			CTFWearable *pWearable = static_cast<CTFWearable *>( pEntity );
-			if ( pWeapon )
-			{
-				if ( pWeapon == GetActiveWeapon() )
-					pWeapon->Holster();
-
-				Weapon_Detach( pWeapon );
-				UTIL_Remove( pWeapon );
-			}
-			else if ( pWearable )
-			{
-				RemoveWearable( pWearable );
-			}
-			else
-			{
-				// Something isn't working if you hit this
-				Assert( false );
-				UTIL_Remove( pEntity );
-			}
-		}
-
 		CTFInventory *pInv = GetTFInventory();
 		Assert( pInv );
 

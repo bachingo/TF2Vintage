@@ -1900,6 +1900,7 @@ const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 
 	if ( pStatic )
 	{
+		// We have an extra wearable
 		return pStatic->extra_wearable;
 	}
 
