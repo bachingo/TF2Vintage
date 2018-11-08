@@ -63,6 +63,8 @@ public:
 	virtual void	HandleFireOnEmpty( void );
 	virtual void	WeaponReset( void );
 
+	virtual bool	CanReload( void ) { return false; }
+
 #ifdef GAME_DLL
 	virtual int		UpdateTransmitState( void );
 #endif
