@@ -31,7 +31,7 @@ public:
 	virtual void		Precache( void );
 	virtual int			GetWeaponID( void ) const					{ return TF_WEAPON_BAT_WOOD; }
 
-	virtual void		WeaponReset( void );
+	virtual bool		Deploy( void );
 	virtual void		PrimaryAttack( void );
 	virtual void		SecondaryAttack( void );
 	virtual void		ItemPostFrame( void );

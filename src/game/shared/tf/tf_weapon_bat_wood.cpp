@@ -47,10 +47,6 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_bat_wood );
 //-----------------------------------------------------------------------------
 CTFBat_Wood::CTFBat_Wood()
 {
-#ifdef CLIENT_DLL
-	// Assume we have ammo at initialization so that the viewmodel renders correctly
-	m_bHasBall = true;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -63,12 +59,24 @@ void CTFBat_Wood::Precache( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Reset the viewmodel 
+// Purpose: Check if we should have the stunball out
 //-----------------------------------------------------------------------------
-void CTFBat_Wood::WeaponReset( void )
+bool CTFBat_Wood::Deploy( void )
 {
-	BaseClass::WeaponReset();
+#ifdef CLIENT_DLL
+	// This is here in case the ammo state changes while the weapon is holstered
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( pOwner )
+	{
+		// Do we currently have ammo?
+		m_bHasBall = pOwner->GetAmmoCount( m_iPrimaryAmmoType ) ? true : false;
+	}
+#endif
+
+	return BaseClass::Deploy();
 }
+
 //-----------------------------------------------------------------------------
 // Purpose: Check if we can currently create a new ball
 //-----------------------------------------------------------------------------
@@ -171,11 +179,12 @@ void CTFBat_Wood::ItemPostFrame( void )
 {
 #ifdef CLIENT_DLL
 	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( !pOwner )
-		return;
 
-	// Do we currently have ammo?
-	m_bHasBall = pOwner->GetAmmoCount( m_iPrimaryAmmoType ) ? true : false;
+	if ( pOwner )
+	{
+		// Do we currently have ammo?
+		m_bHasBall = pOwner->GetAmmoCount( m_iPrimaryAmmoType ) ? true : false;
+	}
 #endif
 
 	BaseClass::ItemPostFrame();
