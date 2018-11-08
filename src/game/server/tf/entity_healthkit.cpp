@@ -24,8 +24,6 @@
 LINK_ENTITY_TO_CLASS( item_healthkit_full, CHealthKit );
 LINK_ENTITY_TO_CLASS( item_healthkit_small, CHealthKitSmall );
 LINK_ENTITY_TO_CLASS( item_healthkit_medium, CHealthKitMedium );
-LINK_ENTITY_TO_CLASS( item_healthkit_tiny, CHealthKitTiny );
-LINK_ENTITY_TO_CLASS( item_healthkit_mega, CHealthKitMega );
 
 //=============================================================================
 //
@@ -67,24 +65,13 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		Assert( pTFPlayer );
 
 		int iHealthToAdd = ceil( pPlayer->GetMaxHealth() * PackRatios[GetPowerupSize()] );
-		bool bTiny = GetPowerupSize() == POWERUP_TINY;
-		bool bMega = GetPowerupSize() == POWERUP_MEGA;
 		int iHealthRestored = 0;
 
 		// Don't heal the player who dropped this healthkit, recharge his lunchbox instead
 		if ( pTFPlayer != GetOwnerEntity() )
 		{
-			// Overheal pellets, well, overheal.
-			if ( bTiny || bMega )
-			{
-				iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetHealth() );
-				iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_IGNORE_MAXHEALTH );
-			}
-			else
-			{
-				iHealthRestored = pTFPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
-				//iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
-			}
+			iHealthRestored = pTFPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
+			//iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
 
 			if ( iHealthRestored )
 				bSuccess = true;
@@ -98,14 +85,11 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 					bSuccess = true;
 			}
 
-			if ( !bTiny )
+			// Remove any negative conditions whether player got healed or not.
+			if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
 			{
-				// Remove any negative conditions whether player got healed or not.
-				if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
-				{
-					pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
-					bSuccess = true;
-				}
+				pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
+				bSuccess = true;
 			}
 		}
 
@@ -119,14 +103,6 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			MessageEnd();
 
 			const char *pszSound = TF_HEALTHKIT_PICKUP_SOUND;
-
-			if ( bTiny )
-			{
-				if ( pPlayer->GetHealth() > pPlayer->GetMaxHealth() )
-					pszSound = "OverhealPillRattle.Touch";
-				else
-					pszSound = "OverhealPillNoRattle.Touch";
-			}
 
 			EmitSound( user, entindex(), pszSound );
 
@@ -157,8 +133,7 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 				CTF_GameStats.Event_PlayerAwardBonusPoints( pTFOwner, pPlayer, 1 );
 			}
 
-			// Disabled for overheal pills since they'll cause too much spam.
-			if ( iHealthRestored && !bTiny )
+			if ( iHealthRestored  )
 			{
 				IGameEvent *event_healonhit = gameeventmanager->CreateEvent( "player_healonhit" );
 				if ( event_healonhit )

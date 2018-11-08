@@ -52,11 +52,11 @@ public:
 	virtual void	PrimaryAttack( void );
 	virtual void	SecondaryAttack( void );
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_LASER_POINTER; }
+	virtual int		GetWeaponID( void ) const	{ return TF_WEAPON_LASER_POINTER; }
 
 #ifdef GAME_DLL
 	void			UpdateLaserDot( void );
-	void			RemoveGun( void )					{ m_hGun = NULL; }
+	void			RemoveGun( void )			{ m_hGun = NULL; }
 
 private:
 	CHandle<CObjectSentrygun> m_hGun;

@@ -30,20 +30,20 @@ public:
 
 	CTFJar();
 
-	virtual int		GetWeaponID( void ) const { return TF_WEAPON_JAR; }
+	virtual int			GetWeaponID( void ) const 			{ return TF_WEAPON_JAR; }
 
-	virtual void	Precache( void );
+	virtual void		Precache( void );
 
-	virtual void	PrimaryAttack( void );
+	virtual void		PrimaryAttack( void );
 
-	virtual float	GetProjectileDamage( void );
-	virtual float	GetProjectileSpeed( void );
-	virtual float	GetProjectileGravity( void );
-	virtual bool	CalcIsAttackCriticalHelper( void );
+	virtual float		GetProjectileDamage( void );
+	virtual float		GetProjectileSpeed( void );
+	virtual float		GetProjectileGravity( void );
+	virtual bool		CalcIsAttackCriticalHelper( void );
 
-	virtual bool		HasChargeBar( void )							{ return true; }
-	virtual const char* GetEffectLabelText( void )						{ return "#TF_Jar"; }
-	virtual float		InternalGetEffectBarRechargeTime()				{ return 20.0; }
+	virtual bool		HasChargeBar( void )				{ return true; }
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_Jar"; }
+	virtual float		InternalGetEffectBarRechargeTime()	{ return 20.0; }
 };
 
 #endif // TF_WEAPON_JAR_H

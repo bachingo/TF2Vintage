@@ -23,24 +23,24 @@ class CTFBat_Wood : public CTFWeaponBaseMelee
 public:
 
 	DECLARE_CLASS( CTFBat_Wood, CTFWeaponBaseMelee );
-	DECLARE_NETWORKCLASS(); 
+	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
 	CTFBat_Wood();
 
 	virtual void		Precache( void );
-	virtual int			GetWeaponID( void ) const						{ return TF_WEAPON_BAT_WOOD; }
+	virtual int			GetWeaponID( void ) const					{ return TF_WEAPON_BAT_WOOD; }
 
 	virtual void		WeaponReset( void );
 	virtual void		PrimaryAttack( void );
 	virtual void		SecondaryAttack( void );
 	virtual void		ItemPostFrame( void );
 
-	virtual bool		HasChargeBar( void )							{ return true; }
-	virtual const char* GetEffectLabelText( void )						{ return "#TF_Ball"; }
+	virtual bool		HasChargeBar( void )						{ return true; }
+	virtual const char* GetEffectLabelText( void )					{ return "#TF_Ball"; }
 	virtual float		InternalGetEffectBarRechargeTime( void );
 
-	virtual bool        SendWeaponAnim( int iActivity );
+	virtual bool       	SendWeaponAnim( int iActivity );
 
 	virtual bool		CanCreateBall( CTFPlayer *pPlayer );
 	virtual bool	    PickedUpBall( CTFPlayer *pPlayer );
@@ -51,7 +51,7 @@ public:
 #ifdef CLIENT_DLL
 	virtual void		CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles );
 
-	virtual const char	*GetStunballViewmodel( void )					{ return ( m_bHasBall ? TF_STUNBALL_VIEWMODEL : NULL_STRING ); }
+	virtual const char	*GetStunballViewmodel( void )				{ return ( m_bHasBall ? TF_STUNBALL_VIEWMODEL : NULL_STRING ); }
 
 private:
 	bool m_bHasBall;

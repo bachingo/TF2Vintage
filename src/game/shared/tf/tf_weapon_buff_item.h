@@ -1,4 +1,4 @@
-//=========== Copyright © 2018, LFE-Team, Not All rights reserved. ============
+﻿//=========== Copyright © 2018, LFE-Team, Not All rights reserved. ============
 //
 // Purpose: 
 //
@@ -39,7 +39,7 @@ public:
 #endif
 
 	CTFBuffItem();
-	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_BUFF_ITEM; }
+	virtual int			GetWeaponID( void ) const	{ return TF_WEAPON_BUFF_ITEM; }
 
 	virtual void		Precache( void );
 
@@ -50,10 +50,10 @@ public:
 	int					GetBuffType( void );
 	void				BlowHorn( void );
 	void				RaiseFlag( void );
-	bool				IsFull( void ) { return GetEffectBarProgress() >= 1.0f; }
+	bool				IsFull( void ) 				{ return GetEffectBarProgress() >= 1.0f; }
 
-	virtual bool		HasChargeBar( void )							{ return true; }
-	virtual const char* GetEffectLabelText( void )						{ return "#TF_Rage"; }
+	virtual bool		HasChargeBar( void )		{ return true; }
+	virtual const char* GetEffectLabelText( void )	{ return "#TF_Rage"; }
 	virtual float		GetEffectBarProgress( void );
 	virtual bool		EffectMeterShouldFlash( void );
 

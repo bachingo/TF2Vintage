@@ -28,11 +28,11 @@ private:
 
 	COutputEvent	m_outputOnStun;	// Fired a stun
 
-	float	m_flTriggerDelay;
-	float	m_flStunDuration;
-	float	m_flMoveSpeedReduction;
-	int		m_iStunType;
-	bool	m_bStunEffects;
+	float			m_flTriggerDelay;
+	float			m_flStunDuration;
+	float			m_flMoveSpeedReduction;
+	int				m_iStunType;
+	bool			m_bStunEffects;
 
 	CUtlVector< CBaseEntity *>	m_stunEntities;
 	

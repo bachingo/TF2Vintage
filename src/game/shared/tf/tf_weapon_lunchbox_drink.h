@@ -23,22 +23,22 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
-	virtual int GetWeaponID() const { return TF_WEAPON_LUNCHBOX_DRINK; }
+	virtual int 		GetWeaponID() const 						{ return TF_WEAPON_LUNCHBOX_DRINK; }
 
-	virtual bool	ShouldBlockPrimaryFire( void ) { return true; }
+	virtual bool		ShouldBlockPrimaryFire( void ) 				{ return true; }
 
-	virtual void	PrimaryAttack( void );
+	virtual void		PrimaryAttack( void );
 
-	virtual bool	Deploy( void );
+	virtual bool		Deploy( void );
 
-	virtual void	DepleteAmmo( void );
+	virtual void		DepleteAmmo( void );
 
-	virtual bool	HasChargeBar( void ) { return true; }
-	virtual float	InternalGetEffectBarRechargeTime( void ) { return 22.2f; }
-	virtual const char	*GetEffectLabelText( void ) { return "#TF_EnergyDrink"; }
+	virtual bool		HasChargeBar( void ) 						{ return true; }
+	virtual float		InternalGetEffectBarRechargeTime( void ) 	{ return 22.2f; }
+	virtual const char	*GetEffectLabelText( void )					{ return "#TF_EnergyDrink"; }
 
 #ifdef GAME_DLL
-	virtual void	Precache( void );
+	virtual void		Precache( void );
 #endif
 };
 

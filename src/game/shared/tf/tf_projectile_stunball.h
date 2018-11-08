@@ -36,13 +36,13 @@ public:
 	CTFStunBall();
 	~CTFStunBall();
 
-	virtual int		GetWeaponID( void ) const { return TF_WEAPON_BAT_WOOD; }
+	virtual int			GetWeaponID( void ) const 	{ return TF_WEAPON_BAT_WOOD; }
 
 #ifdef GAME_DLL
-	static CTFStunBall *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo );
+	static CTFStunBall 	*Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo );
 
 	// IScorer interface
-	virtual CBasePlayer *GetScorer( void ) { return NULL; }
+	virtual CBasePlayer *GetScorer( void ) 			{ return NULL; }
 	virtual CBasePlayer *GetAssistant( void );
 
 	virtual void	Precache( void );
@@ -58,10 +58,10 @@ public:
 	void			CreateTrail( void );
 
 	void			SetScorer( CBaseEntity *pScorer );
-		
-	void			SetCritical( bool bCritical ) { m_bCritical = bCritical; }
 
-	virtual bool	IsDeflectable() { return true; }
+	void			SetCritical( bool bCritical )	{ m_bCritical = bCritical; }
+
+	virtual bool	IsDeflectable() 				{ return true; }
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
@@ -76,16 +76,16 @@ public:
 
 private:
 #ifdef GAME_DLL
-	EHANDLE				    m_Scorer;
 	CNetworkVar( bool, m_bCritical );
 
 	CHandle<CBaseEntity>	m_hEnemy;
+	EHANDLE					m_Scorer;
 	EHANDLE					m_hSpriteTrail;
 #else
-	bool		m_bCritical;
+	bool					m_bCritical;
 #endif
 
-	float		m_flCreationTime;
+	float					m_flCreationTime;
 };
 
 #endif // TF_PROJECTILE_STUNBALL_H

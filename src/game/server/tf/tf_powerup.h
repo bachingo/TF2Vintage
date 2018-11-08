@@ -17,8 +17,6 @@ enum powerupsize_t
 	POWERUP_SMALL,
 	POWERUP_MEDIUM,
 	POWERUP_FULL,
-	POWERUP_TINY,
-	POWERUP_MEGA,
 
 	POWERUP_SIZES,
 };
@@ -48,7 +46,7 @@ public:
 	bool			IsDisabled( void );
 	void			SetDisabled( bool bDisabled );
 
-	virtual float	GetRespawnDelay( void ) { return g_pGameRules->FlItemRespawnTime( this ); }
+	virtual float	GetRespawnDelay( void ) 				{ return g_pGameRules->FlItemRespawnTime( this ); }
 
 	void			DropSingleInstance( const Vector &vecVelocity, CBaseCombatCharacter *pOwner, float flUnknown, float flRestTime );
 
@@ -57,16 +55,16 @@ public:
 	void			InputDisable( inputdata_t &inputdata );
 	void			InputToggle( inputdata_t &inputdata );
 
-	virtual powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
+	virtual powerupsize_t	GetPowerupSize( void ) 			{ return POWERUP_FULL; }
 	virtual const char		*GetPowerupModel( void );
 	virtual const char		*GetDefaultPowerupModel( void ) { return NULL; }
 
 	CNetworkVarForDerived( bool, m_bDisabled );
 	CNetworkVarForDerived( bool, m_bRespawning );
 
-	float m_flNextCollideTime;
+	float 		m_flNextCollideTime;
 
-	string_t m_iszModel;
+	string_t 	m_iszModel;
 };
 
 #endif // TF_POWERUP_H
