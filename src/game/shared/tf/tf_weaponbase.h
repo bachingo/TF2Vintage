@@ -149,6 +149,9 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	C_BaseAnimating *GetAppropriateWorldOrViewModel( void );
 
 	string_t GetViewModelOffset( void );
+
+	// Stunball
+	virtual const char *GetStunballViewmodel( void ) { return NULL_STRING; }
 #endif
 
 	virtual void Drop( const Vector &vecVelocity );

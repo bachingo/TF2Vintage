@@ -19,9 +19,6 @@
 #include "tf_player.h"
 #endif
 
-#define TF_STUNBALL_VIEWMODEL "models/weapons/v_models/v_baseball.mdl"
-#define TF_STUNBALL_ADDON 2
-
 ConVar sv_proj_stunball_damage( "sv_proj_stunball_damage", "15", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball damage." );
 ConVar tf_scout_stunball_regen_rate( "tf_scout_stunball_regen_rate", "15.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball regen rate." );
 ConVar tf_scout_stunball_base_speed( "tf_scout_stunball_base_speed", "2990.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball base speed." );
@@ -50,6 +47,10 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_bat_wood );
 //-----------------------------------------------------------------------------
 CTFBat_Wood::CTFBat_Wood()
 {
+#ifdef CLIENT_DLL
+	// Assume we have ammo at initialization so that the viewmodel renders correctly
+	m_bHasBall = true;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -62,39 +63,10 @@ void CTFBat_Wood::Precache( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Reset the fire time when we holster
-//-----------------------------------------------------------------------------
-bool CTFBat_Wood::Holster( CBaseCombatWeapon *pSwitchingTo )
-{
-#ifdef CLIENT_DLL
-	UpdateViewmodelBall( GetTFPlayerOwner(), true );
-#endif
-
-	return BaseClass::Holster( pSwitchingTo );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Reset the fire time when we deploy
-//-----------------------------------------------------------------------------
-bool CTFBat_Wood::Deploy( void )
-{
-#ifdef CLIENT_DLL
-	UpdateViewmodelBall( GetTFPlayerOwner() );
-#endif
-
-	return BaseClass::Deploy();
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Reset the viewmodel 
 //-----------------------------------------------------------------------------
 void CTFBat_Wood::WeaponReset( void )
 {
-#ifdef CLIENT_DLL
-	UpdateViewmodelBall( GetTFPlayerOwner(), true );
-#endif
-
 	BaseClass::WeaponReset();
 }
 //-----------------------------------------------------------------------------
@@ -149,8 +121,6 @@ bool CTFBat_Wood::PickedUpBall( CTFPlayer *pPlayer )
 	pPlayer->GiveAmmo( 1, m_iPrimaryAmmoType, true, TF_AMMO_SOURCE_RESUPPLY );
 	pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_GRAB_BALL );
 	m_flEffectBarRegenTime = gpGlobals->curtime;
-#else
-	UpdateViewmodelBall( pPlayer );
 #endif
 
 	return true;
@@ -197,6 +167,23 @@ void CTFBat_Wood::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFBat_Wood::ItemPostFrame( void )
+{
+#ifdef CLIENT_DLL
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+		return;
+
+	// Do we currently have ammo?
+	m_bHasBall = pOwner->GetAmmoCount( m_iPrimaryAmmoType ) ? true : false;
+#endif
+
+	BaseClass::ItemPostFrame();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBat_Wood::LaunchBallThink( void )
 {
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
@@ -209,8 +196,6 @@ void CTFBat_Wood::LaunchBallThink( void )
 
 		pPlayer->SpeakWeaponFire( MP_CONCEPT_BAT_BALL );
 		CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
-#else
-		UpdateViewmodelBall( GetTFPlayerOwner() );
 #endif
 		StartEffectBarRegen();
 	}
@@ -254,18 +239,6 @@ CBaseEntity *CTFBat_Wood::LaunchBall( CTFPlayer *pPlayer )
 	return pProjectile;
 #endif
 	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Remove the ball
-//-----------------------------------------------------------------------------
-void CTFBat_Wood::UpdateOnRemove( void )
-{
-#ifdef CLIENT_DLL
-	UpdateViewmodelBall( GetTFPlayerOwner(), true );
-#endif
-
-	BaseClass::UpdateOnRemove();
 }
 
 //-----------------------------------------------------------------------------
@@ -326,24 +299,6 @@ float CTFBat_Wood::InternalGetEffectBarRechargeTime( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFBat_Wood::OnDataChanged( DataUpdateType_t updateType )
-{
-	BaseClass::OnDataChanged( updateType );
-
-	if ( updateType == DATA_UPDATE_CREATED )
-	{
-		C_TFPlayer *pPlayer = GetTFPlayerOwner();
-	
-		if ( pPlayer->IsLocalPlayer() && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) && IsCarrierAlive() && WeaponState() == WEAPON_IS_ACTIVE )
-		{
-			UpdateViewmodelBall( pPlayer );
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void C_TFBat_Wood::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles )
 {
 	// Really hacky workaround for primary/secondary interactions
@@ -366,28 +321,5 @@ void C_TFBat_Wood::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QA
 	}
 
 	BaseClass::CreateMove( flInputSampleTime, pCmd, vecOldViewAngles );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFBat_Wood::UpdateViewmodelBall( C_TFPlayer *pOwner, bool bHolster /*= false*/ )
-{
-	if ( pOwner )
-	{
-		C_TFViewModel *vm = dynamic_cast < C_TFViewModel *  >( pOwner->GetViewModel( m_nViewModelIndex ) );
-		if ( vm )
-		{
-			// Update the ball
-			if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !bHolster )
-			{
-				vm->UpdateViewmodelAddon( TF_STUNBALL_VIEWMODEL, TF_STUNBALL_ADDON );
-			}
-			else
-			{
-				vm->RemoveViewmodelAddon( TF_STUNBALL_ADDON );
-			}
-		}
-	}
 }
 #endif

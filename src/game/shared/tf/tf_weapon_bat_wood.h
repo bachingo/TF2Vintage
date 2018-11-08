@@ -12,6 +12,8 @@
 
 #include "tf_weaponbase_melee.h"
 
+#define TF_STUNBALL_VIEWMODEL "models/weapons/v_models/v_baseball.mdl"
+
 #ifdef CLIENT_DLL
 #define CTFBat_Wood C_TFBat_Wood
 #endif
@@ -29,17 +31,14 @@ public:
 	virtual void		Precache( void );
 	virtual int			GetWeaponID( void ) const						{ return TF_WEAPON_BAT_WOOD; }
 
-	virtual bool		Deploy( void );
-	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual void		WeaponReset( void );
 	virtual void		PrimaryAttack( void );
 	virtual void		SecondaryAttack( void );
+	virtual void		ItemPostFrame( void );
 
 	virtual bool		HasChargeBar( void )							{ return true; }
 	virtual const char* GetEffectLabelText( void )						{ return "#TF_Ball"; }
 	virtual float		InternalGetEffectBarRechargeTime( void );
-
-	virtual void		UpdateOnRemove( void );
 
 	virtual bool        SendWeaponAnim( int iActivity );
 
@@ -50,17 +49,19 @@ public:
 	virtual void		LaunchBallThink( void );
 
 #ifdef CLIENT_DLL
-	virtual void		OnDataChanged( DataUpdateType_t updateType );
 	virtual void		CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles );
 
-	void				UpdateViewmodelBall( C_TFPlayer *pOwner, bool bHolster = false );
+	virtual const char	*GetStunballViewmodel( void )					{ return ( m_bHasBall ? TF_STUNBALL_VIEWMODEL : NULL_STRING ); }
+
+private:
+	bool m_bHasBall;
 #endif
 
 private:
 	CTFBat_Wood( const CTFBat_Wood & ) {}
 
 	// prediction
-	CNetworkVar( bool, m_bFiring );
 	CNetworkVar( float, m_flNextFireTime );
+	CNetworkVar( bool, m_bFiring );
 };
 #endif // TF_WEAPON_BAT_WOOD_H

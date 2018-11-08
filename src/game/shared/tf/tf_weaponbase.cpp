@@ -449,6 +449,7 @@ void C_TFWeaponBase::UpdateViewModel( void )
 
 	int vmType = vm->GetViewModelType();
 	const char *pszModel = NULL;
+	const char *pszStunballModel = GetStunballViewmodel();
 
 	if ( vmType == VMTYPE_L4D )
 	{
@@ -469,10 +470,20 @@ void C_TFWeaponBase::UpdateViewModel( void )
 	if ( pszModel && pszModel[0] != '\0' )
 	{
 		vm->UpdateViewmodelAddon( pszModel );
+
+		if ( pszStunballModel != NULL_STRING )
+		{
+			vm->UpdateViewmodelAddon( pszStunballModel, 1 );
+		}
+		else
+		{
+			vm->RemoveViewmodelAddon( 1 );
+		}
 	}
 	else
 	{
 		vm->RemoveViewmodelAddon();
+		vm->RemoveViewmodelAddon( 1 );
 	}
 }
 
