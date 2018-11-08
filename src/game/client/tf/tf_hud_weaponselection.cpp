@@ -181,7 +181,7 @@ void CItemModelPanel::SetWeapon(C_BaseCombatWeapon *pWeapon, int iBorderStyle, i
 	if (ID != -1)
 	{
 		char szSlotID[8];
-		itoa(m_ID + 1, szSlotID, sizeof(szSlotID));
+		Q_snprintf( szSlotID, sizeof(szSlotID), "%d", m_ID + 1 );
 		m_pSlotID->SetText(szSlotID);
 	}
 	else

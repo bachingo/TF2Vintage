@@ -36,8 +36,8 @@ class CTFAutoRP : CAutoGameSystem
 {
 public:
 	
-	CTFAutoRP::CTFAutoRP();
-	CTFAutoRP::~CTFAutoRP();
+	CTFAutoRP();
+	~CTFAutoRP();
 
 	void ParseDataFile( void );
 	void ApplyRPTo( char *pBuf, int iBufSize );
