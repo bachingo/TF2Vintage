@@ -43,23 +43,6 @@ public:
 		return value;
 	}
 
-	template<>
-	static string_t AttribHookValue<string_t>( string_t strValue, const char *text, const CBaseEntity *pEntity )
-	{
-		if ( !pEntity )
-			return strValue;
-
-		IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
-
-		if ( pAttribInteface )
-		{
-			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
-			strValue = pAttribInteface->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass );
-		}
-
-		return strValue;
-	}
-
 #ifdef CLIENT_DLL
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updatetype );
@@ -84,6 +67,23 @@ protected:
 private:
 	CUtlVector<EHANDLE> m_AttributeProviders;
 };
+
+	template<>
+	inline string_t CAttributeManager::AttribHookValue<string_t>( string_t strValue, const char *text, const CBaseEntity *pEntity )
+	{
+		if ( !pEntity )
+			return strValue;
+
+		IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+
+		if ( pAttribInteface )
+		{
+			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
+			strValue = pAttribInteface->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass );
+		}
+
+		return strValue;
+	}
 
 
 class CAttributeContainer : public CAttributeManager
