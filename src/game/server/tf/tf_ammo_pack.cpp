@@ -106,6 +106,7 @@ void CTFAmmoPack::SetInitialVelocity( Vector &vecVelocity )
 	if ( iHoliday )
 	{
 		// Special rules for holiday loot packs
+		VPhysicsDestroyObject();
 		SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
 		SetAbsVelocity( vecVelocity + Vector( 0.0f, 0.0f, 200.0f ) );
 		SetAbsAngles( vec3_angle );
