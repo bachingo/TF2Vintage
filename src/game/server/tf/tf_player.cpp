@@ -1394,8 +1394,18 @@ void CTFPlayer::GiveDefaultItems()
 				CTFWearable *pWearable = ( CTFWearable* )CreateEntityByName( "tf_wearable" );
 				pWearable->SetItem( *pWeapon->GetItem() );
 				pWearable->SetExtraWearable( true );
-				pWearable->Spawn();
-				EquipWearable( pWearable );
+
+				pWearable->SetLocalOrigin( GetLocalOrigin() );
+				pWearable->AddSpawnFlags( SF_NORESPAWN );
+
+				DispatchSpawn( pWearable );
+				pWearable->Activate();
+
+				if ( pWearable != NULL && !( pWearable->IsMarkedForDeletion() ) )
+				{
+					pWearable->Touch( this );
+					pWearable->GiveTo( this );
+				}
 			}
 		}
 	}
@@ -1788,10 +1798,9 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 		CEconItemView *pItem;
 
-		// Engineers always get PDAs and PDAs come in a set
+		// Engineers always get PDAs
 		// Spies should get their disguise PDA
-		if ( ( m_PlayerClass.GetClassIndex()  == TF_CLASS_ENGINEER || iClass == TF_CLASS_ENGINEER || m_PlayerClass.GetClassIndex() == TF_CLASS_SPY ) 
-			&& ( iSlot == TF_LOADOUT_SLOT_PDA1 || iSlot == TF_LOADOUT_SLOT_PDA2 ) )
+		if ( ( m_PlayerClass.GetClassIndex()  == TF_CLASS_ENGINEER || m_PlayerClass.GetClassIndex() == TF_CLASS_SPY ) && ( iSlot == TF_LOADOUT_SLOT_PDA1 || iSlot == TF_LOADOUT_SLOT_PDA2 ) )
 		{
 			pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
 		}
@@ -1799,14 +1808,6 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		{
 			// Give us the item
 			pItem = pInv->GetItem( iClass, iSlot, iPreset );
-			if ( !pItem )
-			{
-				Msg("NULL Returned: iClass = %i; iSlot = %i; iPreset = %i\n", iClass, iSlot, iPreset );
-			}
-			else
-			{
-				Msg("pItem: iClass = %i; iSlot = %i; iPreset = %i\n", iClass, iSlot, iPreset );
-			}
 		}
 
 		if ( pItem )
