@@ -4375,6 +4375,19 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 
 		if ( pWpn->GetPrimaryAmmoType() != iAmmoIndex )
 			continue;
+
+		// Random weapons should use the ammo of the player class related to this weapon
+		// BUG: Client calls to this method will return incorrect max ammo values in randomizer
+#ifdef GAME_DLL
+		if ( tf2c_random_weapons.GetBool() )
+		{
+			CEconItemView *pItem = pWpn->GetItem();
+			if ( pItem )
+			{
+				iMaxAmmo = GetPlayerClassData( pItem->GetItemClassNumber() )->m_aAmmoMax[iAmmoIndex];
+			}
+		}
+#endif
 	}
 
 	switch ( iAmmoIndex )
@@ -4389,17 +4402,6 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 
 	case TF_AMMO_METAL:
 		CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_metal );
-
-#ifdef GAME_DLL
-		if ( tf2c_random_weapons.GetBool() )
-		{
-			CTFWeaponBase *pWeapon = dynamic_cast < CTFWeaponBase * >( GetWeapon( TF_LOADOUT_SLOT_PDA1 ) );
-			if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_BUILD )
-			{
-				iMaxAmmo = GetPlayerClassData( TF_CLASS_ENGINEER )->m_aAmmoMax[iAmmoIndex];
-			}
-		}
-#endif
 		break;
 
 	case TF_AMMO_GRENADES1:

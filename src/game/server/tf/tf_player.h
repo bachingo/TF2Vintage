@@ -143,7 +143,7 @@ public:
 	void				HandleCommand_WeaponPreset(int iSlotNum, int iPresetNum);
 	void				HandleCommand_WeaponPreset(int iClass, int iSlotNum, int iPresetNum);
 
-	CBaseEntity			*GiveNamedItem( const char *pszName, int iSubType = 0, CEconItemView* pItem = NULL );
+	CBaseEntity			*GiveNamedItem( const char *pszName, int iSubType = 0, CEconItemView* pItem = NULL, int iClassNum = -1 );
 
 	void				SaveMe( void );
 

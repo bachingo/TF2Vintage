@@ -71,11 +71,20 @@ bool CTFInventory::Init( void )
 						delete pBaseItem;
 					}
 
-					m_Items[iClass][iSlot][0] = new CEconItemView( iItemID );
+					CEconItemView *pNewItem = new CEconItemView( iItemID );
+
+#if defined ( GAME_DLL )
+					pNewItem->SetItemClassNumber( iClass );
+#endif
+					m_Items[iClass][iSlot][0] = pNewItem;
 				}
 				else if ( pItemDef->show_in_armory )
 				{
 					CEconItemView *pNewItem = new CEconItemView( iItemID );
+
+#if defined ( GAME_DLL )
+					pNewItem->SetItemClassNumber( iClass );
+#endif
 					m_Items[iClass][iSlot].AddToTail( pNewItem );
 				}
 			}

@@ -66,6 +66,18 @@ private:
 	CNetworkVar( bool, m_bOnlyIterateItemViewAttributes );
 
 	CUtlVector<CEconItemAttribute> m_AttributeList;
+
+#ifdef GAME_DLL
+public:
+
+	void	SetItemClassNumber( int iClassNum ) { m_iClassNumber = iClassNum; }
+	int		GetItemClassNumber() { return m_iClassNumber; }
+
+private:
+
+	// Randomizer needs class values for item view to give correct max ammo values
+	int m_iClassNumber;
+#endif
 };
 
 #endif // TF_ECON_ITEM_VIEW_H

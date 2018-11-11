@@ -1761,13 +1761,29 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for ( int iSlot = 0; iSlot < TF_PLAYER_WEAPON_COUNT; ++iSlot )
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
 	{
 		CTFInventory *pInv = GetTFInventory();
 		Assert( pInv );
 
 		// Get a random item for our weapon slot
 		int iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+		int iSlot = i;
+
+		// Spy's equip slots do not correct match the weapon slot so we need to accommodate for that
+		if ( iClass == TF_CLASS_SPY )
+		{
+			switch( i )
+			{
+			case TF_LOADOUT_SLOT_PRIMARY:
+				iSlot = TF_LOADOUT_SLOT_SECONDARY;
+				break;
+			case TF_LOADOUT_SLOT_SECONDARY:
+				iSlot = TF_LOADOUT_SLOT_BUILDING;
+				break;
+			}
+		}
+
 		int iPreset = RandomInt( 0, pInv->GetNumPresets( iClass, iSlot ) - 1 );
 
 		CEconItemView *pItem;
@@ -1783,6 +1799,14 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		{
 			// Give us the item
 			pItem = pInv->GetItem( iClass, iSlot, iPreset );
+			if ( !pItem )
+			{
+				Msg("NULL Returned: iClass = %i; iSlot = %i; iPreset = %i\n", iClass, iSlot, iPreset );
+			}
+			else
+			{
+				Msg("pItem: iClass = %i; iSlot = %i; iPreset = %i\n", iClass, iSlot, iPreset );
+			}
 		}
 
 		if ( pItem )
@@ -1791,15 +1815,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 			const char *pszClassname = pItem->GetEntityName();
 			Assert( pszClassname );
 
-			if ( V_strcmp( pszClassname, "tf_weapon_shotgun" ) )
-			{
-				// Use the shotgun for the randomized class				
-				pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( TranslateWeaponEntForClass( pszClassname, iClass ), 0, pItem ) );
-			}
-			else
-			{
-				pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
-			}
+			pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem, iClass ) );
 
 			if ( pEntity )
 			{
@@ -1902,10 +1918,12 @@ void CTFPlayer::HandleCommand_WeaponPreset( int iClass, int iSlotNum, int iPrese
 //-----------------------------------------------------------------------------
 // Purpose: Create and give the named item to the player, setting the item ID. Then return it.
 //-----------------------------------------------------------------------------
-CBaseEntity	*CTFPlayer::GiveNamedItem( const char *pszName, int iSubType, CEconItemView* pItem )
+CBaseEntity	*CTFPlayer::GiveNamedItem( const char *pszName, int iSubType, CEconItemView* pItem, int iClassNum /*= -1*/ )
 {
 	const char *pszEntName;
-	pszEntName = TranslateWeaponEntForClass( pszName, m_PlayerClass.GetClassIndex() );
+
+	// Randomizer passes a class value for weapon entity translation. Otherwise use our current class index
+	pszEntName = TranslateWeaponEntForClass( pszName, ( iClassNum != -1 ) ? iClassNum : m_PlayerClass.GetClassIndex() );
 
 	// If I already own this type don't create one
 	if ( Weapon_OwnsThisType( pszEntName ) )
