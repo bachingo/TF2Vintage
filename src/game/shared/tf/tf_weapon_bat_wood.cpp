@@ -47,6 +47,10 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_bat_wood );
 //-----------------------------------------------------------------------------
 CTFBat_Wood::CTFBat_Wood()
 {
+#ifdef CLIENT_DLL
+	// Assume true in case the player is switching to this weapon at resupply
+	m_bHasBall = true;
+#endif
 }
 
 //-----------------------------------------------------------------------------
