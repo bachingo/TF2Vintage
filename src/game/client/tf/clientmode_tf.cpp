@@ -449,9 +449,11 @@ void HandleBreakModel( bf_read &msg, bool bNoAngles )
 {
 	CUtlVector<breakmodel_t> list;
 	int iModelIndex = ( int ) msg.ReadShort();
+	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
 	Vector vec3;
 	QAngle vecAngles;
-	BuildGibList( list, iModelIndex, 1.0f, 0.0f );
+
+	BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
 
 	msg.ReadBitVec3Coord( vec3 );
 	if ( bNoAngles )
@@ -463,8 +465,7 @@ void HandleBreakModel( bf_read &msg, bool bNoAngles )
 		msg.ReadBitAngles( vecAngles );
 	}
 
-	// Impulse doesn't apply correctly in first person for some reason
-	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), Vector( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0f ) );
+	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), angularImpulse );
 
 	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );
 }

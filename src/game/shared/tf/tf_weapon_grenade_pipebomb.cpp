@@ -406,13 +406,15 @@ void CTFGrenadePipebombProjectile::Detonate()
 		g_pEffects->Sparks( GetAbsOrigin() );
 		RemoveGrenade();
 
+		// FIXME: Gibs are causing crashes on some servers for unknown reasons
+
 		// CreatePipebombGibs
-		CPVSFilter filter( GetAbsOrigin() );
+		/*CPVSFilter filter( GetAbsOrigin() );
 		UserMessageBegin( filter, "CheapBreakModel" );
 		WRITE_SHORT( GetModelIndex() );
 		WRITE_VEC3COORD( GetAbsOrigin() );
 		WRITE_ANGLES( GetAbsAngles() );
-		MessageEnd();
+		MessageEnd();*/
 
 		return;
 	}
