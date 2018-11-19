@@ -527,8 +527,8 @@ void C_ObjectSentrygun::CreateLaserBeam( void )
 	if ( m_pLaserBeam)
 		m_pLaserBeam->SetControlPoint( 2, vecColor );
 
-	if ( m_pShieldEffects )
-		m_pShieldEffects->SetControlPoint( 1, vecColor );
+	/*if ( m_pShieldEffects )
+		m_pShieldEffects->SetControlPoint( 1, vecColor );*/
 }
 
 void C_ObjectSentrygun::ClientThink( void ) 

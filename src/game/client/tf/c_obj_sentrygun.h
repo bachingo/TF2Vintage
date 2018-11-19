@@ -85,8 +85,8 @@ public:
 
 	void DestroyShield( void )
 	{
-		ParticleProp()->StopEmissionAndDestroyImmediately( m_pShieldEffects );
-		m_pShieldEffects = NULL;
+		//ParticleProp()->StopEmissionAndDestroyImmediately( m_pShieldEffects );
+		//m_pShieldEffects = NULL;
 
 		m_pShield->Remove();
 		m_pShield = NULL;
