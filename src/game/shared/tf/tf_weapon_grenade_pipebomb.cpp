@@ -55,11 +55,9 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadePipebombProjectile, DT_TFProjectile_Pip
 
 BEGIN_NETWORK_TABLE( CTFGrenadePipebombProjectile, DT_TFProjectile_Pipebomb )
 #ifdef CLIENT_DLL
-RecvPropInt( RECVINFO( m_bTouched ) ),
 RecvPropInt( RECVINFO( m_iType ) ),
 RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
-SendPropBool( SENDINFO( m_bTouched ) ),
 SendPropInt( SENDINFO( m_iType ), 2 ),
 SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
@@ -113,6 +111,11 @@ int	CTFGrenadePipebombProjectile::GetDamageType( void )
 		{
 			iDmgType |= DMG_USEDISTANCEMOD;
 		}
+	}
+	else if ( m_iDeflected > 0 )
+	{
+		// deflected stickies shouldn't get minicrits 
+		iDmgType |= DMG_MINICRITICAL;
 	}
 
 	return iDmgType;
@@ -168,24 +171,12 @@ void CTFGrenadePipebombProjectile::CreateTrails( void )
 {
 	CNewParticleEffect *pParticle = ParticleProp()->Create( GetTrailParticleName(), PATTACH_ABSORIGIN_FOLLOW );
 
-	C_TFPlayer *pPlayer = ToTFPlayer( GetThrower() );
-
-	if ( pPlayer )
-	{
-		pPlayer->m_Shared.SetParticleToMercColor( pParticle );
-	}
-
 	if ( m_bCritical )
 	{
 		const char *pszFormat = ( m_iType == TF_GL_MODE_REMOTE_DETONATE ) ? "critical_grenade_%s" : "critical_pipe_%s";
 		const char *pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber(), true );
 
 		pParticle = ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
-
-		if ( pPlayer )
-		{
-			pPlayer->m_Shared.SetParticleToMercColor( pParticle );
-		}
 	}
 }
 
@@ -286,15 +277,18 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
 //-----------------------------------------------------------------------------
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
-																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult )
+																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo,
+																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon )
 {
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( ( iMode == TF_GL_MODE_REMOTE_DETONATE ) ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
 	{
-
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
 		pGrenade->SetPipebombMode( iMode );
 		DispatchSpawn( pGrenade );
+
+		// Set the launcher for model overrides
+		pGrenade->SetLauncher( pWeapon );
 
 		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo );
 
@@ -331,20 +325,23 @@ void CTFGrenadePipebombProjectile::Spawn()
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
 		// Set this to max, so effectively they do not self-implode.
-		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
 		SetDetonateTimerLength( FLT_MAX );
+		PrecacheProjectileModel( TF_WEAPON_PIPEBOMB_MODEL );
 	}
 	else
 	{
-		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
+		PrecacheProjectileModel( TF_WEAPON_PIPEGRENADE_MODEL );
 	}
 
 	BaseClass::Spawn();
 
 	m_bTouched = false;
 	m_flCreationTime = gpGlobals->curtime;
+
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
 
 	// We want to get touch functions called so we can damage enemy players
 	AddSolidFlags( FSOLID_TRIGGER );
@@ -357,11 +354,20 @@ void CTFGrenadePipebombProjectile::Spawn()
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Precache()
 {
-	PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
-	PrecacheModel( TF_WEAPON_PIPEGRENADE_MODEL );
 	PrecacheTeamParticles("stickybombtrail_%s", true);
 
 	BaseClass::Precache();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGrenadePipebombProjectile::PrecacheProjectileModel( const char *iszModel )
+{
+	int index = 0;
+	index = PrecacheModel( iszModel );
+	PrecacheGibsForModel( index );
+	SetModel( iszModel );
 }
 
 //-----------------------------------------------------------------------------
@@ -369,11 +375,6 @@ void CTFGrenadePipebombProjectile::Precache()
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::SetPipebombMode( int iMode )
 {
-	if ( iMode != TF_GL_MODE_REMOTE_DETONATE )
-	{
-		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
-	}
-
 	m_iType.Set( iMode );
 }
 
@@ -404,6 +405,17 @@ void CTFGrenadePipebombProjectile::Detonate()
 	{
 		g_pEffects->Sparks( GetAbsOrigin() );
 		RemoveGrenade();
+
+		// FIXME: Gibs are causing crashes on some servers for unknown reasons
+
+		// CreatePipebombGibs
+		/*CPVSFilter filter( GetAbsOrigin() );
+		UserMessageBegin( filter, "CheapBreakModel" );
+		WRITE_SHORT( GetModelIndex() );
+		WRITE_VEC3COORD( GetAbsOrigin() );
+		WRITE_ANGLES( GetAbsAngles() );
+		MessageEnd();*/
+
 		return;
 	}
 
@@ -448,7 +460,7 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		return;
 
 	// Blow up if we hit an enemy we can damage
-	if ( pOther->GetTeamNumber() && ( pOther->GetTeamNumber() != GetTeamNumber() || TFGameRules()->IsDeathmatch() ) && pOther->m_takedamage != DAMAGE_NO )
+	if ( pOther->GetTeamNumber() && pOther->GetTeamNumber() != GetTeamNumber() && pOther->m_takedamage != DAMAGE_NO )
 	{
 		// Check to see if this is a respawn room.
 		if ( !pOther->IsPlayer() )

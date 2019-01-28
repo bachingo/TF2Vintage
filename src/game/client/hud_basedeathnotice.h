@@ -18,14 +18,14 @@ struct DeathNoticePlayer
 	{
 		szName[0] = 0;
 		iTeam = TEAM_UNASSIGNED;
-#if defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_VINTAGE_CLIENT )
 		iPlayerID = 0;
 #endif
 	}
 
 	char		szName[MAX_PLAYER_NAME_LENGTH*2];	// big enough for player name and additional information
 	int			iTeam;								// team #	
-#if defined (TF_CLASSIC_CLIENT)
+#if defined (TF_VINTAGE_CLIENT)
 	int			iPlayerID;
 #endif
 };
@@ -59,7 +59,7 @@ struct DeathNoticeItem
 
 	DeathNoticePlayer	Killer;
 	DeathNoticePlayer   Victim;
-#if defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_VINTAGE_CLIENT )
 	DeathNoticePlayer   Assister;
 #endif
 	char		szIcon[32];		// name of icon to display

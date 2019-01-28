@@ -54,6 +54,11 @@ public:
 	CNetworkHandle( CBaseEntity, m_hLauncher );
 	CNetworkHandle( CBaseEntity, m_hDeflectOwner );
 
+protected:
+
+	// Touch fix
+	CNetworkVar( bool,		m_bTouched );
+
 private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );

@@ -63,6 +63,8 @@ public:
 	virtual void	HandleFireOnEmpty( void );
 	virtual void	WeaponReset( void );
 
+	virtual bool	CanReload( void ) { return false; }
+
 #ifdef GAME_DLL
 	virtual int		UpdateTransmitState( void );
 #endif
@@ -89,6 +91,7 @@ private:
 	// Barrel spinning
 	virtual CStudioHdr *OnNewModel( void );
 	virtual void		StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
+	virtual void		ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 	
 	virtual void		UpdateOnRemove( void );
 

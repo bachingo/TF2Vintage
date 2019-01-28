@@ -35,6 +35,23 @@ int C_ViewmodelAttachmentModel::InternalDrawModel( int flags )
 }
 
 //-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+bool C_ViewmodelAttachmentModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
+{
+	if ( BaseClass::OnPostInternalDrawModel( pInfo ) )
+	{
+		C_EconEntity *pEntity = GetOwningWeapon();
+		if ( pEntity )
+		{
+			DrawEconEntityAttachedModels( this, pEntity, pInfo, 2 );
+		}
+		return true;
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: We're overriding this because DrawModel keeps calling the FollowEntity DrawModel function
 //			which in this case is CTFViewModel::DrawModel.
 //			This is basically just a straight copy of C_BaseAnimating::DrawModel, without the FollowEntity part
@@ -80,7 +97,6 @@ int C_ViewmodelAttachmentModel::DrawOverriddenViewmodel( int flags )
 	return drawn;
 }
 
-
 int C_ViewmodelAttachmentModel::DrawModel( int flags )
 {
 	if ( !IsVisible() )
@@ -100,4 +116,20 @@ int C_ViewmodelAttachmentModel::DrawModel( int flags )
 		return false;
 
 	return BaseClass::DrawModel( flags );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ViewmodelAttachmentModel::StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
+{
+	BaseClass::StandardBlendingRules( hdr, pos, q, currentTime, boneMask );
+	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_viewmodel->GetOwningWeapon();
+	if ( !pWeapon )
+		return;
+	if ( m_viewmodel->GetViewModelType() == VMTYPE_TF2 )
+	{
+		pWeapon->SetMuzzleAttachment( LookupAttachment( "muzzle" ) );
+	}
+	pWeapon->ViewModelAttachmentBlending( hdr, pos, q, currentTime, boneMask );
 }

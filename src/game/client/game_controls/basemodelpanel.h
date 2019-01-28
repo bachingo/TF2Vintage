@@ -28,7 +28,7 @@ public:
 
 	virtual bool IsMenuModel() const{ return true; }
 
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 	Vector m_vecModelColor;
 #endif
 };

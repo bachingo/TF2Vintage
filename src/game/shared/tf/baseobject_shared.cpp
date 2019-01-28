@@ -439,6 +439,25 @@ void CBaseObject::OnGoActive( void )
 		// Don't snap to default level again if we get picked up and re-deployed.
 		m_iDefaultUpgrade = 0;
 	}
+#else
+	// mini-sentry siren
+	const char *pszEffect = "";
+	switch( GetTeamNumber() )
+	{
+	case TF_TEAM_RED:
+		pszEffect = "cart_flashinglight_red";
+		break;
+	case TF_TEAM_BLUE:
+		pszEffect = "cart_flashinglight";
+		break;
+	default:
+		pszEffect = "cart_flashinglight_red";
+		break;
+	}
+	if ( IsMiniBuilding() && GetType() == OBJ_SENTRYGUN )
+	{
+		ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "siren" );
+	}
 #endif
 }
 
@@ -483,16 +502,6 @@ bool CBaseObject::ShouldCollide( int collisionGroup, int contentsMask ) const
 
 		case TF_TEAM_BLUE:
 			if ( !( contentsMask & CONTENTS_BLUETEAM ) )
-				return false;
-			break;
-
-		case TF_TEAM_GREEN:
-			if (!(contentsMask & CONTENTS_GREENTEAM ) )
-				return false;
-			break;
-
-		case TF_TEAM_YELLOW:
-			if (!(contentsMask & CONTENTS_YELLOWTEAM ) )
 				return false;
 			break;
 		}

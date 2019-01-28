@@ -93,3 +93,51 @@ bool CAmmoPack::MyTouch( CBasePlayer *pPlayer )
 
 	return bSuccess; 
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Update ammo pack model for holiday events
+//-----------------------------------------------------------------------------
+const char *CAmmoPack::GetDefaultPowerupModel( void )
+{
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
+		{
+			return "models/items/ammopack_large_bday.mdl";
+		}
+	}
+
+	return "models/items/ammopack_large.mdl"; // default
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update ammo pack model for holiday events
+//-----------------------------------------------------------------------------
+const char *CAmmoPackMedium::GetDefaultPowerupModel( void )
+{
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
+		{
+			return "models/items/ammopack_medium_bday.mdl";
+		}
+	}
+
+	return "models/items/ammopack_medium.mdl"; // default
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update ammo pack model for holiday events
+//-----------------------------------------------------------------------------
+const char *CAmmoPackSmall::GetDefaultPowerupModel( void )
+{
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) )
+		{
+			return "models/items/ammopack_small_bday.mdl";
+		}
+	}
+
+	return "models/items/ammopack_small.mdl"; // default
+}

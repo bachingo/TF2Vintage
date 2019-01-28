@@ -88,7 +88,7 @@ class CNavArea;
 class CHintSystem;
 class CAI_Expresser;
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_CLASSIC )
+#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
 class CEconWearable;
 #endif // USES_ECON_ITEMS
 
@@ -614,7 +614,7 @@ public:
 
 	virtual bool			ShouldAnnounceAchievement( void );
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_CLASSIC )
+#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
 	// Wearables
 	virtual void			EquipWearable( CEconWearable *pItem );
 	virtual void			RemoveWearable( CEconWearable *pItem );
@@ -891,7 +891,7 @@ public:
 
 	void		AdjustDrownDmg( int nAmount );
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_CLASSIC )
+#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
 	CEconWearable			*GetWearable( int i ) { return m_hMyWearables[i]; }
 	const CEconWearable		*GetWearable( int i ) const { return m_hMyWearables[i]; }
 	int						GetNumWearables( void ) const { return m_hMyWearables.Count(); }
@@ -1068,7 +1068,7 @@ protected:
 
 	bool					m_bAllowInstantSpawn;
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_CLASSIC )
+#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
 	// Wearables
 	CUtlVector<CHandle<CEconWearable > >	m_hMyWearables;
 #endif

@@ -114,8 +114,7 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 			m_iImageDominating[i] = m_pImageList->AddImage(scheme()->GetImage(g_aDominationEmblems[i], true));
 		}
 
-		// We're skipping the mercenary, as he shouldn't have a visible class emblem during regular gameplay
-		for (int i = TF_CLASS_SCOUT; i < TF_CLASS_MERCENARY; i++)
+		for (int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++)
 		{
 			m_iClassEmblem[i] = m_pImageList->AddImage(scheme()->GetImage(g_aPlayerClassEmblems[i - 1], true));
 			m_iClassEmblemDead[i] = m_pImageList->AddImage(scheme()->GetImage(g_aPlayerClassEmblemsDead[i - 1], true));
@@ -143,10 +142,8 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 	if ( m_pLocalPlayerDuelStatsPanel )
 		m_pLocalPlayerDuelStatsPanel->SetVisible( false );
 
-	// This is the panel used by Arena to show people who are waiting to play.
-	// Since we don't have Arena yet, disable it fo rnow
 	if ( m_pSpectatorsInQueue) 
-		m_pSpectatorsInQueue->SetVisible( false );
+		m_pSpectatorsInQueue->SetVisible( true );
 
 	Reset();
 }
@@ -178,45 +175,23 @@ void CTFClientScoreBoardDialog::ShowPanel( bool bShow )
 
 	if ( bShow )
 	{		
-		if ( TFGameRules() && TFGameRules()->IsFourTeamGame())
-		{
-			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSCOREBOARD, true );
-		}
-		else if ( TFGameRules() && TFGameRules()->IsDeathmatch())
-		{
-			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHSCOREBOARD, true );
-		}
-		else
-		{
-			SetVisible(true);
-			MoveToFront();
+		SetVisible(true);
+		MoveToFront();
 
-			gHUD.LockRenderGroup(iRenderGroup);
+		gHUD.LockRenderGroup(iRenderGroup);
 
-			// Clear the selected item, this forces the default to the local player
-			SectionedListPanel *pList = GetSelectedPlayerList();
-			if (pList)
-			{
-				pList->ClearSelection();
-			}
+		// Clear the selected item, this forces the default to the local player
+		SectionedListPanel *pList = GetSelectedPlayerList();
+		if (pList)
+		{
+			pList->ClearSelection();
 		}
 	}
 	else
 	{
-		if (TFGameRules() && TFGameRules()->IsFourTeamGame())
-		{
-			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSCOREBOARD, false );
-		}
-		else if (TFGameRules() && TFGameRules()->IsDeathmatch())
-		{
-			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHSCOREBOARD, false );
-		}
-		else
-		{
-			SetVisible(false);
+		SetVisible(false);
 
-			gHUD.UnlockRenderGroup(iRenderGroup);
-		}
+		gHUD.UnlockRenderGroup(iRenderGroup);
 	}
 }
 
@@ -278,6 +253,7 @@ void CTFClientScoreBoardDialog::Update()
 	UpdateTeamInfo();
 	UpdatePlayerList();
 	UpdateSpectatorList();
+	UpdateArenaWaitingToPlayList();
 	UpdatePlayerDetails();
 	MoveToCenterOfScreen();
 
@@ -412,18 +388,12 @@ void CTFClientScoreBoardDialog::UpdateTeamInfo( void )
 	}
 }
 
-bool AreEnemyTeams(int iTeam1, int iTeam2)
+bool AreEnemyTeams( int iTeam1, int iTeam2 )
 {
-	if (iTeam1 == TF_TEAM_RED && (iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_GREEN || iTeam2 == TF_TEAM_YELLOW))
+	if ( iTeam1 == TF_TEAM_RED && iTeam2 == TF_TEAM_BLUE )
 		return true;
 
-	if (iTeam1 == TF_TEAM_BLUE && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_GREEN || iTeam2 == TF_TEAM_YELLOW))
-		return true;
-
-	if (iTeam1 == TF_TEAM_GREEN && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_YELLOW))
-		return true;
-
-	if (iTeam1 == TF_TEAM_YELLOW && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_GREEN))
+	if ( iTeam1 == TF_TEAM_BLUE && iTeam2 == TF_TEAM_RED )
 		return true;
 
 	return false;
@@ -518,7 +488,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList( void )
 						iClass = tf_PR->GetPlayerClass( playerIndex );
 					}
 
-					if( iClass >= TF_FIRST_NORMAL_CLASS && iClass < TF_CLASS_MERCENARY )
+					if( iClass >= TF_FIRST_NORMAL_CLASS && iClass < TF_CLASS_COUNT_ALL )
 					{
 						//pKeyValues->SetString( "class", g_aPlayerClassNames[iClass] );
 						pKeyValues->SetInt( "class", tf_PR->IsAlive( playerIndex) ? m_iClassEmblem[iClass] : m_iClassEmblemDead[iClass] );
@@ -622,8 +592,9 @@ void CTFClientScoreBoardDialog::UpdatePlayerList( void )
 void CTFClientScoreBoardDialog::UpdateSpectatorList( void )
 {
 	// Spectators
-	char szSpectatorList[512] = "" ;
+	char szSpectatorList[512] = "";
 	int nSpectators = 0;
+
 	for( int playerIndex = 1 ; playerIndex <= MAX_PLAYERS; playerIndex++ )
 	{
 		if ( ShouldShowAsSpectator( playerIndex ) )
@@ -642,22 +613,61 @@ void CTFClientScoreBoardDialog::UpdateSpectatorList( void )
 	if ( nSpectators > 0 )
 	{
 		const char *pchFormat;
-		if (TFGameRules()->IsInArenaMode())
-		{
-			pchFormat = (1 == nSpectators ? "#TF_Arena_ScoreBoard_Spectator" : "#TF_Arena_ScoreBoard_Spectators");
-		}
-		else
-		{
-			pchFormat = (1 == nSpectators ? "#ScoreBoard_Spectator" : "#ScoreBoard_Spectators");
-		}
+		pchFormat = ( 1 == nSpectators ? "#ScoreBoard_Spectator" : "#ScoreBoard_Spectators" );
 
 		wchar_t wzSpectatorCount[16];
 		wchar_t wzSpectatorList[1024];
 		_snwprintf( wzSpectatorCount, ARRAYSIZE( wzSpectatorCount ), L"%i", nSpectators );
 		g_pVGuiLocalize->ConvertANSIToUnicode( szSpectatorList, wzSpectatorList, sizeof( wzSpectatorList ) );
-		g_pVGuiLocalize->ConstructString( wzSpectators, sizeof(wzSpectators), g_pVGuiLocalize->Find( pchFormat), 2, wzSpectatorCount, wzSpectatorList );
+		g_pVGuiLocalize->ConstructString( wzSpectators, sizeof( wzSpectators ), g_pVGuiLocalize->Find( pchFormat ), 2, wzSpectatorCount, wzSpectatorList );
 	}
 	SetDialogVariable( "spectators", wzSpectators );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Updates the arena queue list
+//-----------------------------------------------------------------------------
+void CTFClientScoreBoardDialog::UpdateArenaWaitingToPlayList( void )
+{
+	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
+	if ( !tf_PR )
+		return;
+
+	// Spectators
+	char szSpectatorsInQueueList[512] = "" ;
+	int nSpectatorsInQueue = 0;
+
+	for( int playerIndex = 1 ; playerIndex <= MAX_PLAYERS; playerIndex++ )
+	{
+		if ( ShouldShowAsWaitingToPlay( playerIndex ) )
+		{
+			// Check if the player is an arena spectator when in arena mode
+			if ( TFGameRules()->IsInArenaMode() &&  !tf_PR->GetArenaSpectator( playerIndex ) )
+			{
+				if ( nSpectatorsInQueue > 0 )
+				{
+					Q_strncat( szSpectatorsInQueueList, ", ", ARRAYSIZE( szSpectatorsInQueueList ) );
+				}
+
+				Q_strncat( szSpectatorsInQueueList, g_PR->GetPlayerName( playerIndex ), ARRAYSIZE( szSpectatorsInQueueList ) );
+				nSpectatorsInQueue++;
+			}
+		}
+	}
+
+	wchar_t wzSpectatorsInQueue[512] = L"";
+	if ( nSpectatorsInQueue > 0 )
+	{
+		const char *pchFormat;
+		pchFormat = ( 1 == nSpectatorsInQueue ? "#TF_Arena_ScoreBoard_Spectator" : "#TF_Arena_ScoreBoard_Spectators" );
+
+		wchar_t wzSpectatorsInQueueCount[16];
+		wchar_t wzSpectatorsInQueueList[1024];
+		_snwprintf( wzSpectatorsInQueueCount, ARRAYSIZE( wzSpectatorsInQueueCount ), L"%i", nSpectatorsInQueue );
+		g_pVGuiLocalize->ConvertANSIToUnicode( szSpectatorsInQueueList, wzSpectatorsInQueueList, sizeof( wzSpectatorsInQueueList ) );
+		g_pVGuiLocalize->ConstructString( wzSpectatorsInQueue, sizeof( wzSpectatorsInQueue ), g_pVGuiLocalize->Find( pchFormat ), 2, wzSpectatorsInQueueCount, wzSpectatorsInQueueList );
+	}
+	SetDialogVariable( "waitingtoplay", wzSpectatorsInQueue );
 }
 
 //-----------------------------------------------------------------------------
@@ -719,7 +729,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails( void )
 
 	int iClass = pLocalPlayer->m_Shared.GetDesiredPlayerClassIndex();
 	int iTeam = pLocalPlayer->GetTeamNumber();
-	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass < TF_CLASS_MERCENARY ) )
+	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass < TF_CLASS_COUNT_ALL ) )
 	{
 		m_pClassImage->SetClass( iTeam, iClass, 0 );
 		m_pClassImage->SetVisible( true );
@@ -827,6 +837,30 @@ const wchar_t *GetPointsString( int iPoints )
 // Purpose: Returns whether the specified player index is a spectator
 //-----------------------------------------------------------------------------
 bool CTFClientScoreBoardDialog::ShouldShowAsSpectator( int iPlayerIndex )
+{
+	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
+	if ( !tf_PR )
+		return false;
+
+	// see if player is connected
+	if ( tf_PR->IsConnected( iPlayerIndex ) ) 
+	{
+		// waiting to play
+		if ( TFGameRules() && TFGameRules()->IsInArenaMode() &&  !tf_PR->GetArenaSpectator( iPlayerIndex ) )
+			return false;
+
+		// either spectating or unassigned team should show in spectator list
+		int iTeam = tf_PR->GetTeam( iPlayerIndex );
+		if ( TEAM_SPECTATOR == iTeam )
+			return true;
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns whether the specified player index is in the arena queue
+//-----------------------------------------------------------------------------
+bool CTFClientScoreBoardDialog::ShouldShowAsWaitingToPlay( int iPlayerIndex )
 {
 	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
 	if ( !tf_PR )

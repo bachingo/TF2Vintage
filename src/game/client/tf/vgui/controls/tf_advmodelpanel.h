@@ -39,6 +39,7 @@ public:
 	void SetBodygroup( int iGroup, int iValue );
 	int FindBodygroupByName( const char *name );
 	int GetNumBodyGroups();
+	const char *GetBodygroupName( int index );
 	CStudioHdr *GetModelPtr();
 	
 

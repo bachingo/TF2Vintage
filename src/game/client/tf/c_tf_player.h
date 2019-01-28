@@ -32,11 +32,6 @@ extern ConVar cl_autorezoom;
 extern ConVar cl_autoreload;
 extern ConVar cl_flipviewmodels;
 
-extern ConVar tf2c_setmerccolor_r;
-extern ConVar tf2c_setmerccolor_g;
-extern ConVar tf2c_setmerccolor_b;
-extern ConVar tf2c_setmercparticle;
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -134,6 +129,9 @@ public:
 	void			TauntCamInterpolation( void ); 
 	bool			InTauntCam( void ) { return m_bWasTaunting; }
 	virtual void	ThirdPersonSwitch( bool bThirdperson );
+
+	// Minimal Viewmodels
+	void			CalcMinViewmodelOffset( void );
 
 	virtual void	InitPhonemeMappings();
 
@@ -236,6 +234,9 @@ public:
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void ReapplyProvision( void ) { /*Do nothing*/ };
 
+	// Gunslinger
+	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
+
 public:
 	// Ragdolls.
 	virtual C_BaseAnimating *BecomeRagdollOnClient();
@@ -263,7 +264,7 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 
-	void UpdateOverhealEffect( void );
+	void UpdateOverhealEffect( bool bForceHide = false );
 
 protected:
 
@@ -379,6 +380,10 @@ public:
 	float				m_flBurnEffectStartTime;
 	float				m_flBurnEffectEndTime;
 
+	// Jumping
+	CSoundPatch			*m_pJumpSound;
+
+
 	CNewParticleEffect	*m_pDisguisingEffect;
 	float m_flDisguiseEffectStartTime;
 	float m_flDisguiseEndEffectStartTime;
@@ -404,6 +409,9 @@ public:
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
 
 	CAttributeManager m_AttributeManager;
+
+	// Overheal particle fix for spies
+	int				m_iOldOverhealTeamNum;
 
 private:
 

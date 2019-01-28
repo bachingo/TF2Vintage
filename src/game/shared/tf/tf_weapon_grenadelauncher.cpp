@@ -241,6 +241,9 @@ bool CTFGrenadeLauncher::Reload( void )
 //-----------------------------------------------------------------------------
 void CTFGrenadeLauncher::SwitchBodyGroups( void )
 {
+	if ( GetNumBodyGroups() < TF_GRENADES_SWITCHGROUP )
+		return; 
+
     int iState = 4;
 
     iState = m_iClip1;

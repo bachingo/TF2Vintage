@@ -856,45 +856,42 @@ void C_BaseObject::GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInByt
 	wchar_t wszUpgradeProgress[ 32 ];
 	wchar_t wszLevel[ 5 ];
 
-	_snwprintf(wszLevel, ARRAYSIZE(wszLevel) - 1, L"%d", m_iUpgradeLevel);
+	_snwprintf( wszLevel, ARRAYSIZE( wszLevel ) - 1, L"%d", m_iUpgradeLevel );
 
-	g_pVGuiLocalize->ConvertANSIToUnicode( GetStatusName(), wszObjectName, sizeof(wszObjectName) );
+	g_pVGuiLocalize->ConvertANSIToUnicode( GetStatusName(), wszObjectName, sizeof( wszObjectName ) );
 
 	C_BasePlayer *pBuilder = GetOwner();
 
 	if ( pBuilder )
 	{
-		g_pVGuiLocalize->ConvertANSIToUnicode( pBuilder->GetPlayerName(), wszBuilderName, sizeof(wszBuilderName) );
+		g_pVGuiLocalize->ConvertANSIToUnicode( pBuilder->GetPlayerName(), wszBuilderName, sizeof( wszBuilderName ) );
 	}
 	else
 	{
 		wszBuilderName[0] = '\0';
 	}
 
-	if (m_iUpgradeLevel >= m_iHighestUpgradeLevel)
+	if ( m_iUpgradeLevel >= m_iHighestUpgradeLevel )
 	{
 		const char *printFormatString = "#TF_playerid_object_level";
 
-		g_pVGuiLocalize->ConstructString(sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find(printFormatString),
+		g_pVGuiLocalize->ConstructString( sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find( printFormatString ),
 			1,
-			wszLevel);
+			wszLevel );
 	}
-	else
+	else if ( !IsMiniBuilding() )
 	{
 		// level 1 and 2 show upgrade progress
-		_snwprintf(wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, m_iUpgradeMetalRequired);
-		wszUpgradeProgress[ARRAYSIZE(wszUpgradeProgress) - 1] = '\0';
+		_snwprintf( wszUpgradeProgress, ARRAYSIZE( wszUpgradeProgress ) - 1, L"%d / %d", m_iUpgradeMetal, m_iUpgradeMetalRequired );
+		wszUpgradeProgress[ARRAYSIZE( wszUpgradeProgress ) - 1] = '\0';
 
 		const char *printFormatString = "#TF_playerid_object_upgrading_level";		
 
-		g_pVGuiLocalize->ConstructString(sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find(printFormatString),
+		g_pVGuiLocalize->ConstructString( sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find( printFormatString ),
 			2,
 			wszLevel,
-			wszUpgradeProgress);
+			wszUpgradeProgress );
 	}
-
-
-
 }
 
 //-----------------------------------------------------------------------------

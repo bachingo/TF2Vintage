@@ -14,7 +14,6 @@
 #include "tf_controls.h"
 #include "tf_imagepanel.h"
 #include "tf_hud_flagstatus.h"
-#include "tf_hud_deathmatchstatus.h"
 #include "tf_hud_escort.h"
 #include "hud_controlpointicons.h"
 #include "GameEventListener.h"
@@ -158,16 +157,10 @@ private:
 
 	CPanelAnimationVarAliasType( int, m_nBlueActiveXPos, "blue_active_xpos", "0", "proportional_int" );
 	CPanelAnimationVarAliasType( int, m_nRedActiveXPos, "red_active_xpos", "0", "proportional_int" );
-	CPanelAnimationVarAliasType( int, m_nGreenActiveXPos, "green_active_xpos", "0", "proportional_int" );
-	CPanelAnimationVarAliasType( int, m_nYellowActiveXPos, "yellow_active_xpos", "0", "proportional_int" );
-	CPanelAnimationVarAliasType( int, m_nGreenActiveYPos, "green_active_ypos", "0", "proportional_int" );
-	CPanelAnimationVarAliasType( int, m_nYellowActiveYPos, "yellow_active_ypos", "0", "proportional_int" );
 
 
 	CTFHudTimeStatus		*m_pBlueKothTimer;
 	CTFHudTimeStatus		*m_pRedKothTimer;
-	CTFHudTimeStatus		*m_pGreenKothTimer;
-	CTFHudTimeStatus		*m_pYellowKothTimer;
 	vgui::ImagePanel		*m_pActiveTimerBG;
 	CTFHudTimeStatus		*m_pActiveKothTimerPanel;
 	int						m_nOriginalActiveTimerBGYPos;
@@ -206,7 +199,6 @@ private:
 //	CTFHudKothTimeStatus	*m_pKothTimePanel;
 	CTFHudEscort			*m_pEscortPanel;
 	CTFHudMultipleEscort	*m_pEscortRacePanel;
-	CTFHudDeathMatchObjectives *m_pDMPanel;
 	CHudControlPointIcons	*m_pControlPointIconsPanel;
 	CControlPointProgressBar *m_pControlPointProgressBar;
 };

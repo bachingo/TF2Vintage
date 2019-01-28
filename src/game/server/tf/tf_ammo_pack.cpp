@@ -16,6 +16,13 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#define TF_MODEL_PUMPKIN_LOOT "models/props_halloween/pumpkin_loot.mdl"
+#define TF_PUMPKIN_LOOT_DROP "Halloween.PumpkinDrop"
+#define TF_PUMPKIN_LOOT_PICKUP "Halloween.PumpkinPickup"
+#define TF_MODEL_GIFT "models/items/tf_gift.mdl"
+#define TF_GIFT_DROP "Christmas.GiftDrop"
+#define TF_GIFT_PICKUP "Christmas.GiftPickup"
+
 //----------------------------------------------
 
 // Network table.
@@ -63,6 +70,22 @@ void CTFAmmoPack::Spawn( void )
 void CTFAmmoPack::Precache( void )
 {
 	PrecacheScriptSound( TF_AMMOPACK_PICKUP_SOUND );
+
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+		{
+			PrecacheModel( TF_MODEL_PUMPKIN_LOOT );
+			PrecacheScriptSound( TF_PUMPKIN_LOOT_DROP );
+			PrecacheScriptSound( TF_PUMPKIN_LOOT_PICKUP );
+		}
+		else if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
+		{
+			PrecacheModel( TF_MODEL_GIFT );
+			PrecacheScriptSound( TF_GIFT_DROP );
+			PrecacheScriptSound( TF_GIFT_PICKUP );
+		}
+	}
 }
 
 CTFAmmoPack *CTFAmmoPack::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, bool bUseCustomAmmoCount )
@@ -80,6 +103,16 @@ CTFAmmoPack *CTFAmmoPack::Create( const Vector &vecOrigin, const QAngle &vecAngl
 
 void CTFAmmoPack::SetInitialVelocity( Vector &vecVelocity )
 { 
+	if ( iHoliday )
+	{
+		// Special rules for holiday loot packs
+		VPhysicsDestroyObject();
+		SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
+		SetAbsVelocity( vecVelocity + Vector( 0.0f, 0.0f, 200.0f ) );
+		SetAbsAngles( vec3_angle );
+		UseClientSideAnimation();
+		ResetSequence( LookupSequence( "idle" ) );
+	}
 	m_vecInitialVelocity = vecVelocity;
 }
 
@@ -177,6 +210,22 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 				pTFPlayer->m_Shared.SetSpyCloakMeter(min(100.0f, pTFPlayer->m_Shared.GetSpyCloakMeter() + ceil(100.0f * 0.25f)));
 				bSuccess = true;
 			}
+
+			switch ( iHoliday )
+			{
+				case kHoliday_Halloween: // Give player crits for three seconds
+					if ( pTFPlayer->m_Shared.InCond( TF_COND_CRITBOOSTED_PUMPKIN ) || pTFPlayer->m_Shared.GetConditionDuration( TF_COND_CRITBOOSTED_PUMPKIN ) < 3.0f )
+					{
+						pTFPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 3.0f );
+					}
+					EmitSound( TF_PUMPKIN_LOOT_PICKUP );
+					bSuccess = true;
+					break;
+				case kHoliday_Christmas: // Gifts don't do anything (for now at least)
+					EmitSound( TF_GIFT_PICKUP );
+					bSuccess = true;
+					break;
+			}
 		}
 		else
 		{
@@ -239,4 +288,49 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 unsigned int CTFAmmoPack::PhysicsSolidMaskForEntity( void ) const
 { 
 	return BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_DEBRIS;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFAmmoPack::MakeHolidayPack( void )
+{ 
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+		{
+			iHoliday = kHoliday_Halloween;
+			SetModel( TF_MODEL_PUMPKIN_LOOT );
+			SetContextThink( &CTFAmmoPack::DropSoundThink, gpGlobals->curtime + 0.1f, "DROP_SOUND_THINK" );
+		}
+		else if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
+		{
+			iHoliday = kHoliday_Christmas;
+			SetModel( TF_MODEL_GIFT );
+			SetContextThink( &CTFAmmoPack::DropSoundThink, gpGlobals->curtime + 0.1f, "DROP_SOUND_THINK" );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFAmmoPack::DropSoundThink( void )
+{ 
+	const char *iszSound = "";
+
+	switch ( iHoliday )
+	{
+		case kHoliday_Halloween:
+			iszSound = TF_PUMPKIN_LOOT_DROP;
+			break;
+		case kHoliday_Christmas:
+			iszSound = TF_GIFT_DROP;
+			break;
+	}
+
+	if ( iszSound[0] )
+	{
+		EmitSound( iszSound );
+	}
 }

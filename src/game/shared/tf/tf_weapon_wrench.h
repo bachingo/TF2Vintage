@@ -14,6 +14,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFWrench C_TFWrench
+#define CTFRobotArm C_TFRobotArm
 #endif
 
 //=============================================================================
@@ -40,6 +41,35 @@ public:
 private:
 
 	CTFWrench( const CTFWrench & ) {}
+};
+
+class CTFRobotArm : public CTFWrench
+{
+public:
+	DECLARE_CLASS( CTFRobotArm, CTFWrench );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROBOT_ARM; }
+	virtual void	Smack( void );
+
+	virtual void	PrimaryAttack( void );
+	virtual void	WeaponIdle( void );
+	virtual int		GetCustomDamageType() const;
+
+#ifdef GAME_DLL
+	virtual float	GetForceScale( void );
+#endif
+
+	virtual bool	CalcIsAttackCriticalHelper( void );
+
+	virtual void	DoViewModelAnimation( void );
+
+private:
+
+	int				m_iConsecutivePunches;
+	bool			m_bComboKill;
+	float			m_flComboDecayTime;
 };
 
 #endif // TF_WEAPON_WRENCH_H

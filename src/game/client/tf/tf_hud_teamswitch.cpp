@@ -174,14 +174,6 @@ void CHudTeamSwitch::SetupSwitchPanel( int iNewTeam )
 						m_pBalanceLabel->SetText(g_pVGuiLocalize->Find("#TF_teamswitch_blue"));
 						break;
 
-					case TF_TEAM_GREEN:
-						m_pBalanceLabel->SetText(g_pVGuiLocalize->Find("#TF_teamswitch_green"));
-						break;
-
-					case TF_TEAM_YELLOW:
-						m_pBalanceLabel->SetText(g_pVGuiLocalize->Find("#TF_teamswitch_yellow"));
-						break;
-
 					default:
 						m_pBalanceLabel->SetText(g_pVGuiLocalize->Find("#TF_teamswitch_blue"));
 						break;

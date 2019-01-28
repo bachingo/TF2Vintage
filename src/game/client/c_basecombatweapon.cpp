@@ -509,7 +509,7 @@ int C_BaseCombatWeapon::CalcOverrideModelIndex()
 		localplayer == GetOwner() &&
 		ShouldDrawLocalPlayerViewModel() )
 	{
-#ifndef TF_CLASSIC_CLIENT
+#ifndef TF_VINTAGE_CLIENT
 		return BaseClass::CalcOverrideModelIndex();
 #else
 		// Temp fix for weapon model not getting set back to viewmodel after

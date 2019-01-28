@@ -93,6 +93,18 @@ CBasePlayer *CTFProjectile_Rocket::GetScorer( void )
 int	CTFProjectile_Rocket::GetDamageType() 
 { 
 	int iDmgType = BaseClass::GetDamageType();
+
+	// Buff banner mini-crit calculations
+	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
+	if ( pWeapon )
+	{
+		pWeapon->CalcIsAttackMiniCritical();
+		if ( pWeapon->IsCurrentAttackAMiniCrit() )
+		{
+			iDmgType |= DMG_MINICRITICAL;
+		}
+	}
+
 	if ( m_bCritical )
 	{
 		iDmgType |= DMG_CRITICAL;

@@ -55,7 +55,10 @@ CTFViewModel::~CTFViewModel()
 {
 	SetViewModelType( VMTYPE_NONE );
 #ifdef CLIENT_DLL
-	RemoveViewmodelAddon();
+	for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+	{
+		RemoveViewmodelAddon( i );
+	}
 #endif
 
 }
@@ -67,6 +70,7 @@ ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "5.0", FCVAR_CLIENTDLL );
 ConVar v_viewmodel_offset_x( "viewmodel_offset_x", "0", FCVAR_ARCHIVE );
 ConVar v_viewmodel_offset_y( "viewmodel_offset_y", "0", FCVAR_ARCHIVE );
 ConVar v_viewmodel_offset_z( "viewmodel_offset_z", "0", FCVAR_ARCHIVE );
+ConVar tf_use_min_viewmodels ( "tf_use_min_viewmodels", "0", FCVAR_ARCHIVE, "Use minimized viewmodels." );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -95,7 +99,12 @@ void CTFViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *wea
 
 #ifdef CLIENT_DLL
 	if ( !modelname )
-		RemoveViewmodelAddon();
+	{
+		for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+		{
+			RemoveViewmodelAddon( i );
+		}
+	}
 #endif
 }
 
@@ -103,9 +112,9 @@ void CTFViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *wea
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
+void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname, int index /*= 0*/ )
 {
-	C_ViewmodelAttachmentModel *pAddon = m_hViewmodelAddon.Get();
+	C_ViewmodelAttachmentModel *pAddon = m_hViewmodelAddon[index].Get();
 
 	if ( pAddon )
 	{
@@ -124,7 +133,7 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 		}
 		else
 		{
-			RemoveViewmodelAddon();
+			RemoveViewmodelAddon( index );
 		}
 	}
 
@@ -138,7 +147,7 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 		return;
 	}
 
-	m_hViewmodelAddon = pAddon;
+	m_hViewmodelAddon[index] = pAddon;
 	pAddon->m_nSkin = GetSkin();
 	pAddon->FollowEntity( this );
 	pAddon->UpdatePartitionListEntry();
@@ -150,12 +159,12 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFViewModel::RemoveViewmodelAddon( void )
+void CTFViewModel::RemoveViewmodelAddon( int index /*= 0*/  )
 {
-	if ( m_hViewmodelAddon.Get() )
+	if ( m_hViewmodelAddon[index].Get() )
 	{
-		m_hViewmodelAddon->SetModel( "" );
-		m_hViewmodelAddon->Remove();
+		m_hViewmodelAddon[index]->SetModel( "" );
+		m_hViewmodelAddon[index]->Remove();
 	}
 }
 
@@ -166,7 +175,7 @@ int	CTFViewModel::LookupAttachment( const char *pAttachmentName )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->LookupAttachment( pAttachmentName );
 	}
@@ -181,7 +190,7 @@ bool CTFViewModel::GetAttachment( int number, matrix3x4_t &matrix )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachment( number, matrix );
 	}
@@ -196,7 +205,7 @@ bool CTFViewModel::GetAttachment( int number, Vector &origin )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachment( number, origin );
 	}
@@ -211,7 +220,7 @@ bool CTFViewModel::GetAttachment( int number, Vector &origin, QAngle &angles )
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachment( number, origin, angles );
 	}
@@ -226,7 +235,7 @@ bool CTFViewModel::GetAttachmentVelocity( int number, Vector &originVel, Quatern
 {
 	if ( GetViewModelType() == VMTYPE_TF2 )
 	{
-		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon.Get();
+		C_ViewmodelAttachmentModel *pEnt = m_hViewmodelAddon[0].Get();
 		if ( pEnt )
 			return pEnt->GetAttachmentVelocity( number, originVel, angleVel );
 	}
@@ -303,7 +312,16 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 	// Viewmodel offset
 	Vector	forward, right, up;
 	AngleVectors(eyeAngles, &forward, &right, &up);
-	vecNewOrigin += forward*v_viewmodel_offset_x.GetFloat() + right*v_viewmodel_offset_y.GetFloat() + up*v_viewmodel_offset_z.GetFloat();
+
+	// Don't use offsets if minimal viewmodels are active
+	if ( tf_use_min_viewmodels.GetBool() )
+	{
+		vecNewOrigin += forward*m_vOffset.x + right*m_vOffset.y + up*m_vOffset.z;
+	}
+	else
+	{
+		vecNewOrigin += forward*v_viewmodel_offset_x.GetFloat() + right*v_viewmodel_offset_y.GetFloat() + up*v_viewmodel_offset_z.GetFloat();
+	}
 
 	BaseClass::CalcViewModelView( owner, vecNewOrigin, vecNewAngles );
 
@@ -418,12 +436,6 @@ int CTFViewModel::GetSkin()
 			case TF_TEAM_BLUE:
 				nSkin = 1;
 				break;
-			case TF_TEAM_GREEN:
-				nSkin = 2;
-				break;
-			case TF_TEAM_YELLOW:
-				nSkin = 3;
-				break;
 			}
 		}	
 	}
@@ -443,6 +455,54 @@ void CTFViewModel::FireEvent( const Vector& origin, const QAngle& angles, int ev
 		return;
 
 	BaseClass::FireEvent( origin, angles, event, options );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update minimal viewmodel positions
+//-----------------------------------------------------------------------------
+void CTFViewModel::CalcMinViewmodelOffset( C_TFPlayer *owner )
+{
+	// Always update this even if we're not using min viewmodels
+	// in case the player decides to activate them
+
+	if ( !owner )
+		return;
+
+	C_TFWeaponBase *pWeapon = owner->GetActiveTFWeapon();
+	if ( pWeapon )
+	{
+		vec_t vecOffset[3] = { 0.0f, 0.0f, 0.0f };
+		string_t strOffset = pWeapon->GetViewModelOffset();
+		if ( strOffset != NULL_STRING )
+		{
+			UTIL_StringToVector( vecOffset, strOffset );
+		}
+
+		m_vOffset.Init( vecOffset[0], vecOffset[1], vecOffset[2] );
+
+		if ( m_vOffset.x == 0.0f && m_vOffset.y == 0.0f && m_vOffset.z == 0.0f )
+		{
+			Warning( "No offset specified for minimal viewmodel. Defaulting to 0\n" );
+		}
+
+	}
+}
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+bool CTFViewModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
+{
+	if ( BaseClass::OnPostInternalDrawModel( pInfo ) )
+	{
+		C_EconEntity *pEntity = GetOwningWeapon();
+		if ( pEntity )
+		{
+			DrawEconEntityAttachedModels( this, pEntity, pInfo, 2 );
+		}
+		return true;
+	}
+	return false;
 }
 
 //-----------------------------------------------------------------------------

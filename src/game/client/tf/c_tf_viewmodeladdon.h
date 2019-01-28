@@ -7,8 +7,6 @@
 #ifndef C_TF_VIEWMODELENT_H
 #define C_TF_VIEWMODELENT_H
 
-#include "cbase.h"
-#include "c_baseanimating.h"
 #include "c_baseviewmodel.h"
 
 class C_TFViewModel;
@@ -19,10 +17,12 @@ class C_ViewmodelAttachmentModel : public C_BaseViewModel
 public:
 
 	virtual int	InternalDrawModel(int flags);
+	virtual bool OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 
 	virtual int	DrawModel( int flags );
 
 	virtual int DrawOverriddenViewmodel( int flags );
+	virtual void StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 
 	void SetViewmodel( C_TFViewModel *vm );
 
@@ -33,5 +33,4 @@ public:
 	virtual RenderGroup_t	GetRenderGroup( void ) { return RENDER_GROUP_VIEW_MODEL_TRANSLUCENT; }
 
 };
-
 #endif

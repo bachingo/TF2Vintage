@@ -1,27 +1,19 @@
 Welcome to Team Fortress 2
-Play nice.
 
 Our map rotation is:
-- Sawmill (Arena)
-- Badlands
+- Gravel Pit
 - Dustbowl
-- Egypt
-- Gorge
 - Granary
-- Gravelpit
-- Powerhouse
 - Well (CP)
-- 2fort
-- Turbine
+- 2Fort
+- Hydro (TC)
 - Well (CTF)
-- Harvest
-- Nucleus
-- Sawmill (KotH)
-- Viaduct
-- Badwater
-- Barnblitz
-- Goldrush
-- Upward
-- Hightower
-- Pipeline
-- Hydro
+- Badlands
+- Hydro (CP)
+- Furnace
+- Landfall
+- Tidal
+- Amaranth
+- Powerhouse
+- Turbine
+- Gorge

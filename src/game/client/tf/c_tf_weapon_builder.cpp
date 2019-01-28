@@ -308,7 +308,7 @@ bool C_TFWeaponBuilder::HasAmmo( void )
 	if ( !pOwner )
 		return false;
 
-	int iCost = CalculateObjectCost( m_iObjectType );
+	int iCost = CalculateObjectCost( m_iObjectType, pOwner->HasGunslinger() );
 	return ( pOwner->GetBuildResources() >= iCost );
 }
 
@@ -363,7 +363,7 @@ Activity C_TFWeaponBuilder::GetDrawActivity( void )
 	}
 }
 
-void C_TFWeaponBuilder::UpdateViewModel( void )
+/*void C_TFWeaponBuilder::UpdateViewModel( void )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer(GetOwner());
 	if ( pTFPlayer == NULL )
@@ -400,4 +400,4 @@ void C_TFWeaponBuilder::UpdateViewModel( void )
 	{
 		vm->RemoveViewmodelAddon();
 	}
-}
+}*/

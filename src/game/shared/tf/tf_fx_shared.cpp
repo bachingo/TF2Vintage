@@ -202,6 +202,10 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 		{
 			nDamageType |= DMG_CRITICAL;
 		}
+		if ( pWeapon->IsCurrentAttackAMiniCrit() )
+		{
+			nDamageType |= DMG_MINICRITICAL;
+		}
 
 		nCustomDamageType = pWeapon->GetCustomDamageType();
 		bBuckshot = ( nDamageType & DMG_BUCKSHOT ) != 0;
@@ -244,6 +248,15 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 				bPerfectAccuracy = flFireInterval > 1.25f;
 			else
 				bPerfectAccuracy = flFireInterval > 0.25f;
+
+			// Ambassador
+			if ( bPerfectAccuracy && pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER )
+			{
+				int iMode = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iMode, set_weapon_mode );
+				if ( iMode == 1)
+					nDamageType |= DMG_USE_HITLOCATIONS;
+			}
 		}
 
 		// See if we're using pre-determined spread pattern.

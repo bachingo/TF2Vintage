@@ -14,14 +14,14 @@
 #include "vgui_controls/AnimationController.h"
 #include "c_playerresource.h"
 #include "c_team_objectiveresource.h"
-#if defined( TF_CLIENT_DLL ) || defined ( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined ( TF_VINTAGE_CLIENT )
 #include "tf_gamerules.h"
 #include "c_tf_player.h"
 #endif // TF_CLIENT_DLL
 #else
 #include "team.h"
 #include "team_objectiveresource.h"
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 #include "tf_player.h"
 #endif // TF_DLL
 #endif
@@ -44,7 +44,7 @@
 #define ROUND_SETUP_2SECS	"Announcer.RoundBegins2Seconds"
 #define ROUND_SETUP_1SECS	"Announcer.RoundBegins1Seconds"
 
-#if defined( TF_CLIENT_DLL ) || defined ( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined ( TF_VINTAGE_CLIENT )
 #define MERASMUS_SETUP_5SECS	"Merasmus.RoundBegins5Seconds"
 #define MERASMUS_SETUP_4SECS	"Merasmus.RoundBegins4Seconds"
 #define MERASMUS_SETUP_3SECS	"Merasmus.RoundBegins3Seconds"
@@ -82,7 +82,7 @@ enum
 
 extern bool IsInCommentaryMode();
 
-#if defined( GAME_DLL ) && ( defined( TF_DLL ) || defined( TF_CLASSIC ) )
+#if defined( GAME_DLL ) && ( defined( TF_DLL ) || defined( TF_VINTAGE ) )
 ConVar tf_overtime_nag( "tf_overtime_nag", "0", FCVAR_NOTIFY, "Announcer overtime nag." );
 #endif
 
@@ -270,7 +270,7 @@ CTeamRoundTimer::~CTeamRoundTimer( void )
 //-----------------------------------------------------------------------------
 void CTeamRoundTimer::Precache( void )
 {
-#if defined( TF_DLL ) || defined( TF_CLIENT_DLL ) || defined( TF_CLASSIC ) || defined( TF_CLASSIC_CLIENT ) 
+#if defined( TF_DLL ) || defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT ) 
 	PrecacheScriptSound( ROUND_TIMER_60SECS );
 	PrecacheScriptSound( ROUND_TIMER_30SECS );
 	PrecacheScriptSound( ROUND_TIMER_10SECS );
@@ -292,7 +292,7 @@ void CTeamRoundTimer::Precache( void )
 	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED_WINNER );
 	PrecacheScriptSound( ROUND_START_BELL );
 
-#if defined( TF_CLIENT_DLL ) || defined ( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined ( TF_VINTAGE_CLIENT )
 	PrecacheScriptSound( MERASMUS_SETUP_5SECS );
 	PrecacheScriptSound( MERASMUS_SETUP_4SECS );
 	PrecacheScriptSound( MERASMUS_SETUP_3SECS );
@@ -771,7 +771,7 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 					}
 				}
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
 				if ( bShouldPlaySound == true )
 				{
 					pPlayer->EmitSound( GetTimeWarningSound( nWarning ) );
@@ -992,9 +992,6 @@ void CTeamRoundTimer::RoundTimerThink( void )
 		// Allow the gamerules to prevent timer expiration (i.e. while a control point is contested)
 		if ( !TeamplayGameRules()->TimerMayExpire() )
 		{
-#ifdef TF_CLASSIC
-			m_bBuffer = false;
-#endif
 			// we don't want the timer to keep going (negative time)
 			m_flTimerEndTime = gpGlobals->curtime;
 
@@ -1005,7 +1002,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 				{
 					TeamplayRoundBasedRules()->SetOvertime( true );
 				}
-#if defined( TF_DLL ) || defined( TF_CLASSIC )
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
 				else
 				{
 					if ( tf_overtime_nag.GetBool() && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
@@ -1028,17 +1025,6 @@ void CTeamRoundTimer::RoundTimerThink( void )
 			SetContextThink( &CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK );
 			return;
 		}
-#ifdef TF_CLASSIC
-		else if ( TeamplayGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
-		{
-			if ( !m_bBuffer )
-			{
-				m_bBuffer = true;
-				SetContextThink( &CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK );
-				return;
-			}
-		}
-#endif
 
 		m_OnFinished.FireOutput( this, this );
 		m_bFireFinished = false;

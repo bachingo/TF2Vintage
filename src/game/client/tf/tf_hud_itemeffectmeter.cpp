@@ -16,6 +16,7 @@
 #include <vgui/IVGui.h>
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
+#include <vgui_controls/AnimationController.h>
 #include "engine/IEngineSound.h"
 #include "tf_controls.h"
 
@@ -50,7 +51,7 @@ private:
 	ContinuousProgressBar *m_pEffectMeter;
 	CExLabel *m_pEffectMeterLabel;
 
-	bool m_bMinHud;
+	bool m_bPlayingAnim;
 	int m_iSlot;
 	CHandle<C_TFWeaponBase> m_hWeapon;
 	float m_flOldCharge;
@@ -64,8 +65,6 @@ CHudItemEffectMeter::CHudItemEffectMeter( Panel *pParent, const char *pElementNa
 	m_pEffectMeter = new ContinuousProgressBar( this, "ItemEffectMeter" );
 	m_pEffectMeterLabel = new CExLabel( this, "ItemEffectMeterLabel", "" );
 	m_iSlot = 0;
-	m_flOldCharge = 1.0f;
-	m_bMinHud = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -111,16 +110,6 @@ void CHudItemEffectMeter::PerformLayout( void )
 //-----------------------------------------------------------------------------
 void CHudItemEffectMeter::UpdateStatus( void )
 {
-	// HACK: Work around the scheme application order failing
-	// to reload the player class hud element's scheme in minmode.
-	
-	ConVarRef cl_hud_minmode( "cl_hud_minmode", true );
-	if ( cl_hud_minmode.IsValid() && cl_hud_minmode.GetBool() != m_bMinHud )
-	{
-		m_hWeapon = NULL;
-		m_bMinHud = cl_hud_minmode.GetBool();
-	}
-
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if ( !pPlayer || !pPlayer->IsAlive() )
@@ -136,9 +125,12 @@ void CHudItemEffectMeter::UpdateStatus( void )
 		if ( pEntity != m_hWeapon.Get() )
 		{
 			m_hWeapon = static_cast<C_TFWeaponBase *>( pEntity );
-			m_flOldCharge = m_hWeapon->GetEffectBarProgress();
+			m_flOldCharge = m_hWeapon->GetEffectBarProgress();;
 
 			InvalidateLayout();
+
+			// Reset the bar color
+			m_pEffectMeter->SetFgColor( Color( 255, 255, 255, 255 ) );
 		}
 	}
 	else
@@ -166,11 +158,33 @@ void CHudItemEffectMeter::UpdateStatus( void )
 		m_pEffectMeter->SetProgress( flCharge );
 		
 		// Play a ding when full charged.
-		if ( m_flOldCharge < 1.0f && flCharge == 1.0f && !m_hWeapon->IsWeapon( TF_WEAPON_INVIS ) )
+		if ( m_flOldCharge < 1.0f && flCharge >= 1.0f && !m_hWeapon->IsWeapon( TF_WEAPON_INVIS ) )
 		{
 			CLocalPlayerFilter filter;
 			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "TFPlayer.Recharged" );
+
+			if ( m_hWeapon->IsWeapon( TF_WEAPON_BUFF_ITEM ) )
+			{
+				m_pEffectMeter->SetFgColor( Color( 255, 0, 0, 255 ) );
+			}
 		}
+
+		if ( m_flOldCharge > 0.0f && flCharge == 0.0f && m_hWeapon->IsWeapon( TF_WEAPON_BUFF_ITEM ) )
+		{
+			m_pEffectMeter->SetFgColor( COLOR_WHITE );
+		}
+
+		// FIXME: I can't get the animation working right so I'm commenting this out for now
+
+		/*if ( m_hWeapon->EffectMeterShouldFlash() && !m_bPlayingAnim )
+		{
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudRageCharged" );
+			m_bPlayingAnim = true;
+		}
+		else if ( m_bPlayingAnim )
+		{
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudRageChargedStop" );
+		}*/
 
 		m_flOldCharge = flCharge;
 	}

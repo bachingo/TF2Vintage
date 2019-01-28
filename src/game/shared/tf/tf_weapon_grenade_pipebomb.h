@@ -38,7 +38,6 @@ public:
 
 	void			SetChargeTime( float flChargeTime )				{ m_flChargeTime = flChargeTime; }
 
-	CNetworkVar( bool, m_bTouched );
 	CNetworkVar( int, m_iType ); // TF_GL_MODE_REGULAR or TF_GL_MODE_REMOTE_DETONATE
 	float		m_flCreationTime;
 	float		m_flChargeTime;
@@ -62,8 +61,8 @@ public:
 	DECLARE_DATADESC();
 
 	// Creation.
-	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-		                                         const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult );
+	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, const AngularImpulse &angVelocity, 
+												 CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult, CTFWeaponBase *pWeapon );
 
 	// Overrides.
 	virtual void	Spawn();
@@ -83,6 +82,8 @@ public:
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 	
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+
+	void			PrecacheProjectileModel( const char *iszModel );
 
 private:
 

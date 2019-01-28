@@ -216,6 +216,10 @@ CTFWeaponBase::CTFWeaponBase()
 	m_bCurrentAttackIsCrit = false;
 	m_iCurrentSeed = -1;
 	m_flLastFireTime = 0.0f;
+
+#ifdef CLIENT_DLL
+	m_iMuzzleAttachment = -1;
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -319,21 +323,6 @@ void CTFWeaponBase::Precache()
 		Q_snprintf( pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_blue_crit", pTFInfo->m_szTracerEffect );
 		PrecacheParticleSystem( pTracerEffect );
 		PrecacheParticleSystem( pTracerEffectCrit );
-
-		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_green", pTFInfo->m_szTracerEffect);
-		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_green_crit", pTFInfo->m_szTracerEffect);
-		//PrecacheParticleSystem(pTracerEffect);
-		//PrecacheParticleSystem(pTracerEffectCrit);
-
-		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_yellow", pTFInfo->m_szTracerEffect);
-		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_yellow_crit", pTFInfo->m_szTracerEffect);
-		//PrecacheParticleSystem(pTracerEffect);
-		//PrecacheParticleSystem(pTracerEffectCrit);
-
-		//Q_snprintf(pTracerEffect, sizeof(pTracerEffect), "%s_dm", pTFInfo->m_szTracerEffect);
-		//Q_snprintf(pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_dm_crit", pTFInfo->m_szTracerEffect);
-		//PrecacheParticleSystem(pTracerEffect);
-		//PrecacheParticleSystem(pTracerEffectCrit);
 	}
 }
 
@@ -445,6 +434,9 @@ void CTFWeaponBase::SetViewModel()
 }
 
 #ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void C_TFWeaponBase::UpdateViewModel( void )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
@@ -457,6 +449,7 @@ void C_TFWeaponBase::UpdateViewModel( void )
 
 	int vmType = vm->GetViewModelType();
 	const char *pszModel = NULL;
+	const char *pszStunballModel = GetStunballViewmodel();
 
 	if ( vmType == VMTYPE_L4D )
 	{
@@ -477,13 +470,26 @@ void C_TFWeaponBase::UpdateViewModel( void )
 	if ( pszModel && pszModel[0] != '\0' )
 	{
 		vm->UpdateViewmodelAddon( pszModel );
+
+		if ( pszStunballModel != NULL_STRING )
+		{
+			vm->UpdateViewmodelAddon( pszStunballModel, 1 );
+		}
+		else
+		{
+			vm->RemoveViewmodelAddon( 1 );
+		}
 	}
 	else
 	{
 		vm->RemoveViewmodelAddon();
+		vm->RemoveViewmodelAddon( 1 );
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
 {
 	C_TFPlayer *pOwner = GetTFPlayerOwner();
@@ -498,6 +504,48 @@ C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
 		}
 	}
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Find the appropriate weapon model to update bodygroups on
+//-----------------------------------------------------------------------------
+C_BaseAnimating *C_TFWeaponBase::GetAppropriateWorldOrViewModel( void )
+{
+	C_TFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer && UsingViewModel() && GetItem() && GetItem()->GetStaticData() )
+	{
+		// what kind of viewmodel is this?
+		int iType = GetItem()->GetStaticData()->attach_to_hands;
+
+		// Is this a cmodel?
+		if ( iType == VMTYPE_TF2 )
+		{
+			C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+			if ( pAttach)
+				return pAttach;
+		}
+
+		// Is this a vmodel?
+		// FIXME: updating this on the client does nothing!
+		C_BaseViewModel *vm = pPlayer->GetViewModel();
+		if ( vm )
+		{
+			return vm;
+		}
+	}
+
+	// this too
+	return this;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get the viewmodel offset for min-viewmodels
+//-----------------------------------------------------------------------------
+string_t C_TFWeaponBase::GetViewModelOffset( void )
+{
+	string_t strOffset = NULL_STRING;
+	CALL_ATTRIB_HOOK_STRING( strOffset, min_viewmodel_offset );
+	return strOffset;
 }
 #endif
 
@@ -518,7 +566,12 @@ const char *CTFWeaponBase::DetermineViewModelType( const char *vModel ) const
 			vm->SetViewModelType( iType );
 
 		if ( iType == VMTYPE_TF2 )
-			return pPlayer->GetPlayerClass()->GetHandModelName();
+		{
+			int iGunslinger = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iGunslinger, wrench_builds_minisentry );
+
+			return iGunslinger ? pPlayer->GetPlayerClass()->GetHandModelName( true ) : pPlayer->GetPlayerClass()->GetHandModelName( false );
+		}
 	}
 
 	return vModel;
@@ -557,30 +610,6 @@ const char *CTFWeaponBase::GetWorldModel( void ) const
 
 	return BaseClass::GetWorldModel();
 }
-
-#ifdef DM_WEAPON_BUCKET
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetSlot( void ) const
-{
-	if ( TFGameRules()->IsDeathmatch() )
-		return GetTFWpnData().m_iSlotDM;
-
-	return GetWpnData().iSlot;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetPosition( void ) const
-{
-	if ( TFGameRules()->IsDeathmatch() )
-		return GetTFWpnData().m_iPositionDM;
-
-	return GetWpnData().iPosition;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -673,6 +702,10 @@ bool CTFWeaponBase::Deploy( void )
 		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 		if ( !pPlayer )
 			return false;
+
+#ifdef CLIENT_DLL
+		pPlayer->CalcMinViewmodelOffset();
+#endif
 
 		// Overrides the anim length for calculating ready time.
 		// Don't override primary attacks that are already further out than this. This prevents
@@ -863,6 +896,25 @@ void CTFWeaponBase::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: Most calls use the prediction seed
 //-----------------------------------------------------------------------------
+void CTFWeaponBase::CalcIsAttackMiniCritical( void)
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+		return;
+
+	if ( pPlayer->m_Shared.IsMiniCritBoosted() )
+	{
+		m_bCurrentAttackIsMiniCrit = true;
+	}
+	else
+	{
+		m_bCurrentAttackIsMiniCrit = false;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Most calls use the prediction seed
+//-----------------------------------------------------------------------------
 void CTFWeaponBase::CalcIsAttackCritical( void)
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
@@ -900,10 +952,6 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
-		return false;
-
-	// Random crits are disabled in DM due to balancing reasons
-	if ( TFGameRules()->IsDeathmatch() )
 		return false;
 
 	// Don't bother checking if random crits are off.
@@ -994,27 +1042,6 @@ int CTFWeaponBase::GetDefaultClip1( void ) const
 		return fDefaultClipMult;
 
 	return iDefaultClip;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetMaxAmmo( void )
-{
-	return GetTFWpnData().m_iMaxAmmo;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBase::GetInitialAmmo( void )
-{
-	int iSpawnAmmo = 0;
-	CALL_ATTRIB_HOOK_INT( iSpawnAmmo, mod_spawn_ammo_override );
-	if ( iSpawnAmmo )
-		return iSpawnAmmo;
-
-	return GetTFWpnData().m_iSpawnAmmo;
 }
 
 //-----------------------------------------------------------------------------
@@ -1757,30 +1784,17 @@ const char *CTFWeaponBase::GetTracerType( void )
 	{
 		if (GetOwner() && !m_szTracerName[0])
 		{
-			if (TFGameRules()->IsDeathmatch())
+			switch (GetOwner()->GetTeamNumber())
 			{
-				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "dm");
-			}
-			else
-			{
-				switch (GetOwner()->GetTeamNumber())
-				{
-				case TF_TEAM_RED:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
-					break;
-				case TF_TEAM_BLUE:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "blue");
-					break;
-				case TF_TEAM_GREEN:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "green");
-					break;
-				case TF_TEAM_YELLOW:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "yellow");
-					break;
-				default:
-					Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
-					break;
-				}
+			case TF_TEAM_RED:
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
+				break;
+			case TF_TEAM_BLUE:
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "blue");
+				break;
+			default:
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
+				break;
 			}
 		}
 
@@ -1889,6 +1903,19 @@ void CTFWeaponBase::OnControlStunned( void )
 {
 	AbortReload();
 	SetWeaponVisible( false );
+}
+
+const char *CTFWeaponBase::GetExtraWearableModel( void ) const
+{
+	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+
+	if ( pStatic )
+	{
+		// We have an extra wearable
+		return pStatic->extra_wearable;
+	}
+
+	return "\0";
 }
 
 //=============================================================================
@@ -2014,12 +2041,6 @@ const Vector &CTFWeaponBase::GetBulletSpread( void )
 // ----------------------------------------------------------------------------
 void CTFWeaponBase::ApplyOnHitAttributes( CTFPlayer *pVictim, const CTakeDamageInfo &info )
 {
-	float flStunTime = 0.0f;
-	CALL_ATTRIB_HOOK_FLOAT( flStunTime, mult_onhit_enemyspeed_major );
-	if ( flStunTime )
-	{
-		pVictim->m_Shared.AddCond( TF_COND_SLOWED, flStunTime );
-	}
 	CTFPlayer *pOwner = GetTFPlayerOwner(), *pAttacker = ToTFPlayer( info.GetAttacker() );
 	if ( !pOwner || !pOwner->IsAlive() )
 		return;
@@ -2083,7 +2104,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 	Vector vecOrigin;
 	QAngle angAngles;
 
-	int iMuzzleFlashAttachment = pAttachEnt->LookupAttachment( "muzzle" );
+	int iMuzzleFlashAttachment = m_iMuzzleAttachment != -1 ? m_iMuzzleAttachment : pAttachEnt->LookupAttachment( "muzzle" );
 
 	const char *pszMuzzleFlashEffect = NULL;
 	const char *pszMuzzleFlashModel = GetMuzzleFlashModel();
@@ -3327,12 +3348,6 @@ int CTFWeaponBase::GetSkin()
 				break;
 			case TF_TEAM_BLUE:
 				nSkin = 1;
-				break;
-			case TF_TEAM_GREEN:
-				nSkin = 2;
-				break;
-			case TF_TEAM_YELLOW:
-				nSkin = 3;
 				break;
 			}
 		}

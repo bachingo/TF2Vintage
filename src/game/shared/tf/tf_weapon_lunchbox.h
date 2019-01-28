@@ -23,25 +23,25 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
-	virtual int GetWeaponID() const { return TF_WEAPON_LUNCHBOX; }
+	virtual int 		GetWeaponID() const 						{ return TF_WEAPON_LUNCHBOX; }
 
-	virtual bool	ShouldBlockPrimaryFire( void ) { return true; }
+	virtual bool		ShouldBlockPrimaryFire( void ) 				{ return true; }
 
-	virtual void	PrimaryAttack( void );
-	virtual void	SecondaryAttack( void );
+	virtual void		PrimaryAttack( void );
+	virtual void		SecondaryAttack( void );
 
-	virtual void	DepleteAmmo( void );
+	virtual void		DepleteAmmo( void );
 
 
-	virtual bool	HasChargeBar( void ) { return true; }
-	virtual float	InternalGetEffectBarRechargeTime( void ) { return 30.0f; }
-	virtual const char	*GetEffectLabelText( void ) { return "#TF_Sandwich"; }
-	virtual void	SwitchBodyGroups( void );
+	virtual bool		HasChargeBar( void )						{ return true; }
+	virtual float		InternalGetEffectBarRechargeTime( void )	{ return 30.0f; }
+	virtual const char	*GetEffectLabelText( void )					{ return "#TF_Sandwich"; }
+	virtual void		SwitchBodyGroups( void );
 
 
 #ifdef GAME_DLL
-	virtual void	Precache( void );
-	virtual void	ApplyBiteEffects( bool bHurt );
+	virtual void		Precache( void );
+	virtual void		ApplyBiteEffects( bool bHurt );
 #endif
 
 private:

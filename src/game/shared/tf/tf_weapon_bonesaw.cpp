@@ -66,5 +66,4 @@ void C_TFBonesaw::UpdateChargePoseParam( void )
 		}
 	}
 }
-
 #endif

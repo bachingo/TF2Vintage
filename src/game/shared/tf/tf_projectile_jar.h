@@ -36,14 +36,14 @@ public:
 	CTFProjectile_Jar();
 	~CTFProjectile_Jar();
 
-	virtual int		GetWeaponID( void ) const { return TF_WEAPON_JAR; }
+	virtual int	GetWeaponID( void ) const 			{ return TF_WEAPON_JAR; }
 
 #ifdef GAME_DLL
-	static CTFProjectile_Jar *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo );
+	static CTFProjectile_Jar	*Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo );
 
 	// IScorer interface
-	virtual CBasePlayer *GetScorer( void ) { return NULL; }
-	virtual CBasePlayer *GetAssistant( void );
+	virtual CBasePlayer			*GetScorer( void ) 	{ return NULL; }
+	virtual CBasePlayer			*GetAssistant( void );
 
 	virtual void	Precache( void );
 	virtual void	Spawn( void );
@@ -55,15 +55,16 @@ public:
 
 	void			SetScorer( CBaseEntity *pScorer );
 		
-	void			SetCritical( bool bCritical ) { m_bCritical = bCritical; }
+	void			SetCritical( bool bCritical ) 	{ m_bCritical = bCritical; }
 
-	virtual bool	IsDeflectable() { return true; }
+	virtual bool	IsDeflectable() 				{ return true; }
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
 #else
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	CreateTrails( void );
+	virtual int		DrawModel( int flags );
 #endif
 
 private:
@@ -73,6 +74,7 @@ private:
 #else
 	bool		m_bCritical;
 #endif
-};
 
+	float		m_flCreationTime;
+};
 #endif // TF_PROJECTILE_JAR_H

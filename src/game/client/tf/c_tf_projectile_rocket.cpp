@@ -70,12 +70,6 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 	if ( m_bCritical )
 	{
 		const char *pszEffectName = ConstructTeamParticle( "critical_rocket_%s", GetTeamNumber(), true );
-		CNewParticleEffect *pParticle = ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
-
-		C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
-		if ( pPlayer )
-		{
-			pPlayer->m_Shared.SetParticleToMercColor( pParticle );
-		}
+		ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 	}
 }

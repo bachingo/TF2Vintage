@@ -35,15 +35,22 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWearable::UpdateModelToClass( void )
 {
-	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-
-	if ( pOwner )
+	if ( m_bExtraWearable && m_Item.GetStaticData() )
 	{
-		const char *pszModel = m_Item.GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
+		SetModel( m_Item.GetStaticData()->extra_wearable );
+	}
+	else 
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 
-		if ( pszModel[0] != '\0' )
+		if ( pOwner )
 		{
-			SetModel( pszModel );
+			const char *pszModel = m_Item.GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
+
+			if ( pszModel[0] != '\0' )
+			{
+				SetModel( pszModel );
+			}
 		}
 	}
 }

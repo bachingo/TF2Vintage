@@ -30,7 +30,7 @@ public:
 
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 
-	virtual const char *GetPowerupModel( void ) { return "models/items/ammopack_large.mdl"; }
+	virtual const char *GetDefaultPowerupModel( void );
 };
 
 class CAmmoPackSmall : public CAmmoPack
@@ -39,7 +39,7 @@ public:
 	DECLARE_CLASS( CAmmoPackSmall, CAmmoPack );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_SMALL; }
 
-	virtual const char *GetPowerupModel( void ) { return "models/items/ammopack_small.mdl"; }
+	virtual const char *GetDefaultPowerupModel( void );
 };
 
 class CAmmoPackMedium : public CAmmoPack
@@ -48,7 +48,7 @@ public:
 	DECLARE_CLASS( CAmmoPackMedium, CAmmoPack );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_MEDIUM; }
 
-	virtual const char *GetPowerupModel( void ) { return "models/items/ammopack_medium.mdl"; }
+	virtual const char *GetDefaultPowerupModel( void );
 };
 
 #endif // ENTITY_AMMOPACK_H

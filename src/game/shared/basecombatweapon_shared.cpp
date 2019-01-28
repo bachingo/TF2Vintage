@@ -20,7 +20,7 @@
 #endif
 // NVNT end extra includes
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 #include "tf_shareddefs.h"
 #endif
 
@@ -95,7 +95,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 
 	m_hWeaponFileInfo = GetInvalidWeaponInfoHandle();
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	UseClientSideAnimation();
 #endif
 
@@ -262,7 +262,7 @@ void CBaseCombatWeapon::Precache( void )
 			{
 				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
 			}
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 			// Ammo override
 			int iModUseMetalOverride = 0;
 			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
@@ -360,7 +360,7 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetMaxClip1( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 	int iModMaxClipOverride = 0;
 	CALL_ATTRIB_HOOK_INT( iModMaxClipOverride, mod_max_primary_clip_override );
 	if ( iModMaxClipOverride != 0 )
@@ -1193,7 +1193,7 @@ void CBaseCombatWeapon::SetViewModel()
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::SendWeaponAnim( int iActivity )
 {
-#if defined( USES_ECON_ITEMS ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined( USES_ECON_ITEMS ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 	iActivity = TranslateViewmodelHandActivity( (Activity)iActivity );
 #endif		
 	// NVNT notify the haptics system of this weapons new activity
@@ -1694,20 +1694,20 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	bool bFired = false;
 
 	// Secondary attack has priority
-	if ((pOwner->m_nButtons & IN_ATTACK2) && CanPerformSecondaryAttack() )
+	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && CanPerformSecondaryAttack() )
 	{
-		if (UsesSecondaryAmmo() && pOwner->GetAmmoCount(m_iSecondaryAmmoType)<=0 )
+		if ( UsesSecondaryAmmo() && pOwner->GetAmmoCount( m_iSecondaryAmmoType )<=0 )
 		{
-			if (m_flNextEmptySoundTime < gpGlobals->curtime)
+			if ( m_flNextEmptySoundTime < gpGlobals->curtime )
 			{
-				WeaponSound(EMPTY);
+				WeaponSound( EMPTY );
 				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
 			}
 		}
-		else if (pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false)
+		else if ( pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false )
 		{
 			// This weapon doesn't fire underwater
-			WeaponSound(EMPTY);
+			WeaponSound( EMPTY );
 			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
 			return;
 		}
@@ -1717,7 +1717,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			// For instance, the crossbow doesn't have a 'real' secondary fire, but it still 
 			// stops the crossbow from firing on the 360 if the player chooses to hold down their
 			// zoom button. (sjb) Orange Box 7/25/2007
-#if !defined(CLIENT_DLL)
+#if !defined( CLIENT_DLL )
 			if( !IsX360() || !ClassMatches("weapon_crossbow") )
 #endif
 			{
@@ -1730,7 +1730,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			if ( UsesClipsForAmmo2() )
 			{
 				// reload clip2 if empty
-				if (m_iClip2 < 1)
+				if ( m_iClip2 < 1 )
 				{
 					pOwner->RemoveAmmo( 1, m_iSecondaryAmmoType );
 					m_iClip2 = m_iClip2 + 1;
@@ -1739,18 +1739,18 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 		}
 	}
 	
-	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+	if ( !bFired && ( pOwner->m_nButtons & IN_ATTACK ) && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
 	{
 		// Clip empty? Or out of ammo on a no-clip weapon?
 		if ( !IsMeleeWeapon() &&  
-			(( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && pOwner->GetAmmoCount(m_iPrimaryAmmoType)<=0 )) )
+			( ( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && pOwner->GetAmmoCount( m_iPrimaryAmmoType )<=0 ) ) )
 		{
 			HandleFireOnEmpty();
 		}
-		else if (pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false)
+		else if ( pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false )
 		{
 			// This weapon doesn't fire underwater
-			WeaponSound(EMPTY);
+			WeaponSound( EMPTY );
 			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
 			return;
 		}
@@ -1794,7 +1794,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	// -----------------------
 	//  No buttons down
 	// -----------------------
-	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD)))
+	if ( !( ( pOwner->m_nButtons & IN_ATTACK ) || ( pOwner->m_nButtons & IN_ATTACK2 ) || ( CanReload() && pOwner->m_nButtons & IN_RELOAD ) ) )
 	{
 		// no fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
@@ -1814,9 +1814,9 @@ void CBaseCombatWeapon::HandleFireOnEmpty()
 	}
 	else
 	{
-		if (m_flNextEmptySoundTime < gpGlobals->curtime)
+		if ( m_flNextEmptySoundTime < gpGlobals->curtime )
 		{
-			WeaponSound(EMPTY);
+			WeaponSound( EMPTY );
 			m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
 		}
 		m_bFireOnEmpty = true;
@@ -2043,7 +2043,7 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 
 bool CBaseCombatWeapon::ReloadsSingly( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 	float fHasReload = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( fHasReload, mod_no_reload_display_only );
 	if ( fHasReload != 1.0f )
@@ -2806,7 +2806,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 
@@ -2832,7 +2832,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 
 	SendPropInt( SENDINFO( m_bFlipViewModel ) ),
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 

@@ -284,12 +284,6 @@ const char *CBuildingStatusItem::GetBackgroundImage( void )
 	case TF_TEAM_BLUE:
 		pResult = "obj_status_background_blue";
 		break;
-	case TF_TEAM_GREEN:
-		pResult = "obj_status_background_green";
-		break;
-	case TF_TEAM_YELLOW:
-		pResult = "obj_status_background_yellow";
-		break;
 	default:
 		break;
 	}
@@ -703,9 +697,18 @@ void CBuildingStatusItem_SentryGun::PerformLayout( void )
 	float flUpgrade = (float)iMetal / (float)iMetalRequired;
 	m_pUpgradeProgress->SetProgress( flUpgrade );
 
-	// upgrade label only in 1 or 2
-	m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
-	m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
+	if ( pSentrygun->IsMiniBuilding() )
+	{
+		// No upgrade labels for mini sentries
+		m_pUpgradeIcon->SetVisible( false);
+		m_pUpgradeProgress->SetVisible( false );
+	}
+	else
+	{
+		// upgrade label only in 1 or 2
+		m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
+		m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
+	}
 
 	// rockets label only in 3
 	m_pRocketsIcon->SetVisible( iUpgradeLevel == 3 );
@@ -741,12 +744,6 @@ const char *CBuildingStatusItem_SentryGun::GetBackgroundImage( void )
 		break;
 	case TF_TEAM_BLUE:
 		pResult = "obj_status_background_tall_blue";
-		break;
-	case TF_TEAM_GREEN:
-		pResult = "obj_status_background_tall_green";
-		break;
-	case TF_TEAM_YELLOW:
-		pResult = "obj_status_background_tall_yellow";
 		break;
 	default:
 		break;

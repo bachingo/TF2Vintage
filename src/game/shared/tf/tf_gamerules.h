@@ -28,6 +28,7 @@
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
+#include "tf_autorp.h"
 #else
 #include "tf_player.h"
 #endif
@@ -81,42 +82,27 @@ public:
 	DECLARE_DATADESC();
 	void	InputSetRedTeamRespawnWaveTime( inputdata_t &inputdata );
 	void	InputSetBlueTeamRespawnWaveTime( inputdata_t &inputdata );
-	void	InputSetGreenTeamRespawnWaveTime(inputdata_t &inputdata);
-	void	InputSetYellowTeamRespawnWaveTime(inputdata_t &inputdata);
 	void	InputAddRedTeamRespawnWaveTime( inputdata_t &inputdata );
 	void	InputAddBlueTeamRespawnWaveTime( inputdata_t &inputdata );
-	void	InputAddGreenTeamRespawnWaveTime(inputdata_t &inputdata);
-	void	InputAddYellowTeamRespawnWaveTime(inputdata_t &inputdata);
 	void	InputSetRedTeamGoalString( inputdata_t &inputdata );
 	void	InputSetBlueTeamGoalString( inputdata_t &inputdata );
-	void	InputSetGreenTeamGoalString(inputdata_t &inputdata);
-	void	InputSetYellowTeamGoalString(inputdata_t &inputdata);
 	void	InputSetRedTeamRole( inputdata_t &inputdata );
 	void	InputSetBlueTeamRole( inputdata_t &inputdata );
-	void	InputSetGreenTeamRole( inputdata_t &inputdata );
-	void	InputSetYellowTeamRole( inputdata_t &inputdata );
 	void	InputAddRedTeamScore( inputdata_t &inputdata );
 	void	InputAddBlueTeamScore( inputdata_t &inputdata );
-	void	InputAddGreenTeamScore( inputdata_t &inputdata );
-	void	InputAddYellowTeamScore( inputdata_t &inputdata );
 
 	void	InputSetRedKothClockActive( inputdata_t &inputdata );
 	void	InputSetBlueKothClockActive( inputdata_t &inputdata );
-	void	InputSetGreenKothClockActive( inputdata_t &inputdata );
-	void	InputSetYellowKothClockActive( inputdata_t &inputdata );
 
 	void	InputSetCTFCaptureBonusTime( inputdata_t &inputdata );
 
 	void	InputPlayVO( inputdata_t &inputdata );
 	void	InputPlayVORed( inputdata_t &inputdata );
 	void	InputPlayVOBlue( inputdata_t &inputdata );
-	void	InputPlayVOGreen( inputdata_t &inputdata );
-	void	InputPlayVOYellow( inputdata_t &inputdata );
 
 	virtual void Activate();
 
 	int		m_iHud_Type;
-	bool	m_bFourTeamMode;
 	bool	m_bCTF_Overtime;
 
 #endif
@@ -162,6 +148,7 @@ public:
 	static int		CalcPlayerScore( RoundStats_t *pRoundStats );
 
 	bool			IsBirthday( void );
+	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
 
 	virtual const unsigned char *GetEncryptionKey( void ) { return (unsigned char *)"E2NcUkG2"; }
 
@@ -173,8 +160,6 @@ public:
 
 	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { return m_hBlueKothTimer.Get(); }
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { return m_hRedKothTimer.Get(); }
-	CTeamRoundTimer* GetGreenKothRoundTimer( void ) { return m_hGreenKothTimer.Get(); }
-	CTeamRoundTimer* GetYellowKothRoundTimer( void ) { return m_hYellowKothTimer.Get(); }
 
 
 #ifdef GAME_DLL
@@ -221,10 +206,20 @@ public:
 
 	void			HandleCTFCaptureBonus( int iTeam );
 
+	virtual void	Arena_CleanupPlayerQueue( void );
+	virtual void	Arena_ClientDisconnect( const char *pszPlayerName );
 	virtual void	Arena_NotifyTeamSizeChange( void );
 	virtual int		Arena_PlayersNeededForMatch( void );
-	virtual void	Arena_ResetLosersScore( bool bUnknown );
+	virtual void	Arena_PrepareNewPlayerQueue( bool bScramble );
+	virtual void	Arena_ResetLosersScore( bool bStreakReached );
 	virtual void	Arena_RunTeamLogic( void );
+	virtual void	Arena_SendPlayerNotifications( void );
+
+	float			GetStalemateStartTime( void ) { return m_flStalemateStartTime; }
+
+	virtual void	AddPlayerToQueue( CTFPlayer *pPlayer );
+	virtual void	AddPlayerToQueueHead( CTFPlayer *pPlayer );
+	virtual void	RemovePlayerFromQueue( CTFPlayer *pPlayer );
 
 	virtual void	Activate();
 
@@ -249,8 +244,6 @@ public:
 
 	void			SetBlueKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hBlueKothTimer.Set( pTimer ); }
 	void			SetRedKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hRedKothTimer.Set( pTimer ); }
-	void			SetGreenKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hGreenKothTimer.Set( pTimer ); }
-	void			SetYellowKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hYellowKothTimer.Set( pTimer ); }
 	float			GetRoundStartTime(void){ return m_flRoundStartTime; }
 
 	virtual bool ClientConnected(edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen);
@@ -268,6 +261,8 @@ protected:
 
 	virtual bool	CanChangelevelBecauseOfTimeLimit( void );
 	virtual bool	CanGoToStalemate( void );
+
+	virtual int		CountActivePlayers( void );
 #endif // GAME_DLL
 
 public:
@@ -299,8 +294,6 @@ public:
 
 	virtual bool	IsConnectedUserInfoChangeAllowed(CBasePlayer *pPlayer){ return true; };
 
-	virtual bool	IsFourTeamGame( void ){ return false; };
-	virtual bool	IsDeathmatch(void){ return false; };
 	virtual bool    IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
@@ -324,6 +317,9 @@ public:
 	bool			ShouldShowTeamGoal( void );
 
 	const char *GetVideoFileForMap( bool bWithExtension = true );
+
+	// AutoRP
+	virtual void ModifySentChat( char *pBuf, int iBufSize );
 
 #else
 
@@ -419,16 +415,20 @@ private:
 	int m_iPrevRoundState;	// bit string representing the state of the points at the start of the previous miniround
 	int m_iCurrentRoundState;
 	int m_iCurrentMiniRoundMask;
+	float m_flTimerMayExpireAt;
 
 	bool m_bFirstBlood;
 	int	m_iArenaTeamCount;
+	float m_flArenaNotificationSend;
+
+	float m_flStalemateStartTime;
+
+	CUtlVector< CTFPlayer * > m_hArenaQueue;
 #endif
 
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
-	CNetworkString( m_pszTeamGoalStringGreen, MAX_TEAMGOAL_STRING );
-	CNetworkString( m_pszTeamGoalStringYellow, MAX_TEAMGOAL_STRING );
 	CNetworkVar( float, m_flCapturePointEnableTime );
 	CNetworkVar( int, m_nHudType );
 	CNetworkVar( bool, m_bPlayingKoth );
@@ -441,8 +441,6 @@ private:
 	CNetworkVar( bool, m_bPowerupMode );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
-	CNetworkVar( CHandle<CTeamRoundTimer>, m_hGreenKothTimer );
-	CNetworkVar( CHandle<CTeamRoundTimer>, m_hYellowKothTimer );
 
 public:
 
@@ -450,8 +448,6 @@ public:
 	int	 m_iPreviousRoundWinners;
 
 	int		m_iBirthdayMode;
-
-	CNetworkVar( bool, m_bFourTeamMode );
 
 #ifdef GAME_DLL
 	float	m_flCTFBonusTime;
@@ -470,6 +466,10 @@ inline CTFGameRules* TFGameRules()
 
 #ifdef GAME_DLL
 	bool EntityPlacementTest( CBaseEntity *pMainEnt, const Vector &vOrigin, Vector &outPos, bool bDropToGround );
+
+	// Sorting methods
+	int ScramblePlayersSort( CTFPlayer* const *p1, CTFPlayer* const *p2 );
+	int SortPlayerSpectatorQueue(CTFPlayer* const *p1, CTFPlayer* const *p2);
 #endif
 
 #ifdef CLIENT_DLL

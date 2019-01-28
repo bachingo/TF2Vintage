@@ -51,6 +51,7 @@ PRECACHE_REGISTER( tf_weaponbase_grenade_proj );
 
 BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #ifdef CLIENT_DLL
+	RecvPropInt( RECVINFO( m_bTouched ) ),
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 
@@ -61,6 +62,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	RecvPropEHandle( RECVINFO( m_hDeflectOwner ) ),
 
 #else
+	SendPropInt( SENDINFO( m_bTouched ) ),
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropBool( SENDINFO( m_bCritical ) ),
 
@@ -106,9 +108,16 @@ int	CTFWeaponBaseGrenadeProj::GetDamageType()
 	{
 		iDmgType |= DMG_CRITICAL;
 	}
-	if ( m_iDeflected > 0 )
+
+	// Buff banner mini-crit calculations
+	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
+	if ( pWeapon )
 	{
-		iDmgType |= DMG_MINICRITICAL;
+		pWeapon->CalcIsAttackMiniCritical();
+		if ( pWeapon->IsCurrentAttackAMiniCrit() )
+		{
+			iDmgType |= DMG_MINICRITICAL;
+		}
 	}
 
 	return iDmgType;
@@ -230,6 +239,18 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 
 	SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
 	SetDamageRadius( weaponInfo.m_flDamageRadius );
+
+	// m_hLauncher is only set this early for stickies and grenades currently
+	if ( m_hLauncher.Get() )
+	{
+		string_t strModelOverride = NULL_STRING;
+		CALL_ATTRIB_HOOK_STRING_ON_OTHER( m_hLauncher.Get(), strModelOverride, custom_projectile_model );
+		if ( strModelOverride != NULL_STRING )
+		{
+			SetModel( STRING( strModelOverride ) );
+		}
+	}
+
 	ChangeTeam( pOwner->GetTeamNumber() );
 
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
@@ -275,9 +296,6 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 
 	// Set skin based on team ( red = 1, blue = 2 )
 	m_nSkin = GetTeamNumber() - 2;
-
-	if ( TFGameRules()->IsDeathmatch() ) // Custom DM skin for coloring
-		m_nSkin = 4;
 
 	// Setup the think and touch functions (see CBaseEntity).
 	SetThink( &CTFWeaponBaseGrenadeProj::DetonateThink );
@@ -328,7 +346,6 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 		}
 	}
 
-
 	// Use the thrower's position as the reported position
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
 
@@ -340,7 +357,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info.Set( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
+	radiusInfo.info.Set( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, TF_DMG_CUSTOM_NONE, &vecReported );
 	radiusInfo.m_vecSrc = vecOrigin;
 	radiusInfo.m_flRadius = flRadius;
 	radiusInfo.m_flSelfDamageRadius = 146.0f;
@@ -624,8 +641,7 @@ void CTFWeaponBaseGrenadeProj::Deflected( CBaseEntity *pDeflectedBy, Vector &vec
 	m_hDeflectOwner = pDeflectedBy;
 	SetThrower( pBCC );
 	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	if ( !TFGameRules()->IsDeathmatch() )
-		m_nSkin = pDeflectedBy->GetTeamNumber() - 2;
+	m_nSkin = pDeflectedBy->GetTeamNumber() - 2;
 	// TODO: Live TF2 adds white trail to reflected pipes and stickies. We need one as well.
 }
 
@@ -668,6 +684,8 @@ public:
 			if ( pEntity->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
 				return false;
 			if ( pEntity->GetCollisionGroup() == COLLISION_GROUP_NONE )
+				return false;
+			if ( pEntity->GetCollisionGroup() == TFCOLLISION_GROUP_RESPAWNROOMS )
 				return false;
 
 			return true;

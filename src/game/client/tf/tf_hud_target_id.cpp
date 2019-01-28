@@ -17,6 +17,17 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+// Medigun names
+const char *g_pszMedigunName[TF_MEDIGUN_COUNT] =
+{
+	"#TF_Weapon_Medigun",
+	"#TF_Unique_Achievement_Medigun1",
+	"#TF_Unique_MediGun_QuickFix",
+	"#TF_Unique_MediGun_Resist",
+	"\0" // Overhealer (unused)
+};
+
+
 DECLARE_HUDELEMENT( CMainTargetID );
 DECLARE_HUDELEMENT( CSpectatorTargetID );
 DECLARE_HUDELEMENT( CSecondaryTargetID );
@@ -216,8 +227,7 @@ void CTargetID::PerformLayout( void )
 
 	if ( m_pBGPanel )
 	{
-		m_pBGPanel->SetSize( iWidth, GetTall() * 0.8 );
-		m_pBGPanel->SetPos( 0, 9 );
+		m_pBGPanel->SetSize( iWidth, GetTall() );
 		m_pBGPanel->SetAlpha( tf_hud_target_id_alpha.GetFloat() );
 	}
 };
@@ -313,18 +323,33 @@ void CTargetID::UpdateID( void )
 			if ( bDisguisedTarget )
 			{
 				// is the target a disguised enemy spy?
-				if ( pPlayer->IsEnemyPlayer() )
+				if ( pPlayer->IsEnemyPlayer() && pDisguiseTarget )
 				{
-					if ( pDisguiseTarget )
+					bDisguisedEnemy = true;
+					// change the player name
+					g_pVGuiLocalize->ConvertANSIToUnicode( pDisguiseTarget->GetPlayerName(), wszPlayerName, sizeof(wszPlayerName) );
+					// Show their disguise team color.
+					iColorNum = pPlayer->m_Shared.GetDisguiseTeam();
+					// change the avatar
+					pAvatarPlayer = pDisguiseTarget;
+
+					// Disguising as a spy should show the fake class used for the mask
+					if ( pPlayer->m_Shared.GetDisguiseClass() == TF_CLASS_SPY )
 					{
-						bDisguisedEnemy = true;
-						// change the player name
-						g_pVGuiLocalize->ConvertANSIToUnicode( pDisguiseTarget->GetPlayerName(), wszPlayerName, sizeof(wszPlayerName) );
-						// Show their disguise team color.
-						iColorNum = pPlayer->m_Shared.GetDisguiseTeam();
-						// change the avatar
-						pAvatarPlayer = pDisguiseTarget;
+						// The target is disguising as a friendly spy.  They appear to the player with no disguise.  Add the disguise
+						// team & class to the target ID element.
+						const wchar_t *wszAlignment = g_pVGuiLocalize->Find( "#TF_enemy" );
+					
+						int classindex = pPlayer->m_Shared.GetMaskClass();
+						const wchar_t *wszClassName = g_pVGuiLocalize->Find( g_aPlayerClassNames[classindex] );
+
+						// build a string with disguise information
+						g_pVGuiLocalize->ConstructString( sDataString, sizeof(sDataString), g_pVGuiLocalize->Find( "#TF_playerid_friendlyspy_disguise" ), 
+							2, wszAlignment, wszClassName );
 						
+					}
+					else
+					{					
 						// offset the name if avatars are enabled and we're a disguised enemy bot
 						if ( tf_hud_target_id_show_avatars.GetBool() && g_PR->IsFakePlayer( m_iTargetEntIndex ) )
 						{
@@ -348,12 +373,59 @@ void CTargetID::UpdateID( void )
 				}
 			}
 
-			if ( pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) || (bDisguisedEnemy && pPlayer->m_Shared.GetDisguiseClass() == TF_CLASS_MEDIC) )
+			// see if the player/disguise target is carrying a medigun
+			CWeaponMedigun *pMedigun = NULL;
+			bool bFakeMedigun = false;
+
+			if ( bDisguisedEnemy )
 			{
+				int iDisguiseClass = pPlayer->m_Shared.GetDisguiseClass();
+
+				if ( !pDisguiseTarget->IsPlayerClass( iDisguiseClass ) )
+				{
+					if ( iDisguiseClass == TF_CLASS_MEDIC )
+					{
+						// Our disguise target is a different class than us so we should use a fake ubercharge instead
+						bFakeMedigun = true;
+					}
+				}
+				else
+				{
+					pMedigun = pDisguiseTarget->GetMedigun();
+				}
+			}
+			else
+			{
+				pMedigun = pPlayer->GetMedigun();
+			}
+
+			if ( pMedigun || bFakeMedigun )
+			{
+				int iType = !bFakeMedigun ? pMedigun->GetMedigunType() : TF_MEDIGUN_STOCK;
+				float flMedigunChargeLevel = 0.0f;
+
+				if ( bDisguisedEnemy )
+				{
+					// disguised players should the charge level at time of disguise
+					flMedigunChargeLevel = pPlayer->m_Shared.GetDisguiseChargeLevel();
+				}
+				else
+				{
+					flMedigunChargeLevel = pMedigun->GetChargeLevel();
+				}
+
 				wchar_t wszChargeLevel[ 10 ];
-				_snwprintf( wszChargeLevel, ARRAYSIZE(wszChargeLevel) - 1, L"%.0f", pPlayer->MedicGetChargeLevel() * 100 );
+				_snwprintf( wszChargeLevel, ARRAYSIZE( wszChargeLevel ) - 1, L"%.0f", flMedigunChargeLevel * 100 );
 				wszChargeLevel[ ARRAYSIZE(wszChargeLevel)-1 ] = '\0';
-				g_pVGuiLocalize->ConstructString( sDataString, sizeof(sDataString), g_pVGuiLocalize->Find( "#TF_playerid_mediccharge" ), 1, wszChargeLevel );
+
+				if ( iType != TF_MEDIGUN_STOCK )
+				{
+					g_pVGuiLocalize->ConstructString( sDataString, sizeof( sDataString ), g_pVGuiLocalize->Find( "#TF_playerid_mediccharge_wpn" ), 2, wszChargeLevel, g_pVGuiLocalize->Find( g_pszMedigunName[iType] ) );
+				}
+				else
+				{
+					g_pVGuiLocalize->ConstructString( sDataString, sizeof( sDataString ), g_pVGuiLocalize->Find( "#TF_playerid_mediccharge" ), 1, wszChargeLevel );
+				}
 			}
 			
 			if (pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR || pPlayer->InSameTeam(pLocalTFPlayer) || (bDisguisedEnemy && pPlayer->m_Shared.GetDisguiseTeam() == pLocalTFPlayer->GetTeamNumber()))

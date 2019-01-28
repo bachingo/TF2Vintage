@@ -61,7 +61,7 @@ public:
 	virtual bool CanBeSelected( void );
 	virtual bool VisibleInWeaponSelection( void );
 
-	virtual void UpdateViewModel( void );
+	//virtual void UpdateViewModel( void );
 
 	virtual bool HasAmmo( void );
 

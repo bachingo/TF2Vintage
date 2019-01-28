@@ -91,7 +91,7 @@ public:
 
 	const char	*GetName( void ) const							{ return GetPlayerClassData( m_iClass )->m_szClassName; }
 	const char	*GetModelName( void ) const						{ return GetPlayerClassData( m_iClass )->GetModelName(); }	
-	const char	*GetHandModelName( void ) const					{ return GetPlayerClassData( m_iClass )->m_szModelHandsName; }		
+	const char	*GetHandModelName( bool bGunslinger = false ) const;		
 	float		GetMaxSpeed( void )								{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
 	int			GetMaxHealth( void )							{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
 	int			GetMaxArmor( void )								{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }

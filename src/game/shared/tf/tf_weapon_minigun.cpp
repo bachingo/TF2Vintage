@@ -14,6 +14,7 @@
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
 #include "soundenvelope.h"
+#include "bone_setup.h"
 
 // Server specific.
 #else
@@ -345,7 +346,12 @@ bool CTFMinigun::CanHolster( void ) const
 	if ( m_iWeaponState > AC_STATE_IDLE )
 		return false;
 
-	if ( GetActivity() == ACT_MP_ATTACK_STAND_POSTFIRE )
+	if ( GetActivity() == ACT_MP_ATTACK_STAND_POSTFIRE ||
+		GetActivity() == ACT_PRIMARY_ATTACK_STAND_POSTFIRE ||
+		GetActivity() == ACT_SECONDARY_ATTACK_STAND_POSTFIRE ||
+		GetActivity() == ACT_MELEE_ATTACK_STAND_POSTFIRE ||
+		GetActivity() == ACT_ITEM1_ATTACK_STAND_POSTFIRE ||
+		GetActivity() == ACT_ITEM2_ATTACK_STAND_POSTFIRE )
 	{
 		if ( !IsViewModelSequenceFinished() )
 			return false;
@@ -363,6 +369,7 @@ bool CTFMinigun::Holster( CBaseCombatWeapon *pSwitchingTo )
 	{
 		WindDown();
 	}
+	m_flBarrelCurrentVelocity = 0.0f;
 
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -542,6 +549,25 @@ void CTFMinigun::StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternio
 		*/
 
 		AngleQuaternion( RadianEuler( 0, 0, m_flBarrelAngle ), q[m_iBarrelBone] );
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFMinigun::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
+{
+	// Weapon happens to be aligned to (0,0,0)
+	// If that changes, use this code block instead to
+	// modify the angles
+	int iBarrelBone = Studio_BoneIndexByName( hdr, "barrel" );
+	if  ( iBarrelBone != -1 && ( hdr->boneFlags( iBarrelBone ) & boneMask ) )
+	{
+		RadianEuler a;
+		QuaternionAngles( q[ iBarrelBone ], a );
+		a.x = GetBarrelRotation();
+		AngleQuaternion( RadianEuler( 0, 0, GetBarrelRotation() ), q[iBarrelBone] );
 	}
 }
 
@@ -780,9 +806,6 @@ float CTFMinigun::GetBarrelRotation( void )
 //-----------------------------------------------------------------------------
 void CTFMinigun::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles )
 {
-	// Stop reload from fucking states up
-	pCmd->buttons &= ~IN_RELOAD;
-
 	// Prevent jumping while firing
 	if ( m_iWeaponState != AC_STATE_IDLE )
 	{

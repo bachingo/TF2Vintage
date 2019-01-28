@@ -1646,7 +1646,7 @@ void CGameMovement::Friction( void )
 			}
 			else
 			{
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_CLASSIC ) || defined ( TF_CLASSIC_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 				control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
 #else
 				control = (speed < sv_stopspeed.GetFloat()) ? (sv_stopspeed.GetFloat() * 2.0f) : speed;

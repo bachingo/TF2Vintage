@@ -53,6 +53,8 @@ public:
 	void SetViewModelType( int iType ){ this->m_iViewModelType = iType; }
 
 #if defined( CLIENT_DLL )
+	void CalcMinViewmodelOffset( C_TFPlayer *owner );
+
 	virtual bool ShouldPredict( void )
 	{
 		if ( GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer() )
@@ -73,13 +75,15 @@ public:
 
 	virtual int DrawModel( int flags );
 
-	CHandle< C_ViewmodelAttachmentModel > m_hViewmodelAddon;
+	// Hold two addons for sandman ball
+	CHandle< C_ViewmodelAttachmentModel > m_hViewmodelAddon[ MAX_VIEWMODELS ];
 
-	C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return m_hViewmodelAddon.Get(); }
-	void UpdateViewmodelAddon( const char *pszModelname );
+	C_ViewmodelAttachmentModel *GetViewmodelAddon( int index = 0 ) { return m_hViewmodelAddon[index].Get(); }
+	void UpdateViewmodelAddon( const char *pszModelname, int index = 0 );
 
-	void RemoveViewmodelAddon( void );
+	void RemoveViewmodelAddon( int index = 0 );
 
+	// This isn't ideal but for now the attachments will always access the default addon at index 0
 	// Attachments
 	virtual int				LookupAttachment( const char *pAttachmentName );
 	virtual bool			GetAttachment( int number, matrix3x4_t &matrix );
@@ -88,6 +92,8 @@ public:
 	virtual bool			GetAttachmentVelocity( int number, Vector &originVel, Quaternion &angleVel );
 
 	virtual void			FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
+
+	virtual bool			OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 
 #endif
 
@@ -103,6 +109,8 @@ private:
 	CTFViewModel( const CTFViewModel & ); // not defined, not accessible
 
 	QAngle m_vLoweredWeaponOffset;
+
+	Vector m_vOffset;
 
 #endif
 

@@ -13,13 +13,7 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-
-static void OnBlogToggle(IConVar *var, const char *pOldValue, float flOldValue)
-{
-	GET_MAINMENUPANEL(CTFMainMenuPanel)->ShowBlogPanel(((ConVar*)var)->GetBool());
-}
 ConVar tf2c_mainmenu_music("tf2c_mainmenu_music", "1", FCVAR_ARCHIVE, "Toggle music in the main menu");
-//ConVar tf2c_mainmenu_showblog("tf2c_mainmenu_showblog", "1", FCVAR_ARCHIVE, "Toggle blog in the main menu", OnBlogToggle);
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -55,7 +49,6 @@ bool CTFMainMenuPanel::Init()
 	m_pNotificationButton = NULL;
 	m_pProfileAvatar = NULL;
 	m_pFakeBGImage = NULL;
-	m_pBlogPanel = new CTFBlogPanel(this, "BlogPanel");
 	m_pServerlistPanel = new CTFServerlistPanel(this, "ServerlistPanel");
 
 	bInMenu = true;
@@ -92,8 +85,6 @@ void CTFMainMenuPanel::PerformLayout()
 		(steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown"));
 	SetDialogVariable("nickname", szNickName);
 
-	//ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
-	OnNotificationUpdate();
 	AutoLayout();
 
 	if (m_iShowFakeIntro > 0)
@@ -114,18 +105,6 @@ void CTFMainMenuPanel::PerformLayout()
 	}
 };
 
-void CTFMainMenuPanel::ShowBlogPanel(bool show)
-{
-	if (m_pBlogPanel)
-	{
-		m_pBlogPanel->SetVisible(show);
-		if (show)
-		{
-			//m_pBlogPanel->LoadBlogPost(BLOG_URL);
-		}
-	}
-}
-
 void CTFMainMenuPanel::OnCommand(const char* command)
 {
 	if (!Q_strcmp(command, "newquit"))
@@ -143,25 +122,6 @@ void CTFMainMenuPanel::OnCommand(const char* command)
 	else if (!Q_strcmp(command, "newstats"))
 	{
 		MAINMENU_ROOT->ShowPanel(STATSUMMARY_MENU);
-	}
-	else if (!Q_strcmp(command, "checkversion"))
-	{
-		//MAINMENU_ROOT->CheckVersion();
-	}
-	else if (!Q_strcmp(command, "shownotification"))
-	{
-		if (m_pNotificationButton)
-		{
-			m_pNotificationButton->SetGlowing(false);
-		}
-		MAINMENU_ROOT->ShowPanel(NOTIFICATION_MENU);
-	}
-	else if (!Q_strcmp(command, "testnotification"))
-	{
-		char resultString[128];
-		Q_snprintf(resultString, sizeof(resultString), "test %d", GetNotificationManager()->GetNotificationsCount());
-		MessageNotification Notification("Yoyo", resultString);
-		GetNotificationManager()->SendNotification(Notification);
 	}
 	else if (!Q_strcmp(command, "randommusic"))
 	{
@@ -235,7 +195,6 @@ void CTFMainMenuPanel::Hide()
 void CTFMainMenuPanel::DefaultLayout()
 {
 	BaseClass::DefaultLayout();
-	//ShowBlogPanel(tf2c_mainmenu_showblog.GetBool());
 };
 
 void CTFMainMenuPanel::GameLayout()
@@ -248,43 +207,12 @@ void CTFMainMenuPanel::PlayMusic()
 
 }
 
-void CTFMainMenuPanel::OnNotificationUpdate()
-{
-	if (m_pNotificationButton)
-	{
-		if (GetNotificationManager()->GetNotificationsCount() > 0)
-		{
-			m_pNotificationButton->SetVisible(true);
-		}
-		else
-		{
-			m_pNotificationButton->SetVisible(false);
-		}
-
-		if (GetNotificationManager()->GetUnreadNotificationsCount() > 0)
-		{
-			m_pNotificationButton->SetGlowing(true);
-		}
-		else
-		{
-			m_pNotificationButton->SetGlowing(false);
-		}
-	}
-	if (GetNotificationManager()->IsOutdated())
-	{
-		if (m_pVersionLabel)
-		{
-			m_pVersionLabel->SetFgColor(Color(255, 20, 50, 100));
-		}
-	}
-};
-
 void CTFMainMenuPanel::SetVersionLabel()  //GetVersionString
 {
 	if (m_pVersionLabel)
 	{
 		char verString[64];
-		Q_snprintf(verString, sizeof(verString), "Version: %s\nSDK branch: %s", GetNotificationManager()->GetVersionString(), GetSDKVersionChecker()->GetKey());
+		Q_snprintf(verString, sizeof(verString), "Version: %s", GetNotificationManager()->GetVersionString() );
 		m_pVersionLabel->SetText(verString);
 	}
 };
@@ -333,44 +261,6 @@ void CTFMainMenuPanel::SetServerlistSize(int size)
 void CTFMainMenuPanel::UpdateServerInfo()
 {
 	m_pServerlistPanel->UpdateServerInfo();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Constructor
-//-----------------------------------------------------------------------------
-CTFBlogPanel::CTFBlogPanel(vgui::Panel* parent, const char *panelName) : CTFMenuPanelBase(parent, panelName)
-{
-	m_pHTMLPanel = new vgui::HTML(this, "HTMLPanel");
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Destructor
-//-----------------------------------------------------------------------------
-CTFBlogPanel::~CTFBlogPanel()
-{
-}
-
-void CTFBlogPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
-{
-	BaseClass::ApplySchemeSettings(pScheme);
-
-	LoadControlSettings("resource/UI/main_menu/BlogPanel.res");
-}
-
-void CTFBlogPanel::PerformLayout()
-{
-	BaseClass::PerformLayout();
-
-	//LoadBlogPost(BLOG_URL);
-}
-
-void CTFBlogPanel::LoadBlogPost(const char* URL)
-{
-	if (m_pHTMLPanel)
-	{
-		m_pHTMLPanel->SetVisible(true);
-		m_pHTMLPanel->OpenURL(URL, NULL);
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -515,10 +405,6 @@ void CTFServerlistPanel::UpdateServerInfo()
 		if (m_Server.m_steamID.GetAccountID() == 0)
 			continue;
 
-		bool bOfficial = GetNotificationManager()->IsOfficialServer(i);
-		if (!bOfficial)
-			continue;
-
 		char szServerName[128];
 		char szServerIP[32];
 		char szServerPlayers[16];
@@ -540,16 +426,12 @@ void CTFServerlistPanel::UpdateServerInfo()
 		curitem->SetString("Players", szServerPlayers);
 		curitem->SetInt("Ping", szServerPing);
 		curitem->SetInt("CurPlayers", szServerCurPlayers);
-		curitem->SetString("Map", szServerMap);
-		//curitem->SetBool("Official", bOfficial);		
+		curitem->SetString("Map", szServerMap);	
 
 		int itemID = m_pServerList->AddItem(0, curitem);
-		/*
-		if (bOfficial)
-			m_pServerList->SetItemFgColor(itemID, GETSCHEME()->GetColor("TeamYellow", Color(255, 255, 255, 255)));
-		else
-			m_pServerList->SetItemFgColor(itemID, GETSCHEME()->GetColor("AdvTextDefault", Color(255, 255, 255, 255)));
-		*/
+		
+		m_pServerList->SetItemFgColor(itemID, GETSCHEME()->GetColor("AdvTextDefault", Color(255, 255, 255, 255)));
+
 		m_pServerList->SetItemFont(itemID, Font);
 		curitem->deleteThis();
 	}

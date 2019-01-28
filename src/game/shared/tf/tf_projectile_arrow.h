@@ -15,6 +15,7 @@
 
 #ifdef GAME_DLL
 #include "iscorer.h"
+#include "tf_player.h"
 #endif
 
 #ifdef CLIENT_DLL
@@ -37,10 +38,10 @@ public:
 	CTFProjectile_Arrow();
 	~CTFProjectile_Arrow();
 
-	void	SetType( int iType ) { m_iType = iType; }
-	void	SetFlameArrow( bool bFlame ) { m_bFlame = bFlame; }
+	void				SetType( int iType ) 				{ m_iType = iType; }
+	void				SetFlameArrow( bool bFlame ) 		{ m_bFlame = bFlame; }
 
-	virtual int		GetWeaponID( void ) const { return TF_WEAPON_COMPOUND_BOW; }
+	virtual int 		GetWeaponID( void ) const 			{ return TF_WEAPON_COMPOUND_BOW; }
 
 #ifdef GAME_DLL
 	static CTFProjectile_Arrow *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, float flSpeed, float flGravity, bool bFlame, CBaseEntity *pOwner, CBaseEntity *pScorer, int iType );
@@ -49,38 +50,43 @@ public:
 	virtual CBasePlayer *GetScorer( void );
 	virtual CBasePlayer *GetAssistant( void ) { return NULL; }
 
-	virtual void	Precache( void );
-	virtual void	Spawn( void );
-	virtual void	RemoveThink( void ) { UTIL_Remove( this ); }
+	virtual void		Precache( void );
+	virtual void		Spawn( void );
+	virtual void		RemoveThink( void ) 			{ UTIL_Remove( this ); }
 
-	void			SetScorer( CBaseEntity *pScorer );
+	void				SetScorer( CBaseEntity *pScorer );
 
-	void			SetCritical( bool bCritical ) { m_bCritical = bCritical; }
-	virtual int		GetDamageType();
+	void				SetCritical( bool bCritical ) 	{ m_bCritical = bCritical; }
+	virtual int			GetDamageType();
 
-	virtual bool	IsDeflectable() { return true; }
-	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+	virtual bool		IsDeflectable() 				{ return true; }
+	virtual void		Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
-	bool			CanHeadshot( void );
-	void			ArrowTouch( CBaseEntity *pOther );
-	void			FlyThink( void );
-	const char		*GetTrailParticleName( void );
-	void			CreateTrail( void );
-	void			BreakArrow( void );
+	bool				CanHeadshot( void );
+	void				ArrowTouch( CBaseEntity *pOther );
+	void				FlyThink( void );
+	const char			*GetTrailParticleName( void );
+	void				CreateTrail( void );
+	void				BreakArrow( void );
 
-	virtual void	UpdateOnRemove( void );
+	virtual void		UpdateOnRemove( void );
 
 	// Arrow attachment functions
-	bool			PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimating *pAnim );
-	void			GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnimating *pAnim, Vector &vecOrigin, QAngle &vecAngles, int &bone, int &iPhysicsBone );
-	void			CheckRagdollPinned( Vector &, Vector &, int, int, CBaseEntity *, int, int );
+	bool				PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimating *pAnim );
+	void				GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnimating *pAnim, Vector &vecOrigin, QAngle &vecAngles, int &bone, int &iPhysicsBone );
+	void				CheckRagdollPinned( Vector &, Vector &, int, int, CBaseEntity *, int, int );
+
+	void				PlayImpactSound( CTFPlayer *pAttacker, const char *pszImpactSound, bool bIsPlayerImpact = false );
 
 #else
-	virtual void	ClientThink( void );
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	Light( void );
+	virtual void		ClientThink( void );
+	virtual void		OnDataChanged( DataUpdateType_t updateType );
+	virtual void		Light( void );
 
-	virtual void    NotifyBoneAttached( C_BaseAnimating* attachTarget );
+	virtual void   		NotifyBoneAttached( C_BaseAnimating* attachTarget );
+
+	// Tell the object when to die
+	void				SetDieTime( float flDieTime ) 	{ m_flDieTime = flDieTime; }
 
 #endif
 

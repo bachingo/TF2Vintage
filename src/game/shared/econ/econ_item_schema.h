@@ -56,11 +56,17 @@ extern const char *g_szQualityLocalizationStrings[];
 #define CALL_ATTRIB_HOOK_FLOAT(value, name)			\
 		value = CAttributeManager::AttribHookValue<float>(value, #name, this)
 
+#define CALL_ATTRIB_HOOK_STRING(value, name)			\
+		value = CAttributeManager::AttribHookValue<string_t>(value, #name, this)
+
 #define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name)			\
 		value = CAttributeManager::AttribHookValue<int>(value, #name, ent)
 
 #define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name)			\
 		value = CAttributeManager::AttribHookValue<float>(value, #name, ent)
+
+#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name)			\
+		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent)
 
 #define CLEAR_STR(name)		\
 		name[0] = '\0'
@@ -92,6 +98,7 @@ struct EconAttributeDefinition
 		CLEAR_STR(name);
 		CLEAR_STR(attribute_class);
 		CLEAR_STR(description_string);
+		string_attribute = false;
 		description_format = -1;
 		hidden = false;
 		effect_type = -1;
@@ -101,10 +108,20 @@ struct EconAttributeDefinition
 	char name[128];
 	char attribute_class[128];
 	char description_string[128];
+	bool string_attribute;
 	int description_format;
 	int effect_type;
 	bool hidden;
 	bool stored_as_integer;
+};
+
+// Live TF2 uses flags instead of view_model and world_model
+struct attachedmodel_t
+{
+	char attachment[128]; // not sure what this does
+	char model[128];
+	int  view_model;
+	int  world_model;
 };
 
 // Client specific.
@@ -135,8 +152,13 @@ public:
 	{
 		Init( iIndex, flValue, pszAttributeClass );
 	}
+	CEconItemAttribute( int iIndex, const char *pszValue, const char *pszAttributeClass )
+	{
+		Init( iIndex, pszValue, pszAttributeClass );
+	}
 
 	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
+	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
 
 public:
 	CNetworkVar( int, m_iAttributeDefinitionIndex );
@@ -177,7 +199,9 @@ public:
 	CUtlMap< int, int > animation_replacement;
 	CUtlDict< const char*, unsigned short > playback_activity;
 	CUtlDict< const char*, unsigned short > misc_info;
+	CUtlVector< attachedmodel_t > attached_models;
 	char aWeaponSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
+	char custom_particlesystem[128];
 	//CUtlDict< EconItemStyle*, unsigned short > styles;
 };
 
@@ -213,6 +237,7 @@ public:
 		CLEAR_STR(model_world);
 		memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
 		attach_to_hands = 0;
+		CLEAR_STR(extra_wearable);
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 	}
@@ -220,6 +245,7 @@ public:
 	EconItemVisuals *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
 	const wchar_t *GenerateLocalizedFullItemName( void );
+	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
 	CEconItemAttribute *IterateAttributes( string_t strClass );
 
 public:
@@ -248,6 +274,7 @@ public:
 	char model_player[128];
 	char model_world[128];
 	char model_player_per_class[TF_CLASS_COUNT_ALL][128];
+	char extra_wearable[128];
 	int attach_to_hands;
 	bool act_as_wearable;
 	int hide_bodygroups_deployed_only;

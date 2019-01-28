@@ -511,6 +511,7 @@ void CTFWeaponBuilder::StartPlacement( void )
 	if ( m_hObjectBeingBuilt )
 	{
 		m_hObjectBeingBuilt->SetObjectMode( m_iObjectMode );
+		m_hObjectBeingBuilt->SetBuilder( ToTFPlayer( GetOwner() ) );
 		m_hObjectBeingBuilt->Spawn();
 		m_hObjectBeingBuilt->StartPlacement( ToTFPlayer( GetOwner() ) );
 
@@ -577,6 +578,16 @@ void CTFWeaponBuilder::StartBuilding( void )
 
 	pObj->StartBuilding( GetOwner() );
 
+	int nMiniSentry = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nMiniSentry, wrench_builds_minisentry );
+	if ( nMiniSentry == 1 )
+	{
+		if ( GetType() == OBJ_SENTRYGUN )
+		{
+			pObj->MakeMiniBuilding();
+		}
+	}
+
 	m_hObjectBeingBuilt = NULL;
 
 	if ( pPlayer )
@@ -594,7 +605,7 @@ bool CTFWeaponBuilder::HasAmmo( void )
 	if ( !pOwner )
 		return false;
 
-	int iCost = CalculateObjectCost( m_iObjectType );
+	int iCost = CalculateObjectCost( m_iObjectType, pOwner->HasGunslinger() );
 	return ( pOwner->GetBuildResources() >= iCost );
 }
 

@@ -69,7 +69,7 @@ void W_Precache(void)
 	g_sModelIndexLaserDot = CBaseEntity::PrecacheModel("sprites/laserdot.vmt");
 #endif // HL1_DLL
 
-#if !defined( TF_DLL ) && !defined( TF_CLASSIC ) 
+#if !defined( TF_DLL ) && !defined( TF_VINTAGE ) 
 	g_sModelIndexFireball = CBaseEntity::PrecacheModel ("sprites/zerogxplode.vmt");// fireball
 
 	g_sModelIndexSmoke = CBaseEntity::PrecacheModel ("sprites/steam1.vmt");// smoke
