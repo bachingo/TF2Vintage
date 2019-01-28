@@ -2461,16 +2461,14 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 
 		if ( TFGameRules()->InStalemate() )
 		{
-			if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
+			if ( TFGameRules()->IsInArenaMode() )
 			{
-				if (TFGameRules()->IsInArenaMode())
-				{
-					ClientPrint(this, HUD_PRINTTALK, "#TF_Arena_NoClassChange"); 
-				}
-				else
-				{
-					ClientPrint(this, HUD_PRINTTALK, "#game_stalemate_cant_change_class");
-				}
+				ClientPrint(this, HUD_PRINTTALK, "#TF_Arena_NoClassChange");
+				return;
+			}
+			else if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
+			{
+				ClientPrint(this, HUD_PRINTTALK, "#game_stalemate_cant_change_class");
 				return;
 			}
 		}
