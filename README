@@ -1,25 +1,44 @@
-------------------------------------------------------------------------------------------- 
-            Team Fortress 2 Disclaimer Version 2 (Added July 15th, 2017, Updated September 28th, 2018)
-
-Team Fortress 2 Vintage is a fork of Team Fortress 2 Classic and includes code developed by Team Fortress 2 Classic.
-   
-Team Fortress 2 Vintage is a reimagining of early Team Fortress 2 created by the community 
-and is unrelated or attempting to be a bootleg or ripoff of Team Fortress 2/Team Fortress 2 Classic and is a seperate 
-entity from the aformentioned software(s).
-   
-This mod has no monetization and is fully non-commercial as per the Source 1 Engine License. 
-   
-This mod is to be used with Source SDK Base 2013 Multiplayer found only on Steam, and downloaded through official download sources only.
-   
-USING NON-SUPPORTED VERSIONS OF TEAM FORTRESS 2 VINTAGE ARE AT YOUR OWN RISK. 
-ONLY DOWNLOAD AND PLAY OFFICIALLY RELEASED VERSIONS USING OFFICIAL SOURCE SDK SOFTWARE. NO OFFICIAL VERSIONS OF TEAM FORTRESS 2 VINTAGE ARE DISTRIBUTED ELSEWHERE. WE ARE NOT RESPONSIBLE FOR ANY SUPPORT OF UNOFFICIAL COPIES OR ANY HARM 
-RESULTING FROM MISUSE OF THE SOFTWARE.
-   
-
--------------------------------------------------------------------------------------------   
-   BEGINNING OF SOURCE 1 SDK LICENSE
 -------------------------------------------------------------------------------------------
-           SOURCE 1 SDK LICENSE
+Team Fortress 2 Vintage
+Copyright (C) 2017-2019 Team Fortress 2 Vintage Team
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+As exception to the above, any derivative works created prior to this 
+date (March 12, 2019) may be licensed under the 
+Team Fortress 2 Vintage UIUC License and only if 
+the work was already UIUC compatible. This clause is 
+provided for backwards compatibility only.
+
+-------------------------------------------------------------------------------------------
+Team Fortress 2 Vintage UIUC License [Legacy License]
+
+Copyright (c) 2017-2019 TF2V. All rights reserved.
+
+Developed by: Team Fortress 2 Vintage Development Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal with the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+    Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimers.
+    Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimers in the documentation and/or other materials provided with the distribution.
+    Neither the names of  Team Fortress 2 Vintage, the Team Fortress 2 Vintage Development Team, nor the names of its contributors may be used to endorse or promote products derived from this Software without specific prior written permission.
+
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+
+-------------------------------------------------------------------------------------------
+SOURCE 1 SDK LICENSE
 
 Source SDK Copyright(c) Valve Corp.  
 
@@ -62,23 +81,3 @@ copyright notice and the following:
        
 If you would like to use the SDK for a commercial purpose, please contact Valve at 
 sourceengine@valvesoftware.com.
-
-
--------------------------------------------------------------------------------------------   
-   BEGINNING OF TEAM FORTRESS 2 VINTAGE UIUC LICENSE
--------------------------------------------------------------------------------------------
-           TEAM FORTRESS 2 VINTAGE UIUC LICENSE 
-		   
-
-Copyright (c) 2017-2018 TF2V. All rights reserved.
-
-Developed by: Team Fortress 2 Vintage Development Team
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal with the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-    Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimers.
-    Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimers in the documentation and/or other materials provided with the distribution.
-    Neither the names of  Team Fortress 2 Vintage, the Team Fortress 2 Vintage Development Team, nor the names of its contributors may be used to endorse or promote products derived from this Software without specific prior written permission.
-
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
