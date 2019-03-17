@@ -723,8 +723,15 @@ bool CTFWeaponBase::Deploy( void )
 		if ( pPlayer->m_Shared.GetNumHealers() == 0 )
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTime, mod_medic_healed_deploy_time );
 
-		m_flNextPrimaryAttack = max( flOriginalPrimaryAttack, gpGlobals->curtime + flDeployTime );
-		m_flNextSecondaryAttack = max( flOriginalSecondaryAttack, gpGlobals->curtime + flDeployTime );
+		flDeployTime = Max( flDeployTime, FLT_EPSILON ); // Don't divide by 0
+
+		if (pPlayer->GetViewModel( 0 ))
+			pPlayer->GetViewModel( 0 )->SetPlaybackRate( 1.0 / flDeployTime );
+		if (pPlayer->GetViewModel( 1 ))
+			pPlayer->GetViewModel( 1 )->SetPlaybackRate( 1.0 / flDeployTime );
+
+		m_flNextPrimaryAttack = max( flOriginalPrimaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
+		m_flNextSecondaryAttack = max( flOriginalSecondaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
 
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
 
