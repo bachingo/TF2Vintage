@@ -366,8 +366,6 @@ void CObjectDispenser::Precache()
 
 	PrecacheVGuiScreen( "screen_obj_dispenser_blue" );
 	PrecacheVGuiScreen( "screen_obj_dispenser_red" );
-	PrecacheVGuiScreen( "screen_obj_dispenser_green" );
-	PrecacheVGuiScreen( "screen_obj_dispenser_yellow" );
 
 
 	PrecacheScriptSound( "Building_Dispenser.Idle" );

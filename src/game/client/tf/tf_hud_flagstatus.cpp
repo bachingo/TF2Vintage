@@ -49,15 +49,11 @@ extern ConVar tf_flag_caps_per_round;
 CTFArrowPanel::CTFArrowPanel( Panel *parent, const char *name ) : vgui::Panel( parent, name )
 {
 	m_RedMaterial.Init( "hud/objectives_flagpanel_compass_red", TEXTURE_GROUP_VGUI ); 
-	m_BlueMaterial.Init( "hud/objectives_flagpanel_compass_blue", TEXTURE_GROUP_VGUI ); 
-	m_GreenMaterial.Init("hud/objectives_flagpanel_compass_green", TEXTURE_GROUP_VGUI);
-	m_YellowMaterial.Init("hud/objectives_flagpanel_compass_yellow", TEXTURE_GROUP_VGUI);
+	m_BlueMaterial.Init( "hud/objectives_flagpanel_compass_blue", TEXTURE_GROUP_VGUI );
 	m_NeutralMaterial.Init( "hud/objectives_flagpanel_compass_grey", TEXTURE_GROUP_VGUI ); 
 
 	m_RedMaterialNoArrow.Init( "hud/objectives_flagpanel_compass_red_noArrow", TEXTURE_GROUP_VGUI ); 
-	m_BlueMaterialNoArrow.Init( "hud/objectives_flagpanel_compass_blue_noArrow", TEXTURE_GROUP_VGUI ); 
-	m_GreenMaterialNoArrow.Init("hud/objectives_flagpanel_compass_green_noArrow", TEXTURE_GROUP_VGUI);
-	m_YellowMaterialNoArrow.Init("hud/objectives_flagpanel_compass_yellow_noArrow", TEXTURE_GROUP_VGUI);
+	m_BlueMaterialNoArrow.Init( "hud/objectives_flagpanel_compass_blue_noArrow", TEXTURE_GROUP_VGUI );
 }
 
 //-----------------------------------------------------------------------------
@@ -345,10 +341,6 @@ void CTFHudFlagObjectives::ApplySchemeSettings( IScheme *pScheme )
 	m_pRedFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "RedFlag" ) );
 	m_pBlueFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "BlueFlag" ) );
 
-	//Not used yet
-	m_pGreenFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "GreenFlag" ) );
-	m_pYellowFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "YellowFlag" ) );
-
 	m_pCapturePoint = dynamic_cast<CTFArrowPanel *>( FindChildByName( "CaptureFlag" ) );
 
 	m_pSpecCarriedImage = dynamic_cast<ImagePanel *>( FindChildByName( "SpecCarriedImage" ) );
@@ -388,16 +380,6 @@ void CTFHudFlagObjectives::Reset()
 	if ( m_pRedFlag && !m_pRedFlag->IsVisible() )
 	{
 		m_pRedFlag->SetVisible( true );
-	}
-
-	if (m_pGreenFlag && !m_pGreenFlag->IsVisible())
-	{
-		m_pGreenFlag->SetVisible(true);
-	}
-
-	if (m_pYellowFlag && !m_pYellowFlag->IsVisible())
-	{
-		m_pYellowFlag->SetVisible(true);
 	}
 
 	if ( m_pSpecCarriedImage && m_pSpecCarriedImage->IsVisible() )
@@ -584,16 +566,6 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 				m_pBlueFlag->SetVisible( false );
 			}
 
-			if (m_pGreenFlag && m_pGreenFlag->IsVisible())
-			{
-				m_pGreenFlag->SetVisible(false);
-			}
-
-			if (m_pYellowFlag && m_pYellowFlag->IsVisible())
-			{
-				m_pYellowFlag->SetVisible(false);
-			}
-
 			if ( !m_pCarriedImage->IsVisible() )
 			{
 				m_pCarriedImage->SetVisible( true );
@@ -666,26 +638,6 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 			}
 
 			m_pRedFlag->UpdateStatus();
-		}
-
-		if (m_pGreenFlag)
-		{
-			if (!m_pGreenFlag->IsVisible())
-			{
-				m_pGreenFlag->SetVisible(true);
-			}
-
-			m_pGreenFlag->UpdateStatus();
-		}
-
-		if (m_pYellowFlag)
-		{
-			if (!m_pYellowFlag->IsVisible())
-			{
-				m_pYellowFlag->SetVisible(true);
-			}
-
-			m_pYellowFlag->UpdateStatus();
 		}
 	}
 }

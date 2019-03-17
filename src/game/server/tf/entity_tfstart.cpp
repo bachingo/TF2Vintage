@@ -24,8 +24,6 @@ BEGIN_DATADESC( CTFTeamSpawn )
 	DEFINE_KEYFIELD( m_iszControlPointName, FIELD_STRING, "controlpoint" ),
 	DEFINE_KEYFIELD( m_iszRoundBlueSpawn, FIELD_STRING, "round_bluespawn" ),
 	DEFINE_KEYFIELD( m_iszRoundRedSpawn, FIELD_STRING, "round_redspawn" ),
-	DEFINE_KEYFIELD( m_iszRoundGreenSpawn, FIELD_STRING, "round_greenspawn" ),
-	DEFINE_KEYFIELD( m_iszRoundYellowSpawn, FIELD_STRING, "round_yellowspawn" ),
 
 	// Inputs.
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
@@ -37,6 +35,8 @@ BEGIN_DATADESC( CTFTeamSpawn )
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( info_player_teamspawn, CTFTeamSpawn );
+
+IMPLEMENT_AUTO_LIST( ITFTeamSpawnAutoList )
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor.
@@ -53,12 +53,12 @@ void CTFTeamSpawn::Activate( void )
 {
 	BaseClass::Activate();
 
-	Vector mins = g_pGameRules->GetViewVectors()->m_vHullMin;
-	Vector maxs = g_pGameRules->GetViewVectors()->m_vHullMax;
+	Vector mins = VEC_HULL_MIN;
+	Vector maxs = VEC_HULL_MAX;
 
 	trace_t trace;
 	UTIL_TraceHull( GetAbsOrigin(), GetAbsOrigin(), mins, maxs, MASK_PLAYERSOLID, NULL, COLLISION_GROUP_PLAYER_MOVEMENT, &trace );
-	bool bClear = ( trace.fraction == 1 && trace.allsolid != 1 && (trace.startsolid != 1) );
+	bool bClear = ( trace.fraction >= 1.0f && !trace.allsolid && !trace.startsolid );
 	if ( !bClear )
 	{
 		Warning("Spawnpoint at (%.2f %.2f %.2f) is not clear.\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
@@ -167,26 +167,6 @@ void CTFTeamSpawn::InputRoundSpawn( inputdata_t &input )
 		if ( !m_hRoundRedSpawn )
 		{
 			Warning("%s failed to find control point round named '%s'\n", GetClassname(), STRING(m_iszRoundRedSpawn) );
-		}
-	}
-
-	if (m_iszRoundGreenSpawn != NULL_STRING)
-	{
-		// We need to re-find our control point round, because they're recreated over round restarts
-		m_hRoundGreenSpawn = dynamic_cast<CTeamControlPointRound*>(gEntList.FindEntityByName(NULL, m_iszRoundGreenSpawn));
-		if (!m_hRoundGreenSpawn)
-		{
-			Warning("%s failed to find control point round named '%s'\n", GetClassname(), STRING(m_iszRoundGreenSpawn));
-		}
-	}
-
-	if (m_iszRoundYellowSpawn != NULL_STRING)
-	{
-		// We need to re-find our control point round, because they're recreated over round restarts
-		m_hRoundYellowSpawn = dynamic_cast<CTeamControlPointRound*>(gEntList.FindEntityByName(NULL, m_iszRoundYellowSpawn));
-		if (!m_hRoundYellowSpawn)
-		{
-			Warning("%s failed to find control point round named '%s'\n", GetClassname(), STRING(m_iszRoundYellowSpawn));
 		}
 	}
 }

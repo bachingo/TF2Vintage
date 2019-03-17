@@ -63,9 +63,9 @@ private:
 
 	CPanelAnimationVar( Color, m_clrBlueText, "TeamBlue", "153 204 255 255" );
 	CPanelAnimationVar( Color, m_clrRedText, "TeamRed", "255 64 64 255" );
-	CPanelAnimationVar( Color, m_clrGreenText, "TeamGreen", "8 174 0 255" );
-	CPanelAnimationVar( Color, m_clrYellowText, "TeamYellow", "255 160 0 255" );
-
+	CPanelAnimationVar( Color, m_clrPurpleText, "PurpleText", "134 80 172 255" );
+	CPanelAnimationVar( Color, m_clrGreenText, "GreenText", "112 176 74 255" );
+	CPanelAnimationVar( Color, m_clrLocalPlayer, "LocalPlayerColor", "65 65 65 255" );
 };
 
 DECLARE_HUDELEMENT( CTFHudDeathNotice );
@@ -263,7 +263,7 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 			{
 				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
 			}
-				break;
+			break;
 		case TF_DMG_CUSTOM_SUICIDE:
 			{
 				// display a different message if this was suicide, or assisted suicide (suicide w/recent damage, kill awarded to damager)
@@ -285,8 +285,8 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 		bool bDefense = ( FStrEq( "teamplay_capture_blocked", pszEventName ) || ( FStrEq( "teamplay_flag_event", pszEventName ) &&
 			TF_FLAGEVENT_DEFEND == event->GetInt( "eventtype" ) ) );
 
-		const char *szCaptureIcons[] = { "d_redcapture", "d_bluecapture", "d_greencapture", "d_yellowcapture" };
-		const char *szDefenseIcons[] = { "d_reddefend", "d_bluedefend", "d_greendefend", "d_yellowdefend" };
+		const char *szCaptureIcons[] = { "d_redcapture", "d_bluecapture" };
+		const char *szDefenseIcons[] = { "d_reddefend", "d_bluedefend" };
 		
 		int iTeam = m_DeathNotices[iDeathNoticeMsg].Killer.iTeam;
 		Assert( iTeam >= FIRST_GAME_TEAM );
@@ -571,6 +571,9 @@ Color CTFHudDeathNotice::GetTeamColor( int iTeamNumber, bool bLocalPlayerInvolve
 		break;
 	case TF_TEAM_RED:
 		return m_clrRedText;
+		break;
+	case TF_TEAM_BOSS:
+		return m_clrPurpleText;
 		break;
 	case TEAM_UNASSIGNED:		
 		return bLocalPlayerInvolved ? Color(0, 0, 0, 255) : Color(255, 255, 255, 255);

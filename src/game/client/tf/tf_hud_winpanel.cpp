@@ -44,8 +44,6 @@ CTFWinPanel::CTFWinPanel( const char *pElementName ) : EditablePanel( NULL, "Win
 	m_flTimeUpdateTeamScore = 0;
 	m_iBlueTeamScore = 0;
 	m_iRedTeamScore = 0;
-	m_iGreenTeamScore = 0;
-	m_iYellowTeamScore = 0;
 
 	RegisterForRenderGroup( "mid" );
 }
