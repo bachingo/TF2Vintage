@@ -4371,7 +4371,8 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 		if (pTFAttacker->GetActiveTFWeapon())
 		{
-			int iAddCloakOnHit = CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker->GetActiveTFWeapon(), iAddCloakOnHit, add_cloak_on_hit );
+			int iAddCloakOnHit = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker->GetActiveTFWeapon(), iAddCloakOnHit, add_cloak_on_hit );
 			if (iAddCloakOnHit)
 				pTFAttacker->m_Shared.AddToSpyCloakMeter( (float)iAddCloakOnHit, true );
 		}
