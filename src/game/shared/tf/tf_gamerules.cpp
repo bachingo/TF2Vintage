@@ -3718,8 +3718,6 @@ void CTFGameRules::SetupSpawnPointsForRound( void )
 			CHandle<CTeamControlPoint> hControlPoint = pTFSpawn->GetControlPoint();
 			CHandle<CTeamControlPointRound> hRoundBlue = pTFSpawn->GetRoundBlueSpawn();
 			CHandle<CTeamControlPointRound> hRoundRed = pTFSpawn->GetRoundRedSpawn();
-			CHandle<CTeamControlPointRound> hRoundGreen = pTFSpawn->GetRoundGreenSpawn();
-			CHandle<CTeamControlPointRound> hRoundYellow = pTFSpawn->GetRoundYellowSpawn();
 
 			if ( hControlPoint && pCurrentRound->IsControlPointInRound( hControlPoint ) )
 			{

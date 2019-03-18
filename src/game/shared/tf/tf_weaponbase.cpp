@@ -2046,9 +2046,9 @@ const Vector &CTFWeaponBase::GetBulletSpread( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 // ----------------------------------------------------------------------------
-void CTFWeaponBase::ApplyOnHitAttributes( CTFPlayer *pVictim, const CTakeDamageInfo &info )
+void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner(), *pAttacker = ToTFPlayer( info.GetAttacker() );
+	CTFPlayer *pOwner = GetTFPlayerOwner(), *pTFVictim = ToTFPlayer( pVictim );
 	if ( !pOwner || !pOwner->IsAlive() )
 		return;
 
@@ -2058,11 +2058,32 @@ void CTFWeaponBase::ApplyOnHitAttributes( CTFPlayer *pVictim, const CTakeDamageI
 			pOwner = pAttacker;
 	}
 
-	// Afterburn shouldn't trigger on-hit effects.
-	// Disguised spies shouldn't trigger on-hit effects.
-	if ( ( info.GetDamageType() & DMG_BURN ) ||
-		( pVictim->m_Shared.InCond( TF_COND_DISGUISED ) && pVictim->m_Shared.GetDisguiseTeam() == pOwner->GetTeamNumber() ) )
-		return;
+	if (pTFVictim)
+	{
+		// Afterburn shouldn't trigger on-hit effects.
+		// Disguised spies shouldn't trigger on-hit effects.
+		if (( info.GetDamageType() & DMG_BURN ) ||
+			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && pTFVictim->m_Shared.GetDisguiseTeam() == pOwner->GetTeamNumber() ))
+			return;
+
+		if (!pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ))
+		{
+			float flSlowOnHit = CAttributeManager::AttribHookValue<float>( 0, "mult_onhit_enemyspeed", this );
+			if (flSlowOnHit && RandomFloat() < flSlowOnHit)
+			{
+				pTFVictim->m_Shared.StunPlayer(
+					0.2f,
+					( Clamp( ( pTFVictim->GetAbsOrigin() - pAttacker->GetAbsOrigin() ).LengthSqr() * 4e-7f, 0.0f, 1.0f ) * -0.2f ) + 0.6f,
+					0.0f,
+					TF_STUNFLAG_SLOWDOWN,
+					pAttacker );
+			}
+
+			flSlowOnHit = CAttributeManager::AttribHookValue<float>( 0, "mult_onhit_enemyspeed_major", this );
+			if (flSlowOnHit)
+				pTFVictim->m_Shared.StunPlayer( flSlowOnHit, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN, pAttacker );
+		}
+	}
 
 	float flAddCharge = 0.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flAddCharge, add_onhit_ubercharge );

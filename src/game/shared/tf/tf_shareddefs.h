@@ -820,6 +820,7 @@ extern const char *g_pszHintMessages[];
 #define DMG_IGNITE				(DMG_PLASMA)
 #define DMG_USEDISTANCEMOD		(DMG_SLOWBURN)		// NEED TO REMOVE CALTROPS
 #define DMG_NOCLOSEDISTANCEMOD	(DMG_POISON)
+#define DMG_MELEE				(DMG_BLAST_SURFACE) // Identifier for melee attributes
 
 #define TF_DMG_SENTINEL_VALUE	0xFFFFFFFF
 

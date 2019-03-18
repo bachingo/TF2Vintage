@@ -3785,7 +3785,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 		
 		// Notify the damaging weapon.
-		pWeapon->ApplyOnHitAttributes( this, info );
+		pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
 		if ( pTFAttacker )
 		{
@@ -4273,6 +4273,35 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDamage, blast_dmg_to_self );
 			}
 		}
+	}
+	
+	if(info.GetDamageType() & DMG_CRITICAL)
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_crit );
+
+	if (info.GetDamageType() & DMG_BLAST)
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_explosions );
+
+	if (info.GetDamageType() & DMG_BURN|DMG_IGNITE)
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_fire );
+
+	if (info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT)
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_bullets );
+
+	if (info.GetDamageType() & DMG_BLAST_SURFACE)
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_melee );
+	
+	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken );
+
+	if (dynamic_cast<CObjectSentrygun *>( info.GetInflictor() ))
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, dmg_from_sentry_reduced );
+
+	if (GetActiveTFWeapon())
+	{
+		if (info.GetDamageType() & DMG_CLUB)
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, dmg_from_melee );
+
+		if(info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT|DMG_IGNITE|DMG_BLAST|DMG_SONIC)
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, dmg_from_ranged );
 	}
 
 	int iOldHealth = m_iHealth;
