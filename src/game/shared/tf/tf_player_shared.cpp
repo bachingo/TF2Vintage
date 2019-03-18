@@ -17,6 +17,7 @@
 #include "in_buttons.h"
 #include "tf_viewmodel.h"
 #include "econ_wearable.h"
+#include "tf_weapon_invis.h"
 #include "tf_weapon_buff_item.h"
 
 // Client specific.
@@ -2959,6 +2960,50 @@ bool CTFPlayerShared::IsLoser( void )
 int CTFPlayerShared::GetDesiredPlayerClassIndex(void)
 {
 	return m_iDesiredPlayerClass;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  :
+// Output : Successful
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAttribs )
+{
+	CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
+	if (!pInvis)
+		return false;
+
+	if (!bForce && pInvis->HasMotionCloak())
+		return false;
+
+	if (bIgnoreAttribs)
+	{
+		if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
+			return false;
+
+		m_flCloakMeter = Min( Max( m_flCloakMeter + amt, 0.0f ), 100.0f );
+		return true;
+	}
+
+	int iNoRegenFromItems = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pInvis, iNoRegenFromItems, mod_cloak_no_regen_from_items );
+	if (iNoRegenFromItems)
+		return false;
+
+	int iNoCloakWhenCloaked = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pInvis, iNoCloakWhenCloaked, NoCloakWhenCloaked );
+	if (iNoCloakWhenCloaked)
+	{
+		if (InCond( TF_COND_STEALTHED ))
+			return false;
+	}
+
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pInvis, amt, ReducedCloakFromAmmo );
+	if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
+		return false;
+
+	m_flCloakMeter = Min( Max( m_flCloakMeter + amt, 0.0f ), 100.0f );
+	return true;
 }
 
 //-----------------------------------------------------------------------------

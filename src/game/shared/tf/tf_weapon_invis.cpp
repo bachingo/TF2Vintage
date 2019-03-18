@@ -49,6 +49,22 @@ void CTFWeaponInvis::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponInvis::HasFeignDeath( void ) const
+{
+	return CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponInvis::HasMotionCloak( void ) const
+{
+	return CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 2;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Clear out the view model when we hide
 //-----------------------------------------------------------------------------
 void CTFWeaponInvis::HideThink( void )
@@ -88,6 +104,9 @@ void CTFWeaponInvis::SetWeaponVisible( bool visible )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFWeaponInvis::Deploy( void )
 {
 	bool b = BaseClass::Deploy();
@@ -97,6 +116,9 @@ bool CTFWeaponInvis::Deploy( void )
 	return b;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFWeaponInvis::Holster( CBaseCombatWeapon *pSwitchingTo )
 { 
 	bool bHolster = BaseClass::Holster( pSwitchingTo );
@@ -107,16 +129,25 @@ bool CTFWeaponInvis::Holster( CBaseCombatWeapon *pSwitchingTo )
 	return bHolster;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponInvis::SecondaryAttack( void )
 {
 	// do nothing
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponInvis::ItemBusyFrame( void )
 {
 	// do nothing
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFWeaponInvis::GetEffectBarProgress( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
@@ -130,6 +161,9 @@ float CTFWeaponInvis::GetEffectBarProgress( void )
 
 #ifndef CLIENT_DLL
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponInvis::GetControlPanelInfo( int nPanelIndex, const char *&pPanelName )
 {
 	pPanelName = "pda_panel_spy_invis";

@@ -236,6 +236,7 @@ public:
 	int		GetRespawnParticleID( void ) { return m_iRespawnParticleID; }
 	void	SetRespawnParticleID(int iParticleID) { m_iRespawnParticleID = iParticleID; }
 
+	bool	AddToSpyCloakMeter( float amt, bool bForce = false, bool bIgnoreAttribs = false );
 	float	GetSpyCloakMeter() const		{ return m_flCloakMeter; }
 	void	SetSpyCloakMeter( float val ) { m_flCloakMeter = val; }
 

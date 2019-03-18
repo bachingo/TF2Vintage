@@ -4218,6 +4218,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CBaseEntity *pWeapon = info.GetWeapon();
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( pWeapon );
+	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
 
 	// If this is an object get the builder
 	if ( pAttacker->IsBaseObject() )
@@ -4252,7 +4253,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		return 0;
 
 	// Self-damage modifiers.
-	if ( info.GetAttacker() == this )
+	if ( pAttacker == this )
 	{
 		if ( ( info.GetDamageType() & DMG_BLAST ) && !info.GetDamagedOtherPlayers() )
 		{
@@ -4364,9 +4365,16 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
         gameeventmanager->FireEvent( event );
 	}
 	
-	if ( pAttacker != this && pAttacker->IsPlayer() )
+	if ( pTFAttacker && pTFAttacker != this )
 	{
-		ToTFPlayer( pAttacker )->RecordDamageEvent( info, (m_iHealth <= 0) );
+		pTFAttacker->RecordDamageEvent( info, (m_iHealth <= 0) );
+
+		if (pTFAttacker->GetActiveTFWeapon())
+		{
+			int iAddCloakOnHit = CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker->GetActiveTFWeapon(), iAddCloakOnHit, add_cloak_on_hit );
+			if (iAddCloakOnHit)
+				pTFAttacker->m_Shared.AddToSpyCloakMeter( (float)iAddCloakOnHit, true );
+		}
 	}
 
 	//No bleeding while invul or disguised.
