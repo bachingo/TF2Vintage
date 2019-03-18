@@ -2976,6 +2976,9 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 	if (!bForce && pInvis->HasMotionCloak())
 		return false;
 
+	if (pInvis->HasFeignDeath())
+		amt = Min( amt, 35.0f );
+
 	if (bIgnoreAttribs)
 	{
 		if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
