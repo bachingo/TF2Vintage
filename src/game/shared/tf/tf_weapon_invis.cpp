@@ -15,8 +15,6 @@
 	#include "c_tf_player.h"
 #endif
 
-extern ConVar tf_spy_invis_unstealth_time;
-
 //=============================================================================
 //
 // TFWeaponBase Melee tables.
@@ -33,9 +31,9 @@ LINK_ENTITY_TO_CLASS( tf_weapon_invis, CTFWeaponInvis );
 PRECACHE_WEAPON_REGISTER( tf_weapon_invis );
 
 // Server specific.
-#if !defined( CLIENT_DLL ) 
-	BEGIN_DATADESC( CTFWeaponInvis )
-	END_DATADESC()
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFWeaponInvis )
+END_DATADESC()
 #endif
 
 //-----------------------------------------------------------------------------

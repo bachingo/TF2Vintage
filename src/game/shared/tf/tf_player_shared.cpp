@@ -1107,6 +1107,29 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
+	if (InCond( TF_COND_BLEEDING ))
+	{
+		for (int i = m_aBleeds.Count() - 1; i >= 0; --i)
+		{
+			bleed_struct_t *bleed = &m_aBleeds[i];
+			if (gpGlobals->curtime >= bleed->m_flEndTime)
+			{
+				m_aBleeds.FastRemove( i );
+				continue;
+			}
+			else if (gpGlobals->curtime >= bleed->m_flBleedTime)
+			{
+				bleed->m_flBleedTime = gpGlobals->curtime + TF_BLEEDING_FREQUENCY;
+
+				CTakeDamageInfo info( bleed->m_hAttacker, bleed->m_hAttacker, bleed->m_hWeapon, (float)bleed->m_iDamage, DMG_SLASH, TF_DMG_CUSTOM_BLEEDING );
+				m_pOuter->TakeDamage( info );
+			}
+		}
+
+		if (m_aBleeds.IsEmpty())
+			RemoveCond( TF_COND_BLEEDING );
+	}
+
 	if (InCond( TF_COND_URINE ) && m_pOuter->GetWaterLevel() >= WL_Waist )
 	{
 		RemoveCond( TF_COND_URINE );
@@ -1160,34 +1183,68 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::ConditionThink( void )
 {
-	bool bIsLocalPlayer = false;
-#ifdef CLIENT_DLL
-	bIsLocalPlayer = m_pOuter->IsLocalPlayer();
-#else
-	bIsLocalPlayer = true;
-#endif
-
-	if ( m_pOuter->IsPlayerClass( TF_CLASS_SPY ) && bIsLocalPlayer )
+#ifndef CLIENT_DLL
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_SPY ) )
 	{
 		if ( InCond( TF_COND_STEALTHED ) )
 		{
-			m_flCloakMeter -= gpGlobals->frametime * tf_spy_cloak_consume_rate.GetFloat();
+			// TODO: Optimize so we aren't calling into attributes ever frame
+
+			float flConsumeRate = tf_spy_cloak_consume_rate.GetFloat();
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flConsumeRate, mult_cloak_meter_consume_rate );
+
+			CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
+
+			if (pInvis && pInvis->HasMotionCloak())
+			{
+				float flSpeed = m_pOuter->GetAbsVelocity().LengthSqr();
+				if (flSpeed == 0.0f)
+				{
+					float flRegenRate = tf_spy_cloak_regen_rate.GetFloat();
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flRegenRate, mult_cloak_meter_regen_rate );
+					m_flCloakMeter += gpGlobals->frametime * flRegenRate;
+
+					if (m_flCloakMeter >= 100.0f)
+						m_flCloakMeter = 100.0f;
+				}
+				else
+				{
+					/*float v32 = DWORD( m_pOuter + 3516 ) * DWORD( m_pOuter + 3516 );
+					if (v32 == 0.0f)
+					{*/
+						m_flCloakMeter -= flConsumeRate * gpGlobals->frametime * 1.5f;
+					/*}
+					else
+					{
+						m_flCloakMeter -= ( flConsumeRate * gpGlobals->frametime * 1.5f ) * Min( flSpeed / v32, 1.0f );
+					}*/
+				}
+			}
+			else
+			{
+				m_flCloakMeter -= gpGlobals->frametime * flConsumeRate;
+			}
 
 			if ( m_flCloakMeter <= 0.0f )
 			{
-				FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
-			}
-		}		
-		else
-		{
-			m_flCloakMeter += gpGlobals->frametime * tf_spy_cloak_regen_rate.GetFloat();
+				float flDecloakRate = tf_spy_invis_unstealth_time.GetFloat();
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flDecloakRate, mult_decloak_rate );
 
-			if  (m_flCloakMeter >= 100.0f )
-			{
-				m_flCloakMeter = 100.0f;
+				if(!pInvis || !pInvis->HasMotionCloak())
+					FadeInvis( flDecloakRate );
 			}
 		}
+		else
+		{
+			float flRegenRate = tf_spy_cloak_regen_rate.GetFloat();
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flRegenRate, mult_cloak_meter_regen_rate );
+			m_flCloakMeter += gpGlobals->frametime * flRegenRate;
+
+			if  (m_flCloakMeter >= 100.0f )
+				m_flCloakMeter = 100.0f;
+		}
 	}
+#endif
 
 	if ( InCond( TF_COND_PHASE ) )
 	{
@@ -1743,6 +1800,44 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResis
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::MakeBleed( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float flBleedDuration, int iBleedDamage )
+{
+#ifdef GAME_DLL
+	if (m_pOuter->IsAlive() && ( pAttacker || pWeapon ))
+	{
+		float flEndAt = gpGlobals->curtime + flBleedDuration;
+		for (int i=0; i<m_aBleeds.Count(); ++i)
+		{
+			bleed_struct_t *bleed = &m_aBleeds[i];
+			if (bleed->m_hAttacker == pAttacker && bleed->m_hWeapon == pWeapon)
+			{
+				bleed->m_flEndTime = flEndAt;
+
+				if (!InCond( TF_COND_BLEEDING ))
+					AddCond( TF_COND_BLEEDING );
+
+				return;
+			}
+		}
+
+		bleed_struct_t bleed = {
+			pAttacker,
+			pWeapon,
+			flBleedDuration,
+			flEndAt,
+			iBleedDamage
+		};
+		m_aBleeds.AddToTail( bleed );
+
+		if (!InCond( TF_COND_BLEEDING ))
+			AddCond( TF_COND_BLEEDING );
+	}
+#endif
+}
+
 #ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Bonk phase effects
@@ -1905,15 +2000,14 @@ void CTFPlayerShared::OnAddStealthed(void)
 	m_pOuter->UpdateOverhealEffect();
 	m_pOuter->RemoveAllDecals();
 	m_pOuter->UpdateRecentlyTeleportedEffect();
-#else
-
 #endif
 
-	m_flInvisChangeCompleteTime = gpGlobals->curtime + tf_spy_invis_time.GetFloat();
+	float flCloakRate = tf_spy_invis_time.GetFloat();
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flCloakRate, mult_cloak_rate );
+	m_flInvisChangeCompleteTime = gpGlobals->curtime + flCloakRate;
 
 	// set our offhand weapon to be the invis weapon
-	int i;
-	for (i = 0; i < m_pOuter->WeaponCount(); i++)
+	for (int i = 0; i < m_pOuter->WeaponCount(); i++)
 	{
 		CTFWeaponBase *pWpn = (CTFWeaponBase *)m_pOuter->GetWeapon(i);
 		if (!pWpn)
@@ -4168,7 +4262,9 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 			if (m_Shared.InCond(TF_COND_STEALTHED))
 			{
 #ifdef GAME_DLL
-				m_Shared.FadeInvis(tf_spy_invis_unstealth_time.GetFloat());
+				float flDecloakRate = tf_spy_invis_unstealth_time.GetFloat();
+				CALL_ATTRIB_HOOK_FLOAT( flDecloakRate, mult_decloak_rate );
+				m_Shared.FadeInvis( flDecloakRate );
 #endif
 				bDoSkill = true;
 			}

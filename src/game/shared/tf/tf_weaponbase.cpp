@@ -710,7 +710,7 @@ bool CTFWeaponBase::Deploy( void )
 		// Overrides the anim length for calculating ready time.
 		// Don't override primary attacks that are already further out than this. This prevents
 		// people exploiting weapon switches to allow weapons to fire faster.
-		float flDeployTime = 0.5f;
+		float flDeployTime = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTime, mult_deploy_time );
 		CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time );
 
@@ -2075,13 +2075,13 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 					0.2f,
 					( Clamp( ( pTFVictim->GetAbsOrigin() - pAttacker->GetAbsOrigin() ).LengthSqr() * 4e-7f, 0.0f, 1.0f ) * -0.2f ) + 0.6f,
 					0.0f,
-					TF_STUNFLAG_SLOWDOWN,
+					TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_NOSOUNDOREFFECT,
 					pAttacker );
 			}
 
 			flSlowOnHit = CAttributeManager::AttribHookValue<float>( 0, "mult_onhit_enemyspeed_major", this );
 			if (flSlowOnHit)
-				pTFVictim->m_Shared.StunPlayer( flSlowOnHit, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN, pAttacker );
+				pTFVictim->m_Shared.StunPlayer( flSlowOnHit, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_NOSOUNDOREFFECT, pAttacker );
 		}
 	}
 

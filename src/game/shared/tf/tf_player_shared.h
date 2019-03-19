@@ -193,6 +193,7 @@ public:
 
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
 	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
+	void	MakeBleed( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float flBleedDuration, int iBleedDamage );
 
 #ifdef GAME_DLL
 	void	AddPhaseEffects( void );
@@ -228,6 +229,7 @@ public:
 	void	NoteLastDamageTime( int nDamage );
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
+	void	SetHasMotionCloak( bool bSet ) { m_bHasMotionCloak = bSet; }
 
 	int		GetDesiredPlayerClassIndex( void );
 
@@ -419,6 +421,18 @@ private:
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
 
+#ifdef GAME_DLL
+	struct bleed_struct_t
+	{
+		CHandle<CTFPlayer> m_hAttacker;
+		CHandle<CTFWeaponBase> m_hWeapon;
+		float m_flBleedTime;
+		float m_flEndTime;
+		int m_iDamage;
+	};
+	CUtlVector< bleed_struct_t > m_aBleeds;
+#endif
+
 	// Other
 	float					m_flStunTime;
 	float					m_flPhaseTime;
@@ -440,6 +454,9 @@ private:
 	float m_flNextBurningSound;
 
 	CNetworkVar( float, m_flCloakMeter );	// [0,100]
+	float m_flCloakDrainRate;
+	float m_flCloakRegenRate;
+	bool m_bHasMotionCloak;
 
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );

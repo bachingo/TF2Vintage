@@ -4307,11 +4307,15 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	int iOldHealth = m_iHealth;
 	bool bIgniting = false;
+	float flBleedDuration = 0.0f;
 
 	if ( m_takedamage != DAMAGE_EVENTS_ONLY )
 	{
 		// Start burning if we took ignition damage
 		bIgniting = ( ( info.GetDamageType() & DMG_IGNITE ) && ( GetWaterLevel() < WL_Waist ) );
+
+		if (info.GetDamageCustom() != TF_DMG_CUSTOM_BLEEDING)
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFWeapon, flBleedDuration, bleeding_duration );
 
 		// Take damage - round to the nearest integer.
 		m_iHealth -= ( flDamage + 0.5f );
@@ -4327,7 +4331,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	m_flLastDamageTime = gpGlobals->curtime;
 
 	// Apply a damage force.
-	if ( !pAttacker )
+	if ( !pTFAttacker )
 		return 0;
 
 	ApplyPushFromDamage( info, vecDir );
@@ -4335,7 +4339,14 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	if ( bIgniting )
 	{
 		//CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( pWeapon );
-		m_Shared.Burn( ToTFPlayer( pAttacker ), pTFWeapon );
+		m_Shared.Burn( pTFAttacker, pTFWeapon );
+	}
+
+	if (flBleedDuration > 0.0f)
+	{
+		int flBleedDamage = TF_BLEEDING_DAMAGE;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFWeapon, flBleedDamage, mult_wpn_bleeddmg );
+		m_Shared.MakeBleed( pTFAttacker, pTFWeapon, flBleedDuration, flBleedDamage );
 	}
 
 	// Fire a global game event - "player_hurt"
