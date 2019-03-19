@@ -1188,21 +1188,12 @@ void CTFPlayerShared::ConditionThink( void )
 	{
 		if ( InCond( TF_COND_STEALTHED ) )
 		{
-			// TODO: Optimize so we aren't calling into attributes ever frame
-
-			float flConsumeRate = tf_spy_cloak_consume_rate.GetFloat();
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flConsumeRate, mult_cloak_meter_consume_rate );
-
-			CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-
-			if (pInvis && pInvis->HasMotionCloak())
+			if (m_bHasMotionCloak)
 			{
 				float flSpeed = m_pOuter->GetAbsVelocity().LengthSqr();
 				if (flSpeed == 0.0f)
 				{
-					float flRegenRate = tf_spy_cloak_regen_rate.GetFloat();
-					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flRegenRate, mult_cloak_meter_regen_rate );
-					m_flCloakMeter += gpGlobals->frametime * flRegenRate;
+					m_flCloakMeter += gpGlobals->frametime * m_flCloakRegenRate;
 
 					if (m_flCloakMeter >= 100.0f)
 						m_flCloakMeter = 100.0f;
@@ -1212,7 +1203,7 @@ void CTFPlayerShared::ConditionThink( void )
 					/*float v32 = DWORD( m_pOuter + 3516 ) * DWORD( m_pOuter + 3516 );
 					if (v32 == 0.0f)
 					{*/
-						m_flCloakMeter -= flConsumeRate * gpGlobals->frametime * 1.5f;
+						m_flCloakMeter -= m_flCloakDrainRate * gpGlobals->frametime * 1.5f;
 					/*}
 					else
 					{
@@ -1222,23 +1213,18 @@ void CTFPlayerShared::ConditionThink( void )
 			}
 			else
 			{
-				m_flCloakMeter -= gpGlobals->frametime * flConsumeRate;
+				m_flCloakMeter -= gpGlobals->frametime * m_flCloakDrainRate;
 			}
 
 			if ( m_flCloakMeter <= 0.0f )
 			{
-				float flDecloakRate = tf_spy_invis_unstealth_time.GetFloat();
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flDecloakRate, mult_decloak_rate );
-
-				if(!pInvis || !pInvis->HasMotionCloak())
-					FadeInvis( flDecloakRate );
+				if(!m_bHasMotionCloak)
+					FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
 			}
 		}
 		else
 		{
-			float flRegenRate = tf_spy_cloak_regen_rate.GetFloat();
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flRegenRate, mult_cloak_meter_regen_rate );
-			m_flCloakMeter += gpGlobals->frametime * flRegenRate;
+			m_flCloakMeter += gpGlobals->frametime * m_flCloakRegenRate;
 
 			if  (m_flCloakMeter >= 100.0f )
 				m_flCloakMeter = 100.0f;
@@ -2254,6 +2240,8 @@ void CTFPlayerShared::OnSpyTouchedByEnemy( void )
 void CTFPlayerShared::FadeInvis( float flInvisFadeTime )
 {
 	RemoveCond( TF_COND_STEALTHED );
+
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flInvisFadeTime, mult_decloak_rate );
 
 	if ( flInvisFadeTime < 0.15 )
 	{
@@ -4259,19 +4247,31 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 		if (m_Shared.m_flStealthNextChangeTime <= gpGlobals->curtime)
 		{
 			// Toggle invisibility
-			if (m_Shared.InCond(TF_COND_STEALTHED))
+			if (m_Shared.InCond( TF_COND_STEALTHED ))
 			{
 #ifdef GAME_DLL
-				float flDecloakRate = tf_spy_invis_unstealth_time.GetFloat();
-				CALL_ATTRIB_HOOK_FLOAT( flDecloakRate, mult_decloak_rate );
-				m_Shared.FadeInvis( flDecloakRate );
+				m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
 #endif
 				bDoSkill = true;
 			}
-			else if (CanGoInvisible() && (m_Shared.GetSpyCloakMeter() > 8.0f))	// must have over 10% cloak to start
+			else if (CanGoInvisible() && ( m_Shared.GetSpyCloakMeter() > 8.0f ))	// must have over 10% cloak to start
 			{
 #ifdef GAME_DLL
-				m_Shared.AddCond(TF_COND_STEALTHED);
+				m_Shared.AddCond( TF_COND_STEALTHED );
+
+				CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
+				if (pInvis)
+				{
+					float flConsumeRate = tf_spy_cloak_consume_rate.GetFloat();
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pInvis, flConsumeRate, mult_cloak_meter_consume_rate );
+
+					float flRegenRate = tf_spy_cloak_regen_rate.GetFloat();
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pInvis, flRegenRate, mult_cloak_meter_regen_rate );
+
+					m_Shared.SetHasMotionCloak( pInvis->HasMotionCloak() );
+					m_Shared.SetCloakDrainRate( flConsumeRate );
+					m_Shared.SetCloakRegenRate( flRegenRate );
+				}
 #endif
 				bDoSkill = true;
 			}

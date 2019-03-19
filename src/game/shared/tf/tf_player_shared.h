@@ -230,6 +230,8 @@ public:
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
 	void	SetHasMotionCloak( bool bSet ) { m_bHasMotionCloak = bSet; }
+	void	SetCloakDrainRate( float flRate ) { m_flCloakDrainRate = flRate; }
+	void	SetCloakRegenRate( float flRate ) { m_flCloakRegenRate = flRate; }
 
 	int		GetDesiredPlayerClassIndex( void );
 
