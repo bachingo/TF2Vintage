@@ -4595,3 +4595,29 @@ void CTFPlayer::PlayStepSound(Vector &vecOrigin, surfacedata_t *psurface, float 
 
 	BaseClass::PlayStepSound(vecOrigin, psurface, fvol, force);
 }
+
+#ifndef CLIENT_DLL
+
+CON_COMMAND_F( addcond, "", FCVAR_CHEAT )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
+	if (pPlayer && args.ArgC() > 1)
+	{
+		float flDuration = -1.0f;
+		if (args.ArgC() > 2)
+			flDuration = atof( args[2] );
+
+		pPlayer->m_Shared.AddCond( atoi( args[1] ), flDuration );
+	}
+}
+
+CON_COMMAND_F( removecond, "", FCVAR_CHEAT )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
+	if (pPlayer && args.ArgC() > 1)
+	{
+		pPlayer->m_Shared.RemoveCond( atoi( args[1] ) );
+	}
+}
+
+#endif
