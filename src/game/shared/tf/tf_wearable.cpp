@@ -30,7 +30,7 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 	UpdatePlayerBodygroups();
 }
 
-//---------------------------------------------------------------------------- -
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFWearable::UpdateModelToClass( void )
@@ -55,4 +55,29 @@ void CTFWearable::UpdateModelToClass( void )
 	}
 }
 
-#endif // GAME_DLL
+#else
+
+//-----------------------------------------------------------------------------
+// Purpose: Overlay Uber
+//-----------------------------------------------------------------------------
+int C_TFWearable::InternalDrawModel( int flags )
+{
+	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	bool bNotViewModel = ( ( pOwner && !pOwner->IsLocalPlayer() ) || C_BasePlayer::ShouldDrawLocalPlayer() );
+	bool bUseInvulnMaterial = ( bNotViewModel && pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
+	if (bUseInvulnMaterial)
+	{
+		modelrender->ForcedMaterialOverride( *pOwner->GetInvulnMaterialRef() );
+	}
+
+	int ret = BaseClass::InternalDrawModel( flags );
+
+	if (bUseInvulnMaterial)
+	{
+		modelrender->ForcedMaterialOverride( NULL );
+	}
+
+	return ret;
+}
+
+#endif

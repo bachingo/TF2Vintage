@@ -25,6 +25,8 @@ public:
 #ifdef GAME_DLL
 	virtual void	Equip( CBasePlayer *pPlayer );
 	void			UpdateModelToClass( void );
+#else
+	virtual int		InternalDrawModel( int flags );
 #endif
 };
 
