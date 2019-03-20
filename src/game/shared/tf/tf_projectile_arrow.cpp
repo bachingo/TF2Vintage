@@ -243,7 +243,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	const char* pszImpactSound = NULL;
 	bool bPlayerImpact = false;
 
-	if ( pPlayer )
+	if ( pPlayer && !pPlayer->m_Shared.IsInvulnerable() )
 	{
 		// Determine where we should land
 		Vector vecDir = GetAbsVelocity();
@@ -422,7 +422,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	else
 	{
 		// TODO: Figure out why arrow gibs sometimes cause crashes
-		//BreakArrow();
+		BreakArrow();
 		UTIL_Remove( this );
 	}
 

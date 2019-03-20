@@ -486,6 +486,30 @@ bool CTFPlayerShared::IsSpeedBoosted( void )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsInvulnerable( void )
+{
+	if (InCond( TF_COND_INVULNERABLE ) ||
+		 InCond( TF_COND_INVULNERABLE_CARD_EFFECT ) ||
+		 InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGE ))
+		return true;
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsStealthed( void )
+{
+	if (InCond( TF_COND_STEALTHED ) ||
+		 InCond( TF_COND_STEALTHED_USER_BUFF ) ||
+		 InCond( TF_COND_STEALTHED_USER_BUFF_FADING ))
+		return true;
+	return false;
+}
+
 void CTFPlayerShared::DebugPrintConditions(void)
 {
 #ifndef CLIENT_DLL

@@ -120,6 +120,8 @@ public:
 	bool	IsCritBoosted( void );
 	bool	IsMiniCritBoosted( void );
 	bool	IsSpeedBoosted( void );
+	bool	IsInvulnerable( void );
+	bool	IsStealthed( void );
 
 	void	ConditionGameRulesThink( void );
 
