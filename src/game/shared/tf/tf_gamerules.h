@@ -223,6 +223,10 @@ public:
 
 	virtual void	Activate();
 
+	virtual void	OnNavMeshLoad( void );
+
+	virtual void	LevelShutdown( void );
+
 	virtual void	SetHudType(int iHudType){ m_nHudType = iHudType; };
 
 	virtual bool	AllowDamage( CBaseEntity *pVictim, const CTakeDamageInfo &info );
