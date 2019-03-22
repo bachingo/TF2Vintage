@@ -143,6 +143,10 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 	m_bConnected = false;
 
+#ifdef GAME_DLL
+	pPlayer->EndClassSpecialSkill();
+#endif
+
 	// Swing the weapon.
 	Swing( pPlayer );
 
@@ -260,7 +264,7 @@ bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )
 	Vector vecForward; 
 	AngleVectors( pPlayer->EyeAngles(), &vecForward );
 	Vector vecSwingStart = pPlayer->Weapon_ShootPosition();
-	Vector vecSwingEnd = vecSwingStart + vecForward * 48;
+	Vector vecSwingEnd = vecSwingStart + vecForward * GetSwingRange();
 
 	// See if we hit anything.
 	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &trace );
@@ -325,7 +329,7 @@ void CTFWeaponBaseMelee::Smack( void )
 		Vector vecForward; 
 		AngleVectors( pPlayer->EyeAngles(), &vecForward );
 		Vector vecSwingStart = pPlayer->Weapon_ShootPosition();
-		Vector vecSwingEnd = vecSwingStart + vecForward * 48;
+		Vector vecSwingEnd = vecSwingStart + vecForward * GetSwingRange();
 
 #ifndef CLIENT_DLL
 		// Do Damage.
@@ -382,7 +386,7 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDama
 
 void CTFWeaponBaseMelee::OnEntityHit( CBaseEntity *pEntity )
 {
-	NULL;
+
 }
 
 //-----------------------------------------------------------------------------
