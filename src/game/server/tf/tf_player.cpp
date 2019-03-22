@@ -4970,10 +4970,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			m_hObserverTarget.Set( pAttacker );
 		}
 
-		// I was supposed to kill him, I'll go after you now
-		if(this == TFGameRules()->GetIT())
-			TFGameRules()->SetIT( pTFAttacker );
-
 		// reset fov to default
 		SetFOV( this, 0 );
 	}

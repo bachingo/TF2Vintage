@@ -482,6 +482,7 @@ public:
 		GET_STRING( pItem, pData, extra_wearable );
 
 		GET_INT( pItem, pData, attach_to_hands );
+		GET_INT( pItem, pData, attach_to_hands_vm_only );
 		GET_BOOL( pItem, pData, act_as_wearable );
 		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
 
