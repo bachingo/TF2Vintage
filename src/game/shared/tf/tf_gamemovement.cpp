@@ -59,40 +59,42 @@ public:
 
 	CTFGameMovement(); 
 
-	virtual void PlayerMove();
+	virtual void		PlayerMove();
 	virtual unsigned int PlayerSolidMask( bool brushOnly = false );
-	virtual void ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMove );
-	virtual bool CanAccelerate();
-	virtual bool CheckJumpButton();
-	virtual bool CheckWater( void );
-	virtual void WaterMove( void );
-	virtual void FullWalkMove();
-	virtual void WalkMove( void );
-	virtual void AirMove( void );
-	virtual void FullTossMove( void );
-	virtual void StunMove( void );
-	virtual void CategorizePosition( void );
-	virtual void CheckFalling( void );
-	virtual void Duck( void );
-	virtual void HandleDuckingSpeedCrop();
-	virtual Vector GetPlayerViewOffset( bool ducked ) const;
+	virtual void		ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMove );
+	virtual bool		CanAccelerate();
+	virtual bool		 CheckJumpButton();
+	virtual bool		CheckWater( void );
+	virtual void		WaterMove( void );
+	virtual void		FullWalkMove();
+	virtual void		WalkMove( void );
+	virtual void		AirMove( void );
+	virtual float		GetAirSpeedCap( void );
+	virtual void		FullTossMove( void );
+	virtual void		StunMove( void );
+	virtual void		ChargeMove( void );
+	virtual void		CategorizePosition( void );
+	virtual void		CheckFalling( void );
+	virtual void		Duck( void );
+	virtual void		HandleDuckingSpeedCrop();
+	virtual Vector		GetPlayerViewOffset( bool ducked ) const;
 
-	virtual void	TracePlayerBBox( const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm );
+	virtual void		TracePlayerBBox( const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm );
 	virtual CBaseHandle	TestPlayerPosition( const Vector& pos, int collisionGroup, trace_t& pm );
-	virtual void	StepMove( Vector &vecDestination, trace_t &trace );
-	virtual bool	GameHasLadders() const;
-	virtual void SetGroundEntity( trace_t *pm );
-	virtual void PlayerRoughLandingEffects( float fvol );
+	virtual void		StepMove( Vector &vecDestination, trace_t &trace );
+	virtual bool		GameHasLadders() const;
+	virtual void		SetGroundEntity( trace_t *pm );
+	virtual void		PlayerRoughLandingEffects( float fvol );
 protected:
 
-	virtual void CheckWaterJump(void );
-	void		 FullWalkMoveUnderwater();
+	virtual void		CheckWaterJump(void );
+	void				FullWalkMoveUnderwater();
 
 private:
 
-	bool		CheckWaterJumpButton( void );
-	void		AirDash( void );
-	void		PreventBunnyJumping();
+	bool				CheckWaterJumpButton( void );
+	void				AirDash( void );
+	void				PreventBunnyJumping();
 
 private:
 
@@ -162,6 +164,9 @@ void CTFGameMovement::PlayerMove()
 			}
 		} 
 	}
+
+	if (mv->m_vecVelocity.Length() < 300.0f)
+		m_pTFPlayer->m_Shared.EndCharge();
 }
 
 Vector CTFGameMovement::GetPlayerViewOffset( bool ducked ) const
@@ -178,6 +183,9 @@ unsigned int CTFGameMovement::PlayerSolidMask( bool brushOnly )
 
 	if ( m_pTFPlayer )
 	{
+		if (m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ))
+			return MASK_PLAYERSOLID_BRUSHONLY;
+
 		switch( m_pTFPlayer->GetTeamNumber() )
 		{
 		case TF_TEAM_RED:
@@ -221,6 +229,7 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 	mv->m_flMaxSpeed = TF_MAX_SPEED; /*tf_maxspeed.GetFloat();*/
 
 	// Run the command.
+	ChargeMove();
 	StunMove();
 	PlayerMove();
 	FinishMove();
@@ -906,6 +915,14 @@ void CTFGameMovement::AirMove( void )
 
 	// Now pull the base velocity back out.   Base velocity is set if you are on a moving object, like a conveyor (or maybe another monster?)
 	VectorSubtract( mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity );
+}
+
+float CTFGameMovement::GetAirSpeedCap( void )
+{
+	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+		return 750.0f;
+
+	return 30.0f * CAttributeManager::AttribHookValue<float>( 1.0f, "mod_air_control", m_pTFPlayer );
 }
 
 extern void TracePlayerBBoxForGround( const Vector& start, const Vector& end, const Vector& minsSrc,
@@ -1604,6 +1621,45 @@ void CTFGameMovement::StunMove( void )
 		mv->m_flSideMove = 0.0f;
 		mv->m_flUpMove = 0.0f;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGameMovement::ChargeMove( void )
+{
+	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+	{
+		mv->m_flMaxSpeed = 750.0f;
+		mv->m_flForwardMove = 750.0f;
+		mv->m_flSideMove = 0.0f;
+		mv->m_flUpMove = 0.0f;
+
+		int iOldButtons = mv->m_nButtons;
+		mv->m_nButtons &= IN_ATTACK2;
+		if (iOldButtons & IN_ATTACK)
+			mv->m_nButtons |= IN_ATTACK;
+	}
+
+#ifdef GAME_DLL
+	CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( m_pTFPlayer->GetActiveTFWeapon() );
+	if (pMedigun && pMedigun->GetWeaponID() == TF_WEAPON_MEDIGUN && pMedigun->GetMedigunType() == TF_MEDIGUN_QUICKFIX)
+	{
+		CTFPlayer *pTarget = ToTFPlayer( pMedigun->GetHealTarget() );
+		if (pTarget && pTarget->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+		{
+			mv->m_flMaxSpeed = 750.0f;
+			mv->m_flForwardMove = 750.0f;
+			mv->m_flSideMove = 0.0f;
+			mv->m_flUpMove = 0.0f;
+
+			int iOldButtons = mv->m_nButtons;
+			mv->m_nButtons &= IN_ATTACK2;
+			if (iOldButtons & IN_ATTACK)
+				mv->m_nButtons |= IN_ATTACK;
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
