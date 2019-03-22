@@ -25,7 +25,7 @@
 //-----------------------------------------------------------------------------
 enum
 {
-	TF_TEAM_RED = LAST_SHARED_TEAM+1,
+	TF_TEAM_RED = FIRST_GAME_TEAM,
 	TF_TEAM_BLUE,
 	TF_TEAM_COUNT,
 	TF_TEAM_BOSS
@@ -38,6 +38,8 @@ extern const char *g_aTeamNamesShort[TF_TEAM_COUNT];
 extern const char *g_aTeamParticleNames[TF_TEAM_COUNT];
 extern color32 g_aTeamColors[TF_TEAM_COUNT];
 extern color32 g_aTeamSkinColors[TF_TEAM_COUNT];
+
+bool IsTeamName( const char *name );
 
 const char *GetTeamParticleName( int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
 const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
@@ -129,6 +131,10 @@ enum
 
 extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
+
+bool IsPlayerClassName( const char *name );
+
+int GetClassIndexFromString( const char *name, int maxClass );
 
 extern const char *g_aDominationEmblems[];
 extern const char *g_aPlayerClassEmblems[];
@@ -352,10 +358,11 @@ enum
 	TF_WEAPON_JAR,
 	TF_WEAPON_LASER_POINTER,
 	TF_WEAPON_HANDGUN_SCOUT_PRIMARY,
-	TF_WEAPON_STICKBOMB, 
+	TF_WEAPON_STICKBOMB,
 	TF_WEAPON_BAT_WOOD,
 	TF_WEAPON_ROBOT_ARM,
 	TF_WEAPON_BUFF_ITEM,
+	TF_WEAPON_SWORD,
 
 	TF_WEAPON_COUNT
 };
@@ -373,6 +380,8 @@ int GetBuildableId( const char *pszBuildableName );
 const char *WeaponIdToAlias( int iWeapon );
 const char *WeaponIdToClassname( int iWeapon );
 const char *TranslateWeaponEntForClass( const char *pszName, int iClass );
+
+bool WeaponID_IsSniperRifle( int iWeaponID );
 
 enum
 {
@@ -426,7 +435,6 @@ extern const char *g_szProjectileNames[];
 #define TF_BURNING_FLAME_LIFE_PYRO	0.25		// pyro only displays burning effect momentarily
 #define TF_BURNING_DMG				3
 
-// Bleeding
 #define TF_BLEEDING_FREQUENCY		0.5f
 #define TF_BLEEDING_DAMAGE			4
 
@@ -951,6 +959,7 @@ enum
 #define SENTRYGUN_MAX_SHELLS_2			200
 #define SENTRYGUN_MAX_SHELLS_3			200
 #define SENTRYGUN_MAX_ROCKETS			20
+#define SENTRYGUN_BASE_RANGE			1100.0f
 
 // Dispenser's maximum carrying capability
 #define DISPENSER_MAX_METAL_AMMO		400
@@ -1160,7 +1169,7 @@ enum
 enum
 {
 	TF_STUNFLAGS_LOSERSTATE		= TF_STUNFLAG_THIRDPERSON | TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_NOSOUNDOREFFECT, // Currently unused
-	TF_STUNFLAGS_GHOSTSCARE		= TF_STUNFLAG_THIRDPERSON |TF_STUNFLAG_GHOSTEFFECT, // Ghost stun
+	TF_STUNFLAGS_GHOSTSCARE		= TF_STUNFLAG_THIRDPERSON | TF_STUNFLAG_GHOSTEFFECT, // Ghost stun
 	TF_STUNFLAGS_SMALLBONK		= TF_STUNFLAG_THIRDPERSON | TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_BONKEFFECT, // Half stun
 	TF_STUNFLAGS_NORMALBONK		= TF_STUNFLAG_BONKSTUCK, // Full stun
 	TF_STUNFLAGS_BIGBONK		= TF_STUNFLAG_CHEERSOUND | TF_STUNFLAG_BONKSTUCK | TF_STUNFLAG_RESISTDAMAGE | TF_STUNFLAG_BONKEFFECT, // Moonshot
@@ -1425,5 +1434,13 @@ private:
 #define TF_CAMERA_DIST 64
 #define TF_CAMERA_DIST_RIGHT 30
 #define TF_CAMERA_DIST_UP 0
+
+inline int GetEnemyTeam( CBaseEntity *ent )
+{
+	int myTeam = ent->GetTeamNumber();
+	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
+}
+
+bool IsSpaceToSpawnHere( const Vector& pos );
 
 #endif // TF_SHAREDDEFS_H

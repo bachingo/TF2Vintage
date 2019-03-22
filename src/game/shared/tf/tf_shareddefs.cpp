@@ -9,6 +9,11 @@
 #include "KeyValues.h"
 #include "takedamageinfo.h"
 #include "tf_gamerules.h"
+#if defined( CLIENT_DLL )
+#include "c_team.h"
+#else
+#include "team.h"
+#endif
 
 //-----------------------------------------------------------------------------
 // Teams.
@@ -72,6 +77,22 @@ color32 g_aTeamColors[TF_TEAM_COUNT] =
 bool IsGameTeam( int iTeam )
 {
 	return ( iTeam > LAST_SHARED_TEAM && iTeam < TF_TEAM_COUNT ); 
+}
+
+bool IsTeamName( const char *str )
+{
+	for (int i = 0; i < g_Teams.Size(); ++i)
+	{
+#if defined( CLIENT_DLL )
+		if (FStrEq( str, g_Teams[i]->Get_Name() ))
+			return true;
+#else
+		if (FStrEq( str, g_Teams[i]->GetName() ))
+			return true;
+#endif
+	}
+
+	return Q_strcasecmp( str, "spectate" ) == 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -151,6 +172,31 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Spy",
 	"Engineer",
 };
+
+bool IsPlayerClassName( const char *str )
+{
+	for (int i = 1; i < TF_CLASS_COUNT; ++i)
+	{
+		TFPlayerClassData_t *data = GetPlayerClassData( i );
+		if (FStrEq( str, data->m_szClassName ))
+			return true;
+	}
+
+	return false;
+}
+
+int GetClassIndexFromString( const char * name, int maxClass )
+{	// what's the point of the second argument?
+	for (int i = TF_FIRST_NORMAL_CLASS; i <= maxClass; ++i)
+	{
+		// what's the point of checking length? investigate for inlines...
+		size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
+		if (length <= strlen( name ) && !Q_strnicmp( g_aPlayerClassNames_NonLocalized[i], name, length ))
+			return i;
+	}
+
+	return TF_CLASS_UNDEFINED;
+}
 
 //-----------------------------------------------------------------------------
 // Gametypes.
@@ -398,6 +444,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_BAT_WOOD",
 	"TF_WEAPON_ROBOT_ARM",
 	"TF_WEAPON_BUFF_ITEM",
+	"TF_WEAPON_SWORD",
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
 
@@ -469,6 +516,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_CLUB,	// TF_WEAPON_BAT_WOOD,
 	DMG_CLUB,   // TF_WEAPON_ROBOT_ARM
 	DMG_GENERIC, // TF_WEAPON_BUFF_ITEM
+	DMG_SLASH, // TF_WEAPON_SWORD
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -673,6 +721,14 @@ int GetWeaponFromDamage( const CTakeDamageInfo &info )
 }
 
 #endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool WeaponID_IsSniperRifle( int iWeaponID )
+{
+	return iWeaponID == TF_WEAPON_SNIPERRIFLE/* || iWeaponID == TF_WEAPON_SNIPERRIFLE_DECAP || iWeaponID == TF_WEAPON_SNIPERRIFLE_CLASSIC*/;
+}
 
 //-----------------------------------------------------------------------------
 // Conditions stuff.
@@ -992,3 +1048,15 @@ float g_flDispenserHealRates[] =
 	15.0,
 	20.0
 };
+
+bool IsSpaceToSpawnHere( const Vector& pos )
+{
+	Vector mins = VEC_HULL_MIN - Vector( -5.0f, -5.0f, 0 );
+	Vector maxs = VEC_HULL_MAX + Vector( 5.0f, 5.0f, 5.0f );
+
+	trace_t tr;
+	CTraceFilterSimple filter( nullptr, COLLISION_GROUP_PLAYER_MOVEMENT );
+	UTIL_TraceHull( pos, pos, mins, maxs, MASK_PLAYERSOLID, &filter, &tr );
+
+	return tr.fraction >= 1.0f;
+}
