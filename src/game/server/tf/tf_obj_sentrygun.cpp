@@ -178,6 +178,8 @@ void CObjectSentrygun::Spawn()
 
 	m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_1;
 
+	m_fireTimer.Start();
+
 	BaseClass::Spawn();
 
 	SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_1 );
@@ -854,7 +856,7 @@ bool CObjectSentrygun::FindTarget()
 	// If we have an enemy get his minimum distance to check against.
 	Vector vecSegment;
 	Vector vecTargetCenter;
-	float flMinDist2 = 1100.0f * 1100.0f;
+	float flMinDist2 = Square( SENTRYGUN_BASE_RANGE );
 	CBaseEntity *pTargetCurrent = NULL;
 	CBaseEntity *pTargetOld = m_hEnemy.Get();
 	float flOldTargetDist2 = FLT_MAX;
@@ -1273,6 +1275,8 @@ bool CObjectSentrygun::Fire()
 
 		EmitSentrySound( filter, entindex(), pszSound );
 
+		m_fireTimer.Reset();
+
 		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
 		{
 			m_iAmmoShells--;
@@ -1368,6 +1372,14 @@ bool CObjectSentrygun::FireRockets()
 	}
 
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CObjectSentrygun::GetTimeSinceLastFired( void ) const
+{
+	return m_fireTimer.GetElapsedTime();
 }
 
 //-----------------------------------------------------------------------------

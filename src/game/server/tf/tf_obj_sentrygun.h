@@ -71,6 +71,10 @@ public:
 
 	virtual void	MakeCarriedObject( CTFPlayer *pPlayer );
 
+	const QAngle&	GetTurretAngles( void ) const { return m_vecCurAngles; }
+
+	float			GetTimeSinceLastFired( void ) const;
+
 	void			SetState( int iState ) { m_iState.Set( iState ); }
 	int 			GetState( void ) { return m_iState.Get(); }
 	bool			Fire( void );
@@ -171,6 +175,8 @@ private:
 	float m_flHeavyBulletResist;
 
 	int m_iPlacementBodygroup;
+
+	IntervalTimer m_fireTimer;
 
 	DECLARE_DATADESC();
 };
