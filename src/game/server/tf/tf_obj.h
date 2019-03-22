@@ -51,7 +51,8 @@ if ( object_verbose.GetInt() )									\
 // ------------------------------------------------------------------------ //
 // Resupply object that's built by the player
 // ------------------------------------------------------------------------ //
-class CBaseObject : public CBaseCombatCharacter, public IHasBuildPoints, public IScorer
+DECLARE_AUTO_LIST( IBaseObjectAutoList )
+class CBaseObject : public CBaseCombatCharacter, public IHasBuildPoints, public IScorer, public IBaseObjectAutoList
 {
 	DECLARE_CLASS( CBaseObject, CBaseCombatCharacter );
 public:

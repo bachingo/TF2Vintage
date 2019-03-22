@@ -179,6 +179,7 @@ public:
 	CHandle<CBaseObject> m_hObj2;
 };
 
+IMPLEMENT_AUTO_LIST( IBaseObjectAutoList )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -221,7 +222,7 @@ void CBaseObject::UpdateOnRemove( void )
 	
 	if ( GetTeam() )
 	{
-		((CTFTeam*)GetTeam())->RemoveObject( this );
+		GetTFTeam()->RemoveObject( this );
 	}
 
 	DetachObjectFromObject();

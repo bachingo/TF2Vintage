@@ -19,7 +19,7 @@
 //-----------------------------------------------------------------------------
 // Purpose: Visualizes a respawn room to the enemy team
 //-----------------------------------------------------------------------------
-DECLARE_AUTO_LIST(IFuncRespawnRoomVisualizerAutoList);
+DECLARE_AUTO_LIST( IFuncRespawnRoomVisualizerAutoList )
 class CFuncRespawnRoomVisualizer : public CFuncBrush, public IFuncRespawnRoomVisualizerAutoList
 {
 	DECLARE_CLASS( CFuncRespawnRoomVisualizer, CFuncBrush );
@@ -43,12 +43,10 @@ protected:
 	CHandle<CFuncRespawnRoom>	m_hRespawnRoom;
 };
 
-IMPLEMENT_AUTO_LIST(IFuncRespawnRoomVisualizerAutoList);
-
-LINK_ENTITY_TO_CLASS( func_respawnroom, CFuncRespawnRoom);
+LINK_ENTITY_TO_CLASS( func_respawnroom, CFuncRespawnRoom );
 
 BEGIN_DATADESC( CFuncRespawnRoom )
-	DEFINE_FUNCTION( RespawnRoomTouch ),
+	DEFINE_FUNCTION( CFuncRespawnRoomShim::Touch ),
 	DEFINE_KEYFIELD( m_bAllowFlag, FIELD_BOOLEAN, "AllowFlag"),
 	// inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetActive", InputSetActive ),
@@ -60,6 +58,7 @@ END_DATADESC()
 IMPLEMENT_SERVERCLASS_ST( CFuncRespawnRoom, DT_FuncRespawnRoom )
 END_SEND_TABLE()
 
+IMPLEMENT_AUTO_LIST( IFuncRespawnRoomAutoList )
 
 //-----------------------------------------------------------------------------
 // Purpose: Check whether the line between two vectors crosses a respawn room visualizer
@@ -107,7 +106,7 @@ void CFuncRespawnRoom::Spawn( void )
 	SetCollisionGroup( TFCOLLISION_GROUP_RESPAWNROOMS );
 
 	m_bActive = true;
-	SetTouch( &CFuncRespawnRoom::RespawnRoomTouch );
+	SetTouch( &CFuncRespawnRoomShim::Touch );
 }
 
 //-----------------------------------------------------------------------------
@@ -318,7 +317,7 @@ bool PointInRespawnRoom( CBaseEntity *pTarget, const Vector &vecOrigin )
 
 //===========================================================================================================
 
-LINK_ENTITY_TO_CLASS( func_respawnroomvisualizer, CFuncRespawnRoomVisualizer);
+LINK_ENTITY_TO_CLASS( func_respawnroomvisualizer, CFuncRespawnRoomVisualizer );
 
 BEGIN_DATADESC( CFuncRespawnRoomVisualizer )
 	DEFINE_KEYFIELD( m_iszRespawnRoomName, FIELD_STRING, "respawnroomname" ),
@@ -328,6 +327,8 @@ END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CFuncRespawnRoomVisualizer, DT_FuncRespawnRoomVisualizer )
 END_SEND_TABLE()
+
+IMPLEMENT_AUTO_LIST( IFuncRespawnRoomVisualizerAutoList )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
