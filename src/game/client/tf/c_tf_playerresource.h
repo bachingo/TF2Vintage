@@ -26,6 +26,7 @@ public:
 	int	GetTotalScore( int iIndex ) { return GetArrayValue( iIndex, m_iTotalScore, 0 ); }
 	int GetDominations( int iIndex ) { return GetArrayValue( iIndex, m_iDomination, 0 ); }
 	int GetMaxHealth( int iIndex )   { return GetArrayValue( iIndex, m_iMaxHealth, TF_HEALTH_UNDEFINED ); }
+	int GetMaxHealthForBuffing( int iIndex ) { return GetArrayValue( iIndex, m_iMaxBuffedHealth, TF_HEALTH_UNDEFINED ); }
 	int GetPlayerClass( int iIndex ) { return GetArrayValue( iIndex, m_iPlayerClass, TF_CLASS_UNDEFINED ); }
 	Color GetPlayerColor(int iIndex);
 	int GetKillstreak(int iIndex) { return GetArrayValue(iIndex, m_iKillstreak, 0); }
@@ -43,7 +44,13 @@ protected:
 	int		m_iKillstreak[MAX_PLAYERS + 1];
 	Vector	m_iColors[MAX_PLAYERS + 1];
 	bool    m_bArenaSpectator[MAX_PLAYERS + 1];
+	int		m_iMaxBuffedHealth[MAX_PLAYERS + 1];
 };
 
+inline C_TF_PlayerResource *TFPlayerResource()
+{
+	Assert( dynamic_cast<C_TF_PlayerResource *>( g_PR ) );
+	return static_cast<C_TF_PlayerResource *>( g_PR );
+}
 
 #endif // C_TF_PLAYERRESOURCE_H

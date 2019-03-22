@@ -34,6 +34,7 @@ protected:
 	CNetworkArray( Vector, m_iColors, MAX_PLAYERS + 1 );
 	CNetworkArray( int, m_iKillstreak, MAX_PLAYERS + 1 );
 	CNetworkArray( bool, m_bArenaSpectator, MAX_PLAYERS + 1 );
+	CNetworkArray( int, m_iMaxBuffedHealth, MAX_PLAYERS + 1 );
 };
 
 #endif // TF_PLAYER_RESOURCE_H
