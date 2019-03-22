@@ -1197,8 +1197,7 @@ public:
 				}
 			}
 		}
-
-		if ( pPlayer && pPlayer->m_Shared.IsMiniCritBoosted() )
+		else if ( pPlayer && pPlayer->m_Shared.IsMiniCritBoosted() )
 		{
 			if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) ||
 				pPlayer->InSameTeam( C_TFPlayer::GetLocalTFPlayer() ) ||
@@ -1213,6 +1212,28 @@ public:
 					vecColor = Vector( 28, 168, 112 );
 					break;
 				}
+			}
+		}
+		else if (pPlayer && (pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) || pPlayer->m_Shared.m_bShieldChargeStopped))
+		{
+			float flAmt = 1.0f;
+			if (pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+				flAmt = ( 100.0f - pPlayer->m_Shared.GetShieldChargeMeter() ) / 100.0f;
+			else
+				flAmt = Min( ( ( gpGlobals->curtime - pPlayer->m_Shared.m_flShieldChargeEndTime ) + -1.5f ) * 10.0f / 3.0f, 1.0f );
+
+			switch (pPlayer->GetTeamNumber())
+			{
+				case TF_TEAM_RED:
+					vecColor.x = Max( flAmt * 80.0f, 1.0f );
+					vecColor.y = Max( flAmt * 8.0f, 1.0f );
+					vecColor.z = Max( flAmt * 5.0f, 1.0f );
+					break;
+				case TF_TEAM_BLUE:
+					vecColor.x = Max( flAmt * 5.0f, 1.0f );
+					vecColor.y = Max( flAmt * 20.0f, 1.0f );
+					vecColor.z = Max( flAmt * 80.0f, 1.0f );
+					break;
 			}
 		}
 
@@ -1768,16 +1789,22 @@ void C_TFPlayer::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 int C_TFPlayer::GetMaxHealth( void ) const
 {	
-	if ( g_PR )
+	if ( TFPlayerResource() )
 	{
-		C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
-		if ( tf_PR )
-		{
-			int index = ( (C_BasePlayer *) this )->entindex();
-			return tf_PR->GetMaxHealth( index );
-		}
+		return TFPlayerResource()->GetMaxHealth( entindex() );
 	}
-	return 1;
+
+	return TF_HEALTH_UNDEFINED;
+}
+
+int C_TFPlayer::GetMaxHealthForBuffing( void ) const
+{
+	if (TFPlayerResource())
+	{
+		return TFPlayerResource()->GetMaxHealthForBuffing( entindex() );
+	}
+
+	return TF_HEALTH_UNDEFINED;
 }
 
 //-----------------------------------------------------------------------------
@@ -2659,6 +2686,9 @@ void C_TFPlayer::ClientThink()
 	m_Shared.InvisibilityThink();
 
 	m_Shared.ConditionThink();
+
+	m_Shared.ClientShieldChargeThink();
+	m_Shared.ClientDemoBuffThink();
 
 	// Clear our healer, it'll be reset by the medigun client think if we're being healed
 	m_hHealer = NULL;
@@ -3991,19 +4021,6 @@ void C_TFPlayer::SetHealer( C_TFPlayer *pHealer, float flChargeLevel )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CBaseEntity *C_TFPlayer::MedicGetHealTarget( void )
-{
-	CWeaponMedigun *pWeapon = dynamic_cast < CWeaponMedigun * >( GetActiveWeapon() );
-
-	if ( pWeapon )
-		return pWeapon->GetHealTarget();
-
-	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool C_TFPlayer::CanShowClassMenu( void )
 {
 	return ( GetTeamNumber() > LAST_SHARED_TEAM );
@@ -4572,6 +4589,37 @@ void C_TFPlayer::UpdateOverhealEffect( bool bForceHide /*= false*/ )
 	
 	// Update our overheal state
 	m_iOldOverhealTeamNum = iTeamNum;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateDemomanEyeEffect( int iDecapCount )
+{
+	if (m_pDemoEyeEffect)
+	{
+		ParticleProp()->StopEmission( m_pDemoEyeEffect );
+		m_pDemoEyeEffect = NULL;
+	}
+
+	iDecapCount = Min( iDecapCount, 4 );
+	switch (iDecapCount)
+	{
+		case 1:
+			m_pDemoEyeEffect = ParticleProp()->Create( "eye_powerup_green_lvl_1", PATTACH_POINT_FOLLOW, "eyeglow_L" );
+			break;
+		case 2:
+			m_pDemoEyeEffect = ParticleProp()->Create( "eye_powerup_green_lvl_2", PATTACH_POINT_FOLLOW, "eyeglow_L" );
+			break;
+		case 3:
+			m_pDemoEyeEffect = ParticleProp()->Create( "eye_powerup_green_lvl_3", PATTACH_POINT_FOLLOW, "eyeglow_L" );
+			break;
+		case 4:
+			m_pDemoEyeEffect = ParticleProp()->Create( "eye_powerup_green_lvl_4", PATTACH_POINT_FOLLOW, "eyeglow_L" );
+			break;
+		default:
+			break;
+	}
 }
 
 #include "c_obj_sentrygun.h"

@@ -92,6 +92,7 @@ public:
 	C_TFPlayerClass *GetPlayerClass( void )		{ return &m_PlayerClass; }
 	bool IsPlayerClass( int iClass );
 	virtual int GetMaxHealth( void ) const;
+	virtual int	GetMaxHealthForBuffing( void ) const;
 
 	virtual int GetRenderTeamNumber( void );
 
@@ -266,6 +267,8 @@ public:
 
 	void UpdateOverhealEffect( bool bForceHide = false );
 
+	void UpdateDemomanEyeEffect( int iDecapCount );
+
 protected:
 
 	void ResetFlexWeights( CStudioHdr *pStudioHdr );
@@ -400,6 +403,8 @@ public:
 	int				m_iPreviousMetal;
 
 	EHANDLE			m_hOldActiveWeapon;
+
+	CNewParticleEffect *m_pDemoEyeEffect;
 
 	int GetNumActivePipebombs( void );
 
