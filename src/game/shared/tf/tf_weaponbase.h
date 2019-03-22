@@ -367,6 +367,8 @@ protected:
 
 	CNetworkVar(	bool, m_bResetParity );
 
+	int				m_iRefundedAmmo;
+
 #ifdef CLIENT_DLL
 	bool m_bOldResetParity;
 

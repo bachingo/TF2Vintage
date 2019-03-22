@@ -6854,7 +6854,7 @@ void CTFPlayer::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarge
 //-----------------------------------------------------------------------------
 void CTFPlayer::RemoveInvisibility( void )
 {
-	if ( !m_Shared.InCond( TF_COND_STEALTHED ) )
+	if ( !m_Shared.IsStealthed() )
 		return;
 
 	// remove quickly

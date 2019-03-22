@@ -3,6 +3,8 @@
 
 #ifdef GAME_DLL
 #include "tf_player.h"
+#else
+#include "c_tf_player.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!

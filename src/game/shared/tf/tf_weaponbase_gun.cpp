@@ -222,23 +222,9 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 	}
 
-	if ( UsesClipsForAmmo1() )
-	{
-		m_iClip1 -= m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
-	}
-	else
-	{
-		if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
-		{
-			pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iPrimaryAmmoType );
-		}
-		else
-		{
-			pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iSecondaryAmmoType );
-		}
-	}
-
 	DoFireEffects();
+
+	RemoveAmmo( pPlayer );
 
 	UpdatePunchAngles( pPlayer );
 
@@ -729,6 +715,45 @@ void CTFWeaponBaseGun::PlayWeaponShootSound( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFWeaponBaseGun::GetAmmoPerShot( void ) const
+{
+	int iAmmoPerShot = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
+	CALL_ATTRIB_HOOK_INT( iAmmoPerShot, mod_ammo_per_shot );
+	return iAmmoPerShot;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBaseGun::RemoveAmmo( CTFPlayer *pPlayer )
+{
+#ifndef CLIENT_DLL
+	if (UsesClipsForAmmo1())
+	{
+		m_iClip1 -= GetAmmoPerShot();
+	}
+	else
+	{
+		if (m_iWeaponMode == TF_WEAPON_PRIMARY_MODE)
+		{
+			pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iPrimaryAmmoType );
+			if (0 < m_iRefundedAmmo)
+				pPlayer->GiveAmmo( m_iRefundedAmmo, m_iPrimaryAmmoType );
+		}
+		else
+		{
+			pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iSecondaryAmmoType );
+			if (0 < m_iRefundedAmmo)
+				pPlayer->GiveAmmo( m_iRefundedAmmo, m_iSecondaryAmmoType );
+		}
+
+		m_iRefundedAmmo = 0;
+	}
+#endif
+}
 //-----------------------------------------------------------------------------
 // Purpose: Accessor for damage, so sniper etc can modify damage
 //-----------------------------------------------------------------------------

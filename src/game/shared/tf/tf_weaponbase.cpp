@@ -725,13 +725,11 @@ bool CTFWeaponBase::Deploy( void )
 
 		flDeployTime = Max( flDeployTime, FLT_EPSILON ); // Don't divide by 0
 
-		if (pPlayer->GetViewModel( 0 ))
-			pPlayer->GetViewModel( 0 )->SetPlaybackRate( 1.0 / flDeployTime );
-		if (pPlayer->GetViewModel( 1 ))
-			pPlayer->GetViewModel( 1 )->SetPlaybackRate( 1.0 / flDeployTime );
+		if (pPlayer->GetViewModel( m_nViewModelIndex ))
+			pPlayer->GetViewModel( m_nViewModelIndex )->SetPlaybackRate( 1.0 / flDeployTime );
 
-		m_flNextPrimaryAttack = max( flOriginalPrimaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
-		m_flNextSecondaryAttack = max( flOriginalSecondaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
+		m_flNextPrimaryAttack = Max( flOriginalPrimaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
+		m_flNextSecondaryAttack = Max( flOriginalSecondaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
 
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
 
@@ -2063,7 +2061,7 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 		// Afterburn shouldn't trigger on-hit effects.
 		// Disguised spies shouldn't trigger on-hit effects.
 		if (( info.GetDamageType() & DMG_BURN ) ||
-			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && pTFVictim->m_Shared.GetDisguiseTeam() == pOwner->GetTeamNumber() ))
+			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() ))
 			return;
 
 		if (!pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ))
@@ -2082,6 +2080,32 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 			flSlowOnHit = CAttributeManager::AttribHookValue<float>( 0, "mult_onhit_enemyspeed_major", this );
 			if (flSlowOnHit)
 				pTFVictim->m_Shared.StunPlayer( flSlowOnHit, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_NOSOUNDOREFFECT, pAttacker );
+		}
+
+		int iRevealCloaked = 0;
+		CALL_ATTRIB_HOOK_INT( iRevealCloaked, reveal_cloaked_victim_on_hit );
+		if (iRevealCloaked > 0)
+		{
+			pTFVictim->RemoveInvisibility();
+			UTIL_ScreenFade( pVictim, { 255, 255, 255, 255 }, 0.25f, 0.1f, FFADE_IN );
+		}
+
+		int iRevealDisguised = 0;
+		CALL_ATTRIB_HOOK_INT( iRevealDisguised, reveal_disguised_victim_on_hit );
+		if (iRevealDisguised > 0)
+			pTFVictim->RemoveDisguise();
+
+		int iStunWaistHighAirborneTime = 0;
+		CALL_ATTRIB_HOOK_INT( iStunWaistHighAirborneTime, stun_waist_high_airborne );
+		if (iStunWaistHighAirborneTime > 0 && !( pVictim->GetFlags() & FL_ONGROUND ) && !pVictim->GetGroundEntity())
+		{
+			Vector vecEye = pOwner->EyePosition();
+			Vector vecWaist = pVictim->WorldSpaceCenter();
+			if (vecEye.z < vecWaist.z)
+			{
+				pTFVictim->m_Shared.StunPlayer( iStunWaistHighAirborneTime, 0.5f, 0.75f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_BONKSTUCK|TF_STUNFLAG_THIRDPERSON, pOwner );
+				pTFVictim->EmitSound( "Halloween.PlayerScream" );
+			}
 		}
 	}
 
@@ -2115,6 +2139,22 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 				gameeventmanager->FireEvent( event );
 			}
 		}
+	}
+
+	int iAddAmmo = 0;
+	CALL_ATTRIB_HOOK_INT( iAddAmmo, add_onhit_addammo );
+	if (iAddAmmo)
+	{
+		if (pTFVictim &&
+			 pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) &&
+			 !pTFVictim->m_Shared.IsStealthed() &&
+			 !pTFVictim->m_Shared.InCond( TF_COND_STEALTHED_BLINK ))
+		{
+			iAddAmmo = 0;
+		}
+
+		iAddAmmo *= info.GetDamage() / 100.0f;
+		m_iRefundedAmmo = iAddAmmo;
 	}
 }
 

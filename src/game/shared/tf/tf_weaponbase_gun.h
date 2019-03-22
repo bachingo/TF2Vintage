@@ -76,6 +76,10 @@ public:
 
 	virtual void PlayWeaponShootSound( void );
 
+	virtual int GetAmmoPerShot( void ) const;
+
+	virtual void RemoveAmmo( CTFPlayer *pPlayer );
+
 private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );
