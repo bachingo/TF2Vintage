@@ -428,6 +428,18 @@ bool CObjectTeleporter::IsSendingPlayer( CTFPlayer *pSender )
 	return bResult;
 }
 
+bool CObjectTeleporter::IsReady( void )
+{
+	if (IsMatchingTeleporterReady() &&
+		GetState() != TELEPORTER_STATE_BUILDING &&
+		!IsDisabled() &&
+		!IsUpgrading() &&
+		!IsRedeploying())
+		return true;
+
+	return false;
+}
+
 void CObjectTeleporter::CopyUpgradeStateToMatch( CObjectTeleporter *pMatch, bool bCopyFrom )
 {
 	if ( !pMatch )
