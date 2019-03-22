@@ -61,13 +61,15 @@
 
 #ifdef CLIENT_DLL
 	extern ConVar tf2c_muzzlelight;
+
+	ConVar tf2v_new_flames( "tf2v_new_flames", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Swap out the particle system for the Flamethrower to the newer one?", true, 0.0f, true, 1.0f );
 #endif
 
 ConVar  tf2v_airblast( "tf2v_airblast", "2", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = tf2c (default), 2 = tf2v" );
-ConVar  tf2c_airblast_players( "tf2c_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
+ConVar  tf2v_airblast_players( "tf2v_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
 
 #ifdef GAME_DLL
-ConVar	tf2c_debug_airblast( "tf2c_debug_airblast", "0", FCVAR_CHEAT, "Visualize airblast box." );
+ConVar	tf2v_debug_airblast( "tf2v_debug_airblast", "0", FCVAR_CHEAT, "Visualize airblast box." );
 #endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrower, DT_WeaponFlameThrower )
@@ -179,13 +181,16 @@ void CTFFlameThrower::WeaponReset( void )
 void CTFFlameThrower::Precache( void )
 {
 	BaseClass::Precache();
-	PrecacheParticleSystem( "pyro_blast" );
+
 	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttack" );
 	PrecacheScriptSound( "TFPlayer.AirBlastImpact" );
 	PrecacheScriptSound( "TFPlayer.FlameOut" );
 	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 	PrecacheScriptSound( "Weapon_FlameThrower.FireHit" );
+
+	PrecacheParticleSystem( "pyro_blast" );
 	PrecacheParticleSystem( "deflect_fx" );
+	PrecacheParticleSystem( "new_flame" );
 }
 
 //-----------------------------------------------------------------------------
@@ -551,7 +556,7 @@ void CTFFlameThrower::SecondaryAttack()
 
 	int count = UTIL_EntitiesInBox( pList, 64, vecOrigin - vecBlastSize, vecOrigin + vecBlastSize, 0 );
 
-	if ( tf2c_debug_airblast.GetBool() )
+	if ( tf2v_debug_airblast.GetBool() )
 	{
 		NDebugOverlay::Box( vecOrigin, -vecBlastSize, vecBlastSize, 0, 0, 255, 100, 2.0 );
 	}
@@ -632,7 +637,7 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 	if ( !pVictim )
 		return;
 
-	if ( !pVictim->InSameTeam( pAttacker ) && tf2c_airblast_players.GetBool() )
+	if ( !pVictim->InSameTeam( pAttacker ) && tf2v_airblast_players.GetBool() )
 	{
 		// Don't push players if they're too far off to the side. Ignore Z.
 		Vector vecVictimDir = pVictim->WorldSpaceCenter() - pAttacker->WorldSpaceCenter();
@@ -1002,6 +1007,13 @@ void CTFFlameThrower::StopPilotLight()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFFlameThrower::UpdateParticleEffect( void )
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFFlameThrower::RestartParticleEffect( void )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
@@ -1022,22 +1034,33 @@ void CTFFlameThrower::RestartParticleEffect( void )
 	{
 		pszParticleEffect = "flamethrower_underwater";
 	}
-	else
+
+	if (!tf2v_new_flames.GetBool())
 	{
-		if ( m_bCritFire )
+		if (m_bCritFire)
 		{
 			pszParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
 		}
-		else 
+		else
 		{
-			pszParticleEffect = iTeam == TF_TEAM_RED ? "flamethrower" : ConstructTeamParticle( "flamethrower_%s", pOwner->GetTeamNumber(), true );
-		}		
+			pszParticleEffect = "flamethrower";
+		}
+	}
+	else
+	{
+		if (m_bCritFire)
+		{
+			pszParticleEffect = ConstructTeamParticle( "new_flame_crit_%s", iTeam, true );
+		}
+		else
+		{
+			pszParticleEffect = "new_flame";
+		}
 	}
 
 	// Start the effect on the viewmodel if our owner is the local player
 	C_BaseEntity *pModel = GetWeaponForEffect();
-
-	if ( pModel )
+	if (pModel)
 	{
 		m_pFlameEffect = pModel->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
 		m_hFlameEffectHost = pModel;
@@ -1081,11 +1104,14 @@ IMPLEMENT_AUTO_LIST( ITFFlameEntityAutoList );
 
 LINK_ENTITY_TO_CLASS( tf_flame, CTFFlameEntity );
 
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Spawns this entitye
 //-----------------------------------------------------------------------------
 void CTFFlameEntity::Spawn( void )
 {
+#ifdef GAME_DLL
 	BaseClass::Spawn();
 
 	// don't collide with anything, we do our own collision detection in our think method
@@ -1109,8 +1135,21 @@ void CTFFlameEntity::Spawn( void )
 	// Setup the think function.
 	SetThink( &CTFFlameEntity::FlameThink );
 	SetNextThink( gpGlobals->curtime );
+#else
+	if(tf2v_new_flames.GetBool())
+		SetNextClientThink( 0.016f );
+#endif
 }
 
+#ifdef CLIENT_DLL
+void CTFFlameEntity::ClientThink( void )
+{
+
+	SetNextClientThink( CLIENT_THINK_NEVER );
+}
+#endif
+
+#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Creates an instance of this entity
 //-----------------------------------------------------------------------------

@@ -85,6 +85,7 @@ public:
 	void 			StartPilotLight();
 	void 			StopPilotLight();
 
+	void			UpdateParticleEffect( void );
 	// Server specific.
 #else
 	virtual void	DeflectEntity( CBaseEntity *pEntity, CTFPlayer *pAttacker, Vector &vecDir );
@@ -152,14 +153,23 @@ public:
 
 #ifdef GAME_DLL
 DECLARE_AUTO_LIST( ITFFlameEntityAutoList );
+#endif
 
-class CTFFlameEntity : public CBaseEntity, public ITFFlameEntityAutoList
+class CTFFlameEntity : public CBaseEntity
+#ifdef GAME_DLL
+	, public ITFFlameEntityAutoList
+#endif
 {
 	DECLARE_CLASS( CTFFlameEntity, CBaseEntity );
 public:
 
 	virtual void Spawn( void );
 
+#ifdef CLIENT_DLL
+	virtual void ClientThink( void );
+#endif
+	
+#ifdef GAME_DLL
 public:
 	static CTFFlameEntity *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float m_flDmgAmount );
 
@@ -181,8 +191,12 @@ private:
 	EHANDLE						m_hAttacker;			// attacking player
 	int							m_iAttackerTeam;		// team of attacking player
 	CHandle<CTFFlameThrower>	m_hLauncher;			// weapon that fired this flame
+
+#else
+	CNewParticleEffect *m_pFlameEffect;
+#endif
 };
 
-#endif // GAME_DLL
+
 
 #endif // TF_WEAPON_FLAMETHROWER_H
