@@ -69,6 +69,9 @@ ConVar tf_spy_cloak_no_attack_time( "tf_spy_cloak_no_attack_time", "2.0", FCVAR_
 //ConVar tf_spy_stealth_blink_time( "tf_spy_stealth_blink_time", "0.3", FCVAR_DEVELOPMENTONLY, "time after being hit the spy blinks into view" );
 //ConVar tf_spy_stealth_blink_scale( "tf_spy_stealth_blink_scale", "0.85", FCVAR_DEVELOPMENTONLY, "percentage visible scalar after being hit the spy blinks into view" );
 
+ConVar tf_demoman_charge_drain_time( "tf_demoman_charge_drain_time", "1.5", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
+ConVar tf_demoman_charge_regen_rate( "tf_demoman_charge_regen_rate", "8.3", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
+
 ConVar tf_tournament_hide_domination_icons( "tf_tournament_hide_domination_icons", "0", FCVAR_REPLICATED, "Tournament mode server convar that forces clients to not display the domination icons above players dominating them." );
 
 ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
@@ -1224,15 +1227,15 @@ void CTFPlayerShared::ConditionThink( void )
 				}
 				else
 				{
-					/*float v32 = DWORD( m_pOuter + 3516 ) * DWORD( m_pOuter + 3516 );
-					if (v32 == 0.0f)
-					{*/
+					float flMaxSpeed = Square( m_pOuter->MaxSpeed() );
+					if (flMaxSpeed == 0.0f)
+					{
 						m_flCloakMeter -= m_flCloakDrainRate * gpGlobals->frametime * 1.5f;
-					/*}
+					}
 					else
 					{
-						m_flCloakMeter -= ( flConsumeRate * gpGlobals->frametime * 1.5f ) * Min( flSpeed / v32, 1.0f );
-					}*/
+						m_flCloakMeter -= ( m_flCloakDrainRate * gpGlobals->frametime * 1.5f ) * Min( flSpeed / flMaxSpeed, 1.0f );
+					}
 				}
 			}
 			else
@@ -2296,7 +2299,7 @@ void CTFPlayerShared::InvisibilityThink( void )
 	// Go invisible or appear.
 	if ( m_flInvisChangeCompleteTime > gpGlobals->curtime )
 	{
-		if ( InCond( TF_COND_STEALTHED ) )
+		if ( IsStealthed() )
 		{
 			flTargetInvis = 1.0f - ( ( m_flInvisChangeCompleteTime - gpGlobals->curtime ) );
 		}
@@ -2307,9 +2310,24 @@ void CTFPlayerShared::InvisibilityThink( void )
 	}
 	else
 	{
-		if ( InCond( TF_COND_STEALTHED ) )
+		if ( IsStealthed() )
 		{
 			flTargetInvis = 1.0f;
+
+			if (m_bHasMotionCloak && m_flCloakMeter == 0.0f)
+			{
+				float flSpeed = m_pOuter->GetAbsVelocity().LengthSqr();
+				float flMaxSpeed = Square( m_pOuter->MaxSpeed() );
+				if (flMaxSpeed == 0.0f)
+				{
+					if (flSpeed >= 0.0f)
+						flTargetInvis *= 0.5f;
+				}
+				else
+				{
+					flTargetInvis *= ( flSpeed * -0.5f ) / flMaxSpeed + 1.0f;
+				}
+			}
 		}
 		else
 		{
