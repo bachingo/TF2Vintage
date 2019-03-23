@@ -285,3 +285,16 @@ CEconItemAttribute *CEconItemView::IterateAttributes( string_t strClass )
 
 	return NULL;
 }
+
+const char *CEconItemView::GetExtraWearableModel( void ) const
+{
+	CEconItemDefinition *pStatic = GetStaticData();
+
+	if ( pStatic )
+	{
+		// We have an extra wearable
+		return pStatic->extra_wearable;
+	}
+
+	return "\0";
+}

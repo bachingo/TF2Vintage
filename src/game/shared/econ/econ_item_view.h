@@ -47,6 +47,8 @@ public:
 	void SetItemDefIndex( int iItemID );
 	int GetItemDefIndex( void ) const;
 
+	const char*	GetExtraWearableModel(void) const;
+
 private:
 	CNetworkVar( short, m_iItemDefinitionIndex );
 

@@ -1427,7 +1427,7 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->UpdatePlayerBodygroups();
 
 			// Extra wearables
-			const char *iszModel = pWeapon->GetExtraWearableModel();
+			const char *iszModel = pWeapon->GetItem()->GetExtraWearableModel();
 			if ( iszModel[0] )
 			{
 				CTFWearable *pWearable = ( CTFWearable* )CreateEntityByName( "tf_wearable" );
