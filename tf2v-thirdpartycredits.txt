@@ -1,0 +1,5 @@
+Auto Recorder, created by StevoTVR for use as a SourceMod plugin. Modified for use in TF2V and used in TF2V's dedicated server tools.
+https://forums.alliedmods.net/showthread.php?t=92072
+
+IP Range Ban, created by Seather for use as a SourceMod plugin. Used in TF2V's dedicated server tools.
+https://forums.alliedmods.net/showthread.php?p=664842
