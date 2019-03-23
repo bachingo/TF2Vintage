@@ -9,6 +9,9 @@
 #include "tf_gamerules.h"
 #include "tf_wearable_demoshield.h"
 
+extern ConVar tf_demoman_charge_drain_time;
+extern ConVar tf_demoman_charge_regen_rate;
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWearableDemoShield, DT_TFWearableDemoShield );
 
 BEGIN_NETWORK_TABLE( CTFWearableDemoShield, DT_TFWearableDemoShield )
@@ -172,9 +175,15 @@ bool CTFWearableDemoShield::DoSpecialAction( CTFPlayer *pUser )
 	{
 		if (!pUser->m_Shared.IsLoser() && !pUser->m_Shared.InCond( TF_COND_TAUNTING ) && !pUser->m_Shared.InCond( TF_COND_STUNNED ) && pUser->m_Shared.GetShieldChargeMeter() == 100.0f)
 		{
-			float flDuration = 1.5f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pUser, flDuration, mod_charge_time );
-			pUser->m_Shared.AddCond( TF_COND_SHIELD_CHARGE, flDuration );
+			float flChargeDuration = tf_demoman_charge_drain_time.GetFloat();
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pUser, flChargeDuration, mod_charge_time );
+
+			float flChargeRechargeRate = tf_demoman_charge_regen_rate.GetFloat();
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pUser, flChargeRechargeRate, charge_recharge_rate );
+
+			pUser->m_Shared.SetShieldChargeDrainRate( flChargeDuration );
+			pUser->m_Shared.SetShieldChargeRegenRate( flChargeRechargeRate );
+			pUser->m_Shared.AddCond( TF_COND_SHIELD_CHARGE, flChargeDuration );
 
 			m_bBashed = false;
 

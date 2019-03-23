@@ -901,10 +901,6 @@ int CTFPlayerShared::GetMaxBuffedHealth( void )
 	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;
 
-	CTFSword *pSword = dynamic_cast<CTFSword *>( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
-	if (pSword)
-		iRoundDown += pSword->GetSwordHealthMod();
-
 	return iRoundDown;
 }
 
@@ -3534,10 +3530,7 @@ void CTFPlayerShared::UpdateChargeMeter( void )
 {
 	if (InCond( TF_COND_SHIELD_CHARGE ))
 	{
-		float flChargeDuration = tf_demoman_charge_drain_time.GetFloat();
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flChargeDuration, mod_charge_time );
-
-		m_flChargeMeter -= ( 100 / flChargeDuration ) * gpGlobals->frametime;
+		m_flChargeMeter -= ( 100 / m_flChargeDrainRate ) * gpGlobals->frametime;
 
 		if (m_flChargeMeter <= 0.0f)
 		{
@@ -3547,10 +3540,7 @@ void CTFPlayerShared::UpdateChargeMeter( void )
 	}
 	else if (m_flChargeMeter < 100.0f)
 	{
-		float flChargeRechargeRate = tf_demoman_charge_regen_rate.GetFloat();
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flChargeRechargeRate, charge_recharge_rate );
-
-		m_flChargeMeter += flChargeRechargeRate * gpGlobals->frametime;
+		m_flChargeMeter += m_flChargeRegenRate * gpGlobals->frametime;
 		m_flChargeMeter = Min( m_flChargeMeter.Get(), 100.0f );
 	}
 }
