@@ -4800,6 +4800,11 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 					}
 				}
 			}
+
+			if ( pWeapon->GetWeaponID() == TF_WEAPON_SWORD )
+			{
+				m_Shared.SetMaxHealth( GetMaxHealth() );
+			}
 		}
 	}
 	else
