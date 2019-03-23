@@ -637,6 +637,7 @@
 			"item_logname"	"fryingpan"
 			"item_iconname"	"fryingpan"
 			"show_in_armory"	"1"
+			"propername"		"1"
 			"item_type_name"	"#TF_Weapon_FryingPan"
 			"item_name"	"#TF_Unique_FryingPan"
 			"item_slot"	"melee"
@@ -681,6 +682,7 @@
 		"weapon_sword"
 		{
 			"enabled"	"1"
+			"propername"		"1"
 			"item_class"	"tf_weapon_sword"
 			"show_in_armory"	"1"
 			"item_logname"	"sword"
@@ -1171,6 +1173,7 @@
 			"propername"		"1"
 			"enabled"			"1"
 			"show_in_armory"	"1"
+			"propername"	"1"
 			"item_class"	"tf_weapon_pda_engineer_build"
 			"item_name"	"#TF_Weapon_PDA_Engineer_Builder"
 			"item_type_name"	"#TF_Weapon_PDA_Engineer"
@@ -1200,9 +1203,6 @@
 		}
 		"weapon_invis"
 		{
-			"propername"		"1"
-			"enabled"			"1"
-			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_invis"
 			"item_type_name"	"#TF_Weapon_Watch"
 			"item_name"	"#TF_Weapon_Watch"
@@ -1410,7 +1410,8 @@
 			"item_iconname"	"gloves"
 			"image_inventory"	"backpack/weapons/c_models/c_boxing_gloves/c_boxing_gloves"
 			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"					
+			"image_inventory_size_h"		"82"			
+			"attach_to_hands" "1"			
 			"model_player"	"models/weapons/c_models/c_boxing_gloves/c_boxing_gloves.mdl"
 			"item_quality"	"unique"
 			"propername"	"1"
@@ -1855,31 +1856,9 @@
 				"min_viewmodel_offset"		"10 -2 -7"				
 			}
 		}
-		"weapon_sword"
-		{
-			"enabled"	"1"
-			"item_class"	"tf_weapon_sword"
-			"show_in_armory"	"1"
-			"item_type_name"	"#TF_Weapon_Sword"
-			"item_slot"	"melee"
-			"anim_slot"	"item1"
-			"item_quality"	"unique"
-			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"
-			"attach_to_hands"	"1"
-			"attributes"
-			{
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
-			}
-		}
 		"weapon_claidheamohmor"
 		{
 			"prefab"	"weapon_sword"
-			"propername"		"1"
 			"item_logname"	"claidheamohmor"
 			"item_iconname"	"claidheamohmor"
 			"item_name"	"#TF_Claidheamohmor"
@@ -1912,31 +1891,14 @@
 					"value" "1"
 				}
 			}
-			"visuals"
-			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
-				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
-				"sound_burst"		"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset"				"10 -3 -10"				
-			}
 		}
 		"weapon_eyelander"
 		{
 			"prefab"	"weapon_sword"
-			"propername"		"1"
 			"item_name"	"#TF_Unique_Achievement_Sword"
 			"image_inventory"	"backpack/weapons/c_models/c_claymore/c_claymore"
 			"model_player"	"models/weapons/c_models/c_claymore/c_claymore.mdl"
 			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
 			"attributes"
 			{
 				"crit mod disabled"
@@ -1970,15 +1932,6 @@
 					"value" "1"
 				}
 			}
-			"visuals"
-			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
-				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
-				"sound_burst"		"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
-			}
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"12 -3 -10"
@@ -1991,6 +1944,8 @@
 			"item_type_name" 	"#TF_Wearable_Shield"
 			"item_name"		"#TF_Unique_Achievement_Shield"
 			"item_description"	"#TF_Unique_Achievement_Shield_Desc"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
 			"item_slot"		"secondary"
 			"equip_region"	"arms"
 			"item_logname"	"demoshield"
@@ -2002,10 +1957,18 @@
 			{
 				"demoman"	"1"
 			}
+			"attributes"
+			{
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
 		}
 		"weapon_reskin"
 		{
-			"show_in_armory"	"0"
+		"show_in_armory"	"0"
 		}
 	}
 	"items"
@@ -2497,34 +2460,6 @@
 			"name"	"Jarate"
 			"prefab"	"weapon_jarate"
 		}
-		"60"
-		{
-			"name"	"The Cloak and Dagger"
-			"first_sale_date"	"2010/09/29"
-			"prefab"	"weapon_invis"
-			"item_type_name"	"#TF_Weapon_Watch"
-			"item_name"	"#TF_Unique_Achievement_CloakWatch"
-			"item_quality"	"unique"
-			"image_inventory"	"backpack/weapons/c_models/c_leather_watch/parts/c_leather_watch"
-			"model_player"	"models/weapons/v_models/v_watch_leather_spy.mdl"
-			"used_by_classes"
-			{
-				"spy"	"1"
-			}
-			"attributes"
-			{
-				"set cloak is movement based"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"2"
-				}
-				"mult cloak meter regen rate"
-				{
-					"attribute_class"	"mult_cloak_meter_regen_rate"
-					"value"	"2.0"
-				}
-			}
-		}
 		"61"
 		{
 			"name"	"The Ambassador"
@@ -2624,8 +2559,6 @@
 			"name"	"The Chargin' Targe"
 			"prefab"	"weapon_shield"
 			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
-			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"
 			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
 			"attributes"
 			{
@@ -2649,22 +2582,27 @@
 		"132"
 		{
 			"name"	"The Eyelander"
-			"prefab"	"valve weapon_eyelander"
-			"first_sale_date"	"2010/09/29"
+			"prefab"	"weapon_eyelander"
 		}
 		"133"
 		{
-			"name"	"The Gunboats"
+			"name"	"Soldier Gunboats"
 			"item_slot"		"secondary"
+			"model_player"	"models/weapons/c_models/c_rocketboots_soldier.mdl"
 			"used_by_classes"
 			{
 				"soldier"	"1"
-				"demoman"	"1"
 			}
-			"model_player_per_class"
+			"prefab"		"weapon_gunboats"
+		}
+		"134"
+		{
+			"name"	"Demoman Gunboats"
+			"item_slot"		"primary"
+			"model_player"	"models/weapons/c_models/c_rocketboots_demo.mdl"
+			"used_by_classes"
 			{
-				"soldier"	"models/weapons/c_models/c_rocketboots_soldier.mdl"
-				"demoman"	"models/weapons/c_models/c_rocketboots_demo.mdl"
+				"demoman"	"1"
 			}
 			"prefab"		"weapon_gunboats"
 		}
@@ -2678,48 +2616,6 @@
 			"name"	"The Gunslinger"
 			"prefab"	"weapon_robot_arm"
 		}
-		"155"
-		{
-			"name"	"The Southern Hospitality"
-			"first_sale_date"	"2010/09/29"
-			"prefab"	"weapon_wrench"
-			"item_type_name"	"#TF_Weapon_Wrench"
-			"item_name"	"#TF_Unique_Combat_Wrench"
-			"item_quality"	"unique"
-			"item_logname"	"southern_hospitality"
-			"item_iconname"	"southern_comfort_kill"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_spikewrench/c_spikewrench"
-			"model_player"	"models/weapons/c_models/c_spikewrench/c_spikewrench.mdl"
-			"attach_to_hands" "1"
-			"attributes"
-			{
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"bleeding duration"
-				{
-					"attribute_class"	"bleeding_duration"
-					"value" "5.0"
-				}
-				"dmg taken from fire increased"
-				{
-					"attribute_class"	"mult_dmgtaken_from_fire"
-					"value"			"1.20"
-				}
-			}
-			"visuals"
-			{
-				"animation_replacement"
-				{
-					"ACT_VM_IDLE"	"ACT_ITEM3_VM_IDLE"
-					"ACT_VM_DRAW"	"ACT_ITEM3_VM_DRAW"
-					"ACT_VM_HITCENTER"	"ACT_ITEM3_VM_HITCENTER"
-					"ACT_VM_SWINGHARD"	"ACT_ITEM3_VM_SWINGHARD"
-				}
-			}
-		}
 		"172"
 		{
 			"name"	"The Scotsman's Skullcutter"
@@ -2732,8 +2628,6 @@
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_battleaxe/c_battleaxe"
 			"image_inventory_size_h"		"96"
 			"model_player"	"models/workshop/weapons/c_models/c_battleaxe/c_battleaxe.mdl"
-			"model_world"	"models/workshop/weapons/c_models/c_battleaxe/c_battleaxe.mdl"
-			"propername"	"1"
 			"attributes"
 			{
 				"provide on active"
@@ -3135,12 +3029,6 @@
 				}
 			}
 		}
-		"327"
-		{
-			"name"	"The Claidheamohmor"
-			"prefab"	"weapon_claidheamohmor"
-			"first_sale_date"	"2010/12/20"
-		}
         "329"
 		{
 			"name"	"The Jag"
@@ -3221,7 +3109,7 @@
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
 		}
-		"160"
+		"10160"
 		{
 			"name"	"TTG Max Pistol"
 			"prefab"	"weapon_pistol weapon_reskin"
@@ -3231,8 +3119,6 @@
 			"item_iconname"	"maxgun"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun"
 			"model_player"	"models/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun.mdl"
-			"model_world"	"models/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun.mdl"
-			"attach_to_hands"	"1"
 			"item_quality"	"unique"
 			"used_by_classes"
 			{
@@ -3240,7 +3126,7 @@
 				"engineer"	"1"
 			}
 		}
-		"161"
+		"10161"
 		{
 			"name"	"TTG Sam Revolver"
 			"prefab"	"weapon_revolver weapon_reskin"
@@ -3253,7 +3139,7 @@
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun"
 			"model_player"	"models/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun.mdl"
 		}
-		"221"
+		"10221"
 		{
 			"name"	"The Holy Mackerel"
 			"prefab"	"weapon_bat weapon_reskin"
@@ -3272,7 +3158,7 @@
 			}
 			"particle_suffix"	"holy_mackerel"
 		}
-		"238"
+		"10237"
 		{
 			"name"	"MYM Rocket Jumper"
 			"prefab"	"weapon_rocketlauncher weapon_reskin"
@@ -3315,12 +3201,30 @@
 				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
 			}
         }
-		"264"
+		"10264"
 		{
 			"name"	"Frying Pan"
 			"prefab"	"weapon_fryingpan weapon_reskin"
 		}
-		"2266"
+		"10266"
+		{
+			"name"	"The Horseless Headless Horseman's Headtaker"
+			"prefab"	"weapon_eyelander weapon_reskin"
+			"item_type_name"	"#TF_Weapon_Axe"
+			"item_name"	"#TF_HalloweenBoss_Axe"
+			"item_description"	"#TF_HalloweenBoss_Axe_Desc"
+			"item_quality"	"rarity4"
+			"item_logname"	"headtaker"
+			"item_iconname"	"headtaker"
+			"image_inventory"	"backpack/weapons/c_models/c_headtaker/c_headtaker"
+			"model_player"	"models/weapons/c_models/c_headtaker/c_headtaker.mdl"
+			"visuals"
+			{
+				"sound_melee_hit"	"Halloween.HeadlessBossAxeHitFlesh"
+				"sound_melee_hit_world"	"Halloween.HeadlessBossAxeHitWorld"
+			}
+		}
+		"10265"
 		{
 			"name"	"MYM Stickybomb Jumper"
 			"prefab"	"weapon_stickybomb_launcher weapon_reskin"
@@ -3368,72 +3272,7 @@
 				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
 			}
 		}
-		"266"
-		{
-			"name"	"The Horseless Headless Horseman's Headtaker"
-			"prefab"	"weapon_sword weapon_reskin"
-			"item_type_name"	"#TF_Weapon_Axe"
-			"item_name"	"#TF_HalloweenBoss_Axe"
-			"item_description"	"#TF_HalloweenBoss_Axe_Desc"
-			"item_quality"	"rarity4"
-			"item_logname"	"headtaker"
-			"item_iconname"	"headtaker"
-			"propername"	"1"
-			"image_inventory"	"backpack/weapons/c_models/c_headtaker/c_headtaker"
-			"model_player"	"models/weapons/c_models/c_headtaker/c_headtaker.mdl"
-			"attach_to_hands"	"1"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"attributes"
-			{
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"max health additive penalty"
-				{
-					"attribute_class"	"add_maxhealth"
-					"value" "-25"
-				}
-				"decapitate type"
-				{
-					"attribute_class"	"decapitate_type"
-					"value"	"1"
-				}
-				"kill eater score type"
-				{
-					"attribute_class"	"kill_eater_score_type"
-					"value" 	"6"									
-				}
-				"kill eater kill type"
-				{
-					"attribute_class"	"kill_eater_kill_type"
-					"value"	"6"			
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"12 -3 -10"
-			}
-			"visuals"
-			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
-				"sound_melee_hit"	"Halloween.HeadlessBossAxeHitFlesh"
-				"sound_melee_hit_world"	"Halloween.HeadlessBossAxeHitWorld"
-				"sound_melee_burst"	"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
-			}
-		}
-		"298"
+		"10298"
 		{
 			"name"	"Iron Curtain"
 			"prefab"	"weapon_minigun weapon_reskin"
@@ -3444,7 +3283,7 @@
 			"model_player"	"models/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain.mdl"
 			"item_quality"	"unique"
 		}
-		"851"
+		"10851"
 		{
 			"name"	"The AWPer Hand"
 			"prefab"	"weapon_sniperrifle weapon_reskin"
@@ -3458,6 +3297,60 @@
 			{
 				"sound_single_shot"	"Weapon_AWP.Single"
 				"sound_burst"		"Weapon_AWP.SingleCrit"
+			}
+		}
+		"11092"
+		{
+			"name"	"The Fortified Compound"
+			"prefab"	"weapon_huntsman weapon_reskin"
+			"item_name"	"#TF_FortifiedCompound"
+			"item_description"	"#TF_FortifiedCompound_Desc"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief.mdl"
+		}
+		"10638"
+		{
+			"name"	"The Sharp Dresser"
+			"prefab"	"weapon_knife weapon_reskin"
+			"item_name"	"#TF_SharpDresser"
+			"item_description"	"#TF_SharpDresser_Desc"
+			"item_quality"	"unique"
+			"item_logname"	"sharp_dresser"
+			"item_iconname"	"sharp_dresser"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade"
+			"model_player"	"models/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -6"
+			}
+			"anim_slot"	"ITEM1"
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_Assassin_Knife.HitFlesh"
+
+				"animation_replacement"
+				{
+					"ACT_VM_DRAW"	"ACT_ITEM1_VM_DRAW"
+					"ACT_VM_IDLE"	"ACT_ITEM1_VM_IDLE"
+					"ACT_VM_HITCENTER"	"ACT_ITEM1_VM_HITCENTER"
+					"ACT_VM_HITCENTER2"	"ACT_ITEM1_VM_HITCENTER2"
+					"ACT_VM_SWINGHARD"	"ACT_ITEM1_VM_SWINGHARD"
+					"ACT_BACKSTAB_VM_UP"	"ACT_ITEM1_BACKSTAB_VM_UP"
+					"ACT_BACKSTAB_VM_DOWN"	"ACT_ITEM1_BACKSTAB_VM_DOWN"
+					"ACT_BACKSTAB_VM_IDLE"	"ACT_ITEM1_BACKSTAB_VM_IDLE"
+					"ACT_MELEE_VM_STUN"	"ACT_MELEE_VM_ITEM1_STUN"
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_ITEM1_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_ITEM1_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_ITEM1_VM_INSPECT_END"
+				}
+			}
+			"attributes"
+			{
+				"disable fancy class select anim"
+				{
+					"attribute_class"	"disable_fancy_class_select_anim"
+					"value"	"1"
+				}
 			}
 		}
 	}
