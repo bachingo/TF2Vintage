@@ -1373,22 +1373,6 @@
 				}
 			}
 		}
-		"weapon_gunboats"
-		{
-			"prefab"	"weapon_wearable"
-			"item_type_name"	"#TF_Wearable_Boots"
-			"item_name"	"#TF_Unique_Blast_Boots"
-			"equip_region"	"feet"
-			"image_inventory"	"backpack/weapons/c_models/c_rocketboots_soldier"
-			"attributes"
-			{
-				"rocket jump damage reduction"
-				{
-					"attribute_class"	"rocket_jump_dmg_reduction"
-					"value"	".4"
-				}
-			}
-		}
 		"weapon_sledgehammer"
 		{
 			"prefab"	"weapon_fireaxe"
@@ -2586,25 +2570,35 @@
 		}
 		"133"
 		{
-			"name"	"Soldier Gunboats"
-			"item_slot"		"secondary"
-			"model_player"	"models/weapons/c_models/c_rocketboots_soldier.mdl"
+			"name"	"The Gunboats"
+			"prefab"	"weapon_wearable"
+			"item_type_name"	"#TF_Wearable_Boots"
+			"item_name"	"#TF_Unique_Blast_Boots"
+			"equip_region"	"feet"
+			"image_inventory"	"backpack/weapons/c_models/c_rocketboots_soldier"
 			"used_by_classes"
+            {
+                "soldier"    "secondary"
+                "demoman"    "primary"
+            }
+            "model_player_per_class"
+            {
+                "soldier"    "models/weapons/c_models/c_rocketboots_soldier.mdl"
+                "demoman"    "models/weapons/c_models/c_rocketboots_demo.mdl"
+            }
+			"attributes"
 			{
-				"soldier"	"1"
+				"rocket jump damage reduction"
+				{
+					"attribute_class"	"rocket_jump_dmg_reduction"
+					"value"	".4"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
 			}
-			"prefab"		"weapon_gunboats"
-		}
-		"134"
-		{
-			"name"	"Demoman Gunboats"
-			"item_slot"		"primary"
-			"model_player"	"models/weapons/c_models/c_rocketboots_demo.mdl"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"prefab"		"weapon_gunboats"
 		}
 		"140"
 		{
