@@ -84,6 +84,10 @@ ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Sh
 ConVar tf2c_building_hauling( "tf2c_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
 ConVar tf2c_disable_player_shadows( "tf2c_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
 
+#ifdef CLIENT_DLL
+ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
+#endif
+
 #ifdef GAME_DLL
 extern ConVar tf2c_random_weapons;
 #endif
@@ -3244,7 +3248,7 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 		if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
 			return false;
 
-		m_flCloakMeter = Min( Max( m_flCloakMeter + amt, 0.0f ), 100.0f );
+		m_flCloakMeter = Clamp( m_flCloakMeter + amt, 0.0f, 100.0f );
 		return true;
 	}
 
@@ -3265,7 +3269,7 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 	if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
 		return false;
 
-	m_flCloakMeter = Min( Max( m_flCloakMeter + amt, 0.0f ), 100.0f );
+	m_flCloakMeter = Clamp( m_flCloakMeter + amt, 0.0f, 100.0f );
 	return true;
 }
 
@@ -3308,22 +3312,22 @@ int CTFPlayerShared::GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCust
 {
 	const char *pszSequence = NULL;
 
-	switch( iDamageCustom )
+	switch(iDamageCustom)
 	{
-	case TF_DMG_CUSTOM_BACKSTAB:
-		pszSequence = "primary_death_backstab";
-		break;
-	case TF_DMG_CUSTOM_HEADSHOT:
-		pszSequence = "primary_death_headshot";
-		break;
-
-	// Unused in live TF2
-	/*case TF_DMG_CUSTOM_BURNING:
-		pszSequence = "primary_death_burning";
-		break;*/
+		case TF_DMG_CUSTOM_BACKSTAB:
+			pszSequence = "primary_death_backstab";
+			break;
+		case TF_DMG_CUSTOM_HEADSHOT:
+			pszSequence = "primary_death_headshot";
+			break;
 	}
 
-	if ( pszSequence != NULL )
+#ifdef CLIENT_DLL
+	if(iDamageCustom == TF_DMG_CUSTOM_BURNING && tf2v_enable_burning_death.GetBool())
+		pszSequence = "primary_death_burning";
+#endif
+
+	if (pszSequence != NULL)
 	{
 		return pAnim->LookupSequence( pszSequence );
 	}
