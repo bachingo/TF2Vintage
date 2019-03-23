@@ -1,19 +1,20 @@
 "GameInfo"
 {
-	game		"Team Fortress 2 Classic" 
+	game		"Team Fortress 2 Vintage"
 	gamelogo 	1 
 	type 		multiplayer_only 
 	icon		"resource/game"		
-	developer 	"Team Fortress 2 Classic Team"
-	developer_url 	"http://tf2classic.com/"
+	developer 	"Team Fortress 2 Vintage Team"
+	developer_url 	"https://steamcommunity.com/groups/TF2_Vintage"
 	nomodels 	1 
 	nohimodel 	1	
 	nocrosshair 	0 
-	GameData	"tf2c.fgd"
+	GameData	"tf2v.fgd"
 	hidden_maps 
 	{ 
 		"test_speakers"		1 
 		"test_hardware"		1 
+		"background01"		1
 	}
 	InstancePath 	"maps/instances/"
 	advcrosshair 	1
@@ -31,20 +32,34 @@
 			// folder. 
 			// Note that this folder is scanned only when the game is booted.	
 			game+mod			|gameinfo_path|custom/* 
-
+			
+			// Before searching for the rest of the game files, we then search for the censorship
+			// patch files of TF2V to remove the blood and gore ingame using a signed VPK.
+			//game+mod			|gameinfo_path|TF2V_low_violence_patch.vpk
+			
 			// Search loose files.  We'll set the directory containing the gameinfo.txt file
-			// as the first "mod" search path (after any user customizations).  This is also the one
+			// as the first "mod" search path (after any user customizations). This is also the one
 			// that's used when writing to the "mod" path.
 			game+mod+mod_write+default_write_path		|gameinfo_path|.
+			
+			//	Search the base TF2V folder. This can be then used for taking files not supplied
+			//	by expansions.
+			//game				|gameinfo_path|../tf2vintage
 
-			// Where the game's binaries are
+			// Where the game's binaries are.
 			gamebin				|gameinfo_path|bin	
 			
 			// We search VPK files before ordinary folders, because most files will be found in
 			// VPK and we can avoid making thousands of file system calls to attempt to open files
-			// in folders where they don't exist.  (Searching a VPK is much faster than making an operating
-			// system call.)
+			// in folders where they don't exist.  (Searching a VPK is much faster than making an 
+			// operating system call.)
+			// TF2V will reintroduce its VPK directory files once the project reaches a stable release, so we'll
+			// remove them from the VPK calls for now.
 			game_lv				hl2/hl2_lv.vpk
+			//game+mod+vgui		|gameinfo_path|tf2vintage_misc.vpk
+			//game+mod			|gameinfo_path|tf2vintage_materials.vpk
+			//game+mod			|gameinfo_path|tf2vintage_models.vpk
+			//game+mod			|gameinfo_path|tf2vintage_sound.vpk
 			//game+mod			hl2mp/hl2mp_english.vpk			
 			//game+mod			hl2mp/hl2mp_pak.vpk			
 			game				|all_source_engine_paths|hl2/hl2_english.vpk			
@@ -58,13 +73,20 @@
 			// Add the HL2 directory as a game search path.  This is also where where writes			
 			// to the "game" path go.			
 			//game+game_write			hl2mp			
-			game+mod			sourcetest/sourcetest_pak.vpk
+			//game+mod			sourcetest/sourcetest_pak.vpk
 			
 			// Mount in shared HL2 loose files			
 			//game				|all_source_engine_paths|hl2mp			
 			game				|all_source_engine_paths|hl2			
 			platform			|all_source_engine_paths|platform			
 			game				|all_source_engine_paths|sourcetest
+
+			// Mount in missing assets from TF2
+			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_lv.vpk"					//game_lv
+			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_textures.vpk"			//game+mod
+			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_sound_vo_english.vpk"	//game+mod
+			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_sound_misc.vpk"			//game+mod
+			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_misc.vpk"				//game+mod+vgui	
 
 			// Random files downloaded from gameservers go into a seperate directory, so
 			// that it's easy to keep those files segregated from the official game files
