@@ -653,26 +653,20 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 		{
 			// Push enemy players.
 			pVictim->SetGroundEntity( NULL );
-			
-			//tf2v airblast
+							
+			// Pushes players based on the airblast type chosen.
+			pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
 			if ( tf2v_airblast.GetInt() == 1 )
 			{
-				pVictim->SetAbsVelocity( vecDir * 500 );
-				pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
-				pVictim->m_Shared.AddCond( TF_COND_NO_MOVE, 0.5f );
-
-				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
-				pVictim->AddDamagerToHistory( pAttacker );
+			pVictim->SetAbsVelocity( vecDir * 500 );
+			pVictim->m_Shared.AddCond( TF_COND_NO_MOVE, 0.5f );
 			}
-			//tf2c airblast
 			else if ( tf2v_airblast.GetInt() == 2 )
 			{
-				pVictim->ApplyAbsVelocityImpulse( vecDir * 500 );
-				pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
-
-				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
-				pVictim->AddDamagerToHistory( pAttacker );
+			pVictim->ApplyAbsVelocityImpulse( vecDir * 500 );
 			}
+			// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
+			pVictim->AddDamagerToHistory( pAttacker );
 			
 		}
 	}
