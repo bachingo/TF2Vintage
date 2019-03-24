@@ -82,6 +82,12 @@ $Project "Client (TF)"
 			$File	"$SRCDIR\game\shared\econ\game_item_schema.h"
 			$File	"$SRCDIR\game\shared\econ\ihasattributes.h"
 		}
+		
+		$Folder "NextBot"
+		{
+			$File	"NextBot\c_NextBot.cpp"
+			$File	"NextBot\c_NextBot.h"
+		}
 
 		$Folder	"TF"
 		{
