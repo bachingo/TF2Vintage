@@ -65,7 +65,7 @@
 	ConVar tf2v_new_flames( "tf2v_new_flames", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Swap out the particle system for the Flamethrower to the newer one?", true, 0.0f, true, 1.0f );
 #endif
 
-ConVar  tf2v_airblast( "tf2v_airblast", "2", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = tf2c (default), 2 = tf2v" );
+ConVar  tf2v_airblast( "tf2v_airblast", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = TF2V/Retail (default), 2 = TF2C" );
 ConVar  tf2v_airblast_players( "tf2v_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
 
 #ifdef GAME_DLL
@@ -653,22 +653,22 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 		{
 			// Push enemy players.
 			pVictim->SetGroundEntity( NULL );
-
-			//tf2c airblast
+			
+			//tf2v airblast
 			if ( tf2v_airblast.GetInt() == 1 )
-			{
-				pVictim->ApplyAbsVelocityImpulse( vecDir * 500 );
-				pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
-
-				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
-				pVictim->AddDamagerToHistory( pAttacker );
-			}
-			//tf2v airblast [EXPERIMENTAL]
-			else if ( tf2v_airblast.GetInt() == 2 )
 			{
 				pVictim->SetAbsVelocity( vecDir * 500 );
 				pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
 				pVictim->m_Shared.AddCond( TF_COND_NO_MOVE, 0.5f );
+
+				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
+				pVictim->AddDamagerToHistory( pAttacker );
+			}
+			//tf2c airblast
+			else if ( tf2v_airblast.GetInt() == 2 )
+			{
+				pVictim->ApplyAbsVelocityImpulse( vecDir * 500 );
+				pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
 
 				// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
 				pVictim->AddDamagerToHistory( pAttacker );
