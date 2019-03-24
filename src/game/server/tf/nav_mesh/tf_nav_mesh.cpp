@@ -12,7 +12,7 @@
 #include "tf_gamerules.h"
 #include "tf_obj.h"
 
-//#include "NextBotUtil.h"
+#include "NextBotUtil.h"
 
 ConVar tf_show_in_combat_areas( "tf_show_in_combat_areas", "0", FCVAR_CHEAT, "", true, 0.0f, true, 1.0f );
 ConVar tf_show_mesh_decoration( "tf_show_mesh_decoration", "0", FCVAR_CHEAT, "Highlight special areas", true, 0.0f, true, 1.0f );
@@ -130,7 +130,7 @@ void CTFNavMesh::Update()
 	if (!TheNavAreas.IsEmpty())
 	{
 		UpdateDebugDisplay();
-		/*if (TheNextBots().GetNextBotCount() > 0)
+		if (TheNextBots().GetNextBotCount() > 0)
 		{
 			if (!m_lastNPCCount)
 			{
@@ -150,7 +150,7 @@ void CTFNavMesh::Update()
 			}
 
 			m_lastNPCCount = TheNextBots().GetNextBotCount();
-		}*/
+		}
 	}
 }
 
@@ -194,7 +194,7 @@ void CTFNavMesh::OnRoundRestart()
 {
 	CNavMesh::OnRoundRestart();
 	ResetMeshAttributes( true );
-	//TheNextBots().OnRoundRestart();
+	TheNextBots().OnRoundRestart();
 	if (TFGameRules()->IsMannVsMachineMode())
 		RecomputeInternalData();
 }
@@ -299,8 +299,8 @@ void CTFNavMesh::OnBlockedAreasChanged()
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
 
-	/*if (TheNextBots().GetNextBotCount() > 0)
-		m_recomputeTimer.Start( 2.0f );*/
+	if (TheNextBots().GetNextBotCount() > 0)
+		m_recomputeTimer.Start( 2.0f );
 }
 
 void CTFNavMesh::CollectAndMarkSpawnRoomExits( CTFNavArea *area, CUtlVector<CTFNavArea *> *areas )
