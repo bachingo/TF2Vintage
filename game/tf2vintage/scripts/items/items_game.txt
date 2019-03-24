@@ -2586,25 +2586,18 @@
 		}
 		"133"
 		{
-			"name"	"Soldier Gunboats"
-			"item_slot"		"secondary"
-			"model_player"	"models/weapons/c_models/c_rocketboots_soldier.mdl"
+			"name"	"The Gunboats"
+			"prefab"	"weapon_gunboats"
 			"used_by_classes"
-			{
-				"soldier"	"1"
-			}
-			"prefab"		"weapon_gunboats"
-		}
-		"134"
-		{
-			"name"	"Demoman Gunboats"
-			"item_slot"		"primary"
-			"model_player"	"models/weapons/c_models/c_rocketboots_demo.mdl"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"prefab"		"weapon_gunboats"
+            {
+                "soldier"    "secondary"
+                "demoman"    "primary"
+            }
+            "model_player_per_class"
+            {
+                "soldier"    "models/weapons/c_models/c_rocketboots_soldier.mdl"
+                "demoman"    "models/weapons/c_models/c_rocketboots_demo.mdl"
+            }
 		}
 		"140"
 		{
