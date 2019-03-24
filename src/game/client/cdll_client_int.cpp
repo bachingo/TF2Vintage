@@ -1703,15 +1703,26 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	// Discord RPC
 	if (!g_bTextMode)
 	{
-	DiscordRichPresence discordPresence;
-	memset(&discordPresence, 0, sizeof(discordPresence));
+		DiscordRichPresence discordPresence;
+		Q_memset( &discordPresence, 0, sizeof( discordPresence ) );
 
-	char buffer[256];
-	discordPresence.state = "In-Game";
-	sprintf(buffer, "Map: %s", pMapName);
-	discordPresence.details = buffer;
-	discordPresence.largeImageKey = "tf2v_drp_logo";
-	Discord_UpdatePresence(&discordPresence);
+		char details[48], buffer[32];
+		Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", pMapName );
+		wchar *mapName = g_pVGuiLocalize->Find( buffer );
+		if (mapName)
+		{
+			g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
+			Q_snprintf( details, sizeof( details ), "Map: %s", buffer );
+		}
+		else
+		{
+			Q_snprintf( details, sizeof( details ), "Map: %s", pMapName );
+		}
+		
+		discordPresence.state = "In-Game";
+		discordPresence.details = details;
+		discordPresence.largeImageKey = "tf2v_drp_logo";
+		Discord_UpdatePresence( &discordPresence );
 	}
 	
 	// Check low violence settings for this map
