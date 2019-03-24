@@ -148,6 +148,10 @@
 #include "fbxsystem/fbxsystem.h"
 #endif
 
+// DRP includes
+#include "discord_rpc.h"
+#include <time.h>
+
 extern vgui::IInputInternal *g_InputInternal;
 
 //=============================================================================
@@ -331,6 +335,10 @@ void DispatchHudText( const char *pszName );
 static ConVar s_CV_ShowParticleCounts("showparticlecounts", "0", 0, "Display number of particles drawn per frame");
 static ConVar s_cl_team("cl_team", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default team when joining a game");
 static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default class when joining a game");
+
+// Discord RPC
+static ConVar cl_discord_appid("cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
+static int64_t startTimestamp = time(0);
 
 #ifdef HL1MP_CLIENT_DLL
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
@@ -837,6 +845,42 @@ bool IsEngineThreaded()
 }
 
 //-----------------------------------------------------------------------------
+// Discord RPC
+//-----------------------------------------------------------------------------
+static void HandleDiscordReady(const DiscordUser* connectedUser)
+{
+	DevMsg("Discord: Connected to user %s#%s - %s\n",
+		connectedUser->username,
+		connectedUser->discriminator,
+		connectedUser->userId);
+}
+
+static void HandleDiscordDisconnected(int errcode, const char* message)
+{
+	DevMsg("Discord: Disconnected (%d: %s)\n", errcode, message);
+}
+
+static void HandleDiscordError(int errcode, const char* message)
+{
+	DevMsg("Discord: Error (%d: %s)\n", errcode, message);
+}
+
+static void HandleDiscordJoin(const char* secret)
+{
+	// Not implemented
+}
+
+static void HandleDiscordSpectate(const char* secret)
+{
+	// Not implemented
+}
+
+static void HandleDiscordJoinRequest(const DiscordUser* request)
+{
+	// Not implemented
+}
+
+//-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
 
@@ -1088,6 +1132,33 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 #ifndef _X360
 	HookHapticMessages(); // Always hook the messages
 #endif
+	
+	// Discord RPC
+	DiscordEventHandlers handlers;
+	memset(&handlers, 0, sizeof(handlers));
+	
+	handlers.ready = HandleDiscordReady;
+	handlers.disconnected = HandleDiscordDisconnected;
+	handlers.errored = HandleDiscordError;
+	handlers.joinGame = HandleDiscordJoin;
+	handlers.spectateGame = HandleDiscordSpectate;
+	handlers.joinRequest = HandleDiscordJoinRequest;
+
+	char appid[255];
+	sprintf(appid, "%d", engine->GetAppID());
+	Discord_Initialize(cl_discord_appid.GetString(), &handlers, 1, appid);
+
+	if (!g_bTextMode)
+	{
+	DiscordRichPresence discordPresence;
+	memset(&discordPresence, 0, sizeof(discordPresence));
+
+	discordPresence.state = "In-Game";
+	discordPresence.details = "Main Menu";
+	discordPresence.startTimestamp = startTimestamp;
+	discordPresence.largeImageKey = "tf2v_drp_logo";
+	Discord_UpdatePresence(&discordPresence);
+	}
 
 	return true;
 }
@@ -1213,6 +1284,9 @@ void CHLClient::Shutdown( void )
 	DisconnectDataModel();
 	ShutdownFbx();
 #endif
+	
+	// Discord RPC
+	Discord_Shutdown();
 	
 	// This call disconnects the VGui libraries which we rely on later in the shutdown path, so don't do it
 //	DisconnectTier3Libraries( );
@@ -1626,6 +1700,20 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	}
 #endif
 
+	// Discord RPC
+	if (!g_bTextMode)
+	{
+	DiscordRichPresence discordPresence;
+	memset(&discordPresence, 0, sizeof(discordPresence));
+
+	char buffer[256];
+	discordPresence.state = "In-Game";
+	sprintf(buffer, "Map: %s", pMapName);
+	discordPresence.details = buffer;
+	discordPresence.largeImageKey = "tf2v_drp_logo";
+	Discord_UpdatePresence(&discordPresence);
+	}
+	
 	// Check low violence settings for this map
 	g_RagdollLVManager.SetLowViolence( pMapName );
 
@@ -1716,6 +1804,19 @@ void CHLClient::LevelShutdown( void )
 	StopAllRumbleEffects();
 
 	gHUD.LevelShutdown();
+	
+	// Discord RPC
+	if (!g_bTextMode)
+	{
+	DiscordRichPresence discordPresence;
+	memset(&discordPresence, 0, sizeof(discordPresence));
+
+	discordPresence.state = "In-Game";
+	discordPresence.details = "Main Menu";
+	discordPresence.startTimestamp = startTimestamp;
+	discordPresence.largeImageKey = "tf2v_drp_logo";
+	Discord_UpdatePresence(&discordPresence);
+	}
 
 	internalCenterPrint->Clear();
 
