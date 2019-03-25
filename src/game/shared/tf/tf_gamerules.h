@@ -161,6 +161,8 @@ public:
 	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { return m_hBlueKothTimer.Get(); }
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { return m_hRedKothTimer.Get(); }
 
+	CBaseEntity*	GetIT( void ) const { return m_itHandle.Get(); }
+	void			SetIT( CBaseEntity *pPlayer );
 
 #ifdef GAME_DLL
 public:
@@ -251,6 +253,9 @@ public:
 	float			GetRoundStartTime(void){ return m_flRoundStartTime; }
 
 	virtual bool ClientConnected(edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen);
+
+	void			RegisterNPC( CBaseCombatCharacter *pNPC );
+	void			RemoveNPC( CBaseCombatCharacter *pNPC );
 
 protected:
 	virtual void	InitTeams( void );
@@ -428,6 +433,8 @@ private:
 	float m_flStalemateStartTime;
 
 	CUtlVector< CTFPlayer * > m_hArenaQueue;
+
+	CUtlVector< CHandle<CBaseCombatCharacter> > m_hNPCs;
 #endif
 
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
@@ -445,6 +452,8 @@ private:
 	CNetworkVar( bool, m_bPowerupMode );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
+	CNetworkVar( EHANDLE, m_itHandle );
+	CNetworkVar( int, m_halloweenScenario );
 
 public:
 
@@ -458,6 +467,20 @@ public:
 #endif
 
 };
+
+#ifdef GAME_DLL
+inline void CTFGameRules::RegisterNPC( CBaseCombatCharacter *pNPC )
+{
+	if (m_hNPCs.Find( pNPC ) == m_hNPCs.InvalidIndex())
+		m_hNPCs.AddToHead( pNPC );
+}
+
+inline void CTFGameRules::RemoveNPC( CBaseCombatCharacter *pNPC )
+{
+	CHandle<CBaseCombatCharacter> hNPC( pNPC );
+	m_hNPCs.FindAndRemove( hNPC );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Gets us at the team fortress game rules

@@ -1546,6 +1546,8 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_iNumCaps[i] = 0;
 	}
 
+	SetIT( NULL );
+
 	// Let all entities know that a new round is starting
 	CBaseEntity *pEnt = gEntList.FirstEnt();
 	while (pEnt)
@@ -5000,6 +5002,40 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 	}
 
 	return bActive;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGameRules::SetIT( CBaseEntity *pEnt )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( pEnt );
+	if (pPlayer)
+	{
+		if (!m_itHandle.Get() || pPlayer != m_itHandle.Get())
+		{
+			ClientPrint( pPlayer, HUD_PRINTTALK, "#TF_HALLOWEEN_BOSS_WARN_VICTIM", pPlayer->GetPlayerName() );
+			ClientPrint( pPlayer, HUD_PRINTCENTER, "#TF_HALLOWEEN_BOSS_WARN_VICTIM", pPlayer->GetPlayerName() );
+
+			CSingleUserRecipientFilter filter( pPlayer );
+			CBaseEntity::EmitSound( filter, pEnt->entindex(), "Player.YouAreIT" );
+			pEnt->EmitSound( "Halloween.PlayerScream" );
+		}
+	}
+
+	CBasePlayer *pIT = ToBasePlayer( m_itHandle.Get() );
+	if (pIT && pEnt != pIT)
+	{
+		if (pIT->IsAlive())
+		{
+			CSingleUserRecipientFilter filter( pIT );
+			CBaseEntity::EmitSound( filter, pIT->entindex(), "Player.TaggedOtherIT" );
+			ClientPrint( pIT, HUD_PRINTTALK, "#TF_HALLOWEEN_BOSS_LOST_AGGRO" );
+			ClientPrint( pIT, HUD_PRINTCENTER, "#TF_HALLOWEEN_BOSS_LOST_AGGRO" );
+		}
+	}
+
+	m_itHandle = pEnt;
 }
 
 //-----------------------------------------------------------------------------
