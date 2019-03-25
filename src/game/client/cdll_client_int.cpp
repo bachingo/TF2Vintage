@@ -1713,15 +1713,16 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		{
 			g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
 			Q_snprintf( details, sizeof( details ), "Map: %s", buffer );
+			discordPresence.largeImageKey = pMapName;
 		}
 		else
 		{
 			Q_snprintf( details, sizeof( details ), "Map: %s", pMapName );
+			discordPresence.largeImageKey = "default";
 		}
 		
 		discordPresence.state = "In-Game";
 		discordPresence.details = details;
-		discordPresence.largeImageKey = "tf2v_drp_logo";
 		Discord_UpdatePresence( &discordPresence );
 	}
 	
