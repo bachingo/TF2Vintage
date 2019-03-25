@@ -318,15 +318,16 @@ public:
 			{
 				GET_VALUES_FAST_BOOL( pVisuals->player_bodygroups, pVisualData );
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "attached_model" ) )
+			else if ( !V_stricmp( pVisualData->GetName(), "attached_models" ) )
 			{
-				attachedmodel_t attached_model;
-				attached_model.view_model = pVisualData->GetInt( "view_model" );
-				attached_model.world_model = pVisualData->GetInt( "world_model" );
-				V_strncpy( attached_model.model, pVisualData->GetString( "model" ), sizeof( attached_model.model ) );
-				V_strncpy( attached_model.attachment, pVisualData->GetString( "attachment" ), sizeof( attached_model.attachment ) );
+				for (KeyValues *pAttachment = pVisualData->GetFirstSubKey(); pAttachment != NULL; pAttachment = pAttachment->GetNextKey())
+				{
+					AttachedModel_t attached_model;
+					attached_model.model_display_flags = pAttachment->GetInt( "model_display_flags" );
+					V_strncpy( attached_model.model, pAttachment->GetString( "model" ), sizeof( attached_model.model ) );
 
-				pVisuals->attached_models.AddToTail( attached_model );
+					pVisuals->attached_models.AddToTail( attached_model );
+				}
 			}
 			else if ( !V_strcmp( pVisualData->GetName(), "custom_particlesystem" ) )
 			{

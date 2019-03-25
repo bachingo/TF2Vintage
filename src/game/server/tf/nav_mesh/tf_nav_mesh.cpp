@@ -466,7 +466,7 @@ void CTFNavMesh::ComputeIncursionDistances()
 				for (int j=0; j<ITFTeamSpawnAutoList::AutoList().Count(); ++j)
 				{
 					CTFTeamSpawn *teamSpawn = static_cast<CTFTeamSpawn *>( ITFTeamSpawnAutoList::AutoList()[j] );
-					if (/*(teamSpawn + 280)(teamspawn, 0) &&*/!teamSpawn->IsDisabled() && 
+					if (teamSpawn->IsTriggered( NULL ) && !teamSpawn->IsDisabled() && 
 						 (teamSpawn->GetTeamNumber() != TF_TEAM_RED || !bFoundRedSpawn) &&
 						 (teamSpawn->GetTeamNumber() != TF_TEAM_BLUE || !bFoundBluSpawn))
 					{
@@ -506,7 +506,7 @@ WarnAndContinue:
 	}
 
 	// not sure why they do this, let alone for a single team
-	if (!TFGameRules()->IsPVEModeActive() && TheNavAreas.Count())
+	if (!TFGameRules()->IsMannVsMachineMode() && TheNavAreas.Count())
 	{
 		float flMaxDistance = 0.0f;
 		for (int i=0; i<TheNavAreas.Count(); ++i)
@@ -609,7 +609,7 @@ void CTFNavMesh::DecorateMesh()
 			for (int j=0; j<ITFTeamSpawnAutoList::AutoList().Count(); ++j)
 			{
 				CTFTeamSpawn *teamSpawn = static_cast<CTFTeamSpawn *>( ITFTeamSpawnAutoList::AutoList()[j] );
-				if (/*(teamSpawn + 280)(teamspawn, 0) teamspawn->HasDataObjectType( GROUNDLINK )? &&*/!teamSpawn->IsDisabled() && respawnRoom->PointIsWithin( teamSpawn->GetAbsOrigin() ))
+				if (teamSpawn->IsTriggered( NULL ) && !teamSpawn->IsDisabled() && respawnRoom->PointIsWithin( teamSpawn->GetAbsOrigin() ))
 				{
 					Extent ext;
 					ext.Init( respawnRoom );

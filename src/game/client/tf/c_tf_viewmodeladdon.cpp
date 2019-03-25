@@ -44,7 +44,7 @@ bool C_ViewmodelAttachmentModel::OnPostInternalDrawModel( ClientModelRenderInfo_
 		C_EconEntity *pEntity = GetOwningWeapon();
 		if ( pEntity )
 		{
-			DrawEconEntityAttachedModels( this, pEntity, pInfo, 2 );
+			DrawEconEntityAttachedModels( this, pEntity, pInfo, AM_VIEWMODEL );
 		}
 		return true;
 	}

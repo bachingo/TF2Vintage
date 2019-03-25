@@ -115,13 +115,13 @@ struct EconAttributeDefinition
 	bool stored_as_integer;
 };
 
-// Live TF2 uses flags instead of view_model and world_model
-struct attachedmodel_t
+// Attached Models
+#define AM_WORLDMODEL	(1 << 0)
+#define AM_VIEWMODEL	(1 << 1)
+struct AttachedModel_t
 {
-	char attachment[128]; // not sure what this does
 	char model[128];
-	int  view_model;
-	int  world_model;
+	int  model_display_flags;
 };
 
 // Client specific.
@@ -199,7 +199,7 @@ public:
 	CUtlMap< int, int > animation_replacement;
 	CUtlDict< const char*, unsigned short > playback_activity;
 	CUtlDict< const char*, unsigned short > misc_info;
-	CUtlVector< attachedmodel_t > attached_models;
+	CUtlVector< AttachedModel_t > attached_models;
 	char aWeaponSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
 	char custom_particlesystem[128];
 	//CUtlDict< EconItemStyle*, unsigned short > styles;

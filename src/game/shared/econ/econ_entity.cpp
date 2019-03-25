@@ -95,7 +95,7 @@ bool CEconEntity::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 {
 	if ( BaseClass::OnInternalDrawModel( pInfo ) )
 	{
-		DrawEconEntityAttachedModels( this, this, pInfo, 1 );
+		DrawEconEntityAttachedModels( this, this, pInfo, AM_WORLDMODEL );
 		return true;
 	}
 
@@ -226,7 +226,7 @@ CEconEntity::~CEconEntity()
 #ifdef CLIENT_DLL
 void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pEconEntity, ClientModelRenderInfo_t const *pInfo, int iModelType )
 {
-	/*if ( pAnimating && pEconEntity && pInfo )
+	if ( pAnimating && pEconEntity && pInfo )
 	{
 		if ( pEconEntity->HasItemDefinition() )
 		{
@@ -239,21 +239,11 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 					const char *pszModelName = NULL;
 					for ( int i = 0; i < pVisuals->attached_models.Count(); i++ )
 					{
-						switch ( iModelType )
+						if (pVisuals->attached_models[i].model_display_flags & iModelType)
 						{
-						case 1:
-							if ( pVisuals->attached_models[i].world_model == 1 )
-							{
-								pszModelName = pVisuals->attached_models[i].model;
-							}
+							pszModelName = pVisuals->attached_models[i].model;
 							break;
-						case 2:
-							if ( pVisuals->attached_models[i].view_model == 1 )
-							{
-								pszModelName = pVisuals->attached_models[i].model;
-							}
-							break;
-						};
+						}
 					}
 
 					if ( pszModelName != NULL )
@@ -274,6 +264,6 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 				}
 			}
 		}
-	}*/
+	}
 }
 #endif
