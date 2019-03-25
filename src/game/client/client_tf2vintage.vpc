@@ -206,6 +206,8 @@ $Project "Client (TF)"
 			$File	"tf\tf_viewrender.h"						
 			$File	"tf\c_tf_viewmodeladdon.cpp"
 			$File	"tf\c_tf_viewmodeladdon.h"
+			$File	"tf\tf_hud_bosshealthmeter.cpp"
+			$File	"tf\tf_hud_bosshealthmeter.h"
 			
 			$Folder	"Unused"
 			{
