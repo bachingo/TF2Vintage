@@ -87,6 +87,8 @@ $Project "Client (TF)"
 		{
 			$File	"NextBot\c_NextBot.cpp"
 			$File	"NextBot\c_NextBot.h"
+			$File	"tf\c_headless_hatman.cpp"
+			$File	"tf\c_headless_hatman.h"
 		}
 
 		$Folder	"TF"
@@ -471,6 +473,10 @@ $Project "Client (TF)"
 				$File	"$SRCDIR\game\shared\tf\tf_wearable.h"
 				$File	"$SRCDIR\game\shared\tf\tf_wearable_demoshield.h"
 				$File	"$SRCDIR\game\shared\tf\tf_wearable_demoshield.cpp"
+				$File	"$SRCDIR\game\shared\tf\entity_boss_resource.cpp"
+				$File	"$SRCDIR\game\shared\tf\entity_boss_resource.h"
+				$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.cpp"
+				$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.h"
 			}
 		}
 	}

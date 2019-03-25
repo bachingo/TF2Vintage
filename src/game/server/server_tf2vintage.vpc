@@ -248,6 +248,26 @@ $Project "Server (TF)"
 				$File	"tf\tf_timer.cpp"
 				$File	"tf\tf_timer.h"
 			}
+			
+			$Folder	"NPC"
+			{
+				$File	"$SRCDIR\game\shared\tf\entity_boss_resource.cpp"
+				$File	"$SRCDIR\game\shared\tf\entity_boss_resource.h"
+				$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.cpp"
+				$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.h"
+				$File	"tf\player_vs_environment\headless_hatman.cpp"
+				$File	"tf\player_vs_environment\headless_hatman.h"
+				$File	"tf\player_vs_environment\headless_hatman_attack.cpp"
+				$File	"tf\player_vs_environment\headless_hatman_attack.h"
+				$File	"tf\player_vs_environment\headless_hatman_behavior.cpp"
+				$File	"tf\player_vs_environment\headless_hatman_behavior.h"
+				$File	"tf\player_vs_environment\headless_hatman_dying.cpp"
+				$File	"tf\player_vs_environment\headless_hatman_dying.h"
+				$File	"tf\player_vs_environment\headless_hatman_emerge.cpp"
+				$File	"tf\player_vs_environment\headless_hatman_emerge.h"
+				$File	"tf\player_vs_environment\headless_hatman_terrify.cpp"
+				$File	"tf\player_vs_environment\headless_hatman_terrify.h"
+			}
 
 			$Folder	"Shared"
 			{
