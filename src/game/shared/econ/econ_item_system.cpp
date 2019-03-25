@@ -368,33 +368,37 @@ public:
 				/*
 				for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
 				{
-				EconItemStyle *style;
-				IF_ELEMENT_FOUND(visual->styles, pStyleData->GetName())
-				{
-				style = visual->styles.Element(index);
-				}
-				else
-				{
-				style = new EconItemStyle();
-				visual->styles.Insert(pStyleData->GetName(), style);
-				}
+					EconItemStyle *style;
+					IF_ELEMENT_FOUND(visual->styles, pStyleData->GetName())
+					{
+						style = visual->styles.Element(index);
+					}
+					else
+					{
+						style = new EconItemStyle();
+						visual->styles.Insert(pStyleData->GetName(), style);
+					}
 
-				GET_STRING(style, pStyleData, name);
-				GET_STRING(style, pStyleData, model_player);
-				GET_STRING(style, pStyleData, image_inventory);
-				GET_BOOL(style, pStyleData, selectable);
-				GET_INT(style, pStyleData, skin_red);
-				GET_INT(style, pStyleData, skin_blu);
+					GET_STRING(style, pStyleData, name);
+					GET_STRING(style, pStyleData, model_player);
+					GET_STRING(style, pStyleData, image_inventory);
+					GET_BOOL(style, pStyleData, selectable);
+					GET_INT(style, pStyleData, skin_red);
+					GET_INT(style, pStyleData, skin_blu);
 
-				for (KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey())
-				{
-				if (!V_stricmp(pStyleModelData->GetName(), "model_player_per_class"))
-				{
-				GET_VALUES_FAST_STRING(style->model_player_per_class, pStyleModelData);
-				}
-				}
+					for (KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey())
+					{
+						if (!V_stricmp(pStyleModelData->GetName(), "model_player_per_class"))
+						{
+							GET_VALUES_FAST_STRING(style->model_player_per_class, pStyleModelData);
+						}
+					}
 				}
 				*/
+			}
+			else if ( !V_stricmp( pVisualData->GetName(), "skin" ) )
+			{
+				pVisuals->skin = pVisualData->GetInt();
 			}
 			else
 			{

@@ -48,19 +48,17 @@ void CEconWearable::Spawn( void )
 
 int CEconWearable::GetSkin( void )
 {
+	if (GetItem() && m_Item.GetSkin( GetTeamNumber(), false ) > -1)
+		return m_Item.GetSkin( GetTeamNumber(), false );
+
 	switch ( GetTeamNumber() )
 	{
 		case TF_TEAM_BLUE:
 			return 1;
-			break;
-
 		case TF_TEAM_RED:
 			return 0;
-			break;
-
 		default:
 			return 0;
-			break;
 	}
 }
 

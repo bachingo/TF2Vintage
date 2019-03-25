@@ -217,6 +217,19 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 	return NULL;
 }
 
+int CEconItemView::GetSkin( int iTeamNum, bool bViewmodel ) const
+{
+	if (iTeamNum <= TF_TEAM_COUNT)
+	{
+		//if !GetStaticData->GetVisuals( iTeamNum )->style.IsEmpty()
+		EconItemVisuals *pVisuals = GetStaticData()->GetVisuals( iTeamNum );
+		if (pVisuals)
+			return pVisuals->skin;
+	}
+
+	return -1;
+}
+
 bool CEconItemView::HasCapability( const char* name )
 {
 	bool result = false;

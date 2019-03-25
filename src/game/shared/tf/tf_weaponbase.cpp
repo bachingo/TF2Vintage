@@ -3394,16 +3394,27 @@ int CTFWeaponBase::GetSkin()
 			 bHasTeamSkins = GetTFWpnData().m_bHasTeamSkins_Worldmodel;
 		}
 
-		if ( bHasTeamSkins )
+		nSkin = GetSkinOverride();
+		if (nSkin == -1)
 		{
-			switch( iTeamNumber )
+			if (GetItem() && m_Item.GetSkin( iTeamNumber, false ) > -1)
 			{
-			case TF_TEAM_RED:
-				nSkin = 0;
-				break;
-			case TF_TEAM_BLUE:
-				nSkin = 1;
-				break;
+				nSkin = m_Item.GetSkin( iTeamNumber, false );
+			}
+			else
+			{
+				if (bHasTeamSkins)
+				{
+					switch (iTeamNumber)
+					{
+						case TF_TEAM_RED:
+							nSkin = 0;
+							break;
+						case TF_TEAM_BLUE:
+							nSkin = 1;
+							break;
+					}
+				}
 			}
 		}
 	}

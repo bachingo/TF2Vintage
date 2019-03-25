@@ -37,6 +37,7 @@ public:
 	Activity GetActivityOverride( int iTeamNumber, Activity actOriginalActivity );
 	const char* GetActivityOverride( int iTeamNumber, const char *name );
 	const char* GetSoundOverride( int iIndex, int iTeamNum = TEAM_UNASSIGNED ) const;
+	int GetSkin( int iTeamNum, bool bViewmodel ) const;
 	bool HasCapability( const char* name );
 	bool HasTag( const char* name );
 

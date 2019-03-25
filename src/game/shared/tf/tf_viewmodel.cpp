@@ -424,7 +424,7 @@ int CTFViewModel::GetSkin()
 		return nSkin;
 
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if ( pPlayer )
+	if ( pPlayer && pPlayer->IsAlive() )
 	{
 		if ( pWeapon->GetTFWpnData().m_bHasTeamSkins_Viewmodel )
 		{
@@ -437,7 +437,12 @@ int CTFViewModel::GetSkin()
 				nSkin = 1;
 				break;
 			}
-		}	
+		}
+
+		if (pWeapon->GetItem())
+		{
+			nSkin = Max( pWeapon->GetItem()->GetSkin( pPlayer->GetTeamNumber(), true ), 0 );
+		}
 	}
 
 	return nSkin;

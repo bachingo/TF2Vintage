@@ -203,6 +203,7 @@ public:
 	char aWeaponSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
 	char custom_particlesystem[128];
 	//CUtlDict< EconItemStyle*, unsigned short > styles;
+	int skin;
 };
 
 class CEconItemDefinition
