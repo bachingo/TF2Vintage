@@ -95,6 +95,11 @@ public:
 	void			HitTargetThink( void );
 #endif
 
+	bool			CanAirBlast( void );
+	bool			CanAirBlastDeflectProjectile( void );
+	bool			CanAirBlastPushPlayers( void );
+	bool			CanAirBlastPutOutTeammate( void );
+
 private:
 	Vector GetMuzzlePosHelper( bool bVisualPos );
 	CNetworkVar( int, m_iWeaponState );
@@ -171,11 +176,13 @@ public:
 	
 #ifdef GAME_DLL
 public:
-	static CTFFlameEntity *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float m_flDmgAmount );
+	static CTFFlameEntity *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float m_flDmgAmount, bool bCritFromBehind );
 
 	void FlameThink( void );
 	void CheckCollision( CBaseEntity *pOther, bool *pbHitWorld );
 	CBaseEntity *GetAttacker( void ) { return m_hAttacker.Get(); }
+	bool IsBehindTarget( CBaseEntity *pVictim );
+
 private:
 	void OnCollide( CBaseEntity *pOther );
 	void SetHitTarget( void );
@@ -191,10 +198,9 @@ private:
 	EHANDLE						m_hAttacker;			// attacking player
 	int							m_iAttackerTeam;		// team of attacking player
 	CHandle<CTFFlameThrower>	m_hLauncher;			// weapon that fired this flame
-
-#else
-	CNewParticleEffect *m_pFlameEffect;
+	bool						m_bCritFromBehind;
 #endif
+
 };
 
 

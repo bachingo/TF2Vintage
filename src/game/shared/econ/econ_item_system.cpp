@@ -323,7 +323,7 @@ public:
 				for (KeyValues *pAttachment = pVisualData->GetFirstSubKey(); pAttachment != NULL; pAttachment = pAttachment->GetNextKey())
 				{
 					AttachedModel_t attached_model;
-					attached_model.model_display_flags = pAttachment->GetInt( "model_display_flags" );
+					attached_model.model_display_flags = pAttachment->GetInt( "model_display_flags", AM_VIEWMODEL|AM_WORLDMODEL );
 					V_strncpy( attached_model.model, pAttachment->GetString( "model" ), sizeof( attached_model.model ) );
 
 					pVisuals->attached_models.AddToTail( attached_model );

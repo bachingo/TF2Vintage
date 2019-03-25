@@ -185,9 +185,17 @@ void CTFMinigun::SharedAttack()
 		{
 			// Removed the need for cells to powerup the AC
 			WindUp();
-			m_flNextPrimaryAttack = gpGlobals->curtime + 1.0;
-			m_flNextSecondaryAttack = gpGlobals->curtime + 1.0;
-			m_flTimeWeaponIdle = gpGlobals->curtime + 1.0;
+
+			float flSpinupTime = 0.75f;
+			CALL_ATTRIB_HOOK_FLOAT( flSpinupTime, mult_minigun_spinup_time );
+			flSpinupTime = Max( flSpinupTime, FLT_EPSILON ); // Don't divide by 0
+
+			if (pPlayer->GetViewModel( m_nViewModelIndex ))
+				pPlayer->GetViewModel( m_nViewModelIndex )->SetPlaybackRate( 0.75 / flSpinupTime );
+
+			m_flNextPrimaryAttack = gpGlobals->curtime + flSpinupTime;
+			m_flNextSecondaryAttack = gpGlobals->curtime + flSpinupTime;
+			m_flTimeWeaponIdle = gpGlobals->curtime + flSpinupTime;
 			m_flStartedFiringAt = -1;
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRE );
 			break;

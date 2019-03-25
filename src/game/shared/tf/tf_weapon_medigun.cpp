@@ -156,7 +156,17 @@ void CWeaponMedigun::WeaponReset( void )
 
 	m_flNextBuzzTime = 0;
 	m_flReleaseStartedAt = 0;
-	m_flChargeLevel = 0.0f;
+	
+	if (TFGameRules()->State_Get() == GR_STATE_RND_RUNNING)
+	{
+		int iPreserveUbercharge = 0;
+		CALL_ATTRIB_HOOK_INT( iPreserveUbercharge, preserve_ubercharge );
+		m_flChargeLevel = Min( iPreserveUbercharge / 100.0f, m_flChargeLevel.Get() );
+	}
+	else
+	{
+		m_flChargeLevel = 0.0f;
+	}
 
 	RemoveHealingTarget( true );
 

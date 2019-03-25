@@ -240,7 +240,7 @@ void CTFFlameThrower::ItemPostFrame()
 		float flAmmoPerSecondaryAttack = TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK;
 		CALL_ATTRIB_HOOK_FLOAT( flAmmoPerSecondaryAttack, mult_airblast_cost );
 
-		if ( iAmmo >= flAmmoPerSecondaryAttack )
+		if ( iAmmo >= flAmmoPerSecondaryAttack && CanAirBlast() )
 		{
 			SecondaryAttack();
 			bFired = true;
@@ -461,7 +461,8 @@ void CTFFlameThrower::PrimaryAttack()
 		int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
-		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage );
+		bool bCritFromBehind = CAttributeManager::AttribHookValue<int>( 0, "set_flamethrower_back_crit", this ) == 1;
+		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage, bCritFromBehind );
 #endif
 	}
 
@@ -512,7 +513,7 @@ void CTFFlameThrower::SecondaryAttack()
 	if ( !pOwner )
 		return;
 
-	if ( !CanAttack() )
+	if ( !CanAttack() || !CanAirBlast() )
 	{
 		m_iWeaponState = FT_STATE_IDLE;
 		return;
@@ -622,7 +623,7 @@ void CTFFlameThrower::SecondaryAttack()
 #ifdef GAME_DLL
 void CTFFlameThrower::DeflectEntity( CBaseEntity *pEntity, CTFPlayer *pAttacker, Vector &vecDir )
 {
-	if ( !TFGameRules() )
+	if ( !TFGameRules() || !CanAirBlastDeflectProjectile() )
 		return;
 
 	if ( ( pEntity->GetTeamNumber() == pAttacker->GetTeamNumber() ) )
@@ -637,7 +638,7 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 	if ( !pVictim )
 		return;
 
-	if ( !pVictim->InSameTeam( pAttacker ) && tf2v_airblast_players.GetBool() )
+	if ( !pVictim->InSameTeam( pAttacker ) && CanAirBlastPushPlayers() )
 	{
 		// Don't push players if they're too far off to the side. Ignore Z.
 		Vector vecVictimDir = pVictim->WorldSpaceCenter() - pAttacker->WorldSpaceCenter();
@@ -670,7 +671,7 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 			
 		}
 	}
-	else if ( pVictim->InSameTeam( pAttacker ) )
+	else if ( pVictim->InSameTeam( pAttacker ) && CanAirBlastPutOutTeammate() )
 	{
 		if ( pVictim->m_Shared.InCond( TF_COND_BURNING ) )
 		{
@@ -1092,6 +1093,52 @@ void CTFFlameThrower::HitTargetThink( void )
 }
 #endif
 
+bool CTFFlameThrower::CanAirBlast( void )
+{
+	if (!GetTFPlayerOwner())
+		return false;
+
+	if (tf2v_airblast.GetInt() == 0)
+		return false;
+
+	int iAirblastDisabled = 0;
+	CALL_ATTRIB_HOOK_INT( iAirblastDisabled, airblast_disabled );
+	return iAirblastDisabled == 0;
+}
+
+bool CTFFlameThrower::CanAirBlastDeflectProjectile( void )
+{
+	if (!CanAirBlast())
+		return false;
+
+	int iDeflectProjDisabled = 0;
+	CALL_ATTRIB_HOOK_INT( iDeflectProjDisabled, airblast_deflect_projectiles_disabled );
+	return iDeflectProjDisabled == 0;
+}
+
+bool CTFFlameThrower::CanAirBlastPushPlayers( void )
+{
+	if (!CanAirBlast())
+		return false;
+
+	if (!tf2v_airblast_players.GetBool())
+		return false;
+
+	int iPushForceDisabled = 0;
+	CALL_ATTRIB_HOOK_INT( iPushForceDisabled, airblast_pushback_disabled );
+	return iPushForceDisabled == 0;
+}
+
+bool CTFFlameThrower::CanAirBlastPutOutTeammate( void )
+{
+	if (!CanAirBlast())
+		return false;
+
+	int iExtinguishDisabled = 0;
+	CALL_ATTRIB_HOOK_INT( iExtinguishDisabled, airblast_put_out_teammate_disabled );
+	return iExtinguishDisabled == 0;
+}
+
 #ifdef GAME_DLL
 
 IMPLEMENT_AUTO_LIST( ITFFlameEntityAutoList );
@@ -1131,7 +1178,7 @@ void CTFFlameEntity::Spawn( void )
 	SetNextThink( gpGlobals->curtime );
 #else
 	if(tf2v_new_flames.GetBool())
-		SetNextClientThink( 0.016f );
+		SetNextClientThink( 0.1f );
 #endif
 }
 
@@ -1147,7 +1194,7 @@ void CTFFlameEntity::ClientThink( void )
 //-----------------------------------------------------------------------------
 // Purpose: Creates an instance of this entity
 //-----------------------------------------------------------------------------
-CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float flDmgAmount )
+CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float flDmgAmount, bool bCritFromBehind )
 {
 	CTFFlameEntity *pFlame = static_cast<CTFFlameEntity*>( CBaseEntity::Create( "tf_flame", vecOrigin, vecAngles, pOwner ) );
 	if ( !pFlame )
@@ -1166,6 +1213,7 @@ CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &v
 	pFlame->ChangeTeam( pOwner->GetTeamNumber() );
 	pFlame->m_iDmgType = iDmgType;
 	pFlame->m_flDmgAmount = flDmgAmount;
+	pFlame->m_bCritFromBehind = bCritFromBehind;
 
 	// Setup the initial velocity.
 	Vector vecForward, vecRight, vecUp;
@@ -1376,6 +1424,22 @@ void CTFFlameEntity::CheckCollision( CBaseEntity *pOther, bool *pbHitWorld )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFFlameEntity::IsBehindTarget( CBaseEntity *pVictim )
+{
+	Vector vecFwd;
+	QAngle angEyes = pVictim->EyeAngles();
+	AngleVectors( angEyes, &vecFwd );
+	vecFwd.NormalizeInPlace();
+
+	Vector vecPos = m_vecBaseVelocity;
+	vecPos.NormalizeInPlace();
+
+	return vecPos.AsVector2D().Dot( vecFwd.AsVector2D() ) > 0.8f;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Called when we've collided with another entity
 //-----------------------------------------------------------------------------
 void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
@@ -1407,6 +1471,9 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 		return;
 
 	SetHitTarget();
+
+	if (pOther->IsPlayer() && IsBehindTarget( pOther ) && m_bCritFromBehind)
+		m_iDmgType |= DMG_CRITICAL;
 
 	CTakeDamageInfo info( GetOwnerEntity(), pAttacker, GetOwnerEntity(), flDamage, m_iDmgType, TF_DMG_CUSTOM_BURNING );
 	info.SetReportedPosition( pAttacker->GetAbsOrigin() );
