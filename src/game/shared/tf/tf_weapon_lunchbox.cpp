@@ -50,7 +50,7 @@ void CTFLunchBox::SecondaryAttack( void )
 	if ( !pOwner )
 		return;
 
-	if ( !CanAttack() )
+	if ( !CanAttack() || !CanDrop() )
 		return;
 
 #ifdef GAME_DLL
@@ -104,20 +104,27 @@ void CTFLunchBox::DepleteAmmo( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
-	{
 		return;
-	}
+
+	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1)
+		return;
 
 	if ( pOwner->HealthFraction() >= 1.0f )
-	{
 		return;
-	}
 
 	// Switch away from it immediately, don't want it to stick around.
 	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
 	pOwner->SwitchToNextBestWeapon( this );
 
 	StartEffectBarRegen();
+}
+
+bool CTFLunchBox::UsesPrimaryAmmo( void )
+{
+	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1)
+		return false;
+
+	return BaseClass::UsesPrimaryAmmo();
 }
 
 //-----------------------------------------------------------------------------
@@ -159,10 +166,30 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	// Heal 25% of the player's max health per second for a total of 100%.
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
+	float flAmt = 75.0f;
+	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1)
+		flAmt = 25.0f;
+
 	if ( pOwner )
 	{
-		pOwner->TakeHealth( ( GetTFPlayerOwner()->GetMaxHealth() ) / 4, DMG_GENERIC );
+		pOwner->TakeHealth( flAmt, DMG_GENERIC );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFLunchBox::CanDrop( void ) const
+{
+	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) != 1)
+	{
+		CTFPlayer *pOwner = GetTFPlayerOwner();
+
+		if (pOwner && pOwner->IsAlive())
+			return !pOwner->m_Shared.InCond( TF_COND_TAUNTING );
+	}
+
+	return false;
 }
 
 #endif

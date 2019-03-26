@@ -31,7 +31,8 @@ public:
 	virtual void		SecondaryAttack( void );
 
 	virtual void		DepleteAmmo( void );
-
+	
+	virtual bool		UsesPrimaryAmmo( void );
 
 	virtual bool		HasChargeBar( void )						{ return true; }
 	virtual float		InternalGetEffectBarRechargeTime( void )	{ return 30.0f; }
@@ -42,6 +43,7 @@ public:
 #ifdef GAME_DLL
 	virtual void		Precache( void );
 	virtual void		ApplyBiteEffects( bool bHurt );
+	virtual bool		CanDrop( void ) const;
 #endif
 
 private:

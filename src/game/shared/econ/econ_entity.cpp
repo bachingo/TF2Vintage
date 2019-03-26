@@ -249,7 +249,7 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 					if ( pszModelName != NULL )
 					{
 						ClientModelRenderInfo_t *pNewInfo = new ClientModelRenderInfo_t( *pInfo );
-						model_t *model = (model_t *)engine->LoadModel( pszModelName );
+						const model_t *model = engine->LoadModel( pszModelName );
 						pNewInfo->pModel = model;
 
 						pNewInfo->pModelToWorld = &pNewInfo->modelToWorld;

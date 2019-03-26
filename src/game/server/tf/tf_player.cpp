@@ -1258,7 +1258,13 @@ void CTFPlayer::InitClass( void )
 //-----------------------------------------------------------------------------
 int CTFPlayer::GetMaxHealth( void ) const
 {
-	return CAttributeManager::AttribHookValue<int>( GetMaxHealthForBuffing(), "add_maxhealth_nonbuffed", this );
+	int iMaxHealth = GetMaxHealthForBuffing();
+	CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth_nonbuffed );
+
+	if (const_cast<CTFPlayerShared &>( m_Shared ).InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ))
+		iMaxHealth += 50;
+
+	return iMaxHealth;
 }
 
 //-----------------------------------------------------------------------------
@@ -7821,6 +7827,9 @@ void CTFPlayer::DoTauntAttack( void )
 			if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
 			{
 				CTFLunchBox *pLunch = static_cast<CTFLunchBox *>( pWeapon );
+
+				if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", pLunch ) == 1 && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ))
+					m_Shared.AddCond( TF_COND_LUNCHBOX_HEALTH_BUFF, 30.0f );
 
 				if ( HealthFraction() <= 1.0f )
 				{
