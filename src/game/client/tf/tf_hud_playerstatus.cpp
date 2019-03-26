@@ -504,7 +504,7 @@ void CTFHudPlayerHealth::OnThink()
 
 		if ( pPlayer )
 		{
-			SetHealth( pPlayer->GetHealth(), pPlayer->m_Shared.GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
+			SetHealth( pPlayer->GetHealth(), pPlayer->GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
 
 			// Player status effects
 			SetPlayerHealthImagePanelVisibility( TF_COND_OFFENSEBUFF, m_hBuffImages.Element( 0 ) );
