@@ -294,6 +294,8 @@ extern const char *g_aAmmoNames[];
 
 #define TF_WEAPON_ZOOM_FOV								20
 
+#define TF_WEAPON_MAX_REVENGE							35
+
 enum
 {
 	TF_WEAPON_NONE = 0,
@@ -363,6 +365,7 @@ enum
 	TF_WEAPON_ROBOT_ARM,
 	TF_WEAPON_BUFF_ITEM,
 	TF_WEAPON_SWORD,
+	TF_WEAPON_SENTRY_REVENGE,
 
 	TF_WEAPON_COUNT
 };

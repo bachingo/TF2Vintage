@@ -16,6 +16,7 @@
 #include "tf_gamerules.h"
 #include "ammodef.h"
 #include "tf_fx_shared.h"
+#include "tf_weapon_shotgun.h"
 #include "tf_weapon_laser_pointer.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1758,11 +1759,17 @@ void CObjectSentrygun::Killed( const CTakeDamageInfo &info )
 	CTFPlayer *pOwner = GetBuilder();
 	if ( pOwner )
 	{
-		CTFLaserPointer *pWeapon = dynamic_cast < CTFLaserPointer * > ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
-		if ( pWeapon )
+		CTFLaserPointer *pWrangler = dynamic_cast <CTFLaserPointer *> ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
+		if (pWrangler)
 		{
 			// Make sure wrangler stops updating sentry laser
-			pWeapon->RemoveGun();
+			pWrangler->RemoveGun();
+		}
+
+		CTFShotgun_Revenge *pShotgun = dynamic_cast <CTFShotgun_Revenge *> ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_PRIMARY ) );
+		if (pShotgun)
+		{
+			pShotgun->OnSentryKilled( this );
 		}
 	}
 

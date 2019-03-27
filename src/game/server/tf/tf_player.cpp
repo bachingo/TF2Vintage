@@ -7637,31 +7637,36 @@ void CTFPlayer::Taunt( void )
 			m_flTauntAttackTime = gpGlobals->curtime + 0.85f;
 			m_iTauntAttack = TAUNTATK_SNIPER_ARROW_STAB_IMPALE;
 		}
-		else if ( V_strnicmp( szResponse, "scenes/player/medic/low/taunt08.vcd", 32 ) == 0 )
+		else if ( V_stricmp( szResponse, "scenes/player/medic/low/taunt08.vcd" ) == 0 )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 2.2f;
 			m_iTauntAttack = TAUNTATK_MEDIC_UBERSLICE_IMPALE;
 		}
-		else if ( V_strnicmp( szResponse, "scenes/player/engineer/low/taunt09.vcd", 32 ) == 0 )
+		else if ( V_stricmp( szResponse, "scenes/player/engineer/low/taunt09.vcd" ) == 0 )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 3.2;
 			m_iTauntAttack = TAUNTATK_ENGINEER_ARM_IMPALE;
 		}
-		else if ( V_strnicmp( szResponse, "scenes/player/scout/low/taunt05_v1.vcd", 32 ) == 0 )
+		else if ( V_stricmp( szResponse, "scenes/player/scout/low/taunt05_v1.vcd" ) == 0 )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 4.03f;
 			m_iTauntAttack = TAUNTATK_SCOUT_GRAND_SLAM;
 		}
-		else if ( V_strnicmp( szResponse, "scenes/player/medic/low/taunt06.vcd", 32 ) == 0 )
+		else if ( V_stricmp( szResponse, "scenes/player/medic/low/taunt06.vcd" ) == 0 )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 0.35;
 			m_iTauntAttack = TAUNTATK_MEDIC_INHALE;
 			DispatchParticleEffect( ConstructTeamParticle( "healhuff_%s", GetTeamNumber(), false, g_aTeamNamesShort ), PATTACH_POINT_FOLLOW, this, "eyes" );
 		}
-		else if ( V_strnicmp( szResponse, "scenes/player/demoman/low/taunt09.vcd", 32 ) == 0 )
+		else if ( V_stricmp( szResponse, "scenes/player/demoman/low/taunt09.vcd" ) == 0 )
 		{
 			m_flTauntAttackTime = gpGlobals->curtime + 2.55f;
 			m_iTauntAttack = TAUNTATK_DEMOMAN_BARBARIAN_SWING;
+		}
+		else if ( V_stricmp( szResponse, "scenes/player/engineer/low/taunt07.vcd" ) == 0 )
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 3.69f;
+			m_iTauntAttack = TAUNTATK_ENGINEER_GUITAR_SMASH;
 		}
 	}
 
@@ -7688,6 +7693,7 @@ void CTFPlayer::DoTauntAttack( void )
 		case TAUNTATK_SPY_FENCING_SLASH_B:
 		case TAUNTATK_SPY_FENCING_STAB:
 		case TAUNTATK_DEMOMAN_BARBARIAN_SWING:
+		case TAUNTATK_ENGINEER_GUITAR_SMASH:
 		{
 			Vector vecAttackDir = BodyDirection2D();
 			Vector vecOrigin = WorldSpaceCenter() + vecAttackDir * 64;
@@ -7722,10 +7728,15 @@ void CTFPlayer::DoTauntAttack( void )
 				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_FENCING;
 				break;
 			case TAUNTATK_DEMOMAN_BARBARIAN_SWING:
-				vecForce.Zero();
 				flDamage = 500.0f;
 				nDamageType = DMG_SLASH;
 				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING;
+				break;
+			case TAUNTATK_ENGINEER_GUITAR_SMASH:
+				vecForce *= 100.0f;
+				flDamage = 500.0f;
+				nDamageType = DMG_CLUB;
+				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_ENGINEER_GUITAR_SMASH;
 				break;
 			default:
 				vecForce *= 100.0f;

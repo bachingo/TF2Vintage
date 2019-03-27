@@ -3170,6 +3170,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		case TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING:
 			pszCustomKill = "taunt_demoman";
 			break;
+		case TF_DMG_CUSTOM_TAUNTATK_ENGINEER_GUITAR_SMASH:
+			pszCustomKill = "taunt_guitar_kill";
+			break;
 		case TF_DMG_CUSTOM_TAUNTATK_ENGINEER_ARM_KILL:
 			pszCustomKill = "robot_arm_blender_kill";
 			break;
@@ -3198,7 +3201,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 			pszCustomKill = "headtaker";
 			break;
 		case TF_DMG_CUSTOM_BLEEDING:
-			pszCustomKill = "tf_weapon_bleed_kill";
+			pszCustomKill = "bleed_kill";
 			break;
 	}
 

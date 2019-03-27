@@ -18,7 +18,7 @@
 #define CTFShotgun_HWG C_TFShotgun_HWG
 #define CTFShotgun_Pyro C_TFShotgun_Pyro
 #define CTFScatterGun C_TFScatterGun
-#define CTFDoubleBarrel C_TFDoubleBarrel
+#define CTFShotgun_Revenge C_TFShotgun_Revenge
 #endif
 
 // Reload Modes
@@ -97,6 +97,47 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_PYRO; }
+};
+
+
+class CTFShotgun_Revenge : public CTFShotgun
+{
+public:
+	DECLARE_CLASS( CTFShotgun_Revenge, CTFShotgun );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	CTFShotgun_Revenge();
+
+	virtual void	Precache( void );
+
+#ifdef CLIENT_DLL
+	virtual int		GetWorldModelIndex( void );
+	
+	virtual void	SetWeaponVisible( bool visible );
+#endif
+
+	virtual void	PrimaryAttack( void );
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SENTRY_REVENGE; }
+	virtual int		GetCount( void ) const;
+
+	virtual int		GetCustomDamageType( void ) const;
+	
+	virtual bool	Deploy( void );
+	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
+	virtual void	Detach( void );
+
+#ifdef GAME_DLL
+	void			OnSentryKilled( class CObjectSentrygun *pSentry );
+#endif
+
+	bool			CanGetRevengeCrits( void ) const;
+
+private:
+
+	CNetworkVar( int, m_iRevengeCrits );
+
+	CTFShotgun_Revenge( CTFShotgun_Revenge const& ) { }
 };
 
 #endif // TF_WEAPON_SHOTGUN_H

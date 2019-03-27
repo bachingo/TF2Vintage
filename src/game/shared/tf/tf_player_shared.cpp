@@ -14,6 +14,7 @@
 #include "baseobject_shared.h"
 #include "tf_weapon_medigun.h"
 #include "tf_weapon_pipebomblauncher.h"
+#include "tf_weapon_shotgun.h"
 #include "in_buttons.h"
 #include "tf_viewmodel.h"
 #include "tf_weapon_invis.h"
@@ -2969,6 +2970,13 @@ void CTFPlayerShared::RecalculateChargeEffects(bool bInstantRemove)
 
 void CTFPlayerShared::SetChargeEffect(medigun_charge_types chargeType, bool bShouldCharge, bool bInstantRemove, const MedigunEffects_t &chargeEffect, float flRemoveTime, CTFPlayer *pProvider)
 {
+	CTFShotgun_Revenge *pShotgun = dynamic_cast<CTFShotgun_Revenge *>( GetActiveTFWeapon() );
+	if (pShotgun && pShotgun->CanGetRevengeCrits())
+	{
+		if (chargeEffect.condition_enable == TF_COND_CRITBOOSTED)
+			return;
+	}
+
 	if (InCond(chargeEffect.condition_enable) == bShouldCharge)
 	{
 		if (bShouldCharge && m_flChargeOffTime[chargeType] != 0.0f)
