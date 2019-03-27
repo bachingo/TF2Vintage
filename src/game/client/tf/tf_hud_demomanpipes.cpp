@@ -129,6 +129,31 @@ void CHudDemomanPipes::OnTick( void )
 		}
 
 		m_flOldCharge = flCharge;
+
+		// We're currently in the middle of a shield charge
+		if ( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE) )
+		{
+			// Set the charge color based on how far into the charge we are
+			if ( flCharge > 0.66 )
+			{
+				// GREEN
+				m_pChargeMeter->SetFgColor( Color( 153, 255, 153, 255 ) );
+			}
+			else if ( flCharge > 0.33 )
+			{
+				// YELLOW
+				m_pChargeMeter->SetFgColor( Color( 255, 178, 0, 255 ) );
+			}
+			else
+			{
+				// RED
+				m_pChargeMeter->SetFgColor( Color( 255, 0, 0, 255 ) );
+			}
+		}
+		else
+		{
+			m_pChargeMeter->SetFgColor( COLOR_WHITE );
+		}
 	}
 	else
 	{
