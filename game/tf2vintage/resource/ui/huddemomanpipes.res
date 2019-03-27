@@ -18,13 +18,53 @@
 		"teambg_2"		"../hud/misc_ammo_area_red"
 		"teambg_2_lodef"	"../hud/misc_ammo_area_red_lodef"
 		"teambg_3"		"../hud/misc_ammo_area_blue"
-		"teambg_3_lodef"	"../hud/misc_ammo_area_blue_lodef"	
-		"teambg_4"		"../hud/misc_ammo_area_green"
-		"teambg_4_lodef"	"../hud/misc_ammo_area_green_lodef"
-		"teambg_5"		"../hud/misc_ammo_area_yellow"
-		"teambg_5_lodef"	"../hud/misc_ammo_area_yellow_lodef"				
+		"teambg_3_lodef"	"../hud/misc_ammo_area_blue_lodef"				
 	}
 	
+	"ChargeLabel"
+	{
+		"ControlName"			"CExLabel"
+		"fieldName"				"ChargeLabel"
+		"xpos"					"25"
+		"ypos"					"27"
+		"zpos"					"2"
+		"wide"					"41"
+		"tall"					"15"
+		"autoResize"			"1"
+		"pinCorner"				"2"
+		"visible"				"1"
+		"visible_minmode"		"0"
+		"enabled"				"1"
+		"tabPosition"			"0"
+		"labelText"				"#TF_Charge"
+		"textAlignment"			"center"
+		"dulltext"				"0"
+		"brighttext"			"0"
+		"font"					"TFFontSmall"
+	}
+
+	"ChargeMeter"
+	{	
+		"ControlName"			"ContinuousProgressBar"
+		"fieldName"				"ChargeMeter"
+		"font"					"Default"
+		"xpos"					"25"
+		"ypos"					"23"
+		"ypos_minmode"			"0"
+		"xpos_minmode"			"0"
+		"zpos"					"2"
+		"wide"					"40"
+		"wide_minmode"			"50"
+		"tall"					"6"				
+		"autoResize"			"0"
+		"pinCorner"				"0"
+		"visible"				"1"
+		"enabled"				"1"
+		"textAlignment"			"Left"
+		"dulltext"				"0"
+		"brighttext"			"0"
+	}				
+		
 	"PipesPresentPanel"
 	{
 		"ControlName"	"EditablePanel"
@@ -53,8 +93,6 @@
 			"scaleImage"	"1"
 			"teambg_2"		"../hud/ico_stickybomb_red"
 			"teambg_3"		"../hud/ico_stickybomb_blue"	
-			"teambg_4"		"../hud/ico_stickybomb_green"
-			"teambg_5"		"../hud/ico_stickybomb_yellow"	
 		}	
 		
 		"NumPipesLabel"
@@ -137,9 +175,7 @@
 			"image"			"../hud/ico_stickybomb_red_faded"
 			"scaleImage"	"1"
 			"teambg_2"		"../hud/ico_stickybomb_red_faded"
-			"teambg_3"		"../hud/ico_stickybomb_blue_faded"
-			"teambg_4"		"../hud/ico_stickybomb_green_faded"
-			"teambg_5"		"../hud/ico_stickybomb_yellow_faded"	
+			"teambg_3"		"../hud/ico_stickybomb_blue_faded"	
 		}
 
 		"NumPipesLabel"
