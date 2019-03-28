@@ -1714,11 +1714,13 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 			g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
 			Q_snprintf( details, sizeof( details ), "Map: %s", buffer );
 			discordPresence.largeImageKey = pMapName;
+			discordPresence.largeImageText = MapName;
 		}
 		else
 		{
 			Q_snprintf( details, sizeof( details ), "Map: %s", pMapName );
 			discordPresence.largeImageKey = "default";
+			discordPresence.largeImageText = pMapName;
 		}
 		
 		discordPresence.state = "In-Game";
