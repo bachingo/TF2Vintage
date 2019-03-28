@@ -70,18 +70,20 @@
 		"MeterFG"		"White"
 		"MeterBG"		"Gray"
 	}
+	
 	"HudItemEffects"
 	{
 		"fieldName"		"HudItemEffects"
 		"visible"		"1"
 		"enabled"		"1"
-		"xpos"			"r387"
-		"xpos_minmode"		"r277"	
-		"ypos"			"r64"
-		"ypos_minmode"		"r62"
+		"xpos"			"0"
+		"xpos_minmode"	"0"	
+		"ypos"			"0"
+		"ypos_minmode"	"0"
 		"wide"			"f0"
 		"tall"			"480"
 	}	
+	
 	HudMedicCharge
 	{
 		"fieldName"		"HudMedicCharge"
@@ -103,14 +105,14 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"xpos"			"r80"	[$WIN32]
-		"xpos_minmode"		"r52"	[$WIN32]
+		"xpos_minmode"	"r52"	[$WIN32]
 		"ypos"			"r21"	[$WIN32]
-		"ypos_minmode"		"r40"	[$WIN32]
+		"ypos_minmode"	"r40"	[$WIN32]
 		"xpos"			"r112"	[$X360]
 		"ypos"			"r45"	[$X360]
 		"zpos"			"1"			// draw in front of ammo
 		"wide"			"60"
-		"wide_minmode"		"50"
+		"wide_minmode"	"50"
 		"tall"			"8"
 		"MeterFG"		"White"
 		"MeterBG"		"Gray"
@@ -122,33 +124,33 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"xpos"			"r80"	[$WIN32]
-		"xpos_minmode"		"r52"	[$WIN32]
+		"xpos_minmode"	"r52"	[$WIN32]
 		"ypos"			"r21"	[$WIN32]
-		"ypos_minmode"		"r40"	[$WIN32]
+		"ypos_minmode"	"r40"	[$WIN32]
 		"xpos"			"r112"	[$X360]
 		"ypos"			"r45"	[$X360]
 		"zpos"			"1"			// draw in front of ammo
 		"wide"			"60"
-		"wide_minmode"		"50"
+		"wide_minmode"	"50"
 		"tall"			"8"
 		"MeterFG"		"White"
 		"MeterBG"		"Gray"
 	}
-
+	
 	HudFlameRocketCharge
 	{
 		"fieldName"		"HudFlameRocketCharge"
 		"visible"		"1"
 		"enabled"		"1"
 		"xpos"			"r80"	[$WIN32]
-		"xpos_minmode"		"r52"	[$WIN32]
+		"xpos_minmode"	"r52"	[$WIN32]
 		"ypos"			"r21"	[$WIN32]
-		"ypos_minmode"		"r40"	[$WIN32]
+		"ypos_minmode"	"r40"	[$WIN32]
 		"xpos"			"r112"	[$X360]
 		"ypos"			"r45"	[$X360]
 		"zpos"			"1"			// draw in front of ammo
 		"wide"			"60"
-		"wide_minmode"		"50"
+		"wide_minmode"	"50"
 		"tall"			"8"
 		"MeterFG"		"White"
 		"MeterBG"		"Gray"
