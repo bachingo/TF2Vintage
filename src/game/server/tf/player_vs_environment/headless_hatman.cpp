@@ -7,7 +7,9 @@
 #include "cbase.h"
 #include "datacache/imdlcache.h"
 #include "props_shared.h"
+#include "tf_gamerules.h"
 #include "tf_team.h"
+#include "entity_bossresource.h"
 #include "headless_hatman_behavior.h"
 #include "headless_hatman.h"
 
@@ -172,6 +174,12 @@ void CHeadlessHatman::Spawn( void )
 	m_vecSpawn = GetAbsOrigin();
 
 	SetBloodColor( DONT_BLEED );
+
+	if (!TFGameRules() || !TFGameRules()->IsHalloweenScenario( 5 ))
+	{
+		if (g_pMonsterResource)
+			g_pMonsterResource->SetBossHealthPercentage( 1.0f );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -194,6 +202,15 @@ void CHeadlessHatman::Precache( void )
 //-----------------------------------------------------------------------------
 int CHeadlessHatman::OnTakeDamage_Alive( const CTakeDamageInfo& info )
 {
+	if (g_pMonsterResource && TFGameRules() && !TFGameRules()->IsHalloweenScenario( 5 ) )
+	{
+		float flHPPercent = GetHealth() / GetMaxHealth();
+		if (flHPPercent <= 0.0f)
+			g_pMonsterResource->HideBossHealthMeter();
+		else
+			g_pMonsterResource->SetBossHealthPercentage( flHPPercent );
+	}
+
 	extern void DispatchParticleEffect( const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, CBaseEntity *pEntity );
 	DispatchParticleEffect( "halloween_boss_injured", info.GetDamagePosition(), GetAbsAngles(), NULL );
 
