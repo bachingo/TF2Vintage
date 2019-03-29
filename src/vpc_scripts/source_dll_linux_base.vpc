@@ -45,6 +45,6 @@ $Project
 	
 	$Folder	"Link Libraries"
 	{
-		$Lib "%LIBPUBLIC\linux32\libdiscord-rpc"
+		$ImpLib "$SRCDIR\lib\public\linux32\discord-rpc" [!$IS_LIB_PROJECT]
 	}
 }
