@@ -4526,7 +4526,8 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 			else if (CanGoInvisible() && (m_Shared.GetSpyCloakMeter() > 8.0f))	// must have over 10% cloak to start
 			{
 			#ifdef GAME_DLL
-				m_Shared.AddCond(TF_COND_STEALTHED);
+				m_Shared.AddCond( TF_COND_STEALTHED );
+			#endif
 
 				CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
 				if (pInvis)
@@ -4541,7 +4542,7 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 					m_Shared.SetCloakDrainRate( flConsumeRate );
 					m_Shared.SetCloakRegenRate( flRegenRate );
 				}
-			#endif
+			
 				bDoSkill = true;
 			}
 
