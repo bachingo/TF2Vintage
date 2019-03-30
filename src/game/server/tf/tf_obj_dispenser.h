@@ -57,6 +57,7 @@ public:
 
 	virtual float GetDispenserRadius( void );
 	virtual float GetHealRate( void );
+	virtual float GetAmmoRate( void );
 
 	virtual void StartTouch( CBaseEntity *pOther );
 	virtual void EndTouch( CBaseEntity *pOther );
