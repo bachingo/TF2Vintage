@@ -164,7 +164,10 @@ float CTFWeaponInvis::GetEffectBarProgress( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponInvis::GetControlPanelInfo( int nPanelIndex, const char *&pPanelName )
 {
-	pPanelName = "pda_panel_spy_invis";
+	if( HasFeignDeath() )
+		pPanelName = "pda_panel_spy_invis_pocket";
+	else
+		pPanelName = "pda_panel_spy_invis";
 }
 
 #endif

@@ -18,6 +18,7 @@
 #include <vgui_controls/RadioButton.h>
 #include "clientmode.h"
 #include <vgui_controls/ProgressBar.h>
+#include <vgui_controls/CircularProgressBar.h>
 
 using namespace vgui;
 
@@ -212,4 +213,58 @@ void CPDAPanel_Spy_Invis::OnTick( void )
 			m_pInvisProgress->SetProgress( pPlayer->m_Shared.GetSpyCloakMeter() / 100.0f );
 		}
 	}	
+}
+
+class CPDAPanel_Spy_Invis_Pocket : public CPDAPanel
+{
+	DECLARE_CLASS( CPDAPanel_Spy_Invis_Pocket, CPDAPanel );
+public:
+	CPDAPanel_Spy_Invis_Pocket( vgui::Panel *parent, const char *panelName );
+
+	virtual void OnTick();
+
+private:
+	CircularProgressBar *m_pInvisProgress;
+};
+
+DECLARE_VGUI_SCREEN_FACTORY( CPDAPanel_Spy_Invis_Pocket, "pda_panel_spy_invis_pocket" );
+
+CPDAPanel_Spy_Invis_Pocket::CPDAPanel_Spy_Invis_Pocket( vgui::Panel *parent, const char *panelName )
+	: CPDAPanel( parent, "CPDAPanel_Spy_Invis_Pocket" )
+{
+	vgui::ivgui()->AddTickSignal( GetVPanel() );
+
+	m_pInvisProgress = new CircularProgressBar( this, "InvisProgress" );
+}
+
+void CPDAPanel_Spy_Invis_Pocket::OnTick( void )
+{
+	C_BaseCombatWeapon *pInvisWeapon = GetOwningWeapon();
+
+	if ( !pInvisWeapon )
+		return;
+
+	C_TFPlayer *pPlayer = ToTFPlayer( pInvisWeapon->GetOwner() );
+
+	if ( pPlayer && !pPlayer->IsDormant() )
+	{
+		if ( m_pInvisProgress )
+		{
+			float flCloakMeter = pPlayer->m_Shared.GetSpyCloakMeter();
+			if ( flCloakMeter == 100.0f )
+			{
+				m_pInvisProgress->SetFgColor( Color( 0xFF, 0x99, 0xFF, 0x99 ) );
+			}
+			else if ( flCloakMeter >= 40.0f )
+			{
+				m_pInvisProgress->SetFgColor( Color( 0xFF, 0x00, 0xB2, 0xFF ) );
+			}
+			else
+			{
+				m_pInvisProgress->SetFgColor( Color( 0xFF, 0x40, 0x40, 0xFF ) );
+			}
+
+			m_pInvisProgress->SetProgress( flCloakMeter / 100.0f );
+		}
+	}
 }
