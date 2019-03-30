@@ -993,7 +993,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			// Dispensers refill cloak.
 			if ( m_aHealers[i].bDispenserHeal )
 			{
-				m_flCloakMeter = min( m_flCloakMeter + m_aHealers[i].flAmount * gpGlobals->frametime, 100.0f );
+				AddToSpyCloakMeter( m_aHealers[i].flAmount * gpGlobals->frametime );
 			}
 
 			// Dispensers don't heal above 100%
