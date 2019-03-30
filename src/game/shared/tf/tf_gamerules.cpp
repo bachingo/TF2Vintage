@@ -2870,10 +2870,7 @@ static const char *g_aTaggedConVars[] =
 	"tf2c_duckjump",
 	"duckjump",
 
-	"tf2c_allow_special_classes",
-	"specialclasses",
-
-	"tf2c_airblast",
+	"tf2v_airblast",
 	"airblast",
 
 	"tf2c_building_hauling",
@@ -2918,8 +2915,6 @@ static const char *g_aTaggedConVars[] =
 	"tf_gamemode_passtime",
 	"passtime",
 
-	"tf_gamemode_dm",
-	"dm",
 };
 
 //-----------------------------------------------------------------------------
