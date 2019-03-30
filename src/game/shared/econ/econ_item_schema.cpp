@@ -90,6 +90,7 @@ EconItemVisuals::EconItemVisuals()
 {
 	animation_replacement.SetLessFunc( actLessFunc );
 	memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
+	skin = -1;
 }
 
 

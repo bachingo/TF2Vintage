@@ -426,7 +426,14 @@ int CTFViewModel::GetSkin()
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( pPlayer && pPlayer->IsAlive() )
 	{
-		if ( pWeapon->GetTFWpnData().m_bHasTeamSkins_Viewmodel )
+		// Check for skin data from items_game
+		if ( pWeapon->GetItem() )
+		{
+			nSkin = Max( pWeapon->GetItem()->GetSkin( pPlayer->GetTeamNumber(), true ), -1 );
+		}
+
+		// No skin data found. Default to team skins
+		if ( pWeapon->GetTFWpnData().m_bHasTeamSkins_Viewmodel && nSkin == -1 )
 		{
 			switch( pPlayer->GetTeamNumber() )	
 			{
@@ -437,11 +444,6 @@ int CTFViewModel::GetSkin()
 				nSkin = 1;
 				break;
 			}
-		}
-
-		if (pWeapon->GetItem())
-		{
-			nSkin = Max( pWeapon->GetItem()->GetSkin( pPlayer->GetTeamNumber(), true ), 0 );
 		}
 	}
 
