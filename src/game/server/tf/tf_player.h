@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright Â© 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef TF_PLAYER_H
@@ -380,8 +380,6 @@ public:
 	virtual CAttributeContainer *GetAttributeContainer() { return NULL; }
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void		ReapplyProvision( void ) { /*Do nothing*/ };
-
-	void				UpdatePlayerColor( void );
 
 	// Entity inputs
 	void				InputIgnitePlayer( inputdata_t &inputdata );
