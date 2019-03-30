@@ -46,6 +46,7 @@ extern ConVar tf2c_muzzlelight;
 #endif
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
+ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
 
 //=============================================================================
 //
@@ -958,11 +959,15 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
 		return false;
+	
+	// Don't bother checking if allcrit is on.
+	if ( tf2v_allcrit.GetBool() )
+		return true;
 
 	// Don't bother checking if random crits are off.
 	if ( !tf_weapon_criticals.GetBool() )
 		return false;
-
+	
 	if ( !CanFireCriticalShot() )
 		return false;
 
