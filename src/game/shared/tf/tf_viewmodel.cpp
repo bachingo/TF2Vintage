@@ -429,7 +429,7 @@ int CTFViewModel::GetSkin()
 		// Check for skin data from items_game
 		if ( pWeapon->GetItem() )
 		{
-			nSkin = Max( pWeapon->GetItem()->GetSkin( pPlayer->GetTeamNumber(), true ), -1 );
+			nSkin = pWeapon->GetItem()->GetSkin( pPlayer->GetTeamNumber(), true );
 		}
 
 		// No skin data found. Default to team skins
