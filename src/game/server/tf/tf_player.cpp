@@ -8971,17 +8971,3 @@ bool CTFPlayer::ShouldAnnouceAchievement( void )
 
 	return true; 
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::UpdatePlayerColor( void )
-{
-	// Update color from their convars
-	Vector vecNewColor;
-	vecNewColor.x = Q_atoi( engine->GetClientConVarValue( entindex(), "tf2c_setmerccolor_r" ) ) / 255.0f;
-	vecNewColor.y = Q_atoi( engine->GetClientConVarValue( entindex(), "tf2c_setmerccolor_g" ) ) / 255.0f;
-	vecNewColor.z = Q_atoi( engine->GetClientConVarValue( entindex(), "tf2c_setmerccolor_b" ) ) / 255.0f;
-
-	m_vecPlayerColor = vecNewColor;
-}
