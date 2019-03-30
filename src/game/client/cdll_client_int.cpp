@@ -1724,6 +1724,7 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		}
 		
 		discordPresence.state = "In-Game";
+		discordPresence.startTimestamp = startTimestamp;
 		discordPresence.details = details;
 		Discord_UpdatePresence( &discordPresence );
 	}
