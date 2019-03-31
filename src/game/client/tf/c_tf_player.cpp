@@ -2268,7 +2268,10 @@ void C_TFPlayer::UpdateRecentlyTeleportedEffect( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::StopViewModelParticles( C_BaseEntity *pEntity )
 {
-	ParticleProp()->StopParticlesInvolving( pEntity );
+	if ( pEntity && pEntity->ParticleProp() )
+	{
+		pEntity->ParticleProp()->StopParticlesInvolving( pEntity );
+	}
 }
 
 //-----------------------------------------------------------------------------
