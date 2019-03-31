@@ -338,6 +338,7 @@ static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "D
 
 // Discord RPC
 static ConVar cl_discord_appid("cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
+static ConVar cl_steam_appid("cl_steam_appid", "14471311890598574118", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
 static int64_t startTimestamp = time(0);
 
 #ifdef HL1MP_CLIENT_DLL
@@ -1146,7 +1147,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 	char appid[255];
 	sprintf(appid, "%d", engine->GetAppID());
-	Discord_Initialize(cl_discord_appid.GetString(), &handlers, 1, appid);
+	Discord_Initialize(cl_discord_appid.GetString(), &handlers, 1, cl_steam_appid.GetString());
 
 	if (!g_bTextMode)
 	{
