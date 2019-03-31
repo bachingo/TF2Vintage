@@ -1724,6 +1724,7 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		
 		discordPresence.details = "In-Game";
 		discordPresence.state = state;
+		discordPresence.smallImageKey = "tf2v_drp_logo";
 		discordPresence.startTimestamp = startTimestamp;
 		Discord_UpdatePresence( &discordPresence );
 	}
