@@ -533,6 +533,7 @@ void CHudItemEffects::SetPlayer( void )
 		case TF_CLASS_SCOUT:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBat_Wood>( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFLunchBox_Drink>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Scout.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJarMilk>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Scout.res" ) );
 			break;
 		case TF_CLASS_SNIPER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJar>( "HudItemEffectMeter" ) );
