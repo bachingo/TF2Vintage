@@ -5,7 +5,7 @@ WeaponData
 	"BuiltRightHanded"		"0"
 	"weight"			"3"
 	"WeaponType"			"primary"
-	"ITEM_FLAG_NOITEMPICKUP" 	"1"
+	"ITEM_FLAG_NOITEMPICKUP"	"1"
 	
 	// Primary Attributes
 	"Damage"			"6"
@@ -35,7 +35,7 @@ WeaponData
 	"bucket_position"		"0"
 
 	// Animation.
-	"anim_prefix"   "shotgun"
+	"anim_prefix"	"shotgun"
 
 	// Muzzleflash
 	"MuzzleFlashParticleEffect" "muzzle_shotgun"

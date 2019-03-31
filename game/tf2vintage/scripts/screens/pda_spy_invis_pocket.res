@@ -2,7 +2,7 @@
 {
 	"InvisProgress"
 	{
-		"ControlName"	"ProgressBar"
+		"ControlName"	"CircularProgressBar"
 		"fieldName"		"InvisProgress"
 		"xpos"			"10"
 		"ypos"			"10"
@@ -13,7 +13,8 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		//"fg_image"		"flagtime_full"
-		//"bg_image"		"flagtime_empty"
+		"fg_image"	"pocket_watch_FG"
+		"bg_image"	"pocket_watch_BG"
 	}	
 }
+

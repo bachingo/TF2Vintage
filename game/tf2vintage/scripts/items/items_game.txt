@@ -59,23 +59,23 @@
 		}
 		"strange"
 		{
-			"value" 	"11"
+			"value"		"11"
 		}
 		"completed"
 		{
-			"value" 	"12"
+			"value"		"12"
 		}
 		"haunted"
 		{
-			"value" 	"13"
+			"value"		"13"
 		}
 		"collectors"
 		{
-			"value" 	"14"
+			"value"		"14"
 		}
 		"paintkitweapon"
 		{
-			"value" 	"15"
+			"value"		"15"
 		}
 	}
 	"colors"
@@ -540,69 +540,6 @@
 				"min_viewmodel_offset"					"10 0 -10"
 			}
 		}
-		"weapon_madmilk"
-		{
-			"enabled"	"1"
-			"item_class"	"tf_weapon_jar_milk"
-			"craft_class"	"weapon"
-			"craft_material_type"	"weapon"
-			"capabilities"
-			{
-				"nameable"		"1"
-			}
-			"tags"
-			{
-				"can_extinguish"			"1"
-			}
-			"base_item_name"	"Mad Milk"
-			"show_in_armory"	"1"
-			"item_type_name"	"#TF_Weapon_Jar_Milk"
-			"item_description"	"#TF_MadMilk_Desc"
-			"item_name"	"#TF_MadMilk"
-			"item_slot"	"secondary"
-			"item_quality"	"unique"
-			"anim_slot"	"item1"
-			"min_ilevel"	"5"
-			"max_ilevel"	"5"
-			"attach_to_hands"	"1"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_madmilk/c_madmilk"
-			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"
-			"model_player"	"models/workshop/weapons/c_models/c_madmilk/c_madmilk.mdl"
-			"used_by_classes"
-			{
-				"scout"	"1"
-			}
-			"attributes"
-			{
-				"kill eater score type"
-				{
-					"attribute_class"	"kill_eater_score_type"
-					"value" 	"4"									
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
-				"extinguish reduces cooldown"
-				{
-					"attribute_class" "extinguish_reduces_cooldown"
-					"value" "0.8"
-				}
-			}
-			"visuals"
-			{
-				"animation_replacement"
-				{
-					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_ITEM1_VM_INSPECT_START"
-					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_ITEM1_VM_INSPECT_IDLE"
-					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_ITEM1_VM_INSPECT_END"
-				}
-			}
-			"mouse_pressed_sound"	"ui/item_bottle_pickup.wav"
-			"drop_sound"		"ui/item_bottle_drop.wav"
-		}
 		"weapon_medigun"
 		{
 			"propername"		"1"
@@ -618,7 +555,7 @@
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
 			"attach_to_hands"	"1"
-            "model_player"    "models/weapons/c_models/c_medigun/c_medigun.mdl"
+			"model_player"	  "models/weapons/c_models/c_medigun/c_medigun.mdl"
 			"used_by_classes"
 			{
 				"medic"	"1"
@@ -886,7 +823,7 @@
 				"kill eater score type"
 				{
 					"attribute_class"	"kill_eater_score_type"
-					"value" 	"51" 
+					"value"		"51" 
 				}
 				"allowed in medieval mode"
 				{
@@ -1589,6 +1526,46 @@
 				"min_viewmodel_offset"		"10 0 -9"
 			}
 		}
+		"weapon_madmilk"
+		{
+			"enabled"	"1"
+			"item_class"	"tf_weapon_jar_milk"
+			"base_item_name"	"Mad Milk"
+			"show_in_armory"	"1"
+			"item_type_name"	"#TF_Weapon_Jar_Milk"
+			"item_description"	"#TF_MadMilk_Desc"
+			"item_name"	"#TF_MadMilk"
+			"item_slot"	"secondary"
+			"item_quality"	"unique"
+			"anim_slot"	"item1"
+			"attach_to_hands"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_madmilk/c_madmilk"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
+			"model_player"	"models/workshop/weapons/c_models/c_madmilk/c_madmilk.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"attributes"
+			{
+				"kill eater score type"
+				{
+					"attribute_class"	"kill_eater_score_type"
+					"value"		"4"									
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+				"extinguish reduces cooldown"
+				{
+					"attribute_class" "extinguish_reduces_cooldown"
+					"value" "0.8"
+				}
+			}
+		}
 		"weapon_sandvich"
 		{
 			"item_class"	"tf_weapon_lunchbox"
@@ -1892,12 +1869,12 @@
 				"kill eater score type"
 				{
 					"attribute_class"	"kill_eater_score_type"
-					"value" 	"3"									
+					"value"		"3"									
 				}
 				"kill eater score type 2"
 				{
 					"attribute_class"	"kill_eater_score_type_2"
-					"value" 	"0"									
+					"value"		"0"									
 				}
 				"special taunt"
 				{
@@ -2024,7 +2001,7 @@
 				"kill eater score type"
 				{
 					"attribute_class"	"kill_eater_score_type"
-					"value" 	"6"									
+					"value"		"6"									
 				}
 				"kill eater kill type"
 				{
@@ -2055,11 +2032,9 @@
 		{
 			"prefab"	"weapon_wearable"
 			"item_class"		"tf_wearable_demoshield"
-			"item_type_name" 	"#TF_Wearable_Shield"
+			"item_type_name"	"#TF_Wearable_Shield"
 			"item_name"		"#TF_Unique_Achievement_Shield"
 			"item_description"	"#TF_Unique_Achievement_Shield_Desc"
-			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"
 			"item_slot"		"secondary"
 			"equip_region"	"arms"
 			"item_logname"	"demoshield"
@@ -2070,14 +2045,6 @@
 			"used_by_classes"
 			{
 				"demoman"	"1"
-			}
-			"attributes"
-			{
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
 			}
 		}
 		"weapon_reskin"
@@ -2375,8 +2342,8 @@
 			"name"	"The Kritzkrieg"
 			"prefab"	"weapon_medigun"
 			"item_name"	"#TF_Unique_Achievement_Medigun1"
-            "image_inventory"    "backpack/weapons/c_models/c_overhealer/c_overhealer"
-            "model_player"    "models/weapons/c_models/c_kritzkrieg/c_kritzkrieg.mdl"
+			"image_inventory"	 "backpack/weapons/c_models/c_overhealer/c_overhealer"
+			"model_player"	  "models/weapons/c_models/c_kritzkrieg/c_kritzkrieg.mdl"
 			"item_quality"	"unique"
 			"attributes"
 			{
@@ -2606,10 +2573,10 @@
 					}
 					"1"
 					{
- 						"model_display_flags"	"2"
- 						"model" "models/weapons/c_models/c_v_ludmila/c_v_ludmila.mdl"
- 					}
- 				}
+						"model_display_flags"	"2"
+						"model" "models/weapons/c_models/c_v_ludmila/c_v_ludmila.mdl"
+					}
+				}
 			}
 		}
 		"42"
@@ -2680,6 +2647,43 @@
 		{
 			"name"	"Jarate"
 			"prefab"	"weapon_jarate"
+		}
+		"59"
+		{
+			"name"	"The Dead Ringer"
+			"prefab"	"weapon_invis"
+			"first_sale_date"	"2010/09/29"
+			"item_type_name"	"#TF_Weapon_Watch"
+			"item_name"	"#TF_Unique_Achievement_FeignWatch"
+			"image_inventory"	"backpack/weapons/c_models/c_pocket_watch/parts/c_pocket_watch"
+			"model_player"	"models/weapons/v_models/v_watch_pocket_spy.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"attributes"
+			{
+				"set cloak is feign death"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"mult cloak meter consume rate"
+				{
+					"attribute_class"	"mult_cloak_meter_consume_rate"
+					"value"	"1.6"
+				}
+				"mult cloak meter regen rate"
+				{
+					"attribute_class"	"mult_cloak_meter_regen_rate"
+					"value"	"1.8"
+				}
+				"kill eater score type"
+				{
+					"attribute_class"	"kill_eater_score_type"
+					"value"				"9"								
+				}
+			}
 		}
 		"60"
 		{
@@ -2808,6 +2812,8 @@
 			"name"	"The Chargin' Targe"
 			"prefab"	"weapon_shield"
 			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
 			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
 			"attributes"
 			{
@@ -2892,12 +2898,12 @@
 				"bleeding duration"
 				{
 					"attribute_class"	"bleeding_duration"
-					"value" "5"
+					"value" "5.0"
 				}
 				"dmg taken from fire increased"
 				{
 					"attribute_class"	"mult_dmgtaken_from_fire"
-					"value"			"1.2"
+					"value"			"1.20"
 				}
 			}
 			"visuals"
@@ -3091,6 +3097,25 @@
 			"prefab" "weapon_shortstop"
 			"particle_suffix"	"shortstop"
 		}
+		"222"
+		{
+			"name"	"Mad Milk"
+			"prefab" "weapon_madmilk"
+			"first_sale_date"	"2010/09/29"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"				
+			}
+			"visuals"
+			{
+				"skin" "2"
+				"custom_particlesystem"
+				{
+					"system"	"energydrink_milk_splash"
+				}
+				"sound_deploy"	"Weapon_MadMilk.Draw"
+			}
+		}
 		"226"
 		{
 			"name"	"The Battalion's Backup"
@@ -3100,7 +3125,7 @@
 			"anim_slot"		"melee"
 			"image_inventory"			"backpack/workshop/weapons/c_models/c_battalion_buffpack/c_battalion_buffpack"
 			"model_player"				"models/workshop/weapons/c_models/c_battalion_bugle/c_battalion_bugle.mdl"
-			"extra_wearable" 			"models/workshop/weapons/c_models/c_battalion_buffpack/c_battalion_buffpack.mdl"
+			"extra_wearable"			"models/workshop/weapons/c_models/c_battalion_buffpack/c_battalion_buffpack.mdl"
 			"attributes"
 			{
 				"mod soldier buff type"
@@ -3121,39 +3146,14 @@
 				}
 			}
 		}
-		"222"
-		{
-			"name"	"Mad Milk"
-			"prefab" "weapon_madmilk"
-			"first_sale_date"	"2010/09/29"
-			"min_ilevel"	"5"
-			"max_ilevel"	"5"
-			"attach_to_hands"	"1"
-			"inspect_panel_dist" 	"25"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -6"				
-			}
-			"visuals"
-			{
-				"skin" "2"
-				"custom_particlesystem"
-				{
-					"system"	"energydrink_milk_splash"
-				}
-				"sound_deploy"	"Weapon_MadMilk.Draw"
-			}
-			"mouse_pressed_sound"	"ui/item_bottle_pickup.wav"
-			"drop_sound"		"ui/item_bottle_drop.wav"
-		}
 		"228"
-       		{
-          	"name"    "The Black Box"
-          	"prefab" "weapon_rocketlauncher"
-            "item_logname"    "blackbox"
-            "item_iconname"    "blackbox"
-            "item_name"    "#TF_TheBlackBox"
-            "item_quality"    "unique"
+		{
+			"name"	  "The Black Box"
+			"prefab" "weapon_rocketlauncher"
+			"item_logname"	  "blackbox"
+			"item_iconname"	   "blackbox"
+			"item_name"	   "#TF_TheBlackBox"
+			"item_quality"	  "unique"
 			"image_inventory"	"backpack/weapons/c_models/c_blackbox/c_blackbox"
 			"model_player"	"models/workshop/weapons/c_models/c_blackbox/c_blackbox.mdl"
 			"attributes"
@@ -3201,7 +3201,7 @@
 		{
 			"name"			"Darwin's Danger Shield"
 			"prefab"		"weapon_wearable"
-			"item_type_name" 	"#TF_Wearable_Shield"
+			"item_type_name"	"#TF_Wearable_Shield"
 			"item_name"		"#TF_DarwinsDangerShield"
 			"item_slot"		"secondary"
 			"equip_region"	"back"
@@ -3213,14 +3213,40 @@
 			}
 			"attributes"
 			{
-               	"max health additive bonus"
+				"max health additive bonus"
 				{
 					"attribute_class"	"add_maxhealth"
 					"value" "25"
 				}
 			}
 		}
-      	"237"
+		"232"
+		{
+			"name"	"The Bushwacka"
+			"first_sale_date"	"2010/09/29"
+			"prefab"	"weapon_club"
+			"item_logname"	"bushwacka"
+			"item_iconname"	"bushwacka"
+			"item_type_name"	"#TF_Weapon_Club"
+			"item_name"	"#TF_TheBushwacka"
+			"image_inventory"	"backpack/weapons/c_models/c_croc_knife/c_croc_knife"
+			"model_player"	"models/weapons/c_models/c_croc_knife/c_croc_knife.mdl"
+			"item_quality"	"unique"
+			"attributes"
+			{
+				"minicrits become crits"
+				{
+					"attribute_class"	"minicrits_become_crits"
+					"value" "1"
+				}
+				"dmg taken from fire increased"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"			"1.2"
+				}
+			}
+		}
+		"237"
 		{
 			"name"	"Standard Rocket Jumper"
 			"prefab"	"weapon_rocketlauncher"
@@ -3262,7 +3288,7 @@
 				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
 				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
 			}
-        }
+		}
 
 		"239"
 		{
@@ -3330,7 +3356,7 @@
 				"sound_burst"	"Weapon_BoxingGloves.MissCrit"
 			}
 		}
-	   	"265"
+		"265"
 		{
 			"name"	"Standard Stickybomb Jumper"
 			"prefab"	"weapon_stickybomb_launcher"
@@ -3367,10 +3393,10 @@
 					"value"				"1"
 				}
 				"custom projectile model"
-                {
-                    "attribute_class"    "custom_projectile_model"
-                    "value"            "models/weapons/w_models/w_stickybomb2.mdl"
-                }
+				{
+					"attribute_class"	 "custom_projectile_model"
+					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
+				}
 			}
 			"visuals"
 			{
@@ -3471,7 +3497,7 @@
 			"prefab"	"weapon_claidheamohmor"
 			"first_sale_date"	"2010/12/20"
 		}
-        "329"
+		"329"
 		{
 			"name"	"The Jag"
 			"prefab"	"weapon_wrench"
@@ -3642,7 +3668,7 @@
 				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
 				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
 			}
-        }
+		}
 		"10264"
 		{
 			"name"	"Frying Pan"
@@ -3703,10 +3729,10 @@
 					"value"				"1"
 				}
 				"custom projectile model"
-                {
-                    "attribute_class"    "custom_projectile_model"
-                    "value"            "models/weapons/w_models/w_stickybomb2.mdl"
-                }
+				{
+					"attribute_class"	 "custom_projectile_model"
+					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
+				}
 			}
 			"visuals"
 			{
