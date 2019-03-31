@@ -194,6 +194,9 @@ public:
 	float	GetSpyCloakMeter() const { return m_flCloakMeter; }
 	void	SetSpyCloakMeter( float val ) { m_flCloakMeter = val; }
 
+	void	SetFeignReady( bool bSet ) { m_bFeignDeathReady = bSet; }
+	bool	IsFeignDeathReady( void ) { return m_bFeignDeathReady; }
+
 #ifdef GAME_DLL
 	void	Heal( CTFPlayer *pPlayer, float flAmount, bool bDispenserHeal = false );
 	void	StopHealing( CTFPlayer *pPlayer );
@@ -335,6 +338,7 @@ private:
 	void ImpactWaterTrace( trace_t &trace, const Vector &vecStart );
 
 	void OnAddStealthed( void );
+	void OnAddFeignDeath( void );
 	void OnAddInvulnerable( void );
 	void OnAddTeleported( void );
 	void OnAddBurning( void );
@@ -489,6 +493,8 @@ private:
 	float m_flCloakDrainRate;
 	float m_flCloakRegenRate;
 	bool m_bHasMotionCloak;
+
+	CNetworkVar( bool, m_bFeignDeathReady );
 
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );

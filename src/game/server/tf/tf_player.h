@@ -302,18 +302,20 @@ public:
 
 	// Death & Ragdolls.
 	virtual void		CreateRagdollEntity( void );
-	void				CreateRagdollEntity( bool bGib, bool bBurning, float flInvisLevel, int iDamageCustom );
+	void				CreateRagdollEntity( bool bGib, bool bBurning, float flInvisLevel, int iDamageCustom, bool bFeigning = false );
 	void				DestroyRagdoll( void );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );	// networked entity handle 
 	virtual bool		ShouldGib( const CTakeDamageInfo &info );
 
 	// Dropping Ammo
-	void				DropAmmoPack( bool bLunchbox = false );
+	void				DropAmmoPack( bool bLunchbox = false, bool bFeigning = false );
 	void				DropFakeWeapon( CTFWeaponBase *pWeapon );
 
 	bool				CanDisguise( void );
-	bool				CanGoInvisible( void );
+	bool				CanGoInvisible( bool bFeigning = false );
 	void				RemoveInvisibility( void );
+
+	void				SpyDeadRingerDeath( CTakeDamageInfo const& info );
 
 	void				RemoveDisguise( void );
 	void				PrintTargetWeaponInfo( void );

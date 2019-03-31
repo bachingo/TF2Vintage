@@ -226,7 +226,7 @@ public:
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
 
 	bool	DoClassSpecialSkill( void );
-	bool	CanGoInvisible( void );
+	bool	CanGoInvisible( bool bFeigning = false );
 
 	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
 

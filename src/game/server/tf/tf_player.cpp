@@ -96,6 +96,9 @@ ConVar tf_damagescale_self_soldier( "tf_damagescale_self_soldier", "0.60", FCVAR
 ConVar tf_damage_lineardist( "tf_damage_lineardist", "0", FCVAR_DEVELOPMENTONLY );
 ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_DEVELOPMENTONLY );
 
+ConVar tf_feign_death_activate_damage_scale( "tf_feign_death_activate_damage_scale", "0.1", FCVAR_CHEAT | FCVAR_NOTIFY );
+ConVar tf_feign_death_damage_scale( "tf_feign_death_damage_scale", "0.1", FCVAR_CHEAT | FCVAR_NOTIFY );
+
 ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_NOTIFY, "Max time after a voice command until player can do another one" );
 
 ConVar tf_allow_player_use( "tf_allow_player_use", "0", FCVAR_NOTIFY, "Allow players to execute + use while playing." );
@@ -1007,6 +1010,7 @@ void CTFPlayer::Spawn()
 	GetViewModel( 1 )->SetWeaponModel( NULL, NULL );
 
 	m_Shared.SetDecapitationCount( 0 );
+	m_Shared.SetFeignReady( false );
 
 	// Kind of lame, but CBasePlayer::Spawn resets a lot of the state that we initially want on.
 	// So if we're in the welcome state, call its enter function to reset 
@@ -1272,7 +1276,7 @@ int CTFPlayer::GetMaxHealth( void ) const
 //-----------------------------------------------------------------------------
 int CTFPlayer::GetMaxHealthForBuffing( void ) const
 {
-	int iMaxHealth = const_cast<CTFPlayerClass *>( const_cast<CTFPlayer *>( this )->GetPlayerClass() )->GetMaxHealth();
+	int iMaxHealth = const_cast<CTFPlayerClass &>( m_PlayerClass ).GetMaxHealth();
 	CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth );
 
 	CTFSword *pSword = dynamic_cast<CTFSword *>( const_cast<CTFPlayer *>( this )->Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
@@ -4188,6 +4192,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		ClearExpression();
 	}
 
+	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG ) // Die anyway if fragged
+	{
+		if ( m_Shared.IsFeignDeathReady() )
+		{
+			m_Shared.SetFeignReady( false );
+
+			if ( !m_Shared.InCond( TF_COND_TAUNTING ) )
+				SpyDeadRingerDeath( info );
+		}
+	}
+
 	CTF_GameStats.Event_PlayerDamage( this, info, iHealthBefore - GetHealth() );
 
 	return bTookDamage;
@@ -4397,6 +4412,21 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, dmg_from_ranged );
 	}
 
+	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG )
+	{
+		if ( m_Shared.InCond( TF_COND_FEIGN_DEATH ) )
+		{
+			// Some variable is being incremented by some wack ass formula
+			//if( !m_Shared.IsFeignDeathReady() )
+
+			flDamage *= tf_feign_death_damage_scale.GetFloat();
+		}
+		else if ( m_Shared.IsFeignDeathReady() )
+		{
+			flDamage *= tf_feign_death_activate_damage_scale.GetFloat();
+		}
+	}
+
 	int iOldHealth = m_iHealth;
 	bool bIgniting = false;
 	float flBleedDuration = 0.0f;
@@ -4423,7 +4453,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	m_flLastDamageTime = gpGlobals->curtime;
 
 	// Apply a damage force.
-	if ( !pTFAttacker )
+	if ( !pAttacker )
 		return 0;
 
 	ApplyPushFromDamage( info, vecDir );
@@ -5237,7 +5267,7 @@ void CTFPlayer::AmmoPackCleanUp( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/ )
+void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/, bool bFeigning /* = false*/ )
 {
 	// Since weapon is hidden in loser state don't drop ammo pack.
 	if ( m_Shared.IsLoser() )
@@ -5314,15 +5344,18 @@ void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/ )
 			}
 		}
 
-		// Remove all of the players ammo.
-		RemoveAllAmmo();
+		if ( !bFeigning )
+		{
+			// Remove all of the players ammo.
+			RemoveAllAmmo();
+		}
 
 		if ( bLunchbox && !bHolidayPack )
 		{
 			// No ammo for sandviches
 			pAmmoPack->SetIsLunchbox( true );
 		}
-		else
+		else if ( !bFeigning )
 		{
 			// Fill up the ammo pack.
 			pAmmoPack->GiveAmmo( iPrimary, TF_AMMO_PRIMARY );
@@ -6856,7 +6889,7 @@ void CTFPlayer::CreateRagdollEntity( void )
 //-----------------------------------------------------------------------------
 // Purpose: Create a ragdoll entity to pass to the client.
 //-----------------------------------------------------------------------------
-void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, float flInvisLevel, int iDamageCustom )
+void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, float flInvisLevel, int iDamageCustom, bool bFeigning )
 {
 	// If we already have a ragdoll destroy it.
 	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll*>( m_hRagdoll.Get() );
@@ -6885,16 +6918,21 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, float flInvisLeve
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
 	}
 
-	// Turn off the player.
-	AddSolidFlags( FSOLID_NOT_SOLID );
-	AddEffects( EF_NODRAW | EF_NOSHADOW );
-	SetMoveType( MOVETYPE_NONE );
+	if ( !bFeigning )
+	{
+		// Turn off the player.
+		AddSolidFlags( FSOLID_NOT_SOLID );
+		AddEffects( EF_NODRAW | EF_NOSHADOW );
+		SetMoveType( MOVETYPE_NONE );
+	}
 
 	// Add additional gib setup.
 	if ( bGib )
 	{
 		EmitSound( "BaseCombatCharacter.CorpseGib" ); // Squish!
-		m_nRenderFX = kRenderFxRagdoll;
+
+		if ( !bFeigning )
+			m_nRenderFX = kRenderFxRagdoll;
 	}
 
 	// Save ragdoll handle.
@@ -7016,6 +7054,37 @@ void CTFPlayer::RemoveDisguise( void )
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) || m_Shared.InCond( TF_COND_DISGUISING ) )
 	{
 		m_Shared.RemoveDisguise();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fake our demise
+//-----------------------------------------------------------------------------
+void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const& info )
+{
+	if ( IsAlive() && !m_Shared.InCond( TF_COND_STEALTHED )
+		 && CanGoInvisible( true ) && m_Shared.GetSpyCloakMeter() >= 100.0f )
+	{
+		bool bGib = ShouldGib( info );
+		bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && !bGib;
+
+		m_Shared.RemoveCond( TF_COND_BURNING );
+		m_Shared.RemoveCond( TF_COND_BLEEDING );
+
+		m_Shared.AddCond( TF_COND_FEIGN_DEATH );
+
+		RemoveTeleportEffect();
+
+		EmitSound( "BaseCombatCharacter.StopWeaponSounds" );
+
+		DeathSound( info );
+		TFGameRules()->DeathNotice( this, info );
+
+		SpeakConceptIfAllowed( MP_CONCEPT_DIED );
+
+		DropAmmoPack( false, true );
+
+		CreateRagdollEntity( bGib, bBurning, 0.0f, 0, true );
 	}
 }
 
