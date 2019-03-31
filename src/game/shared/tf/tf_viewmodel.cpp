@@ -513,6 +513,20 @@ bool CTFViewModel::OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Particle override for weapon viewmodels
+//-----------------------------------------------------------------------------
+const char* C_TFViewModel::ModifyEventParticles( const char* token )
+{
+	C_EconEntity *pEntity = GetOwningWeapon();
+	if ( pEntity )
+	{
+		return pEntity->ModifyEventParticles( token );
+	}
+
+	return token;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Used for spy invisiblity material
 //-----------------------------------------------------------------------------
 class CViewModelInvisProxy : public CEntityMaterialProxy

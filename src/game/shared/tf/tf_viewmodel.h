@@ -95,6 +95,8 @@ public:
 
 	virtual bool			OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 
+	virtual const char*		ModifyEventParticles( const char* token );
+
 #endif
 
 private:

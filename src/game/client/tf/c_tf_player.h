@@ -175,6 +175,8 @@ public:
 	void			StopBurningSound( void );
 	void			UpdateRecentlyTeleportedEffect( void );
 
+	void			StopViewModelParticles( C_BaseEntity *pEntity );
+
 	bool			CanShowClassMenu( void );
 
 	void			InitializePoseParams( void );

@@ -129,4 +129,73 @@ bool CTFJar::CalcIsAttackCriticalHelper( void )
 	return false;
 }
 
+//=============================================================================
+//
+// Weapon JarMilk
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFJarMilk, DT_WeaponJarMilk )
+
+BEGIN_NETWORK_TABLE( CTFJar, DT_WeaponJarMilk )
+#ifdef CLIENT_DLL
+#else
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFJarMilk )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_jar_milk, CTFJarMilk );
+PRECACHE_WEAPON_REGISTER( tf_weapon_jar_milk );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFJarMilk )
+END_DATADESC()
+#endif
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Kill splash particles 
+//-----------------------------------------------------------------------------
+bool C_TFJarMilk::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	C_TFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer && pPlayer->IsLocalPlayer() )
+	{
+		C_BaseViewModel *vm = pPlayer->GetViewModel();
+		if ( vm )
+		{
+			pPlayer->StopViewModelParticles( vm );
+		}
+	}
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Override energydrink particles
+//-----------------------------------------------------------------------------
+const char* C_TFJarMilk::ModifyEventParticles( const char* token )
+{
+	if ( !V_stricmp( token, "energydrink_splash" ) )
+	{
+		CEconItemDefinition *pStatic = m_Item.GetStaticData();
+		if ( pStatic )
+		{
+			EconItemVisuals *pVisuals =	pStatic->GetVisuals( GetTeamNumber() );
+			if ( pVisuals )
+			{
+				const char *pszCustomEffectName = pVisuals->custom_particlesystem;
+				if ( pszCustomEffectName[0] != '\0' )
+				{
+					return pszCustomEffectName;
+				}
+			}
+		}
+	}
+
+	return token;
+}
+#endif
 

@@ -775,6 +775,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddUrine();
 		break;
 
+	case TF_COND_MAD_MILK:
+		OnAddMadMilk();
+		break;
+
 	case TF_COND_PHASE:
 		OnAddPhase();
 		break;
@@ -888,6 +892,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		OnRemoveUrine();
 		break;
 
+	case TF_COND_MAD_MILK:
+		OnRemoveMadMilk();
+		break;
+
 	case TF_COND_PHASE:
 		OnRemovePhase();
 		break;
@@ -961,7 +969,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 					// If we're being healed, we reduce bad conditions faster
 					if ( m_aHealers.Count() > 0 )
 					{
-						if ( i == TF_COND_URINE )
+						if ( i == TF_COND_URINE || i == TF_COND_MAD_MILK )
 							flReduction *= m_aHealers.Count() + 1;
 						else
 							flReduction += ( m_aHealers.Count() * flReduction * 4 );
@@ -1208,9 +1216,17 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			RemoveCond( TF_COND_BLEEDING );
 	}
 
-	if (InCond( TF_COND_URINE ) && m_pOuter->GetWaterLevel() >= WL_Waist )
+	if ( m_pOuter->GetWaterLevel() >= WL_Waist )
 	{
-		RemoveCond( TF_COND_URINE );
+		if ( InCond( TF_COND_URINE ) )
+		{
+			RemoveCond( TF_COND_URINE );
+		}
+
+		if ( InCond( TF_COND_MAD_MILK ) )
+		{
+			RemoveCond( TF_COND_MAD_MILK );
+		}
 	}
 
 	if ( InCond(TF_COND_DISGUISING ) )
@@ -1447,6 +1463,11 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 	if ( InCond( TF_COND_URINE ) )
 	{
 		RemoveCond( TF_COND_URINE );
+	}
+
+	if ( InCond( TF_COND_MAD_MILK ) )
+	{
+		RemoveCond( TF_COND_MAD_MILK );
 	}
 #else
 	if ( m_pOuter->IsLocalPlayer() )
@@ -1784,6 +1805,47 @@ void CTFPlayerShared::OnRemoveUrine(void)
 	}
 #else
 	m_pOuter->ParticleProp()->StopParticlesNamed( "peejar_drips" );
+
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		view->SetScreenOverlayMaterial( NULL );
+	}
+#endif
+}
+
+// ---------------------------------------------------------------------------- -
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddMadMilk( void )
+{
+#ifdef GAME_DLL
+	m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
+#else
+	m_pOuter->ParticleProp()->Create( "peejar_drips_milk", PATTACH_ABSORIGIN_FOLLOW );
+
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		IMaterial *pMaterial = materials->FindMaterial( "effects/milk_screen", TEXTURE_GROUP_CLIENT_EFFECTS, false );
+		if ( !IsErrorMaterial( pMaterial ) )
+		{
+			view->SetScreenOverlayMaterial( pMaterial );
+		}
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveMadMilk( void )
+{
+#ifdef GAME_DLL
+	if ( m_nPlayerState != TF_STATE_DYING )
+	{
+		m_hMilkAttacker = NULL;
+	}
+#else
+	m_pOuter->ParticleProp()->StopParticlesNamed( "peejar_drips_milk" );
 
 	if ( m_pOuter->IsLocalPlayer() )
 	{

@@ -612,7 +612,21 @@ CBaseEntity *CTFWeaponBaseGun::FireJar( CTFPlayer *pPlayer, int iType )
 
 	//GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, false );
 
-	CTFProjectile_Jar *pProjectile = CTFProjectile_Jar::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+	CTFWeaponBaseGrenadeProj *pProjectile = NULL;
+
+	switch ( iType )
+	{
+	case TF_PROJECTILE_JAR:
+	case TF_PROJECTILE_FESTITIVE_URINE:
+	case TF_PROJECTILE_BREADMONSTER_JARATE:
+		pProjectile = CTFProjectile_Jar::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+		break;
+	case TF_PROJECTILE_JAR_MILK:
+	case TF_PROJECTILE_BREADMONSTER_MADMILK:
+		pProjectile = CTFProjectile_JarMilk::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+		break;
+	}
+	
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );

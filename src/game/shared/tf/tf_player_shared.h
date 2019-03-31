@@ -208,6 +208,9 @@ public:
 
 	// Jarate Player
 	EHANDLE	m_hUrineAttacker;
+
+	// Milk Player
+	EHANDLE	m_hMilkAttacker;
 #endif
 	int		GetNumHealers( void )				{ return m_nNumHealers; }
 
@@ -353,6 +356,7 @@ private:
 	void OnAddHalloweenGiant( void );
 	void OnAddHalloweenTiny( void );
 	void OnAddUrine( void );
+	void OnAddMadMilk(void);
 	void OnAddPhase( void );
 	void OnAddSpeedBoost( void );
 	void OnAddBuff( void );
@@ -373,6 +377,7 @@ private:
 	void OnRemoveHalloweenGiant( void );
 	void OnRemoveHalloweenTiny( void );
 	void OnRemoveUrine( void );
+	void OnRemoveMadMilk( void );
 	void OnRemovePhase( void );
 	void OnRemoveSpeedBoost( void );
 	void OnRemoveBuff( void );

@@ -18,6 +18,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFProjectile_Jar C_TFProjectile_Jar
+#define CTFProjectile_JarMilk C_TFProjectile_JarMilk
 #endif
 
 #ifdef GAME_DLL
@@ -61,6 +62,7 @@ public:
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
+	virtual int		GetEffectCondition( void ) { return TF_COND_URINE; }
 #else
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	CreateTrails( void );
@@ -76,5 +78,29 @@ private:
 #endif
 
 	float		m_flCreationTime;
+};
+
+#ifdef GAME_DLL
+class CTFProjectile_JarMilk : public CTFProjectile_Jar
+#else
+class C_TFProjectile_JarMilk : public C_TFProjectile_Jar
+#endif
+{
+	public:
+	DECLARE_CLASS( CTFProjectile_JarMilk, CTFProjectile_Jar );
+	DECLARE_NETWORKCLASS();
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	virtual int	GetWeaponID( void ) const 			{ return TF_WEAPON_JAR_MILK; }
+
+#ifdef GAME_DLL
+	static CTFProjectile_JarMilk	*Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo );
+
+	virtual void	Precache( void );
+
+	virtual int		GetEffectCondition( void ) { return TF_COND_MAD_MILK; }
+#endif
 };
 #endif // TF_PROJECTILE_JAR_H

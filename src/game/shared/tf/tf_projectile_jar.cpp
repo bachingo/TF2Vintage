@@ -12,6 +12,7 @@
 
 
 #define TF_WEAPON_JAR_MODEL		"models/weapons/c_models/urinejar.mdl"
+#define TF_WEAPON_JARMILK_MODEL "models/weapons/c_models/c_madmilk/c_madmilk.mdl"
 #define TF_WEAPON_JAR_LIFETIME  2.0f
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Jar, DT_TFProjectile_Jar )
@@ -88,7 +89,18 @@ void CTFProjectile_Jar::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Jar::Spawn( void )
 {
-	SetModel( TF_WEAPON_JAR_MODEL );
+	switch ( GetEffectCondition() )
+	{
+	case TF_COND_URINE:
+		SetModel( TF_WEAPON_JAR_MODEL );
+		break;
+	case TF_COND_MAD_MILK:
+		SetModel( TF_WEAPON_JARMILK_MODEL );
+		break;
+	default:
+		break;
+	}
+
 	SetDetonateTimerLength( TF_WEAPON_JAR_LIFETIME );
 
 	BaseClass::Spawn();
@@ -145,10 +157,11 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 	radiusInfo.m_flRadius = flRadius;
 	radiusInfo.m_flSelfDamageRadius = 121.0f; // Original rocket radius?
 
-	// If we extinguish a friendly player reduce our recharge time by four seconds
-	if ( TFGameRules()->RadiusJarEffect( radiusInfo, TF_COND_URINE ) && m_iDeflected == 0 && pWeapon ) 
+	// If we extinguish a friendly player reduce our recharge time by 20%
+	if ( TFGameRules()->RadiusJarEffect( radiusInfo, GetEffectCondition() ) && m_iDeflected == 0 && pWeapon ) 
 	{
-		pWeapon->ReduceEffectBarRegenTime( 4.0f );
+		float flCooldownReduction = CAttributeManager::AttribHookValue<float>( 1, "extinguish_reduces_cooldown", pWeapon );
+		pWeapon->SetEffectBarProgress( pWeapon->GetEffectBarProgress() * flCooldownReduction );
 	}
 
 	// Debug!
@@ -359,5 +372,58 @@ int CTFProjectile_Jar::DrawModel( int flags )
 		return 0;
 
 	return BaseClass::DrawModel( flags );
+}
+#endif
+
+//=============================================================================
+//
+// Weapon JarMilk
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_JarMilk, DT_TFProjectile_JarMilk )
+
+BEGIN_NETWORK_TABLE( CTFProjectile_JarMilk, DT_TFProjectile_JarMilk )
+END_NETWORK_TABLE()
+
+#ifdef GAME_DLL
+BEGIN_DATADESC( CTFProjectile_JarMilk )
+END_DATADESC()
+#endif
+
+LINK_ENTITY_TO_CLASS( tf_projectile_jar_milk, CTFProjectile_JarMilk );
+PRECACHE_REGISTER( tf_projectile_jar_milk );
+
+#ifdef GAME_DLL
+CTFProjectile_JarMilk *CTFProjectile_JarMilk::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo )
+{
+	CTFProjectile_JarMilk *pJar = static_cast<CTFProjectile_JarMilk *>( CBaseEntity::CreateNoSpawn( "tf_projectile_jar_milk", vecOrigin, vecAngles, pOwner ) );
+
+	if ( pJar )
+	{
+		// Set scorer.
+		pJar->SetScorer( pScorer );
+
+		// Set firing weapon.
+		pJar->SetLauncher( pWeapon );
+
+		DispatchSpawn( pJar );
+
+		pJar->InitGrenade( vecVelocity, angVelocity, pOwner, weaponInfo );
+
+		pJar->ApplyLocalAngularVelocityImpulse( angVelocity );
+	}
+
+	return pJar;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFProjectile_JarMilk::Precache( void )
+{
+	PrecacheModel( TF_WEAPON_JARMILK_MODEL );
+	PrecacheParticleSystem( "peejar_impact_milk" );
+
+	BaseClass::Precache();
 }
 #endif

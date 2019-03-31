@@ -1908,16 +1908,16 @@ bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
 	CBaseEntity *pAttacker = info.GetAttacker();
 
 	CBaseEntity *pEntity = NULL;
-	for (CEntitySphereQuery sphere( radiusInfo.m_vecSrc, radiusInfo.m_flRadius ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity())
+	for ( CEntitySphereQuery sphere( radiusInfo.m_vecSrc, radiusInfo.m_flRadius ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
 	{
-		if (pEntity == radiusInfo.m_pEntityIgnore)
+		if ( pEntity == radiusInfo.m_pEntityIgnore )
 			continue;
 
-		if (pEntity->m_takedamage == DAMAGE_NO)
+		if ( pEntity->m_takedamage == DAMAGE_NO )
 			continue;
 
 		// UNDONE: this should check a damage mask, not an ignore
-		if (radiusInfo.m_iClassIgnore != CLASS_NONE && pEntity->Classify() == radiusInfo.m_iClassIgnore)
+		if ( radiusInfo.m_iClassIgnore != CLASS_NONE && pEntity->Classify() == radiusInfo.m_iClassIgnore )
 		{
 			continue;
 		}
@@ -1931,34 +1931,44 @@ bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
 		pEntity->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
 		Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
 
-		if (vecDir.LengthSqr() > ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ))
+		if ( vecDir.LengthSqr() > ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
 			continue;
 
 		CTFPlayer *pTFPlayer = ToTFPlayer( pEntity );
-		if (pTFPlayer)
+		if ( pTFPlayer )
 		{
-			if (!pTFPlayer->InSameTeam( pAttacker ))
+			if ( !pTFPlayer->InSameTeam( pAttacker ) )
 			{
 				pTFPlayer->m_Shared.AddCond( iCond, 10.0f );
-				pTFPlayer->m_Shared.m_hUrineAttacker.Set( pAttacker );
+				switch ( iCond )
+				{
+				case TF_COND_URINE:
+					pTFPlayer->m_Shared.m_hUrineAttacker.Set( pAttacker );
+					break;
+				case TF_COND_MAD_MILK:
+					pTFPlayer->m_Shared.m_hMilkAttacker.Set( pAttacker );
+					break;
+				default:
+					break;
+				}
 			}
 			else
 			{
-				if (pTFPlayer->m_Shared.InCond( TF_COND_BURNING ))
+				if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
 				{
 					pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
 					pTFPlayer->EmitSound( "TFPlayer.FlameOut" );
 
-					if (pEntity != pAttacker)
+					if ( pEntity != pAttacker )
 					{
 						bExtinguished = true;
 
 						CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
-						if (pTFAttacker)
+						if ( pTFAttacker )
 						{
 							// Bonus points.
 							IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
-							if (event_bonus)
+							if ( event_bonus )
 							{
 								event_bonus->SetInt( "player_entindex", pEntity->entindex() );
 								event_bonus->SetInt( "source_entindex", pAttacker->entindex() );
@@ -3367,10 +3377,10 @@ CBasePlayer *CTFGameRules::GetAssister( CBasePlayer *pVictim, CBasePlayer *pScor
 {
 	CTFPlayer *pTFScorer = ToTFPlayer( pScorer );
 	CTFPlayer *pTFVictim = ToTFPlayer( pVictim );
-	if (pTFScorer && pTFVictim)
+	if ( pTFScorer && pTFVictim )
 	{
 		// if victim killed himself, don't award an assist to anyone else, even if there was a recent damager
-		if (pTFScorer == pTFVictim)
+		if ( pTFScorer == pTFVictim )
 			return NULL;
 
 		// If a player is healing the scorer, give that player credit for the assist
@@ -3383,16 +3393,24 @@ CBasePlayer *CTFGameRules::GetAssister( CBasePlayer *pVictim, CBasePlayer *pScor
 		}
 		// Players who apply jarate should get next priority
 		CTFPlayer *pThrower = ToTFPlayer( static_cast<CBaseEntity *>( pTFVictim->m_Shared.m_hUrineAttacker.Get() ) );
-		if (pThrower)
+		if ( pThrower )
 		{
-			if (pThrower != pTFScorer)
+			if ( pThrower != pTFScorer )
 				return pThrower;
+		}
+
+		// Mad milk after jarate
+		CTFPlayer *pThrowerMilk = ToTFPlayer( static_cast<CBaseEntity *>( pTFVictim->m_Shared.m_hMilkAttacker.Get() ) );
+		if ( pThrowerMilk )
+		{
+			if ( pThrowerMilk != pTFScorer )
+				return pThrowerMilk;
 		}
 
 		// See who has damaged the victim 2nd most recently (most recent is the killer), and if that is within a certain time window.
 		// If so, give that player an assist.  (Only 1 assist granted, to single other most recent damager.)
 		CTFPlayer *pRecentDamager = GetRecentDamager( pTFVictim, 1, TF_TIME_ASSIST_KILL );
-		if (pRecentDamager && ( pRecentDamager != pScorer ))
+		if ( pRecentDamager && ( pRecentDamager != pScorer ) )
 			return pRecentDamager;
 	}
 	return NULL;

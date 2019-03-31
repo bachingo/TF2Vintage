@@ -14,6 +14,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFJar C_TFJar
+#define CTFJarMilk C_TFJarMilk
 #endif
 
 class CTFJar : public CTFWeaponBaseGun
@@ -46,4 +47,23 @@ public:
 	virtual float		InternalGetEffectBarRechargeTime()	{ return 20.0; }
 };
 
+class CTFJarMilk : public CTFJar
+{
+public:
+	DECLARE_CLASS( CTFJarMilk, CTFJar );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	// Server specific.
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	virtual int			GetWeaponID( void ) const 			{ return TF_WEAPON_JAR_MILK; }
+
+#ifndef GAME_DLL
+	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
+	virtual const char* ModifyEventParticles( const char* token );
+#endif
+};
 #endif // TF_WEAPON_JAR_H

@@ -1220,6 +1220,12 @@ void CTFPlayer::Regenerate( void )
 		m_Shared.RemoveCond( TF_COND_URINE );
 	}
 
+	// Remove Mad Milk condition
+	if ( m_Shared.InCond( TF_COND_MAD_MILK ) )
+	{
+		m_Shared.RemoveCond( TF_COND_MAD_MILK );
+	}
+
 	// Remove bonk! atomic punch phase
 	if ( m_Shared.InCond( TF_COND_PHASE ) )
 	{
@@ -3825,6 +3831,25 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		bitsDamage |= DMG_MINICRITICAL;
 		info.AddDamageType( DMG_MINICRITICAL );
 	}
+
+	if ( this->m_Shared.InCond( TF_COND_MAD_MILK ) )
+	{
+		// Mad Milked players heal the attacker.
+		float flDamage = info.GetDamage();
+		//Take 60% of damage for health
+		int iHealthRestored = flDamage * 0.60;
+		iHealthRestored = pAttacker->TakeHealth( iHealthRestored, DMG_GENERIC );
+
+		IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+		if ( event )
+		{
+			event->SetInt( "amount", iHealthRestored );
+			event->SetInt( "entindex", pAttacker->entindex() );
+				
+			gameeventmanager->FireEvent( event );
+		}
+	}
+	
 
 	// Handle on-hit effects.
 	if ( pWeapon && pAttacker != this )

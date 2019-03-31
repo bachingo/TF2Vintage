@@ -29,16 +29,14 @@ public:
 
 	virtual void		PrimaryAttack( void );
 
-	virtual bool		Deploy( void );
-
 	virtual void		DepleteAmmo( void );
 
 	virtual bool		HasChargeBar( void ) 						{ return true; }
 	virtual float		InternalGetEffectBarRechargeTime( void ) 	{ return 22.2f; }
 	virtual const char	*GetEffectLabelText( void )					{ return "#TF_EnergyDrink"; }
 
-#ifdef GAME_DLL
-	virtual void		Precache( void );
+#ifndef GAME_DLL
+	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo );
 #endif
 };
 

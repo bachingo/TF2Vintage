@@ -150,6 +150,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	string_t GetViewModelOffset( void );
 
+	virtual const char*	ModifyEventParticles( const char* token ) { return token; }
+
 	// Stunball
 	virtual const char *GetStunballViewmodel( void ) { return NULL_STRING; }
 #endif
@@ -268,6 +270,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	void				EffectBarRegenFinished( void );
 	void				CheckEffectBarRegen( void );
 	virtual float		GetEffectBarProgress( void );
+	virtual void		SetEffectBarProgress( float flEffectBarRegenTime ) { m_flEffectBarRegenTime = flEffectBarRegenTime; }
 	virtual const char *GetEffectLabelText( void ) { return ""; }
 	void				ReduceEffectBarRegenTime( float flTime ) { m_flEffectBarRegenTime -= flTime; }
 	virtual bool		EffectMeterShouldFlash( void ) { return false; }
