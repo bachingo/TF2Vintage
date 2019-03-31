@@ -1154,9 +1154,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	DiscordRichPresence discordPresence;
 	memset(&discordPresence, 0, sizeof(discordPresence));
 
-	discordPresence.state = "In-Game";
 	discordPresence.details = "Main Menu";
-	discordPresence.startTimestamp = startTimestamp;
 	discordPresence.largeImageKey = "tf2v_drp_logo";
 	Discord_UpdatePresence(&discordPresence);
 	}
@@ -1707,26 +1705,26 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		DiscordRichPresence discordPresence;
 		Q_memset( &discordPresence, 0, sizeof( discordPresence ) );
 
-		char details[48], buffer[32];
+		char state[48], buffer[32];
 		Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", pMapName );
 		wchar *mapName = g_pVGuiLocalize->Find( buffer );
 		if (mapName)
 		{
 			g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
-			Q_snprintf( details, sizeof( details ), "Map: %s", buffer );
+			Q_snprintf( state, sizeof( state ), "Map: %s", buffer );
 			discordPresence.largeImageKey = pMapName;
 			discordPresence.largeImageText = pMapName;
 		}
 		else
 		{
-			Q_snprintf( details, sizeof( details ), "Map: %s", pMapName );
+			Q_snprintf( state, sizeof( state ), "Map: %s", pMapName );
 			discordPresence.largeImageKey = "default";
 			discordPresence.largeImageText = pMapName;
 		}
 		
-		discordPresence.state = "In-Game";
+		discordPresence.details = "In-Game";
+		discordPresence.state = state;
 		discordPresence.startTimestamp = startTimestamp;
-		discordPresence.details = details;
 		Discord_UpdatePresence( &discordPresence );
 	}
 	
@@ -1827,9 +1825,7 @@ void CHLClient::LevelShutdown( void )
 	DiscordRichPresence discordPresence;
 	memset(&discordPresence, 0, sizeof(discordPresence));
 
-	discordPresence.state = "In-Game";
 	discordPresence.details = "Main Menu";
-	discordPresence.startTimestamp = startTimestamp;
 	discordPresence.largeImageKey = "tf2v_drp_logo";
 	Discord_UpdatePresence(&discordPresence);
 	}
