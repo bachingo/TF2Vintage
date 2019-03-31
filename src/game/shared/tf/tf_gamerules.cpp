@@ -1216,7 +1216,6 @@ void CTFGameRules::Activate()
 	tf_gamemode_mvm.SetValue( 0 );
 	tf_gamemode_rd.SetValue( 0 );
 	tf_gamemode_passtime.SetValue( 0 );
-	tf_gamemode_dm.SetValue( 0 );
 
 	TeamplayRoundBasedRules()->SetMultipleTrains( false );
 
