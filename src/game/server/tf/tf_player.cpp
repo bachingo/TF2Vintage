@@ -3885,6 +3885,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
+	int nMinicritsToCrits = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pAttacker, nMinicritsToCrits, minicrits_become_crits );
+	if ( bitsDamage & DMG_MINICRITICAL && nMinicritsToCrits )
+	{
+		bitsDamage &= ~DMG_MINICRITICAL;
+		bitsDamage |= DMG_CRITICAL;
+	}
+
 	// If we're not damaging ourselves, apply randomness
 	if ( ( pAttacker != this || info.GetAttacker() != this ) && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
 	{
