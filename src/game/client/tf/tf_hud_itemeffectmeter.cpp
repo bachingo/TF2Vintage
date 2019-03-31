@@ -65,7 +65,7 @@ private:
 	ContinuousProgressBar *m_pEffectMeter;
 	CExLabel *m_pEffectMeterLabel;
 
-	CPanelAnimationVarAliasType( int, m_iXOffset, "x_offset", "0", "proportional_float" );
+	CPanelAnimationVarAliasType( int, m_iXOffset, "x_offset", "0", "proportional_int" );
 
 	CHandle<C_TFWeaponBase> m_hItem;
 	float m_flOldCharge;
@@ -178,9 +178,9 @@ void CHudItemEffectMeter::PerformLayout( void )
 	for ( int i = 0; i < CHudItemEffects::m_pEffectBars.Count(); ++i )
 	{
 		CHudItemEffectMeter *pMeter = CHudItemEffects::m_pEffectBars[i];
-		if ( pMeter )
+		if ( pMeter && pMeter->IsEnabled() )
 		{
-			iNumPanels += (int)pMeter->IsEnabled();
+			iNumPanels++;
 			pLastMeter = pMeter;
 		}
 	}
