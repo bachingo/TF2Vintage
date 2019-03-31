@@ -45,7 +45,7 @@ DECLARE_VGUI_SCREEN_FACTORY( CPDAPanel, "pda_panel" );
 // Constructor: 
 //-----------------------------------------------------------------------------
 CPDAPanel::CPDAPanel( vgui::Panel *parent, const char *panelName )
-: BaseClass( parent, "CPDAPanel", vgui::scheme()->LoadSchemeFromFileEx( enginevgui->GetPanel( PANEL_CLIENTDLL ), "resource/PDAControlPanelScheme.res", "TFBase" ) ) 
+	: BaseClass( parent, "CPDAPanel", vgui::scheme()->LoadSchemeFromFileEx( enginevgui->GetPanel( PANEL_CLIENTDLL ), "resource/PDAControlPanelScheme.res", "TFBase" ) )
 {
 }
 
@@ -61,7 +61,7 @@ bool CPDAPanel::Init( KeyValues* pKeyValues, VGuiScreenInitData_t* pInitData )
 	// Make sure we get ticked...
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 
-	if (!BaseClass::Init(pKeyValues, pInitData))
+	if ( !BaseClass::Init( pKeyValues, pInitData ) )
 		return false;
 
 	return true;
@@ -73,14 +73,14 @@ bool CPDAPanel::Init( KeyValues* pKeyValues, VGuiScreenInitData_t* pInitData )
 C_BaseCombatWeapon *CPDAPanel::GetOwningWeapon()
 {
 	C_BaseEntity *pScreenEnt = GetEntity();
-	if (!pScreenEnt)
+	if ( !pScreenEnt )
 		return NULL;
 
 	C_BaseEntity *pOwner = pScreenEnt->GetOwnerEntity();
-	if (!pOwner)
+	if ( !pOwner )
 		return NULL;
 
-	C_BaseViewModel *pViewModel = dynamic_cast< C_BaseViewModel * >( pOwner );
+	C_BaseViewModel *pViewModel = dynamic_cast<C_BaseViewModel *>( pOwner );
 	if ( !pViewModel )
 		return NULL;
 
@@ -115,7 +115,7 @@ DECLARE_VGUI_SCREEN_FACTORY( CPDAPanel_Engineer_Destroy, "pda_panel_engineer_des
 // Constructor: 
 //-----------------------------------------------------------------------------
 CPDAPanel_Engineer_Destroy::CPDAPanel_Engineer_Destroy( vgui::Panel *parent, const char *panelName )
-: CPDAPanel( parent, "CPDAPanel_Engineer_Destroy" ) 
+	: CPDAPanel( parent, "CPDAPanel_Engineer_Destroy" )
 {
 }
 
@@ -137,7 +137,7 @@ DECLARE_VGUI_SCREEN_FACTORY( CPDAPanel_Engineer_Build, "pda_panel_engineer_build
 // Constructor: 
 //-----------------------------------------------------------------------------
 CPDAPanel_Engineer_Build::CPDAPanel_Engineer_Build( vgui::Panel *parent, const char *panelName )
-: CPDAPanel( parent, "CPDAPanel_Engineer" ) 
+	: CPDAPanel( parent, "CPDAPanel_Engineer" )
 {
 }
 
@@ -159,7 +159,7 @@ DECLARE_VGUI_SCREEN_FACTORY( CPDAPanel_Spy, "pda_panel_spy" );
 // Constructor: 
 //-----------------------------------------------------------------------------
 CPDAPanel_Spy::CPDAPanel_Spy( vgui::Panel *parent, const char *panelName )
-: CPDAPanel( parent, "CPDAPanel_Spy" ) 
+	: CPDAPanel( parent, "CPDAPanel_Spy" )
 {
 }
 
@@ -187,7 +187,7 @@ DECLARE_VGUI_SCREEN_FACTORY( CPDAPanel_Spy_Invis, "pda_panel_spy_invis" );
 // Constructor: 
 //-----------------------------------------------------------------------------
 CPDAPanel_Spy_Invis::CPDAPanel_Spy_Invis( vgui::Panel *parent, const char *panelName )
-: CPDAPanel( parent, "CPDAPanel_Spy_Invis" ) 
+	: CPDAPanel( parent, "CPDAPanel_Spy_Invis" )
 {
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 
@@ -212,7 +212,7 @@ void CPDAPanel_Spy_Invis::OnTick( void )
 		{
 			m_pInvisProgress->SetProgress( pPlayer->m_Shared.GetSpyCloakMeter() / 100.0f );
 		}
-	}	
+	}
 }
 
 class CPDAPanel_Spy_Invis_Pocket : public CPDAPanel
@@ -250,21 +250,7 @@ void CPDAPanel_Spy_Invis_Pocket::OnTick( void )
 	{
 		if ( m_pInvisProgress )
 		{
-			float flCloakMeter = pPlayer->m_Shared.GetSpyCloakMeter();
-			if ( flCloakMeter == 100.0f )
-			{
-				m_pInvisProgress->SetFgColor( Color( 0xFF, 0x99, 0xFF, 0x99 ) );
-			}
-			else if ( flCloakMeter >= 40.0f )
-			{
-				m_pInvisProgress->SetFgColor( Color( 0xFF, 0x00, 0xB2, 0xFF ) );
-			}
-			else
-			{
-				m_pInvisProgress->SetFgColor( Color( 0xFF, 0x40, 0x40, 0xFF ) );
-			}
-
-			m_pInvisProgress->SetProgress( flCloakMeter / 100.0f );
+			m_pInvisProgress->SetProgress( pPlayer->m_Shared.GetSpyCloakMeter() / 100.0f );
 		}
 	}
 }
