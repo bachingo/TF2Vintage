@@ -15,6 +15,10 @@
 	#include "c_tf_player.h"
 #endif
 
+extern ConVar tf_spy_invis_unstealth_time;
+extern ConVar tf_spy_cloak_consume_rate;
+extern ConVar tf_spy_cloak_regen_rate;
+
 //=============================================================================
 //
 // TFWeaponBase Melee tables.
@@ -44,6 +48,66 @@ void CTFWeaponInvis::Spawn( void )
 	BaseClass::Spawn();
 
 	SetViewModelIndex( 1 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Toggle state
+//-----------------------------------------------------------------------------
+bool CTFWeaponInvis::ActivateInvisibility( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return false;
+
+	if ( pOwner->m_Shared.InCond( TF_COND_STEALTHED ) )
+	{
+		pOwner->m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
+		return true;
+	}
+
+	float flConsumeRate = tf_spy_cloak_consume_rate.GetFloat();
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flConsumeRate, mult_cloak_meter_consume_rate );
+
+	float flRegenRate = tf_spy_cloak_regen_rate.GetFloat();
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flRegenRate, mult_cloak_meter_regen_rate );
+
+	pOwner->m_Shared.SetHasMotionCloak( HasMotionCloak() );
+	pOwner->m_Shared.SetCloakDrainRate( flConsumeRate );
+	pOwner->m_Shared.SetCloakRegenRate( flRegenRate );
+
+	if ( HasFeignDeath() )
+	{
+		if ( pOwner->m_Shared.IsFeignDeathReady() )
+		{
+			if ( !pOwner->m_Shared.InCond( TF_COND_STEALTHED ) )
+			{
+				pOwner->HolsterOffHandWeapon();
+
+				CBaseCombatWeapon *pWeapon = pOwner->GetActiveWeapon();
+				if ( pWeapon )
+					pWeapon->m_flNextSecondaryAttack = gpGlobals->curtime + 0.1f;
+
+				pOwner->m_Shared.SetFeignReady( false );
+				return true;
+			}
+		}
+		else if ( pOwner->m_Shared.GetSpyCloakMeter() == 100.0f )
+		{
+			pOwner->m_Shared.SetFeignReady( true );
+			pOwner->SetOffHandWeapon( this );
+			return true;
+		}
+
+		return false;
+	}
+
+	if ( pOwner->CanGoInvisible() && ( pOwner->m_Shared.GetSpyCloakMeter() > 8.0f ) )
+	{
+		pOwner->m_Shared.AddCond( TF_COND_STEALTHED );
+		return true;
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------

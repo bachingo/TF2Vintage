@@ -59,6 +59,8 @@ public:
 	virtual void	GetControlPanelInfo( int nPanelIndex, const char *&pPanelName );
 #endif
 
+	bool			ActivateInvisibility( void );
+
 	bool			HasFeignDeath( void ) const;
 	bool			HasMotionCloak( void ) const;
 
