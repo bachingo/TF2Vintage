@@ -15,7 +15,6 @@
 #define CTFProjectile_Rocket C_TFProjectile_Rocket
 
 #include "tf_gamerules.h"
-extern ConVar tf_halloween;
 
 //-----------------------------------------------------------------------------
 // Purpose: Rocket projectile.

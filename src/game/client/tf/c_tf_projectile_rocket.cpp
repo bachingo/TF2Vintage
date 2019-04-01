@@ -65,10 +65,7 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 		ParticleProp()->Create( "rockettrail_underwater", PATTACH_POINT_FOLLOW, "trail" );
 	}
 	else
-	{
-		if (tf_halloween.GetBool())
-		ParticleProp()->Create( "halloween_rockettrail", PATTACH_POINT_FOLLOW, "trail" );		
-		else	
+	{	
 		ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, "trail" );
 	}
 
@@ -77,4 +74,15 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 		const char *pszEffectName = ConstructTeamParticle( "critical_rocket_%s", GetTeamNumber(), true );
 		ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
+{
+	if ( tf_halloween.GetBool() )
+		return "halloween_rockettrail";
+	else
+		return "rockettrail";
 }
