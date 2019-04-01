@@ -88,5 +88,39 @@
 		"textAlignment"	"center"	
 		"font"			"HudClassHealth"
 		"fgcolor"		"TanDark"
-	}								
+	}
+
+	"PlayerStatus_SoldierOffenseBuff"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"PlayerStatus_SoldierOffenseBuff"
+		"xpos"			"85"
+		"xpos_minmode"	"70"
+		"ypos"			"0"
+		"zpos"			"7"
+		"wide"			"31"
+		"tall"			"31"
+		"visible"		"0"
+		"enabled"		"1"
+		"scaleImage"	"1"	
+		"image"			"../effects/soldier_buff_offense_red"
+		"fgcolor"		"TanDark"
+	}
+
+	"PlayerStatus_SoldierDefenseBuff"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"PlayerStatus_SoldierDefenseBuff"
+		"xpos"			"85"
+		"xpos_minmode"	"70"
+		"ypos"			"0"
+		"zpos"			"7"
+		"wide"			"31"
+		"tall"			"31"
+		"visible"		"0"
+		"enabled"		"1"
+		"scaleImage"	"1"	
+		"image"			"../effects/soldier_buff_defense_red"
+		"fgcolor"		"TanDark"
+	}
 }
