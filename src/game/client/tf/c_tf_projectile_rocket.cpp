@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -8,6 +8,8 @@
 #include "c_tf_projectile_rocket.h"
 #include "particles_new.h"
 #include "tf_gamerules.h"
+
+extern ConVar tf_halloween;
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Rocket, DT_TFProjectile_Rocket )
 
@@ -64,6 +66,9 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 	}
 	else
 	{
+		if (tf_halloween.GetBool())
+		ParticleProp()->Create( "halloween_rockettrail", PATTACH_POINT_FOLLOW, "trail" );		
+		else	
 		ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, "trail" );
 	}
 

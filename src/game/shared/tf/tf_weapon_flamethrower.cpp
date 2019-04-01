@@ -1239,16 +1239,6 @@ CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &v
 	pFlame->SetAbsVelocity( pFlame->m_vecBaseVelocity );	
 	// Setup the initial angles.
 	pFlame->SetAbsAngles( vecAngles );
-	
-	// Make the flame visible, if we have new flames on.
-	if(tf2v_new_flames.GetBool())
-	{
-		if(tf_halloween.GetBool())
-		CNewParticleEffect *pFlameEffect = ParticleProp()->Create( "new_flame_fan_core", PATTACH_ABSORIGIN_FOLLOW );
-		else
-		CNewParticleEffect *pFlameEffect = ParticleProp()->Create( "new_flame_core", PATTACH_ABSORIGIN_FOLLOW );
-		ParticleProp()->AddControlPoint( pFlameEffect, 1, this, PATTACH_ABSORIGIN_FOLLOW );
-	}
 
 	return pFlame;
 }
