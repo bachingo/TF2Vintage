@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
 //
 //
 //=============================================================================
@@ -25,6 +25,8 @@
 	#include "tf_projectile_rocket.h"
 	#include "baseentity.h"
 #endif
+
+extern ConVar tf_halloween;
 
 enum FlameThrowerState_t
 {
