@@ -48,6 +48,8 @@
 	//ConVar  tf_flame_force( "tf_flame_force", "30" );
 #endif
 
+	extern ConVar tf_halloween;
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -1034,21 +1036,33 @@ void CTFFlameThrower::RestartParticleEffect( void )
 	{
 		if (m_bCritFire)
 		{
+			if(tf_halloween.GetBool())
+			pszParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
+			else
 			pszParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
 		}
 		else
 		{
+			if(tf_halloween.GetBool())
+			pszParticleEffect = "flamethrower_halloween";
+			else
 			pszParticleEffect = "flamethrower";
 		}
 	}
 	else
 	{
 		if (m_bCritFire)
-		{
+		{			
+			if(tf_halloween.GetBool())
+			pszParticleEffect = ConstructTeamParticle( "new_flame_fan_crit_%s", iTeam, true );
+			else
 			pszParticleEffect = ConstructTeamParticle( "new_flame_crit_%s", iTeam, true );
 		}
 		else
 		{
+			if(tf_halloween.GetBool())
+			pszParticleEffect = "new_flame_fan";
+			else
 			pszParticleEffect = "new_flame";
 		}
 	}
@@ -1185,7 +1199,6 @@ void CTFFlameEntity::Spawn( void )
 #ifdef CLIENT_DLL
 void CTFFlameEntity::ClientThink( void )
 {
-
 	SetNextClientThink( CLIENT_THINK_NEVER );
 }
 #endif
@@ -1226,6 +1239,16 @@ CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &v
 	pFlame->SetAbsVelocity( pFlame->m_vecBaseVelocity );	
 	// Setup the initial angles.
 	pFlame->SetAbsAngles( vecAngles );
+	
+	// Make the flame visible, if we have new flames on.
+	if(tf2v_new_flames.GetBool())
+	{
+		if(tf_halloween.GetBool())
+		CNewParticleEffect *pFlameEffect = ParticleProp()->Create( "new_flame_fan_core", PATTACH_ABSORIGIN_FOLLOW );
+		else
+		CNewParticleEffect *pFlameEffect = ParticleProp()->Create( "new_flame_core", PATTACH_ABSORIGIN_FOLLOW );
+		ParticleProp()->AddControlPoint( pFlameEffect, 1, this, PATTACH_ABSORIGIN_FOLLOW );
+	}
 
 	return pFlame;
 }
