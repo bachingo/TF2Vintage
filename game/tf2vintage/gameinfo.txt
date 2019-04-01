@@ -33,18 +33,10 @@
 			// Note that this folder is scanned only when the game is booted.	
 			game+mod			|gameinfo_path|custom/* 
 			
-			// Before searching for the rest of the game files, we then search for the censorship
-			// patch files of TF2V to remove the blood and gore ingame using a signed VPK.
-			//game+mod			|gameinfo_path|TF2V_low_violence_patch.vpk
-			
 			// Search loose files.  We'll set the directory containing the gameinfo.txt file
 			// as the first "mod" search path (after any user customizations). This is also the one
 			// that's used when writing to the "mod" path.
 			game+mod+mod_write+default_write_path		|gameinfo_path|.
-			
-			//	Search the base TF2V folder. This can be then used for taking files not supplied
-			//	by expansions.
-			//game				|gameinfo_path|../tf2vintage
 
 			// Where the game's binaries are.
 			gamebin				|gameinfo_path|bin	
@@ -55,13 +47,7 @@
 			// operating system call.)
 			// TF2V will reintroduce its VPK directory files once the project reaches a stable release, so we'll
 			// remove them from the VPK calls for now.
-			game_lv				hl2/hl2_lv.vpk
-			//game+mod+vgui		|gameinfo_path|tf2vintage_misc.vpk
-			//game+mod			|gameinfo_path|tf2vintage_materials.vpk
-			//game+mod			|gameinfo_path|tf2vintage_models.vpk
-			//game+mod			|gameinfo_path|tf2vintage_sound.vpk
-			//game+mod			hl2mp/hl2mp_english.vpk			
-			//game+mod			hl2mp/hl2mp_pak.vpk			
+			game_lv				hl2/hl2_lv.vpk	
 			game				|all_source_engine_paths|hl2/hl2_english.vpk			
 			game				|all_source_engine_paths|hl2/hl2_pak.vpk			
 			game				|all_source_engine_paths|hl2/hl2_textures.vpk			
@@ -80,13 +66,6 @@
 			game				|all_source_engine_paths|hl2			
 			platform			|all_source_engine_paths|platform			
 			game				|all_source_engine_paths|sourcetest
-
-			// Mount in missing assets from TF2
-			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_lv.vpk"					//game_lv
-			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_textures.vpk"			//game+mod
-			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_sound_vo_english.vpk"	//game+mod
-			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_sound_misc.vpk"			//game+mod
-			//game				"|all_source_engine_paths|../Team Fortress 2/tf/tf2_misc.vpk"				//game+mod+vgui	
 
 			// Random files downloaded from gameservers go into a seperate directory, so
 			// that it's easy to keep those files segregated from the official game files
