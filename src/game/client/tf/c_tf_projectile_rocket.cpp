@@ -66,6 +66,9 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 	}
 	else
 	{
+		if (tf_halloween.GetBool())
+		ParticleProp()->Create( "halloween_rockettrail", PATTACH_POINT_FOLLOW, "trail" );		
+		else	
 		ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, "trail" );
 	}
 
