@@ -38,10 +38,10 @@ ConVar	tf_clamp_back_speed( "tf_clamp_back_speed", "0.9", FCVAR_REPLICATED | FCV
 ConVar  tf_clamp_back_speed_min( "tf_clamp_back_speed_min", "100", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar	tf_clamp_airducks( "tf_clamp_airducks", "1", FCVAR_REPLICATED );
 
-ConVar	tf2c_bunnyjump_max_speed_factor("tf2c_bunnyjump_max_speed_factor", "1.2", FCVAR_REPLICATED);
-ConVar  tf2c_autojump("tf2c_autojump", "0", FCVAR_REPLICATED, "Automatically jump while holding the jump button down");
-ConVar  tf2c_duckjump("tf2c_duckjump", "0", FCVAR_REPLICATED, "Toggles jumping while ducked");
-ConVar  tf2c_groundspeed_cap("tf2c_groundspeed_cap", "1", FCVAR_REPLICATED, "Toggles the max speed cap imposed when a player is standing on the ground");
+ConVar	tf2v_bunnyjump_max_speed_factor("tf2v_bunnyjump_max_speed_factor", "1.2", FCVAR_REPLICATED);
+ConVar  tf2v_autojump("tf2v_autojump", "0", FCVAR_REPLICATED, "Automatically jump while holding the jump button down");
+ConVar  tf2v_duckjump("tf2v_duckjump", "0", FCVAR_REPLICATED, "Toggles jumping while ducked");
+ConVar  tf2v_groundspeed_cap("tf2v_groundspeed_cap", "1", FCVAR_REPLICATED, "Toggles the max speed cap imposed when a player is standing on the ground");
 
 #define TF_MAX_SPEED   520
 
@@ -345,7 +345,7 @@ void CTFGameMovement::AirDash( void )
 void CTFGameMovement::PreventBunnyJumping()
 {
 	// Speed at which bunny jumping is limited
-	float maxscaledspeed = tf2c_bunnyjump_max_speed_factor.GetFloat() * player->m_flMaxspeed;
+	float maxscaledspeed = tf2v_bunnyjump_max_speed_factor.GetFloat() * player->m_flMaxspeed;
 
 	if ( maxscaledspeed <= 0.0f )
 		return;
@@ -385,14 +385,14 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( player->GetFlags() & FL_DUCKING )
 	{
 		// Let a scout do it.
-		bool bAllow = (bScout && !bOnGround) || tf2c_duckjump.GetBool();
+		bool bAllow = (bScout && !bOnGround) || tf2v_duckjump.GetBool();
 
 		if ( !bAllow )
 			return false;
 	}
 
 	// Cannot jump while in the unduck transition.
-	if ( ( player->m_Local.m_bDucking && (  player->GetFlags() & FL_DUCKING ) ) || ( player->m_Local.m_flDuckJumpTime > 0.0f ) && !tf2c_duckjump.GetBool() )
+	if ( ( player->m_Local.m_bDucking && (  player->GetFlags() & FL_DUCKING ) ) || ( player->m_Local.m_flDuckJumpTime > 0.0f ) && !tf2v_duckjump.GetBool() )
 		return false;
 
 	// Cannot jump again until the jump button has been released.
@@ -402,7 +402,7 @@ bool CTFGameMovement::CheckJumpButton()
 		if ( !bOnGround )
 			return false;
 
-		if ( !tf2c_autojump.GetBool() )
+		if ( !tf2v_autojump.GetBool() )
 			return false;
 	}
 
@@ -446,7 +446,15 @@ bool CTFGameMovement::CheckJumpButton()
 
 	// fMul = sqrt( 2.0 * gravity * jump_height (21.0units) ) * GroundFactor
 	Assert( sv_gravity.GetFloat() == 800.0f );
-	float flMul = 268.3281572999747f * flGroundFactor;
+	float flPower = 268.3281572999747f * flGroundFactor;
+
+	float flMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pTFPlayer, flMult, mod_jump_height );
+
+	if ( m_pTFPlayer->GetActiveTFWeapon() )
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pTFPlayer->GetActiveTFWeapon(), flMult, mod_jump_height_from_weapon );
+
+	flPower *= flMult;
 
 	// Save the current z velocity.
 	float flStartZ = mv->m_vecVelocity[2];
@@ -461,11 +469,11 @@ bool CTFGameMovement::CheckJumpButton()
 		// v = g * sqrt(2.0 * 45 / g )
 		// v^2 = g * g * 2.0 * 45 / g
 		// v = sqrt( g * 2.0 * 45 )
-		mv->m_vecVelocity[2] = flMul;  // 2 * gravity * jump_height * ground_factor
+		mv->m_vecVelocity[2] = flPower;  // 2 * gravity * jump_height * ground_factor
 	}
 	else
 	{
-		mv->m_vecVelocity[2] += flMul;  // 2 * gravity * jump_height * ground_factor
+		mv->m_vecVelocity[2] += flPower;  // 2 * gravity * jump_height * ground_factor
 	}
 
 	// Apply gravity.
@@ -760,7 +768,7 @@ void CTFGameMovement::WalkMove( void )
 	Assert( mv->m_vecVelocity.z == 0.0f );
 
 	// Clamp the players speed in x,y.
-	if ( tf2c_groundspeed_cap.GetBool() )
+	if ( tf2v_groundspeed_cap.GetBool() )
 	{
 		float flNewSpeed = VectorLength(mv->m_vecVelocity);
 		if (flNewSpeed > mv->m_flMaxSpeed)
