@@ -13,12 +13,12 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar tf2c_mainmenu_music("tf2c_mainmenu_music", "1", FCVAR_ARCHIVE, "Toggle music in the main menu");
+ConVar tf2v_mainmenu_music( "tf2v_mainmenu_music", "1", FCVAR_ARCHIVE, "Toggle music in the main menu" );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFMainMenuPanel::CTFMainMenuPanel(vgui::Panel* parent, const char *panelName) : CTFMenuPanelBase(parent, panelName)
+CTFMainMenuPanel::CTFMainMenuPanel( vgui::Panel* parent, const char *panelName ) : CTFMenuPanelBase( parent, panelName )
 {
 	Init();
 }
@@ -39,7 +39,7 @@ bool CTFMainMenuPanel::Init()
 	m_pzMusicLink[0] = '\0';
 	m_nSongGuid = 0;
 
-	if (steamapicontext->SteamUser())
+	if ( steamapicontext->SteamUser() )
 	{
 		m_SteamID = steamapicontext->SteamUser()->GetSteamID();
 	}
@@ -49,7 +49,7 @@ bool CTFMainMenuPanel::Init()
 	m_pNotificationButton = NULL;
 	m_pProfileAvatar = NULL;
 	m_pFakeBGImage = NULL;
-	m_pServerlistPanel = new CTFServerlistPanel(this, "ServerlistPanel");
+	m_pServerlistPanel = new CTFServerlistPanel( this, "ServerlistPanel" );
 
 	bInMenu = true;
 	bInGame = false;
@@ -57,79 +57,79 @@ bool CTFMainMenuPanel::Init()
 }
 
 
-void CTFMainMenuPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
+void CTFMainMenuPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
-	BaseClass::ApplySchemeSettings(pScheme);
+	BaseClass::ApplySchemeSettings( pScheme );
 
-	LoadControlSettings("resource/UI/main_menu/MainMenuPanel.res");
-	m_pVersionLabel = dynamic_cast<CExLabel *>(FindChildByName("VersionLabel"));
-	m_pNotificationButton = dynamic_cast<CTFAdvButton *>(FindChildByName("NotificationButton"));
-	m_pProfileAvatar = dynamic_cast<CAvatarImagePanel *>(FindChildByName("AvatarImage"));
-	m_pFakeBGImage = dynamic_cast<vgui::ImagePanel *>(FindChildByName("FakeBGImage"));
+	LoadControlSettings( "resource/UI/main_menu/MainMenuPanel.res" );
+	m_pVersionLabel = dynamic_cast<CExLabel *>( FindChildByName( "VersionLabel" ) );
+	m_pNotificationButton = dynamic_cast<CTFAdvButton *>( FindChildByName( "NotificationButton" ) );
+	m_pProfileAvatar = dynamic_cast<CAvatarImagePanel *>( FindChildByName( "AvatarImage" ) );
+	m_pFakeBGImage = dynamic_cast<vgui::ImagePanel *>( FindChildByName( "FakeBGImage" ) );
 
 	SetVersionLabel();
-}	
+}
 
 void CTFMainMenuPanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
-	if (m_pProfileAvatar)
+	if ( m_pProfileAvatar )
 	{
-		m_pProfileAvatar->SetPlayer(m_SteamID, k_EAvatarSize64x64);
-		m_pProfileAvatar->SetShouldDrawFriendIcon(false);
+		m_pProfileAvatar->SetPlayer( m_SteamID, k_EAvatarSize64x64 );
+		m_pProfileAvatar->SetShouldDrawFriendIcon( false );
 	}
 
 	char szNickName[64];
-	Q_snprintf(szNickName, sizeof(szNickName),
-		(steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown"));
-	SetDialogVariable("nickname", szNickName);
+	Q_snprintf( szNickName, sizeof( szNickName ),
+		( steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown" ) );
+	SetDialogVariable( "nickname", szNickName );
 
 	AutoLayout();
 
-	if (m_iShowFakeIntro > 0)
+	if ( m_iShowFakeIntro > 0 )
 	{
 		char szBGName[128];
-		engine->GetMainMenuBackgroundName(szBGName, sizeof(szBGName));
+		engine->GetMainMenuBackgroundName( szBGName, sizeof( szBGName ) );
 		char szImage[128];
-		Q_snprintf(szImage, sizeof(szImage), "../console/%s", szBGName);
+		Q_snprintf( szImage, sizeof( szImage ), "../console/%s", szBGName );
 		int width, height;
-		surface()->GetScreenSize(width, height);
+		surface()->GetScreenSize( width, height );
 		float fRatio = (float)width / (float)height;
-		bool bWidescreen = (fRatio < 1.5 ? false : true);
-		if (bWidescreen)
-			Q_strcat(szImage, "_widescreen", sizeof(szImage));
-		m_pFakeBGImage->SetImage(szImage);
-		m_pFakeBGImage->SetVisible(true);
-		m_pFakeBGImage->SetAlpha(255);
+		bool bWidescreen = ( fRatio < 1.5 ? false : true );
+		if ( bWidescreen )
+			Q_strcat( szImage, "_widescreen", sizeof( szImage ) );
+		m_pFakeBGImage->SetImage( szImage );
+		m_pFakeBGImage->SetVisible( true );
+		m_pFakeBGImage->SetAlpha( 255 );
 	}
 };
 
-void CTFMainMenuPanel::OnCommand(const char* command)
+void CTFMainMenuPanel::OnCommand( const char* command )
 {
-	if (!Q_strcmp(command, "newquit"))
+	if ( !Q_strcmp( command, "newquit" ) )
 	{
-		MAINMENU_ROOT->ShowPanel(QUIT_MENU);
+		MAINMENU_ROOT->ShowPanel( QUIT_MENU );
 	}
-	else if (!Q_strcmp(command, "newoptionsdialog"))
+	else if ( !Q_strcmp( command, "newoptionsdialog" ) )
 	{
-		MAINMENU_ROOT->ShowPanel(OPTIONSDIALOG_MENU);
+		MAINMENU_ROOT->ShowPanel( OPTIONSDIALOG_MENU );
 	}
-	else if (!Q_strcmp(command, "newloadout"))
+	else if ( !Q_strcmp( command, "newloadout" ) )
 	{
-		MAINMENU_ROOT->ShowPanel(LOADOUT_MENU);
+		MAINMENU_ROOT->ShowPanel( LOADOUT_MENU );
 	}
-	else if (!Q_strcmp(command, "newstats"))
+	else if ( !Q_strcmp( command, "newstats" ) )
 	{
-		MAINMENU_ROOT->ShowPanel(STATSUMMARY_MENU);
+		MAINMENU_ROOT->ShowPanel( STATSUMMARY_MENU );
 	}
-	else if (!Q_strcmp(command, "randommusic"))
+	else if ( !Q_strcmp( command, "randommusic" ) )
 	{
-		enginesound->StopSoundByGuid(m_nSongGuid);
+		enginesound->StopSoundByGuid( m_nSongGuid );
 	}
 	else
 	{
-		BaseClass::OnCommand(command);
+		BaseClass::OnCommand( command );
 	}
 }
 
@@ -137,27 +137,27 @@ void CTFMainMenuPanel::OnTick()
 {
 	BaseClass::OnTick();
 
-	if (tf2c_mainmenu_music.GetBool() && !bInGameLayout)
+	if ( tf2v_mainmenu_music.GetBool() && !bInGameLayout )
 	{
-		if ((m_psMusicStatus == MUSIC_FIND || m_psMusicStatus == MUSIC_STOP_FIND) && !enginesound->IsSoundStillPlaying(m_nSongGuid))
+		if ( ( m_psMusicStatus == MUSIC_FIND || m_psMusicStatus == MUSIC_STOP_FIND ) && !enginesound->IsSoundStillPlaying( m_nSongGuid ) )
 		{
-			Q_strncpy(m_pzMusicLink, GetRandomMusic(), sizeof(m_pzMusicLink));
+			Q_strncpy( m_pzMusicLink, GetRandomMusic(), sizeof( m_pzMusicLink ) );
 			m_psMusicStatus = MUSIC_PLAY;
 		}
-		else if ((m_psMusicStatus == MUSIC_PLAY || m_psMusicStatus == MUSIC_STOP_PLAY)&& m_pzMusicLink[0] != '\0')
+		else if ( ( m_psMusicStatus == MUSIC_PLAY || m_psMusicStatus == MUSIC_STOP_PLAY )&& m_pzMusicLink[0] != '\0' )
 		{
-			enginesound->StopSoundByGuid(m_nSongGuid);
-			ConVar *snd_musicvolume = cvar->FindVar("snd_musicvolume");
-			float fVolume = (snd_musicvolume ? snd_musicvolume->GetFloat() : 1.0f);
-			enginesound->EmitAmbientSound(m_pzMusicLink, fVolume, PITCH_NORM, 0);			
+			enginesound->StopSoundByGuid( m_nSongGuid );
+			ConVar *snd_musicvolume = cvar->FindVar( "snd_musicvolume" );
+			float fVolume = ( snd_musicvolume ? snd_musicvolume->GetFloat() : 1.0f );
+			enginesound->EmitAmbientSound( m_pzMusicLink, fVolume, PITCH_NORM, 0 );
 			m_nSongGuid = enginesound->GetGuidForLastSoundEmitted();
 			m_psMusicStatus = MUSIC_FIND;
 		}
 	}
-	else if (m_psMusicStatus == MUSIC_FIND)
+	else if ( m_psMusicStatus == MUSIC_FIND )
 	{
-		enginesound->StopSoundByGuid(m_nSongGuid);
-		m_psMusicStatus = (m_nSongGuid == 0 ? MUSIC_STOP_FIND : MUSIC_STOP_PLAY);
+		enginesound->StopSoundByGuid( m_nSongGuid );
+		m_psMusicStatus = ( m_nSongGuid == 0 ? MUSIC_STOP_FIND : MUSIC_STOP_PLAY );
 	}
 };
 
@@ -165,30 +165,30 @@ void CTFMainMenuPanel::OnThink()
 {
 	BaseClass::OnThink();
 
-	if (m_iShowFakeIntro > 0)
+	if ( m_iShowFakeIntro > 0 )
 	{
 		m_iShowFakeIntro--;
-		if (m_iShowFakeIntro == 0)
+		if ( m_iShowFakeIntro == 0 )
 		{
-			vgui::GetAnimationController()->RunAnimationCommand(m_pFakeBGImage, "Alpha", 0, 1.0f, 0.5f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
+			vgui::GetAnimationController()->RunAnimationCommand( m_pFakeBGImage, "Alpha", 0, 1.0f, 0.5f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE );
 		}
-	}	
-	if (m_pFakeBGImage->IsVisible() && m_pFakeBGImage->GetAlpha() == 0)
+	}
+	if ( m_pFakeBGImage->IsVisible() && m_pFakeBGImage->GetAlpha() == 0 )
 	{
-		m_pFakeBGImage->SetVisible(false);
+		m_pFakeBGImage->SetVisible( false );
 	}
 };
 
 void CTFMainMenuPanel::Show()
 {
 	BaseClass::Show();
-	vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 255, 0.0f, 0.5f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
+	vgui::GetAnimationController()->RunAnimationCommand( this, "Alpha", 255, 0.0f, 0.5f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE );
 };
 
 void CTFMainMenuPanel::Hide()
 {
 	BaseClass::Hide();
-	vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR);
+	vgui::GetAnimationController()->RunAnimationCommand( this, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR );
 };
 
 
@@ -209,11 +209,11 @@ void CTFMainMenuPanel::PlayMusic()
 
 void CTFMainMenuPanel::SetVersionLabel()  //GetVersionString
 {
-	if (m_pVersionLabel)
+	if ( m_pVersionLabel )
 	{
 		char verString[64];
-		Q_snprintf(verString, sizeof(verString), "Version: %s", GetNotificationManager()->GetVersionString() );
-		m_pVersionLabel->SetText(verString);
+		Q_snprintf( verString, sizeof( verString ), "Version: %s", GetNotificationManager()->GetVersionString() );
+		m_pVersionLabel->SetText( verString );
 	}
 };
 
@@ -222,17 +222,17 @@ char* CTFMainMenuPanel::GetRandomMusic()
 	char* pszBasePath = "sound/ui/gamestartup";
 	int iCount = 0;
 
-	for (int i = 0; i < 27; i++)
+	for ( int i = 0; i < 27; i++ )
 	{
 		char szPath[MAX_PATH];
 		char szNumber[5];
-		Q_snprintf(szNumber, sizeof(szNumber), "%d", iCount + 1);
-		Q_strncpy(szPath, pszBasePath, sizeof(szPath));
-		Q_strncat(szPath, szNumber, sizeof(szPath));
-		Q_strncat(szPath, ".mp3", sizeof(szPath));
-		if (!g_pFullFileSystem->FileExists(szPath))
+		Q_snprintf( szNumber, sizeof( szNumber ), "%d", iCount + 1 );
+		Q_strncpy( szPath, pszBasePath, sizeof( szPath ) );
+		Q_strncat( szPath, szNumber, sizeof( szPath ) );
+		Q_strncat( szPath, ".mp3", sizeof( szPath ) );
+		if ( !g_pFullFileSystem->FileExists( szPath ) )
 		{
-			if (iCount)
+			if ( iCount )
 				break;
 			else
 				return "";
@@ -244,18 +244,18 @@ char* CTFMainMenuPanel::GetRandomMusic()
 	int iRand = rand() % iCount;
 	char szPath[MAX_PATH];
 	char szNumber[5];
-	Q_snprintf(szNumber, sizeof(szNumber), "%d", iRand + 1);
-	Q_strncpy(szPath, pszSoundPath, sizeof(szPath));
-	Q_strncat(szPath, szNumber, sizeof(szPath));
-	Q_strncat(szPath, ".mp3", sizeof(szPath));
-	char *szResult = (char*)malloc(sizeof(szPath));
-	Q_strncpy(szResult, szPath, sizeof(szPath));
-	return szResult;	
+	Q_snprintf( szNumber, sizeof( szNumber ), "%d", iRand + 1 );
+	Q_strncpy( szPath, pszSoundPath, sizeof( szPath ) );
+	Q_strncat( szPath, szNumber, sizeof( szPath ) );
+	Q_strncat( szPath, ".mp3", sizeof( szPath ) );
+	char *szResult = (char*)malloc( sizeof( szPath ) );
+	Q_strncpy( szResult, szPath, sizeof( szPath ) );
+	return szResult;
 }
 
-void CTFMainMenuPanel::SetServerlistSize(int size)
+void CTFMainMenuPanel::SetServerlistSize( int size )
 {
-	m_pServerlistPanel->SetServerlistSize(size);
+	m_pServerlistPanel->SetServerlistSize( size );
 }
 
 void CTFMainMenuPanel::UpdateServerInfo()
@@ -266,12 +266,12 @@ void CTFMainMenuPanel::UpdateServerInfo()
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFServerlistPanel::CTFServerlistPanel(vgui::Panel* parent, const char *panelName) : CTFMenuPanelBase(parent, panelName)
+CTFServerlistPanel::CTFServerlistPanel( vgui::Panel* parent, const char *panelName ) : CTFMenuPanelBase( parent, panelName )
 {
 	m_iSize = 0;
-	m_pServerList = new vgui::SectionedListPanel(this, "ServerList");
-	m_pConnectButton = new CTFAdvButton(this, "ConnectButton", "Connect");
-	m_pListSlider = new CTFAdvSlider(this, "ListSlider", "");
+	m_pServerList = new vgui::SectionedListPanel( this, "ServerList" );
+	m_pConnectButton = new CTFAdvButton( this, "ConnectButton", "Connect" );
+	m_pListSlider = new CTFAdvSlider( this, "ListSlider", "" );
 }
 
 //-----------------------------------------------------------------------------
@@ -281,26 +281,26 @@ CTFServerlistPanel::~CTFServerlistPanel()
 {
 }
 
-void CTFServerlistPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
+void CTFServerlistPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
-	BaseClass::ApplySchemeSettings(pScheme);
+	BaseClass::ApplySchemeSettings( pScheme );
 
-	LoadControlSettings("resource/UI/main_menu/ServerlistPanel.res");
+	LoadControlSettings( "resource/UI/main_menu/ServerlistPanel.res" );
 
 	m_pServerList->RemoveAll();
 	m_pServerList->RemoveAllSections();
-	m_pServerList->SetSectionFgColor(0, Color(255, 255, 255, 255));
-	m_pServerList->SetBgColor(Color(0, 0, 0, 0));
-	m_pServerList->SetBorder(NULL);
-	m_pServerList->AddSection(0, "Servers", ServerSortFunc);
-	m_pServerList->AddColumnToSection(0, "Name", "Servers", SectionedListPanel::COLUMN_BRIGHT, m_iServerWidth);
-	m_pServerList->AddColumnToSection(0, "Players", "Players", SectionedListPanel::COLUMN_BRIGHT, m_iPlayersWidth);
-	m_pServerList->AddColumnToSection(0, "Ping", "Ping", SectionedListPanel::COLUMN_BRIGHT, m_iPingWidth);
-	m_pServerList->AddColumnToSection(0, "Map", "Map", SectionedListPanel::COLUMN_BRIGHT, m_iMapWidth);
-	m_pServerList->SetSectionAlwaysVisible(0, true);
-	m_pServerList->GetScrollBar()->UseImages("", "", "", ""); //hack to hide the scrollbar
+	m_pServerList->SetSectionFgColor( 0, Color( 255, 255, 255, 255 ) );
+	m_pServerList->SetBgColor( Color( 0, 0, 0, 0 ) );
+	m_pServerList->SetBorder( NULL );
+	m_pServerList->AddSection( 0, "Servers", ServerSortFunc );
+	m_pServerList->AddColumnToSection( 0, "Name", "Servers", SectionedListPanel::COLUMN_BRIGHT, m_iServerWidth );
+	m_pServerList->AddColumnToSection( 0, "Players", "Players", SectionedListPanel::COLUMN_BRIGHT, m_iPlayersWidth );
+	m_pServerList->AddColumnToSection( 0, "Ping", "Ping", SectionedListPanel::COLUMN_BRIGHT, m_iPingWidth );
+	m_pServerList->AddColumnToSection( 0, "Map", "Map", SectionedListPanel::COLUMN_BRIGHT, m_iMapWidth );
+	m_pServerList->SetSectionAlwaysVisible( 0, true );
+	m_pServerList->GetScrollBar()->UseImages( "", "", "", "" ); //hack to hide the scrollbar
 
-	m_pConnectButton->SetVisible(false);
+	m_pConnectButton->SetVisible( false );
 	UpdateServerInfo();
 }
 
@@ -312,65 +312,65 @@ void CTFServerlistPanel::PerformLayout()
 void CTFServerlistPanel::OnThink()
 {
 	m_pServerList->ClearSelection();
-	m_pListSlider->SetVisible(false);
-	m_pConnectButton->SetVisible(false);
+	m_pListSlider->SetVisible( false );
+	m_pConnectButton->SetVisible( false );
 
-	if (!IsCursorOver())
+	if ( !IsCursorOver() )
 		return;
 
-	m_pListSlider->SetValue(m_pServerList->GetScrollBar()->GetValue());
+	m_pListSlider->SetValue( m_pServerList->GetScrollBar()->GetValue() );
 
-	for (int i = 0; i < m_pServerList->GetItemCount(); i++)
+	for ( int i = 0; i < m_pServerList->GetItemCount(); i++ )
 	{
 		int _x, _y;
-		m_pServerList->GetPos(_x, _y);
+		m_pServerList->GetPos( _x, _y );
 		int x, y, wide, tall;
-		m_pServerList->GetItemBounds(i, x, y, wide, tall);
+		m_pServerList->GetItemBounds( i, x, y, wide, tall );
 		int cx, cy;
-		surface()->SurfaceGetCursorPos(cx, cy);
-		m_pServerList->ScreenToLocal(cx, cy);
+		surface()->SurfaceGetCursorPos( cx, cy );
+		m_pServerList->ScreenToLocal( cx, cy );
 
-		if (cx > x && cx < x + wide && cy > y && cy < y + tall)
+		if ( cx > x && cx < x + wide && cy > y && cy < y + tall )
 		{
-			m_pServerList->SetSelectedItem(i);
+			m_pServerList->SetSelectedItem( i );
 			int by = y + _y;
-			m_pConnectButton->SetPos(m_iServerWidth + m_iPlayersWidth + m_iPingWidth, by);
-			m_pConnectButton->SetVisible(true);
-			m_pListSlider->SetVisible(true);
+			m_pConnectButton->SetPos( m_iServerWidth + m_iPlayersWidth + m_iPingWidth, by );
+			m_pConnectButton->SetVisible( true );
+			m_pListSlider->SetVisible( true );
 
 			char szCommand[128];
-			Q_snprintf(szCommand, sizeof(szCommand), "connect %s", m_pServerList->GetItemData(i)->GetString("ServerIP", ""));
-			m_pConnectButton->SetCommandString(szCommand);
+			Q_snprintf( szCommand, sizeof( szCommand ), "connect %s", m_pServerList->GetItemData( i )->GetString( "ServerIP", "" ) );
+			m_pConnectButton->SetCommandString( szCommand );
 		}
 	}
 }
 
-void CTFServerlistPanel::OnCommand(const char* command)
+void CTFServerlistPanel::OnCommand( const char* command )
 {
-	if (!Q_strcmp(command, "scrolled"))
+	if ( !Q_strcmp( command, "scrolled" ) )
 	{
-		m_pServerList->GetScrollBar()->SetValue(m_pListSlider->GetValue());
+		m_pServerList->GetScrollBar()->SetValue( m_pListSlider->GetValue() );
 	}
 	else
 	{
-		BaseClass::OnCommand(command);
+		BaseClass::OnCommand( command );
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for sorting servers
 //-----------------------------------------------------------------------------
-bool CTFServerlistPanel::ServerSortFunc(vgui::SectionedListPanel *list, int itemID1, int itemID2)
+bool CTFServerlistPanel::ServerSortFunc( vgui::SectionedListPanel *list, int itemID1, int itemID2 )
 {
-	KeyValues *it1 = list->GetItemData(itemID1);
-	KeyValues *it2 = list->GetItemData(itemID2);
-	Assert(it1 && it2);
+	KeyValues *it1 = list->GetItemData( itemID1 );
+	KeyValues *it2 = list->GetItemData( itemID2 );
+	Assert( it1 && it2 );
 
-	int v1 = it1->GetInt("CurPlayers");
-	int v2 = it2->GetInt("CurPlayers");
-	if (v1 > v2)
+	int v1 = it1->GetInt( "CurPlayers" );
+	int v2 = it2->GetInt( "CurPlayers" );
+	if ( v1 > v2 )
 		return true;
-	else if (v1 < v2)
+	else if ( v1 < v2 )
 		return false;
 
 	/*
@@ -382,14 +382,14 @@ bool CTFServerlistPanel::ServerSortFunc(vgui::SectionedListPanel *list, int item
 		return false;
 	*/
 
-	int iPing1 = it1->GetInt("Ping");
-	if (iPing1 == 0)
+	int iPing1 = it1->GetInt( "Ping" );
+	if ( iPing1 == 0 )
 		return false;
-	int iPing2 = it2->GetInt("Ping");
-	return (iPing1 < iPing2);
+	int iPing2 = it2->GetInt( "Ping" );
+	return ( iPing1 < iPing2 );
 }
 
-void CTFServerlistPanel::SetServerlistSize(int size) 
+void CTFServerlistPanel::SetServerlistSize( int size )
 {
 	m_iSize = size;
 };
@@ -397,12 +397,12 @@ void CTFServerlistPanel::SetServerlistSize(int size)
 void CTFServerlistPanel::UpdateServerInfo()
 {
 	m_pServerList->RemoveAll();
-	HFont Font = GETSCHEME()->GetFont("FontStoreOriginalPrice", true);
+	HFont Font = GETSCHEME()->GetFont( "FontStoreOriginalPrice", true );
 
-	for (int i = 0; i < m_iSize; i++)
+	for ( int i = 0; i < m_iSize; i++ )
 	{
-		gameserveritem_t m_Server = GetNotificationManager()->GetServerInfo(i);		
-		if (m_Server.m_steamID.GetAccountID() == 0)
+		gameserveritem_t m_Server = GetNotificationManager()->GetServerInfo( i );
+		if ( m_Server.m_steamID.GetAccountID() == 0 )
 			continue;
 
 		char szServerName[128];
@@ -412,41 +412,41 @@ void CTFServerlistPanel::UpdateServerInfo()
 		int szServerPing;
 		char szServerMap[32];
 
-		Q_snprintf(szServerName, sizeof(szServerName), "%s", m_Server.GetName());
-		Q_snprintf(szServerIP, sizeof(szServerIP), "%s", m_Server.m_NetAdr.GetQueryAddressString());
-		Q_snprintf(szServerPlayers, sizeof(szServerPlayers), "%i/%i", m_Server.m_nPlayers, m_Server.m_nMaxPlayers);
+		Q_snprintf( szServerName, sizeof( szServerName ), "%s", m_Server.GetName() );
+		Q_snprintf( szServerIP, sizeof( szServerIP ), "%s", m_Server.m_NetAdr.GetQueryAddressString() );
+		Q_snprintf( szServerPlayers, sizeof( szServerPlayers ), "%i/%i", m_Server.m_nPlayers, m_Server.m_nMaxPlayers );
 		szServerCurPlayers = m_Server.m_nPlayers;
 		szServerPing = m_Server.m_nPing;
-		Q_snprintf(szServerMap, sizeof(szServerMap), "%s", m_Server.m_szMap);
+		Q_snprintf( szServerMap, sizeof( szServerMap ), "%s", m_Server.m_szMap );
 
-		KeyValues *curitem = new KeyValues("data");
+		KeyValues *curitem = new KeyValues( "data" );
 
-		curitem->SetString("Name", szServerName);
-		curitem->SetString("ServerIP", szServerIP);
-		curitem->SetString("Players", szServerPlayers);
-		curitem->SetInt("Ping", szServerPing);
-		curitem->SetInt("CurPlayers", szServerCurPlayers);
-		curitem->SetString("Map", szServerMap);	
+		curitem->SetString( "Name", szServerName );
+		curitem->SetString( "ServerIP", szServerIP );
+		curitem->SetString( "Players", szServerPlayers );
+		curitem->SetInt( "Ping", szServerPing );
+		curitem->SetInt( "CurPlayers", szServerCurPlayers );
+		curitem->SetString( "Map", szServerMap );
 
-		int itemID = m_pServerList->AddItem(0, curitem);
-		
-		m_pServerList->SetItemFgColor(itemID, GETSCHEME()->GetColor("AdvTextDefault", Color(255, 255, 255, 255)));
+		int itemID = m_pServerList->AddItem( 0, curitem );
 
-		m_pServerList->SetItemFont(itemID, Font);
+		m_pServerList->SetItemFgColor( itemID, GETSCHEME()->GetColor( "AdvTextDefault", Color( 255, 255, 255, 255 ) ) );
+
+		m_pServerList->SetItemFont( itemID, Font );
 		curitem->deleteThis();
 	}
 
-	if (m_pServerList->GetItemCount() > 0)
+	if ( m_pServerList->GetItemCount() > 0 )
 	{
-		SetVisible(true);
+		SetVisible( true );
 	}
 	else
 	{
-		SetVisible(false);
+		SetVisible( false );
 	}
 
 	int min, max;
-	m_pServerList->InvalidateLayout(1, 0);
-	m_pServerList->GetScrollBar()->GetRange(min, max);
-	m_pListSlider->SetRange(min, max - m_pServerList->GetScrollBar()->GetButton(0)->GetTall() * 4);
+	m_pServerList->InvalidateLayout( 1, 0 );
+	m_pServerList->GetScrollBar()->GetRange( min, max );
+	m_pListSlider->SetRange( min, max - m_pServerList->GetScrollBar()->GetButton( 0 )->GetTall() * 4 );
 }

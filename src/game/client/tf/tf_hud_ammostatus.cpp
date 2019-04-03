@@ -75,7 +75,7 @@ void CTFHudWeaponAmmo::Reset()
 	m_flNextThink = gpGlobals->curtime + 0.05f;
 }
 
-ConVar tf2c_ammobucket("tf2c_ammobucket", "0", FCVAR_ARCHIVE, "Shows weapon bucket in the ammo section. 1 = ON, 0 = OFF.");
+ConVar tf2v_ammobucket( "tf2v_ammobucket", "0", FCVAR_ARCHIVE, "Shows weapon bucket in the ammo section. 1 = ON, 0 = OFF." );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -126,7 +126,7 @@ bool CTFHudWeaponAmmo::ShouldDraw( void )
 		return false;
 	}
 
-	if ( !pWeapon->UsesPrimaryAmmo() && !tf2c_ammobucket.GetBool() )
+	if ( !pWeapon->UsesPrimaryAmmo() && !tf2v_ammobucket.GetBool() )
 	{
 		return false;
 	}
@@ -190,7 +190,7 @@ void CTFHudWeaponAmmo::OnThink()
 	{
 		bool bShowIcon = false;
 
-		if ( tf2c_ammobucket.GetBool() && pWeapon && m_pWeaponBucket )
+		if ( tf2v_ammobucket.GetBool() && pWeapon && m_pWeaponBucket )
 		{
 			int iItemID = pWeapon->GetItemID();
 			CEconItemDefinition *pItemDefinition = GetItemSchema()->GetItemDefinition( iItemID );

@@ -22,87 +22,87 @@ using namespace vgui;
 
 // See interface.h/.cpp for specifics:  basically this ensures that we actually Sys_UnloadModule the dll and that we don't call Sys_LoadModule 
 //  over and over again.
-static CDllDemandLoader g_GameUIDLL("GameUI");
+static CDllDemandLoader g_GameUIDLL( "GameUI" );
 
 CTFMainMenu *guiroot = NULL;
 
 void OverrideMainMenu()
 {
-	if (!MainMenu->GetPanel())
+	if ( !MainMenu->GetPanel() )
 	{
-		MainMenu->Create(NULL);
+		MainMenu->Create( NULL );
 	}
-	if (guiroot->GetGameUI())
+	if ( guiroot->GetGameUI() )
 	{
-		guiroot->GetGameUI()->SetMainMenuOverride(guiroot->GetVPanel());
+		guiroot->GetGameUI()->SetMainMenuOverride( guiroot->GetVPanel() );
 		return;
 	}
 }
 
-CON_COMMAND(tf2c_mainmenu_reload, "Reload Main Menu")
+CON_COMMAND( tf2v_mainmenu_reload, "Reload Main Menu" )
 {
-	MAINMENU_ROOT->InvalidatePanelsLayout(true, true);
+	MAINMENU_ROOT->InvalidatePanelsLayout( true, true );
 }
 
-CON_COMMAND(showloadout, "Show loadout screen (new)")
+CON_COMMAND( showloadout, "Show loadout screen (new)" )
 {
-	if (!guiroot)
+	if ( !guiroot )
 		return;
 
-	engine->ClientCmd("gameui_activate");
-	MAINMENU_ROOT->ShowPanel(LOADOUT_MENU, true);
+	engine->ClientCmd( "gameui_activate" );
+	MAINMENU_ROOT->ShowPanel( LOADOUT_MENU, true );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFMainMenu::CTFMainMenu(VPANEL parent) : vgui::EditablePanel(NULL, "MainMenu")
+CTFMainMenu::CTFMainMenu( VPANEL parent ) : vgui::EditablePanel( NULL, "MainMenu" )
 {
-	SetParent(parent);
+	SetParent( parent );
 
 	guiroot = this;
 	gameui = NULL;
 	LoadGameUI();
-	SetScheme("ClientScheme");
+	SetScheme( "ClientScheme" );
 
-	SetDragEnabled(false);
-	SetShowDragHelper(false);
-	SetProportional(true);
-	SetVisible(true);
+	SetDragEnabled( false );
+	SetShowDragHelper( false );
+	SetProportional( true );
+	SetVisible( true );
 
 	int width, height;
-	surface()->GetScreenSize(width, height);
-	SetSize(width, height);
-	SetPos(0, 0);
+	surface()->GetScreenSize( width, height );
+	SetSize( width, height );
+	SetPos( 0, 0 );
 
-	m_pPanels.SetSize(COUNT_MENU);
-	AddMenuPanel(new CTFMainMenuPanel(this, "CTFMainMenuPanel"), MAIN_MENU);
-	AddMenuPanel(new CTFPauseMenuPanel(this, "CTFPauseMenuPanel"), PAUSE_MENU);
-	AddMenuPanel(new CTFBackgroundPanel(this, "CTFBackgroundPanel"), BACKGROUND_MENU);
-	AddMenuPanel(new CTFLoadoutPanel(this, "CTFLoadoutPanel"), LOADOUT_MENU);
-	AddMenuPanel(new CTFShadeBackgroundPanel(this, "CTFShadeBackgroundPanel"), SHADEBACKGROUND_MENU);
-	AddMenuPanel(new CTFQuitDialogPanel(this, "CTFQuitDialogPanel"), QUIT_MENU);
-	AddMenuPanel(new CTFOptionsDialog(this, "CTFOptionsDialog"), OPTIONSDIALOG_MENU);
-	AddMenuPanel(new CTFStatsSummaryDialog(this, "CTFStatsSummaryDialog"), STATSUMMARY_MENU);
-	AddMenuPanel(new CTFToolTipPanel(this, "CTFToolTipPanel"), TOOLTIP_MENU);
-	AddMenuPanel(new CTFItemToolTipPanel(this, "CTFItemToolTipPanel"), ITEMTOOLTIP_MENU);
+	m_pPanels.SetSize( COUNT_MENU );
+	AddMenuPanel( new CTFMainMenuPanel( this, "CTFMainMenuPanel" ), MAIN_MENU );
+	AddMenuPanel( new CTFPauseMenuPanel( this, "CTFPauseMenuPanel" ), PAUSE_MENU );
+	AddMenuPanel( new CTFBackgroundPanel( this, "CTFBackgroundPanel" ), BACKGROUND_MENU );
+	AddMenuPanel( new CTFLoadoutPanel( this, "CTFLoadoutPanel" ), LOADOUT_MENU );
+	AddMenuPanel( new CTFShadeBackgroundPanel( this, "CTFShadeBackgroundPanel" ), SHADEBACKGROUND_MENU );
+	AddMenuPanel( new CTFQuitDialogPanel( this, "CTFQuitDialogPanel" ), QUIT_MENU );
+	AddMenuPanel( new CTFOptionsDialog( this, "CTFOptionsDialog" ), OPTIONSDIALOG_MENU );
+	AddMenuPanel( new CTFStatsSummaryDialog( this, "CTFStatsSummaryDialog" ), STATSUMMARY_MENU );
+	AddMenuPanel( new CTFToolTipPanel( this, "CTFToolTipPanel" ), TOOLTIP_MENU );
+	AddMenuPanel( new CTFItemToolTipPanel( this, "CTFItemToolTipPanel" ), ITEMTOOLTIP_MENU );
 
-	ShowPanel(MAIN_MENU);
-	ShowPanel(PAUSE_MENU);
-	ShowPanel(BACKGROUND_MENU);
-	HidePanel(SHADEBACKGROUND_MENU);
-	HidePanel(LOADOUT_MENU);
-	HidePanel(QUIT_MENU);
-	HidePanel(OPTIONSDIALOG_MENU);
-	HidePanel(STATSUMMARY_MENU);
-	HidePanel(TOOLTIP_MENU);
-	HidePanel(ITEMTOOLTIP_MENU);
-	
+	ShowPanel( MAIN_MENU );
+	ShowPanel( PAUSE_MENU );
+	ShowPanel( BACKGROUND_MENU );
+	HidePanel( SHADEBACKGROUND_MENU );
+	HidePanel( LOADOUT_MENU );
+	HidePanel( QUIT_MENU );
+	HidePanel( OPTIONSDIALOG_MENU );
+	HidePanel( STATSUMMARY_MENU );
+	HidePanel( TOOLTIP_MENU );
+	HidePanel( ITEMTOOLTIP_MENU );
+
 	bInGameLayout = false;
 	m_iStopGameStartupSound = 2;
 	m_iUpdateLayout = 1;
 
-	vgui::ivgui()->AddTickSignal(GetVPanel());
+	vgui::ivgui()->AddTickSignal( GetVPanel() );
 }
 
 //-----------------------------------------------------------------------------
@@ -115,23 +115,23 @@ CTFMainMenu::~CTFMainMenu()
 	g_GameUIDLL.Unload();
 }
 
-void CTFMainMenu::AddMenuPanel(CTFMenuPanelBase *m_pPanel, int iPanel)
+void CTFMainMenu::AddMenuPanel( CTFMenuPanelBase *m_pPanel, int iPanel )
 {
 	m_pPanels[iPanel] = m_pPanel;
-	m_pPanel->SetZPos(iPanel);
+	m_pPanel->SetZPos( iPanel );
 }
 
-CTFMenuPanelBase* CTFMainMenu::GetMenuPanel(int iPanel)
+CTFMenuPanelBase* CTFMainMenu::GetMenuPanel( int iPanel )
 {
 	return m_pPanels[iPanel];
 }
 
-CTFMenuPanelBase* CTFMainMenu::GetMenuPanel(const char *name)
+CTFMenuPanelBase* CTFMainMenu::GetMenuPanel( const char *name )
 {
-	for (int i = FIRST_MENU; i < COUNT_MENU; i++)
+	for ( int i = FIRST_MENU; i < COUNT_MENU; i++ )
 	{
-		CTFMenuPanelBase* pMenu = GetMenuPanel(i);
-		if (pMenu && (Q_strcmp(pMenu->GetName(), name) == 0))
+		CTFMenuPanelBase* pMenu = GetMenuPanel( i );
+		if ( pMenu && ( Q_strcmp( pMenu->GetName(), name ) == 0 ) )
 		{
 			return pMenu;
 		}
@@ -139,26 +139,26 @@ CTFMenuPanelBase* CTFMainMenu::GetMenuPanel(const char *name)
 	return NULL;
 }
 
-void CTFMainMenu::ShowPanel(MenuPanel iPanel, bool bShowSingle /*= false*/)
+void CTFMainMenu::ShowPanel( MenuPanel iPanel, bool bShowSingle /*= false*/ )
 {
-	GetMenuPanel(iPanel)->SetShowSingle(bShowSingle);
-	GetMenuPanel(iPanel)->Show();
-	if (bShowSingle)
+	GetMenuPanel( iPanel )->SetShowSingle( bShowSingle );
+	GetMenuPanel( iPanel )->Show();
+	if ( bShowSingle )
 	{
-		GetMenuPanel(CURRENT_MENU)->Hide();
+		GetMenuPanel( CURRENT_MENU )->Hide();
 	}
 }
 
-void CTFMainMenu::HidePanel(MenuPanel iPanel)
+void CTFMainMenu::HidePanel( MenuPanel iPanel )
 {
-	GetMenuPanel(iPanel)->Hide();
+	GetMenuPanel( iPanel )->Hide();
 }
 
 IGameUI *CTFMainMenu::GetGameUI()
 {
-	if (!gameui)
+	if ( !gameui )
 	{
-		if (!LoadGameUI())
+		if ( !LoadGameUI() )
 			return NULL;
 	}
 
@@ -167,13 +167,13 @@ IGameUI *CTFMainMenu::GetGameUI()
 
 bool CTFMainMenu::LoadGameUI()
 {
-	if (!gameui)
+	if ( !gameui )
 	{
 		CreateInterfaceFn gameUIFactory = g_GameUIDLL.GetFactory();
-		if (gameUIFactory)
+		if ( gameUIFactory )
 		{
-			gameui = (IGameUI *)gameUIFactory(GAMEUI_INTERFACE_VERSION, NULL);
-			if (!gameui)
+			gameui = (IGameUI *)gameUIFactory( GAMEUI_INTERFACE_VERSION, NULL );
+			if ( !gameui )
 			{
 				return false;
 			}
@@ -187,9 +187,9 @@ bool CTFMainMenu::LoadGameUI()
 }
 
 
-void CTFMainMenu::ApplySchemeSettings(vgui::IScheme *pScheme)
+void CTFMainMenu::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
-	BaseClass::ApplySchemeSettings(pScheme);
+	BaseClass::ApplySchemeSettings( pScheme );
 }
 
 void CTFMainMenu::PerformLayout()
@@ -197,22 +197,22 @@ void CTFMainMenu::PerformLayout()
 	BaseClass::PerformLayout();
 };
 
-void CTFMainMenu::OnCommand(const char* command)
+void CTFMainMenu::OnCommand( const char* command )
 {
-	engine->ExecuteClientCmd(command);
+	engine->ExecuteClientCmd( command );
 }
 
-void CTFMainMenu::InvalidatePanelsLayout(bool layoutNow, bool reloadScheme)
-{	
-	for (int i = FIRST_MENU; i < COUNT_MENU; i++)
+void CTFMainMenu::InvalidatePanelsLayout( bool layoutNow, bool reloadScheme )
+{
+	for ( int i = FIRST_MENU; i < COUNT_MENU; i++ )
 	{
-		if (GetMenuPanel(i))
+		if ( GetMenuPanel( i ) )
 		{
-			bool bVisible = GetMenuPanel(i)->IsVisible();
-			GetMenuPanel(i)->InvalidateLayout(layoutNow, reloadScheme);
-			GetMenuPanel(i)->SetVisible(bVisible);
+			bool bVisible = GetMenuPanel( i )->IsVisible();
+			GetMenuPanel( i )->InvalidateLayout( layoutNow, reloadScheme );
+			GetMenuPanel( i )->SetVisible( bVisible );
 		}
-	}	
+	}
 	AutoLayout();
 }
 
@@ -224,38 +224,38 @@ void CTFMainMenu::LaunchInvalidatePanelsLayout()
 void CTFMainMenu::OnTick()
 {
 	BaseClass::OnTick();
-	if (!engine->IsDrawingLoadingImage() && !IsVisible())
+	if ( !engine->IsDrawingLoadingImage() && !IsVisible() )
 	{
-		SetVisible(true);
-	} 
-	else if (engine->IsDrawingLoadingImage() && IsVisible())
-	{
-		SetVisible(false);
+		SetVisible( true );
 	}
-	if (!InGame() && bInGameLayout)
+	else if ( engine->IsDrawingLoadingImage() && IsVisible() )
+	{
+		SetVisible( false );
+	}
+	if ( !InGame() && bInGameLayout )
 	{
 		DefaultLayout();
 		bInGameLayout = false;
 	}
-	else if (InGame() && !bInGameLayout)
+	else if ( InGame() && !bInGameLayout )
 	{
 		GameLayout();
 		bInGameLayout = true;
 	}
-	if (m_iStopGameStartupSound > 0)
+	if ( m_iStopGameStartupSound > 0 )
 	{
 		m_iStopGameStartupSound--;
-		if (!m_iStopGameStartupSound)
+		if ( !m_iStopGameStartupSound )
 		{
 			enginesound->NotifyBeginMoviePlayback();
 		}
 	}
-	if (m_iUpdateLayout > 0)
+	if ( m_iUpdateLayout > 0 )
 	{
 		m_iUpdateLayout--;
-		if (!m_iUpdateLayout)
+		if ( !m_iUpdateLayout )
 		{
-			InvalidatePanelsLayout(true, true);
+			InvalidatePanelsLayout( true, true );
 		}
 	}
 };
@@ -269,75 +269,75 @@ void CTFMainMenu::OnThink()
 void CTFMainMenu::DefaultLayout()
 {
 	//set all panels to default layout
-	for (int i = FIRST_MENU; i < COUNT_MENU; i++)
+	for ( int i = FIRST_MENU; i < COUNT_MENU; i++ )
 	{
-		if (GetMenuPanel(i))
-			GetMenuPanel(i)->DefaultLayout();
-	}		
+		if ( GetMenuPanel( i ) )
+			GetMenuPanel( i )->DefaultLayout();
+	}
 };
 
 void CTFMainMenu::GameLayout()
 {
 	//set all panels to game layout
-	for (int i = FIRST_MENU; i < COUNT_MENU; i++)
+	for ( int i = FIRST_MENU; i < COUNT_MENU; i++ )
 	{
-		if (GetMenuPanel(i))
-			GetMenuPanel(i)->GameLayout();
+		if ( GetMenuPanel( i ) )
+			GetMenuPanel( i )->GameLayout();
 	}
 };
 
 void CTFMainMenu::PaintBackground()
 {
-	SetPaintBackgroundType(0);
+	SetPaintBackgroundType( 0 );
 	BaseClass::PaintBackground();
 }
 
 bool CTFMainMenu::InGame()
 {
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-	if (pPlayer && IsVisible())
+	if ( pPlayer && IsVisible() )
 	{
 		return true;
 	}
-	else 
+	else
 	{
 		return false;
 	}
 }
 
-void CTFMainMenu::SetStats(CUtlVector<ClassStats_t> &vecClassStats)
+void CTFMainMenu::SetStats( CUtlVector<ClassStats_t> &vecClassStats )
 {
-	if (!guiroot)
+	if ( !guiroot )
 		return;
-	dynamic_cast<CTFStatsSummaryDialog*>(GetMenuPanel(STATSUMMARY_MENU))->SetStats(vecClassStats);
+	dynamic_cast<CTFStatsSummaryDialog*>( GetMenuPanel( STATSUMMARY_MENU ) )->SetStats( vecClassStats );
 }
 
-void CTFMainMenu::ShowToolTip(char* sText)
+void CTFMainMenu::ShowToolTip( char* sText )
 {
-	dynamic_cast<CTFToolTipPanel*>(GetMenuPanel(TOOLTIP_MENU))->ShowToolTip(sText);
+	dynamic_cast<CTFToolTipPanel*>( GetMenuPanel( TOOLTIP_MENU ) )->ShowToolTip( sText );
 }
 
 void CTFMainMenu::HideToolTip()
 {
-	dynamic_cast<CTFToolTipPanel*>(GetMenuPanel(TOOLTIP_MENU))->HideToolTip();
+	dynamic_cast<CTFToolTipPanel*>( GetMenuPanel( TOOLTIP_MENU ) )->HideToolTip();
 }
 
-void CTFMainMenu::ShowItemToolTip(CEconItemDefinition *pItemData)
+void CTFMainMenu::ShowItemToolTip( CEconItemDefinition *pItemData )
 {
-	dynamic_cast<CTFItemToolTipPanel*>(GetMenuPanel(ITEMTOOLTIP_MENU))->ShowToolTip(pItemData);
+	dynamic_cast<CTFItemToolTipPanel*>( GetMenuPanel( ITEMTOOLTIP_MENU ) )->ShowToolTip( pItemData );
 }
 
 void CTFMainMenu::HideItemToolTip()
 {
-	dynamic_cast<CTFItemToolTipPanel*>(GetMenuPanel(ITEMTOOLTIP_MENU))->HideToolTip();
+	dynamic_cast<CTFItemToolTipPanel*>( GetMenuPanel( ITEMTOOLTIP_MENU ) )->HideToolTip();
 }
 
-void CTFMainMenu::SetServerlistSize(int size)
+void CTFMainMenu::SetServerlistSize( int size )
 {
-	GET_MAINMENUPANEL(CTFMainMenuPanel)->SetServerlistSize(size);
+	GET_MAINMENUPANEL( CTFMainMenuPanel )->SetServerlistSize( size );
 }
 
 void CTFMainMenu::OnServerInfoUpdate()
 {
-	GET_MAINMENUPANEL(CTFMainMenuPanel)->UpdateServerInfo();
+	GET_MAINMENUPANEL( CTFMainMenuPanel )->UpdateServerInfo();
 }

@@ -58,7 +58,7 @@ END_DATADESC()
 #endif
 
 #ifdef CLIENT_DLL
-extern ConVar tf2c_model_muzzleflash;
+extern ConVar tf2v_model_muzzleflash;
 #endif
 
 //=============================================================================
@@ -609,7 +609,7 @@ void CTFMinigun::OnDataChanged( DataUpdateType_t updateType )
 	HandleBrassEffect();
 	
 //	if (!ShouldMuzzleFlash())
-	if (!tf2c_model_muzzleflash.GetBool())
+	if (!tf2v_model_muzzleflash.GetBool())
 	{
 		HandleMuzzleEffect();
 	}

@@ -61,7 +61,7 @@ void PrintBranchName(const CCommand &args)
 {
 	Msg("SDK branch: %s\n", g_SDKVersionParser.GetKey());
 }
-ConCommand tf2c_getsdkbranch("tf2c_getsdkbranch", PrintBranchName);
+ConCommand tf2v_getsdkbranch( "tf2v_getsdkbranch", PrintBranchName );
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor

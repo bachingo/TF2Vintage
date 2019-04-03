@@ -1,6 +1,6 @@
 //====== Copyright Valve Corporation, All rights reserved. =======//
 //
-// Purpose: A modified game_player_equip that works with TF2C
+// Purpose: A modified game_player_equip that works with tf2v
 //
 //=============================================================================//
 

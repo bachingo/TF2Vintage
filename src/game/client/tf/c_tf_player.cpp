@@ -83,8 +83,8 @@ ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "Whe
 
 ConVar cl_autoreload( "cl_autoreload", "1",  FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, clip-using weapons will automatically be reloaded whenever they're not being fired." );
 
-ConVar tf2c_model_muzzleflash("tf2c_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash");
-ConVar tf2c_muzzlelight("tf2c_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower");
+ConVar tf2v_model_muzzleflash( "tf2v_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash" );
+ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower" );
 
 static void OnMercParticleChange( IConVar *var, const char *pOldValue, float flOldValue )
 {
@@ -4215,10 +4215,10 @@ void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int even
 // Shadows
 
 ConVar cl_blobbyshadows( "cl_blobbyshadows", "0", FCVAR_CLIENTDLL );
-extern ConVar tf2c_disable_player_shadows;
+extern ConVar tf2v_disable_player_shadows;
 ShadowType_t C_TFPlayer::ShadowCastType( void ) 
 {
-	if ( tf2c_disable_player_shadows.GetBool() )
+	if ( tf2v_disable_player_shadows.GetBool() )
 		return SHADOWS_NONE;
 
 	// Removed the GetPercentInvisible - should be taken care off in BindProxy now.

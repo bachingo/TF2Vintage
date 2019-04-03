@@ -41,8 +41,8 @@ extern ConVar r_drawviewmodel;
 extern ConVar tf_useparticletracers;
 
 #ifdef CLIENT_DLL
-extern ConVar tf2c_model_muzzleflash;
-extern ConVar tf2c_muzzlelight;
+extern ConVar tf2v_model_muzzleflash;
+extern ConVar tf2v_muzzlelight;
 #endif
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
@@ -2186,7 +2186,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 		pAttachEnt->GetAttachment( iMuzzleFlashAttachment, vecOrigin, angAngles );
 
 		// Muzzleflash light
-		if ( tf2c_muzzlelight.GetBool() )
+		if ( tf2v_muzzlelight.GetBool() )
 		{
 			CLocalPlayerFilter filter;
 			TE_DynamicLight( filter, 0.0f, &vecOrigin, 255, 192, 64, 5, 70.0f, 0.05f, 70.0f / 0.05f, LIGHT_INDEX_MUZZLEFLASH );
@@ -2206,7 +2206,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 			DispatchEffect( pszMuzzleFlashEffect, muzzleFlashData );
 		}
 
-		if (pszMuzzleFlashModel && tf2c_model_muzzleflash.GetBool())
+		if (pszMuzzleFlashModel && tf2v_model_muzzleflash.GetBool())
 		{
 			float flEffectLifetime = GetMuzzleFlashModelLifetime();
 

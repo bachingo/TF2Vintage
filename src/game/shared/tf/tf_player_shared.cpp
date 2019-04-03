@@ -82,15 +82,15 @@ ConVar tf_always_loser( "tf_always_loser", "0", FCVAR_REPLICATED | FCVAR_CHEAT, 
 ConVar sv_showimpacts( "sv_showimpacts", "0", FCVAR_REPLICATED, "Shows client (red) and server (blue) bullet impact point (1=both, 2=client-only, 3=server-only)" );
 ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Show lag compensated hitboxes for the specified player index whenever a player fires." );
 
-ConVar tf2c_building_hauling( "tf2c_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
-ConVar tf2c_disable_player_shadows( "tf2c_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
+ConVar tf2v_building_hauling( "tf2v_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
+ConVar tf2v_disable_player_shadows( "tf2v_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
 
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
 #endif
 
 #ifdef GAME_DLL
-extern ConVar tf2c_random_weapons;
+extern ConVar tf2v_random_weapons;
 #endif
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
@@ -1238,7 +1238,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	}
 
 	// Stops the drain hack.
-	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) || tf2c_random_weapons.GetBool() )
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) || tf2v_random_weapons.GetBool() )
 	{
 		CWeaponMedigun *pWeapon = m_pOuter->GetMedigun();
 		if ( pWeapon && pWeapon->IsReleasingCharge() )
@@ -3004,7 +3004,7 @@ void CTFPlayerShared::StopHealing(CTFPlayer *pPlayer)
 //-----------------------------------------------------------------------------
 medigun_charge_types CTFPlayerShared::GetChargeEffectBeingProvided( CTFPlayer *pPlayer )
 {
-	if ( !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && !tf2c_random_weapons.GetBool() )
+	if ( !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && !tf2v_random_weapons.GetBool() )
 		return TF_CHARGE_NONE;
 
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
@@ -4520,7 +4520,7 @@ bool CTFPlayer::CanPickupBuilding(CBaseObject *pObject)
 //-----------------------------------------------------------------------------
 bool CTFPlayer::TryToPickupBuilding( void )
 {
-	if ( !tf2c_building_hauling.GetBool() )
+	if ( !tf2v_building_hauling.GetBool() )
 		return false;
 
 	if ( m_Shared.IsLoser() )
@@ -4905,7 +4905,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 		// Random weapons should use the ammo of the player class related to this weapon
 		// BUG: Client calls to this method will return incorrect max ammo values in randomizer
 #ifdef GAME_DLL
-		if ( tf2c_random_weapons.GetBool() )
+		if ( tf2v_random_weapons.GetBool() )
 		{
 			CEconItemView *pItem = pWpn->GetItem();
 			if ( pItem )
