@@ -160,7 +160,8 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 	// If we extinguish a friendly player reduce our recharge time by 20%
 	if ( TFGameRules()->RadiusJarEffect( radiusInfo, GetEffectCondition() ) && m_iDeflected == 0 && pWeapon ) 
 	{
-		float flCooldownReduction = CAttributeManager::AttribHookValue<float>( 1, "extinguish_reduces_cooldown", pWeapon );
+		float flCooldownReduction = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCooldownReduction, "extinguish_reduces_cooldown" );
 		pWeapon->SetEffectBarProgress( pWeapon->GetEffectBarProgress() * flCooldownReduction );
 	}
 
