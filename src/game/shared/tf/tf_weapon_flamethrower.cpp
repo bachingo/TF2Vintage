@@ -62,7 +62,7 @@
 #define TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK	20
 
 #ifdef CLIENT_DLL
-	extern ConVar tf2c_muzzlelight;
+	extern ConVar tf2v_muzzlelight;
 
 	ConVar tf2v_new_flames( "tf2v_new_flames", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Swap out the particle system for the Flamethrower to the newer one?", true, 0.0f, true, 1.0f );
 #endif
@@ -395,7 +395,7 @@ void CTFFlameThrower::PrimaryAttack()
 
 #ifdef CLIENT_DLL
 	// Handle the flamethrower light
-	if (tf2c_muzzlelight.GetBool())
+	if (tf2v_muzzlelight.GetBool())
 	{
 		dlight_t *dl = effects->CL_AllocDlight(LIGHT_INDEX_MUZZLEFLASH + index);
 		dl->origin = vecMuzzlePos;

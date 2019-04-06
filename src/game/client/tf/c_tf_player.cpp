@@ -2262,7 +2262,6 @@ void C_TFPlayer::UpdateRecentlyTeleportedEffect( void )
 	}
 }
 
-// FIXME: This isn't killing splash effects from scout secondaries and I have no idea why
 //-----------------------------------------------------------------------------
 // Purpose: Kill viewmodel particle effects
 //-----------------------------------------------------------------------------
@@ -2270,7 +2269,7 @@ void C_TFPlayer::StopViewModelParticles( C_BaseEntity *pEntity )
 {
 	if ( pEntity && pEntity->ParticleProp() )
 	{
-		pEntity->ParticleProp()->StopParticlesInvolving( pEntity );
+		pEntity->ParticleProp()->StopEmissionAndDestroyImmediately();
 	}
 }
 

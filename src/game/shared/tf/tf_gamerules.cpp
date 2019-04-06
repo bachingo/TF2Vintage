@@ -2882,12 +2882,9 @@ static const char *g_aTaggedConVars[] =
 	"tf2v_duckjump",
 	"duckjump",
 
-<<<<<<< HEAD
-=======
 	"tf2v_allow_special_classes",
 	"specialclasses",
 
->>>>>>> faf789cf... Mass Rename tf2c->tf2v
 	"tf2v_airblast",
 	"airblast",
 
