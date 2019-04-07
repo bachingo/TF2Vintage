@@ -324,7 +324,7 @@
 		"visible"				"1"
 		"enabled"				"1"
 		"bordervisible"			"1"		
-		"command"			"tf2c_mainmenu_music"	
+		"command"			"tf2v_mainmenu_music"	
 		"valuetrue"			"0"
 		"valuefalse"		"1"		
 		
