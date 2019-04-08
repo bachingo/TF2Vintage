@@ -150,6 +150,7 @@
 
 // DRP includes
 #include "discord_rpc.h"
+#include "discord_register.h"
 #include <time.h>
 
 extern vgui::IInputInternal *g_InputInternal;
@@ -754,6 +755,9 @@ IBaseClientDLL *clientdll = &gHLClient;
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CHLClient, IBaseClientDLL, CLIENT_DLL_INTERFACE_VERSION, gHLClient );
 
+// Save so we can update certain portions
+DiscordRichPresence s_RichPresence;
+
 
 //-----------------------------------------------------------------------------
 // Precaches a material
@@ -1136,7 +1140,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	
 	// Discord RPC
 	DiscordEventHandlers handlers;
-	memset(&handlers, 0, sizeof(handlers));
+	Q_memset( &handlers, 0, sizeof( handlers ) );
 	
 	handlers.ready = HandleDiscordReady;
 	handlers.disconnected = HandleDiscordDisconnected;
@@ -1145,18 +1149,20 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	handlers.spectateGame = HandleDiscordSpectate;
 	handlers.joinRequest = HandleDiscordJoinRequest;
 
-	char appid[255];
-	sprintf(appid, "%d", engine->GetAppID());
-	Discord_Initialize(cl_discord_appid.GetString(), &handlers, 1, cl_steam_appid.GetString());
+	Discord_Initialize( cl_discord_appid.GetString(), &handlers, 1, cl_steam_appid.GetString() );
 
 	if (!g_bTextMode)
 	{
-	DiscordRichPresence discordPresence;
-	memset(&discordPresence, 0, sizeof(discordPresence));
+		Q_memset( &s_RichPresence, 0, sizeof( s_RichPresence ) );
 
-	discordPresence.details = "Main Menu";
-	discordPresence.largeImageKey = "tf2v_drp_logo";
-	Discord_UpdatePresence(&discordPresence);
+		s_RichPresence.details = "Main Menu";
+		s_RichPresence.largeImageKey = "tf2v_drp_logo";
+		s_RichPresence.startTimestamp = startTimestamp;
+		Discord_UpdatePresence( &s_RichPresence );
+
+		char command[256];
+		Q_snprintf( command, sizeof( command ), "%s -game \"%s\" -steam\n", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
+		Discord_Register( cl_discord_appid.GetString(), command );
 	}
 
 	return true;
@@ -1702,8 +1708,7 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	// Discord RPC
 	if (!g_bTextMode)
 	{
-		DiscordRichPresence discordPresence;
-		Q_memset( &discordPresence, 0, sizeof( discordPresence ) );
+		Q_memset( &s_RichPresence, 0, sizeof( s_RichPresence ) );
 
 		char state[48], buffer[32];
 		Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", pMapName );
@@ -1712,21 +1717,21 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		{
 			g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
 			Q_snprintf( state, sizeof( state ), "Map: %s", buffer );
-			discordPresence.largeImageKey = pMapName;
-			discordPresence.largeImageText = pMapName;
+			s_RichPresence.largeImageKey = pMapName;
+			s_RichPresence.largeImageText = pMapName;
 		}
 		else
 		{
 			Q_snprintf( state, sizeof( state ), "Map: %s", pMapName );
-			discordPresence.largeImageKey = "default";
-			discordPresence.largeImageText = pMapName;
+			s_RichPresence.largeImageKey = "default";
+			s_RichPresence.largeImageText = pMapName;
 		}
 		
-		discordPresence.details = "In-Game";
-		discordPresence.state = state;
-		discordPresence.smallImageKey = "tf2v_drp_logo";
-		discordPresence.startTimestamp = startTimestamp;
-		Discord_UpdatePresence( &discordPresence );
+		s_RichPresence.details = "In-Game";
+		s_RichPresence.state = state;
+		s_RichPresence.smallImageKey = "tf2v_drp_logo";
+		s_RichPresence.startTimestamp = startTimestamp;
+		Discord_UpdatePresence( &s_RichPresence );
 	}
 	
 	// Check low violence settings for this map
@@ -1823,12 +1828,12 @@ void CHLClient::LevelShutdown( void )
 	// Discord RPC
 	if (!g_bTextMode)
 	{
-	DiscordRichPresence discordPresence;
-	memset(&discordPresence, 0, sizeof(discordPresence));
+		Q_memset( &s_RichPresence, 0, sizeof( s_RichPresence ) );
 
-	discordPresence.details = "Main Menu";
-	discordPresence.largeImageKey = "tf2v_drp_logo";
-	Discord_UpdatePresence(&discordPresence);
+		s_RichPresence.details = "Main Menu";
+		s_RichPresence.largeImageKey = "tf2v_drp_logo";
+		s_RichPresence.startTimestamp = startTimestamp;
+		Discord_UpdatePresence( &s_RichPresence );
 	}
 
 	internalCenterPrint->Clear();
