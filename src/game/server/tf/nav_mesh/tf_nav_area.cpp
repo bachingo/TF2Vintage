@@ -33,7 +33,7 @@ CTFNavArea::CTFNavArea()
 
 CTFNavArea::~CTFNavArea()
 {
-	for (int i = 0; i < 4; i++)
+	for ( int i = 0; i < 4; i++ )
 		m_InvasionAreas[i].RemoveAll();
 }
 
@@ -41,7 +41,7 @@ void CTFNavArea::OnServerActivate()
 {
 	CNavArea::OnServerActivate();
 
-	for (int i = 0; i < 4; i++)
+	for ( int i = 0; i < 4; i++ )
 		m_InvasionAreas[i].RemoveAll();
 
 	m_fCombatIntensity = 0;
@@ -62,7 +62,7 @@ void CTFNavArea::Save( CUtlBuffer &fileBuffer, unsigned int version ) const
 
 NavErrorType CTFNavArea::Load( CUtlBuffer &fileBuffer, unsigned int version, unsigned int subVersion )
 {
-	if (subVersion > TheNavMesh->GetSubVersionNumber())
+	if ( subVersion > TheNavMesh->GetSubVersionNumber() )
 	{
 		Warning( "Unknown NavArea sub-version number\n" );
 		return NAV_INVALID_FILE;
@@ -70,7 +70,7 @@ NavErrorType CTFNavArea::Load( CUtlBuffer &fileBuffer, unsigned int version, uns
 	else
 	{
 		CNavArea::Load( fileBuffer, version, subVersion );
-		if (subVersion <= 1)
+		if ( subVersion <= 1 )
 		{
 			m_nAttributes = (TFNavAttributeType)0;
 			return NAV_OK;
@@ -78,7 +78,7 @@ NavErrorType CTFNavArea::Load( CUtlBuffer &fileBuffer, unsigned int version, uns
 		else
 		{
 			fileBuffer.Get( &m_nAttributes, sizeof( unsigned int ) );
-			if (!fileBuffer.IsValid())
+			if ( !fileBuffer.IsValid() )
 			{
 				Warning( "Can't read TF-specific attributes\n" );
 				return NAV_INVALID_FILE;
@@ -96,19 +96,19 @@ void CTFNavArea::UpdateBlocked( bool force, int teamID )
 
 bool CTFNavArea::IsBlocked( int teamID, bool ignoreNavBlockers ) const
 {
-	if (!( m_nAttributes & UNBLOCKABLE ))
+	if ( !( m_nAttributes & UNBLOCKABLE ) )
 	{
-		if (!( m_nAttributes & BLOCKED ))
+		if ( !( m_nAttributes & BLOCKED ) )
 		{
-			if (teamID != TF_TEAM_RED)
+			if ( teamID != TF_TEAM_RED )
 			{
-				if (teamID == TF_TEAM_BLUE && ( m_nAttributes & RED_ONE_WAY_DOOR ))
+				if ( teamID == TF_TEAM_BLUE && ( m_nAttributes & RED_ONE_WAY_DOOR ) )
 					return true;
 
 				return CNavArea::IsBlocked( teamID, ignoreNavBlockers );
 			}
 
-			if (!( m_nAttributes & BLUE_ONE_WAY_DOOR ))
+			if ( !( m_nAttributes & BLUE_ONE_WAY_DOOR ) )
 				return CNavArea::IsBlocked( teamID, ignoreNavBlockers );
 		}
 
@@ -122,29 +122,29 @@ void CTFNavArea::Draw() const
 {
 	CNavArea::Draw();
 
-	if (tf_nav_show_incursion_distances.GetBool())
+	if ( tf_nav_show_incursion_distances.GetBool() )
 	{
 		NDebugOverlay::Text( GetCenter(),
 							 UTIL_VarArgs( "R:%3.1f   B:%3.1f", m_aIncursionDistances[TF_TEAM_RED], m_aIncursionDistances[TF_TEAM_BLUE] ),
 							 true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 	}
 
-	if (tf_nav_show_bomb_target_distance.GetBool())
+	if ( tf_nav_show_bomb_target_distance.GetBool() )
 	{
 		NDebugOverlay::Text( GetCenter(),
 							 UTIL_VarArgs( "%3.1f", m_flBombTargetDistance ),
 							 true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 	}
 
-	if (tf_nav_show_turf_ownership.GetBool())
+	if ( tf_nav_show_turf_ownership.GetBool() )
 	{
 		float flRadius = 500.0f; //tf_nav_show_turf_ownership_range.GetFloat(); // this is some development-only cvar that I can't find
 		bool bRedOwnsMe = IsAwayFromInvasionAreas( TF_TEAM_RED, flRadius );
 		bool bBluOwnsMe = IsAwayFromInvasionAreas( TF_TEAM_BLUE, flRadius );
 
-		if (bBluOwnsMe)
+		if ( bBluOwnsMe )
 		{
-			if (bRedOwnsMe)
+			if ( bRedOwnsMe )
 			{
 				DrawFilled( 255, 0, 255, 255 );
 			}
@@ -159,32 +159,32 @@ void CTFNavArea::Draw() const
 		}
 	}
 
-	if (tf_show_incursion_range.GetInt())
+	if ( tf_show_incursion_range.GetInt() )
 	{
 		float flIncursion = -1.0f;
-		if (tf_show_incursion_range.GetInt() <= 3)
+		if ( tf_show_incursion_range.GetInt() <= 3 )
 		{
 			flIncursion = GetIncursionDistance( tf_show_incursion_range.GetInt() );
-			if (flIncursion < tf_show_incursion_range_min.GetFloat())
+			if ( flIncursion < tf_show_incursion_range_min.GetFloat() )
 				return;
 		}
 		else
 		{
-			if (tf_show_incursion_range_min.GetFloat() > -1.0f)
+			if ( tf_show_incursion_range_min.GetFloat() > -1.0f )
 				return;
 		}
 
-		if (flIncursion <= tf_show_incursion_range_max.GetFloat())
+		if ( flIncursion <= tf_show_incursion_range_max.GetFloat() )
 			DrawFilled( 0, 255, 0, 255 );
 	}
 
 	// moved here from CTFNavMesh::UpdateDebugDisplay
 	extern ConVar tf_show_mesh_decoration;
-	if (tf_show_mesh_decoration.GetBool())
+	if ( tf_show_mesh_decoration.GetBool() )
 	{
-		if (HasTFAttributes( BLUE_SPAWN_ROOM ))
+		if ( HasTFAttributes( BLUE_SPAWN_ROOM ) )
 		{
-			if (HasTFAttributes( SPAWN_ROOM_EXIT ))
+			if ( HasTFAttributes( SPAWN_ROOM_EXIT ) )
 			{
 				DrawFilled( 100, 100, 255, 255 );
 				return;
@@ -194,9 +194,9 @@ void CTFNavArea::Draw() const
 			return;
 		}
 
-		if (HasTFAttributes( RED_SPAWN_ROOM ))
+		if ( HasTFAttributes( RED_SPAWN_ROOM ) )
 		{
-			if (HasTFAttributes( SPAWN_ROOM_EXIT ))
+			if ( HasTFAttributes( SPAWN_ROOM_EXIT ) )
 			{
 				DrawFilled( 255, 100, 100, 255 );
 				return;
@@ -206,15 +206,15 @@ void CTFNavArea::Draw() const
 			return;
 		}
 
-		if (HasTFAttributes( HEALTH ) || HasTFAttributes( AMMO ))
+		if ( HasTFAttributes( HEALTH ) || HasTFAttributes( AMMO ) )
 		{
-			if (!HasTFAttributes( AMMO ))
+			if ( !HasTFAttributes( AMMO ) )
 			{
 				DrawFilled( 80, 140, 80, 255 );
 				return;
 			}
 
-			if (!HasTFAttributes( HEALTH ))
+			if ( !HasTFAttributes( HEALTH ) )
 			{
 				DrawFilled( 140, 80, 80, 255 );
 				return;
@@ -224,7 +224,7 @@ void CTFNavArea::Draw() const
 			return;
 		}
 
-		if (HasTFAttributes( CONTROL_POINT ))
+		if ( HasTFAttributes( CONTROL_POINT ) )
 		{
 			DrawFilled( 0, 255, 0, 255 );
 			return;
@@ -232,16 +232,16 @@ void CTFNavArea::Draw() const
 	}
 
 	extern ConVar tf_show_blocked_areas;
-	if (tf_show_blocked_areas.GetBool())
+	if ( tf_show_blocked_areas.GetBool() )
 	{
-		if (HasTFAttributes( BLOCKED ))
+		if ( HasTFAttributes( BLOCKED ) )
 			DrawFilled( 255, 0, 0, 255 );
 
-		if (IsBlocked( TF_TEAM_RED ) && IsBlocked( TF_TEAM_BLUE ))
+		if ( IsBlocked( TF_TEAM_RED ) && IsBlocked( TF_TEAM_BLUE ) )
 			DrawFilled( 100, 0, 100, 255 );
-		else if (IsBlocked( TF_TEAM_RED ))
+		else if ( IsBlocked( TF_TEAM_RED ) )
 			DrawFilled( 100, 0, 0, 255 );
-		else if (IsBlocked( TF_TEAM_BLUE ))
+		else if ( IsBlocked( TF_TEAM_BLUE ) )
 			DrawFilled( 0, 0, 100, 255 );
 	}
 }
@@ -277,34 +277,16 @@ CTFNavArea *CTFNavArea::GetNextIncursionArea( int teamNum ) const
 
 	float incursionDist = GetIncursionDistance( teamNum );
 
-	for (int i = 0; i < 4; i++)
+	for ( int i = 0; i < 4; i++ )
 	{
-		int areaCount = m_InvasionAreas[i].Count();
-		if (areaCount > 0)
+		for ( int j = 0; j < m_InvasionAreas[i].Count(); j++ )
 		{
-			if (teamNum > 3)
-			{
-				for (int j = 0; j < areaCount; j++)
-				{
-					if (-1.0f > incursionDist)
-					{
-						incursionDist = fmaxf( incursionDist, -1.0f );
-						result = m_InvasionAreas[i].Element( j );
-					}
-				}
-			}
-			else
-			{
-				for (int j = 0; j < areaCount; j++)
-				{
-					float otherIncursionDist = m_InvasionAreas[i][j]->GetIncursionDistance( teamNum );
+			float otherIncursionDist = m_InvasionAreas[i][j]->GetIncursionDistance( teamNum );
 
-					if (otherIncursionDist > incursionDist)
-					{
-						incursionDist = fmaxf( incursionDist, otherIncursionDist );
-						result = m_InvasionAreas[i].Element( j );
-					}
-				}
+			if ( otherIncursionDist > incursionDist )
+			{
+				incursionDist = fmaxf( incursionDist, otherIncursionDist );
+				result = m_InvasionAreas[i].Element( j );
 			}
 		}
 	}
@@ -321,14 +303,14 @@ void CTFNavArea::ComputeInvasionAreaVectors()
 
 bool CTFNavArea::IsAwayFromInvasionAreas( int teamNum, float radius ) const
 {
-	Assert( teamNum > -1 && teamNum < 4 );
-	if (teamNum > -1 && teamNum < 4)
+	Assert( teamNum < 4 );
+	if ( teamNum < 4 )
 	{
 		const CUtlVector<CTFNavArea *> *invasionAreas = &m_InvasionAreas[teamNum];
-		for(int i=0; i<invasionAreas->Count(); ++i)
+		for ( int i=0; i<invasionAreas->Count(); ++i )
 		{
 			CTFNavArea *area = invasionAreas->Element( i );
-			if (Square(radius) > ( m_center - area->GetCenter() ).LengthSqr())
+			if ( Square( radius ) >( m_center - area->GetCenter() ).LengthSqr() )
 				return false;
 		}
 	}
@@ -348,7 +330,7 @@ bool CTFNavArea::IsAwayFromInvasionAreas( int teamNum, float radius ) const
 float CTFNavArea::GetCombatIntensity() const
 {
 	float intensity = 0.0f;
-	if (m_combatTimer.HasStarted())
+	if ( m_combatTimer.HasStarted() )
 	{
 		const float combatTime = m_combatTimer.GetElapsedTime();
 		intensity = fmax( m_fCombatIntensity - ( combatTime * tf_nav_combat_decay_rate.GetFloat() ), 0.0f );
@@ -394,8 +376,8 @@ bool CTFNavArea::IsValidForWanderingPopulation() const
 
 float CTFNavArea::GetIncursionDistance( int teamnum ) const
 {
-	Assert( teamnum > -1 && teamnum < 4 );
-	if (teamnum > -1 && teamnum < 4)
+	Assert( teamnum < 4 );
+	if ( teamnum < 4 )
 		return m_aIncursionDistances[teamnum];
 
 	return -1.0f;
