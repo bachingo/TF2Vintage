@@ -235,6 +235,7 @@ $Project "Server (TF)"
 			$File	"tf\tf_pushentity.h"
 			$File	"tf\trigger_stun.cpp"
 			$File	"tf\trigger_stun.h"
+			$File	"tf\trigger_addcondition.cpp"
 			$File	"tf\entity_spawn_manager.cpp"
 			$File	"tf\entity_spawn_manager.h"
 
