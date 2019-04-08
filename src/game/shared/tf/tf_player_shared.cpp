@@ -159,6 +159,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerCondEx ) ),
 	RecvPropInt( RECVINFO( m_nPlayerCondEx2 ) ),
 	RecvPropInt( RECVINFO( m_nPlayerCondEx3 ) ),
+	RecvPropInt( RECVINFO( m_nPlayerCondEx4 ) ),
 	RecvPropInt( RECVINFO( m_bJumping ) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult ) ),
@@ -203,6 +204,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_nPlayerCondEx, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nPlayerCondEx2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nPlayerCondEx3, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nPlayerCondEx4, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
@@ -235,6 +237,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCondEx ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerCondEx2 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerCondEx3 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nPlayerCondEx4 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -337,30 +340,38 @@ void CTFPlayerShared::AddCond( int nCond, float flDuration /* = PERMANENT_CONDIT
 	Assert( nCond >= 0 && nCond < TF_COND_LAST );
 	int nCondFlag = nCond;
 	int *pVar = NULL;
-	if ( nCond < 96 )
+	if ( nCond < 128 )
 	{
-		if ( nCond < 64 )
+		if ( nCond < 96 )
 		{
-			if ( nCond < 32 )
+			if ( nCond < 64 )
 			{
-				pVar = &m_nPlayerCond.GetForModify();
+				if ( nCond < 32 )
+				{
+					pVar = &m_nPlayerCond.GetForModify();
+				}
+				else
+				{
+					pVar = &m_nPlayerCondEx.GetForModify();
+					nCondFlag -= 32;
+				}
 			}
 			else
 			{
-				pVar = &m_nPlayerCondEx.GetForModify();
-				nCondFlag -= 32;
+				pVar = &m_nPlayerCondEx2.GetForModify();
+				nCondFlag -= 64;
 			}
 		}
 		else
 		{
-			pVar = &m_nPlayerCondEx2.GetForModify();
-			nCondFlag -= 64;
+			pVar = &m_nPlayerCondEx3.GetForModify();
+			nCondFlag -= 96;
 		}
 	}
 	else
 	{
-		pVar = &m_nPlayerCondEx3.GetForModify();
-		nCondFlag -= 96;
+		pVar = &m_nPlayerCondEx4.GetForModify();
+		nCondFlag -= 128;
 	}
 
 	*pVar |= ( 1 << nCondFlag );
@@ -377,30 +388,38 @@ void CTFPlayerShared::RemoveCond(int nCond)
 
 	int nCondFlag = nCond;
 	int *pVar = NULL;
-	if (nCond < 96)
+	if ( nCond < 128 )
 	{
-		if (nCond < 64)
+		if ( nCond < 96 )
 		{
-			if (nCond < 32)
+			if ( nCond < 64 )
 			{
-				pVar = &m_nPlayerCond.GetForModify();
+				if ( nCond < 32 )
+				{
+					pVar = &m_nPlayerCond.GetForModify();
+				}
+				else
+				{
+					pVar = &m_nPlayerCondEx.GetForModify();
+					nCondFlag -= 32;
+				}
 			}
 			else
 			{
-				pVar = &m_nPlayerCondEx.GetForModify();
-				nCondFlag -= 32;
+				pVar = &m_nPlayerCondEx2.GetForModify();
+				nCondFlag -= 64;
 			}
 		}
 		else
 		{
-			pVar = &m_nPlayerCondEx2.GetForModify();
-			nCondFlag -= 64;
+			pVar = &m_nPlayerCondEx3.GetForModify();
+			nCondFlag -= 96;
 		}
 	}
 	else
 	{
-		pVar = &m_nPlayerCondEx3.GetForModify();
-		nCondFlag -= 96;
+		pVar = &m_nPlayerCondEx4.GetForModify();
+		nCondFlag -= 128;
 	}
 
 	*pVar &= ~(1 << nCondFlag);
@@ -418,30 +437,38 @@ bool CTFPlayerShared::InCond(int nCond)
 
 	int nCondFlag = nCond;
 	const int *pVar = NULL;
-	if (nCond < 96)
+	if ( nCond < 128 )
 	{
-		if (nCond < 64)
+		if ( nCond < 96 )
 		{
-			if (nCond < 32)
+			if ( nCond < 64 )
 			{
-				pVar = &m_nPlayerCond.Get();
+				if ( nCond < 32 )
+				{
+					pVar = &m_nPlayerCond.GetForModify();
+				}
+				else
+				{
+					pVar = &m_nPlayerCondEx.GetForModify();
+					nCondFlag -= 32;
+				}
 			}
 			else
 			{
-				pVar = &m_nPlayerCondEx.Get();
-				nCondFlag -= 32;
+				pVar = &m_nPlayerCondEx2.GetForModify();
+				nCondFlag -= 64;
 			}
 		}
 		else
 		{
-			pVar = &m_nPlayerCondEx2.Get();
-			nCondFlag -= 64;
+			pVar = &m_nPlayerCondEx3.GetForModify();
+			nCondFlag -= 96;
 		}
 	}
 	else
 	{
-		pVar = &m_nPlayerCondEx3.Get();
-		nCondFlag -= 96;
+		pVar = &m_nPlayerCondEx4.GetForModify();
+		nCondFlag -= 128;
 	}
 
 	return ((*pVar & (1 << nCondFlag)) != 0);
@@ -575,6 +602,7 @@ void CTFPlayerShared::OnPreDataChanged(void)
 	m_nOldConditionsEx = m_nPlayerCondEx;
 	m_nOldConditionsEx2 = m_nPlayerCondEx2;
 	m_nOldConditionsEx3 = m_nPlayerCondEx3;
+	m_nOldConditionsEx4 = m_nPlayerCondEx4;
 	m_nOldDisguiseClass = GetDisguiseClass();
 	m_nOldDisguiseTeam = GetDisguiseTeam();
 	m_iOldDisguiseWeaponModelIndex = m_iDisguiseWeaponModelIndex;
@@ -591,11 +619,13 @@ void CTFPlayerShared::OnDataChanged(void)
 	SyncConditions(m_nPlayerCondEx, m_nOldConditionsEx, 0, 32);
 	SyncConditions(m_nPlayerCondEx2, m_nOldConditionsEx2, 0, 64);
 	SyncConditions(m_nPlayerCondEx3, m_nOldConditionsEx3, 0, 96);
+	SyncConditions(m_nPlayerCondEx4, m_nOldConditionsEx4, 0, 128);
 
 	m_nOldConditions = m_nPlayerCond;
 	m_nOldConditionsEx = m_nPlayerCondEx;
 	m_nOldConditionsEx2 = m_nPlayerCondEx2;
 	m_nOldConditionsEx3 = m_nPlayerCondEx3;
+	m_nOldConditionsEx4 = m_nPlayerCondEx4;
 
 	if (m_nOldDisguiseClass != GetDisguiseClass() || m_nOldDisguiseTeam != GetDisguiseTeam())
 	{
@@ -674,6 +704,7 @@ void CTFPlayerShared::RemoveAllCond(CTFPlayer *pPlayer)
 	m_nPlayerCondEx = 0;
 	m_nPlayerCondEx2 = 0;
 	m_nPlayerCondEx3 = 0;
+	m_nPlayerCondEx4 = 0;
 }
 
 

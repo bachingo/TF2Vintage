@@ -402,9 +402,10 @@ private:
 	CNetworkVar( int, m_nPlayerState );			// Player state.
 	CNetworkVar( int, m_nPlayerCond );			// Player condition flags.
 	// Ugh...
-	CNetworkVar( int, m_nPlayerCondEx );
-	CNetworkVar( int, m_nPlayerCondEx2 );
-	CNetworkVar( int, m_nPlayerCondEx3 );
+	CNetworkVar( int, m_nPlayerCondEx ); // 33-64
+	CNetworkVar( int, m_nPlayerCondEx2 ); // 65-96
+	CNetworkVar( int, m_nPlayerCondEx3 ); // 97-128
+	CNetworkVar( int, m_nPlayerCondEx4 ); // 129-160
 	CNetworkArray( float, m_flCondExpireTimeLeft, TF_COND_LAST ); // Time until each condition expires
 
 	//TFTODO: What if the player we're disguised as leaves the server?
@@ -573,6 +574,7 @@ private:
 	int m_nOldConditionsEx;
 	int m_nOldConditionsEx2;
 	int m_nOldConditionsEx3;
+	int m_nOldConditionsEx4;
 
 	bool m_bWasCritBoosted;
 #endif
