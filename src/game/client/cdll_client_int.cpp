@@ -1161,7 +1161,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		Discord_UpdatePresence( &s_RichPresence );
 
 		char command[256];
-		Q_snprintf( command, sizeof( command ), "%s -game \"%s\" -steam\n", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
+		Q_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -high -steam\n", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
 		Discord_Register( cl_discord_appid.GetString(), command );
 	}
 
