@@ -204,7 +204,7 @@ int CHeadlessHatman::OnTakeDamage_Alive( const CTakeDamageInfo& info )
 {
 	if (g_pMonsterResource && TFGameRules() && !TFGameRules()->IsHalloweenScenario( 5 ) )
 	{
-		float flHPPercent = GetHealth() / GetMaxHealth();
+		float flHPPercent = (float)GetHealth() / GetMaxHealth();
 		if (flHPPercent <= 0.0f)
 			g_pMonsterResource->HideBossHealthMeter();
 		else

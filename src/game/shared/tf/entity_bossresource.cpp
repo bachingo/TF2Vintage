@@ -8,6 +8,9 @@ CMonsterResource *g_pMonsterResource = nullptr;
 
 
 #ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void RecvProxy_UpdateBossHud( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	*(int *)pOut = pData->m_Value.m_Int;
@@ -37,6 +40,7 @@ END_NETWORK_TABLE()
 
 #ifdef GAME_DLL
 BEGIN_DATADESC( CMonsterResource )
+
 	DEFINE_FIELD( m_iBossHealthPercentageByte, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iBossStunPercentageByte, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iSkillShotCompleteCount, FIELD_INTEGER ),
@@ -63,6 +67,9 @@ CMonsterResource::~CMonsterResource()
 
 
 #ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::Spawn( void )
 {
 	SetThink( &CMonsterResource::Update );
@@ -75,68 +82,101 @@ void CMonsterResource::Spawn( void )
 	m_iBossState = 0;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CMonsterResource::ObjectCaps( void )
 {
 	return ( BaseClass::ObjectCaps() | FCAP_DONT_SAVE );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CMonsterResource::UpdateTransmitState( void )
 {
 	return BaseClass::SetTransmitState( FL_EDICT_ALWAYS );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::Update( void )
 {
 	SetNextThink( gpGlobals->curtime + 0.1 );
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::SetBossHealthPercentage( float percent )
 {
 	m_iBossHealthPercentageByte = RoundFloatToByte( 255.0f * percent );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::SetBossStunPercentage( float percent )
 {
 	m_iBossStunPercentageByte = RoundFloatToByte( 255.0f * percent );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::IncrementSkillShotComboMeter( void )
 {
 	m_iSkillShotCompleteCount += 1;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::StartSkillShotComboMeter( float duration )
 {
 	m_fSkillShotComboEndTime = duration + gpGlobals->curtime;
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::HideBossHealthMeter( void )
 {
 	m_iBossHealthPercentageByte = 0;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::HideBossStunMeter( void )
 {
 	m_iBossStunPercentageByte = 0;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CMonsterResource::HideSkillShotComboMeter( void )
 {
 	m_iSkillShotCompleteCount = 0;
 }
 
 #else // GAME_DLL
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CMonsterResource::GetBossHealthPercentage( void ) const
 {
-	return (float)m_iBossHealthPercentageByte / 255.0f;
+	return m_iBossHealthPercentageByte / 255.0f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CMonsterResource::GetBossStunPercentage( void ) const
 {
-	return (float)m_iBossStunPercentageByte / 255.0f;
+	return m_iBossStunPercentageByte / 255.0f;
 }
 
 #endif
