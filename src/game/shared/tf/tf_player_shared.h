@@ -360,6 +360,7 @@ private:
 	void OnAddPhase( void );
 	void OnAddSpeedBoost( void );
 	void OnAddBuff( void );
+	void OnAddInPurgatory( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -381,6 +382,7 @@ private:
 	void OnRemovePhase( void );
 	void OnRemoveSpeedBoost( void );
 	void OnRemoveBuff( void );
+	void OnRemoveInPurgatory( void );
 
 	float GetCritMult( void );
 

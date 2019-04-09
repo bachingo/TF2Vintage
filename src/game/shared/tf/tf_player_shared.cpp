@@ -825,6 +825,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddBuff();
 		break;
 
+	case TF_COND_PURGATORY:
+		OnAddInPurgatory();
+		break;
+
 	default:
 		break;
 	}
@@ -935,6 +939,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 	case TF_COND_DEFENSEBUFF:
 	case TF_COND_REGENONDAMAGEBUFF:
 		OnRemoveBuff();
+		break;
+
+	case TF_COND_PURGATORY:
+		OnRemoveInPurgatory();
 		break;
 
 	default:
@@ -1944,6 +1952,69 @@ void CTFPlayerShared::OnRemoveBuff( void )
 	}
 #endif
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddInPurgatory( void )
+{
+#ifdef GAME_DLL
+	/*
+	(**(m_pOuter + 9004))(m_pOuter + 9004);
+	*(m_pOuter + 9008) = 40.0f;
+	*(m_pOuter + 9012) = a1 + 40.0f;
+	*(*(m_pOuter + 9008) = 1;
+	*/
+
+	m_pOuter->SetHealth( GetMaxHealth() );
+	m_pOuter->RemoveOwnedProjectiles();
+	AddCond( TF_COND_INVULNERABLE, 1.5f );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Apply effects when player escapes the underworld
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveInPurgatory( void )
+{
+#ifdef GAME_DLL
+	if ( m_pOuter->IsAlive() )
+	{
+		AddCond( TF_COND_INVULNERABLE, 10.0f );
+		AddCond( TF_COND_SPEED_BOOST, 10.0f );
+		AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 10.0f );
+		m_pOuter->SetHealth( GetMaxBuffedHealth() );
+
+		/*
+		(**(m_pOuter + 8992))(m_pOuter + 8992);
+		*(m_pOuter + 8996) = 10.0f;
+		*(m_pOuter + 9000) = 10.0f + 10.0f;
+		*/
+
+		TeamplayRoundBasedRules()->BroadcastSound( 255, "Halloween.PlayerEscapedUnderworld" );
+		m_pOuter->RemoveOwnedProjectiles();
+
+		// Write to chat that player has escaped the underworld
+		CReliableBroadcastRecipientFilter filter;
+		UTIL_SayText2Filter( filter, m_pOuter, false, TFGameRules()->IsHalloweenScenario( 3 ) ? "#TF_Halloween_Skull_Island_Escape" : "#TF_Halloween_Underworld", m_pOuter->GetPlayerName() );
+
+		// Let the map know we escaped the underworld
+		IGameEvent *event = gameeventmanager->CreateEvent( "escaped_loot_island" );
+		if ( event )
+		{
+			event->SetInt( "player", m_pOuter->GetUserID() );
+			gameeventmanager->FireEvent( event, true );
+		}
+
+		CTeam *pTeam = m_pOuter->GetTeam();
+		if ( pTeam )
+		{
+			UTIL_LogPrintf( "HALLOWEEN: \"%s<%i><%s><%s>\" %s\n", m_pOuter->GetPlayerName(), m_pOuter->GetUserID(), m_pOuter->GetNetworkIDString(), pTeam->TeamID(), "purgatory_escaped" );
+		}
+	}
+#endif
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

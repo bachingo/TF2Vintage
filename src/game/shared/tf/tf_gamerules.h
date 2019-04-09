@@ -129,6 +129,8 @@ public:
 	enum
 	{
 		HALLOWEEN_SCENARIO_DOOMSDAY
+		// Halloween Scenario 3 = LAKESIDE (?)
+		// Halloween Scenario 5 = MOUNTAIN_LAB
 	};
 
 	// Damage Queries.
