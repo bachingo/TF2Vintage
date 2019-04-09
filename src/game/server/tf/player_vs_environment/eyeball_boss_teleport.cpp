@@ -42,7 +42,8 @@ ActionResult<CEyeBallBoss> CEyeBallBossTeleport::Update( CEyeBallBoss *me, float
 				if ( pVortex )
 					pVortex->SetupVortex( false, false );
 
-				DispatchParticleEffect( "eyeboss_tp_normal", me->GetAbsOrigin(), me->GetAbsAngles() );
+				// Commenting this out until missing DispatchParticleEffect method is added
+				//DispatchParticleEffect( "eyeboss_tp_normal", me->GetAbsOrigin(), me->GetAbsAngles() );
 				me->EmitSound( "Halloween.EyeballBossTeleport" );
 
 				me->AddEffects( EF_NODRAW|EF_NOINTERP );
@@ -58,7 +59,8 @@ ActionResult<CEyeBallBoss> CEyeBallBossTeleport::Update( CEyeBallBoss *me, float
 			}
 			case TELEPORT_APPEAR:
 			{
-				DispatchParticleEffect( "eyeboss_tp_normal", me->GetAbsOrigin(), me->GetAbsAngles() );
+				// Commenting this out until missing DispatchParticleEffect method is added
+				//DispatchParticleEffect( "eyeboss_tp_normal", me->GetAbsOrigin(), me->GetAbsAngles() );
 
 				int iSequence = me->LookupSequence( "teleport_in" );
 				if ( iSequence )

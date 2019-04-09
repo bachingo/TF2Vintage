@@ -75,6 +75,8 @@ public:
 private:
 	void RememberAttacker( CTFPlayer *pAttacker, bool bMelee, float flDmgAmount );
 
+// Setting these to public so codebase can compile
+public:
 	float m_flDPSCounter;
 	float m_flDPSMax;
 

@@ -28,7 +28,8 @@ ActionResult<CEyeBallBoss> CEyeBallBossEmerge::OnStart( CEyeBallBoss *me, Action
 
 	m_emergeTimer.Start( 3.0f );
 
-	DispatchParticleEffect( "halloween_boss_summon", me->GetAbsOrigin(), me->GetAbsAngles() );
+	// Commenting this out until missing DispatchParticleEffect method is added
+	//DispatchParticleEffect( "halloween_boss_summon", me->GetAbsOrigin(), me->GetAbsAngles() );
 
 	m_vecTarget = me->GetAbsOrigin() + Vector( 0, 0, 100 );
 	m_flDistance = 150.0f;

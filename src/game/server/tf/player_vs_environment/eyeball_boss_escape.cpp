@@ -34,7 +34,8 @@ ActionResult<CEyeBallBoss> CEyeBallBossEscape::Update( CEyeBallBoss *me, float d
 		if ( me->GetTeamNumber() != TF_TEAM_BOSS )
 			me->EmitSound( "Halloween.spell_spawn_boss_disappear" );
 
-		DispatchParticleEffect( "eyeboss_tp_escape", me->GetAbsOrigin(), me->GetAbsAngles() );
+		// Commenting this out until missing DispatchParticleEffect method is added
+		//DispatchParticleEffect( "eyeboss_tp_escape", me->GetAbsOrigin(), me->GetAbsAngles() );
 
 		if ( g_pMonsterResource )
 			g_pMonsterResource->HideBossHealthMeter();

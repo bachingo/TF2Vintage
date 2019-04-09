@@ -42,7 +42,8 @@ ActionResult<CEyeBallBoss> CEyeBallBossDead::Update( CEyeBallBoss *me, float dt 
 
 	if ( m_dyingDuration.IsElapsed() || ( me->WorldSpaceCenter().z - vecGround.z ) < 100.0f )
 	{
-		DispatchParticleEffect( "eyeboss_death", me->GetAbsOrigin(), me->GetAbsAngles() );
+		// Commenting this out until missing DispatchParticleEffect method is added
+		//DispatchParticleEffect( "eyeboss_death", me->GetAbsOrigin(), me->GetAbsAngles() );
 
 		me->EmitSound( "Cart.Explode" );
 		me->EmitSound( "Halloween.EyeballBossDie" );
