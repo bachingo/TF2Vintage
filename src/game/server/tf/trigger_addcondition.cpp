@@ -19,11 +19,13 @@ private:
 };
 
 BEGIN_DATADESC( CTriggerAddTFPlayerCondition )
+
 	DEFINE_FIELD_NAME( m_nCondition, "condition", FIELD_INTEGER ),
 	DEFINE_FIELD_NAME( m_flDuration, "duration", FIELD_FLOAT ),
 
 	DEFINE_ENTITYFUNC( StartTouch ),
 	DEFINE_ENTITYFUNC( EndTouch ),
+
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( trigger_add_tf_player_condition, CTriggerAddTFPlayerCondition );

@@ -165,6 +165,13 @@ void CTFShotgun_Revenge::PrimaryAttack( void )
 	BaseClass::PrimaryAttack();
 
 	m_iRevengeCrits = Max( m_iRevengeCrits - 1, 0 );
+
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner && pOwner->IsAlive() )
+	{
+		if ( m_iRevengeCrits == 0 )
+			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -211,8 +218,7 @@ bool CTFShotgun_Revenge::Holster( CBaseCombatWeapon *pSwitchTo )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if (pOwner && BaseClass::Holster( pSwitchTo ))
 	{
-		if (m_iRevengeCrits > 0)
-			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 
 		return true;
 	}
