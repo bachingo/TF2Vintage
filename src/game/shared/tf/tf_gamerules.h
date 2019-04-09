@@ -310,7 +310,7 @@ public:
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
 	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
 	virtual bool	IsInKothMode( void ) { return m_bPlayingKoth; }
-	virtual bool    IsHalloweenScenario( int iEventType ) { return false; };
+	virtual bool    IsHalloweenScenario( int iEventType ) { return m_halloweenScenario == iEventType; };
 	virtual bool	IsPVEModeActive( void ) { return false; };
 	virtual bool	IsCompetitiveMode( void ){ return m_bCompetitiveMode; };
 	virtual bool	IsInHybridCTF_CPMode( void ){ return m_bPlayingHybrid_CTF_CP; };
