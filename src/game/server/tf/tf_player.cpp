@@ -5354,7 +5354,7 @@ void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/, bool bFeigning /* = fa
 	int iMetal = max( 5, GetAmmoCount( TF_AMMO_METAL ) );
 
 	// Create the ammo pack.
-	CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );
+	CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel, bFeigning );
 	Assert( pAmmoPack );
 	if ( pAmmoPack )
 	{
