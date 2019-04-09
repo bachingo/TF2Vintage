@@ -1984,7 +1984,9 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 		AddCond( TF_COND_INVULNERABLE, 10.0f );
 		AddCond( TF_COND_SPEED_BOOST, 10.0f );
 		AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 10.0f );
-		m_pOuter->SetHealth( GetMaxBuffedHealth() );
+
+		// 200% Max Health(?)
+		m_pOuter->SetHealth( GetMaxHealth() * 2 ); 
 
 		// m_purgatoryDuration(?)
 		/*
