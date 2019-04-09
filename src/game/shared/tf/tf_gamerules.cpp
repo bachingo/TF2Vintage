@@ -1104,6 +1104,21 @@ CTFGameRules::CTFGameRules()
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
+
+	// TODO: Enum-ize these values
+#ifdef GAME_DLL
+	const char *szMapname = STRING( gpGlobals->mapname );
+	if ( !Q_strncmp( szMapname, "cp_manor_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = 1;
+	else if ( !Q_strncmp( szMapname, "koth_viaduct_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = 2;
+	else if ( !Q_strncmp( szMapname, "koth_lakeside_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = 3;
+	else if ( !Q_strncmp( szMapname, "plr_hightower_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = 4;
+	else if ( !Q_strncmp( szMapname, "sd_doomsday_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = 5;
+#endif
 }
 
 //-----------------------------------------------------------------------------
