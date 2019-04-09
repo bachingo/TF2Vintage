@@ -119,7 +119,7 @@ static void SendPlayerToTheUnderworld( CTFPlayer *pPlayer, const char *pszTarget
 				pWeapon->ToggleZoom();
 		}
 
-		pPlayer->Teleport( &pTarget->GetAbsOrigin(), &pTarget->GetAbsAngles(), NULL );
+		pPlayer->Teleport( &pTarget->GetAbsOrigin(), &pTarget->GetAbsAngles(), &vec3_origin );
 
 		if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( 3 ) && pPlayer->IsAlive() )
 		{
@@ -282,7 +282,7 @@ void CTeleportVortex::VortexThink( void )
 	for ( int i=0; i<players.Count(); ++i )
 	{
 		CTFPlayer *pPlayer = players[i];
-		if ( !pPlayer->GetFlags() & FL_ONGROUND )
+		if ( !(pPlayer->GetFlags() & FL_ONGROUND) )
 		{
 			Vector vecToMe = WorldSpaceCenter() - pPlayer->WorldSpaceCenter();
 			float flLength = vecToMe.NormalizeInPlace();
@@ -291,7 +291,7 @@ void CTeleportVortex::VortexThink( void )
 				if ( !pPlayer->IsLookingTowards( WorldSpaceCenter() ) || !pPlayer->IsLineOfSightClear( WorldSpaceCenter(), CBaseCombatCharacter::IGNORE_NOTHING, pPlayer ) )
 					continue;
 
-				Vector vecVel = ( vecToMe * 30.0f ) * flLength;
+				Vector vecVel = ( vecToMe * 30.0f );
 				pPlayer->ApplyAbsVelocityImpulse( vecVel );
 			}
 		}
