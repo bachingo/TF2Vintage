@@ -18,7 +18,7 @@
 #include "tf_player.h"
 #include "tf_obj_sentrygun.h"
 #endif
-	
+
 
 //=============================================================================
 //
@@ -101,9 +101,9 @@ CTFShotgun_Revenge::CTFShotgun_Revenge()
 int CTFShotgun_Revenge::GetWorldModelIndex( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if (pOwner && pOwner->IsAlive())
+	if ( pOwner && pOwner->IsAlive() )
 	{
-		if (pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && pOwner->m_Shared.InCond( TF_COND_TAUNTING ))
+		if ( pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
 		{
 			int iMdlIdx = modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
 			return iMdlIdx;
@@ -118,19 +118,19 @@ int CTFShotgun_Revenge::GetWorldModelIndex( void )
 //-----------------------------------------------------------------------------
 void CTFShotgun_Revenge::SetWeaponVisible( bool visible )
 {
-	if (!visible)
+	if ( !visible )
 	{
 		CTFPlayer *pOwner = GetTFPlayerOwner();
-		if (pOwner && pOwner->IsAlive())
+		if ( pOwner && pOwner->IsAlive() )
 		{
-			if (pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && pOwner->m_Shared.InCond( TF_COND_TAUNTING ))
+			if ( pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
 			{
 				int iModelIndex = modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
 
 				CUtlVector<breakmodel_t> list;
 
 				BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
-				if (!list.IsEmpty())
+				if ( !list.IsEmpty() )
 				{
 					QAngle vecAngles = CollisionProp()->GetCollisionAngles();
 
@@ -159,7 +159,7 @@ void CTFShotgun_Revenge::SetWeaponVisible( bool visible )
 //-----------------------------------------------------------------------------
 void CTFShotgun_Revenge::PrimaryAttack( void )
 {
-	if (!CanAttack())
+	if ( !CanAttack() )
 		return;
 
 	BaseClass::PrimaryAttack();
@@ -187,7 +187,7 @@ int CTFShotgun_Revenge::GetCount( void ) const
 //-----------------------------------------------------------------------------
 int CTFShotgun_Revenge::GetCustomDamageType( void ) const
 {
-	if (m_iRevengeCrits > 0)
+	if ( m_iRevengeCrits > 0 )
 		return TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT;
 
 	return 0;
@@ -199,9 +199,9 @@ int CTFShotgun_Revenge::GetCustomDamageType( void ) const
 bool CTFShotgun_Revenge::Deploy( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if (pOwner && BaseClass::Deploy())
+	if ( pOwner && BaseClass::Deploy() )
 	{
-		if (m_iRevengeCrits > 0)
+		if ( m_iRevengeCrits > 0 )
 			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
 
 		return true;
@@ -216,7 +216,7 @@ bool CTFShotgun_Revenge::Deploy( void )
 bool CTFShotgun_Revenge::Holster( CBaseCombatWeapon *pSwitchTo )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if (pOwner && BaseClass::Holster( pSwitchTo ))
+	if ( pOwner && BaseClass::Holster( pSwitchTo ) )
 	{
 		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 
@@ -241,21 +241,25 @@ void CTFShotgun_Revenge::Detach( void )
 //-----------------------------------------------------------------------------
 void CTFShotgun_Revenge::OnSentryKilled( CObjectSentrygun *pSentry )
 {
-	if (CanGetRevengeCrits())
+	if ( CanGetRevengeCrits() )
 	{
 		m_iRevengeCrits = Min( m_iRevengeCrits + pSentry->GetAssists() + ( pSentry->GetKills() * 2 ), TF_WEAPON_MAX_REVENGE );
 
 		CTFPlayer *pOwner = GetTFPlayerOwner();
+<<<<<<< HEAD
 		if (pOwner)
+=======
+		if ( pOwner && pOwner->GetActiveWeapon() == this )
+>>>>>>> cdab8b1c... Formatting
 		{
-			if (m_iRevengeCrits > 0)
+			if ( m_iRevengeCrits > 0 )
 			{
-				if (!pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ))
+				if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
 					pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
 			}
 			else
 			{
-				if (pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ))
+				if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
 					pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 			}
 		}
