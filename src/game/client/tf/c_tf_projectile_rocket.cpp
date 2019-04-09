@@ -1,4 +1,4 @@
-//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -9,13 +9,13 @@
 #include "particles_new.h"
 #include "tf_gamerules.h"
 
-extern ConVar tf_halloween;
-
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Rocket, DT_TFProjectile_Rocket )
 
 BEGIN_NETWORK_TABLE( C_TFProjectile_Rocket, DT_TFProjectile_Rocket )
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 END_NETWORK_TABLE()
+
+extern ConVar tf_halloween;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -71,14 +71,24 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 
 	if ( m_bCritical )
 	{
-		const char *pszEffectName = ConstructTeamParticle( "critical_rocket_%s", GetTeamNumber(), true );
+		const char *pszEffectName = "";
+		switch ( GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+				pszEffectName = "critical_rocket_red";
+				break;
+			case TF_TEAM_BLUE:
+				pszEffectName = "critical_rocket_blue";
+				break;
+			default:
+				pszEffectName = "eyeboss_projectile";
+				break;
+		}
+		
 		ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
 {
 	if ( tf_halloween.GetBool() )

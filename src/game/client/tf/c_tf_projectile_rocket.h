@@ -1,4 +1,4 @@
-//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -13,8 +13,6 @@
 #include "tf_weaponbase_rocket.h"
 
 #define CTFProjectile_Rocket C_TFProjectile_Rocket
-
-#include "tf_gamerules.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Rocket projectile.
