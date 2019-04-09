@@ -2001,7 +2001,7 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 
 		// Write to chat that player has escaped the underworld
 		CReliableBroadcastRecipientFilter filter;
-		UTIL_SayText2Filter( filter, m_pOuter, false, TFGameRules()->IsHalloweenScenario( 3 ) ? "#TF_Halloween_Skull_Island_Escape" : "#TF_Halloween_Underworld", m_pOuter->GetPlayerName() );
+		UTIL_SayText2Filter( filter, m_pOuter, false, TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_LAKESIDE ) ? "#TF_Halloween_Skull_Island_Escape" : "#TF_Halloween_Underworld", m_pOuter->GetPlayerName() );
 
 		// Let the map know we escaped the underworld
 		IGameEvent *event = gameeventmanager->CreateEvent( "escaped_loot_island" );

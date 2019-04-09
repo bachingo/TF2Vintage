@@ -82,7 +82,7 @@ EventDesiredResult<CEyeBallBoss> CEyeBallBossBehavior::OnKilled( CEyeBallBoss *m
 			}
 		}
 
-		if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( 2 ) && !me->m_bSpawnedWithCheats )
+		if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_VIADUCT ) && !me->m_bSpawnedWithCheats )
 		{
 			pPlayer->AwardAchievement( 1910 );
 		}

@@ -92,9 +92,9 @@ void CEyeBallBossLocomotion::Update( void )
 
 	m_verticalSpeed = m_localVelocity.z * flLength;
 
-	m_localVelocity.x = ( ( m_wishVelocity.x - tf_eyeball_boss_horiz_damping.GetFloat() ) * m_localVelocity.x ) * GetUpdateInterval();
-	m_localVelocity.y = ( ( m_wishVelocity.y - tf_eyeball_boss_horiz_damping.GetFloat() ) * m_localVelocity.y ) * GetUpdateInterval();
-	m_localVelocity.z = ( ( m_wishVelocity.z - tf_eyeball_boss_vert_damping.GetFloat() ) * m_localVelocity.z ) * GetUpdateInterval();
+	m_localVelocity.x = ( m_wishVelocity.x - ( tf_eyeball_boss_horiz_damping.GetFloat() * m_localVelocity.x ) ) * GetUpdateInterval();
+	m_localVelocity.y = ( m_wishVelocity.y - ( tf_eyeball_boss_horiz_damping.GetFloat() * m_localVelocity.y ) ) * GetUpdateInterval();
+	m_localVelocity.z = ( m_wishVelocity.z - ( tf_eyeball_boss_vert_damping.GetFloat() * m_localVelocity.z ) ) * GetUpdateInterval();
 
 	pActor->SetAbsVelocity( m_localVelocity );
 

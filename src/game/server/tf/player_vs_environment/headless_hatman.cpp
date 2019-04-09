@@ -175,9 +175,9 @@ void CHeadlessHatman::Spawn( void )
 
 	SetBloodColor( DONT_BLEED );
 
-	if (!TFGameRules() || !TFGameRules()->IsHalloweenScenario( 5 ))
+	if ( !TFGameRules() || !TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 	{
-		if (g_pMonsterResource)
+		if ( g_pMonsterResource )
 			g_pMonsterResource->SetBossHealthPercentage( 1.0f );
 	}
 }
@@ -202,7 +202,7 @@ void CHeadlessHatman::Precache( void )
 //-----------------------------------------------------------------------------
 int CHeadlessHatman::OnTakeDamage_Alive( const CTakeDamageInfo& info )
 {
-	if (g_pMonsterResource && TFGameRules() && !TFGameRules()->IsHalloweenScenario( 5 ) )
+	if (g_pMonsterResource && TFGameRules() && !TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 	{
 		float flHPPercent = (float)GetHealth() / GetMaxHealth();
 		if (flHPPercent <= 0.0f)

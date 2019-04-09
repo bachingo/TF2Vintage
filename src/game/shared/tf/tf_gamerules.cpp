@@ -1109,15 +1109,15 @@ CTFGameRules::CTFGameRules()
 #ifdef GAME_DLL
 	const char *szMapname = STRING( gpGlobals->mapname );
 	if ( !Q_strncmp( szMapname, "cp_manor_event", MAX_MAP_NAME ) )
-		m_halloweenScenario = 1;
+		m_halloweenScenario = HALLOWEEN_SCENARIO_MOUNTAINLAB;
 	else if ( !Q_strncmp( szMapname, "koth_viaduct_event", MAX_MAP_NAME ) )
-		m_halloweenScenario = 2;
+		m_halloweenScenario = HALLOWEEN_SCENARIO_VIADUCT;
 	else if ( !Q_strncmp( szMapname, "koth_lakeside_event", MAX_MAP_NAME ) )
-		m_halloweenScenario = 3;
+		m_halloweenScenario = HALLOWEEN_SCENARIO_LAKESIDE;
 	else if ( !Q_strncmp( szMapname, "plr_hightower_event", MAX_MAP_NAME ) )
-		m_halloweenScenario = 4;
+		m_halloweenScenario = HALLOWEEN_SCENARIO_HIGHTOWER;
 	else if ( !Q_strncmp( szMapname, "sd_doomsday_event", MAX_MAP_NAME ) )
-		m_halloweenScenario = 5;
+		m_halloweenScenario = HALLOWEEN_SCENARIO_DOOMSDAY;
 #endif
 }
 

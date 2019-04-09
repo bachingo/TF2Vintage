@@ -121,7 +121,7 @@ static void SendPlayerToTheUnderworld( CTFPlayer *pPlayer, const char *pszTarget
 
 		pPlayer->Teleport( &pTarget->GetAbsOrigin(), &pTarget->GetAbsAngles(), &vec3_origin );
 
-		if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( 3 ) && pPlayer->IsAlive() )
+		if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_LAKESIDE ) && pPlayer->IsAlive() )
 		{
 			pPlayer->TakeHealth( pPlayer->GetMaxHealth(), DMG_GENERIC );
 			pPlayer->m_Shared.HealthKitPickupEffects( 0 );

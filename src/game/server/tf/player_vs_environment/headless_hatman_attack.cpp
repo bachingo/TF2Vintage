@@ -71,31 +71,31 @@ ActionResult<CHeadlessHatman> CHeadlessHatmanAttack::Update( CHeadlessHatman *me
 	}
 
 	CBaseCombatCharacter *pVictim = ToBaseCombatCharacter( TFGameRules()->GetIT() );
-	if (pVictim)
+	if ( pVictim )
 	{
-		if (m_notifyVictimTimer.IsElapsed() && !TFGameRules()->IsHalloweenScenario( 5 ))
+		if ( m_notifyVictimTimer.IsElapsed() && !TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 		{
 			CBasePlayer *pPlayer = ToBasePlayer( pVictim );
-			if (pPlayer)
+			if ( pPlayer )
 			{
 				m_notifyVictimTimer.Start( 7.0f );
 				ClientPrint( pPlayer, HUD_PRINTCENTER, "#TF_HALLOWEEN_BOSS_WARN_VICTIM", pPlayer->GetPlayerName() );
 			}
 		}
 
-		if (!me->IsRangeGreaterThan( pVictim, 100.0f ) && me->IsAbleToSee( pVictim, CBaseCombatCharacter::USE_FOV ))
+		if ( !me->IsRangeGreaterThan( pVictim, 100.0f ) && me->IsAbleToSee( pVictim, CBaseCombatCharacter::USE_FOV ) )
 		{
-			if (me->IsRangeLessThan( pVictim, tf_halloween_bot_attack_range.GetFloat() ))
+			if ( me->IsRangeLessThan( pVictim, tf_halloween_bot_attack_range.GetFloat() ) )
 			{
-				if (m_terrifyTimer.IsElapsed() && pVictim->IsPlayer())
+				if ( m_terrifyTimer.IsElapsed() && pVictim->IsPlayer() )
 				{
 					m_terrifyTimer.Reset();
 					return Action<CHeadlessHatman>::SuspendFor( new CHeadlessHatmanTerrify, "Boo!" );
 				}
 
-				if (m_attackDuration.IsElapsed() && m_attackTimer.IsElapsed())
+				if ( m_attackDuration.IsElapsed() && m_attackTimer.IsElapsed() )
 				{
-					if (TFGameRules()->IsHalloweenScenario( 5 ))
+					if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 						me->AddGesture( ACT_MP_ATTACK_STAND_ITEM2 );
 					else
 						me->AddGesture( ACT_MP_ATTACK_STAND_ITEM1 );
@@ -148,9 +148,9 @@ ActionResult<CHeadlessHatman> CHeadlessHatmanAttack::Update( CHeadlessHatman *me
 				return Action<CHeadlessHatman>::SuspendFor( new CHeadlessHatmanTerrify, "Boo!" );
 			}
 
-			if (m_attackDuration.IsElapsed() && m_attackTimer.IsElapsed())
+			if ( m_attackDuration.IsElapsed() && m_attackTimer.IsElapsed() )
 			{
-				if (TFGameRules()->IsHalloweenScenario( 5 ))
+				if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 					me->AddGesture( ACT_MP_ATTACK_STAND_ITEM2 );
 				else
 					me->AddGesture( ACT_MP_ATTACK_STAND_ITEM1 );
@@ -169,12 +169,12 @@ ActionResult<CHeadlessHatman> CHeadlessHatmanAttack::Update( CHeadlessHatman *me
 	if (me->GetLocomotionInterface()->IsAttemptingToMove())
 	{
 		// TODO: deterministic animation from damage
-		if (!me->GetBodyInterface()->IsActivity( ACT_MP_RUN_ITEM1 ))
+		if ( !me->GetBodyInterface()->IsActivity( ACT_MP_RUN_ITEM1 ) )
 			me->GetBodyInterface()->StartActivity( ACT_MP_RUN_ITEM1 );
 
-		if (!TFGameRules()->IsHalloweenScenario( 5 ))
+		if ( !TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 		{
-			if (m_rumbleTimer.IsElapsed())
+			if ( m_rumbleTimer.IsElapsed() )
 			{
 				m_rumbleTimer.Start( 0.25f );
 				UTIL_ScreenShake( me->GetAbsOrigin(), 150.0f, 5.0f, 1.0f, 1000.0f, SHAKE_START );
@@ -375,7 +375,7 @@ void CHeadlessHatmanAttack::UpdateAxeSwing( CHeadlessHatman *actor )
 
 		actor->EmitSound( "Halloween.HeadlessBossAxeHitWorld" );
 
-		if(!TFGameRules()->IsHalloweenScenario( 5 ))
+		if( !TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 			UTIL_ScreenShake( actor->GetAbsOrigin(), 150.0f, 5.0f, 1.0f, 1000.0f, SHAKE_START );
 
 		if (actor->GetWeapon())

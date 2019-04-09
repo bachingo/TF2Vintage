@@ -126,11 +126,14 @@ public:
 
 	CTFGameRules();
 
+	// Halloween Scenarios
 	enum
 	{
+		HALLOWEEN_SCENARIO_MOUNTAINLAB = 1,
+		HALLOWEEN_SCENARIO_VIADUCT,
+		HALLOWEEN_SCENARIO_LAKESIDE,
+		HALLOWEEN_SCENARIO_HIGHTOWER,
 		HALLOWEEN_SCENARIO_DOOMSDAY
-		// Halloween Scenario 3 = LAKESIDE (?)
-		// Halloween Scenario 5 = MOUNTAIN_LAB
 	};
 
 	// Damage Queries.
