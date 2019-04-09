@@ -1959,11 +1959,12 @@ void CTFPlayerShared::OnRemoveBuff( void )
 void CTFPlayerShared::OnAddInPurgatory( void )
 {
 #ifdef GAME_DLL
+	// Some CountdownTimer (possibly not m_purgatoryDuration?)
 	/*
 	(**(m_pOuter + 9004))(m_pOuter + 9004);
 	*(m_pOuter + 9008) = 40.0f;
-	*(m_pOuter + 9012) = a1 + 40.0f;
-	*(*(m_pOuter + 9008) = 1;
+	*(m_pOuter + 9012) = Now() + 40.0f;
+	*(*(m_pOuter + 9016) = 1;
 	*/
 
 	m_pOuter->SetHealth( GetMaxHealth() );
@@ -1985,11 +1986,13 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 		AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 10.0f );
 		m_pOuter->SetHealth( GetMaxBuffedHealth() );
 
+		// m_purgatoryDuration(?)
 		/*
 		(**(m_pOuter + 8992))(m_pOuter + 8992);
 		*(m_pOuter + 8996) = 10.0f;
-		*(m_pOuter + 9000) = 10.0f + 10.0f;
+		*(m_pOuter + 9000) = Now() + 10.0f;
 		*/
+		m_pOuter->m_purgatoryDuration.Start( 10.0f );
 
 		TeamplayRoundBasedRules()->BroadcastSound( 255, "Halloween.PlayerEscapedUnderworld" );
 		m_pOuter->RemoveOwnedProjectiles();
@@ -2009,7 +2012,7 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 		CTeam *pTeam = m_pOuter->GetTeam();
 		if ( pTeam )
 		{
-			UTIL_LogPrintf( "HALLOWEEN: \"%s<%i><%s><%s>\" %s\n", m_pOuter->GetPlayerName(), m_pOuter->GetUserID(), m_pOuter->GetNetworkIDString(), pTeam->TeamID(), "purgatory_escaped" );
+			UTIL_LogPrintf( "HALLOWEEN: \"%s<%i><%s><%s>\" %s\n", m_pOuter->GetPlayerName(), m_pOuter->GetUserID(), m_pOuter->GetNetworkIDString(), pTeam->GetName(), "purgatory_escaped" );
 		}
 	}
 #endif
