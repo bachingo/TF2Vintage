@@ -499,6 +499,8 @@ public:
 
 	// Gunslinger
 	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
+	
+	CountdownTimer m_purgatoryDuration;
 
 private:
 
