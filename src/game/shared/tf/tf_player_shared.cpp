@@ -1979,7 +1979,7 @@ void CTFPlayerShared::OnAddInPurgatory( void )
 void CTFPlayerShared::OnRemoveInPurgatory( void )
 {
 #ifdef GAME_DLL
-	if ( m_pOuter->IsAlive() )
+	if ( m_nPlayerState != TF_STATE_DYING )
 	{
 		AddCond( TF_COND_INVULNERABLE, 10.0f );
 		AddCond( TF_COND_SPEED_BOOST, 10.0f );
