@@ -55,6 +55,7 @@ void CTriggerAddTFPlayerCondition::StartTouch( CBaseEntity *pOther )
 		else
 		{
 			pPlayer->m_Shared.AddCond( m_nCondition, m_flDuration );
+			BaseClass::StartTouch( pOther );
 		}
 	}
 }
