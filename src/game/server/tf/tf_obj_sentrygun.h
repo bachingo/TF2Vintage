@@ -78,12 +78,19 @@ public:
 
 	void			OnStopWrangling( void );
 
-	// Should Fire for wrangler
+	// Wrangler
 	void			SetShouldFire( bool bFire ) { m_bShouldFire = bFire; }
 	bool			ShouldFire( void ) { return m_bShouldFire; }
+	void			UpdateSentryAngles( Vector vecDir );
+	void			SetEnemy( CBaseEntity *pEnemy ) { m_hEnemy.Set( pEnemy ); }
+	void			SetEndVector( Vector vecEnd ) { m_vecEnd = vecEnd; }
 
 	virtual bool	Command_Repair( CTFPlayer *pActivator );
 	virtual bool	CheckUpgradeOnHit( CTFPlayer *pPlayer );
+
+	Vector			GetEnemyAimPosition( CBaseEntity *pEnemy ) const;
+
+	virtual float	GetConstructionMultiplier( void );
 
 private:
 
@@ -98,7 +105,7 @@ private:
 	void StartUpgrading( void );
 	void FinishUpgrading( void );
 
-	void WrangleThink( void );
+	void WranglerThink( void );
 
 	// Target acquisition
 	bool FindTarget( void );
@@ -107,6 +114,9 @@ private:
 	void FoundTarget( CBaseEntity *pTarget, const Vector &vecSoundCenter );
 	bool FInViewCone ( CBaseEntity *pEntity );
 	int Range( CBaseEntity *pTarget );
+
+	// Sentry sounds
+	void EmitSentrySound( IRecipientFilter &filter, int index, char const* pszSound );
 
 	// Rotations
 	void SentryRotate( void );

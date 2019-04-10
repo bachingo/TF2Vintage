@@ -18,7 +18,7 @@
 
 namespace vgui
 {
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 	static CUtlSymbolTable g_ScriptSymbols(0, 128, true);
 #endif
 
@@ -79,7 +79,7 @@ public:
 	// runs the specific animation command (doesn't use script file at all)
 	void RunAnimationCommand(vgui::Panel *panel, const char *variable, float targetValue, float startDelaySeconds, float durationSeconds, Interpolators_e interpolator, float animParameter = 0 );
 	void RunAnimationCommand(vgui::Panel *panel, const char *variable, Color targetValue, float startDelaySeconds, float durationSeconds, Interpolators_e interpolator, float animParameter = 0 );
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 	struct PublicValue_t
 	{
 		PublicValue_t(float _a = 0.0f, float _b = 0.0f, float _c = 0.0f, float _d = 0.0f) :

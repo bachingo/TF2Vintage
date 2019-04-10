@@ -164,26 +164,12 @@ private:
 
 	COutputEvent	m_OnCapTeam1;
 	COutputEvent	m_OnCapTeam2;
-#if defined ( TF_CLASSIC )
-	COutputEvent	m_OnCapTeam3;
-	COutputEvent	m_OnCapTeam4;
-
-#endif
 
 	COutputEvent	m_OnOwnerChangedToTeam1;
 	COutputEvent	m_OnOwnerChangedToTeam2;
-#if defined ( TF_CLASSIC )
-	COutputEvent	m_OnOwnerChangedToTeam3;
-	COutputEvent	m_OnOwnerChangedToTeam4;
-
-#endif
 
 	COutputEvent	m_OnRoundStartOwnedByTeam1;
 	COutputEvent	m_OnRoundStartOwnedByTeam2;
-#if defined ( TF_CLASSIC )
-	COutputEvent	m_OnRoundStartOwnedByTeam3;
-	COutputEvent	m_OnRoundStartOwnedByTeam4;
-#endif
 
 	COutputEvent	m_OnUnlocked;
 

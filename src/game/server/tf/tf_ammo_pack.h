@@ -20,32 +20,37 @@ public:
 
 	CTFAmmoPack() {}
 
-	virtual void Spawn();
-	virtual void Precache();		
+	virtual void			Spawn();
+	virtual void			Precache();		
 
-	void EXPORT FlyThink( void );
-	void EXPORT PackTouch( CBaseEntity *pOther );
+	void EXPORT				FlyThink( void );
+	void EXPORT				PackTouch( CBaseEntity *pOther );
 
-	void SetIsLunchbox( bool bIsLunchbox ) { m_bIsLunchbox = bIsLunchbox; }
+	void					SetIsLunchbox( bool bIsLunchbox ) { m_bIsLunchbox = bIsLunchbox; }
 
-	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
+	virtual unsigned int	PhysicsSolidMaskForEntity( void ) const;
 
-	int GiveAmmo( int iCount, int iAmmoType );
+	int						GiveAmmo( int iCount, int iAmmoType );
 
-	static CTFAmmoPack *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, bool bUseCustomAmmoCount = false);
+	static CTFAmmoPack		*Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, bool bUseCustomAmmoCount = false );
 
-	float GetCreationTime( void ) { return m_flCreationTime; }
-	void  SetInitialVelocity( Vector &vecVelocity );
+	float					GetCreationTime( void ) { return m_flCreationTime; }
+	void					SetInitialVelocity( Vector &vecVelocity );
+
+	void					MakeHolidayPack( void );
+	void					DropSoundThink( void );
 
 private:
-	int m_iAmmo[MAX_AMMO_SLOTS];
+	int		m_iAmmo[MAX_AMMO_SLOTS];
 
-	float m_flCreationTime;
+	float	m_flCreationTime;
 
-	bool m_bIsLunchbox;
-	bool m_bUseCustomAmmoCount;
-	bool m_bAllowOwnerPickup;
+	bool	m_bIsLunchbox;
+	bool	m_bUseCustomAmmoCount;
+	bool	m_bAllowOwnerPickup;
 	CNetworkVector( m_vecInitialVelocity );
+
+	int iHoliday;
 
 private:
 	CTFAmmoPack( const CTFAmmoPack & );

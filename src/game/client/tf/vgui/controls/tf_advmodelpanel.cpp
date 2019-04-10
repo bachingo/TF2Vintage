@@ -166,6 +166,17 @@ int CTFAdvModelPanel::GetNumBodyGroups( void )
 	return ::GetNumBodyGroups( &studioHdr );
 }
 
+const char *CTFAdvModelPanel::GetBodygroupName( int index )
+{
+	studiohdr_t *pStudioHdr = m_RootMDL.m_MDL.GetStudioHdr();
+	if ( !pStudioHdr )
+		return 0;
+
+	CStudioHdr studioHdr( pStudioHdr, g_pMDLCache );
+
+	return ::GetBodygroupName( &studioHdr, index );
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

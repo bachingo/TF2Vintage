@@ -19,7 +19,6 @@
 
 #include "hud_numericdisplay.h"
 #include "c_team.h"
-#include "c_tf_player.h"
 #include "tf_shareddefs.h"
 #include "tf_hud_playerstatus.h"
 #include "tf_hud_target_id.h"
@@ -61,40 +60,6 @@ static char *g_szRedClassImages[] =
 	"../hud/class_engired",
 	"../hud/class_civred",
 	"../hud/class_mercred",
-	"",
-};
-
-static char *g_szGreenClassImages[] =
-{
-	"",
-	"../hud/class_scoutgreen",
-	"../hud/class_snipergreen",
-	"../hud/class_soldiergreen",
-	"../hud/class_demogreen",
-	"../hud/class_medicgreen",
-	"../hud/class_heavygreen",
-	"../hud/class_pyrogreen",
-	"../hud/class_spygreen",
-	"../hud/class_engigreen",
-	"../hud/class_civgreen",
-	"../hud/class_mercgreen",
-	"",
-};
-
-static char *g_szYellowClassImages[] =
-{
-	"",
-	"../hud/class_scoutyellow",
-	"../hud/class_sniperyellow",
-	"../hud/class_soldieryellow",
-	"../hud/class_demoyellow",
-	"../hud/class_medicyellow",
-	"../hud/class_heavyyellow",
-	"../hud/class_pyroyellow",
-	"../hud/class_spyyellow",
-	"../hud/class_engiyellow",
-	"../hud/class_civyellow",
-	"../hud/class_mercyellow",
 	"",
 };
 
@@ -348,9 +313,17 @@ CTFHudPlayerHealth::CTFHudPlayerHealth( Panel *parent, const char *name ) : Edit
 	m_pHealthImageBG = new ImagePanel( this, "PlayerStatusHealthImageBG" );
 	m_pHealthBonusImage = new ImagePanel( this, "PlayerStatusHealthBonusImage" );
 
-	m_pHealthImageBuildingBG = new ImagePanel( this, "BuildingStatusHealthImageBG" );	
+	m_pHealthImageBuildingBG = new ImagePanel( this, "BuildingStatusHealthImageBG" );
+
+	// Buff Images
+	m_pSoldierOffenseBuff = new ImagePanel( this, "PlayerStatus_SoldierOffenseBuff" );
+	m_pSoldierDefenseBuff = new ImagePanel( this, "PlayerStatus_SoldierDefenseBuff" );
+
+	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierOffenseBuff, "../effects/soldier_buff_offense_red", "../effects/soldier_buff_offense_blue" ) );
+	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierDefenseBuff, "../effects/soldier_buff_defense_red", "../effects/soldier_buff_defense_blue" ) );
 
 	m_flNextThink = 0.0f;
+	m_nOffset = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -532,9 +505,72 @@ void CTFHudPlayerHealth::OnThink()
 		if ( pPlayer )
 		{
 			SetHealth( pPlayer->GetHealth(), pPlayer->m_Shared.GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
+
+			// Player status effects
+			SetPlayerHealthImagePanelVisibility( TF_COND_OFFENSEBUFF, m_hBuffImages.Element( 0 ) );
+			SetPlayerHealthImagePanelVisibility( TF_COND_DEFENSEBUFF, m_hBuffImages.Element( 1 ) );
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.05f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update status effect images
+//-----------------------------------------------------------------------------
+void CTFHudPlayerHealth::SetPlayerHealthImagePanelVisibility( int iCond, CTFBuffInfo *info )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( !pPlayer )
+		return;
+
+	ImagePanel *pImage = info->m_pBuffImage;
+	if ( !pImage )
+		return;
+
+	if ( !pImage->IsVisible() )
+	{
+		if ( pPlayer->m_Shared.InCond( iCond ) )
+		{
+			switch ( pPlayer->GetTeamNumber() )
+			{
+			case TF_TEAM_RED:
+				pImage->SetImage( info->m_iszRedImage );
+				break;
+			case TF_TEAM_BLUE:
+				pImage->SetImage( info->m_iszBlueImage );
+				break;
+			}
+
+			int y;
+			pImage->GetPos( info->m_iXPos, y );
+			pImage->SetPos( info->m_iXPos + m_nOffset, y );
+
+			m_nOffset += 100;
+			info->m_nOffset = m_nOffset;
+
+			pImage->SetVisible( true );
+		}
+	}
+	else
+	{
+		// Check if the buff has expired
+		if ( !pPlayer->m_Shared.InCond( iCond ) )
+		{
+			m_nOffset = max( 0, m_nOffset - 100 );
+
+			pImage->SetPos( info->m_iXPos, pImage->GetYPos() );
+			pImage->SetVisible( false );
+		}
+		else if ( info->m_nOffset > m_nOffset )
+		{	
+			// Update our image position
+			int x, y;
+			pImage->GetPos( x, y );
+			pImage->SetPos( x + ( m_nOffset - info->m_nOffset ), y );
+
+			info->m_nOffset -= m_nOffset;
+		}
 	}
 }
 
@@ -603,18 +639,6 @@ void CTFClassImage::SetClass( int iTeam, int iClass, int iCloakstate )
 		case TF_TEAM_BLUE:
 			Q_strncpy(szImage, g_szBlueClassImages[iClass], sizeof(szImage));
 			break;
-		case TF_TEAM_GREEN:
-			Q_strncpy(szImage, g_szGreenClassImages[iClass], sizeof(szImage));
-			break;
-		case TF_TEAM_YELLOW:
-			Q_strncpy(szImage, g_szYellowClassImages[iClass], sizeof(szImage));
-			break;
-	}
-
-	// Since DM mode doesn't use teams, we only need 1 team specific image
-	if (iClass == TF_CLASS_MERCENARY)
-	{
-		Q_strncpy(szImage, "../hud/class_merc", sizeof(szImage));
 	}
 
 	switch( iCloakstate )

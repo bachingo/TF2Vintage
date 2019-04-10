@@ -118,6 +118,8 @@ public:
 	float	GetConditionDuration( int nCond );
 
 	bool	IsCritBoosted( void );
+	bool	IsMiniCritBoosted( void );
+	bool	IsSpeedBoosted( void );
 
 	void	ConditionGameRulesThink( void );
 
@@ -147,7 +149,8 @@ public:
 	int		GetDisguiseClass( void ) 			{ return m_nDisguiseClass; }
 	int		GetDesiredDisguiseClass( void )		{ return m_nDesiredDisguiseClass; }
 	int		GetDesiredDisguiseTeam( void )		{ return m_nDesiredDisguiseTeam; }
-	int		GetMaskClass(void)				{ return m_nMaskClass; }
+	float	GetDisguiseChargeLevel( void )      { return m_flDisguiseChargeLevel; }
+	int		GetMaskClass(void)					{ return m_nMaskClass; }
 	EHANDLE GetDisguiseTarget( void ) 	
 	{
 #ifdef CLIENT_DLL
@@ -173,7 +176,6 @@ public:
 	CTFWeaponInfo *GetDisguiseWeaponInfo( void );
 
 	void	UpdateCritBoostEffect( bool bForceHide = false );
-	bool	SetParticleToMercColor( CNewParticleEffect *pParticle );
 #endif
 
 #ifdef GAME_DLL
@@ -190,16 +192,20 @@ public:
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
-	void	StunPlayer( float flDuration, CTFPlayer *pStunner );
+	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
 
 #ifdef GAME_DLL
 	void	AddPhaseEffects( void );
 	CUtlVector< CSpriteTrail * > m_pPhaseTrails;
 #else
 	CNewParticleEffect *m_pWarp;
+	CNewParticleEffect *m_pStun;
+	CNewParticleEffect *m_pSpeedTrails;
+	CNewParticleEffect *m_pBuffAura;
 #endif
 
 	void	UpdatePhaseEffects( void );
+	void	UpdateSpeedBoostEffects( void );
 
 	void	RecalculatePlayerBodygroups( void );
 
@@ -270,6 +276,8 @@ public:
 	float	GetStunExpireTime( void ) { return m_flStunExpireTime; }
 	void	SetStunExpireTime( float flTime ) { m_flStunExpireTime = flTime; }
 
+	int   GetStunFlags( void ) { return m_nStunFlags; }
+
 	int		GetTeleporterEffectColor( void ) { return m_nTeamTeleporterUsed; }
 	void	SetTeleporterEffectColor( int iTeam ) { m_nTeamTeleporterUsed = iTeam; }
 #ifdef CLIENT_DLL
@@ -277,6 +285,15 @@ public:
 #endif
 
 	int GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCustom );
+
+	// Banners
+	void UpdateRageBuffsAndRage( void );
+	void SetRageMeter( float flRagePercent, int iBuffType );
+	void ActivateRageBuff( CBaseEntity *pEntity, int iBuffType );
+	void PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ );
+	bool IsRageActive( void ) { return m_bRageActive; }
+	float GetRageProgress( void ) { return m_flEffectBarProgress; }
+	void ResetRageSystem( void );
 
 private:
 
@@ -298,6 +315,8 @@ private:
 	void OnAddRagemode( void );
 	void OnAddUrine( void );
 	void OnAddPhase( void );
+	void OnAddSpeedBoost( void );
+	void OnAddBuff( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -316,6 +335,8 @@ private:
 	void OnRemoveRagemode( void );
 	void OnRemoveUrine( void );
 	void OnRemovePhase( void );
+	void OnRemoveSpeedBoost( void );
+	void OnRemoveBuff( void );
 
 	float GetCritMult( void );
 
@@ -370,6 +391,8 @@ private:
 	// Vars that are not networked.
 	OuterClass			*m_pOuter;					// C_TFPlayer or CTFPlayer (client/server).
 
+	bool m_bRageActive;
+
 #ifdef GAME_DLL
 	// Healer handling
 	struct healers_t
@@ -394,8 +417,16 @@ private:
 	float					m_flFlameBurnTime;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
+
+	// Other
 	float					m_flStunTime;
 	float					m_flPhaseTime;
+
+	// Banner
+	CNetworkVar( float, m_flEffectBarProgress );
+	float					m_flNextRageCheckTime;
+	float					m_flRageTimeRemaining;
+	int						m_iActiveBuffType;
 
 
 
@@ -427,6 +458,10 @@ private:
 	CNetworkVar( float, m_flStunExpireTime );
 	int m_iStunPhase;
 
+	CNetworkVar( int, m_nStunFlags );
+	CNetworkVar( float, m_flStunMovementSpeed );
+	CNetworkVar( float, m_flStunResistance );
+
 	//CNetworkVar( int, m_iDominationCount );
 
 	CNetworkHandle( CBaseObject, m_hCarriedObject );
@@ -434,11 +469,11 @@ private:
 
 	CNetworkVar( int, m_nTeamTeleporterUsed );
 
-	// Have we been to resupply recently?
-	CNetworkVar( bool, m_bRegenerated );
+	// Arena spectators
+	CNetworkVar( bool, m_bArenaSpectator );
 
-	// Hacky shit for weapon regeneration
-	bool m_bInRegenerate;
+	// Gunslinger
+	CNetworkVar( bool, m_bGunslinger );
 
 #ifdef GAME_DLL
 

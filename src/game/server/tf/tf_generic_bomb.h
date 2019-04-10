@@ -17,22 +17,22 @@
 // TF Generic Bomb Class
 //
 
-class CTFGenericBomb : public CBreakableProp
+class CTFGenericBomb : public CBaseAnimating
 {
 public:
-	DECLARE_CLASS( CTFGenericBomb, CBreakableProp );
+	DECLARE_CLASS( CTFGenericBomb, CBaseAnimating );
 	DECLARE_DATADESC();
 
 	CTFGenericBomb();
 	virtual void		Precache( void );
-
 	virtual void		Spawn( void );
 	
-	virtual int			OnTakeDamage( const CTakeDamageInfo &info );
-
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 
 	virtual void		InputDetonate( inputdata_t &inputdata );
+
+	virtual int		GetCustomDamageType( void ) { return TF_DMG_CUSTOM_NONE; }
+	virtual void	BombTouch( CBaseEntity *pOther );
 
 protected:
 	float				m_flDamage;

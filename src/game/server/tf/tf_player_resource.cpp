@@ -20,6 +20,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayerResource, DT_TFPlayerResource )
 	SendPropArray3( SENDINFO_ARRAY3( m_iPlayerClass ), SendPropInt( SENDINFO_ARRAY( m_iPlayerClass ), 5, SPROP_UNSIGNED ) ),
 	SendPropArray3(SENDINFO_ARRAY3(m_iColors), SendPropVector( SENDINFO_ARRAY3( m_iColors ), 12, SPROP_COORD) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_iKillstreak ), SendPropInt( SENDINFO_ARRAY( m_iKillstreak ), 10, SPROP_UNSIGNED ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_bArenaSpectator ), SendPropBool( SENDINFO_ARRAY( m_bArenaSpectator ) ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_player_manager, CTFPlayerResource );
@@ -47,17 +48,19 @@ void CTFPlayerResource::UpdatePlayerData( void )
 			PlayerStats_t *pPlayerStats = CTF_GameStats.FindPlayerStats( pPlayer );
 			if ( pPlayerStats ) 
 			{
-			m_iMaxHealth.Set( i, pPlayer->GetPlayerClass()->GetMaxHealth() );
-			m_iPlayerClass.Set( i, pPlayer->GetPlayerClass()->GetClassIndex() );
-			int iTotalScore = CTFGameRules::CalcPlayerScore( &pPlayerStats->statsAccumulated );
-			m_iTotalScore.Set( i, iTotalScore );
+				m_iMaxHealth.Set( i, pPlayer->GetPlayerClass()->GetMaxHealth() );
+				m_iPlayerClass.Set( i, pPlayer->GetPlayerClass()->GetClassIndex() );
+				int iTotalScore = CTFGameRules::CalcPlayerScore( &pPlayerStats->statsAccumulated );
+				m_iTotalScore.Set( i, iTotalScore );
 
-			m_iColors.Set( i, pPlayer->m_vecPlayerColor );
+				m_iColors.Set( i, pPlayer->m_vecPlayerColor );
 
-			m_iKillstreak.Set( i, pPlayer->m_Shared.GetKillstreak() );
+				m_iKillstreak.Set( i, pPlayer->m_Shared.GetKillstreak() );
 			}	
 
-			m_iDomination.Set(i, pPlayer->m_Shared.GetDominationCount());
+			m_iDomination.Set( i, pPlayer->m_Shared.GetDominationCount() );
+
+			m_bArenaSpectator.Set( i, pPlayer->IsArenaSpectator() );
 		}
 	}
 }
@@ -74,6 +77,7 @@ void CTFPlayerResource::Spawn( void )
 		m_iPlayerClass.Set( i, TF_CLASS_UNDEFINED );
 		m_iColors.Set(i, Vector(0.0, 0.0, 0.0));
 		m_iKillstreak.Set(i, 0);
+		m_bArenaSpectator.Set( i, false );
 	}
 
 	BaseClass::Spawn();

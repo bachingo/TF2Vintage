@@ -15,7 +15,6 @@ enum MenuPanel //position in this enum = zpos on the screen
 	SHADEBACKGROUND_MENU, //add popup/additional menus below:		
 	LOADOUT_MENU,
 	STATSUMMARY_MENU,
-	NOTIFICATION_MENU,
 	OPTIONSDIALOG_MENU,
 	QUIT_MENU,
 	TOOLTIP_MENU,
@@ -63,7 +62,6 @@ public:
 	virtual void HideToolTip();
 	virtual void ShowItemToolTip(CEconItemDefinition *pItemData);
 	virtual void HideItemToolTip();
-	virtual void OnNotificationUpdate();
 	virtual void SetServerlistSize(int size);
 	virtual void OnServerInfoUpdate();
 

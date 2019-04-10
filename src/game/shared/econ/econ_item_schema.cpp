@@ -12,10 +12,12 @@ BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
 	RecvPropFloat( RECVINFO( value ) ),
+	RecvPropString( RECVINFO( value_string ) ),
 	RecvPropString( RECVINFO( attribute_class ) ),
 #else
 	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ) ),
 	SendPropFloat( SENDINFO( value ) ),
+	SendPropString( SENDINFO( value_string ) ),
 	SendPropString( SENDINFO( attribute_class ) ),
 #endif
 END_NETWORK_TABLE()
@@ -27,6 +29,30 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 {
 	m_iAttributeDefinitionIndex = iIndex;
 	value = flValue;
+	value_string.GetForModify()[0] = '\0';
+
+	if ( pszAttributeClass )
+	{
+		V_strncpy( attribute_class.GetForModify(), pszAttributeClass, sizeof( attribute_class ) );
+	}
+	else
+	{
+		EconAttributeDefinition *pAttribDef = GetStaticData();
+		if ( pAttribDef )
+		{
+			V_strncpy( attribute_class.GetForModify(), pAttribDef->attribute_class, sizeof( attribute_class ) );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *pszAttributeClass /*= NULL*/ )
+{
+	m_iAttributeDefinitionIndex = iIndex;
+	value = 0.0f;
+	V_strncpy( value_string.GetForModify(), pszValue, sizeof( value_string ) );
 
 	if ( pszAttributeClass )
 	{
@@ -124,6 +150,47 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 		if ( pszQuality )
 		{
 			V_wcsncpy( wszQuality, pszQuality, sizeof( wszQuality ) );
+		}
+	}
+
+	// Attach the original item name after we're done with all the prefixes.
+	wchar_t wszItemName[256];
+
+	const wchar_t *pszLocalizedName = g_pVGuiLocalize->Find( item_name );
+	if ( pszLocalizedName && pszLocalizedName[0] )
+	{
+		V_wcsncpy( wszItemName, pszLocalizedName, sizeof( wszItemName ) );
+	}
+	else
+	{
+		g_pVGuiLocalize->ConvertANSIToUnicode( item_name, wszItemName, sizeof( wszItemName ) );
+	}
+
+	g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
+		wszQuality, wszItemName );
+
+	return wszFullName;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Generate item name without qualities, prefixes, etc. for disguise HUD...
+//-----------------------------------------------------------------------------
+const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
+{
+	static wchar_t wszFullName[256];
+	wszFullName[0] = '\0';
+
+	wchar_t wszQuality[128];
+	wszQuality[0] = '\0';
+
+	// Attach "the" if necessary to unique items.
+	if ( propername )
+	{
+		const wchar_t *pszPrepend = g_pVGuiLocalize->Find( "#TF_Unique_Prepend_Proper_Quality" );
+
+		if ( pszPrepend )
+		{
+			V_wcsncpy( wszQuality, pszPrepend, sizeof( wszQuality ) );
 		}
 	}
 

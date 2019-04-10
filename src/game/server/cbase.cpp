@@ -281,7 +281,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s,%.1f)(%s)\n",
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 						engine->GetServerTime(),
 #else
 						gpGlobals->curtime,
@@ -302,7 +302,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s)(%s)\n",
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 						engine->GetServerTime(),
 #else
 						gpGlobals->curtime,
@@ -776,7 +776,7 @@ void CEventQueue::Dump( void )
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
 	Msg("Dumping event queue. Current time is: %.2f\n",
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 		engine->GetServerTime()
 #else
 		gpGlobals->curtime
@@ -809,7 +809,7 @@ void CEventQueue::AddEvent( const char *target, const char *targetInput, variant
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// priority key in the priority queue
 #else
 	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// priority key in the priority queue
@@ -832,7 +832,7 @@ void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, varian
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// primary priority key in the priority queue
 #else
 	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// primary priority key in the priority queue
@@ -907,7 +907,7 @@ void CEventQueue::ServiceEvents( void )
 
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 	while ( pe != NULL && pe->m_flFireTime <= engine->GetServerTime() )
 #else
 	while ( pe != NULL && pe->m_flFireTime <= gpGlobals->curtime )
@@ -1197,7 +1197,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( tmpEvent.m_pEntTarget,
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 					  tmpEvent.m_flFireTime - engine->GetServerTime(),
 #else
 					  tmpEvent.m_flFireTime - gpGlobals->curtime,
@@ -1211,7 +1211,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( STRING(tmpEvent.m_iTarget),
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-#if defined( TF_DLL ) || defined(TF_CLASSIC)
+#if defined( TF_DLL ) || defined(TF_VINTAGE)
 					  tmpEvent.m_flFireTime - engine->GetServerTime(),
 #else
 					  tmpEvent.m_flFireTime - gpGlobals->curtime,

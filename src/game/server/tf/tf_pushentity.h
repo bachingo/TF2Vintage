@@ -34,7 +34,7 @@ protected:
 	bool			IsPlayerAABBIntersetingPusherOBB( CBaseEntity *pPlayer, CBaseEntity *pPusher );
 
 	// Not sure if these names are any good
-	float			m_flOffset;
-	Vector			m_vecPush;
+	float		m_flOffset;
+	Vector		m_vecPush;
 };
 #endif  // TF_PUSHENTITY_H

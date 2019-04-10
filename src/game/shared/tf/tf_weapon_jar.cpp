@@ -19,7 +19,7 @@
 #endif
 
 #define TF_JAR_DAMAGE 0.0f
-#define TF_JAR_VEL 935
+#define TF_JAR_VEL 1000.0f
 #define TF_JAR_GRAV 1.0f
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFJar, DT_WeaponJar )

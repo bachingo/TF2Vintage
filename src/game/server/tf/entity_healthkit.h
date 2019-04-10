@@ -26,7 +26,7 @@ public:
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
 
-	virtual const char *GetPowerupModel( void ) { return "models/items/medkit_large.mdl"; }
+	virtual const char *GetDefaultPowerupModel( void );
 
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 };
@@ -37,7 +37,7 @@ public:
 	DECLARE_CLASS( CHealthKitSmall, CHealthKit );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_SMALL; }
 
-	virtual const char *GetPowerupModel( void ) { return "models/items/medkit_small.mdl"; }
+	virtual const char *GetDefaultPowerupModel( void );
 };
 
 class CHealthKitMedium : public CHealthKit
@@ -46,25 +46,7 @@ public:
 	DECLARE_CLASS( CHealthKitMedium, CHealthKit );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_MEDIUM; }
 
-	virtual const char *GetPowerupModel( void ) { return "models/items/medkit_medium.mdl"; }
-};
-
-class CHealthKitTiny : public CHealthKit
-{
-public:
-	DECLARE_CLASS(CHealthKitTiny, CHealthKit);
-	powerupsize_t	GetPowerupSize(void) { return POWERUP_TINY; }
-
-	virtual const char *GetPowerupModel(void) { return "models/items/medkit_overheal.mdl"; } 
-};
-
-class CHealthKitMega : public CHealthKit
-{
-public:
-	DECLARE_CLASS(CHealthKitMega, CHealthKit);
-	powerupsize_t	GetPowerupSize(void) { return POWERUP_MEGA; }
-
-	virtual const char *GetPowerupModel(void) { return "models/items/medkit_large.mdl"; }
+	virtual const char *GetDefaultPowerupModel( void );
 };
 
 #endif // ENTITY_HEALTHKIT_H

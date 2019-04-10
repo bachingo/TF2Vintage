@@ -25,6 +25,11 @@ PlayerClass
 	"weapon3"		"TF_WEAPON_SHOTGUN_PRIMARY"
 	"weapon4"		"TF_WEAPON_PDA_ENGINEER_BUILD"
 	"weapon5"		"TF_WEAPON_PDA_ENGINEER_DESTROY"
+	"weapon6"		"TF_WEAPON_BUILDER"
+	"weapon7"		"TF2V_COSMETIC_HAT"
+	"weapon8"		"TF2V_COSMETIC_MISC"
+	"weapon9"		""
+
 	
 	// Buildables
 	"buildable1"	"OBJ_SENTRYGUN"

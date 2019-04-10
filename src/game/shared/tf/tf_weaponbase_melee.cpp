@@ -180,6 +180,7 @@ void CTFWeaponBaseMelee::SecondaryAttack()
 void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 {
 	CalcIsAttackCritical();
+	CalcIsAttackMiniCritical();
 
 	// Play the melee swing and miss (whoosh) always.
 	SendPlayerAnimEvent( pPlayer );
@@ -328,17 +329,23 @@ void CTFWeaponBaseMelee::Smack( void )
 
 #ifndef CLIENT_DLL
 		// Do Damage.
-		int iCustomDamage = TF_DMG_CUSTOM_NONE;
+		int iCustomDamage = GetCustomDamageType();
 		float flDamage = GetMeleeDamage( trace.m_pEnt, iCustomDamage );
 		int iDmgType = DMG_BULLET | DMG_NEVERGIB | DMG_CLUB;
 		if ( IsCurrentAttackACrit() )
 		{
 			// TODO: Not removing the old critical path yet, but the new custom damage is marking criticals as well for melee now.
 			iDmgType |= DMG_CRITICAL;
+
+		}
+
+		if ( IsCurrentAttackAMiniCrit() )
+		{
+			iDmgType |= DMG_MINICRITICAL;
 		}
 
 		CTakeDamageInfo info( pPlayer, pPlayer, flDamage, iDmgType, iCustomDamage );
-		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * tf_meleeattackforcescale.GetFloat() );
+		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * GetForceScale() );
 		trace.m_pEnt->DispatchTraceAttack( info, vecForward, &trace ); 
 		ApplyMultiDamage();
 
@@ -406,3 +413,13 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 
 	return ( RandomInt( 0, WEAPON_RANDOM_RANGE-1 ) <= flCritChance * WEAPON_RANDOM_RANGE );
 }
+
+#ifndef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFWeaponBaseMelee::GetForceScale( void )
+{
+	return tf_meleeattackforcescale.GetFloat();
+}
+#endif

@@ -25,9 +25,17 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFKnife, DT_TFWeaponKnife )
 
 BEGIN_NETWORK_TABLE( CTFKnife, DT_TFWeaponKnife )
+#ifdef CLIENT_DLL
+	RecvPropBool( RECVINFO( m_bReadyToBackstab ) ),
+#else
+	SendPropBool( SENDINFO( m_bReadyToBackstab ) ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFKnife )
+#ifdef CLIENT_DLL
+	DEFINE_PRED_FIELD( m_bReadyToBackstab, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+#endif
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_knife, CTFKnife );
@@ -43,6 +51,27 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
 //-----------------------------------------------------------------------------
 CTFKnife::CTFKnife()
 {
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Change idle anim to raised if we're ready to backstab.
+//-----------------------------------------------------------------------------
+bool CTFKnife::Deploy( void )
+{
+	if ( BaseClass::Deploy() )
+	{
+		m_bReadyToBackstab = false;
+		return true;
+	}
+	return false;
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFKnife::ItemPostFrame( void )
+{
+	BackstabVMThink();
+	BaseClass::ItemPostFrame();
 }
 
 //-----------------------------------------------------------------------------
@@ -93,6 +122,9 @@ void CTFKnife::PrimaryAttack( void )
 
 #if !defined (CLIENT_DLL)
 	lagcompensation->FinishLagCompensation( pPlayer );
+
+	// Reset "backstab ready" state after each attack.
+	m_bReadyToBackstab = false;
 #endif
 
 	// Swing the weapon.
@@ -205,4 +237,71 @@ void CTFKnife::DoViewModelAnimation( void )
 	Activity act = ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE ) ? ACT_VM_HITCENTER : ACT_VM_SWINGHARD;
 
 	SendWeaponAnim( act );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Change idle anim to raised if we're ready to backstab.
+//-----------------------------------------------------------------------------
+bool CTFKnife::SendWeaponAnim( int iActivity )
+{
+	switch( iActivity )
+	{
+	case ACT_VM_IDLE:
+	case ACT_MELEE_VM_IDLE:
+	case ACT_ITEM1_VM_IDLE:
+	case ACT_ITEM2_VM_IDLE:
+		if ( m_bReadyToBackstab )
+			iActivity = ACT_BACKSTAB_VM_IDLE;
+		break;
+	case ACT_BACKSTAB_VM_UP:
+	case ACT_ITEM1_BACKSTAB_VM_UP:
+	case ACT_ITEM2_BACKSTAB_VM_UP:
+		m_bReadyToBackstab = true;
+		break;
+	case ACT_BACKSTAB_VM_DOWN:
+	case ACT_ITEM1_BACKSTAB_VM_DOWN:
+	case ACT_ITEM2_BACKSTAB_VM_DOWN:
+	default:
+		m_bReadyToBackstab = false;
+		break;
+	}
+	return BaseClass::SendWeaponAnim( iActivity );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Check for knife raise conditions.
+//-----------------------------------------------------------------------------
+void CTFKnife::BackstabVMThink( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+		return;
+	if ( GetActivity() == ACT_VM_IDLE ||
+		GetActivity() == ACT_MELEE_VM_IDLE ||
+		GetActivity() == ACT_BACKSTAB_VM_IDLE ||
+		GetActivity() == ACT_ITEM1_VM_IDLE  ||
+		GetActivity() == ACT_ITEM1_BACKSTAB_VM_IDLE ||
+		GetActivity() == ACT_ITEM2_VM_IDLE  ||
+		GetActivity() == ACT_ITEM2_BACKSTAB_VM_IDLE )
+	{
+		trace_t tr;
+		if ( CanAttack() && DoSwingTrace( tr ) &&
+			tr.m_pEnt->IsPlayer() && tr.m_pEnt->GetTeamNumber() != pOwner->GetTeamNumber() &&
+			IsBehindAndFacingTarget( tr.m_pEnt ) )
+		{
+			if ( !m_bReadyToBackstab )
+			{
+				m_bReadyToBackstab = true;
+				SendWeaponAnim( ACT_BACKSTAB_VM_UP );
+			}
+		}
+		else
+		{
+			if ( m_bReadyToBackstab )
+			{
+				m_bReadyToBackstab = false;
+				SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
+			}
+		}
+	}
 }

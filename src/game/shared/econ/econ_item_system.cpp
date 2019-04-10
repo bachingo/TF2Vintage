@@ -9,8 +9,6 @@ const char *g_TeamVisualSections[TF_TEAM_COUNT] =
 	"",					// TEAM_SPECTATOR
 	"visuals_red",		// TEAM_RED
 	"visuals_blu",		// TEAM_BLUE
-	"visuals_grn",		// TEAM_GREEN
-	"visuals_ylw",		// TEAM_YELLOW
 	//"visuals_mvm_boss"	// ???
 };
 
@@ -295,6 +293,7 @@ public:
 			GET_STRING_DEFAULT( pAttribute, pSubData, name, ( unnamed ) );
 			GET_STRING( pAttribute, pSubData, attribute_class );
 			GET_STRING( pAttribute, pSubData, description_string );
+			pAttribute->string_attribute = ( V_stricmp( pSubData->GetString( "attribute_type" ), "string" ) == 0 );
 
 			const char *szFormat = pSubData->GetString( "description_format" );
 			pAttribute->description_format = UTIL_StringFieldToInt( szFormat, g_AttributeDescriptionFormats, ARRAYSIZE( g_AttributeDescriptionFormats ) );
@@ -319,9 +318,19 @@ public:
 			{
 				GET_VALUES_FAST_BOOL( pVisuals->player_bodygroups, pVisualData );
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "attached_models" ) )
+			else if ( !V_stricmp( pVisualData->GetName(), "attached_model" ) )
 			{
-				// TODO
+				attachedmodel_t attached_model;
+				attached_model.view_model = pVisualData->GetInt( "view_model" );
+				attached_model.world_model = pVisualData->GetInt( "world_model" );
+				V_strncpy( attached_model.model, pVisualData->GetString( "model" ), sizeof( attached_model.model ) );
+				V_strncpy( attached_model.attachment, pVisualData->GetString( "attachment" ), sizeof( attached_model.attachment ) );
+
+				pVisuals->attached_models.AddToTail( attached_model );
+			}
+			else if ( !V_strcmp( pVisualData->GetName(), "custom_particlesystem" ) )
+			{
+				V_strncpy( pVisuals->custom_particlesystem, pVisualData->GetString( "system" ), sizeof( pVisuals->custom_particlesystem ) );
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
 			{
@@ -470,10 +479,12 @@ public:
 
 		GET_STRING( pItem, pData, model_player );
 		GET_STRING( pItem, pData, model_world );
+		GET_STRING( pItem, pData, extra_wearable );
 
 		GET_INT( pItem, pData, attach_to_hands );
 		GET_BOOL( pItem, pData, act_as_wearable );
 		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
+
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
@@ -525,11 +536,46 @@ public:
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
 					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
+					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
 
-					if ( iAttributeID == -1 )
+					if ( !pAttrib || iAttributeID == -1 )
 						continue;
 
-					CEconItemAttribute attribute( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
+					CEconItemAttribute attribute;
+
+					if ( pAttrib->string_attribute )
+					{
+						attribute.Init( iAttributeID, pAttribData->GetString( "value" ), pAttribData->GetString( "attribute_class" ) );
+					}
+					else
+					{
+						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
+					}
+
+					pItem->attributes.AddToTail( attribute );
+				}
+			}
+			else if ( !V_stricmp( pSubData->GetName(), "static_attrs" ) )
+			{
+				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
+				{
+					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
+					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
+
+					if ( !pAttrib || iAttributeID == -1 )
+						continue;
+
+					CEconItemAttribute attribute;
+
+					if ( pAttrib->string_attribute )
+					{
+						attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
+					}
+					else
+					{
+						attribute.Init( iAttributeID, pAttribData->GetFloat(), pAttribData->GetName() );
+					}
+
 					pItem->attributes.AddToTail( attribute );
 				}
 			}
@@ -609,6 +655,8 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
+	string_t strPrecacheAttribute = AllocPooledString( "custom_projectile_model" );
+
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
 	{
@@ -642,6 +690,21 @@ void CEconItemSchema::Precache( void )
 				if ( pVisuals->aWeaponSounds[i][0] != '\0' )
 					CBaseEntity::PrecacheScriptSound( pVisuals->aWeaponSounds[i] );
 			}
+
+			// Precache attachments.
+			for ( int i = 0; i < pVisuals->attached_models.Count(); i++ )
+			{
+				const char *pszModel = pVisuals->attached_models[i].model;
+				if ( pszModel != '\0' )
+					CBaseEntity::PrecacheModel( pszModel );
+			}
+
+			// Precache custom particles
+			const char *pszParticle = pVisuals->custom_particlesystem;
+			if ( pszParticle[0] != '\0' )
+			{
+				PrecacheParticleSystem( pszParticle );
+			}
 		}
 
 		// Cache all attrbute names.
@@ -649,6 +712,12 @@ void CEconItemSchema::Precache( void )
 		{
 			CEconItemAttribute *pAttribute = &pItem->attributes[i];
 			pAttribute->m_strAttributeClass = AllocPooledString( pAttribute->attribute_class );
+
+			// Special case for custom_projectile_model attribute.
+			if ( pAttribute->m_strAttributeClass == strPrecacheAttribute )
+			{
+				CBaseEntity::PrecacheModel( pAttribute->value_string.Get() );
+			}
 		}
 	}
 }

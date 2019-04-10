@@ -16,6 +16,25 @@
 #include "tf_imagepanel.h"
 #include "GameEventListener.h"
 
+// Buff images
+struct CTFBuffInfo
+{
+	vgui::ImagePanel *m_pBuffImage;
+	string_t m_iszRedImage;
+	string_t m_iszBlueImage;
+	int m_iXPos;
+	int m_nOffset;
+
+	CTFBuffInfo( vgui::ImagePanel *pImage, const char *pszRedImage, const char *pszBlueImage )
+	{
+		m_pBuffImage = pImage;
+		m_iszRedImage = AllocPooledString( pszRedImage );
+		m_iszBlueImage = AllocPooledString( pszBlueImage );
+		m_iXPos = 0;
+		m_nOffset = 0;
+	}
+};
+
 //-----------------------------------------------------------------------------
 // Purpose:  
 //-----------------------------------------------------------------------------
@@ -105,6 +124,8 @@ public:
 	void	SetHealth( int iNewHealth, int iMaxHealth, int iMaxBuffedHealth );
 	void	HideHealthBonusImage( void );
 
+	void	SetPlayerHealthImagePanelVisibility( int iCond, CTFBuffInfo *info );
+
 protected:
 
 	virtual void OnThink();
@@ -117,9 +138,14 @@ private:
 	vgui::ImagePanel	*m_pHealthBonusImage;
 	vgui::ImagePanel	*m_pHealthImageBG;
 	vgui::ImagePanel	*m_pHealthImageBuildingBG;
+	vgui::ImagePanel		*m_pSoldierOffenseBuff;
+	vgui::ImagePanel		*m_pSoldierDefenseBuff;
+
+	CUtlVector<CTFBuffInfo *> m_hBuffImages;
 
 	int					m_nHealth;
 	int					m_nMaxHealth;
+	int					m_nOffset;
 
 	int					m_nBonusHealthOrigX;
 	int					m_nBonusHealthOrigY;

@@ -157,44 +157,6 @@ void CTFArrowPanel::Paint()
 			}
 		}
 	}
-	else if (pEnt->GetTeamNumber() == TF_TEAM_GREEN)
-	{
-		pMaterial = m_GreenMaterial;
-
-		if (pLocalPlayer && (pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE))
-		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if (pTargetEnt && pTargetEnt->IsPlayer())
-			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >(pTargetEnt);
-				if (pTarget->HasTheFlag() && (pTarget->GetItem() == pEnt))
-				{
-					pMaterial = m_GreenMaterialNoArrow;
-				}
-			}
-		}
-	}
-	else if (pEnt->GetTeamNumber() == TF_TEAM_YELLOW)
-	{
-		pMaterial = m_YellowMaterial;
-
-		if (pLocalPlayer && (pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE))
-		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if (pTargetEnt && pTargetEnt->IsPlayer())
-			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >(pTargetEnt);
-				if (pTarget->HasTheFlag() && (pTarget->GetItem() == pEnt))
-				{
-					pMaterial = m_YellowMaterialNoArrow;
-				}
-			}
-		}
-	}
 
 	int x = 0;
 	int y = 0;
@@ -485,14 +447,6 @@ void CTFHudFlagObjectives::OnTick()
 				{
 					m_pBlueFlag->SetEntity(pFlag);
 				}
-				else if (m_pGreenFlag && pFlag->GetTeamNumber() == TF_TEAM_GREEN)
-				{
-					m_pGreenFlag->SetEntity(pFlag);
-				}
-				else if (m_pYellowFlag && pFlag->GetTeamNumber() == TF_TEAM_YELLOW)
-				{
-					m_pYellowFlag->SetEntity(pFlag);
-				}
 			}
 		}
 		else
@@ -563,12 +517,6 @@ void CTFHudFlagObjectives::OnTick()
 						case TF_TEAM_BLUE:
 							m_pSpecCarriedImage->SetImage(("%s_blue", STRING(pPlayerFlag->m_szHudIcon)));
 							break;
-						case TF_TEAM_GREEN:
-							m_pSpecCarriedImage->SetImage(("%s_green", STRING(pPlayerFlag->m_szHudIcon)));
-							break;
-						case TF_TEAM_YELLOW:
-							m_pSpecCarriedImage->SetImage(("%s_yellow", STRING(pPlayerFlag->m_szHudIcon)));
-							break;
 					}
 				}
 			}
@@ -623,12 +571,6 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 					break;	
 				case TF_TEAM_BLUE:
 					m_pCarriedImage->SetImage("../hud/objectives_flagpanel_carried_blue");
-					break;
-				case TF_TEAM_GREEN:
-					m_pCarriedImage->SetImage("../hud/objectives_flagpanel_carried_green");
-					break;
-				case TF_TEAM_YELLOW:
-					m_pCarriedImage->SetImage("../hud/objectives_flagpanel_carried_yellow");
 					break;
 			}
 

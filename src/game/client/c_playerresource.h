@@ -41,8 +41,8 @@ public : // IGameResources intreface
 	virtual bool	IsAlive( int index );
 	virtual bool	IsFakePlayer( int index );
 	virtual bool	IsLocalPlayer( int index  );
-	virtual bool	IsHLTV(int index);
-	virtual bool	IsReplay(int index);
+	virtual bool	IsHLTV( int index );
+	virtual bool	IsReplay( int index );
 
 	virtual const char *GetPlayerName( int index );
 	virtual int		GetPing( int index );

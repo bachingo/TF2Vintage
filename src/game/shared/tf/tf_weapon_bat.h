@@ -35,5 +35,4 @@ private:
 
 	CTFBat( const CTFBat & ) {}
 };
-
 #endif // TF_WEAPON_BAT_H

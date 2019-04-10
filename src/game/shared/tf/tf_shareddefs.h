@@ -27,8 +27,6 @@ enum
 {
 	TF_TEAM_RED = LAST_SHARED_TEAM+1,
 	TF_TEAM_BLUE,
-	TF_TEAM_GREEN, 
-	TF_TEAM_YELLOW,
 	TF_TEAM_COUNT
 };
 
@@ -40,14 +38,12 @@ extern const char *g_aTeamParticleNames[TF_TEAM_COUNT];
 extern color32 g_aTeamColors[TF_TEAM_COUNT];
 extern color32 g_aTeamSkinColors[TF_TEAM_COUNT];
 
-const char *GetTeamParticleName( int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
-const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
-void PrecacheTeamParticles( const char *pszFormat, bool bDeathmatchOverride = false, const char **pNames = g_aTeamParticleNames );
+const char *GetTeamParticleName( int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
+const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
+void PrecacheTeamParticles( const char *pszFormat, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
 
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
-#define CONTENTS_GREENTEAM	CONTENTS_UNUSED
-#define CONTENTS_YELLOWTEAM	CONTENTS_UNUSED6
 			
 // Team roles
 enum 
@@ -81,14 +77,9 @@ enum
 //-----------------------------------------------------------------------------
 #define PANEL_CLASS_BLUE		"class_blue"
 #define PANEL_CLASS_RED			"class_red"
-#define PANEL_CLASS_GREEN		"class_green"
-#define PANEL_CLASS_YELLOW		"class_yellow"
 #define PANEL_MAPINFO			"mapinfo"
 #define PANEL_ROUNDINFO			"roundinfo"
-#define PANEL_FOURTEAMSCOREBOARD "fourteamscoreboard"
-#define PANEL_FOURTEAMSELECT	"fourteamselect"
-#define PANEL_DEATHMATCHSCOREBOARD "deathmatchscoreboard"
-#define PANEL_DEATHMATCHTEAMSELECT "deathmatchteamselect"
+#define PANEL_ARENATEAMSELECT "arenateamselect"
 
 // file we'll save our list of viewed intro movies in
 #define MOVIES_FILE				"viewed.res"
@@ -105,8 +96,6 @@ enum
 
 #define COLOR_TF_BLUE	Color( 64, 64, 255, 255 )
 #define COLOR_TF_RED	Color( 255, 64, 64, 255 )
-#define COLOR_TF_GREEN	Color( 64, 255, 64, 255 )
-#define COLOR_TF_YELLOW	Color( 255, 255, 64, 255 )
 #define COLOR_TF_SPECTATOR Color( 245, 229, 196, 255 )
 
 
@@ -116,7 +105,6 @@ enum
 #define TF_CLASS_COUNT			( TF_CLASS_COUNT_ALL - 1 )
 
 #define TF_FIRST_NORMAL_CLASS	( TF_CLASS_UNDEFINED + 1 )
-#define TF_LAST_NORMAL_CLASS	( TF_CLASS_CIVILIAN - 1 )
 
 #define	TF_CLASS_MENU_BUTTONS	( TF_CLASS_RANDOM + 1 )
 
@@ -132,12 +120,7 @@ enum
 	TF_CLASS_HEAVYWEAPONS,
 	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
-	TF_CLASS_ENGINEER,		// TF_LAST_NORMAL_CLASS
-
-	// Add any new classes after Engineer.
-	// The following classes are not available in normal play.
-	TF_CLASS_CIVILIAN,
-	TF_CLASS_MERCENARY,
+	TF_CLASS_ENGINEER,		// TF_CLASS_COUNT
 	TF_CLASS_COUNT_ALL,
 
 	TF_CLASS_RANDOM
@@ -176,8 +159,6 @@ enum
 	TF_GAMETYPE_RD,
 	TF_GAMETYPE_PASSTIME,
 	TF_GAMETYPE_PD,
-	TF_GAMETYPE_DM,
-	TF_GAMETYPE_VIP,
 	TF_GAMETYPE_MEDIEVAL,
 };
 extern const char *g_aGameTypeNames[];	// localized gametype names
@@ -370,12 +351,10 @@ enum
 	TF_WEAPON_JAR,
 	TF_WEAPON_LASER_POINTER,
 	TF_WEAPON_HANDGUN_SCOUT_PRIMARY,
-	TF_WEAPON_STICKBOMB, //TF2C AFTER THIS
-	TF_WEAPON_HUNTERRIFLE,
-	TF_WEAPON_UMBRELLA,
-	TF_WEAPON_HAMMERFISTS,
-	TF_WEAPON_CHAINSAW,
-	TF_WEAPON_HEAVYARTILLERY,
+	TF_WEAPON_STICKBOMB, 
+	TF_WEAPON_BAT_WOOD,
+	TF_WEAPON_ROBOT_ARM,
+	TF_WEAPON_BUFF_ITEM,
 
 	TF_WEAPON_COUNT
 };
@@ -425,8 +404,6 @@ enum
 	TF_PROJECTILE_GRAPPLINGHOOK,
 	TF_PROJECTILE_SENTRY_ROCKET,
 	TF_PROJECTILE_BREAD_MONSTER,
-	TF_PROJECTILE_NAIL,
-	TF_PROJECTILE_DART,
 
 	TF_NUM_PROJECTILES
 };
@@ -569,20 +546,9 @@ enum
 	TF_COND_CRITBOOSTED_RUNE_TEMP,
 	TF_COND_PASSTIME_INTERCEPTION,
 
-	// Airblast
+	// TF2V conds
 	TF_COND_NO_MOVE,
-
-	// Add TF2C conds here
-	TF_COND_SMOKE_BOMB,
-	TF_COND_SLOWED,
-
-	// Powerup conditions
-	TF_COND_POWERUP_CRITDAMAGE,
-	TF_COND_POWERUP_SHORTUBER,
-	TF_COND_POWERUP_FASTRELOAD,
-	TF_COND_POWERUP_CLOAK,
-	TF_COND_POWERUP_RAGEMODE,
-	TF_COND_POWERUP_CLASSCHANGE,
+	TF_COND_DISGUISE_HEALTH_OVERHEALED,
 
 	TF_COND_LAST
 };
@@ -862,23 +828,91 @@ extern const char *g_pszHintMessages[];
 // Special Damage types
 enum
 {
-	TF_DMG_CUSTOM_NONE = 0,
+	TF_DMG_CUSTOM_NONE, // TODO: Remove this at some point
+
 	TF_DMG_CUSTOM_HEADSHOT,
 	TF_DMG_CUSTOM_BACKSTAB,
 	TF_DMG_CUSTOM_BURNING,
 	TF_DMG_WRENCH_FIX,
 	TF_DMG_CUSTOM_MINIGUN,
 	TF_DMG_CUSTOM_SUICIDE,
-	TF_DMG_CUSTOM_FLARE,
-	TF_DMG_CUSTOM_STICKBOMB,
-	TF_DMG_CUSTOM_TAUNTATK_HADOUKEN,	
+	TF_DMG_CUSTOM_TAUNTATK_HADOUKEN,
+	TF_DMG_CUSTOM_BURNING_FLARE,
 	TF_DMG_CUSTOM_TAUNTATK_HIGH_NOON,
-	TF_DMG_CUSTOM_TAUNTATK_GRANDSLAM,
+	TF_DMG_CUSTOM_TAUNTATK_GRAND_SLAM,
+	TF_DMG_CUSTOM_PENETRATE_MY_TEAM,
+	TF_DMG_CUSTOM_PENETRATE_ALL_PLAYERS,
 	TF_DMG_CUSTOM_TAUNTATK_FENCING,
+	TF_DMG_CUSTOM_PENETRATE_NONBURNING_TEAMMATE,
 	TF_DMG_CUSTOM_TAUNTATK_ARROW_STAB,
+	TF_DMG_CUSTOM_TELEFRAG,
+	TF_DMG_CUSTOM_BURNING_ARROW,
+	TF_DMG_CUSTOM_FLYINGBURN,
+	TF_DMG_CUSTOM_PUMPKIN_BOMB,
+	TF_DMG_CUSTOM_DECAPITATION,
+	TF_DMG_CUSTOM_TAUNTATK_GRENADE,
+	TF_DMG_CUSTOM_BASEBALL,
+	TF_DMG_CUSTOM_CHARGE_IMPACT,
+	TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING,
+	TF_DMG_CUSTOM_AIR_STICKY_BURST,
+	TF_DMG_CUSTOM_DEFENSIVE_STICKY,
+	TF_DMG_CUSTOM_PICKAXE,
+	TF_DMG_CUSTOM_ROCKET_DIRECTHIT,
 	TF_DMG_CUSTOM_TAUNTATK_UBERSLICE,
-	TF_DMG_TELEFRAG, // 16
-	TF_DMG_BUILDING_CARRIED, // 36
+	TF_DMG_CUSTOM_PLAYER_SENTRY,
+	TF_DMG_CUSTOM_STANDARD_STICKY,
+	TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT,
+	TF_DMG_CUSTOM_TAUNTATK_ENGINEER_GUITAR_SMASH,
+	TF_DMG_CUSTOM_BLEEDING,
+	TF_DMG_CUSTOM_GOLD_WRENCH,
+	TF_DMG_CUSTOM_CARRIED_BUILDING,
+	TF_DMG_CUSTOM_COMBO_PUNCH,
+	TF_DMG_CUSTOM_TAUNTATK_ENGINEER_ARM_KILL,
+	TF_DMG_CUSTOM_FISH_KILL,
+	TF_DMG_CUSTOM_TRIGGER_HURT,
+	TF_DMG_CUSTOM_DECAPITATION_BOSS,
+	TF_DMG_CUSTOM_STICKBOMB_EXPLOSION,
+	TF_DMG_CUSTOM_AEGIS_ROUND,
+	TF_DMG_CUSTOM_FLARE_EXPLOSION,
+	TF_DMG_CUSTOM_BOOTS_STOMP,
+	TF_DMG_CUSTOM_PLASMA,
+	TF_DMG_CUSTOM_PLASMA_CHARGED,
+	TF_DMG_CUSTOM_PLASMA_GIB,
+	TF_DMG_CUSTOM_PRACTICE_STICKY,
+	TF_DMG_CUSTOM_EYEBALL_ROCKET,
+	TF_DMG_CUSTOM_HEADSHOT_DECAPITATION,
+	TF_DMG_CUSTOM_TAUNTATK_ARMAGEDDON,
+	TF_DMG_CUSTOM_FLARE_PELLET,
+	TF_DMG_CUSTOM_CLEAVER,
+	TF_DMG_CUSTOM_CLEAVER_CRIT,
+	TF_DMG_CUSTOM_SAPPER_RECORDER_DEATH,
+	TF_DMG_CUSTOM_MERASMUS_PLAYER_BOMB,
+	TF_DMG_CUSTOM_MERASMUS_GRENADE,
+	TF_DMG_CUSTOM_MERASMUS_ZAP,
+	TF_DMG_CUSTOM_MERASMUS_DECAPITATION,
+	TF_DMG_CUSTOM_CANNONBALL_PUSH,
+	TF_DMG_CUSTOM_TAUNTATK_ALLCLASS_GUITAR_RIFF,
+	TF_DMG_CUSTOM_THROWABLE,
+	TF_DMG_CUSTOM_THROWABLE_KILL,
+	TF_DMG_CUSTOM_SPELL_TELEPORT,
+	TF_DMG_CUSTOM_SPELL_SKELETON,
+	TF_DMG_CUSTOM_SPELL_MIRV,
+	TF_DMG_CUSTOM_SPELL_METEOR,
+	TF_DMG_CUSTOM_SPELL_LIGHTNING,
+	TF_DMG_CUSTOM_SPELL_FIREBALL,
+	TF_DMG_CUSTOM_SPELL_MONOCULUS,
+	TF_DMG_CUSTOM_SPELL_BLASTJUMP,
+	TF_DMG_CUSTOM_SPELL_BATS,
+	TF_DMG_CUSTOM_SPELL_TINY,
+	TF_DMG_CUSTOM_KART,
+	TF_DMG_CUSTOM_GIANT_HAMMER,
+	TF_DMG_CUSTOM_RUNE_REFLECT,
+	TF_DMG_CUSTOM_DRAGONS_FURY_IGNITE,
+	TF_DMG_CUSTOM_DRAGONS_FURY_BONUS_BURNIN,
+	TF_DMG_CUSTOM_SLAP_KILL,
+	TF_DMG_CUSTOM_CROC,
+	TF_DMG_CUSTOM_TAUNTATK_GASBLAST,
+	TF_DMG_CUSTOM_AXTINGUISHER_BOOSTED,
 };
 
 #define TF_JUMP_ROCKET	( 1 << 0 )
@@ -893,6 +927,9 @@ enum
 	TFCOLLISION_GROUP_COMBATOBJECT,
 	TFCOLLISION_GROUP_ROCKETS,		// Solid to players, but not player movement. ensures touch calls are originating from rocket
 	TFCOLLISION_GROUP_RESPAWNROOMS,
+	TFCOLLISION_GROUP_PUMPKIN_BOMB, // Bombs
+	TFCOLLISION_GROUP_ARROWS, // Arrows
+	TFCOLLISION_GROUP_NONE, // Collides with nothing
 };
 
 //-----------------
@@ -1101,6 +1138,61 @@ enum
 	MAX_POWERUPS
 };
 
+//--------------------------------------------------------------------------
+// Stun
+//--------------------------------------------------------------------------
+#define TF_STUNFLAG_SLOWDOWN			(1<<0) // activates slowdown modifier
+#define TF_STUNFLAG_BONKSTUCK			(1<<1) // bonk sound, stuck
+#define TF_STUNFLAG_LIMITMOVEMENT		(1<<2) // disable forward/backward movement
+#define TF_STUNFLAG_CHEERSOUND			(1<<3) // cheering sound
+#define TF_STUNFLAG_NOSOUNDOREFFECT		(1<<4) // no sound or particle
+#define TF_STUNFLAG_THIRDPERSON			(1<<5) // panic animation
+#define TF_STUNFLAG_GHOSTEFFECT			(1<<6) // ghost particles
+#define TF_STUNFLAG_BONKEFFECT			(1<<7) // sandman particles
+#define TF_STUNFLAG_RESISTDAMAGE		(1<<8) // damage resist modifier
+	
+enum
+{
+	TF_STUNFLAGS_LOSERSTATE		= TF_STUNFLAG_THIRDPERSON | TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_NOSOUNDOREFFECT, // Currently unused
+	TF_STUNFLAGS_GHOSTSCARE		= TF_STUNFLAG_THIRDPERSON |TF_STUNFLAG_GHOSTEFFECT, // Ghost stun
+	TF_STUNFLAGS_SMALLBONK		= TF_STUNFLAG_THIRDPERSON | TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_BONKEFFECT, // Half stun
+	TF_STUNFLAGS_NORMALBONK		= TF_STUNFLAG_BONKSTUCK, // Full stun
+	TF_STUNFLAGS_BIGBONK		= TF_STUNFLAG_CHEERSOUND | TF_STUNFLAG_BONKSTUCK | TF_STUNFLAG_RESISTDAMAGE | TF_STUNFLAG_BONKEFFECT, // Moonshot
+	TF_STUNFLAGS_COUNT // This doesn't really work with flags
+};
+
+//--------------------------------------------------------------------------
+// Holiday
+//--------------------------------------------------------------------------
+enum
+{
+	kHoliday_None,
+	kHoliday_TF2Birthday,
+	kHoliday_Halloween,
+	kHoliday_Christmas,
+	kHoliday_CommunityUpdate,
+	kHoliday_EOTL,
+	kHoliday_ValentinesDay,
+	kHoliday_MeetThePyro,
+	kHoliday_FullMoon,
+	kHoliday_HalloweenOrFullMoon,
+	kHoliday_HalloweenOrFullMoonOrValentines,
+	kHoliday_AprilFools,
+
+	kHolidayCount,
+};
+
+//--------------------------------------------------------------------------
+// Rage
+//--------------------------------------------------------------------------
+enum
+{
+	TF_BUFF_OFFENSE = 1,
+	TF_BUFF_DEFENSE,
+	TF_BUFF_REGENONDAMAGE,
+};
+
+
 #define	MAX_CABLE_CONNECTIONS 4
 
 bool IsObjectAnUpgrade( int iObjectType );
@@ -1171,7 +1263,7 @@ const CObjectInfo* GetObjectInfo( int iObject );
 
 // Object utility funcs
 bool	ClassCanBuild( int iClass, int iObjectType );
-int		CalculateObjectCost( int iObjectType /*, int iNumberOfObjects, int iTeam, bool bLast = false*/ );
+int		CalculateObjectCost( int iObjectType, bool bMini = false /*, int iNumberOfObjects, int iTeam, bool bLast = false*/ );
 int		CalculateObjectUpgrade( int iObjectType, int iObjectLevel );
 
 // Shell ejections
@@ -1192,19 +1284,39 @@ enum
 // Taunt attack types
 enum
 {
-	TF_TAUNT_NONE,
-	TF_TAUNT_PYRO,
-	TF_TAUNT_HEAVY,
-	TF_TAUNT_LUNCHBOX,
-	TF_TAUNT_LUNCHBOX_DRINK,
-	TF_TAUNT_SPY1,
-	TF_TAUNT_SPY2,
-	TF_TAUNT_SPY3,
-	TF_TAUNT_SNIPER_STUN,
-	TF_TAUNT_SNIPER_KILL,
-	TF_TAUNT_MEDIC_STUN,
-	TF_TAUNT_MEDIC_KILL,
-	TF_TAUNT_OKTOBERFEST,
+	TAUNTATK_NONE,
+ 	TAUNTATK_PYRO_HADOUKEN,
+ 	TAUNTATK_HEAVY_EAT, // 1st Nom
+ 	TAUNTATK_HEAVY_RADIAL_BUFF, // 2nd Nom gives hp
+ 	TAUNTATK_SCOUT_DRINK,
+ 	TAUNTATK_HEAVY_HIGH_NOON, // POW!
+ 	TAUNTATK_SCOUT_GRAND_SLAM, // Sandman
+ 	TAUNTATK_MEDIC_INHALE, // Oktoberfest
+ 	TAUNTATK_SPY_FENCING_SLASH_A, // Just lay
+ 	TAUNTATK_SPY_FENCING_SLASH_B, // Your weapon down
+ 	TAUNTATK_SPY_FENCING_STAB, // And walk away.
+ 	TAUNTATK_RPS_KILL,
+ 	TAUNTATK_SNIPER_ARROW_STAB_IMPALE, // Stab stab
+ 	TAUNTATK_SNIPER_ARROW_STAB_KILL, // STAB
+ 	TAUNTATK_SOLDIER_GRENADE_KILL, // Equalizer
+ 	TAUNTATK_DEMOMAN_BARBARIAN_SWING,
+ 	TAUNTATK_MEDIC_UBERSLICE_IMPALE, // I'm going to saw
+ 	TAUNTATK_MEDIC_UBERSLICE_KILL, // THROUGH YOUR BONES!
+ 	TAUNTATK_FLIP_LAND_PARTICLE,
+ 	TAUNTATK_RPS_PARTICLE,
+ 	TAUNTATK_HIGHFIVE_PARTICLE,
+ 	TAUNTATK_ENGINEER_GUITAR_SMASH,
+ 	TAUNTATK_ENGINEER_ARM_IMPALE, // Grinder Start
+ 	TAUNTATK_ENGINEER_ARM_KILL, // Grinder Kill
+ 	TAUNTATK_ENGINEER_ARM_BLEND, // Grinder Loop
+ 	TAUNTATK_SOLDIER_GRENADE_KILL_WORMSIGN,
+ 	TAUNTATK_SHOW_ITEM,
+ 	TAUNTATK_MEDIC_RELEASE_DOVES,
+ 	TAUNTATK_PYRO_ARMAGEDDON,
+ 	TAUNTATK_PYRO_SCORCHSHOT,
+ 	TAUNTATK_ALLCLASS_GUITAR_RIFF,
+ 	TAUNTATK_MEDIC_HEROIC_TAUNT,
+	TAUNTATK_PYRO_GASBLAST,
 };
 
 typedef enum
@@ -1267,6 +1379,32 @@ public:
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
 		return pEntity && !pEntity->IsPlayer();
 	}
+};
+
+class CTraceFilterIgnoreTeammatesAndTeamObjects : public CTraceFilterSimple
+{
+public:
+	// It does have a base, but we'll never network anything below here..
+	DECLARE_CLASS( CTraceFilterIgnoreTeammatesAndTeamObjects, CTraceFilterSimple );
+
+	CTraceFilterIgnoreTeammatesAndTeamObjects( const IHandleEntity *passentity, int collisionGroup, int teamNumber )
+		: CTraceFilterSimple( passentity, collisionGroup )
+	{
+		m_iTeamNumber = teamNumber;
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{
+		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
+
+		if ( pEntity && pEntity->GetTeamNumber() == m_iTeamNumber )
+			return false;
+
+		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
+	}
+
+private:
+	int m_iTeamNumber;
 };
 
 // Unused

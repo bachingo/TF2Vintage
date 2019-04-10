@@ -318,10 +318,6 @@ void CTFMapInfoMenu::LoadMapPage( const char *mapName )
 			{
 				pszGameTypeAbbreviation = "payload";
 			}
-			else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_DM )
-			{
-				pszGameTypeAbbreviation = "dm";
-			}
 
 			Q_snprintf( mapLocalizationString, sizeof( mapLocalizationString ), "default_%s_description", pszGameTypeAbbreviation );
 		}
@@ -469,20 +465,6 @@ static s_MapInfo s_Maps[] = {
 	"cp_powerhouse",		"Powerhouse",		"#Gametype_CP",					"Valve",
 
 	"ctf_turbine",			"Turbine",			"#Gametype_CTF",				"Flobster",
-	//---------------------- TF2C maps ----------------------
-	"cp_furnace_rc",	"Furnace Creek",	"#Gametype_AttackDefense",		"YM, Nineaxis",
-	"cp_tidal_v4",		"Tidal",			"#Gametype_CP",					"Heyo",
-	"cp_amaranth",		"Amaranth",			"#Gametype_AttackDefense",		"Berry, TheoF114",
-	"cp_hydro",			"Hydro",			"#Gametype_CP_Domination",		"Snowshoe, Valve",
-	"cp_cragg_a1",		"Cragg",			"#Gametype_CP_Domination",		"Berry",
-	"ctf_casbah",		"Casbah",			"#Gametype_CTF",				"MacD11",
-	"ctf_landfall_rc"	"Landfall",			"#Gametype_CTF",				"Dr. Spud",
-	"dm_wiseau"			"Wiseau",			"#Gametype_Deathmatch",			"MacD11, iiboharz",
-	"dm_grain"			"Grain",			"#Gametype_Deathmatch",			"Ms. Mudpie",
-	"dm_parley"			"Parley",			"#Gametype_Deathmatch",			"DrPyspy",
-	"dm_lumberyard"		"Lumberyard",		"#Gametype_Deathmatch",			"iiboharz, MacD11, Valve",
-	"dm_ravine"			"Ravine",			"#Gametype_Deathmatch",			"Snowshoe, Valve",
-	"dm_2fort"			"2Fort (DM)",		"#Gametype_Deathmatch",			"iiboharz, Valve",
 };
 
 static s_MapTypeInfo s_MapTypes[] = {
@@ -494,9 +476,6 @@ static s_MapTypeInfo s_MapTypes[] = {
 	"arena_",	6, "#Gametype_Arena",
 	"tr_",		3, "#Gametype_Training",
 	"tc_",		3, "#TF_TerritoryControl",
-	"dm_",		3, "#Gametype_Deathmatch",
-	"vip_",		4, "#Gametype_VIP",
-	"esp_",		4, "#Gametype_Espionage",
 };
 
 //-----------------------------------------------------------------------------

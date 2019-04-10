@@ -45,7 +45,6 @@ void CTFQuitDialogPanel::Show()
 {
 	BaseClass::Show();
 	MAINMENU_ROOT->HidePanel(CURRENT_MENU);
-	MAINMENU_ROOT->HidePanel(NOTIFICATION_MENU);
 };
 
 void CTFQuitDialogPanel::Hide()

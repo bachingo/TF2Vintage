@@ -18,6 +18,10 @@
 #include "econ_item_view.h"
 #include "attribute_manager.h"
 
+#ifdef CLIENT_DLL
+#include "c_tf_viewmodeladdon.h"
+#endif
+
 struct wearableanimplayback_t
 {
 	int iStub;
@@ -44,6 +48,11 @@ public:
 	virtual void OnDataChanged( DataUpdateType_t );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 	virtual bool OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options );
+
+	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return NULL; }
+
+	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
+	virtual void ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }
@@ -76,4 +85,7 @@ private:
 	CNetworkVarEmbedded( CAttributeContainer, m_AttributeManager );
 };
 
+#ifdef CLIENT_DLL
+void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pEconEntity, ClientModelRenderInfo_t const *pInfo, int iModelType );
+#endif
 #endif

@@ -262,18 +262,20 @@ int CObjectSapper::OnTakeDamage( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CObjectSapper::Killed(const CTakeDamageInfo &info)
+void CObjectSapper::Killed( const CTakeDamageInfo &info )
  {
-		// If the sapper is removed by someone other than builder, award bonus points.
-		CTFPlayer *pScorer = ToTFPlayer(TFGameRules()->GetDeathScorer(info.GetAttacker(), info.GetInflictor(), this));
+	// If the sapper is removed by someone other than builder, award bonus points.
+	CTFPlayer *pScorer = ToTFPlayer( TFGameRules()->GetDeathScorer( info.GetAttacker(), info.GetInflictor(), this ) );
 	if (pScorer)
 	{
 			CBaseObject *pObject = GetParentObject();
-			if (pScorer->GetTeamNumber() != pObject->GetBuilder()->GetTeamNumber())
+			if ( pScorer->GetTeamNumber() != pObject->GetTeamNumber() )
 			{
 				return;
 			}
-			if (pObject && pScorer != pObject->GetBuilder())
+
+			// Don't award bonus points if this is a map-placed object
+			if ( pObject && pObject->GetBuilder() && pScorer != pObject->GetBuilder() )
 			{
 				// Bonus points.
 				IGameEvent *event_bonus = gameeventmanager->CreateEvent( "player_bonuspoints" );
@@ -286,7 +288,7 @@ void CObjectSapper::Killed(const CTakeDamageInfo &info)
 					gameeventmanager->FireEvent( event_bonus );
 				}
 
-				CTF_GameStats.Event_PlayerAwardBonusPoints(pScorer, this, 1);
+				CTF_GameStats.Event_PlayerAwardBonusPoints( pScorer, this, 1 );
 			}
 	}
 	

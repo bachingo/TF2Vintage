@@ -26,7 +26,7 @@
 #include "c_portal_player.h"
 #endif // PORTAL
 
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 #include "cam_thirdperson.h"
 #endif
 
@@ -40,7 +40,7 @@ using namespace vgui;
 
 int ScreenTransform( const Vector& point, Vector& screen );
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
 // If running TF, we use CHudTFCrosshair instead (which is derived from CHudCrosshair)
 #else
 DECLARE_HUDELEMENT( CHudCrosshair );
@@ -137,7 +137,7 @@ bool CHudCrosshair::ShouldDraw( void )
 	return ( bNeedsDraw && CHudElement::ShouldDraw() );
 }
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
 extern ConVar cl_crosshair_red;
 extern ConVar cl_crosshair_green;
 extern ConVar cl_crosshair_blue;
@@ -195,7 +195,7 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 		}
 #endif
 
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 		if ( g_ThirdPersonManager.WantToUseGameThirdPerson() )
 		{
 			vecStart = pPlayer->Weapon_ShootPosition();
@@ -274,7 +274,7 @@ void CHudCrosshair::Paint( void )
 	}
 
 	float flPlayerScale = 1.0f;
-#if defined( TF_CLIENT_DLL ) || defined( TF_CLASSIC_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
 	Color clr( cl_crosshair_red.GetInt(), cl_crosshair_green.GetInt(), cl_crosshair_blue.GetInt(), 255 );
 	flPlayerScale = cl_crosshair_scale.GetFloat() / 32.0f;  // the player can change the scale in the options/multiplayer tab
 #else

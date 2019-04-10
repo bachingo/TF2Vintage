@@ -8,7 +8,6 @@ class CTFAdvModelPanel;
 class CTFWeaponSetPanel;
 class CModelPanel;
 class CTFAdvButton;
-class CTFRGBPanel;
 class CTFAdvItemButton;
 
 //-----------------------------------------------------------------------------
@@ -36,6 +35,7 @@ public:
 	void SetCurrentSlot(int iSlot) { m_iCurrentSlot = iSlot; };
 	int  GetAnimSlot( CEconItemDefinition *pItemDef, int iClass );
 	const char *GetWeaponModel( CEconItemDefinition *pItemDef, int iClass );
+	const char *GetExtraWearableModel( CEconItemDefinition *pItemDef );
 	void UpdateModelWeapons( void );
 	void SetModelClass(int iClass);
 	void SetSlotAndPreset(int iSlot, int iPreset);
@@ -46,7 +46,6 @@ private:
 	CTFAdvModelPanel *m_pClassModelPanel;
 	CModelPanel		*m_pGameModelPanel;
 	CTFWeaponSetPanel *m_pWeaponSetPanel;
-	CTFRGBPanel		*m_pRGBPanel;
 	CUtlVector<CTFAdvItemButton*> m_pWeaponIcons;
 	CUtlVector<CTFAdvItemButton*> m_pSlideButtons;
 	CUtlVector<int> m_RawIDPos;

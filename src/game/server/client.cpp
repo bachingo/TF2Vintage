@@ -36,7 +36,7 @@
 #include "basemultiplayerplayer.h"
 #include "voice_gamemgr.h"
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 #include "tf_player.h"
 #include "tf_gamerules.h"
 #endif
@@ -63,7 +63,7 @@ enum eAllowPointServerCommand {
 	eAllowAlways
 };
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 // The default value here should match the default of the convar
 eAllowPointServerCommand sAllowPointServerCommand = eAllowOfficial;
 #else
@@ -83,7 +83,7 @@ void sv_allow_point_servercommand_changed( IConVar *pConVar, const char *pOldStr
 	{
 		sAllowPointServerCommand = eAllowAlways;
 	}
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	else if ( V_strcasecmp ( pNewValue, "official" ) == 0 )
 	{
 		sAllowPointServerCommand = eAllowOfficial;
@@ -96,7 +96,7 @@ void sv_allow_point_servercommand_changed( IConVar *pConVar, const char *pOldStr
 }
 
 ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
                                       // The default value here should match the default of the convar
                                       "official",
 #else
@@ -106,7 +106,7 @@ ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
                                       FCVAR_NONE,
                                       "Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.\n"
                                       "  disallow : Always disallow\n"
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
                                       "  official : Allowed for valve maps only\n"
 #endif // TF_DLL
                                       "  always   : Allow for all maps", sv_allow_point_servercommand_changed );
@@ -624,7 +624,7 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 		return;
 
 	bool bAllowed = ( sAllowPointServerCommand == eAllowAlways );
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	if ( sAllowPointServerCommand == eAllowOfficial )
 	{
 		bAllowed = TFGameRules() && TFGameRules()->IsValveMap();
@@ -1207,7 +1207,7 @@ void CC_God_f (void)
 	if ( !pPlayer )
 		return;
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
    if ( TFGameRules() && ( TFGameRules()->IsPVEModeActive() == false ) )
    {
 	   if ( gpGlobals->deathmatch )
@@ -1365,7 +1365,7 @@ CON_COMMAND_F( setang_exact, "Snap player eyes and orientation to specified pitc
 	pPlayer->Teleport( NULL, &newang, NULL );
 	pPlayer->SnapEyeAngles( newang );
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	static_cast<CTFPlayer*>( pPlayer )->DoAnimationEvent( PLAYERANIMEVENT_SNAP_YAW );
 #endif
 }

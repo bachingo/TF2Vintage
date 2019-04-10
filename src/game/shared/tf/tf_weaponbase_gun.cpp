@@ -173,14 +173,8 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 
 	case TF_PROJECTILE_SYRINGE:
-	case TF_PROJECTILE_NAIL:
 		pProjectile = FireNail( pPlayer, iProjectile );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-		break;
-
-	case TF_PROJECTILE_DART:
-		pProjectile = FireNail(pPlayer, iProjectile);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB:
@@ -202,12 +196,10 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	case TF_PROJECTILE_JAR:
 	case TF_PROJECTILE_JAR_MILK:
-	case TF_PROJECTILE_CLEAVER:
-	case TF_PROJECTILE_THROWABLE:
 	case TF_PROJECTILE_FESTITIVE_URINE:
 	case TF_PROJECTILE_BREADMONSTER_JARATE:
 	case TF_PROJECTILE_BREADMONSTER_MADMILK:
-		pProjectile = FireThrowable(pPlayer, iProjectile);
+		pProjectile = FireJar(pPlayer, iProjectile);
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
@@ -221,6 +213,8 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
+	case TF_PROJECTILE_CLEAVER:
+	case TF_PROJECTILE_THROWABLE:
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -496,28 +490,17 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	QAngle angForward;
 	GetProjectileFireSetup( pPlayer, Vector(16,6,-8), &vecSrc, &angForward );
 
-	// Add some spread (no spread on tranq. gun)
-	if ( iSpecificNail != TF_PROJECTILE_DART )
-	{
-		float flSpread = 1.5;
+	// Add some spread
+	float flSpread = 1.5;
 
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
+	angForward.x += RandomFloat(-flSpread, flSpread);
+	angForward.y += RandomFloat(-flSpread, flSpread);
 
 	CTFBaseProjectile *pProjectile = NULL;
 	switch( iSpecificNail )
 	{
 	case TF_PROJECTILE_SYRINGE:
 		pProjectile = CTFProjectile_Syringe::Create( vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit() );
-		break;
-
-	case TF_PROJECTILE_NAIL:
-		pProjectile = CTFProjectile_Nail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
-		break;
-
-	case TF_PROJECTILE_DART:
-		pProjectile = CTFProjectile_Dart::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
 		break;
 
 	default:
@@ -576,13 +559,12 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	}
 
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
-		spin, pPlayer, GetTFWpnData(), iMode, flDamageMult );
+		spin, pPlayer, GetTFWpnData(), iMode, flDamageMult, this );
 
 
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetLauncher( this );
 	}
 	return pProjectile;
 
@@ -622,9 +604,9 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Fire an Arrow
+// Purpose: Fire a throwable
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireThrowable( CTFPlayer *pPlayer, int iType )
+CBaseEntity *CTFWeaponBaseGun::FireJar( CTFPlayer *pPlayer, int iType )
 {
 	PlayWeaponShootSound();
 
@@ -634,9 +616,10 @@ CBaseEntity *CTFWeaponBaseGun::FireThrowable( CTFPlayer *pPlayer, int iType )
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
-	// Create grenades here!!
+	// Set the starting position a bit behind the player so the projectile
+	// launches out of the players view
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
-	vecSrc +=  vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
+	vecSrc +=  vecForward * -64.0f + vecRight * 8.0f + vecUp * -6.0f;
 	
 	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
 		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
@@ -835,9 +818,9 @@ void CTFWeaponBaseGun::DoFireEffects()
 		}
 	}*/
 
-	if (pPlayer->IsPlayerClass(TF_CLASS_SNIPER))
+	if ( pPlayer->IsPlayerClass( TF_CLASS_SNIPER ) )
 	{
-		if (pPlayer->IsActiveTFWeapon(TF_WEAPON_COMPOUND_BOW))
+		if ( pPlayer->IsActiveTFWeapon( TF_WEAPON_COMPOUND_BOW ) )
 		{
 			bMuzzleFlash = false;
 		}

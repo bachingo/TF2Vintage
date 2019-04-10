@@ -30,17 +30,16 @@ public:
 	CTFStickBomb();
 	CTFStickBomb( const CTFStickBomb& ) = delete;
 	
-	virtual int GetWeaponID() const { return TF_WEAPON_STICKBOMB; }
-	virtual const char *GetWorldModel() const;
-	virtual void Precache();
-	virtual void Smack();
-	virtual void SwitchBodyGroups();
-	virtual void WeaponRegenerate();
-	virtual void WeaponReset();
+	virtual int			GetWeaponID() const { return TF_WEAPON_STICKBOMB; }
+	virtual const char	*GetWorldModel() const;
+	virtual void		Precache();
+	virtual void		Smack();
+	virtual void		SwitchBodyGroups();
+	virtual void		WeaponRegenerate();
+	virtual void		WeaponReset();
 	
 #ifdef CLIENT_DLL
-	virtual void ClientThink( void );
-	virtual int GetWorldModelIndex();
+	virtual int			GetWorldModelIndex();
 #endif
 	
 private:

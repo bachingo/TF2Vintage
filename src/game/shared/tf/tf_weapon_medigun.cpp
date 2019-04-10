@@ -40,48 +40,6 @@ const char *g_pszMedigunHealSounds[TF_MEDIGUN_COUNT] =
 	"WeaponMedigun.Healing"
 };
 
-typedef struct
-{
-	const char *fullcharge;
-	const char *beam;
-	const char *beam_invlun;
-}
-MedigunParticles_t;
-
-MedigunParticles_t g_MedigunParticles[TF_MEDIGUN_COUNT] =
-{
-	// Stock
-	{
-		"medicgun_invulnstatus_fullcharge_%s",
-		"medicgun_beam_%s",
-		"medicgun_beam_%s_invun"
-	},
-	// Kritzkrieg
-	{
-		"medicgun_invulnstatus_fullcharge_%s",
-		"kritz_beam_%s",
-		"kritz_beam_%s_invun"
-	},
-	// Quick-Fix
-	{
-		"medicgun_invulnstatus_fullcharge_%s",
-		"medicgun_beam_%s",
-		"medicgun_beam_%s_invun"
-	},
-	// Vaccinator
-	{
-		"medicgun_invulnstatus_fullcharge_%s",
-		"medicgun_beam_%s",
-		"medicgun_beam_%s_invun"
-	},
-	// Overhealer
-	{
-		"medicgun_invulnstatus_fullcharge_%s",
-		"overhealer_%s_beam",
-		"overhealer_%s_beam"
-	},
-};
-
 // Buff ranges
 ConVar weapon_medigun_damage_modifier( "weapon_medigun_damage_modifier", "1.5", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Scales the damage a player does while being healed with the medigun." );
 ConVar weapon_medigun_construction_rate( "weapon_medigun_construction_rate", "10", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Constructing object health healed per second by the medigun." );
@@ -232,9 +190,9 @@ void CWeaponMedigun::Precache()
 	PrecacheScriptSound( "WeaponMedigun.Charged" );
 	PrecacheScriptSound( "WeaponMedigun.HealingDetach" );
 
-	PrecacheTeamParticles(g_MedigunParticles[iType].fullcharge);
-	PrecacheTeamParticles(g_MedigunParticles[iType].beam);
-	PrecacheTeamParticles(g_MedigunParticles[iType].beam_invlun);
+	PrecacheTeamParticles( "medicgun_invulnstatus_fullcharge_%s" );
+	PrecacheTeamParticles( "medicgun_beam_%s" );
+	PrecacheTeamParticles( "medicgun_beam_%s_invun" );
 
 	// Precache charge sounds.
 	for ( int i = 0; i < TF_CHARGE_COUNT; i++ )
@@ -1075,7 +1033,7 @@ void CWeaponMedigun::ManageChargeEffect( void )
 
 		if ( pEffectOwner && m_pChargeEffect == NULL )
 		{
-			const char *pszEffectName = ConstructTeamParticle( g_MedigunParticles[GetMedigunType()].fullcharge, GetTFPlayerOwner()->GetTeamNumber() );
+			const char *pszEffectName = ConstructTeamParticle( "medicgun_invulnstatus_fullcharge_%s", GetTFPlayerOwner()->GetTeamNumber() );
 
 			m_pChargeEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
 			m_hChargeEffectHost = pEffectOwner;
@@ -1224,11 +1182,13 @@ void CWeaponMedigun::UpdateEffects( void )
 	if ( m_hHealingTargetEffect.pEffect && pEffectOwner )
 	{
 		pEffectOwner->ParticleProp()->StopEmission( m_hHealingTargetEffect.pEffect );
+		pEffectOwner->ParticleProp()->StopEmission( m_hHealingTargetEffect.pCustomEffect );
 	}
 
 	m_hHealingTargetEffect.hOwner = NULL;
 	m_hHealingTargetEffect.pTarget = NULL;
 	m_hHealingTargetEffect.pEffect = NULL;
+	m_hHealingTargetEffect.pCustomEffect = NULL;
 
 	pEffectOwner = GetWeaponForEffect();
 
@@ -1243,11 +1203,28 @@ void CWeaponMedigun::UpdateEffects( void )
 		if ( m_hHealingTargetEffect.pTarget == m_hHealingTarget )
 			return;
 
-		const char *pszFormat = IsReleasingCharge() ? g_MedigunParticles[GetMedigunType()].beam_invlun : g_MedigunParticles[GetMedigunType()].beam;
+		const char *pszFormat = IsReleasingCharge() ? "medicgun_beam_%s_invun" : "medicgun_beam_%s";
 		const char *pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber() );
 
 		CNewParticleEffect *pEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
 		pEffectOwner->ParticleProp()->AddControlPoint( pEffect, 1, m_hHealingTarget, PATTACH_ABSORIGIN_FOLLOW, NULL, Vector(0,0,50) );
+
+		CEconItemDefinition *pStatic = m_Item.GetStaticData();
+		if ( pStatic )
+		{
+			EconItemVisuals *pVisuals =	pStatic->GetVisuals( GetTeamNumber() );
+			if ( pVisuals )
+			{
+				const char *pszCustomEffectName = pVisuals->custom_particlesystem;
+				if ( pszCustomEffectName[0] != '\0' )
+				{
+					CNewParticleEffect *pCustomEffect = pEffectOwner->ParticleProp()->Create( pszCustomEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
+					pEffectOwner->ParticleProp()->AddControlPoint( pCustomEffect, 1, m_hHealingTarget, PATTACH_ABSORIGIN_FOLLOW, NULL, Vector(0,0,50) );
+
+					m_hHealingTargetEffect.pCustomEffect = pCustomEffect;
+				}
+			}
+		}
 
 		m_hHealingTargetEffect.hOwner = pEffectOwner;
 		m_hHealingTargetEffect.pTarget = m_hHealingTarget;

@@ -12,34 +12,38 @@
 #include "tf_player.h"
 #endif
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFLaser_Pointer, DT_WeaponLaser_Pointer )
+#ifdef GAME_DLL
+ConVar tf_debug_wrangler( "tf_wrangler_debug", "0", FCVAR_CHEAT );
+#endif
 
-BEGIN_NETWORK_TABLE( CTFLaser_Pointer, DT_WeaponLaser_Pointer )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFLaserPointer, DT_WeaponLaserPointer )
+
+BEGIN_NETWORK_TABLE( CTFLaserPointer, DT_WeaponLaserPointer )
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CTFLaser_Pointer )
+BEGIN_PREDICTION_DATA( CTFLaserPointer )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_laser_pointer, CTFLaser_Pointer );
+LINK_ENTITY_TO_CLASS( tf_weapon_laser_pointer, CTFLaserPointer );
 PRECACHE_WEAPON_REGISTER( tf_weapon_laser_pointer );
 
 // Server specific.
 #ifndef CLIENT_DLL
-BEGIN_DATADESC( CTFLaser_Pointer )
+BEGIN_DATADESC( CTFLaserPointer )
 END_DATADESC()
 #endif
 
-CTFLaser_Pointer::CTFLaser_Pointer()
+CTFLaserPointer::CTFLaserPointer()
 {
 #ifdef GAME_DLL
-	pGun = NULL;
+	m_hGun = NULL;
 #endif
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Reset the charge when we deploy
 //-----------------------------------------------------------------------------
-bool CTFLaser_Pointer::Deploy( void )
+bool CTFLaserPointer::Deploy( void )
 {
 #ifdef GAME_DLL
 	CTFPlayer *pOwner = GetTFPlayerOwner();
@@ -54,7 +58,7 @@ bool CTFLaser_Pointer::Deploy( void )
 
 			if ( pObject->GetType() == OBJ_SENTRYGUN )
 			{
-				pGun = dynamic_cast< CObjectSentrygun * > ( pObject );
+				m_hGun = dynamic_cast< CObjectSentrygun * > ( pObject );
 			}
 		}
 	}
@@ -66,19 +70,19 @@ bool CTFLaser_Pointer::Deploy( void )
 //-----------------------------------------------------------------------------
 // Purpose: Reset the charge when we holster
 //-----------------------------------------------------------------------------
-bool CTFLaser_Pointer::Holster( CBaseCombatWeapon *pSwitchingTo )
+bool CTFLaserPointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 #ifdef GAME_DLL
-	if ( pGun )
+	if ( m_hGun )
 	{
 
-		if ( pGun->GetState() == SENTRY_STATE_WRANGLED )
+		if ( m_hGun->GetState() == SENTRY_STATE_WRANGLED )
 		{
-			pGun->OnStopWrangling();
-			pGun->SetShouldFire( false );
+			m_hGun->OnStopWrangling();
+			m_hGun->SetShouldFire( false );
 		}
 	}
-	pGun = NULL;
+	m_hGun = NULL;
 #endif
 
 	return BaseClass::Holster( pSwitchingTo );
@@ -87,7 +91,7 @@ bool CTFLaser_Pointer::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::WeaponReset( void )
+void CTFLaserPointer::WeaponReset( void )
 {
 	BaseClass::WeaponReset();
 }
@@ -95,44 +99,45 @@ void CTFLaser_Pointer::WeaponReset( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::PrimaryAttack( void )
+void CTFLaserPointer::PrimaryAttack( void )
 {
 	if ( !CanAttack() )
 		return;
 
 #ifdef GAME_DLL
-	if ( !pGun )
+	if ( !m_hGun )
 		return;
 
-	if ( m_flNextPrimaryAttack < gpGlobals->curtime && pGun->GetState() == SENTRY_STATE_WRANGLED )
+	if ( m_flNextPrimaryAttack < gpGlobals->curtime && m_hGun->GetState() == SENTRY_STATE_WRANGLED )
 	{
-		pGun->SetShouldFire( true );
+		m_hGun->SetShouldFire( true );
 
 		// input buffer
 		m_flNextPrimaryAttack = gpGlobals->curtime + 0.05f;
 	}
 #endif
+	SendWeaponAnim( ACT_ITEM3_VM_PRIMARYATTACK );
 }
 
 // ---------------------------------------------------------------------------- -
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::SecondaryAttack( void )
+void CTFLaserPointer::SecondaryAttack( void )
 {
 	if ( !CanAttack() )
 		return;
 
 #ifdef GAME_DLL
-	if ( !pGun )
+	if ( !m_hGun )
 		return;
 
-	if ( m_flNextSecondaryAttack <= gpGlobals->curtime && pGun->GetState() == SENTRY_STATE_WRANGLED )
+	if ( m_flNextSecondaryAttack <= gpGlobals->curtime && m_hGun->GetState() == SENTRY_STATE_WRANGLED )
 	{
-		int iUpgradeLevel = pGun->GetUpgradeLevel();
+		int iUpgradeLevel = m_hGun->GetUpgradeLevel();
 
 		if ( iUpgradeLevel == 3 )
 		{
-			pGun->FireRockets();
+			m_hGun->FireRockets();
 
 			// Rockets fire slightly faster wrangled
 			m_flNextSecondaryAttack = gpGlobals->curtime + 2.5;
@@ -144,18 +149,92 @@ void CTFLaser_Pointer::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLaser_Pointer::ItemPostFrame( void )
+void CTFLaserPointer::ItemPostFrame( void )
 {
 #ifdef GAME_DLL
-	if ( pGun )
+	if ( m_hGun )
 	{
 		//TODO: Find a better way to determine if we can wrangle
-		if ( !pGun->IsRedeploying() && !pGun->IsBuilding() && !pGun->IsUpgrading() && !pGun->HasSapper() )
+		if ( !m_hGun->IsRedeploying() && !m_hGun->IsBuilding() && !m_hGun->IsUpgrading() && !m_hGun->HasSapper() )
 		{
-			pGun->SetState( SENTRY_STATE_WRANGLED );
+			m_hGun->SetState( SENTRY_STATE_WRANGLED );
+		}
+
+		if ( m_hGun->GetState() == SENTRY_STATE_WRANGLED )
+		{
+			UpdateLaserDot();
 		}
 	}
 #endif
 
 	BaseClass::ItemPostFrame();
 }
+
+#ifdef GAME_DLL
+void CTFLaserPointer::UpdateLaserDot( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	m_hGun->StudioFrameAdvance( );
+
+	if ( !pOwner || !pOwner->IsAlive() )
+	{
+		m_hGun->OnStopWrangling();
+		m_hGun->SetShouldFire( false );
+		return;
+	}
+
+	trace_t tr;
+	Vector vecStart, vecEnd, vecForward;
+	pOwner->EyeVectors( &vecForward );
+
+	vecStart = pOwner->EyePosition();
+	vecEnd = vecStart + ( vecForward * MAX_TRACE_LENGTH);
+
+	CTraceFilterIgnoreTeammatesAndTeamObjects *pFilter = new CTraceFilterIgnoreTeammatesAndTeamObjects( this, COLLISION_GROUP_NONE, GetTeamNumber() );
+
+	// First pass to find where we are looking
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
+
+	vecStart = m_hGun->EyePosition();
+
+	// If we're looking at a player fix our position to the centermass
+	if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
+	{
+		vecEnd = m_hGun->GetEnemyAimPosition( tr.m_pEnt );
+
+		// Second pass to make sure the sentry can actually see the person we're targeting 
+		UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
+
+		if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
+		{
+			m_hGun->SetEnemy( tr.m_pEnt );
+		}
+		else
+		{
+			m_hGun->SetEnemy( NULL );
+			vecEnd = tr.endpos;
+		}
+	}
+	else
+	{
+		// We're not locked on to a player so make sure the laser doesn't clip through walls
+		m_hGun->SetEnemy( NULL );
+
+		// Second pass
+		UTIL_TraceLine( vecStart, tr.endpos, MASK_SOLID, pFilter, &tr );
+		vecEnd = tr.endpos;
+	}
+
+	m_hGun->SetEndVector( vecEnd );
+
+	// Adjust sentry angles 
+	vecForward = vecEnd - vecStart;
+	m_hGun->UpdateSentryAngles( vecForward ); 
+
+	if ( tf_debug_wrangler.GetBool() ) 
+	{
+		NDebugOverlay::Line( vecStart, vecEnd, 0, 255, 0, true, 0.25f );
+	}
+}
+#endif

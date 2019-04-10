@@ -280,7 +280,7 @@ void CHudHistoryResource::CheckClearHistory( void )
 //-----------------------------------------------------------------------------
 bool CHudHistoryResource::ShouldDraw( void )
 {
-#if defined(TF_CLIENT_DLL) || defined(TF_CLASSIC_CLIENT)
+#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
 	return false;
 #else
 	return ( ( m_iCurrentHistorySlot > 0 || m_bNeedsDraw ) && CHudElement::ShouldDraw() );

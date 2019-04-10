@@ -136,6 +136,7 @@ protected:
 		EHANDLE				hOwner;
 		C_BaseEntity		*pTarget;
 		CNewParticleEffect	*pEffect;
+		CNewParticleEffect  *pCustomEffect; // custom_particlesystem
 	};
 	healingtargeteffects_t m_hHealingTargetEffect;
 

@@ -63,7 +63,7 @@
 #include "tier1/utlstring.h"
 #include "utlhashtable.h"
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 #include "tf_gamerules.h"
 #endif
 
@@ -303,7 +303,7 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CBaseEntity, DT_BaseEntity )
 	SendPropInt		(SENDINFO(m_bAnimatedEveryTick),		1, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bAlternateSorting )),
 
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	SendPropArray3( SENDINFO_ARRAY3(m_nModelIndexOverrides), SendPropInt( SENDINFO_ARRAY(m_nModelIndexOverrides), SP_MODEL_INDEX_BITS, 0 ) ),
 #endif
 
@@ -655,7 +655,7 @@ void CBaseEntity::SetModelIndex( int index )
 
 void CBaseEntity::ClearModelIndexOverrides( void )
 {
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	for ( int index = 0 ; index < MAX_VISION_MODES ; index++ )
 	{
 		m_nModelIndexOverrides.Set( index, 0 );
@@ -665,7 +665,7 @@ void CBaseEntity::ClearModelIndexOverrides( void )
 
 void CBaseEntity::SetModelIndexOverride( int index, int nValue )
 {
-#if defined( TF_DLL ) || defined ( TF_CLASSIC )
+#if defined( TF_DLL ) || defined ( TF_VINTAGE )
 	if ( ( index >= VISION_MODE_NONE ) && ( index < MAX_VISION_MODES ) )
 	{
 		if ( nValue != m_nModelIndexOverrides[index] )
@@ -1565,7 +1565,7 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 		// setup the damage force & position inside the CTakeDamageInfo (Utility functions for this are in
 		// takedamageinfo.cpp. If you think the damage shouldn't cause force (unlikely!) then you can set the 
 		// damage type to DMG_GENERIC, or | DMG_CRUSH if you need to preserve the damage type for purposes of HUD display.
-#if !defined( TF_DLL ) && !defined( TF_CLASSIC )
+#if !defined( TF_DLL ) && !defined( TF_VINTAGE )
 		Assert( force != vec3_origin && offset != vec3_origin );
 #else
 		// this was spamming the console for Payload maps in TF (trigger_hurt entity on the front of the cart)
@@ -5323,7 +5323,7 @@ void CC_Ent_FireTarget( const CCommand& args )
 }
 static ConCommand firetarget("firetarget", CC_Ent_FireTarget, 0, FCVAR_CHEAT);
 
-#ifdef TF_CLASSIC
+#ifdef TF_VINTAGE
 ConVar sv_allow_ent_fire("sv_allow_ent_fire", "0", FCVAR_CHEAT, "Allows clients to use ent_fire");
 #endif
 
@@ -5361,7 +5361,7 @@ public:
 			//	  ent_create point_servercommand; ent_setname mine; ent_fire mine command "rcon_password mynewpassword"
 			// So, I'm removing the ability for anyone to execute ent_fires on dedicated servers (we can't check to see if
 			// this command is going to connect with a point_servercommand entity here, because they could delay the event and create it later).
-#ifdef TF_CLASSIC
+#ifdef TF_VINTAGE
 			if ( !sv_allow_ent_fire.GetBool() )
 			{
 #endif
@@ -5378,7 +5378,7 @@ public:
 					if ( pPlayer != pHostPlayer )
 						return;
 				}
-#ifdef TF_CLASSIC
+#ifdef TF_VINTAGE
 			}
 #endif
 			else if ( gpGlobals->maxClients > 1 )

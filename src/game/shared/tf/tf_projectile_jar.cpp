@@ -75,7 +75,7 @@ void CTFProjectile_Jar::Precache( void )
 {
 	PrecacheModel( TF_WEAPON_JAR_MODEL );
 
-	PrecacheTeamParticles( "peejar_trail_%s", true );
+	PrecacheTeamParticles( "peejar_trail_%s", false, g_aTeamNamesShort );
 	PrecacheParticleSystem( "peejar_impact" );
 
 	PrecacheScriptSound( "Jar.Explode" );
@@ -93,6 +93,12 @@ void CTFProjectile_Jar::Spawn( void )
 
 	BaseClass::Spawn();
 	SetTouch( &CTFProjectile_Jar::JarTouch );
+
+	// Pumpkin Bombs
+	AddFlag( FL_GRENADE );
+
+	// Don't collide with anything for a short time so that we never get stuck behind surfaces
+	SetCollisionGroup( TFCOLLISION_GROUP_NONE );
 
 	AddSolidFlags( FSOLID_TRIGGER );
 }
@@ -163,7 +169,14 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 void CTFProjectile_Jar::JarTouch( CBaseEntity *pOther )
 {
 	if ( pOther == GetThrower() )
+	{
+		// Make us solid if we're not already
+		if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE )
+		{
+			SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
+		}
 		return;
+	}
 
 	// Verify a correct "other."
 	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
@@ -225,14 +238,17 @@ void CTFProjectile_Jar::VPhysicsCollision( int index, gamevcollisionevent_t *pEv
 		return;
 	}
 
-	if ( pHitEntity->GetMoveType() == MOVETYPE_NONE )
+	// TODO: This needs to be redone properly
+	/*if ( pHitEntity->GetMoveType() == MOVETYPE_NONE )
 	{
 		// Blow up
 		SetThink( &CTFProjectile_Jar::Detonate );
 		SetNextThink( gpGlobals->curtime );
-	}
+	}*/
 
-	return;
+		// Blow up
+		SetThink( &CTFProjectile_Jar::Detonate );
+		SetNextThink( gpGlobals->curtime );
 
 }
 
@@ -310,20 +326,7 @@ void C_TFProjectile_Jar::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		// Now stick our initial velocity into the interpolation history 
-		CInterpolatedVar< Vector > &interpolator = GetOriginInterpolator();
-
-		interpolator.ClearHistory();
-		float changeTime = GetLastChangeTime( LATCH_SIMULATION_VAR );
-
-		// Add a sample 1 second back.
-		Vector vCurOrigin = GetLocalOrigin() - m_vInitialVelocity;
-		interpolator.AddToHead( changeTime - 1.0, &vCurOrigin, false );
-
-		// Add the current sample.
-		vCurOrigin = GetLocalOrigin();
-		interpolator.AddToHead( changeTime, &vCurOrigin, false );
-
+		m_flCreationTime = gpGlobals->curtime;
 		CreateTrails();
 	}
 
@@ -345,5 +348,16 @@ void C_TFProjectile_Jar::CreateTrails( void )
 	const char *pszEffectName = ConstructTeamParticle( "peejar_trail_%s", GetTeamNumber(), false, g_aTeamNamesShort );
 
 	ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Don't draw if we haven't yet gone past our original spawn point
+//-----------------------------------------------------------------------------
+int CTFProjectile_Jar::DrawModel( int flags )
+{
+	if ( gpGlobals->curtime - m_flCreationTime < 0.1f )
+		return 0;
+
+	return BaseClass::DrawModel( flags );
 }
 #endif

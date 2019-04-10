@@ -23,12 +23,12 @@ public:
 	virtual bool Init();
 	virtual char const *Name() { return "CTFTips"; }
 
-	const wchar_t *GetRandomTip();
+	const wchar_t *GetRandomTip( int &iClass );
 	const wchar_t *GetNextClassTip( int iClass );
 private:
 	const wchar_t *GetTip( int iClass, int iTip );
 
-	int m_iTipCount[TF_LAST_NORMAL_CLASS+1];		// how many tips there are for each class
+	int m_iTipCount[TF_CLASS_COUNT+1];		// how many tips there are for each class
 	int m_iTipCountAll;								// how many tips there are total
 	int m_iCurrentClassTip;							// index of current per-class tip
 	bool m_bInited;									// have we been initialized

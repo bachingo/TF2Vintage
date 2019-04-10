@@ -67,6 +67,12 @@ struct DamagerHistory_t
 };
 #define MAX_DAMAGER_HISTORY 2
 
+struct AppliedContext_t
+{
+	float flContextExpireTime;
+	string_t pszContext;
+};
+
 //=============================================================================
 //
 // TF Player
@@ -137,7 +143,7 @@ public:
 	void				HandleCommand_WeaponPreset(int iSlotNum, int iPresetNum);
 	void				HandleCommand_WeaponPreset(int iClass, int iSlotNum, int iPresetNum);
 
-	CBaseEntity			*GiveNamedItem( const char *pszName, int iSubType = 0, CEconItemView* pItem = NULL );
+	CBaseEntity			*GiveNamedItem( const char *pszName, int iSubType = 0, CEconItemView* pItem = NULL, int iClassNum = -1 );
 
 	void				SaveMe( void );
 
@@ -171,7 +177,7 @@ public:
 
 	// Team.
 	void				ForceChangeTeam( int iTeamNum );
-	virtual void		ChangeTeam( int iTeamNum );
+	virtual void		ChangeTeam( int iTeamNum, bool bAutoTeam = false, bool bSilent = false );
 
 	// mp_fadetoblack
 	void				HandleFadeToBlack( void );
@@ -292,12 +298,8 @@ public:
 	virtual bool ShouldGib( const CTakeDamageInfo &info );
 
 	// Dropping Ammo
-	void DropAmmoPack( void );
-	void DropWeapon( CTFWeaponBase *pWeapon, bool bKilled = false );
+	void DropAmmoPack( bool bLunchbox = false );
 	void DropFakeWeapon( CTFWeaponBase *pWeapon );
-
-	// Dropping Sandvich
-	void DropLunchbox( void );
 
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );
@@ -470,6 +472,21 @@ public:
 
 	bool CalculateAmmoPackPositionAndAngles( CTFWeaponBase *pWeapon, Vector &vecOrigin, QAngle &vecAngles );
 
+	// Stun
+	void				PlayStunSound( CTFPlayer *pOther, const char *pszStunSound );
+
+	// Arena
+	float	m_flArenaQueueTime;
+	bool	m_bInArenaQueue;
+
+	// Not really sure why this is needed in Arena
+	bool	m_bIgnoreLastAction;
+
+	bool				IsArenaSpectator( void ) { return m_Shared.m_bArenaSpectator; }
+
+	// Gunslinger
+	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
+
 private:
 
 	int					GetAutoTeam( void );
@@ -506,7 +523,6 @@ private:
 
 	// Ammo pack.
 	void AmmoPackCleanUp( void );
-	void DroppedWeaponCleanUp( void );
 
 	// State.
 	CPlayerStateInfo	*StateLookupInfo( int nState );
@@ -530,6 +546,8 @@ private:
 	bool				PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo &info_modified );
 
 	bool				GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, int numSceneBufferBytes );
+
+	void				AddContext( AppliedContext_t context );
 
 private:
 	// Map introductions
@@ -614,6 +632,9 @@ private:
 	float				m_flTauntAttackTime;
 	int					m_iTauntAttack;
 
+	// Gunslinger taunt
+	short				m_nTauntDamageCount;
+
 	float				m_flNextCarryTalkTime;
 
 	int					m_nBlastJumpFlags;
@@ -624,6 +645,8 @@ private:
 	CAttributeManager	m_AttributeManager;
 
 	COutputEvent		m_OnDeath;
+
+	CUtlVector<AppliedContext_t> m_hActiveContexts;
 
 public:
 	bool				SetPowerplayEnabled( bool bOn );

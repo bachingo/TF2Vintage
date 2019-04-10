@@ -18,7 +18,7 @@
 #include "props.h"
 #include "physconstraint.h"
 
-#if defined( TF_DLL ) || defined( TF_CLASSIC )
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
 #include "tf_shareddefs.h"
 #endif
 
@@ -319,7 +319,7 @@ CTeamTrainWatcher::CTeamTrainWatcher()
 	m_hGlowEnt.Set( NULL );
 #endif // GLOWS_ENABLE
 
-#if defined( TF_DLL ) || defined( TF_CLASSIC )
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
 	ChangeTeam( TF_TEAM_BLUE );
 #else
 	ChangeTeam( TEAM_UNASSIGNED );

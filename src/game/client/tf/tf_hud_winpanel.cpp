@@ -123,12 +123,6 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		if ( !g_PR )
 			return;
 
-		if (TFGameRules()->IsDeathmatch())
-		{
-			m_bShouldBeVisible = false;
-			return;
-		}
-
 		int iWinningTeam = event->GetInt( "winning_team" );
 		int iWinReason = event->GetInt( "winreason" );
 		int iFlagCapLimit = event->GetInt( "flagcaplimit" );
@@ -167,18 +161,6 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 			pTeamLabel = ( bRoundComplete ? "#Winpanel_RedWins" : ( bIsAreaDefense ? "#Winpanel_RedDefends" : "#Winpanel_RedAdvances" ) );
 			pTopPlayersLabel = "#Winpanel_RedMVPs";
 			pLocalizedTeamName =  g_pVGuiLocalize->Find( "TF_RedTeam_Name" );
-			break;
-		case TF_TEAM_GREEN:
-			pImagePanelBG->SetImage("../hud/winpanel_green_bg_main.vmt");
-			pTeamLabel = (bRoundComplete ? "#Winpanel_GreenWins" : (bIsAreaDefense ? "#Winpanel_GreenDefends" : "#Winpanel_GreenAdvances"));
-			pTopPlayersLabel = "#Winpanel_GreenMVPs";
-			pLocalizedTeamName = g_pVGuiLocalize->Find("TF_GreenTeam_Name");
-			break;
-		case TF_TEAM_YELLOW:
-			pImagePanelBG->SetImage("../hud/winpanel_yellow_bg_main.vmt");
-			pTeamLabel = (bRoundComplete ? "#Winpanel_YellowWins" : (bIsAreaDefense ? "#Winpanel_YellowDefends" : "#Winpanel_YellowAdvances"));
-			pTopPlayersLabel = "#Winpanel_YellowMVPs";
-			pLocalizedTeamName = g_pVGuiLocalize->Find("TF_YellowTeam_Name");
 			break;
 		case TEAM_UNASSIGNED:	// stalemate
 			pImagePanelBG->SetImage( "../hud/winpanel_black_bg_main.vmt" );
@@ -274,38 +256,7 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 				m_pTeamScorePanel->SetDialogVariable( "blueteamname", GetGlobalTeam(TF_TEAM_BLUE)->Get_Name() );
 				m_pTeamScorePanel->SetDialogVariable( "redteamname", GetGlobalTeam(TF_TEAM_RED)->Get_Name() );
 
-				if (TFGameRules()->IsFourTeamGame())
-				{
-					vgui::ImagePanel *pGreenBG = dynamic_cast<vgui::ImagePanel *>(m_pTeamScorePanel->FindChildByName("GreenScoreBG"));
-					vgui::ImagePanel *pYellowBG = dynamic_cast<vgui::ImagePanel *>(m_pTeamScorePanel->FindChildByName("YellowScoreBG"));
-
-					if (pGreenBG && pYellowBG)
-					{
-						pGreenBG->SetEnabled(true);
-						pGreenBG->SetVisible(true);
-						pYellowBG->SetEnabled(true);
-						pYellowBG->SetVisible(true);
-					}
-
-					int iGreenTeamPrevScore = event->GetInt("green_score_prev", 0);
-					int iYellowTeamPrevScore = event->GetInt("yellow_score_prev", 0);
-					m_iGreenTeamScore = event->GetInt("green_score", 0);
-					m_iYellowTeamScore = event->GetInt("yellow_score", 0);
-
-					m_pTeamScorePanel->SetDialogVariable("greenteamscore", iGreenTeamPrevScore);
-					m_pTeamScorePanel->SetDialogVariable("yellowteamscore", iYellowTeamPrevScore);
-
-					m_pTeamScorePanel->SetDialogVariable("greenteamname", GetGlobalTeam(TF_TEAM_GREEN)->Get_Name());
-					m_pTeamScorePanel->SetDialogVariable("yellowteamname", GetGlobalTeam(TF_TEAM_YELLOW)->Get_Name());
-
-					if ((m_iBlueTeamScore != iBlueTeamPrevScore) || (m_iRedTeamScore != iRedTeamPrevScore) || (m_iGreenTeamScore != iGreenTeamPrevScore) || (m_iYellowTeamScore != iYellowTeamPrevScore))
-					{
-						// if the new scores are different, set ourselves to update the scoreboard to the new values after a short delay, so players
-						// see the scores tick up
-						m_flTimeUpdateTeamScore = gpGlobals->curtime + 2.0f;
-					}
-				}
-				else if ( ( m_iBlueTeamScore != iBlueTeamPrevScore ) || ( m_iRedTeamScore != iRedTeamPrevScore ) )
+				if ( ( m_iBlueTeamScore != iBlueTeamPrevScore ) || ( m_iRedTeamScore != iRedTeamPrevScore ) )
 				{
 					// if the new scores are different, set ourselves to update the scoreboard to the new values after a short delay, so players
 					// see the scores tick up

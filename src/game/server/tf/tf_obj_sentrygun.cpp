@@ -40,13 +40,14 @@ extern ConVar tf_obj_upgrade_per_hit;
 #define SENTRYGUN_MINS			Vector(-20, -20, 0)
 #define SENTRYGUN_MAXS			Vector( 20,  20, 66)
 
-#define SENTRYGUN_MAX_HEALTH	150
+#define SENTRYGUN_MAX_HEALTH		150
+#define MINI_SENTRYGUN_MAX_HEALTH	100
 
 #define SENTRYGUN_ADD_SHELLS	40
 #define SENTRYGUN_ADD_ROCKETS	8
 
-#define SENTRY_THINK_DELAY	0.05
-#define WRANGLER_RECOVERY_TIME 3.00f
+#define SENTRY_THINK_DELAY		0.05
+#define WRANGLER_RECOVERY_TIME	3.00f
 
 #define	SENTRYGUN_CONTEXT	"SentrygunContext"
 
@@ -57,6 +58,8 @@ extern ConVar tf_obj_upgrade_per_hit;
 #define SENTRYGUN_MINIGUN_RESIST_LVL_3		0.20
 
 #define SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER	0.33f
+
+#define MINI_SENTRYGUN_PITCH	120
 
 enum
 {	
@@ -125,7 +128,6 @@ ConVar tf_sentrygun_newtarget_dist( "tf_sentrygun_newtarget_dist", "200", FCVAR_
 ConVar tf_sentrygun_metal_per_shell( "tf_sentrygun_metal_per_shell", "1", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_sentrygun_metal_per_rocket( "tf_sentrygun_metal_per_rocket", "2", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_sentrygun_notarget( "tf_sentrygun_notarget", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_debug_wrangler( "tf_wrangler_debug", "0", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -184,6 +186,15 @@ void CObjectSentrygun::Spawn()
 
 	m_iState.Set( SENTRY_STATE_INACTIVE );
 
+	// Is the wrangler currently out?
+	if ( GetBuilder() && GetBuilder()->HasGunslinger() )
+	{
+		m_bMiniBuilding = true;
+		SetMaxHealth( MINI_SENTRYGUN_MAX_HEALTH );
+		SetHealth( MINI_SENTRYGUN_MAX_HEALTH );
+		MakeMiniBuilding();
+	}
+
 	SetContextThink( &CObjectSentrygun::SentryThink, gpGlobals->curtime + SENTRY_THINK_DELAY, SENTRYGUN_CONTEXT );
 }
 
@@ -199,7 +210,6 @@ void CObjectSentrygun::MakeCarriedObject( CTFPlayer *pPlayer )
 	m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_1;
 	m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_1;
 	SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_1 );
-
 	BaseClass::MakeCarriedObject( pPlayer );
 }
 
@@ -237,7 +247,7 @@ void CObjectSentrygun::SentryThink( void )
 		break;
 
 	case SENTRY_STATE_WRANGLED:
-		WrangleThink();
+		WranglerThink();
 		break;
 
 	case SENTRY_STATE_WRANGLED_RECOVERY:
@@ -258,90 +268,8 @@ void CObjectSentrygun::SentryThink( void )
 //-----------------------------------------------------------------------------
 // Currently wrangled
 //-----------------------------------------------------------------------------
-void CObjectSentrygun::WrangleThink(void)
+void CObjectSentrygun::WranglerThink(void)
 {
-	CTFPlayer *pOwner = GetOwner();
-
-	StudioFrameAdvance( );
-
-	if ( !pOwner || !pOwner->IsAlive() )
-	{
-		OnStopWrangling();
-		SetShouldFire( false );
-		return;
-	}
-
-	trace_t tr;
-	Vector vecStart, vecEnd, vecDir;
-	AngleVectors( pOwner->EyeAngles(), &vecDir );
-
-	vecStart = pOwner->EyePosition();
-	vecEnd = vecStart + (vecDir * MAX_TRACE_LENGTH);
-
-	CTraceFilterSkipTwoEntities *pFilter = new CTraceFilterSkipTwoEntities( this, pOwner, COLLISION_GROUP_NONE );
-
-	// First pass to find where we are looking
-	UTIL_TraceLine( vecStart, vecEnd, MASK_ALL, pFilter, &tr );
-
-	vecStart = EyePosition();
-	vecEnd = tr.endpos;
-
-	// Adjust sentry angles 
-
-	vecDir = vecEnd - vecStart;
-
-	QAngle angToTarget;
-	VectorAngles( vecDir, angToTarget );
-
-	angToTarget.y = UTIL_AngleMod( angToTarget.y );
-	if (angToTarget.x < -180)
-		angToTarget.x += 360;
-	if (angToTarget.x > 180)
-		angToTarget.x -= 360;
-
-	// now all numbers should be in [1...360]
-	// pin to turret limitations to [-50...50]
-	if (angToTarget.x > 50)
-		angToTarget.x = 50;
-	else if (angToTarget.x < -50)
-		angToTarget.x = -50;
-	m_vecCurAngles.y = angToTarget.y;
-	m_vecCurAngles.x = angToTarget.x;
-	float flYaw = m_vecCurAngles.y - GetAbsAngles().y;
-
-	SetPoseParameter( m_iPitchPoseParameter, -m_vecCurAngles.x );
-	SetPoseParameter( m_iYawPoseParameter, -flYaw );
-
-	
-	// Second pass to find what we actually see
-	UTIL_TraceLine( vecStart, vecEnd, MASK_ALL, pFilter, &tr );
-	
-	// If we're looking at a player fix our position to the centermass
-	if ( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
-	{
-		CTFPlayer *pOther = static_cast< CTFPlayer * >( tr.m_pEnt );
-		if ( ValidTargetPlayer( pOther, vecStart, tr.endpos ) )
-		{
-			m_hEnemy = tr.m_pEnt;
-			m_vecEnd.Set( m_hEnemy->WorldSpaceCenter() );
-		}
-		else
-		{
-			m_hEnemy = NULL;
-			m_vecEnd.Set( tr.endpos );
-		}
-	}
-	else
-	{
-		m_hEnemy = NULL;
-		m_vecEnd.Set( tr.endpos );
-	}
-
-	if ( tf_debug_wrangler.GetBool() ) 
-	{
-		NDebugOverlay::Line( vecStart, m_vecEnd.Get(), 0, 255, 0, true, 0.25f );
-	}
-
 	if ( ShouldFire() && gpGlobals->curtime >= m_flNextAttack )
 	{
 		Fire();
@@ -350,7 +278,14 @@ void CObjectSentrygun::WrangleThink(void)
 		if ( m_iUpgradeLevel == 1 )
 		{
 			// Level 1 sentries fire slower
-			m_flNextAttack = gpGlobals->curtime + 0.1;
+			if ( IsMiniBuilding() )
+			{
+				m_flNextAttack = gpGlobals->curtime + 0.075;
+			}
+			else
+			{
+				m_flNextAttack = gpGlobals->curtime + 0.1;
+			}
 		}
 		else
 		{
@@ -368,6 +303,11 @@ void CObjectSentrygun::StartPlacement( CTFPlayer *pPlayer )
 	m_vecBuildMaxs = SENTRYGUN_MAXS;
 	m_vecBuildMins -= Vector( 4,4,0 );
 	m_vecBuildMaxs += Vector( 4,4,0 );
+
+	if ( IsMiniBuilding() )
+	{
+		MakeMiniBuilding();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -393,6 +333,11 @@ bool CObjectSentrygun::CanBeUpgraded( CTFPlayer *pPlayer )
 	if ( !m_bWasMapPlaced || HasSpawnFlags( SF_OBJ_UPGRADABLE ) )
 	{
 		return BaseClass::CanBeUpgraded( pPlayer );
+	}
+
+	if ( IsMiniBuilding() )
+	{
+		return false;
 	}
 
 	return false;
@@ -500,6 +445,10 @@ void CObjectSentrygun::Precache()
 	PrecacheScriptSound( "Building_Sentrygun.Idle3" );	// level 3 sentry
 	PrecacheScriptSound( "Building_Sentrygun.Built" );
 	PrecacheScriptSound( "Building_Sentrygun.Empty" );
+	PrecacheScriptSound( "Building_MiniSentrygun.Fire" ); // mini-sentry
+	PrecacheScriptSound( "Building_Sentrygun.ShaftFire" ); // wrangler
+	PrecacheScriptSound( "Building_Sentrygun.ShaftFire2" );
+	PrecacheScriptSound( "Building_Sentrygun.ShaftFire3" );
 
 	PrecacheParticleSystem( "sentrydamage_1" );
 	PrecacheParticleSystem( "sentrydamage_2" );
@@ -797,31 +746,31 @@ int CObjectSentrygun::GetBaseHealth( void )
 //-----------------------------------------------------------------------------
 // Debug infos
 //-----------------------------------------------------------------------------
-int CObjectSentrygun::DrawDebugTextOverlays(void) 
+int CObjectSentrygun::DrawDebugTextOverlays( void ) 
 {
 	int text_offset = BaseClass::DrawDebugTextOverlays();
 
-	if (m_debugOverlays & OVERLAY_TEXT_BIT) 
+	if ( m_debugOverlays & OVERLAY_TEXT_BIT ) 
 	{
 		char tempstr[512];
 
 		Q_snprintf( tempstr, sizeof( tempstr ), "Level: %d", m_iUpgradeLevel );
-		EntityText(text_offset,tempstr,0);
+		EntityText( text_offset,tempstr,0 );
 		text_offset++;
 
 		Q_snprintf( tempstr, sizeof( tempstr ), "Shells: %d / %d", m_iAmmoShells, m_iMaxAmmoShells );
-		EntityText(text_offset,tempstr,0);
+		EntityText( text_offset,tempstr,0 );
 		text_offset++;
 
 		if ( m_iUpgradeLevel == 3 )
 		{
 			Q_snprintf( tempstr, sizeof( tempstr ), "Rockets: %d / %d", m_iAmmoRockets, m_iMaxAmmoRockets );
-			EntityText(text_offset,tempstr,0);
+			EntityText( text_offset,tempstr,0 );
 			text_offset++;
 		}
 
 		Q_snprintf( tempstr, sizeof( tempstr ), "Upgrade metal %d", m_iUpgradeMetal );
-		EntityText(text_offset,tempstr,0);
+		EntityText( text_offset,tempstr,0 );
 		text_offset++;
 
 		Vector vecSrc = EyePosition();
@@ -1068,11 +1017,11 @@ void CObjectSentrygun::FoundTarget( CBaseEntity *pTarget, const Vector &vecSound
 
 			// Play a specific sound just to the target and remove it from the genral recipient list.
 			CSingleUserRecipientFilter singleFilter( pPlayer );
-			EmitSound( singleFilter, entindex(), "Building_Sentrygun.AlertTarget" );
+			EmitSentrySound( singleFilter, entindex(), "Building_Sentrygun.AlertTarget" );
 			filter.RemoveRecipient( pPlayer );
 		}
 
-		EmitSound( filter, entindex(), "Building_Sentrygun.Alert" );
+		EmitSentrySound( filter, entindex(), "Building_Sentrygun.Alert" );
 	}
 
 	// Update timers, we are attacking now!
@@ -1125,7 +1074,8 @@ void CObjectSentrygun::Attack()
 
 	// Track enemy
 	Vector vecMid = EyePosition();
-	Vector vecMidEnemy = m_hEnemy->WorldSpaceCenter();
+	//Vector vecMidEnemy = m_hEnemy->WorldSpaceCenter();
+	Vector vecMidEnemy = GetEnemyAimPosition( m_hEnemy );
 	Vector vecDirToEnemy = vecMidEnemy - vecMid;
 
 	QAngle angToTarget;
@@ -1157,7 +1107,14 @@ void CObjectSentrygun::Attack()
 		if ( m_iUpgradeLevel == 1 )
 		{
 			// Level 1 sentries fire slower
-			m_flNextAttack = gpGlobals->curtime + 0.2;
+			if ( IsMiniBuilding() )
+			{
+				m_flNextAttack = gpGlobals->curtime + 0.15;
+			}
+			else
+			{
+				m_flNextAttack = gpGlobals->curtime + 0.2;
+			}
 		}
 		else
 		{
@@ -1228,26 +1185,22 @@ bool CObjectSentrygun::Fire()
 			vecAimDir = m_vecEnd.Get() - vecSrc;
 		}
 
+		info.m_flDamage = tf_sentrygun_damage.GetFloat();
+
+		if ( IsMiniBuilding() )
+		{
+			info.m_flDamage /= 2;
+		}
+
+		info.m_vecSpread = vec3_origin;
+
 		// Wrangled shots should have some spread
 		if ( m_iState == SENTRY_STATE_WRANGLED )
 		{
-			float x = 0.0f, y = 0.0f, flSpread = 0.01f * vecAimDir.Length();
-			Vector vecRight, vecUp;
-			VectorVectors( vecAimDir, vecRight, vecUp );
-
-			// Get circular gaussian spread.
-			x = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
-			y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
-
-			// Initialize the variable firing information.
-			vecAimDir = vecAimDir + ( x *  flSpread * vecRight ) + ( y * flSpread * vecUp );
+			info.m_vecSpread = VECTOR_CONE_3DEGREES;
 
 			// Use modified damage value to compensate for damage ramp-up/falloff
-			info.m_flDamage = ( tf_sentrygun_damage.GetFloat() / 1.5f );
-		}
-		else
-		{
-			info.m_flDamage = tf_sentrygun_damage.GetFloat();
+			info.m_flDamage /= 1.5f ;
 		}
 
 		float flDistToTarget = vecAimDir.Length();
@@ -1256,14 +1209,12 @@ bool CObjectSentrygun::Fire()
 		
 		//NDebugOverlay::Cross3D( vecSrc, 10, 255, 0, 0, false, 0.1 );
 
-		info.m_vecSpread = vec3_origin;
 		info.m_vecSrc = vecSrc;
 		info.m_vecDirShooting = vecAimDir;
 		info.m_iTracerFreq = 1;
 		info.m_iShots = 1;
-		info.m_pAttacker = this;
+		info.m_pAttacker = GetBuilder();
 		info.m_iAmmoType = m_iAmmoType;
-		info.m_vecSpread = vec3_origin;
 		info.m_flDistance = flDistToTarget + 100;
 
 		FireBullets( info );
@@ -1277,19 +1228,50 @@ bool CObjectSentrygun::Fire()
 		data.m_vOrigin = vecSrc;
 		DispatchEffect( "TF_3rdPersonMuzzleFlash_SentryGun", data );
 
-		switch( m_iUpgradeLevel )
+		CPASAttenuationFilter filter( this );
+		const char *pszSound = "";
+
+		if ( IsMiniBuilding() )
 		{
-		case 1:
-		default:
-			EmitSound( "Building_Sentrygun.Fire" );
-			break;
-		case 2:
-			EmitSound( "Building_Sentrygun.Fire2" );
-			break;
-		case 3:
-			EmitSound( "Building_Sentrygun.Fire3" );
-			break;
+			// Mini firing sound
+			pszSound = "Building_MiniSentrygun.Fire";
 		}
+		else if ( m_iState == SENTRY_STATE_WRANGLED )
+		{
+			// Wrangler firing sounds
+			switch( m_iUpgradeLevel )
+			{
+				case 1:
+				default:
+					pszSound = "Building_Sentrygun.ShaftFire";
+					break;
+				case 2:
+					pszSound = "Building_Sentrygun.ShaftFire2";
+					break;
+				case 3:
+					pszSound = "Building_Sentrygun.ShaftFire3";
+					break;
+			}
+		}
+		else
+		{
+			// Standard sentry firing sound
+			switch( m_iUpgradeLevel )
+			{
+				case 1:
+				default:
+					pszSound = "Building_Sentrygun.Fire";
+					break;
+				case 2:
+					pszSound = "Building_Sentrygun.Fire2";
+					break;
+				case 3:
+					pszSound = "Building_Sentrygun.Fire3";
+					break;
+			}
+		}
+
+		EmitSentrySound( filter, entindex(), pszSound );
 
 		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
 		{
@@ -1414,7 +1396,7 @@ char *CObjectSentrygun::GetPlacementModel(void)
 //-----------------------------------------------------------------------------
 int CObjectSentrygun::GetMaxUpgradeLevel( void )
 {
-	return m_bMiniBuilding ? 1 : 3;
+	return IsMiniBuilding() ? 1 : 3;
 }
 
 //-----------------------------------------------------------------------------
@@ -1422,7 +1404,7 @@ int CObjectSentrygun::GetMaxUpgradeLevel( void )
 //-----------------------------------------------------------------------------
 int	CObjectSentrygun::GetTracerAttachment( void )
 {
-		if ( m_iUpgradeLevel > 1 && (m_iAmmoShells & 1) )
+		if ( m_iUpgradeLevel > 1 && ( m_iAmmoShells & 1 ) )
 		{
 			// level 2 and 3 turrets alternate muzzles each time they fizzy fizzy fire.
 			return m_iAttachments[SENTRYGUN_ATTACHMENT_MUZZLE_ALT];
@@ -1456,6 +1438,8 @@ void CObjectSentrygun::SentryRotate( void )
 	if ( FindTarget() )
 		return;
 
+	CPASAttenuationFilter filter( this );
+
 	// Rotate
 	if ( !MoveTurret() )
 	{
@@ -1472,7 +1456,7 @@ void CObjectSentrygun::SentryRotate( void )
 			{
 			case 1:
 			default:
-				EmitSound( "Building_Sentrygun.Idle" );
+				EmitSentrySound( filter, entindex(), "Building_Sentrygun.Idle" );
 				break;
 			case 2:
 				EmitSound( "Building_Sentrygun.Idle2" );
@@ -1597,16 +1581,35 @@ bool CObjectSentrygun::MoveTurret( void )
 		{
 			if ( flDist > 30 )
 			{
-				if ( m_flTurnRate < iBaseTurnRate * 10 )
+				if ( IsMiniBuilding() )
 				{
-					m_flTurnRate += iBaseTurnRate;
+					if ( m_flTurnRate < iBaseTurnRate * 11 )
+					{
+						m_flTurnRate += iBaseTurnRate;
+					}
+				}
+				else
+				{
+					if ( m_flTurnRate < iBaseTurnRate * 10 )
+					{
+						m_flTurnRate += iBaseTurnRate;
+					}	
 				}
 			}
 			else
 			{
-				// Slow down
-				if ( m_flTurnRate > (iBaseTurnRate * 5) )
-					m_flTurnRate -= iBaseTurnRate;
+				if ( IsMiniBuilding() )
+				{
+					// Slow down
+					if ( m_flTurnRate > (iBaseTurnRate * 6) )
+						m_flTurnRate -= iBaseTurnRate;
+				}
+				else
+				{
+					// Slow down
+					if ( m_flTurnRate > (iBaseTurnRate * 5) )
+						m_flTurnRate -= iBaseTurnRate;
+				}
 			}
 		}
 		else
@@ -1614,9 +1617,19 @@ bool CObjectSentrygun::MoveTurret( void )
 			// When tracking enemies, move faster and don't slow
 			if ( flDist > 30 )
 			{
-				if (m_flTurnRate < iBaseTurnRate * 30)
+				if ( IsMiniBuilding() )
 				{
-					m_flTurnRate += iBaseTurnRate * 3;
+					if ( m_flTurnRate < iBaseTurnRate * 32 )
+					{
+						m_flTurnRate += iBaseTurnRate * 4;
+					}
+				}
+				else
+				{
+					if ( m_flTurnRate < iBaseTurnRate * 30 )
+					{
+						m_flTurnRate += iBaseTurnRate * 3;
+					}
 				}
 			}
 		}
@@ -1626,16 +1639,16 @@ bool CObjectSentrygun::MoveTurret( void )
 		// if we passed over the goal, peg right to it now
 		if (flDir == -1)
 		{
-			if ( (bReversed == false && m_vecGoalAngles.y > m_vecCurAngles.y) ||
-				(bReversed == true && m_vecGoalAngles.y < m_vecCurAngles.y) )
+			if ( ( bReversed == false && m_vecGoalAngles.y > m_vecCurAngles.y ) ||
+				( bReversed == true && m_vecGoalAngles.y < m_vecCurAngles.y ) )
 			{
 				m_vecCurAngles.y = m_vecGoalAngles.y;
 			}
 		} 
 		else
 		{
-			if ( (bReversed == false && m_vecGoalAngles.y < m_vecCurAngles.y) ||
-                (bReversed == true && m_vecGoalAngles.y > m_vecCurAngles.y) )
+			if ( ( bReversed == false && m_vecGoalAngles.y < m_vecCurAngles.y ) ||
+                ( bReversed == true && m_vecGoalAngles.y > m_vecCurAngles.y ) )
 			{
 				m_vecCurAngles.y = m_vecGoalAngles.y;
 			}
@@ -1733,7 +1746,7 @@ void CObjectSentrygun::Killed( const CTakeDamageInfo &info )
 	CTFPlayer *pOwner = GetBuilder();
 	if ( pOwner )
 	{
-		CTFLaser_Pointer *pWeapon = dynamic_cast < CTFLaser_Pointer * > ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
+		CTFLaserPointer *pWeapon = dynamic_cast < CTFLaserPointer * > ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
 		if ( pWeapon )
 		{
 			// Make sure wrangler stops updating sentry laser
@@ -1784,6 +1797,99 @@ void CObjectSentrygun::SetModel( const char *pModel )
 	ReattachChildren();
 
 	ResetSequenceInfo();
+}
+
+// sigsegv-mvm's stuff
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Vector CObjectSentrygun::GetEnemyAimPosition( CBaseEntity *pEnemy ) const
+{
+	EHANDLE m_hEnemy = pEnemy;
+	
+	CTFPlayer *pTFPlayer = ToTFPlayer( pEnemy );
+	if ( pTFPlayer )
+	{
+		bool bOnGround = ((pTFPlayer->GetFlags() & FL_ONGROUND) != 0);
+		bool bDucking  = ((pTFPlayer->GetFlags() & FL_DUCKING)  != 0);
+		
+		if ( ( !bOnGround && bDucking ) || pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+		{
+			int iBoneBipSpine2 = pTFPlayer->LookupBone( "bip_spine_2" );
+			if (iBoneBipSpine2 != -1)
+			{
+				Vector vecBone; QAngle angBone;
+				pTFPlayer->GetBonePosition(iBoneBipSpine2, vecBone, angBone);
+				
+				// special case: for players who are airborne-and-ducking, or taunting,
+				// shoot at their bip_spine_2 bone position instead of their hull center
+				return vecBone;
+			}
+		}
+	}
+	
+	// by default, shoot at enemy's hull center
+	return pEnemy->WorldSpaceCenter();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CObjectSentrygun::GetConstructionMultiplier( void )
+{
+	float flMultiplier = 1.0f;
+
+	// Re-deploy twice as fast.
+	if ( IsRedeploying() )
+		flMultiplier *= 2.0f;
+
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetBuilder(), flMultiplier, sentry_build_rate_multiplier );
+
+	return BaseClass::GetConstructionMultiplier();
+}
+
+void CObjectSentrygun::UpdateSentryAngles( Vector vecDir )
+{
+	QAngle angToTarget;
+	VectorAngles( vecDir, angToTarget );
+
+	angToTarget.y = UTIL_AngleMod( angToTarget.y );
+	if (angToTarget.x < -180)
+		angToTarget.x += 360;
+	if (angToTarget.x > 180)
+		angToTarget.x -= 360;
+
+	// now all numbers should be in [1...360]
+	// pin to turret limitations to [-50...50]
+	if (angToTarget.x > 50)
+		angToTarget.x = 50;
+	else if (angToTarget.x < -50)
+		angToTarget.x = -50;
+	m_vecCurAngles.y = angToTarget.y;
+	m_vecCurAngles.x = angToTarget.x;
+	float flYaw = m_vecCurAngles.y - GetAbsAngles().y;
+
+	SetPoseParameter( m_iPitchPoseParameter, -m_vecCurAngles.x );
+	SetPoseParameter( m_iYawPoseParameter, -flYaw );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CObjectSentrygun::EmitSentrySound( IRecipientFilter &filter, int index, char const* pszSound  )
+{
+	EmitSound_t params;
+	params.m_pSoundName = pszSound;
+
+	if ( IsMiniBuilding() )
+	{
+		StopSound( pszSound );
+		params.m_nPitch = MINI_SENTRYGUN_PITCH;
+		params.m_nFlags = SND_CHANGE_PITCH;
+	}
+
+	EmitSound( filter, index, params );
 }
 
 LINK_ENTITY_TO_CLASS( tf_projectile_sentryrocket, CTFProjectile_SentryRocket );

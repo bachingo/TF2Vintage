@@ -252,6 +252,9 @@ public:
 
 	virtual int		GetBaseHealth( void ) { return 0; }
 
+	void	MakeMiniBuilding( void );
+	bool	IsMiniBuilding( void ) { return m_bMiniBuilding; }
+
 public:		
 
 	virtual bool TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, trace_t& tr );

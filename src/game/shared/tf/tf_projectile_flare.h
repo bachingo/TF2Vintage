@@ -35,30 +35,30 @@ public:
 
 #ifdef GAME_DLL
 
-	static CTFProjectile_Flare *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
-	virtual void	Spawn();
-	virtual void	Precache();
+	static CTFProjectile_Flare 	*Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
+	virtual void				Spawn();
+	virtual void				Precache();
 
 	// IScorer interface
-	virtual CBasePlayer *GetScorer( void );
-	virtual CBasePlayer *GetAssistant( void ) { return NULL; }
+	virtual CBasePlayer 		*GetScorer( void );
+	virtual CBasePlayer			*GetAssistant( void ) 	{ return NULL; }
 
-	virtual int		GetWeaponID(void) const			{ return TF_WEAPON_FLAREGUN; }
+	virtual int					GetWeaponID(void) const	{ return TF_WEAPON_FLAREGUN; }
 
-	void	SetScorer( CBaseEntity *pScorer );
+	void						SetScorer( CBaseEntity *pScorer );
 
-	void	SetCritical( bool bCritical ) { m_bCritical = bCritical; }
-	virtual int		GetDamageType();
+	void						SetCritical( bool bCritical ) { m_bCritical = bCritical; }
+	virtual int					GetDamageType();
 
-	virtual bool IsDeflectable() { return true; }
-	virtual void Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+	virtual bool 				IsDeflectable() 		{ return true; }
+	virtual void 				Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	// Overrides.
-	virtual void	Explode( trace_t *pTrace, CBaseEntity *pOther );
+	virtual void				Explode( trace_t *pTrace, CBaseEntity *pOther );
 #else
 
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	CreateTrails( void );
+	virtual void				OnDataChanged( DataUpdateType_t updateType );
+	virtual void				CreateTrails( void );
 
 #endif
 

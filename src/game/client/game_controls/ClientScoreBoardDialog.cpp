@@ -33,7 +33,7 @@
 
 #include "vgui_avatarimage.h"
 
-#ifdef TF_CLASSIC_CLIENT
+#ifdef TF_VINTAGE_CLIENT
 #include "tf_shareddefs.h"
 #endif
 
@@ -127,10 +127,6 @@ void CClientScoreBoardDialog::OnThink()
 		{
 			m_nCloseKey = BUTTON_CODE_INVALID;
 			gViewPortInterface->ShowPanel( PANEL_SCOREBOARD, false );
-#ifdef TF_CLASSIC_CLIENT
-			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSCOREBOARD, false );
-			gViewPortInterface->ShowPanel( PANEL_DEATHMATCHSCOREBOARD, false );
-#endif
 			GetClientVoiceMgr()->StopSquelchMode();
 		}
 	}

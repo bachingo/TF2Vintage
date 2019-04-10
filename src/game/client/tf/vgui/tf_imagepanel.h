@@ -19,7 +19,6 @@
 
 #define MAX_BG_LENGTH		128
 #define IMAGE_BG_EMPTY		0
-#define IMAGE_BG_DEATHMATCH	1
 
 class CTFImagePanel : public vgui::ScalableImagePanel, public CGameEventListener
 {

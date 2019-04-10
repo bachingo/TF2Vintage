@@ -198,6 +198,7 @@ CBaseObject::CBaseObject()
 	m_aGibs.Purge();
 	m_iObjectMode = 0;
 	m_iDefaultUpgrade = 0;
+	m_bMiniBuilding = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -294,6 +295,11 @@ bool CBaseObject::CanBeUpgraded( CTFPlayer *pPlayer )
 		return false;
 	}
 
+	if ( IsMiniBuilding() )
+	{
+		return false;
+	}
+
 	if ( !tf2c_building_upgrades.GetBool() && GetType() != OBJ_SENTRYGUN )
 		return false;
 
@@ -383,7 +389,7 @@ void CBaseObject::Spawn( void )
 	AddFlag( FL_OBJECT ); // So NPCs will notice it
 	SetViewOffset( WorldSpaceCenter() - GetAbsOrigin() );
 
-	if (!VPhysicsGetObject())
+	if ( !VPhysicsGetObject() )
 	{
 		VPhysicsInitStatic();
 	}
@@ -400,6 +406,34 @@ void CBaseObject::Spawn( void )
 
 	// assume valid placement
 	m_bServerOverridePlacement = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Gunslinger's Buildings
+//-----------------------------------------------------------------------------
+void CBaseObject::MakeMiniBuilding( void )
+{
+	m_bMiniBuilding = true;
+
+	// Set the skin
+	switch ( GetTeamNumber() )
+	{
+	case TF_TEAM_RED:
+		m_nSkin = 2;
+		break;
+
+	case TF_TEAM_BLUE:
+		m_nSkin = 3;
+		break;
+
+	default:
+		m_nSkin = 2;
+		break;
+	}
+
+	// Make the model small
+	SetModelScale( 0.75f );
+
 }
 
 void CBaseObject::MakeCarriedObject( CTFPlayer *pPlayer )
@@ -451,7 +485,6 @@ void CBaseObject::DropCarriedObject( CTFPlayer *pPlayer )
 	{
 		pPlayer->m_Shared.SetCarriedObject( NULL );
 	}
-
 	//StopFollowingEntity();
 }
 
@@ -610,14 +643,6 @@ void CBaseObject::InitializeMapPlacedObject( void )
 		m_nSkin = 1;
 		break;
 
-	case TF_TEAM_GREEN:
-		m_nSkin = 2;
-		break;
-
-	case TF_TEAM_YELLOW:
-		m_nSkin = 3;
-		break;
-
 	default:
 		m_nSkin = 1;
 		break;
@@ -687,6 +712,12 @@ void CBaseObject::BaseObjectThink( void )
 		{
 			// Finished.
 			m_bCarryDeploy = false;
+		}
+
+		if ( IsMiniBuilding() )
+		{
+			MakeMiniBuilding();
+			return;
 		}
 	}
 }
@@ -1004,17 +1035,14 @@ void CBaseObject::StartPlacement( CTFPlayer *pPlayer )
 		m_nSkin = 1;
 		break;
 
-	case TF_TEAM_GREEN:
-		m_nSkin = 2;
-		break;
-
-	case TF_TEAM_YELLOW:
-		m_nSkin = 3;
-		break;
-
 	default:
 		m_nSkin = 1;
 		break;
+	}
+
+	if ( IsMiniBuilding() )
+	{
+		MakeMiniBuilding();
 	}
 }
 
@@ -2010,6 +2038,10 @@ float CBaseObject::GetConstructionMultiplier( void )
 {
 	float flMultiplier = 1.0f;
 
+	// Minis deploy faster.
+	if ( IsMiniBuilding() )
+		flMultiplier *= 1.7f;
+
 	// Re-deploy twice as fast.
 	if ( IsRedeploying() )
 		flMultiplier *= 2.0f;
@@ -2028,6 +2060,9 @@ float CBaseObject::GetConstructionMultiplier( void )
 		{
 			// Each player hitting it builds twice as fast
 			flMultiplier *= 2.0;
+
+			// Check if this weapon has a build modifier
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( UTIL_PlayerByIndex( m_RepairerList.Key( iThis ) ), flMultiplier, mult_construction_value );
 		}
 	}
 
@@ -2087,7 +2122,9 @@ void CBaseObject::CreateObjectGibs( void )
 			pAmmoPack->ActivateWhenAtRest();
 
 			// Fill up the ammo pack.
-			pAmmoPack->GiveAmmo( nMetalPerGib, TF_AMMO_METAL );
+			// Mini gibs don't give any ammo
+			if ( !IsMiniBuilding() ) 
+				pAmmoPack->GiveAmmo( nMetalPerGib, TF_AMMO_METAL );
 
 			// Calculate the initial impulse on the weapon.
 			Vector vecImpulse( random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( 0.75, 1.25 ) );
@@ -2123,14 +2160,6 @@ void CBaseObject::CreateObjectGibs( void )
 					pAmmoPack->m_nSkin = 1;
 					break;
 
-				case TF_TEAM_GREEN:
-					pAmmoPack->m_nSkin = 2;
-					break;
-
-				case TF_TEAM_YELLOW:
-					pAmmoPack->m_nSkin = 3;
-					break;
-
 				default:
 					pAmmoPack->m_nSkin = 1;
 					break;
@@ -2141,6 +2170,11 @@ void CBaseObject::CreateObjectGibs( void )
 			pAmmoPack->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 			pAmmoPack->m_takedamage = DAMAGE_YES;		
 			pAmmoPack->SetHealth( 900 );
+
+			if ( IsMiniBuilding() )
+			{
+				pAmmoPack->SetModelScale( 0.6f );
+			}
 		}
 	}
 }
@@ -2503,10 +2537,14 @@ bool CBaseObject::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector ve
 
 	if ( !bRepair )
 	{
-		// Don't put in upgrade metal until the object is fully healed
-		if ( CanBeUpgraded( pPlayer ) )
+		// no building upgrade for minis.
+		if ( !IsMiniBuilding() )
 		{
-			bUpgrade = CheckUpgradeOnHit( pPlayer );
+			// Don't put in upgrade metal until the object is fully healed
+			if ( CanBeUpgraded( pPlayer ) )
+			{
+				bUpgrade = CheckUpgradeOnHit( pPlayer );
+			}
 		}
 	}
 

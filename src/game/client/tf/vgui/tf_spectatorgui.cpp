@@ -46,6 +46,8 @@ CTFSpectatorGUI::CTFSpectatorGUI(IViewPort *pViewPort) : CSpectatorGUI(pViewPort
 	m_pCycleTargetFwdKeyLabel = new Label( this, "CycleTargetFwdKeyLabel", "" );
 	m_pCycleTargetRevKeyLabel = new Label( this, "CycleTargetRevKeyLabel", "" );
 	m_pMapLabel = new Label( this, "MapLabel", "" );
+
+	ListenForGameEvent( "spec_target_updated" );
 }
 
 //-----------------------------------------------------------------------------
@@ -87,6 +89,9 @@ void CTFSpectatorGUI::Update()
 
 	UpdateReinforcements();
 	UpdateKeyLabels();
+
+	if ( gpGlobals->curtime > m_flNextPanelCycleTime )
+		UpdateItemPanel( false );
 }
 
 //-----------------------------------------------------------------------------
@@ -99,7 +104,7 @@ void CTFSpectatorGUI::UpdateReinforcements( void )
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer || pPlayer->IsHLTV() ||
-		(pPlayer->GetTeamNumber() != TF_TEAM_RED && pPlayer->GetTeamNumber() != TF_TEAM_BLUE && pPlayer->GetTeamNumber() != TF_TEAM_GREEN && pPlayer->GetTeamNumber() != TF_TEAM_YELLOW) ||
+		(pPlayer->GetTeamNumber() != TF_TEAM_RED && pPlayer->GetTeamNumber() != TF_TEAM_BLUE) ||
 		( pPlayer->m_Shared.GetState() != TF_STATE_OBSERVER ) && ( pPlayer->m_Shared.GetState() != TF_STATE_DYING ) ||
 		( pPlayer->GetObserverMode() == OBS_MODE_FREEZECAM ) )
 	{
@@ -360,6 +365,19 @@ void CTFSpectatorGUI::UpdateKeyLabels( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSpectatorGUI::UpdateItemPanel( bool bUnknown )
+{
+	// TODO: Work on this more later
+
+	/*CHudElement *pStatPanel =  gHUD.FindElement( "CTFStatPanel" );
+	if ( pStatPanel )
+	{
+	}*/
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: shows/hides the buy menu
 //-----------------------------------------------------------------------------
 void CTFSpectatorGUI::ShowPanel(bool bShow)
@@ -399,6 +417,7 @@ void CTFSpectatorGUI::ShowPanel(bool bShow)
 			m_flNextTipChangeTime = 0;	// force a new tip immediately
 
 			InvalidateLayout();
+			UpdateItemPanel( false );
 		}
 		else
 		{
@@ -430,4 +449,13 @@ const char *CTFSpectatorGUI::GetResFilename(void)
 		return "Resource/UI/SpectatorTournament.res";
 
 	return "Resource/UI/Spectator.res";
+}
+
+void CTFSpectatorGUI::FireGameEvent( IGameEvent *event )
+{
+	if ( V_strcmp( event->GetName(), "spec_target_updated" ) == 0  )
+	{
+		UpdateItemPanel( false );
+		return;
+	}
 }
