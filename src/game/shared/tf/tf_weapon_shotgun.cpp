@@ -246,11 +246,8 @@ void CTFShotgun_Revenge::OnSentryKilled( CObjectSentrygun *pSentry )
 		m_iRevengeCrits = Min( m_iRevengeCrits + pSentry->GetAssists() + ( pSentry->GetKills() * 2 ), TF_WEAPON_MAX_REVENGE );
 
 		CTFPlayer *pOwner = GetTFPlayerOwner();
-<<<<<<< HEAD
-		if (pOwner)
-=======
+
 		if ( pOwner && pOwner->GetActiveWeapon() == this )
->>>>>>> cdab8b1c... Formatting
 		{
 			if ( m_iRevengeCrits > 0 )
 			{

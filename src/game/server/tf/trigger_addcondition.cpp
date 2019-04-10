@@ -20,8 +20,8 @@ private:
 
 BEGIN_DATADESC( CTriggerAddTFPlayerCondition )
 
-	DEFINE_FIELD_NAME( m_nCondition, "condition", FIELD_INTEGER ),
-	DEFINE_FIELD_NAME( m_flDuration, "duration", FIELD_FLOAT ),
+	DEFINE_KEYFIELD( m_nCondition, FIELD_INTEGER, "condition" ),
+	DEFINE_KEYFIELD( m_flDuration, FIELD_FLOAT, "duration" ),
 
 	DEFINE_ENTITYFUNC( StartTouch ),
 	DEFINE_ENTITYFUNC( EndTouch ),
