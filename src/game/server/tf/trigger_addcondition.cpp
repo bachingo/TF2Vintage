@@ -73,7 +73,7 @@ void CTriggerAddTFPlayerCondition::EndTouch( CBaseEntity *pOther )
 		}
 		else
 		{
-			pPlayer->m_Shared.AddCond( m_nCondition, m_flDuration );
+			pPlayer->m_Shared.RemoveCond( m_nCondition );
 		}
 	}
 }
