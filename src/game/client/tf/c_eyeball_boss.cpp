@@ -43,7 +43,7 @@ void C_EyeBallBoss::ClientThink( void )
 	Vector vecFwd, vecRight, vecUp;
 	AngleVectors( m_angRender, &vecFwd, &vecRight, &vecUp );
 
-	vecTo = ( ( vecTo * 3.0f ) * gpGlobals->absoluteframetime ) + vecFwd;
+	vecTo = ( ( vecTo * 3.0f ) * gpGlobals->frametime ) + vecFwd;
 	vecTo.NormalizeInPlace();
 
 	QAngle vecAng;
@@ -53,16 +53,10 @@ void C_EyeBallBoss::ClientThink( void )
 	m_angRender = vecAng;
 
 	if ( m_iLookLeftRight >= 0 )
-	{
-		Vector vecLeftRight = vecTo * vecRight;
-		SetPoseParameter( m_iLookLeftRight, vecLeftRight.Length() * -50.0f );
-	}
+		SetPoseParameter( m_iLookLeftRight, vecTo.Dot( vecRight ) * -50.0f );
 
 	if ( m_iLookUpDown >= 0 )
-	{
-		Vector vecUpDown = vecTo * vecUp;
-		SetPoseParameter( m_iLookUpDown, vecUpDown.Length() * -50.0f );
-	}
+		SetPoseParameter( m_iLookUpDown, vecTo.Dot( vecUp ) * -50.0f );
 }
 
 //-----------------------------------------------------------------------------
