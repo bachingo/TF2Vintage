@@ -1620,11 +1620,17 @@ void CTFPlayerShared::OnRemoveTaunting(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnAddStunned(void)
 {
-	CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
-
-	if ( pWeapon )
+	if ( IsControlStunned() || IsLoser() )
 	{
-		pWeapon->OnControlStunned();
+		RemoveCond( TF_COND_SHIELD_CHARGE );
+
+		CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
+		if ( pWeapon )
+		{
+			pWeapon->OnControlStunned();
+		}
+
+		m_pOuter->TeamFortress_SetSpeed();
 	}
 
 	// Check if effects are disabled
