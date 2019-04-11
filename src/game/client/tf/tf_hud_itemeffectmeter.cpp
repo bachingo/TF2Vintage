@@ -390,7 +390,7 @@ bool CHudItemEffectMeterTemp<C_TFSword>::IsEnabled( void )
 	if ( GetWeapon() && GetWeapon()->CanDecapitate() )
 		return true;
 
-	return CHudItemEffectMeter::IsEnabled();
+	return false;
 }
 
 template<>
