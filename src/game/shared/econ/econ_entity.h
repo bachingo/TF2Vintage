@@ -49,10 +49,20 @@ public:
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 	virtual bool OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options );
 
-	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return NULL; }
+	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return m_hAttachmentParent; }
 
 	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 	virtual void ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
+
+	virtual void UpdateAttachmentModels( void );
+	virtual bool AttachmentModelsShouldBeVisible( void ) const { return true; }
+
+	struct AttachedModelData_t
+	{
+		int  modeltype;
+		const model_t *model;
+	};
+	CUtlVector<AttachedModelData_t> m_aAttachments;
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }
@@ -83,9 +93,14 @@ protected:
 
 private:
 	CNetworkVarEmbedded( CAttributeContainer, m_AttributeManager );
+
+#ifdef CLIENT_DLL
+	CHandle<C_ViewmodelAttachmentModel> m_hAttachmentParent;
+#endif
 };
 
 #ifdef CLIENT_DLL
 void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pEconEntity, ClientModelRenderInfo_t const *pInfo, int iModelType );
 #endif
+
 #endif

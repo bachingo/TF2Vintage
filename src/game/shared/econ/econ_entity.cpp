@@ -12,6 +12,7 @@
 #include "tf_player.h"
 #else
 #include "c_tf_player.h"
+#include "tf_viewmodel.h"
 #include "model_types.h"
 #endif
 
@@ -48,7 +49,9 @@ CEconEntity::CEconEntity()
 }
 
 #ifdef CLIENT_DLL
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconEntity::OnPreDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnPreDataChanged( updateType );
@@ -56,13 +59,21 @@ void CEconEntity::OnPreDataChanged( DataUpdateType_t updateType )
 	m_AttributeManager.OnPreDataChanged( updateType );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconEntity::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
 	m_AttributeManager.OnDataChanged( updateType );
+
+	UpdateAttachmentModels();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconEntity::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
@@ -77,6 +88,9 @@ void CEconEntity::FireEvent( const Vector& origin, const QAngle& angles, int eve
 		BaseClass::FireEvent( origin, angles, event, options );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
@@ -91,6 +105,9 @@ bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CEconEntity::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 {
 	if ( BaseClass::OnInternalDrawModel( pInfo ) )
@@ -103,25 +120,111 @@ bool CEconEntity::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 }
 
 //-----------------------------------------------------------------------------
-// 
+// Purpose: 
 //-----------------------------------------------------------------------------
 void CEconEntity::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
 {
 	// NUB
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconEntity::UpdateAttachmentModels( void )
+{
+	m_aAttachments.Purge();
+
+	if ( GetItem() )
+	{
+		CEconItemDefinition *pItem = m_Item.GetStaticData();
+
+		if ( AttachmentModelsShouldBeVisible() )
+		{
+			EconItemVisuals *pVisuals = pItem->GetVisuals( GetTeamNumber() );
+			if ( pVisuals )
+			{
+				for ( int i=0; i<pVisuals->attached_models.Count(); ++i )
+				{
+					AttachedModel_t attachment = pVisuals->attached_models[i];
+					int iMdlIndex = modelinfo->GetModelIndex( attachment.model );
+					if ( iMdlIndex >= 0 )
+					{
+						AttachedModelData_t attachmentData;
+						attachmentData.model = modelinfo->GetModel( iMdlIndex );
+						attachmentData.modeltype = attachment.model_display_flags;
+
+						m_aAttachments.AddToTail( attachmentData );
+					}
+				}
+			}
+
+			C_BasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
+			if ( pPlayer && pPlayer->IsAlive() && !pPlayer->ShouldDrawThisPlayer() )
+			{
+				if ( m_hAttachmentParent )
+				{
+					// Some validation or something
+					return;
+				}
+
+				CBaseViewModel *pViewmodel = pPlayer->GetViewModel();
+				if ( !pViewmodel )
+				{
+					// Same thing as above
+					return;
+				}
+
+				C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
+				if ( !pAddon )
+					return;
+
+				if ( pAddon->InitializeAsClientEntity( m_Item.GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_TRANSLUCENT ) )
+				{
+					pAddon->SetParent( pViewmodel );
+					pAddon->SetLocalOrigin( vec3_origin );
+					pAddon->SetViewmodel( (C_TFViewModel *)pViewmodel );
+					pAddon->UpdatePartitionListEntry();
+					pAddon->CollisionProp()->MarkPartitionHandleDirty();
+					pAddon->UpdateVisibility();
+
+					m_hAttachmentParent = pAddon;
+
+					return;
+				}
+			}
+			else
+			{
+				if ( m_hAttachmentParent )
+					m_hAttachmentParent->Release();
+			}
+		}
+	}
+	
+	if ( m_hAttachmentParent )
+		m_hAttachmentParent->Release();
+}
+
 #endif
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconEntity::SetItem( CEconItemView &newItem )
 {
 	m_Item = newItem;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CEconItemView *CEconEntity::GetItem( void )
 {
 	return &m_Item;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CEconEntity::HasItemDefinition( void ) const
 {
 	return ( m_Item.GetItemDefIndex() >= 0 );
@@ -228,40 +331,21 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 {
 	if ( pAnimating && pEconEntity && pInfo )
 	{
-		if ( pEconEntity->HasItemDefinition() )
+		for ( int i=0; i<pEconEntity->m_aAttachments.Count(); ++i )
 		{
-			CEconItemDefinition *pItemDef = pEconEntity->GetItem()->GetStaticData();
-			if ( pItemDef )
+			if ( pEconEntity->m_aAttachments[i].model && ( pEconEntity->m_aAttachments[i].modeltype & iModelType ) )
 			{
-				EconItemVisuals *pVisuals = pItemDef->GetVisuals( pEconEntity->GetTeamNumber() );
-				if ( pVisuals )
-				{
-					const char *pszModelName = NULL;
-					for ( int i = 0; i < pVisuals->attached_models.Count(); i++ )
-					{
-						if (pVisuals->attached_models[i].model_display_flags & iModelType)
-						{
-							pszModelName = pVisuals->attached_models[i].model;
-							break;
-						}
-					}
+				ClientModelRenderInfo_t *pNewInfo = new ClientModelRenderInfo_t( *pInfo );
+				pNewInfo->pModel = pEconEntity->m_aAttachments[i].model;
 
-					if ( pszModelName != NULL )
-					{
-						ClientModelRenderInfo_t *pNewInfo = new ClientModelRenderInfo_t( *pInfo );
-						const model_t *model = engine->LoadModel( pszModelName );
-						pNewInfo->pModel = model;
+				pNewInfo->pModelToWorld = &pNewInfo->modelToWorld;
+				// Turns the origin + angles into a matrix
+				AngleMatrix( pNewInfo->angles, pNewInfo->origin, pNewInfo->modelToWorld );
 
-						pNewInfo->pModelToWorld = &pNewInfo->modelToWorld;
-						// Turns the origin + angles into a matrix
-						AngleMatrix( pNewInfo->angles, pNewInfo->origin, pNewInfo->modelToWorld );
-
-						DrawModelState_t state;
-						matrix3x4_t *pBoneToWorld = NULL;
-						bool bMarkAsDrawn = modelrender->DrawModelSetup( *pNewInfo, &state, NULL, &pBoneToWorld );
-						pAnimating->DoInternalDrawModel( pNewInfo, ( bMarkAsDrawn && ( pNewInfo->flags & STUDIO_RENDER ) ) ? &state : NULL, pBoneToWorld );
-					}
-				}
+				DrawModelState_t state;
+				matrix3x4_t *pBoneToWorld = NULL;
+				bool bMarkAsDrawn = modelrender->DrawModelSetup( *pNewInfo, &state, NULL, &pBoneToWorld );
+				pAnimating->DoInternalDrawModel( pNewInfo, ( bMarkAsDrawn && ( pNewInfo->flags & STUDIO_RENDER ) ) ? &state : NULL, pBoneToWorld );
 			}
 		}
 	}
