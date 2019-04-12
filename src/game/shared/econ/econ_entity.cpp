@@ -335,17 +335,17 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 		{
 			if ( pEconEntity->m_aAttachments[i].model && ( pEconEntity->m_aAttachments[i].modeltype & iModelType ) )
 			{
-				ClientModelRenderInfo_t *pNewInfo = new ClientModelRenderInfo_t( *pInfo );
-				pNewInfo->pModel = pEconEntity->m_aAttachments[i].model;
+				ClientModelRenderInfo_t newInfo( *pInfo );
+				newInfo.pModel = pEconEntity->m_aAttachments[i].model;
 
-				pNewInfo->pModelToWorld = &pNewInfo->modelToWorld;
+				newInfo.pModelToWorld = &newInfo.modelToWorld;
 				// Turns the origin + angles into a matrix
-				AngleMatrix( pNewInfo->angles, pNewInfo->origin, pNewInfo->modelToWorld );
+				AngleMatrix( newInfo.angles, newInfo.origin, newInfo.modelToWorld );
 
 				DrawModelState_t state;
 				matrix3x4_t *pBoneToWorld = NULL;
-				bool bMarkAsDrawn = modelrender->DrawModelSetup( *pNewInfo, &state, NULL, &pBoneToWorld );
-				pAnimating->DoInternalDrawModel( pNewInfo, ( bMarkAsDrawn && ( pNewInfo->flags & STUDIO_RENDER ) ) ? &state : NULL, pBoneToWorld );
+				bool bMarkAsDrawn = modelrender->DrawModelSetup( newInfo, &state, NULL, &pBoneToWorld );
+				pAnimating->DoInternalDrawModel( &newInfo, ( bMarkAsDrawn && ( newInfo.flags & STUDIO_RENDER ) ) ? &state : NULL, pBoneToWorld );
 			}
 		}
 	}
