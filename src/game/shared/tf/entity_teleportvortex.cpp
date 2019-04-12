@@ -9,12 +9,10 @@
 #include "team.h"
 #endif
 
-#ifdef CLIENT_DLL
 ConVar vortex_float_osc_speed( "vortex_float_osc_speed", "2.0", FCVAR_CHEAT|FCVAR_REPLICATED|FCVAR_HIDDEN );
 ConVar vortex_float_amp( "vortex_float_amp", "5.0", FCVAR_CHEAT|FCVAR_REPLICATED|FCVAR_HIDDEN );
 ConVar vortex_fade_fraction_denom( "vortex_fade_fraction_denom", "10.0", FCVAR_CHEAT|FCVAR_REPLICATED|FCVAR_HIDDEN );
 ConVar vortex_book_offset( "vortex_book_offset", "5.0", FCVAR_CHEAT|FCVAR_REPLICATED|FCVAR_HIDDEN );
-#endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TeleportVortex, DT_TeleportVortex )
 BEGIN_NETWORK_TABLE( CTeleportVortex, DT_TeleportVortex )
@@ -35,7 +33,7 @@ LINK_ENTITY_TO_CLASS( teleport_vortex, CTeleportVortex );
 
 #ifdef GAME_DLL
 //-----------------------------------------------------------------------------
-// Purpose: Teleport to another section of map for additional AI logic
+// Purpose: Teleport to another section of map
 //-----------------------------------------------------------------------------
 static void SendPlayerToTheUnderworld( CTFPlayer *pPlayer, const char *pszTargetName )
 {
@@ -209,10 +207,24 @@ void CTeleportVortex::Spawn( void )
 #ifndef CLIENT_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
-//-----------------------------------------------------------------------------s
+//-----------------------------------------------------------------------------
 int CTeleportVortex::UpdateTransmitState( void )
 {
 	return SetTransmitState( FL_EDICT_PVSCHECK );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTeleportVortex::KeyValue( const char *szKeyName, const char *szValue )
+{
+	if ( !Q_strnicmp( szKeyName, "type", 4 ) )
+	{
+		m_iType = strtol( szValue, 0, 10 );
+		return true;
+	}
+
+	return BaseClass::KeyValue( szKeyName, szValue );
 }
 
 //-----------------------------------------------------------------------------
@@ -244,7 +256,7 @@ void CTeleportVortex::Touch( CBaseEntity *pOther )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Setup our handling of locational teleporting
 //-----------------------------------------------------------------------------
 void CTeleportVortex::SetupVortex( bool bGotoLoot, bool b2 )
 {
@@ -275,6 +287,20 @@ void CTeleportVortex::VortexThink( void )
 {
 	StudioFrameAdvance();
 
+	if ( m_iState == 2 )
+	{
+		if ( m_iRampState == 0 && ShouldDoBookRampIn() )
+		{
+			EmitSound( "Halloween.TeleportVortex.BookSpawn" );
+			m_iRampState++;
+		}
+		else if ( m_iRampState == 1 && ShouldDoBookRampOut() )
+		{
+			EmitSound( "Halloween.TeleportVortex.BookExit" );
+			m_iRampState++;
+		}
+	}
+
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, TF_TEAM_RED, true );
 	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
@@ -301,6 +327,28 @@ void CTeleportVortex::VortexThink( void )
 		SetNextThink( gpGlobals->curtime );
 	else
 		UTIL_Remove( this );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTeleportVortex::ShouldDoBookRampIn( void ) const
+{
+	if ( ( -m_lifeTimeDuration.GetCountdownDuration() / vortex_fade_fraction_denom.GetFloat() ) >= m_lifeTimeDuration.GetElapsedTime() )
+		return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTeleportVortex::ShouldDoBookRampOut( void ) const
+{
+	if ( m_lifeTimeDuration.GetElapsedTime() >= ( m_lifeTimeDuration.GetCountdownDuration() - ( -m_lifeTimeDuration.GetCountdownDuration() / vortex_fade_fraction_denom.GetFloat() ) ) )
+		return true;
+
+	return false;
 }
 
 #else
@@ -339,7 +387,7 @@ void CTeleportVortex::OnDataChanged( DataUpdateType_t updateType )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Fade out/in
 //-----------------------------------------------------------------------------
 void CTeleportVortex::ClientThink( void )
 {
@@ -364,7 +412,7 @@ void CTeleportVortex::ClientThink( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Face towards local player only
 //-----------------------------------------------------------------------------
 void CTeleportVortex::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion *q, const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList& boneComputed )
 {

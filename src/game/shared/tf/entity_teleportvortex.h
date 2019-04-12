@@ -26,12 +26,16 @@ public:
 
 #ifdef GAME_DLL
 	virtual int UpdateTransmitState( void );
+	virtual bool KeyValue( const char *pszKeyName, const char *pszValue );
 
 	void StartTouch( CBaseEntity *pOther );
 	void Touch( CBaseEntity *pOther );
 
 	void SetupVortex( bool bGotoLoot, bool b2 );
 	void VortexThink( void );
+
+	bool ShouldDoBookRampIn( void ) const;
+	bool ShouldDoBookRampOut( void ) const;
 #else
 	virtual void OnDataChanged( DataUpdateType_t updateType );
 	virtual void ClientThink( void );
@@ -49,6 +53,8 @@ private:
 
 	CFmtStr m_pszTeleTarget;
 	bool m_bUseTeamSpawns;
+	int m_iType;
+	int m_iRampState;
 #else
 	CNewParticleEffect *m_pGlowEffect;
 	int m_iStateParity;
