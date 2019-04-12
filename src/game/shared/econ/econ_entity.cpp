@@ -182,9 +182,8 @@ void CEconEntity::UpdateAttachmentModels( void )
 				{
 					pAddon->SetParent( pViewmodel );
 					pAddon->SetLocalOrigin( vec3_origin );
-					pAddon->SetViewmodel( (C_TFViewModel *)pViewmodel );
 					pAddon->UpdatePartitionListEntry();
-					pAddon->CollisionProp()->MarkPartitionHandleDirty();
+					pAddon->CollisionProp()->UpdatePartition();
 					pAddon->UpdateVisibility();
 
 					m_hAttachmentParent = pAddon;
