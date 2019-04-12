@@ -418,7 +418,7 @@ void CTeleportVortex::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos,
 {
 	q[0].x = vortex_book_offset.GetFloat();
 	q[0].y = 0;
-	q[0].z = ( vortex_float_amp.GetFloat() * sin( vortex_float_osc_speed.GetFloat() * gpGlobals->absoluteframetime ) ) + ( ( m_flFadeFraction * 500.0f ) + -500.0f );
+	q[0].z = ( vortex_float_amp.GetFloat() * sin( vortex_float_osc_speed.GetFloat() * gpGlobals->frametime ) ) + ( ( m_flFadeFraction * 500.0f ) + -500.0f );
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	matrix3x4_t matrix;
@@ -432,10 +432,10 @@ void CTeleportVortex::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos,
 	}
 	else
 	{
-		QuaternionMatrix( *q, matrix );
+		QuaternionMatrix( q[0], matrix );
 	}
 
-	MatrixQuaternion( matrix, *q );
+	MatrixQuaternion( matrix, q[0] );
 
 	C_BaseAnimating::BuildTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed );
 }
