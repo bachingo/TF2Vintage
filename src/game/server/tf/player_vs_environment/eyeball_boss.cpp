@@ -92,13 +92,46 @@ void CEyeBallBossLocomotion::Update( void )
 
 	m_verticalSpeed = m_localVelocity.z * flLength;
 
-	m_localVelocity.x = ( m_wishVelocity.x - ( tf_eyeball_boss_horiz_damping.GetFloat() * m_localVelocity.x ) ) * GetUpdateInterval();
-	m_localVelocity.y = ( m_wishVelocity.y - ( tf_eyeball_boss_horiz_damping.GetFloat() * m_localVelocity.y ) ) * GetUpdateInterval();
-	m_localVelocity.z = ( m_wishVelocity.z - ( tf_eyeball_boss_vert_damping.GetFloat() * m_localVelocity.z ) ) * GetUpdateInterval();
+	m_localVelocity.x += ( m_wishVelocity.x - tf_eyeball_boss_horiz_damping.GetFloat() * m_localVelocity.x ) * GetUpdateInterval();
+	m_localVelocity.y += ( m_wishVelocity.y - tf_eyeball_boss_horiz_damping.GetFloat() * m_localVelocity.y ) * GetUpdateInterval();
+	m_localVelocity.z += ( m_wishVelocity.z - tf_eyeball_boss_vert_damping.GetFloat() * m_localVelocity.z ) * GetUpdateInterval();
 
 	pActor->SetAbsVelocity( m_localVelocity );
 
 	CTraceFilterSkipClassname filter( pActor, "eyeball_boss", COLLISION_GROUP_NONE );
+	Vector vecFrameMovement = ( m_localVelocity * GetUpdateInterval() ) + pActor->GetAbsOrigin();
+	Vector vecMins = pActor->CollisionProp()->OBBMins();
+	Vector vecMaxs = pActor->CollisionProp()->OBBMaxs();
+	Vector vec = vec3_origin; // TODO: Name it
+	trace_t trace;
+
+	for ( int i = 0; i < 3; i++ )
+	{
+		UTIL_TraceHull( pActor->GetAbsOrigin(), vecFrameMovement, vecMins, vecMaxs, pActor->GetBodyInterface()->GetSolidMask(), &filter, &trace );
+		if ( !trace.DidHit() )
+			break;
+
+		vec += trace.endpos;
+
+		if ( !trace.startsolid )
+		{
+			if ( vecFrameMovement.Dot( trace.startpos ) >= 1.0f )
+			{
+				float flScale = trace.startpos.Dot( trace.endpos ) * ( 1.0f - trace.fraction );
+				vecFrameMovement = trace.startpos + pActor->GetAbsOrigin() - ( trace.endpos * flScale );
+				if ( vecFrameMovement.Dot( trace.startpos ) >= 1.0f )
+					continue;
+			}
+		}
+
+		Vector vecNormVel = m_localVelocity.Normalized();
+		m_localVelocity.NormalizeInPlace();
+
+		float flScale = vec.Dot( m_localVelocity ) + ( vecNormVel * vec ).Dot( m_localVelocity );
+		m_localVelocity = vecNormVel - ( ( vecNormVel * vec ) * flScale );
+	}
+
+	pActor->SetAbsOrigin( trace.startpos );
 
 	m_wishVelocity = vec3_origin;
 }
