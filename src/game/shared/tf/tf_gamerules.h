@@ -411,6 +411,11 @@ private:
 
 	int DefaultFOV( void ) { return 75; }
 
+	void			SpawnHalloweenBoss( void );
+	void			SpawnZombieMob( void );
+	CountdownTimer	m_bossSpawnTimer;
+	CountdownTimer	m_mobSpawnTimer;
+
 #endif
 
 private:

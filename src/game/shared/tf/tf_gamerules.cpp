@@ -48,6 +48,7 @@
 	#include "tf_weaponbase_grenadeproj.h"
 	#include "eventqueue.h"
 	#include "nav_mesh.h"
+	#include "tf_halloween_boss.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -138,11 +139,14 @@ extern ConVar tf_halloween_bot_min_player_count;
 ConVar tf_halloween_boss_spawn_interval( "tf_halloween_boss_spawn_interval", "480", FCVAR_CHEAT, "Average interval between boss spawns, in seconds" );
 ConVar tf_halloween_boss_spawn_interval_variation( "tf_halloween_boss_spawn_interval_variation", "60", FCVAR_CHEAT, "Variation of spawn interval +/-" );
 
+ConVar tf_halloween_eyeball_boss_spawn_interval( "tf_halloween_eyeball_boss_spawn_interval", "180", FCVAR_CHEAT, "Average interval between boss spawns, in seconds" );
+ConVar tf_halloween_eyeball_boss_spawn_interval_variation( "tf_halloween_eyeball_boss_spawn_interval_variation", "30", FCVAR_CHEAT, "Variation of spawn interval +/-" );
+
 ConVar tf_halloween_zombie_mob_enabled( "tf_halloween_zombie_mob_enabled", "0", FCVAR_CHEAT, "If set to 1, spawn zombie mobs on non-Halloween Valve maps" );
 ConVar tf_halloween_zombie_mob_spawn_interval( "tf_halloween_zombie_mob_spawn_interval", "180", FCVAR_CHEAT, "Average interval between zombie mob spawns, in seconds" );
 
 static bool isBossForceSpawning = false;
-CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_CHEAT )
 {
 	isBossForceSpawning = true;
 }
@@ -2343,6 +2347,8 @@ void CTFGameRules::Think()
 		Arena_SendPlayerNotifications();
 	}
 
+	SpawnHalloweenBoss();
+
 	BaseClass::Think();
 }
 
@@ -2366,6 +2372,197 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 	BaseClass::FrameUpdatePostEntityThink();
 
 	RunPlayerConditionThink();
+}
+
+inline void PickSpawnSpot( CHalloweenBaseBoss::HalloweenBossType eBossType, Vector *vecSpot )
+{
+	if ( !g_hControlPointMasters.IsEmpty() && g_hControlPointMasters[0] )
+	{
+		CTeamControlPointMaster *pMaster = g_hControlPointMasters[0];
+		for ( int i=0; i<pMaster->GetNumPoints(); ++i )
+		{
+			CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
+			if ( pMaster->IsInRound( pPoint ) &&
+				 ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != TF_TEAM_BLUE &&
+				 TFGameRules()->TeamMayCapturePoint( TF_TEAM_BLUE, pPoint->GetPointIndex() ) )
+			{
+				CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
+				if ( pSpawnPoint )
+				{
+					*vecSpot = pSpawnPoint->GetAbsOrigin();
+				}
+				else
+				{
+					*vecSpot = pPoint->GetAbsOrigin();
+					if ( eBossType > CHalloweenBaseBoss::HEADLESS_HATMAN )
+					{
+						pPoint->ForceOwner( TEAM_UNASSIGNED );
+
+						if ( TFGameRules()->IsInKothMode() )
+						{
+							CTeamRoundTimer *pRedTimer = TFGameRules()->GetRedKothRoundTimer();
+							CTeamRoundTimer *pBluTimer = TFGameRules()->GetBlueKothRoundTimer();
+
+							if ( pRedTimer )
+							{
+								variant_t emptyVar;
+								pRedTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
+							}
+							if ( pBluTimer )
+							{
+								variant_t emptyVar;
+								pBluTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
+							}
+						}
+					}
+				}
+
+				return;
+			}
+		}
+	}
+	else
+	{
+		CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
+		if ( pSpawnPoint )
+		{
+			*vecSpot = pSpawnPoint->GetAbsOrigin();
+			return;
+		}
+
+		CUtlVector<CNavArea *> candidates;
+		for ( int i=0; i<TheNavAreas.Count(); ++i )
+		{
+			CNavArea *area = TheNavAreas[i];
+			if ( area->GetSizeX() >= 100.0f && area->GetSizeY() >= 100.0f )
+				candidates.AddToTail( area );
+		}
+
+		if ( candidates.IsEmpty() )
+			return;
+
+		CNavArea *area = candidates.Random();
+		*vecSpot = area->GetCenter();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::SpawnHalloweenBoss( void )
+{
+	// ???
+	if ( !IsHolidayActive( kHoliday_Halloween ) )
+		return;
+	if ( !IsHolidayActive( kHoliday_Halloween ) )
+		return SpawnZombieMob();
+
+	float fSpawnInterval;
+	float fSpawnVariation;
+	CHalloweenBaseBoss::HalloweenBossType iBossType;
+
+	if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_MANOR ) )
+	{
+		iBossType = CHalloweenBaseBoss::HEADLESS_HATMAN;
+		fSpawnInterval = tf_halloween_boss_spawn_interval.GetFloat();
+		fSpawnVariation = tf_halloween_boss_spawn_interval_variation.GetFloat();
+	}
+	else if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_VIADUCT ) )
+	{
+		iBossType = CHalloweenBaseBoss::EYEBALL_BOSS;
+		fSpawnInterval = tf_halloween_eyeball_boss_spawn_interval.GetFloat();
+		fSpawnVariation = tf_halloween_eyeball_boss_spawn_interval_variation.GetFloat();
+	}
+	else if ( /*IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE )*/false )
+	{
+		/*if (CMerasmus::m_level > 3)
+		{
+			fSpawnInterval = 60.0f;
+			fSpawnVariation = 0.0f;
+		}
+		else
+		{
+			fSpawnInterval = tf_merasmus_spawn_interval.GetFloat();
+			fSpawnVariation = tf_merasmus_spawn_interval_variation.GetFloat();
+		}*/
+		iBossType = CHalloweenBaseBoss::MERASMUS;
+	}
+	else
+	{
+		return SpawnZombieMob();
+	}
+
+	if ( !m_hNPCs.IsEmpty() )
+	{
+		if ( m_hNPCs[0] )
+		{
+			isBossForceSpawning = false;
+			m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+			return;
+		}
+	}
+
+	Vector vecSpawnLoc = vec3_origin;
+
+	if ( !m_bossSpawnTimer.HasStarted() )
+	{
+		if ( !isBossForceSpawning )
+			return;
+
+		if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
+			m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+		else
+			m_bossSpawnTimer.Start( RandomFloat( 0, fSpawnInterval + fSpawnVariation ) * 0.5 );
+
+		return;
+	}
+
+	if ( m_bossSpawnTimer.IsElapsed() )
+	{
+		if ( !isBossForceSpawning )
+		{
+			/*if (BYTE( this + 889 ) || BYTE( this + 900 ))
+				return;*/
+
+			CUtlVector<CTFPlayer *> players;
+			CollectPlayers( &players, TF_TEAM_RED, true );
+			CollectPlayers( &players, TF_TEAM_BLUE, true, true );
+
+			int nNumHumans = 0;
+			for ( int i=0; i<players.Count(); ++i )
+			{
+				if ( !players[i]->IsBot() )
+					nNumHumans++;
+			}
+
+			if ( tf_halloween_bot_min_player_count.GetInt() > nNumHumans )
+				return;
+		}
+
+		PickSpawnSpot( iBossType, &vecSpawnLoc );
+		CHalloweenBaseBoss::SpawnBossAtPos( iBossType, vecSpawnLoc );
+		isBossForceSpawning = false;
+		m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+		return;
+	}
+
+	if ( isBossForceSpawning )
+	{
+		PickSpawnSpot( iBossType, &vecSpawnLoc );
+		CHalloweenBaseBoss::SpawnBossAtPos( iBossType, vecSpawnLoc );
+		isBossForceSpawning = false;
+		m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+		return;
+	}
+
+	if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
+		m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+	else
+		m_bossSpawnTimer.Start( RandomFloat( 0, fSpawnInterval + fSpawnVariation ) * 0.5 );
+}
+
+void CTFGameRules::SpawnZombieMob( void )
+{
 }
 
 bool CTFGameRules::CheckCapsPerRound()
