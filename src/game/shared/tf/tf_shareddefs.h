@@ -101,6 +101,9 @@ enum
 #define COLOR_TF_RED	Color( 255, 64, 64, 255 )
 #define COLOR_TF_SPECTATOR Color( 245, 229, 196, 255 )
 
+#define COLOR_EYEBALLBOSS_TEXT	Color( 134, 80, 172, 255 )
+#define COLOR_MERASMUS_TEXT	Color( 112, 176, 74, 255 )
+
 
 //-----------------------------------------------------------------------------
 // Player Classes.

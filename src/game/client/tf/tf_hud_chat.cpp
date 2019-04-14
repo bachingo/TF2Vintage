@@ -258,6 +258,10 @@ Color CHudChat::GetTextColorForClient( TextColor colorNum, int clientIndex )
 		}
 		break;
 
+	case COLOR_CUSTOM:
+		c = m_ColorCustom;
+		break;
+
 	default:
 		c = pScheme->GetColor( "TFColors.ChatTextYellow", GetBgColor() );
 	}

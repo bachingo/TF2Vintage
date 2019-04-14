@@ -65,6 +65,7 @@ void HUDMinModeChangedCallBack( IConVar *var, const char *pOldString, float flOl
 ConVar cl_hud_minmode( "cl_hud_minmode", "0", FCVAR_ARCHIVE, "Set to 1 to turn on the advanced minimalist HUD mode.", HUDMinModeChangedCallBack );
 
 IClientMode *g_pClientMode = NULL;
+
 // --------------------------------------------------------------------------------- //
 // CTFModeManager.
 // --------------------------------------------------------------------------------- //
@@ -363,11 +364,83 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 		if ( pLocal )
 			pLocal->EmitSound( "Halloween.MonoculusBossSpawn" );
 	}
+	else if ( FStrEq( eventname, "eyeball_boss_stunned" ) )
+	{
+		CHudChat *pChat = GET_HUDELEMENT( CHudChat );
+		int iLevel = event->GetInt( "level" );
+
+		if ( pChat )
+		{
+			pChat->SetCustomColor( COLOR_EYEBALLBOSS_TEXT );
+
+			KeyValues *kv = new KeyValues( "data" );
+			kv->SetString( "player", g_PR->GetPlayerName( event->GetInt( "player_entindex" ) ) );
+			wchar_t *loc;
+
+			if ( iLevel < 2 )
+			{
+				loc = g_pVGuiLocalize->Find( "#TF_Halloween_Eyeball_Boss_Stun" );
+			}
+			else
+			{
+				kv->SetInt( "level", iLevel );
+				loc = g_pVGuiLocalize->Find( "#TF_Halloween_Eyeball_Boss_LevelUp_Stun" );
+			}
+
+			wchar_t unicode[256];
+			char ansi[256];
+			g_pVGuiLocalize->ConstructString( unicode, sizeof( unicode ), loc, kv );
+			g_pVGuiLocalize->ConvertUnicodeToANSI( unicode, ansi, sizeof( ansi ) );
+
+			pChat->ChatPrintf( event->GetInt( "player_entindex" ), CHAT_FILTER_NONE, "%s", ansi );
+
+			if ( kv )
+			{
+				kv->deleteThis();
+			}
+		}
+	}
 	else if ( FStrEq( eventname, "eyeball_boss_killed" ) )
 	{
 		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
 		if ( pLocal )
 			pLocal->EmitSound( "Halloween.HeadlessBossDeath" );
+	}
+	else if ( FStrEq( eventname, "eyeball_boss_killer" ) )
+	{
+		CHudChat *pChat = GET_HUDELEMENT( CHudChat );
+		int iLevel = event->GetInt( "level" );
+
+		if ( pChat )
+		{
+			pChat->SetCustomColor( COLOR_EYEBALLBOSS_TEXT );
+
+			KeyValues *kv = new KeyValues( "data" );
+			kv->SetString( "player", g_PR->GetPlayerName( event->GetInt( "player_entindex" ) ) );
+			wchar_t *loc;
+
+			if ( iLevel < 2 )
+			{
+				loc = g_pVGuiLocalize->Find( "#TF_Halloween_Eyeball_Boss_Killers" );
+			}
+			else
+			{
+				kv->SetInt( "level", iLevel );
+				loc = g_pVGuiLocalize->Find( "#TF_Halloween_Eyeball_Boss_LevelUp_Killers" );
+			}
+
+			wchar_t unicode[256];
+			char ansi[256];
+			g_pVGuiLocalize->ConstructString( unicode, sizeof( unicode ), loc, kv );
+			g_pVGuiLocalize->ConvertUnicodeToANSI( unicode, ansi, sizeof( ansi ) );
+
+			pChat->ChatPrintf( event->GetInt( "player_entindex" ), CHAT_FILTER_NONE, "%s", ansi );
+
+			if ( kv )
+			{
+				kv->deleteThis();
+			}
+		}
 	}
 	else if ( FStrEq( eventname, "eyeball_boss_escape_immenent" ) )
 	{
@@ -379,6 +452,36 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 				pLocal->EmitSound( "Halloween.EyeballBossEscapeSoon" );
 			else
 				pLocal->EmitSound( "Halloween.EyeballBossEscapeImminent" );
+		}
+
+		CHudChat *pChat = GET_HUDELEMENT( CHudChat );
+		int iLevel = event->GetInt( "level" );
+
+		pChat->SetCustomColor( COLOR_EYEBALLBOSS_TEXT );
+
+		KeyValues *kv = new KeyValues( "data" );
+		kv->SetString( "player", g_PR->GetPlayerName( event->GetInt( "player_entindex" ) ) );
+		wchar_t *loc;
+		wchar_t unicode[256];
+		char buf[64], ansi[256];
+
+		if ( iLevel >= 2 )
+		{
+			kv->SetInt( "level", iLevel );
+		}
+
+		// Construct a string for the time left
+		Q_snprintf( buf, sizeof( buf ), "#TF_Halloween_Eyeball_Boss%s_Escaping_In_%i", ( iLevel < 2 ) ? "" : "_LevelUp", iTimeLeft );
+		loc = g_pVGuiLocalize->Find( buf );
+
+		g_pVGuiLocalize->ConstructString( unicode, sizeof( unicode ), loc, kv );
+		g_pVGuiLocalize->ConvertUnicodeToANSI( unicode, ansi, sizeof( ansi ) );
+
+		pChat->ChatPrintf( 0, CHAT_FILTER_NONE, "%s", ansi );
+
+		if ( kv )
+		{
+			kv->deleteThis();
 		}
 
 	}
@@ -480,9 +583,28 @@ int ClientModeTFNormal::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, 
 }
 
 // FIXME: This is causing crashes for Linux and I don't know why
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void ClientModeTFNormal::MessageHooks( void )
 {
 	//usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Print messages to the chat
+//-----------------------------------------------------------------------------
+void ClientModeTFNormal::PrintTextToChat( const char *msg )
+{
+	CHudChat *pChat = GET_HUDELEMENT( CHudChat );
+	if ( pChat )
+	{
+		char buf[4096];
+		g_pVGuiLocalize->Find( msg );
+		g_pVGuiLocalize->ConvertUnicodeToANSI( g_pVGuiLocalize->Find( msg ), buf, sizeof( buf ) );
+
+		pChat->ChatPrintf( 0, CHAT_FILTER_NONE, "%s", buf );
+	}
 }
 
 void __MsgFunc_BreakModel( bf_read &msg )

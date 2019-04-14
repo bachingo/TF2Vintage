@@ -63,6 +63,8 @@ private:
 	void			MessageHooks( void );
 	//void			UpdateSpectatorMode( void );
 
+	void			PrintTextToChat( const char *msg );
+
 private:
 
 	CHudMenuEngyBuild *m_pMenuEngyBuild;
