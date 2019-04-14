@@ -107,7 +107,7 @@ static void SendPlayerToTheUnderworld( CTFPlayer *pPlayer, const char *pszTarget
 		if ( FStrEq( pszTargetName, "spawn_loot" ) )
 		{
 			CReliableBroadcastRecipientFilter filter;
-			UTIL_SayText2Filter( filter, pPlayer, "#TF_Halloween_Loot_Island", pPlayer->GetPlayerName() );
+			UTIL_SayText2Filter( filter, pPlayer, false, "#TF_Halloween_Loot_Island", pPlayer->GetPlayerName() );
 		}
 
 		if ( pPlayer->IsPlayerClass( TF_CLASS_SNIPER ) && pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
