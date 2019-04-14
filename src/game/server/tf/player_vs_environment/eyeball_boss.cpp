@@ -600,34 +600,49 @@ void CEyeBallBoss::Update( void )
 
 	m_attitude = ATTITUDE_CALM;
 
-	if ( GetTeamNumber() == TF_TEAM_BOSS && GetHealth() < 2 * ( GetMaxHealth() / 3 ) && ( !m_attitudeTimer.HasStarted() || m_attitudeTimer.IsElapsed() ) )
+	if ( GetTeamNumber() == TF_TEAM_BOSS )
 	{
-		if ( GetHealth() < ( GetMaxHealth() / 3 ) )
+		if ( GetHealth() < 2 * ( GetMaxHealth() / 3 ) && ( !m_attitudeTimer.HasStarted() || m_attitudeTimer.IsElapsed() ) ) 
 		{
-			m_attitude = ATTITUDE_ANGRY;
-			SetPoseParameter( m_iAngerPose, 0.0f );
+			if ( GetHealth() < ( GetMaxHealth() / 3 ) )
+			{
+				m_nSkin = 1; // Red iris
+				m_attitude = ATTITUDE_ANGRY;
+				SetPoseParameter( m_iAngerPose, 0.0f );
+
+				return;
+			}
+
+			m_nSkin = 0; // Default
+			m_attitude = ATTITUDE_GRUMPY;
+			SetPoseParameter( m_iAngerPose, 0.4f );
 
 			return;
 		}
 
-		m_attitude = ATTITUDE_GRUMPY;
-		SetPoseParameter( m_iAngerPose, 0.4f );
-
-		return;
+		m_nSkin = 0; // Default
 	}
 	else if ( GetTeamNumber() != TF_TEAM_BOSS )
 	{
 		switch ( GetTeamNumber() )
 		{
 			case TF_TEAM_RED:
+				m_nSkin = 2; // Red skin
 				m_attitude = ATTITUDE_HATEBLUE;
 				break;
 			case TF_TEAM_BLUE:
+				m_nSkin = 3; // Blu skin
 				m_attitude = ATTITUDE_HATERED;
 				break;
 			default:
 				break;
 		}
+	}
+
+	// Iris should be red when enraged
+	if ( ( m_attitudeTimer.HasStarted() && !m_attitudeTimer.IsElapsed() ) && GetTeamNumber() == TF_TEAM_BOSS )
+	{
+		m_nSkin = 1; // Red iris
 	}
 
 	SetPoseParameter( m_iAngerPose, 1.0f );
