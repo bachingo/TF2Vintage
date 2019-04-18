@@ -712,6 +712,8 @@ void CTFNavMesh::DecorateMesh()
 {
 	// Flood fills from an area it found in TheNavAreas with BLUE_SPAWN_ROOM flag
 	// with BOMB_DROP flag if not BLUE_SPAWN_ROOM|RED_SPAWN_ROOM
+
+	// These areas determine if the bomb resets if it's dropped from a robot
 }*/
 
 void CTFNavMesh::OnObjectChanged()
@@ -724,7 +726,7 @@ void CTFNavMesh::OnObjectChanged()
 	for ( int i=0; i < IBaseObjectAutoList::AutoList().Count(); ++i )
 	{
 		CBaseObject *obj = static_cast<CBaseObject *>( IBaseObjectAutoList::AutoList()[i] );
-		if ( obj && obj->ObjectType() == OBJ_SENTRYGUN /*&& !DWORD(obj + 1404) && !BYTE(obj + 2584)*/ )
+		if ( obj && obj->ObjectType() == OBJ_SENTRYGUN && !obj->IsDying() && !obj->IsBeingCarried() )
 		{
 			sentries.AddToTail( obj );
 		}
@@ -749,7 +751,7 @@ void CTFNavMesh::OnObjectChanged()
 					if ( !area->HasAttributes( BLUE_SENTRY|RED_SENTRY ) )
 						m_sentryAreas.AddToTail( area );
 
-					area->AddTFAttributes( (TFNavAttributeType)( 128 * ( team != TF_TEAM_BLUE ) + 128 ) );
+					area->AddTFAttributes( team == TF_TEAM_RED ? RED_SENTRY : BLUE_SENTRY );
 				}
 			}
 		}
