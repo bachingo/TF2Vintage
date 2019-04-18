@@ -469,7 +469,7 @@ void CTFNavMesh::ComputeIncursionDistances()
 							CTFNavArea *area = static_cast<CTFNavArea *>( GetNearestNavArea( teamSpawn ) );
 							if ( area )
 							{
-								//ComputeIncursionDistances( area, teamSpawn->GetTeamNumber() );
+								ComputeIncursionDistances( area, teamSpawn->GetTeamNumber() );
 								if ( teamSpawn->GetTeamNumber() == TF_TEAM_RED )
 									bFoundRedSpawn = true;
 								else
@@ -522,11 +522,67 @@ void CTFNavMesh::ComputeIncursionDistances()
 	}
 }
 
+class CComputeDistances : public ISearchSurroundingAreasFunctor
+{
+public:
+	CComputeDistances( int iTeam )
+		: m_iTeam( iTeam )
+	{
+	}
+
+	virtual bool operator() ( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
+	{
+		return true;
+	}
+
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override
+	{
+		CTFNavArea *adjTFArea = static_cast<CTFNavArea *>( adjArea );
+		if ( !TFGameRules()->IsMannVsMachineMode() && !adjTFArea->HasTFAttributes( RED_SETUP_GATE|BLUE_SETUP_GATE|SPAWN_ROOM_EXIT ) && adjArea->IsBlocked( m_iTeam ) )
+			return false;
+
+		return currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) <= 45.0f;
+	}
+
+	virtual void IterateAdjacentAreas( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override
+	{
+		// search adjacent outgoing connections
+		for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
+		{
+			int count = area->GetAdjacentCount( (NavDirType)dir );
+			for ( int i=0; i<count; ++i )
+			{
+				const NavConnect &con = ( *area->GetAdjacentAreas( (NavDirType)dir ) )[i];
+				CTFNavArea *adjArea = static_cast<CTFNavArea *>( con.area );
+
+				if ( ShouldSearch( adjArea, area, travelDistanceSoFar ) )
+				{
+					float flIncursionDist = static_cast<CTFNavArea *>( area )->GetIncursionDistance( m_iTeam ) + con.length;
+					if ( adjArea->GetIncursionDistance( m_iTeam ) < 0.0f || flIncursionDist > adjArea->GetIncursionDistance( m_iTeam ) )
+					{
+						adjArea->SetIncursionDistance( m_iTeam, flIncursionDist );
+						IncludeInSearch( adjArea, area );
+					}
+				}
+			}
+		}
+	}
+
+private:
+	int m_iTeam;
+};
 void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+
+	// Some sort of functor is most likely happening here
 	if ( startArea && teamNum <= 3 )
 	{
-		CNavArea::ClearSearchLists();
+		// Until the logic is fully understood, this will be replacing the code below temporarily
+		CComputeDistances functor( teamNum );
+		SearchSurroundingAreas( startArea, functor );
+
+		/*CNavArea::ClearSearchLists();
 
 		startArea->AddToOpenList();
 		startArea->SetParent( NULL );
@@ -538,21 +594,15 @@ void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )
 		{
 			CTFNavArea *area = static_cast<CTFNavArea *>( CNavArea::PopOpenList() );
 
-			adjCons.RemoveAll();
+			adjCons.Purge();
 
 			if ( !TFGameRules()->IsMannVsMachineMode() && !area->HasTFAttributes( RED_SETUP_GATE|BLUE_SETUP_GATE|SPAWN_ROOM_EXIT ) && area->IsBlocked( teamNum ) )
 				continue;
 
-			for ( int dir = 0; dir < NUM_DIRECTIONS; ++dir )
+			for ( int dir = 0; dir < NUM_DIRECTIONS; dir++ )
 			{
-				if ( area->GetAdjacentCount( (NavDirType)dir ) > 0 )
-				{
-					for ( int i=0; i<area->GetAdjacentCount( (NavDirType)dir ); ++i )
-					{
-						const NavConnect *connection = &( *area->GetAdjacentAreas( (NavDirType)dir ) )[i];
-						adjCons.AddToTail( connection );
-					}
-				}
+				for ( int i=0; i<area->GetAdjacentCount( (NavDirType)dir ); ++i )
+					adjCons.AddToTail( &( *area->GetAdjacentAreas( (NavDirType)dir ) )[i] );
 			}
 
 			for ( int i=0; i<adjCons.Count(); ++i )
@@ -566,13 +616,12 @@ void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )
 						adj->SetIncursionDistance( teamNum, flIncursionDist );
 						adj->Mark();
 						adj->SetParent( area );
-
 						if ( !adj->IsOpen() )
 							adj->AddToOpenListTail();
 					}
 				}
 			}
-		}
+		}*/
 	}
 }
 
