@@ -18,6 +18,7 @@ ConVar tf_show_in_combat_areas( "tf_show_in_combat_areas", "0", FCVAR_CHEAT, "",
 ConVar tf_show_mesh_decoration( "tf_show_mesh_decoration", "0", FCVAR_CHEAT, "Highlight special areas", true, 0.0f, true, 1.0f );
 ConVar tf_show_enemy_invasion_areas( "tf_show_enemy_invasion_areas", "0", FCVAR_CHEAT, "Highlight areas where the enemy team enters the visible environment of the local player", true, 0.0f, true, 1.0f );
 ConVar tf_show_blocked_areas( "tf_show_blocked_areas", "0", FCVAR_CHEAT, "Highlight areas that are considered blocked for TF-specific reasons", true, 0.0f, true, 1.0f );
+ConVar tf_show_sentry_danger( "tf_show_sentry_danger", "0", FCVAR_CHEAT, "Show sentry danger areas. 1:Use m_sentryAreas. 2:Check all nav areas.", true, 0.0f, true, 2.0f );
 ConVar tf_show_incursion_flow( "tf_show_incursion_flow", "0", FCVAR_CHEAT, "", true, 0.0f, true, 1.0f );
 ConVar tf_show_incursion_flow_range( "tf_show_incursion_flow_range", "150", FCVAR_CHEAT, "" );
 ConVar tf_show_incursion_flow_gradient( "tf_show_incursion_flow_gradient", "0", FCVAR_CHEAT, "1 = red, 2 = blue", true, 0.0f, true, 2.0f );
@@ -80,40 +81,36 @@ void CTFNavMesh::FireGameEvent( IGameEvent *event )
 	CUtlString string( event->GetName() );
 	CNavMesh::FireGameEvent( event );
 
-	if ( string.IsEqual_CaseSensitive( "teamplay_point_captured" ) )
+	if ( string == "teamplay_point_captured" )
 	{
 		m_pointChangedIdx = event->GetInt( "cp" );
 		m_pointState = CP_STATE_OWNERSHIP_CHANGED;
 		m_recomputeTimer.Start( 2.0f );
 	}
 
-	if ( string.IsEqual_CaseSensitive( "teamplay_setup_finished" ) )
+	if ( string == "teamplay_setup_finished" )
 	{
 		m_pointChangedIdx = 0;
 		m_pointState = CP_STATE_RESET;
 		m_recomputeTimer.Start( 2.0f );
 	}
 
-	if ( string.IsEqual_CaseSensitive( "teamplay_point_unlocked" ) )
+	if ( string == "teamplay_point_unlocked" )
 	{
 		m_pointChangedIdx = event->GetInt( "cp" );
 		m_pointState = CP_STATE_AWAITING_CAPTURE;
 		m_recomputeTimer.Start( 2.0f );
 	}
 
-	if ( string.IsEqual_CaseSensitive( "player_builtobject" ) ||
-		 string.IsEqual_CaseSensitive( "player_carryobject" ) ||
-		 string.IsEqual_CaseSensitive( "player_dropobject" ) ||
-		 string.IsEqual_CaseSensitive( "object_detonated" ) ||
-		 string.IsEqual_CaseSensitive( "object_destroyed" ) )
+	if ( string == "player_builtobject" || string == "player_carryobject" || string == "player_dropobject" ||
+		 string == "object_detonated" || string == "object_destroyed" )
 	{
 		int iObjectType = event->IsEmpty( "objecttype" ) ? event->GetInt( "object" ) : event->GetInt( "objecttype" );
 		if ( iObjectType == OBJ_SENTRYGUN )
 		{
-			if ( false )
-			{
+			if ( tf_show_sentry_danger.GetInt() )
 				DevMsg( "%s: Got sentrygun %s event\n", __FUNCTION__, string.Get() );
-			}
+			
 			OnObjectChanged();
 		}
 	}
@@ -757,6 +754,9 @@ void CTFNavMesh::OnObjectChanged()
 			}
 		}
 	}
+
+	if ( tf_show_sentry_danger.GetInt() )
+		DevMsg( "%s: sentries:%d areas count:%d\n", __FUNCTION__, sentries.Count(), m_sentryAreas.Count() );
 }
 
 // TODO: Why do they recompute so much so often?
