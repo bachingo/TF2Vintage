@@ -3689,7 +3689,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	//bool bObject = false;
 
 	// If this is a base object get the builder
-	if ( pAttacker->IsBaseObject() )
+	if ( pAttacker && pAttacker->IsBaseObject() )
 	{
 		CBaseObject *pObject = static_cast< CBaseObject * >( pAttacker );
 		pAttacker = pObject->GetBuilder();
