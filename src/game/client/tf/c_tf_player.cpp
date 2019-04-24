@@ -761,8 +761,12 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 				if ( IsDecapitation() )
 				{
 					CreateTFHeadGib();
-					EmitSound( "TF.PlayerDecapitated" );
-					ParticleProp()->Create( "blood_decap", PATTACH_POINT_FOLLOW, "head" );
+
+					if ( !UTIL_IsLowViolence() && !IsLocalPlayerUsingVisionFilterFlags( 0x1 ) ) // Pyrovision check
+					{
+						EmitSound( "TFPlayer.Decapitated" );
+						ParticleProp()->Create( "blood_decap", PATTACH_POINT_FOLLOW, "head" );
+					}
 				}
 			}
 		}
