@@ -86,15 +86,28 @@ ConVar cl_autoreload( "cl_autoreload", "1",  FCVAR_USERINFO | FCVAR_ARCHIVE, "Wh
 ConVar tf2v_model_muzzleflash( "tf2v_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash" );
 ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower" );
 
-static void OnMercParticleChange( IConVar *var, const char *pOldValue, float flOldValue )
+static void BuildDecapitatedTransform( C_BaseAnimating *pAnimating )
 {
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer )
-		return;
+	if ( pAnimating )
+	{
+		int iBone = pAnimating->LookupBone( "bip_head" );
+		if ( iBone != -1 )
+		{
+			MatrixScaleByZero( pAnimating->GetBoneForWrite( iBone ) ); 
+		}		
 
-	ConVar *pCvar = (ConVar *)var;
+		iBone = pAnimating->LookupBone( "prp_helmet" );
+		if ( iBone != -1 )
+		{
+			 MatrixScaleByZero( pAnimating->GetBoneForWrite( iBone ) ); 
+		}
 
-	pLocalPlayer->m_Shared.SetRespawnParticleID( pCvar->GetInt() );
+		iBone = pAnimating->LookupBone( "prp_hat" );
+		if ( iBone != -1 )
+		{
+			 MatrixScaleByZero( pAnimating->GetBoneForWrite( iBone ) ); 
+		}
+	}
 }
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
@@ -109,6 +122,19 @@ const char *pszHeadLabelNames[] =
 {
 	"effects/speech_voice_red",
 	"effects/speech_voice_blue",
+};
+
+const char *pszHeadGibs[] = 
+{
+	"models/player\\gibs\\scoutgib007.mdl",
+	"models/player\\gibs\\snipergib005.mdl",
+	"models/player\\gibs\\soldiergib007.mdl",
+	"models/player\\gibs\\demogib006.mdl",
+	"models/player\\gibs\\medicgib007.mdl",
+	"models/player\\gibs\\heavygib007.mdl",
+	"models/player\\gibs\\pyrogib008.mdl",
+	"models/player\\gibs\\spygib007.mdl",
+	"models/player\\gibs\\engineergib006.mdl",
 };
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
@@ -208,10 +234,14 @@ public:
 	}
 
 	bool IsRagdollVisible();
+	bool IsDecapitation();
 	float GetBurnStartTime() { return m_flBurnEffectStartTime; }
 
 	virtual void SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 	virtual float FrameAdvance( float flInterval = 0.0f );
+
+	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed );
+	virtual bool GetAttachment( int number, matrix3x4_t &matrix );
 
 	float GetInvisibilityLevel( void )
 	{
@@ -229,6 +259,8 @@ private:
 
 	void CreateTFRagdoll( void );
 	void CreateTFGibs( void );
+	void CreateTFHeadGib( void );
+	//void CreateWearableGibs( void );
 private:
 
 	CNetworkVector( m_vecRagdollVelocity );
@@ -245,6 +277,11 @@ private:
 	int	  m_iClass;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
 	float m_flDeathAnimEndTIme;
+	
+	// Decapitation
+	matrix3x4_t m_Head;
+	bool m_bHeadTransform;
+
 };
 
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
@@ -409,6 +446,29 @@ float C_TFRagdoll::FrameAdvance( float flInterval )
 	}
 
 	return flRet;
+}
+
+void C_TFRagdoll::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed )
+{
+	BaseClass::BuildTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed );
+
+	if ( IsDecapitation() && !m_bHeadTransform )
+	{
+		m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
+		BuildDecapitatedTransform( this );
+	}
+}
+
+bool C_TFRagdoll::GetAttachment( int number, matrix3x4_t& matrix )
+{
+	// Sword decapitation
+	if ( IsDecapitation() && LookupAttachment( "head" ) == number )
+	{
+		MatrixCopy( m_Head, matrix );
+		return true;
+	}
+
+	return BaseClass::GetAttachment( number, matrix );
 }
 
 //-----------------------------------------------------------------------------
@@ -622,7 +682,7 @@ void C_TFRagdoll::CreateTFGibs( void )
 	{
 		Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
 		VectorNormalize( vecVelocity );
-		pPlayer->CreatePlayerGibs(m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning);
+		pPlayer->CreatePlayerGibs(m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false );
 	}
 
 	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
@@ -633,6 +693,25 @@ void C_TFRagdoll::CreateTFGibs( void )
 	}
 
 	EndFadeOut();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFRagdoll::CreateTFHeadGib( void )
+{
+	C_TFPlayer *pPlayer = NULL;
+	EHANDLE hPlayer = GetPlayerHandle();
+	if ( hPlayer )
+	{
+		pPlayer = dynamic_cast<C_TFPlayer*>( hPlayer.Get() );
+	}
+	if ( pPlayer && ( pPlayer->m_hFirstGib == NULL ) )
+	{
+		Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
+		VectorNormalize( vecVelocity );
+		pPlayer->CreatePlayerGibs(m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, true );
+	}	
 }
 
 //-----------------------------------------------------------------------------
@@ -677,6 +756,13 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 			else
 			{
 				CreateTFRagdoll();
+
+				if ( IsDecapitation() )
+				{
+					CreateTFHeadGib();
+					EmitSound( "TF.PlayerDecapitated" );
+					ParticleProp()->Create( "blood_decap", PATTACH_POINT_FOLLOW, "head" );
+				}
 			}
 		}
 	}
@@ -724,9 +810,29 @@ bool C_TFRagdoll::IsRagdollVisible()
 	return true;
 }
 
+bool C_TFRagdoll::IsDecapitation()
+{
+	// Only decapitate if the ragdoll is going to stick around for a while (?)
+	if ( cl_ragdoll_fade_time.GetFloat() > 5.0f && ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION || m_iDamageCustom == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING ) )
+	{
+		return true;
+	}
+	return false;
+}
+
 void C_TFRagdoll::ClientThink( void )
 {
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
+
+	if ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION )
+	{
+		m_bHeadTransform = true;
+		BaseClass::GetAttachment( LookupAttachment( "head" ), m_Head );
+		m_bHeadTransform = false;
+
+		m_BoneAccessor.SetReadableBones( 0 );
+		SetupBones( NULL, -1, BONE_USED_BY_ATTACHMENT, gpGlobals->curtime );
+	}
 
 	if ( m_bFadingOut == true )
 	{
@@ -786,7 +892,6 @@ void C_TFRagdoll::EndFadeOut()
 	SetRenderMode( kRenderNone );
 	UpdateVisibility();
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for spy invisiblity material
@@ -3642,7 +3747,7 @@ void C_TFPlayer::InitPlayerGibs( void )
 //			&vecVelocity - 
 //			&vecImpactVelocity - 
 //-----------------------------------------------------------------------------
-void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning )
+void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bHeadGib )
 {
 	// Make sure we have Gibs to create.
 	if ( m_aGibs.Count() == 0 )
@@ -3663,11 +3768,36 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 	}
 
 	breakablepropparams_t breakParams( vecOrigin, GetRenderAngles(), vecBreakVelocity, angularImpulse );
-	breakParams.impactEnergyScale = 1.0f;//
+	breakParams.impactEnergyScale = 1.0f;
 
 	// Break up the player.
 	m_hSpawnedGibs.Purge();
-	m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
+
+	if ( bHeadGib )
+	{
+		// This needs fixing
+		breakmodel_t breakModel;
+		V_strncpy( breakModel.modelName, pszHeadGibs[GetPlayerClass()->GetClassIndex() - 1], sizeof(breakModel.modelName) );
+		breakModel.health = 1;
+		breakModel.fadeTime = RandomFloat(5,10);
+		breakModel.fadeMinDist = 0.0f;
+		breakModel.fadeMaxDist = 0.0f;
+		breakModel.burstScale = breakParams.defBurstScale;
+		breakModel.collisionGroup = COLLISION_GROUP_DEBRIS;
+		breakModel.isRagdoll = false;
+		breakModel.isMotionDisabled = false;
+		breakModel.placementName[0] = 0;
+		breakModel.placementIsBone = false;
+		breakModel.offset = EyePosition();
+
+		CUtlVector<breakmodel_t> list;
+		list.AddToHead( breakModel );
+		m_hFirstGib = CreateGibsFromList( list, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
+	}
+	else
+	{
+		m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
+	}
 
 	DropPartyHat( breakParams, vecBreakVelocity );
 }

@@ -140,7 +140,7 @@ public:
 
 	// Gibs.
 	void InitPlayerGibs( void );
-	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning );
+	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bHeadGib );
 	void DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
 
 	int	GetObjectCount( void );
