@@ -25,6 +25,7 @@
 #include "tf_hud_building_status.h"
 #include "cl_animevent.h"
 #include "eventlist.h"
+#include "proxyentity.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -66,6 +67,107 @@ IMPLEMENT_CLIENTCLASS_DT( C_BaseObject, DT_BaseObject, CBaseObject )
 END_RECV_TABLE()
 
 ConVar cl_obj_test_building_damage( "cl_obj_test_building_damage", "-1", FCVAR_CHEAT, "debug building damage", true, -1, true, BUILDING_DAMAGE_LEVEL_CRITICAL );
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for spy invisiblity material
+//-----------------------------------------------------------------------------
+class CBuildingInvisProxy : public CEntityMaterialProxy
+{
+public:
+	CBuildingInvisProxy( void );
+	virtual				~CBuildingInvisProxy( void );
+	virtual bool		Init( IMaterial *pMaterial, KeyValues* pKeyValues );
+	virtual void		OnBind( C_BaseEntity *pC_BaseEntity );
+	virtual IMaterial *	GetMaterial();
+
+private:
+
+	IMaterialVar		*m_pPercentInvisible;
+	IMaterialVar		*m_pCloakColorTint;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CBuildingInvisProxy::CBuildingInvisProxy( void )
+{
+	m_pPercentInvisible = NULL;
+	m_pCloakColorTint = NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CBuildingInvisProxy::~CBuildingInvisProxy( void )
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get pointer to the color value
+// Input  : *pMaterial - 
+//-----------------------------------------------------------------------------
+bool CBuildingInvisProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
+{
+	Assert( pMaterial );
+
+	// Need to get the material var
+	bool bInvis;
+	m_pPercentInvisible = pMaterial->FindVar( "$cloakfactor", &bInvis );
+
+	bool bTint;
+	m_pCloakColorTint = pMaterial->FindVar( "$cloakColorTint", &bTint );
+
+	return ( bInvis && bTint );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  :
+//-----------------------------------------------------------------------------
+void CBuildingInvisProxy::OnBind( C_BaseEntity *pEnt )
+{
+	if ( !m_pPercentInvisible || !m_pCloakColorTint )
+		return;
+
+	if ( !pEnt )
+		return;
+
+	C_BaseObject *pObject = NULL;
+	if ( pEnt->IsBaseObject() )
+		pObject = dynamic_cast<C_BaseObject *>( pEnt );
+
+	if ( !pObject )
+		return;
+
+	float r, g, b;
+
+	switch ( pObject->GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			r = 1.0; g = 0.5; b = 0.4;
+			break;
+
+		case TF_TEAM_BLUE:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
+
+		default:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
+	}
+
+	m_pCloakColorTint->SetVecValue( r, g, b );
+}
+
+IMaterial *CBuildingInvisProxy::GetMaterial()
+{
+	if ( !m_pPercentInvisible )
+		return NULL;
+
+	return m_pPercentInvisible->GetOwningMaterial();
+}
+
+EXPOSE_INTERFACE( CBuildingInvisProxy, IMaterialProxy, "building_invis" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
