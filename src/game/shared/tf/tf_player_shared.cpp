@@ -3547,6 +3547,7 @@ int CTFPlayerShared::GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCust
 		case TF_DMG_CUSTOM_HEADSHOT:
 		case TF_DMG_CUSTOM_DECAPITATION:
 		case TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING:
+		case TF_DMG_CUSTOM_DECAPITATION_BOSS:
 			pszSequence = "primary_death_headshot";
 			break;
 	}

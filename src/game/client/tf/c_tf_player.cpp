@@ -814,7 +814,7 @@ bool C_TFRagdoll::IsRagdollVisible()
 bool C_TFRagdoll::IsDecapitation()
 {
 	// Only decapitate if the ragdoll is going to stick around for a while (?)
-	if ( cl_ragdoll_fade_time.GetFloat() > 5.0f && ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION || m_iDamageCustom == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING ) )
+	if ( cl_ragdoll_fade_time.GetFloat() > 5.0f && ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION || m_iDamageCustom == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING || m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS ) )
 	{
 		return true;
 	}
