@@ -124,8 +124,9 @@ const char *pszHeadLabelNames[] =
 	"effects/speech_voice_blue",
 };
 
-const char *pszHeadGibs[] = 
+const char *g_pszHeadGibs[] = 
 {
+	"",
 	"models/player\\gibs\\scoutgib007.mdl",
 	"models/player\\gibs\\snipergib005.mdl",
 	"models/player\\gibs\\soldiergib007.mdl",
@@ -3775,25 +3776,31 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 
 	if ( bHeadGib )
 	{
-		// This needs fixing
-		breakmodel_t breakModel;
-		V_strncpy( breakModel.modelName, pszHeadGibs[GetPlayerClass()->GetClassIndex() - 1], sizeof(breakModel.modelName) );
-		breakModel.health = 1;
-		breakModel.fadeTime = RandomFloat(5,10);
-		breakModel.fadeMinDist = 0.0f;
-		breakModel.fadeMaxDist = 0.0f;
-		breakModel.burstScale = breakParams.defBurstScale;
-		breakModel.collisionGroup = COLLISION_GROUP_DEBRIS;
-		breakModel.isRagdoll = false;
-		breakModel.isMotionDisabled = false;
-		breakModel.placementName[0] = 0;
-		breakModel.placementIsBone = false;
-		breakModel.offset = EyePosition();
+		if ( !UTIL_IsLowViolence() )
+		{
+			CUtlVector<breakmodel_t> list;
+			const int iClassIdx = GetPlayerClass()->GetClassIndex();
+			for ( int i=0; i<m_aGibs.Count(); ++i )
+			{
+				breakmodel_t breakModel = m_aGibs[i];
+				if ( !V_strcmp( breakModel.modelName, g_pszHeadGibs[iClassIdx] ) )
+					list.AddToHead( breakModel );
+			}
 
-		CUtlVector<breakmodel_t> list;
-		list.AddToHead( breakModel );
-		m_hFirstGib = CreateGibsFromList( list, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
-	}
+			m_hFirstGib = CreateGibsFromList( list, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
+			if ( m_hFirstGib )
+			{
+				Vector velocity, impulse;
+				IPhysicsObject *pPhys = m_hFirstGib->VPhysicsGetObject();
+				if ( pPhys )
+				{
+					pPhys->GetVelocity( &velocity, &impulse );
+					impulse.x *= 6.0f;
+					pPhys->AddVelocity( &velocity, &impulse );
+				}
+			}
+		}
+    }
 	else
 	{
 		m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
