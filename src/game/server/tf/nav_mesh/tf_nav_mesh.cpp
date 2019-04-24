@@ -32,7 +32,7 @@ ConVar tf_select_ambush_areas_max_enemy_exposure_area( "tf_select_ambush_areas_m
 
 void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 {
-	/*NextBotTraceFilterIgnoreActors filter( pBlocker, COLLISION_GROUP_NONE );
+	NextBotTraceFilterIgnoreActors filter( pBlocker, COLLISION_GROUP_NONE );
 
 	Extent blockerExtent;
 	blockerExtent.Init( pBlocker );
@@ -44,20 +44,61 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 	{
 		CNavArea *area = potentiallyBlockedAreas[i];
 
-		// some funky ass SSE intrinsics with the areas
-		// m_nwCorner, m_neZ and m_seCorner, m_swZ happens
+		Vector nwCorner = area->GetCorner( NORTH_WEST );
+		Vector neCorner = area->GetCorner( NORTH_EAST );
+		Vector swCorner = area->GetCorner( SOUTH_WEST );
+		Vector seCorner = area->GetCorner( SOUTH_EAST );
 
-		// could just be conditional Ray_t.Init
+		Vector vecStart, vecEnd, vecMaxs, vecTest;
+		if ( -( nwCorner.z - neCorner.z ) >= 1.0f )
+		{
+			if ( -( seCorner.z - swCorner.z ) >= 1.0f )
+			{
+				vecTest = seCorner;
+				vecMaxs.x = 1.0f;
+				vecMaxs.y = 1.0f;
+			}
+			else
+			{
+				vecTest = neCorner;
+				vecMaxs.x = 0.0f;
+				vecMaxs.y = seCorner.y - neCorner.y;
+			}
+		}
+		else
+		{
+			vecTest = swCorner;
+			vecMaxs.x = seCorner.x - nwCorner.x;
+			vecMaxs.y = 0.0f;
+		}
+
+		vecStart = nwCorner;
+		if ( nwCorner.z >= vecTest.z )
+		{
+			vecEnd = vecTest;
+		}
+		else
+		{
+			vecEnd = nwCorner;
+			vecStart = vecTest;
+		}
+
+		vecMaxs.z = 12.0f;
 
 		Ray_t ray;
-		//
+		ray.Init( vecStart, vecEnd, Vector( 0 ), vecMaxs );
 
 		trace_t tr;
 		enginetrace->TraceRay( ray, MASK_PLAYERSOLID, &filter, &tr );
 
-		if (tr.DidHit() && tr.m_pEnt && tr.m_pEnt->ShouldBlockNav())
+		if ( tr.DidHit() )
+		{
+			if ( tr.m_pEnt && ( dynamic_cast<CBaseDoor *>( tr.m_pEnt ) || dynamic_cast<CBaseObject *>( tr.m_pEnt ) ) )
+				continue;
+
 			area->MarkAsBlocked( TEAM_ANY, pBlocker );
-	}*/
+		}
+	}
 }
 
 CTFNavMesh::CTFNavMesh()
@@ -110,7 +151,7 @@ void CTFNavMesh::FireGameEvent( IGameEvent *event )
 		{
 			if ( tf_show_sentry_danger.GetInt() )
 				DevMsg( "%s: Got sentrygun %s event\n", __FUNCTION__, string.Get() );
-			
+
 			OnObjectChanged();
 		}
 	}
@@ -145,9 +186,8 @@ void CTFNavMesh::Update()
 				if ( unk10.IsElapsed() )
 					unk10.Start( 3.0f );
 			}
-
-			m_lastNPCCount = TheNextBots().GetNextBotCount();
 		}
+		m_lastNPCCount = TheNextBots().GetNextBotCount();
 	}
 }
 
@@ -214,6 +254,57 @@ void CTFNavMesh::BeginCustomAnalysis( bool bIncremental )
 void CTFNavMesh::EndCustomAnalysis()
 {
 
+}
+
+class ScanSelectAmbushAreas
+{
+public:
+	ScanSelectAmbushAreas(int iTeam, float fIncursion, CTFNavArea *area, CUtlVector<CTFNavArea *> *areas )
+		: m_iTeam( iTeam ), m_ambushVector( areas )
+	{
+		m_flIncursionDistance = fIncursion + area->GetIncursionDistance( iTeam );
+	}
+
+	bool operator()( CNavArea *a )
+	{
+		CTFNavArea *area = static_cast<CTFNavArea *>( a );
+		if ( area->GetParent() && area->GetParent()->IsContiguous( area ) )
+		{
+			if ( area->GetIncursionDistance( m_iTeam ) <= m_flIncursionDistance )
+			{
+				NavAreaCollector collector;
+				area->ForAllPotentiallyVisibleAreas( collector );
+
+				for ( int i=0; i< collector.m_area.Count(); ++i )
+				{
+					CTFNavArea *other = static_cast<CTFNavArea *>( collector.m_area[i] );
+
+					float flDistance = 0.0f;
+					if ( area->GetIncursionDistance( m_iTeam ) > other->GetIncursionDistance( m_iTeam ) )
+						flDistance += other->GetIncursionDistance( m_iTeam ) + other->GetSizeX() * other->GetSizeY();
+
+					if ( flDistance <= tf_select_ambush_areas_max_enemy_exposure_area.GetFloat() )
+					{
+						// The rest of this logic relies on CTFNavArea::m_InvasionAreas
+					}
+				}
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+private:
+	int m_iTeam;
+	float m_flIncursionDistance;
+	CUtlVector<CTFNavArea *> *m_ambushVector;
+};
+void CTFNavMesh::CollectAmbushAreas( CUtlVector<CTFNavArea *> *areas, CTFNavArea *startArea, int teamNum, float fMaxDist, float fIncursionDiff ) const
+{
+	ScanSelectAmbushAreas functor( teamNum, fIncursionDiff, startArea, areas );
+	SearchSurroundingAreas( startArea, startArea->GetCenter(), functor, fMaxDist );
 }
 
 void CTFNavMesh::CollectBuiltObjects( CUtlVector<CBaseObject *> *objects, int teamNum )
@@ -499,14 +590,14 @@ void CTFNavMesh::ComputeIncursionDistances()
 			" missing func_respawnroom, or missing info_player_teamspawn entities within the func_respawnroom.\n" );
 	}
 
-	// not sure why they do this, let alone for a single team
-	if ( !TFGameRules()->IsMannVsMachineMode() && TheNavAreas.Count() )
+	// Update RED incursion distance based on BLU's distance
+	if ( !TFGameRules()->IsMannVsMachineMode() )
 	{
 		float flMaxDistance = 0.0f;
 		for ( int i=0; i<TheNavAreas.Count(); ++i )
 		{
 			CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
-			flMaxDistance = fmax( flMaxDistance, area->GetIncursionDistance( TF_TEAM_BLUE ) );
+			flMaxDistance = Max( flMaxDistance, area->GetIncursionDistance( TF_TEAM_BLUE ) );
 		}
 
 		for ( int i=0; i<TheNavAreas.Count(); ++i )
@@ -514,15 +605,15 @@ void CTFNavMesh::ComputeIncursionDistances()
 			CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
 			float flIncursionDist = area->GetIncursionDistance( TF_TEAM_BLUE );
 			if ( flIncursionDist >= 0.0f )
-				area->SetIncursionDistance( TF_TEAM_RED, ( flIncursionDist  - flMaxDistance ) );
+				area->SetIncursionDistance( TF_TEAM_RED, ( flMaxDistance - flIncursionDist ) );
 		}
 	}
 }
 
-class CComputeDistances : public ISearchSurroundingAreasFunctor
+class ComputeIncursionDistance : public ISearchSurroundingAreasFunctor
 {
 public:
-	CComputeDistances( int iTeam )
+	ComputeIncursionDistance( int iTeam )
 		: m_iTeam( iTeam )
 	{
 	}
@@ -576,7 +667,7 @@ void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )
 	if ( startArea && teamNum <= 3 )
 	{
 		// Until the logic is fully understood, this will be replacing the code below temporarily
-		CComputeDistances functor( teamNum );
+		ComputeIncursionDistance functor( teamNum );
 		SearchSurroundingAreas( startArea, functor );
 
 		/*CNavArea::ClearSearchLists();
@@ -633,6 +724,43 @@ void CTFNavMesh::ComputeInvasionAreas()
 	}
 }
 
+class CollectAndLabelSpawnRooms
+{
+public:
+	CollectAndLabelSpawnRooms( CFuncRespawnRoom *respawnRoom, int teamNum, CUtlVector<CTFNavArea *> *vector )
+		: m_vector( vector )
+	{
+		m_respawn = respawnRoom;
+		m_team = teamNum;
+	};
+
+	inline bool operator()( CNavArea *area )
+	{
+		if ( dynamic_cast<CTFNavArea *>( area ) == nullptr )
+			return false;
+
+		Vector nwCorner = area->GetCorner( NORTH_WEST ) + Vector( 0, 0, StepHeight );
+		Vector neCorner = area->GetCorner( NORTH_EAST ) + Vector( 0, 0, StepHeight );
+		Vector swCorner = area->GetCorner( SOUTH_WEST ) + Vector( 0, 0, StepHeight );
+		Vector seCorner = area->GetCorner( SOUTH_EAST ) + Vector( 0, 0, StepHeight );
+
+		if ( m_respawn->PointIsWithin( nwCorner ) ||
+			 m_respawn->PointIsWithin( neCorner ) ||
+			 m_respawn->PointIsWithin( swCorner ) ||
+			 m_respawn->PointIsWithin( seCorner ) )
+		{
+			( (CTFNavArea *)area )->AddTFAttributes( m_team == TF_TEAM_RED ? RED_SPAWN_ROOM : BLUE_SPAWN_ROOM );
+			m_vector->AddToTail( (CTFNavArea *)area );
+		}
+
+		return true;
+	}
+
+private:
+	CFuncRespawnRoom *m_respawn;
+	int m_team;
+	CUtlVector<CTFNavArea *> *m_vector;
+};
 void CTFNavMesh::DecorateMesh()
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
@@ -657,12 +785,12 @@ void CTFNavMesh::DecorateMesh()
 
 					if ( teamSpawn->GetTeamNumber() == TF_TEAM_RED )
 					{
-						CCollectAndLabelSpawnRooms func( respawnRoom, TF_TEAM_RED, &m_spawnAreasTeam1 );
+						CollectAndLabelSpawnRooms func( respawnRoom, TF_TEAM_RED, &m_spawnAreasTeam1 );
 						ForAllAreasOverlappingExtent( func, ext );
 					}
 					else
 					{
-						CCollectAndLabelSpawnRooms func( respawnRoom, TF_TEAM_BLUE, &m_spawnAreasTeam2 );
+						CollectAndLabelSpawnRooms func( respawnRoom, TF_TEAM_BLUE, &m_spawnAreasTeam2 );
 						ForAllAreasOverlappingExtent( func, ext );
 					}
 				}

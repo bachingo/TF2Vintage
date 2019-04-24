@@ -31,8 +31,8 @@ public:
 	virtual void BeginCustomAnalysis( bool bIncremental ) override;
 	virtual void EndCustomAnalysis( void ) override;
 
-	void CollectAmbushAreas( CUtlVector<CTFNavArea *> *areas, CTFNavArea *area, int teamNum, float f1, float f2 ) const;
-	//void CollectAreaWithinBombTravelRange( CUtlVector<CTFNavArea *> *areas, float f1, float f2 ) const;
+	void CollectAmbushAreas( CUtlVector<CTFNavArea *> *areas, CTFNavArea *startArea, int teamNum, float fMaxDist = -1.0f, float fIncursionDiff = 0.0f ) const;
+	//void CollectAreasWithinBombTravelRange( CUtlVector<CTFNavArea *> *areas, float f1, float f2 ) const;
 	void CollectBuiltObjects( CUtlVector<CBaseObject *> *objects, int teamNum );
 	void CollectSpawnRoomThresholdAreas( CUtlVector<CTFNavArea *> *areas, int teamNum ) const;
 	bool IsSentryGunHere( CTFNavArea *area ) const;
@@ -59,43 +59,6 @@ private:
 	void ResetMeshAttributes( bool bFullReset );
 	void UpdateDebugDisplay( void ) const;
 	void OnBlockedAreasChanged( void );
-
-	class CCollectAndLabelSpawnRooms
-	{
-	public:
-		CCollectAndLabelSpawnRooms( CFuncRespawnRoom *respawnRoom, int teamNum, CUtlVector<CTFNavArea *> *vector )
-			: m_respawn( respawnRoom ), m_team( teamNum )
-		{
-			m_vector = vector;
-		};
-
-		inline bool operator()( CNavArea *area )
-		{
-			if (dynamic_cast<CTFNavArea *>( area ) == nullptr)
-				return false;
-
-			Vector nwCorner = area->GetCorner( NORTH_WEST ) + Vector( 0, 0, StepHeight );
-			Vector neCorner = area->GetCorner( NORTH_EAST ) + Vector( 0, 0, StepHeight );
-			Vector swCorner = area->GetCorner( SOUTH_WEST ) + Vector( 0, 0, StepHeight );
-			Vector seCorner = area->GetCorner( SOUTH_EAST ) + Vector( 0, 0, StepHeight );
-
-			if (m_respawn->PointIsWithin( nwCorner ) ||
-				m_respawn->PointIsWithin( neCorner ) ||
-				m_respawn->PointIsWithin( swCorner ) ||
-				m_respawn->PointIsWithin( seCorner ))
-			{
-				( (CTFNavArea *)area )->AddTFAttributes( (TFNavAttributeType)( 2 * ( m_team != TF_TEAM_RED ) + 2 ) );
-				m_vector->AddToTail( (CTFNavArea *)area );
-			}
-
-			return true;
-		}
-
-	private:
-		CFuncRespawnRoom *m_respawn;
-		int m_team;
-		CUtlVector<CTFNavArea *> *m_vector;
-	};
 
 	CountdownTimer m_recomputeTimer;
 
@@ -129,13 +92,19 @@ private:
 inline CUtlVector<CTFNavArea *> *CTFNavMesh::GetControlPointAreas( int iPointIndex )
 {
 	Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
-	return &m_CPAreas[iPointIndex];
+	if( iPointIndex <= 7 )
+		return &m_CPAreas[iPointIndex];
+
+	return NULL;
 }
 
-inline CTFNavArea * CTFNavMesh::GetMainControlPointArea( int iPointIndex )
+inline CTFNavArea *CTFNavMesh::GetMainControlPointArea( int iPointIndex )
 {
 	Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
-	return m_CPArea[iPointIndex];
+	if ( iPointIndex <= 7 )
+		return m_CPArea[iPointIndex];
+
+	return NULL;
 }
 
 inline CUtlVector<CTFNavArea *> *CTFNavMesh::GetSpawnRoomAreasForTeam( int iTeamNum )
