@@ -29,12 +29,14 @@ int CTFNavArea::m_masterTFMark = 1;
 
 CTFNavArea::CTFNavArea()
 {
+	Q_memset( &m_aIncursionDistances, 0, sizeof( m_aIncursionDistances ) );
+	m_flBombTargetDistance = -1.0f;
 }
 
 CTFNavArea::~CTFNavArea()
 {
 	for ( int i = 0; i < 4; i++ )
-		m_InvasionAreas[i].RemoveAll();
+		m_InvasionAreas[i].Purge();
 }
 
 void CTFNavArea::OnServerActivate()
@@ -91,7 +93,7 @@ NavErrorType CTFNavArea::Load( CUtlBuffer &fileBuffer, unsigned int version, uns
 
 void CTFNavArea::UpdateBlocked( bool force, int teamID )
 {
-
+	//CNavArea::UpdateBlocked( force, teamID );
 }
 
 bool CTFNavArea::IsBlocked( int teamID, bool ignoreNavBlockers ) const
@@ -259,13 +261,13 @@ void CTFNavArea::CustomAnalysis( bool isIncremental )
 	return false;
 }*/
 
-void CTFNavArea::CollectNextIncursionAreas( int teamNum, CUtlVector<CTFNavArea*>* areas )
+void CTFNavArea::CollectNextIncursionAreas( int teamNum, CUtlVector<CTFNavArea *> *areas )
 {
 	areas->RemoveAll();
 	// TODO
 }
 
-void CTFNavArea::CollectPriorIncursionAreas( int teamNum, CUtlVector<CTFNavArea*>* areas )
+void CTFNavArea::CollectPriorIncursionAreas( int teamNum, CUtlVector<CTFNavArea *> *areas )
 {
 	areas->RemoveAll();
 	// TODO
@@ -290,27 +292,83 @@ CTFNavArea *CTFNavArea::GetNextIncursionArea( int teamNum ) const
 			}
 		}
 	}
-
+	
 	return result;
 }
 
+class CollectInvasionAreas
+{
+public:
+	CollectInvasionAreas( CTFNavArea *startArea, CUtlVector<CTFNavArea *> *redAreas, CUtlVector<CTFNavArea *> *blueAreas, int marker )
+		: m_redAreas( redAreas ), m_blueAreas( blueAreas )
+	{
+		m_pArea = startArea;
+		m_iMarker = marker;
+	}
+
+	bool operator()( CNavArea *a )
+	{
+		CTFNavArea *area = static_cast<CTFNavArea *>( a );
+		for ( int i=0; i<4; ++i )
+		{
+			for ( int j=0; j<area->GetInvasionAreasForTeam( i )->Count(); ++j )
+			{
+				CTFNavArea *other = ( *area->GetInvasionAreasForTeam( i ) )[j];
+				if ( other->m_TFSearchMarker == m_iMarker )
+					return false;
+
+				if ( area->GetIncursionDistance( TF_TEAM_BLUE ) <= other->GetIncursionDistance( TF_TEAM_BLUE ) ||
+					 area->GetIncursionDistance( TF_TEAM_BLUE ) > m_pArea->GetIncursionDistance( TF_TEAM_BLUE ) + 100.0f )
+					return false;
+
+				m_redAreas->AddToTail( other );
+
+				if ( area->GetIncursionDistance( TF_TEAM_RED ) <= other->GetIncursionDistance( TF_TEAM_RED ) ||
+					 area->GetIncursionDistance( TF_TEAM_RED ) > m_pArea->GetIncursionDistance( TF_TEAM_RED ) + 100.0f )
+					return false;
+
+				m_blueAreas->AddToTail( other );
+			}
+		}
+
+		return true;
+	}
+
+private:
+	CTFNavArea *m_pArea;
+	CUtlVector<CTFNavArea *> *m_redAreas;
+	CUtlVector<CTFNavArea *> *m_blueAreas;
+	int m_iMarker;
+};
 void CTFNavArea::ComputeInvasionAreaVectors()
 {
-	// This is clearly a CNavMesh::ForAllAreasInRadius call with each area doing a ForAllCompletelyVisibleAreas
-	// but what exactly is going on is hard to decipher
-	// TODO
+	for ( int i=0; i<4; ++i )
+		m_InvasionAreas[i].RemoveAll();
+
+	static int searchMarker = RandomInt( 0, Square( 1024 ) );
+
+	auto MarkSearchAreas = [ = ]( CNavArea *a ) -> bool {
+		CTFNavArea *area = static_cast<CTFNavArea *>( a );
+		area->m_TFSearchMarker = searchMarker;
+
+		return true;
+	};
+	ForAllPotentiallyVisibleAreas( MarkSearchAreas );
+
+	CollectInvasionAreas functor( this, &m_InvasionAreas[TF_TEAM_RED], &m_InvasionAreas[TF_TEAM_BLUE], searchMarker );
+	ForAllCompletelyVisibleAreas( functor );
 }
 
 bool CTFNavArea::IsAwayFromInvasionAreas( int teamNum, float radius ) const
 {
-	Assert( teamNum < 4 );
+	Assert( teamNum >= 0 && teamNum < 4 );
 	if ( teamNum < 4 )
 	{
-		const CUtlVector<CTFNavArea *> *invasionAreas = &m_InvasionAreas[teamNum];
-		for ( int i=0; i<invasionAreas->Count(); ++i )
+		const CUtlVector<CTFNavArea *> &invasionAreas = m_InvasionAreas[teamNum];
+		for ( int i=0; i<invasionAreas.Count(); ++i )
 		{
-			CTFNavArea *area = invasionAreas->Element( i );
-			if ( Square( radius ) >( m_center - area->GetCenter() ).LengthSqr() )
+			CTFNavArea *area = invasionAreas[i];
+			if ( Square( radius ) > ( m_center - area->GetCenter() ).LengthSqr() )
 				return false;
 		}
 	}

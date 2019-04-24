@@ -114,6 +114,10 @@ private:
 	float m_aIncursionDistances[4];
 	CUtlVector<CTFNavArea *> m_InvasionAreas[4];
 
+public:
+	int m_TFSearchMarker;
+
+private:
 	TFNavAttributeType m_nAttributes;
 
 	//CUtlVector< CHandle<CBaseCombatCharacter> > m_PVNPCs[4];
