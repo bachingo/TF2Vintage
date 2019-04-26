@@ -86,9 +86,8 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			}
 
 			// Remove any negative conditions whether player got healed or not.
-			if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
+			if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) || pTFPlayer->m_Shared.InCond( TF_COND_BLEEDING ) )
 			{
-				pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
 				bSuccess = true;
 			}
 		}
@@ -106,15 +105,7 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 
 			EmitSound( user, entindex(), pszSound );
 
-			IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
-			
-			if ( event )
-			{
-				event->SetInt( "amount", iHealthRestored );
-				event->SetInt( "entindex", pPlayer->entindex() );
-				
-				gameeventmanager->FireEvent( event );
-			}
+			pTFPlayer->m_Shared.HealthKitPickupEffects( iHealthRestored );
 
 			CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
 			if ( pTFOwner && pTFOwner->InSameTeam( pTFPlayer ) )
