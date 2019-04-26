@@ -51,7 +51,6 @@ enum TFNavAttributeType
 
 	/* bit 31: unused */
 };
-DEFINE_ENUM_BITWISE_OPERATORS( TFNavAttributeType )
 
 #define TF_ATTRIBUTE_RESET BLOCKED|RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT|AMMO|HEALTH|CONTROL_POINT|BLUE_SENTRY|RED_SENTRY
 
@@ -100,10 +99,10 @@ public:
 	void SetIncursionDistance( int teamnum, float distance );
 	float GetIncursionDistance( int teamnum ) const;
 
-	void AddTFAttributes( TFNavAttributeType bits );
-	TFNavAttributeType GetTFAttributes( void ) const;
-	bool HasTFAttributes( TFNavAttributeType bits ) const;
-	void RemoveTFAttributes( TFNavAttributeType bits );
+	void AddTFAttributes( int bits );
+	int GetTFAttributes( void ) const;
+	bool HasTFAttributes( int bits ) const;
+	void RemoveTFAttributes( int bits );
 
 	void SetBombTargetDistance( float distance );
 	float GetBombTargetDistance( void ) const;
@@ -118,7 +117,7 @@ public:
 	int m_TFSearchMarker;
 
 private:
-	TFNavAttributeType m_nAttributes;
+	int m_nAttributes;
 
 	//CUtlVector< CHandle<CBaseCombatCharacter> > m_PVNPCs[4];
 
@@ -136,28 +135,38 @@ inline CUtlVector<CTFNavArea *> *CTFNavArea::GetInvasionAreasForTeam( int teamNu
 	return &m_InvasionAreas[teamNum];
 }
 
-inline void CTFNavArea::SetIncursionDistance( int teamnum, float distance )
+inline void CTFNavArea::SetIncursionDistance( int teamNum, float distance )
 {
-	if (teamnum > -1 && teamnum < 4)
-		m_aIncursionDistances[teamnum] = distance;
+	Assert( teamNum > -1 && teamNum < 4 );
+	if ( teamNum < 4 )
+		m_aIncursionDistances[teamNum] = distance;
 }
 
-inline void CTFNavArea::AddTFAttributes( TFNavAttributeType bits )
+inline float CTFNavArea::GetIncursionDistance( int teamNum ) const
+{
+	Assert( teamNum > -1 && teamNum < 4 );
+	if ( teamNum < 4 )
+		return m_aIncursionDistances[teamNum];
+
+	return -1.0f;
+}
+
+inline void CTFNavArea::AddTFAttributes( int bits )
 {
 	m_nAttributes |= bits;
 }
 
-inline TFNavAttributeType CTFNavArea::GetTFAttributes( void ) const
+inline int CTFNavArea::GetTFAttributes( void ) const
 {
 	return m_nAttributes;
 }
 
-inline bool CTFNavArea::HasTFAttributes( TFNavAttributeType bits ) const
+inline bool CTFNavArea::HasTFAttributes( int bits ) const
 {
 	return ( m_nAttributes & bits ) != 0;
 }
 
-inline void CTFNavArea::RemoveTFAttributes( TFNavAttributeType bits )
+inline void CTFNavArea::RemoveTFAttributes( int bits )
 {
 	m_nAttributes &= ~bits;
 }

@@ -74,12 +74,12 @@ NavErrorType CTFNavArea::Load( CUtlBuffer &fileBuffer, unsigned int version, uns
 		CNavArea::Load( fileBuffer, version, subVersion );
 		if ( subVersion <= 1 )
 		{
-			m_nAttributes = (TFNavAttributeType)0;
+			m_nAttributes = 0;
 			return NAV_OK;
 		}
 		else
 		{
-			fileBuffer.Get( &m_nAttributes, sizeof( unsigned int ) );
+			m_nAttributes = fileBuffer.GetUnsignedInt();
 			if ( !fileBuffer.IsValid() )
 			{
 				Warning( "Can't read TF-specific attributes\n" );
@@ -430,13 +430,4 @@ void CTFNavArea::TFMark()
 bool CTFNavArea::IsValidForWanderingPopulation() const
 {
 	return ( m_nAttributes & ( BLOCKED|RESCUE_CLOSET|BLUE_SPAWN_ROOM|RED_SPAWN_ROOM|NO_SPAWNING ) ) == 0;
-}
-
-float CTFNavArea::GetIncursionDistance( int teamnum ) const
-{
-	Assert( teamnum < 4 );
-	if ( teamnum < 4 )
-		return m_aIncursionDistances[teamnum];
-
-	return -1.0f;
 }
