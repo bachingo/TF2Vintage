@@ -3350,48 +3350,22 @@ EHANDLE CTFPlayerShared::GetFirstHealer()
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::HealthKitPickupEffects(int iAmount)
 {
-	/*int v4; // eax@2
-	int v5; // edi@8
-	int v6; // edx@9
-	int v7; // eax@9
+	if ( InCond( TF_COND_BURNING ) )
+		RemoveCond( TF_COND_BURNING );
+	if ( InCond( TF_COND_BLEEDING ) )
+		RemoveCond( TF_COND_BLEEDING );
 
-	if (CTFPlayerShared::InCond((int)this, 22))
-	CTFPlayerShared::RemoveCond((int)this, 22, a1, a2);
-	LOBYTE(v4) = CTFPlayerShared::InCond((int)this, 25);
-	if ((_BYTE)v4)
-	LOBYTE(v4) = CTFPlayerShared::RemoveCond((int)this, 25, a1, a2);
-	if ( iAmount )
-	{
-	LOBYTE(v4) = CTFPlayerShared::IsStealthed(this);
-	if (!(_BYTE)v4)
-	{
-	v4 = *((_DWORD *)this + 521);
-	if (v4)
-	{
-	IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
-	v5 = v4;
+	if ( IsStealthed() || !m_pOuter )
+		return;
+
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
 	if ( event )
 	{
-	event->SetInt( "amount", iAmount );
-	event->SetInt( "entindex", m_pOuter->entindex() );
-	gameeventmanager->FireEvent(event);
+		event->SetInt( "amount", iAmount );
+		event->SetInt( "entindex", m_pOuter->entindex() );
 
-
-	(*(void(__cdecl **)(int, _DWORD, int))(*(_DWORD *)v4 + 44))(v4, "amount", iAmount);
-	v6 = *(_DWORD *)(*((_DWORD *)this + 521) + 32);
-	v7 = 0;
-	if (v6)
-	v7 = *(_WORD *)(v6 + 6);
-	(*(void(__cdecl **)(int, _DWORD, int))(*(_DWORD *)v5 + 44))(v5, "entindex", v7);
-	LOBYTE(v4) = (*(int(__cdecl **)(CGameRulesProxy *, int, _DWORD))(*(_DWORD *)gameeventmanager + 32))(
-	gameeventmanager,
-	v5,
-	0);
+		gameeventmanager->FireEvent( event );
 	}
-	}
-	}
-	}
-	return v4;*/
 }
 #endif
 
