@@ -50,9 +50,9 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 		Vector seCorner = area->GetCorner( SOUTH_EAST );
 
 		Vector vecStart, vecEnd, vecMaxs, vecTest;
-		if ( -( nwCorner.z - neCorner.z ) >= 1.0f )
+		if ( abs( nwCorner.z - neCorner.z ) >= 1.0f )
 		{
-			if ( -( seCorner.z - swCorner.z ) >= 1.0f )
+			if ( abs( seCorner.z - swCorner.z ) >= 1.0f )
 			{
 				vecTest = seCorner;
 				vecMaxs.x = 1.0f;
@@ -103,6 +103,9 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 
 CTFNavMesh::CTFNavMesh()
 {
+	Q_memset( &m_CPAreas, 0, sizeof( m_CPAreas ) );
+	Q_memset( &m_CPArea, 0, sizeof( m_CPArea ) );
+
 	ListenForGameEvent( "teamplay_setup_finished" );
 	ListenForGameEvent( "teamplay_point_captured" );
 	ListenForGameEvent( "teamplay_point_unlocked" );
@@ -341,28 +344,17 @@ void CTFNavMesh::CollectSpawnRoomThresholdAreas( CUtlVector<CTFNavArea*> *areas,
 		for ( int i=0; i<spawnExits->Count(); ++i )
 		{
 			CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
-			float flMaxSize = 0.0f;
-			CTFNavArea *candidate = nullptr;
+			
 			for ( int dir = 0; dir < NUM_DIRECTIONS; ++dir )
 			{
 				for ( int j=0; j<area->GetAdjacentCount( (NavDirType)dir ); ++j )
 				{
 					CTFNavArea *adj = static_cast<CTFNavArea *>( area->GetAdjacentArea( (NavDirType)dir, j ) );
-					if ( adj->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT ) )
-						continue;
 
-					float flSize = adj->GetSizeY() * adj->GetSizeX();
-					if ( flSize > flMaxSize )
-					{
-						candidate = adj;
-						flMaxSize = flSize;
-						break;
-					}
+					if ( !adj->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT ) && adj->GetSizeY() * adj->GetSizeX() > 0.0f )
+						areas->AddToTail( adj );
 				}
 			}
-
-			if ( candidate )
-				areas->AddToTail( candidate );
 		}
 	}
 }
@@ -429,25 +421,23 @@ void CTFNavMesh::CollectControlPointAreas()
 					Extent captureExtent;
 					captureExtent.Init( pCaptureArea );
 
-					captureExtent.lo -= HalfHumanHeight;
-					captureExtent.hi += HalfHumanHeight;
+					captureExtent.lo -= 35.5f;
+					captureExtent.hi += 35.5f;
 
 					int iIndex = pPoint->GetPointIndex();
 
 					CollectAreasOverlappingExtent( captureExtent, &m_CPAreas[iIndex] );
 
-					if ( m_CPAreas[iIndex].Count() )
+					float flMinDist = FLT_MAX;
+					Vector vOrigin = pCaptureArea->WorldSpaceCenter();
+					for ( int j=0; j < m_CPAreas[iIndex].Count(); ++j )
 					{
-						float fDistance = FLT_MAX;
-						Vector vOrigin = pCaptureArea->WorldSpaceCenter();
-						for ( int j=0; j < m_CPAreas[iIndex].Count(); ++j )
+						Vector vCenter = m_CPAreas[iIndex][j]->GetCenter();
+						float flDistance = ( vCenter - vOrigin ).AsVector2D().LengthSqr();
+						if ( flMinDist > flDistance )
 						{
-							Vector vCenter = m_CPAreas[iIndex][j]->GetCenter();
-							if ( fDistance >( vCenter - vOrigin ).AsVector2D().LengthSqr() )
-							{
-								fDistance = ( vCenter - vOrigin ).AsVector2D().LengthSqr();
-								m_CPArea[iIndex] = m_CPAreas[iIndex][j];
-							}
+							flMinDist = flDistance;
+							m_CPArea[iIndex] = m_CPAreas[iIndex][j];
 						}
 					}
 				}
@@ -682,7 +672,7 @@ void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )
 		{
 			CTFNavArea *area = static_cast<CTFNavArea *>( CNavArea::PopOpenList() );
 
-			adjCons.Purge();
+			adjCons.RemoveAll();
 
 			if ( !TFGameRules()->IsMannVsMachineMode() && !area->HasTFAttributes( RED_SETUP_GATE|BLUE_SETUP_GATE|SPAWN_ROOM_EXIT ) && area->IsBlocked( teamNum ) )
 				continue;
