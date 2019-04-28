@@ -27,6 +27,10 @@
 #include "tier0/icommandline.h"
 #include "tier1/convar.h"
 
+#ifdef _WIN32
+#include "winlite.h"
+#endif
+
 #include "inetchannelinfo.h"
 
 extern IMaterialSystem *materials;
@@ -35,6 +39,8 @@ extern IMaterialSystem *materials;
 #include "tier0/memdbgon.h"
 
 using namespace vgui;
+
+ConVar cl_windowmode( "cl_windowmode", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Set the mode of the game window (fullscreen, windowed, borderless)", true, 0.0f, true, 2.0f );
 
 //-----------------------------------------------------------------------------
 // Purpose: aspect ratio mappings (for normal/widescreen combo)
@@ -118,6 +124,26 @@ void GetResolutionName( vmode_t *mode, char *sz, int sizeofsz )
 	}
 }
 
+static HWND s_hWnd = NULL;
+BOOL CALLBACK EnumProcs( HWND hwnd, LPARAM lParam )
+{
+	HINSTANCE inst = GetModuleHandle( NULL );
+	if ( (HINSTANCE)GetWindowLongPtr( hwnd, GWL_HINSTANCE )==inst && IsWindowVisible( hwnd ) )
+	{
+		s_hWnd=hwnd;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void InitWindowHandle( void )
+{
+	EnumWindows( EnumProcs, NULL );
+	if ( s_hWnd == NULL )
+		Warning( "Unable to get process handle, borderless option disabled" );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -176,6 +202,7 @@ void CTFOptionsVideoPanel::CreateControls()
 	m_pWindowed = new ComboBox(this, "DisplayModeCombo", 6, false);
 	m_pWindowed->AddItem("#GameUI_Fullscreen", NULL);
 	m_pWindowed->AddItem("#GameUI_Windowed", NULL);
+	m_pWindowed->AddItem("Borderless", NULL);
 
 	m_pGammaSlider = new CCvarSlider(this, "Gamma", "#GameUI_Gamma", 1.6f, 2.6f, "mat_monitorgamma");
 
@@ -441,7 +468,7 @@ void CTFOptionsVideoPanel::PrepareResolutionList()
 
 	const MaterialSystem_Config_t &config = materials->GetCurrentConfigForVideoCard();
 
-	bool bWindowed = (m_pWindowed->GetActiveItem() > 0);
+	bool bWindowed = (m_pWindowed->GetActiveItem() == 1);
 	int desktopWidth, desktopHeight;
 	gameuifuncs->GetDesktopResolution( desktopWidth, desktopHeight );
 
@@ -518,11 +545,11 @@ void CTFOptionsVideoPanel::OnResetData()
 	const MaterialSystem_Config_t &config = materials->GetCurrentConfigForVideoCard();
 
     // reset UI elements
-    m_pWindowed->ActivateItem(config.Windowed() ? 1 : 0);
+    m_pWindowed->ActivateItem( cl_windowmode.GetInt() );
 	//Msg("WINDOWED %i\n", config.Windowed());
 
 	// reset gamma control
-	m_pGammaSlider->SetEnabled(!config.Windowed());
+	m_pGammaSlider->SetEnabled( !config.Windowed() );
 	m_pGammaSlider->Reset();
 
     SetCurrentResolutionComboItem();
@@ -730,6 +757,7 @@ void CTFOptionsVideoPanel::OnApplyChanges()
 		}
 	}
 
+	cl_windowmode.SetValue( m_pWindowed->GetActiveItem() );
 
 	// resolution
 	char sz[256];
@@ -746,7 +774,7 @@ void CTFOptionsVideoPanel::OnApplyChanges()
 	sscanf(sz, "%i x %i", &width, &height);
 	Msg("VIDEO %s\n", sz);
 	// windowed
-	bool windowed = (m_pWindowed->GetActiveItem() > 0) ? true : false;
+	bool windowed = ( m_pWindowed->GetActiveItem() == 1 || m_pWindowed->GetActiveItem() == 2 );
 
 	// make sure there is a change
 	const MaterialSystem_Config_t &config = materials->GetCurrentConfigForVideoCard();
@@ -759,6 +787,25 @@ void CTFOptionsVideoPanel::OnApplyChanges()
 		Q_snprintf( szCmd, sizeof( szCmd ), "mat_setvideomode %i %i %i\n", width, height, windowed ? 1 : 0 );
 		Msg(szCmd);
 		engine->ClientCmd_Unrestricted( szCmd );
+	}
+
+	if ( m_pWindowed->GetActiveItem() == 2 )
+	{
+		if ( !s_hWnd )
+			InitWindowHandle();
+
+		if ( s_hWnd != NULL )
+		{
+			DWORD style = GetWindowLong( s_hWnd, GWL_STYLE );
+			style &= ~( WS_CAPTION|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_SYSMENU );
+			SetWindowLong( s_hWnd, GWL_STYLE, style );
+
+			DWORD exStyle = GetWindowLong( s_hWnd, GWL_EXSTYLE );
+			exStyle &= ~( WS_EX_DLGMODALFRAME|WS_EX_CLIENTEDGE|WS_EX_STATICEDGE );
+			SetWindowLong( s_hWnd, GWL_EXSTYLE, exStyle );
+
+			SetWindowPos( s_hWnd, 0, 0, 0, 0, 0, SWP_DRAWFRAME|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER );
+		}
 	}
 
 	if (config.m_VideoMode.m_Width != width || config.m_VideoMode.m_Height != height || config.Windowed() != windowed)
