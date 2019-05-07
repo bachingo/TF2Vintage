@@ -3692,27 +3692,6 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 	CTFPlayer *pAssister = ToTFPlayer( GetAssister( pVictim, pScorer, pInflictor ) );
 	int iWeaponID = TF_WEAPON_NONE;
 
-	// Work out what killed the player, and send a message to all clients about it
-	const char *killer_weapon_name = GetKillingWeaponName( info, pTFPlayerVictim, iWeaponID );
-	const char *killer_weapon_log_name = NULL;
-
-	if (iWeaponID && pScorer)
-	{
-		CTFWeaponBase *pWeapon = pScorer->Weapon_OwnsThisID( iWeaponID );
-		if (pWeapon)
-		{
-			CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
-			if (pItemDef)
-			{
-				if (pItemDef->item_iconname[0])
-					killer_weapon_name = pItemDef->item_iconname;
-
-				if (pItemDef->item_logname[0])
-					killer_weapon_log_name = pItemDef->item_logname;
-			}
-		}
-	}
-
 	if (pScorer)	// Is the killer a client?
 	{
 		killer_ID = pScorer->GetUserID();
@@ -3750,12 +3729,51 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 		iDeathFlags |= TF_DEATH_FIRST_BLOOD;
 		pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, 5.0f );
 	}
-	// Feign death, purgatory death, australium death etc are all processed here.
+	
+	if ( pTFPlayerVictim->m_Shared.IsFeigningDeath() )
+	{
+		iDeathFlags |= TF_DEATH_FEIGN_DEATH;
+
+		CTFPlayer *pDisguiseVictim = ToTFPlayer( pTFPlayerVictim->m_Shared.GetDisguiseTarget() );
+		if ( pDisguiseVictim && pDisguiseVictim->GetTeamNumber() == pVictim->GetTeamNumber() ) // Make them think they killed our teammate
+		{
+			pVictim = pDisguiseVictim;
+			pTFPlayerVictim = pDisguiseVictim;
+		}
+	}
+
+	if ( info.GetWeapon() )
+	{
+		int nTurnToAustralium = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), nTurnToAustralium, is_australium_item );
+		if ( nTurnToAustralium )
+			iDeathFlags |= TF_DEATH_AUSTRALIUM;
+	}
 
 	pTFPlayerVictim->SetDeathFlags( iDeathFlags );
 
-	IGameEvent *event = gameeventmanager->CreateEvent( "player_death" );
+	// Work out what killed the player, and send a message to all clients about it
+	const char *killer_weapon_name = GetKillingWeaponName( info, pTFPlayerVictim, iWeaponID );
+	const char *killer_weapon_log_name = NULL;
 
+	if ( iWeaponID && pScorer )
+	{
+		CTFWeaponBase *pWeapon = pScorer->Weapon_OwnsThisID( iWeaponID );
+		if ( pWeapon )
+		{
+			CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
+			if ( pItemDef )
+			{
+				if ( pItemDef->item_iconname[0] )
+					killer_weapon_name = pItemDef->item_iconname;
+
+				if ( pItemDef->item_logname[0] )
+					killer_weapon_log_name = pItemDef->item_logname;
+			}
+		}
+	}
+
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_death" );
 	if (event)
 	{
 		event->SetInt( "userid", pVictim->GetUserID() );
@@ -3787,6 +3805,12 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 			event->SetInt( "assister_revenge", 1 );
 		}
 #endif
+		CTFPlayer *pTFAttacker = ToTFPlayer( info.GetAttacker() );
+		if ( pTFAttacker && pTFAttacker->GetActiveTFWeapon() )
+		{
+			CTFWeaponBase *pActive = pTFAttacker->GetActiveTFWeapon();
+			event->SetBool( "silent_kill", ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB && pActive->IsSilentKiller() ) );
+		}
 
 		gameeventmanager->FireEvent( event );
 	}

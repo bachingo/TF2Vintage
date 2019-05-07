@@ -52,6 +52,8 @@ public:
 	void PlayRivalrySounds( int iKillerIndex, int iVictimIndex, int iType  );
 	virtual Color GetInfoTextColor(int iDeathNoticeMsg, bool bLocalPlayerInvolved){ return bLocalPlayerInvolved ? Color(0, 0, 0, 255) : Color(255, 255, 255, 255); }
 
+	virtual bool ShouldShowDeathNotice( IGameEvent *event ) const;
+
 protected:	
 	virtual void OnGameEvent( IGameEvent *event, int iDeathNoticeMsg );
 	virtual Color GetTeamColor( int iTeamNumber, bool bLocalPlayerInvolved /* = false */ );
@@ -119,6 +121,48 @@ void CTFHudDeathNotice::PlayRivalrySounds( int iKillerIndex, int iVictimIndex, i
 
 	CLocalPlayerFilter filter;
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, pszSoundName );
+}
+
+bool CTFHudDeathNotice::ShouldShowDeathNotice( IGameEvent *event ) const
+{
+	if ( event->GetBool( "silent_kill" ) )
+	{
+		int iVictim = engine->GetPlayerForUserID( event->GetInt( "userid" ) );
+		C_BasePlayer *pVictim = UTIL_PlayerByIndex( iVictim );
+		if ( !pVictim || !pVictim->IsPlayer() ||
+			 pVictim->GetTeamNumber() != GetLocalPlayerTeam() || iVictim == GetLocalPlayerIndex() )
+		{
+			if ( !TFGameRules() || !TFGameRules()->IsMannVsMachineMode() )
+				return true;
+
+			if ( event->GetInt( "death_flags" ) & 0x200 )
+				return true;
+
+			if ( engine->GetPlayerForUserID( event->GetInt( "attacker" ) ) == GetLocalPlayerIndex() ||
+				 engine->GetPlayerForUserID( event->GetInt( "assister" ) ) == GetLocalPlayerIndex() )
+				return true;
+
+			if ( !pVictim || !pVictim->IsPlayer() || pVictim->GetTeamNumber() != TF_TEAM_BLUE )
+				return true;
+		}
+	}
+
+	if ( !TFGameRules() || !TFGameRules()->IsMannVsMachineMode() )
+		return true;
+
+	if ( event->GetInt( "death_flags" ) & 0x200 )
+		return true;
+
+	if ( engine->GetPlayerForUserID( event->GetInt( "attacker" ) ) == GetLocalPlayerIndex() ||
+		 engine->GetPlayerForUserID( event->GetInt( "assister" ) ) == GetLocalPlayerIndex() )
+		return true;
+
+	int iVictim = engine->GetPlayerForUserID( event->GetInt( "userid" ) );
+	C_BasePlayer *pVictim = UTIL_PlayerByIndex( iVictim );
+	if ( !pVictim || !pVictim->IsPlayer() || pVictim->GetTeamNumber() != TF_TEAM_BLUE )
+		return true;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -239,32 +283,32 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 		const wchar_t *pMsg = NULL;
 		switch (iCustomDamage)
 		{
-		case TF_DMG_CUSTOM_BACKSTAB:
-			Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_backstab", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
-			break;
-		case TF_DMG_CUSTOM_HEADSHOT:
-			if ( FStrEq( event->GetString( "weapon" ), "huntsman" ) )
-			{
-				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_huntsman_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
-			}
-			else if ( FStrEq( event->GetString( "weapon" ), "huntsman_flyingburn" ) )
-			{
-				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_huntsman_flyingburn_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
-			}
-			else if ( FStrEq( event->GetString( "weapon" ), "deflect_arrow" ) )
-			{
-				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_deflect_huntsman_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
-			}
-			else if ( FStrEq( event->GetString( "weapon" ), "deflect_huntsman_flyingburn" ) )
-			{
-				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_deflect_huntsman_flyingburn_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
-			}
-			else 
-			{
-				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
-			}
-			break;
-		case TF_DMG_CUSTOM_SUICIDE:
+			case TF_DMG_CUSTOM_BACKSTAB:
+				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_backstab", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				break;
+			case TF_DMG_CUSTOM_HEADSHOT:
+				if ( FStrEq( event->GetString( "weapon" ), "huntsman" ) )
+				{
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_huntsman_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				}
+				else if ( FStrEq( event->GetString( "weapon" ), "huntsman_flyingburn" ) )
+				{
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_huntsman_flyingburn_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				}
+				else if ( FStrEq( event->GetString( "weapon" ), "deflect_arrow" ) )
+				{
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_deflect_huntsman_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				}
+				else if ( FStrEq( event->GetString( "weapon" ), "deflect_huntsman_flyingburn" ) )
+				{
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_deflect_huntsman_flyingburn_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				}
+				else 
+				{
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				}
+				break;
+			case TF_DMG_CUSTOM_SUICIDE:
 			{
 				// display a different message if this was suicide, or assisted suicide (suicide w/recent damage, kill awarded to damager)
 				bool bAssistedSuicide = event->GetInt( "userid" ) != event->GetInt( "attacker" );
@@ -275,8 +319,20 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 				}			
 				break;
 			}
-		default:
-			break;
+			case TF_DMG_CUSTOM_EYEBALL_ROCKET:
+			{
+				pMsg = g_pVGuiLocalize->Find( "#TF_HALLOWEEN_EYEBALL_BOSS_DEATHCAM_NAME" );
+				if ( pMsg )
+				{
+					char *pszMsg = NULL;
+					g_pVGuiLocalize->ConvertUnicodeToANSI( pMsg, pszMsg, ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].Killer.szName ) );
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].Killer.szName, pszMsg, ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].Killer.szName ) );
+				}
+				m_DeathNotices[iDeathNoticeMsg].Killer.iTeam = TF_TEAM_BOSS;
+				break;
+			}
+			default:
+				break;
 		}
 	} 
 	else if ( FStrEq( "teamplay_point_captured", pszEventName ) || FStrEq( "teamplay_capture_blocked", pszEventName ) || 

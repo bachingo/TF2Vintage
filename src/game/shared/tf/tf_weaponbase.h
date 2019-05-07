@@ -299,6 +299,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// On hit effects.
 	void ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info );
 
+	bool IsSilentKiller( void ) const;
+
 // Client specific.
 #else
 

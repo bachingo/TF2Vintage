@@ -2362,6 +2362,7 @@ void CTFPlayerShared::OnAddFeignDeath( void )
 		AddCond( TF_COND_STEALTHED );
 
 	m_bFeignDeathReady = false;
+	m_bFeigningDeath = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2396,6 +2397,8 @@ void CTFPlayerShared::OnRemoveStealthed(void)
 		RemoveCond( TF_COND_FEIGN_DEATH );
 		if ( m_flCloakMeter > 40.0f )
 			m_flCloakMeter = 40.0f;
+
+		m_bFeigningDeath = false;
 	}
 
 	m_pOuter->HolsterOffHandWeapon();

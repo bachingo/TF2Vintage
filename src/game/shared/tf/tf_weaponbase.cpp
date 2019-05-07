@@ -2150,6 +2150,16 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Return if we should not show death notices to enemy
+// ----------------------------------------------------------------------------
+bool CTFWeaponBase::IsSilentKiller( void ) const
+{
+	int nSilentKiller = 0;
+	CALL_ATTRIB_HOOK_INT( nSilentKiller, set_silent_killer );
+	return nSilentKiller == 1;
+}
+
 #else
 
 void TE_DynamicLight( IRecipientFilter& filter, float delay,

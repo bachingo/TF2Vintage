@@ -196,6 +196,8 @@ public:
 
 	void	SetFeignReady( bool bSet ) { m_bFeignDeathReady = bSet; }
 	bool	IsFeignDeathReady( void ) { return m_bFeignDeathReady; }
+	
+	bool	IsFeigningDeath( void ) const { return m_bFeigningDeath; }
 
 #ifdef GAME_DLL
 	void	Heal( CTFPlayer *pPlayer, float flAmount, bool bDispenserHeal = false );
@@ -500,9 +502,11 @@ private:
 	CNetworkVar( float, m_flCloakMeter );	// [0,100]
 	float m_flCloakDrainRate;
 	float m_flCloakRegenRate;
+
 	bool m_bHasMotionCloak;
 
 	CNetworkVar( bool, m_bFeignDeathReady );
+	bool m_bFeigningDeath;
 
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );
