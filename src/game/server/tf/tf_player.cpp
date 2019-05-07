@@ -4103,7 +4103,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if ( pWeapon && pAttacker )
+	if ( pWeapon && pTFAttacker )
 	{
 		int nAddCloakOnHit = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnHit, add_cloak_on_hit );
