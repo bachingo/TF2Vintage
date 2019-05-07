@@ -1237,6 +1237,8 @@ void CTFPlayer::Regenerate( void )
 
 	// Reset charge meter
 	m_Shared.SetShieldChargeMeter( 100.0f );
+
+	m_Shared.SetFeignReady( false );
 }
 
 //-----------------------------------------------------------------------------
