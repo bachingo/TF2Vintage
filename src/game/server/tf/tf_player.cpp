@@ -3685,6 +3685,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CBaseEntity *pAttacker = info.GetAttacker();
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CTFWeaponBase *pWeapon = NULL;
+	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
 
 	//bool bObject = false;
 
@@ -3703,7 +3704,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	else if ( pAttacker && pAttacker->IsPlayer() )
 	{
 		// Assume that player used his currently active weapon.
-		pWeapon = ToTFPlayer( pAttacker )->GetActiveTFWeapon();
+		pWeapon = pTFAttacker->GetActiveTFWeapon();
 	}
 
 	int iHealthBefore = GetHealth();
@@ -4100,6 +4101,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			m_iHealth = 1;
 			return 0;
 		}
+	}
+
+	if ( pWeapon && pAttacker )
+	{
+		int nAddCloakOnHit = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnHit, add_cloak_on_hit );
+		if ( nAddCloakOnHit > 0 )
+			pTFAttacker->m_Shared.AddToSpyCloakMeter( nAddCloakOnHit );
 	}
 
 	// Battalion's Backup resists
