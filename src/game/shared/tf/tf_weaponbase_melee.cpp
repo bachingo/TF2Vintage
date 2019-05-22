@@ -123,7 +123,11 @@ bool CTFWeaponBaseMelee::Holster( CBaseCombatWeapon *pSwitchingTo )
 	if ( GetPlayerOwner() )
 	{
 		GetPlayerOwner()->m_flNextAttack = gpGlobals->curtime + 0.5;
+
+		GetTFPlayerOwner()->m_Shared.SetNextMeleeCrit( CTFPlayerShared::MELEE_CRIT_NONE );
 	}
+
+
 		
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -415,6 +419,10 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 
 	if ( nCvarValue == 1 && !tf_weapon_criticals.GetBool() )
 		return false;
+
+	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != CTFPlayerShared::MELEE_CRIT_NONE;
+	if ( pPlayer->m_Shared.GetNextMeleeCrit() == CTFPlayerShared::MELEE_CRIT_FULL )
+		return true;
 
 	float flPlayerCritMult = pPlayer->GetCritMult();
 
