@@ -548,6 +548,17 @@ void CWeaponMedigun::HealTargetThink( void )
 
 	SetNextThink( gpGlobals->curtime + 0.2f, s_pszMedigunHealTargetThink );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CWeaponMedigun::IsAttachedToBuilding( void ) const
+{
+	if ( m_hHealingTarget )
+		return m_hHealingTarget->IsBaseObject();
+
+	return false;
+}
 #endif
 
 //-----------------------------------------------------------------------------

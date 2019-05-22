@@ -83,9 +83,11 @@ public:
 
 	void			HealTargetThink( void );
 
+	bool			IsAttachedToBuilding( void ) const;
+
 #endif
 
-	float			GetChargeLevel( void ) { return m_flChargeLevel; }
+	float			GetChargeLevel( void ) const { return m_flChargeLevel; }
 
 private:
 	bool					FindAndHealTargets( void );
