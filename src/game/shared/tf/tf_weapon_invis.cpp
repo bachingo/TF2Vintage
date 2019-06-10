@@ -113,9 +113,29 @@ bool CTFWeaponInvis::ActivateInvisibility( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFWeaponInvis::CleanUpInvisibility( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( pOwner->m_Shared.IsFeignDeathReady() )
+		pOwner->m_Shared.SetFeignReady( false );
+
+	if ( pOwner->m_Shared.IsStealthed() )
+		pOwner->m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
+
+	pOwner->HolsterOffHandWeapon();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFWeaponInvis::HasFeignDeath( void ) const
 {
-	return CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1;
+	int nWeaponMode = 0;
+	CALL_ATTRIB_HOOK_INT( nWeaponMode, set_weapon_mode );
+	return nWeaponMode == 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -123,7 +143,9 @@ bool CTFWeaponInvis::HasFeignDeath( void ) const
 //-----------------------------------------------------------------------------
 bool CTFWeaponInvis::HasMotionCloak( void ) const
 {
-	return CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 2;
+	int nWeaponMode = 0;
+	CALL_ATTRIB_HOOK_INT( nWeaponMode, set_weapon_mode );
+	return nWeaponMode == 2;
 }
 
 //-----------------------------------------------------------------------------

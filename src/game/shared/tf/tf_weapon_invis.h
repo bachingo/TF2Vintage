@@ -60,6 +60,7 @@ public:
 #endif
 
 	bool			ActivateInvisibility( void );
+	void			CleanUpInvisibility( void );
 
 	bool			HasFeignDeath( void ) const;
 	bool			HasMotionCloak( void ) const;

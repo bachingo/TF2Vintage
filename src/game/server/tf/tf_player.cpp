@@ -57,6 +57,7 @@
 #include "tf_weapon_lunchbox.h"
 #include "tf_weapon_laser_pointer.h"
 #include "tf_weapon_sword.h"
+#include "tf_weapon_invis.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "nav_pathfind.h"
 
@@ -1232,13 +1233,15 @@ void CTFPlayer::Regenerate( void )
 		m_Shared.RemoveCond( TF_COND_PHASE );
 	}
 
+	CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
+	if ( pInvis && pInvis->HasFeignDeath() )
+		pInvis->CleanUpInvisibility();
+
 	// Fill Spy cloak
 	m_Shared.SetSpyCloakMeter( 100.0f );
 
 	// Reset charge meter
 	m_Shared.SetShieldChargeMeter( 100.0f );
-
-	m_Shared.SetFeignReady( false );
 }
 
 //-----------------------------------------------------------------------------
