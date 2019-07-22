@@ -115,6 +115,7 @@ private:
 	bool FindTarget( void );
 	bool ValidTargetPlayer( CTFPlayer *pPlayer, const Vector &vecStart, const Vector &vecEnd );
 	bool ValidTargetObject( CBaseObject *pObject, const Vector &vecStart, const Vector &vecEnd );
+	bool ValidTargetBot( CBaseCombatCharacter *pActor );
 	void FoundTarget( CBaseEntity *pTarget, const Vector &vecSoundCenter );
 	bool FInViewCone ( CBaseEntity *pEntity );
 	int Range( CBaseEntity *pTarget );
