@@ -1157,19 +1157,34 @@ bool CTFFlameThrower::CanAirBlastPutOutTeammate( void )
 	return iExtinguishDisabled == 0;
 }
 
-#if defined( GAME_DLL )
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameEntity, DT_TFFlameEntity )
+
+BEGIN_NETWORK_TABLE( CTFFlameEntity, DT_TFFlameEntity )
+#ifdef CLIENT_DLL
+	RecvPropEHandle( RECVINFO( m_hAttacker ) ),
+#else
+	SendPropEHandle( SENDINFO( m_hAttacker ) ),
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_DATADESC( CTFFlameEntity )
+END_DATADESC()
+
+#if defined( GAME_DLL )
 IMPLEMENT_AUTO_LIST( ITFFlameEntityAutoList );
+#endif
 
 LINK_ENTITY_TO_CLASS( tf_flame, CTFFlameEntity );
 
 //-----------------------------------------------------------------------------
-// Purpose: Spawns this entitye
+// Purpose: Spawns this entity
 //-----------------------------------------------------------------------------
 void CTFFlameEntity::Spawn( void )
 {
 	BaseClass::Spawn();
 
+#if defined( GAME_DLL )
 	// don't collide with anything, we do our own collision detection in our think method
 	SetSolid( SOLID_NONE );
 	SetSolidFlags( FSOLID_NOT_SOLID );
@@ -1191,8 +1206,39 @@ void CTFFlameEntity::Spawn( void )
 	// Setup the think function.
 	SetThink( &CTFFlameEntity::FlameThink );
 	SetNextThink( gpGlobals->curtime );
+#endif
 }
 
+#if defined( CLIENT_DLL )
+void CTFFlameEntity::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		if ( tf2v_new_flames.GetBool() )
+			SetNextClientThink( CLIENT_THINK_ALWAYS );
+	}
+}
+
+void CTFFlameEntity::ClientThink( void )
+{
+	if ( !m_pFlameEffect )
+	{
+		const char *pszParticleEffect;
+		if ( tf_halloween.GetBool() )
+			pszParticleEffect = "new_flame_fan_core";
+		else
+			pszParticleEffect = "new_flame_core";
+
+		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
+	}
+
+	m_pFlameEffect->SetControlPoint( 0, WorldSpaceCenter() );
+}
+#endif
+
+#if defined( GAME_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: Creates an instance of this entity
 //-----------------------------------------------------------------------------
@@ -1212,6 +1258,8 @@ CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &v
 		pFlame->m_vecAttackerVelocity = pAttacker->GetAbsVelocity();
 	}
 
+	pFlame->AddEffects( EF_NOSHADOW );
+
 	// Set team.
 	pFlame->ChangeTeam( pOwner->GetTeamNumber() );
 	pFlame->m_iDmgType = iDmgType;
@@ -1228,6 +1276,9 @@ CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &v
 	pFlame->SetAbsVelocity( pFlame->m_vecBaseVelocity );
 	// Setup the initial angles.
 	pFlame->SetAbsAngles( vecAngles );
+
+	// Force updates even though we don't have a model.
+	pFlame->AddEFlags( EFL_FORCE_CHECK_TRANSMIT );
 
 	return pFlame;
 }
@@ -1435,7 +1486,6 @@ void CTFFlameEntity::CheckCollision( CBaseEntity *pOther, bool *pbHitWorld )
 			UTIL_Remove( this );
 		}
 	}
-
 }
 
 //-----------------------------------------------------------------------------

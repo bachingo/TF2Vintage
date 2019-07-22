@@ -21,6 +21,7 @@
 
 	#define CTFFlameThrower C_TFFlameThrower
 	#define CTFFlameRocket C_TFFlameRocket
+	#define CTFFlameEntity C_TFFlameEntity
 #else
 	#include "tf_projectile_rocket.h"
 	#include "baseentity.h"
@@ -158,7 +159,7 @@ public:
 #endif
 };
 
-#ifdef GAME_DLL
+#if defined( GAME_DLL )
 DECLARE_AUTO_LIST( ITFFlameEntityAutoList );
 #endif
 
@@ -169,16 +170,21 @@ class CTFFlameEntity : public CBaseEntity
 {
 	DECLARE_CLASS( CTFFlameEntity, CBaseEntity );
 public:
+	DECLARE_NETWORKCLASS();
+	DECLARE_DATADESC();
 
 	virtual void Spawn( void );
 
-#ifdef CLIENT_DLL
+#if defined( CLIENT_DLL )
+	virtual void OnDataChanged( DataUpdateType_t updateType );
+
 	virtual void ClientThink( void );
+	CNewParticleEffect *m_pFlameEffect;
 #endif
 	
-#ifdef GAME_DLL
 public:
-	static CTFFlameEntity *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float m_flDmgAmount, bool bCritFromBehind );
+#if defined( GAME_DLL )
+	static CTFFlameEntity *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float flDmgAmount, bool bCritFromBehind );
 
 	void FlameThink( void );
 	void CheckCollision( CBaseEntity *pOther, bool *pbHitWorld );
@@ -197,12 +203,12 @@ private:
 	int							m_iDmgType;				// damage type
 	float						m_flDmgAmount;			// amount of base damage
 	CUtlVector<EHANDLE>			m_hEntitiesBurnt;		// list of entities this flame has burnt
-	EHANDLE						m_hAttacker;			// attacking player
 	int							m_iAttackerTeam;		// team of attacking player
 	CHandle<CTFFlameThrower>	m_hLauncher;			// weapon that fired this flame
 	bool						m_bCritFromBehind;
 #endif
 
+	CNetworkHandle(CBaseEntity, m_hAttacker);			// attacking player
 };
 
 
