@@ -395,7 +395,11 @@ void CTFFlameThrower::PrimaryAttack()
 
 #ifdef CLIENT_DLL
 	// Handle the flamethrower light
+<<<<<<< HEAD
 	if (tf2v_muzzlelight.GetBool())
+=======
+	if ( tf2v_muzzlelight.GetBool() )
+>>>>>>> b1bf4033... Fix build
 	{
 		dlight_t *dl = effects->CL_AllocDlight(LIGHT_INDEX_MUZZLEFLASH + index);
 		dl->origin = vecMuzzlePos;

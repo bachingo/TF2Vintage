@@ -907,9 +907,9 @@ bool CObjectSentrygun::FindTarget()
 			}
 		}
 
-		for ( int i=0; i<bots.Count(); ++i )
+		for ( int iBot=0; iBot<bots.Count(); ++iBot )
 		{
-			CBaseCombatCharacter *pTargetActor = bots[i]->GetEntity();
+			CBaseCombatCharacter *pTargetActor = bots[iBot]->GetEntity();
 			if ( pTargetActor == NULL )
 				continue;
 
