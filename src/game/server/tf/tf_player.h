@@ -502,6 +502,8 @@ public:
 	
 	CountdownTimer m_purgatoryDuration;
 
+	IntervalTimer m_lastCalledMedic;
+
 private:
 
 	int					GetAutoTeam( void );

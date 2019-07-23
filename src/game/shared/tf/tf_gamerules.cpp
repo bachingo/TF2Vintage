@@ -2960,19 +2960,18 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 VoiceCommandMenuItem_t *CTFGameRules::VoiceCommand( CBaseMultiplayerPlayer *pPlayer, int iMenu, int iItem )
 {
 	VoiceCommandMenuItem_t *pItem = BaseClass::VoiceCommand( pPlayer, iMenu, iItem );
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 
-	if (pItem)
+	if ( pItem )
 	{
 		int iActivity = ActivityList_IndexForName( pItem->m_szGestureActivity );
 
-		if (iActivity != ACT_INVALID)
+		if ( iActivity != ACT_INVALID && pTFPlayer )
 		{
-			CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+			pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_VOICE_COMMAND_GESTURE, iActivity );
 
-			if (pTFPlayer)
-			{
-				pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_VOICE_COMMAND_GESTURE, iActivity );
-			}
+			if( iMenu == 0 && iItem == 0 )
+				pTFPlayer->m_lastCalledMedic.Start();
 		}
 	}
 

@@ -465,6 +465,9 @@ CTFPlayer::CTFPlayer()
 	m_flStunTime = 0.0f;
 
 	m_bInArenaQueue = false;
+
+	m_purgatoryDuration.Invalidate();
+	m_lastCalledMedic.Invalidate();
 }
 
 
@@ -1087,6 +1090,9 @@ void CTFPlayer::Spawn()
 			}
 		}
 	}
+
+	m_purgatoryDuration.Invalidate();
+	m_lastCalledMedic.Invalidate();
 
 	m_nForceTauntCam = 0;
 
