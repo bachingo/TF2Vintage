@@ -1583,12 +1583,32 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 	SetIT( NULL );
 
+	m_hRedAttackTrain = NULL;
+	m_hBlueAttackTrain = NULL;
+	m_hRedDefendTrain = NULL;
+	m_hBlueDefendTrain = NULL;
+
+	m_hAmmoEntities.RemoveAll();
+	m_hHealthEntities.RemoveAll();
+
 	// Let all entities know that a new round is starting
 	CBaseEntity *pEnt = gEntList.FirstEnt();
 	while ( pEnt )
 	{
 		variant_t emptyVariant;
 		pEnt->AcceptInput( "RoundSpawn", NULL, NULL, emptyVariant, 0 );
+
+		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_ammopack*" ) || pEnt->ClassMatches( "tf_ammo_pack" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hAmmoEntities.AddToTail( hndl );
+		}
+
+		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_healthkit*" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hHealthEntities.AddToTail( hndl );
+		}
 
 		pEnt = gEntList.NextEnt( pEnt );
 	}
@@ -1606,7 +1626,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 	if ( g_pObjectiveResource && !g_pObjectiveResource->PlayingMiniRounds() )
 	{
 		// Find all the control points with associated spawnpoints
-		memset( m_bControlSpawnsPerTeam, 0, sizeof( bool ) * MAX_TEAMS * MAX_CONTROL_POINTS );
+		Q_memset( m_bControlSpawnsPerTeam, 0, sizeof( bool ) * MAX_TEAMS * MAX_CONTROL_POINTS );
 		CBaseEntity *pSpot = gEntList.FindEntityByClassname( NULL, "info_player_teamspawn" );
 		while ( pSpot )
 		{
