@@ -289,6 +289,9 @@ extern const char *g_aAmmoNames[];
 #define TF_WEAPON_PIPEBOMB_WORLD_COUNT					15
 #define TF_WEAPON_PIPEBOMB_COUNT						8
 #define TF_WEAPON_PIPEBOMB_INTERVAL						0.6f
+#define TF_PIPEBOMB_MIN_CHARGE_VEL						900
+#define TF_PIPEBOMB_MAX_CHARGE_VEL						2400
+#define TF_PIPEBOMB_MAX_CHARGE_TIME						4.0f
 
 #define TF_WEAPON_ROCKET_INTERVAL						0.8f
 

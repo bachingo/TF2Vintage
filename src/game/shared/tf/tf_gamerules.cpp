@@ -1598,7 +1598,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 		variant_t emptyVariant;
 		pEnt->AcceptInput( "RoundSpawn", NULL, NULL, emptyVariant, 0 );
 
-		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_ammopack*" ) || pEnt->ClassMatches( "tf_ammo_pack" ) )
+		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_ammopack*" ) )
 		{
 			EHANDLE hndl( pEnt );
 			m_hAmmoEntities.AddToTail( hndl );

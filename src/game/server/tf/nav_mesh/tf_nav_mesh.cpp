@@ -183,12 +183,6 @@ void CTFNavMesh::Update()
 				m_recomputeTimer.Invalidate();
 				RecomputeInternalData();
 			}
-
-			if ( TFGameRules()->State_Get() == GR_STATE_PREROUND )
-			{
-				if ( unk10.IsElapsed() )
-					unk10.Start( 3.0f );
-			}
 		}
 		m_lastNPCCount = TheNextBots().GetNextBotCount();
 	}
@@ -220,7 +214,6 @@ void CTFNavMesh::OnServerActivate()
 	ResetMeshAttributes( true );
 
 	m_sentryAreas.RemoveAll();
-	unk5.RemoveAll();
 	m_spawnAreasTeam1.RemoveAll();
 	m_spawnAreasTeam2.RemoveAll();
 	m_spawnExitsTeam1.RemoveAll();

@@ -73,8 +73,6 @@ private:
 
 	CUtlVector<CTFNavArea *> m_sentryAreas;
 
-	CUtlVector<CTFNavArea *> unk5; // seems unused
-
 	CUtlVector<CTFNavArea *> m_CPAreas[MAX_CONTROL_POINTS];
 	CTFNavArea *m_CPArea[MAX_CONTROL_POINTS];
 
@@ -83,8 +81,6 @@ private:
 
 	CUtlVector<CTFNavArea *> m_spawnExitsTeam1;
 	CUtlVector<CTFNavArea *> m_spawnExitsTeam2;
-
-	CountdownTimer unk10; // seems unused
 
 	int m_lastNPCCount;
 };
