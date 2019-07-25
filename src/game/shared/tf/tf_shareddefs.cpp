@@ -1053,14 +1053,15 @@ float g_flDispenserHealRates[] =
 	20.0
 };
 
-bool IsSpaceToSpawnHere( const Vector& pos )
+bool IsSpaceToSpawnHere( const Vector &vecPos )
 {
 	Vector mins = VEC_HULL_MIN - Vector( -5.0f, -5.0f, 0 );
 	Vector maxs = VEC_HULL_MAX + Vector( 5.0f, 5.0f, 5.0f );
 
 	trace_t tr;
-	CTraceFilterSimple filter( nullptr, COLLISION_GROUP_PLAYER_MOVEMENT );
-	UTIL_TraceHull( pos, pos, mins, maxs, MASK_PLAYERSOLID, &filter, &tr );
+	UTIL_TraceHull( vecPos, vecPos, mins, maxs, MASK_PLAYERSOLID, nullptr, COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
 
 	return tr.fraction >= 1.0f;
 }
+
+

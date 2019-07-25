@@ -1470,6 +1470,6 @@ inline int GetEnemyTeam( CBaseEntity *ent )
 	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
 }
 
-bool IsSpaceToSpawnHere( const Vector& pos );
+bool IsSpaceToSpawnHere( const Vector &vecPos );
 
 #endif // TF_SHAREDDEFS_H
