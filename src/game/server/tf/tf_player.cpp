@@ -4934,13 +4934,15 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			pszDomination = "domination:dominated";
 		}
 
-		CFmtStrN<128> modifiers( "%s,%s,victimclass:%s", pszCustomDeath, pszDomination, g_aPlayerClassNames_NonLocalized[ pTFVictim->GetPlayerClass()->GetClassIndex() ] );
-		SpeakConceptIfAllowed( MP_CONCEPT_KILLED_PLAYER, modifiers );
-
 		if ( IsAlive() )
 		{
+			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 
-			CTFWeaponBase *pWeapon = GetActiveTFWeapon() ;
+			if ( !pWeapon->IsSilentKiller() )
+			{
+				CFmtStrN<128> modifiers( "%s,%s,victimclass:%s", pszCustomDeath, pszDomination, g_aPlayerClassNames_NonLocalized[pTFVictim->GetPlayerClass()->GetClassIndex()] );
+				SpeakConceptIfAllowed( MP_CONCEPT_KILLED_PLAYER, modifiers );
+			}
 
 			m_Shared.IncKillstreak( pWeapon->GetSlot() );
 			
@@ -8050,7 +8052,9 @@ void CTFPlayer::DoTauntAttack( void )
 			{
 				CTFLunchBox *pLunch = static_cast<CTFLunchBox *>( pWeapon );
 
-				if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", pLunch ) == 1 && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ))
+				int nLunchboxAddsMaxHealth = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pLunch, nLunchboxAddsMaxHealth, set_weapon_mode );
+				if ( nLunchboxAddsMaxHealth == 1 && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ) )
 					m_Shared.AddCond( TF_COND_LUNCHBOX_HEALTH_BUFF, 30.0f );
 
 				if ( HealthFraction() <= 1.0f )
@@ -8218,6 +8222,17 @@ void CTFPlayer::ClearTauntAttack( void )
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX_DRINK ) )
 		{
+			int nLunchBoxAddsMinicrits = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLunchBoxAddsMinicrits, set_weapon_mode );
+			if ( nLunchBoxAddsMinicrits == 2 )
+			{
+				m_Shared.AddCond( TF_COND_OFFENSEBUFF, 8.0f );
+				m_flTauntAttackTime = 0.0f;
+				m_iTauntAttack = TAUNTATK_NONE;
+
+				return;
+			}
+
 			m_Shared.AddCond( TF_COND_PHASE, 8.0f );
 			SpeakConceptIfAllowed( MP_CONCEPT_DODGING, "started_dodging:1" );
 			m_angTauntCamera = EyeAngles();
