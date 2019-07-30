@@ -29,7 +29,9 @@ public:
 	DECLARE_PREDICTABLE();
 
 	CTFShovel();
-	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_SHOVEL; }
+	virtual int			GetWeaponID( void ) const { return TF_WEAPON_SHOVEL; }
+	virtual int			GetCustomDamageType() const;
+	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
 
 private:
 

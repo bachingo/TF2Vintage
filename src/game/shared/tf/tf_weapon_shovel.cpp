@@ -42,3 +42,32 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_shovel );
 CTFShovel::CTFShovel()
 {
 }
+
+int CTFShovel::GetCustomDamageType() const
+{
+	int nShovelWeaponMode = 0;
+	CALL_ATTRIB_HOOK_INT( nShovelWeaponMode, set_weapon_mode );
+	if ( nShovelWeaponMode == 1 || nShovelWeaponMode == 2 )
+		return TF_DMG_CUSTOM_PICKAXE;
+
+	return TF_DMG_CUSTOM_NONE;
+}
+
+float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
+{
+	float flDmg = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
+
+	int nShovelDamageBoost = 0;
+	CALL_ATTRIB_HOOK_INT( nShovelDamageBoost, set_weapon_mode );
+	if ( nShovelDamageBoost != 1 )
+		return flDmg;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return 0.0f;
+
+	float flFraction = Clamp( (float)pOwner->GetHealth() / pOwner->GetMaxHealth(), 0.0f, 1.0f );
+	flDmg *= flFraction * -1.15 + 1.65;
+
+	return flDmg;
+}
