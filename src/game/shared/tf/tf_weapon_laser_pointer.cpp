@@ -191,10 +191,10 @@ void CTFLaserPointer::UpdateLaserDot( void )
 	vecStart = pOwner->EyePosition();
 	vecEnd = vecStart + ( vecForward * MAX_TRACE_LENGTH);
 
-	CTraceFilterIgnoreTeammatesAndTeamObjects *pFilter = new CTraceFilterIgnoreTeammatesAndTeamObjects( this, COLLISION_GROUP_NONE, GetTeamNumber() );
+	CTraceFilterIgnoreTeammatesAndTeamObjects filter( this, COLLISION_GROUP_NONE, GetTeamNumber() );
 
 	// First pass to find where we are looking
-	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, &filter, &tr );
 
 	vecStart = m_hGun->EyePosition();
 
@@ -204,7 +204,7 @@ void CTFLaserPointer::UpdateLaserDot( void )
 		vecEnd = m_hGun->GetEnemyAimPosition( tr.m_pEnt );
 
 		// Second pass to make sure the sentry can actually see the person we're targeting 
-		UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pFilter, &tr );
+		UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, &filter, &tr );
 
 		if ( tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() )
 		{
@@ -222,7 +222,7 @@ void CTFLaserPointer::UpdateLaserDot( void )
 		m_hGun->SetEnemy( NULL );
 
 		// Second pass
-		UTIL_TraceLine( vecStart, tr.endpos, MASK_SOLID, pFilter, &tr );
+		UTIL_TraceLine( vecStart, tr.endpos, MASK_SOLID, &filter, &tr );
 		vecEnd = tr.endpos;
 	}
 

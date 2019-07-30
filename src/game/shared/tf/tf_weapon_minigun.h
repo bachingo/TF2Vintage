@@ -52,6 +52,7 @@ public:
 	virtual void	Precache( void );
 	virtual void	Spawn(void);
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MINIGUN; }
+	MinigunState_t  GetWeaponState( void ) const		{ return m_iWeaponState; }
 	virtual void	PrimaryAttack();
 	virtual void	SecondaryAttack();
 	void			SharedAttack();
@@ -70,13 +71,13 @@ public:
 #endif
 
 
-	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_MINIGUN; }
+	virtual int		GetCustomDamageType() const { return TF_DMG_CUSTOM_MINIGUN; }
 
 	float			GetFiringTime( void ) { return (m_flStartedFiringAt >= 0) ? (gpGlobals->curtime - m_flStartedFiringAt) : 0; }
 
 
 #ifdef CLIENT_DLL
-	float GetBarrelRotation();
+	float			GetBarrelRotation();
 #endif
 
 private:

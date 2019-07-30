@@ -85,6 +85,8 @@ ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Sh
 ConVar tf2v_building_hauling( "tf2v_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
 ConVar tf2v_disable_player_shadows( "tf2v_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
 
+ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
+
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
 #endif
@@ -1109,10 +1111,11 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			}
 		}
 
+		const float flReduction = 2;	 // ( flReduction + 1 ) x faster reduction
+
 		if ( InCond( TF_COND_BURNING ) )
 		{
 			// Reduce the duration of this burn 
-			float flReduction = 2;	 // ( flReduction + 1 ) x faster reduction
 			m_flFlameRemoveTime -= flReduction * gpGlobals->frametime;
 		}
 
@@ -1121,7 +1124,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			for (int i=0; i<m_aBleeds.Count(); ++i)
 			{
 				bleed_struct_t *bleed = &m_aBleeds[i];
-				bleed->m_flEndTime -= gpGlobals->frametime + gpGlobals->frametime;
+				bleed->m_flEndTime -= flReduction * gpGlobals->frametime;
 			}
 		}
 	}
@@ -1990,9 +1993,7 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 		AddCond( TF_COND_INVULNERABLE, 10.0f );
 		AddCond( TF_COND_SPEED_BOOST, 10.0f );
 		AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 10.0f );
-
-		// 200% Max Health(?)
-		m_pOuter->SetHealth( GetMaxHealth() * 2 ); 
+		m_pOuter->SetHealth( GetMaxBuffedHealth() );
 
 		// m_purgatoryDuration(?)
 		/*
@@ -2642,7 +2643,7 @@ void CTFPlayerShared::InvisibilityThink( void )
 {
 	float flTargetInvis = 0.0f;
 	float flTargetInvisScale = 1.0f;
-	if ( InCond( TF_COND_STEALTHED_BLINK ) || InCond( TF_COND_URINE ) )
+	if ( InCond( TF_COND_STEALTHED_BLINK ) || InCond( TF_COND_URINE ) || InCond( TF_COND_MAD_MILK ) )
 	{
 		// We were bumped into or hit for some damage.
 		flTargetInvisScale = TF_SPY_STEALTH_BLINKSCALE;/*tf_spy_stealth_blink_scale.GetFloat();*/
@@ -2653,11 +2654,11 @@ void CTFPlayerShared::InvisibilityThink( void )
 	{
 		if ( IsStealthed() )
 		{
-			flTargetInvis = 1.0f - ( ( m_flInvisChangeCompleteTime - gpGlobals->curtime ) );
+			flTargetInvis = 1.0f - ( m_flInvisChangeCompleteTime - gpGlobals->curtime );
 		}
 		else
 		{
-			flTargetInvis = ( ( m_flInvisChangeCompleteTime - gpGlobals->curtime) * 0.5f );
+			flTargetInvis = ( m_flInvisChangeCompleteTime - gpGlobals->curtime ) * 0.5f;
 		}
 	}
 	else
@@ -2666,18 +2667,18 @@ void CTFPlayerShared::InvisibilityThink( void )
 		{
 			flTargetInvis = 1.0f;
 
-			if (m_bHasMotionCloak && m_flCloakMeter <= 0.0f)
+			if ( m_bHasMotionCloak && m_flCloakMeter == 0.0f )
 			{
 				float flSpeed = m_pOuter->GetAbsVelocity().LengthSqr();
 				float flMaxSpeed = Square( m_pOuter->MaxSpeed() );
-				if (flMaxSpeed == 0.0f)
+				if ( flMaxSpeed == 0.0f )
 				{
 					if (flSpeed >= 0.0f)
 						flTargetInvis *= 0.5f;
 				}
 				else
 				{
-					flTargetInvis *= ( ( flSpeed * -0.5f ) / flMaxSpeed ) + 1.0f;
+					flTargetInvis *= 1.0f + ( ( flSpeed * -0.5f ) / flMaxSpeed );
 				}
 			}
 		}
@@ -3325,11 +3326,11 @@ EHANDLE	CTFPlayerShared::GetHealerByIndex( int index )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int	CTFPlayerShared::FindHealerIndex(CTFPlayer *pPlayer)
+int	CTFPlayerShared::FindHealerIndex( CTFPlayer *pPlayer )
 {
-	for (int i = 0; i < m_aHealers.Count(); i++)
+	for ( int i = 0; i < m_aHealers.Count(); i++ )
 	{
-		if (m_aHealers[i].pPlayer == pPlayer)
+		if ( m_aHealers[i].pPlayer == pPlayer )
 			return i;
 	}
 
@@ -3342,7 +3343,7 @@ int	CTFPlayerShared::FindHealerIndex(CTFPlayer *pPlayer)
 //-----------------------------------------------------------------------------
 EHANDLE CTFPlayerShared::GetFirstHealer()
 {
-	if (m_aHealers.Count() > 0)
+	if ( m_aHealers.Count() > 0 )
 		return m_aHealers.Head().pPlayer;
 
 	return NULL;
@@ -3351,7 +3352,7 @@ EHANDLE CTFPlayerShared::GetFirstHealer()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::HealthKitPickupEffects(int iAmount)
+void CTFPlayerShared::HealthKitPickupEffects( int iAmount )
 {
 	if ( InCond( TF_COND_BURNING ) )
 		RemoveCond( TF_COND_BURNING );
@@ -3369,6 +3370,17 @@ void CTFPlayerShared::HealthKitPickupEffects(int iAmount)
 
 		gameeventmanager->FireEvent( event );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::HealerIsDispenser( int index ) const
+{
+	if( !m_aHealers.IsValidIndex(index) )
+		return false;
+
+	return m_aHealers[index].bDispenserHeal;
 }
 #endif
 
@@ -3530,7 +3542,7 @@ int CTFPlayerShared::GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCust
 	}
 
 #ifdef CLIENT_DLL
-	if(iDamageCustom == TF_DMG_CUSTOM_BURNING && tf2v_enable_burning_death.GetBool())
+	if (iDamageCustom == TF_DMG_CUSTOM_BURNING && tf2v_enable_burning_death.GetBool())
 		pszSequence = "primary_death_burning";
 #endif
 
@@ -4719,7 +4731,7 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 		{
 			// Toggle invisibility
 			CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-			if ( pInvis )
+			if (pInvis)
 			{
 				bDoSkill = pInvis->ActivateInvisibility();
 			}
@@ -4780,7 +4792,7 @@ bool CTFPlayer::CanGoInvisible( bool bFeigning )
 {
 	if ( !bFeigning && HasItem() && GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG )
 	{
-		HintMessage( HINT_CANNOT_CLOAK_WITH_FLAG );
+		HintMessage(HINT_CANNOT_CLOAK_WITH_FLAG);
 		return false;
 	}
 
@@ -4792,7 +4804,7 @@ bool CTFPlayer::CanGoInvisible( bool bFeigning )
 
 	CTFGameRules *pRules = TFGameRules();
 
-	Assert( pRules );
+	Assert(pRules);
 
 	if ( ( pRules->State_Get() == GR_STATE_TEAM_WIN ) && ( pRules->GetWinningTeam() != GetTeamNumber() ) )
 	{

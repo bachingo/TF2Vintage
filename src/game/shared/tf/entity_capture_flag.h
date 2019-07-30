@@ -124,7 +124,12 @@ public:
 //
 // CTF Flag class.
 //
+#ifdef GAME_DLL
+DECLARE_AUTO_LIST( ICaptureFlagAutoList )
+class CCaptureFlag : public CTFItem, public ICaptureFlagAutoList
+#else
 class CCaptureFlag : public CTFItem
+#endif
 {
 public:
 

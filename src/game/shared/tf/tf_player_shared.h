@@ -179,25 +179,9 @@ public:
 	void	OnDisguiseChanged( void );
 	int		GetDisguiseWeaponModelIndex( void ) { return m_iDisguiseWeaponModelIndex; }
 	CTFWeaponInfo *GetDisguiseWeaponInfo( void );
+
+	void	UpdateCritBoostEffect( bool bForceHide = false );
 #endif
-
-	void	FadeInvis( float flInvisFadeTime );
-	float	GetPercentInvisible( void );
-	void	NoteLastDamageTime( int nDamage );
-	void	OnSpyTouchedByEnemy( void );
-	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
-	void	SetHasMotionCloak( bool bSet ) { m_bHasMotionCloak = bSet; }
-	void	SetCloakDrainRate( float flRate ) { m_flCloakDrainRate = flRate; }
-	void	SetCloakRegenRate( float flRate ) { m_flCloakRegenRate = flRate; }
-
-	bool	AddToSpyCloakMeter( float amt, bool bForce = false, bool bIgnoreAttribs = false );
-	float	GetSpyCloakMeter() const { return m_flCloakMeter; }
-	void	SetSpyCloakMeter( float val ) { m_flCloakMeter = val; }
-
-	void	SetFeignReady( bool bSet ) { m_bFeignDeathReady = bSet; }
-	bool	IsFeignDeathReady( void ) { return m_bFeignDeathReady; }
-	
-	bool	IsFeigningDeath( void ) const { return m_bFeigningDeath; }
 
 #ifdef GAME_DLL
 	void	Heal( CTFPlayer *pPlayer, float flAmount, bool bDispenserHeal = false );
@@ -207,6 +191,7 @@ public:
 	int		FindHealerIndex( CTFPlayer *pPlayer );
 	EHANDLE	GetFirstHealer();
 	void	HealthKitPickupEffects( int iAmount );
+	bool	HealerIsDispenser( int index ) const;
 
 	// Jarate Player
 	EHANDLE	m_hUrineAttacker;
@@ -230,9 +215,8 @@ public:
 	CNewParticleEffect *m_pStun;
 	CNewParticleEffect *m_pSpeedTrails;
 	CNewParticleEffect *m_pBuffAura;
-
-	void	UpdateCritBoostEffect( bool bForceHide = false );
 #endif
+
 	void	UpdatePhaseEffects( void );
 	void	UpdateSpeedBoostEffects( void );
 
@@ -252,12 +236,30 @@ public:
 	const Vector &GetSeparationVelocity( void ) const { return m_vSeparationVelocity; }
 	void	SetSeparationVelocity( const Vector &vSeparationVelocity ) { m_vSeparationVelocity = vSeparationVelocity; }
 
+	void	FadeInvis( float flInvisFadeTime );
+	float	GetPercentInvisible( void );
+	void	NoteLastDamageTime( int nDamage );
+	void	OnSpyTouchedByEnemy( void );
+	float	GetLastStealthExposedTime( void )	{ return m_flLastStealthExposeTime; }
+	void	SetHasMotionCloak( bool bSet )		{ m_bHasMotionCloak = bSet; }
+	void	SetCloakDrainRate( float flRate )	{ m_flCloakDrainRate = flRate; }
+	void	SetCloakRegenRate( float flRate )	{ m_flCloakRegenRate = flRate; }
+
 	int		GetDesiredPlayerClassIndex( void );
 
 	int		GetDesiredWeaponIndex( void )		{ return m_iDesiredWeaponID; }
 	void	SetDesiredWeaponIndex( int iWeaponID ) { m_iDesiredWeaponID = iWeaponID; }
 	int		GetRespawnParticleID( void )		{ return m_iRespawnParticleID; }
 	void	SetRespawnParticleID( int iParticleID ) { m_iRespawnParticleID = iParticleID; }
+
+	bool	AddToSpyCloakMeter( float amt, bool bForce = false, bool bIgnoreAttribs = false );
+	float	GetSpyCloakMeter() const			{ return m_flCloakMeter; }
+	void	SetSpyCloakMeter( float val )		{ m_flCloakMeter = val; }
+
+	void	SetFeignReady( bool bSet )			{ m_bFeignDeathReady = bSet; }
+	bool	IsFeignDeathReady( void )			{ return m_bFeignDeathReady; }
+
+	bool	IsFeigningDeath( void ) const		{ return m_bFeigningDeath; }
 
 	bool	IsJumping( void )					{ return m_bJumping; }
 	void	SetJumping( bool bJumping );
@@ -287,9 +289,9 @@ public:
 	CBaseObject*		GetCarriedObject( void );
 #endif
 
-	int		GetKillstreak( void )				{ return m_nStreaks.Get( 0 ); }
-	void	SetKillstreak( int iKillstreak )	{ m_nStreaks.Set( 0, iKillstreak ); }
-	void	IncKillstreak()						{ m_nStreaks.Set( 0, m_nStreaks.Get( 0 ) + 1 ); }
+	int		GetKillstreak( int weaponSlot )						{ return m_nStreaks.Get( weaponSlot ); }
+	void	SetKillstreak( int weaponSlot, int iKillstreak )	{ m_nStreaks.Set( weaponSlot, iKillstreak ); }
+	void	IncKillstreak( int weaponSlot )						{ m_nStreaks.Set( weaponSlot, m_nStreaks.Get( weaponSlot ) + 1 ); }
 
 	int		GetStunPhase( void )				{ return m_iStunPhase; }
 	void	SetStunPhase( int iPhase )			{ m_iStunPhase = iPhase; }
@@ -328,15 +330,15 @@ public:
 	};
 	int		GetNextMeleeCrit( void ) const		{ return m_iNextMeleeCrit; }
 	void	SetNextMeleeCrit( eMeleeCritType iType ) { m_iNextMeleeCrit = iType; }
+	float	GetShieldChargeMeter( void ) const  { return m_flChargeMeter; }
+	void	SetShieldChargeMeter( float flVal ) { m_flChargeMeter = flVal; }
+	void	SetShieldChargeDrainRate( float flRate ) { m_flChargeDrainRate = flRate; }
+	void	SetShieldChargeRegenRate( float flRate ) { m_flChargeRegenRate = flRate; }
 #ifdef GAME_DLL
 	void	CalcChargeCrit( bool bForceFull );
 	void	UpdateChargeMeter( void );
 #endif
 	void	EndCharge( void );
-	float	GetShieldChargeMeter( void ) const { return m_flChargeMeter; }
-	void	SetShieldChargeMeter( float flVal ) { m_flChargeMeter = flVal; }
-	void	SetShieldChargeDrainRate( float flRate ) { m_flChargeDrainRate = flRate; }
-	void	SetShieldChargeRegenRate( float flRate ) { m_flChargeRegenRate = flRate; }
 
 private:
 
@@ -534,6 +536,9 @@ private:
 	CNetworkVar( float, m_flChargeMeter );
 	CNetworkVar( bool, m_bShieldEquipped );
 	CNetworkVar( int, m_iNextMeleeCrit );
+
+	float m_flChargeDrainRate;
+	float m_flChargeRegenRate;
 #ifdef CLIENT_DLL
 public:
 	int m_iDecapitationsParity;
@@ -542,8 +547,6 @@ public:
 
 private:
 #endif
-	float m_flChargeDrainRate;
-	float m_flChargeRegenRate;
 
 	CNetworkHandle( CBaseObject, m_hCarriedObject );
 	CNetworkVar( bool, m_bCarryingObject );

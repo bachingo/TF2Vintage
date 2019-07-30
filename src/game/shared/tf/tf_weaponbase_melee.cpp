@@ -1,4 +1,4 @@
-//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -45,9 +45,7 @@ ConVar tf_meleeattackforcescale( "tf_meleeattackforcescale", "80.0", FCVAR_CHEAT
 #endif
 
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
-ConVar tf2v_allcrit_melee( "tf2v_allcrit_melee", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals for melee weapons." );
 extern ConVar tf_weapon_criticals;
-extern ConVar tf2v_allcrit;
 
 //=============================================================================
 //
@@ -155,6 +153,8 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 
 	// Swing the weapon.
 	Swing( pPlayer );
+
+	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != CTFPlayerShared::MELEE_CRIT_NONE;
 
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
@@ -392,7 +392,29 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDama
 
 void CTFWeaponBaseMelee::OnEntityHit( CBaseEntity *pEntity )
 {
+#ifdef GAME_DLL
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (pPlayer && TFGameRules()->GetIT() && ToBasePlayer( pEntity ))
+	{
+		if (TFGameRules()->GetIT() == pPlayer)
+		{
+			IGameEvent *event = gameeventmanager->CreateEvent( "tagged_player_as_it" );
+			if (event)
+			{
+				event->SetInt( "player", engine->GetPlayerUserId( pPlayer->edict() ) );
 
+				gameeventmanager->FireEvent( event );
+			}
+
+			UTIL_ClientPrintAll( HUD_PRINTTALK, "#TF_HALLOWEEN_BOSS_ANNOUNCE_TAG", pPlayer->GetPlayerName(), ToBasePlayer( pEntity )->GetPlayerName() );
+
+			CSingleUserRecipientFilter filter( pPlayer );
+			CBaseEntity::EmitSound( filter, pPlayer->entindex(), "Player.TaggedOtherIT" );
+
+			TFGameRules()->SetIT( pEntity );
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -404,14 +426,6 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 	if ( !pPlayer )
 		return false;
 
-	// Don't bother checking if allcrit is on.
-	
-	if ( tf2v_allcrit_melee.GetBool() )
-		return true;
-	
-	if ( tf2v_allcrit.GetBool() )
-		return true;
-	
 	int nCvarValue = tf_weapon_criticals_melee.GetInt();
 
 	if ( nCvarValue == 0 )

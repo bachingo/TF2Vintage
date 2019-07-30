@@ -94,11 +94,11 @@ ConVar tf_damageforcescale_self_soldier_rj( "tf_damageforcescale_self_soldier_rj
 ConVar tf_damageforcescale_self_soldier_badrj( "tf_damageforcescale_self_soldier_badrj", "5.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_damagescale_self_soldier( "tf_damagescale_self_soldier", "0.60", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
-ConVar tf_damage_lineardist( "tf_damage_lineardist", "0", FCVAR_DEVELOPMENTONLY );
-ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_DEVELOPMENTONLY );
-
 ConVar tf_feign_death_activate_damage_scale( "tf_feign_death_activate_damage_scale", "0.1", FCVAR_CHEAT | FCVAR_NOTIFY );
 ConVar tf_feign_death_damage_scale( "tf_feign_death_damage_scale", "0.1", FCVAR_CHEAT | FCVAR_NOTIFY );
+
+ConVar tf_damage_lineardist( "tf_damage_lineardist", "0", FCVAR_DEVELOPMENTONLY );
+ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_NOTIFY, "Max time after a voice command until player can do another one" );
 
@@ -465,6 +465,8 @@ CTFPlayer::CTFPlayer()
 	m_flStunTime = 0.0f;
 
 	m_bInArenaQueue = false;
+
+	m_bPuppet = false;
 
 	m_purgatoryDuration.Invalidate();
 	m_lastCalledMedic.Invalidate();
@@ -1454,7 +1456,7 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->UpdatePlayerBodygroups();
 
 			// Extra wearables
-			const char *iszModel = pWeapon->GetItem()->GetExtraWearableModel();
+			const char *iszModel = pWeapon->GetExtraWearableModel();
 			if ( iszModel[0] )
 			{
 				CTFWearable *pWearable = ( CTFWearable* )CreateEntityByName( "tf_wearable" );
@@ -2637,18 +2639,17 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 
 		if ( TFGameRules()->InStalemate() )
 		{
-			if ( TFGameRules()->IsInArenaMode() )
+			if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
 			{
-				if ( TFGameRules()->IsInArenaMode() )
+				if (TFGameRules()->IsInArenaMode())
 				{
-					ClientPrint( this, HUD_PRINTTALK, "#TF_Arena_NoClassChange");
-					return;
+					ClientPrint(this, HUD_PRINTTALK, "#TF_Arena_NoClassChange"); 
 				}
-				else if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
+				else
 				{
-					ClientPrint( this, HUD_PRINTTALK, "#game_stalemate_cant_change_class" );
-					return;
+					ClientPrint(this, HUD_PRINTTALK, "#game_stalemate_cant_change_class");
 				}
+				return;
 			}
 		}
 
@@ -2799,6 +2800,87 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 				RemoveAllObjects( false );
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const Vector& CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
+{
+	if ( !weapon )
+		return GetAbsOrigin();
+
+	const QAngle &angles = EyeAngles();
+
+	float initVel = weapon->IsWeapon( TF_WEAPON_PIPEBOMBLAUNCHER ) ? TF_PIPEBOMB_MIN_CHARGE_VEL : weapon->GetProjectileSpeed();
+	CALL_ATTRIB_HOOK_FLOAT( initVel, mult_projectile_range );
+
+	return EstimateProjectileImpactPosition( angles.x, angles.y, initVel );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const Vector& CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
+{
+	float initVel = charge * ( TF_PIPEBOMB_MAX_CHARGE_VEL - TF_PIPEBOMB_MIN_CHARGE_VEL ) + TF_PIPEBOMB_MIN_CHARGE_VEL;
+	CALL_ATTRIB_HOOK_FLOAT( initVel, mult_projectile_range );
+
+	return EstimateProjectileImpactPosition( pitch, yaw, initVel );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const Vector& CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
+{
+	Vector vecForward, vecRight, vecUp;
+	QAngle angles( pitch, yaw, 0.0f );
+	AngleVectors( angles, &vecForward, &vecRight, &vecUp );
+
+	Vector vecSrc = Weapon_ShootPosition();
+	vecSrc += vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
+
+	const float initVelScale = 0.9f;
+	Vector      vecVelocity = initVelScale * ( ( vecForward * initVel ) + ( vecUp * 200.0f ) );
+
+	Vector      pos = vecSrc;
+	Vector      lastPos = pos;
+
+	extern ConVar sv_gravity;
+	const float g = sv_gravity.GetFloat();
+
+	Vector alongDir = vecForward;
+	alongDir.z = 0.0f;
+	alongDir.NormalizeInPlace();
+
+	float alongVel = FastSqrt( vecVelocity.x * vecVelocity.x + vecVelocity.y * vecVelocity.y );
+
+	trace_t                        trace;
+	NextBotTraceFilterIgnoreActors traceFilter( this, COLLISION_GROUP_NONE );
+	const float timeStep = 0.01f;
+	const float maxTime = 5.0f;
+
+	float t = 0.0f;
+	do
+	{
+		float along = alongVel * t;
+		float height = vecVelocity.z * t - 0.5f * g * Square( t );
+
+		pos.x = vecSrc.x + alongDir.x * along;
+		pos.y = vecSrc.y + alongDir.y * along;
+		pos.z = vecSrc.z + height;
+
+		UTIL_TraceHull( lastPos, pos, -Vector( 8, 8, 8 ), Vector( 8, 8, 8 ), MASK_SOLID_BRUSHONLY, &traceFilter, &trace );
+
+		if ( trace.DidHit() )
+			break;
+
+		lastPos = pos;
+		t += timeStep;
+	} while ( t < maxTime );
+
+	return trace.endpos;
 }
 
 //-----------------------------------------------------------------------------
@@ -3695,8 +3777,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	CBaseEntity *pAttacker = info.GetAttacker();
 	CBaseEntity *pInflictor = info.GetInflictor();
-	CTFWeaponBase *pWeapon = NULL;
 	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
+	CTFWeaponBase *pWeapon = NULL;
 
 	//bool bObject = false;
 
@@ -3891,8 +3973,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			info.SetDamage( flPenaltyNonBurning );
 		}
-
-		CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
 
 		int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
@@ -4236,6 +4316,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		ClearExpression();
 	}
+
 
 	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG ) // Die anyway if fragged
 	{
@@ -4858,10 +4939,11 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 
 		if ( IsAlive() )
 		{
-			m_Shared.IncKillstreak();
 
 			CTFWeaponBase *pWeapon = GetActiveTFWeapon() ;
 
+			m_Shared.IncKillstreak( pWeapon->GetSlot() );
+			
 			if ( pWeapon->GetWeaponID() == GetWeaponFromDamage( info ) )
 			{
 				// Apply on-kill effects.
@@ -4890,7 +4972,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				}
 			}
 
-			if ( pWeapon->GetWeaponID() == TF_WEAPON_SWORD )
+			if (pWeapon->GetWeaponID() == TF_WEAPON_SWORD)
 			{
 				m_Shared.SetMaxHealth( GetMaxHealth() );
 			}
@@ -5064,6 +5146,10 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			m_hObserverTarget.Set( pAttacker );
 		}
 
+		// I was supposed to kill him, I'll go after you now
+		if(this == TFGameRules()->GetIT())
+			TFGameRules()->SetIT( pTFAttacker );
+
 		// reset fov to default
 		SetFOV( this, 0 );
 	}
@@ -5137,7 +5223,9 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-	m_Shared.SetKillstreak(0);
+	m_Shared.SetKillstreak( 0, 0 );
+	m_Shared.SetKillstreak( 1, 0 );
+	m_Shared.SetKillstreak( 2, 0 );
 
 	if (pAttacker && pAttacker == pInflictor && pAttacker->IsBSPModel())
 	{
@@ -5312,7 +5400,7 @@ void CTFPlayer::AmmoPackCleanUp( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/, bool bFeigning /* = false*/ )
+void CTFPlayer::DropAmmoPack( bool bLunchbox/* = false*/, bool bFeigning )
 {
 	// Since weapon is hidden in loser state don't drop ammo pack.
 	if ( m_Shared.IsLoser() )
@@ -6976,7 +7064,7 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, float flInvisLeve
 	{
 		EmitSound( "BaseCombatCharacter.CorpseGib" ); // Squish!
 
-		if ( !bFeigning )
+		if( !bFeigning )
 			m_nRenderFX = kRenderFxRagdoll;
 	}
 
@@ -7091,18 +7179,6 @@ void CTFPlayer::RemoveInvisibility( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Remove disguise
-//-----------------------------------------------------------------------------
-void CTFPlayer::RemoveDisguise( void )
-{
-	// remove quickly
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) || m_Shared.InCond( TF_COND_DISGUISING ) )
-	{
-		m_Shared.RemoveDisguise();
-	}
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Fake our demise
 //-----------------------------------------------------------------------------
 void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const& info )
@@ -7130,6 +7206,18 @@ void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const& info )
 		DropAmmoPack( false, true );
 
 		CreateRagdollEntity( bGib, bBurning, 0.0f, 0, true );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Remove disguise
+//-----------------------------------------------------------------------------
+void CTFPlayer::RemoveDisguise( void )
+{
+	// remove quickly
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) || m_Shared.InCond( TF_COND_DISGUISING ) )
+	{
+		m_Shared.RemoveDisguise();
 	}
 }
 
@@ -7697,7 +7785,7 @@ void CTFPlayer::Taunt( void )
 		if ( tf2v_random_weapons.GetBool() && flDuration == 0.2f )
 		{
 			flDuration += 3.0f;
-			m_Shared.StunPlayer( 3.0f, 0.0f, 0.0f, TF_STUNFLAG_BONKSTUCK | TF_STUNFLAG_NOSOUNDOREFFECT, this );
+			m_Shared.StunPlayer( 3.0f, 0.0f, 0.0f, TF_STUNFLAG_BONKSTUCK|TF_STUNFLAG_NOSOUNDOREFFECT, this );
 		}
 
 		// Clear disguising state.
@@ -7850,6 +7938,7 @@ void CTFPlayer::DoTauntAttack( void )
 				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_FENCING;
 				break;
 			case TAUNTATK_DEMOMAN_BARBARIAN_SWING:
+				vecForce.Zero();
 				flDamage = 500.0f;
 				nDamageType = DMG_SLASH;
 				iDamageCustom = TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING;
@@ -8044,7 +8133,7 @@ void CTFPlayer::DoTauntAttack( void )
 					if ( bStun )
 					{
 						// Stun the player
-						pPlayer->m_Shared.StunPlayer( 3.0f, 0.0f, 0.0f, TF_STUNFLAG_BONKSTUCK | TF_STUNFLAG_NOSOUNDOREFFECT, this );
+						pPlayer->m_Shared.StunPlayer( 3.0f, 0.0f, 0.0f, TF_STUNFLAG_BONKSTUCK|TF_STUNFLAG_NOSOUNDOREFFECT, this );
 						pPlayer->m_iTauntAttack = TAUNTATK_NONE;
 					}
 
@@ -9092,4 +9181,77 @@ bool CTFPlayer::ShouldAnnouceAchievement( void )
 	}
 
 	return true; 
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFPlayerPathCost::operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const
+{
+	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+
+	if ( fromArea == nullptr )
+	{
+		// first area in path; zero cost
+		return 0.0f;
+	}
+
+	const CTFNavArea *tfArea = dynamic_cast<const CTFNavArea *>( area );
+	if ( tfArea == nullptr )
+		return false;
+
+	if ( !m_pPlayer->IsAreaTraversable( area ) )
+	{
+		// dead end
+		return -1.0f;
+	}
+
+	// unless the round is over and we are the winning team, we can't enter the other teams spawn
+	if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN )
+	{
+		switch ( m_pPlayer->GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+			{
+				if ( tfArea->HasTFAttributes( BLUE_SPAWN_ROOM ) )
+					return -1.0f;
+
+				break;
+			}
+			case TF_TEAM_BLUE:
+			{
+				if ( tfArea->HasTFAttributes( RED_SPAWN_ROOM ) )
+					return -1.0f;
+
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
+	if ( ladder != nullptr )
+		length = ladder->m_length;
+	else if ( length <= 0.0f )
+		length = ( area->GetCenter() - fromArea->GetCenter() ).Length();
+
+	const float dz = fromArea->ComputeAdjacentConnectionHeightChange( area );
+	if ( dz >= m_flStepHeight )
+	{
+		// too high!
+		if ( dz >= m_flMaxJumpHeight )
+			return -1.0f;
+
+		// jumping is slow
+		length *= 2;
+	}
+	else
+	{
+		// yikes, this drop will hurt too much!
+		if ( dz < -m_flDeathDropHeight )
+			return -1.0f;
+	}
+
+	return fromArea->GetCostSoFar() + length;
 }

@@ -169,7 +169,7 @@ LINK_ENTITY_TO_CLASS( tf_weapon_base, CTFWeaponBase );
 #if !defined( CLIENT_DLL )
 
 BEGIN_DATADESC( CTFWeaponBase )
-DEFINE_THINKFUNC( FallThink )
+	DEFINE_THINKFUNC( FallThink )
 END_DATADESC()
 
 // Client specific
@@ -726,8 +726,10 @@ bool CTFWeaponBase::Deploy( void )
 
 		flDeployTime = Max( flDeployTime, FLT_EPSILON ); // Don't divide by 0
 
-		if (pPlayer->GetViewModel( m_nViewModelIndex ))
-			pPlayer->GetViewModel( m_nViewModelIndex )->SetPlaybackRate( 1.0 / flDeployTime );
+		if (pPlayer->GetViewModel( 0 ))
+			pPlayer->GetViewModel( 0 )->SetPlaybackRate( 1.0 / flDeployTime );
+		if (pPlayer->GetViewModel( 1 ))
+			pPlayer->GetViewModel( 1 )->SetPlaybackRate( 1.0 / flDeployTime );
 
 		m_flNextPrimaryAttack = Max( flOriginalPrimaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
 		m_flNextSecondaryAttack = Max( flOriginalSecondaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
@@ -959,7 +961,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
 		return false;
-	
+
 	// Don't bother checking if allcrit is on.
 	if ( tf2v_allcrit.GetBool() )
 		return true;
@@ -967,7 +969,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	// Don't bother checking if random crits are off.
 	if ( !tf_weapon_criticals.GetBool() )
 		return false;
-	
+
 	if ( !CanFireCriticalShot() )
 		return false;
 
@@ -1353,6 +1355,8 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 	CALL_ATTRIB_HOOK_FLOAT( flModifiedTime, mult_reload_time );
 	CALL_ATTRIB_HOOK_FLOAT( flModifiedTime, mult_reload_time_hidden );
 	CALL_ATTRIB_HOOK_FLOAT( flModifiedTime, fast_reload );
+
+	flModifiedTime = Max( flModifiedTime, FLT_EPSILON );
 
 	CBaseViewModel *vm = pPlayer->GetViewModel( m_nViewModelIndex );
 	if ( vm )
@@ -1915,6 +1919,19 @@ void CTFWeaponBase::OnControlStunned( void )
 	SetWeaponVisible( false );
 }
 
+const char *CTFWeaponBase::GetExtraWearableModel( void ) const
+{
+	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+
+	if ( pStatic )
+	{
+		// We have an extra wearable
+		return pStatic->extra_wearable;
+	}
+
+	return "\0";
+}
+
 //=============================================================================
 //
 // TFWeaponBase functions (Server specific).
@@ -2138,9 +2155,9 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 	if (iAddAmmo)
 	{
 		if (pTFVictim &&
-			 pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) &&
-			 !pTFVictim->m_Shared.IsStealthed() &&
-			 !pTFVictim->m_Shared.InCond( TF_COND_STEALTHED_BLINK ))
+			pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) &&
+			!pTFVictim->m_Shared.IsStealthed() &&
+			!pTFVictim->m_Shared.InCond( TF_COND_STEALTHED_BLINK ))
 		{
 			iAddAmmo = 0;
 		}
@@ -3150,7 +3167,7 @@ acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 // -----------------------------------------------------------------------------
 CBasePlayer *CTFWeaponBase::GetPlayerOwner() const
 {
-	return dynamic_cast<CBasePlayer*>( GetOwner() );
+	return dynamic_cast<CBasePlayer *>( GetOwner() );
 }
 
 // -----------------------------------------------------------------------------
@@ -3158,7 +3175,7 @@ CBasePlayer *CTFWeaponBase::GetPlayerOwner() const
 // -----------------------------------------------------------------------------
 CTFPlayer *CTFWeaponBase::GetTFPlayerOwner() const
 {
-	return dynamic_cast<CTFPlayer*>( GetOwner() );
+	return dynamic_cast<CTFPlayer *>( GetOwner() );
 }
 
 #ifdef CLIENT_DLL

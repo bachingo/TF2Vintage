@@ -11,6 +11,8 @@
 #include "tf_weaponbase.h"
 #include "time.h"
 #include "viewport_panel_names.h"
+#include "tf_halloween_boss.h"
+#include "entity_bossresource.h"
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
@@ -48,7 +50,7 @@
 	#include "tf_weaponbase_grenadeproj.h"
 	#include "eventqueue.h"
 	#include "nav_mesh.h"
-	#include "tf_halloween_boss.h"
+	#include "bot/tf_bot_manager.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -96,9 +98,6 @@ ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLI
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
 ConVar tf2v_allow_thirdperson( "tf2v_allow_thirdperson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to switch to third person mode." );
-
-// TF2V cvars.
-ConVar tf2v_classlimit( "tf2v_classlimit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable classlimits, even when tournament mode is disabled." );
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -240,6 +239,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bPowerupMode ) ),
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
+	RecvPropEHandle( RECVINFO( m_itHandle ) ),
+	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
 
 #else
 
@@ -258,6 +259,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_bPowerupMode ) ),
 	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
+	SendPropEHandle( SENDINFO( m_itHandle ) ),
+	SendPropInt( SENDINFO( m_halloweenScenario ) ),
 
 #endif
 END_NETWORK_TABLE()
@@ -1309,7 +1312,7 @@ void CTFGameRules::OnNavMeshLoad( void )
 
 void CTFGameRules::LevelShutdown( void )
 {
-	//TheTFBots().OnLevelShutdown();
+	TheTFBots().OnLevelShutdown();
 }
 
 int CTFGameRules::GetClassLimit( int iDesiredClassIndex )
@@ -1581,6 +1584,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_iNumCaps[i] = 0;
 	}
 
+	m_bossSpawnTimer.Invalidate();
 	SetIT( NULL );
 
 	m_hRedAttackTrain = NULL;
@@ -3175,7 +3179,6 @@ static const char *g_aTaggedConVars[] =
 
 	"tf_gamemode_passtime",
 	"passtime",
-
 };
 
 //-----------------------------------------------------------------------------
@@ -4774,7 +4777,10 @@ void CTFGameRules::RoundRespawn( void )
 		if ( pPlayer )
 		{
 			pPlayer->RemoveAllOwnedEntitiesFromWorld();
-			pPlayer->m_Shared.SetKillstreak( 0 );
+
+			pPlayer->m_Shared.SetKillstreak( 0, 0 );
+			pPlayer->m_Shared.SetKillstreak( 1, 0 );
+			pPlayer->m_Shared.SetKillstreak( 2, 0 );
 		}
 	}
 
@@ -5120,8 +5126,9 @@ bool CTFGameRules::TeamMayCapturePoint( int iTeam, int iPointIndex )
 		}
 		else
 		{
-			// No custom previous point, team must own all previous points in the current mini-round
-			//tagES TFTODO: need to figure out a good algorithm for this
+			if ( IsInArenaMode() )
+				return State_Get() == GR_STATE_STALEMATE;
+
 			return true;
 		}
 	}

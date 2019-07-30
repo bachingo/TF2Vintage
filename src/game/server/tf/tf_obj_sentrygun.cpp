@@ -9,6 +9,7 @@
 #include "tf_obj_sentrygun.h"
 #include "engine/IEngineSound.h"
 #include "tf_player.h"
+#include "bot/tf_bot.h"
 #include "tf_team.h"
 #include "world.h"
 #include "tf_projectile_rocket.h"
@@ -1086,6 +1087,13 @@ void CObjectSentrygun::FoundTarget( CBaseEntity *pTarget, const Vector &vecSound
 			CSingleUserRecipientFilter singleFilter( pPlayer );
 			EmitSentrySound( singleFilter, entindex(), "Building_Sentrygun.AlertTarget" );
 			filter.RemoveRecipient( pPlayer );
+
+			CTFBot *pBot = ToTFBot( pTarget );
+			if ( pBot )
+			{
+				pBot->m_hTargetSentry = this;
+				pBot->m_vecLastHurtBySentry = GetAbsOrigin();
+			}
 		}
 
 		EmitSentrySound( filter, entindex(), "Building_Sentrygun.Alert" );
@@ -1823,15 +1831,15 @@ void CObjectSentrygun::Killed( const CTakeDamageInfo &info )
 	CTFPlayer *pOwner = GetBuilder();
 	if ( pOwner )
 	{
-		CTFLaserPointer *pWrangler = dynamic_cast <CTFLaserPointer *> ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
-		if (pWrangler)
+		CTFLaserPointer *pWeapon = dynamic_cast <CTFLaserPointer *>( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_SECONDARY ) );
+		if ( pWeapon )
 		{
 			// Make sure wrangler stops updating sentry laser
-			pWrangler->RemoveGun();
+			pWeapon->RemoveGun();
 		}
 
-		CTFShotgun_Revenge *pShotgun = dynamic_cast <CTFShotgun_Revenge *> ( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_PRIMARY ) );
-		if (pShotgun)
+		CTFShotgun_Revenge *pShotgun = dynamic_cast <CTFShotgun_Revenge *>( pOwner->Weapon_GetSlot( TF_LOADOUT_SLOT_PRIMARY ) );
+		if ( pShotgun )
 		{
 			pShotgun->OnSentryKilled( this );
 		}

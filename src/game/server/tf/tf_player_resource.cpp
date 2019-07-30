@@ -17,9 +17,9 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayerResource, DT_TFPlayerResource )
 	SendPropArray3( SENDINFO_ARRAY3( m_iTotalScore ), SendPropInt( SENDINFO_ARRAY( m_iTotalScore ), 13 ) ),
 	SendPropArray3(SENDINFO_ARRAY3( m_iDomination ), SendPropInt( SENDINFO_ARRAY( m_iDomination ) ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_iMaxHealth ), SendPropInt( SENDINFO_ARRAY( m_iMaxHealth ), 10, SPROP_UNSIGNED ) ),
-	SendPropArray3( SENDINFO_ARRAY3( m_iMaxBuffedHealth ), SendPropInt( SENDINFO_ARRAY( m_iMaxBuffedHealth ), -1, SPROP_UNSIGNED ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_iMaxBuffedHealth ), SendPropInt( SENDINFO_ARRAY( m_iMaxBuffedHealth ), 32, SPROP_UNSIGNED ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_iPlayerClass ), SendPropInt( SENDINFO_ARRAY( m_iPlayerClass ), 5, SPROP_UNSIGNED ) ),
-	SendPropArray3(SENDINFO_ARRAY3(m_iColors), SendPropVector( SENDINFO_ARRAY3( m_iColors ), 12, SPROP_COORD) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_iColors ), SendPropVector( SENDINFO_ARRAY3( m_iColors ), 12, SPROP_COORD ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_iKillstreak ), SendPropInt( SENDINFO_ARRAY( m_iKillstreak ), 10, SPROP_UNSIGNED ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_bArenaSpectator ), SendPropBool( SENDINFO_ARRAY( m_bArenaSpectator ) ) ),
 END_SEND_TABLE()
@@ -57,7 +57,7 @@ void CTFPlayerResource::UpdatePlayerData( void )
 
 				m_iColors.Set( i, pPlayer->m_vecPlayerColor );
 
-				m_iKillstreak.Set( i, pPlayer->m_Shared.GetKillstreak() );
+				m_iKillstreak.Set( i, pPlayer->m_Shared.GetKillstreak( 0 ) + pPlayer->m_Shared.GetKillstreak( 1 ) + pPlayer->m_Shared.GetKillstreak( 2 ) );
 			}	
 
 			m_iDomination.Set( i, pPlayer->m_Shared.GetDominationCount() );

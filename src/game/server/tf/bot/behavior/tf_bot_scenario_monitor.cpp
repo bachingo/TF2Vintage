@@ -9,7 +9,6 @@
 #include "spy/tf_bot_spy_infiltrate.h"
 #include "sniper/tf_bot_sniper_lurk.h"
 #include "engineer/tf_bot_engineer_build.h"
-#include "squad/tf_bot_escort_squad_leader.h"
 //#include "scenario/capture_the_flag/tf_bot_fetch_flag.h"
 //#include "scenario/capture_the_flag/tf_bot_deliver_flag.h"
 #include "scenario/capture_point/tf_bot_capture_point.h"
@@ -94,14 +93,7 @@ ActionResult<CTFBot> CTFBotScenarioMonitor::Update( CTFBot *me, float dt )
 
 Action<CTFBot> *CTFBotScenarioMonitor::InitialContainedAction( CTFBot *actor )
 {
-	CTFBotSquad *squad = actor->GetSquad();
-	if ( squad == nullptr || actor == squad->GetLeader() )
-		return DesiredScenarioAndClassAction( actor );
-
-	if ( actor->IsPlayerClass( TF_CLASS_MEDIC ) )
-		return new CTFBotMedicHeal;
-	
-	return new CTFBotEscortSquadLeader( DesiredScenarioAndClassAction( actor ) );
+	return DesiredScenarioAndClassAction( actor );
 }
 
 

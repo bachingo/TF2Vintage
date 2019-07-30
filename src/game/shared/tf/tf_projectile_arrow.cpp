@@ -179,7 +179,7 @@ void CTFProjectile_Arrow::Spawn( void )
 	CreateTrail();
 
 	SetTouch( &CTFProjectile_Arrow::ArrowTouch );
-	SetThink(&CTFProjectile_Arrow::FlyThink);
+	SetThink( &CTFProjectile_Arrow::FlyThink );
 	SetNextThink(gpGlobals->curtime);
 
 	// TODO: Set skin here...
@@ -605,13 +605,11 @@ void CTFProjectile_Arrow::BreakArrow( void )
 
 	SetContextThink( &CTFProjectile_Arrow::RemoveThink, gpGlobals->curtime + 3.0, "ARROW_REMOVE_THINK" );
 
-	CRecipientFilter pFilter;
-	pFilter.AddRecipientsByPVS( GetAbsOrigin() );
-	
-	UserMessageBegin( pFilter, "BreakModel" );
-	WRITE_SHORT( GetModelIndex() );
-	WRITE_VEC3COORD( GetAbsOrigin() );
-	WRITE_ANGLES( GetAbsAngles() );
+	CPVSFilter filter( GetAbsOrigin() );
+	UserMessageBegin( filter, "BreakModel" );
+		WRITE_SHORT( GetModelIndex() );
+		WRITE_VEC3COORD( GetAbsOrigin() );
+		WRITE_ANGLES( GetAbsAngles() );
 	MessageEnd();
 }
 

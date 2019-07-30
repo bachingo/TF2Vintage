@@ -1,4 +1,4 @@
-//========= Copyright Â© 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef TF_PLAYER_H
@@ -15,6 +15,8 @@
 #include "tf_inventory.h"
 #include "tf_weapon_medigun.h"
 #include "ihasattributes.h"
+#include "Path/NextBotPathFollow.h"
+#include "NextBotUtil.h"
 
 struct foundPlayer
 {
@@ -73,6 +75,26 @@ struct AppliedContext_t
 {
 	float flContextExpireTime;
 	string_t pszContext;
+};
+
+class CTFPlayerPathCost : public IPathCost
+{
+public:
+	CTFPlayerPathCost( CTFPlayer *player )
+		: m_pPlayer( player )
+	{
+		m_flStepHeight = 18.0f;
+		m_flMaxJumpHeight = 72.0f;
+		m_flDeathDropHeight = 200.0f;
+	}
+
+	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const;
+
+private:
+	CTFPlayer *m_pPlayer;
+	float m_flStepHeight;
+	float m_flMaxJumpHeight;
+	float m_flDeathDropHeight;
 };
 
 //=============================================================================
@@ -383,6 +405,8 @@ public:
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void		ReapplyProvision( void ) { /*Do nothing*/ };
 
+	void				UpdatePlayerColor( void );
+
 	// Entity inputs
 	void				InputIgnitePlayer( inputdata_t &inputdata );
 	void				InputExtinguishPlayer( inputdata_t &inputdata );
@@ -394,6 +418,8 @@ public:
 	CNetworkVector( m_vecPlayerColor );
 
 	CTFPlayerShared m_Shared;
+
+	bool	m_bPuppet;
 
 	int	    item_list;			// Used to keep track of which goalitems are 
 								// affecting the player at any time.
@@ -448,6 +474,10 @@ public:
 
 	bool				IsCapturingPoint( void );
 
+	const Vector&		EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
+	const Vector&		EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
+	const Vector&		EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
+
 	// Taunts.
 	void				Taunt( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }
@@ -499,7 +529,7 @@ public:
 
 	// Gunslinger
 	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
-	
+
 	CountdownTimer m_purgatoryDuration;
 
 	IntervalTimer m_lastCalledMedic;

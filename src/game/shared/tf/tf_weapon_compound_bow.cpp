@@ -421,6 +421,14 @@ float CTFCompoundBow::GetChargeMaxTime( void )
 	return TF_BOW_MAX_CHARGE_TIME;
 }
 
+float CTFCompoundBow::GetCurrentCharge( void ) const
+{
+	if (m_flChargeBeginTime > 0.0f)
+		return Min( 1.0f, gpGlobals->curtime - m_flChargeBeginTime );
+
+	return 0.0f;
+}
+
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
 // Purpose:
