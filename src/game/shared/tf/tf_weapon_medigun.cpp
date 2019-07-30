@@ -386,6 +386,11 @@ bool CWeaponMedigun::AllowedToHealTarget( CBaseEntity *pTarget )
 	if ( !pTFPlayer )
 		return false;
 
+	int nWeaponBlocksHealing = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFPlayer, nWeaponBlocksHealing, weapon_blocks_healing );
+	if ( nWeaponBlocksHealing == 1 )
+		return false;
+
 	bool bStealthed = pTFPlayer->m_Shared.InCond( TF_COND_STEALTHED );
 	bool bDisguised = pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED );
 
