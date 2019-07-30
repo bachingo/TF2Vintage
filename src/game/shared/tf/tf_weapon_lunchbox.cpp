@@ -69,7 +69,14 @@ void CTFLunchBox::SecondaryAttack( void )
 	// A bit below the eye position.
 	vecSrc.z -= 8.0f;
 
-	CTFPowerup *pPowerup = static_cast<CTFPowerup *>( CBaseEntity::Create( "item_healthkit_medium", vecSrc, vec3_angle, pOwner ) );
+	const char *pszItemName = "item_healthkit_medium";
+
+	int nLunchboxAddsMaxHealth = 0;
+	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
+	if ( nLunchboxAddsMaxHealth == 1 )
+		pszItemName = "item_healthkit_small";
+
+	CTFPowerup *pPowerup = static_cast<CTFPowerup *>( CBaseEntity::Create( pszItemName, vecSrc, vec3_angle, pOwner ) );
 	if ( !pPowerup )
 		return;
 
@@ -106,7 +113,9 @@ void CTFLunchBox::DepleteAmmo( void )
 	if ( !pOwner )
 		return;
 
-	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1)
+	int nLunchboxAddsMaxHealth = 0;
+	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
+	if ( nLunchboxAddsMaxHealth == 1 )
 		return;
 
 	if ( pOwner->HealthFraction() >= 1.0f )
