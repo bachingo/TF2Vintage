@@ -447,28 +447,27 @@ void CTFNavMesh::ComputeBlockedAreas()
 		area->UnblockArea();
 	}
 
-	for ( CBaseEntity *pBrush = gEntList.FirstEnt(); pBrush; pBrush = gEntList.FindEntityByClassname( pBrush, "func_brush" ) )
+	CBaseEntity *pBrush = NULL;
+	while ( ( pBrush = gEntList.FindEntityByClassname( pBrush, "func_brush" ) ) != NULL )
 	{
 		if ( pBrush->IsSolid() )
 			TestAndBlockOverlappingAreas( pBrush );
 	}
 
-	for ( CBaseEntity *pDoor = gEntList.FirstEnt(); pDoor; pDoor = gEntList.FindEntityByClassname( pDoor, "func_door*" ) )
+	CBaseToggle *pDoor = NULL;
+	while ( ( pDoor = (CBaseToggle *)gEntList.FindEntityByClassname( pDoor, "func_door*" ) ) != NULL )
 	{
 		Extent doorExent;
 		doorExent.Init( pDoor );
-		// this doesn't make sense because 219 should be CBaseToggle::m_toggle_state
-		// bool v49 = ( DWORD( pDoor + 219 ) & 0xFFFFFFFD ) == 1; 
+
+		bool bDoorClosed = pDoor->m_toggle_state == TS_AT_BOTTOM || pDoor->m_toggle_state == TS_GOING_DOWN;
 
 		int iBlockedTeam = 0;
-		bool bNoFilter = false;
+		bool bFiltered = false;
 
-		for ( CBaseEntity *pEntity = gEntList.FirstEnt(); pEntity; pEntity = gEntList.FindEntityByClassname( pEntity, "trigger_multiple" ) )
+		CBaseTrigger *pTrigger = NULL;
+		while ( ( pTrigger = (CBaseTrigger *)gEntList.FindEntityByClassname( pTrigger, "trigger_multiple" ) ) != NULL )
 		{
-			CBaseTrigger *pTrigger = static_cast<CBaseTrigger *>( pEntity );
-			if ( pTrigger == nullptr )
-				break;
-
 			Extent triggerExtent;
 			triggerExtent.Init( pTrigger );
 			if ( doorExent.IsOverlapping( triggerExtent ) && !pTrigger->m_bDisabled )
@@ -476,8 +475,8 @@ void CTFNavMesh::ComputeBlockedAreas()
 				CBaseFilter *pFilter = pTrigger->m_hFilter;
 				if ( pFilter && FClassnameIs( pFilter, "filter_activator_tfteam" ) )
 					iBlockedTeam = pFilter->GetTeamNumber();
-				else
-					bNoFilter = true;
+				
+				bFiltered = true;
 			}
 		}
 
@@ -486,7 +485,7 @@ void CTFNavMesh::ComputeBlockedAreas()
 
 		int iNavTeam = TEAM_ANY;
 		if ( iBlockedTeam > 0 )
-			iNavTeam = ( iBlockedTeam == 2 ) + 2;
+			iNavTeam = ( iBlockedTeam == TF_TEAM_RED ) ? TF_TEAM_BLUE : TF_TEAM_RED;
 
 		for ( int i=0; i<potentiallyBlockedAreas.Count(); ++i )
 		{
@@ -495,11 +494,10 @@ void CTFNavMesh::ComputeBlockedAreas()
 			if ( !area->HasTFAttributes( DOOR_NEVER_BLOCKS ) )
 				area->MarkAsBlocked( iNavTeam, pDoor );
 
-			// v49 maybe
-			if ( ( (CBaseToggle *)pDoor )->m_toggle_state == TS_AT_BOTTOM )
-				continue;
+			if ( area->HasTFAttributes( DOOR_ALWAYS_BLOCKS ) && bDoorClosed )
+				area->MarkAsBlocked( iNavTeam, pDoor );
 
-			if ( !area->HasTFAttributes( DOOR_ALWAYS_BLOCKS ) && !bNoFilter && iNavTeam > 0 )
+			if ( ( !bFiltered && bDoorClosed ) || iNavTeam > 0 )
 				continue;
 
 			area->UnblockArea( iNavTeam );
@@ -987,16 +985,28 @@ void CTFNavMesh::UpdateDebugDisplay() const
 				{
 					if ( area == GetSelectedArea() )
 					{
+						if ( area->HasTFAttributes( RESCUE_CLOSET ) )
+						{
+							NDebugOverlay::Text( center, "Resupply Locker", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
+						if ( area->HasTFAttributes( NO_SPAWNING ) )
+						{
+							NDebugOverlay::Text( center, "No Spawning", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
 						if ( area->HasTFAttributes( BLUE_SPAWN_ROOM ) )
 						{
 							if ( !area->HasTFAttributes( SPAWN_ROOM_EXIT ) )
 							{
 								NDebugOverlay::Text( center, "Blue Spawn Room", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-								return;
+								continue;
 							}
 
 							NDebugOverlay::Text( center, "Blue Spawn Exit", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-							return;
+							continue;
 						}
 
 						if ( area->HasTFAttributes( RED_SPAWN_ROOM ) )
@@ -1004,11 +1014,11 @@ void CTFNavMesh::UpdateDebugDisplay() const
 							if ( !area->HasTFAttributes( SPAWN_ROOM_EXIT ) )
 							{
 								NDebugOverlay::Text( center, "Red Spawn Room", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-								return;
+								continue;
 							}
 
 							NDebugOverlay::Text( center, "Red Spawn Exit", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-							return;
+							continue;
 						}
 
 						if ( area->HasTFAttributes( HEALTH ) || area->HasTFAttributes( AMMO ) )
@@ -1016,28 +1026,104 @@ void CTFNavMesh::UpdateDebugDisplay() const
 							if ( !area->HasTFAttributes( AMMO ) )
 							{
 								NDebugOverlay::Text( center, "Health", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-								return;
+								continue;
 							}
 
 							if ( !area->HasTFAttributes( HEALTH ) )
 							{
 								NDebugOverlay::Text( center, "Ammo", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-								return;
+								continue;
 							}
 
 							NDebugOverlay::Text( center, "Health & Ammo", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-							return;
+							continue;
 						}
 
 						if ( area->HasTFAttributes( CONTROL_POINT ) )
 						{
 							NDebugOverlay::Text( center, "Control Point", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
-							return;
+							continue;
+						}
+
+						if ( area->HasTFAttributes( DOOR_NEVER_BLOCKS ) )
+						{
+							NDebugOverlay::Text( center, "Door Never Blocks", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
+						if ( area->HasTFAttributes( DOOR_ALWAYS_BLOCKS ) )
+						{
+							NDebugOverlay::Text( center, "Door Always Blocks", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
+						if ( area->HasTFAttributes( UNBLOCKABLE ) )
+						{
+							NDebugOverlay::Text( center, "Unblockable", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
+						if ( area->HasTFAttributes( SNIPER_SPOT ) )
+						{
+							NDebugOverlay::Text( center, "Sniper Spot", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
+						if ( area->HasTFAttributes( SENTRY_SPOT ) )
+						{
+							NDebugOverlay::Text( center, "Sentry Spot", true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
+						if ( area->HasTFAttributes( BLOCKED_UNTIL_POINT_CAPTURE ) )
+						{
+							CUtlString string( "Blocked Until Second Point Captured" );
+							if ( !area->HasAttributes( WITH_SECOND_POINT ) )
+								string = "Blocked Until Third Point Captured";
+							else if ( !area->HasAttributes( WITH_THIRD_POINT ) )
+								string = "Blocked Until Fourth Point Captured";
+							else if ( !area->HasAttributes( WITH_FOURTH_POINT ) )
+								string = "Blocked Until Fifth Point Captured";
+							else if ( !area->HasAttributes( WITH_FIFTH_POINT ) )
+								string = "Blocked Until First Point Captured";
+
+							NDebugOverlay::Text( center, string, true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
+						}
+
+						if ( area->HasTFAttributes( BLOCKED_AFTER_POINT_CAPTURE ) )
+						{
+							CUtlString string( "Blocked After Second Point Captured" );
+							if ( !area->HasAttributes( WITH_SECOND_POINT ) )
+								string = "Blocked After Third Point Captured";
+							else if ( !area->HasAttributes( WITH_THIRD_POINT ) )
+								string = "Blocked After Fourth Point Captured";
+							else if ( !area->HasAttributes( WITH_FOURTH_POINT ) )
+								string = "Blocked After Fifth Point Captured";
+							else if ( !area->HasAttributes( WITH_FIFTH_POINT ) )
+								string = "Blocked After First Point Captured";
+
+							NDebugOverlay::Text( center, string, true, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+							continue;
 						}
 					}
 				}
 
 				// TODO
+			}
+
+			if ( tf_show_enemy_invasion_areas.GetBool() )
+			{
+				CTFNavArea *area = static_cast<CTFNavArea *>( host->GetLastKnownArea() );
+				if ( area )
+				{
+					const CUtlVector<CTFNavArea *> *invasionAreas = area->GetInvasionAreasForTeam( host->GetTeamNumber() );
+					for ( int i=0; i<invasionAreas->Count(); ++i )
+					{
+						CTFNavArea *invArea = ( *invasionAreas )[i];
+						invArea->DrawFilled( 255, 0, 0, 255 );
+					}
+				}
 			}
 		}
 	}
