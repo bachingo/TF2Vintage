@@ -282,6 +282,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	const char*			GetExtraWearableModel( void ) const;
 
+	virtual float		GetSpeedMod( void ) const { return 1.0f; }
+
 // Server specific.
 #if !defined( CLIENT_DLL )
 

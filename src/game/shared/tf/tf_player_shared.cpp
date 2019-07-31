@@ -4175,7 +4175,7 @@ int CTFPlayer::GetBuildResources( void )
 void CTFPlayer::TeamFortress_SetSpeed()
 {
 	int playerclass = GetPlayerClass()->GetClassIndex();
-	float maxfbspeed;
+	float maxfbspeed = 0.0f;
 
 	// Spectators can move while in Classic Observer mode
 	if ( IsObserver() )
@@ -4214,6 +4214,8 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		maxfbspeed = Min( flMaxDisguiseSpeed, maxfbspeed );
 	}
 
+	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+
 	// Second, see if any flags are slowing them down
 	if ( HasItem() && GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG )
 	{
@@ -4231,8 +4233,6 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// if they're aiming or spun up, reduce their speed
 	if ( m_Shared.InCond( TF_COND_AIMING ) )
 	{
-		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
-
 		// Heavy moves slightly faster spun-up
 		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) )
 		{
@@ -4258,15 +4258,15 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			maxfbspeed = tf_spy_max_cloaked_speed.GetFloat();
 	}
 
-	if (playerclass == TF_CLASS_DEMOMAN)
-	{
-		CTFSword *pSword = dynamic_cast<CTFSword *>( Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
-		if (pSword)
-			maxfbspeed *= pSword->GetSwordSpeedMod();
+	if ( pWeapon )
+		maxfbspeed *= pWeapon->GetSpeedMod();
 
-		if (m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
-			maxfbspeed = 750.0f;
-	}
+	CTFSword *pSword = dynamic_cast<CTFSword *>( Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
+	if (pSword)
+		maxfbspeed *= pSword->GetSwordSpeedMod();
+
+	if (m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+		maxfbspeed = 750.0f;
 
 	if ( m_Shared.InCond( TF_COND_DISGUISED_AS_DISPENSER ) )
 	{

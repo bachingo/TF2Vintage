@@ -53,6 +53,28 @@ int CTFShovel::GetCustomDamageType() const
 	return TF_DMG_CUSTOM_NONE;
 }
 
+float CTFShovel::GetSpeedMod( void ) const
+{
+	if ( m_bLowered )
+		return 1.0f;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return 1.0f;
+
+	float flFraction = (float)pOwner->GetHealth() / pOwner->GetMaxHealth();
+	if ( flFraction > 0.8f )
+		return 1.0f;
+	else if ( flFraction > 0.6f )
+		return 1.1f;
+	else if ( flFraction > 0.4f )
+		return 1.2f;
+	else if ( flFraction > 0.2f )
+		return 1.4f;
+	else
+		return 1.6f;
+}
+
 float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
 	float flDmg = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );

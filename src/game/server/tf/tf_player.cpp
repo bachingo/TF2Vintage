@@ -4194,6 +4194,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
+	TeamFortress_SetSpeed();
+
 	if ( pWeapon && pTFAttacker )
 	{
 		int nAddCloakOnHit = 0;
