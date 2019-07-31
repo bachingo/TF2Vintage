@@ -3504,7 +3504,8 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 				if ( bCritical )
 				{
-					info_modified.AddDamageType( DMG_CRITICAL );
+					int damageBits = info.GetDamageType() | DMG_CRITICAL;
+
 					info_modified.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
 
 					// play the critical shot sound to the shooter	
@@ -3514,7 +3515,17 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 							pWpn->WeaponSound( BURST );
 
 						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWpn, flDamage, headshot_damage_modify );
+
+						int nHeadshotDealsMinicrit = 0;
+						CALL_ATTRIB_HOOK_INT_ON_OTHER( pWpn, nHeadshotDealsMinicrit, headshots_become_minicrits );
+						if ( nHeadshotDealsMinicrit != 0 )
+						{
+							damageBits &= ~DMG_CRITICAL;
+							damageBits |= DMG_MINICRITICAL;
+						}
 					}
+
+					info_modified.SetDamageType( damageBits );
 				}
 
 				info_modified.SetDamage( flDamage );
