@@ -10,6 +10,7 @@
 #include "tf_gamerules.h"
 #include "tf_obj.h"
 #include "tf_obj_sentrygun.h"
+#include "tf_obj_teleporter.h"
 #include "tf_obj_sapper.h"
 #include "ndebugoverlay.h"
 #include "tf_gamestats.h"
@@ -254,7 +255,39 @@ int CObjectSapper::OnTakeDamage( const CTakeDamageInfo &info )
 {
 	if ( info.GetDamageCustom() != TF_DMG_WRENCH_FIX )
 	{
-		return 0;
+		if ( !info.GetAttacker() )
+			return 0;
+
+		int nDamageAppliesToSapper = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetAttacker(), nDamageAppliesToSapper, set_dmg_apply_to_sapper );
+		if( nDamageAppliesToSapper == 0 )
+			return 0;
+	}
+
+	if( info.GetDamageType() & DMG_CRUSH )
+		return BaseClass::OnTakeDamage( info );
+
+	if ( !GetParentObject() )
+		return BaseClass::OnTakeDamage( info );
+
+	CTakeDamageInfo newInfo = info;
+	newInfo.AddDamageType( DMG_PLASMA );
+
+	CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( GetParentObject() );
+	if ( pTeleporter )
+	{
+		CObjectTeleporter *pSibling = pTeleporter->GetMatchingTeleporter();
+		if ( pSibling && pSibling->HasSapper() )
+		{
+			for ( int i=0; i<pSibling->GetNumObjectsOnMe(); ++i )
+			{
+				CBaseObject *pObject = pSibling->GetBuildPointObject( i );
+				if ( !pObject || !pObject->IsHostileUpgrade() )
+					continue;
+
+				pObject->TakeDamage( newInfo );
+			}
+		}
 	}
 
 	return BaseClass::OnTakeDamage( info );
