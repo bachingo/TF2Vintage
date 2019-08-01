@@ -81,7 +81,7 @@ void CTFKnife::PrimaryAttack( void )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 
-	if ( !CanAttack() )
+	if ( !pPlayer || !CanAttack() )
 		return;
 
 	// Set the weapon usage mode - primary, secondary.
@@ -91,6 +91,8 @@ void CTFKnife::PrimaryAttack( void )
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
 #endif
+
+	int iVictimHealth = 0;
 
 	trace_t trace;
 	if ( DoSwingTrace( trace ) == true )
@@ -103,24 +105,22 @@ void CTFKnife::PrimaryAttack( void )
 			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
 			{
 				// Deal extra damage to players when stabbing them from behind
-				if ( IsBehindAndFacingTarget( trace.m_pEnt ) )
+				if ( IsBehindAndFacingTarget( pTarget ) )
 				{
 					// this will be a backstab, do the strong anim
 					m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 
 					// store the victim to compare when we do the damage
-					m_hBackstabVictim = trace.m_pEnt;
+					m_hBackstabVictim = pTarget;
+					iVictimHealth = pTarget->GetHealth();
 				}
 			}
 		}
 	}
 
-#ifndef CLIENT_DLL
+#if !defined(CLIENT_DLL)
 	pPlayer->RemoveInvisibility();
-	pPlayer->RemoveDisguise();
-#endif
 
-#if !defined (CLIENT_DLL)
 	lagcompensation->FinishLagCompensation( pPlayer );
 
 	// Reset "backstab ready" state after each attack.
@@ -132,11 +132,42 @@ void CTFKnife::PrimaryAttack( void )
 	
 	// And hit instantly.
 	Smack();
-	m_flSmackTime = 0.0f;
+	m_flSmackTime = -1.0f;
 
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
 	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACritical() );
+
+	int nDisguiseOnBackstab = 0;
+	CALL_ATTRIB_HOOK_INT( nDisguiseOnBackstab, set_disguise_on_backstab );
+	if ( nDisguiseOnBackstab != 0 )
+	{
+		if ( m_hBackstabVictim->IsAlive() || pPlayer->HasTheFlag() )
+		{
+			pPlayer->RemoveDisguise();
+			return;
+		}
+
+		SetContextThink( &CTFKnife::DisguiseOnKill, 0.2f, "DisguiseOnKill" );
+	}
+	else
+	{
+		int nSanguisuge = 0;
+		CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
+		if ( m_hBackstabVictim->IsAlive() )
+			return;
+
+		if ( nSanguisuge != 0 )
+		{
+			int nHealthToSteal = Max( pPlayer->GetMaxHealth() * 3, pPlayer->GetHealth() + iVictimHealth );
+			int nHealthToAdd = pPlayer->GetHealth() - nHealthToSteal;
+			if ( nHealthToAdd > 0 )
+			{
+				pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
+				pPlayer->m_Shared.HealthKitPickupEffects( nHealthToAdd );
+			}
+		}
+	}
 #endif
 }
 
@@ -304,4 +335,18 @@ void CTFKnife::BackstabVMThink( void )
 			}
 		}
 	}
+}
+
+void CTFKnife::DisguiseOnKill( void )
+{
+	if ( !m_hBackstabVictim )
+		return;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	int iTeamNum = m_hBackstabVictim->GetTeamNumber();
+	int iClassIdx = m_hBackstabVictim->GetPlayerClass()->GetClassIndex();
+	pOwner->m_Shared.Disguise( iTeamNum, iClassIdx, m_hBackstabVictim );
 }

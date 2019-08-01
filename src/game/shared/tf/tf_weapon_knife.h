@@ -46,9 +46,10 @@ public:
 	virtual bool		SendWeaponAnim( int iActivity );
 
 	void				BackstabVMThink( void );
+	void				DisguiseOnKill( void );
 
 private:
-	EHANDLE				m_hBackstabVictim;
+	CHandle<CTFPlayer> m_hBackstabVictim;
 	CNetworkVar( bool, m_bReadyToBackstab );
 
 	CTFKnife( const CTFKnife & ) {}
