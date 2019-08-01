@@ -12,6 +12,7 @@
 #include "materialsystem/itexture.h"
 #include "view_shared.h"
 #include "viewpostprocess.h"
+#include "gamerules.h"
 
 #define FULL_FRAME_TEXTURE "_rt_FullFrameFB"
 
@@ -61,7 +62,7 @@ void CGlowObjectManager::RenderGlowEffects( const CViewSetup *pSetup, int nSplit
 {
 	if ( g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() )
 	{
-		if ( glow_outline_effect_enable.GetBool() )
+		if ( glow_outline_effect_enable.GetBool() && GameRules() && GameRules()->AllowGlowOutlines() == true )
 		{
 			CMatRenderContextPtr pRenderContext( materials );
 
