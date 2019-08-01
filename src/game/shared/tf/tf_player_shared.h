@@ -146,7 +146,7 @@ public:
 	void	ClientShieldChargeThink( void );
 #endif
 
-	void	Disguise( int nTeam, int nClass );
+	void	Disguise( int nTeam, int nClass, CTFPlayer *pTarget = nullptr, bool b1 = true );
 	void	CompleteDisguise( void );
 	void	RemoveDisguise( void );
 	void	FindDisguiseTarget( void );
@@ -427,6 +427,7 @@ private:
 	CNetworkVar( int, m_nDesiredDisguiseClass );
 	CNetworkVar( int, m_nDesiredDisguiseTeam );
 	CEconItemView m_DisguiseItem;
+	EHANDLE m_hForcedDisguise;
 
 	CNetworkVar( int, m_iMaxHealth );
 

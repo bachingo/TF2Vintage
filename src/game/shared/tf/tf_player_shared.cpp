@@ -2704,7 +2704,7 @@ float CTFPlayerShared::GetPercentInvisible(void)
 //-----------------------------------------------------------------------------
 // Purpose: Start the process of disguising
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::Disguise( int nTeam, int nClass )
+void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer *pTarget, bool b1 )
 {
 #ifndef CLIENT_DLL
 	int nRealTeam = m_pOuter->GetTeamNumber();
@@ -2732,7 +2732,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass )
 	}
 
 	// Ignore disguise of the same type, switch disguise weapon instead.
-	if ( nTeam == m_nDisguiseTeam && nClass == m_nDisguiseClass )
+	if ( nTeam == m_nDisguiseTeam && nClass == m_nDisguiseClass && !b1 )
 	{
 		CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
 		RecalcDisguiseWeapon( pWeapon ? pWeapon->GetSlot() : 0 );
@@ -2751,18 +2751,23 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass )
 		return;
 	}
 
+	m_hForcedDisguise = pTarget;
+
 	m_nDesiredDisguiseClass = nClass;
 	m_nDesiredDisguiseTeam = nTeam;
 
 	AddCond( TF_COND_DISGUISING );
 
 	// Start the think to complete our disguise
+	float flDisguiseTime = gpGlobals->curtime + TF_TIME_TO_DISGUISE;
 
 	// Switching disguises is faster if we're already disguised
 	if ( InCond(TF_COND_DISGUISED ) )
-		m_flDisguiseCompleteTime = gpGlobals->curtime + TF_TIME_TO_CHANGE_DISGUISE;
-	else
-		m_flDisguiseCompleteTime = gpGlobals->curtime + TF_TIME_TO_DISGUISE;
+		flDisguiseTime = gpGlobals->curtime + TF_TIME_TO_CHANGE_DISGUISE;
+	
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, flDisguiseTime, disguise_speed_penalty );
+
+	m_flDisguiseCompleteTime = pTarget ? 0.0f : flDisguiseTime;
 #endif
 }
 
@@ -2772,15 +2777,22 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass )
 #ifndef CLIENT_DLL
 void CTFPlayerShared::FindDisguiseTarget(void)
 {
-	m_hDisguiseTarget = m_pOuter->TeamFortress_GetDisguiseTarget(m_nDisguiseTeam, m_nDisguiseClass);
-	if (m_hDisguiseTarget)
+	m_hDisguiseTarget = m_pOuter->TeamFortress_GetDisguiseTarget( m_nDisguiseTeam, m_nDisguiseClass );
+
+	if ( m_hForcedDisguise )
 	{
-		m_iDisguiseTargetIndex.Set(m_hDisguiseTarget.Get()->entindex());
-		Assert(m_iDisguiseTargetIndex >= 1 && m_iDisguiseTargetIndex <= MAX_PLAYERS);
+		m_hDisguiseTarget = m_hForcedDisguise.Get();
+		m_hForcedDisguise = nullptr;
+	}
+
+	if ( m_hDisguiseTarget )
+	{
+		m_iDisguiseTargetIndex.Set( m_hDisguiseTarget->entindex() );
+		Assert( m_iDisguiseTargetIndex >= 1 && m_iDisguiseTargetIndex <= MAX_PLAYERS );
 	}
 	else
 	{
-		m_iDisguiseTargetIndex.Set(TF_DISGUISE_TARGET_INDEX_NONE);
+		m_iDisguiseTargetIndex.Set( TF_DISGUISE_TARGET_INDEX_NONE );
 	}
 }
 #endif
