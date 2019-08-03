@@ -7170,6 +7170,77 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 	m_hRagdoll = pRagdoll;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Create a ragdoll to fake our death
+//-----------------------------------------------------------------------------
+void CTFPlayer::CreateFeignDeathRagdoll( CTakeDamageInfo const &info, bool bGibbed, bool bBurning, bool bFriendlyDisguise )
+{
+	// If we already have a ragdoll destroy it.
+	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll *>( m_hRagdoll.Get() );
+	if ( pRagdoll )
+	{
+		UTIL_Remove( pRagdoll );
+		pRagdoll = NULL;
+	}
+	Assert( pRagdoll == NULL );
+
+	// Create a ragdoll.
+	pRagdoll = dynamic_cast<CTFRagdoll *>( CreateEntityByName( "tf_ragdoll" ) );
+	if ( pRagdoll )
+	{
+		pRagdoll->m_vecRagdollOrigin = GetAbsOrigin();
+		pRagdoll->m_vecRagdollVelocity = m_vecTotalBulletForce;
+		Assert( entindex() >= 1 && entindex() <= MAX_PLAYERS );
+		pRagdoll->m_iPlayerIndex.Set( entindex() );
+		pRagdoll->m_vecForce = CalcDamageForceVector( info );
+		pRagdoll->m_nForceBone = m_nForceBone;
+		pRagdoll->m_iDamageCustom = info.GetDamageCustom();
+		pRagdoll->m_bGib = bGibbed;
+		pRagdoll->m_bBurning = bBurning;
+		pRagdoll->m_bWasDisguised = bFriendlyDisguise;
+		pRagdoll->m_bFeignDeath = true;
+
+		if ( info.GetInflictor() )
+		{
+			if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
+			{
+				int nTurnToIce = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nTurnToIce, freeze_backstab_victim );
+				pRagdoll->m_bIceRagdoll = nTurnToIce != 0;
+			}
+
+			int nTurnToGold = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nTurnToGold, set_turn_to_gold );
+			pRagdoll->m_bGoldRagdoll = nTurnToGold != 0;
+			
+			int nRagdollsBecomeAsh = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nRagdollsBecomeAsh, ragdolls_become_ash );
+			if ( nRagdollsBecomeAsh != 0 )
+			{
+				pRagdoll->m_bBecomeAsh = true;
+
+				int nRagdollPlasmaEffect = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nRagdollPlasmaEffect, ragdolls_plasma_effect );
+				if ( nRagdollPlasmaEffect != 0 )
+					pRagdoll->m_iDamageCustom = TF_DMG_CUSTOM_PLASMA;
+			}
+
+			int nCritOnHardHit = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nCritOnHardHit, crit_on_hard_hit );
+			pRagdoll->m_bCritOnHardHit = nCritOnHardHit != 0;
+		}
+
+		if ( !bGibbed && info.GetDamageType() & DMG_BLAST )
+		{
+			Vector vecForce = info.GetDamageForce();
+			pRagdoll->m_vecForce = vecForce * 1.5;
+		}
+	}
+
+	m_hRagdoll = pRagdoll;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Destroy's a ragdoll, called with a player is disconnecting.
 //-----------------------------------------------------------------------------
 void CTFPlayer::DestroyRagdoll( void )
@@ -7280,30 +7351,45 @@ void CTFPlayer::RemoveInvisibility( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 {
-	if ( IsAlive() && !m_Shared.InCond( TF_COND_STEALTHED )
-		&& CanGoInvisible( true ) && m_Shared.GetSpyCloakMeter() >= 100.0f )
+	if ( !IsAlive() || !IsPlayerClass( TF_CLASS_SPY ) )
+		return;
+	if ( m_Shared.InCond( TF_COND_STEALTHED ) )
+		return;
+	if ( !CanGoInvisible( true ) || m_Shared.GetSpyCloakMeter() < 99.9f )
+		return;
+
+	bool bFriendly = false;
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) )
 	{
-		bool bGib = ShouldGib( info );
-		bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && !bGib;
-
-		m_Shared.RemoveCond( TF_COND_BURNING );
-		m_Shared.RemoveCond( TF_COND_BLEEDING );
-
-		m_Shared.AddCond( TF_COND_FEIGN_DEATH );
-
-		RemoveTeleportEffect();
-
-		EmitSound( "BaseCombatCharacter.StopWeaponSounds" );
-
-		DeathSound( info );
-		TFGameRules()->DeathNotice( this, info );
-
-		SpeakConceptIfAllowed( MP_CONCEPT_DIED );
-
-		DropAmmoPack( false, true );
-
-		CreateRagdollEntity( bGib, bBurning, 0.0f, 0, true );
+		int iDisguiseTeam = m_Shared.GetDisguiseTeam();
+		bFriendly = GetTeamNumber() == iDisguiseTeam;
 	}
+
+	bool bGib = ShouldGib( info );
+
+	bool bBurning = m_Shared.InCond( TF_COND_BURNING );
+	if ( bFriendly && !m_Shared.InCond( TF_COND_DISGUISED_AS_DISPENSER ) )
+		bBurning &= GetPlayerClass()->GetClassIndex() != 7;
+
+	if ( HasTheFlag() )
+		DropFlag();
+
+	m_Shared.RemoveCond( TF_COND_BURNING );
+	m_Shared.RemoveCond( TF_COND_BLEEDING );
+
+	m_Shared.AddCond( TF_COND_FEIGN_DEATH );
+
+	RemoveTeleportEffect();
+
+	EmitSound( "BaseCombatCharacter.StopWeaponSounds" );
+	DeathSound( info );
+	TFGameRules()->DeathNotice( this, info );
+
+	SpeakConceptIfAllowed( MP_CONCEPT_DIED );
+
+	DropAmmoPack( false, true );
+
+	CreateFeignDeathRagdoll( info, bGib, bBurning, bFriendly );
 }
 
 //-----------------------------------------------------------------------------
