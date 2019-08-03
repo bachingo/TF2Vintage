@@ -224,6 +224,7 @@ public:
 	virtual bool		Weapon_ShouldSetLast( CBaseCombatWeapon *pOldWeapon, CBaseCombatWeapon *pNewWeapon );
 
 	//virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
+	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
 
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
@@ -239,6 +240,7 @@ public:
 	bool				CanAttack( void );
 
 	//virtual void		OnNavAreaChanged( CNavArea *enteredArea, CNavArea *leftArea );
+	virtual void		OnNavAreaChanged( CNavArea *enteredArea, CNavArea *leftArea );
 
 	// This passes the event to the client's and server's CPlayerAnimState.
 	void				DoAnimationEvent( PlayerAnimEvent_t event, int mData = 0 );

@@ -2207,6 +2207,7 @@ bool CTFPlayer::IsCapturingPoint( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 /*void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
+void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
 
@@ -2220,10 +2221,12 @@ bool CTFPlayer::IsCapturingPoint( void )
 
 	for (int i=0; i < areas->Count(); ++i)
 	{
+	FOR_EACH_VEC( *areas, i ) {
 		CTFNavArea *area = static_cast<CTFNavArea *>( ( *areas )[i] );
 		area->IncreaseDanger( GetTeamNumber(), ( area->GetCenter() - GetAbsOrigin() ).Length() );
 	}
 }*/
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -7141,6 +7144,7 @@ void CTFPlayer::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarge
 // Input  : pWeapon - the weapon that was just fired
 //-----------------------------------------------------------------------------
 /*void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
+void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
 {
 	if (!pWeapon)
 		return;
@@ -7174,12 +7178,14 @@ void CTFPlayer::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarge
 
 			FOR_EACH_VEC( nearby, i )
 			{
+			FOR_EACH_VEC( nearby, i ) {
 				CTFNavArea *area = static_cast<CTFNavArea *>( nearby[i] );
 				area->OnCombat();
 			}
 		}
 	}
 }*/
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Remove invisibility, called when player attacks
