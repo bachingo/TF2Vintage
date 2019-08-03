@@ -1829,7 +1829,7 @@ CTFRadiusDamageInfo::CTFRadiusDamageInfo()
 	m_flRadius = 0.0f;
 	m_iClassIgnore = CLASS_NONE;
 	m_pEntityIgnore = NULL;
-	m_flSelfDamageRadius = 0.0f;
+	m_flSelfDamageRadius = 1.0f;
 }
 
 ConVar tf_fixedup_damage_radius( "tf_fixedup_damage_radius", "1", FCVAR_DEVELOPMENTONLY );

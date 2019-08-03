@@ -46,6 +46,7 @@
 #include "tf_weapon_medigun.h"
 #include "hl2orange.spa.h"
 #include "te_tfblood.h"
+#include "tf_fx.h"
 #include "activitylist.h"
 #include "steam/steam_api.h"
 #include "cdll_int.h"
@@ -5042,7 +5043,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)
 	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() );
 	// Ragdoll uncloak
-	bool bCloaked = m_Shared.IsStealthed();
+	//bool bCloaked = m_Shared.IsStealthed();
 	bool bOnGround = ( GetFlags() & FL_ONGROUND );
 
 	// Remove all conditions...
@@ -8062,6 +8063,11 @@ void CTFPlayer::Taunt( void )
 			m_flTauntAttackTime = gpGlobals->curtime + 3.69f;
 			m_iTauntAttack = TAUNTATK_ENGINEER_GUITAR_SMASH;
 		}
+		else if ( V_stricmp( szResponse, "scenes/player/soldier/low/taunt05.vcd" ) == 0 )
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 3.5;
+			m_iTauntAttack = TAUNTATK_SOLDIER_GRENADE_KILL;
+		}
 	}
 
 	pExpresser->DisallowMultipleScenes();
@@ -8382,6 +8388,22 @@ void CTFPlayer::DoTauntAttack( void )
 			m_flTauntAttackTime = gpGlobals->curtime + 0.38;
 			m_iTauntAttack = TAUNTATK_MEDIC_INHALE;
 			break;
+		}
+		case TAUNTATK_SOLDIER_GRENADE_KILL:
+		case TAUNTATK_SOLDIER_GRENADE_KILL_WORMSIGN:
+		{
+			int iHandBone = LookupBone( "bip_hand_r" );
+			if ( iHandBone == -1 )
+				return;
+
+			Vector vecBoneOrigin; QAngle vecBoneAngles;
+			GetBonePosition( iHandBone, vecBoneOrigin, vecBoneAngles );
+
+			CPVSFilter filter( GetAbsOrigin() );
+			TE_TFExplosion( filter, 0.0, vecBoneOrigin, Vector( 0, 0, 1.0f ), TF_WEAPON_ROCKETLAUNCHER, entindex() );
+
+			CTakeDamageInfo info( this, this, GetActiveWeapon(), vec3_origin, vecBoneOrigin, 200.0f, DMG_BLAST|DMG_USEDISTANCEMOD, TF_DMG_CUSTOM_TAUNTATK_GRENADE, &vecBoneOrigin );
+			TFGameRules()->RadiusDamage( info, vecBoneOrigin, 100.0f, 0, NULL );
 		}
 	}
 }
