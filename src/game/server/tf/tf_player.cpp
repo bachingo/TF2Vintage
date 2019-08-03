@@ -2206,7 +2206,6 @@ bool CTFPlayer::IsCapturingPoint( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-/*void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
 void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
@@ -2216,16 +2215,10 @@ void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
 
 	const CUtlVector<CNavArea *> *areas = &collector.m_area;
 
-	if (areas->Count() <= 0)
-		return;
-
-	for (int i=0; i < areas->Count(); ++i)
-	{
 	FOR_EACH_VEC( *areas, i ) {
 		CTFNavArea *area = static_cast<CTFNavArea *>( ( *areas )[i] );
 		area->IncreaseDanger( GetTeamNumber(), ( area->GetCenter() - GetAbsOrigin() ).Length() );
 	}
-}*/
 }
 
 //-----------------------------------------------------------------------------
@@ -5018,6 +5011,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	CBaseEntity *pAttacker = info.GetAttacker();
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
+	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( pInflictor );
 
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)
@@ -5033,6 +5027,20 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	if ( bDisguised )
 	{
 		UpdateModel();
+	}
+
+	if ( pTFAttacker )
+	{
+		int nDropHealthOnKill = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker, nDropHealthOnKill, drop_health_pack_on_kill );
+		if ( nDropHealthOnKill != 0 )
+			DropHealthPack();
+
+		// TODO: Play specific sequence
+		int nForceKillerToLaugh = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker, nForceKillerToLaugh, kill_forces_attacker_to_laugh );
+		if ( nForceKillerToLaugh != 0 )
+			pTFAttacker->Taunt();
 	}
 
 	RemoveTeleportEffect();
@@ -5413,6 +5421,26 @@ void CTFPlayer::AmmoPackCleanUp( void )
 	{
 		UTIL_Remove( pOldestBox );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::DropHealthPack( void )
+{
+	CTFPowerup *pPack = (CTFPowerup *)CBaseEntity::Create( "item_healthkit_small", WorldSpaceCenter(), vec3_angle );
+	if ( !pPack )
+		return;
+
+	// Investigate for constant expression
+	Vector vecRand;
+	vecRand.x = ( rand() * 0.000061037019 ) + -1.0f;
+	vecRand.y = ( rand() * 0.000061037019 ) + -1.0f;
+	vecRand.z = rand();
+
+	vecRand.AsVector2D().NormalizeInPlace();
+
+	pPack->DropSingleInstance( 250 * vecRand, this, 0.0f, 0.1f );
 }
 
 //-----------------------------------------------------------------------------
@@ -7143,7 +7171,6 @@ void CTFPlayer::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarge
 // Purpose: Notify everything around me some combat just happened
 // Input  : pWeapon - the weapon that was just fired
 //-----------------------------------------------------------------------------
-/*void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
 void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
 {
 	if (!pWeapon)
@@ -7176,15 +7203,12 @@ void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
 			CUtlVector<CNavArea *> nearby;
 			CollectSurroundingAreas( &nearby, GetLastKnownArea() );
 
-			FOR_EACH_VEC( nearby, i )
-			{
 			FOR_EACH_VEC( nearby, i ) {
 				CTFNavArea *area = static_cast<CTFNavArea *>( nearby[i] );
 				area->OnCombat();
 			}
 		}
 	}
-}*/
 }
 
 //-----------------------------------------------------------------------------

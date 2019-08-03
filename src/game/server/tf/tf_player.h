@@ -223,7 +223,6 @@ public:
 	virtual void		Weapon_HandleAnimEvent( animevent_t *pEvent );
 	virtual bool		Weapon_ShouldSetLast( CBaseCombatWeapon *pOldWeapon, CBaseCombatWeapon *pNewWeapon );
 
-	//virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
 	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
 
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
@@ -239,7 +238,6 @@ public:
 
 	bool				CanAttack( void );
 
-	//virtual void		OnNavAreaChanged( CNavArea *enteredArea, CNavArea *leftArea );
 	virtual void		OnNavAreaChanged( CNavArea *enteredArea, CNavArea *leftArea );
 
 	// This passes the event to the client's and server's CPlayerAnimState.
@@ -334,6 +332,7 @@ public:
 	// Dropping Ammo
 	void				DropAmmoPack( bool bLunchbox = false, bool bFeigning = false );
 	void				DropFakeWeapon( CTFWeaponBase *pWeapon );
+	void				DropHealthPack( void );
 
 	bool				CanDisguise( void );
 	bool				CanGoInvisible( bool bFeigning = false );
