@@ -5014,7 +5014,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)
 	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() );
 	// Ragdoll uncloak
-	float flInvis = m_Shared.m_flInvisibility;
+	bool bCloaked = m_Shared.IsStealthed();
+	bool bOnGround = ( GetFlags() & FL_ONGROUND );
 
 	// Remove all conditions...
 	m_Shared.RemoveAllCond( NULL );
@@ -5213,10 +5214,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-	m_OnDeath.FireOutput( this, this );
-
-	BaseClass::Event_Killed( info_modified );
-
+	bool bDisguiseOnStab = false, bTurnToIce = false, bTurnToGold = false;
 	if ( pTFAttacker )
 	{
 		if ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() )
@@ -5226,8 +5224,37 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		else if ( TF_DMG_CUSTOM_BACKSTAB == info.GetDamageCustom() )
 		{
 			CTF_GameStats.Event_Backstab( pTFAttacker );
+			if ( pTFInflictor )
+			{
+				int nTurnToIce = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nTurnToIce, freeze_backstab_victim );
+				bTurnToIce = nTurnToIce != 0;
+
+				int nDisguiseOnBackstab = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nDisguiseOnBackstab, set_disguise_on_backstab );
+				bDisguiseOnStab = nDisguiseOnBackstab != 0;
+			}
+		}
+
+		if ( pTFInflictor )
+		{
+			int nTurnToGold = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nTurnToGold, set_turn_to_gold );
+			bTurnToGold = nTurnToGold != 0;
 		}
 	}
+
+	bool bCritOnHardHit = false;
+	if ( pTFInflictor )
+	{
+		int nCritOnHardHit = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nCritOnHardHit, crit_on_hard_hit );
+		bCritOnHardHit = nCritOnHardHit != 0;
+	}
+
+	m_OnDeath.FireOutput( this, this );
+
+	BaseClass::Event_Killed( info_modified );
 
 	// Create the ragdoll entity.
 	if ( bGib || bRagdoll )
