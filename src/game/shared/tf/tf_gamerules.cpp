@@ -99,6 +99,7 @@ ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLI
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
 ConVar tf2v_allow_thirdperson( "tf2v_allow_thirdperson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to switch to third person mode." );
 ConVar tf2v_allow_glow_outline( "tf2v_allow_glow_outline", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to use glow for objectives." );
+ConVar tf2v_classlimit( "tf2v_classlimit", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable classlimits, even when tournament mode is disabled." );
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -1320,7 +1321,7 @@ int CTFGameRules::GetClassLimit( int iDesiredClassIndex )
 {
 	int result;
 
-	if ( IsInTournamentMode() /*||  *((_DWORD *)this + 462) == 7 */ )
+	if ( IsInTournamentMode() || tf2v_classlimit.GetInt() == 1 /*||  *((_DWORD *)this + 462) == 7 */ )
 	{
 		if ( iDesiredClassIndex <= TF_CLASS_COUNT )
 		{
