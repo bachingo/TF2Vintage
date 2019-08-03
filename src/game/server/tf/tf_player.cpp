@@ -5070,6 +5070,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
+	bool bElectrocute = false;
 	if ( IsPlayerClass( TF_CLASS_MEDIC ) && MedicGetChargeLevel() == 1.0f && pTFAttacker )
 	{
 		// Bonus points.
@@ -5084,6 +5085,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 
 		CTF_GameStats.Event_PlayerAwardBonusPoints( pTFAttacker, this, 2 );
+
+		bElectrocute = true;
 	}
 
 	if ( IsPlayerClass( TF_CLASS_ENGINEER ) && m_Shared.GetCarriedObject() )
@@ -5182,6 +5185,13 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	else
 	{
 		m_hObserverTarget.Set( NULL );
+	}
+
+	if ( bElectrocute && bGib )
+	{
+		const char *pszEffect = ConstructTeamParticle( "electrocuted_gibbed_%s", GetTeamNumber() );
+		DispatchParticleEffect( pszEffect, GetAbsOrigin(), vec3_angle );
+		EmitSound( "TFPlayer.MedicChargedDeath" );
 	}
 
 	if ( info_modified.GetDamageCustom() == TF_DMG_CUSTOM_SUICIDE )
