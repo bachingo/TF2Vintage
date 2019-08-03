@@ -195,10 +195,20 @@ public:
 		m_iPlayerIndex.Set( TF_PLAYER_INDEX_NONE );
 		m_bGib = false;
 		m_bBurning = false;
-		m_flInvisibilityLevel = 0.0f;
+		m_bCloaked = false;
+		m_bFeignDeath = false;
+		m_bElectrocuted = false;
+		m_bWasDisguised = false;
+		m_bOnGround = true;
+		m_bBecomeAsh = false;
+		m_bGoldRagdoll = false;
+		m_bIceRagdoll = false;
+		m_bCritOnHardHit = false;
 		m_iDamageCustom = 0;
 		m_vecRagdollOrigin.Init();
 		m_vecRagdollVelocity.Init();
+		
+
 		UseClientSideAnimation();
 	}
 
@@ -213,10 +223,19 @@ public:
 	CNetworkVector( m_vecRagdollOrigin );
 	CNetworkVar( bool, m_bGib );
 	CNetworkVar( bool, m_bBurning );
-	CNetworkVar( float, m_flInvisibilityLevel );
+	CNetworkVar( bool, m_bElectrocuted );
+	CNetworkVar( bool, m_bFeignDeath );
+	CNetworkVar( bool, m_bWasDisguised );
+	CNetworkVar( bool, m_bBecomeAsh );
+	CNetworkVar( bool, m_bOnGround );
+	CNetworkVar( bool, m_bCloaked );
 	CNetworkVar( int, m_iDamageCustom );
 	CNetworkVar( int, m_iTeam );
 	CNetworkVar( int, m_iClass );
+	CNetworkArray( EHANDLE, m_hRagdollWearables, 8 );
+	CNetworkVar( bool, m_bGoldRagdoll );
+	CNetworkVar( bool, m_bIceRagdoll );
+	CNetworkVar( bool, m_bCritOnHardHit );
 };
 
 LINK_ENTITY_TO_CLASS( tf_ragdoll, CTFRagdoll );
@@ -229,10 +248,19 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CTFRagdoll, DT_TFRagdoll )
 	SendPropInt( SENDINFO( m_nForceBone ) ),
 	SendPropBool( SENDINFO( m_bGib ) ),
 	SendPropBool( SENDINFO( m_bBurning ) ),
-	SendPropFloat( SENDINFO( m_flInvisibilityLevel ), 8, 0, 0.0f, 1.0f ),
+	SendPropBool( SENDINFO( m_bElectrocuted ) ),
+	SendPropBool( SENDINFO( m_bFeignDeath ) ),
+	SendPropBool( SENDINFO( m_bWasDisguised ) ),
+	SendPropBool( SENDINFO( m_bBecomeAsh ) ),
+	SendPropBool( SENDINFO( m_bOnGround ) ),
+	SendPropBool( SENDINFO( m_bCloaked ) ),
 	SendPropInt( SENDINFO( m_iDamageCustom ) ),
 	SendPropInt( SENDINFO( m_iTeam ), 3, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iClass ), 4, SPROP_UNSIGNED ),
+	SendPropArray3( SENDINFO_ARRAY3( m_hRagdollWearables ), SendPropEHandle( SENDINFO_ARRAY( m_hRagdollWearables ) ) ),
+	SendPropBool( SENDINFO( m_bGoldRagdoll ) ),
+	SendPropBool( SENDINFO( m_bIceRagdoll ) ),
+	SendPropBool( SENDINFO( m_bCritOnHardHit ) ),
 END_SEND_TABLE()
 
 // -------------------------------------------------------------------------------- //
@@ -5244,9 +5272,21 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-	bool bCritOnHardHit = false;
+	bool bCritOnHardHit = false, bTurnToAsh = false;
 	if ( pTFInflictor )
 	{
+		int nRagdollsBecomeAsh = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nRagdollsBecomeAsh, ragdolls_become_ash );
+		if ( nRagdollsBecomeAsh != 0 )
+		{
+			bTurnToAsh = true;
+
+			int nRagdollPlasmaEffect = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nRagdollPlasmaEffect, ragdolls_plasma_effect );
+			if ( nRagdollPlasmaEffect != 0 )
+				info_modified.SetDamageCustom( TF_DMG_CUSTOM_PLASMA );
+		}
+
 		int nCritOnHardHit = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nCritOnHardHit, crit_on_hard_hit );
 		bCritOnHardHit = nCritOnHardHit != 0;
@@ -5259,7 +5299,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Create the ragdoll entity.
 	if ( bGib || bRagdoll )
 	{
-		CreateRagdollEntity( bGib, bBurning, flInvis, info.GetDamageCustom() );
+		CreateRagdollEntity( bGib, bBurning, bElectrocute, bOnGround, bDisguiseOnStab, bTurnToGold, bTurnToIce, bTurnToAsh, info.GetDamageCustom(), bCritOnHardHit );
 	}
 
 	// Don't overflow the value for this.
@@ -7078,13 +7118,13 @@ void CTFPlayer::PlayerUse( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::CreateRagdollEntity( void )
 {
-	CreateRagdollEntity( false, false, 0.0f, 0 );
+	CreateRagdollEntity( false, false, false, (GetFlags() & FL_ONGROUND), false, false, false, false, 0, false );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Create a ragdoll entity to pass to the client.
 //-----------------------------------------------------------------------------
-void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, bool bCloaked, int iDamageCustom, bool bFeigning )
+void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectrocute, bool bOnGround, bool bCloak, bool bGoldStatue, bool bIceStatue, bool bDisintigrate, int iDamageCustom, bool bCreatePhysics )
 {
 	// If we already have a ragdoll destroy it.
 	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll *>( m_hRagdoll.Get() );
@@ -7105,29 +7145,25 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, bool bCloaked, in
 		pRagdoll->m_nForceBone = m_nForceBone;
 		Assert( entindex() >= 1 && entindex() <= MAX_PLAYERS );
 		pRagdoll->m_iPlayerIndex.Set( entindex() );
-		pRagdoll->m_bGib = bGib;
+		pRagdoll->m_bGib = bGibbed;
 		pRagdoll->m_bBurning = bBurning;
-		pRagdoll->m_bCloaked = bCloaked;
+		pRagdoll->m_bCloaked = bCloak;
 		pRagdoll->m_iDamageCustom = iDamageCustom;
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
 	}
 
-	if ( !bFeigning )
-	{
-		// Turn off the player.
-		AddSolidFlags( FSOLID_NOT_SOLID );
-		AddEffects( EF_NODRAW | EF_NOSHADOW );
-		SetMoveType( MOVETYPE_NONE );
-	}
+	// Turn off the player.
+	AddSolidFlags( FSOLID_NOT_SOLID );
+	AddEffects( EF_NODRAW | EF_NOSHADOW );
+	SetMoveType( MOVETYPE_NONE );
 
 	// Add additional gib setup.
-	if ( bGib )
+	if ( bGibbed )
 	{
 		EmitSound( "BaseCombatCharacter.CorpseGib" ); // Squish!
 
-		if ( !bFeigning )
-			m_nRenderFX = kRenderFxRagdoll;
+		m_nRenderFX = kRenderFxRagdoll;
 	}
 
 	// Save ragdoll handle.
