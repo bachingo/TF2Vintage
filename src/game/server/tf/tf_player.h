@@ -45,14 +45,14 @@ class CPlayerStateInfo
 public:
 
 	int				m_nPlayerState;
-	const char		*m_pStateName;
+	const char *m_pStateName;
 
 	// Enter/Leave state.
-	void ( CTFPlayer::*pfnEnterState )( );
-	void ( CTFPlayer::*pfnLeaveState )( );
+	void ( CTFPlayer:: *pfnEnterState )( );
+	void ( CTFPlayer:: *pfnLeaveState )( );
 
 	// Think (called every frame).
-	void ( CTFPlayer::*pfnThink )( );
+	void ( CTFPlayer:: *pfnThink )( );
 };
 
 struct DamagerHistory_t
@@ -112,13 +112,13 @@ public:
 	~CTFPlayer();
 
 	// Creation/Destruction.
-	static CTFPlayer*	CreatePlayer( const char *className, edict_t *ed );
-	static CTFPlayer*	Instance( int iEnt );
+	static CTFPlayer	*CreatePlayer( const char *className, edict_t *ed );
+	static CTFPlayer	*Instance( int iEnt );
 
 	virtual void		Spawn();
 	virtual int			ShouldTransmit( const CCheckTransmitInfo *pInfo );
 	virtual void		ForceRespawn();
-	virtual CBaseEntity*EntSelectSpawnPoint( void );
+	virtual CBaseEntity *EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
 	virtual void		Precache();
 	virtual bool		IsReadyToPlay( void );
@@ -128,7 +128,7 @@ public:
 	virtual void		PlayerUse( void );
 
 	void				CreateViewModel( int iViewModel = 0 );
-	CBaseViewModel*		GetOffHandViewModel();
+	CBaseViewModel		*GetOffHandViewModel();
 	void				SendOffHandViewModelActivity( Activity activity );
 
 	virtual void		CheatImpulseCommands( int iImpulse );
@@ -154,7 +154,7 @@ public:
 	int					GetBlastJumpFlags( void ) { return m_nBlastJumpFlags; }
 	void				AddDamagerToHistory( EHANDLE hDamager );
 	void				ClearDamagerHistory();
-	DamagerHistory_t&	GetDamagerHistory( int i ) { return m_DamagerHistory[i]; }
+	DamagerHistory_t	&GetDamagerHistory( int i ) { return m_DamagerHistory[i]; }
 	virtual void		DamageEffect( float flDamage, int fDamageType );
 	virtual	bool		ShouldCollide( int collisionGroup, int contentsMask ) const;
 
@@ -163,14 +163,14 @@ public:
 
 	void				SetHealthBuffTime( float flTime ) { m_flHealthBuffTime = flTime; }
 
-	CTFWeaponBase*		GetActiveTFWeapon( void ) const;
+	CTFWeaponBase		*GetActiveTFWeapon( void ) const;
 	bool				IsActiveTFWeapon( int iWeaponID );
 
-	CEconItemView*		GetLoadoutItem( int iClass, int iSlot );
+	CEconItemView		*GetLoadoutItem( int iClass, int iSlot );
 	void				HandleCommand_WeaponPreset( int iSlotNum, int iPresetNum );
 	void				HandleCommand_WeaponPreset( int iClass, int iSlotNum, int iPresetNum );
 
-	CBaseEntity*		GiveNamedItem( const char *pszName, int iSubType = 0, CEconItemView* pItem = NULL, int iClassNum = -1 );
+	CBaseEntity			*GiveNamedItem( const char *pszName, int iSubType = 0, CEconItemView* pItem = NULL, int iClassNum = -1 );
 
 	void				SaveMe( void );
 
@@ -180,7 +180,7 @@ public:
 
 	bool				HasItem( void );					// Currently can have only one item at a time.
 	void				SetItem( CTFItem *pItem );
-	CTFItem*			GetItem( void );
+	CTFItem				*GetItem( void );
 
 	void				Regenerate( void );
 	float				GetNextRegenTime( void ) { return m_flNextRegenerateTime; }
@@ -198,7 +198,7 @@ public:
 	bool				TFWeaponDrop( CTFWeaponBase *pWeapon, bool bThrowForward );
 
 	// Class.
-	CTFPlayerClass*		GetPlayerClass( void ) { return &m_PlayerClass; }
+	CTFPlayerClass		*GetPlayerClass( void ) { return &m_PlayerClass; }
 	int					GetDesiredPlayerClassIndex( void ) { return m_Shared.m_iDesiredPlayerClass; }
 	void				SetDesiredPlayerClassIndex( int iClass ) { m_Shared.m_iDesiredPlayerClass = iClass; }
 
@@ -252,12 +252,12 @@ public:
 
 	int					BuildObservableEntityList( void );
 	virtual int			GetNextObserverSearchStartPoint( bool bReverse ); // Where we should start looping the player list in a FindNextObserverTarget call
-	virtual CBaseEntity*FindNextObserverTarget( bool bReverse );
-	virtual bool		IsValidObserverTarget( CBaseEntity * target ); // true, if player is allowed to see this target
-	virtual bool		SetObserverTarget( CBaseEntity * target );
+	virtual CBaseEntity *FindNextObserverTarget( bool bReverse );
+	virtual bool		IsValidObserverTarget( CBaseEntity *target ); // true, if player is allowed to see this target
+	virtual bool		SetObserverTarget( CBaseEntity *target );
 	virtual bool		ModeWantsSpectatorGUI( int iMode ) { return ( iMode != OBS_MODE_FREEZECAM && iMode != OBS_MODE_DEATHCAM ); }
 	void				FindInitialObserverTarget( void );
-	CBaseEntity*		FindNearestObservableTarget( Vector vecOrigin, float flMaxDist );
+	CBaseEntity			*FindNearestObservableTarget( Vector vecOrigin, float flMaxDist );
 	virtual void		ValidateCurrentObserverTarget( void );
 
 	void				CheckUncoveringSpies( CTFPlayer *pTouchedPlayer );
@@ -270,7 +270,7 @@ public:
 	void				RemoveAllOwnedEntitiesFromWorld( bool bSilent = true );
 	void				RemoveOwnedProjectiles( void );
 
-	CTFTeamSpawn*		GetSpawnPoint( void ) { return m_pSpawnPoint; }
+	CTFTeamSpawn		*GetSpawnPoint( void ) { return m_pSpawnPoint; }
 
 	void				SetAnimation( PLAYER_ANIM playerAnim );
 
@@ -289,7 +289,7 @@ public:
 
 	// Buildables
 	void				SetWeaponBuilder( CTFWeaponBuilder *pBuilder );
-	CTFWeaponBuilder*	GetWeaponBuilder( void );
+	CTFWeaponBuilder	*GetWeaponBuilder( void );
 
 	int					GetBuildResources( void );
 	void				RemoveBuildResources( int iAmount );
@@ -298,7 +298,7 @@ public:
 	bool				IsBuilding( void );
 	int					CanBuild( int iObjectType, int iObjectMode );
 
-	CBaseObject*		GetObject( int index );
+	CBaseObject			*GetObject( int index );
 	int					GetObjectCount( void );
 	int					GetNumObjects( int iObjectType, int iObjectMode );
 	void				RemoveAllObjects( bool bSilent );
@@ -312,10 +312,10 @@ public:
 	bool				PlayerOwnsObject( CBaseObject *pObject );
 	void				DetonateOwnedObjectsOfType( int iType, int iMode );
 	void				StartBuildingObjectOfType( int iType, int iMode );
-	CBaseObject*		GetObjectOfType( int iType, int iMode );
+	CBaseObject			*GetObjectOfType( int iType, int iMode );
 
-	CTFTeam*			GetTFTeam( void );
-	CTFTeam*			GetOpposingTFTeam( void );
+	CTFTeam				*GetTFTeam( void );
+	CTFTeam				*GetOpposingTFTeam( void );
 
 	void				TeleportEffect( void );
 	void				RemoveTeleportEffect( void );
@@ -338,7 +338,7 @@ public:
 	bool				CanGoInvisible( bool bFeigning = false );
 	void				RemoveInvisibility( void );
 
-	void				SpyDeadRingerDeath( CTakeDamageInfo const& info );
+	void				SpyDeadRingerDeath( CTakeDamageInfo const &info );
 
 	void				RemoveDisguise( void );
 	void				PrintTargetWeaponInfo( void );
@@ -369,7 +369,7 @@ public:
 	bool				ShouldFlipViewModel( void ) { return m_bFlipViewModel; }
 	void				SetFlipViewModel( bool bFlip ) { m_bFlipViewModel = bFlip; }
 
-	virtual void		ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet );
+	virtual void		ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet );
 
 	virtual bool		CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 
@@ -471,13 +471,13 @@ public:
 
 	void				PostInventoryApplication( void );
 
-	CTriggerAreaCapture*GetControlPointStandingOn( void );
+	CTriggerAreaCapture *GetControlPointStandingOn( void );
 
 	bool				IsCapturingPoint( void );
 
-	const Vector&		EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
-	const Vector&		EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
-	const Vector&		EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
+	const Vector		&EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
+	const Vector		&EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
+	const Vector		&EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
 
 	// Taunts.
 	void				Taunt( void );
@@ -501,7 +501,7 @@ public:
 	void				StopRandomExpressions( void ) { m_flNextRandomExpressionTime = -1; }
 	void				StartRandomExpressions( void ) { m_flNextRandomExpressionTime = gpGlobals->curtime; }
 
-	virtual bool		WantsLagCompensationOnEntity( const CBasePlayer	*pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
+	virtual bool		WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
 
 	float				MedicGetChargeLevel( void );
 	CBaseEntity			*MedicGetHealTarget( void );
@@ -543,7 +543,7 @@ private:
 	// Creation/Destruction.
 	virtual void		InitClass( void );
 	void				GiveDefaultItems();
-	bool				SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot );
+	bool				SelectSpawnSpot( const char *pEntClassName, CBaseEntity *&pSpot );
 	void				PrecachePlayerModels( void );
 	void				RemoveNemesisRelationships();
 
@@ -579,7 +579,7 @@ private:
 	void				AmmoPackCleanUp( void );
 
 	// State.
-	CPlayerStateInfo*	StateLookupInfo( int nState );
+	CPlayerStateInfo	*StateLookupInfo( int nState );
 	void				StateEnter( int nState );
 	void				StateLeave( void );
 	void				StateTransition( int nState );
@@ -641,7 +641,7 @@ private:
 	CTFPlayerClass		m_PlayerClass;
 	int					m_WeaponPreset[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
 
-	CTFPlayerAnimState	*m_PlayerAnimState;
+	CTFPlayerAnimState *m_PlayerAnimState;
 	int					m_iLastWeaponFireUsercmd;				// Firing a weapon.  Last usercmd we shot a bullet on.
 	int					m_iLastSkin;
 	float				m_flLastDamageTime;
@@ -715,11 +715,11 @@ public:
 //-----------------------------------------------------------------------------
 inline CTFPlayer *ToTFPlayer( CBaseEntity *pEntity )
 {
-	if (!pEntity || !pEntity->IsPlayer())
+	if ( !pEntity || !pEntity->IsPlayer() )
 		return NULL;
 
-	Assert( dynamic_cast<CTFPlayer*>( pEntity ) != 0 );
-	return static_cast<CTFPlayer*>( pEntity );
+	Assert( dynamic_cast<CTFPlayer *>( pEntity ) != 0 );
+	return static_cast<CTFPlayer *>( pEntity );
 }
 
 inline int CTFPlayer::StateGet( void ) const
