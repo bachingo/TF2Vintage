@@ -6337,25 +6337,27 @@ int CTFPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound, EAmmoS
 	{
 		CALL_ATTRIB_HOOK_INT( iCount, mult_metal_pickup );
 	}
-	/*else if ( CALL_ATTRIB_HOOK_INT( bBool, ammo_becomes_health ) == 1 )
-	{
-	if ( !ammosource )
-	{
-	v7 = (*(int (__cdecl **)(CBaseEntity *, float, _DWORD))(*(_DWORD *)a3 + 260))(a3, (float)iCount, 0);
-	if ( v7 > 0 )
-	{
-	if ( !bSuppressSound )
-	EmitSound( "BaseCombatCharacter.AmmoPickup" );
 
-	*(float *)&a2.m128i_i32[0] = (float)iCount;
-	HealthKitPickupEffects( iCount );
-	}
-	return v7;
-	}
+	int nAmmoBecomesHealth = 0;
+	CALL_ATTRIB_HOOK_INT( nAmmoBecomesHealth, ammo_becomes_health );
+	if ( nAmmoBecomesHealth != 0 )
+	{
+		if ( ammosource == TF_AMMO_SOURCE_AMMOPACK )
+		{
+			if ( TakeHealth( iCount, DMG_GENERIC ) > 0 )
+			{
+				if ( !bSuppressSound )
+					EmitSound( "BaseCombatCharacter.AmmoPickup" );
 
-	if ( ammosource == TF_AMMO_SOURCE_DISPENSER )
-	return v7;
-	}*/
+				m_Shared.HealthKitPickupEffects( iCount );
+			}
+
+			return 0;
+		}
+
+		if ( ammosource == TF_AMMO_SOURCE_DISPENSER )
+			return 0;
+	}
 
 	if ( !g_pGameRules->CanHaveAmmo( this, iAmmoIndex ) )
 	{
@@ -6365,7 +6367,7 @@ int CTFPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound, EAmmoS
 
 	int iMaxAmmo = GetMaxAmmo( iAmmoIndex );
 	int iAmmoCount = GetAmmoCount( iAmmoIndex );
-	int iAdd = min( iCount, iMaxAmmo - iAmmoCount );
+	int iAdd = Min( iCount, iMaxAmmo - iAmmoCount );
 
 	if ( iAdd < 1 )
 	{
