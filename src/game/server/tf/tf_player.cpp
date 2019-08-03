@@ -2237,6 +2237,9 @@ void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
 
+	if ( !newArea || !oldArea )
+		return;
+
 	NavAreaCollector collector( true );
 	newArea->ForAllPotentiallyVisibleAreas( collector );
 
