@@ -233,7 +233,7 @@ public:
 	CNetworkVar( int, m_iDamageCustom );
 	CNetworkVar( int, m_iTeam );
 	CNetworkVar( int, m_iClass );
-	CNetworkArray( EHANDLE, m_hRagdollWearables, 8 );
+	CNetworkArray( EHANDLE, m_hRagdollWearables, TF_LOADOUT_SLOT_COUNT );
 	CNetworkVar( bool, m_bGoldRagdoll );
 	CNetworkVar( bool, m_bIceRagdoll );
 	CNetworkVar( bool, m_bCritOnHardHit );

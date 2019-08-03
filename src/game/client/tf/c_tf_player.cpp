@@ -213,6 +213,7 @@ public:
 
 	DECLARE_CLASS( C_TFRagdoll, C_BaseFlex );
 	DECLARE_CLIENTCLASS();
+	DECLARE_PREDICTABLE();
 	
 	C_TFRagdoll();
 	~C_TFRagdoll();
@@ -271,11 +272,21 @@ private:
 	bool  m_bFadingOut;
 	bool  m_bGib;
 	bool  m_bBurning;
+	bool  m_bElectrocuted;
+	bool  m_bFeignDeath;
+	bool  m_bWasDisguised;
+	bool  m_bBecomeAsh;
+	bool  m_bOnGround;
+	bool  m_bCloaked;
 	float m_flInvisibilityLevel;
 	float m_flUncloakCompleteTime;
 	int   m_iDamageCustom;
 	int	  m_iTeam;
 	int	  m_iClass;
+	CHandle<CEconEntity> m_hRagdollWearables[TF_LOADOUT_SLOT_COUNT];
+	bool  m_bGoldRagdoll;
+	bool  m_bIceRagdoll;
+	bool  m_bCritOnHardHit;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
 	float m_flDeathAnimEndTIme;
 	
@@ -293,11 +304,24 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropInt( RECVINFO( m_nForceBone ) ),
 	RecvPropBool( RECVINFO( m_bGib ) ),
 	RecvPropBool( RECVINFO( m_bBurning ) ),
-	RecvPropFloat( RECVINFO( m_flInvisibilityLevel ) ),
+	RecvPropBool( RECVINFO( m_bElectrocuted ) ),
+	RecvPropBool( RECVINFO( m_bFeignDeath ) ),
+	RecvPropBool( RECVINFO( m_bWasDisguised ) ),
+	RecvPropBool( RECVINFO( m_bBecomeAsh ) ),
+	RecvPropBool( RECVINFO( m_bOnGround ) ),
+	RecvPropBool( RECVINFO( m_bCloaked ) ),
 	RecvPropInt( RECVINFO( m_iDamageCustom ) ),
 	RecvPropInt( RECVINFO( m_iTeam ) ),
 	RecvPropInt( RECVINFO( m_iClass ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_hRagdollWearables ), RecvPropEHandle( RECVINFO( m_hRagdollWearables[0] ) ) ),
+	RecvPropBool( RECVINFO( m_bGoldRagdoll ) ),
+	RecvPropBool( RECVINFO( m_bIceRagdoll ) ),
+	RecvPropBool( RECVINFO( m_bCritOnHardHit ) ),
 END_RECV_TABLE()
+
+BEGIN_PREDICTION_DATA( C_TFRagdoll )
+	DEFINE_PRED_ARRAY( m_hRagdollWearables, FIELD_EHANDLE, TF_LOADOUT_SLOT_COUNT, FTYPEDESC_INSENDTABLE ),
+END_PREDICTION_DATA()
 
 //-----------------------------------------------------------------------------
 // Purpose: 
