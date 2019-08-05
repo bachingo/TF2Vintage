@@ -1476,6 +1476,20 @@ void CTFPlayer::GiveDefaultItems()
 				continue;
 			}
 
+			// Can we Disguise?
+			int nCannotDisguise = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCannotDisguise, set_cannot_disguise );
+			if ( IsPlayerClass( TF_CLASS_SPY ) && nCannotDisguise == 1 )
+			{
+				// Not allowed
+				if ( pWeapon == GetActiveWeapon() )
+					pWeapon->Holster();
+
+				Weapon_Detach( Weapon_GetWeaponByType( TF_WPN_TYPE_PDA ) );
+				UTIL_Remove( Weapon_GetWeaponByType( TF_WPN_TYPE_PDA ) );
+				continue;
+			}
+
 			// Regenerate
 			pWeapon->WeaponRegenerate();
 
@@ -3395,6 +3409,14 @@ bool CTFPlayer::CanDisguise( void )
 	if ( HasItem() && GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG )
 	{
 		HintMessage( HINT_CANNOT_DISGUISE_WITH_FLAG );
+		return false;
+	}
+
+	int nCannotDisguise = 0;
+	CALL_ATTRIB_HOOK_INT( nCannotDisguise, set_cannot_disguise );
+	if ( nCannotDisguise == 1 )
+	{
+		// Not allowed
 		return false;
 	}
 
@@ -7148,12 +7170,17 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 		pRagdoll->m_vecRagdollVelocity = GetAbsVelocity();
 		pRagdoll->m_vecForce = m_vecTotalBulletForce;
 		pRagdoll->m_nForceBone = m_nForceBone;
-		Assert( entindex() >= 1 && entindex() <= MAX_PLAYERS );
 		pRagdoll->m_iPlayerIndex.Set( entindex() );
 		pRagdoll->m_bGib = bGibbed;
 		pRagdoll->m_bBurning = bBurning;
+		pRagdoll->m_bElectrocuted = bElectrocute;
 		pRagdoll->m_bCloaked = bCloak;
+		pRagdoll->m_bBecomeAsh = bDisintigrate;
+		pRagdoll->m_bCritOnHardHit = bCreatePhysics;
+		pRagdoll->m_bGoldRagdoll = bGoldStatue;
+		pRagdoll->m_bIceRagdoll = bIceStatue;
 		pRagdoll->m_iDamageCustom = iDamageCustom;
+		pRagdoll->m_bOnGround = bOnGround;
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
 	}
@@ -7195,7 +7222,6 @@ void CTFPlayer::CreateFeignDeathRagdoll( CTakeDamageInfo const &info, bool bGibb
 	{
 		pRagdoll->m_vecRagdollOrigin = GetAbsOrigin();
 		pRagdoll->m_vecRagdollVelocity = m_vecTotalBulletForce;
-		Assert( entindex() >= 1 && entindex() <= MAX_PLAYERS );
 		pRagdoll->m_iPlayerIndex.Set( entindex() );
 		pRagdoll->m_vecForce = CalcDamageForceVector( info );
 		pRagdoll->m_nForceBone = m_nForceBone;
