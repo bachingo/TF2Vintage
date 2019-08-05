@@ -5033,8 +5033,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 //-----------------------------------------------------------------------------
 void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
-	SpeakConceptIfAllowed( MP_CONCEPT_DIED );
-
 	StateTransition( TF_STATE_DYING );	// Transition into the dying state.
 
 	CBaseEntity *pAttacker = info.GetAttacker();
@@ -5057,6 +5055,9 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	{
 		UpdateModel();
 	}
+
+	if ( !pTFInflictor || !pTFInflictor->IsSilentKiller() )
+		SpeakConceptIfAllowed( MP_CONCEPT_DIED );
 
 	if ( pTFAttacker )
 	{
