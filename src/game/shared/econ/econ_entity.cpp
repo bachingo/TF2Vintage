@@ -105,6 +105,19 @@ bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin
 	return false;
 }
 
+int CEconEntity::InternalDrawModel( int flags )
+{
+	int iTeam = GetTeamNumber();
+	if ( iTeam < 0 || iTeam > TF_TEAM_COUNT || !m_MaterialOverrides[iTeam] || !( flags & STUDIO_RENDER ) )
+		return BaseClass::InternalDrawModel( flags );
+
+	modelrender->ForcedMaterialOverride( m_MaterialOverrides[iTeam] );
+	int result = BaseClass::InternalDrawModel( flags );
+	modelrender->ForcedMaterialOverride( NULL );
+
+	return result;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -201,6 +214,18 @@ void CEconEntity::UpdateAttachmentModels( void )
 	
 	if ( m_hAttachmentParent )
 		m_hAttachmentParent->Release();
+}
+
+void CEconEntity::SetMaterialOverride( int iTeam, const char *pszMaterial )
+{
+	if ( iTeam < TF_TEAM_COUNT )
+		m_MaterialOverrides[iTeam].Init( pszMaterial, "ClientEffect textures", true );
+}
+
+void CEconEntity::SetMaterialOverride( int iTeam, CMaterialReference &material )
+{
+	if ( iTeam < TF_TEAM_COUNT )
+		m_MaterialOverrides[iTeam].Init( material );
 }
 
 #endif

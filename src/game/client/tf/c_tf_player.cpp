@@ -219,6 +219,8 @@ public:
 
 	virtual void OnDataChanged( DataUpdateType_t type );
 
+	virtual int InternalDrawModel( int flags );
+
 	IRagdoll *GetIRagdoll() const;
 
 	void ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName );
@@ -285,13 +287,19 @@ private:
 	CNetworkArray( CHandle<C_EconEntity>, m_hRagdollWearables, TF_LOADOUT_SLOT_COUNT );
 	bool  m_bGoldRagdoll;
 	bool  m_bIceRagdoll;
+	CountdownTimer m_timeUntilSlowdown;
+	CountdownTimer m_timeUntilFreeze;
 	bool  m_bCritOnHardHit;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
 	float m_flDeathAnimEndTIme;
+	float m_flDeathEndTime;
 
 	// Decapitation
 	matrix3x4_t m_Head;
 	bool m_bHeadTransform;
+
+	bool m_bFixedConstraints;
+	CMaterialReference m_MatOverride;
 
 };
 
@@ -350,6 +358,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bGoldRagdoll = false;
 	m_bIceRagdoll = false;
 	m_bCritOnHardHit = false;
+	m_bFixedConstraints = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -536,6 +545,21 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 	}
 
+	if ( m_bGoldRagdoll || m_iDamageCustom == TF_DMG_CUSTOM_GOLD_WRENCH )
+	{
+		EmitSound( "Saxxy.TurnGold" );
+		m_bFixedConstraints = true;
+	}
+
+	if ( m_bIceRagdoll )
+	{
+		EmitSound( "Icicle.TurnToIce" );
+		ParticleProp()->Create( "xms_icicle_impact_dryice", PATTACH_ABSORIGIN_FOLLOW );
+
+		m_timeUntilSlowdown.Start( RandomFloat( 0.1f, 0.75f ) );
+		m_timeUntilFreeze.Start( RandomFloat( 9.0f, 11.0f ) );
+	}
+
 #ifdef _DEBUG
 	DevMsg( 2, "CreateTFRagdoll %d %d\n", gpGlobals->framecount, pPlayer ? pPlayer->entindex() : 0 );
 #endif
@@ -620,6 +644,12 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 			ResetSequenceInfo();
 		}
 	}
+	else if ( m_bIceRagdoll )
+	{
+		m_timeUntilSlowdown.Invalidate();
+		m_timeUntilFreeze.Invalidate();
+		m_bFixedConstraints = true;
+	}
 
 	// Turn it into a ragdoll.
 	if ( !bPlayDeathAnim )
@@ -661,7 +691,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 				GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
 			}
 
-			InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt );
+			InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt, m_bFixedConstraints );
 		}
 		else
 		{
@@ -676,9 +706,27 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		ParticleProp()->Create( "burningplayer_corpse", PATTACH_ABSORIGIN_FOLLOW );
 	}
 
+	if ( m_bElectrocuted )
+	{
+		const char *pszEffect = ConstructTeamParticle( "electrocuted_%s", m_iTeam );
+		EmitSound( "TFPlayer.MedicChargedDeath" );
+		ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN_FOLLOW );
+	}
+
+	if ( m_bBecomeAsh && !m_bGib && !m_bGoldRagdoll )
+	{
+		ParticleProp()->Create( "drg_fiery_death", PATTACH_ABSORIGIN_FOLLOW );
+		m_flDeathEndTIme = 0.5f;
+	}
+
 	if ( pPlayer )
 	{
 		pPlayer->MoveBoneAttachments( this );
+
+		int nBombinomiconDeath = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nBombinomiconDeath, bombinomicon_effect_on_death );
+		if ( nBombinomiconDeath == 1 && !m_bGib && !m_bGoldRagdoll )
+			m_flDeathEndTIme = 1.2f;
 	}
 
 	if ( m_flInvisibilityLevel != 0.0f )
@@ -697,6 +745,27 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		breakablepropparams_t breakParams( m_vecRagdollOrigin, GetRenderAngles(), m_vecRagdollVelocity, angularImpulse );
 		breakParams.impactEnergyScale = 1.0f;
 		pPlayer->DropPartyHat( breakParams, m_vecRagdollVelocity.GetForModify() );
+	}
+
+	const char *pszMaterial = NULL;
+	if ( m_bGoldRagdoll )
+		pszMaterial = "models/player/shared/gold_player.vmt";
+	if ( m_bIceRagdoll )
+		pszMaterial = "models/player/shared/ice_player.vmt";
+
+	if ( pszMaterial )
+	{
+		m_MatOverride.Init( pszMaterial, "ClientEffect textures", true );
+
+		for ( C_BaseEntity *pClientEntity = cl_entitylist->FirstBaseEntity(); pClientEntity; pClientEntity = cl_entitylist->NextBaseEntity( pClientEntity ) )
+		{
+			if ( pClientEntity->GetFollowedEntity() == this )
+			{
+				C_EconEntity *pEconEnt = dynamic_cast<C_EconEntity *>( pClientEntity );
+				if ( pEconEnt )
+					pEconEnt->SetMaterialOverride( GetTeamNumber(), pszMaterial );
+			}
+		}
 	}
 }
 
@@ -828,6 +897,19 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 			m_nRenderFX = kRenderFxNone;
 		}
 	}
+}
+
+int C_TFRagdoll::InternalDrawModel( int flags )
+{
+	if ( m_MatOverride )
+		modelrender->ForcedMaterialOverride( m_MatOverride );
+
+	int result = C_BaseAnimating::InternalDrawModel( flags );
+
+	if ( m_MatOverride )
+		modelrender->ForcedMaterialOverride( NULL );
+
+	return result;
 }
 
 //-----------------------------------------------------------------------------

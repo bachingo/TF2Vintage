@@ -51,11 +51,15 @@ public:
 
 	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return m_hAttachmentParent; }
 
+	virtual int InternalDrawModel( int flags );
 	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 	virtual void ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 
 	virtual void UpdateAttachmentModels( void );
 	virtual bool AttachmentModelsShouldBeVisible( void ) const { return true; }
+
+	virtual void SetMaterialOverride( int iTeam, const char *pszMaterial );
+	virtual void SetMaterialOverride( int iTeam, CMaterialReference &material );
 
 	struct AttachedModelData_t
 	{
@@ -63,6 +67,8 @@ public:
 		const model_t *model;
 	};
 	CUtlVector<AttachedModelData_t> m_aAttachments;
+
+	CMaterialReference m_MaterialOverrides[TF_TEAM_COUNT];
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }
