@@ -282,7 +282,7 @@ private:
 	int   m_iDamageCustom;
 	int	  m_iTeam;
 	int	  m_iClass;
-	CHandle<C_EconEntity> m_hRagdollWearables[TF_LOADOUT_SLOT_COUNT];
+	CNetworkArray( CHandle<C_EconEntity>, m_hRagdollWearables, TF_LOADOUT_SLOT_COUNT );
 	bool  m_bGoldRagdoll;
 	bool  m_bIceRagdoll;
 	bool  m_bCritOnHardHit;
@@ -333,6 +333,12 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bFadingOut = false;
 	m_bGib = false;
 	m_bBurning = false;
+	m_bElectrocuted = false;
+	m_bFeignDeath = false;
+	m_bWasDisguised = false;
+	m_bBecomeAsh = false;
+	m_bOnGround = false;
+	m_bCloaked = false;
 	m_flInvisibilityLevel = 0.0f;
 	m_flUncloakCompleteTime = 0.0f;
 	m_iDamageCustom = 0;
@@ -341,6 +347,9 @@ C_TFRagdoll::C_TFRagdoll()
 	m_iClass = -1;
 	m_nForceBone = -1;
 	m_flDeathAnimEndTIme = 0.0f;
+	m_bGoldRagdoll = false;
+	m_bIceRagdoll = false;
+	m_bCritOnHardHit = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -702,18 +711,35 @@ void C_TFRagdoll::CreateTFGibs( void )
 	{
 		pPlayer = dynamic_cast<C_TFPlayer *>( hPlayer.Get() );
 	}
-	if ( pPlayer && ( pPlayer->m_hFirstGib == NULL ) )
+	if ( pPlayer )
 	{
-		Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
-		VectorNormalize( vecVelocity );
-		pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false );
+		int nBombiconDeath = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nBombiconDeath, bombinomicon_effect_on_death );
+		if ( nBombiconDeath == 1 )
+		{
+			m_vecForce *= Vector( 2, 2, 6 );
+			const char *pszEffect = "bombinomicon_burningdebris";
+			if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+				pszEffect = "bombinomicon_burningdebris_halloween";
+
+			DispatchParticleEffect( pszEffect, m_vecRagdollOrigin, GetLocalAngles() );
+			EmitSound( "Bombinomicon.Explode" );
+		}
+
+		if ( pPlayer->m_hFirstGib == NULL )
+		{
+			Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
+			VectorNormalize( vecVelocity );
+			pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false );
+		}
 	}
 
-	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
+	if ( pPlayer && TFGameRules() && ( TFGameRules()->IsBirthday() || IsLocalPlayerUsingVisionFilterFlags( 0x1 ) ) )
 	{
 		DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector( 0, 0, 32 ), vec3_angle );
 
-		C_BaseEntity::EmitSound( "Game.HappyBirthday" );
+		if( TFGameRules()->IsBirthday() )
+			C_BaseEntity::EmitSound( "Game.HappyBirthday" );
 	}
 
 	EndFadeOut();
@@ -3747,7 +3773,7 @@ void C_TFPlayer::InitPlayerGibs( void )
 	m_aGibs.Purge();
 	BuildGibList( m_aGibs, GetModelIndex(), 1.0f, COLLISION_GROUP_NONE );
 
-	if ( TFGameRules() && TFGameRules()->IsBirthday() )
+	if ( ( TFGameRules() && TFGameRules()->IsBirthday() ) || IsLocalPlayerUsingVisionFilterFlags( 0x1 ) )
 	{
 		for ( int i = 0; i < m_aGibs.Count(); i++ )
 		{
