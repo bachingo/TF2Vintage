@@ -193,8 +193,11 @@ void CTFFlameThrower::Precache( void )
 
 	PrecacheParticleSystem( "pyro_blast" );
 	PrecacheParticleSystem( "deflect_fx" );
+	PrecacheParticleSystem( "flamethrower" );
 	PrecacheParticleSystem( "new_flame" );
+	PrecacheParticleSystem( "new_flame_core" );
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1033,12 +1036,21 @@ void CTFFlameThrower::RestartParticleEffect( void )
 
 	if ( !tf2v_new_flames.GetBool() )
 	{
+		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
+				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow_new_flame", iTeam, true );
+			else 
+		{
 		if ( m_bCritFire )
 		{
 			if ( tf_halloween.GetBool() )
 				pszParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
 			else
 				pszParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
+		}
+		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
+		{
+				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow_new_flame", iTeam, true );
+				return;
 		}
 		else
 		{
@@ -1047,9 +1059,19 @@ void CTFFlameThrower::RestartParticleEffect( void )
 			else
 				pszParticleEffect = "flamethrower";
 		}
+		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
+		{
+				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow_new_flame", iTeam, true );
+				return;
+		}
+		}
 	}
 	else
 	{
+		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
+				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow", iTeam, true );
+			else
+		{
 		if ( m_bCritFire )
 		{
 			if ( tf_halloween.GetBool() )
@@ -1063,6 +1085,7 @@ void CTFFlameThrower::RestartParticleEffect( void )
 				pszParticleEffect = "new_flame_fan";
 			else
 				pszParticleEffect = "new_flame";
+		}
 		}
 	}
 
@@ -1226,12 +1249,17 @@ void CTFFlameEntity::ClientThink( void )
 	if ( !m_pFlameEffect )
 	{
 		const char *pszParticleEffect;
+		//if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
+		//		pszParticleEffect = "new_flame_core"; // Rainbow colored flame core goes here.
+		//	else 
+		//{
 		if ( tf_halloween.GetBool() )
-			pszParticleEffect = "new_flame_fan_core";
+			pszParticleEffect = "new_flame_core_halloween";
 		else
 			pszParticleEffect = "new_flame_core";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
+		//}
 	}
 
 	m_pFlameEffect->SetControlPoint( 0, WorldSpaceCenter() );
