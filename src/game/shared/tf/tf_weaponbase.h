@@ -32,11 +32,11 @@
 
 // Client specific.
 #if defined( CLIENT_DLL )
-#define CTFWeaponBase C_TFWeaponBase
-#define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
-#define CTFViewModel C_TFViewModel
-#include "tf_fx_muzzleflash.h"
-#include "c_tf_viewmodeladdon.h"
+	#define CTFWeaponBase C_TFWeaponBase
+	#define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
+	#define CTFViewModel C_TFViewModel
+	#include "tf_fx_muzzleflash.h"
+	#include "c_tf_viewmodeladdon.h"
 #endif
 
 #define MAX_TRACER_NAME		128
@@ -233,8 +233,10 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	CTFPlayer *GetTFPlayerOwner() const;
 
 #ifdef CLIENT_DLL
-	bool			UsingViewModel( void );
-	C_BaseEntity	*GetWeaponForEffect();
+	bool UsingViewModel( void );
+	C_BaseEntity *GetWeaponForEffect();
+
+	bool IsFirstPersonView( void ) const;
 #endif
 
 	bool CanAttack( void );

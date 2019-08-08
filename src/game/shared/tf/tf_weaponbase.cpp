@@ -14,27 +14,27 @@
 
 // Server specific.
 #if !defined( CLIENT_DLL )
-#include "tf_player.h"
+	#include "tf_player.h"
 // Client specific.
 #else
-#include "vgui/ISurface.h"
-#include "vgui_controls/Controls.h"
-#include "c_tf_player.h"
-#include "tf_viewmodel.h"
-#include "hud_crosshair.h"
-#include "c_tf_playerresource.h"
-#include "clientmode_tf.h"
-#include "r_efx.h"
-#include "dlight.h"
-#include "effect_dispatch_data.h"
-#include "c_te_effect_dispatch.h"
-#include "toolframework_client.h"
-#include "c_env_projectedtexture.h"
+	#include "vgui/ISurface.h"
+	#include "vgui_controls/Controls.h"
+	#include "c_tf_player.h"
+	#include "tf_viewmodel.h"
+	#include "hud_crosshair.h"
+	#include "c_tf_playerresource.h"
+	#include "clientmode_tf.h"
+	#include "r_efx.h"
+	#include "dlight.h"
+	#include "effect_dispatch_data.h"
+	#include "c_te_effect_dispatch.h"
+	#include "toolframework_client.h"
+	#include "c_env_projectedtexture.h"
 
-// for spy material proxy
-#include "proxyentity.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
+	// for spy material proxy
+	#include "proxyentity.h"
+	#include "materialsystem/imaterial.h"
+	#include "materialsystem/imaterialvar.h"
 #endif
 
 extern ConVar r_drawviewmodel;
@@ -438,7 +438,7 @@ void CTFWeaponBase::SetViewModel()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFWeaponBase::UpdateViewModel( void )
+void CTFWeaponBase::UpdateViewModel( void )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
 	if ( pTFPlayer == NULL )
@@ -491,13 +491,13 @@ void C_TFWeaponBase::UpdateViewModel( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
+C_ViewmodelAttachmentModel *CTFWeaponBase::GetViewmodelAddon( void )
 {
 	C_TFPlayer *pOwner = GetTFPlayerOwner();
 
 	if ( pOwner )
 	{
-		C_TFViewModel *vm = dynamic_cast < C_TFViewModel *  >( pOwner->GetViewModel( m_nViewModelIndex ) );
+		C_TFViewModel *vm = dynamic_cast <C_TFViewModel *>( pOwner->GetViewModel( m_nViewModelIndex ) );
 		if ( vm )
 		{
 			C_ViewmodelAttachmentModel *pAttachment = vm->GetViewmodelAddon();
@@ -510,7 +510,7 @@ C_ViewmodelAttachmentModel *C_TFWeaponBase::GetViewmodelAddon( void )
 //-----------------------------------------------------------------------------
 // Purpose: Find the appropriate weapon model to update bodygroups on
 //-----------------------------------------------------------------------------
-C_BaseAnimating *C_TFWeaponBase::GetAppropriateWorldOrViewModel( void )
+C_BaseAnimating *CTFWeaponBase::GetAppropriateWorldOrViewModel( void )
 {
 	C_TFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer && UsingViewModel() && GetItem() && GetItem()->GetStaticData() )
@@ -542,11 +542,23 @@ C_BaseAnimating *C_TFWeaponBase::GetAppropriateWorldOrViewModel( void )
 //-----------------------------------------------------------------------------
 // Purpose: Get the viewmodel offset for min-viewmodels
 //-----------------------------------------------------------------------------
-string_t C_TFWeaponBase::GetViewModelOffset( void )
+string_t CTFWeaponBase::GetViewModelOffset( void )
 {
 	string_t strOffset = NULL_STRING;
 	CALL_ATTRIB_HOOK_STRING( strOffset, min_viewmodel_offset );
 	return strOffset;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return if local player is in in-eye view
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsFirstPersonView( void ) const
+{
+	C_TFPlayer *pOwner = dynamic_cast<C_TFPlayer *>( GetOwner() );
+	if ( pOwner )
+		return pOwner->InFirstPersonView();
+
+	return false;
 }
 #endif
 
