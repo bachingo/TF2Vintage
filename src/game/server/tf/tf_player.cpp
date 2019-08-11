@@ -5180,6 +5180,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	m_vecLastDeathPosition = GetAbsOrigin();
 
 	CTakeDamageInfo info_modified = info;
+	int iDamageCustom = info.GetDamageCustom();
 
 	// Ragdoll, gib, or death animation.
 	bool bRagdoll = true;
@@ -5250,7 +5251,24 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		EmitSound( "TFPlayer.MedicChargedDeath" );
 	}
 
-	if ( info_modified.GetDamageCustom() == TF_DMG_CUSTOM_SUICIDE )
+	bool bCritOnHardHit = false, bTurnToAsh = false;
+	if ( pTFInflictor )
+	{
+		int nRagdollsBecomeAsh = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nRagdollsBecomeAsh, ragdolls_become_ash );
+		bTurnToAsh = nRagdollsBecomeAsh != 0;
+
+		int nRagdollPlasmaEffect = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nRagdollPlasmaEffect, ragdolls_plasma_effect );
+		if ( nRagdollPlasmaEffect != 0 )
+			iDamageCustom = TF_DMG_CUSTOM_PLASMA;
+
+		int nCritOnHardHit = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nCritOnHardHit, crit_on_hard_hit );
+		bCritOnHardHit = nCritOnHardHit != 0;
+	}
+
+	if ( iDamageCustom == TF_DMG_CUSTOM_SUICIDE )
 	{
 		// if this was suicide, recalculate attacker to see if we want to award the kill to a recent damager
 		info_modified.SetAttacker( TFGameRules()->GetDeathScorer( info.GetAttacker(), pInflictor, this ) );
@@ -5265,18 +5283,18 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			info_modified.SetInflictor( NULL );
 			info_modified.SetWeapon( NULL );
 			info_modified.SetDamageType( DMG_GENERIC );
-			info_modified.SetDamageCustom( TF_DMG_CUSTOM_SUICIDE );
+			iDamageCustom = TF_DMG_CUSTOM_SUICIDE;
 		}
 	}
 
 	bool bDisguiseOnStab = false, bTurnToIce = false, bTurnToGold = false;
 	if ( pTFAttacker )
 	{
-		if ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() )
+		if ( TF_DMG_CUSTOM_HEADSHOT == iDamageCustom )
 		{
 			CTF_GameStats.Event_Headshot( pTFAttacker );
 		}
-		else if ( TF_DMG_CUSTOM_BACKSTAB == info.GetDamageCustom() )
+		else if ( TF_DMG_CUSTOM_BACKSTAB == iDamageCustom )
 		{
 			CTF_GameStats.Event_Backstab( pTFAttacker );
 			if ( pTFInflictor )
@@ -5299,25 +5317,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-	bool bCritOnHardHit = false, bTurnToAsh = false;
-	if ( pTFInflictor )
-	{
-		int nRagdollsBecomeAsh = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nRagdollsBecomeAsh, ragdolls_become_ash );
-		if ( nRagdollsBecomeAsh != 0 )
-		{
-			bTurnToAsh = true;
-
-			int nRagdollPlasmaEffect = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nRagdollPlasmaEffect, ragdolls_plasma_effect );
-			if ( nRagdollPlasmaEffect != 0 )
-				info_modified.SetDamageCustom( TF_DMG_CUSTOM_PLASMA );
-		}
-
-		int nCritOnHardHit = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nCritOnHardHit, crit_on_hard_hit );
-		bCritOnHardHit = nCritOnHardHit != 0;
-	}
+	info_modified.SetDamageCustom( iDamageCustom );
 
 	m_OnDeath.FireOutput( this, this );
 
@@ -5326,7 +5326,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Create the ragdoll entity.
 	if ( bGib || bRagdoll )
 	{
-		CreateRagdollEntity( bGib, bBurning, bElectrocute, bOnGround, bDisguiseOnStab, bTurnToGold, bTurnToIce, bTurnToAsh, info.GetDamageCustom(), bCritOnHardHit );
+		CreateRagdollEntity( bGib, bBurning, bElectrocute, bOnGround, bDisguiseOnStab, bTurnToGold, bTurnToIce, bTurnToAsh, iDamageCustom, bCritOnHardHit );
 	}
 
 	// Don't overflow the value for this.
@@ -7246,15 +7246,12 @@ void CTFPlayer::CreateFeignDeathRagdoll( CTakeDamageInfo const &info, bool bGibb
 			
 			int nRagdollsBecomeAsh = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nRagdollsBecomeAsh, ragdolls_become_ash );
-			if ( nRagdollsBecomeAsh != 0 )
-			{
-				pRagdoll->m_bBecomeAsh = true;
-
-				int nRagdollPlasmaEffect = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nRagdollPlasmaEffect, ragdolls_plasma_effect );
-				if ( nRagdollPlasmaEffect != 0 )
-					pRagdoll->m_iDamageCustom = TF_DMG_CUSTOM_PLASMA;
-			}
+			pRagdoll->m_bBecomeAsh = nRagdollsBecomeAsh != 0;
+				
+			int nRagdollPlasmaEffect = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nRagdollPlasmaEffect, ragdolls_plasma_effect );
+			if ( nRagdollPlasmaEffect != 0 )
+				pRagdoll->m_iDamageCustom = TF_DMG_CUSTOM_PLASMA;
 
 			int nCritOnHardHit = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetInflictor(), nCritOnHardHit, crit_on_hard_hit );
