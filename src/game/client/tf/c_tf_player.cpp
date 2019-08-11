@@ -43,6 +43,7 @@
 #include "functionproxy.h"
 #include "toolframework_client.h"
 #include "choreoevent.h"
+#include "c_entitydissolve.h"
 #include "vguicenterprint.h"
 #include "eventlist.h"
 #include "tf_hud_statpanel.h"
@@ -206,6 +207,7 @@ ConVar cl_ragdoll_forcefade( "cl_ragdoll_forcefade", "0", FCVAR_CLIENTDLL );
 ConVar cl_ragdoll_pronecheck_distance( "cl_ragdoll_pronecheck_distance", "64", FCVAR_GAMEDLL );
 ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Force death anims to always play." );
 
+extern C_EntityDissolve *DissolveEffect( C_BaseEntity *pTarget, float flTime );
 class C_TFRagdoll : public C_BaseFlex
 {
 public:
@@ -240,6 +242,8 @@ public:
 	bool IsDecapitation();
 	float GetBurnStartTime() { return m_flBurnEffectStartTime; }
 
+	void DissolveEntity( C_BaseEntity *pEntity );
+
 	virtual void SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 	virtual float FrameAdvance( float flInterval = 0.0f );
 
@@ -248,6 +252,9 @@ public:
 
 	float GetInvisibilityLevel( void )
 	{
+		if ( m_bCloaked )
+			return m_flInvisibilityLevel;
+
 		if ( m_flUncloakCompleteTime == 0.0f )
 			return 0.0f;
 
@@ -261,7 +268,7 @@ private:
 	void Interp_Copy( C_BaseAnimatingOverlay *pSourceEntity );
 
 	void CreateTFRagdoll( void );
-	void CreateTFGibs( void );
+	void CreateTFGibs( bool bKill, bool bLocalOrigin );
 	void CreateTFHeadGib( void );
 	//void CreateWearableGibs( void );
 private:
@@ -270,10 +277,10 @@ private:
 	CNetworkVector( m_vecRagdollOrigin );
 	int	  m_iPlayerIndex;
 	float m_fDeathTime;
-	bool  m_bFadingOut;
 	bool  m_bGib;
 	bool  m_bBurning;
 	bool  m_bElectrocuted;
+	bool  m_bDissolve;
 	bool  m_bFeignDeath;
 	bool  m_bWasDisguised;
 	bool  m_bBecomeAsh;
@@ -284,23 +291,25 @@ private:
 	int   m_iDamageCustom;
 	int	  m_iTeam;
 	int	  m_iClass;
-	CNetworkArray( CHandle<C_EconEntity>, m_hRagdollWearables, TF_LOADOUT_SLOT_COUNT );
+	bool  m_bStartedDying;
 	bool  m_bGoldRagdoll;
 	bool  m_bIceRagdoll;
-	CountdownTimer m_timeUntilSlowdown;
-	CountdownTimer m_timeUntilFreeze;
 	bool  m_bCritOnHardHit;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
-	float m_flDeathAnimEndTIme;
-	float m_flDeathEndTime;
+	float m_flDeathDelay;
+	bool  m_bFixedConstraints;
+	bool  m_bFadingOut;
+	bool  m_bPlayDeathAnim;
+	CountdownTimer m_timer1;
+	CountdownTimer m_timer2;
 
 	// Decapitation
 	matrix3x4_t m_Head;
 	bool m_bHeadTransform;
 
-	bool m_bFixedConstraints;
 	CMaterialReference m_MatOverride;
 
+	CNetworkArray( CHandle<C_EconEntity>, m_hRagdollWearables, TF_LOADOUT_SLOT_COUNT );
 };
 
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
@@ -328,7 +337,7 @@ END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA( C_TFRagdoll )
 	DEFINE_PRED_ARRAY( m_hRagdollWearables, FIELD_EHANDLE, TF_LOADOUT_SLOT_COUNT, FTYPEDESC_INSENDTABLE ),
-END_PREDICTION_DATA()
+END_PREDICTION_DATA();
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -337,16 +346,7 @@ END_PREDICTION_DATA()
 C_TFRagdoll::C_TFRagdoll()
 {
 	m_iPlayerIndex = TF_PLAYER_INDEX_NONE;
-	m_fDeathTime = -1;
-	m_bFadingOut = false;
-	m_bGib = false;
-	m_bBurning = false;
-	m_bElectrocuted = false;
-	m_bFeignDeath = false;
-	m_bWasDisguised = false;
-	m_bBecomeAsh = false;
-	m_bOnGround = false;
-	m_bCloaked = false;
+	m_fDeathTime = -1.0f;
 	m_flInvisibilityLevel = 0.0f;
 	m_flUncloakCompleteTime = 0.0f;
 	m_iDamageCustom = 0;
@@ -354,11 +354,8 @@ C_TFRagdoll::C_TFRagdoll()
 	m_iTeam = -1;
 	m_iClass = -1;
 	m_nForceBone = -1;
-	m_flDeathAnimEndTIme = 0.0f;
-	m_bGoldRagdoll = false;
-	m_bIceRagdoll = false;
-	m_bCritOnHardHit = false;
-	m_bFixedConstraints = false;
+	m_timer1.Invalidate();
+	m_timer2.Invalidate();
 }
 
 //-----------------------------------------------------------------------------
@@ -367,6 +364,7 @@ C_TFRagdoll::C_TFRagdoll()
 //-----------------------------------------------------------------------------
 C_TFRagdoll::~C_TFRagdoll()
 {
+	m_MatOverride.Shutdown();
 	PhysCleanupFrictionSounds( this );
 }
 
@@ -397,6 +395,25 @@ void C_TFRagdoll::Interp_Copy( C_BaseAnimatingOverlay *pSourceEntity )
 			}
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Dissolve the targetted entity
+//-----------------------------------------------------------------------------
+void C_TFRagdoll::DissolveEntity( C_BaseEntity *pEntity )
+{
+	C_EntityDissolve *pDissolver = DissolveEffect( pEntity, gpGlobals->curtime );
+	if ( !pDissolver )
+		return;
+
+	if ( m_iTeam == TF_TEAM_BLUE )
+		pDissolver->SetEffectColor( {BitsToFloat( 0x4337999A ), BitsToFloat( 0x42606666 ), BitsToFloat( 0x426A999A )} );
+	else
+		pDissolver->SetEffectColor( {BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD )} );
+
+	pDissolver->SetOwnerEntity( NULL );
+	pDissolver->SetRenderMode( kRenderTransColor );
+	pDissolver->m_vDissolverOrigin = GetLocalOrigin();
 }
 
 //-----------------------------------------------------------------------------
@@ -460,36 +477,53 @@ void C_TFRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCu
 //-----------------------------------------------------------------------------
 float C_TFRagdoll::FrameAdvance( float flInterval )
 {
-	float flRet = BaseClass::FrameAdvance( flInterval );
+	if ( m_timer1.HasStarted() && !m_timer1.IsElapsed() )
+		return BaseClass::FrameAdvance( flInterval );
 
-	// Turn into a ragdoll once animation is over.
-	if ( m_flDeathAnimEndTIme != 0.0f && gpGlobals->curtime >= m_flDeathAnimEndTIme )
+	float flRet = 0.0f; 
+	matrix3x4_t boneDelta0[MAXSTUDIOBONES];
+	matrix3x4_t boneDelta1[MAXSTUDIOBONES];
+	matrix3x4_t currentBones[MAXSTUDIOBONES];
+	const float boneDt = 0.05f;
+
+	if ( m_timer2.HasStarted() )
 	{
-		if ( cl_ragdoll_physics_enable.GetBool() )
-		{
-			m_flDeathAnimEndTIme = 0.0f;
+		if ( !m_timer2.IsElapsed() )
+			return flRet;
 
-			// Make us a ragdoll..
-			m_nRenderFX = kRenderFxRagdoll;
+		m_timer2.Invalidate();
+		m_nRenderFX = kRenderFxRagdoll;
 
-			matrix3x4_t boneDelta0[MAXSTUDIOBONES];
-			matrix3x4_t boneDelta1[MAXSTUDIOBONES];
-			matrix3x4_t currentBones[MAXSTUDIOBONES];
-			const float boneDt = 0.05f;
+		GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
+		InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt, true );
 
-			GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
-			InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt );
-			SetAbsVelocity( vec3_origin );
-		}
-		else
-		{
-			ClientLeafSystem()->SetRenderGroup( GetRenderHandle(), RENDER_GROUP_TRANSLUCENT_ENTITY );
-		}
+		SetAbsVelocity( vec3_origin );
+
+		m_bStartedDying = true;
+	}
+
+	flRet = BaseClass::FrameAdvance( flInterval );
+
+	if ( !m_bStartedDying && IsSequenceFinished() && m_bPlayDeathAnim )
+	{
+		m_nRenderFX = kRenderFxRagdoll;
+
+		GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
+		InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt, false );
+
+		SetAbsVelocity( vec3_origin );
+
+		m_bStartedDying = true;
+
+		StartFadeOut( cl_ragdoll_fade_time.GetFloat() );
 	}
 
 	return flRet;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void C_TFRagdoll::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed )
 {
 	BaseClass::BuildTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed );
@@ -501,6 +535,9 @@ void C_TFRagdoll::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Qua
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool C_TFRagdoll::GetAttachment( int number, matrix3x4_t &matrix )
 {
 	// Sword decapitation
@@ -515,7 +552,6 @@ bool C_TFRagdoll::GetAttachment( int number, matrix3x4_t &matrix )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Input  :  - 
 //-----------------------------------------------------------------------------
 void C_TFRagdoll::CreateTFRagdoll( void )
 {
@@ -556,13 +592,10 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		EmitSound( "Icicle.TurnToIce" );
 		ParticleProp()->Create( "xms_icicle_impact_dryice", PATTACH_ABSORIGIN_FOLLOW );
 
-		m_timeUntilSlowdown.Start( RandomFloat( 0.1f, 0.75f ) );
-		m_timeUntilFreeze.Start( RandomFloat( 9.0f, 11.0f ) );
+		m_timer1.Start( RandomFloat( 0.1f, 0.75f ) );
+		m_timer2.Start( RandomFloat( 9.0f, 11.0f ) );
 	}
 
-#ifdef _DEBUG
-	DevMsg( 2, "CreateTFRagdoll %d %d\n", gpGlobals->framecount, pPlayer ? pPlayer->entindex() : 0 );
-#endif
 	if ( pPlayer && !pPlayer->IsDormant() )
 	{
 		// Move my current model instance to the ragdoll's so decals are preserved.
@@ -616,14 +649,39 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		Interp_Reset( GetVarMapping() );
 	}
 
-	bool bPlayDeathAnim = false;
-	if ( pPlayer && ( tf_always_deathanim.GetBool() || RandomFloat() < 0.25f ) )
-	{
-		int iSeq = pPlayer->m_Shared.GetSequenceForDeath( this, m_iDamageCustom );
-		if ( iSeq != -1 )
-		{
-			bPlayDeathAnim = true;
+	if ( m_bCloaked )
+		AddEffects( EF_NOSHADOW );
 
+	if ( pPlayer )
+	{
+		bool bFloatingAnim = false;
+		int iSeq = pPlayer->m_Shared.GetSequenceForDeath( this, m_iDamageCustom );
+		int iDesiredSeq = -1;
+
+		if ( m_bDissolve && !m_bGib )
+		{
+			iSeq = pPlayer->LookupSequence( "dieviolent" );
+			bFloatingAnim = true;
+		}
+
+		if ( iSeq >= 0 )
+		{
+			switch ( m_iDamageCustom )
+			{
+				case TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING:
+				case TF_DMG_CUSTOM_TAUNTATK_ENGINEER_GUITAR_SMASH:
+				case TF_DMG_CUSTOM_TAUNTATK_ALLCLASS_GUITAR_RIFF:
+					iDesiredSeq = iSeq;
+					break;
+				default:
+					if ( m_bIceRagdoll || tf_always_deathanim.GetBool() || RandomFloat() <= 0.25f )
+						iDesiredSeq = iSeq;
+					break;
+			}
+		}
+
+		if ( iDesiredSeq >= 0 && ( m_bOnGround || bFloatingAnim ) && !cl_ragdoll_physics_enable.GetBool() )
+		{
 			// Doing this here since the server doesn't send the value over.
 			ForceClientSideAnimationOn();
 
@@ -637,22 +695,21 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 			UpdateVisibility();
 
 			SetSequence( iSeq );
-			m_flDeathAnimEndTIme = gpGlobals->curtime + SequenceDuration();
-
 			SetCycle( 0.0f );
-
 			ResetSequenceInfo();
+
+			m_bPlayDeathAnim = true;
 		}
-	}
-	else if ( m_bIceRagdoll )
-	{
-		m_timeUntilSlowdown.Invalidate();
-		m_timeUntilFreeze.Invalidate();
-		m_bFixedConstraints = true;
+		else if ( m_bIceRagdoll )
+		{
+			m_timer1.Invalidate();
+			m_timer2.Invalidate();
+			m_bFixedConstraints = true;
+		}
 	}
 
 	// Turn it into a ragdoll.
-	if ( !bPlayDeathAnim )
+	if ( !m_bPlayDeathAnim )
 	{
 		if ( cl_ragdoll_physics_enable.GetBool() )
 		{
@@ -699,6 +756,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 	}
 
+	StartFadeOut( cl_ragdoll_fade_time.GetFloat() );
 
 	if ( m_bBurning )
 	{
@@ -713,30 +771,22 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN_FOLLOW );
 	}
 
-	if ( m_bBecomeAsh && !m_bGib && !m_bGoldRagdoll )
+	if ( m_bBecomeAsh && !m_bDissolve && !m_bGib )
 	{
 		ParticleProp()->Create( "drg_fiery_death", PATTACH_ABSORIGIN_FOLLOW );
-		m_flDeathEndTIme = 0.5f;
+		m_flDeathDelay = 0.5f;
 	}
 
 	if ( pPlayer )
 	{
+		//pPlayer->CreateBoneAttachmentsFromWearables( this, m_bWasDisguised );
 		pPlayer->MoveBoneAttachments( this );
 
 		int nBombinomiconDeath = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nBombinomiconDeath, bombinomicon_effect_on_death );
 		if ( nBombinomiconDeath == 1 && !m_bGib && !m_bGoldRagdoll )
-			m_flDeathEndTIme = 1.2f;
+			m_flDeathDelay = 1.2f;
 	}
-
-	if ( m_flInvisibilityLevel != 0.0f )
-	{
-		m_flUncloakCompleteTime = gpGlobals->curtime + 2.0f * m_flInvisibilityLevel;
-	}
-
-	// Fade out the ragdoll in a while
-	StartFadeOut( cl_ragdoll_fade_time.GetFloat() );
-	SetNextClientThink( gpGlobals->curtime + cl_ragdoll_fade_time.GetFloat() * 0.33f );
 
 	// Birthday mode.
 	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
@@ -772,7 +822,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void C_TFRagdoll::CreateTFGibs( void )
+void C_TFRagdoll::CreateTFGibs( bool bKill, bool bLocalOrigin )
 {
 	C_TFPlayer *pPlayer = NULL;
 	EHANDLE hPlayer = GetPlayerHandle();
@@ -782,24 +832,37 @@ void C_TFRagdoll::CreateTFGibs( void )
 	}
 	if ( pPlayer )
 	{
-		int nBombiconDeath = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nBombiconDeath, bombinomicon_effect_on_death );
-		if ( nBombiconDeath == 1 )
+		int nBombinomiconDeath = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nBombinomiconDeath, bombinomicon_effect_on_death );
+		if ( nBombinomiconDeath == 1 )
 		{
 			m_vecForce *= Vector( 2, 2, 6 );
 			const char *pszEffect = "bombinomicon_burningdebris";
 			if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 				pszEffect = "bombinomicon_burningdebris_halloween";
 
-			DispatchParticleEffect( pszEffect, m_vecRagdollOrigin, GetLocalAngles() );
+			Vector vecOrigin;
+			if ( bLocalOrigin )
+				vecOrigin = GetLocalOrigin();
+			else
+				vecOrigin = m_vecRagdollOrigin;
+
+			DispatchParticleEffect( pszEffect, vecOrigin, GetLocalAngles() );
 			EmitSound( "Bombinomicon.Explode" );
 		}
 
-		if ( pPlayer->m_hFirstGib == NULL )
+		if ( pPlayer->m_hFirstGib == NULL || m_bFeignDeath )
 		{
 			Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
 			VectorNormalize( vecVelocity );
-			pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false );
+
+			Vector vecOrigin;
+			if ( bLocalOrigin )
+				vecOrigin = GetLocalOrigin();
+			else
+				vecOrigin = m_vecRagdollOrigin;
+
+			pPlayer->CreatePlayerGibs( vecOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false );
 		}
 	}
 
@@ -811,7 +874,11 @@ void C_TFRagdoll::CreateTFGibs( void )
 			C_BaseEntity::EmitSound( "Game.HappyBirthday" );
 	}
 
-	EndFadeOut();
+	if( bKill )
+		EndFadeOut();
+
+	SetRenderMode( kRenderNone );
+	UpdateVisibility();
 }
 
 //-----------------------------------------------------------------------------
@@ -866,11 +933,30 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 			}
 		}
 
+		C_TFPlayer *pPlayer = ToTFPlayer( hPlayer );
+		if ( !m_bCloaked && pPlayer )
+			m_flUncloakCompleteTime = gpGlobals->curtime * 2.0f + pPlayer->GetPercentInvisible();
+
+		if ( m_iDamageCustom == TF_DMG_CUSTOM_PLASMA_CHARGED )
+		{
+			if ( !m_bBecomeAsh )
+				m_bDissolve = true;
+
+			m_bGib = true;
+		}
+		else if ( m_iDamageCustom == TF_DMG_CUSTOM_PLASMA )
+		{
+			if ( !m_bBecomeAsh )
+				m_bDissolve = true;
+
+			m_bGib = false;
+		}
+
 		if ( bCreateRagdoll )
 		{
 			if ( m_bGib )
 			{
-				CreateTFGibs();
+				CreateTFGibs( !m_bDissolve, false );
 			}
 			else
 			{
@@ -899,6 +985,11 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : flags - 
+// Output : 
+//-----------------------------------------------------------------------------
 int C_TFRagdoll::InternalDrawModel( int flags )
 {
 	if ( m_MatOverride )
@@ -946,6 +1037,9 @@ bool C_TFRagdoll::IsRagdollVisible()
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool C_TFRagdoll::IsDecapitation()
 {
 	// Only decapitate if the ragdoll is going to stick around for a while (?)
@@ -956,11 +1050,14 @@ bool C_TFRagdoll::IsDecapitation()
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void C_TFRagdoll::ClientThink( void )
 {
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 
-	if ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION )
+	if ( IsDecapitation() )
 	{
 		m_bHeadTransform = true;
 		BaseClass::GetAttachment( LookupAttachment( "head" ), m_Head );
@@ -968,6 +1065,89 @@ void C_TFRagdoll::ClientThink( void )
 
 		m_BoneAccessor.SetReadableBones( 0 );
 		SetupBones( NULL, -1, BONE_USED_BY_ATTACHMENT, gpGlobals->curtime );
+	}
+
+	if ( m_bCloaked )
+	{
+		if ( m_flInvisibilityLevel < 1.0f )
+			m_flInvisibilityLevel = Min( m_flInvisibilityLevel + gpGlobals->frametime, 1.0f );
+	}
+
+	C_TFPlayer *pPlayer = ToTFPlayer( GetPlayerHandle() );
+	bool bBombinomiconDeath = false;
+	if ( pPlayer )
+	{
+		int nBombinomiconDeath = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nBombinomiconDeath, bombinomicon_effect_on_death );
+		bBombinomiconDeath = nBombinomiconDeath != 0;
+	}
+
+	if ( m_bGib )
+	{
+		if ( m_bDissolve )
+		{
+			m_flDeathDelay -= gpGlobals->frametime;
+			if ( m_flDeathDelay <= 0 )
+			{
+				m_bDissolve = false;
+
+				if ( pPlayer )
+				{
+					if ( bBombinomiconDeath )
+					{
+						CreateTFGibs( true, true );
+					}
+					else
+					{
+						for ( int i=0; i<pPlayer->m_hSpawnedGibs.Count(); ++i )
+						{
+							C_BaseEntity *pGiblet = pPlayer->m_hSpawnedGibs[i];
+
+							pGiblet->SetAbsVelocity( vec3_origin );
+							DissolveEntity( pGiblet );
+							pGiblet->ParticleProp()->StopParticlesInvolving( pGiblet );
+						}
+					}
+				}
+
+				EndFadeOut();
+			}
+
+			return;
+		}
+	}
+	else if ( m_bDissolve )
+	{
+		m_bDissolve = false;
+		m_flDeathDelay = 1.2f;
+		DissolveEntity( this );
+	}
+	else if ( !bBombinomiconDeath || !( GetFlags() & FL_DISSOLVING ) )
+	{
+		if ( m_bBecomeAsh )
+		{
+			m_flDeathDelay -= gpGlobals->frametime;
+			if ( m_flDeathDelay <= 0.0f && !bBombinomiconDeath )
+			{
+				SUB_Remove();
+				return;
+			}
+		}
+		else if ( !bBombinomiconDeath )
+		{
+			m_flDeathDelay -= gpGlobals->frametime;
+			if ( m_flDeathDelay <= 0.0f )
+			{
+				CreateTFGibs( true, true );
+				return;
+			}
+		}
+	}
+	else
+	{
+		m_flDeathDelay -= gpGlobals->frametime;
+		if ( m_flDeathDelay <= 0.0f )
+			CreateTFGibs( true, true );
 	}
 
 	if ( m_bFadingOut == true )
@@ -1011,6 +1191,9 @@ void C_TFRagdoll::ClientThink( void )
 	EndFadeOut(); // remove clientside ragdoll
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void C_TFRagdoll::StartFadeOut( float fDelay )
 {
 	if ( !cl_ragdoll_forcefade.GetBool() )
@@ -1020,7 +1203,9 @@ void C_TFRagdoll::StartFadeOut( float fDelay )
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void C_TFRagdoll::EndFadeOut()
 {
 	SetNextClientThink( CLIENT_THINK_NEVER );

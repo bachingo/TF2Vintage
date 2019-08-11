@@ -142,7 +142,7 @@ void CTFKnife::PrimaryAttack( void )
 	CALL_ATTRIB_HOOK_INT( nDisguiseOnBackstab, set_disguise_on_backstab );
 	if ( nDisguiseOnBackstab != 0 )
 	{
-		if ( m_hBackstabVictim->IsAlive() || pPlayer->HasTheFlag() )
+		if ( ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() ) || pPlayer->HasTheFlag() )
 		{
 			pPlayer->RemoveDisguise();
 			return;
@@ -154,7 +154,7 @@ void CTFKnife::PrimaryAttack( void )
 	{
 		int nSanguisuge = 0;
 		CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
-		if ( m_hBackstabVictim->IsAlive() )
+		if ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() )
 			return;
 
 		if ( nSanguisuge != 0 )
