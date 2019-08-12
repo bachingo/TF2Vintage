@@ -110,6 +110,8 @@ public:
 
 	virtual float GetMinFOV() const;
 
+	virtual int GetVisionFilterFlags( bool bWeaponCheck );
+
 	virtual const QAngle &EyeAngles();
 
 	int GetBuildResources( void );

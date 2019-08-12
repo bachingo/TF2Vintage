@@ -80,9 +80,13 @@ ConVar tf_playergib_forceup( "tf_playersgib_forceup", "1.0", FCVAR_CHEAT | FCVAR
 ConVar tf_playergib_force( "tf_playersgib_force", "500.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Gibs force." );
 ConVar tf_playergib_maxspeed( "tf_playergib_maxspeed", "400", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Max gib speed." );
 
+ConVar tf_spectate_pyrovision( "tf_spectate_pyrovision", "0", FCVAR_ARCHIVE, "When on, spectator will see the world with Pyrovision active" );
+
 ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, sniper rifle will re-zoom after firing a zoomed shot." );
 
 ConVar cl_autoreload( "cl_autoreload", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, clip-using weapons will automatically be reloaded whenever they're not being fired." );
+
+ConVar cl_forced_pyrovision( "cl_forced_pyrovision", "0", FCVAR_DONTRECORD, "When on, you will always see the world through the eyes of the Pyro" );
 
 ConVar cl_fp_ragdoll( "cl_fp_ragdoll", "1", FCVAR_ARCHIVE, "Allow first person ragdolls" );
 ConVar cl_fp_ragdoll_auto( "cl_fp_ragdoll_auto", "1", FCVAR_ARCHIVE, "Autoswitch to ragdoll thirdperson-view when necessary" );
@@ -3977,6 +3981,35 @@ float C_TFPlayer::GetMinFOV() const
 {
 	// Min FOV for Sniper Rifle
 	return 20;
+}
+
+int C_TFPlayer::GetVisionFilterFlags( bool bWeaponsCheck )
+{
+	//if( g_pEngineClientReplay->IsPlayingReplayDemo() )
+	//	return tf_replay_pyrovision.GetBool() ? TF_VISION_FILTER_PYRO : TF_VISION_FILTER_NONE;
+	
+	int nVisionFlags = 0;
+	CALL_ATTRIB_HOOK_INT( nVisionFlags, vision_opt_in_flags );
+
+	if ( IsLocalPlayer() )
+	{
+		if ( bWeaponsCheck )
+		{
+			if ( m_nForceVisionFilterFlags != TF_VISION_FILTER_NONE )
+				return m_nForceVisionFilterFlags;
+		}
+
+		if ( GetRenderTeamNumber() == TEAM_SPECTATOR && tf_spectate_pyrovision.GetBool() )
+			nVisionFlags |= TF_VISION_FILTER_PYRO;
+	}
+
+	if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
+		nVisionFlags |= TF_VISION_FILTER_HALLOWEEN;
+
+	if ( cl_forced_pyrovision.GetBool() )
+		return TF_VISION_FILTER_PYRO;
+
+	return nVisionFlags;
 }
 
 //-----------------------------------------------------------------------------
