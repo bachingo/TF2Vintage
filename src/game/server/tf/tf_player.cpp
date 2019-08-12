@@ -5060,7 +5060,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	CBaseEntity *pAttacker = info.GetAttacker();
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
-	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( pInflictor );
+	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
 
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)

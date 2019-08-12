@@ -214,7 +214,6 @@ public:
 
 	DECLARE_CLASS( C_TFRagdoll, C_BaseFlex );
 	DECLARE_CLIENTCLASS();
-	DECLARE_PREDICTABLE();
 
 	C_TFRagdoll();
 	~C_TFRagdoll();
@@ -249,6 +248,7 @@ public:
 
 	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
 	virtual bool GetAttachment( int number, matrix3x4_t &matrix );
+	virtual bool GetAttachment( int number, Vector &origin, QAngle &angles ) override { return BaseClass::GetAttachment( number, origin, angles ); }
 
 	float GetInvisibilityLevel( void )
 	{
@@ -280,6 +280,7 @@ private:
 	bool  m_bGib;
 	bool  m_bBurning;
 	bool  m_bElectrocuted;
+	bool  m_bSlamRagdoll;
 	bool  m_bDissolve;
 	bool  m_bFeignDeath;
 	bool  m_bWasDisguised;
@@ -335,10 +336,6 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropBool( RECVINFO( m_bCritOnHardHit ) ),
 END_RECV_TABLE()
 
-BEGIN_PREDICTION_DATA( C_TFRagdoll )
-	DEFINE_PRED_ARRAY( m_hRagdollWearables, FIELD_EHANDLE, TF_LOADOUT_SLOT_COUNT, FTYPEDESC_INSENDTABLE ),
-END_PREDICTION_DATA();
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :  - 
@@ -347,15 +344,22 @@ C_TFRagdoll::C_TFRagdoll()
 {
 	m_iPlayerIndex = TF_PLAYER_INDEX_NONE;
 	m_fDeathTime = -1.0f;
-	m_flInvisibilityLevel = 0.0f;
-	m_flUncloakCompleteTime = 0.0f;
-	m_iDamageCustom = 0;
 	m_flBurnEffectStartTime = 0.0f;
+	m_iDamageCustom = false;
+	m_bGoldRagdoll = false;
+	m_bSlamRagdoll = false;
+	m_bFadingOut = false;
+	m_bCloaked = false;
+	m_timer1.Invalidate();
+	m_timer2.Invalidate();
 	m_iTeam = -1;
 	m_iClass = -1;
 	m_nForceBone = -1;
-	m_timer1.Invalidate();
-	m_timer2.Invalidate();
+	m_bHeadTransform = 0;
+	m_bStartedDying = 0;
+	m_flDeathDelay = 0.3f;
+
+	UseClientSideAnimation();
 }
 
 //-----------------------------------------------------------------------------
@@ -652,7 +656,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	if ( m_bCloaked )
 		AddEffects( EF_NOSHADOW );
 
-	if ( pPlayer )
+	if ( pPlayer && !m_bGoldRagdoll )
 	{
 		bool bFloatingAnim = false;
 		int iSeq = pPlayer->m_Shared.GetSequenceForDeath( this, m_iDamageCustom );
@@ -680,12 +684,9 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 			}
 		}
 
-		if ( iDesiredSeq >= 0 && ( m_bOnGround || bFloatingAnim ) && !cl_ragdoll_physics_enable.GetBool() )
+		if ( iDesiredSeq >= 0 && ( m_bOnGround || bFloatingAnim ) && cl_ragdoll_physics_enable.GetBool() )
 		{
-			// Doing this here since the server doesn't send the value over.
-			ForceClientSideAnimationOn();
-
-			// Slame velocity when doing death animation.
+			// Slam velocity when doing death animation.
 			SetAbsOrigin( pPlayer->GetNetworkOrigin() );
 			SetAbsAngles( pPlayer->GetRenderAngles() );
 			SetAbsVelocity( vec3_origin );
@@ -874,11 +875,15 @@ void C_TFRagdoll::CreateTFGibs( bool bKill, bool bLocalOrigin )
 			C_BaseEntity::EmitSound( "Game.HappyBirthday" );
 	}
 
-	if( bKill )
+	if ( bKill )
+	{
 		EndFadeOut();
-
-	SetRenderMode( kRenderNone );
-	UpdateVisibility();
+	}
+	else
+	{
+		SetRenderMode( kRenderNone );
+		UpdateVisibility();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -934,7 +939,7 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 		}
 
 		C_TFPlayer *pPlayer = ToTFPlayer( hPlayer );
-		if ( !m_bCloaked && pPlayer )
+		if ( !m_bCloaked && pPlayer && pPlayer->GetPercentInvisible() > 0 )
 			m_flUncloakCompleteTime = gpGlobals->curtime * 2.0f + pPlayer->GetPercentInvisible();
 
 		if ( m_iDamageCustom == TF_DMG_CUSTOM_PLASMA_CHARGED )
@@ -966,7 +971,7 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 				{
 					CreateTFHeadGib();
 
-					if ( !UTIL_IsLowViolence() && !IsLocalPlayerUsingVisionFilterFlags( 0x1 ) ) // Pyrovision check
+					if ( !UTIL_IsLowViolence() ) // Pyrovision check
 					{
 						EmitSound( "TFPlayer.Decapitated" );
 						ParticleProp()->Create( "blood_decap", PATTACH_POINT_FOLLOW, "head" );
@@ -1082,72 +1087,87 @@ void C_TFRagdoll::ClientThink( void )
 		bBombinomiconDeath = nBombinomiconDeath != 0;
 	}
 
-	if ( m_bGib )
+	if ( !m_bGib )
 	{
-		if ( m_bDissolve )
+		if ( !m_bDissolve )
 		{
-			m_flDeathDelay -= gpGlobals->frametime;
-			if ( m_flDeathDelay <= 0 )
+			if ( bBombinomiconDeath && ( GetFlags() & FL_DISSOLVING ) )
 			{
-				m_bDissolve = false;
-
-				if ( pPlayer )
+				m_flDeathDelay -= gpGlobals->frametime;
+				if ( m_flDeathDelay <= 0 )
+					CreateTFGibs( !m_bDissolve, true );
+			}
+			else
+			{
+				if ( !m_bBecomeAsh )
 				{
 					if ( bBombinomiconDeath )
 					{
-						CreateTFGibs( true, true );
-					}
-					else
-					{
-						for ( int i=0; i<pPlayer->m_hSpawnedGibs.Count(); ++i )
+						m_flDeathDelay -= gpGlobals->frametime;
+						if ( m_flDeathDelay <= 0 )
 						{
-							C_BaseEntity *pGiblet = pPlayer->m_hSpawnedGibs[i];
-
-							pGiblet->SetAbsVelocity( vec3_origin );
-							DissolveEntity( pGiblet );
-							pGiblet->ParticleProp()->StopParticlesInvolving( pGiblet );
+							CreateTFGibs( !m_bDissolve, true );
+							return;
 						}
 					}
 				}
+				else
+				{
+					m_flDeathDelay -= gpGlobals->frametime;
+					if ( m_flDeathDelay <= 0 )
+					{
+						if ( !bBombinomiconDeath )
+						{
+							SUB_Remove();
+							return;
+						}
 
-				EndFadeOut();
-			}
-
-			return;
-		}
-	}
-	else if ( m_bDissolve )
-	{
-		m_bDissolve = false;
-		m_flDeathDelay = 1.2f;
-		DissolveEntity( this );
-	}
-	else if ( !bBombinomiconDeath || !( GetFlags() & FL_DISSOLVING ) )
-	{
-		if ( m_bBecomeAsh )
-		{
-			m_flDeathDelay -= gpGlobals->frametime;
-			if ( m_flDeathDelay <= 0.0f && !bBombinomiconDeath )
-			{
-				SUB_Remove();
-				return;
+						CreateTFGibs( !m_bDissolve, true );
+						return;
+					}
+				}
 			}
 		}
-		else if ( !bBombinomiconDeath )
+		else
 		{
-			m_flDeathDelay -= gpGlobals->frametime;
-			if ( m_flDeathDelay <= 0.0f )
-			{
-				CreateTFGibs( true, true );
-				return;
-			}
+			m_bDissolve = false;
+			m_flDeathDelay = 1.2f;
+			DissolveEntity( this );
+			EmitSound( "TFPlayer.Dissolve" );
 		}
 	}
 	else
 	{
-		m_flDeathDelay -= gpGlobals->frametime;
-		if ( m_flDeathDelay <= 0.0f )
-			CreateTFGibs( true, true );
+		if ( m_bDissolve )
+		{
+			m_flDeathDelay -= gpGlobals->frametime;
+			if ( m_flDeathDelay > 0 )
+				return;
+
+			m_bDissolve = false;
+
+			if ( pPlayer )
+			{
+				if ( bBombinomiconDeath )
+				{
+					CreateTFGibs( true, true );
+				}
+				else
+				{
+					for ( int i=0; i<pPlayer->m_hSpawnedGibs.Count(); ++i )
+					{
+						C_BaseEntity *pGiblet = pPlayer->m_hSpawnedGibs[i];
+
+						pGiblet->SetAbsVelocity( vec3_origin );
+						DissolveEntity( pGiblet );
+						pGiblet->ParticleProp()->StopParticlesInvolving( pGiblet );
+					}
+				}
+			}
+
+			EndFadeOut();
+			return;
+		}
 	}
 
 	if ( m_bFadingOut == true )
