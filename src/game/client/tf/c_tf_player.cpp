@@ -84,6 +84,9 @@ ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "Whe
 
 ConVar cl_autoreload( "cl_autoreload", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, clip-using weapons will automatically be reloaded whenever they're not being fired." );
 
+ConVar cl_fp_ragdoll( "cl_fp_ragdoll", "1", FCVAR_ARCHIVE, "Allow first person ragdolls" );
+ConVar cl_fp_ragdoll_auto( "cl_fp_ragdoll_auto", "1", FCVAR_ARCHIVE, "Autoswitch to ragdoll thirdperson-view when necessary" );
+
 ConVar tf2v_model_muzzleflash( "tf2v_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash" );
 ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower" );
 
@@ -4939,6 +4942,37 @@ void C_TFPlayer::ComputeFxBlend( void )
 void C_TFPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, float &zFar, float &fov )
 {
 	HandleTaunting();
+
+	if ( m_lifeState != LIFE_ALIVE && m_hRagdoll.Get() )
+	{
+		// First person ragdolls
+		if ( cl_fp_ragdoll.GetBool() && GetObserverMode() == OBS_MODE_DEATHCAM )
+		{
+			C_TFRagdoll *pRagdoll = assert_cast<C_TFRagdoll *>( m_hRagdoll.Get() );
+
+			int iAttachment = pRagdoll->LookupAttachment( "eyes" );
+			if ( iAttachment >= 0 )
+			{
+				pRagdoll->GetAttachment( iAttachment, eyeOrigin, eyeAngles );
+
+				Vector vForward;
+				AngleVectors( eyeAngles, &vForward );
+
+				if ( cl_fp_ragdoll_auto.GetBool() )
+				{
+					// DM: Don't use first person view when we are very close to something
+					trace_t tr;
+					UTIL_TraceLine( eyeOrigin, eyeOrigin + ( vForward * 10000 ), MASK_ALL, pRagdoll, COLLISION_GROUP_NONE, &tr );
+
+					if ( ( !( tr.fraction < 1 ) || ( tr.endpos.DistTo( eyeOrigin ) > 25 ) ) )
+						return;
+				}
+				else
+					return;
+			}
+		}
+	}
+
 	BaseClass::CalcView( eyeOrigin, eyeAngles, zNear, zFar, fov );
 }
 
