@@ -327,9 +327,12 @@ void CLagCompensationManager::FrameUpdatePostEntityThink()
 		record.m_masterCycle = pPlayer->GetCycle();
 
 		CStudioHdr *hdr = pPlayer->GetModelPtr();
-		for (int paramIndex = 0; paramIndex < hdr->GetNumPoseParameters(); paramIndex++)
+		if ( hdr )
 		{
-			record.m_poseParameters[paramIndex] = pPlayer->GetPoseParameter(paramIndex);
+			for ( int paramIndex = 0; paramIndex < hdr->GetNumPoseParameters(); paramIndex++ )
+			{
+				record.m_poseParameters[paramIndex] = pPlayer->GetPoseParameter( paramIndex );
+			}
 		}
 	}
 
@@ -728,19 +731,22 @@ void CLagCompensationManager::BacktrackPlayer( CBasePlayer *pPlayer, float flTar
 
 	// Now do pose parameters
 	CStudioHdr *hdr = pPlayer->GetModelPtr();
-	for (int paramIndex = 0; paramIndex < hdr->GetNumPoseParameters(); paramIndex++)
+	if ( hdr )
 	{
-		float poseParameter = record->m_poseParameters[paramIndex];
-		if ((frac > 0.0f) && interpolationAllowed)
+		for ( int paramIndex = 0; paramIndex<hdr->GetNumPoseParameters(); paramIndex++ )
 		{
-			// These could wrap like cycles, but there's no way to know. In the most common case
-			// (move_x/move_y) it's correct to just lerp. Interpolation almost never happens anyways.
-			float prevPoseParameter = prevRecord->m_poseParameters[paramIndex];
-			pPlayer->SetPoseParameter(paramIndex, Lerp(frac, poseParameter, prevPoseParameter));
-		}
-		else
-		{
-			pPlayer->SetPoseParameter(paramIndex, poseParameter);
+			float poseParameter = record->m_poseParameters[ paramIndex ];
+			if ( frac > 0.0f && interpolationAllowed )
+			{
+				// These could wrap like cycles, but there's no way to know. In the most common case
+				// (move_x/move_y) it's correct to just lerp. Interpolation almost never happens anyways.
+				float prevPoseParameter = prevRecord->m_poseParameters[ paramIndex ];
+				pPlayer->SetPoseParameter( paramIndex, Lerp( frac, poseParameter, prevPoseParameter ) );
+			}
+			else
+			{
+				pPlayer->SetPoseParameter( paramIndex, poseParameter );
+			}
 		}
 	}
 	
