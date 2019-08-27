@@ -874,7 +874,7 @@ void C_TFRagdoll::CreateTFGibs( bool bKill, bool bLocalOrigin )
 		}
 	}
 
-	if ( pPlayer && TFGameRules() && ( TFGameRules()->IsBirthday() || IsLocalPlayerUsingVisionFilterFlags( 0x1 ) ) )
+	if ( pPlayer && TFGameRules() && ( TFGameRules()->IsBirthday() || UTIL_IsLowViolence() ) )
 	{
 		DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector( 0, 0, 32 ), vec3_angle );
 
@@ -4096,7 +4096,7 @@ void C_TFPlayer::InitPlayerGibs( void )
 	m_aGibs.Purge();
 	BuildGibList( m_aGibs, GetModelIndex(), 1.0f, COLLISION_GROUP_NONE );
 
-	if ( ( TFGameRules() && TFGameRules()->IsBirthday() ) || IsLocalPlayerUsingVisionFilterFlags( 0x1 ) )
+	if ( ( TFGameRules() && TFGameRules()->IsBirthday() ) || UTIL_IsLowViolence() )
 	{
 		for ( int i = 0; i < m_aGibs.Count(); i++ )
 		{
