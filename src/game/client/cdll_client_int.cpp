@@ -604,6 +604,53 @@ void DisplayBoneSetupEnts()
 #endif
 }
 
+#ifdef TF_VINTAGE_CLIENT
+// We don't have access to engine includes so the best that
+// can be done is a manual definition to make it work
+class CSfxTable;
+struct StartSoundParams_t
+{
+	StartSoundParams_t() :
+		staticsound( false ),
+		userdata( 0 ),
+		soundsource( 0 ),
+		entchannel( CHAN_AUTO ),
+		pSfx( 0 ),
+		bUpdatePositions( true ),
+		fvol( 1.0f ),
+		soundlevel( SNDLVL_NORM ),
+		flags( SND_NOFLAGS ),
+		pitch( PITCH_NORM ),
+		fromserver( false ),
+		delay( 0.0f ),
+		speakerentity( -1 ),
+		suppressrecording( false ),
+		initialStreamPosition( 0 )
+	{
+		origin.Init();
+		direction.Init();
+	}
+
+	bool			staticsound;
+	int				userdata;
+	int				soundsource;
+	int				entchannel;
+	CSfxTable      *pSfx;
+	Vector			origin;
+	Vector			direction;
+	bool			bUpdatePositions;
+	float			fvol;
+	soundlevel_t	soundlevel;
+	int				flags;
+	int				pitch;
+	bool			fromserver;
+	float			delay;
+	int				speakerentity;
+	bool			suppressrecording;
+	int				initialStreamPosition;
+};
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: engine to client .dll interface
 //-----------------------------------------------------------------------------
@@ -2711,7 +2758,7 @@ void CHLClient::FileReceived( const char * fileName, unsigned int transferID )
 
 void CHLClient::ClientAdjustStartSoundParams( StartSoundParams_t& params )
 {
-#ifdef TF_CLIENT_DLL
+#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
 	CBaseEntity *pEntity = ClientEntityList().GetEnt( params.soundsource );
 
 	// A player speaking
