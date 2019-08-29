@@ -146,6 +146,17 @@ void CTFGrenadeLauncher::WeaponIdle( void )
 	BaseClass::WeaponIdle();
 }
 
+CBaseEntity *CTFGrenadeLauncher::FireProjectileInternal( CTFPlayer *pPlayer )
+{
+	CTFWeaponBaseGrenadeProj *pGrenade = (CTFWeaponBaseGrenadeProj *)FireProjectile( pPlayer );
+	/*if ( pGrenade )
+	{
+		if ( GetDetonateMode() == TF_GL_MODE_FIZZLE )
+			pGrenade->m_bFizzle = true;
+	}*/
+	return pGrenade;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -163,7 +174,7 @@ void CTFGrenadeLauncher::LaunchGrenade( void )
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
 	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 
-	FireProjectile(pPlayer);
+	FireProjectileInternal(pPlayer);
 
 #if 0
 	CBaseEntity *pPipeBomb = 
@@ -262,4 +273,11 @@ void CTFGrenadeLauncher::SwitchBodyGroups( void )
 			vm->SetPoseParameter( "barrel_spin", TF_GRENADE_BARREL_SPIN * iState );
         }
     }
+}
+
+int CTFGrenadeLauncher::GetDetonateMode( void ) const
+{
+	int nDetonateMode = 0;
+	CALL_ATTRIB_HOOK_INT( nDetonateMode, set_detonate_mode );
+	return nDetonateMode;
 }

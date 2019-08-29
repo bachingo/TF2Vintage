@@ -23,6 +23,7 @@
 #include "c_tf_player.h"
 #include "IEffects.h"
 #include "c_team.h"
+#include "functionproxy.h"
 // Server specific.
 #else
 #include "tf_player.h"
@@ -55,11 +56,13 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadePipebombProjectile, DT_TFProjectile_Pip
 
 BEGIN_NETWORK_TABLE( CTFGrenadePipebombProjectile, DT_TFProjectile_Pipebomb )
 #ifdef CLIENT_DLL
-RecvPropInt( RECVINFO( m_iType ) ),
-RecvPropEHandle( RECVINFO( m_hLauncher ) ),
+	RecvPropInt( RECVINFO( m_iType ) ),
+	RecvPropBool( RECVINFO( m_bDefensiveBomb ) ),
+	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
-SendPropInt( SENDINFO( m_iType ), 2 ),
-SendPropEHandle( SENDINFO( m_hLauncher ) ),
+	SendPropInt( SENDINFO( m_iType ), 2 ),
+	SendPropBool( SENDINFO( m_bDefensiveBomb ) ),
+	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -78,6 +81,10 @@ CTFGrenadePipebombProjectile::CTFGrenadePipebombProjectile()
 	m_bTouched = false;
 	m_flChargeTime = 0.0f;
 
+#ifdef CLIENT_DLL
+	m_pGlowObject = NULL;
+#endif
+
 #ifdef GAME_DLL
 	s_iszTrainName  = AllocPooledString( "models/props_vehicles/train_enginecar.mdl" );
 	s_iszSawBlade01 = AllocPooledString( "sawmovelinear01" );
@@ -93,6 +100,7 @@ CTFGrenadePipebombProjectile::~CTFGrenadePipebombProjectile()
 {
 #ifdef CLIENT_DLL
 	ParticleProp()->StopEmission();
+	delete m_pGlowObject;
 #endif
 }
 
@@ -135,6 +143,16 @@ void CTFGrenadePipebombProjectile::UpdateOnRemove( void )
 	}
 
 	BaseClass::UpdateOnRemove();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFGrenadePipebombProjectile::GetLiveTime( void ) const
+{
+	float flArmTime = tf_grenadelauncher_livetime.GetFloat();
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher, flArmTime, sticky_arm_time );
+	return flArmTime;
 }
 
 #ifdef CLIENT_DLL
@@ -203,6 +221,20 @@ void CTFGrenadePipebombProjectile::OnDataChanged( DataUpdateType_t updateType )
 		}
 
 		CreateTrails();
+
+		if ( m_bDefensiveBomb )
+		{
+			if ( C_BasePlayer::GetLocalPlayer() == GetThrower() )
+			{
+				Vector vecColor;
+				if ( GetTeamNumber() == TF_TEAM_RED )
+					vecColor.Init( 150.f, 0.0f, 0.0f );
+				else if ( GetTeamNumber() == TF_TEAM_BLUE )
+					vecColor.Init( 0.0f, 0.0f, 150.0f );
+
+				m_pGlowObject = new CGlowObject( this, vecColor, 1.0f, true );
+			}
+		}
 	}
 	else if ( m_bTouched )
 	{
@@ -216,8 +248,6 @@ void CTFGrenadePipebombProjectile::OnDataChanged( DataUpdateType_t updateType )
 	}
 }
 
-extern ConVar tf_grenadelauncher_livetime;
-
 void CTFGrenadePipebombProjectile::Simulate( void )
 {
 	BaseClass::Simulate();
@@ -227,7 +257,7 @@ void CTFGrenadePipebombProjectile::Simulate( void )
 
 	if ( m_bPulsed == false )
 	{
-		if ( (gpGlobals->curtime - m_flCreationTime) >= tf_grenadelauncher_livetime.GetFloat() )
+		if ( (gpGlobals->curtime - m_flCreationTime) >= GetLiveTime() )
 		{
 			const char *pszEffectName = ConstructTeamParticle( "stickybomb_pulse_%s", GetTeamNumber() );
 			ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN );
@@ -356,6 +386,8 @@ void CTFGrenadePipebombProjectile::Precache()
 {
 	PrecacheTeamParticles("stickybombtrail_%s", true);
 
+	PrecacheModel( "models/weapons/w_models/w_stickybomb_d.mdl" );
+
 	BaseClass::Precache();
 }
 
@@ -427,6 +459,35 @@ void CTFGrenadePipebombProjectile::Detonate()
 void CTFGrenadePipebombProjectile::Fizzle( void )
 {
 	m_bFizzle = true;
+}
+
+
+void CTFGrenadePipebombProjectile::DetonateStickies( void )
+{
+	if ( !m_hLauncher )
+		return;
+
+	CBaseEntity *pList[64];
+	CFlaggedEntitiesEnum enumerator( pList, sizeof( pList ), FL_GRENADE );
+	int count = UTIL_EntitiesInSphere( GetAbsOrigin(), GetDamageRadius(), &enumerator );
+
+	for ( int i=0; i<count; ++i )
+	{
+		CTFGrenadePipebombProjectile *pOther = dynamic_cast<CTFGrenadePipebombProjectile *>( pList[i] );
+		if ( !pOther || !pOther->m_hLauncher )
+			continue;
+
+		if ( pOther->m_hLauncher->GetTeamNumber() == m_hLauncher->GetTeamNumber() )
+			continue;
+
+		trace_t tr;
+		UTIL_TraceLine( GetAbsOrigin(), pOther->GetAbsOrigin(), MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+		if ( tr.fraction >= 1.0f )
+		{
+			pOther->Fizzle();
+			pOther->Detonate();
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -662,5 +723,67 @@ void CTFGrenadePipebombProjectile::Deflected( CBaseEntity *pDeflectedBy, Vector 
 	// TODO: Live TF2 adds white trail to reflected pipes and stickies. We need one as well.
 }
 
+
+#endif
+
+#if defined(CLIENT_DLL)
+class CProxyStickyBombGlowColor : public CResultProxy
+{
+public:
+	virtual ~CProxyStickyBombGlowColor() {}
+	virtual void OnBind( void *pObject );
+};
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CProxyStickyBombGlowColor::OnBind( void *pObject )
+{
+	if ( !pObject )
+	{
+		m_pResult->SetVecValue( 1.0f, 1.0f, 1.0f );
+		return;
+	}
+
+	C_BaseEntity *pEntity = BindArgToEntity( pObject );
+	if ( !pEntity )
+	{
+		m_pResult->SetVecValue( 1.0f, 1.0f, 1.0f );
+		return;
+	}
+
+	CTFGrenadePipebombProjectile *pProjectile = dynamic_cast<CTFGrenadePipebombProjectile *>( pEntity );
+	if ( !pProjectile || !pProjectile->m_pGlowObject )
+	{
+		m_pResult->SetVecValue( 1.0f, 1.0f, 1.0f );
+		return;
+	}
+
+	Vector vecColor;
+
+	if ( pProjectile->m_bGlowing )
+	{
+		if ( pProjectile->GetTeamNumber() == TF_TEAM_RED )
+			vecColor.Init( 100.0f, 0.0f, 0.0f );
+		else if ( pProjectile->GetTeamNumber() == TF_TEAM_BLUE )
+			vecColor.Init( 0.0f, 0.0f, 100.0f );
+
+		pProjectile->m_pGlowObject->SetColor( vecColor * 2.5f );
+		m_pResult->SetVecValue( vecColor.x, vecColor.y, vecColor.z );
+
+		return;
+	}
+
+	if ( pProjectile->GetTeamNumber() == TF_TEAM_RED )
+		vecColor.Init( 200.0f, 100.0f, 100.0f );
+	else if ( pProjectile->GetTeamNumber() == TF_TEAM_BLUE )
+		vecColor.Init( 100.0f, 100.0f, 200.0f );
+
+	pProjectile->m_pGlowObject->SetColor( vecColor );
+	m_pResult->SetVecValue( 1.0f, 1.0f, 1.0f );
+}
+
+EXPOSE_INTERFACE( CProxyStickyBombGlowColor, IMaterialProxy, "StickybombGlowColor" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 #endif

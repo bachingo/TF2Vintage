@@ -39,6 +39,7 @@ public:
 	void			SetChargeTime( float flChargeTime )				{ m_flChargeTime = flChargeTime; }
 
 	CNetworkVar( int, m_iType ); // TF_GL_MODE_REGULAR or TF_GL_MODE_REMOTE_DETONATE
+	CNetworkVar( bool, m_bDefensiveBomb );
 	float		m_flCreationTime;
 	float		m_flChargeTime;
 	bool		m_bPulsed;
@@ -46,7 +47,7 @@ public:
 
 	virtual void	UpdateOnRemove( void );
 
-
+	virtual float	GetLiveTime( void ) const;
 
 #ifdef CLIENT_DLL
 
@@ -55,6 +56,9 @@ public:
 	virtual void CreateTrails( void );
 	virtual int DrawModel( int flags );
 	virtual void	Simulate( void );
+
+	CGlowObject *m_pGlowObject;
+	bool		m_bGlowing;
 
 #else
 
@@ -71,6 +75,8 @@ public:
 	virtual void	BounceSound( void );
 	virtual void	Detonate();
 	virtual void	Fizzle();
+
+	virtual void	DetonateStickies( void );
 
 	void			SetPipebombMode( int iMode );
 

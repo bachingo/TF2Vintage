@@ -42,6 +42,12 @@ public:
 	CTFPipebombLauncher();
 	~CTFPipebombLauncher();
 
+	enum {
+		TF_PIPEBOMB_CHECK_NONE,
+		TF_PIPEBOMB_GLOW_CHECK,
+		TF_PIPEBOMB_DETONATE_CHECK,
+	};
+
 	virtual void	Spawn( void );
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER; }
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
@@ -57,30 +63,30 @@ public:
 	virtual bool	Reload( void );
 	virtual void	WeaponReset( void );
 
-public:
 	// ITFChargeUpWeapon
 	virtual float	GetChargeBeginTime( void ) { return m_flChargeBeginTime; }
 	virtual float	GetChargeMaxTime( void );
 
+	int				GetDetonateMode( void ) const;
+
+#ifdef CLIENT_DLL
+	void			BombHighlightThink( void );
+#endif
+
 	int				GetPipeBombCount( void ) { return m_iPipebombCount; }
-	void			LaunchGrenade( void );
-	bool			DetonateRemotePipebombs( bool bFizzle );
-	void			AddPipeBomb( CTFGrenadePipebombProjectile *pBomb );
+	virtual void	LaunchGrenade( void );
+	virtual bool	DetonateRemotePipebombs( bool bFizzle );
+	virtual void	AddPipeBomb( CTFGrenadePipebombProjectile *pBomb );
+	virtual bool	ModifyPipebombsInView( int iMode );
 
 	void			DeathNotice( CBaseEntity *pVictim );
 
 #ifdef GAME_DLL
 	void			UpdateOnRemove( void );
-	
-private:
+#endif
 
-	// This is here so we can network the pipebomb count for prediction purposes
 	CNetworkVar( int, m_iPipebombCount );	
-#endif
 
-#ifdef CLIENT_DLL
-	int		m_iPipebombCount;
-#endif
 
 	// List of active pipebombs
 	typedef CHandle<CTFGrenadePipebombProjectile>	PipebombHandle;
@@ -89,7 +95,7 @@ private:
 	float	m_flChargeBeginTime;
 	float	m_flLastDenySoundTime;
 
-	CTFPipebombLauncher( const CTFPipebombLauncher & ) {}
+	CTFPipebombLauncher( CTFPipebombLauncher const& );
 };
 
 #endif // TF_WEAPON_PIPEBOMBLAUNCHER_H

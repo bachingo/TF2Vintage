@@ -23,13 +23,15 @@
 #include "tf_gamestats.h"
 #endif
 
-// Delete me and put in script
-extern ConVar tf_grenadelauncher_livetime;
-
 // hard code these eventually
 #define TF_PIPEBOMB_MIN_CHARGE_VEL 900
 #define TF_PIPEBOMB_MAX_CHARGE_VEL 2400
 #define TF_PIPEBOMB_MAX_CHARGE_TIME 4.0f
+
+#define HIGHLIGHT_CONTEXT	"BOMB_HIGHLIGHT_THINK"
+
+#define TF_PIPEBOMB_MODE_REMOTE		0
+#define TF_PIPEBOMB_MODE_VICINITY	1
 
 //=============================================================================
 //
@@ -174,6 +176,11 @@ void CTFPipebombLauncher::PrimaryAttack( void )
 			LaunchGrenade();
 		}
 	}
+
+#ifdef CLIENT_DLL
+	if( GetDetonateMode() == TF_PIPEBOMB_MODE_VICINITY && GetIndexForThinkContext(HIGHLIGHT_CONTEXT) == NO_THINK_CONTEXT )
+		SetContextThink( &CTFPipebombLauncher::BombHighlightThink, gpGlobals->curtime + 0.1, HIGHLIGHT_CONTEXT );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -215,6 +222,12 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 	{
 		// Save the charge time to scale the detonation timer.
 		pProjectile->SetChargeTime( gpGlobals->curtime - m_flChargeBeginTime );
+
+		if ( GetDetonateMode() == TF_PIPEBOMB_MODE_VICINITY )
+		{
+			pProjectile->m_bDefensiveBomb = true;
+			pProjectile->SetModel( "models/weapons/w_models/w_stickybomb_d.mdl" );
+		}
 	}
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
@@ -239,6 +252,9 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 	m_flChargeBeginTime = 0;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFPipebombLauncher::GetProjectileSpeed( void )
 {
 	float flForwardSpeed = RemapValClamped( ( gpGlobals->curtime - m_flChargeBeginTime ),
@@ -250,11 +266,81 @@ float CTFPipebombLauncher::GetProjectileSpeed( void )
 	return flForwardSpeed;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPipebombLauncher::AddPipeBomb( CTFGrenadePipebombProjectile *pBomb )
 {
 	PipebombHandle hHandle;
 	hHandle = pBomb;
 	m_Pipebombs.AddToTail( hHandle );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPipebombLauncher::ModifyPipebombsInView( int iMode )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if( !pPlayer )
+		return false;
+
+#ifdef GAME_DLL
+	int nStickiesKillStickies = 0;
+	CALL_ATTRIB_HOOK_INT( nStickiesKillStickies, stickies_detonate_stickies );
+#endif
+
+	bool bFailedToDetonate = true;
+	for ( int i = 0; i < m_Pipebombs.Count(); i++ )
+	{
+		CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[i];
+		if ( pTemp )
+		{
+			if ( pTemp->IsEffectActive( EF_NODRAW ) )
+				continue;
+
+			if ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) < pTemp->GetLiveTime() )
+				continue;
+
+			Vector vecToPlayer = pTemp->WorldSpaceCenter() - pPlayer->EyePosition();
+			vecToPlayer.NormalizeInPlace();
+
+			Vector vecFwd;
+			AngleVectors( pPlayer->EyeAngles(), &vecFwd );
+			vecFwd.NormalizeInPlace();
+
+			float flDistance = ( pPlayer->GetAbsOrigin() - pTemp->GetAbsOrigin() ).Length();
+
+			if ( vecToPlayer.Dot( vecFwd ) > 0.975f || flDistance < 100.0f )
+			{
+			#ifdef GAME_DLL
+				if ( iMode == TF_PIPEBOMB_DETONATE_CHECK )
+				{
+					if ( nStickiesKillStickies == 1 )
+						pTemp->DetonateStickies();
+
+					pTemp->Detonate();
+				}
+			#endif
+
+			#ifdef CLIENT_DLL
+				if ( iMode == TF_PIPEBOMB_GLOW_CHECK && pTemp->m_bDefensiveBomb )
+					pTemp->m_bGlowing = true;
+			#endif
+
+				bFailedToDetonate = false;
+			}
+			else
+			{
+			#ifdef CLIENT_DLL
+				if ( iMode == TF_PIPEBOMB_GLOW_CHECK && pTemp->m_bDefensiveBomb )
+					pTemp->m_bGlowing = false;
+			#endif
+			}
+		}
+	}
+
+	return bFailedToDetonate;
 }
 
 //-----------------------------------------------------------------------------
@@ -293,6 +379,18 @@ CBaseEntity *CTFPipebombLauncher::FireProjectile( CTFPlayer *pPlayer )
 
 	return pProjectile;
 }
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFPipebombLauncher::BombHighlightThink( void )
+{
+	ModifyPipebombsInView( TF_PIPEBOMB_GLOW_CHECK );
+	if ( GetOwner() )
+		SetContextThink( &CTFPipebombLauncher::BombHighlightThink, gpGlobals->curtime + 0.1, HIGHLIGHT_CONTEXT );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -405,46 +503,59 @@ void CTFPipebombLauncher::DeathNotice( CBaseEntity *pVictim )
 //-----------------------------------------------------------------------------
 bool CTFPipebombLauncher::DetonateRemotePipebombs( bool bFizzle )
 {
-	bool bFailedToDetonate = false;
-
-	int count = m_Pipebombs.Count();
-
-	for ( int i = 0; i < count; i++ )
+	if ( GetDetonateMode() != TF_PIPEBOMB_MODE_VICINITY || bFizzle )
 	{
-		CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[i];
-		if ( pTemp )
-		{
-			//This guy will die soon enough.
-			if ( pTemp->IsEffectActive( EF_NODRAW ) )
-				continue;
-#ifdef GAME_DLL
-			if ( bFizzle )
-			{
-				pTemp->Fizzle();
-			}
-#endif
+		bool bFailedToDetonate = false;
 
-			if ( bFizzle == false )
+		for ( int i = 0; i < m_Pipebombs.Count(); i++ )
+		{
+			CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[i];
+			if ( pTemp )
 			{
-				if ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) < tf_grenadelauncher_livetime.GetFloat() )
-				{
-					bFailedToDetonate = true;
+				//This guy will die soon enough.
+				if ( pTemp->IsEffectActive( EF_NODRAW ) )
 					continue;
+
+			#ifdef GAME_DLL
+				if ( bFizzle )
+				{
+					pTemp->Fizzle();
 				}
+			#endif
+
+				if ( bFizzle == false )
+				{
+					if ( ( gpGlobals->curtime - pTemp->m_flCreationTime ) < pTemp->GetLiveTime() )
+					{
+						bFailedToDetonate = true;
+						continue;
+					}
+				}
+
+			#ifdef GAME_DLL
+				pTemp->Detonate();
+			#endif
 			}
-#ifdef GAME_DLL
-			pTemp->Detonate();
-#endif
 		}
+
+		return bFailedToDetonate;
 	}
 
-	return bFailedToDetonate;
+	return ModifyPipebombsInView( TF_PIPEBOMB_DETONATE_CHECK );
 }
 
 
 float CTFPipebombLauncher::GetChargeMaxTime( void )
 {
 	return TF_PIPEBOMB_MAX_CHARGE_TIME;
+}
+
+
+int CTFPipebombLauncher::GetDetonateMode( void ) const
+{
+	int nDetonateMode = 0;
+	CALL_ATTRIB_HOOK_INT( nDetonateMode, set_detonate_mode );
+	return nDetonateMode;
 }
 
 

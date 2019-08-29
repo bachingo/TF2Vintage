@@ -55,8 +55,11 @@ public:
 
 	virtual void SwitchBodyGroups( void );
 
+	int GetDetonateMode( void ) const;
+
 public:
 
+	CBaseEntity *FireProjectileInternal( CTFPlayer *pPlayer );
 	void LaunchGrenade( void );
 
 private:
