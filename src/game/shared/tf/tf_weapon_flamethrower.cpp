@@ -1042,7 +1042,9 @@ void CTFFlameThrower::RestartParticleEffect( void )
 		{
 		if ( m_bCritFire )
 		{
-			if ( tf_halloween.GetBool() )
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				pszParticleEffect = "flamethrower_rainbow_FP";
+			else if ( tf_halloween.GetBool() )
 				pszParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
 			else
 				pszParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
@@ -1054,7 +1056,9 @@ void CTFFlameThrower::RestartParticleEffect( void )
 		}
 		else
 		{
-			if ( tf_halloween.GetBool() )
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				pszParticleEffect = "flamethrower_rainbow_FP";
+			else if ( tf_halloween.GetBool() )
 				pszParticleEffect = "flamethrower_halloween";
 			else
 				pszParticleEffect = "flamethrower";
@@ -1074,14 +1078,18 @@ void CTFFlameThrower::RestartParticleEffect( void )
 		{
 		if ( m_bCritFire )
 		{
-			if ( tf_halloween.GetBool() )
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				pszParticleEffect = "flamethrower_rainbow_new_flame";
+			else if ( tf_halloween.GetBool() )
 				pszParticleEffect = ConstructTeamParticle( "new_flame_fan_crit_%s", iTeam, true );
 			else
 				pszParticleEffect = ConstructTeamParticle( "new_flame_crit_%s", iTeam, true );
 		}
 		else
 		{
-			if ( tf_halloween.GetBool() )
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				pszParticleEffect = "flamethrower_rainbow_new_flame";
+			else if ( tf_halloween.GetBool() )
 				pszParticleEffect = "new_flame_fan";
 			else
 				pszParticleEffect = "new_flame";
@@ -1259,10 +1267,18 @@ void CTFFlameEntity::ClientThink( void )
 			pszParticleEffect = "new_flame_core";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
-		//}
+
 	}
 
 	m_pFlameEffect->SetControlPoint( 0, WorldSpaceCenter() );
+
+	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+	{
+		Vector vecColor = RandomVector( 0, 1 );
+		vecColor *= rand() % 255;
+
+		m_pFlameEffect->SetControlPoint( 6, vecColor );
+	}
 }
 #endif
 
