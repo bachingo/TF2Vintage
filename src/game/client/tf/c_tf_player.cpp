@@ -86,7 +86,7 @@ ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "Whe
 
 ConVar cl_autoreload( "cl_autoreload", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, clip-using weapons will automatically be reloaded whenever they're not being fired." );
 
-ConVar cl_forced_pyrovision( "cl_forced_pyrovision", "0", FCVAR_DONTRECORD, "When on, you will always see the world through the eyes of the Pyro" );
+ConVar cl_forced_vision_filter( "cl_forced_vision_filter", "0", FCVAR_DONTRECORD, "1=Pyrovision, 2=Halloween" );
 
 ConVar cl_fp_ragdoll( "cl_fp_ragdoll", "1", FCVAR_ARCHIVE, "Allow first person ragdolls" );
 ConVar cl_fp_ragdoll_auto( "cl_fp_ragdoll_auto", "1", FCVAR_ARCHIVE, "Autoswitch to ragdoll thirdperson-view when necessary" );
@@ -4006,8 +4006,8 @@ int C_TFPlayer::GetVisionFilterFlags( bool bWeaponsCheck )
 	if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 		nVisionFlags |= TF_VISION_FILTER_HALLOWEEN;
 
-	if ( cl_forced_pyrovision.GetBool() )
-		return TF_VISION_FILTER_PYRO;
+	if ( cl_forced_vision_filter.GetBool() )
+		return cl_forced_vision_filter.GetInt();
 
 	return nVisionFlags;
 }
