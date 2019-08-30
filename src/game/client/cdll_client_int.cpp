@@ -112,6 +112,7 @@
 #include "matsys_controls/matsyscontrols.h"
 #include "gamestats.h"
 #include "particle_parse.h"
+#include "vscript/ivscript.h"
 #if defined( TF_CLIENT_DLL )
 #include "rtime.h"
 #include "tf_hud_disconnect_prompt.h"
@@ -210,6 +211,7 @@ IXboxSystem *xboxsystem = NULL;	// Xbox 360 only
 IMatchmaking *matchmaking = NULL;
 IUploadGameStats *gamestatsuploader = NULL;
 IClientReplayContext *g_pClientReplayContext = NULL;
+IScriptManager *scriptmanager = NULL;
 #if defined( REPLAY_ENABLED )
 IReplayManager *g_pReplayManager = NULL;
 IReplayMovieManager *g_pReplayMovieManager = NULL;
@@ -1031,6 +1033,11 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		return false;
 	InitFbx();
 #endif
+
+	if ( !CommandLine()->CheckParm( "-noscripting" ) )
+	{
+		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+	}
 
 	// it's ok if this is NULL. That just means the sourcevr.dll wasn't found
 	g_pSourceVR = (ISourceVirtualReality *)appSystemFactory(SOURCE_VIRTUAL_REALITY_INTERFACE_VERSION, NULL);

@@ -89,6 +89,8 @@
 #include "tier3/tier3.h"
 #include "serverbenchmark_base.h"
 #include "querycache.h"
+#include "vscript/ivscript.h"
+#include "vscript_server.h"
 
 
 #ifdef TF_DLL
@@ -183,6 +185,7 @@ IServerEngineTools *serverenginetools = NULL;
 ISceneFileCache *scenefilecache = NULL;
 IXboxSystem *xboxsystem = NULL;	// Xbox 360 only
 IMatchmaking *matchmaking = NULL;	// Xbox 360 only
+IScriptManager *scriptmanager = NULL;
 #if defined( REPLAY_ENABLED )
 IReplaySystem *g_pReplay = NULL;
 IServerReplayContext *g_pReplayServerContext = NULL;
@@ -656,6 +659,11 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		return false;
 	if ( IsX360() && (matchmaking = (IMatchmaking *)appSystemFactory( VENGINE_MATCHMAKING_VERSION, NULL )) == NULL )
 		return false;
+
+	if ( !CommandLine()->CheckParm( "-noscripting" ) )
+	{
+		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+	}
 
 	// If not running dedicated, grab the engine vgui interface
 	if ( !engine->IsDedicatedServer() )
