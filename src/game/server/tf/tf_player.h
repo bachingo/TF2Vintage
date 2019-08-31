@@ -127,6 +127,8 @@ public:
 	virtual void		ResetScores( void );
 	virtual void		PlayerUse( void );
 
+	virtual void		ApplyAbsVelocityImpulse( Vector const &impulse );
+
 	void				CreateViewModel( int iViewModel = 0 );
 	CBaseViewModel		*GetOffHandViewModel();
 	void				SendOffHandViewModelActivity( Activity activity );

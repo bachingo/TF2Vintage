@@ -7141,6 +7141,21 @@ void CTFPlayer::PlayerUse( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ApplyAbsVelocityImpulse( Vector const &vecImpulse )
+{
+	float flImpulseScale = 1.0f;
+	if ( IsPlayerClass( TF_CLASS_SNIPER ) && m_Shared.InCond( TF_COND_AIMING ) )
+		CALL_ATTRIB_HOOK_FLOAT( flImpulseScale, mult_aiming_knockback_resistance );
+
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) )
+		flImpulseScale *= 2.0f;
+
+	BaseClass::ApplyAbsVelocityImpulse( vecImpulse * flImpulseScale );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 void CTFPlayer::CreateRagdollEntity( void )
