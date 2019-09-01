@@ -17,20 +17,6 @@
 #include "tier1/interface.h"
 
 //-----------------------------------------------------------------------------
-// GL helpers
-//-----------------------------------------------------------------------------
-FORCEINLINE bool IsEmulatingGL()
-{
-	static bool bIsEmulatingGL = ( Plat_GetCommandLineA() ) ? ( strstr( Plat_GetCommandLineA(), "-r_emulate_gl" ) != NULL ) : false;
-	return bIsEmulatingGL;
-}
-
-FORCEINLINE bool IsOpenGL( void )
-{
-	return IsPlatformOpenGL() || IsEmulatingGL();
-}
-
-//-----------------------------------------------------------------------------
 // Material system interface version
 //-----------------------------------------------------------------------------
 #define MATERIALSYSTEM_HARDWARECONFIG_INTERFACE_VERSION		"MaterialSystemHardwareConfig012"
@@ -204,9 +190,6 @@ public:
 
 	virtual bool SupportsBorderColor( void ) const = 0;
 	virtual bool SupportsFetch4( void ) const = 0;
-
-	inline bool ShouldAlwaysUseShaderModel2bShaders() const { return IsOpenGL(); }
-	inline bool PlatformRequiresNonNullPixelShaders() const { return IsOpenGL(); }
 };
 
 #endif // IMATERIALSYSTEMHARDWARECONFIG_H
