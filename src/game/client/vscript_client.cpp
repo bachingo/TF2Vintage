@@ -101,7 +101,7 @@ bool VScriptClientInit()
 
 			if( g_pScriptVM )
 			{
-				Log_Msg( LOG_VScript, "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
+				Msg( "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 				ScriptRegisterFunction( g_pScriptVM, GetMapName, "Get the name of the map.");
 				ScriptRegisterFunction( g_pScriptVM, Time, "Get the current server time" );
 				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, "Execute a script (internal)" );
@@ -132,8 +132,9 @@ bool VScriptClientInit()
 	}
 	else
 	{
-		Log_Msg( LOG_VScript, "\nVSCRIPT: Scripting is disabled.\n" );
+		Msg( "\nVSCRIPT: Scripting is disabled.\n" );
 	}
+
 	g_pScriptVM = NULL;
 	return false;
 }

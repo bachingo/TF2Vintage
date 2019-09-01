@@ -17,8 +17,6 @@
 IScriptVM *g_pScriptVM;
 extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 
-DEFINE_LOGGING_CHANNEL_NO_TAGS( LOG_VScript, "VScript", LCF_CONSOLE_ONLY, LS_WARNING );
-
 // #define VMPROFILE 1
 
 #ifdef VMPROFILE
@@ -55,7 +53,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 	const char *pszIncomingExtension = V_strrchr( pszScriptName , '.' );
 	if ( pszIncomingExtension && V_strcmp( pszIncomingExtension, pszVMExtension ) != 0 )
 	{
-		Log_Warning( LOG_VScript, "Script file type does not match VM type\n" );
+		Warning( "Script file type does not match VM type\n" );
 		return NULL;
 	}
 
@@ -83,7 +81,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 
 		if( !bResult )
 		{
-			Log_Warning( LOG_VScript, "Script not found (%s) \n", scriptPath.operator const char *() );
+			Warning( "Script not found (%s) \n", scriptPath.operator const char *() );
 			Assert( "Error running script" );
 		}
 
@@ -101,7 +99,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 	HSCRIPT hScript = g_pScriptVM->CompileScript( pBase, pszFilename );
 	if ( !hScript )
 	{
-		Log_Warning( LOG_VScript, "FAILED to compile and execute script file named %s\n", scriptPath.operator const char *() );
+		Warning( "FAILED to compile and execute script file named %s\n", scriptPath.operator const char *() );
 		Assert( "Error running script" );
 	}
 	return hScript;
@@ -118,14 +116,14 @@ bool VScriptRunScript( const char *pszScriptName, HSCRIPT hScope, bool bWarnMiss
 
 	if ( !pszScriptName || !*pszScriptName )
 	{
-		Log_Warning( LOG_VScript, "Cannot run script: NULL script name\n" );
+		Warning( "Cannot run script: NULL script name\n" );
 		return false;
 	}
 
 	// Prevent infinite recursion in VM
 	if ( g_ScriptServerRunScriptDepth > 16 )
 	{
-		Log_Warning( LOG_VScript, "IncludeScript stack overflow\n" );
+		Warning( "IncludeScript stack overflow\n" );
 		return false;
 	}
 
@@ -147,7 +145,7 @@ bool VScriptRunScript( const char *pszScriptName, HSCRIPT hScope, bool bWarnMiss
 		bSuccess = ( g_pScriptVM->Run( hScript, hScope ) != SCRIPT_ERROR );
 		if ( !bSuccess )
 		{
-			Log_Warning( LOG_VScript, "Error running script named %s\n", pszScriptName );
+			Warning( "Error running script named %s\n", pszScriptName );
 			Assert( "Error running script" );
 		}
 	}
@@ -163,13 +161,13 @@ CON_COMMAND( script, "Run the text as a script" )
 {
 	if ( !*args[1] )
 	{
-		Log_Warning( LOG_VScript, "No function name specified\n" );
+		Warning( "No function name specified\n" );
 		return;
 	}
 
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 
@@ -218,13 +216,13 @@ CON_COMMAND_SHARED( script_execute, "Run a vscript file" )
 {
 	if ( !*args[1] )
 	{
-		Log_Warning( LOG_VScript, "No script specified\n" );
+		Warning( "No script specified\n" );
 		return;
 	}
 
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 
@@ -235,7 +233,7 @@ CON_COMMAND_SHARED( script_debug, "Connect the vscript VM to the script debugger
 {
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 	g_pScriptVM->ConnectDebugger();
@@ -245,7 +243,7 @@ CON_COMMAND_SHARED( script_help, "Output help for script functions, optionally w
 {
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 	const char *pszArg1 = "*";
@@ -261,7 +259,7 @@ CON_COMMAND_SHARED( script_dump_all, "Dump the state of the VM to the console" )
 {
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 	g_pScriptVM->DumpState();

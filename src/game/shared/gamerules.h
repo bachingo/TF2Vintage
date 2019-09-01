@@ -189,6 +189,8 @@ public:
 		return true; 
 	}
 
+	virtual void RegisterScriptFunctions( void ) {}
+
 #ifdef CLIENT_DLL
 
 	virtual bool IsBonusChallengeTimeBased( void );
