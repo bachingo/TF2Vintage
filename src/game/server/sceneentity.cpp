@@ -33,6 +33,7 @@
 #include "SceneCache.h"
 #include "scripted.h"
 #include "env_debughistory.h"
+#include "team.h"
 
 #ifdef HL2_EPISODIC
 #include "npc_alyx_episodic.h"
@@ -344,6 +345,8 @@ public:
 	virtual void			OnRestore();
 	virtual void			OnLoaded();
 
+	virtual int				DrawDebugTextOverlays();
+
 	DECLARE_DATADESC();
 
 	virtual void			OnSceneFinished( bool canceled, bool fireoutput );
@@ -466,6 +469,9 @@ public:
 
 	void					InputScriptPlayerDeath( inputdata_t &inputdata );
 
+	void					AddBroadcastTeamTarget( int nTeamIndex );
+	void					RemoveBroadcastTeamTarget( int nTeamIndex );
+
 // Data
 public:
 	string_t				m_iszSceneFile;
@@ -527,6 +533,8 @@ public:
 	virtual CBaseEntity		*FindNamedEntity( const char *name, CBaseEntity *pActor = NULL, bool bBaseFlexOnly = false, bool bUseClear = false );
 	CBaseEntity				*FindNamedTarget( string_t iszTarget, bool bBaseFlexOnly = false );
 	virtual CBaseEntity		*FindNamedEntityClosest( const char *name, CBaseEntity *pActor = NULL, bool bBaseFlexOnly = false, bool bUseClear = false, const char *pszSecondary = NULL );
+	HSCRIPT					ScriptFindNamedEntity( const char *name );
+	bool					ScriptLoadSceneFromString( const char *pszFilename, const char *pszData );
 
 private:
 
@@ -758,6 +766,16 @@ BEGIN_DATADESC( CSceneEntity )
 END_DATADESC()
 
 const ConVar	*CSceneEntity::m_pcvSndMixahead = NULL;
+
+BEGIN_ENT_SCRIPTDESC( CSceneEntity, CBaseEntity, "Choreographed scene which controls animation and/or dialog on one or more actors." )
+	DEFINE_SCRIPTFUNC( EstimateLength, "Returns length of this scene in seconds." )
+	DEFINE_SCRIPTFUNC( IsPlayingBack, "If this scene is currently playing." )
+	DEFINE_SCRIPTFUNC( IsPaused, "If this scene is currently paused." )
+	DEFINE_SCRIPTFUNC( AddBroadcastTeamTarget, "Adds a team (by index) to the broadcast list" )
+	DEFINE_SCRIPTFUNC( RemoveBroadcastTeamTarget, "Removes a team (by index) from the broadcast list" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptFindNamedEntity, "FindNamedEntity", "given an entity reference, such as !target, get actual entity from scene object" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptLoadSceneFromString, "LoadSceneFromString", "given a dummy scene name and a vcd string, load the scene" )
+END_SCRIPTDESC();
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3374,6 +3392,48 @@ CChoreoScene *BlockingLoadScene( const char *filename )
 	return CSceneEntity::LoadScene( filename, NULL );
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: vscript - create a scene directly from a buffer containing
+// a vcd description, and load it into the scene entity.
+//-----------------------------------------------------------------------------
+
+bool CSceneEntity::ScriptLoadSceneFromString( const char *pszFilename, const char *pszData )
+{
+	CChoreoScene *pScene = new CChoreoScene( NULL );
+
+	// CSceneTokenProcessor SceneTokenProcessor;
+	// SceneTokenProcessor.SetBuffer( pszData );
+	g_TokenProcessor.SetBuffer( (char *)pszData );
+
+	if ( !pScene->ParseFromBuffer( pszFilename, &g_TokenProcessor ) ) //&SceneTokenProcessor ) )
+	{
+		Warning( "CSceneEntity::LoadSceneFromString: Unable to parse scene data '%s'\n", pszFilename );
+		delete pScene;
+		pScene = NULL;
+	}
+	else
+	{
+		pScene->SetPrintFunc( LocalScene_Printf );
+		pScene->SetEventCallbackInterface( this );
+
+		// precache all sounds for the newly constructed scene
+		PrecacheScene( pScene );
+	}
+
+	if ( pScene != NULL )
+	{
+		// release prior scene if present
+		UnloadScene();
+		m_pScene = pScene;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3726,6 +3786,12 @@ private:
 	float		m_flNearestToActor;
 	CBaseEntity *m_pNearestToActor;
 };
+
+
+HSCRIPT CSceneEntity::ScriptFindNamedEntity( const char *name )
+{
+	return ToHScript( FindNamedEntity( name, NULL, false, false ) );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Search for an actor by name, make sure it can do face poses
@@ -4376,6 +4442,65 @@ void CSceneEntity::SetRecipientFilter( IRecipientFilter *filter )
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CSceneEntity::DrawDebugTextOverlays()
+{
+	int nOffset = BaseClass::DrawDebugTextOverlays();
+
+	if ( m_debugOverlays & OVERLAY_TEXT_BIT )
+	{
+		char tempstr[ 512 ];
+		Q_snprintf( tempstr, sizeof( tempstr ), "Playing back: %s", m_bIsPlayingBack ? "yes" : "no" );
+		EntityText( nOffset, tempstr, 0 );
+		nOffset++;
+
+		Q_snprintf( tempstr, sizeof( tempstr ), "Paused: %s", m_bPaused ? ( m_bPausedViaInput ? "yes - via input" : "yes" ) : "no" );
+		EntityText( nOffset, tempstr, 0 );
+		nOffset++;
+	}
+
+	return nOffset;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Adds a player (by index) to the recipient filter
+//-----------------------------------------------------------------------------
+void CSceneEntity::AddBroadcastTeamTarget( int nTeamIndex )
+{
+	if ( m_pRecipientFilter == NULL )
+	{
+		CRecipientFilter filter;
+		SetRecipientFilter( &filter );
+	}
+
+	CTeam *pTeam = GetGlobalTeam( nTeamIndex );
+	Assert( pTeam );
+	if ( pTeam == NULL )
+		return;
+
+	m_pRecipientFilter->AddRecipientsByTeam( pTeam );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Removes a player (by index) from the recipient filter
+//-----------------------------------------------------------------------------
+void CSceneEntity::RemoveBroadcastTeamTarget( int nTeamIndex )
+{
+	if ( m_pRecipientFilter == NULL )
+	{
+		CRecipientFilter filter;
+		SetRecipientFilter( &filter );
+	}
+
+	CTeam *pTeam = GetGlobalTeam( nTeamIndex );
+	Assert( pTeam );
+	if ( pTeam == NULL )
+		return;
+
+	m_pRecipientFilter->RemoveRecipientsByTeam( pTeam );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

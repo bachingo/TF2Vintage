@@ -995,6 +995,21 @@ void CBaseEntity::SetCollisionBounds( const Vector& mins, const Vector &maxs )
 	m_Collision.SetCollisionBounds( mins, maxs );
 }
 
+//-----------------------------------------------------------------------------
+// Vscript: Gets the min collision bounds, centered on object
+//-----------------------------------------------------------------------------
+const Vector &CBaseEntity::ScriptGetBoundingMins( void )
+{
+	return m_Collision.OBBMins();
+}
+
+//-----------------------------------------------------------------------------
+// Vscript: Gets the max collision bounds, centered on object
+//-----------------------------------------------------------------------------
+const Vector &CBaseEntity::ScriptGetBoundingMaxs( void )
+{
+	return m_Collision.OBBMaxs();
+}
 
 void CBaseEntity::StopFollowingEntity( )
 {
@@ -6291,6 +6306,22 @@ void CBaseEntity::SetLocalAngularVelocity( const QAngle &vecAngVelocity )
 	}
 }
 
+void CBaseEntity::ScriptSetLocalAngularVelocity( float pitchVel, float yawVel, float rollVel )
+{
+	QAngle qa;
+	qa.Init( pitchVel, yawVel, rollVel );
+	SetLocalAngularVelocity( qa );
+}
+
+const Vector &CBaseEntity::ScriptGetLocalAngularVelocity( void )
+{
+	QAngle qa = GetLocalAngularVelocity();
+	static Vector v;
+	v.x = qa.x;
+	v.y = qa.y;
+	v.z = qa.z;
+	return v;
+}
 
 //-----------------------------------------------------------------------------
 // Sets the local position from a transform
@@ -6856,6 +6887,39 @@ HSCRIPT CBaseEntity::ScriptFirstMoveChild( void )
 HSCRIPT CBaseEntity::ScriptNextMovePeer( void )
 {
 	return ToHScript( NextMovePeer() );
+}
+
+HSCRIPT CBaseEntity::ScriptGetModelKeyValues( void )
+{
+	KeyValues *pModelKeyValues = new KeyValues( "" );
+	HSCRIPT hScript = NULL;
+	const char *pszModelName = modelinfo->GetModelName( GetModel() );
+	const char *pBuffer = modelinfo->GetModelKeyValueText( GetModel() );
+
+	if ( pModelKeyValues->LoadFromBuffer( pszModelName, pBuffer ) )
+	{
+		// UNDONE: how does destructor get called on this
+		m_pScriptModelKeyValues = new CScriptKeyValues( pModelKeyValues );
+
+		// UNDONE: who calls ReleaseInstance on this??? Does name need to be unique???
+
+		hScript = g_pScriptVM->RegisterInstance( m_pScriptModelKeyValues );
+
+		/*
+		KeyValues *pParticleEffects = pModelKeyValues->FindKey("Particles");
+		if ( pParticleEffects )
+		{
+			// Start grabbing the sounds and slotting them in
+			for ( KeyValues *pSingleEffect = pParticleEffects->GetFirstSubKey(); pSingleEffect; pSingleEffect = pSingleEffect->GetNextKey() )
+			{
+				const char *pParticleEffectName = pSingleEffect->GetString( "name", "" );
+				PrecacheParticleSystem( pParticleEffectName );
+			}
+		}
+		*/
+	}
+
+	return hScript;
 }
 
 //-----------------------------------------------------------------------------
