@@ -100,6 +100,93 @@ ConVar sv_netvisdist( "sv_netvisdist", "10000", FCVAR_CHEAT | FCVAR_DEVELOPMENTO
 
 ConVar sv_script_think_interval( "sv_script_think_interval", "0.1" );
 
+class CThinkContextsSaveDataOps : public CDefSaveRestoreOps
+{
+	virtual void Save( const SaveRestoreFieldInfo_t &fieldInfo, ISave *pSave )
+	{
+		AssertMsg( fieldInfo.pTypeDesc->fieldSize == 1, "CThinkContextsSaveDataOps does not support arrays" );
+
+		// Write out the vector
+		CUtlVector< thinkfunc_t > *pUtlVector = ( CUtlVector< thinkfunc_t > * )fieldInfo.pField;
+		SaveUtlVector( pSave, pUtlVector, FIELD_EMBEDDED );
+
+		// Get our owner
+		CBaseEntity *pOwner = (CBaseEntity *)fieldInfo.pOwner;
+
+		pSave->StartBlock();
+		// Now write out all the functions
+		for ( int i = 0; i < pUtlVector->Size(); i++ )
+		{
+		#ifdef WIN32
+			void **ppV = ( void ** ) & ( ( *pUtlVector )[ i ].m_pfnThink );
+		#else
+			BASEPTR *ppV = &( ( *pUtlVector )[ i ].m_pfnThink );
+		#endif
+			bool bHasFunc = ( *ppV != NULL );
+			pSave->WriteBool( &bHasFunc, 1 );
+			if ( bHasFunc )
+			{
+				pSave->WriteFunction( pOwner->GetDataDescMap(), "m_pfnThink", (inputfunc_t * *)ppV, 1 );
+			}
+		}
+		pSave->EndBlock();
+	}
+
+	virtual void Restore( const SaveRestoreFieldInfo_t &fieldInfo, IRestore *pRestore )
+	{
+		AssertMsg( fieldInfo.pTypeDesc->fieldSize == 1, "CThinkContextsSaveDataOps does not support arrays" );
+
+		// Read in the vector
+		CUtlVector< thinkfunc_t > *pUtlVector = ( CUtlVector< thinkfunc_t > * )fieldInfo.pField;
+		RestoreUtlVector( pRestore, pUtlVector, FIELD_EMBEDDED );
+
+		// Get our owner
+		CBaseEntity *pOwner = (CBaseEntity *)fieldInfo.pOwner;
+
+		pRestore->StartBlock();
+		// Now read in all the functions
+		for ( int i = 0; i < pUtlVector->Size(); i++ )
+		{
+			bool bHasFunc;
+			pRestore->ReadBool( &bHasFunc, 1 );
+		#ifdef WIN32
+			void **ppV = ( void ** ) & ( ( *pUtlVector )[ i ].m_pfnThink );
+		#else
+			BASEPTR *ppV = &( ( *pUtlVector )[ i ].m_pfnThink );
+			Q_memset( (void *)ppV, 0x0, sizeof( inputfunc_t ) );
+		#endif
+			if ( bHasFunc )
+			{
+				SaveRestoreRecordHeader_t header;
+				pRestore->ReadHeader( &header );
+				pRestore->ReadFunction( pOwner->GetDataDescMap(), (inputfunc_t * *)ppV, 1, header.size );
+			}
+			else
+			{
+				*ppV = NULL;
+			}
+		}
+		pRestore->EndBlock();
+	}
+
+	virtual bool IsEmpty( const SaveRestoreFieldInfo_t &fieldInfo )
+	{
+		CUtlVector< thinkfunc_t > *pUtlVector = ( CUtlVector< thinkfunc_t > * )fieldInfo.pField;
+		return ( pUtlVector->Count() == 0 );
+	}
+
+	virtual void MakeEmpty( const SaveRestoreFieldInfo_t &fieldInfo )
+	{
+		BASEPTR pFunc = *( (BASEPTR *)fieldInfo.pField );
+		pFunc = NULL;
+	}
+};
+CThinkContextsSaveDataOps g_ThinkContextsSaveDataOps;
+ISaveRestoreOps *thinkcontextFuncs = &g_ThinkContextsSaveDataOps;
+
+// For code error checking
+extern bool g_bReceivedChainedUpdateOnRemove;
+
 // This table encodes edict data.
 void SendProxy_AnimTime( const SendProp *pProp, const void *pStruct, const void *pVarData, DVariant *pOut, int iElement, int objectID )
 {
@@ -1998,93 +2085,6 @@ CBaseEntity *CBaseEntity::GetNextTarget( void )
 		return NULL;
 	return gEntList.FindEntityByName( NULL, m_target );
 }
-
-class CThinkContextsSaveDataOps : public CDefSaveRestoreOps
-{
-	virtual void Save( const SaveRestoreFieldInfo_t &fieldInfo, ISave *pSave )
-	{
-		AssertMsg( fieldInfo.pTypeDesc->fieldSize == 1, "CThinkContextsSaveDataOps does not support arrays");
-
-		// Write out the vector
-		CUtlVector< thinkfunc_t > *pUtlVector = (CUtlVector< thinkfunc_t > *)fieldInfo.pField;
-		SaveUtlVector( pSave, pUtlVector, FIELD_EMBEDDED );
-
-		// Get our owner
-		CBaseEntity *pOwner = (CBaseEntity*)fieldInfo.pOwner;
-
-		pSave->StartBlock();
-		// Now write out all the functions
-		for ( int i = 0; i < pUtlVector->Size(); i++ )
-		{
-#ifdef WIN32
-			void **ppV = (void**)&((*pUtlVector)[i].m_pfnThink);
-#else
-			BASEPTR *ppV = &((*pUtlVector)[i].m_pfnThink);
-#endif
-			bool bHasFunc = (*ppV != NULL);
-			pSave->WriteBool( &bHasFunc, 1 );
-			if ( bHasFunc )
-			{
-				pSave->WriteFunction( pOwner->GetDataDescMap(), "m_pfnThink", (inputfunc_t **)ppV, 1 );
-			}
-		}
-		pSave->EndBlock();
-	}
-
-	virtual void Restore( const SaveRestoreFieldInfo_t &fieldInfo, IRestore *pRestore )
-	{
-		AssertMsg( fieldInfo.pTypeDesc->fieldSize == 1, "CThinkContextsSaveDataOps does not support arrays");
-
-		// Read in the vector
-		CUtlVector< thinkfunc_t > *pUtlVector = (CUtlVector< thinkfunc_t > *)fieldInfo.pField;
-		RestoreUtlVector( pRestore, pUtlVector, FIELD_EMBEDDED );
-
-		// Get our owner
-		CBaseEntity *pOwner = (CBaseEntity*)fieldInfo.pOwner;
-
-		pRestore->StartBlock();
-		// Now read in all the functions
-		for ( int i = 0; i < pUtlVector->Size(); i++ )
-		{
-			bool bHasFunc;
-			pRestore->ReadBool( &bHasFunc, 1 );
-#ifdef WIN32
-			void **ppV = (void**)&((*pUtlVector)[i].m_pfnThink);
-#else
-			BASEPTR *ppV = &((*pUtlVector)[i].m_pfnThink);
-			Q_memset( (void *)ppV, 0x0, sizeof(inputfunc_t) );
-#endif
-			if ( bHasFunc )
-			{
-				SaveRestoreRecordHeader_t header;
-				pRestore->ReadHeader( &header );
-				pRestore->ReadFunction( pOwner->GetDataDescMap(), (inputfunc_t **)ppV, 1, header.size );
-			}
-			else
-			{
-				*ppV = NULL;
-			}
-		}
-		pRestore->EndBlock();
-	}
-
-	virtual bool IsEmpty( const SaveRestoreFieldInfo_t &fieldInfo )
-	{
-		CUtlVector< thinkfunc_t > *pUtlVector = (CUtlVector< thinkfunc_t > *)fieldInfo.pField;
-		return ( pUtlVector->Count() == 0 );
-	}
-
-	virtual void MakeEmpty( const SaveRestoreFieldInfo_t &fieldInfo )
-	{
-		BASEPTR pFunc = *((BASEPTR*)fieldInfo.pField);
-		pFunc = NULL;
-	}
-};
-CThinkContextsSaveDataOps g_ThinkContextsSaveDataOps;
-ISaveRestoreOps *thinkcontextFuncs = &g_ThinkContextsSaveDataOps;
-
-// For code error checking
-extern bool g_bReceivedChainedUpdateOnRemove;
 
 //-----------------------------------------------------------------------------
 // Purpose: Called just prior to object destruction
