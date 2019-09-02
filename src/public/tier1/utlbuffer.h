@@ -143,6 +143,9 @@ public:
 	// Makes sure we've got at least this much memory
 	void			EnsureCapacity( int num );
 
+	// Access for direct read into buffer
+	void			*AccessForDirectRead( int nBytes );
+
 	// Attaches the buffer to external memory....
 	void			SetExternalBuffer( void* pMemory, int nSize, int nInitialPut, int nFlags = 0 );
 	bool			IsExternallyAllocated() const;

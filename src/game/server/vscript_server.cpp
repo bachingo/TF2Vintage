@@ -412,7 +412,7 @@ bool VScriptServerInit()
 
 			if( g_pScriptVM )
 			{
-				Log_Msg( LOG_VScript, "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
+				Msg( "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 				ScriptRegisterFunctionNamed( g_pScriptVM, UTIL_ShowMessageAll, "ShowMessage", "Print a hud message on all clients" );
 
 				ScriptRegisterFunction( g_pScriptVM, SendToConsole, "Send a string to the console as a command" );
@@ -457,7 +457,7 @@ bool VScriptServerInit()
 	}
 	else
 	{
-		Log_Msg( LOG_VScript, "\nVSCRIPT: Scripting is disabled.\n" );
+		Msg( "\nVSCRIPT: Scripting is disabled.\n" );
 	}
 	g_pScriptVM = NULL;
 	return false;
@@ -502,13 +502,13 @@ CON_COMMAND( script_reload_code, "Execute a vscript file, replacing existing fun
 {
 	if ( !*args[1] )
 	{
-		Log_Warning( LOG_VScript, "No script specified\n" );
+		Warning( "No script specified\n" );
 		return;
 	}
 
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 
@@ -527,7 +527,7 @@ CON_COMMAND( script_reload_entity_code, "Execute all of this entity's VScripts, 
 
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 
@@ -565,7 +565,7 @@ CON_COMMAND( script_reload_think, "Execute an activation script, replacing exist
 
 	if ( !g_pScriptVM )
 	{
-		Log_Warning( LOG_VScript, "Scripting disabled or no server running\n" );
+		Warning( "Scripting disabled or no server running\n" );
 		return;
 	}
 
