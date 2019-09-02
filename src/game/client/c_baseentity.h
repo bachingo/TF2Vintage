@@ -36,6 +36,9 @@
 #include "toolframework/itoolentity.h"
 #include "tier0/threadtools.h"
 
+#include "vscript/ivscript.h"
+#include "vscript_shared.h"
+
 class C_Team;
 class IPhysicsObject;
 class IClientVehicle;
@@ -184,10 +187,16 @@ public:
 	DECLARE_DATADESC();
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
+	// script description
+	DECLARE_ENT_SCRIPTDESC();
 
 									C_BaseEntity();
+
+protected:
+	// Use UTIL_Remove to delete!
 	virtual							~C_BaseEntity();
 
+public:
 	static C_BaseEntity				*CreatePredictedEntityByName( const char *classname, const char *module, int line, bool persist = false );
 	
 	// FireBullets uses shared code for prediction.
@@ -255,7 +264,12 @@ public:
 	virtual C_BaseAnimating*		GetBaseAnimating() { return NULL; }
 	virtual void					SetClassname( const char *className );
 
-	string_t						m_iClassname;
+	string_t				m_iClassname;
+
+	HSCRIPT					GetScriptInstance();
+
+	HSCRIPT					m_hScriptInstance;
+	string_t				m_iszScriptId;
 
 // IClientUnknown overrides.
 public:
@@ -460,6 +474,9 @@ public:
 
 	virtual const Vector&			GetAbsOrigin( void ) const;
 	virtual const QAngle&			GetAbsAngles( void ) const;
+	inline Vector					Forward() const; ///< get my forward (+x) vector
+	inline Vector					Left() const;    ///< get my left    (+y) vector
+	inline Vector					Up() const;      ///< get my up      (+z) vector
 
 	const Vector&					GetNetworkOrigin() const;
 	const QAngle&					GetNetworkAngles() const;
@@ -861,6 +878,7 @@ public:
 public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( pev, mins, maxs );
 	char const						*GetClassname( void );
+	char const						*GetEntityName( void );
 	char const						*GetDebugName( void );
 	static int						PrecacheModel( const char *name ); 
 	static bool						PrecacheSound( const char *name );
@@ -1117,6 +1135,11 @@ public:
 	// For shadows rendering the correct body + sequence...
 	virtual int GetBody() { return 0; }
 	virtual int GetSkin() { return 0; }
+
+
+	const Vector &ScriptGetForward( void ) { static Vector vecForward; GetVectors( &vecForward, NULL, NULL ); return vecForward; }
+	const Vector &ScriptGetLeft( void ) { static Vector vecLeft; GetVectors( NULL, &vecLeft, NULL ); return vecLeft; }
+	const Vector &ScriptGetUp( void ) { static Vector vecUp; GetVectors( NULL, NULL, &vecUp ); return vecUp; }
 
 	// Stubs on client
 	void	NetworkStateManualMode( bool activate )		{ }
@@ -1595,6 +1618,8 @@ private:
 	EHANDLE							m_hGroundEntity;
 	float							m_flGroundChangeTime;
 
+
+	char							m_iName[ MAX_PATH ];
 
 	// Friction.
 	float							m_flFriction;       
@@ -2209,6 +2234,14 @@ inline bool C_BaseEntity::ShouldRecordInTools() const
 #else
 	return true;
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Inline methods
+//-----------------------------------------------------------------------------
+inline const char *C_BaseEntity::GetEntityName()
+{
+	return m_iName;
 }
 
 C_BaseEntity *CreateEntityByName( const char *className );
