@@ -67,25 +67,22 @@
 #define SPROP_PROXY_ALWAYS_YES	(1<<9)	// Set for datatable props using one of the default datatable proxies like
 										// SendProxy_DataTableToDataTable that always send the data to all clients.
 
-#define SPROP_IS_A_VECTOR_ELEM	(1<<10)	// Set automatically if SPROP_VECTORELEM is used.
+#define SPROP_CHANGES_OFTEN		(1<<10)	// this is an often changed field, moved to head of sendtable so it gets a small index
 
-#define SPROP_COLLAPSIBLE		(1<<11)	// Set automatically if it's a datatable with an offset of 0 that doesn't change the pointer
+#define SPROP_IS_A_VECTOR_ELEM	(1<<11)	// Set automatically if SPROP_VECTORELEM is used.
+
+#define SPROP_COLLAPSIBLE		(1<<12)	// Set automatically if it's a datatable with an offset of 0 that doesn't change the pointer
 										// (ie: for all automatically-chained base classes).
 										// In this case, it can get rid of this SendPropDataTable altogether and spare the
 										// trouble of walking the hierarchy more than necessary.
 
-#define SPROP_COORD_MP					(1<<12) // Like SPROP_COORD, but special handling for multiplayer games
-#define SPROP_COORD_MP_LOWPRECISION 	(1<<13) // Like SPROP_COORD, but special handling for multiplayer games where the fractional component only gets a 3 bits instead of 5
-#define SPROP_COORD_MP_INTEGRAL			(1<<14) // SPROP_COORD_MP, but coordinates are rounded to integral boundaries
-#define SPROP_CELL_COORD				(1<<15) // Like SPROP_COORD, but special encoding for cell coordinates that can't be negative, bit count indicate maximum value
-#define SPROP_CELL_COORD_LOWPRECISION 	(1<<16) // Like SPROP_CELL_COORD, but special handling where the fractional component only gets a 3 bits instead of 5
-#define SPROP_CELL_COORD_INTEGRAL		(1<<17) // SPROP_CELL_COORD, but coordinates are rounded to integral boundaries
-
-#define SPROP_CHANGES_OFTEN				(1<<18)	// this is an often changed field, moved to head of sendtable so it gets a small index
+#define SPROP_COORD_MP					(1<<13) // Like SPROP_COORD, but special handling for multiplayer games
+#define SPROP_COORD_MP_LOWPRECISION 	(1<<14) // Like SPROP_COORD, but special handling for multiplayer games where the fractional component only gets a 3 bits instead of 5
+#define SPROP_COORD_MP_INTEGRAL			(1<<15) // SPROP_COORD_MP, but coordinates are rounded to integral boundaries
 
 #define SPROP_VARINT					SPROP_NORMAL	// reuse existing flag so we don't break demo. note you want to include SPROP_UNSIGNED if needed, its more efficient
 
-#define SPROP_NUMFLAGBITS_NETWORKED		19
+#define SPROP_NUMFLAGBITS_NETWORKED		16
 
 // This is server side only, it's used to mark properties whose SendProxy_* functions encode against gpGlobals->tickcount (the only ones that currently do this are
 //  m_flAnimTime and m_flSimulationTime.  MODs shouldn't need to mess with this probably
@@ -136,75 +133,75 @@ typedef enum
 class DVariant
 {
 public:
-				DVariant()				{m_Type = DPT_Float;}
-				DVariant(float val)		{m_Type = DPT_Float; m_Float = val;}
+	DVariant()				{m_Type = DPT_Float;}
+	DVariant(float val)		{m_Type = DPT_Float; m_Float = val;}
 				
-				const char *ToString()
-				{
-					static char text[128];
+	const char *ToString()
+	{
+		static char text[128];
 
-					switch ( m_Type )
-					{
-						case DPT_Int : 
-							Q_snprintf( text, sizeof(text), "%i", m_Int );
-							break;
-						case DPT_Float :
-							Q_snprintf( text, sizeof(text), "%.3f", m_Float );
-							break;
-						case DPT_Vector :
-							Q_snprintf( text, sizeof(text), "(%.3f,%.3f,%.3f)", 
-								m_Vector[0], m_Vector[1], m_Vector[2] );
-							break;
-						case DPT_VectorXY :
-							Q_snprintf( text, sizeof(text), "(%.3f,%.3f)", 
-								m_Vector[0], m_Vector[1] );
-							break;
-#if 0 // We can't ship this since it changes the size of DTVariant to be 20 bytes instead of 16 and that breaks MODs!!!
-						case DPT_Quaternion :
-							Q_snprintf( text, sizeof(text), "(%.3f,%.3f,%.3f %.3f)", 
-								m_Vector[0], m_Vector[1], m_Vector[2], m_Vector[3] );
-							break;
-#endif
-						case DPT_String : 
-							if ( m_pString ) 
-								return m_pString;
-							else
-								return "NULL";
-							break;
-						case DPT_Array :
-							Q_snprintf( text, sizeof(text), "Array" ); 
-							break;
-						case DPT_DataTable :
-							Q_snprintf( text, sizeof(text), "DataTable" ); 
-							break;
-#ifdef SUPPORTS_INT64
-						case DPT_Int64:
-							Q_snprintf( text, sizeof(text), "%I64d", m_Int64 );
-							break;
-#endif
-						default :
-							Q_snprintf( text, sizeof(text), "DVariant type %i unknown", m_Type ); 
-							break;
-					}
+		switch ( m_Type )
+		{
+			case DPT_Int : 
+				Q_snprintf( text, sizeof(text), "%i", m_Int );
+				break;
+			case DPT_Float :
+				Q_snprintf( text, sizeof(text), "%.3f", m_Float );
+				break;
+			case DPT_Vector :
+				Q_snprintf( text, sizeof(text), "(%.3f,%.3f,%.3f)", 
+							m_Vector[0], m_Vector[1], m_Vector[2] );
+				break;
+			case DPT_VectorXY :
+				Q_snprintf( text, sizeof(text), "(%.3f,%.3f)", 
+							m_Vector[0], m_Vector[1] );
+				break;
+			#if 0 // We can't ship this since it changes the size of DTVariant to be 20 bytes instead of 16 and that breaks MODs!!!
+			case DPT_Quaternion :
+				Q_snprintf( text, sizeof(text), "(%.3f,%.3f,%.3f %.3f)", 
+							m_Vector[0], m_Vector[1], m_Vector[2], m_Vector[3] );
+				break;
+			#endif
+			case DPT_String : 
+				if ( m_pString ) 
+					return m_pString;
+				else
+					return "NULL";
+				break;
+			case DPT_Array :
+				Q_snprintf( text, sizeof(text), "Array" ); 
+				break;
+			case DPT_DataTable :
+				Q_snprintf( text, sizeof(text), "DataTable" ); 
+				break;
+			#ifdef SUPPORTS_INT64
+			case DPT_Int64:
+				Q_snprintf( text, sizeof(text), "%I64d", m_Int64 );
+				break;
+			#endif
+			default :
+				Q_snprintf( text, sizeof(text), "DVariant type %i unknown", m_Type ); 
+				break;
+		}
 
-					return text;
-				}
+		return text;
+	}
 
 	union
 	{
 		float	m_Float;
-		int		m_Int;
-		const char	*m_pString;
+		long	m_Int;
+		const char *m_pString;
 		void	*m_pData;	// For DataTables.
-#if 0 // We can't ship this since it changes the size of DTVariant to be 20 bytes instead of 16 and that breaks MODs!!!
+	#if 0 // We can't ship this since it changes the size of DTVariant to be 20 bytes instead of 16 and that breaks MODs!!!
 		float	m_Vector[4];
-#else
+	#else
 		float	m_Vector[3];
-#endif
+	#endif
 
-#ifdef SUPPORTS_INT64
+	#ifdef SUPPORTS_INT64
 		int64	m_Int64;
-#endif
+	#endif
 	};
 	SendPropType	m_Type;
 };
