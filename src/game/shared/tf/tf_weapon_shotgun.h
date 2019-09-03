@@ -66,6 +66,14 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SCATTERGUN; }
+	virtual void	FireBullet( CTFPlayer *pShooter );
+
+	virtual void	Equip( CBaseCombatCharacter *pEquipTo );
+	virtual bool	Reload();
+	virtual void	FinishReload();
+	virtual bool	SendWeaponAnim( int iActivity );
+
+	bool			HasKnockback() const;
 };
 
 class CTFShotgun_Soldier : public CTFShotgun

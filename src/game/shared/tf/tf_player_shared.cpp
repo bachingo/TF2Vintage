@@ -2080,7 +2080,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 
 void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner )
 {
-	float flNextStunExpireTime = max( m_flStunExpireTime, gpGlobals->curtime + flDuration );
+	float flNextStunExpireTime = Max( m_flStunExpireTime.Get(), gpGlobals->curtime + flDuration );
 	m_hStunner = pStunner;
 	m_nStunFlags = nStunFlags;
 	m_flStunMovementSpeed = flSpeed;

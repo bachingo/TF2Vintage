@@ -1789,6 +1789,7 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 	{
 		m_pTFPlayer->m_Shared.SetAirDash( false );
 		m_pTFPlayer->m_Shared.ResetAirDucks();
+		m_pTFPlayer->m_Shared.SetHasRecoiled( false );
 	}
 
 #ifdef GAME_DLL

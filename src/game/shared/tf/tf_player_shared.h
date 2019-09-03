@@ -317,6 +317,10 @@ public:
 	float	GetRageProgress( void )				{ return m_flEffectBarProgress; }
 	void	ResetRageSystem( void );
 
+	// Scatterguns
+	bool	HasRecoiled( void ) const			{ return m_bRecoiled; }
+	void	SetHasRecoiled( bool value )		{ m_bRecoiled = value; }
+
 	// Knights
 	int		GetDecapitationCount( void ) const	{ return m_iDecapitations; }
 	void	SetDecapitationCount( int count )	{ m_iDecapitations = count; }
@@ -444,6 +448,8 @@ private:
 	OuterClass			*m_pOuter;					// C_TFPlayer or CTFPlayer (client/server).
 
 	bool m_bRageActive;
+
+	bool m_bRecoiled;			// Recoil in midair from scattergun
 
 #ifdef GAME_DLL
 	// Healer handling

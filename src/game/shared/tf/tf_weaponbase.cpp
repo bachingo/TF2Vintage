@@ -583,7 +583,7 @@ const char *CTFWeaponBase::DetermineViewModelType( const char *vModel ) const
 			int iUsingGunslinger = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iUsingGunslinger, wrench_builds_minisentry );
 
-			return pPlayer->GetPlayerClass()->GetHandModelName( (bool)iUsingGunslinger );
+			return pPlayer->GetPlayerClass()->GetHandModelName( iUsingGunslinger == 1 );
 		}
 	}
 

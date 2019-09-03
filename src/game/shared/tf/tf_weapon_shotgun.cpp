@@ -9,6 +9,7 @@
 #include "tf_weapon_shotgun.h"
 #include "decals.h"
 #include "tf_fx_shared.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #if defined( CLIENT_DLL )
@@ -19,6 +20,16 @@
 #include "tf_obj_sentrygun.h"
 #endif
 
+
+float AirBurstDamageForce( Vector const &vecSize, float damage, float scale )
+{
+	const float flSizeMag = vecSize.x * vecSize.y * vecSize.z;
+	const float flHullMag = 48 * 48 * 82.0;
+
+	const float flDamageForce = damage * ( flHullMag / flSizeMag ) * scale;
+
+	return Min( flDamageForce, 1000.0f );
+}
 
 //=============================================================================
 //
@@ -70,6 +81,149 @@ void CTFShotgun::UpdatePunchAngles( CTFPlayer *pPlayer )
 	pPlayer->SetPunchAngle( angle );
 }
 
+//=============================================================================
+//
+// Weapon Scatter Gun functions.
+//
+
+void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
+{
+	if ( !HasKnockback() )
+	{
+		BaseClass::FireBullet( pPlayer );
+		return;
+	}
+
+	if ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_PREROUND )
+		return;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner || ( pOwner->GetFlags() & FL_ONGROUND ) || pOwner->m_Shared.HasRecoiled() )
+		return;
+
+	pOwner->m_Shared.SetHasRecoiled( true );
+
+	pOwner->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_SLOWDOWN, NULL );
+
+#ifdef GAME_DLL
+	EntityMatrix matrix;
+	matrix.InitFromEntity( pOwner );
+
+	Vector vecLocalTranslation = pOwner->GetAbsOrigin() + pOwner->GetAbsVelocity();
+
+	Vector vecLocal = matrix.WorldToLocal( vecLocalTranslation );
+	vecLocal.x = -300.0f;
+
+	Vector vecVelocity = matrix.LocalToWorld( vecLocal );
+	vecVelocity -= pOwner->GetAbsOrigin();
+
+	pOwner->SetAbsVelocity( vecVelocity );
+
+	pOwner->ApplyAbsVelocityImpulse( Vector( 0, 0, 50 ) );
+	pOwner->RemoveFlag( FL_ONGROUND );
+#endif
+
+	BaseClass::FireBullet( pPlayer );
+}
+
+void CTFScatterGun::Equip( CBaseCombatCharacter *pEquipTo )
+{
+	if ( pEquipTo )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( pEquipTo );
+		if ( pOwner )
+		{
+			// CTFPlayerShared::SetScoutHypeMeter
+		}
+	}
+
+	BaseClass::Equip( pEquipTo );
+}
+
+bool CTFScatterGun::Reload()
+{
+	int nScatterGunNoReloadSingle = 0;
+	CALL_ATTRIB_HOOK_INT( nScatterGunNoReloadSingle, set_scattergun_no_reload_single );
+	if ( nScatterGunNoReloadSingle == 1 )
+		m_bReloadsSingly = false;
+
+	return BaseClass::Reload();
+}
+
+void CTFScatterGun::FinishReload()
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( !UsesClipsForAmmo1() )
+		return;
+
+	if ( ReloadsSingly() )
+		return;
+
+	m_iClip1 += Min( GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount( m_iPrimaryAmmoType ) );
+
+	pOwner->RemoveAmmo( GetMaxClip1(), m_iPrimaryAmmoType );
+
+	BaseClass::FinishReload();
+}
+
+bool CTFScatterGun::SendWeaponAnim( int iActivity )
+{
+	if ( GetTFPlayerOwner() && HasKnockback() )
+	{
+		switch ( iActivity )
+		{
+			case ACT_VM_DRAW:
+				iActivity = ACT_ITEM2_VM_DRAW;
+				break;
+			case ACT_VM_HOLSTER:
+				iActivity = ACT_ITEM2_VM_HOLSTER;
+				break;
+			case ACT_VM_IDLE:
+				iActivity = ACT_ITEM2_VM_IDLE;
+				break;
+			case ACT_VM_PULLBACK:
+				iActivity = ACT_ITEM2_VM_PULLBACK;
+				break;
+			case ACT_VM_PRIMARYATTACK:
+				iActivity = ACT_ITEM2_VM_PRIMARYATTACK;
+				break;
+			case ACT_VM_SECONDARYATTACK:
+				iActivity = ACT_ITEM2_VM_SECONDARYATTACK;
+				break;
+			case ACT_VM_RELOAD:
+				iActivity = ACT_ITEM2_VM_RELOAD;
+				break;
+			case ACT_VM_DRYFIRE:
+				iActivity = ACT_ITEM2_VM_DRYFIRE;
+				break;
+			case ACT_VM_IDLE_TO_LOWERED:
+				iActivity = ACT_ITEM2_VM_IDLE_TO_LOWERED;
+				break;
+			case ACT_VM_IDLE_LOWERED:
+				iActivity = ACT_ITEM2_VM_IDLE_LOWERED;
+				break;
+			case ACT_VM_LOWERED_TO_IDLE:
+				iActivity = ACT_ITEM2_VM_LOWERED_TO_IDLE;
+				break;
+			default:
+				return BaseClass::SendWeaponAnim( iActivity );
+		}
+	}
+
+	return BaseClass::SendWeaponAnim( iActivity );
+}
+
+bool CTFScatterGun::HasKnockback() const
+{
+	int nScatterGunHasKnockback = 0;
+	CALL_ATTRIB_HOOK_INT( nScatterGunHasKnockback, set_scattergun_has_knockback );
+	return nScatterGunHasKnockback == 1;
+}
+
+
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFShotgun_Revenge, DT_TFShotgun_Revenge )
 
@@ -103,11 +257,8 @@ int CTFShotgun_Revenge::GetWorldModelIndex( void )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && pOwner->IsAlive() )
 	{
-		if ( pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
-		{
-			int iMdlIdx = modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
-			return iMdlIdx;
-		}
+		if ( pOwner->IsPlayerClass( TF_CLASS_ENGINEER ) && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
+			return modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
 	}
 
 	return BaseClass::GetWorldModelIndex();
@@ -123,9 +274,9 @@ void CTFShotgun_Revenge::SetWeaponVisible( bool visible )
 		CTFPlayer *pOwner = GetTFPlayerOwner();
 		if ( pOwner && pOwner->IsAlive() )
 		{
-			if ( pOwner->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
+			if ( pOwner->IsPlayerClass( TF_CLASS_ENGINEER ) && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
 			{
-				int iModelIndex = modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
+				const int iModelIndex = modelinfo->GetModelIndex( "models/player/items/engineer/guitar.mdl" );
 
 				CUtlVector<breakmodel_t> list;
 
@@ -190,7 +341,7 @@ int CTFShotgun_Revenge::GetCustomDamageType( void ) const
 	if ( m_iRevengeCrits > 0 )
 		return TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT;
 
-	return 0;
+	return TF_DMG_CUSTOM_NONE;
 }
 
 //-----------------------------------------------------------------------------
@@ -280,5 +431,7 @@ void CTFShotgun_Revenge::Precache( void )
 //-----------------------------------------------------------------------------
 bool CTFShotgun_Revenge::CanGetRevengeCrits( void ) const
 {
-	return CAttributeManager::AttribHookValue<int>( 0, "sentry_killed_revenge", this ) == 1;
+	int nSentryRevenge = 0;
+	CALL_ATTRIB_HOOK_INT( nSentryRevenge, sentry_killed_revenge );
+	return nSentryRevenge == 1;
 }
