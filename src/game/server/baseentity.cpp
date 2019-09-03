@@ -250,7 +250,7 @@ BEGIN_SEND_TABLE_NOBASE( CBaseEntity, DT_AnimTimeMustBeFirst )
 	//  proxy on the client that stores off the old values before writing in the new values and
 	//  if it is sent after the new values, then it will only have the new origin and studio model, etc.
 	//  interpolation will be busted
-	SendPropInt	(SENDINFO(m_flAnimTime), 8, SPROP_UNSIGNED|SPROP_CHANGES_OFTEN|SPROP_ENCODED_AGAINST_TICKCOUNT, SendProxy_AnimTime),
+	SendPropInt( SENDINFO( m_flAnimTime ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN | SPROP_ENCODED_AGAINST_TICKCOUNT, SendProxy_AnimTime ),
 END_SEND_TABLE()
 
 #if !defined( NO_ENTITY_PREDICTION )
@@ -346,6 +346,8 @@ void SendProxy_Angles( const SendProp *pProp, const void *pStruct, const void *p
 	pOut->m_Vector[ 2 ] = anglemod( a->z );
 }
 
+#define SPROP_CELL_COORD				(1<<16) // Like SPROP_COORD, but special encoding for cell coordinates that can't be negative, bit count indicate maximum value
+
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
 const int SENDPROP_ANGROTATION_DEFAULT_BITS = -1;
 const int SENDPROP_VECORIGIN_FLAGS = SPROP_NOSCALE | SPROP_CHANGES_OFTEN;
@@ -356,56 +358,56 @@ const int SENDPROP_VECORIGIN_FLAGS = SPROP_CELL_COORD | SPROP_CHANGES_OFTEN;
 
 // This table encodes the CBaseEntity data.
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CBaseEntity, DT_BaseEntity )
-	SendPropDataTable( "AnimTimeMustBeFirst", 0, &REFERENCE_SEND_TABLE(DT_AnimTimeMustBeFirst), SendProxy_ClientSideAnimation ),
-	SendPropInt			(SENDINFO(m_flSimulationTime),	SIMULATION_TIME_WINDOW_BITS, SPROP_UNSIGNED|SPROP_CHANGES_OFTEN|SPROP_ENCODED_AGAINST_TICKCOUNT, SendProxy_SimulationTime),
+	SendPropDataTable( "AnimTimeMustBeFirst", 0, &REFERENCE_SEND_TABLE( DT_AnimTimeMustBeFirst ), SendProxy_ClientSideAnimation ),
+	SendPropInt( SENDINFO( m_flSimulationTime ), SIMULATION_TIME_WINDOW_BITS, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN | SPROP_ENCODED_AGAINST_TICKCOUNT, SendProxy_SimulationTime ),
 
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
-	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 #else
-	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_COORD | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 #endif
 
-	SendPropInt		(SENDINFO( m_ubInterpolationFrame ), NOINTERP_PARITY_MAX_BITS, SPROP_UNSIGNED ),
-	SendPropModelIndex(SENDINFO(m_nModelIndex)),
-	SendPropDataTable( SENDINFO_DT( m_Collision ), &REFERENCE_SEND_TABLE(DT_CollisionProperty) ),
-	SendPropInt		(SENDINFO(m_nRenderFX),		8, SPROP_UNSIGNED ),
-	SendPropInt		(SENDINFO(m_nRenderMode),	8, SPROP_UNSIGNED ),
-	SendPropInt		(SENDINFO(m_fEffects),		EF_MAX_BITS, SPROP_UNSIGNED),
-	SendPropInt		(SENDINFO(m_clrRender),	32, SPROP_UNSIGNED),
-	SendPropInt		(SENDINFO(m_iTeamNum),		TEAMNUM_NUM_BITS, 0),
-	SendPropInt		(SENDINFO(m_CollisionGroup), 5, SPROP_UNSIGNED),
-	SendPropFloat	(SENDINFO(m_flElasticity), 0, SPROP_COORD),
-	SendPropFloat	(SENDINFO(m_flShadowCastDistance), 12, SPROP_UNSIGNED ),
-	SendPropEHandle (SENDINFO(m_hOwnerEntity)),
-	SendPropEHandle (SENDINFO(m_hEffectEntity)),
-	SendPropEHandle (SENDINFO_NAME(m_hMoveParent, moveparent)),
-	SendPropInt		(SENDINFO(m_iParentAttachment), NUM_PARENTATTACHMENT_BITS, SPROP_UNSIGNED),
+	SendPropInt( SENDINFO( m_ubInterpolationFrame ), NOINTERP_PARITY_MAX_BITS, SPROP_UNSIGNED ),
+	SendPropModelIndex( SENDINFO( m_nModelIndex ) ),
+	SendPropDataTable( SENDINFO_DT( m_Collision ), &REFERENCE_SEND_TABLE( DT_CollisionProperty ) ),
+	SendPropInt( SENDINFO( m_nRenderFX ), 8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nRenderMode ), 8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_fEffects ), EF_MAX_BITS, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_clrRender ), 32, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iTeamNum ), TEAMNUM_NUM_BITS, 0 ),
+	SendPropInt( SENDINFO( m_CollisionGroup ), 5, SPROP_UNSIGNED ),
+	SendPropFloat( SENDINFO( m_flElasticity ), 0, SPROP_COORD ),
+	SendPropFloat( SENDINFO( m_flShadowCastDistance ), 12, SPROP_UNSIGNED ),
+	SendPropEHandle( SENDINFO( m_hOwnerEntity ) ),
+	SendPropEHandle( SENDINFO( m_hEffectEntity ) ),
+	SendPropEHandle( SENDINFO_NAME( m_hMoveParent, moveparent ) ),
+	SendPropInt( SENDINFO( m_iParentAttachment ), NUM_PARENTATTACHMENT_BITS, SPROP_UNSIGNED ),
 
 	SendPropStringT( SENDINFO( m_iName ) ),
 
-	SendPropInt		(SENDINFO_NAME( m_MoveType, movetype ), MOVETYPE_MAX_BITS, SPROP_UNSIGNED ),
-	SendPropInt		(SENDINFO_NAME( m_MoveCollide, movecollide ), MOVECOLLIDE_MAX_BITS, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NAME( m_MoveType, movetype ), MOVETYPE_MAX_BITS, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NAME( m_MoveCollide, movecollide ), MOVECOLLIDE_MAX_BITS, SPROP_UNSIGNED ),
+
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
-	SendPropVector	(SENDINFO(m_angRotation), -1, SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0, HIGH_DEFAULT, SendProxy_Angles ),
+	SendPropVector( SENDINFO( m_angRotation ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0, HIGH_DEFAULT, SendProxy_Angles ),
 #else
-	SendPropQAngles	(SENDINFO(m_angRotation), 13, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
+	SendPropQAngles( SENDINFO( m_angRotation ), 13, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
 #endif
 
-	SendPropInt		( SENDINFO( m_iTextureFrameIndex ),		8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iTextureFrameIndex ), 8, SPROP_UNSIGNED ),
 
 #if !defined( NO_ENTITY_PREDICTION )
 	SendPropDataTable( "predictable_id", 0, &REFERENCE_SEND_TABLE( DT_PredictableId ), SendProxy_SendPredictableId ),
 #endif
 
 	// FIXME: Collapse into another flag field?
-	SendPropInt		(SENDINFO(m_bSimulatedEveryTick),		1, SPROP_UNSIGNED ),
-	SendPropInt		(SENDINFO(m_bAnimatedEveryTick),		1, SPROP_UNSIGNED ),
-	SendPropBool( SENDINFO( m_bAlternateSorting )),
+	SendPropInt( SENDINFO( m_bSimulatedEveryTick ), 1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_bAnimatedEveryTick ), 1, SPROP_UNSIGNED ),
+	SendPropBool( SENDINFO( m_bAlternateSorting ) ),
 
 #if defined( TF_DLL ) || defined ( TF_VINTAGE )
-	SendPropArray3( SENDINFO_ARRAY3(m_nModelIndexOverrides), SendPropInt( SENDINFO_ARRAY(m_nModelIndexOverrides), SP_MODEL_INDEX_BITS, 0 ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_nModelIndexOverrides ), SendPropInt( SENDINFO_ARRAY( m_nModelIndexOverrides ), SP_MODEL_INDEX_BITS, 0 ) ),
 #endif
-
 END_SEND_TABLE()
 
 BEGIN_SIMPLE_DATADESC( thinkfunc_t )
@@ -807,6 +809,7 @@ CBaseEntity::CBaseEntity( bool bServerOnly )
 	SetCheckUntouch( false );
 	SetModelIndex( 0 );
 	SetModelName( NULL_STRING );
+	SetName( NULL_STRING );
 	m_nTransmitStateOwnedCounter = 0;
 
 	SetCollisionBounds( vec3_origin, vec3_origin );

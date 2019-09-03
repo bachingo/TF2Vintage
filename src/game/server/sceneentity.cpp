@@ -634,26 +634,6 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CSceneEntity, DT_SceneEntity )
 		SendPropEHandle( NULL, 0 ) ),
 END_SEND_TABLE()
 
-HSCRIPT ScriptCreateSceneEntity( const char *pszScene )
-{
-	if ( IsEntityCreationAllowedInScripts() == false )
-	{
-		Warning( "VScript error: A script attempted to create a scene entity mid-game. Entity creation from scripts is only allowed during map init.\n" );
-		return NULL;
-	}
-
-	g_pScriptVM->RegisterClass( GetScriptDescForClass( CSceneEntity ) );
-	CSceneEntity *pScene = (CSceneEntity *)CBaseEntity::CreateNoSpawn( "logic_choreographed_scene", vec3_origin, vec3_angle );
-
-	if ( pScene )
-	{
-		pScene->m_iszSceneFile = AllocPooledString( pszScene );
-		DispatchSpawn( pScene );
-	}
-
-	return ToHScript( pScene );
-}
-
 BEGIN_DATADESC( CSceneEntity )
 
 	// Keys
@@ -4702,6 +4682,27 @@ void StopScriptedScene( CBaseFlex *pActor, EHANDLE hSceneEnt )
 		LocalScene_Printf( "%s : stop scripted scene\n", STRING( pScene->m_iszSceneFile ) );
 		pScene->CancelPlayback();
 	}
+}
+
+
+HSCRIPT ScriptCreateSceneEntity( const char *pszScene )
+{
+	if ( IsEntityCreationAllowedInScripts() == false )
+	{
+		Warning( "VScript error: A script attempted to create a scene entity mid-game. Entity creation from scripts is only allowed during map init.\n" );
+		return NULL;
+	}
+
+	g_pScriptVM->RegisterClass( GetScriptDescForClass( CSceneEntity ) );
+	CSceneEntity *pScene = (CSceneEntity *)CBaseEntity::CreateNoSpawn( "logic_choreographed_scene", vec3_origin, vec3_angle );
+
+	if ( pScene )
+	{
+		pScene->m_iszSceneFile = AllocPooledString( pszScene );
+		DispatchSpawn( pScene );
+	}
+
+	return ToHScript( pScene );
 }
 
 //-----------------------------------------------------------------------------
