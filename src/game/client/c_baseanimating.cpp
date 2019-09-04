@@ -283,6 +283,13 @@ BEGIN_DATADESC( C_ClientRagdoll )
 
 END_DATADESC()
 
+
+BEGIN_ENT_SCRIPTDESC( C_BaseAnimating, C_BaseEntity, "Animating models client-side" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetPoseParameter, "SetPoseParameter", "Set the specified pose parameter to the specified value" )
+	DEFINE_SCRIPTFUNC( IsSequenceFinished, "Ask whether the main sequence is done playing" )
+END_SCRIPTDESC();
+
+
 C_ClientRagdoll::C_ClientRagdoll( bool bRestoring )
 {
 	m_iCurrentFriction = 0;
@@ -5663,6 +5670,16 @@ float C_BaseAnimating::SetPoseParameter( CStudioHdr *pStudioHdr, int iParameter,
 	}
 
 	return flValue;
+}
+
+void C_BaseAnimating::ScriptSetPoseParameter( const char *szName, float fValue )
+{
+	CStudioHdr *pHdr = GetModelPtr();
+	if ( pHdr == NULL )
+		return;
+
+	int iPoseParam = LookupPoseParameter( pHdr, szName );
+	SetPoseParameter( pHdr, iPoseParam, fValue );
 }
 
 //-----------------------------------------------------------------------------
