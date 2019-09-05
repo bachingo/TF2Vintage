@@ -461,6 +461,14 @@ BEGIN_DATADESC( CBasePlayer )
 	// DEFINE_UTLVECTOR( m_vecPlayerSimInfo ),
 END_DATADESC()
 
+BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseAnimating, "The player entity." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEyeAngles, "GetEyeAngles", "Player eye angles." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEyeForward, "GetForwardVector", "Player forward facing vector." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEyeRight, "GetRightVector", "Player right facing vector." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEyeUp, "GetUpVector", "Player up facing vector." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsPlayerNoclipping, "IsNoclipping", "Returns true if the player is in noclip mode." )
+END_SCRIPTDESC();
+
 int giPrecacheGrunt = 0;
 
 edict_t *CBasePlayer::s_PlayerEdict = NULL;
