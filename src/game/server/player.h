@@ -337,7 +337,7 @@ public:
 
 	virtual Vector			EyePosition( void );			// position of eyes
 	const QAngle&			EyeAngles( void );
-	const QAngle&			ScriptEyeAngles( void ) { static QAngle angEyes; angEyes = EyeAngles(); return angEyes; }
+	const Vector&			ScriptEyeAngles( void ) { static QAngle angEyes; angEyes = EyeAngles(); return (Vector &)angEyes; }
 	void					EyePositionAndVectors( Vector *pPosition, Vector *pForward, Vector *pRight, Vector *pUp );
 	virtual const QAngle&	LocalEyeAngles( void );		// Direction of eyes
 	void					EyeVectors( Vector *pForward, Vector *pRight = NULL, Vector *pUp = NULL );
