@@ -1036,10 +1036,6 @@ void CTFFlameThrower::RestartParticleEffect( void )
 
 	if ( !tf2v_new_flames.GetBool() )
 	{
-		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
-				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow_new_flame", iTeam, true );
-			else 
-		{
 		if ( m_bCritFire )
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
@@ -1048,11 +1044,6 @@ void CTFFlameThrower::RestartParticleEffect( void )
 				pszParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
 			else
 				pszParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
-		}
-		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
-		{
-				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow_new_flame", iTeam, true );
-				return;
 		}
 		else
 		{
@@ -1063,19 +1054,9 @@ void CTFFlameThrower::RestartParticleEffect( void )
 			else
 				pszParticleEffect = "flamethrower";
 		}
-		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
-		{
-				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow_new_flame", iTeam, true );
-				return;
-		}
-		}
 	}
 	else
 	{
-		if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
-				pszParticleEffect = ConstructTeamParticle( "flamethrower_rainbow", iTeam, true );
-			else
-		{
 		if ( m_bCritFire )
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
@@ -1094,7 +1075,6 @@ void CTFFlameThrower::RestartParticleEffect( void )
 			else
 				pszParticleEffect = "new_flame";
 		}
-		}
 	}
 
 	// Start the effect on the viewmodel if our owner is the local player
@@ -1103,11 +1083,6 @@ void CTFFlameThrower::RestartParticleEffect( void )
 	{
 		m_pFlameEffect = pModel->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
 		m_hFlameEffectHost = pModel;
-
-		Vector vecFwd, vecRight, vecUp;
-		QAngle angRot = pModel->GetAbsAngles();
-		AngleVectors( angRot, &vecFwd, &vecRight, &vecUp );
-		m_pFlameEffect->SetControlPointOrientation( 0, vecFwd, vecRight, vecUp );
 	}
 }
 
