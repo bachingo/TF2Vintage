@@ -88,14 +88,11 @@ void CTFShotgun::UpdatePunchAngles( CTFPlayer *pPlayer )
 
 void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 {
-	if ( !HasKnockback() )
+	if ( !HasKnockback() || ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_PREROUND ) )
 	{
 		BaseClass::FireBullet( pPlayer );
 		return;
 	}
-
-	if ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_PREROUND )
-		return;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
