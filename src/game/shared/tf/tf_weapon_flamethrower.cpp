@@ -1231,15 +1231,9 @@ void CTFFlameEntity::ClientThink( void )
 {
 	if ( !m_pFlameEffect )
 	{
-		const char *pszParticleEffect;
-		//if (IsLocalPlayerUsingVisionFilterFlags( 0x1 ) = 1);
-		//		pszParticleEffect = "new_flame_core"; // Rainbow colored flame core goes here.
-		//	else 
-		//{
-		if ( tf_halloween.GetBool() )
+		const char *pszParticleEffect = "new_flame_core";
+		if ( tf_halloween.GetBool() && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "new_flame_core_halloween";
-		else
-			pszParticleEffect = "new_flame_core";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
 
