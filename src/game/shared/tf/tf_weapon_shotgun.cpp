@@ -98,30 +98,33 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 		return;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner || ( pOwner->GetFlags() & FL_ONGROUND ) || pOwner->m_Shared.HasRecoiled() )
+	if ( !pOwner )
 		return;
 
-	pOwner->m_Shared.SetHasRecoiled( true );
+	if ( !( ( pOwner->GetFlags() & FL_ONGROUND ) || pOwner->m_Shared.HasRecoiled() ) )
+	{
+		pOwner->m_Shared.SetHasRecoiled( true );
 
-	pOwner->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_SLOWDOWN, NULL );
+		pOwner->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_SLOWDOWN, NULL );
 
-#ifdef GAME_DLL
-	EntityMatrix matrix;
-	matrix.InitFromEntity( pOwner );
+	#ifdef GAME_DLL
+		EntityMatrix matrix;
+		matrix.InitFromEntity( pOwner );
 
-	Vector vecLocalTranslation = pOwner->GetAbsOrigin() + pOwner->GetAbsVelocity();
+		Vector vecLocalTranslation = pOwner->GetAbsOrigin() + pOwner->GetAbsVelocity();
 
-	Vector vecLocal = matrix.WorldToLocal( vecLocalTranslation );
-	vecLocal.x = -300.0f;
+		Vector vecLocal = matrix.WorldToLocal( vecLocalTranslation );
+		vecLocal.x = -300.0f;
 
-	Vector vecVelocity = matrix.LocalToWorld( vecLocal );
-	vecVelocity -= pOwner->GetAbsOrigin();
+		Vector vecVelocity = matrix.LocalToWorld( vecLocal );
+		vecVelocity -= pOwner->GetAbsOrigin();
 
-	pOwner->SetAbsVelocity( vecVelocity );
+		pOwner->SetAbsVelocity( vecVelocity );
 
-	pOwner->ApplyAbsVelocityImpulse( Vector( 0, 0, 50 ) );
-	pOwner->RemoveFlag( FL_ONGROUND );
-#endif
+		pOwner->ApplyAbsVelocityImpulse( Vector( 0, 0, 50 ) );
+		pOwner->RemoveFlag( FL_ONGROUND );
+	#endif
+	}
 
 	BaseClass::FireBullet( pPlayer );
 }
