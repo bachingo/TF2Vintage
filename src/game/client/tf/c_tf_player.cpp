@@ -3008,7 +3008,7 @@ void C_TFPlayer::HandleTaunting( void )
 	// Clear the taunt slot.
 	if ( ( !m_bWasTaunting || m_flTauntOffTime != 0.0f ) && (
 		m_Shared.InCond( TF_COND_TAUNTING ) ||
-		m_Shared.InCond( TF_COND_STUNNED ) ||
+		m_Shared.IsControlStunned() ||
 		m_Shared.IsLoser() ||
 		m_nForceTauntCam ||
 		m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) ||
@@ -3028,7 +3028,7 @@ void C_TFPlayer::HandleTaunting( void )
 
 	if ( m_bWasTaunting && m_flTauntOffTime == 0.0f &&  (
 		!m_Shared.InCond( TF_COND_TAUNTING ) &&
-		!m_Shared.InCond( TF_COND_STUNNED ) &&
+		!m_Shared.IsControlStunned() &&
 		!m_Shared.IsLoser() &&
 		!m_nForceTauntCam &&
 		!m_Shared.InCond( TF_COND_PHASE ) &&
