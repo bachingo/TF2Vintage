@@ -68,6 +68,10 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SCATTERGUN; }
 	virtual void	FireBullet( CTFPlayer *pShooter );
 
+#ifdef GAME_DLL
+	virtual void	ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim );
+#endif
+
 	virtual void	Equip( CBaseCombatCharacter *pEquipTo );
 	virtual bool	Reload();
 	virtual void	FinishReload();

@@ -297,7 +297,6 @@ public:
 	void	SetStunPhase( int iPhase )			{ m_iStunPhase = iPhase; }
 	float	GetStunExpireTime( void )			{ return m_flStunExpireTime; }
 	void	SetStunExpireTime( float flTime )	{ m_flStunExpireTime = flTime; }
-
 	int		GetStunFlags( void )				{ return m_nStunFlags; }
 
 	int		GetTeleporterEffectColor( void )	{ return m_nTeamTeleporterUsed; }
@@ -320,6 +319,12 @@ public:
 	// Scatterguns
 	bool	HasRecoiled( void ) const			{ return m_bRecoiled; }
 	void	SetHasRecoiled( bool value )		{ m_bRecoiled = value; }
+	float	GetHypeMeter( void ) const {}
+	void	SetHypeMeter(float value) {}
+	
+	int		GetKnockbackWeaponID( void ) const { return m_iWeaponKnockbackID; }
+	void	SetKnockbackWeaponID( int userid ) { m_iWeaponKnockbackID = userid; }
+	CBasePlayer *GetKnockbackWeaponOwner( void );
 
 	// Knights
 	int		GetDecapitationCount( void ) const	{ return m_iDecapitations; }
@@ -539,6 +544,8 @@ private:
 	CNetworkVar( float, m_flStunMovementSpeed );
 	CNetworkVar( float, m_flStunResistance );
 
+	CNetworkVar( int, m_iWeaponKnockbackID );
+
 	CNetworkVar( int, m_iDecapitations );
 	CNetworkVar( float, m_flChargeMeter );
 	CNetworkVar( bool, m_bShieldEquipped );
@@ -595,6 +602,15 @@ private:
 	bool m_bWasCritBoosted;
 #endif
 };
+
+inline CBasePlayer *CTFPlayerShared::GetKnockbackWeaponOwner( void )
+{
+	if ( m_iWeaponKnockbackID == -1 )
+		return NULL;
+
+	Assert( dynamic_cast<CTFPlayer *>( UTIL_PlayerByUserId( m_iWeaponKnockbackID ) ) );
+	return UTIL_PlayerByUserId( m_iWeaponKnockbackID );
+}
 
 #define TF_DEATH_DOMINATION				0x0001	// killer is dominating victim
 #define TF_DEATH_ASSISTER_DOMINATION	0x0002	// assister is dominating victim

@@ -86,6 +86,9 @@ void CTFShotgun::UpdatePunchAngles( CTFPlayer *pPlayer )
 // Weapon Scatter Gun functions.
 //
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 {
 	if ( !HasKnockback() || ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_PREROUND ) )
@@ -126,6 +129,48 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 	BaseClass::FireBullet( pPlayer );
 }
 
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFScatterGun::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim )
+{
+	BaseClass::ApplyPostOnHitAttributes( info, pVictim );
+
+	CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
+	if ( pAttacker == NULL || pVictim == NULL )
+		return;
+
+	if ( !HasKnockback() || pVictim->m_Shared.InCond( TF_COND_MEGAHEAL ) )
+		return;
+
+	if ( pVictim->m_Shared.GetKnockbackWeaponID() >= 0 )
+		return;
+
+	Vector vecToVictim = pAttacker->WorldSpaceCenter() - pVictim->WorldSpaceCenter();
+
+	float flKnockbackMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flKnockbackMult, scattergun_knockback_mult );
+
+	// This check is a bit open ended and broad
+	if ( ( info.GetDamage() <= 30.0f || vecToVictim.LengthSqr() > Square( 400.0f ) ) && flKnockbackMult < 1.0f )
+		return;
+
+	vecToVictim.NormalizeInPlace();
+
+	float flDmgForce = AirBurstDamageForce( pVictim->WorldAlignSize(), info.GetDamage(), flKnockbackMult );
+	Vector vecVelocityImpulse = vecToVictim * abs( flDmgForce );
+
+	pVictim->ApplyAirBlastImpulse( vecVelocityImpulse );
+	pVictim->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_LIMITMOVEMENT, pAttacker );
+
+	pVictim->m_Shared.SetKnockbackWeaponID( pAttacker->GetUserID() );
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFScatterGun::Equip( CBaseCombatCharacter *pEquipTo )
 {
 	if ( pEquipTo )
@@ -140,6 +185,9 @@ void CTFScatterGun::Equip( CBaseCombatCharacter *pEquipTo )
 	BaseClass::Equip( pEquipTo );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFScatterGun::Reload()
 {
 	int nScatterGunNoReloadSingle = 0;
@@ -150,6 +198,9 @@ bool CTFScatterGun::Reload()
 	return BaseClass::Reload();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFScatterGun::FinishReload()
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
@@ -169,6 +220,9 @@ void CTFScatterGun::FinishReload()
 	BaseClass::FinishReload();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFScatterGun::SendWeaponAnim( int iActivity )
 {
 	if ( GetTFPlayerOwner() && HasKnockback() )
@@ -216,6 +270,9 @@ bool CTFScatterGun::SendWeaponAnim( int iActivity )
 	return BaseClass::SendWeaponAnim( iActivity );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFScatterGun::HasKnockback() const
 {
 	int nScatterGunHasKnockback = 0;
