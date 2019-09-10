@@ -4659,6 +4659,14 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		m_Shared.MakeBleed( pTFAttacker, pTFWeapon, flBleedDuration, flBleedDamage );
 	}
 
+	if ( pTFWeapon )
+	{
+		float flJarateDuration = 0.0f;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFWeapon, flJarateDuration, jarate_duration );
+		if ( flJarateDuration > 0.0f )
+			m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+	}
+
 	// Fire a global game event - "player_hurt"
 	IGameEvent *event = gameeventmanager->CreateEvent( "player_hurt" );
 	if ( event )
