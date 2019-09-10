@@ -930,7 +930,10 @@ float CTFGameMovement::GetAirSpeedCap( void )
 	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
 		return 750.0f;
 
-	return 30.0f * CAttributeManager::AttribHookValue<float>( 1.0f, "mod_air_control", m_pTFPlayer );
+	float flAirSpeedMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pTFPlayer, flAirSpeedMult, mod_air_control );
+
+	return 30.0f * flAirSpeedMult;
 }
 
 extern void TracePlayerBBoxForGround( const Vector& start, const Vector& end, const Vector& minsSrc,
@@ -1622,12 +1625,19 @@ void CTFGameMovement::FullTossMove( void )
 //-----------------------------------------------------------------------------
 void CTFGameMovement::StunMove( void )
 {
-	// Can't move while stunned
-	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) && ( m_pTFPlayer->m_Shared.GetStunFlags() & TF_STUNFLAG_BONKSTUCK ) )
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
 	{
-		mv->m_flForwardMove = 0.0f;
-		mv->m_flSideMove = 0.0f;
-		mv->m_flUpMove = 0.0f;
+		// Can't move while stunned
+		if ( m_pTFPlayer->m_Shared.GetStunFlags() & TF_STUNFLAG_BONKSTUCK )
+		{
+			mv->m_flForwardMove = 0.0f;
+			mv->m_flSideMove = 0.0f;
+			mv->m_flUpMove = 0.0f;
+		}
+
+		// Can't fight back against the push force
+		if ( m_pTFPlayer->m_Shared.GetStunFlags() & TF_STUNFLAG_LIMITMOVEMENT )
+			mv->m_flForwardMove = 0.0f;
 	}
 }
 
@@ -1645,26 +1655,21 @@ void CTFGameMovement::ChargeMove( void )
 
 		int iOldButtons = mv->m_nButtons;
 		mv->m_nButtons &= IN_ATTACK2;
-		if (iOldButtons & IN_ATTACK)
+		if ( iOldButtons & IN_ATTACK )
 			mv->m_nButtons |= IN_ATTACK;
 	}
 
 #ifdef GAME_DLL
 	CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( m_pTFPlayer->GetActiveTFWeapon() );
-	if (pMedigun && pMedigun->GetWeaponID() == TF_WEAPON_MEDIGUN && pMedigun->GetMedigunType() == TF_MEDIGUN_QUICKFIX)
+	if ( pMedigun && pMedigun->GetWeaponID() == TF_WEAPON_MEDIGUN && pMedigun->GetMedigunType() == TF_MEDIGUN_QUICKFIX )
 	{
 		CTFPlayer *pTarget = ToTFPlayer( pMedigun->GetHealTarget() );
-		if (pTarget && pTarget->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+		if ( pTarget && pTarget->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 		{
 			mv->m_flMaxSpeed = 750.0f;
 			mv->m_flForwardMove = 750.0f;
 			mv->m_flSideMove = 0.0f;
 			mv->m_flUpMove = 0.0f;
-
-			int iOldButtons = mv->m_nButtons;
-			mv->m_nButtons &= IN_ATTACK2;
-			if (iOldButtons & IN_ATTACK)
-				mv->m_nButtons |= IN_ATTACK;
 		}
 	}
 #endif
@@ -1790,6 +1795,7 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 		m_pTFPlayer->m_Shared.SetAirDash( false );
 		m_pTFPlayer->m_Shared.ResetAirDucks();
 		m_pTFPlayer->m_Shared.SetHasRecoiled( false );
+		m_pTFPlayer->m_Shared.SetKnockbackWeaponID( -1 );
 	}
 
 #ifdef GAME_DLL
