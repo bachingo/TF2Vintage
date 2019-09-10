@@ -622,12 +622,28 @@ void CTFSniperRifle::UpdateSniperDot( void )
 //-----------------------------------------------------------------------------
 bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 {
-	// can only fire a crit shot if this is a headshot
-	if ( !bIsHeadshot )
+	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot ) )
 		return false;
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( pPlayer )
+
+	// are we being damage boosted?
+	if ( !pPlayer || pPlayer->m_Shared.IsCritBoosted() )
+		return true;
+
+	int nSniperNoHeadshot = 0;
+	CALL_ATTRIB_HOOK_INT( nSniperNoHeadshot, set_weapon_mode );
+	if ( nSniperNoHeadshot == 1 )
+		return false;
+
+	int nSniperFullChargeHeadShotOnly = 0;
+	CALL_ATTRIB_HOOK_INT( nSniperFullChargeHeadShotOnly, sniper_no_headshot_without_full_charge );
+	if ( nSniperFullChargeHeadShotOnly == 1 && m_flChargedDamage < TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX )
+		return false;
+
+	int nSniperNoScopeCrits = 0;
+	CALL_ATTRIB_HOOK_INT( nSniperNoScopeCrits, sniper_crit_no_scope );
+	if ( nSniperNoScopeCrits == 0 )
 	{
 		// no crits if they're not zoomed
 		if ( pPlayer->GetFOV() >= pPlayer->GetDefaultFOV() )
