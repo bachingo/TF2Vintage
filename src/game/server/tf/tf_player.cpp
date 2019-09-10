@@ -7161,6 +7161,22 @@ void CTFPlayer::ApplyAbsVelocityImpulse( Vector const &vecImpulse )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ApplyAirBlastImpulse( Vector const &vecImpulse )
+{
+	Vector vecModImpulse = vecImpulse;
+
+	// Approximate force to leave ground
+	float flImpulseLiftZ = 268.3281572999747f;
+	vecModImpulse.z = ( GetFlags() & FL_ONGROUND ) ? vecModImpulse.z : Max( flImpulseLiftZ, vecModImpulse.z );
+	CALL_ATTRIB_HOOK_FLOAT( vecModImpulse.z, airblast_vertical_vulnerability_multiplier );
+
+	RemoveFlag( FL_ONGROUND );
+	ApplyAbsVelocityImpulse( vecModImpulse );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 void CTFPlayer::CreateRagdollEntity( void )

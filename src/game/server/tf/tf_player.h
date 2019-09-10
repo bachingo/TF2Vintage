@@ -128,6 +128,7 @@ public:
 	virtual void		PlayerUse( void );
 
 	virtual void		ApplyAbsVelocityImpulse( Vector const &impulse );
+	void				ApplyAirBlastImpulse( Vector const &imuplse );
 
 	void				CreateViewModel( int iViewModel = 0 );
 	CBaseViewModel		*GetOffHandViewModel();
