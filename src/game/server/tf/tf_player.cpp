@@ -4392,6 +4392,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	CTF_GameStats.Event_PlayerDamage( this, info, iHealthBefore - GetHealth() );
 
+	// Post modified weapon effects
+	if ( pWeapon )
+		pWeapon->ApplyPostOnHitAttributes( inputInfo, this );
+
 	return bTookDamage;
 }
 

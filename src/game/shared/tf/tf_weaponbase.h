@@ -303,7 +303,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual const Vector& GetBulletSpread();
 
 	// On hit effects.
-	void ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info );
+	virtual void ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info );
+	virtual void ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim );
 
 	bool IsSilentKiller( void ) const;
 

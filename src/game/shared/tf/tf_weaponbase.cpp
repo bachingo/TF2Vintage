@@ -2180,6 +2180,19 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+void CTFWeaponBase::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim )
+{
+	CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
+	if ( pAttacker == NULL )
+		return;
+
+	if ( pAttacker != GetOwner() )
+		return;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Return if we should not show death notices to enemy
 // ----------------------------------------------------------------------------
 bool CTFWeaponBase::IsSilentKiller( void ) const
