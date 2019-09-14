@@ -206,12 +206,12 @@ BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainer, DT_AttributeContainer )
 	SendPropEHandle( SENDINFO( m_hOuter ) ),
 	SendPropInt( SENDINFO( m_iReapplyProvisionParity ), ATTRIB_REAPPLY_PARITY_BITS, SPROP_UNSIGNED ),
 #endif
-END_NETWORK_TABLE()
+END_NETWORK_TABLE();
 
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA_NO_BASE( CAttributeContainer )
 	DEFINE_PRED_FIELD( m_iReapplyProvisionParity, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-END_PREDICTION_DATA()
+END_PREDICTION_DATA();
 #endif
 
 float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders )

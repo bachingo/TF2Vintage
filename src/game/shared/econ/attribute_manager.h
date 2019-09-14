@@ -96,7 +96,7 @@ public:
 #endif
 	DECLARE_EMBEDDED_NETWORKVAR();
 
-	virtual ~CAttributeContainer();
+	virtual ~CAttributeContainer() {};
 
 	float ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
