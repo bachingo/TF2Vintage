@@ -38,6 +38,7 @@ public:
 	virtual void			SetParticle(const char* name);
 	virtual void			UpdateWearableBodyGroups( CBasePlayer *pPlayer );
 	virtual void			GiveTo( CBaseEntity *pEntity );
+	virtual void			RemoveFrom( CBaseEntity *pEntity );
 
 #ifdef GAME_DLL
 	virtual void			Equip( CBasePlayer *pPlayer );

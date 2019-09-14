@@ -100,6 +100,18 @@ void CEconWearable::GiveTo( CBaseEntity *pEntity )
 #endif
 }
 
+void CEconWearable::RemoveFrom( CBaseEntity *pEntity )
+{
+#ifdef GAME_DLL
+	CBasePlayer *pPlayer = ToBasePlayer( pEntity );
+
+	if ( pPlayer )
+	{
+		pPlayer->RemoveWearable( this );
+	}
+#endif
+}
+
 #ifdef GAME_DLL
 void CEconWearable::Equip( CBasePlayer *pPlayer )
 {
