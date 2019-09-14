@@ -57,6 +57,20 @@ void CTFWearable::UpdateModelToClass( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWearable::Break( void )
+{
+	CPVSFilter filter( GetAbsOrigin() );
+	UserMessageBegin( filter, "BreakModel" );
+		WRITE_SHORT( GetModelIndex() );
+		WRITE_VEC3COORD( GetAbsOrigin() );
+		WRITE_ANGLES( GetAbsAngles() );
+		WRITE_SHORT( GetSkin() );
+	MessageEnd();
+}
+
 #else
 
 //-----------------------------------------------------------------------------
