@@ -24,9 +24,10 @@ public:
 	DECLARE_CLASS_NOBASE( CAttributeManager );
 
 	CAttributeManager();
+	virtual ~CAttributeManager();
 
 	template <typename type>
-	static type AttribHookValue( type value, const char* text, const CBaseEntity *pEntity )
+	static type AttribHookValue( type value, const char* text, const CBaseEntity *pEntity, CUtlVector<EHANDLE> *pOutList = NULL )
 	{
 		if ( !pEntity )
 			return value;
@@ -36,7 +37,7 @@ public:
 		if ( pAttribInteface )
 		{
 			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
-			float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( (float)value, pEntity, strAttributeClass );
+			float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( (float)value, pEntity, strAttributeClass, pOutList );
 			value = (type)flResult;
 		}
 
@@ -52,8 +53,8 @@ public:
 	void			ProviteTo( CBaseEntity *pEntity );
 	void			StopProvidingTo( CBaseEntity *pEntity );
 	virtual void	InitializeAttributes( CBaseEntity *pEntity );
-	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
-	virtual string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass );
+	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	virtual string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 
 protected:
 	CNetworkHandle( CBaseEntity, m_hOuter );
@@ -68,37 +69,37 @@ private:
 	CUtlVector<EHANDLE> m_AttributeProviders;
 };
 
-	template<>
-	inline string_t CAttributeManager::AttribHookValue<string_t>( string_t strValue, const char *text, const CBaseEntity *pEntity )
-	{
-		if ( !pEntity )
-			return strValue;
-
-		IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
-
-		if ( pAttribInteface )
-		{
-			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
-			strValue = pAttribInteface->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass );
-		}
-
+template<>
+inline string_t CAttributeManager::AttribHookValue<string_t>( string_t strValue, const char *text, const CBaseEntity *pEntity, CUtlVector<EHANDLE> *pOutList )
+{
+	if ( !pEntity )
 		return strValue;
+
+	IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+
+	if ( pAttribInteface )
+	{
+		string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
+		strValue = pAttribInteface->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutList );
 	}
+
+	return strValue;
+}
 
 
 class CAttributeContainer : public CAttributeManager
 {
 public:
-	DECLARE_EMBEDDED_NETWORKVAR();
 	DECLARE_CLASS( CAttributeContainer, CAttributeManager );
 #ifdef CLIENT_DLL
 	DECLARE_PREDICTABLE();
 #endif
+	DECLARE_EMBEDDED_NETWORKVAR();
 
-	CAttributeContainer();
+	virtual ~CAttributeContainer();
 
-	float ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass );
-	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass );
+	float ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 };
 
 #endif // ATTRIBUTE_MANAGER_H

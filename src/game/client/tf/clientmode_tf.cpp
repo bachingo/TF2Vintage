@@ -618,23 +618,21 @@ void __MsgFunc_CheapBreakModel( bf_read &msg )
 	HandleBreakModel( msg, true );
 }
 
-void HandleBreakModel( bf_read &msg, bool bNoAngles )
+void HandleBreakModel( bf_read &msg, bool bCheap )
 {
 	CUtlVector<breakmodel_t> list;
-	int iModelIndex = ( int ) msg.ReadShort();
 	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
-	Vector vecOrigin;
-	QAngle vecAngles;
+	Vector vecOrigin = vec3_origin;
+	QAngle vecAngles = vec3_angle;
 	int nSkin = 0;
+
+	int iModelIndex = msg.ReadShort();
 
 	BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
 
 	msg.ReadBitVec3Coord( vecOrigin );
-	if ( bNoAngles )
-	{
-		vecAngles = vec3_angle;
-	}
-	else
+
+	if ( !bCheap )
 	{
 		msg.ReadBitAngles( vecAngles );
 		nSkin = msg.ReadShort();
