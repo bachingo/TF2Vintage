@@ -47,6 +47,7 @@ public:
 
 	void				BackstabVMThink( void );
 	void				DisguiseOnKill( void );
+	void				BackstabBlocked( void );
 
 private:
 	CHandle<CTFPlayer> m_hBackstabVictim;

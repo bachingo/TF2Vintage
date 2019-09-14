@@ -350,6 +350,8 @@ public:
 	bool				DoClassSpecialSkill( void );
 	void				EndClassSpecialSkill( void );
 
+	bool				CheckBlockBackstab( CTFPlayer *pAttacker );
+
 	float				GetLastDamageTime( void ) { return m_flLastDamageTime; }
 
 	void				SetClassMenuOpen( bool bIsOpen );

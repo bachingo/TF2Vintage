@@ -19,6 +19,7 @@
 #include "tf_viewmodel.h"
 #include "tf_item.h"
 #include "in_buttons.h"
+#include "tf_bot.h"
 #include "entity_capture_flag.h"
 #include "effect_dispatch_data.h"
 #include "te_effect_dispatch.h"
@@ -60,6 +61,7 @@
 #include "tf_weapon_laser_pointer.h"
 #include "tf_weapon_sword.h"
 #include "tf_weapon_invis.h"
+#include "tf_weapon_knife.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "nav_pathfind.h"
 
@@ -2096,6 +2098,44 @@ void CTFPlayer::EndClassSpecialSkill( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayer::CheckBlockBackstab( CTFPlayer *pAttacker )
+{
+	CUtlVector<EHANDLE> attribProviders;
+	int nBlocksBackstab = 0;
+
+	CALL_ATTRIB_HOOK_INT_PROVIDERS( nBlocksBackstab, set_blockbackstab_once, attribProviders );
+	if ( nBlocksBackstab == 1 )
+	{
+		// Get the top most provider so we can destroy them in order
+		CBaseEntity *pProvider = attribProviders.Head();
+		if ( pProvider )
+		{
+			if ( pProvider->IsWearable() )
+			{
+				CTFWearable *pWearable = assert_cast<CTFWearable *>( pProvider );
+				pWearable->Break();
+				pWearable->RemoveFrom( this );
+			}
+
+			UTIL_Remove( pProvider );
+
+			CTFBot *pBot = ToTFBot( this );
+			if ( pBot )
+			{
+				EHANDLE hndl( pAttacker );
+				pBot->DelayedThreatNotice( hndl, 0.5f );
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Find a spawn point for the player.
 //-----------------------------------------------------------------------------
 CBaseEntity *CTFPlayer::EntSelectSpawnPoint()
@@ -3978,14 +4018,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if ( this->m_Shared.InCond( TF_COND_URINE ) )
+	if ( m_Shared.InCond( TF_COND_URINE ) )
 	{
 		// Jarated players take mini crits
 		bitsDamage |= DMG_MINICRITICAL;
 		info.AddDamageType( DMG_MINICRITICAL );
 	}
 
-	if ( this->m_Shared.InCond( TF_COND_MAD_MILK ) )
+	if ( m_Shared.InCond( TF_COND_MAD_MILK ) )
 	{
 		// Mad Milked players heal the attacker.
 		float flDamage = info.GetDamage();
@@ -4071,6 +4111,46 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		bitsDamage &= ~DMG_MINICRITICAL;
 		bitsDamage |= DMG_CRITICAL;
+	}
+
+	if ( inputInfo.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
+	{
+		int nJarateBackstabber = 0;
+		CALL_ATTRIB_HOOK_INT( nJarateBackstabber, jarate_backstabber );
+		if ( nJarateBackstabber == 1 && pTFAttacker )
+		{
+			pTFAttacker->m_Shared.AddCond( TF_COND_URINE, 10.0f );
+			pTFAttacker->m_Shared.m_hUrineAttacker = this;
+			pTFAttacker->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
+		}
+
+		if ( this && CheckBlockBackstab( pTFAttacker ) )
+		{
+			info.SetDamage( 0.0f );
+
+			UTIL_ScreenShake( GetAbsOrigin(), 25.0f, 150.0f, 1.0f, 50.0f, SHAKE_START );
+			EmitSound( "Player.Spy_Shield_Break" );
+
+			CTFSniperRifle *pRifle = (CTFSniperRifle *)GetActiveTFWeapon();
+			if ( pRifle && pRifle->IsZoomed() )
+				pRifle->ToggleZoom();
+
+			if ( pTFAttacker )
+			{
+				CTFKnife *pKnife = dynamic_cast<CTFKnife *>( pTFAttacker->GetActiveTFWeapon() );
+				if ( pKnife )
+					pKnife->BackstabBlocked();
+			}
+
+			CRecipientFilter filter;
+			filter.AddRecipient( this );
+			filter.AddRecipient( pTFAttacker );
+
+			UserMessageBegin( filter, "PlayerShieldBlocked" );
+				WRITE_BYTE( pTFAttacker->entindex() );
+				WRITE_BYTE( this->entindex() );
+			MessageEnd();
+		}
 	}
 
 	// If we're not damaging ourselves, apply randomness

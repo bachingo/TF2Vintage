@@ -337,6 +337,9 @@ void CTFKnife::BackstabVMThink( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFKnife::DisguiseOnKill( void )
 {
 	if ( !m_hBackstabVictim )
@@ -349,4 +352,19 @@ void CTFKnife::DisguiseOnKill( void )
 	int iTeamNum = m_hBackstabVictim->GetTeamNumber();
 	int iClassIdx = m_hBackstabVictim->GetPlayerClass()->GetClassIndex();
 	pOwner->m_Shared.Disguise( iTeamNum, iClassIdx, m_hBackstabVictim );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFKnife::BackstabBlocked( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+		return;
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + 2.0f;
+	m_flNextSecondaryAttack = gpGlobals->curtime + 2.0f;
+
+	SendWeaponAnim( ACT_MELEE_VM_PULLBACK );
 }
