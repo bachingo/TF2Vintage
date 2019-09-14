@@ -623,12 +623,13 @@ void HandleBreakModel( bf_read &msg, bool bNoAngles )
 	CUtlVector<breakmodel_t> list;
 	int iModelIndex = ( int ) msg.ReadShort();
 	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
-	Vector vec3;
+	Vector vecOrigin;
 	QAngle vecAngles;
+	int nSkin = 0;
 
 	BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
 
-	msg.ReadBitVec3Coord( vec3 );
+	msg.ReadBitVec3Coord( vecOrigin );
 	if ( bNoAngles )
 	{
 		vecAngles = vec3_angle;
@@ -636,9 +637,11 @@ void HandleBreakModel( bf_read &msg, bool bNoAngles )
 	else
 	{
 		msg.ReadBitAngles( vecAngles );
+		nSkin = msg.ReadShort();
 	}
 
-	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), angularImpulse );
+	breakablepropparams_t params( vecOrigin, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), angularImpulse );
+	params.nDefaultSkin = nSkin;
 
 	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );
 }
