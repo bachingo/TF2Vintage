@@ -1125,7 +1125,7 @@ void C_TFRagdoll::ClientThink( void )
 					{
 						if ( !bBombinomiconDeath )
 						{
-							SUB_Remove();
+							EndFadeOut();
 							return;
 						}
 
