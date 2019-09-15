@@ -129,9 +129,12 @@ float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *
 		{
 			flValue = pAttributes->GetAttributeManager()->ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
 
-			EHANDLE hndl( pProvider );
-			if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
-				pOutProviders->AddToTail( hndl );
+			if( pOutProviders )
+			{
+				EHANDLE hndl( pProvider );
+				if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
+					pOutProviders->AddToTail( hndl );
+			}
 		}
 	}
 
@@ -174,9 +177,12 @@ string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBase
 		{
 			strValue = pAttributes->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
 
-			EHANDLE hndl( pProvider );
-			if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
-				pOutProviders->AddToTail( hndl );
+			if ( pOutProviders )
+			{
+				EHANDLE hndl( pProvider );
+				if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
+					pOutProviders->AddToTail( hndl );
+			}
 		}
 	}
 
