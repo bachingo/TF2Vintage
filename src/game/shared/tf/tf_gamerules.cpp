@@ -2491,11 +2491,11 @@ inline void PickSpawnSpot( CHalloweenBaseBoss::HalloweenBossType eBossType, Vect
 //-----------------------------------------------------------------------------
 void CTFGameRules::SpawnHalloweenBoss( void )
 {
-	// ???
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
+	{
+		SpawnZombieMob();
 		return;
-	if ( !IsHolidayActive( kHoliday_Halloween ) )
-		return SpawnZombieMob();
+	}
 
 	float fSpawnInterval;
 	float fSpawnVariation;
