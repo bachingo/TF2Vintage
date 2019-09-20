@@ -1236,17 +1236,15 @@ void CTFFlameEntity::ClientThink( void )
 			pszParticleEffect = "new_flame_core_halloween";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
-
 	}
 
 	m_pFlameEffect->SetControlPoint( 0, WorldSpaceCenter() );
 
 	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 	{
-		Vector vecColor = RandomVector( 0, 1 );
-		vecColor *= rand() % 255;
+		Vector vecColor = RandomVector( -255, 255 );
 
-		m_pFlameEffect->SetControlPoint( 6, vecColor );
+		m_pFlameEffect->SetControlPoint( 2, vecColor );
 	}
 }
 #endif

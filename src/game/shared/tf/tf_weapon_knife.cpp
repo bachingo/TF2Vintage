@@ -152,13 +152,15 @@ void CTFKnife::PrimaryAttack( void )
 	}
 	else
 	{
+		pPlayer->RemoveDisguise();
+
 		int nSanguisuge = 0;
 		CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
-		if ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() )
-			return;
-
 		if ( nSanguisuge != 0 )
 		{
+			if ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() )
+				return;
+
 			int nHealthToSteal = Max( pPlayer->GetMaxHealth() * 3, pPlayer->GetHealth() + iVictimHealth );
 			int nHealthToAdd = pPlayer->GetHealth() - nHealthToSteal;
 			if ( nHealthToAdd > 0 )
