@@ -4702,7 +4702,7 @@ void CTFGameRules::Arena_SendPlayerNotifications( void )
 			{
 				for ( int j = 0; j < pTeam[i]->GetNumPlayers(); j++ )
 				{
-					CBasePlayer *pPlayer = pTeam[ i ]->GetPlayer( j );
+					CBasePlayer *pPlayer = pTeam[i]->GetPlayer( j );
 					pTFPlayer = ToTFPlayer( pPlayer );
 					if ( pTFPlayer && pTFPlayer->IsReadyToPlay() && !pTFPlayer->IsHLTV() && !pTFPlayer->IsReplay() )
 					{
