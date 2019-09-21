@@ -142,32 +142,28 @@ void CTFKnife::PrimaryAttack( void )
 	CALL_ATTRIB_HOOK_INT( nDisguiseOnBackstab, set_disguise_on_backstab );
 	if ( nDisguiseOnBackstab != 0 )
 	{
-		if ( !m_hBackstabVictim || ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() ) || pPlayer->HasTheFlag() )
-		{
-			pPlayer->RemoveDisguise();
-			return;
-		}
+		float flDisguiseSpeedPenalty = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDisguiseSpeedPenalty, disguise_speed_penalty );
 
-		SetContextThink( &CTFKnife::DisguiseOnKill, 0.2f, "DisguiseOnKill" );
+		if ( m_hBackstabVictim && !m_hBackstabVictim->IsAlive() && !pPlayer->HasTheFlag() )
+			SetContextThink( &CTFKnife::DisguiseOnKill, gpGlobals->curtime + flDisguiseSpeedPenalty, "DisguiseOnKill" );
 	}
-	else
+	
+	pPlayer->RemoveDisguise();
+
+	int nSanguisuge = 0;
+	CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
+	if ( nSanguisuge != 0 )
 	{
-		pPlayer->RemoveDisguise();
+		if ( !m_hBackstabVictim || m_hBackstabVictim->IsAlive() )
+			return;
 
-		int nSanguisuge = 0;
-		CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
-		if ( nSanguisuge != 0 )
+		int nHealthToSteal = Max( pPlayer->GetMaxHealth() * 3, pPlayer->GetHealth() + iVictimHealth );
+		int nHealthToAdd = pPlayer->GetHealth() - nHealthToSteal;
+		if ( nHealthToAdd > 0 )
 		{
-			if ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() )
-				return;
-
-			int nHealthToSteal = Max( pPlayer->GetMaxHealth() * 3, pPlayer->GetHealth() + iVictimHealth );
-			int nHealthToAdd = pPlayer->GetHealth() - nHealthToSteal;
-			if ( nHealthToAdd > 0 )
-			{
-				pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
-				pPlayer->m_Shared.HealthKitPickupEffects( nHealthToAdd );
-			}
+			pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
+			pPlayer->m_Shared.HealthKitPickupEffects( nHealthToAdd );
 		}
 	}
 #endif
