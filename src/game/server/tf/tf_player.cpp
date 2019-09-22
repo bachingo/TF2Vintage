@@ -4106,7 +4106,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 
 	int nMinicritsToCrits = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( pAttacker, nMinicritsToCrits, minicrits_become_crits );
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritsToCrits, minicrits_become_crits );
 	if ( bitsDamage & DMG_MINICRITICAL && nMinicritsToCrits )
 	{
 		bitsDamage &= ~DMG_MINICRITICAL;
