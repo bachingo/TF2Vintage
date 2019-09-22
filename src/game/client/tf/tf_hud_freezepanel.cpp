@@ -754,17 +754,20 @@ void CTFFreezePanel::ShowNemesisPanel( bool bShow )
 
 void CTFFreezePanel::SetColorForTargetTeam( int iTeamNumber )
 {
-	switch ( iTeamNumber )
+	if( m_pFreezePanelBG )
 	{
-	case TF_TEAM_RED:
-		m_pFreezePanelBG->SetImage("../hud/freezecam_red_bg");
-		break;
-	case TF_TEAM_BLUE:
-		m_pFreezePanelBG->SetImage("../hud/freezecam_blue_bg");
-		break;
-	default:
-		m_pFreezePanelBG->SetImage("../hud/freezecam_black_bg");
-		break;
+		switch ( iTeamNumber )
+		{
+			case TF_TEAM_RED:
+				m_pFreezePanelBG->SetImage("../hud/freezecam_red_bg");
+				break;
+			case TF_TEAM_BLUE:
+				m_pFreezePanelBG->SetImage("../hud/freezecam_blue_bg");
+				break;
+			default:
+				m_pFreezePanelBG->SetImage("../hud/freezecam_black_bg");
+				break;
+		}
 	}
 }
 
