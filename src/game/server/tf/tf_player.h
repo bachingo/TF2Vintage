@@ -523,7 +523,7 @@ public:
 	bool				CalculateAmmoPackPositionAndAngles( CTFWeaponBase *pWeapon, Vector &vecOrigin, QAngle &vecAngles );
 
 	// Stun
-	void				PlayStunSound( CTFPlayer *pOther, const char *pszStunSound );
+	void				PlayStunSound( CTFPlayer *pStunner, int nStunFlags/*, int nCurrentStunFlags*/ );
 
 	// Arena
 	float	m_flArenaQueueTime;

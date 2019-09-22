@@ -2092,23 +2092,8 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResis
 		m_flStunExpireTime = flNextStunExpireTime;
 
 #ifdef GAME_DLL
-
-		// Don't play the stun sound if sounds are disabled or the stunner isn't a player
-		if ( m_hStunner.Get() && !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) )
-		{
-			const char *pszStunSound = "\0";
-			if ( m_nStunFlags & TF_STUNFLAG_CHEERSOUND )
-			{
-				// Moonshot/Grandslam
-				pszStunSound = "TFPlayer.StunImpactRange";
-			}
-			else
-			{
-				// Normal stun
-				pszStunSound = "TFPlayer.StunImpact";
-			}
-			m_pOuter->PlayStunSound( pStunner, pszStunSound );
-		}
+		if( !( m_nStunFlags & TF_STUNFLAG_THIRDPERSON ) )
+			m_pOuter->PlayStunSound( m_hStunner, m_nStunFlags /*, current stun flags*/ );
 #endif
 	}
 }

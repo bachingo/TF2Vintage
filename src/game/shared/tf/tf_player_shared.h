@@ -544,6 +544,7 @@ private:
 	CNetworkVar( float, m_flStunMovementSpeed );
 	CNetworkVar( float, m_flStunResistance );
 
+	// Stored for environmental kill credit
 	CNetworkVar( int, m_iWeaponKnockbackID );
 
 	CNetworkVar( int, m_iDecapitations );

@@ -8334,7 +8334,7 @@ void CTFPlayer::DoTauntAttack( void )
 					if ( pVictim )
 					{
 						bHomerun = true;
-						pVictim->PlayStunSound( this, "TFPlayer.StunImpactRange" );
+						EmitSound(  "TFPlayer.StunImpactRange" );
 					}
 				}
 
@@ -9235,15 +9235,36 @@ int	CTFPlayer::CalculateTeamBalanceScore( void )
 // ----------------------------------------------------------------------------
 // Purpose: Play the stun sound to nearby players of the victim and the attacker
 //-----------------------------------------------------------------------------
-void CTFPlayer::PlayStunSound( CTFPlayer *pOther, const char *pszStunSound )
+void CTFPlayer::PlayStunSound( CTFPlayer *pStunner, int nStunFlags/*, int nCurrentStunFlags*/ )
 {
+	// Don't play the stun sound if sounds are disabled or the stunner isn't a player
+	if ( pStunner == nullptr || ( nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) != 0 )
+		return;
+
+	const char *pszStunSound = "\0";
+	if ( nStunFlags & TF_STUNFLAG_CHEERSOUND )
+	{
+		// Moonshot/Grandslam
+		pszStunSound = "TFPlayer.StunImpactRange";
+	}
+	else if( !( nStunFlags & TF_STUNFLAG_GHOSTEFFECT ) )
+	{
+		// Normal stun
+		pszStunSound = "TFPlayer.StunImpact";
+	}
+	else
+	{
+		// Spookily spooked
+		pszStunSound = "Halloween.PlayerScream";
+	}
+
 	CRecipientFilter filter;
-	CSingleUserRecipientFilter filterAttacker( pOther );
+	CSingleUserRecipientFilter filterAttacker( pStunner );
 	filter.AddRecipientsByPAS( GetAbsOrigin() );
-	filter.RemoveRecipient( pOther );
+	filter.RemoveRecipient( pStunner );
 
 	EmitSound( filter, this->entindex(), pszStunSound );
-	EmitSound( filterAttacker, pOther->entindex(), pszStunSound );
+	EmitSound( filterAttacker, pStunner->entindex(), pszStunSound );
 }
 
 // ----------------------------------------------------------------------------
