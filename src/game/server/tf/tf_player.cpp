@@ -7257,7 +7257,7 @@ void CTFPlayer::ApplyAirBlastImpulse( Vector const &vecImpulse )
 
 	// Approximate force to leave ground
 	float flImpulseLiftZ = 268.3281572999747f;
-	vecModImpulse.z = ( GetFlags() & FL_ONGROUND ) ? vecModImpulse.z : Max( flImpulseLiftZ, vecModImpulse.z );
+	vecModImpulse.z = !( GetFlags() & FL_ONGROUND ) ? vecModImpulse.z : Max( flImpulseLiftZ, vecModImpulse.z );
 	CALL_ATTRIB_HOOK_FLOAT( vecModImpulse.z, airblast_vertical_vulnerability_multiplier );
 
 	RemoveFlag( FL_ONGROUND );
