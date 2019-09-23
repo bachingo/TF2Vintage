@@ -194,8 +194,8 @@ void CTFFlameThrower::Precache( void )
 	PrecacheParticleSystem( "pyro_blast" );
 	PrecacheParticleSystem( "deflect_fx" );
 	PrecacheParticleSystem( "flamethrower" );
-	PrecacheParticleSystem( "new_flame" );
-	PrecacheParticleSystem( "new_flame_core" );
+	PrecacheParticleSystem( "tf2v_new_flame" );
+	PrecacheParticleSystem( "tf2v_new_flame_core" );
 }
 
 
@@ -1062,7 +1062,7 @@ void CTFFlameThrower::RestartParticleEffect( void )
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				pszParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
 			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = ConstructTeamParticle( "tf2v_new_flame_fan_crit_%s", iTeam, true );
+				pszParticleEffect = ConstructTeamParticle( "tf2v_flamethrower_halloween_crit_%s_new_flame", iTeam, true );
 			else
 				pszParticleEffect = ConstructTeamParticle( "tf2v_new_flame_crit_%s", iTeam, true );
 		}
@@ -1071,7 +1071,7 @@ void CTFFlameThrower::RestartParticleEffect( void )
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				pszParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
 			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = "tf2v_new_flame_fan";
+				pszParticleEffect = "tf2v_flamethrower_halloween";
 			else
 				pszParticleEffect = "tf2v_new_flame";
 		}
@@ -1231,9 +1231,11 @@ void CTFFlameEntity::ClientThink( void )
 {
 	if ( !m_pFlameEffect )
 	{
-		const char *pszParticleEffect = "new_flame_core";
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				pszParticleEffect = "tf2v_flamethrower_rainbow_core";
+		const char *pszParticleEffect = "tf2v_new_flame_core";
 		if ( tf_halloween.GetBool() && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-			pszParticleEffect = "new_flame_core_halloween";
+			pszParticleEffect = "tf2v_new_flame_core_halloween";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
 	}
