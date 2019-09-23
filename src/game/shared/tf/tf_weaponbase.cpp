@@ -1306,7 +1306,7 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 
 	// Play reload
 #ifdef CLIENT_DLL
-	if ( !UsingViewModel() )
+	if ( UsingViewModel() )
 #endif
 	WeaponSound( RELOAD );
 
