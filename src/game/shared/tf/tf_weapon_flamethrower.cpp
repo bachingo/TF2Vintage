@@ -1060,20 +1060,20 @@ void CTFFlameThrower::RestartParticleEffect( void )
 		if ( m_bCritFire )
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				pszParticleEffect = "flamethrower_rainbow_new_flame";
+				pszParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
 			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = ConstructTeamParticle( "new_flame_fan_crit_%s", iTeam, true );
+				pszParticleEffect = ConstructTeamParticle( "tf2v_new_flame_fan_crit_%s", iTeam, true );
 			else
-				pszParticleEffect = ConstructTeamParticle( "new_flame_crit_%s", iTeam, true );
+				pszParticleEffect = ConstructTeamParticle( "tf2v_new_flame_crit_%s", iTeam, true );
 		}
 		else
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				pszParticleEffect = "flamethrower_rainbow_new_flame";
+				pszParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
 			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = "new_flame_fan";
+				pszParticleEffect = "tf2v_new_flame_fan";
 			else
-				pszParticleEffect = "new_flame";
+				pszParticleEffect = "tf2v_new_flame";
 		}
 	}
 
