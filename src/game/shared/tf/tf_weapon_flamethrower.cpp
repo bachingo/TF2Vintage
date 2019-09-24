@@ -1231,9 +1231,9 @@ void CTFFlameEntity::ClientThink( void )
 {
 	if ( !m_pFlameEffect )
 	{
-			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				pszParticleEffect = "tf2v_new_flame_waterfall_core";
 		const char *pszParticleEffect = "tf2v_new_flame_core";
+		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+			pszParticleEffect = "tf2v_new_flame_waterfall_core";
 		if ( tf_halloween.GetBool() && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_core_halloween";
 

@@ -65,11 +65,6 @@ extern ConVar replay_rendersetting_renderglow;
 #include "econ_item_description.h"
 #endif
 
-#if defined ( TF_VINTAGE_CLIENT )
-#include "c_tf_player.h"
-#include "tf_gamerules.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
