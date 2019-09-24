@@ -64,7 +64,7 @@ void CAttributeManager::RemoveProvider( CBaseEntity *pEntity )
 	m_AttributeProviders.FindAndRemove( pEntity );
 }
 
-void CAttributeManager::ProviteTo( CBaseEntity *pEntity )
+void CAttributeManager::ProvideTo( CBaseEntity *pEntity )
 {
 	if ( !pEntity || !m_hOuter.Get() )
 		return;

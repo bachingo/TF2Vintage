@@ -50,7 +50,7 @@ public:
 #endif
 	void			AddProvider( CBaseEntity *pEntity );
 	void			RemoveProvider( CBaseEntity *pEntity );
-	void			ProviteTo( CBaseEntity *pEntity );
+	void			ProvideTo( CBaseEntity *pEntity );
 	void			StopProvidingTo( CBaseEntity *pEntity );
 	virtual void	InitializeAttributes( CBaseEntity *pEntity );
 	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
