@@ -109,10 +109,6 @@ CTFMapOverview::CTFMapOverview( const char *pElementName ) : CMapOverview(pEleme
 	m_bDisabled = false;
 	m_nMapTextureOverlayID = -1;
 	usermessages->HookMessage( "UpdateRadar", __MsgFunc_UpdateRadar );
-
-	// Moving this here for now
-	usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
-	usermessages->HookMessage( "CheapBreakModel", __MsgFunc_CheapBreakModel );
 }
 
 //-----------------------------------------------------------------------------

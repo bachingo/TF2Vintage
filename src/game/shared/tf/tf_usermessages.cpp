@@ -31,21 +31,20 @@ void RegisterUserMessages()
 	usermessages->Register("Fade", 10);		// fade HUD in/out
 	usermessages->Register("VGUIMenu", -1);	// Show VGUI menu
 	usermessages->Register("Rumble", 3);	// Send a rumble to a controller
+
 	usermessages->Register("CloseCaption", -1); // Show a caption (by string id number)(duration in 10th of a second)
 
 	usermessages->Register("SendAudio", -1);	// play radion command
 
 	usermessages->Register("VoiceMask", VOICE_MAX_PLAYERS_DW * 4 * 2 + 1);
-	usermessages->Register("RequestState", 0);
 
+	usermessages->Register("RequestState", 0);
 	usermessages->Register("Damage", -1);		// for HUD damage indicators
 	usermessages->Register("HintText", -1);	// Displays hint text display
 	usermessages->Register("KeyHintText", -1);	// Displays hint text display
-
 	usermessages->Register("HudMsg", -1);
 	usermessages->Register("AmmoDenied", 2);
 	usermessages->Register("AchievementEvent", -1);
-
 	usermessages->Register("UpdateRadar", -1);
 
 	usermessages->Register("VoiceSubtitle", 3);
@@ -66,10 +65,11 @@ void RegisterUserMessages()
 	usermessages->Register("PlayerExtinguished", 2);
 	usermessages->Register("PlayerJaratedFade", 2);
 	usermessages->Register("PlayerShieldBlocked", 2);
+
 	usermessages->Register("BreakModel", -1);
 	usermessages->Register("CheapBreakModel", -1);
 	usermessages->Register("BreakModel_Pumpkin", -1);
-	usermessages->Register("BreakModelRocketDud", -1);
+	usermessages->Register("BreakModel_RocketDud", -1);
 
 	usermessages->Register("CallVoteFailed", -1);
 	usermessages->Register("VoteStart", -1);
@@ -78,33 +78,12 @@ void RegisterUserMessages()
 	usermessages->Register("VoteSetup", -1);
 
 	usermessages->Register("PlayerBonusPoints", 3);
-	usermessages->Register("RDTeamPointsChanged", 4);
+
 	usermessages->Register("SpawnFlyingBird", -1);
 	usermessages->Register("PlayerGodRayEffect", -1);
 	usermessages->Register("PlayerTeleportHomeEffect", -1);
-	usermessages->Register("MVMStatsReset", -1);
-	usermessages->Register("MVMPlayerEvent", -1);
-	usermessages->Register("MVMResetPlayerStats", -1);
-	usermessages->Register("MVMWaveFailed", 0);
-	usermessages->Register("MVMAnnouncement", 2);
-	usermessages->Register("MVMPlayerUpgradedEvent", 9);
-	usermessages->Register("MVMVictory", 2);
-	usermessages->Register("MVMWaveChange", 15);
-	usermessages->Register("MVMLocalPlayerUpgradesClear", 1);
-	usermessages->Register("MVMLocalPlayerUpgradesValue", 6);
-	usermessages->Register("MVMResetPlayerWaveSpendingStats", 1);
-	usermessages->Register("MVMLocalPlayerWaveSpendingValue", 12);
-	usermessages->Register("MVMResetPlayerUpgradeSpending", -1);
-	usermessages->Register("MVMServerKickTimeUpdate", 1);
+
 	usermessages->Register("PlayerLoadoutUpdated", -1);
-	usermessages->Register("PlayerTauntSoundLoopStart", -1);
-	usermessages->Register("PlayerTauntSoundLoopEnd", -1);
-	usermessages->Register("WarKilledOther", -1);
-	usermessages->Register("ForcePlayerViewAngles", -1);
-	usermessages->Register("BonusDucks", 2);
-	usermessages->Register("EOTLDuckEvent", 7);
-	usermessages->Register("PlayerPickupWeapon", -1);
-	usermessages->Register("QuestObjectiveCompleted", 14);
 #ifndef _X360
 	// NVNT register haptic user messages
 	RegisterHapticMessages();
