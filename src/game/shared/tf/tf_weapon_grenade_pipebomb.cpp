@@ -285,11 +285,12 @@ int CTFGrenadePipebombProjectile::DrawModel( int flags )
 //
 // TF Pipebomb Grenade Projectile functions (Server specific).
 //
-#define TF_WEAPON_PIPEGRENADE_MODEL		"models/weapons/w_models/w_grenade_grenadelauncher.mdl"
-#define TF_WEAPON_PIPEBOMB_MODEL		"models/weapons/w_models/w_stickybomb.mdl"
-#define TF_WEAPON_PIPEBOMB_BOUNCE_SOUND	"Weapon_Grenade_Pipebomb.Bounce"
-#define TF_WEAPON_GRENADE_DETONATE_TIME 2.0f
-#define TF_WEAPON_GRENADE_XBOX_DAMAGE 112
+#define TF_WEAPON_PIPEGRENADE_MODEL        "models/weapons/w_models/w_grenade_grenadelauncher.mdl"
+#define TF_WEAPON_PIPEBOMB_MODEL           "models/weapons/w_models/w_stickybomb.mdl"
+#define TF_WEAPON_PIPEBOMB_DEFENSIVE_MODEL "models/weapons/w_models/w_stickybomb_d.mdl"
+#define TF_WEAPON_PIPEBOMB_BOUNCE_SOUND	   "Weapon_Grenade_Pipebomb.Bounce"
+#define TF_WEAPON_GRENADE_DETONATE_TIME    2.0f
+#define TF_WEAPON_GRENADE_XBOX_DAMAGE      112
 
 BEGIN_DATADESC( CTFGrenadePipebombProjectile )
 END_DATADESC()
@@ -439,11 +440,11 @@ void CTFGrenadePipebombProjectile::Detonate()
 
 		// CreatePipebombGibs
 		CPVSFilter filter( GetAbsOrigin() );
-		UserMessageBegin( filter, "CheapBreakModel" );
+		/*UserMessageBegin( filter, "CheapBreakModel" );
 			WRITE_SHORT( GetModelIndex() );
 			WRITE_VEC3COORD( GetAbsOrigin() );
 			WRITE_ANGLES( GetAbsAngles() );
-		MessageEnd();
+		MessageEnd();*/
 
 		RemoveGrenade( false );
 
