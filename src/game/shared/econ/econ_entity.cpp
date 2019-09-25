@@ -286,7 +286,7 @@ void CEconEntity::ReapplyProvision( void )
 
 		if ( pOwner )
 		{
-			m_AttributeManager.ProviteTo( pOwner );
+			m_AttributeManager.ProvideTo( pOwner );
 			m_hOldOwner = pOwner;
 		}
 		else
@@ -359,10 +359,14 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 		{
 			if ( pEconEntity->m_aAttachments[i].model && ( pEconEntity->m_aAttachments[i].modeltype & iModelType ) )
 			{
-				ClientModelRenderInfo_t newInfo( *pInfo );
+				ClientModelRenderInfo_t newInfo;
+				V_memcpy( &newInfo, pInfo, sizeof( ClientModelRenderInfo_t ) );
+				newInfo.pRenderable = (IClientRenderable *)pAnimating;
+				newInfo.instance = MODEL_INSTANCE_INVALID;
+				newInfo.entity_index = pAnimating->entindex();
 				newInfo.pModel = pEconEntity->m_aAttachments[i].model;
-
 				newInfo.pModelToWorld = &newInfo.modelToWorld;
+
 				// Turns the origin + angles into a matrix
 				AngleMatrix( newInfo.angles, newInfo.origin, newInfo.modelToWorld );
 
