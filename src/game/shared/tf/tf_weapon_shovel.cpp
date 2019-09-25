@@ -64,7 +64,7 @@ float CTFShovel::GetSpeedMod( void ) const
 
 	int nShovelWeaponMode = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelWeaponMode, set_weapon_mode );
-	if ( nShovelWeaponMode != 2 )
+	if ( nShovelWeaponMode != 1 )
 		return 1.0f;
 
 	float flFraction = (float)pOwner->GetHealth() / pOwner->GetMaxHealth();
