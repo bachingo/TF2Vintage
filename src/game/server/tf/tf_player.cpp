@@ -8581,7 +8581,7 @@ void CTFPlayer::ClearTauntAttack( void )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLunchBoxAddsMinicrits, set_weapon_mode );
 			if ( nLunchBoxAddsMinicrits == 2 )
 			{
-				m_Shared.AddCond( TF_COND_OFFENSEBUFF, 8.0f );
+				m_Shared.AddCond( TF_COND_ENERGY_BUFF, 8.0f );
 				m_flTauntAttackTime = 0.0f;
 				m_iTauntAttack = TAUNTATK_NONE;
 
