@@ -357,13 +357,13 @@ void CTFGrenadePipebombProjectile::Spawn()
 	{
 		// Set this to max, so effectively they do not self-implode.
 		SetDetonateTimerLength( FLT_MAX );
-		PrecacheProjectileModel( TF_WEAPON_PIPEBOMB_MODEL );
+		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
 	}
 	else
 	{
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
-		PrecacheProjectileModel( TF_WEAPON_PIPEGRENADE_MODEL );
+		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
 	}
 
 	BaseClass::Spawn();
@@ -387,20 +387,18 @@ void CTFGrenadePipebombProjectile::Precache()
 {
 	PrecacheTeamParticles("stickybombtrail_%s", true);
 
-	PrecacheModel( "models/weapons/w_models/w_stickybomb_d.mdl" );
+	int index = PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
+	PrecacheGibsForModel( index );
+	
+	index = PrecacheModel( TF_WEAPON_PIPEBOMB_DEFENSIVE_MODEL );
+	PrecacheGibsForModel( index );
+
+	index = PrecacheModel( TF_WEAPON_PIPEGRENADE_MODEL );
+	PrecacheGibsForModel( index );
+
+	PrecacheScriptSound( TF_WEAPON_PIPEBOMB_BOUNCE_SOUND );
 
 	BaseClass::Precache();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadePipebombProjectile::PrecacheProjectileModel( const char *iszModel )
-{
-	int index = 0;
-	index = PrecacheModel( iszModel );
-	PrecacheGibsForModel( index );
-	SetModel( iszModel );
 }
 
 //-----------------------------------------------------------------------------
@@ -443,7 +441,6 @@ void CTFGrenadePipebombProjectile::Detonate()
 		/*UserMessageBegin( filter, "CheapBreakModel" );
 			WRITE_SHORT( GetModelIndex() );
 			WRITE_VEC3COORD( GetAbsOrigin() );
-			WRITE_ANGLES( GetAbsAngles() );
 		MessageEnd();*/
 
 		RemoveGrenade( false );
