@@ -286,7 +286,7 @@ void CEconEntity::ReapplyProvision( void )
 
 		if ( pOwner )
 		{
-			m_AttributeManager.ProviteTo( pOwner );
+			m_AttributeManager.ProvideTo( pOwner );
 			m_hOldOwner = pOwner;
 		}
 		else
