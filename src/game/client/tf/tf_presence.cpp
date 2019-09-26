@@ -580,6 +580,7 @@ RealTimeCountdownTimer CTFDiscordPresence::m_updateThrottle;
 int64 CTFDiscordPresence::m_iCreationTimestamp;
 
 CTFDiscordPresence::CTFDiscordPresence()
+	: BaseClass( "TFDiscordPresence" )
 {
 	Q_memset( m_szMapName, 0, sizeof( m_szMapName ) );
 	m_iCreationTimestamp = time( NULL );
@@ -702,6 +703,20 @@ void CTFDiscordPresence::Shutdown( void )
 
 	if ( steamapicontext->SteamFriends() )
 		steamapicontext->SteamFriends()->ClearRichPresence();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::Update( float frametime )
+{
+	if ( !engine->IsConnected() || m_szMapName[0] == '\0' )
+		return;
+
+	UpdatePresence();
+
+	if ( gpGlobals->tickcount % 2 )
+		Discord_RunCallbacks();
 }
 
 //-----------------------------------------------------------------------------

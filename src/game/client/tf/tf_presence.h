@@ -49,9 +49,9 @@ struct DiscordRichPresence;
 
 #define DISCORD_FIELD_MAXLEN 128
 
-class CTFDiscordPresence : public CAutoGameSystem, public CGameEventListener
+class CTFDiscordPresence : public CAutoGameSystemPerFrame, public CGameEventListener
 {
-	DECLARE_CLASS_GAMEROOT( CTFDiscordPresence, CBaseGameSystem );
+	DECLARE_CLASS_GAMEROOT( CTFDiscordPresence, CAutoGameSystemPerFrame );
 public:
 
 	CTFDiscordPresence();
@@ -59,9 +59,9 @@ public:
 
 	virtual void FireGameEvent( IGameEvent *event );
 
-	virtual char const *Name( void ) override { return "CTFDiscordPresence"; }
 	virtual bool		Init( void );
 	virtual void		Shutdown( void );
+	virtual void		Update( float frametime );
 	virtual void		LevelInitPostEntity( void );
 	virtual void		LevelShutdownPreEntity( void );
 
