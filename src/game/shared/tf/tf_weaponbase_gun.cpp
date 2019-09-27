@@ -171,10 +171,16 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pProjectile = FireRocket( pPlayer );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
-
+		
 	case TF_PROJECTILE_SYRINGE:
+	case TF_PROJECTILE_NAIL:
 		pProjectile = FireNail( pPlayer, iProjectile );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
+
+	case TF_PROJECTILE_DART:
+		pProjectile = FireNail(pPlayer, iProjectile);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB:
@@ -487,6 +493,14 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	{
 	case TF_PROJECTILE_SYRINGE:
 		pProjectile = CTFProjectile_Syringe::Create( vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit() );
+		break;
+
+	case TF_PROJECTILE_NAIL:
+		pProjectile = CTFProjectile_Nail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
+		break;
+
+	case TF_PROJECTILE_DART:
+		pProjectile = CTFProjectile_Dart::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
 		break;
 
 	default:

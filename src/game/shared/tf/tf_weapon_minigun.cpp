@@ -49,6 +49,8 @@ END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_minigun, CTFMinigun );
 PRECACHE_WEAPON_REGISTER( tf_weapon_minigun );
+LINK_ENTITY_TO_CLASS( tf_weapon_minigun_real, CTFMinigun );
+PRECACHE_WEAPON_REGISTER( tf_weapon_minigun_real );
 
 
 // Server specific.

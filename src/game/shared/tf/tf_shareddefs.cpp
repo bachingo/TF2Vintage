@@ -447,6 +447,9 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SWORD",
 	"TF_WEAPON_SENTRY_REVENGE",
 	"TF_WEAPON_JAR_MILK",
+	"TF_WEAPON_HUNTERRIFLE",
+	"TF_WEAPON_ASSAULTRIFLE",
+	"TF_WEAPON_MINIGUN_REAL",
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
 
@@ -521,6 +524,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_SLASH, // TF_WEAPON_SWORD
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, // TF_WEAPON_SENTRY_REVENGE
 	DMG_GENERIC,	// TF_WEAPON_JAR_MILK
+	DMG_BULLET | DMG_USE_HITLOCATIONS,//TF_WEAPON_HUNTERRIFLE,
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -573,6 +577,8 @@ const char *g_szProjectileNames[] =
 	"projectile_grapplinghook",
 	"projectile_sentry_rocket",
 	"projectile_bread_monster",
+	"projectile_nail",
+	"projectile_dart",
 };
 
 // these map to the projectiles named in g_szProjectileNames
