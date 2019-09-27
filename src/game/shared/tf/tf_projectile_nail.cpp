@@ -102,6 +102,7 @@ void ClientsideProjectileSyringeCallback( const CEffectData &data )
 				break;
 			}
 			bool bCritical = ( ( data.m_nDamageType & DMG_CRITICAL ) != 0 );
+			pSyringe->AddParticleEffect(GetSyringeTrailParticleName(pPlayer->GetTeamNumber(), bCritical));
 			pSyringe->AddEffects( EF_NOSHADOW );
 			pSyringe->flags |= FTENT_USEFASTCOLLISIONS;
 		}
@@ -167,17 +168,6 @@ float CTFProjectile_Nail::GetGravity(void)
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Output : const char
-//-----------------------------------------------------------------------------
-const char *GetNailTrailParticleName(int iTeamNumber, bool bCritical)
-{
-	const char *pszFormat = bCritical ? "nailtrails_medic_%s_crit" : "nailtrails_medic_%s";
-
-	return ConstructTeamParticle( pszFormat, iTeamNumber, true );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
 //-----------------------------------------------------------------------------
 void ClientsideProjectileNailCallback(const CEffectData &data)
 {
@@ -197,6 +187,7 @@ void ClientsideProjectileNailCallback(const CEffectData &data)
 				break;
 			}
 			bool bCritical = ((data.m_nDamageType & DMG_CRITICAL) != 0);
+			pSyringe->AddParticleEffect(GetSyringeTrailParticleName(pPlayer->GetTeamNumber(), bCritical));
 			pNail->AddEffects(EF_NOSHADOW);
 			pNail->flags |= FTENT_USEFASTCOLLISIONS;
 		}
@@ -261,17 +252,6 @@ float CTFProjectile_Dart::GetGravity(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Output : const char
-//-----------------------------------------------------------------------------
-const char *GetTranqDartTrailParticleName( int iTeamNumber, bool bCritical )
-{
-	const char *pszFormat = bCritical ? "nailtrails_medic_%s_crit" : "nailtrails_medic_%s";
-
-	return ConstructTeamParticle( pszFormat, iTeamNumber, true );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
 //-----------------------------------------------------------------------------
 void ClientsideProjectileTranqDartCallback(const CEffectData &data)
 {
@@ -292,6 +272,7 @@ void ClientsideProjectileTranqDartCallback(const CEffectData &data)
 				break;
 			}
 			bool bCritical = ((data.m_nDamageType & DMG_CRITICAL) != 0);
+			pSyringe->AddParticleEffect(GetSyringeTrailParticleName(pPlayer->GetTeamNumber(), bCritical));
 			pSyringe->AddEffects(EF_NOSHADOW);
 			pSyringe->flags |= FTENT_USEFASTCOLLISIONS;
 		}
