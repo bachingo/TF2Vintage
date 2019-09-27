@@ -19,7 +19,7 @@
 //-----------------------------------------------------------------------------
 class CTFPresence : public CBasePresence, public CGameEventListener
 {
-	DECLARE_CLASS_NOFRIEND( CTFPresence, CBasePresence );
+	DECLARE_CLASS_GAMEROOT( CTFPresence, CBasePresence );
 public:
 	// IGameEventListener Interface
 	virtual void	FireGameEvent( IGameEvent * event );

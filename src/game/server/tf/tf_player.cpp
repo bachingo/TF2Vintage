@@ -681,7 +681,7 @@ void CTFPlayer::PreThink()
 //-----------------------------------------------------------------------------
 void CTFPlayer::RemoveMeleeCrit( void )
 {
-	m_Shared.SetNextMeleeCrit( CTFPlayerShared::MELEE_CRIT_NONE );
+	m_Shared.SetNextMeleeCrit( kCritType_None );
 }
 
 ConVar mp_idledealmethod( "mp_idledealmethod", "1", FCVAR_GAMEDLL, "Deals with Idle Players. 1 = Sends them into Spectator mode then kicks them if they're still idle, 2 = Kicks them out of the game;" );

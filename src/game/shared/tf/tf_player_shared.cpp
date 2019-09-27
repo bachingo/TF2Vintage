@@ -3745,11 +3745,11 @@ void CTFPlayerShared::CalcChargeCrit( bool bForceCrit )
 {
 	if (m_flChargeMeter <= 33.0f || bForceCrit)
 	{
-		m_iNextMeleeCrit = MELEE_CRIT_FULL;
+		m_iNextMeleeCrit = kCritType_Crit;
 	}
 	else if (m_flChargeMeter <= 75.0f)
 	{
-		m_iNextMeleeCrit = MELEE_CRIT_MINICRIT;
+		m_iNextMeleeCrit = kCritType_MiniCrit;
 	}
 
 	m_pOuter->SetContextThink( &CTFPlayer::RemoveMeleeCrit, gpGlobals->curtime + 0.3f, "RemoveMeleeCrit" );
