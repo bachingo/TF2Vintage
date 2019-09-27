@@ -285,13 +285,13 @@ public:
 	bool	IsCarryingObject( void )			{ return m_bCarryingObject; }
 
 #ifdef GAME_DLL
-	void				SetCarriedObject( CBaseObject *pObj );
-	CBaseObject*		GetCarriedObject( void );
+	void			SetCarriedObject( CBaseObject *pObj );
+	CBaseObject*	GetCarriedObject( void );
 #endif
 
 	int		GetKillstreak( int weaponSlot )						{ return m_nStreaks.Get( weaponSlot ); }
-	void	SetKillstreak( int weaponSlot, int iKillstreak )	{ m_nStreaks.Set( weaponSlot, iKillstreak ); }
-	void	IncKillstreak( int weaponSlot )						{ m_nStreaks.Set( weaponSlot, m_nStreaks.Get( weaponSlot ) + 1 ); }
+	void	SetKillstreak( int weaponSlot, int iStreak )	{ m_nStreaks.Set( weaponSlot, iStreak ); }
+	void	IncKillstreak( int weaponSlot );
 
 	int		GetStunPhase( void )				{ return m_iStunPhase; }
 	void	SetStunPhase( int iPhase )			{ m_iStunPhase = iPhase; }
@@ -322,25 +322,19 @@ public:
 	float	GetHypeMeter( void ) const {}
 	void	SetHypeMeter(float value) {}
 	
-	int		GetKnockbackWeaponID( void ) const { return m_iWeaponKnockbackID; }
-	void	SetKnockbackWeaponID( int userid ) { m_iWeaponKnockbackID = userid; }
+	int		GetKnockbackWeaponID( void ) const  { return m_iWeaponKnockbackID; }
+	void	SetKnockbackWeaponID( int userid )  { m_iWeaponKnockbackID = userid; }
 	CBasePlayer *GetKnockbackWeaponOwner( void );
 
 	// Knights
-	int		GetDecapitationCount( void ) const	{ return m_iDecapitations; }
-	void	SetDecapitationCount( int count )	{ m_iDecapitations = count; }
+	int		GetDecapitationCount( void ) const       { return m_iDecapitations; }
+	void	SetDecapitationCount( int count )        { m_iDecapitations = count; }
 	bool	HasDemoShieldEquipped( void ) const;
-	void	SetDemoShieldEquipped( bool bEquipped ) { m_bShieldEquipped = bEquipped; }
-	enum eMeleeCritType
-	{
-		MELEE_CRIT_NONE,
-		MELEE_CRIT_MINICRIT,
-		MELEE_CRIT_FULL
-	};
-	int		GetNextMeleeCrit( void ) const		{ return m_iNextMeleeCrit; }
-	void	SetNextMeleeCrit( eMeleeCritType iType ) { m_iNextMeleeCrit = iType; }
-	float	GetShieldChargeMeter( void ) const  { return m_flChargeMeter; }
-	void	SetShieldChargeMeter( float flVal ) { m_flChargeMeter = flVal; }
+	void	SetDemoShieldEquipped( bool bEquipped )  { m_bShieldEquipped = bEquipped; }
+	int		GetNextMeleeCrit( void ) const           { return m_iNextMeleeCrit; }
+	void	SetNextMeleeCrit( int iType )            { m_iNextMeleeCrit = iType; }
+	float	GetShieldChargeMeter( void ) const       { return m_flChargeMeter; }
+	void	SetShieldChargeMeter( float flVal )      { m_flChargeMeter = flVal; }
 	void	SetShieldChargeDrainRate( float flRate ) { m_flChargeDrainRate = flRate; }
 	void	SetShieldChargeRegenRate( float flRate ) { m_flChargeRegenRate = flRate; }
 #ifdef GAME_DLL
@@ -350,8 +344,6 @@ public:
 	void	EndCharge( void );
 
 private:
-
-	void ImpactWaterTrace( trace_t &trace, const Vector &vecStart );
 
 	void OnAddStealthed( void );
 	void OnAddFeignDeath( void );
@@ -603,15 +595,6 @@ private:
 	bool m_bWasCritBoosted;
 #endif
 };
-
-inline CBasePlayer *CTFPlayerShared::GetKnockbackWeaponOwner( void )
-{
-	if ( m_iWeaponKnockbackID == -1 )
-		return NULL;
-
-	Assert( dynamic_cast<CTFPlayer *>( UTIL_PlayerByUserId( m_iWeaponKnockbackID ) ) );
-	return UTIL_PlayerByUserId( m_iWeaponKnockbackID );
-}
 
 #define TF_DEATH_DOMINATION				0x0001	// killer is dominating victim
 #define TF_DEATH_ASSISTER_DOMINATION	0x0002	// assister is dominating victim
