@@ -122,7 +122,7 @@ bool CTFWeaponBaseMelee::Holster( CBaseCombatWeapon *pSwitchingTo )
 	{
 		GetPlayerOwner()->m_flNextAttack = gpGlobals->curtime + 0.5;
 
-		GetTFPlayerOwner()->m_Shared.SetNextMeleeCrit( CTFPlayerShared::MELEE_CRIT_NONE );
+		GetTFPlayerOwner()->m_Shared.SetNextMeleeCrit( kCritType_None );
 	}
 
 
@@ -154,7 +154,7 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 	// Swing the weapon.
 	Swing( pPlayer );
 
-	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != CTFPlayerShared::MELEE_CRIT_NONE;
+	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != kCritType_None;
 
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
@@ -434,8 +434,8 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 	if ( nCvarValue == 1 && !tf_weapon_criticals.GetBool() )
 		return false;
 
-	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != CTFPlayerShared::MELEE_CRIT_NONE;
-	if ( pPlayer->m_Shared.GetNextMeleeCrit() == CTFPlayerShared::MELEE_CRIT_FULL )
+	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != kCritType_None;
+	if ( pPlayer->m_Shared.GetNextMeleeCrit() == kCritType_Crit )
 		return true;
 
 	float flPlayerCritMult = pPlayer->GetCritMult();

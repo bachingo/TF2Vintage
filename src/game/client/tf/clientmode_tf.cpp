@@ -11,6 +11,7 @@
 //=============================================================================
 #include "cbase.h"
 #include "hud.h"
+#include "hud_macros.h"
 #include "clientmode_tf.h"
 #include "cdll_client_int.h"
 #include "iinput.h"
@@ -65,6 +66,140 @@ void HUDMinModeChangedCallBack( IConVar *var, const char *pOldString, float flOl
 ConVar cl_hud_minmode( "cl_hud_minmode", "0", FCVAR_ARCHIVE, "Set to 1 to turn on the advanced minimalist HUD mode.", HUDMinModeChangedCallBack );
 
 IClientMode *g_pClientMode = NULL;
+
+void __MsgFunc_BreakModel( bf_read &msg )
+{
+	HandleBreakModel( msg, false );
+}
+
+void __MsgFunc_CheapBreakModel( bf_read &msg )
+{
+	// Cheap gibs don't use angle vectors
+	HandleBreakModel( msg, true );
+}
+
+void __MsgFunc_BreakModel_Pumpkin( bf_read &msg )
+{
+	CUtlVector<breakmodel_t> list;
+	int iModelIndex = msg.ReadShort();
+	BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
+
+	if ( list.IsEmpty() )
+		return;
+
+	for ( int i=0; i < list.Count(); ++i )
+	{
+		breakmodel_t *model = &list[ i ];
+		model->burstScale = 1000.f;
+	}
+
+	Vector vecOrigin = vec3_origin;
+	msg.ReadBitVec3Coord( vecOrigin );
+
+	QAngle vecAngles = vec3_angle;
+	msg.ReadBitAngles( vecAngles );
+
+	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
+	breakablepropparams_t params( vecOrigin, vecAngles, Vector( 0.0f ), angularImpulse );
+
+	CUtlVector<EHANDLE> gibList;
+	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true, &gibList );
+
+	for ( int i=0; i < gibList.Count(); ++i )
+	{
+		C_BaseEntity *pGiblet = gibList[ i ];
+		if ( pGiblet == nullptr )
+			continue;
+
+		if ( pGiblet->VPhysicsGetObject() == nullptr )
+			continue;
+
+		Vector vecVelocity; AngularImpulse vecImpulse;
+		pGiblet->VPhysicsGetObject()->GetVelocity( &vecVelocity, &vecImpulse );
+
+		vecImpulse.x *= 3.0f;
+		vecImpulse.y *= 3.0f;
+		vecImpulse.z = i == 3 ? 300.0f : 400.0f;
+
+		pGiblet->VPhysicsGetObject()->SetVelocity( &vecVelocity, &vecImpulse );
+	}
+}
+
+void __MsgFunc_BreakModel_RocketDud( bf_read &msg )
+{
+	CUtlVector<breakmodel_t> list;
+	int iModelIndex = msg.ReadShort();
+	BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
+
+	if ( list.IsEmpty() )
+		return;
+
+	Vector vecOrigin = vec3_origin;
+	msg.ReadBitVec3Coord( vecOrigin );
+
+	QAngle vecAngles = vec3_angle;
+	msg.ReadBitAngles( vecAngles );
+}
+
+void __MsgFunc_PlayerJarated( bf_read &msg )
+{
+	int iAttacker = msg.ReadByte();
+	int iVictim = msg.ReadByte();
+
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_jarated" );
+	if ( event )
+	{
+		event->SetInt( "thrower_entindex", iAttacker );
+		event->SetInt( "victim_entindex", iVictim );
+
+		gameeventmanager->FireEventClientSide( event );
+	}
+}
+
+void __MsgFunc_PlayerJaratedFade( bf_read &msg )
+{
+	int iAttacker = msg.ReadByte();
+	int iVictim = msg.ReadByte();
+
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_jarated_fade" );
+	if ( event )
+	{
+		event->SetInt( "thrower_entindex", iAttacker );
+		event->SetInt( "victim_entindex", iVictim );
+
+		gameeventmanager->FireEventClientSide( event );
+	}
+}
+
+void __MsgFunc_PlayerExtinguished( bf_read &msg )
+{
+	int iVictim = msg.ReadByte();
+	int iHealer = msg.ReadByte();
+
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_extinguished" );
+	if ( event )
+	{
+		event->SetInt( "victim", iVictim );
+		event->SetInt( "healer", iHealer );
+
+		gameeventmanager->FireEventClientSide( event );
+	}
+}
+
+void __MsgFunc_PlayerShieldBlocked( bf_read &msg )
+{
+	int iAttacker = msg.ReadByte();
+	int iVictim = msg.ReadByte();
+
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_shield_blocked" );
+	if ( event )
+	{
+		event->SetInt( "attacker_index", iAttacker );
+		event->SetInt( "blocker_index", iVictim );
+
+		gameeventmanager->FireEventClientSide( event );
+	}
+}
 
 // --------------------------------------------------------------------------------- //
 // CTFModeManager.
@@ -588,7 +723,14 @@ int ClientModeTFNormal::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, 
 //-----------------------------------------------------------------------------
 void ClientModeTFNormal::MessageHooks( void )
 {
-	//usermessages->HookMessage( "BreakModel", __MsgFunc_BreakModel );
+	HOOK_MESSAGE( BreakModel );
+	HOOK_MESSAGE( CheapBreakModel );
+	HOOK_MESSAGE( BreakModel_Pumpkin );
+	HOOK_MESSAGE( BreakModel_RocketDud );
+	HOOK_MESSAGE( PlayerJarated );
+	HOOK_MESSAGE( PlayerJaratedFade );
+	HOOK_MESSAGE( PlayerExtinguished );
+	HOOK_MESSAGE( PlayerShieldBlocked );
 }
 
 //-----------------------------------------------------------------------------
@@ -607,38 +749,31 @@ void ClientModeTFNormal::PrintTextToChat( const char *msg )
 	}
 }
 
-void __MsgFunc_BreakModel( bf_read &msg )
-{
-	HandleBreakModel( msg, false );
-}
-
-void __MsgFunc_CheapBreakModel( bf_read &msg )
-{
-	// Cheap gibs don't use angle vectors
-	HandleBreakModel( msg, true );
-}
-
-void HandleBreakModel( bf_read &msg, bool bNoAngles )
+void HandleBreakModel( bf_read &msg, bool bCheap )
 {
 	CUtlVector<breakmodel_t> list;
-	int iModelIndex = ( int ) msg.ReadShort();
-	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
-	Vector vec3;
-	QAngle vecAngles;
-
+	int iModelIndex = msg.ReadShort();
 	BuildGibList( list, iModelIndex, 1.0f, COLLISION_GROUP_NONE );
 
-	msg.ReadBitVec3Coord( vec3 );
-	if ( bNoAngles )
-	{
-		vecAngles = vec3_angle;
-	}
-	else
+	if ( list.IsEmpty() )
+		return;
+
+	Vector vecOrigin = vec3_origin;
+	msg.ReadBitVec3Coord( vecOrigin );
+
+	QAngle vecAngles = vec3_angle;
+	int nSkin = 0;
+	if ( !bCheap )
 	{
 		msg.ReadBitAngles( vecAngles );
+		nSkin = msg.ReadShort();
 	}
 
-	breakablepropparams_t params( vec3, vecAngles, Vector( 0.0f, 0.0f, 200.0f ), angularImpulse );
+	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
+	Vector vecVelocity( 0.0f, 0.0f, 200.0f );
+	breakablepropparams_t params( vecOrigin, vecAngles, vecVelocity, angularImpulse );
+	params.impactEnergyScale = 1.0f;
+	params.nDefaultSkin = nSkin;
 
-	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false, true );
+	CreateGibsFromList( list, iModelIndex, NULL, params, NULL, -1, false );
 }

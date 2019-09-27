@@ -1125,7 +1125,8 @@ void C_TFRagdoll::ClientThink( void )
 					{
 						if ( !bBombinomiconDeath )
 						{
-							SUB_Remove();
+							// TODO: Figure out why SUB_Remove boots to main menu when that's what they do in live
+							EndFadeOut();
 							return;
 						}
 

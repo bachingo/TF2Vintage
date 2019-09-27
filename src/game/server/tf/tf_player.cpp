@@ -19,6 +19,7 @@
 #include "tf_viewmodel.h"
 #include "tf_item.h"
 #include "in_buttons.h"
+#include "tf_bot.h"
 #include "entity_capture_flag.h"
 #include "effect_dispatch_data.h"
 #include "te_effect_dispatch.h"
@@ -60,6 +61,7 @@
 #include "tf_weapon_laser_pointer.h"
 #include "tf_weapon_sword.h"
 #include "tf_weapon_invis.h"
+#include "tf_weapon_knife.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "nav_pathfind.h"
 
@@ -679,7 +681,7 @@ void CTFPlayer::PreThink()
 //-----------------------------------------------------------------------------
 void CTFPlayer::RemoveMeleeCrit( void )
 {
-	m_Shared.SetNextMeleeCrit( CTFPlayerShared::MELEE_CRIT_NONE );
+	m_Shared.SetNextMeleeCrit( kCritType_None );
 }
 
 ConVar mp_idledealmethod( "mp_idledealmethod", "1", FCVAR_GAMEDLL, "Deals with Idle Players. 1 = Sends them into Spectator mode then kicks them if they're still idle, 2 = Kicks them out of the game;" );
@@ -2093,6 +2095,44 @@ void CTFPlayer::EndClassSpecialSkill( void )
 		if ( pShield )
 			pShield->EndSpecialAction( this );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayer::CheckBlockBackstab( CTFPlayer *pAttacker )
+{
+	CUtlVector<EHANDLE> attribProviders;
+	int nBlocksBackstab = 0;
+
+	CALL_ATTRIB_HOOK_INT_PROVIDERS( nBlocksBackstab, set_blockbackstab_once, attribProviders );
+	if ( nBlocksBackstab == 1 )
+	{
+		// Get the top most provider so we can destroy them in order
+		CBaseEntity *pProvider = attribProviders.Head();
+		if ( pProvider )
+		{
+			if ( pProvider->IsWearable() )
+			{
+				CTFWearable *pWearable = assert_cast<CTFWearable *>( pProvider );
+				pWearable->Break();
+				pWearable->RemoveFrom( this );
+			}
+
+			UTIL_Remove( pProvider );
+
+			CTFBot *pBot = ToTFBot( this );
+			if ( pBot )
+			{
+				EHANDLE hndl( pAttacker );
+				pBot->DelayedThreatNotice( hndl, 0.5f );
+			}
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -3978,14 +4018,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if ( this->m_Shared.InCond( TF_COND_URINE ) )
+	if ( m_Shared.InCond( TF_COND_URINE ) )
 	{
 		// Jarated players take mini crits
 		bitsDamage |= DMG_MINICRITICAL;
 		info.AddDamageType( DMG_MINICRITICAL );
 	}
 
-	if ( this->m_Shared.InCond( TF_COND_MAD_MILK ) )
+	if ( m_Shared.InCond( TF_COND_MAD_MILK ) )
 	{
 		// Mad Milked players heal the attacker.
 		float flDamage = info.GetDamage();
@@ -4066,11 +4106,51 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 
 	int nMinicritsToCrits = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( pAttacker, nMinicritsToCrits, minicrits_become_crits );
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritsToCrits, minicrits_become_crits );
 	if ( bitsDamage & DMG_MINICRITICAL && nMinicritsToCrits )
 	{
 		bitsDamage &= ~DMG_MINICRITICAL;
 		bitsDamage |= DMG_CRITICAL;
+	}
+
+	if ( inputInfo.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
+	{
+		int nJarateBackstabber = 0;
+		CALL_ATTRIB_HOOK_INT( nJarateBackstabber, jarate_backstabber );
+		if ( nJarateBackstabber == 1 && pTFAttacker )
+		{
+			pTFAttacker->m_Shared.AddCond( TF_COND_URINE, 10.0f );
+			pTFAttacker->m_Shared.m_hUrineAttacker = this;
+			pTFAttacker->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
+		}
+
+		if ( this && CheckBlockBackstab( pTFAttacker ) )
+		{
+			info.SetDamage( 0.0f );
+
+			UTIL_ScreenShake( GetAbsOrigin(), 25.0f, 150.0f, 1.0f, 50.0f, SHAKE_START );
+			EmitSound( "Player.Spy_Shield_Break" );
+
+			CTFSniperRifle *pRifle = (CTFSniperRifle *)GetActiveTFWeapon();
+			if ( pRifle && pRifle->IsZoomed() )
+				pRifle->ToggleZoom();
+
+			if ( pTFAttacker )
+			{
+				CTFKnife *pKnife = dynamic_cast<CTFKnife *>( pTFAttacker->GetActiveTFWeapon() );
+				if ( pKnife )
+					pKnife->BackstabBlocked();
+			}
+
+			CRecipientFilter filter;
+			filter.AddRecipient( this );
+			filter.AddRecipient( pTFAttacker );
+
+			UserMessageBegin( filter, "PlayerShieldBlocked" );
+				WRITE_BYTE( pTFAttacker->entindex() );
+				WRITE_BYTE( this->entindex() );
+			MessageEnd();
+		}
 	}
 
 	// If we're not damaging ourselves, apply randomness
@@ -7177,7 +7257,7 @@ void CTFPlayer::ApplyAirBlastImpulse( Vector const &vecImpulse )
 
 	// Approximate force to leave ground
 	float flImpulseLiftZ = 268.3281572999747f;
-	vecModImpulse.z = ( GetFlags() & FL_ONGROUND ) ? vecModImpulse.z : Max( flImpulseLiftZ, vecModImpulse.z );
+	vecModImpulse.z = !( GetFlags() & FL_ONGROUND ) ? vecModImpulse.z : Max( flImpulseLiftZ, vecModImpulse.z );
 	CALL_ATTRIB_HOOK_FLOAT( vecModImpulse.z, airblast_vertical_vulnerability_multiplier );
 
 	RemoveFlag( FL_ONGROUND );
@@ -8254,7 +8334,7 @@ void CTFPlayer::DoTauntAttack( void )
 					if ( pVictim )
 					{
 						bHomerun = true;
-						pVictim->PlayStunSound( this, "TFPlayer.StunImpactRange" );
+						EmitSound(  "TFPlayer.StunImpactRange" );
 					}
 				}
 
@@ -8501,7 +8581,7 @@ void CTFPlayer::ClearTauntAttack( void )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLunchBoxAddsMinicrits, set_weapon_mode );
 			if ( nLunchBoxAddsMinicrits == 2 )
 			{
-				m_Shared.AddCond( TF_COND_OFFENSEBUFF, 8.0f );
+				m_Shared.AddCond( TF_COND_ENERGY_BUFF, 8.0f );
 				m_flTauntAttackTime = 0.0f;
 				m_iTauntAttack = TAUNTATK_NONE;
 
@@ -9155,15 +9235,36 @@ int	CTFPlayer::CalculateTeamBalanceScore( void )
 // ----------------------------------------------------------------------------
 // Purpose: Play the stun sound to nearby players of the victim and the attacker
 //-----------------------------------------------------------------------------
-void CTFPlayer::PlayStunSound( CTFPlayer *pOther, const char *pszStunSound )
+void CTFPlayer::PlayStunSound( CTFPlayer *pStunner, int nStunFlags/*, int nCurrentStunFlags*/ )
 {
+	// Don't play the stun sound if sounds are disabled or the stunner isn't a player
+	if ( pStunner == nullptr || ( nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) != 0 )
+		return;
+
+	const char *pszStunSound = "\0";
+	if ( nStunFlags & TF_STUNFLAG_CHEERSOUND )
+	{
+		// Moonshot/Grandslam
+		pszStunSound = "TFPlayer.StunImpactRange";
+	}
+	else if( !( nStunFlags & TF_STUNFLAG_GHOSTEFFECT ) )
+	{
+		// Normal stun
+		pszStunSound = "TFPlayer.StunImpact";
+	}
+	else
+	{
+		// Spookily spooked
+		pszStunSound = "Halloween.PlayerScream";
+	}
+
 	CRecipientFilter filter;
-	CSingleUserRecipientFilter filterAttacker( pOther );
+	CSingleUserRecipientFilter filterAttacker( pStunner );
 	filter.AddRecipientsByPAS( GetAbsOrigin() );
-	filter.RemoveRecipient( pOther );
+	filter.RemoveRecipient( pStunner );
 
 	EmitSound( filter, this->entindex(), pszStunSound );
-	EmitSound( filterAttacker, pOther->entindex(), pszStunSound );
+	EmitSound( filterAttacker, pStunner->entindex(), pszStunSound );
 }
 
 // ----------------------------------------------------------------------------

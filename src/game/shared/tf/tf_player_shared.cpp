@@ -2092,23 +2092,8 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResis
 		m_flStunExpireTime = flNextStunExpireTime;
 
 #ifdef GAME_DLL
-
-		// Don't play the stun sound if sounds are disabled or the stunner isn't a player
-		if ( m_hStunner.Get() && !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) )
-		{
-			const char *pszStunSound = "\0";
-			if ( m_nStunFlags & TF_STUNFLAG_CHEERSOUND )
-			{
-				// Moonshot/Grandslam
-				pszStunSound = "TFPlayer.StunImpactRange";
-			}
-			else
-			{
-				// Normal stun
-				pszStunSound = "TFPlayer.StunImpact";
-			}
-			m_pOuter->PlayStunSound( pStunner, pszStunSound );
-		}
+		if( !( m_nStunFlags & TF_STUNFLAG_THIRDPERSON ) )
+			m_pOuter->PlayStunSound( m_hStunner, m_nStunFlags /*, current stun flags*/ );
 #endif
 	}
 }
@@ -3735,6 +3720,18 @@ void CTFPlayerShared::ResetRageSystem( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+CBasePlayer *CTFPlayerShared::GetKnockbackWeaponOwner( void )
+{
+	if ( m_iWeaponKnockbackID == -1 )
+		return NULL;
+
+	Assert( dynamic_cast<CTFPlayer *>( UTIL_PlayerByUserId( m_iWeaponKnockbackID ) ) );
+	return UTIL_PlayerByUserId( m_iWeaponKnockbackID );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFPlayerShared::HasDemoShieldEquipped( void ) const
 {
 	return m_bShieldEquipped;
@@ -3748,11 +3745,11 @@ void CTFPlayerShared::CalcChargeCrit( bool bForceCrit )
 {
 	if (m_flChargeMeter <= 33.0f || bForceCrit)
 	{
-		m_iNextMeleeCrit = MELEE_CRIT_FULL;
+		m_iNextMeleeCrit = kCritType_Crit;
 	}
 	else if (m_flChargeMeter <= 75.0f)
 	{
-		m_iNextMeleeCrit = MELEE_CRIT_MINICRIT;
+		m_iNextMeleeCrit = kCritType_MiniCrit;
 	}
 
 	m_pOuter->SetContextThink( &CTFPlayer::RemoveMeleeCrit, gpGlobals->curtime + 0.3f, "RemoveMeleeCrit" );
@@ -4703,6 +4700,9 @@ bool CTFPlayer::TryToPickupBuilding( void )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPlayerShared::SetCarriedObject(CBaseObject *pObj)
 {
 	if (pObj)
@@ -4719,6 +4719,9 @@ void CTFPlayerShared::SetCarriedObject(CBaseObject *pObj)
 	m_pOuter->TeamFortress_SetSpeed();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CBaseObject* CTFPlayerShared::GetCarriedObject(void)
 {
 	CBaseObject *pObj = m_hCarriedObject.Get();
@@ -4728,6 +4731,15 @@ CBaseObject* CTFPlayerShared::GetCarriedObject(void)
 #endif
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::IncKillstreak( int weaponSlot )
+{
+	int currentStreak = m_nStreaks.Get( weaponSlot );
+	m_nStreaks.Set( weaponSlot, ++currentStreak );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Weapons can call this on secondary attack and it will link to the class
 // ability
 //-----------------------------------------------------------------------------
@@ -4735,54 +4747,52 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 {
 	bool bDoSkill = false;
 
-	switch (GetPlayerClass()->GetClassIndex())
+	switch ( GetPlayerClass()->GetClassIndex() )
 	{
-	case TF_CLASS_SPY:
-	{
-		if (m_Shared.m_flStealthNextChangeTime <= gpGlobals->curtime)
+		case TF_CLASS_SPY:
 		{
-			// Toggle invisibility
-			CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-			if (pInvis)
+			if ( m_Shared.m_flStealthNextChangeTime <= gpGlobals->curtime )
 			{
-				bDoSkill = pInvis->ActivateInvisibility();
+				// Toggle invisibility
+				CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
+				if (pInvis)
+				{
+					bDoSkill = pInvis->ActivateInvisibility();
+				}
+
+				if ( bDoSkill )
+					m_Shared.m_flStealthNextChangeTime = gpGlobals->curtime + 0.5;
+			}
+			break;
+		}
+		case TF_CLASS_DEMOMAN:
+		{
+			CTFPipebombLauncher *pPipebombLauncher = static_cast<CTFPipebombLauncher*>(Weapon_OwnsThisID(TF_WEAPON_PIPEBOMBLAUNCHER));
+
+			if ( pPipebombLauncher )
+			{
+				pPipebombLauncher->SecondaryAttack();
+
+				bDoSkill = true;
 			}
 
-			if (bDoSkill)
-				m_Shared.m_flStealthNextChangeTime = gpGlobals->curtime + 0.5;
+			break;
 		}
-		break;
-	}
-
-	case TF_CLASS_DEMOMAN:
-	{
-		CTFPipebombLauncher *pPipebombLauncher = static_cast<CTFPipebombLauncher*>(Weapon_OwnsThisID(TF_WEAPON_PIPEBOMBLAUNCHER));
-
-		if (pPipebombLauncher)
+		case TF_CLASS_ENGINEER:
 		{
-			pPipebombLauncher->SecondaryAttack();
-
-			bDoSkill = true;
+			bDoSkill = false;
+		#ifdef GAME_DLL
+			bDoSkill = TryToPickupBuilding();
+		#endif
+			break;
 		}
 
-		break;
-	}
-
-	case TF_CLASS_ENGINEER:
-	{
-		bDoSkill = false;
-	#ifdef GAME_DLL
-		bDoSkill = TryToPickupBuilding();
-	#endif
-		break;
-	}
-
-	default:
-		break;
+		default:
+			break;
 	}
 
 	CTFWearableDemoShield *pShield = GetEquippedDemoShield( this );
-	if (pShield)
+	if ( pShield )
 	{
 		bDoSkill = false;
 	#ifdef GAME_DLL

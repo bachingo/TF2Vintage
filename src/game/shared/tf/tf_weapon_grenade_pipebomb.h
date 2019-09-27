@@ -89,8 +89,6 @@ public:
 	
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
-	void			PrecacheProjectileModel( const char *iszModel );
-
 private:
 
 	

@@ -132,27 +132,13 @@
 #include "haptics/haptic_utils.h"
 #include "haptics/haptic_msgs.h"
 
-#if defined( TF_CLIENT_DLL )
-#include "abuse_report.h"
-#endif
-
-#ifdef USES_ECON_ITEMS
-#include "econ_item_system.h"
-#endif // USES_ECON_ITEMS
-
-#if defined( TF_CLIENT_DLL )
-#include "econ/tool_items/custom_texture_cache.h"
-
-#endif
-
-#ifdef WORKSHOP_IMPORT_ENABLED
-#include "fbxsystem/fbxsystem.h"
-#endif
-
-// DRP includes
-#include "discord_rpc.h"
+// Discord RPC
 #include "discord_register.h"
-#include <time.h>
+ConVar cl_discord_appid( "cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_PROTECTED );
+
+#ifdef TF_VINTAGE_CLIENT
+#include "tf_presence.h"
+#endif
 
 extern vgui::IInputInternal *g_InputInternal;
 
@@ -338,11 +324,6 @@ void DispatchHudText( const char *pszName );
 static ConVar s_CV_ShowParticleCounts("showparticlecounts", "0", 0, "Display number of particles drawn per frame");
 static ConVar s_cl_team("cl_team", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default team when joining a game");
 static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default class when joining a game");
-
-// Discord RPC
-static ConVar cl_discord_appid("cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
-static ConVar cl_steam_appid("cl_steam_appid", "14471311890598574118", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
-static int64_t startTimestamp = time(0);
 
 #ifdef HL1MP_CLIENT_DLL
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
@@ -804,9 +785,6 @@ IBaseClientDLL *clientdll = &gHLClient;
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CHLClient, IBaseClientDLL, CLIENT_DLL_INTERFACE_VERSION, gHLClient );
 
-// Save so we can update certain portions
-DiscordRichPresence s_RichPresence;
-
 
 //-----------------------------------------------------------------------------
 // Precaches a material
@@ -896,42 +874,6 @@ bool IsEngineThreaded()
 		return g_pcv_ThreadMode->GetBool();
 	}
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Discord RPC
-//-----------------------------------------------------------------------------
-static void HandleDiscordReady(const DiscordUser* connectedUser)
-{
-	DevMsg("Discord: Connected to user %s#%s - %s\n",
-		connectedUser->username,
-		connectedUser->discriminator,
-		connectedUser->userId);
-}
-
-static void HandleDiscordDisconnected(int errcode, const char* message)
-{
-	DevMsg("Discord: Disconnected (%d: %s)\n", errcode, message);
-}
-
-static void HandleDiscordError(int errcode, const char* message)
-{
-	DevMsg("Discord: Error (%d: %s)\n", errcode, message);
-}
-
-static void HandleDiscordJoin(const char* secret)
-{
-	// Not implemented
-}
-
-static void HandleDiscordSpectate(const char* secret)
-{
-	// Not implemented
-}
-
-static void HandleDiscordJoinRequest(const DiscordUser* request)
-{
-	// Not implemented
 }
 
 //-----------------------------------------------------------------------------
@@ -1227,27 +1169,8 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 #endif
 	
 	// Discord RPC
-	DiscordEventHandlers handlers;
-	Q_memset( &handlers, 0, sizeof( handlers ) );
-	
-	handlers.ready = HandleDiscordReady;
-	handlers.disconnected = HandleDiscordDisconnected;
-	handlers.errored = HandleDiscordError;
-	handlers.joinGame = HandleDiscordJoin;
-	handlers.spectateGame = HandleDiscordSpectate;
-	handlers.joinRequest = HandleDiscordJoinRequest;
-
-	Discord_Initialize( cl_discord_appid.GetString(), &handlers, 1, cl_steam_appid.GetString() );
-
 	if (!g_bTextMode)
 	{
-		Q_memset( &s_RichPresence, 0, sizeof( s_RichPresence ) );
-
-		s_RichPresence.details = "Main Menu";
-		s_RichPresence.largeImageKey = "tf2v_drp_logo";
-		s_RichPresence.startTimestamp = startTimestamp;
-		Discord_UpdatePresence( &s_RichPresence );
-
 		char command[256];
 		Q_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -high -steam\n", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
 		Discord_Register( cl_discord_appid.GetString(), command );
@@ -1377,9 +1300,6 @@ void CHLClient::Shutdown( void )
 	DisconnectDataModel();
 	ShutdownFbx();
 #endif
-	
-	// Discord RPC
-	Discord_Shutdown();
 	
 	// This call disconnects the VGui libraries which we rely on later in the shutdown path, so don't do it
 //	DisconnectTier3Libraries( );
@@ -1761,6 +1681,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	view->LevelInit();
 	tempents->LevelInit();
 	ResetToneMapping(1.0);
+	
+	if ( rpc )
+	{
+		rpc->SetLevelName( pMapName );
+	}
 
 	IGameSystem::LevelInitPreEntityAllSystems(pMapName);
 
@@ -1792,35 +1717,6 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		}
 	}
 #endif
-
-	// Discord RPC
-	if (!g_bTextMode)
-	{
-		Q_memset( &s_RichPresence, 0, sizeof( s_RichPresence ) );
-
-		char state[48], buffer[32];
-		Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", pMapName );
-		wchar *mapName = g_pVGuiLocalize->Find( buffer );
-		if (mapName)
-		{
-			g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
-			Q_snprintf( state, sizeof( state ), "Map: %s", buffer );
-			s_RichPresence.largeImageKey = pMapName;
-			s_RichPresence.largeImageText = pMapName;
-		}
-		else
-		{
-			Q_snprintf( state, sizeof( state ), "Map: %s", pMapName );
-			s_RichPresence.largeImageKey = "default";
-			s_RichPresence.largeImageText = pMapName;
-		}
-		
-		s_RichPresence.details = "In-Game";
-		s_RichPresence.state = state;
-		s_RichPresence.smallImageKey = "tf2v_drp_logo";
-		s_RichPresence.startTimestamp = startTimestamp;
-		Discord_UpdatePresence( &s_RichPresence );
-	}
 	
 	// Check low violence settings for this map
 	g_RagdollLVManager.SetLowViolence( pMapName );
@@ -1912,17 +1808,6 @@ void CHLClient::LevelShutdown( void )
 	StopAllRumbleEffects();
 
 	gHUD.LevelShutdown();
-	
-	// Discord RPC
-	if (!g_bTextMode)
-	{
-		Q_memset( &s_RichPresence, 0, sizeof( s_RichPresence ) );
-
-		s_RichPresence.details = "Main Menu";
-		s_RichPresence.largeImageKey = "tf2v_drp_logo";
-		s_RichPresence.startTimestamp = startTimestamp;
-		Discord_UpdatePresence( &s_RichPresence );
-	}
 
 	internalCenterPrint->Clear();
 

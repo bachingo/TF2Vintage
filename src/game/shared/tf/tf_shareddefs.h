@@ -964,6 +964,14 @@ enum
 	TF_DMG_CUSTOM_AXTINGUISHER_BOOSTED,
 };
 
+// Crit types
+enum ECritType
+{
+	kCritType_None,
+	kCritType_MiniCrit,
+	kCritType_Crit
+};
+
 #define TF_JUMP_ROCKET	( 1 << 0 )
 #define TF_JUMP_STICKY	( 1 << 1 )
 #define TF_JUMP_OTHER	( 1 << 2 )

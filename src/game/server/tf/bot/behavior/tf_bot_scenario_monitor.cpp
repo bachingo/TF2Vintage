@@ -99,6 +99,9 @@ Action<CTFBot> *CTFBotScenarioMonitor::InitialContainedAction( CTFBot *actor )
 
 Action<CTFBot> *CTFBotScenarioMonitor::DesiredScenarioAndClassAction( CTFBot *actor )
 {
+	if ( TheNavAreas.IsEmpty() )
+		return nullptr;
+
 	if ( actor->IsPlayerClass( TF_CLASS_SPY ) )
 		return new CTFBotSpyInfiltrate;
 

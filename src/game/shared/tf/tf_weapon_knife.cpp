@@ -142,30 +142,28 @@ void CTFKnife::PrimaryAttack( void )
 	CALL_ATTRIB_HOOK_INT( nDisguiseOnBackstab, set_disguise_on_backstab );
 	if ( nDisguiseOnBackstab != 0 )
 	{
-		if ( !m_hBackstabVictim || ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() ) || pPlayer->HasTheFlag() )
-		{
-			pPlayer->RemoveDisguise();
-			return;
-		}
+		float flDisguiseSpeedPenalty = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDisguiseSpeedPenalty, disguise_speed_penalty );
 
-		SetContextThink( &CTFKnife::DisguiseOnKill, 0.2f, "DisguiseOnKill" );
+		if ( m_hBackstabVictim && !m_hBackstabVictim->IsAlive() && !pPlayer->HasTheFlag() )
+			SetContextThink( &CTFKnife::DisguiseOnKill, gpGlobals->curtime + flDisguiseSpeedPenalty, "DisguiseOnKill" );
 	}
-	else
+	
+	pPlayer->RemoveDisguise();
+
+	int nSanguisuge = 0;
+	CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
+	if ( nSanguisuge != 0 )
 	{
-		int nSanguisuge = 0;
-		CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
-		if ( m_hBackstabVictim && m_hBackstabVictim->IsAlive() )
+		if ( !m_hBackstabVictim || m_hBackstabVictim->IsAlive() )
 			return;
 
-		if ( nSanguisuge != 0 )
+		int nHealthToSteal = Max( pPlayer->GetMaxHealth() * 3, pPlayer->GetHealth() + iVictimHealth );
+		int nHealthToAdd = pPlayer->GetHealth() - nHealthToSteal;
+		if ( nHealthToAdd > 0 )
 		{
-			int nHealthToSteal = Max( pPlayer->GetMaxHealth() * 3, pPlayer->GetHealth() + iVictimHealth );
-			int nHealthToAdd = pPlayer->GetHealth() - nHealthToSteal;
-			if ( nHealthToAdd > 0 )
-			{
-				pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
-				pPlayer->m_Shared.HealthKitPickupEffects( nHealthToAdd );
-			}
+			pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
+			pPlayer->m_Shared.HealthKitPickupEffects( nHealthToAdd );
 		}
 	}
 #endif
@@ -337,6 +335,9 @@ void CTFKnife::BackstabVMThink( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFKnife::DisguiseOnKill( void )
 {
 	if ( !m_hBackstabVictim )
@@ -349,4 +350,19 @@ void CTFKnife::DisguiseOnKill( void )
 	int iTeamNum = m_hBackstabVictim->GetTeamNumber();
 	int iClassIdx = m_hBackstabVictim->GetPlayerClass()->GetClassIndex();
 	pOwner->m_Shared.Disguise( iTeamNum, iClassIdx, m_hBackstabVictim );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFKnife::BackstabBlocked( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+		return;
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + 2.0f;
+	m_flNextSecondaryAttack = gpGlobals->curtime + 2.0f;
+
+	SendWeaponAnim( ACT_MELEE_VM_PULLBACK );
 }
