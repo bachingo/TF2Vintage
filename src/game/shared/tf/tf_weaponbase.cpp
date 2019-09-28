@@ -228,7 +228,7 @@ CTFWeaponBase::CTFWeaponBase()
 // -----------------------------------------------------------------------------
 void CTFWeaponBase::Spawn()
 {
-	GetAttributeContainer()->InitializeAttributes( this );
+	InitializeAttributes();
 
 	// Base class spawn.
 	BaseClass::Spawn();
@@ -754,7 +754,7 @@ bool CTFWeaponBase::Deploy( void )
 		CEconItemDefinition *pStatic = m_Item.GetStaticData();
 		if ( pStatic && pStatic->hide_bodygroups_deployed_only )
 		{
-			EconItemVisuals *pVisuals =	pStatic->GetVisuals();
+			PerTeamVisuals_t *pVisuals =	pStatic->GetVisuals();
 			if ( pVisuals )
 			{
 				for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
@@ -2300,7 +2300,7 @@ int	CTFWeaponBase::InternalDrawModel( int flags )
 	bool bUseInvulnMaterial = ( bNotViewModel && pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
 	if ( bUseInvulnMaterial )
 	{
-		modelrender->ForcedMaterialOverride( *pOwner->GetInvulnMaterialRef() );
+		modelrender->ForcedMaterialOverride( pOwner->GetInvulnMaterial() );
 	}
 
 	int ret = BaseClass::InternalDrawModel( flags );

@@ -81,14 +81,14 @@ int C_TFWearable::InternalDrawModel( int flags )
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	bool bNotViewModel = ( ( pOwner && !pOwner->IsLocalPlayer() ) || C_BasePlayer::ShouldDrawLocalPlayer() );
 	bool bUseInvulnMaterial = ( bNotViewModel && pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
-	if (bUseInvulnMaterial)
+	if ( bUseInvulnMaterial )
 	{
-		modelrender->ForcedMaterialOverride( *pOwner->GetInvulnMaterialRef() );
+		modelrender->ForcedMaterialOverride( pOwner->GetInvulnMaterial() );
 	}
 
 	int ret = BaseClass::InternalDrawModel( flags );
 
-	if (bUseInvulnMaterial)
+	if ( bUseInvulnMaterial )
 	{
 		modelrender->ForcedMaterialOverride( NULL );
 	}

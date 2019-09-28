@@ -4502,14 +4502,8 @@ int	C_TFPlayer::DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flags 
 	if ( pPlayer->m_Shared.InCond( TF_COND_INVULNERABLE ) )
 	{
 		// Force the invulnerable material
-		modelrender->ForcedMaterialOverride( *pPlayer->GetInvulnMaterialRef() );
-
-		C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>( pViewmodel );
-		if ( pVMAddon )
-			ret = pVMAddon->DrawOverriddenViewmodel( flags );
-		else
-			ret = pViewmodel->DrawOverriddenViewmodel( flags );
-
+		modelrender->ForcedMaterialOverride( pPlayer->GetInvulnMaterial() );
+		ret = pViewmodel->DrawOverriddenViewmodel( flags );
 		modelrender->ForcedMaterialOverride( NULL );
 	}
 

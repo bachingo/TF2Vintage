@@ -58,7 +58,7 @@ public:
 	virtual bool    ShouldFlash( void )                 { return false; }
 	virtual bool    IsEnabled( void ) override          { return m_bEnabled; }
 
-	virtual C_TFWeaponBase* GetItem( void ) const       { return m_hItem.Get(); }
+	virtual C_TFWeaponBase* GetItem( void ) const       { return m_hItem; }
 	void            SetItem( C_TFWeaponBase *pItem )    { m_hItem = pItem; }
 
 private:
@@ -358,7 +358,7 @@ bool CHudItemEffectMeterTemp<Class>::IsEnabled( void )
 template<typename Class>
 Class *CHudItemEffectMeterTemp<Class>::GetWeapon( void )
 {
-	if ( !GetItem() )
+	if ( GetItem() == NULL )
 	{
 		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 		if ( pPlayer )
