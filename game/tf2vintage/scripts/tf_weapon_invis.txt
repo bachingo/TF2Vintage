@@ -11,6 +11,8 @@
 	"primary_ammo"			"None"
 	"secondary_ammo"		"None"
 
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
 	"HasTeamSkins_Viewmodel"	"1"
 	"MeleeWeapon"			"1"	// so we can always attack
 

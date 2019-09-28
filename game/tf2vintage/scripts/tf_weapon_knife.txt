@@ -12,7 +12,9 @@ WeaponData
 	"Damage"			"40"
 	"TimeFireDelay"			"0.8"
 	"TimeIdle"			"5.0"
-	"HasTeamSkins_Viewmodel"			"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
 	"SmackDelay"			"0.1"
 	"Secondary_SmackDelay"		"0.3"
 

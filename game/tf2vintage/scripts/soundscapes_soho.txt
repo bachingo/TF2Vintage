@@ -13,7 +13,7 @@
 		{
 		"volume"	"0.2"
 		"pitch"		"100"
-		"wave"		"ambient_mp3\voices\appartments_crowd_loop1.mp3"
+		"wave"		"ambient/voices/appartments_crowd_loop1.wav"
 	}
 
 
@@ -24,10 +24,10 @@
 		"pitch"		"125"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_06.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_05.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_03.mp3"
+			"wave"		"ambient/cp_harbor/car_1shot_06.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_05.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_04.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_03.wav"
 
 		}
 	}
@@ -39,10 +39,10 @@
 		"pitch"		"115"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\dog1.mp3"
-			"wave"		"ambient_mp3\dog2.mp3"
-			"wave"		"ambient_mp3\dog3.mp3"
-			"wave"		"ambient_mp3\dog4.mp3"
+			"wave"		"ambient/dog1.wav"
+			"wave"		"ambient/dog2.wav"
+			"wave"		"ambient/dog3.wav"
+			"wave"		"ambient/dog4.wav"
 
 		}
 	}
@@ -55,7 +55,7 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\machines\heli_pass1.mp3"
+			"wave"		"ambient/machines/heli_pass1.wav"
 		}
 	}
 	
@@ -66,7 +66,7 @@
 		"pitch"		"180"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\alarms\apc_alarm_pass1.mp3"
+			"wave"		"ambient/alarms/apc_alarm_pass1.wav"
 		}
 	}
 } 
@@ -89,7 +89,7 @@
 	{
 		"volume"	"1"
 		"pitch"		"100"
-		"wave"		"ambient_mp3\atmosphere\plaza_amb.mp3"
+		"wave"		"ambient/atmosphere/plaza_amb.wav"
 	}
 	
 		"playrandom"
@@ -99,7 +99,7 @@
 		"pitch"		"180"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\alarms\apc_alarm_pass1.mp3"
+			"wave"		"ambient/alarms/apc_alarm_pass1.wav"
 		}
 	}
 	"playrandom"
@@ -109,10 +109,10 @@
 		"pitch"		"125"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_06.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_05.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_03.mp3"
+			"wave"		"ambient/cp_harbor/car_1shot_06.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_05.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_04.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_03.wav"
 
 		}
 	}
@@ -123,12 +123,12 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\materials\shutter6.mp3"
-			"wave"		"ambient_mp3\materials\shutter7.mp3"
-			"wave"		"ambient_mp3\materials\shutter8.mp3"
-			"wave"		"ambient_mp3\shutter4.mp3"
-			"wave"		"ambient_mp3\shutter5.mp3"
-			"wave"		"ambient_mp3\shutter6.mp3"
+			"wave"		"ambient/materials/shutter6.wav"
+			"wave"		"ambient/materials/shutter7.wav"
+			"wave"		"ambient/materials/shutter8.wav"
+			"wave"		"ambient/shutter4.wav"
+			"wave"		"ambient/shutter5.wav"
+			"wave"		"ambient/shutter6.wav"
 
 		}
 	}
@@ -139,10 +139,10 @@
 		"pitch"		"115"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\dog1.mp3"
-			"wave"		"ambient_mp3\dog2.mp3"
-			"wave"		"ambient_mp3\dog3.mp3"
-			"wave"		"ambient_mp3\dog4.mp3"
+			"wave"		"ambient/dog1.wav"
+			"wave"		"ambient/dog2.wav"
+			"wave"		"ambient/dog3.wav"
+			"wave"		"ambient/dog4.wav"
 
 		}
 	}
@@ -155,7 +155,7 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\machines\heli_pass1.mp3"
+			"wave"		"ambient/machines/heli_pass1.wav"
 		}
 	}
 } 
@@ -178,9 +178,9 @@
 		"pitch"		"135"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\creak01.mp3"
-			"wave"		"ambient_mp3\creak02.mp3"
-			"wave"		"ambient_mp3\creak03.mp3"
+			"wave"		"ambient/creak01.wav"
+			"wave"		"ambient/creak02.wav"
+			"wave"		"ambient/creak03.wav"
 		}
 	}
 
@@ -190,7 +190,7 @@
 		"pitch"		"100"
 		"position"		"0"
 		"attenuation"	"0.19"	
-		"wave"		"ambient_mp3\levels\canals\waterleak_loop1.mp3"
+		"wave"		"ambient/levels/canals/waterleak_loop1.wav"
 	}
 
 		"playlooping"
@@ -207,7 +207,7 @@
 		"pitch"		"115"
 		"position"		"2"
 		"attenuation"	"0.18"	
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 
 		"playlooping"
@@ -216,7 +216,7 @@
 		"pitch"		"100"
 		"position"		"3"
 		"attenuation"	"0.19"	
-		"wave"		"ambient_mp3\levels\canals\waterleak_loop1.mp3"
+		"wave"		"ambient/levels/canals/waterleak_loop1.wav"
 	}
 			"playlooping"
 	{
@@ -232,7 +232,7 @@
 		"pitch"		"115"
 		"position"		"5"
 		"attenuation"	"0.18"	
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 	
 } 

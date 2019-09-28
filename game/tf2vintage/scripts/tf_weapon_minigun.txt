@@ -6,6 +6,10 @@ WeaponData
 	"weight"		"3"
 	"WeaponType"		"primary"
 	"ITEM_FLAG_NOITEMPICKUP" 	"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
+
 		
 	// Attributes TF.
 	"Damage"		"9"
@@ -29,8 +33,6 @@ WeaponData
 	"bucket"		"0"
 	"bucket_position"	"0"
 
-	"bucket_DM"		"2"
-	"bucket_position_DM"	"2"
 
 	// Animation.
 	"viewmodel"		"models/weapons/v_models/v_minigun_heavy.mdl"

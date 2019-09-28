@@ -143,14 +143,14 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/dog1.mp3"
-			"wave"		"ambient_mp3/dog2.mp3"
-			"wave"		"ambient_mp3/dog3.mp3"
-			"wave"		"ambient_mp3/dog4.mp3"
-			"wave"		"ambient_mp3/crow1.mp3"
-			"wave"		"ambient_mp3/crow2.mp3"
-			"wave"		"ambient_mp3/crow3.mp3"
-			"wave"		"ambient_mp3/crow4.mp3"
+			"wave"		"ambient/dog1.wav"
+			"wave"		"ambient/dog2.wav"
+			"wave"		"ambient/dog3.wav"
+			"wave"		"ambient/dog4.wav"
+			"wave"		"ambient/crow1.wav"
+			"wave"		"ambient/crow2.wav"
+			"wave"		"ambient/crow3.wav"
+			"wave"		"ambient/crow4.wav"
 		}
 	}
 }

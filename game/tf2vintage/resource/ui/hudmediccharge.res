@@ -14,9 +14,7 @@
 		"image"			"../hud/medic_charge_blue_bg"
 		"scaleImage"	"1"	
 		"teambg_2"		"../hud/medic_charge_red_bg"
-		"teambg_3"		"../hud/medic_charge_blue_bg"	
-		"teambg_4"		"../hud/medic_charge_green_bg"
-		"teambg_5"		"../hud/medic_charge_yellow_bg"				
+		"teambg_3"		"../hud/medic_charge_blue_bg"			
 	}
 	
 	"ChargeLabel"

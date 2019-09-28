@@ -6,6 +6,10 @@ WeaponData
 	"weight"		"2"
 	"WeaponType"		"primary"
 	"ITEM_FLAG_NOITEMPICKUP" 	"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
+
 		
 	// Attributes TF.
 	"Damage"		"12"
@@ -18,11 +22,11 @@ WeaponData
 	"TimeReload"		"0.5"
 	"ProjectileType"	"projectile_bullet"
 	"BrassModel"		"models/weapons/shells/shell_pistol.mdl"
-	"UseRapidFireCrits"	"1"
+	"UseRapidFireCrits"	"0"
 	"TracerEffect"		"bullet_pistol_tracer01"
 
 	// Ammo & Clip.
-	"primary_ammo"		"TF_AMMO_PRIMARY"
+	"primary_ammo"		"TF_AMMO_SECONDARY"
 	"secondary_ammo"	"None"
 	"clip_size"		"4"
 	"default_clip"		"4"
@@ -35,7 +39,9 @@ WeaponData
 	"anim_prefix"		"ac"
 
 	// Muzzleflash
+	"MuzzleFlashModel"	"models/effects/muzzleflash/minigunmuzzle.mdl"
 	"MuzzleFlashParticleEffect" "muzzle_pistol"
+	"MuzzleflashModelScale"		".3"
 
 	// Sounds.
 	// Max of 16 per category (ie. max 16 "single_shot" sounds).

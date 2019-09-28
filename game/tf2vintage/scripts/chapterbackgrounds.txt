@@ -1,8 +1,8 @@
 "chapters"
 {
-	1	"background01"
+	1	"title_red"
 	2	"background02"
-	3	"background03"
+	3	"title_blue"
 }
 "BackgroundMaps"
 {

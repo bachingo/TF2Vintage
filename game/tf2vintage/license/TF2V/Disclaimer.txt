@@ -1,0 +1,17 @@
+************************************************************************************
+Team Fortress 2 Disclaimer Version 2 (Added July 15th, 2017, Updated September 28th, 2018)
+************************************************************************************
+
+Team Fortress 2 Vintage is a fork of Team Fortress 2 Classic and includes code developed by Team Fortress 2 Classic.
+   
+Team Fortress 2 Vintage is a reimagining of early Team Fortress 2 created by the community 
+and is unrelated or attempting to be a bootleg or ripoff of Team Fortress 2/Team Fortress 2 Classic and is a separate 
+entity from the aformentioned software(s).
+   
+This mod has no monetization and is fully non-commercial as per the Source 1 Engine License. 
+   
+This mod is to be used with Source SDK Base 2013 Multiplayer found only on Steam, and downloaded through official download sources only.
+   
+USING NON-SUPPORTED VERSIONS OF TEAM FORTRESS 2 VINTAGE ARE AT YOUR OWN RISK. 
+ONLY DOWNLOAD AND PLAY OFFICIALLY RELEASED VERSIONS USING OFFICIAL SOURCE SDK SOFTWARE. NO OFFICIAL VERSIONS OF TEAM FORTRESS 2 VINTAGE 
+ARE DISTRIBUTED ELSEWHERE. WE ARE NOT RESPONSIBLE FOR ANY SUPPORT OF UNOFFICIAL COPIES OR ANY HARM RESULTING FROM MISUSE OF THE SOFTWARE.

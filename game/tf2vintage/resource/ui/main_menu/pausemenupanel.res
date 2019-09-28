@@ -192,7 +192,7 @@
 	{
 		"ControlName"			"CTFAdvButton"
 		"fieldName"				"OptionsOldButton"	
-		"xpos"					"15"
+		"xpos"					"40"
 		"ypos"					"450"
 		"zpos"					"5"
 		"wide"					"20"
@@ -205,7 +205,7 @@
 		"SubButton"
 		{
 			"labelText"			""
-			"tooltip" 			"#MMenu_Tooltip_AdvOptions"
+			"tooltip" 			"Advanced Options"
 			"xshift" 			"20"
 			"yshift" 			"0"
 			"textAlignment"		"center"
@@ -289,7 +289,7 @@
 	{
 		"ControlName"			"CTFAdvButton"
 		"fieldName"				"TheaterButton"
-		"xpos"					"40"
+		"xpos"					"65"
 		"ypos"					"450"
 		"zpos"					"5"
 		"wide"					"20"
@@ -302,7 +302,7 @@
 		"SubButton"
 		{
 			"labelText"			""
-			"tooltip" 		"#MMenu_Tooltip_Replay"
+			"tooltip" 		"Theater"
 			"xshift" 			"20"
 			"yshift" 			"0"
 			"textAlignment"		"center"
@@ -319,6 +319,40 @@
 			"imagewidth"		"16"	
 		}
 	}	
+	"DevCommentaryButton"
+	{
+		"ControlName"			"CTFAdvButton"
+		"fieldName"				"DevCommentaryButton"
+		"xpos"					"15"
+		"ypos"					"450"
+		"zpos"					"5"
+		"wide"					"20"
+		"tall"					"20"
+		"visible"				"1"
+		"enabled"				"1"
+		"bordervisible"			"1"		
+		"command"				"gamemenucommand OpenLoadSingleplayerCommentaryDialog"
+		
+		"SubButton"
+		{
+			"labelText"			""
+			"tooltip" 			"#GameUI_LoadCommentary"
+			"xshift" 			"20"
+			"yshift" 			"0"
+			"textAlignment"		"center"
+			"font"				"MenuSmallFont"	
+			"border_default"	"AdvRightButtonDefault"
+			"border_armed"		"AdvRightButtonArmed"
+			"border_depressed"	"AdvRightButtonDepressed"
+		}
+		
+		
+		"SubImage"
+		{
+			"image" 			"../vgui/glyph_commentary"
+			"imagewidth"		"16"	
+		}
+	}
 	"LoadoutButton"
 	{
 		"ControlName"			"CTFAdvButton"
@@ -353,4 +387,3 @@
 	}	
 
 }
-		

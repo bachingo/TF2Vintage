@@ -24,12 +24,12 @@
 		"pitch"		"75, 100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/owl1.mp3"
-			"wave"		"ambient_mp3/owl2.mp3"
-			"wave"		"ambient_mp3/owl3.mp3"
-			"wave"		"ambient_mp3/wolf01.mp3"
-			"wave"		"ambient_mp3/wolf02.mp3"
-			"wave"		"ambient_mp3/wolf03.mp3"
+			"wave"		"ambient/owl1.wav"
+			"wave"		"ambient/owl2.wav"
+			"wave"		"ambient/owl3.wav"
+			"wave"		"ambient/wolf01.wav"
+			"wave"		"ambient/wolf02.wav"
+			"wave"		"ambient/wolf03.wav"
 		}
 	}
 	"playrandom"
@@ -39,8 +39,8 @@
 		"pitch"		"65, 75"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/crow1.mp3"
-			"wave"		"ambient_mp3/crow2.mp3"
+			"wave"		"ambient/crow1.wav"
+			"wave"		"ambient/crow2.wav"
 		}
 	}
 	"playrandom"
@@ -50,8 +50,8 @@
 		"pitch"		"50, 75"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/wind_gust1.mp3"
-			"wave"		"ambient_mp3/wind_gust2.mp3"
+			"wave"		"ambient/wind_gust1.wav"
+			"wave"		"ambient/wind_gust2.wav"
 		}
 	}
 
@@ -62,9 +62,9 @@
 		"pitch"		"90, 110"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hallow01.mp3"
-			"wave"		"ambient_mp3/hallow02.mp3"
-			"wave"		"ambient_mp3/hallow03.mp3"			
+			"wave"		"ambient/hallow01.wav"
+			"wave"		"ambient/hallow02.wav"
+			"wave"		"ambient/hallow03.wav"			
 		}
 	}
 }
@@ -92,8 +92,8 @@
 		"pitch"		"50, 75"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/wind_gust1.mp3"
-			"wave"		"ambient_mp3/wind_gust2.mp3"
+			"wave"		"ambient/wind_gust1.wav"
+			"wave"		"ambient/wind_gust2.wav"
 		}
 	}
 	"playrandom"
@@ -103,9 +103,9 @@
 		"pitch"		"90, 110"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hallow01.mp3"
-			"wave"		"ambient_mp3/hallow02.mp3"
-			"wave"		"ambient_mp3/hallow03.mp3"			
+			"wave"		"ambient/hallow01.wav"
+			"wave"		"ambient/hallow02.wav"
+			"wave"		"ambient/hallow03.wav"			
 		}
 	}
 	"playrandom"
@@ -115,9 +115,9 @@
 		"pitch"		"60, 80"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/creak01.mp3"
-			"wave"		"ambient_mp3/creak02.mp3"
-			"wave"		"ambient_mp3/creak03.mp3"			
+			"wave"		"ambient/creak01.wav"
+			"wave"		"ambient/creak02.wav"
+			"wave"		"ambient/creak03.wav"			
 		}
 	}
 }
@@ -132,35 +132,35 @@
 	{
 		"volume"	".75"
 		"pitch"		"110"
-		"wave"		"ambient\halloween\Underground_wind_lp_01.wav"
+		"wave"		"ambient/halloween/Underground_wind_lp_01.wav"
 	}
 
 	"playlooping"
 	{
 		"volume"	".85"
 		"pitch"		"100"
-		"wave"		"ambient\halloween\Underground_wind_lp_04.wav"
+		"wave"		"ambient/halloween/Underground_wind_lp_04.wav"
 	}
 
 	"playlooping"
 	{
 		"volume"	"1.0"
 		"pitch"		"100"
-		"wave"		"ambient\halloween\Underground_wind_lp_02.wav"
+		"wave"		"ambient/halloween/Underground_wind_lp_02.wav"
 	}	
 
 	"playlooping"
 	{
 		"volume"	"1.0"
 		"pitch"		"100"
-		"wave"		"ambient\halloween\Underground_wind_lp_03.wav"
+		"wave"		"ambient/halloween/Underground_wind_lp_03.wav"
 	}
 
 	"playlooping"
 	{
 		"volume"	"1.0"
 		"pitch"		"100"
-		"wave"		"ambient\halloween\Underground_water_lp_01.wav"
+		"wave"		"ambient/halloween/Underground_water_lp_01.wav"
 	}	
 
 	"playrandom"
@@ -170,11 +170,11 @@
 		"pitch"		"50, 75"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hallow04.mp3"
-			"wave"		"ambient_mp3/hallow05.mp3"
-			"wave"		"ambient_mp3/hallow06.mp3"
-			"wave"		"ambient_mp3/hallow07.mp3"
-			"wave"		"ambient_mp3/hallow08.mp3"					
+			"wave"		"ambient/hallow04.wav"
+			"wave"		"ambient/hallow05.wav"
+			"wave"		"ambient/hallow06.wav"
+			"wave"		"ambient/hallow07.wav"
+			"wave"		"ambient/hallow08.wav"					
 		}
 	}
 	
@@ -185,16 +185,16 @@
 		"pitch"		"90, 110"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\halloween\female_scream_01.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_02.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_03.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_04.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_05.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_06.mp3"	
-			"wave"		"ambient_mp3\halloween\female_scream_07.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_08.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_09.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_10.mp3"			
+			"wave"		"ambient/halloween/female_scream_01.wav"
+			"wave"		"ambient/halloween/female_scream_02.wav"
+			"wave"		"ambient/halloween/female_scream_03.wav"
+			"wave"		"ambient/halloween/female_scream_04.wav"
+			"wave"		"ambient/halloween/female_scream_05.wav"
+			"wave"		"ambient/halloween/female_scream_06.wav"	
+			"wave"		"ambient/halloween/female_scream_07.wav"
+			"wave"		"ambient/halloween/female_scream_08.wav"
+			"wave"		"ambient/halloween/female_scream_09.wav"
+			"wave"		"ambient/halloween/female_scream_10.wav"			
 		}
 	}
 	
@@ -206,27 +206,27 @@
 		"rndwave"
 		{
 
-			"wave"		"ambient_mp3\halloween\male_scream_03.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_04.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_05.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_06.mp3"	
-			"wave"		"ambient_mp3\halloween\male_scream_07.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_08.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_09.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_10.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_11.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_12.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_13.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_14.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_15.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_16.mp3"	
-			"wave"		"ambient_mp3\halloween\male_scream_17.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_18.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_19.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_20.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_21.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_22.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_23.mp3"			
+			"wave"		"ambient/halloween/male_scream_03.wav"
+			"wave"		"ambient/halloween/male_scream_04.wav"
+			"wave"		"ambient/halloween/male_scream_05.wav"
+			"wave"		"ambient/halloween/male_scream_06.wav"	
+			"wave"		"ambient/halloween/male_scream_07.wav"
+			"wave"		"ambient/halloween/male_scream_08.wav"
+			"wave"		"ambient/halloween/male_scream_09.wav"
+			"wave"		"ambient/halloween/male_scream_10.wav"
+			"wave"		"ambient/halloween/male_scream_11.wav"
+			"wave"		"ambient/halloween/male_scream_12.wav"
+			"wave"		"ambient/halloween/male_scream_13.wav"
+			"wave"		"ambient/halloween/male_scream_14.wav"
+			"wave"		"ambient/halloween/male_scream_15.wav"
+			"wave"		"ambient/halloween/male_scream_16.wav"	
+			"wave"		"ambient/halloween/male_scream_17.wav"
+			"wave"		"ambient/halloween/male_scream_18.wav"
+			"wave"		"ambient/halloween/male_scream_19.wav"
+			"wave"		"ambient/halloween/male_scream_20.wav"
+			"wave"		"ambient/halloween/male_scream_21.wav"
+			"wave"		"ambient/halloween/male_scream_22.wav"
+			"wave"		"ambient/halloween/male_scream_23.wav"			
 		}
 	}
 	
@@ -237,22 +237,22 @@
 		"pitch"		"110, 125"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\halloween\mysterious_perc_01.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_02.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_03.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_04.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_05.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_06.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_07.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_08.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_09.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_10.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_11.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_12.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_13.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_14.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_15.mp3"
-			"wave"		"ambient_mp3\halloween\mysterious_perc_16.mp3"				
+			"wave"		"ambient/halloween/mysterious_perc_01.wav"
+			"wave"		"ambient/halloween/mysterious_perc_02.wav"
+			"wave"		"ambient/halloween/mysterious_perc_03.wav"
+			"wave"		"ambient/halloween/mysterious_perc_04.wav"
+			"wave"		"ambient/halloween/mysterious_perc_05.wav"
+			"wave"		"ambient/halloween/mysterious_perc_06.wav"
+			"wave"		"ambient/halloween/mysterious_perc_07.wav"
+			"wave"		"ambient/halloween/mysterious_perc_08.wav"
+			"wave"		"ambient/halloween/mysterious_perc_09.wav"
+			"wave"		"ambient/halloween/mysterious_perc_10.wav"
+			"wave"		"ambient/halloween/mysterious_perc_11.wav"
+			"wave"		"ambient/halloween/mysterious_perc_12.wav"
+			"wave"		"ambient/halloween/mysterious_perc_13.wav"
+			"wave"		"ambient/halloween/mysterious_perc_14.wav"
+			"wave"		"ambient/halloween/mysterious_perc_15.wav"
+			"wave"		"ambient/halloween/mysterious_perc_16.wav"				
 		}
 	}
 	
@@ -263,26 +263,26 @@
 		"pitch"		"85, 100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\halloween\thunder_01.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_02.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_03.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_03.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_03.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_04.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_05.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_05.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_05.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_05.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_06.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_07.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_08.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_09.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_10.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_10.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_10.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_07.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_07.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_07.mp3"				
+			"wave"		"ambient/halloween/thunder_01.wav"
+			"wave"		"ambient/halloween/thunder_02.wav"
+			"wave"		"ambient/halloween/thunder_03.wav"
+			"wave"		"ambient/halloween/thunder_03.wav"
+			"wave"		"ambient/halloween/thunder_03.wav"
+			"wave"		"ambient/halloween/thunder_04.wav"	
+			"wave"		"ambient/halloween/thunder_05.wav"
+			"wave"		"ambient/halloween/thunder_05.wav"
+			"wave"		"ambient/halloween/thunder_05.wav"
+			"wave"		"ambient/halloween/thunder_05.wav"
+			"wave"		"ambient/halloween/thunder_06.wav"	
+			"wave"		"ambient/halloween/thunder_07.wav"
+			"wave"		"ambient/halloween/thunder_08.wav"	
+			"wave"		"ambient/halloween/thunder_09.wav"
+			"wave"		"ambient/halloween/thunder_10.wav"
+			"wave"		"ambient/halloween/thunder_10.wav"
+			"wave"		"ambient/halloween/thunder_10.wav"
+			"wave"		"ambient/halloween/thunder_07.wav"	
+			"wave"		"ambient/halloween/thunder_07.wav"	
+			"wave"		"ambient/halloween/thunder_07.wav"				
 		}
 	}
 	
@@ -293,18 +293,18 @@
 		"pitch"		"95, 105"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\halloween\windgust_01.mp3"
-			"wave"		"ambient_mp3\halloween\windgust_02.mp3"
-			"wave"		"ambient_mp3\halloween\windgust_03.mp3"
-			"wave"		"ambient_mp3\halloween\windgust_04.mp3"		
-			"wave"		"ambient_mp3\halloween\windgust_05.mp3"
-			"wave"		"ambient_mp3\halloween\windgust_06.mp3"		
-			"wave"		"ambient_mp3\halloween\windgust_07.mp3"
-			"wave"		"ambient_mp3\halloween\windgust_08.mp3"		
-			"wave"		"ambient_mp3\halloween\windgust_09.mp3"
-			"wave"		"ambient_mp3\halloween\windgust_10.mp3"		
-			"wave"		"ambient_mp3\halloween\windgust_11.mp3"
-			"wave"		"ambient_mp3\halloween\windgust_12.mp3"		
+			"wave"		"ambient/halloween/windgust_01.wav"
+			"wave"		"ambient/halloween/windgust_02.wav"
+			"wave"		"ambient/halloween/windgust_03.wav"
+			"wave"		"ambient/halloween/windgust_04.wav"		
+			"wave"		"ambient/halloween/windgust_05.wav"
+			"wave"		"ambient/halloween/windgust_06.wav"		
+			"wave"		"ambient/halloween/windgust_07.wav"
+			"wave"		"ambient/halloween/windgust_08.wav"		
+			"wave"		"ambient/halloween/windgust_09.wav"
+			"wave"		"ambient/halloween/windgust_10.wav"		
+			"wave"		"ambient/halloween/windgust_11.wav"
+			"wave"		"ambient/halloween/windgust_12.wav"		
 		}
 	}
 }
@@ -318,7 +318,7 @@
 	{
 		"volume"	"1"
 		"pitch"		"100"
-		"wave"		"ambient\hell\hell_atmos.wav"
+		"wave"		"ambient/hell/hell_atmos.wav"
 	}
 
 	"playrandom"
@@ -328,13 +328,13 @@
 		"pitch"		"95, 105"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hell\hell_rumbles_01.mp3"
-			"wave"		"ambient_mp3/hell\hell_rumbles_02.mp3"
-			"wave"		"ambient_mp3/hell\hell_rumbles_03.mp3"
-			"wave"		"ambient_mp3/hell\hell_rumbles_04.mp3"
-			"wave"		"ambient_mp3/hell\hell_rumbles_05.mp3"
-			"wave"		"ambient_mp3/hell\hell_rumbles_06.mp3"	
-			"wave"		"ambient_mp3/hell\hell_rumbles_07.mp3"			
+			"wave"		"ambient/hell/hell_rumbles_01.wav"
+			"wave"		"ambient/hell/hell_rumbles_02.wav"
+			"wave"		"ambient/hell/hell_rumbles_03.wav"
+			"wave"		"ambient/hell/hell_rumbles_04.wav"
+			"wave"		"ambient/hell/hell_rumbles_05.wav"
+			"wave"		"ambient/hell/hell_rumbles_06.wav"	
+			"wave"		"ambient/hell/hell_rumbles_07.wav"			
 		}
 	}
 	
@@ -345,16 +345,16 @@
 		"pitch"		"90, 110"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\halloween\female_scream_01.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_02.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_03.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_04.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_05.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_06.mp3"	
-			"wave"		"ambient_mp3\halloween\female_scream_07.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_08.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_09.mp3"
-			"wave"		"ambient_mp3\halloween\female_scream_10.mp3"			
+			"wave"		"ambient/halloween/female_scream_01.wav"
+			"wave"		"ambient/halloween/female_scream_02.wav"
+			"wave"		"ambient/halloween/female_scream_03.wav"
+			"wave"		"ambient/halloween/female_scream_04.wav"
+			"wave"		"ambient/halloween/female_scream_05.wav"
+			"wave"		"ambient/halloween/female_scream_06.wav"	
+			"wave"		"ambient/halloween/female_scream_07.wav"
+			"wave"		"ambient/halloween/female_scream_08.wav"
+			"wave"		"ambient/halloween/female_scream_09.wav"
+			"wave"		"ambient/halloween/female_scream_10.wav"			
 		}
 	}
 	
@@ -366,27 +366,27 @@
 		"rndwave"
 		{
 
-			"wave"		"ambient_mp3\halloween\male_scream_03.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_04.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_05.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_06.mp3"	
-			"wave"		"ambient_mp3\halloween\male_scream_07.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_08.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_09.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_10.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_11.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_12.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_13.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_14.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_15.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_16.mp3"	
-			"wave"		"ambient_mp3\halloween\male_scream_17.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_18.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_19.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_20.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_21.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_22.mp3"
-			"wave"		"ambient_mp3\halloween\male_scream_23.mp3"			
+			"wave"		"ambient/halloween/male_scream_03.wav"
+			"wave"		"ambient/halloween/male_scream_04.wav"
+			"wave"		"ambient/halloween/male_scream_05.wav"
+			"wave"		"ambient/halloween/male_scream_06.wav"	
+			"wave"		"ambient/halloween/male_scream_07.wav"
+			"wave"		"ambient/halloween/male_scream_08.wav"
+			"wave"		"ambient/halloween/male_scream_09.wav"
+			"wave"		"ambient/halloween/male_scream_10.wav"
+			"wave"		"ambient/halloween/male_scream_11.wav"
+			"wave"		"ambient/halloween/male_scream_12.wav"
+			"wave"		"ambient/halloween/male_scream_13.wav"
+			"wave"		"ambient/halloween/male_scream_14.wav"
+			"wave"		"ambient/halloween/male_scream_15.wav"
+			"wave"		"ambient/halloween/male_scream_16.wav"	
+			"wave"		"ambient/halloween/male_scream_17.wav"
+			"wave"		"ambient/halloween/male_scream_18.wav"
+			"wave"		"ambient/halloween/male_scream_19.wav"
+			"wave"		"ambient/halloween/male_scream_20.wav"
+			"wave"		"ambient/halloween/male_scream_21.wav"
+			"wave"		"ambient/halloween/male_scream_22.wav"
+			"wave"		"ambient/halloween/male_scream_23.wav"			
 		}
 	}
 	
@@ -397,16 +397,16 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\halloween\thunder_01.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_02.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_03.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_04.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_05.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_06.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_07.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_08.mp3"	
-			"wave"		"ambient_mp3\halloween\thunder_09.mp3"
-			"wave"		"ambient_mp3\halloween\thunder_10.mp3"			
+			"wave"		"ambient/halloween/thunder_01.wav"
+			"wave"		"ambient/halloween/thunder_02.wav"
+			"wave"		"ambient/halloween/thunder_03.wav"
+			"wave"		"ambient/halloween/thunder_04.wav"	
+			"wave"		"ambient/halloween/thunder_05.wav"
+			"wave"		"ambient/halloween/thunder_06.wav"	
+			"wave"		"ambient/halloween/thunder_07.wav"
+			"wave"		"ambient/halloween/thunder_08.wav"	
+			"wave"		"ambient/halloween/thunder_09.wav"
+			"wave"		"ambient/halloween/thunder_10.wav"			
 		}
 	}
 	
@@ -417,11 +417,11 @@
 		"pitch"		"80, 110"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hallow04.mp3"
-			"wave"		"ambient_mp3/hallow05.mp3"
-			"wave"		"ambient_mp3/hallow06.mp3"
-			"wave"		"ambient_mp3/hallow07.mp3"
-			"wave"		"ambient_mp3/hallow08.mp3"					
+			"wave"		"ambient/hallow04.wav"
+			"wave"		"ambient/hallow05.wav"
+			"wave"		"ambient/hallow06.wav"
+			"wave"		"ambient/hallow07.wav"
+			"wave"		"ambient/hallow08.wav"					
 		}
 	}
 }
@@ -451,12 +451,12 @@
 		"pitch"		"75, 100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/owl1.mp3"
-			"wave"		"ambient_mp3/owl2.mp3"
-			"wave"		"ambient_mp3/owl3.mp3"
-			"wave"		"ambient_mp3/wolf01.mp3"
-			"wave"		"ambient_mp3/wolf02.mp3"
-			"wave"		"ambient_mp3/wolf03.mp3"
+			"wave"		"ambient/owl1.wav"
+			"wave"		"ambient/owl2.wav"
+			"wave"		"ambient/owl3.wav"
+			"wave"		"ambient/wolf01.wav"
+			"wave"		"ambient/wolf02.wav"
+			"wave"		"ambient/wolf03.wav"
 		}
 	}
 	"playrandom"
@@ -466,8 +466,8 @@
 		"pitch"		"65, 75"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/crow1.mp3"
-			"wave"		"ambient_mp3/crow2.mp3"
+			"wave"		"ambient/crow1.wav"
+			"wave"		"ambient/crow2.wav"
 		}
 	}
 	"playrandom"
@@ -477,8 +477,8 @@
 		"pitch"		"50, 75"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/wind_gust1.mp3"
-			"wave"		"ambient_mp3/wind_gust2.mp3"
+			"wave"		"ambient/wind_gust1.wav"
+			"wave"		"ambient/wind_gust2.wav"
 		}
 	}
 
@@ -489,9 +489,9 @@
 		"pitch"		"90, 110"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hallow01.mp3"
-			"wave"		"ambient_mp3/hallow02.mp3"
-			"wave"		"ambient_mp3/hallow03.mp3"			
+			"wave"		"ambient/hallow01.wav"
+			"wave"		"ambient/hallow02.wav"
+			"wave"		"ambient/hallow03.wav"			
 		}
 	}
 }
@@ -519,8 +519,8 @@
 		"pitch"		"50, 75"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/wind_gust1.mp3"
-			"wave"		"ambient_mp3/wind_gust2.mp3"
+			"wave"		"ambient/wind_gust1.wav"
+			"wave"		"ambient/wind_gust2.wav"
 		}
 	}
 	"playrandom"
@@ -530,9 +530,9 @@
 		"pitch"		"90, 110"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hallow01.mp3"
-			"wave"		"ambient_mp3/hallow02.mp3"
-			"wave"		"ambient_mp3/hallow03.mp3"			
+			"wave"		"ambient/hallow01.wav"
+			"wave"		"ambient/hallow02.wav"
+			"wave"		"ambient/hallow03.wav"			
 		}
 	}
 	"playrandom"
@@ -542,9 +542,9 @@
 		"pitch"		"60, 80"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/creak01.mp3"
-			"wave"		"ambient_mp3/creak02.mp3"
-			"wave"		"ambient_mp3/creak03.mp3"			
+			"wave"		"ambient/creak01.wav"
+			"wave"		"ambient/creak02.wav"
+			"wave"		"ambient/creak03.wav"			
 		}
 	}
 }

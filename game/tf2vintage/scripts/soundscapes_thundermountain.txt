@@ -105,10 +105,10 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hawk.mp3"
-			"wave"		"ambient_mp3/warbler.mp3"
-			"wave"		"ambient_mp3/crow3.mp3"
-			"wave"		"ambient_mp3/crow4.mp3"
+			"wave"		"ambient/hawk.wav"
+			"wave"		"ambient/warbler.wav"
+			"wave"		"ambient/crow3.wav"
+			"wave"		"ambient/crow4.wav"
 
 		}
 	}

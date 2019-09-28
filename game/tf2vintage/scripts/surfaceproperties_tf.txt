@@ -36,6 +36,30 @@
 	"rolling"	"Grenade.Roll"
 }
 
+"deathmatch_grenade"
+{
+	"base"		"metal"
+
+	"bulletimpact"	"GrenadeDM.ImpactHard"
+	"scraperough"	"Grenade.ScrapeRough"
+	"scrapesmooth"	"Grenade.ScrapeSmooth"
+	"impacthard"	"GrenadeDM.ImpactHard"
+	"impactsoft"	"GrenadeDM.ImpactSoft"
+	"rolling"	"Grenade.Roll"
+}
+
+"deathmatch_heavy_shell"
+{
+	"base"		"metal"
+
+	"bulletimpact"	"GrenadeDM.ImpactHard"
+	"scraperough"	"Grenade.ScrapeRough"
+	"scrapesmooth"	"Grenade.ScrapeSmooth"
+	"impacthard"	"GrenadeDM.ImpactHard"
+	"impactsoft"	"GrenadeDM.ImpactSoft"
+	"rolling"	"Grenade.Roll"
+}
+
 "scout_baseball"
 {
 	"base"		"rubber"

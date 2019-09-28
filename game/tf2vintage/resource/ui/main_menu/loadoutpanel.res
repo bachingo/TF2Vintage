@@ -29,7 +29,7 @@
 		"scaleimage"		"1"
 		"border"			"AdvRoundedButtonArmed"
 		"visible"			"1"
-		//"fillcolor"			"46 43 42 100"
+		//"fillcolor"			"46 43 42 400"
 		"enabled"			"1"
 	}
 	
@@ -93,7 +93,7 @@
 		"fieldName"		"classmodelpanel"
 		
 		"xpos"			"c80"
-		"ypos"			"c-220"
+		"ypos"			"c-100"
 		"zpos"			"0"		
 		"wide"			"250"
 		"tall"			"280"
@@ -102,7 +102,7 @@
 		"visible"		"1"
 		"enabled"		"1"
 
-		"fov"			"25"
+		"fov"			"27"
 		"allow_rot"		"1"
 				
 		"model"
@@ -192,8 +192,8 @@
 	{
 		"ControlName"	"CTFWeaponSetPanel"
 		"fieldName"		"weaponsetpanel"		
-		"xpos"			"c-320"
-		"ypos"			"c-180"
+		"xpos"			"c-380"
+		"ypos"			"c-130"
 		"zpos"			"-1"		
 		"wide"			"380"
 		"tall"			"280"
@@ -208,7 +208,7 @@
 	{
 		"ControlName"	"CTFAdvButton"
 		"fieldName"		"BackButton"
-		"xpos"			"c-200"
+		"xpos"			"c-300"
 		"ypos"			"r60"
 		"zpos"			"20"
 		"wide"			"100"
@@ -247,7 +247,7 @@
 		"ControlName"		"CAdvTabs"
 		"fieldName"			"classselection"
 		"xpos"				"c-300"
-		"ypos"				"340"
+		"ypos"				"0"
 		"zpos"				"6"
 		"wide"				"600"
 		"tall"				"63"

@@ -79,10 +79,10 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_01.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_02.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_03.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_04.mp3"
+			"wave"		"ambient/spacebase/spacebase_bang_01.wav"
+			"wave"		"ambient/spacebase/spacebase_bang_02.wav"
+			"wave"		"ambient/spacebase/spacebase_bang_03.wav"
+			"wave"		"ambient/spacebase/spacebase_bang_04.wav"
 		}
 	}
 	
@@ -93,15 +93,15 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_01.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_02.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_03.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_04.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_05.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_06.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_07.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_08.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_09.mp3"
+			"wave"		"ambient/spacebase/spacebase_rumble_01.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_02.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_03.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_04.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_05.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_06.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_07.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_08.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_09.wav"
 		}
 	}
 	
@@ -125,10 +125,10 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_01.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_02.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_03.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_bang_04.mp3"
+			"wave"		"ambient/spacebase/spacebase_bang_01.wav"
+			"wave"		"ambient/spacebase/spacebase_bang_02.wav"
+			"wave"		"ambient/spacebase/spacebase_bang_03.wav"
+			"wave"		"ambient/spacebase/spacebase_bang_04.wav"
 		}
 	}
 	
@@ -139,15 +139,15 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_01.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_02.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_03.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_04.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_05.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_06.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_07.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_08.mp3"
-			"wave"		"ambient_mp3/spacebase/spacebase_rumble_09.mp3"
+			"wave"		"ambient/spacebase/spacebase_rumble_01.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_02.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_03.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_04.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_05.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_06.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_07.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_08.wav"
+			"wave"		"ambient/spacebase/spacebase_rumble_09.wav"
 		}
 	}
 	
@@ -325,12 +325,12 @@
 		// "attenuation"	"0.25"	
 		// "rndwave"
 		// {
-			// "wave"		"ambient_mp3/cow1.mp3"
-			// "wave"		"ambient_mp3/cow2.mp3"
-			// "wave"		"ambient_mp3/cow3.mp3"
-			// "wave"		"ambient_mp3/bird1.mp3"
-			// "wave"		"ambient_mp3/bird2.mp3"
-			// "wave"		"ambient_mp3/bird3.mp3"
+			// "wave"		"ambient/cow1.wav"
+			// "wave"		"ambient/cow2.wav"
+			// "wave"		"ambient/cow3.wav"
+			// "wave"		"ambient/bird1.wav"
+			// "wave"		"ambient/bird2.wav"
+			// "wave"		"ambient/bird3.wav"
 		// }
 	// }
 
@@ -383,12 +383,12 @@
 		// "attenuation"	"0.7"	
 		// "rndwave"
 		// {
-			// "wave"		"ambient_mp3/cow1.mp3"
-			// "wave"		"ambient_mp3/cow2.mp3"
-			// "wave"		"ambient_mp3/cow3.mp3"
-			// "wave"		"ambient_mp3/bird1.mp3"
-			// "wave"		"ambient_mp3/bird2.mp3"
-			// "wave"		"ambient_mp3/bird3.mp3"
+			// "wave"		"ambient/cow1.wav"
+			// "wave"		"ambient/cow2.wav"
+			// "wave"		"ambient/cow3.wav"
+			// "wave"		"ambient/bird1.wav"
+			// "wave"		"ambient/bird2.wav"
+			// "wave"		"ambient/bird3.wav"
 		// }
 	// }
 

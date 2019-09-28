@@ -77,11 +77,11 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\materials\rock1.mp3"
-			"wave"		"ambient_mp3\materials\rock2.mp3"
-			"wave"		"ambient_mp3\materials\rock3.mp3"
-			"wave"		"ambient_mp3\materials\rock4.mp3"
-			"wave"		"ambient_mp3\materials\rock5.mp3"
+			"wave"		"ambient/materials/rock1.wav"
+			"wave"		"ambient/materials/rock2.wav"
+			"wave"		"ambient/materials/rock3.wav"
+			"wave"		"ambient/materials/rock4.wav"
+			"wave"		"ambient/materials/rock5.wav"
 		}
 	}
 
@@ -106,11 +106,11 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-		"wave"		"ambient_mp3\materials\wood_creak1.mp3"
-		"wave"		"ambient_mp3\materials\wood_creak2.mp3"
-		"wave"		"ambient_mp3\materials\wood_creak3.mp3"
-		"wave"		"ambient_mp3\materials\wood_creak4.mp3"
-		"wave"		"ambient_mp3\materials\wood_creak5.mp3"
+		"wave"		"ambient/materials/wood_creak1.wav"
+		"wave"		"ambient/materials/wood_creak2.wav"
+		"wave"		"ambient/materials/wood_creak3.wav"
+		"wave"		"ambient/materials/wood_creak4.wav"
+		"wave"		"ambient/materials/wood_creak5.wav"
 		}
 	}
 
@@ -131,7 +131,7 @@
 	{
 		"volume"	".8"
 		"pitch"		"100"
-		"wave"		"ambient_mp3\water\lake_water.mp3"
+		"wave"		"ambient/water/lake_water.wav"
 	}
 	"playrandom"
 	{
@@ -140,8 +140,8 @@
 		"pitch"		"90,105"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\levels\canals\windchime4.mp3"
-			"wave"		"ambient_mp3\levels\canals\windchime5.mp3"
+			"wave"		"ambient/levels/canals/windchime4.wav"
+			"wave"		"ambient/levels/canals/windchime5.wav"
 		}
 	}
 		
@@ -164,7 +164,7 @@
 	{
 		"volume"	".2"
 		"pitch"		"100"
-		"wave"		"ambient\lighthum.wav"
+		"wave"		"ambient/lighthum.wav"
 	}
 
 	
@@ -185,7 +185,7 @@
 	{
 		"volume"	".3"
 		"pitch"		"100"
-		"wave"		"ambient_mp3\fire\fire_small1.mp3"
+		"wave"		"ambient/fire/fire_small1.wav"
 	}
 
 	
@@ -199,7 +199,7 @@
 	{
 		"volume"	".3"
 		"pitch"		"100"
-		"wave"		"ambient_mp3\fire\fire_small1.mp3"
+		"wave"		"ambient/fire/fire_small1.wav"
 	}
 
 	"playlooping"
@@ -212,7 +212,7 @@
 	{
 		"volume"	".5"
 		"pitch"		"100"
-		"wave"		"ambient_mp3\water\lake_water.mp3"
+		"wave"		"ambient/water/lake_water.wav"
 	}
 	
 }
@@ -236,11 +236,11 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\materials\rock1.mp3"
-			"wave"		"ambient_mp3\materials\rock2.mp3"
-			"wave"		"ambient_mp3\materials\rock3.mp3"
-			"wave"		"ambient_mp3\materials\rock4.mp3"
-			"wave"		"ambient_mp3\materials\rock5.mp3"
+			"wave"		"ambient/materials/rock1.wav"
+			"wave"		"ambient/materials/rock2.wav"
+			"wave"		"ambient/materials/rock3.wav"
+			"wave"		"ambient/materials/rock4.wav"
+			"wave"		"ambient/materials/rock5.wav"
 		}
 	}
 	

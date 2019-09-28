@@ -400,7 +400,10 @@ criterion "WeaponIsRobotSandvich" "item_name" "The Robo-Sandvich" "required" wei
 criterion "WeaponIsFestiveSandvich" "item_name" "Festive Sandvich" "required" weight 5
 criterion "WeaponIsLunchboxDrink" "playerweapon" "tf_weapon_lunchbox_drink" "required"
 criterion "WeaponIsLunchbox" "playerweapon" "tf_weapon_lunchbox" "required"
-criterion "WeaponIsGloves" "item_type_name" "#TF_Weapon_Gloves" "required" weight 10
+criterion "WeaponIsGloves" "item_type_name"	"#TF_Weapon_Gloves" "required" weight 10
+criterion "WeaponIsKGB" "item_name" "The Killing Gloves of Boxing" "required" weight 10
+criterion "WeaponIsGRU" "item_name" "Gloves of Running Urgently" "required" weight 10
+criterion "WeaponIsBearGloves" "item_name" "Warrior's Spirit" "required" weight 10
 criterion "WeaponIsKritzkrieg" "item_name" "The Kritzkrieg" "required" weight 10
 criterion "WeaponIsBow" "item_type_name" "#TF_Weapon_CompoundBow" "required" weight 10
 criterion "WeaponIsEqualizer" "item_name" "The Equalizer" "required" weight 10
@@ -435,6 +438,7 @@ criterion "WeaponIsBenja" "item_name" "The Dalokohs Bar" "required" weight 10
 criterion "WeaponIsFishcake" "item_name" "Fishcake" "required" weight 10
 criterion "WeaponIsSteak" "item_name" "The Buffalo Steak Sandvich" "required" weight 10 // Not actually used for the auto-eat response. Used for distinction in the taunts.
 criterion "WeaponIsPainTrain" "item_name" "The Pain Train" "required" weight 10
+criterion "WeaponIsPainTrainPyro" "item_name" "The Pain Train (Pyro)" "required" weight 10
 criterion "WeaponIsNotPainTrain" "item_name" "!=The Pain Train" "required" weight 10
 criterion "WeaponIsFryingPan" "item_name" "Frying Pan" "required" weight 10
 criterion "WeaponIsNotFryingPan" "item_name" "!=Frying Pan" "required" weight 10

@@ -6,6 +6,10 @@ WeaponData
 	"weight"				"1"
 	"WeaponType"			"pda"
 	"ITEM_FLAG_NOITEMPICKUP" 	"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
+
 	
 	// Ammo & Clip
 	"primary_ammo"			"None"

@@ -151,12 +151,12 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/crow1.mp3"
-			"wave"		"ambient_mp3/crow2.mp3"
-			"wave"		"ambient_mp3/crow3.mp3"
-			"wave"		"ambient_mp3/crow4.mp3"
-			"wave"		"ambient_mp3/owl3.mp3"
-			"wave"		"ambient_mp3/owl4.mp3"
+			"wave"		"ambient/crow1.wav"
+			"wave"		"ambient/crow2.wav"
+			"wave"		"ambient/crow3.wav"
+			"wave"		"ambient/crow4.wav"
+			"wave"		"ambient/owl3.wav"
+			"wave"		"ambient/owl4.wav"
 		}
 	}
 

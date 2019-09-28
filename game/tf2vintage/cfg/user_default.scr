@@ -1,32 +1,39 @@
-// User options script
+// NOTE:  THIS FILE IS AUTOMATICALLY REGENERATED, 
+			//DO NOT EDIT THIS HEADER, YOUR COMMENTS WILL BE LOST IF YOU DO
+			// User options script
+			//
+			// Format:
+			//  Version [float]
+			//  Options description followed by 
+			//  Options defaults
+			//
+			// Option description syntax:
+			//
+			//  "cvar" { "Prompt" { type [ type info ] } { default } }
+			//
+			//  type = 
+			//   BOOL   (a yes/no toggle)
+			//   STRING
+			//   NUMBER
+			//   LIST
+			//
+			// type info:
+			// BOOL                 no type info
+			// NUMBER       min max range, use -1 -1 for no limits
+			// STRING       no type info
+			// LIST          delimited list of options value pairs
+			//
+			//
+			// default depends on type
+			// BOOL is "0" or "1"
+			// NUMBER is "value"
+			// STRING is "value"
+			// LIST is "index", where index "0" is the first element of the list
+
+
+// Half-Life User Info Configuration Layout Script (stores last settings chosen, too)
+// File generated:  Sat Jul 28 13:38:04 AM
 //
-// Format:
-//  Version [float]
-//  Options description followed by 
-//  Options defaults
-//
-// Option description syntax:
-//
-//  "cvar" { "Prompt" { type [ type info ] } { default } }
-//
-//  type = 
-//   BOOL   (a yes/no toggle)
-//   STRING
-//   NUMBER
-//   LIST
-//
-// type info:
-// BOOL                 no type info
-// NUMBER       min max range, use -1 -1 for no limits
-// STRING       no type info
-// LIST          delimited list of options value pairs
-//
-//
-// default depends on type
-// BOOL is "0" or "1"
-// NUMBER is "value"
-// STRING is "value"
-// LIST is "index", where index "0" is the first element of the list
 //
 // Cvar	-	Setting
 
@@ -39,20 +46,20 @@ DESCRIPTION INFO_OPTIONS
 		"Advanced Options"
 		{ CATEGORY }
 	}
-	
+
 	"con_enable"
 	{
 		"#GameUI_DeveloperConsoleCheck"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
-	
+
 	"category1"
 	{
 		"#TF_OptionCategory_Combat"
 		{ CATEGORY }
 	}
-	
+
 	"cl_autoreload"
 	{
 		"#TF_autoreload"
@@ -60,15 +67,15 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
-	
+
 	"hud_fastswitch"
 	{
 		"#GameUI_FastSwitchCheck"
 		"#Tooltip_hud_fastswitch"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
-	
+
 	"tf_dingalingaling"
 	{
 		"#TF_Hitbeeps"
@@ -76,15 +83,22 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
-
-	//"tf_dingaling_volume"
-	//{
-	//	"#TF_Dingaling_Volume"
-	//	"#Tooltip_Dingaling_Volume"
-	//	{ SLIDER 0 1 }
-	//	{ "0.75" }
-	//}
 	
+	"tf_dingalingaling_lasthit"
+	{
+		"#TF_LastHitbeeps"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"tf_dingaling_volume"
+	{
+		"#TF_Dingaling_Volume"
+		"#Tooltip_Dingaling_Volume"
+		{ STRING }
+		{ "0.75" }
+	}
+
 	"hud_combattext"
 	{
 		"#TF_CombatText"
@@ -92,69 +106,45 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
+	
+	"hud_combattext_red"
+	{
+		"#Tooltip_CombatTextRed"
+		"#Tooltip_CombatTextRed"
+		{ SLIDER 0 255 }
+		{ "254.9" }
+	}
+	
+	"hud_combattext_green"
+	{
+		"#Tooltip_CombatTextGreen"
+		"#Tooltip_CombatTextGreen"
+		{ SLIDER 0 255 }
+		{ "0" }
+	}
+	
+	"hud_combattext_blue"
+	{
+		"#Tooltip_CombatTextBlue"
+		"#Tooltip_CombatTextBlue"
+		{ SLIDER 0 255 }
+		{ "0" }
+	}
 
-	//"hud_combattext_doesnt_block_overhead_text"
-	//{
-	//	"#TF_CombatTextDoesntBlock"
-	//	"#Tooltip_CombatTextDoesntBlock"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-	
-	//"tf_remember_activeweapon"
-	//{
-	//	"#TF_rememberactiveweapon"
-	//	"#Tooltip_rememberactiveweapon"
-	//	{ BOOL }
-	//	{ "0" }
-	//}	
-	
-	//"tf_remember_lastswitched"
-	//{
-	//	"#TF_rememberlastweapon"
-	//	"#Tooltip_rememberlastweapon"
-	//	{ BOOL }
-	//	{ "0" }
-	//}	
-	
-	//"tf_sniper_fullcharge_bell"
-	//{
-	//	"#TF_sniperbell"
-	//	"#Tooltip_sniperbell"
-	//	{ BOOL }
-	//	{ "0" }
-	//}	
-	 	
 	"category2"
 	{
 		"#TF_OptionCategory_ClassSpecific"
 		{ CATEGORY }
 	}
 
-	//"tf_simple_disguise_menu"
-	//{
-	//	"#TF_simple_disguise_menu_option"
-	//	"#Tooltip_simple_disguise_menu_option"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
-	
 	"cl_autorezoom"
 	{
 		"#TF_autozoom"
 		"#Tooltip_autozoom"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
-	//"tf_hud_no_crosshair_on_scope_zoom"
-	//{
-	//	"#TF_nocrosshaironscopezoom"
-	//	"#Tooltip_nocrosshaironscopezoomn"
-	//	{ BOOL }
-	//	{ "0" }
-	//}	
-	
 	"tf_medigun_autoheal"
 	{
 		"#TF_medigun_autoheal"
@@ -162,37 +152,13 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
-	
-	//"hud_medichealtargetmarker"
-	//{
-	//	"#TF_HealTargetMarker"
-	//	"#Tooltip_HealTargetMarker"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
-	
-	//"hud_medicautocallers"
-	//{
-	//	"#TF_AutoMedicCallers"
-	//	"#Tooltip_AutoMedicCallers"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
-	
-	//"hud_medicautocallersthreshold"
-	//{
-	//	"#TF_AutoMedicCallThreshold"
-	//	"#Tooltip_AutoMedicCallThreshold"
-	//	{ SLIDER 10 99 }
-	//	{ "75" }
-	//}
-		
+
 	"category3"
 	{
 		"#TF_OptionCategory_HUD"
 		{ CATEGORY }
 	}
-	
+
 	"cl_hud_minmode"
 	{
 		"#GameUI_EnableHUDMinMode"
@@ -200,248 +166,100 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
-	
-	//"tf_colorblindassist"
-	//{
-	//	"#TF_colorblindassist"
-	//	"#Tooltip_colorblindassist"
-	//	{ BOOL }
-	//	{ "0" }
-	//}	
-	
-	//"cl_use_tournament_specgui"
-	//{
-	//	"#TF_UseAdvancedTourneyGUI"
-	//	"#Tooltip_UseAdvancedTourneyGUI"
-	//	{ BOOL }
-	//	{ "0" }
-	//}	
-
-	//"cl_spec_carrieditems"
-	//{
-	//	"#TF_SpectateCarriedItems"
-	//	"#Tooltip_SpectateCarriedItems"
-	//	{ BOOL }
-	//	{ "1" }
-	//}	
-	
-	"glow_outline_effect_enable"
+	"tf_use_min_viewmodels"
 	{
-		"#TF_UseGlowEffect"
-		"#Tooltip_UseGlowEffect"
+		"#TF_use_min_viewmodels_option"
+		"#Tooltip_use_min_viewmodels_option"
 		{ BOOL }
-		{ "1" }
+		{ "0" }
 	}
 
-	//"cl_hud_playerclass_use_playermodel"
-	//{
-	//	"#GameUI_HudPlayerClassUsePlayerModel"
-	//	"#ToolTip_HudPlayerClassUsePlayerModel"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-	
+	"cl_flipviewmodels"
+	{
+		"#TF_flipviewmodel_option"
+		"#Tooltip_flipviewmodel_option"
+		{ BOOL }
+		{ "0" }
+	}
+
 	"viewmodel_fov"
 	{
 		"#TF_viewmodelfov_option"
 		"#Tooltip_viewmodelfov_option"
 		{ SLIDER 54 70 }
-		{ "1" }
+		{ "54" }
 	}
 	
-	//"tf_spectator_target_location"
-	//{
-	//	"#TF_Spectator_TargetID_Location"
-	//	{ LIST
-	//		"#TF_Spectator_Default" "0"
-	//		"#TF_Spectator_Bottom_Left" "1"
-	//		"#TF_Spectator_Bottom_Center" "2"
-	//		"#TF_Spectator_Bottom_Right" "3"
-	//	}
-	//	{ "0" }
-	//}	
-	
+	"fov_desired"
+	{
+		"FOV"
+		{ SLIDER 75 100 }
+		{ "75" }
+	}
+
 	"hud_freezecamhide"
 	{
 		"#TF_FreezeCamHide"
 		"#Tooltip_FreezeCamHide"
 		{ BOOL }
 		{ "0" }
-	}	
-
-	//"tf_spectate_pyrovision"
-	//{
-	//	"#TF_SpectatePyroVision"
-	//	"#Tooltip_SpectatePyroVision"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
+	}
 	
-	//"pyro_vignette"
-	//{
-	//	"#TF_Pyrovision_Vignette"
-	//	{ LIST
-	//		"#TF_Pyrovision_Disable" "0"
-	//		"#TF_Pyrovision_Vignette_Static" "1"
-	//		"#TF_Pyrovision_Vignette_Dynamic" "2"
-	//	}
-	//	{ "2" }
-	//}
-
-	//"pyro_vignette_distortion"
-	//{
-	//	"#TF_Pyrovision_Distortion"
-	//	{ LIST
-	//		"#TF_Pyrovision_Disable" "0"
-	//		"#TF_Pyrovision_Enable" "1"
-	//	}
-	//	{ "1" }
-	//}
-
-	//"pyro_dof"
-	//{
-	//	"#TF_Pyrovision_Dof"
-	//	{ LIST
-	//		"#TF_Pyrovision_Disable" "0"
-	//		"#TF_Pyrovision_Enable" "1"
-	//	}
-	//	{ "1" }
-	//}
-
-	//"tf_romevision_opt_in"
-	//{
-	//	"#TF_RomeVisionOptIn"
-	//	"#Tooltip_RomeVisionOptIn"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
-
-	//"tf_hud_target_id_disable_floating_health"
-	//{
-	//	"#TF_TargetID_Disable_Floating"
-	//	"#ToolTip_TargetID_Disable_Floating"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
-
-	//"tf_hud_target_id_alpha"
-	//{
-	//	"#TF_TargetID_Alpha"
-	//	"#ToolTip_TargetID_Alpha"
-	//	{ SLIDER 0 255 }
-	//	{ "100" }
-	//}
+	"cl_fp_ragdoll"
+	{
+		"First Person Ragdolls"
+		{ BOOL }
+		{ "0" }
+	}
 	
-	//"tf_contract_progress_show"
-	//{
-	//	"#TF_Contract_Progress"
-	//	"#ToolTip_TF_Contract_Progress"
-	//	{ LIST
-	//		"#TF_Contract_Progress_None"	"0"
-	//		"#TF_Contract_Progress_All"		"1"
-	//		"#TF_Contract_Progress_Active"	"2"
-	//	}
-	//	{ "1" }
-	//}
+	"tf2v_ammobucket"
+	{
+		"#TFOption_ammobucket"
+		{ BOOL }
+		{ "0" }
+	}
 
-	//"category4"
-	//{
-	//	"#TF_OptionCategory_Replay"
-	//	{ CATEGORY }
-	//}
-	
-	//"youtube_http_proxy"
-	//{
-	//	"#TFOption_httpproxy"
-	//	"#Tooltip_httpproxy"
-	//	{ STRING }
-	//	{ "" }
-	//}
-	
-	//"replay_postdeathrecordtime"
-	//{
-	//	"#TFOption_postdeathrecordtime"
-	//	"#Tooltip_postdeathrecordtime"
-	//	{ SLIDER 0 10 }
-	//	{ "5" }
-	//}
-	
-	//"replay_enableeventbasedscreenshots"
-	//{
-	//	"#TFOption_replay_enableeventbasedscreenshots"
-	//	"#Tooltip_replay_enableeventbasedscreenshots"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-
-	//"replay_screenshotresolution"
-	//{
-	//	"#TFOption_replay_screenshotresolution"
-	//	"#Tooltip_replay_screenshotresolution"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-	
-	//"replay_maxscreenshotsperreplay"
-	//{
-	//	"#TFOption_replay_maxscreenshots"
-	//	"#Tooltip_replay_maxscreenshots"
-	//	{ NUMBER 1 1000 }
-	//	{ "200" }
-	//}
-	
-	//"replay_mintimebetweenscreenshots"
-	//{
-	//	"#TFOption_mintimebetweenscreenshots"
-	//	"#Tooltip_mintimebetweenscreenshots"
-	//	{ NUMBER 1 1000 }
-	//	{ "5" }
-	//}
-
-	//"tf_replay_pyrovision"
-	//{
-	//	"#TF_ReplayPyroVision"
-	//	"#Tooltip_ReplayPyroVision"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
-	
 	"category4"
 	{
 		"#TF_OptionCategory_Performance"
 		{ CATEGORY }
 	}
-	
-	//"tf_particles_disable_weather"
-	//{
-	//	"#TF_DisableWeatherParticles"
-	//	"#Tooltip_DisableWeatherParticles"
-	//	{ BOOL }
-	//	{ "0" }
-	//}	
-	
+
 	"cl_disablehtmlmotd"
 	{
 		"#Valve_DisableHTMLMOTD"
 		"#Tooltip_DisableHTMLMOTD"
 		{ BOOL }
 		{ "0" }
-	}	
+	}
 
 	"mp_decals"
 	{
 		"#Valve_Multiplayer_Decal_Limit"
 		"#Tooltip_Multiplayer_Decal_Limit"
 		{ SLIDER 0 4096 }
-		{ "2048" }
+		{ "4095" }
 	}
 	
+	"tf2v_muzzlelight"
+	{
+		"#TFOption_muzzlelight"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"category5"
 	{
 		"#TF_OptionCategory_Misc"
 		{ CATEGORY }
 	}
-	
+
+	"tf2v_model_muzzleflash"
+	{
+		"#TFOption_modelmuzzleflash"
+		{ BOOL }
+		{ "0" }
+	}
 	"hud_takesshots"
 	{
 		"#game_takesshots"
@@ -449,39 +267,15 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
-	
+
 	"hud_classautokill"
 	{
 		"#TF_classautokill"
 		"#Tooltip_classautokill"
 		{ BOOL }
-		{ "1" }
-	}
-	
-	//"tf_respawn_on_loadoutchanges"
-	//{
-	//	"#TF_loadoutrespawn"
-	//	"#Tooltip_loadoutrespawn"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-
-	"r_drawviewmodel"
-	{
-		"#TF_drawviewmodel_option"
-		"#Tooltip_drawviewmodel_option"
-		{ BOOL }
-		{ "1" }
-	}	
-	
-	"cl_flipviewmodels"
-	{
-		"#TF_flipviewmodel_option"
-		"#Tooltip_flipviewmodel_option"
-		{ BOOL }
 		{ "0" }
-	}		
-	
+	}
+
 	"cl_playerspraydisable"
 	{
 		"#GameUI_DisableSprays"
@@ -489,108 +283,12 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
-
-	//"sb_close_browser_on_connect"
-	//{
-	//	"#GameUI_CloseBrowserOnConnect"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
 	
-	//"cl_cloud_settings"
-	//{
-	//	"#Valve_UseSteamCloud"
-	//	"#Tooltip_UseSteamCloud"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-	
-	//"cl_steamscreenshots"
-	//{
-	//	"#Valve_SteamScreenshots"
-	//	"#Tooltip_SteamScreenshots"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-	
-	//"cl_notifications_show_ingame"
-	//{
-	//	"#TF_ShowNotificationsInGame"
-	//	"#Tooltip_ShowNotificationsInGame"
-	//	{ BOOL }
-	//	{ "1" }
-	//}
-	
-	//"cl_trading_show_requests_from"
-	//{
-	//	"#TF_ShowTradeRequestsFrom"
-	//	{ LIST
-	//		"#TF_ShowTradeRequestsFrom_FriendsOnly" "1"
-	//		"#TF_ShowTradeRequestsFrom_FriendsAndServer" "2"
-	//		"#TF_ShowTradeRequestsFrom_Anyone" "3"
-	//		"#TF_ShowTradeRequestsFrom_NoOne" "4"
-	//	}
-	//	{ "3" }
-	//}
-
-	//"cl_show_market_data_on_items"
-	//{
-	//	"#TF_ShowMarketDataOnItems"
-	//	"#Tooltip_ShowMarketDataOnItems"
-	//	{ LIST
-	//		"#TF_ShowMarketDataOnItems_Never" "0"
-	//		"#TF_ShowMarketDataOnItems_WhenBordersOnly" "1"
-	//		"#TF_ShowMarketDataOnItems_Always" "2"
-	//	}
-	//	{ "1" }
-	//}
-	
-	//"tf_scoreboard_mouse_mode"
-	//{
-	//	"#TF_ScoreBoard_MouseMode"
-	//	{ BOOL }
-	//	{ "0" }
-	//}
-	
-	"category6"
+	"cl_customsounds"
 	{
-		"Team Fortress 2 Classic Options"
-		{ CATEGORY }
-	}
-	
-	"tf2c_model_muzzleflash"
-	{
-		"Enable beta model muzzleflash"
-		{ BOOL }
-		{ "0" }
-	}
-	
-	"tf2c_model_muzzleflash"
-	{
-		"Enable beta model muzzleflash"
-		{ BOOL }
-		{ "0" }
-	}
-	
-	"tf2c_ammobucket"
-	{
-		"Enable weapon icon in ammo section"
-		{ BOOL }
-		{ "0" }
-	}
-	
-	"tf2c_muzzlelight"
-	{
-		"Enable dynamic lights for muzzleflashes and the flamethrower"
-		{ BOOL }
-		{ "0" }
-	}
-	
-	"tf2c_coloredhud"
-	{
-		"Enable colored HUD panels in Deathmatch"
+		"#Attrib_NoiseMaker"
 		{ BOOL }
 		{ "1" }
 	}
-	
+
 }

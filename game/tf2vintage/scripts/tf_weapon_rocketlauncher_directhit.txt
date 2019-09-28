@@ -6,6 +6,10 @@ WeaponData
 	"weight"		"3"
 	"WeaponType"		"primary"
 	"ITEM_FLAG_NOITEMPICKUP" 	"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
+
 	
 	// Primary Attributes.
 	"Damage"		"90"
@@ -22,7 +26,6 @@ WeaponData
 	clip_size		4
 	default_clip		4
 	"ProjectileType"	"projectile_rocket"
-	"HasTeamSkins_Viewmodel"	"1"
 
 	// Secondary Attributes.
 	"secondary_ammo"	"None"

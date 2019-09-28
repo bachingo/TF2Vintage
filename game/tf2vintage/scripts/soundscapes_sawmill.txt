@@ -153,9 +153,9 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/thunder2.mp3"
-			"wave"		"ambient_mp3/thunder3.mp3"
-			"wave"		"ambient_mp3/thunder4.mp3"
+			"wave"		"ambient/thunder2.wav"
+			"wave"		"ambient/thunder3.wav"
+			"wave"		"ambient/thunder4.wav"
 
 		}
 	}
@@ -195,9 +195,9 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/thunder2.mp3"
-			"wave"		"ambient_mp3/thunder3.mp3"
-			"wave"		"ambient_mp3/thunder4.mp3"
+			"wave"		"ambient/thunder2.wav"
+			"wave"		"ambient/thunder3.wav"
+			"wave"		"ambient/thunder4.wav"
 
 		}
 	}
@@ -235,9 +235,9 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/thunder2.mp3"
-			"wave"		"ambient_mp3/thunder3.mp3"
-			"wave"		"ambient_mp3/thunder4.mp3"
+			"wave"		"ambient/thunder2.wav"
+			"wave"		"ambient/thunder3.wav"
+			"wave"		"ambient/thunder4.wav"
 
 		}
 	}

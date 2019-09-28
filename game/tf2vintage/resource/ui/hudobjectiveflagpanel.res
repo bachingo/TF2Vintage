@@ -176,8 +176,6 @@
 		"scaleImage"	"1"
 		"teambg_2"		"../hud/objectives_flagpanel_carried_blue"
 		"teambg_3"		"../hud/objectives_flagpanel_carried_red"
-		"teambg_4"		"../hud/objectives_flagpanel_carried_green"
-		"teambg_5"		"../hud/objectives_flagpanel_carried_yellow"
 	}		
 	"PlayingTo"
 	{

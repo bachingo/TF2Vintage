@@ -77,10 +77,10 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/medieval_falcon.mp3"
-//			"wave"		"ambient_mp3/medieval_thunder1.mp3"
-			"wave"		"ambient_mp3/medieval_thunder2.mp3"
-			"wave"		"ambient_mp3/medieval_thunder3.mp3"
+			"wave"		"ambient/medieval_falcon.wav"
+//			"wave"		"ambient/medieval_thunder1.wav"
+			"wave"		"ambient/medieval_thunder2.wav"
+			"wave"		"ambient/medieval_thunder3.wav"
 		}
 	}
 }
@@ -103,10 +103,10 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/medieval_falcon_inside.mp3"
-			"wave"		"ambient_mp3/medieval_thunder1_inside.mp3"
-			"wave"		"ambient_mp3/medieval_thunder2_inside.mp3"
-			"wave"		"ambient_mp3/medieval_thunder3_inside.mp3"
+			"wave"		"ambient/medieval_falcon_inside.wav"
+			"wave"		"ambient/medieval_thunder1_inside.wav"
+			"wave"		"ambient/medieval_thunder2_inside.wav"
+			"wave"		"ambient/medieval_thunder3_inside.wav"
 		}
 	}
 }

@@ -6,6 +6,10 @@ WeaponData
 	"weight"			"4"
 	"WeaponType"			"primary"
 	"ITEM_FLAG_NOITEMPICKUP" 	"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
+
 		
 	// Attributes TF.
 	"Damage"			"10"
@@ -14,9 +18,7 @@ WeaponData
 	"Spread"			"0.0"
 	"TimeFireDelay"			"0.1"
 	"ProjectileType"		"projectile_syringe"
-	"HasTeamSkins_Viewmodel"	"1"
 	"UseRapidFireCrits"		"1"
-	"HasTeamSkins_Worldmodel"	"1"
 	"MaxAmmo"			"150"
 
 	// Ammo & Clip.
@@ -32,7 +34,7 @@ WeaponData
 
 	// Muzzleflash
 	//"MuzzleFlashModel"		"models/effects/muzzleflash/minigunmuzzle.mdl"
-	"MuzzleFlashParticleEffect"	"muzzle_tranq"
+	"MuzzleFlashParticleEffect"	"muzzle_syringe"
 	"MuzzleflashModelScale"		".2"
 
 	// Animation.

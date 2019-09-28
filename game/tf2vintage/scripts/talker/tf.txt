@@ -188,19 +188,9 @@
 		criteria ConceptPlayerTaunt IsHeavy WeaponIsFists
 		response HeavyTauntMelee
 	}
-	rule HeavyTauntPlayerKillingGloves
+	rule HeavyTauntPlayerGloves
 	{
-		criteria ConceptPlayerTaunt IsHeavy WeaponIsKillingGloves
-		response HeavyTauntPlayerGloves
-	}
-	rule HeavyTauntPlayerRunningGloves
-	{
-		criteria ConceptPlayerTaunt IsHeavy WeaponIsRunningGloves
-		response HeavyTauntPlayerGloves
-	}
-	rule HeavyTauntPlayerBearGloves
-	{
-		criteria ConceptPlayerTaunt IsHeavy WeaponIsBearGloves
+		criteria ConceptPlayerTaunt IsHeavy WeaponIsGloves
 		response HeavyTauntPlayerGloves
 	}
 	rule HeavyTauntPlayerItem1
@@ -234,6 +224,21 @@
 	{
 		criteria ConceptPlayerTaunt IsHeavy WeaponIsSteak
 		response HeavyTauntPlayerItem3
+	}
+	rule HeavyTauntPlayerKGB
+	{
+		criteria ConceptPlayerTaunt IsHeavy WeaponIsKGB
+		response HeavyTauntPlayerGloves
+	}
+	rule HeavyTauntPlayerGRU
+	{
+		criteria ConceptPlayerTaunt IsHeavy WeaponIsGRU
+		response HeavyTauntPlayerGloves
+	}
+	rule HeavyTauntPlayerBearGloves
+	{
+		criteria ConceptPlayerTaunt IsHeavy WeaponIsBearGloves
+		response HeavyTauntPlayerGloves
 	}
 	//End Custom
 	rule HeavyTauntHalloween
@@ -1357,6 +1362,11 @@
 	{
 		criteria ConceptPlayerTaunt IsDemoman WeaponIsPainTrain
 		Response DemomanTauntSecondary
+	}
+	Rule PyroTauntPainTrain
+	{
+		criteria ConceptPlayerTaunt IsPyro WeaponIsPainTrainPyro
+		Response PyroTauntMelee
 	}
 
 	Response PlayerExpressionIdleDemoman

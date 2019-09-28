@@ -15,7 +15,9 @@ WeaponData
 	"TimeFireDelay"		"0.5"
 	"ProjectileType"	"projectile_bullet"
 	"DoInstantEjectBrass"	"0"
-	"HasTeamSkins_Viewmodel"			"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
 	"TracerEffect"		"bullet_pistol_tracer01"
 	"MaxAmmo"		"24"
 

@@ -20,8 +20,7 @@
 		"teambg_3"		"../hud/misc_ammo_area_blue"
 		"teambg_3_lodef"	"../hud/misc_ammo_area_blue_lodef"				
 	}
-	
-	"ChargeLabel"
+		"ChargeLabel"
 	{
 		"ControlName"			"CExLabel"
 		"fieldName"				"ChargeLabel"
@@ -63,8 +62,8 @@
 		"textAlignment"			"Left"
 		"dulltext"				"0"
 		"brighttext"			"0"
-	}				
-		
+	}
+	
 	"PipesPresentPanel"
 	{
 		"ControlName"	"EditablePanel"
@@ -175,7 +174,7 @@
 			"image"			"../hud/ico_stickybomb_red_faded"
 			"scaleImage"	"1"
 			"teambg_2"		"../hud/ico_stickybomb_red_faded"
-			"teambg_3"		"../hud/ico_stickybomb_blue_faded"	
+			"teambg_3"		"../hud/ico_stickybomb_blue_faded"
 		}
 
 		"NumPipesLabel"

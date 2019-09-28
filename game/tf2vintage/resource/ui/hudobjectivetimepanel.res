@@ -21,28 +21,6 @@
 		"image"			"../hud/objectives_timepanel_black_bg"	
 		"scaleImage"		"1"	
 	}
-	"HudColoredBG"
-	{
-		"ControlName"		"CTFImageColoredPanel"
-		"fieldName"		"HudColoredBG"
-		"xpos"			"16"
-		"xpos_minmode"	"35"
-		"xpos_hidef"	"108"
-		"xpos_lodef"	"108"
-		"ypos"			"9"
-		"zpos"			"1"
-		"wide"			"78"
-		"wide_minmode"	"38"
-		"wide_lodef"	"90"
-		"tall"			"33"
-		"tall_minmode"	"23"
-		"tall_lodef"	"38"
-		"visible"		"1"
-		"enabled"		"1"
-		"alpha"			"230"
-		"image"			"../hud/objectives_timepanel_custom_bg"	
-		"scaleImage"		"1"		
-	}
 	"TimePanelProgressBar"
 	{
 		"ControlName"			"CTFProgressBar"

@@ -1,0 +1,178 @@
+lights/blue001	 		107 116 116 50
+lights/blue002	 		107 116 116 100
+lights/blue003 			107 116 116 200
+lights/blue004 			151 165 204 50
+
+lights/white001			150 150 150 50
+lights/white002 		150 150 150 100
+lights/white003 		150 150 150 200
+lights/white004			170 228 247 425
+lights/white005			234 235 220 375
+lights/white006			234 235 220 100
+lights/white007			255 255 255 50
+
+lights/white001_nochop	250 240 205 100
+lights/white002_nochop	189 233 247 425
+lights/white003_nochop	232 246 190 350
+lights/white004_nochop	170 228 247 425
+lights/white005_nochop	234 235 220 375
+lights/white006_nochop	234 235 220 100
+
+lights/white_fill		150 150 150 5
+
+lights/fluorescentcool001a	189 231 232 350
+lights/fluorescentcool001b	236 255 182 350
+lights/fluorescentcool002a	189 231 232 400
+lights/fluorescentcool002b	236 255 182 400
+lights/fluorescentcool003a	189 231 232 300
+lights/fluorescentwarm001a	239 216 193 350
+lights/fluorescentwarm002a	239 216 193 400
+lights/fluorescentwhite001a	245 245 245 350
+lights/fluorescentwhite002a	245 245 245 400
+
+lights/hazzardred001a		228 37 0 300
+lights/hazzardyellow001a	250 215 74 300
+
+lights/HIDcool001a		145 222 172 650
+lights/HIDcool001b		205 232 255 650
+lights/HIDwarm001a		255 201 116 650
+
+lights/incandescentcool001a	235 235 235 300
+lights/incandescentwarm001a	250 226 129 300
+
+props/monitor_world_red 125 70 54 4000
+props/monitor_world_blue 84 100 98 4000
+
+moon/moon_ceiling_light01		255 250 245 150
+moon/moon_ceiling_light01b		255 250 245 200
+moon/moon_ceiling_light01c 		255 250 245 25
+
+forcetextureshadow models/props_gameplay/security_fence_big01.mdl
+forcetextureshadow models/props_gameplay/security_fence_big02.mdl
+forcetextureshadow models/props_gameplay/security_fence512.mdl
+forcetextureshadow models/props_gameplay/security_fence512_lower.mdl
+forcetextureshadow models/props_gameplay/security_fence512_skybox.mdl
+forcetextureshadow models/props_gameplay/security_fence256.mdl
+forcetextureshadow models/props_gameplay/security_fence32.mdl
+forcetextureshadow models/props_gameplay/security_fence64.mdl
+forcetextureshadow models/props_gameplay/security_fence64_lower.mdl
+forcetextureshadow models/props_gameplay/security_fence80.mdl
+forcetextureshadow models/props_gameplay/security_fence_section01.mdl
+forcetextureshadow models/props_gameplay/security_fence128.mdl
+forcetextureshadow models/props_gameplay/security_fence128_lower.mdl
+forcetextureshadow models/props_gameplay/security_fence256_gate01.mdl
+forcetextureshadow models/props_gameplay/security_fence256_gate02.mdl
+forcetextureshadow models/props_gameplay/security_fence256_lower.mdl
+forcetextureshadow models/props_farm/haypile001.mdl
+forcetextureshadow models/props_farm/tree001.mdl
+forcetextureshadow models/props_farm/tree001_skybox.mdl
+forcetextureshadow models/props_gameplay/door_grate001_bottom.mdl
+forcetextureshadow models/props_gameplay/door_grate001_top.mdl
+forcetextureshadow models/props_gameplay/door_grate002_bottom.mdl
+forcetextureshadow models/props_gameplay/door_grate002_top.mdl
+forcetextureshadow models/props_gameplay/door_grate003_bottom.mdl
+forcetextureshadow models/props_gameplay/door_grate003_top.mdl
+forcetextureshadow models/props_foliage/grass_01.mdl
+forcetextureshadow models/props_foliage/grass_02.mdl
+forcetextureshadow models/props_foliage/grass_02_cluster01.mdl
+forcetextureshadow models/props_foliage/grass_02_cluster02.mdl
+forcetextureshadow models/props_foliage/grass_02_detailmodel.mdl
+forcetextureshadow models/props_foliage/bramble001a.mdl 
+forcetextureshadow models/props_foliage/bramble001a_skybox.mdl 
+forcetextureshadow models/props_foliage/corn_plant01.mdl
+forcetextureshadow models/props_foliage/shrub_01a.mdl
+forcetextureshadow models/props_foliage/shrub_02a.mdl
+forcetextureshadow models/props_foliage/shrub_03_card.mdl
+forcetextureshadow models/props_foliage/shrub_03_card_skybox.mdl
+forcetextureshadow models/props_foliage/shrub_03_cluster.mdl
+forcetextureshadow models/props_foliage/shrub_03_cluster02.mdl
+forcetextureshadow models/props_foliage/shrub_03_cluster_skybox.mdl
+forcetextureshadow models/props_foliage/shrub_03a.mdl
+forcetextureshadow models/props_foliage/shrub_03b.mdl
+forcetextureshadow models/props_foliage/shrub_03c.mdl
+forcetextureshadow models/props_foliage/shrub_04a.mdl
+forcetextureshadow models/props_foliage/shrub_04b.mdl
+forcetextureshadow models/props_foliage/tree01.mdl
+forcetextureshadow models/props_foliage/tree02.mdl
+forcetextureshadow models/props_foliage/tree_pine01.mdl
+forcetextureshadow models/props_foliage/tree_pine01_4cluster.mdl
+forcetextureshadow models/props_foliage/tree_pine01_8cluster.mdl
+forcetextureshadow models/props_foliage/tree_pine01_8cluster.mdl
+forcetextureshadow models/props_forest/shrub_03_cluster.mdl
+forcetextureshadow models/props_forest/shrub_03b.mdl
+forcetextureshadow models/props_forest/shrub_03c.mdl
+forcetextureshadow models/props_foliage/tree_sb_pencil_01.mdl
+forcetextureshadow models/props_foliage/tree_sb_pencil_02.mdl
+forcetextureshadow models/props_foliage/tree_sb_pencil_03.mdl
+forcetextureshadow models/props_halloween/oak_01a.mdl
+forcetextureshadow models/props_halloween/oak_02a.mdl
+forcetextureshadow models/props_halloween/oak_03a.mdl
+forcetextureshadow models/props_coalmines/wood_fence_short_256.mdl
+forcetextureshadow models/props_coalmines/wood_fence_short_128.mdl
+forcetextureshadow models/props_coalmines/foliage_clump1.mdl
+forcetextureshadow models/props_coalmines/foliage_clump2.mdl
+forcetextureshadow models/props_coalmines/foliage_clump3.mdl
+forcetextureshadow models/props_coalmines/foliage_single1.mdl
+forcetextureshadow models/props_coalmines/wood_fence_128.mdl
+forcetextureshadow models/props_coalmines/wood_fence_256.mdl
+forcetextureshadow models/props_coalmines/wood_fence_64.mdl
+forcetextureshadow models/props_coalmines/wood_fence_short_128.mdl
+forcetextureshadow models/props_coalmines/wood_fence_short_256.mdl
+forcetextureshadow models/props_coalmines/wood_fence_short_64.mdl
+
+forcetextureshadow models/props_doomsday/dd_woodfence_128.mdl
+forcetextureshadow models/props_doomsday/dd_woodfence_256.mdl
+forcetextureshadow models/props_doomsday/dd_woodfence_64.mdl
+forcetextureshadow models/props_doomsday/dd_woodfence_short_128.mdl
+forcetextureshadow models/props_doomsday/dd_woodfence_short_256.mdl
+forcetextureshadow models/props_doomsday/dd_woodfence_short_64.mdl
+
+forcetextureshadow models/props_foliage/tree_pine_extrasmall.mdl
+forcetextureshadow models/props_foliage/tree_pine_extrasmall_snow.mdl
+forcetextureshadow models/props_foliage/tree_pine_huge.mdl
+forcetextureshadow models/props_foliage/tree_pine_huge_snow.mdl
+forcetextureshadow models/props_foliage/tree_pine_small.mdl
+forcetextureshadow models/props_foliage/tree_pine_small_snow.mdl
+
+forcetextureshadow models/props_manor/halloween_skycard_01.mdl
+forcetextureshadow models/props_manor/halloween_skycard_02.mdl
+
+forcetextureshadow models/props_manor/oak_01a.mdl
+forcetextureshadow models/props_manor/oak_01b.mdl
+forcetextureshadow models/props_manor/oak_01c.mdl
+forcetextureshadow models/props_manor/oak_02a.mdl
+forcetextureshadow models/props_manor/oak_02b.mdl
+forcetextureshadow models/props_manor/oak_02c.mdl
+
+forcetextureshadow models/props_medieval/wallstone001_128.mdl
+forcetextureshadow models/props_medieval/wallstone001_256.mdl
+forcetextureshadow models/props_medieval/wallwood001_128.mdl
+forcetextureshadow models/props_medieval/wallwood001_256.mdl
+forcetextureshadow models/props_medieval/wallwood002_128.mdl
+forcetextureshadow models/props_medieval/wallwood002_256.mdl
+
+
+forcetextureshadow models/props_swamp/cattails_ref01.mdl
+forcetextureshadow models/props_swamp/cattails_ref02.mdl
+forcetextureshadow models/props_swamp/cattails_ref03.mdl
+
+forcetextureshadow models/props_swamp/fern_01.mdl
+forcetextureshadow models/props_swamp/fern_02.mdl
+forcetextureshadow models/props_swamp/fern_03.mdl
+forcetextureshadow models/props_swamp/fern_04.mdl
+forcetextureshadow models/props_swamp/fern_05.mdl
+forcetextureshadow models/props_swamp/fern_06.mdl
+forcetextureshadow models/props_swamp/reeds.mdl
+
+forcetextureshadow models/props_swamp/shrub_03_cluster.mdl
+forcetextureshadow models/props_swamp/shrub_03b.mdl
+forcetextureshadow models/props_swamp/shrub_03c.mdl
+
+forcetextureshadow models/props_swamp/tallgrass_01.mdl
+forcetextureshadow models/props_swamp/tallgrass_02.mdl
+forcetextureshadow models/props_swamp/tallgrass_03.mdl
+forcetextureshadow models/props_swamp/tallgrass_04.mdl
+forcetextureshadow models/props_swamp/tallgrass_05.mdl
+forcetextureshadow models/props_swamp/tallgrass_06.mdl
+forcetextureshadow models/props_swamp/tallgrass_07.mdl
+forcetextureshadow models/props_swamp/tallgrass_08.mdl

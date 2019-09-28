@@ -5,7 +5,7 @@ WeaponData
 	"BuiltRightHanded"		"0"
 	"weight"			"3"
 	"WeaponType"			"primary"
-	"ITEM_FLAG_NOITEMPICKUP"	"1"
+	"ITEM_FLAG_NOITEMPICKUP" 	"1"
 	
 	// Primary Attributes
 	"Damage"			"6"
@@ -35,10 +35,12 @@ WeaponData
 	"bucket_position"		"0"
 
 	// Animation.
-	"anim_prefix"	"shotgun"
+	"anim_prefix"   "shotgun"
 
 	// Muzzleflash
+	"MuzzleFlashModel"	"models/effects/muzzleflash/minigunmuzzle.mdl"
 	"MuzzleFlashParticleEffect" "muzzle_shotgun"
+	"MuzzleflashModelScale"	".5"
 	
 	// Sounds.
 	// Max of 16 per category (ie. max 16 "single_shot" sounds).
@@ -93,6 +95,5 @@ WeaponData
 				"y"		"48"
 				"width"		"24"
 				"height"	"24"
-		}
-	}
+		}	}
 }

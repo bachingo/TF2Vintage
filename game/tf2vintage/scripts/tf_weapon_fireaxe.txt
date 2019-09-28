@@ -12,7 +12,10 @@
 	"Damage"				"65"
 	"TimeFireDelay"			"0.8"
 	"TimeIdle"				"5.0"
-	"HasTeamSkins_Viewmodel"			"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
+
 
 	// Ammo & Clip
 	"primary_ammo"			"None"

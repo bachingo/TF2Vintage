@@ -66,16 +66,16 @@
 	
 	"playlooping"
 	{
-		"volume"	"1.0"
+		"volume"	".5"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
-		"volume"	"1.0"
+		"volume"	".5"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 }
 
@@ -89,14 +89,14 @@
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 }
 
@@ -108,14 +108,14 @@
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 }
 
@@ -129,28 +129,28 @@
 	{
 		"volume"	".8"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_02.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.9"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".2"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 }
 
@@ -164,14 +164,14 @@
 	{
 		"volume"	".35"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".35"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_04.wav"
 	}
 	
 	"playrandom"
@@ -183,11 +183,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_05.mp3"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_01.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_02.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_03.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_04.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_05.wav"
 		}
 	}
 }
@@ -202,21 +202,21 @@
 	{
 		"volume"	".9"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 
 	"playlooping"
 	{
 		"volume"	".2"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_01.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_01.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playrandom"
@@ -228,11 +228,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_05.mp3"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_01.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_02.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_03.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_04.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_05.wav"
 		}
 	}
 }
@@ -247,14 +247,14 @@
 	{
 		"volume"	".6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_02.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".55"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playrandom"
@@ -266,11 +266,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_05.mp3"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_01.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_02.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_03.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_04.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_05.wav"
 		}
 	}
 }
@@ -284,28 +284,28 @@
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_out_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_out_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_out_lp_03.wav"
+		"wave"		"ambient/cp_harbor/machinery_out_lp_03.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".8"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_04.wav"
 	}
 }
 
@@ -318,28 +318,28 @@
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_01.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_02.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_03.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_03.wav"
 	}
 	
 	"playrandom"
@@ -351,12 +351,12 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_05.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_06.mp3"
+			"wave"		"ambient/cp_harbor/car_1shot_01.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_02.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_03.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_04.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_05.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_06.wav"
 		}
 	}
 }
@@ -367,16 +367,16 @@
 	
 	"playlooping"
 	{
-		"volume"	"1.0"
+		"volume"	".5"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
-		"volume"	"1.0"
+		"volume"	".5"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 }
 
@@ -388,14 +388,14 @@
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 }
 
@@ -408,28 +408,28 @@
 	{
 		"volume"	".8"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_02.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.9"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 }
 
@@ -441,14 +441,14 @@
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 }
 
@@ -460,14 +460,14 @@
 	{
 		"volume"	".35"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".35"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_04.wav"
 	}
 	
 	"playrandom"
@@ -479,11 +479,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_05.mp3"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_01.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_02.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_03.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_04.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_05.wav"
 		}
 	}
 }
@@ -497,21 +497,21 @@
 	{
 		"volume"	".9"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_01.wav"
 	}
 
 	"playlooping"
 	{
 		"volume"	".2"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_01.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_01.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playrandom"
@@ -523,11 +523,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_05.mp3"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_01.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_02.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_03.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_04.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_05.wav"
 		}
 	}
 }
@@ -541,14 +541,14 @@
 	{
 		"volume"	".6"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\indoor_lp_02.wav"
+		"wave"		"ambient/cp_harbor/indoor_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".55"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playrandom"
@@ -560,11 +560,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\furnace_1_shot_05.mp3"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_01.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_02.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_03.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_04.wav"
+			"wave"		"ambient/cp_harbor/furnace_1_shot_05.wav"
 		}
 	}
 }
@@ -578,28 +578,28 @@
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_01.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_02.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_03.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_03.wav"
 	}
 	
 	"playrandom"
@@ -611,11 +611,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_05.mp3"
+			"wave"		"ambient/cp_harbor/train_1shot_01.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_02.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_03.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_04.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_05.wav"
 		}
 	}
 }
@@ -628,28 +628,28 @@
 	{
 		"volume"	".10"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_out_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_out_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".1"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_out_lp_03.wav"
+		"wave"		"ambient/cp_harbor/machinery_out_lp_03.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".8"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\machinery_in_lp_02.wav"
+		"wave"		"ambient/cp_harbor/machinery_in_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	"0.4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_04.wav"
 	}	
 }
 
@@ -662,28 +662,28 @@
 	{
 		"volume"	".2"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_01.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_01.wav"
 	}
 	
 	"playlooping"
 	{
-		"volume"	"0.7"
+		"volume"	"0.4"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_04.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_04.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".2"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_02.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_02.wav"
 	}
 	
 	"playlooping"
 	{
 		"volume"	".25"
 		"pitch"		"100"
-		"wave"		"ambient\cp_harbor\outdoor_lp_03.wav"
+		"wave"		"ambient/cp_harbor/outdoor_lp_03.wav"
 	}
 	
 	"playrandom"
@@ -695,13 +695,13 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_05.mp3"
-			"wave"		"ambient_mp3\cp_harbor\car_1shot_06.mp3"
-			"wave"		"ambient_mp3\cp_harbor\machinery_outdoors_1shot_03.mp3"
+			"wave"		"ambient/cp_harbor/car_1shot_01.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_02.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_03.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_04.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_05.wav"
+			"wave"		"ambient/cp_harbor/car_1shot_06.wav"
+			"wave"		"ambient/cp_harbor/machinery_outdoors_1shot_03.wav"
 		}
 	}
 	
@@ -714,11 +714,11 @@
 
 		"rndwave"
 		{
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_01.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_02.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_03.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_04.mp3"
-			"wave"		"ambient_mp3\cp_harbor\train_1shot_05.mp3"
+			"wave"		"ambient/cp_harbor/train_1shot_01.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_02.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_03.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_04.wav"
+			"wave"		"ambient/cp_harbor/train_1shot_05.wav"
 		}
 	}
 }

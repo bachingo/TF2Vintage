@@ -29,7 +29,11 @@ WeaponData
 	"bucket"		"1"
 	"bucket_position"	"0"
 
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
 
+	
 	// Muzzleflash
 	"MuzzleFlashParticleEffect" "muzzle_sniperrifle"
 
@@ -37,8 +41,6 @@ WeaponData
 	//"viewmodel"     -viewmodel is now defined in _items_main.txt
 	//"playermodel"   -playermodel is now defined in _items_main.txt
 	"anim_prefix"		"shotgun"
-	"HasTeamSkins"			"1"
-	"HasTeamSkins_Viewmodel"	"1"
 
 	// Sounds.
 	// Max of 16 per category (ie. max 16 "single_shot" sounds).

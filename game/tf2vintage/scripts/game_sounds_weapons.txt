@@ -2312,6 +2312,74 @@
 }
 
 // ------------------------------------------------------------------------------------ //
+// Assault Cannon
+// ------------------------------------------------------------------------------------ //
+"Weapon_Asscan.Reload"
+{
+	"channel"	"CHAN_WEAPON"
+	"soundlevel"	"SNDLVL_NORM"
+	"volume"	"1.0"
+	"wave"		"weapons/default_reload.wav"
+}
+
+"Weapon_Asscan.ClipEmpty"	
+{
+	"channel"	"CHAN_STATIC"
+	"soundlevel"	"SNDLVL_NORM"
+	"volume"	"1.0"
+	"wave"		")weapons/minigun_empty.wav"
+}
+
+"Weapon_Asscan.Spin"	
+{
+	"channel"	"CHAN_STATIC"
+	"soundlevel"	"SNDLVL_NORM"
+	"volume"	"1.0"
+	"wave"		")weapons/asscan_spin.wav"
+}
+
+"Weapon_Asscan.WindUp"	
+{
+	"channel"	"CHAN_WEAPON"
+	"soundlevel"	"SNDLVL_94dB"
+	"volume"	"1.0"
+	"wave"		")weapons/asscan_wind_up.wav"
+}
+
+
+"Weapon_Asscan.Fire"	
+{
+	"channel"	"CHAN_STATIC"
+	"soundlevel"	"SNDLVL_94dB"
+	"volume"	"1.0"
+	"wave"		")weapons/asscan_shoot.wav"
+}
+
+"Weapon_Asscan.FireCrit"	
+{
+	"channel"	"CHAN_STATIC"
+	"soundlevel"	"SNDLVL_94dB"
+	"volume"	"1.0"
+	"wave"		")weapons/asscan_shoot.wav"
+}
+
+"Weapon_Asscan.WindDown"	
+{
+	"channel"	"CHAN_WEAPON"
+	"soundlevel"	"SNDLVL_94dB"
+	"volume"	"1.0"
+	"wave"		")weapons/asscan_wind_down.wav"
+}
+
+"Weapon_Asscan.Draw"
+{
+	"channel"	"CHAN_AUTO"
+	"soundlevel"	"SNDLVL_74dB"
+	"volume"	".5"
+	"wave"		"weapons/draw_minigun_heavy.wav"
+}
+
+// ------------------------------------------------------------------------------------ //
 // PIPE
 // ------------------------------------------------------------------------------------ //
 

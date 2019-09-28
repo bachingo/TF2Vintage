@@ -105,17 +105,17 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/hawk.mp3"
-			"wave"		"ambient_mp3/warbler.mp3"
-			"wave"		"ambient_mp3/forest_bird1.mp3"
-			"wave"		"ambient_mp3/forest_bird2.mp3"
-			"wave"		"ambient_mp3/forest_bird3.mp3"
-			"wave"		"ambient_mp3/forest_bird4.mp3"
-			"wave"		"ambient_mp3/forest_bird5.mp3"
-			"wave"		"ambient_mp3/forest_bird6.mp3"
-			"wave"		"ambient_mp3/forest_bird7.mp3"
-			"wave"		"ambient_mp3/forest_bird8.mp3"
-			"wave"		"ambient_mp3/forest_bird9.mp3"
+			"wave"		"ambient/hawk.wav"
+			"wave"		"ambient/warbler.wav"
+			"wave"		"ambient/forest_bird1.wav"
+			"wave"		"ambient/forest_bird2.wav"
+			"wave"		"ambient/forest_bird3.wav"
+			"wave"		"ambient/forest_bird4.wav"
+			"wave"		"ambient/forest_bird5.wav"
+			"wave"		"ambient/forest_bird6.wav"
+			"wave"		"ambient/forest_bird7.wav"
+			"wave"		"ambient/forest_bird8.wav"
+			"wave"		"ambient/forest_bird9.wav"
 		}
 	}
 

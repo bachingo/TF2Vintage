@@ -87,9 +87,9 @@
 		"attenuation"	"0.7"	
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/bird1.mp3"
-			"wave"		"ambient_mp3/bird2.mp3"
-			"wave"		"ambient_mp3/bird3.mp3"
+			"wave"		"ambient/bird1.wav"
+			"wave"		"ambient/bird2.wav"
+			"wave"		"ambient/bird3.wav"
 		}
 	}
 }

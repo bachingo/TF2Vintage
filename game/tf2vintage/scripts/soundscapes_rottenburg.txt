@@ -77,14 +77,14 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/crow3.mp3"
-			"wave"		"ambient_mp3/crow4.mp3"
-			"wave"		"ambient_mp3/dog1.mp3"
-			"wave"		"ambient_mp3/dog2.mp3"
-			"wave"		"ambient_mp3/dog3.mp3"
-			"wave"		"ambient_mp3/dog4.mp3"
-			"wave"		"ambient_mp3/dog5.mp3"
-			"wave"		"ambient_mp3/dog6.mp3"
+			"wave"		"ambient/crow3.wav"
+			"wave"		"ambient/crow4.wav"
+			"wave"		"ambient/dog1.wav"
+			"wave"		"ambient/dog2.wav"
+			"wave"		"ambient/dog3.wav"
+			"wave"		"ambient/dog4.wav"
+			"wave"		"ambient/dog5.wav"
+			"wave"		"ambient/dog6.wav"
 		}
 	}
 	
@@ -95,8 +95,8 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/owl3.mp3"
-			"wave"		"ambient_mp3/owl4.mp3"
+			"wave"		"ambient/owl3.wav"
+			"wave"		"ambient/owl4.wav"
 			"wave"		"misc/null.wav"
 		}
 	}
@@ -108,11 +108,11 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/rottenburg/dove_01.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_02.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_03.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_04.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_05.mp3"
+			"wave"		"ambient/rottenburg/dove_01.wav"
+			"wave"		"ambient/rottenburg/dove_02.wav"
+			"wave"		"ambient/rottenburg/dove_03.wav"
+			"wave"		"ambient/rottenburg/dove_04.wav"
+			"wave"		"ambient/rottenburg/dove_05.wav"
 		}
 	}
 	
@@ -162,14 +162,14 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/crow3.mp3"
-			"wave"		"ambient_mp3/crow4.mp3"
-			"wave"		"ambient_mp3/dog1.mp3"
-			"wave"		"ambient_mp3/dog2.mp3"
-			"wave"		"ambient_mp3/dog3.mp3"
-			"wave"		"ambient_mp3/dog4.mp3"
-			"wave"		"ambient_mp3/dog5.mp3"
-			"wave"		"ambient_mp3/dog6.mp3"
+			"wave"		"ambient/crow3.wav"
+			"wave"		"ambient/crow4.wav"
+			"wave"		"ambient/dog1.wav"
+			"wave"		"ambient/dog2.wav"
+			"wave"		"ambient/dog3.wav"
+			"wave"		"ambient/dog4.wav"
+			"wave"		"ambient/dog5.wav"
+			"wave"		"ambient/dog6.wav"
 		}
 	}
 	
@@ -180,11 +180,11 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/rottenburg/dove_01.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_02.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_03.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_04.mp3"
-			"wave"		"ambient_mp3/rottenburg/dove_05.mp3"
+			"wave"		"ambient/rottenburg/dove_01.wav"
+			"wave"		"ambient/rottenburg/dove_02.wav"
+			"wave"		"ambient/rottenburg/dove_03.wav"
+			"wave"		"ambient/rottenburg/dove_04.wav"
+			"wave"		"ambient/rottenburg/dove_05.wav"
 		}
 	}
 }
@@ -207,13 +207,13 @@
 		"pitch"		"100"
 		"rndwave"
 		{
-			"wave"		"ambient_mp3/rottenburg/smallbird_01.mp3"
-			"wave"		"ambient_mp3/rottenburg/smallbird_02.mp3"
-			"wave"		"ambient_mp3/rottenburg/smallbird_03.mp3"
-			"wave"		"ambient_mp3/rottenburg/smallbird_04.mp3"
-			"wave"		"ambient_mp3/rottenburg/smallbird_05.mp3"
-			"wave"		"ambient_mp3/rottenburg/smallbird_06.mp3"
-			"wave"		"ambient_mp3/rottenburg/smallbird_07.mp3"
+			"wave"		"ambient/rottenburg/smallbird_01.wav"
+			"wave"		"ambient/rottenburg/smallbird_02.wav"
+			"wave"		"ambient/rottenburg/smallbird_03.wav"
+			"wave"		"ambient/rottenburg/smallbird_04.wav"
+			"wave"		"ambient/rottenburg/smallbird_05.wav"
+			"wave"		"ambient/rottenburg/smallbird_06.wav"
+			"wave"		"ambient/rottenburg/smallbird_07.wav"
 		}
 	}
 }

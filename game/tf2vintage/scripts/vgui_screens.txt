@@ -24,7 +24,7 @@
 		"type"			"pda_panel"
 		"pixelswide"	300
 		"pixelshigh"	400
-		"acceptsinput"	1
+		"acceptsinput"  1
 		"resfile"		"scripts/screens/screen_pda.res"
 	}
 	
@@ -33,7 +33,7 @@
 		"type"			"pda_panel_engineer_build"
 		"pixelswide"	300
 		"pixelshigh"	400
-		"acceptsinput"	1
+		"acceptsinput"  1
 		"resfile"		"scripts/screens/pda_engineer_build.res"
 	}
 	
@@ -42,7 +42,7 @@
 		"type"			"pda_panel_engineer_destroy"
 		"pixelswide"	300
 		"pixelshigh"	400
-		"acceptsinput"	1
+		"acceptsinput"  1
 		"resfile"		"scripts/screens/pda_engineer_destroy.res"
 	}
 	
@@ -51,7 +51,7 @@
 		"type"			"pda_panel_spy"
 		"pixelswide"	300
 		"pixelshigh"	400
-		"acceptsinput"	1
+		"acceptsinput"  1
 		"resfile"		"scripts/screens/pda_spy.res"
 	}
 	
@@ -60,7 +60,7 @@
 		"type"			"pda_panel_spy_invis"
 		"pixelswide"	280
 		"pixelshigh"	100
-		"acceptsinput"	1
+		"acceptsinput"  1
 		"resfile"		"scripts/screens/pda_spy_invis.res"
 	}
 	
@@ -69,7 +69,7 @@
 		"type"			"pda_panel_spy_invis_pocket"
 		"pixelswide"	280
 		"pixelshigh"	100
-		"acceptsinput"	1
+		"acceptsinput"  1
 		"resfile"		"scripts/screens/pda_spy_invis_pocket.res"
 	}
 	
