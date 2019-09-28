@@ -183,7 +183,7 @@ const char* C_TFJarMilk::ModifyEventParticles( const char* token )
 		CEconItemDefinition *pStatic = m_Item.GetStaticData();
 		if ( pStatic )
 		{
-			EconItemVisuals *pVisuals =	pStatic->GetVisuals( GetTeamNumber() );
+			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );
 			if ( pVisuals )
 			{
 				const char *pszCustomEffectName = pVisuals->custom_particlesystem;

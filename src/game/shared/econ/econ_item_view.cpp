@@ -175,7 +175,7 @@ Activity CEconItemView::GetActivityOverride( int iTeamNumber, Activity actOrigin
 	{
 		int iOverridenActivity = ACT_INVALID;
 
-		EconItemVisuals *pVisuals = pStatic->GetVisuals( iTeamNumber );
+		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( iTeamNumber );
 		FIND_ELEMENT( pVisuals->animation_replacement, actOriginalActivity, iOverridenActivity );
 
 		if ( iOverridenActivity != ACT_INVALID )
@@ -193,7 +193,7 @@ const char *CEconItemView::GetActivityOverride( int iTeamNumber, const char *nam
 	{
 		int iOriginalAct = ActivityList_IndexForName( name );
 		int iOverridenAct = ACT_INVALID;
-		EconItemVisuals *pVisuals = pStatic->GetVisuals( iTeamNumber );
+		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( iTeamNumber );
 
 		FIND_ELEMENT( pVisuals->animation_replacement, iOriginalAct, iOverridenAct );
 
@@ -210,7 +210,7 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 
 	if ( pStatic )
 	{
-		EconItemVisuals *pVisuals = pStatic->GetVisuals( iTeamNum );
+		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( iTeamNum );
 		return pVisuals->aWeaponSounds[iIndex];
 	}
 
@@ -222,7 +222,7 @@ int CEconItemView::GetSkin( int iTeamNum, bool bViewmodel ) const
 	if (iTeamNum <= TF_TEAM_COUNT)
 	{
 		//if !GetStaticData->GetVisuals( iTeamNum )->style.IsEmpty()
-		EconItemVisuals *pVisuals = GetStaticData()->GetVisuals( iTeamNum );
+		PerTeamVisuals_t *pVisuals = GetStaticData()->GetVisuals( iTeamNum );
 		if (pVisuals)
 			return pVisuals->skin;
 	}

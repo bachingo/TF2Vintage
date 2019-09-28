@@ -41,25 +41,32 @@ class CEconEntity : public CBaseAnimating, public IHasAttributes
 
 public:
 	CEconEntity();
-	~CEconEntity();
+	virtual ~CEconEntity() {};
 
 #ifdef CLIENT_DLL
 	virtual void OnPreDataChanged( DataUpdateType_t );
 	virtual void OnDataChanged( DataUpdateType_t );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 	virtual bool OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options );
+	virtual bool IsOverridingViewmodel( void ) const;
 
-	virtual C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) { return m_hAttachmentParent; }
+	C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) const;
 
 	virtual int InternalDrawModel( int flags );
 	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 	virtual void ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
+	virtual bool GetAttachment( char const *pszName, Vector &absOrigin ) { return BaseClass::GetAttachment( pszName, absOrigin ); }
+	virtual bool GetAttachment( char const *pszName, Vector &absOrigin, QAngle &absAngles ) { return BaseClass::GetAttachment( pszName, absOrigin, absAngles ); }
+	virtual bool GetAttachment( int iAttachment, Vector &absOrigin );
+	virtual bool GetAttachment( int iAttachment, Vector &absOrigin, QAngle &absAngles );
+	virtual bool GetAttachment( int iAttachment, matrix3x4_t &matrix );
 
 	virtual void UpdateAttachmentModels( void );
 	virtual bool AttachmentModelsShouldBeVisible( void ) const { return true; }
 
-	virtual void SetMaterialOverride( int iTeam, const char *pszMaterial );
-	virtual void SetMaterialOverride( int iTeam, CMaterialReference &material );
+	IMaterial *GetMaterialOverride( int iIndex ) const;
+	virtual void SetMaterialOverride( int iIndex, const char *pszMaterial );
+	virtual void SetMaterialOverride( int iIndex, CMaterialReference &material );
 
 	struct AttachedModelData_t
 	{
@@ -68,15 +75,15 @@ public:
 	};
 	CUtlVector<AttachedModelData_t> m_aAttachments;
 
-	CMaterialReference m_MaterialOverrides[TF_TEAM_COUNT];
+	CMaterialReference m_aMaterials[4];
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }
 
 	virtual void PlayAnimForPlaybackEvent(wearableanimplayback_t iPlayback) {};
 
-	virtual void SetItem( CEconItemView &newItem );
-	CEconItemView *GetItem();
+	virtual void SetItem( CEconItemView &newItem ) { m_Item = newItem; }
+	CEconItemView *GetItem()                       { return &m_Item; }
 	virtual bool HasItemDefinition() const;
 	virtual int GetItemID();
 
@@ -86,8 +93,12 @@ public:
 	virtual CAttributeContainer *GetAttributeContainer() { return &m_AttributeManager; }
 	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
 	virtual void ReapplyProvision( void );
+	void InitializeAttributes( void );
 
-	void UpdatePlayerModelToClass( void );
+#ifdef GAME_DLL
+	void UpdateModelToClass( void );
+
+#endif
 
 	virtual void UpdatePlayerBodygroups( void );
 
@@ -106,6 +117,19 @@ private:
 };
 
 #ifdef CLIENT_DLL
+inline C_ViewmodelAttachmentModel *C_EconEntity::GetViewmodelAddon( void ) const
+{
+	return m_hAttachmentParent;
+}
+
+inline IMaterial *C_EconEntity::GetMaterialOverride( int iIndex ) const
+{
+	if ( iIndex < 0 || iIndex > 4 )
+		return NULL;
+
+	return m_aMaterials[ iIndex ];
+}
+
 void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pEconEntity, ClientModelRenderInfo_t const *pInfo, int iModelType );
 #endif
 

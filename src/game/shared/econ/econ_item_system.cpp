@@ -310,7 +310,7 @@ public:
 
 	bool ParseVisuals( KeyValues *pData, CEconItemDefinition* pItem, int iIndex )
 	{
-		EconItemVisuals *pVisuals = &pItem->visual[iIndex];
+		PerTeamVisuals_t *pVisuals = &pItem->visual[iIndex];
 
 		for ( KeyValues *pVisualData = pData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
 		{
@@ -688,7 +688,7 @@ void CEconItemSchema::Precache( void )
 			if ( i == TEAM_SPECTATOR )
 				continue;
 
-			EconItemVisuals *pVisuals = &pItem->visual[i];
+			PerTeamVisuals_t *pVisuals = &pItem->visual[i];
 
 			// Precache sounds.
 			for ( int i = 0; i < NUM_SHOOT_SOUND_TYPES; i++ )

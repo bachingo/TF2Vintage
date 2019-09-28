@@ -186,7 +186,7 @@ public:
 	string_t m_strAttributeClass;
 };
 
-struct EconItemStyle
+typedef struct EconItemStyle
 {
 	EconItemStyle()
 	{
@@ -205,14 +205,17 @@ struct EconItemStyle
 	char model_player[128];
 	char image_inventory[128];
 	CUtlDict< const char*, unsigned short > model_player_per_class;
-};
+} ItemStyle_t;
 
-class EconItemVisuals
+typedef struct EconPerTeamVisuals
 {
-public:
-	EconItemVisuals();
+	EconPerTeamVisuals()
+	{
+		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
+		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
+		skin = -1;
+	}
 
-public:
 	CUtlDict< bool, unsigned short > player_bodygroups;
 	CUtlMap< int, int > animation_replacement;
 	CUtlDict< const char*, unsigned short > playback_activity;
@@ -220,9 +223,9 @@ public:
 	CUtlVector< AttachedModel_t > attached_models;
 	char aWeaponSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
 	char custom_particlesystem[128];
-	//CUtlDict< EconItemStyle*, unsigned short > styles;
+	//CUtlDict< ItemStyle_t*, unsigned short > styles;
 	int skin;
-};
+} PerTeamVisuals_t;
 
 class CEconItemDefinition
 {
@@ -262,7 +265,7 @@ public:
 		hide_bodygroups_deployed_only = 0;
 	}
 
-	EconItemVisuals *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
+	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
@@ -300,7 +303,7 @@ public:
 	bool act_as_wearable;
 	int hide_bodygroups_deployed_only;
 	CUtlVector<CEconItemAttribute> attributes;
-	EconItemVisuals visual[TF_TEAM_COUNT];
+	PerTeamVisuals_t visual[TF_TEAM_COUNT];
 };
 
 #endif // ECON_ITEM_SCHEMA_H

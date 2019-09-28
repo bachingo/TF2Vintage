@@ -74,32 +74,12 @@ EconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 }
 
 
-//-----------------------------------------------------------------------------
-// Purpose: for the UtlMap
-//-----------------------------------------------------------------------------
-static bool actLessFunc( const int &lhs, const int &rhs )
-{
-	return lhs < rhs;
-}
-
-//-----------------------------------------------------------------------------
-// EconItemVisuals
-//-----------------------------------------------------------------------------
-
-EconItemVisuals::EconItemVisuals()
-{
-	animation_replacement.SetLessFunc( actLessFunc );
-	memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
-	skin = -1;
-}
-
-
 
 //-----------------------------------------------------------------------------
 // CEconItemDefinition
 //-----------------------------------------------------------------------------
 
-EconItemVisuals *CEconItemDefinition::GetVisuals( int iTeamNum /*= TEAM_UNASSIGNED*/ )
+PerTeamVisuals_t *CEconItemDefinition::GetVisuals( int iTeamNum /*= TEAM_UNASSIGNED*/ )
 {
 	if ( iTeamNum > LAST_SHARED_TEAM && iTeamNum < TF_TEAM_COUNT )
 	{

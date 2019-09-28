@@ -25,7 +25,7 @@ END_NETWORK_TABLE()
 
 void CEconWearable::Spawn( void )
 {
-	GetAttributeContainer()->InitializeAttributes( this );
+	InitializeAttributes();
 
 	Precache();
 
@@ -64,7 +64,7 @@ int CEconWearable::GetSkin( void )
 
 void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )
 {
-	EconItemVisuals *visual = GetItem()->GetStaticData()->GetVisuals( GetTeamNumber() );
+	PerTeamVisuals_t *visual = GetItem()->GetStaticData()->GetVisuals( GetTeamNumber() );
  	for ( unsigned int i = 0; i < visual->player_bodygroups.Count(); i++ )
 	{
 		const char *szBodyGroupName = visual->player_bodygroups.GetElementName(i);

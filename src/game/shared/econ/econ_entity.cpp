@@ -7,6 +7,7 @@
 #include "cbase.h"
 #include "econ_entity.h"
 #include "eventlist.h"
+#include "datacache/imdlcache.h"
 
 #ifdef GAME_DLL
 #include "tf_player.h"
@@ -52,7 +53,7 @@ CEconEntity::CEconEntity()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconEntity::OnPreDataChanged( DataUpdateType_t updateType )
+void C_EconEntity::OnPreDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnPreDataChanged( updateType );
 
@@ -62,7 +63,7 @@ void CEconEntity::OnPreDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconEntity::OnDataChanged( DataUpdateType_t updateType )
+void C_EconEntity::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
@@ -74,7 +75,7 @@ void CEconEntity::OnDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconEntity::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
+void C_EconEntity::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
 	{
@@ -91,7 +92,7 @@ void CEconEntity::FireEvent( const Vector& origin, const QAngle& angles, int eve
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options )
+bool C_EconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	if ( event == AE_CL_BODYGROUP_SET_VALUE_CMODEL_WPN )
 	{
@@ -105,13 +106,37 @@ bool CEconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin
 	return false;
 }
 
-int CEconEntity::InternalDrawModel( int flags )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::IsOverridingViewmodel( void ) const
 {
-	int iTeam = GetTeamNumber();
-	if ( iTeam < 0 || iTeam > TF_TEAM_COUNT || !m_MaterialOverrides[iTeam] || !( flags & STUDIO_RENDER ) )
+	if ( GetMaterialOverride( GetTeamNumber() ) )
+		return true;
+
+	if ( !m_hAttachmentParent )
+		return false;
+
+	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+	if ( pStatic == nullptr )
+		return false;
+
+	PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );
+	if ( !pVisuals->attached_models.IsEmpty() )
+		return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int C_EconEntity::InternalDrawModel( int flags )
+{
+	if ( GetMaterialOverride( GetTeamNumber() ) == nullptr || !( flags & STUDIO_RENDER ) )
 		return BaseClass::InternalDrawModel( flags );
 
-	modelrender->ForcedMaterialOverride( m_MaterialOverrides[iTeam] );
+	modelrender->ForcedMaterialOverride( m_aMaterials[ GetTeamNumber() ] );
 	int result = BaseClass::InternalDrawModel( flags );
 	modelrender->ForcedMaterialOverride( NULL );
 
@@ -121,7 +146,7 @@ int CEconEntity::InternalDrawModel( int flags )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CEconEntity::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
+bool C_EconEntity::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 {
 	if ( BaseClass::OnInternalDrawModel( pInfo ) )
 	{
@@ -133,9 +158,9 @@ bool CEconEntity::OnInternalDrawModel( ClientModelRenderInfo_t *pInfo )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Stubbed out
 //-----------------------------------------------------------------------------
-void CEconEntity::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
+void C_EconEntity::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
 {
 	// NUB
 }
@@ -143,9 +168,9 @@ void CEconEntity::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Qu
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconEntity::UpdateAttachmentModels( void )
+void C_EconEntity::UpdateAttachmentModels( void )
 {
-	m_aAttachments.Purge();
+	m_aAttachments.RemoveAll();
 
 	if ( GetItem() )
 	{
@@ -153,7 +178,7 @@ void CEconEntity::UpdateAttachmentModels( void )
 
 		if ( AttachmentModelsShouldBeVisible() )
 		{
-			EconItemVisuals *pVisuals = pItem->GetVisuals( GetTeamNumber() );
+			PerTeamVisuals_t *pVisuals = pItem->GetVisuals( GetTeamNumber() );
 			if ( pVisuals )
 			{
 				for ( int i=0; i<pVisuals->attached_models.Count(); ++i )
@@ -216,35 +241,74 @@ void CEconEntity::UpdateAttachmentModels( void )
 		m_hAttachmentParent->Release();
 }
 
-void CEconEntity::SetMaterialOverride( int iTeam, const char *pszMaterial )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::GetAttachment( int iAttachment, Vector &absOrigin )
 {
-	if ( iTeam < TF_TEAM_COUNT )
-		m_MaterialOverrides[iTeam].Init( pszMaterial, "ClientEffect textures", true );
+	if ( m_hAttachmentParent.Get() )
+		return m_hAttachmentParent->GetAttachment( iAttachment, absOrigin );
+
+	return BaseClass::GetAttachment( iAttachment, absOrigin );
 }
 
-void CEconEntity::SetMaterialOverride( int iTeam, CMaterialReference &material )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::GetAttachment( int iAttachment, Vector &absOrigin, QAngle &absAngles )
 {
-	if ( iTeam < TF_TEAM_COUNT )
-		m_MaterialOverrides[iTeam].Init( material );
+	if ( m_hAttachmentParent.Get() )
+		return m_hAttachmentParent->GetAttachment( iAttachment, absOrigin, absAngles );
+
+	return BaseClass::GetAttachment( iAttachment, absOrigin, absAngles );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::GetAttachment( int iAttachment, matrix3x4_t &matrix )
+{
+	if ( m_hAttachmentParent.Get() )
+		return m_hAttachmentParent->GetAttachment( iAttachment, matrix );
+
+	return BaseClass::GetAttachment( iAttachment, matrix );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_EconEntity::SetMaterialOverride( int iTeam, const char *pszMaterial )
+{
+	if ( iTeam < 4 )
+		m_aMaterials[iTeam].Init( pszMaterial, "ClientEffect textures", true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_EconEntity::SetMaterialOverride( int iTeam, CMaterialReference &material )
+{
+	if ( iTeam < 4 )
+		m_aMaterials[iTeam].Init( material );
+}
+
+#else
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconEntity::UpdateModelToClass( void )
+{
+	MDLCACHE_CRITICAL_SECTION();
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( pOwner == nullptr )
+		return;
+
+
 }
 
 #endif
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CEconEntity::SetItem( CEconItemView &newItem )
-{
-	m_Item = newItem;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CEconItemView *CEconEntity::GetItem( void )
-{
-	return &m_Item;
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -296,6 +360,11 @@ void CEconEntity::ReapplyProvision( void )
 	}
 }
 
+void CEconEntity::InitializeAttributes( void )
+{
+	m_AttributeManager.InitializeAttributes( this );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Update visible bodygroups
 //-----------------------------------------------------------------------------
@@ -312,7 +381,7 @@ void CEconEntity::UpdatePlayerBodygroups( void )
 	CEconItemDefinition *pStatic = m_Item.GetStaticData();
 	if ( pStatic )
 	{
-		EconItemVisuals *pVisuals =	pStatic->GetVisuals();
+		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
 		if ( pVisuals )
 		{
 			for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
@@ -343,11 +412,6 @@ void CEconEntity::UpdateOnRemove( void )
 	SetOwnerEntity( NULL );
 	ReapplyProvision();
 	BaseClass::UpdateOnRemove();
-}
-
-CEconEntity::~CEconEntity()
-{
-
 }
 
 #ifdef CLIENT_DLL
