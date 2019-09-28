@@ -444,7 +444,7 @@ void CTFWeaponBase::UpdateViewModel( void )
 	if ( pTFPlayer == NULL )
 		return;
 
-	CTFViewModel *vm = dynamic_cast<CTFViewModel*>( pTFPlayer->GetViewModel( m_nViewModelIndex, false ) );
+	CTFViewModel *vm = dynamic_cast<CTFViewModel *>( pTFPlayer->GetViewModel( m_nViewModelIndex, false ) );
 	if ( vm == NULL )
 		return;
 
@@ -483,7 +483,7 @@ void CTFWeaponBase::UpdateViewModel( void )
 	}
 	else
 	{
-		vm->RemoveViewmodelAddon();
+		vm->RemoveViewmodelAddon( 0 );
 		vm->RemoveViewmodelAddon( 1 );
 	}
 }
@@ -1042,12 +1042,21 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 int CTFWeaponBase::GetMaxClip1( void ) const
 {
 	int iMaxClip = CBaseCombatWeapon::GetMaxClip1();
+	if ( iMaxClip < 0 )
+		return iMaxClip;
 
-	float fMaxClipMult = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT( fMaxClipMult, mult_clipsize );
-	fMaxClipMult *= iMaxClip;
-	if ( fMaxClipMult != 0 )
-		return fMaxClipMult;
+	CALL_ATTRIB_HOOK_FLOAT( iMaxClip, mult_clipsize );
+	if ( iMaxClip < 0 )
+		return iMaxClip;
+
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner == NULL )
+		return iMaxClip;
+
+	int nClipSizePerKill = 0;
+	CALL_ATTRIB_HOOK_INT( nClipSizePerKill, clipsize_increase_on_kill );
+
+	iMaxClip += Min( nClipSizePerKill, pOwner->m_Shared.GetDecapitationCount() );
 
 	return iMaxClip;
 }
@@ -1057,15 +1066,7 @@ int CTFWeaponBase::GetMaxClip1( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetDefaultClip1( void ) const
 {
-	int iDefaultClip = CBaseCombatWeapon::GetDefaultClip1();
-
-	float fDefaultClipMult = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT( fDefaultClipMult, mult_clipsize );
-	fDefaultClipMult *= iDefaultClip;
-	if ( fDefaultClipMult != 0 )
-		return fDefaultClipMult;
-
-	return iDefaultClip;
+	return GetMaxClip1();
 }
 
 //-----------------------------------------------------------------------------
@@ -2295,8 +2296,8 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 int	CTFWeaponBase::InternalDrawModel( int flags )
 {
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-	bool bNotViewModel = ( (pOwner && !pOwner->IsLocalPlayer()) || C_BasePlayer::ShouldDrawLocalPlayer() );
-	bool bUseInvulnMaterial = (bNotViewModel && pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ));
+	bool bNotViewModel = ( ( pOwner && !pOwner->IsLocalPlayer() ) || C_BasePlayer::ShouldDrawLocalPlayer() );
+	bool bUseInvulnMaterial = ( bNotViewModel && pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
 	if ( bUseInvulnMaterial )
 	{
 		modelrender->ForcedMaterialOverride( *pOwner->GetInvulnMaterialRef() );
