@@ -664,6 +664,11 @@ $Project
 		//Haptics
 		$File	"$SRCDIR\public\haptics\haptic_msgs.cpp"
 		$File	"$SRCDIR\public\haptics\haptic_utils.cpp"	[$WIN32]
+		//VScript
+		$File	"$SRCDIR\game\shared\vscript_shared.cpp"
+		$File   "vscript_server.cpp"
+		$File   "vscript_server.nut"
+
 
 		// Not using precompiled header cbase.h
 
@@ -718,7 +723,7 @@ $Project
 			}
 		}
 
-		$Folder	"temporary entities"
+		$Folder	"Temporary Entities"
 		{
 			$File	"basetempentity.cpp"
 			$File	"event_tempentity_tester.cpp"

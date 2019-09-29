@@ -503,6 +503,11 @@ $Project
 		//Haptics
 		$File	"$SRCDIR\public\haptics\haptic_msgs.cpp"	[!$X360]
 		$File	"$SRCDIR\public\haptics\haptic_utils.cpp"	[$WIN32&&!$X360]
+		//VScript
+		$File	"$SRCDIR\game\shared\vscript_shared.cpp"
+		$File   "vscript_client.cpp"
+		$File   "vscript_client.nut"
+
 
 		$Folder	"Sixense"
 		{
