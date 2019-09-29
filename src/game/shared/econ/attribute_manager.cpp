@@ -128,13 +128,6 @@ float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *
 		if ( pAttributes )
 		{
 			flValue = pAttributes->GetAttributeManager()->ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
-
-			if( pOutProviders )
-			{
-				EHANDLE hndl( pProvider );
-				if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
-					pOutProviders->AddToTail( hndl );
-			}
 		}
 	}
 
@@ -176,13 +169,6 @@ string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBase
 		if ( pAttributes )
 		{
 			strValue = pAttributes->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
-
-			if ( pOutProviders )
-			{
-				EHANDLE hndl( pProvider );
-				if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
-					pOutProviders->AddToTail( hndl );
-			}
 		}
 	}
 
@@ -239,24 +225,31 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 
 		switch ( pStatic->description_format )
 		{
-		case ATTRIB_FORMAT_ADDITIVE:
-		case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
-			flValue += pAttribute->value;
-			break;
-		case ATTRIB_FORMAT_PERCENTAGE:
-		case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
-			flValue *= pAttribute->value;
-			break;
-		case ATTRIB_FORMAT_OR:
-		default:
-		{
-			// Oh, man...
-			int iValue = (int)flValue;
-			int iAttrib = (int)pAttribute->value;
-			iValue |= iAttrib;
-			flValue = (float)iValue;
-			break;
+			case ATTRIB_FORMAT_ADDITIVE:
+			case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
+				flValue += pAttribute->value;
+				break;
+			case ATTRIB_FORMAT_PERCENTAGE:
+			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
+				flValue *= pAttribute->value;
+				break;
+			case ATTRIB_FORMAT_OR:
+			default:
+			{
+				// Oh, man...
+				int iValue = (int)flValue;
+				int iAttrib = (int)pAttribute->value;
+				iValue |= iAttrib;
+				flValue = (float)iValue;
+				break;
+			}
 		}
+
+		if ( pOutProviders )
+		{
+			EHANDLE hndl( pEconEnt );
+			if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
+				pOutProviders->AddToTail( hndl );
 		}
 	}
 
@@ -283,6 +276,13 @@ string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBa
 	if ( pAttribute )
 	{
 		strValue = AllocPooledString( pAttribute->value_string.Get() );
+
+		if ( pOutProviders )
+		{
+			EHANDLE hndl( pEconEnt );
+			if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
+				pOutProviders->AddToTail( hndl );
+		}
 	}
 
 	m_bParsingMyself = false;
