@@ -117,5 +117,44 @@ public:
 
 CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_Legacy, tf_weapon_pipebomblauncher_legacy )
 
+// TF2 Beta Pipebomb launcher.
+
+#if defined CLIENT_DLL
+#define CTFPipebombLauncher_TF2Beta C_TFPipebombLauncher_TF2Beta
+#endif
+
+class CTFPipebombLauncher_TF2Beta : public CTFPipebombLauncher
+{
+public:
+
+	DECLARE_CLASS( CTFPipebombLauncher_TF2Beta, CTFPipebombLauncher )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_TF2BETA; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TF2Beta, tf_weapon_pipebomblauncher_tf2beta )
+
+// TFC Esque Pipebomb launcher.
+
+#if defined CLIENT_DLL
+#define CTFPipebombLauncher_TFC C_TFPipebombLauncher_TFC
+#endif
+
+class CTFPipebombLauncher_TFC : public CTFPipebombLauncher
+{
+public:
+
+	DECLARE_CLASS( CTFPipebombLauncher_TFC, CTFPipebombLauncher )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_TFC; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TFC, tf_weapon_pipebomblauncher_tfc )
+
+
 
 #endif // TF_WEAPON_PIPEBOMBLAUNCHER_H

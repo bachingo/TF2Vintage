@@ -372,6 +372,8 @@ $Project "Client (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_jar.h"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_stunball.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_stunball.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_syringe.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_syringe.h"
 					}
 					$Folder	"Legacy Content"
 					{
