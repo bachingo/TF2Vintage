@@ -29,8 +29,8 @@ WeaponData
 
 	// Muzzleflash
 	"MuzzleFlashModel"		"models/effects/muzzleflash/minigunmuzzle.mdl"
-	"MuzzleFlashParticleEffect"	"muzzle_tranq"
-	"MuzzleflashModelScale"	".3"
+	"MuzzleFlashParticleEffect"	"muzzle_syringe"
+	"MuzzleflashModelScale"	".2"
 
 	// Animation.
 	"viewmodel"		"models/weapons/v_models/v_nailgun_scout.mdl"

@@ -67,4 +67,23 @@ private:
 	CTFGrenadeLauncher( const CTFGrenadeLauncher & ) {}
 };
 
+// Old School Grenade Launcher.
+
+#if defined CLIENT_DLL
+#define CTFGrenadeLauncher_Legacy C_TFGrenadeLauncher_Legacy
+#endif
+
+class CTFGrenadeLauncher_Legacy : public CTFGrenadeLauncher
+{
+public:
+
+	DECLARE_CLASS( CTFGrenadeLauncher_Legacy, CTFGrenadeLauncher )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_GRENADELAUNCHER_LEGACY; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Legacy, tf_weapon_grenadelauncher_legacy )
+
 #endif // TF_WEAPON_GRENADELAUNCHER_H

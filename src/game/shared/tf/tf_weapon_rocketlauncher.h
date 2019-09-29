@@ -80,4 +80,24 @@ public:
 
 #endif
 
+// Old School Rocket Launcher.
+
+#if defined CLIENT_DLL
+#define CTFRocketLauncher_Legacy C_TFRocketLauncher_Legacy
+#endif
+
+class CTFRocketLauncher_Legacy : public CTFRocketLauncher
+{
+public:
+
+	DECLARE_CLASS( CTFRocketLauncher_Legacy, CTFRocketLauncher )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_ROCKETLAUNCHER_LEGACY; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFRocketLauncher_Legacy, tf_weapon_rocketlauncher_legacy )
+
+
 #endif // TF_WEAPON_ROCKETLAUNCHER_H

@@ -98,4 +98,24 @@ public:
 	CTFPipebombLauncher( CTFPipebombLauncher const& );
 };
 
+// Old School Pipebomb/Sticky Launcher.
+
+#if defined CLIENT_DLL
+#define CTFPipebombLauncher_Legacy C_TFPipebombLauncher_Legacy
+#endif
+
+class CTFPipebombLauncher_Legacy : public CTFPipebombLauncher
+{
+public:
+
+	DECLARE_CLASS( CTFPipebombLauncher_Legacy, CTFPipebombLauncher )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_LEGACY; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_Legacy, tf_weapon_pipebomblauncher_legacy )
+
+
 #endif // TF_WEAPON_PIPEBOMBLAUNCHER_H

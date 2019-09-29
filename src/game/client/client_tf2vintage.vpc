@@ -377,6 +377,8 @@ $Project "Client (TF)"
 					{
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_tranq.cpp"

@@ -145,4 +145,25 @@ private:
 #endif
 };
 
+
+// More realistic Minigun type.
+
+#if defined CLIENT_DLL
+#define CTFMinigun_Real C_TFMinigun_Real
+#endif
+
+class CTFMinigun_Real : public CTFMinigun
+{
+public:
+
+	DECLARE_CLASS( CTFMinigun_Real, CTFMinigun )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_MINIGUN_REAL; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFMinigun_Real, tf_weapon_minigun_real )
+
+
 #endif // TF_WEAPON_MINIGUN_H
