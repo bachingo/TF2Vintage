@@ -396,8 +396,8 @@ private:
 
 #define WEAPON_RANDOM_RANGE 10000
 
-#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
-																	\
+#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )	\
+															\
 	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
 															\
 	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
