@@ -461,6 +461,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_PIPEBOMBLAUNCHER_TF2BETA",
 	"TF_WEAPON_PIPEBOMBLAUNCHER_TFC",
 	"TF_WEAPON_SYRINGE",
+	"TF_WEAPON_SNIPERRIFLE_REAL",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -549,7 +550,8 @@ int g_aWeaponDamageTypes[] =
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_PIPEBOMBLAUNCHER_TF2BETA,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_PIPEBOMBLAUNCHER_TFC,
 	DMG_CLUB,		// TF_WEAPON_SYRINGE,
-
+	DMG_BULLET | DMG_USE_HITLOCATIONS,	// TF_WEAPON_SNIPERRIFLE_REAL,
+	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
 	TF_DMG_SENTINEL_VALUE

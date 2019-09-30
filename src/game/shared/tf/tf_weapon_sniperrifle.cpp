@@ -141,7 +141,18 @@ void CTFSniperRifle::ResetTimers( void )
 bool CTFSniperRifle::Reload( void )
 {
 	// We currently don't reload.
-	return true;
+	//return true;
+	
+	if ( BaseClass::Reload() == true )
+	{
+		if ( IsZoomed() )
+			ZoomOut();
+
+		if ( Clip1() >= 0 )
+		return true;
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -268,6 +279,8 @@ void CTFSniperRifle::ItemPostFrame( void )
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( !pPlayer )
 		return;
+	
+	CheckReload();
 
 	if ( !CanAttack() )
 	{
@@ -319,6 +332,13 @@ void CTFSniperRifle::ItemPostFrame( void )
 	if ( pPlayer->m_nButtons & IN_ATTACK )
 	{
 		Fire( pPlayer );
+	}
+	
+	//  Reload pressed / Clip Empty
+	if ( ( pPlayer->m_nButtons & IN_RELOAD ) && !m_bInReload ) 
+	{
+		// reload when reload is pressed, or if no buttons are down and weapon is empty.
+		Reload();
 	}
 
 	// Idle.

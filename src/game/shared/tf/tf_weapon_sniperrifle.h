@@ -140,4 +140,23 @@ private:
 	CTFSniperRifle( const CTFSniperRifle & );
 };
 
+// Old School Pipebomb/Sticky Launcher.
+
+#if defined CLIENT_DLL
+#define CTFSniperRifle_Real C_TFSniperRifle_Real
+#endif
+
+class CTFSniperRifle_Real : public CTFSniperRifle
+{
+public:
+
+	DECLARE_CLASS( CTFSniperRifle_Real, CTFSniperRifle )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_REAL; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFSniperRifle_Real, tf_weapon_sniperrifle_real )
+
 #endif // TF_WEAPON_SNIPERRIFLE_H
