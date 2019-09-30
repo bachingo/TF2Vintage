@@ -18,8 +18,8 @@ WeaponData
 	"Spread"		"0.0"
 	"TimeFireDelay"		"1.5"
 	"ProjectileType"	"projectile_bullet"
-	"MaxAmmo"		"25"
-	"SpawnAmmo"		"10"
+	"MaxAmmo"		"24"
+	"SpawnAmmo"		"12"
 	
 	"DoInstantEjectBrass"	"0"
 	"BrassModel"		"models/weapons/shells/shell_sniperrifle.mdl"
