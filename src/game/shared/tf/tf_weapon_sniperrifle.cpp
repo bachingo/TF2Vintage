@@ -141,18 +141,7 @@ void CTFSniperRifle::ResetTimers( void )
 bool CTFSniperRifle::Reload( void )
 {
 	// We currently don't reload.
-	//return true;
-	
-	if ( BaseClass::Reload() == true )
-	{
-		if ( IsZoomed() )
-			ZoomOut();
-
-		if ( Clip1() >= 0 )
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
 //-----------------------------------------------------------------------------
