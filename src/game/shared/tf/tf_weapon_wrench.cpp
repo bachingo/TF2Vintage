@@ -22,16 +22,8 @@
 //
 // Weapon Wrench tables.
 //
-IMPLEMENT_NETWORKCLASS_ALIASED( TFWrench, DT_TFWeaponWrench )
-
-BEGIN_NETWORK_TABLE( CTFWrench, DT_TFWeaponWrench )
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA( CTFWrench )
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS( tf_weapon_wrench, CTFWrench );
-PRECACHE_WEAPON_REGISTER( tf_weapon_wrench );
+CREATE_SIMPLE_WEAPON_TABLE( TFWrench, tf_weapon_wrench )
+CREATE_SIMPLE_WEAPON_TABLE( TFRobotArm, tf_weapon_robot_arm )
 
 //=============================================================================
 //
@@ -116,21 +108,6 @@ void CTFWrench::Smack( void )
 		BaseClass::Smack();
 	}
 }
-
-//=============================================================================
-//
-// Weapon Robot Arm tables.
-//
-IMPLEMENT_NETWORKCLASS_ALIASED( TFRobotArm, DT_TFWeaponRobotArm )
-
-BEGIN_NETWORK_TABLE( CTFRobotArm, DT_TFWeaponRobotArm )
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA( CTFRobotArm )
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS( tf_weapon_robot_arm, CTFRobotArm );
-PRECACHE_WEAPON_REGISTER( tf_weapon_robot_arm );
 
 //=============================================================================
 //

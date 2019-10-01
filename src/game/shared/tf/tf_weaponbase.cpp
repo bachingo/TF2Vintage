@@ -754,7 +754,7 @@ bool CTFWeaponBase::Deploy( void )
 		CEconItemDefinition *pStatic = m_Item.GetStaticData();
 		if ( pStatic && pStatic->hide_bodygroups_deployed_only )
 		{
-			PerTeamVisuals_t *pVisuals =	pStatic->GetVisuals();
+			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
 			if ( pVisuals )
 			{
 				for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )

@@ -20,6 +20,9 @@
 #include "tf_obj_sentrygun.h"
 #endif
 
+#if defined( CLIENT_DLL )
+extern ConVar cl_autoreload;
+#endif
 
 float AirBurstDamageForce( Vector const &vecSize, float damage, float scale )
 {
@@ -107,7 +110,7 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 
 		pOwner->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_SLOWDOWN, NULL );
 
-	#ifdef GAME_DLL
+	#if defined( GAME_DLL )
 		EntityMatrix matrix;
 		matrix.InitFromEntity( pOwner );
 
@@ -129,7 +132,7 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 	BaseClass::FireBullet( pPlayer );
 }
 
-#ifdef GAME_DLL
+#if defined( GAME_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -179,8 +182,18 @@ void CTFScatterGun::Equip( CBaseCombatCharacter *pEquipTo )
 		if ( pOwner )
 		{
 			// CTFPlayerShared::SetScoutHypeMeter
+		#if defined( CLIENT_DLL )
+			m_bAutoReload = cl_autoreload.GetBool();
+		#else
+			m_bAutoReload = pOwner->ShouldAutoReload();
+		#endif
 		}
 	}
+
+	int nScatterGunNoReloadSingle = 0;
+	CALL_ATTRIB_HOOK_INT( nScatterGunNoReloadSingle, set_scattergun_no_reload_single );
+	if ( nScatterGunNoReloadSingle == 1 )
+		m_bReloadsSingly = false;
 
 	BaseClass::Equip( pEquipTo );
 }
@@ -188,16 +201,40 @@ void CTFScatterGun::Equip( CBaseCombatCharacter *pEquipTo )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFScatterGun::Reload()
+bool CTFScatterGun::Deploy()
 {
-	int nScatterGunNoReloadSingle = 0;
-	CALL_ATTRIB_HOOK_INT( nScatterGunNoReloadSingle, set_scattergun_no_reload_single );
-	if ( nScatterGunNoReloadSingle == 1 )
-		m_bReloadsSingly = false;
+	if ( !ReloadsSingly() )
+	{
+	#if defined( CLIENT_DLL )
+		cl_autoreload.SetValue( 0 );
+	#else
+		CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+		if ( pOwner )
+			pOwner->SetAutoReload( false );
+	#endif
+	}
 
-	return BaseClass::Reload();
+	return BaseClass::Deploy();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFScatterGun::Holster(CBaseCombatWeapon *pSwitchTo)
+{
+	if ( !ReloadsSingly() )
+	{
+	#if defined( CLIENT_DLL )
+		cl_autoreload.SetValue( m_bAutoReload );
+	#else
+		CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+		if ( pOwner )
+			pOwner->SetAutoReload( m_bAutoReload );
+	#endif
+	}
+
+	return BaseClass::Holster( pSwitchTo );
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -216,8 +253,6 @@ void CTFScatterGun::FinishReload()
 	m_iClip1 += Min( GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount( m_iPrimaryAmmoType ) );
 
 	pOwner->RemoveAmmo( GetMaxClip1(), m_iPrimaryAmmoType );
-
-	BaseClass::FinishReload();
 }
 
 //-----------------------------------------------------------------------------
@@ -305,7 +340,7 @@ CTFShotgun_Revenge::CTFShotgun_Revenge()
 	m_iRevengeCrits = 0;
 }
 
-#ifdef CLIENT_DLL
+#if defined( CLIENT_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -443,7 +478,7 @@ void CTFShotgun_Revenge::Detach( void )
 	BaseClass::Detach();
 }
 
-#ifdef GAME_DLL
+#if defined( GAME_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
