@@ -298,7 +298,7 @@ $Project "Server (TF)"
 			{
 				$Folder	"Weapons"
 				{	
-					$Folder	"Custom"
+					$Folder	"Custom Content"
 					{
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_flaregun.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_flaregun.h"
@@ -322,6 +322,8 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_buff_item.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_sword.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_sword.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_decapitation.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_decapitation.h"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_flare.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_flare.h"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_arrow.cpp"
@@ -332,6 +334,8 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_stunball.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_syringe.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_syringe.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_sniperrifle_classic.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_sniperrifle_classic.h"
 					}
 					$Folder	"Legacy Content"
 					{
@@ -352,6 +356,8 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.h"	
 					}
+					$Folder	"Base TF2"
+					{
 					$File	"$SRCDIR\game\shared\tf\tf_weapon_bat.cpp"
 					$File	"$SRCDIR\game\shared\tf\tf_weapon_bat.h"
 					$File	"$SRCDIR\game\shared\tf\tf_weapon_bonesaw.cpp"
@@ -412,8 +418,7 @@ $Project "Server (TF)"
 					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_melee.h"
 					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_rocket.cpp"
 					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_rocket.h"
-					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_decapitation.cpp"
-					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_decapitation.h"
+					}
 				}				
 				$File	"$SRCDIR\game\shared\tf\achievements_tf.cpp"
 				$File	"$SRCDIR\game\shared\tf\baseobject_shared.cpp"

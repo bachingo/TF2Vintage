@@ -11,76 +11,26 @@
 
 #include "tf_weaponbase_gun.h"
 #include "Sprite.h"
+#include "tf_weapon_sniperrifle.h"
 
 #if defined( CLIENT_DLL )
-#define CTFSniperRifle C_TFSniperRifle
-#define CSniperDot C_SniperDot
+#define CTFSniperRifle_Classic C_TFSniperRifle_Classic_Classic
 #endif
-
-//=============================================================================
-//
-// Sniper Rifle Laser Dot class.
-//
-class CSniperDot : public CBaseEntity
-{
-public:
-
-	DECLARE_CLASS( CSniperDot, CBaseEntity );
-	DECLARE_NETWORKCLASS();
-	DECLARE_DATADESC();
-
-	// Creation/Destruction.
-	CSniperDot( void );
-	~CSniperDot( void );
-
-	static CSniperDot *Create( const Vector &origin, CBaseEntity *pOwner = NULL, bool bVisibleDot = true );
-	void		ResetChargeTime( void ) { m_flChargeStartTime = gpGlobals->curtime; }
-
-	// Attributes.
-	int			ObjectCaps()							{ return (BaseClass::ObjectCaps() & ~FCAP_ACROSS_TRANSITION) | FCAP_DONT_SAVE; }
-
-	// Targeting.
-	void        Update( CBaseEntity *pTarget, const Vector &vecOrigin, const Vector &vecNormal );
-	CBaseEntity	*GetTargetEntity( void )				{ return m_hTargetEnt; }
-
-// Client specific.
-#ifdef CLIENT_DLL
-
-	// Rendering.
-	virtual bool			IsTransparent( void )		{ return true; }
-	virtual RenderGroup_t	GetRenderGroup( void )		{ return RENDER_GROUP_TRANSLUCENT_ENTITY; }
-	virtual int				DrawModel( int flags );
-	virtual bool			ShouldDraw( void );
-
-	//
-	virtual void			OnDataChanged( DataUpdateType_t updateType );
-
-	CMaterialReference		m_hSpriteMaterial;
-
-#endif
-
-protected:
-
-	Vector					m_vecSurfaceNormal;
-	EHANDLE					m_hTargetEnt;
-
-	CNetworkVar( float, m_flChargeStartTime );
-};
 
 //=============================================================================
 //
 // Sniper Rifle class.
 //
-class CTFSniperRifle : public CTFWeaponBaseGun
+class CTFSniperRifle_Classic : public CTFWeaponBaseGun
 {
 public:
 
-	DECLARE_CLASS( CTFSniperRifle, CTFWeaponBaseGun );
+	DECLARE_CLASS( CTFSniperRifle_Classic, CTFWeaponBaseGun );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	CTFSniperRifle();
-	~CTFSniperRifle();
+	CTFSniperRifle_Classic();
+	~CTFSniperRifle_Classic();
 
 	virtual int	GetWeaponID( void ) const			{ return TF_WEAPON_SNIPERRIFLE_CLASSIC; }
 
@@ -137,7 +87,7 @@ private:
 	float m_flRezoomTime;
 	bool m_bRezoomAfterShot;
 
-	CTFSniperRifle( const CTFSniperRifle & );
+	CTFSniperRifle_Classic( const CTFSniperRifle_Classic & );
 };
 
 #endif // TF_WEAPON_SNIPERRIFLE_CLASSIC_H
