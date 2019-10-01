@@ -174,13 +174,9 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		
 	case TF_PROJECTILE_SYRINGE:
 	case TF_PROJECTILE_NAIL:
+	case TF_PROJECTILE_DART:
 		pProjectile = FireNail( pPlayer, iProjectile );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-		break;
-
-	case TF_PROJECTILE_DART:
-		pProjectile = FireNail(pPlayer, iProjectile);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB:

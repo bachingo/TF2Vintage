@@ -73,11 +73,15 @@ public:
 #endif
 
 	virtual void	Equip( CBaseCombatCharacter *pEquipTo );
-	virtual bool	Reload();
-	virtual void	FinishReload();
+	virtual bool	Deploy( void );
+	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
+	virtual void	FinishReload( void );
 	virtual bool	SendWeaponAnim( int iActivity );
 
-	bool			HasKnockback() const;
+	bool			HasKnockback( void ) const;
+
+private:
+	bool m_bAutoReload;
 };
 
 class CTFShotgun_Soldier : public CTFShotgun
@@ -142,7 +146,7 @@ public:
 	virtual const char *GetEffectLabelText( void ) { return "#TF_REVENGE"; }
 
 #ifdef GAME_DLL
-	void			OnSentryKilled( class CObjectSentrygun *pSentry );
+	virtual void	OnSentryKilled( class CObjectSentrygun *pSentry );
 #endif
 
 	bool			CanGetRevengeCrits( void ) const;
@@ -151,7 +155,7 @@ private:
 
 	CNetworkVar( int, m_iRevengeCrits );
 
-	CTFShotgun_Revenge( CTFShotgun_Revenge const& ) { }
+	CTFShotgun_Revenge( CTFShotgun_Revenge const& );
 };
 
 #endif // TF_WEAPON_SHOTGUN_H
