@@ -14,12 +14,12 @@
 #include "tf_weapon_sniperrifle.h"
 
 #if defined( CLIENT_DLL )
-#define CTFSniperRifle_Classic C_TFSniperRifle_Classic_Classic
+#define CTFSniperRifle_Classic C_TFSniperRifle_Classic
 #endif
 
 //=============================================================================
 //
-// Sniper Rifle class.
+// TFC Sniper Rifle class.
 //
 class CTFSniperRifle_Classic : public CTFWeaponBaseGun
 {
