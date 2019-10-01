@@ -140,6 +140,19 @@ void CTFSniperRifle::ResetTimers( void )
 //-----------------------------------------------------------------------------
 bool CTFSniperRifle::Reload( void )
 {
+	//Enable reloading, but only if our clipsize is defined.
+	if ( Clip1() >= 0 )
+	{
+		if ( BaseClass::Reload() == true )
+		{
+			if ( IsZoomed() )
+			ZoomOut();
+			return true;
+		}
+		else
+		return false;
+	}
+	else
 	// We currently don't reload.
 	return true;
 }
