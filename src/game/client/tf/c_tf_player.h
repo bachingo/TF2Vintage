@@ -273,6 +273,8 @@ public:
 
 	void UpdateDemomanEyeEffect( int iDecapCount );
 
+	bool ShouldDrawSpyAsDisguised( void );
+
 protected:
 
 	void ResetFlexWeights( CStudioHdr *pStudioHdr );

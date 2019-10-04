@@ -7105,7 +7105,7 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 
 	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_PAIN, "damagecritical:1", szResponse, AI_Response::MAX_RESPONSE_NAME, &filter ) )
 	{
-		flPainLength = max( GetSceneDuration( szResponse ), flPainLength );
+		flPainLength = Max( GetSceneDuration( szResponse ), flPainLength );
 	}
 
 	// speak a louder pain concept to just the attacker
@@ -7362,6 +7362,15 @@ void CTFPlayer::CreateFeignDeathRagdoll( CTakeDamageInfo const &info, bool bGibb
 		pRagdoll->m_bBurning = bBurning;
 		pRagdoll->m_bWasDisguised = bFriendlyDisguise;
 		pRagdoll->m_bFeignDeath = true;
+
+		if ( bFriendlyDisguise )
+		{
+			pRagdoll->m_iClass = m_Shared.GetDisguiseClass();
+		}
+		else
+		{
+			pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
+		}
 
 		if ( info.GetInflictor() )
 		{

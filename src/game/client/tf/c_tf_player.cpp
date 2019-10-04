@@ -567,17 +567,25 @@ bool C_TFRagdoll::GetAttachment( int number, matrix3x4_t &matrix )
 void C_TFRagdoll::CreateTFRagdoll( void )
 {
 	// Get the player.
-	C_TFPlayer *pPlayer = NULL;
-	EHANDLE hPlayer = GetPlayerHandle();
-	if ( hPlayer )
+	C_TFPlayer *pPlayer = ToTFPlayer( GetPlayerHandle() );
+
+	int nModelIndex = -1;
+	if ( pPlayer && !pPlayer->ShouldDrawSpyAsDisguised() )
 	{
-		pPlayer = dynamic_cast<C_TFPlayer *>( hPlayer.Get() );
+		char const *szModelName = pPlayer->GetPlayerClass()->GetModelName();
+		nModelIndex = modelinfo->GetModelIndex( szModelName );
+	}
+	else
+	{
+		TFPlayerClassData_t *pData = GetPlayerClassData( m_iClass );
+		if ( pData )
+		{
+			nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
+		}
 	}
 
-	TFPlayerClassData_t *pData = GetPlayerClassData( m_iClass );
-	if ( pData )
+	if ( nModelIndex != -1 )
 	{
-		int nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
 		SetModelIndex( nModelIndex );
 
 		switch ( m_iTeam )
@@ -585,12 +593,14 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 			case TF_TEAM_RED:
 				m_nSkin = 0;
 				break;
-
 			case TF_TEAM_BLUE:
 				m_nSkin = 1;
 				break;
 		}
 	}
+
+	//if ( pPlayer && pPlayer->BRenderAsZombie( false ) )
+	//	m_nSkin += m_iClass == TF_CLASS_SPY ? 22 : 4;
 
 	if ( m_bGoldRagdoll || m_iDamageCustom == TF_DMG_CUSTOM_GOLD_WRENCH )
 	{
@@ -3124,6 +3134,31 @@ bool C_TFPlayer::CanLightCigarette( void )
 		!m_Shared.InCond( TF_COND_DISGUISED_AS_DISPENSER ) &&				// don't show if we're a dispenser
 		!( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE && pLocalPlayer->GetObserverTarget() == this ) )	// not if we're spectating this player first person
 		return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool C_TFPlayer::ShouldDrawSpyAsDisguised( void )
+{
+	C_BasePlayer *pLocal = GetLocalPlayer();
+	if ( pLocal == nullptr )
+		return false;
+
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) )
+	{
+		int iEnemyTeam = GetEnemyTeam( this );
+		if ( iEnemyTeam == pLocal->GetTeamNumber() )
+		{
+			if ( m_Shared.InCond( TF_COND_DISGUISED_AS_DISPENSER ) )
+				return true;
+
+			if ( m_Shared.GetDisguiseTeam() != pLocal->GetTeamNumber() )
+				return true;
+		}
+	}
 
 	return false;
 }
