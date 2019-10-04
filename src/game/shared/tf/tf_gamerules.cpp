@@ -3729,12 +3729,20 @@ CBasePlayer *CTFGameRules::GetDeathScorer( CBaseEntity *pKiller, CBaseEntity *pI
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Clone
+//-----------------------------------------------------------------------------
+void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info )
+{
+	DeathNotice( pVictim, info, "player_death" );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pVictim - 
 //			*pKiller - 
 //			*pInflictor - 
 //-----------------------------------------------------------------------------
-void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info )
+void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info, const char *szName )
 {
 	int killer_ID = 0;
 
@@ -3827,7 +3835,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 		}
 	}
 
-	IGameEvent *event = gameeventmanager->CreateEvent( "player_death" );
+	IGameEvent *event = gameeventmanager->CreateEvent( szName );
 	if ( event )
 	{
 		event->SetInt( "userid", pVictim->GetUserID() );

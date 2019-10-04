@@ -391,8 +391,9 @@ public:
 	// Sets up g_pPlayerResource.
 	virtual void	CreateStandardEntities();
 
-	virtual void	PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &info );
-	virtual void	DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info );
+	virtual void	PlayerKilled( CBasePlayer *pVictim, CTakeDamageInfo const &info );
+	virtual void	DeathNotice( CBasePlayer *pVictim, CTakeDamageInfo const &info, char const *szName );
+	virtual void	DeathNotice( CBasePlayer *pVictim, CTakeDamageInfo const &info );
 	virtual CBasePlayer *GetDeathScorer( CBaseEntity *pKiller, CBaseEntity *pInflictor, CBaseEntity *pVictim );
 
 	void			CalcDominationAndRevenge( CTFPlayer *pAttacker, CTFPlayer *pVictim, bool bIsAssist, int *piDeathFlags );

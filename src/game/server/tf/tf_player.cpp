@@ -7133,6 +7133,14 @@ void CTFPlayer::DeathSound( const CTakeDamageInfo &info )
 	if ( !pData )
 		return;
 
+	CTFPlayer *pTFAttacker = ToTFPlayer( info.GetAttacker() );
+	if ( pTFAttacker && pTFAttacker->GetActiveTFWeapon() )
+	{
+		CTFWeaponBase *pActive = pTFAttacker->GetActiveTFWeapon();
+		if ( pActive->IsSilentKiller() )
+			return;
+	}
+
 	if ( m_LastDamageType & DMG_FALL ) // Did we die from falling?
 	{
 		// They died in the fall. Play a splat sound.
