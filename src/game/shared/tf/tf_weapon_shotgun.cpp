@@ -235,6 +235,7 @@ bool CTFScatterGun::Holster(CBaseCombatWeapon *pSwitchTo)
 
 	return BaseClass::Holster( pSwitchTo );
 }
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

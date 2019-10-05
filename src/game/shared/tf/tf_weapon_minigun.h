@@ -163,7 +163,5 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_MINIGUN_REAL; }
 };
 
-CREATE_SIMPLE_WEAPON_TABLE( TFMinigun_Real, tf_weapon_minigun_real )
-
 
 #endif // TF_WEAPON_MINIGUN_H

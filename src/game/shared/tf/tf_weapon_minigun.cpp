@@ -57,6 +57,9 @@ BEGIN_DATADESC( CTFMinigun )
 END_DATADESC()
 #endif
 
+CREATE_SIMPLE_WEAPON_TABLE( TFMinigun_Real, tf_weapon_minigun_real )
+
+
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
 #endif
@@ -586,8 +589,12 @@ void CTFMinigun::UpdateBarrelMovement()
 {
 	if ( m_flBarrelCurrentVelocity != m_flBarrelTargetVelocity )
 	{
+		float flSpinupTime = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flSpinupTime, mult_minigun_spinup_time );
+		flSpinupTime = Max( flSpinupTime, FLT_EPSILON ); // Don't divide by 0
+
 		// update barrel velocity to bring it up to speed or to rest
-		m_flBarrelCurrentVelocity = Approach( m_flBarrelTargetVelocity, m_flBarrelCurrentVelocity, 0.1 );
+		m_flBarrelCurrentVelocity = Approach( m_flBarrelTargetVelocity, m_flBarrelCurrentVelocity, 0.2 / flSpinupTime );
 
 		if ( 0 == m_flBarrelCurrentVelocity )
 		{	
@@ -837,12 +844,10 @@ void CTFMinigun::WeaponSoundUpdate()
 		if ( m_flBarrelCurrentVelocity > 0 )
 		{
 			iSound = SPECIAL2;	// wind down sound
-#ifdef CLIENT_DLL
 			if ( m_flBarrelTargetVelocity > 0 )
 			{
 				m_flBarrelTargetVelocity = 0;
 			}
-#endif
 		}
 		else
 			iSound = -1;
