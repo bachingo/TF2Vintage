@@ -93,6 +93,7 @@ public:
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 
 	void		 HandleZooms( void );
+	virtual void DoFireEffects( void );
 	virtual void ItemPostFrame( void );
 	virtual bool Lower( void );
 	virtual float GetProjectileDamage( void );

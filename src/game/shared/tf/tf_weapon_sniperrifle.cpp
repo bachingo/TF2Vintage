@@ -451,6 +451,26 @@ bool CTFSniperRifle::IsZoomed( void )
 	return false;
 }
 
+void CTFSniperRifle::DoFireEffects(void)
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (!pPlayer)
+		return;
+
+	// Muzzle flash on weapon.
+	bool bMuzzleFlash = true;
+
+	if (IsZoomed())
+	{
+		bMuzzleFlash = false;
+	}
+
+	if (bMuzzleFlash)
+	{
+		pPlayer->DoMuzzleFlash();
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
