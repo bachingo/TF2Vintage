@@ -10,7 +10,6 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
-#include "Sprite.h"
 #include "tf_weapon_sniperrifle.h"
 
 #if defined( CLIENT_DLL )
@@ -87,7 +86,7 @@ private:
 	float m_flRezoomTime;
 	bool m_bRezoomAfterShot;
 
-	CTFSniperRifle_Classic( const CTFSniperRifle_Classic & );
+	CTFSniperRifle_Classic( CTFSniperRifle_Classic const& );
 };
 
 #endif // TF_WEAPON_SNIPERRIFLE_CLASSIC_H

@@ -45,6 +45,9 @@ BEGIN_DATADESC( CTFRocketLauncher )
 END_DATADESC()
 #endif
 
+
+CREATE_SIMPLE_WEAPON_TABLE( TFRocketLauncher_Legacy, tf_weapon_rocketlauncher_legacy )
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :  - 

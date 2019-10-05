@@ -84,6 +84,4 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_GRENADELAUNCHER_LEGACY; }
 };
 
-CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Legacy, tf_weapon_grenadelauncher_legacy )
-
 #endif // TF_WEAPON_GRENADELAUNCHER_H

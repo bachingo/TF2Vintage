@@ -43,6 +43,9 @@ END_DATADESC()
 #define TF_GRENADES_SWITCHGROUP 2 
 #define TF_GRENADE_BARREL_SPIN 0.25 // barrel increments by one quarter for each pill
 
+
+CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Legacy, tf_weapon_grenadelauncher_legacy )
+
 //=============================================================================
 //
 // Weapon Grenade Launcher functions.

@@ -115,8 +115,6 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_LEGACY; }
 };
 
-CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_Legacy, tf_weapon_pipebomblauncher_legacy )
-
 // TF2 Beta Pipebomb launcher.
 
 #if defined CLIENT_DLL
@@ -134,8 +132,6 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_TF2BETA; }
 };
 
-CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TF2Beta, tf_weapon_pipebomblauncher_tf2beta )
-
 // TFC Esque Pipebomb launcher.
 
 #if defined CLIENT_DLL
@@ -152,9 +148,5 @@ public:
 
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER_TFC; }
 };
-
-CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TFC, tf_weapon_pipebomblauncher_tfc )
-
-
 
 #endif // TF_WEAPON_PIPEBOMBLAUNCHER_H

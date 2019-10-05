@@ -738,10 +738,14 @@ bool CTFWeaponBase::Deploy( void )
 
 		flDeployTime = Max( flDeployTime, FLT_EPSILON ); // Don't divide by 0
 
-		if (pPlayer->GetViewModel( 0 ))
-			pPlayer->GetViewModel( 0 )->SetPlaybackRate( 1.0 / flDeployTime );
-		if (pPlayer->GetViewModel( 1 ))
-			pPlayer->GetViewModel( 1 )->SetPlaybackRate( 1.0 / flDeployTime );
+		for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+		{
+			CBaseViewModel *vm = pPlayer->GetViewModel( i );
+			if ( vm == nullptr )
+				continue;
+
+			vm->SetPlaybackRate( 1.0 / flDeployTime );
+		}
 
 		m_flNextPrimaryAttack = Max( flOriginalPrimaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
 		m_flNextSecondaryAttack = Max( flOriginalSecondaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
@@ -1107,7 +1111,7 @@ void CTFWeaponBase::AbortReload( void )
 	BaseClass::AbortReload();
 
 #ifdef CLIENT_DLL
-	if ( !UsingViewModel() ) 
+	if ( UsingViewModel() ) 
 #endif
 	StopWeaponSound( RELOAD );
 
@@ -1188,7 +1192,7 @@ bool CTFWeaponBase::ReloadSingly( void )
 			}
 
 #ifdef CLIENT_DLL
-			if ( !UsingViewModel() )
+			if ( UsingViewModel() )
 #endif
 			WeaponSound( RELOAD );
 
@@ -3106,7 +3110,7 @@ viewmodel_acttable_t CTFWeaponBase::s_viewmodelacttable[] =
 	{ ACT_VM_IDLE_LOWERED,		ACT_MELEE_ALLCLASS_VM_IDLE_LOWERED, TF_WPN_TYPE_MELEE_ALLCLASS },
 	{ ACT_VM_LOWERED_TO_IDLE,	ACT_MELEE_ALLCLASS_VM_LOWERED_TO_IDLE, TF_WPN_TYPE_MELEE_ALLCLASS },
 	{ ACT_VM_HITCENTER,		ACT_MELEE_ALLCLASS_VM_HITCENTER, TF_WPN_TYPE_MELEE_ALLCLASS },
-	{ ACT_VM_SWING,			ACT_MELEE_ALLCLASS_VM_SWING, TF_WPN_TYPE_MELEE_ALLCLASS },
+	{ ACT_VM_SWINGHARD,			ACT_MELEE_ALLCLASS_VM_SWINGHARD, TF_WPN_TYPE_MELEE_ALLCLASS },
 	{ ACT_VM_DRAW,			ACT_SECONDARY2_VM_DRAW, TF_WPN_TYPE_SECONDARY2 },
 	{ ACT_VM_HOLSTER,		ACT_SECONDARY2_VM_HOLSTER, TF_WPN_TYPE_SECONDARY2 },
 	{ ACT_VM_IDLE,			ACT_SECONDARY2_VM_IDLE, TF_WPN_TYPE_SECONDARY2 },

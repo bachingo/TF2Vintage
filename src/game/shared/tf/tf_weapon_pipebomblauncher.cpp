@@ -71,6 +71,11 @@ BEGIN_DATADESC( CTFPipebombLauncher )
 END_DATADESC()
 #endif
 
+
+CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_Legacy, tf_weapon_pipebomblauncher_legacy )
+CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TF2Beta, tf_weapon_pipebomblauncher_tf2beta )
+CREATE_SIMPLE_WEAPON_TABLE( TFPipebombLauncher_TFC, tf_weapon_pipebomblauncher_tfc )
+
 //=============================================================================
 //
 // Weapon Pipebomb Launcher functions.
@@ -384,9 +389,12 @@ CBaseEntity *CTFPipebombLauncher::FireProjectile( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFPipebombLauncher::BombHighlightThink( void )
 {
+	if ( GetOwner() == nullptr )
+		return;
+
 	ModifyPipebombsInView( TF_PIPEBOMB_GLOW_CHECK );
-	if ( GetOwner() )
-		SetContextThink( &CTFPipebombLauncher::BombHighlightThink, gpGlobals->curtime + 0.1, HIGHLIGHT_CONTEXT );
+
+	SetNextThink( gpGlobals->curtime + 0.1, HIGHLIGHT_CONTEXT );
 }
 #endif
 

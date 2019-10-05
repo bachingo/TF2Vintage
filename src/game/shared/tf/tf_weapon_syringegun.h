@@ -37,12 +37,12 @@ public:
 	CTFSyringeGun() {}
 	~CTFSyringeGun() {}
 
-	virtual void Precache();
+	virtual void	Precache();
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SYRINGEGUN_MEDIC; }
 
 private:
 
-	CTFSyringeGun( const CTFSyringeGun & ) {}
+	CTFSyringeGun( CTFSyringeGun const& );
 };
 
 // Temporary Crossbow, for now.
@@ -61,8 +61,5 @@ public:
 
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_CROSSBOW; }
 };
-
-CREATE_SIMPLE_WEAPON_TABLE( TFCrossbow, tf_weapon_crossbow )
-
 
 #endif // TF_WEAPON_SYRINGEGUN_H

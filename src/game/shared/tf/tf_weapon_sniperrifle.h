@@ -157,6 +157,4 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_REAL; }
 };
 
-CREATE_SIMPLE_WEAPON_TABLE( TFSniperRifle_Real, tf_weapon_sniperrifle_real )
-
 #endif // TF_WEAPON_SNIPERRIFLE_H

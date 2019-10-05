@@ -5,7 +5,7 @@
 //=============================================================================//
 #include "cbase.h" 
 #include "tf_fx_shared.h"
-#include "tf_weapon_sniperrifle.h"
+#include "tf_weapon_sniperrifle_classic.h"
 #include "in_buttons.h"
 
 // Client specific.
@@ -47,9 +47,9 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 // Weapon Sniper Rifles tables.
 //
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFSniperRifle, DT_TFSniperRifle )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFSniperRifle_Classic, DT_TFSniperRifle_Classic )
 
-BEGIN_NETWORK_TABLE_NOBASE( CTFSniperRifle, DT_SniperRifleLocalData )
+BEGIN_NETWORK_TABLE_NOBASE( CTFSniperRifle_Classic, DT_SniperRifleClassicLocalData )
 #if !defined( CLIENT_DLL )
 	SendPropFloat( SENDINFO(m_flChargedDamage), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 #else
@@ -57,15 +57,15 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFSniperRifle, DT_SniperRifleLocalData )
 #endif
 END_NETWORK_TABLE()
 
-BEGIN_NETWORK_TABLE( CTFSniperRifle, DT_TFSniperRifle )
+BEGIN_NETWORK_TABLE( CTFSniperRifle_Classic, DT_TFSniperRifle_Classic )
 #if !defined( CLIENT_DLL )
-	SendPropDataTable( "SniperRifleLocalData", 0, &REFERENCE_SEND_TABLE( DT_SniperRifleLocalData ), SendProxy_SendLocalWeaponDataTable ),
+	SendPropDataTable( "SniperRifleLocalData", 0, &REFERENCE_SEND_TABLE( DT_SniperRifleClassicLocalData ), SendProxy_SendLocalWeaponDataTable ),
 #else
-	RecvPropDataTable( "SniperRifleLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_SniperRifleLocalData ) ),
+	RecvPropDataTable( "SniperRifleLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_SniperRifleClassicLocalData ) ),
 #endif
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CTFSniperRifle )
+BEGIN_PREDICTION_DATA( CTFSniperRifle_Classic )
 #ifdef CLIENT_DLL
 	DEFINE_PRED_FIELD( m_flUnzoomTime, FIELD_FLOAT, 0 ),
 	DEFINE_PRED_FIELD( m_flRezoomTime, FIELD_FLOAT, 0 ),
@@ -74,8 +74,8 @@ BEGIN_PREDICTION_DATA( CTFSniperRifle )
 #endif
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle, CTFSniperRifle );
-PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle );
+LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle_classic, CTFSniperRifle_Classic );
+PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle_classic );
 
 //=============================================================================
 //
@@ -85,7 +85,7 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle );
 //-----------------------------------------------------------------------------
 // Purpose: Constructor.
 //-----------------------------------------------------------------------------
-CTFSniperRifle::CTFSniperRifle()
+CTFSniperRifle_Classic::CTFSniperRifle_Classic()
 {
 // Server specific.
 #ifdef GAME_DLL
@@ -96,7 +96,7 @@ CTFSniperRifle::CTFSniperRifle()
 //-----------------------------------------------------------------------------
 // Purpose: Destructor.
 //-----------------------------------------------------------------------------
-CTFSniperRifle::~CTFSniperRifle()
+CTFSniperRifle_Classic::~CTFSniperRifle_Classic()
 {
 // Server specific.
 #ifdef GAME_DLL
@@ -107,7 +107,7 @@ CTFSniperRifle::~CTFSniperRifle()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::Spawn()
+void CTFSniperRifle_Classic::Spawn()
 {
 	m_iAltFireHint = HINT_ALTFIRE_SNIPERRIFLE;
 	BaseClass::Spawn();
@@ -118,7 +118,7 @@ void CTFSniperRifle::Spawn()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::Precache()
+void CTFSniperRifle_Classic::Precache()
 {
 	BaseClass::Precache();
 	PrecacheModel( SNIPER_DOT_SPRITE_RED );
@@ -128,7 +128,7 @@ void CTFSniperRifle::Precache()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::ResetTimers( void )
+void CTFSniperRifle_Classic::ResetTimers( void )
 {
 	m_flUnzoomTime = -1;
 	m_flRezoomTime = -1;
@@ -138,7 +138,7 @@ void CTFSniperRifle::ResetTimers( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFSniperRifle::Reload( void )
+bool CTFSniperRifle_Classic::Reload( void )
 {
 	// We currently don't reload.
 	return true;
@@ -147,7 +147,7 @@ bool CTFSniperRifle::Reload( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFSniperRifle::CanHolster( void ) const
+bool CTFSniperRifle_Classic::CanHolster( void ) const
 {
  	CTFPlayer *pPlayer = GetTFPlayerOwner();
  	if ( pPlayer )
@@ -166,7 +166,7 @@ bool CTFSniperRifle::CanHolster( void ) const
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFSniperRifle::Holster( CBaseCombatWeapon *pSwitchingTo )
+bool CTFSniperRifle_Classic::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 // Server specific.
 #ifdef GAME_DLL
@@ -186,7 +186,7 @@ bool CTFSniperRifle::Holster( CBaseCombatWeapon *pSwitchingTo )
 	return BaseClass::Holster( pSwitchingTo );
 }
 
-void CTFSniperRifle::WeaponReset( void )
+void CTFSniperRifle_Classic::WeaponReset( void )
 {
 	BaseClass::WeaponReset();
 
@@ -196,7 +196,7 @@ void CTFSniperRifle::WeaponReset( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::HandleZooms( void )
+void CTFSniperRifle_Classic::HandleZooms( void )
 {
 	// Get the owning player.
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
@@ -258,7 +258,7 @@ void CTFSniperRifle::HandleZooms( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::ItemPostFrame( void )
+void CTFSniperRifle_Classic::ItemPostFrame( void )
 {
 	// If we're lowered, we're not allowed to fire
 	if ( m_bLowered )
@@ -344,7 +344,7 @@ void CTFSniperRifle::ItemPostFrame( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFSniperRifle::Lower( void )
+bool CTFSniperRifle_Classic::Lower( void )
 {
 	if ( BaseClass::Lower() )
 	{
@@ -362,7 +362,7 @@ bool CTFSniperRifle::Lower( void )
 //-----------------------------------------------------------------------------
 // Purpose: Secondary attack.
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::Zoom( void )
+void CTFSniperRifle_Classic::Zoom( void )
 {
 	// Don't allow the player to zoom in while jumping
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
@@ -375,14 +375,14 @@ void CTFSniperRifle::Zoom( void )
 	ToggleZoom();
 
 	// at least 0.1 seconds from now, but don't stomp a previous value
-	m_flNextPrimaryAttack = max( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
+	m_flNextPrimaryAttack = Max( m_flNextPrimaryAttack.Get(), gpGlobals->curtime + 0.1f );
 	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::ZoomOutIn( void )
+void CTFSniperRifle_Classic::ZoomOutIn( void )
 {
 	ZoomOut();
 
@@ -400,7 +400,7 @@ void CTFSniperRifle::ZoomOutIn( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::ZoomIn( void )
+void CTFSniperRifle_Classic::ZoomIn( void )
 {
 	// Start aiming.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
@@ -423,7 +423,7 @@ void CTFSniperRifle::ZoomIn( void )
 #endif
 }
 
-bool CTFSniperRifle::IsZoomed( void )
+bool CTFSniperRifle_Classic::IsZoomed( void )
 {
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 
@@ -438,7 +438,7 @@ bool CTFSniperRifle::IsZoomed( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::ZoomOut( void )
+void CTFSniperRifle_Classic::ZoomOut( void )
 {
 	BaseClass::ZoomOut();
 
@@ -467,7 +467,7 @@ void CTFSniperRifle::ZoomOut( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
+void CTFSniperRifle_Classic::Fire( CTFPlayer *pPlayer )
 {
 	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
 	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
@@ -514,7 +514,7 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
+void CTFSniperRifle_Classic::SetRezoom( bool bRezoom, float flDelay )
 {
 	m_flUnzoomTime = gpGlobals->curtime + flDelay;
 
@@ -525,16 +525,16 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 // Purpose: 
 // Output : float
 //-----------------------------------------------------------------------------
-float CTFSniperRifle::GetProjectileDamage( void )
+float CTFSniperRifle_Classic::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	return max( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+	return Max( m_flChargedDamage.Get(), TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int	CTFSniperRifle::GetDamageType( void ) const
+int	CTFSniperRifle_Classic::GetDamageType( void ) const
 {
 	// Only do hit location damage if we're zoomed
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
@@ -547,7 +547,7 @@ int	CTFSniperRifle::GetDamageType( void ) const
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::CreateSniperDot( void )
+void CTFSniperRifle_Classic::CreateSniperDot( void )
 {
 // Server specific.
 #ifdef GAME_DLL
@@ -571,7 +571,7 @@ void CTFSniperRifle::CreateSniperDot( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::DestroySniperDot( void )
+void CTFSniperRifle_Classic::DestroySniperDot( void )
 {
 // Server specific.
 #ifdef GAME_DLL
@@ -589,7 +589,7 @@ void CTFSniperRifle::DestroySniperDot( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSniperRifle::UpdateSniperDot( void )
+void CTFSniperRifle_Classic::UpdateSniperDot( void )
 {
 // Server specific.
 #ifdef GAME_DLL
@@ -629,7 +629,7 @@ void CTFSniperRifle::UpdateSniperDot( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
+bool CTFSniperRifle_Classic::CanFireCriticalShot( bool bIsHeadshot )
 {
 	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot ) )
 		return false;
@@ -678,21 +678,21 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-float CTFSniperRifle::GetHUDDamagePerc( void )
+float CTFSniperRifle_Classic::GetHUDDamagePerc( void )
 {
-	return (m_flChargedDamage / TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX);
+	return ( m_flChargedDamage / TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
 }
 
 //-----------------------------------------------------------------------------
 // Returns the sniper chargeup from 0 to 1
 //-----------------------------------------------------------------------------
-class CProxySniperRifleCharge : public CResultProxy
+class CProxySniperRifleClassicCharge : public CResultProxy
 {
 public:
 	void OnBind( void *pC_BaseEntity );
 };
 
-void CProxySniperRifleCharge::OnBind( void *pC_BaseEntity )
+void CProxySniperRifleClassicCharge::OnBind( void *pC_BaseEntity )
 {
 	Assert( m_pResult );
 
@@ -700,12 +700,12 @@ void CProxySniperRifleCharge::OnBind( void *pC_BaseEntity )
 
 	if ( GetSpectatorTarget() != 0 && GetSpectatorMode() == OBS_MODE_IN_EYE )
 	{
-		pPlayer = (C_TFPlayer *)UTIL_PlayerByIndex( GetSpectatorTarget() );
+		pPlayer = ToTFPlayer( UTIL_PlayerByIndex( GetSpectatorTarget() ) );
 	}
 
 	if ( pPlayer )
 	{
-		CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+		CTFSniperRifle_Classic *pWeapon = assert_cast<CTFSniperRifle_Classic *>( pPlayer->GetActiveTFWeapon() );
 		if ( pWeapon )
 		{
 			float flChargeValue = ( ( 1.0 - pWeapon->GetHUDDamagePerc() ) * 0.8 ) + 0.6;
@@ -742,211 +742,6 @@ void CProxySniperRifleCharge::OnBind( void *pC_BaseEntity )
 	}
 }
 
-EXPOSE_INTERFACE( CProxySniperRifleCharge, IMaterialProxy, "SniperRifleCharge" IMATERIAL_PROXY_INTERFACE_VERSION );
-#endif
-
-//=============================================================================
-//
-// Laser Dot functions.
-//
-
-IMPLEMENT_NETWORKCLASS_ALIASED( SniperDot, DT_SniperDot )
-
-BEGIN_NETWORK_TABLE( CSniperDot, DT_SniperDot )
-#ifdef CLIENT_DLL
-	RecvPropFloat( RECVINFO( m_flChargeStartTime ) ),
-#else
-	SendPropTime( SENDINFO( m_flChargeStartTime ) ),
-#endif
-END_NETWORK_TABLE()
-
-LINK_ENTITY_TO_CLASS( env_sniperdot, CSniperDot );
-
-BEGIN_DATADESC( CSniperDot )
-DEFINE_FIELD( m_vecSurfaceNormal,	FIELD_VECTOR ),
-DEFINE_FIELD( m_hTargetEnt,			FIELD_EHANDLE ),
-END_DATADESC()
-
-//-----------------------------------------------------------------------------
-// Purpose: Constructor.
-//-----------------------------------------------------------------------------
-CSniperDot::CSniperDot( void )
-{
-	m_vecSurfaceNormal.Init();
-	m_hTargetEnt = NULL;
-
-#ifdef CLIENT_DLL
-	m_hSpriteMaterial = NULL;
-#endif
-
-	ResetChargeTime();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Destructor.
-//-----------------------------------------------------------------------------
-CSniperDot::~CSniperDot( void )
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &origin - 
-// Output : CSniperDot
-//-----------------------------------------------------------------------------
-CSniperDot *CSniperDot::Create( const Vector &origin, CBaseEntity *pOwner, bool bVisibleDot )
-{
-// Client specific.
-#ifdef CLIENT_DLL
-
-	return NULL;
-
-// Server specific.
-#else
-
-	// Create the sniper dot entity.
-	CSniperDot *pDot = static_cast<CSniperDot*>( CBaseEntity::Create( "env_sniperdot", origin, QAngle( 0.0f, 0.0f, 0.0f ) ) );
-	if ( !pDot )
-		return NULL;
-
-	//Create the graphic
-	pDot->SetMoveType( MOVETYPE_NONE );
-	pDot->AddSolidFlags( FSOLID_NOT_SOLID );
-	pDot->AddEffects( EF_NOSHADOW );
-	UTIL_SetSize( pDot, -Vector( 4.0f, 4.0f, 4.0f ), Vector( 4.0f, 4.0f, 4.0f ) );
-
-	// Set owner.
-	pDot->SetOwnerEntity( pOwner );
-
-	// Force updates even though we don't have a model.
-	pDot->AddEFlags( EFL_FORCE_CHECK_TRANSMIT );
-
-	return pDot;
-
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CSniperDot::Update( CBaseEntity *pTarget, const Vector &vecOrigin, const Vector &vecNormal )
-{
-	SetAbsOrigin( vecOrigin );
-	m_vecSurfaceNormal = vecNormal;
-	m_hTargetEnt = pTarget;
-}
-
-//=============================================================================
-//
-// Client specific functions.
-//
-#ifdef CLIENT_DLL
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// TFTODO: Make the sniper dot get brighter the more damage it will do.
-//-----------------------------------------------------------------------------
-int CSniperDot::DrawModel( int flags )
-{
-	// Get the owning player.
-	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
-	if ( !pPlayer )
-		return -1;
-
-	// Get the sprite rendering position.
-	Vector vecEndPos;
-
-	float flSize = 6.0;
-
-	if ( !pPlayer->IsDormant() )
-	{
-		Vector vecAttachment, vecDir;
-		QAngle angles;
-
-		float flDist = MAX_TRACE_LENGTH;
-
-		// Always draw the dot in front of our faces when in first-person.
-		if ( pPlayer->IsLocalPlayer() )
-		{
-			// Take our view position and orientation
-			vecAttachment = CurrentViewOrigin();
-			vecDir = CurrentViewForward();
-
-			// Clamp the forward distance for the sniper's firstperson
-			flDist = 384;
-
-			flSize = 2.0;
-		}
-		else
-		{
-			// Take the owning player eye position and direction.
-			vecAttachment = pPlayer->EyePosition();
-			QAngle angles = pPlayer->EyeAngles();
-			AngleVectors( angles, &vecDir );
-		}
-
-		trace_t tr;
-		UTIL_TraceLine( vecAttachment, vecAttachment + ( vecDir * flDist ), MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
-
-		// Backup off the hit plane, towards the source
-		vecEndPos = tr.endpos + vecDir * -4;
-	}
-	else
-	{
-		// Just use our position if we can't predict it otherwise.
-		vecEndPos = GetAbsOrigin();
-	}
-
-	// Draw our laser dot in space.
-	CMatRenderContextPtr pRenderContext( materials );
-	pRenderContext->Bind( m_hSpriteMaterial, this );
-
-	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
-	float flStrength = RemapValClamped( flLifeTime, 0.0, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, 0.1, 1.0 );
-	
-	color32 innercolor = { 255, 255, 255, 255 };
-	color32 outercolor = { 255, 255, 255, 128 };
-
-	DrawSprite( vecEndPos, flSize, flSize, outercolor );
-	DrawSprite( vecEndPos, flSize * flStrength, flSize * flStrength, innercolor );
-
-	// Successful.
-	return 1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CSniperDot::ShouldDraw( void )			
-{
-	if ( IsEffectActive( EF_NODRAW ) )
-		return false;
-#if 0
-	// Don't draw the sniper dot when in thirdperson.
-	if ( ::input->CAM_IsThirdPerson() )
-		return false;
-#endif
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CSniperDot::OnDataChanged( DataUpdateType_t updateType )
-{
-	if ( updateType == DATA_UPDATE_CREATED )
-	{
-		switch (GetTeamNumber())
-		{
-		case TF_TEAM_RED:
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS);
-			break;
-		case TF_TEAM_BLUE:
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS);
-			break;
-		}
-	}
-}
+EXPOSE_INTERFACE( CProxySniperRifleClassicCharge, IMaterialProxy, "SniperRifleClassicCharge" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 #endif
