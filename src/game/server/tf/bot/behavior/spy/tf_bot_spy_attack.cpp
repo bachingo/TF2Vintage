@@ -46,10 +46,10 @@ ActionResult<CTFBot> CTFBotSpyAttack::Update( CTFBot *me, float dt )
 
 	if ( victim )
 	{
-		if ( threat->GetEntity() && victim != threat )
+		if ( threat && threat->GetEntity() && victim != threat )
 		{
 			float victimDist = me->GetRangeTo( victim->GetLastKnownPosition() );
-			float threatDist = me->GetRangeTo( victim->GetLastKnownPosition() );
+			float threatDist = me->GetRangeTo( threat->GetLastKnownPosition() );
 			if ( ( victimDist - threatDist ) > tf_bot_spy_change_target_range_threshold.GetFloat() )
 			{
 				if ( threat->GetEntity()->IsPlayer() )
