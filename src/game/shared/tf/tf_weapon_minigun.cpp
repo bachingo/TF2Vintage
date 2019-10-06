@@ -594,7 +594,7 @@ void CTFMinigun::UpdateBarrelMovement()
 		flSpinupTime = Max( flSpinupTime, FLT_EPSILON ); // Don't divide by 0
 
 		// update barrel velocity to bring it up to speed or to rest
-		m_flBarrelCurrentVelocity = Approach( m_flBarrelTargetVelocity, m_flBarrelCurrentVelocity, 0.2 / flSpinupTime );
+		m_flBarrelCurrentVelocity = Approach( m_flBarrelTargetVelocity, m_flBarrelCurrentVelocity, 0.1 / flSpinupTime );
 
 		if ( 0 == m_flBarrelCurrentVelocity )
 		{	

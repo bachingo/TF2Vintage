@@ -28,6 +28,7 @@
 #include "tf_obj.h"
 #include "tf_powerup.h"
 #include "tf_ammo_pack.h"
+#include "dt_utlvector_send.h"
 #include "datacache/imdlcache.h"
 #include "particle_parse.h"
 #include "props_shared.h"
@@ -210,14 +211,12 @@ public:
 		m_iDamageCustom = 0;
 		m_vecRagdollOrigin.Init();
 		m_vecRagdollVelocity.Init();
-		
-
-		UseClientSideAnimation();
 	}
 
 	// Transmit ragdolls to everyone.
 	virtual int UpdateTransmitState()
 	{
+		UseClientSideAnimation();
 		return SetTransmitState( FL_EDICT_ALWAYS );
 	}
 
@@ -235,10 +234,11 @@ public:
 	CNetworkVar( int, m_iDamageCustom );
 	CNetworkVar( int, m_iTeam );
 	CNetworkVar( int, m_iClass );
-	CNetworkArray( EHANDLE, m_hRagdollWearables, TF_LOADOUT_SLOT_COUNT );
 	CNetworkVar( bool, m_bGoldRagdoll );
 	CNetworkVar( bool, m_bIceRagdoll );
 	CNetworkVar( bool, m_bCritOnHardHit );
+
+	CUtlVector< CHandle<CEconWearable> > m_hRagdollWearables;
 };
 
 LINK_ENTITY_TO_CLASS( tf_ragdoll, CTFRagdoll );
@@ -260,7 +260,7 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CTFRagdoll, DT_TFRagdoll )
 	SendPropInt( SENDINFO( m_iDamageCustom ) ),
 	SendPropInt( SENDINFO( m_iTeam ), 3, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iClass ), 4, SPROP_UNSIGNED ),
-	SendPropArray3( SENDINFO_ARRAY3( m_hRagdollWearables ), SendPropEHandle( SENDINFO_ARRAY( m_hRagdollWearables ) ) ),
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_hRagdollWearables ), MAX_WEARABLES_SENT_FROM_SERVER, SendPropEHandle( NULL, 0 ) ),
 	SendPropBool( SENDINFO( m_bGoldRagdoll ) ),
 	SendPropBool( SENDINFO( m_bIceRagdoll ) ),
 	SendPropBool( SENDINFO( m_bCritOnHardHit ) ),

@@ -13,6 +13,7 @@
 #include "input.h"
 #include "IEffects.h"
 #include "fx.h"
+#include "econ_wearable.h"
 #include "c_basetempentity.h"
 #include "hud_macros.h"
 #include "engine/ivdebugoverlay.h"
@@ -33,6 +34,7 @@
 #include "effect_dispatch_data.h"
 #include "c_te_effect_dispatch.h"
 #include "tf_fx_muzzleflash.h"
+#include "dt_utlvector_recv.h"
 #include "tf_gamerules.h"
 #include "view_scene.h"
 #include "c_baseobject.h"
@@ -317,7 +319,7 @@ private:
 
 	CMaterialReference m_MatOverride;
 
-	CNetworkArray( CHandle<C_EconEntity>, m_hRagdollWearables, TF_LOADOUT_SLOT_COUNT );
+	CUtlVector< CHandle<C_EconEntity> > m_hRagdollWearables;
 };
 
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
@@ -337,7 +339,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropInt( RECVINFO( m_iDamageCustom ) ),
 	RecvPropInt( RECVINFO( m_iTeam ) ),
 	RecvPropInt( RECVINFO( m_iClass ) ),
-	RecvPropArray3( RECVINFO_ARRAY( m_hRagdollWearables ), RecvPropEHandle( RECVINFO( m_hRagdollWearables[0] ) ) ),
+	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hRagdollWearables ), MAX_WEARABLES_SENT_FROM_SERVER, RecvPropEHandle( NULL, 0, 0 ) ),
 	RecvPropBool( RECVINFO( m_bGoldRagdoll ) ),
 	RecvPropBool( RECVINFO( m_bIceRagdoll ) ),
 	RecvPropBool( RECVINFO( m_bCritOnHardHit ) ),

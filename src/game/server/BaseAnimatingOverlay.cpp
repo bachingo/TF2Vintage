@@ -61,20 +61,17 @@ END_DATADESC()
 #define ORDER_BITS			4
 #define WEIGHT_BITS			8
 
-BEGIN_SEND_TABLE_NOBASE(CAnimationLayer, DT_Animationlayer)
+BEGIN_SEND_TABLE_NOBASE( CAnimationLayer, DT_Animationlayer )
 	SendPropInt		(SENDINFO(m_nSequence),		ANIMATION_SEQUENCE_BITS,SPROP_UNSIGNED),
 	SendPropFloat	(SENDINFO(m_flCycle),		ANIMATION_CYCLE_BITS,	SPROP_ROUNDDOWN,	0.0f,   1.0f),
 	SendPropFloat	(SENDINFO(m_flPrevCycle),	ANIMATION_CYCLE_BITS,	SPROP_ROUNDDOWN,	0.0f,   1.0f),
-	SendPropFloat	(SENDINFO(m_flWeight),		WEIGHT_BITS,			0,	0.0f,	1.0f),
+	SendPropFloat	(SENDINFO(m_flWeight),		WEIGHT_BITS,			0,					0.0f,	1.0f),
 	SendPropInt		(SENDINFO(m_nOrder),		ORDER_BITS,				SPROP_UNSIGNED),
 END_SEND_TABLE()
 
 
 BEGIN_SEND_TABLE_NOBASE( CBaseAnimatingOverlay, DT_OverlayVars )
-	SendPropUtlVector( 
-		SENDINFO_UTLVECTOR( m_AnimOverlay ),
-		CBaseAnimatingOverlay::MAX_OVERLAYS, // max elements
-		SendPropDataTable( NULL, 0, &REFERENCE_SEND_TABLE( DT_Animationlayer ) )  )
+	SendPropUtlVectorDataTable( m_AnimOverlay, CBaseAnimatingOverlay::MAX_OVERLAYS, DT_Animationlayer  )
 END_SEND_TABLE()
 
 
