@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #include "cbase.h"
 #include "entity_bossresource.h"
 #ifdef CLIENT_DLL

@@ -1,10 +1,10 @@
-/* reverse engineering by sigsegv
- * based on TF2 version 20151007a
- * https://github.com/sigsegv-mvm/mvm-reversed/tree/master/server/tf/bot
- *
- * additional reversing by Deathreus
- * created from build 4783668
- */
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef TF_BOT_H
 #define TF_BOT_H
 #ifdef _WIN32

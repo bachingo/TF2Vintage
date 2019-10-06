@@ -66,4 +66,4 @@ src/lib/public/vgui_controls.lib
 fgdlib.lib
 src/utils/sapi51/Samples/VB/TTSAppVB/ttsapp.RES
 vc120.pdb
-*.VC.db*
+*.VC.*

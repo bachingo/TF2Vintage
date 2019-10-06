@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef EYEBALL_BOSS_ROCKETS_H
 #define EYEBALL_BOSS_ROCKETS_H
 #ifdef _WIN32

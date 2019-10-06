@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef TF_FUNC_HINT_H
 #define TF_FUNC_HINT_H
 #ifdef _WIN32

@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef HEADLESS_HATMAN_BEHAVIOR_H
 #define HEADLESS_HATMAN_BEHAVIOR_H
 #ifdef _WIN32

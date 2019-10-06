@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #include "cbase.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "tf_bot.h"

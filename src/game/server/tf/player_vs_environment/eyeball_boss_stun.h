@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef EYEBALL_BOSS_STUN_H
 #define EYEBALL_BOSS_STUN_H
 #ifdef _WIN32

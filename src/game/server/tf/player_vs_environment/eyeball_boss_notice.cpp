@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #include "cbase.h"
 #include "eyeball_boss_notice.h"
 #include "eyeball_boss_approach.h"

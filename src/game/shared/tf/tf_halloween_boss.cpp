@@ -1,3 +1,10 @@
+//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #include "cbase.h"
 #include "tf_halloween_boss.h"
 
@@ -18,58 +25,35 @@ CHalloweenBaseBoss::~CHalloweenBaseBoss()
 }
 
 #ifdef GAME_DLL
-CHalloweenBaseBoss *CHalloweenBaseBoss::SpawnBossAtPos( HalloweenBossType type, const Vector& pos, int teamNum, CBaseEntity *pOwner )
+CHalloweenBaseBoss *CHalloweenBaseBoss::SpawnBossAtPos( HalloweenBossType type, Vector const& pos, int teamNum, CBaseEntity *pOwner )
 {
+	CHalloweenBaseBoss *pBoss = NULL;
 	switch (type)
 	{
 		case HEADLESS_HATMAN:
-		{
-			/*CHeadlessHatman*/CHalloweenBaseBoss *pBoss = dynamic_cast<CHalloweenBaseBoss *>( CreateEntityByName( "headless_hatman" ) );
-			if (pBoss)
-			{
-				pBoss->SetAbsOrigin( pos + Vector( 0, 0, 10 ) );
-				pBoss->ChangeTeam( teamNum );
-				pBoss->SetOwnerEntity( pOwner );
-				DispatchSpawn( pBoss );
-
-				return pBoss;
-			}
-
-			return NULL;
-		}
+			pBoss = dynamic_cast<CHalloweenBaseBoss *>( CreateEntityByName( "headless_hatman" ) );
+			break;
 		case EYEBALL_BOSS:
-		{
-			/*CEyeballBoss*/CHalloweenBaseBoss *pBoss = dynamic_cast<CHalloweenBaseBoss *>( CreateEntityByName( "eyeball_boss" ) );
-			if (pBoss)
-			{
-				pBoss->SetAbsOrigin( pos + Vector( 0, 0, 10 ) );
-				pBoss->ChangeTeam( teamNum );
-				pBoss->SetOwnerEntity( pOwner );
-				DispatchSpawn( pBoss );
-
-				return pBoss;
-			}
-
-			return NULL;
-		}
+			pBoss = dynamic_cast<CHalloweenBaseBoss *>( CreateEntityByName( "eyeball_boss" ) );
+			break;
 		case MERASMUS:
-		{
-			/*CMerasmus*/CHalloweenBaseBoss *pBoss = dynamic_cast<CHalloweenBaseBoss *>( CreateEntityByName( "merasmus" ) );
-			if (pBoss)
-			{
-				pBoss->SetAbsOrigin( pos + Vector( 0, 0, 10 ) );
-				pBoss->ChangeTeam( teamNum );
-				pBoss->SetOwnerEntity( pOwner );
-				DispatchSpawn( pBoss );
-
-				return pBoss;
-			}
-
-			return NULL;
-		}
+			pBoss = dynamic_cast<CHalloweenBaseBoss *>( CreateEntityByName( "merasmus" ) );
+			break;
 		default:
 			return NULL;
 	}
+
+	if ( pBoss )
+	{
+		pBoss->SetAbsOrigin( pos + Vector( 0, 0, 10 ) );
+		pBoss->ChangeTeam( teamNum );
+		pBoss->SetOwnerEntity( pOwner );
+		DispatchSpawn( pBoss );
+
+		return pBoss;
+	}
+
+	return NULL;
 }
 
 

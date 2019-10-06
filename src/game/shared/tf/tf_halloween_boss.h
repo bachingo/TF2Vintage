@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef TF_HALLOWEEN_BOSS_H
 #define TF_HALLOWEEN_BOSS_H
 #ifdef _WIN32

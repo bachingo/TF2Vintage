@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef TF_BOT_MANAGER_H
 #define TF_BOT_MANAGER_H
 #ifdef _WIN32

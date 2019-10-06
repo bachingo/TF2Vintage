@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef TF_HINT_TELEEXIT_H
 #define TF_HINT_TELEEXIT_H
 #ifdef _WIN32

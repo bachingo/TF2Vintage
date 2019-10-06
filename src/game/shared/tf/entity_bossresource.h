@@ -1,3 +1,10 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
 #ifndef ENTITY_BOSSRESOURCE_H
 #define ENTITY_BOSSRESOURCE_H
 #ifdef _WIN32
