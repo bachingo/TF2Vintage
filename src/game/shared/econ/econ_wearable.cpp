@@ -54,9 +54,9 @@ void CEconWearable::Spawn( void )
 
 int CEconWearable::GetSkin( void )
 {
-#ifdef GAME_DLL
-	if (GetItem() && m_Item.GetSkin(GetTeamNumber(), false) > -1)
+if (GetItem() && m_Item.GetSkin(GetTeamNumber(), false) > -1)
 		return m_Item.GetSkin(GetTeamNumber(), false);
+#ifdef GAME_DLL
 	CTFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
 
 	int iVisibleTeam = GetTeamNumber();
@@ -65,20 +65,7 @@ int CEconWearable::GetSkin( void )
 	{
 		iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
 	}
-
-	switch (iVisibleTeam)
-	{
-	case TF_TEAM_BLUE:
-		return 1;
-	case TF_TEAM_RED:
-		return 0;
-	default:
-		return 0;
-	}
 #else
-
-	if (GetItem() && m_Item.GetSkin(GetTeamNumber(), false) > -1)
-		return m_Item.GetSkin(GetTeamNumber(), false);
 	C_TFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
 
 	int iVisibleTeam = GetTeamNumber();
