@@ -4739,7 +4739,7 @@ void C_TFPlayer::ValidateModelIndex( void )
 			C_TFWearable *pWearable = static_cast<C_TFWearable *>(GetWearable(i));
 
 			if (!pWearable)
-				return;
+				continue;
 
 
 			pWearable->UpdateModelToClass();
