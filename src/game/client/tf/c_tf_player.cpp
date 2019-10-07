@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2003, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -4719,7 +4719,7 @@ void C_TFPlayer::ValidateModelIndex( void )
 			C_TFWearable *pWearable = static_cast<C_TFWearable *>(GetWearable(i));
 
 			if (!pWearable)
-				return;
+				continue;
 
 
 			pWearable->UpdateModelToClass();
