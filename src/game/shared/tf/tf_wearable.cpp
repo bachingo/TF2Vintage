@@ -96,4 +96,39 @@ int C_TFWearable::InternalDrawModel( int flags )
 	return ret;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFWearable::UpdateModelToClass(void)
+{
+	if (m_bExtraWearable && m_Item.GetStaticData())
+	{
+		SetModel(m_Item.GetStaticData()->extra_wearable);
+	}
+	else
+	{
+		C_TFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
+
+		if (pOwner)
+		{
+			const char *pszModel;
+			if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) pOwner->IsEnemyPlayer())
+			{
+				pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
+			}
+			else
+			{
+				pszModel = m_Item.GetPlayerDisplayModel(pOwner->GetPlayerClass()->GetClassIndex());
+			}
+
+
+			if (pszModel[0] != '\0')
+			{
+				SetModel(pszModel);
+			}
+		}
+
+	}
+}
+
 #endif
