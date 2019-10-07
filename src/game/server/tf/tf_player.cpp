@@ -1433,7 +1433,7 @@ void CTFPlayer::GiveDefaultItems()
 	else if ( !tf2v_random_weapons.GetBool() )
 		ManageRegularWeapons( pData );
 
-	if (tf_halloween.GetBool())
+	if ( tf_halloween.GetBool() )
 	{
 		int iItemID = 5617;
 		CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition(iItemID);
@@ -7321,7 +7321,7 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 	{
 		pRagdoll->m_vecRagdollOrigin = GetAbsOrigin();
 		pRagdoll->m_vecRagdollVelocity = GetAbsVelocity();
-		pRagdoll->m_vecForce = m_vecTotalBulletForce;
+		pRagdoll->m_vecForce = m_vecForce;
 		pRagdoll->m_nForceBone = m_nForceBone;
 		pRagdoll->m_iPlayerIndex.Set( entindex() );
 		pRagdoll->m_bGib = bGibbed;
@@ -7383,6 +7383,7 @@ void CTFPlayer::CreateFeignDeathRagdoll( CTakeDamageInfo const &info, bool bGibb
 		pRagdoll->m_bBurning = bBurning;
 		pRagdoll->m_bWasDisguised = bFriendlyDisguise;
 		pRagdoll->m_bFeignDeath = true;
+		pRagdoll->m_bOnGround = !!( GetFlags() & FL_ONGROUND );
 
 		if ( bFriendlyDisguise )
 		{

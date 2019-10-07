@@ -3450,15 +3450,15 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 	if ( !pInvis )
 		return false;
 
-	if (!bForce && pInvis->HasMotionCloak())
+	if ( !bForce && pInvis->HasMotionCloak() )
 		return false;
 
-	if (pInvis->HasFeignDeath())
+	if ( pInvis->HasFeignDeath() )
 		amt = Min( amt, 35.0f );
 
-	if (bIgnoreAttribs)
+	if ( bIgnoreAttribs )
 	{
-		if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
+		if ( amt <= 0.0f || m_flCloakMeter >= 100.0f )
 			return false;
 
 		m_flCloakMeter = Clamp( m_flCloakMeter + amt, 0.0f, 100.0f );
@@ -3467,19 +3467,19 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 
 	int iNoRegenFromItems = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pInvis, iNoRegenFromItems, mod_cloak_no_regen_from_items );
-	if (iNoRegenFromItems)
+	if ( iNoRegenFromItems )
 		return false;
 
 	int iNoCloakWhenCloaked = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pInvis, iNoCloakWhenCloaked, NoCloakWhenCloaked );
-	if (iNoCloakWhenCloaked)
+	if ( iNoCloakWhenCloaked )
 	{
 		if (InCond( TF_COND_STEALTHED ))
 			return false;
 	}
 
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pInvis, amt, ReducedCloakFromAmmo );
-	if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
+	if ( amt <= 0.0f || m_flCloakMeter >= 100.0f )
 		return false;
 
 	m_flCloakMeter = Clamp( m_flCloakMeter + amt, 0.0f, 100.0f );
@@ -4755,7 +4755,7 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 			{
 				// Toggle invisibility
 				CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-				if (pInvis)
+				if ( pInvis )
 				{
 					bDoSkill = pInvis->ActivateInvisibility();
 				}
