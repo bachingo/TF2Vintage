@@ -72,7 +72,7 @@ void CTFWearable::Break( void )
 }
 
 #else
-extern ConVar tf2v_Zombie_bug;
+
 //-----------------------------------------------------------------------------
 // Purpose: Overlay Uber
 //-----------------------------------------------------------------------------
@@ -112,17 +112,9 @@ void C_TFWearable::UpdateModelToClass(void)
 		if (pOwner)
 		{
 			const char *pszModel;
-			if (pOwner->m_Shared.InCond(TF_COND_DISGUISED))
+			if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) pOwner->IsEnemyPlayer())
 			{
-				if (tf2v_Zombie_bug.GetBool())
-				{
-					pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
-				}
-				else if (pOwner->IsEnemyPlayer())
-				{
-					pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
-				}
-				
+				pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
 			}
 			else
 			{
