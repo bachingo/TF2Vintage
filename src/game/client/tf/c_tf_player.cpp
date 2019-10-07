@@ -50,6 +50,7 @@
 #include "eventlist.h"
 #include "tf_hud_statpanel.h"
 #include "input.h"
+#include "tf_wearable.h"
 #include "tf_weapon_medigun.h"
 #include "tf_weapon_pipebomblauncher.h"
 #include "tf_hud_mediccallers.h"
@@ -95,6 +96,8 @@ ConVar cl_fp_ragdoll_auto( "cl_fp_ragdoll_auto", "1", FCVAR_ARCHIVE, "Autoswitch
 
 ConVar tf2v_model_muzzleflash( "tf2v_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash" );
 ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower" );
+
+extern ConVar tf_halloween;
 
 static void BuildDecapitatedTransform( C_BaseAnimating *pAnimating )
 {
@@ -4332,37 +4335,124 @@ int C_TFPlayer::GetSkin()
 
 	int nSkin;
 
-	switch ( iVisibleTeam )
+	switch (iVisibleTeam)
 	{
-		case TF_TEAM_RED:
-			nSkin = 0;
-			break;
+	case TF_TEAM_RED:
+		if (tf_halloween.GetBool())
+		{
+			if (IsPlayerClass(TF_CLASS_SPY))
+			{
+				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
+				{
+					nSkin = 4;
+				}
+				else
+				{
+					nSkin = 22;
+				}
 
-		case TF_TEAM_BLUE:
+			}
+			else
+			{
+				nSkin = 4;
+			}
+
+		}
+		else
+		{
+			nSkin = 0;
+		}
+
+		break;
+
+	case TF_TEAM_BLUE:
+		if (tf_halloween.GetBool())
+		{
+			if (IsPlayerClass(TF_CLASS_SPY))
+			{
+				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
+				{
+					nSkin = 5;
+				}
+				else
+				{
+					nSkin = 23;
+				}
+
+			}
+			else
+			{
+				nSkin = 5;
+			}
+
+		}
+		else
+		{
 			nSkin = 1;
-			break;
+		}
+		break;
 
-		default:
-			nSkin = 0;
-			break;
+	default:
+		nSkin = 0;
+		break;
 	}
 
 	// 3 and 4 are invulnerable
-	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) )
+	if (m_Shared.InCond(TF_COND_INVULNERABLE))
 	{
 		nSkin += 2;
+
+
 	}
-	else if ( m_Shared.InCond( TF_COND_DISGUISED ) )
+	else if (m_Shared.InCond(TF_COND_DISGUISED))
 	{
-		if ( !IsEnemyPlayer() )
+		if (!IsEnemyPlayer())
 		{
-			// Show team members what this player is disguised as
-			nSkin += 4 + ( ( m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
+			if (tf_halloween.GetBool())
+			{
+				if (iVisibleTeam == 2)
+				{
+					nSkin = 0;
+				}
+				else if (iVisibleTeam == 3)
+				{
+					nSkin = 1;
+				}
+
+
+				// Show team members what this player is disguised as
+				nSkin += 4 + ((m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS) * 2);
+			}
+			else
+			{
+				// Show team members what this player is disguised as
+				nSkin += 4 + ((m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS) * 2);
+			}
+
+
+
 		}
-		else if ( m_Shared.GetDisguiseClass() ==  TF_CLASS_SPY )
+		else if (m_Shared.GetDisguiseClass() == TF_CLASS_SPY)
 		{
-			// This player is disguised as an enemy spy so enemies should see a fake mask
-			nSkin += 4 + ( ( m_Shared.GetMaskClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
+			if (tf_halloween.GetBool())
+			{
+				if (iVisibleTeam == 2)
+				{
+					nSkin = 0;
+				}
+				else if (iVisibleTeam == 3)
+				{
+					nSkin = 1;
+				}
+
+				// This player is disguised as an enemy spy so enemies should see a fake mask
+				nSkin += 4 + ((m_Shared.GetMaskClass() - TF_FIRST_NORMAL_CLASS) * 2);
+			}
+			else
+			{
+				// This player is disguised as an enemy spy so enemies should see a fake mask
+				nSkin += 4 + ((m_Shared.GetMaskClass() - TF_FIRST_NORMAL_CLASS) * 2);
+			}
 		}
 	}
 
@@ -4623,6 +4713,18 @@ void C_TFPlayer::ValidateModelIndex( void )
 	{
 		TFPlayerClassData_t *pData = GetPlayerClassData( m_Shared.GetDisguiseClass() );
 		m_nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
+
+		for (int i = 0; i < GetNumWearables(); i++)
+		{
+			C_TFWearable *pWearable = static_cast<C_TFWearable *>(GetWearable(i));
+
+			if (!pWearable)
+				return;
+
+
+			pWearable->UpdateModelToClass();
+
+		}
 	}
 	else
 	{
@@ -4630,6 +4732,18 @@ void C_TFPlayer::ValidateModelIndex( void )
 		if ( pClass )
 		{
 			m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );
+		}
+
+		for (int i = 0; i < GetNumWearables(); i++)
+		{
+			C_TFWearable *pWearable = static_cast<C_TFWearable *>(GetWearable(i));
+
+			if (!pWearable)
+				return;
+
+
+			pWearable->UpdateModelToClass();
+
 		}
 	}
 

@@ -120,6 +120,7 @@ extern ConVar sv_maxunlag;
 
 extern ConVar sv_alltalk;
 extern ConVar tf_teamtalk;
+extern ConVar tf_halloween;
 
 extern ConVar tf_arena_force_class;
 
@@ -1431,6 +1432,26 @@ void CTFPlayer::GiveDefaultItems()
 		ManageRegularWeaponsLegacy( pData );
 	else if ( !tf2v_random_weapons.GetBool() )
 		ManageRegularWeapons( pData );
+
+	if (tf_halloween.GetBool())
+	{
+		int iItemID = 5617;
+		CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition(iItemID);
+		if (!pItemDef)
+			return;
+
+		CEconItemView econItem(iItemID);
+
+		const char *pszClassname = "tf_wearable";
+		Assert(pszClassname);
+
+		CEconEntity *pEntity = dynamic_cast<CEconEntity *>(GiveNamedItem(pszClassname, 0, &econItem));
+
+		if (pEntity)
+		{
+			pEntity->GiveTo(this);
+		}
+	}
 
 
 	// Give grenades.

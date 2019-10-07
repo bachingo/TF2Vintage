@@ -7,6 +7,12 @@
 #include "cbase.h"
 #include "econ_wearable.h"
 
+#ifdef GAME_DLL
+#include "tf_player.h"
+#else
+#include "c_tf_player.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -48,18 +54,51 @@ void CEconWearable::Spawn( void )
 
 int CEconWearable::GetSkin( void )
 {
-	if (GetItem() && m_Item.GetSkin( GetTeamNumber(), false ) > -1)
-		return m_Item.GetSkin( GetTeamNumber(), false );
+#ifdef GAME_DLL
+	if (GetItem() && m_Item.GetSkin(GetTeamNumber(), false) > -1)
+		return m_Item.GetSkin(GetTeamNumber(), false);
+	CTFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
 
-	switch ( GetTeamNumber() )
+	int iVisibleTeam = GetTeamNumber();
+	// if this player is disguised and on the other team, use disguise team
+	if (pOwner->m_Shared.InCond(TF_COND_DISGUISED))
 	{
-		case TF_TEAM_BLUE:
-			return 1;
-		case TF_TEAM_RED:
-			return 0;
-		default:
-			return 0;
+		iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
 	}
+
+	switch (iVisibleTeam)
+	{
+	case TF_TEAM_BLUE:
+		return 1;
+	case TF_TEAM_RED:
+		return 0;
+	default:
+		return 0;
+	}
+#else
+
+	if (GetItem() && m_Item.GetSkin(GetTeamNumber(), false) > -1)
+		return m_Item.GetSkin(GetTeamNumber(), false);
+	C_TFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
+
+	int iVisibleTeam = GetTeamNumber();
+	// if this player is disguised and on the other team, use disguise team
+	if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) && pOwner->IsEnemyPlayer())
+	{
+		iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
+	}
+
+	switch (iVisibleTeam)
+	{
+	case TF_TEAM_BLUE:
+		return 1;
+	case TF_TEAM_RED:
+		return 0;
+	default:
+		return 0;
+	}
+
+#endif
 }
 
 void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )

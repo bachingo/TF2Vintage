@@ -72,7 +72,7 @@ void CTFWearable::Break( void )
 }
 
 #else
-
+extern ConVar tf2v_Zombie_bug;
 //-----------------------------------------------------------------------------
 // Purpose: Overlay Uber
 //-----------------------------------------------------------------------------
@@ -94,6 +94,49 @@ int C_TFWearable::InternalDrawModel( int flags )
 	}
 
 	return ret;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFWearable::UpdateModelToClass(void)
+{
+	if (m_bExtraWearable && m_Item.GetStaticData())
+	{
+		SetModel(m_Item.GetStaticData()->extra_wearable);
+	}
+	else
+	{
+		C_TFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
+
+		if (pOwner)
+		{
+			const char *pszModel;
+			if (pOwner->m_Shared.InCond(TF_COND_DISGUISED))
+			{
+				if (tf2v_Zombie_bug.GetBool())
+				{
+					pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
+				}
+				else if (pOwner->IsEnemyPlayer())
+				{
+					pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
+				}
+				
+			}
+			else
+			{
+				pszModel = m_Item.GetPlayerDisplayModel(pOwner->GetPlayerClass()->GetClassIndex());
+			}
+
+
+			if (pszModel[0] != '\0')
+			{
+				SetModel(pszModel);
+			}
+		}
+
+	}
 }
 
 #endif

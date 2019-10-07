@@ -28,6 +28,7 @@ public:
 	void			Break( void );
 #else
 	virtual int		InternalDrawModel( int flags );
+	void			UpdateModelToClass(void);
 #endif
 };
 
