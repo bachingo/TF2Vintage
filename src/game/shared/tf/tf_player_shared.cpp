@@ -87,6 +87,8 @@ ConVar tf2v_disable_player_shadows( "tf2v_disable_player_shadows", "0", FCVAR_RE
 
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
+ConVar tf_enable_grenades( "tf_enable_grenade_equipment", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
+
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
 #endif
@@ -3737,7 +3739,6 @@ bool CTFPlayerShared::HasDemoShieldEquipped( void ) const
 	return m_bShieldEquipped;
 }
 
-#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3752,8 +3753,12 @@ void CTFPlayerShared::CalcChargeCrit( bool bForceCrit )
 		m_iNextMeleeCrit = kCritType_MiniCrit;
 	}
 
+#ifdef GAME_DLL
 	m_pOuter->SetContextThink( &CTFPlayer::RemoveMeleeCrit, gpGlobals->curtime + 0.3f, "RemoveMeleeCrit" );
+#endif
 }
+
+#ifdef GAME_DLL
 
 //-----------------------------------------------------------------------------
 // Purpose: 

@@ -79,12 +79,6 @@ extern ConVar	sk_player_stomach;
 extern ConVar	sk_player_arm;
 extern ConVar	sk_player_leg;
 
-extern ConVar	tf_spy_invis_time;
-extern ConVar	tf_spy_invis_unstealth_time;
-extern ConVar	tf_stalematechangeclasstime;
-
-extern ConVar	tf_damage_disablespread;
-
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
 
 ConVar tf_playerstatetransitions( "tf_playerstatetransitions", "-2", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "tf_playerstatetransitions <ent index or -1 for all>. Show player state transitions." );
@@ -117,12 +111,16 @@ ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10",
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
-
 extern ConVar sv_alltalk;
+
 extern ConVar tf_teamtalk;
 extern ConVar tf_halloween;
-
+extern ConVar tf_enable_grenades;
 extern ConVar tf_arena_force_class;
+extern ConVar tf_spy_invis_time;
+extern ConVar tf_spy_invis_unstealth_time;
+extern ConVar tf_stalematechangeclasstime;
+extern ConVar tf_damage_disablespread;
 
 // Team Fortress 2 Classic commands
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
@@ -1455,7 +1453,8 @@ void CTFPlayer::GiveDefaultItems()
 
 
 	// Give grenades.
-	//ManageGrenades( pData );
+	if( tf_enable_grenades.GetBool() )
+		ManageGrenades( pData );
 
 	// Give a builder weapon for each object the playerclass is allowed to build
 	ManageBuilderWeapons( pData );

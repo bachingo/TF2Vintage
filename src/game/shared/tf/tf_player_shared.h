@@ -339,7 +339,6 @@ public:
 	void	SetShieldChargeRegenRate( float flRate ) { m_flChargeRegenRate = flRate; }
 	void	CalcChargeCrit( bool bForceFull );
 #ifdef GAME_DLL
-	float	CalcChargeCap( void );
 	void	UpdateChargeMeter( void );
 #endif
 	void	EndCharge( void );
