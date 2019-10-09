@@ -337,8 +337,9 @@ public:
 	void	SetShieldChargeMeter( float flVal )      { m_flChargeMeter = flVal; }
 	void	SetShieldChargeDrainRate( float flRate ) { m_flChargeDrainRate = flRate; }
 	void	SetShieldChargeRegenRate( float flRate ) { m_flChargeRegenRate = flRate; }
-#ifdef GAME_DLL
 	void	CalcChargeCrit( bool bForceFull );
+#ifdef GAME_DLL
+	float	CalcChargeCap( void );
 	void	UpdateChargeMeter( void );
 #endif
 	void	EndCharge( void );

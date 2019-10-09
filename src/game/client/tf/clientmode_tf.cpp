@@ -55,14 +55,18 @@
 #include "tf_clientscoreboard.h"
 #endif
 
+extern ConVar r_drawviewmodel;
+
 ConVar default_fov( "default_fov", "75", FCVAR_CHEAT );
 ConVar fov_desired( "fov_desired", "75", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 75.0, true, 100.0 );
+
+ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_CLIENTDLL );
+
 
 void HUDMinModeChangedCallBack( IConVar *var, const char *pOldString, float flOldValue )
 {
 	engine->ExecuteClientCmd( "hud_reloadscheme" );
 }
-
 ConVar cl_hud_minmode( "cl_hud_minmode", "0", FCVAR_ARCHIVE, "Set to 1 to turn on the advanced minimalist HUD mode.", HUDMinModeChangedCallBack );
 
 IClientMode *g_pClientMode = NULL;
@@ -453,6 +457,18 @@ bool ClientModeTFNormal::ShouldDrawViewModel()
 	{
 		if ( pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 			return false;
+	}
+
+	return r_drawviewmodel.GetBool();
+}
+
+bool ClientModeTFNormal::ShouldDrawCrosshair( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer )
+	{
+		if ( pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
+			return tf_hud_no_crosshair_on_scope_zoom.GetBool();
 	}
 
 	return true;
