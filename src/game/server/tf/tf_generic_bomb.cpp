@@ -70,8 +70,8 @@ void CTFGenericBomb::Spawn()
 		m_flDamage = 80.0f;	
 	}
 
-	char *szModel = (char *)STRING( GetModelName() );
-	if ( !szModel || !*szModel )
+	char const *szModel = STRING( GetModelName() );
+	if ( !szModel || !szModel[0] )
 	{
 		Warning( "prop at %.0f %.0f %0.f missing modelname\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 		UTIL_Remove( this );
@@ -91,14 +91,10 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 {
 	m_takedamage = DAMAGE_NO;
 
-	Vector absOrigin = WorldSpaceCenter();
-	QAngle absAngles = GetAbsAngles();
-
 	trace_t	tr;
 	Vector vecForward = GetAbsVelocity();
 	VectorNormalize( vecForward );
-	UTIL_TraceLine ( absOrigin, absOrigin + 60*vecForward , MASK_SHOT, 
-		this, COLLISION_GROUP_NONE, &tr);
+	UTIL_TraceLine ( GetAbsOrigin(), GetAbsOrigin() + 60*vecForward , MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
 
 #if 0
 	int iAttachment = LookupAttachment("alt-origin");
@@ -108,7 +104,6 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 #endif
 
 	CPVSFilter filter( GetAbsOrigin() );
-
 	if ( STRING( m_iszParticleName ) )
 		TE_TFParticleEffect( filter, 0.0, STRING( m_iszParticleName ), GetAbsOrigin(), GetAbsAngles(), NULL, PATTACH_CUSTOMORIGIN );
 	if ( STRING( m_iszExplodeSound ) )
@@ -126,7 +121,7 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 	if ( m_bFriendlyFire )
 		info_modified.SetForceFriendlyFire( true );
 
-	TFGameRules()->RadiusDamage( info_modified, absOrigin, m_flRadius, CLASS_NONE, this );
+	TFGameRules()->RadiusDamage( info_modified, GetAbsOrigin(), m_flRadius, CLASS_NONE, this );
 
 	if ( tr.m_pEnt && !tr.m_pEnt->IsPlayer() )
 		UTIL_DecalTrace( &tr, "Scorch");
@@ -134,9 +129,10 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 	// FIXME: Gibs are causing crashes on some servers for unknown reasons
 
 	/*UserMessageBegin( filter, "BreakModel" );
-	WRITE_SHORT( GetModelIndex() );
-	WRITE_VEC3COORD( absOrigin );
-	WRITE_ANGLES( absAngles );
+		WRITE_SHORT( GetModelIndex() );
+		WRITE_VEC3COORD( GetAbsOrigin() );
+		WRITE_ANGLES( GetAbsAngles() );
+		WRITE_SHORT( m_nSkin );
 	MessageEnd();*/
 
 	m_OnDetonate.FireOutput( this, this, 0.0f );
@@ -147,15 +143,11 @@ void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 {
 	m_takedamage = DAMAGE_NO;
 
-	Vector absOrigin = GetAbsOrigin();
-	QAngle absAngles = GetAbsAngles();
-
-	// Trace used for ground scortching
+	// Trace used for ground scorching
 	trace_t	tr;
 	Vector vecForward = GetAbsVelocity();
 	VectorNormalize( vecForward );
-	UTIL_TraceLine ( absOrigin, absOrigin + 60*vecForward , MASK_SHOT, 
-		this, COLLISION_GROUP_NONE, &tr);
+	UTIL_TraceLine ( GetAbsOrigin(), GetAbsOrigin() + 60*vecForward , MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
 
 	// Do explosion effects
 	CPVSFilter filter( GetAbsOrigin() );
@@ -171,12 +163,12 @@ void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 	if ( inputdata.pActivator && inputdata.pActivator->IsPlayer() )
 		pAttacker = inputdata.pActivator;
 
-	CTakeDamageInfo info_modified( this, pAttacker, m_flDamage, DMG_BLAST );
+	CTakeDamageInfo info_modified( this, pAttacker, m_flDamage, DMG_BLAST, GetCustomDamageType() );
 
 	if ( m_bFriendlyFire )
 		info_modified.SetForceFriendlyFire( true );
 
-	TFGameRules()->RadiusDamage( info_modified, absOrigin, m_flRadius, CLASS_NONE, this );
+	TFGameRules()->RadiusDamage( info_modified, GetAbsOrigin(), m_flRadius, CLASS_NONE, this );
 
 	if ( tr.m_pEnt && !tr.m_pEnt->IsPlayer() )
 		UTIL_DecalTrace( &tr, "Scorch");
@@ -184,9 +176,10 @@ void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 	// FIXME: Gibs are causing crashes on some servers for unknown reasons
 
 	/*UserMessageBegin( filter, "BreakModel" );
-	WRITE_SHORT( GetModelIndex() );
-	WRITE_VEC3COORD( absOrigin );
-	WRITE_ANGLES( absAngles );
+		WRITE_SHORT( GetModelIndex() );
+		WRITE_VEC3COORD( GetAbsOrigin() );
+		WRITE_ANGLES( GetAbsAngles() );
+		WRITE_SHORT( m_nSkin );
 	MessageEnd();*/
 }
 
@@ -241,10 +234,11 @@ LINK_ENTITY_TO_CLASS( tf_pumpkin_bomb, CTFPumpkinBomb );
 
 void CTFPumpkinBomb::Spawn( void )
 {
-	m_iszExplodeSound = MAKE_STRING( "Halloween.PumpkinExplode" );
-	SetModelName( MAKE_STRING( "models/props_halloween/pumpkin_explode.mdl") );
-	m_iszParticleName = MAKE_STRING( "pumpkin_explode" );
+	m_iszExplodeSound = AllocPooledString( "Halloween.PumpkinExplode" );
+	SetModelName( AllocPooledString( "models/props_halloween/pumpkin_explode.mdl" ) );
+	m_iszParticleName = AllocPooledString( "pumpkin_explode" );
 	m_flRadius = 300.0f; // 200.0f for MIRV pumpkin
 	m_flDamage = 150.0f; // 80.0f for MIRV pumpkin
+
 	BaseClass::Spawn();
 }

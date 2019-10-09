@@ -4094,26 +4094,32 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			info.SetDamage( flPenaltyNonBurning );
 		}
 
-		int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMiniCritWhileAirborne, mini_crit_airborne );
-
-		if ( nCritWhileAirborne && pTFAttacker && pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-		{
-			bitsDamage |= DMG_CRITICAL;
-			info.AddDamageType( DMG_CRITICAL );
-		}
-		else if ( nMiniCritWhileAirborne && this && this->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-		{
-			bitsDamage |= DMG_MINICRITICAL;
-			info.AddDamageType( DMG_MINICRITICAL );
-		}
-
-		// Notify the damaging weapon.
-		pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
-
 		if ( pTFAttacker )
 		{
+			if ( pTFAttacker->m_Shared.InCond( TF_COND_ENERGY_BUFF ) || pTFAttacker->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
+			{
+				bitsDamage |= DMG_MINICRITICAL;
+				info.AddDamageType( DMG_MINICRITICAL );
+			}
+
+			int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMiniCritWhileAirborne, mini_crit_airborne );
+
+			if ( nCritWhileAirborne && pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+			{
+				bitsDamage |= DMG_CRITICAL;
+				info.AddDamageType( DMG_CRITICAL );
+			}
+			else if ( nMiniCritWhileAirborne && m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+			{
+				bitsDamage |= DMG_MINICRITICAL;
+				info.AddDamageType( DMG_MINICRITICAL );
+			}
+
+			// Notify the damaging weapon.
+			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
+
 			// Build rage
 			pTFAttacker->m_Shared.SetRageMeter( info.GetDamage() / 6.0f, TF_BUFF_OFFENSE );
 		}
