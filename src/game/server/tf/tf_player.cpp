@@ -1438,7 +1438,7 @@ void CTFPlayer::GiveDefaultItems()
 		int iItemID = 5617;
 		CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition(iItemID);
 		if (!pItemDef)
-			continue;
+			return;
 
 		CEconItemView econItem(iItemID);
 

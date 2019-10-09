@@ -112,7 +112,7 @@ void C_TFWearable::UpdateModelToClass(void)
 		if (pOwner)
 		{
 			const char *pszModel;
-			if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) pOwner->IsEnemyPlayer())
+			if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) && pOwner->IsEnemyPlayer())
 			{
 				pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
 			}
