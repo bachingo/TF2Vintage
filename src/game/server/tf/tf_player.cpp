@@ -8349,10 +8349,10 @@ void CTFPlayer::DoTauntAttack( void )
 				m_iTauntAttack = TAUNTATK_SPY_FENCING_STAB;
 			}
 
-			CBaseEntity *pList[256];
+			CBaseEntity *pList[64];
 
 			bool bHomerun = false;
-			int count = UTIL_EntitiesInBox( pList, 256, mins, maxs, FL_CLIENT|FL_OBJECT );
+			int count = UTIL_EntitiesInBox( pList, 64, mins, maxs, FL_CLIENT|FL_OBJECT );
 
 			if ( tf_debug_damage.GetBool() )
 			{
@@ -8618,18 +8618,16 @@ void CTFPlayer::ClearTauntAttack( void )
 		{
 			int nLunchBoxAddsMinicrits = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLunchBoxAddsMinicrits, set_weapon_mode );
-			if ( nLunchBoxAddsMinicrits == 2 )
+			if ( nLunchBoxAddsMinicrits != 2 )
+			{
+				m_Shared.AddCond( TF_COND_PHASE, 8.0f );
+				SpeakConceptIfAllowed( MP_CONCEPT_DODGING, "started_dodging:1" );
+				m_angTauntCamera = EyeAngles();
+			}
+			else
 			{
 				m_Shared.AddCond( TF_COND_ENERGY_BUFF, 8.0f );
-				m_flTauntAttackTime = 0.0f;
-				m_iTauntAttack = TAUNTATK_NONE;
-
-				return;
 			}
-
-			m_Shared.AddCond( TF_COND_PHASE, 8.0f );
-			SpeakConceptIfAllowed( MP_CONCEPT_DODGING, "started_dodging:1" );
-			m_angTauntCamera = EyeAngles();
 		}
 	}
 

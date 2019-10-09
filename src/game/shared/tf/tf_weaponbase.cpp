@@ -48,6 +48,10 @@ extern ConVar tf2v_muzzlelight;
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
 ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
 
+#if defined( CLIENT_DLL )
+ConVar tf2v_revolver_scale_crosshair( "tf2v_revolver_scale_crosshair", "1", FCVAR_ARCHIVE, "Toggle the crosshair size scaling on the ambassador" );
+#endif
+
 //=============================================================================
 //
 // Global functions.
@@ -2488,6 +2492,22 @@ int CTFWeaponBase::GetWorldModelIndex( void )
 bool CTFWeaponBase::ShouldDrawCrosshair( void )
 {
 	return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_bDrawCrosshair;
+}
+
+void CTFWeaponBase::GetWeaponCrosshairScale( float &flScale )
+{
+	if ( GetWeaponID() == TF_WEAPON_REVOLVER )
+	{
+		int iMode = 0;
+		CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode );
+		if ( iMode == 1 && tf2v_revolver_scale_crosshair.GetBool() )
+		{
+			float flFireInterval = Min( gpGlobals->curtime - GetLastFireTime(), 1.25f );
+			flScale = Clamp( ( flFireInterval / 1.25f ), 0.334f, 1.0f );
+		}
+
+		return;
+	}
 }
 
 void CTFWeaponBase::Redraw()
