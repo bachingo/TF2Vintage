@@ -35,6 +35,10 @@ public:
 
 	virtual bool DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 
+#if defined( CLIENT_DLL )
+	virtual void	GetWeaponCrosshairScale( float &flScale ) override;
+#endif
+
 private:
 
 	CTFRevolver( const CTFRevolver & ) {}
