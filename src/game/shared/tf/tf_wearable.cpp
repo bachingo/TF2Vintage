@@ -101,30 +101,29 @@ int C_TFWearable::InternalDrawModel( int flags )
 //-----------------------------------------------------------------------------
 void C_TFWearable::UpdateModelToClass(void)
 {
-	if (m_bExtraWearable && m_Item.GetStaticData())
+	if ( m_bExtraWearable && m_Item.GetStaticData() )
 	{
-		SetModel(m_Item.GetStaticData()->extra_wearable);
+		SetModel( m_Item.GetStaticData()->extra_wearable );
 	}
 	else
 	{
-		C_TFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
-
-		if (pOwner)
+		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+		if ( pOwner )
 		{
-			const char *pszModel;
-			if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) pOwner->IsEnemyPlayer())
+			const char *pszModel = nullptr;
+			if ( pOwner->m_Shared.InCond(TF_COND_DISGUISED) && pOwner->IsEnemyPlayer() )
 			{
-				pszModel = m_Item.GetPlayerDisplayModel(pOwner->m_Shared.GetDisguiseClass());
+				pszModel = m_Item.GetPlayerDisplayModel( pOwner->m_Shared.GetDisguiseClass() );
 			}
 			else
 			{
-				pszModel = m_Item.GetPlayerDisplayModel(pOwner->GetPlayerClass()->GetClassIndex());
+				pszModel = m_Item.GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 			}
 
 
-			if (pszModel[0] != '\0')
+			if ( pszModel && *pszModel )
 			{
-				SetModel(pszModel);
+				SetModel( pszModel );
 			}
 		}
 

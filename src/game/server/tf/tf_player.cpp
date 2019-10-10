@@ -1433,21 +1433,16 @@ void CTFPlayer::GiveDefaultItems()
 
 	if ( tf_halloween.GetBool() )
 	{
-		int iItemID = 5617;
-		CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition(iItemID);
-		if (!pItemDef)
-			continue;
-
-		CEconItemView econItem(iItemID);
-
-		const char *pszClassname = "tf_wearable";
-		Assert(pszClassname);
-
-		CEconEntity *pEntity = dynamic_cast<CEconEntity *>(GiveNamedItem(pszClassname, 0, &econItem));
-
-		if (pEntity)
+		const int iItemID = 5617;
+		if ( GetItemSchema()->GetItemDefinition( iItemID ) )
 		{
-			pEntity->GiveTo(this);
+			CEconItemView econItem( iItemID );
+			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( "tf_wearable", 0, &econItem ) );
+
+			if ( pEntity )
+			{
+				pEntity->GiveTo( this );
+			}
 		}
 	}
 
