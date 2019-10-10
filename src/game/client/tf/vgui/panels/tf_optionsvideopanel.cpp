@@ -580,7 +580,7 @@ void CTFOptionsVideoPanel::OnResetData()
 	ResetDXLevelCombo();
 
 	m_pModelDetail->ActivateItem(2 - clamp(r_rootlod.GetInt(), 0, 2));
-	m_pTextureDetail->ActivateItem(2 - clamp(mat_picmip.GetInt(), -1, 2));
+	m_pTextureDetail->ActivateItem(2 - clamp(mat_picmip.GetInt(), -10, 2));
 
 	if (r_flashlightdepthtexture.GetBool())		// If we're doing flashlight shadow depth texturing...
 	{
