@@ -302,6 +302,9 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe_remote );
 LINK_ENTITY_TO_CLASS( tf_projectile_pipe, CTFGrenadePipebombProjectile );
 PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
 
+LINK_ENTITY_TO_CLASS( tf_weapon_grenade_pipebomb_projectile, CTFGrenadePipebombProjectile );
+PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_pipebomb_projectile );
+
 //-----------------------------------------------------------------------------
 // Purpose:
 // PIPEBOMB = STICKY
@@ -310,13 +313,14 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
 																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo,
-																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon )
+																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon, int iVariant )
 {
-	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( ( iMode == TF_GL_MODE_REMOTE_DETONATE ) ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
+	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( ( iMode == TF_GL_MODE_REMOTE_DETONATE ) ? ( ( iVariant == TF_GL_IS_STICKY ) ? "tf_projectile_pipe_remote" : "tf_weapon_grenade_pipebomb_projectile" ): "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
 	{
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
 		pGrenade->SetPipebombMode( iMode );
+		pGrenade->SetPipebombBetaVariant( iVariant );
 		DispatchSpawn( pGrenade );
 
 		// Set the launcher for model overrides
@@ -358,7 +362,10 @@ void CTFGrenadePipebombProjectile::Spawn()
 	{
 		// Set this to max, so effectively they do not self-implode.
 		SetDetonateTimerLength( FLT_MAX );
+		if ( m_iBeta == TF_GL_IS_STICKY )
 		SetModel( TF_WEAPON_STICKYBOMB_MODEL );
+		else
+		SetModel( TF_WEAPON_PIPEBOMB_MODEL );	
 	}
 	else
 	{
@@ -409,6 +416,15 @@ void CTFGrenadePipebombProjectile::SetPipebombMode( int iMode )
 {
 	m_iType.Set( iMode );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGrenadePipebombProjectile::SetPipebombBetaVariant( int iVariant )
+{
+	m_iBeta.Set( iVariant );
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose:

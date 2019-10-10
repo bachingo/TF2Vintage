@@ -463,6 +463,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SYRINGE",
 	"TF_WEAPON_SNIPERRIFLE_REAL",
 	"TF_WEAPON_SNIPERRIFLE_CLASSIC",
+	"TF_WEAPON_GRENADE_PIPEBOMB_BETA",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -553,6 +554,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_CLUB,		// TF_WEAPON_SYRINGE,
 	DMG_BULLET | DMG_USE_HITLOCATIONS,	// TF_WEAPON_SNIPERRIFLE_REAL,
 	DMG_BULLET | DMG_USE_HITLOCATIONS,	// TF_WEAPON_SNIPERRIFLE_CLASSIC,
+	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_GRENADE_PIPEBOMB_BETA,
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -616,7 +618,8 @@ const char *g_szProjectileNames[] =
 	"weapon_grenade_nail_projectile",
 	"weapon_grenade_napalm_projectile",
 	"weapon_grenade_normal_projectile",
-	"weapon_grenade_smoke_bomb_projectile",
+	"weapon_grenade_smoke_bomb_projectile"
+	"weapon_grenade_pipebomb_projectile",
 	
 };
 

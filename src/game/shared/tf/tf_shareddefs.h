@@ -229,6 +229,15 @@ enum
 };
 
 //-----------------------------------------------------------------------------
+// Differentiate Pipebombs and Stickybombs.
+//-----------------------------------------------------------------------------
+enum
+{
+	TF_GL_IS_GRENADE = 0,
+	TF_GL_IS_STICKY
+};
+
+//-----------------------------------------------------------------------------
 // Weapon Types
 //-----------------------------------------------------------------------------
 enum
@@ -389,6 +398,7 @@ enum
 	TF_WEAPON_SYRINGE,
 	TF_WEAPON_SNIPERRIFLE_REAL,
 	TF_WEAPON_SNIPERRIFLE_CLASSIC,
+	TF_WEAPON_GRENADE_PIPEBOMB_BETA,
 	
 	TF_WEAPON_COUNT
 };
@@ -454,6 +464,7 @@ enum
 	TF_WEAPON_GRENADE_NAPALM_PROJECTILE,
 	TF_WEAPON_GRENADE_NORMAL_PROJECTILE,
 	TF_WEAPON_GRENADE_SMOKE_BOMB_PROJECTILE,
+	TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE,
 	// End of grenade content.
 	// Add new ones below this line!
 

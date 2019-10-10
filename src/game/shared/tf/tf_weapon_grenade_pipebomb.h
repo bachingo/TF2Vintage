@@ -31,7 +31,7 @@ public:
 	~CTFGrenadePipebombProjectile();
 
 	// Unique identifier.
-	virtual int			GetWeaponID( void ) const	{ return ( m_iType == TF_GL_MODE_REMOTE_DETONATE ) ? TF_WEAPON_GRENADE_PIPEBOMB : TF_WEAPON_GRENADE_DEMOMAN; }
+	virtual int			GetWeaponID( void ) const	{ return ( m_iType == TF_GL_MODE_REMOTE_DETONATE ) ? ( ( m_iVariant == TF_GL_IS_STICKY ) ? TF_WEAPON_GRENADE_PIPEBOMB : TF_WEAPON_GRENADE_PIPEBOMB_BETA ): TF_WEAPON_GRENADE_DEMOMAN; }
 
 	int GetType( void ){ return m_iType; } 
 	virtual int			GetDamageType();
@@ -39,6 +39,7 @@ public:
 	void			SetChargeTime( float flChargeTime )				{ m_flChargeTime = flChargeTime; }
 
 	CNetworkVar( int, m_iType ); // TF_GL_MODE_REGULAR or TF_GL_MODE_REMOTE_DETONATE
+	CNetworkVar( int, m_iBeta ); // TF_GL_IS_GRENADE or TF_GL_IS_STICKY
 	CNetworkVar( bool, m_bDefensiveBomb );
 	float		m_flCreationTime;
 	float		m_flChargeTime;
@@ -66,7 +67,7 @@ public:
 
 	// Creation.
 	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, const AngularImpulse &angVelocity, 
-												 CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult, CTFWeaponBase *pWeapon );
+												 CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iMode, float flDamageMult, CTFWeaponBase *pWeapon, int iVariant );
 
 	// Overrides.
 	virtual void	Spawn();
