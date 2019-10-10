@@ -143,7 +143,21 @@ void CTFBaseRocket::Spawn( void )
 
 	// Setup attributes.
 	m_takedamage = DAMAGE_NO;
-	SetGravity( 0.0f );
+	
+	// This sets projectile gravity, if the attribute exists.
+	if ( m_hLauncher.Get() )
+	{
+		float flGravityOverride = 0.0f;
+		CALL_ATTRIB_HOOK_STRING_ON_OTHER( m_hLauncher.Get(), strModelOverride, projectile_gravity );
+		if ( flGravityOverride != 0.0f )
+		{
+			SetGravity( flGravityOverride );
+		}
+		else
+		SetGravity( 0.0f );
+	}
+	else
+		SetGravity( 0.0f );
 
 	// Setup the touch and think functions.
 	SetTouch( &CTFBaseRocket::RocketTouch );
