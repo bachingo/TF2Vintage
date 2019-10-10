@@ -148,7 +148,7 @@ void CTFBaseRocket::Spawn( void )
 	if ( m_hLauncher.Get() )
 	{
 		float flGravityOverride = 0.0f;
-		CALL_ATTRIB_HOOK_STRING_ON_OTHER( m_hLauncher.Get(), strModelOverride, projectile_gravity );
+		CALL_ATTRIB_HOOK_STRING_ON_OTHER( m_hLauncher.Get(), flGravityOverride, projectile_gravity );
 		if ( flGravityOverride != 0.0f )
 		{
 			SetGravity( flGravityOverride );
