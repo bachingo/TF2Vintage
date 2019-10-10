@@ -335,7 +335,7 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_sniperrifle_classic.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_sniperrifle_classic.h"
 					}
-					$Folder	"Legacy Content"
+					$Folder	"Classic Content"
 					{
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.h"
@@ -353,11 +353,11 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.h"		
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.h"	
-						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.cpp"
-						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.h"
 					}
 					$Folder "Grenades"
 					{
+						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_concussion.cpp"
