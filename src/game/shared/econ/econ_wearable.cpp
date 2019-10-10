@@ -54,38 +54,29 @@ void CEconWearable::Spawn( void )
 
 int CEconWearable::GetSkin( void )
 {
-if (GetItem() && m_Item.GetSkin(GetTeamNumber(), false) > -1)
-		return m_Item.GetSkin(GetTeamNumber(), false);
-#ifdef GAME_DLL
-	CTFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
+	if ( GetItem() && m_Item.GetSkin( GetTeamNumber(), false ) > -1 )
+		return m_Item.GetSkin( GetTeamNumber(), false );
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( pOwner == nullptr )
+		return 0;
 
 	int iVisibleTeam = GetTeamNumber();
 	// if this player is disguised and on the other team, use disguise team
-	if (pOwner->m_Shared.InCond(TF_COND_DISGUISED))
-	{
-		iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
-	}
-#else
-	C_TFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
-
-	int iVisibleTeam = GetTeamNumber();
-	// if this player is disguised and on the other team, use disguise team
-	if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) && pOwner->IsEnemyPlayer())
+	if ( pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
 	{
 		iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
 	}
 
-	switch (iVisibleTeam)
+	switch ( iVisibleTeam )
 	{
-	case TF_TEAM_BLUE:
-		return 1;
-	case TF_TEAM_RED:
-		return 0;
-	default:
-		return 0;
+		case TF_TEAM_BLUE:
+			return 1;
+		case TF_TEAM_RED:
+			return 0;
 	}
 
-#endif
+	return m_nSkin;
 }
 
 void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )

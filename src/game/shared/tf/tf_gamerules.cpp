@@ -58,6 +58,28 @@
 
 #define ITEM_RESPAWN_TIME	10.0f
 
+void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
+{
+	ConVarRef cvar( var );
+	if ( cvar.IsValid() && cvar.GetBool() )
+	{
+	#if defined( CLIENT_DLL )
+		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+		if ( pLocal == nullptr )
+			return;
+		
+		if ( SharedRandomInt( "HalloweenChanged", 0, 100 ) <= 15 )
+		{
+			pLocal->EmitSound( "Halloween.MerasmusHalloweenModeRare" );
+		}
+		else
+		{
+			pLocal->EmitSound( "Halloween.MerasmusHalloweenModeCommon" );
+		}
+	#endif
+	}
+}
+
 enum
 {
 	BIRTHDAY_RECALCULATE,
@@ -90,7 +112,7 @@ extern ConVar tf_arena_max_streak;
 ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
-ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "", HalloweenChanged );
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 //ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
 ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );

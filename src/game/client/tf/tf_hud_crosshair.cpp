@@ -29,8 +29,6 @@ ConVar cl_crosshair_approach_speed( "cl_crosshair_approach_speed", "0.015" );
 
 ConVar cl_dynamic_crosshair( "cl_dynamic_crosshair", "1", FCVAR_ARCHIVE );
 
-ConVar tf2v_revolver_scale_crosshair( "tf2v_revolver_scale_crosshair", "1", FCVAR_ARCHIVE, "Toggle the crosshair size scaling on the ambassador" );
-
 using namespace vgui;
 
 DECLARE_HUDELEMENT(CHudTFCrosshair);
@@ -177,15 +175,9 @@ void CHudTFCrosshair::Paint()
 
 		// Ambassador crosshair scaling
 		float flCrosshairScale = 1.0f;
-		if ( pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER )
+		if ( pWeapon )
 		{
-			int iMode = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iMode, set_weapon_mode );
-			if ( iMode == 1 && tf2v_revolver_scale_crosshair.GetBool() )
-			{
-				float flFireInterval = min( gpGlobals->curtime - pWeapon->GetLastFireTime(), 1.25f );
-				flCrosshairScale = clamp( ( flFireInterval / 1.25f ), 0.334, 1.0f );
-			}
+			pWeapon->GetWeaponCrosshairScale( flCrosshairScale );
 		}
 
 		iWidth = iHeight = cl_crosshair_scale.GetInt() / flCrosshairScale;

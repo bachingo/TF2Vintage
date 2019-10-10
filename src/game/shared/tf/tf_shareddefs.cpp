@@ -607,6 +607,17 @@ const char *g_szProjectileNames[] =
 	"projectile_bread_monster",
 	"projectile_nail",
 	"projectile_dart",
+	"weapon_grenade_caltrop_projectile",
+	"weapon_grenade_concussion_projectile",
+	"weapon_grenade_emp_projectile",
+	"weapon_grenade_gas_projectile",
+	"weapon_grenade_heal_projectile",
+	"weapon_grenade_mirv_projectile",
+	"weapon_grenade_nail_projectile",
+	"weapon_grenade_napalm_projectile",
+	"weapon_grenade_normal_projectile",
+	"weapon_grenade_smoke_bomb_projectile",
+	
 };
 
 // these map to the projectiles named in g_szProjectileNames
@@ -615,8 +626,8 @@ int g_iProjectileWeapons[] =
 	TF_WEAPON_NONE,
 	TF_WEAPON_PISTOL,
 	TF_WEAPON_ROCKETLAUNCHER,
-	TF_WEAPON_PIPEBOMBLAUNCHER,
 	TF_WEAPON_GRENADELAUNCHER,
+	TF_WEAPON_PIPEBOMBLAUNCHER,
 	TF_WEAPON_SYRINGEGUN_MEDIC,
 	TF_WEAPON_FLAREGUN,
 };

@@ -2490,6 +2490,11 @@ bool CTFWeaponBase::ShouldDrawCrosshair( void )
 	return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_bDrawCrosshair;
 }
 
+void CTFWeaponBase::GetWeaponCrosshairScale( float &flScale )
+{
+	CALL_ATTRIB_HOOK_FLOAT( flScale, crosshair_scale );
+}
+
 void CTFWeaponBase::Redraw()
 {
 	if ( ShouldDrawCrosshair() && g_pClientMode->ShouldDrawCrosshair() )

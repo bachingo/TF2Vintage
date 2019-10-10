@@ -15,7 +15,6 @@
 #include "NextBot/Player/NextBotPlayer.h"
 #include "tf_player.h"
 #include "GameEventListener.h"
-#include "nav_mesh/tf_nav_area.h"
 #include "tf_path_follower.h"
 
 class CTeamControlPoint;
@@ -166,8 +165,6 @@ public:
 	virtual int		DrawDebugTextOverlays( void );
 	virtual void	PhysicsSimulate( void );
 	virtual void	Touch( CBaseEntity *other );
-
-	virtual CTFNavArea *GetLastKnownArea( void ) const override;
 
 	virtual bool	IsDormantWhenDead( void ) const { return false; }
 	virtual bool	IsDebugFilterMatch( const char *name ) const;

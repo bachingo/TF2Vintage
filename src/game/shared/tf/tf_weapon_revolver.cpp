@@ -14,6 +14,10 @@
 #include "tf_player.h"
 #endif
 
+#if defined( CLIENT_DLL )
+ConVar tf2v_revolver_scale_crosshair( "tf2v_revolver_scale_crosshair", "1", FCVAR_ARCHIVE, "Toggle the crosshair size scaling on the ambassador" );
+#endif
+
 //=============================================================================
 //
 // Weapon Revolver tables.
@@ -56,3 +60,23 @@ bool CTFRevolver::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
 
 	return BaseClass::DefaultReload( iClipSize1, iClipSize2, iActivity );
 }
+
+#if defined( CLIENT_DLL )
+void CTFRevolver::GetWeaponCrosshairScale( float &flScale )
+{
+	C_TFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner == nullptr )
+		return;
+
+	int iMode = 0;
+	CALL_ATTRIB_HOOK_INT( iMode, set_weapon_mode );
+	if ( iMode == 1 && tf2v_revolver_scale_crosshair.GetBool() )
+	{
+		/*const float flTimeBase = pOwner->GetFinalPredictedTime();
+		const float flFireInterval = ( ( gpGlobals->interpolation_amount * gpGlobals->interpolation_amount ) + flTimeBase ) - GetLastFireTime();
+		flScale = ( Clamp( ( flFireInterval + -1.0f ) * -2.0f, 0.0f, 1.0f ) * 1.75f ) + 0.75f;*/
+		float flFireInterval = Min( gpGlobals->curtime - GetLastFireTime(), 1.25f );
+		flScale = Clamp( ( flFireInterval / 1.25f ), 0.334f, 1.0f );
+	}
+}
+#endif

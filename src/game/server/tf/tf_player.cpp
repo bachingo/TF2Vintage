@@ -7,12 +7,14 @@
 
 #include "cbase.h"
 #include "tf_player.h"
+#include "nav_pathfind.h"
 #include "tf_gamerules.h"
 #include "tf_gamestats.h"
 #include "KeyValues.h"
 #include "viewport_panel_names.h"
 #include "client.h"
 #include "team.h"
+#include "nav_mesh/tf_nav_mesh.h"
 #include "tf_weaponbase.h"
 #include "tf_client.h"
 #include "tf_team.h"
@@ -63,8 +65,6 @@
 #include "tf_weapon_sword.h"
 #include "tf_weapon_invis.h"
 #include "tf_weapon_knife.h"
-#include "nav_mesh/tf_nav_mesh.h"
-#include "nav_pathfind.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -78,12 +78,6 @@ extern ConVar	sk_player_chest;
 extern ConVar	sk_player_stomach;
 extern ConVar	sk_player_arm;
 extern ConVar	sk_player_leg;
-
-extern ConVar	tf_spy_invis_time;
-extern ConVar	tf_spy_invis_unstealth_time;
-extern ConVar	tf_stalematechangeclasstime;
-
-extern ConVar	tf_damage_disablespread;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
 
@@ -117,12 +111,16 @@ ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10",
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
-
 extern ConVar sv_alltalk;
+
 extern ConVar tf_teamtalk;
 extern ConVar tf_halloween;
-
+extern ConVar tf_enable_grenades;
 extern ConVar tf_arena_force_class;
+extern ConVar tf_spy_invis_time;
+extern ConVar tf_spy_invis_unstealth_time;
+extern ConVar tf_stalematechangeclasstime;
+extern ConVar tf_damage_disablespread;
 
 // Team Fortress 2 Classic commands
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
@@ -1433,29 +1431,25 @@ void CTFPlayer::GiveDefaultItems()
 	else if ( !tf2v_random_weapons.GetBool() )
 		ManageRegularWeapons( pData );
 
-	if (tf_halloween.GetBool())
+	if ( tf_halloween.GetBool() )
 	{
-		int iItemID = 5617;
-		CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition(iItemID);
-		if (!pItemDef)
-			return;
-
-		CEconItemView econItem(iItemID);
-
-		const char *pszClassname = "tf_wearable";
-		Assert(pszClassname);
-
-		CEconEntity *pEntity = dynamic_cast<CEconEntity *>(GiveNamedItem(pszClassname, 0, &econItem));
-
-		if (pEntity)
+		const int iItemID = 5617;
+		if ( GetItemSchema()->GetItemDefinition( iItemID ) )
 		{
-			pEntity->GiveTo(this);
+			CEconItemView econItem( iItemID );
+			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( "tf_wearable", 0, &econItem ) );
+
+			if ( pEntity )
+			{
+				pEntity->GiveTo( this );
+			}
 		}
 	}
 
 
 	// Give grenades.
-	//ManageGrenades( pData );
+	if( tf_enable_grenades.GetBool() )
+		ManageGrenades( pData );
 
 	// Give a builder weapon for each object the playerclass is allowed to build
 	ManageBuilderWeapons( pData );
@@ -2304,6 +2298,14 @@ bool CTFPlayer::IsCapturingPoint( void )
 	}
 
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return a CTFNavArea casted instance
+//-----------------------------------------------------------------------------
+CTFNavArea *CTFPlayer::GetLastKnownArea( void ) const
+{
+	return (CTFNavArea *)m_lastNavArea;
 }
 
 //-----------------------------------------------------------------------------
@@ -4094,26 +4096,32 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			info.SetDamage( flPenaltyNonBurning );
 		}
 
-		int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMiniCritWhileAirborne, mini_crit_airborne );
-
-		if ( nCritWhileAirborne && pTFAttacker && pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-		{
-			bitsDamage |= DMG_CRITICAL;
-			info.AddDamageType( DMG_CRITICAL );
-		}
-		else if ( nMiniCritWhileAirborne && this && this->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-		{
-			bitsDamage |= DMG_MINICRITICAL;
-			info.AddDamageType( DMG_MINICRITICAL );
-		}
-
-		// Notify the damaging weapon.
-		pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
-
 		if ( pTFAttacker )
 		{
+			if ( pTFAttacker->m_Shared.InCond( TF_COND_ENERGY_BUFF ) || pTFAttacker->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
+			{
+				bitsDamage |= DMG_MINICRITICAL;
+				info.AddDamageType( DMG_MINICRITICAL );
+			}
+
+			int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMiniCritWhileAirborne, mini_crit_airborne );
+
+			if ( nCritWhileAirborne && pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+			{
+				bitsDamage |= DMG_CRITICAL;
+				info.AddDamageType( DMG_CRITICAL );
+			}
+			else if ( nMiniCritWhileAirborne && m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+			{
+				bitsDamage |= DMG_MINICRITICAL;
+				info.AddDamageType( DMG_MINICRITICAL );
+			}
+
+			// Notify the damaging weapon.
+			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
+
 			// Build rage
 			pTFAttacker->m_Shared.SetRageMeter( info.GetDamage() / 6.0f, TF_BUFF_OFFENSE );
 		}
@@ -7321,7 +7329,7 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 	{
 		pRagdoll->m_vecRagdollOrigin = GetAbsOrigin();
 		pRagdoll->m_vecRagdollVelocity = GetAbsVelocity();
-		pRagdoll->m_vecForce = m_vecTotalBulletForce;
+		pRagdoll->m_vecForce = m_vecForce;
 		pRagdoll->m_nForceBone = m_nForceBone;
 		pRagdoll->m_iPlayerIndex.Set( entindex() );
 		pRagdoll->m_bGib = bGibbed;
@@ -7383,6 +7391,7 @@ void CTFPlayer::CreateFeignDeathRagdoll( CTakeDamageInfo const &info, bool bGibb
 		pRagdoll->m_bBurning = bBurning;
 		pRagdoll->m_bWasDisguised = bFriendlyDisguise;
 		pRagdoll->m_bFeignDeath = true;
+		pRagdoll->m_bOnGround = !!( GetFlags() & FL_ONGROUND );
 
 		if ( bFriendlyDisguise )
 		{
@@ -7513,12 +7522,11 @@ void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
 			if ( !GetLastKnownArea() )
 				return;
 
-			CUtlVector<CNavArea *> nearby;
+			CUtlVector<CTFNavArea *> nearby;
 			CollectSurroundingAreas( &nearby, GetLastKnownArea() );
 
 			FOR_EACH_VEC( nearby, i ) {
-				CTFNavArea *area = static_cast<CTFNavArea *>( nearby[i] );
-				area->OnCombat();
+				nearby[i]->OnCombat();
 			}
 		}
 	}
@@ -8348,10 +8356,10 @@ void CTFPlayer::DoTauntAttack( void )
 				m_iTauntAttack = TAUNTATK_SPY_FENCING_STAB;
 			}
 
-			CBaseEntity *pList[256];
+			CBaseEntity *pList[64];
 
 			bool bHomerun = false;
-			int count = UTIL_EntitiesInBox( pList, 256, mins, maxs, FL_CLIENT|FL_OBJECT );
+			int count = UTIL_EntitiesInBox( pList, 64, mins, maxs, FL_CLIENT|FL_OBJECT );
 
 			if ( tf_debug_damage.GetBool() )
 			{
@@ -8617,18 +8625,16 @@ void CTFPlayer::ClearTauntAttack( void )
 		{
 			int nLunchBoxAddsMinicrits = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLunchBoxAddsMinicrits, set_weapon_mode );
-			if ( nLunchBoxAddsMinicrits == 2 )
+			if ( nLunchBoxAddsMinicrits != 2 )
+			{
+				m_Shared.AddCond( TF_COND_PHASE, 8.0f );
+				SpeakConceptIfAllowed( MP_CONCEPT_DODGING, "started_dodging:1" );
+				m_angTauntCamera = EyeAngles();
+			}
+			else
 			{
 				m_Shared.AddCond( TF_COND_ENERGY_BUFF, 8.0f );
-				m_flTauntAttackTime = 0.0f;
-				m_iTauntAttack = TAUNTATK_NONE;
-
-				return;
 			}
-
-			m_Shared.AddCond( TF_COND_PHASE, 8.0f );
-			SpeakConceptIfAllowed( MP_CONCEPT_DODGING, "started_dodging:1" );
-			m_angTauntCamera = EyeAngles();
 		}
 	}
 

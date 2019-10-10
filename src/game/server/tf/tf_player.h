@@ -15,6 +15,7 @@
 #include "tf_inventory.h"
 #include "tf_weapon_medigun.h"
 #include "ihasattributes.h"
+#include "nav_mesh/tf_nav_area.h"
 #include "Path/NextBotPathFollow.h"
 #include "NextBotUtil.h"
 
@@ -140,9 +141,12 @@ public:
 
 	virtual void		LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExitAngles );
 
+	virtual CTFNavArea *GetLastKnownArea( void ) const override;
+
 	// Combats
 	virtual void		TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
 	virtual int			TakeHealth( float flHealth, int bitsDamageType );
+	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
 	virtual	void		Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 	virtual bool		Event_Gibbed( const CTakeDamageInfo &info );
@@ -225,8 +229,6 @@ public:
 	virtual void		Weapon_FrameUpdate( void );
 	virtual void		Weapon_HandleAnimEvent( animevent_t *pEvent );
 	virtual bool		Weapon_ShouldSetLast( CBaseCombatWeapon *pOldWeapon, CBaseCombatWeapon *pNewWeapon );
-
-	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
 
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );

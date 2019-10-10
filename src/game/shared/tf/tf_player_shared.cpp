@@ -87,6 +87,8 @@ ConVar tf2v_disable_player_shadows( "tf2v_disable_player_shadows", "0", FCVAR_RE
 
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
+ConVar tf_enable_grenades( "tf_enable_grenade_equipment", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
+
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
 #endif
@@ -3450,15 +3452,15 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 	if ( !pInvis )
 		return false;
 
-	if (!bForce && pInvis->HasMotionCloak())
+	if ( !bForce && pInvis->HasMotionCloak() )
 		return false;
 
-	if (pInvis->HasFeignDeath())
+	if ( pInvis->HasFeignDeath() )
 		amt = Min( amt, 35.0f );
 
-	if (bIgnoreAttribs)
+	if ( bIgnoreAttribs )
 	{
-		if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
+		if ( amt <= 0.0f || m_flCloakMeter >= 100.0f )
 			return false;
 
 		m_flCloakMeter = Clamp( m_flCloakMeter + amt, 0.0f, 100.0f );
@@ -3467,19 +3469,19 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 
 	int iNoRegenFromItems = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pInvis, iNoRegenFromItems, mod_cloak_no_regen_from_items );
-	if (iNoRegenFromItems)
+	if ( iNoRegenFromItems )
 		return false;
 
 	int iNoCloakWhenCloaked = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pInvis, iNoCloakWhenCloaked, NoCloakWhenCloaked );
-	if (iNoCloakWhenCloaked)
+	if ( iNoCloakWhenCloaked )
 	{
 		if (InCond( TF_COND_STEALTHED ))
 			return false;
 	}
 
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pInvis, amt, ReducedCloakFromAmmo );
-	if (amt <= 0.0f || m_flCloakMeter >= 100.0f)
+	if ( amt <= 0.0f || m_flCloakMeter >= 100.0f )
 		return false;
 
 	m_flCloakMeter = Clamp( m_flCloakMeter + amt, 0.0f, 100.0f );
@@ -3737,7 +3739,6 @@ bool CTFPlayerShared::HasDemoShieldEquipped( void ) const
 	return m_bShieldEquipped;
 }
 
-#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3752,8 +3753,12 @@ void CTFPlayerShared::CalcChargeCrit( bool bForceCrit )
 		m_iNextMeleeCrit = kCritType_MiniCrit;
 	}
 
+#ifdef GAME_DLL
 	m_pOuter->SetContextThink( &CTFPlayer::RemoveMeleeCrit, gpGlobals->curtime + 0.3f, "RemoveMeleeCrit" );
+#endif
 }
+
+#ifdef GAME_DLL
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4755,7 +4760,7 @@ bool CTFPlayer::DoClassSpecialSkill(void)
 			{
 				// Toggle invisibility
 				CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-				if (pInvis)
+				if ( pInvis )
 				{
 					bDoSkill = pInvis->ActivateInvisibility();
 				}

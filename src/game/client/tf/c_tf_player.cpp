@@ -1070,7 +1070,8 @@ bool C_TFRagdoll::IsRagdollVisible()
 bool C_TFRagdoll::IsDecapitation()
 {
 	// Only decapitate if the ragdoll is going to stick around for a while (?)
-	if ( cl_ragdoll_fade_time.GetFloat() > 5.0f && ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION || m_iDamageCustom == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING || m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS ) )
+	if ( cl_ragdoll_fade_time.GetFloat() > 5.0f && ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION || m_iDamageCustom == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING
+													 || m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS ) )
 	{
 		return true;
 	}
@@ -4189,8 +4190,8 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 			const int iClassIdx = GetPlayerClass()->GetClassIndex();
 			for ( int i=0; i<m_aGibs.Count(); ++i )
 			{
-				breakmodel_t breakModel = m_aGibs[i];
-				if ( !V_strcmp( breakModel.modelName, g_pszHeadGibs[iClassIdx] ) )
+				breakmodel_t const &breakModel = m_aGibs[i];
+				if ( !V_stricmp( breakModel.modelName, g_pszHeadGibs[iClassIdx] ) )
 					list.AddToHead( breakModel );
 			}
 

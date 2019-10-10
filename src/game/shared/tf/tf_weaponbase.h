@@ -320,6 +320,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual int		GetWorldModelIndex( void );
 	virtual bool	ShouldDrawCrosshair( void );
+	virtual void	GetWeaponCrosshairScale( float &flScale );
 	virtual void	Redraw( void );
 
 	virtual void	AddViewmodelBob( CBaseViewModel *viewmodel, Vector &origin, QAngle &angles );
