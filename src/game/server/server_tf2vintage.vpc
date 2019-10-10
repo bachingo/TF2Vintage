@@ -353,6 +353,8 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.h"		
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.h"	
+						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.h"
 					}
 					$Folder "Grenades"
 					{
