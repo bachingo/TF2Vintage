@@ -28,7 +28,7 @@ WeaponData
 	"secondary_ammo"	"None"
 	"clip_size"		"6"
 	"default_clip"		"6"
-	"ProjectileType"	"projectile_pipe"
+	"ProjectileType"	"weapon_grenade_pipebomb_projectile"
 
 	// Buckets.
 	"bucket"		"1"
