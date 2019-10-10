@@ -52,7 +52,7 @@ enum TFNavAttributeType
 	/* bit 31: unused */
 };
 
-#define TF_ATTRIBUTE_RESET BLOCKED|RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT|AMMO|HEALTH|CONTROL_POINT|BLUE_SENTRY|RED_SENTRY
+
 
 class CTFNavArea : public CNavArea
 {

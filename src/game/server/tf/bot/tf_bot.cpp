@@ -237,14 +237,6 @@ void CTFBot::Touch( CBaseEntity *other )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Return a CTFNavArea instance
-//-----------------------------------------------------------------------------
-CTFNavArea *CTFBot::GetLastKnownArea( void ) const
-{
-	return (CTFNavArea *)m_lastNavArea;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 bool CTFBot::IsAllowedToPickUpFlag( void )

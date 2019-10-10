@@ -922,6 +922,8 @@ void CTFNavMesh::RecomputeInternalData()
 	m_recomputeTimer.Invalidate();
 }
 
+#define TF_ATTRIBUTE_RESET    (BLOCKED|RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT|AMMO|HEALTH|CONTROL_POINT|BLUE_SENTRY|RED_SENTRY)
+
 void CTFNavMesh::RemoveAllMeshDecoration()
 {
 	for ( int i=0; i < TheNavAreas.Count(); ++i )

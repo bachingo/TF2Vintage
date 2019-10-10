@@ -7,12 +7,14 @@
 
 #include "cbase.h"
 #include "tf_player.h"
+#include "nav_pathfind.h"
 #include "tf_gamerules.h"
 #include "tf_gamestats.h"
 #include "KeyValues.h"
 #include "viewport_panel_names.h"
 #include "client.h"
 #include "team.h"
+#include "nav_mesh/tf_nav_mesh.h"
 #include "tf_weaponbase.h"
 #include "tf_client.h"
 #include "tf_team.h"
@@ -63,8 +65,6 @@
 #include "tf_weapon_sword.h"
 #include "tf_weapon_invis.h"
 #include "tf_weapon_knife.h"
-#include "nav_mesh/tf_nav_mesh.h"
-#include "nav_pathfind.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2298,6 +2298,14 @@ bool CTFPlayer::IsCapturingPoint( void )
 	}
 
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return a CTFNavArea casted instance
+//-----------------------------------------------------------------------------
+CTFNavArea *CTFPlayer::GetLastKnownArea( void ) const
+{
+	return (CTFNavArea *)m_lastNavArea;
 }
 
 //-----------------------------------------------------------------------------
@@ -7514,12 +7522,11 @@ void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
 			if ( !GetLastKnownArea() )
 				return;
 
-			CUtlVector<CNavArea *> nearby;
+			CUtlVector<CTFNavArea *> nearby;
 			CollectSurroundingAreas( &nearby, GetLastKnownArea() );
 
 			FOR_EACH_VEC( nearby, i ) {
-				CTFNavArea *area = static_cast<CTFNavArea *>( nearby[i] );
-				area->OnCombat();
+				nearby[i]->OnCombat();
 			}
 		}
 	}
