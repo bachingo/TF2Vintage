@@ -147,9 +147,9 @@ void CTFBaseRocket::Spawn( void )
 	// This sets projectile gravity, if the attribute exists.
 	if ( m_hLauncher.Get() )
 	{
-		float flGravityOverride = 0.0f;
+		float flGravityOverride = 0.4f; //0.4f is base grenade gravity.
 		CALL_ATTRIB_HOOK_STRING_ON_OTHER( m_hLauncher.Get(), flGravityOverride, projectile_gravity );
-		if ( flGravityOverride != 0.0f )
+		if ( flGravityOverride != 0.4f )
 		{
 			SetGravity( flGravityOverride );
 		}
