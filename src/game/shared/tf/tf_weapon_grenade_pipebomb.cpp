@@ -62,7 +62,7 @@ BEGIN_NETWORK_TABLE( CTFGrenadePipebombProjectile, DT_TFProjectile_Pipebomb )
 	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
 	SendPropInt( SENDINFO( m_iType ), 2 ),
-	SendPropInt( SENDINFO( m_iVariant ), 2 ),
+//	SendPropInt( SENDINFO( m_iVariant ), 2 ),
 	SendPropBool( SENDINFO( m_bDefensiveBomb ) ),
 	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif

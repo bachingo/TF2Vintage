@@ -466,7 +466,7 @@ void CTFWeaponBaseGrenadeProj::SetDetonateTimerLength( float timer )
 {
 	m_flDetonateTime = gpGlobals->curtime + timer;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), m_flDetonateTime, fuse_mult );
-	return m_flDetonateTime;
+	//return m_flDetonateTime;
 }
 
 //-----------------------------------------------------------------------------
