@@ -80,6 +80,7 @@ public:
 	virtual void	DetonateStickies( void );
 
 	void			SetPipebombMode( int iMode );
+	void			SetPipebombBetaVariant( int iVariant );
 
 	virtual void	PipebombTouch( CBaseEntity *pOther );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
