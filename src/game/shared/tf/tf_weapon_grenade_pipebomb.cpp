@@ -57,12 +57,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadePipebombProjectile, DT_TFProjectile_Pip
 BEGIN_NETWORK_TABLE( CTFGrenadePipebombProjectile, DT_TFProjectile_Pipebomb )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iType ) ),
-	RecvPropInt( RECVINFO( m_iVariant ) ),
 	RecvPropBool( RECVINFO( m_bDefensiveBomb ) ),
 	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
 	SendPropInt( SENDINFO( m_iType ), 2 ),
-	SendPropInt( SENDINFO( m_iVariant ), 2 ),
 	SendPropBool( SENDINFO( m_bDefensiveBomb ) ),
 	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
@@ -315,7 +313,7 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_pipebomb_projectile );
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
 																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo,
-																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon, int iVariant )
+																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon )
 {
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( ( iMode == TF_GL_MODE_REMOTE_DETONATE ) ? ( ( iVariant == TF_GL_IS_STICKY ) ? "tf_projectile_pipe_remote" : "tf_weapon_grenade_pipebomb_projectile" ): "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
@@ -404,6 +402,9 @@ void CTFGrenadePipebombProjectile::Precache()
 	PrecacheGibsForModel( index );
 
 	index = PrecacheModel( TF_WEAPON_GRENADE_MODEL );
+	PrecacheGibsForModel( index );
+	
+	index = PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
 	PrecacheGibsForModel( index );
 
 	PrecacheScriptSound( TF_WEAPON_PIPEBOMB_BOUNCE_SOUND );
