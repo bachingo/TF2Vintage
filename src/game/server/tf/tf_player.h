@@ -703,6 +703,7 @@ private:
 	bool				m_bJumpEffect;
 
 	CNetworkVar( int, m_nForceTauntCam );
+	CNetworkVar( bool, m_bTyping );
 
 	CAttributeManager	m_AttributeManager;
 

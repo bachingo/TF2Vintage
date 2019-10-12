@@ -271,6 +271,7 @@ public:
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 
 	void UpdateSpyMask(void);
+	void UpdateTypingBubble( void );
 
 	void UpdateOverhealEffect( bool bForceHide = false );
 
@@ -346,6 +347,7 @@ private:
 
 	// Medic callout particle effect
 	CNewParticleEffect *m_pSaveMeEffect;
+	CNewParticleEffect *m_pTypingEffect;
 
 	bool m_bUpdateObjectHudState;
 
@@ -371,6 +373,7 @@ public:
 	bool			m_bIsDisplayingNemesisIcon;
 
 	int				m_nForceTauntCam;
+	bool			m_bTyping;
 
 	int				m_iSpawnCounter;
 

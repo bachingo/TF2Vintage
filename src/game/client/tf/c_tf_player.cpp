@@ -75,6 +75,8 @@
 #include "iviewrender.h"				//for view->
 
 #include "cam_thirdperson.h"
+#include "tf_hud_chat.h"
+#include "iclientmode.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2074,7 +2076,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropDataTable( "tfnonlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFNonLocalPlayerExclusive ) ),
 
 	RecvPropInt( RECVINFO( m_nForceTauntCam ) ),
-
+	RecvPropBool( RECVINFO( m_bTyping ) ),
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
 END_RECV_TABLE()
 
@@ -2118,6 +2120,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
 	m_pOverhealEffect = NULL;
+	m_pTypingEffect = NULL;
 
 	m_aGibs.Purge();
 
@@ -2140,6 +2143,8 @@ C_TFPlayer::C_TFPlayer() :
 	m_bWaterExitEffectActive = false;
 
 	m_bUpdateObjectHudState = false;
+	
+	m_bTyping = false;
 
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "player_regenerate" );
@@ -2448,6 +2453,8 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		// Player has triggered a save me command
 		CreateSaveMeEffect();
 	}
+	
+	UpdateTypingBubble();
 
 	if ( m_Shared.InCond( TF_COND_BURNING ) && !m_pBurningSound )
 	{
@@ -3716,6 +3723,12 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 	else
 	{
 		VectorCopy( pCmd->viewangles, angMoveAngle );
+	}
+	
+	// HACK: We're using an unused bit in buttons var to set the typing status based on whether player's chat panel is open.
+	if ( GetTFChatHud() && GetTFChatHud()->GetMessageMode() != MM_NONE )
+	{
+		pCmd->buttons |= IN_TYPING;
 	}
 
 	BaseClass::CreateMove( flInputSampleTime, pCmd );
@@ -5343,6 +5356,43 @@ void C_TFPlayer::UpdateDemomanEyeEffect( int iDecapCount )
 			break;
 		default:
 			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateTypingBubble( void )
+{
+	// Don't show the bubble for local player.
+	if ( IsLocalPlayer() )
+		return;
+
+	if ( !m_pTypingEffect )
+	{
+		// Check if it's all or team chat.
+		if ( GetTFChatHud()->GetMessageMode() == MM_SAY )
+		{
+			// for all chat, show it over anyone's head.
+			if ( m_bTyping && IsAlive() && !m_Shared.IsStealthed() )
+			{
+				m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+			}
+		}
+		else
+		{
+			// for team chat, show over teammates only.
+			if ( m_bTyping && IsAlive() && ( !m_Shared.IsStealthed() || !IsEnemyPlayer() ) )
+			{
+			m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+			}
+		}
+	}
+	else
+	if ( m_pTypingEffect )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pTypingEffect );
+		m_pTypingEffect = NULL;
 	}
 }
 

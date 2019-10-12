@@ -60,7 +60,11 @@ void CHudChatInputLine::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 }
 
-
+static CHudChat *g_pTFChatHud = NULL;
+CHudChat *GetTFChatHud( void )
+{
+	return g_pTFChatHud;
+}
 
 //=====================
 //CHudChat

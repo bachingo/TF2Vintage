@@ -1544,4 +1544,6 @@ inline int GetEnemyTeam( CBaseEntity *ent )
 
 bool IsSpaceToSpawnHere( const Vector &vecPos );
 
+#define IN_TYPING ( 1 << 31 )
+
 #endif // TF_SHAREDDEFS_H

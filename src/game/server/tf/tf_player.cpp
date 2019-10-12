@@ -392,7 +392,8 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropDataTable( "tfnonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
 
 	SendPropInt( SENDINFO( m_nForceTauntCam ), 2, SPROP_UNSIGNED ),
-
+	SendPropBool( SENDINFO( m_bTyping ) ),
+	
 	SendPropInt( SENDINFO( m_iSpawnCounter ) ),
 END_SEND_TABLE()
 
@@ -820,6 +821,9 @@ void CTFPlayer::PostThink()
 		m_flTauntAttackTime = 0.0f;
 		DoTauntAttack();
 	}
+	
+	// Check if player is typing.
+	m_bTyping = ( m_nButtons & IN_TYPING ) != 0;
 }
 
 //-----------------------------------------------------------------------------
