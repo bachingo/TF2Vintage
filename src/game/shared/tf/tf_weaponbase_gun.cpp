@@ -191,6 +191,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
+	case TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE:
+		pProjectile = FirePipeBomb( pPlayer, true, TF_GL_IS_GRENADE );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
+
 	case TF_PROJECTILE_FLARE:
 		pProjectile = FireFlare(pPlayer);
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
@@ -518,7 +523,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 //-----------------------------------------------------------------------------
 // Purpose: Fire a  pipe bomb
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate )
+CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate, int iBetaMode )
 {
 	PlayWeaponShootSound();
 
@@ -555,7 +560,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	}
 
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
-		spin, pPlayer, GetTFWpnData(), iMode, flDamageMult, this );
+																spin, pPlayer, GetTFWpnData(), iMode, flDamageMult, this, iBetaMode );
 
 
 	if ( pProjectile )

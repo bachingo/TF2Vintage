@@ -55,7 +55,7 @@ public:
 	virtual void FireBullet( CTFPlayer *pPlayer );
 	CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	CBaseEntity *FireNail( CTFPlayer *pPlayer, int iSpecificNail );
-	CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate );
+	CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate, int iBetaMode = TF_GL_IS_STICKY );
 	CBaseEntity *FireFlare( CTFPlayer *pPlayer );
 	CBaseEntity *FireArrow( CTFPlayer *pPlayer, int iType );
 	CBaseEntity *FireJar( CTFPlayer *pPlayer, int iType );
