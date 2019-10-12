@@ -42,6 +42,8 @@ CTFAdvItemButton::~CTFAdvItemButton()
 void CTFAdvItemButton::Init()
 {
 	BaseClass::Init();
+	//SetScheme("AdvItemButton.res");
+
 	m_pItemDefinition = NULL;
 	m_iLoadoutSlot = TF_LOADOUT_SLOT_PRIMARY;
 	pButton->SetContentAlignment(CTFAdvButtonBase::GetAlignment("south"));
@@ -57,6 +59,25 @@ void CTFAdvItemButton::PerformLayout()
 	SetShouldScaleImage(true);
 
 	BaseClass::PerformLayout();
+};
+
+void CTFAdvItemButton::ApplySchemeSettings(vgui::IScheme *pScheme)
+{
+	BaseClass::ApplySchemeSettings(pScheme);
+
+	LoadControlSettings("resource/UI/main_menu/AdvItemButton.res");
+	//const char Font;
+	/*vgui::HFont hFont = pScheme->GetFont("tf2build", true);
+	pButton->SetFont(hFont);*/
+}
+
+
+void CTFAdvItemButton::Paint()
+{
+	BaseClass::Paint();
+
+	pButton->SetFgColor(Color(71, 98, 145, 255));
+	//pButton->Color
 };
 
 //-----------------------------------------------------------------------------
