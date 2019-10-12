@@ -2360,21 +2360,21 @@ void CTFPlayerShared::OnAddFeignDeath( void )
 void CTFPlayerShared::OnRemoveStealthed(void)
 {
 #ifdef CLIENT_DLL
-	const char *pUncloak = NULL;
 	C_TFWeaponInvis *pInvis = dynamic_cast<C_TFWeaponInvis *>( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-	if ( CAttributeManager::AttribHookValue<int>( 0, "set_quiet_unstealth", m_pOuter ) != 0 )
+	int nQuietUncloak = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nQuietUncloak, set_quiet_unstealth );
+	if ( nQuietUncloak != 0 )
 	{
-		pUncloak = "Player.Spy_UnCloakReduced";
+		m_pOuter->EmitSound( "Player.Spy_UnCloakReduced" );
 	}
 	else if ( pInvis && pInvis->HasFeignDeath() )
 	{
-		pUncloak = "Player.Spy_UnCloakFeignDeath";
+		m_pOuter->EmitSound( "Player.Spy_UnCloakFeignDeath" );
 	}
 	else
 	{
-		pUncloak = "Player.Spy_UnCloak";
+		m_pOuter->EmitSound( "Player.Spy_UnCloak" );
 	}
-	m_pOuter->EmitSound( pUncloak );
 
 	UpdateCritBoostEffect();
 	m_pOuter->UpdateOverhealEffect();
