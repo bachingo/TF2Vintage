@@ -65,6 +65,7 @@
 #include "tf_weapon_sword.h"
 #include "tf_weapon_invis.h"
 #include "tf_weapon_knife.h"
+#include "tf_weapon_syringe.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -7549,9 +7550,7 @@ void CTFPlayer::RemoveInvisibility( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 {
-	if ( !IsAlive() || !IsPlayerClass( TF_CLASS_SPY ) )
-		return;
-	if ( m_Shared.InCond( TF_COND_STEALTHED ) )
+	if ( !IsAlive() || m_Shared.InCond( TF_COND_STEALTHED ) )
 		return;
 	if ( !CanGoInvisible( true ) || m_Shared.GetSpyCloakMeter() < 99.9f )
 		return;
@@ -9108,25 +9107,23 @@ bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const 
 	bool bIsMedic = false;
 
 	//Do Lag comp on medics trying to heal team mates.
-	if ( IsPlayerClass( TF_CLASS_MEDIC ) == true || iWeaponID == TF_WEAPON_MEDIGUN )
+	if ( IsPlayerClass( TF_CLASS_MEDIC ) || iWeaponID == TF_WEAPON_MEDIGUN )
 	{
 		bIsMedic = true;
 
 		if ( pPlayer->GetTeamNumber() == GetTeamNumber() )
 		{
-			CWeaponMedigun *pWeapon = dynamic_cast<CWeaponMedigun *>( GetActiveWeapon() );
+			CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( GetActiveWeapon() );
+			if ( pMedigun && pMedigun->GetHealTarget() )
+				return ( pMedigun->GetHealTarget() == pPlayer );
 
-			if ( pWeapon && pWeapon->GetHealTarget() )
-			{
-				if ( pWeapon->GetHealTarget() == pPlayer )
-					return true;
-				else
-					return false;
-			}
+			CTFSyringe *pSyringe = dynamic_cast<CTFSyringe *>( GetActiveWeapon() );
+			if ( pSyringe && pSyringe->CanBeHealed( const_cast<CBasePlayer *>( pPlayer ) ) )
+				return true;
 		}
 	}
 
-	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && bIsMedic == false )
+	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && !bIsMedic )
 		return false;
 
 	// If this entity hasn't been transmitted to us and acked, then don't bother lag compensating it.

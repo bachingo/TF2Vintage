@@ -30,10 +30,14 @@ public:
 
 	CTFSyringe();
 	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_SYRINGE; }
+	virtual void		Smack( void );
+
+	bool CanBeHealed( CBaseEntity *pTarget ) const;
 
 private:
+	bool HitPlayer( CBaseEntity *pTarget );
 
-	CTFSyringe(const CTFSyringe &) {}
+	CTFSyringe( CTFSyringe const& );
 };
 
 #endif // TF_WEAPON_SYRINGE_H
