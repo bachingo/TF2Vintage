@@ -138,9 +138,4 @@ void CTFSyringe::Smack( void )
 			BaseClass::Smack();
 		}
 	}
-	else	 
-	{
-		// if it's a building, melee as usual.
-		BaseClass::Smack();
-	}
 }
