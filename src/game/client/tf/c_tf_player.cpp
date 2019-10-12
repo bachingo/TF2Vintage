@@ -98,6 +98,7 @@ ConVar cl_fp_ragdoll_auto( "cl_fp_ragdoll_auto", "1", FCVAR_ARCHIVE, "Autoswitch
 
 ConVar tf2v_model_muzzleflash( "tf2v_model_muzzleflash", "0", FCVAR_ARCHIVE, "Use the tf2 beta model based muzzleflash" );
 ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower" );
+ConVar tf2v_showchatbubbles( "tf2v_showchatbubbles", "1", FCVAR_ARCHIVE, "Show bubble icons over typing players" );
 
 extern ConVar tf_halloween;
 
@@ -5364,6 +5365,10 @@ void C_TFPlayer::UpdateDemomanEyeEffect( int iDecapCount )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdateTypingBubble( void )
 {
+	// If they're disabled, don't even bother with the rest of the function.
+	if ( !tf2v_showchatbubbles.GetBool() )
+		return;
+		
 	// Don't show the bubble for local player.
 	if ( IsLocalPlayer() )
 		return;
@@ -5384,7 +5389,7 @@ void C_TFPlayer::UpdateTypingBubble( void )
 			// for team chat, show over teammates only.
 			if ( m_bTyping && IsAlive() && ( !m_Shared.IsStealthed() || !IsEnemyPlayer() ) )
 			{
-			m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+				m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
 			}
 		}
 	}
