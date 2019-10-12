@@ -53,8 +53,36 @@ int C_TFSpyMask::GetSkin( void )
 {
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	
-	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+	// If the target is being ubered, show the uber skin instead.
+	if (pOwner->m_Shared.InCond(TF_COND_INVULNERABLE))
 	{
+		int iVisibleTeam = GetTeamNumber();
+		int nSkin;
+
+		// if this player is disguised and on the other team, use disguise team
+		if (pOwner->m_Shared.InCond(TF_COND_DISGUISED) && pOwner->IsEnemyPlayer())
+		{
+			iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
+		}
+
+		// Our mask's uber skins are on 9 and 10 (0 and 1 offset 9)
+		switch (iVisibleTeam)
+		{
+			case TF_TEAM_RED:
+			nSkin = 9;
+			break;
+
+			case TF_TEAM_BLUE:
+			nSkin = 10;
+			break;
+		
+			default:
+			nSkin = 9;
+			break;
+		}
+		return nSkin;
+	}
+		
 		// If this is an enemy spy disguised as a spy show a fake disguise class.
 		if ( pOwner->IsEnemyPlayer() && pOwner->m_Shared.GetDisguiseClass() == TF_CLASS_SPY )
 		{
@@ -64,8 +92,6 @@ int C_TFSpyMask::GetSkin( void )
 		{
 			return ( pOwner->m_Shared.GetDisguiseClass() - 1 );
 		}
-
-	}
 
 	return BaseClass::GetSkin();
 }

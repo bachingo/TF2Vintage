@@ -210,6 +210,8 @@ $Project "Client (TF)"
 			$File	"tf\c_tf_viewmodeladdon.h"
 			$File	"tf\tf_hud_bosshealthmeter.cpp"
 			$File	"tf\tf_hud_bosshealthmeter.h"
+			$File	"tf\c_tf_spymask.cpp"
+			$File	"tf\c_tf_spymask.h"
 			
 			$Folder	"Unused"
 			{

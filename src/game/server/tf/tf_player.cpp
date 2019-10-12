@@ -921,6 +921,9 @@ void CTFPlayer::PrecachePlayerModels( void )
 
 	// Gunslinger
 	PrecacheModel( "models/weapons/c_models/c_engineer_gunslinger.mdl" );
+	
+	// Spy's mask (new disguise method)
+	PrecacheModel( "models/player/items/spy/spyMask.mdl" );
 
 	// Precache player class sounds
 	for ( i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; ++i )

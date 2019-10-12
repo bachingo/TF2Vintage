@@ -23,6 +23,7 @@
 #include "iinput.h"
 #include "tf_weapon_medigun.h"
 #include "ihasattributes.h"
+#include "c_tf_spymask.h"
 
 class C_MuzzleFlashModel;
 class C_BaseObject;
@@ -269,6 +270,8 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 
+	void UpdateSpyMask(void);
+
 	void UpdateOverhealEffect( bool bForceHide = false );
 
 	void UpdateDemomanEyeEffect( int iDecapCount );
@@ -418,6 +421,8 @@ public:
 
 	bool			m_bUpdatePartyHat;
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
+	
+	CHandle<C_TFSpyMask> m_hSpyMask;
 
 	CAttributeManager m_AttributeManager;
 

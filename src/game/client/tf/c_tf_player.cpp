@@ -2822,19 +2822,62 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 		InitPhonemeMappings();
 	}
 
+	// No longer needed for rendering, but still used for code.
+	
 	if ( IsPlayerClass( TF_CLASS_SPY ) )
 	{
 		m_iSpyMaskBodygroup = FindBodygroupByName( "spyMask" );
 	}
+	
 	else
 	{
 		m_iSpyMaskBodygroup = -1;
 	}
-
+	
+	if ( m_hSpyMask )
+	{
+		// Local player must have changed team.
+		m_hSpyMask->UpdateVisibility();
+	}
 	m_bUpdatePartyHat = true;
 
 	return hdr;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateSpyMask(void)
+{
+	C_TFSpyMask *pMask = m_hSpyMask.Get();
+
+	if (m_Shared.InCond(TF_COND_DISGUISED))
+	{
+		// Create mask if we don't already have one.
+		if (!pMask)
+		{
+			pMask = new C_TFSpyMask();
+
+			if (!pMask->InitializeAsClientEntity("models/player/items/spy/spyMask.mdl", RENDER_GROUP_OPAQUE_ENTITY))
+			{
+				pMask->Release();
+				return;
+			}
+
+			pMask->SetOwnerEntity(this);
+			pMask->FollowEntity(this);
+			pMask->UpdateVisibility();
+
+			m_hSpyMask = pMask;
+		}
+	}
+	else if (pMask)
+	{
+		pMask->Release();
+		m_hSpyMask = NULL;
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4343,15 +4386,7 @@ int C_TFPlayer::GetSkin()
 		{
 			if (IsPlayerClass(TF_CLASS_SPY))
 			{
-				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
-				{
-					nSkin = 4;
-				}
-				else
-				{
-					nSkin = 22;
-				}
-
+				nSkin = 22;
 			}
 			else
 			{
@@ -4371,15 +4406,7 @@ int C_TFPlayer::GetSkin()
 		{
 			if (IsPlayerClass(TF_CLASS_SPY))
 			{
-				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
-				{
-					nSkin = 5;
-				}
-				else
-				{
-					nSkin = 23;
-				}
-
+				nSkin = 23;
 			}
 			else
 			{
@@ -4405,6 +4432,8 @@ int C_TFPlayer::GetSkin()
 
 
 	}
+	// This part shouldn't matter anymore.
+	/*
 	else if (m_Shared.InCond(TF_COND_DISGUISED))
 	{
 		if (!IsEnemyPlayer())
@@ -4456,6 +4485,7 @@ int C_TFPlayer::GetSkin()
 			}
 		}
 	}
+	*/
 
 	return nSkin;
 }
@@ -4747,12 +4777,14 @@ void C_TFPlayer::ValidateModelIndex( void )
 
 		}
 	}
-
+	
+	// Don't need to set bodygroup anymore.
+	/*
 	if ( m_iSpyMaskBodygroup > -1 && GetModelPtr() != NULL )
 	{
 		SetBodygroup( m_iSpyMaskBodygroup, ( m_Shared.InCond( TF_COND_DISGUISED ) && ( !IsEnemyPlayer() || m_Shared.GetDisguiseClass() == TF_CLASS_SPY ) ) );
 	}
-
+	*/
 	BaseClass::ValidateModelIndex();
 }
 
