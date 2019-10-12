@@ -27,6 +27,7 @@ public:
 	void OnThink();
 	void OnTick();
 	virtual void Paint();
+	bool InSelection = false;
 	void OnCommand(const char* command);
 	void Hide();
 	void Show();

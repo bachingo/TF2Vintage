@@ -392,42 +392,50 @@ void CTFLoadoutPanel::OnCommand( const char* command )
 	}
 	else
 	{
-		char buffer[64];
-		const char* szText;
-		char strText[40];
-
-		if ( !Q_strncmp( command, "loadout", 7 ) )
+		if (InSelection)
 		{
-			const char *sChar = strchr( command, ' ' );
-			if ( sChar )
+			char buffer[64];
+			const char* szText;
+			char strText[40];
+
+			if (!Q_strncmp(command, "loadout", 7))
 			{
-				int iSlot = atoi( sChar + 1 );
-				sChar = strchr( sChar + 1, ' ' );
-				if ( sChar )
+				const char *sChar = strchr(command, ' ');
+				if (sChar)
 				{
-					int iWeapon = atoi( sChar + 1 );
-					SetSlotAndPreset( iSlot, iWeapon );
-					//Hide();
-					//Show_Inventory();
+					int iSlot = atoi(sChar + 1);
+					sChar = strchr(sChar + 1, ' ');
+					if (sChar)
+					{
+						int iWeapon = atoi(sChar + 1);
+						SetSlotAndPreset(iSlot, iWeapon);
+						InSelection = false;
+						
+					}
 				}
-			}
-			return;
-		}
-
-		for ( int i = 0; i < 2; i++ )
-		{
-			szText = ( i == 0 ? "SlideL" : "SlideR" );
-			Q_strncpy( strText, command, Q_strlen( szText ) + 1 );
-			if ( !Q_strcmp( strText, szText ) )
-			{
-				Q_snprintf( buffer, sizeof( buffer ), command + Q_strlen( szText ) );
-				SideRow( atoi( buffer ), ( i == 0 ? -1 : 1 ) );
 				return;
 			}
+
+			for (int i = 0; i < 2; i++)
+			{
+				szText = (i == 0 ? "SlideL" : "SlideR");
+				Q_strncpy(strText, command, Q_strlen(szText) + 1);
+				if (!Q_strcmp(strText, szText))
+				{
+					Q_snprintf(buffer, sizeof(buffer), command + Q_strlen(szText));
+					SideRow(atoi(buffer), (i == 0 ? -1 : 1));
+					return;
+				}
+			}
 		}
+		else
+		{
+			InSelection = true;
+		}
+	}
+
 
 		BaseClass::OnCommand( command );
-	}
 }
 
 void CTFLoadoutPanel::SetSlotAndPreset( int iSlot, int iPreset )
