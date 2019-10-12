@@ -27,7 +27,9 @@ enum
 {
 	TF_TEAM_RED = FIRST_GAME_TEAM,
 	TF_TEAM_BLUE,
+
 	TF_TEAM_COUNT,
+
 	TF_TEAM_BOSS
 };
 
@@ -136,8 +138,9 @@ extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
 
 bool IsPlayerClassName( const char *name );
-
 int GetClassIndexFromString( const char *name, int maxClass );
+char const *GetPlayerClassName( int iClassIdx );
+char const *GetPlayerClassLocalizationKey( int iClassIdx );
 
 extern const char *g_aDominationEmblems[];
 extern const char *g_aPlayerClassEmblems[];
@@ -250,14 +253,18 @@ enum
 	TF_WPN_TYPE_PDA,
 	TF_WPN_TYPE_ITEM1,
 	TF_WPN_TYPE_ITEM2,
-	TF_WPN_TYPE_MELEE_ALLCLASS, // In live tf2 this is equal to 10, however keep it at 8 just in case it screws something else up
+	TF_WPN_TYPE_HEAD,
+	TF_WPN_TYPE_MISC,
+	TF_WPN_TYPE_MELEE_ALLCLASS,
 	TF_WPN_TYPE_SECONDARY2,
 	TF_WPN_TYPE_PRIMARY2,
+
 	TF_WPN_TYPE_COUNT
 };
 
 extern const char *g_AnimSlots[];
 extern const char *g_LoadoutSlots[];
+extern const char *g_LoadoutTranslations[];
 
 //-----------------------------------------------------------------------------
 // Loadout slots
@@ -267,12 +274,22 @@ enum
 	TF_LOADOUT_SLOT_PRIMARY = 0,
 	TF_LOADOUT_SLOT_SECONDARY,
 	TF_LOADOUT_SLOT_MELEE,
+	TF_LOADOUT_SLOT_UTILITY,
+	TF_LOADOUT_SLOT_BUILDING,
 	TF_LOADOUT_SLOT_PDA1,
 	TF_LOADOUT_SLOT_PDA2,
-	TF_LOADOUT_SLOT_BUILDING,
 	TF_LOADOUT_SLOT_HAT,
 	TF_LOADOUT_SLOT_MISC,
 	TF_LOADOUT_SLOT_ACTION,
+	TF_LOADOUT_SLOT_MISC2,
+	TF_LOADOUT_SLOT_TAUNT,
+	TF_LOADOUT_SLOT_TAUNT2,
+	TF_LOADOUT_SLOT_TAUNT3,
+	TF_LOADOUT_SLOT_TAUNT4,
+	TF_LOADOUT_SLOT_TAUNT5,
+	TF_LOADOUT_SLOT_TAUNT6,
+	TF_LOADOUT_SLOT_TAUNT7,
+	TF_LOADOUT_SLOT_TAUNT8,
 	TF_LOADOUT_SLOT_COUNT
 };
 
