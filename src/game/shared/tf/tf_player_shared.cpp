@@ -1537,6 +1537,12 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 		{
 			view->SetScreenOverlayMaterial( pMaterial );
 		}
+		
+		// We need to add the ubercharge effect to the Spy's mask.
+		if ( InCond( TF_COND_DISGUISED ) )
+		{	
+		m_pOuter->UpdateSpyMask();
+		}
 	}
 #endif
 }
@@ -1550,6 +1556,11 @@ void CTFPlayerShared::OnRemoveInvulnerable(void)
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		view->SetScreenOverlayMaterial( NULL );
+	}
+	// We need to revert the mask back to the regular disguise class.
+	if ( InCond( TF_COND_DISGUISED ) )
+	{	
+	m_pOuter->UpdateSpyMask();
 	}
 #endif
 }
