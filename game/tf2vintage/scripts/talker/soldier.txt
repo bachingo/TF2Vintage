@@ -417,7 +417,23 @@ Response PlayerKilledDominatingDemomanSoldier
 }
 Rule PlayerKilledDominatingDemomanSoldier
 {
-	criteria ConceptKilledPlayer IsSoldier IsDominated  IsVictimDemoman
+	criteria ConceptKilledPlayer IsSoldier IsDominated  IsVictimDemoman IsNotFriends
+	ApplyContext "SoldierKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingDemomanSoldier
+}
+
+Response PlayerKilledDominatingDemomanSoldierWAR
+{
+	scene "scenes/Player/Soldier/high/3413.vcd" predelay "2.5"
+	scene "scenes/Player/Soldier/high/3414.vcd" predelay "2.5"
+	scene "scenes/Player/Soldier/high/3415.vcd" predelay "2.5"
+	scene "scenes/Player/Soldier/high/3416.vcd" predelay "2.5"
+	scene "scenes/Player/Soldier/high/3417.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingDemomanSoldierWAR
+{
+	criteria ConceptKilledPlayer IsSoldier IsDominated  IsVictimDemoman IsFriends
 	ApplyContext "SoldierKillSpeech:1:10"
 	ApplyContext "IsDominating:1:10"
 	Response PlayerKilledDominatingDemomanSoldier

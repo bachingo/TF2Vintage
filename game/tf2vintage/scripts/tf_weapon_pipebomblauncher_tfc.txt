@@ -40,8 +40,8 @@ WeaponData
 	"ExplosionWaterEffect"	"ExplosionCore_MidAir_underwater"
 
 	// Animation.
-	"viewmodel"		"models/weapons/v_models/v_grenadelauncher_demo.mdl"
-	"playermodel"		"models/weapons/w_models/w_grenadelauncher.mdl"
+	"viewmodel"		"models/weapons/v_models/v_pipebomblauncher_demo.mdl"
+	"playermodel"		"models/weapons/w_models/w_pipebomblauncher.mdl"
 	"anim_prefix"		"pipe"
 
 	// Muzzleflash

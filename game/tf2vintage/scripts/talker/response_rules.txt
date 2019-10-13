@@ -293,6 +293,9 @@ criterion "IsDominated" "domination" "dominated" "required"
 criterion "IsRevenge" "domination" "revenge" "required" 
 criterion "IsHeadShot" "customdeath" "headshot" "required" 
 
+criterion "IsFriends" "relation" "friends" "required" 
+criterion "IsNotFriends" "relation" "none" "required" 
+
 
 
 criterion "ConceptKilledPlayer" "Concept" "TLK_KILLED_PLAYER" required

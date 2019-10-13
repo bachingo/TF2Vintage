@@ -242,6 +242,7 @@ Response PlayerTeleporterThanksHeavy
 	scene "scenes/Player/Heavy/low/347.vcd" 
 	scene "scenes/Player/Heavy/low/348.vcd" 
 	scene "scenes/Player/Heavy/low/349.vcd" 
+	scene "scenes/Player/Heavy/low/thanks04.vcd" 
 }
 Rule PlayerTeleporterThanksHeavy
 {

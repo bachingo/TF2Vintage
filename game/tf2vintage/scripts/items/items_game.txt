@@ -2019,6 +2019,73 @@
 				}
 			}
 		}
+		"weapon_quadball"
+		{
+			"prefab"		"weapon_grenade_launcher"
+			"item_logname"	"iron_bomber"
+			"item_iconname"	"iron_bomber"
+			"item_type_name"	"#TF_Weapon_GrenadeLauncher"
+			"item_name"		"#TF_Weapon_Iron_bomber"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_quadball/c_quadball"
+			"model_player"	"models/workshop/weapons/c_models/c_quadball/c_quadball.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -10"				
+			}
+			"attributes"
+			{
+				"Blast radius decreased"
+				{
+					"attribute_class"	"mult_explosion_radius"
+					"value"				"0.85"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	"custom_projectile_model"
+					"value"				"models/workshop/weapons/c_models/c_quadball/w_quadball_grenade.mdl"
+				}
+				"fuse bonus"
+				{
+					"attribute_class" "fuse_mult"
+					"value" "0.7"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_TackyGrenadier.Single"
+				"sound_burst"			"Weapon_TackyGrenadier.SingleCrit"
+				"sound_special1"		"Weapon_Airstrike.Explosion"
+			}
+		}
+		"zombie"
+		{
+			"item_class"	"tf_wearable"
+			"item_type_name"	"#TF_VoodooCursedSoul_Type"
+			"show_in_armory"	"0"
+			"armory_remap"		"Voodoo-Cursed Soul (Armory)"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
+			"item_quality"	"unique"
+			"propername" "0"
+			"min_ilevel"	"1"
+			"max_ilevel"	"1"
+			"item_slot"	"action"
+			"equip_region"	"zombie_body"
+			"holiday_restriction"	"halloween_or_fullmoon"
+			"attributes"
+			{
+				"player skin override"
+				{
+					"attribute_class" "player_skin_override"
+					"value"		  "1"
+				}
+				"zombiezombiezombiezombie"
+				{
+					"attribute_class"	"zombiezombiezombiezombie"
+					"value"		"1"
+				}
+			}
+		}
 		"weapon_robot_arm"
 		{
 			"propername"		"1"
@@ -2273,9 +2340,57 @@
 				"demoman"	"1"
 			}
 		}
+		"weapon_crusaders_crossbow"
+		{
+			"item_class"	"tf_weapon_crossbow"
+			"item_type_name"	"#TF_Weapon_Crossbow"
+			"item_name"	"#TF_CrusadersCrossbow"
+			"item_description"	"#TF_CrusadersCrossbow_desc"
+			"item_logname"	"crusaders_crossbow"
+			"item_iconname"	"crusaders_crossbow"
+			"item_slot"	"primary"
+			"item_quality"	"unique"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
+			"model_player"	"models/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow.mdl"
+			"attach_to_hands"	"1"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"				"10 0 -14"
+			}
+			"attributes"
+			{
+				"sniper no headshots"
+				{
+					"attribute_class" "set_weapon_mode"
+					"value" "1"
+				}
+				"maxammo primary reduced"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"	"0.25"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_CrusadersCrossbow.Single"
+				"sound_burst"	"Weapon_CrusadersCrossbow.SingleCrit"
+			}
+			"xifier_class_remap"	"crusaders_crossbow"
+		}
 		"weapon_reskin"
 		{
-			"show_in_armory"	"1"
+			"show_in_armory"	"0"
 		}
 	}
 	"items"
@@ -3087,8 +3202,8 @@
 			"prefab"	"weapon_pickaxe"
 			"item_name"	"#TF_Unique_Achievement_Pickaxe"
 			"item_logname"	"unique_pickaxe"
-			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe"	
-			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe.mdl"
+			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe_s2"
+			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe_s2.mdl"
 			"attributes"
 			{
 				"provide on active"
@@ -3100,11 +3215,6 @@
 				{
 					"attribute_class"	"set_weapon_mode"
 					"value"	"1"
-				}
-				"mod shovel speed boost"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"2"
 				}
 				"special taunt"
 				{
@@ -3937,6 +4047,11 @@
 				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
 			}
 		}
+		"305"
+		{
+			"name"	"The Crusader's Crossbow"
+			"prefab" "weapon_crusaders_crossbow"
+		}
 		"307"
 		{
 			"name"	"The Ullapool Caber"
@@ -4163,84 +4278,43 @@
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
 		}
-		"1050"
+		"775"
 		{
-			"name"		"Spawn Camper"
-			"prefab"		"weapon_backpack"
-			"item_name"		"#TF_sum19_spawn_camper_backpack"
-			"item_description"		"#TF_sum19_spawn_camper_backpack_Desc"
-			"item_type_name"		"#TF_Wearable_Backpack"
-			"image_inventory"		"backpack/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack"
-			"model_player"			"models/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack.mdl"
-			"item_slot"	"secondary"
-			"used_by_classes"
-			{
-				"pyro"		"1"
-			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"backpack"		"1"
-				}
-			}
-			"visuals_red"
-			{
-				"skin"	"0"
-			}
-			"visuals_blu"
-			{
-				"skin"	"1"
-			}
+			"name"	"The Escape Plan"
+			"prefab"	"weapon_pickaxe"
+			"item_name"	"#TF_Unique_Pickaxe_EscapePlan"
+			"item_logname"	"unique_pickaxe_escape"
+			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe"	
+			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe.mdl"
 			"attributes"
 			{
-				"health regen"
+				"provide on active"
 				{
-					"attribute_class"	"add_health_regen"
-					"value"	"4"
+					"attribute_class"	"provide_on_active"
+					"value" "1"
+				}
+				"mod shovel speed boost"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"2"
+				}
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value" "1"
+				}
+				"mod weapon blocks healing"
+				{
+					"attribute_class"	"weapon_blocks_healing"
+					"value" "1"
 				}
 			}
 		}
-		"1051"
+		"1151"
 		{
-			"name"	"Assault Cannon"
-			"prefab"	"weapon_minigun"
-			"enabled"				"0"
-			"show_in_armory"		"0"
-			"item_type_name"	"#TF_Weapon_Minigun"
-			"item_name"	"#TF_Weapon_AssaultCannon"
-			"item_logname"	"assaultcannon"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_assault_minigun/c_assault_minigun"
-			"model_player"	"models/workshop/weapons/c_models/c_assault_minigun/c_assault_minigun.mdl"
-			"item_quality"	"unique"
-			"visuals"
-			{
-				"sound_reload"	"Weapon_Asscan.Reload"
-				"sound_empty"	"Weapon_Asscan.ClipEmpty"
-				"sound_double_shot"	"Weapon_Asscan.Fire"
-				"sound_special1"	"Weapon_Asscan.WindUp"
-				"sound_special2"	"Weapon_Asscan.WindDown"
-				"sound_special3"	"Weapon_Asscan.Spin"
-				"sound_burst"	"Weapon_Asscan.FireCrit"
-			}
-			"attributes"
-			{		
-				"weapon spread bonus"
-				{
-					"attribute_class"	"mult_spread_scale"
-					"value"	".5"
-				}			
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0.875"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
+			"name"	"The Iron Bomber"
+			"prefab"	"weapon_quadball"
+			"particle_suffix"	"iron_bomber"
 		}
 		"10160"
 		{
@@ -4691,6 +4765,29 @@
 				"sound_burst"		"Weapon_AWP.SingleCrit"
 			}
 		}
+		"11013"
+		{
+			"name"	"The Ham Shank"
+			"prefab"	"weapon_fryingpan weapon_reskin"
+			"item_logname"	"ham_shank"
+			"item_iconname"	"ham_shank"
+			"item_type_name"	"#TF_Weapon_Pork_Product"
+			"item_name"	"#TF_HamShank"
+			"item_description"	"#TF_HamShank_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_ham/c_ham"
+			"model_player"	"models/workshop/weapons/c_models/c_ham/c_ham.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
+				"sound_melee_miss"	"Weapon_Machete.Miss"
+				"sound_burst"		"Weapon_Machete.MissCrit"
+			}
+		}
 		"11092"
 		{
 			"name"	"The Fortified Compound"
@@ -4848,6 +4945,51 @@
 			"item_iconname"		"giger_counter"
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
+		}
+		"35617"
+		{
+			"name"		"Zombie Halloween"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieScout"
+			"model_player_per_class"
+			{
+				"scout"		"models/player/items/scout/scout_zombie.mdl"
+				"sniper"	"models/player/items/sniper/sniper_zombie.mdl"
+				"heavy"		"models/player/items/heavy/heavy_zombie.mdl"
+				"spy"		"models/player/items/spy/spy_zombie.mdl"
+				"engineer"	"models/player/items/engineer/engineer_zombie.mdl"
+				"demoman"	"models/player/items/demo/demo_zombie.mdl"
+				"pyro"	"models/player/items/pyro/pyro_zombie.mdl"
+				"medic"	"models/player/items/medic/medic_zombie.mdl"
+				"soldier"	"models/player/items/soldier/soldier_zombie.mdl"
+			}
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"sniper"	"1"
+				"heavy"	"1"
+				"spy" "1"
+				"engineer" "1"
+				"demoman" "1"
+				"pyro" "1"
+				"medic" "1"
+				"soldier" "1"
+			}
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"feet"					"1"
+			}
+			"item_description"	"#TF_Item_ZombieScout_Desc"
+			"image_inventory"	"backpack/player/items/scout/scout_zombie"
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"shoes_socks"			"1"
+				}
+			}
+			"baseitem"	"1"
 		}
 	}
 	"attributes"
@@ -8586,6 +8728,15 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
+		"450"
+		{
+			"name"	"zombiezombiezombiezombie"
+			"attribute_class"	"zombiezombiezombiezombie"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"0"
+		}
 		"464"
 		{
 			"name"	"engineer sentry build rate multiplier"
@@ -9863,6 +10014,16 @@
 			"attribute_class"	"headshot_damage_modify"
 			"description_string"	"#Attrib_HeadshotDamageDecrease"
 			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10003"
+		{
+			"name"	"projectile gravity"
+			"attribute_class"	"projectile_gravity"
+			"description_string"	"#Attrib_ProjectileGravity"
+			"description_format"	"value_is_additive_percentage"
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
