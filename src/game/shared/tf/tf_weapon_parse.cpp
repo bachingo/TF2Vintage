@@ -91,7 +91,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 			m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_iProjectile = i;
 			break;
 		}
-	}	 
+	}
 
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flProjectileSpeed	= pKeyValuesData->GetFloat( "ProjectileSpeed", 0.0f );
 
