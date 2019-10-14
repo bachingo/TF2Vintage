@@ -10026,7 +10026,7 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
+			"stored_as_integer"	"0"
 		}
 	}
 	"attribute_controlled_attached_particles"

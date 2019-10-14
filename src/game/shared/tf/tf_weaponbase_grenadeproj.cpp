@@ -234,7 +234,13 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetupInitialTransmittedGrenadeVelocity( velocity );
 
 
-	SetGravity( 0.4f/*BaseClass::GetGrenadeGravity()*/ );
+	// Check if we should apply alternate gravity on our grenades.
+	float m_fl_GravityOverride = 0.0f;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher.Get(), m_flGravityOverride, projectile_gravity );
+	if (m_flGravityOverride != 0)
+	SetGravity( m_flGravityOverride );
+	else
+	SetGravity( 0.4f/*BaseClass::GetGrenadeGravity()*/ ); 
 
 	SetFriction( 0.2f/*BaseClass::GetGrenadeFriction()*/ );
 	SetElasticity( 0.45f/*BaseClass::GetGrenadeElasticity()*/ );
