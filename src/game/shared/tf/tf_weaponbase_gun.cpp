@@ -181,18 +181,18 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	case TF_PROJECTILE_PIPEBOMB:
 	case TF_PROJECTILE_CANNONBALL:
-		pProjectile = FirePipeBomb( pPlayer, false );
+		pProjectile = FirePipeBomb( pPlayer, 0 );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB_REMOTE:
 	case TF_PROJECTILE_PIPEBOMB_REMOTE_PRACTICE:
-		pProjectile = FirePipeBomb( pPlayer, true );
+		pProjectile = FirePipeBomb( pPlayer, 1 );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
 	case TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE:
-		pProjectile = FirePipeBomb( pPlayer, true, TF_GL_IS_GRENADE );
+		pProjectile = FirePipeBomb( pPlayer, 3 );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
@@ -523,7 +523,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 //-----------------------------------------------------------------------------
 // Purpose: Fire a  pipe bomb
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate, int iBetaMode )
+CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iRemoteDetonate )
 {
 	PlayWeaponShootSound();
 
@@ -532,9 +532,13 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	int iMode = TF_GL_MODE_REGULAR, iNoSpin = 0;
 	CALL_ATTRIB_HOOK_INT( iMode, set_detonate_mode );
 
-	if ( bRemoteDetonate )
+	if ( iRemoteDetonate == 1 )
 	{
 		iMode = TF_GL_MODE_REMOTE_DETONATE;
+	}
+	else if ( iRemoteDetonate == 3 )
+	{
+		iMode = TF_GL_MODE_BETA_DETONATE;
 	}
 
 	Vector vecForward, vecRight, vecUp;
@@ -560,7 +564,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	}
 
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
-																spin, pPlayer, GetTFWpnData(), iMode, flDamageMult, this, iBetaMode );
+																spin, pPlayer, GetTFWpnData(), iMode, flDamageMult, this );
 
 
 	if ( pProjectile )

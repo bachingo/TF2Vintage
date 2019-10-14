@@ -40,7 +40,7 @@
 
 #define TF_WEAPON_PIPEBOMB_GRAVITY		0.5f
 #define TF_WEAPON_PIPEBOMB_FRICTION		0.8f
-#define TF_WEAPON_PIPEBOMB_ELASTICITY	flGrenadeElasticity
+#define TF_WEAPON_PIPEBOMB_ELASTICITY	0.45f
 
 #define TF_WEAPON_PIPEBOMB_TIMER_DMG_REDUCTION		0.6
 
@@ -80,12 +80,6 @@ CTFGrenadePipebombProjectile::CTFGrenadePipebombProjectile()
 {
 	m_bTouched = false;
 	m_flChargeTime = 0.0f;
-	
-	int iNoBounce = 0;
-	float flGrenadeElasticity = 0.45f;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, iNoBounce, grenade_no_bounce );
-	if ( iNoBounce == 1 )
-	flGrenadeElasticity = 0.0f;
 
 #ifdef CLIENT_DLL
 	m_pGlowObject = NULL;
@@ -113,13 +107,10 @@ CTFGrenadePipebombProjectile::~CTFGrenadePipebombProjectile()
 int CTFGrenadePipebombProjectile::GetWeaponID( void ) const
 {
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
-	{
-		if ( m_iVariant == TF_GL_IS_STICKY )
-			return TF_WEAPON_GRENADE_PIPEBOMB;
-
+		return TF_WEAPON_GRENADE_PIPEBOMB;
+	else if ( m_iType == TF_GL_MODE_BETA_DETONATE )
 		return TF_WEAPON_GRENADE_PIPEBOMB_BETA;
-	}
-
+	else
 	return TF_WEAPON_GRENADE_DEMOMAN;
 }
 
@@ -132,7 +123,7 @@ int	CTFGrenadePipebombProjectile::GetDamageType( void )
 	int iDmgType = BaseClass::GetDamageType();
 
 	// If we're a pipebomb, we do distance based damage falloff for just the first few seconds of our life
-	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
+	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE || m_iType == TF_GL_MODE_BETA_DETONATE )
 	{
 		if ( gpGlobals->curtime - m_flCreationTime < 5.0 )
 		{
@@ -210,7 +201,11 @@ void CTFGrenadePipebombProjectile::CreateTrails( void )
 
 	if ( m_bCritical )
 	{
-		const char *pszFormat = ( m_iType == TF_GL_MODE_REMOTE_DETONATE ) ? "critical_grenade_%s" : "critical_pipe_%s";
+		const char *pszFormat = nullptr;
+		if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
+			pszFormat = "critical_grenade_%s";
+		else
+			pszFormat = "critical_pipe_%s";
 		const char *pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber(), true );
 
 		pParticle = ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
@@ -332,27 +327,21 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_pipebomb_projectile );
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
 																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo,
-																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon, int iVariant )
+																	int iMode, float flDamageMult, CTFWeaponBase *pWeapon )
 {
 	char const *szClassName = nullptr;
 	if ( iMode == TF_GL_MODE_REMOTE_DETONATE )
-	{
-		if ( iVariant == TF_GL_IS_STICKY )
-			szClassName = "tf_projectile_pipe_remote";
-		else
-			szClassName = "tf_weapon_grenade_pipebomb_projectile";
-	}
+		szClassName = "tf_projectile_pipe_remote";
+	else if ( iMode == TF_GL_MODE_BETA_DETONATE )
+		szClassName = "tf_weapon_grenade_pipebomb_projectile";
 	else
-	{
 		szClassName = "tf_projectile_pipe";
-	}
 
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( szClassName ? szClassName : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
 	{
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
 		pGrenade->SetPipebombMode( iMode );
-		pGrenade->SetPipebombBetaVariant( iVariant );
 		DispatchSpawn( pGrenade );
 
 		// Set the launcher for model overrides
@@ -370,7 +359,7 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 		pGrenade->SetDamage( pGrenade->GetDamage() * flDamageMult );
 		pGrenade->m_flFullDamage = pGrenade->GetDamage();
 
-		if ( pGrenade->m_iType != TF_GL_MODE_REMOTE_DETONATE )
+		if ( pGrenade->m_iType != TF_GL_MODE_REMOTE_DETONATE || pGrenade->m_iType != TF_GL_MODE_BETA_DETONATE )
 		{
 			// Some hackery here. Reduce the damage by 25%, so that if we explode on timeout,
 			// we'll do less damage. If we explode on contact, we'll restore this to full damage.
@@ -392,12 +381,13 @@ void CTFGrenadePipebombProjectile::Spawn()
 {
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
-		// Set this to max, so effectively they do not self-implode.
 		SetDetonateTimerLength( FLT_MAX );
-		if ( m_iVariant == TF_GL_IS_STICKY )
-			SetModel( TF_WEAPON_STICKYBOMB_MODEL );
-		else
-			SetModel( TF_WEAPON_PIPEBOMB_MODEL );	
+		SetModel( TF_WEAPON_STICKYBOMB_MODEL );
+	}
+	else if ( m_iType == TF_GL_MODE_BETA_DETONATE )
+	{
+		SetDetonateTimerLength( FLT_MAX );
+		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
 	}
 	else
 	{
@@ -451,15 +441,6 @@ void CTFGrenadePipebombProjectile::SetPipebombMode( int iMode )
 {
 	m_iType.Set( iMode );
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGrenadePipebombProjectile::SetPipebombBetaVariant( int iVariant )
-{
-	m_iVariant.Set( iVariant );
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -721,7 +702,7 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 			}
 		}
 
-		// If the force is sufficient, detach & move the pipebomb
+		// If the force is sufficient, detach & move the grenade/pipebomb/sticky
 		float flForce = tf_pipebomb_force_to_move.GetFloat();
 		if ( vecForce.LengthSqr() > (flForce*flForce) )
 		{
@@ -735,7 +716,7 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 
 			VPhysicsTakeDamage( newInfo );
 
-			// The pipebomb will re-stick to the ground after this time expires
+			// The sticky will re-stick to the ground after this time expires
 			m_flMinSleepTime = gpGlobals->curtime + tf_grenade_force_sleeptime.GetFloat();
 			m_bTouched = false;
 

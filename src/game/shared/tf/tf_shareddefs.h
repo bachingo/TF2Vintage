@@ -228,16 +228,8 @@ enum
 {
 	TF_GL_MODE_REGULAR = 0,
 	TF_GL_MODE_REMOTE_DETONATE,
-	TF_GL_MODE_FIZZLE
-};
-
-//-----------------------------------------------------------------------------
-// Differentiate Pipebombs and Stickybombs.
-//-----------------------------------------------------------------------------
-enum
-{
-	TF_GL_IS_GRENADE = 0,
-	TF_GL_IS_STICKY
+	TF_GL_MODE_FIZZLE,
+	TF_GL_MODE_BETA_DETONATE
 };
 
 //-----------------------------------------------------------------------------
