@@ -40,7 +40,7 @@
 
 #define TF_WEAPON_PIPEBOMB_GRAVITY		0.5f
 #define TF_WEAPON_PIPEBOMB_FRICTION		0.8f
-#define TF_WEAPON_PIPEBOMB_ELASTICITY	0.45f
+#define TF_WEAPON_PIPEBOMB_ELASTICITY	flGrenadeElasticity
 
 #define TF_WEAPON_PIPEBOMB_TIMER_DMG_REDUCTION		0.6
 
@@ -80,6 +80,12 @@ CTFGrenadePipebombProjectile::CTFGrenadePipebombProjectile()
 {
 	m_bTouched = false;
 	m_flChargeTime = 0.0f;
+	
+	int iNoBounce = 0;
+	float flGrenadeElasticity = 0.45f;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, iNoBounce, grenade_no_bounce );
+	if ( iNoBounce == 1 )
+	flGrenadeElasticity = 0.0f;
 
 #ifdef CLIENT_DLL
 	m_pGlowObject = NULL;
