@@ -52,7 +52,6 @@
 #include "te_tfblood.h"
 #include "tf_fx.h"
 #include "activitylist.h"
-#include "steam/steam_api.h"
 #include "cdll_int.h"
 #include "tf_weaponbase.h"
 #include "econ_wearable.h"
@@ -66,6 +65,15 @@
 #include "tf_weapon_invis.h"
 #include "tf_weapon_knife.h"
 #include "tf_weapon_syringe.h"
+
+#ifndef _X360
+#include "steam/isteamuserstats.h"
+#include "steam/isteamfriends.h"
+#include "steam/isteamutils.h"
+#include "steam/steam_api.h"
+#include "steam/isteamremotestorage.h"
+#endif
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -5123,6 +5131,29 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			pszDomination = "domination:dominated";
 		}
+
+		// Check if those involved were friends.
+		const char *pszRelationship = "relation:none";
+		#ifndef NO_STEAM
+		player_info_t piv;
+		player_info_t pia;
+		// Get the information about the attacker.
+		CBaseEntity *pAttacker = info.GetAttacker();
+		// Grab the indexes of the players involved.
+		int iPlayerIndexAttacker =pAttacker->entindex();
+		int iPlayerIndexVictim =pVictim->entindex();
+		// If player info is there, check friendship status on Steam.
+		if ( (engine->GetPlayerInfo(iPlayerIndexVictim, &piv)) && (engine->GetPlayerInfo(iPlayerIndexAttacker, &pia)) )
+		{
+			if (piv.friendsID && pia.friendsID)
+			{
+				// check and see if they're on the local player's friends list
+				CSteamID steamID(piv.friendsID, pia.friendsID, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual);
+				if (steamapicontext->SteamFriends()->HasFriend(steamID, /*k_EFriendFlagImmediate*/ 0x04))
+				pszRelationship = "relation:friends";
+			}
+		}
+		#endif
 
 		if ( IsAlive() )
 		{
