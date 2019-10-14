@@ -10023,10 +10023,10 @@
 			"name"	"projectile gravity"
 			"attribute_class"	"projectile_gravity"
 			"description_string"	"#Attrib_ProjectileGravity"
-			"description_format"	"value_is_additive_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"1"
 		}
 	}
 	"attribute_controlled_attached_particles"
