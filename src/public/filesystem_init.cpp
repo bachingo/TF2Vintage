@@ -224,7 +224,8 @@ CFSSearchPathsInit::CFSSearchPathsInit()
 	m_pDirectoryName = NULL;
 	m_pLanguage = NULL;
 	m_ModPath[0] = 0;
-	m_bMountHDContent = m_bLowViolence = false;
+	m_bMountHDContent = false;
+	m_bLowViolence = UTIL_IsLowViolence();
 }
 
 

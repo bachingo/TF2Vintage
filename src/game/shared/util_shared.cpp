@@ -815,13 +815,14 @@ static ConVar	violence_hblood( "violence_hblood","1", 0, "Draw human blood" );
 static ConVar	violence_hgibs( "violence_hgibs","1", 0, "Show human gib entities" );
 static ConVar	violence_ablood( "violence_ablood","1", 0, "Draw alien blood" );
 static ConVar	violence_agibs( "violence_agibs","1", 0, "Show alien gib entities" );
+static ConVar	tf2v_lv( "tf2v_lv","0", 0, "Force enable Low Violence mode." );
 
 bool UTIL_IsLowViolence( void )
 {
 	// These convars are no longer necessary -- the engine is the final arbiter of
 	// violence settings -- but they're here for legacy support and for testing low
 	// violence when the engine is in normal violence mode.
-	if ( !violence_hblood.GetBool() || !violence_ablood.GetBool() || !violence_hgibs.GetBool() || !violence_agibs.GetBool() )
+	if ( ( !violence_hblood.GetBool() || !violence_ablood.GetBool() || !violence_hgibs.GetBool() || !violence_agibs.GetBool() ) || ( tf2v_lv.GetBool() ) )
 		return true;
 
 #if defined(TF_CLIENT_DLL) || defined (TF_VINTAGE_CLIENT)
