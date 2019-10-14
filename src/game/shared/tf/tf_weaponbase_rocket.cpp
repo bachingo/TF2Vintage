@@ -148,7 +148,8 @@ void CTFBaseRocket::Spawn( void )
 	float m_flGravityOverride = 0.0f;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), m_flGravityOverride, projectile_gravity );
 	SetGravity( m_flGravityOverride ); // Rockets have no gravity, we we don't need to check it.
-
+	SetGravity( 0.0f );
+	
 	// Setup the touch and think functions.
 	SetTouch( &CTFBaseRocket::RocketTouch );
 	SetThink( &CTFBaseRocket::FlyThink );

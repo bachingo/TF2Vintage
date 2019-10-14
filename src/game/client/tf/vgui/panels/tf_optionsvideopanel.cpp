@@ -580,7 +580,7 @@ void CTFOptionsVideoPanel::OnResetData()
 	ResetDXLevelCombo();
 
 	m_pModelDetail->ActivateItem(2 - clamp(r_rootlod.GetInt(), 0, 2));
-	m_pTextureDetail->ActivateItem(4.6 * clamp(mat_picmip.GetInt(), -10, 4) - 14.5);
+	m_pTextureDetail->ActivateItem(clamp(mat_picmip.GetInt(), -10, 4) - 9);
 
 	if (r_flashlightdepthtexture.GetBool())		// If we're doing flashlight shadow depth texturing...
 	{
@@ -825,7 +825,7 @@ void CTFOptionsVideoPanel::OnApplyChanges()
 
 	ApplyChangesToConVar("mat_dxlevel", m_pDXLevel->GetActiveItemUserData()->GetInt("dxlevel"));
 	ApplyChangesToConVar("r_rootlod", 2 - m_pModelDetail->GetActiveItem());
-	ApplyChangesToConVar("mat_picmip", 4.6 * m_pTextureDetail->GetActiveItem() - 14.5);
+	ApplyChangesToConVar("mat_picmip", m_pTextureDetail->GetActiveItem() - 9);
 
 	// reset everything tied to the filtering mode, then the switch sets the appropriate one
 	ApplyChangesToConVar("mat_trilinear", false);

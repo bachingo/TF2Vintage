@@ -1447,9 +1447,10 @@ void CTFPlayer::GiveDefaultItems()
 	else if ( !tf2v_random_weapons.GetBool() )
 		ManageRegularWeapons( pData );
 
+	
 	if ( tf_halloween.GetBool() )
 	{
-		const int iItemID = 5617;
+		const int iItemID = 35617;
 		if ( GetItemSchema()->GetItemDefinition( iItemID ) )
 		{
 			CEconItemView econItem( iItemID );
