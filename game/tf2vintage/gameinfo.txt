@@ -43,6 +43,7 @@
 			game+mod+mod_write+default_write_path		"|gameinfo_path|."
 			
 			//  Load core TF2V assets.
+			game_lv					"|gameinfo_path|vpk/base/tf2v_lv.vpk"
 			game+mod				"|gameinfo_path|vpk/base/tf2v_base.vpk"
 			
 			// Where the game's binaries are.
