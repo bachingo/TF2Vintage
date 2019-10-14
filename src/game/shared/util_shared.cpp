@@ -822,7 +822,7 @@ bool UTIL_IsLowViolence( void )
 	// These convars are no longer necessary -- the engine is the final arbiter of
 	// violence settings -- but they're here for legacy support and for testing low
 	// violence when the engine is in normal violence mode.
-	if ( ( !violence_hblood.GetBool() || !violence_ablood.GetBool() || !violence_hgibs.GetBool() || !violence_agibs.GetBool() ) || ( tf2v_lv.GetBool() ) )
+	if ( ( !violence_hblood.GetBool() && !violence_ablood.GetBool() && !violence_hgibs.GetBool() && !violence_agibs.GetBool() ) || ( tf2v_lv.GetBool() ) )
 		return true;
 
 #if defined(TF_CLIENT_DLL) || defined (TF_VINTAGE_CLIENT)
