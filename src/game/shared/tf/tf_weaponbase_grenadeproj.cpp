@@ -236,7 +236,7 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 
 	// Check if we should apply alternate gravity on our grenades.
 	float m_flGravityOverride = 0.0f;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher.Get(), m_flGravityOverride, projectile_gravity );
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), m_flGravityOverride, projectile_gravity );
 	if (m_flGravityOverride != 0)
 	SetGravity( m_flGravityOverride );
 	else
