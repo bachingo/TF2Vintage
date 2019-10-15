@@ -130,9 +130,25 @@ public:
 		_WeaponData sTemp;
 		Q_strncpy( sTemp.szWorldModel, pKeyValuesData->GetString( "playermodel", "" ), sizeof( sTemp.szWorldModel ) );
 		Q_strncpy( sTemp.szPrintName, pKeyValuesData->GetString( "printname", "" ), sizeof( sTemp.szPrintName ) );
-		const char *pszWeaponType = pKeyValuesData->GetString( "WeaponType" );
+		CUtlString szWeaponType = pKeyValuesData->GetString( "WeaponType" );
 
-		int iType = UTIL_StringFieldToInt( pszWeaponType, g_AnimSlots, TF_WPN_TYPE_COUNT );
+		int iType = -1;
+		if ( szWeaponType == "primary" )
+			iType = TF_WPN_TYPE_PRIMARY;
+		else if ( szWeaponType == "secondary" )
+			iType = TF_WPN_TYPE_SECONDARY;
+		else if ( szWeaponType == "melee" )
+			iType = TF_WPN_TYPE_MELEE;
+		else if ( szWeaponType == "grenade" )
+			iType = TF_WPN_TYPE_GRENADE;
+		else if ( szWeaponType == "building" )
+			iType = TF_WPN_TYPE_BUILDING;
+		else if ( szWeaponType == "pda" )
+			iType = TF_WPN_TYPE_PDA;
+		else if ( szWeaponType == "item1" )
+			iType = TF_WPN_TYPE_ITEM1;
+		else if ( szWeaponType == "item2" )
+			iType = TF_WPN_TYPE_ITEM2;
 
 		sTemp.m_iWeaponType = iType >= 0 ? iType : TF_WPN_TYPE_PRIMARY;
 
