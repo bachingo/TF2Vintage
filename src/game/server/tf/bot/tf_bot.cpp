@@ -112,6 +112,9 @@ void CTFBot::Spawn( void )
 //-----------------------------------------------------------------------------
 void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 {
+	OnKilled( info );
+	CTFPlayer::Event_Killed( info );
+
 	LeaveSquad();
 
 	if ( !tf_bot_keep_class_after_death.GetBool() && TFGameRules()->CanBotChangeClass( this ) )
@@ -119,8 +122,6 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 		const char *pszClassname = GetNextSpawnClassname();
 		HandleCommand_JoinClass( pszClassname );
 	}
-
-	BaseClass::Event_Killed( info );
 }
 
 //-----------------------------------------------------------------------------
