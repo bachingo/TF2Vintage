@@ -5366,7 +5366,7 @@ void C_TFPlayer::UpdateDemomanEyeEffect( int iDecapCount )
 void C_TFPlayer::UpdateTypingBubble( void )
 {
 	// If they're disabled, don't even bother with the rest of the function.
-	if ( !tf2v_showchatbubbles.GetBool() )
+	if ( !tf2v_showchatbubbles.GetBool() || !GetTFChatHud() )
 		return;
 		
 	// Don't show the bubble for local player.
