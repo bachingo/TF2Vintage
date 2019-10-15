@@ -27,6 +27,9 @@
 #define TF_MIRV_MAX_CHARGE_VEL 2400
 #define TF_MIRV_MAX_CHARGE_TIME 4.0f
 
+#define TF_MIRV_TIMER	3.0f // seconds
+
+
 //=============================================================================
 //
 // Weapon Mirv tables.

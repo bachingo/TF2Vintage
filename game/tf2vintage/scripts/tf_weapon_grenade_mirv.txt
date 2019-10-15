@@ -4,7 +4,7 @@ WeaponData
 	"printname"		"#TF_sum19_dynamite_abs_style1"
 	"BuiltRightHanded"	"0"
 	"weight"		"2"
-	"WeaponType"		"primary"
+	"WeaponType"		"secondary"
 	"ITEM_FLAG_NOITEMPICKUP" 	"1"	
 	"HasTeamSkins"			"1"
 	"HasTeamSkins_Worldmodel"	"1"
@@ -45,7 +45,7 @@ WeaponData
 	// Animation.
 	"viewmodel"		"models/weapons/v_models/v_mirv_demo.mdl"
 	"playermodel"		"models/weapons/w_models/w_grenade_mirv_demo.mdl"
-	"anim_prefix"		"gl"
+	"anim_prefix"		"bottle"
 
 	// Muzzleflash
 	"MuzzleFlashParticleEffect" "muzzle_grenadelauncher"

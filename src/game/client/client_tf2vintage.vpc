@@ -420,6 +420,8 @@ $Project "Client (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_napalm.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_mirv.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_mirv.h"
 					}
 					$Folder	"Base TF2"
 					{
