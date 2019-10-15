@@ -144,11 +144,7 @@ void CTFBaseRocket::Spawn( void )
 	// Setup attributes.
 	m_takedamage = DAMAGE_NO;
 	
-	// Check if we should apply grenade gravity to our rockets.
-	float m_flGravityOverride = 0.0f;
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), m_flGravityOverride, projectile_gravity );
-	SetGravity( m_flGravityOverride ); // Rockets have no gravity, we we don't need to check it.
-	SetGravity( 0.0f );
+	SetGravity( 0.0f ); // Rockets have no gravity.
 	
 	// Setup the touch and think functions.
 	SetTouch( &CTFBaseRocket::RocketTouch );

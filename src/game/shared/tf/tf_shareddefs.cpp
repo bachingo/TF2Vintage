@@ -282,15 +282,7 @@ const char *g_LoadoutSlots[] =
 	"head",
 	"misc",
 	"action",
-	NULL,
-	"taunt",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	"misc"
 };
 
 const char *g_LoadoutTranslations[] ={
@@ -302,17 +294,8 @@ const char *g_LoadoutTranslations[] ={
 	"#LoadoutSlot_pda",
 	"#LoadoutSlot_pda2",
 	"#LoadoutSlot_Misc",
-	"#LoadoutSlot_Misc",
 	"#LoadoutSlot_Action",
 	"#LoadoutSlot_Misc",
-	"#LoadoutSlot_Taunt",
-	"#LoadoutSlot_Taunt2",
-	"#LoadoutSlot_Taunt3",
-	"#LoadoutSlot_Taunt4",
-	"#LoadoutSlot_Taunt5",
-	"#LoadoutSlot_Taunt6",
-	"#LoadoutSlot_Taunt7",
-	"#LoadoutSlot_Taunt8",
 };
 
 //-----------------------------------------------------------------------------

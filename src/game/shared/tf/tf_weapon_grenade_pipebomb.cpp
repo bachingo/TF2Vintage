@@ -36,11 +36,11 @@
 #include "func_respawnroom.h"
 #endif
 
-#define TF_WEAPON_PIPEBOMB_TIMER		3.0f //Seconds
-
+#define TF_WEAPON_PIPEBOMB_TIMER		3.0f 			//Seconds
 #define TF_WEAPON_PIPEBOMB_GRAVITY		0.5f
-#define TF_WEAPON_PIPEBOMB_FRICTION		0.8f
-#define TF_WEAPON_PIPEBOMB_ELASTICITY	0.45f
+
+#define TF_WEAPON_PIPEBOMB_FRICTION		0.8f			//Friction
+#define TF_WEAPON_PIPEBOMB_ELASTICITY	0.45f			//Elasticity
 
 #define TF_WEAPON_PIPEBOMB_TIMER_DMG_REDUCTION		0.6
 
@@ -391,7 +391,9 @@ void CTFGrenadePipebombProjectile::Spawn()
 	}
 	else
 	{
-		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
+		float flDetonateTime = TF_WEAPON_GRENADE_DETONATE_TIME;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), flDetonateTime, fuse_mult );
+		SetDetonateTimerLength( flDetonateTime );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
 		SetModel( TF_WEAPON_GRENADE_MODEL );
 	}
