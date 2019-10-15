@@ -142,15 +142,15 @@ const char *pszHeadLabelNames[] =
 
 const char *g_pszHeadGibs[] = {
 	"",
-	"models/player\\gibs\\scoutgib007.mdl",
-	"models/player\\gibs\\snipergib005.mdl",
-	"models/player\\gibs\\soldiergib007.mdl",
-	"models/player\\gibs\\demogib006.mdl",
-	"models/player\\gibs\\medicgib007.mdl",
-	"models/player\\gibs\\heavygib007.mdl",
-	"models/player\\gibs\\pyrogib008.mdl",
-	"models/player\\gibs\\spygib007.mdl",
-	"models/player\\gibs\\engineergib006.mdl",
+	"models/player/gibs/scoutgib007.mdl",
+	"models/player/gibs/snipergib005.mdl",
+	"models/player/gibs/soldiergib007.mdl",
+	"models/player/gibs/demogib006.mdl",
+	"models/player/gibs/medicgib007.mdl",
+	"models/player/gibs/heavygib007.mdl",
+	"models/player/gibs/pyrogib008.mdl",
+	"models/player/gibs/spygib007.mdl",
+	"models/player/gibs/engineergib006.mdl",
 };
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
@@ -1813,6 +1813,24 @@ public:
 };
 
 EXPOSE_INTERFACE( CProxyAnimatedWeaponSheen, IMaterialProxy, "AnimatedWeaponSheen" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
+// Purpose: Stub class for the WeaponSkin material proxy used by live TF2
+//-----------------------------------------------------------------------------
+class CProxyWeaponSkin : public CResultProxy
+{
+public:
+	virtual bool Init( IMaterial *pMaterial, KeyValues *pKeyValues )
+	{
+		return true;
+	}
+	void OnBind( void *pC_BaseEntity )
+	{
+
+	}
+};
+
+EXPOSE_INTERFACE( CProxyWeaponSkin, IMaterialProxy, "WeaponSkin" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: Universal proxy from live tf2 used for spy invisiblity material
