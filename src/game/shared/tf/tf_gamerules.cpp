@@ -3218,6 +3218,9 @@ static const char *g_aTaggedConVars[] =
 	
 	"tf2v_homing_deflected_rockets",
 	"homingdeflections",
+	
+	"tf2v_allow_cosmetics",
+	"randomizer",
 };
 
 //-----------------------------------------------------------------------------
