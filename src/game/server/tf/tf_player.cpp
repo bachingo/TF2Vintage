@@ -1450,24 +1450,9 @@ void CTFPlayer::GiveDefaultItems()
 	
 	if ( tf2v_allow_cosmetics.GetBool() )
 		ManageCosmetics( pData );
-
 	
-	/*
 	if ( tf_halloween.GetBool() )
-	{
-		const int iItemID = 35617;
-		if ( GetItemSchema()->GetItemDefinition( iItemID ) )
-		{
-			CEconItemView econItem( iItemID );
-			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( "tf_wearable", 0, &econItem ) );
-
-			if ( pEntity )
-			{
-				pEntity->GiveTo( this );
-			}
-		}
-	}
-	*/
+		EnableZombies( pData );
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -2060,6 +2045,36 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 					pGrenade->DefaultTouch( this );
 				}
 			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
+{
+	int iSlot = 9;
+	if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
+	{
+		// If there is no item in this slot (which there should always be for zombies) error and return.
+		Assert(GetEntityForLoadoutSlot( iSlot ) = NULL)
+		return;
+	}
+
+	// Give us an item from the inventory.
+	CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
+
+	if ( pItem )
+	{
+		const char *pszClassname = pItem->GetEntityName();
+		Assert( pszClassname );
+
+		CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+
+		if ( pEntity )
+		{
+			pEntity->GiveTo( this );
 		}
 	}
 }

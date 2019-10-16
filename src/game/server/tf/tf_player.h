@@ -477,6 +477,7 @@ public:
 	void				ManageRandomWeapons( TFPlayerClassData_t *pData );
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 	void				ManageGrenades( TFPlayerClassData_t *pData );
+	void				EnableZombies( TFPlayerClassData_t *pData );
 
 	void				PostInventoryApplication( void );
 
