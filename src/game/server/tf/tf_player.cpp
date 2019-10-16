@@ -1778,6 +1778,13 @@ void CTFPlayer::ManageCosmetics( TFPlayerClassData_t *pData )
 	{
 		if ( iSlot != 9) // Skip over the action slot for now.
 		{
+			int doublemisc = 0; //HACK: we set up misc2 to duplicate the misc slot.
+			if ( iSlot == 10 && doublemisc == 0)
+			{
+				iSlot = 8;
+				doublemisc = 1;
+			}
+			
 			if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 			{
 				// Nothing to do here.
@@ -1786,7 +1793,13 @@ void CTFPlayer::ManageCosmetics( TFPlayerClassData_t *pData )
 
 			// Give us an item from the inventory.
 			CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
-
+			
+			if ( iSlot == 8 && doublemisc == 1)
+			{
+				iSlot = 10;
+				doublemisc = 0;
+			}
+			
 			if ( pItem )
 			{
 				const char *pszClassname = pItem->GetEntityName();
