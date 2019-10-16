@@ -343,10 +343,7 @@ void CTFHudPlayerHealth::ApplySchemeSettings( IScheme *pScheme )
 	// load control settings...
 	LoadControlSettings( GetResFilename() );
 
-	if ( m_pHealthBonusImage )
-	{
-		m_pHealthBonusImage->GetBounds( m_nBonusHealthOrigX, m_nBonusHealthOrigY, m_nBonusHealthOrigW, m_nBonusHealthOrigH );
-	}
+	m_pHealthBonusImage->GetBounds( m_nBonusHealthOrigX, m_nBonusHealthOrigY, m_nBonusHealthOrigW, m_nBonusHealthOrigH );
 
 	m_flNextThink = 0.0f;
 
@@ -363,10 +360,10 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 	// set our health
 	m_nHealth = iNewHealth;
 	m_nMaxHealth = iMaxHealth;
-	m_pHealthImage->SetHealth( (float)(m_nHealth) / (float)(m_nMaxHealth) );
 
 	if ( m_pHealthImage )
 	{
+		m_pHealthImage->SetHealth( (float)(m_nHealth) / (float)(m_nMaxHealth) );
 		m_pHealthImage->SetFgColor( Color( 255, 255, 255, 255 ) );
 	}
 

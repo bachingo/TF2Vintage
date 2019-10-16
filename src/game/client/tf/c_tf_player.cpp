@@ -5388,34 +5388,43 @@ void C_TFPlayer::UpdateTypingBubble( void )
 		return;
 		
 	// Don't show the bubble for local player.
-	if ( IsLocalPlayer() )
+	if ( InFirstPersonView() )
 		return;
 
-	if ( !m_pTypingEffect )
+	// Check if it's all or team chat.
+	if ( GetTFChatHud()->GetMessageMode() == MM_SAY )
 	{
-		// Check if it's all or team chat.
-		if ( GetTFChatHud()->GetMessageMode() == MM_SAY )
+		// for all chat, show it over anyone's head.
+		if ( m_bTyping && IsAlive() && !m_Shared.IsStealthed() )
 		{
-			// for all chat, show it over anyone's head.
-			if ( m_bTyping && IsAlive() && !m_Shared.IsStealthed() )
-			{
+			if ( !m_pTypingEffect )
 				m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
-			}
 		}
-		else
+		else 
 		{
-			// for team chat, show over teammates only.
-			if ( m_bTyping && IsAlive() && ( !m_Shared.IsStealthed() || !IsEnemyPlayer() ) )
+			if ( m_pTypingEffect )
 			{
-				m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+				ParticleProp()->StopEmissionAndDestroyImmediately( m_pTypingEffect );
+				m_pTypingEffect = NULL;
 			}
 		}
 	}
 	else
-	if ( m_pTypingEffect )
 	{
-		ParticleProp()->StopEmissionAndDestroyImmediately( m_pTypingEffect );
-		m_pTypingEffect = NULL;
+		// for team chat, show over teammates only.
+		if ( m_bTyping && IsAlive() && ( !m_Shared.IsStealthed() || !IsEnemyPlayer() ) )
+		{
+			if ( !m_pTypingEffect )
+				m_pTypingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+		}
+		else 
+		{
+			if ( m_pTypingEffect )
+			{
+				ParticleProp()->StopEmissionAndDestroyImmediately( m_pTypingEffect );
+				m_pTypingEffect = NULL;
+			}
+		}
 	}
 }
 
