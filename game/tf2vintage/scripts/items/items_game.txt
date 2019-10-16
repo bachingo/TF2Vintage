@@ -4319,12 +4319,6 @@
 				}
 			}
 		}
-		"1151"
-		{
-			"name"	"The Iron Bomber"
-			"prefab"	"weapon_quadball"
-			"particle_suffix"	"iron_bomber"
-		}
 		"10160"
 		{
 			"name"	"TTG Max Pistol"
