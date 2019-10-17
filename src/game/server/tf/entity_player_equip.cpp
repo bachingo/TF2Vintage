@@ -48,7 +48,12 @@ BEGIN_DATADESC(CTFPlayerEquip)
 	DEFINE_KEYFIELD(m_iWeaponNumber[2], FIELD_INTEGER, "weapon3"),
 	DEFINE_KEYFIELD(m_iWeaponNumber[3], FIELD_INTEGER, "weapon4"),
 	DEFINE_KEYFIELD(m_iWeaponNumber[4], FIELD_INTEGER, "weapon5"),
-	DEFINE_KEYFIELD(m_iWeaponNumber[5], FIELD_INTEGER, "weapon6")
+	DEFINE_KEYFIELD(m_iWeaponNumber[5], FIELD_INTEGER, "weapon6"),
+	DEFINE_KEYFIELD(m_iWeaponNumber[6], FIELD_INTEGER, "weapon7"),
+	DEFINE_KEYFIELD(m_iWeaponNumber[7], FIELD_INTEGER, "weapon8"),
+	DEFINE_KEYFIELD(m_iWeaponNumber[8], FIELD_INTEGER, "weapon9"),
+	DEFINE_KEYFIELD(m_iWeaponNumber[9], FIELD_INTEGER, "weapon10"),
+	DEFINE_KEYFIELD(m_iWeaponNumber[10], FIELD_INTEGER, "weapon11"),
 
 	DEFINE_INPUTFUNC(FIELD_VOID, "EquipWeapons", InputEquipWeapons),
 
