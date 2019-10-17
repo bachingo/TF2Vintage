@@ -321,6 +321,7 @@
 			"item_class"	"tf_wearable"
 			"item_quality"	"unique"
 			"item_slot"	"misc"
+			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
 			"drop_type"	"none"
@@ -328,13 +329,13 @@
 		"misc"
 		{
 			"public_prefab"	"1"
-			"prefab"	"cosmetic base_misc"
+			"prefab"	"cosmetic"
 			"item_type_name"	"#TF_Wearable_CosmeticItem"
 		}
 		"hat"
 		{
 			"public_prefab"	"1"
-			"prefab"	"cosmetic base_hat"
+			"prefab"	"cosmetic"
 			"qc_template"	"scripts/itemtest_qc_template_hat.txt"
 			"item_type_name"	"#TF_Wearable_Hat"
 			"item_slot"	"head"
@@ -346,6 +347,14 @@
 					"hat"	"1"
 				}
 			}
+		}
+		"base_hat"
+		{
+		"prefab"	"hat"
+		}
+		"base_misc"
+		{
+		"prefab"	"misc"
 		}
 		"taunt"
 		{
@@ -416,28 +425,6 @@
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -9"
-			}
-		}
-		"weapon_minigun_alt"
-		{
-			"prefab"	"weapon_minigun"
-			"attributes"
-			{
-				"hidden primary max ammo bonus"
-				{
-					"attribute_class"	"mult_maxammo_primary"
-					"value"	"4"
-				}
-				"fire rate bonus"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value"	".25"
-				}
-				"bullets per shot penalty"
-				{
-					"attribute_class"	"mult_bullets_per_shot"
-					"value"	".25"
-				}
 			}
 		}
 		"weapon_rocketlauncher"
@@ -2039,11 +2026,6 @@
 					"attribute_class"	"mult_explosion_radius"
 					"value"				"0.85"
 				}
-				"grenade no bounce"
-				{
-					"attribute_class"	"grenade_no_bounce"
-					"value"	"1"
-				}
 				"custom projectile model"
 				{
 					"attribute_class"	"custom_projectile_model"
@@ -2066,14 +2048,12 @@
 		{
 			"item_class"	"tf_wearable"
 			"item_type_name"	"#TF_VoodooCursedSoul_Type"
-			"show_in_armory"	"0"
+			"baseitem"	"1"
 			"armory_remap"		"Voodoo-Cursed Soul (Armory)"
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
 			"item_quality"	"unique"
 			"propername" "0"
-			"min_ilevel"	"1"
-			"max_ilevel"	"1"
 			"item_slot"	"action"
 			"equip_region"	"zombie_body"
 			"holiday_restriction"	"halloween_or_fullmoon"
@@ -2088,6 +2068,11 @@
 				{
 					"attribute_class"	"zombiezombiezombiezombie"
 					"value"		"1"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
 				}
 			}
 		}
@@ -2405,7 +2390,7 @@
 			"name"	"default"
 			"hidden"	"1"
 			"item_class"	"tf_wearable"
-			"item_name"	"#TF_Default_ItemDef"
+			"item_name"	"#TF_Spectator_Default"
 			"item_slot"	"melee"
 			"item_quality"	"normal"
 		}
@@ -2681,6 +2666,51 @@
 			"prefab"	"weapon_builder_spy"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_sapper.mdl"
+			"baseitem"	"1"
+		}
+		"32"
+		{
+			"name"	"TF2V_COSMETIC_HAT"
+			"prefab"	"hat"
+			"item_name"	"#TF_Default_ItemDef"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"	"0"
+				}
+			}
+			"baseitem"	"1"
+		}
+		"32"
+		{
+			"name"	"TF2V_COSMETIC_MISC"
+			"prefab"	"misc"
+			"item_name"	"#TF_Default_ItemDef"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
 			"baseitem"	"1"
 		}
 		"35"
@@ -4241,10 +4271,6 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_bet_rocketlauncher/c_bet_rocketlauncher"
 			"model_player"	"models/workshop_partner/weapons/c_models/c_bet_rocketlauncher/c_bet_rocketlauncher.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -5"				
-			}
 			"attributes"
 			{
 				"centerfire projectile"
@@ -4318,6 +4344,12 @@
 					"value" "1"
 				}
 			}
+		}
+		"1151"
+		{
+			"name"	"The Iron Bomber"
+			"prefab"	"weapon_quadball"
+			"particle_suffix"	"iron_bomber"
 		}
 		"10160"
 		{
@@ -4949,50 +4981,132 @@
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
 		}
-		"35617"
+		"55617"
 		{
-			"name"		"Zombie Halloween"
+			"name"		"Zombie Scout"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieScout"
-			"model_player_per_class"
-			{
-				"scout"		"models/player/items/scout/scout_zombie.mdl"
-				"sniper"	"models/player/items/sniper/sniper_zombie.mdl"
-				"heavy"		"models/player/items/heavy/heavy_zombie.mdl"
-				"spy"		"models/player/items/spy/spy_zombie.mdl"
-				"engineer"	"models/player/items/engineer/engineer_zombie.mdl"
-				"demoman"	"models/player/items/demo/demo_zombie.mdl"
-				"pyro"	"models/player/items/pyro/pyro_zombie.mdl"
-				"medic"	"models/player/items/medic/medic_zombie.mdl"
-				"soldier"	"models/player/items/soldier/soldier_zombie.mdl"
-			}
-			"used_by_classes"
-			{
-				"scout"	"1"
-				"sniper"	"1"
-				"heavy"	"1"
-				"spy" "1"
-				"engineer" "1"
-				"demoman" "1"
-				"pyro" "1"
-				"medic" "1"
-				"soldier" "1"
-			}
+			"model_player"	"models/player/items/scout/scout_zombie.mdl"
 			"equip_regions"
 			{
 				"zombie_body"			"1"
 				"feet"					"1"
 			}
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
 			"item_description"	"#TF_Item_ZombieScout_Desc"
 			"image_inventory"	"backpack/player/items/scout/scout_zombie"
-			"visuals"
+		}
+		"55618"
+		{
+			"name"		"Zombie Soldier"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieSoldier"
+			"model_player"	"models/player/items/soldier/soldier_zombie.mdl"
+			"used_by_classes"
 			{
-				"player_bodygroups"
-				{
-					"shoes_socks"			"1"
-				}
+				"soldier"	"1"
 			}
-			"baseitem"	"1"
+			"item_description"	"#TF_Item_ZombieSoldier_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
+		}
+		"55619"
+		{
+			"name"		"Zombie Heavy"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieHeavy"
+			"model_player"	"models/player/items/heavy/heavy_zombie.mdl"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieHeavy_Desc"
+			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
+		}
+		"55620"
+		{
+			"name"		"Zombie Demo"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieDemoman"
+			"model_player"	"models/player/items/demo/demo_zombie.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieDemoman_Desc"
+			"image_inventory"	"backpack/player/items/demo/demo_zombie"
+		}
+		"55621"
+		{
+			"name"		"Zombie Engineer"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieEngineer"
+			"model_player"	"models/player/items/engineer/engineer_zombie.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieEngineer_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
+		}
+		"55622"
+		{
+			"name"		"Zombie Medic"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieMedic"
+			"model_player"	"models/player/items/medic/medic_zombie.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieMedic_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_zombie"
+		}
+		"55623"
+		{
+			"name"		"Zombie Spy"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieSpy"
+			"model_player"	"models/player/items/spy/spy_zombie.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSpy_Desc"
+			"image_inventory"	"backpack/player/items/spy/spy_zombie"
+		}
+		"55624"
+		{
+			"name"		"Zombie Pyro"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombiePyro"
+			"model_player"	"models/player/items/pyro/pyro_zombie.mdl"
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"pyro_head_replacement"	"1"
+			}
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+			"item_description"	"#TF_Item_ZombiePyro_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
+		}
+		"55625"
+		{
+			"name"		"Zombie Sniper"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieSniper"
+			"model_player"	"models/player/items/sniper/sniper_zombie.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSniper_Desc"
+			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
 		}
 	}
 	"attributes"
