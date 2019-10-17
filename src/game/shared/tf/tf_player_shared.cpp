@@ -96,7 +96,7 @@ ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLIC
 #ifdef GAME_DLL
 extern ConVar tf_halloween;
 extern ConVar tf2v_allow_cosmetics;
-extern ConVar tf2v_random_weapons;
+extern ConVar tf2v_randomizer;
 #endif
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
@@ -1284,7 +1284,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	}
 
 	// Stops the drain hack.
-	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) || tf2v_random_weapons.GetBool() )
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) || tf2v_randomizer.GetBool() )
 	{
 		CWeaponMedigun *pWeapon = m_pOuter->GetMedigun();
 		if ( pWeapon && pWeapon->IsReleasingCharge() )
@@ -3140,7 +3140,7 @@ void CTFPlayerShared::StopHealing(CTFPlayer *pPlayer)
 //-----------------------------------------------------------------------------
 medigun_charge_types CTFPlayerShared::GetChargeEffectBeingProvided( CTFPlayer *pPlayer )
 {
-	if ( !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && !tf2v_random_weapons.GetBool() )
+	if ( !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && !tf2v_randomizer.GetBool() )
 		return TF_CHARGE_NONE;
 
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
@@ -5057,7 +5057,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 		// Random weapons should use the ammo of the player class related to this weapon
 		// BUG: Client calls to this method will return incorrect max ammo values in randomizer
 #ifdef GAME_DLL
-		if ( tf2v_random_weapons.GetBool() )
+		if ( tf2v_randomizer.GetBool() )
 		{
 			CEconItemView *pItem = pWpn->GetItem();
 			if ( pItem )

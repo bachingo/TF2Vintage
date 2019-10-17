@@ -132,9 +132,10 @@ extern ConVar tf_stalematechangeclasstime;
 extern ConVar tf_damage_disablespread;
 
 // TF2V commands
-ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
+ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout and class." );
 ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "1", FCVAR_NOTIFY, "Enable or disable cosmetics on the server." );
-
+ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes players spawn with random classes." );
+ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
 ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
@@ -1043,7 +1044,7 @@ void CTFPlayer::Spawn()
 {
 	MDLCACHE_CRITICAL_SECTION();
 
-	if ( tf2v_random_weapons.GetBool() )
+	if ( tf2v_randomizer.GetBool() || tf2v_random_classes.GetBool() )
 	{
 		// Random class
 		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT ) );
@@ -1442,11 +1443,11 @@ void CTFPlayer::GiveDefaultItems()
 	}
 
 	// Give weapons.
-	if ( tf2v_random_weapons.GetBool() && !m_bRegenerating )
+	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating )
 		ManageRandomWeapons( pData );
 	else if ( tf2v_legacy_weapons.GetBool() )
 		ManageRegularWeaponsLegacy( pData );
-	else if ( !tf2v_random_weapons.GetBool() )
+	else if ( !tf2v_randomizer.GetBool() )
 		ManageRegularWeapons( pData );
 
 	// Give grenades.
@@ -2787,7 +2788,7 @@ void CTFPlayer::ChangeTeam( int iTeamNum, bool bAutoTeam/*= false*/, bool bSilen
 //-----------------------------------------------------------------------------
 void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 {
-	if ( !tf2v_random_weapons.GetBool() )
+	if ( !tf2v_randomizer.GetBool() || tf2v_random_classes.GetBool() )
 	{
 		if ( GetNextChangeClassTime() > gpGlobals->curtime )
 			return;
@@ -8238,13 +8239,13 @@ void CTFPlayer::Taunt( void )
 
 	m_bInitTaunt = true;
 	char szResponse[AI_Response::MAX_RESPONSE_NAME];
-	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_TAUNT, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) || tf2v_random_weapons.GetBool() )
+	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_TAUNT, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) || tf2v_random_weapons.GetBool() || tf2v_randomizer.GetBool() )
 	{
 		// Get the duration of the scene.
 		float flDuration = GetSceneDuration( szResponse ) + 0.2f;
 
 		// Crappy default taunt for randomizer
-		if ( tf2v_random_weapons.GetBool() && flDuration == 0.2f )
+		if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && flDuration == 0.2f )
 		{
 			flDuration += 3.0f;
 			m_Shared.StunPlayer( 3.0f, 0.0f, 0.0f, TF_STUNFLAG_BONKSTUCK|TF_STUNFLAG_NOSOUNDOREFFECT, this );
@@ -9180,7 +9181,7 @@ void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
 {
 	int iWeaponID = TF_WEAPON_NONE;
-	if ( tf2v_random_weapons.GetBool() )
+	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) )
 	{
 		iWeaponID = GetActiveTFWeapon()->GetWeaponID();
 	}

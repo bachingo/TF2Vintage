@@ -3147,7 +3147,7 @@ static const char *g_aTaggedConVars[] =
 	"tf2v_allow_thirdperson",
 	"thirdperson",
 
-	"tf2v_random_weapons",
+	"tf2v_randomizer",
 	"randomizer",
 
 	"tf2v_autojump",
@@ -3218,6 +3218,16 @@ static const char *g_aTaggedConVars[] =
 	
 	"tf2v_homing_deflected_rockets",
 	"homingdeflections",
+	
+	"tf2v_allow_cosmetics",
+	"cosmetics",
+
+	"tf2v_random_classes",
+	"randomclasses",
+	
+	"tf2v_random_classes",
+	"randomweapons",
+
 };
 
 //-----------------------------------------------------------------------------
