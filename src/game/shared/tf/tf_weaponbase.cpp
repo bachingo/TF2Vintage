@@ -1192,7 +1192,8 @@ bool CTFWeaponBase::ReloadSingly( void )
 			}
 
 #ifdef CLIENT_DLL
-			if ( UsingViewModel() )
+			// Play world reload.
+			if ( !UsingViewModel() )
 			WeaponSound( RELOAD );
 #endif
 
@@ -1309,9 +1310,9 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( !( bReloadPrimary || bReloadSecondary )  )
 		return false;
 
-	// Play reload
+	// Play world reload.
 #ifdef CLIENT_DLL
-	if ( UsingViewModel() )
+	if ( !UsingViewModel() )
 	WeaponSound( RELOAD );
 #endif
 	
