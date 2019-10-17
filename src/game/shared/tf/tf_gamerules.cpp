@@ -3209,9 +3209,6 @@ static const char *g_aTaggedConVars[] =
 	
 	"tf2v_allcrit",
 	"allcrit",
-	
-	"tf2v_allcrit",
-	"allcritmelee",
 		
 	"tf2v_homing_rockets",
 	"homingrockets",
