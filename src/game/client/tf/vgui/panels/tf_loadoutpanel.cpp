@@ -158,6 +158,10 @@ public:
 			iType = TF_WPN_TYPE_ITEM1;
 		else if ( szWeaponType == "item2" )
 			iType = TF_WPN_TYPE_ITEM2;
+		else if ( szWeaponType == "head" )
+			iType = TF_WPN_TYPE_HEAD;
+		else if ( szWeaponType == "misc" || szWeaponType == "misc2" || szWeaponType == "action" )
+			iType = TF_WPN_TYPE_MISC;
 
 		sTemp.m_iWeaponType = iType >= 0 ? iType : TF_WPN_TYPE_PRIMARY;
 
