@@ -1772,7 +1772,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	ValidateWeapons( true );
 	ValidateWearables();
 
-	for ( int iSlot = 0; iSlot < TF_PLAYER_LOADOUT_COUNT; ++iSlot )
+	for (int iSlot = 0; iSlot < TF_LOADOUT_SLOT_COUNT; ++iSlot)
 	{
 		if (!tf_halloween.GetBool() && iSlot == TF_LOADOUT_SLOT_ACTION)
 		continue;	// If it's not Halloween, just bail on the action slot.
@@ -1827,7 +1827,7 @@ void CTFPlayer::PostInventoryApplication( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
-	for ( int iWeapon = 0; iWeapon < TF_PLAYER_LOADOUT_COUNT; ++iWeapon )
+	for (int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_COUNT; ++iWeapon)
 	{
 		if ( (iWeapon >=TF_LOADOUT_SLOT_HAT && iWeapon != TF_LOADOUT_SLOT_ACTION ) )
 			continue; // Always bail on cosmetics, other than zombie skins.
@@ -1923,7 +1923,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for ( int i = 0; i < TF_PLAYER_LOADOUT_COUNT; ++i )
+	for (int i = 0; i < TF_LOADOUT_SLOT_COUNT; ++i)
 	{
 		if ( !tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ACTION )
 		continue;	// If it's not Halloween, just bail on the action slot.
