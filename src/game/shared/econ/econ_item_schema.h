@@ -253,8 +253,8 @@ public:
 		min_ilevel = 0;
 		max_ilevel = 0;
 		CLEAR_STR(image_inventory);
-		image_inventory_size_w = 0;
-		image_inventory_size_h = 0;
+		image_inventory_size_w = 128;
+		image_inventory_size_h = 82;
 		CLEAR_STR(model_player);
 		CLEAR_STR(model_world);
 		memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
@@ -263,6 +263,8 @@ public:
 		CLEAR_STR(extra_wearable);
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
+		reskin_of = 0;
+		is_reskin = false;
 	}
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
@@ -302,6 +304,8 @@ public:
 	int attach_to_hands_vm_only;
 	bool act_as_wearable;
 	int hide_bodygroups_deployed_only;
+	int reskin_of;
+	bool is_reskin;
 	CUtlVector<CEconItemAttribute> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];
 };
