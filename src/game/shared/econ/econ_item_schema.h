@@ -263,7 +263,6 @@ public:
 		CLEAR_STR(extra_wearable);
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
-		reskin_of = 0;
 		is_reskin = false;
 	}
 
@@ -304,7 +303,6 @@ public:
 	int attach_to_hands_vm_only;
 	bool act_as_wearable;
 	int hide_bodygroups_deployed_only;
-	int reskin_of;
 	bool is_reskin;
 	CUtlVector<CEconItemAttribute> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];

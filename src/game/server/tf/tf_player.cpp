@@ -136,6 +136,7 @@ ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spa
 ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "0", FCVAR_NOTIFY, "Enable or disable cosmetics on the server." );
 ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes players spawn with random classes." );
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
+ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
 ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
@@ -1786,11 +1787,11 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			// Nothing to do here.
 			continue;
 		}
-
+		
 		// Give us an item from the inventory.
 		CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
 
-		if ( pItem )
+		if ( pItem)
 		{
 			const char *pszClassname = pItem->GetEntityName();
 			Assert( pszClassname );
@@ -1800,6 +1801,18 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( pEntity )
 			{
 				pEntity->GiveTo( this );
+			}
+		}
+
+		// We check to make sure it's not a reskin.
+		int iIsReskin = 0;
+		if (!tf2v_allow_reskins.GetBool())
+		{
+			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>(Weapon_GetSlot(iSlot));
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, iIsReskin, is_reskin);
+			if (iIsReskin != 0) // If it's a reskin, swap to the default weapon.
+			{
+				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);
 			}
 		}
 	}

@@ -2380,7 +2380,15 @@
 		}
 		"weapon_reskin"
 		{
-			"show_in_armory"	"0"
+			"show_in_armory" "0"
+			"attributes"
+			{	
+				"is_reskin"
+				{
+					"attribute_class"	"is_reskin"
+					"value"	"1"
+				}
+			}
 		}
 	}
 	"items"
@@ -13060,7 +13068,17 @@
 		{
 			"name"					"allowed in_2006_mode"
 			"attribute_class"		"allowed in_2006_mode"
+			"description_format"	"value_is_additive"
 			"hidden"				"1"
+			"stored_as_integer"	"1"
+		}
+		"10005"
+		{
+			"name"					"is_reskin"
+			"attribute_class"		"is_reskin"
+			"description_format"	"value_is_additive"
+			"hidden"				"1"
+			"stored_as_integer"	"1"
 		}
 	}
 	"attribute_controlled_attached_particles"

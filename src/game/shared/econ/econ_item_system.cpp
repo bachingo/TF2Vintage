@@ -490,7 +490,6 @@ public:
 		GET_INT( pItem, pData, attach_to_hands_vm_only );
 		GET_BOOL( pItem, pData, act_as_wearable );
 		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
-		GET_INT(pItem, pData, reskin_of);
 		GET_BOOL(pItem, pData, is_reskin);
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
