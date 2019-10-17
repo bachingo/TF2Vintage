@@ -131,9 +131,8 @@ extern ConVar tf_spy_invis_unstealth_time;
 extern ConVar tf_stalematechangeclasstime;
 extern ConVar tf_damage_disablespread;
 
-// TF2V commands
+// Team Fortress 2 Classic commands
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
-ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "1", FCVAR_NOTIFY, "Enable or disable cosmetics on the server." );
 
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
@@ -1447,12 +1446,8 @@ void CTFPlayer::GiveDefaultItems()
 		ManageRegularWeaponsLegacy( pData );
 	else if ( !tf2v_random_weapons.GetBool() )
 		ManageRegularWeapons( pData );
-	
-	if ( tf2v_allow_cosmetics.GetBool() )
-		ManageCosmetics( pData );
 
 	
-	/*
 	if ( tf_halloween.GetBool() )
 	{
 		const int iItemID = 35617;
@@ -1467,7 +1462,7 @@ void CTFPlayer::GiveDefaultItems()
 			}
 		}
 	}
-	*/
+
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -1779,40 +1774,6 @@ void CTFPlayer::ValidateWearables( void )
 			else
 			{
 				pWearable->UpdateModelToClass();
-			}
-		}
-	}
-}
-	
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::ManageCosmetics( TFPlayerClassData_t *pData )
-{
-	for ( int iSlot = 7; iSlot < ( TF_PLAYER_COSMETIC_COUNT + 6 ); ++iSlot ) // Final is offset by 1 to count for us starting on hat
-	{
-		if ( iSlot != 9) // Skip over the action slot for now.
-		{
-			if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
-			{
-				// Nothing to do here.
-				continue;
-			}
-
-			// Give us an item from the inventory.
-			CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
-
-			if ( pItem )
-			{
-				const char *pszClassname = pItem->GetEntityName();
-				Assert( pszClassname );
-
-				CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
-
-				if ( pEntity )
-				{
-					pEntity->GiveTo( this );
-				}
 			}
 		}
 	}

@@ -471,7 +471,6 @@ public:
 	bool				ItemsMatch( CEconItemView *pItem1, CEconItemView *pItem2, CTFWeaponBase *pWeapon );
 	void				ValidateWeapons( bool bRegenerate );
 	void				ValidateWearables( void );
-	void				ManageCosmetics( TFPlayerClassData_t *pData );
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
 	void				ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData );
 	void				ManageRandomWeapons( TFPlayerClassData_t *pData );

@@ -23,6 +23,12 @@ PlayerClass
 	"weapon1"		"TF_WEAPON_BONESAW"
 	"weapon2"		"TF_WEAPON_MEDIGUN"
 	"weapon3"		"TF_WEAPON_SYRINGEGUN_MEDIC"
+	"weapon4"		""
+	"weapon5"		""
+	"weapon6"		""
+	"weapon7"		"TF2V_COSMETIC_HAT"
+	"weapon8"		"TF2V_COSMETIC_MISC"
+	"weapon9"		""
 	
 	//"DontDoAirwalk"	"1"
 	//"DontDoNewJump"	"1"
