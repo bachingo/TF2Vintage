@@ -2058,7 +2058,7 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 	if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 	{
 		// If there is no item in this slot (which there should always be for zombies) error and return.
-		Assert(GetEntityForLoadoutSlot( iSlot ) = NULL);
+		Assert(GetEntityForLoadoutSlot( iSlot ) = NULL)
 		return;
 	}
 
