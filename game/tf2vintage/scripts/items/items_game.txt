@@ -348,14 +348,6 @@
 				}
 			}
 		}
-		"base_hat"
-		{
-		"prefab"	"hat"
-		}
-		"base_misc"
-		{
-		"prefab"	"misc"
-		}
 		"taunt"
 		{
 			"public_prefab"	"1"

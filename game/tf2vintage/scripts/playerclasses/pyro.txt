@@ -23,14 +23,6 @@ PlayerClass
 	"weapon1"		"TF_WEAPON_FIREAXE"
 	"weapon2"		"TF_WEAPON_SHOTGUN_PYRO"
 	"weapon3"		"TF_WEAPON_FLAMETHROWER"
-	"weapon4"		""
-	"weapon5"		""
-	"weapon6"		""
-	"weapon7"		""
-	"weapon8"		""
-	"weapon9"		""
-	"weapon10"		""
-	"weapon11"		""
 
 	//Thirdperson
 	"cameraoffset_forward"	"85"

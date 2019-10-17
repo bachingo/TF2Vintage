@@ -24,14 +24,6 @@ PlayerClass
 	"weapon1"		"TF_WEAPON_BAT"
 	"weapon2"		"TF_WEAPON_PISTOL_SCOUT"
 	"weapon3"		"TF_WEAPON_SCATTERGUN"
-	"weapon4"		""
-	"weapon5"		""
-	"weapon6"		""
-	"weapon7"		""
-	"weapon8"		""
-	"weapon9"		""
-	"weapon10"		""
-	"weapon11"		""
 
 	//Thirdperson
 	"cameraoffset_forward"	"85"

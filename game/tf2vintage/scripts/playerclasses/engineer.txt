@@ -26,11 +26,6 @@ PlayerClass
 	"weapon4"		"TF_WEAPON_PDA_ENGINEER_BUILD"
 	"weapon5"		"TF_WEAPON_PDA_ENGINEER_DESTROY"
 	"weapon6"		"TF_WEAPON_BUILDER"
-	"weapon7"		""
-	"weapon8"		""
-	"weapon9"		""
-	"weapon10"		""
-	"weapon11"		""
 
 	
 	// Buildables

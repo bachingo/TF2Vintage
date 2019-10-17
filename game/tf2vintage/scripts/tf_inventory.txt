@@ -10,7 +10,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"scout"
 	{
@@ -22,7 +22,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"sniper"
 	{
@@ -34,7 +34,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"soldier"
 	{
@@ -46,7 +46,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"demoman"
 	{
@@ -58,7 +58,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"medic"
 	{
@@ -70,7 +70,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"heavy"
 	{
@@ -82,7 +82,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"pyro"
 	{
@@ -94,7 +94,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"spy"
 	{
@@ -106,7 +106,7 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 	"engineer"
 	{
@@ -118,6 +118,6 @@
 		"building"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"misc2"		"0"
+		"misc"		"0"
 	}
 }

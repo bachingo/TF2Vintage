@@ -282,7 +282,15 @@ const char *g_LoadoutSlots[] =
 	"head",
 	"misc",
 	"action",
-	"misc2",
+	"misc",
+	"taunt",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
 };
 
 const char *g_LoadoutTranslations[] ={
@@ -297,6 +305,14 @@ const char *g_LoadoutTranslations[] ={
 	"#LoadoutSlot_Misc",
 	"#LoadoutSlot_Action",
 	"#LoadoutSlot_Misc",
+	"#LoadoutSlot_Taunt",
+	"#LoadoutSlot_Taunt2",
+	"#LoadoutSlot_Taunt3",
+	"#LoadoutSlot_Taunt4",
+	"#LoadoutSlot_Taunt5",
+	"#LoadoutSlot_Taunt6",
+	"#LoadoutSlot_Taunt7",
+	"#LoadoutSlot_Taunt8",
 };
 
 //-----------------------------------------------------------------------------
