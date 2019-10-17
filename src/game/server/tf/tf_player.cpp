@@ -131,8 +131,9 @@ extern ConVar tf_spy_invis_unstealth_time;
 extern ConVar tf_stalematechangeclasstime;
 extern ConVar tf_damage_disablespread;
 
-// Team Fortress 2 Classic commands
+// TF2V commands
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
+ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "1", FCVAR_NOTIFY, "Enable or disable cosmetics on the server." );
 
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
@@ -140,6 +141,7 @@ ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "
 
 // TF2V specific cvars
 ConVar tf2v_disable_holiday_loot( "tf2v_disable_holiday_loot", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disable loot drops in holiday gamemodes" );
+
 
 
 // -------------------------------------------------------------------------------- //
@@ -1447,23 +1449,6 @@ void CTFPlayer::GiveDefaultItems()
 	else if ( !tf2v_random_weapons.GetBool() )
 		ManageRegularWeapons( pData );
 
-	
-	if ( tf_halloween.GetBool() )
-	{
-		const int iItemID = 35617;
-		if ( GetItemSchema()->GetItemDefinition( iItemID ) )
-		{
-			CEconItemView econItem( iItemID );
-			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( "tf_wearable", 0, &econItem ) );
-
-			if ( pEntity )
-			{
-				pEntity->GiveTo( this );
-			}
-		}
-	}
-
-
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
 		ManageGrenades( pData );
@@ -1787,8 +1772,14 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	ValidateWeapons( true );
 	ValidateWearables();
 
-	for ( int iSlot = 0; iSlot < TF_PLAYER_WEAPON_COUNT; ++iSlot )
+	for ( int iSlot = 0; iSlot < TF_PLAYER_LOADOUT_COUNT; ++iSlot )
 	{
+		if (!tf_halloween.GetBool() && iSlot == TF_LOADOUT_SLOT_ACTION)
+		continue;	// If it's not Halloween, just bail on the action slot.
+		
+		if ((!tf2v_allow_cosmetics.GetBool() && iSlot >= TF_LOADOUT_SLOT_HAT) && (iSlot == TF_LOADOUT_SLOT_ACTION || !tf_halloween.GetBool()))
+		continue; // If cosmetics aren't enabled, also bail. (unless it's Halloween)
+	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 		{
 			// Nothing to do here.
@@ -1836,8 +1827,17 @@ void CTFPlayer::PostInventoryApplication( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
-	for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
+	for ( int iWeapon = 0; iWeapon < TF_PLAYER_LOADOUT_COUNT; ++iWeapon )
 	{
+		if ( (iWeapon >=TF_LOADOUT_SLOT_HAT && iWeapon != TF_LOADOUT_SLOT_ACTION ) )
+			continue; // Always bail on cosmetics, other than zombie skins.
+		
+		if (tf_halloween.GetBool() && iWeapon == TF_LOADOUT_SLOT_ACTION)
+		{
+			EnableZombies( pData );
+			continue;	// If it's Halloween, make sure it's our class' zombie skin.
+		}
+		
 		int iWeaponID = GetTFInventory()->GetWeapon( m_PlayerClass.GetClassIndex(), iWeapon );
 
 		if ( iWeaponID != TF_WEAPON_NONE )
@@ -1923,8 +1923,20 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
+	for ( int i = 0; i < TF_PLAYER_LOADOUT_COUNT; ++i )
 	{
+		if ( !tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ACTION )
+		continue;	// If it's not Halloween, just bail on the action slot.
+		
+		if ( ( !tf2v_allow_cosmetics.GetBool() && i >= TF_LOADOUT_SLOT_HAT ) && (i == TF_LOADOUT_SLOT_ACTION || !tf_halloween.GetBool() ) )
+		continue; // If cosmetics aren't enabled, also bail, unless it's Halloween.
+	
+		if ( tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ACTION )
+		{
+		EnableZombies( pData );
+		continue;	// If it's Halloween, make sure it's our class' zombie skin.
+		}
+		
 		CTFInventory *pInv = GetTFInventory();
 		Assert( pInv );
 
@@ -2021,6 +2033,36 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 					pGrenade->DefaultTouch( this );
 				}
 			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
+{
+	int iSlot = TF_LOADOUT_SLOT_ACTION;
+	if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
+	{
+		// If there is no item in this slot (which there should always be for zombies) error and return.
+		Assert(GetEntityForLoadoutSlot( iSlot ));
+		return;
+	}
+
+	// Give us an item from the inventory.
+	CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
+
+	if ( pItem )
+	{
+		const char *pszClassname = pItem->GetEntityName();
+		Assert( pszClassname );
+
+		CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+
+		if ( pEntity )
+		{
+			pEntity->GiveTo( this );
 		}
 	}
 }

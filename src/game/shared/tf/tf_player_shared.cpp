@@ -94,6 +94,8 @@ ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLIC
 #endif
 
 #ifdef GAME_DLL
+extern ConVar tf_halloween;
+extern ConVar tf2v_allow_cosmetics;
 extern ConVar tf2v_random_weapons;
 #endif
 
@@ -2928,8 +2930,14 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 	CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 
 	// Find the weapon in the same slot
-	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; i++ )	
+	for ( int i = 0; i < TF_LOADOUT_SLOT_COUNT; i++ )	
 	{
+		if ( !tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ACTION )
+		continue;	// If it's not Halloween, just bail.
+		
+		if ( ( !tf2v_allow_cosmetics.GetBool() && i >= TF_LOADOUT_SLOT_HAT ) && (i == TF_LOADOUT_SLOT_ACTION || !tf_halloween.GetBool() ) )
+		continue; // If cosmetics aren't enabled, also bail.
+			
 		// Use disguise target's weapons if possible.
 		CEconItemView *pItem = NULL;
 
