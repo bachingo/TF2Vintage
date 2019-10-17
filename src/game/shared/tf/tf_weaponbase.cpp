@@ -1111,9 +1111,9 @@ void CTFWeaponBase::AbortReload( void )
 	BaseClass::AbortReload();
 
 #ifdef CLIENT_DLL
-	if ( UsingViewModel() ) 
+	if ( UsingViewModel() )
+	StopWeaponSound( RELOAD );		
 #endif
-	StopWeaponSound( RELOAD );
 
 	m_iReloadMode.Set( TF_RELOAD_START );
 }
@@ -1193,8 +1193,8 @@ bool CTFWeaponBase::ReloadSingly( void )
 
 #ifdef CLIENT_DLL
 			if ( UsingViewModel() )
-#endif
 			WeaponSound( RELOAD );
+#endif
 
 			// Next continue to reload shells?
 			m_iReloadMode.Set( TF_RELOADING_CONTINUE );
@@ -1312,8 +1312,9 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	// Play reload
 #ifdef CLIENT_DLL
 	if ( UsingViewModel() )
-#endif
 	WeaponSound( RELOAD );
+#endif
+	
 
 	// Play the player's reload animation
 	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD );
@@ -3115,7 +3116,7 @@ viewmodel_acttable_t CTFWeaponBase::s_viewmodelacttable[] =
 	{ ACT_VM_IDLE_LOWERED,		ACT_MELEE_ALLCLASS_VM_IDLE_LOWERED, TF_WPN_TYPE_MELEE_ALLCLASS },
 	{ ACT_VM_LOWERED_TO_IDLE,	ACT_MELEE_ALLCLASS_VM_LOWERED_TO_IDLE, TF_WPN_TYPE_MELEE_ALLCLASS },
 	{ ACT_VM_HITCENTER,		ACT_MELEE_ALLCLASS_VM_HITCENTER, TF_WPN_TYPE_MELEE_ALLCLASS },
-	{ ACT_VM_SWINGHARD,			ACT_MELEE_ALLCLASS_VM_SWINGHARD, TF_WPN_TYPE_MELEE_ALLCLASS },
+	{ ACT_VM_SWINGHARD,		ACT_MELEE_ALLCLASS_VM_HITCENTER, TF_WPN_TYPE_MELEE_ALLCLASS },
 	{ ACT_VM_DRAW,			ACT_SECONDARY2_VM_DRAW, TF_WPN_TYPE_SECONDARY2 },
 	{ ACT_VM_HOLSTER,		ACT_SECONDARY2_VM_HOLSTER, TF_WPN_TYPE_SECONDARY2 },
 	{ ACT_VM_IDLE,			ACT_SECONDARY2_VM_IDLE, TF_WPN_TYPE_SECONDARY2 },
