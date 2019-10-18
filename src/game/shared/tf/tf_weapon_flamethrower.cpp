@@ -1071,7 +1071,7 @@ void CTFFlameThrower::RestartParticleEffect( void )
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				pszParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
 			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = "tf2v_flamethrower_halloween";
+				pszParticleEffect = "tf2v_flamethrower_halloween_new_flame";
 			else
 				pszParticleEffect = "tf2v_new_flame";
 		}
