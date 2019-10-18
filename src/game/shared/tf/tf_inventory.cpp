@@ -244,7 +244,7 @@ const char* CTFInventory::GetSlotName(int iSlot)
 #endif
 
 // Legacy array, used when we're forced to use old method of giving out weapons.
-const int CTFInventory::Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT] =
+const int CTFInventory::Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER] =
 {
 	{
 

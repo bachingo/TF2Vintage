@@ -22,9 +22,9 @@
 #include "filesystem.h"
 #endif
 
-#define INVENTORY_WEAPONS		63
-#define INVENTORY_WEAPONS_COUNT	64
-#define INVENTORY_COLNUM		64
+#define INVENTORY_WEAPONS		62
+#define INVENTORY_WEAPONS_COUNT	63
+#define INVENTORY_COLNUM		63
 #define INVENTORY_ROWNUM		6
 #define INVENTORY_VECTOR_NUM	INVENTORY_COLNUM * INVENTORY_ROWNUM
 
@@ -52,7 +52,7 @@ public:
 #endif
 
 private:
-	static const int Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
+	static const int Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER];
 	CUtlVector<CEconItemView *> m_Items[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
 
 #if defined( CLIENT_DLL )

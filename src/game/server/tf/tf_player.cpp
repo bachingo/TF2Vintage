@@ -1777,13 +1777,13 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	ValidateWeapons( true );
 	ValidateWearables();
 
-	for (int iSlot = 0; iSlot < TF_LOADOUT_SLOT_COUNT; ++iSlot)
+	for (int iSlot = 0; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
 	{
 		if (!tf_halloween.GetBool() && iSlot == TF_LOADOUT_SLOT_ACTION)
-		continue;	// If it's not Halloween, just bail on the action slot.
+		continue;	// If it's not Halloween, just skip the action slot.
 		
-		if ((!tf2v_allow_cosmetics.GetBool() && iSlot >= TF_LOADOUT_SLOT_HAT) && (iSlot == TF_LOADOUT_SLOT_ACTION || !tf_halloween.GetBool()))
-		continue; // If cosmetics aren't enabled, also bail. (unless it's Halloween)
+		if ( !tf2v_allow_cosmetics.GetBool() && ( ( iSlot > TF_PLAYER_WEAPON_COUNT ) && ( iSlot != TF_LOADOUT_SLOT_ACTION ) ) )
+		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
 	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 		{
@@ -1844,7 +1844,7 @@ void CTFPlayer::PostInventoryApplication( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
-	for (int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_COUNT; ++iWeapon)
+	for (int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon)
 	{
 		if ( (iWeapon >=TF_LOADOUT_SLOT_HAT && iWeapon != TF_LOADOUT_SLOT_ACTION ) )
 			continue; // Always bail on cosmetics, other than zombie skins.
@@ -1940,13 +1940,14 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for (int i = 0; i < TF_LOADOUT_SLOT_COUNT; ++i)
+	for (int i = 0; i < TF_LOADOUT_SLOT_BUFFER; ++i)
 	{
-		if ( !tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ACTION )
-		continue;	// If it's not Halloween, just bail on the action slot.
 		
-		if ( ( !tf2v_allow_cosmetics.GetBool() && i >= TF_LOADOUT_SLOT_HAT ) && (i == TF_LOADOUT_SLOT_ACTION || !tf_halloween.GetBool() ) )
-		continue; // If cosmetics aren't enabled, also bail, unless it's Halloween.
+		if (!tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ACTION)
+		continue;	// If it's not Halloween, just skip the action slot.
+		
+		if ( !tf2v_allow_cosmetics.GetBool() && ( ( i > TF_PLAYER_WEAPON_COUNT ) && (i != TF_LOADOUT_SLOT_ACTION ) ) )
+		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
 	
 		if ( tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ACTION )
 		{
@@ -2059,16 +2060,15 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 {
-	int iSlot = TF_LOADOUT_SLOT_ACTION;
-	if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
+	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ACTION ) != NULL )
 	{
 		// If there is no item in this slot (which there should always be for zombies) error and return.
-		Assert(GetEntityForLoadoutSlot( iSlot ));
+		Assert(GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ACTION ));
 		return;
 	}
 
 	// Give us an item from the inventory.
-	CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
+	CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), TF_LOADOUT_SLOT_ACTION );
 
 	if ( pItem )
 	{
@@ -3216,7 +3216,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "getweaponinfos" ) )
 	{
-		for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_COUNT; ++iWeapon )
+		for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon )
 		{
 			CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 
@@ -5379,7 +5379,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Remove all items...
 	RemoveAllItems( true );
 
-	for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_COUNT; ++iWeapon )
+	for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon )
 	{
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 

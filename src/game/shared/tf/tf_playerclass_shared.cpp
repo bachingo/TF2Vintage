@@ -62,7 +62,7 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 	m_szExplosionDeathSound[0] = '\0';
 #endif
 
-	for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_COUNT; ++iWeapon )
+	for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon )
 	{
 		m_aWeapons[iWeapon] = TF_WEAPON_NONE;
 	}
@@ -154,7 +154,7 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	// Weapons.
 	int i;
 	char buf[32];
-	for ( i=0;i<TF_LOADOUT_SLOT_COUNT;i++ )
+	for ( i=0;i<TF_LOADOUT_SLOT_BUFFER;i++ )
 	{
 		Q_snprintf( buf, sizeof(buf), "weapon%d", i+1 );		
 		m_aWeapons[i] = GetWeaponId( pKeyValuesData->GetString( buf ) );

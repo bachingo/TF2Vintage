@@ -242,7 +242,7 @@ bool CTFLoadoutPanel::Init()
 		if ( pszClassModels[iClassIndex][0] != '\0' )
 			modelinfo->FindOrLoadModel( pszClassModels[iClassIndex] );
 
-		for ( int iSlot = 0; iSlot < TF_LOADOUT_SLOT_COUNT; iSlot++ )
+		for ( int iSlot = 0; iSlot < TF_LOADOUT_SLOT_BUFFER; iSlot++ )
 		{
 			for ( int iPreset = 0; iPreset < INVENTORY_COLNUM; iPreset++ )
 			{

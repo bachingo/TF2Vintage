@@ -275,6 +275,8 @@ enum
 	TF_LOADOUT_SLOT_ACTION,
 	TF_LOADOUT_SLOT_MISC2,
 	
+	
+	TF_LOADOUT_SLOT_BUFFER,
 	TF_LOADOUT_SLOT_COUNT
 };
 
@@ -283,6 +285,7 @@ extern const char *g_aAmmoNames[];
 //-----------------------------------------------------------------------------
 // Weapons.
 //-----------------------------------------------------------------------------
+#define TF_PLAYER_WEAPON_COUNT		6		// This is for weapon slots. for all slots, see TF_LOADOUT_SLOT_COUNT.
 #define TF_PLAYER_GRENADE_COUNT		2
 #define TF_PLAYER_BUILDABLE_COUNT	4
 

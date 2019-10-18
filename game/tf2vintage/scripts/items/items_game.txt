@@ -276,20 +276,17 @@
 	}
 	"prefabs"
 	{
-		"cosmetic"
+		"weapon_wearable"
 		{
-			"public_prefab"	"1"
-			"enabled"	"1"
+			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_wearable"
-			"act_as_wearable"	"1"
-			"loadondemand"	"1"
 			"anim_slot"	"FORCE_NOT_USED"
-			"item_type_name"	"#TF_Wearable_CosmeticItem"
 			"item_quality"	"unique"
-			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
+			"loadondemand"	"1"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
+			"act_as_wearable"	"1"
 			"attributes"
 			{
 				"allowed in medieval mode"
@@ -299,18 +296,25 @@
 				}
 			}
 		}
+		"cosmetic"
+		{
+			"public_prefab"	"1"
+			"prefab"	"weapon_wearable"
+			"item_type_name"	"#TF_Wearable_CosmeticItem"
+			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
+		}
 		"misc"
 		{
 			"public_prefab"	"1"
 			"prefab"	"cosmetic"
-			"item_slot"	"misc"
+			"item_slot" "misc"
 		}
 		"hat"
 		{
 			"public_prefab"	"1"
 			"prefab"	"cosmetic"
+			"item_slot" "head"
 			"item_type_name"	"#TF_Wearable_Hat"
-			"item_slot"	"head"
 			"equip_region"	"hat"
 			"visuals"
 			{
@@ -332,19 +336,23 @@
 		}
 		"zombie"
 		{
-			"enabled"			"1"
-			"show_in_armory"	"1"
-			"item_class"	"tf_wearable"
-			"item_quality"	"unique"
+			"prefab"	"weapon_wearable"
 			"propername" "0"
-			"loadondemand"	"1"
-			"image_inventory_size_w"	"128"
-			"image_inventory_size_h"	"82"
-			"act_as_wearable"	"1"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
 			"item_slot"	"action"
-			"anim_slot"	"FORCE_NOT_USED"
 			"equip_region"	"zombie_body"
+			"model_player_per_class"
+			{
+				"scout"		"models/player/items/scout/scout_zombie.mdl"
+				"sniper"	"models/player/items/sniper/sniper_zombie.mdl"
+				"heavy"		"models/player/items/heavy/heavy_zombie.mdl"
+				"spy"		"models/player/items/spy/spy_zombie.mdl"
+				"engineer"	"models/player/items/engineer/engineer_zombie.mdl"
+				"demoman"	"models/player/items/demo/demo_zombie.mdl"
+				"pyro"	"models/player/items/pyro/pyro_zombie.mdl"
+				"medic"	"models/player/items/medic/medic_zombie.mdl"
+				"soldier"	"models/player/items/soldier/soldier_zombie.mdl"
+			}
 			"attributes"
 			{
 				"player skin override"
@@ -356,11 +364,6 @@
 				{
 					"attribute_class"	"zombiezombiezombiezombie"
 					"value"		"1"
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
 				}
 			}
 		}
@@ -386,28 +389,6 @@
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -9"
-			}
-		}
-		"weapon_minigun_alt"
-		{
-			"prefab"	"weapon_minigun"
-			"attributes"
-			{
-				"hidden primary max ammo bonus"
-				{
-					"attribute_class"	"mult_maxammo_primary"
-					"value"	"4"
-				}
-				"fire rate bonus"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value"	".25"
-				}
-				"bullets per shot penalty"
-				{
-					"attribute_class"	"mult_bullets_per_shot"
-					"value"	".25"
-				}
 			}
 		}
 		"weapon_rocketlauncher"
@@ -1409,26 +1390,6 @@
 			{
 				"min_viewmodel_offset"		"10 0 -6"				
 			}
-			"attributes"
-			{
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
-			}
-		}
-		"weapon_wearable"
-		{
-			"propername"		"1"
-			"show_in_armory"	"1"
-			"item_class"	"tf_wearable"
-			"anim_slot"	"FORCE_NOT_USED"
-			"item_quality"	"unique"
-			"loadondemand"	"1"
-			"image_inventory_size_w"	"128"
-			"image_inventory_size_h"	"82"
-			"act_as_wearable"	"1"
 			"attributes"
 			{
 				"allowed in medieval mode"
@@ -2531,6 +2492,71 @@
 			"prefab"	"weapon_builder_spy"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_sapper.mdl"
+			"baseitem"	"1"
+		}
+		"32"
+		{
+			"name"	"TF2V_COSMETIC_HAT"
+			"prefab"	"hat"
+			"item_name"	"#TF_Default_ItemDef"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"	"0"
+				}
+			}
+			"baseitem"	"1"
+		}
+		"33"
+		{
+			"name"	"TF2V_COSMETIC_MISC"
+			"prefab"	"misc"
+			"item_name"	"#TF_Default_ItemDef"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
+			"baseitem"	"1"
+		}
+		"34"
+		{
+			"name"	"TF2V_COSMETIC_MISC2"
+			"prefab"	"misc"
+			"item_slot"	"misc2"
+			"item_name"	"#TF_Default_ItemDef"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
 			"baseitem"	"1"
 		}
 		"35"
@@ -4133,91 +4159,11 @@
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
 		}
-		"1050"
-		{
-			"name"		"Spawn Camper"
-			"prefab"		"weapon_backpack"
-			"item_name"		"#TF_sum19_spawn_camper_backpack"
-			"item_description"		"#TF_sum19_spawn_camper_backpack_Desc"
-			"item_type_name"		"#TF_Wearable_Backpack"
-			"image_inventory"		"backpack/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack"
-			"model_player"			"models/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack.mdl"
-			"item_slot"	"secondary"
-			"used_by_classes"
-			{
-				"pyro"		"1"
-			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"backpack"		"1"
-				}
-			}
-			"visuals_red"
-			{
-				"skin"	"0"
-			}
-			"visuals_blu"
-			{
-				"skin"	"1"
-			}
-			"attributes"
-			{
-				"health regen"
-				{
-					"attribute_class"	"add_health_regen"
-					"value"	"2"
-				}
-			}
-		}
-		"1051"
-		{
-			"name"	"Assault Cannon"
-			"prefab"	"weapon_minigun"
-			"enabled"				"0"
-			"show_in_armory"		"0"
-			"item_type_name"	"#TF_Weapon_Minigun"
-			"item_name"	"#TF_Weapon_AssaultCannon"
-			"item_logname"	"assaultcannon"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_assault_minigun/c_assault_minigun"
-			"model_player"	"models/workshop/weapons/c_models/c_assault_minigun/c_assault_minigun.mdl"
-			"item_quality"	"unique"
-			"visuals"
-			{
-				"sound_reload"	"Weapon_Asscan.Reload"
-				"sound_empty"	"Weapon_Asscan.ClipEmpty"
-				"sound_double_shot"	"Weapon_Asscan.Fire"
-				"sound_special1"	"Weapon_Asscan.WindUp"
-				"sound_special2"	"Weapon_Asscan.WindDown"
-				"sound_special3"	"Weapon_Asscan.Spin"
-				"sound_burst"	"Weapon_Asscan.FireCrit"
-			}
-			"attributes"
-			{		
-				"weapon spread bonus"
-				{
-					"attribute_class"	"mult_spread_scale"
-					"value"	".5"
-				}			
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0.875"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
-		}
 		"5617"
 		{
 			"name"		"Zombie Scout"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieScout"
-			"model_player"	"models/player/items/scout/scout_zombie.mdl"
 			"equip_regions"
 			{
 				"zombie_body"			"1"
@@ -4229,91 +4175,91 @@
 			}
 			"item_description"	"#TF_Item_ZombieScout_Desc"
 			"image_inventory"	"backpack/player/items/scout/scout_zombie"
+			"baseitem"	"1"
 		}
 		"5618"
 		{
 			"name"		"Zombie Soldier"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieSoldier"
-			"model_player"	"models/player/items/soldier/soldier_zombie.mdl"
 			"used_by_classes"
 			{
 				"soldier"	"1"
 			}
 			"item_description"	"#TF_Item_ZombieSoldier_Desc"
 			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
+			"baseitem"	"1"
 		}
 		"5619"
 		{
 			"name"		"Zombie Heavy"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieHeavy"
-			"model_player"	"models/player/items/heavy/heavy_zombie.mdl"
 			"used_by_classes"
 			{
 				"heavy"	"1"
 			}
 			"item_description"	"#TF_Item_ZombieHeavy_Desc"
 			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
+			"baseitem"	"1"
 		}
 		"5620"
 		{
 			"name"		"Zombie Demo"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieDemoman"
-			"model_player"	"models/player/items/demo/demo_zombie.mdl"
 			"used_by_classes"
 			{
 				"demoman"	"1"
 			}
 			"item_description"	"#TF_Item_ZombieDemoman_Desc"
 			"image_inventory"	"backpack/player/items/demo/demo_zombie"
+			"baseitem"	"1"
 		}
 		"5621"
 		{
 			"name"		"Zombie Engineer"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieEngineer"
-			"model_player"	"models/player/items/engineer/engineer_zombie.mdl"
 			"used_by_classes"
 			{
 				"engineer"	"1"
 			}
 			"item_description"	"#TF_Item_ZombieEngineer_Desc"
 			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
+			"baseitem"	"1"
 		}
 		"5622"
 		{
 			"name"		"Zombie Medic"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieMedic"
-			"model_player"	"models/player/items/medic/medic_zombie.mdl"
 			"used_by_classes"
 			{
 				"medic"	"1"
 			}
 			"item_description"	"#TF_Item_ZombieMedic_Desc"
 			"image_inventory"	"backpack/player/items/medic/medic_zombie"
+			"baseitem"	"1"
 		}
 		"5623"
 		{
 			"name"		"Zombie Spy"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieSpy"
-			"model_player"	"models/player/items/spy/spy_zombie.mdl"
 			"used_by_classes"
 			{
 				"spy"	"1"
 			}
 			"item_description"	"#TF_Item_ZombieSpy_Desc"
 			"image_inventory"	"backpack/player/items/spy/spy_zombie"
+			"baseitem"	"1"
 		}
 		"5624"
 		{
 			"name"		"Zombie Pyro"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombiePyro"
-			"model_player"	"models/player/items/pyro/pyro_zombie.mdl"
 			"equip_regions"
 			{
 				"zombie_body"			"1"
@@ -4325,19 +4271,20 @@
 			}
 			"item_description"	"#TF_Item_ZombiePyro_Desc"
 			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
+			"baseitem"	"1"
 		}
 		"5625"
 		{
 			"name"		"Zombie Sniper"
 			"prefab"	"zombie"
 			"item_name"	"#TF_Item_ZombieSniper"
-			"model_player"	"models/player/items/sniper/sniper_zombie.mdl"
 			"used_by_classes"
 			{
 				"sniper"	"1"
 			}
 			"item_description"	"#TF_Item_ZombieSniper_Desc"
 			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
+			"baseitem"	"1"
 		}
 		"10160"
 		{

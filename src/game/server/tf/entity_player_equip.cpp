@@ -29,7 +29,7 @@ public:
 private:
 
 	void		EquipPlayer(CBaseEntity *pPlayer);
-	int			m_iWeaponNumber[TF_LOADOUT_SLOT_COUNT];
+	int			m_iWeaponNumber[TF_LOADOUT_SLOT_BUFFER];
 	bool		m_bStripWeapons;
 
 };
@@ -74,7 +74,7 @@ void CTFPlayerEquip::EquipPlayer(CBaseEntity *pEntity)
 	if (!pTFPlayer)
 		return;
 
-	for (int i = 0; i < TF_LOADOUT_SLOT_COUNT; i++)
+	for (int i = 0; i < TF_LOADOUT_SLOT_BUFFER; i++)
 	{
 		if (m_bStripWeapons)
 		{
