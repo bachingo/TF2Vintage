@@ -2204,6 +2204,56 @@
 				"demoman"	"1"
 			}
 		}
+		"weapon_crusaders_crossbow"
+		{
+			"enabled"	"0"
+			"show_in_armory" "0"
+			"item_class"	"tf_weapon_crossbow"
+			"base_item_name"	"The Crusader's Crossbow"
+			"item_type_name"	"#TF_Weapon_Crossbow"
+			"item_name"	"#TF_CrusadersCrossbow"
+			"item_description"	"#TF_CrusadersCrossbow_desc"
+			"item_logname"	"crusaders_crossbow"
+			"item_iconname"	"crusaders_crossbow"
+			"item_slot"	"primary"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
+			"model_player"	"models/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow.mdl"
+			"attach_to_hands"	"1"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"				"10 0 -14"
+			}
+			"attributes"
+			{
+				"sniper no headshots"
+				{
+					"attribute_class" "set_weapon_mode"
+					"value" "1"
+				}
+				"maxammo primary reduced"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"	"0.25"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_CrusadersCrossbow.Single"
+				"sound_burst"	"Weapon_CrusadersCrossbow.SingleCrit"
+			}
+			"xifier_class_remap"	"crusaders_crossbow"
+		}
 		"weapon_reskin"
 		{
 			"show_in_armory"	"0"
@@ -3932,6 +3982,12 @@
 				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
 				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
 			}
+		}
+		"305"
+		{
+			"name"	"The Crusader's Crossbow"
+			"prefab" "weapon_crusaders_crossbow"
+			"particle_suffix"	"crusaders_crossbow"
 		}
 		"307"
 		{
