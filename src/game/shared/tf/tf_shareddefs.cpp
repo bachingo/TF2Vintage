@@ -282,7 +282,7 @@ const char *g_LoadoutSlots[] =
 	"head",
 	"misc",
 	"action",
-	"misc"
+	"misc2"
 };
 
 const char *g_LoadoutTranslations[] ={
