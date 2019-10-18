@@ -1978,7 +1978,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 		// Engineers always get PDAs
 		// Spies should get their disguise PDA
-		if ( ( m_PlayerClass.GetClassIndex()  == TF_CLASS_ENGINEER || m_PlayerClass.GetClassIndex() == TF_CLASS_SPY ) && ( iSlot == TF_LOADOUT_SLOT_PDA1 || iSlot == TF_LOADOUT_SLOT_PDA2 ) )
+		if ( ( m_PlayerClass.GetClassIndex()  == TF_CLASS_ENGINEER || m_PlayerClass.GetClassIndex() == TF_CLASS_SPY ) && ( iSlot == TF_LOADOUT_SLOT_PDA1 ) )
 		{
 			pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
 		}
