@@ -1289,10 +1289,6 @@ void CTFPlayer::Regenerate( void )
 		m_Shared.RemoveCond( TF_COND_PHASE );
 	}
 
-	CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
-	if ( pInvis && pInvis->HasFeignDeath() )
-		pInvis->CleanUpInvisibility();
-
 	// Fill Spy cloak
 	m_Shared.SetSpyCloakMeter( 100.0f );
 
@@ -1308,6 +1304,13 @@ void CTFPlayer::InitClass( void )
 	// Init the anim movement vars
 	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
 	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
+
+	if ( m_bRegenerating )
+	{
+		CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
+		if ( pInvis && pInvis->HasFeignDeath() )
+			pInvis->CleanUpInvisibility();
+	}
 
 	// Give default items for class.
 	GiveDefaultItems();
