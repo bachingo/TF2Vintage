@@ -42,7 +42,7 @@ struct TFPlayerClassData_t
 	float		m_flMaxSpeed;
 	int			m_nMaxHealth;
 	int			m_nMaxArmor;
-	int			m_aWeapons[TF_PLAYER_WEAPON_COUNT];
+	int			m_aWeapons[TF_LOADOUT_SLOT_COUNT];
 	int			m_aGrenades[TF_PLAYER_GRENADE_COUNT];
 	int			m_aAmmoMax[TF_AMMO_COUNT];
 	int			m_aBuildable[TF_PLAYER_BUILDABLE_COUNT];

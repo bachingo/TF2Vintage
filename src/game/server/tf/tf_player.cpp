@@ -3213,7 +3213,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "getweaponinfos" ) )
 	{
-		for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
+		for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_COUNT; ++iWeapon )
 		{
 			CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 
@@ -5376,7 +5376,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Remove all items...
 	RemoveAllItems( true );
 
-	for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
+	for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_COUNT; ++iWeapon )
 	{
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 
