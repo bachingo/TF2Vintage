@@ -93,6 +93,7 @@ void CTFKnife::PrimaryAttack( void )
 #endif
 
 	int iVictimHealth = 0;
+	m_hBackstabVictim = NULL;
 
 	trace_t trace;
 	if ( DoSwingTrace( trace ) == true )
@@ -140,16 +141,21 @@ void CTFKnife::PrimaryAttack( void )
 
 	int nDisguiseOnBackstab = 0;
 	CALL_ATTRIB_HOOK_INT( nDisguiseOnBackstab, set_disguise_on_backstab );
-	if ( nDisguiseOnBackstab != 0 )
-	{
-		float flDisguiseSpeedPenalty = 0;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDisguiseSpeedPenalty, disguise_speed_penalty );
 
-		if ( m_hBackstabVictim && !m_hBackstabVictim->IsAlive() && !pPlayer->HasTheFlag() )
-			SetContextThink( &CTFKnife::DisguiseOnKill, gpGlobals->curtime + flDisguiseSpeedPenalty, "DisguiseOnKill" );
-	}
+	float flDisguiseSpeed = 0;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDisguiseSpeed, disguise_speed_penalty );
 	
-	pPlayer->RemoveDisguise();
+	if( nDisguiseOnBackstab == 0 || !m_hBackstabVictim || m_hBackstabVictim->IsAlive() || pPlayer->HasTheFlag() )
+	{
+		pPlayer->RemoveDisguise();
+	}
+	else
+	{
+		if( flDisguiseSpeed > 0.1f )
+			pPlayer->RemoveDisguise();
+
+		SetContextThink( &CTFKnife::DisguiseOnKill, gpGlobals->curtime + flDisguiseSpeed, "DisguiseOnKill" );
+	}
 
 	int nSanguisuge = 0;
 	CALL_ATTRIB_HOOK_INT( nSanguisuge, sanguisuge );
