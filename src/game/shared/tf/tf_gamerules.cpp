@@ -4297,6 +4297,9 @@ void CTFGameRules::HandleCTFCaptureBonus( int iTeam )
 {
 	float flBoostTime = tf_ctf_bonus_time.GetFloat();
 
+	if ( m_flCTFBonusTime == 0 )
+		return; //Bail on calculating the rest of the function if capture crits are disabled.
+	
 	if ( m_flCTFBonusTime > -1 )
 		flBoostTime = m_flCTFBonusTime;
 
