@@ -276,29 +276,20 @@
 	}
 	"prefabs"
 	{
-		"valve"
+		"cosmetic"
 		{
-		}
-		"tf2v_cosmetic_hook"
-		{
-			"enabled"	"1"
 			"public_prefab"	"1"
+			"enabled"	"1"
+			"show_in_armory"	"1"
+			"item_class"	"tf_wearable"
 			"act_as_wearable"	"1"
-			"propername"	"1"
+			"loadondemand"	"1"
 			"anim_slot"	"FORCE_NOT_USED"
-			"visuals"
-			{
-				"styles"
-				{
-					"0"
-					{
-						"skin_red"	"0"
-						"skin_blu"	"1"
-						"v_skin_red"	"0"
-						"v_skin_blu"	"1"
-					}
-				}
-			}
+			"item_type_name"	"#TF_Wearable_CosmeticItem"
+			"item_quality"	"unique"
+			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
+			"image_inventory_size_w"	"128"
+			"image_inventory_size_h"	"82"
 			"attributes"
 			{
 				"allowed in medieval mode"
@@ -308,35 +299,16 @@
 				}
 			}
 		}
-		"cosmetic"
-		{
-			"public_prefab"	"1"
-			"prefab"	"tf2v_cosmetic_hook"	
-			"triangle_budget_lod0"	"1400"
-			"triangle_budget_lod1"	"1000"
-			"triangle_budget_lod2"	"700"
-			"qc_template"	"scripts/itemtest_qc_template_misc.txt"
-			"loadondemand"	"1"
-			"show_in_armory"	"1"
-			"item_class"	"tf_wearable"
-			"item_quality"	"unique"
-			"item_slot"	"misc"
-			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
-			"image_inventory_size_w"	"128"
-			"image_inventory_size_h"	"82"
-			"drop_type"	"none"
-		}
 		"misc"
 		{
 			"public_prefab"	"1"
 			"prefab"	"cosmetic"
-			"item_type_name"	"#TF_Wearable_CosmeticItem"
+			"item_slot"	"misc"
 		}
 		"hat"
 		{
 			"public_prefab"	"1"
 			"prefab"	"cosmetic"
-			"qc_template"	"scripts/itemtest_qc_template_hat.txt"
 			"item_type_name"	"#TF_Wearable_Hat"
 			"item_slot"	"head"
 			"equip_region"	"hat"
@@ -350,60 +322,49 @@
 		}
 		"base_hat"
 		{
+		"public_prefab"	"1"
 		"prefab"	"hat"
 		}
 		"base_misc"
 		{
+		"public_prefab"	"1"
 		"prefab"	"misc"
 		}
-		"taunt"
+		"zombie"
 		{
-			"public_prefab"	"1"
-			"qc_template"	"scripts/itemtest_qc_template_taunt.txt"
-			"anim_slot"	"FORCE_NOT_USED"
+			"enabled"			"1"
 			"show_in_armory"	"1"
-			"armory_desc"	"action tauntenabler"
+			"item_class"	"tf_wearable"
+			"item_quality"	"unique"
+			"propername" "0"
+			"loadondemand"	"1"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
-			"item_quality"		"unique"
-			"item_class"	"no_entity"
-			"propername"	"1"
-			"valid_for_shuffle"	"1"
-			"item_type_name"	"#TF_TauntEnabler"
-			"item_slot"	"taunt"
-		}
-		"score_reward_hat"
-		{
-			"prefab"	"promo hat"
-			"visuals"
+			"act_as_wearable"	"1"
+			"item_type_name"	"#TF_Item_Zombie_Armory"
+			"item_slot"	"action"
+			"anim_slot"	"FORCE_NOT_USED"
+			"equip_region"	"zombie_body"
+			"attributes"
 			{
-				"player_bodygroups"
+				"player skin override"
 				{
-					"hat"	"1"
-					"headphones"	"1"
+					"attribute_class" "player_skin_override"
+					"value"		  "1"
+				}
+				"zombiezombiezombiezombie"
+				{
+					"attribute_class"	"zombiezombiezombiezombie"
+					"value"		"1"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
 				}
 			}
-			"used_by_classes"
-			{
-				"scout"	"1"
-				"sniper"	"1"
-				"soldier"	"1"
-				"demoman"	"1"
-				"medic"	"1"
-				"heavy"	"1"
-				"spy"	"1"
-				"engineer"	"1"
-				"pyro"	"1"
-			}
 		}
-		"hat_decoration"
-		{
-			"prefab"	"cosmetic base_hat"
-			"item_type_name"	"#TF_Wearable_Hat"
-			"item_slot"	"head"
-			"equip_region"	"hat"
-		}
-
+		
 		"weapon_minigun"
 		{
 			"propername"		"1"
@@ -425,6 +386,28 @@
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -9"
+			}
+		}
+		"weapon_minigun_alt"
+		{
+			"prefab"	"weapon_minigun"
+			"attributes"
+			{
+				"hidden primary max ammo bonus"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"	"4"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	".25"
+				}
+				"bullets per shot penalty"
+				{
+					"attribute_class"	"mult_bullets_per_shot"
+					"value"	".25"
+				}
 			}
 		}
 		"weapon_rocketlauncher"
@@ -2006,76 +1989,6 @@
 				}
 			}
 		}
-		"weapon_quadball"
-		{
-			"prefab"		"weapon_grenade_launcher"
-			"item_logname"	"iron_bomber"
-			"item_iconname"	"iron_bomber"
-			"item_type_name"	"#TF_Weapon_GrenadeLauncher"
-			"item_name"		"#TF_Weapon_Iron_bomber"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_quadball/c_quadball"
-			"model_player"	"models/workshop/weapons/c_models/c_quadball/c_quadball.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"		"10 0 -10"				
-			}
-			"attributes"
-			{
-				"Blast radius decreased"
-				{
-					"attribute_class"	"mult_explosion_radius"
-					"value"				"0.85"
-				}
-				"custom projectile model"
-				{
-					"attribute_class"	"custom_projectile_model"
-					"value"				"models/workshop/weapons/c_models/c_quadball/w_quadball_grenade.mdl"
-				}
-				"fuse bonus"
-				{
-					"attribute_class" "fuse_mult"
-					"value" "0.7"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_TackyGrenadier.Single"
-				"sound_burst"			"Weapon_TackyGrenadier.SingleCrit"
-				"sound_special1"		"Weapon_Airstrike.Explosion"
-			}
-		}
-		"zombie"
-		{
-			"item_class"	"tf_wearable"
-			"item_type_name"	"#TF_VoodooCursedSoul_Type"
-			"baseitem"	"1"
-			"armory_remap"		"Voodoo-Cursed Soul (Armory)"
-			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"
-			"item_quality"	"unique"
-			"propername" "0"
-			"item_slot"	"action"
-			"equip_region"	"zombie_body"
-			"holiday_restriction"	"halloween_or_fullmoon"
-			"attributes"
-			{
-				"player skin override"
-				{
-					"attribute_class" "player_skin_override"
-					"value"		  "1"
-				}
-				"zombiezombiezombiezombie"
-				{
-					"attribute_class"	"zombiezombiezombiezombie"
-					"value"		"1"
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
-			}
-		}
 		"weapon_robot_arm"
 		{
 			"propername"		"1"
@@ -2330,65 +2243,9 @@
 				"demoman"	"1"
 			}
 		}
-		"weapon_crusaders_crossbow"
-		{
-			"item_class"	"tf_weapon_crossbow"
-			"item_type_name"	"#TF_Weapon_Crossbow"
-			"item_name"	"#TF_CrusadersCrossbow"
-			"item_description"	"#TF_CrusadersCrossbow_desc"
-			"item_logname"	"crusaders_crossbow"
-			"item_iconname"	"crusaders_crossbow"
-			"item_slot"	"primary"
-			"item_quality"	"unique"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow"
-			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"
-			"model_player"	"models/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow.mdl"
-			"attach_to_hands"	"1"
-			"used_by_classes"
-			{
-				"medic"	"1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset"				"10 0 -14"
-			}
-			"attributes"
-			{
-				"sniper no headshots"
-				{
-					"attribute_class" "set_weapon_mode"
-					"value" "1"
-				}
-				"maxammo primary reduced"
-				{
-					"attribute_class"	"mult_maxammo_primary"
-					"value"	"0.25"
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"	"Weapon_CrusadersCrossbow.Single"
-				"sound_burst"	"Weapon_CrusadersCrossbow.SingleCrit"
-			}
-			"xifier_class_remap"	"crusaders_crossbow"
-		}
 		"weapon_reskin"
 		{
-			"show_in_armory" "0"
-			"attributes"
-			{	
-				"is_reskin"
-				{
-					"attribute_class"	"is_reskin"
-					"value"	"1"
-				}
-			}
+			"show_in_armory"	"0"
 		}
 	}
 	"items"
@@ -2398,7 +2255,7 @@
 			"name"	"default"
 			"hidden"	"1"
 			"item_class"	"tf_wearable"
-			"item_name"	"#TF_Spectator_Default"
+			"item_name"	"#TF_Default_ItemDef"
 			"item_slot"	"melee"
 			"item_quality"	"normal"
 		}
@@ -2674,71 +2531,6 @@
 			"prefab"	"weapon_builder_spy"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_sapper.mdl"
-			"baseitem"	"1"
-		}
-		"32"
-		{
-			"name"	"TF2V_COSMETIC_HAT"
-			"prefab"	"hat"
-			"item_name"	"#TF_Default_ItemDef"
-			"used_by_classes"
-			{
-				"scout"		"1"
-				"soldier"	"1"
-				"pyro"		"1"
-				"demoman"	"1"
-				"heavy"		"1"
-				"engineer"	"1"
-				"medic"		"1"
-				"sniper"	"1"
-				"spy"		"1"
-			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"hat"	"0"
-				}
-			}
-			"baseitem"	"1"
-		}
-		"32"
-		{
-			"name"	"TF2V_COSMETIC_MISC"
-			"prefab"	"misc"
-			"item_name"	"#TF_Default_ItemDef"
-			"used_by_classes"
-			{
-				"scout"		"1"
-				"soldier"	"1"
-				"pyro"		"1"
-				"demoman"	"1"
-				"heavy"		"1"
-				"engineer"	"1"
-				"medic"		"1"
-				"sniper"	"1"
-				"spy"		"1"
-			}
-			"baseitem"	"1"
-		}
-		"33"
-		{
-			"name"	"TF2V_COSMETIC_MISC2"
-			"prefab"	"misc"
-			"item_slot"	"misc2"
-			"item_name"	"#TF_Default_ItemDef"
-			"used_by_classes"
-			{
-				"scout"		"1"
-				"soldier"	"1"
-				"pyro"		"1"
-				"demoman"	"1"
-				"heavy"		"1"
-				"engineer"	"1"
-				"medic"		"1"
-				"sniper"	"1"
-				"spy"		"1"
-			}
 			"baseitem"	"1"
 		}
 		"35"
@@ -3265,8 +3057,8 @@
 			"prefab"	"weapon_pickaxe"
 			"item_name"	"#TF_Unique_Achievement_Pickaxe"
 			"item_logname"	"unique_pickaxe"
-			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe_s2"
-			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe_s2.mdl"
+			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe"	
+			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe.mdl"
 			"attributes"
 			{
 				"provide on active"
@@ -3278,6 +3070,11 @@
 				{
 					"attribute_class"	"set_weapon_mode"
 					"value"	"1"
+				}
+				"mod shovel speed boost"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"2"
 				}
 				"special taunt"
 				{
@@ -4110,11 +3907,6 @@
 				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
 			}
 		}
-		"305"
-		{
-			"name"	"The Crusader's Crossbow"
-			"prefab" "weapon_crusaders_crossbow"
-		}
 		"307"
 		{
 			"name"	"The Ullapool Caber"
@@ -4341,43 +4133,211 @@
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
 		}
-		"775"
+		"1050"
 		{
-			"name"	"The Escape Plan"
-			"prefab"	"weapon_pickaxe"
-			"item_name"	"#TF_Unique_Pickaxe_EscapePlan"
-			"item_logname"	"unique_pickaxe_escape"
-			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe"	
-			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe.mdl"
+			"name"		"Spawn Camper"
+			"prefab"		"weapon_backpack"
+			"item_name"		"#TF_sum19_spawn_camper_backpack"
+			"item_description"		"#TF_sum19_spawn_camper_backpack_Desc"
+			"item_type_name"		"#TF_Wearable_Backpack"
+			"image_inventory"		"backpack/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack"
+			"model_player"			"models/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack.mdl"
+			"item_slot"	"secondary"
+			"used_by_classes"
+			{
+				"pyro"		"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"backpack"		"1"
+				}
+			}
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
 			"attributes"
 			{
-				"provide on active"
+				"health regen"
 				{
-					"attribute_class"	"provide_on_active"
-					"value" "1"
-				}
-				"mod shovel speed boost"
-				{
-					"attribute_class"	"set_weapon_mode"
+					"attribute_class"	"add_health_regen"
 					"value"	"2"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-				"mod weapon blocks healing"
-				{
-					"attribute_class"	"weapon_blocks_healing"
-					"value" "1"
 				}
 			}
 		}
-		"1151"
+		"1051"
 		{
-			"name"	"The Iron Bomber"
-			"prefab"	"weapon_quadball"
-			"particle_suffix"	"iron_bomber"
+			"name"	"Assault Cannon"
+			"prefab"	"weapon_minigun"
+			"enabled"				"0"
+			"show_in_armory"		"0"
+			"item_type_name"	"#TF_Weapon_Minigun"
+			"item_name"	"#TF_Weapon_AssaultCannon"
+			"item_logname"	"assaultcannon"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_assault_minigun/c_assault_minigun"
+			"model_player"	"models/workshop/weapons/c_models/c_assault_minigun/c_assault_minigun.mdl"
+			"item_quality"	"unique"
+			"visuals"
+			{
+				"sound_reload"	"Weapon_Asscan.Reload"
+				"sound_empty"	"Weapon_Asscan.ClipEmpty"
+				"sound_double_shot"	"Weapon_Asscan.Fire"
+				"sound_special1"	"Weapon_Asscan.WindUp"
+				"sound_special2"	"Weapon_Asscan.WindDown"
+				"sound_special3"	"Weapon_Asscan.Spin"
+				"sound_burst"	"Weapon_Asscan.FireCrit"
+			}
+			"attributes"
+			{		
+				"weapon spread bonus"
+				{
+					"attribute_class"	"mult_spread_scale"
+					"value"	".5"
+				}			
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.875"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+		}
+		"5617"
+		{
+			"name"		"Zombie Scout"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieScout"
+			"model_player"	"models/player/items/scout/scout_zombie.mdl"
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"feet"					"1"
+			}
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieScout_Desc"
+			"image_inventory"	"backpack/player/items/scout/scout_zombie"
+		}
+		"5618"
+		{
+			"name"		"Zombie Soldier"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieSoldier"
+			"model_player"	"models/player/items/soldier/soldier_zombie.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSoldier_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
+		}
+		"5619"
+		{
+			"name"		"Zombie Heavy"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieHeavy"
+			"model_player"	"models/player/items/heavy/heavy_zombie.mdl"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieHeavy_Desc"
+			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
+		}
+		"5620"
+		{
+			"name"		"Zombie Demo"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieDemoman"
+			"model_player"	"models/player/items/demo/demo_zombie.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieDemoman_Desc"
+			"image_inventory"	"backpack/player/items/demo/demo_zombie"
+		}
+		"5621"
+		{
+			"name"		"Zombie Engineer"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieEngineer"
+			"model_player"	"models/player/items/engineer/engineer_zombie.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieEngineer_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
+		}
+		"5622"
+		{
+			"name"		"Zombie Medic"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieMedic"
+			"model_player"	"models/player/items/medic/medic_zombie.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieMedic_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_zombie"
+		}
+		"5623"
+		{
+			"name"		"Zombie Spy"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieSpy"
+			"model_player"	"models/player/items/spy/spy_zombie.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSpy_Desc"
+			"image_inventory"	"backpack/player/items/spy/spy_zombie"
+		}
+		"5624"
+		{
+			"name"		"Zombie Pyro"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombiePyro"
+			"model_player"	"models/player/items/pyro/pyro_zombie.mdl"
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"pyro_head_replacement"	"1"
+			}
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+			"item_description"	"#TF_Item_ZombiePyro_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
+		}
+		"5625"
+		{
+			"name"		"Zombie Sniper"
+			"prefab"	"zombie"
+			"item_name"	"#TF_Item_ZombieSniper"
+			"model_player"	"models/player/items/sniper/sniper_zombie.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSniper_Desc"
+			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
 		}
 		"10160"
 		{
@@ -4828,29 +4788,6 @@
 				"sound_burst"		"Weapon_AWP.SingleCrit"
 			}
 		}
-		"11013"
-		{
-			"name"	"The Ham Shank"
-			"prefab"	"weapon_fryingpan weapon_reskin"
-			"item_logname"	"ham_shank"
-			"item_iconname"	"ham_shank"
-			"item_type_name"	"#TF_Weapon_Pork_Product"
-			"item_name"	"#TF_HamShank"
-			"item_description"	"#TF_HamShank_Desc"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_ham/c_ham"
-			"model_player"	"models/workshop/weapons/c_models/c_ham/c_ham.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -6"
-			}
-			"visuals"
-			{
-				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
-				"sound_melee_miss"	"Weapon_Machete.Miss"
-				"sound_burst"		"Weapon_Machete.MissCrit"
-			}
-		}
 		"11092"
 		{
 			"name"	"The Fortified Compound"
@@ -5009,137 +4946,9 @@
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
 		}
-		"55617"
-		{
-			"name"		"Zombie Scout"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieScout"
-			"model_player"	"models/player/items/scout/scout_zombie.mdl"
-			"equip_regions"
-			{
-				"zombie_body"			"1"
-				"feet"					"1"
-			}
-			"used_by_classes"
-			{
-				"scout"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieScout_Desc"
-			"image_inventory"	"backpack/player/items/scout/scout_zombie"
-		}
-		"55618"
-		{
-			"name"		"Zombie Soldier"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieSoldier"
-			"model_player"	"models/player/items/soldier/soldier_zombie.mdl"
-			"used_by_classes"
-			{
-				"soldier"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSoldier_Desc"
-			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
-		}
-		"55619"
-		{
-			"name"		"Zombie Heavy"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieHeavy"
-			"model_player"	"models/player/items/heavy/heavy_zombie.mdl"
-			"used_by_classes"
-			{
-				"heavy"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieHeavy_Desc"
-			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
-		}
-		"55620"
-		{
-			"name"		"Zombie Demo"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieDemoman"
-			"model_player"	"models/player/items/demo/demo_zombie.mdl"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieDemoman_Desc"
-			"image_inventory"	"backpack/player/items/demo/demo_zombie"
-		}
-		"55621"
-		{
-			"name"		"Zombie Engineer"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieEngineer"
-			"model_player"	"models/player/items/engineer/engineer_zombie.mdl"
-			"used_by_classes"
-			{
-				"engineer"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieEngineer_Desc"
-			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
-		}
-		"55622"
-		{
-			"name"		"Zombie Medic"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieMedic"
-			"model_player"	"models/player/items/medic/medic_zombie.mdl"
-			"used_by_classes"
-			{
-				"medic"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieMedic_Desc"
-			"image_inventory"	"backpack/player/items/medic/medic_zombie"
-		}
-		"55623"
-		{
-			"name"		"Zombie Spy"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieSpy"
-			"model_player"	"models/player/items/spy/spy_zombie.mdl"
-			"used_by_classes"
-			{
-				"spy"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSpy_Desc"
-			"image_inventory"	"backpack/player/items/spy/spy_zombie"
-		}
-		"55624"
-		{
-			"name"		"Zombie Pyro"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombiePyro"
-			"model_player"	"models/player/items/pyro/pyro_zombie.mdl"
-			"equip_regions"
-			{
-				"zombie_body"			"1"
-				"pyro_head_replacement"	"1"
-			}
-			"used_by_classes"
-			{
-				"pyro"	"1"
-			}
-			"item_description"	"#TF_Item_ZombiePyro_Desc"
-			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
-		}
-		"55625"
-		{
-			"name"		"Zombie Sniper"
-			"prefab"	"zombie"
-			"item_name"	"#TF_Item_ZombieSniper"
-			"model_player"	"models/player/items/sniper/sniper_zombie.mdl"
-			"used_by_classes"
-			{
-				"sniper"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSniper_Desc"
-			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
-		}
 	}
 	"attributes"
 	{
-
 		"1"
 		{
 			"name"	"damage penalty"
@@ -5689,16 +5498,6 @@
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"55"
-		{
-			"name"	"obsolete ammo penalty"
-			"attribute_class"	"obsolete"
-			"description_string"	"unused"
-			"description_format"	"value_is_percentage"
-			"hidden"	"1"
-			"effect_type"	"neutral"
 			"stored_as_integer"	"0"
 		}
 		"56"
@@ -6496,26 +6295,6 @@
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
-		"132"
-		{
-			"name"	"community description"
-			"attribute_class"	"desc_community_description"
-			"description_string"	"#Attrib_Community_Description"
-			"description_format"	"value_is_percentage"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"133"
-		{
-			"name"	"soldier model index"
-			"attribute_class"	"desc_soldiermedal_index"
-			"description_string"	"#Attrib_MedalIndex_Description"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
 		"134"
 		{
 			"name"	"attach particle effect"
@@ -6525,7 +6304,6 @@
 			"hidden"	"0"
 			"effect_type"	"unusual"
 			"stored_as_integer"	"0"
-			"can_affect_market_name"	"1"
 		}
 		"135"
 		{
@@ -6587,16 +6365,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"141"
-		{
-			"name"	"selfmade description"
-			"attribute_class"	"desc_selfmade_description"
-			"description_string"	"#Attrib_Selfmade_Description"
-			"description_format"	"value_is_percentage"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
 		"142"
 		{
 			"name"	"set item tint RGB"
@@ -6607,31 +6375,11 @@
 			"effect_type"	"neutral"
 			"stored_as_integer"	"0"
 		}
-		"143"
-		{
-			"name"	"custom employee number"
-			"attribute_class"	"set_employee_number"
-			"description_string"	"#Attrib_EmployeeNumber"
-			"description_format"	"value_is_date"
-			"hidden"	"0"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
 		"144"
 		{
 			"name"	"lunchbox adds minicrits"
 			"attribute_class"	"set_weapon_mode"
 			"description_string"	"#Attrib_LunchboxAddsMinicrits"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"145"
-		{
-			"name"	"taunt is highfive"
-			"attribute_class"	"enable_misc2_highfive"
-			"description_string"	"#Attrib_DamageDone_Negative"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"neutral"
@@ -6646,16 +6394,6 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
-		}
-		"147"
-		{
-			"name"	"Wrench index"
-			"attribute_class"	"desc_wrench_index"
-			"description_string"	"#Attrib_WrenchNumber"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
 		}
 		"148"
 		{
@@ -6686,36 +6424,6 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"151"
-		{
-			"name"	"DEPRECATED socketed item definition id DEPRECATED "
-			"attribute_class"	"socketed_item_definition_id"
-			"description_string"	"#Attrib_Socket"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"152"
-		{
-			"name"	"custom texture lo"
-			"attribute_class"	"custom_texture_lo"
-			"description_string"	"#Attrib_CustomTexture"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"153"
-		{
-			"name"	"cannot trade"
-			"attribute_class"	"cannot_trade"
-			"description_string"	"#Attrib_CannotTrade"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
 			"stored_as_integer"	"0"
 		}
 		"154"
@@ -6770,7 +6478,7 @@
 		}
 		"159"
 		{
-			"name"	"SET BONUS: cloak blink time penalty"
+			"name"	"cloak blink time penalty"
 			"attribute_class"	"cloak_blink_time_penalty"
 			"description_string"	"#Attrib_CloakBlinkTimePenalty"
 			"description_format"	"value_is_additive"
@@ -6781,7 +6489,7 @@
 		}
 		"160"
 		{
-			"name"	"SET BONUS: quiet unstealth"
+			"name"	"quiet unstealth"
 			"attribute_class"	"set_quiet_unstealth"
 			"description_string"	"#Attrib_QuietUnstealth"
 			"description_format"	"value_is_additive"
@@ -6872,7 +6580,7 @@
 		}
 		"169"
 		{
-			"name"	"SET BONUS: dmg from sentry reduced"
+			"name"	"dmg from sentry reduced"
 			"attribute_class"	"dmg_from_sentry_reduced"
 			"description_string"	"#Attrib_DmgFromSentryReduced"
 			"description_format"	"value_is_inverted_percentage"
@@ -6899,16 +6607,6 @@
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"172"
-		{
-			"name"	"purchased"
-			"attribute_class"	"purchased"
-			"description_string"	"#Attrib_Purchased"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
 			"stored_as_integer"	"0"
 		}
 		"173"
@@ -6944,7 +6642,7 @@
 		}
 		"176"
 		{
-			"name"	"SET BONUS: no death from headshots"
+			"name"	"no death from headshots"
 			"attribute_class"	"no_death_from_headshots"
 			"description_string"	"#Attrib_NoDeathFromHeadshots"
 			"description_format"	"value_is_additive"
@@ -7025,47 +6723,6 @@
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
-		"184"
-		{
-			"name"	"duel loser account id"
-			"attribute_class"	"duel_loser_account_id"
-			"description_string"	"#Attrib_DuelLoserAccountID"
-			"description_format"	"value_is_account_id"
-			"hidden"	"0"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
-		"185"
-		{
-			"name"	"event date"
-			"attribute_class"	"event_date"
-			"description_string"	"#Attrib_EventDate"
-			"description_format"	"value_is_date"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
-		"186"
-		{
-			"name"	"gifter account id"
-			"attribute_class"	"gifter_account_id"
-			"description_string"	"#Attrib_GifterAccountID"
-			"description_format"	"value_is_account_id"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"187"
-		{
-			"name"	"set supply crate series"
-			"attribute_class"	"supply_crate_series"
-			"description_string"	"#Attrib_SupplyCrateSeries"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-			"can_affect_market_name"	"1"
-		}
 		"188"
 		{
 			"name"	"preserve ubercharge"
@@ -7073,16 +6730,6 @@
 			"description_string"	"#Attrib_PreserveUbercharge"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"189"
-		{
-			"name"	"elevate quality"
-			"attribute_class"	"set_elevated_quality"
-			"description_string"	"#Attrib_ElevateQuality"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
@@ -7108,84 +6755,12 @@
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
-		"192"
-		{
-			"name"	"referenced item id low"
-			"attribute_class"	"referenced_item_id_low"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"negative"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"1"
-		}
-		"193"
-		{
-			"name"	"referenced item id high"
-			"attribute_class"	"referenced_item_id_high"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"negative"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"1"
-		}
-		"194"
-		{
-			"name"	"referenced item def UPDATED"
-			"attribute_class"	"referenced_item_def"
-			"description_string"	"#Attrib_ReferencedItem"
-			"description_format"	"value_is_item_def"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"1"
-		}
-		"195"
-		{
-			"name"	"always tradable"
-			"attribute_class"	"always_tradable"
-			"description_string"	"#Attrib_Always_Tradable"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"196"
-		{
-			"name"	"noise maker"
-			"attribute_class"	"enable_misc2_noisemaker"
-			"description_string"	"#Attrib_NoiseMaker"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"197"
-		{
-			"name"	"halloween item"
-			"attribute_class"	"halloween_item"
-			"description_string"	"#Attrib_Halloween_Item"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"198"
-		{
-			"name"	"collection bits DEPRECATED"
-			"attribute_class"	"collection_bits_DEPRECATED"
-			"description_string"	"#Attrib_Halloween_Item"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"199"
 		{
 			"name"	"switch from wep deploy time decreased"
 			"attribute_class"	"mult_switch_from_wep_deploy_time"
-			"description_string"	"#Attrib_SingleWepHolsterBonus"
-			"description_format"	"value_is_inverted_percentage"
-			"hidden"	"0"
+			"description_format"	"value_is_percentage"
+			"hidden"	"1"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
@@ -7292,39 +6867,6 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
-		}
-
-		
-		"211"
-		{
-			"name"	"tradable after date"
-			"attribute_class"	"tradable_after_date"
-			"description_string"	"#Attrib_TradableAfterDate"
-			"description_format"	"value_is_date"
-			"hidden"	"1"
-			"effect_type"	"negative"
-			"stored_as_integer"	"1"
-		}
-		"212"
-		{
-			"name"	"force level display"
-			"attribute_class"	"force_level_display"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-
-
-		"214"
-		{
-			"name"	"kill eater"
-			"attribute_class"	"kill_eater"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-			"can_affect_market_name"	"1"			
 		}
 		"215"
 		{
@@ -7444,35 +6986,6 @@
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
-		}
-		"227"
-		{
-			"name"	"custom texture hi"
-			"attribute_class"	"custom_texture_hi"
-			"description_string"	"#Attrib_CustomTexture"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"228"
-		{
-			"name"	"makers mark id"
-			"attribute_class"	"makers_mark_id"
-			"description_string"	"#Attrib_MakersMark"
-			"description_format"	"value_is_account_id"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"229"
-		{
-			"name"	"unique craft index"
-			"attribute_class"	"unique_craft_index"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
 		}
 		"230"
 		{
@@ -7715,6 +7228,15 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
+		"254"
+		{
+			"name"	"airblast functionality flags"
+			"attribute_class"	"airblast_functionality_flags"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"positive"
+			"stored_as_integer"	"1"
+		}
 		"255"
 		{
 			"name"	"airblast pushback scale"
@@ -7783,16 +7305,6 @@
 			"effect_type"	"neutral"
 			"stored_as_integer"	"0"
 		}
-		"262"
-		{
-			"name"	"saxxy award category"
-			"attribute_class"	"saxxy_award_category"
-			"description_string"	"#Attrib_SaxxyAward"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"263"
 		{
 			"name"	"melee bounds multiplier"
@@ -7857,56 +7369,6 @@
 			"name"	"mod see enemy health"
 			"attribute_class"	"see_enemy_health"
 			"description_string"	"#Attrib_SeeEnemyHealth"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"270"
-		{
-			"name"	"powerup max charges"
-			"attribute_class"	"powerup_max_charges"
-			"description_string"	"#Attrib_PowerupMaxCharges"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"271"
-		{
-			"name"	"powerup charges"
-			"attribute_class"	"powerup_charges"
-			"description_string"	"#Attrib_PowerupCharges"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"272"
-		{
-			"name"	"powerup duration"
-			"attribute_class"	"powerup_duration"
-			"description_string"	"#Attrib_PowerupDuration"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"273"
-		{
-			"name"	"critboost"
-			"attribute_class"	"critboost"
-			"description_string"	"#Attrib_CritBoost"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"274"
-		{
-			"name"	"ubercharge"
-			"attribute_class"	"ubercharge"
-			"description_string"	"#Attrib_Ubercharge"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"positive"
@@ -8061,43 +7523,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"1"
 		}
-		"292"
-		{
-			"name"	"kill eater score type"
-			"attribute_class"	"kill_eater_score_type"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"293"
-		{
-			"name"	"kill eater score type 2"
-			"attribute_class"	"kill_eater_score_type_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"294"
-		{
-			"name"	"kill eater 2"
-			"attribute_class"	"kill_eater_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"295"
-		{
-			"name"	"has pipboy build interface"
-			"attribute_class"	"set_custom_buildmenu"
-			"description_string"	""
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"296"
 		{
 			"name"	"sapper kills collect crits"
@@ -8137,7 +7562,7 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
-		}	
+		}
 		"300"
 		{
 			"name"	"electrical airblast DISPLAY ONLY"
@@ -8158,16 +7583,6 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"1"
 		}
-		"302"
-		{
-			"name"	"expiration date"
-			"attribute_class"	"expiration_date"
-			"description_string"	"#Attrib_ExpirationDate"
-			"description_format"	"value_is_date"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
 		"303"
 		{
 			"name"	"mod max primary clip override"
@@ -8177,7 +7592,7 @@
 			"hidden"	"1"
 			"effect_type"	"positive"
 			"stored_as_integer"	"1"
-		}	
+		}
 		"304"
 		{
 			"name"	"sniper full charge damage bonus"
@@ -8237,26 +7652,6 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
-		}		
-		"310"
-		{
-			"name"	"recall"
-			"attribute_class"	"recall"
-			"description_string"	"#Attrib_Recall"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"311"
-		{
-			"name"	"unlimited quantity"
-			"attribute_class"	"unlimited_quantity"
-			"description_string"	"#Attrib_Unlimited"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
 		}
 		"312"
 		{
@@ -8287,26 +7682,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"315"
-		{
-			"name"	"refill_ammo"
-			"attribute_class"	"refill_ammo"
-			"description_string"	"#Attrib_RefillAmmo"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"317"
-		{
-			"name"	"store sort override DEPRECATED"
-			"attribute_class"	"store_sort_override_DEPRECATED"
-			"description_string"	"#Attrib_AlternateRocketEffect"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
 		"318"
 		{
 			"name"	"faster reload rate"
@@ -8327,16 +7702,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"320"
-		{
-			"name"	"robo sapper"
-			"attribute_class"	"robo_sapper"
-			"description_string"	"#Attrib_RoboSapper"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
 		"321"
 		{
 			"name"	"build rate bonus"
@@ -8346,16 +7711,6 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
-		}
-		"322"
-		{
-			"name"	"taunt is press and hold"
-			"attribute_class"	"enable_misc2_holdtaunt"
-			"description_string"	"#Attrib_DamageDone_Negative"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
 		}
 		"323"
 		{
@@ -8371,16 +7726,6 @@
 			"name"	"accuracy scales damage"
 			"attribute_class"	"accuracy_scales_damage"
 			"description_string"	"#Attrib_AccurScalesDmg"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"325"
-		{
-			"name"	"currency bonus"
-			"attribute_class"	"currency_bonus"
-			"description_string"	"#Attrib_CurrencyBonus"
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
 			"effect_type"	"positive"
@@ -8421,7 +7766,7 @@
 			"description_string"	"#Attrib_AirBlastVulnerabilityMultipier"
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
-			"effect_type"	"positive"
+			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
 		"330"
@@ -8453,7 +7798,7 @@
 		}
 		"333"
 		{
-			"name"	"SET BONUS: special dsp"
+			"name"	"special dsp"
 			"attribute_class"	"special_dsp"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -8661,7 +8006,7 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
-		}	
+		}
 		"355"
 		{
 			"name"	"mod ammo per shot missed DISPLAY ONLY"
@@ -8741,7 +8086,7 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
-		}		
+		}
 		"363"
 		{
 			"name"	"crit does no damage"
@@ -8751,7 +8096,7 @@
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
-		}		
+		}
 		"364"
 		{
 			"name"	"add jingle to footsteps"
@@ -8761,7 +8106,7 @@
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
-		}				
+		}
 		"365"
 		{
 			"name"	"set icicle knife mode"
@@ -8771,7 +8116,7 @@
 			"hidden"	"1"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
-		}				
+		}
 		"366"
 		{
 			"name"	"mod stun waist high airborne"
@@ -8821,49 +8166,9 @@
 			"effect_type"	"neutral"
 			"stored_as_integer"	"0"
 		}
-		"371"
-		{
-			"name"	"cosmetic taunt sound"
-			"attribute_class"	"cosmetic_taunt_sound"
-			"attribute_type"	"string"
-			"description_string"	"#Attrib_TauntSoundSuccess"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-		}
-		"372"
-		{
-			"name"	"accepted wedding ring account id 1"
-			"attribute_class"	"accepted_wedding_ring_account_id_1"
-			"description_string"	"#Attrib_AcceptedWeddingRingAccount1"
-			"description_format"	"value_is_account_id"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"373"
-		{
-			"name"	"accepted wedding ring account id 2"
-			"attribute_class"	"accepted_wedding_ring_account_id_2"
-			"description_string"	"#Attrib_AcceptedWeddingRingAccount2"
-			"description_format"	"value_is_account_id"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"374"
-		{
-			"name"	"tool escrow until date"
-			"attribute_class"	"tool_escrow_until_date"
-			"description_string"	"#Attrib_ToolEscrowUntilDate"
-			"description_format"	"value_is_date"
-			"hidden"	"1"
-			"effect_type"	"negative"
-			"stored_as_integer"	"1"
-		}
 		"375"
 		{
-			"name"	"generate rage on damage"	
+			"name"	"generate rage on damage"
 			"attribute_class"	"generate_rage_on_dmg"
 			"description_string"	"#Attrib_RageOnDamage"
 			"description_format"	"value_is_additive"
@@ -8904,78 +8209,6 @@
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
-		"379"
-		{
-			"name"	"kill eater user 1"
-			"attribute_class"	"kill_eater_user_1"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"380"
-		{
-			"name"	"kill eater user score type 1"
-			"attribute_class"	"kill_eater_user_score_type_1"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"381"
-		{
-			"name"	"kill eater user 2"
-			"attribute_class"	"kill_eater_user_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"382"
-		{
-			"name"	"kill eater user score type 2"
-			"attribute_class"	"kill_eater_user_score_type_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"383"
-		{
-			"name"	"kill eater user 3"
-			"attribute_class"	"kill_eater_user_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"384"
-		{
-			"name"	"kill eater user score type 3"
-			"attribute_class"	"kill_eater_user_score_type_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"385"
-		{
-			"name"	"strange part new counter ID"
-			"attribute_class"	"strange_part_new_counter_id"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"386"
-		{
-			"name"	"mvm completed challenges bitmask"
-			"attribute_class"	"mvm_completed_challenges_bitmask"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"387"
 		{
 			"name"	"rage on kill"
@@ -8987,16 +8220,7 @@
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
-		"388"
-		{
-			"name"	"kill eater kill type"
-			"attribute_class"	"kill_eater_kill_type"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"389" 
+		"389"
 		{
 			"name"	"shot penetrate all players"
 			"attribute_class"	"shot_penetrate_all_players"
@@ -9016,17 +8240,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"391"
-		{
-			"name"	"SET BONUS: mystery solving time decrease"
-			"attribute_class"	"mystery_solving_time_decrease"
-			"description_string"	"#Attrib_MysterySolvingTimeDecrease"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
 		"392"
 		{
 			"name"	"damage penalty on bodyshot"
@@ -9039,7 +8252,7 @@
 		}
 		"393"
 		{
-			"name" "sniper rage DISPLAY ONLY"
+			"name"	"sniper rage DISPLAY ONLY"
 			"attribute_class"	"sniper_rage_DISPLAY_ONLY"
 			"description_string"	"#Attrib_SniperRageDisplayOnly"
 			"description_format"	"value_is_additive"
@@ -9054,27 +8267,6 @@
 			"description_string"	"#Attrib_FireRate_Positive"
 			"description_format"	"value_is_inverted_percentage"
 			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"395"
-		{
-			"name"	"explosive sniper shot"
-			"attribute_class"	"explosive_sniper_shot"
-			"description_string"	"#Attrib_ExplosiveSniperShot"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"396"
-		{
-			"name"	"melee attack rate bonus"
-			"attribute_class"	"mult_postfiredelay"
-			"description_string"	"#Attrib_MeleeRate_Positive"
-			"description_format"	"value_is_inverted_percentage"
-			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
@@ -9099,17 +8291,6 @@
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
-		"399"
-		{
-			"name"	"armor piercing"
-			"attribute_class"	"armor_piercing"
-			"description_string"	"#Attrib_ArmorPiercing"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
 		"400"
 		{
 			"name"	"cannot pick up intelligence"
@@ -9118,17 +8299,6 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"401"
-		{
-			"name"	"SET BONUS: chance of hunger decrease"
-			"attribute_class"	"chance_of_hunger_decrease"
-			"description_string"	"#Attrib_ChanceOfHungerDecrease"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
 		"402"
@@ -9141,42 +8311,12 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"403"
-		{
-			"name"	"squad surplus claimer id DEPRECATED"						
-			"attribute_class"	"squad_surplus_claimer_account_id_DEPRECATED"
-			"description_string"	"#Attrib_SquadSurplusClaimerAccountID"
-			"description_format"	"value_is_account_id"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"404"
-		{
-			"name"	"share consumable with patient"
-			"attribute_class"	"share_consumable_with_patient"
-			"description_string"	"#Attrib_ShareConsumable"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
 		"405"
 		{
 			"name"	"airblast vertical vulnerability multiplier"
 			"attribute_class"	"airblast_vertical_vulnerability_multiplier"
 			"description_string"	"#Attrib_AirBlastVerticalVulnerabilityMultipier"
 			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"406"
-		{
-			"name"	"vision opt in flags"
-			"attribute_class"	"vision_opt_in_flags"
-			"description_format"	"value_is_or"
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
@@ -9214,7 +8354,7 @@
 		"410"
 		{
 			"name"	"damage bonus while disguised"
-			"attribute_class"		"mult_dmg_disguised"
+			"attribute_class"	"mult_dmg_disguised"
 			"description_string"	"#Attrib_DmgBonus_Disguised"
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
@@ -9262,16 +8402,6 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
-		"415"
-		{
-			"name"	"counts as assister is some kind of pet this update is going to be awesome"
-			"attribute_class"	"counts_as_assister"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"1"
-		}
 		"416"
 		{
 			"name"	"mod flaregun fires pellets with knockback"
@@ -9294,9 +8424,9 @@
 		}
 		"418"
 		{
-			"name"	"boost on damage"
-			"attribute_class"	"boost_on_damage"
-			"description_string"	"#Attrib_BoostOnDamage"
+			"name"	"hype on damage"
+			"attribute_class"	"hype_on_damage"
+			"description_string"	"#Attrib_HypeOnDamage"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"positive"
@@ -9312,31 +8442,11 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
-		"420"
-		{
-			"name"	"pyro year number"
-			"attribute_class"	"pyro_year_number"
-			"description_string"	"#Attrib_PyroYearNumber"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"421"
 		{
 			"name"	"no primary ammo from dispensers while active"
-			"attribute_class"	"no_primary_ammo_from_dispensers"	
+			"attribute_class"	"no_primary_ammo_from_dispensers"
 			"description_string"	"#Attrib_NoPrimaryAmmoFromDispensers"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"1"
-		}
-		"422"
-		{
-			"name"	"pyrovision only DISPLAY ONLY"
-			"attribute_class"	"pyrovision_only_display"
-			"description_string"	"#Attrib_PyrovisionFilter"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"negative"
@@ -9482,16 +8592,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"439"
-		{
-			"name"	"override item level desc string"
-			"attribute_class"	"override_item_level_desc_string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		
 		"440"
 		{
 			"name"	"clip size upgrade atomic"
@@ -9583,144 +8683,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"449"
-		{
-			"name"	"never craftable"
-			"attribute_class"	"never_craftable"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"450"
-		{
-			"name"	"zombiezombiezombiezombie"
-			"attribute_class"	"zombiezombiezombiezombie"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"451"
-		{
-			"name"	"sapper voice pak"
-			"attribute_class"	"sapper_voice_pak"
-			"description_string"	"#Attrib_Sapper_Voice_Pak"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"452"
-		{
-			"name"	"sapper voice pak idle wait"
-			"attribute_class"	"sapper_voice_pak_idle_wait"
-			"description_string"	"#Attrib_Sapper_Voice_Pak_Idle_Wait"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"453"
-		{
-			"name"	"merasmus hat level display ONLY"
-			"attribute_class"	"merasmus_hat_level_display_ONLY"
-			"description_string"	"#Attrib_Merasmus_Hat_Level"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"454"
-		{
-			"name"	"strange restriction type 1"
-			"attribute_class"	"strange_restriction_type_1"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"455"
-		{
-			"name"	"strange restriction value 1"
-			"attribute_class"	"strange_restriction_value_1"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"456"
-		{
-			"name"	"strange restriction type 2"
-			"attribute_class"	"strange_restriction_type_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"457"
-		{
-			"name"	"strange restriction value 2"
-			"attribute_class"	"strange_restriction_value_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"458"
-		{
-			"name"	"strange restriction user type 1"
-			"attribute_class"	"strange_restriction_user_type_1"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"459"
-		{
-			"name"	"strange restriction user value 1"
-			"attribute_class"	"strange_restriction_user_value_1"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"460"
-		{
-			"name"	"strange restriction user type 2"
-			"attribute_class"	"strange_restriction_user_type_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"461"
-		{
-			"name"	"strange restriction user value 2"
-			"attribute_class"	"strange_restriction_user_value_2"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"462"
-		{
-			"name"	"strange restriction user type 3"
-			"attribute_class"	"strange_restriction_user_type_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"463"
-		{
-			"name"	"strange restriction user value 3"
-			"attribute_class"	"strange_restriction_user_value_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"464"
 		{
 			"name"	"engineer sentry build rate multiplier"
@@ -9760,15 +8722,6 @@
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
-		}
-		"468"
-		{
-			"name"	"strange score selector"
-			"attribute_class"	"strange_score_selector"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
 		}
 		"469"
 		{
@@ -9882,16 +8835,6 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
-		"481"
-		{
-			"name"	"canteen specialist"
-			"attribute_class"	"canteen_specialist"
-			"description_string"	"#Attrib_Canteen_Specialist"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
 		"482"
 		{
 			"name"	"overheal expert"
@@ -9922,54 +8865,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"489"
-		{
-			"name"	"SET BONUS: move speed set bonus"
-			"attribute_class"	"mult_player_movespeed"
-			"description_string"	"#Attrib_MoveSpeed_Bonus"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"490"
-		{
-			"name"	"SET BONUS: health regen set bonus"
-			"attribute_class"	"add_health_regen"
-			"description_string"	"#Attrib_HealthRegen"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"491"
-		{
-			"name"	"SET BONUS: dmg taken from crit reduced set bonus"
-			"attribute_class"	"mult_dmgtaken_from_crit"
-			"description_string"	"#Attrib_DmgTaken_From_Crit_Reduced"
-			"description_format"	"value_is_inverted_percentage"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"492"
-		{
-			"name"	"SET BONUS: dmg taken from fire reduced set bonus"
-			"attribute_class"	"mult_dmgtaken_from_fire"
-			"description_string"	"#Attrib_DmgTaken_From_Fire_Reduced"
-			"description_format"	"value_is_inverted_percentage"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
 		"493"
 		{
 			"name"	"healing mastery"
@@ -9980,46 +8875,10 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"494"
-		{
-			"name"	"kill eater 3"
-			"attribute_class"	"kill_eater_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"495"
-		{
-			"name"	"kill eater score type 3"
-			"attribute_class"	"kill_eater_score_type_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"496"
-		{
-			"name"	"strange restriction type 3"
-			"attribute_class"	"strange_restriction_type_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"497"
-		{
-			"name"	"strange restriction value 3"
-			"attribute_class"	"strange_restriction_value_3"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"498"
 		{
-			"name" "bot custom jump particle"
-			"attribute_class"	"bot_custom_jump_particle"
+			"name"	"custom jump particle"
+			"attribute_class"	"bot_custom_jump_particle__mvm"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"
@@ -10027,7 +8886,7 @@
 		}
 		"499"
 		{
-			"name"	"generate rage on heal"		
+			"name"	"generate rage on heal"
 			"attribute_class"	"generate_rage_on_heal"
 			"description_string"	"#Attrib_RageOnHeal"
 			"description_format"	"value_is_additive"
@@ -10035,27 +8894,9 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"500"
-		{
-			"name" "custom name attr"
-			"attribute_class"	"custom_name_attr"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"501"
-		{
-			"name" "custom desc attr"
-			"attribute_class"	"custom_desc_attr"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
 		"503"
 		{
-			"name" "medigun bullet resist passive"
+			"name"	"medigun bullet resist passive"
 			"attribute_class"	"medigun_bullet_resist_passive"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10064,7 +8905,7 @@
 		}
 		"504"
 		{
-			"name" "medigun blast resist passive"
+			"name"	"medigun blast resist passive"
 			"attribute_class"	"medigun_blast_resist_passive"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10073,7 +8914,7 @@
 		}
 		"505"
 		{
-			"name" "medigun fire resist passive"
+			"name"	"medigun fire resist passive"
 			"attribute_class"	"medigun_fire_resist_passive"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10082,7 +8923,7 @@
 		}
 		"506"
 		{
-			"name" "medigun bullet resist deployed"
+			"name"	"medigun bullet resist deployed"
 			"attribute_class"	"medigun_bullet_resist_deployed"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10091,7 +8932,7 @@
 		}
 		"507"
 		{
-			"name" "medigun blast resist deployed"
+			"name"	"medigun blast resist deployed"
 			"attribute_class"	"medigun_blast_resist_deployed"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10100,7 +8941,7 @@
 		}
 		"508"
 		{
-			"name" "medigun fire resist deployed"
+			"name"	"medigun fire resist deployed"
 			"attribute_class"	"medigun_fire_resist_deployed"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10109,7 +8950,7 @@
 		}
 		"509"
 		{
-			"name" "medigun crit bullet percent bar deplete"
+			"name"	"medigun crit bullet percent bar deplete"
 			"attribute_class"	"medigun_crit_bullet_percent_bar_deplete"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10118,7 +8959,7 @@
 		}
 		"510"
 		{
-			"name" "medigun crit blast percent bar deplete"
+			"name"	"medigun crit blast percent bar deplete"
 			"attribute_class"	"medigun_crit_blast_percent_bar_deplete"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10127,7 +8968,7 @@
 		}
 		"511"
 		{
-			"name" "medigun crit fire percent bar deplete"
+			"name"	"medigun crit fire percent bar deplete"
 			"attribute_class"	"medigun_crit_fire_percent_bar_deplete"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10136,7 +8977,7 @@
 		}
 		"512"
 		{
-			"name" "throwable fire speed"
+			"name"	"throwable fire speed"
 			"attribute_class"	"throwable_fire_speed"
 			"description_format"	"value_is_percentage"
 			"hidden"	"1"
@@ -10145,7 +8986,7 @@
 		}
 		"513"
 		{
-			"name" "throwable damage"
+			"name"	"throwable damage"
 			"attribute_class"	"throwable_damage"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10154,7 +8995,7 @@
 		}
 		"514"
 		{
-			"name" "throwable healing"
+			"name"	"throwable healing"
 			"attribute_class"	"throwable_healing"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10172,7 +9013,7 @@
 		}
 		"516"
 		{
-			"name"	"SET BONUS: dmg taken from bullets increased"
+			"name"	"dmg taken from bullets increased"
 			"attribute_class"	"mult_dmgtaken_from_bullets"
 			"description_string"	"#Attrib_DmgTaken_From_Bullets_Increased"
 			"description_format"	"value_is_percentage"
@@ -10184,7 +9025,7 @@
 		}
 		"517"
 		{
-			"name"	"SET BONUS: max health additive bonus"
+			"name"	"max health additive bonus"
 			"attribute_class"	"add_maxhealth"
 			"description_string"	"#Attrib_MaxHealth_Positive"
 			"description_format"	"value_is_additive"
@@ -10279,15 +9120,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"528"
-		{
-			"name"	"decoded by itemdefindex"
-			"attribute_class"	"decoded_by_itemdefindex"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
 		"532"
 		{
 			"name"	"hype decays over time"
@@ -10300,7 +9132,7 @@
 		}
 		"533"
 		{
-			"name" "SET BONUS: custom taunt particle attr"
+			"name"	"custom taunt particle attr"
 			"attribute_class"	"custom_taunt_particle_attr"
 			"description_string"	"#Attrib_TauntParticles"
 			"description_format"	"value_is_additive"
@@ -10309,7 +9141,7 @@
 			"is_set_bonus"	"1"
 			"stored_as_integer"	"1"
 		}
-		"534"		
+		"534"
 		{
 			"name"	"airblast vulnerability multiplier hidden"
 			"attribute_class"	"airblast_vulnerability_multiplier"
@@ -10339,16 +9171,12 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
-		"537"
+		"538"
 		{
-			"name" "SET BONUS: calling card on kill"
-			"attribute_class"	"calling_card_on_kill"
-			"description_string"	"#Attrib_CallingCardOnKill"
+			"name"	"righthand pose parameter"
+			"attribute_class"	"righthand_pose_parameter"
 			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"armory_desc"	"on_wearer"
-			"effect_type"	"positive"
-			"is_set_bonus"	"1"
+			"hidden"	"1"
 			"stored_as_integer"	"1"
 		}
 		"539"
@@ -10377,35 +9205,6 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 		}
-		"543"
-		{
-			"name"	"paint decal enum"
-			"attribute_class"	"paint_decal_enum"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"544"
-		{
-			"name"	"show paint description"
-			"attribute_class"	"show_paint_description"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"545"
-		{
-			"name"	"bot medic uber health threshold"
-			"attribute_class"	"bot_medic_uber_health_threshold"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"1"
-		}
-		"546"
-		{
-			"name"	"bot medic uber deploy delay duration"
-			"attribute_class"	"bot_medic_uber_deploy_delay_duration"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
 		"547"
 		{
 			"name"	"single wep deploy time decreased"
@@ -10416,7 +9215,6 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		
 		"548"
 		{
 			"name"	"halloween reload time decreased"
@@ -10452,92 +9250,6 @@
 			"hidden"	"1"
 			"effect_type"	"positive"
 			"stored_as_integer"	"1"
-		}
-		"554"
-		{
-			"name" "revive"
-			"attribute_class"	"revive"
-			"description_string"	"#Attrib_Revive"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"556"
-		{
-			"name" "taunt attack name"
-			"attribute_class"	"taunt_attack_name"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"557"
-		{
-			"name" "taunt attack time"
-			"attribute_class"	"taunt_attack_time"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"600"
-		{
-			"name" "taunt force move forward"
-			"attribute_class"	"taunt_force_move_forward"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"602"
-		{
-			"name" "taunt mimic"
-			"attribute_class"	"taunt_mimic"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"606"
-		{
-			"name"	"taunt success sound"
-			"attribute_class"	"taunt_success_sound"
-			"attribute_type"	"string"
-			"description_string"	"#Attrib_TauntSoundSuccess"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"607"
-		{
-			"name"	"taunt success sound offset"
-			"attribute_class"	"taunt_success_sound_offset"
-			"description_string"	"#Attrib_PhaseCloak"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"608"
-		{
-			"name"	"taunt success sound loop"
-			"attribute_class"	"taunt_success_sound_loop"
-			"attribute_type"	"string"
-			"description_string"	"#Attrib_TauntSoundSuccess"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"609"
-		{
-			"name"	"taunt success sound loop offset"
-			"attribute_class"	"taunt_success_sound_loop_offset"
-			"description_string"	"#Attrib_PhaseCloak"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
 		}
 		"610"
 		{
@@ -10582,7 +9294,7 @@
 		}
 		"615"
 		{
-			"name" "projectile entity name"
+			"name"	"projectile entity name"
 			"attribute_class"	"projectile_entity_name"
 			"attribute_type"	"string"
 			"description_format"	"value_is_additive"
@@ -10732,7 +9444,7 @@
 		}
 		"641"
 		{
-			"name" "taunt force weapon slot"
+			"name"	"taunt force weapon slot"
 			"attribute_class"	"taunt_force_weapon_slot"
 			"attribute_type"	"string"
 			"description_format"	"value_is_additive"
@@ -10765,22 +9477,6 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 		}
-		"645"
-		{
-			"name"	"breadgloves properties"
-			"attribute_class"	"breadgloves_properties"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"646"
-		{
-			"name"	"taunt turn speed"
-			"attribute_class"	"taunt_turn_speed"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
 		"647"
 		{
 			"name"	"sniper fires tracer HIDDEN"
@@ -10798,25 +9494,6 @@
 			"description_string"	"#Attrib_FireRateBonusWithReducedHealth"
 			"description_format"	"value_is_inverted_percentage"
 			"hidden"	"0"
-			"effect_type"	"positive"
-		}
-		"661"
-		{
-			"name"	"tag__summer2014"
-			"attribute_class"	"tag__summer2014"
-			"description_string"	"#Attrib_Summer2014Tag"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"662"
-		{
-			"name"	"crate generation code"
-			"attribute_class"	"crate_generation_code"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
 			"effect_type"	"positive"
 		}
 		"669"
@@ -10846,19 +9523,9 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 		}
-		"674"
-		{
-			"name"	"class select override vcd"
-			"attribute_class"	"class_select_override_vcd"
-			"attribute_type"	"string"
-			"description_string"	"#Attrib_Class_Select_Override_VCD"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
 		"675"
 		{
-			"name" "custom projectile model"
+			"name"	"custom projectile model"
 			"attribute_class"	"custom_projectile_model"
 			"attribute_type"	"string"
 			"description_format"	"value_is_additive"
@@ -10867,7 +9534,7 @@
 		}
 		"676"
 		{
-			"name" 		"lose demo charge on damage when charging"
+			"name"	"lose demo charge on damage when charging"
 			"attribute_class"	"lose_demo_charge_on_damage_when_charging"
 			"description_string"	"#Attrib_LoseDemoChargeOnDamageWhenCharging"
 			"description_format"	"value_is_additive"
@@ -10876,7 +9543,7 @@
 		}
 		"681"
 		{
-			"name" 		"grenade no spin"
+			"name"	"grenade no spin"
 			"attribute_class"	"grenade_no_spin"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -10884,110 +9551,16 @@
 		}
 		"684"
 		{
-			"name" 		"grenade detonation damage penalty"
+			"name"	"grenade detonation damage penalty"
 			"attribute_class"	"grenade_detonation_damage_penalty"
 			"description_string"	"#Attrib_GrenadeDetonationDamagePenalty"
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
 			"effect_type"	"negative"
 		}
-		"687"
-		{
-			"name" 		"taunt turn acceleration time"
-			"attribute_class"	"taunt_turn_acceleration_time"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"688"
-		{
-			"name" 		"taunt move acceleration time"
-			"attribute_class"	"taunt_move_acceleration"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"689"
-		{
-			"name" 		"taunt move speed"
-			"attribute_class"	"taunt_move_speed"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"690"
-		{
-			"name" "shuffle crate item def min"
-			"attribute_class"	"shuffle_crate_item_def_min"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"691"
-		{
-			"name" "shuffle crate item def max"
-			"attribute_class"	"shuffle_crate_item_def_max"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"692"		
-		{
-			"name" "limited quantity item"
-			"attribute_class"	"limited_quantity_item"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"1"
-		}
-		"693"
-		{
-			"name" "SET BONUS: alien isolation xeno bonus pos"
-			"attribute_class"	"alien_isolation_xeno_bonus_pos"
-			"description_format"	"value_is_additive"
-			"description_string"	"#Attrib_AiXenoSetBonusPos"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"694"
-		{
-			"name" "SET BONUS: alien isolation xeno bonus neg"
-			"attribute_class"	"alien_isolation_xeno_bonus_neg"
-			"description_format"	"value_is_additive"
-			"description_string"	"#Attrib_AiXenoSetBonusNeg"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"negative"
-			"stored_as_integer"	"1"
-		}
-		"695"
-		{
-			"name" "SET BONUS: alien isolation merc bonus pos"
-			"attribute_class"	"alien_isolation_merc_bonus_pos"
-			"description_format"	"value_is_additive"
-			"description_string"	"#Attrib_AiMercSetBonusPos"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"696"
-		{
-			"name" "SET BONUS: alien isolation merc bonus neg"
-			"attribute_class"	"alien_isolation_merc_bonus_neg"
-			"description_format"	"value_is_additive"
-			"description_string"	"#Attrib_AiMercSetBonusNeg"
-			"hidden"	"0"
-			"is_set_bonus"	"1"
-			"effect_type"	"negative"
-			"stored_as_integer"	"1"
-		}
 		"698"
 		{
-			"name" "disable weapon switch"
+			"name"	"disable weapon switch"
 			"attribute_class"	"disable_weapon_switch"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
@@ -11004,64 +9577,6 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
-		"700"
-		{
-			"name"	"display duck leaderboard"
-			"attribute_class"	"display_duck_leaderboard"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"701"
-		{
-			"name"	"duck rating"
-			"attribute_class"	"duck_rating"
-			"description_string"	"#Attrib_duck_rating"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"702"
-		{
-			"name"	"duck badge level"
-			"attribute_class"	"duck_badge_level"
-			"description_string"	"#Attrib_duck_badge_level"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"703"
-		{
-			"name"	"tag__eotlearlysupport"
-			"attribute_class"	"tag__eotlearlysupport"
-			"description_string"	"#Attrib_eotl_early_supporter"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"704"
-		{
-			"name"	"unlimited quantity hidden"
-			"attribute_class"	"unlimited_quantity"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"705"
-		{
-			"name"	"duckstreaks active"
-			"attribute_class"	"duckstreaks_active"
-			"description_string"	"#Attrib_duckstreaks"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
 		"708"
 		{
 			"name"	"panic_attack"
@@ -11077,7 +9592,7 @@
 			"name"	"panic_attack_negative"
 			"attribute_class"	"panic_attack_negative"
 			"description_string"	"#Attrib_PanicAttackNegative"
-			"description_format"	"value_is_inverted_percentage" 
+			"description_format"	"value_is_inverted_percentage"
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
@@ -11109,39 +9624,6 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"
-		}
-		"719"
-		{
-			"name"	"weapon_uses_stattrak_module"
-			"attribute_class"	"weapon_uses_stattrak_module"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"strange"
-		}
-		"723"
-		{
-			"name"	"is_operation_pass"
-			"attribute_class"	"is_operation_pass"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"724"
-		{
-			"name"	"weapon_stattrak_module_scale"
-			"attribute_class"	"weapon_stattrak_module_scale"
-			"description_format"	"value_is_percentage"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"725"
-		{
-			"name"	"set_item_texture_wear"
-			"attribute_class"	"set_item_texture_wear"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"can_affect_market_name"	"1"
-			"stored_as_integer"	"0"
 		}
 		"726"
 		{
@@ -11180,23 +9662,6 @@
 			"hidden"	"0"
 			"effect_type"	"negative"
 		}
-		"730"
-		{
-			"name"	"elevate to unusual if applicable"
-			"attribute_class"	"elevate_to_unusual_if_applicable"
-			"description_string"	"#Attrib_ElevateQuality"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"731"
-		{
-			"name"	"weapon_allow_inspect"
-			"attribute_class"	"weapon_allow_inspect"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
 		"732"
 		{
 			"name"	"metal_pickup_decreased"
@@ -11209,7 +9674,7 @@
 		}
 		"733"
 		{
-			"name"				"lose hype on take damage"
+			"name"	"lose hype on take damage"
 			"attribute_class"	"lose_hype_on_take_damage"
 			"description_string"	"#Attrib_losehypeontakedamage"
 			"description_format"	"value_is_additive"
@@ -11294,350 +9759,6 @@
 			"armory_desc"	"on_hit"
 			"stored_as_integer"	"0"
 		}
-		"742"
-		{
-			"name"					"style changes on strange level"
-			"attribute_class"		"style_changes_on_strange_level"
-			"hidden"				"1"
-			"stored_as_integer"	"1"
-		}
-		"743"
-		{
-			"name"					"cannot restore"
-			"attribute_class"		"cannot_restore"
-			"hidden"				"1"
-			"stored_as_integer"	"1"
-		}
-		"744"
-		{
-			"name"					"hide crate series number"
-			"attribute_class"		"hide_crate_series_number"
-			"hidden"				"1"
-			"stored_as_integer"	"1"
-		}
-		"745"
-		{
-			"name"					"has team color paintkit"
-			"attribute_class"		"has_team_color_paintkit"
-			"description_string"	"#Attrib_HasTeamColorPaintkit"
-			"description_format"	"value_is_additive"
-			"effect_type"			"neutral"
-			"stored_as_integer"		"1"
-		}
-		"746"
-		{
-			"name"	"cosmetic_allow_inspect"
-			"attribute_class"	"cosmetic_allow_inspect"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"747"
-		{
-			"name"	"hat only unusual effect"
-			"attribute_class"		"hat_only_unusual_effect"
-			"description_format"	"value_is_particle_index"
-			"hidden"	"1"
-			"effect_type"	"unusual"
-			"stored_as_integer"	"0"
-			"can_affect_market_name"	"1"
-		}
-		"748"
-		{
-			"name"	"items traded in for"
-			"attribute_class"		"items_traded_in_for"
-			"description_string"	"#Attrib_ItemsTradedIn"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
-		"749"
-		{
-			"name"	"texture_wear_default"
-			"attribute_class"	"texture_wear_default"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"750"
-		{
-			"name"	"taunt only unusual effect"
-			"attribute_class"		"taunt_only_unusual_effect"
-			"description_format"	"value_is_particle_index"
-			"hidden"	"1"
-			"effect_type"	"unusual"
-			"can_affect_market_name"	"1"
-			"stored_as_integer"	"1"
-		}
-		"751"					
-		{
-			"name"	"deactive date"
-			"attribute_class"	"deactive_date"
-			"description_format"	"value_is_date"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-		}
-		"752"
-		{
-			"name"	"is giger counter"
-			"attribute_class"	"is_giger_counter"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"753"
-		{
-			"name"	"hide_strange_prefix"
-			"attribute_class"	"hide_strange_prefix"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"754"
-		{
-			"name"	"always_transmit_so"
-			"attribute_class"	"always_transmit_so"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"760"
-		{
-			"name"					"allow_halloween_offering"
-			"attribute_class"		"allow_halloween_offering"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"762"
-		{
-			"name"					"cannot_transmute"
-			"attribute_class"		"cannot_transmute"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"772"
-		{
-			"name"	"single wep holster time increased"
-			"attribute_class"	"mult_switch_from_wep_deploy_time"
-			"description_string"	"#Attrib_SingleWepHolsterPenalty"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"773"
-		{
-			"name"	"single wep deploy time increased"
-			"attribute_class"	"mult_single_wep_deploy_time"
-			"description_string"	"#Attrib_SingleWepDeployPenalty"
-			"description_format"	"value_is_inverted_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"774"
-		{
-			"name"	"charge time decreased"
-			"attribute_class"	"mod_charge_time"
-			"description_string"	"#Attrib_ChargeTime_Decrease"
-			"description_format"	"value_is_additive"
-			"effect_type"	"negative"
-			"armory_desc"	"on_wearer"
-		}
-		"775"
-		{
-			"name"	"dmg penalty vs buildings"
-			"attribute_class"	"mult_dmg_vs_buildings"
-			"description_string"	"#Attrib_DmgVsBuilding_decreased"
-			"description_format"	"value_is_percentage"
-			"effect_type"	"negative"
-		}
-		"776"
-		{
-			"name"	"charge impact damage decreased"
-			"attribute_class"	"charge_impact_damage"
-			"description_string"	"#Attrib_ChargeImpactDamageDecreased"
-			"description_format"	"value_is_percentage"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"777"
-		{
-			"name"	"non economy"
-			"attribute_class"	"non_economy"
-			"description_string"	"#Attrib_NonEconomyItem"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"778"
-		{
-			"name"					"charge meter on hit"
-			"attribute_class"		"charge_meter_on_hit"
-			"description_string"	"#Attrib_HitsRefillMeter"
-			"description_format"	"value_is_additive_percentage"
-			"effect_type"			"positive"
-		}
-		"779"
-		{
-			"name"	"minicrit_boost_when_charged"
-			"attribute_class"	"minicrit_boost_when_charged"
-			"description_string"	"#Attrib_MiniCritBoost_WhenCharged"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-		}
-		"780"
-		{
-			"name" "minicrit_boost_charge_rate"
-			"attribute_class" "minicrit_boost_charge_rate"
-			"description_string" "#Attrib_MiniCritBoost_ChargeRate"
-			"description_format" "value_is_additive"
-			"hidden" "0"
-			"effect_type" "positive"
-			"stored_as_integer" "0"
-		}
-		"781"
-		{
-			"name" "is_a_sword"
-			"attribute_class" 	"is_a_sword"
-			"description_string" "#Attrib_IsASword"
-			"description_format" "value_is_additive"
-			"hidden" "0"
-			"effect_type" "neutral"
-		}
-		"782"
-		{
-			"name"	"ammo gives charge"
-			"attribute_class"	"ammo_gives_charge"
-			"description_string"	"#Attrib_AmmoGivesCharge"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"783"
-		{
-			"name"	"extinguish restores health"
-			"attribute_class"	"extinguish_restores_health"
-			"description_string"	"#Attrib_ExtinguishRestoresHealth"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-		}
-		"784"
-		{
-			"name" "extinguish reduces cooldown"
-			"attribute_class" "extinguish_reduces_cooldown"
-			"description_string" "#Attrib_ExtinguishReducesCooldown"
-			"description_format" "value_is_percentage"
-			"hidden" "0"
-			"effect_type" "positive"
-		}
-		"785"
-		{
-			"name"					"cannot giftwrap"
-			"attribute_class"		"cannot_giftwrap"
-			"hidden"				"1"
-			"stored_as_integer"	"1"
-		}
-		"786"
-		{
-			"name"					"tool needs giftwrap"
-			"attribute_class"		"tool_needs_giftwrap"
-			"hidden"				"1"
-			"stored_as_integer"	"1"
-		}
-		"787"
-		{
-			"name"	"fuse bonus"
-			"attribute_class"	"fuse_mult"
-			"description_string"	"#Attrib_Fuse_Bonus"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"788"
-		{
-			"name"	"move speed bonus shield required"
-			"attribute_class"	"mult_player_movespeed_shieldrequired"
-			"description_string"	"#Attrib_MoveSpeed_Bonus_ShieldRequired"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"789"
-		{
-			"name"	"damage bonus bullet vs sentry target"
-			"attribute_class"	"mult_dmg_bullet_vs_sentry_target"
-			"description_string"	"#Attrib_DamageBonusAgainstSentryTarget"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"790"
-		{
-			"name"	"mod teleporter cost"
-			"attribute_class"	"mod_teleporter_cost"
-			"description_string"	"#Attrib_TeleporterBuildCost"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"791"
-		{
-			"name"	"damage blast push"
-			"attribute_class"	"damage_blast_push"
-			"description_string"	"#Attrib_DamageBlastPush"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"792"
-		{
-			"name"	"move speed bonus resource level"
-			"attribute_class"	"mult_player_movespeed_resource_level"
-			"description_format"	"value_is_percentage"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"793"
-		{
-			"name"	"hype on damage"
-			"attribute_class"	"hype_on_damage"
-			"description_string"	"#Attrib_HypeOnDamage"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"794"
-		{
-			"name"	"dmg taken from fire reduced on active"
-			"attribute_class"	"mult_dmgtaken_from_fire_active"
-			"description_string"	"#Attrib_DmgTaken_From_Fire_ReducedActive"
-			"description_format"	"value_is_inverted_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"795"
-		{
-			"name"	"damage bonus vs burning"
-			"attribute_class"	"mult_dmg_vs_burning"
-			"description_string"	"#Attrib_DmgBonusVsBurning"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
 		"796"
 		{
 			"name"	"min_viewmodel_offset"
@@ -11646,689 +9767,10 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 		}
-		"797"
-		{
-			"name"	"dmg pierces resists absorbs"
-			"attribute_class"	"mod_pierce_resists_absorbs"
-			"description_string"	"#Attrib_PierceResists"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"798"
-		{
-			"name"	"energy buff dmg taken multiplier"
-			"attribute_class"	"energy_buff_dmg_taken_multiplier"
-			"description_format"	"value_is_percentage"
-			"hidden"	"1"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"799"
-		{
-			"name"	"lose revenge crits on death DISPLAY ONLY"
-			"attribute_class"	"lose_revenge_crits_on_death_DISPLAY_ONLY"
-			"description_string"	"#Attrib_LoseRevengeCritsOnDeath"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"800"
-		{
-			"name"	"patient overheal penalty"
-			"attribute_class"	"mult_patient_overheal_penalty"
-			"description_string"	"#Attrib_PatientOverheal_Penalty"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"801"
-		{
-			"name"	"item_meter_charge_rate"
-			"attribute_class"	"item_meter_charge_rate"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"804"
-		{
-			"name"	"mult_spread_scale_first_shot"
-			"attribute_class"	"mult_spread_scale_first_shot"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"805"
-		{
-			"name"	"unusualifier_attribute_template_name"
-			"attribute_class"	"unusualifier_attribute_template_name"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"806"
-		{
-			"name"	"tool_target_item_icon_offset"
-			"attribute_class"	"tool_target_item_icon_offset"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"807"
-		{
-			"name"	"add_head_on_kill"
-			"attribute_class"	"add_head_on_kill"
-			"description_string"	"#Attrib_AddHeadOnKill"
-			"description_format"	"value_is_additive_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_hit"
-			"stored_as_integer"	"0"
-		}
-		"808"
-		{
-			"name"	"mult_spread_scales_consecutive"
-			"attribute_class"	"mult_spread_scales_consecutive"
-			"description_string"	"#Attrib_SpreadPenaltyScalesCons"
-			"description_format"	"value_is_additive_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"armory_desc"	"on_hit"
-			"stored_as_integer"	"0"
-		}
-		"809"
-		{
-			"name"	"fixed_shot_pattern"
-			"attribute_class"	"fixed_shot_pattern"
-			"description_string"	"#Attrib_FixedShotPattern"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"1"
-		}
-		"810"
-		{
-			"name"	"mod_cloak_no_regen_from_items"
-			"attribute_class"	"mod_cloak_no_regen_from_items"
-			"description_string"	"#Attrib_NoCloakFromAmmo"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-		}
-		"811"
-		{
-			"name"	"ubercharge_preserved_on_spawn_max"
-			"attribute_class"	"ubercharge_preserved_on_spawn_max"
-			"description_string"	"#Attrib_UberchargeSavedOnHit"
-			"description_format"	"value_is_additive_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_hit"
-			"stored_as_integer"	"0"
-		}
-		"812"
-		{
-			"name"	"mod_air_control_blast_jump"
-			"attribute_class"	"mod_air_control_blast_jump"
-			"description_string"	"#Attrib_AirControlBlastJump"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"813"
-		{
-			"name"	"spunup_push_force_immunity"
-			"attribute_class"	"spunup_push_force_immunity"
-			"description_string"	"#Attrib_SpunUpPushForceResist"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-		}
-		"814"
-		{
-			"name"	"mod_mark_attacker_for_death"
-			"attribute_class"	"mod_mark_attacker_for_death"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-		}
-		"815"
-		{
-			"name"	"use_model_cache_icon"
-			"attribute_class"	"use_model_cache_icon"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"1"
-		}
-		"816"
-		{
-			"name"	"mod_disguise_consumes_cloak"
-			"attribute_class"	"mod_disguise_consumes_cloak"
-			"description_string"	"#Attrib_DisguiseConsumesCloak"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"stored_as_integer"	"1"
-			"effect_type"	"negative"
-		}
-		"817"
-		{
-			"name"	"inspect_viewmodel_offset"
-			"attribute_class"	"inspect_viewmodel_offset"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-		}
-		"818"
-		{
-			"name"	"is_passive_weapon"
-			"attribute_class"	"is_passive_weapon"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"819"
-		{
-			"name"	"no_jump"
-			"attribute_class"	"no_jump"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"820"
-		{
-			"name"	"no_duck"
-			"attribute_class"	"no_duck"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"821"
-		{
-			"name"	"no_attack"
-			"attribute_class"	"no_attack"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"822"
-		{
-			"name"	"airblast_destroy_projectile"
-			"attribute_class"	"airblast_destroy_projectile"
-			"description_string"	"#Attrib_AirblastDestroyProjectile"
-			"description_format"	"value_is_additive"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"823"
-		{
-			"name"	"airblast_pushback_disabled"
-			"attribute_class"	"airblast_pushback_disabled"
-			"description_format"	"value_is_additive"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"824"
-		{
-			"name"	"airblast_pushback_no_stun"
-			"attribute_class"	"airblast_pushback_no_stun"
-			"description_format"	"value_is_additive"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"825"
-		{
-			"name"	"airblast_pushback_no_viewpunch"
-			"attribute_class"	"airblast_pushback_no_viewpunch"
-			"description_format"	"value_is_additive"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"826"
-		{
-			"name"	"airblast_deflect_projectiles_disabled"
-			"attribute_class"	"airblast_deflect_projectiles_disabled"
-			"description_format"	"value_is_additive"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"827"
-		{
-			"name"	"airblast_put_out_teammate_disabled"
-			"attribute_class"	"airblast_put_out_teammate_disabled"
-			"description_format"	"value_is_additive"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"828"
-		{
-			"name"	"afterburn duration penalty"
-			"attribute_class"	"afterburn_duration_mult"
-			"description_format"	"value_is_percentage"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"829"
-		{
-			"name"	"afterburn duration bonus"
-			"attribute_class"	"afterburn_duration_mult"
-			"description_format"	"value_is_percentage"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"830"
-		{
-			"name"	"aoe_deflection"
-			"attribute_class"	"aoe_deflection"
-			"description_format"	"value_is_additive"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"831"
-		{
-			"name"	"mult_end_flame_size"
-			"attribute_class"	"mult_end_flame_size"
-			"description_format"	"value_is_percentage"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-			"hidden"	"1"
-		}
-		"832"
-		{
-			"name"	"airblast_give_teammate_speed_boost"
-			"attribute_class"	"airblast_give_teammate_speed_boost"
-			"description_format"	"value_is_additive"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"833"
-		{
-			"name"	"airblast_turn_projectile_to_ammo"
-			"attribute_class"	"airblast_turn_projectile_to_ammo"
-			"description_format"	"value_is_additive"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"834"
-		{
-			"name"	"paintkit_proto_def_index"
-			"attribute_class"		"paintkit_proto_def_index"
-			"description_format"	"value_is_additive"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"1"
-			"can_affect_market_name"	"1"
-		}
-		"835"
-		{
-			"name"	"taunt_attr_player_invis_percent"
-			"attribute_class"	"taunt_attr_player_invis_percent"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"837"
-		{
-			"name"	"redirected_flame_size_mult"
-			"attribute_class"	"redirected_flame_size_mult"
-			"description_format"	"value_is_percentage"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"838"
-		{
-			"name"	"flame_reflect_on_collision"
-			"attribute_class"	"flame_reflect_on_collision"
-			"description_format"	"value_is_additive"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"839"
-		{
-			"name"	"flame_spread_degree"
-			"attribute_class"	"flame_spread_degree"
-			"description_format"	"value_is_additive"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"840"
-		{
-			"name"	"holster_anim_time"
-			"attribute_class"	"holster_anim_time"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"841"
-		{
-			"name"	"flame_gravity"
-			"attribute_class"	"flame_gravity"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"842"
-		{
-			"name"	"flame_ignore_player_velocity"
-			"attribute_class"	"flame_ignore_player_velocity"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"843"
-		{
-			"name"	"flame_drag"
-			"attribute_class"	"flame_drag"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"844"
-		{
-			"name"	"flame_speed"
-			"attribute_class"	"flame_speed"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"845"
-		{
-			"name"	"grenades1_resupply_denied"
-			"attribute_class"	"grenades1_resupply_denied"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"846"
-		{
-			"name"	"grenades2_resupply_denied"
-			"attribute_class"	"grenades2_resupply_denied"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"847"
-		{
-			"name"	"grenades3_resupply_denied"
-			"attribute_class"	"grenades3_resupply_denied"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"848"
-		{
-			"name"	"item_meter_resupply_denied"
-			"attribute_class"	"item_meter_resupply_denied"
-			"description_string"	"#Attrib_MeterResupplyDenied"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"851"
-		{
-			"name"	"mult_player_movespeed_active"
-			"attribute_class"	"mult_player_movespeed_active"
-			"description_string"	"#Attrib_MoveSpeed_Bonus"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"armory_desc"	"on_active"
-			"stored_as_integer"	"0"
-		}
-		"852"
-		{
-			"name"	"mult_dmgtaken_active"
-			"attribute_class"	"mult_dmgtaken_active"
-			"description_string"	"#Attrib_DmgTaken_Increased"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"armory_desc"	"on_active"
-			"stored_as_integer"	"0"
-		}
-		"853"
-		{
-			"name"	"mult_patient_overheal_penalty_active"
-			"attribute_class"	"mult_patient_overheal_penalty_active"
-			"description_string"	"#Attrib_PatientOverheal_Penalty"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"armory_desc"	"on_active"
-			"stored_as_integer"	"0"
-		}
-		"854"
-		{
-			"name"	"mult_health_fromhealers_penalty_active"
-			"attribute_class"	"mult_health_fromhealers_penalty_active"
-			"description_string"	"#Attrib_HealthFromHealers_Reduced"
-			"description_format"	"value_is_percentage"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"armory_desc"	"on_wearer"
-			"stored_as_integer"	"0"
-		}
-		"855"
-		{
-			"name"	"mod_maxhealth_drain_rate"
-			"attribute_class"	"mod_maxhealth_drain_rate"
-			"description_string"	"#Attrib_MaxHealthDrain"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"armory_desc"	"on_active"
-			"stored_as_integer"	"0"
-		}
-		"856"
-		{
-			"name"	"item_meter_charge_type"
-			"attribute_class"	"item_meter_charge_type"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"0"
-		}
-		"859"
-		{
-			"name"	"max_flame_reflection_count"
-			"attribute_class"	"max_flame_reflection_count"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"860"
-		{
-			"name"	"flame_reflection_add_life_time"
-			"attribute_class"	"flame_reflection_add_life_time"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"861"
-		{
-			"name"	"reflected_flame_dmg_reduction"
-			"attribute_class"	"reflected_flame_dmg_reduction"
-			"description_format"	"value_is_percentage"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"862"
-		{
-			"name"	"flame_lifetime"
-			"attribute_class"	"flame_lifetime"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"863"
-		{
-			"name"	"flame_random_life_time_offset"
-			"attribute_class"	"flame_random_life_time_offset"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"865"
-		{
-			"name"	"flame_up_speed"
-			"attribute_class"	"flame_up_speed"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"0"
-		}
-		"866"
-		{
-			"name"	"custom_paintkit_seed_lo"
-			"attribute_class"	"custom_paintkit_seed_lo"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"1"
-		}
-		"867"
-		{
-			"name"	"custom_paintkit_seed_hi"
-			"attribute_class"	"custom_paintkit_seed_hi"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"stored_as_integer"	"1"
-		}
-		"868"
-		{
-			"name"	"crit_dmg_falloff"
-			"attribute_class"	"crit_dmg_falloff"
-			"description_string"	"#Attrib_Dmg_Crit_Falloff"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"869"
-		{
-			"name"	"crits_become_minicrits"
-			"attribute_class"	"crits_become_minicrits"
-			"description_string"	"#Attrib_CritsBecomeMinicrits"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"870"
-		{
-			"name"				"falling_impact_radius_pushback"
-			"attribute_class"	"falling_impact_radius_pushback"
-			"description_string" "#Attrib_ImpactPushback"
-			"description_format" "value_is_additive"
-			"hidden"			"0"
-			"effect_type"		"positive"
-			"stored_as_integer"	"0"
-		}
-		"871"
-		{
-			"name"				"falling_impact_radius_stun"
-			"attribute_class"	"falling_impact_radius_stun"
-			"description_string" "#Attrib_ImpactStun"
-			"description_format" "value_is_additive"
-			"hidden"			"0"
-			"effect_type"		"positive"
-			"stored_as_integer"	"0"
-		}
-		"872"
-		{
-			"name"				"thermal_thruster_air_launch"
-			"attribute_class"	"thermal_thruster_air_launch"
-			"description_string" "#Attrib_ThermalThrusterAirLaunch"
-			"description_format" "value_is_additive"
-			"hidden"			"1"
-			"effect_type"		"positive"
-			"stored_as_integer"	"0"
-		}
-		"873"
-		{
-			"name"				"thermal_thruster"
-			"attribute_class"	"thermal_thruster"
-			"description_format" "value_is_additive"
-			"hidden"			"1"
-			"effect_type"		"positive"
-			"stored_as_integer"	"0"
-		}
-		"874"
-		{
-			"name"	"mult_item_meter_charge_rate"
-			"attribute_class"	"mult_item_meter_charge_rate"
-			"description_string" "#Attrib_ChargeMeterRateMult"
-			"description_format"	"value_is_inverted_percentage"
-			"hidden"				"0"
-			"stored_as_integer"	"0"
-		}
-		"875"
-		{
-			"name"	"explode_on_ignite"
-			"attribute_class"	"explode_on_ignite"
-			"description_string" "#Attrib_ExplodeOnIgnite"
-			"description_format"	"value_is_additive"
-			"hidden"				"0"
-			"stored_as_integer"	"0"
-		}
-		"876"
-		{
-			"name"	"lunchbox healing decreased"
-			"attribute_class" "lunchbox_healing_scale"
-			"description_string" "#Attrib_LunchboxHealingDecreased"
-			"description_format" "value_is_percentage"
-			"hidden" "0"
-			"effect_type" "negative"
-			"stored_as_integer" "0"
-		}
-		"877"
-		{
-			"name"	"speed_boost_on_hit_enemy"
-			"attribute_class" "speed_boost_on_hit_enemy"
-			"description_string" "#Attrib_SpeedBoostEnemy"
-			"description_format" "value_is_additive"
-			"hidden" "0"
-			"effect_type" "positive"
-			"stored_as_integer" "0"
-		}
-		"878"
-		{
-			"name"	"item_meter_starts_empty_DISPLAY_ONLY"
-			"attribute_class"	"item_meter_starts_empty_DISPLAY_ONLY"
-			"description_string"	"#Attrib_MeterStartsEmpty"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-		"879"
-		{
-			"name"	"item_meter_charge_type_3_DISPLAY_ONLY"
-			"attribute_class"	"item_meter_charge_type_3_DISPLAY_ONLY"
-			"description_string"	"#Attrib_MeterChargeType3"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"880"
-		{
-			"name"	"repair health to metal ratio DISPLAY ONLY"
-			"attribute_class"	"repair_health_to_metal_ratio_DISPLAY_ONLY"
-			"description_string"	"#Attrib_RepairHealthToMetalRatio"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-			"stored_as_integer"	"0"
-		}
-
-
 		"1000"
 		{
 			"name"	"CARD: damage bonus"
-			"attribute_class"	"mult_dmg"
+			"attribute_class"	"mult_dmg__mvm"
 			"description_string"	"#Attrib_DamageDone_Positive"
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
@@ -12338,7 +9780,7 @@
 		"1001"
 		{
 			"name"	"CARD: dmg taken from bullets reduced"
-			"attribute_class"	"mult_dmgtaken_from_bullets"
+			"attribute_class"	"mult_dmgtaken_from_bullets__mvm"
 			"description_string"	"#Attrib_DmgTaken_From_Bullets_Reduced"
 			"description_format"	"value_is_inverted_percentage"
 			"hidden"	"0"
@@ -12349,7 +9791,7 @@
 		"1002"
 		{
 			"name"	"CARD: move speed bonus"
-			"attribute_class"	"mult_player_movespeed"
+			"attribute_class"	"mult_player_movespeed__mvm"
 			"description_string"	"#Attrib_MoveSpeed_Bonus"
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
@@ -12360,7 +9802,7 @@
 		"1003"
 		{
 			"name"	"CARD: health regen"
-			"attribute_class"	"add_health_regen"
+			"attribute_class"	"add_health_regen__mvm"
 			"description_string"	"#Attrib_HealthRegen"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
@@ -12371,19 +9813,19 @@
 		"1004"
 		{
 			"name"	"SPELL: set item tint RGB"
-			"attribute_class"	"set_item_tint_rgb_override"
-			"description_string"	"#Attrib_HalloweenSpell_RGB"			
+			"attribute_class"	"set_item_tint_rgb_override__halloween"
+			"description_string"	"#Attrib_HalloweenSpell_RGB"
 			"description_format"	"value_is_from_lookup_table"
 			"hidden"	"0"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"		
+			"stored_as_integer"	"0"
 			"is_user_generated"	"2"
 		}
 		"1005"
 		{
 			"name"	"SPELL: set Halloween footstep type"
-			"attribute_class"	"halloween_footstep_type"
-			"description_string"	"#Attrib_HalloweenSpell_Footstep"			
+			"attribute_class"	"halloween_footstep_type__halloween"
+			"description_string"	"#Attrib_HalloweenSpell_Footstep"
 			"description_format"	"value_is_from_lookup_table"
 			"hidden"	"0"
 			"effect_type"	"positive"
@@ -12393,288 +9835,62 @@
 		"1006"
 		{
 			"name"	"SPELL: Halloween voice modulation"
-			"attribute_class"	"halloween_voice_modulation"
-			"description_string"	"#Attrib_HalloweenSpell_Voice"			
+			"attribute_class"	"halloween_voice_modulation__halloween"
+			"description_string"	"#Attrib_HalloweenSpell_Voice"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"		
+			"stored_as_integer"	"0"
 			"is_user_generated"	"2"
 		}
 		"1007"
 		{
 			"name"	"SPELL: Halloween pumpkin explosions"
-			"attribute_class"	"halloween_pumpkin_explosions"
-			"description_string"	"#Attrib_HalloweenSpell_PumpkinBombs"			
+			"attribute_class"	"halloween_pumpkin_explosions__halloween"
+			"description_string"	"#Attrib_HalloweenSpell_PumpkinBombs"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"		
+			"stored_as_integer"	"0"
 			"is_user_generated"	"2"
 		}
 		"1008"
 		{
 			"name"	"SPELL: Halloween green flames"
-			"attribute_class"	"halloween_green_flames"
-			"description_string"	"#Attrib_HalloweenSpell_GreenFlames"			
+			"attribute_class"	"halloween_green_flames__halloween"
+			"description_string"	"#Attrib_HalloweenSpell_GreenFlames"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"		
+			"stored_as_integer"	"0"
 			"is_user_generated"	"2"
 		}
 		"1009"
 		{
 			"name"	"SPELL: Halloween death ghosts"
-			"attribute_class"	"halloween_death_ghosts"
-			"description_string"	"#Attrib_HalloweenSpell_DeathGhosts"			
+			"attribute_class"	"halloween_death_ghosts__halloween"
+			"description_string"	"#Attrib_HalloweenSpell_DeathGhosts"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"		
+			"stored_as_integer"	"0"
 			"is_user_generated"	"2"
 		}
 		"1030"
 		{
 			"name"	"Attack not cancel charge"
-			"attribute_class"	"attack_not_cancel_charge"
+			"attribute_class"	"attack_not_cancel_charge__mvm"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 			"is_user_generated"	"1"
 		}
-		"2000"
-		{
-			"name"	"recipe component defined item 1"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2001"
-		{
-			"name"	"recipe component defined item 2"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2002"
-		{
-			"name"	"recipe component defined item 3"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2003"
-		{
-			"name"	"recipe component defined item 4"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2004"
-		{
-			"name"	"recipe component defined item 5"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2005"
-		{
-			"name"	"recipe component defined item 6"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2006"
-		{
-			"name"	"recipe component defined item 7"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2007"
-		{
-			"name"	"recipe component defined item 8"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2008"
-		{
-			"name"	"recipe component defined item 9"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2009"
-		{
-			"name"	"recipe component defined item 10"
-			"attribute_class"	"dynamic_recipe_component_defined_item"
-			"attribute_type"	"dynamic_recipe_component_defined_item"
-			"can_affect_market_name"	"1"
-		}
-		"2010"
-		{
-			"name"					"start drop date"
-			"attribute_class"		"start_drop_date"
-			"attribute_type"		"string"
-			"description_format"	"value_is_date"
-		}
-		"2011"
-		{
-			"name"					"end drop date"
-			"attribute_class"		"end_drop_date"
-			"attribute_type"		"string"
-			"description_format"	"value_is_date"
-		}
-		"2012"
-		{
-			"name"					"tool target item"
-			"attribute_class"		"tool_target_item"
-			"hidden"	"1"
-			"can_affect_market_name"	"1"
-		}
-		"2013"		
-		{
-			"name"					"killstreak effect"
-			"attribute_class"		"killstreak_effect"
-			"description_string"	"#Attrib_KillStreakEffect"
-			"description_format"	"value_is_killstreakeffect_index"
-			"stored_as_integer"	"0"
-			"effect_type"	"positive"
-			"can_affect_recipe_component_name"	"1"
-		}
-		"2014"		
-		{
-			"name"					"killstreak idleeffect"
-			"attribute_class"		"killstreak_idleeffect"
-			"description_string"	"#Attrib_KillStreakIdleEffect"
-			"description_format"	"value_is_killstreak_idleeffect_index"
-			"stored_as_integer"	"0"
-			"effect_type"	"positive"
-			"can_affect_recipe_component_name"	"1"
-		}
-
-		"2015"
-		{
-			"name"					"spellbook page attr id"
-			"attribute_class"		"spellbook_page_attr_id"
-			"hidden"				"1"
-		}
-		"2016"
-		{
-			"name"					"Halloween Spellbook Page: Tumidum"			
-			"attribute_class"		"tf_halloween_spell_page"
-			"description_string"	"#Attrib_HalloweenSpellbookPage_A"
-			"description_format"	"value_is_additive"
-			"effect_type"			"positive"
-			"stored_as_integer"		"1"
-		}
-		"2017"
-		{
-			"name"					"Halloween Spellbook Page: Gratanter"		
-			"attribute_class"		"tf_halloween_spell_page"
-			"description_string"	"#Attrib_HalloweenSpellbookPage_B"
-			"description_format"	"value_is_additive"
-			"effect_type"			"positive"
-			"stored_as_integer"		"1"
-		}
-		"2018"
-		{
-			"name"					"Halloween Spellbook Page: Audere"			
-			"attribute_class"		"tf_halloween_spell_page"
-			"description_string"	"#Attrib_HalloweenSpellbookPage_C"
-			"description_format"	"value_is_additive"
-			"effect_type"			"positive"
-			"stored_as_integer"		"1"
-		}
-		"2019"
-		{
-			"name"					"Halloween Spellbook Page: Congeriae"		
-			"attribute_class"		"tf_halloween_spell_page"
-			"description_string"	"#Attrib_HalloweenSpellbookPage_D"
-			"description_format"	"value_is_additive"
-			"effect_type"			"positive"
-			"stored_as_integer"		"1"
-		}
-		"2020"
-		{
-			"name"					"Halloween Spellbook Page: Veteris"			
-			"attribute_class"		"tf_halloween_spell_page"
-			"description_string"	"#Attrib_HalloweenSpellbookPage_E"
-			"description_format"	"value_is_additive"
-			"effect_type"			"positive"
-			"stored_as_integer"		"1"
-		}
-		"2021"
-		{
-			"name" "additional halloween response criteria name"
-			"attribute_class"	"additional_halloween_response_criteria_name"
-			"attribute_type"	"string"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-		}
-		"2022"
-		{
-			"name"					"loot rarity"
-			"attribute_class"		"loot_rarity"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"		"1"
-		}
-		"2023"
-		{
-			"name"					"quality text override"
-			"attribute_class"		"quality_text_override"
-			"attribute_type"		"string"
-			"hidden"				"1"
-		}
-		"2024"
-		{
-			"name"					"item name text override"
-			"attribute_class"		"item_name_text_override"
-			"attribute_type"		"string"
-			"hidden"				"1"
-		}
-		"2025"		
-		{
-			"name"					"killstreak tier"
-			"attribute_class"		"killstreak_tier"
-			"can_affect_market_name"	"1"
-			"description_string"	"#Attrib_KillStreakTier"
-			"description_format"	"value_is_additive"
-			"effect_type"	"positive"
-			"stored_as_integer"		"0"
-		}
-		"2026"		
-		{
-			"name"					"wide item level"
-			"attribute_class"		"wide_item_level"
-			"hidden"				"1"
-			"stored_as_integer"		"1"
-		}
-		"2027"
-		{
-			"name"					"is australium item"
-			"attribute_class"		"is_australium_item"
-			"can_affect_market_name"	"1"
-			"hidden"				"1"
-			"description_format"	"value_is_additive"
-			"stored_as_integer"		"1"
-		}
-		"2028"
-		{
-			"name"					"is marketable"
-			"attribute_class"		"is_marketable"
-			"hidden"				"1"
-		}
 		"2029"
 		{
-			"name"					"allowed in medieval mode"
-			"attribute_class"		"allowed_in_medieval_mode"
-			"hidden"				"1"
+			"name"	"allowed in medieval mode"
+			"attribute_class"	"allowed_in_medieval_mode"
+			"hidden"	"1"
 		}
 		"2030"
 		{
@@ -12685,78 +9901,14 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"2031"
-		{
-			"name"					"series number"
-			"attribute_class"		"series_number"
-			"hidden"	"1"
-			"can_affect_market_name"	"1"
-		}
-		"2032"
-		{
-			"name"					"recipe no partial complete"
-			"attribute_class"		"recipe_no_partial_complete"
-			"hidden"	"1"
-		}
-		"2034"
-		{
-			"name"					"kill refills meter"
-			"attribute_class"		"kill_refills_meter"
-			"description_string"	"#Attrib_KillsRefillMeter"
-			"description_format"	"value_is_additive_percentage"
-			"stored_as_integer"		"0"
-			"effect_type"			"positive"
-		}
-		"2035"
-		{
-			"name"				"random drop line item unusual chance"
-			"hidden"			"1"
-		}
-		"2036"
-		{
-			"name"				"random drop line item unusual list"
-			"attribute_type"	"string"
-			"hidden"			"1"
-		}
-		"2037"
-		{
-			"name"				"random drop line item 0"
-			"stored_as_integer"	"1"
-			"hidden"			"1"
-		}
-		"2038"
-		{
-			"name"				"random drop line item 1"
-			"stored_as_integer"	"1"
-			"hidden"			"1"
-		}
-		"2039"
-		{
-			"name"				"random drop line item 2"
-			"stored_as_integer"	"1"
-			"hidden"			"1"
-		}
-		"2040"
-		{
-			"name"				"random drop line item 3"
-			"stored_as_integer"	"1"
-			"hidden"			"1"
-		}
 		"2041"
 		{
-			"name"					"taunt attach particle index"
-			"hidden"				"0"
+			"name"	"on taunt attach particle index"
+			"hidden"	"0"
 			"description_string"	"#Attrib_AttachedParticle"
 			"description_format"	"value_is_particle_index"
-			"effect_type"			"unusual"
-			"stored_as_integer"		"1"
-			"can_affect_market_name"	"1"
-		}
-		"2042"
-		{
-			"name"					"loot list name"
-			"attribute_type"		"string"
-			"hidden"				"1"
+			"effect_type"	"unusual"
+			"stored_as_integer"	"1"
 		}
 		"2043"
 		{
@@ -12768,21 +9920,11 @@
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
 		}
-		"2044"
+		"2047"
 		{
-			"name"				"can shuffle crate contents"
-			"hidden"			"1"
-		}
-		"2045"
-		{
-			"name"				"random drop line item footer desc"
-			"attribute_type"	"string"
-			"hidden"			"1"
-		}
-		"2046"
-		{
-			"name"				"is commodity"
-			"hidden"			"1"
+			"name"	"allowed in 2006 mode"
+			"attribute_class"	"allowed_in_2006_mode"
+			"hidden"	"1"
 		}
 		"2048"
 		{
@@ -12801,239 +9943,7 @@
 			"attribute_class"	"gunslinger_punch_combo"
 			"description_format"	"value_is_additive"
 			"description_string"	"#Attrib_GunslingerPunchCombo"
-			"effect_type"			"positive"
-		}
-		"2050"
-		{
-			"name"	"cannot delete"
-			"hidden"			"1"
-		}
-		"2051"
-		{
-			"name"		"quest loaner id low"
-			"hidden"	"1"
-			"stored_as_integer"	"1"
-		}
-		"2052"
-		{
-			"name"		"quest loaner id hi"
-			"hidden"	"1"
-			"stored_as_integer"	"1"
-		}
-		"2053"
-		{
-			"name"	"is_festivized"
-			"attribute_class"	"is_festivized"
-			"description_string"	"#Attrib_IsFestivized"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"unusual"	
-			"can_affect_market_name"	"1"
-		}
-		"2054"
-		{
-			"name"					"fire particle blue"
-			"attribute_type"		"string"
-			"hidden"				"1"
-		}
-		"2055"
-		{
-			"name"					"fire particle red"
-			"attribute_type"		"string"
-			"hidden"				"1"
-		}
-		"2056"
-		{
-			"name"					"fire particle blue crit"
-			"attribute_type"		"string"
-			"hidden"				"1"
-		}
-		"2057"
-		{
-			"name"					"fire particle red crit"
-			"attribute_type"		"string"
-			"hidden"				"1"
-		}
-		"2058"
-		{
-			"name"					"meter_label"
-			"attribute_type"		"string"
-			"hidden"				"1"
-		}
-		"2059"
-		{
-			"name"					"item_meter_damage_for_full_charge"
-			"attribute_class"		"item_meter_damage_for_full_charge"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"		"0"
-		}
-		"2062"
-		{
-			"name"	"airblast cost scale hidden"
-			"attribute_class"	"mult_airblast_cost"
-			"hidden"	"1"
-			"description_format"	"value_is_percentage"
-			"stored_as_integer"	"0"
-		}
-		"2063"
-		{
-			"name"	"dragons fury positive properties"
-			"attribute_class"	"dragons_fury_positive_properties"
-			"description_string"	"#TF_Weapon_DragonsFury_PositiveDesc"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
 			"effect_type"	"positive"
-		}
-		"2064"
-		{
-			"name"	"dragons fury negative properties"
-			"attribute_class"	"dragons_fury_negative_properties"
-			"description_string"	"#TF_Weapon_DragonsFury_NegativeDesc"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"negative"
-		}
-		"2065"
-		{
-			"name"	"dragons fury neutral properties"
-			"attribute_class"	"dragons_fury_neutral_properties"
-			"description_string"	"#TF_Weapon_DragonsFury_NeutralDesc"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"neutral"
-		}
-		"2066"
-		{
-			"name"				"force center wrap"
-			"hidden"			"1"
-		}
-		"2067"
-		{
-			"name"	"attack_minicrits_and_consumes_burning"
-			"attribute_class"	"attack_minicrits_and_consumes_burning"
-			"description_string"	"#Attrib_ConsumesBurning"
-			"description_format"	"value_is_additive"
-			"hidden"	"0"
-			"effect_type"	"positive"
-		}
-
-		"3000"
-		{
-			"name"	"item slot criteria 1"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3001"
-		{
-			"name"	"item in slot 1"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3002"
-		{
-			"name"	"item slot criteria 2"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3003"
-		{
-			"name"	"item in slot 2"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3004"
-		{
-			"name"	"item slot criteria 3"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3005"
-		{
-			"name"	"item in slot 3"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3006"
-		{
-			"name"	"item slot criteria 4"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3007"
-		{
-			"name"	"item in slot 4"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3008"
-		{
-			"name"	"item slot criteria 5"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3009"
-		{
-			"name"	"item in slot 5"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3010"
-		{
-			"name"	"item slot criteria 6"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3011"
-		{
-			"name"	"item in slot 6"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3012"
-		{
-			"name"	"item slot criteria 7"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3013"
-		{
-			"name"	"item in slot 7"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3014"
-		{
-			"name"	"item slot criteria 8"
-			"attribute_class"	"item_slot_criteria"
-			"attribute_type"	"item_slot_criteria"
-		}
-		"3015"
-		{
-			"name"	"item in slot 8"
-			"attribute_class"	"item_in_slot"
-			"attribute_type"	"uint64"
-		}
-		"3016"
-		{
-			"name"				"quest earned standard points"
-			"attribute_class"	"quest_earned_standard_points"
-			"hidden"			"1"
-			"stored_as_integer"	"1"
-		}
-		"3017"
-		{
-			"name"				"quest earned bonus points"
-			"attribute_class"	"quest_earned_bonus_points"
-			"hidden"			"1"
-			"stored_as_integer"	"1"
-		}
-		"3018"
-		{
-			"name"				"item drop wave"
-			"attribute_class"	"item_drop_wave"
-			"hidden"			"1"
-			"stored_as_integer"	"1"
 		}
 		"10001"
 		{
@@ -13053,32 +9963,6 @@
 			"hidden"	"0"
 			"effect_type"	"negative"
 			"stored_as_integer"	"0"
-		}
-		"10003"
-		{
-			"name"	"projectile gravity"
-			"attribute_class"	"projectile_gravity"
-			"description_string"	"#Attrib_ProjectileGravity"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"neutral"
-			"stored_as_integer"	"0"
-		}
-		"10004"
-		{
-			"name"					"allowed in_2006_mode"
-			"attribute_class"		"allowed in_2006_mode"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"1"
-		}
-		"10005"
-		{
-			"name"					"is_reskin"
-			"attribute_class"		"is_reskin"
-			"description_format"	"value_is_additive"
-			"hidden"				"1"
-			"stored_as_integer"	"1"
 		}
 	}
 	"attribute_controlled_attached_particles"
