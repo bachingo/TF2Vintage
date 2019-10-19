@@ -395,9 +395,7 @@ void CTFFlameThrower::PrimaryAttack()
 			RestartParticleEffect();
 		}
 	}
-#endif
 
-#ifdef CLIENT_DLL
 	// Handle the flamethrower light
 	if ( tf2v_muzzlelight.GetBool() )
 	{
@@ -440,7 +438,7 @@ void CTFFlameThrower::PrimaryAttack()
 	#endif
 
 		// Burn & Ignite 'em
-		int iDmgType = g_aWeaponDamageTypes[GetWeaponID()];
+		int iDmgType = g_aWeaponDamageTypes[ GetWeaponID() ];
 		m_bCritFire = IsCurrentAttackACrit();
 
 		if ( m_bCritFire )
@@ -465,8 +463,9 @@ void CTFFlameThrower::PrimaryAttack()
 		int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
-		bool bCritFromBehind = CAttributeManager::AttribHookValue<int>( 0, "set_flamethrower_back_crit", this ) == 1;
-		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage, bCritFromBehind );
+		int nCritFromBehind = 0;
+		CALL_ATTRIB_HOOK_INT( nCritFromBehind, set_flamethrower_back_crit );
+		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage, nCritFromBehind == 1 );
 	#endif
 	}
 
@@ -824,6 +823,66 @@ void CTFFlameThrower::SetDormant( bool bDormant )
 	C_BaseEntity::SetDormant( bDormant );
 }
 
+char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return "";
+
+	int iTeam = pOwner->GetTeamNumber();
+	const char *szParticleEffect = "";
+
+	if ( pOwner->GetWaterLevel() == WL_Eyes )
+	{
+		szParticleEffect = "flamethrower_underwater";
+	}
+
+	if ( !tf2v_new_flames.GetBool() )
+	{
+		if ( m_bCritFire )
+		{
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				szParticleEffect = "flamethrower_rainbow_FP";
+			else if ( tf_halloween.GetBool() )
+				szParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
+			else
+				szParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
+		}
+		else
+		{
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				szParticleEffect = "flamethrower_rainbow_FP";
+			else if ( tf_halloween.GetBool() )
+				szParticleEffect = "flamethrower_halloween";
+			else
+				szParticleEffect = "flamethrower";
+		}
+	}
+	else
+	{
+		if ( m_bCritFire )
+		{
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				szParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
+			else if ( tf_halloween.GetBool() )
+				szParticleEffect = ConstructTeamParticle( "tf2v_flamethrower_halloween_crit_%s_new_flame", iTeam, true );
+			else
+				szParticleEffect = ConstructTeamParticle( "tf2v_new_flame_crit_%s", iTeam, true );
+		}
+		else
+		{
+			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+				szParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
+			else if ( tf_halloween.GetBool() )
+				szParticleEffect = "tf2v_flamethrower_halloween_new_flame";
+			else
+				szParticleEffect = "tf2v_new_flame";
+		}
+	}
+
+	return szParticleEffect;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1025,64 +1084,18 @@ void CTFFlameThrower::RestartParticleEffect( void )
 	}
 
 	m_iParticleWaterLevel = pOwner->GetWaterLevel();
-	int iTeam = pOwner->GetTeamNumber();
 
 	// Start the appropriate particle effect
-	const char *pszParticleEffect;
-	if ( pOwner->GetWaterLevel() == WL_Eyes )
+	const char *pszParticleEffect = GetFlameEffectInternal();
+	if( pszParticleEffect && pszParticleEffect[0] )
 	{
-		pszParticleEffect = "flamethrower_underwater";
-	}
-
-	if ( !tf2v_new_flames.GetBool() )
-	{
-		if ( m_bCritFire )
+		// Start the effect on the viewmodel if our owner is the local player
+		C_BaseEntity *pModel = GetWeaponForEffect();
+		if ( pModel )
 		{
-			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				pszParticleEffect = "flamethrower_rainbow_FP";
-			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
-			else
-				pszParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
+			m_pFlameEffect = pModel->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
+			m_hFlameEffectHost = pModel;
 		}
-		else
-		{
-			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				pszParticleEffect = "flamethrower_rainbow_FP";
-			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = "flamethrower_halloween";
-			else
-				pszParticleEffect = "flamethrower";
-		}
-	}
-	else
-	{
-		if ( m_bCritFire )
-		{
-			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				pszParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
-			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = ConstructTeamParticle( "tf2v_flamethrower_halloween_crit_%s_new_flame", iTeam, true );
-			else
-				pszParticleEffect = ConstructTeamParticle( "tf2v_new_flame_crit_%s", iTeam, true );
-		}
-		else
-		{
-			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				pszParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
-			else if ( tf_halloween.GetBool() )
-				pszParticleEffect = "tf2v_flamethrower_halloween_new_flame";
-			else
-				pszParticleEffect = "tf2v_new_flame";
-		}
-	}
-
-	// Start the effect on the viewmodel if our owner is the local player
-	C_BaseEntity *pModel = GetWeaponForEffect();
-	if ( pModel )
-	{
-		m_pFlameEffect = pModel->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
-		m_hFlameEffectHost = pModel;
 	}
 }
 

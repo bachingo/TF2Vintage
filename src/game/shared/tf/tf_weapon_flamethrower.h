@@ -78,6 +78,8 @@ public:
 	virtual void	UpdateOnRemove( void );
 	virtual void	SetDormant( bool bDormant );
 
+	virtual char const *GetFlameEffectInternal( void ) const;
+
 	//	Start/stop flame sound and particle effects
 	void			StartFlame();
 	void			StopFlame( bool bAbrupt = false );
@@ -103,7 +105,7 @@ public:
 	bool			CanAirBlastPushPlayers( void );
 	bool			CanAirBlastPutOutTeammate( void );
 
-private:
+protected:
 	Vector GetMuzzlePosHelper( bool bVisualPos );
 	CNetworkVar( int, m_iWeaponState );
 	CNetworkVar( bool, m_bCritFire );
@@ -132,7 +134,7 @@ private:
 	float m_flStopHitSoundTime;
 #endif
 
-	CTFFlameThrower( const CTFFlameThrower & );
+	CTFFlameThrower( CTFFlameThrower const& );
 };
 
 //=============================================================================
