@@ -11,8 +11,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"scout"
 	{
@@ -25,8 +27,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"sniper"
 	{
@@ -39,8 +43,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"soldier"
 	{
@@ -53,8 +59,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"demoman"
 	{
@@ -67,8 +75,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"medic"
 	{
@@ -81,8 +91,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"heavy"
 	{
@@ -95,8 +107,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"pyro"
 	{
@@ -109,8 +123,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"spy"
 	{
@@ -123,8 +139,10 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 	"engineer"
 	{
@@ -137,7 +155,9 @@
 		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"action"		"0"
+		"Action"		"0"
 		"misc2"		"0"
+		"zombie"		"0"
+		"buffer"		"0"
 	}
 }

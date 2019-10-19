@@ -160,7 +160,7 @@ public:
 			iType = TF_WPN_TYPE_ITEM2;
 		else if ( szWeaponType == "head" )
 			iType = TF_WPN_TYPE_HEAD;
-		else if ( szWeaponType == "misc" || szWeaponType == "misc2" || szWeaponType == "action" )
+		else if ( szWeaponType == "misc" || szWeaponType == "misc2" || szWeaponType == "action" || szWeaponType == "zombie" )
 			iType = TF_WPN_TYPE_MISC;
 
 		sTemp.m_iWeaponType = iType >= 0 ? iType : TF_WPN_TYPE_PRIMARY;
@@ -246,7 +246,18 @@ bool CTFLoadoutPanel::Init()
 		{
 			for ( int iPreset = 0; iPreset < INVENTORY_COLNUM; iPreset++ )
 			{
+				int miscslot = 1;
+				if ( iSlot == TF_LOADOUT_SLOT_MISC2 )
+				{
+					iSlot = TF_LOADOUT_SLOT_MISC;
+					miscslot = 2;
+				}
 				CEconItemView *pItem = GetTFInventory()->GetItem( iClassIndex, iSlot, iPreset );
+				if ( miscslot == 2 )
+				{
+					iSlot = TF_LOADOUT_SLOT_MISC2;
+					miscslot = 1;
+				}
 
 				if ( pItem )
 				{

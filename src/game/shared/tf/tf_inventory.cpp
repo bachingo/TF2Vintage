@@ -62,6 +62,13 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
+				int miscslot = 1;
+				
+				if ( iSlot == TF_LOADOUT_SLOT_MISC2 )
+				{
+					iSlot = TF_LOADOUT_SLOT_MISC;
+					miscslot = 2;
+				}
 				if ( pItemDef->baseitem )
 				{
 					CEconItemView *pBaseItem = m_Items[iClass][iSlot][0];
@@ -70,9 +77,15 @@ bool CTFInventory::Init( void )
 						Warning( "Duplicate base item %d for class %s in slot %s!\n", iItemID, g_aPlayerClassNames_NonLocalized[iClass], g_LoadoutSlots[iSlot] );
 						delete pBaseItem;
 					}
+				
+				if ( miscslot == 2  ) 
+				{
+					iSlot = TF_LOADOUT_SLOT_MISC2;
+					miscslot = 1;
+				}	
 
 					CEconItemView *pNewItem = new CEconItemView( iItemID );
-
+					
 #if defined ( GAME_DLL )
 					pNewItem->SetItemClassNumber( iClass );
 #endif
