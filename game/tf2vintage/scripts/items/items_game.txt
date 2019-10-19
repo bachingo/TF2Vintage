@@ -339,7 +339,7 @@
 			"prefab"	"weapon_wearable"
 			"propername" "0"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
-			"item_slot"	"action"
+			"item_slot"	"zombie"
 			"equip_region"	"zombie_body"
 			"model_player_per_class"
 			{
