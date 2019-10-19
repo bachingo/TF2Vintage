@@ -2266,7 +2266,7 @@
 			"name"	"default"
 			"hidden"	"1"
 			"item_class"	"tf_wearable"
-			"item_name"	"#TF_Default_ItemDef"
+			"item_name"	"#TF_Spectator_Default"
 			"item_slot"	"melee"
 			"item_quality"	"normal"
 		}

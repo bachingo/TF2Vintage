@@ -20,15 +20,17 @@ PlayerClass
 //	"grenade2"		"TF_WEAPON_GRENADE_SMOKE_BOMB"
 
 	// Weapons.
-	"weapon1"		"TF_WEAPON_KNIFE"
+	"weapon1"		""
 	"weapon2"		"TF_WEAPON_REVOLVER"
-	"weapon3"		"TF_WEAPON_PDA_SPY"
-	"weapon4"		"TF_WEAPON_INVIS"
-	"weapon5"		""
-	"weapon6"		"TF_WEAPON_BUILDER_SPY"
-	"weapon7"		"TF2V_COSMETIC_HAT"
-	"weapon8"		"TF2V_COSMETIC_MISC"
+	"weapon3"		"TF_WEAPON_KNIFE"
+	"weapon4"		"TF_WEAPON_PDA_SPY"
+	"weapon5"		"TF_WEAPON_INVIS"
+	"weapon6"		"TF_WEAPON_BUILDER"
+	"weapon7"		""
+	"weapon8"		""
 	"weapon9"		""
+	"weapon10"		""
+	"weapon11"		""
 
 	
 	// Buildables
