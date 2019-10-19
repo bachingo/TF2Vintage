@@ -1948,8 +1948,8 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 	for (int i = 0; i < TF_LOADOUT_SLOT_BUFFER; ++i)
 	{
-		if ( (i == TF_LOADOUT_SLOT_BUILDING ) || (i == TF_LOADOUT_SLOT_UTILITY ) )
-		continue;	// These are special slots, we don't bother to check them.	
+		if ( i == TF_LOADOUT_SLOT_UTILITY )
+		continue;	// Don't check this slot, it's currently unused.
 	
 		if (!tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ZOMBIE)
 		continue;	// If it's not Halloween, just skip the action slot.
