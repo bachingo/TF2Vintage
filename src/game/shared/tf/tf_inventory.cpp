@@ -66,7 +66,7 @@ bool CTFInventory::Init( void )
 				
 				if ( iSlot == TF_LOADOUT_SLOT_MISC2 )
 				{
-					iSlot = TF_LOADOUT_SLOT_MISC;
+					iSlot = TF_LOADOUT_SLOT_MISC1;
 					miscslot = 2;
 				}
 				if ( pItemDef->baseitem )

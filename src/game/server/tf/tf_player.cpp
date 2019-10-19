@@ -1779,6 +1779,9 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 
 	for (int iSlot = 0; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
 	{
+		if ( (iSlot == TF_LOADOUT_SLOT_BUILDING ) || (iSlot == TF_LOADOUT_SLOT_UTILITY ) )
+		continue;	// These are special slots, we don't bother to check them.
+		
 		if (!tf_halloween.GetBool() && iSlot == TF_LOADOUT_SLOT_ZOMBIE)
 		continue;	// If it's not Halloween, just skip the action slot.
 		
@@ -1846,6 +1849,9 @@ void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
 	for (int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon)
 	{
+		if ( (iWeapon == TF_LOADOUT_SLOT_BUILDING ) || (iWeapon == TF_LOADOUT_SLOT_UTILITY ) )
+		continue;	// These are special slots, we don't bother to check them.
+	
 		if ( (iWeapon >=TF_LOADOUT_SLOT_HAT && iWeapon != TF_LOADOUT_SLOT_ZOMBIE ) )
 			continue; // Always bail on cosmetics, other than zombie skins.
 		
@@ -1942,7 +1948,9 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 	for (int i = 0; i < TF_LOADOUT_SLOT_BUFFER; ++i)
 	{
-		
+		if ( (i == TF_LOADOUT_SLOT_BUILDING ) || (i == TF_LOADOUT_SLOT_UTILITY ) )
+		continue;	// These are special slots, we don't bother to check them.	
+	
 		if (!tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ZOMBIE)
 		continue;	// If it's not Halloween, just skip the action slot.
 		
@@ -1982,7 +1990,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 		// Engineers always get PDAs
 		// Spies should get their disguise PDA
-		if ( ( m_PlayerClass.GetClassIndex()  == TF_CLASS_ENGINEER || m_PlayerClass.GetClassIndex() == TF_CLASS_SPY ) && ( iSlot == TF_LOADOUT_SLOT_PDA1 ) )
+		if ( ( ( m_PlayerClass.GetClassIndex() == TF_CLASS_ENGINEER ) && ( iSlot == TF_LOADOUT_SLOT_PDA1  || iSlot == TF_LOADOUT_SLOT_PDA2 ) ) || ( ( m_PlayerClass.GetClassIndex() == TF_CLASS_SPY ) && ( iSlot == TF_LOADOUT_SLOT_PDA1  ) ) )
 		{
 			pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
 		}

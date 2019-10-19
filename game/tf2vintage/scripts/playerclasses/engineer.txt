@@ -20,16 +20,17 @@ PlayerClass
 	"grenade2"		"TF_WEAPON_GRENADE_EMP"
 
 	// Weapons.
-	"weapon1"		"TF_WEAPON_WRENCH"
+	"weapon1"		"TF_WEAPON_SHOTGUN_PRIMARY"
 	"weapon2"		"TF_WEAPON_PISTOL"
-	"weapon3"		"TF_WEAPON_SHOTGUN_PRIMARY"
+	"weapon1"		"TF_WEAPON_WRENCH"
 	"weapon4"		"TF_WEAPON_PDA_ENGINEER_BUILD"
 	"weapon5"		"TF_WEAPON_PDA_ENGINEER_DESTROY"
 	"weapon6"		"TF_WEAPON_BUILDER"
-	"weapon7"		"TF2V_COSMETIC_HAT"
-	"weapon8"		"TF2V_COSMETIC_MISC"
+	"weapon7"		""
+	"weapon8"		""
 	"weapon9"		""
-
+	"weapon10"		""
+	"weapon11"		""
 	
 	// Buildables
 	"buildable1"	"OBJ_SENTRYGUN"
