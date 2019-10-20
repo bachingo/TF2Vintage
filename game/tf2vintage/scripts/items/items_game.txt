@@ -2811,11 +2811,11 @@
                     "attribute_class"    "mult_dmg"
                     "value"    "1.15"
                 }
-                "airblast disabled"
-                {
-                    "attribute_class"    "airblast_disabled"
-                    "value"    "1"
-                }
+				"airblast cost increased"
+				{
+					"attribute_class"	"mult_airblast_cost"
+					"value" "1.50"
+				}
                 "crit mod disabled hidden"
                 {
                     "attribute_class"    "mult_crit_chance"
@@ -3185,15 +3185,15 @@
 					"attribute_class"	"provide_on_active"
 					"value" "1"
 				}
-				"mod shovel damage boost"
+				"mod shovel boosts"
 				{
 					"attribute_class"	"set_weapon_mode"
-					"value"	"1"
+					"value"	"3"
 				}
-				"mod shovel speed boost"
+				"name"	"mod shovel boosts speed null"
 				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"2"
+					"attribute_class"	"null"
+					"value"	"0"
 				}
 				"special taunt"
 				{
@@ -10014,6 +10014,26 @@
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
 			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10003"
+		{
+			"name"	"mod shovel boosts"
+			"attribute_class"	"set_weapon_mode"
+			"description_string"	"#Attrib_ShovelDamageBoost"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"10004"
+		{
+			"name"	"mod shovel boosts speed null"
+			"attribute_class"	"null"
+			"description_string"	"#Attrib_ShovelSpeedBoost"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
 	}
