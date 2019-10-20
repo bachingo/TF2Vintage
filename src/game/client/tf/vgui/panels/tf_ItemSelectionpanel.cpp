@@ -14,10 +14,10 @@ using namespace vgui;
 
 #define PANEL_WIDE 110
 #define PANEL_TALL 70
-CTFWeaponSelectPanel *m_weaponbutton;
+CTFWeaponSelectPanel *ptr_weaponbutton;
 
-CTFWeaponSelectPanel *m_ScrollButton;
-CTFWeaponSelectPanel *m_ScrollButton2;
+CTFWeaponSelectPanel *ptr_ScrollButton;
+CTFWeaponSelectPanel *ptr_ScrollButton2;
 
 static int g_aClassLoadoutSlots[TF_CLASS_COUNT_ALL][INVENTORY_ROWNUM] =
 {
@@ -215,15 +215,15 @@ bool CTFItemPanel::Init()
 	m_ScrollButton2 = new CTFWeaponSelectPanel(this, "Scrollbutton2");
 	g_TFWeaponScriptParser.InitParser("scripts/tf_weapon_*.txt", true, false);
 
-	for (int i = 0; i < INVENTORY_VECTOR_NUM_Selection; i++)
+	for (int i = 0; i < INVENTORY_VECTOR_NUM_SELECTION; i++)
 	{
 		m_pWeaponIcons.AddToTail(new CTFAdvItemButton(m_pWeaponSetPanel, "WeaponIcons", "DUK"));
 	}
-	for (int i = 0; i < INVENTORY_ROWNUM_Selection  * 2; i++)
+	for (int i = 0; i < INVENTORY_ROWNUM_SELECTION  * 2; i++)
 	{
 		m_pSlideButtons.AddToTail(new CTFAdvItemButton(m_pWeaponSetPanel, "SlideButton", "DUK"));
 	}
-	for (int i = 0; i < INVENTORY_ROWNUM_Selection ; i++)
+	for (int i = 0; i < INVENTORY_ROWNUM_SELECTION ; i++)
 	{
 		m_RawIDPos.AddToTail(0);
 	}
@@ -236,7 +236,7 @@ bool CTFItemPanel::Init()
 
 		for (int iSlot = 0; iSlot < TF_LOADOUT_SLOT_COUNT; iSlot++)
 		{
-			for (int iPreset = 0; iPreset < INVENTORY_COLNUM_Selection; iPreset++)
+			for (int iPreset = 0; iPreset < INVENTORY_COLNUM_SELECTION; iPreset++)
 			{
 				CEconItemView *pItem = GetTFInventory()->GetItem(iClassIndex, iSlot, iPreset);
 
@@ -273,13 +273,13 @@ void CTFItemPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 void CTFItemPanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
-	for (int iSlot = 0; iSlot < INVENTORY_ROWNUM_Selection ; iSlot++)
+	for (int iSlot = 0; iSlot < INVENTORY_ROWNUM_SELECTION ; iSlot++)
 	{
 		for (int iPreset = 0; iPreset < INVENTORY_COLNUM_Selection; iPreset++)
 		{
 			CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM_Selection * iSlot + iPreset];
-			m_pWeaponButton->SetSize(XRES(m_weaponbutton->GetWide()), YRES(m_weaponbutton->GetTall()));
-			m_pWeaponButton->SetPos((iSlot * YRES((m_weaponbutton->GetYPos()))), iPreset * XRES((m_weaponbutton->GetXPos())) );
+			m_pWeaponButton->SetSize(XRES(ptr_weaponbutton->GetWide()), YRES(ptr_weaponbutton->GetTall()));
+			m_pWeaponButton->SetPos((iSlot * YRES((ptr_weaponbutton->GetYPos()))), iPreset * XRES((ptr_weaponbutton->GetXPos())) );
 			m_pWeaponButton->SetBorderVisible(true);
 			m_pWeaponButton->SetBorderByString("AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed");
 			m_pWeaponButton->SetLoadoutSlot(m_iCurrentSlot, iPreset);
@@ -288,8 +288,8 @@ void CTFItemPanel::PerformLayout()
 		CTFAdvItemButton *m_pSlideButtonL = m_pSlideButtons[iSlot * 2];
 		CTFAdvItemButton *m_pSlideButtonR = m_pSlideButtons[(iSlot * 2) + 1];
 
-		m_pSlideButtonL->SetSize(XRES(m_ScrollButton->GetWide()), YRES(m_ScrollButton->GetTall()));
-		m_pSlideButtonL->SetPos(m_ScrollButton->GetXPos(), iSlot * YRES((m_ScrollButton->GetYPos() + 5)));
+		m_pSlideButtonL->SetSize(XRES(ptr_ScrollButton->GetWide()), YRES(ptr_ScrollButton->GetTall()));
+		m_pSlideButtonL->SetPos(ptr_ScrollButton->GetXPos(), iSlot * YRES((ptr_ScrollButton->GetYPos() + 5)));
 		m_pSlideButtonL->SetText("^");
 		m_pSlideButtonL->SetBorderVisible(true);
 		m_pSlideButtonL->SetBorderByString("AdvLeftButtonDefault", "AdvLeftButtonArmed", "AdvLeftButtonDepressed");
@@ -297,8 +297,8 @@ void CTFItemPanel::PerformLayout()
 		Q_snprintf(szCommand, sizeof(szCommand), "SlideL%i", iSlot);
 		m_pSlideButtonL->SetCommandString(szCommand);
 
-		m_pSlideButtonR->SetSize(XRES(m_ScrollButton2->GetWide()), YRES(m_ScrollButton2->GetTall()));
-		m_pSlideButtonR->SetPos(m_ScrollButton2->GetXPos(), m_pWeaponSetPanel->GetTall() - YRES(m_ScrollButton2->GetYPos()));
+		m_pSlideButtonR->SetSize(XRES(ptr_ScrollButton2->GetWide()), YRES(ptr_ScrollButton2->GetTall()));
+		m_pSlideButtonR->SetPos(ptr_ScrollButton2->GetXPos(), ptr_pWeaponSetPanel->GetTall() - YRES(ptr_ScrollButton2->GetYPos()));
 		m_pSlideButtonR->SetText("v");
 		m_pSlideButtonR->SetBorderVisible(true);
 		m_pSlideButtonR->SetBorderByString("AdvRightButtonDefault", "AdvRightButtonArmed", "AdvRightButtonDepressed");
@@ -411,12 +411,12 @@ void CTFItemPanel::SideRow(int iRow, int iDir)
 {
 	m_RawIDPos[iRow] += iDir;
 
-	for (int iPreset = 0; iPreset < INVENTORY_COLNUM_Selection; iPreset++)
+	for (int iPreset = 0; iPreset < INVENTORY_COLNUM_SELECTION; iPreset++)
 	{
-		CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM_Selection * iRow + iPreset];
+		CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM_SELECTION * iRow + iPreset];
 		int _x, _y;
 		m_pWeaponButton->GetPos(_x, _y);
-		int y = (iPreset - m_RawIDPos[iRow]) * YRES((m_weaponbutton->GetXPos()));
+		int y = (iPreset - m_RawIDPos[iRow]) * YRES((ptr_weaponbutton->GetXPos()));
 		AnimationController::PublicValue_t p_AnimHover(_x, y);
 		vgui::GetAnimationController()->RunAnimationCommand(m_pWeaponButton, "Position", p_AnimHover, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR, NULL);
 	}
@@ -432,7 +432,7 @@ void CTFItemPanel::ResetRows()
 		for (int iPreset = 0; iPreset < INVENTORY_COLNUM_Selection; iPreset++)
 		{
 			CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM_Selection * iSlot + iPreset];
-			m_pWeaponButton->SetPos(iSlot * YRES((m_weaponbutton->GetYPos())), iPreset * YRES((m_weaponbutton->GetXPos())));
+			m_pWeaponButton->SetPos(iSlot * YRES((ptr_weaponbutton->GetYPos())), iPreset * YRES((ptr_weaponbutton->GetXPos())));
 		}
 	}
 }
@@ -482,7 +482,7 @@ void CTFItemPanel::DefaultLayout()
 	int iClassIndex = m_iCurrentClass;
 	SetDialogVariable("classname", g_pVGuiLocalize->Find(g_aPlayerClassNames[iClassIndex]));
 	
-	for (int iRow = 0; iRow < INVENTORY_ROWNUM_Selection; iRow++)
+	for (int iRow = 0; iRow < INVENTORY_ROWNUM_SELECTION; iRow++)
 	{
 		int iColumnCount = 0;
 		int iPresetID = 0;
@@ -496,7 +496,7 @@ void CTFItemPanel::DefaultLayout()
 		
 		
 
-		for (int iColumn = 0; iColumn < INVENTORY_COLNUM_Selection; iColumn++)
+		for (int iColumn = 0; iColumn < INVENTORY_COLNUM_SELECTION; iColumn++)
 		{
 			CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM_Selection * iRow + iColumn];
 
