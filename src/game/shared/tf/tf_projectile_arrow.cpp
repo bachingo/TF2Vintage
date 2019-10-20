@@ -29,6 +29,13 @@ const char *g_pszArrowModels[] =
 	//"models/weapons/w_models/w_arrow_xmas.mdl",
 };
 
+const char *g_pszArrowHits[] =
+{
+	"arrow_hit"
+	"bolt_hit"
+	"claw_hit"
+};
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
 
 BEGIN_NETWORK_TABLE( CTFProjectile_Arrow, DT_TFProjectile_Arrow )
@@ -95,6 +102,9 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		// Setup the initial velocity.
 		Vector vecForward, vecRight, vecUp;
 		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
+		
+		if ( iType != 0 )
+		flSpeed = 2400.00f; // If we're a crossbow bolt or claw, set our speed instead.
 
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flSpeed, mult_projectile_speed );
 
@@ -343,8 +353,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		}
 		else
 		{
-			
-			IGameEvent *event = gameeventmanager->CreateEvent( "arrow_impact" );
+			IGameEvent *event = gameeventmanager->CreateEvent( g_pszArrowHits[m_iType] );
 			
 			if ( event )
 			{

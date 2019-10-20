@@ -145,7 +145,7 @@ void CHudBowChargeMeter::FireGameEvent( IGameEvent *event )
 {
 	const char *eventName = event->GetName();
 
-	if ( !Q_strcmp( eventName, "arrow_impact" ) )
+	if ( !Q_strcmp( eventName, "arrow_impact" ) || !Q_strcmp( eventName, "bolt_impact" ) || !Q_strcmp( eventName, "claw_impact" ) )
 	{
 		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer * >( cl_entitylist->GetBaseEntity( event->GetInt( "attachedEntity" ) ) );
 		if ( pPlayer )
@@ -153,7 +153,12 @@ void CHudBowChargeMeter::FireGameEvent( IGameEvent *event )
 			C_TFProjectile_Arrow *pArrow = new C_TFProjectile_Arrow();
 			if ( pArrow )
 			{
-				pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_arrow.mdl", RENDER_GROUP_OPAQUE_ENTITY );
+				if ( !Q_strcmp( eventName, "arrow_impact" ) )
+					pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_arrow.mdl", RENDER_GROUP_OPAQUE_ENTITY );
+				else if ( !Q_strcmp( eventName, "bolt_impact" ) )
+					pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_syringe_proj.mdl", RENDER_GROUP_OPAQUE_ENTITY );
+				else
+					pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_repair_claw.mdl", RENDER_GROUP_OPAQUE_ENTITY );
 				int bone = event->GetInt( "boneIndexAttached" );
 				Vector vecPosition( event->GetFloat( "bonePositionX" ), event->GetFloat( "bonePositionY" ), event->GetFloat( "bonePositionZ" ) );
 				QAngle vecAngles( event->GetFloat( "boneAnglesX" ), event->GetFloat( "boneAnglesY" ), event->GetFloat( "boneAnglesZ" ) );
