@@ -31,9 +31,9 @@ const char *g_pszArrowModels[] =
 
 const char *g_pszArrowHits[] =
 {
-	"arrow_hit"
-	"bolt_hit"
-	"claw_hit"
+	"arrow_impact"
+	"bolt_impact"
+	"claw_impact"
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
@@ -486,6 +486,10 @@ int	CTFProjectile_Arrow::GetDamageType()
 		}
 	}
 
+	if ( m_iType != 0 )
+	{
+		iDmgType |= DMG_USEDISTANCEMOD;
+	}
 	if ( m_bCritical )
 	{
 		iDmgType |= DMG_CRITICAL;
@@ -745,7 +749,7 @@ void C_TFProjectile_Arrow::ClientThink( void )
 //-----------------------------------------------------------------------------
 void C_TFProjectile_Arrow::Light( void )
 {
-	if ( IsDormant() || !m_bFlame )
+	if ( ( IsDormant() || !m_bFlame ) || ( m_iType != 0 ) )
 		return;
 
 	ParticleProp()->Create( "flying_flaming_arrow", PATTACH_ABSORIGIN_FOLLOW );
@@ -761,4 +765,5 @@ void C_TFProjectile_Arrow::NotifyBoneAttached( C_BaseAnimating* attachTarget )
 	m_bAttachment = true;
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
+
 #endif

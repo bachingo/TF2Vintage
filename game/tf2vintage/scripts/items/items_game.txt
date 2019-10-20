@@ -2206,8 +2206,8 @@
 		}
 		"weapon_crusaders_crossbow"
 		{
-			"enabled"	"0"
-			"show_in_armory" "0"
+			"enabled"	"1"
+			"show_in_armory" "1"
 			"item_class"	"tf_weapon_crossbow"
 			"base_item_name"	"The Crusader's Crossbow"
 			"item_type_name"	"#TF_Weapon_Crossbow"

@@ -3572,6 +3572,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 						killer_weapon_name = "deflect_rocket";
 						break;
 					case TF_WEAPON_COMPOUND_BOW: //does this go here?
+					case TF_WEAPON_CROSSBOW:
 						if ( info.GetDamageType() & DMG_IGNITE )
 							killer_weapon_name = "deflect_huntsman_flyingburn";
 						else
@@ -3658,11 +3659,20 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		killer_weapon_name = "obj_sentrygun3";
 	}
 
-	// make sure arrow kills are mapping to the huntsman
-	else if ( !V_strcmp( killer_weapon_name, "tf_projectile_arrow" ) )
+	// make sure arrow kills are mapping to the huntsman and crossbow.
+	else if ( !V_strcmp( killer_weapon_name, "tf_projectile_arrow" )  )
 	{
-		killer_weapon_name = "huntsman";
+		switch (iWeaponID)
+		{
+		case TF_WEAPON_COMPOUND_BOW:
+			killer_weapon_name = "huntsman";
+			break;
+		case TF_WEAPON_CROSSBOW:
+			killer_weapon_name = "crusaders_crossbow";
+			break;
+		}
 	}
+
 
 	else if ( iWeaponID )
 	{

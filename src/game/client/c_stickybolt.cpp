@@ -29,6 +29,14 @@
 #include "c_te_effect_dispatch.h"
 #include "c_tf_player.h"
 
+const char *g_pszArrowModelClient[] =
+{
+	"models/weapons/w_models/w_arrow.mdl",
+	"models/weapons/w_models/w_syringe_proj.mdl",
+	"models/weapons/w_models/w_repair_claw.mdl",
+	//"models/weapons/w_models/w_arrow_xmas.mdl",
+};
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -133,7 +141,17 @@ void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 	//model_t *pModel = (model_t *)engine->LoadModel( "models/crossbow_bolt.mdl" );
 
 	//repurpose old crossbow collision code for huntsman collisions
-	model_t *pModel = (model_t *)engine->LoadModel( "models/weapons/w_models/w_arrow.mdl" );
+	int iModel = 0;
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
+	int iWeaponID = pWpn->GetWeaponID();
+	if ( iWeaponID == TF_WEAPON_COMPOUND_BOW )
+	iModel = 0;
+	else if ( iWeaponID == TF_WEAPON_CROSSBOW )
+	iModel = 1;
+	else
+	iModel = 2;
+	model_t *pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[iModel] );
 
 	QAngle vAngles;
 

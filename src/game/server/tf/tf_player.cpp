@@ -4342,6 +4342,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( tf_damage_lineardist.GetBool() )
 			{
 				float flBaseDamage = info.GetDamage() - flRandomDamage;
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				{
+					// If we're a crossbow, invert our damage formula.
+					flDamage = flBaseDamage - RandomFloat( 0, flRandomDamage * 2 );
+				}
+				else
 				flDamage = flBaseDamage + RandomFloat( 0, flRandomDamage * 2 );
 			}
 			else
@@ -4374,6 +4380,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 							flCenter = RemapVal( flCenter, 0.5, 1.0, 0.5, 0.65 );
 						}
 					}
+					
+					if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+					{
+						// If we're a crossbow, change our falloff band so that our 100% is at long range.
+						flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 1.0, 0.50 );
+					}
+					
 					flMin = Max( 0.0, flCenter - 0.10 );
 					flMax = Min( 1.0, flCenter + 0.10 );
 
@@ -4416,6 +4429,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 
 				float flOut = SimpleSplineRemapValClamped( flRandomVal, 0, 1, -flRandomDamage, flRandomDamage );
+				
+
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				{
+					// If we're a crossbow, invert our damage falloff calculation.
+					flDamage = info.GetDamage() - flOut;
+				}
+				else
 				flDamage = info.GetDamage() + flOut;
 
 				/*
