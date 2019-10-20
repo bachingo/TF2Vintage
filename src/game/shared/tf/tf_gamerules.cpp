@@ -3659,18 +3659,11 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		killer_weapon_name = "obj_sentrygun3";
 	}
 
-	// make sure arrow kills are mapping to the huntsman and crossbow.
+	// make sure standard arrow kills are mapped to their weapon.
 	else if ( !V_strcmp( killer_weapon_name, "tf_projectile_arrow" )  )
 	{
-		switch (iWeaponID)
-		{
-		case TF_WEAPON_COMPOUND_BOW:
-			killer_weapon_name = "huntsman";
-			break;
-		case TF_WEAPON_CROSSBOW:
-			killer_weapon_name = "crusaders_crossbow";
-			break;
-		}
+		killer_weapon_name = pActiveWpn->GetClassname();
+		iWeaponID = pActiveWpn->GetWeaponID();
 	}
 
 
