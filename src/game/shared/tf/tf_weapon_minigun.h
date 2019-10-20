@@ -54,6 +54,7 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MINIGUN; }
 	MinigunState_t  GetWeaponState( void ) const		{ return m_iWeaponState; }
 	virtual void	PrimaryAttack();
+	virtual void	UseRealMinigunBrassEject( void );
 	virtual void	SecondaryAttack();
 	void			SharedAttack();
 	virtual void	WeaponIdle();

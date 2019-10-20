@@ -137,6 +137,7 @@ ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "0", FCVAR_NOTIFY, "Enable 
 ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes players spawn with random classes." );
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
 ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
+ConVar tf2v_bonus_distance_range( "tf2v_bonus_distance_range", "10", FCVAR_NOTIFY, "Percent variation in range calculations for damage." );
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
 ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
@@ -4342,6 +4343,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( tf_damage_lineardist.GetBool() )
 			{
 				float flBaseDamage = info.GetDamage() - flRandomDamage;
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				{
+					// If we're a crossbow, invert our damage formula.
+					flDamage = flBaseDamage - RandomFloat( 0, flRandomDamage * 2 );
+				}
+				else
 				flDamage = flBaseDamage + RandomFloat( 0, flRandomDamage * 2 );
 			}
 			else
@@ -4355,10 +4362,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 					pAttacker = info.GetAttacker();
 				}
 
-
-				float flMin = 0.40;
-				float flMax = 0.60;
 				float flCenter = 0.5;
+				float flCenVar = ( tf2v_bonus_distance_range.GetFloat() / 100 ) ;	
+				float flMin = flCenter - flCenVar;
+				float flMax = flCenter + flCenVar;
 
 				if ( bitsDamage & DMG_USEDISTANCEMOD )
 				{
@@ -4374,8 +4381,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 							flCenter = RemapVal( flCenter, 0.5, 1.0, 0.5, 0.65 );
 						}
 					}
-					flMin = Max( 0.0, flCenter - 0.10 );
-					flMax = Min( 1.0, flCenter + 0.10 );
+					
+					if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+					{
+						// If we're a crossbow, change our falloff band so that our 100% is at long range.
+						flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 1.0, 0.50 );
+					}
+					
+					flMin = ( 0.0 > (flCenter + flCenVar) ? 0.0 : (flCenter + flCenVar) ); // Our version of MAX.
+					flMax = ( 1.0 < (flCenter + flCenVar) ? 1.0 : (flCenter - flCenVar) ); // Our version of MIN.
 
 					if ( bDebug )
 					{
@@ -4416,6 +4430,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 
 				float flOut = SimpleSplineRemapValClamped( flRandomVal, 0, 1, -flRandomDamage, flRandomDamage );
+				
+
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				{
+					// If we're a crossbow, invert our damage falloff calculation.
+					flDamage = info.GetDamage() - flOut;
+				}
+				else
 				flDamage = info.GetDamage() + flOut;
 
 				/*

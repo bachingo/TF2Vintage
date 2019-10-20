@@ -2206,8 +2206,8 @@
 		}
 		"weapon_crusaders_crossbow"
 		{
-			"enabled"	"0"
-			"show_in_armory" "0"
+			"enabled"	"1"
+			"show_in_armory" "1"
 			"item_class"	"tf_weapon_crossbow"
 			"base_item_name"	"The Crusader's Crossbow"
 			"item_type_name"	"#TF_Weapon_Crossbow"
@@ -2253,6 +2253,49 @@
 				"sound_burst"	"Weapon_CrusadersCrossbow.SingleCrit"
 			}
 			"xifier_class_remap"	"crusaders_crossbow"
+		}
+		"weapon_quadball"
+		{
+			"prefab"		"weapon_grenade_launcher"
+			"item_logname"	"iron_bomber"
+			"item_iconname"	"iron_bomber"
+			"item_name"		"#TF_Weapon_Iron_bomber"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_quadball/c_quadball"
+			"model_player"	"models/workshop/weapons/c_models/c_quadball/c_quadball.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -10"				
+			}
+			"attributes"
+			{
+				"Blast radius decreased"
+				{
+					"attribute_class"	"mult_explosion_radius"
+					"value"				"0.85"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	"custom_projectile_model"
+					"value"				"models/workshop/weapons/c_models/c_quadball/w_quadball_grenade.mdl"
+				}
+				"fuse bonus"
+				{
+					"attribute_class" "fuse_mult"
+					"value" "0.7"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_TackyGrenadier.Single"
+				"sound_burst"			"Weapon_TackyGrenadier.SingleCrit"
+				"sound_special1"		"Weapon_Airstrike.Explosion"
+				"animation_replacement"
+				{
+					"ACT_PRIMARY_VM_INSPECT_START"		"ACT_PRIMARY_ALT1_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"		"ACT_PRIMARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"		"ACT_PRIMARY_ALT1_VM_INSPECT_END"
+				}
+			}
 		}
 		"weapon_reskin"
 		{
@@ -2768,11 +2811,11 @@
                     "attribute_class"    "mult_dmg"
                     "value"    "1.15"
                 }
-                "airblast disabled"
-                {
-                    "attribute_class"    "airblast_disabled"
-                    "value"    "1"
-                }
+				"airblast cost increased"
+				{
+					"attribute_class"	"mult_airblast_cost"
+					"value" "1.50"
+				}
                 "crit mod disabled hidden"
                 {
                     "attribute_class"    "mult_crit_chance"
@@ -3142,15 +3185,15 @@
 					"attribute_class"	"provide_on_active"
 					"value" "1"
 				}
-				"mod shovel damage boost"
+				"mod shovel boosts"
 				{
 					"attribute_class"	"set_weapon_mode"
-					"value"	"1"
+					"value"	"3"
 				}
-				"mod shovel speed boost"
+				"name"	"mod shovel boosts speed null"
 				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"2"
+					"attribute_class"	"null"
+					"value"	"0"
 				}
 				"special taunt"
 				{
@@ -4214,6 +4257,12 @@
 				"sound_reload"			"Weapon_QuakeRPG.Reload"
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
+		}
+		"1151"
+		{
+			"name"	"The Iron Bomber"
+			"prefab"	"weapon_quadball"
+			"particle_suffix"	"iron_bomber"
 		}
 		"5617"
 		{
@@ -9965,6 +10014,26 @@
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
 			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10003"
+		{
+			"name"	"mod shovel boosts"
+			"attribute_class"	"set_weapon_mode"
+			"description_string"	"#Attrib_ShovelDamageBoost"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"10004"
+		{
+			"name"	"mod shovel boosts speed null"
+			"attribute_class"	"null"
+			"description_string"	"#Attrib_ShovelSpeedBoost"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
 	}

@@ -47,7 +47,7 @@ int CTFShovel::GetCustomDamageType() const
 {
 	int nShovelWeaponMode = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelWeaponMode, set_weapon_mode );
-	if ( nShovelWeaponMode == 1 || nShovelWeaponMode == 2 )
+	if ( nShovelWeaponMode == 1 || nShovelWeaponMode == 2 || nShovelWeaponMode == 3)
 		return TF_DMG_CUSTOM_PICKAXE;
 
 	return TF_DMG_CUSTOM_NONE;
@@ -62,9 +62,9 @@ float CTFShovel::GetSpeedMod( void ) const
 	if ( !pOwner )
 		return 1.0f;
 
-	int nShovelWeaponMode = 0;
-	CALL_ATTRIB_HOOK_INT( nShovelWeaponMode, set_weapon_mode );
-	if ( nShovelWeaponMode != 1 )
+	int nShovelSpeedBoost = 0;
+	CALL_ATTRIB_HOOK_INT( nShovelSpeedBoost, set_weapon_mode );
+	if ( nShovelSpeedBoost != 2 || nShovelSpeedBoost != 3 )
 		return 1.0f;
 
 	float flFraction = (float)pOwner->GetHealth() / pOwner->GetMaxHealth();
@@ -86,7 +86,7 @@ float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 
 	int nShovelDamageBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelDamageBoost, set_weapon_mode );
-	if ( nShovelDamageBoost != 1 )
+	if ( nShovelDamageBoost != 1 || nShovelDamageBoost != 3 )
 		return flDmg;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );

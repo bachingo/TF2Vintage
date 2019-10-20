@@ -29,6 +29,13 @@ const char *g_pszArrowModels[] =
 	//"models/weapons/w_models/w_arrow_xmas.mdl",
 };
 
+const char *g_pszArrowHits[] =
+{
+	"arrow_impact"
+	"bolt_impact"
+	"claw_impact"
+};
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
 
 BEGIN_NETWORK_TABLE( CTFProjectile_Arrow, DT_TFProjectile_Arrow )
@@ -95,6 +102,9 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		// Setup the initial velocity.
 		Vector vecForward, vecRight, vecUp;
 		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
+		
+		if ( iType != 0 )
+		flSpeed = 2400.00f; // If we're a crossbow bolt or claw, set our speed instead.
 
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flSpeed, mult_projectile_speed );
 
@@ -343,8 +353,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		}
 		else
 		{
-			
-			IGameEvent *event = gameeventmanager->CreateEvent( "arrow_impact" );
+			IGameEvent *event = gameeventmanager->CreateEvent( g_pszArrowHits[m_iType] );
 			
 			if ( event )
 			{
@@ -477,6 +486,10 @@ int	CTFProjectile_Arrow::GetDamageType()
 		}
 	}
 
+	if ( m_iType != 0 )
+	{
+		iDmgType |= DMG_USEDISTANCEMOD;
+	}
 	if ( m_bCritical )
 	{
 		iDmgType |= DMG_CRITICAL;
@@ -736,7 +749,7 @@ void C_TFProjectile_Arrow::ClientThink( void )
 //-----------------------------------------------------------------------------
 void C_TFProjectile_Arrow::Light( void )
 {
-	if ( IsDormant() || !m_bFlame )
+	if ( ( IsDormant() || !m_bFlame ) || ( m_iType != 0 ) )
 		return;
 
 	ParticleProp()->Create( "flying_flaming_arrow", PATTACH_ABSORIGIN_FOLLOW );
@@ -752,4 +765,5 @@ void C_TFProjectile_Arrow::NotifyBoneAttached( C_BaseAnimating* attachTarget )
 	m_bAttachment = true;
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
+
 #endif

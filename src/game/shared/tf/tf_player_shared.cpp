@@ -84,6 +84,7 @@ ConVar sv_showplayerhitboxes("sv_showplayerhitboxes", "0", FCVAR_REPLICATED, "Sh
 
 ConVar tf2v_building_hauling( "tf2v_building_hauling", "1", FCVAR_REPLICATED, "Toggle Engineer's building hauling ability." );
 ConVar tf2v_disable_player_shadows( "tf2v_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
+ConVar tf2v_critmod_range( "tf2v_critmod_range", "800", FCVAR_NOTIFY | FCVAR_REPLICATED, "Recent Damage (in HP) before peak critical chance levels off." );
 
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
@@ -3867,7 +3868,7 @@ void CTFPlayerShared::UpdateCritMult(void)
 		flTotalDamage += m_DamageEvents[i].flDamage;
 	}
 
-	float flMult = RemapValClamped(flTotalDamage, 0, TF_DAMAGE_CRITMOD_DAMAGE, flMinMult, flMaxMult);
+	float flMult = RemapValClamped(flTotalDamage, 0, tf2v_critmod_range.GetFloat(), flMinMult, flMaxMult);
 
 	//Msg( "   TotalDamage: %.2f   -> Mult %.2f\n", flTotalDamage, flMult );
 

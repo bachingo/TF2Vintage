@@ -21,6 +21,12 @@
 #include "tf_player.h"
 #endif
 
+#ifdef CLIENT_DLL
+	#include "c_te_effect_dispatch.h"
+#else
+	#include "te_effect_dispatch.h"
+#endif
+
 #define MAX_BARREL_SPIN_VELOCITY	20
 
 //=============================================================================
@@ -62,6 +68,7 @@ CREATE_SIMPLE_WEAPON_TABLE( TFMinigun_Real, tf_weapon_minigun_real )
 
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
+ConVar tf2v_minigun_brasseject( "tf2v_minigun_brasseject", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Use real shells instead of sprites?");
 #endif
 
 //=============================================================================
@@ -262,6 +269,7 @@ void CTFMinigun::SharedAttack()
 				// Only fire if we're actually shooting
 				BaseClass::PrimaryAttack();		// fire and do timers
 				CalcIsAttackCritical();
+				UseRealMinigunBrassEject();
 				m_bCritShot = IsCurrentAttackACrit();
 				pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 				m_flTimeWeaponIdle = gpGlobals->curtime + 0.2;
@@ -510,6 +518,33 @@ void CTFMinigun::HandleFireOnEmpty( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFMinigun::UseRealMinigunBrassEject( void )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+	return;
+#ifdef SERVER_DLL
+	return;
+#endif
+#ifdef CLIENT_DLL
+	if (tf2v_minigun_brasseject.GetBool())
+	{
+		Vector vecOrigin;
+		QAngle angAngles;
+		CEffectData brassejectdata;
+		C_BaseViewModel *pViewModel = dynamic_cast< C_BaseViewModel* >( pPlayer );
+		pViewModel->GetAttachment(m_iEjectBrassAttachment, vecOrigin, angAngles);
+		brassejectdata.m_vOrigin = vecOrigin;
+		brassejectdata.m_vAngles = angAngles;
+		brassejectdata.m_nHitBox = TF_WEAPON_MINIGUN;
+		DispatchEffect("TF_EjectBrass", brassejectdata);
+	}
+#endif
+}
+
 #ifdef CLIENT_DLL
 
 //-----------------------------------------------------------------------------
@@ -705,7 +740,8 @@ void CTFMinigun::StartBrassEffect()
 	// Start the brass ejection, if a system hasn't already been started.
 	if ( m_iEjectBrassAttachment != -1 && m_pEjectBrassEffect == NULL )
 	{
-		m_pEjectBrassEffect = pEffectOwner->ParticleProp()->Create( "eject_minigunbrass", PATTACH_POINT_FOLLOW, m_iEjectBrassAttachment );
+		if ( !tf2v_minigun_brasseject.GetBool() )
+			m_pEjectBrassEffect = pEffectOwner->ParticleProp()->Create( "eject_minigunbrass", PATTACH_POINT_FOLLOW, m_iEjectBrassAttachment );
 		m_hBrassEffectHost = pEffectOwner;
 	}
 }
