@@ -46,6 +46,7 @@ ConVar tf_meleeattackforcescale( "tf_meleeattackforcescale", "80.0", FCVAR_CHEAT
 
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
 extern ConVar tf_weapon_criticals;
+extern ConVar tf2v_critchance_melee;
 
 //=============================================================================
 //
@@ -440,7 +441,7 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 
 	float flPlayerCritMult = pPlayer->GetCritMult();
 
-	float flCritChance = TF_DAMAGE_CRIT_CHANCE_MELEE * flPlayerCritMult;
+	float flCritChance = ( ( tf2v_critchance_melee.GetFloat() / 100 ) * flPlayerCritMult );
 	CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
 	// If the chance is 0, just bail.

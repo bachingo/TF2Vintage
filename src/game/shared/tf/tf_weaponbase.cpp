@@ -39,6 +39,8 @@
 
 extern ConVar r_drawviewmodel;
 extern ConVar tf_useparticletracers;
+extern ConVar tf2v_critchance;
+extern ConVar tf2v_critchance_rapid;
 
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
@@ -1001,7 +1003,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		m_flLastCritCheckTime = gpGlobals->curtime;
 
 		// get the total crit chance (ratio of total shots fired we want to be crits)
-		float flTotalCritChance = TF_DAMAGE_CRIT_CHANCE_RAPID * flPlayerCritMult;
+		float flTotalCritChance = ( ( tf2v_critchance_rapid.GetFloat() / 100 ) * flPlayerCritMult );
 		CALL_ATTRIB_HOOK_FLOAT( flTotalCritChance, mult_crit_chance );
 
 		// If the chance is 0, just bail.
@@ -1029,7 +1031,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	else
 	{
 		// single-shot weapon, just use random pct per shot
-		float flCritChance = TF_DAMAGE_CRIT_CHANCE * flPlayerCritMult;
+		float flCritChance = ( ( tf2v_critchance.GetFloat() / 100 ) * flPlayerCritMult );
 		CALL_ATTRIB_HOOK_FLOAT( flCritChance, mult_crit_chance );
 
 		// If the chance is 0, just bail.
