@@ -3662,6 +3662,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	// make sure standard arrow kills are mapped to their weapon.
 	else if ( !V_strcmp( killer_weapon_name, "tf_projectile_arrow" )  )
 	{
+		CTFWeaponBase *pActiveWpn = pScorer->GetActiveTFWeapon();
 		killer_weapon_name = pActiveWpn->GetClassname();
 		iWeaponID = pActiveWpn->GetWeaponID();
 	}
