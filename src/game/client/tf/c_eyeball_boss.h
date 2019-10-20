@@ -36,7 +36,7 @@ public:
 public:
 	virtual int GetBossType( void ) const { return EYEBALL_BOSS; }
 
-	Vector m_lookAtSpot;
+	CNetworkVector( m_lookAtSpot );
 	int m_attitude;
 
 private:
@@ -46,9 +46,9 @@ private:
 	int m_iLookUpDown;
 
 	QAngle m_angRender;
-
-	CNewParticleEffect *m_pGlow;
-	CNewParticleEffect *m_pAura;
+	
+	CSmartPtr<CNewParticleEffect> m_pGlow;
+	CSmartPtr<CNewParticleEffect> m_pAura;
 
 	CMaterialReference m_TeamMaterial;
 

@@ -23,6 +23,7 @@ void C_EyeBallBoss::Spawn( void )
 	m_iLookLeftRight = -1;
 	m_iLookUpDown = -1;
 	m_angRender = vec3_angle;
+	m_attitudeParity = m_attitude = 0;
 
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
@@ -43,20 +44,20 @@ void C_EyeBallBoss::ClientThink( void )
 	Vector vecFwd, vecRight, vecUp;
 	AngleVectors( m_angRender, &vecFwd, &vecRight, &vecUp );
 
-	vecTo = ( ( vecTo * 3.0f ) * gpGlobals->frametime ) + vecFwd;
-	vecTo.NormalizeInPlace();
+	vecFwd += vecTo * 3.0f * gpGlobals->frametime;
+	vecFwd.NormalizeInPlace();
 
 	QAngle vecAng;
-	VectorAngles( vecTo, vecAng );
+	VectorAngles( vecFwd, vecAng );
 
 	SetAbsAngles( vecAng );
 	m_angRender = vecAng;
 
 	if ( m_iLookLeftRight >= 0 )
-		SetPoseParameter( m_iLookLeftRight, vecTo.Dot( vecRight ) * -50.0f );
+		SetPoseParameter( m_iLookLeftRight, vecFwd.Dot( vecRight ) * -50.0f );
 
 	if ( m_iLookUpDown >= 0 )
-		SetPoseParameter( m_iLookUpDown, vecTo.Dot( vecUp ) * -50.0f );
+		SetPoseParameter( m_iLookUpDown, vecFwd.Dot( vecUp ) * -50.0f );
 }
 
 //-----------------------------------------------------------------------------
@@ -128,9 +129,9 @@ void C_EyeBallBoss::OnDataChanged( DataUpdateType_t updateType )
 	{
 		if ( GetTeamNumber() == TF_TEAM_BOSS && m_attitude != m_attitudeParity )
 		{
-			if ( m_pAura )
+			if ( m_pAura.IsValid() )
 			{
-				ParticleProp()->StopEmission( m_pAura );
+				ParticleProp()->StopEmission( m_pAura.GetObject() );
 				m_pAura = NULL;
 			}
 

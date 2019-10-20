@@ -18,6 +18,16 @@
 #else
 #include "NextBot.h"
 #include "nav_mesh.h"
+
+class CDisableVision : public IVision
+{
+public:
+	CDisableVision( INextBot *bot )
+		: IVision( bot ) {}
+	virtual ~CDisableVision() {}
+	virtual void Reset( void ) {}
+	virtual void Update( void ) {}
+};
 #endif
 
 class CTFPlayer;

@@ -117,6 +117,7 @@ public:
 
 	virtual ILocomotion*	GetLocomotionInterface( void ) const override { return m_locomotor; }
 	virtual IBody*			GetBodyInterface( void ) const override { return m_body; }
+	virtual IVision*		GetVisionInterface( void ) const override { return m_vision; }
 
 	void					JarateNearbyPlayer( float range );
 	CBaseCombatCharacter*	GetVictim( void ) const;
@@ -153,6 +154,7 @@ private:
 
 	CEyeBallBossLocomotion *m_locomotor;
 	CEyeBallBossBody *m_body;
+	IVision *m_vision;
 
 	int m_iAngerPose;
 

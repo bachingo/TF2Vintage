@@ -13,8 +13,8 @@
 #include "eyeball_boss_behavior.h"
 #include "eyeball_boss.h"
 
-ConVar tf_eyeball_boss_debug( "tf_eyeball_boss_debug", "0", FCVAR_CHEAT );
-ConVar tf_eyeball_boss_debug_orientation( "tf_eyeball_boss_debug_orientation", "0", FCVAR_CHEAT );
+ConVar tf_eyeball_boss_debug( "tf_eyeball_boss_debug", "0", FCVAR_CHEAT|FCVAR_DEVELOPMENTONLY );
+ConVar tf_eyeball_boss_debug_orientation( "tf_eyeball_boss_debug_orientation", "0", FCVAR_CHEAT|FCVAR_DEVELOPMENTONLY );
 ConVar tf_eyeball_boss_lifetime( "tf_eyeball_boss_lifetime", "120", FCVAR_CHEAT );
 ConVar tf_eyeball_boss_lifetime_spell( "tf_eyeball_boss_lifetime_spell", "8", FCVAR_CHEAT );
 ConVar tf_eyeball_boss_speed( "tf_eyeball_boss_speed", "250", FCVAR_CHEAT );
@@ -31,11 +31,11 @@ ConVar tf_eyeball_boss_health_per_level( "tf_eyeball_boss_health_per_level", "30
 extern ConVar tf_halloween_bot_min_player_count;
 
 IMPLEMENT_SERVERCLASS_ST( CEyeBallBoss, DT_EyeBallBoss )
-SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
-SendPropExclude( "DT_BaseEntity", "m_angAbsRotation" ),
+	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
+	SendPropExclude( "DT_BaseEntity", "m_angAbsRotation" ),
 
-SendPropVector( SENDINFO( m_lookAtSpot ) ),
-SendPropInt( SENDINFO( m_attitude ) ),
+	SendPropVector( SENDINFO( m_lookAtSpot ) ),
+	SendPropInt( SENDINFO( m_attitude ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( eyeball_boss, CEyeBallBoss );
@@ -350,17 +350,17 @@ void CEyeBallBossBody::Update( void )
 	Vector vecFwd;
 	pActor->GetVectors( &vecFwd, NULL, NULL );
 
-	vecTo = ( ( vecTo * 3.0f ) * GetUpdateInterval() ) + vecFwd;
-	vecTo.NormalizeInPlace();
+	vecFwd += vecTo * 3.0f * GetUpdateInterval();
+	vecFwd.NormalizeInPlace();
 
 	QAngle vecAng;
-	VectorAngles( vecTo, vecAng );
+	VectorAngles( vecFwd, vecAng );
 
 	pActor->SetAbsAngles( vecAng );
 	if ( tf_eyeball_boss_debug_orientation.GetBool() )
 	{
 		NDebugOverlay::Line( pActor->WorldSpaceCenter(),
-							 pActor->WorldSpaceCenter() + vecTo * 150.0f,
+							 pActor->WorldSpaceCenter() + vecFwd * 150.0f,
 							 255,
 							 0,
 							 205,
@@ -406,6 +406,7 @@ CEyeBallBoss::CEyeBallBoss()
 	m_intention = new CEyeBallBossIntention( this );
 	m_body = new CEyeBallBossBody( this );
 	m_locomotor = new CEyeBallBossLocomotion( this );
+	m_vision = new CDisableVision( this );
 
 	m_iOldHealth = -1;
 	m_iAngerPose = -1;
@@ -416,6 +417,7 @@ CEyeBallBoss::~CEyeBallBoss()
 	delete m_intention;
 	delete m_body;
 	delete m_locomotor;
+	delete m_vision;
 }
 
 //-----------------------------------------------------------------------------
@@ -777,7 +779,7 @@ const Vector& CEyeBallBoss::PickNewSpawnSpot( void ) const
 
 	if ( !m_hSpawnEnts.IsEmpty() )
 	{
-		CBaseEntity *pSpot = m_hSpawnEnts[RandomInt( 0, m_hSpawnEnts.Count() )];
+		CBaseEntity *pSpot = m_hSpawnEnts.Random();
 		if ( pSpot )
 			spot = pSpot->GetAbsOrigin();
 	}
