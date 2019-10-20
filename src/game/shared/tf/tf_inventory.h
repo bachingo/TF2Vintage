@@ -24,9 +24,16 @@
 
 #define INVENTORY_WEAPONS		62
 #define INVENTORY_WEAPONS_COUNT	63
-#define INVENTORY_COLNUM		63
+#define INVENTORY_COLNUM		1
 #define INVENTORY_ROWNUM		6
 #define INVENTORY_VECTOR_NUM	INVENTORY_COLNUM * INVENTORY_ROWNUM
+
+//Item Selection Def's
+#define INVENTORY_WEAPONS_Selection		62
+#define INVENTORY_WEAPONS_COUNT_Selection	63
+#define INVENTORY_COLNUM_Selection		63
+#define INVENTORY_ROWNUM_Selection		1
+#define INVENTORY_VECTOR_NUM_Selection	INVENTORY_COLNUM_Selection * INVENTORY_ROWNUM_Selection
 
 class CTFInventory : public CAutoGameSystemPerFrame
 {

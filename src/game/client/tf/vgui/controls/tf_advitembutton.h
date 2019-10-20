@@ -26,6 +26,8 @@ public:
 	~CTFAdvItemButton();
 	void Init();
 	void PerformLayout();
+	virtual void Paint();
+	void ApplySchemeSettings(vgui::IScheme *pScheme);
 	void SendAnimation(MouseState flag);
 	void SetItemDefinition(CEconItemDefinition *pItemData);
 	void SetLoadoutSlot( int iSlot, int iPreset );

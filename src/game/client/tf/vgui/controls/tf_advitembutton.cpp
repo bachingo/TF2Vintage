@@ -59,6 +59,23 @@ void CTFAdvItemButton::PerformLayout()
 	BaseClass::PerformLayout();
 };
 
+void CTFAdvItemButton::ApplySchemeSettings(vgui::IScheme *pScheme)
+{
+	BaseClass::ApplySchemeSettings(pScheme);
+
+	LoadControlSettings("resource/UI/main_menu/AdvItemButton.res");
+}
+
+
+void CTFAdvItemButton::Paint()
+{
+	BaseClass::Paint();
+
+	//We Color it the vintage color
+	pButton->SetFgColor(Color(71, 98, 145, 255));
+
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
