@@ -3190,10 +3190,10 @@
 					"attribute_class"	"set_weapon_mode"
 					"value"	"3"
 				}
-				"name"	"mod shovel boosts speed null"
+				"mod shovel boosts speed null"
 				{
 					"attribute_class"	"null"
-					"value"	"0"
+					"value"	"1"
 				}
 				"special taunt"
 				{
