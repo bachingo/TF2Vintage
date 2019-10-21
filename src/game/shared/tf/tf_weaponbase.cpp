@@ -41,6 +41,7 @@ extern ConVar r_drawviewmodel;
 extern ConVar tf_useparticletracers;
 extern ConVar tf2v_critchance;
 extern ConVar tf2v_critchance_rapid;
+extern ConVar tf2v_crit_duration_rapid;
 
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
@@ -1012,7 +1013,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 
 		flTotalCritChance = clamp( flTotalCritChance, 0.01f, 0.99f );
 		// get the fixed amount of time that we start firing crit shots for	
-		float flCritDuration = TF_DAMAGE_CRIT_DURATION_RAPID;
+		float flCritDuration = tf2v_crit_duration_rapid.GetFloat();
 		// calculate the amount of time, on average, that we want to NOT fire crit shots for in order to achive the total crit chance we want
 		float flNonCritDuration = ( flCritDuration / flTotalCritChance ) - flCritDuration;
 		// calculate the chance per second of non-crit fire that we should transition into critting such that on average we achieve the total crit chance we want
@@ -1022,7 +1023,7 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		int iRandom = RandomInt( 0, WEAPON_RANDOM_RANGE-1 );
 		if ( iRandom <= flStartCritChance * WEAPON_RANDOM_RANGE )
 		{
-			m_flCritTime = gpGlobals->curtime + TF_DAMAGE_CRIT_DURATION_RAPID;
+			m_flCritTime = gpGlobals->curtime + tf2v_crit_duration_rapid.GetFloat();
 			return true;
 		}
 		

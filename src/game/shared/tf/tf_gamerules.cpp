@@ -125,6 +125,7 @@ ConVar tf2v_classlimit( "tf2v_classlimit", "1", FCVAR_NOTIFY | FCVAR_REPLICATED,
 ConVar tf2v_critchance( "tf2v_critchance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for regular critical hits.");
 ConVar tf2v_critchance_rapid( "tf2v_critchance_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for rapid fire critical hits.");
 ConVar tf2v_critchance_melee( "tf2v_critchance_melee", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance of melee critical hits.");
+ConVar tf2v_crit_duration_rapid( "tf2v_crit_duration_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Length in seconds for rapid fire critical hit duration.");
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar

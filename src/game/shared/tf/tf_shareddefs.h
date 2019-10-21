@@ -65,7 +65,7 @@ enum
 //-----------------------------------------------------------------------------
 #define TF_DAMAGE_CRIT_CHANCE				0.02f // Originally 0.05f, deprecated by tf2v_critchance
 #define TF_DAMAGE_CRIT_CHANCE_RAPID			0.02f // Originally 0.05f, deprecated by tf2v_critchance_rapid
-#define TF_DAMAGE_CRIT_DURATION_RAPID		2.0f
+#define TF_DAMAGE_CRIT_DURATION_RAPID		2.0f  // Originally 2.0f, deprecated by tf2v_crit_duration_rapid
 #define TF_DAMAGE_CRIT_CHANCE_MELEE			0.10f // Originally 0.15f, deprecated by tf2v_critchance_melee
 
 #define TF_DAMAGE_CRITMOD_MAXTIME			20
