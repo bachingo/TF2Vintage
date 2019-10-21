@@ -142,7 +142,7 @@ void CTFKnife::PrimaryAttack( void )
 	int nDisguiseOnBackstab = 0;
 	CALL_ATTRIB_HOOK_INT( nDisguiseOnBackstab, set_disguise_on_backstab );
 
-	float flDisguiseSpeed = 0;
+	float flDisguiseSpeed = 0.1;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDisguiseSpeed, disguise_speed_penalty );
 	
 	if( nDisguiseOnBackstab == 0 || !m_hBackstabVictim || m_hBackstabVictim->IsAlive() || pPlayer->HasTheFlag() )

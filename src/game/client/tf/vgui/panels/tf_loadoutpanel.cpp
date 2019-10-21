@@ -14,10 +14,10 @@ using namespace vgui;
 
 #define PANEL_WIDE 110
 #define PANEL_TALL 70
-CTFWeaponSetPanel *ptr_weaponbutton;
-CTFWeaponSetPanel *ptr_weaponbutton2;
-CTFWeaponSetPanel *ptr_weaponspace;
-bool b_itemmenu= 0;
+static CTFWeaponSetPanel *s_pWeaponButton;
+static CTFWeaponSetPanel *s_pWeaponButton2;
+static CTFWeaponSetPanel *s_pWeaponSpace;
+static bool s_bItemMenu= 0;
 
 static char* pszClassModels[TF_CLASS_COUNT_ALL] =
 {
@@ -225,9 +225,9 @@ bool CTFLoadoutPanel::Init()
 	m_pClassModelPanel = new CTFAdvModelPanel( this, "classmodelpanel" );
 	m_pGameModelPanel = new CModelPanel( this, "gamemodelpanel" );
 	m_pWeaponSetPanel = new CTFWeaponSetPanel( this, "weaponsetpanel" );
-	ptr_weaponbutton = new CTFWeaponSetPanel(this, "weaponbutton1");
-	ptr_weaponbutton2 = new CTFWeaponSetPanel(this, "weaponbutton2");
-	ptr_weaponspace = new CTFWeaponSetPanel(this, "weaponspace");
+	s_pWeaponButton = new CTFWeaponSetPanel(this, "weaponbutton1");
+	s_pWeaponButton2 = new CTFWeaponSetPanel(this, "weaponbutton2");
+	s_pWeaponSpace = new CTFWeaponSetPanel(this, "weaponspace");
 	g_TFWeaponScriptParser.InitParser( "scripts/tf_weapon_*.txt", true, false );
 
 	for ( int i = 0; i < INVENTORY_VECTOR_NUM; i++ )
@@ -307,14 +307,14 @@ void CTFLoadoutPanel::PerformLayout()
 			//Original Loadout Button Size/Pos
 			//m_pWeaponButton->SetSize( XRES( PANEL_WIDE ), YRES( PANEL_TALL ) );
 			//m_pWeaponButton->SetPos( iPreset * XRES( ( PANEL_WIDE + 10 ) ), iSlot * YRES( ( PANEL_TALL + 5 ) ) );
-			m_pWeaponButton->SetSize(XRES(ptr_weaponbutton->GetWide()), YRES(ptr_weaponbutton->GetTall()));
+			m_pWeaponButton->SetSize(XRES(s_pWeaponButton->GetWide()), YRES(s_pWeaponButton->GetTall()));
 			if (iSlot >= 4)
 			{
-				m_pWeaponButton->SetPos(XRES((ptr_weaponbutton2->GetXPos() + 10)), (iSlot - 5) * YRES((ptr_weaponbutton2->GetYPos())));
+				m_pWeaponButton->SetPos(XRES((s_pWeaponButton2->GetXPos() + 10)), (iSlot - 5) * YRES((s_pWeaponButton2->GetYPos())));
 			}
 			else
 			{
-				m_pWeaponButton->SetPos(iPreset * XRES((ptr_weaponspace->GetWide() + 10)), ((iSlot - 0.01) * YRES((ptr_weaponspace->GetTall() - 12))));
+				m_pWeaponButton->SetPos(iPreset * XRES((s_pWeaponSpace->GetWide() + 10)), ((iSlot - 0.01) * YRES((s_pWeaponSpace->GetTall() - 12))));
 			}
 			m_pWeaponButton->SetBorderVisible( true );
 			m_pWeaponButton->SetBorderByString( "AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed" );
@@ -400,11 +400,11 @@ void CTFLoadoutPanel::OnCommand( const char* command )
 	}
 	else
 	{
-		char buffer[64];
+		/*char buffer[64];
 		const char* szText;
-		char strText[40];
+		char strText[40];*/
 
-		if (!b_itemmenu)
+		if (!s_bItemMenu)
 		{
 			CTFItemPanel *ItemPanel = dynamic_cast<CTFItemPanel*>(GetMenuPanel(ITEMSELCTION_MENU));
 			ItemPanel->SetEnabled(true);
@@ -412,7 +412,7 @@ void CTFLoadoutPanel::OnCommand( const char* command )
 			int iSlot = atoi(sChar + 1);
 			ItemPanel->SetCurrentClassAndSlot(m_iCurrentClass, iSlot);
 
-			b_itemmenu = 1;
+			s_bItemMenu = 1;
 
 			//ItemPanel->SetCurrentClass(m_iCurrentClass);
 			MAINMENU_ROOT->ShowPanel(ITEMSELCTION_MENU);
@@ -424,7 +424,7 @@ void CTFLoadoutPanel::OnCommand( const char* command )
 			CTFItemPanel *ItemPanel = dynamic_cast<CTFItemPanel*>(GetMenuPanel(ITEMSELCTION_MENU));
 
 			ItemPanel->SetEnabled(false);
-			b_itemmenu = 0;
+			s_bItemMenu = 0;
 			MAINMENU_ROOT->HidePanel(ITEMSELCTION_MENU);
 			if (!Q_strncmp(command, "loadout", 7))
 			{
@@ -499,11 +499,11 @@ void CTFLoadoutPanel::ResetRows()
 			//m_pWeaponButton->SetPos( iPreset * XRES( ( PANEL_WIDE + 10 ) ), iSlot * YRES( ( PANEL_TALL + 5 ) ) );
 			if (iSlot >= 4)
 			{
-				m_pWeaponButton->SetPos(XRES((ptr_weaponbutton2->GetXPos() + 5)), (iSlot - 5) * YRES((ptr_weaponbutton2->GetYPos())));
+				m_pWeaponButton->SetPos(XRES((s_pWeaponButton2->GetXPos() + 5)), (iSlot - 5) * YRES((s_pWeaponButton2->GetYPos())));
 			}
 			else
 			{
-				m_pWeaponButton->SetPos(iPreset * XRES((ptr_weaponspace->GetWide() + 10)), (iSlot - 0.01) * YRES((ptr_weaponspace->GetTall() - 12)));
+				m_pWeaponButton->SetPos(iPreset * XRES((s_pWeaponSpace->GetWide() + 10)), (iSlot - 0.01) * YRES((s_pWeaponSpace->GetTall() - 12)));
 			}
 		}
 	}
@@ -712,7 +712,7 @@ void CTFLoadoutPanel::DefaultLayout()
 
 			if (iRow >= 4)
 			{
-				m_pWeaponButton->SetPos(XRES((ptr_weaponbutton2->GetXPos() + 5)), (iSlot - 5) * YRES((ptr_weaponbutton2->GetYPos())));
+				m_pWeaponButton->SetPos(XRES((s_pWeaponButton2->GetXPos() + 5)), (iSlot - 5) * YRES((s_pWeaponButton2->GetYPos())));
 			}
 
 			CEconItemView *pItem = NULL;
