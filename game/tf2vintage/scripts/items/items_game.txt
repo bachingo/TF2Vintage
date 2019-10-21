@@ -4119,6 +4119,38 @@
 				}
 			}
 		}
+		"325"
+		{
+			"name"	"The Boston Basher"
+			"prefab"	"weapon_bat"
+			"item_name"	"#TF_BostonBasher"
+			"item_logname"	"boston_basher"
+			"item_iconname"	"boston_basher"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_boston_basher/c_boston_basher"
+			"model_player"	"models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"bleeding duration"
+				{
+					"attribute_class"	"bleeding_duration"
+					"value" "5"
+				}
+				"hit self on miss"
+				{
+					"attribute_class"	"hit_self_on_miss"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"		"BostonBasher.Impact"
+				"sound_melee_hit_world"	"BostonBasher.HitWorld"
+			}
+		}
 		"327"
 		{
 			"name"	"The Claidheamohmor"
