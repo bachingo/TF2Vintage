@@ -314,8 +314,7 @@ void CTFWeaponBaseMelee::Smack( void )
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
 #endif
-	
-	int iSelfHarm = 0; // Do we hit ourselves on a miss?
+
 	// We hit, setup the smack.
 	if ( DoSwingTrace( trace ) )
 	{
@@ -372,36 +371,6 @@ void CTFWeaponBaseMelee::Smack( void )
 			m_bConnected = true;
 		}
 
-	}
-	else if ( ( CALL_ATTRIB_HOOK_INT( iSelfHarm, hit_self_on_miss ) ) != 0 ) // Hit ourselves, dummy!
-	{
-		// Get the current player.
-		CTFPlayer *pPlayer = GetTFPlayerOwner();
-		if ( !pPlayer )
-			return;
-		
-#ifndef CLIENT_DLL
-		// Do Damage.
-		int iCustomDamage = GetCustomDamageType();
-		float flDamage = GetMeleeDamage(pPlayer, iCustomDamage);
-		int iDmgType = DMG_MELEE | DMG_NEVERGIB | DMG_CLUB;
-		if ( IsCurrentAttackACrit() )
-		{
-			// TODO: Not removing the old critical path yet, but the new custom damage is marking criticals as well for melee now.
-			iDmgType |= DMG_CRITICAL;
-
-		}
-
-		if ( IsCurrentAttackAMiniCrit() )
-		{
-			iDmgType |= DMG_MINICRITICAL;
-		}
-
-		CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
-		ApplyMultiDamage();
-
-		OnEntityHit( pPlayer );
-#endif	
 	}
 
 #if !defined (CLIENT_DLL)
