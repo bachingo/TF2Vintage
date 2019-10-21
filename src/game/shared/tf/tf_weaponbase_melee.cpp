@@ -341,7 +341,7 @@ void CTFWeaponBaseMelee::Smack( void )
 #ifndef CLIENT_DLL
 		// Do Damage.
 		int iCustomDamage = GetCustomDamageType();
-		float flDamage = GetMeleeDamage( trace.m_pEnt, iCustomDamage );
+		float flDamage = GetMeleeDamage(trace.m_pEnt, iCustomDamage);
 		int iDmgType = DMG_MELEE | DMG_NEVERGIB | DMG_CLUB;
 		if ( IsCurrentAttackACrit() )
 		{
@@ -387,6 +387,15 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDama
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
+
+	if (pTarget->IsBaseObject())
+	{
+		CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg_vs_buildings);
+	}
+	else if (pTarget->IsPlayer())
+	{
+		CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg_vs_players);
+	}
 
 	return flDamage;
 }
