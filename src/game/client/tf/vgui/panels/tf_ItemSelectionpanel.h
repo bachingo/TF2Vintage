@@ -1,12 +1,10 @@
-#ifndef TFMAINMENULOADOUTPANEL_H
-#define TFMAINMENULOADOUTPANEL_H
+#ifndef TFMAINMENUITEMSELECTIONPANEL_H
+#define TFMAINMENUITEMSELECTIONPANEL_H
 
-#include "tf_dialogpanelbase.h"
+#include "Panels/tf_dialogpanelbase.h"
 #include "tf_inventory.h"
-#include "panels/tf_ItemSelectionpanel.h"
 
-class CTFAdvModelPanel;
-class CTFWeaponSetPanel;
+class CTFWeaponSelectPanel;
 class CModelPanel;
 class CTFAdvButton;
 class CTFAdvItemButton;
@@ -14,13 +12,13 @@ class CTFAdvItemButton;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CTFLoadoutPanel : public CTFDialogPanelBase
+class CTFItemPanel : public CTFDialogPanelBase
 {
-	DECLARE_CLASS_SIMPLE(CTFLoadoutPanel, CTFDialogPanelBase);
+	DECLARE_CLASS_SIMPLE(CTFItemPanel, CTFDialogPanelBase);
 
 public:
-	CTFLoadoutPanel(vgui::Panel* parent, const char *panelName);
-	virtual ~CTFLoadoutPanel();
+	CTFItemPanel(vgui::Panel* parent, const char *panelName);
+	virtual ~CTFItemPanel();
 	bool Init();
 	void PerformLayout();
 	void ApplySchemeSettings(vgui::IScheme *pScheme);
@@ -33,24 +31,20 @@ public:
 	void GameLayout();
 	void SetWeaponPreset(int iClass, int iSlot, int iPreset);
 	void SetCurrentClass(int iClass);
+	void SetCurrentClassAndSlot(int iClass, int iSlot);
 	void SetCurrentSlot(int iSlot) { m_iCurrentSlot = iSlot; };
-	int  GetAnimSlot( CEconItemDefinition *pItemDef, int iClass );
-	const char *GetWeaponModel( CEconItemDefinition *pItemDef, int iClass );
-	const char *GetExtraWearableModel( CEconItemDefinition *pItemDef );
-	void UpdateModelWeapons( void );
-	void SetModelClass(int iClass);
+	int  GetAnimSlot(CEconItemDefinition *pItemDef, int iClass);
 	void SetSlotAndPreset(int iSlot, int iPreset);
 	void SideRow(int iRow, int iDir);
 	void ResetRows();
 
 private:
-	CTFAdvModelPanel *m_pClassModelPanel;
 	CModelPanel		*m_pGameModelPanel;
-	CTFWeaponSetPanel *m_pWeaponSetPanel;
+	CTFWeaponSelectPanel *m_pWeaponSetPanel;
 	CUtlVector<CTFAdvItemButton*> m_pWeaponIcons;
 	CUtlVector<CTFAdvItemButton*> m_pSlideButtons;
 	CUtlVector<int> m_RawIDPos;
-	MESSAGE_FUNC(UpdateModelPanels, "ControlModified");
+	//MESSAGE_FUNC(UpdateModelPanels, "ControlModified");
 	int	m_iCurrentClass;
 	int	m_iCurrentSlot;
 	int m_iCurrentSkin;
@@ -59,13 +53,13 @@ private:
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CTFWeaponSetPanel : public vgui::EditablePanel
+class CTFWeaponSelectPanel : public vgui::EditablePanel
 {
-	DECLARE_CLASS_SIMPLE(CTFWeaponSetPanel, vgui::EditablePanel);
+	DECLARE_CLASS_SIMPLE(CTFWeaponSelectPanel, vgui::EditablePanel);
 
 public:
-	CTFWeaponSetPanel(vgui::Panel* parent, const char *panelName);
+	CTFWeaponSelectPanel(vgui::Panel* parent, const char *panelName);
 	void OnCommand(const char* command);
 };
 
-#endif // TFMAINMENULOADOUTPANEL_H
+#endif // TFMAINMENUITEMSELECTIONPANEL_H
