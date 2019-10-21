@@ -143,14 +143,15 @@ void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 	//repurpose old crossbow collision code for huntsman collisions
 	int iModel = 0;
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
 	int iWeaponID = pWpn->GetWeaponID();
 	if ( iWeaponID == TF_WEAPON_COMPOUND_BOW )
 	iModel = 0;
 	else if ( iWeaponID == TF_WEAPON_CROSSBOW )
-	iModel = 1;
+		iModel = 1;
 	else
-	iModel = 2;
+		iModel = 2;
 	model_t *pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[iModel] );
 
 	QAngle vAngles;
