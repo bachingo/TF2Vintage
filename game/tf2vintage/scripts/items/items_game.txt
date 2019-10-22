@@ -10036,6 +10036,17 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
+		"10005"
+		{
+			"name"	"health regen passive"
+			"attribute_class"	"add_health_regen_legacy"
+			"description_string"	"#Attrib_HealthRegen"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_wearer"
+			"stored_as_integer"	"0"
+		}
 	}
 	"attribute_controlled_attached_particles"
 	{
