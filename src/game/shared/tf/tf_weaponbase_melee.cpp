@@ -36,7 +36,7 @@ LINK_ENTITY_TO_CLASS( tf_weaponbase_melee, CTFWeaponBaseMelee );
 // Server specific.
 #if !defined( CLIENT_DLL ) 
 BEGIN_DATADESC( CTFWeaponBaseMelee )
-DEFINE_THINKFUNC( Smack )
+	DEFINE_THINKFUNC( Smack )
 END_DATADESC()
 #endif
 
@@ -242,6 +242,23 @@ void CTFWeaponBaseMelee::SendPlayerAnimEvent( CTFPlayer *pPlayer )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
+//-----------------------------------------------------------------------------
+int CTFWeaponBaseMelee::GetSwingRange( void ) const
+{
+	CBasePlayer *pPlayer = GetPlayerOwner();
+	if ( pPlayer == nullptr )
+		return 48;
+
+	float flSwingRangeMult = 1.0f;
+	if ( pPlayer->GetModelScale() > 1.0f )
+		flSwingRangeMult *= pPlayer->GetModelScale();
+
+	CALL_ATTRIB_HOOK_FLOAT( flSwingRangeMult, melee_range_multiplier );
+	return 48 * flSwingRangeMult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
 // Input  :  - 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::ItemPostFrame()
@@ -262,6 +279,9 @@ bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )
 	static Vector vecSwingMins( -18, -18, -18 );
 	static Vector vecSwingMaxs( 18, 18, 18 );
 
+	float flBoundsMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flBoundsMult, melee_bounds_multiplier );
+
 	// Get the current player.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )
@@ -277,7 +297,7 @@ bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )
 	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &trace );
 	if ( trace.fraction >= 1.0 )
 	{
-		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &trace );
+		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins * flBoundsMult, vecSwingMaxs * flBoundsMult, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &trace );
 		if ( trace.fraction < 1.0 )
 		{
 			// Calculate the point of intersection of the line (or hull) and the object we hit
@@ -306,14 +326,17 @@ void CTFWeaponBaseMelee::Smack( void )
 {
 	trace_t trace;
 
-	CBasePlayer *pPlayer = GetPlayerOwner();
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )
 		return;
 
-#if !defined (CLIENT_DLL)
+#if !defined( CLIENT_DLL )
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
 #endif
+	
+	int iSelfHarm = 0; // Do we hit ourselves on a miss?
+	CALL_ATTRIB_HOOK_INT( iSelfHarm, hit_self_on_miss );
 
 	// We hit, setup the smack.
 	if ( DoSwingTrace( trace ) )
@@ -328,53 +351,69 @@ void CTFWeaponBaseMelee::Smack( void )
 			WeaponSound( MELEE_HIT_WORLD );
 		}
 
-		// Get the current player.
-		CTFPlayer *pPlayer = GetTFPlayerOwner();
-		if ( !pPlayer )
-			return;
+		DoMeleeDamage( trace.m_pEnt, trace );
 
-		Vector vecForward; 
-		AngleVectors( pPlayer->EyeAngles(), &vecForward );
-		Vector vecSwingStart = pPlayer->Weapon_ShootPosition();
-		Vector vecSwingEnd = vecSwingStart + vecForward * GetSwingRange();
-
-#ifndef CLIENT_DLL
-		// Do Damage.
-		int iCustomDamage = GetCustomDamageType();
-		float flDamage = GetMeleeDamage(trace.m_pEnt, iCustomDamage);
-		int iDmgType = DMG_MELEE | DMG_NEVERGIB | DMG_CLUB;
-		if ( IsCurrentAttackACrit() )
-		{
-			// TODO: Not removing the old critical path yet, but the new custom damage is marking criticals as well for melee now.
-			iDmgType |= DMG_CRITICAL;
-
-		}
-
-		if ( IsCurrentAttackAMiniCrit() )
-		{
-			iDmgType |= DMG_MINICRITICAL;
-		}
-
-		CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
-		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * GetForceScale() );
-		trace.m_pEnt->DispatchTraceAttack( info, vecForward, &trace ); 
-		ApplyMultiDamage();
-
-		OnEntityHit( trace.m_pEnt );
-#endif
 		// Don't impact trace friendly players or objects
 		if ( trace.m_pEnt && trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() )
 		{
-#ifdef CLIENT_DLL
+#if defined( CLIENT_DLL )
 			UTIL_ImpactTrace( &trace, DMG_CLUB );
 #endif
 			m_bConnected = true;
 		}
 
 	}
+	
+	if ( iSelfHarm != 0 ) // Hit ourselves, dummy!
+	{
+		// Do Damage.
+		DoMeleeDamage( pPlayer, trace );
+	}
 
-#if !defined (CLIENT_DLL)
+#if !defined( CLIENT_DLL )
 	lagcompensation->FinishLagCompensation( pPlayer );
+#endif
+}
+
+void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+	Vector vecForward; 
+	AngleVectors( pPlayer->EyeAngles(), &vecForward );
+	Vector vecSwingStart = pPlayer->Weapon_ShootPosition();
+	Vector vecSwingEnd = vecSwingStart + vecForward * GetSwingRange();
+
+#if !defined( CLIENT_DLL )
+	// Do Damage.
+	int iCustomDamage = GetCustomDamageType();
+	float flDamage = GetMeleeDamage(pTarget, iCustomDamage);
+	int iDmgType = DMG_MELEE | DMG_NEVERGIB | DMG_CLUB;
+	if ( IsCurrentAttackACrit() )
+	{
+		// TODO: Not removing the old critical path yet, but the new custom damage is marking criticals as well for melee now.
+		iDmgType |= DMG_CRITICAL;
+
+	}
+
+	if ( IsCurrentAttackAMiniCrit() )
+	{
+		iDmgType |= DMG_MINICRITICAL;
+	}
+
+	CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
+
+	if ( pTarget == pPlayer )
+		info.SetDamageForce( vec3_origin );
+	else
+		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * GetForceScale() );
+
+	pTarget->DispatchTraceAttack( info, vecForward, &trace ); 
+	ApplyMultiDamage();
+
+	OnEntityHit( pTarget );
 #endif
 }
 
