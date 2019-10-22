@@ -56,7 +56,7 @@ int C_TFSpyMask::GetSkin( void )
 	// If the target is being ubered, show the uber skin instead.
 	if (pOwner->m_Shared.InCond(TF_COND_INVULNERABLE))
 	{
-		int iVisibleTeam = GetTeamNumber();
+		int iVisibleTeam = pOwner->GetTeamNumber();
 		int nSkin;
 
 		// if this player is disguised and on the other team, use disguise team
