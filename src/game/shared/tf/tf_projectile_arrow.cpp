@@ -96,8 +96,8 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		// Set flame arrow.
 		pArrow->SetFlameArrow( bFlame );
 
-		// Set Skin, if we're going to be a bolt.
-		if (iType == 1)
+		// Set Skin, if we're not an arrow.
+		if (iType != 0 )
 		{
 			switch (pOwner->GetTeamNumber())
 			{
@@ -544,8 +544,10 @@ void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 	IncremenentDeflected();
 	SetOwnerEntity( pDeflectedBy );
 	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	if (m_iType == 1)
+	if (m_iType != 0)
+	{
 		m_nSkin = ( pDeflectedBy->GetTeamNumber() - 2 );
+	}
 	
 	SetScorer( pDeflectedBy );
 
