@@ -10039,7 +10039,7 @@
 		"10005"
 		{
 			"name"	"health regen passive"
-			"attribute_class"	"add_health_regen_legacy"
+			"attribute_class"	"add_health_regen_passive"
 			"description_string"	"#Attrib_HealthRegen"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
