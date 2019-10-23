@@ -1305,6 +1305,7 @@ bool IsObjectADefensiveBuilding( int iObjectType );
 class CHudTexture;
 
 #define OBJECT_MAX_GIB_MODELS	9
+#define TEMP_OBJECT_LIFETIME	10.0f
 
 class CObjectInfo
 {
