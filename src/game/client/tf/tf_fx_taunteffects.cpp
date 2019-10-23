@@ -33,7 +33,7 @@ void TF_ThrowCigaretteCallback( const CEffectData &data )
 
 	vecVelocity.z += 100;
 
-	float flLifeTime = 10.0f;
+	float flLifeTime = TEMP_OBJECT_LIFETIME;
 
 	const char *pszCigaretteModel = "models/weapons/shells/shell_cigarrette.mdl";	// sic
 

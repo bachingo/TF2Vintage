@@ -20,15 +20,7 @@
 //
 // Weapon Sword tables.
 //
-IMPLEMENT_NETWORKCLASS_ALIASED( TFSword, DT_TFSword )
-BEGIN_NETWORK_TABLE( CTFSword, DT_TFSword )
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA( CTFSword )
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS( tf_weapon_sword, CTFSword );
-PRECACHE_WEAPON_REGISTER( tf_weapon_sword );
+CREATE_SIMPLE_WEAPON_TABLE( TFSword, tf_weapon_sword )
 
 //=============================================================================
 //
@@ -55,7 +47,7 @@ CTFSword::~CTFSword()
 bool CTFSword::Deploy( void )
 {
 	bool orgResult = BaseClass::Deploy();
-	if (CanDecapitate() && orgResult)
+	if ( CanDecapitate() && orgResult )
 	{
 #ifdef GAME_DLL
 		SetupGameEventListeners();
@@ -80,9 +72,12 @@ bool CTFSword::Deploy( void )
 int CTFSword::GetSwingRange( void ) const
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if (!pOwner)
+	if ( pOwner == nullptr )
 		return 72;
-	return pOwner->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) ? 128 : 72;
+
+	int iBaseRange = BaseClass::GetSwingRange();
+
+	return pOwner->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) ? iBaseRange + 96 : iBaseRange + 24;
 }
 
 //-----------------------------------------------------------------------------
@@ -91,10 +86,10 @@ int CTFSword::GetSwingRange( void ) const
 int CTFSword::GetSwordHealthMod( void )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if (!pOwner)
+	if ( pOwner == nullptr )
 		return 0;
 
-	if (CanDecapitate())
+	if ( CanDecapitate() )
 		return Min( pOwner->m_Shared.GetDecapitationCount(), 4 ) * 15;
 
 	return 0;
@@ -106,10 +101,10 @@ int CTFSword::GetSwordHealthMod( void )
 float CTFSword::GetSwordSpeedMod( void )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if (!pOwner)
+	if ( pOwner == nullptr )
 		return 1.0f;
 
-	if (CanDecapitate())
+	if ( CanDecapitate() )
 		return ( Min( pOwner->m_Shared.GetDecapitationCount(), 4 ) * 0.08 ) + 1.0f;
 
 	return 1.0f;
@@ -121,11 +116,11 @@ float CTFSword::GetSwordSpeedMod( void )
 void CTFSword::OnDecapitation( CTFPlayer *pVictim )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if (!pOwner)
+	if ( pOwner == nullptr )
 		return;
 
 	int iHeadCount = pOwner->m_Shared.GetDecapitationCount() + 1;
-	if (pVictim)
+	if ( pVictim )
 		iHeadCount += pVictim->m_Shared.GetDecapitationCount();
 
 	pOwner->m_Shared.SetDecapitationCount( iHeadCount );
@@ -133,10 +128,10 @@ void CTFSword::OnDecapitation( CTFPlayer *pVictim )
 	pOwner->TeamFortress_SetSpeed();
 
 #ifdef GAME_DLL
-	if (pOwner->m_Shared.GetMaxBuffedHealth() > pOwner->GetHealth())
+	if ( pOwner->m_Shared.GetMaxBuffedHealth() > pOwner->GetHealth() )
 		pOwner->TakeHealth( 15.0f, DMG_IGNORE_MAXHEALTH );
 
-	if (!pOwner->m_Shared.InCond( TF_COND_DEMO_BUFF ))
+	if ( !pOwner->m_Shared.InCond( TF_COND_DEMO_BUFF ) )
 		pOwner->m_Shared.AddCond( TF_COND_DEMO_BUFF );
 #endif
 }

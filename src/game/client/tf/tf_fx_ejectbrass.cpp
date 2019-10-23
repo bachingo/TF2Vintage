@@ -35,9 +35,9 @@ void TF_EjectBrassCallback( const CEffectData &data )
 	Vector vecVelocity = random->RandomFloat( 130, 180 ) * vForward +
 						 random->RandomFloat( -30, 30 ) * vRight +
 						 random->RandomFloat( -30, 30 ) * vUp;
-
-	float flLifeTime = 10.0f;
-
+		
+		
+	float flLifeTime = TEMP_OBJECT_LIFETIME;
 	model_t *pModel = (model_t *)engine->LoadModel( pWeaponInfo->m_szBrassModel );
 	if ( !pModel )
 		return;

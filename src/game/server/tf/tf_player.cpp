@@ -592,10 +592,31 @@ void CTFPlayer::TFPlayerThink()
 //-----------------------------------------------------------------------------
 void CTFPlayer::MedicRegenThink( void )
 {
-	// Health drain attribute
+	// Health drain/regen attribute.
+	// If negative, drains health per second. If positive, heals based on the last time damage was taken.
 	int iHealthDrain = 0;
+	bool bHasRegen = 0;
 	CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
+	
+	// Health drain/regen attribute, based on the older passive healing per second model.
+	int iHealthRegenLegacy = 0;
+	CALL_ATTRIB_HOOK_INT( iHealthRegenLegacy, add_health_regen_passive );
+	
+	
+	// If we heal, use an algorithm similar to medic's to determine healing.
+	if ( iHealthDrain != 0 && iHealthDrain > 0 )
+	{
+		if ( IsAlive() )
+		{
+			float flTimeSinceDamageGeneric = gpGlobals->curtime - GetLastDamageTime();
+			// We use the same time table as medic, but our range is 1HP to add_health_regen_medic instead.
+			float flScaleGeneric = RemapValClamped( flTimeSinceDamageGeneric, 5, 10, 1.0, iHealthDrain );
 
+			iHealthDrain = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleGeneric );
+			bHasRegen = 1;
+		}
+	}
+	
 	if ( IsPlayerClass( TF_CLASS_MEDIC ) )
 	{
 		if ( IsAlive() )
@@ -605,15 +626,14 @@ void CTFPlayer::MedicRegenThink( void )
 			float flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 3.0, 6.0 );
 
 			int iHealAmount = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
-			TakeHealth( iHealAmount + iHealthDrain, DMG_GENERIC );
+			TakeHealth( iHealAmount + iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
 		}
-		SetContextThink( &CTFPlayer::MedicRegenThink, gpGlobals->curtime + TF_MEDIC_REGEN_TIME, "MedicRegenThink" );
 	}
 	else
 	{
 		if ( IsAlive() )
 		{
-			int iHealthRestored = TakeHealth( iHealthDrain, DMG_GENERIC );
+			int iHealthRestored = TakeHealth( iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
 			if ( iHealthRestored )
 			{
 				IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
@@ -628,6 +648,9 @@ void CTFPlayer::MedicRegenThink( void )
 			}
 		}
 	}
+
+	if ( IsPlayerClass( TF_CLASS_MEDIC ) || bHasRegen == 1 )
+		SetContextThink( &CTFPlayer::MedicRegenThink, gpGlobals->curtime + TF_MEDIC_REGEN_TIME, "MedicRegenThink" );
 }
 
 CTFPlayer::~CTFPlayer()
