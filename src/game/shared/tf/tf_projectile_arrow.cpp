@@ -7,6 +7,7 @@
 #include "cbase.h"
 #include "tf_projectile_arrow.h"
 #include "effect_dispatch_data.h"
+#include "tf_gamerules.h"
 
 #ifdef GAME_DLL
 #include "SpriteTrail.h"
@@ -21,12 +22,16 @@
 ConVar tf_debug_arrows( "tf_debug_arrows", "0", FCVAR_CHEAT );
 #endif
 
+extern ConVar tf_christmas;
+
+
 const char *g_pszArrowModels[] =
 {
 	"models/weapons/w_models/w_arrow.mdl",
 	"models/weapons/w_models/w_syringe_proj.mdl",
 	"models/weapons/w_models/w_repair_claw.mdl",
-	//"models/weapons/w_models/w_arrow_xmas.mdl",
+	"models/weapons/w_models/w_arrow_xmas.mdl",
+	"models/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow_xmas_proj.mdl",
 };
 
 const char *g_pszArrowHits[] =
@@ -34,6 +39,8 @@ const char *g_pszArrowHits[] =
 	"arrow_impact"
 	"bolt_impact"
 	"claw_impact"
+	"arrow_impact"
+	"bolt_impact"
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
@@ -93,21 +100,51 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		pArrow->SetLauncher( pWeapon );
 		
 		// Compensate iTypes from shareddefs to a more usable range for our use.
-		if (iType == 8) // Arrow (8)
-			iType = 0;
-		else if (iType == 11) // Crossbow Bolt (11)
-			iType = 1;
-		else // Repair Claw (18)
-			iType = 2;
+		if ( !tf_christmas.GetBool() )
+		{
+			switch (iType)
+			{
+			case TF_PROJECTILE_ARROW:
+				iType = 0;
+			case TF_PROJECTILE_HEALING_BOLT:
+				iType = 1;
+			case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
+				iType = 2;
+			case TF_PROJECTILE_FESTITIVE_ARROW:
+				iType = 0;
+			case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
+				iType = 1;
+			}
+		}
+		else // If it's the holidays, use festive projectiles.
+		{
+			switch (iType)
+			{
+			case TF_PROJECTILE_ARROW:
+				iType = 3;
+			case TF_PROJECTILE_HEALING_BOLT:
+				iType = 4;
+			case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
+				iType = 2;
+			case TF_PROJECTILE_FESTITIVE_ARROW:
+				iType = 3;
+			case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
+				iType = 4;
+			}
+		}	
 
 		// Set arrow type.
 		pArrow->SetType( iType );
 
+		// If we're not a Huntsman arrow, we never light on fire.
+		if (iType != 0 && iType != 3 )
+		bFlame = 0;
+	
 		// Set flame arrow.
 		pArrow->SetFlameArrow( bFlame );
 
 		// Set Skin, if we're not an arrow.
-		if (iType != 0 )
+		if (iType != 0 || iType != 3 )
 		{
 			switch (pOwner->GetTeamNumber())
 			{
@@ -129,7 +166,7 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		Vector vecForward, vecRight, vecUp;
 		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
 		
-		if ( iType != 0 )
+		if (iType != 0 ||iType != 3 )
 		flSpeed = 2400.00f; // If we're a crossbow bolt or claw, set our speed instead.
 
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flSpeed, mult_projectile_speed );
@@ -187,19 +224,8 @@ void CTFProjectile_Arrow::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::Spawn( void )
 {
-	switch ( m_iType )
-	{
-	case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
-		SetModel( g_pszArrowModels[2] );
-		break;
-	case TF_PROJECTILE_HEALING_BOLT:
-	case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
-		SetModel( g_pszArrowModels[1] );
-		break;
-	default:
-		SetModel( g_pszArrowModels[0] );
-		break;
-	}
+	
+	SetModel( g_pszArrowModels[m_iType]);
 
 	BaseClass::Spawn();
 
@@ -514,7 +540,7 @@ int	CTFProjectile_Arrow::GetDamageType()
 		}
 	}
 
-	if ( m_iType != 0 )
+	if (m_iType != 0 && m_iType != 3)
 	{
 		iDmgType |= DMG_USEDISTANCEMOD;
 	}
@@ -557,7 +583,7 @@ void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 	IncremenentDeflected();
 	SetOwnerEntity( pDeflectedBy );
 	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	if (m_iType != 0)
+	if (m_iType != 0 && m_iType != 3)
 	{
 		m_nSkin = ( pDeflectedBy->GetTeamNumber() - 2 );
 	}
@@ -578,7 +604,8 @@ void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 //-----------------------------------------------------------------------------
 bool CTFProjectile_Arrow::CanHeadshot( void )
 {
-	return ( m_iType == TF_PROJECTILE_ARROW || m_iType == TF_PROJECTILE_FESTITIVE_ARROW );
+	//return ( m_iType == TF_PROJECTILE_ARROW || m_iType == TF_PROJECTILE_FESTITIVE_ARROW );
+	return ( m_iType == 0 || m_iType == 3 );
 }
 
 //-----------------------------------------------------------------------------
@@ -591,12 +618,12 @@ const char *CTFProjectile_Arrow::GetTrailParticleName( void )
 
 	switch( m_iType )
 	{
-	case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
+	case 3:
 		pszFormat = "effects/repair_claw_trail_%s.vmt";
 		bLongTeamName = true;
 		break;
-	case TF_PROJECTILE_HEALING_BOLT:
-	case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
+	case 1:
+	case 4:
 		pszFormat = "effects/healingtrail_%s.vmt";
 		break;
 	default:
@@ -783,7 +810,7 @@ void C_TFProjectile_Arrow::ClientThink( void )
 //-----------------------------------------------------------------------------
 void C_TFProjectile_Arrow::Light( void )
 {
-	if ( ( IsDormant() || !m_bFlame ) || ( m_iType != 0 ) )
+	if ( ( ( IsDormant() || !m_bFlame ) ) && ( ( m_iType != 0 ) && ( m_iType != 3 ) ) )
 		return;
 
 	ParticleProp()->Create( "flying_flaming_arrow", PATTACH_ABSORIGIN_FOLLOW );

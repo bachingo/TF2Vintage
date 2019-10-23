@@ -36,7 +36,8 @@ const char *g_pszArrowModelClient[] =
 	"models/weapons/w_models/w_arrow.mdl",
 	"models/weapons/w_models/w_syringe_proj.mdl",
 	"models/weapons/w_models/w_repair_claw.mdl",
-	//"models/weapons/w_models/w_arrow_xmas.mdl",
+	"models/weapons/w_models/w_arrow_xmas.mdl",
+	"models/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow_xmas_proj.mdl",
 };
 
 // memdbgon must be the last include file in a .cpp file!!!
