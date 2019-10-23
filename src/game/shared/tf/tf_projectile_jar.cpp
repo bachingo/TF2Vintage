@@ -12,6 +12,7 @@
 
 
 #define TF_WEAPON_JAR_MODEL		"models/weapons/c_models/urinejar.mdl"
+#define TF_WEAPON_FESTIVE_URINE_MODEL "models/weapons/c_models/c_xms_urinejar.mdl"
 #define TF_WEAPON_JARMILK_MODEL "models/weapons/c_models/c_madmilk/c_madmilk.mdl"
 #define TF_WEAPON_JAR_LIFETIME  2.0f
 
@@ -20,8 +21,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Jar, DT_TFProjectile_Jar )
 BEGIN_NETWORK_TABLE( CTFProjectile_Jar, DT_TFProjectile_Jar )
 #ifdef CLIENT_DLL
 	RecvPropBool( RECVINFO( m_bCritical ) ),
+	RecvPropInt( RECVINFO( m_nSkin ) ),
 #else
 	SendPropBool( SENDINFO( m_bCritical ) ),
+	SendPropInt( SENDINFO( m_nSkin ), 0, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -31,6 +34,7 @@ END_DATADESC()
 #endif
 
 ConVar tf_jar_show_radius( "tf_jar_show_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT /*| FCVAR_DEVELOPMENTONLY*/, "Render jar radius." );
+extern ConVar tf_christmas;
 
 LINK_ENTITY_TO_CLASS( tf_projectile_jar, CTFProjectile_Jar );
 PRECACHE_REGISTER( tf_projectile_jar );
@@ -64,6 +68,19 @@ CTFProjectile_Jar *CTFProjectile_Jar::Create( CBaseEntity *pWeapon, const Vector
 		pJar->InitGrenade( vecVelocity, angVelocity, pOwner, weaponInfo );
 
 		pJar->ApplyLocalAngularVelocityImpulse( angVelocity );
+		
+		if ( tf_christmas.GetBool() )
+		{
+			switch (pOwner->GetTeamNumber())
+			{
+			case TF_TEAM_RED:
+				pJar->m_nSkin = 0;
+				break;
+			case TF_TEAM_BLUE:
+				pJar->m_nSkin = 1;
+				break;
+			}
+		}
 	}
 
 	return pJar;
@@ -89,17 +106,22 @@ void CTFProjectile_Jar::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Jar::Spawn( void )
 {
-	switch ( GetEffectCondition() )
+	if (!tf_christmas.GetBool() && ( GetEffectCondition() != TF_COND_URINE ) )
 	{
-	case TF_COND_URINE:
-		SetModel( TF_WEAPON_JAR_MODEL );
-		break;
-	case TF_COND_MAD_MILK:
-		SetModel( TF_WEAPON_JARMILK_MODEL );
-		break;
-	default:
-		break;
+		switch ( GetEffectCondition() )
+		{
+		case TF_COND_URINE:
+			SetModel( TF_WEAPON_JAR_MODEL );
+			break;
+		case TF_COND_MAD_MILK:
+			SetModel( TF_WEAPON_JARMILK_MODEL );
+			break;
+		default:
+			break;
+		}
 	}
+	else
+		SetModel( TF_WEAPON_FESTIVE_URINE_MODEL );
 
 	SetDetonateTimerLength( TF_WEAPON_JAR_LIFETIME );
 
