@@ -66,24 +66,6 @@ public:
 			iType = TF_WPN_TYPE_MISC;
 
 		sTemp.m_iWeaponType = iType >= 0 ? iType : TF_WPN_TYPE_PRIMARY;
-
-		for (KeyValues *pData = pKeyValuesData->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey())
-		{
-			if (!Q_stricmp(pData->GetName(), "TextureData"))
-			{
-				for (KeyValues *pTextureData = pData->GetFirstSubKey(); pTextureData != NULL; pTextureData = pTextureData->GetNextKey())
-				{
-					if (!Q_stricmp(pTextureData->GetName(), "weapon"))
-					{
-						Q_strncpy(sTemp.iconInactive, pTextureData->GetString("file", ""), sizeof(sTemp.iconInactive));
-					}
-					if (!Q_stricmp(pTextureData->GetName(), "weapon_s"))
-					{
-						Q_strncpy(sTemp.iconActive, pTextureData->GetString("file", ""), sizeof(sTemp.iconActive));
-					}
-				}
-			}
-		}
 		m_WeaponInfoDatabase.Insert(szFileWithoutEXT, sTemp);
 	};
 
@@ -100,7 +82,7 @@ CTFWeaponSelectionScriptParser g_TFWeaponScriptParser;
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFItemPanel::CTFItemPanel(vgui::Panel* parent, const char *panelName) : CTFDialogPanelBase(parent, panelName)
+CTFItemPanel::CTFItemPanel(vgui::Panel* parent, const char *panelName) : CTFMenuPanelBase(parent, panelName)
 {
 	Init();
 }
@@ -322,7 +304,6 @@ void CTFItemPanel::ResetRows()
 void CTFItemPanel::Show()
 {
 	BaseClass::Show();
-	MAINMENU_ROOT->ShowPanel(SHADEBACKGROUND_MENU);
 
 	
 	DefaultLayout();
@@ -331,7 +312,6 @@ void CTFItemPanel::Show()
 void CTFItemPanel::Hide()
 {
 	BaseClass::Hide();
-	MAINMENU_ROOT->HidePanel(SHADEBACKGROUND_MENU);
 };
 
 

@@ -1,7 +1,7 @@
 #ifndef TFMAINMENULOADOUTPANEL_H
 #define TFMAINMENULOADOUTPANEL_H
 
-#include "tf_dialogpanelbase.h"
+#include "tf_menupanelbase.h"
 #include "tf_inventory.h"
 #include "panels/tf_ItemSelectionpanel.h"
 
@@ -14,9 +14,9 @@ class CTFAdvItemButton;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CTFLoadoutPanel : public CTFDialogPanelBase
+class CTFLoadoutPanel : public CTFMenuPanelBase
 {
-	DECLARE_CLASS_SIMPLE(CTFLoadoutPanel, CTFDialogPanelBase);
+	DECLARE_CLASS_SIMPLE(CTFLoadoutPanel, CTFMenuPanelBase);
 
 public:
 	CTFLoadoutPanel(vgui::Panel* parent, const char *panelName);

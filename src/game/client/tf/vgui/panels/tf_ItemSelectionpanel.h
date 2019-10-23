@@ -1,7 +1,7 @@
 #ifndef TFMAINMENUITEMSELECTIONPANEL_H
 #define TFMAINMENUITEMSELECTIONPANEL_H
 
-#include "Panels/tf_dialogpanelbase.h"
+#include "tf_menupanelbase.h"
 #include "tf_inventory.h"
 
 class CTFWeaponSelectPanel;
@@ -102,9 +102,9 @@ struct _WeaponData
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CTFItemPanel : public CTFDialogPanelBase
+class CTFItemPanel : public CTFMenuPanelBase
 {
-	DECLARE_CLASS_SIMPLE(CTFItemPanel, CTFDialogPanelBase);
+	DECLARE_CLASS_SIMPLE(CTFItemPanel, CTFMenuPanelBase);
 
 public:
 	CTFItemPanel(vgui::Panel* parent, const char *panelName);

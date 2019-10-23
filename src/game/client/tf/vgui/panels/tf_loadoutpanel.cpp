@@ -7,6 +7,7 @@
 #include <vgui/ILocalize.h>
 #include "script_parser.h"
 #include "econ_item_view.h"
+#include "tier0/icommandline.h"
 
 using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
@@ -79,24 +80,6 @@ public:
 			iType = TF_WPN_TYPE_MISC;
 
 		sTemp.m_iWeaponType = iType >= 0 ? iType : TF_WPN_TYPE_PRIMARY;
-
-		for ( KeyValues *pData = pKeyValuesData->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey() )
-		{
-			if ( !Q_stricmp( pData->GetName(), "TextureData" ) )
-			{
-				for ( KeyValues *pTextureData = pData->GetFirstSubKey(); pTextureData != NULL; pTextureData = pTextureData->GetNextKey() )
-				{
-					if ( !Q_stricmp( pTextureData->GetName(), "weapon" ) )
-					{
-						Q_strncpy( sTemp.iconInactive, pTextureData->GetString( "file", "" ), sizeof( sTemp.iconInactive ) );
-					}
-					if ( !Q_stricmp( pTextureData->GetName(), "weapon_s" ) )
-					{
-						Q_strncpy( sTemp.iconActive, pTextureData->GetString( "file", "" ), sizeof( sTemp.iconActive ) );
-					}
-				}
-			}
-		}
 		m_WeaponInfoDatabase.Insert( szFileWithoutEXT, sTemp );
 	};
 
@@ -113,7 +96,7 @@ CTFWeaponScriptParser g_TFWeaponScriptParser;
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFLoadoutPanel::CTFLoadoutPanel( vgui::Panel* parent, const char *panelName ) : CTFDialogPanelBase( parent, panelName )
+CTFLoadoutPanel::CTFLoadoutPanel(vgui::Panel* parent, const char *panelName) : CTFMenuPanelBase(parent, panelName)
 {
 	Init();
 }
@@ -463,14 +446,14 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 			const char *pszModel = GetWeaponModel( pItemDef, m_iCurrentClass );
 			if ( pszModel[0] != '\0' )
 			{
-				m_pClassModelPanel->SetMergeMDL( pszModel, NULL, 0 );
+				m_pClassModelPanel->SetMergeMDL(pszModel, NULL, m_iCurrentSkin);
 			}
 		}
 
 		const char *pszExtraWearableModel = GetExtraWearableModel( pItem->GetStaticData() );
 		if ( pszExtraWearableModel[0] != '\0' )
 		{
-			m_pClassModelPanel->SetMergeMDL( pszExtraWearableModel, NULL, 0 );
+			m_pClassModelPanel->SetMergeMDL( pszExtraWearableModel, NULL, m_iCurrentSkin );
 		}
 	}
 
@@ -483,7 +466,8 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 void CTFLoadoutPanel::Show()
 {
 	BaseClass::Show();
-	MAINMENU_ROOT->ShowPanel( SHADEBACKGROUND_MENU );
+	CTFLoadoutPanel *m_bShadedBG = this;
+	vgui::GetAnimationController()->RunAnimationCommand(m_bShadedBG, "Alpha", 255, 0.0f, 0.15f, vgui::AnimationController::INTERPOLATOR_LINEAR);
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
@@ -498,7 +482,12 @@ void CTFLoadoutPanel::Show()
 void CTFLoadoutPanel::Hide()
 {
 	BaseClass::Hide();
-	MAINMENU_ROOT->HidePanel( SHADEBACKGROUND_MENU );
+	GetMenuPanel(CURRENT_MENU)->Show();
+	CTFLoadoutPanel *m_bShadedBG = this;
+	vgui::GetAnimationController()->RunAnimationCommand(m_bShadedBG, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR);
+	if (InGame() && !bFromPause)
+		engine->ExecuteClientCmd("escape");
+	//MAINMENU_ROOT->ShowPanel(PAUSE_MENU);
 };
 
 
@@ -514,7 +503,7 @@ void CTFLoadoutPanel::OnThink()
 
 void CTFLoadoutPanel::SetModelClass( int iClass )
 {
-	m_pClassModelPanel->SetModelName( strdup( pszClassModels[iClass] ), 0 );
+	m_pClassModelPanel->SetModelName( strdup( pszClassModels[iClass] ), m_iCurrentSkin );
 }
 
 void CTFLoadoutPanel::UpdateModelPanels()
@@ -532,9 +521,17 @@ void CTFLoadoutPanel::UpdateModelPanels()
 void CTFLoadoutPanel::DefaultLayout()
 {
 	BaseClass::DefaultLayout();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if (pPlayer && pPlayer->m_iOldTeam == TF_TEAM_BLUE)
+	{
+		m_iCurrentSkin = TF_TEAM_BLUE - 2;
+	}
+	else
+	{
+		m_iCurrentSkin = 0;
+	}
 
-	/*
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	/*C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if (pLocalPlayer && pLocalPlayer->GetTeamNumber() >= TF_TEAM_RED)
 	{
 		m_iCurrentSkin = pLocalPlayer->GetTeamNumber() - 2;
@@ -542,8 +539,7 @@ void CTFLoadoutPanel::DefaultLayout()
 	else
 	{
 		m_iCurrentSkin = 0;
-	}
-	*/
+	}*/
 
 	UpdateModelPanels();
 

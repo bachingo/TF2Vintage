@@ -89,6 +89,7 @@ void CTFPauseMenuPanel::OnCommand(const char* command)
 	}
 	else if (!Q_strcmp(command, "newloadout"))
 	{
+		bFromPause = true;
 		MAINMENU_ROOT->ShowPanel(LOADOUT_MENU);
 	}
 	else if (!Q_strcmp(command, "newstats"))
@@ -114,13 +115,13 @@ void CTFPauseMenuPanel::OnThink()
 void CTFPauseMenuPanel::Show()
 {
 	BaseClass::Show();
-	vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 255, 0.0f, 0.5f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
+	//vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 255, 0.0f, 0.5f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
 };
 
 void CTFPauseMenuPanel::Hide()
 {
 	BaseClass::Hide();
-	vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR);
+	//vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR);
 };
 
 
