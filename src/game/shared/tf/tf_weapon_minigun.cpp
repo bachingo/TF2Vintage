@@ -535,19 +535,17 @@ void CTFMinigun::UseRealMinigunBrassEject( void )
 		if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 			return;
 		
-		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-		if ( !pPlayer )
-			return;
 		
-		Vector vecOrigin;
-		QAngle angAngles;
+		C_BaseEntity *pEffectOwner = GetWeaponForEffect();
+		if ( !pEffectOwner )
+		return;
+		
+		int iEjectBrassAttachmentReal = pEffectOwner->LookupAttachment("eject_brass");
+		
 		CEffectData brassejectdata;
-		if (m_iEjectBrassAttachment != -1)
+		if (iEjectBrassAttachmentReal != -1)
 		{
-			CBaseViewModel *pViewModel = pPlayer->GetViewModel(0);
-			pViewModel->GetAttachment(m_iEjectBrassAttachment, vecOrigin, angAngles);
-			brassejectdata.m_vOrigin = vecOrigin;
-			brassejectdata.m_vAngles = angAngles;
+			pEffectOwner->GetAttachment(iEjectBrassAttachmentReal, brassejectdata.m_vOrigin, brassejectdata.m_vAngles);
 			brassejectdata.m_nHitBox = TF_WEAPON_MINIGUN;
 			DispatchEffect("TF_EjectBrass", brassejectdata);
 		}
