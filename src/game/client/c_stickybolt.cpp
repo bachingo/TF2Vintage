@@ -138,17 +138,23 @@ private:
 	Vector  m_vWorld;
 };
 
-void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iModel, int iSkin  )
+void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin  )
 {
 	//model_t *pModel = (model_t *)engine->LoadModel( "models/crossbow_bolt.mdl" );
 	//repurpose old crossbow collision code for huntsman collisions
-	model_t *pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[iModel] );
+	model_t *pModel;
+	if (iType == 2)
+		pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[2] );
+	else if (iType == 1)
+		pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[1] );
+	else 
+		pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[0] );
 
 	QAngle vAngles;
 
 	VectorAngles( vecDirection, vAngles );
 	float flLifeTime = ( TEMP_OBJECT_LIFETIME * 3); // A little longer than normal temporary entities.
-	C_LocalTempEntity *pTemp  = tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), flLifeTime, FTENT_NONE );
+	C_LocalTempEntity *pTemp = tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), flLifeTime, FTENT_NONE );
 	pTemp->m_nSkin = iSkin;
 
 }
@@ -179,7 +185,7 @@ void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int i
 //-----------------------------------------------------------------------------
 void StickyBoltCallback( const CEffectData &data )
 {
-	 StickRagdollNow( data.m_vOrigin, data.m_vNormal, data.m_nType, data.m_nSkin );
+	 StickRagdollNow( data.m_vOrigin, data.m_vNormal, data.m_iType, data.m_nSkin );
 }
 
 

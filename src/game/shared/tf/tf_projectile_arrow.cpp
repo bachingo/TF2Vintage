@@ -47,8 +47,8 @@ BEGIN_NETWORK_TABLE( CTFProjectile_Arrow, DT_TFProjectile_Arrow )
 #else
 	SendPropBool( SENDINFO( m_bCritical ) ),
 	SendPropBool( SENDINFO( m_bFlame ) ),
-	SendPropInt( SENDINFO( m_iType ), 3, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_nSkin ), 2, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iType ), 0, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nSkin ), 0, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -91,6 +91,14 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 
 		// Set firing weapon.
 		pArrow->SetLauncher( pWeapon );
+		
+		// Compensate iTypes from shareddefs to a more usable range for our use.
+		if (iType == 8) // Arrow (8)
+			iType = 0;
+		else if (iType == 11) // Crossbow Bolt (11)
+			iType = 1;
+		else // Repair Claw (18)
+			iType = 2;
 
 		// Set arrow type.
 		pArrow->SetType( iType );
@@ -363,8 +371,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 					data.m_vOrigin = tr.endpos;
 					data.m_vNormal = vForward;
 					data.m_nEntIndex = tr.fraction != 1.0f;
+					data.m_iType = m_iType;
 					data.m_nSkin = m_nSkin;
-					data.m_nType = m_iType;
 					DispatchEffect( "BoltImpact", data );
 				}
 			}
@@ -430,8 +438,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				data.m_vOrigin = tr.endpos;
 				data.m_vNormal = vForward;
 				data.m_nEntIndex = tr.fraction != 1.0f;
+				data.m_iType = m_iType;
 				data.m_nSkin = m_nSkin;
-				data.m_nType = m_iType;
 				DispatchEffect( "BoltImpact", data );
 			}
 		}
