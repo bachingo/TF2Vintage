@@ -43,10 +43,12 @@ BEGIN_NETWORK_TABLE( CTFProjectile_Arrow, DT_TFProjectile_Arrow )
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 	RecvPropBool( RECVINFO( m_bFlame ) ),
 	RecvPropInt( RECVINFO( m_iType ) ),
+	RecvPropInt( RECVINFO( m_nSkin ) ),
 #else
 	SendPropBool( SENDINFO( m_bCritical ) ),
 	SendPropBool( SENDINFO( m_bFlame ) ),
 	SendPropInt( SENDINFO( m_iType ), 3, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nSkin ), 2, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -361,7 +363,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 					data.m_vOrigin = tr.endpos;
 					data.m_vNormal = vForward;
 					data.m_nEntIndex = tr.fraction != 1.0f;
-			
+					data.m_nSkin = m_nSkin;
+					data.m_nType = m_iType;
 					DispatchEffect( "BoltImpact", data );
 				}
 			}
@@ -427,6 +430,8 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				data.m_vOrigin = tr.endpos;
 				data.m_vNormal = vForward;
 				data.m_nEntIndex = tr.fraction != 1.0f;
+				data.m_nSkin = m_nSkin;
+				data.m_nType = m_iType;
 				DispatchEffect( "BoltImpact", data );
 			}
 		}
@@ -643,6 +648,7 @@ void CTFProjectile_Arrow::BreakArrow( void )
 		WRITE_SHORT( GetModelIndex() );
 		WRITE_VEC3COORD( GetAbsOrigin() );
 		WRITE_ANGLES( GetAbsAngles() );
+		WRITE_SHORT(m_iType);
 		WRITE_SHORT( m_nSkin );
 	MessageEnd();
 }

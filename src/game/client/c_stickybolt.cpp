@@ -28,6 +28,8 @@
 #include "engine/ivdebugoverlay.h"
 #include "c_te_effect_dispatch.h"
 #include "c_tf_player.h"
+#include "tf_shareddefs.h"
+
 
 const char *g_pszArrowModelClient[] =
 {
@@ -136,33 +138,22 @@ private:
 	Vector  m_vWorld;
 };
 
-void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
+void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iModel, int iSkin  )
 {
 	//model_t *pModel = (model_t *)engine->LoadModel( "models/crossbow_bolt.mdl" );
-
 	//repurpose old crossbow collision code for huntsman collisions
-	int iModel = 0;
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	
-	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-	int iWeaponID = pWpn->GetWeaponID();
-	if ( iWeaponID == TF_WEAPON_COMPOUND_BOW )
-	iModel = 0;
-	else if ( iWeaponID == TF_WEAPON_CROSSBOW )
-		iModel = 1;
-	else
-		iModel = 2;
 	model_t *pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[iModel] );
 
 	QAngle vAngles;
 
 	VectorAngles( vecDirection, vAngles );
-
-	tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 30.0f, FTENT_NONE );
+	float flLifeTime = ( TEMP_OBJECT_LIFETIME * 3); // A little longer than normal temporary entities.
+	C_LocalTempEntity *pTemp  = tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), flLifeTime, FTENT_NONE );
+	pTemp->m_nSkin = iSkin;
 
 }
 
-void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection )
+void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin   )
 {
 	Ray_t	shotRay;
 	trace_t tr;
@@ -179,7 +170,7 @@ void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection )
 	CRagdollBoltEnumerator	ragdollEnum( shotRay, vecOrigin );
 	partition->EnumerateElementsAlongRay( PARTITION_CLIENT_RESPONSIVE_EDICTS, shotRay, false, &ragdollEnum );
 	
-	CreateCrossbowBolt( vecOrigin, vecDirection );
+	CreateCrossbowBolt( vecOrigin, vecDirection, iType, iSkin  );
 }
 
 //-----------------------------------------------------------------------------
@@ -188,7 +179,9 @@ void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection )
 //-----------------------------------------------------------------------------
 void StickyBoltCallback( const CEffectData &data )
 {
-	 StickRagdollNow( data.m_vOrigin, data.m_vNormal );
+	 StickRagdollNow( data.m_vOrigin, data.m_vNormal, data.m_nType, data.m_nSkin );
 }
+
+
 
 DECLARE_CLIENT_EFFECT( "BoltImpact", StickyBoltCallback );
