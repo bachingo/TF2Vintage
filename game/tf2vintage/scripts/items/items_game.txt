@@ -2212,7 +2212,7 @@
 			"base_item_name"	"The Crusader's Crossbow"
 			"item_type_name"	"#TF_Weapon_Crossbow"
 			"item_name"	"#TF_CrusadersCrossbow"
-			"item_description"	"#TF_CrusadersCrossbow_desc"
+			"item_description"	"#TF_Unique_Achievement_Flaregun_desc"
 			"item_logname"	"crusaders_crossbow"
 			"item_iconname"	"crusaders_crossbow"
 			"item_slot"	"primary"
@@ -2591,7 +2591,7 @@
 		{
 			"name"	"TF2V_COSMETIC_HAT"
 			"prefab"	"hat"
-			"item_name"	"#TF_Default_ItemDef"
+			"item_name"	"#TF_Spectator_Default"
 			"used_by_classes"
 			{
 				"scout"		"1"
@@ -2617,7 +2617,7 @@
 		{
 			"name"	"TF2V_COSMETIC_MISC"
 			"prefab"	"misc"
-			"item_name"	"#TF_Default_ItemDef"
+			"item_name"	"#TF_Spectator_Default"
 			"used_by_classes"
 			{
 				"scout"		"1"
@@ -2637,7 +2637,7 @@
 			"name"	"TF2V_COSMETIC_MISC2"
 			"prefab"	"misc"
 			"item_slot"	"misc2"
-			"item_name"	"#TF_Default_ItemDef"
+			"item_name"	"#TF_Spectator_Default"
 			"used_by_classes"
 			{
 				"scout"		"1"
