@@ -4174,6 +4174,29 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
+	if (pTFAttacker->m_Shared.InCond(TF_COND_REGENONDAMAGEBUFF))
+	{
+		// Buffed players heal when hit enemy.
+		float flDamage = info.GetDamage();
+		// Make sure we're not healing off of ourself or fall damage
+		if (pAttacker != this && !(bitsDamage & DMG_FALL))
+		{
+			//Take 35% of damage for health
+			int iHealthRestored = flDamage * 0.35;
+			iHealthRestored = pAttacker->TakeHealth(iHealthRestored, DMG_GENERIC);
+
+			IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
+			if (event)
+			{
+				event->SetInt("amount", iHealthRestored);
+				event->SetInt("entindex", pAttacker->entindex());
+
+				gameeventmanager->FireEvent(event);
+			}
+		}
+		
+	}
+
 
 	// Handle on-hit effects.
 	if ( pWeapon && pAttacker != this )
@@ -4231,7 +4254,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
 			// Build rage
-			pTFAttacker->m_Shared.SetRageMeter( info.GetDamage() / 6.0f, TF_BUFF_OFFENSE );
+			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -4523,7 +4547,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( pAttacker != this && !( bitsDamage & DMG_FALL ) )
 	{
 		// Build rage on damage taken
-		m_Shared.SetRageMeter( info.GetDamage() / 1.75f, TF_BUFF_DEFENSE );
+		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_DEFENSE_COUNT / 100), TF_BUFF_DEFENSE);
+		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_DEFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
 	}
 
 	// Early out if the base class took no damage
