@@ -1295,6 +1295,10 @@ enum
 	TF_BUFF_REGENONDAMAGE,
 };
 
+#define TF_BUFF_OFFENSE_COUNT 600				// Damage to give before filling the Buff Banner rage.
+#define TF_BUFF_DEFENSE_COUNT 175				// Damage to take before filling the Battalion's Backup rage.
+#define TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT 600 // Damage to give before filling the Concheror rage.
+#define TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT 210 // Damage to take before filling the Concheror rage.
 
 #define	MAX_CABLE_CONNECTIONS 4
 
