@@ -3642,7 +3642,11 @@ void CTFPlayerShared::ActivateRageBuff( CBaseEntity *pEntity, int iBuffType )
 		return;
 
 	m_flNextRageCheckTime = gpGlobals->curtime + 1.0f;
-	m_flRageTimeRemaining = tf_soldier_buff_pulses.GetFloat();
+	float flBuffDuration = tf_soldier_buff_pulses.GetFloat();
+	float flModBuffDuration = 0.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_pOuter, flModBuffDuration, mod_buff_duration);
+
+	m_flRageTimeRemaining = flBuffDuration + flModBuffDuration;
 	m_iActiveBuffType = iBuffType;
 
 #ifdef GAME_DLL
