@@ -63,7 +63,7 @@ void CTFAdvItemButton::ApplySchemeSettings(vgui::IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings(pScheme);
 
-	LoadControlSettings("resource/UI/main_menu/AdvItemButton.res");
+	LoadControlSettings("resource/UI/main_menu/advitembutton.res");
 }
 
 

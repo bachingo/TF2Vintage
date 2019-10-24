@@ -15,9 +15,13 @@ using namespace vgui;
 
 #define PANEL_WIDE 110
 #define PANEL_TALL 70
-static CTFWeaponSetPanel *s_pWeaponButton;
-static CTFWeaponSetPanel *s_pWeaponButton2;
-static CTFWeaponSetPanel *s_pWeaponSpace;
+static CTFAdvItemButton *s_pWeaponButton1;
+static CTFAdvItemButton *s_pWeaponButton2;
+static CTFAdvItemButton *s_pWeaponButton3;
+static CTFAdvItemButton *s_pWeaponButton4;
+static CTFAdvItemButton *s_pWeaponButton5;
+static CTFAdvItemButton *s_pWeaponButton6;
+//static CTFWeaponSetPanel *s_pWeaponSpace;
 
 static char* pszClassModels[TF_CLASS_COUNT_ALL] =
 {
@@ -106,7 +110,7 @@ CTFLoadoutPanel::CTFLoadoutPanel(vgui::Panel* parent, const char *panelName) : C
 //-----------------------------------------------------------------------------
 CTFLoadoutPanel::~CTFLoadoutPanel()
 {
-	m_pWeaponIcons.RemoveAll();
+	//m_pWeaponIcons.RemoveAll();
 }
 
 bool CTFLoadoutPanel::Init()
@@ -117,20 +121,24 @@ bool CTFLoadoutPanel::Init()
 	m_iCurrentSlot = TF_LOADOUT_SLOT_PRIMARY;
 	m_pClassModelPanel = new CTFAdvModelPanel( this, "classmodelpanel" );
 	m_pGameModelPanel = new CModelPanel( this, "gamemodelpanel" );
-	m_pWeaponSetPanel = new CTFWeaponSetPanel( this, "weaponsetpanel" );
-	s_pWeaponButton = new CTFWeaponSetPanel(this, "weaponbutton1");
-	s_pWeaponButton2 = new CTFWeaponSetPanel(this, "weaponbutton2");
-	s_pWeaponSpace = new CTFWeaponSetPanel(this, "weaponspace");
+	//m_pWeaponSetPanel = new CTFWeaponSetPanel( this, "weaponsetpanel" );
+	s_pWeaponButton1 = new CTFAdvItemButton(this, "weaponbutton1", "DUK");
+	s_pWeaponButton2 = new CTFAdvItemButton(this, "weaponbutton2", "DUK");
+	s_pWeaponButton3 = new CTFAdvItemButton(this, "weaponbutton3", "DUK");
+	s_pWeaponButton4 = new CTFAdvItemButton(this, "weaponbutton4", "DUK");
+	s_pWeaponButton5 = new CTFAdvItemButton(this, "weaponbutton5", "DUK");
+	s_pWeaponButton6 = new CTFAdvItemButton(this, "weaponbutton6", "DUK");
+	m_pItemPanel = NULL;
 	g_TFWeaponScriptParser.InitParser( "scripts/tf_weapon_*.txt", true, false );
 
-	for ( int i = 0; i < INVENTORY_VECTOR_NUM; i++ )
+	/*for ( int i = 0; i < INVENTORY_VECTOR_NUM; i++ )
 	{
 		m_pWeaponIcons.AddToTail( new CTFAdvItemButton( m_pWeaponSetPanel, "WeaponIcons", "DUK" ) );
 	}
 	for ( int i = 0; i < INVENTORY_ROWNUM; i++ )
 	{
 		m_RawIDPos.AddToTail( 0 );
-	}
+	}*/
 
 
 	for ( int iClassIndex = 0; iClassIndex < TF_CLASS_COUNT_ALL; iClassIndex++ )
@@ -183,12 +191,22 @@ void CTFLoadoutPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	LoadControlSettings( "resource/UI/main_menu/LoadoutPanel.res" );
+	m_pItemPanel = dynamic_cast<CTFItemPanel*>(GetMenuPanel(ITEMSELCTION_MENU));
+	//m_pVersionLabel = dynamic_cast<CExLabel *>(FindChildByName("VersionLabel"));
 }
 
 void CTFLoadoutPanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
-	for ( int iSlot = 0; iSlot < INVENTORY_ROWNUM; iSlot++ )
+	s_pWeaponButton1->SetLoadoutSlot(0, 0);
+	s_pWeaponButton2->SetLoadoutSlot(1, 0);
+	s_pWeaponButton3->SetLoadoutSlot(2, 0);
+	s_pWeaponButton4->SetLoadoutSlot(3, 0);
+	s_pWeaponButton5->SetLoadoutSlot(4, 0);
+	s_pWeaponButton6->SetLoadoutSlot(5, 0);
+
+
+	/*for ( int iSlot = 0; iSlot < INVENTORY_ROWNUM; iSlot++ )
 	{
 		for ( int iPreset = 0; iPreset < INVENTORY_COLNUM; iPreset++ )
 		{
@@ -196,7 +214,7 @@ void CTFLoadoutPanel::PerformLayout()
 			//Original Loadout Button Size/Pos
 			//m_pWeaponButton->SetSize( XRES( PANEL_WIDE ), YRES( PANEL_TALL ) );
 			//m_pWeaponButton->SetPos( iPreset * XRES( ( PANEL_WIDE + 10 ) ), iSlot * YRES( ( PANEL_TALL + 5 ) ) );
-			m_pWeaponButton->SetSize(XRES(s_pWeaponButton->GetWide()), YRES(s_pWeaponButton->GetTall()));
+			m_pWeaponButton->SetSize(XRES(s_pWeaponButton1->GetWide()), YRES(s_pWeaponButton1->GetTall()));
 			if (iSlot >= 4)
 			{
 				m_pWeaponButton->SetPos(XRES((s_pWeaponButton2->GetXPos() + 10)), (iSlot - 5) * YRES((s_pWeaponButton2->GetYPos())));
@@ -209,19 +227,27 @@ void CTFLoadoutPanel::PerformLayout()
 			m_pWeaponButton->SetBorderByString( "AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed" );
 			m_pWeaponButton->SetLoadoutSlot( iSlot, iPreset );
 		}
-	}
+	}*/
 };
 
 
-void CTFLoadoutPanel::SetCurrentClass( int iClass )
+void CTFLoadoutPanel::SetCurrentClass(int iClass)
 {
-	if ( m_iCurrentClass == iClass )
+	if (m_iCurrentClass == iClass)
 		return;
+
+	if (s_bItemMenu)
+	{
+		m_pItemPanel->SetEnabled(false);
+		s_bItemMenu = false;
+		MAINMENU_ROOT->HidePanel(ITEMSELCTION_MENU);
+	}
 
 	m_iCurrentClass = iClass;
 	m_iCurrentSlot = g_aClassLoadoutSlots[iClass][0];
-	ResetRows();
+	//ResetRows();
 	DefaultLayout();
+
 };
 
 
@@ -280,7 +306,7 @@ void CTFLoadoutPanel::OnCommand( const char* command )
 			const char *sChar = strchr(command, ' ');
 			int iSlot = atoi(sChar + 1);
 			ItemPanel->SetCurrentClassAndSlot(m_iCurrentClass, iSlot);
-			s_bItemMenu = 1;
+			s_bItemMenu = true;
 
 			//ItemPanel->SetCurrentClass(m_iCurrentClass);
 			MAINMENU_ROOT->ShowPanel(ITEMSELCTION_MENU);
@@ -292,7 +318,7 @@ void CTFLoadoutPanel::OnCommand( const char* command )
 			CTFItemPanel *ItemPanel = dynamic_cast<CTFItemPanel*>(GetMenuPanel(ITEMSELCTION_MENU));
 
 			ItemPanel->SetEnabled(false);
-			s_bItemMenu = 0;
+			s_bItemMenu = false;
 			MAINMENU_ROOT->HidePanel(ITEMSELCTION_MENU);
 			if (!Q_strncmp(command, "loadout", 7))
 			{
@@ -323,7 +349,7 @@ void CTFLoadoutPanel::SetSlotAndPreset( int iSlot, int iPreset )
 	SetWeaponPreset( m_iCurrentClass, m_iCurrentSlot, iPreset );
 }
 
-void CTFLoadoutPanel::ResetRows()
+/*void CTFLoadoutPanel::ResetRows()
 {
 	for ( int iSlot = 0; iSlot < INVENTORY_ROWNUM; iSlot++ )
 	{
@@ -343,7 +369,7 @@ void CTFLoadoutPanel::ResetRows()
 			}
 		}
 	}
-}
+}*/
 
 int CTFLoadoutPanel::GetAnimSlot( CEconItemDefinition *pItemDef, int iClass )
 {
@@ -466,8 +492,7 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 void CTFLoadoutPanel::Show()
 {
 	BaseClass::Show();
-	CTFLoadoutPanel *m_bShadedBG = this;
-	vgui::GetAnimationController()->RunAnimationCommand(m_bShadedBG, "Alpha", 255, 0.0f, 0.15f, vgui::AnimationController::INTERPOLATOR_LINEAR);
+	vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 255, 0.0f, 0.15f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE);
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
@@ -483,8 +508,7 @@ void CTFLoadoutPanel::Hide()
 {
 	BaseClass::Hide();
 	GetMenuPanel(CURRENT_MENU)->Show();
-	CTFLoadoutPanel *m_bShadedBG = this;
-	vgui::GetAnimationController()->RunAnimationCommand(m_bShadedBG, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR);
+	vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR);
 	if (InGame() && !bFromPause)
 		engine->ExecuteClientCmd("escape");
 	//MAINMENU_ROOT->ShowPanel(PAUSE_MENU);
@@ -512,7 +536,7 @@ void CTFLoadoutPanel::UpdateModelPanels()
 
 	m_pClassModelPanel->SetVisible( true );
 	m_pGameModelPanel->SetVisible( false );
-	m_pWeaponSetPanel->SetVisible( true );
+	//m_pWeaponSetPanel->SetVisible( true );
 
 	SetModelClass( iClassIndex );
 	UpdateModelWeapons();
@@ -550,15 +574,8 @@ void CTFLoadoutPanel::DefaultLayout()
 	{
 		int iSlot = g_aClassLoadoutSlots[iClassIndex][iRow];
 
-		for ( int iColumn = 0; iColumn < INVENTORY_COLNUM; iColumn++ )
+		for (int iColumn = 0; iColumn < INVENTORY_COLNUM; iColumn++)
 		{
-			CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM * iRow + iColumn];
-
-			if (iRow >= 4)
-			{
-				m_pWeaponButton->SetPos(XRES((s_pWeaponButton2->GetXPos() + 5)), (iSlot - 5) * YRES((s_pWeaponButton2->GetYPos())));
-			}
-
 			CEconItemView *pItem = NULL;
 
 			int iWeaponPreset = GetTFInventory()->GetWeaponPreset(iClassIndex, iSlot);
@@ -573,18 +590,31 @@ void CTFLoadoutPanel::DefaultLayout()
 			}
 
 			CEconItemDefinition *pItemData = pItem ? pItem->GetStaticData() : NULL;
+			if (pItemData)
+			{
+				switch (iRow) {
+				case 0:
+					s_pWeaponButton1->SetItemDefinition(pItemData);
+					s_pWeaponButton1->GetButton()->SetSelected((iColumn == iWeaponPreset));
+				case 1:
+					s_pWeaponButton2->SetItemDefinition(pItemData);
+					s_pWeaponButton2->GetButton()->SetSelected((iColumn == iWeaponPreset));
+				case 2:
+					s_pWeaponButton3->SetItemDefinition(pItemData);
+					s_pWeaponButton3->GetButton()->SetSelected((iColumn == iWeaponPreset));
+				case 3:
+					s_pWeaponButton4->SetItemDefinition(pItemData);
+					s_pWeaponButton4->GetButton()->SetSelected((iColumn == iWeaponPreset));
+				case 4:
+					s_pWeaponButton5->SetItemDefinition(pItemData);
+					s_pWeaponButton5->GetButton()->SetSelected((iColumn == iWeaponPreset));
+				case 5:
+					s_pWeaponButton6->SetItemDefinition(pItemData);
+					s_pWeaponButton6->GetButton()->SetSelected((iColumn == iWeaponPreset));
+				default:
+					continue;
 
-			if ( pItemData )
-			{
-				m_pWeaponButton->SetVisible( true );
-				m_pWeaponButton->SetItemDefinition( pItemData );
-				m_pWeaponButton->SetLoadoutSlot( iSlot, iColumn );
-				m_pWeaponButton->SetBorderByString("AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed");
-				m_pWeaponButton->GetButton()->SetSelected((iColumn == iWeaponPreset));
-			}
-			else
-			{
-				m_pWeaponButton->SetVisible( false );
+				}
 			}
 		}
 	}

@@ -8,6 +8,7 @@
 #include "tf_imagepanel.h"
 #include "tf_advbutton.h"
 
+
 using namespace vgui;
 
 class CTFButton;

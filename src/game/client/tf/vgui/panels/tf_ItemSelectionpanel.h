@@ -120,12 +120,11 @@ public:
 	void DefaultLayout();
 	void GameLayout();
 	void SetWeaponPreset(int iClass, int iSlot, int iPreset);
-	void SetCurrentClass(int iClass);
 	void SetCurrentClassAndSlot(int iClass, int iSlot);
 	void SetCurrentSlot(int iSlot) { m_iCurrentSlot = iSlot; };
 	int  GetAnimSlot(CEconItemDefinition *pItemDef, int iClass);
 	void SetSlotAndPreset(int iSlot, int iPreset);
-	void SideRow(int iRow, int iDir);
+	void SlideColumn(int iCol, int iDir);
 	void ResetRows();
 
 private:

@@ -53,6 +53,7 @@ private:
 	int	m_iCurrentClass;
 	int	m_iCurrentSlot;
 	int m_iCurrentSkin;
+	CTFItemPanel *m_pItemPanel;
 };
 
 //-----------------------------------------------------------------------------
