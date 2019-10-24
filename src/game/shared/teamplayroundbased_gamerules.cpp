@@ -191,11 +191,13 @@ ConVar tf_arena_use_queue( "tf_arena_use_queue", "1", FCVAR_REPLICATED | FCVAR_N
 ConVar mp_teams_unbalance_limit( "mp_teams_unbalance_limit", "1", FCVAR_REPLICATED,
 					 "Teams are unbalanced when one team has this many more players than the other team. (0 disables check)",
 					 true, 0,	// min value
-					 true, 30	// max value
+					 true, 127	// max value
 					 );
 
 ConVar mp_maxrounds( "mp_maxrounds", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "max number of rounds to play before server changes maps", true, 0, false, 0 );
 ConVar mp_winlimit( "mp_winlimit", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Max score one team can reach before server changes maps", true, 0, false, 0 );
+ConVar mp_windifference( "mp_difference", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Max score difference between teams before the server changes maps", true, 0, false, 0 );
+ConVar mp_windifference_min( "mp_difference_min", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimum score required before checking for point difference victory", true, 0, false, 0 );
 ConVar mp_disable_respawn_times( "mp_disable_respawn_times", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar mp_bonusroundtime( "mp_bonusroundtime", "15", FCVAR_REPLICATED, "Time after round win until round restarts", true, 5, true, 15 );
 ConVar mp_bonusroundtime_final( "mp_bonusroundtime_final", "15", FCVAR_REPLICATED, "Time after final round ends until round restarts", true, 5, true, 300 );
@@ -269,8 +271,8 @@ void cc_ScrambleTeams( const CCommand& args )
 }
 
 static ConCommand mp_scrambleteams( "mp_scrambleteams", cc_ScrambleTeams, "Scramble the teams and restart the game" );
-ConVar mp_scrambleteams_auto( "mp_scrambleteams_auto", "1", FCVAR_NOTIFY, "Server will automatically scramble the teams if criteria met.  Only works on dedicated servers." );
-ConVar mp_scrambleteams_auto_windifference( "mp_scrambleteams_auto_windifference", "2", FCVAR_NOTIFY, "Number of round wins a team must lead by in order to trigger an auto scramble." );
+ConVar mp_scrambleteams_auto( "mp_scrambleteams_auto", "0", FCVAR_NOTIFY, "Server will automatically scramble the teams if criteria met.  Only works on dedicated servers." );
+ConVar mp_scrambleteams_auto_windifference( "mp_scrambleteams_auto_windifference", "0", FCVAR_NOTIFY, "Number of round wins a team must lead by in order to trigger an auto scramble." );
 
 // Classnames of entities that are preserved across round restarts
 static const char *s_PreserveEnts[] =
@@ -1204,6 +1206,8 @@ bool CTeamplayRoundBasedRules::CheckWinLimit( bool bAllowEnd /*= true*/ )
 {
 	// has one team won the specified number of rounds?
 	int iWinLimit = mp_winlimit.GetInt();
+	int iWinLimitDelta = mp_windifference.GetInt();
+	int iWinLimitDeltaMin = mp_windifference_min.GetInt();
 
 	if ( iWinLimit > 0 )
 	{
@@ -1213,6 +1217,30 @@ bool CTeamplayRoundBasedRules::CheckWinLimit( bool bAllowEnd /*= true*/ )
 			Assert( pTeam );
 
 			if ( pTeam->GetScore() >= iWinLimit )
+			{
+				if ( bAllowEnd )
+				{
+					IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_game_over" );
+					if ( event )
+					{
+						event->SetString( "reason", "Reached Win Limit" );
+						gameeventmanager->FireEvent( event );
+					}
+
+					GoToIntermission();
+				}
+				return true;
+			}
+		}
+	}
+	
+	if ( iWinLimitDelta > 0 )
+	{
+		int iBlueScore = GetGlobalTeam( TF_TEAM_BLUE )->GetScore();
+		int iRedScore = GetGlobalTeam( TF_TEAM_RED )->GetScore();
+		if ( ( iRedScore >= iWinLimitDeltaMin ) || ( iRedScore >= iWinLimitDeltaMin ) )
+		{
+			if ( ( ( iRedScore - iBlueScore ) >= iWinLimitDelta ) || ( (iBlueScore -iRedScore ) >= iWinLimitDelta ) )
 			{
 				if ( bAllowEnd )
 				{
