@@ -479,6 +479,8 @@ public:
 	void				EnableZombies( TFPlayerClassData_t *pData );
 
 	void				PostInventoryApplication( void );
+	
+	virtual bool		IsWhiteListed ( const char *pszClassname );
 
 	CTriggerAreaCapture *GetControlPointStandingOn( void );
 
