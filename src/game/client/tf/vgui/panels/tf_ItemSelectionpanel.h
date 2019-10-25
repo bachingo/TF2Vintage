@@ -8,7 +8,7 @@ class CTFWeaponSelectPanel;
 class CModelPanel;
 class CTFAdvButton;
 class CTFAdvItemButton;
-bool s_bItemMenu = 0;
+bool s_bShowItemMenu = 0;
 
 static int g_aClassLoadoutSlots[TF_CLASS_COUNT_ALL][INVENTORY_ROWNUM] =
 {

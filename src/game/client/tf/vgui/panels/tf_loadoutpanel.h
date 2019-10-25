@@ -45,7 +45,6 @@ public:
 private:
 	CTFAdvModelPanel *m_pClassModelPanel;
 	CModelPanel		*m_pGameModelPanel;
-	CTFWeaponSetPanel *m_pWeaponSetPanel;
 	CUtlVector<CTFAdvItemButton*> m_pWeaponIcons;
 	CUtlVector<CTFAdvItemButton*> m_pSlideButtons;
 	CUtlVector<int> m_RawIDPos;

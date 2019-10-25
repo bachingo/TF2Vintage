@@ -12,8 +12,6 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define PANEL_WIDE 110
-#define PANEL_TALL 70
 #define SLOTSPACING 10
 static CTFWeaponSelectPanel *s_pWeaponButton;
 
@@ -167,6 +165,8 @@ void CTFItemPanel::PerformLayout()
 		Q_snprintf(szCommand, sizeof(szCommand), "SlideD%i", iSlot);
 		m_pSlideButtonDown->SetCommandString(szCommand);
 	}
+	//m_pWeaponSetPanel->SetPos( 0, m_pWeaponSetPanel->GetYPos() );
+
 	DefaultLayout();
 };
 
@@ -184,52 +184,34 @@ void CTFItemPanel::SetCurrentClassAndSlot(int iClass, int iSlot)
 
 void CTFItemPanel::OnCommand(const char* command)
 {
-	if (!Q_strcmp(command, "back") || (!Q_strcmp(command, "vguicancel")))
+	if ( !Q_strcmp ( command, "back" ) || (!Q_strcmp ( command, "vguicancel" )) )
 	{
-		s_bItemMenu = 0;
-		Hide();
+		s_bShowItemMenu = false;
+		Hide ();
+	}
+	else if ( !Q_strncmp ( command, "loadout", 7 ) )
+	{
+		GetParent ()->OnCommand ( command );
+		return;
 	}
 	else
 	{
-		if (!Q_strncmp(command, "loadout", 7))
-		{
-			GetParent()->OnCommand(command);
-			return;
-		}
-		
 		char buffer[64];
 		const char* szText;
 		char strText[40];
 
-		/*if (!Q_strncmp(command, "loadout", 7))
-		{
-			const char *sChar = strchr(command, ' ');
-			if (sChar)
-			{
-				int iSlot = atoi(sChar + 1);
-				sChar = strchr(sChar + 1, ' ');
-				if (sChar)
-				{
-					int iWeapon = atoi(sChar + 1);
-					SetSlotAndPreset(iSlot, iWeapon);
-				}
-			}
-			return;
-		}*/
 
-		for (int i = 0; i < 2; i++)
+		for ( int i = 0; i < 2; i++ )
 		{
 			szText = (i == 0 ? "SlideU" : "SlideD");
-			Q_strncpy(strText, command, Q_strlen(szText) + 1);
-			if (!Q_strcmp(strText, szText))
+			Q_strncpy ( strText, command, Q_strlen ( szText ) + 1 );
+			if ( !Q_strcmp ( strText, szText ) )
 			{
-				Q_snprintf(buffer, sizeof(buffer), command + Q_strlen(szText));
-				SlideColumn(atoi(buffer), (i == 0 ? -1 : 1));
+				Q_snprintf ( buffer, sizeof ( buffer ), command + Q_strlen ( szText ) );
+				SlideColumn ( atoi ( buffer ), (i == 0 ? -1 : 1) );
 				return;
 			}
 		}
-
-		//BaseClass::OnCommand(command);
 	}
 }
 
@@ -297,18 +279,6 @@ void CTFItemPanel::OnThink()
 void CTFItemPanel::DefaultLayout()
 {
 	BaseClass::DefaultLayout();
-
-	/*
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if (pLocalPlayer && pLocalPlayer->GetTeamNumber() >= TF_TEAM_RED)
-	{
-	m_iCurrentSkin = pLocalPlayer->GetTeamNumber() - 2;
-	}
-	else
-	{
-	m_iCurrentSkin = 0;
-	}
-	*/
 
 	int iClassIndex = m_iCurrentClass;
 	SetDialogVariable("classname", g_pVGuiLocalize->Find(g_aPlayerClassNames[iClassIndex]));
