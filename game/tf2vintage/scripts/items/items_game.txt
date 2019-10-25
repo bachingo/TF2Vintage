@@ -2299,7 +2299,6 @@
 		}
 		"weapon_reskin"
 		{
-			"show_in_armory"	"1"
 			"is_reskin"			"1"
 			"attributes"
 			{
