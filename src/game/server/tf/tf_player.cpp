@@ -138,6 +138,7 @@ ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes pla
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
 ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
 ConVar tf2v_bonus_distance_range( "tf2v_bonus_distance_range", "10", FCVAR_NOTIFY, "Percent variation in range calculations for damage." );
+ConVar tf2v_enforce_whitelist( "tf2v_enforce_whitelist", "0", FCVAR_NOTIFY, "Requires items to be verified from a server whitelist." );
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
 ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
@@ -1825,16 +1826,25 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		{
 			const char *pszClassname = pItem->GetEntityName();
 			Assert( pszClassname );
-
-			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
-
-			if ( pEntity )
+			bool bWhiteListedWeapon = true; // Defaulted to true, since whitelisting is a niche server option.
+			
+			if ( tf2v_enforce_whitelist.GetBool() ) // Only run this when we need to.
+				bWhiteListedWeapon = IsWhiteListed(pszClassname);
+			
+			if ( ( bWhiteListedWeapon == true ) || !tf2v_enforce_whitelist.GetBool() ) // If the weapon is allowed, give it to the player.
 			{
-				pEntity->GiveTo( this );
+				CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+
+				if ( pEntity )
+				{
+					pEntity->GiveTo( this );
+				}
 			}
+			else // If the weapon is banned, give them the stock weapon.
+				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);	
 		}
 
-		// We check to make sure it's not a reskin.
+		// We check to make sure it's also not a reskin.
 		int iIsReskin = 0;
 		if (!tf2v_allow_reskins.GetBool())
 		{
@@ -1845,6 +1855,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);
 			}
 		}
+		
 	}
 
 	PostInventoryApplication();
@@ -4174,6 +4185,29 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
+	if (pTFAttacker->m_Shared.InCond(TF_COND_REGENONDAMAGEBUFF))
+	{
+		// Buffed players heal when hit enemy.
+		float flDamage = info.GetDamage();
+		// Make sure we're not healing off of ourself or fall damage
+		if (pAttacker != this && !(bitsDamage & DMG_FALL))
+		{
+			//Take 35% of damage for health
+			int iHealthRestored = flDamage * 0.35;
+			iHealthRestored = pAttacker->TakeHealth(iHealthRestored, DMG_GENERIC);
+
+			IGameEvent *event = gameeventmanager->CreateEvent("player_healonhit");
+			if (event)
+			{
+				event->SetInt("amount", iHealthRestored);
+				event->SetInt("entindex", pAttacker->entindex());
+
+				gameeventmanager->FireEvent(event);
+			}
+		}
+		
+	}
+
 
 	// Handle on-hit effects.
 	if ( pWeapon && pAttacker != this )
@@ -4231,7 +4265,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
 			// Build rage
-			pTFAttacker->m_Shared.SetRageMeter( info.GetDamage() / 6.0f, TF_BUFF_OFFENSE );
+			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -4523,7 +4558,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( pAttacker != this && !( bitsDamage & DMG_FALL ) )
 	{
 		// Build rage on damage taken
-		m_Shared.SetRageMeter( info.GetDamage() / 1.75f, TF_BUFF_DEFENSE );
+		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_DEFENSE_COUNT / 100), TF_BUFF_DEFENSE);
+		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_DEFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
 	}
 
 	// Early out if the base class took no damage
@@ -9830,4 +9866,48 @@ float CTFPlayerPathCost::operator()( CNavArea *area, CNavArea *fromArea, const C
 	}
 
 	return fromArea->GetCostSoFar() + length;
+}
+
+bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
+{
+	// First, we parse the item_whitelist to see if it's on there.
+	
+	KeyValues *pData = new KeyValues( "item_whitelist.txt" );
+	
+	if (!pData) // If we don't have a whitelist, assume yes.
+	return true;
+	
+	KeyValues* pFileSystemInfo = pData->FindKey("item_whitelist");
+
+	if (!pFileSystemInfo) // If we don't have a whitelist, assume yes.
+		return true;
+	
+	if ( pFileSystemInfo )
+	{
+		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
+		{
+			if ( Q_stricmp( pKey->GetName(), "pszClassname" ) == 1 )
+			{
+				int iWeapon = abs( pKey->GetInt() );
+				if ( iWeapon == 1 )
+					return true;
+				else
+					return false;
+			}
+		}
+		for (KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey())
+		{
+			if (Q_stricmp(pKey->GetName(), "unlisted_items_default_to") == '1')
+			{
+				int iWeapon = abs(pKey->GetInt());
+				if (iWeapon == 1)
+					return true;
+				else
+					return false;
+			}
+		}
+	}
+	return false; // If we have a blank/incomplete whitelist, assume no.
+
+
 }

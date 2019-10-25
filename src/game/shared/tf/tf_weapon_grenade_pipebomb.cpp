@@ -419,17 +419,19 @@ void CTFGrenadePipebombProjectile::Precache()
 {
 	PrecacheTeamParticles("stickybombtrail_%s", true);
 
+	// We use the same gibs for all of the grenades, which are stickybomb gibs.
+	
 	int index = PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL );
-	PrecacheGibsForModel( index );
+	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
 	
 	index = PrecacheModel( TF_WEAPON_STICKYBOMB_DEFENSIVE_MODEL );
-	PrecacheGibsForModel( index );
+	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
 
 	index = PrecacheModel( TF_WEAPON_GRENADE_MODEL );
-	PrecacheGibsForModel( index );
+	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
 	
 	index = PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
-	PrecacheGibsForModel( index );
+	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
 
 	PrecacheScriptSound( TF_WEAPON_PIPEBOMB_BOUNCE_SOUND );
 
@@ -473,10 +475,10 @@ void CTFGrenadePipebombProjectile::Detonate()
 
 		// CreatePipebombGibs
 		CPVSFilter filter( GetAbsOrigin() );
-		/*UserMessageBegin( filter, "CheapBreakModel" );
+		UserMessageBegin( filter, "CheapBreakModel" );
 			WRITE_SHORT( GetModelIndex() );
 			WRITE_VEC3COORD( GetAbsOrigin() );
-		MessageEnd();*/
+		MessageEnd();
 
 		RemoveGrenade( false );
 

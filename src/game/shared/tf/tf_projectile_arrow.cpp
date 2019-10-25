@@ -484,8 +484,9 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	}
 	else
 	{
-		// TODO: Figure out why arrow gibs sometimes cause crashes
-		BreakArrow();
+		// If we're an item with gibs (Arrow, Festive Arrow, Repair Claw) then gib.
+		if ( ( m_iType == 0 ) || ( m_iType == 3 ) || ( m_iType == 2 ) )
+			BreakArrow();
 		UTIL_Remove( this );
 	}
 

@@ -2299,7 +2299,16 @@
 		}
 		"weapon_reskin"
 		{
-			"show_in_armory"	"0"
+			"show_in_armory"	"1"
+			"attributes"
+			{
+				"is_reskin"
+				{
+					"attribute_class" "is_reskin"
+					"value" "1"
+				}
+			
+			}
 		}
 	}
 	"items"
@@ -3710,6 +3719,51 @@
 					"value"	"2"
 				}
 			}
+		}
+		"227"
+		{
+			"name"	"The Concheror"
+			"prefab"		"weapon_buff_banner"
+			"item_type_name"	"#TF_Weapon_SoldierSashimono"
+			"item_name"	"#TF_SoldierSashimono"
+			"item_description"	"#TF_SoldierSashimono_Desc"
+			
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack"
+			"image_inventory_size_w"		"128"
+			"image_inventory_size_h"		"82"
+			"inspect_panel_dist" 			"35"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_shogun_warhorn/c_shogun_warhorn.mdl"
+			"attach_to_hands" "1"
+			"extra_wearable" "models/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack.mdl"
+			"anim_slot"		"melee"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 -5 -2"
+			}
+			"attributes"
+			{
+				"mod soldier buff type"
+				{
+					"attribute_class"	"set_buff_type"
+					"value"	"3"
+				}
+			}
+			"visuals"
+			{
+				"animation_replacement"
+				{
+					"ACT_ITEM1_VM_DRAW"	"ACT_ITEM2_VM_DRAW"
+					"ACT_ITEM1_VM_IDLE"	"ACT_ITEM2_VM_IDLE"
+					"ACT_ITEM1_VM_PRIMARYATTACK"	"ACT_ITEM2_VM_PRIMARYATTACK"
+					"ACT_ITEM1_VM_SECONDARYATTACK"	"ACT_ITEM2_VM_SECONDARYATTACK"
+					"ACT_MP_ATTACK_STAND_MELEE_SECONDARY"	"ACT_MP_ATTACK_STAND_ITEM2_SECONDARY"
+					"ACT_MP_ATTACK_CROUCH_MELEE_SECONDARY"	"ACT_MP_ATTACK_STAND_ITEM2_SECONDARY"
+					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_ITEM2_VM_INSPECT_START"
+					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_ITEM2_VM_INSPECT_IDLE"
+					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_ITEM2_VM_INSPECT_END"
+				}
+			}
+			
 		}
 		"228"
 		{
@@ -10046,6 +10100,12 @@
 			"effect_type"	"positive"
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
+		}
+		"10006"
+		{
+			"name"	"is_reskin"
+			"attribute_class"	"is_reskin"
+			"hidden"	"1"
 		}
 	}
 	"attribute_controlled_attached_particles"
