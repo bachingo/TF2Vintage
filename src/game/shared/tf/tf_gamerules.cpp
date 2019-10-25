@@ -3228,6 +3228,10 @@ static const char *g_aTaggedConVars[] =
 	
 	"tf2v_random_classes",
 	"randomweapons",
+	
+	"tf2v_enforce_whitelist",
+	"whitelist",
+	
 
 };
 
