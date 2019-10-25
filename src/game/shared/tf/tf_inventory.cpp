@@ -11,6 +11,10 @@
 #include "tf_inventory.h"
 #include "econ_item_system.h"
 
+#ifdef CLIENT_DLL
+ConVar tf2v_show_reskins_in_armory("tf2v_show_reskins_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
+#endif
+
 static CTFInventory g_TFInventory;
 
 CTFInventory *GetTFInventory()
@@ -43,6 +47,13 @@ CTFInventory::~CTFInventory()
 
 bool CTFInventory::Init( void )
 {
+#ifdef CLIENT_DLL
+	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
+#endif
+#ifdef GAME_DLL
+	bool bReskinsEnabled = true;
+#endif
+
 	GetItemSchema()->Init();
 
 	// Generate item list.
@@ -91,7 +102,7 @@ bool CTFInventory::Init( void )
 #endif
 					m_Items[iClass][iSlot][0] = pNewItem;
 				}
-				else if ( pItemDef->show_in_armory )
+				else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->show_in_armory ) == 0 ) || ( bReskinsEnabled ) ) )
 				{
 					CEconItemView *pNewItem = new CEconItemView( iItemID );
 

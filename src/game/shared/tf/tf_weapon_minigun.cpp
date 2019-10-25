@@ -524,7 +524,7 @@ void CTFMinigun::HandleFireOnEmpty( void )
 //-----------------------------------------------------------------------------
 void CTFMinigun::UseRealMinigunBrassEject( void )
 {
-#ifdef SERVER_DLL
+#ifdef GAME_DLL
 	return;
 #endif
 #ifdef CLIENT_DLL
