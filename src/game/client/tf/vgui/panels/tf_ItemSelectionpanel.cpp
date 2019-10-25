@@ -14,12 +14,11 @@ using namespace vgui;
 
 #define PANEL_WIDE 110
 #define PANEL_TALL 70
+#define SLOTSPACING 10
 static CTFWeaponSelectPanel *s_pWeaponButton;
 
 static CTFWeaponSelectPanel *s_pScrollButtonDown;
 static CTFWeaponSelectPanel *s_pScrollButtonUp;
-int iSlotSpacing = 10;
-
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -152,7 +151,7 @@ void CTFItemPanel::PerformLayout()
 		CTFAdvItemButton *m_pSlideButtonDown = m_pSlideButtons[iSlot + 1];
 
 		m_pSlideButtonUp->SetSize(s_pScrollButtonUp->GetWide(), s_pScrollButtonUp->GetTall());
-		m_pSlideButtonUp->SetPos(s_pScrollButtonUp->GetXPos(), iSlot * YRES((s_pScrollButtonUp->GetYPos() + iSlotSpacing)));
+		m_pSlideButtonUp->SetPos(s_pScrollButtonUp->GetXPos(), iSlot * YRES((s_pScrollButtonUp->GetYPos() + SLOTSPACING)));
 		m_pSlideButtonUp->SetText("^");
 		m_pSlideButtonUp->SetBorderVisible(true);
 		m_pSlideButtonUp->SetBorderByString("AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed");
@@ -249,7 +248,7 @@ void CTFItemPanel::SlideColumn(int iCol, int iDir)
 		CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM_SELECTION * iCol + iPreset];
 		int _x, _y;
 		m_pWeaponButton->GetPos(_x, _y);
-		int y = (iPreset - m_RawIDPos[iCol]) * YRES(s_pWeaponButton->GetTall() + iSlotSpacing);
+		int y = (iPreset - m_RawIDPos[iCol]) * YRES(s_pWeaponButton->GetTall() + SLOTSPACING);
 		AnimationController::PublicValue_t p_AnimHover(_x, y);
 		vgui::GetAnimationController()->RunAnimationCommand(m_pWeaponButton, "Position", p_AnimHover, 0.0f, 0.15f, vgui::AnimationController::INTERPOLATOR_SIMPLESPLINE, NULL);
 	}
@@ -265,7 +264,7 @@ void CTFItemPanel::ResetRows()
 		for (int iPreset = 0; iPreset < INVENTORY_COLNUM_SELECTION; iPreset++)
 		{
 			CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM_SELECTION * iSlot + iPreset];
-			m_pWeaponButton->SetPos(XRES(0), iPreset * YRES(s_pWeaponButton->GetTall() + iSlotSpacing));
+			m_pWeaponButton->SetPos(XRES(0), iPreset * YRES(s_pWeaponButton->GetTall() + SLOTSPACING));
 			//m_pWeaponButton->SetPos(iSlot * XRES((s_pWeaponButton->GetXPos())), (iPreset - m_RawIDPos[iSlot]) * YRES(s_pWeaponButton->GetYPos()));
 		}
 	}
@@ -310,12 +309,6 @@ void CTFItemPanel::DefaultLayout()
 	m_iCurrentSkin = 0;
 	}
 	*/
-
-	/* TODO
-	 * - change var names to make sense vertically
-	 * - change sliders to appear based on height intead of row count 
-	*/
-
 
 	int iClassIndex = m_iCurrentClass;
 	SetDialogVariable("classname", g_pVGuiLocalize->Find(g_aPlayerClassNames[iClassIndex]));

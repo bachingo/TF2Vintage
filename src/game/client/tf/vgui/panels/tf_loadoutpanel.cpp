@@ -198,36 +198,13 @@ void CTFLoadoutPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 void CTFLoadoutPanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
+	// kinda lazy but does the job
 	s_pWeaponButton1->SetLoadoutSlot(0, 0);
 	s_pWeaponButton2->SetLoadoutSlot(1, 0);
 	s_pWeaponButton3->SetLoadoutSlot(2, 0);
 	s_pWeaponButton4->SetLoadoutSlot(3, 0);
 	s_pWeaponButton5->SetLoadoutSlot(4, 0);
 	s_pWeaponButton6->SetLoadoutSlot(5, 0);
-
-
-	/*for ( int iSlot = 0; iSlot < INVENTORY_ROWNUM; iSlot++ )
-	{
-		for ( int iPreset = 0; iPreset < INVENTORY_COLNUM; iPreset++ )
-		{
-			CTFAdvItemButton *m_pWeaponButton = m_pWeaponIcons[INVENTORY_COLNUM * iSlot + iPreset];
-			//Original Loadout Button Size/Pos
-			//m_pWeaponButton->SetSize( XRES( PANEL_WIDE ), YRES( PANEL_TALL ) );
-			//m_pWeaponButton->SetPos( iPreset * XRES( ( PANEL_WIDE + 10 ) ), iSlot * YRES( ( PANEL_TALL + 5 ) ) );
-			m_pWeaponButton->SetSize(XRES(s_pWeaponButton1->GetWide()), YRES(s_pWeaponButton1->GetTall()));
-			if (iSlot >= 4)
-			{
-				m_pWeaponButton->SetPos(XRES((s_pWeaponButton2->GetXPos() + 10)), (iSlot - 5) * YRES((s_pWeaponButton2->GetYPos())));
-			}
-			else
-			{
-				m_pWeaponButton->SetPos(iPreset * XRES((s_pWeaponSpace->GetWide() + 10)), ((iSlot - 0.01) * YRES((s_pWeaponSpace->GetTall() - 12))));
-			}
-			m_pWeaponButton->SetBorderVisible( true );
-			m_pWeaponButton->SetBorderByString( "AdvRoundedButtonDefault", "AdvRoundedButtonArmed", "AdvRoundedButtonDepressed" );
-			m_pWeaponButton->SetLoadoutSlot( iSlot, iPreset );
-		}
-	}*/
 };
 
 
@@ -293,11 +270,49 @@ void CTFLoadoutPanel::OnCommand( const char* command )
 	{
 		SetCurrentClass( TF_CLASS_SPY );
 	}
+	/*else if (!Q_strncmp(command, "loadout", 7))
+	{
+		const char *sChar = strchr(command, ' ');
+		if (sChar)
+		{
+			int iSlot = atoi(sChar + 1);
+			sChar = strchr(sChar + 1, ' ');
+			if (sChar)
+			{
+				int iWeapon = atoi(sChar + 1);
+				SetSlotAndPreset(iSlot, iWeapon);
+			}
+		}
+		return;
+	}
 	else
 	{
-		/*char buffer[64];
-		const char* szText;
-		char strText[40];*/
+		if (!s_bItemMenu)
+		{
+			CTFItemPanel *ItemPanel = dynamic_cast<CTFItemPanel*>(GetMenuPanel(ITEMSELCTION_MENU));
+			ItemPanel->SetEnabled(true);
+			const char *sChar = strchr(command, ' ');
+			int iSlot = atoi(sChar + 1);
+			ItemPanel->SetCurrentClassAndSlot(m_iCurrentClass, iSlot);
+			s_bItemMenu = true;
+
+			//ItemPanel->SetCurrentClass(m_iCurrentClass);
+			MAINMENU_ROOT->ShowPanel(ITEMSELCTION_MENU);
+
+
+		}
+		else
+		{
+			CTFItemPanel *ItemPanel = dynamic_cast<CTFItemPanel*>(GetMenuPanel(ITEMSELCTION_MENU));
+
+			ItemPanel->SetEnabled(false);
+			s_bItemMenu = false;
+			MAINMENU_ROOT->HidePanel(ITEMSELCTION_MENU);
+		}
+	}
+}*/
+	else
+	{
 
 		if (!s_bItemMenu)
 		{
@@ -546,13 +561,13 @@ void CTFLoadoutPanel::DefaultLayout()
 {
 	BaseClass::DefaultLayout();
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if (pPlayer && pPlayer->m_iOldTeam == TF_TEAM_BLUE)
+	if ( pPlayer && pPlayer->m_iOldTeam == TF_TEAM_BLUE )
 	{
 		m_iCurrentSkin = TF_TEAM_BLUE - 2;
 	}
 	else
 	{
-		m_iCurrentSkin = 0;
+		m_iCurrentSkin = TF_TEAM_RED - 2;
 	}
 
 	/*C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
