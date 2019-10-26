@@ -1124,9 +1124,9 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			m_flFlameRemoveTime -= flReduction * gpGlobals->frametime;
 		}
 
-		if (InCond( TF_COND_BLEEDING ))
+		if ( InCond( TF_COND_BLEEDING ) )
 		{
-			for (int i=0; i<m_aBleeds.Count(); ++i)
+			for ( int i=0; i<m_aBleeds.Count(); ++i )
 			{
 				bleed_struct_t *bleed = &m_aBleeds[i];
 				bleed->m_flEndTime -= flReduction * gpGlobals->frametime;
@@ -1240,17 +1240,17 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
-	if (InCond( TF_COND_BLEEDING ))
+	if ( InCond( TF_COND_BLEEDING ) )
 	{
-		for (int i = m_aBleeds.Count() - 1; i >= 0; --i)
+		for ( int i = m_aBleeds.Count() - 1; i >= 0; --i )
 		{
 			bleed_struct_t *bleed = &m_aBleeds[i];
-			if (gpGlobals->curtime >= bleed->m_flEndTime)
+			if ( gpGlobals->curtime >= bleed->m_flEndTime )
 			{
 				m_aBleeds.FastRemove( i );
 				continue;
 			}
-			else if (gpGlobals->curtime >= bleed->m_flBleedTime)
+			else if ( gpGlobals->curtime >= bleed->m_flBleedTime )
 			{
 				bleed->m_flBleedTime = gpGlobals->curtime + TF_BLEEDING_FREQUENCY;
 
@@ -1259,7 +1259,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			}
 		}
 
-		if (m_aBleeds.IsEmpty())
+		if ( m_aBleeds.IsEmpty() )
 			RemoveCond( TF_COND_BLEEDING );
 	}
 

@@ -1308,6 +1308,11 @@ void CTFPlayer::Regenerate( void )
 		m_Shared.RemoveCond( TF_COND_MAD_MILK );
 	}
 
+	if ( m_Shared.InCond( TF_COND_BLEEDING ) )
+	{
+		m_Shared.RemoveCond( TF_COND_BLEEDING );
+	}
+
 	// Remove bonk! atomic punch phase
 	if ( m_Shared.InCond( TF_COND_PHASE ) )
 	{
