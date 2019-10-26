@@ -386,21 +386,17 @@ bool VScriptServerInit()
 		char const *pszScriptLanguage;
 		if ( CommandLine()->CheckParm( "-scriptlang", &pszScriptLanguage ) )
 		{
-			if( !Q_stricmp(pszScriptLanguage, "gamemonkey") )
-			{
-				scriptLanguage = SL_GAMEMONKEY;
-			}
-			else if( !Q_stricmp(pszScriptLanguage, "squirrel") )
+			if( !Q_stricmp(pszScriptLanguage, "squirrel") )
 			{
 				scriptLanguage = SL_SQUIRREL;
 			}
-			else if( !Q_stricmp(pszScriptLanguage, "python") )
+			else if( !Q_stricmp(pszScriptLanguage, "lua") )
 			{
-				scriptLanguage = SL_PYTHON;
+				scriptLanguage = SL_LUA;
 			}
 			else
 			{
-				DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
+				DevWarning("-scriptlang does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
 				scriptLanguage = SL_NONE;
 			}
 

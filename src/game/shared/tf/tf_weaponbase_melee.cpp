@@ -335,7 +335,7 @@ void CTFWeaponBaseMelee::Smack( void )
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
 #endif
 	
-	int iSelfHarm = 0; // Do we hit ourselves on a miss?
+	int iSelfHarm = 0;
 	CALL_ATTRIB_HOOK_INT( iSelfHarm, hit_self_on_miss );
 
 	// We hit, setup the smack.
@@ -351,6 +351,7 @@ void CTFWeaponBaseMelee::Smack( void )
 			WeaponSound( MELEE_HIT_WORLD );
 		}
 
+		// Do Damage.
 		DoMeleeDamage( trace.m_pEnt, trace );
 
 		// Don't impact trace friendly players or objects
