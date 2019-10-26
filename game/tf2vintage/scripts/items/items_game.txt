@@ -2300,15 +2300,6 @@
 		"weapon_reskin"
 		{
 			"is_reskin"			"1"
-			"attributes"
-			{
-				"is_reskin"
-				{
-					"attribute_class" "is_reskin"
-					"value" "1"
-				}
-			
-			}
 		}
 	}
 	"items"
@@ -10132,12 +10123,6 @@
 			"effect_type"	"positive"
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
-		}
-		"10006"
-		{
-			"name"	"is_reskin"
-			"attribute_class"	"is_reskin"
-			"hidden"	"1"
 		}
 	}
 	"attribute_controlled_attached_particles"

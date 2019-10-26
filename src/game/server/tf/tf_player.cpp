@@ -1832,11 +1832,18 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			const char *pszClassname = pItem->GetEntityName();
 			Assert( pszClassname );
 			bool bWhiteListedWeapon = true; // Defaulted to true, since whitelisting is a niche server option.
+			bool bIsReskin = false;			// Defaulted to false, since reskins aren't common.
 			
 			if ( tf2v_enforce_whitelist.GetBool() ) // Only run this when we need to.
 				bWhiteListedWeapon = IsWhiteListed(pszClassname);
+				
+			if (tf2v_allow_reskins.GetBool() )
+			{
+				CEconItemDefinition *pItemDef = pItem->GetStaticData();
+				bIsReskin = pItemDef->is_reskin;
+			}
 			
-			if ( ( bWhiteListedWeapon == true ) || !tf2v_enforce_whitelist.GetBool() ) // If the weapon is allowed, give it to the player.
+			if ( ( bWhiteListedWeapon == true ) || ( bIsReskin = false ) ) // If the weapon is allowed, give it to the player.
 			{
 				CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
 
@@ -1847,18 +1854,6 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			}
 			else // If the weapon is banned, give them the stock weapon.
 				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);	
-		}
-
-		// We check to make sure it's also not a reskin.
-		int iIsReskin = 0;
-		if (!tf2v_allow_reskins.GetBool())
-		{
-			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>(Weapon_GetSlot(iSlot));
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, iIsReskin, is_reskin);
-			if (iIsReskin != 0) // If it's a reskin, swap to the default weapon.
-			{
-				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);
-			}
 		}
 		
 	}
