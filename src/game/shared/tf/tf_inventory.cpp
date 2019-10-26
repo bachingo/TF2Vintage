@@ -102,7 +102,7 @@ bool CTFInventory::Init( void )
 #endif
 					m_Items[iClass][iSlot][0] = pNewItem;
 				}
-				else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->show_in_armory ) == 0 ) || ( bReskinsEnabled ) ) )
+				else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) )
 				{
 					CEconItemView *pNewItem = new CEconItemView( iItemID );
 
