@@ -1840,10 +1840,14 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( !tf2v_allow_reskins.GetBool() )
 			{
 				CEconItemDefinition *pItemDef = pItem->GetStaticData();
-				bIsReskin = pItemDef->is_reskin;
+
+				if ( pItemDef )
+				{
+					bIsReskin = pItemDef->is_reskin;
+				}
 			}
 			
-			if ( ( bWhiteListedWeapon == true ) && ( bIsReskin = false ) ) // If the weapon is allowed, give it to the player.
+			if ( ( bWhiteListedWeapon == true ) && ( bIsReskin == false ) ) // If the weapon is allowed, give it to the player.
 			{
 				CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
 
