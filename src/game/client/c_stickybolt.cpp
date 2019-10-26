@@ -141,15 +141,9 @@ private:
 
 void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin  )
 {
-	//model_t *pModel = (model_t *)engine->LoadModel( "models/crossbow_bolt.mdl" );
+	Assert( iType >= 0 && iType < ARRAYSIZE( g_pszArrowModelClient ) );
 	//repurpose old crossbow collision code for huntsman collisions
-	model_t *pModel;
-	if (iType == 2)
-		pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[2] );
-	else if (iType == 1)
-		pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[1] );
-	else 
-		pModel = (model_t *)engine->LoadModel( g_pszArrowModelClient[0] );
+	const model_t *pModel = engine->LoadModel( g_pszArrowModelClient[ iType ] );
 
 	QAngle vAngles;
 
