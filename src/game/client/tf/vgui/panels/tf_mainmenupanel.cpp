@@ -8,6 +8,7 @@
 #include "c_sdkversionchecker.h"
 #include "engine/IEngineSound.h"
 #include "vgui_avatarimage.h"
+#include "tf_gamerules.h"
 
 using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
@@ -220,6 +221,9 @@ void CTFMainMenuPanel::SetVersionLabel()  //GetVersionString
 char* CTFMainMenuPanel::GetRandomMusic()
 {
 	char* pszBasePath = "sound/ui/gamestartup";
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+		pszBasePath = "sound/ui/holiday/gamestartup_halloween";
+	
 	int iCount = 0;
 
 	for ( int i = 0; i < 27; i++ )
@@ -241,6 +245,9 @@ char* CTFMainMenuPanel::GetRandomMusic()
 	}
 
 	char* pszSoundPath = "ui/gamestartup";
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+		pszSoundPath = "ui/holiday/gamestartup_halloween";
+	
 	int iRand = rand() % iCount;
 	char szPath[MAX_PATH];
 	char szNumber[5];
