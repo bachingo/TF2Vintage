@@ -408,7 +408,7 @@ criterion "WeaponIsKGB" "item_name" "The Killing Gloves of Boxing" "required" we
 criterion "WeaponIsGRU" "item_name" "Gloves of Running Urgently" "required" weight 10
 criterion "WeaponIsBearGloves" "item_name" "Warrior's Spirit" "required" weight 10
 criterion "WeaponIsKritzkrieg" "item_name" "The Kritzkrieg" "required" weight 10
-criterion "WeaponIsBow" "item_type_name" "#TF_Weapon_CompoundBow" "required" weight 10
+criterion "WeaponIsBow" "playerweapon" "tf_weapon_compound_bow" "required" weight 10
 criterion "WeaponIsEqualizer" "item_name" "The Equalizer" "required" weight 10
 criterion "WeaponIsEscapePlan" "item_name" "The Escape Plan" "required" weight 10
 criterion "WeaponIsDirectHit" "item_name" "The Direct Hit" "required" weight 10
