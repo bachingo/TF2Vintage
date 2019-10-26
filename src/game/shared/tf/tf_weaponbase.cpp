@@ -1292,7 +1292,7 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( UsesClipsForAmmo1() )
 	{
 		// need to reload primary clip?
-		int primary	= min( iClipSize1 - m_iClip1, pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) );
+		int primary	= Min( iClipSize1 - m_iClip1, pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) );
 		if ( primary != 0 )
 		{
 			bReloadPrimary = true;
@@ -1302,7 +1302,7 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( UsesClipsForAmmo2() )
 	{
 		// need to reload secondary clip?
-		int secondary = min( iClipSize2 - m_iClip2, pPlayer->GetAmmoCount( m_iSecondaryAmmoType ) );
+		int secondary = Min( iClipSize2 - m_iClip2, pPlayer->GetAmmoCount( m_iSecondaryAmmoType ) );
 		if ( secondary != 0 )
 		{
 			bReloadSecondary = true;

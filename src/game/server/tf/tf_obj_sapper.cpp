@@ -325,8 +325,8 @@ void CObjectSapper::Killed( const CTakeDamageInfo &info )
 			}
 	}
 	
-		BaseClass::Killed(info);
-	}
+	BaseClass::Killed(info);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

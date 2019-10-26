@@ -191,6 +191,8 @@ IReplaySystem *g_pReplay = NULL;
 IServerReplayContext *g_pReplayServerContext = NULL;
 #endif
 
+static CDllDemandLoader hVScript( "vscript" );
+
 IGameSystem *SoundEmitterSystem();
 
 bool ModelSoundsCacheInit();
@@ -662,7 +664,14 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	if ( !CommandLine()->CheckParm( "-noscripting" ) )
 	{
-		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+		CreateInterfaceFn pfnCreateInterface = hVScript.GetFactory();
+		if ( pfnCreateInterface )
+		{
+			IAppSystem *pSystem = (IAppSystem *)pfnCreateInterface( VSCRIPT_INTERFACE_VERSION, NULL );
+			if( pSystem != nullptr )
+				scriptmanager = (IScriptManager *)pSystem;
+		}
+		AssertMsg( pfnCreateInterface && scriptmanager, "Scripting was not properly initialized" );
 	}
 
 	// If not running dedicated, grab the engine vgui interface
@@ -670,7 +679,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	{
 #ifdef _WIN32
 		// This interface is optional, and is only valid when running with -tools
-		serverenginetools = ( IServerEngineTools * )appSystemFactory( VSERVERENGINETOOLS_INTERFACE_VERSION, NULL );
+		serverenginetools = (IServerEngineTools *)appSystemFactory( VSERVERENGINETOOLS_INTERFACE_VERSION, NULL );
 #endif
 	}
 
