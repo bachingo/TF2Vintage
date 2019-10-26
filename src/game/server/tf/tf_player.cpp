@@ -124,6 +124,8 @@ extern ConVar sv_alltalk;
 
 extern ConVar tf_teamtalk;
 extern ConVar tf_halloween;
+extern ConVar tf_christmas;
+extern ConVar tf_birthday;
 extern ConVar tf_enable_grenades;
 extern ConVar tf_arena_force_class;
 extern ConVar tf_spy_invis_time;
@@ -1830,24 +1832,29 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		if ( pItem)
 		{
 			const char *pszClassname = pItem->GetEntityName();
+			CEconItemDefinition *pItemDef = pItem->GetStaticData();
 			Assert( pszClassname );
 			bool bWhiteListedWeapon = true; // Defaulted to true, since whitelisting is a niche server option.
 			bool bIsReskin = false;			// Defaulted to false, since reskins aren't common.
+			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
 			
-			if ( tf2v_enforce_whitelist.GetBool() ) // Only run this when we need to.
+			// Only run these checks when necessary.
+			
+			if ( tf2v_enforce_whitelist.GetBool() ) 	// Checks if it's allowed on the server whitelist.
 				bWhiteListedWeapon = IsWhiteListed(pszClassname);
 				
-			if ( !tf2v_allow_reskins.GetBool() )
-			{
-				CEconItemDefinition *pItemDef = pItem->GetStaticData();
-
-				if ( pItemDef )
-				{
-					bIsReskin = pItemDef->is_reskin;
-				}
-			}
+			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
+				bIsReskin = pItemDef->is_reskin;
 			
-			if ( ( bWhiteListedWeapon == true ) && ( bIsReskin == false ) ) // If the weapon is allowed, give it to the player.
+			// Checks for holiday restrictions.
+			if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
+				bHolidayRestrictedItem = true;
+			
+			if ( ( bWhiteListedWeapon == true ) && ( bIsReskin == false ) && ( bHolidayRestrictedItem == false ) ) // If the weapon is allowed, give it to the player.
 			{
 				CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
 

@@ -160,6 +160,10 @@ public:
 	static int		CalcPlayerScore( RoundStats_t *pRoundStats );
 
 	bool			IsBirthday( void );
+	bool			IsHalloween( void );
+	bool			IsChristmas( void );
+	bool			IsValentinesDay( void );
+	bool			IsAprilFools( void );
 	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
 
 	virtual const unsigned char *GetEncryptionKey( void ) { return (unsigned char *)"E2NcUkG2"; }
@@ -496,6 +500,10 @@ public:
 	int	 m_iPreviousRoundWinners;
 
 	int	m_iBirthdayMode;
+	int	m_iHalloweenMode;
+	int	m_iChristmasMode;
+	int	m_iValentinesDayMode;
+	int	m_iAprilFoolsMode;
 
 #ifdef GAME_DLL
 	float m_flCTFBonusTime;

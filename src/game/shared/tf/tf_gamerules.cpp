@@ -86,6 +86,30 @@ enum
 	BIRTHDAY_OFF,
 	BIRTHDAY_ON,
 };
+enum
+{
+	HALLOWEEN_RECALCULATE,
+	HALLOWEEN_OFF,
+	HALLOWEEN_ON,
+};
+enum
+{
+	CHRISTMAS_RECALCULATE,
+	CHRISTMAS_OFF,
+	CHRISTMAS_ON,
+};
+enum
+{
+	VALENTINESDAY_RECALCULATE,
+	VALENTINESDAY_OFF,
+	VALENTINESDAY_ON,
+};
+enum
+{
+	APRILFOOLS_RECALCULATE,
+	APRILFOOLS_OFF,
+	APRILFOOLS_ON,
+};
 
 static int g_TauntCamAchievements[] =
 {
@@ -5483,6 +5507,129 @@ bool CTFGameRules::IsBirthday( void )
 	return ( m_iBirthdayMode == BIRTHDAY_ON );
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsHalloween( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iHalloweenMode == HALLOWEEN_RECALCULATE )
+	{
+		m_iHalloweenMode = HALLOWEEN_OFF;
+		if ( tf_halloween.GetBool() )
+		{
+			m_iHalloweenMode = HALLOWEEN_ON;
+		}
+		else
+		{
+			time_t ltime = time( 0 );
+			const time_t *ptime = &ltime;
+			struct tm *today = localtime( ptime );
+			if ( today )
+			{
+				if ( today->tm_mon == 10 && today->tm_mday == 31 )
+				{
+					m_iHalloweenMode = HALLOWEEN_ON;
+				}
+			}
+		}
+	}
+
+	return ( m_iHalloweenMode == HALLOWEEN_ON );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsChristmas( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iChristmasMode == CHRISTMAS_RECALCULATE )
+	{
+		m_iChristmasMode = CHRISTMAS_OFF;
+		if ( tf_christmas.GetBool() )
+		{
+			m_iChristmasMode = CHRISTMAS_ON;
+		}
+		else
+		{
+			time_t ltime = time( 0 );
+			const time_t *ptime = &ltime;
+			struct tm *today = localtime( ptime );
+			if ( today )
+			{
+				if ( today->tm_mon == 12 && today->tm_mday == 25 )
+				{
+					m_iChristmasMode = CHRISTMAS_ON;
+				}
+			}
+		}
+	}
+
+	return ( m_iChristmasMode == CHRISTMAS_ON );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsValentinesDay( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iValentinesDayMode == VALENTINESDAY_RECALCULATE )
+	{
+		m_iValentinesDayMode = VALENTINESDAY_OFF;
+		
+		time_t ltime = time( 0 );
+		const time_t *ptime = &ltime;
+		struct tm *today = localtime( ptime );
+		if ( today )
+		{
+			if ( today->tm_mon == 2 && today->tm_mday == 14 )
+			{
+				m_iValentinesDayMode = VALENTINESDAY_ON;
+			}
+		}
+	}
+
+	return ( m_iValentinesDayMode == VALENTINESDAY_ON );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsAprilFools( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iAprilFoolsMode == APRILFOOLS_RECALCULATE )
+	{
+		m_iAprilFoolsMode = APRILFOOLS_OFF;
+		
+		time_t ltime = time( 0 );
+		const time_t *ptime = &ltime;
+		struct tm *today = localtime( ptime );
+		if ( today )
+		{
+			if ( ( today->tm_mon == 4 && today->tm_mday == 1 ) )
+			{
+				m_iAprilFoolsMode = APRILFOOLS_ON;
+			}
+		}
+		
+	}
+
+	return ( m_iAprilFoolsMode == APRILFOOLS_ON );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -5495,10 +5642,16 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 			bActive = IsBirthday();
 			break;
 		case kHoliday_Halloween:
-			bActive = tf_halloween.GetBool();
+			bActive = IsHalloween();
 			break;
 		case kHoliday_Christmas:
-			bActive = tf_christmas.GetBool();
+			bActive = IsChristmas();
+			break;
+		case kHoliday_ValentinesDay:
+			bActive = IsValentinesDay();
+			break;
+		case kHoliday_AprilFools:
+			bActive = IsAprilFools();
 			break;
 		default:
 			break;

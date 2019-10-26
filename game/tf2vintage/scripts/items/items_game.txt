@@ -367,6 +367,18 @@
 				}
 			}
 		}
+		"halloween"
+		{
+			"holiday_restriction"	"halloween_or_fullmoon"
+		}
+		"christmas"
+		{
+			"holiday_restriction"	"christmas"
+		}
+		"birthday"
+		{
+			"holiday_restriction"	"birthday"
+		}
 		
 		"weapon_minigun"
 		{

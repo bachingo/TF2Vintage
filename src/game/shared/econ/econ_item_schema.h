@@ -264,6 +264,7 @@ public:
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 		is_reskin = false;
+		CLEAR_STR(holiday_restriction);
 	}
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
@@ -304,6 +305,8 @@ public:
 	bool act_as_wearable;
 	int hide_bodygroups_deployed_only;
 	bool is_reskin;
+	char holiday_restriction[128];
+	
 	CUtlVector<CEconItemAttribute> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];
 };
