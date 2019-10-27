@@ -41,6 +41,7 @@ extern IMaterialSystem *materials;
 using namespace vgui;
 
 ConVar cl_windowmode( "cl_windowmode", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Set the mode of the game window (fullscreen, windowed, borderless)", true, 0.0f, true, 2.0f );
+ConVar cl_unlockfovsliders( "cl_unlockfovsliders", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Unlock the standard FOV up to super high settings", true, 0, true, 1 );
 
 //-----------------------------------------------------------------------------
 // Purpose: aspect ratio mappings (for normal/widescreen combo)
@@ -398,7 +399,10 @@ void CTFOptionsVideoPanel::CreateControls()
 	m_pQueuedMode->AddItem("#gameui_disabled", NULL);
 	m_pQueuedMode->AddItem("#gameui_enabled", NULL);
 
-	m_pFOVSlider = new CCvarSlider(this, "FOV", "#GameUI_FOV", 75.0f, MAX_FOV, "fov_desired");
+	if (cl_unlockfovsliders.GetBool() )
+		m_pFOVSlider = new CCvarSlider(this, "FOV", "#GameUI_FOV", 75.0f, MAX_FOV_UNLOCKED, "fov_desired");
+	else
+		m_pFOVSlider = new CCvarSlider(this, "FOV", "#GameUI_FOV", 75.0f, MAX_FOV, "fov_desired");
 
 	m_pDXLevel->SetVisible(false);
 
