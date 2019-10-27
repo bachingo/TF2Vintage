@@ -238,7 +238,7 @@ enum CastVote
 
 #if defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
 #define MAX_FOV						110
-#define MAX_FOV_UNLOCKED			179.9
+#define MAX_FOV_UNLOCKED			360
 #else
 #define MAX_FOV						90
 #define MAX_FOV_UNLOCKED			90
