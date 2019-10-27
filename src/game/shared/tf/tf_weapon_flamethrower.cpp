@@ -843,7 +843,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "flamethrower_rainbow_FP";
-			else if ( tf_halloween.GetBool() )
+			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
 				szParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
 			else
 				szParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
@@ -852,7 +852,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "flamethrower_rainbow_FP";
-			else if ( tf_halloween.GetBool() )
+			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
 				szParticleEffect = "flamethrower_halloween";
 			else
 				szParticleEffect = "flamethrower";
@@ -864,7 +864,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
-			else if ( tf_halloween.GetBool() )
+			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
 				szParticleEffect = ConstructTeamParticle( "tf2v_flamethrower_halloween_crit_%s_new_flame", iTeam, true );
 			else
 				szParticleEffect = ConstructTeamParticle( "tf2v_new_flame_crit_%s", iTeam, true );
@@ -873,7 +873,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
-			else if ( tf_halloween.GetBool() )
+			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
 				szParticleEffect = "tf2v_flamethrower_halloween_new_flame";
 			else
 				szParticleEffect = "tf2v_new_flame";
@@ -1247,7 +1247,7 @@ void CTFFlameEntity::ClientThink( void )
 		const char *pszParticleEffect = "tf2v_new_flame_core";
 		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_waterfall_core";
-		if ( tf_halloween.GetBool() && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )  && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_core_halloween";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );

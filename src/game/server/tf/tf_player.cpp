@@ -1814,7 +1814,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		if ( (iSlot == TF_LOADOUT_SLOT_BUILDING ) || (iSlot == TF_LOADOUT_SLOT_UTILITY ) )
 		continue;	// These are special slots, we don't bother to check them.
 		
-		if (!tf_halloween.GetBool() && iSlot == TF_LOADOUT_SLOT_ZOMBIE)
+		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && iSlot == TF_LOADOUT_SLOT_ZOMBIE)
 		continue;	// If it's not Halloween, just skip the action slot.
 		
 		if ( !tf2v_allow_cosmetics.GetBool() && ( ( iSlot > TF_PLAYER_WEAPON_COUNT ) && ( iSlot != TF_LOADOUT_SLOT_ZOMBIE ) ) )
@@ -1847,11 +1847,11 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				bIsReskin = pItemDef->is_reskin;
 			
 			// Checks for holiday restrictions.
-			if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
+			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
 				bHolidayRestrictedItem = true;
-			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
 				bHolidayRestrictedItem = true;
-			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
 				bHolidayRestrictedItem = true;
 			
 			if ( ( bWhiteListedWeapon == true ) && ( bIsReskin == false ) && ( bHolidayRestrictedItem == false ) ) // If the weapon is allowed, give it to the player.
@@ -1901,7 +1901,7 @@ void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 		if ( (iWeapon >=TF_LOADOUT_SLOT_HAT && iWeapon != TF_LOADOUT_SLOT_ZOMBIE ) )
 			continue; // Always bail on cosmetics, other than zombie skins.
 		
-		if (tf_halloween.GetBool() && iWeapon == TF_LOADOUT_SLOT_ZOMBIE)
+		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && iWeapon == TF_LOADOUT_SLOT_ZOMBIE)
 		{
 			EnableZombies( pData );
 			continue;	// If it's Halloween, make sure it's our class' zombie skin.
@@ -1997,13 +1997,13 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		if ( i == TF_LOADOUT_SLOT_UTILITY )
 		continue;	// Don't check this slot, it's currently unused.
 	
-		if (!tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ZOMBIE)
+		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && i == TF_LOADOUT_SLOT_ZOMBIE)
 		continue;	// If it's not Halloween, just skip the action slot.
 		
 		if ( !tf2v_allow_cosmetics.GetBool() && ( ( i > TF_PLAYER_WEAPON_COUNT ) && (i != TF_LOADOUT_SLOT_ZOMBIE ) ) )
 		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
 	
-		if ( tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ZOMBIE )
+		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && i == TF_LOADOUT_SLOT_ZOMBIE )
 		{
 		EnableZombies( pData );
 		continue;	// If it's Halloween, make sure it's our class' zombie skin.

@@ -4414,7 +4414,7 @@ int C_TFPlayer::GetSkin()
 	switch (iVisibleTeam)
 	{
 	case TF_TEAM_RED:
-		if (tf_halloween.GetBool())
+		if (TFGameRules()->IsHolidayActive(kHoliday_Halloween) || TFGameRules()->IsHolidayActive(kHoliday_HalloweenOrFullMoon))
 		{
 			if (IsPlayerClass(TF_CLASS_SPY))
 			{
@@ -4434,7 +4434,7 @@ int C_TFPlayer::GetSkin()
 		break;
 
 	case TF_TEAM_BLUE:
-		if (tf_halloween.GetBool())
+		if (TFGameRules()->IsHolidayActive(kHoliday_Halloween) || TFGameRules()->IsHolidayActive(kHoliday_HalloweenOrFullMoon))
 		{
 			if (IsPlayerClass(TF_CLASS_SPY))
 			{
