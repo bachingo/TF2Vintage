@@ -221,8 +221,6 @@ void CTFMainMenuPanel::SetVersionLabel()  //GetVersionString
 char* CTFMainMenuPanel::GetRandomMusic()
 {
 	char* pszBasePath = "sound/ui/gamestartup";
-	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
-		pszBasePath = "sound/ui/holiday/gamestartup_halloween";
 	
 	int iCount = 0;
 
@@ -245,8 +243,6 @@ char* CTFMainMenuPanel::GetRandomMusic()
 	}
 
 	char* pszSoundPath = "ui/gamestartup";
-	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
-		pszSoundPath = "ui/holiday/gamestartup_halloween";
 	
 	int iRand = rand() % iCount;
 	char szPath[MAX_PATH];
