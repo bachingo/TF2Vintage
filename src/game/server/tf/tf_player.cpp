@@ -9897,7 +9897,7 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 	{
 		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
 		{
-			if ( Q_stricmp( pKey->GetName(), "pszClassname" ) == 1 )
+			if ( Q_stricmp( pKey->GetName(), pszClassname ) == 0 )
 			{
 				int iWeapon = abs( pKey->GetInt() );
 				if ( iWeapon == 1 )
@@ -9908,7 +9908,7 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 		}
 		for (KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey())
 		{
-			if (Q_stricmp(pKey->GetName(), "unlisted_items_default_to") == '1')
+			if (Q_stricmp(pKey->GetName(), "unlisted_items_default_to") == 0 )
 			{
 				int iWeapon = abs(pKey->GetInt());
 				if (iWeapon == 1)
