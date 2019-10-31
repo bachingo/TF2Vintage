@@ -143,6 +143,7 @@ static	kbutton_t	in_zoom;
 static  kbutton_t   in_grenade1;
 static  kbutton_t   in_grenade2;
 static	kbutton_t	in_attack3;
+static	kbutton_t	action_use;
 kbutton_t	in_ducktoggle;
 
 /*
@@ -490,6 +491,8 @@ void IN_Grenade2Down( const CCommand &args ) { KeyDown( &in_grenade2, args[1] );
 void IN_XboxStub( const CCommand &args ) { /*do nothing*/ }
 void IN_Attack3Down( const CCommand &args ) { KeyDown(&in_attack3, args[1] );}
 void IN_Attack3Up( const CCommand &args ) { KeyUp(&in_attack3, args[1] );}
+void IN_ActionDown ( const CCommand &args ) {KeyDown(&action_use, args[1] );}
+void IN_ActionUp ( const CCommand &args ) {KeyUp(&action_use, args[1] );}
 
 void IN_DuckToggle( const CCommand &args ) 
 { 
@@ -1620,12 +1623,14 @@ static ConCommand force_centerview("force_centerview", IN_CenterView_f);
 static ConCommand joyadvancedupdate("joyadvancedupdate", IN_Joystick_Advanced_f, "", FCVAR_CLIENTCMD_CAN_EXECUTE);
 static ConCommand startzoom("+zoom", IN_ZoomDown);
 static ConCommand endzoom("-zoom", IN_ZoomUp);
-static ConCommand endgrenade1( "-grenade1", IN_Grenade1Up );
 static ConCommand startgrenade1( "+grenade1", IN_Grenade1Down );
-static ConCommand endgrenade2( "-grenade2", IN_Grenade2Up );
+static ConCommand endgrenade1( "-grenade1", IN_Grenade1Up );
 static ConCommand startgrenade2( "+grenade2", IN_Grenade2Down );
+static ConCommand endgrenade2( "-grenade2", IN_Grenade2Up );
 static ConCommand startattack3("+attack3", IN_Attack3Down);
 static ConCommand endattack3("-attack3", IN_Attack3Up);
+static ConCommand startaction("+use_action_slot_item", IN_ActionDown);
+static ConCommand endaction("-use_action_slot_item", IN_ActionUp);
 
 #if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
 static ConCommand toggle_duck( "toggle_duck", IN_DuckToggle );
