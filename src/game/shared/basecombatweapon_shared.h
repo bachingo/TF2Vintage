@@ -180,6 +180,7 @@ public:
 	DECLARE_CLASS( CBaseCombatWeapon, BASECOMBATWEAPON_DERIVED_FROM );
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
+	DECLARE_ENT_SCRIPTDESC();
 
 							CBaseCombatWeapon();
 	virtual 				~CBaseCombatWeapon();

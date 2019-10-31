@@ -19,6 +19,8 @@
 
 extern IScriptManager *scriptmanager;
 extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
+extern void RegisterScriptedWeapon( char const *szName );
+extern void RegisterScriptedEntity( char const *szName );
 
 // #define VMPROFILE 1
 
@@ -75,25 +77,21 @@ bool VScriptClientInit()
 		char const *pszScriptLanguage;
 		if ( CommandLine()->CheckParm( "-scriptlang", &pszScriptLanguage ) )
 		{
-			if( !Q_stricmp(pszScriptLanguage, "gamemonkey") )
-			{
-				scriptLanguage = SL_GAMEMONKEY;
-			}
-			else if( !Q_stricmp(pszScriptLanguage, "squirrel") )
+			if( !Q_stricmp(pszScriptLanguage, "squirrel") )
 			{
 				scriptLanguage = SL_SQUIRREL;
 			}
-			else if( !Q_stricmp(pszScriptLanguage, "python") )
+			else if( !Q_stricmp(pszScriptLanguage, "lua") )
 			{
-				scriptLanguage = SL_PYTHON;
+				scriptLanguage = SL_LUA;
 			}
 			else
 			{
 				DevWarning("-scriptlang does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
 				scriptLanguage = SL_NONE;
 			}
-
 		}
+
 		if( scriptLanguage != SL_NONE )
 		{
 			if ( g_pScriptVM == NULL )
@@ -105,6 +103,8 @@ bool VScriptClientInit()
 				ScriptRegisterFunction( g_pScriptVM, GetMapName, "Get the name of the map.");
 				ScriptRegisterFunction( g_pScriptVM, Time, "Get the current server time" );
 				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, "Execute a script (internal)" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedEntity, "RegisterEnt", "Register an entity by name that can be created" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedWeapon, "RegisterWep", "Register a weapon by name that can be created" );
 				
 				if ( GameRules() )
 				{

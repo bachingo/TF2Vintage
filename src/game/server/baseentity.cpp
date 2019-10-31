@@ -2200,6 +2200,12 @@ void CBaseEntity::UpdateOnRemove( void )
 		modelinfo->ReleaseDynamicModel( m_nModelIndex ); // no-op if not dynamic
 		m_nModelIndex = -1;
 	}
+
+	if ( m_hScriptInstance )
+	{
+		g_pScriptVM->RemoveInstance( m_hScriptInstance );
+		m_hScriptInstance = NULL;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -4086,7 +4092,36 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 						data.value = Value;
 						data.nOutputID = outputID;
 
-						(this->*pfnInput)( data );
+						// Now, see if there's a function named Input<Name of Input> in this entity's script file. 
+						// If so, execute it and let it decide whether to allow the default behavior to also execute.
+						bool bCallInputFunc = true; // Always assume default behavior (do call the input function)
+						ScriptVariant_t functionReturn;
+
+						if ( m_ScriptScope.IsInitialized() )
+						{
+							char szScriptFunctionName[255];
+							Q_strcpy( szScriptFunctionName, "Input" );
+							Q_strcat( szScriptFunctionName, szInputName, 255 );
+
+							g_pScriptVM->SetValue( "activator", ( pActivator ) ? ScriptVariant_t( pActivator->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
+							g_pScriptVM->SetValue( "caller", ( pCaller ) ? ScriptVariant_t( pCaller->GetScriptInstance() ) : SCRIPT_VARIANT_NULL );
+
+							if( CallScriptFunction( szScriptFunctionName, &functionReturn ) )
+							{
+								bCallInputFunc = functionReturn.m_bool;
+							}
+						}
+
+						if( bCallInputFunc )
+						{
+							(this->*pfnInput)( data );
+						}
+
+						if ( m_ScriptScope.IsInitialized() )
+						{
+							g_pScriptVM->ClearValue( "activator" );
+							g_pScriptVM->ClearValue( "caller" );
+						}
 					}
 					else if ( dmap->dataDesc[i].flags & FTYPEDESC_KEY )
 					{
@@ -6855,7 +6890,7 @@ void CBaseEntity::ScriptThink( void )
 //-----------------------------------------------------------------------------
 const char *CBaseEntity::GetScriptId()
 {
-	return STRING( m_iszScriptThinkFunction );
+	return STRING( m_iszScriptId );
 }
 
 //-----------------------------------------------------------------------------
@@ -7728,9 +7763,6 @@ bool CBaseEntity::ValidateScriptScope()
 
 		// Force instance creation
 		GetScriptInstance();
-
-		EHANDLE hThis;
-		hThis.Set( this );
 
 		bool bResult = m_ScriptScope.Init( STRING( m_iszScriptId ) );
 
