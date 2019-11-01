@@ -96,6 +96,12 @@ static int g_aClassLoadoutSlots[TF_CLASS_COUNT_ALL][INVENTORY_ROWNUM] =
 		TF_LOADOUT_SLOT_MISC1,
 		TF_LOADOUT_SLOT_MISC2,
 	},
+	{
+		TF_LOADOUT_SLOT_MELEE,
+		TF_LOADOUT_SLOT_HAT,
+		TF_LOADOUT_SLOT_MISC1,
+		TF_LOADOUT_SLOT_MISC2,
+	},
 };
 
 struct _WeaponData
@@ -229,7 +235,7 @@ bool CTFItemPanel::Init()
 	}
 
 
-	/*for (int iClassIndex = 0; iClassIndex < TF_CLASS_COUNT_ALL; iClassIndex++)
+	/*for (int iClassIndex = 0; iClassIndex <= TF_CLASS_COUNT; iClassIndex++)
 	{
 		if (pszClassModels[iClassIndex][0] != '\0')
 			modelinfo->FindOrLoadModel(pszClassModels[iClassIndex]);

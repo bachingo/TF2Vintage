@@ -33,6 +33,9 @@ enum
 	TF_TEAM_BOSS
 };
 
+#define TF_PLAYER_BOSS_TEAM TF_TEAM_BLUE
+#define TF_PLAYER_HORDE_TEAM TF_TEAM_RED
+
 #define TF_TEAM_AUTOASSIGN (TF_TEAM_COUNT + 1 )
 
 extern const char *g_aTeamNames[TF_TEAM_COUNT];
@@ -110,9 +113,10 @@ enum
 //-----------------------------------------------------------------------------
 // Player Classes.
 //-----------------------------------------------------------------------------
-#define TF_CLASS_COUNT			( TF_CLASS_COUNT_ALL - 1 )
+#define TF_CLASS_COUNT			( TF_CLASS_ENGINEER )
 
 #define TF_FIRST_NORMAL_CLASS	( TF_CLASS_UNDEFINED + 1 )
+
 
 #define	TF_CLASS_MENU_BUTTONS	( TF_CLASS_RANDOM + 1 )
 
@@ -129,6 +133,12 @@ enum
 	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
 	TF_CLASS_ENGINEER,		// TF_CLASS_COUNT
+	
+	// New classes go here.
+	// These are special classes and are not found normally.
+	TF_CLASS_SAXTON,
+	
+	
 	TF_CLASS_COUNT_ALL,
 
 	TF_CLASS_RANDOM
@@ -403,6 +413,7 @@ enum
 	TF_WEAPON_SNIPERRIFLE_REAL,
 	TF_WEAPON_SNIPERRIFLE_CLASSIC,
 	TF_WEAPON_GRENADE_PIPEBOMB_BETA,
+	TF_WEAPON_SHOVELFIST,
 	
 	TF_WEAPON_COUNT
 };

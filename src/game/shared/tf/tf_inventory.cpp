@@ -148,7 +148,7 @@ CEconItemView *CTFInventory::GetItem( int iClass, int iSlot, int iNum )
 
 bool CTFInventory::CheckValidSlot(int iClass, int iSlot, bool bHudCheck /*= false*/)
 {
-	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT)
+	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
 		return false;
 
 	int iCount = (bHudCheck ? INVENTORY_ROWNUM : TF_LOADOUT_SLOT_COUNT);
@@ -166,7 +166,7 @@ bool CTFInventory::CheckValidSlot(int iClass, int iSlot, bool bHudCheck /*= fals
 
 bool CTFInventory::CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHudCheck /*= false*/)
 {
-	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT)
+	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
 		return false;
 
 	int iCount = ( bHudCheck ? INVENTORY_COLNUM : m_Items[iClass][iSlot].Count() );
@@ -321,5 +321,8 @@ const int CTFInventory::Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER] =
 		TF_WEAPON_WRENCH,
 		TF_WEAPON_PDA_ENGINEER_BUILD,
 		TF_WEAPON_PDA_ENGINEER_DESTROY
+	},
+	{
+		TF_WEAPON_SHOVELFIST
 	},
 };

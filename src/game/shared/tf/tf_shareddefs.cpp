@@ -111,6 +111,7 @@ const char *g_aPlayerClassNames[] =
 	"#TF_Class_Name_Pyro",
 	"#TF_Class_Name_Spy",
 	"#TF_Class_Name_Engineer",
+	"#TF_SaxtonHat",
 };
 
 const char *g_aPlayerClassNames_NonLocalized[] =
@@ -125,6 +126,7 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Pyro",
 	"Spy",
 	"Engineer",
+	"Saxton Hale",
 };
 
 const char *g_aDominationEmblems[] =
@@ -158,6 +160,7 @@ const char *g_aPlayerClassEmblems[] =
 	"../hud/leaderboard_class_pyro",
 	"../hud/leaderboard_class_spy",
 	"../hud/leaderboard_class_engineer",
+	"../hud/leaderboard_class_tank",
 };
 
 const char *g_aPlayerClassEmblemsDead[] =
@@ -171,6 +174,7 @@ const char *g_aPlayerClassEmblemsDead[] =
 	"../hud/leaderboard_class_pyro_d",
 	"../hud/leaderboard_class_spy_d",
 	"../hud/leaderboard_class_engineer_d",
+	"../hud/leaderboard_class_tank",
 };
 
 typedef struct PlayerClassData
@@ -189,12 +193,13 @@ PlayerClassData_t gs_PlayerClassData[ TF_CLASS_COUNT_ALL + 1 ] ={
 	{	"Pyro",       "#TF_Class_Name_Pyro"      },
 	{	"Spy",        "#TF_Class_Name_Spy"       },
 	{	"Engineer",   "#TF_Class_Name_Engineer"  },
+	{	"Saxton",     "#TF_SaxtonHat"  },
 	{	"Invalid",    NULL  }
 };
 
 bool IsPlayerClassName( char const *str )
 {
-	for (int i = 1; i < TF_CLASS_COUNT; ++i)
+	for (int i = 1; i < TF_CLASS_COUNT_ALL; ++i)
 	{
 		TFPlayerClassData_t *data = GetPlayerClassData( i );
 		if (FStrEq( str, data->m_szClassName ))
@@ -519,6 +524,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SNIPERRIFLE_REAL",
 	"TF_WEAPON_SNIPERRIFLE_CLASSIC",
 	"TF_WEAPON_GRENADE_PIPEBOMB_BETA",
+	"TF_WEAPON_SHOVELFIST",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -611,6 +617,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BULLET | DMG_USE_HITLOCATIONS,			// TF_WEAPON_SNIPERRIFLE_REAL,
 	DMG_BULLET | DMG_USE_HITLOCATIONS,			// TF_WEAPON_SNIPERRIFLE_CLASSIC,
 	DMG_BLAST | DMG_HALF_FALLOFF,               // TF_WEAPON_GRENADE_PIPEBOMB_BETA
+	DMG_CLUB,									// TF_WEAPON_SHOVELFIST
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list

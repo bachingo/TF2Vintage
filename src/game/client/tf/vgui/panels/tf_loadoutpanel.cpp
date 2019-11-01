@@ -31,6 +31,7 @@ static char* pszClassModels[TF_CLASS_COUNT_ALL] =
 	"models/player/pyro.mdl",
 	"models/player/spy.mdl",
 	"models/player/engineer.mdl",
+	"models/player/saxton_test4/saxton_hale_test4.mdl",
 };
 
 static int g_aClassLoadoutSlots[TF_CLASS_COUNT_ALL][INVENTORY_ROWNUM] =
@@ -105,6 +106,12 @@ static int g_aClassLoadoutSlots[TF_CLASS_COUNT_ALL][INVENTORY_ROWNUM] =
 	{
 		TF_LOADOUT_SLOT_PRIMARY,
 		TF_LOADOUT_SLOT_SECONDARY,
+		TF_LOADOUT_SLOT_MELEE,
+		TF_LOADOUT_SLOT_HAT,
+		TF_LOADOUT_SLOT_MISC1,
+		TF_LOADOUT_SLOT_MISC2,
+	},
+	{
 		TF_LOADOUT_SLOT_MELEE,
 		TF_LOADOUT_SLOT_HAT,
 		TF_LOADOUT_SLOT_MISC1,
