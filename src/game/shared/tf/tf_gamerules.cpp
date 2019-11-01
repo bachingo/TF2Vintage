@@ -264,6 +264,7 @@ Vector g_TFClassViewVectors[TF_CLASS_COUNT_ALL] =
 	Vector( 0, 0, 68 ),		// TF_CLASS_PYRO,
 	Vector( 0, 0, 75 ),		// TF_CLASS_SPY,
 	Vector( 0, 0, 68 ),		// TF_CLASS_ENGINEER,
+	Vector( 0, 0, 68 ),		// TF_CLASS_SAXTON,
 };
 
 const CViewVectors *CTFGameRules::GetViewVectors() const
@@ -1316,15 +1317,6 @@ void CTFGameRules::Activate()
 		}
 		return;
 	}
-	
-	CArenaLogic *pVSH = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_vsh" ) );
-	if ( pVSH )
-	{
-		m_nGameType.Set( TF_GAMETYPE_ARENA );
-		tf_gamemode_arena.SetValue( 1 );
-		m_bPlayingVSH = true;
-		return;
-	}
 
 	CKothLogic *pKoth = dynamic_cast<CKothLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_koth" ) );
 	if ( pKoth )
@@ -1458,21 +1450,31 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 	int iClassLimit = 0;
 	int iClassCount = 0;
 
-	iClassLimit = GetClassLimit( iDesiredClassIndex );
-
-	if ( iClassLimit != -1 && pTFTeam && pTFPlayer->GetTeamNumber() >= TF_TEAM_RED )
+	if ( iDesiredClassIndex <= TF_CLASS_COUNT ) 
 	{
-		for ( int i = 0; i < pTFTeam->GetNumPlayers(); i++ )
+		iClassLimit = GetClassLimit( iDesiredClassIndex );
+
+		if ( iClassLimit != -1 && pTFTeam && pTFPlayer->GetTeamNumber() >= TF_TEAM_RED )
 		{
-			if ( pTFTeam->GetPlayer( i ) && pTFTeam->GetPlayer( i ) != pPlayer )
-				iClassCount += iDesiredClassIndex == ToTFPlayer( pTFTeam->GetPlayer( i ) )->GetPlayerClass()->GetClassIndex();
-		}
+			for ( int i = 0; i < pTFTeam->GetNumPlayers(); i++ )
+			{
+				if ( pTFTeam->GetPlayer( i ) && pTFTeam->GetPlayer( i ) != pPlayer )
+					iClassCount += iDesiredClassIndex == ToTFPlayer( pTFTeam->GetPlayer( i ) )->GetPlayerClass()->GetClassIndex();
+			}
 
-		return iClassLimit > iClassCount;
+			return iClassLimit > iClassCount;
+		}
+		else
+			return true;
 	}
-	else
+	else if ( !IsInVSHMode() && ( iDesiredClassIndex > TF_CLASS_COUNT ) )
+		return false;
+	else if ( IsInVSHMode() && ( iDesiredClassIndex > TF_CLASS_COUNT ) )
 	{
-		return true;
+		if ( pTFPlayer->GetTeamNumber() == TF_PLAYER_BOSS_TEAM )
+			return true;
+		else
+			return false;
 	}
 
 	return true;
@@ -5057,14 +5059,31 @@ void CTFGameRules::HandleScrambleTeams( void )
 		}
 	}
 
-	// loop through and auto team everyone
-	for ( i = 0; i < pListPlayers.Count(); i++ )
+	if (IsInVSHMode())
 	{
-		pTFPlayer = pListPlayers[i];
-
-		if ( pTFPlayer )
+		// We random pick a player to be the boss character.
+		int iBossPlayer = RandomInt(0, pListPlayers.Count());
+		for ( i = 0; i < pListPlayers.Count(); i++ )
 		{
-			pTFPlayer->ForceChangeTeam( TF_TEAM_AUTOASSIGN );
+			pTFPlayer = pListPlayers[i];
+
+			if ( pTFPlayer && ( i == iBossPlayer ) )
+				pTFPlayer->ForceChangeTeam( TF_PLAYER_BOSS_TEAM );
+			else if ( pTFPlayer && ( i != iBossPlayer ) )
+				pTFPlayer->ForceChangeTeam( TF_PLAYER_HORDE_TEAM );
+		}
+	}
+	else
+	{
+		// loop through and auto team everyone
+		for ( i = 0; i < pListPlayers.Count(); i++ )
+		{
+			pTFPlayer = pListPlayers[i];
+
+			if ( pTFPlayer )
+			{
+				pTFPlayer->ForceChangeTeam( TF_TEAM_AUTOASSIGN );
+			}
 		}
 	}
 }

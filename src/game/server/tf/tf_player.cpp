@@ -503,7 +503,7 @@ CTFPlayer::CTFPlayer()
 	m_bBlastLaunched = false;
 	m_bJumpEffect = false;
 
-	memset( m_WeaponPreset, 0, TF_CLASS_COUNT * TF_LOADOUT_SLOT_COUNT );
+	memset( m_WeaponPreset, 0, TF_CLASS_COUNT_ALL * TF_LOADOUT_SLOT_COUNT );
 
 	m_bIsPlayerADev = false;
 
@@ -1078,6 +1078,13 @@ void CTFPlayer::Spawn()
 		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT ) );
 	}
 
+	if ( ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_PLAYER_BOSS_TEAM ) ) )
+	{
+		// Random boss character.
+		SetDesiredPlayerClassIndex( RandomInt( (TF_CLASS_COUNT + 1), (TF_CLASS_COUNT_ALL - 1) ) );
+	}
+
+	
 	m_flSpawnTime = gpGlobals->curtime;
 	UpdateModel();
 
@@ -2858,7 +2865,7 @@ void CTFPlayer::ChangeTeam( int iTeamNum, bool bAutoTeam/*= false*/, bool bSilen
 //-----------------------------------------------------------------------------
 void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 {
-	if ( !tf2v_randomizer.GetBool() || tf2v_random_classes.GetBool() )
+	if ( !tf2v_randomizer.GetBool() || !tf2v_random_classes.GetBool() )
 	{
 		if ( GetNextChangeClassTime() > gpGlobals->curtime )
 			return;
@@ -2896,11 +2903,18 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			bShouldNotRespawn = true;
 		}
 
+		bool bCanBeBoss = false;
+		if ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_PLAYER_BOSS_TEAM ) )
+			bCanBeBoss = true;
+
+			
 		if ( stricmp( pClassName, "random" ) != 0 )
 		{
 			int i = 0;
+				
+			int iMaxClass = bCanBeBoss ? ( TF_CLASS_COUNT_ALL ) : ( TF_CLASS_COUNT + 1 );
 
-			for ( i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
+			for (i = TF_FIRST_NORMAL_CLASS; i <= TF_CLASS_COUNT; i++)
 			{
 				if ( stricmp( pClassName, GetPlayerClassData( i )->m_szClassName ) == 0 )
 				{
@@ -2909,7 +2923,13 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 				}
 			}
 
-			if ( i > TF_CLASS_COUNT )
+			// If we're selected to become a boss character, use a random boss.
+			if (bCanBeBoss)
+			{
+				iClass = random->RandomInt((TF_CLASS_COUNT + 1), (TF_CLASS_COUNT_ALL - 1));
+			}
+
+			if ( i >= iMaxClass )
 			{
 				ClientPrint( this, HUD_PRINTCONSOLE, UTIL_VarArgs( "Invalid class name \"%s\".\n", pClassName ) );
 				return;
@@ -2917,12 +2937,21 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		}
 		else
 		{
-			// The player has selected Random class...so let's pick one for them.
-			do
+			// If we can be a boss character, switch to a boss.
+			if (bCanBeBoss)
 			{
-				// Don't let them be the same class twice in a row
-				iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
-			} while ( iClass == GetPlayerClass()->GetClassIndex() );
+				iClass = random->RandomInt((TF_CLASS_COUNT + 1), (TF_CLASS_COUNT_ALL - 1));
+			}
+			else
+			{
+				// The player has selected Random class...so let's pick one for them.
+				do
+				{
+					// Don't let them be the same class twice in a row
+					iClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT);
+
+				} while (iClass == GetPlayerClass()->GetClassIndex());
+			}
 		}
 
 		if ( !TFGameRules()->CanPlayerChooseClass( this, iClass ) )
@@ -8994,7 +9023,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 				bool bSameTeam = InSameTeam( pTFPlayer );
 				criteriaSet.AppendCriteria( "crosshair_enemy", bSameTeam ? "No" : "Yes" );
 
-				if ( iClass > TF_CLASS_UNDEFINED && iClass <= TF_CLASS_COUNT )
+				if ( iClass > TF_CLASS_UNDEFINED && iClass < TF_CLASS_COUNT_ALL )
 				{
 					criteriaSet.AppendCriteria( "crosshair_on", g_aPlayerClassNames_NonLocalized[iClass] );
 				}
@@ -9125,7 +9154,7 @@ IResponseSystem *CTFPlayer::GetResponseSystem()
 		iClass = m_Shared.GetDisguiseClass();
 	}
 
-	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_CLASS_COUNT );
+	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_CLASS_COUNT_ALL );
 	bool bValidConcept = ( m_iCurrentConcept >= 0 && m_iCurrentConcept < MP_TF_CONCEPT_COUNT );
 	Assert( bValidClass );
 	Assert( bValidConcept );
