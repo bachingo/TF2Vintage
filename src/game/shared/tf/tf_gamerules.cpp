@@ -282,6 +282,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropTime( RECVINFO( m_flCapturePointEnableTime ) ),
 	RecvPropInt( RECVINFO( m_nHudType ) ),
 	RecvPropBool( RECVINFO( m_bPlayingKoth ) ),
+	RecvPropBool( RECVINFO( m_bPlayingVSH ) ),
 	RecvPropBool( RECVINFO( m_bPlayingMedieval ) ),
 	RecvPropBool( RECVINFO( m_bPlayingHybrid_CTF_CP ) ),
 	RecvPropBool( RECVINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -302,6 +303,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropTime( SENDINFO( m_flCapturePointEnableTime ) ),
 	SendPropInt( SENDINFO( m_nHudType ) ),
 	SendPropBool( SENDINFO( m_bPlayingKoth ) ),
+	SendPropBool( SENDINFO( m_bPlayingVSH ) ),
 	SendPropBool( SENDINFO( m_bPlayingMedieval ) ),
 	SendPropBool( SENDINFO( m_bPlayingHybrid_CTF_CP ) ),
 	SendPropBool( SENDINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -1302,9 +1304,25 @@ void CTFGameRules::Activate()
 	{
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
 		tf_gamemode_arena.SetValue( 1 );
-		Msg( "Executing server arena config file\n", 1 );
-		engine->ServerCommand( "exec config_arena.cfg \n" );
-		engine->ServerExecute();
+	
+		// VSH maps use arena logic, except with the gamemode prefix.
+		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
+			m_bPlayingVSH = true;
+		else
+		{
+			Msg( "Executing server arena config file\n", 1 );
+			engine->ServerCommand( "exec config_arena.cfg \n" );
+			engine->ServerExecute();
+		}
+		return;
+	}
+	
+	CArenaLogic *pVSH = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_vsh" ) );
+	if ( pVSH )
+	{
+		m_nGameType.Set( TF_GAMETYPE_ARENA );
+		tf_gamemode_arena.SetValue( 1 );
+		m_bPlayingVSH = true;
 		return;
 	}
 
@@ -6303,7 +6321,7 @@ const char *CTFGameRules::GetGameDescription( void )
 			break;
 		case TF_GAMETYPE_CP:
 			if ( IsInKothMode() )
-				return "TF2V (Koth)";
+				return "TF2V (KotH)";
 
 			return "TF2V (CP)";
 			break;
@@ -6311,11 +6329,23 @@ const char *CTFGameRules::GetGameDescription( void )
 			return "TF2V (Payload)";
 			break;
 		case TF_GAMETYPE_ARENA:
+			if ( IsInVSHMode() )
+				return "TF2V (VSH)";
+			
 			return "TF2V (Arena)";
 			break;
 		case TF_GAMETYPE_MVM:
-			return "Implying we will ever have this";
+			return "TF2V (MvM)";
 			break;
+		case TF_GAMETYPE_RD:
+			return "TF2V (RD)";
+			break;
+		case TF_GAMETYPE_PASSTIME:
+			return "TF2V (PASS)";
+			break;
+		case TF_GAMETYPE_PD:
+			return "TF2V (PD)";
+			break;	
 		case TF_GAMETYPE_MEDIEVAL:
 			return "TF2V (Medieval)";
 			break;

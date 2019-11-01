@@ -476,6 +476,12 @@ static s_MapTypeInfo s_MapTypes[] = {
 	"arena_",	6, "#Gametype_Arena",
 	"tr_",		3, "#Gametype_Training",
 	"tc_",		3, "#GameType_TerritorialControl",
+	"mvm_",		4, "#Gametype_MVM",
+	"rd_",		3, "#Gametype_RobotDestruction",
+	"sd_",		3, "#Gametype_SD",
+	"pd_",		3, "#Gametype_PlayerDestruction",
+	"vsh_",		4, "#TF_MMCat_Alternative",
+	
 };
 
 //-----------------------------------------------------------------------------

@@ -330,6 +330,7 @@ public:
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
 	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
 	virtual bool	IsInKothMode( void ) { return m_bPlayingKoth; }
+	virtual bool	IsInVSHMode( void ) { return m_bPlayingVSH; }
 	virtual bool    IsHalloweenScenario( int iEventType ) { return m_halloweenScenario == iEventType; };
 	virtual bool	IsPVEModeActive( void ) { return false; };
 	virtual bool	IsCompetitiveMode( void ) { return m_bCompetitiveMode; };
@@ -482,6 +483,7 @@ private:
 	CNetworkVar( float, m_flCapturePointEnableTime );
 	CNetworkVar( int, m_nHudType );
 	CNetworkVar( bool, m_bPlayingKoth );
+	CNetworkVar( bool, m_bPlayingVSH );
 	CNetworkVar( bool, m_bPlayingMedieval );
 	CNetworkVar( bool, m_bPlayingSpecialDeliveryMode );
 	CNetworkVar( bool, m_bPlayingRobotDestructionMode );
