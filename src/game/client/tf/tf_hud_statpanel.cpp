@@ -740,7 +740,7 @@ ClassStats_t &CTFStatPanel::GetClassStats( int iClass )
 {
 	Assert( statPanel );
 	Assert( iClass >= TF_FIRST_NORMAL_CLASS );
-	Assert( iClass <= TF_CLASS_COUNT );
+	Assert( iClass <= TF_CLASS_COUNT_ALL );
 	int i;
 	for( i = 0; i < statPanel->m_aClassStats.Count(); i++ )
 	{
@@ -816,7 +816,7 @@ void CTFStatPanel::MsgFunc_PlayerStatsUpdate( bf_read &msg )
 		Assert( false );
 	}
 
-	Assert( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_CLASS_COUNT );
+	Assert( iClass >= TF_FIRST_NORMAL_CLASS && iClass < TF_CLASS_COUNT_ALL );
 	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_CLASS_COUNT )
 		return;
 	

@@ -2748,7 +2748,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer *pTarget, bool 
 	}
 
 	// invalid class
-	if ( nClass <= TF_CLASS_UNDEFINED || nClass >= TF_CLASS_COUNT_ALL )
+	if ( nClass < TF_FIRST_NORMAL_CLASS || nClass > TF_CLASS_COUNT )
 	{
 		return;
 	}
@@ -4887,7 +4887,7 @@ Vector CTFPlayer::GetClassEyeHeight(void)
 
 	int iClassIndex = pClass->GetClassIndex();
 
-	if (iClassIndex < TF_FIRST_NORMAL_CLASS || iClassIndex > TF_CLASS_COUNT)
+	if (iClassIndex < TF_FIRST_NORMAL_CLASS || iClassIndex > TF_CLASS_COUNT_ALL)
 		return VEC_VIEW_SCALED(this);
 
 	return (g_TFClassViewVectors[pClass->GetClassIndex()] * GetModelScale());
