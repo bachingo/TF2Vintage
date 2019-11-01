@@ -2309,6 +2309,41 @@
 				}
 			}
 		}
+		"weapon_bossmelee"
+		{
+			"propername"		"1"
+			"show_in_armory"	"1"
+			"item_class"	"tf_weapon_shovelfist"
+			"item_type_name"	"#TF_Weapon_Fists"
+			"item_name"	"#KillEaterRank20"
+			"item_slot"	"melee"
+			"item_quality"	"developer"
+			"image_inventory"	"backpack/weapons/w_models/w_shovel"
+			"image_inventory_size_w"	"128"
+			"image_inventory_size_h"	"82"
+			"attach_to_hands"	"1"
+			"used_by_classes"
+			{
+				"saxton"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 -6 -12"
+			}
+			"attributes"
+			{
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+		}
 		"weapon_reskin"
 		{
 			"is_reskin"			"1"
@@ -2597,6 +2632,12 @@
 			"prefab"	"weapon_builder_spy"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_sapper.mdl"
+			"baseitem"	"1"
+		}
+		"31"
+		{
+			"name"	"TF_WEAPON_SHOVELFIST"
+			"prefab"	"weapon_bossmelee"
 			"baseitem"	"1"
 		}
 		"32"

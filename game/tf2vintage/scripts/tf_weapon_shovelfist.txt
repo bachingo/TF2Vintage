@@ -1,7 +1,7 @@
 	WeaponData
 {
 	// Attributes Base.
-	"printname"			"#TF_Weapon_Shovel"
+	"printname"			"#KillEaterRank20"
 	"BuiltRightHanded"		"0"
 	"MeleeWeapon"			"1"
 	"weight"			"1"

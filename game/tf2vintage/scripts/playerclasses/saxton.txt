@@ -18,7 +18,7 @@ PlayerClass
 	"grenade2"		""
 
 	// Weapons.
-	"weapon`"		"TF_WEAPON_FISTS"
+	"weapon1"		"TF_WEAPON_SHOVELFIST"
 	"weapon2"		""
 	"weapon3"		""
 	"weapon4"		""
