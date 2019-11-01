@@ -318,7 +318,7 @@ CBaseEntity *ToEnt( HSCRIPT hScript );
 extern void SpawnEntityByName( const char *className, CEntityMapData *mapData = NULL );
 
 // calls the spawn functions for an entity
-extern int DispatchSpawn( CBaseEntity *pEntity );
+extern int DispatchSpawn( CBaseEntity *pEntity, bool bRunVScripts = true );
 
 inline CBaseEntity *GetContainingEntity( edict_t *pent );
 

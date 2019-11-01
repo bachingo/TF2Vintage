@@ -316,7 +316,7 @@ private:
 	bool  m_bFixedConstraints;
 	bool  m_bFadingOut;
 	bool  m_bPlayDeathAnim;
-	CountdownTimer m_timer1;
+	CountdownTimer m_timer1; // TODO: Name
 	CountdownTimer m_timer2;
 
 	// Decapitation
@@ -426,9 +426,9 @@ void C_TFRagdoll::DissolveEntity( C_BaseEntity *pEntity )
 		return;
 
 	if ( m_iTeam == TF_TEAM_BLUE )
-		pDissolver->SetEffectColor( {BitsToFloat( 0x4337999A ), BitsToFloat( 0x42606666 ), BitsToFloat( 0x426A999A )} );
+		pDissolver->SetEffectColor( Vector( BitsToFloat( 0x4337999A ), BitsToFloat( 0x42606666 ), BitsToFloat( 0x426A999A ) ) );
 	else
-		pDissolver->SetEffectColor( {BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD )} );
+		pDissolver->SetEffectColor( Vector( BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD ) ) );
 
 	pDissolver->SetOwnerEntity( NULL );
 	pDissolver->SetRenderMode( kRenderTransColor );
@@ -2877,27 +2877,27 @@ void C_TFPlayer::UpdateSpyMask(void)
 {
 	C_TFSpyMask *pMask = m_hSpyMask.Get();
 
-	if (m_Shared.InCond(TF_COND_DISGUISED))
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) )
 	{
 		// Create mask if we don't already have one.
-		if (!pMask)
+		if ( !pMask )
 		{
 			pMask = new C_TFSpyMask();
 
-			if (!pMask->InitializeAsClientEntity("models/player/items/spy/spyMask.mdl", RENDER_GROUP_OPAQUE_ENTITY))
+			if ( !pMask->InitializeAsClientEntity( "models/player/items/spy/spyMask.mdl", RENDER_GROUP_OPAQUE_ENTITY ) )
 			{
 				pMask->Release();
 				return;
 			}
 
-			pMask->SetOwnerEntity(this);
-			pMask->FollowEntity(this);
+			pMask->SetOwnerEntity( this );
+			pMask->FollowEntity( this );
 			pMask->UpdateVisibility();
 
 			m_hSpyMask = pMask;
 		}
 	}
-	else if (pMask)
+	else if ( pMask )
 	{
 		pMask->Release();
 		m_hSpyMask = NULL;
