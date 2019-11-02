@@ -496,7 +496,7 @@ static s_MapTypeInfo s_MapTypes[] = {
 	"tr_",		4, "#GameType_Misc",
 	"trade_",	4, "#GameType_Misc",
 	"ultiduo_",	8, "#Gametype_Koth",
-	"vsh_",		4, "#GameType_Misc",
+	"vsh_",		4, "#TF_SaxtonHat",
 	"zf_",		4, "#GameType_Misc",
 	
 };
