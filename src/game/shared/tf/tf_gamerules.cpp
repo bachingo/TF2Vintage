@@ -4680,7 +4680,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( bStreakReached )
+		if ( bStreakReached && !IsInVSHMode() )
 		{
 			for ( i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
@@ -4688,13 +4688,16 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( !IsInTournamentMode() )
+		if ( !IsInTournamentMode() && !IsInVSHMode() )
 		{
 			if ( iActivePlayers > 0 )
 				Arena_ResetLosersScore( bStreakReached );
 			else
 				Arena_ResetLosersScore( true );
 		}
+		
+		if ( IsInVSHMode() )
+			bStreakReached = true;
 
 		if ( iActivePlayers <= 0 )
 		{
