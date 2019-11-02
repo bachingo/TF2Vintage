@@ -33,10 +33,10 @@
 	// Sounds for the weapon. There is a max of 16 sounds per category (i.e. max 16 "single_shot" sounds)
 	SoundData
 	{
-		"melee_miss"		"Weapon_Shovel.Miss"
-		"melee_hit"		"Weapon_Shovel.HitFlesh"
-		"melee_hit_world"	"Weapon_Shovel.HitWorld"
-		"burst"			"Weapon_Shovel.MissCrit"
+		"melee_miss"		"Weapon_Fist.Miss"
+		"melee_hit"			"Taunt.HeavyBell"
+		"melee_hit_world"	"Weapon_Fist.HitWorld"
+		"burst"			"Weapon_Fist.MissCrit"
 	}
 
 	// Weapon Sprite data is loaded by the Client DLL.
