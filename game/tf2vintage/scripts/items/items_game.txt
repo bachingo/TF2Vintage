@@ -2342,6 +2342,11 @@
 					"attribute_class"	"mult_crit_chance"
 					"value"	"0"
 				}
+				"increased jump height"
+				{
+					"attribute_class"	"mod_jump_height"
+					"value"	"10"
+				}
 			}
 		}
 		"weapon_reskin"

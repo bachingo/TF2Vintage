@@ -3846,7 +3846,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 
 	int iDeathFlags = pTFPlayerVictim->GetDeathFlags();
 
-	if ( IsInArenaMode() && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
+	if ( ( IsInArenaMode() && !IsInVSHMode() ) && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
 	{
 		m_bFirstBlood = true;
 		float flElapsedTime = gpGlobals->curtime - m_flStalemateStartTime;;
@@ -4012,10 +4012,16 @@ float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 		// it's always going to be much more dangerous to weaker classes than larger.
 		float flRatio = (float)pPlayer->GetMaxHealth() / 100.0;
 		flFallDamage *= flRatio;
-
+		
 		if ( tf2v_falldamage_disablespread.GetBool() == false )
 		{
 			flFallDamage *= random->RandomFloat( 0.8, 1.2 );
+		}
+
+		// If we're a boss, no fall damage.
+		if ( pPlayer->IsPlayerClass( TF_CLASS_SAXTON ) )
+		{
+			return 0;
 		}
 
 		return flFallDamage;
