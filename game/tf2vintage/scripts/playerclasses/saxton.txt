@@ -5,8 +5,8 @@ PlayerClass
 {
 	// Attributes.
 	"name"			"saxton"
-	"model"			"models/player/saxton_test4/saxton_hale_test4.mdl"
-	"model_hwm"		"models/player/saxton_test4/saxton_hale_test4.mdl"
+	"model"			"models/player/saxton_hale_jungle_inferno/saxton_hale.mdl"
+	"model_hwm"		"models/player/saxton_hale_jungle_inferno/saxton_hale.mdl"
 	"model_hands"	"models/weapons/c_models/c_soldier_arms.mdl"
 	"localize_name"	"TF_Class_Name_Soldier"
 	"speed_max"		"360"

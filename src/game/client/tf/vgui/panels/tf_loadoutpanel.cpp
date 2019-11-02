@@ -31,7 +31,7 @@ static char* pszClassModels[TF_CLASS_COUNT_ALL] =
 	"models/player/pyro.mdl",
 	"models/player/spy.mdl",
 	"models/player/engineer.mdl",
-	"models/player/saxton_test4/saxton_hale_test4.mdl",
+	"models/player/saxton_hale_jungle_inferno/saxton_hale.mdl",
 };
 
 static int g_aClassLoadoutSlots[TF_CLASS_COUNT_ALL][INVENTORY_ROWNUM] =
