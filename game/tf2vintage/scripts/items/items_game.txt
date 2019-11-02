@@ -2347,6 +2347,11 @@
 					"attribute_class"	"mod_jump_height"
 					"value"	"10"
 				}
+				"kill will gib"
+				{
+					"attribute_class"	"kill_will_gib"
+					"value"	"1"
+				}
 			}
 		}
 		"weapon_reskin"
@@ -4934,6 +4939,46 @@
 					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_ITEM2_VM_INSPECT_IDLE"
 					"ACT_MELEE_VM_INSPECT_END"		"ACT_ITEM2_VM_INSPECT_END"
 				}
+			}
+		}
+		"10587"
+		{
+			"name"	"Apoco-Fists"
+			"prefab"	"weapon_fists weapon_reskin"
+			"item_name"	"#TF_Apocofists"
+			"item_description"	"#TF_Apocofists_Desc"
+			"item_logname"	"apocofists"
+			"item_iconname"	"apocofists"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch"					
+			"model_player"	"models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -10"
+			}
+			"attributes"
+			{
+				"crit kill will gib"
+				{
+					"attribute_class"	"crit_kill_will_gib"
+					"value"	"1"
+				}
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value" "1"
+				}
+			}
+			"hide_bodygroups_deployed_only"	"1"
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hands"			"1"
+				}
+				"sound_melee_miss"	"Weapon_BoxingGloves.Miss"
+				"sound_melee_hit"	"Weapon_BoxingGloves.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_BoxingGloves.HitWorld"
+				"sound_burst"		"Weapon_BoxingGloves.MissCrit"
 			}
 		}
 		"10727"
@@ -10180,6 +10225,16 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"armory_desc"	"on_wearer"
+			"stored_as_integer"	"0"
+		}
+		"10006"
+		{
+			"name"	"kill will gib"
+			"attribute_class"	"kill_will_gib"
+			"description_string"	"#Attrib_CritKillWillGib"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
 	}
