@@ -748,7 +748,7 @@ bool CTriggerHurt::HurtEntity( CBaseEntity *pOther, float damage )
 			int iHealthDifference = ( ( pTFOther->GetMaxHealth() ) - ( pTFOther->GetHealth() ) );
 			pTFOther->ForceRespawn();
 			// Instead of calculating trigger damage, we just subtract the lost health from their spawn health.
-			pOther->TakeHealth(iHealthDifference, 1);
+			pOther->TakeHealth(iHealthDifference, m_bitsDamageInflict );
 		}
 		return false;
 	}
