@@ -158,7 +158,7 @@ public:
 	IServerNetworkable *Create( const char *pClassName )
 	{
 		T *pEnt = _CreateEntityTemplate((T *)NULL, pClassName);
-		pEnt->m_szScriptedClassname = pClassName;
+		pEnt->m_szScriptedClassname = AllocPooledString( pClassName );
 		return pEnt->NetworkProp();
 	}
 
