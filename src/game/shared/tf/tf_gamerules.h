@@ -337,6 +337,9 @@ public:
 	virtual bool	IsInHybridCTF_CPMode( void ) { return m_bPlayingHybrid_CTF_CP; };
 	virtual bool	IsInSpecialDeliveryMode( void ) { return m_bPlayingSpecialDeliveryMode; };
 
+	bool 			IsNormalClass(CBaseEntity *pPlayer);
+	bool 			IsBossClass(CBaseEntity *pPlayer);
+
 #ifdef CLIENT_DLL
 
 	DECLARE_CLIENTCLASS_NOBASE(); // This makes data tables able to access our private vars.
@@ -412,7 +415,7 @@ public:
 	void			RadiusDamage( CTFRadiusDamageInfo &radiusInfo );
 	bool			RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond );
 	virtual void	RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
-
+	
 	virtual float	FlPlayerFallDamage( CBasePlayer *pPlayer );
 
 	virtual bool	FlPlayerFallDeathDoesScreenFade( CBasePlayer *pl ) { return false; }
