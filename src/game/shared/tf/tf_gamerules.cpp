@@ -1471,7 +1471,7 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 		return false;
 	else if ( IsInVSHMode() && ( iDesiredClassIndex > TF_CLASS_COUNT ) )
 	{
-		if ( pTFPlayer->GetTeamNumber() == TF_PLAYER_BOSS_TEAM )
+		if ( pTFPlayer->GetTeamNumber() == TF_TEAM_PLAYER_BOSS )
 			return true;
 		else
 			return false;
@@ -5071,9 +5071,9 @@ void CTFGameRules::HandleScrambleTeams( void )
 			pTFPlayer = pListPlayers[i];
 
 			if ( pTFPlayer && ( i == iBossPlayer ) )
-				pTFPlayer->ForceChangeTeam( TF_PLAYER_BOSS_TEAM );
+				pTFPlayer->ForceChangeTeam( TF_TEAM_PLAYER_BOSS );
 			else if ( pTFPlayer && ( i != iBossPlayer ) )
-				pTFPlayer->ForceChangeTeam( TF_PLAYER_HORDE_TEAM );
+				pTFPlayer->ForceChangeTeam( TF_TEAM_PLAYER_HORDE );
 		}
 	}
 	else

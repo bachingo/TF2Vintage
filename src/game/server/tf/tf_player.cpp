@@ -1079,7 +1079,7 @@ void CTFPlayer::Spawn()
 		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT ) );
 	}
 
-	if ( ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_PLAYER_BOSS_TEAM ) ) )
+	if ( ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_TEAM_PLAYER_BOSS ) ) )
 	{
 		// Random boss character.
 		SetDesiredPlayerClassIndex( RandomInt( (TF_CLASS_COUNT + 1), (TF_CLASS_COUNT_ALL - 1) ) );
@@ -2914,7 +2914,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		}
 
 		bool bCanBeBoss = false;
-		if ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_PLAYER_BOSS_TEAM ) )
+		if ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_TEAM_PLAYER_BOSS ) )
 			bCanBeBoss = true;
 
 			
