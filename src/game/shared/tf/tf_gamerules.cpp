@@ -597,6 +597,13 @@ LINK_ENTITY_TO_CLASS( tf_logic_arena, CArenaLogic );
 CArenaLogic::CArenaLogic()
 {
 	m_iUnlockPoint = 60;
+	// If we're VSH mode, unlock time is scaled to player numbers.
+	if ( TFGameRules()->IsInVSHMode() )
+	{
+		CUtlVector<CTFPlayer *> pListPlayers;
+		int iPlayerScale = ( pListPlayers.Count() - 1 ); // Amount of active players, minus the boss player.
+		m_iUnlockPoint = 6 * iPlayerScale; // Unlocks at 6 * player count, in seconds.
+	}
 	m_bCapUnlocked = false;
 }
 
@@ -4019,7 +4026,8 @@ float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 		}
 
 		// If we're a boss, no fall damage.
-		if ( pPlayer->IsPlayerClass( TF_CLASS_SAXTON ) )
+		CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+		if ( pTFPlayer->IsPlayerClass( TF_CLASS_SAXTON ) )
 		{
 			return 0;
 		}
