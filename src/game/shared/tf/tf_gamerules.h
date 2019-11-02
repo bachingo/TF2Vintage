@@ -166,6 +166,9 @@ public:
 	bool			IsAprilFools( void );
 	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
 
+	bool 			IsNormalClass(CBaseEntity *pPlayer);
+	bool 			IsBossClass(CBaseEntity *pPlayer);
+
 	virtual const unsigned char *GetEncryptionKey( void ) { return (unsigned char *)"E2NcUkG2"; }
 
 	virtual bool	AllowThirdPersonCamera( void );
@@ -336,9 +339,6 @@ public:
 	virtual bool	IsCompetitiveMode( void ) { return m_bCompetitiveMode; };
 	virtual bool	IsInHybridCTF_CPMode( void ) { return m_bPlayingHybrid_CTF_CP; };
 	virtual bool	IsInSpecialDeliveryMode( void ) { return m_bPlayingSpecialDeliveryMode; };
-
-	bool 			IsNormalClass(CBaseEntity *pPlayer);
-	bool 			IsBossClass(CBaseEntity *pPlayer);
 
 #ifdef CLIENT_DLL
 

@@ -392,11 +392,11 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 	int iCustomDamage = GetCustomDamageType();
 	float flDamage = GetMeleeDamage(pTarget, iCustomDamage);
 	
-	bool bWillGibCrit = false;
-	CALL_ATTRIB_HOOK_BOOL( bWillGibCrit, crit_kill_will_gib );
+	int iWillGibCrit = 0;
+	CALL_ATTRIB_HOOK_INT( iWillGibCrit, crit_kill_will_gib );
 	bool bIsCritKill = false;
-	bool bWillGibAlways = false;
-	CALL_ATTRIB_HOOK_BOOL( bWillGibAlways, kill_will_gib );
+	int iWillGibAlways = false;
+	CALL_ATTRIB_HOOK_INT( iWillGibAlways, kill_will_gib );
 
 	
 	int iDmgType = DMG_MELEE | DMG_CLUB;
@@ -413,7 +413,7 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 		bIsCritKill = true;
 	}
 	
-	if ( ( bWillGibCrit && bIsCritKill ) || bWillGibAlways )
+	if ( ((iWillGibCrit != 0) && bIsCritKill) || ( iWillGibAlways != 0 ) )
 	{
 		iDmgType |= DMG_ALWAYSGIB;
 		bIsCritKill = true;

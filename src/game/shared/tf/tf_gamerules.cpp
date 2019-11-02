@@ -4005,28 +4005,6 @@ void CTFGameRules::ClientDisconnected( edict_t *pClient )
 	Arena_ClientDisconnect( pPlayer->GetPlayerName() );
 }
 
-// We can use these to check between normal and boss behavior without writing out individual massive if statements each time.
-// For regular classes.
-bool CTFGameRules::IsNormalClass( CBaseEntity *pPlayer)
-{
-	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-	if ( pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) || pTFPlayer->IsPlayerClass( TF_CLASS_SNIPER ) || pTFPlayer->IsPlayerClass( TF_CLASS_SOLDIER ) ||
-	pTFPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) || pTFPlayer->IsPlayerClass( TF_CLASS_MEDIC ) || pTFPlayer->IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) ||
-	pTFPlayer->IsPlayerClass( TF_CLASS_PYRO ) || pTFPlayer->IsPlayerClass( TF_CLASS_SPY ) || pTFPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) )
-		return true;
-	else
-		return false;
-}
-// For boss characters.
-bool CTFGameRules::IsBossClass( CBaseEntity *pPlayer)
-{
-	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-	if ( pTFPlayer->IsPlayerClass( TF_CLASS_SAXTON ) )
-		return true;
-	else
-		return false;
-}
-
 
 // Falling damage stuff.
 #define TF_PLAYER_MAX_SAFE_FALL_SPEED	650		
@@ -5734,6 +5712,28 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 	}
 
 	return bActive;
+}
+
+// We can use these to check between normal and boss behavior without writing out individual massive if statements each time.
+// For regular classes.
+bool CTFGameRules::IsNormalClass(CBaseEntity *pPlayer)
+{
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer->IsPlayerClass(TF_CLASS_SCOUT) || pTFPlayer->IsPlayerClass(TF_CLASS_SNIPER) || pTFPlayer->IsPlayerClass(TF_CLASS_SOLDIER) ||
+		pTFPlayer->IsPlayerClass(TF_CLASS_DEMOMAN) || pTFPlayer->IsPlayerClass(TF_CLASS_MEDIC) || pTFPlayer->IsPlayerClass(TF_CLASS_HEAVYWEAPONS) ||
+		pTFPlayer->IsPlayerClass(TF_CLASS_PYRO) || pTFPlayer->IsPlayerClass(TF_CLASS_SPY) || pTFPlayer->IsPlayerClass(TF_CLASS_ENGINEER))
+		return true;
+	else
+		return false;
+}
+// For boss characters.
+bool CTFGameRules::IsBossClass(CBaseEntity *pPlayer)
+{
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer->IsPlayerClass(TF_CLASS_SAXTON))
+		return true;
+	else
+		return false;
 }
 
 //-----------------------------------------------------------------------------
