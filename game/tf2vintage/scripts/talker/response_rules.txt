@@ -310,6 +310,7 @@ criterion "IsHeavy" "playerclass" "Heavy" "required"
 criterion "IsPyro" "playerclass" "Pyro" "required"
 criterion "IsSpy" "playerclass" "Spy" "required"
 criterion "IsEngineer" "playerclass" "Engineer" "required"
+criterion "IsSaxton" "playerclass" "Saxton" "required"
 
 criterion "IsNotScout" "playerclass" "!=Scout" "required" 
 criterion "IsNotSniper" "playerclass" "!=Sniper" "required"
@@ -320,6 +321,7 @@ criterion "IsNotHeavy" "playerclass" "!=Heavy" "required"
 criterion "IsNotPyro" "playerclass" "!=Pyro" "required"
 criterion "IsNotSpy" "playerclass" "!=Spy" "required"
 criterion "IsNotEngineer" "playerclass" "!=Engineer" "required"
+criterion "IsNotSaxton" "playerclass" "!=Saxton" "required"
 
 
 criterion "IsVictimScout" "victimclass" "Scout" "required" weight 0
@@ -397,6 +399,7 @@ criterion "WeaponIsSpyPDA" "playerweapon" "tf_weapon_pda_spy" "required"
 criterion "WeaponIsRocket" "playerweapon" "tf_weapon_rocketlauncher" "required"
 criterion "WeaponIsShovel" "playerweapon" "tf_weapon_shovel" "required"
 criterion "WeaponIsFlaregun" "playerweapon" "tf_weapon_flaregun" "required"
+criterion "WeaponIsShovelFist" "playerweapon" "tf_weapon_shovelfist" "required"
 // Lunchbox modified to fire for Sandvich only, so we don't share lines.
 criterion "WeaponIsSandvich" "item_name" "The Sandvich" "required" weight 5
 criterion "WeaponIsRobotSandvich" "item_name" "The Robo-Sandvich" "required" weight 5
