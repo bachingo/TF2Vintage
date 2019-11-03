@@ -2317,6 +2317,8 @@
 			"item_type_name"	"#TF_Weapon_Fists"
 			"item_name"	"#KillEaterRank20"
 			"item_slot"	"melee"
+			"item_logname"	"saxtonfist"
+			"item_iconname"	"saxxy"
 			"item_quality"	"developer"
 			"image_inventory"	"backpack/weapons/w_models/w_shovel"
 			"image_inventory_size_w"	"128"

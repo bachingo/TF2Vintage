@@ -1946,4 +1946,69 @@
     Response KritzSpeechMedic
 }
 
+
+// Saxton Hale
+//------------------------------------------------------------------------------------------------------------
+	response "SaxtonTauntMelee"
+	{
+		scene "scenes/player/saxton/low/taunt03_v1.vcd"
+		scene "scenes/player/saxton/low/taunt03_v2.vcd"
+		scene "scenes/player/saxton/low/taunt03_v3.vcd"
+		scene "scenes/player/saxton/low/taunt03_v4.vcd"
+	}
+	response "SaxtonTauntHalloween"
+	{
+		scene "scenes/player/saxton/low/taunt06.vcd"
+	}
+	rule SaxtonTauntPlayerMelee
+	{
+		criteria ConceptPlayerTaunt IsSaxton WeaponIsShovelFist
+		response SaxtonTauntMelee
+	}
+	rule SaxtonTauntHalloween
+	{
+		criteria ConceptPlayerTaunt IsSaxton IsHalloweenTaunt
+		response SaxtonTauntHalloween
+	}
+	rule SaxtonTauntSaxxy
+	{
+		criteria ConceptPlayerTaunt IsSaxton WeaponIsSaxxy
+		response SaxtonTauntBanner
+	}
+		
+	Response PlayerExpressionIdleSaxton
+	{
+		scene "scenes/player/saxton/low/idleloop01.vcd"
+	}
+	Rule PlayerExpressionIdleSaxton
+	{
+		criteria ConceptPlayerExpression IsSaxton
+		Response PlayerExpressionIdleSaxton
+	}
+	Response PlayerExpressionIdleHurtSaxton
+	{
+		scene "scenes/player/saxton/low/idleloopHurt01.vcd"
+	}
+	Rule PlayerExpressionIdleHurtSaxton
+	{
+		criteria ConceptPlayerExpression IsSaxton LowHealthContext
+		Response PlayerExpressionIdleHurtSaxton
+	}
+	Rule PlayerExpressionRoundLossSaxton
+	{
+		criteria ConceptPlayerExpression IsSaxton GameRulesInWinState PlayerOnLosingTeam
+		Response PlayerExpressionIdleHurtSaxton
+	}
+	
+	Response PlayerExpressionAttackSaxton
+	{
+		scene "scenes/player/saxton/low/attack01.vcd"
+	}
+	Rule PlayerExpressionAttackSaxton
+	{
+		criteria ConceptFireWeapon IsSaxton
+		Response PlayerExpressionAttackSaxton
+	}
+	
+
 //============================================================================================================
