@@ -167,8 +167,6 @@ extern vgui::IInputInternal *g_InputInternal;
 
 extern IClientMode *GetClientModeNormal();
 
-static CDllDemandLoader hVScript( "vscript" );
-
 // IF YOU ADD AN INTERFACE, EXTERN IT IN THE HEADER FILE.
 IVEngineClient	*engine = NULL;
 IVModelRender *modelrender = NULL;
@@ -437,6 +435,7 @@ public:
 	{
 		AddAppSystem( "soundemittersystem" DLL_EXT_STRING, SOUNDEMITTERSYSTEM_INTERFACE_VERSION );
 		AddAppSystem( "scenefilecache" DLL_EXT_STRING, SCENE_FILE_CACHE_INTERFACE_VERSION );
+		AddAppSystem( "vscript" DLL_EXT_STRING, VSCRIPT_INTERFACE_VERSION );
 	}
 
 	virtual int	Count()
@@ -1027,14 +1026,8 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 	if ( !CommandLine()->CheckParm( "-noscripting" ) )
 	{
-		CreateInterfaceFn pfnCreateInterface = hVScript.GetFactory();
-		if ( pfnCreateInterface )
-		{
-			IAppSystem *pSystem = (IAppSystem *)pfnCreateInterface( VSCRIPT_INTERFACE_VERSION, NULL );
-			if( pSystem != nullptr )
-				scriptmanager = (IScriptManager *)pSystem;
-		}
-		AssertMsg( pfnCreateInterface && scriptmanager, "Scripting was not properly initialized" );
+		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+		AssertMsg( scriptmanager, "Scripting was not properly initialized" );
 	}
 
 	// it's ok if this is NULL. That just means the sourcevr.dll wasn't found

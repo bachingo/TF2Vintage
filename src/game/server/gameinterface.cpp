@@ -191,8 +191,6 @@ IReplaySystem *g_pReplay = NULL;
 IServerReplayContext *g_pReplayServerContext = NULL;
 #endif
 
-static CDllDemandLoader hVScript( "vscript" );
-
 IGameSystem *SoundEmitterSystem();
 
 bool ModelSoundsCacheInit();
@@ -664,14 +662,8 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	if ( !CommandLine()->CheckParm( "-noscripting" ) )
 	{
-		CreateInterfaceFn pfnCreateInterface = hVScript.GetFactory();
-		if ( pfnCreateInterface )
-		{
-			IAppSystem *pSystem = (IAppSystem *)pfnCreateInterface( VSCRIPT_INTERFACE_VERSION, NULL );
-			if( pSystem != nullptr )
-				scriptmanager = (IScriptManager *)pSystem;
-		}
-		AssertMsg( pfnCreateInterface && scriptmanager, "Scripting was not properly initialized" );
+		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+		AssertMsg( scriptmanager, "Scripting was not properly initialized" );
 	}
 
 	// If not running dedicated, grab the engine vgui interface
@@ -3496,6 +3488,7 @@ public:
 	{
 		AddAppSystem( "soundemittersystem" DLL_EXT_STRING, SOUNDEMITTERSYSTEM_INTERFACE_VERSION );
 		AddAppSystem( "scenefilecache" DLL_EXT_STRING, SCENE_FILE_CACHE_INTERFACE_VERSION );
+		AddAppSystem( "vscript" DLL_EXT_STRING, VSCRIPT_INTERFACE_VERSION );
 	}
 
 	virtual int	Count()

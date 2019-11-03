@@ -82,33 +82,9 @@ void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
 
 enum
 {
-	BIRTHDAY_RECALCULATE,
-	BIRTHDAY_OFF,
-	BIRTHDAY_ON,
-};
-enum
-{
-	HALLOWEEN_RECALCULATE,
-	HALLOWEEN_OFF,
-	HALLOWEEN_ON,
-};
-enum
-{
-	CHRISTMAS_RECALCULATE,
-	CHRISTMAS_OFF,
-	CHRISTMAS_ON,
-};
-enum
-{
-	VALENTINESDAY_RECALCULATE,
-	VALENTINESDAY_OFF,
-	VALENTINESDAY_ON,
-};
-enum
-{
-	APRILFOOLS_RECALCULATE,
-	APRILFOOLS_OFF,
-	APRILFOOLS_ON,
+	HOLIDAY_RECALCULATE,
+	HOLIDAY_OFF,
+	HOLIDAY_ON,
 };
 
 static int g_TauntCamAchievements[] =
@@ -1158,7 +1134,11 @@ CTFGameRules::CTFGameRules()
 	Assert( FStrEq( g_aWeaponNames[TF_WEAPON_COUNT], "TF_WEAPON_COUNT" ) );
 
 	m_iPreviousRoundWinners = TEAM_UNASSIGNED;
-	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+	m_iBirthdayMode = HOLIDAY_RECALCULATE;
+	m_iHalloweenMode = HOLIDAY_RECALCULATE;
+	m_iChristmasMode = HOLIDAY_RECALCULATE;
+	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
@@ -1280,7 +1260,11 @@ static const char *s_PreserveEnts[] =
 //-----------------------------------------------------------------------------
 void CTFGameRules::Activate()
 {
-	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+	m_iBirthdayMode = HOLIDAY_RECALCULATE;
+	m_iHalloweenMode = HOLIDAY_RECALCULATE;
+	m_iChristmasMode = HOLIDAY_RECALCULATE;
+	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 
 	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
 
@@ -5536,12 +5520,12 @@ bool CTFGameRules::IsBirthday( void )
 	if ( IsX360() )
 		return false;
 
-	if ( m_iBirthdayMode == BIRTHDAY_RECALCULATE )
+	if ( m_iBirthdayMode == HOLIDAY_RECALCULATE )
 	{
-		m_iBirthdayMode = BIRTHDAY_OFF;
+		m_iBirthdayMode = HOLIDAY_OFF;
 		if ( tf_birthday.GetBool() )
 		{
-			m_iBirthdayMode = BIRTHDAY_ON;
+			m_iBirthdayMode = HOLIDAY_ON;
 		}
 		else
 		{
@@ -5552,13 +5536,13 @@ bool CTFGameRules::IsBirthday( void )
 			{
 				if ( ( today->tm_mon == 7 && today->tm_mday == 4 )  || ( today->tm_mon == 8 && today->tm_mday == 24 ) )
 				{
-					m_iBirthdayMode = BIRTHDAY_ON;
+					m_iBirthdayMode = HOLIDAY_ON;
 				}
 			}
 		}
 	}
 
-	return ( m_iBirthdayMode == BIRTHDAY_ON );
+	return ( m_iBirthdayMode == HOLIDAY_ON );
 }
 
 
@@ -5570,12 +5554,12 @@ bool CTFGameRules::IsHalloween( void )
 	if ( IsX360() )
 		return false;
 
-	if ( m_iHalloweenMode == HALLOWEEN_RECALCULATE )
+	if ( m_iHalloweenMode == HOLIDAY_RECALCULATE )
 	{
-		m_iHalloweenMode = HALLOWEEN_OFF;
+		m_iHalloweenMode = HOLIDAY_OFF;
 		if ( tf_halloween.GetBool() )
 		{
-			m_iHalloweenMode = HALLOWEEN_ON;
+			m_iHalloweenMode = HOLIDAY_ON;
 		}
 		else
 		{
@@ -5586,13 +5570,13 @@ bool CTFGameRules::IsHalloween( void )
 			{
 				if ( today->tm_mon == 10 && today->tm_mday == 31 )
 				{
-					m_iHalloweenMode = HALLOWEEN_ON;
+					m_iHalloweenMode = HOLIDAY_ON;
 				}
 			}
 		}
 	}
 
-	return ( m_iHalloweenMode == HALLOWEEN_ON );
+	return ( m_iHalloweenMode == HOLIDAY_ON );
 }
 
 
@@ -5604,12 +5588,12 @@ bool CTFGameRules::IsChristmas( void )
 	if ( IsX360() )
 		return false;
 
-	if ( m_iChristmasMode == CHRISTMAS_RECALCULATE )
+	if ( m_iChristmasMode == HOLIDAY_RECALCULATE )
 	{
-		m_iChristmasMode = CHRISTMAS_OFF;
+		m_iChristmasMode = HOLIDAY_OFF;
 		if ( tf_christmas.GetBool() )
 		{
-			m_iChristmasMode = CHRISTMAS_ON;
+			m_iChristmasMode = HOLIDAY_ON;
 		}
 		else
 		{
@@ -5620,13 +5604,13 @@ bool CTFGameRules::IsChristmas( void )
 			{
 				if ( today->tm_mon == 12 && today->tm_mday == 25 )
 				{
-					m_iChristmasMode = CHRISTMAS_ON;
+					m_iChristmasMode = HOLIDAY_ON;
 				}
 			}
 		}
 	}
 
-	return ( m_iChristmasMode == CHRISTMAS_ON );
+	return ( m_iChristmasMode == HOLIDAY_ON );
 }
 
 //-----------------------------------------------------------------------------
@@ -5637,9 +5621,9 @@ bool CTFGameRules::IsValentinesDay( void )
 	if ( IsX360() )
 		return false;
 
-	if ( m_iValentinesDayMode == VALENTINESDAY_RECALCULATE )
+	if ( m_iValentinesDayMode == HOLIDAY_RECALCULATE )
 	{
-		m_iValentinesDayMode = VALENTINESDAY_OFF;
+		m_iValentinesDayMode = HOLIDAY_OFF;
 		
 		time_t ltime = time( 0 );
 		const time_t *ptime = &ltime;
@@ -5648,12 +5632,12 @@ bool CTFGameRules::IsValentinesDay( void )
 		{
 			if ( today->tm_mon == 2 && today->tm_mday == 14 )
 			{
-				m_iValentinesDayMode = VALENTINESDAY_ON;
+				m_iValentinesDayMode = HOLIDAY_ON;
 			}
 		}
 	}
 
-	return ( m_iValentinesDayMode == VALENTINESDAY_ON );
+	return ( m_iValentinesDayMode == HOLIDAY_ON );
 }
 
 //-----------------------------------------------------------------------------
@@ -5664,9 +5648,9 @@ bool CTFGameRules::IsAprilFools( void )
 	if ( IsX360() )
 		return false;
 
-	if ( m_iAprilFoolsMode == APRILFOOLS_RECALCULATE )
+	if ( m_iAprilFoolsMode == HOLIDAY_RECALCULATE )
 	{
-		m_iAprilFoolsMode = APRILFOOLS_OFF;
+		m_iAprilFoolsMode = HOLIDAY_OFF;
 		
 		time_t ltime = time( 0 );
 		const time_t *ptime = &ltime;
@@ -5675,13 +5659,13 @@ bool CTFGameRules::IsAprilFools( void )
 		{
 			if ( ( today->tm_mon == 4 && today->tm_mday == 1 ) )
 			{
-				m_iAprilFoolsMode = APRILFOOLS_ON;
+				m_iAprilFoolsMode = HOLIDAY_ON;
 			}
 		}
 		
 	}
 
-	return ( m_iAprilFoolsMode == APRILFOOLS_ON );
+	return ( m_iAprilFoolsMode == HOLIDAY_ON );
 }
 
 //-----------------------------------------------------------------------------
@@ -6045,7 +6029,11 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 #ifdef CLIENT_DLL
 	if ( !Q_strcmp( eventName, "game_newmap" ) )
 	{
-		m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+		m_iBirthdayMode = HOLIDAY_RECALCULATE;
+		m_iHalloweenMode = HOLIDAY_RECALCULATE;
+		m_iChristmasMode = HOLIDAY_RECALCULATE;
+		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 	}
 #endif
 }
@@ -6231,7 +6219,11 @@ void CTFGameRules::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( State_Get() == GR_STATE_STARTGAME )
 	{
-		m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+		m_iBirthdayMode = HOLIDAY_RECALCULATE;
+		m_iHalloweenMode = HOLIDAY_RECALCULATE;
+		m_iChristmasMode = HOLIDAY_RECALCULATE;
+		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 	}
 }
 
