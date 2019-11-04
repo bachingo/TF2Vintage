@@ -4235,7 +4235,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if (pTFAttacker->m_Shared.InCond(TF_COND_REGENONDAMAGEBUFF))
+	if (pTFAttacker && pTFAttacker->m_Shared.InCond(TF_COND_REGENONDAMAGEBUFF))
 	{
 		// Buffed players heal when hit enemy.
 		float flDamage = info.GetDamage();
