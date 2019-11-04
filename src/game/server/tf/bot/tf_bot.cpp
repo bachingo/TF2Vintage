@@ -55,6 +55,115 @@ CBasePlayer *CTFBot::AllocatePlayerEntity( edict_t *edict, const char *playerNam
 }
 
 
+class SelectClosestPotentiallyVisible
+{
+public:
+	SelectClosestPotentiallyVisible( const Vector &origin )
+		: m_vecOrigin( origin )
+	{
+		m_pSelected = NULL;
+		m_flMinDist = FLT_MAX;
+	}
+
+	bool operator()( CNavArea *area )
+	{
+		Vector vecClosest;
+		area->GetClosestPointOnArea( m_vecOrigin, &vecClosest );
+		float flDistance = ( vecClosest - m_vecOrigin ).LengthSqr();
+
+		if ( flDistance < m_flMinDist )
+		{
+			m_flMinDist = flDistance;
+			m_pSelected = area;
+		}
+
+		return true;
+	}
+
+	Vector m_vecOrigin;
+	CNavArea *m_pSelected;
+	float m_flMinDist;
+};
+
+
+class CollectReachableObjects : public ISearchSurroundingAreasFunctor
+{
+public:
+	CollectReachableObjects( CTFBot *actor, CUtlVector<EHANDLE> *selectedHealths, CUtlVector<EHANDLE> *outVector, float flMaxLength )
+	{
+		m_pBot = actor;
+		m_flMaxRange = flMaxLength;
+		m_pHealths = selectedHealths;
+		m_pVector = outVector;
+	}
+
+	virtual bool operator() ( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
+	{
+		for ( int i=0; i<m_pHealths->Count(); ++i )
+		{
+			CBaseEntity *pEntity = ( *m_pHealths )[i];
+			if ( !pEntity || !area->Contains( pEntity->WorldSpaceCenter() ) )
+				continue;
+
+			for ( int j=0; j<m_pVector->Count(); ++j )
+			{
+				CBaseEntity *pSelected = ( *m_pVector )[i];
+				if ( ENTINDEX( pEntity ) == ENTINDEX( pSelected ) )
+					return true;
+			}
+
+			EHANDLE hndl( pEntity );
+			m_pVector->AddToTail( hndl );
+		}
+
+		return true;
+	}
+
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar )
+	{
+		if ( adjArea->IsBlocked( m_pBot->GetTeamNumber() ) || travelDistanceSoFar > m_flMaxRange )
+			return false;
+
+		return currentArea->IsContiguous( adjArea );
+	}
+
+private:
+	CTFBot *m_pBot;
+	CUtlVector<EHANDLE> *m_pHealths;
+	CUtlVector<EHANDLE> *m_pVector;
+	float m_flMaxRange;
+};
+
+
+class CountClassMembers
+{
+public:
+	CountClassMembers( CTFBot *bot, int teamNum )
+		: m_pBot( bot ), m_iTeam( teamNum )
+	{
+		Q_memset( &m_aClassCounts, 0, sizeof( m_aClassCounts ) );
+	}
+
+	bool operator()( CBasePlayer *player )
+	{
+		if ( player->GetTeamNumber() == m_iTeam )
+		{
+			++m_iTotal;
+			CTFPlayer *pTFPlayer = static_cast<CTFPlayer *>( player );
+			if ( !m_pBot->IsSelf( player ) )
+				++m_aClassCounts[ pTFPlayer->GetDesiredPlayerClassIndex() ];
+		}
+
+		return true;
+	}
+
+	CTFBot *m_pBot;
+	int m_iTeam;
+	int m_aClassCounts[TF_CLASS_COUNT_ALL];
+	int m_iTotal;
+};
+
+
 IMPLEMENT_INTENTION_INTERFACE( CTFBot, CTFBotMainAction )
 
 
@@ -1442,35 +1551,6 @@ void CTFBot::ForgetSpy( CTFPlayer *spy )
 	m_knownSpies.FindAndFastRemove( spy );
 }
 
-class SelectClosestPotentiallyVisible
-{
-public:
-	SelectClosestPotentiallyVisible( const Vector &origin )
-		: m_vecOrigin( origin )
-	{
-		m_pSelected = NULL;
-		m_flMinDist = FLT_MAX;
-	}
-
-	bool operator()( CNavArea *area )
-	{
-		Vector vecClosest;
-		area->GetClosestPointOnArea( m_vecOrigin, &vecClosest );
-		float flDistance = ( vecClosest - m_vecOrigin ).LengthSqr();
-
-		if ( flDistance < m_flMinDist )
-		{
-			m_flMinDist = flDistance;
-			m_pSelected = area;
-		}
-
-		return true;
-	}
-
-	Vector m_vecOrigin;
-	CNavArea *m_pSelected;
-	float m_flMinDist;
-};
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2007,53 +2087,6 @@ CBaseCombatCharacter *CTFBot::GetEntity( void ) const
 	return ToBasePlayer( m_controlling ) ? m_controlling : (CTFPlayer *)this;
 }
 
-class CollectReachableObjects : public ISearchSurroundingAreasFunctor
-{
-public:
-	CollectReachableObjects( CTFBot *actor, CUtlVector<EHANDLE> *selectedHealths, CUtlVector<EHANDLE> *outVector, float flMaxLength )
-	{
-		m_pBot = actor;
-		m_flMaxRange = flMaxLength;
-		m_pHealths = selectedHealths;
-		m_pVector = outVector;
-	}
-
-	virtual bool operator() ( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
-	{
-		for ( int i=0; i<m_pHealths->Count(); ++i )
-		{
-			CBaseEntity *pEntity = ( *m_pHealths )[i];
-			if ( !pEntity || !area->Contains( pEntity->WorldSpaceCenter() ) )
-				continue;
-
-			for ( int j=0; j<m_pVector->Count(); ++j )
-			{
-				CBaseEntity *pSelected = ( *m_pVector )[i];
-				if ( ENTINDEX( pEntity ) == ENTINDEX( pSelected ) )
-					return true;
-			}
-
-			EHANDLE hndl( pEntity );
-			m_pVector->AddToTail( hndl );
-		}
-
-		return true;
-	}
-
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar )
-	{
-		if ( adjArea->IsBlocked( m_pBot->GetTeamNumber() ) || travelDistanceSoFar > m_flMaxRange )
-			return false;
-
-		return currentArea->IsContiguous( adjArea );
-	}
-
-private:
-	CTFBot *m_pBot;
-	CUtlVector<EHANDLE> *m_pHealths;
-	CUtlVector<EHANDLE> *m_pVector;
-	float m_flMaxRange;
-};
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2124,41 +2157,6 @@ bool CTFBot::CanChangeClass( void )
 		return true;
 
 	return medigun->GetChargeLevel() <= 0.25f;
-}
-
-class CCountClassMembers
-{
-public:
-	CCountClassMembers( CTFBot *bot, int teamNum )
-		: m_pBot( bot ), m_iTeam( teamNum )
-	{
-		Q_memset( &m_aClassCounts, 0, sizeof( m_aClassCounts ) );
-	}
-
-	bool operator()( CBasePlayer *player )
-	{
-		if ( player->GetTeamNumber() == m_iTeam )
-		{
-			++m_iTotal;
-			CTFPlayer *pTFPlayer = static_cast<CTFPlayer *>( player );
-			if ( !m_pBot->IsSelf( player ) )
-			{
-				const int iClassIdx = pTFPlayer->GetDesiredPlayerClassIndex() + 2; // ??
-				++m_aClassCounts[iClassIdx];
-			}
-		}
-
-		return true;
-	}
-
-	CTFBot *m_pBot;
-	int m_iTeam;
-	int m_aClassCounts[11];
-	int m_iTotal;
-};
-inline const char *PickClassName( const int *pRoster, CCountClassMembers const &counter )
-{
-	return GetPlayerClassData( pRoster[random->RandomInt( 0, 10 )] )->m_szClassName;
 }
 
 //-----------------------------------------------------------------------------
