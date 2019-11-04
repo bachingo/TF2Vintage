@@ -370,7 +370,7 @@ bool CTFBot::IsAllowedToPickUpFlag( void )
 void CTFBot::DisguiseAsEnemy( void )
 {
 	CUtlVector<CTFPlayer *> enemies;
-	CollectPlayers( &enemies, GetEnemyTeam( this ), false, false );
+	CollectPlayers( &enemies, GetEnemyTeam( this ), false );
 
 	int iClass = TF_CLASS_UNDEFINED;
 	for ( int i=0; i < enemies.Count(); ++i )
@@ -2068,9 +2068,9 @@ void CTFBot::AvoidPlayers( CUserCmd *pCmd )
 		vecAvoidCenter.NormalizeInPlace();
 
 		m_Shared.SetSeparation( true );
-		m_Shared.SetSeparationVelocity( vecAvoidCenter * 50.0f );
-		pCmd->forwardmove += vecAvoidCenter.Dot( vecFwd ) * 50.0f;
-		pCmd->sidemove += vecAvoidCenter.Dot( vecRight ) * 50.0f;
+		m_Shared.SetSeparationVelocity( vecAvoidCenter * flRadius );
+		pCmd->forwardmove += vecAvoidCenter.Dot( vecFwd ) * flRadius;
+		pCmd->sidemove += vecAvoidCenter.Dot( vecRight ) * flRadius;
 	}
 	else
 	{
