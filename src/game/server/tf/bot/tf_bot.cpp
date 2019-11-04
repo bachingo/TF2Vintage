@@ -2190,6 +2190,7 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		TF_CLASS_PYRO,
 		TF_CLASS_SPY
 	};
+	static const int rosterSize = ARRAYSIZE( offenseRoster ) + ARRAYSIZE( defenseRoster ) / 2;
 
 	const char *szClassName = tf_bot_force_class.GetString();
 	if ( !FStrEq( szClassName, "" ) )
@@ -2202,17 +2203,18 @@ const char *CTFBot::GetNextSpawnClassname( void )
 	if ( !CanChangeClass() )
 		return m_PlayerClass.GetName();
 
-	CCountClassMembers func( this, GetTeamNumber() );
+	CountClassMembers func( this, GetTeamNumber() );
 	ForEachPlayer( func );
 
+	const int *pRoster = NULL;
 	if ( !TFGameRules()->IsInKothMode() )
 	{
 		if ( TFGameRules()->GetGameType() != TF_GAMETYPE_CP )
 		{
 			if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT && GetTeamNumber() == TF_TEAM_RED )
-				return PickClassName( defenseRoster, func );
-
-			return PickClassName( offenseRoster, func );
+				pRoster = defenseRoster;
+			else
+				pRoster = offenseRoster;
 		}
 		else
 		{
@@ -2222,13 +2224,9 @@ const char *CTFBot::GetNextSpawnClassname( void )
 			TFGameRules()->CollectDefendPoints( this, &defensePoints );
 
 			if ( attackPoints.IsEmpty() && !defensePoints.IsEmpty() )
-			{
-				return PickClassName( defenseRoster, func );
-			}
+				pRoster = defenseRoster;
 			else
-			{
-				return PickClassName( offenseRoster, func );
-			}
+				pRoster = offenseRoster;
 		}
 	}
 	else
@@ -2237,13 +2235,53 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		if ( pPoint )
 		{
 			if ( GetTeamNumber() == ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) )
-				return PickClassName( defenseRoster, func );
-
-			return PickClassName( offenseRoster, func );
+				pRoster = defenseRoster;
+			else
+				pRoster = offenseRoster;
 		}
-
-		return PickClassName( offenseRoster, func );
+		else
+			pRoster = offenseRoster;
 	}
+
+	if( pRoster == NULL )
+		return "random";
+
+	float flClassWeight[ TF_CLASS_COUNT_ALL ] = { 1.0f };
+	for ( int i=0; i < rosterSize; ++i )
+	{
+		if ( !TFGameRules()->CanBotChooseClass( this, pRoster[i] ) )
+			continue;
+
+		flClassWeight[ pRoster[i] ] += 1.0f;
+
+		if ( m_PlayerClass.GetClassIndex() == pRoster[i] )
+			flClassWeight[ pRoster[i] ] *= 0.1f;
+
+		flClassWeight[ pRoster[i] ] /= func.m_aClassCounts[ pRoster[i] ] + 1;
+	}
+
+	float flTotalFitness = 0;
+	for ( int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++ )
+		flTotalFitness += flClassWeight[i];
+
+	float flRandom = RandomFloat(0.0f, flTotalFitness);
+
+	flTotalFitness = 0;
+
+	int iDesiredClass = TF_CLASS_UNDEFINED;
+	for ( int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		flTotalFitness += flClassWeight[i];
+
+		if ( flRandom <= flTotalFitness )
+		{
+			iDesiredClass = i;
+			break;
+		}
+	}
+
+	if ( iDesiredClass > TF_CLASS_UNDEFINED )
+		return GetPlayerClassData( iDesiredClass )->m_szClassName;
 
 	return "random";
 }
