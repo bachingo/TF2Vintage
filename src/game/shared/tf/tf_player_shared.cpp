@@ -2748,7 +2748,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer *pTarget, bool 
 	}
 
 	// invalid class
-	if ( nClass < TF_FIRST_NORMAL_CLASS || nClass > TF_CLASS_COUNT )
+	if ( nClass < TF_FIRST_NORMAL_CLASS || nClass > TF_LAST_NORMAL_CLASS )
 	{
 		return;
 	}
@@ -2851,7 +2851,7 @@ void CTFPlayerShared::CompleteDisguise(void)
 
 	if (m_nDisguiseClass == TF_CLASS_SPY)
 	{
-		m_nMaskClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT);
+		m_nMaskClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS);
 	}
 	// Update the player model and skin.
 	m_pOuter->UpdateModel();

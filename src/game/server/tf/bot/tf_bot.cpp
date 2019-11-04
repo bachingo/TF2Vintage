@@ -380,7 +380,7 @@ void CTFBot::DisguiseAsEnemy( void )
 	}
 
 	if ( iClass == TF_CLASS_UNDEFINED )
-		iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+		iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 
 	m_Shared.Disguise( GetEnemyTeam( this ), iClass );
 }
@@ -2199,7 +2199,7 @@ const char *CTFBot::GetNextSpawnClassname( void )
 	const char *szClassName = tf_bot_force_class.GetString();
 	if ( !FStrEq( szClassName, "" ) )
 	{
-		const int iClassIdx = GetClassIndexFromString( szClassName, TF_CLASS_COUNT );
+		const int iClassIdx = GetClassIndexFromString( szClassName, TF_LAST_NORMAL_CLASS );
 		if ( iClassIdx != TF_CLASS_UNDEFINED )
 			return GetPlayerClassData( iClassIdx )->m_szClassName;
 	}

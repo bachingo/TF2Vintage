@@ -118,9 +118,12 @@ enum
 //-----------------------------------------------------------------------------
 // Player Classes.
 //-----------------------------------------------------------------------------
-#define TF_CLASS_COUNT			( TF_CLASS_ENGINEER )
 
 #define TF_FIRST_NORMAL_CLASS	( TF_CLASS_UNDEFINED + 1 )
+#define TF_LAST_NORMAL_CLASS	( TF_CLASS_UNDEFINED + 9 )
+
+#define TF_FIRST_BOSS_CLASS		( TF_LAST_NORMAL_CLASS + 1 )
+#define TF_LAST_BOSS_CLASS		( TF_CLASS_COUNT_ALL - 1 )
 
 
 #define	TF_CLASS_MENU_BUTTONS	( TF_CLASS_RANDOM + 1 )
@@ -137,7 +140,7 @@ enum
 	TF_CLASS_HEAVYWEAPONS,
 	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
-	TF_CLASS_ENGINEER,		// TF_CLASS_COUNT
+	TF_CLASS_ENGINEER,		// TF_LAST_NORMAL_CLASS
 	
 	// New classes go here.
 	// These are special classes and are not found normally.

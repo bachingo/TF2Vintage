@@ -201,7 +201,7 @@ EventDesiredResult<CTFBot> CTFBotTacticalMonitor::OnCommandString( CTFBot *me, c
 	else if ( FStrEq( cmd, "disguise" ) )
 	{
 		if ( me->IsPlayerClass( TF_CLASS_SPY ) && me->CanDisguise() )
-			me->m_Shared.Disguise( GetEnemyTeam( me ), RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT ) );
+			me->m_Shared.Disguise( GetEnemyTeam( me ), RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS ) );
 	}
 	else if ( FStrEq( cmd, "build sentry at nearest sentry hint" ) )
 	{

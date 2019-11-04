@@ -1076,13 +1076,13 @@ void CTFPlayer::Spawn()
 	if ( tf2v_randomizer.GetBool() || tf2v_random_classes.GetBool() )
 	{
 		// Random class
-		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT ) );
+		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS ) );
 	}
 
 	if ( ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_TEAM_PLAYER_BOSS ) ) )
 	{
 		// Random boss character.
-		SetDesiredPlayerClassIndex( RandomInt( (TF_CLASS_COUNT + 1), (TF_CLASS_COUNT_ALL - 1) ) );
+		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_BOSS_CLASS, TF_LAST_BOSS_CLASS ) );
 	}
 
 	
@@ -2030,7 +2030,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		Assert( pInv );
 
 		// Get a random item for our weapon slot
-		int iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+		int iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 		int iSlot = i;
 
 		// Spy's equip slots do not correct match the weapon slot so we need to accommodate for that
@@ -2922,9 +2922,9 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		{
 			int i = 0;
 				
-			int iMaxClass = bCanBeBoss ? ( TF_CLASS_COUNT_ALL ) : ( TF_CLASS_COUNT + 1 );
+			int iMaxClass = bCanBeBoss ? ( TF_CLASS_COUNT_ALL ) : ( TF_LAST_NORMAL_CLASS );
 
-			for (i = TF_FIRST_NORMAL_CLASS; i <= TF_CLASS_COUNT; i++)
+			for (i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++)
 			{
 				if ( stricmp( pClassName, GetPlayerClassData( i )->m_szClassName ) == 0 )
 				{
@@ -2936,10 +2936,10 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			// If we're selected to become a boss character, use a random boss.
 			if (bCanBeBoss)
 			{
-				iClass = random->RandomInt((TF_CLASS_COUNT + 1), (TF_CLASS_COUNT_ALL - 1));
+				iClass = random->RandomInt( TF_FIRST_BOSS_CLASS, TF_LAST_BOSS_CLASS );
 			}
 
-			if ( i >= iMaxClass )
+			if ( i > iMaxClass )
 			{
 				ClientPrint( this, HUD_PRINTCONSOLE, UTIL_VarArgs( "Invalid class name \"%s\".\n", pClassName ) );
 				return;
@@ -2950,7 +2950,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			// If we can be a boss character, switch to a boss.
 			if (bCanBeBoss)
 			{
-				iClass = random->RandomInt((TF_CLASS_COUNT + 1), (TF_CLASS_COUNT_ALL - 1));
+				iClass = random->RandomInt( TF_FIRST_BOSS_CLASS, TF_LAST_BOSS_CLASS );
 			}
 			else
 			{
@@ -2958,7 +2958,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 				do
 				{
 					// Don't let them be the same class twice in a row
-					iClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT);
+					iClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS);
 
 				} while (iClass == GetPlayerClass()->GetClassIndex());
 			}
@@ -3388,7 +3388,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 				// PistonMiner: Made it so it doesnt pick your own team.
 				do
 				{
-					nClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+					nClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 
 					GetTeamNumber() == TF_TEAM_BLUE ? nTeam = TF_TEAM_RED : nTeam = TF_TEAM_BLUE;
 
@@ -6890,7 +6890,7 @@ void CTFPlayer::ForceRespawn( void )
 		// Don't let them be the same class twice in a row
 		do
 		{
-			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 		} while ( iDesiredClass == GetPlayerClass()->GetClassIndex() );
 
 		bRandom = true;

@@ -235,7 +235,7 @@ bool CTFItemPanel::Init()
 	}
 
 
-	/*for (int iClassIndex = 0; iClassIndex <= TF_CLASS_COUNT; iClassIndex++)
+	/*for (int iClassIndex = 0; iClassIndex <= TF_LAST_NORMAL_CLASS; iClassIndex++)
 	{
 		if (pszClassModels[iClassIndex][0] != '\0')
 			modelinfo->FindOrLoadModel(pszClassModels[iClassIndex]);

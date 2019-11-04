@@ -1374,7 +1374,7 @@ int CTFGameRules::GetClassLimit( int iDesiredClassIndex )
 
 	if ( IsInTournamentMode() || tf2v_classlimit.GetInt() == 1 /*||  *((_DWORD *)this + 462) == 7 */ )
 	{
-		if ( iDesiredClassIndex <= TF_CLASS_COUNT )
+		if ( iDesiredClassIndex <= TF_LAST_NORMAL_CLASS )
 		{
 			switch ( iDesiredClassIndex )
 			{
@@ -1411,7 +1411,7 @@ int CTFGameRules::GetClassLimit( int iDesiredClassIndex )
 		}
 		else
 		{
-			result = -1;
+			result = 1;
 		}
 	}
 	else if ( IsInHighlanderMode() )
@@ -1441,7 +1441,7 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 	int iClassLimit = 0;
 	int iClassCount = 0;
 
-	if ( iDesiredClassIndex <= TF_CLASS_COUNT ) 
+	if ( iDesiredClassIndex <= TF_LAST_NORMAL_CLASS ) 
 	{
 		iClassLimit = GetClassLimit( iDesiredClassIndex );
 
@@ -1458,9 +1458,9 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 		else
 			return true;
 	}
-	else if ( !IsInVSHMode() && ( iDesiredClassIndex > TF_CLASS_COUNT ) )
+	else if ( !IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
 		return false;
-	else if ( IsInVSHMode() && ( iDesiredClassIndex > TF_CLASS_COUNT ) )
+	else if ( IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TF_TEAM_PLAYER_BOSS )
 			return true;

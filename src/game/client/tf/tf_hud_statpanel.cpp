@@ -372,7 +372,7 @@ void CTFStatPanel::WriteStats( void )
 		const ClassStats_t &stat = m_aClassStats[ i ];
 
 		// strip out any garbage class data
-		if ( ( stat.iPlayerClass > TF_CLASS_COUNT ) || ( stat.iPlayerClass < TF_FIRST_NORMAL_CLASS ) )
+		if ( ( stat.iPlayerClass > TF_LAST_NORMAL_CLASS ) || ( stat.iPlayerClass < TF_FIRST_NORMAL_CLASS ) )
 			continue;
 
 		CDmxElement *pClass = CreateDmxElement( "ClassStats_t" );
@@ -587,7 +587,7 @@ void CTFStatPanel::ShowStatPanel( int iClass, int iTeam, int iCurStatValue, TFSt
 	pLabel->GetText( szOriginalSummary, sizeof( szOriginalSummary ) );
 	const wchar_t *pszPlayerClass = L"undefined";
 
-	if ( ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_CLASS_COUNT ) )
+	if ( ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_LAST_NORMAL_CLASS ) )
 	{
 		pszPlayerClass = g_pVGuiLocalize->Find( g_aPlayerClassNames[ iClass ] );
 	}
@@ -817,7 +817,7 @@ void CTFStatPanel::MsgFunc_PlayerStatsUpdate( bf_read &msg )
 	}
 
 	Assert( iClass >= TF_FIRST_NORMAL_CLASS && iClass < TF_CLASS_COUNT_ALL );
-	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_CLASS_COUNT )
+	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_LAST_NORMAL_CLASS )
 		return;
 	
 	m_iClassCurrentLife = iClass;
