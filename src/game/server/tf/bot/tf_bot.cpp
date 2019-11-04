@@ -2265,7 +2265,7 @@ const char *CTFBot::GetNextSpawnClassname( void )
 	}
 
 	float flTotalFitness = 0;
-	for ( int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++ )
+	for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
 		flTotalFitness += flClassWeight[i];
 
 	float flRandom = RandomFloat(0.0f, flTotalFitness);
@@ -2273,7 +2273,7 @@ const char *CTFBot::GetNextSpawnClassname( void )
 	flTotalFitness = 0;
 
 	int iDesiredClass = TF_CLASS_UNDEFINED;
-	for ( int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++ )
+	for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
 	{
 		flTotalFitness += flClassWeight[i];
 

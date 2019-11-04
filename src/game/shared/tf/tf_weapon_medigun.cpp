@@ -1238,7 +1238,7 @@ void CWeaponMedigun::UpdateEffects( void )
 		CEconItemDefinition *pStatic = m_Item.GetStaticData();
 		if ( pStatic )
 		{
-			PerTeamVisuals_t *pVisuals =	pStatic->GetVisuals( GetTeamNumber() );
+			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );
 			if ( pVisuals )
 			{
 				const char *pszCustomEffectName = pVisuals->custom_particlesystem;

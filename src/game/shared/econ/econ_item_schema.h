@@ -213,6 +213,7 @@ typedef struct EconPerTeamVisuals
 	{
 		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
 		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
+		CLEAR_STR( custom_particlesystem );
 		skin = -1;
 	}
 
