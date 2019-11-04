@@ -2165,9 +2165,11 @@ bool CTFBot::CanChangeClass( void )
 const char *CTFBot::GetNextSpawnClassname( void )
 {
 	static const int offenseRoster[] ={
+		TF_CLASS_SCOUT,
 		TF_CLASS_ENGINEER,
 		TF_CLASS_SOLDIER,
 		TF_CLASS_HEAVYWEAPONS,
+		TF_CLASS_MEDIC,
 		TF_CLASS_DEMOMAN,
 		TF_CLASS_SCOUT,
 		TF_CLASS_PYRO,
@@ -2178,11 +2180,13 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		TF_CLASS_SPY
 	};
 	static const int defenseRoster[] ={
+		TF_CLASS_MEDIC,
 		TF_CLASS_ENGINEER,
 		TF_CLASS_SOLDIER,
 		TF_CLASS_DEMOMAN,
 		TF_CLASS_SCOUT,
 		TF_CLASS_HEAVYWEAPONS,
+		TF_CLASS_MEDIC,
 		TF_CLASS_SNIPER,
 		TF_CLASS_ENGINEER,
 		TF_CLASS_SOLDIER,
@@ -2190,7 +2194,7 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		TF_CLASS_PYRO,
 		TF_CLASS_SPY
 	};
-	static const int rosterSize = ARRAYSIZE( offenseRoster ) + ARRAYSIZE( defenseRoster ) / 2;
+	static const int rosterSize = ( ARRAYSIZE( offenseRoster ) + ARRAYSIZE( defenseRoster ) ) / 2;
 
 	const char *szClassName = tf_bot_force_class.GetString();
 	if ( !FStrEq( szClassName, "" ) )
