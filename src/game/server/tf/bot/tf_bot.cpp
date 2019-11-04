@@ -107,7 +107,7 @@ public:
 
 			for ( int j=0; j<m_pVector->Count(); ++j )
 			{
-				CBaseEntity *pSelected = ( *m_pVector )[i];
+				CBaseEntity *pSelected = ( *m_pVector )[j];
 				if ( ENTINDEX( pEntity ) == ENTINDEX( pSelected ) )
 					return true;
 			}
