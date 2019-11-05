@@ -117,6 +117,8 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
 
+ConVar tf2v_misschance( "tf2v_misschance", "0.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a purpose miss.");
+
 
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
@@ -4157,9 +4159,19 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	int bTookDamage = 0;
 
 	int bitsDamage = inputInfo.GetDamageType();
+	
+	
+	// We calculate out a random chance of a critical miss happening.
+	bool bIsCriticalMiss = false;
+	if (tf2v_misschance.GetInt() > 0)
+	{
+		int iRandomChance = RandomInt(0,99);
+		if ( iRandomChance <= tf2v_misschance.GetInt() )
+			bIsCriticalMiss = true;
+	}
 
 	// If we're invulnerable, force ourselves to only take damage events only, so we still get pushed
-	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) || m_Shared.InCond( TF_COND_PHASE ) )
+	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) || m_Shared.InCond( TF_COND_PHASE ) || (bIsCriticalMiss) )
 	{
 		bool bAllowDamage = false;
 
@@ -4193,7 +4205,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 			}
 
-			if ( m_Shared.InCond( TF_COND_PHASE ) )
+			if ( ( m_Shared.InCond( TF_COND_PHASE ) ) || ( bIsCriticalMiss ) )
 			{
 				CEffectData	data;
 				data.m_nHitBox = GetParticleSystemIndex( "miss_text" );
@@ -4204,7 +4216,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				CSingleUserRecipientFilter filter( (CBasePlayer *)pAttacker );
 				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
 
-				SpeakConceptIfAllowed( MP_CONCEPT_DODGE_SHOT );
+				if ( m_Shared.InCond( TF_COND_PHASE ) )
+					SpeakConceptIfAllowed( MP_CONCEPT_DODGE_SHOT );
 			}
 			return 0;
 		}
