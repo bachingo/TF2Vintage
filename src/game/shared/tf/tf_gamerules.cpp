@@ -3870,7 +3870,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 		float flFirstBloodDuration = tf_arena_first_blood_length.GetFloat();
 
 		iDeathFlags |= TF_DEATH_FIRST_BLOOD;
-		if ( flFirstBloodDuration > 0 )
+		if ( flFirstBloodDuration > 0.0f )
 		pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, flFirstBloodDuration );
 	}
 

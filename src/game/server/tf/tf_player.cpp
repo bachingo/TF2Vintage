@@ -118,7 +118,7 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
 
 ConVar tf2v_player_misses( "tf2v_player_misses", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
-ConVar tf2v_misschance( "tf2v_misschance", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
+ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
 
 
 extern ConVar spec_freeze_time;
@@ -4164,10 +4164,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	
 	// We calculate out a random chance of a critical miss happening.
 	bool bIsCriticalMiss = false;
-	if ( ( tf2v_misschance.GetInt() > 0 ) && ( tf2v_player_misses.GetBool() ) )
+	if ( ( tf2v_misschance.GetFloat() > 0.0f ) && ( tf2v_player_misses.GetBool() ) )
 	{
-		int iRandomChance = RandomInt(0,99);
-		if ( iRandomChance <= tf2v_misschance.GetInt() )
+		int iRandomChance = RandomFloat(0.0f,99.0f);
+		if ( iRandomChance <= tf2v_misschance.GetFloat() )
 			bIsCriticalMiss = true;
 	}
 
