@@ -126,6 +126,8 @@ ConVar tf2v_critchance( "tf2v_critchance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf2v_critchance_rapid( "tf2v_critchance_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for rapid fire critical hits.");
 ConVar tf2v_critchance_melee( "tf2v_critchance_melee", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance of melee critical hits.");
 ConVar tf2v_crit_duration_rapid( "tf2v_crit_duration_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Length in seconds for rapid fire critical hit duration.");
+ConVar tf2v_ctf_capcrits( "tf2v_ctf_capcrits", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable critical hits on flag capture." );
+
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -135,6 +137,7 @@ ConVar mp_humans_must_join_team( "mp_humans_must_join_team", "any", FCVAR_GAMEDL
 
 ConVar tf_arena_force_class( "tf_arena_force_class", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force random classes in arena." );
 ConVar tf_arena_first_blood( "tf_arena_first_blood", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles first blood criticals" );
+ConVar tf_arena_first_blood_length( "tf_arena_first_blood_length", "5.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Duration of first blood criticals" );
 
 ConVar tf_gamemode_arena( "tf_gamemode_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_cp( "tf_gamemode_cp", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
@@ -3863,9 +3866,12 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 				BroadcastSound( i, "Announcer.AM_FirstBloodFinally" );
 			}
 		}
+		
+		float flFirstBloodDuration = tf_arena_first_blood_length.GetFloat();
 
 		iDeathFlags |= TF_DEATH_FIRST_BLOOD;
-		pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, 5.0f );
+		if ( flFirstBloodDuration > 0 )
+		pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, flFirstBloodDuration );
 	}
 
 	if ( pTFPlayerVictim->m_Shared.IsFeigningDeath() )
@@ -4357,7 +4363,7 @@ void CTFGameRules::HandleCTFCaptureBonus( int iTeam )
 	if ( m_flCTFBonusTime > -1 )
 		flBoostTime = m_flCTFBonusTime;
 
-	if ( flBoostTime > 0.0 )
+	if ( ( flBoostTime > 0.0 ) && ( tf2v_ctf_capcrits.GetBool() ) )
 	{
 		for ( int i = 1; i < gpGlobals->maxClients; i++ )
 		{
