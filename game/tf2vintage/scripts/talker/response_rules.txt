@@ -512,6 +512,8 @@ criterion "WeaponIsScotsmansSkullcutter" "item_name" "The Scotsman's Skullcutter
 criterion "WeaponIsClassicSniperrifle" "playerweapon" "tf_weapon_sniperrifle_classic" "required"
 criterion "WeaponIsRocketLauncherAirStrike" "playerweapon" "tf_weapon_rocketlauncher_airstrike" "required"
 criterion "WeaponIsMutatedMilk" "item_name" "Mutated Milk" "required" weight 10
+criterion "WeaponIsStockBonesaw" "item_name" "TF_WEAPON_BONESAW" "required" weight 5
+criterion "WeaponIsNotStockBonesaw" "item_name" "!=TF_WEAPON_BONESAW" "required" weight 5
 
 //Custom healed concept and critical hit
 criterion "IsBeingHealed" "beinghealed" "1" "required"

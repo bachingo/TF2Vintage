@@ -551,6 +551,10 @@
 	{
 		scene "scenes/player/medic/low/taunt03.vcd"
 	}
+	response "MedicTauntMeleeUber"
+	{
+		scene "scenes/player/medic/low/taunt03_uber.vcd"
+	}
 	response "MedicTauntHalloween"
 	{
 		scene "scenes/player/medic/low/taunt07.vcd"
@@ -576,8 +580,13 @@
 	}
 	rule MedicTauntPlayerMelee
 	{
-		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw
+		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw WeaponIsStockBonesaw
 		response MedicTauntMelee
+	}
+	rule MedicTauntPlayerMeleeUber
+	{
+		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw WeaponIsNotStockBonesaw
+		response MedicTauntMeleeUber
 	}
 	rule MedicTauntPlayerKritzkrieg
 	{

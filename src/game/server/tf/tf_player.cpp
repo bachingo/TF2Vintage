@@ -8416,9 +8416,16 @@ void CTFPlayer::Taunt( void )
 		{
 			SetAbsVelocity( vec3_origin );
 		}
+			
+
 		if ( V_stricmp( szResponse, "scenes/player/medic/low/taunt03.vcd" ) == 0 )
 		{
 			EmitSound( "Taunt.MedicViolin" );
+		}
+
+		if (V_stricmp(szResponse, "scenes/player/medic/low/taunt03_uber.vcd") == 0)
+		{
+			EmitSound("Taunt.MedicViolinUber");
 		}
 
 		// Setup a taunt attack if necessary.
