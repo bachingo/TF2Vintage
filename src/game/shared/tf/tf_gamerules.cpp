@@ -145,8 +145,13 @@ ConVar tf_gamemode_ctf( "tf_gamemode_ctf", "0", FCVAR_NOTIFY | FCVAR_REPLICATED 
 ConVar tf_gamemode_sd( "tf_gamemode_sd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_rd( "tf_gamemode_rd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_payload( "tf_gamemode_payload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_plr( "tf_gamemode_plr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_mvm( "tf_gamemode_mvm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_passtime( "tf_gamemode_passtime", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_medieval( "tf_gamemode_medieval", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_koth( "tf_gamemode_koth", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_vsh( "tf_gamemode_vsh", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
 ConVar tf_ctf_bonus_time( "tf_ctf_bonus_time", "10", FCVAR_NOTIFY, "Length of team crit time for CTF capture." );
@@ -1276,9 +1281,15 @@ void CTFGameRules::Activate()
 	tf_gamemode_ctf.SetValue( 0 );
 	tf_gamemode_sd.SetValue( 0 );
 	tf_gamemode_payload.SetValue( 0 );
+	tf_gamemode_plr.SetValue( 0 );
 	tf_gamemode_mvm.SetValue( 0 );
 	tf_gamemode_rd.SetValue( 0 );
 	tf_gamemode_passtime.SetValue( 0 );
+	tf_gamemode_koth.SetValue( 0 );
+	tf_gamemode_medieval.SetValue( 0 );
+	tf_gamemode_vsh.SetValue( 0 );
+	tf_gamemode_pd.SetValue( 0 );
+
 
 	TeamplayRoundBasedRules()->SetMultipleTrains( false );
 
@@ -1291,6 +1302,7 @@ void CTFGameRules::Activate()
 	if ( pMedieval )
 	{
 		m_nGameType.Set( TF_GAMETYPE_MEDIEVAL );
+		tf_gamemode_medieval.SetValue( 1 );
 		return;
 	}
 
@@ -1298,13 +1310,14 @@ void CTFGameRules::Activate()
 	if ( pArena )
 	{
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
-		tf_gamemode_arena.SetValue( 1 );
 	
 		// VSH maps use arena logic, except with the gamemode prefix.
 		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
+			tf_gamemode_vsh.SetValue( 1 );
 			m_bPlayingVSH = true;
 		else
 		{
+			tf_gamemode_arena.SetValue( 1 );
 			Msg( "Executing server arena config file\n", 1 );
 			engine->ServerCommand( "exec config_arena.cfg \n" );
 			engine->ServerExecute();
@@ -1316,6 +1329,7 @@ void CTFGameRules::Activate()
 	if ( pKoth )
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
+		tf_gamemode_koth.SetValue( 1 );
 		m_bPlayingKoth = true;
 		return;
 	}
@@ -1340,7 +1354,7 @@ void CTFGameRules::Activate()
 	if ( pMultipleEscort )
 	{
 		m_nGameType.Set( TF_GAMETYPE_ESCORT );
-		tf_gamemode_payload.SetValue( 1 );
+		tf_gamemode_plr.SetValue( 1 );
 		TeamplayRoundBasedRules()->SetMultipleTrains( true );
 		return;
 	}
@@ -3191,6 +3205,12 @@ static const char *g_aTaggedConVars[] =
 
 	"tf2v_randomizer",
 	"randomizer",
+	
+	"tf2v_random_classes",
+	"randomclasses",
+	
+	"tf2v_random_weapons",
+	"randomweapons",
 
 	"tf2v_autojump",
 	"autojump",
@@ -3198,8 +3218,8 @@ static const char *g_aTaggedConVars[] =
 	"tf2v_duckjump",
 	"duckjump",
 
-	"tf2v_allow_special_classes",
-	"specialclasses",
+	"tf2v_player_misses",
+	"misses",
 
 	"tf2v_airblast",
 	"airblast",
@@ -3236,15 +3256,30 @@ static const char *g_aTaggedConVars[] =
 
 	"tf_gamemode_rd",
 	"rd",
+	
+	"tf_gamemode_pd",
+	"pd",
 
 	"tf_gamemode_payload",
-	"payload",
+	"pl",
+	
+	"tf_gamemode_plr",
+	"plr",
 
 	"tf_gamemode_mvm",
 	"mvm",
 
 	"tf_gamemode_passtime",
-	"passtime",
+	"pass",
+	
+	"tf_gamemode_medieval",
+	"medieval",
+	
+	"tf_gamemode_koth",
+	"koth",
+	
+	"tf_gamemode_vsh",
+	"vsh",
 	
 	"tf2v_allow_glow_outline",
 	"glow",
@@ -3264,11 +3299,17 @@ static const char *g_aTaggedConVars[] =
 	"tf2v_random_classes",
 	"randomclasses",
 	
-	"tf2v_random_classes",
+	"tf2v_random_weapons",
 	"randomweapons",
 	
 	"tf2v_enforce_whitelist",
 	"whitelist",
+	
+	"tf_arena_first_blood",
+	"firstblood",
+	
+	"tf2v_ctf_capcrits",
+	"capcrits",
 	
 
 };
