@@ -1313,8 +1313,10 @@ void CTFGameRules::Activate()
 	
 		// VSH maps use arena logic, except with the gamemode prefix.
 		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
-			tf_gamemode_vsh.SetValue( 1 );
+		{
+			tf_gamemode_vsh.SetValue(1);
 			m_bPlayingVSH = true;
+		}
 		else
 		{
 			tf_gamemode_arena.SetValue( 1 );
