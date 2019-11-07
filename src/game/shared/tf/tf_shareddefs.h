@@ -307,6 +307,9 @@ extern const char *g_aAmmoNames[];
 #define TF_PLAYER_GRENADE_COUNT		2
 #define TF_PLAYER_BUILDABLE_COUNT	4
 
+#define TF_PLAYER_MISC_COUNT		2		// Total amount of all misc slots.
+#define TF_PLAYER_ACTION_COUNT		8		// Total amount of all action slots.
+
 #define TF_WEAPON_PRIMARY_MODE		0
 #define TF_WEAPON_SECONDARY_MODE	1
 
