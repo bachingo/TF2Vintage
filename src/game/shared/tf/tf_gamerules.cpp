@@ -3023,7 +3023,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 		}
 	}
-	/*else if ( pTFPlayer->m_bIsPlayerADev )
+	else if ( pTFPlayer->m_bIsPlayerADev )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
@@ -3040,7 +3040,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 				pszFormat = "TF_Chat_Dev";
 			}
 		}
-	}*/
+	}
 	else
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
@@ -3156,6 +3156,20 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	int iFov = atoi( pszFov );
 	iFov = clamp( iFov, 75, MAX_FOV_UNLOCKED );
 	pTFPlayer->SetDefaultFOV( iFov );
+	
+		
+	// Check if the player is someone of note.
+	if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
+	{
+		pTFPlayer->m_iPlayerVIPRanking = pTFPlayer->GetPlayerVIPRanking();
+		if ( pTFPlayer->m_iPlayerVIPRanking != 0 )
+		{
+			pTFPlayer->m_bIsPlayerAVIP = true;
+			if (pTFPlayer->m_iPlayerVIPRanking <= 2)	// Rank 1 and 2 members are developers.
+				pTFPlayer->m_bIsPlayerADev = true;
+		}
+	}
+	
 }
 
 static const char *g_aTaggedConVars[] =

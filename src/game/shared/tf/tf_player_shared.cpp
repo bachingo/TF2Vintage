@@ -1215,7 +1215,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
-	if ( InCond( TF_COND_BURNING ) && ( m_pOuter->m_flPowerPlayTime < gpGlobals->curtime ) )
+	if ( InCond( TF_COND_BURNING ) )
 	{
 		// If we're underwater, put the fire out
 		if ( gpGlobals->curtime > m_flFlameRemoveTime || m_pOuter->GetWaterLevel() >= WL_Waist )
@@ -3166,11 +3166,6 @@ void CTFPlayerShared::RecalculateChargeEffects(bool bInstantRemove)
 {
 	bool bShouldCharge[TF_CHARGE_COUNT] = {};
 	CTFPlayer *pProviders[TF_CHARGE_COUNT] = {};
-
-	if (m_pOuter->m_flPowerPlayTime > gpGlobals->curtime)
-	{
-		bShouldCharge[TF_CHARGE_INVULNERABLE] = true;
-	}
 
 	medigun_charge_types selfCharge = GetChargeEffectBeingProvided(m_pOuter);
 

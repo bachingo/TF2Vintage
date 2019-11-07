@@ -457,6 +457,9 @@ public:
 	bool	m_bBlastLaunched;
 
 	bool	m_bIsPlayerADev;
+	bool	m_bIsPlayerAVIP;
+	int		m_iPlayerVIPRanking;
+	
 
 	int					StateGet( void ) const;
 
@@ -717,10 +720,7 @@ private:
 	CUtlVector<AppliedContext_t> m_hActiveContexts;
 
 public:
-	bool				SetPowerplayEnabled( bool bOn );
-	bool				PlayerHasPowerplay( void );
-	void				PowerplayThink( void );
-	float				m_flPowerPlayTime;
+	int				GetPlayerVIPRanking( void );
 };
 
 //-----------------------------------------------------------------------------

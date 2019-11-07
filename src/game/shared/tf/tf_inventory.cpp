@@ -51,7 +51,6 @@ bool CTFInventory::Init( void )
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
 	bool bCosmeticsEnabled = tf2v_show_cosmetics_in_armory.GetBool();
-	
 #endif
 #ifdef GAME_DLL
 	bool bReskinsEnabled = true;

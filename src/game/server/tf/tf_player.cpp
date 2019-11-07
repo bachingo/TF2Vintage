@@ -510,7 +510,9 @@ CTFPlayer::CTFPlayer()
 	memset( m_WeaponPreset, 0, TF_CLASS_COUNT_ALL * TF_LOADOUT_SLOT_COUNT );
 
 	m_bIsPlayerADev = false;
-
+	m_bIsPlayerAVIP = false;
+	m_iPlayerVIPRanking = 0;
+	
 	m_flStunTime = 0.0f;
 
 	m_bInArenaQueue = false;
@@ -1207,7 +1209,6 @@ void CTFPlayer::Spawn()
 	m_flNextSpeakWeaponFire = gpGlobals->curtime;
 
 	m_bIsIdle = false;
-	m_flPowerPlayTime = 0.0;
 
 	m_nBlastJumpFlags = 0;
 
@@ -1518,7 +1519,7 @@ void CTFPlayer::GiveDefaultItems()
 	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 		EnableZombies( pData );
 	
-	// If we're a VIP player, give a commendation.
+	// If we're a VIP player, give a medal.
 	// EnableVIP( pData );
 
 	// Give grenades.
@@ -2204,31 +2205,29 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData )
 {
 	// Check to determine which of the VIP medals we should give them.
-	int iItemID = 5617;
+	int iItemID = 166;
 
-	// This is then where we'd check their veterancy status and add the proper item.
 	int iMedalType = 0;
+	
+	if ( iMedalType == 0 )
+		return;		// Nothing to do here.
 	
 	switch (iMedalType)
 	{
-		case 0:
-			iItemID = 5617;
-			break;
-			
 		case 1:
-			iItemID = 5617;
+			iItemID = 170;
 			break;
 
 		case 2:
-			iItemID = 5617;
+			iItemID = 164;
 			break;
 			
 		case 3:
-			iItemID = 5617;
+			iItemID = 165;
 			break;
 		
 		case 4:
-			iItemID = 5617;
+			iItemID = 166;
 			break;
 	}
 		
@@ -9912,28 +9911,74 @@ CON_COMMAND_F( give_particle, NULL, FCVAR_CHEAT )
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFPlayer::SetPowerplayEnabled( bool bOn )
+// Rank 1.
+uint64 VIPRANK1[] =
 {
-	return false;
+	76561198168440306, // BSUV
+	76561197984621385, // ZOOPWOOP
+};
+
+// Rank 2.
+uint64 VIPRANK2[] =
+{
+	76561198168440306, // BSUV
+	76561197984621385, // ZOOPWOOP
+};
+
+// Rank 3.
+uint64 VIPRANK3[] =
+{
+	76561198168440306, // BSUV
+	76561197984621385, // ZOOPWOOP
+};
+
+// Rank 4.
+uint64 VIPRANK4[] =
+{
+	76561198168440306, // BSUV
+	76561197984621385, // ZOOPWOOP
 };
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFPlayer::PlayerHasPowerplay( void )
+int CTFPlayer::GetPlayerVIPRanking( void )
 {
-	return false;
-}
+	if ( !engine->IsClientFullyAuthenticated( edict() ) )
+		return 0;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::PowerplayThink( void )
-{
-	return;
+	player_info_t pi;
+	if ( engine->GetPlayerInfo( entindex(), &pi ) && ( pi.friendsID ) )
+	{
+		CSteamID steamIDForPlayer( pi.friendsID, 1, k_EUniversePublic, k_EAccountTypeIndividual );
+
+		// Rank 1 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK1); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK1[i] ) )
+				return 1;
+		}
+		// Rank 2 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK2); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK2[i] ) )
+				return 2;
+		}
+		// Rank 3 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK3); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK3[i] ) )
+				return 3;
+		}
+		// Rank 4 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK4); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK4[i] ) )
+				return 4;
+		}	
+	}
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------
