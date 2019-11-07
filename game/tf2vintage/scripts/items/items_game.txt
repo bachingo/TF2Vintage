@@ -2697,26 +2697,6 @@
 			}
 			"baseitem"	"1"
 		}
-		"34"
-		{
-			"name"	"TF2V_COSMETIC_MISC2"
-			"prefab"	"misc"
-			"item_slot"	"misc2"
-			"item_name"	"#TF_Spectator_Default"
-			"used_by_classes"
-			{
-				"scout"		"1"
-				"soldier"	"1"
-				"pyro"		"1"
-				"demoman"	"1"
-				"heavy"		"1"
-				"engineer"	"1"
-				"medic"		"1"
-				"sniper"	"1"
-				"spy"		"1"
-			}
-			"baseitem"	"1"
-		}
 		"35"
 		{
 			"name"	"The Kritzkrieg"
