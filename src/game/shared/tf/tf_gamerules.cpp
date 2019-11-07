@@ -108,6 +108,7 @@ extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;
 extern ConVar mp_chattime;
 extern ConVar tf_arena_max_streak;
+extern ConVar mp_tournament;
 
 ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
@@ -4215,6 +4216,65 @@ void CTFGameRules::FillOutTeamplayRoundWinEvent( IGameEvent *event )
 
 	// set the number of caps that team got any time during the round
 	event->SetInt( "losing_team_num_caps", m_iNumCaps[iLosingTeam] );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::StartCompetitiveMatch( void )
+{
+	SetInWaitingForPlayers( false );
+	CleanUpMap();
+	State_Transition( GR_STATE_RESTART );
+	ResetPlayerAndTeamReadyState();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::EndCompetitiveMatch( void )
+{
+	State_Transition( GR_STATE_RESTART );
+	SetInWaitingForPlayers( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::StopCompetitiveMatch( int eMatchResult )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( "competitive_victory" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+
+	if ( eMatchResult == 3 )
+	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "player_abandoned_match" );
+		if ( event )
+		{
+			event->SetBool( "game_over", State_Get() == GR_STATE_BETWEEN_RNDS );
+			gameeventmanager->FireEvent( event );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::UsePlayerReadyStatusMode( void )
+{
+	if ( IsMannVsMachineMode() )
+		return true;
+
+	if ( IsCompetitiveMode() )
+		return true;
+
+	if ( mp_tournament.GetBool() )
+		return true;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------

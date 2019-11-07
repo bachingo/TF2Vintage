@@ -277,6 +277,10 @@ public:
 
 	virtual bool	ClientConnected( edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen );
 
+	void			StartCompetitiveMatch( void );
+	void			StopCompetitiveMatch(/*CMsgGC_Match_Result_Status*/int eMatchResult=0 );
+	void			EndCompetitiveMatch( void );
+
 	void			RegisterNPC( CBaseCombatCharacter *pNPC );
 	void			RemoveNPC( CBaseCombatCharacter *pNPC );
 
@@ -328,7 +332,7 @@ public:
 
 	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer ) { return true; };
 
-	virtual bool    IsMannVsMachineMode( void ) { return false; };
+	bool			IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
 	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
@@ -339,6 +343,7 @@ public:
 	virtual bool	IsCompetitiveMode( void ) { return m_bCompetitiveMode; };
 	virtual bool	IsInHybridCTF_CPMode( void ) { return m_bPlayingHybrid_CTF_CP; };
 	virtual bool	IsInSpecialDeliveryMode( void ) { return m_bPlayingSpecialDeliveryMode; };
+	bool			UsePlayerReadyStatusMode( void );
 
 #ifdef CLIENT_DLL
 

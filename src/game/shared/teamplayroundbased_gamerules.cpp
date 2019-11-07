@@ -1005,7 +1005,7 @@ void CTeamplayRoundBasedRules::CheckRestartRound( void )
 	{
 		int iDelayMax = 60;
 
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL ) || defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
 		if ( TFGameRules() && ( TFGameRules()->IsMannVsMachineMode() || TFGameRules()->IsCompetitiveMode() ) )
 		{
 			iDelayMax = 180;
@@ -1499,17 +1499,19 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 
 		m_flStateTransitionTime = gpGlobals->curtime + tf_arena_preround_time.GetInt();
 	}
-#if defined(TF_CLIENT_DLL) || defined(TF_DLL)
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL ) || defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
 	// Only allow at the very beginning of the game, or between waves in mvm
 	else if ( TFGameRules() && TFGameRules()->UsePlayerReadyStatusMode() && m_bAllowBetweenRounds )
 	{
 		State_Transition( GR_STATE_BETWEEN_RNDS );
 		m_bAllowBetweenRounds = false;
 
+	#if 0
 		if ( TFGameRules()->IsMannVsMachineMode() )
 		{
 			TFObjectiveResource()->SetMannVsMachineBetweenWaves( true );
 		}
+	#endif
 	}
 #endif // #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
 	else
@@ -1596,9 +1598,10 @@ void CTeamplayRoundBasedRules::CheckReadyRestart( void )
 	{
 		m_flRestartRoundTime = -1;
 
-#ifdef TF_DLL
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
 		if ( TFGameRules() )
 		{
+		#if 0
 			if ( TFGameRules()->IsMannVsMachineMode() )
 			{
 				if ( g_pPopulationManager && TFObjectiveResource()->GetMannVsMachineIsBetweenWaves() )
@@ -1608,12 +1611,13 @@ void CTeamplayRoundBasedRules::CheckReadyRestart( void )
 					return;
 				}
 			}
-			else if ( TFGameRules()->IsCompetitiveMode() )
+		#endif
+			if ( TFGameRules()->IsCompetitiveMode() )
 			{
 				TFGameRules()->StartCompetitiveMatch();
 				return;
 			}
-			else if ( mp_tournament.GetBool() )
+			if ( mp_tournament.GetBool() )
 			{
 				// Temp
 				TFGameRules()->StartCompetitiveMatch();
@@ -1628,7 +1632,7 @@ void CTeamplayRoundBasedRules::CheckReadyRestart( void )
 
 	bool bProcessReadyRestart = m_bAwaitingReadyRestart;
 
-#ifdef TF_DLL
+#if defined TF_DLL || defined TF_VINTAGE
 	bProcessReadyRestart &= TFGameRules() && !TFGameRules()->UsePlayerReadyStatusMode();
 #endif // TF_DLL
 
@@ -1751,7 +1755,7 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 		}
 #endif
 
-#ifdef TF_DLL
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
 		// Mass time-out?  Clean everything up.
 		if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() )
 		{
@@ -1844,12 +1848,12 @@ void CTeamplayRoundBasedRules::State_Enter_TEAM_WIN( void )
 
 	SendWinPanelInfo();
 
-#ifdef TF_DLL
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
 	// Do this now, so players don't leave before the usual CheckWinLimit() call happens
 	bool bDone = ( CheckTimeLimit( false ) || CheckWinLimit( false ) || CheckMaxRounds( false ) || CheckNextLevelCvar( false ) );
 	if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() && bDone )
 	{
-		TFGameRules()->StopCompetitiveMatch( CMsgGC_Match_Result_Status_MATCH_SUCCEEDED );
+		TFGameRules()->StopCompetitiveMatch( /*CMsgGC_Match_Result_Status_MATCH_SUCCEEDED*/ );
 	}
 #endif // TF_DLL
 }
@@ -1919,7 +1923,8 @@ void CTeamplayRoundBasedRules::State_Think_TEAM_WIN( void )
 
 				State_Transition( GR_STATE_PREROUND );
 			}
-#ifdef TF_DLL
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
+		#if 0
 			else if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() && g_pPopulationManager )
 			{
 				// one of the convars mp_timelimit, mp_winlimit, mp_maxrounds, or nextlevel has been triggered
@@ -1937,6 +1942,7 @@ void CTeamplayRoundBasedRules::State_Think_TEAM_WIN( void )
 				State_Enter( GR_STATE_GAME_OVER );
 				return;
 			}
+		#endif
 			else if ( TFGameRules() && TFGameRules()->UsePlayerReadyStatusMode() )
 			{
 				for ( int i = 1; i <= MAX_PLAYERS; i++ )
@@ -2523,7 +2529,7 @@ void CC_CH_TournamentRestart( void )
 			return;
 	}
 
-#ifdef TF_DLL
+#if defined( TF_DLL ) || defined( TF_VINTAGE )
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 		return;
 #endif // TF_DLL
@@ -3280,7 +3286,7 @@ void CTeamplayRoundBasedRules::PlayWinSong( int team )
 	}
 	else
 	{
-#if defined (TF_DLL) || defined (TF_CLIENT_DLL)
+#if defined( TF_DLL ) || defined( TF_CLIENT_DLL )
 		if ( TFGameRules() && TFGameRules()->IsPlayingSpecialDeliveryMode() )
 			return;
 #endif // TF_DLL
