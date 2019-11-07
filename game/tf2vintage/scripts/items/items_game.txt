@@ -301,7 +301,8 @@
 			"public_prefab"	"1"
 			"prefab"	"weapon_wearable"
 			"item_type_name"	"#TF_Wearable_CosmeticItem"
-			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
+			"item_name"	"#TF_Spectator_Default"
+			"image_inventory"	"backpack/player/items/all_class/blank_icon"
 		}
 		"misc"
 		{
@@ -2656,7 +2657,6 @@
 		{
 			"name"	"TF2V_COSMETIC_HAT"
 			"prefab"	"hat"
-			"item_name"	"#TF_Spectator_Default"
 			"used_by_classes"
 			{
 				"scout"		"1"
@@ -2682,7 +2682,6 @@
 		{
 			"name"	"TF2V_COSMETIC_MISC"
 			"prefab"	"misc"
-			"item_name"	"#TF_Spectator_Default"
 			"used_by_classes"
 			{
 				"scout"		"1"
