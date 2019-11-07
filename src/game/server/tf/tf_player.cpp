@@ -1497,6 +1497,10 @@ void CTFPlayer::GiveDefaultItems()
 	{
 		GiveAmmo( GetMaxAmmo( iAmmo ), iAmmo, false, TF_AMMO_SOURCE_RESUPPLY );
 	}
+	
+	// Validate our inventory.
+	ValidateWeapons( true );
+	ValidateWearables();
 
 	// Give weapons.
 	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating )
@@ -1505,10 +1509,24 @@ void CTFPlayer::GiveDefaultItems()
 		ManageRegularWeaponsLegacy( pData );
 	else if ( !tf2v_randomizer.GetBool() )
 		ManageRegularWeapons( pData );
+	
+	// Give ourselves cosmetic items.
+	if ( tf2v_allow_cosmetics.GetBool() )
+		ManagePlayerCosmetics( pData );
+	
+	// Give ourselves zombie skins when it's Halloween.
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
+		EnableZombies( pData );
+	
+	// If we're a VIP player, give a commendation.
+	// EnableVIP( pData );
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
 		ManageGrenades( pData );
+	
+	// Update bodygroups and everything dealing with inventory processing.
+	PostInventoryApplication();
 
 	// Give a builder weapon for each object the playerclass is allowed to build
 	ManageBuilderWeapons( pData );
@@ -1826,19 +1844,11 @@ void CTFPlayer::ValidateWearables( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
-	ValidateWeapons( true );
-	ValidateWearables();
 
-	for (int iSlot = 0; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
+	for (int iSlot = 0; iSlot <= TF_PLAYER_WEAPON_COUNT; ++iSlot)
 	{
-		if ( (iSlot == TF_LOADOUT_SLOT_BUILDING ) || (iSlot == TF_LOADOUT_SLOT_UTILITY ) )
-		continue;	// These are special slots, we don't bother to check them.
-		
-		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && iSlot == TF_LOADOUT_SLOT_ZOMBIE)
-		continue;	// If it's not Halloween, just skip the action slot.
-		
-		if ( !tf2v_allow_cosmetics.GetBool() && ( ( iSlot > TF_PLAYER_WEAPON_COUNT ) && ( iSlot != TF_LOADOUT_SLOT_ZOMBIE ) ) )
-		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
+		if (iSlot == TF_LOADOUT_SLOT_BUILDING )  
+		continue;	// Don't check this slot here.
 	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 		{
@@ -1874,22 +1884,22 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
 				bHolidayRestrictedItem = true;
 			
-			if ( ( bWhiteListedWeapon == true ) && ( bIsReskin == false ) && ( bHolidayRestrictedItem == false ) ) // If the weapon is allowed, give it to the player.
+			if ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) || ( bHolidayRestrictedItem == true ) )  // If the weapon is banned, swap for a stock weapon.
 			{
-				CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
-
-				if ( pEntity )
-				{
-					pEntity->GiveTo( this );
-				}
+				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
-			else // If the weapon is banned, give them the stock weapon.
-				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);	
+			
+			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+
+			if ( pEntity )
+			{
+				pEntity->GiveTo( this );
+			}
+			
 		}
 		
 	}
 
-	PostInventoryApplication();
 }
 
 //-----------------------------------------------------------------------------
@@ -1913,19 +1923,9 @@ void CTFPlayer::PostInventoryApplication( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
-	for (int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon)
-	{
-		if ( (iWeapon == TF_LOADOUT_SLOT_BUILDING ) || (iWeapon == TF_LOADOUT_SLOT_UTILITY ) )
-		continue;	// These are special slots, we don't bother to check them.
 	
-		if ( (iWeapon >=TF_LOADOUT_SLOT_HAT && iWeapon != TF_LOADOUT_SLOT_ZOMBIE ) )
-			continue; // Always bail on cosmetics, other than zombie skins.
-		
-		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && iWeapon == TF_LOADOUT_SLOT_ZOMBIE)
-		{
-			EnableZombies( pData );
-			continue;	// If it's Halloween, make sure it's our class' zombie skin.
-		}
+	for (int iWeapon = 0; iWeapon <= TF_PLAYER_WEAPON_COUNT; ++iWeapon)
+	{
 		
 		int iWeaponID = GetTFInventory()->GetWeapon( m_PlayerClass.GetClassIndex(), iWeapon );
 
@@ -2012,22 +2012,8 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for (int i = 0; i < TF_LOADOUT_SLOT_BUFFER; ++i)
+	for (int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i)
 	{
-		if ( i == TF_LOADOUT_SLOT_UTILITY )
-		continue;	// Don't check this slot, it's currently unused.
-	
-		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && i == TF_LOADOUT_SLOT_ZOMBIE)
-		continue;	// If it's not Halloween, just skip the action slot.
-		
-		if ( !tf2v_allow_cosmetics.GetBool() && ( ( i > TF_PLAYER_WEAPON_COUNT ) && (i != TF_LOADOUT_SLOT_ZOMBIE ) ) )
-		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
-	
-		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && i == TF_LOADOUT_SLOT_ZOMBIE )
-		{
-		EnableZombies( pData );
-		continue;	// If it's Halloween, make sure it's our class' zombie skin.
-		}
 		
 		CTFInventory *pInv = GetTFInventory();
 		Assert( pInv );
@@ -2081,7 +2067,6 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		}
 	}
 
-	PostInventoryApplication();
 }
 
 
@@ -2129,6 +2114,60 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
+{
+
+	for (int iSlot = TF_LOADOUT_SLOT_HAT; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
+	{
+		if ( iSlot == TF_LOADOUT_SLOT_ZOMBIE )
+		continue;	// These are special slots, we don't check these.
+	
+		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
+		{
+			// Nothing to do here.
+			continue;
+		}
+		
+		// Give us an item from the inventory.
+		CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
+
+		if ( pItem)
+		{
+			const char *pszClassname = pItem->GetEntityName();
+			CEconItemDefinition *pItemDef = pItem->GetStaticData();
+			Assert( pszClassname );
+			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
+			
+			// Checks for holiday restrictions.
+			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
+				bHolidayRestrictedItem = true;
+			
+			if ( bHolidayRestrictedItem == true )  // If the item is banned, swap to the default cosmetic.
+			{
+				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
+			}
+			
+			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+
+			if ( pEntity )
+			{
+				pEntity->GiveTo( this );
+			}
+
+		}
+		
+	}
+
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2156,6 +2195,55 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 			pEntity->GiveTo( this );
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData )
+{
+	// Check to determine which of the VIP medals we should give them.
+	int iItemID = 5617;
+
+	// This is then where we'd check their veterancy status and add the proper item.
+	int iMedalType = 0;
+	
+	switch (iMedalType)
+	{
+		case 0:
+			iItemID = 5617;
+			break;
+			
+		case 1:
+			iItemID = 5617;
+			break;
+
+		case 2:
+			iItemID = 5617;
+			break;
+			
+		case 3:
+			iItemID = 5617;
+			break;
+		
+		case 4:
+			iItemID = 5617;
+			break;
+	}
+		
+	
+    if ( GetItemSchema()->GetItemDefinition( iItemID ) )
+    {
+        CEconItemView econItem( iItemID );
+        CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( "tf_wearable", 0, &econItem ) );
+
+        if ( pEntity )
+        {
+            pEntity->GiveTo( this );
+        }
+    }
+
 }
 
 //-----------------------------------------------------------------------------
