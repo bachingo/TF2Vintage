@@ -3023,7 +3023,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 		}
 	}
-	else if ( pTFPlayer->m_bIsPlayerADev )
+	/*else if ( pTFPlayer->m_bIsPlayerADev )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
@@ -3040,7 +3040,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 				pszFormat = "TF_Chat_Dev";
 			}
 		}
-	}
+	}*/
 	else
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
@@ -3165,7 +3165,7 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 		if ( pTFPlayer->m_iPlayerVIPRanking != 0 )
 		{
 			pTFPlayer->m_bIsPlayerAVIP = true;
-			if (pTFPlayer->m_iPlayerVIPRanking <= 2)	// Rank 1 and 2 members are developers.
+			if ( pTFPlayer->m_iPlayerVIPRanking <= 2 )	// Rank 1 and 2 members are developers.
 				pTFPlayer->m_bIsPlayerADev = true;
 		}
 	}

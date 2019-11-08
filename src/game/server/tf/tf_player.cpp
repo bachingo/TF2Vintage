@@ -9912,6 +9912,7 @@ CON_COMMAND_F( give_particle, NULL, FCVAR_CHEAT )
 }
 
 // Rank 1.
+// The founding developers and day zero veterans of TF2V.
 uint64 VIPRANK1[] =
 {
 	76561198168440306, // BSUV
@@ -9919,24 +9920,30 @@ uint64 VIPRANK1[] =
 };
 
 // Rank 2.
+// The non-anonymous developers of TF2V.
 uint64 VIPRANK2[] =
 {
-	76561198168440306, // BSUV
-	76561197984621385, // ZOOPWOOP
+	76561198032163560, // Anthony
+	76561198076264543, // Deathreus
+	76561198315815308, // Eshy
 };
 
 // Rank 3.
+// Those who helped contribute something directly into TF2V.
 uint64 VIPRANK3[] =
 {
-	76561198168440306, // BSUV
-	76561197984621385, // ZOOPWOOP
+	76561198112316720, // DoopieWop
+	76561198851124770, // SandvichThief
+	76561197992168067, // PeatEar
 };
 
 // Rank 4.
+// Supporters and long term players of the game.
 uint64 VIPRANK4[] =
 {
-	76561198168440306, // BSUV
-	76561197984621385, // ZOOPWOOP
+	76561198078752968, // FusionR
+	76561198263004448, // Private Polygon
+	76561198082424900, // FatMagic
 };
 
 //-----------------------------------------------------------------------------
