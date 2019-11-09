@@ -23,6 +23,7 @@ ConVar tf_debug_arrows( "tf_debug_arrows", "0", FCVAR_CHEAT );
 #endif
 
 extern ConVar tf_christmas;
+extern ConVar tf2v_minicrits_on_deflect;
 
 
 const char *g_pszArrowModels[] =
@@ -557,7 +558,7 @@ int	CTFProjectile_Arrow::GetDamageType()
 	{
 		iDmgType |= DMG_IGNITE;	
 	}
-	if ( m_iDeflected > 0 )
+	if ( ( m_iDeflected > 0 ) && ( tf2v_minicrits_on_deflect.GetBool() ) )
 	{
 		iDmgType |= DMG_MINICRITICAL;
 	}
