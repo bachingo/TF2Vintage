@@ -123,6 +123,9 @@ ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
 ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
 
+ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
+ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
+
 
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
@@ -1881,7 +1884,21 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				
 			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
 				bIsReskin = pItemDef->is_reskin;
-			
+				
+			if ( tf2v_force_year_items.GetBool()
+			{
+				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
+				{
+					if ( (pItemDef->year) > 2007 ) 
+					bWhiteListedWeapon = false;
+				}
+				else
+				{
+					if ( (pItemDef->year) > tf2v_current_items.GetInt() ) 
+					bWhiteListedWeapon = false;
+				}
+			}
+		
 			// Checks for holiday restrictions.
 			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
 				bHolidayRestrictedItem = true;
@@ -2147,6 +2164,21 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			CEconItemDefinition *pItemDef = pItem->GetStaticData();
 			Assert( pszClassname );
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
+			bool bWhiteListedCosmetic = true; // Only concerned with this when it's before the item's time (Time Paradox!)
+			
+			if ( tf2v_force_year_items.GetBool()
+			{
+				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
+				{
+					if ( (pItemDef->year) > 2007 ) 
+					bWhiteListedCosmetic = false;
+				}
+				else
+				{
+					if ( (pItemDef->year) > tf2v_current_items.GetInt() ) 
+					bWhiteListedCosmetic = false;
+				}
+			}
 			
 			// Checks for holiday restrictions.
 			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
@@ -2156,7 +2188,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
 				bHolidayRestrictedItem = true;
 			
-			if ( bHolidayRestrictedItem == true )  // If the item is banned, swap to the default cosmetic.
+			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic = false ) )  // If the item is banned, swap to the default cosmetic.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}

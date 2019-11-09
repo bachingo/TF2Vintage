@@ -135,7 +135,7 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 
 	if ( m_pAttributeText )
 	{
-		for ( int i = 0; i <= pItemData->attributes.Count(); i++ )
+		for ( int i = 0; i <= ( pItemData->attributes.Count() ); i++ )
 		{
 			CExLabel *pLabel = m_pAttributes[i];
 
@@ -149,7 +149,23 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 
 				pLabel->SetFgColor( pScheme->GetColor( "ItemAttribNeutral", COLOR_WHITE ) );
 				pLabel->SetVisible( true );
-			}
+			} /*
+			else if ( i == ( pItemData->attributes.Count() + 1 ) )
+			{
+				// Show the item's year.
+				if ( ( pItemData->year ) < 2006 )	// Only debug and always whitelisted items before this period
+					continue;
+
+				char strYear = ( pItemData->year );
+				const char strYearDisplay = strYear;
+
+
+
+				pLabel->SetText(strcat(CFbconf, bconf + i););
+
+				pLabel->SetFgColor( pScheme->GetColor( "ItemAttribNeutral", COLOR_WHITE ) );
+				pLabel->SetVisible( true );
+			} */
 			else
 			{
 				CEconItemAttribute *pAttribute = &pItemData->attributes[i];
