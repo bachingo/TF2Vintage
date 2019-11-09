@@ -1323,6 +1323,8 @@ enum
 #define TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT 600 // Damage to give before filling the Concheror rage.
 #define TF_BUFF_REGENONDAMAGE_DEFENSE_COUNT 210 // Damage to take before filling the Concheror rage.
 
+#define TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW 480 // Damage to give before filling the Concheror rage, using the modern value.
+
 #define	MAX_CABLE_CONNECTIONS 4
 
 bool IsObjectAnUpgrade( int iObjectType );

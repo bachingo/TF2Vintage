@@ -120,6 +120,9 @@ ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10",
 ConVar tf2v_player_misses( "tf2v_player_misses", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
 ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
 
+ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
+ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
+
 
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
@@ -4420,8 +4423,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
 			// Build rage
-			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
-			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
+			if ( !tf2v_use_new_buff_charges.GetBool() )
+			{
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
+			}
+			else if ( tf2v_use_new_buff_charges.GetBool() )
+			{
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_DEFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW / 100), TF_BUFF_REGENONDAMAGE);
+			}
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -4690,8 +4702,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		// Battalion's Backup negates all crit damage
 		bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
 
+		
 		float flDamage = info.GetDamage();
-		/*if ( bObject )
+		if ( bObject && tf2v_sentry_resist_bonus.GetBool() )
 		{
 			// 50% resistance to sentry damage
 			info.SetDamage( flDamage * 0.50f );
@@ -4700,17 +4713,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			// 35% to all other sources
 			info.SetDamage( flDamage * 0.65f );
-		}*/
-
-		// 35% damage resist from all sources
-		info.SetDamage( flDamage * 0.65f );
+		}
 	}
 
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
 
 	// Make sure we're not building damage off of ourself or fall damage
-	if ( pAttacker != this && !( bitsDamage & DMG_FALL ) )
+	if ( ( pAttacker != this && !( bitsDamage & DMG_FALL ) ) & ( !tf2v_use_new_buff_charges.GetBool() ) )
 	{
 		// Build rage on damage taken
 		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_DEFENSE_COUNT / 100), TF_BUFF_DEFENSE);
