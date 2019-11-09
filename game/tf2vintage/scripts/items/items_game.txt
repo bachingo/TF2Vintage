@@ -286,6 +286,7 @@
 			"loadondemand"	"1"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
+			"image_inventory"	"backpack/player/items/all_class/blank_icon"
 			"act_as_wearable"	"1"
 			"attributes"
 			{
@@ -302,7 +303,6 @@
 			"prefab"	"weapon_wearable"
 			"item_type_name"	"#TF_Wearable_CosmeticItem"
 			"item_name"	"#TF_Spectator_Default"
-			"image_inventory"	"backpack/player/items/all_class/blank_icon"
 		}
 		"misc"
 		{
@@ -327,13 +327,13 @@
 		}
 		"base_hat"
 		{
-		"public_prefab"	"1"
-		"prefab"	"hat"
+			"public_prefab"	"1"
+			"prefab"	"hat"
 		}
 		"base_misc"
 		{
-		"public_prefab"	"1"
-		"prefab"	"misc"
+			"public_prefab"	"1"
+			"prefab"	"misc"
 		}
 		"zombie"
 		{
@@ -368,6 +368,32 @@
 				}
 			}
 		}
+		"medal"
+		{
+			"prefab"		"base_misc"
+			"item_class"	"tf_wearable"
+			"show_in_armory"	"1"
+			"item_type_name"	"#TF_Wearable_Badge"
+			"equip_region"	"medal"
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"sniper"	"1"
+				"soldier"	"1"
+				"demoman"	"1"
+				"medic"	"1"
+				"heavy"	"1"
+				"spy" "1"
+				"engineer" "1"
+				"pyro" "1"
+			}
+		}
+		"veteran_medal"
+		{
+			"prefab"		"medal"
+			"item_quality"		"unique"
+			"model_player"	"models/player/items/all_class/id_badge.mdl"
+		}
 		"halloween"
 		{
 			"holiday_restriction"	"halloween_or_fullmoon"
@@ -380,6 +406,7 @@
 		{
 			"holiday_restriction"	"birthday"
 		}
+		
 		
 		"weapon_minigun"
 		{
@@ -2696,6 +2723,24 @@
 			}
 			"baseitem"	"1"
 		}
+		"34"
+		{
+			"name"	"TF2V_COSMETIC_MEDAL"
+			"prefab"	"medal"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
+			"baseitem"	"1"
+		}
 		"35"
 		{
 			"name"	"The Kritzkrieg"
@@ -4384,6 +4429,76 @@
 			"name"	"The Iron Bomber"
 			"prefab"	"weapon_quadball"
 			"particle_suffix"	"iron_bomber"
+		}
+		"121"
+		{
+			"name"	"The Devanon Special"
+			"prefab"		"medal"
+			"item_type_name"	"#TF_Wearable_Medal"
+			"item_name"	"#TF_Soldier_Medal_Web_Sleuth"
+			"item_description"	"#TF_Soldier_Medal_Web_Sleuth_Desc"
+			"image_inventory"	"backpack/player/items/soldier/medal"
+			"model_player"			"models/player/items/soldier/medal.mdl"
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
+		}
+		"170"
+		{
+			"name"	"Employee Badge Plat"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_Plat"
+			"item_description"	"#TF_Employee_Badge_Plat_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_platinum"
+			"visuals"
+			{
+				"skin" "3"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"164"
+		{
+			"name"	"Employee Badge A"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_A"
+			"item_description"	"#TF_Employee_Badge_A_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_gold"
+			"visuals"
+			{
+				"skin" "0"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"165"
+		{
+			"name"	"Employee Badge B"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_B"
+			"item_description"	"#TF_Employee_Badge_B_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_silver"
+			"visuals"
+			{
+				"skin" "1"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"166"
+		{
+			"name"	"Employee Badge C"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_C"
+			"item_description"	"#TF_Employee_Badge_C_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_bronze"
+			"visuals"
+			{
+				"skin" "2"
+				"use_per_class_bodygroups" "1"
+			}
 		}
 		"5617"
 		{

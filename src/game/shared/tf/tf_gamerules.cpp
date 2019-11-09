@@ -3165,7 +3165,7 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 		if ( pTFPlayer->m_iPlayerVIPRanking != 0 )
 		{
 			pTFPlayer->m_bIsPlayerAVIP = true;
-			if ( pTFPlayer->m_iPlayerVIPRanking <= 2 )	// Rank 1 and 2 members are developers.
+			if ( pTFPlayer->m_iPlayerVIPRanking == 1 )	// Rank 1 members are developers.
 				pTFPlayer->m_bIsPlayerADev = true;
 		}
 	}

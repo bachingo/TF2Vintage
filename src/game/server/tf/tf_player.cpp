@@ -1520,7 +1520,9 @@ void CTFPlayer::GiveDefaultItems()
 		EnableZombies( pData );
 	
 	// If we're a VIP player, give a medal.
-	// EnableVIP( pData );
+	CTFPlayer *pPlayer = this;
+	if ( pPlayer->m_bIsPlayerAVIP )
+		EnableVIP( pData );
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -2124,7 +2126,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 
 	for (int iSlot = TF_LOADOUT_SLOT_HAT; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
 	{
-		if ( iSlot == TF_LOADOUT_SLOT_ZOMBIE )
+		if ( ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) )
 		continue;	// These are special slots, we don't check these.
 	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
@@ -2174,7 +2176,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 {
-	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) != NULL )
+	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) == NULL )
 	{
 		// If there is no item in this slot (which there should always be for zombies) error and return.
 		Assert(GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ));
@@ -2205,7 +2207,7 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData )
 {
 	// Check to determine which of the VIP medals we should give them.
-	int iItemID = 166;
+	int iItemID = 34;
 
 	int iMedalType = 0;
 	
@@ -2214,6 +2216,10 @@ void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData )
 	
 	switch (iMedalType)
 	{
+		case -1:
+			iItemID = 121;
+			break;
+			
 		case 1:
 			iItemID = 170;
 			break;
@@ -9911,39 +9917,47 @@ CON_COMMAND_F( give_particle, NULL, FCVAR_CHEAT )
 	}
 }
 
-// Rank 1.
-// The founding developers and day zero veterans of TF2V.
-uint64 VIPRANK1[] =
+
+// Rank -1.
+// Special rank for founding TF2V.
+uint64 VIPRANKS1[] =
 {
-	76561198168440306, // BSUV
 	76561197984621385, // ZOOPWOOP
 };
 
-// Rank 2.
+// Rank 1.
 // The non-anonymous developers of TF2V.
-uint64 VIPRANK2[] =
+uint64 VIPRANK1[] =
 {
+	76561198168440306, // BSUV
 	76561198032163560, // Anthony
 	76561198076264543, // Deathreus
 	76561198315815308, // Eshy
 };
 
-// Rank 3.
+// Rank 2.
 // Those who helped contribute something directly into TF2V.
-uint64 VIPRANK3[] =
+uint64 VIPRANK2[] =
 {
 	76561198112316720, // DoopieWop
 	76561198851124770, // SandvichThief
 	76561197992168067, // PeatEar
 };
 
-// Rank 4.
+// Rank 3.
 // Supporters and long term players of the game.
-uint64 VIPRANK4[] =
+uint64 VIPRANK3[] =
 {
 	76561198078752968, // FusionR
 	76561198263004448, // Private Polygon
 	76561198082424900, // FatMagic
+};
+
+// Rank 4.
+// Currently unused.
+uint64 VIPRANK4[] =
+{
+	76561198168440306, // PLACEHOLDER
 };
 
 //-----------------------------------------------------------------------------
@@ -9959,6 +9973,8 @@ int CTFPlayer::GetPlayerVIPRanking( void )
 	{
 		CSteamID steamIDForPlayer( pi.friendsID, 1, k_EUniversePublic, k_EAccountTypeIndividual );
 
+		// Regular Ranks
+		
 		// Rank 1 Users
 		for ( int i = 0; i < ARRAYSIZE(VIPRANK1); i++ )
 		{
@@ -9983,6 +9999,15 @@ int CTFPlayer::GetPlayerVIPRanking( void )
 			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK4[i] ) )
 				return 4;
 		}	
+		
+		// Special Ranks
+		
+		// Rank -1
+		for ( int i = 0; i < ARRAYSIZE(VIPRANKS1); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANKS1[i] ) )
+				return -1;
+		}
 	}
 
 	return 0;

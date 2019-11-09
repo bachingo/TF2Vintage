@@ -106,7 +106,7 @@ bool CTFInventory::Init( void )
 							m_Items[iClass][iSlot].AddToTail( pNewItem );
 						}
 					}
-					if ( iSlot == TF_LOADOUT_SLOT_MISC1 ) // We need to duplicate across all misc slots by 
+					if ( iSlot == TF_LOADOUT_SLOT_MISC1 ) // We need to duplicate across all misc slots.
 					{
 						for (int iMiscSlot = 1; iMiscSlot <= TF_PLAYER_MISC_COUNT; ++iMiscSlot)
 						{
