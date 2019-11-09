@@ -9,6 +9,7 @@
 #include "KeyValues.h"
 #include "takedamageinfo.h"
 #include "tf_gamerules.h"
+#include "bone_setup.h"
 #if defined( CLIENT_DLL )
 #include "c_team.h"
 #else
@@ -1186,6 +1187,7 @@ void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio
 	if ( headBone == -1 )
 		return;
 
+#if defined( CLIENT_DLL )
 	matrix3x4_t &head = pAnimating->GetBoneForWrite( headBone );
 
 	Vector oldTransform, newTransform;
@@ -1213,6 +1215,7 @@ void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio
 		Vector transform = ( ( newTransform - oldTransform ) * flScale ) + oldTransform;
 		MatrixSetColumn( transform, 3, hat );
 	}
+#endif
 }
 
 

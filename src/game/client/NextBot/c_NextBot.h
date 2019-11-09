@@ -15,8 +15,13 @@ public:
 
 	C_NextBotCombatCharacter();
 
+	virtual bool IsNextBot( void ) override { return true; }
+
+	virtual void Spawn( void ) override;
+	virtual void UpdateClientSideAnimation( void ) override;
+
 private:
-	C_NextBotCombatCharacter( const C_NextBotCombatCharacter & ); // not defined, not accessible
+	C_NextBotCombatCharacter( C_NextBotCombatCharacter const& ); // not defined, not accessible
 };
 
 
