@@ -9,10 +9,12 @@
 #include "ammodef.h"
 #include "KeyValues.h"
 #include "tf_weaponbase.h"
+#include "filesystem.h"
 #include "time.h"
 #include "viewport_panel_names.h"
 #include "tf_halloween_boss.h"
 #include "entity_bossresource.h"
+#include "vscript_shared.h"
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
@@ -180,11 +182,18 @@ ConVar tf_halloween_eyeball_boss_spawn_interval_variation( "tf_halloween_eyeball
 
 ConVar tf_halloween_zombie_mob_enabled( "tf_halloween_zombie_mob_enabled", "0", FCVAR_CHEAT, "If set to 1, spawn zombie mobs on non-Halloween Valve maps" );
 ConVar tf_halloween_zombie_mob_spawn_interval( "tf_halloween_zombie_mob_spawn_interval", "180", FCVAR_CHEAT, "Average interval between zombie mob spawns, in seconds" );
+ConVar tf_halloween_zombie_mob_spawn_count( "tf_halloween_zombie_mob_spawn_count", "20", FCVAR_CHEAT, "How many zombies to spawn" );
 
 static bool isBossForceSpawning = false;
-CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_CHEAT )
+CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_DEVELOPMENTONLY )
 {
 	isBossForceSpawning = true;
+}
+
+static bool isZombieMobForceSpawning = false;
+CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTONLY )
+{
+	isZombieMobForceSpawning = true;
 }
 #endif
 
@@ -2659,11 +2668,18 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::SpawnZombieMob( void )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBotSpiky" );
+
+	// can we even spawn some?
 	if ( !tf_halloween_zombie_mob_enabled.GetBool() )
 		return;
 
+	// do nothing when the game hasn't started yet
 	if ( InSetup() || IsInWaitingForPlayers() )
 	{
 		m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
@@ -6143,6 +6159,98 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 	}
 #endif
+}
+
+static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szName, HSCRIPT hEntity )
+{
+	CBaseEntity *pEntity = ToEnt( hEntity );
+	if ( !pEntity )
+		return value;
+
+	IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+
+	if ( pAttribInteface )
+	{
+		string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( szName );
+		float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( value, pEntity, strAttributeClass, NULL );
+		value = flResult;
+	}
+
+	return value;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::RegisterScriptFunctions( void )
+{
+	ScriptRegisterFunctionNamed( g_pScriptVM, AttribHookValue, "GetAttribValue", "Fetch an attribute that is assigned to the provided weapon" );
+
+	char root[ MAX_PATH ]{};
+	Q_strncpy( root, "scripts\\vscripts", sizeof root );
+	Q_FixSlashes( root );
+
+	FileFindHandle_t fh;
+	char const *path = g_pFullFileSystem->FindFirst( root, &fh );
+	while ( path )
+	{
+		CScriptScope hTable{};
+		if ( g_pFullFileSystem->FindIsDirectory( fh ) )
+		{
+			if ( path[0] != '.' && Q_strncmp( path, "weapons", MAX_PATH ) && Q_strncmp( path, "entities", MAX_PATH ) )
+				break;
+
+			continue;
+		}
+
+		HSCRIPT hScript = VScriptCompileScript( path, true );
+
+		char const *className = Q_strrchr( path, CORRECT_PATH_SEPARATOR );
+		if ( hTable.Init( className ) )
+		{
+			if ( hTable.Run( hScript ) == SCRIPT_ERROR )
+			{
+				Warning( "Error running script named %s\n", className );
+				Assert( "Error running script" );
+			}
+
+			HSCRIPT hRegisterFunc = hTable.LookupFunction( "RegisterEnt" );
+			if ( hRegisterFunc != INVALID_HSCRIPT )
+			{
+				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
+				{
+					Warning( "Error running script named %s\n", className );
+					Assert( "Error running script" );
+				}
+
+				hTable.ReleaseFunction( hRegisterFunc );
+			}
+
+			hRegisterFunc = hTable.LookupFunction( "RegisterWep" );
+			if ( hRegisterFunc != INVALID_HSCRIPT )
+			{
+				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
+				{
+					Warning( "Error running script named %s\n", className );
+					Assert( "Error running script" );
+				}
+
+				hTable.ReleaseFunction( hRegisterFunc );
+			}
+
+			hTable.Term();
+		}
+		else
+		{
+			Warning( "Unable to create script scope for %s\n", className );
+		}
+
+		g_pScriptVM->ReleaseScript( hScript );
+
+		path = g_pFullFileSystem->FindNext( fh );
+	}
+
+	g_pFullFileSystem->FindClose( fh );
 }
 
 //-----------------------------------------------------------------------------

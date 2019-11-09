@@ -345,6 +345,8 @@ public:
 	virtual bool	IsInSpecialDeliveryMode( void ) { return m_bPlayingSpecialDeliveryMode; };
 	bool			UsePlayerReadyStatusMode( void );
 
+	virtual void RegisterScriptFunctions( void );
+
 #ifdef CLIENT_DLL
 
 	DECLARE_CLIENTCLASS_NOBASE(); // This makes data tables able to access our private vars.
@@ -445,6 +447,8 @@ private:
 	void			SpawnZombieMob( void );
 	CountdownTimer	m_bossSpawnTimer;
 	CountdownTimer	m_mobSpawnTimer;
+	int				m_nZombiesToSpawn;
+	Vector			m_vecMobSpawnLocation;
 
 #endif
 
