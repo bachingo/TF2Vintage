@@ -493,6 +493,7 @@ public:
 		
 		GET_BOOL(pItem, pData, is_reskin);
 		GET_STRING( pItem, pData, holiday_restriction );
+		GET_INT( pItem, pData, year );
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{

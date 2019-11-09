@@ -7,6 +7,7 @@
 #include "cbase.h"
 #include "tf_projectile_rocket.h"
 #include "tf_player.h"
+#include "tf_gamerules.h"
 
 //=============================================================================
 //
@@ -22,6 +23,8 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Rocket, DT_TFProjectile_Rocket )
 BEGIN_NETWORK_TABLE( CTFProjectile_Rocket, DT_TFProjectile_Rocket )
 	SendPropBool( SENDINFO( m_bCritical ) ),
 END_NETWORK_TABLE()
+
+extern ConVar tf2v_minicrits_on_deflect;
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -109,7 +112,7 @@ int	CTFProjectile_Rocket::GetDamageType()
 	{
 		iDmgType |= DMG_CRITICAL;
 	}
-	if ( m_iDeflected > 0 )
+	if ( ( m_iDeflected > 0 ) && ( tf2v_minicrits_on_deflect.GetBool() ) )
 	{
 		iDmgType |= DMG_MINICRITICAL;
 	}

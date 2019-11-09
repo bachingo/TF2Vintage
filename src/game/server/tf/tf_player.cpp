@@ -120,6 +120,12 @@ ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10",
 ConVar tf2v_player_misses( "tf2v_player_misses", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
 ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
 
+ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
+ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
+
+ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
+ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
+
 
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
@@ -1520,7 +1526,9 @@ void CTFPlayer::GiveDefaultItems()
 		EnableZombies( pData );
 	
 	// If we're a VIP player, give a medal.
-	// EnableVIP( pData );
+	CTFPlayer *pPlayer = this;
+	if ( pPlayer )
+		EnableVIP( pData, pPlayer->m_iPlayerVIPRanking );
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -1876,7 +1884,21 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				
 			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
 				bIsReskin = pItemDef->is_reskin;
-			
+				
+			if ( tf2v_force_year_items.GetBool()
+			{
+				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
+				{
+					if ( (pItemDef->year) > 2007 ) 
+					bWhiteListedWeapon = false;
+				}
+				else
+				{
+					if ( (pItemDef->year) > tf2v_current_items.GetInt() ) 
+					bWhiteListedWeapon = false;
+				}
+			}
+		
 			// Checks for holiday restrictions.
 			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
 				bHolidayRestrictedItem = true;
@@ -2124,7 +2146,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 
 	for (int iSlot = TF_LOADOUT_SLOT_HAT; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
 	{
-		if ( iSlot == TF_LOADOUT_SLOT_ZOMBIE )
+		if ( ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) )
 		continue;	// These are special slots, we don't check these.
 	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
@@ -2142,6 +2164,21 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			CEconItemDefinition *pItemDef = pItem->GetStaticData();
 			Assert( pszClassname );
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
+			bool bWhiteListedCosmetic = true; // Only concerned with this when it's before the item's time (Time Paradox!)
+			
+			if ( tf2v_force_year_items.GetBool()
+			{
+				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
+				{
+					if ( (pItemDef->year) > 2007 ) 
+					bWhiteListedCosmetic = false;
+				}
+				else
+				{
+					if ( (pItemDef->year) > tf2v_current_items.GetInt() ) 
+					bWhiteListedCosmetic = false;
+				}
+			}
 			
 			// Checks for holiday restrictions.
 			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
@@ -2151,7 +2188,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
 				bHolidayRestrictedItem = true;
 			
-			if ( bHolidayRestrictedItem == true )  // If the item is banned, swap to the default cosmetic.
+			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic = false ) )  // If the item is banned, swap to the default cosmetic.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
@@ -2174,7 +2211,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 {
-	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) != NULL )
+	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) == NULL )
 	{
 		// If there is no item in this slot (which there should always be for zombies) error and return.
 		Assert(GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ));
@@ -2202,18 +2239,20 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData )
+void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData , int iMedalType )
 {
 	// Check to determine which of the VIP medals we should give them.
-	int iItemID = 166;
-
-	int iMedalType = 0;
+	int iItemID = 34;
 	
 	if ( iMedalType == 0 )
 		return;		// Nothing to do here.
 	
 	switch (iMedalType)
 	{
+		case -1:
+			iItemID = 121;
+			break;
+			
 		case 1:
 			iItemID = 170;
 			break;
@@ -4416,8 +4455,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
 			// Build rage
-			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
-			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
+			if ( !tf2v_use_new_buff_charges.GetBool() )
+			{
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
+			}
+			else if ( tf2v_use_new_buff_charges.GetBool() )
+			{
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_DEFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW / 100), TF_BUFF_REGENONDAMAGE);
+			}
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -4686,8 +4734,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		// Battalion's Backup negates all crit damage
 		bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
 
+		
 		float flDamage = info.GetDamage();
-		/*if ( bObject )
+		if ( bObject && tf2v_sentry_resist_bonus.GetBool() )
 		{
 			// 50% resistance to sentry damage
 			info.SetDamage( flDamage * 0.50f );
@@ -4696,17 +4745,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			// 35% to all other sources
 			info.SetDamage( flDamage * 0.65f );
-		}*/
-
-		// 35% damage resist from all sources
-		info.SetDamage( flDamage * 0.65f );
+		}
 	}
 
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
 
 	// Make sure we're not building damage off of ourself or fall damage
-	if ( pAttacker != this && !( bitsDamage & DMG_FALL ) )
+	if ( ( pAttacker != this && !( bitsDamage & DMG_FALL ) ) & ( !tf2v_use_new_buff_charges.GetBool() ) )
 	{
 		// Build rage on damage taken
 		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_DEFENSE_COUNT / 100), TF_BUFF_DEFENSE);
@@ -9911,39 +9957,47 @@ CON_COMMAND_F( give_particle, NULL, FCVAR_CHEAT )
 	}
 }
 
-// Rank 1.
-// The founding developers and day zero veterans of TF2V.
-uint64 VIPRANK1[] =
+
+// Rank -1.
+// Special rank for founding TF2V.
+uint64 VIPRANKS1[] =
 {
-	76561198168440306, // BSUV
 	76561197984621385, // ZOOPWOOP
 };
 
-// Rank 2.
+// Rank 1.
 // The non-anonymous developers of TF2V.
-uint64 VIPRANK2[] =
+uint64 VIPRANK1[] =
 {
+	76561198168440306, // BSUV
 	76561198032163560, // Anthony
 	76561198076264543, // Deathreus
 	76561198315815308, // Eshy
 };
 
-// Rank 3.
+// Rank 2.
 // Those who helped contribute something directly into TF2V.
-uint64 VIPRANK3[] =
+uint64 VIPRANK2[] =
 {
 	76561198112316720, // DoopieWop
 	76561198851124770, // SandvichThief
 	76561197992168067, // PeatEar
 };
 
-// Rank 4.
+// Rank 3.
 // Supporters and long term players of the game.
-uint64 VIPRANK4[] =
+uint64 VIPRANK3[] =
 {
 	76561198078752968, // FusionR
 	76561198263004448, // Private Polygon
 	76561198082424900, // FatMagic
+};
+
+// Rank 4.
+// Currently unused.
+uint64 VIPRANK4[] =
+{
+	76561198168440306, // PLACEHOLDER
 };
 
 //-----------------------------------------------------------------------------
@@ -9959,6 +10013,8 @@ int CTFPlayer::GetPlayerVIPRanking( void )
 	{
 		CSteamID steamIDForPlayer( pi.friendsID, 1, k_EUniversePublic, k_EAccountTypeIndividual );
 
+		// Regular Ranks
+		
 		// Rank 1 Users
 		for ( int i = 0; i < ARRAYSIZE(VIPRANK1); i++ )
 		{
@@ -9983,6 +10039,15 @@ int CTFPlayer::GetPlayerVIPRanking( void )
 			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK4[i] ) )
 				return 4;
 		}	
+		
+		// Special Ranks
+		
+		// Rank -1
+		for ( int i = 0; i < ARRAYSIZE(VIPRANKS1); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANKS1[i] ) )
+				return -1;
+		}
 	}
 
 	return 0;

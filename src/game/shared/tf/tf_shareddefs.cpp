@@ -290,6 +290,7 @@ const char *g_LoadoutSlots[] =
 	"action",
 	"misc2",
 	"zombie",
+	"medal",
 	"buffer"
 };
 

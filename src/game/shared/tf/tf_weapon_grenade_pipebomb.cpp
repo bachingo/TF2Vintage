@@ -45,6 +45,8 @@
 #define TF_WEAPON_PIPEBOMB_TIMER_DMG_REDUCTION		0.6
 
 extern ConVar tf_grenadelauncher_max_chargetime;
+extern ConVar tf2v_minicrits_on_deflect;
+
 ConVar tf_grenadelauncher_chargescale( "tf_grenadelauncher_chargescale", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
@@ -130,7 +132,7 @@ int	CTFGrenadePipebombProjectile::GetDamageType( void )
 			iDmgType |= DMG_USEDISTANCEMOD;
 		}
 	}
-	else if ( m_iDeflected > 0 )
+	else if ( ( m_iDeflected > 0 ) && ( tf2v_minicrits_on_deflect.GetBool() ) )
 	{
 		// deflected stickies shouldn't get minicrits 
 		iDmgType |= DMG_MINICRITICAL;
