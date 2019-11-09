@@ -1559,4 +1559,6 @@ inline int GetEnemyTeam( CBaseEntity *ent )
 
 bool IsSpaceToSpawnHere( const Vector &vecPos );
 
+void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, CBoneBitList &boneComputed, float flScale );
+
 #endif // TF_SHAREDDEFS_H
