@@ -1521,8 +1521,8 @@ void CTFPlayer::GiveDefaultItems()
 	
 	// If we're a VIP player, give a medal.
 	CTFPlayer *pPlayer = this;
-	if ( pPlayer->m_bIsPlayerAVIP )
-		EnableVIP( pData );
+	if ( pPlayer )
+		EnableVIP( pData, pPlayer->m_iPlayerVIPRanking );
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -2204,12 +2204,10 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData )
+void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData , int iMedalType )
 {
 	// Check to determine which of the VIP medals we should give them.
 	int iItemID = 34;
-
-	int iMedalType = 0;
 	
 	if ( iMedalType == 0 )
 		return;		// Nothing to do here.

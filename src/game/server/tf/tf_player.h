@@ -481,7 +481,7 @@ public:
 	void				ManageGrenades( TFPlayerClassData_t *pData );
 	void				ManagePlayerCosmetics( TFPlayerClassData_t *pData );
 	void				EnableZombies( TFPlayerClassData_t *pData );
-	void				EnableVIP( TFPlayerClassData_t *pData );
+	void				EnableVIP( TFPlayerClassData_t *pData , int iMedalType );
 
 	void				PostInventoryApplication( void );
 	
