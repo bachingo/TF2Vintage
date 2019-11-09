@@ -137,7 +137,7 @@ enum ScriptLanguage_t
 	SL_LUA,
 	SL_PYTHON,
 
-	SL_DEFAULT = SL_LUA
+	SL_DEFAULT = SL_SQUIRREL
 };
 
 class IScriptManager : public IAppSystem

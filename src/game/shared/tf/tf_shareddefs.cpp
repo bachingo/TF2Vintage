@@ -1174,4 +1174,45 @@ bool IsSpaceToSpawnHere( const Vector &vecPos )
 	return tr.fraction >= 1.0f;
 }
 
+void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, CBoneBitList &boneComputed, float flScale )
+{
+	if ( pAnimating == nullptr )
+		return;
+
+	if ( flScale == 1.0f )
+		return;
+
+	int headBone = pAnimating->LookupBone( "bip_head" );
+	if ( headBone == -1 )
+		return;
+
+	matrix3x4_t &head = pAnimating->GetBoneForWrite( headBone );
+
+	Vector oldTransform, newTransform;
+	MatrixGetColumn( head, 3, &oldTransform );
+	MatrixScaleBy( flScale, head );
+
+	int helmetBone = pAnimating->LookupBone( "prp_helmet" );
+	if ( helmetBone != -1 )
+	{
+		matrix3x4_t &helmet = pAnimating->GetBoneForWrite( helmetBone );
+		MatrixScaleBy( flScale, helmet );
+
+		MatrixGetColumn( helmet, 3, &newTransform );
+		Vector transform = ( ( newTransform - oldTransform ) * flScale ) + oldTransform;
+		MatrixSetColumn( transform, 3, helmet );
+	}
+
+	int hatBone = pAnimating->LookupBone( "prp_hat" );
+	if ( hatBone != -1 )
+	{
+		matrix3x4_t &hat = pAnimating->GetBoneForWrite( hatBone );
+		MatrixScaleBy( flScale, hat );
+
+		MatrixGetColumn( hat, 3, &newTransform );
+		Vector transform = ( ( newTransform - oldTransform ) * flScale ) + oldTransform;
+		MatrixSetColumn( transform, 3, hat );
+	}
+}
+
 
