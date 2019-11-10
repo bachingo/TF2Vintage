@@ -76,7 +76,7 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				if ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || ( bCosmeticsEnabled ) ) 
+				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || ( bCosmeticsEnabled ) ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) ) 
 				{
 					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) || ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )
 					{
