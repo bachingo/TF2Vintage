@@ -1885,7 +1885,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
 				bIsReskin = pItemDef->is_reskin;
 				
-			if ( tf2v_force_year_items.GetBool()
+			if ( tf2v_force_year_items.GetBool() )
 			{
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
@@ -1894,7 +1894,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				}
 				else
 				{
-					if ( (pItemDef->year) > tf2v_current_items.GetInt() ) 
+					if ((pItemDef->year) > tf2v_allowed_year_items.GetInt())
 					bWhiteListedWeapon = false;
 				}
 			}
@@ -2166,7 +2166,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
 			bool bWhiteListedCosmetic = true; // Only concerned with this when it's before the item's time (Time Paradox!)
 			
-			if ( tf2v_force_year_items.GetBool()
+			if ( tf2v_force_year_items.GetBool() )
 			{
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
@@ -2175,7 +2175,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 				}
 				else
 				{
-					if ( (pItemDef->year) > tf2v_current_items.GetInt() ) 
+					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt() )
 					bWhiteListedCosmetic = false;
 				}
 			}
@@ -2188,7 +2188,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
 				bHolidayRestrictedItem = true;
 			
-			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic = false ) )  // If the item is banned, swap to the default cosmetic.
+			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic == false ) )  // If the item is banned, swap to the default cosmetic.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
@@ -4200,14 +4200,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
 	CTFWeaponBase *pWeapon = NULL;
 
-	//bool bObject = false;
+	bool bObject = false;
 
 	// If this is a base object get the builder
 	if ( pAttacker && pAttacker->IsBaseObject() )
 	{
 		CBaseObject *pObject = static_cast<CBaseObject *>( pAttacker );
 		pAttacker = pObject->GetBuilder();
-		//bObject = true;
+		bObject = true;
 	}
 
 	if ( inputInfo.GetWeapon() )
