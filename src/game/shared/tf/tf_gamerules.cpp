@@ -3314,12 +3314,18 @@ static const char *g_aTaggedConVars[] =
 	
 	"tf2v_allow_cosmetics",
 	"cosmetics",
+	
+	"tf2v_allow_reskins",
+	"reskins",
 
 	"tf2v_random_classes",
 	"randomclasses",
 	
 	"tf2v_random_weapons",
 	"randomweapons",
+	
+	"tf2v_allow_mod_weapons",
+	"customweapons",
 	
 	"tf2v_enforce_whitelist",
 	"whitelist",

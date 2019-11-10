@@ -117,16 +117,6 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
 
-ConVar tf2v_player_misses( "tf2v_player_misses", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
-ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
-
-ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
-ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
-
-ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
-ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
-
-
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
@@ -149,14 +139,25 @@ ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "0", FCVAR_NOTIFY, "Enable 
 ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes players spawn with random classes." );
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
 ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
+ConVar tf2v_allow_mod_weapons( "tf2v_allow_mod_weapons", "0", FCVAR_NOTIFY, "Allows players to use non-standard TF2 weapons." );
 ConVar tf2v_bonus_distance_range( "tf2v_bonus_distance_range", "10", FCVAR_NOTIFY, "Percent variation in range calculations for damage." );
 ConVar tf2v_enforce_whitelist( "tf2v_enforce_whitelist", "0", FCVAR_NOTIFY, "Requires items to be verified from a server whitelist." );
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
 ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
 
-// TF2V specific cvars
 ConVar tf2v_disable_holiday_loot( "tf2v_disable_holiday_loot", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disable loot drops in holiday gamemodes" );
+
+ConVar tf2v_player_misses( "tf2v_player_misses", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
+ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
+
+ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
+ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
+
+ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
+ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
+
+
 
 
 
@@ -1876,6 +1877,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			bool bWhiteListedWeapon = true; // Defaulted to true, since whitelisting is a niche server option.
 			bool bIsReskin = false;			// Defaulted to false, since reskins aren't common.
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
+			bool bIsCustomContent = false;	
 			
 			// Only run these checks when necessary.
 			
@@ -1884,6 +1886,9 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				
 			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
 				bIsReskin = pItemDef->is_reskin;
+				
+			if ( !tf2v_allow_mod_weapons.GetBool() )	// Checks if it's a custom weapon.
+				bIsCustomContent = pItemDef->is_custom_content;
 				
 			if ( tf2v_force_year_items.GetBool() )
 			{
@@ -1907,7 +1912,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
 				bHolidayRestrictedItem = true;
 			
-			if ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) || ( bHolidayRestrictedItem == true ) )  // If the weapon is banned, swap for a stock weapon.
+			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) || ( bHolidayRestrictedItem == true ) || ( bIsCustomContent == true ) )  // If the weapon is banned, swap for a stock weapon.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
