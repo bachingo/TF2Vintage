@@ -1863,14 +1863,6 @@
 			{
 				"min_viewmodel_offset"					"10 0 -11"
 			}
-			"attributes"
-			{
-				"slow enemy on hit major"
-				{
-					"attribute_class"	"mult_onhit_enemyspeed_major"
-					"value"	"0.5"
-				}
-			}
 		}
 		"weapon_wrangler"
 		{
