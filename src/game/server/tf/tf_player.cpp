@@ -1912,7 +1912,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
 				bHolidayRestrictedItem = true;
 			
-			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) || ( bHolidayRestrictedItem == true ) || ( bIsCustomContent == true ) )  // If the weapon is banned, swap for a stock weapon.
+			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsCustomContent == true ) ) ) // If the weapon is banned, swap for a stock weapon.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
