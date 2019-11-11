@@ -1317,13 +1317,22 @@ void CTFGameRules::Activate()
 		tf_gamemode_medieval.SetValue( 1 );
 		return;
 	}
-
+	
+	
+	/* CMvMLogic *pMvM = dynamic_cast<MvMLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_mann_vs_machine" ) );
+	if (pMvM)
+	{
+		m_nGameType.Set( TF_GAMETYPE_MVM );
+		tf_gamemode_mvm.SetValue( 1 );
+		return;
+	} */
+	
 	CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 	if ( pArena )
 	{
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
 	
-		// VSH maps use arena logic, except with the gamemode prefix.
+		// VSH maps use arena logic, except with the map prefix changed.
 		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
 		{
 			tf_gamemode_vsh.SetValue(1);
