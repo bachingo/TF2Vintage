@@ -19,10 +19,12 @@ public:
 
 	virtual EventDesiredResult<CZombie> OnKilled( CZombie *me, CTakeDamageInfo const& info ) override;
 
+	virtual QueryResultType IsPositionAllowed( INextBot const *me, Vector const &position ) const override;
+
 	virtual Action<CZombie> *InitialContainedAction( CZombie *me ) override;
 
 private:
-	bool ShouldLaugh( CZombie *actor );
+	CountdownTimer m_giggleTimer;
 };
 
 #endif

@@ -9,7 +9,7 @@
 #else
 #include "Path/NextBotPath.h"
 #include "NextBotGroundLocomotion.h"
-#include "player_vs_environment/tf_zombie_behavior.h"
+#include "player_vs_environment/zombie_behavior.h"
 #include "player_vs_environment/headless_hatman.h"
 
 ConVar tf_max_active_zombies( "tf_max_active_zombies", "30", FCVAR_CHEAT );
@@ -457,7 +457,7 @@ void CZombie::PrecacheZombie( void )
 
 	if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 	{
-		for ( int i=0; i < 4; ++i )
+		for ( int i=0; i < NELEMS( s_skeletonHatModels ); ++i )
 			PrecacheModel( s_skeletonHatModels[i] );
 	}
 
