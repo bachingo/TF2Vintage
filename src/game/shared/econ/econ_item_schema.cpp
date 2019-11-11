@@ -107,23 +107,25 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 	static wchar_t wszFullName[256];
 	wszFullName[0] = '\0';
 
+	wchar_t wszPrefix[128];
 	wchar_t wszQuality[128];
+	wszPrefix[0] = '\0';
 	wszQuality[0] = '\0';
 
-	if ( item_quality == QUALITY_UNIQUE )
-	{
-		// Attach "the" if necessary to unique items.
-		if ( propername )
-		{
-			const wchar_t *pszPrepend = g_pVGuiLocalize->Find( "#TF_Unique_Prepend_Proper_Quality" );
 
-			if ( pszPrepend )
-			{
-				V_wcsncpy( wszQuality, pszPrepend, sizeof( wszQuality ) );
-			}
+	if ( propername )
+	{
+		const wchar_t *pszPrepend = g_pVGuiLocalize->Find( "#TF_Unique_Prepend_Proper_Quality" );
+
+		if ( pszPrepend )
+		{
+			V_wcsncpy( wszPrefix, pszPrepend, sizeof( wszPrefix ) );
 		}
 	}
-	else if ( item_quality != QUALITY_NORMAL )
+	
+	// Quality prefixes are a bit annoying, so don't bother loading them.
+	/* 
+	if ( item_quality != QUALITY_NORMAL )
 	{
 		// Live TF2 allows multiple qualities per item but eh, we don't need that for now.
 		const wchar_t *pszQuality = g_pVGuiLocalize->Find( g_szQualityLocalizationStrings[item_quality] );
@@ -132,7 +134,7 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 		{
 			V_wcsncpy( wszQuality, pszQuality, sizeof( wszQuality ) );
 		}
-	}
+	} */
 
 	// Attach the original item name after we're done with all the prefixes.
 	wchar_t wszItemName[256];
@@ -147,8 +149,26 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 		g_pVGuiLocalize->ConvertANSIToUnicode( item_name, wszItemName, sizeof( wszItemName ) );
 	}
 
-	g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
+	if ( ( wszQuality[0] == '\0') && ( wszPrefix[0] != '\0') ) // Propername, but no Quality
+	{
+		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
+		wszPrefix, wszItemName );
+	}
+	else if ( ( wszQuality[0] != '\0') && ( wszPrefix[0] != '\0') ) // Quality and Propername
+	{
+		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2 %s3", 3,
+		wszPrefix, wszQuality, wszItemName );
+	}
+	else if ( ( wszQuality[0] != '\0') && ( wszPrefix[0] == '\0') ) // Quality, but no Propername
+	{
+		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
 		wszQuality, wszItemName );
+	}
+	else // No Quality or Propername
+	{
+		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1", 1,
+		wszItemName );
+	}
 
 	return wszFullName;
 }
@@ -161,17 +181,17 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 	static wchar_t wszFullName[256];
 	wszFullName[0] = '\0';
 
-	wchar_t wszQuality[128];
-	wszQuality[0] = '\0';
+	wchar_t wszPrefix[128];
+	wszPrefix[0] = '\0';
 
-	// Attach "the" if necessary to unique items.
+	// Attach "the" if necessary.
 	if ( propername )
 	{
 		const wchar_t *pszPrepend = g_pVGuiLocalize->Find( "#TF_Unique_Prepend_Proper_Quality" );
 
 		if ( pszPrepend )
 		{
-			V_wcsncpy( wszQuality, pszPrepend, sizeof( wszQuality ) );
+			V_wcsncpy( wszPrefix, pszPrepend, sizeof( wszPrefix ) );
 		}
 	}
 
@@ -189,7 +209,7 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 	}
 
 	g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
-		wszQuality, wszItemName );
+		wszPrefix, wszItemName );
 
 	return wszFullName;
 }

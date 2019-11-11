@@ -278,11 +278,9 @@
 	{
 		"weapon_wearable"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_wearable"
 			"anim_slot"	"FORCE_NOT_USED"
-			"item_quality"	"unique"
 			"loadondemand"	"1"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -301,6 +299,7 @@
 		{
 			"public_prefab"	"1"
 			"prefab"	"weapon_wearable"
+			"item_quality"	"unique"
 			"item_type_name"	"#TF_Wearable_CosmeticItem"
 			"item_name"	"#TF_Spectator_Default"
 		}
@@ -340,6 +339,7 @@
 			"prefab"	"weapon_wearable"
 			"propername" "0"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
+			"item_quality"	"haunted"
 			"item_slot"	"zombie"
 			"equip_region"	"zombie_body"
 			"model_player_per_class"
@@ -373,6 +373,7 @@
 			"prefab"		"base_misc"
 			"item_class"	"tf_wearable"
 			"item_slot"		"medal"
+			"item_quality"		"collectors"
 			"show_in_armory"	"1"
 			"item_type_name"	"#TF_Wearable_Badge"
 			"equip_region"	"medal"
@@ -392,7 +393,6 @@
 		"veteran_medal"
 		{
 			"prefab"		"medal"
-			"item_quality"		"unique"
 			"model_player"	"models/player/items/all_class/id_badge.mdl"
 		}
 		"halloween"
@@ -411,13 +411,11 @@
 		
 		"weapon_minigun"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_minigun"
 			"item_type_name"	"#TF_Weapon_Minigun"
 			"item_name"	"#TF_Weapon_Minigun"
 			"item_slot"	"primary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_minigun"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -434,13 +432,11 @@
 		}
 		"weapon_rocketlauncher"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_rocketlauncher"
 			"item_type_name"	"#TF_Weapon_RocketLauncher"
 			"item_name"	"#TF_Weapon_RocketLauncher"
 			"item_slot"	"primary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_rocketlauncher"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -457,14 +453,12 @@
 		}
 		"weapon_stickybomb_launcher"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_pipebomblauncher"
 			"item_type_name"	"#TF_Weapon_PipebombLauncher"
 			"item_name"	"#TF_Weapon_PipebombLauncher"
 			"item_slot"	"secondary"
 			"anim_slot"	"primary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_stickybomb_launcher"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -481,14 +475,12 @@
 		}
 		"weapon_grenade_launcher"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_grenadelauncher"
 			"item_type_name"	"#TF_Weapon_GrenadeLauncher"
 			"item_name"	"#TF_Weapon_GrenadeLauncher"
 			"item_slot"	"primary"
 			"anim_slot"	"secondary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_grenadelauncher"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -505,13 +497,11 @@
 		}
 		"weapon_flamethrower"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_flamethrower"
 			"item_type_name"	"#TF_Weapon_FlameThrower"
 			"item_name"	"#TF_Weapon_FlameThrower"
 			"item_slot"	"primary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_flamethrower/c_flamethrower"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -528,14 +518,12 @@
 		}
 		"weapon_medigun"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_medigun"
 			"item_type_name"	"#TF_Weapon_Medigun"
 			"item_name"	"#TF_Weapon_Medigun"
 			"item_slot"	"secondary"
 			"equip_region"	"medigun_backpack"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_medigun/c_medigun"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -553,13 +541,11 @@
 		}
 		"weapon_knife"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_knife"
 			"item_type_name"	"#TF_Weapon_Knife"
 			"item_name"	"#TF_Weapon_Knife"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_knife"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -605,13 +591,11 @@
 		}
 		"weapon_wrench"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_wrench"
 			"item_type_name"	"#TF_Weapon_Wrench"
 			"item_name"	"#TF_Weapon_Wrench"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_wrench"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -642,8 +626,6 @@
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
 			"attach_to_hands"	"1"
-			"item_quality"	"unique"
-			"propername"	"1"
 			"anim_slot" "MELEE_ALLCLASS"
 			"static_attrs"
 			{
@@ -675,8 +657,6 @@
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
 			"attach_to_hands"	"1"
-			"item_quality"	"unique"
-			"propername"	"1"
 			"anim_slot" "MELEE_ALLCLASS"
 			"item_logname"	"fryingpan"
 			"item_iconname"	"fryingpan"
@@ -725,13 +705,11 @@
 		}
 		"weapon_scattergun"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_scattergun"
 			"item_type_name"	"#TF_Weapon_Scattergun"
 			"item_name"	"#TF_Weapon_Scattergun"
 			"item_slot"	"primary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_scattergun"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -748,13 +726,11 @@
 		}
 		"weapon_sniperrifle"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_sniperrifle"
 			"item_type_name"	"#TF_Weapon_SniperRifle"
 			"item_name"	"#TF_Weapon_SniperRifle"
 			"item_slot"	"primary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_sniperrifle"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -771,13 +747,11 @@
 		}
 		"weapon_bat"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_bat"
 			"item_type_name"	"#TF_Weapon_Bat"
 			"item_name"	"#TF_Weapon_Bat"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_bat"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -802,13 +776,11 @@
 		}
 		"weapon_bottle"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_bottle"
 			"item_type_name"	"#TF_Weapon_Bottle"
 			"item_name"	"#TF_Weapon_Bottle"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_bottle"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -833,7 +805,6 @@
 		}
 		"weapon_buff_banner"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_buff_item"
 			"base_item_name"	"The Buff Banner"
@@ -843,7 +814,6 @@
 			"item_slot"	"secondary"
 			"equip_region"	"back"
 			"anim_slot"	"melee"
-			"item_quality"	"unique"
 			"image_inventory"	"backpack/weapons/c_models/c_buffpack/c_buffpack"
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
@@ -885,13 +855,11 @@
 		}
 		"weapon_fireaxe"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_fireaxe"
 			"item_type_name"	"#TF_Weapon_FireAxe"
 			"item_name"	"#TF_Weapon_FireAxe"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_fireaxe_pyro/c_fireaxe_pyro"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -916,13 +884,11 @@
 		}
 		"weapon_club"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_club"
 			"item_type_name"	"#TF_Weapon_Club"
 			"item_name"	"#TF_Weapon_Club"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_machete"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -947,13 +913,11 @@
 		}
 		"weapon_fists"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_fists"
 			"item_type_name"	"#TF_Weapon_Fists"
 			"item_name"	"#TF_Weapon_Fists"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/v_models/v_fist_heavy"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -989,13 +953,11 @@
 		}
 		"weapon_shovel"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_shovel"
 			"item_type_name"	"#TF_Weapon_Shovel"
 			"item_name"	"#TF_Weapon_Shovel"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_shovel"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1036,7 +998,6 @@
 		}
 		"weapon_paintrain"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_shovel"
 			"item_slot"	"melee"
@@ -1048,7 +1009,6 @@
 			"item_type_name"	"#TF_Weapon_MakeshiftClub"
 			"item_name"	"#TF_Unique_Makeshiftclub"
 			"image_inventory"	"backpack/weapons/c_models/c_paintrain/c_paintrain"
-			"item_quality"	"unique"
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 -3 -11"
@@ -1081,13 +1041,11 @@
 		}
 		"weapon_bonesaw"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_bonesaw"
 			"item_type_name"	"#TF_Weapon_Bonesaw"
 			"item_name"	"#TF_Weapon_Bonesaw"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_bonesaw/c_bonesaw"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1112,12 +1070,10 @@
 		}
 		"weapon_shotgun"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_shotgun"
 			"item_type_name"	"#TF_Weapon_Shotgun"
 			"item_name"	"#TF_Weapon_Shotgun"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_shotgun"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1134,7 +1090,6 @@
 			"item_name"	"#TF_ReserveShooter"
 			"item_logname"	"reserve_shooter"
 			"item_iconname"	"reserve_shooter"
-			"item_quality"	"unique"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_reserve_shooter/c_reserve_shooter"
 			"model_player"	"models/workshop/weapons/c_models/c_reserve_shooter/c_reserve_shooter.mdl"
 			"static_attrs"
@@ -1173,13 +1128,11 @@
 		}
 		"weapon_smg"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_smg"
 			"item_type_name"	"#TF_Weapon_SMG"
 			"item_name"	"#TF_Weapon_SMG"
 			"item_slot"	"secondary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_smg"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1196,13 +1149,11 @@
 		}
 		"weapon_syringegun"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_syringegun_medic"
 			"item_type_name"	"#TF_Weapon_SyringeGun"
 			"item_name"	"#TF_Weapon_SyringeGun"
 			"item_slot"	"primary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_syringegun"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1219,13 +1170,11 @@
 		}
 		"weapon_pistol"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_pistol"
 			"item_type_name"	"#TF_Weapon_Pistol"
 			"item_name"	"#TF_Weapon_Pistol"
 			"item_slot"	"secondary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_pistol"
 			"model_player"	"models/weapons/c_models/c_pistol/c_pistol.mdl"
 			"attach_to_hands"	"1"
@@ -1239,13 +1188,11 @@
 		}
 		"weapon_revolver"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_revolver"
 			"item_type_name"	"#TF_Weapon_Revolver"
 			"item_name"	"#TF_Weapon_Revolver"
 			"item_slot"	"secondary"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_revolver"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1262,13 +1209,11 @@
 		}
 		"weapon_pda_engineer_build"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_pda_engineer_build"
 			"item_name"	"#TF_Weapon_PDA_Engineer_Builder"
 			"item_type_name"	"#TF_Weapon_PDA_Engineer"
 			"item_slot"	"pda"
-			"item_quality"	"normal"
 			"attach_to_hands"	"1"
 			"image_inventory"	"backpack/weapons/w_models/w_builder"
 			"image_inventory_size_w"	"128"
@@ -1293,14 +1238,12 @@
 		}
 		"weapon_invis"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_invis"
 			"item_type_name"	"#TF_Weapon_Watch"
 			"item_name"	"#TF_Weapon_Watch"
 			"item_slot"	"pda2"
 			"anim_slot"	"FORCE_NOT_USED"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/c_models/c_spy_watch/parts/c_spy_watch"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1325,13 +1268,11 @@
 		"weapon_builder"
 		{
 			"hidden"	"1"
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_builder"
 			"item_type_name"	"#TF_Weapon_PDA_Engineer"
 			"item_name"	"#TF_Weapon_PDA_Engineer"
 			"item_slot"	"building"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_pda_engineer"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1356,14 +1297,12 @@
 		}
 		"weapon_builder_spy"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_builder"
 			"item_name"	"#TF_Weapon_Spy_Sapper"
 			"item_type_name"	"#TF_Weapon_Spy_Sapper"
 			"item_slot"	"building"
 			"anim_slot"	"building"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_sapper"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1380,13 +1319,11 @@
 		}
 		"weapon_pda_engineer_destroy"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_pda_engineer_destroy"
 			"item_name"	"#TF_Weapon_PDA_Engineer_Destroyer"
 			"item_type_name"	"#TF_Weapon_PDA_Engineer"
 			"item_slot"	"pda2"
-			"item_quality"	"normal"
 			"attach_to_hands"	"1"
 			"image_inventory"	"backpack/weapons/w_models/w_pda_engineer"
 			"image_inventory_size_w"	"128"
@@ -1411,13 +1348,11 @@
 		}
 		"weapon_pda_spy"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_pda_spy"
 			"item_name"	"#TF_Weapon_Disguise_Kit"
 			"item_type_name"	"#TF_Weapon_Disguise_Kit_Type"
 			"item_slot"	"pda"
-			"item_quality"	"normal"
 			"image_inventory"	"backpack/weapons/w_models/w_cigarette_case"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
@@ -1465,7 +1400,6 @@
 		{
 			"prefab"	"weapon_fireaxe"
 			"item_type_name"	"#TF_Weapon_SledgeHammer"
-			"item_quality"	"unique"
 			"visuals"
 			{
 				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
@@ -1485,8 +1419,6 @@
 			"image_inventory_size_h"		"82"		
 			"attach_to_hands" "1"
 			"model_player"	"models/weapons/c_models/c_boxing_gloves/c_boxing_gloves.mdl"
-			"item_quality"	"unique"
-			"propername"	"1"
 			"used_by_classes"
 			{
 				"heavy"	"1"
@@ -1519,7 +1451,6 @@
 		"weapon_flaregun"
 		{
 			"item_class"	"tf_weapon_flaregun"
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_type_name"	"#TF_Weapon_Flaregun"
 			"item_name"	"#TF_Unique_Achievement_Flaregun"
@@ -1531,8 +1462,6 @@
 			"image_inventory_size_h"	"82"
 			"model_player"	"models/weapons/c_models/c_flaregun_pyro/c_flaregun_pyro.mdl"
 			"attach_to_hands"	"1"
-			"item_quality"	"unique"
-			"propername"	"1"
 			"used_by_classes"
 			{
 				"pyro"	"1"
@@ -1552,12 +1481,10 @@
 		}
 		"weapon_double_barrel"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_scattergun"
 			"item_type_name"	"#TF_Weapon_Scattergun"
 			"item_slot"	"primary"
-			"item_quality"	"unique"
 			"image_inventory_size_w"	"128"
 			"image_inventory_size_h"	"82"
 			"attach_to_hands"	"1"
@@ -1601,7 +1528,6 @@
 				"sound_burst"	"Weapon_Scatter_Gun_Double.SingleCrit"
 				"muzzle_flash"	"muzzle_bignasty"
 				"tracer_effect"	"bullet_bignasty_tracer01"
-				
 				"animation_replacement"
 				{
 					"ACT_PRIMARY_VM_INSPECT_START"		"ACT_ITEM2_VM_INSPECT_START"
@@ -1612,14 +1538,12 @@
 		}
 		"weapon_huntsman"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_compound_bow"
 			"base_item_name"	"The Huntsman"
 			"item_type_name"	"#TF_Weapon_CompoundBow"
 			"item_name"	"#TF_Unique_Achievement_CompoundBow"
 			"item_slot"	"primary"
-			"item_quality"	"unique"
 			"item_iconname"	"huntsman"
 			"anim_slot"	"item2"
 			"image_inventory"	"backpack/weapons/c_models/c_bow/c_bow"
@@ -1664,14 +1588,12 @@
 		}
 		"weapon_jarate"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_jar"
 			"base_item_name"	"Jarate"
 			"item_type_name"	"#TF_Weapon_Jar"
 			"item_name"	"#TF_Unique_Achievement_Jar"
 			"item_slot"	"secondary"
-			"item_quality"	"unique"
 			"anim_slot"	"item1"
 			"attach_to_hands"	"1"
 			"image_inventory"	"backpack/weapons/c_models/urinejar"
@@ -1704,7 +1626,6 @@
 			"item_description"	"#TF_MadMilk_Desc"
 			"item_name"	"#TF_MadMilk"
 			"item_slot"	"secondary"
-			"item_quality"	"unique"
 			"anim_slot"	"item1"
 			"attach_to_hands"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_madmilk/c_madmilk"
@@ -1741,7 +1662,6 @@
 		"weapon_sandvich"
 		{
 			"item_class"	"tf_weapon_lunchbox"
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_type_name"	"#TF_Weapon_LunchBox"
 			"item_name"	"#TF_Unique_Achievement_LunchBox"
@@ -1752,7 +1672,6 @@
 			"image_inventory_size_h"		"82"
 			"model_player"	"models/weapons/c_models/c_sandwich/c_sandwich.mdl"
 			"attach_to_hands"	"1"
-			"item_quality"	"unique"
 			"used_by_classes"
 			{
 				"heavy"	"1"
@@ -1777,7 +1696,6 @@
 		"weapon_scout_drink"
 		{
 			"item_class"	"tf_weapon_lunchbox_drink"
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_type_name"	"#TF_Weapon_LunchBox"
 			"item_name"	"#TF_Unique_Achievement_EnergyDrink"
@@ -1789,7 +1707,7 @@
 			"image_inventory_size_h"		"82"
 			"model_player"	"models/weapons/c_models/c_energy_drink/c_energy_drink.mdl"
 			"attach_to_hands"	"1"
-			"item_quality"	"unique"
+			
 			"used_by_classes"
 			{
 				"scout"	"1"
@@ -1818,14 +1736,12 @@
 		"weapon_shortstop"
 		{
 			"item_class"	"tf_weapon_handgun_scout_primary"
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_type_name"	"#TF_Weapon_Peppergun"
 			"item_description"	"#TF_TheShortstop_Desc"
 			"item_name"	"#TF_TheShortstop"
 			"item_slot"	"primary"
 			"anim_slot"	"secondary"
-			"item_quality"	"unique"
 			"item_logname"	"shortstop"
 			"item_iconname"	"shortstop"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_shortstop/c_shortstop"
@@ -1867,14 +1783,12 @@
 		"weapon_wrangler"
 		{
 			"item_class"	"tf_weapon_laser_pointer"
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_type_name"	"#TF_Weapon_Laser_Pointer"
 			"item_name"	"#TF_Unique_Achievement_Laser_Pointer"
 			"item_description"	"#TF_Wrangler_Desc"
 			"item_slot"	"secondary"
 			"anim_slot"	"item1"
-			"item_quality"	"unique"
 			"item_logname"	"laser_pointer"
 			"item_iconname"	"laser_pointer"
 			"image_inventory"	"backpack/weapons/c_models/c_wrangler"
@@ -1903,7 +1817,6 @@
 		"weapon_stickbomb"
 		{
 			"item_class"	"tf_weapon_stickbomb"
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_type_name"	"#TF_Weapon_StickBomb"
 			"item_name"	"#TF_UllapoolCaber"
@@ -1911,8 +1824,6 @@
 			"item_logname"	"ullapool_caber"
 			"item_iconname"	"ullapool_caber"
 			"item_slot"	"melee"
-			"item_quality"	"unique"
-			"propername"	"1"
 			"image_inventory" "backpack/weapons/c_models/c_caber/c_caber"
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
@@ -1947,7 +1858,6 @@
 			"item_type_name"	"#TF_Weapon_Shotgun"
 			"item_name"	"#TF_Unique_Sentry_Shotgun"
 			"item_slot"	"primary"
-			"item_quality"	"unique"
 			"item_logname"	"frontier_justice"
 			"item_iconname"	"frontier_kill"
 			"image_inventory"	"backpack/weapons/c_models/c_frontierjustice/c_frontierjustice"
@@ -1985,14 +1895,12 @@
 		}
 		"weapon_robot_arm"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_robot_arm"
 			"item_type_name"	"#TF_Weapon_Robot_Arm"
 			"item_name"	"#TF_Unique_Robot_Arm"
 			"item_slot"	"melee"
 			"equip_region"	"arms"
-			"item_quality"	"unique"
 			"anim_slot"	"item2"
 			"item_logname"	"robot_arm"
 			"item_iconname"	"robot_arm_kill"
@@ -2066,13 +1974,11 @@
 		}
 		"weapon_sword"
 		{
-			"propername"	"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_sword"
 			"item_type_name"	"#TF_Weapon_Sword"
 			"item_slot"	"melee"
 			"anim_slot"	"item1"
-			"item_quality"	"unique"
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
 			"attach_to_hands"	"1"
@@ -2332,7 +2238,6 @@
 		}
 		"weapon_bossmelee"
 		{
-			"propername"		"1"
 			"show_in_armory"	"1"
 			"item_class"	"tf_weapon_shovelfist"
 			"item_type_name"	"#TF_Weapon_Fists"
@@ -2380,6 +2285,7 @@
 		"weapon_reskin"
 		{
 			"is_reskin"			"1"
+			"item_quality" "customized"
 		}
 	}
 	"items"
@@ -2389,15 +2295,16 @@
 			"name"	"default"
 			"hidden"	"1"
 			"item_class"	"tf_wearable"
+			"item_quality" "normal"
 			"year"			"2007"
 			"item_name"	"#TF_Spectator_Default"
 			"item_slot"	"melee"
-			"item_quality"	"normal"
 		}
 		"0"
 		{
 			"name"	"TF_WEAPON_BAT"
 			"prefab"	"weapon_bat"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_bat.mdl"
@@ -2407,6 +2314,7 @@
 		{
 			"name"	"TF_WEAPON_BOTTLE"
 			"prefab"	"weapon_bottle"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_bottle.mdl"
@@ -2416,6 +2324,7 @@
 		{
 			"name"	"TF_WEAPON_FIREAXE"
 			"prefab"	"weapon_fireaxe"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_fireaxe.mdl"
@@ -2425,6 +2334,7 @@
 		{
 			"name"	"TF_WEAPON_CLUB"
 			"prefab"	"weapon_club"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_machete.mdl"
@@ -2434,6 +2344,7 @@
 		{
 			"name"	"TF_WEAPON_KNIFE"
 			"prefab"	"weapon_knife"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_knife.mdl"
@@ -2443,6 +2354,7 @@
 		{
 			"name"	"TF_WEAPON_FISTS"
 			"prefab"	"weapon_fists"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"baseitem"	"1"
@@ -2451,6 +2363,7 @@
 		{
 			"name"	"TF_WEAPON_SHOVEL"
 			"prefab"	"weapon_shovel"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_shovel.mdl"
@@ -2460,6 +2373,7 @@
 		{
 			"name"	"TF_WEAPON_WRENCH"
 			"prefab"	"weapon_wrench"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_wrench.mdl"
@@ -2469,6 +2383,7 @@
 		{
 			"name"	"TF_WEAPON_BONESAW"
 			"prefab"	"weapon_bonesaw"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_bonesaw.mdl"
@@ -2478,6 +2393,7 @@
 		{
 			"name"	"TF_WEAPON_SHOTGUN_PRIMARY"
 			"prefab"	"weapon_shotgun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 			"item_slot"	"primary"
@@ -2490,6 +2406,7 @@
 		{
 			"name"	"TF_WEAPON_SHOTGUN_SOLDIER"
 			"prefab"	"weapon_shotgun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"hidden"	"1"
 			"baseitem"	"1"
@@ -2506,6 +2423,7 @@
 		{
 			"name"	"TF_WEAPON_SHOTGUN_HWG"
 			"prefab"	"weapon_shotgun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"hidden"	"1"
 			"baseitem"	"1"
@@ -2522,6 +2440,7 @@
 		{
 			"name"	"TF_WEAPON_SHOTGUN_PYRO"
 			"prefab"	"weapon_shotgun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"hidden"	"1"
 			"baseitem"	"1"
@@ -2538,6 +2457,7 @@
 		{
 			"name"	"TF_WEAPON_SCATTERGUN"
 			"prefab"	"weapon_scattergun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_scattergun.mdl"
@@ -2547,6 +2467,7 @@
 		{
 			"name"	"TF_WEAPON_SNIPERRIFLE"
 			"prefab"	"weapon_sniperrifle"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_sniperrifle.mdl"
@@ -2556,6 +2477,7 @@
 		{
 			"name"	"TF_WEAPON_MINIGUN"
 			"prefab"	"weapon_minigun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_minigun.mdl"
@@ -2565,6 +2487,7 @@
 		{
 			"name"	"TF_WEAPON_SMG"
 			"prefab"	"weapon_smg"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_smg.mdl"
@@ -2574,6 +2497,7 @@
 		{
 			"name"	"TF_WEAPON_SYRINGEGUN_MEDIC"
 			"prefab"	"weapon_syringegun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_syringegun.mdl"
@@ -2583,6 +2507,7 @@
 		{
 			"name"	"TF_WEAPON_ROCKETLAUNCHER"
 			"prefab"	"weapon_rocketlauncher"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_rocketlauncher.mdl"
@@ -2592,6 +2517,7 @@
 		{
 			"name"	"TF_WEAPON_GRENADELAUNCHER"
 			"prefab"	"weapon_grenade_launcher"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_grenadelauncher.mdl"
@@ -2601,6 +2527,7 @@
 		{
 			"name"	"TF_weapon_stickybomb_launcher"
 			"prefab"	"weapon_stickybomb_launcher"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_stickybomb_launcher.mdl"
@@ -2610,6 +2537,7 @@
 		{
 			"name"	"TF_WEAPON_FLAMETHROWER"
 			"prefab"	"weapon_flamethrower"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_flamethrower.mdl"
@@ -2619,6 +2547,7 @@
 		{
 			"name"	"TF_WEAPON_PISTOL"
 			"prefab"	"weapon_pistol"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 			"used_by_classes"
@@ -2630,6 +2559,7 @@
 		{
 			"name"	"TF_WEAPON_PISTOL_SCOUT"
 			"prefab"	"weapon_pistol"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 			"hidden"	"1"
@@ -2642,6 +2572,7 @@
 		{
 			"name"	"TF_WEAPON_REVOLVER"
 			"prefab"	"weapon_revolver"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_revolver.mdl"
@@ -2651,6 +2582,7 @@
 		{
 			"name"	"TF_WEAPON_PDA_ENGINEER_BUILD"
 			"prefab"	"weapon_pda_engineer_build"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 		}
@@ -2658,6 +2590,7 @@
 		{
 			"name"	"TF_WEAPON_PDA_ENGINEER_DESTROY"
 			"prefab"	"weapon_pda_engineer_destroy"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 		}
@@ -2665,6 +2598,7 @@
 		{
 			"name"	"TF_WEAPON_PDA_SPY"
 			"prefab"	"weapon_pda_spy"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_cigarette_case.mdl"
@@ -2674,6 +2608,7 @@
 		{
 			"name"	"TF_WEAPON_BUILDER"
 			"prefab"	"weapon_builder"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 		}
@@ -2681,6 +2616,7 @@
 		{
 			"name"	"TF_WEAPON_MEDIGUN"
 			"prefab"	"weapon_medigun"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 		}
@@ -2688,6 +2624,7 @@
 		{
 			"name"	"TF_WEAPON_INVIS"
 			"prefab"	"weapon_invis"
+			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
 		}
@@ -2695,6 +2632,7 @@
 		{
 			"name"	"TF_WEAPON_BUILDER_SPY"
 			"prefab"	"weapon_builder_spy"
+			"item_quality" "normal"
 			"year"			"2007"
 			"attach_to_hands" "0"
 			"model_world"	"models/weapons/w_models/w_sapper.mdl"
@@ -2704,12 +2642,14 @@
 		{
 			"name"	"TF_WEAPON_SHOVELFIST"
 			"prefab"	"weapon_bossmelee"
+			"item_quality" "normal"
 			"baseitem"	"1"
 		}
 		"32"
 		{
 			"name"	"TF2V_COSMETIC_HAT"
 			"prefab"	"hat"
+			"item_quality" "normal"
 			"used_by_classes"
 			{
 				"scout"		"1"
@@ -2735,6 +2675,7 @@
 		{
 			"name"	"TF2V_COSMETIC_MISC"
 			"prefab"	"misc"
+			"item_quality" "normal"
 			"used_by_classes"
 			{
 				"scout"		"1"
@@ -2753,6 +2694,7 @@
 		{
 			"name"	"TF2V_COSMETIC_MEDAL"
 			"prefab"	"medal"
+			"item_quality" "normal"
 			"used_by_classes"
 			{
 				"scout"		"1"
@@ -2773,9 +2715,9 @@
 			"prefab"	"weapon_medigun"
 			"year"			"2008"
 			"item_name"	"#TF_Unique_Achievement_Medigun1"
+			"propername"	"1"
 			"image_inventory"	 "backpack/weapons/c_models/c_overhealer/c_overhealer"
 			"model_player"	  "models/weapons/c_models/c_kritzkrieg/c_kritzkrieg.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"lunchbox adds minicrits"
@@ -2817,9 +2759,9 @@
 			"item_logname"	"blutsauger"
 			"item_iconname"	"blutsauger"
 			"item_name"	"#TF_Unique_Achievement_Syringegun1"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_leechgun/c_leechgun"
 			"model_player"	"models/weapons/c_models/c_leechgun/c_leechgun.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"heal on hit for slowfire"
@@ -2842,10 +2784,10 @@
 			"item_logname"	"ubersaw"
 			"item_iconname"	"ubersaw"
 			"item_name"	"#TF_Unique_Achievement_Bonesaw1"
+			"propername"	"1"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/c_models/c_ubersaw/c_ubersaw"
 			"model_player"	"models/weapons/c_models/c_ubersaw/c_ubersaw.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"add uber charge on hit"
@@ -2872,9 +2814,9 @@
 			"item_logname"	"axtinguisher"
 			"item_iconname"	"axtinguisher"
 			"item_name"	"#TF_Unique_Achievement_FireAxe1"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_axtinguisher/c_axtinguisher_pyro"
 			"model_player"	"models/weapons/c_models/c_axtinguisher/c_axtinguisher_pyro.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"crit vs burning players"
@@ -2898,6 +2840,7 @@
 		{
 			"name"	"The Flare Gun"
 			"prefab"	"weapon_flaregun"
+			"propername"	"1"
 			"attributes"
 			{
 				"crit_vs_burning_FLARES_DISPLAY_ONLY"
@@ -2916,9 +2859,10 @@
 			"item_iconname"	"backburner"
 			"item_type_name"	"#TF_Weapon_Flamethrower"
 			"item_name"	"#TF_Unique_Achievement_Flamethrower"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_backburner/c_backburner"
 			"model_player"	"models/weapons/c_models/c_backburner/c_backburner.mdl"
-			"item_quality"	"unique"
+			
 			"attributes"
 			{
 				"mod flamethrower back crit"
@@ -2961,7 +2905,7 @@
 			"image_inventory"	"backpack/weapons/c_models/c_w_ludmila/c_w_ludmila"
 			"model_world"	"models/weapons/w_models/w_minigun.mdl"
 			"attach_to_hands"	"0"
-			"item_quality"	"unique"
+			
 			"attributes"
 			{
 				"slow enemy on hit"
@@ -3014,6 +2958,7 @@
 		{
 			"name"	"The Sandvich"
 			"prefab"	"weapon_sandvich"
+			"propername"	"1"
 			"year"			"2008"
 			"item_description" "#TF_Sandvich_desc"
 		}
@@ -3021,6 +2966,7 @@
 		{
 			"name"	"The Killing Gloves of Boxing"
 			"prefab"	"weapon_gloves"
+			"propername"	"1"
 			"year"			"2008"
 			"attributes"
 			{
@@ -3043,9 +2989,9 @@
 			"year"			"2009"
 			"item_class"	"tf_weapon_bat_wood"
 			"item_name"		"#TF_Unique_Achievement_Bat"
+			"propername"	"1"
 			"item_logname"	"sandman"
 			"item_iconname"	"sandman"
-			"item_quality"	"unique"
 			"image_inventory"	"backpack/weapons/c_models/c_wooden_bat/c_wooden_bat"
 			"model_player"	"models/weapons/c_models/c_wooden_bat/c_wooden_bat.mdl"
 			"attributes"
@@ -3073,6 +3019,7 @@
 			"prefab"	"weapon_double_barrel"
 			"year"			"2009"
 			"item_name"	"#TF_Unique_Achievement_Scattergun_Double"
+			"propername"	"1"
 			"item_description"	"#TF_Unique_Achievement_Scattergun_Double_desc"
 			"item_logname"	"force_a_nature"
 			"item_iconname"	"force_a_nature"
@@ -3105,6 +3052,7 @@
 		{
 			"name"	"The Huntsman"
 			"prefab"	"weapon_huntsman"
+			"propername"	"1"
 			"year"			"2009"
 		}
 		"57"
@@ -3114,11 +3062,10 @@
 			"year"			"2009"
 			"item_type_name" 	"#TF_Wearable_Shield"
 			"item_name"		"#TF_Unique_Backstab_Shield"
+			"propername"	"1"
 			"item_slot"		"secondary"
 			"equip_region"	"back"
 			"anim_slot"	"FORCE_NOT_USED"
-			"item_quality"		"unique"
-			"propername"	"1"
 			"image_inventory"	"backpack/player/items/sniper/knife_shield"
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
@@ -3159,6 +3106,7 @@
 			"year"			"2009"
 			"item_type_name"	"#TF_Weapon_Watch"
 			"item_name"	"#TF_Unique_Achievement_FeignWatch"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_pocket_watch/parts/c_pocket_watch"
 			"model_player"	"models/weapons/v_models/v_watch_pocket_spy.mdl"
 			"used_by_classes"
@@ -3196,7 +3144,7 @@
 			"year"			"2009"
 			"item_type_name"	"#TF_Weapon_Watch"
 			"item_name"	"#TF_Unique_Achievement_CloakWatch"
-			"item_quality"	"unique"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_leather_watch/parts/c_leather_watch"
 			"model_player"	"models/weapons/v_models/v_watch_leather_spy.mdl"
 			"used_by_classes"
@@ -3223,7 +3171,7 @@
 			"prefab"	"weapon_revolver"
 			"year"			"2009"
 			"item_name"	"#TF_Unique_Achievement_Revolver"
-			"item_quality"	"unique"
+			"propername"	"1"
 			"item_logname"	"ambassador"
 			"item_iconname"	"ambassador"
 			"image_inventory"	"backpack/weapons/c_models/c_ambassador/parts/c_ambassador_opt"
@@ -3265,7 +3213,7 @@
 			"item_logname"	"rocketlauncher_directhit"
 			"item_iconname"	"rocketlauncher_directhit"
 			"item_name"	"#TF_Unique_Achievement_RocketLauncher"
-			"item_quality"	"unique"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_directhit/c_directhit"
 			"model_player"	"models/weapons/c_models/c_directhit/c_directhit.mdl"
 			"attributes"
@@ -3309,6 +3257,7 @@
 			"prefab"	"weapon_pickaxe"
 			"year"			"2009"
 			"item_name"	"#TF_Unique_Achievement_Pickaxe"
+			"propername"	"1"
 			"item_logname"	"unique_pickaxe"
 			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe"	
 			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe.mdl"
@@ -3345,6 +3294,7 @@
 		{
 			"name"	"The Buff Banner"
 			"prefab"	"weapon_buff_banner"
+			"propername"	"1"
 			"year"			"2009"
 			"xifier_class_remap"	"buff_banner"
 			"attributes"
@@ -3362,7 +3312,7 @@
 			"prefab"	"weapon_stickybomb_launcher"
 			"year"			"2009"
 			"item_name"	"#TF_Unique_Achievement_StickyLauncher"
-			"item_quality"	"unique"
+			"propername"	"1"
 			"item_logname"	"stickybomb_defender"
 			"image_inventory"	"backpack/weapons/w_models/w_stickybomb_defender"
 			"model_player"	"models/weapons/c_models/c_scottish_resistance/c_scottish_resistance.mdl"
@@ -3394,6 +3344,7 @@
 		{
 			"name"	"The Chargin' Targe"
 			"prefab"	"weapon_shield"
+			"propername"	"1"
 			"year"			"2009"
 			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
 			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
@@ -3415,12 +3366,14 @@
 		{
 			"name"	"The Eyelander"
 			"prefab"	"weapon_eyelander"
+			"propername"	"1"
 			"year"			"2009"
 		}
 		"133"
 		{
 			"name"	"The Gunboats"
 			"prefab"		"weapon_gunboats"
+			"propername"	"1"
 			"year"			"2009"
 			"item_slot"		"secondary"
 			"used_by_classes"
@@ -3438,12 +3391,14 @@
 		{
 			"name"	"The Wrangler"
 			"prefab"	"weapon_wrangler"
+			"propername"	"1"
 			"year"			"2010"
 		}
 		"141"
 		{
 			"name"	"The Frontier Justice"
 			"prefab"	"weapon_sentry_revenge"
+			"propername"	"1"
 			"year"			"2010"
 			"static_attrs"
 			{
@@ -3454,19 +3409,21 @@
 		{
 			"name"	"The Gunslinger"
 			"prefab"	"weapon_robot_arm"
+			"propername"	"1"
 			"year"			"2010"
 		}
 		"153"
 		{
 			"name"	"The Homewrecker"
 			"prefab"		"weapon_sledgehammer"
+			"propername"	"1"
 			"year"			"2010"
 			"item_logname"	"sledgehammer"
 			"item_iconname"	"sledgehammer"
 			"item_name"	"#TF_Unique_SledgeHammer"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer"
 			"model_player"	"models/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer.mdl"
-			"item_quality"	"unique"
+			
 			"attributes"
 			{
 				"dmg bonus vs buildings"
@@ -3490,6 +3447,7 @@
 		{
 			"name"	"The Pain Train"
 			"prefab"	"weapon_paintrain"
+			"propername"	"1"
 			"year"			"2010"
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl"
 			"used_by_classes"
@@ -3502,10 +3460,10 @@
 		{
 			"name"	"The Southern Hospitality"
 			"prefab"	"weapon_wrench"
+			"propername"	"1"
 			"year"			"2010"
 			"item_type_name"	"#TF_Weapon_Wrench"
 			"item_name"	"#TF_Unique_Combat_Wrench"
-			"item_quality"	"unique"
 			"item_logname"	"southern_hospitality"
 			"item_iconname"	"southern_comfort_kill"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_spikewrench/c_spikewrench"
@@ -3543,6 +3501,7 @@
 		{
 			"name"	"The Pain Train (Pyro)"
 			"prefab"	"weapon_paintrain"
+			"propername"	"1"
 			"year"			"2010"
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain_pyro.mdl"
 			"used_by_classes"
@@ -3557,9 +3516,9 @@
 			"year"			"2010"
 			"item_type_name"	"#TF_Weapon_LunchBox"
 			"item_name"	"#TF_Unique_Lunchbox_Chocolate"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_chocolate/c_chocolate"
 			"model_player"	"models/weapons/c_models/c_chocolate/c_chocolate.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"lunchbox adds maxhealth bonus"
@@ -3610,9 +3569,9 @@
 			"item_iconname"	"tribalkukri"
 			"item_type_name"	"#TF_Weapon_Club"
 			"item_name"	"#TF_Unique_TribalmanKukri"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_wood_machete/c_wood_machete"
 			"model_player"	"models/workshop/weapons/c_models/c_wood_machete/c_wood_machete.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"bleeding duration"
@@ -3631,18 +3590,18 @@
 		{
 			"name"	"The Scotsman's Skullcutter"
 			"prefab"	"weapon_battleaxe"
+			"propername"	"1"
 			"year"			"2010"
 		}
 		"173"
 		{
 			"name"	"The Vita-Saw"
-			"prefab"	"weapon_bonesaw"
 			"year"			"2010"
-			"item_quality"	"unique"
 			"item_logname"	"battleneedle"
 			"item_iconname"	"battleneedle"
 			"item_type_name"	"#TF_Weapon_Bonesaw"
 			"item_name"	"#TF_Unique_BattleSaw"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_uberneedle/c_uberneedle"
 			"model_player"	"models/workshop/weapons/c_models/c_uberneedle/c_uberneedle.mdl"
 			"attributes"
@@ -3676,6 +3635,7 @@
 			"item_logname"	"powerjack"
 			"item_iconname"	"powerjack"
 			"item_name"	"#TF_ThePowerjack"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_powerjack/c_powerjack"
 			"model_player"	"models/workshop/weapons/c_models/c_powerjack/c_powerjack.mdl"
 			"attributes"
@@ -3710,10 +3670,9 @@
 			"item_logname"	"degreaser"
 			"item_iconname"	"degreaser"
 			"item_name"	"#TF_TheDegreaser"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_degreaser/c_degreaser"
 			"model_player"	"models/weapons/c_models/c_degreaser/c_degreaser.mdl"
-			"item_quality"	"unique"
-			"propername"	"1"
 			"attributes"
 			{
 				"deploy time decreased"
@@ -3744,6 +3703,7 @@
 		{
 			"name"	"The Shortstop"
 			"prefab" "weapon_shortstop"
+			"propername"	"1"
 			"year"			"2010"
 			"particle_suffix"	"shortstop"
 		}
@@ -3768,7 +3728,6 @@
 			"prefab"	"weapon_revolver"
 			"year"			"2010"
 			"item_name"	"#TF_LEtranger"
-			"item_quality"	"unique"
 			"item_logname"	"letranger"
 			"item_iconname"	"letranger"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_letranger/c_letranger"
@@ -3855,6 +3814,7 @@
 			"prefab"		"weapon_buff_banner"
 			"year"			"2010"
 			"item_name"	"#TF_TheBattalionsBackup"
+			"propername"	"1"
 			"item_description"	"#TF_TheBattalionsBackup_Desc"
 			"anim_slot"		"melee"
 			"image_inventory"			"backpack/workshop/weapons/c_models/c_battalion_buffpack/c_battalion_buffpack"
@@ -3876,8 +3836,8 @@
 			"year"			"2011"
 			"item_type_name"	"#TF_Weapon_SoldierSashimono"
 			"item_name"	"#TF_SoldierSashimono"
+			"propername"	"1"
 			"item_description"	"#TF_SoldierSashimono_Desc"
-			
 			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack"
 			"image_inventory_size_w"		"128"
 			"image_inventory_size_h"		"82"
@@ -3923,7 +3883,7 @@
 			"item_logname"	  "blackbox"
 			"item_iconname"	   "blackbox"
 			"item_name"	   "#TF_TheBlackBox"
-			"item_quality"	  "unique"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_blackbox/c_blackbox"
 			"model_player"	"models/workshop/weapons/c_models/c_blackbox/c_blackbox.mdl"
 			"attributes"
@@ -3975,7 +3935,7 @@
 			"item_logname"	"sydney_sleeper"
 			"item_iconname"	"sydney_sleeper"
 			"item_name"	"#TF_SydneySleeper"
-			"item_quality"	"unique"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_sydney_sleeper/c_sydney_sleeper"
 			"model_player"	"models/workshop/weapons/c_models/c_sydney_sleeper/c_sydney_sleeper.mdl"
 			"visuals"
@@ -4055,9 +4015,9 @@
 			"item_iconname"	"bushwacka"
 			"item_type_name"	"#TF_Weapon_Club"
 			"item_name"	"#TF_TheBushwacka"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_croc_knife/c_croc_knife"
 			"model_player"	"models/workshop/weapons/c_models/c_croc_knife/c_croc_knife.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"minicrits become crits"
@@ -4086,7 +4046,6 @@
 			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy"
 			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"damage penalty"
@@ -4197,7 +4156,6 @@
 			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"damage penalty"
@@ -4241,6 +4199,7 @@
 		{
 			"name"	"The Crusader's Crossbow"
 			"prefab" "weapon_crusaders_crossbow"
+			"propername"	"1"
 			"year"			"2010"
 			"particle_suffix"	"crusaders_crossbow"
 		}
@@ -4248,6 +4207,7 @@
 		{
 			"name"	"The Ullapool Caber"
 			"prefab"	"weapon_stickbomb"
+			"propername"	"1"
 			"year"			"2010"
 		}
 		"308"
@@ -4258,7 +4218,7 @@
 			"item_logname"	"loch_n_load"
 			"item_iconname"	"loch_n_load"
 			"item_name"		"#TF_LochNLoad"
-			"item_quality"		"unique"
+			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_lochnload/c_lochnload"
 			"model_player"	"models/workshop/weapons/c_models/c_lochnload/c_lochnload.mdl"
 			"attributes"
@@ -4312,7 +4272,6 @@
 			"item_iconname"	"warrior_spirit"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_bear_claw/c_bear_claw"			
 			"model_player"	"models/workshop/weapons/c_models/c_bear_claw/c_bear_claw.mdl"
-			"item_quality"	"unique"
 			"visuals"
 			{
 				"sound_melee_miss"	"Weapon_BoxingGloves.Miss"
@@ -4340,6 +4299,7 @@
 			"prefab"	"weapon_bat"
 			"year"			"2010"
 			"item_name"	"#TF_BostonBasher"
+			"propername"	"1"
 			"item_logname"	"boston_basher"
 			"item_iconname"	"boston_basher"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_boston_basher/c_boston_basher"
@@ -4371,6 +4331,7 @@
 		{
 			"name"	"The Claidheamohmor"
 			"prefab"	"weapon_claidheamohmor"
+			"propername"	"1"
 			"year"			"2010"
 		}
 		"329"
@@ -4379,13 +4340,11 @@
 			"prefab"	"weapon_wrench"
 			"year"			"2010"
 			"item_name"	"#TF_Jag"
+			"propername"	"1"
 			"item_slot"	"melee"
-			"item_quality"	"unique"
 			"item_logname"	"wrench_jag"
 			"item_iconname"	"wrench_jag"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_jag/c_jag"
-			"image_inventory_size_w"		"128"
-			"image_inventory_size_h"		"82"
 			"model_player"	"models/workshop/weapons/c_models/c_jag/c_jag.mdl"
 			"attributes"
 			{
@@ -4405,6 +4364,7 @@
 		{
 			"name"	"The Reserve Shooter"
 			"prefab"	"weapon_reserve_shooter"
+			"propername"	"1"
 			"year"			"2011"
 			"item_slot"	"secondary"
 			"used_by_classes"
@@ -4419,9 +4379,9 @@
 			"prefab"		"weapon_shovel"
 			"year"			"2011"
 			"item_name"	"#TF_MarketGardener"
+			"propername"	"1"
 			"item_logname"	"market_gardener"
 			"item_iconname"	"market_gardener"
-			"item_quality"	"unique"
 			"image_inventory" "backpack/workshop/weapons/c_models/c_market_gardener/c_market_gardener"
 			"model_player"	"models/workshop/weapons/c_models/c_market_gardener/c_market_gardener.mdl"
 			"static_attrs"
@@ -4451,6 +4411,7 @@
 		{
 			"name"	"The Reserve Shooter (Engineer)"
 			"prefab"	"weapon_reserve_shooter"
+			"propername"	"1"
 			"year"			"2011"
 			"item_slot"	"primary"
 			"used_by_classes"
@@ -4466,7 +4427,6 @@
 			"item_logname"	"quake_rl"
 			"item_iconname"	"quake_rl"
 			"item_name"	"#TF_TheOriginal"
-			"item_quality"	"unique"
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_bet_rocketlauncher/c_bet_rocketlauncher"
 			"model_player"	"models/workshop_partner/weapons/c_models/c_bet_rocketlauncher/c_bet_rocketlauncher.mdl"
@@ -4516,6 +4476,7 @@
 		{
 			"name"	"The Iron Bomber"
 			"prefab"	"weapon_quadball"
+			"propername"	"1"
 			"year"			"2014"
 			"particle_suffix"	"iron_bomber"
 		}
@@ -4718,16 +4679,16 @@
 		}
 		"10160"
 		{
-			"name"	"TTG Max Pistol"
+			"name"	"The Lugermorph (TTG Max Pistol)"
 			"prefab"	"weapon_pistol weapon_reskin"
 			"year"			"2010"
 			"item_name"	"#TF_TTG_MaxGun"
+			"propername"	"1"
 			"item_description"	"#TF_TTG_MaxGun_Desc"
 			"item_logname"	"maxgun"
 			"item_iconname"	"maxgun"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun"
 			"model_player"	"models/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun.mdl"
-			"item_quality"	"unique"
 			"used_by_classes"
 			{
 				"scout"	"1"
@@ -4736,12 +4697,12 @@
 		}
 		"10161"
 		{
-			"name"	"TTG Sam Revolver"
+			"name"	"The Big Kill (TTG Sam Revolver)"
 			"prefab"	"weapon_revolver weapon_reskin"
 			"year"			"2010"
 			"item_name"	"#TF_TTG_SamRevolver"
+			"propername"	"1"
 			"item_description"	"#TF_TTG_SamRevolver_Desc"
-			"item_quality"	"unique"
 			"item_logname"	"samrevolver"
 			"item_iconname"	"samrevolver"
 			"propername"	"1"
@@ -4755,8 +4716,8 @@
 			"year"			"2010"
 			"item_type_name"	"#TF_Weapon_Fish"
 			"item_name"	"#TF_TheHolyMackerel"
+			"propername"	"1"
 			"item_description"	"#TF_TheHolyMackerel_Desc"
-			"item_quality"	"unique"
 			"item_logname"	"holymackerel"
 			"item_iconname"	"holymackerel"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_holymackerel/c_holymackerel"
@@ -4777,7 +4738,6 @@
 			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper"
 			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"damage penalty"
@@ -4814,8 +4774,9 @@
 		}
 		"10264"
 		{
-			"name"	"Frying Pan"
+			"name"	"The Frying Pan"
 			"prefab"	"weapon_fryingpan weapon_reskin"
+			"propername"	"1"
 			"year"			"2009"
 		}
 		"10266"
@@ -4825,6 +4786,7 @@
 			"year"			"2010"
 			"item_type_name"	"#TF_Weapon_Axe"
 			"item_name"	"#TF_HalloweenBoss_Axe"
+			"propername"	"1"
 			"item_description"	"#TF_HalloweenBoss_Axe_Desc"
 			"item_quality"	"rarity4"
 			"item_logname"	"headtaker"
@@ -4887,7 +4849,6 @@
 			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"damage penalty"
@@ -4929,15 +4890,15 @@
 		}
 		"10298"
 		{
-			"name"	"Iron Curtain"
+			"name"	"The Iron Curtain"
 			"prefab"	"weapon_minigun weapon_reskin"
 			"year"			"2010"
 			"item_name"	"#TF_Iron_Curtain"
+			"propername"	"1"
 			"item_logname"	"iron_curtain"
 			"item_iconname"	"iron_curtain"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain"
 			"model_player"	"models/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain.mdl"
-			"item_quality"	"unique"
 		}
 		"10457"
 		{
@@ -4948,9 +4909,9 @@
 			"item_iconname"	"mailbox"
 			"item_name"	"#TF_Mailbox"
 			"item_type_name"	"#TF_Weapon_Mailbox"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_mailbox/c_mailbox"
 			"model_player"	"models/workshop/weapons/c_models/c_mailbox/c_mailbox.mdl"
-			"item_quality"	"unique"
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"15 2 -12"				
@@ -4980,14 +4941,13 @@
 			"prefab"	"weapon_fireaxe weapon_reskin"
 			"year"			"2011"
 			"item_type_name"	"#TF_Weapon_SledgeHammer"
-			"item_quality"	"unique"
 			"item_logname"	"the_maul"
 			"item_iconname"	"the_maul"
 			"item_name"	"#TF_RFAHammer"
+			"propername"	"1"
 			"item_description"	"#TF_RFAHammer_Desc"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer"
 			"model_player"	"models/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer.mdl"
-			"item_quality"	"unique"
 			"attributes"
 			{
 				"dmg bonus vs buildings"
@@ -5023,7 +4983,6 @@
 			"item_type_name"	"#TF_Weapon_GolfClub"
 			"item_name"	"#TF_NineIron"
 			"item_description"	"#TF_NineIron_Desc"
-			"item_quality"	"unique"
 			"item_logname"	"nessieclub"
 			"item_iconname"	"nessieclub"
 			"propername"	"0"
@@ -5082,8 +5041,8 @@
 			"name"	"The Wanga Prick"
 			"prefab"	"weapon_knife weapon_reskin"
 			"year"			"2011"
-			"propername"			"0"
 			"item_name"	"#TF_VoodooPin"
+			"propername"	"1"
 			"item_logname"	"voodoo_pin"
 			"item_iconname"	"voodoo_pin"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_voodoo_pin/c_voodoo_pin"
@@ -5140,10 +5099,11 @@
 		}
 		"10587"
 		{
-			"name"	"Apoco-Fists"
+			"name"	"The Apoco-Fists"
 			"prefab"	"weapon_fists weapon_reskin"
 			"year"			"2011"
 			"item_name"	"#TF_Apocofists"
+			"propername"	"1"
 			"item_description"	"#TF_Apocofists_Desc"
 			"item_logname"	"apocofists"
 			"item_iconname"	"apocofists"
@@ -5185,6 +5145,7 @@
 			"prefab"	"weapon_knife weapon_reskin"
 			"year"			"2012"
 			"item_name"			"#TF_BlackRose"
+			"propername"	"1"
 			"item_description"	"#TF_BlackRose_Desc"
 			"item_logname"	"black_rose"
 			"item_iconname"	"black_rose"
@@ -5209,8 +5170,8 @@
 			"prefab"	"weapon_sniperrifle weapon_reskin"
 			"year"			"2012"
 			"item_name"	"#TF_CSGO_AWP"
+			"propername"	"1"
 			"item_description"	"#TF_CSGO_AWP_Desc"
-			"item_quality"	"unique"
 			"image_inventory"	"backpack/weapons/c_models/c_csgo_awp/c_csgo_awp"
 			"model_player"	"models/weapons/c_models/c_csgo_awp/c_csgo_awp.mdl"
 			"item_logname"	"awper_hand"
@@ -5226,6 +5187,7 @@
 			"prefab"	"weapon_huntsman weapon_reskin"
 			"year"			"2014"
 			"item_name"	"#TF_FortifiedCompound"
+			"propername"	"1"
 			"item_description"	"#TF_FortifiedCompound_Desc"
 			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief"
 			"model_player"	"models/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief.mdl"
@@ -5236,8 +5198,8 @@
 			"prefab"	"weapon_knife weapon_reskin"
 			"year"			"2011"
 			"item_name"	"#TF_SharpDresser"
+			"propername"	"1"
 			"item_description"	"#TF_SharpDresser_Desc"
-			"item_quality"	"unique"
 			"item_logname"	"sharp_dresser"
 			"item_iconname"	"sharp_dresser"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade"
@@ -5284,9 +5246,9 @@
 			"item_logname"		"ai_flamethrower"
 			"item_iconname"		"ai_flamethrower"
 			"item_name"		"#TF_NostromoNapalmer"
+			"propername"	"1"
 			"image_inventory"		"backpack/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower"
 			"model_player"		"models/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower.mdl"
-			"item_quality"		"unique"
 		}
 		"30666"
 		{
@@ -5296,6 +5258,7 @@
 			"enabled"				"0"
 			"show_in_armory"		"0"
 			"item_name"		"#TF_invasion_pistol"
+			"propername"	"1"
 			"item_logname"		"the_capper"
 			"item_iconname"		"the_capper"
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol"
@@ -5347,9 +5310,9 @@
 			"enabled"				"0"
 			"show_in_armory"		"0"
 			"item_name"		"#TF_invasion_bat"
+			"propername"	"1"
 			"item_logname"		"batsaber"
 			"item_iconname"		"batsaber"
-			"item_quality"		"unique"
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat.mdl"
 			"static_attrs"
@@ -5379,6 +5342,7 @@
 			"prefab"		"weapon_wrangler weapon_reskin"
 			"year"			"2015"
 			"item_name"		"#TF_invasion_wrangler"
+			"propername"	"1"
 			"item_logname"		"giger_counter"
 			"item_iconname"		"giger_counter"
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
