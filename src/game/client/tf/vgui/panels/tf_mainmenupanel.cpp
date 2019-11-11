@@ -224,7 +224,7 @@ char* CTFMainMenuPanel::GetRandomMusic()
 	
 	int iCount = 0;
 
-	for ( int i = 0; i < 27; i++ )
+	for ( int i = 0; i < 40; i++ )
 	{
 		char szPath[MAX_PATH];
 		char szNumber[5];
