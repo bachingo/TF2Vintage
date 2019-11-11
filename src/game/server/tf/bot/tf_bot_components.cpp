@@ -14,12 +14,6 @@
 #include "tf_bot_components.h"
 
 
-CTFBotBody::CTFBotBody( INextBot *bot )
-	: BaseClass( bot )
-{
-}
-
-
 float CTFBotBody::GetHeadAimTrackingInterval( void ) const
 {
 	CTFBot *bot = static_cast<CTFBot *>( this->GetBot() );
@@ -36,12 +30,6 @@ float CTFBotBody::GetHeadAimTrackingInterval( void ) const
 		default:
 			return 1.00f;
 	}
-}
-
-
-CTFBotLocomotion::CTFBotLocomotion( INextBot *bot )
-	: BaseClass( bot )
-{
 }
 
 
@@ -161,14 +149,21 @@ CTFBotVision::CTFBotVision( INextBot *bot )
 }
 
 
+CTFBotVision::~CTFBotVision()
+{
+	m_PVNPCs.RemoveAll();
+}
+
 void CTFBotVision::Reset( void )
 {
 	BaseClass::Reset();
-	m_PVNPCs.Purge();
+	m_PVNPCs.RemoveAll();
 }
 
 void CTFBotVision::Update( void )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+
 	BaseClass::Update();
 
 	CTFBot *actor = ToTFBot( GetBot()->GetEntity() );

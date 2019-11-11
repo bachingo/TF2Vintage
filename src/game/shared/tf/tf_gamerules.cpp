@@ -13,6 +13,7 @@
 #include "time.h"
 #include "viewport_panel_names.h"
 #include "tf_halloween_boss.h"
+#include "tf_zombie.h"
 #include "entity_bossresource.h"
 #include "vscript_shared.h"
 #ifdef CLIENT_DLL
@@ -2696,6 +2697,78 @@ void CTFGameRules::SpawnZombieMob( void )
 		m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
 		return;
 	}
+
+	if ( isZombieMobForceSpawning )
+	{
+		isZombieMobForceSpawning = false;
+		m_mobSpawnTimer.Invalidate();
+	}
+
+	if ( m_nZombiesToSpawn > 0 && IsSpaceToSpawnHere( m_vecMobSpawnLocation ) )
+	{
+		if ( CZombie::SpawnAtPos( m_vecMobSpawnLocation, 0 ) )
+			--m_nZombiesToSpawn;
+	}
+
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players, TF_TEAM_RED, true );
+	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
+
+	int nHumans = 0;
+	for ( CTFPlayer *pPlayer : players )
+	{
+		if ( !pPlayer->IsBot() )
+			++nHumans;
+	}
+
+	if ( nHumans <= 0 || !m_mobSpawnTimer.IsElapsed() )
+		return;
+
+	m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
+
+	CUtlVector<CTFNavArea *> validAreas;
+	const float flSearchRange = 2000.0f;
+
+	// populate a vector of valid spawn locations
+	for ( CTFPlayer *pPlayer : players )
+	{
+		CUtlVector<CTFNavArea *> nearby;
+		// ignore bots
+		if ( pPlayer->IsBot() )
+			continue;
+		// are they on mesh?
+		if ( pPlayer->GetLastKnownArea() == nullptr )
+			continue;
+
+		CollectSurroundingAreas( &nearby, pPlayer->GetLastKnownArea(), flSearchRange );
+		for ( CTFNavArea *pArea : nearby )
+		{
+			if ( !pArea->IsValidForWanderingPopulation() )
+				continue;
+
+			if ( pArea->IsBlocked( TF_TEAM_RED ) || pArea->IsBlocked( TF_TEAM_BLUE ) )
+				continue;
+
+			validAreas.AddToTail( pArea );
+		}
+	}
+
+	if ( validAreas.IsEmpty() )
+		return;
+
+	int iAttempts = 10;
+	while( true )
+	{
+		CTFNavArea *pArea = validAreas.Random();
+		m_vecMobSpawnLocation = pArea->GetCenter() + Vector( 0, 0, StepHeight );
+		if ( IsSpaceToSpawnHere( m_vecMobSpawnLocation ) )
+			break;
+
+		if ( --iAttempts == 0 )
+			return;
+	}
+
+	m_nZombiesToSpawn = tf_halloween_zombie_mob_spawn_count.GetInt();
 }
 
 bool CTFGameRules::CheckCapsPerRound()
