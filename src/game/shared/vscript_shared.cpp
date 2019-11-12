@@ -32,6 +32,13 @@ extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 #endif // VMPROFILE
 
 
+// Shorten the string and return it
+const char *VScriptCutDownString( const char* str )
+{
+	static char staticStr[MAX_PATH] = {0};
+	Q_strncpy( staticStr, str, MAX_PATH );
+	return staticStr;
+}
 
 HSCRIPT VScriptCompileScript( const char *pszScriptPath, bool bWarnMissing )
 {

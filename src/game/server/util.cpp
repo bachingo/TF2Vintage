@@ -1974,6 +1974,11 @@ int DispatchSpawn( CBaseEntity *pEntity, bool bRunVScripts )
 		}
 
 		gEntList.NotifySpawn( pEntity );
+
+		if( bRunVScripts )
+		{
+			pEntity->RunOnPostSpawnScripts();
+		}
 	}
 
 	return 0;

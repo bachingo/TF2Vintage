@@ -20,6 +20,7 @@
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
 	#include "c_tf_objective_resource.h"
+	#include "c_user_message_register.h"
 #else
 	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
@@ -1086,9 +1087,121 @@ int	CTFGameRules::Damage_GetShouldNotBleed( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFGameRules::HaveSavedConvar( ConVarRef const& cvar )
+{
+	Assert( cvar.IsValid() );
+
+	UtlSymId_t iSymbol = m_SavedConvars.Find( cvar.GetName() );
+	if ( iSymbol == m_SavedConvars.InvalidIndex() )
+		return false;
+
+	return m_SavedConvars[ iSymbol ] != NULL_STRING;
+}
+
+#if defined( CLIENT_DLL )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void __MsgFunc_SavedConvar( bf_read &msg )
+{
+	Assert( TFGameRules() );
+	if ( !TFGameRules() )
+		return;
+
+	char szKey[2048];
+	bool bReadKey = msg.ReadString( szKey, sizeof( szKey ) );
+	Assert( bReadKey );
+
+	char szValue[2048];
+	bool bReadValue = msg.ReadString( szValue, sizeof( szValue ) );
+	Assert( bReadValue );
+
+	if ( bReadKey && bReadValue )
+	{
+		ConVarRef cvar( szKey );
+
+		Assert( cvar.IsValid() );
+		Assert( cvar.IsFlagSet( FCVAR_REPLICATED ) );
+
+		if ( cvar.IsValid() && cvar.IsFlagSet( FCVAR_REPLICATED ) )
+			TFGameRules()->m_SavedConvars[ szKey ] = AllocPooledString( szValue );
+	}
+}
+USER_MESSAGE_REGISTER( SavedConvar );
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::SaveConvar( ConVarRef const& cvar )
+{
+	Assert( cvar.IsValid() );
+
+	if ( HaveSavedConvar( cvar ) )
+	{
+		// already saved, don't override.
+		return;
+	}
+
+#if defined( GAME_DLL )
+	// BenLubar: Send saved replicated convars to the client so that it can reset them if the player disconnects.
+	if ( cvar.IsFlagSet( FCVAR_REPLICATED ) )
+	{
+		CReliableBroadcastRecipientFilter filter;
+		UserMessageBegin( filter, "SavedConvar" );
+			WRITE_STRING( cvar.GetName() );
+			WRITE_STRING( cvar.GetString() );
+		MessageEnd();
+	}
+#endif
+	m_SavedConvars[ cvar.GetName() ] = AllocPooledString( cvar.GetString() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::RevertSingleConvar( ConVarRef &cvar )
+{
+	Assert( cvar.IsValid() );
+
+	if ( !HaveSavedConvar( cvar ) )
+	{
+		// don't have a saved value
+		return;
+	}
+
+	string_t &saved = m_SavedConvars[ cvar.GetName() ];
+	cvar.SetValue( STRING( saved ) );
+	saved = NULL_STRING;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::RevertSavedConvars()
+{
+	// revert saved convars
+	for ( int i = 0; i < m_SavedConvars.GetNumStrings(); i++ )
+	{
+		const char *pszName = m_SavedConvars.String( i );
+		string_t iszValue = m_SavedConvars[i];
+
+		ConVarRef cvar( pszName );
+		Assert( cvar.IsValid() );
+
+		if ( iszValue != NULL_STRING )
+			cvar.SetValue( STRING( iszValue ) );
+	}
+
+	m_SavedConvars.Purge();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTFGameRules::CTFGameRules()
 {
-#ifdef GAME_DLL
+#if defined( GAME_DLL )
 	// Create teams.
 	TFTeamMgr()->Init();
 
@@ -5401,6 +5514,13 @@ bool CTFGameRules::ShouldScorePerRound( void )
 }
 
 #endif  // GAME_DLL
+
+void CTFGameRules::LevelShutdownPostEntity( void )
+{
+#if defined( CLIENT_DLL )
+	RevertSavedConvars();
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

@@ -20,6 +20,14 @@ struct template_t
 	DECLARE_SIMPLE_DATADESC();
 };
 
+void PrecachePointTemplates();
+
+//-----------------------------------------------------------------------------
+
+void ScriptInstallPreSpawnHook();
+bool ScriptPreInstanceSpawn( CScriptScope *pScriptScope, CBaseEntity *pChild, string_t iszKeyValueData );
+void ScriptPostSpawn( CScriptScope *pScriptScope, CBaseEntity **ppEntities, int nEntities );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -48,7 +56,7 @@ public:
 	int				GetTemplateIndexForTemplate( int iTemplate );
 
 	// Template instancing
-	bool			CreateInstance( const Vector &vecOrigin, const QAngle &vecAngles, CUtlVector<CBaseEntity*> *pEntities );
+	bool			CreateInstance( const Vector &vecOrigin, const QAngle &vecAngles, CUtlVector<CBaseEntity *> *pEntities );
 
 	// Inputs
 	void			InputForceSpawn( inputdata_t &inputdata );
@@ -56,6 +64,8 @@ public:
 	virtual void	PerformPrecache();
 
 private:
+	void			CreationComplete( const CUtlVector<CBaseEntity *> &entities );
+
 	string_t						m_iszTemplateEntityNames[MAX_NUM_TEMPLATES];
 
 	// List of map entities this template targets. Built inside our Spawn().
