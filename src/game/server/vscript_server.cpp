@@ -572,34 +572,54 @@ static void DoEntFireByInstanceHandle( HSCRIPT hTarget, const char *pszAction, c
 	g_EventQueue.AddEvent( pTarget, action, value, delay, ToEnt(hActivator), ToEnt(hCaller) );
 }
 
-static float ScriptTraceLine( const Vector &vecStart, const Vector &vecEnd, HSCRIPT entIgnore )
+static ScriptVariant_t ScriptTraceLine( const Vector &vecStart, const Vector &vecEnd, HSCRIPT entIgnore )
 {
 	trace_t tr;
 	CBaseEntity *pLooker = ToEnt(entIgnore);
 	UTIL_TraceLine( vecStart, vecEnd, MASK_NPCWORLDSTATIC, pLooker, COLLISION_GROUP_NONE, &tr );
-	if ( tr.fractionleftsolid && tr.startsolid )
+
+	ScriptVariant_t hTable;
+	g_pScriptVM->CreateTable( hTable );
+	if ( hTable )
 	{
-		return 1.0 - tr.fractionleftsolid;
+		g_pScriptVM->SetValue( hTable, "startpos", tr.startpos );
+		g_pScriptVM->SetValue( hTable, "endpos", tr.endpos );
+		g_pScriptVM->SetValue( hTable, "fraction", tr.fraction );
+		g_pScriptVM->SetValue( hTable, "fractionleftsolid", tr.fractionleftsolid );
+		g_pScriptVM->SetValue( hTable, "hitgroup", tr.hitgroup );
+		g_pScriptVM->SetValue( hTable, "hitbox", tr.hitbox );
+		g_pScriptVM->SetValue( hTable, "allsolid", tr.allsolid );
+		g_pScriptVM->SetValue( hTable, "startsolid", tr.startsolid );
+		g_pScriptVM->SetValue( hTable, "contents", tr.contents );
+		g_pScriptVM->SetValue( hTable, "ent", ToHScript( tr.m_pEnt ) );
 	}
-	else
-	{
-		return tr.fraction;
-	}
+
+	return hTable;
 }
 
-static float ScriptTraceHull( const Vector &vecStart, const Vector &vecEnd, const Vector &vecMins, const Vector &vecMaxs, HSCRIPT entIgnore )
+static ScriptVariant_t ScriptTraceHull( const Vector &vecStart, const Vector &vecEnd, const Vector &vecMins, const Vector &vecMaxs, HSCRIPT entIgnore )
 {
 	trace_t tr;
 	CBaseEntity *pLooker = ToEnt(entIgnore);
 	UTIL_TraceHull( vecStart, vecEnd, vecMins, vecMaxs, MASK_NPCWORLDSTATIC, pLooker, COLLISION_GROUP_NONE, &tr );
-	if ( tr.fractionleftsolid && tr.startsolid )
+
+	ScriptVariant_t hTable;
+	g_pScriptVM->CreateTable( hTable );
+	if ( hTable )
 	{
-		return 1.0 - tr.fractionleftsolid;
+		g_pScriptVM->SetValue( hTable, "startpos", tr.startpos );
+		g_pScriptVM->SetValue( hTable, "endpos", tr.endpos );
+		g_pScriptVM->SetValue( hTable, "fraction", tr.fraction );
+		g_pScriptVM->SetValue( hTable, "fractionleftsolid", tr.fractionleftsolid );
+		g_pScriptVM->SetValue( hTable, "hitgroup", tr.hitgroup );
+		g_pScriptVM->SetValue( hTable, "hitbox", tr.hitbox );
+		g_pScriptVM->SetValue( hTable, "allsolid", tr.allsolid );
+		g_pScriptVM->SetValue( hTable, "startsolid", tr.startsolid );
+		g_pScriptVM->SetValue( hTable, "contents", tr.contents );
+		g_pScriptVM->SetValue( hTable, "ent", ToHScript( tr.m_pEnt ) );
 	}
-	else
-	{
-		return tr.fraction;
-	}
+
+	return hTable;
 }
 
 HSCRIPT Script_PlayerInstanceFromIndex( int playerIndex )
