@@ -556,6 +556,7 @@ public:
 
 	// initialization
 	virtual void Spawn( void );
+	void ScriptSpawn( void );
 	virtual void Precache( void ) {}
 
 	virtual void SetModel( const char *szModelName );
@@ -592,6 +593,7 @@ public:
 	CBaseEntity *NextMovePeer( void );
 
 	void		SetName( string_t newTarget );
+	void		ScriptSetName( const char *newName );
 	void		SetParent( string_t newParent, CBaseEntity *pActivator, int iAttachment = -1 );
 	
 	// Set the movement parent. Your local origin and angles will become relative to this parent.
@@ -934,6 +936,8 @@ public:
 
 	// This is what you should call to apply damage to an entity.
 	int TakeDamage( const CTakeDamageInfo &info );
+	void ScriptTakeDamage( float flDamage, int ndamageType, HSCRIPT hAttacker );
+	void ScriptTakeDamageParams( HSCRIPT hInflictor, HSCRIPT hAttacker, HSCRIPT hWeapon, const Vector &damageForce, const Vector &damagePosition, float flDamage, int ndamageType );
 	virtual void AdjustDamageDirection( const CTakeDamageInfo &info, Vector &dir, CBaseEntity *pEnt ) {}
 
 	virtual int		TakeHealth( float flHealth, int bitsDamageType );
@@ -1809,6 +1813,7 @@ public:
 public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( this, mins, maxs );
 	static int						PrecacheModel( const char *name, bool bPreload = true ); 
+	void							ScriptPrecacheModel( const char *name );
 	static bool						PrecacheSound( const char *name );
 	static void						PrefetchSound( const char *name );
 	void							Remove( ); // UTIL_Remove( this );
@@ -1871,26 +1876,31 @@ public:
 	static bool s_bAbsQueriesValid;
 
 	// VSCRIPT
-	HSCRIPT GetScriptInstance();
-	bool ValidateScriptScope();
-	virtual void RunVScripts();
+	HSCRIPT GetScriptInstance( void );
+	bool ValidateScriptScope( void );
+	virtual void RunVScripts( void );
 	bool CallScriptFunction( const char *pFunctionName, ScriptVariant_t *pFunctionReturn );
 	void ConnectOutputToScript( const char *pszOutput, const char *pszScriptFunc );
 	void DisconnectOutputFromScript( const char *pszOutput, const char *pszScriptFunc );
-	void ScriptThink();
-	const char *GetScriptId();
-	HSCRIPT GetScriptScope();
+	void ScriptThink( void );
+	const char *GetScriptId( void );
+	HSCRIPT GetScriptScope( void );
 	void RunPrecacheScripts( void );
 	void RunOnPostSpawnScripts( void );
 
 	HSCRIPT ScriptGetMoveParent( void );
-	HSCRIPT ScriptGetRootMoveParent();
+	HSCRIPT ScriptGetRootMoveParent( void );
 	HSCRIPT ScriptFirstMoveChild( void );
 	HSCRIPT ScriptNextMovePeer( void );
 
 	const Vector &ScriptEyePosition( void ) { static Vector vec; vec = EyePosition(); return vec; }
 	void ScriptSetAngles( float fPitch, float fYaw, float fRoll ) { QAngle angles( fPitch, fYaw, fRoll ); Teleport( NULL, &angles, NULL ); }
+	void ScriptSetAnglesVector( const Vector &v ) { QAngle angles( VectorExpand( v ) ); Teleport( NULL, &angles, NULL ); }
 	const Vector &ScriptGetAngles( void ) { static Vector vec; QAngle qa = GetAbsAngles(); vec.x = qa.x; vec.y = qa.y; vec.z = qa.z; return vec; }
+	// BenLubar
+	void ScriptSetLocalAngles( float fPitch, float fYaw, float fRoll ) { QAngle angles( fPitch, fYaw, fRoll ); SetLocalAngles( angles ); }
+	const Vector &ScriptGetLocalAngles() { static Vector vec; QAngle qa = GetLocalAngles(); vec.x = qa.x; vec.y = qa.y; vec.z = qa.z; return vec; }
+	//
 
 	void ScriptSetSize( const Vector &mins, const Vector &maxs ) { UTIL_SetSize( this, mins, maxs ); }
 	void ScriptUtilRemove( void ) { UTIL_Remove( this ); }
@@ -2071,6 +2081,10 @@ inline void CBaseEntity::SetName( string_t newName )
 	m_iName = newName;
 }
 
+inline void CBaseEntity::ScriptSetName( const char *newName )
+{
+	m_iName = AllocPooledString( newName );
+}
 
 inline bool CBaseEntity::NameMatches( const char *pszNameOrWildcard )
 {
