@@ -29,11 +29,6 @@ ConVar tf_halloween_bot_terrify_radius( "tf_halloween_bot_terrify_radius", "500"
 IMPLEMENT_INTENTION_INTERFACE( CHeadlessHatman, CHeadlessHatmanBehavior )
 
 
-CHeadlessHatmanLocomotion::CHeadlessHatmanLocomotion( INextBot *actor )
-	: NextBotGroundLocomotion( actor )
-{
-}
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -46,7 +41,13 @@ float CHeadlessHatmanLocomotion::GetRunSpeed( void ) const
 // Purpose:
 //-----------------------------------------------------------------------------
 bool CHeadlessHatmanLocomotion::ShouldCollideWith( const CBaseEntity *other ) const
-{	// a check against gamerules saying it's doomsday event and other->IsPlayer() happens
+{
+	if ( !TFGameRules() || !other )
+		return true;
+
+	if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) && other->IsPlayer() )
+		return false;
+
 	return true;
 }
 
@@ -65,33 +66,33 @@ CHeadlessHatmanBody::CHeadlessHatmanBody( INextBot *actor )
 void CHeadlessHatmanBody::Update( void )
 {
 	CBaseCombatCharacter *actor = GetBot()->GetEntity();
-	if (m_iMoveX < 0)
+	if ( m_iMoveX < 0 )
 		m_iMoveX = actor->LookupPoseParameter( "move_x" );
-	if (m_iMoveY < 0)
+	if ( m_iMoveY < 0 )
 		m_iMoveY = actor->LookupPoseParameter( "move_y" );
 
 	float flSpeed = GetBot()->GetLocomotionInterface()->GetGroundSpeed();
-	if (flSpeed >= 0.01f) // only animate if moving enough
+	if ( flSpeed >= 0.01f ) // only animate if moving enough
 	{
 		Vector vecFwd, vecRight;
 		actor->GetVectors( &vecFwd, &vecRight, nullptr );
 
 		Vector vecDir = GetBot()->GetLocomotionInterface()->GetGroundMotionVector();
 
-		if (m_iMoveX >= 0)
+		if ( m_iMoveX >= 0 )
 			actor->SetPoseParameter( m_iMoveX, vecDir.Dot( vecFwd ) );
-		if (m_iMoveY >= 0)
+		if ( m_iMoveY >= 0 )
 			actor->SetPoseParameter( m_iMoveY, vecDir.Dot( vecRight ) );
 	}
 	else
 	{
-		if (m_iMoveX >= 0)
+		if ( m_iMoveX >= 0 )
 			actor->SetPoseParameter( m_iMoveX, 0.0f );
-		if (m_iMoveY >= 0)
+		if ( m_iMoveY >= 0 )
 			actor->SetPoseParameter( m_iMoveY, 0.0f );
 	}
 
-	if (actor->m_flGroundSpeed)
+	if ( actor->m_flGroundSpeed )
 		actor->SetPlaybackRate( Clamp( flSpeed / actor->m_flGroundSpeed, -4.0f, 12.0f ) );
 
 	actor->StudioFrameAdvance();
@@ -106,7 +107,7 @@ bool CHeadlessHatmanBody::StartActivity( Activity act, unsigned int flags )
 	CBaseCombatCharacter *actor = GetBot()->GetEntity();
 
 	int iSequence = actor->SelectWeightedSequence( act );
-	if (iSequence)
+	if ( iSequence )
 	{
 		m_Activity = act;
 
@@ -155,16 +156,16 @@ void CHeadlessHatman::Spawn( void )
 	SetModel( "models/bots/headless_hatman.mdl" );
 
 	m_pAxe = (CBaseAnimating *)CreateEntityByName( "prop_dynamic" );
-	if (m_pAxe)
+	if ( m_pAxe )
 	{
-		m_pAxe->SetModel( "models/weapons/c_models/c_bigaxe/c_bigaxe.mdl" );
+		m_pAxe->SetModel( GetWeaponModel() );
 		m_pAxe->FollowEntity( this );
 	}
 
 	int iHealth = tf_halloween_bot_health_base.GetInt();
 	int iNumPlayers = GetGlobalTFTeam( TF_TEAM_RED )->GetNumPlayers() + GetGlobalTFTeam( TF_TEAM_BLUE )->GetNumPlayers();
 	int iMinPlayers = tf_halloween_bot_min_player_count.GetInt();
-	if (iNumPlayers > iMinPlayers)
+	if ( iNumPlayers > iMinPlayers )
 		iHealth += tf_halloween_bot_health_per_player.GetInt() * ( iNumPlayers - iMinPlayers );
 
 	SetMaxHealth( iHealth );
@@ -201,18 +202,18 @@ void CHeadlessHatman::Precache( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-int CHeadlessHatman::OnTakeDamage_Alive( const CTakeDamageInfo& info )
+int CHeadlessHatman::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
-	if (g_pMonsterResource && TFGameRules() && !TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+	if ( g_pMonsterResource && TFGameRules() && !TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 	{
 		float flHPPercent = (float)GetHealth() / GetMaxHealth();
-		if (flHPPercent <= 0.0f)
+		if ( flHPPercent <= 0.0f )
 			g_pMonsterResource->HideBossHealthMeter();
 		else
 			g_pMonsterResource->SetBossHealthPercentage( flHPPercent );
 	}
 
-	extern void DispatchParticleEffect( const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, CBaseEntity *pEntity );
+	extern void DispatchParticleEffect( const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, CBaseEntity * pEntity );
 	DispatchParticleEffect( "halloween_boss_injured", info.GetDamagePosition(), GetAbsAngles(), NULL );
 
 	return BaseClass::OnTakeDamage_Alive( info );
@@ -236,8 +237,10 @@ void CHeadlessHatman::PrecacheHeadlessHatman( void )
 	int iMdlIdx = PrecacheModel( "models/bots/headless_hatman.mdl" );
 	PrecacheGibsForModel( iMdlIdx );
 
-	// some gamerules checking for doomsday event happens here
-	PrecacheModel( "models/weapons/c_models/c_bigaxe/c_bigaxe.mdl" );
+	if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+		PrecacheModel( "models/weapons/c_models/c_big_mallet/c_big_mallet.mdl" );
+	else
+		PrecacheModel( "models/weapons/c_models/c_bigaxe/c_bigaxe.mdl" );
 
 	PrecacheScriptSound( "Halloween.HeadlessBossSpawn" );
 	PrecacheScriptSound( "Halloween.HeadlessBossSpawnRumble" );
@@ -267,7 +270,10 @@ void CHeadlessHatman::PrecacheHeadlessHatman( void )
 // Purpose:
 //-----------------------------------------------------------------------------
 const char *CHeadlessHatman::GetWeaponModel( void ) const
-{	// this isn't even used, but it returns either axe, or mallet, depending on gamerules condition (in doomsday event)
+{
+	if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+		return "models/weapons/c_models/c_big_mallet/c_big_mallet.mdl";
+
 	return "models/weapons/c_models/c_bigaxe/c_bigaxe.mdl";
 }
 
@@ -276,27 +282,27 @@ const char *CHeadlessHatman::GetWeaponModel( void ) const
 //-----------------------------------------------------------------------------
 float CHeadlessHatmanPathCost::operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const
 {
-	if (fromArea == nullptr)
+	if ( fromArea == nullptr )
 	{
 		// first area in path; zero cost
 		return 0.0f;
 	}
 
-	if (!m_Actor->GetLocomotionInterface()->IsAreaTraversable( area ))
+	if ( !m_Actor->GetLocomotionInterface()->IsAreaTraversable( area ) )
 	{
 		// dead end
 		return -1.0f;
 	}
 
-	if (ladder != nullptr)
+	if ( ladder != nullptr )
 		length = ladder->m_length;
-	else if (length <= 0.0f)
+	else if ( length <= 0.0f )
 		length = ( area->GetCenter() - fromArea->GetCenter() ).Length();
 
 	const float dz = fromArea->ComputeAdjacentConnectionHeightChange( area );
-	if (dz >= m_Actor->GetLocomotionInterface()->GetStepHeight())
+	if ( dz >= m_Actor->GetLocomotionInterface()->GetStepHeight() )
 	{
-		if (dz >= m_Actor->GetLocomotionInterface()->GetMaxJumpHeight())
+		if ( dz >= m_Actor->GetLocomotionInterface()->GetMaxJumpHeight() )
 			return -1.0f;
 
 		// we won't actually get here according to the locomotor
@@ -304,7 +310,7 @@ float CHeadlessHatmanPathCost::operator()( CNavArea *area, CNavArea *fromArea, c
 	}
 	else
 	{
-		if (dz < -m_Actor->GetLocomotionInterface()->GetDeathDropHeight())
+		if ( dz < -m_Actor->GetLocomotionInterface()->GetDeathDropHeight() )
 			return -1.0f;
 	}
 

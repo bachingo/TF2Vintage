@@ -36,7 +36,8 @@ private:
 class CHeadlessHatmanLocomotion : public NextBotGroundLocomotion
 {
 public:
-	CHeadlessHatmanLocomotion( INextBot *actor );
+	CHeadlessHatmanLocomotion( INextBot *actor )
+		: NextBotGroundLocomotion( actor ) {}
 	virtual ~CHeadlessHatmanLocomotion() { };
 
 	virtual float GetStepHeight( void ) const override { return 18.0f; }
