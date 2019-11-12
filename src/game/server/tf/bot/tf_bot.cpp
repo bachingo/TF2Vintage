@@ -1868,7 +1868,7 @@ void CTFBot::AccumulateSniperSpots( void )
 
 	SetupSniperSpotAccumulation();
 
-	if ( m_sniperAreasRed.IsEmpty() || m_sniperAreasBlu.IsEmpty() )
+	if ( m_sniperStandAreas.IsEmpty() || m_sniperLookAreas.IsEmpty() )
 	{
 		if ( m_sniperSpotTimer.IsElapsed() )
 			ClearSniperSpots();
@@ -1879,23 +1879,23 @@ void CTFBot::AccumulateSniperSpots( void )
 	for ( int i=0; i<tf_bot_sniper_spot_search_count.GetInt(); ++i )
 	{
 		SniperSpotInfo newInfo{};
-		newInfo.m_area1 = m_sniperAreasRed.Random();
-		newInfo.m_pos1 = newInfo.m_area1->GetRandomPoint();
-		newInfo.m_area2 = m_sniperAreasBlu.Random();
-		newInfo.m_pos2 = newInfo.m_area2->GetRandomPoint();
+		newInfo.m_pHomeArea = m_sniperStandAreas.Random();
+		newInfo.m_vecHome = newInfo.m_pHomeArea->GetRandomPoint();
+		newInfo.m_pForwardArea = m_sniperLookAreas.Random();
+		newInfo.m_vecForward = newInfo.m_pForwardArea->GetRandomPoint();
 
-		newInfo.m_length = ( newInfo.m_pos1 - newInfo.m_pos2 ).Length();
+		newInfo.m_flRange = ( newInfo.m_vecHome - newInfo.m_vecForward ).Length();
 
-		if ( newInfo.m_length < tf_bot_sniper_spot_min_range.GetFloat() )
+		if ( newInfo.m_flRange < tf_bot_sniper_spot_min_range.GetFloat() )
 			continue;
 
-		if ( !IsLineOfFireClear( newInfo.m_pos1 + Vector( 0, 0, 60.0f ), newInfo.m_pos2 + Vector( 0, 0, 60.0f ) ) )
+		if ( !IsLineOfFireClear( newInfo.m_vecHome + Vector( 0, 0, 60.0f ), newInfo.m_vecForward + Vector( 0, 0, 60.0f ) ) )
 			continue;
 
-		float flIncursion1 = newInfo.m_area1->GetIncursionDistance( GetEnemyTeam( this ) );
-		float flIncursion2 = newInfo.m_area2->GetIncursionDistance( GetEnemyTeam( this ) );
+		float flIncursion1 = newInfo.m_pHomeArea->GetIncursionDistance( GetEnemyTeam( this ) );
+		float flIncursion2 = newInfo.m_pForwardArea->GetIncursionDistance( GetEnemyTeam( this ) );
 
-		newInfo.m_difference = flIncursion1 - flIncursion2;
+		newInfo.m_flIncursionDiff = flIncursion1 - flIncursion2;
 
 		if ( m_sniperSpots.Count() - tf_bot_sniper_spot_max_count.GetInt() <= 0 )
 			m_sniperSpots.AddToTail( newInfo );
@@ -1904,7 +1904,7 @@ void CTFBot::AccumulateSniperSpots( void )
 		{
 			SniperSpotInfo *info = &m_sniperSpots[j];
 
-			if ( flIncursion1 - flIncursion2 <= info->m_difference )
+			if ( flIncursion1 - flIncursion2 <= info->m_flIncursionDiff )
 				continue;
 
 			*info = newInfo;
@@ -1915,8 +1915,8 @@ void CTFBot::AccumulateSniperSpots( void )
 	{
 		for ( int i=0; i<m_sniperSpots.Count(); ++i )
 		{
-			NDebugOverlay::Cross3D( m_sniperSpots[i].m_pos1, 5.0f, 255, 255, 205, false, 1 );
-			NDebugOverlay::Line( m_sniperSpots[i].m_pos1, m_sniperSpots[i].m_pos2, 0, 200, 0, true, 0.1f );
+			NDebugOverlay::Cross3D( m_sniperSpots[i].m_vecHome, 5.0f, 255, 255, 205, false, 1 );
+			NDebugOverlay::Line( m_sniperSpots[i].m_vecHome, m_sniperSpots[i].m_vecForward, 0, 200, 0, true, 0.1f );
 		}
 	}
 }
@@ -1985,8 +1985,8 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 		bCheckForward = iEnemyTeam != pObjective->GetTeamNumber();
 	}
 
-	m_sniperAreasRed.RemoveAll();
-	m_sniperAreasBlu.RemoveAll();
+	m_sniperStandAreas.RemoveAll();
+	m_sniperLookAreas.RemoveAll();
 
 	if ( !objectiveArea )
 		return;
@@ -2004,17 +2004,17 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 			continue;
 
 		if ( flEnemyIncursion <= objectiveArea->GetIncursionDistance( iEnemyTeam ) )
-			m_sniperAreasBlu.AddToTail( area );
+			m_sniperLookAreas.AddToTail( area );
 
 		if ( bCheckForward )
 		{
 			if ( objectiveArea->GetIncursionDistance( iMyTeam ) + tf_bot_sniper_spot_point_tolerance.GetFloat() >= flMyIncursion )
-				m_sniperAreasRed.AddToTail( area );
+				m_sniperStandAreas.AddToTail( area );
 		}
 		else
 		{
 			if ( objectiveArea->GetIncursionDistance( iMyTeam ) - tf_bot_sniper_spot_point_tolerance.GetFloat() >= flMyIncursion )
-				m_sniperAreasRed.AddToTail( area );
+				m_sniperStandAreas.AddToTail( area );
 		}
 	}
 
@@ -2028,8 +2028,8 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 void CTFBot::ClearSniperSpots( void )
 {
 	m_sniperSpots.Purge();
-	m_sniperAreasRed.RemoveAll();
-	m_sniperAreasBlu.RemoveAll();
+	m_sniperStandAreas.RemoveAll();
+	m_sniperLookAreas.RemoveAll();
 	m_sniperGoalEnt = nullptr;
 
 	m_sniperSpotTimer.Start( RandomFloat( 5.0f, 10.0f ) );
