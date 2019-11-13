@@ -265,8 +265,8 @@ CZombie::CZombie()
 
 	m_timeTillDeath.Invalidate();
 	m_bNoteShouldDie = false;
-	m_flDamageMax = 50.0f;
-	m_flDamageMin = 30.0f;
+	m_flAttDamage = 30.0f;
+	m_flAttRange = 50.0f;
 #endif
 
 	m_flHeadScale = 1.0f;
@@ -430,21 +430,18 @@ void CZombie::AddHat( char const *szModelName )
 void CZombie::SetSkeletonType( SkeletonType_t eType )
 {
 	m_nType = eType;
-	if ( eType == NORMAL || eType == MINION )
+	if ( eType == MINION )
 	{
 		SetModel( "models/bots/skeleton_sniper/skeleton_sniper.mdl" );
 
-		if ( eType == MINION )
-		{
-			SetModelScale( .5f );
-			m_flHeadScale = 3.0f;
-		}
+		SetModelScale( .5f );
+		m_flHeadScale = 3.0f;
 
 		if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
 			AddHat( s_skeletonHatModels[ RandomInt( 0, 3 ) ] );
 
-		m_flDamageMin = 20.0f;
-		m_flDamageMax = 40.0f;
+		m_flAttRange = 40.0f;
+		m_flAttDamage = 20.0f;
 	}
 	else if ( eType == KING )
 	{
@@ -456,7 +453,7 @@ void CZombie::SetSkeletonType( SkeletonType_t eType )
 
 		AddHat( "models/player/items/demo/crown.mdl" );
 
-		m_flDamageMin = m_flDamageMax = 100.0f;
+		m_flAttRange = m_flAttDamage = 100.0f;
 	}
 }
 

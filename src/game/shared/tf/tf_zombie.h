@@ -78,8 +78,8 @@ public:
 
 	CHandle<CBaseEntity> m_hHat;
 
-	float m_flDamageMin;
-	float m_flDamageMax;
+	float m_flAttRange;
+	float m_flAttDamage;
 
 	CountdownTimer m_timeTillDeath;
 	bool m_bNoteShouldDie;
