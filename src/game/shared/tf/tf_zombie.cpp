@@ -71,6 +71,11 @@ float CZombiePathCost::operator()( CNavArea *area, CNavArea *fromArea, const CNa
 		return -1.0f;
 	}
 
+	if ( ladder != nullptr )
+		length = ladder->m_length;
+	else if ( length <= 0.0f )
+		length = ( area->GetCenter() - fromArea->GetCenter() ).Length();
+
 	const float dz = fromArea->ComputeAdjacentConnectionHeightChange( area );
 	if ( dz >= m_Actor->GetLocomotionInterface()->GetStepHeight() )
 	{
@@ -107,6 +112,7 @@ CZombie *CZombie::SpawnAtPos( Vector const &pos, float flLifeTime, int iTeamNum,
 	{
 		pZombie->SetOwnerEntity( pOwner );
 		pZombie->ChangeTeam( iTeamNum );
+		DispatchSpawn( pZombie );
 		pZombie->SetAbsOrigin( pos );
 
 		if ( flLifeTime > 0.0f )
@@ -291,7 +297,7 @@ void CZombie::Spawn( void )
 
 	SetAbsAngles( QAngle( 0, RandomFloat( 0, 360.f ), 0 ) );
 
-	SetMoveType( MOVETYPE_WALK );
+	GetBodyInterface()->StartActivity( ACT_TRANSITION );
 
 	switch ( GetTeamNumber() )
 	{
@@ -371,6 +377,9 @@ int CZombie::OnTakeDamage_Alive( CTakeDamageInfo const &info )
 
 	if ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() )
 		return 0;
+
+	if ( !IsPlayingGesture( ACT_MP_GESTURE_FLINCH_ITEM1 ) )
+		AddGesture( ACT_MP_GESTURE_FLINCH_ITEM1 );
 
 	char const *pszDamageEffect = "spell_skeleton_goop_green";
 	if ( GetTeamNumber() != TF_TEAM_BOSS )
