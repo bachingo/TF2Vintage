@@ -6749,6 +6749,29 @@ void CTFGameRules::PlayerSpawn( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFGameRules::PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector )
+{
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players, iTeamNum, true );
+
+	for ( CTFPlayer *pPlayer : players )
+	{
+		Vector vecTo = pPlayer->EyePosition() - vecPos;
+		if ( vecTo.LengthSqr() > Square( flRange ) )
+			continue;
+
+		vecTo.NormalizeInPlace();
+
+		pPlayer->ApplyAbsVelocityImpulse( vecTo * flForce );
+
+		if ( outVector )
+			outVector->AddToTail( pPlayer );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CTFGameRules::CountActivePlayers( void )
 {
 	int iActivePlayers = 0;

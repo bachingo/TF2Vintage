@@ -453,7 +453,8 @@ void CZombie::SetSkeletonType( SkeletonType_t eType )
 
 		AddHat( "models/player/items/demo/crown.mdl" );
 
-		m_flAttRange = m_flAttDamage = 100.0f;
+		m_flAttRange = 100.0f;
+		m_flAttDamage = 100.0f;
 	}
 }
 

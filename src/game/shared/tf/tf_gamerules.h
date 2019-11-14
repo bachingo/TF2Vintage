@@ -448,6 +448,8 @@ public:
 	const CUtlVector<EHANDLE> &GetAmmoEnts( void ) const { Assert( m_hAmmoEntities.Count() ); return m_hAmmoEntities; }
 	const CUtlVector<EHANDLE> &GetHealthEnts( void ) const { Assert( m_hHealthEntities.Count() ); return m_hHealthEntities; }
 
+	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
+
 private:
 
 	int				DefaultFOV( void ) { return 75; }

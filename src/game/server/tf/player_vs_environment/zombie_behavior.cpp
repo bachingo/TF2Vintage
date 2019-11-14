@@ -1,3 +1,9 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
 #include "cbase.h"
 #include "tf_zombie.h"
 #include "zombie_behavior.h"
