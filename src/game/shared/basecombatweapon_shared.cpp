@@ -2958,5 +2958,5 @@ BEGIN_ENT_SCRIPTDESC( CBaseCombatWeapon, CBaseAnimating, "Base that all weapons 
 	DEFINE_SCRIPTFUNC( SetSubType, "" )
 	DEFINE_SCRIPTFUNC( GetSubType, "" )
 	DEFINE_SCRIPTFUNC( HasAmmo, "" )
-	DEFINE_SCRIPTFUNC_NAMED(ScriptGiveTo, "GiveTo", "")
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGiveTo, "GiveTo", "" )
 END_SCRIPTDESC()

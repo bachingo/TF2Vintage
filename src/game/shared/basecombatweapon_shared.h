@@ -215,6 +215,7 @@ public:
 	virtual void			SetPickupTouch( void );
 	virtual void 			DefaultTouch( CBaseEntity *pOther );	// default weapon touch
 	virtual void			GiveTo( CBaseEntity *pOther );
+	void					ScriptGiveTo( HSCRIPT hOther ) { GiveTo( ToEnt( hOther ) ); }
 
 	// HUD Hints
 	virtual bool			ShouldDisplayAltFireHUDHint();
