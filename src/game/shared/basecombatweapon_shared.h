@@ -336,7 +336,9 @@ public:
 	virtual char			*GetDeathNoticeName( void );	// Get the string to print death notices with
 
 	CBaseCombatCharacter	*GetOwner() const;
+	HSCRIPT					ScriptGetOwner( void ) { return ToHScript( GetOwner() ); }
 	void					SetOwner( CBaseCombatCharacter *owner );
+	void					ScriptSetOwner( HSCRIPT hScriptOwner ) { SetOwner( ToEnt( hScriptOwner )->MyCombatCharacterPointer() ); }
 	virtual void			OnPickedUp( CBaseCombatCharacter *pNewOwner );
 
 	virtual void			AddViewmodelBob( CBaseViewModel *viewmodel, Vector &origin, QAngle &angles ) {};
