@@ -55,9 +55,12 @@ $Project "Server (TF)"
 		$File	"trigger_area_capture.h"
 		$File   "$SRCDIR\game\shared\teamplay_round_timer.cpp"
 		$File   "$SRCDIR\game\shared\teamplay_round_timer.h"
-		
 		$File	"$SRCDIR\game\shared\playerclass_info_parse.cpp"
 		$File	"$SRCDIR\game\shared\playerclass_info_parse.h"
+		$File   "ScriptGameEventListener.cpp"
+		$File   "ScriptGameEventListener.h"
+		$File   "netpropmanager.cpp"
+		#File   "netpropmanager.h"
 		
 		$Folder	"Multiplayer"
 		{
