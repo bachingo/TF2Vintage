@@ -60,7 +60,7 @@ $Project "Server (TF)"
 		$File   "ScriptGameEventListener.cpp"
 		$File   "ScriptGameEventListener.h"
 		$File   "netpropmanager.cpp"
-		#File   "netpropmanager.h"
+		$File   "netpropmanager.h"
 		
 		$Folder	"Multiplayer"
 		{
