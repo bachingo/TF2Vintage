@@ -84,7 +84,8 @@ void CTFMainMenuPanel::PerformLayout()
 	char szNickName[64];
 	Q_snprintf( szNickName, sizeof( szNickName ),
 		( steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown" ) );
-	SetDialogVariable( "nickname", szNickName );
+	//SetDialogVariable( "nickname", szNickName ); 
+	SetDialogVariable( "playername", szNickName ); // easier than changing all the language resource files
 
 	AutoLayout();
 

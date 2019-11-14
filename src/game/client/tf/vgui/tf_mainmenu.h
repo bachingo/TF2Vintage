@@ -32,6 +32,7 @@ enum MenuPanel //position in this enum = zpos on the screen
 	dynamic_cast<className*>(MAINMENU_ROOT->GetMenuPanel(#className))
 
 class CTFMenuPanelBase;
+bool bFromPause = false;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

@@ -13,62 +13,154 @@
 		"visible"			"1"
 		"enabled"			"1"
 		"border"			""
-	}	
+	}
 	
 	"BackgroundImage"
 	{
-		"ControlName"		"ImagePanel"
-		"fieldName"			"BackgroundImage"
-		"xpos"				"100"
-		"ypos"				"20"
-		"zpos"				"-2"
-		"wide"				"f+900"
-		"tall"				"f+"
-		"autoResize"		"0"
-		"pinCorner"			"0"
-		"scaleimage"		"1"
-		"border"			"AdvRoundedButtonArmed"
-		"visible"			"1"
-		//"fillcolor"			"46 43 42 400"
-		"enabled"			"1"
+		"ControlName"	"EditablePanel"
+		"fieldName"		"BackgroundImage"
+		"xpos"			"0"
+		"ypos"			"0"	
+		"zpos"			"-200"		
+		"wide"			"f0"
+		"tall"			"f0"
+		"visible"		"1"
+		"enabled"		"1"
+		"scaleImage"	"1"	
+		"bgcolor_override"	"42 39 37 255"
+	}	
+	
+	"BackgroundHeader"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"BackgroundHeader"
+		"xpos"			"0"
+		"ypos"			"0"
+		"zpos"			"-100"
+		"wide"			"f0"
+		"tall"			"54"
+		"visible"		"1"
+		"enabled"		"1"
+		"image"			"loadout_header"
+		"scaleImage"	"0"
+		"tileImage"		"1"
+	}	
+
+	"HeaderLine"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"HeaderLine"
+		"xpos"			"0"
+		"ypos"			"54"
+		"zpos"			"-99"
+		"wide"			"f0"
+		"tall"			"10"
+		"visible"		"1"
+		"enabled"		"1"
+		"image"			"loadout_solid_line"
+		"scaleImage"	"1"
 	}
 	
-	"ClassLabel"
+	"BackgroundFooter"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"BackgroundFooter"
+		"xpos"			"0"
+		"ypos"			"420"
+		"zpos"			"-100"
+		"wide"			"f0"
+		"tall"			"60"
+		"visible"		"1"
+		"enabled"		"1"
+		"image"			"loadout_bottom_gradient"
+		"tileImage"		"1"
+	}
+	
+	"CaratLabel"
 	{
 		"ControlName"	"CExLabel"
-		"fieldName"		"ClassLabel"
-		"font"			"HudFontMediumBold"
-		"labelText"		"#ClassBeingEquipped"
+		"fieldName"		"CaratLabel"
+		"font"			"HudFontSmallestBold"
+		"labelText"		">>"
 		"textAlignment"	"west"
-		"xpos"			"c-280"
-		"ypos"			"15"
-		"zpos"			"1"
-		"wide"			"200"
-		"tall"			"25"
-		"autoResize"	"0"
+		"xpos"			"85"
+		"ypos"			"20"
+		"zpos"			"10"
+		"wide"			"20"
+		"tall"			"15"
+		"autoResize"	"1"
 		"pinCorner"		"0"
-		"visible"		"0"
+		"visible"		"1"
 		"enabled"		"1"
+		"fgcolor_override" "200 80 60 255"
 	}
 	
-	
-	"CharacterLoadout"
+	"HackTitleLabel"
 	{
-		"ControlName"		"Label"
-		"fieldName"		"CharacterLoadout"
-		"font"			"HudFontSmallestBold"
-		"labelText"		"#CharacterLoadout"
-		"textAlignment"	"south-west"
-		"xpos"			"c60"
-		"ypos"			"40"
-		"zpos"			"1"
-		"wide"			"f0"
+		"ControlName"	"CExLabel"
+		"fieldName"		"HackTitleLabel"
+		"font"			"HudFontMediumSmallBold"
+		"labelText"		"#CharInfoAndSetup"
+		"textAlignment"	"west"
+		"xpos"			"105"
+		"ypos"			"20"
+		"zpos"			"10"
+		"wide"			"350"
 		"tall"			"15"
 		"autoResize"	"0"
 		"pinCorner"		"0"
-		"visible"		"0"
-		"enabled"		"1"
+		"visible"		"1"
+		"enabled"			"1"
+		"fgcolor_override"	"117 107 94 255"
 	}
+	
+	"FooterLine"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"FooterLine"
+		"xpos"			"0"
+		"ypos"			"420"
+		"zpos"			"-99"
+		"wide"			"f0"
+		"tall"			"10"
+		"visible"		"1"
+		"enabled"		"1"
+		"image"			"loadout_solid_line"
+		"scaleImage"	"1"
+	}	
+	
+	"TopDotted"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"TopDotted"
+		"xpos"			"cs-0.5"
+		"ypos"			"70"
+		"zpos"			"-100"
+		"wide"			"f80"
+		"tall"			"8"
+		"visible"		"1"
+		"enabled"		"1"
+		"image"			"loadout_dotted_line"
+		"scaleImage"	"0"
+		"tileImage"		"1"
+	}	
+	
+	"BottomDotted"
+	{
+		"ControlName"	"ImagePanel"
+		"fieldName"		"BottomDotted"
+		"xpos"			"cs-0.5"
+		"ypos"			"r126"
+		"zpos"			"-100"
+		"wide"			"f80"
+		"tall"			"8"
+		"visible"		"1"
+		"enabled"		"1"
+		"image"			"loadout_dotted_line"
+		"scaleImage"	"0"
+		"tileImage"		"1"
+	}	
+	
 	"EquipLabel"
 	{
 		"ControlName"		"Label"
@@ -87,24 +179,159 @@
 		"enabled"		"1"
 	}
 	
+	"weaponbutton0"
+	{
+		"ControlName"	"CTFAdvItemButton"
+		"fieldName"		"weaponbutton0"		
+		"xpos"			"c-280"
+		"ypos"			"94"		
+		"zpos"			"-1"		
+		"wide"			"140"
+		"tall"			"74"
+		"autoResize"	"0"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		//"border"		"MainMenuHighlightBorder"
+		"SubButton"
+		{
+			"font"				"HudFontSmallestBold"
+			"border_default"	"AdvRoundedButtonDefault"
+			"border_armed"		"AdvRoundedButtonArmed"
+			"border_depressed"	"AdvRoundedButtonDepressed"	
+		}
+	}
+	
+	"weaponbutton1"
+	{
+		"ControlName"	"CTFAdvItemButton"
+		"fieldName"		"weaponbutton1"		
+		"xpos"			"c-280"
+		"ypos"			"178"
+		"zpos"			"-1"		
+		"wide"			"140"
+		"tall"			"74"
+		"autoResize"	"5"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		//"border"		"MainMenuHighlightBorder"
+		"SubButton"
+		{
+			"font"				"HudFontSmallestBold"
+			"border_default"	"AdvRoundedButtonDefault"
+			"border_armed"		"AdvRoundedButtonArmed"
+			"border_depressed"	"AdvRoundedButtonDepressed"	
+		}
+	}
+	
+	"weaponbutton2"
+	{
+		"ControlName"	"CTFAdvItemButton"
+		"fieldName"		"weaponbutton2"	
+		"xpos"			"c-280"
+		"ypos"			"262"
+		"zpos"			"-1"		
+		"wide"			"140"
+		"tall"			"74"
+		"autoResize"	"5"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		"SubButton"
+		{
+			"font"				"HudFontSmallestBold"
+			"border_default"	"AdvRoundedButtonDefault"
+			"border_armed"		"AdvRoundedButtonArmed"
+			"border_depressed"	"AdvRoundedButtonDepressed"	
+		}
+	}
+	
+	"weaponbutton3"
+	{
+		"ControlName"	"CTFAdvItemButton"
+		"fieldName"		"weaponbutton3"		
+		"xpos"			"c140"
+		"ypos"			"94"		
+		"zpos"			"-1"		
+		"wide"			"140"
+		"tall"			"74"
+		"autoResize"	"0"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		"SubButton"
+		{
+			"font"				"HudFontSmallestBold"
+			"border_default"	"AdvRoundedButtonDefault"
+			"border_armed"		"AdvRoundedButtonArmed"
+			"border_depressed"	"AdvRoundedButtonDepressed"	
+		}
+	}
+	
+	"weaponbutton4"
+	{
+		"ControlName"	"CTFAdvItemButton"
+		"fieldName"		"weaponbutton4"		
+		"xpos"			"c140"
+		"ypos"			"178"
+		"zpos"			"-1"		
+		"wide"			"140"
+		"tall"			"74"
+		"autoResize"	"0"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		"SubButton"
+		{
+			"font"				"HudFontSmallestBold"
+			"border_default"	"AdvRoundedButtonDefault"
+			"border_armed"		"AdvRoundedButtonArmed"
+			"border_depressed"	"AdvRoundedButtonDepressed"	
+		}
+	}
+	
+	"weaponbutton5"
+	{
+		"ControlName"	"CTFAdvItemButton"
+		"fieldName"		"weaponbutton5"		
+		"xpos"			"c140"
+		"ypos"			"262"
+		"zpos"			"-1"		
+		"wide"			"140"
+		"tall"			"74"
+		"autoResize"	"0"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		"SubButton"
+		{
+			"font"				"HudFontSmallestBold"
+			"border_default"	"AdvRoundedButtonDefault"
+			"border_armed"		"AdvRoundedButtonArmed"
+			"border_depressed"	"AdvRoundedButtonDepressed"	
+		}
+	}
+	
 	"classmodelpanel"
 	{
 		"ControlName"	"CTFAdvModelPanel"
-		"fieldName"		"classmodelpanel"
-		
-		"xpos"			"c80"
-		"ypos"			"c-100"
-		"zpos"			"0"		
-		"wide"			"250"
+		"bgcolor_override"	"255 0 0 96"
+		"xpos"			"cs-0.5"
+		"ypos"			"90"
+		"zpos"			"-2"		
+		"wide"			"370"
 		"tall"			"280"
 		"autoResize"	"0"
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-
-		"fov"			"27"
+		
+		"fov"			"43"
 		"allow_rot"		"1"
-				
+		"allow_manip"	"0"
+		"allow_pitch"	"0"
+		
 		"model"
 		{
 			"force_pos"	"1"
@@ -188,29 +415,13 @@
 		}
 	}
 	
-	"weaponsetpanel"
-	{
-		"ControlName"	"CTFWeaponSetPanel"
-		"fieldName"		"weaponsetpanel"		
-		"xpos"			"c-380"
-		"ypos"			"c-130"
-		"zpos"			"-1"		
-		"wide"			"380"
-		"tall"			"280"
-		"autoResize"	"0"
-		"pinCorner"		"0"
-		"visible"		"1"
-		"enabled"		"1"
-		//"border"		"MainMenuHighlightBorder"
-	}
-	
 	"BackButton"
 	{
 		"ControlName"	"CTFAdvButton"
 		"fieldName"		"BackButton"
-		"xpos"			"c-300"
-		"ypos"			"r60"
-		"zpos"			"20"
+		"xpos"			"c160"
+		"ypos"			"437"
+		"zpos"			"-1"
 		"wide"			"100"
 		"tall"			"25"
 		"visible"		"1"
@@ -219,12 +430,12 @@
 		
 		"SubButton"
 		{
-			"labelText" 		"#TF_Back"
+			"labelText" 		"#GameUI_Close"
 			"textAlignment"		"center"
-			"font"				"tf2build"
-			"border_default"	"AdvRoundedButtonDefault"
-			"border_armed"		"AdvRoundedButtonArmed"
-			"border_depressed"	"AdvRoundedButtonDepressed"	
+			"font"				"HudFontSmallBold"
+			"border_default"	"OldAdvButtonDefault"
+			"border_armed"		"OldAdvButtonDefaultArmed"
+			"border_depressed"	"OldAdvButtonDefaultArmed"	
 		}
 	}	
 
@@ -234,9 +445,9 @@
 		"fieldName"		"LogoCircle"
 		"xpos"			"87"
 		"ypos"			"44"
-		"zpos"			"5"
-		"wide"			"30"
-		"tall"			"30"
+		"zpos"			"30"
+		"wide"			"10"
+		"tall"			"10"
 		"image"			"vgui/class_icons/scout"
 		"visible"		"0"
 		"enabled"		"1"
@@ -246,17 +457,16 @@
 	{
 		"ControlName"		"CAdvTabs"
 		"fieldName"			"classselection"
-		"xpos"				"c-300"
-		"ypos"				"0"
-		"zpos"				"6"
-		"wide"				"600"
-		"tall"				"63"
+		"xpos"				"c-220"
+		"ypos"				"r112"
+		"zpos"				"40"
+		"wide"				"440"
+		"tall"				"44"
 		"visible"			"1"
 		"enabled"			"1"
-		"bordervisible"		"0"		
-		"offset"			"3"
-	
-	
+		"bordervisible"		"1"		
+		"offset"			"0"
+		
 		"scout_blue"
 		{
 			"ControlName"		"CTFAdvButton"
@@ -278,7 +488,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/scout"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -303,7 +513,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/soldier"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -328,7 +538,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/pyro"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -353,7 +563,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/demo"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -378,7 +588,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/heavy"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -403,7 +613,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/engineer"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -428,7 +638,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/medic"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -453,7 +663,7 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/sniper"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	
@@ -478,10 +688,8 @@
 			"SubImage"
 			{
 				"image" 			"class_icons/spy"	
-				"imagewidth"		"55"
+				"imagewidth"		"44"
 			}
 		}
 	}
-
-	
 }

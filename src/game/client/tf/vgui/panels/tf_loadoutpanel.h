@@ -1,7 +1,7 @@
 #ifndef TFMAINMENULOADOUTPANEL_H
 #define TFMAINMENULOADOUTPANEL_H
 
-#include "tf_dialogpanelbase.h"
+#include "tf_menupanelbase.h"
 #include "tf_inventory.h"
 #include "panels/tf_ItemSelectionpanel.h"
 
@@ -14,9 +14,9 @@ class CTFAdvItemButton;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CTFLoadoutPanel : public CTFDialogPanelBase
+class CTFLoadoutPanel : public CTFMenuPanelBase
 {
-	DECLARE_CLASS_SIMPLE(CTFLoadoutPanel, CTFDialogPanelBase);
+	DECLARE_CLASS_SIMPLE(CTFLoadoutPanel, CTFMenuPanelBase);
 
 public:
 	CTFLoadoutPanel(vgui::Panel* parent, const char *panelName);
@@ -40,13 +40,11 @@ public:
 	void UpdateModelWeapons( void );
 	void SetModelClass(int iClass);
 	void SetSlotAndPreset(int iSlot, int iPreset);
-	void SideRow(int iRow, int iDir);
 	void ResetRows();
 
 private:
 	CTFAdvModelPanel *m_pClassModelPanel;
 	CModelPanel		*m_pGameModelPanel;
-	CTFWeaponSetPanel *m_pWeaponSetPanel;
 	CUtlVector<CTFAdvItemButton*> m_pWeaponIcons;
 	CUtlVector<CTFAdvItemButton*> m_pSlideButtons;
 	CUtlVector<int> m_RawIDPos;
@@ -54,6 +52,7 @@ private:
 	int	m_iCurrentClass;
 	int	m_iCurrentSlot;
 	int m_iCurrentSkin;
+	CTFItemPanel *m_pItemPanel;
 };
 
 //-----------------------------------------------------------------------------
