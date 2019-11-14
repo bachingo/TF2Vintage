@@ -33,7 +33,7 @@ extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 
 
 
-HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
+HSCRIPT VScriptCompileScript( const char *pszScriptPath, bool bWarnMissing )
 {
 	if ( !g_pScriptVM )
 	{
@@ -49,8 +49,8 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 		".py",  // SL_PYTHON
 	};
 
-	const char *pszVMExtension = pszExtensions[g_pScriptVM->GetLanguage()];
-	const char *pszIncomingExtension = V_strrchr( pszScriptName , '.' );
+	const char *pszVMExtension = pszExtensions[ g_pScriptVM->GetLanguage() ];
+	const char *pszIncomingExtension = V_strrchr( pszScriptPath , '.' );
 	if ( pszIncomingExtension && V_strcmp( pszIncomingExtension, pszVMExtension ) != 0 )
 	{
 		Warning( "Script file type does not match VM type\n" );
@@ -60,11 +60,11 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 	CFmtStr scriptPath;
 	if ( pszIncomingExtension )
 	{
-		scriptPath.sprintf( "scripts/vscripts/%s", pszScriptName );
+		scriptPath.sprintf( "%s", pszScriptPath );
 	}
 	else
 	{	
-		scriptPath.sprintf( "scripts/vscripts/%s%s", pszScriptName,  pszVMExtension );
+		scriptPath.sprintf( "%s%s", pszScriptPath,  pszVMExtension );
 	}
 
 	const char *pBase;
@@ -81,7 +81,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 
 		if( !bResult )
 		{
-			Warning( "Script not found (%s) \n", scriptPath.operator const char *() );
+			Warning( "Script not found (%s) \n", scriptPath );
 			Assert( "Error running script" );
 		}
 
@@ -99,7 +99,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 	HSCRIPT hScript = g_pScriptVM->CompileScript( pBase, pszFilename );
 	if ( !hScript )
 	{
-		Warning( "FAILED to compile and execute script file named %s\n", scriptPath.operator const char *() );
+		Warning( "FAILED to compile and execute script file named %s (%s)\n", scriptPath, pszFilename );
 		Assert( "Error running script" );
 	}
 	return hScript;

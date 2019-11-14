@@ -160,7 +160,14 @@ public:
 	static int		CalcPlayerScore( RoundStats_t *pRoundStats );
 
 	bool			IsBirthday( void );
+	bool			IsHalloween( void );
+	bool			IsChristmas( void );
+	bool			IsValentinesDay( void );
+	bool			IsAprilFools( void );
 	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
+
+	bool 			IsNormalClass(CBaseEntity *pPlayer);
+	bool 			IsBossClass(CBaseEntity *pPlayer);
 
 	virtual const unsigned char *GetEncryptionKey( void ) { return (unsigned char *)"E2NcUkG2"; }
 
@@ -270,6 +277,10 @@ public:
 
 	virtual bool	ClientConnected( edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen );
 
+	void			StartCompetitiveMatch( void );
+	void			StopCompetitiveMatch(/*CMsgGC_Match_Result_Status*/int eMatchResult=0 );
+	void			EndCompetitiveMatch( void );
+
 	void			RegisterNPC( CBaseCombatCharacter *pNPC );
 	void			RemoveNPC( CBaseCombatCharacter *pNPC );
 
@@ -321,16 +332,20 @@ public:
 
 	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer ) { return true; };
 
-	virtual bool    IsMannVsMachineMode( void ) { return false; };
+	bool			IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
 	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
 	virtual bool	IsInKothMode( void ) { return m_bPlayingKoth; }
+	virtual bool	IsInVSHMode( void ) { return m_bPlayingVSH; }
 	virtual bool    IsHalloweenScenario( int iEventType ) { return m_halloweenScenario == iEventType; };
 	virtual bool	IsPVEModeActive( void ) { return false; };
 	virtual bool	IsCompetitiveMode( void ) { return m_bCompetitiveMode; };
 	virtual bool	IsInHybridCTF_CPMode( void ) { return m_bPlayingHybrid_CTF_CP; };
 	virtual bool	IsInSpecialDeliveryMode( void ) { return m_bPlayingSpecialDeliveryMode; };
+	bool			UsePlayerReadyStatusMode( void );
+
+	virtual void RegisterScriptFunctions( void );
 
 #ifdef CLIENT_DLL
 
@@ -407,7 +422,7 @@ public:
 	void			RadiusDamage( CTFRadiusDamageInfo &radiusInfo );
 	bool			RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond );
 	virtual void	RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
-
+	
 	virtual float	FlPlayerFallDamage( CBasePlayer *pPlayer );
 
 	virtual bool	FlPlayerFallDeathDoesScreenFade( CBasePlayer *pl ) { return false; }
@@ -432,6 +447,8 @@ private:
 	void			SpawnZombieMob( void );
 	CountdownTimer	m_bossSpawnTimer;
 	CountdownTimer	m_mobSpawnTimer;
+	int				m_nZombiesToSpawn;
+	Vector			m_vecMobSpawnLocation;
 
 #endif
 
@@ -478,6 +495,7 @@ private:
 	CNetworkVar( float, m_flCapturePointEnableTime );
 	CNetworkVar( int, m_nHudType );
 	CNetworkVar( bool, m_bPlayingKoth );
+	CNetworkVar( bool, m_bPlayingVSH );
 	CNetworkVar( bool, m_bPlayingMedieval );
 	CNetworkVar( bool, m_bPlayingSpecialDeliveryMode );
 	CNetworkVar( bool, m_bPlayingRobotDestructionMode );
@@ -496,6 +514,10 @@ public:
 	int	 m_iPreviousRoundWinners;
 
 	int	m_iBirthdayMode;
+	int	m_iHalloweenMode;
+	int	m_iChristmasMode;
+	int	m_iValentinesDayMode;
+	int	m_iAprilFoolsMode;
 
 #ifdef GAME_DLL
 	float m_flCTFBonusTime;

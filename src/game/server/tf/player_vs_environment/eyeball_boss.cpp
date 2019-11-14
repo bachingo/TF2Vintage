@@ -469,7 +469,7 @@ void CEyeBallBoss::Spawn( void )
 
 	ChangeTeam( TF_TEAM_BOSS );
 
-	m_vecSpawn = GetAbsOrigin();
+	m_body->m_lookAtSpot = GetAbsOrigin();
 
 	if ( GetTeamNumber() == TF_TEAM_BOSS )
 	{
@@ -561,6 +561,12 @@ Vector CEyeBallBoss::EyePosition( void )
 //-----------------------------------------------------------------------------
 void CEyeBallBoss::UpdateLastKnownArea( void )
 {
+	if ( TheNavMesh->IsGenerating() )
+	{
+		ClearLastKnownArea();
+		return;
+	}
+
 	// find the area we are directly standing in
 	CNavArea *area = TheNavMesh->GetNearestNavArea( this, GETNAVAREA_CHECK_LOS, 500.0f );
 	if ( !area )

@@ -55,6 +55,115 @@ CBasePlayer *CTFBot::AllocatePlayerEntity( edict_t *edict, const char *playerNam
 }
 
 
+class SelectClosestPotentiallyVisible
+{
+public:
+	SelectClosestPotentiallyVisible( const Vector &origin )
+		: m_vecOrigin( origin )
+	{
+		m_pSelected = NULL;
+		m_flMinDist = FLT_MAX;
+	}
+
+	bool operator()( CNavArea *area )
+	{
+		Vector vecClosest;
+		area->GetClosestPointOnArea( m_vecOrigin, &vecClosest );
+		float flDistance = ( vecClosest - m_vecOrigin ).LengthSqr();
+
+		if ( flDistance < m_flMinDist )
+		{
+			m_flMinDist = flDistance;
+			m_pSelected = area;
+		}
+
+		return true;
+	}
+
+	Vector m_vecOrigin;
+	CNavArea *m_pSelected;
+	float m_flMinDist;
+};
+
+
+class CollectReachableObjects : public ISearchSurroundingAreasFunctor
+{
+public:
+	CollectReachableObjects( CTFBot *actor, CUtlVector<EHANDLE> *selectedHealths, CUtlVector<EHANDLE> *outVector, float flMaxLength )
+	{
+		m_pBot = actor;
+		m_flMaxRange = flMaxLength;
+		m_pHealths = selectedHealths;
+		m_pVector = outVector;
+	}
+
+	virtual bool operator() ( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
+	{
+		for ( int i=0; i<m_pHealths->Count(); ++i )
+		{
+			CBaseEntity *pEntity = ( *m_pHealths )[i];
+			if ( !pEntity || !area->Contains( pEntity->WorldSpaceCenter() ) )
+				continue;
+
+			for ( int j=0; j<m_pVector->Count(); ++j )
+			{
+				CBaseEntity *pSelected = ( *m_pVector )[j];
+				if ( ENTINDEX( pEntity ) == ENTINDEX( pSelected ) )
+					return true;
+			}
+
+			EHANDLE hndl( pEntity );
+			m_pVector->AddToTail( hndl );
+		}
+
+		return true;
+	}
+
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar )
+	{
+		if ( adjArea->IsBlocked( m_pBot->GetTeamNumber() ) || travelDistanceSoFar > m_flMaxRange )
+			return false;
+
+		return currentArea->IsContiguous( adjArea );
+	}
+
+private:
+	CTFBot *m_pBot;
+	CUtlVector<EHANDLE> *m_pHealths;
+	CUtlVector<EHANDLE> *m_pVector;
+	float m_flMaxRange;
+};
+
+
+class CountClassMembers
+{
+public:
+	CountClassMembers( CTFBot *bot, int teamNum )
+		: m_pBot( bot ), m_iTeam( teamNum )
+	{
+		Q_memset( &m_aClassCounts, 0, sizeof( m_aClassCounts ) );
+	}
+
+	bool operator()( CBasePlayer *player )
+	{
+		if ( player->GetTeamNumber() == m_iTeam )
+		{
+			++m_iTotal;
+			CTFPlayer *pTFPlayer = static_cast<CTFPlayer *>( player );
+			if ( !m_pBot->IsSelf( player ) )
+				++m_aClassCounts[ pTFPlayer->GetDesiredPlayerClassIndex() ];
+		}
+
+		return true;
+	}
+
+	CTFBot *m_pBot;
+	int m_iTeam;
+	int m_aClassCounts[TF_CLASS_COUNT_ALL];
+	int m_iTotal;
+};
+
+
 IMPLEMENT_INTENTION_INTERFACE( CTFBot, CTFBotMainAction )
 
 
@@ -261,7 +370,7 @@ bool CTFBot::IsAllowedToPickUpFlag( void )
 void CTFBot::DisguiseAsEnemy( void )
 {
 	CUtlVector<CTFPlayer *> enemies;
-	CollectPlayers( &enemies, GetEnemyTeam( this ), false, false );
+	CollectPlayers( &enemies, GetEnemyTeam( this ), false );
 
 	int iClass = TF_CLASS_UNDEFINED;
 	for ( int i=0; i < enemies.Count(); ++i )
@@ -271,7 +380,7 @@ void CTFBot::DisguiseAsEnemy( void )
 	}
 
 	if ( iClass == TF_CLASS_UNDEFINED )
-		iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+		iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 
 	m_Shared.Disguise( GetEnemyTeam( this ), iClass );
 }
@@ -1442,35 +1551,6 @@ void CTFBot::ForgetSpy( CTFPlayer *spy )
 	m_knownSpies.FindAndFastRemove( spy );
 }
 
-class SelectClosestPotentiallyVisible
-{
-public:
-	SelectClosestPotentiallyVisible( const Vector &origin )
-		: m_vecOrigin( origin )
-	{
-		m_pSelected = NULL;
-		m_flMinDist = FLT_MAX;
-	}
-
-	bool operator()( CNavArea *area )
-	{
-		Vector vecClosest;
-		area->GetClosestPointOnArea( m_vecOrigin, &vecClosest );
-		float flDistance = ( vecClosest - m_vecOrigin ).LengthSqr();
-
-		if ( flDistance < m_flMinDist )
-		{
-			m_flMinDist = flDistance;
-			m_pSelected = area;
-		}
-
-		return true;
-	}
-
-	Vector m_vecOrigin;
-	CNavArea *m_pSelected;
-	float m_flMinDist;
-};
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1988,9 +2068,9 @@ void CTFBot::AvoidPlayers( CUserCmd *pCmd )
 		vecAvoidCenter.NormalizeInPlace();
 
 		m_Shared.SetSeparation( true );
-		m_Shared.SetSeparationVelocity( vecAvoidCenter * 50.0f );
-		pCmd->forwardmove += vecAvoidCenter.Dot( vecFwd ) * 50.0f;
-		pCmd->sidemove += vecAvoidCenter.Dot( vecRight ) * 50.0f;
+		m_Shared.SetSeparationVelocity( vecAvoidCenter * flRadius );
+		pCmd->forwardmove += vecAvoidCenter.Dot( vecFwd ) * flRadius;
+		pCmd->sidemove += vecAvoidCenter.Dot( vecRight ) * flRadius;
 	}
 	else
 	{
@@ -2007,53 +2087,6 @@ CBaseCombatCharacter *CTFBot::GetEntity( void ) const
 	return ToBasePlayer( m_controlling ) ? m_controlling : (CTFPlayer *)this;
 }
 
-class CollectReachableObjects : public ISearchSurroundingAreasFunctor
-{
-public:
-	CollectReachableObjects( CTFBot *actor, CUtlVector<EHANDLE> *selectedHealths, CUtlVector<EHANDLE> *outVector, float flMaxLength )
-	{
-		m_pBot = actor;
-		m_flMaxRange = flMaxLength;
-		m_pHealths = selectedHealths;
-		m_pVector = outVector;
-	}
-
-	virtual bool operator() ( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
-	{
-		for ( int i=0; i<m_pHealths->Count(); ++i )
-		{
-			CBaseEntity *pEntity = ( *m_pHealths )[i];
-			if ( !pEntity || !area->Contains( pEntity->WorldSpaceCenter() ) )
-				continue;
-
-			for ( int j=0; j<m_pVector->Count(); ++j )
-			{
-				CBaseEntity *pSelected = ( *m_pVector )[i];
-				if ( ENTINDEX( pEntity ) == ENTINDEX( pSelected ) )
-					return true;
-			}
-
-			EHANDLE hndl( pEntity );
-			m_pVector->AddToTail( hndl );
-		}
-
-		return true;
-	}
-
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar )
-	{
-		if ( adjArea->IsBlocked( m_pBot->GetTeamNumber() ) || travelDistanceSoFar > m_flMaxRange )
-			return false;
-
-		return currentArea->IsContiguous( adjArea );
-	}
-
-private:
-	CTFBot *m_pBot;
-	CUtlVector<EHANDLE> *m_pHealths;
-	CUtlVector<EHANDLE> *m_pVector;
-	float m_flMaxRange;
-};
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2126,50 +2159,17 @@ bool CTFBot::CanChangeClass( void )
 	return medigun->GetChargeLevel() <= 0.25f;
 }
 
-class CCountClassMembers
-{
-public:
-	CCountClassMembers( CTFBot *bot, int teamNum )
-		: m_pBot( bot ), m_iTeam( teamNum )
-	{
-		Q_memset( &m_aClassCounts, 0, sizeof( m_aClassCounts ) );
-	}
-
-	bool operator()( CBasePlayer *player )
-	{
-		if ( player->GetTeamNumber() == m_iTeam )
-		{
-			++m_iTotal;
-			CTFPlayer *pTFPlayer = static_cast<CTFPlayer *>( player );
-			if ( !m_pBot->IsSelf( player ) )
-			{
-				const int iClassIdx = pTFPlayer->GetDesiredPlayerClassIndex() + 2; // ??
-				++m_aClassCounts[iClassIdx];
-			}
-		}
-
-		return true;
-	}
-
-	CTFBot *m_pBot;
-	int m_iTeam;
-	int m_aClassCounts[11];
-	int m_iTotal;
-};
-inline const char *PickClassName( const int *pRoster, CCountClassMembers const &counter )
-{
-	return GetPlayerClassData( pRoster[random->RandomInt( 0, 10 )] )->m_szClassName;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 const char *CTFBot::GetNextSpawnClassname( void )
 {
 	static const int offenseRoster[] ={
+		TF_CLASS_SCOUT,
 		TF_CLASS_ENGINEER,
 		TF_CLASS_SOLDIER,
 		TF_CLASS_HEAVYWEAPONS,
+		TF_CLASS_MEDIC,
 		TF_CLASS_DEMOMAN,
 		TF_CLASS_SCOUT,
 		TF_CLASS_PYRO,
@@ -2180,11 +2180,13 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		TF_CLASS_SPY
 	};
 	static const int defenseRoster[] ={
+		TF_CLASS_MEDIC,
 		TF_CLASS_ENGINEER,
 		TF_CLASS_SOLDIER,
 		TF_CLASS_DEMOMAN,
 		TF_CLASS_SCOUT,
 		TF_CLASS_HEAVYWEAPONS,
+		TF_CLASS_MEDIC,
 		TF_CLASS_SNIPER,
 		TF_CLASS_ENGINEER,
 		TF_CLASS_SOLDIER,
@@ -2192,11 +2194,12 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		TF_CLASS_PYRO,
 		TF_CLASS_SPY
 	};
+	static const int rosterSize = ( ARRAYSIZE( offenseRoster ) + ARRAYSIZE( defenseRoster ) ) / 2;
 
 	const char *szClassName = tf_bot_force_class.GetString();
 	if ( !FStrEq( szClassName, "" ) )
 	{
-		const int iClassIdx = GetClassIndexFromString( szClassName, TF_CLASS_COUNT );
+		const int iClassIdx = GetClassIndexFromString( szClassName, TF_LAST_NORMAL_CLASS );
 		if ( iClassIdx != TF_CLASS_UNDEFINED )
 			return GetPlayerClassData( iClassIdx )->m_szClassName;
 	}
@@ -2204,17 +2207,18 @@ const char *CTFBot::GetNextSpawnClassname( void )
 	if ( !CanChangeClass() )
 		return m_PlayerClass.GetName();
 
-	CCountClassMembers func( this, GetTeamNumber() );
+	CountClassMembers func( this, GetTeamNumber() );
 	ForEachPlayer( func );
 
+	const int *pRoster = NULL;
 	if ( !TFGameRules()->IsInKothMode() )
 	{
 		if ( TFGameRules()->GetGameType() != TF_GAMETYPE_CP )
 		{
 			if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT && GetTeamNumber() == TF_TEAM_RED )
-				return PickClassName( defenseRoster, func );
-
-			return PickClassName( offenseRoster, func );
+				pRoster = defenseRoster;
+			else
+				pRoster = offenseRoster;
 		}
 		else
 		{
@@ -2224,13 +2228,9 @@ const char *CTFBot::GetNextSpawnClassname( void )
 			TFGameRules()->CollectDefendPoints( this, &defensePoints );
 
 			if ( attackPoints.IsEmpty() && !defensePoints.IsEmpty() )
-			{
-				return PickClassName( defenseRoster, func );
-			}
+				pRoster = defenseRoster;
 			else
-			{
-				return PickClassName( offenseRoster, func );
-			}
+				pRoster = offenseRoster;
 		}
 	}
 	else
@@ -2239,13 +2239,53 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		if ( pPoint )
 		{
 			if ( GetTeamNumber() == ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) )
-				return PickClassName( defenseRoster, func );
-
-			return PickClassName( offenseRoster, func );
+				pRoster = defenseRoster;
+			else
+				pRoster = offenseRoster;
 		}
-
-		return PickClassName( offenseRoster, func );
+		else
+			pRoster = offenseRoster;
 	}
+
+	if( pRoster == NULL )
+		return "random";
+
+	float flClassWeight[ TF_CLASS_COUNT_ALL ] = { 1.0f };
+	for ( int i=0; i < rosterSize; ++i )
+	{
+		if ( !TFGameRules()->CanBotChooseClass( this, pRoster[i] ) )
+			continue;
+
+		flClassWeight[ pRoster[i] ] += 1.0f;
+
+		if ( m_PlayerClass.GetClassIndex() == pRoster[i] )
+			flClassWeight[ pRoster[i] ] *= 0.1f;
+
+		flClassWeight[ pRoster[i] ] /= func.m_aClassCounts[ pRoster[i] ] + 1;
+	}
+
+	float flTotalFitness = 0;
+	for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
+		flTotalFitness += flClassWeight[i];
+
+	float flRandom = RandomFloat(0.0f, flTotalFitness);
+
+	flTotalFitness = 0;
+
+	int iDesiredClass = TF_CLASS_UNDEFINED;
+	for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		flTotalFitness += flClassWeight[i];
+
+		if ( flRandom <= flTotalFitness )
+		{
+			iDesiredClass = i;
+			break;
+		}
+	}
+
+	if ( iDesiredClass > TF_CLASS_UNDEFINED )
+		return GetPlayerClassData( iDesiredClass )->m_szClassName;
 
 	return "random";
 }

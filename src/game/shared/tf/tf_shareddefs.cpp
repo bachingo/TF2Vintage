@@ -9,6 +9,7 @@
 #include "KeyValues.h"
 #include "takedamageinfo.h"
 #include "tf_gamerules.h"
+#include "bone_setup.h"
 #if defined( CLIENT_DLL )
 #include "c_team.h"
 #else
@@ -111,6 +112,7 @@ const char *g_aPlayerClassNames[] =
 	"#TF_Class_Name_Pyro",
 	"#TF_Class_Name_Spy",
 	"#TF_Class_Name_Engineer",
+	"#TF_SaxtonHat",
 };
 
 const char *g_aPlayerClassNames_NonLocalized[] =
@@ -125,6 +127,7 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Pyro",
 	"Spy",
 	"Engineer",
+	"Saxton Hale",
 };
 
 const char *g_aDominationEmblems[] =
@@ -158,6 +161,7 @@ const char *g_aPlayerClassEmblems[] =
 	"../hud/leaderboard_class_pyro",
 	"../hud/leaderboard_class_spy",
 	"../hud/leaderboard_class_engineer",
+	"../hud/leaderboard_class_tank",
 };
 
 const char *g_aPlayerClassEmblemsDead[] =
@@ -171,6 +175,7 @@ const char *g_aPlayerClassEmblemsDead[] =
 	"../hud/leaderboard_class_pyro_d",
 	"../hud/leaderboard_class_spy_d",
 	"../hud/leaderboard_class_engineer_d",
+	"../hud/leaderboard_class_tank",
 };
 
 typedef struct PlayerClassData
@@ -189,12 +194,13 @@ PlayerClassData_t gs_PlayerClassData[ TF_CLASS_COUNT_ALL + 1 ] ={
 	{	"Pyro",       "#TF_Class_Name_Pyro"      },
 	{	"Spy",        "#TF_Class_Name_Spy"       },
 	{	"Engineer",   "#TF_Class_Name_Engineer"  },
+	{	"Saxton",     "#TF_SaxtonHat"  },
 	{	"Invalid",    NULL  }
 };
 
 bool IsPlayerClassName( char const *str )
 {
-	for (int i = 1; i < TF_CLASS_COUNT; ++i)
+	for (int i = 1; i < TF_CLASS_COUNT_ALL; ++i)
 	{
 		TFPlayerClassData_t *data = GetPlayerClassData( i );
 		if (FStrEq( str, data->m_szClassName ))
@@ -284,6 +290,7 @@ const char *g_LoadoutSlots[] =
 	"action",
 	"misc2",
 	"zombie",
+	"medal",
 	"buffer"
 };
 
@@ -519,6 +526,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SNIPERRIFLE_REAL",
 	"TF_WEAPON_SNIPERRIFLE_CLASSIC",
 	"TF_WEAPON_GRENADE_PIPEBOMB_BETA",
+	"TF_WEAPON_SHOVELFIST",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -611,6 +619,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BULLET | DMG_USE_HITLOCATIONS,			// TF_WEAPON_SNIPERRIFLE_REAL,
 	DMG_BULLET | DMG_USE_HITLOCATIONS,			// TF_WEAPON_SNIPERRIFLE_CLASSIC,
 	DMG_BLAST | DMG_HALF_FALLOFF,               // TF_WEAPON_GRENADE_PIPEBOMB_BETA
+	DMG_CLUB,									// TF_WEAPON_SHOVELFIST
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -1165,6 +1174,49 @@ bool IsSpaceToSpawnHere( const Vector &vecPos )
 	UTIL_TraceHull( vecPos, vecPos, mins, maxs, MASK_PLAYERSOLID, nullptr, COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
 
 	return tr.fraction >= 1.0f;
+}
+
+void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, CBoneBitList &boneComputed, float flScale )
+{
+	if ( pAnimating == nullptr )
+		return;
+
+	if ( flScale == 1.0f )
+		return;
+
+	int headBone = pAnimating->LookupBone( "bip_head" );
+	if ( headBone == -1 )
+		return;
+
+#if defined( CLIENT_DLL )
+	matrix3x4_t &head = pAnimating->GetBoneForWrite( headBone );
+
+	Vector oldTransform, newTransform;
+	MatrixGetColumn( head, 3, &oldTransform );
+	MatrixScaleBy( flScale, head );
+
+	int helmetBone = pAnimating->LookupBone( "prp_helmet" );
+	if ( helmetBone != -1 )
+	{
+		matrix3x4_t &helmet = pAnimating->GetBoneForWrite( helmetBone );
+		MatrixScaleBy( flScale, helmet );
+
+		MatrixGetColumn( helmet, 3, &newTransform );
+		Vector transform = ( ( newTransform - oldTransform ) * flScale ) + oldTransform;
+		MatrixSetColumn( transform, 3, helmet );
+	}
+
+	int hatBone = pAnimating->LookupBone( "prp_hat" );
+	if ( hatBone != -1 )
+	{
+		matrix3x4_t &hat = pAnimating->GetBoneForWrite( hatBone );
+		MatrixScaleBy( flScale, hat );
+
+		MatrixGetColumn( hat, 3, &newTransform );
+		Vector transform = ( ( newTransform - oldTransform ) * flScale ) + oldTransform;
+		MatrixSetColumn( transform, 3, hat );
+	}
+#endif
 }
 
 

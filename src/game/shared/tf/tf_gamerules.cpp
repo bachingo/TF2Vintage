@@ -9,10 +9,12 @@
 #include "ammodef.h"
 #include "KeyValues.h"
 #include "tf_weaponbase.h"
+#include "filesystem.h"
 #include "time.h"
 #include "viewport_panel_names.h"
 #include "tf_halloween_boss.h"
 #include "entity_bossresource.h"
+#include "vscript_shared.h"
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
@@ -82,9 +84,9 @@ void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
 
 enum
 {
-	BIRTHDAY_RECALCULATE,
-	BIRTHDAY_OFF,
-	BIRTHDAY_ON,
+	HOLIDAY_RECALCULATE,
+	HOLIDAY_OFF,
+	HOLIDAY_ON,
 };
 
 static int g_TauntCamAchievements[] =
@@ -108,6 +110,7 @@ extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;
 extern ConVar mp_chattime;
 extern ConVar tf_arena_max_streak;
+extern ConVar mp_tournament;
 
 ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
@@ -126,6 +129,10 @@ ConVar tf2v_critchance( "tf2v_critchance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf2v_critchance_rapid( "tf2v_critchance_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for rapid fire critical hits.");
 ConVar tf2v_critchance_melee( "tf2v_critchance_melee", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance of melee critical hits.");
 ConVar tf2v_crit_duration_rapid( "tf2v_crit_duration_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Length in seconds for rapid fire critical hit duration.");
+ConVar tf2v_ctf_capcrits( "tf2v_ctf_capcrits", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable critical hits on flag capture." );
+ConVar tf2v_minicrits_on_deflect( "tf2v_minicrits_on_deflect", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Deflected projectiles get minicrits." );
+
+
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -135,6 +142,7 @@ ConVar mp_humans_must_join_team( "mp_humans_must_join_team", "any", FCVAR_GAMEDL
 
 ConVar tf_arena_force_class( "tf_arena_force_class", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force random classes in arena." );
 ConVar tf_arena_first_blood( "tf_arena_first_blood", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles first blood criticals" );
+ConVar tf_arena_first_blood_length( "tf_arena_first_blood_length", "5.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Duration of first blood criticals" );
 
 ConVar tf_gamemode_arena( "tf_gamemode_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_cp( "tf_gamemode_cp", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
@@ -142,8 +150,13 @@ ConVar tf_gamemode_ctf( "tf_gamemode_ctf", "0", FCVAR_NOTIFY | FCVAR_REPLICATED 
 ConVar tf_gamemode_sd( "tf_gamemode_sd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_rd( "tf_gamemode_rd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_payload( "tf_gamemode_payload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_plr( "tf_gamemode_plr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_mvm( "tf_gamemode_mvm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_passtime( "tf_gamemode_passtime", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_medieval( "tf_gamemode_medieval", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_koth( "tf_gamemode_koth", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_vsh( "tf_gamemode_vsh", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
 ConVar tf_ctf_bonus_time( "tf_ctf_bonus_time", "10", FCVAR_NOTIFY, "Length of team crit time for CTF capture." );
@@ -171,11 +184,18 @@ ConVar tf_halloween_eyeball_boss_spawn_interval_variation( "tf_halloween_eyeball
 
 ConVar tf_halloween_zombie_mob_enabled( "tf_halloween_zombie_mob_enabled", "0", FCVAR_CHEAT, "If set to 1, spawn zombie mobs on non-Halloween Valve maps" );
 ConVar tf_halloween_zombie_mob_spawn_interval( "tf_halloween_zombie_mob_spawn_interval", "180", FCVAR_CHEAT, "Average interval between zombie mob spawns, in seconds" );
+ConVar tf_halloween_zombie_mob_spawn_count( "tf_halloween_zombie_mob_spawn_count", "20", FCVAR_CHEAT, "How many zombies to spawn" );
 
 static bool isBossForceSpawning = false;
-CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_CHEAT )
+CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_DEVELOPMENTONLY )
 {
 	isBossForceSpawning = true;
+}
+
+static bool isZombieMobForceSpawning = false;
+CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTONLY )
+{
+	isZombieMobForceSpawning = true;
 }
 #endif
 
@@ -240,6 +260,7 @@ Vector g_TFClassViewVectors[TF_CLASS_COUNT_ALL] =
 	Vector( 0, 0, 68 ),		// TF_CLASS_PYRO,
 	Vector( 0, 0, 75 ),		// TF_CLASS_SPY,
 	Vector( 0, 0, 68 ),		// TF_CLASS_ENGINEER,
+	Vector( 0, 0, 68 ),		// TF_CLASS_SAXTON,
 };
 
 const CViewVectors *CTFGameRules::GetViewVectors() const
@@ -258,6 +279,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropTime( RECVINFO( m_flCapturePointEnableTime ) ),
 	RecvPropInt( RECVINFO( m_nHudType ) ),
 	RecvPropBool( RECVINFO( m_bPlayingKoth ) ),
+	RecvPropBool( RECVINFO( m_bPlayingVSH ) ),
 	RecvPropBool( RECVINFO( m_bPlayingMedieval ) ),
 	RecvPropBool( RECVINFO( m_bPlayingHybrid_CTF_CP ) ),
 	RecvPropBool( RECVINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -278,6 +300,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropTime( SENDINFO( m_flCapturePointEnableTime ) ),
 	SendPropInt( SENDINFO( m_nHudType ) ),
 	SendPropBool( SENDINFO( m_bPlayingKoth ) ),
+	SendPropBool( SENDINFO( m_bPlayingVSH ) ),
 	SendPropBool( SENDINFO( m_bPlayingMedieval ) ),
 	SendPropBool( SENDINFO( m_bPlayingHybrid_CTF_CP ) ),
 	SendPropBool( SENDINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -570,6 +593,13 @@ LINK_ENTITY_TO_CLASS( tf_logic_arena, CArenaLogic );
 CArenaLogic::CArenaLogic()
 {
 	m_iUnlockPoint = 60;
+	// If we're VSH mode, unlock time is scaled to player numbers.
+	if ( TFGameRules()->IsInVSHMode() )
+	{
+		CUtlVector<CTFPlayer *> pListPlayers;
+		int iPlayerScale = ( pListPlayers.Count() - 1 ); // Amount of active players, minus the boss player.
+		m_iUnlockPoint = 6 * iPlayerScale; // Unlocks at 6 * player count, in seconds.
+	}
 	m_bCapUnlocked = false;
 }
 
@@ -1124,7 +1154,11 @@ CTFGameRules::CTFGameRules()
 	Assert( FStrEq( g_aWeaponNames[TF_WEAPON_COUNT], "TF_WEAPON_COUNT" ) );
 
 	m_iPreviousRoundWinners = TEAM_UNASSIGNED;
-	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+	m_iBirthdayMode = HOLIDAY_RECALCULATE;
+	m_iHalloweenMode = HOLIDAY_RECALCULATE;
+	m_iChristmasMode = HOLIDAY_RECALCULATE;
+	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
@@ -1246,7 +1280,11 @@ static const char *s_PreserveEnts[] =
 //-----------------------------------------------------------------------------
 void CTFGameRules::Activate()
 {
-	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+	m_iBirthdayMode = HOLIDAY_RECALCULATE;
+	m_iHalloweenMode = HOLIDAY_RECALCULATE;
+	m_iChristmasMode = HOLIDAY_RECALCULATE;
+	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 
 	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
 
@@ -1255,9 +1293,15 @@ void CTFGameRules::Activate()
 	tf_gamemode_ctf.SetValue( 0 );
 	tf_gamemode_sd.SetValue( 0 );
 	tf_gamemode_payload.SetValue( 0 );
+	tf_gamemode_plr.SetValue( 0 );
 	tf_gamemode_mvm.SetValue( 0 );
 	tf_gamemode_rd.SetValue( 0 );
 	tf_gamemode_passtime.SetValue( 0 );
+	tf_gamemode_koth.SetValue( 0 );
+	tf_gamemode_medieval.SetValue( 0 );
+	tf_gamemode_vsh.SetValue( 0 );
+	tf_gamemode_pd.SetValue( 0 );
+
 
 	TeamplayRoundBasedRules()->SetMultipleTrains( false );
 
@@ -1270,17 +1314,37 @@ void CTFGameRules::Activate()
 	if ( pMedieval )
 	{
 		m_nGameType.Set( TF_GAMETYPE_MEDIEVAL );
+		tf_gamemode_medieval.SetValue( 1 );
 		return;
 	}
-
+	
+	
+	/* CMvMLogic *pMvM = dynamic_cast<MvMLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_mann_vs_machine" ) );
+	if (pMvM)
+	{
+		m_nGameType.Set( TF_GAMETYPE_MVM );
+		tf_gamemode_mvm.SetValue( 1 );
+		return;
+	} */
+	
 	CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 	if ( pArena )
 	{
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
-		tf_gamemode_arena.SetValue( 1 );
-		Msg( "Executing server arena config file\n", 1 );
-		engine->ServerCommand( "exec config_arena.cfg \n" );
-		engine->ServerExecute();
+	
+		// VSH maps use arena logic, except with the map prefix changed.
+		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
+		{
+			tf_gamemode_vsh.SetValue(1);
+			m_bPlayingVSH = true;
+		}
+		else
+		{
+			tf_gamemode_arena.SetValue( 1 );
+			Msg( "Executing server arena config file\n", 1 );
+			engine->ServerCommand( "exec config_arena.cfg \n" );
+			engine->ServerExecute();
+		}
 		return;
 	}
 
@@ -1288,6 +1352,7 @@ void CTFGameRules::Activate()
 	if ( pKoth )
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
+		tf_gamemode_koth.SetValue( 1 );
 		m_bPlayingKoth = true;
 		return;
 	}
@@ -1312,7 +1377,7 @@ void CTFGameRules::Activate()
 	if ( pMultipleEscort )
 	{
 		m_nGameType.Set( TF_GAMETYPE_ESCORT );
-		tf_gamemode_payload.SetValue( 1 );
+		tf_gamemode_plr.SetValue( 1 );
 		TeamplayRoundBasedRules()->SetMultipleTrains( true );
 		return;
 	}
@@ -1349,7 +1414,7 @@ int CTFGameRules::GetClassLimit( int iDesiredClassIndex )
 
 	if ( IsInTournamentMode() || tf2v_classlimit.GetInt() == 1 /*||  *((_DWORD *)this + 462) == 7 */ )
 	{
-		if ( iDesiredClassIndex <= TF_CLASS_COUNT )
+		if ( iDesiredClassIndex <= TF_LAST_NORMAL_CLASS )
 		{
 			switch ( iDesiredClassIndex )
 			{
@@ -1386,7 +1451,7 @@ int CTFGameRules::GetClassLimit( int iDesiredClassIndex )
 		}
 		else
 		{
-			result = -1;
+			result = 1;
 		}
 	}
 	else if ( IsInHighlanderMode() )
@@ -1416,21 +1481,31 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 	int iClassLimit = 0;
 	int iClassCount = 0;
 
-	iClassLimit = GetClassLimit( iDesiredClassIndex );
-
-	if ( iClassLimit != -1 && pTFTeam && pTFPlayer->GetTeamNumber() >= TF_TEAM_RED )
+	if ( iDesiredClassIndex <= TF_LAST_NORMAL_CLASS ) 
 	{
-		for ( int i = 0; i < pTFTeam->GetNumPlayers(); i++ )
+		iClassLimit = GetClassLimit( iDesiredClassIndex );
+
+		if ( iClassLimit != -1 && pTFTeam && pTFPlayer->GetTeamNumber() >= TF_TEAM_RED )
 		{
-			if ( pTFTeam->GetPlayer( i ) && pTFTeam->GetPlayer( i ) != pPlayer )
-				iClassCount += iDesiredClassIndex == ToTFPlayer( pTFTeam->GetPlayer( i ) )->GetPlayerClass()->GetClassIndex();
-		}
+			for ( int i = 0; i < pTFTeam->GetNumPlayers(); i++ )
+			{
+				if ( pTFTeam->GetPlayer( i ) && pTFTeam->GetPlayer( i ) != pPlayer )
+					iClassCount += iDesiredClassIndex == ToTFPlayer( pTFTeam->GetPlayer( i ) )->GetPlayerClass()->GetClassIndex();
+			}
 
-		return iClassLimit > iClassCount;
+			return iClassLimit > iClassCount;
+		}
+		else
+			return true;
 	}
-	else
+	else if ( !IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
+		return false;
+	else if ( IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
 	{
-		return true;
+		if ( pTFPlayer->GetTeamNumber() == TF_TEAM_PLAYER_BOSS )
+			return true;
+		else
+			return false;
 	}
 
 	return true;
@@ -2440,78 +2515,6 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 	RunPlayerConditionThink();
 }
 
-inline void PickSpawnSpot( CHalloweenBaseBoss::HalloweenBossType eBossType, Vector *vecSpot )
-{
-	if ( !g_hControlPointMasters.IsEmpty() && g_hControlPointMasters[0] )
-	{
-		CTeamControlPointMaster *pMaster = g_hControlPointMasters[0];
-		for ( int i=0; i<pMaster->GetNumPoints(); ++i )
-		{
-			CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
-			if ( pMaster->IsInRound( pPoint ) &&
-				ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != TF_TEAM_BLUE &&
-				TFGameRules()->TeamMayCapturePoint( TF_TEAM_BLUE, pPoint->GetPointIndex() ) )
-			{
-				CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
-				if ( pSpawnPoint )
-				{
-					*vecSpot = pSpawnPoint->GetAbsOrigin();
-				}
-				else
-				{
-					*vecSpot = pPoint->GetAbsOrigin();
-					if ( eBossType > CHalloweenBaseBoss::HEADLESS_HATMAN )
-					{
-						pPoint->ForceOwner( TEAM_UNASSIGNED );
-
-						if ( TFGameRules()->IsInKothMode() )
-						{
-							CTeamRoundTimer *pRedTimer = TFGameRules()->GetRedKothRoundTimer();
-							CTeamRoundTimer *pBluTimer = TFGameRules()->GetBlueKothRoundTimer();
-
-							if ( pRedTimer )
-							{
-								variant_t emptyVar;
-								pRedTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
-							}
-							if ( pBluTimer )
-							{
-								variant_t emptyVar;
-								pBluTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
-							}
-						}
-					}
-				}
-
-				return;
-			}
-		}
-	}
-	else
-	{
-		CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
-		if ( pSpawnPoint )
-		{
-			*vecSpot = pSpawnPoint->GetAbsOrigin();
-			return;
-		}
-
-		CUtlVector<CNavArea *> candidates;
-		for ( int i=0; i<TheNavAreas.Count(); ++i )
-		{
-			CNavArea *area = TheNavAreas[i];
-			if ( area->GetSizeX() >= 100.0f && area->GetSizeY() >= 100.0f )
-				candidates.AddToTail( area );
-		}
-
-		if ( candidates.IsEmpty() )
-			return;
-
-		CNavArea *area = candidates.Random();
-		*vecSpot = area->GetCenter();
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2569,13 +2572,8 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 		}
 	}
 
-	Vector vecSpawnLoc = vec3_origin;
-
-	if ( !m_bossSpawnTimer.HasStarted() )
+	if ( !m_bossSpawnTimer.HasStarted() && !isBossForceSpawning )
 	{
-		if ( !isBossForceSpawning )
-			return;
-
 		if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
 			m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
 		else
@@ -2584,12 +2582,12 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 		return;
 	}
 
-	if ( m_bossSpawnTimer.IsElapsed() )
+	if ( m_bossSpawnTimer.IsElapsed() || isBossForceSpawning )
 	{
 		if ( !isBossForceSpawning )
 		{
-			/*if (BYTE( this + 889 ) || BYTE( this + 900 ))
-				return;*/
+			if ( InSetup() || IsInWaitingForPlayers() )
+				return;
 
 			CUtlVector<CTFPlayer *> players;
 			CollectPlayers( &players, TF_TEAM_RED, true );
@@ -2606,30 +2604,98 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 				return;
 		}
 
-		PickSpawnSpot( iBossType, &vecSpawnLoc );
+		Vector vecSpawnLoc = vec3_origin;
+		if ( !g_hControlPointMasters.IsEmpty() && g_hControlPointMasters[0] )
+		{
+			CTeamControlPointMaster *pMaster = g_hControlPointMasters[0];
+			for ( int i=0; i<pMaster->GetNumPoints(); ++i )
+			{
+				CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
+				if ( pMaster->IsInRound( pPoint ) &&
+					 ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != TF_TEAM_BLUE &&
+					 TFGameRules()->TeamMayCapturePoint( TF_TEAM_BLUE, pPoint->GetPointIndex() ) )
+				{
+					CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
+					if ( pSpawnPoint )
+					{
+						vecSpawnLoc = pSpawnPoint->GetAbsOrigin();
+					}
+					else
+					{
+						vecSpawnLoc = pPoint->GetAbsOrigin();
+						if ( iBossType > CHalloweenBaseBoss::HEADLESS_HATMAN )
+						{
+							pPoint->ForceOwner( TEAM_UNASSIGNED );
+
+							if ( TFGameRules()->IsInKothMode() )
+							{
+								CTeamRoundTimer *pRedTimer = TFGameRules()->GetRedKothRoundTimer();
+								CTeamRoundTimer *pBluTimer = TFGameRules()->GetBlueKothRoundTimer();
+
+								if ( pRedTimer )
+								{
+									variant_t emptyVar;
+									pRedTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
+								}
+								if ( pBluTimer )
+								{
+									variant_t emptyVar;
+									pBluTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
+			if ( pSpawnPoint )
+			{
+				vecSpawnLoc = pSpawnPoint->GetAbsOrigin();
+			}
+			else
+			{
+				CUtlVector<CNavArea *> candidates;
+				for ( int i=0; i<TheNavAreas.Count(); ++i )
+				{
+					CNavArea *area = TheNavAreas[i];
+					if ( area->GetSizeX() >= 100.0f && area->GetSizeY() >= 100.0f )
+						candidates.AddToTail( area );
+				}
+
+				if ( !candidates.IsEmpty() )
+				{
+					CNavArea *area = candidates.Random();
+					vecSpawnLoc = area->GetCenter();
+				}
+			}
+		}
+
 		CHalloweenBaseBoss::SpawnBossAtPos( iBossType, vecSpawnLoc );
 		isBossForceSpawning = false;
 		m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
-		return;
 	}
-
-	if ( isBossForceSpawning )
-	{
-		PickSpawnSpot( iBossType, &vecSpawnLoc );
-		CHalloweenBaseBoss::SpawnBossAtPos( iBossType, vecSpawnLoc );
-		isBossForceSpawning = false;
-		m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
-		return;
-	}
-
-	if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
-		m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
-	else
-		m_bossSpawnTimer.Start( RandomFloat( 0, fSpawnInterval + fSpawnVariation ) * 0.5 );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::SpawnZombieMob( void )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBotSpiky" );
+
+	// can we even spawn some?
+	if ( !tf_halloween_zombie_mob_enabled.GetBool() )
+		return;
+
+	// do nothing when the game hasn't started yet
+	if ( InSetup() || IsInWaitingForPlayers() )
+	{
+		m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
+		return;
+	}
 }
 
 bool CTFGameRules::CheckCapsPerRound()
@@ -3115,8 +3181,22 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 
 	const char *pszFov = engine->GetClientConVarValue( pPlayer->entindex(), "fov_desired" );
 	int iFov = atoi( pszFov );
-	iFov = clamp( iFov, 75, MAX_FOV );
+	iFov = clamp( iFov, 75, MAX_FOV_UNLOCKED );
 	pTFPlayer->SetDefaultFOV( iFov );
+	
+		
+	// Check if the player is someone of note.
+	if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
+	{
+		pTFPlayer->m_iPlayerVIPRanking = pTFPlayer->GetPlayerVIPRanking();
+		if ( pTFPlayer->m_iPlayerVIPRanking != 0 )
+		{
+			pTFPlayer->m_bIsPlayerAVIP = true;
+			if ( pTFPlayer->m_iPlayerVIPRanking == 1 )	// Rank 1 members are developers.
+				pTFPlayer->m_bIsPlayerADev = true;
+		}
+	}
+	
 }
 
 static const char *g_aTaggedConVars[] =
@@ -3153,6 +3233,12 @@ static const char *g_aTaggedConVars[] =
 
 	"tf2v_randomizer",
 	"randomizer",
+	
+	"tf2v_random_classes",
+	"randomclasses",
+	
+	"tf2v_random_weapons",
+	"randomweapons",
 
 	"tf2v_autojump",
 	"autojump",
@@ -3160,8 +3246,8 @@ static const char *g_aTaggedConVars[] =
 	"tf2v_duckjump",
 	"duckjump",
 
-	"tf2v_allow_special_classes",
-	"specialclasses",
+	"tf2v_player_misses",
+	"misses",
 
 	"tf2v_airblast",
 	"airblast",
@@ -3198,15 +3284,30 @@ static const char *g_aTaggedConVars[] =
 
 	"tf_gamemode_rd",
 	"rd",
+	
+	"tf_gamemode_pd",
+	"pd",
 
 	"tf_gamemode_payload",
-	"payload",
+	"pl",
+	
+	"tf_gamemode_plr",
+	"plr",
 
 	"tf_gamemode_mvm",
 	"mvm",
 
 	"tf_gamemode_passtime",
-	"passtime",
+	"pass",
+	
+	"tf_gamemode_medieval",
+	"medieval",
+	
+	"tf_gamemode_koth",
+	"koth",
+	
+	"tf_gamemode_vsh",
+	"vsh",
 	
 	"tf2v_allow_glow_outline",
 	"glow",
@@ -3222,15 +3323,27 @@ static const char *g_aTaggedConVars[] =
 	
 	"tf2v_allow_cosmetics",
 	"cosmetics",
+	
+	"tf2v_allow_reskins",
+	"reskins",
 
 	"tf2v_random_classes",
 	"randomclasses",
 	
-	"tf2v_random_classes",
+	"tf2v_random_weapons",
 	"randomweapons",
+	
+	"tf2v_allow_mod_weapons",
+	"customweapons",
 	
 	"tf2v_enforce_whitelist",
 	"whitelist",
+	
+	"tf_arena_first_blood",
+	"firstblood",
+	
+	"tf2v_ctf_capcrits",
+	"capcrits",
 	
 
 };
@@ -3802,7 +3915,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 
 	int iDeathFlags = pTFPlayerVictim->GetDeathFlags();
 
-	if ( IsInArenaMode() && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
+	if ( ( IsInArenaMode() && !IsInVSHMode() ) && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
 	{
 		m_bFirstBlood = true;
 		float flElapsedTime = gpGlobals->curtime - m_flStalemateStartTime;;
@@ -3828,9 +3941,12 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 				BroadcastSound( i, "Announcer.AM_FirstBloodFinally" );
 			}
 		}
+		
+		float flFirstBloodDuration = tf_arena_first_blood_length.GetFloat();
 
 		iDeathFlags |= TF_DEATH_FIRST_BLOOD;
-		pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, 5.0f );
+		if ( flFirstBloodDuration > 0.0f )
+		pScorer->m_Shared.AddCond( TF_COND_CRITBOOSTED_FIRST_BLOOD, flFirstBloodDuration );
 	}
 
 	if ( pTFPlayerVictim->m_Shared.IsFeigningDeath() )
@@ -3954,6 +4070,7 @@ void CTFGameRules::ClientDisconnected( edict_t *pClient )
 	Arena_ClientDisconnect( pPlayer->GetPlayerName() );
 }
 
+
 // Falling damage stuff.
 #define TF_PLAYER_MAX_SAFE_FALL_SPEED	650		
 
@@ -3968,10 +4085,16 @@ float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 		// it's always going to be much more dangerous to weaker classes than larger.
 		float flRatio = (float)pPlayer->GetMaxHealth() / 100.0;
 		flFallDamage *= flRatio;
-
+		
 		if ( tf2v_falldamage_disablespread.GetBool() == false )
 		{
 			flFallDamage *= random->RandomFloat( 0.8, 1.2 );
+		}
+
+		// If we're a boss, no fall damage.
+		if ( IsBossClass(pPlayer) )
+		{
+			return 0;
 		}
 
 		return flFallDamage;
@@ -4140,6 +4263,65 @@ void CTFGameRules::FillOutTeamplayRoundWinEvent( IGameEvent *event )
 
 	// set the number of caps that team got any time during the round
 	event->SetInt( "losing_team_num_caps", m_iNumCaps[iLosingTeam] );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::StartCompetitiveMatch( void )
+{
+	SetInWaitingForPlayers( false );
+	CleanUpMap();
+	State_Transition( GR_STATE_RESTART );
+	ResetPlayerAndTeamReadyState();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::EndCompetitiveMatch( void )
+{
+	State_Transition( GR_STATE_RESTART );
+	SetInWaitingForPlayers( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::StopCompetitiveMatch( int eMatchResult )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( "competitive_victory" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+
+	if ( eMatchResult == 3 )
+	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "player_abandoned_match" );
+		if ( event )
+		{
+			event->SetBool( "game_over", State_Get() == GR_STATE_BETWEEN_RNDS );
+			gameeventmanager->FireEvent( event );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::UsePlayerReadyStatusMode( void )
+{
+	if ( IsMannVsMachineMode() )
+		return true;
+
+	if ( IsCompetitiveMode() )
+		return true;
+
+	if ( mp_tournament.GetBool() )
+		return true;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -4315,7 +4497,7 @@ void CTFGameRules::HandleCTFCaptureBonus( int iTeam )
 	if ( m_flCTFBonusTime > -1 )
 		flBoostTime = m_flCTFBonusTime;
 
-	if ( flBoostTime > 0.0 )
+	if ( ( flBoostTime > 0.0 ) && ( tf2v_ctf_capcrits.GetBool() ) )
 	{
 		for ( int i = 1; i < gpGlobals->maxClients; i++ )
 		{
@@ -4636,7 +4818,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( bStreakReached )
+		if ( bStreakReached && !IsInVSHMode() )
 		{
 			for ( i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
@@ -4644,13 +4826,16 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( !IsInTournamentMode() )
+		if ( !IsInTournamentMode() && !IsInVSHMode() )
 		{
 			if ( iActivePlayers > 0 )
 				Arena_ResetLosersScore( bStreakReached );
 			else
 				Arena_ResetLosersScore( true );
 		}
+		
+		if ( IsInVSHMode() )
+			bStreakReached = true;
 
 		if ( iActivePlayers <= 0 )
 		{
@@ -5015,14 +5200,31 @@ void CTFGameRules::HandleScrambleTeams( void )
 		}
 	}
 
-	// loop through and auto team everyone
-	for ( i = 0; i < pListPlayers.Count(); i++ )
+	if (IsInVSHMode())
 	{
-		pTFPlayer = pListPlayers[i];
-
-		if ( pTFPlayer )
+		// We random pick a player to be the boss character.
+		int iBossPlayer = RandomInt(0, pListPlayers.Count());
+		for ( i = 0; i < pListPlayers.Count(); i++ )
 		{
-			pTFPlayer->ForceChangeTeam( TF_TEAM_AUTOASSIGN );
+			pTFPlayer = pListPlayers[i];
+
+			if ( pTFPlayer && ( i == iBossPlayer ) )
+				pTFPlayer->ForceChangeTeam( TF_TEAM_PLAYER_BOSS );
+			else if ( pTFPlayer && ( i != iBossPlayer ) )
+				pTFPlayer->ForceChangeTeam( TF_TEAM_PLAYER_HORDE );
+		}
+	}
+	else
+	{
+		// loop through and auto team everyone
+		for ( i = 0; i < pListPlayers.Count(); i++ )
+		{
+			pTFPlayer = pListPlayers[i];
+
+			if ( pTFPlayer )
+			{
+				pTFPlayer->ForceChangeTeam( TF_TEAM_AUTOASSIGN );
+			}
 		}
 	}
 }
@@ -5458,12 +5660,12 @@ bool CTFGameRules::IsBirthday( void )
 	if ( IsX360() )
 		return false;
 
-	if ( m_iBirthdayMode == BIRTHDAY_RECALCULATE )
+	if ( m_iBirthdayMode == HOLIDAY_RECALCULATE )
 	{
-		m_iBirthdayMode = BIRTHDAY_OFF;
+		m_iBirthdayMode = HOLIDAY_OFF;
 		if ( tf_birthday.GetBool() )
 		{
-			m_iBirthdayMode = BIRTHDAY_ON;
+			m_iBirthdayMode = HOLIDAY_ON;
 		}
 		else
 		{
@@ -5474,13 +5676,136 @@ bool CTFGameRules::IsBirthday( void )
 			{
 				if ( ( today->tm_mon == 7 && today->tm_mday == 4 )  || ( today->tm_mon == 8 && today->tm_mday == 24 ) )
 				{
-					m_iBirthdayMode = BIRTHDAY_ON;
+					m_iBirthdayMode = HOLIDAY_ON;
 				}
 			}
 		}
 	}
 
-	return ( m_iBirthdayMode == BIRTHDAY_ON );
+	return ( m_iBirthdayMode == HOLIDAY_ON );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsHalloween( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iHalloweenMode == HOLIDAY_RECALCULATE )
+	{
+		m_iHalloweenMode = HOLIDAY_OFF;
+		if ( tf_halloween.GetBool() )
+		{
+			m_iHalloweenMode = HOLIDAY_ON;
+		}
+		else
+		{
+			time_t ltime = time( 0 );
+			const time_t *ptime = &ltime;
+			struct tm *today = localtime( ptime );
+			if ( today )
+			{
+				if ( today->tm_mon == 10 && today->tm_mday == 31 )
+				{
+					m_iHalloweenMode = HOLIDAY_ON;
+				}
+			}
+		}
+	}
+
+	return ( m_iHalloweenMode == HOLIDAY_ON );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsChristmas( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iChristmasMode == HOLIDAY_RECALCULATE )
+	{
+		m_iChristmasMode = HOLIDAY_OFF;
+		if ( tf_christmas.GetBool() )
+		{
+			m_iChristmasMode = HOLIDAY_ON;
+		}
+		else
+		{
+			time_t ltime = time( 0 );
+			const time_t *ptime = &ltime;
+			struct tm *today = localtime( ptime );
+			if ( today )
+			{
+				if ( today->tm_mon == 12 && today->tm_mday == 25 )
+				{
+					m_iChristmasMode = HOLIDAY_ON;
+				}
+			}
+		}
+	}
+
+	return ( m_iChristmasMode == HOLIDAY_ON );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsValentinesDay( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iValentinesDayMode == HOLIDAY_RECALCULATE )
+	{
+		m_iValentinesDayMode = HOLIDAY_OFF;
+		
+		time_t ltime = time( 0 );
+		const time_t *ptime = &ltime;
+		struct tm *today = localtime( ptime );
+		if ( today )
+		{
+			if ( today->tm_mon == 2 && today->tm_mday == 14 )
+			{
+				m_iValentinesDayMode = HOLIDAY_ON;
+			}
+		}
+	}
+
+	return ( m_iValentinesDayMode == HOLIDAY_ON );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsAprilFools( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iAprilFoolsMode == HOLIDAY_RECALCULATE )
+	{
+		m_iAprilFoolsMode = HOLIDAY_OFF;
+		
+		time_t ltime = time( 0 );
+		const time_t *ptime = &ltime;
+		struct tm *today = localtime( ptime );
+		if ( today )
+		{
+			if ( ( today->tm_mon == 4 && today->tm_mday == 1 ) )
+			{
+				m_iAprilFoolsMode = HOLIDAY_ON;
+			}
+		}
+		
+	}
+
+	return ( m_iAprilFoolsMode == HOLIDAY_ON );
 }
 
 //-----------------------------------------------------------------------------
@@ -5495,16 +5820,44 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 			bActive = IsBirthday();
 			break;
 		case kHoliday_Halloween:
-			bActive = tf_halloween.GetBool();
+			bActive = IsHalloween();
 			break;
 		case kHoliday_Christmas:
-			bActive = tf_christmas.GetBool();
+			bActive = IsChristmas();
+			break;
+		case kHoliday_ValentinesDay:
+			bActive = IsValentinesDay();
+			break;
+		case kHoliday_AprilFools:
+			bActive = IsAprilFools();
 			break;
 		default:
 			break;
 	}
 
 	return bActive;
+}
+
+// We can use these to check between normal and boss behavior without writing out individual massive if statements each time.
+// For regular classes.
+bool CTFGameRules::IsNormalClass(CBaseEntity *pPlayer)
+{
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer->IsPlayerClass(TF_CLASS_SCOUT) || pTFPlayer->IsPlayerClass(TF_CLASS_SNIPER) || pTFPlayer->IsPlayerClass(TF_CLASS_SOLDIER) ||
+		pTFPlayer->IsPlayerClass(TF_CLASS_DEMOMAN) || pTFPlayer->IsPlayerClass(TF_CLASS_MEDIC) || pTFPlayer->IsPlayerClass(TF_CLASS_HEAVYWEAPONS) ||
+		pTFPlayer->IsPlayerClass(TF_CLASS_PYRO) || pTFPlayer->IsPlayerClass(TF_CLASS_SPY) || pTFPlayer->IsPlayerClass(TF_CLASS_ENGINEER))
+		return true;
+	else
+		return false;
+}
+// For boss characters.
+bool CTFGameRules::IsBossClass(CBaseEntity *pPlayer)
+{
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer->IsPlayerClass(TF_CLASS_SAXTON))
+		return true;
+	else
+		return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -5816,9 +6169,105 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 #ifdef CLIENT_DLL
 	if ( !Q_strcmp( eventName, "game_newmap" ) )
 	{
-		m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+		m_iBirthdayMode = HOLIDAY_RECALCULATE;
+		m_iHalloweenMode = HOLIDAY_RECALCULATE;
+		m_iChristmasMode = HOLIDAY_RECALCULATE;
+		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 	}
 #endif
+}
+
+static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szName, HSCRIPT hEntity )
+{
+	CBaseEntity *pEntity = ToEnt( hEntity );
+	if ( !pEntity )
+		return value;
+
+	IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+
+	if ( pAttribInteface )
+	{
+		string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( szName );
+		float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( value, pEntity, strAttributeClass, NULL );
+		value = flResult;
+	}
+
+	return value;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::RegisterScriptFunctions( void )
+{
+	ScriptRegisterFunctionNamed( g_pScriptVM, AttribHookValue, "GetAttribValue", "Fetch an attribute that is assigned to the provided weapon" );
+
+	char root[ MAX_PATH ]{};
+	Q_strncpy( root, "scripts\\vscripts", sizeof root );
+	Q_FixSlashes( root );
+
+	FileFindHandle_t fh;
+	char const *path = g_pFullFileSystem->FindFirst( root, &fh );
+	while ( path )
+	{
+		CScriptScope hTable{};
+		if ( g_pFullFileSystem->FindIsDirectory( fh ) )
+		{
+			if ( path[0] != '.' && Q_strncmp( path, "weapons", MAX_PATH ) && Q_strncmp( path, "entities", MAX_PATH ) )
+				break;
+
+			continue;
+		}
+
+		HSCRIPT hScript = VScriptCompileScript( path, true );
+
+		char const *className = Q_strrchr( path, CORRECT_PATH_SEPARATOR );
+		if ( hTable.Init( className ) )
+		{
+			if ( hTable.Run( hScript ) == SCRIPT_ERROR )
+			{
+				Warning( "Error running script named %s\n", className );
+				Assert( "Error running script" );
+			}
+
+			HSCRIPT hRegisterFunc = hTable.LookupFunction( "RegisterEnt" );
+			if ( hRegisterFunc != INVALID_HSCRIPT )
+			{
+				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
+				{
+					Warning( "Error running script named %s\n", className );
+					Assert( "Error running script" );
+				}
+
+				hTable.ReleaseFunction( hRegisterFunc );
+			}
+
+			hRegisterFunc = hTable.LookupFunction( "RegisterWep" );
+			if ( hRegisterFunc != INVALID_HSCRIPT )
+			{
+				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
+				{
+					Warning( "Error running script named %s\n", className );
+					Assert( "Error running script" );
+				}
+
+				hTable.ReleaseFunction( hRegisterFunc );
+			}
+
+			hTable.Term();
+		}
+		else
+		{
+			Warning( "Unable to create script scope for %s\n", className );
+		}
+
+		g_pScriptVM->ReleaseScript( hScript );
+
+		path = g_pFullFileSystem->FindNext( fh );
+	}
+
+	g_pFullFileSystem->FindClose( fh );
 }
 
 //-----------------------------------------------------------------------------
@@ -6002,7 +6451,11 @@ void CTFGameRules::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( State_Get() == GR_STATE_STARTGAME )
 	{
-		m_iBirthdayMode = BIRTHDAY_RECALCULATE;
+		m_iBirthdayMode = HOLIDAY_RECALCULATE;
+		m_iHalloweenMode = HOLIDAY_RECALCULATE;
+		m_iChristmasMode = HOLIDAY_RECALCULATE;
+		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
+		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 	}
 }
 
@@ -6150,7 +6603,7 @@ const char *CTFGameRules::GetGameDescription( void )
 			break;
 		case TF_GAMETYPE_CP:
 			if ( IsInKothMode() )
-				return "TF2V (Koth)";
+				return "TF2V (KotH)";
 
 			return "TF2V (CP)";
 			break;
@@ -6158,11 +6611,23 @@ const char *CTFGameRules::GetGameDescription( void )
 			return "TF2V (Payload)";
 			break;
 		case TF_GAMETYPE_ARENA:
+			if ( IsInVSHMode() )
+				return "TF2V (VSH)";
+			
 			return "TF2V (Arena)";
 			break;
 		case TF_GAMETYPE_MVM:
-			return "Implying we will ever have this";
+			return "TF2V (MvM)";
 			break;
+		case TF_GAMETYPE_RD:
+			return "TF2V (RD)";
+			break;
+		case TF_GAMETYPE_PASSTIME:
+			return "TF2V (PASS)";
+			break;
+		case TF_GAMETYPE_PD:
+			return "TF2V (PD)";
+			break;	
 		case TF_GAMETYPE_MEDIEVAL:
 			return "TF2V (Medieval)";
 			break;

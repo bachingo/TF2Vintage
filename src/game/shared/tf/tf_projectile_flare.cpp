@@ -5,6 +5,7 @@
 //=============================================================================//
 #include "cbase.h"
 #include "tf_projectile_flare.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -31,6 +32,9 @@ BEGIN_NETWORK_TABLE( CTFProjectile_Flare, DT_TFProjectile_Flare )
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 #endif
 END_NETWORK_TABLE()
+
+extern ConVar tf2v_minicrits_on_deflect;
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -118,7 +122,7 @@ int	CTFProjectile_Flare::GetDamageType()
 	{
 		iDmgType |= DMG_CRITICAL;
 	}
-	if ( m_iDeflected > 0 )
+	if ( ( m_iDeflected > 0 ) && ( tf2v_minicrits_on_deflect.GetBool() ) )
 	{
 		iDmgType |= DMG_MINICRITICAL;
 	}

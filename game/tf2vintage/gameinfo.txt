@@ -42,9 +42,11 @@
 			// that's used when writing to the "mod" path.
 			game+mod+mod_write+default_write_path		"|gameinfo_path|."
 			
-			//  Load core TF2V assets.
-			game_lv					"|gameinfo_path|vpk/base/tf2v_lv.vpk"
-			game+mod				"|gameinfo_path|vpk/base/tf2v_base.vpk"
+			//  Load base TF2V assets.
+			// game_lv					"|gameinfo_path|vpk/base/tf2v_lv.vpk"
+			game+mod				"|gameinfo_path|vpk/base/tf2v_core.vpk"
+			game+mod				"|gameinfo_path|vpk/base/tf2v_shared.vpk"
+			game+mod				"|gameinfo_path|vpk/base/tf2v_vo_english.vpk"
 			
 			// Where the game's binaries are.
 			gamebin					"|gameinfo_path|bin"

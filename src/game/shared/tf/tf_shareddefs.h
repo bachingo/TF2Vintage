@@ -33,6 +33,14 @@ enum
 	TF_TEAM_BOSS
 };
 
+
+
+#define TF_TEAM_PLAYER_BOSS TF_TEAM_BLUE
+#define TF_TEAM_PLAYER_HORDE TF_TEAM_RED
+
+#define TF_TEAM_MVM_BOTS TF_TEAM_BLUE
+#define TF_TEAM_MVM_PLAYERS TF_TEAM_RED
+
 #define TF_TEAM_AUTOASSIGN (TF_TEAM_COUNT + 1 )
 
 extern const char *g_aTeamNames[TF_TEAM_COUNT];
@@ -110,9 +118,13 @@ enum
 //-----------------------------------------------------------------------------
 // Player Classes.
 //-----------------------------------------------------------------------------
-#define TF_CLASS_COUNT			( TF_CLASS_COUNT_ALL - 1 )
 
 #define TF_FIRST_NORMAL_CLASS	( TF_CLASS_UNDEFINED + 1 )
+#define TF_LAST_NORMAL_CLASS	( TF_CLASS_UNDEFINED + 9 )
+
+#define TF_FIRST_BOSS_CLASS		( TF_LAST_NORMAL_CLASS + 1 )
+#define TF_LAST_BOSS_CLASS		( TF_CLASS_COUNT_ALL - 1 )
+
 
 #define	TF_CLASS_MENU_BUTTONS	( TF_CLASS_RANDOM + 1 )
 
@@ -128,7 +140,13 @@ enum
 	TF_CLASS_HEAVYWEAPONS,
 	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
-	TF_CLASS_ENGINEER,		// TF_CLASS_COUNT
+	TF_CLASS_ENGINEER,		// TF_LAST_NORMAL_CLASS
+	
+	// New classes go here.
+	// These are special classes and are not found normally.
+	TF_CLASS_SAXTON,
+	
+	
 	TF_CLASS_COUNT_ALL,
 
 	TF_CLASS_RANDOM
@@ -275,6 +293,7 @@ enum
 	TF_LOADOUT_SLOT_ACTION,
 	TF_LOADOUT_SLOT_MISC2,
 	TF_LOADOUT_SLOT_ZOMBIE,
+	TF_LOADOUT_SLOT_MEDAL,
 	
 	TF_LOADOUT_SLOT_BUFFER,
 	TF_LOADOUT_SLOT_COUNT
@@ -288,6 +307,9 @@ extern const char *g_aAmmoNames[];
 #define TF_PLAYER_WEAPON_COUNT		5		// This is for weapon slots. for all slots, see TF_LOADOUT_SLOT_COUNT.
 #define TF_PLAYER_GRENADE_COUNT		2
 #define TF_PLAYER_BUILDABLE_COUNT	4
+
+#define TF_PLAYER_MISC_COUNT		2		// Total amount of all misc slots.
+#define TF_PLAYER_ACTION_COUNT		8		// Total amount of all action slots.
 
 #define TF_WEAPON_PRIMARY_MODE		0
 #define TF_WEAPON_SECONDARY_MODE	1
@@ -403,6 +425,7 @@ enum
 	TF_WEAPON_SNIPERRIFLE_REAL,
 	TF_WEAPON_SNIPERRIFLE_CLASSIC,
 	TF_WEAPON_GRENADE_PIPEBOMB_BETA,
+	TF_WEAPON_SHOVELFIST,
 	
 	TF_WEAPON_COUNT
 };
@@ -1300,6 +1323,8 @@ enum
 #define TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT 600 // Damage to give before filling the Concheror rage.
 #define TF_BUFF_REGENONDAMAGE_DEFENSE_COUNT 210 // Damage to take before filling the Concheror rage.
 
+#define TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW 480 // Damage to give before filling the Concheror rage, using the modern value.
+
 #define	MAX_CABLE_CONNECTIONS 4
 
 bool IsObjectAnUpgrade( int iObjectType );
@@ -1535,5 +1560,7 @@ inline int GetEnemyTeam( CBaseEntity *ent )
 }
 
 bool IsSpaceToSpawnHere( const Vector &vecPos );
+
+void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, class CBoneBitList &boneComputed, float flScale );
 
 #endif // TF_SHAREDDEFS_H

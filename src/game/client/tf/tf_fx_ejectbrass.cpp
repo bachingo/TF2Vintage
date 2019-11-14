@@ -15,6 +15,9 @@
 
 extern CTFWeaponInfo *GetTFWeaponInfo( int iWeapon );
 
+ConVar cl_brass_fade_time( "cl_brass_fade_time", "10", FCVAR_CLIENTDLL );
+
+
 //-----------------------------------------------------------------------------
 // Purpose: TF Eject Brass
 //-----------------------------------------------------------------------------
@@ -37,7 +40,7 @@ void TF_EjectBrassCallback( const CEffectData &data )
 						 random->RandomFloat( -30, 30 ) * vUp;
 		
 		
-	float flLifeTime = TEMP_OBJECT_LIFETIME;
+	float flLifeTime = cl_brass_fade_time.GetFloat();
 	model_t *pModel = (model_t *)engine->LoadModel( pWeaponInfo->m_szBrassModel );
 	if ( !pModel )
 		return;

@@ -124,7 +124,8 @@ static const DRPClassImages_t s_pClassImages[TF_CLASS_COUNT_ALL] =
 	{ "heavy_red",		"heavy_red_gray",		"heavy_blue",		"heavy_blue_gray"		},
 	{ "pyro_red",		"pyro_red_gray",		"pyro_blue",		"pyro_blue_gray"		},
 	{ "spy_red",		"spy_red_gray",			"spy_blue",			"spy_blue_gray"			},
-	{ "engineer_red",	"engineer_red_gray",	"engineer_blue",	"engineer_blue_gray"	}
+	{ "engineer_red",	"engineer_red_gray",	"engineer_blue",	"engineer_blue_gray"	},
+	{ "tf2v_drp_logo",	"tf2v_drp_logo",		"tf2v_drp_logo",	"tf2v_drp_logo"			}
 };
 
 //-----------------------------------------------------------------------------

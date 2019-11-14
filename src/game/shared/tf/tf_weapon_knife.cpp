@@ -190,9 +190,18 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 		if ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget )
 		{
 			// this will be a backstab, do the strong anim.
-			// Do twice the target's health so that random modification will still kill him.
-			flBaseDamage = pTarget->GetHealth() * 2;
-
+			if (!TFGameRules()->IsBossClass(pTarget))
+			{
+				// Do twice the target's health so that random modification will still kill him.
+				flBaseDamage = pTarget->GetHealth() * 2;
+			}
+			else
+			{
+				// If we're backstabbing a boss class, we don't do an instant kill but rather based on the total health.
+				int iBossMaxHealth = pTarget->GetMaxHealth();
+				float flBossDamageModifier = (0.784314 + 512.0);
+				flBaseDamage = pow(float(iBossMaxHealth), flBossDamageModifier);
+			}
 			// Declare a backstab.
 			iCustomDamage = TF_DMG_CUSTOM_BACKSTAB;
 		}

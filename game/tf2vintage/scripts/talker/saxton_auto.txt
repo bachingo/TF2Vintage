@@ -1,0 +1,201 @@
+//--------------------------------------------------------------------------------------------------------------
+// Saxton Response Rule File - AUTO GENERATED DO NOT EDIT BY HAND
+//--------------------------------------------------------------------------------------------------------------
+
+Criterion "SaxtonNotIdleSpeech" "SaxtonIdleSpeech" "!=1" "required" weight 0
+
+
+Response item_birdhead_round_startSaxton
+{
+	scene "scenes/Player/Saxton/low/7464.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7464.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7465.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7466.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7469.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7470.vcd" predelay "1.0, 5.0"
+}
+Rule item_birdhead_round_startSaxton
+{
+	criteria ConceptPlayerRoundStart IsSaxton 100PercentChance IsSaxtonBirdHead
+	Response item_birdhead_round_startSaxton
+}
+
+Response item_birdhead_uberSaxton
+{
+	scene "scenes/Player/Saxton/low/7473.vcd" 
+	scene "scenes/Player/Saxton/low/7474.vcd" 
+}
+Rule item_birdhead_uberSaxton
+{
+	criteria ConceptMedicChargeDeployed IsSaxton  IsInvulnerable MedicNotInvulnerableSpeech 20PercentChance IsSaxtonBirdHead
+	Response item_birdhead_uberSaxton
+}
+
+Response item_maggot_idleSaxton
+{
+	scene "scenes/Player/Saxton/low/7494.vcd" 
+	scene "scenes/Player/Saxton/low/7492.vcd" 
+	scene "scenes/Player/Saxton/low/7493.vcd" 
+	scene "scenes/Player/Saxton/low/7498.vcd" 
+	scene "scenes/Player/Saxton/low/7496.vcd" 
+	scene "scenes/Player/Saxton/low/7495.vcd" 
+	scene "scenes/Player/Saxton/low/7497.vcd" 
+	scene "scenes/Player/Saxton/low/7500.vcd" 
+	scene "scenes/Player/Saxton/low/7502.vcd" 
+	scene "scenes/Player/Saxton/low/7501.vcd" 
+}
+Rule item_maggot_idleSaxton
+{
+	criteria ConceptPlayerExpression IsSaxton 30PercentChance IsSaxtonMaggotHat SaxtonNotIdleSpeech
+	ApplyContext "SaxtonIdleSpeech:1:10"
+	Response item_maggot_idleSaxton
+}
+
+
+Response item_maggot_round_battlecrySaxton
+{
+	scene "scenes/Player/Saxton/low/7482.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7484.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7485.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7487.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7489.vcd" predelay "1.0, 5.0"
+}
+
+
+Rule item_maggot_round_battlecrySaxton
+{
+	criteria ConceptPlayerBattleCry IsHeavy IsSaxtonMaggotHat
+	Response item_maggot_round_battlecrySaxton
+}
+
+
+
+Response item_maggot_round_startSaxton
+{
+	scene "scenes/Player/Saxton/low/7482.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7484.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7485.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7487.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7489.vcd" predelay "1.0, 5.0"
+}
+Rule item_maggot_round_startSaxton
+{
+	criteria ConceptPlayerRoundStart IsSaxton 100PercentChance IsSaxtonMaggotHat
+	Response item_maggot_round_startSaxton
+}
+
+Response item_maggot_uberSaxton
+{
+	scene "scenes/Player/Saxton/low/7490.vcd" 
+	scene "scenes/Player/Saxton/low/7491.vcd" 
+}
+Rule item_maggot_uberSaxton
+{
+	criteria ConceptMedicChargeDeployed IsSaxton  IsInvulnerable MedicNotInvulnerableSpeech 20PercentChance IsSaxtonMaggotHat
+	Response item_maggot_uberSaxton
+}
+
+Response item_wizard_dominationSaxton
+{
+	scene "scenes/Player/Saxton/low/7512.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/8570.vcd" predelay "2.5"
+}
+Rule item_wizard_dominationSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated 30PercentChance IsSaxtonWizardHat
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response item_wizard_dominationSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Auto Speech
+//--------------------------------------------------------------------------------------------------------------
+Response item_maggot_healedSaxton
+{
+	scene "scenes/Player/Saxton/low/7505.vcd" 
+	scene "scenes/Player/Saxton/low/7504.vcd" 
+}
+Rule item_maggot_healedSaxton
+{
+	criteria ConceptMedicChargeStopped IsSaxton SuperHighHealthContext SaxtonNotSaidHealThanks IsSaxtonMaggotHat 10PercentChance
+	ApplyContext "SaxtonSaidHealThanks:1:20"
+	Response item_maggot_healedSaxton
+}
+
+Response item_unicorn_round_startSaxton
+{
+	scene "scenes/Player/Saxton/low/7457.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7456.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7454.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7455.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7453.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7452.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/7458.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/8562.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/8563.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/8564.vcd" predelay "1.0, 5.0"
+}
+Rule item_unicorn_round_startSaxton
+{
+	criteria ConceptPlayerRoundStart IsSaxton 100PercentChance IsUnicornHead
+	Response item_unicorn_round_startSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Auto Speech Combat
+//--------------------------------------------------------------------------------------------------------------
+Response item_maggot_dominationSaxton
+{
+	scene "scenes/Player/Saxton/low/7510.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/8565.vcd" predelay "2.5"
+}
+Rule item_maggot_dominationSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated 30PercentChance IsSaxtonMaggotHat
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response item_maggot_dominationSaxton
+}
+
+Response item_unicorn_dominationSaxton
+{
+	scene "scenes/Player/Saxton/low/7460.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/7459.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/7463.vcd" predelay "2.5"
+}
+Rule item_unicorn_dominationSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated 30PercentChance IsUnicornHead
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response item_unicorn_dominationSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Auto Speech Pain
+//--------------------------------------------------------------------------------------------------------------
+Response item_birdhead_on_fireSaxton
+{
+	scene "scenes/Player/Saxton/low/7479.vcd" 
+	scene "scenes/Player/Saxton/low/7481.vcd" 
+}
+Rule item_birdhead_on_fireSaxton
+{
+	criteria ConceptFire IsSaxton SaxtonIsNotStillonFire  40PercentChance IsSaxtonBirdHead
+	ApplyContext "SaxtonOnFire:1:7"
+	Response item_birdhead_on_fireSaxton
+}
+
+Response item_maggot_on_fireSaxton
+{
+	scene "scenes/Player/Saxton/low/7508.vcd" 
+	scene "scenes/Player/Saxton/low/7507.vcd" 
+}
+Rule item_maggot_on_fireSaxton
+{
+	criteria ConceptFire IsSaxton SaxtonIsNotStillonFire  20PercentChance IsSaxtonMaggotHat
+	ApplyContext "SaxtonOnFire:1:7"
+	Response item_maggot_on_fireSaxton
+}
+

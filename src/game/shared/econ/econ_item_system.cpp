@@ -438,7 +438,7 @@ public:
 		GET_STRING( pItem, pData, item_description );
 		GET_STRING( pItem, pData, item_type_name );
 		
-		/*const char *pszQuality = pData->GetString( "item_quality" );
+		const char *pszQuality = pData->GetString( "item_quality" );
 		if ( pszQuality[0] )
 		{
 			int iQuality = UTIL_StringFieldToInt( pszQuality, g_szQualityStrings, ARRAYSIZE( g_szQualityStrings ) );
@@ -446,10 +446,10 @@ public:
 			{
 				pItem->item_quality = iQuality;
 			}
-		}*/
+		}
 		
 		// All items are vintage quality
-		pItem->item_quality = QUALITY_VINTAGE;
+		//pItem->item_quality = QUALITY_VINTAGE;
 
 		GET_STRING( pItem, pData, item_logname );
 		GET_STRING( pItem, pData, item_iconname );
@@ -490,7 +490,11 @@ public:
 		GET_INT( pItem, pData, attach_to_hands_vm_only );
 		GET_BOOL( pItem, pData, act_as_wearable );
 		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
+		
 		GET_BOOL(pItem, pData, is_reskin);
+		GET_STRING( pItem, pData, holiday_restriction );
+		GET_INT( pItem, pData, year );
+		GET_BOOL(pItem, pData, is_custom_content);
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{

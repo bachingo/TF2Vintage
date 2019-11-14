@@ -390,7 +390,7 @@ void CTFGameStats::Event_PlayerSpawned( CTFPlayer *pPlayer )
 		}
 	}
 
-	if ( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_CLASS_COUNT )
+	if ( iClass >= TF_FIRST_NORMAL_CLASS && iClass < TF_CLASS_COUNT_ALL )
 	{
 		SendStatsToPlayer( pPlayer, STATMSG_PLAYERSPAWN );
 	}

@@ -232,7 +232,7 @@ void CreateBotName( int iTeamNum, int iClassIdx, int iSkillLevel, char *out, int
 		}
 
 		const wchar_t *szLClassname = nullptr;
-		if ( ( iClassIdx-1 ) < TF_CLASS_COUNT )
+		if ( ( iClassIdx-1 ) < TF_LAST_NORMAL_CLASS )
 		{
 			szLClassname = g_pVGuiLocalize->Find( g_aPlayerClassNames[iClassIdx] );
 		}

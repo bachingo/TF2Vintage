@@ -229,7 +229,7 @@ enum CastVote
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65  // Absolute max players supported
 #elif defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
-	#define MAX_PLAYERS				128 
+	#define MAX_PLAYERS				129 
 #else
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
@@ -237,9 +237,11 @@ enum CastVote
 #define MAX_PLACE_NAME_LENGTH		18
 
 #if defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
-#define MAX_FOV						100
+#define MAX_FOV						90
+#define MAX_FOV_UNLOCKED			140
 #else
 #define MAX_FOV						90
+#define MAX_FOV_UNLOCKED			90
 #endif
 
 //===================================================================================================================

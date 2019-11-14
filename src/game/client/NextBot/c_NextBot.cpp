@@ -11,3 +11,14 @@ END_RECV_TABLE()
 C_NextBotCombatCharacter::C_NextBotCombatCharacter()
 {
 }
+
+void C_NextBotCombatCharacter::Spawn( void )
+{
+	BaseClass::Spawn();
+}
+
+void C_NextBotCombatCharacter::UpdateClientSideAnimation( void )
+{
+	if ( !IsDormant() )
+		BaseClass::UpdateClientSideAnimation();
+}

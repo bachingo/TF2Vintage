@@ -457,6 +457,9 @@ public:
 	bool	m_bBlastLaunched;
 
 	bool	m_bIsPlayerADev;
+	bool	m_bIsPlayerAVIP;
+	int		m_iPlayerVIPRanking;
+	
 
 	int					StateGet( void ) const;
 
@@ -476,7 +479,9 @@ public:
 	void				ManageRandomWeapons( TFPlayerClassData_t *pData );
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 	void				ManageGrenades( TFPlayerClassData_t *pData );
+	void				ManagePlayerCosmetics( TFPlayerClassData_t *pData );
 	void				EnableZombies( TFPlayerClassData_t *pData );
+	void				EnableVIP( TFPlayerClassData_t *pData , int iMedalType );
 
 	void				PostInventoryApplication( void );
 	
@@ -715,10 +720,7 @@ private:
 	CUtlVector<AppliedContext_t> m_hActiveContexts;
 
 public:
-	bool				SetPowerplayEnabled( bool bOn );
-	bool				PlayerHasPowerplay( void );
-	void				PowerplayThink( void );
-	float				m_flPowerPlayTime;
+	int				GetPlayerVIPRanking( void );
 };
 
 //-----------------------------------------------------------------------------

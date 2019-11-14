@@ -65,6 +65,7 @@
 #include "tf_weapon_invis.h"
 #include "tf_weapon_knife.h"
 #include "tf_weapon_syringe.h"
+#include "tf_weapon_shovel.h"
 
 #ifndef _X360
 #include "steam/isteamuserstats.h"
@@ -116,7 +117,6 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
 
-
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
@@ -124,6 +124,8 @@ extern ConVar sv_alltalk;
 
 extern ConVar tf_teamtalk;
 extern ConVar tf_halloween;
+extern ConVar tf_christmas;
+extern ConVar tf_birthday;
 extern ConVar tf_enable_grenades;
 extern ConVar tf_arena_force_class;
 extern ConVar tf_spy_invis_time;
@@ -137,14 +139,25 @@ ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "0", FCVAR_NOTIFY, "Enable 
 ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes players spawn with random classes." );
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
 ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
+ConVar tf2v_allow_mod_weapons( "tf2v_allow_mod_weapons", "0", FCVAR_NOTIFY, "Allows players to use non-standard TF2 weapons." );
 ConVar tf2v_bonus_distance_range( "tf2v_bonus_distance_range", "10", FCVAR_NOTIFY, "Percent variation in range calculations for damage." );
 ConVar tf2v_enforce_whitelist( "tf2v_enforce_whitelist", "0", FCVAR_NOTIFY, "Requires items to be verified from a server whitelist." );
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
 ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
 
-// TF2V specific cvars
 ConVar tf2v_disable_holiday_loot( "tf2v_disable_holiday_loot", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disable loot drops in holiday gamemodes" );
+
+ConVar tf2v_player_misses( "tf2v_player_misses", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
+ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
+
+ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
+ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
+
+ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
+ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
+
+
 
 
 
@@ -501,10 +514,12 @@ CTFPlayer::CTFPlayer()
 	m_bBlastLaunched = false;
 	m_bJumpEffect = false;
 
-	memset( m_WeaponPreset, 0, TF_CLASS_COUNT * TF_LOADOUT_SLOT_COUNT );
+	memset( m_WeaponPreset, 0, TF_CLASS_COUNT_ALL * TF_LOADOUT_SLOT_COUNT );
 
 	m_bIsPlayerADev = false;
-
+	m_bIsPlayerAVIP = false;
+	m_iPlayerVIPRanking = 0;
+	
 	m_flStunTime = 0.0f;
 
 	m_bInArenaQueue = false;
@@ -1073,9 +1088,16 @@ void CTFPlayer::Spawn()
 	if ( tf2v_randomizer.GetBool() || tf2v_random_classes.GetBool() )
 	{
 		// Random class
-		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT ) );
+		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS ) );
 	}
 
+	if ( ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_TEAM_PLAYER_BOSS ) ) )
+	{
+		// Random boss character.
+		SetDesiredPlayerClassIndex( RandomInt( TF_FIRST_BOSS_CLASS, TF_LAST_BOSS_CLASS ) );
+	}
+
+	
 	m_flSpawnTime = gpGlobals->curtime;
 	UpdateModel();
 
@@ -1194,7 +1216,6 @@ void CTFPlayer::Spawn()
 	m_flNextSpeakWeaponFire = gpGlobals->curtime;
 
 	m_bIsIdle = false;
-	m_flPowerPlayTime = 0.0;
 
 	m_nBlastJumpFlags = 0;
 
@@ -1308,6 +1329,11 @@ void CTFPlayer::Regenerate( void )
 		m_Shared.RemoveCond( TF_COND_MAD_MILK );
 	}
 
+	if ( m_Shared.InCond( TF_COND_BLEEDING ) )
+	{
+		m_Shared.RemoveCond( TF_COND_BLEEDING );
+	}
+
 	// Remove bonk! atomic punch phase
 	if ( m_Shared.InCond( TF_COND_PHASE ) )
 	{
@@ -1373,6 +1399,15 @@ int CTFPlayer::GetMaxHealthForBuffing( void ) const
 {
 	int iMaxHealth = const_cast<CTFPlayerClass &>( m_PlayerClass ).GetMaxHealth();
 	CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth );
+	
+	// If we're using a boss weapon, apply player scaling to our health so that more player involved is more health.
+	CTFShovelFist *pBoss = dynamic_cast<CTFShovelFist *>(const_cast<CTFPlayer *>(this)->Weapon_OwnsThisID(TF_WEAPON_SHOVELFIST));
+	if ( pBoss )
+	{
+		CUtlVector<CTFPlayer *> pListPlayers;
+		int iPlayerScale = ( pListPlayers.Count() - 1 ); // Amount of active players, minus the boss player.
+		iMaxHealth += pow(((760.8 + (iPlayerScale))*((iPlayerScale)-1)), 1.0341); // We already add the 2046HP in the playerclass file.
+	}
 
 	CTFSword *pSword = dynamic_cast<CTFSword *>( const_cast<CTFPlayer *>( this )->Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
 	if ( pSword )
@@ -1470,6 +1505,10 @@ void CTFPlayer::GiveDefaultItems()
 	{
 		GiveAmmo( GetMaxAmmo( iAmmo ), iAmmo, false, TF_AMMO_SOURCE_RESUPPLY );
 	}
+	
+	// Validate our inventory.
+	ValidateWeapons( true );
+	ValidateWearables();
 
 	// Give weapons.
 	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating )
@@ -1478,10 +1517,26 @@ void CTFPlayer::GiveDefaultItems()
 		ManageRegularWeaponsLegacy( pData );
 	else if ( !tf2v_randomizer.GetBool() )
 		ManageRegularWeapons( pData );
+	
+	// Give ourselves cosmetic items.
+	if ( tf2v_allow_cosmetics.GetBool() )
+		ManagePlayerCosmetics( pData );
+	
+	// Give ourselves zombie skins when it's Halloween.
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
+		EnableZombies( pData );
+	
+	// If we're a VIP player, give a medal.
+	CTFPlayer *pPlayer = this;
+	if ( pPlayer )
+		EnableVIP( pData, pPlayer->m_iPlayerVIPRanking );
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
 		ManageGrenades( pData );
+	
+	// Update bodygroups and everything dealing with inventory processing.
+	PostInventoryApplication();
 
 	// Give a builder weapon for each object the playerclass is allowed to build
 	ManageBuilderWeapons( pData );
@@ -1799,19 +1854,11 @@ void CTFPlayer::ValidateWearables( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
-	ValidateWeapons( true );
-	ValidateWearables();
 
-	for (int iSlot = 0; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
+	for (int iSlot = 0; iSlot <= TF_PLAYER_WEAPON_COUNT; ++iSlot)
 	{
-		if ( (iSlot == TF_LOADOUT_SLOT_BUILDING ) || (iSlot == TF_LOADOUT_SLOT_UTILITY ) )
-		continue;	// These are special slots, we don't bother to check them.
-		
-		if (!tf_halloween.GetBool() && iSlot == TF_LOADOUT_SLOT_ZOMBIE)
-		continue;	// If it's not Halloween, just skip the action slot.
-		
-		if ( !tf2v_allow_cosmetics.GetBool() && ( ( iSlot > TF_PLAYER_WEAPON_COUNT ) && ( iSlot != TF_LOADOUT_SLOT_ZOMBIE ) ) )
-		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
+		if (iSlot == TF_LOADOUT_SLOT_BUILDING )  
+		continue;	// Don't check this slot here.
 	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 		{
@@ -1825,40 +1872,62 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		if ( pItem)
 		{
 			const char *pszClassname = pItem->GetEntityName();
+			CEconItemDefinition *pItemDef = pItem->GetStaticData();
 			Assert( pszClassname );
 			bool bWhiteListedWeapon = true; // Defaulted to true, since whitelisting is a niche server option.
+			bool bIsReskin = false;			// Defaulted to false, since reskins aren't common.
+			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
+			bool bIsCustomContent = false;	
 			
-			if ( tf2v_enforce_whitelist.GetBool() ) // Only run this when we need to.
+			// Only run these checks when necessary.
+			
+			if ( tf2v_enforce_whitelist.GetBool() ) 	// Checks if it's allowed on the server whitelist.
 				bWhiteListedWeapon = IsWhiteListed(pszClassname);
-			
-			if ( ( bWhiteListedWeapon == true ) || !tf2v_enforce_whitelist.GetBool() ) // If the weapon is allowed, give it to the player.
+				
+			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
+				bIsReskin = pItemDef->is_reskin;
+				
+			if ( !tf2v_allow_mod_weapons.GetBool() )	// Checks if it's a custom weapon.
+				bIsCustomContent = pItemDef->is_custom_content;
+				
+			if ( tf2v_force_year_items.GetBool() )
 			{
-				CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
-
-				if ( pEntity )
+				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
-					pEntity->GiveTo( this );
+					if ( (pItemDef->year) > 2007 ) 
+					bWhiteListedWeapon = false;
+				}
+				else
+				{
+					if ((pItemDef->year) > tf2v_allowed_year_items.GetInt())
+					bWhiteListedWeapon = false;
 				}
 			}
-			else // If the weapon is banned, give them the stock weapon.
-				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);	
-		}
-
-		// We check to make sure it's also not a reskin.
-		int iIsReskin = 0;
-		if (!tf2v_allow_reskins.GetBool())
-		{
-			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>(Weapon_GetSlot(iSlot));
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, iIsReskin, is_reskin);
-			if (iIsReskin != 0) // If it's a reskin, swap to the default weapon.
+		
+			// Checks for holiday restrictions.
+			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
+				bHolidayRestrictedItem = true;
+			
+			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsCustomContent == true ) ) ) // If the weapon is banned, swap for a stock weapon.
 			{
-				GetTFInventory()->GetWeapon(m_PlayerClass.GetClassIndex(), iSlot);
+				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
+			
+			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+
+			if ( pEntity )
+			{
+				pEntity->GiveTo( this );
+			}
+			
 		}
 		
 	}
 
-	PostInventoryApplication();
 }
 
 //-----------------------------------------------------------------------------
@@ -1882,19 +1951,9 @@ void CTFPlayer::PostInventoryApplication( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
-	for (int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon)
-	{
-		if ( (iWeapon == TF_LOADOUT_SLOT_BUILDING ) || (iWeapon == TF_LOADOUT_SLOT_UTILITY ) )
-		continue;	// These are special slots, we don't bother to check them.
 	
-		if ( (iWeapon >=TF_LOADOUT_SLOT_HAT && iWeapon != TF_LOADOUT_SLOT_ZOMBIE ) )
-			continue; // Always bail on cosmetics, other than zombie skins.
-		
-		if (tf_halloween.GetBool() && iWeapon == TF_LOADOUT_SLOT_ZOMBIE)
-		{
-			EnableZombies( pData );
-			continue;	// If it's Halloween, make sure it's our class' zombie skin.
-		}
+	for (int iWeapon = 0; iWeapon <= TF_PLAYER_WEAPON_COUNT; ++iWeapon)
+	{
 		
 		int iWeaponID = GetTFInventory()->GetWeapon( m_PlayerClass.GetClassIndex(), iWeapon );
 
@@ -1981,28 +2040,14 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for (int i = 0; i < TF_LOADOUT_SLOT_BUFFER; ++i)
+	for (int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i)
 	{
-		if ( i == TF_LOADOUT_SLOT_UTILITY )
-		continue;	// Don't check this slot, it's currently unused.
-	
-		if (!tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ZOMBIE)
-		continue;	// If it's not Halloween, just skip the action slot.
-		
-		if ( !tf2v_allow_cosmetics.GetBool() && ( ( i > TF_PLAYER_WEAPON_COUNT ) && (i != TF_LOADOUT_SLOT_ZOMBIE ) ) )
-		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
-	
-		if ( tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ZOMBIE )
-		{
-		EnableZombies( pData );
-		continue;	// If it's Halloween, make sure it's our class' zombie skin.
-		}
 		
 		CTFInventory *pInv = GetTFInventory();
 		Assert( pInv );
 
 		// Get a random item for our weapon slot
-		int iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+		int iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 		int iSlot = i;
 
 		// Spy's equip slots do not correct match the weapon slot so we need to accommodate for that
@@ -2050,7 +2095,6 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		}
 	}
 
-	PostInventoryApplication();
 }
 
 
@@ -2098,12 +2142,81 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
+{
+
+	for (int iSlot = TF_LOADOUT_SLOT_HAT; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
+	{
+		if ( ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) )
+		continue;	// These are special slots, we don't check these.
+	
+		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
+		{
+			// Nothing to do here.
+			continue;
+		}
+		
+		// Give us an item from the inventory.
+		CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
+
+		if ( pItem)
+		{
+			const char *pszClassname = pItem->GetEntityName();
+			CEconItemDefinition *pItemDef = pItem->GetStaticData();
+			Assert( pszClassname );
+			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
+			bool bWhiteListedCosmetic = true; // Only concerned with this when it's before the item's time (Time Paradox!)
+			
+			if ( tf2v_force_year_items.GetBool() )
+			{
+				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
+				{
+					if ( (pItemDef->year) > 2007 ) 
+					bWhiteListedCosmetic = false;
+				}
+				else
+				{
+					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt() )
+					bWhiteListedCosmetic = false;
+				}
+			}
+			
+			// Checks for holiday restrictions.
+			if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) || ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
+				bHolidayRestrictedItem = true;
+			else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
+				bHolidayRestrictedItem = true;
+			
+			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic == false ) )  // If the item is banned, swap to the default cosmetic.
+			{
+				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
+			}
+			
+			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+
+			if ( pEntity )
+			{
+				pEntity->GiveTo( this );
+			}
+
+		}
+		
+	}
+
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 {
-	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) != NULL )
+	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) == NULL )
 	{
 		// If there is no item in this slot (which there should always be for zombies) error and return.
 		Assert(GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ));
@@ -2125,6 +2238,55 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 			pEntity->GiveTo( this );
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData , int iMedalType )
+{
+	// Check to determine which of the VIP medals we should give them.
+	int iItemID = 34;
+	
+	if ( iMedalType == 0 )
+		return;		// Nothing to do here.
+	
+	switch (iMedalType)
+	{
+		case -1:
+			iItemID = 121;
+			break;
+			
+		case 1:
+			iItemID = 170;
+			break;
+
+		case 2:
+			iItemID = 164;
+			break;
+			
+		case 3:
+			iItemID = 165;
+			break;
+		
+		case 4:
+			iItemID = 166;
+			break;
+	}
+		
+	
+    if ( GetItemSchema()->GetItemDefinition( iItemID ) )
+    {
+        CEconItemView econItem( iItemID );
+        CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( "tf_wearable", 0, &econItem ) );
+
+        if ( pEntity )
+        {
+            pEntity->GiveTo( this );
+        }
+    }
+
 }
 
 //-----------------------------------------------------------------------------
@@ -2847,7 +3009,7 @@ void CTFPlayer::ChangeTeam( int iTeamNum, bool bAutoTeam/*= false*/, bool bSilen
 //-----------------------------------------------------------------------------
 void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 {
-	if ( !tf2v_randomizer.GetBool() || tf2v_random_classes.GetBool() )
+	if ( !tf2v_randomizer.GetBool() || !tf2v_random_classes.GetBool() )
 	{
 		if ( GetNextChangeClassTime() > gpGlobals->curtime )
 			return;
@@ -2885,11 +3047,18 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			bShouldNotRespawn = true;
 		}
 
+		bool bCanBeBoss = false;
+		if ( TFGameRules()->IsInVSHMode() && ( GetTeamNumber() == TF_TEAM_PLAYER_BOSS ) )
+			bCanBeBoss = true;
+
+			
 		if ( stricmp( pClassName, "random" ) != 0 )
 		{
 			int i = 0;
+				
+			int iMaxClass = bCanBeBoss ? ( TF_CLASS_COUNT_ALL ) : ( TF_LAST_NORMAL_CLASS );
 
-			for ( i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
+			for (i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++)
 			{
 				if ( stricmp( pClassName, GetPlayerClassData( i )->m_szClassName ) == 0 )
 				{
@@ -2898,7 +3067,13 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 				}
 			}
 
-			if ( i > TF_CLASS_COUNT )
+			// If we're selected to become a boss character, use a random boss.
+			if (bCanBeBoss)
+			{
+				iClass = random->RandomInt( TF_FIRST_BOSS_CLASS, TF_LAST_BOSS_CLASS );
+			}
+
+			if ( i > iMaxClass )
 			{
 				ClientPrint( this, HUD_PRINTCONSOLE, UTIL_VarArgs( "Invalid class name \"%s\".\n", pClassName ) );
 				return;
@@ -2906,12 +3081,21 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		}
 		else
 		{
-			// The player has selected Random class...so let's pick one for them.
-			do
+			// If we can be a boss character, switch to a boss.
+			if (bCanBeBoss)
 			{
-				// Don't let them be the same class twice in a row
-				iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
-			} while ( iClass == GetPlayerClass()->GetClassIndex() );
+				iClass = random->RandomInt( TF_FIRST_BOSS_CLASS, TF_LAST_BOSS_CLASS );
+			}
+			else
+			{
+				// The player has selected Random class...so let's pick one for them.
+				do
+				{
+					// Don't let them be the same class twice in a row
+					iClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS);
+
+				} while (iClass == GetPlayerClass()->GetClassIndex());
+			}
 		}
 
 		if ( !TFGameRules()->CanPlayerChooseClass( this, iClass ) )
@@ -3338,7 +3522,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 				// PistonMiner: Made it so it doesnt pick your own team.
 				do
 				{
-					nClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+					nClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 
 					GetTeamNumber() == TF_TEAM_BLUE ? nTeam = TF_TEAM_RED : nTeam = TF_TEAM_BLUE;
 
@@ -4021,14 +4205,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
 	CTFWeaponBase *pWeapon = NULL;
 
-	//bool bObject = false;
+	bool bObject = false;
 
 	// If this is a base object get the builder
 	if ( pAttacker && pAttacker->IsBaseObject() )
 	{
 		CBaseObject *pObject = static_cast<CBaseObject *>( pAttacker );
 		pAttacker = pObject->GetBuilder();
-		//bObject = true;
+		bObject = true;
 	}
 
 	if ( inputInfo.GetWeapon() )
@@ -4107,9 +4291,19 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	int bTookDamage = 0;
 
 	int bitsDamage = inputInfo.GetDamageType();
+	
+	
+	// We calculate out a random chance of a critical miss happening.
+	bool bIsCriticalMiss = false;
+	if ( ( tf2v_misschance.GetFloat() > 0.0f ) && ( tf2v_player_misses.GetBool() ) )
+	{
+		int iRandomChance = RandomFloat(0.0f,99.0f);
+		if ( iRandomChance <= tf2v_misschance.GetFloat() )
+			bIsCriticalMiss = true;
+	}
 
 	// If we're invulnerable, force ourselves to only take damage events only, so we still get pushed
-	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) || m_Shared.InCond( TF_COND_PHASE ) )
+	if ( m_Shared.InCond( TF_COND_INVULNERABLE ) || m_Shared.InCond( TF_COND_PHASE ) || (bIsCriticalMiss) )
 	{
 		bool bAllowDamage = false;
 
@@ -4143,7 +4337,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 			}
 
-			if ( m_Shared.InCond( TF_COND_PHASE ) )
+			if ( ( m_Shared.InCond( TF_COND_PHASE ) ) || ( bIsCriticalMiss ) )
 			{
 				CEffectData	data;
 				data.m_nHitBox = GetParticleSystemIndex( "miss_text" );
@@ -4154,7 +4348,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				CSingleUserRecipientFilter filter( (CBasePlayer *)pAttacker );
 				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
 
-				SpeakConceptIfAllowed( MP_CONCEPT_DODGE_SHOT );
+				if ( m_Shared.InCond( TF_COND_PHASE ) )
+					SpeakConceptIfAllowed( MP_CONCEPT_DODGE_SHOT );
 			}
 			return 0;
 		}
@@ -4185,7 +4380,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if (pTFAttacker->m_Shared.InCond(TF_COND_REGENONDAMAGEBUFF))
+	if (pTFAttacker && pTFAttacker->m_Shared.InCond(TF_COND_REGENONDAMAGEBUFF))
 	{
 		// Buffed players heal when hit enemy.
 		float flDamage = info.GetDamage();
@@ -4265,8 +4460,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
 			// Build rage
-			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
-			pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
+			if ( !tf2v_use_new_buff_charges.GetBool() )
+			{
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
+			}
+			else if ( tf2v_use_new_buff_charges.GetBool() )
+			{
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_DEFENSE);
+				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW / 100), TF_BUFF_REGENONDAMAGE);
+			}
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -4535,8 +4739,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		// Battalion's Backup negates all crit damage
 		bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
 
+		
 		float flDamage = info.GetDamage();
-		/*if ( bObject )
+		if ( bObject && tf2v_sentry_resist_bonus.GetBool() )
 		{
 			// 50% resistance to sentry damage
 			info.SetDamage( flDamage * 0.50f );
@@ -4545,17 +4750,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			// 35% to all other sources
 			info.SetDamage( flDamage * 0.65f );
-		}*/
-
-		// 35% damage resist from all sources
-		info.SetDamage( flDamage * 0.65f );
+		}
 	}
 
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
 
 	// Make sure we're not building damage off of ourself or fall damage
-	if ( pAttacker != this && !( bitsDamage & DMG_FALL ) )
+	if ( ( pAttacker != this && !( bitsDamage & DMG_FALL ) ) & ( !tf2v_use_new_buff_charges.GetBool() ) )
 	{
 		// Build rage on damage taken
 		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_DEFENSE_COUNT / 100), TF_BUFF_DEFENSE);
@@ -6840,7 +7042,7 @@ void CTFPlayer::ForceRespawn( void )
 		// Don't let them be the same class twice in a row
 		do
 		{
-			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT );
+			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
 		} while ( iDesiredClass == GetPlayerClass()->GetClassIndex() );
 
 		bRandom = true;
@@ -8366,9 +8568,16 @@ void CTFPlayer::Taunt( void )
 		{
 			SetAbsVelocity( vec3_origin );
 		}
+			
+
 		if ( V_stricmp( szResponse, "scenes/player/medic/low/taunt03.vcd" ) == 0 )
 		{
 			EmitSound( "Taunt.MedicViolin" );
+		}
+
+		if (V_stricmp(szResponse, "scenes/player/medic/low/taunt03_uber.vcd") == 0)
+		{
+			EmitSound("Taunt.MedicViolinUber");
 		}
 
 		// Setup a taunt attack if necessary.
@@ -8983,7 +9192,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 				bool bSameTeam = InSameTeam( pTFPlayer );
 				criteriaSet.AppendCriteria( "crosshair_enemy", bSameTeam ? "No" : "Yes" );
 
-				if ( iClass > TF_CLASS_UNDEFINED && iClass <= TF_CLASS_COUNT )
+				if ( iClass > TF_CLASS_UNDEFINED && iClass < TF_CLASS_COUNT_ALL )
 				{
 					criteriaSet.AppendCriteria( "crosshair_on", g_aPlayerClassNames_NonLocalized[iClass] );
 				}
@@ -9114,7 +9323,7 @@ IResponseSystem *CTFPlayer::GetResponseSystem()
 		iClass = m_Shared.GetDisguiseClass();
 	}
 
-	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_CLASS_COUNT );
+	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_CLASS_COUNT_ALL );
 	bool bValidConcept = ( m_iCurrentConcept >= 0 && m_iCurrentConcept < MP_TF_CONCEPT_COUNT );
 	Assert( bValidClass );
 	Assert( bValidConcept );
@@ -9753,28 +9962,100 @@ CON_COMMAND_F( give_particle, NULL, FCVAR_CHEAT )
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFPlayer::SetPowerplayEnabled( bool bOn )
+
+// Rank -1.
+// Special rank for founding TF2V.
+uint64 VIPRANKS1[] =
 {
-	return false;
+	76561197984621385, // ZOOPWOOP
+};
+
+// Rank 1.
+// The non-anonymous developers of TF2V.
+uint64 VIPRANK1[] =
+{
+	76561198168440306, // BSUV
+	76561198032163560, // Anthony
+	76561198076264543, // Deathreus
+	76561198315815308, // Eshy
+};
+
+// Rank 2.
+// Those who helped contribute something directly into TF2V.
+uint64 VIPRANK2[] =
+{
+	76561198112316720, // DoopieWop
+	76561198851124770, // SandvichThief
+	76561197992168067, // PeatEar
+};
+
+// Rank 3.
+// Supporters and long term players of the game.
+uint64 VIPRANK3[] =
+{
+	76561198078752968, // FusionR
+	76561198263004448, // Private Polygon
+	76561198082424900, // FatMagic
+};
+
+// Rank 4.
+// Currently unused.
+uint64 VIPRANK4[] =
+{
+	76561198168440306, // PLACEHOLDER
 };
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFPlayer::PlayerHasPowerplay( void )
+int CTFPlayer::GetPlayerVIPRanking( void )
 {
-	return false;
-}
+	if ( !engine->IsClientFullyAuthenticated( edict() ) )
+		return 0;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::PowerplayThink( void )
-{
-	return;
+	player_info_t pi;
+	if ( engine->GetPlayerInfo( entindex(), &pi ) && ( pi.friendsID ) )
+	{
+		CSteamID steamIDForPlayer( pi.friendsID, 1, k_EUniversePublic, k_EAccountTypeIndividual );
+
+		// Regular Ranks
+		
+		// Rank 1 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK1); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK1[i] ) )
+				return 1;
+		}
+		// Rank 2 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK2); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK2[i] ) )
+				return 2;
+		}
+		// Rank 3 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK3); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK3[i] ) )
+				return 3;
+		}
+		// Rank 4 Users
+		for ( int i = 0; i < ARRAYSIZE(VIPRANK4); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK4[i] ) )
+				return 4;
+		}	
+		
+		// Special Ranks
+		
+		// Rank -1
+		for ( int i = 0; i < ARRAYSIZE(VIPRANKS1); i++ )
+		{
+			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANKS1[i] ) )
+				return -1;
+		}
+	}
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -9886,7 +10167,7 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 	{
 		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
 		{
-			if ( Q_stricmp( pKey->GetName(), "pszClassname" ) == 1 )
+			if ( Q_stricmp( pKey->GetName(), pszClassname ) == 0 )
 			{
 				int iWeapon = abs( pKey->GetInt() );
 				if ( iWeapon == 1 )
@@ -9897,7 +10178,7 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 		}
 		for (KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey())
 		{
-			if (Q_stricmp(pKey->GetName(), "unlisted_items_default_to") == '1')
+			if (Q_stricmp(pKey->GetName(), "unlisted_items_default_to") == 0 )
 			{
 				int iWeapon = abs(pKey->GetInt());
 				if (iWeapon == 1)

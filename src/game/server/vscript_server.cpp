@@ -20,6 +20,8 @@
 #endif
 
 extern ScriptClassDesc_t *GetScriptDesc( CBaseEntity * );
+extern void RegisterScriptedWeapon( char const *szName );
+extern void RegisterScriptedEntity( char const *szName );
 
 // #define VMPROFILE 1
 
@@ -98,8 +100,6 @@ public:
 	{
 		return ToHScript( gEntList.FindEntityByClassnameWithin( ToEnt( hStartEntity ), szName, vecSrc, flRadius ) );
 	}
-
-private:
 } g_ScriptEntityIterator;
 
 BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptEntityIterator, "CEntities", SCRIPT_SINGLETON "The global list of entities" )
@@ -386,25 +386,21 @@ bool VScriptServerInit()
 		char const *pszScriptLanguage;
 		if ( CommandLine()->CheckParm( "-scriptlang", &pszScriptLanguage ) )
 		{
-			if( !Q_stricmp(pszScriptLanguage, "gamemonkey") )
-			{
-				scriptLanguage = SL_GAMEMONKEY;
-			}
-			else if( !Q_stricmp(pszScriptLanguage, "squirrel") )
+			if( !Q_stricmp(pszScriptLanguage, "squirrel") )
 			{
 				scriptLanguage = SL_SQUIRREL;
 			}
-			else if( !Q_stricmp(pszScriptLanguage, "python") )
+			else if( !Q_stricmp(pszScriptLanguage, "lua") )
 			{
-				scriptLanguage = SL_PYTHON;
+				scriptLanguage = SL_LUA;
 			}
 			else
 			{
-				DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
+				DevWarning("-scriptlang does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
 				scriptLanguage = SL_NONE;
 			}
-
 		}
+
 		if( scriptLanguage != SL_NONE )
 		{
 			if ( g_pScriptVM == NULL )
@@ -429,6 +425,8 @@ bool VScriptServerInit()
 				ScriptRegisterFunctionNamed( g_pScriptVM, NDebugOverlay::Line, "DebugDrawLine", "Draw a debug overlay box" );
 				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, "Execute a script (internal)" );
 				ScriptRegisterFunction( g_pScriptVM, CreateProp, "Create a physics prop" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedEntity, "RegisterEnt", "Register an entity by name that can be created" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedWeapon, "RegisterWep", "Register a weapon by name that can be created" );
 
 				
 				if ( GameRules() )
@@ -445,7 +443,7 @@ bool VScriptServerInit()
 
 				VScriptRunScript( "mapspawn", false );
 
-				VMPROF_SHOW( pszScriptLanguage, "virtual machine startup" );
+				VMPROF_SHOW( __FUNCTION__, "virtual machine startup" );
 
 				return true;
 			}

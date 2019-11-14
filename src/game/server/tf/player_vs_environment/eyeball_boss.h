@@ -54,6 +54,8 @@ private:
 	float m_verticalSpeed;
 	Vector m_localVelocity;
 	Vector m_wishVelocity;
+
+	friend class CEyeBallBoss;
 };
 
 
@@ -80,6 +82,7 @@ public:
 
 private:
 	Vector m_lookAtSpot;
+	friend class CEyeBallBoss;
 };
 
 

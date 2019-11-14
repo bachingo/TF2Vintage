@@ -91,7 +91,7 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 
 const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
 {
-	if ( tf_halloween.GetBool() )
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 		return "halloween_rockettrail";
 	else
 		return "rockettrail";

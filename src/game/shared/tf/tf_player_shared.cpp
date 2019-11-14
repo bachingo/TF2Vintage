@@ -1124,9 +1124,9 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			m_flFlameRemoveTime -= flReduction * gpGlobals->frametime;
 		}
 
-		if (InCond( TF_COND_BLEEDING ))
+		if ( InCond( TF_COND_BLEEDING ) )
 		{
-			for (int i=0; i<m_aBleeds.Count(); ++i)
+			for ( int i=0; i<m_aBleeds.Count(); ++i )
 			{
 				bleed_struct_t *bleed = &m_aBleeds[i];
 				bleed->m_flEndTime -= flReduction * gpGlobals->frametime;
@@ -1215,7 +1215,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
-	if ( InCond( TF_COND_BURNING ) && ( m_pOuter->m_flPowerPlayTime < gpGlobals->curtime ) )
+	if ( InCond( TF_COND_BURNING ) )
 	{
 		// If we're underwater, put the fire out
 		if ( gpGlobals->curtime > m_flFlameRemoveTime || m_pOuter->GetWaterLevel() >= WL_Waist )
@@ -1240,17 +1240,17 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
-	if (InCond( TF_COND_BLEEDING ))
+	if ( InCond( TF_COND_BLEEDING ) )
 	{
-		for (int i = m_aBleeds.Count() - 1; i >= 0; --i)
+		for ( int i = m_aBleeds.Count() - 1; i >= 0; --i )
 		{
 			bleed_struct_t *bleed = &m_aBleeds[i];
-			if (gpGlobals->curtime >= bleed->m_flEndTime)
+			if ( gpGlobals->curtime >= bleed->m_flEndTime )
 			{
 				m_aBleeds.FastRemove( i );
 				continue;
 			}
-			else if (gpGlobals->curtime >= bleed->m_flBleedTime)
+			else if ( gpGlobals->curtime >= bleed->m_flBleedTime )
 			{
 				bleed->m_flBleedTime = gpGlobals->curtime + TF_BLEEDING_FREQUENCY;
 
@@ -1259,7 +1259,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			}
 		}
 
-		if (m_aBleeds.IsEmpty())
+		if ( m_aBleeds.IsEmpty() )
 			RemoveCond( TF_COND_BLEEDING );
 	}
 
@@ -2748,7 +2748,7 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer *pTarget, bool 
 	}
 
 	// invalid class
-	if ( nClass <= TF_CLASS_UNDEFINED || nClass >= TF_CLASS_COUNT_ALL )
+	if ( nClass < TF_FIRST_NORMAL_CLASS || nClass > TF_LAST_NORMAL_CLASS )
 	{
 		return;
 	}
@@ -2851,7 +2851,7 @@ void CTFPlayerShared::CompleteDisguise(void)
 
 	if (m_nDisguiseClass == TF_CLASS_SPY)
 	{
-		m_nMaskClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT);
+		m_nMaskClass = random->RandomInt(TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS);
 	}
 	// Update the player model and skin.
 	m_pOuter->UpdateModel();
@@ -2933,11 +2933,15 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 	// Find the weapon in the same slot
 	for ( int i = 0; i < TF_LOADOUT_SLOT_BUFFER; i++ )	
 	{
-		if (!tf_halloween.GetBool() && i == TF_LOADOUT_SLOT_ZOMBIE)
-		continue;	// If it's not Halloween, just skip the action slot.
 		
-		if ( !tf2v_allow_cosmetics.GetBool() && ( ( i > TF_PLAYER_WEAPON_COUNT ) && (i != TF_LOADOUT_SLOT_ZOMBIE ) ) )
-		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we check the Action slot.)
+		if ( i == TF_LOADOUT_SLOT_UTILITY )
+		continue;	// Never check this slot.
+	
+		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( i == TF_LOADOUT_SLOT_ZOMBIE ) )
+		continue;	// If it's not Halloween, skip the zombie slot.
+		
+		if ( ( !tf2v_allow_cosmetics.GetBool() &&  ( i > TF_PLAYER_WEAPON_COUNT ) ) && ( i != TF_LOADOUT_SLOT_ZOMBIE ) )
+		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we do check the zombie slot.)
 			
 		// Use disguise target's weapons if possible.
 		CEconItemView *pItem = NULL;
@@ -3162,11 +3166,6 @@ void CTFPlayerShared::RecalculateChargeEffects(bool bInstantRemove)
 {
 	bool bShouldCharge[TF_CHARGE_COUNT] = {};
 	CTFPlayer *pProviders[TF_CHARGE_COUNT] = {};
-
-	if (m_pOuter->m_flPowerPlayTime > gpGlobals->curtime)
-	{
-		bShouldCharge[TF_CHARGE_INVULNERABLE] = true;
-	}
 
 	medigun_charge_types selfCharge = GetChargeEffectBeingProvided(m_pOuter);
 
@@ -4887,7 +4886,7 @@ Vector CTFPlayer::GetClassEyeHeight(void)
 
 	int iClassIndex = pClass->GetClassIndex();
 
-	if (iClassIndex < TF_FIRST_NORMAL_CLASS || iClassIndex > TF_CLASS_COUNT)
+	if (iClassIndex < TF_FIRST_NORMAL_CLASS || iClassIndex > TF_CLASS_COUNT_ALL)
 		return VEC_VIEW_SCALED(this);
 
 	return (g_TFClassViewVectors[pClass->GetClassIndex()] * GetModelScale());

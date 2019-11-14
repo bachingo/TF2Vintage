@@ -17,6 +17,7 @@ static CTFWeaponSelectPanel *s_pWeaponButton;
 
 static CTFWeaponSelectPanel *s_pScrollButtonDown;
 static CTFWeaponSelectPanel *s_pScrollButtonUp;
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -60,7 +61,7 @@ public:
 			iType = TF_WPN_TYPE_ITEM2;
 		else if (szWeaponType == "head")
 			iType = TF_WPN_TYPE_HEAD;
-		else if (szWeaponType == "misc" || szWeaponType == "misc2" || szWeaponType == "action")
+		else if (szWeaponType == "misc" || szWeaponType == "misc2" || szWeaponType == "action" || szWeaponType == "zombie" || szWeaponType == "medal" )
 			iType = TF_WPN_TYPE_MISC;
 
 		sTemp.m_iWeaponType = iType >= 0 ? iType : TF_WPN_TYPE_PRIMARY;

@@ -160,7 +160,7 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 	while ( --count >= 0 )
 	{
 		// What class do they want?
-		int iClass = RandomInt( TF_CLASS_SCOUT, TF_CLASS_COUNT );
+		int iClass = RandomInt( TF_CLASS_SCOUT, TF_LAST_NORMAL_CLASS );
 		char const *pVal = args.FindArg( "-class" );
 		if ( pVal )
 		{

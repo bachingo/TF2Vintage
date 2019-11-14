@@ -1216,6 +1216,12 @@ void C_BaseEntity::Term()
 	RemoveFromLeafSystem();
 
 	RemoveFromAimEntsList();
+
+	if ( m_hScriptInstance )
+	{
+		g_pScriptVM->RemoveInstance( m_hScriptInstance );
+		m_hScriptInstance = NULL;
+	}
 }
 
 

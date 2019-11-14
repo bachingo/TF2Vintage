@@ -28,7 +28,7 @@ public:
 private:
 	const wchar_t *GetTip( int iClass, int iTip );
 
-	int m_iTipCount[TF_CLASS_COUNT+1];		// how many tips there are for each class
+	int m_iTipCount[TF_LAST_NORMAL_CLASS+1];		// how many tips there are for each class
 	int m_iTipCountAll;								// how many tips there are total
 	int m_iCurrentClassTip;							// index of current per-class tip
 	bool m_bInited;									// have we been initialized

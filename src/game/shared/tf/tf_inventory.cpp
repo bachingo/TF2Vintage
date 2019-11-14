@@ -11,6 +11,11 @@
 #include "tf_inventory.h"
 #include "econ_item_system.h"
 
+#ifdef CLIENT_DLL
+ConVar tf2v_show_reskins_in_armory("tf2v_show_reskins_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
+ConVar tf2v_show_cosmetics_in_armory("tf2v_show_cosmetics_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
+#endif
+
 static CTFInventory g_TFInventory;
 
 CTFInventory *GetTFInventory()
@@ -43,6 +48,15 @@ CTFInventory::~CTFInventory()
 
 bool CTFInventory::Init( void )
 {
+#ifdef CLIENT_DLL
+	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
+	bool bCosmeticsEnabled = tf2v_show_cosmetics_in_armory.GetBool();
+#endif
+#ifdef GAME_DLL
+	bool bReskinsEnabled = true;
+	bool bCosmeticsEnabled = true;
+#endif
+
 	GetItemSchema()->Init();
 
 	// Generate item list.
@@ -53,7 +67,7 @@ bool CTFInventory::Init( void )
 
 		if ( pItemDef->item_slot == -1 )
 			continue;
-
+		
 		// Add it to each class that uses it.
 		for ( int iClass = 0; iClass < TF_CLASS_COUNT_ALL; iClass++ )
 		{
@@ -62,43 +76,78 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				int miscslot = 1;
-				
-				if ( iSlot == TF_LOADOUT_SLOT_MISC2 )
+				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || ( bCosmeticsEnabled ) ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) ) 
 				{
-					iSlot = TF_LOADOUT_SLOT_MISC1;
-					miscslot = 2;
-				}
-				if ( pItemDef->baseitem )
-				{
-					CEconItemView *pBaseItem = m_Items[iClass][iSlot][0];
-					if ( pBaseItem != NULL )
+					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) || ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )
 					{
-						Warning( "Duplicate base item %d for class %s in slot %s!\n", iItemID, g_aPlayerClassNames_NonLocalized[iClass], g_LoadoutSlots[iSlot] );
-						delete pBaseItem;
+						if ( pItemDef->baseitem )
+						{
+							CEconItemView *pBaseItem = m_Items[iClass][iSlot][0];
+							if ( pBaseItem != NULL )
+							{
+								Warning( "Duplicate base item %d for class %s in slot %s!\n", iItemID, g_aPlayerClassNames_NonLocalized[iClass], g_LoadoutSlots[iSlot] );
+								delete pBaseItem;
+							}
+
+							CEconItemView *pNewItem = new CEconItemView( iItemID );
+						
+#if defined ( GAME_DLL )
+							pNewItem->SetItemClassNumber( iClass );
+#endif
+							m_Items[iClass][iSlot][0] = pNewItem;
+						}
+						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) )
+						{
+							CEconItemView *pNewItem = new CEconItemView( iItemID );
+
+#if defined ( GAME_DLL )
+							pNewItem->SetItemClassNumber( iClass );
+#endif
+							m_Items[iClass][iSlot].AddToTail( pNewItem );
+						}
 					}
-				
-				if ( miscslot == 2  ) 
-				{
-					iSlot = TF_LOADOUT_SLOT_MISC2;
-					miscslot = 1;
-				}	
+					if ( iSlot == TF_LOADOUT_SLOT_MISC1 ) // We need to duplicate across all misc slots.
+					{
+						for (int iMiscSlot = 1; iMiscSlot <= TF_PLAYER_MISC_COUNT; ++iMiscSlot)
+						{
+							switch (iMiscSlot)
+							{
+								case 2:
+									iSlot = TF_LOADOUT_SLOT_MISC2;
+									break;
 
-					CEconItemView *pNewItem = new CEconItemView( iItemID );
-					
+								default:
+									iSlot = TF_LOADOUT_SLOT_MISC1;
+									break;
+							}
+		
+							if ( pItemDef->baseitem )
+							{
+								CEconItemView *pBaseItem = m_Items[iClass][iSlot][0];
+								if ( pBaseItem != NULL )
+								{
+									Warning("Duplicate base item %d for class %s in slot %s!\n", iItemID, g_aPlayerClassNames_NonLocalized[iClass], g_LoadoutSlots[iSlot]);
+									delete pBaseItem;
+								}
+
+								CEconItemView *pNewItem = new CEconItemView( iItemID );
+							
 #if defined ( GAME_DLL )
-					pNewItem->SetItemClassNumber( iClass );
+								pNewItem->SetItemClassNumber( iClass );
 #endif
-					m_Items[iClass][iSlot][0] = pNewItem;
-				}
-				else if ( pItemDef->show_in_armory )
-				{
-					CEconItemView *pNewItem = new CEconItemView( iItemID );
+								m_Items[iClass][iSlot][0] = pNewItem;
+							}
+							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) )
+							{
+								CEconItemView *pNewItem = new CEconItemView( iItemID );
 
 #if defined ( GAME_DLL )
-					pNewItem->SetItemClassNumber( iClass );
+								pNewItem->SetItemClassNumber( iClass );
 #endif
-					m_Items[iClass][iSlot].AddToTail( pNewItem );
+								m_Items[iClass][iSlot].AddToTail(pNewItem);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -137,7 +186,7 @@ CEconItemView *CTFInventory::GetItem( int iClass, int iSlot, int iNum )
 
 bool CTFInventory::CheckValidSlot(int iClass, int iSlot, bool bHudCheck /*= false*/)
 {
-	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT)
+	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
 		return false;
 
 	int iCount = (bHudCheck ? INVENTORY_ROWNUM : TF_LOADOUT_SLOT_COUNT);
@@ -155,7 +204,7 @@ bool CTFInventory::CheckValidSlot(int iClass, int iSlot, bool bHudCheck /*= fals
 
 bool CTFInventory::CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHudCheck /*= false*/)
 {
-	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT)
+	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
 		return false;
 
 	int iCount = ( bHudCheck ? INVENTORY_COLNUM : m_Items[iClass][iSlot].Count() );
@@ -310,5 +359,8 @@ const int CTFInventory::Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER] =
 		TF_WEAPON_WRENCH,
 		TF_WEAPON_PDA_ENGINEER_BUILD,
 		TF_WEAPON_PDA_ENGINEER_DESTROY
+	},
+	{
+		TF_WEAPON_SHOVELFIST
 	},
 };

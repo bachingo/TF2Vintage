@@ -1,0 +1,1861 @@
+//--------------------------------------------------------------------------------------------------------------
+// Saxton Response Rule File
+//--------------------------------------------------------------------------------------------------------------
+
+Criterion "SaxtonIsKillSpeechObject" "SaxtonKillSpeechObject" "1" "required" weight 0
+Criterion "SaxtonIsNotStillonFire" "SaxtonOnFire" "!=1" "required" weight 0
+Criterion "SaxtonIsStillonFire" "SaxtonOnFire" "1" "required" weight 0
+Criterion "SaxtonNotKillSpeech" "SaxtonKillSpeech" "!=1" "required" weight 0
+Criterion "SaxtonNotKillSpeechMelee" "SaxtonKillSpeechMelee" "!=1" "required" weight 0
+Criterion "SaxtonNotSaidHealThanks" "SaxtonSaidHealThanks" "!=1" "required"
+Criterion "SaxtonNotRobotNoises" "SaxtonRobotNoises" "!=1" "required" weight 0
+Criterion "IsHelpCapSaxton" "SaxtonHelpCap" "1" "required" weight 0
+// Custom criterion
+Criterion "SaxtonNotAssistSpeech" "SaxtonAssistSpeech" "!=1" "required" weight 0
+Criterion "SaxtonNotInvulnerableSpeech" "SaxtonInvulnerableSpeech" "!=1" "required" weight 0
+Criterion "SaxtonNotAwardSpeech" "SaxtonAwardSpeech" "!=1" "required" weight 0
+
+Response PlayerCloakedSpyDemomanSaxton
+{
+	scene "scenes/Player/Saxton/low/1082.vcd" 
+}
+Rule PlayerCloakedSpyDemomanSaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnDemoman
+	Response PlayerCloakedSpyDemomanSaxton
+}
+
+Response PlayerCloakedSpyEngineerSaxton
+{
+	scene "scenes/Player/Saxton/low/1087.vcd" 
+}
+Rule PlayerCloakedSpyEngineerSaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnEngineer
+	Response PlayerCloakedSpyEngineerSaxton
+}
+
+Response PlayerCloakedSpyHeavySaxton
+{
+	scene "scenes/Player/Saxton/low/1077.vcd" 
+}
+Rule PlayerCloakedSpyHeavySaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnHeavy
+	Response PlayerCloakedSpyHeavySaxton
+}
+
+Response PlayerCloakedSpyMedicSaxton
+{
+	scene "scenes/Player/Saxton/low/1085.vcd" 
+}
+Rule PlayerCloakedSpyMedicSaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnMedic
+	Response PlayerCloakedSpyMedicSaxton
+}
+
+Response PlayerCloakedSpyPyroSaxton
+{
+	scene "scenes/Player/Saxton/low/1080.vcd" 
+}
+Rule PlayerCloakedSpyPyroSaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnPyro
+	Response PlayerCloakedSpyPyroSaxton
+}
+
+Response PlayerCloakedSpyScoutSaxton
+{
+	scene "scenes/Player/Saxton/low/1074.vcd" 
+}
+Rule PlayerCloakedSpyScoutSaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnScout
+	Response PlayerCloakedSpyScoutSaxton
+}
+
+Response PlayerCloakedSpySniperSaxton
+{
+	scene "scenes/Player/Saxton/low/1090.vcd" 
+}
+Rule PlayerCloakedSpySniperSaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnSniper
+	Response PlayerCloakedSpySniperSaxton
+}
+
+Response PlayerCloakedSpySaxtonSaxton
+{
+	scene "scenes/Player/Saxton/low/1075.vcd" 
+}
+Rule PlayerCloakedSpySaxtonSaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnSaxton
+	Response PlayerCloakedSpySaxtonSaxton
+}
+
+Response PlayerCloakedSpySpySaxton
+{
+	scene "scenes/Player/Saxton/low/1083.vcd" 
+}
+Rule PlayerCloakedSpySpySaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton IsOnSpy
+	Response PlayerCloakedSpySpySaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Auto Speech
+//--------------------------------------------------------------------------------------------------------------
+Response HealThanksSaxton
+{
+	scene "scenes/Player/Saxton/low/1213.vcd" 
+	scene "scenes/Player/Saxton/low/1214.vcd" 
+	scene "scenes/Player/Saxton/low/1215.vcd" 
+}
+Rule HealThanksSaxton
+{
+	criteria ConceptMedicChargeStopped IsSaxton SuperHighHealthContext SaxtonNotSaidHealThanks 50PercentChance
+	ApplyContext "SaxtonSaidHealThanks:1:20"
+	Response HealThanksSaxton
+}
+
+// Custom achievement stuff
+Response AwardSaxton
+{
+	scene "scenes/Player/Saxton/low/1043.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1048.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1135.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1347.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1182.vcd" predelay "2.5"
+}
+Rule AwardSaxton
+{
+	criteria ConceptAchievementAward IsSaxton SaxtonNotAwardSpeech
+	ApplyContext "SaxtonAwardSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response AwardSaxton
+}
+//End custom achievement
+
+Response PlayerRoundStartSaxton
+{
+	scene "scenes/Player/Saxton/low/1055.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/1057.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/1058.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/1059.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/1056.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/1060.vcd" predelay "1.0, 5.0"
+}
+Rule PlayerRoundStartSaxton
+{
+	criteria ConceptPlayerRoundStart IsSaxton
+	Response PlayerRoundStartSaxton
+}
+
+Response PlayerCappedIntelligenceSaxton
+{
+	scene "scenes/Player/Saxton/low/1046.vcd" 
+	scene "scenes/Player/Saxton/low/1048.vcd" 
+	scene "scenes/Player/Saxton/low/1047.vcd" 
+}
+Rule PlayerCappedIntelligenceSaxton
+{
+	criteria ConceptPlayerCapturedIntelligence IsSaxton
+	Response PlayerCappedIntelligenceSaxton
+}
+
+Response PlayerCapturedPointSaxton
+{
+	scene "scenes/Player/Saxton/low/1043.vcd" 
+	scene "scenes/Player/Saxton/low/1044.vcd" 
+	scene "scenes/Player/Saxton/low/1045.vcd" 
+}
+Rule PlayerCapturedPointSaxton
+{
+	criteria ConceptPlayerCapturedPoint IsSaxton
+	Response PlayerCapturedPointSaxton
+}
+
+Response PlayerSuddenDeathSaxton
+{
+	scene "scenes/Player/Saxton/low/1120.vcd" 
+	scene "scenes/Player/Saxton/low/1121.vcd" 
+	scene "scenes/Player/Saxton/low/1122.vcd" 
+	scene "scenes/Player/Saxton/low/1123.vcd" 
+	scene "scenes/Player/Saxton/low/1124.vcd" 
+	scene "scenes/Player/Saxton/low/1125.vcd" 
+	scene "scenes/Player/Saxton/low/1126.vcd" 
+	scene "scenes/Player/Saxton/low/1127.vcd" 
+	scene "scenes/Player/Saxton/low/1128.vcd" 
+	scene "scenes/Player/Saxton/low/1129.vcd" 
+	scene "scenes/Player/Saxton/low/1130.vcd" 
+	scene "scenes/Player/Saxton/low/1131.vcd" 
+}
+Rule PlayerSuddenDeathSaxton
+{
+	criteria ConceptPlayerSuddenDeathStart IsSaxton
+	Response PlayerSuddenDeathSaxton
+}
+
+Response PlayerStalemateSaxton
+{
+	scene "scenes/Player/Saxton/low/1049.vcd" 
+	scene "scenes/Player/Saxton/low/1050.vcd" 
+	scene "scenes/Player/Saxton/low/1051.vcd" 
+}
+Rule PlayerStalemateSaxton
+{
+	criteria ConceptPlayerStalemate IsSaxton
+	Response PlayerStalemateSaxton
+}
+
+Response PlayerTeleporterThanksSaxton
+{
+	scene "scenes/Player/Saxton/low/1216.vcd" 
+	scene "scenes/Player/Saxton/low/1217.vcd" 
+	scene "scenes/Player/Saxton/low/1218.vcd" 
+}
+Rule PlayerTeleporterThanksSaxton
+{
+	criteria ConceptTeleported IsNotEngineer IsSaxton 30PercentChance
+	Response PlayerTeleporterThanksSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Auto Speech Combat
+//--------------------------------------------------------------------------------------------------------------
+Response DefendOnThePointSaxton
+{
+	scene "scenes/Player/Saxton/low/1187.vcd" 
+	scene "scenes/Player/Saxton/low/1354.vcd" 
+	scene "scenes/Player/Saxton/low/1355.vcd" 
+}
+Rule DefendOnThePointSaxton
+{
+	criteria ConceptFireWeapon IsSaxton IsOnFriendlyControlPoint NotDefendOnThePointSpeech
+	ApplyContext "DefendOnThePointSpeech:1:30"
+	applycontexttoworld
+	Response DefendOnThePointSaxton
+}
+
+Response KilledPlayerManySaxton
+{
+	scene "scenes/Player/Saxton/low/1181.vcd" 
+	scene "scenes/Player/Saxton/low/1356.vcd" 
+	scene "scenes/Player/Saxton/low/1197.vcd" 
+	scene "scenes/Player/Saxton/low/1199.vcd" 
+}
+Rule KilledPlayerManySaxton
+{
+	criteria ConceptKilledPlayer IsManyRecentKills 30PercentChance IsWeaponPrimary KilledPlayerDelay SaxtonNotKillSpeech IsSaxton
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response KilledPlayerManySaxton
+}
+
+Response KilledDemomanSaxton
+{
+	scene "scenes/Player/Saxton/low/3486.vcd" 
+	scene "scenes/Player/Saxton/low/3487.vcd" 
+	scene "scenes/Player/Saxton/low/3488.vcd" 
+	scene "scenes/Player/Saxton/low/3489.vcd" 
+	scene "scenes/Player/Saxton/low/3490.vcd" 
+	scene "scenes/Player/Saxton/low/3491.vcd" 
+}
+Rule KilledDemomanSaxton
+{
+	criterion ConceptKilledPlayer KilledPlayerDelay IsVictimDemoman 10PercentChance SaxtonNotKillSpeech IsSaxton
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response KilledDemomanSaxton
+}
+
+Response KilledPlayerAssistAutoSaxton
+{
+	scene "scenes/Player/Saxton/low/1186.vcd" predelay "2.5"
+}
+Rule KilledPlayerAssistAutoSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsBeingHealed IsManyRecentKills KilledPlayerDelay 20PercentChance SaxtonNotAssistSpeech
+	ApplyContext "SaxtonAssistSpeech:1:20"
+	Response KilledPlayerAssistAutoSaxton
+}
+
+// A custom rule for when you're on a pocket Saxton killing spree.
+Response SpreeMedicSaxton
+{
+	scene "scenes/Player/Saxton/low/3492.vcd"
+	scene "scenes/Player/Saxton/low/3493.vcd"
+	scene "scenes/Player/Saxton/low/3494.vcd"
+}
+Rule SpreeMedicSaxton
+{
+	criteria ConceptKilledPlayer KilledPlayerDelay IsSaxton IsBeingHealed SaxtonNotKillSpeech IsVeryManyRecentKills IsWeaponPrimary
+	ApplyContext "SaxtonKillSpeech:1:20"
+	Response SpreeMedicSaxton
+}
+
+// Custom Medic follow - because Saxton needs it more than most classes.
+Response MedicFollowSaxton
+{
+	scene "scenes/Player/Saxton/low/3495.vcd" predelay ".25"
+	scene "scenes/Player/Saxton/low/3496.vcd" predelay ".25"
+	scene "scenes/Player/Saxton/low/3497.vcd" predelay ".25"
+	scene "scenes/Player/Saxton/low/3499.vcd" predelay ".25"
+}
+Rule MedicFollowSaxton
+{
+	criteria ConceptPlayerMedic IsOnMedic IsSaxton IsNotCrossHairEnemy NotLowHealth SaxtonIsNotStillonFire
+	ApplyContext "ScoutKillSpeech:1:10"
+	Response MedicFollowSaxton
+}
+
+Response SaxtonJarateHit
+{
+	scene "scenes/Player/Saxton/low/1051.vcd"
+	scene "scenes/Player/Saxton/low/1155.vcd"
+	scene "scenes/Player/Saxton/low/1353.vcd"
+	scene "scenes/Player/Saxton/low/1152.vcd"
+}
+Rule SaxtonJarateHit
+{
+	criteria ConceptJarateHit IsSaxton 50PercentChance
+	Response SaxtonJarateHit
+}
+
+// Invulnerable lines
+Response InvulnerableSpeechSaxton
+{
+	scene "scenes/Player/Saxton/low/1191.vcd"
+	scene "scenes/Player/Saxton/low/1194.vcd"
+	scene "scenes/Player/Saxton/low/1200.vcd"
+	scene "scenes/Player/Saxton/low/1204.vcd"
+	scene "scenes/Player/Saxton/low/1192.vcd"
+	scene "scenes/Player/Saxton/low/1189.vcd"
+	scene "scenes/Player/Saxton/low/1201.vcd"
+}
+Rule InvulnerableSpeechSaxton
+{
+	criterion ConceptFireWeapon IsSaxton IsInvulnerable SaxtonNotInvulnerableSpeech
+	ApplyContext "SaxtonInvulnerableSpeech:1:30"
+	Response InvulnerableSpeechSaxton
+}
+
+// End custom stuff
+
+// Added the unused Direct Hit screams here, as they can't be added to the taunt.
+Response KilledPlayerMeleeSaxton
+{
+	scene "scenes/Player/Saxton/low/1185.vcd" 
+	scene "scenes/Player/Saxton/low/3403.vcd" 
+	scene "scenes/Player/Saxton/low/3405.vcd" 
+	scene "scenes/Player/Saxton/low/3406.vcd" 
+}
+Rule KilledPlayerMeleeSaxton
+{
+	criteria ConceptKilledPlayer KilledPlayerDelay 30PercentChance  IsWeaponMelee SaxtonNotKillSpeechMelee IsSaxton
+	ApplyContext "SaxtonKillSpeechMelee:1:10"
+	Response KilledPlayerMeleeSaxton
+}
+
+Response KilledPlayerVeryManySaxton
+{
+	scene "scenes/Player/Saxton/low/1206.vcd" 
+	scene "scenes/Player/Saxton/low/1188.vcd" 
+}
+Rule KilledPlayerVeryManySaxton
+{
+	criteria ConceptKilledPlayer IsVeryManyRecentKills 50PercentChance IsWeaponPrimary KilledPlayerDelay SaxtonNotKillSpeech IsSaxton
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response KilledPlayerVeryManySaxton
+}
+
+Response PlayerKilledCapperSaxton
+{
+	scene "scenes/Player/Saxton/low/1064.vcd" 
+	scene "scenes/Player/Saxton/low/1062.vcd" 
+	scene "scenes/Player/Saxton/low/1063.vcd" 
+}
+Rule PlayerKilledCapperSaxton
+{
+	criteria ConceptCapBlocked IsSaxton
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response PlayerKilledCapperSaxton
+}
+
+Response PlayerKilledDominatingSaxton
+{
+	scene "scenes/Player/Saxton/low/1132.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1346.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1348.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1133.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1134.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1347.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1135.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1349.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1195.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1202.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingSaxton
+}
+
+Response PlayerKilledDominatingDemomanSaxton
+{
+	scene "scenes/Player/Saxton/low/3407.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3408.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3409.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3410.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3411.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3412.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingDemomanSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimDemoman IsNotFriends
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingDemomanSaxton
+}
+
+Response PlayerKilledDominatingDemomanSaxtonWAR
+{
+	scene "scenes/Player/Saxton/high/3413.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/high/3414.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/high/3415.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/high/3416.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/high/3417.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingDemomanSaxtonWAR
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimDemoman IsFriends
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingDemomanSaxton
+}
+
+Response PlayerKilledDominatingEngineerSaxton
+{
+	scene "scenes/Player/Saxton/low/3418.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3419.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3420.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3421.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3422.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3423.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingEngineerSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimEngineer
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingEngineerSaxton
+}
+
+Response PlayerKilledDominatingHeavySaxton
+{
+	scene "scenes/Player/Saxton/low/3424.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3425.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3426.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3427.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3428.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3429.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3430.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingHeavySaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimHeavy
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingHeavySaxton
+}
+
+Response PlayerKilledDominatingMedicSaxton
+{
+	scene "scenes/Player/Saxton/low/3431.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3432.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3433.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3434.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3435.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3436.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3437.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingMedicSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimMedic
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingMedicSaxton
+}
+
+Response PlayerKilledDominatingPyroSaxton
+{
+	scene "scenes/Player/Saxton/low/3438.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3439.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3440.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3441.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3442.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3443.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3444.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3445.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3446.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingPyroSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimPyro
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingPyroSaxton
+}
+
+Response PlayerKilledDominatingScoutSaxton
+{
+	scene "scenes/Player/Saxton/low/3447.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3448.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3449.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3450.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3451.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3452.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3453.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3454.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3455.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3456.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3457.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingScoutSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimScout
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingScoutSaxton
+}
+
+Response PlayerKilledDominatingSniperSaxton
+{
+	scene "scenes/Player/Saxton/low/3458.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3459.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3460.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3461.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3462.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3463.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3464.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3465.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3466.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3467.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3468.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3469.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3470.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3471.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingSniperSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimSniper
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingSniperSaxton
+}
+
+Response PlayerKilledDominatingSaxtonSaxton
+{
+	scene "scenes/Player/Saxton/low/3472.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3473.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3474.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3475.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3476.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3477.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingSaxtonSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimSaxton
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingSaxtonSaxton
+}
+
+Response PlayerKilledDominatingSpySaxton
+{
+	scene "scenes/Player/Saxton/low/3478.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3479.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3480.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3481.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3482.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3483.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3484.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/3485.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingSpySaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated  IsVictimSpy
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingSpySaxton
+}
+
+Response PlayerKilledForRevengeSaxton
+{
+	scene "scenes/Player/Saxton/low/1060.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1065.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1096.vcd" predelay "2.5"
+}
+Rule PlayerKilledForRevengeSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsRevenge
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledForRevengeSaxton
+}
+
+Response PlayerKilledObjectSaxton
+{
+	scene "scenes/Player/Saxton/low/1055.vcd" 
+	scene "scenes/Player/Saxton/low/1345.vcd" 
+	scene "scenes/Player/Saxton/low/1172.vcd" 
+	scene "scenes/Player/Saxton/low/1175.vcd" 
+	scene "scenes/Player/Saxton/low/1182.vcd" 
+}
+Rule PlayerKilledObjectSaxton
+{
+	criteria ConceptKilledObject IsSaxton 30PercentChance IsARecentKill
+	ApplyContext "SaxtonKillSpeechObject:1:30"
+	Response PlayerKilledObjectSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Auto Speech Pain
+//--------------------------------------------------------------------------------------------------------------
+Response PlayerAttackerPainSaxton
+{
+	scene "scenes/Player/Saxton/low/1165.vcd" 
+	scene "scenes/Player/Saxton/low/1166.vcd" 
+	scene "scenes/Player/Saxton/low/1167.vcd" 
+	scene "scenes/Player/Saxton/low/1371.vcd" 
+	scene "scenes/Player/Saxton/low/1372.vcd" 
+	scene "scenes/Player/Saxton/low/1373.vcd" 
+}
+Rule PlayerAttackerPainSaxton
+{
+	criteria ConceptAttackerPain IsSaxton IsNotDominating
+	Response PlayerAttackerPainSaxton
+}
+
+Response PlayerOnFireSaxton
+{
+	scene "scenes/Player/Saxton/low/1052.vcd" 
+}
+Rule PlayerOnFireSaxton
+{
+	criteria ConceptFire IsSaxton SaxtonIsNotStillonFire IsNotDominating
+	ApplyContext "SaxtonOnFire:1:7"
+	Response PlayerOnFireSaxton
+}
+
+Response PlayerOnFireRareSaxton
+{
+	scene "scenes/Player/Saxton/low/1053.vcd" 
+	scene "scenes/Player/Saxton/low/1054.vcd" 
+}
+Rule PlayerOnFireRareSaxton
+{
+	criteria ConceptFire IsSaxton 10PercentChance SaxtonIsNotStillonFire IsNotDominating
+	ApplyContext "SaxtonOnFire:1:7"
+	Response PlayerOnFireRareSaxton
+}
+
+Response PlayerPainSaxton
+{
+	scene "scenes/Player/Saxton/low/1168.vcd" 
+	scene "scenes/Player/Saxton/low/1169.vcd" 
+	scene "scenes/Player/Saxton/low/1170.vcd" 
+	scene "scenes/Player/Saxton/low/1374.vcd" 
+	scene "scenes/Player/Saxton/low/1375.vcd" 
+	scene "scenes/Player/Saxton/low/1376.vcd" 
+	scene "scenes/Player/Saxton/low/1377.vcd" 
+	scene "scenes/Player/Saxton/low/1378.vcd" 
+}
+Rule PlayerPainSaxton
+{
+	criteria ConceptPain IsSaxton IsNotDominating
+	Response PlayerPainSaxton
+}
+
+Response PlayerStillOnFireSaxton
+{
+	scene "scenes/Player/Saxton/low/1926.vcd" 
+}
+Rule PlayerStillOnFireSaxton
+{
+	criteria ConceptFire IsSaxton  SaxtonIsStillonFire IsNotDominating
+	ApplyContext "SaxtonOnFire:1:7"
+	Response PlayerStillOnFireSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Duel Speech
+//--------------------------------------------------------------------------------------------------------------
+Response AcceptedDuelSaxton
+{
+	scene "scenes/Player/Saxton/low/1062.vcd" 
+	scene "scenes/Player/Saxton/low/1172.vcd" 
+	scene "scenes/Player/Saxton/low/1175.vcd" 
+	scene "scenes/Player/Saxton/low/1174.vcd" 
+	scene "scenes/Player/Saxton/low/1190.vcd" 
+	scene "scenes/Player/Saxton/low/1221.vcd" 
+}
+Rule AcceptedDuelSaxton
+{
+	criteria ConceptIAcceptDuel IsSaxton
+	Response AcceptedDuelSaxton
+}
+
+Response MeleeDareSaxton
+{
+	scene "scenes/Player/Saxton/low/1094.vcd" 
+	scene "scenes/Player/Saxton/low/1188.vcd" 
+	scene "scenes/Player/Saxton/low/1195.vcd" 
+	scene "scenes/Player/Saxton/low/1196.vcd" 
+	scene "scenes/Player/Saxton/low/1202.vcd" 
+	scene "scenes/Player/Saxton/low/1210.vcd" 
+}
+Rule MeleeDareSaxton
+{
+	criteria ConceptRequestDuel IsSaxton
+	Response MeleeDareSaxton
+}
+
+Response RejectedDuelSaxton
+{
+	scene "scenes/Player/Saxton/low/3487.vcd" 
+	scene "scenes/Player/Saxton/low/1120.vcd" 
+	scene "scenes/Player/Saxton/low/1207.vcd" 
+}
+Rule RejectedDuelSaxton
+{
+	criteria ConceptDuelRejected IsSaxton
+	Response RejectedDuelSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Speech Menu 1
+//--------------------------------------------------------------------------------------------------------------
+Response PlayerGoSaxton
+{
+	scene "scenes/Player/Saxton/low/1092.vcd" 
+	scene "scenes/Player/Saxton/low/1093.vcd" 
+	scene "scenes/Player/Saxton/low/1094.vcd" // Restored
+}
+Rule PlayerGoSaxton
+{
+	criteria ConceptPlayerGo IsSaxton
+	Response PlayerGoSaxton
+}
+
+Response PlayerHeadLeftSaxton
+{
+	scene "scenes/Player/Saxton/low/1098.vcd" 
+	scene "scenes/Player/Saxton/low/1100.vcd" 
+	scene "scenes/Player/Saxton/low/1099.vcd" 
+}
+Rule PlayerHeadLeftSaxton
+{
+	criteria ConceptPlayerLeft  IsSaxton
+	Response PlayerHeadLeftSaxton
+}
+
+Response PlayerHeadRightSaxton
+{
+	scene "scenes/Player/Saxton/low/1103.vcd" 
+	scene "scenes/Player/Saxton/low/1101.vcd" 
+	scene "scenes/Player/Saxton/low/1102.vcd" 
+}
+Rule PlayerHeadRightSaxton
+{
+	criteria ConceptPlayerRight  IsSaxton
+	Response PlayerHeadRightSaxton
+}
+
+Response PlayerHelpSaxton
+{
+	scene "scenes/Player/Saxton/low/1104.vcd" 
+	scene "scenes/Player/Saxton/low/1105.vcd" 
+	scene "scenes/Player/Saxton/low/1106.vcd" 
+}
+Rule PlayerHelpSaxton
+{
+	criteria ConceptPlayerHelp IsSaxton
+	Response PlayerHelpSaxton
+}
+
+Response PlayerHelpCaptureSaxton
+{
+	scene "scenes/Player/Saxton/low/1109.vcd" 
+	scene "scenes/Player/Saxton/low/1107.vcd" 
+	scene "scenes/Player/Saxton/low/1108.vcd" 
+}
+Rule PlayerHelpCaptureSaxton
+{
+	criteria ConceptPlayerHelp IsSaxton IsOnCappableControlPoint
+	ApplyContext "SaxtonHelpCap:1:10"
+	Response PlayerHelpCaptureSaxton
+}
+
+Response PlayerHelpCapture2Saxton
+{
+	scene "scenes/Player/Saxton/low/1187.vcd" 
+	scene "scenes/Player/Saxton/low/1354.vcd" 
+	scene "scenes/Player/Saxton/low/1355.vcd" 
+}
+Rule PlayerHelpCapture2Saxton
+{
+	criteria ConceptPlayerHelp IsSaxton IsOnCappableControlPoint IsHelpCapSaxton
+	Response PlayerHelpCapture2Saxton
+}
+
+Response PlayerHelpDefendSaxton
+{
+	scene "scenes/Player/Saxton/low/1110.vcd" 
+	scene "scenes/Player/Saxton/low/1111.vcd" 
+	scene "scenes/Player/Saxton/low/1112.vcd" 
+	scene "scenes/Player/Saxton/low/1113.vcd" 
+}
+Rule PlayerHelpDefendSaxton
+{
+	criteria ConceptPlayerHelp IsSaxton IsOnFriendlyControlPoint
+	Response PlayerHelpDefendSaxton
+}
+
+Response PlayerMedicSaxton
+{
+	scene "scenes/Player/Saxton/low/1139.vcd" 
+	scene "scenes/Player/Saxton/low/1140.vcd" 
+	scene "scenes/Player/Saxton/low/1141.vcd" 
+}
+Rule PlayerMedicSaxton
+{
+	criteria ConceptPlayerMedic IsSaxton
+	Response PlayerMedicSaxton
+}
+
+Response PlayerAskForBallSaxton
+{
+}
+Rule PlayerAskForBallSaxton
+{
+	criteria ConceptPlayerAskForBall IsSaxton
+	Response PlayerAskForBallSaxton
+}
+
+Response PlayerMoveUpSaxton
+{
+	scene "scenes/Player/Saxton/low/1142.vcd" 
+	scene "scenes/Player/Saxton/low/1143.vcd" 
+	scene "scenes/Player/Saxton/low/1144.vcd" 
+}
+Rule PlayerMoveUpSaxton
+{
+	criteria ConceptPlayerMoveUp  IsSaxton
+	Response PlayerMoveUpSaxton
+}
+
+Response PlayerNoSaxton
+{
+	scene "scenes/Player/Saxton/low/1159.vcd" 
+	scene "scenes/Player/Saxton/low/1161.vcd" 
+	scene "scenes/Player/Saxton/low/1160.vcd" 
+}
+Rule PlayerNoSaxton
+{
+	criteria ConceptPlayerNo  IsSaxton
+	Response PlayerNoSaxton
+}
+
+Response PlayerThanksSaxton
+{
+	scene "scenes/Player/Saxton/low/1211.vcd" 
+	scene "scenes/Player/Saxton/low/1212.vcd" 
+}
+Rule PlayerThanksSaxton
+{
+	criteria ConceptPlayerThanks IsSaxton
+	Response PlayerThanksSaxton
+}
+
+// Custom Assist kill response
+// As there is no actual concept for assist kills, this is the second best method.
+// Say thanks after you kill more than one person.
+
+Response KilledPlayerAssistSaxton
+{
+	scene "scenes/Player/Saxton/low/1186.vcd"
+}
+Rule KilledPlayerAssistSaxton
+{
+	criteria ConceptPlayerThanks IsSaxton IsARecentKill KilledPlayerDelay SaxtonNotAssistSpeech
+	ApplyContext "SaxtonAssistSpeech:1:20"
+	Response KilledPlayerAssistSaxton
+}
+// End custom
+
+Response PlayerYesSaxton
+{
+	scene "scenes/Player/Saxton/low/1350.vcd" 
+	scene "scenes/Player/Saxton/low/1220.vcd" 
+	scene "scenes/Player/Saxton/low/1221.vcd" 
+	scene "scenes/Player/Saxton/low/1219.vcd" 
+}
+Rule PlayerYesSaxton
+{
+	criteria ConceptPlayerYes  IsSaxton
+	Response PlayerYesSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Speech Menu 2
+//--------------------------------------------------------------------------------------------------------------
+Response PlayerActivateChargeSaxton
+{
+	scene "scenes/Player/Saxton/low/1040.vcd" 
+	scene "scenes/Player/Saxton/low/1041.vcd" 
+	scene "scenes/Player/Saxton/low/1042.vcd" 
+}
+Rule PlayerActivateChargeSaxton
+{
+	criteria ConceptPlayerActivateCharge IsSaxton
+	Response PlayerActivateChargeSaxton
+}
+
+Response PlayerCloakedSpySaxton
+{
+	scene "scenes/Player/Saxton/low/1071.vcd" 
+	scene "scenes/Player/Saxton/low/1072.vcd" 
+	scene "scenes/Player/Saxton/low/1070.vcd" 
+}
+Rule PlayerCloakedSpySaxton
+{
+	criteria ConceptPlayerCloakedSpy IsSaxton
+	Response PlayerCloakedSpySaxton
+}
+
+Response PlayerDispenserHereSaxton
+{
+	scene "scenes/Player/Saxton/low/1146.vcd" 
+}
+Rule PlayerDispenserHereSaxton
+{
+	criteria ConceptPlayerDispenserHere IsSaxton
+	Response PlayerDispenserHereSaxton
+}
+
+Response PlayerIncomingSaxton
+{
+	scene "scenes/Player/Saxton/low/1114.vcd" 
+}
+Rule PlayerIncomingSaxton
+{
+	criteria ConceptPlayerIncoming IsSaxton
+	Response PlayerIncomingSaxton
+}
+
+Response PlayerSentryAheadSaxton
+{
+	scene "scenes/Player/Saxton/low/1177.vcd" 
+	scene "scenes/Player/Saxton/low/1178.vcd" 
+	scene "scenes/Player/Saxton/low/1176.vcd" 
+}
+Rule PlayerSentryAheadSaxton
+{
+	criteria ConceptPlayerSentryAhead IsSaxton
+	Response PlayerSentryAheadSaxton
+}
+
+Response PlayerSentryHereSaxton
+{
+	scene "scenes/Player/Saxton/low/1148.vcd" 
+}
+Rule PlayerSentryHereSaxton
+{
+	criteria ConceptPlayerSentryHere IsSaxton
+	Response PlayerSentryHereSaxton
+}
+
+Response PlayerTeleporterHereSaxton
+{
+	scene "scenes/Player/Saxton/low/1150.vcd" 
+}
+Rule PlayerTeleporterHereSaxton
+{
+	criteria ConceptPlayerTeleporterHere IsSaxton
+	Response PlayerTeleporterHereSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Speech Menu 3
+//--------------------------------------------------------------------------------------------------------------
+Response PlayerBattleCrySaxton
+{
+	scene "scenes/Player/Saxton/low/1055.vcd" 
+	scene "scenes/Player/Saxton/low/1057.vcd" 
+	scene "scenes/Player/Saxton/low/1058.vcd" 
+	scene "scenes/Player/Saxton/low/1059.vcd" 
+	scene "scenes/Player/Saxton/low/1056.vcd" 
+	scene "scenes/Player/Saxton/low/1060.vcd" 
+}
+Rule PlayerBattleCrySaxton
+{
+	criteria ConceptPlayerBattleCry IsSaxton
+	Response PlayerBattleCrySaxton
+}
+
+// Custom stuff - melee dare
+// Look at enemy, then do battle cry voice command while holding a melee weapon.
+Response MeleeDareCombatSaxton
+{
+	scene "scenes/Player/Saxton/low/1196.vcd"
+	scene "scenes/Player/Saxton/low/1210.vcd"
+	scene "scenes/Player/Saxton/low/1205.vcd"
+	scene "scenes/Player/Saxton/low/1208.vcd"
+	scene "scenes/Player/Saxton/low/1203.vcd"
+	scene "scenes/Player/Saxton/low/1190.vcd" 
+}
+Rule MeleeDareCombatSaxton
+{
+	criteria ConceptPlayerBattleCry IsWeaponMelee IsSaxton IsCrosshairEnemy
+	Response MeleeDareCombatSaxton
+}
+//End custom
+
+Response PlayerCheersSaxton
+{
+	scene "scenes/Player/Saxton/low/1065.vcd" 
+	scene "scenes/Player/Saxton/low/1068.vcd" 
+	scene "scenes/Player/Saxton/low/1066.vcd" 
+	scene "scenes/Player/Saxton/low/1064.vcd" 
+	scene "scenes/Player/Saxton/low/1062.vcd" 
+	scene "scenes/Player/Saxton/low/1063.vcd" 
+}
+Rule PlayerCheersSaxton
+{
+	criteria ConceptPlayerCheers IsSaxton
+	Response PlayerCheersSaxton
+}
+
+Response PlayerGoodJobSaxton
+{
+	scene "scenes/Player/Saxton/low/1095.vcd" 
+	scene "scenes/Player/Saxton/low/1096.vcd" 
+	scene "scenes/Player/Saxton/low/1097.vcd" 
+}
+Rule PlayerGoodJobSaxton
+{
+	criteria ConceptPlayerGoodJob IsSaxton
+	Response PlayerGoodJobSaxton
+}
+
+Response PlayerJeersSaxton
+{
+	scene "scenes/Player/Saxton/low/1120.vcd" 
+	scene "scenes/Player/Saxton/low/1121.vcd" 
+	scene "scenes/Player/Saxton/low/1122.vcd" 
+	scene "scenes/Player/Saxton/low/1123.vcd" 
+	scene "scenes/Player/Saxton/low/1124.vcd" 
+	scene "scenes/Player/Saxton/low/1125.vcd" 
+	scene "scenes/Player/Saxton/low/1126.vcd" 
+	scene "scenes/Player/Saxton/low/1127.vcd" 
+	scene "scenes/Player/Saxton/low/1128.vcd" 
+	scene "scenes/Player/Saxton/low/1129.vcd" 
+	scene "scenes/Player/Saxton/low/1130.vcd" 
+	scene "scenes/Player/Saxton/low/1131.vcd" 
+}
+Rule PlayerJeersSaxton
+{
+	criteria ConceptPlayerJeers IsSaxton
+	Response PlayerJeersSaxton
+}
+
+Response PlayerLostPointSaxton
+{
+	scene "scenes/Player/Saxton/low/1151.vcd" 
+	scene "scenes/Player/Saxton/low/1152.vcd" 
+	scene "scenes/Player/Saxton/low/1153.vcd" 
+	scene "scenes/Player/Saxton/low/1154.vcd" 
+	scene "scenes/Player/Saxton/low/1155.vcd" 
+	scene "scenes/Player/Saxton/low/1353.vcd" 
+}
+Rule PlayerLostPointSaxton
+{
+	criteria ConceptPlayerLostPoint IsSaxton
+	Response PlayerLostPointSaxton
+}
+
+Response PlayerNegativeSaxton
+{
+	scene "scenes/Player/Saxton/low/1151.vcd" 
+	scene "scenes/Player/Saxton/low/1152.vcd" 
+	scene "scenes/Player/Saxton/low/1153.vcd" 
+	scene "scenes/Player/Saxton/low/1154.vcd" 
+	scene "scenes/Player/Saxton/low/1155.vcd" 
+	scene "scenes/Player/Saxton/low/1353.vcd" 
+}
+Rule PlayerNegativeSaxton
+{
+	criteria ConceptPlayerNegative IsSaxton
+	Response PlayerNegativeSaxton
+}
+
+Response PlayerNiceShotSaxton
+{
+	scene "scenes/Player/Saxton/low/1156.vcd" 
+	scene "scenes/Player/Saxton/low/1157.vcd" 
+	scene "scenes/Player/Saxton/low/1158.vcd" 
+}
+Rule PlayerNiceShotSaxton
+{
+	criteria ConceptPlayerNiceShot IsSaxton
+	Response PlayerNiceShotSaxton
+}
+
+Response PlayerPositiveSaxton
+{
+	scene "scenes/Player/Saxton/low/1345.vcd" 
+	scene "scenes/Player/Saxton/low/1172.vcd" 
+	scene "scenes/Player/Saxton/low/1175.vcd" 
+	scene "scenes/Player/Saxton/low/1174.vcd" 
+	scene "scenes/Player/Saxton/low/1171.vcd" 
+}
+
+Response PlayerTauntsSaxton
+{
+	scene "scenes/Player/Saxton/low/1136.vcd" 
+	scene "scenes/Player/Saxton/low/1137.vcd" 
+	scene "scenes/Player/Saxton/low/1138.vcd" 
+	scene "scenes/Player/Saxton/low/1351.vcd" 
+	scene "scenes/Player/Saxton/low/1352.vcd" 
+}
+Rule PlayerPositiveSaxton
+{
+	criteria ConceptPlayerPositive IsSaxton
+	Response PlayerPositiveSaxton
+	Response PlayerTauntsSaxton
+}
+
+Response PlayerRobotNoisesSaxton
+{
+	scene "scenes/Player/Saxton/low/robot01.vcd"
+	scene "scenes/Player/Saxton/low/robot02.vcd"
+	scene "scenes/Player/Saxton/low/robot03.vcd"
+	scene "scenes/Player/Saxton/low/robot04.vcd"
+	scene "scenes/Player/Saxton/low/robot05.vcd"
+	scene "scenes/Player/Saxton/low/robot06.vcd"
+	scene "scenes/Player/Saxton/low/robot07.vcd"
+}
+Rule PlayerRobotNoisesSaxton
+{
+	criteria ConceptFireWeapon IsSaxton IsRobotCostume SaxtonNotRobotNoises 50PercentChance
+	ApplyContext "SaxtonRobotNoises:1:30"
+	Response PlayerRobotNoisesSaxton
+}
+
+Response PlayerBattleCryRobotSaxton
+{
+	scene "scenes/Player/Saxton/low/robot08.vcd"
+	scene "scenes/Player/Saxton/low/robot09.vcd"
+}
+Rule PlayerBattleCryRobotSaxton
+{
+	criteria ConceptPlayerBattleCry IsSaxton IsRobotCostume
+	Response PlayerBattleCryRobotSaxton
+}
+
+Response KilledPlayerRobotSaxton
+{
+	scene "scenes/Player/Saxton/low/robot10.vcd"
+	scene "scenes/Player/Saxton/low/robot11.vcd"
+	scene "scenes/Player/Saxton/low/robot12.vcd"
+	scene "scenes/Player/Saxton/low/robot13.vcd"
+	scene "scenes/Player/Saxton/low/robot14.vcd"
+}
+Rule KilledPlayerRobotSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsRobotCostume SaxtonNotKillSpeech 50PercentChance
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response KilledPlayerRobotSaxton
+}
+
+Response KilledPlayerManyRobotSaxton
+{
+	scene "scenes/Player/Saxton/low/robot15.vcd"
+	scene "scenes/Player/Saxton/low/robot16.vcd"
+	scene "scenes/Player/Saxton/low/robot17.vcd"
+	scene "scenes/Player/Saxton/low/robot18.vcd"
+	scene "scenes/Player/Saxton/low/robot19.vcd"
+}
+Rule KilledPlayerManyRobotSaxton
+{
+	criteria ConceptKilledPlayer IsManyRecentKills 30PercentChance IsWeaponPrimary KilledPlayerDelay SaxtonNotKillSpeech IsSaxton IsRobotCostume
+	ApplyContext "SaxtonKillSpeech:1:10"
+	Response KilledPlayerManyRobotSaxton
+}
+
+Response PlayerKilledForRevengeRobotSaxton
+{
+	scene "scenes/Player/Saxton/low/robot20.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1060.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/1065.vcd" predelay "2.5"
+}
+Rule PlayerKilledForRevengeRobotSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsRevenge IsRobotCostume
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledForRevengeRobotSaxton
+}
+
+Response PlayerKilledDominatingRobotSaxton
+{
+	scene "scenes/Player/Saxton/low/robot21.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/robot22.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/robot23.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/robot24.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/robot25.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/robot26.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/robot27.vcd" predelay "2.5"
+	scene "scenes/Player/Saxton/low/robot28.vcd" predelay "2.5"
+}
+Rule PlayerKilledDominatingRobotSaxton
+{
+	criteria ConceptKilledPlayer IsSaxton IsDominated IsRobotCostume
+	ApplyContext "SaxtonKillSpeech:1:10"
+	ApplyContext "IsDominating:1:10"
+	Response PlayerKilledDominatingRobotSaxton
+}
+
+//--------------------------------------------------------------------------------------------------------------
+// MvM Speech
+//--------------------------------------------------------------------------------------------------------------
+Response MvMBombDroppedSaxton
+{
+	scene "scenes/Player/Saxton/low/4284.vcd" 
+	scene "scenes/Player/Saxton/low/4285.vcd" 
+}
+Rule MvMBombDroppedSaxton
+{
+	criteria ConceptMvMBombDropped 5PercentChance IsMvMDefender IsSaxton 
+	Response MvMBombDroppedSaxton
+}
+
+Response MvMBombCarrierUpgrade1Saxton
+{
+	scene "scenes/Player/Saxton/low/4280.vcd" 
+}
+Rule MvMBombCarrierUpgrade1Saxton
+{
+	criteria ConceptMvMBombCarrierUpgrade1 5PercentChance IsMvMDefender IsSaxton 
+	Response MvMBombCarrierUpgrade1Saxton
+}
+
+Response MvMBombCarrierUpgrade2Saxton
+{
+	scene "scenes/Player/Saxton/low/4281.vcd" 
+}
+Rule MvMBombCarrierUpgrade2Saxton
+{
+	criteria ConceptMvMBombCarrierUpgrade2 5PercentChance IsMvMDefender IsSaxton 
+	Response MvMBombCarrierUpgrade2Saxton
+}
+
+Response MvMBombCarrierUpgrade3Saxton
+{
+	scene "scenes/Player/Saxton/low/4282.vcd" 
+}
+Rule MvMBombCarrierUpgrade3Saxton
+{
+	criteria ConceptMvMBombCarrierUpgrade3 5PercentChance IsMvMDefender IsSaxton 
+	Response MvMBombCarrierUpgrade3Saxton
+}
+
+Response MvMDefenderDiedScoutSaxton
+{
+	scene "scenes/Player/Saxton/low/4246.vcd" 
+}
+Rule MvMDefenderDiedScoutSaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimScout IsSaxton 
+	Response MvMDefenderDiedScoutSaxton
+}
+
+Response MvMDefenderDiedSpySaxton
+{
+	scene "scenes/Player/Saxton/low/4247.vcd" 
+}
+Rule MvMDefenderDiedSpySaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimSpy IsSaxton 
+	Response MvMDefenderDiedSpySaxton
+}
+
+Response MvMDefenderDiedHeavySaxton
+{
+	scene "scenes/Player/Saxton/low/4248.vcd" 
+}
+Rule MvMDefenderDiedHeavySaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimHeavy IsSaxton 
+	Response MvMDefenderDiedHeavySaxton
+}
+
+Response MvMDefenderDiedSaxtonSaxton
+{
+	scene "scenes/Player/Saxton/low/4249.vcd" 
+}
+Rule MvMDefenderDiedSaxtonSaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimSaxton IsSaxton 
+	Response MvMDefenderDiedSaxtonSaxton
+}
+
+Response MvMDefenderDiedMedicSaxton
+{
+	scene "scenes/Player/Saxton/low/4250.vcd" 
+}
+Rule MvMDefenderDiedMedicSaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimMedic IsSaxton 
+	Response MvMDefenderDiedMedicSaxton
+}
+
+Response MvMDefenderDiedDemomanSaxton
+{
+	scene "scenes/Player/Saxton/low/4251.vcd" 
+}
+Rule MvMDefenderDiedDemomanSaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimDemoman IsSaxton 
+	Response MvMDefenderDiedDemomanSaxton
+}
+
+Response MvMDefenderDiedPyroSaxton
+{
+	scene "scenes/Player/Saxton/low/4252.vcd" 
+}
+Rule MvMDefenderDiedPyroSaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimPyro IsSaxton 
+	Response MvMDefenderDiedPyroSaxton
+}
+
+Response MvMDefenderDiedSniperSaxton
+{
+	scene "scenes/Player/Saxton/low/4253.vcd" 
+}
+Rule MvMDefenderDiedSniperSaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimSniper IsSaxton 
+	Response MvMDefenderDiedSniperSaxton
+}
+
+Response MvMDefenderDiedEngineerSaxton
+{
+	scene "scenes/Player/Saxton/low/4254.vcd" 
+}
+Rule MvMDefenderDiedEngineerSaxton
+{
+	criteria ConceptMvMDefenderDied 50PercentChance IsMvMDefender IsVictimEngineer IsSaxton 
+	Response MvMDefenderDiedEngineerSaxton
+}
+
+Response MvMFirstBombPickupSaxton
+{
+	scene "scenes/Player/Saxton/low/4277.vcd" 
+	scene "scenes/Player/Saxton/low/4279.vcd" 
+}
+Rule MvMFirstBombPickupSaxton
+{
+	criteria ConceptMvMFirstBombPickup 5PercentChance IsMvMDefender IsSaxton
+	Response MvMFirstBombPickupSaxton
+}
+
+Response MvMBombPickupSaxton
+{
+	scene "scenes/Player/Saxton/low/4276.vcd" 
+}
+Rule MvMBombPickupSaxton
+{
+	criteria ConceptMvMBombPickup 5PercentChance IsMvMDefender IsSaxton
+	Response MvMBombPickupSaxton
+}
+
+Response MvMSniperCalloutSaxton
+{
+	scene "scenes/Player/Saxton/low/4258.vcd" 
+}
+Rule MvMSniperCalloutSaxton
+{
+	criteria ConceptMvMSniperCallout 50PercentChance IsMvMDefender IsSaxton
+	Response MvMSniperCalloutSaxton
+}
+
+Response MvMSentryBusterSaxton
+{
+	scene "scenes/Player/Saxton/low/4295.vcd" 
+}
+Rule MvMSentryBusterSaxton
+{
+	criteria ConceptMvMSentryBuster 50PercentChance IsMvMDefender IsSaxton
+	Response MvMSentryBusterSaxton
+}
+
+Response MvMSentryBusterDownSaxton
+{
+	scene "scenes/Player/Saxton/low/4296.vcd" 
+}
+Rule MvMSentryBusterDownSaxton
+{
+	criteria ConceptMvMSentryBusterDown 20PercentChance IsMvMDefender IsSaxton
+	Response MvMSentryBusterDownSaxton
+}
+
+Response MvMLastManStandingSaxton
+{
+	scene "scenes/Player/Saxton/low/4255.vcd" 
+	scene "scenes/Player/Saxton/low/4257.vcd" 
+}
+Rule MvMLastManStandingSaxton
+{
+	criteria ConceptMvMLastManStanding 20PercentChance IsMvMDefender IsSaxton
+	Response MvMLastManStandingSaxton
+}
+
+Response MvMEncourageMoneySaxton
+{
+	scene "scenes/Player/Saxton/low/4270.vcd" 
+}
+Rule MvMEncourageMoneySaxton
+{
+	criteria ConceptMvMEncourageMoney 50PercentChance IsMvMDefender IsSaxton
+	Response MvMEncourageMoneySaxton
+}
+
+Response MvMEncourageUpgradeSaxton
+{
+	scene "scenes/Player/Saxton/low/4274.vcd" 
+}
+Rule MvMEncourageUpgradeSaxton
+{
+	criteria ConceptMvMEncourageUpgrade 50PercentChance IsMvMDefender IsSaxton
+	Response MvMEncourageUpgradeSaxton
+}
+
+Response MvMUpgradeCompleteSaxton
+{
+	scene "scenes/Player/Saxton/low/4271.vcd" 
+	scene "scenes/Player/Saxton/low/4272.vcd" 
+	scene "scenes/Player/Saxton/low/4273.vcd" 
+}
+Rule MvMUpgradeCompleteSaxton
+{
+	criteria ConceptMvMUpgradeComplete 5PercentChance IsMvMDefender IsSaxton
+	Response MvMUpgradeCompleteSaxton
+}
+
+Response MvMGiantCalloutSaxton
+{
+	scene "scenes/Player/Saxton/low/4297.vcd" 
+	scene "scenes/Player/Saxton/low/4301.vcd"
+}
+Rule MvMGiantCalloutSaxton
+{
+	criteria ConceptMvMGiantCallout 20PercentChance IsMvMDefender IsSaxton
+	Response MvMGiantCalloutSaxton
+}
+
+Response MvMGiantHasBombSaxton
+{
+	scene "scenes/Player/Saxton/low/4302.vcd" 
+	scene "scenes/Player/Saxton/low/4303.vcd" 
+}
+Rule MvMGiantHasBombSaxton
+{
+	criteria ConceptMvMGiantHasBomb 20PercentChance IsMvMDefender IsSaxton
+	Response MvMGiantHasBombSaxton
+}
+
+Response MvMSappedRobotSaxton
+{
+	scene "scenes/Player/Saxton/low/4259.vcd" 
+	scene "scenes/Player/Saxton/low/4260.vcd" 
+}
+Rule MvMSappedRobotSaxton
+{
+	criteria ConceptMvMSappedRobot 50PercentChance IsMvMDefender IsSaxton
+	Response MvMSappedRobotSaxton
+}
+
+Response MvMCloseCallSaxton
+{
+	scene "scenes/Player/Saxton/low/4283.vcd" 
+}
+Rule MvMCloseCallSaxton
+{
+	criteria ConceptMvMCloseCall 50PercentChance IsMvMDefender IsSaxton
+	Response MvMCloseCallSaxton
+}
+
+Response MvMTankCalloutSaxton
+{
+	scene "scenes/Player/Saxton/low/4287.vcd" 
+	scene "scenes/Player/Saxton/low/4288.vcd" 
+}
+Rule MvMTankCalloutSaxton
+{
+	criteria ConceptMvMTankCallout 50PercentChance IsMvMDefender IsSaxton
+	Response MvMTankCalloutSaxton
+}
+
+Response MvMTankDeadSaxton
+{
+	scene "scenes/Player/Saxton/low/4293.vcd" 
+	scene "scenes/Player/Saxton/low/4294.vcd" 
+}
+Rule MvMTankDeadSaxton
+{
+	criteria ConceptMvMTankDead 50PercentChance IsMvMDefender IsSaxton
+	Response MvMTankDeadSaxton
+}
+
+Response MvMTankDeployingSaxton
+{
+	scene "scenes/Player/Saxton/low/4292.vcd" 
+}
+Rule MvMTankDeployingSaxton
+{
+	criteria ConceptMvMTankDeploying 50PercentChance IsMvMDefender IsSaxton
+	Response MvMTankDeployingSaxton
+}
+
+Response MvMAttackTheTankSaxton
+{
+	scene "scenes/Player/Saxton/low/4289.vcd" 
+	scene "scenes/Player/Saxton/low/4290.vcd" 
+	scene "scenes/Player/Saxton/low/4291.vcd" 
+}
+Rule MvMAttackTheTankSaxton
+{
+	criteria ConceptMvMAttackTheTank 50PercentChance IsMvMDefender IsSaxton
+	Response MvMAttackTheTankSaxton
+}
+
+Response MvMTauntSaxton
+{
+	scene "scenes/Player/Saxton/low/4262.vcd" 
+	scene "scenes/Player/Saxton/low/4263.vcd" 
+	scene "scenes/Player/Saxton/low/4264.vcd" 
+	scene "scenes/Player/Saxton/low/4265.vcd" 
+	scene "scenes/Player/Saxton/low/4266.vcd" 
+	scene "scenes/Player/Saxton/low/4267.vcd" 
+}
+Rule MvMTauntSaxton
+{
+	criteria ConceptMvMTaunt 50PercentChance IsMvMDefender IsSaxton
+	Response MvMTauntSaxton
+}
+
+Response MvMWaveWinSaxton
+{
+	scene "scenes/Player/Saxton/low/4231.vcd" 
+	scene "scenes/Player/Saxton/low/4232.vcd" 
+	scene "scenes/Player/Saxton/low/4233.vcd" 
+	scene "scenes/Player/Saxton/low/4234.vcd" 
+	scene "scenes/Player/Saxton/low/4235.vcd" 
+}
+Rule MvMWaveWinSaxton
+{
+	criteria ConceptMvMWaveWin 50PercentChance IsMvMDefender IsSaxton
+	Response MvMWaveWinSaxton
+}
+
+Response MvMWaveLoseSaxton
+{
+	scene "scenes/Player/Saxton/low/4236.vcd" 
+	scene "scenes/Player/Saxton/low/4237.vcd" 
+	scene "scenes/Player/Saxton/low/4238.vcd" 
+	scene "scenes/Player/Saxton/low/4239.vcd" 
+	scene "scenes/Player/Saxton/low/4240.vcd" 
+}
+Rule MvMWaveLoseSaxton
+{
+	criteria ConceptMvMWaveLose 50PercentChance IsMvMDefender IsSaxton
+	Response MvMWaveLoseSaxton
+}
+
+Response MvMMoneyPickupSaxton
+{
+	scene "scenes/Player/Saxton/low/4269.vcd" 
+}
+Rule MvMMoneyPickupSaxton
+{
+	criteria ConceptMvMMoneyPickup 5PercentChance IsMvMDefender IsSaxton
+	Response MvMMoneyPickupSaxton
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+// Auto Speech Cart
+//--------------------------------------------------------------------------------------------------------------
+Criterion "SaxtonNotSaidCartMovingBackwardD" "SaidCartMovingBackwardD" "!=1" "required" weight 0
+Criterion "SaxtonNotSaidCartMovingBackwardO" "SaidCartMovingBackwardO" "!=1" "required" weight 0
+Criterion "SaxtonNotSaidCartMovingForwardD" "SaidCartMovingForwardD" "!=1" "required" weight 0
+Criterion "SaxtonNotSaidCartMovingForwardO" "SaidCartMovingForwardO" "!=1" "required" weight 0
+Criterion "SaxtonNotSaidCartMovingStoppedD" "SaidCartMovingStoppedD" "!=1" "required" weight 0
+Criterion "SaxtonNotSaidCartMovingStoppedO" "SaidCartMovingStoppedO" "!=1" "required" weight 0
+Response CartMovingBackwardsDefenseSaxton                                                     
+{
+	scene "scenes/Player/Saxton/low/7371.vcd"
+	scene "scenes/Player/Saxton/low/7375.vcd"
+}
+Rule CartMovingBackwardsDefenseSaxton                                                     
+{
+	criteria ConceptCartMovingBackward IsOnDefense IsSaxton SaxtonNotSaidCartMovingBackwardD IsNotDisguised 75PercentChance                                                                                                                                                          
+	ApplyContext "SaidCartMovingBackwardD:1:20"
+	Response CartMovingBackwardsDefenseSaxton                                                     
+}
+Response CartMovingBackwardsOffenseSaxton                                                     
+{
+	scene "scenes/Player/Saxton/low/7363.vcd"
+	scene "scenes/Player/Saxton/low/7365.vcd"
+}
+Rule CartMovingBackwardsOffenseSaxton                                                     
+{
+	criteria ConceptCartMovingBackward IsOnOffense IsSaxton SaxtonNotSaidCartMovingBackwardO IsNotDisguised 75PercentChance                                                                                                                                                          
+	ApplyContext "SaidCartMovingBackwardO:1:20"
+	Response CartMovingBackwardsOffenseSaxton                                                     
+}
+Response CartMovingForwardDefenseSaxton                                                       
+{
+	scene "scenes/Player/Saxton/low/7368.vcd"
+	scene "scenes/Player/Saxton/low/7369.vcd"
+	scene "scenes/Player/Saxton/low/8559.vcd"
+}
+Rule CartMovingForwardDefenseSaxton                                                       
+{
+	criteria ConceptCartMovingForward IsOnDefense IsSaxton SaxtonNotSaidCartMovingForwardD IsNotDisguised 75PercentChance                                                                                                                                                            
+	ApplyContext "SaidCartMovingForwardD:1:20"
+	Response CartMovingForwardDefenseSaxton                                                       
+}
+Response CartMovingForwardOffenseSaxton                                                       
+{
+	scene "scenes/Player/Saxton/low/7345.vcd"
+	scene "scenes/Player/Saxton/low/7346.vcd"
+	scene "scenes/Player/Saxton/low/7347.vcd"
+	scene "scenes/Player/Saxton/low/7350.vcd"
+	scene "scenes/Player/Saxton/low/7351.vcd"
+	scene "scenes/Player/Saxton/low/7352.vcd"
+	scene "scenes/Player/Saxton/low/7353.vcd"
+	scene "scenes/Player/Saxton/low/7356.vcd"
+	scene "scenes/Player/Saxton/low/7355.vcd"
+	scene "scenes/Player/Saxton/low/7359.vcd"
+	scene "scenes/Player/Saxton/low/7362.vcd"
+	scene "scenes/Player/Saxton/low/7357.vcd"
+	scene "scenes/Player/Saxton/low/7349.vcd"
+	scene "scenes/Player/Saxton/low/7348.vcd"
+	scene "scenes/Player/Saxton/low/7354.vcd"
+	scene "scenes/Player/Saxton/low/7377.vcd"
+	scene "scenes/Player/Saxton/low/7378.vcd"
+	scene "scenes/Player/Saxton/low/7379.vcd"
+	scene "scenes/Player/Saxton/low/7382.vcd"
+	scene "scenes/Player/Saxton/low/7383.vcd"
+	scene "scenes/Player/Saxton/low/7385.vcd"
+}
+Rule CartMovingForwardOffenseSaxton                                                       
+{
+	criteria ConceptCartMovingForward IsOnOffense IsSaxton SaxtonNotSaidCartMovingForwardO IsNotDisguised 75PercentChance                                                                                                                                                            
+	ApplyContext "SaidCartMovingForwardO:1:20"
+	Response CartMovingForwardOffenseSaxton                                                       
+}
+Response CartMovingStoppedDefenseSaxton                                                       
+{
+	scene "scenes/Player/Saxton/low/7396.vcd"
+	scene "scenes/Player/Saxton/low/7398.vcd"
+	scene "scenes/Player/Saxton/low/7400.vcd"
+}
+Rule CartMovingStoppedDefenseSaxton                                                       
+{
+	criteria ConceptCartMovingStopped IsOnDefense IsSaxton SaxtonNotSaidCartMovingStoppedD IsNotDisguised 75PercentChance                                                                                                                                                            
+	ApplyContext "SaidCartMovingStoppedD:1:20"
+	Response CartMovingStoppedDefenseSaxton                                                       
+}
+Response CartMovingStoppedOffenseSaxton                                                       
+{
+	scene "scenes/Player/Saxton/low/7389.vcd"
+	scene "scenes/Player/Saxton/low/7390.vcd"
+	scene "scenes/Player/Saxton/low/7388.vcd"
+}
+Rule CartMovingStoppedOffenseSaxton                                                       
+{
+	criteria ConceptCartMovingStopped IsOnOffense IsSaxton SaxtonNotSaidCartMovingStoppedO IsNotDisguised 75PercentChance                                                                                                                                                            
+	ApplyContext "SaidCartMovingStoppedO:1:20"
+	Response CartMovingStoppedOffenseSaxton                                                       
+}
+//--------------------------------------------------------------------------------------------------------------
+// END OF Auto Speech Cart
+//--------------------------------------------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------------------------
+// Begin Competitive Mode VO
+//--------------------------------------------------------------------------------------------------------------
+Response PlayerFirstRoundStartCompSaxton
+{
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_01.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_04.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_05.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_07.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_08.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_09.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_10.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_11.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_12.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_13.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_comp_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_comp_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_comp_04.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_comp_05.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_comp_06.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_comp_07.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_rare_01.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_rare_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_rare_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_rare_04.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_rare_05.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamefirst_rare_06.vcd" predelay "1.0, 5.0"
+}
+Rule PlayerFirstRoundStartCompSaxton
+{
+	criteria ConceptPlayerRoundStartComp IsSaxton IsFirstRound 40PercentChance
+	Response PlayerFirstRoundStartCompSaxton
+}
+
+Response PlayerWonPrevRoundCompSaxton
+{
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_01.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_06.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_07.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_01.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_06.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_07.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_rare_01.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_rare_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_rare_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamewonlast_rare_04.vcd" predelay "1.0, 5.0"
+}
+Rule PlayerWonPrevRoundCompSaxton
+{
+	criteria ConceptPlayerRoundStartComp IsSaxton IsNotFirstRound PlayerWonPreviousRound 40PercentChance
+	Response PlayerWonPrevRoundCompSaxton
+}
+
+Response PlayerLostPrevRoundCompSaxton
+{
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_04.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_05.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_06.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_07.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_08.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_09.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_04.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_05.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_06.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_07.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_rare_01.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_rare_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_rare_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_rare_04.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregamelostlast_rare_05.vcd" predelay "1.0, 5.0"
+}
+Rule PlayerLostPrevRoundCompSaxton
+{
+	criteria ConceptPlayerRoundStartComp IsSaxton IsNotFirstRound PlayerLostPreviousRound PreviousRoundWasNotTie 40PercentChance
+	Response PlayerLostPrevRoundCompSaxton
+}
+
+Response PlayerTiedPrevRoundCompSaxton
+{
+	scene "scenes/Player/Saxton/low/cm_saxton_pregametie_01.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregametie_02.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregametie_03.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregametie_04.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregametie_05.vcd" predelay "1.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_pregametie_06.vcd" predelay "1.0, 5.0"
+}
+Rule PlayerTiedPrevRoundCompSaxton
+{
+	criteria ConceptPlayerRoundStartComp IsSaxton IsNotFirstRound PreviousRoundWasTie 40PercentChance
+	Response PlayerTiedPrevRoundCompSaxton
+}
+
+Response PlayerGameWinCompSaxton
+{
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_01.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_03.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_04.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_05.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_06.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_07.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_08.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_01.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_03.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_04.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_05.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_06.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_07.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_08.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_09.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_01.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_02.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_03.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_04.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_05.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_06.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_07.vcd" predelay "2.0, 5.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_gamewon_rare_08.vcd" predelay "2.0, 5.0"
+}
+Rule PlayerGameWinCompSaxton
+{
+	criteria ConceptPlayerGameOverComp PlayerOnWinningTeam IsSaxton 40PercentChance
+	Response PlayerGameWinCompSaxton
+}
+
+Response PlayerMatchWinCompSaxton
+{
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_01.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_02.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_03.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_04.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_05.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_06.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_07.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_08.vcd" predelay "1.0, 2.0"
+	scene "scenes/Player/Saxton/low/cm_saxton_matchwon_09.vcd" predelay "1.0, 2.0"
+}
+Rule PlayerMatchWinCompSaxton
+{
+	criteria ConceptPlayerMatchOverComp PlayerOnWinningTeam IsSaxton 40PercentChance
+	Response PlayerMatchWinCompSaxton
+}
+//--------------------------------------------------------------------------------------------------------------
+// End Competitive Mode VO
+//--------------------------------------------------------------------------------------------------------------

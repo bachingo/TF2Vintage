@@ -1,0 +1,54 @@
+//
+// Team Fortress 2 Vintage - Saxton Hale Player Class
+//
+PlayerClass
+{
+	// Attributes.
+	"name"			"saxton"
+	"model"			"models/player/saxton_hale_jungle_inferno/saxton_hale.mdl"
+	"model_hwm"		"models/player/saxton_hale_jungle_inferno/saxton_hale.mdl"
+	"model_hands"	"models/weapons/c_models/c_soldier_arms.mdl"
+	"localize_name"	"TF_Class_Name_Soldier"
+	"speed_max"		"360"
+	"health_max"		"2046"
+	"armor_max"		"0"
+
+	// Grenades.
+	"grenade1"		""
+	"grenade2"		""
+
+	// Weapons.
+	"weapon1"		"TF_WEAPON_SHOVELFIST"
+	"weapon2"		""
+	"weapon3"		""
+	"weapon4"		""
+	"weapon5"		""
+	"weapon6"		""
+	"weapon7"		""
+	"weapon8"		""
+	"weapon9"		""
+	"weapon10"		""
+	"weapon11"		""
+
+
+	//Thirdperson
+	"cameraoffset_forward"	"85"
+	"cameraoffset_right"	"25"
+	"cameraoffset_up"	"0"
+
+
+	AmmoMax
+	{
+		"tf_ammo_primary"	"200"
+		"tf_ammo_secondary"	"200"
+		"tf_ammo_metal"		"200"
+		"tf_ammo_grenades1"	"0"
+		"tf_ammo_grenades2"	"0"
+	}
+
+	// Death Sounds
+	"sound_death"				"Saxton.Death"
+	"sound_crit_death"				"Saxton.CritDeath"
+	"sound_melee_death"			"Saxton.MeleeDeath"
+	"sound_explosion_death"			"Saxton.ExplosionDeath"		
+}

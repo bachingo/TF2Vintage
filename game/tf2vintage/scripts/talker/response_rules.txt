@@ -310,6 +310,7 @@ criterion "IsHeavy" "playerclass" "Heavy" "required"
 criterion "IsPyro" "playerclass" "Pyro" "required"
 criterion "IsSpy" "playerclass" "Spy" "required"
 criterion "IsEngineer" "playerclass" "Engineer" "required"
+criterion "IsSaxton" "playerclass" "Saxton" "required"
 
 criterion "IsNotScout" "playerclass" "!=Scout" "required" 
 criterion "IsNotSniper" "playerclass" "!=Sniper" "required"
@@ -320,6 +321,7 @@ criterion "IsNotHeavy" "playerclass" "!=Heavy" "required"
 criterion "IsNotPyro" "playerclass" "!=Pyro" "required"
 criterion "IsNotSpy" "playerclass" "!=Spy" "required"
 criterion "IsNotEngineer" "playerclass" "!=Engineer" "required"
+criterion "IsNotSaxton" "playerclass" "!=Saxton" "required"
 
 
 criterion "IsVictimScout" "victimclass" "Scout" "required" weight 0
@@ -397,6 +399,7 @@ criterion "WeaponIsSpyPDA" "playerweapon" "tf_weapon_pda_spy" "required"
 criterion "WeaponIsRocket" "playerweapon" "tf_weapon_rocketlauncher" "required"
 criterion "WeaponIsShovel" "playerweapon" "tf_weapon_shovel" "required"
 criterion "WeaponIsFlaregun" "playerweapon" "tf_weapon_flaregun" "required"
+criterion "WeaponIsShovelFist" "playerweapon" "tf_weapon_shovelfist" "required"
 // Lunchbox modified to fire for Sandvich only, so we don't share lines.
 criterion "WeaponIsSandvich" "item_name" "The Sandvich" "required" weight 5
 criterion "WeaponIsRobotSandvich" "item_name" "The Robo-Sandvich" "required" weight 5
@@ -408,7 +411,7 @@ criterion "WeaponIsKGB" "item_name" "The Killing Gloves of Boxing" "required" we
 criterion "WeaponIsGRU" "item_name" "Gloves of Running Urgently" "required" weight 10
 criterion "WeaponIsBearGloves" "item_name" "Warrior's Spirit" "required" weight 10
 criterion "WeaponIsKritzkrieg" "item_name" "The Kritzkrieg" "required" weight 10
-criterion "WeaponIsBow" "item_type_name" "#TF_Weapon_CompoundBow" "required" weight 10
+criterion "WeaponIsBow" "playerweapon" "tf_weapon_compound_bow" "required" weight 10
 criterion "WeaponIsEqualizer" "item_name" "The Equalizer" "required" weight 10
 criterion "WeaponIsEscapePlan" "item_name" "The Escape Plan" "required" weight 10
 criterion "WeaponIsDirectHit" "item_name" "The Direct Hit" "required" weight 10
@@ -509,6 +512,8 @@ criterion "WeaponIsScotsmansSkullcutter" "item_name" "The Scotsman's Skullcutter
 criterion "WeaponIsClassicSniperrifle" "playerweapon" "tf_weapon_sniperrifle_classic" "required"
 criterion "WeaponIsRocketLauncherAirStrike" "playerweapon" "tf_weapon_rocketlauncher_airstrike" "required"
 criterion "WeaponIsMutatedMilk" "item_name" "Mutated Milk" "required" weight 10
+criterion "WeaponIsStockBonesaw" "item_name" "TF_WEAPON_BONESAW" "required" weight 5
+criterion "WeaponIsNotStockBonesaw" "item_name" "!=TF_WEAPON_BONESAW" "required" weight 5
 
 //Custom healed concept and critical hit
 criterion "IsBeingHealed" "beinghealed" "1" "required"
@@ -711,4 +716,6 @@ criterion "ConceptPlayerMatchOverComp" "Concept" "TLK_MATCH_OVER_COMP" required
 #include "talker/Medic_auto.txt"
 #include "talker/Pyro_auto.txt"
 #include "talker/Spy_auto.txt"
+#include "talker/Saxton.txt"
+#include "talker/Saxton_auto.txt"
 

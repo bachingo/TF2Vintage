@@ -335,7 +335,7 @@ void CTFWeaponBaseMelee::Smack( void )
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
 #endif
 	
-	int iSelfHarm = 0; // Do we hit ourselves on a miss?
+	int iSelfHarm = 0;
 	CALL_ATTRIB_HOOK_INT( iSelfHarm, hit_self_on_miss );
 
 	// We hit, setup the smack.
@@ -351,6 +351,7 @@ void CTFWeaponBaseMelee::Smack( void )
 			WeaponSound( MELEE_HIT_WORLD );
 		}
 
+		// Do Damage.
 		DoMeleeDamage( trace.m_pEnt, trace );
 
 		// Don't impact trace friendly players or objects
@@ -390,19 +391,38 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 	// Do Damage.
 	int iCustomDamage = GetCustomDamageType();
 	float flDamage = GetMeleeDamage(pTarget, iCustomDamage);
-	int iDmgType = DMG_MELEE | DMG_NEVERGIB | DMG_CLUB;
+	
+	int iWillGibCrit = 0;
+	CALL_ATTRIB_HOOK_INT( iWillGibCrit, crit_kill_will_gib );
+	bool bIsCritKill = false;
+	int iWillGibAlways = false;
+	CALL_ATTRIB_HOOK_INT( iWillGibAlways, kill_will_gib );
+
+	
+	int iDmgType = DMG_MELEE | DMG_CLUB;
 	if ( IsCurrentAttackACrit() )
 	{
 		// TODO: Not removing the old critical path yet, but the new custom damage is marking criticals as well for melee now.
 		iDmgType |= DMG_CRITICAL;
-
+		bIsCritKill = true;
 	}
 
 	if ( IsCurrentAttackAMiniCrit() )
 	{
 		iDmgType |= DMG_MINICRITICAL;
+		bIsCritKill = true;
 	}
-
+	
+	if ( ((iWillGibCrit != 0) && bIsCritKill) || ( iWillGibAlways != 0 ) )
+	{
+		iDmgType |= DMG_ALWAYSGIB;
+		bIsCritKill = true;
+	}
+	else
+	{
+		iDmgType |= DMG_NEVERGIB;
+	}
+	
 	CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
 
 	if ( pTarget == pPlayer )

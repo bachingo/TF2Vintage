@@ -213,6 +213,7 @@ typedef struct EconPerTeamVisuals
 	{
 		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
 		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
+		CLEAR_STR( custom_particlesystem );
 		skin = -1;
 	}
 
@@ -245,7 +246,7 @@ public:
 		CLEAR_STR(item_description);
 		item_slot = -1;
 		anim_slot = -1;
-		item_quality = QUALITY_NORMAL;
+		item_quality = QUALITY_VINTAGE;
 		baseitem = false;
 		propername = false;
 		CLEAR_STR(item_logname);
@@ -264,6 +265,9 @@ public:
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 		is_reskin = false;
+		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
+		is_custom_content = false;
+		CLEAR_STR(holiday_restriction);
 	}
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
@@ -304,6 +308,10 @@ public:
 	bool act_as_wearable;
 	int hide_bodygroups_deployed_only;
 	bool is_reskin;
+	char holiday_restriction[128];
+	int year;
+	bool is_custom_content;
+	
 	CUtlVector<CEconItemAttribute> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];
 };

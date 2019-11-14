@@ -2807,7 +2807,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
 
 #if defined( TF_DLL ) || defined ( TF_VINTAGE )
-	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
+	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
 #endif
 
 #else
@@ -2823,24 +2823,24 @@ END_NETWORK_TABLE()
 //-----------------------------------------------------------------------------
 BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #if !defined( CLIENT_DLL )
-	SendPropIntWithMinusOneFlag( SENDINFO(m_iClip1 ), 8 ),
-	SendPropIntWithMinusOneFlag( SENDINFO(m_iClip2 ), 8 ),
-	SendPropInt( SENDINFO(m_iPrimaryAmmoType ), 8 ),
-	SendPropInt( SENDINFO(m_iSecondaryAmmoType ), 8 ),
+	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip1 ), 8 ),
+	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip2 ), 8 ),
+	SendPropInt( SENDINFO( m_iPrimaryAmmoType ), 8 ),
+	SendPropInt( SENDINFO( m_iSecondaryAmmoType ), 8 ),
 
 	SendPropInt( SENDINFO( m_nViewModelIndex ), VIEWMODEL_INDEX_BITS, SPROP_UNSIGNED ),
 
 	SendPropInt( SENDINFO( m_bFlipViewModel ) ),
 
 #if defined( TF_DLL ) || defined ( TF_VINTAGE )
-	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
+	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
 #endif
 
 #else
-	RecvPropIntWithMinusOneFlag( RECVINFO(m_iClip1 )),
-	RecvPropIntWithMinusOneFlag( RECVINFO(m_iClip2 )),
-	RecvPropInt( RECVINFO(m_iPrimaryAmmoType )),
-	RecvPropInt( RECVINFO(m_iSecondaryAmmoType )),
+	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip1 ) ),
+	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip2 ) ),
+	RecvPropInt( RECVINFO( m_iPrimaryAmmoType ) ),
+	RecvPropInt( RECVINFO( m_iSecondaryAmmoType ) ),
 
 	RecvPropInt( RECVINFO( m_nViewModelIndex ) ),
 
@@ -2849,20 +2849,23 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #endif
 END_NETWORK_TABLE()
 
-BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
+BEGIN_NETWORK_TABLE( CBaseCombatWeapon, DT_BaseCombatWeapon )
 #if !defined( CLIENT_DLL )
-	SendPropDataTable("LocalWeaponData", 0, &REFERENCE_SEND_TABLE(DT_LocalWeaponData), SendProxy_SendLocalWeaponDataTable ),
-	SendPropDataTable("LocalActiveWeaponData", 0, &REFERENCE_SEND_TABLE(DT_LocalActiveWeaponData), SendProxy_SendActiveLocalWeaponDataTable ),
-	SendPropModelIndex( SENDINFO(m_iViewModelIndex) ),
-	SendPropModelIndex( SENDINFO(m_iWorldModelIndex) ),
-	SendPropInt( SENDINFO(m_iState ), 8, SPROP_UNSIGNED ),
-	SendPropEHandle( SENDINFO(m_hOwner) ),
+	SendPropDataTable( "LocalWeaponData", 0, &REFERENCE_SEND_TABLE( DT_LocalWeaponData ), SendProxy_SendLocalWeaponDataTable ),
+	SendPropDataTable( "LocalActiveWeaponData", 0, &REFERENCE_SEND_TABLE( DT_LocalActiveWeaponData ), SendProxy_SendActiveLocalWeaponDataTable ),
+	SendPropModelIndex( SENDINFO( m_iViewModelIndex ) ),
+	SendPropModelIndex( SENDINFO( m_iWorldModelIndex ) ),
+	SendPropInt( SENDINFO( m_iState ), 8, SPROP_UNSIGNED ),
+	SendPropEHandle( SENDINFO( m_hOwner ) ),
 #else
-	RecvPropDataTable("LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalWeaponData)),
-	RecvPropDataTable("LocalActiveWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalActiveWeaponData)),
-	RecvPropInt( RECVINFO(m_iViewModelIndex)),
-	RecvPropInt( RECVINFO(m_iWorldModelIndex)),
-	RecvPropInt( RECVINFO(m_iState), 0, &CBaseCombatWeapon::RecvProxy_WeaponState ),
-	RecvPropEHandle( RECVINFO(m_hOwner ) ),
+	RecvPropDataTable( "LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE( DT_LocalWeaponData ) ),
+	RecvPropDataTable( "LocalActiveWeaponData", 0, 0, &REFERENCE_RECV_TABLE( DT_LocalActiveWeaponData ) ),
+	RecvPropInt( RECVINFO( m_iViewModelIndex ) ),
+	RecvPropInt( RECVINFO( m_iWorldModelIndex ) ),
+	RecvPropInt( RECVINFO( m_iState ), 0, &CBaseCombatWeapon::RecvProxy_WeaponState ),
+	RecvPropEHandle( RECVINFO( m_hOwner ) ),
 #endif
 END_NETWORK_TABLE()
+
+BEGIN_ENT_SCRIPTDESC( CBaseCombatWeapon, CBaseAnimating, "Base that all weapons derive from" )
+END_SCRIPTDESC()

@@ -146,6 +146,36 @@ public:
 	}
 };
 
+template <class T>
+class CScriptedFactory : public IEntityFactory
+{
+public:
+	CScriptedFactory( const char *pClassName )
+	{
+		EntityFactoryDictionary()->InstallFactory( this, pClassName );
+	}
+
+	IServerNetworkable *Create( const char *pClassName )
+	{
+		T *pEnt = _CreateEntityTemplate((T *)NULL, pClassName);
+		pEnt->m_szScriptedClassname = AllocPooledString( pClassName );
+		return pEnt->NetworkProp();
+	}
+
+	void Destroy( IServerNetworkable *pNetworkable )
+	{
+		if ( pNetworkable )
+		{
+			pNetworkable->Release();
+		}
+	}
+
+	virtual size_t GetEntitySize()
+	{
+		return sizeof(T);
+	}
+};
+
 #define LINK_ENTITY_TO_CLASS(mapClassName,DLLClassName) \
 	static CEntityFactory<DLLClassName> mapClassName( #mapClassName );
 

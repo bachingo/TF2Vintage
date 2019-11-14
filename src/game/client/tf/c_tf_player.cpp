@@ -100,6 +100,8 @@ ConVar tf2v_model_muzzleflash( "tf2v_model_muzzleflash", "0", FCVAR_ARCHIVE, "Us
 ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes and the flamethrower" );
 ConVar tf2v_showchatbubbles( "tf2v_showchatbubbles", "1", FCVAR_ARCHIVE, "Show bubble icons over typing players" );
 
+ConVar tf2v_show_veterancy( "tf2v_show_veterancy", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Enable or disable veterancy status if awarded." );
+
 extern ConVar tf_halloween;
 
 static void BuildDecapitatedTransform( C_BaseAnimating *pAnimating )
@@ -316,7 +318,7 @@ private:
 	bool  m_bFixedConstraints;
 	bool  m_bFadingOut;
 	bool  m_bPlayDeathAnim;
-	CountdownTimer m_timer1;
+	CountdownTimer m_timer1; // TODO: Name
 	CountdownTimer m_timer2;
 
 	// Decapitation
@@ -426,9 +428,9 @@ void C_TFRagdoll::DissolveEntity( C_BaseEntity *pEntity )
 		return;
 
 	if ( m_iTeam == TF_TEAM_BLUE )
-		pDissolver->SetEffectColor( {BitsToFloat( 0x4337999A ), BitsToFloat( 0x42606666 ), BitsToFloat( 0x426A999A )} );
+		pDissolver->SetEffectColor( Vector( BitsToFloat( 0x4337999A ), BitsToFloat( 0x42606666 ), BitsToFloat( 0x426A999A ) ) );
 	else
-		pDissolver->SetEffectColor( {BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD )} );
+		pDissolver->SetEffectColor( Vector( BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD ) ) );
 
 	pDissolver->SetOwnerEntity( NULL );
 	pDissolver->SetRenderMode( kRenderTransColor );
@@ -2877,27 +2879,27 @@ void C_TFPlayer::UpdateSpyMask(void)
 {
 	C_TFSpyMask *pMask = m_hSpyMask.Get();
 
-	if (m_Shared.InCond(TF_COND_DISGUISED))
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) )
 	{
 		// Create mask if we don't already have one.
-		if (!pMask)
+		if ( !pMask )
 		{
 			pMask = new C_TFSpyMask();
 
-			if (!pMask->InitializeAsClientEntity("models/player/items/spy/spyMask.mdl", RENDER_GROUP_OPAQUE_ENTITY))
+			if ( !pMask->InitializeAsClientEntity( "models/player/items/spy/spyMask.mdl", RENDER_GROUP_OPAQUE_ENTITY ) )
 			{
 				pMask->Release();
 				return;
 			}
 
-			pMask->SetOwnerEntity(this);
-			pMask->FollowEntity(this);
+			pMask->SetOwnerEntity( this );
+			pMask->FollowEntity( this );
 			pMask->UpdateVisibility();
 
 			m_hSpyMask = pMask;
 		}
 	}
-	else if (pMask)
+	else if ( pMask )
 	{
 		pMask->Release();
 		m_hSpyMask = NULL;
@@ -4414,7 +4416,7 @@ int C_TFPlayer::GetSkin()
 	switch (iVisibleTeam)
 	{
 	case TF_TEAM_RED:
-		if (tf_halloween.GetBool())
+		if (TFGameRules()->IsHolidayActive(kHoliday_Halloween) || TFGameRules()->IsHolidayActive(kHoliday_HalloweenOrFullMoon))
 		{
 			if (IsPlayerClass(TF_CLASS_SPY))
 			{
@@ -4434,7 +4436,7 @@ int C_TFPlayer::GetSkin()
 		break;
 
 	case TF_TEAM_BLUE:
-		if (tf_halloween.GetBool())
+		if (TFGameRules()->IsHolidayActive(kHoliday_Halloween) || TFGameRules()->IsHolidayActive(kHoliday_HalloweenOrFullMoon))
 		{
 			if (IsPlayerClass(TF_CLASS_SPY))
 			{
