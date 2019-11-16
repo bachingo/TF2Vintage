@@ -119,6 +119,7 @@ public:
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
 	DECLARE_PREDICTABLE();
+	DECLARE_ENT_SCRIPTDESC();
 
 public:
 
@@ -212,6 +213,7 @@ public:
 	void				RemoveAllAmmo( );
 	virtual int			GetAmmoCount( int iAmmoIndex ) const;
 	int					GetAmmoCount( char *szName ) const;
+	void				VScriptGiveAmmo( int iCount, int iAmmoIndex );
 
 	virtual Activity	NPC_TranslateActivity( Activity baseAct );
 

@@ -2570,6 +2570,73 @@ void CDmgAccumulator::Process( void )
 }
 #endif // GAME_DLL
 
+int CBaseCombatWeapon::ScriptGetMaxAmmo1()
+{
+	int iAmmo = GetMaxClip1();
+
+	if ( UsesClipsForAmmo1() )
+	{
+		iAmmo += GetAmmoDef()->MaxCarry( GetPrimaryAmmoType() );
+	}
+
+	return iAmmo;
+}
+
+int CBaseCombatWeapon::ScriptGetMaxAmmo2()
+{
+	int iAmmo = GetMaxClip2();
+
+	if ( UsesClipsForAmmo2() )
+	{
+		iAmmo += GetAmmoDef()->MaxCarry( GetSecondaryAmmoType() );
+	}
+
+	return iAmmo;
+}
+
+int CBaseCombatWeapon::ScriptGetClips()
+{
+	if ( !GetOwner() )
+		return -1;
+
+	int nClipSize = GetMaxClip1();
+
+	if ( nClipSize < 1 || FStrEq("asw_weapon_chainsaw", GetClassname()) )
+		return 1;
+
+	int nClips = GetOwner()->GetAmmoCount( m_iPrimaryAmmoType ) / nClipSize;
+
+	return nClips;
+}
+
+int CBaseCombatWeapon::ScriptGetMaxClips()
+{
+	if ( !GetOwner() )
+		return -1;
+
+	int nClipSize = GetMaxClip1();
+
+	if ( nClipSize < 1 || FStrEq("asw_weapon_chainsaw", GetClassname()) )
+		return 1;
+
+	return GetAmmoDef()->MaxCarry( m_iPrimaryAmmoType ) / nClipSize;
+}
+
+#ifdef GAME_DLL
+void CBaseCombatWeapon::ScriptSetClips( int nClips )
+{
+	if ( !GetOwner() )
+		return;
+
+	int nClipSize = GetMaxClip1();
+
+	if ( nClipSize < 0 || FStrEq("asw_weapon_chainsaw", GetClassname()) )
+		return;
+
+	GetOwner()->VScriptGiveAmmo( (nClipSize * nClips), m_iPrimaryAmmoType );
+}
+#endif
+
 #if defined( CLIENT_DLL )
 
 BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
@@ -2868,4 +2935,28 @@ BEGIN_NETWORK_TABLE( CBaseCombatWeapon, DT_BaseCombatWeapon )
 END_NETWORK_TABLE()
 
 BEGIN_ENT_SCRIPTDESC( CBaseCombatWeapon, CBaseAnimating, "Base that all weapons derive from" )
+	DEFINE_SCRIPTFUNC( GetMaxClip1, "" )
+	DEFINE_SCRIPTFUNC( GetMaxClip2, "" )
+	DEFINE_SCRIPTFUNC( GetDefaultClip1, "" )
+	DEFINE_SCRIPTFUNC( GetDefaultClip2, "" )
+	DEFINE_SCRIPTFUNC( Clip1, "" )
+	DEFINE_SCRIPTFUNC( Clip2, "" )
+#ifdef GAME_DLL
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetClip1, "SetClip1", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetClip2, "SetClip2", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetClips, "SetClips", "" )
+#endif
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMaxAmmo1, "GetMaxAmmo1", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMaxAmmo2, "GetMaxAmmo2", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetClips, "GetClips", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMaxClips, "GetMaxClips", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetOwner, "GetOwner", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetOwner, "SetOwner", "" )
+	DEFINE_SCRIPTFUNC( SendWeaponAnim, "" )
+	DEFINE_SCRIPTFUNC( SendViewModelAnim, "" )
+	DEFINE_SCRIPTFUNC( SetViewModelIndex, "" )
+	DEFINE_SCRIPTFUNC( SetSubType, "" )
+	DEFINE_SCRIPTFUNC( GetSubType, "" )
+	DEFINE_SCRIPTFUNC( HasAmmo, "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGiveTo, "GiveTo", "" )
 END_SCRIPTDESC()

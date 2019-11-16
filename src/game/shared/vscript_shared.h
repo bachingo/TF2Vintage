@@ -15,6 +15,7 @@
 
 extern IScriptVM *g_pScriptVM;
 
+const char *VScriptCutDownString( const char *str );
 HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing = false );
 bool VScriptRunScript( const char *pszScriptName, HSCRIPT hScope, bool bWarnMissing = false );
 inline bool VScriptRunScript( const char *pszScriptName, bool bWarnMissing = false ) { return VScriptRunScript( pszScriptName, NULL, bWarnMissing ); }

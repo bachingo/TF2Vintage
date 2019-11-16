@@ -25,6 +25,7 @@
 #include "gamevars_shared.h"
 #include "GameEventListener.h"
 #include "tf_gamestats_shared.h"
+#include "tier1/UtlStringMap.h"
 
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
@@ -185,6 +186,12 @@ public:
 	CBaseEntity*	GetIT( void ) const { return m_itHandle.Get(); }
 	void			SetIT( CBaseEntity *pPlayer );
 
+	CUtlStringMap<string_t> m_SavedConvars;
+	bool			HaveSavedConvar( ConVarRef const& cvar );
+	void			SaveConvar( ConVarRef const& cvar );
+	void			RevertSingleConvar( ConVarRef &cvar );
+	void			RevertSavedConvars();
+
 #ifdef GAME_DLL
 public:
 	// Override this to prevent removal of game specific entities that need to persist
@@ -284,6 +291,8 @@ public:
 	void			RegisterNPC( CBaseCombatCharacter *pNPC );
 	void			RemoveNPC( CBaseCombatCharacter *pNPC );
 
+	virtual void	RegisterScriptFunctions( void );
+
 protected:
 	virtual void	InitTeams( void );
 
@@ -332,6 +341,8 @@ public:
 
 	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer ) { return true; };
 
+	virtual void	LevelShutdownPostEntity( void );
+
 	bool			IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
@@ -344,8 +355,6 @@ public:
 	virtual bool	IsInHybridCTF_CPMode( void ) { return m_bPlayingHybrid_CTF_CP; };
 	virtual bool	IsInSpecialDeliveryMode( void ) { return m_bPlayingSpecialDeliveryMode; };
 	bool			UsePlayerReadyStatusMode( void );
-
-	virtual void RegisterScriptFunctions( void );
 
 #ifdef CLIENT_DLL
 
@@ -438,6 +447,8 @@ public:
 
 	const CUtlVector<EHANDLE> &GetAmmoEnts( void ) const { Assert( m_hAmmoEntities.Count() ); return m_hAmmoEntities; }
 	const CUtlVector<EHANDLE> &GetHealthEnts( void ) const { Assert( m_hHealthEntities.Count() ); return m_hHealthEntities; }
+
+	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
 
 private:
 

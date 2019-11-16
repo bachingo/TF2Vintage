@@ -651,7 +651,7 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPT_INSTANCE_HELPER( &g_BaseEntityScriptInstanceHelper )
 	DEFINE_SCRIPTFUNC_NAMED( ConnectOutputToScript, "ConnectOutput", "Adds an I/O connection that will call the named function when the specified output fires"  )
 	DEFINE_SCRIPTFUNC_NAMED( DisconnectOutputFromScript, "DisconnectOutput", "Removes a connected script function from an I/O event."  )
-	
+
 	DEFINE_SCRIPTFUNC( GetHealth, "" )
 	DEFINE_SCRIPTFUNC( SetHealth, "" )
 	DEFINE_SCRIPTFUNC( GetMaxHealth, "" )
@@ -659,20 +659,23 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 
 	DEFINE_SCRIPTFUNC( SetModel, "" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetModelName, "GetModelName", "Returns the name of the model" )
-	
+	DEFINE_SCRIPTFUNC_NAMED( ScriptPrecacheModel, "PrecacheModel", "Precache a model after the map has loaded" )
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptEmitSound, "EmitSound", "Plays a sound from this entity." )
 	DEFINE_SCRIPTFUNC_NAMED( VScriptPrecacheScriptSound, "PrecacheSoundScript", "Precache a sound for later playing." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSoundDuration, "GetSoundDuration", "Returns float duration of the sound. Takes soundname and optional actormodelname.")
+	DEFINE_SCRIPTFUNC_NAMED( ScriptStopSound, "StopSound", "Stops a sound from this entity." )
 
 
 	DEFINE_SCRIPTFUNC( GetClassname, "" )
 	DEFINE_SCRIPTFUNC_NAMED( GetEntityNameAsCStr, "GetName", "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetName, "SetName", "" )
 	DEFINE_SCRIPTFUNC( GetPreTemplateName, "Get the entity name stripped of template unique decoration" )
 
 	DEFINE_SCRIPTFUNC_NAMED( GetAbsOrigin, "GetOrigin", ""  )
 	DEFINE_SCRIPTFUNC( SetAbsOrigin, "SetAbsOrigin" )
 
-	
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetOrigin, "SetOrigin", ""  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetForward, "GetForwardVector", "Get the forward vector of the entity"  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetLeft, "GetLeftVector", "Get the left vector of the entity"  )
@@ -689,7 +692,14 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC_NAMED( WorldSpaceCenter, "GetCenter", "Get vector to center of object - absolute coords")
 	DEFINE_SCRIPTFUNC_NAMED( ScriptEyePosition, "EyePosition", "Get vector to eye position - absolute coords")
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetAngles, "SetAngles", "Set entity pitch, yaw, roll")
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetAnglesVector, "SetAnglesVector", "Set entity pitch, yaw, roll from a vector")
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAngles, "GetAngles", "Get entity pitch, yaw, roll as a vector")
+	// BenLubar
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetLocalAngles, "SetLocalAngles", "Set entity pitch, yaw, roll relative to the parent")
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetLocalAngles, "GetLocalAngles", "Get entity pitch, yaw, roll relative to the parent as a vector")
+	//
+	DEFINE_SCRIPTFUNC( SetLocalOrigin, "Moves the entity to this global position vector relative to the parent")
+	DEFINE_SCRIPTFUNC( GetLocalOrigin, "Returns the Entity position in the world relative to the parent as a vector")
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetSize, "SetSize", ""  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetBoundingMins, "GetBoundingMins", "Get a vector containing min bounds, centered on object")
@@ -699,7 +709,13 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetOwner, "SetOwner", ""  )
 	DEFINE_SCRIPTFUNC_NAMED( GetTeamNumber, "GetTeam", ""  )
 	DEFINE_SCRIPTFUNC_NAMED( ChangeTeam, "SetTeam", ""  )
-	
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTakeDamage, "TakeDamage", "Causes the entity to take damage" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTakeDamageParams, "TakeDamageParams", "Causes the entity to take damage with additional parameters" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSpawn, "Spawn", "Spawns the entity into the game." )
+	DEFINE_SCRIPTFUNC( Activate, "Activates the spawned entity." )
+	DEFINE_SCRIPTFUNC( SetCollisionGroup, "Sets the entity's collision group." )
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMoveParent, "GetMoveParent", "If in hierarchy, retrieves the entity's parent" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetRootMoveParent, "GetRootMoveParent", "If in hierarchy, walks up the hierarchy to find the root parent" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptFirstMoveChild,  "FirstMoveChild", "" )
@@ -709,9 +725,12 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC_NAMED( KeyValueFromFloat, "__KeyValueFromFloat", SCRIPT_HIDE )
 	DEFINE_SCRIPTFUNC_NAMED( KeyValueFromInt, "__KeyValueFromInt", SCRIPT_HIDE )
 	DEFINE_SCRIPTFUNC_NAMED( KeyValueFromVector, "__KeyValueFromVector", SCRIPT_HIDE )
+	#ifdef REACTIVEDROP_VSCRIPT_KEYVALUES
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValue, "GetKeyValue", "" )
+	#endif
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetModelKeyValues, "GetModelKeyValues", "Get a KeyValue class instance on this entity's model")
-	
+
 	DEFINE_SCRIPTFUNC( ValidateScriptScope, "Ensure that an entity's script scope has been created" )
 	DEFINE_SCRIPTFUNC( GetScriptScope, "Retrieve the script-side data associated with an entity" )
 	DEFINE_SCRIPTFUNC( GetScriptId, "Retrieve the unique identifier used to refer to the entity within the scripting system" )
@@ -1948,6 +1967,32 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 		return OnTakeDamage( info );
 	}
 	return 0;
+}
+
+//-----------------------------------------------------------------------------
+// VScript: Scale damage done and call OnTakeDamage
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptTakeDamage( float flDamage, int ndamageType, HSCRIPT hAttacker )
+{
+	CBaseEntity *pAttacker = ToEnt(hAttacker);
+	if ( !pAttacker )
+		pAttacker = this;
+
+	CTakeDamageInfo info( pAttacker, pAttacker, flDamage, ndamageType );
+	TakeDamage( info );
+}
+
+//-----------------------------------------------------------------------------
+// VScript: Scale damage done and call OnTakeDamage with additional parameters
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptTakeDamageParams( HSCRIPT hInflictor, HSCRIPT hAttacker, HSCRIPT hWeapon, const Vector &damageForce, const Vector &damagePosition, float flDamage, int ndamageType )
+{
+	CBaseEntity *pInflictor = ToEnt(hInflictor);
+	CBaseEntity *pAttacker = ToEnt(hAttacker);
+	CBaseEntity *pWeapon = ToEnt(hWeapon);
+
+	CTakeDamageInfo info( pInflictor, pAttacker, pWeapon, damageForce, damagePosition, flDamage, ndamageType );
+	TakeDamage( info );
 }
 
 //-----------------------------------------------------------------------------
@@ -3626,6 +3671,11 @@ void CBaseEntity::Spawn( void )
 {
 }
 
+void CBaseEntity::ScriptSpawn( void ) 
+{
+	DispatchSpawn( this );
+}
+
 
 CBaseEntity* CBaseEntity::Instance( const CBaseHandle &hEnt )
 {
@@ -5121,6 +5171,25 @@ int CBaseEntity::PrecacheModel( const char *name, bool bPreload )
 #endif
 
 	return idx;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: VScript: Precache model after map has loaded
+// Input  : *name - model name
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptPrecacheModel( const char *name )
+{
+	if ( !name || !*name )
+	{
+		Msg( "Attempting to precache model, but model name is NULL\n");
+		return;
+	}
+
+	int idx = engine->PrecacheModel( VScriptCutDownString( name ), true );
+	if ( idx != -1 )
+	{
+		PrecacheModelComponents( idx );
+	}
 }
 
 //-----------------------------------------------------------------------------

@@ -13,12 +13,14 @@
 #include "time.h"
 #include "viewport_panel_names.h"
 #include "tf_halloween_boss.h"
+#include "tf_zombie.h"
 #include "entity_bossresource.h"
 #include "vscript_shared.h"
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
 	#include "c_tf_objective_resource.h"
+	#include "c_user_message_register.h"
 #else
 	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
@@ -1085,9 +1087,121 @@ int	CTFGameRules::Damage_GetShouldNotBleed( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFGameRules::HaveSavedConvar( ConVarRef const& cvar )
+{
+	Assert( cvar.IsValid() );
+
+	UtlSymId_t iSymbol = m_SavedConvars.Find( cvar.GetName() );
+	if ( iSymbol == m_SavedConvars.InvalidIndex() )
+		return false;
+
+	return m_SavedConvars[ iSymbol ] != NULL_STRING;
+}
+
+#if defined( CLIENT_DLL )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void __MsgFunc_SavedConvar( bf_read &msg )
+{
+	Assert( TFGameRules() );
+	if ( !TFGameRules() )
+		return;
+
+	char szKey[2048];
+	bool bReadKey = msg.ReadString( szKey, sizeof( szKey ) );
+	Assert( bReadKey );
+
+	char szValue[2048];
+	bool bReadValue = msg.ReadString( szValue, sizeof( szValue ) );
+	Assert( bReadValue );
+
+	if ( bReadKey && bReadValue )
+	{
+		ConVarRef cvar( szKey );
+
+		Assert( cvar.IsValid() );
+		Assert( cvar.IsFlagSet( FCVAR_REPLICATED ) );
+
+		if ( cvar.IsValid() && cvar.IsFlagSet( FCVAR_REPLICATED ) )
+			TFGameRules()->m_SavedConvars[ szKey ] = AllocPooledString( szValue );
+	}
+}
+USER_MESSAGE_REGISTER( SavedConvar );
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::SaveConvar( ConVarRef const& cvar )
+{
+	Assert( cvar.IsValid() );
+
+	if ( HaveSavedConvar( cvar ) )
+	{
+		// already saved, don't override.
+		return;
+	}
+
+#if defined( GAME_DLL )
+	// BenLubar: Send saved replicated convars to the client so that it can reset them if the player disconnects.
+	if ( cvar.IsFlagSet( FCVAR_REPLICATED ) )
+	{
+		CReliableBroadcastRecipientFilter filter;
+		UserMessageBegin( filter, "SavedConvar" );
+			WRITE_STRING( cvar.GetName() );
+			WRITE_STRING( cvar.GetString() );
+		MessageEnd();
+	}
+#endif
+	m_SavedConvars[ cvar.GetName() ] = AllocPooledString( cvar.GetString() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::RevertSingleConvar( ConVarRef &cvar )
+{
+	Assert( cvar.IsValid() );
+
+	if ( !HaveSavedConvar( cvar ) )
+	{
+		// don't have a saved value
+		return;
+	}
+
+	string_t &saved = m_SavedConvars[ cvar.GetName() ];
+	cvar.SetValue( STRING( saved ) );
+	saved = NULL_STRING;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::RevertSavedConvars()
+{
+	// revert saved convars
+	for ( int i = 0; i < m_SavedConvars.GetNumStrings(); i++ )
+	{
+		const char *pszName = m_SavedConvars.String( i );
+		string_t iszValue = m_SavedConvars[i];
+
+		ConVarRef cvar( pszName );
+		Assert( cvar.IsValid() );
+
+		if ( iszValue != NULL_STRING )
+			cvar.SetValue( STRING( iszValue ) );
+	}
+
+	m_SavedConvars.Purge();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTFGameRules::CTFGameRules()
 {
-#ifdef GAME_DLL
+#if defined( GAME_DLL )
 	// Create teams.
 	TFTeamMgr()->Init();
 
@@ -2696,6 +2810,78 @@ void CTFGameRules::SpawnZombieMob( void )
 		m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
 		return;
 	}
+
+	if ( isZombieMobForceSpawning )
+	{
+		isZombieMobForceSpawning = false;
+		m_mobSpawnTimer.Invalidate();
+	}
+
+	if ( m_nZombiesToSpawn > 0 && IsSpaceToSpawnHere( m_vecMobSpawnLocation ) )
+	{
+		if ( CZombie::SpawnAtPos( m_vecMobSpawnLocation, 0 ) )
+			--m_nZombiesToSpawn;
+	}
+
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players, TF_TEAM_RED, true );
+	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
+
+	int nHumans = 0;
+	for ( CTFPlayer *pPlayer : players )
+	{
+		if ( !pPlayer->IsBot() )
+			++nHumans;
+	}
+
+	if ( nHumans <= 0 || !m_mobSpawnTimer.IsElapsed() )
+		return;
+
+	m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
+
+	CUtlVector<CTFNavArea *> validAreas;
+	const float flSearchRange = 2000.0f;
+
+	// populate a vector of valid spawn locations
+	for ( CTFPlayer *pPlayer : players )
+	{
+		CUtlVector<CTFNavArea *> nearby;
+		// ignore bots
+		if ( pPlayer->IsBot() )
+			continue;
+		// are they on mesh?
+		if ( pPlayer->GetLastKnownArea() == nullptr )
+			continue;
+
+		CollectSurroundingAreas( &nearby, pPlayer->GetLastKnownArea(), flSearchRange );
+		for ( CTFNavArea *pArea : nearby )
+		{
+			if ( !pArea->IsValidForWanderingPopulation() )
+				continue;
+
+			if ( pArea->IsBlocked( TF_TEAM_RED ) || pArea->IsBlocked( TF_TEAM_BLUE ) )
+				continue;
+
+			validAreas.AddToTail( pArea );
+		}
+	}
+
+	if ( validAreas.IsEmpty() )
+		return;
+
+	int iAttempts = 10;
+	while( true )
+	{
+		CTFNavArea *pArea = validAreas.Random();
+		m_vecMobSpawnLocation = pArea->GetCenter() + Vector( 0, 0, StepHeight );
+		if ( IsSpaceToSpawnHere( m_vecMobSpawnLocation ) )
+			break;
+
+		if ( --iAttempts == 0 )
+			return;
+	}
+
+	m_nZombiesToSpawn = tf_halloween_zombie_mob_spawn_count.GetInt();
 }
 
 bool CTFGameRules::CheckCapsPerRound()
@@ -5329,6 +5515,13 @@ bool CTFGameRules::ShouldScorePerRound( void )
 
 #endif  // GAME_DLL
 
+void CTFGameRules::LevelShutdownPostEntity( void )
+{
+#if defined( CLIENT_DLL )
+	RevertSavedConvars();
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -6178,98 +6371,6 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 #endif
 }
 
-static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szName, HSCRIPT hEntity )
-{
-	CBaseEntity *pEntity = ToEnt( hEntity );
-	if ( !pEntity )
-		return value;
-
-	IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
-
-	if ( pAttribInteface )
-	{
-		string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( szName );
-		float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( value, pEntity, strAttributeClass, NULL );
-		value = flResult;
-	}
-
-	return value;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFGameRules::RegisterScriptFunctions( void )
-{
-	ScriptRegisterFunctionNamed( g_pScriptVM, AttribHookValue, "GetAttribValue", "Fetch an attribute that is assigned to the provided weapon" );
-
-	char root[ MAX_PATH ]{};
-	Q_strncpy( root, "scripts\\vscripts", sizeof root );
-	Q_FixSlashes( root );
-
-	FileFindHandle_t fh;
-	char const *path = g_pFullFileSystem->FindFirst( root, &fh );
-	while ( path )
-	{
-		CScriptScope hTable{};
-		if ( g_pFullFileSystem->FindIsDirectory( fh ) )
-		{
-			if ( path[0] != '.' && Q_strncmp( path, "weapons", MAX_PATH ) && Q_strncmp( path, "entities", MAX_PATH ) )
-				break;
-
-			continue;
-		}
-
-		HSCRIPT hScript = VScriptCompileScript( path, true );
-
-		char const *className = Q_strrchr( path, CORRECT_PATH_SEPARATOR );
-		if ( hTable.Init( className ) )
-		{
-			if ( hTable.Run( hScript ) == SCRIPT_ERROR )
-			{
-				Warning( "Error running script named %s\n", className );
-				Assert( "Error running script" );
-			}
-
-			HSCRIPT hRegisterFunc = hTable.LookupFunction( "RegisterEnt" );
-			if ( hRegisterFunc != INVALID_HSCRIPT )
-			{
-				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
-				{
-					Warning( "Error running script named %s\n", className );
-					Assert( "Error running script" );
-				}
-
-				hTable.ReleaseFunction( hRegisterFunc );
-			}
-
-			hRegisterFunc = hTable.LookupFunction( "RegisterWep" );
-			if ( hRegisterFunc != INVALID_HSCRIPT )
-			{
-				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
-				{
-					Warning( "Error running script named %s\n", className );
-					Assert( "Error running script" );
-				}
-
-				hTable.ReleaseFunction( hRegisterFunc );
-			}
-
-			hTable.Term();
-		}
-		else
-		{
-			Warning( "Unable to create script scope for %s\n", className );
-		}
-
-		g_pScriptVM->ReleaseScript( hScript );
-
-		path = g_pFullFileSystem->FindNext( fh );
-	}
-
-	g_pFullFileSystem->FindClose( fh );
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: Init ammo definitions
 //-----------------------------------------------------------------------------
@@ -6643,6 +6744,29 @@ const char *CTFGameRules::GetGameDescription( void )
 void CTFGameRules::PlayerSpawn( CBasePlayer *pPlayer )
 {
 	BaseClass::PlayerSpawn( pPlayer );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector )
+{
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players, iTeamNum, true );
+
+	for ( CTFPlayer *pPlayer : players )
+	{
+		Vector vecTo = pPlayer->EyePosition() - vecPos;
+		if ( vecTo.LengthSqr() > Square( flRange ) )
+			continue;
+
+		vecTo.NormalizeInPlace();
+
+		pPlayer->ApplyAbsVelocityImpulse( vecTo * flForce );
+
+		if ( outVector )
+			outVector->AddToTail( pPlayer );
+	}
 }
 
 //-----------------------------------------------------------------------------

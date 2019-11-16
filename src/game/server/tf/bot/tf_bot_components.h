@@ -20,8 +20,9 @@ class CTFBotBody : public PlayerBody
 {
 	DECLARE_CLASS( CTFBotBody, PlayerBody )
 public:
-	CTFBotBody( INextBot *bot );
-	virtual ~CTFBotBody() { }
+	CTFBotBody( INextBot *bot )
+		: BaseClass( bot ) {}
+	virtual ~CTFBotBody() {}
 
 	virtual float GetHeadAimTrackingInterval( void ) const override;
 };
@@ -31,8 +32,9 @@ class CTFBotLocomotion : public PlayerLocomotion
 {
 	DECLARE_CLASS( CTFBotLocomotion, PlayerLocomotion )
 public:
-	CTFBotLocomotion( INextBot *bot );
-	virtual ~CTFBotLocomotion() { }
+	CTFBotLocomotion( INextBot *bot )
+		: BaseClass( bot ) {}
+	virtual ~CTFBotLocomotion() {}
 
 	virtual void Update( void ) override;
 
@@ -54,7 +56,7 @@ class CTFBotVision : public IVision
 	DECLARE_CLASS( CTFBotVision, IVision )
 public:
 	CTFBotVision( INextBot *nextbot );
-	virtual ~CTFBotVision() { }
+	virtual ~CTFBotVision();
 
 	virtual void Reset( void ) override;
 	virtual void Update( void ) override;

@@ -536,6 +536,8 @@ $Project "Client (TF)"
 				$File	"$SRCDIR\game\shared\tf\entity_teleportvortex.h"
 				$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.h"
+				$File	"$SRCDIR\game\shared\tf\tf_zombie.cpp"
+				$File	"$SRCDIR\game\shared\tf\tf_zombie.h"
 			}
 		}
 	}

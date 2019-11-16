@@ -74,6 +74,9 @@ public:
 	virtual ~CTFBot();
 
 	DECLARE_INTENTION_INTERFACE( CTFBot )
+	ILocomotion *m_locomotor;
+	IBody *m_body;
+	IVision *m_vision;
 
 	struct DelayedNoticeInfo
 	{
@@ -250,18 +253,17 @@ public:
 	void			LeaveSquad();
 
 	struct SniperSpotInfo
-	{	// TODO: Better names
-		CTFNavArea *m_area1;
-		Vector m_pos1;
-		CTFNavArea *m_area2;
-		Vector m_pos2;
-		float m_length;
-		float m_difference;
+	{
+		CTFNavArea *m_pHomeArea;
+		Vector m_vecHome;
+		CTFNavArea *m_pForwardArea;
+		Vector m_vecForward;
+		float m_flRange;
+		float m_flIncursionDiff;
 	};
 	void			AccumulateSniperSpots( void );
 	void			SetupSniperSpotAccumulation( void );
 	void			ClearSniperSpots( void );
-	const CUtlVector<SniperSpotInfo> *GetSniperSpots( void ) const { return &m_sniperSpots; }
 
 	void			SelectReachableObjects( CUtlVector<EHANDLE> const& append, CUtlVector<EHANDLE> *outVector, INextBotFilter const& func, CNavArea *pStartArea, float flMaxRange );
 	CTFPlayer *		SelectRandomReachableEnemy( void );
@@ -278,6 +280,7 @@ public:
 	bool m_bIsInFormation;
 
 	CTFNavArea *m_HomeArea;
+	CUtlVector<SniperSpotInfo> m_sniperSpots;
 
 	CHandle<CBaseObject> m_hTargetSentry;
 	Vector m_vecLastHurtBySentry;
@@ -294,13 +297,10 @@ public:
 	bool m_bLookingAroundForEnemies;
 
 	CountdownTimer m_cpChangedTimer;
+	
 
 private:
 	CountdownTimer m_lookForEnemiesTimer;
-
-	ILocomotion *m_locomotor;
-	IBody *m_body;
-	IVision *m_vision;
 
 	CTFPlayer *m_controlling;
 
@@ -318,9 +318,8 @@ private:
 	CUtlVectorAutoPurge<SuspectedSpyInfo *> m_suspectedSpies;
 	CUtlVector< CHandle<CTFPlayer> > m_knownSpies;
 
-	CUtlVector<SniperSpotInfo> m_sniperSpots;
-	CUtlVector<CTFNavArea *> m_sniperAreasRed;
-	CUtlVector<CTFNavArea *> m_sniperAreasBlu;
+	CUtlVector<CTFNavArea *> m_sniperStandAreas;
+	CUtlVector<CTFNavArea *> m_sniperLookAreas;
 	CBaseEntity *m_sniperGoalEnt;
 	Vector m_sniperGoal;
 	CountdownTimer m_sniperSpotTimer;
@@ -344,10 +343,11 @@ private:
 
 inline CTFBot *ToTFBot( CBaseEntity *ent )
 {
-	if ( !ent || !ent->IsPlayer() )
+	CTFPlayer *player = ToTFPlayer( ent );
+	if ( player == nullptr )
 		return NULL;
 
-	if ( !( (CBasePlayer *)ent )->IsBotOfType( 1337 ) )
+	if ( !player->IsBotOfType( 1337 ) )
 		return NULL;
 
 	Assert( dynamic_cast<CTFBot *>( ent ) );

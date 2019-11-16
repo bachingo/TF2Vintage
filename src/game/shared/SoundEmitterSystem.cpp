@@ -1198,6 +1198,17 @@ void CBaseEntity::ScriptEmitSound( const char *soundname )
 {
 	EmitSound( soundname );
 }
+
+float CBaseEntity::ScriptSoundDuration( const char *soundname, const char *actormodel )
+{
+	float duration = CBaseEntity::GetSoundDuration( soundname, actormodel );
+	return duration;
+}
+
+void CBaseEntity::ScriptStopSound( const char *soundname )
+{
+	StopSound( soundname );
+}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -1481,14 +1492,6 @@ float CBaseEntity::GetSoundDuration( const char *soundname, char const *actormod
 {
 	return enginesound->GetSoundDuration( PSkipSoundChars( UTIL_TranslateSoundName( soundname, actormodel ) ) );
 }
-
-#if !defined ( CLIENT_DLL )
-float CBaseEntity::ScriptSoundDuration( const char *soundname, const char *actormodel )
-{
-	float duration = CBaseEntity::GetSoundDuration( soundname, actormodel );
-	return duration;
-}
-#endif // !CLIENT
 
 //-----------------------------------------------------------------------------
 // Purpose: 

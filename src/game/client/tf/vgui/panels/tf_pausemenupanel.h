@@ -2,7 +2,9 @@
 #define TFMAINMENUPAUSEPANEL_H
 
 #include "tf_menupanelbase.h"
+#include "steam/steam_api.h"
 
+class CAvatarImagePanel;
 class CTFAdvButton;
 
 //-----------------------------------------------------------------------------
@@ -29,6 +31,9 @@ public:
 
 private:
 	CTFAdvButton	*m_pNotificationButton;
+	CSteamID			m_SteamID;
+	CAvatarImagePanel	*m_pProfileAvatar;
+	CExLabel			*m_pVersionLabel;
 };
 
 #endif // TFMAINMENUPAUSEPANEL_H

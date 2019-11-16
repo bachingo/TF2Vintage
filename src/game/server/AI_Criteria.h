@@ -32,6 +32,7 @@ public:
 
 	int GetCount() const;
 	int			FindCriterionIndex( const char *name ) const;
+	bool		IsValidIndex( int index ) const;
 
 	const char *GetName( int index ) const;
 	const char *GetValue( int index ) const;
@@ -94,6 +95,11 @@ private:
 
 	CUtlRBTree< CritEntry_t, short > m_Lookup;
 };
+
+inline bool AI_CriteriaSet::IsValidIndex( int index ) const
+{
+	return ( index >= 0 && index < ((int)(m_Lookup.Count())) );
+}
 
 #pragma pack(1)
 template<typename T>

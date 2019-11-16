@@ -15,8 +15,11 @@
 #include "sceneentity.h"		// for exposing scene precache function
 #include "isaverestore.h"
 #include "gamerules.h"
-#ifdef _WIN32
-//#include "vscript_server_nut.h"
+#include "netpropmanager.h"
+#include "AI_Criteria.h"
+#include "AI_ResponseSystem.h"
+#ifdef IS_WINDOWS_PC
+#include "vscript_server_nut.h"
 #endif
 
 extern ScriptClassDesc_t *GetScriptDesc( CBaseEntity * );
@@ -227,6 +230,177 @@ CScriptKeyValues::~CScriptKeyValues( )
 }
 
 
+class CScriptResponseCriteria
+{
+public:
+	const char *GetValue( HSCRIPT hEntity, const char *pCriteria )
+	{
+		CBaseEntity *pBaseEntity = ToEnt(hEntity);
+		if ( !pBaseEntity )
+			return "";
+
+		AI_CriteriaSet criteria;
+		pBaseEntity->ModifyOrAppendCriteria( criteria );
+
+		int index = criteria.FindCriterionIndex( pCriteria );
+		if ( !criteria.IsValidIndex( index ) )
+			return "";
+
+		return criteria.GetValue( index );
+	}
+
+	void GetTable( HSCRIPT hEntity, HSCRIPT hTable )
+	{
+		CBaseEntity *pBaseEntity = ToEnt(hEntity);
+		if ( !pBaseEntity || !hTable )
+			return;
+
+		AI_CriteriaSet criteria;
+		pBaseEntity->ModifyOrAppendCriteria( criteria );
+
+		for ( int nCriteriaIdx = 0; nCriteriaIdx < criteria.GetCount(); nCriteriaIdx++ )
+		{
+			if ( !criteria.IsValidIndex( nCriteriaIdx ) )
+				continue;
+
+			g_pScriptVM->SetValue( hTable, criteria.GetName( nCriteriaIdx ), criteria.GetValue( nCriteriaIdx ) );
+		}
+	}
+
+	bool HasCriterion( HSCRIPT hEntity, const char *pCriteria )
+	{
+		CBaseEntity *pBaseEntity = ToEnt(hEntity);
+		if ( !pBaseEntity )
+			return false;
+
+		AI_CriteriaSet criteria;
+		pBaseEntity->ModifyOrAppendCriteria( criteria );
+
+		int index = criteria.FindCriterionIndex( pCriteria );
+		return criteria.IsValidIndex( index );
+	}
+} g_ScriptResponseCriteria;
+
+BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptResponseCriteria, "CScriptResponseCriteria", SCRIPT_SINGLETON "Used to get response criteria" )
+	DEFINE_SCRIPTFUNC( GetValue, "Arguments: ( entity, criteriaName ) - returns a string" )
+	DEFINE_SCRIPTFUNC( GetTable, "Arguments: ( entity ) - returns a table of all criteria" )
+	DEFINE_SCRIPTFUNC( HasCriterion, "Arguments: ( entity, criteriaName ) - returns true if the criterion exists" )
+END_SCRIPTDESC();
+
+class CScriptEntityOutputs
+{
+public:
+	int GetNumElements( HSCRIPT hEntity, const char *szOutputName )
+	{
+		CBaseEntity *pBaseEntity = ToEnt(hEntity);
+		if ( !pBaseEntity )
+			return -1;
+
+		CBaseEntityOutput *pOutput = pBaseEntity->FindNamedOutput( szOutputName );
+		if ( !pOutput )
+			return -1;
+
+		return pOutput->NumberOfElements();
+	}
+
+	void GetOutputTable( HSCRIPT hEntity, const char *szOutputName, HSCRIPT hOutputTable, int element )
+	{
+		CBaseEntity *pBaseEntity = ToEnt(hEntity);
+		if ( !pBaseEntity || !hOutputTable || element < 0 )
+			return;
+
+		CBaseEntityOutput *pOutput = pBaseEntity->FindNamedOutput( szOutputName );
+		if ( pOutput )
+		{
+			int iCount = 0;
+			CEventAction *pAction = pOutput->GetFirstAction();
+			while ( pAction )
+			{
+				if ( iCount == element )
+				{
+					g_pScriptVM->SetValue( hOutputTable, "target", STRING( pAction->m_iTarget ) );
+					g_pScriptVM->SetValue( hOutputTable, "input", STRING( pAction->m_iTargetInput ) );
+					g_pScriptVM->SetValue( hOutputTable, "parameter", STRING( pAction->m_iParameter ) );
+					g_pScriptVM->SetValue( hOutputTable, "delay", pAction->m_flDelay );
+					g_pScriptVM->SetValue( hOutputTable, "times_to_fire", pAction->m_nTimesToFire );
+					break;
+				}
+				else
+				{
+					iCount++;
+					pAction = pAction->m_pNext;
+				}
+			}
+		}
+	}
+
+	bool HasOutput( HSCRIPT hEntity, const char *szOutputName )
+	{
+		CBaseEntity *pBaseEntity = ToEnt(hEntity);
+		if ( !pBaseEntity )
+			return false;
+
+		CBaseEntityOutput *pOutput = pBaseEntity->FindNamedOutput( szOutputName );
+		if ( !pOutput )
+			return false;
+
+		return true;
+	}
+
+	bool HasAction( HSCRIPT hEntity, const char *szOutputName )
+	{
+		CBaseEntity *pBaseEntity = ToEnt(hEntity);
+		if ( !pBaseEntity )
+			return false;
+
+		CBaseEntityOutput *pOutput = pBaseEntity->FindNamedOutput( szOutputName );
+		if ( pOutput )
+		{
+			CEventAction *pAction = pOutput->GetFirstAction();
+			if ( pAction )
+				return true;
+		}
+
+		return false;
+	}
+} g_ScriptEntityOutputs;
+
+BEGIN_SCRIPTDESC_ROOT( CScriptEntityOutputs, SCRIPT_SINGLETON "Used to get entity output data" )
+	DEFINE_SCRIPTFUNC( GetNumElements, "Arguments: ( entity, outputName ) - returns the number of array elements" )
+	DEFINE_SCRIPTFUNC( GetOutputTable, "Arguments: ( entity, outputName, table, arrayElement ) - returns a table of output information" )
+	DEFINE_SCRIPTFUNC( HasOutput, "Arguments: ( entity, outputName ) - returns true if the output exists" )
+	DEFINE_SCRIPTFUNC( HasAction, "Arguments: ( entity, outputName ) - returns true if an action exists for the output" )
+END_SCRIPTDESC();
+
+// When a scripter wants to change a netprop value, they can use the
+// CNetPropManager class; it checks for errors and such on its own.
+CNetPropManager g_NetProps;
+
+BEGIN_SCRIPTDESC_ROOT( CNetPropManager, SCRIPT_SINGLETON "Used to get/set entity network fields" )
+	DEFINE_SCRIPTFUNC( GetPropInt, "Arguments: ( entity, propertyName )" )
+	DEFINE_SCRIPTFUNC( GetPropFloat, "Arguments: ( entity, propertyName )" )
+	DEFINE_SCRIPTFUNC( GetPropVector, "Arguments: ( entity, propertyName )" )
+	DEFINE_SCRIPTFUNC( GetPropEntity, "Arguments: ( entity, propertyName ) - returns an entity" )
+	DEFINE_SCRIPTFUNC( GetPropString, "Arguments: ( entity, propertyName )" )
+	DEFINE_SCRIPTFUNC( SetPropInt, "Arguments: ( entity, propertyName, value )" )
+	DEFINE_SCRIPTFUNC( SetPropFloat, "Arguments: ( entity, propertyName, value )" )
+	DEFINE_SCRIPTFUNC( SetPropVector, "Arguments: ( entity, propertyName, value )" )
+	DEFINE_SCRIPTFUNC( SetPropEntity, "Arguments: ( entity, propertyName, value )" )
+	DEFINE_SCRIPTFUNC( SetPropString, "Arguments: ( entity, propertyName, value )" )
+	DEFINE_SCRIPTFUNC( GetPropIntArray, "Arguments: ( entity, propertyName, arrayElement )" )
+	DEFINE_SCRIPTFUNC( GetPropFloatArray, "Arguments: ( entity, propertyName, arrayElement )" )
+	DEFINE_SCRIPTFUNC( GetPropVectorArray, "Arguments: ( entity, propertyName, arrayElement )" )
+	DEFINE_SCRIPTFUNC( GetPropEntityArray, "Arguments: ( entity, propertyName, arrayElement ) - returns an entity" )
+	DEFINE_SCRIPTFUNC( GetPropStringArray, "Arguments: ( entity, propertyName, arrayElement )" )
+	DEFINE_SCRIPTFUNC( SetPropIntArray, "Arguments: ( entity, propertyName, value, arrayElement )" )
+	DEFINE_SCRIPTFUNC( SetPropFloatArray, "Arguments: ( entity, propertyName, value, arrayElement )" )
+	DEFINE_SCRIPTFUNC( SetPropVectorArray, "Arguments: ( entity, propertyName, value, arrayElement )" )
+	DEFINE_SCRIPTFUNC( SetPropEntityArray, "Arguments: ( entity, propertyName, value, arrayElement )" )
+	DEFINE_SCRIPTFUNC( SetPropStringArray, "Arguments: ( entity, propertyName, value, arrayElement )" )
+	DEFINE_SCRIPTFUNC( GetPropArraySize, "Arguments: ( entity, propertyName )" )
+	DEFINE_SCRIPTFUNC( HasProp, "Arguments: ( entity, propertyName )" )
+	DEFINE_SCRIPTFUNC( GetPropType, "Arguments: ( entity, propertyName )" )
+END_SCRIPTDESC()
 
 
 //-----------------------------------------------------------------------------
@@ -242,6 +416,11 @@ static float FrameTime()
 	return gpGlobals->frametime;
 }
 
+static int Script_GetFrameCount()
+{
+	return gpGlobals->framecount;
+}
+
 static void SendToConsole( const char *pszCommand )
 {
 	CBasePlayer *pPlayer = UTIL_GetLocalPlayerOrListenServerHost();
@@ -254,6 +433,24 @@ static void SendToConsole( const char *pszCommand )
 	engine->ClientCommand( pPlayer->edict(), pszCommand );
 }
 
+static void SendToServerConsole( const char *pszCommand )
+{
+	char szCommand[512];
+	Q_snprintf( szCommand, sizeof(szCommand), "%s\n", pszCommand );
+	engine->ServerCommand( szCommand );
+}
+
+static bool Script_IsDedicatedServer()
+{
+	return engine->IsDedicatedServer();
+}
+
+HSCRIPT Script_GetLocalPlayerOrListenServerHost()
+{
+	CBasePlayer *pPlayer = UTIL_GetLocalPlayerOrListenServerHost();
+	return ToHScript( pPlayer );
+}
+
 static const char *GetMapName()
 {
 	return STRING( gpGlobals->mapname );
@@ -264,6 +461,22 @@ static const char *DoUniqueString( const char *pszBase )
 	static char szBuf[512];
 	g_pScriptVM->GenerateUniqueKey( pszBase, szBuf, ARRAYSIZE(szBuf) );
 	return szBuf;
+}
+
+bool Script_IsModelPrecached( const char *modelname )
+{
+	return engine->IsModelPrecached( VScriptCutDownString( modelname ) );
+}
+
+static void Script_AddThinkToEnt( HSCRIPT entity, const char *funcName )
+{
+	CBaseEntity *pEntity = ToEnt( entity );
+
+	if ( !pEntity )
+		return;
+
+	pEntity->m_iszScriptThinkFunction = AllocPooledString( funcName );
+	pEntity->SetContextThink( &CBaseEntity::ScriptThink, gpGlobals->curtime, "ScriptThink" );
 }
 
 static void DoEntFire( const char *pszTarget, const char *pszAction, const char *pszValue, float delay, HSCRIPT hActivator, HSCRIPT hCaller )
@@ -359,20 +572,183 @@ static void DoEntFireByInstanceHandle( HSCRIPT hTarget, const char *pszAction, c
 	g_EventQueue.AddEvent( pTarget, action, value, delay, ToEnt(hActivator), ToEnt(hCaller) );
 }
 
-static float ScriptTraceLine( const Vector &vecStart, const Vector &vecEnd, HSCRIPT entIgnore )
+static ScriptVariant_t ScriptTraceLine( const Vector &vecStart, const Vector &vecEnd, HSCRIPT entIgnore )
 {
-	// UTIL_TraceLine( vecAbsStart, vecAbsEnd, MASK_BLOCKLOS, pLooker, COLLISION_GROUP_NONE, ptr );
 	trace_t tr;
 	CBaseEntity *pLooker = ToEnt(entIgnore);
-	UTIL_TraceLine( vecStart, vecEnd, MASK_NPCWORLDSTATIC, pLooker, COLLISION_GROUP_NONE, &tr);
-	if (tr.fractionleftsolid && tr.startsolid)
+	UTIL_TraceLine( vecStart, vecEnd, MASK_NPCWORLDSTATIC, pLooker, COLLISION_GROUP_NONE, &tr );
+
+	ScriptVariant_t hTable;
+	g_pScriptVM->CreateTable( hTable );
+	if ( hTable )
 	{
-		return 1.0 - tr.fractionleftsolid;
+		g_pScriptVM->SetValue( hTable, "startpos", tr.startpos );
+		g_pScriptVM->SetValue( hTable, "endpos", tr.endpos );
+		g_pScriptVM->SetValue( hTable, "fraction", tr.fraction );
+		g_pScriptVM->SetValue( hTable, "fractionleftsolid", tr.fractionleftsolid );
+		g_pScriptVM->SetValue( hTable, "hitgroup", tr.hitgroup );
+		g_pScriptVM->SetValue( hTable, "hitbox", tr.hitbox );
+		g_pScriptVM->SetValue( hTable, "allsolid", tr.allsolid );
+		g_pScriptVM->SetValue( hTable, "startsolid", tr.startsolid );
+		g_pScriptVM->SetValue( hTable, "contents", tr.contents );
+		g_pScriptVM->SetValue( hTable, "ent", ToHScript( tr.m_pEnt ) );
+	}
+
+	return hTable;
+}
+
+static ScriptVariant_t ScriptTraceHull( const Vector &vecStart, const Vector &vecEnd, const Vector &vecMins, const Vector &vecMaxs, HSCRIPT entIgnore )
+{
+	trace_t tr;
+	CBaseEntity *pLooker = ToEnt(entIgnore);
+	UTIL_TraceHull( vecStart, vecEnd, vecMins, vecMaxs, MASK_NPCWORLDSTATIC, pLooker, COLLISION_GROUP_NONE, &tr );
+
+	ScriptVariant_t hTable;
+	g_pScriptVM->CreateTable( hTable );
+	if ( hTable )
+	{
+		g_pScriptVM->SetValue( hTable, "startpos", tr.startpos );
+		g_pScriptVM->SetValue( hTable, "endpos", tr.endpos );
+		g_pScriptVM->SetValue( hTable, "fraction", tr.fraction );
+		g_pScriptVM->SetValue( hTable, "fractionleftsolid", tr.fractionleftsolid );
+		g_pScriptVM->SetValue( hTable, "hitgroup", tr.hitgroup );
+		g_pScriptVM->SetValue( hTable, "hitbox", tr.hitbox );
+		g_pScriptVM->SetValue( hTable, "allsolid", tr.allsolid );
+		g_pScriptVM->SetValue( hTable, "startsolid", tr.startsolid );
+		g_pScriptVM->SetValue( hTable, "contents", tr.contents );
+		g_pScriptVM->SetValue( hTable, "ent", ToHScript( tr.m_pEnt ) );
+	}
+
+	return hTable;
+}
+
+HSCRIPT Script_PlayerInstanceFromIndex( int playerIndex )
+{
+	CBasePlayer *pPlayer = UTIL_PlayerByIndex( playerIndex );
+	return ToHScript( pPlayer );
+}
+
+HSCRIPT Script_GetPlayerFromUserID( int userID )
+{
+	CBasePlayer *pPlayer = UTIL_PlayerByUserId( userID );
+	return ToHScript( pPlayer );
+}
+
+HSCRIPT Script_EntIndexToHScript( int entIndex )
+{
+	CBaseEntity *pBaseEntity = UTIL_EntityByIndex( entIndex );
+	return ToHScript( pBaseEntity );
+}
+
+static void Script_Say( HSCRIPT hPlayer, const char *pText )
+{
+	CBaseEntity *pBaseEntity = ToEnt(hPlayer);
+	CBasePlayer *pPlayer = NULL;
+	char szText[256];
+
+	if ( pBaseEntity )
+		pPlayer = dynamic_cast<CBasePlayer*>(pBaseEntity);
+
+	if ( pPlayer )
+	{
+		Q_snprintf( szText, sizeof(szText), "say %s", pText );
+		engine->ClientCommand( pPlayer->edict(), szText );
 	}
 	else
 	{
-		return tr.fraction;
+		Q_snprintf( szText, sizeof(szText), "Console: %s", pText );
+		UTIL_SayTextAll( szText, pPlayer );
 	}
+}
+
+static void Script_ClientPrint( HSCRIPT hPlayer, int iDest, const char *pText )
+{
+	CBaseEntity *pBaseEntity = ToEnt(hPlayer);
+	CBasePlayer *pPlayer = NULL;
+
+	if ( pBaseEntity )
+		pPlayer = dynamic_cast<CBasePlayer*>(pBaseEntity);
+
+	if ( pPlayer )
+		ClientPrint( pPlayer, iDest, pText );
+	else
+		UTIL_ClientPrintAll( iDest, pText );
+}
+
+static void Script_StringToFile( const char *pszFileName, const char *pszString )
+{
+	char szFullFileName[256];
+	Q_snprintf( szFullFileName, sizeof(szFullFileName), "save/vscripts/%s", pszFileName );
+
+	static char szFolders[256];
+	bool bHasFolders = false;
+	const char *pszDelimiter = V_strrchr( pszFileName, '/' );
+	if ( pszDelimiter )
+	{
+		bHasFolders = true;
+		V_strncpy( szFolders, pszFileName, MIN( ARRAYSIZE(szFolders), pszDelimiter - pszFileName + 1 ) );
+	}
+
+	if ( bHasFolders )
+		g_pFullFileSystem->CreateDirHierarchy( CFmtStr( "save/vscripts/%s", szFolders ), "GAME" );
+	else
+		g_pFullFileSystem->CreateDirHierarchy( "save/vscripts", "GAME" );
+	CUtlBuffer buf;
+	buf.PutString( pszString );
+	g_pFullFileSystem->WriteFile( szFullFileName, "GAME", buf );
+}
+
+static const char *Script_FileToString( const char *pszFileName )
+{
+	char szFullFileName[256];
+	Q_snprintf( szFullFileName, sizeof(szFullFileName), "save/vscripts/%s", pszFileName );
+
+	FileHandle_t fh = g_pFullFileSystem->Open( szFullFileName, "rb" );
+	if ( fh == FILESYSTEM_INVALID_HANDLE )
+		return NULL;
+
+	char szString[16384];
+	int size = g_pFullFileSystem->Size(fh) + 1;
+	if ( size > sizeof(szString) )
+	{
+		Warning( "File %s (from %s) is len %i too long for a ScriptFileRead\n", szFullFileName, pszFileName, size );
+		return NULL;
+	}
+
+	CUtlBuffer buf( 0, size, CUtlBuffer::TEXT_BUFFER );
+	g_pFullFileSystem->Read( szString, size, fh );
+	g_pFullFileSystem->Close(fh);
+
+	const char *pszString = (const char*)szString;
+	return pszString;
+}
+
+static void Script_ScreenShake( const Vector &center, float amplitude, float frequency, float duration, float radius, int eCommand, bool bAirShake )
+{
+	UTIL_ScreenShake( center, amplitude, frequency, duration, radius, (ShakeCommand_t)eCommand, bAirShake );
+}
+
+static void Script_ScreenFade( HSCRIPT hEntity, int r, int g, int b, int a, float fadeTime, float fadeHold, int flags )
+{
+	CBaseEntity *pEntity = ToEnt(hEntity);
+	color32 color = { r, g, b, a };
+
+	if ( pEntity )
+		UTIL_ScreenFade( pEntity, color, fadeTime, fadeHold, flags );
+	else
+		UTIL_ScreenFadeAll( color, fadeTime, fadeHold, flags );
+}
+
+static void Script_FadeClientVolume( HSCRIPT hPlayer, float fadePercent, float fadeOutSeconds, float holdTime, float fadeInSeconds )
+{
+	CBaseEntity *pBaseEntity = ToEnt(hPlayer);
+	CBasePlayer *pPlayer = NULL;
+
+	if ( pBaseEntity )
+		pPlayer = dynamic_cast<CBasePlayer*>(pBaseEntity);
+
+	if ( pPlayer )
+		engine->FadeClientVolume( pPlayer->edict(), fadePercent, fadeOutSeconds, holdTime, fadeInSeconds );
 }
 
 bool VScriptServerInit()
@@ -412,11 +788,15 @@ bool VScriptServerInit()
 				ScriptRegisterFunctionNamed( g_pScriptVM, UTIL_ShowMessageAll, "ShowMessage", "Print a hud message on all clients" );
 
 				ScriptRegisterFunction( g_pScriptVM, SendToConsole, "Send a string to the console as a command" );
+				ScriptRegisterFunction( g_pScriptVM, SendToServerConsole, "Send a string to the server console as a command" );
 				ScriptRegisterFunction( g_pScriptVM, GetMapName, "Get the name of the map.");
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceLine, "TraceLine", "given 2 points & ent to ignore, return fraction along line that hits world or models" );
 
 				ScriptRegisterFunction( g_pScriptVM, Time, "Get the current server time" );
 				ScriptRegisterFunction( g_pScriptVM, FrameTime, "Get the time spent on the server in the last frame" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetFrameCount, "GetFrameCount", "Returns the engines current frame count" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_IsDedicatedServer, "IsDedicatedServer", "Returns true if this is a dedicated server.");
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetLocalPlayerOrListenServerHost, "GetListenServerHost", "Get the host player on a listen server.");
 				ScriptRegisterFunction( g_pScriptVM, DoEntFire, SCRIPT_ALIAS( "EntFire", "Generate and entity i/o event" ) );
 				ScriptRegisterFunctionNamed( g_pScriptVM, DoEntFireByInstanceHandle, "EntFireByHandle", "Generate and entity i/o event. First parameter is an entity instance." );
 				ScriptRegisterFunction( g_pScriptVM, DoUniqueString, SCRIPT_ALIAS( "UniqueString", "Generate a string guaranteed to be unique across the life of the script VM, with an optional root string. Useful for adding data to tables when not sure what keys are already in use in that table." ) );
@@ -425,6 +805,20 @@ bool VScriptServerInit()
 				ScriptRegisterFunctionNamed( g_pScriptVM, NDebugOverlay::Line, "DebugDrawLine", "Draw a debug overlay box" );
 				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, "Execute a script (internal)" );
 				ScriptRegisterFunction( g_pScriptVM, CreateProp, "Create a physics prop" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_Say, "Say", "Have player say string" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_ClientPrint, "ClientPrint", "Print a client message" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_StringToFile, "StringToFile", "Stores the string into the file." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_FileToString, "FileToString", "Reads a string from file. Returns the string from the file, null if no file or file is too big." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_AddThinkToEnt, "AddThinkToEnt", "Adds a late bound think function to the C++ think tables for the obj" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_ScreenShake, "ScreenShake", "Start a screenshake with the following parameters. vecCenter, flAmplitude, flFrequency, flDuration, flRadius, eCommand( SHAKE_START = 0, SHAKE_STOP = 1 ), bAirShake" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_ScreenFade, "ScreenFade", "Start a screenfade with the following parameters. player, red, green, blue, alpha, flFadeTime, flFadeHold, flags" );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_IsModelPrecached, "IsModelPrecached", "Checks if the modelname is precached." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_FadeClientVolume, "FadeClientVolume", "Fade out the client's volume level toward silence (or fadePercent)" );
+
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PlayerInstanceFromIndex, "PlayerInstanceFromIndex", "Get a script handle of a player using the player index." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetPlayerFromUserID, "GetPlayerFromUserID", "Given a user id, return the entity, or null." );
+				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EntIndexToHScript, "EntIndexToHScript", "Returns the script handle for the given entity index." );
+
 				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedEntity, "RegisterEnt", "Register an entity by name that can be created" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedWeapon, "RegisterWep", "Register a weapon by name that can be created" );
 
@@ -435,10 +829,18 @@ bool VScriptServerInit()
 				}
 
 				g_pScriptVM->RegisterInstance( &g_ScriptEntityIterator, "Entities" );
+				g_pScriptVM->RegisterInstance( &g_NetProps, "NetProps" );
+				g_pScriptVM->RegisterInstance( &g_ScriptResponseCriteria, "ResponseCriteria" );
+
+				// To be used with Script_ClientPrint
+				g_pScriptVM->SetValue( "HUD_PRINTNOTIFY", HUD_PRINTNOTIFY );
+				g_pScriptVM->SetValue( "HUD_PRINTCONSOLE", HUD_PRINTCONSOLE );
+				g_pScriptVM->SetValue( "HUD_PRINTTALK", HUD_PRINTTALK );
+				g_pScriptVM->SetValue( "HUD_PRINTCENTER", HUD_PRINTCENTER );
 
 				if ( scriptLanguage == SL_SQUIRREL )
 				{
-					//g_pScriptVM->Run( g_Script_vscript_server );
+					g_pScriptVM->Run( g_Script_vscript_server );
 				}
 
 				VScriptRunScript( "mapspawn", false );
