@@ -45,7 +45,7 @@ DESCRIPTION SERVER_OPTIONS
 	{
 		"#Valve_Hostname"
 		{ STRING }
-		{ "Team Fortress 2" }
+		{ "Team Fortress 2 Vintage Server" }
 	}
 
 	"maxplayers"
@@ -75,16 +75,11 @@ DESCRIPTION SERVER_OPTIONS
 		{ NUMBER 0 -1 }
 		{ "0" }
 	}
+	
 	"mp_maxrounds"
 	{
 		"#TF_MaxRounds"
 		{ NUMBER 0 -1 }
 		{ "0" }
-	}
-	"mp_fraglimit"
-	{
-		"#TF_DMFragLimit"
-		{ NUMBER 0 -1 }
-		{ "50" }
 	}
 }

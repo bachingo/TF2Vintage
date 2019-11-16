@@ -115,6 +115,11 @@ ConVar tf_dingaling_lasthit_volume("tf_dingaling_lasthit_volume", "0.75", FCVAR_
 ConVar tf_dingaling_lasthit_pitchmindmg("tf_dingaling_lasthit_pitchmindmg", "100", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a minimal damage hit (<= 10 health) is done.", true, 1, true, 255);
 ConVar tf_dingaling_lasthit_pitchmaxdmg("tf_dingaling_lasthit_pitchmaxdmg", "100", FCVAR_ARCHIVE, "Desired pitch of the last hit sound when a maximum damage hit (>= 150 health) is done.", true, 1, true, 255);
 
+
+ConVar tf_dingalingaling_effect("tf_dingalingaling_effect", "0", FCVAR_ARCHIVE, "Changes the sound effect type when your attack injures an enemy.");
+ConVar tf_dingalingaling_last_effect("tf_dingalingaling_last_effect", "0", FCVAR_ARCHIVE, "Changes the sound effect type when your attack kills an enemy.");
+
+
 ConVar hud_combattext_red( "hud_combattext_red", "255", FCVAR_ARCHIVE, "Red modifier for color of damage indicators", true, 0, true, 255 );
 ConVar hud_combattext_green( "hud_combattext_green", "0", FCVAR_ARCHIVE, "Green modifier for color of damage indicators", true, 0, true, 255 );
 ConVar hud_combattext_blue( "hud_combattext_blue", "0", FCVAR_ARCHIVE, "Blue modifier for color of damage indicators", true, 0, true, 255 );
@@ -425,6 +430,56 @@ void CDamageAccountPanel::OnBonus( IGameEvent *event )
 	pDelta->m_iType = DELTA_TYPE_BONUS;
 }
 
+
+
+const char *g_pszHitSoundsElectro[] =
+{
+	"ui/hitsound_electro1.wav",
+	"ui/hitsound_electro2.wav",
+	"ui/hitsound_electro3.wav",
+};
+
+const char *g_pszHitSoundsMenuNote[] =
+{
+	"ui/hitsound_menu_note1.wav",
+	"ui/hitsound_menu_note2.wav",
+	"ui/hitsound_menu_note3.wav",
+	"ui/hitsound_menu_note4.wav",
+	"ui/hitsound_menu_note5.wav",
+	"ui/hitsound_menu_note6.wav",
+	"ui/hitsound_menu_note7.wav",
+	"ui/hitsound_menu_note7b.wav",
+	"ui/hitsound_menu_note8.wav",
+	"ui/hitsound_menu_note9.wav",
+};
+
+const char *g_pszHitSoundsPercussion[] =
+{
+	"ui/hitsound_percussion1.wav",
+	"ui/hitsound_percussion2.wav",
+	"ui/hitsound_percussion3.wav",
+	"ui/hitsound_percussion4.wav",
+	"ui/hitsound_percussion5.wav",
+};
+
+const char *g_pszHitSoundsRetro[] =
+{
+	"ui/hitsound_retro1.wav",
+	"ui/hitsound_retro2.wav",
+	"ui/hitsound_retro3.wav",
+	"ui/hitsound_retro4.wav",
+	"ui/hitsound_retro5.wav",
+};
+
+const char *g_pszHitSoundsVortex[] =
+{
+	"ui/hitsound_vortex1.wav",
+	"ui/hitsound_vortex2.wav",
+	"ui/hitsound_vortex3.wav",
+	"ui/hitsound_vortex4.wav",
+	"ui/hitsound_vortex5.wav",
+};
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -441,7 +496,59 @@ void CDamageAccountPanel::PlayHitSound(int iAmount, bool bKill)
 	
 		if ( bKill )
 		{
-			params.m_pSoundName = "ui/killsound.wav";
+			switch (tf_dingalingaling_last_effect.GetInt())
+			{
+				default:
+				{
+					params.m_pSoundName = "ui/killsound.wav";
+					break;
+				}
+				case 1:
+				{
+					params.m_pSoundName = "ui/killsound_electro.wav";
+					break;
+				}
+				case 2:
+				{
+					params.m_pSoundName = "ui/killsound_note.wav";
+					break;
+				}
+				case 3:
+				{
+					params.m_pSoundName = "ui/killsound_percussion.wav";
+					break;
+				}
+				case 4:
+				{
+					params.m_pSoundName = "ui/killsound_retro.wav";
+					break;
+				}
+				case 5:
+				{
+					params.m_pSoundName = "ui/killsound_space.wav";
+					break;
+				}
+				case 6:
+				{
+					params.m_pSoundName = "ui/killsound_beepo.wav";
+					break;
+				}
+				case 7:
+				{
+					params.m_pSoundName = "ui/killsound_vortex.wav";
+					break;
+				}
+				case 8:
+				{
+					params.m_pSoundName = "ui/killsound_squasher.wav";
+					break;
+				}
+				case 9:
+				{
+					params.m_pSoundName = "ui/killsound_custom.wav";
+					break;
+				}	
+			}
 	
 			params.m_flVolume = tf_dingaling_lasthit_volume.GetFloat();
 	
@@ -451,7 +558,60 @@ void CDamageAccountPanel::PlayHitSound(int iAmount, bool bKill)
 		}
 		else
 		{
-			params.m_pSoundName = "ui/hitsound.wav";
+			switch (tf_dingalingaling_effect.GetInt())
+			{
+				default:
+				{
+					params.m_pSoundName = "ui/hitsound.wav";
+					break;
+				}
+				case 1:
+				{
+					params.m_pSoundName = g_pszHitSoundsElectro[RandomInt (0, ARRAYSIZE( g_pszHitSoundsElectro ) ) ];
+					break;
+				}
+				case 2:
+				{
+					
+					params.m_pSoundName = g_pszHitSoundsMenuNote[RandomInt (0, ARRAYSIZE( g_pszHitSoundsMenuNote ) ) ];
+					break;
+				}
+				case 3:
+				{
+					params.m_pSoundName = g_pszHitSoundsPercussion[RandomInt (0, ARRAYSIZE( g_pszHitSoundsPercussion ) ) ];
+					break;
+				}
+				case 4:
+				{
+					params.m_pSoundName = g_pszHitSoundsRetro[RandomInt (0, ARRAYSIZE( g_pszHitSoundsRetro ) ) ];
+					break;
+				}
+				case 5:
+				{
+					params.m_pSoundName = "ui/hitsound_space.wav";
+					break;
+				}
+				case 6:
+				{
+					params.m_pSoundName = "ui/hitsound_beepo.wav";
+					break;
+				}
+				case 7:
+				{
+					params.m_pSoundName = g_pszHitSoundsVortex[RandomInt (0, ARRAYSIZE( g_pszHitSoundsVortex ) ) ];
+					break;
+				}
+				case 8:
+				{
+					params.m_pSoundName = "ui/hitsound_squasher.wav";
+					break;
+				}
+				case 9:
+				{
+					params.m_pSoundName = "ui/hitsound_custom.wav";
+					break;
+				}
+			}
 
 			params.m_flVolume = tf_dingaling_volume.GetFloat();
 

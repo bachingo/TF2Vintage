@@ -98,6 +98,42 @@ DESCRIPTION INFO_OPTIONS
 		{ STRING }
 		{ "0.75" }
 	}
+	
+	"tf_dingalingaling_effect"
+	{
+		"#tf_dingalingaling_effect"
+		{ LIST
+			"#tf_dingalingaling_Default"                "0"
+			"#tf_dingalingaling_Electro"                "1"
+			"#tf_dingalingaling_Notes"	            	"2"
+			"#tf_dingalingaling_Percussion"             "3"
+			"#tf_dingalingaling_Retro"                  "4"
+			"#tf_dingalingaling_Space"					"5"
+			"#tf_dingalingaling_Beepo"					"6"
+			"#tf_dingalingaling_Vortex"					"7"
+			"#tf_dingalingaling_Squasher"				"8"
+			"#customized"								"9"
+		}
+		{ "0" }
+	}
+	
+	"tf_dingalingaling_last_effect"
+	{
+		"#tf_dingalingaling_last_effect"
+		{ LIST
+			"#tf_dingalingaling_Default"                "0"
+			"#tf_dingalingaling_Electro"                "1"
+			"#tf_dingalingaling_Notes"	            	"2"
+			"#tf_dingalingaling_Percussion"             "3"
+			"#tf_dingalingaling_Retro"                  "4"
+			"#tf_dingalingaling_Space"					"5"
+			"#tf_dingalingaling_Beepo"					"6"
+			"#tf_dingalingaling_Vortex"					"7"
+			"#tf_dingalingaling_Squasher"				"8"
+			"#customized"								"9"
+		}
+		{ "0" }
+	}
 
 	"hud_combattext"
 	{
@@ -290,7 +326,5 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "1" }
 	}
-	
-	
 
 }
