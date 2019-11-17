@@ -4364,18 +4364,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if ( ( !m_Shared.InCond(TF_COND_URINE) && m_Shared.InCond(TF_COND_MARKEDFORDEATH) ) || ( m_Shared.InCond(TF_COND_URINE) && !m_Shared.InCond(TF_COND_MARKEDFORDEATH) ) )
+	if ( m_Shared.InCond(TF_COND_URINE) || m_Shared.InCond(TF_COND_MARKEDFORDEATH) )
 	{
 		// Jarate or Marked for Death players take mini crits.
 		bitsDamage |= DMG_MINICRITICAL;
 		info.AddDamageType( DMG_MINICRITICAL );
-	}
-
-	if ( m_Shared.InCond(TF_COND_URINE) && m_Shared.InCond(TF_COND_MARKEDFORDEATH) )
-	{
-		// Players with both Jarate and Marked for Death take regular criticals.
-		bitsDamage |= DMG_CRITICAL;
-		info.AddDamageType(DMG_CRITICAL);
 	}
 
 	if ( m_Shared.InCond( TF_COND_MAD_MILK ) )
