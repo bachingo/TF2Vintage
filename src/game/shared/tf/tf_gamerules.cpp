@@ -3531,6 +3531,12 @@ static const char *g_aTaggedConVars[] =
 	"tf2v_ctf_capcrits",
 	"capcrits",
 	
+	"tf2v_use_new_weapon_swap_speed",
+	"modernswapspeed",
+	
+	"tf2v_use_new_fallsounds",
+	"modernfallsounds",
+	
 
 };
 

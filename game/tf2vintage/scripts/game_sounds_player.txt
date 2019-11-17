@@ -188,6 +188,14 @@
 	"wave"		"player/pl_fallpain.wav"
 }
 
+"Player.FallDamageNew"
+{
+	"channel"	"CHAN_STATIC"
+	"volume"	"1"
+	"soundlevel"	"SNDLVL_NORM"
+	"wave"		"player/pl_fallpain_new.wav"
+}
+
 "Player.PlasmaDamage"
 {
 	"channel"	"CHAN_BODY"

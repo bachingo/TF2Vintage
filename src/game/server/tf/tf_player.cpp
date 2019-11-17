@@ -117,6 +117,9 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
 
+ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "0", FCVAR_PROTECTED, "Allows servers to choose between the old and new fall damage sound types." );
+
+
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
@@ -7471,9 +7474,19 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 	if ( m_flNextPainSoundTime > gpGlobals->curtime )
 		return;
 
-	// Don't play falling pain sounds, they have their own system
-	if ( info.GetDamageType() & DMG_FALL )
+	// This used to be handled elsewhere, but we can let servers decide to use the old
+	// TF2 pain sounds or the new TF2 pain sounds by doing it here instead.
+	if ( ( info.GetDamageType() & DMG_FALL ) & ( !tf2v_use_new_fallsounds.GetBool() ) )
+	{
+		// No pain shouts on old falldamage.
+		EmitSound( "Player.FallDamage" );
 		return;
+	}
+	if ( ( info.GetDamageType() & DMG_FALL ) & ( tf2v_use_new_fallsounds.GetBool() ) )
+	{
+		// We also shout on new falldamage.
+		EmitSound( "Player.FallDamageNew" );
+	}
 
 	if ( info.GetDamageType() & DMG_DROWN )
 	{
