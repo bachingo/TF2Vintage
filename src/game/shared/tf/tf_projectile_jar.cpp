@@ -106,23 +106,16 @@ void CTFProjectile_Jar::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Jar::Spawn( void )
 {
-	if (!tf_christmas.GetBool() && ( GetEffectCondition() != TF_COND_URINE ) )
+	if ( GetEffectCondition() != TF_COND_URINE )
+		SetModel( TF_WEAPON_JARMILK_MODEL );
+	else 
 	{
-		switch ( GetEffectCondition() )
-		{
-		case TF_COND_URINE:
+		if ( !tf_christmas.GetBool() )
 			SetModel( TF_WEAPON_JAR_MODEL );
-			break;
-		case TF_COND_MAD_MILK:
-			SetModel( TF_WEAPON_JARMILK_MODEL );
-			break;
-		default:
-			break;
-		}
+		else
+			SetModel( TF_WEAPON_FESTIVE_URINE_MODEL );
 	}
-	else
-		SetModel( TF_WEAPON_FESTIVE_URINE_MODEL );
-
+	
 	SetDetonateTimerLength( TF_WEAPON_JAR_LIFETIME );
 
 	BaseClass::Spawn();

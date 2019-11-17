@@ -1342,6 +1342,12 @@ void CTFPlayer::Regenerate( void )
 	{
 		m_Shared.RemoveCond( TF_COND_PHASE );
 	}
+	
+	// Remove Marked for Death effects
+	if ( m_Shared.InCond( TF_COND_MARKEDFORDEATH ) )
+	{
+		m_Shared.RemoveCond( TF_COND_MARKEDFORDEATH );
+	}
 
 	// Fill Spy cloak
 	m_Shared.SetSpyCloakMeter( 100.0f );
@@ -4358,11 +4364,18 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if ( m_Shared.InCond( TF_COND_URINE ) )
+	if ( ( !m_Shared.InCond(TF_COND_URINE) && m_Shared.InCond(TF_COND_MARKEDFORDEATH) ) || ( m_Shared.InCond(TF_COND_URINE) && !m_Shared.InCond(TF_COND_MARKEDFORDEATH) ) )
 	{
-		// Jarated players take mini crits
+		// Jarate or Marked for Death players take mini crits.
 		bitsDamage |= DMG_MINICRITICAL;
 		info.AddDamageType( DMG_MINICRITICAL );
+	}
+
+	if ( m_Shared.InCond(TF_COND_URINE) && m_Shared.InCond(TF_COND_MARKEDFORDEATH) )
+	{
+		// Players with both Jarate and Marked for Death take regular criticals.
+		bitsDamage |= DMG_CRITICAL;
+		info.AddDamageType(DMG_CRITICAL);
 	}
 
 	if ( m_Shared.InCond( TF_COND_MAD_MILK ) )

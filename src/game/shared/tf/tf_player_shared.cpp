@@ -1517,6 +1517,11 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 	{
 		RemoveCond( TF_COND_MAD_MILK );
 	}
+	
+	if ( InCond( TF_COND_MARKEDFORDEATH ) )
+	{
+		RemoveCond( TF_COND_MARKEDFORDEATH );
+	}
 #else
 	if ( m_pOuter->IsLocalPlayer() )
 	{
