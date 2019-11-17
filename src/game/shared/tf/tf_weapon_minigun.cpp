@@ -189,6 +189,10 @@ void CTFMinigun::SharedAttack()
 	{
 		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 	}
+	
+	// Recalculate our thinking times based on fire delays.
+	float flFireDelay = m_pWeaponInfo->GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_flTimeFireDelay;
+	CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay );
 
 	switch ( m_iWeaponState )
 	{
@@ -232,7 +236,7 @@ void CTFMinigun::SharedAttack()
 #endif
 				}
 
-				m_flNextSecondaryAttack = m_flNextPrimaryAttack = m_flTimeWeaponIdle = gpGlobals->curtime + 0.1;
+				m_flNextSecondaryAttack = m_flNextPrimaryAttack = m_flTimeWeaponIdle = gpGlobals->curtime + flFireDelay;
 			}
 			break;
 		}
@@ -246,7 +250,7 @@ void CTFMinigun::SharedAttack()
 #endif
 				m_iWeaponState = AC_STATE_SPINNING;
 
-				m_flNextSecondaryAttack = m_flNextPrimaryAttack = m_flTimeWeaponIdle = gpGlobals->curtime + 0.1;
+				m_flNextSecondaryAttack = m_flNextPrimaryAttack = m_flTimeWeaponIdle = gpGlobals->curtime + flFireDelay;
 			}
 			else if ( pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0 )
 			{
@@ -273,7 +277,7 @@ void CTFMinigun::SharedAttack()
 				CalcIsAttackCritical();
 				m_bCritShot = IsCurrentAttackACrit();
 				pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-				m_flTimeWeaponIdle = gpGlobals->curtime + 0.2;
+				m_flTimeWeaponIdle = gpGlobals->curtime + (flFireDelay * 2);
 			}
 			break;
 		}
