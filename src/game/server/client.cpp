@@ -369,6 +369,7 @@ void ClientPrecache( void )
 	CBaseEntity::PrecacheScriptSound( "Hud.Hint" );
 #endif // HL2MP
 	CBaseEntity::PrecacheScriptSound( "Player.FallDamage" );
+	CBaseEntity::PrecacheScriptSound( "Player.FallDamageNew" );
 	CBaseEntity::PrecacheScriptSound( "Player.Swim" );
 
 	// General HUD sounds
