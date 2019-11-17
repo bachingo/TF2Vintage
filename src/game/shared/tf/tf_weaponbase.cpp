@@ -50,6 +50,7 @@ extern ConVar tf2v_muzzlelight;
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
 ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
+ConVar tf2v_use_new_weapon_swap_speed( "tf2v_use_new_weapon_swap_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables faster weapon switching." );
 
 //=============================================================================
 //
@@ -726,6 +727,11 @@ bool CTFWeaponBase::Deploy( void )
 		// Overrides the anim length for calculating ready time.
 		// Don't override primary attacks that are already further out than this. This prevents
 		// people exploiting weapon switches to allow weapons to fire faster.
+		
+		float flWeaponSwapSpeed = 0.67f;
+		if ( tf2v_use_new_weapon_swap_speed.GetBool() )
+			flWeaponSwapSpeed = 0.5f;
+		
 		float flDeployTime = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTime, mult_deploy_time );
 		CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time );
@@ -747,11 +753,11 @@ bool CTFWeaponBase::Deploy( void )
 			if ( vm == nullptr )
 				continue;
 
-			vm->SetPlaybackRate( 1.0 / flDeployTime );
+			vm->SetPlaybackRate( ( 0.67f / flWeaponSwapSpeed ) / flDeployTime );
 		}
 
-		m_flNextPrimaryAttack = Max( flOriginalPrimaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
-		m_flNextSecondaryAttack = Max( flOriginalSecondaryAttack, gpGlobals->curtime + (flDeployTime * 0.67f) );
+		m_flNextPrimaryAttack = Max( flOriginalPrimaryAttack, gpGlobals->curtime + (flDeployTime * flWeaponSwapSpeed) );
+		m_flNextSecondaryAttack = Max( flOriginalSecondaryAttack, gpGlobals->curtime + (flDeployTime * flWeaponSwapSpeed) );
 
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
 
