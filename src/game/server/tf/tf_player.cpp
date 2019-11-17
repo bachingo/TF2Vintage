@@ -7476,13 +7476,13 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 
 	// This used to be handled elsewhere, but we can let servers decide to use the old
 	// TF2 pain sounds or the new TF2 pain sounds by doing it here instead.
-	if ( ( info.GetDamageType() & DMG_FALL ) & ( !tf2v_use_new_fallsounds.GetBool() ) )
+	if ( ( info.GetDamageType() & DMG_FALL ) && ( !tf2v_use_new_fallsounds.GetBool() ) )
 	{
 		// No pain shouts on old falldamage.
 		EmitSound( "Player.FallDamage" );
 		return;
 	}
-	if ( ( info.GetDamageType() & DMG_FALL ) & ( tf2v_use_new_fallsounds.GetBool() ) )
+	if ( ( info.GetDamageType() & DMG_FALL ) && ( tf2v_use_new_fallsounds.GetBool() ) )
 	{
 		// We also shout on new falldamage.
 		EmitSound( "Player.FallDamageNew" );
