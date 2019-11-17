@@ -486,7 +486,7 @@ static void FileSystem_AddLoadedSearchPath(
 	if ( V_stricmp( pPathID, "game_hd" ) == 0 )
 	{
 
-		// Not in LV build, don't mount
+		// Not in HD build, don't mount
 		if ( !initInfo.m_bMountHDContent )
 			return;
 
