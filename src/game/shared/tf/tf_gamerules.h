@@ -162,6 +162,7 @@ public:
 
 	bool			IsBirthday( void );
 	bool			IsHalloween( void );
+	bool			IsHalloweenOrFullMoon( void );
 	bool			IsChristmas( void );
 	bool			IsValentinesDay( void );
 	bool			IsAprilFools( void );
@@ -526,6 +527,7 @@ public:
 
 	int	m_iBirthdayMode;
 	int	m_iHalloweenMode;
+	int	m_iHalloweenOrFullMoonMode;
 	int	m_iChristmasMode;
 	int	m_iValentinesDayMode;
 	int	m_iAprilFoolsMode;

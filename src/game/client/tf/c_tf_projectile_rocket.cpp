@@ -15,7 +15,6 @@ BEGIN_NETWORK_TABLE( C_TFProjectile_Rocket, DT_TFProjectile_Rocket )
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 END_NETWORK_TABLE()
 
-extern ConVar tf_halloween;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -91,7 +90,7 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 
 const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
 {
-	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		return "halloween_rockettrail";
 	else
 		return "rockettrail";

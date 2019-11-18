@@ -49,7 +49,6 @@
 	//ConVar tf_flame_force( "tf_flame_force", "30" );
 #endif
 
-extern ConVar tf_halloween;
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -843,7 +842,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "flamethrower_rainbow_FP";
-			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
+			else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 				szParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
 			else
 				szParticleEffect = ConstructTeamParticle( "flamethrower_crit_%s", iTeam, true );
@@ -852,7 +851,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "flamethrower_rainbow_FP";
-			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
+			else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 				szParticleEffect = "flamethrower_halloween";
 			else
 				szParticleEffect = "flamethrower";
@@ -864,7 +863,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
-			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
+			else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 				szParticleEffect = ConstructTeamParticle( "tf2v_flamethrower_halloween_crit_%s_new_flame", iTeam, true );
 			else
 				szParticleEffect = ConstructTeamParticle( "tf2v_new_flame_crit_%s", iTeam, true );
@@ -873,7 +872,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 				szParticleEffect = "tf2v_flamethrower_rainbow_new_flame";
-			else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) )
+			else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 				szParticleEffect = "tf2v_flamethrower_halloween_new_flame";
 			else
 				szParticleEffect = "tf2v_new_flame";

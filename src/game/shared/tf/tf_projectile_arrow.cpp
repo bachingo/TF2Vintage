@@ -22,7 +22,6 @@
 ConVar tf_debug_arrows( "tf_debug_arrows", "0", FCVAR_CHEAT );
 #endif
 
-extern ConVar tf_christmas;
 extern ConVar tf2v_minicrits_on_deflect;
 
 
@@ -101,7 +100,7 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		pArrow->SetLauncher( pWeapon );
 		
 		// Compensate iTypes from shareddefs to a more usable range for our use.
-		if ( !tf_christmas.GetBool() )
+		if ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
 		{
 			switch (iType)
 			{

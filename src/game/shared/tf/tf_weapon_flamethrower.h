@@ -27,7 +27,6 @@
 	#include "baseentity.h"
 #endif
 
-extern ConVar tf_halloween;
 
 enum FlameThrowerState_t
 {

@@ -34,7 +34,6 @@ END_DATADESC()
 #endif
 
 ConVar tf_jar_show_radius( "tf_jar_show_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT /*| FCVAR_DEVELOPMENTONLY*/, "Render jar radius." );
-extern ConVar tf_christmas;
 
 LINK_ENTITY_TO_CLASS( tf_projectile_jar, CTFProjectile_Jar );
 PRECACHE_REGISTER( tf_projectile_jar );
@@ -69,7 +68,7 @@ CTFProjectile_Jar *CTFProjectile_Jar::Create( CBaseEntity *pWeapon, const Vector
 
 		pJar->ApplyLocalAngularVelocityImpulse( angVelocity );
 		
-		if ( tf_christmas.GetBool() )
+		if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
 		{
 			switch (pOwner->GetTeamNumber())
 			{
@@ -110,10 +109,10 @@ void CTFProjectile_Jar::Spawn( void )
 		SetModel( TF_WEAPON_JARMILK_MODEL );
 	else 
 	{
-		if ( !tf_christmas.GetBool() )
-			SetModel( TF_WEAPON_JAR_MODEL );
-		else
+		if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
 			SetModel( TF_WEAPON_FESTIVE_URINE_MODEL );
+		else
+			SetModel( TF_WEAPON_JAR_MODEL );
 	}
 	
 	SetDetonateTimerLength( TF_WEAPON_JAR_LIFETIME );

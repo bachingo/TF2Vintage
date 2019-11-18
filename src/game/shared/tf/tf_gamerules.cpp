@@ -5873,6 +5873,8 @@ bool CTFGameRules::IsBirthday( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
+				// July 4th is the birthday of the first TF2V release.
+				// August 24th is the Team Fortress birthday.
 				if ( ( today->tm_mon == 7 && today->tm_mday == 4 )  || ( today->tm_mon == 8 && today->tm_mday == 24 ) )
 				{
 					m_iBirthdayMode = HOLIDAY_ON;
@@ -5907,7 +5909,9 @@ bool CTFGameRules::IsHalloween( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				if ( today->tm_mon == 10 && today->tm_mday == 31 )
+				// Just for Halloween: ( today->tm_mon == 10 && today->tm_mday == 31 )
+				// We use the week before Halloween to the end of Dia de Muertos for this range.
+				if ( ( today->tm_mon == 10 && ( ( today->tm_mday >= 23 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == 11 ) && ( today->tm_mday <= 2 ) ) )
 				{
 					m_iHalloweenMode = HOLIDAY_ON;
 				}
@@ -5916,6 +5920,61 @@ bool CTFGameRules::IsHalloween( void )
 	}
 
 	return ( m_iHalloweenMode == HOLIDAY_ON );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsHalloweenOrFullMoon( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iHalloweenOrFullMoonMode == HOLIDAY_RECALCULATE )
+	{
+		m_iHalloweenOrFullMoonMode = HOLIDAY_OFF;
+		if ( tf_halloween.GetBool() )
+		{
+			m_iHalloweenOrFullMoonMode = HOLIDAY_ON;
+		}
+		else
+		{
+			if ( IsHolidayActive(kHoliday_Halloween) )
+				m_iHalloweenOrFullMoonMode = HOLIDAY_ON;
+			else
+			{
+				// Check for Full Moon next.
+				time_t ltime = time( 0 );
+				const time_t *ptime = &ltime;
+				struct tm *today = localtime( ptime );
+				if ( today )
+				{
+					// We convert our date to days since 04:41UTC on 01/21/2000, the first full moon of the century.
+					// Year calculations are based since 1900, but we only need the difference.
+					float flDaysSinceFullMoon = ( ( ( ( today->tm_year - 2000 ) + ( ( today->tm_yday + ( ( today->tm_hour + ( today->tm_min / 60 ) ) / 24 ) ) / 365 ) ) * 365.25 ) - ( 20 + ( ( 4 + ( 41 / 60 ) ) / 24 ) ) );
+					
+					// Check how many Full Moons there have been.
+					float flMeanMoonDays = 29.530587981; // Mean difference between full moons, with an deviation of 14hr.
+					float flNumberofFullMoons = flDaysSinceFullMoon / flMeanMoonDays;
+					int iNumberofFullMoonsWhole = flDaysSinceFullMoon / flMeanMoonDays;
+					
+					// Check how close we are to a full moon/new lunar month. 100% full moon = 0.
+					float flFullMoonPhase = ( flNumberofFullMoons - iNumberofFullMoonsWhole );
+					
+					// TF2 does their full moons for a 24 hour period, so it should be Full Moon +/- 12 hours.
+					float iMoonPhaseMax = .0338631929930891;
+					float iMoonPhaseMin = 1 - .0338631929930891;
+					
+					if ( ( flFullMoonPhase >= iMoonPhaseMin ) || ( flFullMoonPhase <= iMoonPhaseMax ) )
+					{
+						m_iHalloweenOrFullMoonMode = HOLIDAY_ON;
+					}
+				}
+			}
+		}
+	}
+
+	return ( m_iHalloweenOrFullMoonMode == HOLIDAY_ON );
 }
 
 
@@ -5941,7 +6000,9 @@ bool CTFGameRules::IsChristmas( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				if ( today->tm_mon == 12 && today->tm_mday == 25 )
+				// Just for Christmas: ( today->tm_mon == 12 && today->tm_mday == 25 )
+				// We use the day before Winter Solstice to the day after National Hangover Day for this range.
+				if ( ( today->tm_mon == 12 && ( ( today->tm_mday >= 20 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == 1 ) && ( today->tm_mday <= 1 ) ) )
 				{
 					m_iChristmasMode = HOLIDAY_ON;
 				}
@@ -6026,6 +6087,9 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 			break;
 		case kHoliday_ValentinesDay:
 			bActive = IsValentinesDay();
+			break;
+		case kHoliday_HalloweenOrFullMoon:
+			bActive = IsHalloweenOrFullMoon();
 			break;
 		case kHoliday_AprilFools:
 			bActive = IsAprilFools();

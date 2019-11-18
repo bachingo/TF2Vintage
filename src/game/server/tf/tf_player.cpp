@@ -126,8 +126,6 @@ extern ConVar sv_maxunlag;
 extern ConVar sv_alltalk;
 
 extern ConVar tf_teamtalk;
-extern ConVar tf_halloween;
-extern ConVar tf_christmas;
 extern ConVar tf_birthday;
 extern ConVar tf_enable_grenades;
 extern ConVar tf_arena_force_class;
@@ -1532,7 +1530,7 @@ void CTFPlayer::GiveDefaultItems()
 		ManagePlayerCosmetics( pData );
 	
 	// Give ourselves zombie skins when it's Halloween.
-	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		EnableZombies( pData );
 	
 	// If we're a VIP player, give a medal.

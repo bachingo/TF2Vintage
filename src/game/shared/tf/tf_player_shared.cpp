@@ -95,7 +95,6 @@ ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLIC
 #endif
 
 #ifdef GAME_DLL
-extern ConVar tf_halloween;
 extern ConVar tf2v_allow_cosmetics;
 extern ConVar tf2v_randomizer;
 #endif
@@ -2942,7 +2941,7 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 		if ( i == TF_LOADOUT_SLOT_UTILITY )
 		continue;	// Never check this slot.
 	
-		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( i == TF_LOADOUT_SLOT_ZOMBIE ) )
+		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) ) && ( i == TF_LOADOUT_SLOT_ZOMBIE ) )
 		continue;	// If it's not Halloween, skip the zombie slot.
 		
 		if ( ( !tf2v_allow_cosmetics.GetBool() &&  ( i > TF_PLAYER_WEAPON_COUNT ) ) && ( i != TF_LOADOUT_SLOT_ZOMBIE ) )
