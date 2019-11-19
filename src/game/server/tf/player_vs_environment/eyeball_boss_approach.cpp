@@ -35,42 +35,34 @@ ActionResult<CEyeBallBoss> CEyeBallBossApproachTarget::OnStart( CEyeBallBoss *me
 ActionResult<CEyeBallBoss> CEyeBallBossApproachTarget::Update( CEyeBallBoss *me, float dt )
 {
 	CBaseCombatCharacter *pVictim = me->GetVictim();
-	if( pVictim == me->FindNearestVisibleVictim() || !m_keepTargetDuration.IsElapsed() )
-	{
-		if ( pVictim && pVictim->IsAlive() )
-		{
-			if ( !m_targetDuration.IsElapsed() )
-			{
-				if ( me->IsLineOfSightClear( pVictim, CBaseCombatCharacter::IGNORE_ACTORS ) )
-				{
-					m_targetVerifyTimer.Start( 1.0f );
+	if( pVictim != me->FindNearestVisibleVictim() && m_keepTargetDuration.IsElapsed() )
+		return Action<CEyeBallBoss>::Done( "Noticed better victim" );
 
-					float flRange = tf_eyeball_boss_attack_range.GetFloat();
-					if ( me->GetTeamNumber() != TF_TEAM_BOSS ||
-						 me->GetHealth() < ( me->GetMaxHealth() / 3 ) ||
-						 ( me->m_attitudeTimer.HasStarted() && !me->m_attitudeTimer.IsElapsed() ) )
-					{
-						flRange *= 2;
-					}
-
-					if ( me->IsRangeLessThan( pVictim, flRange ) )
-						return Action<CEyeBallBoss>::ChangeTo( new CEyeBallBossLaunchRockets, "Rocket attack!" );
-
-					CEyeBallBossLocomotion *pLoco = (CEyeBallBossLocomotion *)me->GetLocomotionInterface();
-					pLoco->SetDesiredSpeed( tf_eyeball_boss_speed.GetFloat() );
-					pLoco->Approach( pVictim->WorldSpaceCenter() );
-
-					return Action<CEyeBallBoss>::Continue();
-				}
-				else if ( m_targetVerifyTimer.IsElapsed() )
-					return Action<CEyeBallBoss>::Done( "Lost victim..." );
-			}
-			
-			return Action<CEyeBallBoss>::Done( "Giving up..." );
-		}
-		
+	if ( !pVictim || !pVictim->IsAlive() )
 		return Action<CEyeBallBoss>::Done( "Victim gone..." );
-	}
+
+	if ( m_targetDuration.IsElapsed() )
+		return Action<CEyeBallBoss>::Done( "Giving up..." );
 	
-	return Action<CEyeBallBoss>::Done( "Noticed better victim" );
+	if ( !me->IsLineOfSightClear( pVictim, CBaseCombatCharacter::IGNORE_ACTORS ) && m_targetVerifyTimer.IsElapsed() )
+		return Action<CEyeBallBoss>::Done( "Lost victim..." );
+
+	m_targetVerifyTimer.Start( 1.0f );
+
+	float flRange = tf_eyeball_boss_attack_range.GetFloat();
+	if ( me->GetTeamNumber() != TF_TEAM_NPC ||
+			me->GetHealth() < ( me->GetMaxHealth() / 3 ) ||
+			( me->m_attitudeTimer.HasStarted() && !me->m_attitudeTimer.IsElapsed() ) )
+	{
+		flRange *= 2;
+	}
+
+	if ( me->IsRangeLessThan( pVictim, flRange ) )
+		return Action<CEyeBallBoss>::ChangeTo( new CEyeBallBossLaunchRockets, "Rocket attack!" );
+
+	CEyeBallBossLocomotion *pLoco = (CEyeBallBossLocomotion *)me->GetLocomotionInterface();
+	pLoco->SetDesiredSpeed( tf_eyeball_boss_speed.GetFloat() );
+	pLoco->Approach( pVictim->WorldSpaceCenter() );
+
+	return Action<CEyeBallBoss>::Continue();
 }
