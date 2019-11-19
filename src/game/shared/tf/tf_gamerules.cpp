@@ -300,6 +300,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_itHandle ) ),
+	RecvPropInt( RECVINFO( m_nHalloweenEffect ) ),
+	RecvPropTime( RECVINFO( m_flHalloweenEffectStartTime ) ),
+	RecvPropFloat( RECVINFO( m_flHalloweenEffectDuration ) ),
 	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
 
 #else
@@ -321,6 +324,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_itHandle ) ),
+	SendPropInt( SENDINFO( m_nHalloweenEffect ) ),
+	SendPropTime( SENDINFO( m_flHalloweenEffectStartTime ) ),
+	SendPropFloat( SENDINFO( m_flHalloweenEffectDuration ) ),
 	SendPropInt( SENDINFO( m_halloweenScenario ) ),
 
 #endif

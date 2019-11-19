@@ -755,6 +755,13 @@ Vector CTFFlameThrower::GetMuzzlePosHelper( bool bVisualPos )
 	return vecMuzzlePos;
 }
 
+int CTFFlameThrower::GetBuffType( void ) const
+{
+	int iBuffType = 0;
+	CALL_ATTRIB_HOOK_INT( iBuffType, set_buff_type );
+	return iBuffType;
+}
+
 #if defined( CLIENT_DLL )
 
 bool CTFFlameThrower::Deploy( void )
