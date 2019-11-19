@@ -127,7 +127,7 @@ void C_EyeBallBoss::OnDataChanged( DataUpdateType_t updateType )
 	}
 	else
 	{
-		if ( GetTeamNumber() == TF_TEAM_BOSS && m_attitude != m_attitudeParity )
+		if ( GetTeamNumber() == TF_TEAM_NPC && m_attitude != m_attitudeParity )
 		{
 			if ( m_pAura.IsValid() )
 			{

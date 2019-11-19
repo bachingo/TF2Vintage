@@ -213,7 +213,7 @@ void CZombieSpawner::Think( void )
 		return;
 	}
 
-	CZombie *pZombie = CZombie::SpawnAtPos( GetAbsOrigin(), m_flZombieLifeTime, TF_TEAM_BOSS, NULL, m_nSkeletonType );
+	CZombie *pZombie = CZombie::SpawnAtPos( GetAbsOrigin(), m_flZombieLifeTime, TF_TEAM_NPC, NULL, m_nSkeletonType );
 	if ( pZombie )
 	{
 		++m_iNumSpawned;
@@ -382,7 +382,7 @@ int CZombie::OnTakeDamage_Alive( CTakeDamageInfo const &info )
 		AddGesture( ACT_MP_GESTURE_FLINCH_ITEM1 );
 
 	char const *pszDamageEffect = "spell_skeleton_goop_green";
-	if ( GetTeamNumber() != TF_TEAM_BOSS )
+	if ( GetTeamNumber() != TF_TEAM_NPC )
 	{
 		switch ( GetTeamNumber() )
 		{

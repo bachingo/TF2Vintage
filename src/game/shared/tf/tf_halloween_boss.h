@@ -62,7 +62,7 @@ public:
 	};
 	CUtlVector<DamageRateInfo> m_damageInfos;
 
-	static CHalloweenBaseBoss *SpawnBossAtPos( HalloweenBossType type, const Vector &pos, int teamNum = TF_TEAM_BOSS, CBaseEntity *pOwner = NULL );
+	static CHalloweenBaseBoss *SpawnBossAtPos( HalloweenBossType type, const Vector &pos, int teamNum = TF_TEAM_NPC, CBaseEntity *pOwner = NULL );
 
 
 	virtual void Spawn( void );

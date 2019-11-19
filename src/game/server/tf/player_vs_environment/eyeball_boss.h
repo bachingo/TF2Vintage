@@ -20,8 +20,8 @@ template<typename Actor> class Behavior;
 class CEyeBallBossLocomotion : public ILocomotion
 {
 public:
-	CEyeBallBossLocomotion( CEyeBallBoss *me );
-	virtual ~CEyeBallBossLocomotion() { }
+	CEyeBallBossLocomotion( INextBot *bot );
+	virtual ~CEyeBallBossLocomotion() {}
 
 	virtual void            Update( void );
 	virtual void            Reset( void );

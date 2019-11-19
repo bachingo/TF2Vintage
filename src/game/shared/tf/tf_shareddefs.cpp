@@ -980,7 +980,6 @@ bool AreObjectInfosLoaded()
 	return g_ObjectInfos[0].m_pClassName != NULL;
 }
 
-
 void LoadObjectInfos( IBaseFileSystem *pFileSystem )
 {
 	const char *pFilename = "scripts/objects.txt";

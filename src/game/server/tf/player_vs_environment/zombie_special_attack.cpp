@@ -51,7 +51,7 @@ void CZombieSpecialAttack::DoSpecialAttack( CZombie *actor )
 	CPVSFilter filter( actor->GetAbsOrigin() );
 	TE_TFParticleEffect( filter, 0, "bomibomicon_ring", vecOrigin, vec3_angle );
 
-	int iTeam = actor->GetTeamNumber() == TF_TEAM_BOSS ? TEAM_ANY : GetEnemyTeam( actor );
+	int iTeam = actor->GetTeamNumber() == TF_TEAM_NPC ? TEAM_ANY : GetEnemyTeam( actor );
 	CUtlVector<CTFPlayer *> playersPushed;
 	TFGameRules()->PushAllPlayersAway( actor->GetAbsOrigin(), 200.0f, 500.0f, iTeam, &playersPushed );
 

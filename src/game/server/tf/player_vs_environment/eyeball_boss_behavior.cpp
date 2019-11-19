@@ -77,7 +77,7 @@ EventDesiredResult<CEyeBallBoss> CEyeBallBossBehavior::OnKilled( CEyeBallBoss *m
 		if ( !pPlayer || ( gpGlobals->curtime - me->m_lastAttackers[i].m_flTimeDamaged ) > 5.0f )
 			continue;
 
-		if ( me->GetTeamNumber() == TF_TEAM_BOSS )
+		if ( me->GetTeamNumber() == TF_TEAM_NPC )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_killer" );
 			if ( event )

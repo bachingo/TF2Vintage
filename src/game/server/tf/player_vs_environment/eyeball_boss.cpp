@@ -13,8 +13,8 @@
 #include "eyeball_boss_behavior.h"
 #include "eyeball_boss.h"
 
-ConVar tf_eyeball_boss_debug( "tf_eyeball_boss_debug", "0", FCVAR_CHEAT|FCVAR_DEVELOPMENTONLY );
-ConVar tf_eyeball_boss_debug_orientation( "tf_eyeball_boss_debug_orientation", "0", FCVAR_CHEAT|FCVAR_DEVELOPMENTONLY );
+ConVar tf_eyeball_boss_debug( "tf_eyeball_boss_debug", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar tf_eyeball_boss_debug_orientation( "tf_eyeball_boss_debug_orientation", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_eyeball_boss_lifetime( "tf_eyeball_boss_lifetime", "120", FCVAR_CHEAT );
 ConVar tf_eyeball_boss_lifetime_spell( "tf_eyeball_boss_lifetime_spell", "8", FCVAR_CHEAT );
 ConVar tf_eyeball_boss_speed( "tf_eyeball_boss_speed", "250", FCVAR_CHEAT );
@@ -74,9 +74,10 @@ static const float EyeBallBossModifyDamage( CTakeDamageInfo const& info )
 IMPLEMENT_INTENTION_INTERFACE( CEyeBallBoss, CEyeBallBossBehavior )
 
 
-CEyeBallBossLocomotion::CEyeBallBossLocomotion( CEyeBallBoss *me )
-	: ILocomotion( me )
+CEyeBallBossLocomotion::CEyeBallBossLocomotion( INextBot *bot )
+	: ILocomotion( bot )
 {
+	Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -335,6 +336,7 @@ void CEyeBallBossLocomotion::MaintainAltitude( void )
 CEyeBallBossBody::CEyeBallBossBody( CEyeBallBoss *me )
 	: IBody( me )
 {
+	m_lookAtSpot = vec3_origin;
 }
 
 //-----------------------------------------------------------------------------
@@ -410,6 +412,8 @@ CEyeBallBoss::CEyeBallBoss()
 
 	m_iOldHealth = -1;
 	m_iAngerPose = -1;
+	m_lookAtSpot = vec3_origin;
+	m_attitude = ATTITUDE_CALM;
 }
 
 CEyeBallBoss::~CEyeBallBoss()
@@ -467,11 +471,11 @@ void CEyeBallBoss::Spawn( void )
 	CollisionProp()->SetSurroundingBoundsType( USE_SPECIFIED_BOUNDS, &mins, &maxs );
 	CollisionProp()->SetCollisionBounds( mins, maxs );
 
-	ChangeTeam( TF_TEAM_BOSS );
+	ChangeTeam( TF_TEAM_NPC );
 
 	m_body->m_lookAtSpot = GetAbsOrigin();
 
-	if ( GetTeamNumber() == TF_TEAM_BOSS )
+	if ( GetTeamNumber() == TF_TEAM_NPC )
 	{
 		if ( g_pMonsterResource )
 			g_pMonsterResource->SetBossHealthPercentage( 1.0f );
@@ -526,7 +530,7 @@ int CEyeBallBoss::OnTakeDamage_Alive( const CTakeDamageInfo& info )
 {
 	int res = 0;
 	CTakeDamageInfo newInfo = info;
-	if ( !IsSelf( info.GetAttacker() ) && GetTeamNumber() == TF_TEAM_BOSS )
+	if ( !IsSelf( info.GetAttacker() ) && GetTeamNumber() == TF_TEAM_NPC )
 	{
 		int iHealth = GetHealth();
 		newInfo.SetDamage( EyeBallBossModifyDamage( info ) );
@@ -609,9 +613,9 @@ void CEyeBallBoss::Update( void )
 
 	m_attitude = ATTITUDE_CALM;
 
-	if ( GetTeamNumber() == TF_TEAM_BOSS )
+	if ( GetTeamNumber() == TF_TEAM_NPC )
 	{
-		if ( GetHealth() < 2 * ( GetMaxHealth() / 3 ) && ( !m_attitudeTimer.HasStarted() || m_attitudeTimer.IsElapsed() ) ) 
+		if ( GetHealth() < 2 * ( GetMaxHealth() / 3 ) && ( !m_attitudeTimer.HasStarted() || m_attitudeTimer.IsElapsed() ) )
 		{
 			if ( GetHealth() < ( GetMaxHealth() / 3 ) )
 			{
@@ -631,7 +635,7 @@ void CEyeBallBoss::Update( void )
 
 		m_nSkin = 0; // Default
 	}
-	else if ( GetTeamNumber() != TF_TEAM_BOSS )
+	else if ( GetTeamNumber() != TF_TEAM_NPC )
 	{
 		switch ( GetTeamNumber() )
 		{
@@ -649,7 +653,7 @@ void CEyeBallBoss::Update( void )
 	}
 
 	// Iris should be red when enraged
-	if ( ( m_attitudeTimer.HasStarted() && !m_attitudeTimer.IsElapsed() ) && GetTeamNumber() == TF_TEAM_BOSS )
+	if ( ( m_attitudeTimer.HasStarted() && !m_attitudeTimer.IsElapsed() ) && GetTeamNumber() == TF_TEAM_NPC )
 	{
 		m_nSkin = 1; // Red iris
 	}
@@ -681,7 +685,7 @@ CBaseCombatCharacter *CEyeBallBoss::GetVictim( void ) const
 {
 	if ( m_hTarget )
 	{
-		if ( GetTeamNumber() == TF_TEAM_BOSS && m_hTarget->GetAbsOrigin().z < -1152.0f )
+		if ( GetTeamNumber() == TF_TEAM_NPC && m_hTarget->GetAbsOrigin().z < -1152.0f )
 			return nullptr;
 	}
 
@@ -698,7 +702,7 @@ CBaseCombatCharacter *CEyeBallBoss::FindNearestVisibleVictim( void )
 	CUtlVector<CTFPlayer *> players;
 	CBaseCombatCharacter *pClosest = nullptr;
 
-	if ( GetTeamNumber() == TF_TEAM_BOSS )
+	if ( GetTeamNumber() == TF_TEAM_NPC )
 	{
 		iTeam = TEAM_ANY;
 		flMinDist = FLT_MAX;
@@ -725,7 +729,7 @@ CBaseCombatCharacter *CEyeBallBoss::FindNearestVisibleVictim( void )
 	for ( int i=0; i<players.Count(); ++i )
 	{
 		CTFPlayer *pPlayer = players[i];
-		if ( GetTeamNumber() == TF_TEAM_BOSS && pPlayer->GetAbsOrigin().z < -1152.0f )
+		if ( GetTeamNumber() == TF_TEAM_NPC && pPlayer->GetAbsOrigin().z < -1152.0f )
 			continue;
 
 		if ( !pPlayer->m_Shared.IsStealthed() ||
@@ -769,7 +773,7 @@ CBaseCombatCharacter *CEyeBallBoss::FindNearestVisibleVictim( void )
 //-----------------------------------------------------------------------------
 void CEyeBallBoss::BecomeEnraged( float duration )
 {
-	if ( GetTeamNumber() == TF_TEAM_BOSS && GetHealth() >= ( GetMaxHealth() / 3 ) && ( !m_attitudeTimer.HasStarted() || m_attitudeTimer.IsElapsed() ) )
+	if ( GetTeamNumber() == TF_TEAM_NPC && GetHealth() >= ( GetMaxHealth() / 3 ) && ( !m_attitudeTimer.HasStarted() || m_attitudeTimer.IsElapsed() ) )
 		EmitSound( "Halloween.EyeballBossBecomeEnraged" );
 
 	m_attitudeTimer.Start( duration );

@@ -193,17 +193,17 @@ inline const char * ScriptFieldTypeName()
 }
 
 #define DECLARE_NAMED_FIELDTYPE( fieldType, strName ) template <> inline const char * ScriptFieldTypeName<fieldType>() { return strName; }
-DECLARE_NAMED_FIELDTYPE( void,	"void" );
-DECLARE_NAMED_FIELDTYPE( float,	"float" );
-DECLARE_NAMED_FIELDTYPE( const char *,	"cstring" );
-DECLARE_NAMED_FIELDTYPE( char *,	"cstring" );
-DECLARE_NAMED_FIELDTYPE( Vector,	"vector" );
-DECLARE_NAMED_FIELDTYPE( const Vector&,	"vector" );
-DECLARE_NAMED_FIELDTYPE( int,	"integer" );
-DECLARE_NAMED_FIELDTYPE( bool,	"boolean" );
-DECLARE_NAMED_FIELDTYPE( char,	"character" );
-DECLARE_NAMED_FIELDTYPE( HSCRIPT,	"hscript" );
-DECLARE_NAMED_FIELDTYPE( ScriptVariant_t,	"variant" );
+DECLARE_NAMED_FIELDTYPE( void,	          "void" );
+DECLARE_NAMED_FIELDTYPE( float,	          "float" );
+DECLARE_NAMED_FIELDTYPE( const char *,	  "cstring" );
+DECLARE_NAMED_FIELDTYPE( char *,	      "cstring" );
+DECLARE_NAMED_FIELDTYPE( Vector,	      "vector" );
+DECLARE_NAMED_FIELDTYPE( const Vector&,	  "vector" );
+DECLARE_NAMED_FIELDTYPE( int,	          "integer" );
+DECLARE_NAMED_FIELDTYPE( bool,	          "boolean" );
+DECLARE_NAMED_FIELDTYPE( char,	          "character" );
+DECLARE_NAMED_FIELDTYPE( HSCRIPT,	      "hscript" );
+DECLARE_NAMED_FIELDTYPE( ScriptVariant_t, "variant" );
 
 inline const char * ScriptFieldTypeName( int16 eType)
 {

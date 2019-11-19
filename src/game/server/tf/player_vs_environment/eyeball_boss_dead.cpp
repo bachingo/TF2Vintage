@@ -59,7 +59,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossDead::Update( CEyeBallBoss *me, float dt 
 
 		UTIL_Remove( me );
 
-		if ( me->GetTeamNumber() == TF_TEAM_BOSS )
+		if ( me->GetTeamNumber() == TF_TEAM_NPC )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_killed" );
 			if ( event )

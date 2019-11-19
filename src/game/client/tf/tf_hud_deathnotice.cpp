@@ -321,7 +321,7 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 					g_pVGuiLocalize->ConvertUnicodeToANSI( pMsg, pszMsg, ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].Killer.szName ) );
 					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].Killer.szName, pszMsg, ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].Killer.szName ) );
 				}
-				m_DeathNotices[iDeathNoticeMsg].Killer.iTeam = TF_TEAM_BOSS;
+				m_DeathNotices[iDeathNoticeMsg].Killer.iTeam = TF_TEAM_NPC;
 				break;
 			}
 			default:
@@ -389,7 +389,7 @@ Color CTFHudDeathNotice::GetTeamColor( int iTeamNumber, bool bLocalPlayerInvolve
 		return m_clrBlueText;
 	case TF_TEAM_RED:
 		return m_clrRedText;
-	case TF_TEAM_BOSS:
+	case TF_TEAM_NPC:
 		return m_clrPurpleText;
 	case TEAM_UNASSIGNED:		
 		return bLocalPlayerInvolved ? m_clrLocalPlayer : Color(255, 255, 255, 255);

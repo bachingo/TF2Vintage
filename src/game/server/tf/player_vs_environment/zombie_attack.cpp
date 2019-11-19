@@ -93,7 +93,7 @@ ActionResult<CZombie> CZombieAttack::Update( CZombie *me, float dt )
 
 EventDesiredResult<CZombie> CZombieAttack::OnContact( CZombie *me, CBaseEntity *other, CGameTrace *result )
 {
-	if ( other->IsPlayer() && me->GetTeamNumber() != TF_TEAM_BOSS )
+	if ( other->IsPlayer() && me->GetTeamNumber() != TF_TEAM_NPC )
 	{
 		CTFPlayer *pPlayer = ToTFPlayer( other );
 		if ( pPlayer->IsAlive() && pPlayer->GetTeamNumber() != me->GetTeamNumber() )

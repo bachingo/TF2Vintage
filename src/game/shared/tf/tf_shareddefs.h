@@ -30,7 +30,7 @@ enum
 
 	TF_TEAM_COUNT,
 
-	TF_TEAM_BOSS
+	TF_TEAM_NPC
 };
 
 
