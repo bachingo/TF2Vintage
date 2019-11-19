@@ -1316,6 +1316,7 @@ enum
 	TF_BUFF_OFFENSE = 1,
 	TF_BUFF_DEFENSE,
 	TF_BUFF_REGENONDAMAGE,
+	TF_BUFF_COUNT
 };
 
 #define TF_BUFF_OFFENSE_COUNT 600				// Damage to give before filling the Buff Banner rage.

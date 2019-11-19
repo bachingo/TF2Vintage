@@ -62,27 +62,8 @@
 
 #define ITEM_RESPAWN_TIME	10.0f
 
-void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
-{
-	ConVarRef cvar( var );
-	if ( cvar.IsValid() && cvar.GetBool() )
-	{
-	#if defined( CLIENT_DLL )
-		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
-		if ( pLocal == nullptr )
-			return;
-		
-		if ( SharedRandomInt( "HalloweenChanged", 0, 100 ) <= 15 )
-		{
-			pLocal->EmitSound( "Halloween.MerasmusHalloweenModeRare" );
-		}
-		else
-		{
-			pLocal->EmitSound( "Halloween.MerasmusHalloweenModeCommon" );
-		}
-	#endif
-	}
-}
+void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue );
+void ValidateCapturesPerRound( IConVar *var, const char *pOldValue, float flOldValue );
 
 enum
 {
@@ -121,6 +102,7 @@ ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "", H
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 //ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
 ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
+ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9, ValidateCapturesPerRound );
 
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
@@ -184,6 +166,9 @@ ConVar tf_halloween_boss_spawn_interval_variation( "tf_halloween_boss_spawn_inte
 ConVar tf_halloween_eyeball_boss_spawn_interval( "tf_halloween_eyeball_boss_spawn_interval", "180", FCVAR_CHEAT, "Average interval between boss spawns, in seconds" );
 ConVar tf_halloween_eyeball_boss_spawn_interval_variation( "tf_halloween_eyeball_boss_spawn_interval_variation", "30", FCVAR_CHEAT, "Variation of spawn interval +/-" );
 
+ConVar tf_merasmus_spawn_interval( "tf_halloween_eyeball_boss_spawn_interval", "180", FCVAR_CHEAT, "Average interval between boss spawns, in seconds" );
+ConVar tf_merasmus_spawn_interval_variation( "tf_halloween_eyeball_boss_spawn_interval_variation", "30", FCVAR_CHEAT, "Variation of spawn interval +/-" );
+
 ConVar tf_halloween_zombie_mob_enabled( "tf_halloween_zombie_mob_enabled", "0", FCVAR_CHEAT, "If set to 1, spawn zombie mobs on non-Halloween Valve maps" );
 ConVar tf_halloween_zombie_mob_spawn_interval( "tf_halloween_zombie_mob_spawn_interval", "180", FCVAR_CHEAT, "Average interval between zombie mob spawns, in seconds" );
 ConVar tf_halloween_zombie_mob_spawn_count( "tf_halloween_zombie_mob_spawn_count", "20", FCVAR_CHEAT, "How many zombies to spawn" );
@@ -201,9 +186,38 @@ CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTON
 }
 #endif
 
-#ifdef GAME_DLL
+void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
+{
+	ConVarRef cvar( var );
+	if ( cvar.IsValid() )
+	{
+	#if defined( GAME_DLL )
+		tf_halloween_zombie_mob_enabled.SetValue( cvar.GetBool() );
+	#endif
+		if( cvar.GetBool() )
+		{
+		#if defined( CLIENT_DLL )
+			C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+			if ( pLocal == nullptr )
+				return;
+
+			if ( RandomInt( 0, 100 ) <= 15 )
+			{
+				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeRare" );
+			}
+			else
+			{
+				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeCommon" );
+			}
+		#endif
+		}
+	}
+}
+
 void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
 {
+
+#ifdef GAME_DLL
 	ConVarRef var( pConVar );
 
 	if ( var.GetInt() <= 0 )
@@ -219,14 +233,8 @@ void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flO
 			pTeam->SetFlagCaptures( 0 );
 		}
 	}
-}
-#endif	
-
-ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9
-#ifdef GAME_DLL
-	, ValidateCapturesPerRound
 #endif
-);
+}
 
 
 /**
@@ -2658,7 +2666,11 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 	}
 	else if ( /*IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE )*/false )
 	{
-		/*if (CMerasmus::m_level > 3)
+		/*CWheelOfDoom *pWheelOfDoom = (CWheelOfDoom *)gEntList.FindEntityByClassname( NULL, "wheel_of_doom" );
+		if ( pWheelOfDoom && !pWheelOfDoom->IsDoneBoardcastingEffectSound() )
+			return;
+
+		if (CMerasmus::m_level > 3)
 		{
 			fSpawnInterval = 60.0f;
 			fSpawnVariation = 0.0f;
@@ -2676,9 +2688,9 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 		return;
 	}
 
-	if ( !m_hNPCs.IsEmpty() )
+	if ( !m_hBosses.IsEmpty() )
 	{
-		if ( m_hNPCs[0] )
+		if ( m_hBosses[0] )
 		{
 			isBossForceSpawning = false;
 			m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
