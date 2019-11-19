@@ -207,7 +207,7 @@ void CEyeBallBossLocomotion::FaceTowards( const Vector& target )
 //-----------------------------------------------------------------------------
 const Vector& CEyeBallBossLocomotion::GetGroundNormal( void ) const
 {
-	static Vector up( 0, 0, 1.0f );
+	static const Vector up( 0, 0, 1.0f );
 	return up;
 }
 
@@ -216,15 +216,15 @@ const Vector& CEyeBallBossLocomotion::GetGroundNormal( void ) const
 //-----------------------------------------------------------------------------
 const Vector& CEyeBallBossLocomotion::GetFeet( void ) const
 {
-	static Vector feet;
-
 	CBaseCombatCharacter *pActor = GetBot()->GetEntity();
-	CTraceFilterSkipClassname filter( pActor, "eyeball_boss", COLLISION_GROUP_NONE );
+	CTraceFilterSimpleClassnameList filter( pActor, COLLISION_GROUP_NONE );
+	filter.AddClassnameToIgnore( "eyeball_boss" );
+
+	static Vector feet = pActor->GetAbsOrigin();
 
 	trace_t tr;
-	UTIL_TraceLine( pActor->GetAbsOrigin(), pActor->GetAbsOrigin() + Vector( 0, 0, -2000.0f ), MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr );
+	UTIL_TraceLine( feet, feet + Vector( 0, 0, -2000.0f ), MASK_PLAYERSOLID_BRUSHONLY, &filter, &tr );
 
-	feet = tr.startpos;
 	feet.z = tr.endpos.z;
 
 	return feet;
