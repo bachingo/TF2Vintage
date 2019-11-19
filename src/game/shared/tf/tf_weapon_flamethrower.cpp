@@ -1253,7 +1253,7 @@ void CTFFlameEntity::ClientThink( void )
 		const char *pszParticleEffect = "tf2v_new_flame_core";
 		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_waterfall_core";
-		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )  && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_core_halloween";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );

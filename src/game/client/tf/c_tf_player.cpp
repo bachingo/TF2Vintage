@@ -4122,7 +4122,7 @@ int C_TFPlayer::GetVisionFilterFlags( bool bWeaponsCheck )
 			nVisionFlags |= TF_VISION_FILTER_PYRO;
 	}
 
-	if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
+	if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		nVisionFlags |= TF_VISION_FILTER_HALLOWEEN;
 
 	if ( cl_forced_vision_filter.GetBool() )
