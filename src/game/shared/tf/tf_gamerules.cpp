@@ -5944,28 +5944,33 @@ bool CTFGameRules::IsHalloweenOrFullMoon( void )
 			else
 			{
 				// Check for Full Moon next.
+				// Use UTC for this conversion for consistency.
 				time_t ltime = time( 0 );
 				const time_t *ptime = &ltime;
-				struct tm *today = localtime( ptime );
+				struct tm *today = gmtime( ptime );
 				if ( today )
 				{
-					// We convert our date to days since 04:41UTC on 01/21/2000, the first full moon of the century.
+					// We convert our date to days since 18:14 UTC on 01/6/2000, the first new moon of 2000. (Meeus Lunation Number 0/Brown Lunation Number 953)
 					// Year calculations are based since 1900, but we only need the difference.
-					float flDaysSinceFullMoon = ( ( ( ( today->tm_year - 2000 ) + ( ( today->tm_yday + ( ( today->tm_hour + ( today->tm_min / 60 ) ) / 24 ) ) / 365 ) ) * 365.25 ) - ( 20 + ( ( 4 + ( 41 / 60 ) ) / 24 ) ) );
+					float flDaysSinceNewMoon = ( ( ( ( today->tm_year - 2000 ) + ( ( today->tm_yday + ( ( today->tm_hour + ( today->tm_min / 60 ) ) / 24 ) ) / 365 ) ) * 365.25 ) - ( 5 + ( ( 18 + ( 14 / 60 ) ) / 24 ) ) );
 					
-					// Check how many Full Moons there have been.
-					float flMeanMoonDays = 29.530587981; // Mean difference between full moons, with an deviation of 14hr.
-					float flNumberofFullMoons = flDaysSinceFullMoon / flMeanMoonDays;
-					int iNumberofFullMoonsWhole = flDaysSinceFullMoon / flMeanMoonDays;
+					// Check how many New Moons there have been.
+					float flMeanMoonDays = 29.530587981; // Mean difference between full moons, in days. Variation is -0.259/+0.302.
+					float flNumberofMoons = flDaysSinceNewMoon / flMeanMoonDays; 
+					int iNumberofMoons = flDaysSinceNewMoon / flMeanMoonDays; // This can also be used to calculate Meeus Lunation Numbers.
 					
-					// Check how close we are to a full moon/new lunar month. 100% full moon = 0.
-					float flFullMoonPhase = ( flNumberofFullMoons - iNumberofFullMoonsWhole );
+					// Check how close we are to a new lunar month.
+					// A New Moon phase is at 0.
+					float flCurrentMoonPhase = ( flNumberofMoons - iNumberofMoons );
 					
 					// TF2 does their full moons for a 24 hour period, so it should be Full Moon +/- 12 hours.
-					float iMoonPhaseMax = .0338631929930891;
-					float iMoonPhaseMin = 1 - .0338631929930891;
+					// A Full Moon is halfway after a New Moon, so add 0.5 to our tolerances.
+					int iFullMoonHours = 12;
+					float flFullMoonTolerance = ( ( iFullMoonHours / 24 ) / flMeanMoonDays );
+					float iFullMoonPhaseMax = 0.5 + flFullMoonTolerance;
+					float iFullMoonPhaseMin = 0.5 - flFullMoonTolerance;
 					
-					if ( ( flFullMoonPhase >= iMoonPhaseMin ) || ( flFullMoonPhase <= iMoonPhaseMax ) )
+					if ( ( flCurrentMoonPhase >= iFullMoonPhaseMin ) && ( flCurrentMoonPhase <= iFullMoonPhaseMax ) )
 					{
 						m_iHalloweenOrFullMoonMode = HOLIDAY_ON;
 					}
