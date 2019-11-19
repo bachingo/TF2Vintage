@@ -38,7 +38,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossLaunchRockets::OnStart( CEyeBallBoss *me,
 	}
 
 	int iSequence = 0;
-	if ( me->GetTeamNumber() != TF_TEAM_BOSS ||
+	if ( me->GetTeamNumber() != TF_TEAM_NPC ||
 		 me->GetHealth() < ( me->GetMaxHealth() / 3 ) ||
 		 ( me->m_attitudeTimer.HasStarted() && !me->m_attitudeTimer.IsElapsed() ) )
 	{
@@ -49,7 +49,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossLaunchRockets::OnStart( CEyeBallBoss *me,
 
 		iSequence = me->LookupSequence( "firing3" );
 	}
-	else if ( me->GetTeamNumber() != TF_TEAM_BOSS ||
+	else if ( me->GetTeamNumber() != TF_TEAM_NPC ||
 			  me->GetHealth() < ( me->GetMaxHealth() / 3 ) ||
 			  ( me->m_attitudeTimer.HasStarted() && !me->m_attitudeTimer.IsElapsed() ) ||
 			  me->GetHealth() >= 2 * ( me->GetMaxHealth() / 3 ) )
@@ -86,7 +86,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossLaunchRockets::Update( CEyeBallBoss *me, 
 		Vector vecFwd, vecRight;
 		me->GetVectors( &vecFwd, &vecRight, NULL );
 
-		if ( me->GetTeamNumber() == TF_TEAM_BOSS )
+		if ( me->GetTeamNumber() == TF_TEAM_NPC )
 		{
 			if ( pVictim->GetFlags() & FL_ONGROUND )
 			{
@@ -107,11 +107,11 @@ ActionResult<CEyeBallBoss> CEyeBallBossLaunchRockets::Update( CEyeBallBoss *me, 
 		me->GetBodyInterface()->AimHeadTowards( m_vecShootAt );
 	}
 
-	if( !m_rocketLaunchDelay.IsElapsed() || !m_refireDelay.IsElapsed() )
+	if ( !m_rocketLaunchDelay.IsElapsed() || !m_refireDelay.IsElapsed() )
 		return Action<CEyeBallBoss>::Continue();
 
 	float flSpeed = 330.0f;
-	if ( me->GetTeamNumber() != TF_TEAM_BOSS ||
+	if ( me->GetTeamNumber() != TF_TEAM_NPC ||
 		 me->GetHealth() < ( me->GetMaxHealth() / 3 ) ||
 		 ( me->m_attitudeTimer.HasStarted() && !me->m_attitudeTimer.IsElapsed() ) )
 	{
@@ -124,11 +124,11 @@ ActionResult<CEyeBallBoss> CEyeBallBossLaunchRockets::Update( CEyeBallBoss *me, 
 	Vector vecShootAt = m_vecShootAt;
 
 	// If we're angry we suddenly can predict where to fire our rockets
-	if ( me->GetTeamNumber() != TF_TEAM_BOSS ||
+	if ( me->GetTeamNumber() != TF_TEAM_NPC ||
 		 me->GetHealth() < ( me->GetMaxHealth() / 3 ) ||
-		( me->m_attitudeTimer.HasStarted() && !me->m_attitudeTimer.IsElapsed() ) )
+		 ( me->m_attitudeTimer.HasStarted() && !me->m_attitudeTimer.IsElapsed() ) )
 	{
-		if ( pVictim && me->GetRangeTo( pVictim ) > 150.0f)
+		if ( pVictim && me->GetRangeTo( pVictim ) > 150.0f )
 		{
 			float flComp = me->GetRangeTo( pVictim ) / flSpeed;
 			Vector vecAdjustment = pVictim->GetAbsVelocity() * flComp;
@@ -157,9 +157,9 @@ ActionResult<CEyeBallBoss> CEyeBallBossLaunchRockets::Update( CEyeBallBoss *me, 
 		Vector vecDir;
 		AngleVectors( vecAng, &vecDir );
 		pRocket->SetAbsVelocity( vecDir * flSpeed );
-		
+
 		pRocket->SetDamage( 50.0f );
-		pRocket->SetCritical( me->GetTeamNumber() == TF_TEAM_BOSS );
+		pRocket->SetCritical( me->GetTeamNumber() == TF_TEAM_NPC );
 
 		pRocket->ChangeTeam( me->GetTeamNumber() );
 	}

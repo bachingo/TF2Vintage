@@ -69,6 +69,8 @@ public:
 	Vector			GetVisualMuzzlePos();
 	Vector			GetFlameOriginPos();
 
+	int				GetBuffType( void ) const;
+
 	// Client specific.
 #if defined( CLIENT_DLL )
 	virtual bool	Deploy( void );

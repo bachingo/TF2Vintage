@@ -1,3 +1,9 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
 #ifndef TF_ZOMBIE_H
 #define TF_ZOMBIE_H
 #ifdef _WIN32
@@ -55,7 +61,7 @@ public:
 		KING,
 		MINION
 	} SkeletonType_t;
-	static CZombie*	SpawnAtPos( Vector const &pos, float flLifeTime, int iTeamNum = TF_TEAM_BOSS, CBaseEntity *pOwner = NULL, SkeletonType_t eType = NORMAL );
+	static CZombie*	SpawnAtPos( Vector const &pos, float flLifeTime, int iTeamNum = TF_TEAM_NPC, CBaseEntity *pOwner = NULL, SkeletonType_t eType = NORMAL );
 	
 	virtual void	Spawn( void );
 	virtual void	Precache( void );

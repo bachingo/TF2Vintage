@@ -35,7 +35,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::OnStart( CEyeBallBoss *me, Action<C
 	float flRandom = RandomFloat( 3.0f, 5.0f );
 	me->m_idleTimer.Start( flRandom );
 
-	if ( me->GetTeamNumber() == TF_TEAM_BOSS )
+	if ( me->GetTeamNumber() == TF_TEAM_NPC )
 		me->m_lifeTimeDuration.Start( flRandom + tf_eyeball_boss_lifetime.GetFloat() );
 	else
 		me->m_lifeTimeDuration.Start( flRandom + tf_eyeball_boss_lifetime_spell.GetFloat() );
@@ -55,7 +55,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::OnResume( CEyeBallBoss *me, Action<
 
 ActionResult<CEyeBallBoss> CEyeBallBossIdle::Update( CEyeBallBoss *me, float dt )
 {
-	if ( me->GetTeamNumber() == TF_TEAM_BOSS )
+	if ( me->GetTeamNumber() == TF_TEAM_NPC )
 	{
 		const float flTimeLeft = me->m_lifeTimeDuration.GetRemainingTime();
 		if ( flTimeLeft >= 10.0f || me->m_flTimeLeftAlive <= 10.0f )
@@ -111,7 +111,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::Update( CEyeBallBoss *me, float dt 
 	else if ( me->m_lifeTimeDuration.IsElapsed() )
 		return Action<CEyeBallBoss>::ChangeTo( new CEyeBallBossEscape, "Escaping..." );
 
-	if ( !me->m_teleportTimer.IsElapsed() || me->GetTeamNumber() != TF_TEAM_BOSS )
+	if ( !me->m_teleportTimer.IsElapsed() || me->GetTeamNumber() != TF_TEAM_NPC )
 	{
 		CEyeBallBossLocomotion *pLoco = (CEyeBallBossLocomotion *)me->GetLocomotionInterface();
 		pLoco->SetDesiredAltitude( tf_eyeball_boss_hover_height.GetFloat() );
@@ -170,7 +170,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::Update( CEyeBallBoss *me, float dt 
 		}
 
 		int iSequence = 0;
-		if ( me->GetTeamNumber() != TF_TEAM_BOSS )
+		if ( me->GetTeamNumber() != TF_TEAM_NPC )
 		{
 			iSequence = me->LookupSequence( "lookaround3" );
 		}
@@ -224,13 +224,13 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::Update( CEyeBallBoss *me, float dt 
 }
 
 
-EventDesiredResult<CEyeBallBoss> CEyeBallBossIdle::OnInjured( CEyeBallBoss *me, const CTakeDamageInfo& info )
+EventDesiredResult<CEyeBallBoss> CEyeBallBossIdle::OnInjured( CEyeBallBoss *me, const CTakeDamageInfo &info )
 {
 	me->m_hTarget = (CBaseCombatCharacter *)info.GetAttacker();
 	return Action<CEyeBallBoss>::TryContinue();
 }
 
-EventDesiredResult<CEyeBallBoss> CEyeBallBossIdle::OnOtherKilled( CEyeBallBoss *me, CBaseCombatCharacter *pOther, const CTakeDamageInfo& info )
+EventDesiredResult<CEyeBallBoss> CEyeBallBossIdle::OnOtherKilled( CEyeBallBoss *me, CBaseCombatCharacter *pOther, const CTakeDamageInfo &info )
 {
 	me->m_bTaunt = true;
 	return Action<CEyeBallBoss>::TryContinue();

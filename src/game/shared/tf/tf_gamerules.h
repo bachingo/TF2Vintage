@@ -289,8 +289,8 @@ public:
 	void			StopCompetitiveMatch(/*CMsgGC_Match_Result_Status*/int eMatchResult=0 );
 	void			EndCompetitiveMatch( void );
 
-	void			RegisterNPC( CBaseCombatCharacter *pNPC );
-	void			RemoveNPC( CBaseCombatCharacter *pNPC );
+	void			RegisterBoss( CBaseCombatCharacter *pNPC )  { if( m_hBosses.Find( pNPC ) == m_hBosses.InvalidIndex() ) m_hBosses.AddToHead( pNPC ); }
+	void			RemoveBoss( CBaseCombatCharacter *pNPC )    { EHANDLE hNPC( pNPC ); m_hBosses.FindAndRemove( hNPC ); }
 
 	virtual void	RegisterScriptFunctions( void );
 
@@ -490,7 +490,8 @@ private:
 
 	CUtlVector<CTFPlayer *> m_hArenaQueue;
 
-	CUtlVector< CHandle<CBaseCombatCharacter> > m_hNPCs;
+public:
+	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
 
 	CHandle<CTeamTrainWatcher> m_hRedAttackTrain;
 	CHandle<CTeamTrainWatcher> m_hBlueAttackTrain;
@@ -501,6 +502,7 @@ private:
 	CUtlVector<EHANDLE> m_hHealthEntities;
 #endif
 
+private:
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
@@ -537,20 +539,6 @@ public:
 #endif
 
 };
-
-#ifdef GAME_DLL
-inline void CTFGameRules::RegisterNPC(CBaseCombatCharacter *pNPC)
-{
-	if(m_hNPCs.Find(pNPC) == m_hNPCs.InvalidIndex())
-		m_hNPCs.AddToHead( pNPC );
-}
-
-inline void CTFGameRules::RemoveNPC(CBaseCombatCharacter *pNPC)
-{
-	CHandle<CBaseCombatCharacter> hNPC( pNPC );
-	m_hNPCs.FindAndRemove( hNPC );
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Gets us at the team fortress game rules

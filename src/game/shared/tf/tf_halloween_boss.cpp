@@ -61,7 +61,7 @@ void CHalloweenBaseBoss::Spawn( void )
 {
 	BaseClass::Spawn();
 
-	TFGameRules()->RegisterNPC( this );
+	TFGameRules()->RegisterBoss( this );
 
 	ConVarRef sv_cheats( "sv_cheats" );
 	if (sv_cheats.IsValid() && sv_cheats.GetBool())
@@ -73,7 +73,7 @@ void CHalloweenBaseBoss::Spawn( void )
 
 void CHalloweenBaseBoss::UpdateOnRemove( void )
 {
-	TFGameRules()->RemoveNPC( this );
+	TFGameRules()->RemoveBoss( this );
 	BaseClass::UpdateOnRemove();
 }
 

@@ -3630,7 +3630,7 @@ void CTFPlayerShared::SetRageMeter( float flRagePercent, int iBuffType )
 			if ( pBuffItem && pBuffItem->GetBuffType() == iBuffType )
 			{
 				// Only build rage if we're using this type of banner
-				m_flEffectBarProgress = min( m_flEffectBarProgress + flRagePercent, 100.0f );
+				m_flEffectBarProgress = Min( m_flEffectBarProgress + flRagePercent, 100.0f );
 			}
 		}
 	}

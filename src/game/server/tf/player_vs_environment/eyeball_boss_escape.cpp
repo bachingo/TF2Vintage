@@ -38,7 +38,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossEscape::Update( CEyeBallBoss *me, float d
 {
 	if ( me->IsSequenceFinished() )
 	{
-		if ( me->GetTeamNumber() != TF_TEAM_BOSS )
+		if ( me->GetTeamNumber() != TF_TEAM_NPC )
 			me->EmitSound( "Halloween.spell_spawn_boss_disappear" );
 
 		// Commenting this out until missing DispatchParticleEffect method is added
@@ -49,8 +49,8 @@ ActionResult<CEyeBallBoss> CEyeBallBossEscape::Update( CEyeBallBoss *me, float d
 
 		UTIL_Remove( me );
 
-		me->m_hTarget = nullptr ;
-		if ( me->GetTeamNumber() == TF_TEAM_BOSS )
+		me->m_hTarget = nullptr;
+		if ( me->GetTeamNumber() == TF_TEAM_NPC )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_escaped" );
 			if ( event )

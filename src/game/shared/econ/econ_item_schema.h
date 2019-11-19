@@ -50,43 +50,25 @@ enum
 extern const char *g_szQualityColorStrings[];
 extern const char *g_szQualityLocalizationStrings[];
 
-#define CALL_ATTRIB_HOOK_INT(value, name) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, this)
+#define CALL_ATTRIB_HOOK_INT(value, name, ...) \
+		value = CAttributeManager::AttribHookValue<int>(value, #name, this, __VA_ARGS__)
 
-#define CALL_ATTRIB_HOOK_FLOAT(value, name) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, this)
+#define CALL_ATTRIB_HOOK_FLOAT(value, name, ...) \
+		value = CAttributeManager::AttribHookValue<float>(value, #name, this, __VA_ARGS__)
 
-#define CALL_ATTRIB_HOOK_STRING(value, name) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, this)
+#define CALL_ATTRIB_HOOK_STRING(value, name, ...) \
+		value = CAttributeManager::AttribHookValue<string_t>(value, #name, this, __VA_ARGS__)
 
-#define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, ent)
+#define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name, ...) \
+		value = CAttributeManager::AttribHookValue<int>(value, #name, ent, __VA_ARGS__)
 
-#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, ent)
+#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name, ...) \
+		value = CAttributeManager::AttribHookValue<float>(value, #name, ent, __VA_ARGS__)
 
-#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent)
+#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name, ...) \
+		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent, __VA_ARGS__)
 
-#define CALL_ATTRIB_HOOK_INT_PROVIDERS(value, name, providers) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, this, &providers)
-
-#define CALL_ATTRIB_HOOK_FLOAT_PROVIDERS(value, name, providers) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, this, &providers)
-
-#define CALL_ATTRIB_HOOK_STRING_PROVIDERS(value, name, providers) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, this, &providers)
-
-#define CALL_ATTRIB_HOOK_INT_PROVIDERS_ON_OTHER(ent, value, name, providers) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, ent, &providers)
-
-#define CALL_ATTRIB_HOOK_FLOAT_PROVIDERS_ON_OTHER(ent, value, name, providers) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, ent, &providers)
-
-#define CALL_ATTRIB_HOOK_STRING_PROVIDERS_ON_OTHER(ent, value, name, providers) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent, &providers)
-
-#define CLEAR_STR(name)		\
+#define CLEAR_STR(name) \
 		name[0] = '\0'
 
 struct EconQuality
