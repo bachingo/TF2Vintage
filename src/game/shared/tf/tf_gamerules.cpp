@@ -5925,61 +5925,56 @@ bool CTFGameRules::IsHalloween( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFGameRules::IsHalloweenOrFullMoon( void )
+bool CTFGameRules::IsFullMoon( void )
 {
 	if ( IsX360() )
 		return false;
 
-	if ( m_iHalloweenOrFullMoonMode == HOLIDAY_RECALCULATE )
+	if ( m_iFullMoonMode == HOLIDAY_RECALCULATE )
 	{
-		m_iHalloweenOrFullMoonMode = HOLIDAY_OFF;
+		m_iFullMoonMode = HOLIDAY_OFF;
 		if ( tf_halloween.GetBool() )
 		{
-			m_iHalloweenOrFullMoonMode = HOLIDAY_ON;
+			m_iFullMoonMode = HOLIDAY_ON;
 		}
 		else
 		{
-			if ( IsHolidayActive(kHoliday_Halloween) )
-				m_iHalloweenOrFullMoonMode = HOLIDAY_ON;
-			else
+			// Check for Full Moon.
+			// Use UTC for this conversion for consistency.
+			time_t ltime = time( 0 );
+			const time_t *ptime = &ltime;
+			struct tm *today = gmtime( ptime );
+			if ( today )
 			{
-				// Check for Full Moon next.
-				// Use UTC for this conversion for consistency.
-				time_t ltime = time( 0 );
-				const time_t *ptime = &ltime;
-				struct tm *today = gmtime( ptime );
-				if ( today )
+				// We convert our date to difference in days since 18:14 UTC on 01/6/2000, the first new moon of 2000. (Also referred to as Lunation Number 0/Brown Lunation Number 953)
+				// Year calculations are based on the difference since 1900, so offset for that.
+				float flDaysSinceMeeusMoon = ( ( ( ( today->tm_year + 1900 ) * 365.25 ) + ( today->tm_yday + ( ( today->tm_hour + ( today->tm_min / 60 ) ) / 24 ) ) ) - ( ( 2000 * 365.25 ) + ( 5 + ( ( 18 + ( 14 / 60 ) ) / 24 ) ) ) );
+					
+				// Check how many New Moons there have been, and find our Lunation Number.
+				float flMeanMoonDays = 29.530587981; // Mean difference between full moons, in days. Variation is -0.259/+0.302.
+				float flMeeusLunationDecimal = flDaysSinceMeeusMoon / flMeanMoonDays; 
+				int iMeeusLunationNumber = flDaysSinceMeeusMoon / flMeanMoonDays; // Amount of moon cycles since LN 0/BLN 953.
+					
+				// Check how close we are to a new lunar month.
+				// A New Moon is at 0.
+				float flCurrentMoonPhase = ( flMeeusLunationDecimal - iMeeusLunationNumber );
+					
+				// TF2 does their full moons for a 24 hour period, so it should be Full Moon +/- 12 hours.
+				// A Full Moon is halfway after a New Moon, so add 0.5 to our tolerances.
+				int iFullMoonHours = 12;
+				float flFullMoonTolerance = ( ( iFullMoonHours / 24 ) / flMeanMoonDays );
+				float iFullMoonPhaseMax = 0.5 + flFullMoonTolerance;
+				float iFullMoonPhaseMin = 0.5 - flFullMoonTolerance;
+				
+				if ( ( flCurrentMoonPhase >= iFullMoonPhaseMin ) && ( flCurrentMoonPhase <= iFullMoonPhaseMax ) )
 				{
-					// We convert our date to days since 18:14 UTC on 01/6/2000, the first new moon of 2000. (Meeus Lunation Number 0/Brown Lunation Number 953)
-					// Year calculations are based since 1900, but we only need the difference.
-					float flDaysSinceNewMoon = ( ( ( ( today->tm_year - 2000 ) + ( ( today->tm_yday + ( ( today->tm_hour + ( today->tm_min / 60 ) ) / 24 ) ) / 365 ) ) * 365.25 ) - ( 5 + ( ( 18 + ( 14 / 60 ) ) / 24 ) ) );
-					
-					// Check how many New Moons there have been.
-					float flMeanMoonDays = 29.530587981; // Mean difference between full moons, in days. Variation is -0.259/+0.302.
-					float flNumberofMoons = flDaysSinceNewMoon / flMeanMoonDays; 
-					int iNumberofMoons = flDaysSinceNewMoon / flMeanMoonDays; // This can also be used to calculate Meeus Lunation Numbers.
-					
-					// Check how close we are to a new lunar month.
-					// A New Moon phase is at 0.
-					float flCurrentMoonPhase = ( flNumberofMoons - iNumberofMoons );
-					
-					// TF2 does their full moons for a 24 hour period, so it should be Full Moon +/- 12 hours.
-					// A Full Moon is halfway after a New Moon, so add 0.5 to our tolerances.
-					int iFullMoonHours = 12;
-					float flFullMoonTolerance = ( ( iFullMoonHours / 24 ) / flMeanMoonDays );
-					float iFullMoonPhaseMax = 0.5 + flFullMoonTolerance;
-					float iFullMoonPhaseMin = 0.5 - flFullMoonTolerance;
-					
-					if ( ( flCurrentMoonPhase >= iFullMoonPhaseMin ) && ( flCurrentMoonPhase <= iFullMoonPhaseMax ) )
-					{
-						m_iHalloweenOrFullMoonMode = HOLIDAY_ON;
-					}
+					m_iFullMoonMode = HOLIDAY_ON;
 				}
 			}
 		}
 	}
 
-	return ( m_iHalloweenOrFullMoonMode == HOLIDAY_ON );
+	return ( m_iFullMoonMode == HOLIDAY_ON );
 }
 
 
@@ -6090,11 +6085,29 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 		case kHoliday_Christmas:
 			bActive = IsChristmas();
 			break;
+		case kHoliday_CommunityUpdate:
+			break;
+		case kHoliday_EOTL:
+			break;			
 		case kHoliday_ValentinesDay:
 			bActive = IsValentinesDay();
 			break;
+		case kHoliday_MeetThePyro:
+			break;
+		case kHoliday_FullMoon:
+			bActive = IsFullMoon();
+			break;
 		case kHoliday_HalloweenOrFullMoon:
-			bActive = IsHalloweenOrFullMoon();
+			if ( IsHalloween() || IsFullMoon() )
+				bActive = true;
+			else
+				bActive = false;
+			break;
+		case kHoliday_HalloweenOrFullMoonOrValentines:
+			if ( ( IsHalloween() || IsFullMoon() ) || IsValentinesDay() )
+				bActive = true;
+			else
+				bActive = false;				
 			break;
 		case kHoliday_AprilFools:
 			bActive = IsAprilFools();
