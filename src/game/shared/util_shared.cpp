@@ -825,11 +825,17 @@ bool UTIL_IsLowViolence( void )
 	// violence settings -- but they're here for legacy support and for testing low
 	// violence when the engine is in normal violence mode.
 	
-	if ( tf2v_lv.GetBool() )
+	// If we have a LV governor in the scripts folder, always LV.
+	KeyValues *pData = new KeyValues( "scripts/tf2v_lv.txt" );
+	if (pData) 
 	{
-		// Auto override everything, if we're using tf2_lv.
+		tf2v_lv.SetValue( 1 );
 		return true;
 	}
+	
+	// Check if we manually override the low violence ourselves.
+	if ( tf2v_lv.GetBool() )
+		return true;
 	
 	// Turn on lowviolence mode when all of these are disabled.
 	if ( ( !violence_hblood.GetBool() && !violence_hgibs.GetBool() ) && ( !violence_ablood.GetBool() && !violence_agibs.GetBool() ) )
