@@ -166,6 +166,8 @@ public:
 	bool			IsChristmas( void );
 	bool			IsValentinesDay( void );
 	bool			IsAprilFools( void );
+	bool			IsEOTL( void );
+	bool			IsBreadUpdate( void );
 	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
 
 	bool 			IsNormalClass(CBaseEntity *pPlayer);
@@ -533,6 +535,8 @@ public:
 	int	m_iChristmasMode;
 	int	m_iValentinesDayMode;
 	int	m_iAprilFoolsMode;
+	int	m_iBreadUpdateMode;
+	int	m_iEOTLMode;
 
 #ifdef GAME_DLL
 	float m_flCTFBonusTime;

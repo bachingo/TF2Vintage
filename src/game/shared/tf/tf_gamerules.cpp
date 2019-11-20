@@ -300,9 +300,6 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_itHandle ) ),
-	RecvPropInt( RECVINFO( m_nHalloweenEffect ) ),
-	RecvPropTime( RECVINFO( m_flHalloweenEffectStartTime ) ),
-	RecvPropFloat( RECVINFO( m_flHalloweenEffectDuration ) ),
 	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
 
 #else
@@ -324,9 +321,6 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_itHandle ) ),
-	SendPropInt( SENDINFO( m_nHalloweenEffect ) ),
-	SendPropTime( SENDINFO( m_flHalloweenEffectStartTime ) ),
-	SendPropFloat( SENDINFO( m_flHalloweenEffectDuration ) ),
 	SendPropInt( SENDINFO( m_halloweenScenario ) ),
 
 #endif
@@ -1284,9 +1278,12 @@ CTFGameRules::CTFGameRules()
 	m_iPreviousRoundWinners = TEAM_UNASSIGNED;
 	m_iBirthdayMode = HOLIDAY_RECALCULATE;
 	m_iHalloweenMode = HOLIDAY_RECALCULATE;
+	m_iFullMoonMode = HOLIDAY_RECALCULATE;
 	m_iChristmasMode = HOLIDAY_RECALCULATE;
 	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
 	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
+	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
+	m_iEOTLMode = HOLIDAY_RECALCULATE;
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
@@ -1410,9 +1407,12 @@ void CTFGameRules::Activate()
 {
 	m_iBirthdayMode = HOLIDAY_RECALCULATE;
 	m_iHalloweenMode = HOLIDAY_RECALCULATE;
+	m_iFullMoonMode = HOLIDAY_RECALCULATE;
 	m_iChristmasMode = HOLIDAY_RECALCULATE;
 	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
 	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
+	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
+	m_iEOTLMode = HOLIDAY_RECALCULATE;
 
 	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
 
@@ -5891,9 +5891,9 @@ bool CTFGameRules::IsBirthday( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				// July 4th is the birthday of the first TF2V release.
+				// July 4th is the birthday of the first TF2V release, while May 27 was a milestone update.
 				// August 24th is the Team Fortress birthday.
-				if ( ( today->tm_mon == 7 && today->tm_mday == 4 )  || ( today->tm_mon == 8 && today->tm_mday == 24 ) )
+				if ( ( ( today->tm_mon == 5 && today->tm_mday == 27 ) || ( today->tm_mon == 7 && today->tm_mday == 4 ) ) || ( today->tm_mon == 8 && today->tm_mday == 24 ) )
 				{
 					m_iBirthdayMode = HOLIDAY_ON;
 				}
@@ -5903,7 +5903,6 @@ bool CTFGameRules::IsBirthday( void )
 
 	return ( m_iBirthdayMode == HOLIDAY_ON );
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -6087,6 +6086,63 @@ bool CTFGameRules::IsAprilFools( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsEOTL( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iEOTLMode == HOLIDAY_RECALCULATE )
+	{
+		m_iEOTLMode = HOLIDAY_OFF;
+		time_t ltime = time( 0 );
+		const time_t *ptime = &ltime;
+		struct tm *today = localtime( ptime );
+		if ( today )
+		{
+			// End of the Line released December 8th. The event itself ended January 7th.
+			// We have the holidays run through the same time, so finish it beforehand.
+			if ( today->tm_mon == 12 && ( ( today->tm_mday >= 8 ) && ( today->tm_mday <= 17 ) ) )
+			{
+				m_iEOTLMode = HOLIDAY_ON;
+				}
+		}
+	}
+
+	return ( m_iEOTLMode == HOLIDAY_ON );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsBreadUpdate( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iBreadUpdateMode == HOLIDAY_RECALCULATE )
+	{
+		m_iBreadUpdateMode = HOLIDAY_OFF;
+		time_t ltime = time( 0 );
+		const time_t *ptime = &ltime;
+		struct tm *today = localtime( ptime );
+		if ( today )
+		{
+			// Love and War released June 18th, and ran to July 9th.
+			// Purposely skip over July 4th, because that is the TF2V birthday.
+			if ( ( today->tm_mon == 6 && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == 7 && ( ( ( today->tm_mday >= 1 ) && ( today->tm_mday <= 9 ) ) && ( today->tm_mday != 4 ) ) ) )
+			{
+				m_iBreadUpdateMode = HOLIDAY_ON;
+			}
+		}
+	}
+
+	return ( m_iBreadUpdateMode == HOLIDAY_ON );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 bool CTFGameRules::IsHolidayActive( int eHoliday )
@@ -6106,6 +6162,7 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 		case kHoliday_CommunityUpdate:
 			break;
 		case kHoliday_EOTL:
+			bActive = IsEOTL();
 			break;			
 		case kHoliday_ValentinesDay:
 			bActive = IsValentinesDay();
@@ -6129,6 +6186,9 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 			break;
 		case kHoliday_AprilFools:
 			bActive = IsAprilFools();
+			break;
+		case kHoliday_BreadUpdate:
+			bActive = IsBreadUpdate();
 			break;
 		default:
 			break;
@@ -6470,9 +6530,12 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 	{
 		m_iBirthdayMode = HOLIDAY_RECALCULATE;
 		m_iHalloweenMode = HOLIDAY_RECALCULATE;
+		m_iFullMoonMode = HOLIDAY_RECALCULATE;
 		m_iChristmasMode = HOLIDAY_RECALCULATE;
 		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
 		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
+		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
+		m_iEOTLMode = HOLIDAY_RECALCULATE;
 	}
 #endif
 }
@@ -6660,9 +6723,12 @@ void CTFGameRules::OnDataChanged( DataUpdateType_t updateType )
 	{
 		m_iBirthdayMode = HOLIDAY_RECALCULATE;
 		m_iHalloweenMode = HOLIDAY_RECALCULATE;
+		m_iFullMoonMode = HOLIDAY_RECALCULATE;
 		m_iChristmasMode = HOLIDAY_RECALCULATE;
 		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
 		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
+		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
+		m_iEOTLMode = HOLIDAY_RECALCULATE;
 	}
 }
 
