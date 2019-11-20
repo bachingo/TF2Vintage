@@ -599,7 +599,9 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 		{
 			if ( pTarget != pNewTarget && pNewTarget->IsPlayer() )
 			{
-				pTFPlayer->m_Shared.Heal( pOwner, GetHealRate() );
+				float flHealRate = GetHealRate();
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTarget, flHealRate, mult_health_fromhealers );
+				pTFPlayer->m_Shared.Heal( pOwner, flHealRate );
 			}
 
 			pTFPlayer->m_Shared.RecalculateChargeEffects( false );
@@ -901,7 +903,9 @@ void CWeaponMedigun::PrimaryAttack( void )
 	// Start boosting ourself if we're not
 	if ( m_bChargeRelease && !m_bHealingSelf )
 	{
-		pOwner->m_Shared.Heal( pOwner, GetHealRate() * 2 );
+		float flHealRate = GetHealRate() * 2;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flHealRate, mult_health_fromhealers );
+		pOwner->m_Shared.Heal( pOwner, flHealRate );
 		m_bHealingSelf = true;
 	}
 	*/

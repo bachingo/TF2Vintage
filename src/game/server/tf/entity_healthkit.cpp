@@ -65,6 +65,7 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		Assert( pTFPlayer );
 
 		int iHealthToAdd = ceil( pPlayer->GetMaxHealth() * PackRatios[GetPowerupSize()] );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iHealthToAdd, mult_health_frompacks );
 		int iHealthRestored = 0;
 
 		// Don't heal the player who dropped this healthkit, recharge his lunchbox instead
