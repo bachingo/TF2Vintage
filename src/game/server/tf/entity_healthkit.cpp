@@ -65,7 +65,7 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		Assert( pTFPlayer );
 
 		int iHealthToAdd = ceil( pPlayer->GetMaxHealth() * PackRatios[GetPowerupSize()] );
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iHealthToAdd, mult_health_frompacks );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFPlayer, iHealthToAdd, mult_health_frompacks );
 		int iHealthRestored = 0;
 
 		// Don't heal the player who dropped this healthkit, recharge his lunchbox instead
@@ -80,7 +80,9 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			// Restore disguise health.
 			if ( pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 			{
-				int iFakeHealthToAdd = ceil( pTFPlayer->m_Shared.GetDisguiseMaxHealth() * PackRatios[ GetPowerupSize() ] );
+				int iFakeHealthToAdd = ceil( pTFPlayer->m_Shared.GetDisguiseClass() * PackRatios[ GetPowerupSize() ] );
+				CTFPlayer *pDisguiseTarget = ToTFPlayer(pTFPlayer->m_Shared.GetDisguiseTarget());
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pDisguiseTarget, iFakeHealthToAdd, mult_health_frompacks );
 
 				if ( pTFPlayer->m_Shared.AddDisguiseHealth( iFakeHealthToAdd ) )
 					bSuccess = true;

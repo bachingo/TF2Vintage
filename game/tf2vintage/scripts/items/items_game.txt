@@ -4331,6 +4331,7 @@
 		{
 			"name"	"The Back Scratcher"
 			"prefab"	"weapon_fireaxe"
+			"year"			"2010"
 			"item_logname"	"back_scratcher"
 			"item_iconname"	"back_scratcher"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_back_scratcher/c_back_scratcher"

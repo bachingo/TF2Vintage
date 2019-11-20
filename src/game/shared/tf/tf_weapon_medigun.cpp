@@ -600,7 +600,6 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 			if ( pTarget != pNewTarget && pNewTarget->IsPlayer() )
 			{
 				float flHealRate = GetHealRate();
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTarget, flHealRate, mult_health_fromhealers );
 				pTFPlayer->m_Shared.Heal( pOwner, flHealRate );
 			}
 

@@ -1089,10 +1089,14 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				//int iFakeBoostMax = GetDisguiseMaxBuffedHealth();
 				//int nFakeHealthToAdd = clamp(nHealthToAdd, 0, iFakeBoostMax - m_iDisguiseHealth);
 				//m_iDisguiseHealth += nFakeHealthToAdd;
-				AddDisguiseHealth( nHealthToAdd, true );
+				CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
+				int nFakeHealthToAdd = nHealthToAdd;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pDisguiseTarget, nFakeHealthToAdd, mult_health_fromhealers );
+				AddDisguiseHealth( nFakeHealthToAdd, true );
 			}
 
 			// Cap it to the max we'll boost a player's health
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( ToTFPlayer(m_pOuter), nHealthToAdd, mult_health_fromhealers );
 			nHealthToAdd = clamp( nHealthToAdd, 0, iBoostMax - m_pOuter->GetHealth() );
 
 			m_pOuter->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
