@@ -4877,7 +4877,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			info.SetDamage( flDamage * 0.65f );
 		}
 	}
-
+	
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
 
@@ -5196,6 +5196,10 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		if ( info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT|DMG_IGNITE|DMG_BLAST|DMG_SONIC )
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, dmg_from_ranged );
 	}
+	
+	// Aiming resists, if actively using a minigun/sniper rifle and under 50% health.
+	if ( ( m_Shared.InCond(TF_COND_AIMING ) ) && ( GetHealth() < ( GetMaxHealth() / 2 ) ) )
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, spunup_damage_resistance );
 
 	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG )
 	{
