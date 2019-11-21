@@ -2482,21 +2482,24 @@ int CBaseCombatCharacter::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 	}
 
-	if ( HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnTakeDamage_Alive_Any" ) )
+	if( g_pScriptVM )
 	{
-		ScriptVariant_t newDamage;
-		ScriptStatus_t nStatus = g_pScriptVM->Call( hFunction, NULL, true, &newDamage, ToHScript( this ), ToHScript( info.GetInflictor() ), ToHScript( info.GetAttacker() ), ToHScript( info.GetWeapon() ), flDamage, info.GetDamageType(), info.GetAmmoName() );
-
-		if ( nStatus != SCRIPT_DONE )
+		if ( HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnTakeDamage_Alive_Any" ) )
 		{
-			DevWarning( "OnTakeDamage_Alive_Any VScript function did not finish!\n" );
-		}
-		else
-		{
-			newDamage.AssignTo( &flDamage );
-		}
+			ScriptVariant_t newDamage;
+			ScriptStatus_t nStatus = g_pScriptVM->Call( hFunction, NULL, true, &newDamage, ToHScript( this ), ToHScript( info.GetInflictor() ), ToHScript( info.GetAttacker() ), ToHScript( info.GetWeapon() ), flDamage, info.GetDamageType(), info.GetAmmoName() );
 
-		g_pScriptVM->ReleaseFunction( hFunction );
+			if ( nStatus != SCRIPT_DONE )
+			{
+				DevWarning( "OnTakeDamage_Alive_Any VScript function did not finish!\n" );
+			}
+			else
+			{
+				newDamage.AssignTo( &flDamage );
+			}
+
+			g_pScriptVM->ReleaseFunction( hFunction );
+		}
 	}
 
 	// grab the vector of the incoming attack. ( pretend that the inflictor is a little lower than it really is, so the body will tend to fly upward a bit).
