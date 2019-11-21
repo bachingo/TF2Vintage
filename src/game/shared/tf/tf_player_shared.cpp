@@ -4290,6 +4290,9 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			if ( maxfbspeed > 80 )
 				maxfbspeed = 80;
 		}
+		
+		// Modify our movement speed when required.
+		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_aiming_movespeed );
 	}
 
 	// Engineer moves slower while a hauling an object.
