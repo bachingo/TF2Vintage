@@ -22,6 +22,14 @@ CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 #define SANDVICH_STATE_NORMAL 0
 
 //-----------------------------------------------------------------------------
+// Purpose: Give us a fresh sandwich.
+//-----------------------------------------------------------------------------
+CTFLunchBox::CTFLunchBox()
+{
+	m_bBitten = false;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFLunchBox::PrimaryAttack( void )
@@ -35,10 +43,15 @@ void CTFLunchBox::PrimaryAttack( void )
 #ifdef GAME_DLL
 	pOwner->Taunt();
 #endif
+	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
+	
+	// Add a very tiny delay here to make the bite look real.
+	// The bite happens around the 25th frame of animation.
+	float flEmitTime = gpGlobals->curtime + (25 / 30);
+	while (gpGlobals->curtime < flEmitTime)
+		nullptr;
 	m_bBitten = true;
 	SwitchBodyGroups();
-
-	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -149,6 +162,19 @@ void CTFLunchBox::SwitchBodyGroups( void )
 		pAttach->SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
 	}
 #endif
+}
+
+void CTFLunchBox::WeaponRegenerate()
+{
+	m_bBitten = false;
+	SetContextThink( &CTFLunchBox::SwitchBodyGroups, gpGlobals->curtime + 0.01f, "SwitchBodyGroups" );
+	BaseClass::WeaponRegenerate();
+}
+
+void CTFLunchBox::WeaponReset()
+{
+	m_bBitten = false;
+	BaseClass::WeaponReset();
 }
 
 #ifdef GAME_DLL

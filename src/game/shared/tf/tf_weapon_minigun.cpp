@@ -115,6 +115,7 @@ void CTFMinigun::WeaponReset( void )
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 	m_bCritShot = false;
 	m_flStartedFiringAt = -1;
+	m_flStartedWindingAt = -1;
 	m_flNextFiringSpeech = 0;
 
 	m_flBarrelAngle = 0;
@@ -193,6 +194,11 @@ void CTFMinigun::SharedAttack()
 	// Recalculate our thinking times based on fire delays.
 	float flFireDelay = m_pWeaponInfo->GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_flTimeFireDelay;
 	CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay );
+	
+	// We drain ammo when spinning or firing, but only when we have the trait.
+	int iAmmoDrain = 0;
+	CALL_ATTRIB_HOOK_FLOAT(iAmmoDrain, uses_ammo_while_aiming);
+	int iDrainTimeInterval = 1; // Time to deduct ammo, in seconds.
 
 	switch ( m_iWeaponState )
 	{
@@ -213,6 +219,8 @@ void CTFMinigun::SharedAttack()
 			m_flNextSecondaryAttack = gpGlobals->curtime + flSpinupTime;
 			m_flTimeWeaponIdle = gpGlobals->curtime + flSpinupTime;
 			m_flStartedFiringAt = -1;
+			m_flStartedWindingAt = -1;
+			m_flDrainTime = -1;
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRE );
 			break;
 		}
@@ -242,6 +250,23 @@ void CTFMinigun::SharedAttack()
 		}
 	case AC_STATE_FIRING:
 		{
+			// Drain ammo when winding, if we have the trait.
+			if ( iAmmoDrain != 0 )
+			{
+				if ( m_flStartedWindingAt < 0 )
+				{
+					// Set our drain time, if undefined. (We just started firing)
+					m_flStartedWindingAt = gpGlobals->curtime;
+					m_flDrainTime = m_flStartedWindingAt + iDrainTimeInterval;
+
+				}
+				if ( m_flDrainTime < gpGlobals->curtime ) 
+				{
+					// If we're above the drain time, take bullets away.
+					m_iClip1 -= iAmmoDrain;
+					m_flDrainTime = gpGlobals->curtime + iDrainTimeInterval;
+				}
+			}
 			if ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE )
 			{
 #ifdef GAME_DLL
@@ -249,6 +274,10 @@ void CTFMinigun::SharedAttack()
 				pPlayer->SpeakWeaponFire( MP_CONCEPT_WINDMINIGUN );
 #endif
 				m_iWeaponState = AC_STATE_SPINNING;
+				
+				if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+				return;
+				
 
 				m_flNextSecondaryAttack = m_flNextPrimaryAttack = m_flTimeWeaponIdle = gpGlobals->curtime + flFireDelay;
 			}
@@ -297,6 +326,23 @@ void CTFMinigun::SharedAttack()
 		}
 	case AC_STATE_SPINNING:
 		{
+			// Drain ammo when winding, if we have the trait.
+			if ( iAmmoDrain != 0 )
+			{
+				if ( m_flStartedWindingAt < 0 )
+				{
+					// Set our drain time, if undefined. (We just started firing)
+					m_flStartedWindingAt = gpGlobals->curtime;
+					m_flDrainTime = m_flStartedWindingAt + iDrainTimeInterval;
+
+				}
+				if ( m_flDrainTime < gpGlobals->curtime ) 
+				{
+					// If we're above the drain time, take bullets away.
+					m_iClip1 -= iAmmoDrain;
+					m_flDrainTime = gpGlobals->curtime + iDrainTimeInterval;
+				}
+			}
 			m_flStartedFiringAt = -1;
 			if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
 			{

@@ -4327,6 +4327,42 @@
 				"sound_melee_hit_world"	"BostonBasher.HitWorld"
 			}
 		}
+		"326"
+		{
+			"name"	"The Back Scratcher"
+			"prefab"	"weapon_fireaxe"
+			"year"			"2010"
+			"item_logname"	"back_scratcher"
+			"item_iconname"	"back_scratcher"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_back_scratcher/c_back_scratcher"
+			"model_player"	"models/workshop/weapons/c_models/c_back_scratcher/c_back_scratcher.mdl"
+			"item_type_name"	"#TF_Weapon_GardenRake"
+			"item_name"	"#TF_BackScratcher"
+			"propername"	"1"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"		
+			}
+			"attributes"
+			{
+				"damage bonus"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"1.25"
+				}
+				"health from healers reduced"
+				{
+					"attribute_class"	"mult_health_fromhealers"
+					"value"			"0.25"
+				}
+				"health from packs increased"
+				{
+					"attribute_class"	"mult_health_frompacks"
+					"value"			"1.5"
+				}
+			}
+			"particle_suffix"	"back_scratcher"
+		}
 		"327"
 		{
 			"name"	"The Claidheamohmor"
@@ -4357,6 +4393,36 @@
 				{
 					"attribute_class"	"mult_dmg"
 					"value"	".75"
+				}
+			}
+		}
+		"348"
+		{
+			"name"	"Sharpened Volcano Fragment"
+			"prefab"	"weapon_fireaxe"
+			"item_type_name"	"#TF_Weapon_RiftFireAxe"
+			"item_name"	"#TF_Unique_RiftFireAxe"
+			"item_description"	"#TF_RiftFireAxe_Desc"
+			"propername"	"0"
+			"item_logname"	"lava_axe"
+			"item_iconname"	"lava_axe"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_rift_fire_axe/c_rift_fire_axe"
+			"model_player"	"models/workshop/weapons/c_models/c_rift_fire_axe/c_rift_fire_axe.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -11"				
+			}
+			"attributes"
+			{
+				"Set DamageType Ignite"
+				{
+					"attribute_class"	"set_dmgtype_ignite"
+					"value" "1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.8"
 				}
 			}
 		}

@@ -23,6 +23,9 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
+	CTFLunchBox();
+	CTFLunchBox( const CTFLunchBox& ) = delete;
+	
 	virtual int 		GetWeaponID() const 						{ return TF_WEAPON_LUNCHBOX; }
 
 	virtual bool		ShouldBlockPrimaryFire( void ) 				{ return true; }
@@ -38,6 +41,8 @@ public:
 	virtual float		InternalGetEffectBarRechargeTime( void )	{ return 30.0f; }
 	virtual const char	*GetEffectLabelText( void )					{ return "#TF_Sandwich"; }
 	virtual void		SwitchBodyGroups( void );
+	virtual void		WeaponRegenerate();
+	virtual void		WeaponReset();
 
 
 #ifdef GAME_DLL

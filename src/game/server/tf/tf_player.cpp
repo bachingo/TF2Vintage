@@ -8704,14 +8704,19 @@ void CTFPlayer::Taunt( void )
 			SetAbsVelocity( vec3_origin );
 		}
 			
-
+		// These should start playing around the 24th frame of the animation.
+		float flEmitTime = gpGlobals->curtime + (24 / 30);
 		if ( V_stricmp( szResponse, "scenes/player/medic/low/taunt03.vcd" ) == 0 )
 		{
+			while ( gpGlobals->curtime < flEmitTime )
+				nullptr;
 			EmitSound( "Taunt.MedicViolin" );
 		}
 
 		if (V_stricmp(szResponse, "scenes/player/medic/low/taunt03_uber.vcd") == 0)
 		{
+			while ( gpGlobals->curtime < flEmitTime )
+				nullptr;
 			EmitSound("Taunt.MedicViolinUber");
 		}
 
