@@ -1396,6 +1396,27 @@
 				}
 			}
 		}
+		"weapon_bat_basher"
+		{
+			"prefab"	"weapon_bat"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"bleeding duration"
+				{
+					"attribute_class"	"bleeding_duration"
+					"value" "5"
+				}
+				"hit self on miss"
+				{
+					"attribute_class"	"hit_self_on_miss"
+					"value"	"1"
+				}
+			}
+		}
 		"weapon_sledgehammer"
 		{
 			"prefab"	"weapon_fireaxe"
@@ -4293,10 +4314,60 @@
 				}
 			}
 		}
+		"312"
+		{
+			"name"	"The Brass Beast"
+			"prefab"	"weapon_minigun"
+			"year"		"2010"
+			"item_name"	"#TF_GatlingGun"
+			"item_logname"	"brass_beast"
+			"item_iconname"	"brass_beast"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_gatling_gun/c_gatling_gun"
+			"model_player"	"models/workshop/weapons/c_models/c_gatling_gun/c_gatling_gun.mdl"
+			"propername"	"1"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -9"
+			}
+			"visuals"
+			{
+				"sound_reload"	"Weapon_Gatling.Reload"
+				"sound_empty"	"Weapon_Gatling.ClipEmpty"
+				"sound_double_shot"	"Weapon_Gatling.Fire"
+				"sound_special1"	"Weapon_Gatling.WindUp"
+				"sound_special2"	"Weapon_Gatling.WindDown"
+				"sound_special3"	"Weapon_Gatling.Spin"
+				"sound_burst"	"Weapon_Gatling.FireCrit"
+			}
+			"attributes"
+			{
+				"damage bonus"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"1.20"
+				}
+				"minigun spinup time increased"
+				{
+					"attribute_class"	"mult_minigun_spinup_time"
+					"value" "1.5"
+				}
+				"aiming movespeed decreased"
+				{
+					"attribute_class"	"mult_player_aiming_movespeed"
+					"value" "0.4"
+				}
+				"spunup_damage_resistance"
+				{
+					"attribute_class"		"spunup_damage_resistance"
+					"value"					"0.45"
+				}
+			}
+			"particle_suffix"	"brass_beast"
+		}
 		"325"
 		{
 			"name"	"The Boston Basher"
-			"prefab"	"weapon_bat"
+			"prefab"	"weapon_bat_basher"
 			"year"			"2010"
 			"item_name"	"#TF_BostonBasher"
 			"propername"	"1"
@@ -4304,23 +4375,6 @@
 			"item_iconname"	"boston_basher"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_boston_basher/c_boston_basher"
 			"model_player"	"models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -6"
-			}
-			"attributes"
-			{
-				"bleeding duration"
-				{
-					"attribute_class"	"bleeding_duration"
-					"value" "5"
-				}
-				"hit self on miss"
-				{
-					"attribute_class"	"hit_self_on_miss"
-					"value"	"1"
-				}
-			}
 			"visuals"
 			{
 				"sound_melee_hit"		"BostonBasher.Impact"
@@ -4396,10 +4450,58 @@
 				}
 			}
 		}
+		"331"
+		{
+			"name"	"Fists of Steel"
+			"prefab"	"weapon_gloves"
+			"year"		"2010"
+			"item_name"	"#TF_FistsOfSteel"
+			"propername"	"1"
+			"item_logname"	"steel_fists"
+			"item_iconname"	"steel_fists"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel"			
+			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hands"			"1"
+				}
+				"sound_melee_miss"	"Weapon_MetalGloves.Miss"
+				"sound_melee_hit"	"Weapon_MetalGloves.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_MetalGloves.HitWorld"
+				"sound_burst"		"Weapon_MetalGloves.MissCrit"
+				"animation_replacement"
+				{
+					"ACT_VM_DRAW"	"ACT_MELEE_VM_ITEM1_DRAW"
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT1_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT1_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT1_VM_INSPECT_END"
+				}
+			}
+			"attributes"
+			{
+				"dmg from ranged reduced"
+				{
+					"attribute_class"	"dmg_from_ranged"
+					"value"	"0.6"
+				}
+				"dmg from melee increased"
+				{
+					"attribute_class"	"dmg_from_melee"
+					"value"	"2.0"
+				}
+			}
+		}
 		"348"
 		{
 			"name"	"Sharpened Volcano Fragment"
 			"prefab"	"weapon_fireaxe"
+			"year"		"2011"
 			"item_type_name"	"#TF_Weapon_RiftFireAxe"
 			"item_name"	"#TF_Unique_RiftFireAxe"
 			"item_description"	"#TF_RiftFireAxe_Desc"
@@ -4965,6 +5067,29 @@
 			"item_iconname"	"iron_curtain"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain"
 			"model_player"	"models/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain.mdl"
+		}
+		"10452"
+		{
+			"name"	"Three-Rune Blade"
+			"prefab"	"weapon_bat_basher weapon_reskin"
+			"year"		"2011"
+			"item_type_name"	"#TF_Weapon_Sword"
+			"item_name"	"#TF_ScoutSword"
+			"item_description"	"#TF_ScoutSword_Desc"
+			"item_logname"	"scout_sword"
+			"item_iconname"	"scout_sword"
+			"propername"		"0"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_scout_sword/c_scout_sword"
+			"model_player"	"models/workshop/weapons/c_models/c_scout_sword/c_scout_sword.mdl"		
+			"visuals"
+			{
+				"sound_melee_miss"	"Weapon_Sword.Swing"
+				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
+				"sound_burst"		"Weapon_Sword.SwingCrit"
+				"sound_special1"	"Sword.Hit"
+				"sound_special2"	"Sword.Idle"
+			}
 		}
 		"10457"
 		{
