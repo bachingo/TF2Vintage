@@ -397,6 +397,8 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 	bool bIsCritKill = false;
 	int iWillGibAlways = false;
 	CALL_ATTRIB_HOOK_INT( iWillGibAlways, kill_will_gib );
+	bool bDmgIgnite = false;
+	CALL_ATTRIB_HOOK_INT( iWillGibAlways, set_dmgtype_ignite );
 
 	
 	int iDmgType = DMG_MELEE | DMG_CLUB;
@@ -411,6 +413,11 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 	{
 		iDmgType |= DMG_MINICRITICAL;
 		bIsCritKill = true;
+	}
+	
+	if ( bDmgIgnite )
+	{
+		iDmgType |= DMG_IGNITE;
 	}
 	
 	if ( ((iWillGibCrit != 0) && bIsCritKill) || ( iWillGibAlways != 0 ) )

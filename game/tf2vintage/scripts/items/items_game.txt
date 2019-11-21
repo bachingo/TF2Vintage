@@ -4396,6 +4396,36 @@
 				}
 			}
 		}
+		"348"
+		{
+			"name"	"Sharpened Volcano Fragment"
+			"prefab"	"weapon_fireaxe"
+			"item_type_name"	"#TF_Weapon_RiftFireAxe"
+			"item_name"	"#TF_Unique_RiftFireAxe"
+			"item_description"	"#TF_RiftFireAxe_Desc"
+			"propername"	"0"
+			"item_logname"	"lava_axe"
+			"item_iconname"	"lava_axe"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_rift_fire_axe/c_rift_fire_axe"
+			"model_player"	"models/workshop/weapons/c_models/c_rift_fire_axe/c_rift_fire_axe.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -11"				
+			}
+			"attributes"
+			{
+				"Set DamageType Ignite"
+				{
+					"attribute_class"	"set_dmgtype_ignite"
+					"value" "1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.8"
+				}
+			}
+		}
 		"415"
 		{
 			"name"	"The Reserve Shooter"
