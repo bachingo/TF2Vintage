@@ -86,6 +86,8 @@ ConVar tf2v_building_hauling( "tf2v_building_hauling", "1", FCVAR_REPLICATED, "T
 ConVar tf2v_disable_player_shadows( "tf2v_disable_player_shadows", "0", FCVAR_REPLICATED, "Disables rendering of player shadows regardless of client's graphical settings." );
 ConVar tf2v_critmod_range( "tf2v_critmod_range", "800", FCVAR_NOTIFY | FCVAR_REPLICATED, "Recent Damage (in HP) before peak critical chance levels off." );
 
+ConVar tf2v_new_flame_damage( "tf2v_new_flame_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables Jungle Inferno fire and afterburn damage calculations." );
+
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
 ConVar tf_enable_grenades( "tf_enable_grenade_equipment", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
@@ -1227,7 +1229,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 		else if ( ( gpGlobals->curtime >= m_flFlameBurnTime ) && ( TF_CLASS_PYRO != m_pOuter->GetPlayerClass()->GetClassIndex() ) )
 		{
-			float flBurnDamage = TF_BURNING_DMG;
+			float flBurnDamage = tf2v_new_flame_damage.GetBool() ? TF_BURNING_DMG_JI : TF_BURNING_DMG;;
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hBurnWeapon, flBurnDamage, mult_wpn_burndmg );
 
 			// Burn the player (if not pyro, who does not take persistent burning damage)
@@ -2077,6 +2079,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 	// pyros don't burn persistently or take persistent burning damage, but we show brief burn effect so attacker can tell they hit
 	bool bVictimIsPyro = ( TF_CLASS_PYRO ==  m_pOuter->GetPlayerClass()->GetClassIndex() );
 
+
 	if (!InCond(TF_COND_BURNING))
 	{
 		// Start burning
@@ -2087,16 +2090,48 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 		{
 			pAttacker->OnBurnOther(m_pOuter);
 		}
+		if (tf2v_new_flame_damage.GetBool())	// Start keeping track of flame stacks.
+			m_flFlameStack = 0;
 	}
 
-	float flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
+	if (tf2v_new_flame_damage.GetBool())	// Jungle Inferno Calculations
+	{
+		CTFWeaponBase *pWeapon = pAttacker->GetActiveTFWeapon(); // Check the weapon we're using to calculate afterburn.
+		if ( !bVictimIsPyro && ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER ) ) // If we have a Flamethrower, stack our afterburn from 4-10 seconds.
+		{
+			m_flFlameStack += 1;	// Add a flame to our stack.
+			float flFlameLifeAdjusted = 4 + (0.4 * (m_flFlameStack - 1) ); // Duration is 4 + ( 0.4 * (n - 1 ) ) seconds, where n is flame thrower hits.
+			if (flFlameLifeAdjusted > 10 )	// Max out at 10 seconds
+				flFlameLifeAdjusted = 10;
+			if ( m_flFlameRemoveTime && ( ( flFlameLifeAdjusted + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If we're less than the original remove time, increase the duration.
+				flFlameLifeAdjusted = ( m_flFlameRemoveTime - gpGlobals->curtime ) + 4 + (0.4 * (m_flFlameStack - 1) );
+			m_flFlameLife = flFlameLifeAdjusted;
+				
+		}
+		else // Something else, like a Flare Gun
+		{
+			m_flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE_JI;
 
-	if ( flFlameDuration != -1.0f  )
-		flFlameLife = flFlameDuration;
+			if ( m_flFlameRemoveTime && ( ( m_flFlameLife + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If less than original remove time, increase duration.
+			{
+				m_flFlameLife = ( m_flFlameRemoveTime - gpGlobals->curtime ) + m_flFlameLife;
+			}
+			
+			if ( flFlameDuration != -1.0f  )
+			m_flFlameLife = flFlameDuration;
+		}
+	}
+	else	// Original Flame Calculations
+	{
+		m_flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
 
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pAttacker, flFlameLife, mult_wpn_burntime);
+		if ( flFlameDuration != -1.0f  )
+			m_flFlameLife = flFlameDuration;
+	}
 
-	m_flFlameRemoveTime = gpGlobals->curtime + flFlameLife;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pAttacker, m_flFlameLife, mult_wpn_burntime);
+
+	m_flFlameRemoveTime = gpGlobals->curtime + m_flFlameLife;
 	m_hBurnAttacker = pAttacker;
 	m_hBurnWeapon = pWeapon;
 
@@ -2496,7 +2531,7 @@ void CTFPlayerShared::OnAddBurning(void)
 		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 
 		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;
-		m_pOuter->m_flBurnEffectEndTime = gpGlobals->curtime + TF_BURNING_FLAME_LIFE;
+		m_pOuter->m_flBurnEffectEndTime = gpGlobals->curtime + m_flFlameLife;
 	}
 	// set the burning screen overlay
 	if ( m_pOuter->IsLocalPlayer() )

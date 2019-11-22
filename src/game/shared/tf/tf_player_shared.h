@@ -470,8 +470,14 @@ private:
 	CHandle<CTFWeaponBase>	m_hBurnWeapon;
 	CNetworkVar( int, m_nNumFlames );
 	float					m_flFlameBurnTime;
+	float					m_flFlameStack;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
+
+	public:
+	float					m_flFlameLife;			// Flame lifetime.
+
+	private:
 
 #ifdef GAME_DLL
 	struct bleed_struct_t

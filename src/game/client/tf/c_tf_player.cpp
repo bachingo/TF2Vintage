@@ -1514,7 +1514,7 @@ public:
 			else
 			{
 				// fade out from 1->0 in the remaining time until flame extinguished
-				flTempResult = RemapValClamped( gpGlobals->curtime, flBurnPeakTime, flBurnStartTime + TF_BURNING_FLAME_LIFE, 1.0, 0.0 );
+				flTempResult = RemapValClamped( gpGlobals->curtime, flBurnPeakTime, flBurnStartTime + pPlayer->m_Shared.m_flFlameLife, 1.0, 0.0 );
 			}
 
 			// We have to do some more calc here instead of in materialvars.
