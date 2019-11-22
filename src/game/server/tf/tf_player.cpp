@@ -3479,6 +3479,9 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 				{
 					Msg( "ItemID %i:\nname %s\nitem_class %s\nitem_type_name %s\n",
 						pWeapon->GetItemID(), itemdef->name, itemdef->item_class, itemdef->item_type_name );
+					
+					Msg("Year: %s\n",
+						itemdef->year);
 
 					Msg( "Attributes:\n" );
 					for ( int i = 0; i < itemdef->attributes.Count(); i++ )
