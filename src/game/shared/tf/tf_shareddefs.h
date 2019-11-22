@@ -511,7 +511,7 @@ extern const char *g_szProjectileNames[];
 
 // Burning
 // Original Burn Definitions
-#define TF_BURNING_FREQUENCY		0.5f
+#define TF_BURNING_FREQUENCY		0.5f		// 2 ticks per second
 #define TF_BURNING_FLAME_LIFE		10.0
 #define TF_BURNING_FLAME_LIFE_PYRO	0.25		// pyro only displays burning effect momentarily
 #define TF_BURNING_DMG				3
@@ -519,8 +519,8 @@ extern const char *g_szProjectileNames[];
 // New (Jungle Inferno) Burn Definitions
 #define TF_BURNING_FLAME_LIFE_MIN_JI 4.0
 #define TF_BURNING_FLAME_LIFE_MAX_JI 10.0
-#define TF_BURNING_FLAME_LIFE_JI 7.5
-#define TF_BURNING_DMG_JI				4
+#define TF_BURNING_FLAME_LIFE_JI 	 7.5
+#define TF_BURNING_DMG_JI			 4
 
 // Bleeding
 #define TF_BLEEDING_FREQUENCY		0.5f

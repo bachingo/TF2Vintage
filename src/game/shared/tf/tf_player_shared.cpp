@@ -2542,8 +2542,8 @@ void CTFPlayerShared::OnAddBurning(void)
 
 		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 	
-		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;
-		m_pOuter->m_flBurnEffectEndTime = gpGlobals->curtime + m_flFlameLife;
+		m_pOuter->m_flBurnEffectStartTime = m_flFlameBurnTime;
+		m_pOuter->m_flBurnEffectEndTime = m_flFlameRemoveTime;
 
 	}
 	// set the burning screen overlay

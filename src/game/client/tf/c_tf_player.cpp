@@ -103,6 +103,7 @@ ConVar tf2v_showchatbubbles( "tf2v_showchatbubbles", "1", FCVAR_ARCHIVE, "Show b
 ConVar tf2v_show_veterancy( "tf2v_show_veterancy", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Enable or disable veterancy status if awarded." );
 
 extern ConVar tf_halloween;
+extern ConVar tf2v_new_flame_damage;
 
 static void BuildDecapitatedTransform( C_BaseAnimating *pAnimating )
 {
@@ -791,7 +792,16 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 	if ( m_bBurning )
 	{
-		m_flBurnEffectStartTime = gpGlobals->curtime;
+		if ( pPlayer )	// Try to use the player's information for burning.
+		{
+			m_flBurnEffectStartTime = pPlayer->m_flBurnEffectStartTime;
+			m_flBurnEffectEndTime = pPlayer->m_flBurnEffectEndTime;
+		}
+		else			// If we can't, construct an approximation.
+		{
+			m_flBurnEffectStartTime = gpGlobals->curtime;
+			m_flBurnEffectEndTime = tf2v_new_flame_damage.GetBool() ? (gpGlobals->curtime + TF_BURNING_FLAME_LIFE_JI )  : (gpGlobals->curtime + TF_BURNING_FLAME_LIFE ) ;
+		}
 		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			ParticleProp()->Create( "burningplayer_corpse_rainbow", PATTACH_ABSORIGIN_FOLLOW );			
 		else
