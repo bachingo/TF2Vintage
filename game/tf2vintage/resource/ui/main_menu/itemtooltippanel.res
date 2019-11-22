@@ -75,12 +75,32 @@
 		"fgcolor"			"ItemAttribLevel"
 	}	
 	
+	"YearLabel"
+	{
+		"ControlName"		"CExLabel"
+		"fieldName"			"YearLabel"
+		"xpos"				"0"
+		"ypos"				"36"
+		"zpos"				"1"
+		"wide"				"250"
+		"tall"				"15"
+		"autoResize"		"0"
+		"pinCorner"			"0"
+		"visible"			"1"
+		"enabled"			"1"
+		"labelText"			"text"
+		"textAlignment"		"center"
+		"wrap"				"0"
+		"font"				"ControllerHintText"
+		"fgcolor"			"ItemAttribLevel"
+	}
+	
 	"AttributeLabel"
 	{
 		"ControlName"		"CExLabel"
 		"fieldName"			"AttributeLabel"
 		"xpos"				"0"
-		"ypos"				"38"
+		"ypos"				"51"
 		"zpos"				"1"
 		"wide"				"250"
 		"tall"				"33"

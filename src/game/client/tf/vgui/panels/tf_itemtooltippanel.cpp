@@ -20,8 +20,9 @@ CTFItemToolTipPanel::CTFItemToolTipPanel( Panel* parent, const char *panelName )
 	m_pClassModelPanel = new CTFAdvModelPanel( this, "classmodelpanel" );
 	m_pTitle = new CExLabel( this, "TitleLabel", "Title" );
 	m_pClassName = new CExLabel( this, "ClassNameLabel", "ClassName" );
+	m_pYear = new CExLabel( this, "YearLabel", "Year" );
 	m_pAttributeText = new CExLabel( this, "AttributeLabel", "Attribute" );
-	for ( int i = 0; i < 20; i++ )
+	for ( int i = 0; i < 31; i++ )
 	{
 		m_pAttributes.AddToTail( new CExLabel( this, VarArgs( "attribute_%d", i ), "Attribute" ) );
 	}
@@ -129,6 +130,19 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 	{
 		m_pClassName->SetText( pItemData->item_type_name );
 	}
+	
+	
+	if ( m_pYear )
+	{
+		// Show the item's year at the beginning.
+		if ((pItemData->year) >= 2006)	// Only debug, undefined always whitelisted items before this period.
+		{
+			wchar_t wszYear[128];
+			swprintf_s(wszYear, L"%d", (pItemData->year));
+			m_pYear->SetText(wszYear);
+			
+		}
+	}
 
 	for ( int i = 0; i < m_pAttributes.Count(); i++ )
 		m_pAttributes[i]->SetVisible( false );
@@ -149,23 +163,7 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 
 				pLabel->SetFgColor( pScheme->GetColor( "ItemAttribNeutral", COLOR_WHITE ) );
 				pLabel->SetVisible( true );
-			} /*
-			else if ( i == ( pItemData->attributes.Count() + 1 ) )
-			{
-				// Show the item's year.
-				if ( ( pItemData->year ) < 2006 )	// Only debug and always whitelisted items before this period
-					continue;
-
-				char strYear = ( pItemData->year );
-				const char strYearDisplay = strYear;
-
-
-
-				pLabel->SetText(strcat(CFbconf, bconf + i););
-
-				pLabel->SetFgColor( pScheme->GetColor( "ItemAttribNeutral", COLOR_WHITE ) );
-				pLabel->SetVisible( true );
-			} */
+			} 
 			else
 			{
 				CEconItemAttribute *pAttribute = &pItemData->attributes[i];

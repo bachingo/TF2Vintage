@@ -29,6 +29,7 @@ private:
 	int iItemID;
 	CExLabel	*m_pTitle;
 	CExLabel	*m_pClassName;
+	CExLabel	*m_pYear;
 	CExLabel	*m_pAttributeText;
 	CTFAdvModelPanel *m_pClassModelPanel;
 	CUtlVector<CExLabel*> m_pAttributes;
