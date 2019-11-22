@@ -45,11 +45,29 @@ void CTFLunchBox::PrimaryAttack( void )
 #endif
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
 	
-	// Add a very tiny delay here to make the bite look real.
-	// The bite happens around the 25th frame of animation.
+	BiteLunch();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Times our bite to make it look more authentic.
+//-----------------------------------------------------------------------------
+void CTFLunchBox::BiteLunch( void )
+{
+	if (m_bBitten)	//If we already bit the sandwich, this is redundant.
+		return;
+	
+	// Our bite happens around the 25th frame of animation.
 	float flEmitTime = gpGlobals->curtime + (25 / 30);
-	while (gpGlobals->curtime < flEmitTime)
+	
+	// If our timescale is different then adjust, especially since we're basing this on the animation framerate.
+	ConVarRef host_timescale( "host_timescale" );
+	flEmitTime /= host_timescale.GetFloat();
+
+	// Intentionally wait before doing our action.
+	while ( gpGlobals->curtime < flEmitTime )
 		nullptr;
+
+	// We waited for the bite, switch bodygroups.
 	m_bBitten = true;
 	SwitchBodyGroups();
 }

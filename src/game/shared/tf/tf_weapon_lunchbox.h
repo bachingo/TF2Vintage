@@ -31,6 +31,7 @@ public:
 	virtual bool		ShouldBlockPrimaryFire( void ) 				{ return true; }
 
 	virtual void		PrimaryAttack( void );
+	virtual void		BiteLunch( void );
 	virtual void		SecondaryAttack( void );
 
 	virtual void		DepleteAmmo( void );
