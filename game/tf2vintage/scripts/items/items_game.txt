@@ -3749,6 +3749,7 @@
 			"prefab"	"weapon_revolver"
 			"year"			"2010"
 			"item_name"	"#TF_LEtranger"
+			"propername"	"0"
 			"item_logname"	"letranger"
 			"item_iconname"	"letranger"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_letranger/c_letranger"
@@ -3783,6 +3784,7 @@
 			"prefab"	"weapon_spy_knife_item2"
 			"year"			"2010"
 			"item_name"	"#TF_EternalReward"
+			"propername"	"0"
 			"item_logname"	"eternal_reward"
 			"item_iconname"	"eternal_reward"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_eternal_reward/c_eternal_reward"
@@ -4011,6 +4013,7 @@
 			"year"			"2010"
 			"item_type_name"	"#TF_Wearable_Shield"
 			"item_name"		"#TF_DarwinsDangerShield"
+			"propername"	"0"
 			"item_slot"		"secondary"
 			"image_inventory"	"backpack/workshop/player/items/sniper/croc_shield/croc_shield"
 			"model_player"	"models/workshop/player/items/sniper/croc_shield/croc_shield.mdl"
@@ -4064,6 +4067,7 @@
 			"prefab"	"weapon_rocketlauncher"
 			"year"			"2010"
 			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
+			"propername"	"0"
 			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy"
 			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy.mdl"
@@ -4107,6 +4111,7 @@
 			"prefab"	"weapon_gloves"
 			"year"			"2010"
 			"item_name"	"TF_Unique_Gloves_of_Running_Urgently"
+			"propername"	"0"
 			"item_logname"	"gloves_running_urgently"
 			"item_iconname"	"gloves_running_urgently"
 			"image_inventory"	"backpack/weapons/c_models/c_boxing_gloves_urgency/c_boxing_gloves_urgency"
@@ -4174,6 +4179,7 @@
 			"prefab"	"weapon_stickybomb_launcher"
 			"year"			"2010"
 			"item_name"	"#TF_Weapon_StickyBomb_Jump"
+			"propername"	"0"
 			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy.mdl"
@@ -4289,6 +4295,7 @@
 			"year"			"2010"
 			"item_type_name"	"#TF_Weapon_Gloves"
 			"item_name"	"#TF_WarriorsSpirit"
+			"propername"	"0"
 			"item_logname"	"warrior_spirit"
 			"item_iconname"	"warrior_spirit"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_bear_claw/c_bear_claw"			
@@ -4505,7 +4512,7 @@
 			"item_type_name"	"#TF_Weapon_RiftFireAxe"
 			"item_name"	"#TF_Unique_RiftFireAxe"
 			"item_description"	"#TF_RiftFireAxe_Desc"
-			"propername"	"0"
+			"propername"	"1"
 			"item_logname"	"lava_axe"
 			"item_iconname"	"lava_axe"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_rift_fire_axe/c_rift_fire_axe"
@@ -4519,6 +4526,11 @@
 				"Set DamageType Ignite"
 				{
 					"attribute_class"	"set_dmgtype_ignite"
+					"value" "1"
+				}
+				"minicrit vs burning player"
+				{
+					"attribute_class"	"or_minicrit_vs_playercond_burning"
 					"value" "1"
 				}
 				"damage penalty"
@@ -4847,7 +4859,7 @@
 		}
 		"10160"
 		{
-			"name"	"The Lugermorph (TTG Max Pistol)"
+			"name"	"TTG Max Pistol"
 			"prefab"	"weapon_pistol weapon_reskin"
 			"year"			"2010"
 			"item_name"	"#TF_TTG_MaxGun"
@@ -4865,7 +4877,7 @@
 		}
 		"10161"
 		{
-			"name"	"The Big Kill (TTG Sam Revolver)"
+			"name"	"TTG Sam Revolver"
 			"prefab"	"weapon_revolver weapon_reskin"
 			"year"			"2010"
 			"item_name"	"#TF_TTG_SamRevolver"
@@ -4942,7 +4954,7 @@
 		}
 		"10264"
 		{
-			"name"	"The Frying Pan"
+			"name"	"Frying Pan"
 			"prefab"	"weapon_fryingpan weapon_reskin"
 			"propername"	"1"
 			"year"			"2009"
