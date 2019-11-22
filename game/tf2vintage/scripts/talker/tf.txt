@@ -580,12 +580,12 @@
 	}
 	rule MedicTauntPlayerMelee
 	{
-		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw WeaponIsStockBonesaw
+		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw WeaponIsNotVitasaw
 		response MedicTauntMelee
 	}
 	rule MedicTauntPlayerMeleeUber
 	{
-		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw WeaponIsNotStockBonesaw
+		criteria ConceptPlayerTaunt IsMedic WeaponIsVitasaw
 		response MedicTauntMeleeUber
 	}
 	rule MedicTauntPlayerKritzkrieg

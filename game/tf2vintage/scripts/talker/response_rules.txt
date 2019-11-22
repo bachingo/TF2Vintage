@@ -424,6 +424,8 @@ criterion "WeaponIsFestiveBanner" "item_name" "Festive Buff Banner" "required" w
 criterion "WeaponIsSword" "playerweapon" "tf_weapon_sword" "required" weight 10
 criterion "WeaponIsDefender" "item_name" "The Scottish Resistance" "required" weight 10
 criterion "WeaponIsUbersaw" "item_name" "The Ubersaw" "required" weight 10
+criterion "WeaponIsVitasaw" "item_name" "The Vita-Saw" "required" weight 10
+criterion "WeaponIsNotVitasaw" "item_name" "!=The Vita-Saw" "required" weight 10
 criterion "WeaponIsFestiveUbersaw" "item_name" "Festive Ubersaw" "required" weight 10
 criterion "WeaponIsFrontierJustice" "item_name" "The Frontier Justice" "required" weight 10
 criterion "WeaponIsFestiveFrontierJustice" "item_name" "Festive Frontier Justice" "required" weight 10
