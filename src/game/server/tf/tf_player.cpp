@@ -8711,20 +8711,15 @@ void CTFPlayer::Taunt( void )
 			SetAbsVelocity( vec3_origin );
 		}
 			
-		// These should start playing around the 24th frame of the animation.
-		float flEmitTime = gpGlobals->curtime + (24 / 30);
+		// We need to delay sounds for this slightly, so use DoTauntAction.
 		if ( V_stricmp( szResponse, "scenes/player/medic/low/taunt03.vcd" ) == 0 )
 		{
-			while ( gpGlobals->curtime < flEmitTime )
-				nullptr;
-			EmitSound( "Taunt.MedicViolin" );
+			DoTauntAction(1);
 		}
 
 		if (V_stricmp(szResponse, "scenes/player/medic/low/taunt03_uber.vcd") == 0)
 		{
-			while ( gpGlobals->curtime < flEmitTime )
-				nullptr;
-			EmitSound("Taunt.MedicViolinUber");
+			DoTauntAction(2);
 		}
 
 		// Setup a taunt attack if necessary.
@@ -8803,6 +8798,58 @@ void CTFPlayer::Taunt( void )
 	}
 
 	pExpresser->DisallowMultipleScenes();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Intended for syncing items in taunts, such as sounds.
+//-----------------------------------------------------------------------------
+void CTFPlayer::DoTauntAction( int iTauntType )
+{
+	float flEmitTime = gpGlobals->curtime;
+	bool bFrameDependent = false;
+	// Adjust our frame time.
+	switch (iTauntType)
+	{
+		case 1: // Regular Violin
+		case 2:	// Uber Violin
+		{
+			flEmitTime += (23 / 30); // Framerate based!
+			bFrameDependent = true;
+			break;
+		}
+		default:
+			break;
+	}
+	
+	// If our timescale is different then adjust, especially if we're using a framerate specific timing.
+	if ( bFrameDependent )
+	{
+		ConVarRef host_timescale( "host_timescale" );
+		flEmitTime /= host_timescale.GetFloat();
+	}
+
+	// Intentionally wait for a bit before doing our action.
+	while ( gpGlobals->curtime < flEmitTime )
+		nullptr;
+
+	// Now that we waited, do our action.
+	switch (iTauntType)
+	{
+		case 1: // Regular Violin
+		{
+			EmitSound( "Taunt.MedicViolin" );
+			break;
+		}
+		case 2:	// Uber Violin
+		{
+			EmitSound( "Taunt.MedicViolinUber" );
+			break;
+		}
+		default:
+			break;
+	}
+	
+	return;
 }
 
 //-----------------------------------------------------------------------------
