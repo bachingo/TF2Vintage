@@ -2100,12 +2100,16 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 		if ( !bVictimIsPyro && ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER ) ) // If we have a Flamethrower, stack our afterburn from 4-10 seconds.
 		{
 			m_flFlameStack += 1;	// Add a flame to our stack.
-			float flFlameLifeAdjusted = 4 + (0.4 * (m_flFlameStack - 1) ); // Duration is 4 + ( 0.4 * (n - 1 ) ) seconds, where n is flame thrower hits.
-			if (flFlameLifeAdjusted > 10 )	// Max out at 10 seconds
-				flFlameLifeAdjusted = 10;
+			float flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MIN_JI + (0.4 * (m_flFlameStack - 1) ); // Duration is 4 + ( 0.4 * (n - 1 ) ) seconds, where n is flame thrower hits.
+			if (flFlameLifeAdjusted > TF_BURNING_FLAME_LIFE_MAX_JI )	// Max out at 10 seconds
+				flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MAX_JI;
 			if ( m_flFlameRemoveTime && ( ( flFlameLifeAdjusted + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If we're less than the original remove time, increase the duration.
-				flFlameLifeAdjusted = ( m_flFlameRemoveTime - gpGlobals->curtime ) + 4 + (0.4 * (m_flFlameStack - 1) );
-			m_flFlameLife = flFlameLifeAdjusted;
+				flFlameLifeAdjusted = ( m_flFlameRemoveTime - gpGlobals->curtime ); // Reset the afterburn time to the longer value.
+			
+			if ( flFlameDuration != -1.0f  )
+				m_flFlameLife = flFlameDuration;
+			else
+				m_flFlameLife = flFlameLifeAdjusted;
 				
 		}
 		else // Something else, like a Flare Gun
@@ -2114,11 +2118,11 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 
 			if ( m_flFlameRemoveTime && ( ( m_flFlameLife + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If less than original remove time, increase duration.
 			{
-				m_flFlameLife = ( m_flFlameRemoveTime - gpGlobals->curtime ) + m_flFlameLife;
+				m_flFlameLife = ( m_flFlameRemoveTime - gpGlobals->curtime ); // Reset the afterburn time to the longer value.
 			}
 			
 			if ( flFlameDuration != -1.0f  )
-			m_flFlameLife = flFlameDuration;
+				m_flFlameLife = flFlameDuration;
 		}
 	}
 	else	// Original Flame Calculations

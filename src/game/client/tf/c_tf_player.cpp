@@ -257,6 +257,7 @@ public:
 	bool IsRagdollVisible();
 	bool IsDecapitation();
 	float GetBurnStartTime() { return m_flBurnEffectStartTime; }
+	float GetBurnEndTime() { return m_flBurnEffectEndTime; }
 
 	void DissolveEntity( C_BaseEntity *pEntity );
 
@@ -314,6 +315,7 @@ private:
 	bool  m_bIceRagdoll;
 	bool  m_bCritOnHardHit;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
+	float m_flBurnEffectEndTime;	// start time of burning, or 0 if not burning
 	float m_flDeathDelay;
 	bool  m_bFixedConstraints;
 	bool  m_bFadingOut;
@@ -362,6 +364,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_iPlayerIndex = TF_PLAYER_INDEX_NONE;
 	m_fDeathTime = -1.0f;
 	m_flBurnEffectStartTime = 0.0f;
+	m_flBurnEffectEndTime = 0.0f;
 	m_iDamageCustom = false;
 	m_bGoldRagdoll = false;
 	m_bSlamRagdoll = false;
@@ -1479,6 +1482,7 @@ public:
 
 		// default to zero
 		float flBurnStartTime = 0;
+		float flBurnEndTime = 0;
 
 		C_TFPlayer *pPlayer = dynamic_cast<C_TFPlayer *>( pEntity );
 		if ( pPlayer )
@@ -1487,6 +1491,7 @@ public:
 			if ( pPlayer->m_Shared.InCond( TF_COND_BURNING ) )
 			{
 				flBurnStartTime = pPlayer->m_flBurnEffectStartTime;
+				flBurnEndTime = pPlayer->m_flBurnEffectEndTime;
 			}
 		}
 		else
@@ -1496,6 +1501,7 @@ public:
 			if ( pRagDoll )
 			{
 				flBurnStartTime = pRagDoll->GetBurnStartTime();
+				flBurnEndTime = pRagDoll->GetBurnEndTime();	
 			}
 		}
 
@@ -1514,7 +1520,7 @@ public:
 			else
 			{
 				// fade out from 1->0 in the remaining time until flame extinguished
-				flTempResult = RemapValClamped( gpGlobals->curtime, flBurnPeakTime, flBurnStartTime + pPlayer->m_Shared.m_flFlameLife, 1.0, 0.0 );
+				flTempResult = RemapValClamped( gpGlobals->curtime, flBurnPeakTime, flBurnEndTime, 1.0, 0.0 );
 			}
 
 			// We have to do some more calc here instead of in materialvars.
