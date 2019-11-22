@@ -4450,6 +4450,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 			}
 		}
+		
+		int nMinicritOnBurning = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnBurning, or_minicrit_vs_playercond_burning );
+		if ( nMinicritOnBurning && m_Shared.InCond( TF_COND_BURNING ) )
+		{
+			bitsDamage |= DMG_MINICRITICAL;
+			info.AddDamageType( DMG_MINICRITICAL );
+		}
 
 		float flPenaltyNonBurning = info.GetDamage();
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flPenaltyNonBurning, mult_dmg_vs_nonburning );
