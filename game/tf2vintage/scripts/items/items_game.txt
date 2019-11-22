@@ -4488,7 +4488,7 @@
 				"dmg from ranged reduced"
 				{
 					"attribute_class"	"dmg_from_ranged"
-					"value"	"0.6"
+					"value"	"0.4"
 				}
 				"dmg from melee increased"
 				{
