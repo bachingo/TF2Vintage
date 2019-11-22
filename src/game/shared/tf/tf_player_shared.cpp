@@ -2082,8 +2082,6 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 
 	if (!InCond(TF_COND_BURNING))
 	{
-		// Start burning
-		AddCond(TF_COND_BURNING);
 		m_flFlameBurnTime = gpGlobals->curtime;	//asap
 		// let the attacker know he burned me
 		if (pAttacker && !bVictimIsPyro)
@@ -2112,7 +2110,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 				m_flFlameLife = flFlameLifeAdjusted;
 				
 		}
-		else // Something else, like a Flare Gun
+		else // Something other than a flame thrower, or we're attacking a pyro.
 		{
 			m_flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE_JI;
 
@@ -2134,10 +2132,16 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 	}
 
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pAttacker, m_flFlameLife, mult_wpn_burntime);
-
+		
 	m_flFlameRemoveTime = gpGlobals->curtime + m_flFlameLife;
 	m_hBurnAttacker = pAttacker;
 	m_hBurnWeapon = pWeapon;
+	
+	if (!InCond(TF_COND_BURNING))
+	{
+		// Start burning, now that our parameters are set.
+		AddCond(TF_COND_BURNING);
+	}
 
 #endif
 }
@@ -2530,12 +2534,17 @@ void CTFPlayerShared::OnAddBurning(void)
 	// Start the burning effect
 	if ( !m_pOuter->m_pBurningEffect )
 	{
-		const char *pszEffectName = ConstructTeamParticle( "burningplayer_%s", m_pOuter->GetTeamNumber(), true );
+		const char *pszEffectName;
+		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+			pszEffectName = ConstructTeamParticle( "burningplayer_rainbow_%s", m_pOuter->GetTeamNumber(), true );
+		else
+			pszEffectName = ConstructTeamParticle( "burningplayer_%s", m_pOuter->GetTeamNumber(), true );
 
 		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
-
+	
 		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;
 		m_pOuter->m_flBurnEffectEndTime = gpGlobals->curtime + m_flFlameLife;
+
 	}
 	// set the burning screen overlay
 	if ( m_pOuter->IsLocalPlayer() )

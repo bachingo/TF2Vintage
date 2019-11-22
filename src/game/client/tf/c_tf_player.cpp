@@ -792,7 +792,10 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	if ( m_bBurning )
 	{
 		m_flBurnEffectStartTime = gpGlobals->curtime;
-		ParticleProp()->Create( "burningplayer_corpse", PATTACH_ABSORIGIN_FOLLOW );
+		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+			ParticleProp()->Create( "burningplayer_corpse_rainbow", PATTACH_ABSORIGIN_FOLLOW );			
+		else
+			ParticleProp()->Create( "burningplayer_corpse", PATTACH_ABSORIGIN_FOLLOW );
 	}
 
 	if ( m_bElectrocuted )
