@@ -39,7 +39,7 @@ public:
 	virtual bool		UsesPrimaryAmmo( void );
 
 	virtual bool		HasChargeBar( void )						{ return true; }
-	virtual float		InternalGetEffectBarRechargeTime( void )	{ return 30.0f; }
+	virtual float		InternalGetEffectBarRechargeTime( void );
 	virtual const char	*GetEffectLabelText( void )					{ return "#TF_Sandwich"; }
 	virtual void		SwitchBodyGroups( void );
 	virtual void		WeaponRegenerate();

@@ -17,9 +17,17 @@
 CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 
 #define TF_SANDVICH_PLATE_MODEL "models/items/plate.mdl"
+#define TF_ROBOSANDVICH_PLATE_MODEL "models/items/plate_robo_sandwich.mdl"
+#define TF_SANDVICH_FESTIVE_PLATE_MODEL "models/items/plate_sandwich_xmas.mdl"
+#define TF_DALOKOH_PLATE_MODEL "models/workshop/weapons/c_models/c_chocolate/plate_chocolate.mdl"
+#define TF_FISHCAKE_PLATE_MODEL "models/workshop/weapons/c_models/c_fishcake/plate_fishcake.mdl"
+#define TF_STEAK_PLATE_MODEL "models/items/plate_steak.mdl"
+#define TF_BANANA_PLATE_MODEL "models/items/banana/plate_banana.mdl"
 #define SANDVICH_BODYGROUP_BITE 0
 #define SANDVICH_STATE_BITTEN 1
 #define SANDVICH_STATE_NORMAL 0
+
+ConVar tf2v_new_sandvich_behavior( "tf2v_new_sandvich_behavior", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Use Gun Mettle rebalancing on sandviches." );
 
 //-----------------------------------------------------------------------------
 // Purpose: Give us a fresh sandwich.
@@ -104,7 +112,7 @@ void CTFLunchBox::SecondaryAttack( void )
 
 	int nLunchboxAddsMaxHealth = 0;
 	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
-	if ( nLunchboxAddsMaxHealth == 1 )
+	if ( ( nLunchboxAddsMaxHealth == 1 ) || ( nLunchboxAddsMaxHealth == 6 ) || ( nLunchboxAddsMaxHealth == 7 ) ) // Chocolate, Fishcake and Banana are small health drops
 		pszItemName = "item_healthkit_small";
 
 	CTFPowerup *pPowerup = static_cast<CTFPowerup *>( CBaseEntity::Create( pszItemName, vecSrc, vec3_angle, pOwner ) );
@@ -113,8 +121,32 @@ void CTFLunchBox::SecondaryAttack( void )
 
 	// Don't collide with the player owner for the first portion of its life
 	pPowerup->m_flNextCollideTime = gpGlobals->curtime + 0.5f;
-
-	pPowerup->SetModel( TF_SANDVICH_PLATE_MODEL );
+	
+	switch ( nLunchboxAddsMaxHealth)
+	{
+		case 1:
+			pPowerup->SetModel( TF_DALOKOH_PLATE_MODEL );
+			break;
+		case 2:
+			pPowerup->SetModel( TF_STEAK_PLATE_MODEL );
+			break;
+		case 3:
+			pPowerup->SetModel( TF_ROBOSANDVICH_PLATE_MODEL );
+			break;
+		case 4:
+			pPowerup->SetModel( TF_SANDVICH_FESTIVE_PLATE_MODEL );
+			break;
+		case 6:
+			pPowerup->SetModel( TF_BANANA_PLATE_MODEL );
+			break;
+		case 7:
+			pPowerup->SetModel( TF_FISHCAKE_PLATE_MODEL );
+			break;
+		default:
+			pPowerup->SetModel( TF_SANDVICH_PLATE_MODEL );
+			break;
+	}
+	
 	UTIL_SetSize( pPowerup, -Vector( 17, 17, 10 ), Vector( 17, 17, 10 ) );
 
 	// Throw it down.
@@ -144,10 +176,16 @@ void CTFLunchBox::DepleteAmmo( void )
 	if ( !pOwner )
 		return;
 
-	int nLunchboxAddsMaxHealth = 0;
-	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
-	if ( nLunchboxAddsMaxHealth == 1 )
-		return;
+	
+	if ( !tf2v_new_sandvich_behavior.GetBool() )
+	{
+		int nLunchboxAddsMaxHealth = 0;
+		
+		CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
+		if ( ( nLunchboxAddsMaxHealth == 1 ) || ( nLunchboxAddsMaxHealth == 7 ) )
+			return;
+		
+	}
 
 	if ( pOwner->HealthFraction() >= 1.0f )
 		return;
@@ -161,10 +199,25 @@ void CTFLunchBox::DepleteAmmo( void )
 
 bool CTFLunchBox::UsesPrimaryAmmo( void )
 {
-	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1)
-		return false;
+	if ( !tf2v_new_sandvich_behavior.GetBool() )
+	{
+		if ( (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
+			return false;
+	}
 
 	return BaseClass::UsesPrimaryAmmo();
+}
+
+float CTFLunchBox::InternalGetEffectBarRechargeTime( void )
+{
+	// If we're using the Dalokoh, regen in 10 seconds.
+	if ( (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
+		return 10.0f;
+	
+	// Everything else is 30 seconds.
+	return 30.0f;
+	
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -204,7 +257,13 @@ void CTFLunchBox::Precache( void )
 {
 	UTIL_PrecacheOther( "item_healthkit_medium" );
 	PrecacheModel( TF_SANDVICH_PLATE_MODEL );
-
+	PrecacheModel( TF_ROBOSANDVICH_PLATE_MODEL );
+	PrecacheModel( TF_SANDVICH_FESTIVE_PLATE_MODEL );
+	PrecacheModel( TF_DALOKOH_PLATE_MODEL );
+	PrecacheModel( TF_FISHCAKE_PLATE_MODEL );
+	PrecacheModel( TF_STEAK_PLATE_MODEL );
+	PrecacheModel( TF_BANANA_PLATE_MODEL );
+						
 	BaseClass::Precache();
 }
 
@@ -220,8 +279,12 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
 	float flAmt = 75.0f;
-	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1)
+	if ( ( CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
 		flAmt = 25.0f;
+	
+	// Adjust our healing scale if defined.
+	if (CAttributeManager::AttribHookValue<float>( 0, "lunchbox_healing_scale", this ) )
+		flAmt *= (CAttributeManager::AttribHookValue<float>( 0, "lunchbox_healing_scale", this ) );
 
 	if ( pOwner )
 	{
@@ -234,13 +297,15 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 //-----------------------------------------------------------------------------
 bool CTFLunchBox::CanDrop( void ) const
 {
-	if (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) != 1)
+	if ( !tf2v_new_sandvich_behavior.GetBool() )
 	{
-		CTFPlayer *pOwner = GetTFPlayerOwner();
-
-		if (pOwner && pOwner->IsAlive())
-			return !pOwner->m_Shared.InCond( TF_COND_TAUNTING );
+		if ( (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
+			return false;
 	}
+	
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if (pOwner && pOwner->IsAlive())
+		return !pOwner->m_Shared.InCond( TF_COND_TAUNTING );
 
 	return false;
 }
