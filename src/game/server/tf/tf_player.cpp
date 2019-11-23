@@ -4435,6 +4435,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, crit_vs_burning_FLARES_DISPLAY_ONLY );
 
 		if ( nCritOnCond )
 		{
@@ -4451,12 +4452,22 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 		}
 		
-		int nMinicritOnBurning = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnBurning, or_minicrit_vs_playercond_burning );
-		if ( nMinicritOnBurning && m_Shared.InCond( TF_COND_BURNING ) )
+		int nMinicritOnCond = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnCond, or_minicrit_vs_playercond_burning );
+		// We have the attribute name set up for burning, but since we only have burn checks it's still usable.
+		if ( nMinicritOnCond )
 		{
-			bitsDamage |= DMG_MINICRITICAL;
-			info.AddDamageType( DMG_MINICRITICAL );
+			for ( int i = 0; condition_to_attribute_translation[i] != TF_COND_LAST; i++ )
+			{
+				int nCond = condition_to_attribute_translation[i];
+				int nFlag = ( 1 << i );
+				if ( ( nCritOnCond & nFlag ) && m_Shared.InCond( nCond ) )
+				{
+					bitsDamage |= DMG_MINICRITICAL;
+					info.AddDamageType( DMG_MINICRITICAL );
+					break;
+				}
+			}
 		}
 
 		float flPenaltyNonBurning = info.GetDamage();
@@ -5206,6 +5217,9 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 		if ( info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT|DMG_IGNITE|DMG_BLAST|DMG_SONIC )
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, dmg_from_ranged );
+		
+		if ( info.GetDamageType() & DMG_BURN|DMG_IGNITE )
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, mult_dmgtaken_from_fire_active );
 	}
 	
 	// Aiming resists, if actively using a minigun/sniper rifle and under 50% health.
