@@ -4431,7 +4431,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 
 	// Handle on-hit effects.
-	if ( pWeapon && pAttacker != this )
+	// Don't apply on-hit effects if a building did it.
+	if ( ( pWeapon && pAttacker != this ) && (!bObject)	)
 	{
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
