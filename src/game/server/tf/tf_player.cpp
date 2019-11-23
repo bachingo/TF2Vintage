@@ -4479,6 +4479,22 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			info.SetDamage( flPenaltyNonBurning );
 		}
 
+		float flPenaltyHealth = info.GetDamage();
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flPenaltyHealth, mult_dmg_penalty_while_half_alive );
+
+		if ( GetHealth() >= ( GetMaxHealth() / 2 ) )
+		{
+			info.SetDamage( flPenaltyHealth );
+		}
+		
+		float flBonusHealth = info.GetDamage();
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flBonusHealth, mult_dmg_bonus_while_half_dead );
+
+		if ( GetHealth() < ( GetMaxHealth() / 2 ) )
+		{
+			info.SetDamage( flBonusHealth );
+		}
+		
 		if ( pTFAttacker )
 		{
 			if ( pTFAttacker->m_Shared.InCond( TF_COND_ENERGY_BUFF ) || pTFAttacker->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
