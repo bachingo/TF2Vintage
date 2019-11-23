@@ -32,6 +32,8 @@
 #include "tier0/memdbgon.h"
 																						
 ConVar localplayer_visionflags( "localplayer_visionflags", "0", FCVAR_DEVELOPMENTONLY );
+
+ConVar tf2v_disable_object_fade( "tf2v_disable_object_fade", "1", FCVAR_ARCHIVE, "Prevents distance fadeout of entities such as props." );
 																						
 //-----------------------------------------------------------------------------
 // ConVars
@@ -1105,8 +1107,12 @@ unsigned char UTIL_ComputeEntityFade( C_BaseEntity *pEntity, float flMinDist, fl
 {
 	unsigned char nAlpha = 255;
 
+	// Disable fading if we manually disabled it.
+	if ( tf2v_disable_object_fade.GetBool() )
+		return 255;
+	
 	// If we're taking devshots, don't fade props at all
-	if ( g_MakingDevShots || cl_leveloverview.GetFloat() > 0 )
+	if  ( g_MakingDevShots || cl_leveloverview.GetFloat() > 0 )
 		return 255;
 
 #ifdef _DEBUG
