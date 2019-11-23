@@ -5080,7 +5080,7 @@
 				"lunchbox adds maxhealth bonus"
 				{
 					"attribute_class"	"set_weapon_mode"
-					"value"	"1"
+					"value"	"7"
 				}
 				"special taunt"
 				{
