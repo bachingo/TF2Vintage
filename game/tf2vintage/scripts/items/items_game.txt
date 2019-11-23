@@ -4159,18 +4159,10 @@
 			"visuals_red"
 			{
 				"skin"	"2"
-				"sound_melee_miss"	"Weapon_BoxingGloves.Miss"
-				"sound_melee_hit"	"Weapon_BoxingGloves.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_BoxingGloves.HitWorld"
-				"sound_burst"	"Weapon_BoxingGloves.MissCrit"
 			}
 			"visuals_blu"
 			{
 				"skin"	"3"
-				"sound_melee_miss"	"Weapon_BoxingGloves.Miss"
-				"sound_melee_hit"	"Weapon_BoxingGloves.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_BoxingGloves.HitWorld"
-				"sound_burst"	"Weapon_BoxingGloves.MissCrit"
 			}
 		}
 		"265"
@@ -4652,14 +4644,6 @@
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
 		}
-		"1151"
-		{
-			"name"	"The Iron Bomber"
-			"prefab"	"weapon_quadball"
-			"propername"	"1"
-			"year"			"2014"
-			"particle_suffix"	"iron_bomber"
-		}
 		"121"
 		{
 			"name"	"The Devanon Special"
@@ -5070,7 +5054,7 @@
 		}
 		"10298"
 		{
-			"name"	"The Iron Curtain"
+			"name"	"Iron Curtain"
 			"prefab"	"weapon_minigun weapon_reskin"
 			"year"			"2010"
 			"item_name"	"#TF_Iron_Curtain"
@@ -5079,6 +5063,31 @@
 			"item_iconname"	"iron_curtain"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain"
 			"model_player"	"models/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain.mdl"
+		}
+		"10433"
+		{
+			"name"	"Fishcake"
+			"prefab"	"weapon_sandvich weapon_reskin"
+			"year"			"2011"
+			"item_type_name"	"#TF_SpaceChem_Fishcake_Type"
+			"item_name"	"#TF_SpaceChem_Fishcake"
+			"item_description"	"#TF_SpaceChem_Fishcake_Desc"
+			"propername"	"0"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fishcake/c_fishcake"
+			"model_player"	"models/workshop/weapons/c_models/c_fishcake/c_fishcake.mdl"
+			"attributes"
+			{
+				"lunchbox adds maxhealth bonus"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value" "1"
+				}
+			}
 		}
 		"10452"
 		{
@@ -5302,7 +5311,7 @@
 		}
 		"10587"
 		{
-			"name"	"The Apoco-Fists"
+			"name"	"Apoco-Fists"
 			"prefab"	"weapon_fists weapon_reskin"
 			"year"			"2011"
 			"item_name"	"#TF_Apocofists"
@@ -5341,6 +5350,19 @@
 				"sound_melee_hit_world"	"Weapon_BoxingGloves.HitWorld"
 				"sound_burst"		"Weapon_BoxingGloves.MissCrit"
 			}
+		}
+		"10609"
+		{
+			"name"	"The Scottish Handshake"
+			"prefab"		"weapon_bottle weapon_reskin"
+			"year"			"2011"
+			"item_name"	"#TF_ScottishHandshake"
+			"item_description"	"#TF_ScottishHandshake_Desc"
+			"item_logname"	"scotland_shard"
+			"item_iconname"	"scotland_shard"
+			"propername"	"1"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_scotland_shard/c_scotland_shard"		
+			"model_player"	"models/workshop/weapons/c_models/c_scotland_shard/c_scotland_shard.mdl"
 		}
 		"10727"
 		{
@@ -5458,8 +5480,6 @@
 			"name"		"The C.A.P.P.E.R"
 			"prefab"		"weapon_pistol weapon_reskin"
 			"year"			"2015"
-			"enabled"				"0"
-			"show_in_armory"		"0"
 			"item_name"		"#TF_invasion_pistol"
 			"propername"	"1"
 			"item_logname"		"the_capper"
@@ -5510,8 +5530,6 @@
 			"name"		"Batsaber"
 			"prefab"		"weapon_bat weapon_reskin"
 			"year"			"2015"
-			"enabled"				"0"
-			"show_in_armory"		"0"
 			"item_name"		"#TF_invasion_bat"
 			"propername"	"1"
 			"item_logname"		"batsaber"

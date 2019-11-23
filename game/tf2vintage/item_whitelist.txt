@@ -63,6 +63,7 @@
 	"Warrior's Spirit"								"1"
 	"The Brass Beast"								"1"
 	"The Boston Basher"								"1"
+	"The Back Scratcher"							"1"
 	"The Claidheamohmor"							"1"
 	"The Jag"										"1"
 	"Fists of Steel"								"1"
@@ -71,7 +72,6 @@
 	"The Market Gardener"							"1"
 	"The Reserve Shooter (Engineer)"				"1"
 	"The Original"									"1"
-	"The Iron Bomber"								"1"
 	
 	// Reskins
 	"TTG Max Pistol"								"1"
@@ -82,16 +82,21 @@
 	"The Horseless Headless Horseman's Headtaker" 	"1"
 	"Stickybomb Jumper"								"1"
 	"Iron Curtain"									"1"
+	"Fishcake"										"1"
 	"Three-Rune Blade"								"1"
 	"The Postal Pummeler"							"1"
 	"The Maul"										"1"
 	"Nessie's Nine Iron"							"1"
 	"The Wanga Prick"								"1"
+	"Apoco-Fists"									"1"
+	"The Scottish Handshake"						"1"
 	"The Black Rose"								"1"
 	"The AWPer Hand"								"1"
 	"The Fortified Compound"						"1"
 	"The Sharp Dresser"								"1"
 	"The Nostromo Napalmer"							"1"
+	"The C.A.P.P.E.R"								"1"
+	"Batsaber"										"1"
 	"The Giger Counter"								"1"
 
 }
