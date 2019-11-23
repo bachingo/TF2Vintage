@@ -2542,8 +2542,16 @@ void CTFPlayerShared::OnAddBurning(void)
 
 		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 	
+	if (m_flFlameBurnTime)
 		m_pOuter->m_flBurnEffectStartTime = m_flFlameBurnTime;
+	else	// Failsafe in case we can't call the time for some reason.
+		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;
+			
+	if (m_flFlameRemoveTime)
 		m_pOuter->m_flBurnEffectEndTime = m_flFlameRemoveTime;
+	else	// Failsafe in case we can't call the time for some reason.	
+		m_pOuter->m_flBurnEffectEndTime = tf2v_new_flame_damage.GetBool() ? (gpGlobals->curtime + TF_BURNING_FLAME_LIFE_MAX_JI )  : (gpGlobals->curtime + TF_BURNING_FLAME_LIFE ) ;
+
 
 	}
 	// set the burning screen overlay
