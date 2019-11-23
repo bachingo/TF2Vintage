@@ -1867,7 +1867,11 @@ const char *CTFWeaponBase::GetTracerType( void )
  	if ( gpGlobals->curtime > m_flEffectBarRegenTime ||
  		pOwner->GetAmmoCount( m_iPrimaryAmmoType ) + 1 <= pOwner->GetMaxAmmo( m_iPrimaryAmmoType ) )
  	{
- 		m_flEffectBarRegenTime = gpGlobals->curtime + InternalGetEffectBarRechargeTime();
+		float flRechargeTime = InternalGetEffectBarRechargeTime();
+		if (CAttributeManager::AttribHookValue<float>( 0, "charge_recharge_rate", this ) )
+			flRechargeTime *= (CAttributeManager::AttribHookValue<float>( 0, "charge_recharge_rate", this ) );
+		
+ 		m_flEffectBarRegenTime = gpGlobals->curtime + flRechargeTime;
  	}
  }
  
@@ -1932,6 +1936,10 @@ const char *CTFWeaponBase::GetTracerType( void )
  	{
  		float flTimeLeft = m_flEffectBarRegenTime - gpGlobals->curtime;
  		float flRechargeTime = InternalGetEffectBarRechargeTime();
+		
+		if (CAttributeManager::AttribHookValue<float>( 0, "charge_recharge_rate", this ) )
+			flRechargeTime *= (CAttributeManager::AttribHookValue<float>( 0, "charge_recharge_rate", this ) );
+		
  		return clamp( ( ( flRechargeTime - flTimeLeft ) / flRechargeTime ), 0.0f, 1.0f );
  	}
  
