@@ -321,6 +321,8 @@ const char *CTFLoadoutPanel::GetWeaponModel( CEconItemDefinition *pItemDef, int 
 	{
 		pszModel = pItemDef->model_player;
 	}
+	if ( pItemDef->model_player_per_class[iClass][0] != '\0' && pItemDef->attach_to_hands == 1 )
+		pszModel = pItemDef->model_player_per_class[iClass];
 
 	return pszModel;
 }

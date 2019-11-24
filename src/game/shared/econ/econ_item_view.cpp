@@ -104,12 +104,15 @@ const char *CEconItemView::GetWorldDisplayModel( int iClass/* = 0*/ ) const
 	if ( pStatic )
 	{
 		pszModelName = pStatic->model_world;
+		
 
 		// Assuming we're using same model for both 1st person and 3rd person view.
 		if ( !pszModelName[0] && pStatic->attach_to_hands == 1 )
 		{
 			pszModelName = pStatic->model_player;
 		}
+		if (pStatic->model_player_per_class[iClass][0] != '\0' && pStatic->attach_to_hands == 1)
+			pszModelName = pStatic->model_player_per_class[iClass];
 	}
 
 	return pszModelName;
