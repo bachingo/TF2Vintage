@@ -112,8 +112,9 @@ CZombie *CZombie::SpawnAtPos( Vector const &pos, float flLifeTime, int iTeamNum,
 	{
 		pZombie->SetOwnerEntity( pOwner );
 		pZombie->ChangeTeam( iTeamNum );
-		DispatchSpawn( pZombie );
 		pZombie->SetAbsOrigin( pos );
+
+		DispatchSpawn( pZombie );
 
 		if ( flLifeTime > 0.0f )
 			pZombie->m_timeTillDeath.Start( flLifeTime );
@@ -131,7 +132,9 @@ class CZombieSpawner : public CPointEntity
 	DECLARE_CLASS( CZombieSpawner, CPointEntity );
 public:
 	CZombieSpawner();
-	virtual ~CZombieSpawner() {}
+	virtual ~CZombieSpawner() {
+		m_hZombies.RemoveAll();
+	}
 
 	DECLARE_DATADESC()
 
@@ -152,8 +155,6 @@ private:
 	CUtlVector< CHandle<CZombie> > m_hZombies;
 };
 
-LINK_ENTITY_TO_CLASS( tf_zombie_spawner, CZombieSpawner );
-
 BEGIN_DATADESC( CZombieSpawner )
 	DEFINE_KEYFIELD( m_flZombieLifeTime, FIELD_FLOAT, "zombie_lifetime" ),
 	DEFINE_KEYFIELD( m_nMaxActiveZombies, FIELD_INTEGER, "max_zombies" ),
@@ -164,6 +165,8 @@ BEGIN_DATADESC( CZombieSpawner )
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMaxActiveZombies", InputSetMaxActiveZombies ),
 END_DATADESC()
+
+LINK_ENTITY_TO_CLASS( tf_zombie_spawner, CZombieSpawner );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -434,7 +437,7 @@ void CZombie::SetSkeletonType( SkeletonType_t eType )
 	{
 		SetModel( "models/bots/skeleton_sniper/skeleton_sniper.mdl" );
 
-		SetModelScale( .5f );
+		SetModelScale( 0.5f );
 		m_flHeadScale = 3.0f;
 
 		if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )

@@ -37,8 +37,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossStunned::OnStart( CEyeBallBoss *me, Actio
 
 	me->EmitSound( "Halloween.EyeballBossStunned" );
 
-	CEyeBallBossLocomotion *pLoco = (CEyeBallBossLocomotion *)me->GetLocomotionInterface();
-	pLoco->SetDesiredAltitude( 0 );
+	me->GetLocomotionInterface()->SetDesiredAltitude( 0 );
 
 	int iMaxHealth = me->GetMaxHealth();
 	me->m_iOldHealth = ( ( 1431655766LL * iMaxHealth ) >> 32 ) - ( iMaxHealth >> 31 );

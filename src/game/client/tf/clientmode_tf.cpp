@@ -593,7 +593,7 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 			}
 		}
 	}
-	else if ( FStrEq( eventname, "eyeball_boss_escape_immenent" ) )
+	else if ( FStrEq( eventname, "eyeball_boss_escape_imminent" ) )
 	{
 		int iTimeLeft = event->GetInt( "time_remaining" );
 		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();

@@ -146,15 +146,15 @@ void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, in
 	const model_t *pModel = engine->LoadModel( g_pszArrowModelClient[ iType ] );
 
 	QAngle vAngles;
-
 	VectorAngles( vecDirection, vAngles );
 	float flLifeTime = ( TEMP_OBJECT_LIFETIME * 3); // A little longer than normal temporary entities.
+
 	C_LocalTempEntity *pTemp = tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), flLifeTime, FTENT_NONE );
 	pTemp->m_nSkin = iSkin;
 
 }
 
-void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin   )
+void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin )
 {
 	Ray_t	shotRay;
 	trace_t tr;
@@ -168,7 +168,7 @@ void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int i
 
 	shotRay.Init( vecOrigin, vecEnd );
 
-	CRagdollBoltEnumerator	ragdollEnum( shotRay, vecOrigin );
+	CRagdollBoltEnumerator ragdollEnum( shotRay, vecOrigin );
 	partition->EnumerateElementsAlongRay( PARTITION_CLIENT_RESPONSIVE_EDICTS, shotRay, false, &ragdollEnum );
 	
 	CreateCrossbowBolt( vecOrigin, vecDirection, iType, iSkin  );

@@ -32,15 +32,13 @@ ActionResult<CEyeBallBoss> CEyeBallBossNotice::OnStart( CEyeBallBoss *me, Action
 ActionResult<CEyeBallBoss> CEyeBallBossNotice::Update( CEyeBallBoss *me, float dt )
 {
 	CBaseCombatCharacter *pVictim = me->GetVictim();
-	if ( pVictim )
-	{
-		me->GetBodyInterface()->AimHeadTowards( pVictim );
+	if ( pVictim == nullptr )
+		return Action<CEyeBallBoss>::Done("Victim gone...");
 
-		if ( m_chaseDelay.IsElapsed() )
-			return Action<CEyeBallBoss>::ChangeTo( new CEyeBallBossApproachTarget, "Chasing victim" );
+	me->GetBodyInterface()->AimHeadTowards( pVictim );
 
-		return Action<CEyeBallBoss>::Continue();
-	}
+	if ( m_chaseDelay.IsElapsed() )
+		return Action<CEyeBallBoss>::ChangeTo( new CEyeBallBossApproachTarget, "Chasing victim" );
 
-	return Action<CEyeBallBoss>::Done("Victim gone...");
+	return Action<CEyeBallBoss>::Continue();
 }

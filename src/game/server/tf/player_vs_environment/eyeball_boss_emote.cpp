@@ -8,13 +8,10 @@
 #include "cbase.h"
 #include "eyeball_boss_emote.h"
 
-CEyeBallBossEmote::CEyeBallBossEmote()
-{
-}
-
 CEyeBallBossEmote::CEyeBallBossEmote( int sequence, const char *sound, Action<CEyeBallBoss> *nextAction )
-	: m_iSequence( sequence ), m_pszActionSound( sound ), m_nextAction( nextAction )
+	: m_iSequence( sequence ), m_pszActionSound( sound )
 {
+	m_nextAction = nextAction;
 }
 
 

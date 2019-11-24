@@ -11,7 +11,6 @@
 #include "tf_obj_sentrygun.h"
 #include "entity_bossresource.h"
 #include "eyeball_boss_behavior.h"
-#include "eyeball_boss.h"
 
 ConVar tf_eyeball_boss_debug( "tf_eyeball_boss_debug", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_eyeball_boss_debug_orientation( "tf_eyeball_boss_debug_orientation", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
@@ -90,7 +89,7 @@ void CEyeBallBossLocomotion::Update( void )
 	this->MaintainAltitude();
 
 	float flLength = m_localVelocity.NormalizeInPlace();
-	m_motionVector = m_localVelocity;
+	m_vecMotion = m_localVelocity;
 
 	m_verticalSpeed = m_localVelocity.z * flLength;
 
@@ -100,42 +99,109 @@ void CEyeBallBossLocomotion::Update( void )
 
 	pActor->SetAbsVelocity( m_localVelocity );
 
-	CTraceFilterSkipClassname filter( pActor, "eyeball_boss", COLLISION_GROUP_NONE );
+	CTraceFilterSimpleClassnameList filter( pActor, COLLISION_GROUP_NONE );
+	filter.AddClassnameToIgnore( "eyeball_boss" );
 	Vector vecFrameMovement = ( m_localVelocity * GetUpdateInterval() ) + pActor->GetAbsOrigin();
-	Vector vecMins = pActor->CollisionProp()->OBBMins();
-	Vector vecMaxs = pActor->CollisionProp()->OBBMaxs();
-	Vector vec = vec3_origin; // TODO: Name it
-	trace_t trace;
+	Vector vecAverage = vec3_origin;
 
+	trace_t trace;
 	for ( int i = 0; i < 3; i++ )
 	{
-		UTIL_TraceHull( pActor->GetAbsOrigin(), vecFrameMovement, vecMins, vecMaxs, pActor->GetBodyInterface()->GetSolidMask(), &filter, &trace );
+		UTIL_TraceHull( pActor->GetAbsOrigin(), 
+						vecFrameMovement, 
+						pActor->CollisionProp()->OBBMins(), 
+						pActor->CollisionProp()->OBBMaxs(), 
+						pActor->GetBodyInterface()->GetSolidMask(), 
+						&filter, 
+						&trace );
+
+		// clear path, just move there
 		if ( !trace.DidHit() )
 			break;
 
-		vec += trace.endpos;
+		vecAverage += trace.plane.normal;
 
+		Vector vecDifference = vecFrameMovement - pActor->GetAbsOrigin();
 		if ( !trace.startsolid )
 		{
-			if ( vecFrameMovement.Dot( trace.startpos ) >= 1.0f )
+			if ( ( vecFrameMovement - trace.endpos ).LengthSqr() >= 1.0f )
 			{
-				float flScale = trace.startpos.Dot( trace.endpos ) * ( 1.0f - trace.fraction );
-				vecFrameMovement = trace.startpos + pActor->GetAbsOrigin() - ( trace.endpos * flScale );
-				if ( vecFrameMovement.Dot( trace.startpos ) >= 1.0f )
+				float flScale = vecDifference.Dot( trace.plane.normal ) * ( 1.0f - trace.fraction );
+				vecFrameMovement = vecDifference + pActor->GetAbsOrigin() - ( trace.plane.normal * flScale );
+				if ( ( vecFrameMovement - trace.endpos ).LengthSqr() >= 1.0f )
 					continue;
 			}
 		}
 
-		Vector vecNormVel = m_localVelocity.Normalized();
-		m_localVelocity.NormalizeInPlace();
+		vecAverage.NormalizeInPlace();
 
-		float flScale = vec.Dot( m_localVelocity ) + ( vecNormVel * vec ).Dot( m_localVelocity );
-		m_localVelocity = vecNormVel - ( ( vecNormVel * vec ) * flScale );
+		// bounce off of surfaces
+		float flScale = vecAverage.x * m_localVelocity.x + vecAverage.y * m_localVelocity.y;
+		flScale = ( flScale + vecAverage.z * m_localVelocity.z ) + ( flScale + vecAverage.z * m_localVelocity.z );
+		m_localVelocity -= ( vecAverage * flScale );
 	}
 
-	pActor->SetAbsOrigin( trace.startpos );
+	pActor->SetAbsOrigin( trace.endpos );
 
 	m_wishVelocity = vec3_origin;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CEyeBallBossLocomotion::MaintainAltitude( void )
+{
+	CEyeBallBoss *pActor = (CEyeBallBoss *)GetBot()->GetEntity();
+	if ( pActor->IsAlive() )
+	{
+		CTraceFilterSimpleClassnameList filter( pActor, COLLISION_GROUP_NONE );
+		filter.AddClassnameToIgnore( "eyeball_boss" );
+		Vector vecStart = pActor->GetAbsOrigin();
+		Vector vecEnd = pActor->GetAbsOrigin();
+
+		trace_t ceiltrace;
+		UTIL_TraceHull(
+			vecStart,
+			vecEnd + Vector( 0, 0, 1000.0f ),
+			pActor->WorldAlignMins(),
+			pActor->WorldAlignMaxs(),
+			pActor->GetBodyInterface()->GetSolidMask(),
+			&filter,
+			&ceiltrace
+		);
+
+		Vector vecAdditiveVec;
+		if ( IsAttemptingToMove() )
+		{
+			vecAdditiveVec.x = m_vecMotion.x;
+			vecAdditiveVec.y = m_vecMotion.y;
+			vecAdditiveVec.z = 0.0f;
+			vecAdditiveVec.NormalizeInPlace();
+		}
+		else
+		{
+			vecAdditiveVec = vec3_origin;
+		}
+
+		trace_t floortrace;
+		UTIL_TraceHull(
+			vecStart + Vector(0, 0, ceiltrace.endpos.z - vecStart.z) + vecAdditiveVec * 50.0f,
+			vecEnd + Vector( 0, 0, -2000.0f ) + vecAdditiveVec * 50.0f,
+			pActor->WorldAlignMins() * 1.25f,
+			pActor->WorldAlignMaxs() * 1.25f,
+			pActor->GetBodyInterface()->GetSolidMask(),
+			&filter,
+			&floortrace
+		);
+
+		m_wishVelocity.z += Clamp( GetDesiredAltitude() - ( vecStart.z - floortrace.endpos.z ),
+								   -tf_eyeball_boss_acceleration.GetFloat(),
+								   tf_eyeball_boss_acceleration.GetFloat() );
+	}
+	else
+	{
+		m_wishVelocity = Vector( 0, 0, -300.0f );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -146,7 +212,7 @@ void CEyeBallBossLocomotion::Reset( void )
 	m_desiredSpeed = 0;
 	m_desiredAltitude = tf_eyeball_boss_hover_height.GetFloat();
 	m_verticalSpeed = 0;
-	m_motionVector = vec3_origin;
+	m_vecMotion = vec3_origin;
 	m_wishVelocity = vec3_origin;
 	m_localVelocity = vec3_origin;
 }
@@ -236,7 +302,7 @@ const Vector& CEyeBallBossLocomotion::GetFeet( void ) const
 //-----------------------------------------------------------------------------
 const Vector& CEyeBallBossLocomotion::GetVelocity( void ) const
 {
-	return m_wishVelocity;
+	return m_localVelocity;
 }
 
 //-----------------------------------------------------------------------------
@@ -269,67 +335,6 @@ float CEyeBallBossLocomotion::GetDesiredAltitude( void ) const
 void CEyeBallBossLocomotion::SetDesiredAltitude( float fHeight )
 {
 	m_desiredAltitude = fHeight;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CEyeBallBossLocomotion::MaintainAltitude( void )
-{
-	CEyeBallBoss *pActor = (CEyeBallBoss *)GetBot()->GetEntity();
-	if ( pActor->IsAlive() )
-	{
-		CTraceFilterSkipClassname filter( pActor, "eyeball_boss", COLLISION_GROUP_NONE );
-		Vector vecStart = pActor->GetAbsOrigin();
-		Vector vecEnd = pActor->GetAbsOrigin();
-		Vector vecMins = pActor->CollisionProp()->OBBMins();
-		Vector vecMaxs = pActor->CollisionProp()->OBBMaxs();
-		int nMask = pActor->GetBodyInterface()->GetSolidMask();
-
-		trace_t ceiltrace;
-		UTIL_TraceHull(
-			vecStart,
-			vecEnd + Vector( 0, 0, 1000.0f ),
-			vecMins,
-			vecMaxs,
-			nMask,
-			&filter,
-			&ceiltrace
-		);
-
-		Vector vecAdditiveVec;
-		if ( this->IsAttemptingToMove() )
-		{
-			vecAdditiveVec = m_motionVector;
-			vecAdditiveVec.NormalizeInPlace();
-		}
-		else
-		{
-			vecAdditiveVec = vec3_origin;
-		}
-
-		Vector vecOffset = Vector( 0, 0, -2000.0f );
-		vecOffset.z -= ceiltrace.endpos.z - vecStart.z;
-
-		trace_t floortrace;
-		UTIL_TraceHull(
-			vecStart,
-			vecEnd - vecOffset + vecAdditiveVec * 50.0f,
-			vecMins * 1.25f,
-			vecMaxs * 1.25f,
-			nMask,
-			&filter,
-			&floortrace
-		);
-
-		m_wishVelocity.z += Clamp( GetDesiredAltitude() - ( vecStart.z - floortrace.endpos.z ),
-								   -tf_eyeball_boss_acceleration.GetFloat(),
-								   tf_eyeball_boss_acceleration.GetFloat() );
-	}
-	else
-	{
-		m_wishVelocity = Vector( 0, 0, -300.0f );
-	}
 }
 
 

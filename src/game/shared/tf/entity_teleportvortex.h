@@ -16,8 +16,19 @@ class CTeleportVortex : public CBaseAnimating
 	DECLARE_CLASS( CTeleportVortex, CBaseAnimating );
 public:
 
-	CTeleportVortex();
-	virtual ~CTeleportVortex();
+	enum
+	{
+		VORTEX_STATE_NONE,
+		VORTEX_STATE_UNDERWORLD,
+		VORTEX_STATE_LOOTISLAND
+	};
+	enum
+	{
+		VORTEX_RAMP_IN,
+		VORTEX_RAMP_OUT
+	};
+
+	virtual ~CTeleportVortex() {}
 
 	DECLARE_NETWORKCLASS()
 
@@ -51,7 +62,7 @@ private:
 #ifdef GAME_DLL
 	DECLARE_DATADESC()
 
-	CFmtStr m_pszTeleTarget;
+	string_t m_iTeleTarget;
 	bool m_bUseTeamSpawns;
 	int m_iType;
 	int m_iRampState;

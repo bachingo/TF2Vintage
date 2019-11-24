@@ -56,9 +56,9 @@ BEGIN_DATADESC( CMonsterResource )
 	DEFINE_THINKFUNC( Update )
 
 END_DATADESC()
+#endif
 
 LINK_ENTITY_TO_CLASS( monster_resource, CMonsterResource );
-#endif
 
 
 CMonsterResource::CMonsterResource()

@@ -133,14 +133,6 @@ static void SendPlayerToTheUnderworld( CTFPlayer *pPlayer, const char *pszTarget
 #endif
 
 
-CTeleportVortex::CTeleportVortex()
-{
-}
-
-CTeleportVortex::~CTeleportVortex()
-{
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -189,9 +181,12 @@ void CTeleportVortex::Spawn( void )
 	SetRenderColor( 255, 255, 255, 255 );
 
 	m_lifeTimeDuration.Start( 5.0f );
+	m_iState = VORTEX_STATE_NONE;
 
 #ifndef CLIENT_DLL
-	m_pszTeleTarget = "spawn_purgatory";
+
+	m_iRampState = VORTEX_RAMP_IN;
+	m_iTeleTarget = AllocPooledString( "spawn_purgatory" );
 
 	SetThink( &CTeleportVortex::VortexThink );
 	SetNextThink( gpGlobals->curtime );
@@ -245,12 +240,12 @@ void CTeleportVortex::Touch( CBaseEntity *pOther )
 	{
 		if ( m_bUseTeamSpawns )
 		{
-			CFmtStr str( "%s%s", m_pszTeleTarget, pOther->GetTeamNumber() == TF_TEAM_RED ? "_red" : "_blue" );
+			CFmtStr str( "%s%s", STRING( m_iTeleTarget ), pOther->GetTeamNumber() == TF_TEAM_RED ? "_red" : "_blue" );
 			SendPlayerToTheUnderworld( ToTFPlayer( pOther ), str );
 		}
 		else
 		{
-			SendPlayerToTheUnderworld( ToTFPlayer( pOther ), m_pszTeleTarget );
+			SendPlayerToTheUnderworld( ToTFPlayer( pOther ), STRING( m_iTeleTarget ) );
 		}
 	}
 }
@@ -260,24 +255,21 @@ void CTeleportVortex::Touch( CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 void CTeleportVortex::SetupVortex( bool bGotoLoot, bool b2 )
 {
-	m_bUseTeamSpawns = b2;
 	if ( bGotoLoot )
 	{
-		m_iState = 2;
-
-		m_pszTeleTarget = "spawn_loot";
-
+		m_iState = VORTEX_STATE_LOOTISLAND;
+		m_iTeleTarget = AllocPooledString( "spawn_loot" );
 		RemoveEffects( EF_NODRAW );
 		SetModel( "models/props_halloween/bombonomicon.mdl" );
-
-		return;
+	}
+	else
+	{
+		m_iState = VORTEX_STATE_UNDERWORLD;
+		m_iTeleTarget = AllocPooledString( "spawn_purgatory" );
+		AddEffects( EF_NODRAW );
 	}
 
-	m_iState = 1;
-
-	m_pszTeleTarget = "spawn_purgatory";
-
-	AddEffects( EF_NODRAW );
+	m_bUseTeamSpawns = b2;
 }
 
 //-----------------------------------------------------------------------------
@@ -287,14 +279,14 @@ void CTeleportVortex::VortexThink( void )
 {
 	StudioFrameAdvance();
 
-	if ( m_iState == 2 )
+	if ( m_iState == VORTEX_STATE_LOOTISLAND )
 	{
-		if ( m_iRampState == 0 && ShouldDoBookRampIn() )
+		if ( m_iRampState == VORTEX_RAMP_IN && ShouldDoBookRampIn() )
 		{
 			EmitSound( "Halloween.TeleportVortex.BookSpawn" );
 			m_iRampState++;
 		}
-		else if ( m_iRampState == 1 && ShouldDoBookRampOut() )
+		else if ( m_iRampState == VORTEX_RAMP_OUT && ShouldDoBookRampOut() )
 		{
 			EmitSound( "Halloween.TeleportVortex.BookExit" );
 			m_iRampState++;
@@ -359,9 +351,9 @@ void CTeleportVortex::OnDataChanged( DataUpdateType_t updateType )
 {
 	if ( m_iState != m_iStateParity )
 	{
-		if ( m_iState != 0 )
+		if ( m_iState != VORTEX_STATE_NONE )
 		{
-			if ( m_iState == 1 )
+			if ( m_iState == VORTEX_STATE_UNDERWORLD )
 			{
 				m_pGlowEffect = ParticleProp()->Create( "eyeboss_tp_vortex", PATTACH_ABSORIGIN );
 				EmitSound( "Halloween.TeleportVortex.EyeballMovedVortex" );

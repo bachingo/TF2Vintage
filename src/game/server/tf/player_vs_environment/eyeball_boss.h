@@ -50,7 +50,7 @@ private:
 
 	float m_desiredSpeed;
 	float m_desiredAltitude;
-	Vector m_motionVector;
+	Vector m_vecMotion;
 	float m_verticalSpeed;
 	Vector m_localVelocity;
 	Vector m_wishVelocity;
@@ -118,8 +118,8 @@ public:
 	virtual int				GetBossType( void ) const { return EYEBALL_BOSS; }
 	virtual int				GetLevel( void ) const { return m_level; }
 
-	virtual ILocomotion*	GetLocomotionInterface( void ) const override { return m_locomotor; }
-	virtual IBody*			GetBodyInterface( void ) const override { return m_body; }
+	virtual CEyeBallBossLocomotion *GetLocomotionInterface( void ) const override { return m_locomotor; }
+	virtual CEyeBallBossBody *GetBodyInterface( void ) const override { return m_body; }
 	virtual IVision*		GetVisionInterface( void ) const override { return m_vision; }
 
 	void					JarateNearbyPlayer( float range );

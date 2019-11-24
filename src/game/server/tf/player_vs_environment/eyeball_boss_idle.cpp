@@ -16,13 +16,12 @@
 extern ConVar tf_eyeball_boss_lifetime;
 extern ConVar tf_eyeball_boss_lifetime_spell;
 extern ConVar tf_eyeball_boss_hover_height;
-extern ConVar tf_eyeball_boss_debug;
+extern ConVar tf_eyeball_boss_debug_orientation;
 
 
 CEyeBallBossIdle::CEyeBallBossIdle()
 {
 }
-
 
 const char *CEyeBallBossIdle::GetName( void ) const
 {
@@ -55,46 +54,26 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::OnResume( CEyeBallBoss *me, Action<
 
 ActionResult<CEyeBallBoss> CEyeBallBossIdle::Update( CEyeBallBoss *me, float dt )
 {
+	if ( tf_eyeball_boss_debug_orientation.GetBool() )
+	{
+		CBaseCombatCharacter *pVictim = me->FindNearestVisibleVictim();
+		if ( pVictim )
+			me->GetBodyInterface()->AimHeadTowards( pVictim );
+
+		if ( me->m_flDPSCounter > 0.0001f )
+			DevMsg(
+				"%3.2f: DPS = %3.2f, Max DPS = %3.2f\n",
+				gpGlobals->curtime,
+				me->m_flDPSCounter,
+				me->m_flDPSMax );
+
+		return Action<CEyeBallBoss>::Continue();
+	}
+
 	if ( me->GetTeamNumber() == TF_TEAM_NPC )
 	{
 		const float flTimeLeft = me->m_lifeTimeDuration.GetRemainingTime();
-		if ( flTimeLeft >= 10.0f || me->m_flTimeLeftAlive <= 10.0f )
-		{
-			if ( flTimeLeft >= 30.0f || me->m_flTimeLeftAlive <= 30.0f )
-			{
-				if ( flTimeLeft >= 60.0f || me->m_flTimeLeftAlive <= 60.0f )
-				{
-					me->m_flTimeLeftAlive = flTimeLeft;
-				}
-				else
-				{
-					IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_escape_imminent" );
-					if ( event )
-					{
-						event->SetInt( "time_remaining", 60 );
-						event->SetInt( "level", me->GetLevel() );
-
-						gameeventmanager->FireEvent( event );
-					}
-
-					me->m_flTimeLeftAlive = flTimeLeft;
-				}
-			}
-			else
-			{
-				IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_escape_imminent" );
-				if ( event )
-				{
-					event->SetInt( "time_remaining", 30 );
-					event->SetInt( "level", me->GetLevel() );
-
-					gameeventmanager->FireEvent( event );
-				}
-
-				me->m_flTimeLeftAlive = flTimeLeft;
-			}
-		}
-		else
+		if ( flTimeLeft < 10.0f && me->m_flTimeLeftAlive > 10.0f )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_escape_imminent" );
 			if ( event )
@@ -104,22 +83,42 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::Update( CEyeBallBoss *me, float dt 
 
 				gameeventmanager->FireEvent( event );
 			}
-
-			me->m_flTimeLeftAlive = flTimeLeft;
 		}
+		else if ( flTimeLeft < 30.0f && me->m_flTimeLeftAlive > 30.0f )
+		{
+			IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_escape_imminent" );
+			if ( event )
+			{
+				event->SetInt( "time_remaining", 30 );
+				event->SetInt( "level", me->GetLevel() );
+
+				gameeventmanager->FireEvent( event );
+			}
+		}
+		else if ( flTimeLeft < 60.0f && me->m_flTimeLeftAlive > 60.0f )
+		{
+			IGameEvent *event = gameeventmanager->CreateEvent( "eyeball_boss_escape_imminent" );
+			if ( event )
+			{
+				event->SetInt( "time_remaining", 60 );
+				event->SetInt( "level", me->GetLevel() );
+
+				gameeventmanager->FireEvent( event );
+			}		
+		}
+		
+		me->m_flTimeLeftAlive = flTimeLeft;
 	}
 	else if ( me->m_lifeTimeDuration.IsElapsed() )
 		return Action<CEyeBallBoss>::ChangeTo( new CEyeBallBossEscape, "Escaping..." );
 
 	if ( !me->m_teleportTimer.IsElapsed() || me->GetTeamNumber() != TF_TEAM_NPC )
 	{
-		CEyeBallBossLocomotion *pLoco = (CEyeBallBossLocomotion *)me->GetLocomotionInterface();
-		pLoco->SetDesiredAltitude( tf_eyeball_boss_hover_height.GetFloat() );
+		me->GetLocomotionInterface()->SetDesiredAltitude( tf_eyeball_boss_hover_height.GetFloat() );
 	}
 	else
 	{
-		CEyeBallBossLocomotion *pLoco = (CEyeBallBossLocomotion *)me->GetLocomotionInterface();
-		pLoco->SetDesiredAltitude( 0 );
+		me->GetLocomotionInterface()->SetDesiredAltitude( 0 );
 
 		Vector vecPos = me->WorldSpaceCenter();
 		float flHeight = 0;
