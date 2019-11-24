@@ -1002,11 +1002,14 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 	bool bRepaired = false;
 	int iAmountToHeal = 0;
 	int iRepairCost = 0;
+	
+	float flRepairRate = 1;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
 
 	// There's got to be a better way a shorter way to mirror repairs and such.
 	if ( GetHealth() < GetMaxHealth() )
 	{
-		iAmountToHeal = min( 100, GetMaxHealth() - GetHealth() );
+		iAmountToHeal = min( (int)(flRepairRate * 100), GetMaxHealth() - GetHealth() );
 
 		// repair the building
 		iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );

@@ -2605,7 +2605,10 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 {
 	if ( GetHealth() < GetMaxHealth() )
 	{
-		int iAmountToHeal = min( 100, GetMaxHealth() - GetHealth() );
+		float flRepairRate = 1;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
+		
+		int	iAmountToHeal = min( (int)(flRepairRate * 100) , GetMaxHealth() - GetHealth() );
 
 		// repair the building
 		int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );

@@ -558,13 +558,13 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 {
 	bool bRepair = false;
 	bool bUpgrade = false;
-	bool bWrangled = false;
 
+	float flRepairRate = 1;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flRepairRate, mult_repair_value);
+		
 	// Wrangled sentries have 33% of normal repair rate
 	if ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY )
-	{
-		bWrangled = true;
-	}
+		flRepairRate *= .33f;
 
 	bRepair = Command_Repair( pPlayer/*, pWrench->GetRepairValue()*/ );
 
@@ -592,16 +592,7 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 
 			// cap the amount we can add
 			int iAmountToAdd;
-
-			if ( !bWrangled )
-			{
-				iAmountToAdd = Min( SENTRYGUN_ADD_SHELLS, iMaxShellsPlayerCanAfford );
-			}
-			else
-			{
-				// 33% of normal rate
-				iAmountToAdd = Min( (int)( SENTRYGUN_ADD_SHELLS * .33f ), iMaxShellsPlayerCanAfford );
-			}
+			iAmountToAdd = Min( (int)( flRepairRate * SENTRYGUN_ADD_SHELLS ), iMaxShellsPlayerCanAfford );
 			iAmountToAdd = Min( ( m_iMaxAmmoShells - m_iAmmoShells ), iAmountToAdd );
 
 			pPlayer->RemoveAmmo( iAmountToAdd * tf_sentrygun_metal_per_shell.GetInt(), TF_AMMO_METAL );
@@ -619,18 +610,10 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 		if ( m_iAmmoRockets < m_iMaxAmmoRockets && m_iUpgradeLevel == 3 && iPlayerMetal > 0 )
 		{
 			int iMaxRocketsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_rocket.GetFloat() );
+			
+			// cap the amount we can add
 			int iAmountToAdd;
-
-			if ( !bWrangled )
-			{
-				iAmountToAdd = Min( SENTRYGUN_ADD_ROCKETS, iMaxRocketsPlayerCanAfford );
-			}
-			else
-			{
-				// 33% of normal rate
-				iAmountToAdd = Min( ( SENTRYGUN_ADD_ROCKETS * 33 ), iMaxRocketsPlayerCanAfford );
-			}
-
+			iAmountToAdd = Min( (int)( flRepairRate * SENTRYGUN_ADD_ROCKETS ), iMaxRocketsPlayerCanAfford );
 			iAmountToAdd = Min( ( m_iMaxAmmoRockets - m_iAmmoRockets ), iAmountToAdd );
 
 			pPlayer->RemoveAmmo( iAmountToAdd * tf_sentrygun_metal_per_rocket.GetFloat(), TF_AMMO_METAL );
@@ -654,17 +637,15 @@ bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
 	if ( GetHealth() < GetMaxHealth() )
 	{
 		int iAmountToHeal;
+		
+		float flRepairRate = 1;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
 
 		if ( m_iState != SENTRY_STATE_WRANGLED && m_iState != SENTRY_STATE_WRANGLED_RECOVERY )
-		{
-			iAmountToHeal = Min( 100, GetMaxHealth() - GetHealth() );
-		}
-		else
-		{
-			// 33% of normal rate
-			iAmountToHeal = Min( ( 33 ), GetMaxHealth() - GetHealth() );
-		}
+			flRepairRate *= .33f;
 
+		iAmountToHeal = Min( (int)(flRepairRate * 100), GetMaxHealth() - GetHealth() );
+					
 		// repair the building
 		int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );
 
