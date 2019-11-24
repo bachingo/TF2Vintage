@@ -4305,7 +4305,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// speed boost
 	if ( m_Shared.IsSpeedBoosted() )
 	{
-		maxfbspeed *= 1.2f;
+		// Flat rate, old algorithm.
+		//maxfbspeed *= 1.2f;
+		// Based on class speed, new algorithm.
+		maxfbspeed = ( 1.072404 * maxfbspeed ) + 80.914786;
 	}
 
 	// Slow us down if we're disguised as a slower class
