@@ -88,6 +88,9 @@ ConVar tf2v_critmod_range( "tf2v_critmod_range", "800", FCVAR_NOTIFY | FCVAR_REP
 
 ConVar tf2v_new_flame_damage( "tf2v_new_flame_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables Jungle Inferno fire and afterburn damage calculations." );
 
+ConVar tf2v_clamp_speed( "tf2v_clamp_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable maximum speed bonus a player can have at a single time." );
+ConVar tf2v_max_speed_difference( "tf2v_max_speed_difference", "105", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maxmimum speed a player can be boosted, in HU/s." );
+
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
 ConVar tf_enable_grenades( "tf_enable_grenade_equipment", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
@@ -4300,25 +4303,23 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// First, get their max class speed
 	maxfbspeed = GetPlayerClassData( playerclass )->m_flMaxSpeed;
 
-	
+	CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
+
 	// Speed Boost Effects.
 	if ( m_Shared.InCond( TF_COND_SPEED_BOOST ) )
 	{
-		// Increase our speed by 40%.
+		// 40% Speed increase.
 		maxfbspeed *= 1.4f;
 	}
 	if ( m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
 	{
-		// Increase speed by 20%.
+		// 20% Speed increase.
 		maxfbspeed *= 1.2f;
 	}
 	
 	// Clamp the max speed boost we can get.
-	if ( maxfbspeed > ( GetPlayerClassData( playerclass )->m_flMaxSpeed + 105 ) )
-		maxfbspeed = ( GetPlayerClassData( playerclass )->m_flMaxSpeed + 105 );
-	
-	
-	CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
+	if ( ( tf2v_clamp_speed.GetInt() ) && ( maxfbspeed > ( GetPlayerClassData( playerclass )->m_flMaxSpeed + tf2v_max_speed_difference.GetInt() ) ))
+		maxfbspeed = ( GetPlayerClassData( playerclass )->m_flMaxSpeed + tf2v_max_speed_difference.GetInt() );
 	
 	// Slow us down if we're disguised as a slower class
 	// unless we're cloaked..
