@@ -221,7 +221,7 @@ public:
 		for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
 			item_slot_per_class[i] = -1;
 
-		show_in_armory = false;
+		show_in_armory = true;
 		CLEAR_STR(item_class);
 		CLEAR_STR(item_type_name);
 		CLEAR_STR(item_name);
@@ -241,7 +241,7 @@ public:
 		CLEAR_STR(model_player);
 		CLEAR_STR(model_world);
 		memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
-		attach_to_hands = 0;
+		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
 		CLEAR_STR(extra_wearable);
 		act_as_wearable = false;
