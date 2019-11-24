@@ -19,6 +19,9 @@
 #include "c_tf_player.h"
 #endif
 
+#define TF_SPEED_BUFF_DURATION_LEGACY 3.0f	// Values used before mid-2016.
+#define TF_SPEED_BUFF_DURATION_MODERN 2.0f	// Values used after mid-2016.
+
 //=============================================================================
 //
 // TFWeaponBase Melee tables.
@@ -43,6 +46,8 @@ END_DATADESC()
 #ifndef CLIENT_DLL
 ConVar tf_meleeattackforcescale( "tf_meleeattackforcescale", "80.0", FCVAR_CHEAT | FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY );
 #endif
+
+ConVar tf2v_new_speed_buff_duration( "tf2v_new_speed_buff_duration", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Swaps between using old (3s) and new (2s) speed buffing times." );
 
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
 extern ConVar tf_weapon_criticals;
@@ -353,6 +358,27 @@ void CTFWeaponBaseMelee::Smack( void )
 
 		// Do Damage.
 		DoMeleeDamage( trace.m_pEnt, trace );
+		
+		// Ally buff calculations.
+		int nCanBuffAllies = 0;
+		CALL_ATTRIB_HOOK_INT( nCanBuffAllies, speed_buff_ally );
+		if( trace.m_pEnt->IsPlayer() && ( nCanBuffAllies != 0 ) )
+		{
+			// Check to see if they can be buffed.
+			CTFPlayer *pTFPlayer = ToTFPlayer( trace.m_pEnt );
+			if (pTFPlayer)
+			{
+				// We can buff our team, and spies disguised as teammates.
+				if ( ( !pTFPlayer->m_Shared.InCond( TF_COND_STEALTHED ) ) &&
+				( pTFPlayer->InSameTeam( pPlayer ) ||
+				( ( pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) ) && pTFPlayer->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() ) ) )
+				{
+					float flBuffDuration = tf2v_new_speed_buff_duration.GetBool() ? TF_SPEED_BUFF_DURATION_MODERN : TF_SPEED_BUFF_DURATION_LEGACY ;
+					pPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, (flBuffDuration * 1.75) );
+					pTFPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffDuration );
+				}
+			}
+		}
 
 		// Don't impact trace friendly players or objects
 		if ( trace.m_pEnt && trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() )
