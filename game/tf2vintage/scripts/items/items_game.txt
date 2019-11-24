@@ -334,6 +334,7 @@
 		"zombie"
 		{
 			"prefab"	"weapon_wearable"
+			"baseitem"	"1"
 			"propername" "0"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
 			"item_quality"	"haunted"
@@ -554,6 +555,33 @@
 					"ACT_MELEE_VM_INSPECT_START"	"ACT_ITEM2_VM_INSPECT_START"
 					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_ITEM2_VM_INSPECT_IDLE"
 					"ACT_MELEE_VM_INSPECT_END"		"ACT_ITEM2_VM_INSPECT_END"
+				}
+			}
+		}
+		"weapon_eternal_reward"
+		{
+			"prefab"	"weapon_spy_knife_item2"
+			"attributes"
+			{
+				"disguise on backstab"
+				{
+					"attribute_class"	"set_disguise_on_backstab"
+					"value" "1"
+				}
+				"silent killer"
+				{
+					"attribute_class"	"set_silent_killer"
+					"value" "1"
+				}
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value" "1"
+				}
+				"cannot disguise"
+				{
+					"attribute_class"	"set_cannot_disguise"
+					"value" "1"
 				}
 			}
 		}
@@ -816,6 +844,28 @@
 				}
 			}
 		}
+		"weapon_axtinguisher"
+		{
+			"prefab"	"weapon_fireaxe"
+			"attributes"
+			{
+				"crit vs burning players"
+				{
+					"attribute_class"	"or_crit_vs_playercond"
+					"value"	"1"
+				}
+				"dmg penalty vs nonburning"
+				{
+					"attribute_class"	"mult_dmg_vs_nonburning"
+					"value"	"0.5"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+		}
 		"weapon_club"
 		{
 			"item_class"	"tf_weapon_club"
@@ -1022,11 +1072,6 @@
 				{
 					"attribute_class"	"mult_deploy_time"
 					"value"	".85"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
 				}
 			}
 			"visuals"
@@ -1293,6 +1338,30 @@
 			"visuals"
 			{
 				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
+			}
+		}
+		"weapon_homewrecker"
+		{
+			"prefab"	"weapon_sledgehammer"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer"
+			"model_player"	"models/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer.mdl"
+			"attributes"
+			{
+				"dmg bonus vs buildings"
+				{
+					"attribute_class"	"mult_dmg_vs_buildings"
+					"value"	"2.0"
+				}
+				"dmg penalty vs players"
+				{
+					"attribute_class"	"mult_dmg_vs_players"
+					"value"	"0.75"
+				}
+				"damage applies to sappers"
+				{
+					"attribute_class"	"set_dmg_apply_to_sapper"
+					"value"	"1"
+				}
 			}
 		}
 		"weapon_gloves"
@@ -1696,6 +1765,92 @@
 				"min_viewmodel_offset"		"12 0 -17"				
 			}
 		}
+		"weapon_stickybombjumper"
+		{
+			"prefab"	"weapon_stickybomb_launcher"
+			"item_name"	"#TF_Weapon_StickyBomb_Jump"
+			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
+			"propername"	"0"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "1"
+				}
+				"maxammo secondary increased"
+				{
+					"attribute_class"	"mult_maxammo_secondary"
+					"value" "3"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	 "custom_projectile_model"
+					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
+				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
+			}
+		}
+		"weapon_rocketjumper"
+		{
+			"prefab"	"weapon_rocketlauncher"
+			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
+			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
+			"propername"	"0"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "2"
+				}
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value" "3.0"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
+				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
+			}
+
+		}
 		"weapon_sentry_revenge"
 		{
 			"item_class"	"tf_weapon_sentry_revenge"
@@ -1726,11 +1881,6 @@
 				{
 					"attribute_class"	"mult_clipsize"
 					"value" "0.5"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
 				}
 			}
 		}
@@ -1786,11 +1936,6 @@
 					"attribute_class"	"kill_eater_score_type_2"
 					"value"		"0"									
 				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
 				"allowed in medieval mode"
 				{
 					"attribute_class"	"allowed_in_medieval_mode"
@@ -1831,6 +1976,60 @@
 			{
 				"min_viewmodel_offset"			"10 -3 -10"		
 			}
+			"visuals"
+			{
+				"sound_melee_miss"	"Weapon_Sword.Swing"
+				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
+				"sound_burst"		"Weapon_Sword.SwingCrit"
+				"sound_special1"	"Sword.Hit"
+				"sound_special2"	"Sword.Idle"
+			}
+		}
+		"weapon_eyelander"
+		{
+			"prefab"	"weapon_sword"
+			"item_type_name"	"#TF_Weapon_Sword"
+			"item_slot"	"melee"
+			"anim_slot"	"item1"
+			"image_inventory"	"backpack/weapons/c_models/c_claymore/c_claymore"
+			"model_player"	"models/weapons/c_models/c_claymore/c_claymore.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"attributes"
+			{
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"max health additive penalty"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value" "-25"
+				}
+				"decapitate type"
+				{
+					"attribute_class"	"decapitate_type"
+					"value"	"1"
+				}
+				"kill eater score type"
+				{
+					"attribute_class"	"kill_eater_score_type"
+					"value"		"6"									
+				}
+				"kill eater kill type"
+				{
+					"attribute_class"	"kill_eater_kill_type"
+					"value"	"6"			
+				}
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"			"12 -3 -10"		
+			}
 		}
 		"weapon_battleaxe"
 		{			
@@ -1843,7 +2042,6 @@
 			"model_player"	"models/workshop/weapons/c_models/c_battleaxe/c_battleaxe.mdl"
 			"attributes"
 			{
-			
 				"provide on active"
 				{
 					"attribute_class"	"provide_on_active"
@@ -1886,73 +2084,6 @@
 					"attribute_class"	"add_maxhealth"
 					"value" "-15"
 				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-			}
-			"visuals"
-			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
-				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
-				"sound_burst"		"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
-			}
-		}
-		"weapon_eyelander"
-		{
-			"prefab"	"weapon_sword"
-			"item_name"	"#TF_Unique_Achievement_Sword"
-			"image_inventory"	"backpack/weapons/c_models/c_claymore/c_claymore"
-			"model_player"	"models/weapons/c_models/c_claymore/c_claymore.mdl"
-			"attributes"
-			{
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"max health additive penalty"
-				{
-					"attribute_class"	"add_maxhealth"
-					"value" "-25"
-				}
-				"decapitate type"
-				{
-					"attribute_class"	"decapitate_type"
-					"value"	"1"
-				}
-				"kill eater score type"
-				{
-					"attribute_class"	"kill_eater_score_type"
-					"value"		"6"									
-				}
-				"kill eater kill type"
-				{
-					"attribute_class"	"kill_eater_kill_type"
-					"value"	"6"			
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-			}
-			"visuals"
-			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
-				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
-				"sound_burst"		"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"12 -3 -10"
 			}
 		}
 		"weapon_shield"
@@ -2583,7 +2714,7 @@
 		"38"
 		{
 			"name"	"The Axtinguisher"			
-			"prefab"	"weapon_fireaxe"
+			"prefab"	"weapon_axtinguisher"
 			"year"			"2008"
 			"item_logname"	"axtinguisher"
 			"item_iconname"	"axtinguisher"
@@ -2591,24 +2722,6 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_axtinguisher/c_axtinguisher_pyro"
 			"model_player"	"models/weapons/c_models/c_axtinguisher/c_axtinguisher_pyro.mdl"
-			"attributes"
-			{
-				"crit vs burning players"
-				{
-					"attribute_class"	"or_crit_vs_playercond"
-					"value"	"1"
-				}
-				"dmg penalty vs nonburning"
-				{
-					"attribute_class"	"mult_dmg_vs_nonburning"
-					"value"	"0.5"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
 		}
 		"39"
 		{
@@ -2779,11 +2892,6 @@
 				{
 					"attribute_class"	"add_maxhealth"
 					"value" "-15"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
 				}
 			}
 		}
@@ -3050,11 +3158,6 @@
 					"attribute_class"	"null"
 					"value"	"1"
 				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
 				"mod weapon blocks healing"
 				{
 					"attribute_class"	"weapon_blocks_healing"
@@ -3138,6 +3241,8 @@
 		{
 			"name"	"The Eyelander"
 			"prefab"	"weapon_eyelander"
+			"item_name"	"#TF_Unique_Achievement_Sword"
+			"item_description"	"#TF_Unique_Achievement_Sword_Desc"
 			"propername"	"1"
 			"year"			"2009"
 		}
@@ -3187,33 +3292,12 @@
 		"153"
 		{
 			"name"	"The Homewrecker"
-			"prefab"		"weapon_sledgehammer"
+			"prefab"		"weapon_homewrecker"
 			"propername"	"1"
 			"year"			"2010"
 			"item_logname"	"sledgehammer"
 			"item_iconname"	"sledgehammer"
 			"item_name"	"#TF_Unique_SledgeHammer"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer"
-			"model_player"	"models/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer.mdl"
-			
-			"attributes"
-			{
-				"dmg bonus vs buildings"
-				{
-					"attribute_class"	"mult_dmg_vs_buildings"
-					"value"	"2.0"
-				}
-				"dmg penalty vs players"
-				{
-					"attribute_class"	"mult_dmg_vs_players"
-					"value"	"0.75"
-				}
-				"damage applies to sappers"
-				{
-					"attribute_class"	"set_dmg_apply_to_sapper"
-					"value"	"1"
-				}
-			}
 		}
 		"154"
 		{
@@ -3297,11 +3381,6 @@
 				{
 					"attribute_class"	"set_weapon_mode"
 					"value"	"1"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
 				}
 			}
 		}
@@ -3532,7 +3611,7 @@
 		"225"
 		{
 			"name"	"Your Eternal Reward"
-			"prefab"	"weapon_spy_knife_item2"
+			"prefab"	"weapon_eternal_reward"
 			"year"			"2010"
 			"item_name"	"#TF_EternalReward"
 			"propername"	"0"
@@ -3543,43 +3622,6 @@
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"5 0 -4"
-			}
-			"attributes"
-			{
-				"disguise on backstab"
-				{
-					"attribute_class"	"set_disguise_on_backstab"
-					"value" "1"
-				}
-				"silent killer"
-				{
-					"attribute_class"	"set_silent_killer"
-					"value" "1"
-				}
-				"lunchbox adds minicrits"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value" "1"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-				"cannot disguise"
-				{
-					"attribute_class"	"set_cannot_disguise"
-					"value" "1"
-				}
-			}
-			"capabilities"
-			{
-				"nameable"		"1"
-			}
-			"tags"
-			{
-				"can_deal_damage"			"1"
-				"can_deal_taunt_damage"		"1"
 			}
 		}
 		"226"
@@ -3811,46 +3853,10 @@
 		"237"
 		{
 			"name"	"Legacy Rocket Jumper"
-			"prefab"	"weapon_rocketlauncher"
+			"prefab"	"weapon_rocketjumper"
 			"year"			"2010"
-			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
-			"propername"	"0"
-			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy"
 			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy.mdl"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "2"
-				}
-				"maxammo primary increased"
-				{
-					"attribute_class"	"mult_maxammo_primary"
-					"value" "3.0"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
-				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
-			}
 		}
 		"239"
 		{
@@ -3915,51 +3921,10 @@
 		"265"
 		{
 			"name"	"Legacy Stickybomb Jumper"
-			"prefab"	"weapon_stickybomb_launcher"
+			"prefab"	"weapon_stickybombjumper"
 			"year"			"2010"
-			"item_name"	"#TF_Weapon_StickyBomb_Jump"
-			"propername"	"0"
-			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy.mdl"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "1"
-				}
-				"maxammo secondary increased"
-				{
-					"attribute_class"	"mult_maxammo_secondary"
-					"value" "3"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-				"custom projectile model"
-				{
-					"attribute_class"	 "custom_projectile_model"
-					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
-				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
-			}
 		}
 		"305"
 		{
@@ -4477,7 +4442,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieScout_Desc"
 			"image_inventory"	"backpack/player/items/scout/scout_zombie"
-			"baseitem"	"1"
 		}
 		"5618"
 		{
@@ -4490,7 +4454,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieSoldier_Desc"
 			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
-			"baseitem"	"1"
 		}
 		"5619"
 		{
@@ -4503,7 +4466,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieHeavy_Desc"
 			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
-			"baseitem"	"1"
 		}
 		"5620"
 		{
@@ -4516,7 +4478,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieDemoman_Desc"
 			"image_inventory"	"backpack/player/items/demo/demo_zombie"
-			"baseitem"	"1"
 		}
 		"5621"
 		{
@@ -4529,7 +4490,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieEngineer_Desc"
 			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
-			"baseitem"	"1"
 		}
 		"5622"
 		{
@@ -4542,7 +4502,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieMedic_Desc"
 			"image_inventory"	"backpack/player/items/medic/medic_zombie"
-			"baseitem"	"1"
 		}
 		"5623"
 		{
@@ -4555,7 +4514,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieSpy_Desc"
 			"image_inventory"	"backpack/player/items/spy/spy_zombie"
-			"baseitem"	"1"
 		}
 		"5624"
 		{
@@ -4573,7 +4531,6 @@
 			}
 			"item_description"	"#TF_Item_ZombiePyro_Desc"
 			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
-			"baseitem"	"1"
 		}
 		"5625"
 		{
@@ -4586,7 +4543,6 @@
 			}
 			"item_description"	"#TF_Item_ZombieSniper_Desc"
 			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
-			"baseitem"	"1"
 		}
 		"10160"
 		{
@@ -4643,45 +4599,10 @@
 		"10237"
 		{
 			"name"	"Rocket Jumper"
-			"prefab"	"weapon_rocketlauncher weapon_reskin"
+			"prefab"	"weapon_rocketjumper weapon_reskin"
 			"year"			"2016"
-			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
-			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper"
 			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper.mdl"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "2"
-				}
-				"maxammo primary increased"
-				{
-					"attribute_class"	"mult_maxammo_primary"
-					"value" "3.0"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
-				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
-			}
 		}
 		"10264"
 		{
@@ -4693,7 +4614,7 @@
 		"10266"
 		{
 			"name"	"The Horseless Headless Horseman's Headtaker"
-			"prefab"	"weapon_sword weapon_reskin"
+			"prefab"	"weapon_eyelander weapon_reskin"
 			"year"			"2010"
 			"item_type_name"	"#TF_Weapon_Axe"
 			"item_name"	"#TF_HalloweenBoss_Axe"
@@ -4704,100 +4625,23 @@
 			"item_iconname"	"headtaker"
 			"image_inventory"	"backpack/weapons/c_models/c_headtaker/c_headtaker"
 			"model_player"	"models/weapons/c_models/c_headtaker/c_headtaker.mdl"
-			"attributes"
-			{
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"max health additive penalty"
-				{
-					"attribute_class"	"add_maxhealth"
-					"value" "-25"
-				}
-				"decapitate type"
-				{
-					"attribute_class"	"decapitate_type"
-					"value"	"1"
-				}
-				"kill eater score type"
-				{
-					"attribute_class"	"kill_eater_score_type"
-					"value"		"6"									
-				}
-				"kill eater kill type"
-				{
-					"attribute_class"	"kill_eater_kill_type"
-					"value"	"6"			
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-			}
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"12 -3 -10"
 			}
 			"visuals"
 			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
 				"sound_melee_hit"	"Halloween.HeadlessBossAxeHitFlesh"
 				"sound_melee_hit_world"	"Halloween.HeadlessBossAxeHitWorld"
-				"sound_burst"		"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
 			}
 		}
 		"10265"
 		{
 			"name"	"Stickybomb Jumper"
-			"prefab"	"weapon_stickybomb_launcher weapon_reskin"
+			"prefab"	"weapon_stickybombjumper weapon_reskin"
 			"year"			"2016"
-			"item_name"	"#TF_Weapon_StickyBomb_Jump"
-			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper.mdl"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "1"
-				}
-				"maxammo secondary increased"
-				{
-					"attribute_class"	"mult_maxammo_secondary"
-					"value" "3"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-				"custom projectile model"
-				{
-					"attribute_class"	 "custom_projectile_model"
-					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
-				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
-			}
 		}
 		"10298"
 		{
@@ -4829,11 +4673,6 @@
 					"attribute_class"	"set_weapon_mode"
 					"value"	"7"
 				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
 			}
 		}
 		"10452"
@@ -4862,7 +4701,7 @@
 		"10457"
 		{
 			"name"	"The Postal Pummeler"
-			"prefab"	"weapon_fireaxe weapon_reskin"
+			"prefab"	"weapon_axtinguisher weapon_reskin"
 			"year"			"2011"
 			"item_logname"	"mailbox"
 			"item_iconname"	"mailbox"
@@ -4875,31 +4714,12 @@
 			{
 				"min_viewmodel_offset"					"15 2 -12"				
 			}
-			"attributes"
-			{
-				"crit vs burning players"
-				{
-					"attribute_class"	"or_crit_vs_playercond"
-					"value"	"1"
-				}
-				"dmg penalty vs nonburning"
-				{
-					"attribute_class"	"mult_dmg_vs_nonburning"
-					"value"	"0.5"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
 		}
 		"10466"
 		{
 			"name"	"The Maul"
-			"prefab"	"weapon_fireaxe weapon_reskin"
+			"prefab"	"weapon_homewrecker weapon_reskin"
 			"year"			"2011"
-			"item_type_name"	"#TF_Weapon_SledgeHammer"
 			"item_logname"	"the_maul"
 			"item_iconname"	"the_maul"
 			"item_name"	"#TF_RFAHammer"
@@ -4929,15 +4749,11 @@
 			{
 				"min_viewmodel_offset"					"15 2 -12"				
 			}
-			"visuals"
-			{
-				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
-			}
 		}
 		"10482"
 		{
 			"name"	"Nessie's Nine Iron"
-			"prefab"	"weapon_sword weapon_reskin"
+			"prefab"	"weapon_eyelander weapon_reskin"
 			"year"			"2011"
 			"item_type_name"	"#TF_Weapon_GolfClub"
 			"item_name"	"#TF_NineIron"
@@ -4947,58 +4763,16 @@
 			"propername"	"0"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_golfclub/c_golfclub"
 			"model_player"	"models/workshop/weapons/c_models/c_golfclub/c_golfclub.mdl"
-			"attributes"
-			{
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"max health additive penalty"
-				{
-					"attribute_class"	"add_maxhealth"
-					"value" "-25"
-				}
-				"decapitate type"
-				{
-					"attribute_class"	"decapitate_type"
-					"value"	"1"
-				}
-				"kill eater score type"
-				{
-					"attribute_class"	"kill_eater_score_type"
-					"value"		"6"									
-				}
-				"kill eater kill type"
-				{
-					"attribute_class"	"kill_eater_kill_type"
-					"value"	"6"			
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-			}
 			"static_attrs"
 			{
 				"min_viewmodel_offset"		"10 0 -11"				
-			}
-			"visuals"
-			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
-				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
-				"sound_burst"		"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
 			}
 			"xifier_class_remap"	"Nessie's Nine Iron"
 		}
 		"10574"
 		{
 			"name"	"The Wanga Prick"
-			"prefab"	"weapon_knife weapon_reskin"
+			"prefab"	"weapon_eternal_reward weapon_reskin"
 			"year"			"2011"
 			"item_name"	"#TF_VoodooPin"
 			"propername"	"1"
@@ -5008,52 +4782,7 @@
 			"model_player"	"models/workshop/weapons/c_models/c_voodoo_pin/c_voodoo_pin.mdl"
 			"static_attrs"
 			{
-						"min_viewmodel_offset"		"10 0 -6"
-			}
-			"attributes"
-			{
-				"disguise on backstab"
-				{
-					"attribute_class"	"set_disguise_on_backstab"
-					"value" "1"
-				}
-				"silent killer"
-				{
-					"attribute_class"	"set_silent_killer"
-					"value" "1"
-				}
-				"lunchbox adds minicrits"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value" "1"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
-				"cannot disguise"
-				{
-					"attribute_class"	"set_cannot_disguise"
-					"value" "1"
-				}
-			}
-			"visuals"
-			{
-				"animation_replacement"
-				{
-					"ACT_VM_DRAW"	"ACT_ITEM2_VM_DRAW"
-					"ACT_VM_IDLE"	"ACT_ITEM2_VM_IDLE"
-					"ACT_VM_HITCENTER"	"ACT_ITEM2_VM_HITCENTER"
-					"ACT_VM_SWINGHARD"	"ACT_ITEM2_VM_SWINGHARD"
-					"ACT_BACKSTAB_VM_UP"	"ACT_ITEM2_BACKSTAB_VM_UP"
-					"ACT_BACKSTAB_VM_DOWN"	"ACT_ITEM2_BACKSTAB_VM_DOWN"
-					"ACT_BACKSTAB_VM_IDLE"	"ACT_ITEM2_BACKSTAB_VM_IDLE"
-					"ACT_MELEE_VM_STUN"	"ACT_MELEE_VM_ITEM2_STUN"
-					"ACT_MELEE_VM_INSPECT_START"	"ACT_ITEM2_VM_INSPECT_START"
-					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_ITEM2_VM_INSPECT_IDLE"
-					"ACT_MELEE_VM_INSPECT_END"		"ACT_ITEM2_VM_INSPECT_END"
-				}
+				"min_viewmodel_offset"		"10 0 -6"
 			}
 		}
 		"10587"
@@ -5078,11 +4807,6 @@
 				{
 					"attribute_class"	"crit_kill_will_gib"
 					"value"	"1"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
 				}
 			}
 			"hide_bodygroups_deployed_only"	"1"
@@ -5126,14 +4850,6 @@
 			"static_attrs"
 			{
 				"min_viewmodel_offset"		"10 0 -6"
-			}
-			"attributes"
-			{
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
 			}
 		}
 		"10851"
@@ -5184,7 +4900,6 @@
 			"visuals"
 			{
 				"sound_melee_hit"	"Weapon_Assassin_Knife.HitFlesh"
-
 				"animation_replacement"
 				{
 					"ACT_VM_DRAW"	"ACT_ITEM1_VM_DRAW"
