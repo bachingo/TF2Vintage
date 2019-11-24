@@ -9060,7 +9060,7 @@ void CTFPlayer::DoTauntAttack( void )
 
 				int nLunchboxAddsMaxHealth = 0;
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pLunch, nLunchboxAddsMaxHealth, set_weapon_mode );
-				if ( nLunchboxAddsMaxHealth == 1 && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ) )
+				if ( ( (nLunchboxAddsMaxHealth == 1) || (nLunchboxAddsMaxHealth == 7) ) && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ) )
 					m_Shared.AddCond( TF_COND_LUNCHBOX_HEALTH_BUFF, 30.0f );
 
 				if ( HealthFraction() <= 1.0f )
