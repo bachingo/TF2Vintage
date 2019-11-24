@@ -908,7 +908,6 @@ void CTFPlayer::Precache()
 
 	PrecacheScriptSound( "DemoCharge.ChargeCritOn" );
 	PrecacheScriptSound( "DemoCharge.ChargeCritOff" );
-	PrecacheScriptSound( "DemoCharge.Charging" );
 
 	// Precache particle systems
 	PrecacheParticleSystem( "crit_text" );

@@ -1743,8 +1743,6 @@ void CTFPlayerShared::OnAddShieldCharge( void )
 {
 	m_pOuter->TeamFortress_SetSpeed();
 
-	m_pOuter->EmitSound( "DemoCharge.Charging" );
-
 	UpdatePhaseEffects();
 }
 

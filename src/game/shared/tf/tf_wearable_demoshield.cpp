@@ -44,6 +44,7 @@ void CTFWearableDemoShield::Precache( void )
 	PrecacheScriptSound( "DemoCharge.HitWorld" );
 	PrecacheScriptSound( "DemoCharge.HitFlesh" );
 	PrecacheScriptSound( "DemoCharge.HitFleshRange" );
+	PrecacheScriptSound( "DemoCharge.Charging" );
 }
 
 #ifdef GAME_DLL
@@ -184,6 +185,10 @@ bool CTFWearableDemoShield::DoSpecialAction( CTFPlayer *pUser )
 			pUser->m_Shared.SetShieldChargeDrainRate( flChargeDuration );
 			pUser->m_Shared.SetShieldChargeRegenRate( flChargeRechargeRate );
 			pUser->m_Shared.AddCond( TF_COND_SHIELD_CHARGE, flChargeDuration );
+			
+			// Start screaming if we're a Demoman.
+			if ( pUser->IsPlayerClass(TF_CLASS_DEMOMAN) )
+				pUser->EmitSound( "DemoCharge.Charging" );
 
 			m_bBashed = false;
 
