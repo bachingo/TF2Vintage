@@ -2021,7 +2021,7 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 	if ( m_nPlayerState != TF_STATE_DYING )
 	{
 		AddCond( TF_COND_INVULNERABLE, 10.0f );
-		AddCond( TF_COND_HALLOWEEN_SPEED_BOOST, 10.0f );
+		AddCond( TF_COND_SPEED_BOOST, 10.0f );
 		AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 10.0f );
 		m_pOuter->SetHealth( GetMaxBuffedHealth() );
 
@@ -4306,15 +4306,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
 
 	// Speed Boost Effects.
-	if ( m_Shared.InCond( TF_COND_SPEED_BOOST ) )
+	if ( m_Shared.IsSpeedBoosted() )
 	{
 		// 40% Speed increase.
 		maxfbspeed *= 1.4f;
-	}
-	if ( m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
-	{
-		// 20% Speed increase.
-		maxfbspeed *= 1.2f;
 	}
 	
 	// Clamp the max speed boost we can get.
