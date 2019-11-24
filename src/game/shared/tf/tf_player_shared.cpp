@@ -2018,7 +2018,7 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 	if ( m_nPlayerState != TF_STATE_DYING )
 	{
 		AddCond( TF_COND_INVULNERABLE, 10.0f );
-		AddCond( TF_COND_SPEED_BOOST, 10.0f );
+		AddCond( TF_COND_HALLOWEEN_SPEED_BOOST, 10.0f );
 		AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 10.0f );
 		m_pOuter->SetHealth( GetMaxBuffedHealth() );
 
@@ -4302,15 +4302,18 @@ void CTFPlayer::TeamFortress_SetSpeed()
 
 	CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
 
-	// speed boost
-	if ( m_Shared.IsSpeedBoosted() )
+	// Speed Boost Effects.
+	if ( m_Shared.InCond( TF_COND_SPEED_BOOST ) )
 	{
-		// Flat rate, old algorithm.
-		//maxfbspeed *= 1.2f;
-		// Based on class speed, new algorithm.
+		// Linear increase relative to original class speed.
 		maxfbspeed = ( 1.072404 * maxfbspeed ) + 80.914786;
 	}
-
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
+	{
+		// Flat rate increase.
+		maxfbspeed *= 1.2f;
+	}
+	
 	// Slow us down if we're disguised as a slower class
 	// unless we're cloaked..
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
