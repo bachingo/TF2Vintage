@@ -23,8 +23,8 @@
 #endif
 
 extern ScriptClassDesc_t *GetScriptDesc( CBaseEntity * );
-extern void RegisterScriptedWeapon( char const *szName );
-extern void RegisterScriptedEntity( char const *szName );
+/*extern */void RegisterScriptedWeapon( char const *szName ) {}
+/*extern */void RegisterScriptedEntity( char const *szName ) {}
 
 // #define VMPROFILE 1
 
@@ -374,7 +374,7 @@ END_SCRIPTDESC();
 
 // When a scripter wants to change a netprop value, they can use the
 // CNetPropManager class; it checks for errors and such on its own.
-CNetPropManager g_NetProps;
+CNetPropManager g_NetPropManager;
 
 BEGIN_SCRIPTDESC_ROOT( CNetPropManager, SCRIPT_SINGLETON "Used to get/set entity network fields" )
 	DEFINE_SCRIPTFUNC( GetPropInt, "Arguments: ( entity, propertyName )" )
@@ -829,7 +829,7 @@ bool VScriptServerInit()
 				}
 
 				g_pScriptVM->RegisterInstance( &g_ScriptEntityIterator, "Entities" );
-				g_pScriptVM->RegisterInstance( &g_NetProps, "NetProps" );
+				g_pScriptVM->RegisterInstance( &g_NetPropManager, "NetProps" );
 				g_pScriptVM->RegisterInstance( &g_ScriptResponseCriteria, "ResponseCriteria" );
 
 				// To be used with Script_ClientPrint
