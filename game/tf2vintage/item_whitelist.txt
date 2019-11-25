@@ -94,6 +94,7 @@
 	"The AWPer Hand"								"1"
 	"The Fortified Compound"						"1"
 	"The Sharp Dresser"								"1"
+	"Ambassador Dark"								"1"
 	"The Nostromo Napalmer"							"1"
 	"The C.A.P.P.E.R"								"1"
 	"Batsaber"										"1"

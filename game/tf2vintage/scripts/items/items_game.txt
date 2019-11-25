@@ -1145,6 +1145,45 @@
 				"min_viewmodel_offset"					"10 0 -6"
 			}
 		}
+		"weapon_ambassador"
+		{
+			"prefab"		"weapon_revolver"
+			"item_name"	"#TF_Unique_Achievement_Revolver"
+			"propername"	"1"
+			"item_logname"	"ambassador"
+			"item_iconname"	"ambassador"
+			"image_inventory"	"backpack/weapons/c_models/c_ambassador/parts/c_ambassador_opt"
+			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador.mdl"
+			"attributes"
+			{
+				"revolver use hit locations"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value" "0.85"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.2"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_Ambassador.Single"
+				"sound_burst" "Weapon_Ambassador.SingleCrit"
+			}
+			"xifier_class_remap"	"ambassador"
+		}
 		"weapon_pda_engineer_build"
 		{
 			"item_class"	"tf_weapon_pda_engineer_build"
@@ -3048,42 +3087,8 @@
 		"61"
 		{
 			"name"	"The Ambassador"
-			"prefab"	"weapon_revolver"
+			"prefab"	"weapon_ambassador"
 			"year"			"2009"
-			"item_name"	"#TF_Unique_Achievement_Revolver"
-			"propername"	"1"
-			"item_logname"	"ambassador"
-			"item_iconname"	"ambassador"
-			"image_inventory"	"backpack/weapons/c_models/c_ambassador/parts/c_ambassador_opt"
-			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador.mdl"
-			"attributes"
-			{
-				"revolver use hit locations"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"1"
-				}
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value" "0.85"
-				}
-				"fire rate penalty"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value"	"1.2"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot" "Weapon_Ambassador.Single"
-				"sound_burst" "Weapon_Ambassador.SingleCrit"
-			}
 		}
 		"127"
 		{
@@ -4924,6 +4929,13 @@
 					"value"	"1"
 				}
 			}
+		}
+		"11006"
+		{
+			"name"			"Ambassador Dark"
+			"prefab"		"weapon_ambassador weapon_reskin"
+			"year"			"2012"
+			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador_dark.mdl"
 		}
 		"30474"
 		{
