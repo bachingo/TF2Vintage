@@ -4934,6 +4934,7 @@
 		{
 			"name"			"Ambassador Dark"
 			"prefab"		"weapon_ambassador weapon_reskin"
+			"item_description"	"#TF_PyroHazmat_Style3"
 			"year"			"2012"
 			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador_dark.mdl"
 		}
