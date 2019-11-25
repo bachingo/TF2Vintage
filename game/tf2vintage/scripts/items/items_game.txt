@@ -2158,7 +2158,7 @@
 			"item_slot"	"melee"
 			"item_logname"	"saxtonfist"
 			"item_iconname"	"saxxy"
-			"item_quality"	"developer"
+			"item_quality"	"strange"
 			"image_inventory"	"backpack/weapons/w_models/w_shovel"
 			"used_by_classes"
 			{
@@ -5038,7 +5038,7 @@
 			"year" "2010"
 			"item_name"	"#TF_Unique_Golden_Wrench"
 			"propername"	"1"
-			"item_quality" "strange"
+			"item_quality" "developer"
 			"specialitem"	"1"
 			"item_logname"	"wrench_golden"
 			"item_iconname"	"wrench_golden"
