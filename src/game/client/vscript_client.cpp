@@ -19,8 +19,8 @@
 
 extern IScriptManager *scriptmanager;
 extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
-extern void RegisterScriptedWeapon( char const *szName );
-extern void RegisterScriptedEntity( char const *szName );
+/*extern */void RegisterScriptedWeapon( char const *szName ) {}
+/*extern */void RegisterScriptedEntity( char const *szName ) {}
 
 // #define VMPROFILE 1
 
