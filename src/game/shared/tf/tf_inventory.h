@@ -63,6 +63,7 @@ private:
 	CUtlVector<CEconItemView *> m_Items[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
 
 #if defined( CLIENT_DLL )
+	virtual bool CheckSpecialItemAccess( void );
 	void LoadInventory();
 	void ResetInventory();
 	void SaveInventory();
