@@ -134,13 +134,8 @@ void CTFGameRules::RegisterScriptFunctions( void )
 	while ( path )
 	{
 		CScriptScope hTable{};
-		if ( g_pFullFileSystem->FindIsDirectory( fh ) )
-		{
-			if ( path[0] != '.' && Q_strncmp( path, "weapons", MAX_PATH ) && Q_strncmp( path, "entities", MAX_PATH ) )
-				break;
-
-			continue;
-		}
+		if ( g_pFullFileSystem->FindIsDirectory( fh ) && path[0] != '.' )
+			break;
 
 		HSCRIPT hScript = VScriptCompileScript( path, true );
 
