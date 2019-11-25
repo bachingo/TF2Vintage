@@ -492,6 +492,7 @@ public:
 		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
 		
 		GET_BOOL(pItem, pData, is_reskin);
+		GET_BOOL(pItem, pData, specialitem);
 		GET_STRING( pItem, pData, holiday_restriction );
 		GET_INT( pItem, pData, year );
 		GET_BOOL(pItem, pData, is_custom_content);

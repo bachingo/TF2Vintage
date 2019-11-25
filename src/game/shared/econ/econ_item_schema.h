@@ -247,6 +247,7 @@ public:
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 		is_reskin = false;
+		specialitem = false;
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		CLEAR_STR(holiday_restriction);
@@ -290,6 +291,7 @@ public:
 	bool act_as_wearable;
 	int hide_bodygroups_deployed_only;
 	bool is_reskin;
+	bool specialitem;
 	char holiday_restriction[128];
 	int year;
 	bool is_custom_content;

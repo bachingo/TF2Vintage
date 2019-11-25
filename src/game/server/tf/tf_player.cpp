@@ -1884,6 +1884,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			bool bIsReskin = false;			// Defaulted to false, since reskins aren't common.
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
 			bool bIsCustomContent = false;	
+			bool bIsSpecialRestricted = false;
 			
 			// Only run these checks when necessary.
 			
@@ -1905,9 +1906,17 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				}
 				else
 				{
-					if ((pItemDef->year) > tf2v_allowed_year_items.GetInt())
+					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt())
 					bWhiteListedWeapon = false;
 				}
+			}
+			
+			// If it's special, check access.
+			if ( pItemDef->specialitem )
+			{
+				CTFPlayer *pPlayer = this;
+				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
+				bIsSpecialRestricted = true;
 			}
 		
 			// Checks for holiday restrictions.
@@ -1926,7 +1935,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					bHolidayRestrictedItem = true;
 			}
 			
-			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsCustomContent == true ) ) ) // If the weapon is banned, swap for a stock weapon.
+			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsSpecialRestricted == true ) ) ) // If the weapon is banned, swap for a stock weapon.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
@@ -2184,6 +2193,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			Assert( pszClassname );
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
 			bool bWhiteListedCosmetic = true; // Only concerned with this when it's before the item's time (Time Paradox!)
+			bool bIsSpecialRestricted = false;
 			
 			if ( tf2v_force_year_items.GetBool() )
 			{
@@ -2197,6 +2207,14 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt() )
 					bWhiteListedCosmetic = false;
 				}
+			}
+			
+			// If it's special, check access.
+			if ( pItemDef->specialitem )
+			{
+				CTFPlayer *pPlayer = this;
+				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
+				bIsSpecialRestricted = true;
 			}
 			
 			// Checks for holiday restrictions.
@@ -2215,7 +2233,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 					bHolidayRestrictedItem = true;
 			}
 			
-			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic == false ) )  // If the item is banned, swap to the default cosmetic.
+			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic == false ) || ( bIsSpecialRestricted == true ) )  // If the item is banned, swap to the default cosmetic.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
@@ -10250,7 +10268,7 @@ int CTFPlayer::GetPlayerVIPRanking( void )
 	{
 		CSteamID steamIDForPlayer( pi.friendsID, 1, k_EUniversePublic, k_EAccountTypeIndividual );
 
-		// Regular Ranks
+		// Developer Ranks
 		
 		// Rank 1 Users
 		for ( int i = 0; i < ARRAYSIZE(VIPRANK1); i++ )
@@ -10258,6 +10276,9 @@ int CTFPlayer::GetPlayerVIPRanking( void )
 			if ( steamIDForPlayer.ConvertToUint64() == ( VIPRANK1[i] ) )
 				return 1;
 		}
+		
+		// Regular Ranks
+		
 		// Rank 2 Users
 		for ( int i = 0; i < ARRAYSIZE(VIPRANK2); i++ )
 		{
