@@ -5031,6 +5031,64 @@
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
 		}
+		"31169"
+		{
+			"name"	"Golden Wrench"
+			"prefab"	"weapon_wrench weapon_reskin"
+			"item_name"	"#TF_Unique_Golden_Wrench"
+			"propername"	"1"
+			"item_quality" "strange"
+			"specialitem"	"1"
+			"item_logname"	"wrench_golden"
+			"item_iconname"	"wrench_golden"
+			"image_inventory"	"backpack/weapons/c_models/c_wrench/gold_wrench"
+			"model_player"	"models/weapons/c_models/c_wrench/c_wrench.mdl"
+			"attributes"
+			{
+				"turn to gold"
+				{
+					"attribute_class"	"set_turn_to_gold"
+					"value" "1"
+				}
+			}
+			"visuals_red"
+			{
+				"skin"	"8"
+			}
+			"visuals_blu"
+			{
+				"skin"	"9"
+			}
+		}
+		"32071"
+		{
+			"name"	"Gold Frying Pan"
+			"prefab"	"weapon_fryingpan weapon_reskin"
+			"specialitem"	"1"
+			"item_quality" "strange"
+			"item_logname"	"golden_fryingpan"
+			"item_iconname"	"golden_fryingpan"
+			"item_type_name"	"#TF_Weapon_GoldFryingPan"
+			"item_name"	"#TF_Gold_FryingPan"
+			"image_inventory"	"backpack/weapons/c_models/c_frying_pan/c_frying_pan_gold"
+			"model_player"	"models/weapons/c_models/c_frying_pan/c_frying_pan.mdl"
+			"attributes"
+			{
+				"turn to gold"
+				{
+					"attribute_class"	"set_turn_to_gold"
+					"value" "1"
+				}
+			}
+			"visuals_red"
+			{
+				"skin"	"2"
+			}
+			"visuals_blu"
+			{
+				"skin"	"3"
+			}
+		}
 	}
 	"attributes"
 	{
