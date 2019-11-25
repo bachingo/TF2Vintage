@@ -826,17 +826,14 @@ bool UTIL_IsLowViolence( void )
 	// violence when the engine is in normal violence mode.
 	
 	// If we have a LV governor in the scripts folder, always LV.
-	KeyValues *pData = new KeyValues( "scripts/tf2v_lv.txt" );
-	if (pData) 
-	{
-		tf2v_lv.SetValue( 1 );
-		return true;
-	}
-	
+#if defined(TF_CLIENT_DLL) || defined (TF_VINTAGE_CLIENT)
+
 	// Check if we manually override the low violence ourselves.
 	if ( tf2v_lv.GetBool() )
 		return true;
 	
+#endif
+
 	// Turn on lowviolence mode when all of these are disabled.
 	if ( ( !violence_hblood.GetBool() && !violence_hgibs.GetBool() ) && ( !violence_ablood.GetBool() && !violence_agibs.GetBool() ) )
 		return true;
