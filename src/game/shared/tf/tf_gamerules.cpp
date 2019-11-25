@@ -3254,7 +3254,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 		}
 	}
-	/*else if ( pTFPlayer->m_bIsPlayerADev )
+	else if ( pTFPlayer->m_bIsPlayerADev )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
@@ -3271,7 +3271,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 				pszFormat = "TF_Chat_Dev";
 			}
 		}
-	}*/
+	}
 	else
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
