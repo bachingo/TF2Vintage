@@ -51,10 +51,12 @@ bool CTFInventory::Init( void )
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
 	bool bCosmeticsEnabled = tf2v_show_cosmetics_in_armory.GetBool();
+	bool bSpecialItems = CheckSpecialItemAccess();
 #endif
 #ifdef GAME_DLL
 	bool bReskinsEnabled = true;
 	bool bCosmeticsEnabled = true;
+	bool bSpecialItems = true;
 #endif
 
 	GetItemSchema()->Init();
@@ -96,7 +98,7 @@ bool CTFInventory::Init( void )
 #endif
 							m_Items[iClass][iSlot][0] = pNewItem;
 						}
-						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) )
+						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) && ( ( ( pItemDef->specialitem ) == 0 ) || ( ( bSpecialItems ) && ( bReskinsEnabled ) ) ) )
 						{
 							CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -137,7 +139,7 @@ bool CTFInventory::Init( void )
 #endif
 								m_Items[iClass][iSlot][0] = pNewItem;
 							}
-							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) )
+							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) && ( ( ( pItemDef->specialitem ) == 0 ) || ( ( bSpecialItems ) && ( bReskinsEnabled ) ) ) )
 							{
 								CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -221,6 +223,16 @@ bool CTFInventory::CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHu
 };
 
 #if defined( CLIENT_DLL )
+bool CTFInventory::CheckSpecialItemAccess()
+{
+#ifndef NO_STEAM
+	// Todo: Calculate this to VIP rank.
+#endif
+	
+	return false;
+	
+}
+
 void CTFInventory::LoadInventory()
 {
 	bool bExist = filesystem->FileExists("scripts/tf_inventory.txt", "MOD");
