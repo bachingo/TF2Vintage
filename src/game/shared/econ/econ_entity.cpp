@@ -196,45 +196,49 @@ void C_EconEntity::UpdateAttachmentModels( void )
 				}
 			}
 
-			C_BasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
-			if ( pPlayer && pPlayer->IsAlive() && !pPlayer->ShouldDrawThisPlayer() )
+			if ( pItem->attach_to_hands || pItem->attach_to_hands_vm_only )
 			{
-				if ( m_hAttachmentParent )
+				C_BasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
+				if ( pPlayer && pPlayer->IsAlive() && !pPlayer->ShouldDrawThisPlayer() )
 				{
-					// Some validation or something
-					return;
-				}
+					if ( !m_hAttachmentParent || m_hAttachmentParent != GetMoveParent() )
+					{
+						// Some validation or something
+						return;
+					}
 
-				CBaseViewModel *pViewmodel = pPlayer->GetViewModel();
-				if ( !pViewmodel )
+					CBaseViewModel *pViewmodel = pPlayer->GetViewModel();
+					if ( !pViewmodel )
+					{
+						// Same thing as above
+						return;
+					}
+
+					C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
+					if ( !pAddon )
+						return;
+
+					if ( pAddon->InitializeAsClientEntity( m_Item.GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
+					{
+						pAddon->SetOwnerEntity( this );
+						pAddon->SetParent( pViewmodel );
+						pAddon->SetLocalOrigin( vec3_origin );
+						pAddon->UpdatePartitionListEntry();
+						pAddon->CollisionProp()->UpdatePartition();
+						pAddon->UpdateVisibility();
+
+						m_hAttachmentParent = pAddon;
+					}
+				}
+				else
 				{
-					// Same thing as above
-					return;
+					if ( m_hAttachmentParent )
+						m_hAttachmentParent->Release();
 				}
-
-				C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
-				if ( !pAddon )
-					return;
-
-				if ( pAddon->InitializeAsClientEntity( m_Item.GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_TRANSLUCENT ) )
-				{
-					pAddon->SetParent( pViewmodel );
-					pAddon->SetLocalOrigin( vec3_origin );
-					pAddon->UpdatePartitionListEntry();
-					pAddon->CollisionProp()->UpdatePartition();
-					pAddon->UpdateVisibility();
-
-					m_hAttachmentParent = pAddon;
-
-					return;
-				}
-			}
-			else
-			{
-				if ( m_hAttachmentParent )
-					m_hAttachmentParent->Release();
 			}
 		}
+
+		return;
 	}
 	
 	if ( m_hAttachmentParent )
