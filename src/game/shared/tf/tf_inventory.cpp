@@ -14,6 +14,7 @@
 #ifdef CLIENT_DLL
 ConVar tf2v_show_reskins_in_armory("tf2v_show_reskins_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
 ConVar tf2v_show_cosmetics_in_armory("tf2v_show_cosmetics_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
+ConVar cl_show_debug_items("cl_show_debug_items", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display debug items.");
 #endif
 
 static CTFInventory g_TFInventory;
@@ -51,7 +52,7 @@ bool CTFInventory::Init( void )
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
 	bool bCosmeticsEnabled = tf2v_show_cosmetics_in_armory.GetBool();
-	bool bSpecialItems = CheckSpecialItemAccess();
+	bool bSpecialItems = CheckSpecialItemAccess();	// We could just use GetBool here, but this allows us to expand on it later.
 #endif
 #ifdef GAME_DLL
 	bool bReskinsEnabled = true;
@@ -226,9 +227,8 @@ bool CTFInventory::CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHu
 bool CTFInventory::CheckSpecialItemAccess()
 {
 #ifndef NO_STEAM
-	// Todo: Calculate this to VIP rank.
+	return cl_show_debug_items.GetBool();
 #endif
-	
 	return false;
 	
 }
