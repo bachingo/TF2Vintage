@@ -594,7 +594,9 @@ void CTFPlayer::TFPlayerThink()
 	{
 		int iHealthDrain = 0;
 		CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
-		if ( iHealthDrain )
+		int iHealthRegenLegacy = 0;
+		CALL_ATTRIB_HOOK_INT( iHealthRegenLegacy, add_health_regen_passive );
+		if ( iHealthDrain || iHealthRegenLegacy )
 		{
 			MedicRegenThink();
 			m_flNextHealthRegen = gpGlobals->curtime + TF_MEDIC_REGEN_TIME;
@@ -612,7 +614,6 @@ void CTFPlayer::MedicRegenThink( void )
 	// Health drain/regen attribute.
 	// If negative, drains health per second. If positive, heals based on the last time damage was taken.
 	int iHealthDrain = 0;
-	bool bHasRegen = 0;
 	CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
 	
 	// Health drain/regen attribute, based on the older passive healing per second model.
@@ -625,12 +626,15 @@ void CTFPlayer::MedicRegenThink( void )
 	{
 		if ( IsAlive() )
 		{
-			float flTimeSinceDamageGeneric = gpGlobals->curtime - GetLastDamageTime();
-			// We use the same time table as medic, but our range is 1HP to add_health_regen_medic instead.
-			float flScaleGeneric = RemapValClamped( flTimeSinceDamageGeneric, 5, 10, 1.0, iHealthDrain );
+			if ( TFGameRules()->GetGameType() != TF_GAMETYPE_MVM ) // Regen is static in MVM.
+			{
+				// Scale health regen to the last time we took damage.
+				float flTimeSinceDamageGeneric = gpGlobals->curtime - GetLastDamageTime();
+				// We use the same time table as medic, but our range is 1HP to add_health_regen instead.
+				float flScaleGeneric = RemapValClamped( flTimeSinceDamageGeneric, 5, 10, 1.0, iHealthDrain );
 
-			iHealthDrain = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleGeneric );
-			bHasRegen = 1;
+				iHealthDrain = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleGeneric );
+			}
 		}
 	}
 	
@@ -643,10 +647,12 @@ void CTFPlayer::MedicRegenThink( void )
 			float flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 3.0, 6.0 );
 
 			int iHealAmount = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
-			TakeHealth( iHealAmount + iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
+			TakeHealth( iHealAmount, DMG_GENERIC );
 		}
 	}
-	else
+
+	// Throw the event for health regen.
+	if ( ( iHealthDrain != 0 && iHealthDrain > 0 ) || ( iHealthRegenLegacy != 0 && iHealthRegenLegacy > 0) )
 	{
 		if ( IsAlive() )
 		{
@@ -666,7 +672,7 @@ void CTFPlayer::MedicRegenThink( void )
 		}
 	}
 
-	if ( IsPlayerClass( TF_CLASS_MEDIC ) || bHasRegen == 1 )
+	if ( IsPlayerClass( TF_CLASS_MEDIC ) )
 		SetContextThink( &CTFPlayer::MedicRegenThink, gpGlobals->curtime + TF_MEDIC_REGEN_TIME, "MedicRegenThink" );
 }
 
