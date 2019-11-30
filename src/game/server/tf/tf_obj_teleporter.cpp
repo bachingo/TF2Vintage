@@ -64,6 +64,8 @@ PRECACHE_REGISTER( obj_teleporter );
 ConVar tf_teleporter_fov_start( "tf_teleporter_fov_start", "120", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Starting FOV for teleporter zoom.", true, 1, false, 0 );
 ConVar tf_teleporter_fov_time( "tf_teleporter_fov_time", "0.5", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "How quickly to restore FOV after teleport.", true, 0.0, false, 0 );
 
+extern ConVar tf2v_use_new_wrench_mechanics;
+
 LINK_ENTITY_TO_CLASS( obj_teleporter,	CObjectTeleporter );
 
 //-----------------------------------------------------------------------------
@@ -1012,7 +1014,17 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 		iAmountToHeal = min( (int)(flRepairRate * 100), GetMaxHealth() - GetHealth() );
 
 		// repair the building
-		iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );
+		int iRepairCost;
+		if ( tf2v_use_new_wrench_mechanics.GetBool() )
+		{
+			// 33 metal to repair 100HP (new repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.33f );	
+		}
+		else
+		{
+			// 20 metal to repair 100HP (old repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );	
+		}
 
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
 			GetHealth(),

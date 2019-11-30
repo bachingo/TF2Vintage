@@ -61,6 +61,8 @@ ConVar tf_fastbuild("tf_fastbuild", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_obj_ground_clearance( "tf_obj_ground_clearance", "32", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Object corners can be this high above the ground" );
 ConVar tf2v_building_upgrades( "tf2v_building_upgrades", "1", FCVAR_REPLICATED, "Toggles the ability to upgrade buildings other than the sentrygun" );
 
+extern ConVar tf2v_use_new_wrench_mechanics;
+
 extern short g_sModelIndexFireball;
 
 // Minimum distance between 2 objects to ensure player movement between them
@@ -2059,8 +2061,16 @@ float CBaseObject::GetConstructionMultiplier( void )
 		}
 		else
 		{
-			// Each player hitting it builds twice as fast
-			flMultiplier *= 2.0;
+			if ( tf2v_use_new_wrench_mechanics.GetBool() ) 
+			{
+				// Each player hitting it builds 2.5x as fast
+				flMultiplier *= 2.5;
+			}
+			else
+			{
+				// Each player hitting it builds twice as fast
+				flMultiplier *= 2.0;
+			}
 
 			// Check if this weapon has a build modifier
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( UTIL_PlayerByIndex( m_RepairerList.Key( iThis ) ), flMultiplier, mult_construction_value );
@@ -2611,7 +2621,18 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 		int	iAmountToHeal = min( (int)(flRepairRate * 100) , GetMaxHealth() - GetHealth() );
 
 		// repair the building
-		int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );
+		int iRepairCost;
+		if ( tf2v_use_new_wrench_mechanics.GetBool() )
+		{
+			// 33 metal to repair 100HP (new repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.33f );	
+		}
+		else
+		{
+			// 20 metal to repair 100HP (old repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );	
+		}
+		
 	
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
 			GetHealth(),

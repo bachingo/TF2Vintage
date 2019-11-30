@@ -28,6 +28,7 @@ extern bool IsInCommentaryMode();
 
 extern ConVar tf_cheapobjects;
 extern ConVar tf_obj_upgrade_per_hit;
+extern ConVar tf2v_use_new_wrench_mechanics;
 
 // Ground placed version
 #define SENTRY_MODEL_PLACEMENT			"models/buildables/sentry1_blueprint.mdl"
@@ -647,7 +648,17 @@ bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
 		iAmountToHeal = Min( (int)(flRepairRate * 100), GetMaxHealth() - GetHealth() );
 					
 		// repair the building
-		int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );
+		int iRepairCost;
+		if ( tf2v_use_new_wrench_mechanics.GetBool() )
+		{
+			// 33 metal to repair 100HP (new repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.33f );	
+		}
+		else
+		{
+			// 20 metal to repair 100HP (old repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );	
+		}
 
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime,
 			GetHealth(),

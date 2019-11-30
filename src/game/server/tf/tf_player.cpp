@@ -117,7 +117,8 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
 
-ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "0", FCVAR_PROTECTED, "Allows servers to choose between the old and new fall damage sound types." );
+ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "0", FCVAR_NOTIFY, "Allows servers to choose between the old and new fall damage sound types." );
+ConVar tf2v_use_new_wrench_mechanics( "tf2v_use_new_wrench_mechanics", "0", FCVAR_NOTIFY, "Allows servers to choose between early and modern wrench build and repair mechanics." );
 
 
 extern ConVar spec_freeze_time;
