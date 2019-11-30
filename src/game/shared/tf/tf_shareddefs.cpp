@@ -1077,6 +1077,7 @@ const CObjectInfo* GetObjectInfo( int iObject )
 }
 
 ConVar tf_cheapobjects( "tf_cheapobjects","0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Set to 1 and all objects will cost 0" );
+ConVar tf2v_use_new_teleporter_cost( "tf2v_use_new_teleporter_cost", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era cheaper teleporter costs." );
 
 //-----------------------------------------------------------------------------
 // Purpose: Return the cost of another object of the specified type
@@ -1097,6 +1098,11 @@ int CalculateObjectCost( int iObjectType, bool bMini /*= false*/ )
 	if ( iObjectType == OBJ_SENTRYGUN && bMini )
 	{
 		iCost = 100;
+	}
+	
+	if ( iObjectType == OBJ_TELEPORTER && ( tf2v_use_new_teleporter_cost.GetBool() ) )
+	{
+		iCost = 50;	
 	}
 
 	return iCost;
