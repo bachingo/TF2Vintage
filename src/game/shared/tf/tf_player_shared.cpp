@@ -91,6 +91,9 @@ ConVar tf2v_new_flame_damage( "tf2v_new_flame_damage", "0", FCVAR_NOTIFY | FCVAR
 ConVar tf2v_clamp_speed( "tf2v_clamp_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable maximum speed bonus a player can have at a single time." );
 ConVar tf2v_max_speed_difference( "tf2v_max_speed_difference", "105", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maxmimum speed a player can be boosted, in HU/s." );
 
+ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era move speed for spies." );
+ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
+
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
 ConVar tf_enable_grenades( "tf_enable_grenade_equipment", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
@@ -4300,7 +4303,14 @@ void CTFPlayer::TeamFortress_SetSpeed()
 
 	// First, get their max class speed
 	maxfbspeed = GetPlayerClassData( playerclass )->m_flMaxSpeed;
-
+	
+	// Modern spies move at 320 units/s rather than the old 300 units/s.
+	// Because the speed is defined elsewhere, just use a fraction here. (~107%)
+	if ( ( playerclass == TF_CLASS_SPY ) && ( tf2v_use_new_spy_movespeeds.GetBool() ) )
+		maxfbspeed *= ( 320 / 300 );
+	
+	float flBaseSpeed = maxfbspeed;
+	
 	CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
 
 	// Speed Boost Effects.
@@ -4311,14 +4321,18 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	}
 	
 	// Clamp the max speed boost we can get.
-	if ( ( tf2v_clamp_speed.GetInt() ) && ( maxfbspeed > ( GetPlayerClassData( playerclass )->m_flMaxSpeed + tf2v_max_speed_difference.GetInt() ) ))
-		maxfbspeed = ( GetPlayerClassData( playerclass )->m_flMaxSpeed + tf2v_max_speed_difference.GetInt() );
+	if ( ( tf2v_clamp_speed.GetInt() ) && ( maxfbspeed > ( flBaseSpeed + tf2v_max_speed_difference.GetInt() ) ) )
+		maxfbspeed = ( flBaseSpeed + tf2v_max_speed_difference.GetInt() );
 	
 	// Slow us down if we're disguised as a slower class
 	// unless we're cloaked..
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
 	{
 		float flMaxDisguiseSpeed = GetPlayerClassData( m_Shared.GetDisguiseClass() )->m_flMaxSpeed;
+		
+		if ( ( m_Shared.GetDisguiseClass() == TF_CLASS_SPY ) && ( tf2v_use_new_spy_movespeeds.GetBool() ) )
+			flMaxDisguiseSpeed *= ( 320 / 300 );
+		
 		maxfbspeed = Min( flMaxDisguiseSpeed, maxfbspeed );
 	}
 
@@ -4360,7 +4374,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// Engineer moves slower while a hauling an object.
 	if ( playerclass == TF_CLASS_ENGINEER && m_Shared.IsCarryingObject() )
 	{
-		maxfbspeed *= 0.75f;
+		if ( tf2v_use_new_hauling_speed.GetBool() )
+			maxfbspeed *= 0.90f;
+		else
+			maxfbspeed *= 0.75f;
 	}
 
 	if ( m_Shared.InCond( TF_COND_STEALTHED ) )
