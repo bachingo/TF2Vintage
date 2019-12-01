@@ -140,6 +140,7 @@ ConVar tf_gamemode_passtime( "tf_gamemode_passtime", "0", FCVAR_NOTIFY | FCVAR_R
 ConVar tf_gamemode_medieval( "tf_gamemode_medieval", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_koth( "tf_gamemode_koth", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_vsh( "tf_gamemode_vsh", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_dr( "tf_gamemode_dr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
@@ -290,6 +291,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropInt( RECVINFO( m_nHudType ) ),
 	RecvPropBool( RECVINFO( m_bPlayingKoth ) ),
 	RecvPropBool( RECVINFO( m_bPlayingVSH ) ),
+	RecvPropBool( RECVINFO( m_bPlayingDR ) ),
 	RecvPropBool( RECVINFO( m_bPlayingMedieval ) ),
 	RecvPropBool( RECVINFO( m_bPlayingHybrid_CTF_CP ) ),
 	RecvPropBool( RECVINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -311,6 +313,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropInt( SENDINFO( m_nHudType ) ),
 	SendPropBool( SENDINFO( m_bPlayingKoth ) ),
 	SendPropBool( SENDINFO( m_bPlayingVSH ) ),
+	SendPropBool( SENDINFO( m_bPlayingDR ) ),
 	SendPropBool( SENDINFO( m_bPlayingMedieval ) ),
 	SendPropBool( SENDINFO( m_bPlayingHybrid_CTF_CP ) ),
 	SendPropBool( SENDINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -1428,6 +1431,7 @@ void CTFGameRules::Activate()
 	tf_gamemode_koth.SetValue( 0 );
 	tf_gamemode_medieval.SetValue( 0 );
 	tf_gamemode_vsh.SetValue( 0 );
+	tf_gamemode_dr.SetValue( 0 );
 	tf_gamemode_pd.SetValue( 0 );
 
 
@@ -1465,6 +1469,11 @@ void CTFGameRules::Activate()
 		{
 			tf_gamemode_vsh.SetValue(1);
 			m_bPlayingVSH = true;
+		}	// Ditto, but with DR for Deathrun.
+		else if ( !Q_strncmp( MapName(), "dr_", 3 ) )
+		{
+			tf_gamemode_dr.SetValue(1);
+			m_bPlayingDR = true;
 		}
 		else
 		{
@@ -1626,9 +1635,9 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 		else
 			return true;
 	}
-	else if ( !IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
+	else if ( !IsInVSHMode() && ( iDesiredClassIndex >= TF_FIRST_BOSS_CLASS ) )
 		return false;
-	else if ( IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
+	else if ( IsInVSHMode() && ( iDesiredClassIndex >= TF_FIRST_BOSS_CLASS ) )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TF_TEAM_PLAYER_BOSS )
 			return true;
@@ -3513,6 +3522,9 @@ static const char *g_aTaggedConVars[] =
 	"tf_gamemode_vsh",
 	"vsh",
 	
+	"tf_gamemode_dr",
+	"dr",
+	
 	"tf2v_allow_glow_outline",
 	"glow",
 	
@@ -4125,7 +4137,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 
 	int iDeathFlags = pTFPlayerVictim->GetDeathFlags();
 
-	if ( ( IsInArenaMode() && !IsInVSHMode() ) && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
+	if ( ( IsInArenaMode() && ( !IsInVSHMode() || !IsInDRMode() ) ) && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
 	{
 		m_bFirstBlood = true;
 		float flElapsedTime = gpGlobals->curtime - m_flStalemateStartTime;;
@@ -5028,7 +5040,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( bStreakReached && !IsInVSHMode() )
+		if ( bStreakReached && ( !IsInVSHMode() || !IsInDRMode() ) )
 		{
 			for ( i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
@@ -5036,7 +5048,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( !IsInTournamentMode() && !IsInVSHMode() )
+		if ( !IsInTournamentMode() && ( !IsInVSHMode() || !IsInDRMode() ) )
 		{
 			if ( iActivePlayers > 0 )
 				Arena_ResetLosersScore( bStreakReached );
@@ -5044,7 +5056,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 				Arena_ResetLosersScore( true );
 		}
 		
-		if ( IsInVSHMode() )
+		if ( IsInVSHMode() || IsInDRMode() )
 			bStreakReached = true;
 
 		if ( iActivePlayers <= 0 )
@@ -5410,7 +5422,7 @@ void CTFGameRules::HandleScrambleTeams( void )
 		}
 	}
 
-	if (IsInVSHMode())
+	if ( IsInVSHMode() || IsInDRMode() )
 	{
 		// We random pick a player to be the boss character.
 		int iBossPlayer = RandomInt(0, pListPlayers.Count());
@@ -6886,6 +6898,8 @@ const char *CTFGameRules::GetGameDescription( void )
 		case TF_GAMETYPE_ARENA:
 			if ( IsInVSHMode() )
 				return "TF2V (VSH)";
+			else if ( IsInDRMode() )
+				return "TF2V (DR)";
 			
 			return "TF2V (Arena)";
 			break;
