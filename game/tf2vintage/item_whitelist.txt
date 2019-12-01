@@ -27,7 +27,7 @@
 	"The Equalizer"									"1"
 	"The Buff Banner"								"1"
 	"The Scottish Resistance"						"1"
-	"The Chargin' Targe"							"1"
+	"Legacy Chargin' Targe"							"1"
 	"The Eyelander"									"1"
 	"The Gunboats"									"1"
 	"The Wrangler"									"1"
@@ -76,6 +76,7 @@
 	// Reskins
 	"TTG Max Pistol"								"1"
 	"TTG Sam Revolver"								"1"
+	"The Chargin' Targe"							"1"
 	"The Holy Mackerel"								"1"
 	"Rocket Jumper"									"1"
 	"Frying Pan"									"1"

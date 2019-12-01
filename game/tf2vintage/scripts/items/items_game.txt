@@ -2144,6 +2144,25 @@
 				"demoman"	"1"
 			}
 		}
+		"weapon_targe"
+		{
+			"prefab"	"weapon_shield"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
+			"attributes"
+			{
+				"dmg taken from fire reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"			"0.5"
+				}
+				"dmg taken from blast reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_explosions"
+					"value"			"0.6"
+				}
+			}
+		}
 		"weapon_crusaders_crossbow"
 		{
 			"item_class"	"tf_weapon_crossbow"
@@ -3222,25 +3241,10 @@
 		}
 		"131"
 		{
-			"name"	"The Chargin' Targe"
-			"prefab"	"weapon_shield"
-			"propername"	"1"
-			"year"			"2009"
-			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
-			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
-			"attributes"
-			{
-				"dmg taken from fire reduced"
-				{
-					"attribute_class"	"mult_dmgtaken_from_fire"
-					"value"			"0.5"
-				}
-				"dmg taken from blast reduced"
-				{
-					"attribute_class"	"mult_dmgtaken_from_explosions"
-					"value"			"0.6"
-				}
-			}
+			"name"	"Legacy Chargin' Targe"
+			"prefab"	"weapon_targe"
+			"year"		"2009"
+			"model_player"	"models/weapons/c_models/c_targe/c_targe_team.mdl"
 		}
 		"132"
 		{
@@ -4580,6 +4584,13 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun"
 			"model_player"	"models/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun.mdl"
+		}
+		"10131"
+		{
+			"name"	"The Chargin' Targe"
+			"prefab"	"weapon_targe weapon_reskin"
+			"year"		"2010"
+			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
 		}
 		"10221"
 		{
