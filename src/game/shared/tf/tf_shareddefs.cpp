@@ -127,7 +127,7 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Pyro",
 	"Spy",
 	"Engineer",
-	"Saxton Hale",
+	"Saxton",
 };
 
 const char *g_aDominationEmblems[] =
@@ -183,7 +183,7 @@ typedef struct PlayerClassData
 	const char *szClassName;
 	const char *szLocalizedName;
 } PlayerClassData_t;
-PlayerClassData_t gs_PlayerClassData[ TF_CLASS_COUNT_ALL + 1 ] ={
+PlayerClassData_t gs_PlayerClassData[ TF_CLASS_COUNT_ALL ] ={
 	{	"Undefined",  "#TF_Class_Name_Undefined" },
 	{	"Scout",      "#TF_Class_Name_Scout"     },
 	{	"Sniper",     "#TF_Class_Name_Sniper"    },
@@ -195,7 +195,6 @@ PlayerClassData_t gs_PlayerClassData[ TF_CLASS_COUNT_ALL + 1 ] ={
 	{	"Spy",        "#TF_Class_Name_Spy"       },
 	{	"Engineer",   "#TF_Class_Name_Engineer"  },
 	{	"Saxton",     "#TF_SaxtonHat"  },
-	{	"Invalid",    NULL  }
 };
 
 bool IsPlayerClassName( char const *str )

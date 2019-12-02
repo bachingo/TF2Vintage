@@ -144,9 +144,8 @@ enum
 	
 	// New classes go here.
 	// These are special classes and are not found normally.
-	TF_CLASS_SAXTON,
-	
-	
+	TF_CLASS_SAXTON,		// TF_FIRST_BOSS_CLASS
+							// TF_LAST_BOSS_CLASS
 	TF_CLASS_COUNT_ALL,
 
 	TF_CLASS_RANDOM
