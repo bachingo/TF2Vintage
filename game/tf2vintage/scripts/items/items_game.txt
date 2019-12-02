@@ -334,7 +334,6 @@
 		"zombie"
 		{
 			"prefab"	"weapon_wearable"
-			"baseitem"	"1"
 			"propername" "0"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
 			"item_quality"	"haunted"
@@ -976,7 +975,7 @@
 			"item_iconname"	"paintrain"
 			"item_type_name"	"#TF_Weapon_MakeshiftClub"
 			"item_name"	"#TF_Unique_Makeshiftclub"
-			"image_inventory"	"backpack/weapons/c_models/c_paintrain/c_paintrain"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_paintrain/c_paintrain"
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 -3 -11"
@@ -1780,7 +1779,7 @@
 			"item_logname"	"ullapool_caber"
 			"item_iconname"	"ullapool_caber"
 			"item_slot"	"melee"
-			"image_inventory" "backpack/weapons/c_models/c_caber/c_caber"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_caber/c_caber"
 			"model_player"	"models/weapons/c_models/c_caber/c_caber.mdl"
 			"used_by_classes"
 			{
@@ -2253,7 +2252,7 @@
 		"weapon_reskin"
 		{
 			"is_reskin"			"1"
-			"item_quality" "customized"
+			"item_quality" "unique"
 		}
 	}
 	"items"
@@ -3959,7 +3958,7 @@
 			"item_iconname"	"loch_n_load"
 			"item_name"		"#TF_LochNLoad"
 			"propername"	"1"
-			"image_inventory"	"backpack/weapons/c_models/c_lochnload/c_lochnload"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_lochnload/c_lochnload"
 			"model_player"	"models/workshop/weapons/c_models/c_lochnload/c_lochnload.mdl"
 			"attributes"
 			{
@@ -4439,6 +4438,7 @@
 		{
 			"name"		"Zombie Scout"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieScout"
 			"equip_regions"
 			{
@@ -4456,6 +4456,7 @@
 		{
 			"name"		"Zombie Soldier"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieSoldier"
 			"used_by_classes"
 			{
@@ -4468,6 +4469,7 @@
 		{
 			"name"		"Zombie Heavy"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieHeavy"
 			"used_by_classes"
 			{
@@ -4480,6 +4482,7 @@
 		{
 			"name"		"Zombie Demo"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieDemoman"
 			"used_by_classes"
 			{
@@ -4492,6 +4495,7 @@
 		{
 			"name"		"Zombie Engineer"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieEngineer"
 			"used_by_classes"
 			{
@@ -4504,6 +4508,7 @@
 		{
 			"name"		"Zombie Medic"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieMedic"
 			"used_by_classes"
 			{
@@ -4516,6 +4521,7 @@
 		{
 			"name"		"Zombie Spy"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieSpy"
 			"used_by_classes"
 			{
@@ -4528,6 +4534,7 @@
 		{
 			"name"		"Zombie Pyro"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombiePyro"
 			"equip_regions"
 			{
@@ -4545,6 +4552,7 @@
 		{
 			"name"		"Zombie Sniper"
 			"prefab"	"zombie"
+			"baseitem"	"1"
 			"item_name"	"#TF_Item_ZombieSniper"
 			"used_by_classes"
 			{
@@ -4948,142 +4956,6 @@
 			"item_description"	"#TF_PyroHazmat_Style3"
 			"year"			"2012"
 			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador_dark.mdl"
-		}
-		"30474"
-		{
-			"name"		"The Nostromo Napalmer"
-			"prefab"		"weapon_flamethrower weapon_reskin"
-			"year"			"2014"
-			"item_logname"		"ai_flamethrower"
-			"item_iconname"		"ai_flamethrower"
-			"item_name"		"#TF_NostromoNapalmer"
-			"propername"	"1"
-			"image_inventory"		"backpack/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower"
-			"model_player"		"models/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower.mdl"
-		}
-		"30666"
-		{
-			"name"		"The C.A.P.P.E.R"
-			"prefab"		"weapon_pistol weapon_reskin"
-			"year"			"2015"
-			"item_name"		"#TF_invasion_pistol"
-			"propername"	"1"
-			"item_logname"		"the_capper"
-			"item_iconname"		"the_capper"
-			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol"
-			"model_player"		"models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol.mdl"
-			"used_by_classes"
-			{
-				"scout"	"1"
-				"engineer"	"1"
-			}
-			"static_attrs"
-			{
-				"ragdolls become ash"		"1"
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_Capper.Single"
-				"sound_burst"		"Weapon_Capper.SingleCrit"
-				"styles"
-				{
-					"0"
-					{
-						"skin_red"		"0"
-						"skin_blu"		"1"
-					}
-				}
-			}
-			"visuals_red"
-			{
-				"skin"		"0"
-				"sound_single_shot"		"Weapon_Capper.Single"
-				"sound_burst"		"Weapon_Capper.SingleCrit"
-				"muzzle_flash"		"muzzle_raygun_red"
-				"tracer_effect"		"bullet_tracer_raygun"
-			}
-			"visuals_blu"
-			{
-				"skin"		"1"
-				"sound_single_shot"		"Weapon_Capper.Single"
-				"sound_burst"		"Weapon_Capper.SingleCrit"
-				"muzzle_flash"		"muzzle_raygun_blue"
-				"tracer_effect"		"bullet_tracer_raygun"
-			}
-		}
-		"30667"
-		{
-			"name"		"Batsaber"
-			"prefab"		"weapon_bat weapon_reskin"
-			"year"			"2015"
-			"item_name"		"#TF_invasion_bat"
-			"propername"	"1"
-			"item_logname"		"batsaber"
-			"item_iconname"		"batsaber"
-			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat"
-			"model_player"		"models/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat.mdl"
-			"static_attrs"
-			{
-				"ragdolls plasma effect"		"1"
-			}
-			"visuals"
-			{
-				"sound_melee_miss"		"Weapon_BatSaber.Swing"
-				"sound_melee_hit"		"Weapon_BatSaber.HitFlesh"
-				"sound_melee_hit_world"		"Weapon_BatSaber.HitWorld"
-				"sound_burst"		"Weapon_BatSaber.SwingCrit"
-				"sound_deploy"		"Weapon_BatSaber.Draw"
-				"styles"
-				{
-					"0"
-					{
-						"skin_red"		"0"
-						"skin_blu"		"1"
-					}
-				}
-			}
-		}
-		"30668"
-		{
-			"name"		"The Giger Counter"
-			"prefab"		"weapon_wrangler weapon_reskin"
-			"year"			"2015"
-			"item_name"		"#TF_invasion_wrangler"
-			"propername"	"1"
-			"item_logname"		"giger_counter"
-			"item_iconname"		"giger_counter"
-			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
-			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
-		}
-		"31169"
-		{
-			"name"	"Golden Wrench"
-			"prefab"	"weapon_wrench weapon_reskin"
-			"year" "2010"
-			"item_name"	"#TF_Unique_Golden_Wrench"
-			"propername"	"1"
-			"item_quality" "developer"
-			"specialitem"	"1"
-			"item_logname"	"wrench_golden"
-			"item_iconname"	"wrench_golden"
-			"image_inventory"	"backpack/weapons/c_models/c_wrench/gold_wrench"
-			"model_player"	"models/weapons/c_models/c_wrench/c_wrench.mdl"
-			"attributes"
-			{
-				"turn to gold"
-				{
-					"attribute_class"	"set_turn_to_gold"
-					"value" "1"
-				}
-			}
-			"visuals_red"
-			{
-				"skin"	"8"
-			}
-			"visuals_blu"
-			{
-				"skin"	"9"
-			}
 		}
 	}
 	"attributes"
