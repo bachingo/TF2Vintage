@@ -7,6 +7,7 @@
 //===========================================================================//
 
 #include "cbase.h"
+#include "fmtstr.h"
 #include "gamestringpool.h"
 #include "mapentities_shared.h"
 #include "game.h"
@@ -92,8 +93,13 @@
 #include "vscript/ivscript.h"
 #include "vscript_server.h"
 #include "ScriptGameEventListener.h"
-
-
+#ifdef _WIN32
+#include <direct.h> // getcwd
+#elif POSIX
+#include <dlfcn.h>
+#include <unistd.h>
+#define _getcwd getcwd
+#endif
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
 #include "econ_item_inventory.h"
@@ -663,7 +669,19 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	if ( !CommandLine()->CheckParm( "-noscripting" ) )
 	{
-		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+	#if defined( TF_VINTAGE )
+		char szCwd[1024];
+		_getcwd( szCwd, sizeof( szCwd ) );
+
+		static CDllDemandLoader s_VScript( CFmtStr( "%s/tf2vintage/bin/vscript.dll", szCwd ) );
+	#else
+		static CDllDemandLoader s_VScript( "vscript.dll" );
+	#endif
+
+		CreateInterfaceFn pAppFactory = s_VScript.GetFactory();
+		if( pAppFactory )
+			scriptmanager = (IScriptManager *)pAppFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+
 		AssertMsg( scriptmanager, "Scripting was not properly initialized" );
 	}
 
@@ -3494,7 +3512,7 @@ public:
 	{
 		AddAppSystem( "soundemittersystem" DLL_EXT_STRING, SOUNDEMITTERSYSTEM_INTERFACE_VERSION );
 		AddAppSystem( "scenefilecache" DLL_EXT_STRING, SCENE_FILE_CACHE_INTERFACE_VERSION );
-		AddAppSystem( "vscript" DLL_EXT_STRING, VSCRIPT_INTERFACE_VERSION );
+		//AddAppSystem( "vscript" DLL_EXT_STRING, VSCRIPT_INTERFACE_VERSION );
 	}
 
 	virtual int	Count()

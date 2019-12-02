@@ -5,6 +5,7 @@
 // $NoKeywords: $
 //===========================================================================//
 #include "cbase.h"
+#include "fmtstr.h"
 #include <crtmemdebug.h>
 #include "vgui_int.h"
 #include "clientmode.h"
@@ -112,6 +113,13 @@
 #include "matsys_controls/matsyscontrols.h"
 #include "gamestats.h"
 #include "particle_parse.h"
+#ifdef _WIN32
+#include <direct.h> // getcwd
+#elif POSIX
+#include <dlfcn.h>
+#include <unistd.h>
+#define _getcwd getcwd
+#endif
 #include "vscript/ivscript.h"
 #if defined( TF_CLIENT_DLL )
 #include "rtime.h"
@@ -435,7 +443,7 @@ public:
 	{
 		AddAppSystem( "soundemittersystem" DLL_EXT_STRING, SOUNDEMITTERSYSTEM_INTERFACE_VERSION );
 		AddAppSystem( "scenefilecache" DLL_EXT_STRING, SCENE_FILE_CACHE_INTERFACE_VERSION );
-		AddAppSystem( "vscript" DLL_EXT_STRING, VSCRIPT_INTERFACE_VERSION );
+		//AddAppSystem( "vscript" DLL_EXT_STRING, VSCRIPT_INTERFACE_VERSION );
 	}
 
 	virtual int	Count()
@@ -1026,7 +1034,19 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 	if ( !CommandLine()->CheckParm( "-noscripting" ) )
 	{
-		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+	#if defined( TF_VINTAGE_CLIENT )
+		char szCwd[1024];
+		_getcwd( szCwd, sizeof( szCwd ) );
+
+		static CDllDemandLoader s_VScript( CFmtStr( "%s/tf2vintage/bin/vscript.dll", szCwd ) );
+	#else
+		static CDllDemandLoader s_VScript( "vscript.dll" );
+	#endif
+
+		CreateInterfaceFn pAppFactory = s_VScript.GetFactory();
+		if( pAppFactory )
+			scriptmanager = (IScriptManager *)pAppFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+
 		AssertMsg( scriptmanager, "Scripting was not properly initialized" );
 	}
 
