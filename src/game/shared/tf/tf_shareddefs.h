@@ -144,9 +144,8 @@ enum
 	
 	// New classes go here.
 	// These are special classes and are not found normally.
-	TF_CLASS_SAXTON,
-	
-	
+	TF_CLASS_SAXTON,		// TF_FIRST_BOSS_CLASS
+							// TF_LAST_BOSS_CLASS
 	TF_CLASS_COUNT_ALL,
 
 	TF_CLASS_RANDOM
@@ -1182,6 +1181,7 @@ enum
 	SENTRY_STATE_UPGRADING,
 	SENTRY_STATE_WRANGLED,
 	SENTRY_STATE_WRANGLED_RECOVERY,
+	SENTRY_STATE_SAPPER_RECOVERY,
 
 	SENTRY_NUM_STATES,
 };

@@ -28,6 +28,9 @@ extern bool IsInCommentaryMode();
 
 extern ConVar tf_cheapobjects;
 extern ConVar tf_obj_upgrade_per_hit;
+extern ConVar tf2v_use_new_wrench_mechanics;
+ConVar tf2v_use_new_sentry_sappers( "tf2v_use_new_sentry_sappers", "0", FCVAR_NOTIFY, "Changes damage resistance and sentry behaviors when using sappers to modern values." );
+
 
 // Ground placed version
 #define SENTRY_MODEL_PLACEMENT			"models/buildables/sentry1_blueprint.mdl"
@@ -51,6 +54,7 @@ extern ConVar tf_obj_upgrade_per_hit;
 
 #define SENTRY_THINK_DELAY		0.05
 #define WRANGLER_RECOVERY_TIME	3.00f
+#define SAPPER_RECOVERY_TIME	0.50f
 
 #define	SENTRYGUN_CONTEXT	"SentrygunContext"
 
@@ -60,7 +64,9 @@ extern ConVar tf_obj_upgrade_per_hit;
 #define SENTRYGUN_MINIGUN_RESIST_LVL_2		0.15
 #define SENTRYGUN_MINIGUN_RESIST_LVL_3		0.20
 
+
 #define SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER	0.33f
+#define SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER_GUNMETTLE	0.66f
 
 #define MINI_SENTRYGUN_PITCH	120
 
@@ -225,6 +231,13 @@ void CObjectSentrygun::OnStopWrangling( void )
 	m_iState.Set( SENTRY_STATE_WRANGLED_RECOVERY );
 }
 
+void CObjectSentrygun::SapperRecovery( void )
+{
+	// Wait 0.5 seconds before resuming function
+	m_flRecoveryTime = gpGlobals->curtime + SAPPER_RECOVERY_TIME;
+	m_iState.Set( SENTRY_STATE_SAPPER_RECOVERY );
+}
+
 void CObjectSentrygun::SentryThink( void )
 {
 	// Don't think while re-deploying so we don't target anything inbetween upgrades.
@@ -262,6 +275,13 @@ void CObjectSentrygun::SentryThink( void )
 			}
 			break;
 
+		case SENTRY_STATE_SAPPER_RECOVERY:
+			if ( gpGlobals->curtime > m_flRecoveryTime )
+			{
+				m_iState.Set( SENTRY_STATE_SEARCHING );
+			}
+			break;
+			
 		default:
 			Assert( 0 );
 			break;
@@ -647,7 +667,17 @@ bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
 		iAmountToHeal = Min( (int)(flRepairRate * 100), GetMaxHealth() - GetHealth() );
 					
 		// repair the building
-		int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );
+		int iRepairCost;
+		if ( tf2v_use_new_wrench_mechanics.GetBool() )
+		{
+			// 33 metal to repair 100HP (new repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.33f );	
+		}
+		else
+		{
+			// 20 metal to repair 100HP (old repair cost)
+			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );	
+		}
 
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime,
 			GetHealth(),
@@ -1586,6 +1616,9 @@ void CObjectSentrygun::OnEndDisabled( void )
 
 	m_vecGoalAngles.x = 0;
 
+	if ( tf2v_use_new_sentry_sappers.GetBool() )
+		SapperRecovery();
+	
 	BaseClass::OnEndDisabled();
 }
 
@@ -1781,7 +1814,12 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 		// Take less damage if the owner is causing additional damage.
 		if ( pSapper && ( info.GetAttacker() == pSapper->GetOwner() ) )
 		{
-			float flDamage = newInfo.GetDamage() * SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER;
+			float flDamage;
+			if ( tf2v_use_new_sentry_sappers.GetBool() )
+				flDamage = newInfo.GetDamage() * SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER_GUNMETTLE;
+			else
+				flDamage = newInfo.GetDamage() * SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER;
+			
 			newInfo.SetDamage( flDamage );
 		}
 	}

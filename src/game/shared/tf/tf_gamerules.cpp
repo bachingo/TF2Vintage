@@ -100,6 +100,7 @@ ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_R
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "", HalloweenChanged );
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_fullmoon( "tf_fullmoon", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "");
 //ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
 ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
 ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9, ValidateCapturesPerRound );
@@ -140,6 +141,7 @@ ConVar tf_gamemode_passtime( "tf_gamemode_passtime", "0", FCVAR_NOTIFY | FCVAR_R
 ConVar tf_gamemode_medieval( "tf_gamemode_medieval", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_koth( "tf_gamemode_koth", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_vsh( "tf_gamemode_vsh", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_dr( "tf_gamemode_dr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
@@ -290,6 +292,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropInt( RECVINFO( m_nHudType ) ),
 	RecvPropBool( RECVINFO( m_bPlayingKoth ) ),
 	RecvPropBool( RECVINFO( m_bPlayingVSH ) ),
+	RecvPropBool( RECVINFO( m_bPlayingDR ) ),
 	RecvPropBool( RECVINFO( m_bPlayingMedieval ) ),
 	RecvPropBool( RECVINFO( m_bPlayingHybrid_CTF_CP ) ),
 	RecvPropBool( RECVINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -311,6 +314,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropInt( SENDINFO( m_nHudType ) ),
 	SendPropBool( SENDINFO( m_bPlayingKoth ) ),
 	SendPropBool( SENDINFO( m_bPlayingVSH ) ),
+	SendPropBool( SENDINFO( m_bPlayingDR ) ),
 	SendPropBool( SENDINFO( m_bPlayingMedieval ) ),
 	SendPropBool( SENDINFO( m_bPlayingHybrid_CTF_CP ) ),
 	SendPropBool( SENDINFO( m_bPlayingSpecialDeliveryMode ) ),
@@ -1428,6 +1432,7 @@ void CTFGameRules::Activate()
 	tf_gamemode_koth.SetValue( 0 );
 	tf_gamemode_medieval.SetValue( 0 );
 	tf_gamemode_vsh.SetValue( 0 );
+	tf_gamemode_dr.SetValue( 0 );
 	tf_gamemode_pd.SetValue( 0 );
 
 
@@ -1465,6 +1470,11 @@ void CTFGameRules::Activate()
 		{
 			tf_gamemode_vsh.SetValue(1);
 			m_bPlayingVSH = true;
+		}	// Ditto, but with DR for Deathrun.
+		else if ( !Q_strncmp( MapName(), "dr_", 3 ) )
+		{
+			tf_gamemode_dr.SetValue(1);
+			m_bPlayingDR = true;
 		}
 		else
 		{
@@ -1626,9 +1636,9 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 		else
 			return true;
 	}
-	else if ( !IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
+	else if ( !IsInVSHMode() && ( iDesiredClassIndex >= TF_FIRST_BOSS_CLASS ) )
 		return false;
-	else if ( IsInVSHMode() && ( iDesiredClassIndex > TF_LAST_NORMAL_CLASS ) )
+	else if ( IsInVSHMode() && ( iDesiredClassIndex >= TF_FIRST_BOSS_CLASS ) )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TF_TEAM_PLAYER_BOSS )
 			return true;
@@ -3513,6 +3523,9 @@ static const char *g_aTaggedConVars[] =
 	"tf_gamemode_vsh",
 	"vsh",
 	
+	"tf_gamemode_dr",
+	"dr",
+	
 	"tf2v_allow_glow_outline",
 	"glow",
 	
@@ -4125,7 +4138,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 
 	int iDeathFlags = pTFPlayerVictim->GetDeathFlags();
 
-	if ( ( IsInArenaMode() && !IsInVSHMode() ) && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
+	if ( ( IsInArenaMode() && ( !IsInVSHMode() || !IsInDRMode() ) ) && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
 	{
 		m_bFirstBlood = true;
 		float flElapsedTime = gpGlobals->curtime - m_flStalemateStartTime;;
@@ -5028,7 +5041,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( bStreakReached && !IsInVSHMode() )
+		if ( bStreakReached && ( !IsInVSHMode() || !IsInDRMode() ) )
 		{
 			for ( i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
@@ -5036,7 +5049,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 			}
 		}
 
-		if ( !IsInTournamentMode() && !IsInVSHMode() )
+		if ( !IsInTournamentMode() && ( !IsInVSHMode() || !IsInDRMode() ) )
 		{
 			if ( iActivePlayers > 0 )
 				Arena_ResetLosersScore( bStreakReached );
@@ -5044,7 +5057,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 				Arena_ResetLosersScore( true );
 		}
 		
-		if ( IsInVSHMode() )
+		if ( IsInVSHMode() || IsInDRMode() )
 			bStreakReached = true;
 
 		if ( iActivePlayers <= 0 )
@@ -5410,7 +5423,7 @@ void CTFGameRules::HandleScrambleTeams( void )
 		}
 	}
 
-	if (IsInVSHMode())
+	if ( IsInVSHMode() || IsInDRMode() )
 	{
 		// We random pick a player to be the boss character.
 		int iBossPlayer = RandomInt(0, pListPlayers.Count());
@@ -5893,7 +5906,7 @@ bool CTFGameRules::IsBirthday( void )
 			{
 				// July 4th is the birthday of the first TF2V release, while May 27 was a milestone update.
 				// August 24th is the Team Fortress birthday.
-				if ( ( ( today->tm_mon == 5 && today->tm_mday == 27 ) || ( today->tm_mon == 7 && today->tm_mday == 4 ) ) || ( today->tm_mon == 8 && today->tm_mday == 24 ) )
+				if ( ( ( today->tm_mon == (5-1) && today->tm_mday == 27 ) || ( today->tm_mon == (7-1) && today->tm_mday == 4 ) ) || ( today->tm_mon == (8-1) && today->tm_mday == 24 ) )
 				{
 					m_iBirthdayMode = HOLIDAY_ON;
 				}
@@ -5926,9 +5939,9 @@ bool CTFGameRules::IsHalloween( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				// Just for Halloween: ( today->tm_mon == 10 && today->tm_mday == 31 )
+				// Just for Halloween: 10/31
 				// We use the week before Halloween to the end of Dia de Muertos for this range.
-				if ( ( today->tm_mon == 10 && ( ( today->tm_mday >= 23 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == 11 ) && ( today->tm_mday <= 2 ) ) )
+				if ( ( today->tm_mon == (10-1) && ( ( today->tm_mday >= 23 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (11-1) ) && ( today->tm_mday <= 2 ) ) )
 				{
 					m_iHalloweenMode = HOLIDAY_ON;
 				}
@@ -5950,7 +5963,7 @@ bool CTFGameRules::IsFullMoon( void )
 	if ( m_iFullMoonMode == HOLIDAY_RECALCULATE )
 	{
 		m_iFullMoonMode = HOLIDAY_OFF;
-		if ( tf_halloween.GetBool() )
+		if ( tf_fullmoon.GetBool() )
 		{
 			m_iFullMoonMode = HOLIDAY_ON;
 		}
@@ -6017,9 +6030,9 @@ bool CTFGameRules::IsChristmas( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				// Just for Christmas: ( today->tm_mon == 12 && today->tm_mday == 25 )
+				// Just for Christmas: 12/25
 				// We use the day before Winter Solstice to the day after National Hangover Day for this range.
-				if ( ( today->tm_mon == 12 && ( ( today->tm_mday >= 20 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == 1 ) && ( today->tm_mday <= 1 ) ) )
+				if ( ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 20 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (1-1) ) && ( today->tm_mday <= 1 ) ) )
 				{
 					m_iChristmasMode = HOLIDAY_ON;
 				}
@@ -6047,7 +6060,7 @@ bool CTFGameRules::IsValentinesDay( void )
 		struct tm *today = localtime( ptime );
 		if ( today )
 		{
-			if ( today->tm_mon == 2 && today->tm_mday == 14 )
+			if ( today->tm_mon == (2-1) && today->tm_mday == 14 )
 			{
 				m_iValentinesDayMode = HOLIDAY_ON;
 			}
@@ -6074,7 +6087,7 @@ bool CTFGameRules::IsAprilFools( void )
 		struct tm *today = localtime( ptime );
 		if ( today )
 		{
-			if ( ( today->tm_mon == 4 && today->tm_mday == 1 ) )
+			if ( ( today->tm_mon == (4-1) && today->tm_mday == 1 ) )
 			{
 				m_iAprilFoolsMode = HOLIDAY_ON;
 			}
@@ -6103,10 +6116,10 @@ bool CTFGameRules::IsEOTL( void )
 		{
 			// End of the Line released December 8th. The event itself ended January 7th.
 			// We have the holidays run through the same time, so finish it beforehand.
-			if ( today->tm_mon == 12 && ( ( today->tm_mday >= 8 ) && ( today->tm_mday <= 17 ) ) )
+			if ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 8 ) && ( today->tm_mday <= 17 ) ) )
 			{
 				m_iEOTLMode = HOLIDAY_ON;
-				}
+			}
 		}
 	}
 
@@ -6132,7 +6145,7 @@ bool CTFGameRules::IsBreadUpdate( void )
 		{
 			// Love and War released June 18th, and ran to July 9th.
 			// Purposely skip over July 4th, because that is the TF2V birthday.
-			if ( ( today->tm_mon == 6 && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == 7 && ( ( ( today->tm_mday >= 1 ) && ( today->tm_mday <= 9 ) ) && ( today->tm_mday != 4 ) ) ) )
+			if ( ( today->tm_mon == (6-1) && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == (7-1) && ( ( ( today->tm_mday >= 1 ) && ( today->tm_mday <= 9 ) ) && ( today->tm_mday != 4 ) ) ) )
 			{
 				m_iBreadUpdateMode = HOLIDAY_ON;
 			}
@@ -6886,6 +6899,8 @@ const char *CTFGameRules::GetGameDescription( void )
 		case TF_GAMETYPE_ARENA:
 			if ( IsInVSHMode() )
 				return "TF2V (VSH)";
+			else if ( IsInDRMode() )
+				return "TF2V (DR)";
 			
 			return "TF2V (Arena)";
 			break;

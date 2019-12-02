@@ -3029,7 +3029,7 @@ void CTeamplayRoundBasedRules::CheckRespawnWaves( void )
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::BalanceTeams( bool bRequireSwitcheesToBeDead )
 {
-	if ( mp_autoteambalance.GetBool() == false || ( IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true ) )
+	if ((mp_autoteambalance.GetBool() == false || (IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true)) || (TFGameRules()->IsInVSHMode() == true || TFGameRules()->IsInDRMode() == true))
 	{
 		return;
 	}

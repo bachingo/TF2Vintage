@@ -117,7 +117,6 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
 
-ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "0", FCVAR_PROTECTED, "Allows servers to choose between the old and new fall damage sound types." );
 
 
 extern ConVar spec_freeze_time;
@@ -158,6 +157,10 @@ ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY
 ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
 ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
 
+ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "0", FCVAR_NOTIFY, "Allows servers to choose between the old and new fall damage sound types." );
+ConVar tf2v_use_new_wrench_mechanics( "tf2v_use_new_wrench_mechanics", "0", FCVAR_NOTIFY, "Allows servers to choose between early and modern wrench build and repair mechanics." );
+
+ConVar tf2v_force_melee( "tf2v_force_melee", "0", FCVAR_NOTIFY, "Allow players to only use melee weapons." );
 
 
 
@@ -594,7 +597,9 @@ void CTFPlayer::TFPlayerThink()
 	{
 		int iHealthDrain = 0;
 		CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
-		if ( iHealthDrain )
+		int iHealthRegenLegacy = 0;
+		CALL_ATTRIB_HOOK_INT( iHealthRegenLegacy, add_health_regen_passive );
+		if ( iHealthDrain || iHealthRegenLegacy )
 		{
 			MedicRegenThink();
 			m_flNextHealthRegen = gpGlobals->curtime + TF_MEDIC_REGEN_TIME;
@@ -612,7 +617,6 @@ void CTFPlayer::MedicRegenThink( void )
 	// Health drain/regen attribute.
 	// If negative, drains health per second. If positive, heals based on the last time damage was taken.
 	int iHealthDrain = 0;
-	bool bHasRegen = 0;
 	CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
 	
 	// Health drain/regen attribute, based on the older passive healing per second model.
@@ -625,12 +629,15 @@ void CTFPlayer::MedicRegenThink( void )
 	{
 		if ( IsAlive() )
 		{
-			float flTimeSinceDamageGeneric = gpGlobals->curtime - GetLastDamageTime();
-			// We use the same time table as medic, but our range is 1HP to add_health_regen_medic instead.
-			float flScaleGeneric = RemapValClamped( flTimeSinceDamageGeneric, 5, 10, 1.0, iHealthDrain );
+			if ( TFGameRules()->GetGameType() != TF_GAMETYPE_MVM ) // Regen is static in MVM.
+			{
+				// Scale health regen to the last time we took damage.
+				float flTimeSinceDamageGeneric = gpGlobals->curtime - GetLastDamageTime();
+				// We use the same time table as medic, but our range is 1HP to add_health_regen instead.
+				float flScaleGeneric = RemapValClamped( flTimeSinceDamageGeneric, 5, 10, 1.0, iHealthDrain );
 
-			iHealthDrain = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleGeneric );
-			bHasRegen = 1;
+				iHealthDrain = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleGeneric );
+			}
 		}
 	}
 	
@@ -643,10 +650,12 @@ void CTFPlayer::MedicRegenThink( void )
 			float flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 3.0, 6.0 );
 
 			int iHealAmount = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
-			TakeHealth( iHealAmount + iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
+			TakeHealth( iHealAmount, DMG_GENERIC );
 		}
 	}
-	else
+
+	// Throw the event for health regen.
+	if ( ( iHealthDrain != 0 && iHealthDrain > 0 ) || ( iHealthRegenLegacy != 0 && iHealthRegenLegacy > 0) )
 	{
 		if ( IsAlive() )
 		{
@@ -666,7 +675,7 @@ void CTFPlayer::MedicRegenThink( void )
 		}
 	}
 
-	if ( IsPlayerClass( TF_CLASS_MEDIC ) || bHasRegen == 1 )
+	if ( IsPlayerClass( TF_CLASS_MEDIC ) )
 		SetContextThink( &CTFPlayer::MedicRegenThink, gpGlobals->curtime + TF_MEDIC_REGEN_TIME, "MedicRegenThink" );
 }
 
@@ -1863,8 +1872,13 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 
 	for (int iSlot = 0; iSlot <= TF_PLAYER_WEAPON_COUNT; ++iSlot)
 	{
+		
+		// Only allow for melee items, if we enable it or are in a special gamemode.
+		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && (iSlot != TF_LOADOUT_SLOT_MELEE) )
+			continue;
+		
 		if (iSlot == TF_LOADOUT_SLOT_BUILDING )  
-		continue;	// Don't check this slot here.
+			continue;	// Don't check this slot here.
 	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 		{
@@ -1977,6 +1991,9 @@ void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 	
 	for (int iWeapon = 0; iWeapon <= TF_PLAYER_WEAPON_COUNT; ++iWeapon)
 	{
+		// Only allow for melee items if we enable it or are in a special gamemode.
+		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && (iWeapon != TF_LOADOUT_SLOT_MELEE) )
+			continue;
 		
 		int iWeaponID = GetTFInventory()->GetWeapon( m_PlayerClass.GetClassIndex(), iWeapon );
 
@@ -2065,6 +2082,9 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 	for (int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i)
 	{
+		// Only allow for melee items, if we enable it or are in a special gamemode.
+		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && (i != TF_LOADOUT_SLOT_MELEE) )
+			continue;
 		
 		CTFInventory *pInv = GetTFInventory();
 		Assert( pInv );
