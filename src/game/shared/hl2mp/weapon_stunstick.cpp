@@ -636,7 +636,7 @@ void C_WeaponStunStick::ClientThink( void )
 			beamInfo.m_flSpeed = 0.0;
 			beamInfo.m_nStartFrame = 0.0;
 			beamInfo.m_flFrameRate = 1.0f;
-			beamInfo.m_flRed = 255.0f;;
+			beamInfo.m_flRed = 255.0f;
 			beamInfo.m_flGreen = 255.0f;
 			beamInfo.m_flBlue = 255.0f;
 			beamInfo.m_nSegments = 16;
@@ -771,7 +771,7 @@ void C_WeaponStunStick::DrawThirdPersonEffects( void )
 			beamInfo.m_flSpeed = 0.0;
 			beamInfo.m_nStartFrame = 0.0;
 			beamInfo.m_flFrameRate = 1.0f;
-			beamInfo.m_flRed = 255.0f;;
+			beamInfo.m_flRed = 255.0f;
 			beamInfo.m_flGreen = 255.0f;
 			beamInfo.m_flBlue = 255.0f;
 			beamInfo.m_nSegments = 16;

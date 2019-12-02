@@ -4141,7 +4141,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 	if ( ( IsInArenaMode() && ( !IsInVSHMode() || !IsInDRMode() ) ) && tf_arena_first_blood.GetBool() && !m_bFirstBlood && pScorer && pScorer != pTFPlayerVictim )
 	{
 		m_bFirstBlood = true;
-		float flElapsedTime = gpGlobals->curtime - m_flStalemateStartTime;;
+		float flElapsedTime = gpGlobals->curtime - m_flStalemateStartTime;
 
 		if ( flElapsedTime <= 20.0 )
 		{
@@ -5089,7 +5089,7 @@ void CTFGameRules::Arena_RunTeamLogic( void )
 
 					for ( i = 0; i < iPlayersNeeded; ++i )
 					{
-						CTFPlayer *pTFPlayer = m_hArenaQueue.Element( i );;
+						CTFPlayer *pTFPlayer = m_hArenaQueue.Element( i );
 						if ( i >= iUnknown )
 							iTeam = TF_TEAM_AUTOASSIGN;
 

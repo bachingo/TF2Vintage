@@ -52,7 +52,7 @@ private:
 
 	bool				bCompleted;
 
-	float				fUpdateLastCheck;;	
+	float				fUpdateLastCheck;
 
 	HServerListRequest hRequest;
 	CUtlMap<int, gameserveritem_t> m_mapServers;

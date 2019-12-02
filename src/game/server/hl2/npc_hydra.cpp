@@ -346,7 +346,7 @@ void CNPC_Hydra::RunAI( void )
 
 Vector CNPC_Hydra::TestPosition( float t )
 {
-	// return GetAbsOrigin( ) + Vector( sin( (m_seed + t) * 2.3 ) * 15, cos( (m_seed + t) * 2.4 ) * 150, sin( ( m_seed + t ) * 1.8 ) * 50 ) + m_vecOutward * sv_hydraLength.GetFloat();;
+	// return GetAbsOrigin( ) + Vector( sin( (m_seed + t) * 2.3 ) * 15, cos( (m_seed + t) * 2.4 ) * 150, sin( ( m_seed + t ) * 1.8 ) * 50 ) + m_vecOutward * sv_hydraLength.GetFloat();
 	t = (int)(t * 0.2);
 #if 1
 	Vector tmp = Vector( sin( (m_seed + t) * 0.8 ) * 15, cos( (m_seed + t) * 0.9 ) * 150, sin( ( m_seed + t ) * 0.4 ) * 50 );

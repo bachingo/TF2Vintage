@@ -1529,7 +1529,7 @@ void CNPC_Manhack::Slice( CBaseEntity *pHitEntity, float flInterval, trace_t &tr
 
 		VectorNormalize( velocity );
 		
-		data.m_vNormal = ( tr.plane.normal + velocity ) * 0.5;;
+		data.m_vNormal = ( tr.plane.normal + velocity ) * 0.5;
 
 		DispatchEffect( "ManhackSparks", data );
 
@@ -1610,7 +1610,7 @@ void CNPC_Manhack::Bump( CBaseEntity *pHitEntity, float flInterval, trace_t &tr 
 
 			VectorNormalize( velocity );
 			
-			data.m_vNormal = ( tr.plane.normal + velocity ) * 0.5;;
+			data.m_vNormal = ( tr.plane.normal + velocity ) * 0.5;
 
 			DispatchEffect( "ManhackSparks", data );
 

@@ -325,7 +325,7 @@ void CTFMusicManager::StopMusic( bool bPlayEnding /*= false*/ )
 	// Play ending segment that corrensonds to the current track.
 	if ( bPlayEnding )
 	{
-		const char *pszFormat = GetMusicPower() < 3 ? "music/combat_%d/end_medium.mp3" : "music/combat_%d/end_heavy.mp3";;
+		const char *pszFormat = GetMusicPower() < 3 ? "music/combat_%d/end_medium.mp3" : "music/combat_%d/end_heavy.mp3";
 		char szSound[128];
 		V_snprintf( szSound, 128, pszFormat, m_iTrack );
 

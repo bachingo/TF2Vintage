@@ -324,7 +324,7 @@ void CTFStatPanel::TestStatPanel( TFStatType_t statType, RecordBreakType_t recor
 		return;
 	
 	m_iCurStatClass = pPlayer->GetPlayerClass()->GetClassIndex();
-	ClassStats_t &classStats = GetClassStats( m_iCurStatClass );;
+	ClassStats_t &classStats = GetClassStats( m_iCurStatClass );
 	m_iCurStatValue = classStats.max.m_iStat[statType];
 	m_iCurStatTeam = pPlayer->GetTeamNumber();
 

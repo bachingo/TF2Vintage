@@ -304,7 +304,7 @@ void CWeaponFrag::PrimaryAttack( void )
 		return;
 	}
 
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );;
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 
 	if ( !pPlayer )
 		return;
