@@ -100,6 +100,7 @@ ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_R
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "", HalloweenChanged );
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_fullmoon( "tf_fullmoon", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "");
 //ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
 ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
 ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9, ValidateCapturesPerRound );
@@ -5905,7 +5906,7 @@ bool CTFGameRules::IsBirthday( void )
 			{
 				// July 4th is the birthday of the first TF2V release, while May 27 was a milestone update.
 				// August 24th is the Team Fortress birthday.
-				if ( ( ( today->tm_mon == 5 && today->tm_mday == 27 ) || ( today->tm_mon == 7 && today->tm_mday == 4 ) ) || ( today->tm_mon == 8 && today->tm_mday == 24 ) )
+				if ( ( ( today->tm_mon == (5-1) && today->tm_mday == 27 ) || ( today->tm_mon == (7-1) && today->tm_mday == 4 ) ) || ( today->tm_mon == (8-1) && today->tm_mday == 24 ) )
 				{
 					m_iBirthdayMode = HOLIDAY_ON;
 				}
@@ -5938,9 +5939,9 @@ bool CTFGameRules::IsHalloween( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				// Just for Halloween: ( today->tm_mon == 10 && today->tm_mday == 31 )
+				// Just for Halloween: 10/31
 				// We use the week before Halloween to the end of Dia de Muertos for this range.
-				if ( ( today->tm_mon == 10 && ( ( today->tm_mday >= 23 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == 11 ) && ( today->tm_mday <= 2 ) ) )
+				if ( ( today->tm_mon == (10-1) && ( ( today->tm_mday >= 23 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (11-1) ) && ( today->tm_mday <= 2 ) ) )
 				{
 					m_iHalloweenMode = HOLIDAY_ON;
 				}
@@ -5962,7 +5963,7 @@ bool CTFGameRules::IsFullMoon( void )
 	if ( m_iFullMoonMode == HOLIDAY_RECALCULATE )
 	{
 		m_iFullMoonMode = HOLIDAY_OFF;
-		if ( tf_halloween.GetBool() )
+		if ( tf_fullmoon.GetBool() )
 		{
 			m_iFullMoonMode = HOLIDAY_ON;
 		}
@@ -6029,9 +6030,9 @@ bool CTFGameRules::IsChristmas( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				// Just for Christmas: ( today->tm_mon == 12 && today->tm_mday == 25 )
+				// Just for Christmas: 12/25
 				// We use the day before Winter Solstice to the day after National Hangover Day for this range.
-				if ( ( today->tm_mon == 12 && ( ( today->tm_mday >= 20 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == 1 ) && ( today->tm_mday <= 1 ) ) )
+				if ( ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 20 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (1-1) ) && ( today->tm_mday <= 1 ) ) )
 				{
 					m_iChristmasMode = HOLIDAY_ON;
 				}
@@ -6059,7 +6060,7 @@ bool CTFGameRules::IsValentinesDay( void )
 		struct tm *today = localtime( ptime );
 		if ( today )
 		{
-			if ( today->tm_mon == 2 && today->tm_mday == 14 )
+			if ( today->tm_mon == (2-1) && today->tm_mday == 14 )
 			{
 				m_iValentinesDayMode = HOLIDAY_ON;
 			}
@@ -6086,7 +6087,7 @@ bool CTFGameRules::IsAprilFools( void )
 		struct tm *today = localtime( ptime );
 		if ( today )
 		{
-			if ( ( today->tm_mon == 4 && today->tm_mday == 1 ) )
+			if ( ( today->tm_mon == (4-1) && today->tm_mday == 1 ) )
 			{
 				m_iAprilFoolsMode = HOLIDAY_ON;
 			}
@@ -6115,10 +6116,10 @@ bool CTFGameRules::IsEOTL( void )
 		{
 			// End of the Line released December 8th. The event itself ended January 7th.
 			// We have the holidays run through the same time, so finish it beforehand.
-			if ( today->tm_mon == 12 && ( ( today->tm_mday >= 8 ) && ( today->tm_mday <= 17 ) ) )
+			if ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 8 ) && ( today->tm_mday <= 17 ) ) )
 			{
 				m_iEOTLMode = HOLIDAY_ON;
-				}
+			}
 		}
 	}
 
@@ -6144,7 +6145,7 @@ bool CTFGameRules::IsBreadUpdate( void )
 		{
 			// Love and War released June 18th, and ran to July 9th.
 			// Purposely skip over July 4th, because that is the TF2V birthday.
-			if ( ( today->tm_mon == 6 && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == 7 && ( ( ( today->tm_mday >= 1 ) && ( today->tm_mday <= 9 ) ) && ( today->tm_mday != 4 ) ) ) )
+			if ( ( today->tm_mon == (6-1) && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == (7-1) && ( ( ( today->tm_mday >= 1 ) && ( today->tm_mday <= 9 ) ) && ( today->tm_mday != 4 ) ) ) )
 			{
 				m_iBreadUpdateMode = HOLIDAY_ON;
 			}
