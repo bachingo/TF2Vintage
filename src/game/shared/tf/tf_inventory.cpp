@@ -14,7 +14,6 @@
 #ifdef CLIENT_DLL
 ConVar tf2v_show_reskins_in_armory("tf2v_show_reskins_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
 ConVar tf2v_show_cosmetics_in_armory("tf2v_show_cosmetics_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
-ConVar cl_show_debug_items("cl_show_debug_items", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display debug items.");
 #endif
 
 static CTFInventory g_TFInventory;
@@ -52,12 +51,10 @@ bool CTFInventory::Init( void )
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
 	bool bCosmeticsEnabled = tf2v_show_cosmetics_in_armory.GetBool();
-	bool bSpecialItems = CheckSpecialItemAccess();	// We could just use GetBool here, but this allows us to expand on it later.
 #endif
 #ifdef GAME_DLL
 	bool bReskinsEnabled = true;
 	bool bCosmeticsEnabled = true;
-	bool bSpecialItems = true;
 #endif
 
 	GetItemSchema()->Init();
@@ -79,9 +76,9 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || ( bCosmeticsEnabled ) ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) ) 
+				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || ( pItemDef->baseitem || bCosmeticsEnabled ) ) || ( ( iSlot == TF_LOADOUT_SLOT_MEDAL ) || ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) ) ) 
 				{
-					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) || ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )
+					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) && ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )	// Skip MISC2 since we do it below.
 					{
 						if ( pItemDef->baseitem )
 						{
@@ -99,7 +96,7 @@ bool CTFInventory::Init( void )
 #endif
 							m_Items[iClass][iSlot][0] = pNewItem;
 						}
-						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) && ( ( ( pItemDef->specialitem ) == 0 ) || ( ( bSpecialItems ) && ( bReskinsEnabled ) ) ) )
+						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) )
 						{
 							CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -109,18 +106,18 @@ bool CTFInventory::Init( void )
 							m_Items[iClass][iSlot].AddToTail( pNewItem );
 						}
 					}
-					if ( iSlot == TF_LOADOUT_SLOT_MISC1 ) // We need to duplicate across all misc slots.
+					else if ( iSlot != TF_LOADOUT_SLOT_MISC2 ) // We need to duplicate across all misc slots.
 					{
 						for (int iMiscSlot = 1; iMiscSlot <= TF_PLAYER_MISC_COUNT; ++iMiscSlot)
 						{
 							switch (iMiscSlot)
 							{
+								case 1:
+									iSlot = TF_LOADOUT_SLOT_MISC1;
+									break;
+									
 								case 2:
 									iSlot = TF_LOADOUT_SLOT_MISC2;
-									break;
-
-								default:
-									iSlot = TF_LOADOUT_SLOT_MISC1;
 									break;
 							}
 		
@@ -140,7 +137,7 @@ bool CTFInventory::Init( void )
 #endif
 								m_Items[iClass][iSlot][0] = pNewItem;
 							}
-							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin ) == 0 ) || ( bReskinsEnabled ) ) && ( ( ( pItemDef->specialitem ) == 0 ) || ( ( bSpecialItems ) && ( bReskinsEnabled ) ) ) )
+							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) )
 							{
 								CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -226,9 +223,7 @@ bool CTFInventory::CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHu
 #if defined( CLIENT_DLL )
 bool CTFInventory::CheckSpecialItemAccess()
 {
-#ifndef NO_STEAM
-	return cl_show_debug_items.GetBool();
-#endif
+	// Placeholder until we can implement SteamID checking here.
 	return false;
 	
 }
