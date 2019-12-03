@@ -2028,14 +2028,8 @@
 		{
 			"prefab"	"weapon_sword"
 			"item_type_name"	"#TF_Weapon_Sword"
-			"item_slot"	"melee"
-			"anim_slot"	"item1"
 			"image_inventory"	"backpack/weapons/c_models/c_claymore/c_claymore"
 			"model_player"	"models/weapons/c_models/c_claymore/c_claymore.mdl"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
 			"attributes"
 			{
 				"crit mod disabled"
