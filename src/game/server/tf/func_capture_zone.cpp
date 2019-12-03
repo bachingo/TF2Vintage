@@ -42,6 +42,9 @@ END_SEND_TABLE()
 
 IMPLEMENT_AUTO_LIST( ICaptureZoneAutoList );
 
+
+extern ConVar tf2v_assault_ctf_rules;
+
 //=============================================================================
 //
 // CTF Flag Capture Zone functions.
@@ -85,8 +88,15 @@ void CCaptureZone::CaptureTouch( CBaseEntity *pOther )
 				// does this capture point have a team number asssigned?
 				if ( GetTeamNumber() != TEAM_UNASSIGNED )
 				{
+					// TF2V exclusive: We use different capture zones for regular CTF, same capture zones for Assault CTF.
+					bool bIsTeamCapturePoint;
+					if (tf2v_assault_ctf_rules.GetBool() )
+						bIsTeamCapturePoint = pPlayer->GetTeamNumber() != GetTeamNumber();
+					else
+						bIsTeamCapturePoint = pPlayer->GetTeamNumber() == GetTeamNumber();
+					
 					// Check to see if the capture zone team matches the player's team.
-					if ( pPlayer->GetTeamNumber() != TEAM_UNASSIGNED && pPlayer->GetTeamNumber() != GetTeamNumber() )
+					if ( pPlayer->GetTeamNumber() != TEAM_UNASSIGNED && bIsTeamCapturePoint )
 					{
 						if ( pFlag->GetGameType() == TF_FLAGTYPE_CTF )
 						{

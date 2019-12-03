@@ -40,6 +40,7 @@ ConVar cl_flag_return_size( "cl_flag_return_size", "20", FCVAR_CHEAT );
 extern ConVar tf_flag_caps_per_round;
 
 ConVar cl_flag_return_height( "cl_flag_return_height", "82", FCVAR_CHEAT );
+ConVar tf2v_assault_ctf_rules( "tf2v_assault_ctf_rules", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses reversed CTF locations. Applied on map switch." );
 
 #endif
 
@@ -369,7 +370,21 @@ void CCaptureFlag::Activate( void )
 {
 	BaseClass::Activate();
 
-	m_iOriginalTeam = GetTeamNumber();
+	if (tf2v_assault_ctf_rules.GetBool() )
+	{
+		// If we're playing Assault CTF, swap the flags.
+		switch (GetTeamNumber())
+		{
+		case TF_TEAM_RED:
+			m_iOriginalTeam = TF_TEAM_BLUE;
+			break;
+		case TF_TEAM_BLUE:
+			m_iOriginalTeam = TF_TEAM_RED;
+			break;
+		}
+	}
+	else
+		m_iOriginalTeam = GetTeamNumber();
 
 	m_nSkin = GetIntelSkin(GetTeamNumber());
 }

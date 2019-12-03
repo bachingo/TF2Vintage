@@ -105,6 +105,7 @@ ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLIC
 #ifdef GAME_DLL
 extern ConVar tf2v_allow_cosmetics;
 extern ConVar tf2v_randomizer;
+extern ConVar tf2v_assault_ctf_rules;
 #endif
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
@@ -4388,7 +4389,14 @@ void CTFPlayer::TeamFortress_SetSpeed()
 
 	if ( pWeapon )
 		maxfbspeed *= pWeapon->GetSpeedMod();
-
+	
+#ifdef GAME_DLL
+	// TF2V exclusive: If we're using Assault CTF rules, cut the carrier's speed to encourage team cooperation.
+	CCaptureFlag *pCaptureFlag = dynamic_cast<CCaptureFlag *>( Weapon_OwnsThisID( TF_ITEM_CAPTURE_FLAG ) );
+	if ( pCaptureFlag && tf2v_assault_ctf_rules.GetBool() )
+		maxfbspeed *= 0.75;
+#endif
+		
 	CTFSword *pSword = dynamic_cast<CTFSword *>( Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
 	if (pSword)
 		maxfbspeed *= pSword->GetSwordSpeedMod();
