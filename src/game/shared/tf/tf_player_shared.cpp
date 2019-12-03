@@ -2083,69 +2083,80 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 
 	// pyros don't burn persistently or take persistent burning damage, but we show brief burn effect so attacker can tell they hit
 	bool bVictimIsPyro = ( TF_CLASS_PYRO ==  m_pOuter->GetPlayerClass()->GetClassIndex() );
+	int nVictimIsFlameProof = 0;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ToTFPlayer(m_pOuter), nVictimIsFlameProof, set_fire_retardant);
 
-
-	if (!InCond(TF_COND_BURNING))
+	if (nVictimIsFlameProof == 0 )
 	{
-		m_flFlameBurnTime = gpGlobals->curtime;	//asap
-		// let the attacker know he burned me
-		if (pAttacker && !bVictimIsPyro)
+		if (!InCond(TF_COND_BURNING))
 		{
-			pAttacker->OnBurnOther(m_pOuter);
-		}
-		if (tf2v_new_flame_damage.GetBool())	// Start keeping track of flame stacks.
-			m_flFlameStack = 0;
-	}
-
-	if (tf2v_new_flame_damage.GetBool())	// Jungle Inferno Calculations
-	{
-		CTFWeaponBase *pWeapon = pAttacker->GetActiveTFWeapon(); // Check the weapon we're using to calculate afterburn.
-		if ( !bVictimIsPyro && ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER ) ) // If we have a Flamethrower, stack our afterburn from 4-10 seconds.
-		{
-			m_flFlameStack += 1;	// Add a flame to our stack.
-			float flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MIN_JI + (0.4 * (m_flFlameStack - 1) ); // Duration is 4 + ( 0.4 * (n - 1 ) ) seconds, where n is flame thrower hits.
-			if (flFlameLifeAdjusted > TF_BURNING_FLAME_LIFE_MAX_JI )	// Max out at 10 seconds
-				flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MAX_JI;
-			if ( m_flFlameRemoveTime && ( ( flFlameLifeAdjusted + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If we're less than the original remove time, increase the duration.
-				flFlameLifeAdjusted = ( m_flFlameRemoveTime - gpGlobals->curtime ); // Reset the afterburn time to the longer value.
-			
-			if ( flFlameDuration != -1.0f  )
-				m_flFlameLife = flFlameDuration;
-			else
-				m_flFlameLife = flFlameLifeAdjusted;
-				
-		}
-		else // Something other than a flame thrower, or we're attacking a pyro.
-		{
-			m_flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE_JI;
-
-			if ( m_flFlameRemoveTime && ( ( m_flFlameLife + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If less than original remove time, increase duration.
+			AddCond(TF_COND_BURNING);
+			m_flFlameBurnTime = gpGlobals->curtime;	//asap
+			// let the attacker know he burned me
+			if (pAttacker && !bVictimIsPyro)
 			{
-				m_flFlameLife = ( m_flFlameRemoveTime - gpGlobals->curtime ); // Reset the afterburn time to the longer value.
+				pAttacker->OnBurnOther(m_pOuter);
 			}
-			
+			if (tf2v_new_flame_damage.GetBool())	// Start keeping track of flame stacks.
+				m_flFlameStack = 0;
+		}
+
+		if (tf2v_new_flame_damage.GetBool())	// Jungle Inferno Calculations
+		{
+			CTFWeaponBase *pWeapon = pAttacker->GetActiveTFWeapon(); // Check the weapon we're using to calculate afterburn.
+			if ( !bVictimIsPyro && ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER ) ) // If we have a Flamethrower, stack our afterburn from 4-10 seconds.
+			{
+				m_flFlameStack += 1;	// Add a flame to our stack.
+				float flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MIN_JI + (0.4 * (m_flFlameStack - 1) ); // Duration is 4 + ( 0.4 * (n - 1 ) ) seconds, where n is flame thrower hits.
+				if (flFlameLifeAdjusted > TF_BURNING_FLAME_LIFE_MAX_JI )	// Max out at 10 seconds
+					flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MAX_JI;
+				if ( m_flFlameRemoveTime && ( ( flFlameLifeAdjusted + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If we're less than the original remove time, increase the duration.
+					flFlameLifeAdjusted = ( m_flFlameRemoveTime - gpGlobals->curtime ); // Reset the afterburn time to the longer value.
+				
+				if ( flFlameDuration != -1.0f  )
+					m_flFlameLife = flFlameDuration;
+				else
+					m_flFlameLife = flFlameLifeAdjusted;
+					
+			}
+			else // Something other than a flame thrower, or we're attacking a pyro.
+			{
+				m_flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE_JI;
+
+				if ( m_flFlameRemoveTime && ( ( m_flFlameLife + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If less than original remove time, increase duration.
+				{
+					m_flFlameLife = ( m_flFlameRemoveTime - gpGlobals->curtime ); // Reset the afterburn time to the longer value.
+				}
+				
+				if ( flFlameDuration != -1.0f  )
+					m_flFlameLife = flFlameDuration;
+			}
+		}
+		else	// Original Flame Calculations
+		{
+			m_flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
+
 			if ( flFlameDuration != -1.0f  )
 				m_flFlameLife = flFlameDuration;
 		}
-	}
-	else	// Original Flame Calculations
-	{
-		m_flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
 
-		if ( flFlameDuration != -1.0f  )
-			m_flFlameLife = flFlameDuration;
-	}
-
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pAttacker, m_flFlameLife, mult_wpn_burntime);
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pAttacker, m_flFlameLife, mult_wpn_burntime);
+			
+		m_flFlameRemoveTime = gpGlobals->curtime + m_flFlameLife;
+		m_hBurnAttacker = pAttacker;
+		m_hBurnWeapon = pWeapon;
 		
-	m_flFlameRemoveTime = gpGlobals->curtime + m_flFlameLife;
-	m_hBurnAttacker = pAttacker;
-	m_hBurnWeapon = pWeapon;
-	
-	if (!InCond(TF_COND_BURNING))
+	}
+	else // Don't burn players with fire retardant items.
 	{
-		// Start burning, now that our parameters are set.
-		AddCond(TF_COND_BURNING);
+		if (InCond(TF_COND_BURNING))
+		{
+			// If we're on fire, stop burning and prevent us from being burnt.
+			RemoveCond(TF_COND_BURNING);
+		}
+		m_flFlameBurnTime = 0;
+		m_flFlameLife = 0;
+		m_flFlameRemoveTime = 0;
 	}
 
 #endif
