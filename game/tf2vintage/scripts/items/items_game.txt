@@ -2248,6 +2248,11 @@
 			"is_reskin"			"1"
 			"item_quality" "unique"
 		}
+		"weapon_custom"
+		{
+			"is_custom_content"			"1"
+			"item_quality" "community"
+		}
 	}
 	"items"
 	{
@@ -3358,7 +3363,7 @@
 		"156"
 		{
 			"name"	"The Pain Train (Pyro)"
-			"prefab"	"weapon_paintrain"
+			"prefab"	"weapon_paintrain weapon_custom"
 			"propername"	"1"
 			"year"			"2010"
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain_pyro.mdl"
@@ -4210,6 +4215,31 @@
 				}
 			}
 		}
+		"333"
+        {
+            "name"            "Fire Retardant Suit"
+            "prefab"        "weapon_wearable weapon_custom"
+            "year"            "2010"
+            "item_type_name"    "TF_Wearable_Shirt"
+            "item_name"        "#TF_jul13_soot_suit"
+            "propername"    "0"
+            "item_slot"        "secondary"
+            "equip_region"    "spy_coat"
+            "image_inventory"    "backpack/player/items/spy/firesuit_large"
+            "model_player"    "models/workshop/player/items/spy/firesuit/firesuit.mdl"
+            "used_by_classes"
+            {
+                "spy"    "1"
+            }
+            "attributes"
+            {
+                "fire retardant"
+                {
+                    "attribute_class"    "set_fire_retardant"
+                    "value" "1"
+                }
+            }
+        }
 		"348"
 		{
 			"name"	"Sharpened Volcano Fragment"
@@ -4296,7 +4326,7 @@
 		"417"
 		{
 			"name"	"The Reserve Shooter (Engineer)"
-			"prefab"	"weapon_reserve_shooter"
+			"prefab"	"weapon_reserve_shooter weapon_custom"
 			"propername"	"1"
 			"year"			"2011"
 			"item_slot"	"primary"
