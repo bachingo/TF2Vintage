@@ -67,6 +67,7 @@
 	"The Claidheamohmor"							"1"
 	"The Jag"										"1"
 	"Fists of Steel"								"1"
+	"Fire Retardant Suit"							"1"
 	"Sharpened Volcano Fragment"					"1"
 	"The Reserve Shooter"							"1"
 	"The Market Gardener"							"1"
