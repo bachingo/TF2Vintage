@@ -1694,7 +1694,7 @@ void CTFPlayer::GiveDefaultItems()
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 {
-	if ( pData->m_aBuildable[0] != OBJ_LAST )
+	if ( ( pData->m_aBuildable[0] != OBJ_LAST ) && ( !TFGameRules()->IsInDRMode() && !tf2v_force_melee.GetBool() ) )
 	{
 		CEconItemView *pItem = GetLoadoutItem( GetPlayerClass()->GetClassIndex(), TF_LOADOUT_SLOT_BUILDING );
 		CTFWeaponBase *pBuilder = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
