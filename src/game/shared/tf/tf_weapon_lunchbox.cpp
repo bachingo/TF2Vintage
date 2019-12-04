@@ -143,7 +143,10 @@ void CTFLunchBox::SecondaryAttack( void )
 			pPowerup->SetModel( TF_FISHCAKE_PLATE_MODEL );
 			break;
 		default:
-			pPowerup->SetModel( TF_SANDVICH_PLATE_MODEL );
+			if ( GameRules()->IsHolidayActive( kHoliday_Christmas ) )
+				pPowerup->SetModel( TF_SANDVICH_FESTIVE_PLATE_MODEL );
+			else
+				pPowerup->SetModel( TF_SANDVICH_PLATE_MODEL );
 			break;
 	}
 	
