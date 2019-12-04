@@ -523,7 +523,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	pOther->DispatchTraceAttack( info, vecDir, &trHit );
 	ApplyMultiDamage();
 	
-	if ( ( pPlayer && ( m_iType == 1 || m_iType == 4 ) ) && tf2v_healing_bolts.GetBool() ) // Crossbow bolts can heal teammates if the convar is enabled.
+	if ( ( pPlayer && ( m_iType == 1 || m_iType == 4 ) ) && ( tf2v_healing_bolts.GetBool() || TFGameRules()->IsInMedievalMode() ) ) // Crossbow bolts can heal teammates if the convar is enabled, or it's medieval.
 	{	
 		CTFPlayer *pHealer = ToTFPlayer( pAttacker );
 		// Is this someone we can heal?
