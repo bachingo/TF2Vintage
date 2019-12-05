@@ -216,7 +216,7 @@ void C_EconEntity::UpdateAttachmentModels( void )
 					if ( !pAddon )
 						return;
 
-					if ( pAddon->InitializeAsClientEntity( m_Item.GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
+					if ( pAddon->InitializeAsClientEntity( GetItem()->GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
 					{
 						pAddon->SetOwnerEntity( this );
 						pAddon->SetParent( pViewmodel );

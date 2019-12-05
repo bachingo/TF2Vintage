@@ -1965,12 +1965,12 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
 					if ( (pItemDef->year) > 2007 ) 
-					bWhiteListedWeapon = false;
+						bWhiteListedWeapon = false;
 				}
 				else
 				{
 					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt())
-					bWhiteListedWeapon = false;
+						bWhiteListedWeapon = false;
 				}
 			}
 			
@@ -1979,7 +1979,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			{
 				CTFPlayer *pPlayer = this;
 				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
-				bIsSpecialRestricted = true;
+					bIsSpecialRestricted = true;
 			}
 		
 			// Checks for holiday restrictions.
@@ -2269,12 +2269,12 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
 					if ( (pItemDef->year) > 2007 ) 
-					bWhiteListedCosmetic = false;
+						bWhiteListedCosmetic = false;
 				}
 				else
 				{
 					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt() )
-					bWhiteListedCosmetic = false;
+						bWhiteListedCosmetic = false;
 				}
 			}
 			
@@ -2283,7 +2283,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			{
 				CTFPlayer *pPlayer = this;
 				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
-				bIsSpecialRestricted = true;
+					bIsSpecialRestricted = true;
 			}
 			
 			// Checks for holiday restrictions.
