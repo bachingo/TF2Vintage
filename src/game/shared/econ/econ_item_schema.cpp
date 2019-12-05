@@ -111,6 +111,8 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 	wchar_t wszQuality[128];
 	wszPrefix[0] = '\0';
 	wszQuality[0] = '\0';
+	
+	int iItemNameFlags = 0;
 
 
 	if ( propername )
@@ -120,6 +122,7 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 		if ( pszPrepend )
 		{
 			V_wcsncpy( wszPrefix, pszPrepend, sizeof( wszPrefix ) );
+			iItemNameFlags += 1;
 		}
 	}
 	
@@ -133,6 +136,7 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 		if ( pszQuality )
 		{
 			V_wcsncpy( wszQuality, pszQuality, sizeof( wszQuality ) );
+			iItemNameFlags += 2;
 		}
 	} */
 
@@ -148,26 +152,26 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedFullItemName( void )
 	{
 		g_pVGuiLocalize->ConvertANSIToUnicode( item_name, wszItemName, sizeof( wszItemName ) );
 	}
-
-	if ( ( wszQuality[0] == '\0') && ( wszPrefix[0] != '\0') ) // Propername, but no Quality
+	
+	// Instead of using an if/else tree, just use a switch with our naming flags.
+	switch (iItemNameFlags)
 	{
-		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
-		wszPrefix, wszItemName );
-	}
-	else if ( ( wszQuality[0] != '\0') && ( wszPrefix[0] != '\0') ) // Quality and Propername
-	{
-		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2 %s3", 3,
-		wszPrefix, wszQuality, wszItemName );
-	}
-	else if ( ( wszQuality[0] != '\0') && ( wszPrefix[0] == '\0') ) // Quality, but no Propername
-	{
-		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
-		wszQuality, wszItemName );
-	}
-	else // No Quality or Propername
-	{
-		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1", 1,
-		wszItemName );
+		case 1:		// Prefix
+			g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
+			wszPrefix, wszItemName ); // THE Itemname
+			break;
+		case 2:		// Quality
+			g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
+			wszQuality, wszItemName ); // QUALITY Itemname
+			break;
+		case 3:		// Prefix+Quality
+			g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2 %s3", 3,
+			wszPrefix, wszQuality, wszItemName ); // THE QUALITY Itemname (Note: standard TF2 drops the prefix, but this sounds better.)
+			break;
+		default:	// No quality or prefix
+			g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1", 1,
+			wszItemName );
+			break;	// Itemname
 	}
 
 	return wszFullName;
@@ -208,8 +212,16 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 		g_pVGuiLocalize->ConvertANSIToUnicode( item_name, wszItemName, sizeof( wszItemName ) );
 	}
 
-	g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
-		wszPrefix, wszItemName );
+	if ( wszPrefix[0] == '\0' )	// If we don't use a prefix, just use the itemname.
+	{
+		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1", 1,
+		wszItemName );	// Itemname
+	}
+	else	// Add prefix.
+	{
+		g_pVGuiLocalize->ConstructString( wszFullName, sizeof( wszFullName ), L"%s1 %s2", 2,
+		wszPrefix, wszItemName ); // THE Itemname
+	}
 
 	return wszFullName;
 }
