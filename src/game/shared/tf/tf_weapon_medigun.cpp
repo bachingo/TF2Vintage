@@ -1238,7 +1238,7 @@ void CWeaponMedigun::UpdateEffects( void )
 		CNewParticleEffect *pEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
 		pEffectOwner->ParticleProp()->AddControlPoint( pEffect, 1, m_hHealingTarget, PATTACH_ABSORIGIN_FOLLOW, NULL, Vector(0,0,50) );
 
-		CEconItemDefinition *pStatic = m_Item.GetStaticData();
+		CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 		if ( pStatic )
 		{
 			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );

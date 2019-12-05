@@ -3528,7 +3528,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 						if ( pStatic )
 						{
-							float value = pAttribute->value;
+							float value = (float)pAttribute->m_iRawValue32;
 							if ( pStatic->description_format == ATTRIB_FORMAT_PERCENTAGE || pStatic->description_format == ATTRIB_FORMAT_INVERTED_PERCENTAGE )
 							{
 								value *= 100.0f;
@@ -10164,7 +10164,6 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 		float flValue = V_atof( args[i + 1] );
 
 		CEconItemAttribute econAttribute( iAttribIndex, flValue );
-		econAttribute.m_strAttributeClass = AllocPooledString( econAttribute.attribute_class );
 		bAddedAttributes = econItem.AddAttribute( &econAttribute );
 	}
 

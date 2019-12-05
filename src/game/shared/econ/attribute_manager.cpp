@@ -108,7 +108,7 @@ void CAttributeManager::InitializeAttributes( CBaseEntity *pEntity )
 	m_bParsingMyself = false;
 }
 
-float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders )
+float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return flValue;
@@ -151,7 +151,7 @@ float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *
 //-----------------------------------------------------------------------------
 // Purpose: Search for an attribute on our providers.
 //-----------------------------------------------------------------------------
-string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders )
+string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return strValue;
@@ -190,13 +190,21 @@ string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBase
 }
 
 
+#if defined( CLIENT_DLL )
+EXTERN_RECV_TABLE( DT_ScriptCreatedItem );
+#else
+EXTERN_SEND_TABLE( DT_ScriptCreatedItem );
+#endif
+
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainer, DT_AttributeContainer )
 #ifdef CLIENT_DLL
 	RecvPropEHandle( RECVINFO( m_hOuter ) ),
 	RecvPropInt( RECVINFO( m_iReapplyProvisionParity ) ),
+	RecvPropDataTable( RECVINFO_DT( m_Item ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
 #else
 	SendPropEHandle( SENDINFO( m_hOuter ) ),
 	SendPropInt( SENDINFO( m_iReapplyProvisionParity ), ATTRIB_REAPPLY_PARITY_BITS, SPROP_UNSIGNED ),
+	SendPropDataTable( SENDINFO_DT( m_Item ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 #endif
 END_NETWORK_TABLE();
 
@@ -206,52 +214,21 @@ BEGIN_PREDICTION_DATA_NO_BASE( CAttributeContainer )
 END_PREDICTION_DATA();
 #endif
 
-float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders )
+void CAttributeContainer::InitializeAttributes( CBaseEntity *pEntity )
+{
+	BaseClass::InitializeAttributes( pEntity );
+	m_Item.GetAttributeList()->SetManager( this );
+}
+
+float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return flValue;
 
 	m_bParsingMyself = true;
 
-	// This should only ever be used by econ entities.
-	CEconEntity *pEconEnt = assert_cast<CEconEntity *>( m_hOuter.Get() );
-	CEconItemView *pItem = pEconEnt->GetItem();
-
-	CEconItemAttribute *pAttribute = pItem->IterateAttributes( strAttributeClass );
-
-	if ( pAttribute )
-	{
-		EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
-
-		switch ( pStatic->description_format )
-		{
-			case ATTRIB_FORMAT_ADDITIVE:
-			case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
-				flValue += pAttribute->value;
-				break;
-			case ATTRIB_FORMAT_PERCENTAGE:
-			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
-				flValue *= pAttribute->value;
-				break;
-			case ATTRIB_FORMAT_OR:
-			default:
-			{
-				// Oh, man...
-				int iValue = (int)flValue;
-				int iAttrib = (int)pAttribute->value;
-				iValue |= iAttrib;
-				flValue = (float)iValue;
-				break;
-			}
-		}
-
-		if ( pOutProviders )
-		{
-			EHANDLE hndl( pEconEnt );
-			if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
-				pOutProviders->AddToTail( hndl );
-		}
-	}
+	CEconItemAttributeIterator_ApplyAttributeFloat func( m_hOuter.Get(), strAttributeClass, &flValue, pOutProviders );
+	GetItem()->IterateAttributes( func );
 
 	m_bParsingMyself = false;
 
@@ -261,31 +238,22 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 //-----------------------------------------------------------------------------
 // Purpose: Search for an attribute and apply its value.
 //-----------------------------------------------------------------------------
-string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders )
+string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return strValue;
 
 	m_bParsingMyself = true;
 
-	// This should only ever be used by econ entities.
-	CEconEntity *pEconEnt = assert_cast<CEconEntity *>( m_hOuter.Get() );
-	CEconItemView *pItem = pEconEnt->GetItem();
-
-	CEconItemAttribute *pAttribute = pItem->IterateAttributes( strAttributeClass );
-	if ( pAttribute )
-	{
-		strValue = AllocPooledString( pAttribute->value_string.Get() );
-
-		if ( pOutProviders )
-		{
-			EHANDLE hndl( pEconEnt );
-			if ( pOutProviders->Find( hndl ) == pOutProviders->InvalidIndex() )
-				pOutProviders->AddToTail( hndl );
-		}
-	}
+	CEconItemAttributeIterator_ApplyAttributeString func( m_hOuter.Get(), strAttributeClass, &strValue, pOutProviders );
+	GetItem()->IterateAttributes( func );
 
 	m_bParsingMyself = false;
 
 	return BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
+}
+
+void CAttributeContainer::OnAttributesChanged( void )
+{
+	BaseClass::OnAttributesChanged();
 }

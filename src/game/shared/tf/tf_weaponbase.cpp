@@ -385,13 +385,13 @@ int CTFWeaponBase::TranslateViewmodelHandActivity( int iActivity )
 
 	if ( HasItemDefinition() )
 	{
-		int iSchemaRole = m_Item.GetAnimationSlot();
+		int iSchemaRole = GetItem()->GetAnimationSlot();
 		if ( iSchemaRole >= 0 )
 		{
 			iWeaponRole = iSchemaRole;
 		}
 
-		Activity actActivityOverride = m_Item.GetActivityOverride( GetTeamNumber(), (Activity)iActivity );
+		Activity actActivityOverride = GetItem()->GetActivityOverride( GetTeamNumber(), (Activity)iActivity );
 		if ( actActivityOverride != iActivity )
 		{
 			return actActivityOverride;
@@ -464,7 +464,7 @@ void CTFWeaponBase::UpdateViewModel( void )
 	{
 		if ( HasItemDefinition() )
 		{
-			pszModel = m_Item.GetPlayerDisplayModel( pTFPlayer->GetPlayerClass()->GetClassIndex() );
+			pszModel = GetItem()->GetPlayerDisplayModel( pTFPlayer->GetPlayerClass()->GetClassIndex() );
 		}
 		else
 		{
@@ -572,7 +572,7 @@ const char *CTFWeaponBase::DetermineViewModelType( const char *vModel ) const
 	if ( !pPlayer )
 		return vModel;
 
-	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 
 	if ( pStatic )
 	{
@@ -604,7 +604,7 @@ const char *CTFWeaponBase::GetViewModel( int iViewModel ) const
 
 	if ( pOwner && HasItemDefinition() )
 	{
-		pszModelName = m_Item.GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
+		pszModelName = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 	}
 	else
 	{
@@ -622,7 +622,7 @@ const char *CTFWeaponBase::GetWorldModel( void ) const
 	// Use model from item schema if we have an item ID.
 	if ( HasItemDefinition() )
 	{
-		return m_Item.GetWorldDisplayModel();
+		return GetItem()->GetWorldDisplayModel();
 	}
 
 	return BaseClass::GetWorldModel();
@@ -764,7 +764,7 @@ bool CTFWeaponBase::Deploy( void )
 		SwitchBodyGroups();
 
 		// Hellish check for bodygroup disabling
-		CEconItemDefinition *pStatic = m_Item.GetStaticData();
+		CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 		if ( pStatic && pStatic->hide_bodygroups_deployed_only )
 		{
 			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
@@ -809,7 +809,7 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::UpdatePlayerBodygroups( void )
 {
-	if ( m_Item.GetStaticData() && ( !m_Item.GetStaticData()->hide_bodygroups_deployed_only || m_iState == WEAPON_IS_ACTIVE ) )
+	if ( GetItem()->GetStaticData() && ( !GetItem()->GetStaticData()->hide_bodygroups_deployed_only || m_iState == WEAPON_IS_ACTIVE ) )
 	{
 		// Don't call for inactive weapons that hide bodygroups when deployed
 		BaseClass::UpdatePlayerBodygroups();
@@ -1431,7 +1431,7 @@ const char *CTFWeaponBase::GetShootSound( int iIndex ) const
 
 	if ( HasItemDefinition() )
 	{
-		pszSoundName = m_Item.GetSoundOverride( iIndex, GetTeamNumber() );
+		pszSoundName = GetItem()->GetSoundOverride( iIndex, GetTeamNumber() );
 	}
 
 	if ( !pszSoundName || pszSoundName[0] == '\0' )
@@ -1733,7 +1733,7 @@ int CTFWeaponBase::GetActivityWeaponRole( void )
 
 	if ( HasItemDefinition() )
 	{
-		int iSchemaRole = m_Item.GetAnimationSlot();
+		int iSchemaRole = GetItem()->GetAnimationSlot();
 		if ( iSchemaRole >= 0 )
 			iWeaponRole = iSchemaRole;
 	}
@@ -1957,7 +1957,7 @@ void CTFWeaponBase::OnControlStunned( void )
 
 const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 {
-	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 
 	if ( pStatic )
 	{
@@ -3483,9 +3483,9 @@ int CTFWeaponBase::GetSkin()
 		nSkin = GetSkinOverride();
 		if (nSkin == -1)
 		{
-			if (GetItem() && m_Item.GetSkin( iTeamNumber, false ) > -1)
+			if (GetItem() && GetItem()->GetSkin( iTeamNumber, false ) > -1)
 			{
-				nSkin = m_Item.GetSkin( iTeamNumber, false );
+				nSkin = GetItem()->GetSkin( iTeamNumber, false );
 			}
 			else
 			{

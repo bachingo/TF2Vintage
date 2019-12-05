@@ -30,10 +30,8 @@ IMPLEMENT_NETWORKCLASS_ALIASED( EconEntity, DT_EconEntity )
 
 BEGIN_NETWORK_TABLE( CEconEntity, DT_EconEntity )
 #ifdef CLIENT_DLL
-	RecvPropDataTable( RECVINFO_DT( m_Item ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
 	RecvPropDataTable( RECVINFO_DT( m_AttributeManager ), 0, &REFERENCE_RECV_TABLE( DT_AttributeContainer ) ),
 #else
-	SendPropDataTable( SENDINFO_DT( m_Item ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 	SendPropDataTable( SENDINFO_DT( m_AttributeManager ), &REFERENCE_SEND_TABLE( DT_AttributeContainer ) ),
 #endif
 END_NETWORK_TABLE()
@@ -117,7 +115,7 @@ bool C_EconEntity::IsOverridingViewmodel( void ) const
 	if ( !m_hAttachmentParent )
 		return false;
 
-	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 	if ( pStatic == nullptr )
 		return false;
 
@@ -172,9 +170,9 @@ void C_EconEntity::UpdateAttachmentModels( void )
 {
 	m_aAttachments.RemoveAll();
 
-	if ( GetItem() )
+	if ( GetItem()->GetStaticData() )
 	{
-		CEconItemDefinition *pItem = m_Item.GetStaticData();
+		CEconItemDefinition *pItem = GetItem()->GetStaticData();
 
 		if ( AttachmentModelsShouldBeVisible() )
 		{
@@ -237,12 +235,12 @@ void C_EconEntity::UpdateAttachmentModels( void )
 				}
 			}
 		}
-
-		return;
 	}
-	
-	if ( m_hAttachmentParent )
-		m_hAttachmentParent->Release();
+	else
+	{
+		if ( m_hAttachmentParent )
+			m_hAttachmentParent->Release();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -319,15 +317,15 @@ void CEconEntity::UpdateModelToClass( void )
 //-----------------------------------------------------------------------------
 bool CEconEntity::HasItemDefinition( void ) const
 {
-	return ( m_Item.GetItemDefIndex() >= 0 );
+	return ( GetItem()->GetItemDefIndex() >= 0 );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Shortcut to get item ID.
 //-----------------------------------------------------------------------------
-int CEconEntity::GetItemID( void )
+int CEconEntity::GetItemID( void ) const
 {
-	return m_Item.GetItemDefIndex();
+	return GetItem()->GetItemDefIndex();
 }
 
 //-----------------------------------------------------------------------------
@@ -382,7 +380,7 @@ void CEconEntity::UpdatePlayerBodygroups( void )
 	}
 
 	// bodygroup enabling/disabling
-	CEconItemDefinition *pStatic = m_Item.GetStaticData();
+	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 	if ( pStatic )
 	{
 		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();

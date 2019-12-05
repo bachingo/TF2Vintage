@@ -82,16 +82,17 @@ public:
 
 	virtual void PlayAnimForPlaybackEvent(wearableanimplayback_t iPlayback) {};
 
-	virtual void SetItem( CEconItemView &newItem ) { m_Item = newItem; }
-	CEconItemView *GetItem()                       { return &m_Item; }
-	virtual bool HasItemDefinition() const;
-	virtual int GetItemID();
+	void SetItem( CEconItemView const& pItem ) { m_AttributeManager.m_Item.CopyFrom( pItem ); }
+	CEconItemView *GetItem() const { return const_cast<CEconEntity *>( this )->GetAttributeContainer()->GetItem(); }
+	bool HasItemDefinition() const;
+	int GetItemID() const;
 
 	virtual void GiveTo( CBaseEntity *pEntity );
 
-	virtual CAttributeManager *GetAttributeManager() { return &m_AttributeManager; }
-	virtual CAttributeContainer *GetAttributeContainer() { return &m_AttributeManager; }
-	virtual CBaseEntity *GetAttributeOwner() { return NULL; }
+	virtual CAttributeManager *GetAttributeManager( void ) { return &m_AttributeManager; }
+	virtual CAttributeContainer *GetAttributeContainer( void ) { return &m_AttributeManager; }
+	virtual CBaseEntity *GetAttributeOwner( void ) { return NULL; }
+	virtual CAttributeList *GetAttributeList( void ) { return &m_AttributeList; }
 	virtual void ReapplyProvision( void );
 	void InitializeAttributes( void );
 
@@ -106,11 +107,11 @@ public:
 
 protected:
 	EHANDLE m_hOldOwner;
-	CEconItemView m_Item;
 
 private:
 	CNetworkVarEmbedded( CAttributeContainer, m_AttributeManager );
 
+	CAttributeList m_AttributeList;
 #ifdef CLIENT_DLL
 	CHandle<C_ViewmodelAttachmentModel> m_hAttachmentParent;
 #endif

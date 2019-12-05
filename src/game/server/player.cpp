@@ -7996,13 +7996,13 @@ void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const voi
 // DT_BasePlayer sendtable.
 // -------------------------------------------------------------------------------- //
 	
-#if defined USES_ECON_ITEMS
+#if defined USES_ECON_ITEMS || defined TF_VINTAGE
 	EXTERN_SEND_TABLE(DT_AttributeList);
 #endif
 
 	IMPLEMENT_SERVERCLASS_ST( CBasePlayer, DT_BasePlayer )
 
-#if defined USES_ECON_ITEMS
+#if defined USES_ECON_ITEMS || defined TF_VINTAGE
 		SendPropDataTable(SENDINFO_DT(m_AttributeList), &REFERENCE_SEND_TABLE(DT_AttributeList)),
 #endif
 

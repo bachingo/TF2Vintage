@@ -288,7 +288,7 @@ public:
 		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
 			EconAttributeDefinition *pAttribute = new EconAttributeDefinition;
-			int index = V_atoi( pSubData->GetName() );
+			pAttribute->index = V_atoi( pSubData->GetName() );
 
 			GET_STRING_DEFAULT( pAttribute, pSubData, name, ( unnamed ) );
 			GET_STRING( pAttribute, pSubData, attribute_class );
@@ -304,7 +304,7 @@ public:
 			GET_BOOL( pAttribute, pSubData, hidden );
 			GET_BOOL( pAttribute, pSubData, stored_as_integer );
 
-			GetItemSchema()->m_Attributes.Insert( index, pAttribute );
+			GetItemSchema()->m_Attributes.Insert( pAttribute->index, pAttribute );
 		}
 	};
 
@@ -722,12 +722,13 @@ void CEconItemSchema::Precache( void )
 		for ( int i = 0; i < pItem->attributes.Count(); i++ )
 		{
 			CEconItemAttribute *pAttribute = &pItem->attributes[i];
-			pAttribute->m_strAttributeClass = AllocPooledString( pAttribute->attribute_class );
 
+			attrib_data_union_t value;
+			value.iVal = pAttribute->m_iRawValue32;
 			// Special case for custom_projectile_model attribute.
-			if ( pAttribute->m_strAttributeClass == strPrecacheAttribute )
+			if ( pAttribute->m_iAttributeClass == strPrecacheAttribute )
 			{
-				CBaseEntity::PrecacheModel( pAttribute->value_string.Get() );
+				CBaseEntity::PrecacheModel( STRING( value.sVal ) );
 			}
 		}
 	}

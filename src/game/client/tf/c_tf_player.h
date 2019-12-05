@@ -238,6 +238,7 @@ public:
 	virtual CAttributeManager *GetAttributeManager() { return &m_AttributeManager; }
 	virtual CAttributeContainer *GetAttributeContainer() { return NULL; }
 	virtual C_BaseEntity *GetAttributeOwner() { return NULL; }
+	virtual CAttributeList *GetAttributeList() { return &m_AttributeList; }
 	virtual void ReapplyProvision( void ) { /*Do nothing*/ };
 
 	// Gunslinger

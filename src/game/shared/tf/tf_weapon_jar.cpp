@@ -180,7 +180,7 @@ const char* C_TFJarMilk::ModifyEventParticles( const char* token )
 {
 	if ( !V_stricmp( token, "energydrink_splash" ) )
 	{
-		CEconItemDefinition *pStatic = m_Item.GetStaticData();
+		CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 		if ( pStatic )
 		{
 			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );
