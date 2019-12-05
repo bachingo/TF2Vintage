@@ -45,19 +45,27 @@ public:
 			{
 				case ATTRIB_FORMAT_ADDITIVE:
 				case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
-					*m_flOut += (float)value;
+				{
+					*m_flOut += BitsToFloat( value );
 					break;
+				}
 				case ATTRIB_FORMAT_PERCENTAGE:
 				case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
-					*m_flOut *= (float)value;
+				{
+					*m_flOut *= BitsToFloat( value );
 					break;
+				}
 				case ATTRIB_FORMAT_OR:
-				default:
 				{
 					// Oh, man...
-					int iValue = (int)*m_flOut;
+					int iValue = FloatBits( *m_flOut );
 					iValue |= value;
-					*m_flOut = (float)iValue;
+					*m_flOut = BitsToFloat( iValue );
+					break;
+				}
+				default:
+				{
+					*m_flOut = value;
 					break;
 				}
 			}

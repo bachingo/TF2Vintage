@@ -3577,7 +3577,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 						if ( pStatic )
 						{
-							float value = (float)pAttribute->m_iRawValue32;
+							float value = BitsToFloat( pAttribute->m_iRawValue32 );
 							if ( pStatic->description_format == ATTRIB_FORMAT_PERCENTAGE || pStatic->description_format == ATTRIB_FORMAT_INVERTED_PERCENTAGE )
 							{
 								value *= 100.0f;

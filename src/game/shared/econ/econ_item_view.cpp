@@ -259,7 +259,7 @@ bool CEconItemView::AddAttribute( CEconItemAttribute *pAttribute )
 	// Make sure this attribute exists.
 	EconAttributeDefinition *pAttribDef = pAttribute->GetStaticData();
 	if ( pAttribDef )
-		return m_AttributeList.SetRuntimeAttributeValue( pAttribDef, (float)pAttribute->m_iRawValue32 );
+		return m_AttributeList.SetRuntimeAttributeValue( pAttribDef, BitsToFloat( pAttribute->m_iRawValue32 ) );
 
 	return false;
 }
@@ -358,7 +358,7 @@ bool CAttributeList::SetRuntimeAttributeValue( const EconAttributeDefinition *pD
 		CEconItemAttribute *pAttrib = &m_Attributes[ i ];
 		if ( pAttrib->GetStaticData() == pDefinition )
 		{
-			pAttrib->m_iRawValue32 = (int)flValue;
+			pAttrib->m_iRawValue32 = FloatBits( flValue );
 			m_pManager->OnAttributesChanged();
 			return true;
 		}
