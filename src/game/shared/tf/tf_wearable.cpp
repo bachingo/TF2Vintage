@@ -37,9 +37,9 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWearable::UpdateModelToClass( void )
 {
-	if ( m_bExtraWearable && m_Item.GetStaticData() )
+	if ( m_bExtraWearable && GetItem()->GetStaticData() )
 	{
-		SetModel( m_Item.GetStaticData()->extra_wearable );
+		SetModel( GetItem()->GetStaticData()->extra_wearable );
 	}
 	else 
 	{
@@ -47,7 +47,7 @@ void CTFWearable::UpdateModelToClass( void )
 
 		if ( pOwner )
 		{
-			const char *pszModel = m_Item.GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
+			const char *pszModel = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 
 			if ( pszModel[0] != '\0' )
 			{
@@ -101,9 +101,9 @@ int C_TFWearable::InternalDrawModel( int flags )
 //-----------------------------------------------------------------------------
 void C_TFWearable::UpdateModelToClass(void)
 {
-	if ( m_bExtraWearable && m_Item.GetStaticData() )
+	if ( m_bExtraWearable && GetItem()->GetStaticData() )
 	{
-		SetModel( m_Item.GetStaticData()->extra_wearable );
+		SetModel( GetItem()->GetStaticData()->extra_wearable );
 	}
 	else
 	{
@@ -113,11 +113,11 @@ void C_TFWearable::UpdateModelToClass(void)
 			const char *pszModel = nullptr;
 			if ( pOwner->m_Shared.InCond(TF_COND_DISGUISED) && pOwner->IsEnemyPlayer() )
 			{
-				pszModel = m_Item.GetPlayerDisplayModel( pOwner->m_Shared.GetDisguiseClass() );
+				pszModel = GetItem()->GetPlayerDisplayModel( pOwner->m_Shared.GetDisguiseClass() );
 			}
 			else
 			{
-				pszModel = m_Item.GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
+				pszModel = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 			}
 
 

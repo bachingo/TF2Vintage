@@ -11,14 +11,10 @@
 BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
-	RecvPropFloat( RECVINFO( value ) ),
-	RecvPropString( RECVINFO( value_string ) ),
-	RecvPropString( RECVINFO( attribute_class ) ),
+	RecvPropInt( RECVINFO( m_iRawValue32 ) ),
 #else
 	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ) ),
-	SendPropFloat( SENDINFO( value ) ),
-	SendPropString( SENDINFO( value_string ) ),
-	SendPropString( SENDINFO( attribute_class ) ),
+	SendPropInt( SENDINFO( m_iRawValue32 ), -1, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -28,19 +24,21 @@ END_NETWORK_TABLE()
 void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttributeClass /*= NULL*/ )
 {
 	m_iAttributeDefinitionIndex = iIndex;
-	value = flValue;
-	value_string.GetForModify()[0] = '\0';
+	
+	attrib_data_union_t value;
+	value.flVal = flValue;
+	m_iRawValue32 = value.iVal;
 
 	if ( pszAttributeClass )
 	{
-		V_strncpy( attribute_class.GetForModify(), pszAttributeClass, sizeof( attribute_class ) );
+		m_iAttributeClass = AllocPooledString( pszAttributeClass );
 	}
 	else
 	{
 		EconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			V_strncpy( attribute_class.GetForModify(), pAttribDef->attribute_class, sizeof( attribute_class ) );
+			m_iAttributeClass = AllocPooledString( pAttribDef->attribute_class );
 		}
 	}
 }
@@ -51,19 +49,21 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *pszAttributeClass /*= NULL*/ )
 {
 	m_iAttributeDefinitionIndex = iIndex;
-	value = 0.0f;
-	V_strncpy( value_string.GetForModify(), pszValue, sizeof( value_string ) );
+
+	attrib_data_union_t value;
+	value.sVal = AllocPooledString_StaticConstantStringPointer( pszValue );
+	m_iRawValue32 = value.iVal;
 
 	if ( pszAttributeClass )
 	{
-		V_strncpy( attribute_class.GetForModify(), pszAttributeClass, sizeof( attribute_class ) );
+		m_iAttributeClass = AllocPooledString( pszAttributeClass );
 	}
 	else
 	{
 		EconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			V_strncpy( attribute_class.GetForModify(), pAttribDef->attribute_class, sizeof( attribute_class ) );
+			m_iAttributeClass = AllocPooledString( pAttribDef->attribute_class );
 		}
 	}
 }
@@ -227,18 +227,12 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 }
 
 
-CEconItemAttribute *CEconItemDefinition::IterateAttributes( string_t strClass )
+void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 {
 	// Returning the first attribute found.
-	for ( int i = 0; i < attributes.Count(); i++ )
+	FOR_EACH_VEC( attributes, i )
 	{
-		CEconItemAttribute *pAttribute = &attributes[i];
-
-		if ( pAttribute->m_strAttributeClass == strClass )
-		{
-			return pAttribute;
-		}
+		if ( !iter.OnIterateAttributeValue( attributes[i].GetStaticData(), attributes[i].m_iRawValue32 ) )
+			return;
 	}
-
-	return NULL;
 }

@@ -255,7 +255,7 @@ END_RECV_TABLE()
 // DT_BasePlayer datatable.
 // -------------------------------------------------------------------------------- //
 
-#if defined USES_ECON_ITEMS
+#if defined USES_ECON_ITEMS || defined TF_VINTAGE_CLIENT
 	EXTERN_RECV_TABLE(DT_AttributeList);
 #endif
 
@@ -264,7 +264,7 @@ END_RECV_TABLE()
 		// only send one.
 		RecvPropDataTable( "localdata", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalPlayerExclusive) ),
 
-#if defined USES_ECON_ITEMS
+#if defined USES_ECON_ITEMS || defined TF_VINTAGE_CLIENT
 		RecvPropDataTable(RECVINFO_DT(m_AttributeList),0, &REFERENCE_RECV_TABLE(DT_AttributeList) ),
 #endif
 

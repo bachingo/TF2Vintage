@@ -15,44 +15,39 @@
 #define MAX_ATTRIBUTES_SENT 20
 
 #ifdef CLIENT_DLL
-BEGIN_RECV_TABLE_NOBASE(CEconItemView, DT_ScriptCreatedItem)
-	RecvPropInt(RECVINFO(m_iItemDefinitionIndex)),
-	RecvPropInt(RECVINFO(m_iEntityQuality)),
-	RecvPropInt(RECVINFO(m_iEntityLevel)),
-	RecvPropInt(RECVINFO(m_iItemID)),
-	RecvPropInt(RECVINFO(m_iInventoryPosition)),
-	RecvPropInt(RECVINFO(m_iTeamNumber)),
-	RecvPropBool(RECVINFO(m_bOnlyIterateItemViewAttributes)),
-	RecvPropUtlVector( 
-	RECVINFO_UTLVECTOR( m_AttributeList ),
-	MAX_ATTRIBUTES_SENT,
-	RecvPropDataTable( NULL, 0, 0, &REFERENCE_RECV_TABLE( DT_EconItemAttribute ) ) )
+BEGIN_RECV_TABLE_NOBASE( CAttributeList, DT_AttributeList )
+	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_Attributes ), MAX_ATTRIBUTES_SENT, RecvPropDataTable( NULL, 0, 0, &REFERENCE_RECV_TABLE( DT_EconItemAttribute ) ) )
 END_RECV_TABLE()
 #else
-BEGIN_SEND_TABLE_NOBASE(CEconItemView, DT_ScriptCreatedItem)
-	SendPropInt(SENDINFO(m_iItemDefinitionIndex)),
-	SendPropInt(SENDINFO(m_iEntityQuality)),
-	SendPropInt(SENDINFO(m_iEntityLevel)),
-	SendPropInt(SENDINFO(m_iItemID)),
-	SendPropInt(SENDINFO(m_iInventoryPosition)),
-	SendPropInt(SENDINFO(m_iTeamNumber)),
-	SendPropBool(SENDINFO(m_bOnlyIterateItemViewAttributes)),
-	SendPropUtlVector( 
-	SENDINFO_UTLVECTOR( m_AttributeList ),
-	MAX_ATTRIBUTES_SENT,
-	SendPropDataTable( NULL, 0, &REFERENCE_SEND_TABLE( DT_EconItemAttribute ) ) )
+BEGIN_SEND_TABLE_NOBASE( CAttributeList, DT_AttributeList )
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_Attributes ), MAX_ATTRIBUTES_SENT, SendPropDataTable( NULL, 0, &REFERENCE_SEND_TABLE( DT_EconItemAttribute ) ) )
 END_SEND_TABLE()
 #endif
 
-#define FIND_ELEMENT(map, key, val)						\
-		unsigned int index = map.Find(key);				\
-		if (index != map.InvalidIndex())						\
-			val = map.Element(index)				
+#ifdef CLIENT_DLL
+BEGIN_RECV_TABLE_NOBASE( CEconItemView, DT_ScriptCreatedItem )
+	RecvPropInt( RECVINFO( m_iItemDefinitionIndex ) ),
+	RecvPropInt( RECVINFO( m_iEntityQuality ) ),
+	RecvPropInt( RECVINFO( m_iEntityLevel ) ),
+	RecvPropInt( RECVINFO( m_iTeamNumber ) ),
+	RecvPropBool( RECVINFO( m_bOnlyIterateItemViewAttributes ) ),
+	RecvPropDataTable( RECVINFO_DT( m_AttributeList ), 0, &REFERENCE_RECV_TABLE( DT_AttributeList ) ),
+END_RECV_TABLE()
+#else
+BEGIN_SEND_TABLE_NOBASE( CEconItemView, DT_ScriptCreatedItem )
+	SendPropInt( SENDINFO( m_iItemDefinitionIndex ) ),
+	SendPropInt( SENDINFO( m_iEntityQuality ) ),
+	SendPropInt( SENDINFO( m_iEntityLevel ) ),
+	SendPropInt( SENDINFO( m_iTeamNumber ) ),
+	SendPropBool( SENDINFO( m_bOnlyIterateItemViewAttributes ) ),
+	SendPropDataTable( SENDINFO_DT( m_AttributeList ), &REFERENCE_SEND_TABLE( DT_AttributeList ) ),
+END_SEND_TABLE()
+#endif
 
-#define FIND_ELEMENT_STRING(map, key, val)						\
-		unsigned int index = map.Find(key);						\
-		if (index != map.InvalidIndex())								\
-			Q_snprintf(val, sizeof(val), map.Element(index))
+#define FIND_ELEMENT(map, key, val)			\
+		unsigned int index = map.Find(key);	\
+		if (index != map.InvalidIndex())	\
+			val = map.Element(index)
 
 
 CEconItemView::CEconItemView()
@@ -263,12 +258,8 @@ bool CEconItemView::AddAttribute( CEconItemAttribute *pAttribute )
 {
 	// Make sure this attribute exists.
 	EconAttributeDefinition *pAttribDef = pAttribute->GetStaticData();
-
 	if ( pAttribDef )
-	{
-		m_AttributeList.AddToTail( *pAttribute );
-		return true;
-	}
+		return m_AttributeList.SetRuntimeAttributeValue( pAttribDef, BitsToFloat( pAttribute->m_iRawValue32 ) );
 
 	return false;
 }
@@ -278,28 +269,15 @@ void CEconItemView::SkipBaseAttributes( bool bSkip )
 	m_bOnlyIterateItemViewAttributes = bSkip;
 }
 
-CEconItemAttribute *CEconItemView::IterateAttributes( string_t strClass )
+void CEconItemView::IterateAttributes( IEconAttributeIterator &iter )
 {
-	// Returning the first attribute found.
-	// This is not how live TF2 does this but this will do for now.
-	for ( int i = 0; i < m_AttributeList.Count(); i++ )
-	{
-		CEconItemAttribute *pAttribute = &m_AttributeList[i];
-
-		if ( pAttribute->m_strAttributeClass == strClass )
-		{
-			return pAttribute;
-		}
-	}
+	m_AttributeList.IterateAttributes( iter );
 
 	CEconItemDefinition *pStatic = GetStaticData();
-
 	if ( pStatic && !m_bOnlyIterateItemViewAttributes )
 	{
-		return pStatic->IterateAttributes( strClass );
+		pStatic->IterateAttributes( iter );
 	}
-
-	return NULL;
 }
 
 const char *CEconItemView::GetExtraWearableModel( void ) const
@@ -313,4 +291,124 @@ const char *CEconItemView::GetExtraWearableModel( void ) const
 	}
 
 	return "\0";
+}
+
+CEconItemView &CEconItemView::operator=( CEconItemView const &rhs )
+{
+	m_iItemDefinitionIndex = rhs.m_iItemDefinitionIndex;
+	m_iEntityQuality = rhs.m_iEntityQuality;
+	m_iEntityLevel = rhs.m_iEntityLevel;
+	m_iTeamNumber = rhs.m_iTeamNumber;
+	m_AttributeList = rhs.m_AttributeList;
+
+#ifdef GAME_DLL
+	m_bOnlyIterateItemViewAttributes = rhs.m_bOnlyIterateItemViewAttributes;
+	m_iClassNumber = rhs.m_iClassNumber;
+#endif
+
+	return *this;
+}
+
+CAttributeList::CAttributeList()
+{
+}
+
+void CAttributeList::Init( void )
+{
+	m_Attributes.Purge();
+}
+
+CEconItemAttribute const *CAttributeList::GetAttribByID( int iNum )
+{
+	FOR_EACH_VEC( m_Attributes, i )
+	{
+		if ( m_Attributes[i].GetStaticData()->index == iNum )
+			return &m_Attributes[i];
+	}
+
+	return nullptr;
+}
+
+CEconItemAttribute const *CAttributeList::GetAttribByName( char const *szName )
+{
+	EconAttributeDefinition *pDefinition = GetItemSchema()->GetAttributeDefinitionByName( szName );
+
+	FOR_EACH_VEC( m_Attributes, i )
+	{
+		if ( m_Attributes[i].GetStaticData()->index == pDefinition->index )
+			return &m_Attributes[i];
+	}
+
+	return nullptr;
+}
+
+void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
+{
+	FOR_EACH_VEC( m_Attributes, i )
+	{
+		if ( !iter.OnIterateAttributeValue( m_Attributes[i].GetStaticData(), m_Attributes[i].m_iRawValue32 ) )
+			return;
+	}
+}
+
+bool CAttributeList::SetRuntimeAttributeValue( const EconAttributeDefinition *pDefinition, float flValue )
+{
+	FOR_EACH_VEC( m_Attributes, i )
+	{
+		CEconItemAttribute *pAttrib = &m_Attributes[ i ];
+		if ( pAttrib->GetStaticData() == pDefinition )
+		{
+			pAttrib->m_iRawValue32 = FloatBits( flValue );
+			m_pManager->OnAttributesChanged();
+			return true;
+		}
+	}
+
+	CEconItemAttribute attrib( pDefinition->index, flValue );
+	m_Attributes[ m_Attributes.AddToTail() ] = attrib;
+
+	return true;
+}
+
+bool CAttributeList::RemoveAttribute( const EconAttributeDefinition *pDefinition )
+{
+	FOR_EACH_VEC( m_Attributes, i )
+	{
+		if ( m_Attributes[i].GetStaticData() == pDefinition )
+		{
+			m_Attributes.Remove( i );
+			m_pManager->OnAttributesChanged();
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CAttributeList::RemoveAttribByIndex( int iIndex )
+{
+	if( iIndex == m_Attributes.InvalidIndex() || iIndex > m_Attributes.Count() )
+		return false;
+
+	m_Attributes.Remove( iIndex );
+	m_pManager->OnAttributesChanged();
+	return true;
+}
+
+void CAttributeList::SetManager( CAttributeManager *pManager )
+{
+	m_pManager = pManager;
+}
+
+void CAttributeList::NotifyManagerOfAttributeValueChanges( void )
+{
+	m_pManager->OnAttributesChanged();
+}
+
+CAttributeList &CAttributeList::operator=( CAttributeList const &rhs )
+{
+	m_Attributes.RemoveAll();
+	m_Attributes = rhs.m_Attributes;
+	m_pManager = nullptr;
+	return *this;
 }

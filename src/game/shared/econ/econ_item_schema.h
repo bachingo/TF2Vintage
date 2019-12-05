@@ -15,6 +15,10 @@ enum
 	ATTRIB_FORMAT_ADDITIVE,
 	ATTRIB_FORMAT_ADDITIVE_PERCENTAGE,
 	ATTRIB_FORMAT_OR,
+	ATTRIB_FORMAT_PARTICLE_INDEX,
+	ATTRIB_FORMAT_ITEM_DEF,
+	ATTRIB_FORMAT_ACCOUNT_ID,
+	ATTRIB_FORMAT_DATE
 };
 	
 enum
@@ -95,6 +99,7 @@ struct EconAttributeDefinition
 {
 	EconAttributeDefinition()
 	{
+		index = 0xFFFF;
 		CLEAR_STR(name);
 		CLEAR_STR(attribute_class);
 		CLEAR_STR(description_string);
@@ -103,8 +108,10 @@ struct EconAttributeDefinition
 		hidden = false;
 		effect_type = -1;
 		stored_as_integer = false;
+		m_iAttributeClass = NULL_STRING;
 	}
 
+	unsigned short index;
 	char name[128];
 	char attribute_class[128];
 	char description_string[128];
@@ -113,6 +120,7 @@ struct EconAttributeDefinition
 	int effect_type;
 	bool hidden;
 	bool stored_as_integer;
+	string_t m_iAttributeClass;
 };
 
 // Attached Models
@@ -122,6 +130,21 @@ struct AttachedModel_t
 {
 	char model[128];
 	int  model_display_flags;
+};
+
+typedef union
+{
+	int iVal;
+	float flVal;
+	string_t sVal;
+} attrib_data_union_t;
+
+class IEconAttributeIterator
+{
+public:
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) = 0;
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) = 0;
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) = 0;
 };
 
 // Client specific.
@@ -162,10 +185,8 @@ public:
 
 public:
 	CNetworkVar( int, m_iAttributeDefinitionIndex );
-	CNetworkVar( float, value ); // m_iRawValue32
-	CNetworkString( value_string, 128 );
-	CNetworkString( attribute_class, 128 );
-	string_t m_strAttributeClass;
+	CNetworkVar( unsigned int, m_iRawValue32 );
+	string_t m_iAttributeClass;
 };
 
 typedef struct EconItemStyle
@@ -257,7 +278,7 @@ public:
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
-	CEconItemAttribute *IterateAttributes( string_t strClass );
+	void IterateAttributes( IEconAttributeIterator &iter );
 
 public:
 	char name[128];

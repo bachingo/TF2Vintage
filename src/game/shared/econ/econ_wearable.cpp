@@ -35,13 +35,13 @@ void CEconWearable::Spawn( void )
 
 	Precache();
 
-	if ( m_bExtraWearable && m_Item.GetStaticData() )
+	if ( m_bExtraWearable && GetItem()->GetStaticData() )
 	{
-		SetModel( m_Item.GetStaticData()->extra_wearable );
+		SetModel( GetItem()->GetStaticData()->extra_wearable );
 	}
 	else
 	{
-		SetModel( m_Item.GetPlayerDisplayModel() );
+		SetModel( GetItem()->GetPlayerDisplayModel() );
 	}
 
 	BaseClass::Spawn();
@@ -54,8 +54,8 @@ void CEconWearable::Spawn( void )
 
 int CEconWearable::GetSkin( void )
 {
-	if ( GetItem() && m_Item.GetSkin( GetTeamNumber(), false ) > -1 )
-		return m_Item.GetSkin( GetTeamNumber(), false );
+	if ( GetItem() && GetItem()->GetSkin( GetTeamNumber(), false ) > -1 )
+		return GetItem()->GetSkin( GetTeamNumber(), false );
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	if ( pOwner == nullptr )

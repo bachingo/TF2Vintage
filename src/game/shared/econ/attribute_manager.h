@@ -7,6 +7,120 @@
 
 #include "gamestringpool.h"
 
+typedef CUtlVector< CHandle<CBaseEntity> > ProviderVector;
+
+class CEconItemSpecificAttributeIterator : public IEconAttributeIterator
+{
+public:
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) { return true; }
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) { return true; }
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) { return true; }
+};
+
+class CEconItemAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
+{
+public:
+	CEconItemAttributeIterator_ApplyAttributeFloat( EHANDLE hOwner, string_t iName, float *outValue, ProviderVector *outVector )
+		: m_hOwner( hOwner ), m_iName( iName ), m_flOut( outValue ), m_pOutProviders( outVector ) {}
+
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, unsigned int value )
+	{
+		string_t name = pDefinition->m_iAttributeClass;
+		if ( !name && pDefinition->attribute_class[ 0 ] )
+		{
+			name = AllocPooledString( pDefinition->attribute_class );
+			const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+		}
+
+		// Pointer comparison, bad
+		if ( m_iName == name )
+		{
+			if ( m_pOutProviders )
+			{
+				if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+					m_pOutProviders->AddToTail( m_hOwner );
+			}
+
+			switch ( pDefinition->description_format )
+			{
+				case ATTRIB_FORMAT_ADDITIVE:
+				case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
+				{
+					*m_flOut += BitsToFloat( value );
+					break;
+				}
+				case ATTRIB_FORMAT_PERCENTAGE:
+				case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
+				{
+					*m_flOut *= BitsToFloat( value );
+					break;
+				}
+				case ATTRIB_FORMAT_OR:
+				{
+					// Oh, man...
+					int iValue = FloatBits( *m_flOut );
+					iValue |= value;
+					*m_flOut = BitsToFloat( iValue );
+					break;
+				}
+				default:
+				{
+					*m_flOut = value;
+					break;
+				}
+			}
+		}
+
+		return true;
+	}
+
+private:
+	EHANDLE m_hOwner;
+	string_t m_iName;
+	float *m_flOut;
+	ProviderVector *m_pOutProviders;
+};
+
+class CEconItemAttributeIterator_ApplyAttributeString : public CEconItemSpecificAttributeIterator
+{
+public:
+	CEconItemAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t *outValue, ProviderVector *outVector )
+		: m_hOwner( hOwner ), m_iName( iName ), m_pOut( outValue ), m_pOutProviders( outVector ) {}
+
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, unsigned int value )
+	{
+		attrib_data_union_t convert;
+		convert.iVal = value;
+
+		string_t name = pDefinition->m_iAttributeClass;
+		if ( !name && pDefinition->attribute_class[ 0 ] )
+		{
+			name = AllocPooledString( pDefinition->attribute_class );
+			const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+		}
+
+		// Pointer comparison, bad
+		if ( m_iName == name )
+		{
+			if ( m_pOutProviders )
+			{
+				if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+					m_pOutProviders->AddToTail( m_hOwner );
+			}
+
+			*m_pOut = convert.sVal;
+		}
+
+		return true;
+	}
+
+private:
+	EHANDLE m_hOwner;
+	string_t m_iName;
+	string_t *m_pOut;
+	ProviderVector *m_pOutProviders;
+};
+
 // Client specific.
 #ifdef CLIENT_DLL
 EXTERN_RECV_TABLE( DT_AttributeManager );
@@ -55,6 +169,7 @@ public:
 	virtual void	InitializeAttributes( CBaseEntity *pEntity );
 	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 	virtual string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	virtual void	OnAttributesChanged( void ) {}
 
 protected:
 	CNetworkHandle( CBaseEntity, m_hOuter );
@@ -65,8 +180,9 @@ protected:
 	int m_iOldReapplyProvisionParity;
 #endif
 
-private:
 	CUtlVector<EHANDLE> m_AttributeProviders;
+
+	friend class CEconEntity;
 };
 
 template<>
@@ -97,9 +213,17 @@ public:
 	DECLARE_EMBEDDED_NETWORKVAR();
 
 	virtual ~CAttributeContainer() {};
-
-	float ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	void	InitializeAttributes( CBaseEntity *pEntity );
+	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	void	OnAttributesChanged( void );
+
+	CEconItemView *GetItem( void ) { return &m_Item; }
+
+protected:
+	CNetworkVarEmbedded( CEconItemView, m_Item );
+
+	friend class CEconEntity;
 };
 
 #endif // ATTRIBUTE_MANAGER_H

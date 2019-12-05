@@ -19,7 +19,7 @@
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "util_shared.h"
 
-#if defined USES_ECON_ITEMS
+#if defined USES_ECON_ITEMS || defined TF_VINTAGE
 #include "game_item_schema.h"
 #include "econ_item_view.h"
 #endif
@@ -843,8 +843,8 @@ public:
 	//  the player and not to other players.
 	CNetworkVarEmbedded( CPlayerLocalData, m_Local );
 
-#if defined USES_ECON_ITEMS
-	CNetworkVarEmbedded( CAttributeList,	m_AttributeList );
+#if defined USES_ECON_ITEMS || defined TF_VINTAGE
+	CNetworkVarEmbedded( CAttributeList, m_AttributeList );
 #endif
 
 	void InitFogController( void );

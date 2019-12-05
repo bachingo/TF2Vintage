@@ -458,6 +458,54 @@ bool HintCallbackNeedsResources_Teleporter( CBasePlayer *pPlayer )
 	return ( pPlayer->GetAmmoCount( TF_AMMO_METAL ) > CalculateObjectCost( OBJ_TELEPORTER ) );
 }
 
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
+{
+	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
+		return flValue;
+
+	m_bParsingMyself = true;;
+
+	CEconItemAttributeIterator_ApplyAttributeFloat func( m_hOuter, strAttributeClass, &flValue, pOutProviders );
+	m_hOuter->m_AttributeList.IterateAttributes( func );
+
+	m_bParsingMyself = false;
+
+	return BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
+{
+	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
+		return strValue;
+
+	m_bParsingMyself = true;
+
+	CEconItemAttributeIterator_ApplyAttributeString func( m_hOuter, strAttributeClass, &strValue, pOutProviders );
+	m_hOuter->m_AttributeList.IterateAttributes( func );
+
+	m_bParsingMyself = false;
+
+	return BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAttributeContainerPlayer::OnAttributesChanged( void )
+{
+	m_hOuter->NetworkStateChanged();
+}
+
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1077,6 +1125,7 @@ void CTFPlayer::InitialSpawn( void )
 	BaseClass::InitialSpawn();
 
 	m_AttributeManager.InitializeAttributes( this );
+	m_AttributeManager.m_hOuter = this;
 
 	SetWeaponBuilder( NULL );
 
@@ -1916,12 +1965,12 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
 					if ( (pItemDef->year) > 2007 ) 
-					bWhiteListedWeapon = false;
+						bWhiteListedWeapon = false;
 				}
 				else
 				{
 					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt())
-					bWhiteListedWeapon = false;
+						bWhiteListedWeapon = false;
 				}
 			}
 			
@@ -1930,7 +1979,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			{
 				CTFPlayer *pPlayer = this;
 				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
-				bIsSpecialRestricted = true;
+					bIsSpecialRestricted = true;
 			}
 		
 			// Checks for holiday restrictions.
@@ -2220,12 +2269,12 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
 					if ( (pItemDef->year) > 2007 ) 
-					bWhiteListedCosmetic = false;
+						bWhiteListedCosmetic = false;
 				}
 				else
 				{
 					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt() )
-					bWhiteListedCosmetic = false;
+						bWhiteListedCosmetic = false;
 				}
 			}
 			
@@ -2234,7 +2283,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			{
 				CTFPlayer *pPlayer = this;
 				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
-				bIsSpecialRestricted = true;
+					bIsSpecialRestricted = true;
 			}
 			
 			// Checks for holiday restrictions.
@@ -3528,7 +3577,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 						if ( pStatic )
 						{
-							float value = pAttribute->value;
+							float value = BitsToFloat( pAttribute->m_iRawValue32 );
 							if ( pStatic->description_format == ATTRIB_FORMAT_PERCENTAGE || pStatic->description_format == ATTRIB_FORMAT_INVERTED_PERCENTAGE )
 							{
 								value *= 100.0f;
@@ -10164,7 +10213,6 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 		float flValue = V_atof( args[i + 1] );
 
 		CEconItemAttribute econAttribute( iAttribIndex, flValue );
-		econAttribute.m_strAttributeClass = AllocPooledString( econAttribute.attribute_class );
 		bAddedAttributes = econItem.AddAttribute( &econAttribute );
 	}
 
