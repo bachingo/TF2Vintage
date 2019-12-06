@@ -1889,6 +1889,52 @@
 			}
 
 		}
+		"weapon_quadball"
+		{
+			"prefab"	"weapon_grenade_launcher"
+			"item_logname"	"iron_bomber"
+			"item_iconname"	"iron_bomber"
+			"item_type_name"	"#TF_Weapon_GrenadeLauncher"
+			"item_name"		"#TF_Weapon_Iron_bomber"
+			"propername"		"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_quadball/c_quadball"
+			"model_player"	"models/workshop/weapons/c_models/c_quadball/c_quadball.mdl"
+			"attributes"
+			{
+				"Blast radius decreased"
+				{
+					"attribute_class"	"mult_explosion_radius"
+					"value"				"0.85"
+				}
+				"grenade no bounce"
+				{
+					"attribute_class"	"grenade_no_bounce"
+					"value"	"1"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	"custom_projectile_model"
+					"value"				"models/workshop/weapons/c_models/c_quadball/w_quadball_grenade.mdl"
+				}
+				"fuse bonus"
+				{
+					"attribute_class" "fuse_mult"
+					"value" "0.7"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_TackyGrenadier.Single"
+				"sound_burst"			"Weapon_TackyGrenadier.SingleCrit"
+				"sound_special1"		"Weapon_Airstrike.Explosion"
+				"animation_replacement"
+				{
+					"ACT_PRIMARY_VM_INSPECT_START"		"ACT_PRIMARY_ALT1_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"		"ACT_PRIMARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"		"ACT_PRIMARY_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
 		"weapon_sentry_revenge"
 		{
 			"item_class"	"tf_weapon_sentry_revenge"
@@ -3363,7 +3409,7 @@
 		"156"
 		{
 			"name"	"The Pain Train (Pyro)"
-			"prefab"	"weapon_paintrain weapon_custom"
+			"prefab"	"weapon_paintrain"
 			"propername"	"1"
 			"year"			"2010"
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain_pyro.mdl"
@@ -4326,7 +4372,7 @@
 		"417"
 		{
 			"name"	"The Reserve Shooter (Engineer)"
-			"prefab"	"weapon_reserve_shooter weapon_custom"
+			"prefab"	"weapon_reserve_shooter"
 			"propername"	"1"
 			"year"			"2011"
 			"item_slot"	"primary"
@@ -4387,6 +4433,70 @@
 				"sound_reload"			"Weapon_QuakeRPG.Reload"
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
+		}
+		"1150"
+		{
+			"name"	"The Quickiebomb Launcher"
+			"prefab"		"weapon_stickybomb_launcher"
+			"year"			"2014"
+			"item_type_name"	"#TF_Weapon_PipebombLauncher"
+			"item_name" "#TF_Weapon_Sticky_Quickie"
+			"propername"	"1"
+			"item_logname"	"quickiebomb_launcher"
+			"item_iconname"	"quickiebomb_launcher"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_kingmaker_sticky/c_kingmaker_sticky"
+			"model_player"	"models/workshop/weapons/c_models/c_kingmaker_sticky/c_kingmaker_sticky.mdl"
+			"attributes"
+			{
+				"sticky arm time bonus"
+				{
+					"attribute_class"	"sticky_arm_time"
+					"value"	"-0.2"
+				}
+				"stickybomb charge rate"
+				{
+					"attribute_class"	"stickybomb_charge_rate"
+					"value"	"0.3"
+				}
+				"stickybomb_charge_damage_increase"
+				{
+					"attribute_class"	"stickybomb_charge_damage_increase"
+					"value"	"1.35"
+				}
+				"stickies detonate stickies"
+				{
+					"attribute_class"	"stickies_detonate_stickies"
+					"value"	"1"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value"	"0.5"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.85"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	"custom_projectile_model"
+					"value"				"models/workshop/weapons/c_models/c_kingmaker_sticky/w_kingmaker_stickybomb.mdl"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_AirBurster.Single"
+				"sound_burst"			"Weapon_AirBurster.SingleCrit"
+				"sound_special1"		"Weapon_AirBurster.Explode"
+			}
+		}
+		"1151"
+		{
+			"name"	"The Iron Bomber"
+			"prefab"	"weapon_quadball"
+			"year"			"2014"
+			"particle_suffix"	"iron_bomber"
 		}
 		"121"
 		{
