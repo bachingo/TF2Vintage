@@ -553,6 +553,27 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iRemoteDeto
 
 	float flDamageMult = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flDamageMult, mult_dmg );
+	
+	// Special damage bonus case for stickybombs.
+	if ( iMode == TF_GL_MODE_REMOTE_DETONATE )
+	{
+		float flDamageChargeMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageChargeMult, stickybomb_charge_damage_increase );
+		if ( flDamageChargeMult != 1.0f )
+		{
+			// If we're a stickybomb with this attribute, we need to calculate out the charge level.
+			// Since we know GetProjectileSpeed(), we can use maths to get the charge level percent.
+			float flSpeedMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT( flSpeedMult, mult_projectile_range );
+			float flProjectileSpeedDiffCurrent = GetProjectileSpeed() - ( TF_PIPEBOMB_MIN_CHARGE_VEL * flSpeedMult );
+			float flProjectileSpeedDiffMax = ( TF_PIPEBOMB_MAX_CHARGE_VEL - TF_PIPEBOMB_MIN_CHARGE_VEL ) * flSpeedMult;
+			float flChargePercent = flProjectileSpeedDiffCurrent / flProjectileSpeedDiffMax;
+			
+			// Calculate out our additional damage bonus from charging our stickybomb.
+			flDamageMult *= ( ( flDamageChargeMult - 1 ) * flChargePercent ) + 1;
+			
+		}
+	}
 
 	CALL_ATTRIB_HOOK_INT ( iNoSpin, grenade_no_spin );
 

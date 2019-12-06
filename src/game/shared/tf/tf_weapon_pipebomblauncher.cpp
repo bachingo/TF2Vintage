@@ -22,11 +22,7 @@
 #include "tf_player.h"
 #include "tf_gamestats.h"
 #endif
-
-// hard code these eventually
-#define TF_PIPEBOMB_MIN_CHARGE_VEL 900
-#define TF_PIPEBOMB_MAX_CHARGE_VEL 2400
-#define TF_PIPEBOMB_MAX_CHARGE_TIME 4.0f
+#include "tf_shareddefs.h"
 
 #define HIGHLIGHT_CONTEXT	"BOMB_HIGHLIGHT_THINK"
 
@@ -176,7 +172,7 @@ void CTFPipebombLauncher::PrimaryAttack( void )
 	{
 		float flTotalChargeTime = gpGlobals->curtime - m_flChargeBeginTime;
 
-		if ( flTotalChargeTime >= TF_PIPEBOMB_MAX_CHARGE_TIME )
+		if ( flTotalChargeTime >= GetChargeMaxTime() )
 		{
 			LaunchGrenade();
 		}
@@ -264,10 +260,11 @@ float CTFPipebombLauncher::GetProjectileSpeed( void )
 {
 	float flForwardSpeed = RemapValClamped( ( gpGlobals->curtime - m_flChargeBeginTime ),
 											0.0f,
-											TF_PIPEBOMB_MAX_CHARGE_TIME,
+											GetChargeMaxTime(),
 											TF_PIPEBOMB_MIN_CHARGE_VEL,
 											TF_PIPEBOMB_MAX_CHARGE_VEL );
 
+	CALL_ATTRIB_HOOK_FLOAT( flForwardSpeed, mult_projectile_range );
 	return flForwardSpeed;
 }
 
@@ -553,7 +550,9 @@ bool CTFPipebombLauncher::DetonateRemotePipebombs( bool bFizzle )
 
 float CTFPipebombLauncher::GetChargeMaxTime( void )
 {
-	return TF_PIPEBOMB_MAX_CHARGE_TIME;
+	float flMaxChargeTime = TF_PIPEBOMB_MAX_CHARGE_TIME;
+	CALL_ATTRIB_HOOK_INT( flMaxChargeTime, stickybomb_charge_rate );
+	return flMaxChargeTime;
 }
 
 
