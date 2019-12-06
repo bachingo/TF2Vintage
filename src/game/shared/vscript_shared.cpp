@@ -40,7 +40,7 @@ const char *VScriptCutDownString( const char* str )
 	return staticStr;
 }
 
-HSCRIPT VScriptCompileScript( const char *pszScriptPath, bool bWarnMissing )
+HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 {
 	if ( !g_pScriptVM )
 	{
@@ -57,7 +57,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptPath, bool bWarnMissing )
 	};
 
 	const char *pszVMExtension = pszExtensions[ g_pScriptVM->GetLanguage() ];
-	const char *pszIncomingExtension = V_strrchr( pszScriptPath , '.' );
+	const char *pszIncomingExtension = V_strrchr( pszScriptName , '.' );
 	if ( pszIncomingExtension && V_strcmp( pszIncomingExtension, pszVMExtension ) != 0 )
 	{
 		Warning( "Script file type does not match VM type\n" );
@@ -67,11 +67,11 @@ HSCRIPT VScriptCompileScript( const char *pszScriptPath, bool bWarnMissing )
 	CFmtStr scriptPath;
 	if ( pszIncomingExtension )
 	{
-		scriptPath.sprintf( "%s", pszScriptPath );
+		scriptPath.sprintf( "scripts/vscripts/%s", pszScriptName );
 	}
 	else
 	{	
-		scriptPath.sprintf( "%s%s", pszScriptPath,  pszVMExtension );
+		scriptPath.sprintf( "scripts/vscripts/%s%s", pszScriptName,  pszVMExtension );
 	}
 
 	const char *pBase;
@@ -106,7 +106,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptPath, bool bWarnMissing )
 	HSCRIPT hScript = g_pScriptVM->CompileScript( pBase, pszFilename );
 	if ( !hScript )
 	{
-		Warning( "FAILED to compile and execute script file named %s (%s)\n", scriptPath, pszFilename );
+		Warning( "FAILED to compile and execute script file named %s\n", scriptPath );
 		Assert( "Error running script" );
 	}
 	return hScript;
