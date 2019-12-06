@@ -499,6 +499,8 @@ $Project "Server (TF)"
 				$File	"$SRCDIR\game\shared\tf\tf_wearable.h"
 				$File	"$SRCDIR\game\shared\tf\tf_wearable_demoshield.h"
 				$File	"$SRCDIR\game\shared\tf\tf_wearable_demoshield.cpp"
+				$File	"$SRCDIR\game\shared\tf\tf_wearable_razorback.cpp"
+				$File	"$SRCDIR\game\shared\tf\tf_wearable_razorback.h"
 			}
 
 			$Folder "Bots"
