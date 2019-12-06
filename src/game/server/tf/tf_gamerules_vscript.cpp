@@ -116,14 +116,10 @@ static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szNam
 	return value;
 }
 
-class CTFGameRulesScope
+class CTFGameRulesScope : 
+	public CScriptScopeT<CDefScriptScopeBase>
 {
 public:
-	static IScriptVM *GetVM()
-	{
-		extern IScriptVM *g_pScriptVM;
-		return g_pScriptVM;
-	}
 
 	DEFINE_SCRIPT_PROXY_1V( RegisterWep );
 	DEFINE_SCRIPT_PROXY_1V( RegisterEnt );
@@ -146,7 +142,7 @@ void CTFGameRules::RegisterScriptFunctions( void )
 	char const *path = g_pFullFileSystem->FindFirst( root, &fh );
 	while ( path )
 	{
-		CScriptScopeT<CTFGameRulesScope> hTable{};
+		CTFGameRulesScope hTable{};
 		if ( g_pFullFileSystem->FindIsDirectory( fh ) && path[0] != '.' )
 			break;
 
