@@ -116,6 +116,19 @@ static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szNam
 	return value;
 }
 
+class CTFGameRulesScope
+{
+public:
+	static IScriptVM *GetVM()
+	{
+		extern IScriptVM *g_pScriptVM;
+		return g_pScriptVM;
+	}
+
+	DEFINE_SCRIPT_PROXY_1V( RegisterWep );
+	DEFINE_SCRIPT_PROXY_1V( RegisterEnt );
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -133,7 +146,7 @@ void CTFGameRules::RegisterScriptFunctions( void )
 	char const *path = g_pFullFileSystem->FindFirst( root, &fh );
 	while ( path )
 	{
-		CScriptScope hTable{};
+		CScriptScopeT<CTFGameRulesScope> hTable{};
 		if ( g_pFullFileSystem->FindIsDirectory( fh ) && path[0] != '.' )
 			break;
 
@@ -148,31 +161,10 @@ void CTFGameRules::RegisterScriptFunctions( void )
 				Assert( "Error running script" );
 			}
 
-			HSCRIPT hRegisterFunc = hTable.LookupFunction( "RegisterEnt" );
-			if ( hRegisterFunc != INVALID_HSCRIPT )
+			if ( hTable.RegisterEnt( className ) || hTable.RegisterWep( className ) )
 			{
-				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
-				{
-					Warning( "Error running script named %s\n", className );
-					Assert( "Error running script" );
-				}
-
-				hTable.ReleaseFunction( hRegisterFunc );
+				DevMsg( "Registering new entity {%s} for creation.", className );
 			}
-
-			hRegisterFunc = hTable.LookupFunction( "RegisterWep" );
-			if ( hRegisterFunc != INVALID_HSCRIPT )
-			{
-				if ( hTable.Call( hRegisterFunc, NULL ) == SCRIPT_ERROR )
-				{
-					Warning( "Error running script named %s\n", className );
-					Assert( "Error running script" );
-				}
-
-				hTable.ReleaseFunction( hRegisterFunc );
-			}
-
-			hTable.Term();
 		}
 		else
 		{

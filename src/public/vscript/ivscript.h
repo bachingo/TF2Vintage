@@ -862,7 +862,7 @@ public:
 };
 
 template <class BASE_CLASS = CDefScriptScopeBase>
-class CScriptScopeT : public CDefScriptScopeBase
+class CScriptScopeT : public BASE_CLASS
 {
 public:
 	CScriptScopeT() :
