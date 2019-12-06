@@ -2154,9 +2154,6 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 			// If we're on fire, stop burning and prevent us from being burnt.
 			RemoveCond(TF_COND_BURNING);
 		}
-		m_flFlameBurnTime = 0;
-		m_flFlameLife = 0;
-		m_flFlameRemoveTime = 0;
 	}
 
 #endif
