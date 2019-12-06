@@ -163,7 +163,7 @@ void CTFGrenadePipebombProjectile::UpdateOnRemove( void )
 float CTFGrenadePipebombProjectile::GetLiveTime( void ) const
 {
 	float flArmTime = tf_grenadelauncher_livetime.GetFloat();
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher, flArmTime, sticky_arm_time );
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), flArmTime, sticky_arm_time );
 	return flArmTime;
 }
 
