@@ -135,9 +135,9 @@ IMPLEMENT_SERVERCLASS_ST(CTeamTrainWatcher, DT_TeamTrainWatcher)
 	SendPropInt( SENDINFO( m_iTrainSpeedLevel ), 4 ),
 	SendPropTime( SENDINFO( m_flRecedeTime ) ),
 	SendPropInt( SENDINFO( m_nNumCappers ) ),
-#ifdef GLOWS_ENABLE
+
 	SendPropEHandle( SENDINFO( m_hGlowEnt ) ),
-#endif // GLOWS_ENABLE
+
 
 END_SEND_TABLE()
 
@@ -315,9 +315,9 @@ CTeamTrainWatcher::CTeamTrainWatcher()
 
 	m_nTrainRecedeTime = 0;
 
-#ifdef GLOWS_ENABLE
+
 	m_hGlowEnt.Set( NULL );
-#endif // GLOWS_ENABLE
+
 
 #if defined( TF_DLL ) || defined( TF_VINTAGE )
 	ChangeTeam( TF_TEAM_BLUE );
@@ -388,9 +388,9 @@ void CTeamTrainWatcher::InputDisable( inputdata_t &inputdata )
 
 	m_Sparks.Purge();
 
-#ifdef GLOWS_ENABLE
+
 	m_hGlowEnt.Set( NULL );
-#endif // GLOWS_ENABLE
+
 
 	// if we're moving the train, let's shut it down
 	if ( m_bHandleTrainMovement )
@@ -756,7 +756,7 @@ void CTeamTrainWatcher::InputOnStartOvertime( inputdata_t &inputdata )
 	}
 }
 
-#ifdef GLOWS_ENABLE
+
 void CTeamTrainWatcher::FindGlowEntity( void )
 {
 	if ( m_hTrain && ( m_hTrain->GetEntityName() != NULL_STRING ) )
@@ -814,7 +814,7 @@ void CTeamTrainWatcher::FindGlowEntity( void )
 		}
 	}
 }
-#endif // GLOWS_ENABLE
+
 
 // ==========================================================
 // given a start node and a list of goal nodes
@@ -1030,9 +1030,9 @@ void CTeamTrainWatcher::WatcherActivate( void )
 #endif
 	}
 
-#ifdef GLOWS_ENABLE
+
 	FindGlowEntity();
-#endif // GLOWS_ENABLE
+
 
 	InternalSetSpeedForwardModifier( m_flSpeedForwardModifier );
 

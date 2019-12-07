@@ -106,9 +106,9 @@ private:
 	void PlayCaptureAlert( CTeamControlPoint *pPoint, bool bFinalPointInMap );
 	void InternalSetNumTrainCappers( int iNumCappers, CBaseEntity *pTrigger );
 	void InternalSetSpeedForwardModifier( float flModifier );
-#ifdef GLOWS_ENABLE
+
 	void FindGlowEntity( void );
-#endif // GLOWS_ENABLE
+
 	void HandleTrainMovement( bool bStartReceding = false );
 	void HandleSparks( bool bSparks );
 
@@ -188,9 +188,9 @@ private:
 
 	int m_nTrainRecedeTime;
 
-#ifdef GLOWS_ENABLE
+
 	CNetworkVar( EHANDLE, m_hGlowEnt );
-#endif // GLOWS_ENABLE
+
 };
 
 

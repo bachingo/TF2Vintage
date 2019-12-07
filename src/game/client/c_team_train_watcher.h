@@ -12,9 +12,9 @@
 
 #include "c_baseentity.h"
 #include "c_physicsprop.h"
-#ifdef GLOWS_ENABLE
+
 #include "glow_outline_effect.h"
-#endif // GLOWS_ENABLE
+
 
 class C_TeamTrainWatcher : public C_BaseEntity
 {
@@ -38,11 +38,11 @@ public:
 public:
 	virtual	void ClientThink();
 
-#ifdef GLOWS_ENABLE
+
 private:
 	void UpdateGlowEffect( void );
 	void DestroyGlowEffect( void );
-#endif // GLOWS_ENABLE
+
 
 private:
 
@@ -65,11 +65,11 @@ private:
 	CNetworkVar( int, m_nNumCappers );
 	int m_nOldNumCappers;
 
-#ifdef GLOWS_ENABLE
+
 	EHANDLE m_hGlowEnt;
 	EHANDLE m_hOldGlowEnt;
 	CGlowObject *m_pGlowEffect;
-#endif // GLOWS_ENABLE
+
 };
 
 extern CUtlVector< CHandle<C_TeamTrainWatcher> > g_hTrainWatchers;

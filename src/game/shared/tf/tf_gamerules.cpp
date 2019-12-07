@@ -108,7 +108,6 @@ ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, 
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
 ConVar tf2v_allow_thirdperson( "tf2v_allow_thirdperson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to switch to third person mode." );
-ConVar tf2v_allow_glow_outline( "tf2v_allow_glow_outline", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to use glow for objectives." );
 ConVar tf2v_classlimit( "tf2v_classlimit", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable classlimits, even when tournament mode is disabled." );
 ConVar tf2v_critchance( "tf2v_critchance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for regular critical hits.");
 ConVar tf2v_critchance_rapid( "tf2v_critchance_rapid", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for rapid fire critical hits.");
@@ -117,7 +116,8 @@ ConVar tf2v_crit_duration_rapid( "tf2v_crit_duration_rapid", "2.0", FCVAR_NOTIFY
 ConVar tf2v_ctf_capcrits( "tf2v_ctf_capcrits", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable critical hits on flag capture." );
 ConVar tf2v_minicrits_on_deflect( "tf2v_minicrits_on_deflect", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Deflected projectiles get minicrits." );
 
-
+ConVar tf2v_allow_objective_glow_ctf( "tf2v_allow_objective_glow_ctf", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable glow for CTF flags." );
+ConVar tf2v_allow_objective_glow_pl( "tf2v_allow_objective_glow_pl", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable glow for Payload carts." );
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -3526,8 +3526,11 @@ static const char *g_aTaggedConVars[] =
 	"tf_gamemode_dr",
 	"dr",
 	
-	"tf2v_allow_glow_outline",
-	"glow",
+	"tf2v_allow_objective_glow_ctf",
+	"glow_flag",
+	
+	"tf2v_allow_objective_glow_pl",
+	"glow_cart",
 	
 	"tf2v_allcrit",
 	"allcrit",
@@ -6286,13 +6289,20 @@ bool CTFGameRules::AllowThirdPersonCamera( void )
 	return tf2v_allow_thirdperson.GetBool();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowGlowOutlinesFlags( void )
+{
+	return tf2v_allow_objective_glow_ctf.GetBool();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFGameRules::AllowGlowOutlines( void )
+bool CTFGameRules::AllowGlowOutlinesCarts( void )
 {
-	return tf2v_allow_glow_outline.GetBool();
+	return tf2v_allow_objective_glow_pl.GetBool();
 }
 
 //-----------------------------------------------------------------------------

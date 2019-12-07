@@ -14,9 +14,9 @@
 
 #include "shareddefs.h"
 #include "c_baseflex.h"
-#ifdef GLOWS_ENABLE
+
 #include "glow_outline_effect.h"
-#endif // GLOWS_ENABLE
+
 
 class C_BaseCombatWeapon;
 class C_WeaponCombatShield;
@@ -94,14 +94,14 @@ public:
 
 	virtual void		DoMuzzleFlash();
 
-#ifdef GLOWS_ENABLE
+
 	CGlowObject			*GetGlowObject( void ){ return m_pGlowEffect; }
 	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
 //	void				EnableGlowEffect( float r, float g, float b );
 
 	void				SetClientSideGlowEnabled( bool bEnabled ){ m_bClientSideGlowEnabled = bEnabled; UpdateGlowEffect(); }
 	bool				IsClientSideGlowEnabled( void ){ return m_bClientSideGlowEnabled; }
-#endif // GLOWS_ENABLE
+
 
 public:
 
@@ -109,10 +109,10 @@ public:
 
 protected:
 
-#ifdef GLOWS_ENABLE	
+	
 	virtual void		UpdateGlowEffect( void );
 	virtual void		DestroyGlowEffect( void );
-#endif // GLOWS_ENABLE
+
 
 	int			m_bloodColor;			// color of blood particless
 
@@ -124,12 +124,12 @@ private:
 	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
 	CHandle< C_BaseCombatWeapon > m_hActiveWeapon;
 
-#ifdef GLOWS_ENABLE
+
 	bool				m_bClientSideGlowEnabled;	// client-side only value used for spectator
 	bool				m_bGlowEnabled;				// networked value
 	bool				m_bOldGlowEnabled;
 	CGlowObject			*m_pGlowEffect;
-#endif // GLOWS_ENABLE
+
 
 private:
 	C_BaseCombatCharacter( const C_BaseCombatCharacter & ); // not defined, not accessible

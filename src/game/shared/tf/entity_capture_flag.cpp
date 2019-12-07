@@ -349,14 +349,18 @@ void CCaptureFlag::Spawn( void )
 // Manage glow effect
 void CCaptureFlag::UpdateGlowEffect( void )
 {
-	if ( !g_GlowObjectManager.HasGlowEffect( this ) )
+	if ( !GameRules() || GameRules()->AllowGlowOutlinesFlags() )
 	{
-		m_iGlowEffectHandle = g_GlowObjectManager.RegisterGlowObject( this, Vector( 0.76f, 0.76f, 0.76f ) , 1.0f, true, true, 0 );
-	}
+		if ( !g_GlowObjectManager.HasGlowEffect( this ) )
+		{
+			m_iGlowEffectHandle = g_GlowObjectManager.RegisterGlowObject( this, Vector( 0.76f, 0.76f, 0.76f ) , 1.0f, true, true, 0 );
+		}
 
-	Vector vecColor;
-	TFGameRules()->GetTeamGlowColor( GetTeamNumber(), vecColor.x, vecColor.y, vecColor.z );
-	g_GlowObjectManager.SetColor( m_iGlowEffectHandle, vecColor );
+		Vector vecColor;
+		TFGameRules()->GetTeamGlowColor( GetTeamNumber(), vecColor.x, vecColor.y, vecColor.z );
+		g_GlowObjectManager.SetColor( m_iGlowEffectHandle, vecColor );
+		
+	}
 
 }
 

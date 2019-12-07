@@ -177,7 +177,8 @@ public:
 
 	virtual bool	AllowThirdPersonCamera( void );
 	
-	virtual bool	AllowGlowOutlines( void );
+	virtual bool	AllowGlowOutlinesFlags( void );
+	virtual bool	AllowGlowOutlinesCarts( void );
 
 	virtual float	GetRespawnWaveMaxLength( int iTeam, bool bScaleWithNumPlayers = true );
 

@@ -18,7 +18,7 @@
 
 #define FIXED_COPY_TEXTURE_TO_RENDER_TARGET 0
 
-#ifdef GLOWS_ENABLE
+
 
 ConVar glow_outline_effect_enable( "glow_outline_effect_enable", "1", FCVAR_ARCHIVE, "Enable entity outline glow effects." );
 
@@ -75,7 +75,7 @@ void CGlowObjectManager::RenderGlowEffects( const CViewSetup *pSetup, int nSplit
 {
 	if ( g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() )
 	{
-		if ( glow_outline_effect_enable.GetBool() && ( !GameRules() || GameRules()->AllowGlowOutlines() ) )
+		if ( glow_outline_effect_enable.GetBool() )
 		{
 			CMatRenderContextPtr pRenderContext( materials );
 
@@ -364,4 +364,3 @@ void CGlowObjectManager::GlowObjectDefinition_t::DrawModel()
 	}
 }
 
-#endif // GLOWS_ENABLE

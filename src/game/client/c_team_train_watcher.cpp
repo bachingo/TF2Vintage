@@ -23,9 +23,9 @@ IMPLEMENT_CLIENTCLASS_DT(C_TeamTrainWatcher, DT_TeamTrainWatcher, CTeamTrainWatc
 	RecvPropInt( RECVINFO( m_iTrainSpeedLevel ) ),
 	RecvPropFloat( RECVINFO( m_flRecedeTime ) ),
 	RecvPropInt( RECVINFO( m_nNumCappers ) ),
-#ifdef GLOWS_ENABLE
+
 	RecvPropEHandle( RECVINFO( m_hGlowEnt ) ),
-#endif // GLOWS_ENABLE
+
 
 END_RECV_TABLE()
 
@@ -38,11 +38,11 @@ C_TeamTrainWatcher::C_TeamTrainWatcher()
 	m_flTotalProgress = -1;
 	m_flRecedeTime = -1;
 
-#ifdef GLOWS_ENABLE
+
 	m_pGlowEffect = NULL;
 	m_hGlowEnt = NULL;
 	m_hOldGlowEnt = NULL;
-#endif // GLOWS_ENABLE
+
 }
 
 //-----------------------------------------------------------------------------
@@ -50,9 +50,9 @@ C_TeamTrainWatcher::C_TeamTrainWatcher()
 //-----------------------------------------------------------------------------
 C_TeamTrainWatcher::~C_TeamTrainWatcher()
 {
-#ifdef GLOWS_ENABLE
+
 	DestroyGlowEffect();
-#endif // GLOWS_ENABLE
+
 }
 
 //-----------------------------------------------------------------------------
@@ -60,34 +60,37 @@ C_TeamTrainWatcher::~C_TeamTrainWatcher()
 //-----------------------------------------------------------------------------
 void C_TeamTrainWatcher::ClientThink()
 {
-#ifdef GLOWS_ENABLE
+
 	if ( IsDormant() || ( m_hGlowEnt.Get() == NULL ) )
 	{
 		DestroyGlowEffect();
 		m_hOldGlowEnt = NULL;
 		m_hGlowEnt = NULL;
 	}
-#endif // GLOWS_ENABLE
+
 }
 
-#ifdef GLOWS_ENABLE
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void C_TeamTrainWatcher::UpdateGlowEffect( void )
 {
-	// destroy the existing effect
-	if ( m_pGlowEffect )
+	if ( !GameRules() || GameRules()->AllowGlowOutlinesCarts() )
 	{
-		DestroyGlowEffect();
-	}
+		// destroy the existing effect
+		if ( m_pGlowEffect )
+		{
+			DestroyGlowEffect();
+		}
 
-	// create a new effect if we have a cart
-	if ( m_hGlowEnt )
-	{
-		float r, g, b;
-		TeamplayRoundBasedRules()->GetTeamGlowColor( GetTeamNumber(), r, g, b );
-		m_pGlowEffect = new CGlowObject( m_hGlowEnt, Vector( r, g, b ), 1.0, true );
+		// create a new effect if we have a cart
+		if ( m_hGlowEnt )
+		{
+			float r, g, b;
+			TeamplayRoundBasedRules()->GetTeamGlowColor( GetTeamNumber(), r, g, b );
+			m_pGlowEffect = new CGlowObject( m_hGlowEnt, Vector( r, g, b ), 1.0, true );
+		}
 	}
 }
 
@@ -102,7 +105,7 @@ void C_TeamTrainWatcher::DestroyGlowEffect( void )
 		m_pGlowEffect = NULL;
 	}
 }
-#endif // GLOWS_ENABLE
+
 
 void C_TeamTrainWatcher::OnPreDataChanged( DataUpdateType_t updateType )
 {
@@ -112,9 +115,9 @@ void C_TeamTrainWatcher::OnPreDataChanged( DataUpdateType_t updateType )
 	m_flOldProgress = m_flTotalProgress;
 	m_flOldRecedeTime = m_flRecedeTime;
 	m_nOldNumCappers = m_nNumCappers;
-#ifdef GLOWS_ENABLE
+
 	m_hOldGlowEnt = m_hGlowEnt;
-#endif // GLOWS_ENABLE
+
 }
 
 //-----------------------------------------------------------------------------
@@ -185,12 +188,12 @@ void C_TeamTrainWatcher::OnDataChanged( DataUpdateType_t updateType )
 			gameeventmanager->FireEventClientSide( event );
 		}
 	}
-#ifdef GLOWS_ENABLE
+
 	if ( m_hOldGlowEnt != m_hGlowEnt )
 	{
 		UpdateGlowEffect();
 	}
-#endif // GLOWS_ENABLE
+
 }
 
 //-----------------------------------------------------------------------------
