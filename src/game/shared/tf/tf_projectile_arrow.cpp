@@ -22,6 +22,7 @@
 #ifdef GAME_DLL
 ConVar tf_debug_arrows( "tf_debug_arrows", "0", FCVAR_CHEAT );
 ConVar tf2v_healing_bolts("tf2v_healing_bolts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables crossbow bolts to be able to heal teammates." );
+ConVar tf2v_healing_bolts_heal_factor("tf2v_healing_bolts_heal_factor", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Multiplication factor of healing when using a healing bolt." );
 #endif
 
 extern ConVar tf2v_minicrits_on_deflect;
@@ -546,7 +547,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		if (bCanBeHealed)
 		{
 			// We hit someone that can be healed, so heal them.
-			int iHealthRestored = pPlayer->TakeHealth( ( GetDamage() * 2 ), DMG_GENERIC ); // Bolts always heal double the damage.
+			int iHealthRestored = pPlayer->TakeHealth( ( GetDamage() * tf2v_healing_bolts_heal_factor.GetFloat() ), DMG_GENERIC ); // Bolts always heal double the damage.
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, iHealthRestored, mult_health_fromhealers );
 			CTF_GameStats.Event_PlayerHealedOther( pHealer, iHealthRestored );
 
