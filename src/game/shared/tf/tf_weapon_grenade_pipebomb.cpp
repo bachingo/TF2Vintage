@@ -50,6 +50,8 @@ extern ConVar tf2v_minicrits_on_deflect;
 ConVar tf_grenadelauncher_chargescale( "tf_grenadelauncher_chargescale", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
+ConVar tf2v_grenades_explode_contact( "tf2v_grenades_explode_contact", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should Demoman grenades explode on contact?" );
+
 #ifndef CLIENT_DLL
 ConVar tf_grenadelauncher_min_contact_speed( "tf_grenadelauncher_min_contact_speed", "100", FCVAR_DEVELOPMENTONLY );
 #endif
@@ -557,7 +559,7 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		return;
 
 	// Blow up if we hit an enemy we can damage
-	if ( pOther->IsCombatCharacter() && pOther->GetTeamNumber() != GetTeamNumber() && pOther->m_takedamage != DAMAGE_NO )
+	if ( ( pOther->IsCombatCharacter() && pOther->GetTeamNumber() != GetTeamNumber() && pOther->m_takedamage != DAMAGE_NO ) && tf2v_grenades_explode_contact.GetBool() )
 	{
 		// Check to see if this is a respawn room.
 		if ( !pOther->IsPlayer() )
@@ -602,10 +604,13 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		// Blow up if we hit an enemy we can damage
 		if ( pHitEntity->IsCombatCharacter() && pHitEntity->GetTeamNumber() != GetTeamNumber() && pHitEntity->m_takedamage != DAMAGE_NO )
 		{
-			// Save this entity as enemy, they will take 100% damage.
-			m_hEnemy = pHitEntity;
-			SetThink( &CTFGrenadePipebombProjectile::Detonate );
-			SetNextThink( gpGlobals->curtime );
+			if ( tf2v_grenades_explode_contact.GetBool() )
+			{
+				// Save this entity as enemy, they will take 100% damage.
+				m_hEnemy = pHitEntity;
+				SetThink( &CTFGrenadePipebombProjectile::Detonate );
+				SetNextThink( gpGlobals->curtime );
+			}
 		}
 		else if ( m_iType == TF_GL_MODE_FIZZLE )
 		{
