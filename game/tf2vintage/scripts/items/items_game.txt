@@ -4463,11 +4463,6 @@
 					"attribute_class"	"stickybomb_charge_damage_increase"
 					"value"	"1.35"
 				}
-				"stickies detonate stickies"
-				{
-					"attribute_class"	"stickies_detonate_stickies"
-					"value"	"1"
-				}
 				"clip size penalty"
 				{
 					"attribute_class"	"mult_clipsize"

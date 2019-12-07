@@ -257,7 +257,7 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 		{
 			int nDamperMult = 4;
 			SetFriction( ( 0.2f * nDamperMult ) );
-			SetElasticity( ( 0.45f * nDamperMult ) );
+			SetElasticity( ( 0.45f / nDamperMult ) );
 		}
 	}
 
