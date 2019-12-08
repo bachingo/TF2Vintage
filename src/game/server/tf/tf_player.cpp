@@ -8931,48 +8931,43 @@ void CTFPlayer::Taunt( void )
 void CTFPlayer::DoTauntAction( int iTauntType )
 {
 	float flEmitTime = gpGlobals->curtime;
-	bool bFrameDependent = false;
+	ConVarRef host_timescale( "host_timescale" );
 	// Adjust our frame time.
 	switch (iTauntType)
 	{
 		case 1: // Regular Violin
 		case 2:	// Uber Violin
 		{
-			flEmitTime += (23 / 30); // Framerate based!
-			bFrameDependent = true;
+			flEmitTime += ( (23 / 30) / host_timescale.GetFloat() ); // Framerate based!
 			break;
 		}
 		default:
 			break;
 	}
-	
-	// If our timescale is different then adjust, especially if we're using a framerate specific timing.
-	if ( bFrameDependent )
-	{
-		ConVarRef host_timescale( "host_timescale" );
-		flEmitTime /= host_timescale.GetFloat();
-	}
 
 	// Intentionally wait for a bit before doing our action.
-	while ( gpGlobals->curtime < flEmitTime )
-		nullptr;
-
-	// Now that we waited, do our action.
-	switch (iTauntType)
+	tauntthink:
+	if (gpGlobals->curtime > flEmitTime)
 	{
+		// Now that we waited, do our action.
+		switch (iTauntType)
+		{
 		case 1: // Regular Violin
 		{
-			EmitSound( "Taunt.MedicViolin" );
+			EmitSound("Taunt.MedicViolin");
 			break;
 		}
 		case 2:	// Uber Violin
 		{
-			EmitSound( "Taunt.MedicViolinUber" );
+			EmitSound("Taunt.MedicViolinUber");
 			break;
 		}
 		default:
 			break;
+		}
 	}
+	else
+		goto tauntthink;
 	
 	return;
 }

@@ -65,19 +65,22 @@ void CTFLunchBox::BiteLunch( void )
 		return;
 	
 	// Our bite happens around the 25th frame of animation.
-	float flEmitTime = gpGlobals->curtime + (25 / 30);
-	
-	// If our timescale is different then adjust, especially since we're basing this on the animation framerate.
 	ConVarRef host_timescale( "host_timescale" );
-	flEmitTime /= host_timescale.GetFloat();
+	float flEmitTime = gpGlobals->curtime + ( (25 / 30) / host_timescale.GetFloat() );
 
 	// Intentionally wait before doing our action.
-	while ( gpGlobals->curtime < flEmitTime )
-		nullptr;
+	bitethink:
+	if ( gpGlobals->curtime > flEmitTime )
+	{
+		// We waited for the bite, switch bodygroups.
+		m_bBitten = true;
+		SwitchBodyGroups();	
+		
+	}
+	else
+		goto bitethink;
 
-	// We waited for the bite, switch bodygroups.
-	m_bBitten = true;
-	SwitchBodyGroups();
+	return;
 }
 
 //-----------------------------------------------------------------------------
