@@ -8967,7 +8967,10 @@ void CTFPlayer::DoTauntAction( int iTauntType )
 		}
 	}
 	else
+	{
+		SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
 		goto tauntthink;
+	}
 	
 	return;
 }

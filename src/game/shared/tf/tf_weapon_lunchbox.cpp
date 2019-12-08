@@ -78,7 +78,10 @@ void CTFLunchBox::BiteLunch( void )
 		
 	}
 	else
+	{
+		SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
 		goto bitethink;
+	}
 
 	return;
 }
