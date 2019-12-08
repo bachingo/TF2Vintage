@@ -96,6 +96,7 @@
 	"The Scottish Handshake"						"1"
 	"The Black Rose"								"1"
 	"The AWPer Hand"								"1"
+	"The Ham Shank"									"1"
 	"The Fortified Compound"						"1"
 	"The Sharp Dresser"								"1"
 

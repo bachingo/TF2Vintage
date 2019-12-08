@@ -5027,6 +5027,27 @@
 				"sound_burst"		"Weapon_AWP.SingleCrit"
 			}
 		}
+		"11013"
+		{
+			"name"	"The Ham Shank"
+			"prefab"	"weapon_melee_allclass weapon_reskin"
+			"year"			"2013"
+			"item_logname"	"ham_shank"
+			"item_iconname"	"ham_shank"
+			"item_type_name"	"#TF_Weapon_Pork_Product"
+			"item_name"	"#TF_HamShank"
+			"item_description"	"#TF_HamShank_Desc"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_ham/c_ham"
+			"model_player"	"models/workshop/weapons/c_models/c_ham/c_ham.mdl"
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
+				"sound_melee_miss"	"Weapon_Machete.Miss"
+				"sound_burst"		"Weapon_Machete.MissCrit"
+			}
+		}
 		"11092"
 		{
 			"name"	"The Fortified Compound"
