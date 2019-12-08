@@ -561,6 +561,8 @@ CTFPlayer::CTFPlayer()
 
 	m_flTauntAttackTime = 0.0f;
 	m_iTauntAttack = TAUNTATK_NONE;
+	m_flTauntEmitTime = 0;
+	m_iSpecialTauntType = 0;
 
 	m_nBlastJumpFlags = 0;
 	m_bBlastLaunched = false;
@@ -8839,12 +8841,14 @@ void CTFPlayer::Taunt( void )
 		// We need to delay sounds for this slightly, so use DoTauntAction.
 		if ( V_stricmp( szResponse, "scenes/player/medic/low/taunt03.vcd" ) == 0 )
 		{
-			DoTauntAction(1);
+			m_iSpecialTauntType = 1;
+			DoTauntAction();
 		}
 
 		if (V_stricmp(szResponse, "scenes/player/medic/low/taunt03_uber.vcd") == 0)
 		{
-			DoTauntAction(2);
+			m_iSpecialTauntType = 2;
+			DoTauntAction();
 		}
 
 		// Setup a taunt attack if necessary.
@@ -8928,17 +8932,17 @@ void CTFPlayer::Taunt( void )
 //-----------------------------------------------------------------------------
 // Purpose: Intended for syncing items in taunts, such as sounds.
 //-----------------------------------------------------------------------------
-void CTFPlayer::DoTauntAction( int iTauntType )
+void CTFPlayer::DoTauntAction( void )
 {
-	float flEmitTime = gpGlobals->curtime;
+	m_flTauntEmitTime = gpGlobals->curtime;
 	ConVarRef host_timescale( "host_timescale" );
 	// Adjust our frame time.
-	switch (iTauntType)
+	switch (m_iSpecialTauntType)
 	{
 		case 1: // Regular Violin
 		case 2:	// Uber Violin
 		{
-			flEmitTime += ( (23 / 30) / host_timescale.GetFloat() ); // Framerate based!
+			m_flTauntEmitTime += ((23 / 30) / host_timescale.GetFloat()); // Framerate based!
 			break;
 		}
 		default:
@@ -8946,11 +8950,20 @@ void CTFPlayer::DoTauntAction( int iTauntType )
 	}
 
 	// Intentionally wait for a bit before doing our action.
-	tauntthink:
-	if (gpGlobals->curtime > flEmitTime)
+	SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
+	SetThink( &CTFPlayer::DoTauntActionThink );
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::DoTauntActionThink( void )
+{
+	if (gpGlobals->curtime > m_flTauntEmitTime)
 	{
 		// Now that we waited, do our action.
-		switch (iTauntType)
+		switch (m_iSpecialTauntType)
 		{
 		case 1: // Regular Violin
 		{
@@ -8965,15 +8978,16 @@ void CTFPlayer::DoTauntAction( int iTauntType )
 		default:
 			break;
 		}
+		m_iSpecialTauntType = 0; // Reset our taunt type.
+		return;
 	}
 	else
 	{
 		SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
-		goto tauntthink;
+		SetThink( &CTFPlayer::DoTauntActionThink );
 	}
-	
-	return;
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

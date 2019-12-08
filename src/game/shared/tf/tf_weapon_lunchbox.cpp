@@ -35,6 +35,7 @@ ConVar tf2v_new_sandvich_behavior( "tf2v_new_sandvich_behavior", "0", FCVAR_REPL
 CTFLunchBox::CTFLunchBox()
 {
 	m_bBitten = false;
+	m_flBiteTime = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -66,24 +67,34 @@ void CTFLunchBox::BiteLunch( void )
 	
 	// Our bite happens around the 25th frame of animation.
 	ConVarRef host_timescale( "host_timescale" );
-	float flEmitTime = gpGlobals->curtime + ( (25 / 30) / host_timescale.GetFloat() );
+	m_flBiteTime = gpGlobals->curtime + ( (25 / 30) / host_timescale.GetFloat() );
 
+	SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
+	SetThink( &CTFLunchBox::BiteLunchThink );
+
+	return;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLunchBox::BiteLunchThink( void )
+{
 	// Intentionally wait before doing our action.
-	bitethink:
-	if ( gpGlobals->curtime > flEmitTime )
+	if ( gpGlobals->curtime > m_flBiteTime )
 	{
 		// We waited for the bite, switch bodygroups.
 		m_bBitten = true;
+		m_flBiteTime = 0;
 		SwitchBodyGroups();	
-		
+		return;
 	}
 	else
 	{
 		SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
-		goto bitethink;
+		SetThink( &CTFLunchBox::BiteLunchThink );
 	}
-
-	return;
+	
 }
 
 //-----------------------------------------------------------------------------

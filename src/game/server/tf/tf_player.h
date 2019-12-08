@@ -512,7 +512,10 @@ public:
 	// Taunts.
 	void				Taunt( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }
-	void				DoTauntAction(int iTauntType);
+	void				DoTauntAction( void );
+	void				DoTauntActionThink( void );
+	float				m_flTauntEmitTime;
+	int					m_iSpecialTauntType;
 	void				DoTauntAttack( void );
 	void				ClearTauntAttack( void );
 	QAngle	m_angTauntCamera;

@@ -32,6 +32,8 @@ public:
 
 	virtual void		PrimaryAttack( void );
 	virtual void		BiteLunch( void );
+	virtual void		BiteLunchThink( void );
+	float				m_flBiteTime;
 	virtual void		SecondaryAttack( void );
 
 	virtual void		DepleteAmmo( void );
