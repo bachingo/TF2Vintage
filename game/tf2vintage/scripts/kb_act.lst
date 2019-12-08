@@ -44,6 +44,7 @@
 "+attack"		"#Valve_Primary_Attack"
 "+reload"		"#Valve_Reload_Weapon"
 "+use"			"#Valve_Use_Items"
+"+use_action_slot_item"	"#TF_ImportPreview_ActionLabel"
 "invprev"		"#Valve_Previous_Weapon"
 "invnext"		"#Valve_Next_Weapon"
 "lastinv"		"#Valve_Last_Weapon_Used"
