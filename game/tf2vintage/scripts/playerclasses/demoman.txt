@@ -18,7 +18,7 @@ PlayerClass
 	"grenade2"		"TF_WEAPON_GRENADE_MIRV_DEMOMAN"
 
 	// Weapons.
-	"weapon`"		"TF_WEAPON_GRENADELAUNCHER"
+	"weapon1"		"TF_WEAPON_GRENADELAUNCHER"
 	"weapon2"		"TF_WEAPON_PIPEBOMBLAUNCHER"
 	"weapon3"		"TF_WEAPON_BOTTLE"
 	"weapon4"		""

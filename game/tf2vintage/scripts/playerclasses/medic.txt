@@ -29,6 +29,8 @@ PlayerClass
 	"weapon7"		""
 	"weapon8"		""
 	"weapon9"		""
+	"weapon10"		""
+	"weapon11"		""
 	
 	//"DontDoAirwalk"	"1"
 	//"DontDoNewJump"	"1"
