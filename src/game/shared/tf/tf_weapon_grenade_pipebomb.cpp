@@ -554,12 +554,14 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		return;
 	}
 
-	//If we already touched a surface then we're not exploding on contact anymore.
-	if ( m_bTouched == true )
+	// If we already touched a surface then we're not exploding on contact anymore.
+	// This behavior doesn't apply to the launch era grenades.
+	// If we're a launch era grenade, explode on the second touch.
+	if ( ( m_bTouched == true && tf2v_grenades_explode_contact.GetBool() ) || (!tf2v_grenades_explode_contact.GetBool() && m_bTouched == false )  )
 		return;
-
+		
 	// Blow up if we hit an enemy we can damage
-	if ( ( pOther->IsCombatCharacter() && pOther->GetTeamNumber() != GetTeamNumber() && pOther->m_takedamage != DAMAGE_NO ) && tf2v_grenades_explode_contact.GetBool() )
+	if  ( pOther->IsCombatCharacter() && pOther->GetTeamNumber() != GetTeamNumber() && pOther->m_takedamage != DAMAGE_NO ) 
 	{
 		// Check to see if this is a respawn room.
 		if ( !pOther->IsPlayer() )
@@ -604,7 +606,8 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		// Blow up if we hit an enemy we can damage
 		if ( pHitEntity->IsCombatCharacter() && pHitEntity->GetTeamNumber() != GetTeamNumber() && pHitEntity->m_takedamage != DAMAGE_NO )
 		{
-			if ( tf2v_grenades_explode_contact.GetBool() )
+			// Blow up if we hit an enemy with a contact grenade, or an enemy touches our launch era grenade.
+			if ( tf2v_grenades_explode_contact.GetBool() || (!tf2v_grenades_explode_contact.GetBool() && m_bTouched == true ) )
 			{
 				// Save this entity as enemy, they will take 100% damage.
 				m_hEnemy = pHitEntity;
