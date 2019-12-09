@@ -94,6 +94,8 @@ ConVar tf2v_max_speed_difference( "tf2v_max_speed_difference", "105", FCVAR_NOTI
 ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era move speed for spies." );
 ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
 
+ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
+
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
 ConVar tf_enable_grenades( "tf_enable_grenade_equipment", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
@@ -105,6 +107,7 @@ ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLIC
 #ifdef GAME_DLL
 extern ConVar tf2v_allow_cosmetics;
 extern ConVar tf2v_randomizer;
+extern ConVar tf2v_random_weapons;
 extern ConVar tf2v_assault_ctf_rules;
 #endif
 
@@ -5167,7 +5170,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 		// Random weapons should use the ammo of the player class related to this weapon
 		// BUG: Client calls to this method will return incorrect max ammo values in randomizer
 #ifdef GAME_DLL
-		if ( tf2v_randomizer.GetBool() )
+		if ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() )
 		{
 			CEconItemView *pItem = pWpn->GetItem();
 			if ( pItem )
@@ -5176,6 +5179,30 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 			}
 		}
 #endif
+	}
+	
+	// If we're using 2007 era ammocounts, re-adjust our ammo pools.
+	if ( tf2v_use_old_ammocounts.GetBool() )
+	{
+		
+		switch (iClassNumber)
+		{
+		
+			case TF_CLASS_SOLDIER:
+				if ( iAmmoIndex == TF_AMMO_PRIMARY )
+					iMaxAmmo *= ( 36 / 20 ); 
+				break;
+			
+			case TF_CLASS_DEMOMAN:
+				if ( iAmmoIndex == TF_AMMO_PRIMARY )
+					iMaxAmmo *= ( 30 / 16 ); 
+				else if ( iAmmoIndex == TF_AMMO_SECONDARY )
+					iMaxAmmo *= ( 40 / 24 ); 
+				break;
+	
+			default:
+				break;
+		}
 	}
 
 	switch ( iAmmoIndex )
