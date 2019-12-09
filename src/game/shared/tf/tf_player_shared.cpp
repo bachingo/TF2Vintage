@@ -5182,7 +5182,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 	}
 	
 	// If we're using 2007 era ammocounts, re-adjust our ammo pools.
-	if ( tf2v_use_old_ammocounts.GetBool() )
+	if ( tf2v_use_old_ammocounts.GetInt() == 1 )
 	{
 		
 		switch (iClassNumber)
@@ -5203,6 +5203,12 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 			default:
 				break;
 		}
+	}
+	else if ( tf2v_use_old_ammocounts.GetInt() == 2 )
+	{
+		// If we're using 2008 ammo settings, reduce only the Rocket Launcher.
+		if ( (iClassNumber == TF_CLASS_SOLDIER) && ( iAmmoIndex == TF_AMMO_PRIMARY ) )
+		iMaxAmmo *= ( 16 / 20 ); 
 	}
 
 	switch ( iAmmoIndex )
