@@ -44,6 +44,8 @@ extern void SendProxy_Angles( const SendProp *pProp, const void *pStruct, const 
 
 #endif
 
+ConVar tf2v_use_new_grenade_radius( "tf2v_use_new_grenade_radius", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses modern grenade explosion sizes (146Hu)instead of older ones (159Hu) for Demoman." );
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 
 LINK_ENTITY_TO_CLASS( tf_weaponbase_grenade_proj, CTFWeaponBaseGrenadeProj );
@@ -129,6 +131,8 @@ int	CTFWeaponBaseGrenadeProj::GetDamageType()
 float CTFWeaponBaseGrenadeProj::GetDamageRadius( void )
 {
 	float flRadius = BaseClass::GetDamageRadius();
+	if ( tf2v_use_new_grenade_radius.GetBool() )
+		flRadius *= (159 / 146 );
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), flRadius, mult_explosion_radius );
 	return flRadius;
 }
