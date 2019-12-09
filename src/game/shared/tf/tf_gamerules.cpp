@@ -1464,7 +1464,7 @@ void CTFGameRules::Activate()
 	if ( pArena )
 	{
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
-	
+	/*
 		// VSH maps use arena logic, except with the map prefix changed.
 		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
 		{
@@ -1477,12 +1477,12 @@ void CTFGameRules::Activate()
 			m_bPlayingDR = true;
 		}
 		else
-		{
+		{ */
 			tf_gamemode_arena.SetValue( 1 );
 			Msg( "Executing server arena config file\n", 1 );
 			engine->ServerCommand( "exec config_arena.cfg \n" );
 			engine->ServerExecute();
-		}
+		//}
 		return;
 	}
 
