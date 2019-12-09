@@ -35,6 +35,8 @@ END_DATADESC()
 
 ConVar tf_jar_show_radius( "tf_jar_show_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT /*| FCVAR_DEVELOPMENTONLY*/, "Render jar radius." );
 
+ConVar tf2v_use_extinguish_cooldown( "tf2v_use_extinguish_cooldown", "0", FCVAR_REPLICATED, "Enables -20% cooldown for extinguishing a teammate with a jar." );
+
 LINK_ENTITY_TO_CLASS( tf_projectile_jar, CTFProjectile_Jar );
 PRECACHE_REGISTER( tf_projectile_jar );
 
@@ -175,6 +177,10 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 	if ( TFGameRules()->RadiusJarEffect( radiusInfo, GetEffectCondition() ) && m_iDeflected == 0 && pWeapon ) 
 	{
 		float flCooldownReduction = 1.0f;
+		
+		if ( tf2v_use_extinguish_cooldown.GetBool() )
+			flCooldownReduction *= 0.8f;
+		
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCooldownReduction, "extinguish_reduces_cooldown" );
 		pWeapon->SetEffectBarProgress( pWeapon->GetEffectBarProgress() * flCooldownReduction );
 	}
