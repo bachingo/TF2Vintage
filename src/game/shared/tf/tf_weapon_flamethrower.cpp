@@ -70,6 +70,8 @@
 ConVar tf2v_airblast( "tf2v_airblast", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Enable/Disable the Airblast function of the Flamethrower. 0 = off, 1 = Pre-JI, 2 = Post-JI" );
 ConVar tf2v_airblast_players( "tf2v_airblast_players", "1", FCVAR_REPLICATED, "Enable/Disable the Airblast pushing players." );
 
+ConVar tf2v_use_extinguish_heal( "tf2v_use_extinguish_heal", "0", FCVAR_REPLICATED, "Enables 20HP healing for airblast extinguishing a teammate." );
+
 #ifdef GAME_DLL
 	ConVar tf2v_debug_airblast( "tf2v_debug_airblast", "0", FCVAR_CHEAT, "Visualize airblast box." );
 #endif
@@ -690,8 +692,30 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 
 				gameeventmanager->FireEvent( event_bonus );
 			}
-
+			
 			CTF_GameStats.Event_PlayerAwardBonusPoints( pAttacker, pVictim, 1 );
+			
+			// If we got the convar turned on, heal us .
+			if ( tf2v_use_extinguish_heal.GetBool() )
+			{
+				int iHPtoHeal = 20;
+				int iHealthRestored = TakeHealth( iHPtoHeal, DMG_GENERIC );
+				if ( iHealthRestored )
+				{
+					IGameEvent *event_healonhit = gameeventmanager->CreateEvent( "player_healonhit" );
+
+					if ( event_healonhit )
+					{
+						event_healonhit->SetInt( "amount", iHealthRestored );
+						event_healonhit->SetInt( "entindex", pAttacker->entindex() );
+
+						gameeventmanager->FireEvent( event_healonhit );
+					}
+				}
+						
+			}
+
+
 		}
 	}
 }
