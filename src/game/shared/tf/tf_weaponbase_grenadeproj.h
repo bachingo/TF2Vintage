@@ -49,6 +49,7 @@ public:
 	void				SetCritical( bool bCritical ) { m_bCritical = bCritical; }
 	virtual int			GetDamageType();
 	virtual float		GetDamageRadius( void );
+	bool				Touched( void ) const { return m_bTouched; }
 
 	CNetworkVar( int, m_iDeflected );
 	CNetworkHandle( CBaseEntity, m_hLauncher );

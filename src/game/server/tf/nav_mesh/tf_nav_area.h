@@ -89,8 +89,8 @@ public:
 	bool IsInCombat() const;
 	void OnCombat();
 
-	void ResetTFMarker();
-	void MakeNewTFMarker();
+	static void ResetTFMarker();
+	static void MakeNewTFMarker();
 	bool IsTFMarked() const;
 	void TFMark();
 
