@@ -28,7 +28,7 @@ ActionResult<CHeadlessHatman> CHeadlessHatmanDying::OnStart( CHeadlessHatman *me
 
 ActionResult<CHeadlessHatman> CHeadlessHatmanDying::Update( CHeadlessHatman *me, float dt )
 {
-	if (me->IsSequenceFinished())
+	if ( me->IsSequenceFinished() )
 	{
 		me->Break();
 
@@ -38,7 +38,7 @@ ActionResult<CHeadlessHatman> CHeadlessHatmanDying::Update( CHeadlessHatman *me,
 		UTIL_Remove( me );
 
 		IGameEvent *event = gameeventmanager->CreateEvent( "pumpkin_lord_killed" );
-		if (event)
+		if ( event )
 			gameeventmanager->FireEvent( event );
 
 		return Action<CHeadlessHatman>::Done();

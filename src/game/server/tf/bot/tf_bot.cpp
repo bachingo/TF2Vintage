@@ -201,7 +201,8 @@ void CTFBot::Spawn( void )
 {
 	BaseClass::Spawn();
 
-	m_iSkill = tf_bot_difficulty.GetInt();
+	m_iSkill = (DifficultyType)tf_bot_difficulty.GetInt();
+	m_nBotAttrs = AttributeType::NONE;
 
 	m_useWeaponAbilityTimer.Start( 5.0f );
 	m_bLookingAroundForEnemies = true;
@@ -2414,7 +2415,7 @@ void DifficultyChanged( IConVar *var, const char *pOldValue, float flOldValue )
 			if ( pBot == nullptr )
 				continue;
 
-			pBot->m_iSkill = tf_bot_difficulty.GetInt();
+			pBot->m_iSkill = (CTFBot::DifficultyType)tf_bot_difficulty.GetInt();
 		}
 	}
 	else

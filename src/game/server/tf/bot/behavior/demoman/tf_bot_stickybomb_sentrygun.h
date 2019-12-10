@@ -9,10 +9,11 @@
 
 class CTFBotStickybombSentrygun : public Action<CTFBot>
 {
+	DECLARE_CLASS( CTFBotStickybombSentrygun, Action<CTFBot> );
 public:
-	CTFBotStickybombSentrygun( CObjectSentrygun *sentry );
-	CTFBotStickybombSentrygun( CObjectSentrygun *sentry, const Vector& vec );
-	virtual ~CTFBotStickybombSentrygun();
+	CTFBotStickybombSentrygun( CObjectSentrygun *pSentry );
+	CTFBotStickybombSentrygun( CObjectSentrygun *pSentry, float flPitch, float flYaw, float flChargePerc );
+	virtual ~CTFBotStickybombSentrygun() {};
 
 	virtual const char *GetName() const override;
 
@@ -28,19 +29,20 @@ public:
 	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const override;
 
 private:
-	bool IsAimOnTarget( CTFBot *actor, float pitch, float yaw, float speed );
+	bool IsAimOnTarget( CTFBot *actor, float pitch, float yaw, float charge );
 
-	// 34 Vector/QAngle
-	bool m_bOpportunistic;               // +0x40
-	bool m_bReload;                      // +0x41
-	CHandle<CObjectSentrygun> m_hSentry; // +0x44
-	// 48 bool
-	CountdownTimer m_aimDuration;       // +0x4c
-	// 58 bool
-	Vector m_vecAimTarget;               // +0x5c
-	// 68 Vector/QAngle
-	float m_flChargeLevel;               // +0x74
-	// 78 dword
+	float m_flDesiredPitch;
+	float m_flDesiredYaw;
+	float m_flDesiredCharge;
+	bool m_bOpportunistic;
+	bool m_bReload;
+	CHandle<CObjectSentrygun> m_hSentry;
+	bool m_bChargeShot;
+	CountdownTimer m_aimDuration;
+	bool m_bAimOnTarget;
+	Vector m_vecAimTarget;
+	Vector m_vecHome;
+	float m_flChargeLevel;
 };
 
 #endif

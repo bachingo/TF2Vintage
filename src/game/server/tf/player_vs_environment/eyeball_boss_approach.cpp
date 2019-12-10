@@ -60,9 +60,8 @@ ActionResult<CEyeBallBoss> CEyeBallBossApproachTarget::Update( CEyeBallBoss *me,
 	if ( me->IsRangeLessThan( pVictim, flRange ) )
 		return Action<CEyeBallBoss>::ChangeTo( new CEyeBallBossLaunchRockets, "Rocket attack!" );
 
-	CEyeBallBossLocomotion *pLoco = (CEyeBallBossLocomotion *)me->GetLocomotionInterface();
-	pLoco->SetDesiredSpeed( tf_eyeball_boss_speed.GetFloat() );
-	pLoco->Approach( pVictim->WorldSpaceCenter() );
+	me->GetLocomotionInterface()->SetDesiredSpeed( tf_eyeball_boss_speed.GetFloat() );
+	me->GetLocomotionInterface()->Approach( pVictim->WorldSpaceCenter() );
 
 	return Action<CEyeBallBoss>::Continue();
 }
