@@ -3349,6 +3349,7 @@ void CTFGameRules::ChangePlayerName( CTFPlayer *pPlayer, const char *pszNewName 
 	pPlayer->m_flNextNameChangeTime = gpGlobals->curtime + 10.0f;
 }
 
+ConVar	tf2v_allowed_fov( "tf2v_allowed_fov", "140", FCVAR_REPLICATED, "Maximum FOV allowed on the server.", true, MAX_FOV, true, MAX_FOV_UNLOCKED );
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3394,8 +3395,14 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	pTFPlayer->SetFlipViewModel( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "cl_flipviewmodels" ) ) > 0 );
 
 	const char *pszFov = engine->GetClientConVarValue( pPlayer->entindex(), "fov_desired" );
-	int iFov = atoi( pszFov );
-	iFov = clamp( iFov, 75, MAX_FOV_UNLOCKED );
+	int iFov = atoi(pszFov);
+	int iAllowedFov = tf2v_allowed_fov.GetInt();
+	if ( iAllowedFov < MAX_FOV )
+		iAllowedFov = MAX_FOV;
+	if ( iAllowedFov < MAX_FOV_UNLOCKED )
+		iFov = clamp( iFov, 75, iAllowedFov );
+	else
+		iFov = clamp( iFov, 75, MAX_FOV_UNLOCKED );
 	pTFPlayer->SetDefaultFOV( iFov );
 	
 		
