@@ -601,15 +601,32 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	if ( nModelIndex != -1 )
 	{
 		SetModelIndex( nModelIndex );
-
-		switch ( m_iTeam )
+		
+		if ( TFGameRules()->IsHolidayActive(kHoliday_Halloween) )
 		{
-			case TF_TEAM_RED:
-				m_nSkin = 0;
-				break;
-			case TF_TEAM_BLUE:
-				m_nSkin = 1;
-				break;
+			switch ( m_iTeam )
+			{
+				case TF_TEAM_RED:
+					m_nSkin = 4;
+					break;
+				case TF_TEAM_BLUE:
+					m_nSkin = 5;
+					break;
+			}
+			if ( m_iClass == TF_CLASS_SPY )
+				m_nSkin += 18;
+		}
+		else
+		{
+			switch ( m_iTeam )
+			{
+				case TF_TEAM_RED:
+					m_nSkin = 0;
+					break;
+				case TF_TEAM_BLUE:
+					m_nSkin = 1;
+					break;
+			}
 		}
 	}
 
