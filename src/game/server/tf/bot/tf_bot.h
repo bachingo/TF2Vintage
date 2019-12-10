@@ -291,8 +291,41 @@ public:
 		NORMAL = 1,
 		HARD   = 2,
 		EXPERT = 3
-	};
-	int m_iSkill;
+	}
+	m_iSkill;
+
+	enum class AttributeType : int
+	{
+		NONE                    = 0,
+
+		REMOVEONDEATH           = (1 << 0),
+		AGGRESSIVE              = (1 << 1),
+		// 2?
+		SUPPRESSFIRE            = (1 << 3),
+		DISABLEDODGE            = (1 << 4),
+		BECOMESPECTATORONDEATH  = (1 << 5),
+		// 6?
+		RETAINBUILDINGS         = (1 << 7),
+		SPAWNWITHFULLCHARGE     = (1 << 8),
+		ALWAYSCRIT              = (1 << 9),
+		IGNOREENEMIES           = (1 << 10),
+		HOLDFIREUNTILFULLRELOAD = (1 << 11),
+		// 12?
+		ALWAYSFIREWEAPON        = (1 << 13),
+		TELEPORTTOHINT          = (1 << 14),
+		MINIBOSS                = (1 << 15),
+		USEBOSSHEALTHBAR        = (1 << 16),
+		IGNOREFLAG              = (1 << 17),
+		AUTOJUMP                = (1 << 18),
+		AIRCHARGEONLY           = (1 << 19),
+		VACCINATORBULLETS       = (1 << 20),
+		VACCINATORBLAST         = (1 << 21),
+		VACCINATORFIRE          = (1 << 22),
+		BULLETIMMUNE            = (1 << 23),
+		BLASTIMMUNE             = (1 << 24),
+		FIREIMMUNE              = (1 << 25),
+	}
+	m_nBotAttrs;
 
 	bool m_bLookingAroundForEnemies;
 
@@ -340,6 +373,12 @@ private:
 	float m_flMaxJumpHeight;
 	float m_flDeathDropHeight;
 };
+
+DEFINE_ENUM_BITWISE_OPERATORS( CTFBot::AttributeType )
+inline bool operator!(CTFBot::AttributeType const& rhs)
+{
+	return (int const&)rhs == 0;
+}
 
 inline CTFBot *ToTFBot( CBaseEntity *ent )
 {

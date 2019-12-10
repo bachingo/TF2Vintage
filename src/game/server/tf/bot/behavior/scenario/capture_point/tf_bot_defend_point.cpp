@@ -41,7 +41,7 @@ ActionResult<CTFBot> CTFBotDefendPoint::OnStart( CTFBot *me, Action<CTFBot> *pri
 
 	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
 	m_DefenseArea = nullptr;
-	m_bShouldRoam = ( RandomFloat( 0.0f, 100.0f ) < roamChance[Clamp( me->m_iSkill, 0, 3 )] );
+	m_bShouldRoam = ( RandomFloat( 0.0f, 100.0f ) < roamChance[Clamp( (int)me->m_iSkill, 0, 3 )] );
 
 	return Action<CTFBot>::Continue();
 }

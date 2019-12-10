@@ -3352,6 +3352,8 @@ const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch
 //-----------------------------------------------------------------------------
 const Vector &CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+
 	Vector vecForward, vecRight, vecUp;
 	QAngle angles( pitch, yaw, 0.0f );
 	AngleVectors( angles, &vecForward, &vecRight, &vecUp );
