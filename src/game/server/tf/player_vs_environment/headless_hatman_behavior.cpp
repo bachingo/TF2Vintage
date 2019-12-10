@@ -32,13 +32,13 @@ Action<CHeadlessHatman> *CHeadlessHatmanBehavior::InitialContainedAction( CHeadl
 
 ActionResult<CHeadlessHatman> CHeadlessHatmanBehavior::Update( CHeadlessHatman *me, float dt )
 {
-	if (!me->IsAlive())
+	if ( !me->IsAlive() )
 	{
-		if (!me->DidSpawnWithCheats())
+		if ( !me->DidSpawnWithCheats() )
 		{
-			for (int i=0; i<me->m_lastAttackers.Count(); ++i)
+			for ( int i=0; i<me->m_lastAttackers.Count(); ++i )
 			{
-				if (!me->m_lastAttackers[i].m_hPlayer || ( gpGlobals->curtime - me->m_lastAttackers[i].m_flTimeDamaged ) > 5.0f)
+				if ( !me->m_lastAttackers[i].m_hPlayer || ( gpGlobals->curtime - me->m_lastAttackers[i].m_flTimeDamaged ) > 5.0f )
 					continue;
 
 				CReliableBroadcastRecipientFilter filter;

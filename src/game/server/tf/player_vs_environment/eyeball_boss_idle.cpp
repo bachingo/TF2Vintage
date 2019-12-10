@@ -125,7 +125,7 @@ ActionResult<CEyeBallBoss> CEyeBallBossIdle::Update( CEyeBallBoss *me, float dt 
 
 		if ( TheNavMesh->GetSimpleGroundHeight( vecPos, &flHeight ) && TheNavMesh->GetNearestNavArea( vecPos, true, 450.0f ) )
 		{
-			if ( vecPos.z - flHeight < 300.0f )
+			if ( vecPos.z - flHeight < 220.0f )
 			{
 				if ( !me->m_lifeTimeDuration.IsElapsed() )
 				{
