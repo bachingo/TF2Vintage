@@ -190,6 +190,13 @@ public:
 	CBaseEntity*	GetIT( void ) const { return m_itHandle.Get(); }
 	void			SetIT( CBaseEntity *pPlayer );
 
+	int				GetActiveHalloweenEffect( void ) const          { return m_nHalloweenEffect; }
+	void			SetActiveHalloweenEffect( int iType )           { m_nHalloweenEffect = iType; }
+	float			GetTimeHalloweenEffectStarted( void ) const     { return m_flHalloweenEffectStartTime; }
+	void			SetTimeHalloweenEffectStarted( float flTime )   { m_flHalloweenEffectStartTime = flTime; }
+	float			GetHalloweenEffectDuration( void ) const        { return m_flHalloweenEffectDuration; }
+	void			SetHalloweenEffectDuration( float flDuration )  { m_flHalloweenEffectDuration = flDuration; }
+
 	CUtlStringMap<string_t> m_SavedConvars;
 	bool			HaveSavedConvar( ConVarRef const& cvar );
 	void			SaveConvar( ConVarRef const& cvar );
@@ -525,6 +532,9 @@ private:
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( EHANDLE, m_itHandle );
+	CNetworkVar( int, m_nHalloweenEffect );
+	CNetworkVar( float, m_flHalloweenEffectStartTime );
+	CNetworkVar( float, m_flHalloweenEffectDuration );
 	CNetworkVar( int, m_halloweenScenario );
 
 public:
