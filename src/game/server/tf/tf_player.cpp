@@ -7929,6 +7929,7 @@ void CTFPlayer::PlayerUse( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ApplyAbsVelocityImpulse( Vector const &vecImpulse )
 {
+	Vector vecModImpulse = vecImpulse;
 	float flImpulseScale = 1.0f;
 	if ( m_Shared.InCond( TF_COND_AIMING ) )
 		CALL_ATTRIB_HOOK_FLOAT( flImpulseScale, mult_aiming_knockback_resistance );
@@ -7936,7 +7937,13 @@ void CTFPlayer::ApplyAbsVelocityImpulse( Vector const &vecImpulse )
 	if ( m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) )
 		flImpulseScale *= 2.0f;
 
-	BaseClass::ApplyAbsVelocityImpulse( vecImpulse * flImpulseScale );
+	if ( m_Shared.InCond( TF_COND_PARACHUTE_ACTIVE ) )
+	{
+		vecModImpulse.x *= 1.5f;
+		vecModImpulse.y *= 1.5f;
+	}
+
+	BaseClass::ApplyAbsVelocityImpulse( vecModImpulse * flImpulseScale );
 }
 
 //-----------------------------------------------------------------------------
