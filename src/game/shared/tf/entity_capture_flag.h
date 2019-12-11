@@ -41,6 +41,7 @@
 #define TF_CTF_CAPTURED_TEAM_FRAGS	1
 
 #define TF_CTF_RESET_TIME			60.0f
+#define TF_ACTF_RESET_TIME			0.1f
 
 //=============================================================================
 //
