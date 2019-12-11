@@ -602,7 +602,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	{
 		SetModelIndex( nModelIndex );
 		
-		if ( TFGameRules()->IsHolidayActive(kHoliday_Halloween) )
+		if ( TFGameRules()->IsHolidayActive(kHoliday_Halloween) && !m_bGib )
 		{
 			switch ( m_iTeam )
 			{

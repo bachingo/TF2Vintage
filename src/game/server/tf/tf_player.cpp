@@ -4064,6 +4064,19 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				break;
 			}
 			default:
+				// We did a bodyshot, check if that affects our damage.
+				CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
+				if ( pWpn )
+				{
+					float flBodyshotModifer = 1.0f;
+					CALL_ATTRIB_HOOK_INT_ON_OTHER( pWpn, flBodyshotModifer, bodyshot_damage_modify );
+					if ( flBodyshotModifer != 1.0f ) // We have an attribute changing damage, modify it.
+					{
+						float flDamage = info_modified.GetDamage();
+						flDamage *= flBodyshotModifer;
+						info_modified.SetDamage( flDamage );
+					}
+				}
 				break;
 		}
 	}
@@ -4413,7 +4426,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	bool bIsCriticalMiss = false;
 	if ( ( tf2v_misschance.GetFloat() > 0.0f ) && ( tf2v_player_misses.GetBool() ) )
 	{
-		int iRandomChance = RandomFloat(0.0f,99.0f);
+		int iRandomChance = RandomInt(0.0,100.0);
 		if ( iRandomChance <= tf2v_misschance.GetFloat() )
 			bIsCriticalMiss = true;
 	}
@@ -4993,7 +5006,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		// Battalion's Backup negates all crit damage
 		bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
 
-		
 		float flDamage = info.GetDamage();
 		if ( bObject && tf2v_sentry_resist_bonus.GetBool() )
 		{
@@ -5478,23 +5490,6 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		return;
 
 	float flDamage = info.GetDamage();
-
-	if ( m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
-	{
-		// Battalion's Backup reduces damage so make sure we compensate for that 
-		// so that the knockback isn't affected too much
-
-		/*if ( info.GetInflictor()->IsBaseObject() )
-		{
-			flDamage /= 0.50f;
-		}
-		else
-		{
-			flDamage /= 0.65f;
-		}*/
-
-		flDamage /= 0.65f;
-	}
 
 	Vector vecForce;
 	vecForce.Init();
@@ -10335,10 +10330,10 @@ uint64 VIPRANK3[] =
 };
 
 // Rank 4.
-// Currently unused.
+// Special thanks and other acknowledgements.
 uint64 VIPRANK4[] =
 {
-	76561198168440306, // PLACEHOLDER
+	76561197974643849,
 };
 
 //-----------------------------------------------------------------------------
