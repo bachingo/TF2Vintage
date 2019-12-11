@@ -4064,6 +4064,19 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				break;
 			}
 			default:
+				// We did a bodyshot, check if that affects our damage.
+				CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
+				if ( pWpn )
+				{
+					float flBodyshotModifer = 1.0f;
+					CALL_ATTRIB_HOOK_INT_ON_OTHER( pWpn, flBodyshotModifer, bodyshot_damage_modify );
+					if ( flBodyshotModifer != 1.0f ) // We have an attribute changing damage, modify it.
+					{
+						float flDamage = info_modified.GetDamage();
+						flDamage *= flBodyshotModifer;
+						info_modified.SetDamage( flDamage );
+					}
+				}
 				break;
 		}
 	}
