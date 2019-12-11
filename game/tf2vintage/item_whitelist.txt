@@ -73,6 +73,7 @@
 	"The Market Gardener"							"1"
 	"The Reserve Shooter (Engineer)"				"1"
 	"The Original"									"1"
+	"The Cozy Camper"								"1"
 	"The Quickiebomb Launcher"						"1"
 	"The Iron Bomber"								"1"
 	

@@ -3760,6 +3760,12 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 		pCmd->sidemove = 0.0f;
 		VectorCopy( pCmd->viewangles, angMoveAngle );
 	}
+	else if ( m_Shared.InCond( TF_COND_REDUCED_MOVE ) )
+	{
+		pCmd->forwardmove = 0.33f;
+		pCmd->sidemove = 0.33f;
+		VectorCopy( pCmd->viewangles, angMoveAngle );
+	}
 	else if ( m_Shared.InCond( TF_COND_PHASE ) )
 	{
 		pCmd->weaponselect = 0;
