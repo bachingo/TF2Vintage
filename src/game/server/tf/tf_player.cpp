@@ -4665,9 +4665,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			pTFAttacker->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
 		}
 
-		if ( this && CheckBlockBackstab( pTFAttacker ) )
+		if ( CheckBlockBackstab( pTFAttacker ) )
 		{
 			info.SetDamage( 0.0f );
+			info.ScaleDamageForce( 0.0f );
 
 			UTIL_ScreenShake( GetAbsOrigin(), 25.0f, 150.0f, 1.0f, 50.0f, SHAKE_START );
 			EmitSound( "Player.Spy_Shield_Break" );
