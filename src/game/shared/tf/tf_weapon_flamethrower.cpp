@@ -668,7 +668,8 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 			}
 			else if ( tf2v_airblast.GetInt() == 2 )
 			{
-			pVictim->ApplyAbsVelocityImpulse( vecDir * 500 );
+			pVictim->ApplyAbsVelocityImpulse( vecDir * 750 );
+			pVictim->m_Shared.AddCond( TF_COND_REDUCED_MOVE, 0.5f );
 			}
 			// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
 			pVictim->AddDamagerToHistory( pAttacker );
