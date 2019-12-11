@@ -90,7 +90,7 @@ void CCaptureZone::CaptureTouch( CBaseEntity *pOther )
 				{
 					// TF2V exclusive: We use different capture zones for regular CTF, same capture zones for Assault CTF.
 					bool bIsTeamCapturePoint;
-					if (tf2v_assault_ctf_rules.GetBool() )
+					if ( pFlag->GetGameType() == TF_FLAGTYPE_CTF && tf2v_assault_ctf_rules.GetBool() )
 						bIsTeamCapturePoint = pPlayer->GetTeamNumber() != GetTeamNumber();
 					else
 						bIsTeamCapturePoint = pPlayer->GetTeamNumber() == GetTeamNumber();
