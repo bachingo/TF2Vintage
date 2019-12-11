@@ -4434,6 +4434,47 @@
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
 		}
+		"642"
+		{
+			"name"			"The Cozy Camper"
+			"prefab"			"weapon_backpack"
+			"year"				"2012"
+			"item_type_name" 	"#TF_Wearable_Backpack"
+			"item_name"	"#TF_CozyCamper"
+			"item_description"	"#TF_CozyCamper_Desc"
+			"item_slot"		"secondary"
+			"propername"		"1"
+			"image_inventory"	"backpack/workshop/player/items/sniper/xms_sniper_commandobackpack/xms_sniper_commandobackpack"
+			"model_player"	"models/workshop/player/items/sniper/xms_sniper_commandobackpack/xms_sniper_commandobackpack.mdl"
+			"extra_wearable" "models/workshop/player/items/sniper/xms_sniper_commandobackpack/xms_sniper_commandobackpack.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"attributes"
+			{
+				"health regen"
+				{
+					"attribute_class"	"add_health_regen"
+					"value"	"4"
+				}
+				"aiming knockback resistance"
+				{
+					"attribute_class"	"mult_aiming_knockback_resistance"
+					"value"	"0.80"
+				}
+				"aiming no flinch"
+				{
+					"attribute_class"	"aiming_no_flinch"
+					"value" "1"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
+		}
 		"1150"
 		{
 			"name"	"The Quickiebomb Launcher"
