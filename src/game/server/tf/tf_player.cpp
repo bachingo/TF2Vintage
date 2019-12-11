@@ -10344,10 +10344,10 @@ uint64 VIPRANK3[] =
 };
 
 // Rank 4.
-// Currently unused.
+// Special thanks and other acknowledgements.
 uint64 VIPRANK4[] =
 {
-	76561198168440306, // PLACEHOLDER
+	76561197974643849,
 };
 
 //-----------------------------------------------------------------------------
