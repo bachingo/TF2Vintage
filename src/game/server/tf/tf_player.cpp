@@ -5076,13 +5076,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
+	int nAimingNoFlinch = 0;
+	CALL_ATTRIB_HOOK_INT( nAimingNoFlinch, aiming_no_flinch );
+
 	// Display any effect associate with this damage type
 	DamageEffect( info.GetDamage(), bitsDamage );
 
 	m_bitsDamageType |= bitsDamage; // Save this so we can report it to the client
 	m_bitsHUDDamage = -1;  // make sure the damage bits get resent
 
-	m_Local.m_vecPunchAngle.SetX( -2 );
+	if( nAimingNoFlinch == 0 || !m_Shared.InCond( TF_COND_AIMING ) )
+		m_Local.m_vecPunchAngle.SetX( -2 );
 
 	// Do special explosion damage effect
 	if ( bitsDamage & DMG_BLAST )
