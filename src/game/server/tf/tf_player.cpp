@@ -5492,6 +5492,7 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 
 	float flDamage = info.GetDamage();
 
+	float flForceMultiplier = 1.0f;
 	Vector vecForce;
 	vecForce.Init();
 	if ( pAttacker == this )
@@ -5518,6 +5519,12 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		{
 			vecForce = vecDir * -DamageForce( WorldAlignSize(), flDamage, DAMAGE_FORCE_SCALE_SELF );
 		}
+		
+		// If we damaged ourselves, check the force modifier attribute.
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(pAttacker), flForceMultiplier, mult_dmgself_push_force );
+		if ( flForceMultiplier != 1.0f )
+			vecForce *= flForceMultiplier;
+		
 	}
 	else
 	{
@@ -5541,6 +5548,11 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		{
 			m_bBlastLaunched = true;
 		}
+		
+		// If we were damaged by someone else, reduce the amount of force with an attribute.
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(pAttacker), flForceMultiplier, damage_force_reduction );
+		if ( flForceMultiplier != 1.0f )
+			vecForce *= flForceMultiplier;
 	}
 
 	ApplyAbsVelocityImpulse( vecForce );
@@ -7953,13 +7965,16 @@ void CTFPlayer::ApplyAirBlastImpulse( Vector const &vecImpulse )
 {
 	Vector vecModImpulse = vecImpulse;
 
+	float flAirblastScale = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flAirblastScale, airblast_vulnerability_multiplier );
+	
 	// Approximate force to leave ground
 	float flImpulseLiftZ = 268.3281572999747f;
 	vecModImpulse.z = !( GetFlags() & FL_ONGROUND ) ? vecModImpulse.z : Max( flImpulseLiftZ, vecModImpulse.z );
 	CALL_ATTRIB_HOOK_FLOAT( vecModImpulse.z, airblast_vertical_vulnerability_multiplier );
 
 	RemoveFlag( FL_ONGROUND );
-	ApplyAbsVelocityImpulse( vecModImpulse );
+	ApplyAbsVelocityImpulse( vecModImpulse * flAirblastScale );
 }
 
 //-----------------------------------------------------------------------------
