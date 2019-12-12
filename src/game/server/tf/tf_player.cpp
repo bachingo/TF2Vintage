@@ -4611,6 +4611,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
 
+			if ( pTFAttacker->m_Shared.InCond( TF_COND_DISGUISED )
+			{
+				float flDisguisedMod = info.GetDamage(); 
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDisguisedMod, mult_dmg_disguised );
+				info.SetDamage( flDisguisedMod );
+			}
+			
 			int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMiniCritWhileAirborne, mini_crit_airborne );
@@ -5004,6 +5011,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnHit, add_cloak_on_hit );
 		if ( nAddCloakOnHit > 0 )
 			pTFAttacker->m_Shared.AddToSpyCloakMeter( nAddCloakOnHit );
+		
+		int nSpeedBoostOnHit = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnHit, speed_boost_on_hit );
+		if ( nSpeedBoostOnHit > 0)
+			m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnHit );
 	}
 
 	// Battalion's Backup resists
@@ -5899,6 +5911,17 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				{
 					m_Shared.m_flChargeMeter = min( ( m_Shared.m_flChargeMeter + ( flAddChargeShieldKill * 100 ) ), 100.0f ) ;
 				}
+				
+				int nAddCloakOnKill = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnKill, add_cloak_on_kill );
+				if ( nAddCloakOnKill > 0 )
+					m_Shared.AddToSpyCloakMeter( nAddCloakOnKill );
+
+				int nSpeedBoostOnKill = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnKill, speed_boost_on_kill );
+				if ( nSpeedBoostOnKill > 0)
+					m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnKill );
+	
 			}
 
 			if ( pWeapon->GetWeaponID() == TF_WEAPON_SWORD )
