@@ -5318,42 +5318,120 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			}
 		}
 	}
-
+	
+	// Check to see if the weapon pierces through our resistances.
+	int nIgnoreResists = 0;
+	if ( pInflictor )
+	{
+		if ( pTFWeapon )
+		{
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFWeapon, nIgnoreResists, mod_pierce_resists_absorbs );
+		}
+	}
+	
+	// We check the original resistance first to see if it's a resistance/vurnerability.
+	// If it's a resistance and we pierce through then remove the resistance, but keep the vurnerabilities.
+	
 	if ( info.GetDamageType() & DMG_CRITICAL )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_crit );
+	{
+		float flDamageCritMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageCritMult, mult_dmgtaken_from_crit );
+		if ( (nIgnoreResists == 1) && ( flDamageCritMult < 1.0f ) )
+			flDamageCritMult = 1.0f;
+		flDamage *= flDamageCritMult;
+	}
 
 	if ( info.GetDamageType() & DMG_BLAST )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_explosions );
+	{
+		float flDamageBlastMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageBlastMult, mult_dmgtaken_from_explosions );
+		if ( (nIgnoreResists == 1) && ( flDamageBlastMult < 1.0f ) )
+			flDamageBlastMult = 1.0f;
+		flDamage *= flDamageBlastMult;
+	}
 
 	if ( info.GetDamageType() & DMG_BURN|DMG_IGNITE )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_fire );
+	{
+		float flDamageFireMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageFireMult, mult_dmgtaken_from_fire );
+		if ( (nIgnoreResists == 1) && ( flDamageFireMult < 1.0f ) )
+			flDamageFireMult = 1.0f;
+		flDamage *= flDamageFireMult;			
+	}
 
 	if ( info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_bullets );
+	{
+		float flDamageBulletMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageBulletMult, mult_dmgtaken_from_bullets );
+		if ( (nIgnoreResists == 1) && ( flDamageBulletMult < 1.0f ) )
+			flDamageBulletMult = 1.0f;
+		flDamage *= flDamageBulletMult;
+	}
 
 	if ( info.GetDamageType() & DMG_BLAST_SURFACE )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken_from_melee );
+	{
+		float flDamageMeleeMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageMeleeMult, mult_dmgtaken_from_melee );
+		if ( (nIgnoreResists == 1) && ( flDamageMeleeMult < 1.0f ) )
+			flDamageMeleeMult = 1.0f;
+		flDamage *= flDamageMeleeMult;
+	}
 
-	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmgtaken );
+	float flDamageAllMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flDamageAllMult, mult_dmgtaken );
+	if ( (nIgnoreResists == 1) && ( flDamageAllMult < 1.0f ) )
+		flDamageAllMult = 1.0f;
+	flDamage *= flDamageAllMult;
 
 	if ( dynamic_cast<CObjectSentrygun *>( pInflictor ) )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, dmg_from_sentry_reduced );
+	{
+		float flDamageSentryMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageSentryMult, dmg_from_sentry_reduced );
+		if ( (nIgnoreResists == 1) && ( flDamageSentryMult < 1.0f ) )
+			flDamageSentryMult = 1.0f;
+		flDamage *= flDamageSentryMult;
+	}
 
 	if ( GetActiveTFWeapon() )
 	{
 		if ( info.GetDamageType() & DMG_CLUB )
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, dmg_from_melee );
+		{
+			float flDamageClubMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamageClubMult, dmg_from_melee );
+			if ( (nIgnoreResists == 1) && ( flDamageClubMult < 1.0f ) )
+				flDamageClubMult = 1.0f;
+			flDamage *= flDamageClubMult;
+		}
 
 		if ( info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT|DMG_IGNITE|DMG_BLAST|DMG_SONIC )
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, dmg_from_ranged );
-		
+		{
+			float flDamageRangedMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamageRangedMult, dmg_from_ranged );
+			if ( (nIgnoreResists == 1) && ( flDamageRangedMult < 1.0f ) )
+				flDamageRangedMult = 1.0f;
+			flDamage *= flDamageRangedMult;
+		}
+			
 		if ( info.GetDamageType() & DMG_BURN|DMG_IGNITE )
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamage, mult_dmgtaken_from_fire_active );
+		{
+			float flDamageFireActiveMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamageFireActiveMult, mult_dmgtaken_from_fire_active );
+			if ( (nIgnoreResists == 1) && ( flDamageFireActiveMult < 1.0f ) )
+				flDamageFireActiveMult = 1.0f;
+			flDamage *= flDamageFireActiveMult;
+		}
+		
+		// Aiming resists, if actively using a minigun/sniper rifle and under 50% health.
+		if ( ( m_Shared.InCond(TF_COND_AIMING ) ) && ( GetHealth() < ( GetMaxHealth() / 2 ) ) )
+		{
+			float flDamageAimMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT( flDamageAimMult, spunup_damage_resistance );
+			if ( (nIgnoreResists == 1) && ( flDamageAimMult < 1.0f ) )
+				flDamageAimMult = 1.0f;
+			flDamage *= flDamageAimMult;
+		}
+		
 	}
-	
-	// Aiming resists, if actively using a minigun/sniper rifle and under 50% health.
-	if ( ( m_Shared.InCond(TF_COND_AIMING ) ) && ( GetHealth() < ( GetMaxHealth() / 2 ) ) )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, spunup_damage_resistance );
 
 	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG )
 	{
