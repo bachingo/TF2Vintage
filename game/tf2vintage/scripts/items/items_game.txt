@@ -422,6 +422,55 @@
 				"min_viewmodel_offset"					"10 0 -9"
 			}
 		}
+		"weapon_tomislav"
+		{
+			"prefab"	"weapon_minigun"
+			"item_name"	"#TF_Tomislav"
+			"item_logname"	"tomislav"
+			"item_iconname"	"tomislav"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_tomislav/c_tomislav"
+			"model_player"	"models/workshop/weapons/c_models/c_tomislav/c_tomislav.mdl"
+			"attributes"
+			{
+				"minigun spinup time decreased"
+				{
+					"attribute_class"	"mult_minigun_spinup_time"
+					"value" "0.8"
+				}
+				"minigun no spin sounds"
+				{
+					"attribute_class"	"minigun_no_spin_sounds"
+					"value" "1"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.2"
+				}
+				"weapon spread bonus"
+				{
+					"attribute_class"	"mult_spread_scale"
+					"value"	"0.8"
+				}
+			}
+			"visuals"
+			{
+				"sound_reload"	"Weapon_Gatling.Reload"
+				"sound_empty"	"Weapon_Tomislav.WindDown"
+				"sound_double_shot"	"Weapon_Tomislav.Fire"
+				"sound_burst"	"Weapon_Tomislav.FireCrit"
+				"sound_special1"	"Weapon_Tomislav.WindUp"
+				"sound_special2"	"Weapon_Tomislav.WindDown"
+			}
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
+			}
+		}
 		"weapon_rocketlauncher"
 		{
 			"item_class"	"tf_weapon_rocketlauncher"
@@ -1079,6 +1128,49 @@
 				"sound_burst"		"Weapon_Reserve_Shooter.SingleCrit"
 			}
 			"particle_suffix"	"reserve_shooter"
+		}
+		"weapon_russian_riot"
+		{
+			"prefab"	"weapon_shotgun"
+			"item_type_name"	"#TF_Weapon_Shotgun"
+			"item_logname" "family_business"
+			"item_iconname" "family_business"
+			"item_name"	"#TF_RussianRiot"
+			"item_slot"	"secondary"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_russian_riot/c_russian_riot"
+			"model_player"	"models/workshop/weapons/c_models/c_russian_riot/c_russian_riot.mdl"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"				"10 0 -10"
+			}
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value" "0.85"
+				}
+				"clip size bonus"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "1.33"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "0.85"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_FamilyBusiness.Single"
+				"sound_burst"	"Weapon_FamilyBusiness.SingleCrit"
+			}
 		}
 		"weapon_smg"
 		{
@@ -4557,6 +4649,157 @@
 			"used_by_classes"
 			{
 				"engineer"	"1"
+			}
+		}
+		"424"
+		{
+			"name"	"Tomislav"
+			"prefab" "weapon_tomislav"
+			"year"		"2011"
+			"particle_suffix"	"tomislav"
+		}
+		"425"
+		{
+			"name"	"The Family Business"
+			"prefab"	"weapon_russian_riot"
+			"year"			"2011"
+			"particle_suffix"	"family_business"
+		}
+		"426"
+		{
+			"name"	"The Eviction Notice"
+			"prefab"			"weapon_fists"
+			"year"				"2011"
+			"item_type_name"	"#TF_Weapon_Gloves"
+			"item_name"	"#TF_EvictionNotice"
+			"propername"	"1"
+			"item_logname"	"eviction_notice"
+			"item_iconname"	"eviction_notice"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_eviction_notice/c_eviction_notice"			
+			"model_player"	"models/workshop/weapons/c_models/c_eviction_notice/c_eviction_notice.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"			"10 0 -8"
+			}
+			"attributes"
+			{
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "0.6"
+				}
+				"speed_boost_on_hit"
+				{
+					"attribute_class"	"speed_boost_on_hit"
+					"value"	"3"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.4"
+				}
+				"dmg taken increased"
+				{
+					"attribute_class"	"mult_dmgtaken"
+					"value"	"1.2"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_miss"		"EvictionNotice.Swing"
+				"sound_melee_hit"		"EvictionNotice.Impact"
+				"sound_melee_hit_world"	"EvictionNotice.HitWorld"
+				"sound_melee_burst"		"EvictionNotice.ImpactCrit"
+				"animation_replacement"
+				{
+					"ACT_VM_IDLE"	"ACT_FISTS_VM_IDLE"
+					"ACT_VM_HITLEFT"	"ACT_FISTS_VM_HITLEFT"
+					"ACT_VM_HITRIGHT"	"ACT_FISTS_VM_HITRIGHT"
+					"ACT_VM_SWINGHARD"	"ACT_FISTS_VM_SWINGHARD"
+					"ACT_VM_DRAW"	"ACT_FISTS_VM_DRAW"
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT3_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT3_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT3_VM_INSPECT_END"
+				}
+			}
+		}
+		"460"
+		{
+			"name"	"The Enforcer"
+			"prefab"		"weapon_revolver"
+			"year"			"2011"
+			"item_name"	"#TF_Enforcer"
+			"propername"	"1"
+			"item_logname"	"enforcer"
+			"item_iconname"	"enforcer"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_snub_nose/c_snub_nose"
+			"model_player"	"models/workshop/weapons/c_models/c_snub_nose/c_snub_nose.mdl"
+			"attributes"
+			{
+				"dmg pierces resists absorbs"
+				{
+					"attribute_class"	"mod_pierce_resists_absorbs"
+					"value"	"1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.2"
+				}
+				"damage bonus while disguised"
+				{
+					"attribute_class"	"mult_dmg_disguised"
+					"value"	"1.2"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Enforcer.Single"
+				"sound_burst"	"Weapon_Enforcer.SingleCrit"
+			}
+		}
+		"461"
+		{
+			"name"	"The Big Earner"
+			"prefab"	"weapon_spy_knife_item2"
+			"year"			"2011"
+			"item_name"	"#TF_BigEarner"
+			"propername"	"1"
+			"item_logname"	"big_earner"
+			"item_iconname"	"big_earner"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_switchblade/c_switchblade"
+			"model_player"	"models/workshop/weapons/c_models/c_switchblade/c_switchblade.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -6"
+			}
+			"attributes"
+			{
+				"add cloak on kill"
+				{
+					"attribute_class"	"add_cloak_on_kill"
+					"value" "30"
+				}
+				"max health additive penalty"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value" "-25"
+				}
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value" "1"
+				}
+				"speed_boost_on_kill"
+				{
+					"attribute_class"	"speed_boost_on_kill"
+					"value"	"3"
+				}
 			}
 		}
 		"513"
