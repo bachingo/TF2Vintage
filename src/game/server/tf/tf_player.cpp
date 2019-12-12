@@ -5810,6 +5810,12 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 						}
 					}
 				}
+				float flAddChargeShieldKill = 0.0f;
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flAddChargeShieldKill, kill_refills_meter );
+				if ( flAddChargeShieldKill )
+				{
+					m_Shared.m_flChargeMeter = min( ( m_Shared.m_flChargeMeter + ( flAddChargeShieldKill * 100 ) ), 100.0f ) ;
+				}
 			}
 
 			if ( pWeapon->GetWeaponID() == TF_WEAPON_SWORD )
