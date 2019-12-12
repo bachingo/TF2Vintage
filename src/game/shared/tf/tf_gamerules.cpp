@@ -4313,6 +4313,12 @@ float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 {
 	if ( pPlayer->m_Local.m_flFallVelocity > TF_PLAYER_MAX_SAFE_FALL_SPEED )
 	{
+		// Check if we have an attribute to cancel the fall damage first.
+		int nCancelFallDamage = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( ToTFPlayer(pPlayer), nCancelFallDamage, cancel_falling_damage );
+		if ( nCancelFallDamage != 0 )
+			return 0;	// No fall damage if we have an item to cancel it.
+		
 		// Old TFC damage formula
 		float flFallDamage = 5 * ( pPlayer->m_Local.m_flFallVelocity / 300 );
 
