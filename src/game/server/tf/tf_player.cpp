@@ -139,6 +139,7 @@ ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "0", FCVAR_NOTIFY, "Enable 
 ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes players spawn with random classes." );
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
 ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
+ConVar tf2v_allow_demoknights( "tf2v_allow_demoknights", "1", FCVAR_NOTIFY, "Allows players to use Demoknight content." );
 ConVar tf2v_allow_mod_weapons( "tf2v_allow_mod_weapons", "0", FCVAR_NOTIFY, "Allows players to use non-standard TF2 weapons." );
 ConVar tf2v_bonus_distance_range( "tf2v_bonus_distance_range", "10", FCVAR_NOTIFY, "Percent variation in range calculations for damage." );
 ConVar tf2v_enforce_whitelist( "tf2v_enforce_whitelist", "0", FCVAR_NOTIFY, "Requires items to be verified from a server whitelist." );
@@ -1947,6 +1948,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			Assert( pszClassname );
 			bool bWhiteListedWeapon = true; // Defaulted to true, since whitelisting is a niche server option.
 			bool bIsReskin = false;			// Defaulted to false, since reskins aren't common.
+			bool bIsDemoknight = false;		// Defaulted to false, since Demoknights are more allowed than not.
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
 			bool bIsCustomContent = false;	
 			bool bIsSpecialRestricted = false;
@@ -1958,6 +1960,9 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				
 			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
 				bIsReskin = pItemDef->is_reskin;
+			
+			if ( !tf2v_allow_demoknights.GetBool() )	// Checks if it's a Demoknight item.
+				bIsDemoknight = pItemDef->demoknight;
 				
 			if ( !tf2v_allow_mod_weapons.GetBool() )	// Checks if it's a custom weapon.
 				bIsCustomContent = pItemDef->is_custom_content;
@@ -2000,7 +2005,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					bHolidayRestrictedItem = true;
 			}
 			
-			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsSpecialRestricted == true ) ) ) // If the weapon is banned, swap for a stock weapon.
+			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsSpecialRestricted == true ) ) || ( bIsDemoknight == true ) ) // If the weapon is banned, swap for a stock weapon.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}

@@ -493,6 +493,7 @@ public:
 		
 		GET_BOOL(pItem, pData, is_reskin);
 		GET_BOOL(pItem, pData, specialitem);
+		GET_BOOL(pItem, pData, demoknight);
 		GET_STRING( pItem, pData, holiday_restriction );
 		GET_INT( pItem, pData, year );
 		GET_BOOL(pItem, pData, is_custom_content);

@@ -2042,6 +2042,7 @@
 		{
 			"item_class"	"tf_weapon_sword"
 			"item_type_name"	"#TF_Weapon_Sword"
+			"demoknight"	"1"
 			"item_slot"	"melee"
 			"anim_slot"	"item1"
 			"used_by_classes"
@@ -2172,6 +2173,7 @@
 			"item_logname"	"persian_persuader"
 			"item_iconname"	"persian_persuader"
 			"propername"	"1"
+			"anim_slot" "MELEE_ALLCLASS"
 			"image_inventory" "backpack/workshop/weapons/c_models/c_demo_sultan_sword/c_demo_sultan_sword"
 			"model_player"	"models/workshop/weapons/c_models/c_demo_sultan_sword/c_demo_sultan_sword.mdl"
 			"used_by_classes"
@@ -2230,6 +2232,7 @@
 		"weapon_demoman_boots"
 		{
 			"prefab"			"weapon_wearable"
+			"demoknight"	"1"
 			"item_type_name" 	"#TF_Wearable_Boots"
 			"base_item_name"	"The Bootlegger"
 			"item_slot"		"primary"
@@ -2280,6 +2283,7 @@
 		"weapon_shield"
 		{
 			"prefab"	"weapon_wearable"
+			"demoknight"	"1"
 			"item_class"		"tf_wearable_demoshield"
 			"item_type_name"	"#TF_Wearable_Shield"
 			"item_name"		"#TF_Unique_Achievement_Shield"
