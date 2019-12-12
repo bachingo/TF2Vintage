@@ -2164,6 +2164,119 @@
 				}
 			}
 		}
+		"weapon_demo_sultan_sword"
+		{
+			"prefab"	"weapon_sword"
+			"item_name"	"#TF_PersianPersuader"
+			"item_description"	"#TF_PersianPersuader_Desc"
+			"item_logname"	"persian_persuader"
+			"item_iconname"	"persian_persuader"
+			"propername"	"1"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_demo_sultan_sword/c_demo_sultan_sword"
+			"model_player"	"models/workshop/weapons/c_models/c_demo_sultan_sword/c_demo_sultan_sword.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"				"10 -3 -10"
+				"weapon_stattrak_module_scale"			"0.455"				
+			}
+			"visuals"
+			{
+				"sound_melee_miss"	"Weapon_Sword.Swing"
+				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
+				"sound_burst"		"Weapon_Sword.SwingCrit"
+				"sound_special1"	"Sword.Hit"
+				"sound_special2"	"Sword.Idle"
+				"animation_replacement"
+				{
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALLCLASS_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALLCLASS_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALLCLASS_VM_INSPECT_END"
+				}
+			}
+			"attributes"
+			{
+				"maxammo primary reduced"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"				"0.20"
+				}
+				"maxammo secondary reduced"
+				{
+					"attribute_class"	"mult_maxammo_secondary"
+					"value"				"0.20"
+				}
+				"ammo gives charge"
+				{
+					"attribute_class"	"ammo_gives_charge"
+					"value"				"1"
+				}
+				"charge meter on hit"
+				{
+					"attribute_class"	"charge_meter_on_hit"
+					"value"			"0.20"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+		}
+		"weapon_demoman_boots"
+		{
+			"prefab"			"weapon_wearable"
+			"item_type_name" 	"#TF_Wearable_Boots"
+			"base_item_name"	"The Bootlegger"
+			"item_slot"		"primary"
+			"equip_region"	"feet"
+			"anim_slot"		"FORCE_NOT_USED"
+			"propername"	"0"
+			"act_as_wearable" "1"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"attributes"
+			{
+				"mult charge turn control"
+				{
+					"attribute_class"	"charge_turn_control"
+					"value"			"3"
+				}
+				"max health additive bonus"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value" "25"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+				"kill refills meter"
+				{
+					"attribute_class"	"kill_refills_meter"
+					"value"			"0.25"
+				}
+				"move speed bonus shield required"
+				{
+					"attribute_class"	"mult_player_movespeed_shieldrequired"
+					"value" "1.10"
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"shoes"			"1"
+				}
+			}
+		}
 		"weapon_shield"
 		{
 			"prefab"	"weapon_wearable"
@@ -2181,6 +2294,14 @@
 			"used_by_classes"
 			{
 				"demoman"	"1"
+			}
+			"attributes"
+			{
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
 			}
 		}
 		"weapon_targe"
@@ -4322,6 +4443,59 @@
 				}
 			}
 		}
+		"404"
+		{
+			"name"	"The Persian Persuader"
+			"prefab"	"weapon_demo_sultan_sword"
+			"year"	"2011"
+			"particle_suffix"	"persian_persuader"
+		}
+		"405"
+		{
+			"name"			"Ali Baba's Wee Booties"
+			"prefab"			"weapon_demoman_boots"
+			"year"				"2011"
+			"item_type_name" 	"#TF_Wearable_Boots"
+			"item_name"		"#TF_Ali_Babas_Wee_Booties"
+			"image_inventory"	"backpack/workshop/player/items/demo/demo_booties/demo_booties"
+			"model_player"		"models/workshop/player/items/demo/demo_booties/demo_booties.mdl"
+		}
+		"406"
+		{
+			"name"			"The Splendid Screen"
+			"prefab"			"weapon_shield"
+			"first_sale_date"	"2011"
+			"item_logname" "splendid_screen"
+			"item_iconname" "splendid_screen"
+			"item_name"		"#TF_SplendidScreen"
+			"item_description"	"#TF_SplendidScreen_Desc"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_persian_shield/c_persian_shield"
+			"model_player"	"models/workshop/weapons/c_models/c_persian_shield/c_persian_shield.mdl"
+			"attributes"
+			{
+				"charge recharge rate increased"
+				{
+					"attribute_class"	"charge_recharge_rate"
+					"value"	"1.5"
+				}
+				"charge impact damage increased"
+				{
+					"attribute_class"	"charge_impact_damage"
+					"value"			"1.7"
+				}
+				"dmg taken from fire reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"			"0.8"
+				}
+				"dmg taken from blast reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_explosions"
+					"value"			"0.8"
+				}
+			}
+		}
 		"415"
 		{
 			"name"	"The Reserve Shooter"
@@ -5020,6 +5194,17 @@
 				"sound_melee_hit_world"	"Weapon_BoxingGloves.HitWorld"
 				"sound_burst"		"Weapon_BoxingGloves.MissCrit"
 			}
+		}
+		"10608"
+		{
+			"name"	"The Bootlegger"
+			"year"				"2011"
+			"prefab"			"weapon_demoman_boots weapon_reskin"
+			"propername"		"1"
+			"item_name"			"#TF_Bootlegger"
+			"item_description"	"#TF_Bootlegger_Desc"
+			"image_inventory"	"backpack/workshop/player/items/demo/pegleg/pegleg"
+			"model_player"		"models/workshop/player/items/demo/pegleg/pegleg.mdl"
 		}
 		"10609"
 		{
