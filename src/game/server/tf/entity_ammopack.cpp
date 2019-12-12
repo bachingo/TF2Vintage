@@ -81,6 +81,17 @@ bool CAmmoPack::MyTouch( CBasePlayer *pPlayer )
 		{
 			bSuccess = true;
 		}
+		
+		int nAmmoGivesCharge = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER ( pTFPlayer, nAmmoGivesCharge, ammo_gives_charge );
+		if ( nAmmoGivesCharge != 0 )
+		{
+			if ( pTFPlayer->m_Shared.m_flChargeMeter != 100.0f )
+			{
+				pTFPlayer->m_Shared.m_flChargeMeter = min( ( pTFPlayer->m_Shared.m_flChargeMeter + ( ( PackRatios[GetPowerupSize()] ) * 100 ) ), 100.0f ) ;
+				bSuccess = true;
+			}
+		}
 
 		// did we give them anything?
 		if ( bSuccess )
