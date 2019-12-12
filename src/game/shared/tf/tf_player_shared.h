@@ -543,9 +543,17 @@ private:
 	CNetworkVar( int, m_iWeaponKnockbackID );
 
 	CNetworkVar( int, m_iDecapitations );
-	CNetworkVar( float, m_flChargeMeter );
 	CNetworkVar( bool, m_bShieldEquipped );
 	CNetworkVar( int, m_iNextMeleeCrit );
+
+#ifdef CLIENT_DLL
+	CNetworkVar( float, m_flChargeMeter );
+#endif
+#ifdef GAME_DLL
+	public:
+	CNetworkVar( float, m_flChargeMeter );
+	private:
+#endif
 
 	float m_flChargeDrainRate;
 	float m_flChargeRegenRate;

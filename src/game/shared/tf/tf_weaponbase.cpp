@@ -2165,6 +2165,13 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 			pMedigun->AddCharge( flAddCharge );
 		}
 	}
+	
+	float flAddChargeShield = 0.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flAddChargeShield, charge_meter_on_hit );
+	if ( flAddChargeShield )
+	{
+		pAttacker->m_Shared.m_flChargeMeter = min( ( pAttacker->m_Shared.m_flChargeMeter + ( flAddChargeShield * 100 ) ), 100.0f );
+	}
 
 	float flAddHealth = 0.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flAddHealth, add_onhit_addhealth );
