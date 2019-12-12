@@ -13,21 +13,14 @@
 //#include "scenario/capture_the_flag/tf_bot_deliver_flag.h"
 #include "scenario/capture_point/tf_bot_capture_point.h"
 #include "scenario/capture_point/tf_bot_defend_point.h"
+#include "scenario/payload/tf_bot_payload_push.h"
+#include "scenario/payload/tf_bot_payload_guard.h"
 #include "tf_gamerules.h"
 #include "entity_capture_flag.h"
 
 
 ConVar tf_bot_fetch_lost_flag_time( "tf_bot_fetch_lost_flag_time", "10", FCVAR_CHEAT, "How long busy TFBots will ignore the dropped flag before they give up what they are doing and go after it" );
 ConVar tf_bot_flag_kill_on_touch( "tf_bot_flag_kill_on_touch", "0", FCVAR_CHEAT, "If nonzero, any bot that picks up the flag dies. For testing." );
-
-
-CTFBotScenarioMonitor::CTFBotScenarioMonitor()
-{
-}
-
-CTFBotScenarioMonitor::~CTFBotScenarioMonitor()
-{
-}
 
 
 const char *CTFBotScenarioMonitor::GetName( void ) const
@@ -41,7 +34,7 @@ ActionResult<CTFBot> CTFBotScenarioMonitor::OnStart( CTFBot *me, Action<CTFBot> 
 	m_fetchFlagDelay.Start( 20.0f );
 	m_fetchFlagDuration.Invalidate();
 
-	return Action<CTFBot>::Continue();
+	return BaseClass::Continue();
 }
 
 ActionResult<CTFBot> CTFBotScenarioMonitor::Update( CTFBot *me, float dt )
@@ -51,17 +44,17 @@ ActionResult<CTFBot> CTFBotScenarioMonitor::Update( CTFBot *me, float dt )
 		if ( tf_bot_flag_kill_on_touch.GetBool() )
 		{
 			me->CommitSuicide( false, true );
-			return Action<CTFBot>::Done( "Flag kill" );
+			return BaseClass::Done( "Flag kill" );
 		}
 
-		//return Action<CTFBot>::SuspendFor( new CTFBotDeliverFlag( /* TODO */ ), "I've picked up the flag! Running it in..." );
+		//return BaseClass::SuspendFor( new CTFBotDeliverFlag( /* TODO */ ), "I've picked up the flag! Running it in..." );
 	}
 
 	/*if ( m_fetchFlagDelay.IsElapsed() && me->IsAllowedToPickUpFlag() )
 	{
 		CCaptureFlag *flag = me->GetFlagToFetch();
 		if ( flag == nullptr )
-			return Action<CTFBot>::Continue();
+			return BaseClass::Continue();
 
 		CTFPlayer *owner = ToTFPlayer( flag->GetOwnerEntity() );
 		if ( owner )
@@ -77,7 +70,7 @@ ActionResult<CTFBot> CTFBotScenarioMonitor::Update( CTFBot *me, float dt )
 					m_fetchFlagDuration.Invalidate();
 
 					if ( me->MedicGetHealTarget() == nullptr )
-						return Action<CTFBot>::SuspendFor( new CTFBotFetchFlag( true ), "Fetching lost flag..." );
+						return BaseClass::SuspendFor( new CTFBotFetchFlag( true ), "Fetching lost flag..." );
 				}
 			}
 			else
@@ -87,7 +80,7 @@ ActionResult<CTFBot> CTFBotScenarioMonitor::Update( CTFBot *me, float dt )
 		}
 	}*/
 
-	return Action<CTFBot>::Continue();
+	return BaseClass::Continue();
 }
 
 
@@ -123,13 +116,14 @@ Action<CTFBot> *CTFBotScenarioMonitor::DesiredScenarioAndClassAction( CTFBot *ac
 	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ARENA )
 		return new CTFBotRoam;
 
-	/*if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
+	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 	{
+		// TODO: PLR logic
 		if ( actor->GetTeamNumber() == TF_TEAM_BLUE )
 			return new CTFBotPayloadPush;
 		else if ( actor->GetTeamNumber() == TF_TEAM_RED )
 			return new CTFBotPayloadGuard;
-	}*/
+	}
 
 	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CP )
 	{

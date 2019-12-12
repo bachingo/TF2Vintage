@@ -9,9 +9,9 @@
 
 class CTFBotScenarioMonitor : public Action<CTFBot>
 {
+	DECLARE_CLASS( CTFBotScenarioMonitor, Action<CTFBot> );
 public:
-	CTFBotScenarioMonitor();
-	virtual ~CTFBotScenarioMonitor();
+	virtual ~CTFBotScenarioMonitor() {}
 
 	virtual const char *GetName( void ) const override;
 
