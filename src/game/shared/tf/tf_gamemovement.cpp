@@ -932,6 +932,9 @@ float CTFGameMovement::GetAirSpeedCap( void )
 
 	float flAirSpeedMult = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pTFPlayer, flAirSpeedMult, mod_air_control );
+	
+	if (m_pTFPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ))
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pTFPlayer, flAirSpeedMult, mod_air_control_blast_jump );	
 
 	return 30.0f * flAirSpeedMult;
 }
