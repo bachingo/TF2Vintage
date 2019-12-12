@@ -4404,6 +4404,9 @@ void CTFPlayer::TeamFortress_SetSpeed()
 
 	if ( pWeapon )
 		maxfbspeed *= pWeapon->GetSpeedMod();
+	
+	if (m_Shared.m_bShieldEquipped == true)
+		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed_shieldrequired );
 		
 	CTFSword *pSword = dynamic_cast<CTFSword *>( Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
 	if (pSword)
