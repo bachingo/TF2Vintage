@@ -432,9 +432,15 @@ void CTFSniperRifle::ZoomIn( void )
 	pPlayer->m_Shared.AddCond( TF_COND_AIMING );
 	pPlayer->TeamFortress_SetSpeed();
 
+	int nWeaponModeDot = 0;
+	CALL_ATTRIB_HOOK_INT( nWeaponModeDot, set_weapon_mode );
+	
 #ifdef GAME_DLL
-	// Create the sniper dot.
-	CreateSniperDot();
+	if ( nWeaponModeDot == 0 || nWeaponModeDot == 2 )
+	{
+		// Create the sniper dot.
+		CreateSniperDot();
+	}
 	pPlayer->ClearExpression();
 #endif
 }
@@ -518,17 +524,23 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	// Fire the sniper shot.
 	PrimaryAttack();
 
+	int nWeaponModeScope = 0;
+	CALL_ATTRIB_HOOK_INT( nWeaponModeScope, set_weapon_mode );
+	
 	if ( IsZoomed() )
 	{
-		// If we have more bullets, zoom out, play the bolt animation and zoom back in
-		if( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
+		if (nWeaponModeScope == 0 || nWeaponModeScope == 1 )
 		{
-			SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
-		}
-		else	
-		{
-			//just zoom out
-			SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
+			// If we have more bullets, zoom out, play the bolt animation and zoom back in
+			if( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
+			{
+				SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
+			}
+			else	
+			{
+				//just zoom out
+				SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
+			}
 		}
 	}
 	else
