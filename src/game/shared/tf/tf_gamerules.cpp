@@ -4263,7 +4263,14 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 		if ( pTFAttacker && pTFAttacker->GetActiveTFWeapon() )
 		{
 			CTFWeaponBase *pActive = pTFAttacker->GetActiveTFWeapon();
-			event->SetBool( "silent_kill", ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB && pActive->IsSilentKiller() ) );
+			if ( pActive )
+			{
+				bool bIsSilent = pActive->IsSilentKiller();
+				if ( pActive->IsWeapon( TF_WEAPON_KNIFE ) )	// Knife only: Check for backstab.
+					event->SetBool( "silent_kill", ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB && bIsSilent ) );
+				else
+					event->SetBool( "silent_kill", ( bIsSilent ) );
+			}
 		}
 
 		gameeventmanager->FireEvent( event );
