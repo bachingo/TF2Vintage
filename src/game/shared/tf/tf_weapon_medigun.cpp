@@ -46,6 +46,9 @@ ConVar weapon_medigun_construction_rate( "weapon_medigun_construction_rate", "10
 ConVar weapon_medigun_charge_rate( "weapon_medigun_charge_rate", "40", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time healing it takes to fully charge the medigun." );
 ConVar weapon_medigun_chargerelease_rate( "weapon_medigun_chargerelease_rate", "8", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time it takes the a full charge of the medigun to be released." );
 
+
+ConVar tf2v_setup_uber_rate("tf2v_setup_uber_rate", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Affects how Uber is built during Setup.", true, 0, true, 2);
+
 #if defined (CLIENT_DLL)
 ConVar tf_medigun_autoheal( "tf_medigun_autoheal", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Setting this to 1 will cause the Medigun's primary attack to be a toggle instead of needing to be held down." );
 #endif
@@ -629,15 +632,18 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 
 					CALL_ATTRIB_HOOK_FLOAT( flChargeAmount, mult_medigun_uberchargerate );
 
-					if ( TFGameRules() && TFGameRules()->InSetup() )
+					if ( ( TFGameRules() && TFGameRules()->InSetup() ) && ( tf2v_setup_uber_rate.GetInt() == 2 ) )
 					{
 						// Build charge at triple rate during setup
 						flChargeAmount *= 3.0f;
 					}
-					else if ( pNewTarget->GetHealth() >= iBoostMax )
+					else if  ( pNewTarget->GetHealth() >= iBoostMax )
 					{
-						// Reduced charge for healing fully healed guys
-						flChargeAmount *= 0.5f;
+						if ( TFGameRules() && ( !TFGameRules()->InSetup() || ( TFGameRules()->InSetup() && ( tf2v_setup_uber_rate.GetInt() == 0 ) ) ) )
+						{
+							// Reduced charge for healing fully healed guys
+							flChargeAmount *= 0.5f;
+						}
 					}
 
 					int iTotalHealers = pTFPlayer->m_Shared.GetNumHealers();
