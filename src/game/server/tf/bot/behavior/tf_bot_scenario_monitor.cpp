@@ -9,8 +9,8 @@
 #include "spy/tf_bot_spy_infiltrate.h"
 #include "sniper/tf_bot_sniper_lurk.h"
 #include "engineer/tf_bot_engineer_build.h"
-//#include "scenario/capture_the_flag/tf_bot_fetch_flag.h"
-//#include "scenario/capture_the_flag/tf_bot_deliver_flag.h"
+#include "scenario/capture_the_flag/tf_bot_fetch_flag.h"
+#include "scenario/capture_the_flag/tf_bot_deliver_flag.h"
 #include "scenario/capture_point/tf_bot_capture_point.h"
 #include "scenario/capture_point/tf_bot_defend_point.h"
 #include "scenario/payload/tf_bot_payload_push.h"
@@ -47,17 +47,17 @@ ActionResult<CTFBot> CTFBotScenarioMonitor::Update( CTFBot *me, float dt )
 			return BaseClass::Done( "Flag kill" );
 		}
 
-		//return BaseClass::SuspendFor( new CTFBotDeliverFlag( /* TODO */ ), "I've picked up the flag! Running it in..." );
+		return BaseClass::SuspendFor( new CTFBotDeliverFlag, "I've picked up the flag! Running it in..." );
 	}
 
-	/*if ( m_fetchFlagDelay.IsElapsed() && me->IsAllowedToPickUpFlag() )
+	if ( m_fetchFlagDelay.IsElapsed() && me->IsAllowedToPickUpFlag() )
 	{
-		CCaptureFlag *flag = me->GetFlagToFetch();
-		if ( flag == nullptr )
+		CCaptureFlag *pFlag = me->GetFlagToFetch();
+		if ( pFlag == nullptr )
 			return BaseClass::Continue();
 
-		CTFPlayer *owner = ToTFPlayer( flag->GetOwnerEntity() );
-		if ( owner )
+		CTFPlayer *pCarrier = ToTFPlayer( pFlag->GetOwnerEntity() );
+		if ( pCarrier )
 		{
 			m_fetchFlagDuration.Invalidate();
 		}
@@ -78,7 +78,7 @@ ActionResult<CTFBot> CTFBotScenarioMonitor::Update( CTFBot *me, float dt )
 				m_fetchFlagDuration.Start( tf_bot_fetch_lost_flag_time.GetFloat() );
 			}
 		}
-	}*/
+	}
 
 	return BaseClass::Continue();
 }
@@ -110,8 +110,8 @@ Action<CTFBot> *CTFBotScenarioMonitor::DesiredScenarioAndClassAction( CTFBot *ac
 			return new CTFBotEngineerBuild;
 	}
 
-	/*if ( actor->GetFlagToFetch() != nullptr )
-		return new CTFBotFetchFlag( false );*/
+	if ( actor->GetFlagToFetch() )
+		return new CTFBotFetchFlag( false );
 
 	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ARENA )
 		return new CTFBotRoam;
