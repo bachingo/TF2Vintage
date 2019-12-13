@@ -4611,9 +4611,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
 
-			if ( pTFAttacker->m_Shared.InCond( TF_COND_DISGUISED )
+			if ( pTFAttacker->m_Shared.InCond( TF_COND_DISGUISED ) )
 			{
-				float flDisguisedMod = info.GetDamage(); 
+				float flDisguisedMod = info.GetDamage();
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDisguisedMod, mult_dmg_disguised );
 				info.SetDamage( flDisguisedMod );
 			}
