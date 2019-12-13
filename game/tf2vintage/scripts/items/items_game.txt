@@ -1136,9 +1136,14 @@
 			"item_logname" "family_business"
 			"item_iconname" "family_business"
 			"item_name"	"#TF_RussianRiot"
+			"item_slot"	"secondary"
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_russian_riot/c_russian_riot"
 			"model_player"	"models/workshop/weapons/c_models/c_russian_riot/c_russian_riot.mdl"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
 			"static_attrs"
 			{
 				"min_viewmodel_offset"				"10 0 -10"
@@ -1166,7 +1171,6 @@
 				"sound_single_shot"	"Weapon_FamilyBusiness.Single"
 				"sound_burst"	"Weapon_FamilyBusiness.SingleCrit"
 			}
-			"particle_suffix"	"family_business"
 		}
 		"weapon_smg"
 		{
@@ -4659,11 +4663,7 @@
 			"name"	"The Family Business"
 			"prefab"	"weapon_russian_riot"
 			"year"			"2011"
-			"item_slot"	"secondary"
-			"used_by_classes"
-			{
-				"heavy"	"1"
-			}
+			"particle_suffix"	"family_business"
 		}
 		"426"
 		{
@@ -4721,18 +4721,6 @@
 					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT3_VM_INSPECT_IDLE"
 					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT3_VM_INSPECT_END"
 				}
-			}
-		}
-		"427"
-		{
-			"name"	"The Family Business (Multi-Class)"
-			"prefab"	"weapon_russian_riot"
-			"year"			"2011"
-			"used_by_classes"
-			{
-				"soldier"	"secondary"
-				"pyro"		"secondary"
-				"engineer"	"primary"
 			}
 		}
 		"460"
