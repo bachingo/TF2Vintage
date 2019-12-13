@@ -3796,28 +3796,37 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 			{
 				switch ( m_iActiveBuffType )
 				{
-				case TF_BUFF_OFFENSE:
-					pPlayer->m_Shared.AddCond( TF_COND_OFFENSEBUFF, 1.2f );
-					break;
-				case TF_BUFF_DEFENSE:
-					pPlayer->m_Shared.AddCond( TF_COND_DEFENSEBUFF, 1.2f );
-					break;
-				case TF_BUFF_REGENONDAMAGE:
-					pPlayer->m_Shared.AddCond( TF_COND_REGENONDAMAGEBUFF, 1.2f );
-					break;
-				case TF_COND_RADIUSHEAL:
-					pPlayer->m_Shared.AddCond( TF_COND_RADIUSHEAL, 1.0f );
-					break;
+					case TF_BUFF_OFFENSE:
+						pPlayer->m_Shared.AddCond( TF_COND_OFFENSEBUFF, 1.2f );
+						break;
+					case TF_BUFF_DEFENSE:
+						pPlayer->m_Shared.AddCond( TF_COND_DEFENSEBUFF, 1.2f );
+						break;
+					case TF_BUFF_REGENONDAMAGE:
+						pPlayer->m_Shared.AddCond( TF_COND_REGENONDAMAGEBUFF, 1.2f );
+						break;
+					case TF_COND_RADIUSHEAL:
+					{
+						if (!pPlayer->m_Shared.InCond( TF_COND_RADIUSHEAL ) )
+						{
+							pPlayer->m_Shared.AddCond(TF_COND_RADIUSHEAL, TF_MEDIC_REGEN_TIME);
+							pPlayer->AOEHeal(pPlayer, pOuter);
+						}
+						break;
+					}
 				}
 
 				// Achievements
-				IGameEvent *event = gameeventmanager->CreateEvent( "player_buff" );
-				if ( event )
+				if ( m_iActiveBuffType != TF_COND_RADIUSHEAL )
 				{
-					event->SetInt( "userid", pPlayer->GetUserID() );
-					event->SetInt( "buff_type", m_iActiveBuffType );
-					event->SetInt( "buff_owner", pOuter->entindex() );
- 					gameeventmanager->FireEvent( event );
+					IGameEvent *event = gameeventmanager->CreateEvent( "player_buff" );
+					if ( event )
+					{
+						event->SetInt( "userid", pPlayer->GetUserID() );
+						event->SetInt( "buff_type", m_iActiveBuffType );
+						event->SetInt( "buff_owner", pOuter->entindex() );
+						gameeventmanager->FireEvent( event );
+					}
 				}
 			}
 		}

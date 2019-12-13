@@ -584,6 +584,9 @@ private:
 	// Think.
 	void				TFPlayerThink();
 	void				MedicRegenThink( void );
+	public:
+	void				AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer );
+	private:
 	void				UpdateTimers( void );
 
 public:
@@ -678,7 +681,9 @@ private:
 	CTFPlayerAnimState *m_PlayerAnimState;
 	int					m_iLastWeaponFireUsercmd;				// Firing a weapon.  Last usercmd we shot a bullet on.
 	int					m_iLastSkin;
+	public:
 	float				m_flLastDamageTime;
+	private:
 	float				m_flNextPainSoundTime;
 	int					m_LastDamageType;
 	int					m_iDeathFlags;				// TF_DEATH_* flags with additional death info
