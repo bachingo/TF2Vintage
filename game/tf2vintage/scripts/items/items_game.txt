@@ -4592,6 +4592,90 @@
 				}
 			}
 		}
+		"412"
+		{
+			"name"	"The Overdose"
+			"prefab"	"weapon_syringegun"
+			"year"				"2011"
+			"item_logname"	"proto_syringe"
+			"item_iconname"	"proto_syringe"
+			"item_type_name"	"#TF_Weapon_SyringeGun_Prototype"
+			"item_name"		"#TF_Overdose"
+			"item_description"	"#TF_Overdose_Desc"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/c_models/c_proto_syringegun/c_proto_syringegun"
+			"model_player"	"models/weapons/c_models/c_proto_syringegun/c_proto_syringegun.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -14"				
+			}
+			"attributes"
+			{
+				"move speed bonus resource level"
+				{
+					"attribute_class"	"mult_player_movespeed_resource_level"
+					"value"	"1.2"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.85"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"    "Weapon_Overdose.Single"
+				"sound_burst"    "Weapon_Overdose.SingleCrit"
+			}
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
+			}
+		}
+		"413"
+		{
+			"name"	"The Solemn Vow"
+			"prefab"	"weapon_melee_allclass"
+			"year"				"2011"
+			"item_class"	"tf_weapon_bonesaw"
+			"item_logname"	"solemn_vow"
+			"item_iconname"	"solemn_vow"
+			"item_type_name"	"#TF_Weapon_Bust"
+			"item_description"	"#TF_SolemnVow_Desc"
+			"item_name"	"#TF_SolemnVow"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/c_models/c_hippocrates_bust/c_hippocrates_bust"
+			"model_player"	"models/weapons/c_models/c_hippocrates_bust/c_hippocrates_bust.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 -4 -12"				
+			}
+			"attributes"
+			{
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.1"
+				}
+				"mod see enemy health"
+				{
+					"attribute_class"	"see_enemy_health"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
+			}
+		}
 		"415"
 		{
 			"name"	"The Reserve Shooter"

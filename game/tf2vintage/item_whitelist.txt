@@ -72,6 +72,8 @@
 	"The Persian Persuader"							"1"
 	"Ali Baba's Wee Booties"						"1"
 	"The Splendid Screen"							"1"
+	"The Overdose"									"1"
+	"The Solemn Vow"								"1"
 	"The Reserve Shooter"							"1"
 	"The Market Gardener"							"1"
 	"The Reserve Shooter (Engineer)"				"1"
