@@ -5088,6 +5088,55 @@
 				}
 			}
 		}
+		"751"
+		{
+			"name" "The Cleaner's Carbine"
+			"prefab"		"weapon_smg"
+			"year"				"2012"
+			"item_logname"	"pro_smg"
+			"item_iconname"	"pro_smg"
+			"item_name"	"#TF_Pro_SMG"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_pro_smg/c_pro_smg"
+			"model_player"	"models/workshop/weapons/c_models/c_pro_smg/c_pro_smg.mdl"
+			"attributes"
+			{
+				"minicritboost on kill"
+				{
+					"attribute_class"	"add_onkill_minicritboost_time"
+					"value"	"8"
+				}
+				"weapon spread bonus"
+				{
+					"attribute_class"	"mult_spread_scale"
+					"value"	"0.80"
+				}
+				"silent killer notaknife"
+				{
+					"attribute_class"	"set_silent_killer"
+					"value"	"1"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "1.25"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value"	"0.80"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_UrbanProfessional.Single"
+				"sound_burst"		"Weapon_UrbanProfessional.SingleCrit"
+			}
+		}
 		"1150"
 		{
 			"name"	"The Quickiebomb Launcher"
@@ -10831,6 +10880,15 @@
 			"name"	"kill will gib"
 			"attribute_class"	"kill_will_gib"
 			"description_string"	"#Attrib_CritKillWillGib"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"156"
+		{
+			"name"	"silent killer notaknife"
+			"attribute_class"	"set_silent_killer"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"
