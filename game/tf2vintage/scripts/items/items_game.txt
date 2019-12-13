@@ -5137,6 +5137,45 @@
 				"sound_burst"		"Weapon_UrbanProfessional.SingleCrit"
 			}
 		}
+		"752"
+		{
+			"name"	"The Hitman's Heatmaker"
+			"prefab"		"weapon_sniperrifle"
+			"year"				"2012"
+			"item_logname"	"pro_rifle"
+			"item_iconname"	"pro_rifle"
+			"item_type_name"	"#TF_Weapon_SniperRifle"
+			"item_name"	"#TF_Pro_SniperRifle"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_pro_rifle/c_pro_rifle"
+			"model_player"	"models/workshop/weapons/c_models/c_pro_rifle/c_pro_rifle.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"5 0 -8"				
+			}
+			"attributes"
+			{
+				"silent killer notaknife"
+				{
+					"attribute_class"	"set_silent_killer"
+					"value"	"1"
+				}
+				"damage penalty on bodyshot"
+				{
+					"attribute_class"	"bodyshot_damage_modify"
+					"value" "0.75"
+				}
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value" "3"			
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_ProSniperRifle.Single"
+				"sound_burst"			"Weapon_ProSniperRifle.SingleCrit"
+			}
+		}
 		"1150"
 		{
 			"name"	"The Quickiebomb Launcher"
