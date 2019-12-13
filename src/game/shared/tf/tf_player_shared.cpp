@@ -3811,18 +3811,61 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 				}
 
 				// Achievements
-				IGameEvent *event = gameeventmanager->CreateEvent( "player_buff" );
-				if ( event )
+				if ( m_iActiveBuffType != TF_COND_RADIUSHEAL )
 				{
-					event->SetInt( "userid", pPlayer->GetUserID() );
-					event->SetInt( "buff_type", m_iActiveBuffType );
-					event->SetInt( "buff_owner", pOuter->entindex() );
- 					gameeventmanager->FireEvent( event );
+					IGameEvent *event = gameeventmanager->CreateEvent( "player_buff" );
+					if ( event )
+					{
+						event->SetInt( "userid", pPlayer->GetUserID() );
+						event->SetInt( "buff_type", m_iActiveBuffType );
+						event->SetInt( "buff_owner", pOuter->entindex() );
+						gameeventmanager->FireEvent( event );
+					}
 				}
+				else
+				AOEHeal( pPlayer, pOuter );
 			}
 		}
 	}
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Health regen for Area of Effect items.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer )
+{
+#ifdef GAME_DLL
+	if ( pPatient->m_Shared.InCond( TF_COND_RADIUSHEAL ) && ( pPatient != pHealer ) )
+	{
+		int iHealthRegenAOE = 0;
+		int iHealthRestored = 0;
+		// More time since combat equals faster healing. Healing increases up to 300%.
+		if ( pPatient->IsAlive() )
+		{
+			int iAoEHealthBase = 26; 
+			float flTimeSinceDamageAOE = gpGlobals->curtime - pPatient->m_flLastDamageTime;
+			float flScaleAoE = RemapValClamped( flTimeSinceDamageAOE, 5, 10, iAoEHealthBase, (iAoEHealthBase * 3 ) );
+			iHealthRegenAOE = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleAoE );
+			iHealthRestored = pPatient->TakeHealth( iHealthRegenAOE, DMG_GENERIC );
+		}
+		if ( iHealthRestored > 0 )
+		{
+			CTF_GameStats.Event_PlayerHealedOther( pHealer, iHealthRegenAOE );
+			IGameEvent *event = gameeventmanager->CreateEvent( "player_healed" );
+			if ( event )
+			{
+				event->SetInt( "patient", pPatient->GetUserID() );
+				event->SetInt( "healer", pHealer->GetUserID() );
+				event->SetInt( "amount", iHealthRestored );
+			}
+		}
+		
+		AOEHeal(pPatient, pHealer);
+	}
+	else
+#endif
+		return;	// Not healing anymore.
 }
 
 //-----------------------------------------------------------------------------
