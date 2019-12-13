@@ -103,8 +103,11 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 
 CTFNavMesh::CTFNavMesh()
 {
-	Q_memset( &m_CPAreas, 0, sizeof( m_CPAreas ) );
-	Q_memset( &m_CPArea, 0, sizeof( m_CPArea ) );
+	for ( int i=0; i < MAX_CONTROL_POINTS; ++i )
+	{
+		m_CPAreas[i].RemoveAll();
+		m_CPArea[i] = NULL;
+	}
 
 	ListenForGameEvent( "teamplay_setup_finished" );
 	ListenForGameEvent( "teamplay_point_captured" );
@@ -1119,10 +1122,10 @@ void CTFNavMesh::UpdateDebugDisplay() const
 				CTFNavArea *area = static_cast<CTFNavArea *>( host->GetLastKnownArea() );
 				if ( area )
 				{
-					const CUtlVector<CTFNavArea *> *invasionAreas = area->GetInvasionAreasForTeam( host->GetTeamNumber() );
-					for ( int i=0; i<invasionAreas->Count(); ++i )
+					const CUtlVector<CTFNavArea *> &invasionAreas = area->GetInvasionAreasForTeam( host->GetTeamNumber() );
+					for ( int i=0; i<invasionAreas.Count(); ++i )
 					{
-						CTFNavArea *invArea = ( *invasionAreas )[i];
+						CTFNavArea *invArea = invasionAreas[i];
 						invArea->DrawFilled( 255, 0, 0, 255 );
 					}
 				}

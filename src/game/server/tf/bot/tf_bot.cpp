@@ -1651,12 +1651,12 @@ void CTFBot::UpdateLookingForIncomingEnemies( bool enemy )
 	if ( m_Shared.InCond( TF_COND_AIMING ) )
 		fRange = 750.0f;
 
-	const CUtlVector<CTFNavArea *> *areas = area->GetInvasionAreasForTeam( iTeam );
-	if ( !areas->IsEmpty() )
+	const CUtlVector<CTFNavArea *> &areas = area->GetInvasionAreasForTeam( iTeam );
+	if ( !areas.IsEmpty() )
 	{
 		for ( int i = 0; i < 20; ++i )
 		{
-			const Vector vSpot = areas->Random()->GetRandomPoint();
+			const Vector vSpot = areas.Random()->GetRandomPoint();
 			if ( this->IsRangeGreaterThan( vSpot, fRange ) )
 			{
 				if ( GetVisionInterface()->IsLineOfSightClear( vSpot ) )

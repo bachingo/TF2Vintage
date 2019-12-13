@@ -175,11 +175,11 @@ CTFNavArea *CTFBotSeekAndDestroy::ChooseGoalArea( CTFBot *actor )
 	{
 		int index = point->GetPointIndex();
 		if ( index < MAX_CONTROL_POINTS )
-		{	// this is somewhat what's happening, no idea what (TheNavMesh + 20 * index + 1536) is
-			const CUtlVector<CTFNavArea *> *cpAreas = TFNavMesh()->GetControlPointAreas( index );
-			if ( cpAreas && cpAreas->Count() > 0 )
+		{	// this is somewhat what's happening, no idea what (TheNavMesh + 20 * index + 1536) is, it's between m_sentryAreas & m_CPAreas
+			const CUtlVector<CTFNavArea *> &cpAreas = TFNavMesh()->GetControlPointAreas( index );
+			if ( cpAreas.Count() > 0 )
 			{
-				CTFNavArea *area = cpAreas->Random();
+				CTFNavArea *area = cpAreas.Random();
 				areas.AddToHead( area );
 			}
 		}

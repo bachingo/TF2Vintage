@@ -181,8 +181,8 @@ bool CTFBotSpyInfiltrate::FindHidingSpot( CTFBot *actor )
 	if ( actor->GetAliveDuration() < 5.0f && TFGameRules()->InSetup() )
 		return false;
 
-	const CUtlVector<CTFNavArea *> *exits = TFNavMesh()->GetSpawnRoomExitsForTeam( GetEnemyTeam( actor ) );
-	if ( exits == nullptr || exits->IsEmpty() )
+	const CUtlVector<CTFNavArea *> &exits = TFNavMesh()->GetSpawnRoomExitsForTeam( GetEnemyTeam( actor ) );
+	if ( exits.IsEmpty() )
 	{
 		if ( tf_bot_debug_spy.GetBool() )
 			DevMsg( "%3.2f: No enemy spawn room exit areas found\n", gpGlobals->curtime );
@@ -191,10 +191,10 @@ bool CTFBotSpyInfiltrate::FindHidingSpot( CTFBot *actor )
 	}
 
 	CUtlVector<CNavArea *> surrounding;
-	FOR_EACH_VEC( *exits, i )
+	FOR_EACH_VEC( exits, i )
 	{
 		CUtlVector<CNavArea *> temp;
-		CollectSurroundingAreas( &temp, ( *exits )[i], 2500.0f );
+		CollectSurroundingAreas( &temp, exits[i], 2500.0f );
 
 		surrounding.AddVectorToTail( temp );
 	}
@@ -206,9 +206,9 @@ bool CTFBotSpyInfiltrate::FindHidingSpot( CTFBot *actor )
 			continue;
 
 		bool visible = false;
-		FOR_EACH_VEC( *exits, j )
+		FOR_EACH_VEC( exits, j )
 		{
-			if ( surrounding[i]->IsPotentiallyVisible( ( *exits )[j] ) )
+			if ( surrounding[i]->IsPotentiallyVisible( exits[j] ) )
 			{
 				visible = true;
 				break;
@@ -241,7 +241,7 @@ bool CTFBotSpyInfiltrate::FindHidingSpot( CTFBot *actor )
 						"just heading to the enemy spawn and hoping...\n", gpGlobals->curtime );
 			}
 
-			m_HidingArea = exits->Random();
+			m_HidingArea = exits.Random();
 
 			return false;
 		}

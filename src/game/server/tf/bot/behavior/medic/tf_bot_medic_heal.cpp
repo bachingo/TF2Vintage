@@ -400,7 +400,7 @@ ActionResult<CTFBot> CTFBotMedicHeal::Update( CTFBot *me, float interval )
 		bool useUber = false;
 		if ( IsReadyToDeployUber( medigun ) && CanDeployUber( me, medigun ) )
 		{
-			/*if ( medigun->GetMedigunType() == MEDIGUN_RESIST )
+			if ( medigun->GetMedigunType() == TF_MEDIGUN_VACCINATOR )
 			{
 				if ( me->GetTimeSinceLastInjury( GetEnemyTeam( me ) ) < 1.0f )
 				{
@@ -412,7 +412,7 @@ ActionResult<CTFBot> CTFBotMedicHeal::Update( CTFBot *me, float interval )
 					useUber = true;
 				}
 			}
-			else*/
+			else
 			{
 				const float healthyRatio = 0.5f;
 				useUber = ( ( (float)m_hPatient->GetHealth() / (float)m_hPatient->GetMaxHealth() ) < healthyRatio );
@@ -541,19 +541,19 @@ EventDesiredResult<CTFBot> CTFBotMedicHeal::OnStuck( CTFBot *me )
 
 EventDesiredResult<CTFBot> CTFBotMedicHeal::OnActorEmoted( CTFBot *me, CBaseCombatCharacter *who, int concept )
 {
-	CTFPlayer *player = ToTFPlayer( who );
-	if ( !player )
+	CTFPlayer *pPlayer = ToTFPlayer( who );
+	if ( pPlayer == nullptr )
 		return Action<CTFBot>::TryContinue();
 
 	if ( concept == MP_CONCEPT_PLAYER_GO ||
 		 concept == MP_CONCEPT_PLAYER_ACTIVATECHARGE )
 	{
-		CTFPlayer *patient = m_hPatient;
-		if ( patient && player && ENTINDEX( player ) == ENTINDEX( patient ) )
+		CTFPlayer *pPatient = m_hPatient;
+		if ( pPatient && pPlayer && ENTINDEX( pPlayer ) == ENTINDEX( pPatient ) )
 		{
-			CWeaponMedigun *medigun = dynamic_cast<CWeaponMedigun *>( me->m_Shared.GetActiveTFWeapon() );
+			CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( me->m_Shared.GetActiveTFWeapon() );
 
-			if ( IsReadyToDeployUber( medigun ) )
+			if ( IsReadyToDeployUber( pMedigun ) )
 				me->PressAltFireButton();
 		}
 	}

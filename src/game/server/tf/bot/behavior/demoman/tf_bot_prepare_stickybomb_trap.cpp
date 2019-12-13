@@ -232,11 +232,11 @@ bool CTFBotPrepareStickybombTrap::IsPossible( CTFBot *actor )
 
 void CTFBotPrepareStickybombTrap::InitBombTargetAreas( CTFBot *actor )
 {
-	CUtlVector<CTFNavArea *> *invasionAreas = m_LastKnownArea->GetInvasionAreasForTeam( actor->GetTeamNumber() );
+	const CUtlVector<CTFNavArea *> &invasionAreas = m_LastKnownArea->GetInvasionAreasForTeam( actor->GetTeamNumber() );
 
 	/* intentional array copy */
 	CUtlVector<CTFNavArea *> areas;
-	areas.CopyArray( invasionAreas->Base(), invasionAreas->Count() );
+	areas.CopyArray( invasionAreas.Base(), invasionAreas.Count() );
 	areas.Shuffle();
 
 	m_BombTargetAreas.RemoveAll();

@@ -63,8 +63,8 @@ public:
 	virtual void OnServerActivate() override;
 	virtual void OnRoundRestart() override;
 
-	virtual void Save( CUtlBuffer& fileBuffer, unsigned int version ) const override;
-	virtual NavErrorType Load( CUtlBuffer& fileBuffer, unsigned int version, unsigned int subVersion ) override;
+	virtual void Save( CUtlBuffer &fileBuffer, unsigned int version ) const override;
+	virtual NavErrorType Load( CUtlBuffer &fileBuffer, unsigned int version, unsigned int subVersion ) override;
 
 	virtual void UpdateBlocked( bool force = false, int teamID = TEAM_ANY ) override;
 	virtual bool IsBlocked( int teamID, bool ignoreNavBlockers = false ) const override;
@@ -73,15 +73,23 @@ public:
 
 	virtual void CustomAnalysis( bool isIncremental = false ) override;
 
-	virtual bool IsPotentiallyVisibleToTeam( int team ) const override;
+	virtual bool IsPotentiallyVisibleToTeam( int iTeamNum ) const override
+	{
+		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		return !m_PVNPCs[ iTeamNum ].IsEmpty();
+	}
 
-	void CollectNextIncursionAreas( int teamNum, CUtlVector<CTFNavArea *> *areas );
-	void CollectPriorIncursionAreas( int teamNum, CUtlVector<CTFNavArea *> *areas );
-	CTFNavArea *GetNextIncursionArea( int teamNum ) const;
+	void CollectNextIncursionAreas( int iTeamNum, CUtlVector<CTFNavArea *> *areas );
+	void CollectPriorIncursionAreas( int iTeamNum, CUtlVector<CTFNavArea *> *areas );
+	CTFNavArea *GetNextIncursionArea( int iTeamNum ) const;
 
 	void ComputeInvasionAreaVectors();
-	bool IsAwayFromInvasionAreas( int teamNum, float radius ) const;
-	CUtlVector<CTFNavArea *> *GetInvasionAreasForTeam( int teamNum );
+	bool IsAwayFromInvasionAreas( int iTeamNum, float radius ) const;
+	const CUtlVector<CTFNavArea *> &GetInvasionAreasForTeam( int iTeamNum ) const
+	{
+		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		return m_InvasionAreas[ iTeamNum ];
+	}
 
 	void AddPotentiallyVisibleActor( CBaseCombatCharacter *actor );
 
@@ -89,23 +97,64 @@ public:
 	bool IsInCombat() const;
 	void OnCombat();
 
-	static void ResetTFMarker();
-	static void MakeNewTFMarker();
-	bool IsTFMarked() const;
-	void TFMark();
+	static void ResetTFMarker()
+	{
+		m_masterTFMark = 1;
+	}
+	static void MakeNewTFMarker()
+	{
+		++m_masterTFMark;
+	}
+	bool IsTFMarked() const
+	{
+		return m_TFMarker == m_masterTFMark;
+	}
+	void TFMark()
+	{
+		m_TFMarker = m_masterTFMark;
+	}
 
-	bool IsValidForWanderingPopulation() const;
+	inline bool IsValidForWanderingPopulation() const
+	{
+		return ( m_nAttributes & ( BLOCKED | RESCUE_CLOSET | BLUE_SPAWN_ROOM | RED_SPAWN_ROOM | NO_SPAWNING ) ) == 0;
+	}
 
-	void SetIncursionDistance( int teamnum, float distance );
-	float GetIncursionDistance( int teamnum ) const;
+	void SetIncursionDistance( int iTeamNum, float distance )
+	{
+		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		m_aIncursionDistances[ iTeamNum ] = distance;
+	}
+	float GetIncursionDistance( int iTeamNum ) const
+	{
+		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		return m_aIncursionDistances[ iTeamNum ];
+	}
 
-	void AddTFAttributes( int bits );
-	int GetTFAttributes( void ) const;
-	bool HasTFAttributes( int bits ) const;
-	void RemoveTFAttributes( int bits );
+	inline void CTFNavArea::AddTFAttributes( int bits )
+	{
+		m_nAttributes |= bits;
+	}
+	inline int CTFNavArea::GetTFAttributes( void ) const
+	{
+		return m_nAttributes;
+	}
+	inline bool CTFNavArea::HasTFAttributes( int bits ) const
+	{
+		return ( m_nAttributes & bits ) != 0;
+	}
+	inline void CTFNavArea::RemoveTFAttributes( int bits )
+	{
+		m_nAttributes &= ~bits;
+	}
 
-	void SetBombTargetDistance( float distance );
-	float GetBombTargetDistance( void ) const;
+	void CTFNavArea::SetBombTargetDistance( float distance )
+	{
+		m_flBombTargetDistance = distance;
+	}
+	float CTFNavArea::GetBombTargetDistance( void ) const
+	{
+		return m_flBombTargetDistance;
+	}
 
 	static int m_masterTFMark;
 
@@ -128,90 +177,5 @@ private:
 
 	int m_TFMarker;
 };
-
-inline CUtlVector<CTFNavArea *> *CTFNavArea::GetInvasionAreasForTeam( int teamNum )
-{
-	Assert( teamNum > -1 && teamNum < 4 );
-	return &m_InvasionAreas[teamNum];
-}
-
-inline void CTFNavArea::SetIncursionDistance( int teamNum, float distance )
-{
-	Assert( teamNum > -1 && teamNum < 4 );
-	if ( teamNum < 4 )
-		m_aIncursionDistances[teamNum] = distance;
-}
-
-inline float CTFNavArea::GetIncursionDistance( int teamNum ) const
-{
-	Assert( teamNum > -1 && teamNum < 4 );
-	if ( teamNum < 4 )
-		return m_aIncursionDistances[teamNum];
-
-	return -1.0f;
-}
-
-inline bool CTFNavArea::IsPotentiallyVisibleToTeam( int team ) const
-{
-	if ( team > -1 && team < 4 )
-		return m_PVNPCs[team].Count() > 0;
-
-	return false;
-}
-
-inline void CTFNavArea::ResetTFMarker()
-{
-	m_masterTFMark = 1;
-}
-
-inline void CTFNavArea::MakeNewTFMarker()
-{
-	++m_masterTFMark;
-}
-
-inline bool CTFNavArea::IsTFMarked() const
-{
-	return m_TFMarker == m_masterTFMark;
-}
-
-inline void CTFNavArea::TFMark()
-{
-	m_TFMarker = m_masterTFMark;
-}
-
-inline bool CTFNavArea::IsValidForWanderingPopulation() const
-{
-	return ( m_nAttributes & ( BLOCKED|RESCUE_CLOSET|BLUE_SPAWN_ROOM|RED_SPAWN_ROOM|NO_SPAWNING ) ) == 0;
-}
-
-inline void CTFNavArea::AddTFAttributes( int bits )
-{
-	m_nAttributes |= bits;
-}
-
-inline int CTFNavArea::GetTFAttributes( void ) const
-{
-	return m_nAttributes;
-}
-
-inline bool CTFNavArea::HasTFAttributes( int bits ) const
-{
-	return ( m_nAttributes & bits ) != 0;
-}
-
-inline void CTFNavArea::RemoveTFAttributes( int bits )
-{
-	m_nAttributes &= ~bits;
-}
-
-inline void CTFNavArea::SetBombTargetDistance( float distance )
-{
-	m_flBombTargetDistance = distance;
-}
-
-inline float CTFNavArea::GetBombTargetDistance( void ) const
-{
-	return m_flBombTargetDistance;
-}
 
 #endif

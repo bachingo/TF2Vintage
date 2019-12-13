@@ -71,8 +71,8 @@ ActionResult<CTFBot> CTFBotCapturePoint::Update( CTFBot *me, float dt )
 
 	if ( me->IsCapturingPoint() )
 	{
-		CUtlVector<CTFNavArea *> *cpAreas = TFNavMesh()->GetControlPointAreas( pPoint->GetPointIndex() );
-		if( !cpAreas )
+		const CUtlVector<CTFNavArea *> &cpAreas = TFNavMesh()->GetControlPointAreas( pPoint->GetPointIndex() );
+		if( cpAreas.IsEmpty() )
 			return Action<CTFBot>::Continue();
 
 		if ( !m_recomputePathTimer.IsElapsed() )
@@ -84,16 +84,16 @@ ActionResult<CTFBot> CTFBotCapturePoint::Update( CTFBot *me, float dt )
 		m_recomputePathTimer.Start( RandomFloat( 0.5f, 1.0f ) );
 
 		float flTotalArea = 0.0f;
-		for ( int i=0; i<cpAreas->Count(); ++i )
+		for ( int i=0; i<cpAreas.Count(); ++i )
 		{
-			CNavArea *area = ( *cpAreas )[i];
+			CNavArea *area = cpAreas[i];
 			flTotalArea += area->GetSizeX() * area->GetSizeY();
 		}
 
 		float flRand = RandomFloat( 0, flTotalArea - 1.0f );
-		for ( int i=0; i<cpAreas->Count(); ++i )
+		for ( int i=0; i<cpAreas.Count(); ++i )
 		{
-			CNavArea *area = ( *cpAreas )[i];
+			CNavArea *area = cpAreas[i];
 			if ( flRand - ( area->GetSizeX() * area->GetSizeY() ) <= 0.0f )
 			{
 				CTFBotPathCost cost( me );

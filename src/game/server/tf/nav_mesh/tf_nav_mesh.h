@@ -37,11 +37,33 @@ public:
 	void CollectSpawnRoomThresholdAreas( CUtlVector<CTFNavArea *> *areas, int teamNum ) const;
 	bool IsSentryGunHere( CTFNavArea *area ) const;
 
-	CUtlVector<CTFNavArea *> *GetControlPointAreas( int iPointIndex );
-	CTFNavArea *GetMainControlPointArea( int iPointIndex );
+	const CUtlVector<CTFNavArea *> &GetControlPointAreas( int iPointIndex ) const
+	{
+		Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
+		return m_CPAreas[iPointIndex];
+	}
+	CTFNavArea *GetMainControlPointArea( int iPointIndex )
+	{
+		Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
+		return m_CPArea[iPointIndex];
+	}
 
-	CUtlVector<CTFNavArea *> *GetSpawnRoomAreasForTeam( int iTeamNum );
-	CUtlVector<CTFNavArea *> *GetSpawnRoomExitsForTeam( int iTeamNum );
+	const CUtlVector<CTFNavArea *> &GetSpawnRoomAreasForTeam( int iTeamNum ) const
+	{
+		Assert( iTeamNum == TF_TEAM_RED || iTeamNum == TF_TEAM_BLUE );
+		if (iTeamNum == TF_TEAM_RED)
+			return m_spawnAreasTeam1;
+
+		return m_spawnAreasTeam2;
+	}
+	const CUtlVector<CTFNavArea *> &GetSpawnRoomExitsForTeam( int iTeamNum ) const
+	{
+		Assert( iTeamNum == TF_TEAM_RED || iTeamNum == TF_TEAM_BLUE );
+		if (iTeamNum == TF_TEAM_RED)
+			return m_spawnExitsTeam1;
+		
+		return m_spawnExitsTeam2;
+	}
 
 private:
 	void CollectAndMarkSpawnRoomExits( CTFNavArea *area, CUtlVector<CTFNavArea *> *areas );
@@ -84,46 +106,6 @@ private:
 
 	int m_lastNPCCount;
 };
-
-inline CUtlVector<CTFNavArea *> *CTFNavMesh::GetControlPointAreas( int iPointIndex )
-{
-	Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
-	if( iPointIndex <= 7 )
-		return &m_CPAreas[iPointIndex];
-
-	return NULL;
-}
-
-inline CTFNavArea *CTFNavMesh::GetMainControlPointArea( int iPointIndex )
-{
-	Assert( iPointIndex >= 0 && iPointIndex < MAX_CONTROL_POINTS );
-	if ( iPointIndex <= 7 )
-		return m_CPArea[iPointIndex];
-
-	return NULL;
-}
-
-inline CUtlVector<CTFNavArea *> *CTFNavMesh::GetSpawnRoomAreasForTeam( int iTeamNum )
-{
-	Assert( iTeamNum == TF_TEAM_RED || iTeamNum == TF_TEAM_BLUE );
-	if (iTeamNum == TF_TEAM_RED)
-		return &m_spawnAreasTeam1;
-	else if (iTeamNum == TF_TEAM_BLUE)
-		return &m_spawnAreasTeam2;
-
-	return NULL;
-}
-
-inline CUtlVector<CTFNavArea *> *CTFNavMesh::GetSpawnRoomExitsForTeam( int iTeamNum )
-{
-	Assert( iTeamNum == TF_TEAM_RED || iTeamNum == TF_TEAM_BLUE );
-	if (iTeamNum == TF_TEAM_RED)
-		return &m_spawnExitsTeam1;
-	else if (iTeamNum == TF_TEAM_BLUE)
-		return &m_spawnExitsTeam2;
-
-	return NULL;
-}
 
 inline CTFNavMesh *TFNavMesh( void )
 {
