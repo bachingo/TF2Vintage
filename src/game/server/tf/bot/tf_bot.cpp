@@ -938,7 +938,7 @@ CCaptureFlag *CTFBot::GetFlagToFetch( void )
 
 		if ( pFlag->GetGameType() >= TF_FLAGTYPE_CTF && pFlag->GetGameType() <= TF_FLAGTYPE_INVADE )
 		{
-			if ( pFlag->GetTeamNumber() != GetEnemyTeam( this ) )
+			if ( pFlag->GetTeamNumber() == GetEnemyTeam( this ) )
 				flags.AddToTail( pFlag );
 
 			nNumStolen += pFlag->IsStolen();
