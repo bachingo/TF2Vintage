@@ -41,3 +41,22 @@ void CTFSyringeGun::Precache()
 	PrecacheTeamParticles("nailtrails_medic_%s_crit");
 #endif
 }
+
+float CTFSyringeGun::GetSpeedMod( void ) const
+{
+	if ( m_bLowered )
+		return 1.0f;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return 1.0f;
+
+	float flSyringeGunSpeedBoost = 1.0f;
+	CALL_ATTRIB_HOOK_INT( flSyringeGunSpeedBoost, mult_player_movespeed_resource_level );
+	if ( ( flSyringeGunSpeedBoost != 1.0f ) && ( pOwner->MedicGetChargeLevel() != 0 ) )
+	{
+		return ( ( pOwner->MedicGetChargeLevel() / 100.0f ) * flSyringeGunSpeedBoost );
+	}
+	
+	return 1.0f;
+}
