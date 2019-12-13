@@ -3796,18 +3796,24 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 			{
 				switch ( m_iActiveBuffType )
 				{
-				case TF_BUFF_OFFENSE:
-					pPlayer->m_Shared.AddCond( TF_COND_OFFENSEBUFF, 1.2f );
-					break;
-				case TF_BUFF_DEFENSE:
-					pPlayer->m_Shared.AddCond( TF_COND_DEFENSEBUFF, 1.2f );
-					break;
-				case TF_BUFF_REGENONDAMAGE:
-					pPlayer->m_Shared.AddCond( TF_COND_REGENONDAMAGEBUFF, 1.2f );
-					break;
-				case TF_COND_RADIUSHEAL:
-					pPlayer->m_Shared.AddCond( TF_COND_RADIUSHEAL, 1.0f );
-					break;
+					case TF_BUFF_OFFENSE:
+						pPlayer->m_Shared.AddCond( TF_COND_OFFENSEBUFF, 1.2f );
+						break;
+					case TF_BUFF_DEFENSE:
+						pPlayer->m_Shared.AddCond( TF_COND_DEFENSEBUFF, 1.2f );
+						break;
+					case TF_BUFF_REGENONDAMAGE:
+						pPlayer->m_Shared.AddCond( TF_COND_REGENONDAMAGEBUFF, 1.2f );
+						break;
+					case TF_COND_RADIUSHEAL:
+					{
+						if (!pPlayer->m_Shared.InCond( TF_COND_RADIUSHEAL ) )
+						{
+							pPlayer->m_Shared.AddCond(TF_COND_RADIUSHEAL, TF_MEDIC_REGEN_TIME);
+							pPlayer->AOEHeal(pPlayer, pOuter);
+						}
+						break;
+					}
 				}
 
 				// Achievements
@@ -3822,50 +3828,10 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 						gameeventmanager->FireEvent( event );
 					}
 				}
-				else
-				AOEHeal( pPlayer, pOuter );
 			}
 		}
 	}
 #endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Health regen for Area of Effect items.
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer )
-{
-#ifdef GAME_DLL
-	if ( pPatient->m_Shared.InCond( TF_COND_RADIUSHEAL ) && ( pPatient != pHealer ) )
-	{
-		int iHealthRegenAOE = 0;
-		int iHealthRestored = 0;
-		// More time since combat equals faster healing. Healing increases up to 300%.
-		if ( pPatient->IsAlive() )
-		{
-			int iAoEHealthBase = 26; 
-			float flTimeSinceDamageAOE = gpGlobals->curtime - pPatient->m_flLastDamageTime;
-			float flScaleAoE = RemapValClamped( flTimeSinceDamageAOE, 5, 10, iAoEHealthBase, (iAoEHealthBase * 3 ) );
-			iHealthRegenAOE = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleAoE );
-			iHealthRestored = pPatient->TakeHealth( iHealthRegenAOE, DMG_GENERIC );
-		}
-		if ( iHealthRestored > 0 )
-		{
-			CTF_GameStats.Event_PlayerHealedOther( pHealer, iHealthRegenAOE );
-			IGameEvent *event = gameeventmanager->CreateEvent( "player_healed" );
-			if ( event )
-			{
-				event->SetInt( "patient", pPatient->GetUserID() );
-				event->SetInt( "healer", pHealer->GetUserID() );
-				event->SetInt( "amount", iHealthRestored );
-			}
-		}
-		
-		AOEHeal(pPatient, pHealer);
-	}
-	else
-#endif
-		return;	// Not healing anymore.
 }
 
 //-----------------------------------------------------------------------------

@@ -729,6 +729,44 @@ void CTFPlayer::MedicRegenThink( void )
 		SetContextThink( &CTFPlayer::MedicRegenThink, gpGlobals->curtime + TF_MEDIC_REGEN_TIME, "MedicRegenThink" );
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Health regen for Area of Effect content.
+//-----------------------------------------------------------------------------
+void CTFPlayer::AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer )
+{
+	// Must be alive, must be buffed, and cannot be the same person executing the heal.
+	if ( pPatient->IsAlive() && pPatient->m_Shared.InCond( TF_COND_RADIUSHEAL ) && ( pPatient != pHealer ) )
+	{
+		int iHealthRegenAOE = 0;
+		int iHealthRestored = 0;
+		
+		// More time since combat equals faster healing. Healing increases up to 300%.
+		int iAoEHealthBase = 26; 
+		float flTimeSinceDamageAOE = gpGlobals->curtime - pPatient->m_flLastDamageTime;
+		float flScaleAoE = RemapValClamped( flTimeSinceDamageAOE, 5, 10, iAoEHealthBase, (iAoEHealthBase * 3 ) );
+		iHealthRegenAOE = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleAoE );
+		
+		// Check how much health we give.
+		iHealthRestored = pPatient->TakeHealth( iHealthRegenAOE, DMG_GENERIC );
+		if ( iHealthRestored > 0 )
+		{
+			CTF_GameStats.Event_PlayerHealedOther( pHealer, iHealthRestored );
+			IGameEvent *event = gameeventmanager->CreateEvent( "player_healed" );
+			if ( event )
+			{
+				event->SetInt( "patient", pPatient->GetUserID() );
+				event->SetInt( "healer", pHealer->GetUserID() );
+				event->SetInt( "amount", iHealthRestored );
+			}
+		}
+		
+	}
+	else
+		return;	// Not healing.
+}
+
+
 CTFPlayer::~CTFPlayer()
 {
 	DestroyRagdoll();
