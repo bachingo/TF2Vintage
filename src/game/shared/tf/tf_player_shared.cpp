@@ -841,6 +841,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 	case TF_COND_OFFENSEBUFF:
 	case TF_COND_DEFENSEBUFF:
 	case TF_COND_REGENONDAMAGEBUFF:
+	case TF_COND_RADIUSHEAL:
 		OnAddBuff();
 		break;
 
@@ -957,6 +958,7 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 	case TF_COND_OFFENSEBUFF:
 	case TF_COND_DEFENSEBUFF:
 	case TF_COND_REGENONDAMAGEBUFF:
+	case TF_COND_RADIUSHEAL:
 		OnRemoveBuff();
 		break;
 
@@ -3718,11 +3720,18 @@ void CTFPlayerShared::SetRageMeter( float flRagePercent, int iBuffType )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::ActivateRageBuff( CBaseEntity *pEntity, int iBuffType )
 {
-	if ( m_flEffectBarProgress < 100.0f )
+	
+	if ( m_flEffectBarProgress < 100.0f && ( iBuffType != TF_COND_RADIUSHEAL ) )
 		return;
 
 	m_flNextRageCheckTime = gpGlobals->curtime + 1.0f;
-	float flBuffDuration = tf_soldier_buff_pulses.GetFloat();
+	
+	float flBuffDuration;
+	if ( iBuffType != TF_COND_RADIUSHEAL )
+		flBuffDuration = tf_soldier_buff_pulses.GetFloat();
+	else
+		flBuffDuration = 4.0f; // Taunt duration
+
 	float flModBuffDuration = 0.0f;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_pOuter, flModBuffDuration, mod_buff_duration);
 
@@ -3753,6 +3762,7 @@ void CTFPlayerShared::ActivateRageBuff( CBaseEntity *pEntity, int iBuffType )
 
 	PulseRageBuff();
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Give rage buffs to nearby players
@@ -3794,6 +3804,9 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 					break;
 				case TF_BUFF_REGENONDAMAGE:
 					pPlayer->m_Shared.AddCond( TF_COND_REGENONDAMAGEBUFF, 1.2f );
+					break;
+				case TF_COND_RADIUSHEAL:
+					pPlayer->m_Shared.AddCond( TF_COND_RADIUSHEAL, 1.0f );
 					break;
 				}
 

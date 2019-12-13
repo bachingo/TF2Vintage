@@ -644,7 +644,7 @@ void CTFPlayer::TFPlayerThink()
 		m_bJumpEffect = true;
 	}
 
-	if ( !IsPlayerClass( TF_CLASS_MEDIC ) && gpGlobals->curtime > m_flNextHealthRegen )
+	if ( ( !IsPlayerClass( TF_CLASS_MEDIC ) && gpGlobals->curtime > m_flNextHealthRegen ) || ( m_Shared.InCond( TF_COND_RADIUSHEAL ) ) )
 	{
 		int iHealthDrain = 0;
 		CALL_ATTRIB_HOOK_INT( iHealthDrain, add_health_regen );
@@ -674,6 +674,19 @@ void CTFPlayer::MedicRegenThink( void )
 	int iHealthRegenLegacy = 0;
 	CALL_ATTRIB_HOOK_INT( iHealthRegenLegacy, add_health_regen_passive );
 	
+	// Area of Effect (AOE) heal, if we're being buffed.
+	int iHealthRegenAOE = 0;
+	if ( m_Shared.InCond( TF_COND_RADIUSHEAL ) )
+	{
+		// More time since combat equals faster healing.
+		if ( IsAlive() )
+		{
+			int iAoEHealthBase = 25; 
+			float flTimeSinceDamageAOE = gpGlobals->curtime - GetLastDamageTime();
+			float flScaleAoE = RemapValClamped( flTimeSinceDamageAOE, 5, 10, iAoEHealthBase, (iAoEHealthBase * 3 ) );
+			iHealthRegenAOE = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleAoE );
+		}
+	}
 	
 	// If we heal, use an algorithm similar to medic's to determine healing.
 	if ( iHealthDrain != 0 && iHealthDrain > 0 )
@@ -706,11 +719,11 @@ void CTFPlayer::MedicRegenThink( void )
 	}
 
 	// Throw the event for health regen.
-	if ( ( iHealthDrain != 0 && iHealthDrain > 0 ) || ( iHealthRegenLegacy != 0 && iHealthRegenLegacy > 0) )
+	if ( ( ( iHealthDrain != 0 && iHealthDrain > 0 ) || ( iHealthRegenLegacy != 0 && iHealthRegenLegacy > 0 ) ) || ( m_Shared.InCond( TF_COND_RADIUSHEAL ) ) )
 	{
 		if ( IsAlive() )
 		{
-			int iHealthRestored = TakeHealth( iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
+			int iHealthRestored = TakeHealth( iHealthDrain + iHealthRegenLegacy + iHealthRegenAOE, DMG_GENERIC );
 			if ( iHealthRestored )
 			{
 				IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
@@ -8991,6 +9004,13 @@ void CTFPlayer::Taunt( void )
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 		if ( pWeapon )
 		{
+			// Check if we do an AOE Taunt.
+			int nEnablesAOEHeal = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nEnablesAOEHeal, enables_aoe_heal );
+			if ( nEnablesAOEHeal != 0 )
+				m_Shared.ActivateRageBuff( this, TF_COND_RADIUSHEAL );
+		
+			// Lunchbox taunts.
 			if ( pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
 			{
 				m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
