@@ -57,6 +57,7 @@
 	"Legacy Rocket Jumper"							"1"
 	"Gloves of Running Urgently"					"1"
 	"Legacy Stickybomb Jumper"						"1"
+	"The Amputator"									"1"
 	"The Crusader's Crossbow"						"1"
 	"The Ullapool Caber"							"1"
 	"The Loch-n-Load"								"1"

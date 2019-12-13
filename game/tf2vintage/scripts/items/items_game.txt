@@ -1080,6 +1080,44 @@
 				}
 			}
 		}
+		"weapon_amputator"
+		{
+			"prefab"		"weapon_bonesaw"
+			"item_logname"		"amputator"
+			"item_iconname"		"amputator"
+			"item_name"		"#TF_Amputator"
+			"propername"		"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_amputator/c_amputator"
+			"model_player"		"models/workshop/weapons/c_models/c_amputator/c_amputator.mdl"
+			"attributes"
+			{
+				"provide on active"
+				{
+					"attribute_class"	"provide_on_active"
+					"value" "1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.80"
+				}
+				"enables aoe heal"
+				{
+					"attribute_class"	"enables_aoe_heal"
+					"value"	"1"
+				}
+				"health regen"
+				{
+					"attribute_class"	"add_health_regen_passive"
+					"value"	"3"
+				}
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value" "1"
+				}
+			}
+		}
 		"weapon_shotgun"
 		{
 			"item_class"	"tf_weapon_shotgun"
@@ -4195,6 +4233,13 @@
 			"year"			"2010"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy.mdl"
+		}
+		"304"
+		{
+			"name"			"The Amputator"
+			"prefab"		"weapon_amputator"
+			"year"				"2010"
+			"particle_suffix"	"amputator"
 		}
 		"305"
 		{
