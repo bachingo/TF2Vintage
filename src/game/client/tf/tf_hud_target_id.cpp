@@ -158,6 +158,9 @@ bool CTargetID::ShouldDraw( void )
 	{
 		m_flLastChangeTime = gpGlobals->curtime;
 	}
+	
+	int nSeeEnemyHealth = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pLocalTFPlayer, nSeeEnemyHealth, see_enemy_health );
 
 	bool bReturn = false;
 	if ( m_iTargetEntIndex )
@@ -177,7 +180,7 @@ bool CTargetID::ShouldDraw( void )
 				}
 
 				bReturn = (pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR || 
-					pLocalTFPlayer->InSameTeam(pEnt) || 
+					( pLocalTFPlayer->InSameTeam(pEnt) || nSeeEnemyHealth ) || 
 					(bDisguisedEnemy && pPlayer->m_Shared.GetDisguiseTeam() == pLocalTFPlayer->GetTeamNumber()) || 
 					(pLocalTFPlayer->IsPlayerClass( TF_CLASS_SPY ) && !pPlayer->m_Shared.InCond( TF_COND_STEALTHED )) );
 			}
