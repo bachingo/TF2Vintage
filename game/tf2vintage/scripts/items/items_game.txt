@@ -4739,6 +4739,51 @@
 				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
 			}
 		}
+		"414"
+		{
+			"name"	"The Liberty Launcher"
+			"prefab"		"weapon_rocketlauncher"
+			"year"				"2011"
+			"item_name"	"#TF_LibertyLauncher"
+			"item_logname"	"liberty_launcher"
+			"item_iconname"	"liberty_launcher"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_liberty_launcher/c_liberty_launcher"
+			"model_player"	"models/workshop/weapons/c_models/c_liberty_launcher/c_liberty_launcher.mdl"
+			"attributes"
+			{
+				"Projectile speed increased"
+				{
+					"attribute_class"	"mult_projectile_speed"
+					"value"	"1.4"
+				}
+				"clip size bonus"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "1.25"
+				}
+				"switch from wep deploy time decreased"
+				{
+					"attribute_class"	"mult_switch_from_wep_deploy_time"
+					"value"	"0.75"
+				}
+				"rocket jump damage reduction"
+				{
+					"attribute_class"	"rocket_jump_dmg_reduction"
+					"value" "0.75"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value" "0.75"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Liberty_Launcher.Single"
+				"sound_burst"	"Weapon_Liberty_Launcher.SingleCrit"
+			}
+		}
 		"415"
 		{
 			"name"	"The Reserve Shooter"
