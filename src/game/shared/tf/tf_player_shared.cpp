@@ -535,7 +535,9 @@ bool CTFPlayerShared::IsMiniCritBoosted( void )
 	if (InCond( TF_COND_OFFENSEBUFF ) ||
 		InCond( TF_COND_ENERGY_BUFF ) ||
 		InCond( TF_COND_SODAPOPPER_HYPE ) ||
-		InCond( TF_COND_MINICRITBOOSTED_ON_KILL ))
+		InCond( TF_COND_MINICRITBOOSTED_ON_KILL ) ||
+		InCond( TF_COND_MINICRITBOOSTED ) ||
+		InCond( TF_COND_BERSERK ) )
 		return true;
 	return false;
 }
