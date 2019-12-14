@@ -119,6 +119,8 @@ ConVar tf2v_minicrits_on_deflect( "tf2v_minicrits_on_deflect", "1", FCVAR_NOTIFY
 ConVar tf2v_allow_objective_glow_ctf( "tf2v_allow_objective_glow_ctf", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable glow for CTF flags." );
 ConVar tf2v_allow_objective_glow_pl( "tf2v_allow_objective_glow_pl", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable glow for Payload carts." );
 
+ConVar tf2v_console_grenadelauncher("tf2v_console_grenadelauncher", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the grenade launcher magazine and damage to reflect console values.", true, 0, true, 1 );
+
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", ( IsX360() ? "15" : "30" ), FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );

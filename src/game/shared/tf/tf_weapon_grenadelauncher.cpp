@@ -6,6 +6,7 @@
 #include "cbase.h"
 #include "tf_weapon_grenadelauncher.h"
 #include "tf_fx_shared.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -45,6 +46,8 @@ END_DATADESC()
 
 
 CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Legacy, tf_weapon_grenadelauncher_legacy )
+
+extern ConVar tf2v_console_grenadelauncher;
 
 //=============================================================================
 //
@@ -102,6 +105,32 @@ int CTFGrenadeLauncher::GetMaxClip1( void ) const
 	return TF_GRENADE_LAUNCHER_XBOX_CLIP;
 #endif
 
+	// BaseClass::GetMaxClip1() but with the base set to TF_GRENADE_LAUNCHER_XBOX_CLIP.
+	// We need to do it this way in order to consider attributes.
+	if ( tf2v_console_grenadelauncher.GetBool() )
+	{
+		
+		int iMaxClip = TF_GRENADE_LAUNCHER_XBOX_CLIP;
+		if ( iMaxClip < 0 )
+			return iMaxClip;
+
+		CALL_ATTRIB_HOOK_FLOAT( iMaxClip, mult_clipsize );
+		if ( iMaxClip < 0 )
+			return iMaxClip;
+
+		CTFPlayer *pOwner = GetTFPlayerOwner();
+		if ( pOwner == NULL )
+			return iMaxClip;
+
+		int nClipSizePerKill = 0;
+		CALL_ATTRIB_HOOK_INT( nClipSizePerKill, clipsize_increase_on_kill );
+
+		iMaxClip += Min( nClipSizePerKill, pOwner->m_Shared.GetDecapitationCount() );
+
+		return iMaxClip;
+
+	}
+
 	return BaseClass::GetMaxClip1();
 }
 
@@ -114,6 +143,10 @@ int CTFGrenadeLauncher::GetDefaultClip1( void ) const
 	return TF_GRENADE_LAUNCHER_XBOX_CLIP;
 #endif
 
+	// BaseClass::GetDefaultClip1() is just checking GetMaxClip1(), nothing fancy to do here.
+	if ( tf2v_console_grenadelauncher.GetBool() )
+		return GetMaxClip1();
+	 
 	return BaseClass::GetDefaultClip1();
 }
 

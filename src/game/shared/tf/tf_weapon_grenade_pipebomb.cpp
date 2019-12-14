@@ -46,6 +46,7 @@
 
 extern ConVar tf_grenadelauncher_max_chargetime;
 extern ConVar tf2v_minicrits_on_deflect;
+extern ConVar tf2v_console_grenadelauncher;
 
 ConVar tf_grenadelauncher_chargescale( "tf_grenadelauncher_chargescale", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
@@ -359,9 +360,18 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 			pGrenade->SetDamage( TF_WEAPON_GRENADE_XBOX_DAMAGE );
 		}
 #endif
+		// If we're using console rules, set grenades to console values. Don't do this for stickies/pipebombs.
+		if ( ( ( pGrenade->m_iType == TF_GL_MODE_REGULAR ) || ( pGrenade->m_iType == TF_GL_MODE_FIZZLE ) ) && tf2v_console_grenadelauncher.GetBool() )
+		{
+			pGrenade->SetDamage( TF_WEAPON_GRENADE_XBOX_DAMAGE * flDamageMult );
+			pGrenade->m_flFullDamage = TF_WEAPON_GRENADE_XBOX_DAMAGE;
+		}
+		else // Do this for everything else, or when using PC values.
+		{
+			pGrenade->SetDamage( pGrenade->GetDamage() * flDamageMult );
+			pGrenade->m_flFullDamage = pGrenade->GetDamage();
+		}
 
-		pGrenade->SetDamage( pGrenade->GetDamage() * flDamageMult );
-		pGrenade->m_flFullDamage = pGrenade->GetDamage();
 
 		if ( pGrenade->m_iType != TF_GL_MODE_REMOTE_DETONATE || pGrenade->m_iType != TF_GL_MODE_BETA_DETONATE )
 		{
