@@ -1111,11 +1111,6 @@
 					"attribute_class"	"add_health_regen_passive"
 					"value"	"3"
 				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
-				}
 			}
 		}
 		"weapon_shotgun"
@@ -4340,6 +4335,29 @@
 				}
 			}
 		}
+		"311"
+		{
+			"name"	"The Buffalo Steak Sandvich"
+			"prefab"	"weapon_sandvich"
+			"year"				"2010"
+			"item_name"	"#TF_BuffaloSteak"
+			"item_description"	"#TF_BuffaloSteak_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_buffalo_steak/c_buffalo_steak"
+			"model_player"	"models/workshop/weapons/c_models/c_buffalo_steak/c_buffalo_steak.mdl"
+			"attributes"
+			{
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"2"
+				}
+				"energy buff dmg taken multiplier"
+				{
+					"attribute_class"	"energy_buff_dmg_taken_multiplier"
+					"value"	"1.2"
+				}
+			}
+		}
 		"312"
 		{
 			"name"	"The Brass Beast"
@@ -4918,11 +4936,6 @@
 				{
 					"attribute_class"	"add_maxhealth"
 					"value" "-25"
-				}
-				"special taunt"
-				{
-					"attribute_class"	"special_taunt"
-					"value" "1"
 				}
 				"speed_boost_on_kill"
 				{

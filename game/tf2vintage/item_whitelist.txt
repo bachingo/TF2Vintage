@@ -62,6 +62,7 @@
 	"The Ullapool Caber"							"1"
 	"The Loch-n-Load"								"1"
 	"Warrior's Spirit"								"1"
+	"The Buffalo Steak Sandvich"					"1"
 	"The Brass Beast"								"1"
 	"The Boston Basher"								"1"
 	"The Back Scratcher"							"1"
