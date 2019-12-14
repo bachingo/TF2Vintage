@@ -4526,7 +4526,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	if ( m_Shared.InCond(TF_COND_URINE) || m_Shared.InCond(TF_COND_MARKEDFORDEATH) )
+	if ( m_Shared.InCond(TF_COND_URINE) || m_Shared.InCond(TF_COND_MARKEDFORDEATH) || m_Shared.InCond(TF_COND_MARKEDFORDEATH_SILENT) )
 	{
 		// Jarate or Marked for Death players take mini crits.
 		bitsDamage |= DMG_MINICRITICAL;
@@ -4573,7 +4573,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 		
 	}
-
 
 	// Handle on-hit effects.
 	// Don't apply on-hit effects if a building did it.
@@ -5480,6 +5479,13 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			flDamage *= flDamageAimMult;
 		}
 		
+		if ( m_Shared.InCond(TF_COND_ENERGY_BUFF ) )
+		{
+			float flEnergyBuffMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT( flEnergyBuffMult, energy_buff_dmg_taken_multiplier );
+			flDamage *= flEnergyBuffMult;
+		}
+		
 	}
 
 	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG )
@@ -5919,7 +5925,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			if ( pWeapon->GetWeaponID() == GetWeaponFromDamage( info ) )
 			{
 				// Apply on-kill effects.
-				float flCritOnKill = 0.0f, flHealthOnKill = 0.0f;
+				float flCritOnKill = 0.0f, flHealthOnKill = 0.0f, flMinicritOnKill = 0.0f;
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCritOnKill, add_onkill_critboost_time );
 				if ( flCritOnKill )
 				{
@@ -5941,6 +5947,11 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 							gameeventmanager->FireEvent( event );
 						}
 					}
+				}
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMinicritOnKill, add_onkill_minicritboost_time );
+				if ( flMinicritOnKill )
+				{
+					m_Shared.AddCond( TF_COND_MINICRITBOOSTED_ON_KILL, flMinicritOnKill );
 				}
 				float flAddChargeShieldKill = 0.0f;
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flAddChargeShieldKill, kill_refills_meter );
@@ -9341,10 +9352,15 @@ void CTFPlayer::DoTauntAttack( void )
 				if ( ( (nLunchboxAddsMaxHealth == 1) || (nLunchboxAddsMaxHealth == 7) ) && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ) )
 					m_Shared.AddCond( TF_COND_LUNCHBOX_HEALTH_BUFF, 30.0f );
 
-				if ( HealthFraction() <= 1.0f )
-				{
-					pLunch->ApplyBiteEffects( true );
+				if (nLunchboxAddsMaxHealth != 2 )
+				{	
+					if ( HealthFraction() <= 1.0f )
+					{
+						pLunch->ApplyBiteEffects( true );
+					}
 				}
+				else
+					pLunch->ApplyBerserkEffect();
 
 				m_iTauntAttack = TAUNTATK_HEAVY_EAT;
 				m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
