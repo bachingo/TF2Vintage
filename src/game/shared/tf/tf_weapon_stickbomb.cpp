@@ -30,8 +30,8 @@ LINK_ENTITY_TO_CLASS( tf_weapon_stickbomb, CTFStickBomb );
 PRECACHE_WEAPON_REGISTER( tf_weapon_stickbomb );
 
 
-#define MODEL_NORMAL   "models/weapons/c_models/c_caber/c_caber.mdl"
-#define MODEL_EXPLODED "models/weapons/c_models/c_caber/c_caber_exploded.mdl"
+#define MODEL_NORMAL   "models/workshop/weapons/c_models/c_caber/c_caber.mdl"
+#define MODEL_EXPLODED "models/workshop/weapons/c_models/c_caber/c_caber_exploded.mdl"
 
 #define TF_STICKBOMB_NORMAL    0
 #define TF_STICKBOMB_DETONATED 1
