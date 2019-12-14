@@ -297,10 +297,11 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 
 	// Heal 25% of the player's max health per second for a total of 100%.
 	CTFPlayer *pOwner = GetTFPlayerOwner();
+	int iPlayerMaxHealth = pOwner->GetMaxHealth();
 
-	float flAmt = 75.0f;
+	float flAmt = iPlayerMaxHealth * (1/4); // 25%.
 	if ( ( CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
-		flAmt = 25.0f;
+		flAmt = (1/12); // 1/3 of 25%, so 1/12.
 	
 	// Adjust our healing scale if defined.
 	if (CAttributeManager::AttribHookValue<float>( 0, "lunchbox_healing_scale", this ) )
@@ -309,6 +310,27 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	if ( pOwner )
 	{
 		pOwner->TakeHealth( flAmt, DMG_GENERIC );
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLunchBox::ApplyBerserkEffect( void )
+{
+	float flBuffaloSteakTime = 18.0f;
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner )
+	{
+		if (!pOwner->m_Shared.InCond(TF_COND_CANNOT_SWITCH_FROM_MELEE))
+			pOwner->m_Shared.AddCond(TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime);
+		if (!pOwner->m_Shared.InCond(TF_COND_SPEED_BOOST))
+			pOwner->m_Shared.AddCond(TF_COND_SPEED_BOOST, flBuffaloSteakTime);
+		if (!pOwner->m_Shared.InCond(TF_COND_MINICRITBOOSTED))
+			pOwner->m_Shared.AddCond(TF_COND_MINICRITBOOSTED, flBuffaloSteakTime);
+		if (!pOwner->m_Shared.InCond(TF_COND_ENERGY_BUFF))
+			pOwner->m_Shared.AddCond(TF_COND_ENERGY_BUFF, flBuffaloSteakTime);
 	}
 }
 
