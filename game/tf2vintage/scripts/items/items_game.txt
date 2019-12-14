@@ -1905,7 +1905,7 @@
 			"item_iconname"	"ullapool_caber"
 			"item_slot"	"melee"
 			"image_inventory" "backpack/workshop/weapons/c_models/c_caber/c_caber"
-			"model_player"	"models/weapons/c_models/c_caber/c_caber.mdl"
+			"model_player"	"models/workshop/weapons/c_models/c_caber/c_caber.mdl"
 			"used_by_classes"
 			{
 				"demoman"	"1"
@@ -4407,6 +4407,43 @@
 				}
 			}
 			"particle_suffix"	"brass_beast"
+		}
+		"317"
+		{
+			"name"	"The Candy Cane"
+			"prefab"		"weapon_bat"
+			"year"				"2010"
+			"item_name"	"#TF_CandyCane"
+			"item_logname"	"candy_cane"
+			"item_iconname"	"candy_cane"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_candy_cane/c_candy_cane"					
+			"model_player"	"models/workshop/weapons/c_models/c_candy_cane/c_candy_cane.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
+			"attributes"
+			{
+				"drop health pack on kill"
+				{
+					"attribute_class"	"drop_health_pack_on_kill"
+					"value"			"1"
+				}
+				"dmg taken from blast increased"
+				{
+					"attribute_class"	"mult_dmgtaken_from_explosions"
+					"value"			"1.25"
+				}
+			}
 		}
 		"325"
 		{

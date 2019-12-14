@@ -64,6 +64,7 @@
 	"Warrior's Spirit"								"1"
 	"The Buffalo Steak Sandvich"					"1"
 	"The Brass Beast"								"1"
+	"The Candy Cane"								"1"
 	"The Boston Basher"								"1"
 	"The Back Scratcher"							"1"
 	"The Claidheamohmor"							"1"
