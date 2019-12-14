@@ -10517,6 +10517,7 @@ uint64 VIPRANK2[] =
 	76561198112316720, // DoopieWop
 	76561198851124770, // SandvichThief
 	76561197992168067, // PeatEar
+	76561198828415839, // Very Suspicious
 };
 
 // Rank 3.
