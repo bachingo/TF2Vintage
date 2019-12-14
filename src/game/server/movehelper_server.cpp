@@ -364,7 +364,7 @@ bool CMoveHelperServer::PlayerFallingDamage( void )
 	{
 		m_pHostPlayer->TakeDamage( CTakeDamageInfo( GetContainingEntity(INDEXENT(0)), GetContainingEntity(INDEXENT(0)), flFallDamage, DMG_FALL ) ); 
 		
-		// We now take care of falling damage sounds in a separate location.
+		// We now take care of falling damage sounds in CTFPlayer::PainSound
 		//StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamage" );
 
         //=============================================================================

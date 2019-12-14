@@ -188,6 +188,27 @@
 	"wave"		"player/pl_fallpain.wav"
 }
 
+"Player.FallDamageBeta"
+{
+	"channel"	"CHAN_STATIC"
+	"volume"	"1"
+	"soundlevel"	"SNDLVL_NORM"
+	"rndwave"
+	{
+		"wave"	"player/pl_fallpain3.wav"
+		"wave"	"player/pl_fallpain4.wav"
+		"wave"	"player/pl_fallpain5.wav"
+		"wave"	"player/pl_fallpain6.wav"
+		"wave"	"player/pl_fallpain7.wav"
+		"wave"	"player/pl_fallpain8.wav"
+		"wave"	"player/pl_fallpain9.wav"
+		"wave"	"player/pl_fallpain10.wav"
+		"wave"	"player/pl_fallpain11.wav"
+		"wave"	"player/pl_fallpain12.wav"
+		"wave"	"player/pl_fallpain13.wav"
+	}
+}
+
 "Player.FallDamageNew"
 {
 	"channel"	"CHAN_STATIC"

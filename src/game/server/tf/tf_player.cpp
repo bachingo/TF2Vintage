@@ -158,7 +158,7 @@ ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY
 ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
 ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
 
-ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "0", FCVAR_NOTIFY, "Allows servers to choose between the old and new fall damage sound types." );
+ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "1", FCVAR_NOTIFY, "Allows servers to choose between the launch, retail, and F2P fall damage sound types.", true, 0, true, 2 );
 ConVar tf2v_use_new_wrench_mechanics( "tf2v_use_new_wrench_mechanics", "0", FCVAR_NOTIFY, "Allows servers to choose between early and modern wrench build and repair mechanics." );
 
 ConVar tf2v_force_melee( "tf2v_force_melee", "0", FCVAR_NOTIFY, "Allow players to only use melee weapons." );
@@ -7910,16 +7910,23 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 
 	// This used to be handled elsewhere, but we can let servers decide to use the old
 	// TF2 pain sounds or the new TF2 pain sounds by doing it here instead.
-	if ( ( info.GetDamageType() & DMG_FALL ) && ( !tf2v_use_new_fallsounds.GetBool() ) )
+	if ( info.GetDamageType() & DMG_FALL )
 	{
-		// No pain shouts on old falldamage.
-		EmitSound( "Player.FallDamage" );
-		return;
-	}
-	if ( ( info.GetDamageType() & DMG_FALL ) && ( tf2v_use_new_fallsounds.GetBool() ) )
-	{
-		// We also shout on new falldamage.
-		EmitSound( "Player.FallDamageNew" );
+		if ( tf2v_use_new_fallsounds.GetInt() != 2 )
+		{
+			if ( tf2v_use_new_fallsounds.GetInt() == 1 )	// Standard fall damage sounds.
+				EmitSound( "Player.FallDamage" );
+			else											// Day One Orange Box fall damage sounds.
+				EmitSound( "Player.FallDamageBeta" );
+			
+			// No additional pain shouts on old falldamage sounds.
+			return;	
+		}
+		else
+		{
+			// We also shout on new falldamage.
+			EmitSound( "Player.FallDamageNew" );
+		}
 	}
 
 	if ( info.GetDamageType() & DMG_DROWN )
