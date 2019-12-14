@@ -6045,6 +6045,10 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack( bLunchbox );
+	
+	// If we're playing Medieval, drop a small health pack.
+	if ( TFGameRules()->IsInMedievalMode() )
+		DropHealthPack();
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
 	if ( HasItem() && pTFAttacker && ( pTFAttacker != this ) )
