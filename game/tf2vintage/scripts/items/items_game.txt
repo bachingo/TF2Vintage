@@ -338,6 +338,7 @@
 			"prefab"	"weapon_wearable"
 			"propername" "0"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
+			"itemfalloff"	"0"
 			"item_quality"	"haunted"
 			"item_slot"	"zombie"
 			"equip_region"	"zombie_body"
