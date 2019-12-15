@@ -1992,7 +1992,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			
 			// Only run these checks when necessary.
 			
-			if ( tf2v_enforce_whitelist.GetBool() ) 	// Checks if it's allowed on the server whitelist.
+			if ( tf2v_enforce_whitelist.GetBool() && !pItemDef->baseitem ) 	// Checks if it's allowed on the server whitelist. Baseitems are always allowed.
 				bWhiteListedWeapon = IsWhiteListed(pszClassname);
 				
 			if ( !tf2v_allow_reskins.GetBool() )		// Checks if it's a weapon reskin.
