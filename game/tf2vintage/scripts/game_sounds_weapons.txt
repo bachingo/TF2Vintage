@@ -6572,7 +6572,7 @@
 "Weapon_ProSniperRifle.Single"
 {
 	"channel"	"CHAN_WEAPON"
-	"soundlevel"	"SNDLVL_98dB"
+	"soundlevel"	"SNDLVL_88dB"
 	"volume"	"1.0"
 	"wave"		")weapons/doom_sniper_rifle.wav"
 }
@@ -6580,7 +6580,7 @@
 "Weapon_ProSniperRifle.SingleCrit"
 {
 	"channel"	"CHAN_WEAPON"
-	"soundlevel"	"SNDLVL_98dB"
+	"soundlevel"	"SNDLVL_88dB"
 	"volume"	"1.0"
 	"wave"		")weapons/doom_sniper_rifle_crit.wav"
 }
@@ -6588,7 +6588,7 @@
 "Weapon_UrbanProfessional.Single"
 {
 	"channel"	"CHAN_WEAPON"
-	"soundlevel"	"SNDLVL_94dB"
+	"soundlevel"	"SNDLVL_84dB"
 	"volume"	"1.0"
 	"wave"		")weapons/doom_sniper_smg.wav"
 }
@@ -6596,7 +6596,7 @@
 "Weapon_UrbanProfessional.SingleCrit"
 {
 	"channel"	"CHAN_WEAPON"
-	"soundlevel"	"SNDLVL_94dB"
+	"soundlevel"	"SNDLVL_84dB"
 	"volume"	"1.0"
 	"wave"		")weapons/doom_sniper_smg_crit.wav"
 }
