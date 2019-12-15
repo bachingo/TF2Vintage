@@ -264,6 +264,7 @@ public:
 		image_inventory_size_h = 82;
 		CLEAR_STR(model_player);
 		CLEAR_STR(model_world);
+		CLEAR_STR(equip_region);
 		memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
@@ -310,6 +311,7 @@ public:
 	int	 image_inventory_size_h;
 	char model_player[128];
 	char model_world[128];
+	char equip_region[128];
 	char model_player_per_class[TF_CLASS_COUNT_ALL][128];
 	char extra_wearable[128];
 	int attach_to_hands;

@@ -52,14 +52,7 @@ public:
 #endif
 
 	CNetworkVar(bool, m_bItemFallsOff);
-
-protected:
-
-#ifdef GAME_DLL
 	CNetworkVar( bool, m_bExtraWearable );
-#else
-	bool m_bExtraWearable;
-#endif
 
 private:
 

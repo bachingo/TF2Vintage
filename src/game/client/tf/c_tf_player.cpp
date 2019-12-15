@@ -289,6 +289,7 @@ private:
 	void CreateTFRagdoll( void );
 	void CreateTFGibs( bool bKill, bool bLocalOrigin );
 	void CreateTFHeadGib( void );
+	void UpdateRagdollWearables(bool bIsStatue, C_TFPlayer *pPlayer);
 	//void CreateWearableGibs( void );
 private:
 
@@ -859,7 +860,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		pPlayer->DropPartyHat( breakParams, m_vecRagdollVelocity.GetForModify() );
 	}
 	// Also drop a hat if we're wearing one.
-	if ( !m_bGoldRagdoll && !m_bIceRagdoll )
+	if ( !m_bGoldRagdoll || !m_bIceRagdoll )
 		pPlayer->DropHat(breakParams, m_vecRagdollVelocity.GetForModify());
 
 	const char *pszMaterial = NULL;
@@ -879,6 +880,62 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 				C_EconEntity *pEconEnt = dynamic_cast<C_EconEntity *>( pClientEntity );
 				if ( pEconEnt )
 					pEconEnt->SetMaterialOverride( GetTeamNumber(), pszMaterial );
+			}
+		}
+	}
+	
+	// If we're a ragdoll, update what our corpse has. Do this only on standard ragdolls.
+	if ( !m_bElectrocuted && !m_bBecomeAsh && !m_bDissolve && !m_bGib )
+		UpdateRagdollWearables( ( m_bGoldRagdoll || m_bIceRagdoll ), pPlayer );
+	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue, C_TFPlayer *pPlayer )
+{
+	// Grab all the wearables the player has.
+	for ( int i=0; i<(pPlayer->m_hMyWearables.Count()); ++i )
+	{
+		CEconWearable* pItem = pPlayer->m_hMyWearables[i];
+		if ( pItem && pItem->GetItem()->GetStaticData() ) // If valid item
+		{
+			
+			// Set the bodygroups for our ragdolls.
+			CEconItemDefinition *pStatic = pItem->GetItem()->GetStaticData();
+			if ( pStatic )
+			{
+				PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
+				if ( pVisuals )
+				{
+					for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
+					{
+						unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
+						if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
+						{
+							bool bTrue = pVisuals->player_bodygroups.Element( index );
+							if ( bTrue )
+							{
+								SetBodygroup( i , 1 );
+							}
+							else
+							{
+								SetBodygroup( i , 0 );
+							}
+						}
+					}
+				}
+			}
+			
+			// We need to attach the model to the player, but only if it's a static object (or they're a statue)
+			if ( !pItem->m_bItemFallsOff || ( pItem->m_bItemFallsOff && bIsStatue ) )
+			{
+
+				if (pItem->m_bExtraWearable)
+					C_PlayerAttachedModel::Create( ( pItem->GetItem()->GetStaticData()->extra_wearable ), this, LookupAttachment( pItem->GetItem()->GetStaticData()->equip_region ), vec3_origin, PAM_PERMANENT, 0 );
+				else
+					C_PlayerAttachedModel::Create( ( pItem->GetItem()->GetStaticData()->model_player ), this, LookupAttachment( pItem->GetItem()->GetStaticData()->equip_region ), vec3_origin, PAM_PERMANENT, 0 );
 			}
 		}
 	}
@@ -4338,7 +4395,8 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 	}
 
 	DropPartyHat( breakParams, vecBreakVelocity );
-	DropHat( breakParams, vecBreakVelocity );
+	if ( TFGameRules() && TFGameRules()->IsBirthday() )
+		DropHat( breakParams, vecBreakVelocity );
 
 }
 
@@ -4369,17 +4427,22 @@ void C_TFPlayer::DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBr
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void C_TFPlayer::DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity )
 {
 	for ( int i=0; i<m_hMyWearables.Count(); ++i )
 	{
 		CEconWearable* pItem = m_hMyWearables[i];
-		if ( pItem )
+		if ( pItem && pItem->GetItem()->GetStaticData() )
 		{
 			if ( pItem->m_bItemFallsOff )
 			{
 				breakmodel_t breakModel;
-				strcpy(breakModel.modelName, ( pItem->GetItem()->GetPlayerDisplayModel() ) );
+				if (pItem->m_bExtraWearable)
+					strcpy(breakModel.modelName, ( pItem->GetItem()->GetStaticData()->extra_wearable ) );
+				else
+					strcpy(breakModel.modelName, ( pItem->GetItem()->GetStaticData()->model_player ) );
 				breakModel.health = 1;
 				breakModel.fadeTime = RandomFloat( 5, 10 );
 				breakModel.fadeMinDist = 0.0f;
@@ -4396,6 +4459,7 @@ void C_TFPlayer::DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVe
 		}
 	}
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: How many buildables does this player own
