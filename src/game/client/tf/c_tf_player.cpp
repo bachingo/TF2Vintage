@@ -4334,6 +4334,7 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 	}
 
 	DropPartyHat( breakParams, vecBreakVelocity );
+	DropHat( breakParams, vecBreakVelocity  );
 }
 
 //-----------------------------------------------------------------------------
@@ -4359,6 +4360,35 @@ void C_TFPlayer::DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBr
 		BreakModelCreateSingle( this, &breakModel, m_hPartyHat->GetAbsOrigin(), m_hPartyHat->GetAbsAngles(), vecBreakVelocity, breakParams.angularVelocity, m_hPartyHat->m_nSkin, breakParams );
 
 		m_hPartyHat->Release();
+	}
+}
+
+//-----------------------------------------------------------------------------
+void C_TFPlayer::DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity )
+{
+	for ( int i=0; i<m_hMyWearables.Count(); ++i )
+	{
+		CEconWearable* pItem = m_hMyWearables[i];
+		if ( pItem )
+		{
+			if ( pItem->m_bItemFallsOff )
+			{
+				breakmodel_t breakModel;
+				strcpy(breakModel.modelName, ( pItem->GetItem()->GetPlayerDisplayModel() ) );
+				breakModel.health = 1;
+				breakModel.fadeTime = RandomFloat( 5, 10 );
+				breakModel.fadeMinDist = 0.0f;
+				breakModel.fadeMaxDist = 0.0f;
+				breakModel.burstScale = breakParams.defBurstScale;
+				breakModel.collisionGroup = COLLISION_GROUP_DEBRIS;
+				breakModel.isRagdoll = false;
+				breakModel.isMotionDisabled = false;
+				breakModel.placementName[0] = 0;
+				breakModel.placementIsBone = false;
+				breakModel.offset = GetAbsOrigin() - pItem->GetAbsOrigin();
+				BreakModelCreateSingle( this, &breakModel, pItem->GetAbsOrigin(), pItem->GetAbsAngles(), vecBreakVelocity, breakParams.angularVelocity, pItem->m_nSkin, breakParams );
+			}
+		}
 	}
 }
 

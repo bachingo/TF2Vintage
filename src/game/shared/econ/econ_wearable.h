@@ -51,6 +51,8 @@ public:
 	virtual bool			ShouldDraw( void );
 #endif
 
+	CNetworkVar(bool, m_bItemFallsOff);
+
 protected:
 
 #ifdef GAME_DLL

@@ -23,9 +23,11 @@ BEGIN_NETWORK_TABLE( CEconWearable, DT_EconWearable )
 #ifdef GAME_DLL
 	SendPropString( SENDINFO( m_ParticleName ) ),
 	SendPropBool( SENDINFO( m_bExtraWearable ) ),
+	SendPropBool( SENDINFO( m_bItemFallsOff ) ),
 #else
 	RecvPropString( RECVINFO( m_ParticleName ) ),
 	RecvPropBool( RECVINFO( m_bExtraWearable ) ),
+	RecvPropBool( RECVINFO( m_bItemFallsOff ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -44,6 +46,8 @@ void CEconWearable::Spawn( void )
 		SetModel( GetItem()->GetPlayerDisplayModel() );
 	}
 
+	m_bItemFallsOff = GetItem()->GetStaticData()->itemfalloff;
+	
 	BaseClass::Spawn();
 
 	AddEffects( EF_BONEMERGE );

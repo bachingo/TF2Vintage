@@ -145,6 +145,7 @@ public:
 	void InitPlayerGibs( void );
 	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bHeadGib );
 	void DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
+	void DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
 
 	int	GetObjectCount( void );
 	C_BaseObject *GetObject( int index );
