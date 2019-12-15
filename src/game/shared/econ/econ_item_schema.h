@@ -273,6 +273,7 @@ public:
 		is_reskin = false;
 		specialitem = false;
 		demoknight = false;
+		itemfalloff = false;
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		CLEAR_STR(holiday_restriction);
@@ -319,6 +320,7 @@ public:
 	bool specialitem;
 	bool demoknight;
 	char holiday_restriction[128];
+	bool itemfalloff;
 	int year;
 	bool is_custom_content;
 	

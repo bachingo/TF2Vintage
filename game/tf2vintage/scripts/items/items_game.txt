@@ -305,6 +305,7 @@
 			"public_prefab"	"1"
 			"prefab"	"cosmetic"
 			"item_slot" "misc"
+			"itemfalloff"	"0"
 		}
 		"hat"
 		{
@@ -313,6 +314,7 @@
 			"item_slot" "head"
 			"item_type_name"	"#TF_Wearable_Hat"
 			"equip_region"	"hat"
+			"itemfalloff"	"1"
 			"visuals"
 			{
 				"player_bodygroups"
@@ -336,6 +338,7 @@
 			"prefab"	"weapon_wearable"
 			"propername" "0"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
+			"itemfalloff"	"0"
 			"item_quality"	"haunted"
 			"item_slot"	"zombie"
 			"equip_region"	"zombie_body"
@@ -2927,6 +2930,7 @@
 				}
 			}
 			"baseitem"	"1"
+			"itemfalloff"	"0"
 		}
 		"33"
 		{
