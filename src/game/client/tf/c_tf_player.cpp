@@ -849,14 +849,18 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 			m_flDeathDelay = 1.2f;
 	}
 
+
+	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
+	breakablepropparams_t breakParams( m_vecRagdollOrigin, GetRenderAngles(), m_vecRagdollVelocity, angularImpulse );
+	breakParams.impactEnergyScale = 1.0f;
 	// Birthday mode.
-	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
+	if (pPlayer && TFGameRules() && TFGameRules()->IsBirthday())
 	{
-		AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
-		breakablepropparams_t breakParams( m_vecRagdollOrigin, GetRenderAngles(), m_vecRagdollVelocity, angularImpulse );
-		breakParams.impactEnergyScale = 1.0f;
 		pPlayer->DropPartyHat( breakParams, m_vecRagdollVelocity.GetForModify() );
 	}
+	// Also drop a hat if we're wearing one.
+	if ( !m_bGoldRagdoll && !m_bIceRagdoll )
+		pPlayer->DropHat(breakParams, m_vecRagdollVelocity.GetForModify());
 
 	const char *pszMaterial = NULL;
 	if ( m_bGoldRagdoll )
@@ -4334,7 +4338,8 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 	}
 
 	DropPartyHat( breakParams, vecBreakVelocity );
-	DropHat( breakParams, vecBreakVelocity  );
+	DropHat( breakParams, vecBreakVelocity );
+
 }
 
 //-----------------------------------------------------------------------------
