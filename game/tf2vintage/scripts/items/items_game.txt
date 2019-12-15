@@ -305,6 +305,7 @@
 			"public_prefab"	"1"
 			"prefab"	"cosmetic"
 			"item_slot" "misc"
+			"itemfalloff"	"0"
 		}
 		"hat"
 		{
@@ -313,6 +314,7 @@
 			"item_slot" "head"
 			"item_type_name"	"#TF_Wearable_Hat"
 			"equip_region"	"hat"
+			"itemfalloff"	"1"
 			"visuals"
 			{
 				"player_bodygroups"
@@ -2927,6 +2929,7 @@
 				}
 			}
 			"baseitem"	"1"
+			"itemfalloff"	"0"
 		}
 		"33"
 		{
