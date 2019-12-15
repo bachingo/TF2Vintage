@@ -14,7 +14,7 @@
 #include "particles_new.h"
 #endif
 
-#define MAX_WEARABLES_SENT_FROM_SERVER	5
+#define MAX_WEARABLES_SENT_FROM_SERVER	7
 #define PARTICLE_MODIFY_STRING_SIZE		128
 
 #if defined( CLIENT_DLL )
