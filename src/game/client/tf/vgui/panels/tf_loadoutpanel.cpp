@@ -395,6 +395,28 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 		{
 			m_pClassModelPanel->SetMergeMDL( pszExtraWearableModel, NULL, m_iCurrentSkin );
 		}
+		
+		// Update the bodygroups.
+		PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals();
+		if ( pVisuals )
+		{
+			for (int i = 0; i < m_pClassModelPanel->GetNumBodyGroups(); i++)
+			{
+				unsigned int index = pVisuals->player_bodygroups.Find(m_pClassModelPanel->GetBodygroupName(i));
+				if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
+				{
+					bool bTrue = pVisuals->player_bodygroups.Element( index );
+					if ( bTrue )
+					{
+						m_pClassModelPanel->SetBodygroup(i, 1);
+					}
+					else
+					{
+						m_pClassModelPanel->SetBodygroup(i, 0);
+					}
+				}
+			}
+		}
 	}
 
 	// Set the animation.
