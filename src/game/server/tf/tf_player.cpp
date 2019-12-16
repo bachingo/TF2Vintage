@@ -10706,27 +10706,17 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 	
 	if ( pFileSystemInfo )
 	{
+		// Find the weapon's name on our list.
 		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
 		{
 			if ( Q_stricmp( pKey->GetName(), pszClassname ) == 0 )
-			{
-				int iWeapon = abs( pKey->GetInt() );
-				if ( iWeapon == 1 )
-					return true;
-				else
-					return false;
-			}
+				return abs( pKey->GetInt() );
 		}
+		// We didn't find the weapon, so check what we set unlisted items to.
 		for (KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey())
 		{
 			if (Q_stricmp(pKey->GetName(), "unlisted_items_default_to") == 0 )
-			{
-				int iWeapon = abs(pKey->GetInt());
-				if (iWeapon == 1)
-					return true;
-				else
-					return false;
-			}
+				return abs( pKey->GetInt() );
 		}
 	}
 	return false; // If we have a blank/incomplete whitelist, assume no.
