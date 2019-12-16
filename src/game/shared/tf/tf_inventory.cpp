@@ -259,11 +259,14 @@ void CTFInventory::ResetInventory()
 
 	m_pInventory = new KeyValues("Inventory");
 
-	for (int i = TF_CLASS_UNDEFINED; i < TF_CLASS_COUNT_ALL; i++)
+	for (int i = TF_FIRST_NORMAL_CLASS; i <= TF_LAST_NORMAL_CLASS; i++)
 	{
 		KeyValues *pClassInv = new KeyValues(g_aPlayerClassNames_NonLocalized[i]);
-		for (int j = 0; j < TF_LOADOUT_SLOT_COUNT; j++)
+		for (int j = 0; j < TF_LOADOUT_SLOT_ZOMBIE; j++)
 		{
+			if (j == TF_LOADOUT_SLOT_UTILITY || j == TF_LOADOUT_SLOT_ACTION )
+				continue;
+			
 			pClassInv->SetInt( g_LoadoutSlots[j], 0 );
 		}
 		m_pInventory->AddSubKey(pClassInv);

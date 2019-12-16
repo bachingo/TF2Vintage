@@ -1,21 +1,5 @@
 "Inventory"
 {
-	"undefined"
-	{
-		"primary"		"0"
-		"secondary"		"0"
-		"melee"		"0"
-		"pda"		"0"
-		"pda2"		"0"
-		"building"		"0"
-		"utility"		"0"
-		"head"		"0"
-		"misc"		"0"
-		"Action"		"0"
-		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
-	}
 	"scout"
 	{
 		"primary"		"0"
@@ -24,13 +8,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"sniper"
 	{
@@ -40,13 +20,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"soldier"
 	{
@@ -56,13 +32,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"demoman"
 	{
@@ -72,13 +44,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"medic"
 	{
@@ -88,13 +56,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"heavy"
 	{
@@ -104,13 +68,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"pyro"
 	{
@@ -120,13 +80,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"spy"
 	{
@@ -136,13 +92,9 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 	"engineer"
 	{
@@ -152,12 +104,8 @@
 		"pda"		"0"
 		"pda2"		"0"
 		"building"		"0"
-		"utility"		"0"
 		"head"		"0"
 		"misc"		"0"
-		"Action"		"0"
 		"misc2"		"0"
-		"zombie"		"0"
-		"buffer"		"0"
 	}
 }
