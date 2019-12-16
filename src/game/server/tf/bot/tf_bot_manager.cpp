@@ -288,6 +288,8 @@ void CTFBotManager::Update()
 
 void CTFBotManager::OnMapLoaded()
 {
+	LoadBotNames();
+
 	NextBotManager::OnMapLoaded();
 }
 
@@ -298,6 +300,7 @@ void CTFBotManager::OnRoundRestart()
 
 void CTFBotManager::OnLevelShutdown()
 {
+	m_BotNames.Purge();
 	m_flQuotaChangeTime = 0.0f;
 
 	if ( IsInOfflinePractice() )
@@ -370,6 +373,8 @@ bool CTFBotManager::IsMeleeOnly() const
 
 void CTFBotManager::MaintainBotQuota()
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBot" );
+
 	if ( TheNavMesh->IsGenerating() || g_fGameOver ) return;
 	if ( !TFGameRules() || TFGameRules()->IsInTraining() ) return;
 	if ( !engine->IsDedicatedServer() && !UTIL_GetListenServerHost() ) return;
@@ -509,3 +514,59 @@ void CTFBotManager::MaintainBotQuota()
 		}
 	}
 }
+
+const char *CTFBotManager::GetRandomBotName()
+{
+	static char szName[64];
+	if( m_BotNames.Count() == 0 )
+		return "Unnamed";
+
+	Q_strncpy( szName,
+			   STRING( m_BotNames[ RandomInt( 0, m_BotNames.Count() - 1 ) ] ),
+			   sizeof szName );
+
+	return szName;
+}
+
+void CTFBotManager::ReloadBotNames()
+{
+	m_BotNames.RemoveAll();
+	LoadBotNames();
+}
+
+#define BOT_NAMES_FILE	"scripts/tf_bot_names.txt"
+
+bool CTFBotManager::LoadBotNames()
+{
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_OTHER_FILESYSTEM );
+
+	if ( g_pFullFileSystem == nullptr )
+		return false;
+
+	KeyValues *pBotNames = new KeyValues( "BotNames" );
+	if ( !pBotNames->LoadFromFile( g_pFullFileSystem, BOT_NAMES_FILE, "MOD" ) )
+	{
+		Warning( "CTFBotManager: Could not load %s", BOT_NAMES_FILE );
+		pBotNames->deleteThis();
+		return false;
+	}
+
+	for ( KeyValues *pSubData = pBotNames->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	{
+		if ( FStrEq( pSubData->GetString(), "" ) )
+			continue;
+
+		string_t iName = AllocPooledString( pSubData->GetString() );
+		if ( m_BotNames.Find( iName ) == m_BotNames.InvalidIndex() )
+			m_BotNames[ m_BotNames.AddToTail() ] = iName;
+	}
+
+	return true;
+}
+
+void CC_ReloadBotNames( const CCommand &args )
+{
+	TheTFBots().ReloadBotNames();
+}
+
+ConCommand tf_bot_names_reload( "tf_bot_names_reload", CC_ReloadBotNames, "Reload all names for TFBots.", FCVAR_CHEAT );

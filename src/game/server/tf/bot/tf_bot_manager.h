@@ -29,6 +29,8 @@ public:
 	bool IsInOfflinePractice( void ) const;
 	void SetIsInOfflinePractice( bool set );
 
+	const char *GetRandomBotName( void );
+	void ReloadBotNames( void );
 	CTFBot *GetAvailableBotFromPool( void );
 	bool RemoveBotFromTeamAndKick( int teamNum );
 	void OnForceAddedBots( int count );
@@ -39,15 +41,15 @@ public:
 	bool IsMeleeOnly( void ) const;
 
 private:
+	bool LoadBotNames( void );
 	void MaintainBotQuota( void );
 	void RevertOfflinePracticeConvars( void );
 
+	CUtlVector<string_t> m_BotNames;
 	float m_flQuotaChangeTime;
 };
 
 extern CTFBotManager &TheTFBots( void );
-
-const char *GetRandomBotName( void );
 
 const char *DifficultyToName( int iSkillLevel );
 int NameToDifficulty( const char *pszSkillName );
