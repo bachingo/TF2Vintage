@@ -901,42 +901,16 @@ void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue, C_TFPlayer *pPlayer )
 		CEconWearable* pItem = pPlayer->m_hMyWearables[i];
 		if ( pItem && pItem->GetItem()->GetStaticData() ) // If valid item
 		{
-			
-			// Set the bodygroups for our ragdolls.
-			CEconItemDefinition *pStatic = pItem->GetItem()->GetStaticData();
-			if ( pStatic )
+			// Add the items to the ragdoll. Skip over items that fall off when dying.
+			bool bItemFallsOff = pItem->GetItem()->GetStaticData()->itemfalloff;
+			if ( !bItemFallsOff || ( bItemFallsOff && bIsStatue ) )
 			{
-				PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
-				if ( pVisuals )
-				{
-					for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
-					{
-						unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
-						if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
-						{
-							bool bTrue = pVisuals->player_bodygroups.Element( index );
-							if ( bTrue )
-							{
-								SetBodygroup( i , 1 );
-							}
-							else
-							{
-								SetBodygroup( i , 0 );
-							}
-						}
-					}
-				}
+				pItem->ValidateModelIndex();
+				pItem->UpdateVisibility();
+				pItem->CreateShadow();
 			}
-			
-			// We need to attach the model to the player, but only if it's a static object (or they're a statue)
-			if ( !pItem->m_bItemFallsOff || ( pItem->m_bItemFallsOff && bIsStatue ) )
-			{
-
-				if (pItem->m_bExtraWearable)
-					C_PlayerAttachedModel::Create( ( pItem->GetItem()->GetStaticData()->extra_wearable ), this, LookupAttachment( pItem->GetItem()->GetStaticData()->equip_region ), vec3_origin, PAM_PERMANENT, 0 );
-				else
-					C_PlayerAttachedModel::Create( ( pItem->GetItem()->GetStaticData()->model_player ), this, LookupAttachment( pItem->GetItem()->GetStaticData()->equip_region ), vec3_origin, PAM_PERMANENT, 0 );
-			}
+			// Update bodygroup, even for items that fell off.
+				pItem->UpdatePlayerBodygroups();	
 		}
 	}
 }
