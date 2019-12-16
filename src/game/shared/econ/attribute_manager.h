@@ -17,6 +17,7 @@ public:
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) { return true; }
 };
 
+extern ConVar tf2v_attrib_mult;
 class CEconItemAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
 {
 public:
@@ -70,7 +71,7 @@ public:
 				}
 			}
 		}
-
+		*m_flOut *=	tf2v_attrib_mult.GetFloat();
 		return true;
 	}
 

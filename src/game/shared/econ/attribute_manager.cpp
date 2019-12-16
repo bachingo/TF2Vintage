@@ -21,6 +21,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CAttributeManager, DT_AttributeManager )
 #endif
 END_NETWORK_TABLE();
 
+ConVar tf2v_attrib_mult( "tf2v_attrib_mult", "1" , FCVAR_NOTIFY | FCVAR_REPLICATED, "Amount to multiply on attribute values." );
+
 CAttributeManager::CAttributeManager()
 {
 	m_bParsingMyself = false;
