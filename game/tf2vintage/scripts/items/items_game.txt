@@ -2438,10 +2438,10 @@
 					"attribute_class"	"kill_refills_meter"
 					"value"			"0.25"
 				}
-				"move speed bonus shield required"
+				"move speed bonus"
 				{
-					"attribute_class"	"mult_player_movespeed_shieldrequired"
-					"value" "1.10"
+					"attribute_class"	"mult_player_movespeed"
+					"value"	"1.10"
 				}
 			}
 			"visuals"
@@ -3994,9 +3994,9 @@
 					"attribute_class"	"set_buff_type"
 					"value"	"2"
 				}
-				"max health additive bonus era"
+				"max health additive bonus"
 				{
-					"attribute_class"	"add_maxhealth_era"
+					"attribute_class"	"add_maxhealth"
 					"value" "20"
 				}
 			}
@@ -11123,16 +11123,6 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"
-			"stored_as_integer"	"0"
-		}
-		"10008"
-		{
-			"name"	"max health additive bonus era"
-			"attribute_class"	"add_maxhealth_era"
-			"description_format"	"value_is_additive"
-			"hidden"	"1"
-			"effect_type"	"positive"
-			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
 	}
