@@ -10696,12 +10696,12 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 	
 	KeyValues *pData = new KeyValues( "item_whitelist.txt" );
 	
-	if (!pData) // If we don't have a whitelist, assume yes.
-	return true;
+	if ( !pData ) // If we don't have a whitelist, assume yes.
+		return true;
 	
-	KeyValues* pFileSystemInfo = pData->FindKey("item_whitelist");
+	KeyValues *pFileSystemInfo = pData->FindKey("item_whitelist");
 
-	if (!pFileSystemInfo) // If we don't have a whitelist, assume yes.
+	if ( !pFileSystemInfo ) // If we don't have a whitelist, assume yes.
 		return true;
 	
 	if ( pFileSystemInfo )
@@ -10710,16 +10710,15 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
 		{
 			if ( Q_stricmp( pKey->GetName(), pszClassname ) == 0 )
-				return abs( pKey->GetInt() );
+				return pKey->GetInt() == 1;
 		}
 		// We didn't find the weapon, so check what we set unlisted items to.
-		for (KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey())
+		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
 		{
-			if (Q_stricmp(pKey->GetName(), "unlisted_items_default_to") == 0 )
-				return abs( pKey->GetInt() );
+			if  (Q_stricmp( pKey->GetName(), "unlisted_items_default_to" ) == 0 )
+				return pKey->GetInt() == 1;
 		}
 	}
+
 	return false; // If we have a blank/incomplete whitelist, assume no.
-
-
 }
