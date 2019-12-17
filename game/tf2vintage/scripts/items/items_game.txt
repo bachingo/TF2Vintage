@@ -1057,6 +1057,51 @@
 				"sound_melee_hit_world"	"Weapon_Shovel.HitWorld"
 			}
 		}
+		"weapon_disciplinary_action"
+		{
+			"prefab"	"weapon_shovel"
+			"item_type_name"	"#TF_Weapon_Riding_Crop"
+			"item_name"	"#TF_DisciplinaryAction"
+			"item_logname"	"disciplinary_action"
+			"item_iconname"	"disciplinary_action"
+			"propername"	"1"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_riding_crop/c_riding_crop"
+			"model_player"	"models/workshop/weapons/c_models/c_riding_crop/c_riding_crop.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"				"10 -5 -20"
+			}
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
+				"speed buff ally"
+				{
+					"attribute_class"	"speed_buff_ally"
+					"value"	"1"
+				}
+				"melee range multiplier"
+				{
+					"attribute_class"	"melee_range_multiplier"
+					"value"	"1.7"
+				}
+				"melee bounds multiplier"
+				{
+					"attribute_class"	"melee_bounds_multiplier"
+					"value"	"1.55"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_miss"		"DisciplineDevice.Swing"
+				"sound_melee_hit"		"DisciplineDevice.Impact"
+				"sound_melee_hit_world"	"DisciplineDevice.HitWorld"
+				"sound_melee_burst"		"DisciplineDevice.ImpactCrit"
+			}
+		}
 		"weapon_bonesaw"
 		{
 			"item_class"	"tf_weapon_bonesaw"
@@ -4996,6 +5041,13 @@
 					"value" "3.0"
 				}
 			}
+		}
+		"447"
+		{
+			"name"	"The Disciplinary Action"
+			"prefab" "weapon_disciplinary_action"
+			"year"				"2011"
+			"particle_suffix"	"disciplinary_action"
 		}
 		"460"
 		{
