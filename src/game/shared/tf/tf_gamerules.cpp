@@ -6284,7 +6284,10 @@ bool CTFGameRules::IsNormalClass( CBaseEntity *pPlayer )
 bool CTFGameRules::IsBossClass( CBaseEntity *pPlayer )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-	if ( pTFPlayer && pTFPlayer->IsPlayerClass( TF_CLASS_SAXTON ) )
+	if( pTFPlayer == nullptr )
+		return false;
+	
+	if ( pTFPlayer->GetPlayerClass()->GetClassIndex() >= TF_FIRST_BOSS_CLASS && pTFPlayer->GetPlayerClass()->GetClassIndex() <= TF_LAST_BOSS_CLASS )
 		return true;
 	
 	return false;
