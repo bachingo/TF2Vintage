@@ -27,6 +27,7 @@ void TFExplosionCallback( const Vector &vecOrigin, const Vector &vecNormal, int 
 	{
 	case TF_WEAPON_GRENADE_PIPEBOMB:
 	case TF_WEAPON_GRENADE_DEMOMAN:
+	case TF_WEAPON_GRENADE_PIPEBOMB_BETA:
 		pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_PIPEBOMBLAUNCHER );
 		break;
 	default:
