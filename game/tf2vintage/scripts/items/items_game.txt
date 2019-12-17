@@ -11129,9 +11129,8 @@
 		{
 			"name"	"max health additive bonus era"
 			"attribute_class"	"add_maxhealth_era"
-			"description_string"	"#Attrib_MaxHealth_Positive"
 			"description_format"	"value_is_additive"
-			"hidden"	"0"
+			"hidden"	"1"
 			"effect_type"	"positive"
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
