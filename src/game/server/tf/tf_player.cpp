@@ -163,6 +163,8 @@ ConVar tf2v_use_new_wrench_mechanics( "tf2v_use_new_wrench_mechanics", "0", FCVA
 
 ConVar tf2v_force_melee( "tf2v_force_melee", "0", FCVAR_NOTIFY, "Allow players to only use melee weapons." );
 
+ConVar tf2v_blastjump_only_airborne("tf2v_blastjump_only_airborne", "0", FCVAR_NOTIFY, "Allows conditions for airborne to be counted only when blastjumping.", true, 0, true, 1);
+
 
 
 
@@ -4657,13 +4659,19 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMiniCritWhileAirborne, mini_crit_airborne );
-
-			if ( nCritWhileAirborne && pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+			
+			bool bIsAirborne = false;
+			if ( tf2v_blastjump_only_airborne.GetBool() )
+				bIsAirborne	= ( pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) );
+			else
+				bIsAirborne	= ( ( pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) ) || !(pTFAttacker->GetFlags() & FL_ONGROUND) );
+			
+			if ( nCritWhileAirborne && bIsAirborne )
 			{
 				bitsDamage |= DMG_CRITICAL;
 				info.AddDamageType( DMG_CRITICAL );
 			}
-			else if ( nMiniCritWhileAirborne && m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+			else if ( nMiniCritWhileAirborne && bIsAirborne )
 			{
 				bitsDamage |= DMG_MINICRITICAL;
 				info.AddDamageType( DMG_MINICRITICAL );
@@ -10715,7 +10723,7 @@ bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
 		// We didn't find the weapon, so check what we set unlisted items to.
 		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
 		{
-			if  (Q_stricmp( pKey->GetName(), "unlisted_items_default_to" ) == 0 )
+			if ( Q_stricmp( pKey->GetName(), "unlisted_items_default_to" ) == 0 )
 				return pKey->GetInt() == 1;
 		}
 	}
