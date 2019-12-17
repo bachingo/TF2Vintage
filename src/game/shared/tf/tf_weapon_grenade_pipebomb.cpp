@@ -372,6 +372,7 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 			pGrenade->m_flFullDamage = pGrenade->GetDamage();
 		}
 
+		pGrenade->m_flDamageMult = flDamageMult;
 
 		if ( pGrenade->m_iType != TF_GL_MODE_REMOTE_DETONATE || pGrenade->m_iType != TF_GL_MODE_BETA_DETONATE )
 		{
@@ -767,7 +768,12 @@ void CTFGrenadePipebombProjectile::Deflected( CBaseEntity *pDeflectedBy, Vector 
 		Vector vecPushDir = GetAbsOrigin() - vecPushSrc;
 		VectorNormalize( vecPushDir );
 
-		CTakeDamageInfo info( pDeflectedBy, pDeflectedBy, 100, DMG_BLAST );
+		// Get the damage values for the grenade, again.
+		float flDeflectDamage = 100;
+		if ( tf2v_console_grenadelauncher.GetBool() )
+			flDeflectDamage = TF_WEAPON_GRENADE_XBOX_DAMAGE;
+			
+		CTakeDamageInfo info( pDeflectedBy, pDeflectedBy, ( flDeflectDamage * m_flDamageMult ) , DMG_BLAST );
 		CalculateExplosiveDamageForce( &info, vecPushDir, vecPushSrc );
 		TakeDamage( info );
 	}

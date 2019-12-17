@@ -44,7 +44,8 @@ public:
 	float		m_flChargeTime;
 	bool		m_bPulsed;
 	float		m_flFullDamage;
-
+	float		m_flDamageMult;
+	
 	virtual void	UpdateOnRemove( void );
 
 	virtual float	GetLiveTime( void ) const;
@@ -95,7 +96,6 @@ private:
 
 	
 	bool		m_bFizzle;
-
 	float		m_flMinSleepTime;
 
 	CHandle<CBaseEntity>	m_hEnemy;
