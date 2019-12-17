@@ -154,6 +154,7 @@ ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATE
 
 ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
 ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
+ConVar tf2v_use_new_buff_health("tf2v_use_new_buff_health", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Applies the +20HP buff to the Battalion's Backup.");
 
 ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
 ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
@@ -1513,6 +1514,9 @@ int CTFPlayer::GetMaxHealthForBuffing( void ) const
 {
 	int iMaxHealth = const_cast<CTFPlayerClass &>( m_PlayerClass ).GetMaxHealth();
 	CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth );
+	
+	if ( tf2v_use_new_buff_health.GetBool() )
+		CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth_era );
 	
 	// If we're using a boss weapon, apply player scaling to our health so that more player involved is more health.
 	CTFShovelFist *pBoss = dynamic_cast<CTFShovelFist *>(const_cast<CTFPlayer *>(this)->Weapon_OwnsThisID(TF_WEAPON_SHOVELFIST));

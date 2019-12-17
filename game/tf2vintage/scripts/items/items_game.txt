@@ -3994,6 +3994,11 @@
 					"attribute_class"	"set_buff_type"
 					"value"	"2"
 				}
+				"max health additive bonus era"
+				{
+					"attribute_class"	"add_maxhealth_era"
+					"value" "20"
+				}
 			}
 		}
 		"227"
@@ -11111,13 +11116,24 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"156"
+		"10007"
 		{
 			"name"	"silent killer notaknife"
 			"attribute_class"	"set_silent_killer"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"10008"
+		{
+			"name"	"max health additive bonus era"
+			"attribute_class"	"add_maxhealth_era"
+			"description_string"	"#Attrib_MaxHealth_Positive"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
 	}
