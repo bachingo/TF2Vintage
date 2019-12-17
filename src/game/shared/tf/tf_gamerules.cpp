@@ -3944,7 +3944,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 			iWeaponID = pGrenade->GetWeaponID();
 
 			// Most grenades have their own kill icons except for pipes and stickies, those use weapon icons.
-			if ( iWeaponID == TF_WEAPON_GRENADE_DEMOMAN || iWeaponID == TF_WEAPON_GRENADE_PIPEBOMB )
+			if ( iWeaponID == TF_WEAPON_GRENADE_DEMOMAN || iWeaponID == TF_WEAPON_GRENADE_PIPEBOMB || iWeaponID == TF_WEAPON_GRENADE_PIPEBOMB_BETA )
 			{
 				CTFWeaponBase *pLauncher = dynamic_cast<CTFWeaponBase *>( pGrenade->m_hLauncher.Get() );
 				if ( pLauncher )
