@@ -165,6 +165,7 @@ ConVar tf2v_force_melee( "tf2v_force_melee", "0", FCVAR_NOTIFY, "Allow players t
 
 ConVar tf2v_blastjump_only_airborne("tf2v_blastjump_only_airborne", "0", FCVAR_NOTIFY, "Allows conditions for airborne to be counted only when blastjumping.", true, 0, true, 1);
 
+ConVar tf2v_generic_voicelines("tf2v_generic_voicelines", "0", FCVAR_NOTIFY, "Turns the death and medic sounds into generic trailer versions.", true, 0, true, 1);
 
 
 
@@ -1007,6 +1008,12 @@ void CTFPlayer::Precache()
 
 	PrecacheScriptSound( "DemoCharge.ChargeCritOn" );
 	PrecacheScriptSound( "DemoCharge.ChargeCritOff" );
+	
+	// Beta/Trailer player sounds.
+	PrecacheScriptSound( "Player.ExplosionDeathBeta" );
+	PrecacheScriptSound( "TFPlayer.CritDeathBeta" );
+	PrecacheScriptSound( "Player.MeleeDeathBeta" );
+	PrecacheScriptSound( "Player.DeathBeta" );
 
 	// Precache particle systems
 	PrecacheParticleSystem( "crit_text" );
@@ -1091,6 +1098,7 @@ void CTFPlayer::PrecachePlayerModels( void )
 		PrecacheScriptSound( pData->m_szMeleeDeathSound );
 		PrecacheScriptSound( pData->m_szExplosionDeathSound );
 	}
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -8018,25 +8026,40 @@ void CTFPlayer::DeathSound( const CTakeDamageInfo &info )
 	if ( m_LastDamageType & DMG_FALL ) // Did we die from falling?
 	{
 		// They died in the fall. Play a splat sound.
-		EmitSound( "Player.FallGib" );
+		if (!tf2v_generic_voicelines.GetBool() )
+			EmitSound( "Player.FallGib" );
+		else
+			EmitSound( "Player.FallGibBeta" );
 	}
 	else if ( m_LastDamageType & DMG_BLAST )
 	{
-		EmitSound( pData->m_szExplosionDeathSound );
+		if (!tf2v_generic_voicelines.GetBool() )
+			EmitSound( pData->m_szExplosionDeathSound );
+		else
+			EmitSound( "Player.ExplosionDeathBeta" );
 	}
 	else if ( m_LastDamageType & DMG_CRITICAL )
 	{
-		EmitSound( pData->m_szCritDeathSound );
+		if (!tf2v_generic_voicelines.GetBool() )
+			EmitSound( pData->m_szCritDeathSound );
+		else
+			EmitSound( "TFPlayer.CritDeathBeta" );
 
 		PlayCritReceivedSound();
 	}
 	else if ( m_LastDamageType & DMG_CLUB )
 	{
-		EmitSound( pData->m_szMeleeDeathSound );
+		if (!tf2v_generic_voicelines.GetBool() )
+			EmitSound( pData->m_szMeleeDeathSound );
+		else
+			EmitSound( "Player.MeleeDeathBeta" );
 	}
 	else
 	{
-		EmitSound( pData->m_szDeathSound );
+		if (!tf2v_generic_voicelines.GetBool() )
+			EmitSound( pData->m_szDeathSound );
+		else
+			EmitSound( "Player.DeathBeta" );
 	}
 }
 
@@ -9958,6 +9981,13 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 		if ( iConcept == MP_CONCEPT_PLAYER_MEDIC )
 		{
 			SaveMe();
+			
+			// Show the bubble, but use a generic voiceline.
+			if (tf2v_generic_voicelines.GetBool() )
+			{
+				bReturn = false;
+				EmitSound( "TFPlayer.SaveMe" );
+			}
 		}
 	}
 
