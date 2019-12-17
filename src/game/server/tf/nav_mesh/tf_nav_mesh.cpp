@@ -30,6 +30,9 @@ ConVar tf_select_ambush_areas_radius( "tf_select_ambush_areas_radius", "750", FC
 ConVar tf_select_ambush_areas_close_range( "tf_select_ambush_areas_close_range", "300", FCVAR_CHEAT );
 ConVar tf_select_ambush_areas_max_enemy_exposure_area( "tf_select_ambush_areas_max_enemy_exposure_area", "500000", FCVAR_CHEAT );
 
+#define TF_ATTRIBUTE_RESET    (BLOCKED|RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT|AMMO|HEALTH|CONTROL_POINT|BLUE_SENTRY|RED_SENTRY)
+
+
 void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 {
 	NextBotTraceFilterIgnoreActors filter( pBlocker, COLLISION_GROUP_NONE );
@@ -100,6 +103,150 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 		}
 	}
 }
+
+
+class ComputeIncursionDistance : public ISearchSurroundingAreasFunctor
+{
+public:
+	ComputeIncursionDistance( int teamNum=TEAM_ANY )
+		: m_iTeam( teamNum ) {}
+
+	virtual bool operator() ( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
+	{
+		return true;
+	}
+
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override
+	{
+		CTFNavArea *adjTFArea = static_cast<CTFNavArea *>( adjArea );
+		if ( !adjTFArea->HasTFAttributes( RED_SETUP_GATE|BLUE_SETUP_GATE|SPAWN_ROOM_EXIT ) && adjArea->IsBlocked( m_iTeam ) )
+			return false;
+
+		return currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) <= 45.0f;
+	}
+
+	virtual void IterateAdjacentAreas( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override
+	{
+		// search adjacent outgoing connections
+		for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
+		{
+			int count = area->GetAdjacentCount( (NavDirType)dir );
+			for ( int i=0; i<count; ++i )
+			{
+				const NavConnect &con = ( *area->GetAdjacentAreas( (NavDirType)dir ) )[i];
+				CTFNavArea *adjArea = static_cast<CTFNavArea *>( con.area );
+
+				if ( ShouldSearch( adjArea, area, travelDistanceSoFar ) )
+				{
+					float flIncursionDist = static_cast<CTFNavArea *>( area )->GetIncursionDistance( m_iTeam ) + con.length;
+					if ( adjArea->GetIncursionDistance( m_iTeam ) < 0.0f || adjArea->GetIncursionDistance( m_iTeam ) > flIncursionDist )
+					{
+						adjArea->SetIncursionDistance( m_iTeam, flIncursionDist );
+						IncludeInSearch( adjArea, area );
+					}
+				}
+			}
+		}
+	}
+
+private:
+	int m_iTeam;
+};
+
+
+class CollectAndLabelSpawnRooms
+{
+public:
+	CollectAndLabelSpawnRooms( CFuncRespawnRoom *respawnRoom, int teamNum, CUtlVector<CTFNavArea *> *vector )
+		: m_vector( vector )
+	{
+		m_respawn = respawnRoom;
+		m_team = teamNum;
+	};
+
+	inline bool operator()( CNavArea *area )
+	{
+		if ( dynamic_cast<CTFNavArea *>( area ) == nullptr )
+			return false;
+
+		Vector nwCorner = area->GetCorner( NORTH_WEST ) + Vector( 0, 0, StepHeight );
+		Vector neCorner = area->GetCorner( NORTH_EAST ) + Vector( 0, 0, StepHeight );
+		Vector swCorner = area->GetCorner( SOUTH_WEST ) + Vector( 0, 0, StepHeight );
+		Vector seCorner = area->GetCorner( SOUTH_EAST ) + Vector( 0, 0, StepHeight );
+
+		if ( m_respawn->PointIsWithin( nwCorner ) ||
+			 m_respawn->PointIsWithin( neCorner ) ||
+			 m_respawn->PointIsWithin( swCorner ) ||
+			 m_respawn->PointIsWithin( seCorner ) )
+		{
+			( (CTFNavArea *)area )->AddTFAttributes( m_team == TF_TEAM_RED ? RED_SPAWN_ROOM : BLUE_SPAWN_ROOM );
+			m_vector->AddToTail( (CTFNavArea *)area );
+		}
+
+		return true;
+	}
+
+private:
+	CFuncRespawnRoom *m_respawn;
+	int m_team;
+	CUtlVector<CTFNavArea *> *m_vector;
+};
+
+
+class ScanSelectAmbushAreas
+{
+public:
+	ScanSelectAmbushAreas(int iTeam, float fIncursion, CTFNavArea *area, CUtlVector<CTFNavArea *> *areas )
+		: m_iTeam( iTeam ), m_vector( areas )
+	{
+		m_flIncursionDistance = fIncursion + area->GetIncursionDistance( iTeam );
+	}
+
+	bool operator()( CNavArea *a )
+	{
+		CTFNavArea *area = static_cast<CTFNavArea *>( a );
+		if ( area->GetParent() && area->GetParent()->IsContiguous( area ) )
+		{
+			if ( area->GetIncursionDistance( m_iTeam ) <= m_flIncursionDistance )
+			{
+				NavAreaCollector collector;
+				area->ForAllPotentiallyVisibleAreas( collector );
+
+				float flDistance = 0.0f;
+				for ( int i=0; i < collector.m_area.Count(); ++i )
+				{
+					CTFNavArea *other = static_cast<CTFNavArea *>( collector.m_area[i] );
+
+					if ( area->GetIncursionDistance( m_iTeam ) > other->GetIncursionDistance( m_iTeam ) )
+						flDistance += other->GetSizeX() * other->GetSizeY();
+
+					if ( flDistance <= tf_select_ambush_areas_max_enemy_exposure_area.GetFloat() )
+					{
+						if ( area->GetIncursionDistance( m_iTeam ) > other->GetIncursionDistance( m_iTeam ) && 
+							( area->GetCenter() - other->GetCenter() ).LengthSqr() <= Square( tf_select_ambush_areas_close_range.GetFloat() ) )
+							continue;
+
+						m_vector->AddToTail( area );
+					}
+					else
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+private:
+	int m_iTeam;
+	float m_flIncursionDistance;
+	CUtlVector<CTFNavArea *> *m_vector;
+};
+
 
 CTFNavMesh::CTFNavMesh()
 {
@@ -231,8 +378,6 @@ void CTFNavMesh::OnRoundRestart()
 	CNavMesh::OnRoundRestart();
 	ResetMeshAttributes( true );
 	TheNextBots().OnRoundRestart();
-	if ( TFGameRules()->IsMannVsMachineMode() )
-		RecomputeInternalData();
 }
 
 unsigned int CTFNavMesh::GetGenerationTraceMask() const
@@ -255,51 +400,6 @@ void CTFNavMesh::EndCustomAnalysis()
 
 }
 
-class ScanSelectAmbushAreas
-{
-public:
-	ScanSelectAmbushAreas(int iTeam, float fIncursion, CTFNavArea *area, CUtlVector<CTFNavArea *> *areas )
-		: m_iTeam( iTeam ), m_ambushVector( areas )
-	{
-		m_flIncursionDistance = fIncursion + area->GetIncursionDistance( iTeam );
-	}
-
-	bool operator()( CNavArea *a )
-	{
-		CTFNavArea *area = static_cast<CTFNavArea *>( a );
-		if ( area->GetParent() && area->GetParent()->IsContiguous( area ) )
-		{
-			if ( area->GetIncursionDistance( m_iTeam ) <= m_flIncursionDistance )
-			{
-				NavAreaCollector collector;
-				area->ForAllPotentiallyVisibleAreas( collector );
-
-				for ( int i=0; i< collector.m_area.Count(); ++i )
-				{
-					CTFNavArea *other = static_cast<CTFNavArea *>( collector.m_area[i] );
-
-					float flDistance = 0.0f;
-					if ( area->GetIncursionDistance( m_iTeam ) > other->GetIncursionDistance( m_iTeam ) )
-						flDistance += other->GetIncursionDistance( m_iTeam ) + other->GetSizeX() * other->GetSizeY();
-
-					if ( flDistance <= tf_select_ambush_areas_max_enemy_exposure_area.GetFloat() )
-					{
-						// The rest of this logic relies on CTFNavArea::m_InvasionAreas
-					}
-				}
-
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-private:
-	int m_iTeam;
-	float m_flIncursionDistance;
-	CUtlVector<CTFNavArea *> *m_ambushVector;
-};
 void CTFNavMesh::CollectAmbushAreas( CUtlVector<CTFNavArea *> *areas, CTFNavArea *startArea, int teamNum, float fMaxDist, float fIncursionDiff ) const
 {
 	ScanSelectAmbushAreas functor( teamNum, fIncursionDiff, startArea, areas );
@@ -522,178 +622,87 @@ void CTFNavMesh::ComputeIncursionDistances()
 	bool bFoundRedSpawn = false;
 	bool bFoundBluSpawn = false;
 
-	if ( IFuncRespawnRoomAutoList::AutoList().Count() && ITFTeamSpawnAutoList::AutoList().Count() )
+	for ( int i=0; i<IFuncRespawnRoomAutoList::AutoList().Count(); ++i )
 	{
-		for ( int i=0; i<IFuncRespawnRoomAutoList::AutoList().Count(); ++i )
+		CFuncRespawnRoom *pRespawnRoom = static_cast<CFuncRespawnRoom *>( IFuncRespawnRoomAutoList::AutoList()[i] );
+		if ( pRespawnRoom->GetActive() && !pRespawnRoom->m_bDisabled )
 		{
-			CFuncRespawnRoom *respawnRoom = static_cast<CFuncRespawnRoom *>( IFuncRespawnRoomAutoList::AutoList()[i] );
-			if ( respawnRoom->GetActive() && !respawnRoom->m_bDisabled )
+			for ( int j=0; j<ITFTeamSpawnAutoList::AutoList().Count(); ++j )
 			{
-				for ( int j=0; j<ITFTeamSpawnAutoList::AutoList().Count(); ++j )
+				CTFTeamSpawn *pTeamSpawn = static_cast<CTFTeamSpawn *>( ITFTeamSpawnAutoList::AutoList()[j] );
+				int iSpawnTeam = pTeamSpawn->GetTeamNumber();
+
+				// Has anyone spawned here yet?
+				if ( !pTeamSpawn->IsTriggered( NULL ) || pTeamSpawn->IsDisabled() )
+					continue;
+
+				// Have we already found a spawn point for RED?
+				if ( iSpawnTeam == TF_TEAM_RED && bFoundRedSpawn )
+					continue;
+
+				// Have we already found a spawn point for BLU?
+				if ( iSpawnTeam == TF_TEAM_BLUE && bFoundBluSpawn )
+					continue;
+
+				// Is it even located in a spawn room? !BUG! this breaks on Arena
+				if ( !pRespawnRoom->PointIsWithin( pTeamSpawn->GetAbsOrigin() ) )
+					continue;
+
+				CTFNavArea *pArea = static_cast<CTFNavArea *>( GetNearestNavArea( pTeamSpawn ) );
+				if ( pArea )
 				{
-					CTFTeamSpawn *teamSpawn = static_cast<CTFTeamSpawn *>( ITFTeamSpawnAutoList::AutoList()[j] );
-					if ( teamSpawn->IsTriggered( NULL ) && !teamSpawn->IsDisabled() &&
-						( teamSpawn->GetTeamNumber() != TF_TEAM_RED || !bFoundRedSpawn ) &&
-						( teamSpawn->GetTeamNumber() != TF_TEAM_BLUE || !bFoundBluSpawn ) )
-					{
-						if ( respawnRoom->PointIsWithin( teamSpawn->GetAbsOrigin() ) )
-						{
-							CTFNavArea *area = static_cast<CTFNavArea *>( GetNearestNavArea( teamSpawn ) );
-							if ( area )
-							{
-								ComputeIncursionDistances( area, teamSpawn->GetTeamNumber() );
-								if ( teamSpawn->GetTeamNumber() == TF_TEAM_RED )
-									bFoundRedSpawn = true;
-								else
-									bFoundBluSpawn = true;
-							}
-						}
-					}
+					ComputeIncursionDistances( pArea, iSpawnTeam );
+					if ( iSpawnTeam == TF_TEAM_RED )
+						bFoundRedSpawn = true;
+					else
+						bFoundBluSpawn = true;
 				}
 			}
 		}
-
-		if ( !bFoundRedSpawn )
-		{
-			Warning(
-				"Can't compute incursion distances from the Red spawn room(s). Bots will perform poorly. This is caused by either a"
-				" missing func_respawnroom, or missing info_player_teamspawn entities within the func_respawnroom.\n" );
-		}
-
-		if ( !bFoundBluSpawn )
-		{
-			Warning(
-				"Can't compute incursion distances from the Blue spawn room(s). Bots will perform poorly. This is caused by either "
-				"a missing func_respawnroom, or missing info_player_teamspawn entities within the func_respawnroom.\n" );
-		}
 	}
-	else
+
+	if ( !bFoundRedSpawn )
 	{
 		Warning(
 			"Can't compute incursion distances from the Red spawn room(s). Bots will perform poorly. This is caused by either a"
 			" missing func_respawnroom, or missing info_player_teamspawn entities within the func_respawnroom.\n" );
 	}
 
-	// Update RED incursion distance based on BLU's distance
-	if ( !TFGameRules()->IsMannVsMachineMode() )
+	if ( !bFoundBluSpawn )
 	{
-		float flMaxDistance = 0.0f;
-		for ( int i=0; i<TheNavAreas.Count(); ++i )
-		{
-			CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
-			flMaxDistance = Max( flMaxDistance, area->GetIncursionDistance( TF_TEAM_BLUE ) );
-		}
+		Warning(
+			"Can't compute incursion distances from the Blue spawn room(s). Bots will perform poorly. This is caused by either "
+			"a missing func_respawnroom, or missing info_player_teamspawn entities within the func_respawnroom.\n" );
+	}
 
-		for ( int i=0; i<TheNavAreas.Count(); ++i )
-		{
-			CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
-			float flIncursionDist = area->GetIncursionDistance( TF_TEAM_BLUE );
-			if ( flIncursionDist >= 0.0f )
-				area->SetIncursionDistance( TF_TEAM_RED, ( flMaxDistance - flIncursionDist ) );
-		}
+	// Update RED incursion distance based on BLU's distance
+	float flMaxDistance = 0.0f;
+	for ( int i=0; i<TheNavAreas.Count(); ++i )
+	{
+		CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
+		flMaxDistance = Max( flMaxDistance, area->GetIncursionDistance( TF_TEAM_BLUE ) );
+	}
+
+	for ( int i=0; i<TheNavAreas.Count(); ++i )
+	{
+		CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
+		float flIncursionDist = area->GetIncursionDistance( TF_TEAM_BLUE );
+		if ( flIncursionDist >= 0.0f )
+			area->SetIncursionDistance( TF_TEAM_RED, ( flMaxDistance - flIncursionDist ) );
 	}
 }
 
-class ComputeIncursionDistance : public ISearchSurroundingAreasFunctor
-{
-public:
-	ComputeIncursionDistance( int iTeam )
-		: m_iTeam( iTeam )
-	{
-	}
-
-	virtual bool operator() ( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar )
-	{
-		return true;
-	}
-
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override
-	{
-		CTFNavArea *adjTFArea = static_cast<CTFNavArea *>( adjArea );
-		if ( !TFGameRules()->IsMannVsMachineMode() && !adjTFArea->HasTFAttributes( RED_SETUP_GATE|BLUE_SETUP_GATE|SPAWN_ROOM_EXIT ) && adjArea->IsBlocked( m_iTeam ) )
-			return false;
-
-		return currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) <= 45.0f;
-	}
-
-	virtual void IterateAdjacentAreas( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override
-	{
-		// search adjacent outgoing connections
-		for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
-		{
-			int count = area->GetAdjacentCount( (NavDirType)dir );
-			for ( int i=0; i<count; ++i )
-			{
-				const NavConnect &con = ( *area->GetAdjacentAreas( (NavDirType)dir ) )[i];
-				CTFNavArea *adjArea = static_cast<CTFNavArea *>( con.area );
-
-				if ( ShouldSearch( adjArea, area, travelDistanceSoFar ) )
-				{
-					float flIncursionDist = static_cast<CTFNavArea *>( area )->GetIncursionDistance( m_iTeam ) + con.length;
-					if ( adjArea->GetIncursionDistance( m_iTeam ) < 0.0f || flIncursionDist > adjArea->GetIncursionDistance( m_iTeam ) )
-					{
-						adjArea->SetIncursionDistance( m_iTeam, flIncursionDist );
-						IncludeInSearch( adjArea, area );
-					}
-				}
-			}
-		}
-	}
-
-private:
-	int m_iTeam;
-};
 void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )
 {
+	Assert( teamNum >= 0 && teamNum <= 3 );
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
-
-	// Some sort of functor is most likely happening here
-	if ( startArea && teamNum <= 3 )
+	
+	if ( startArea )
 	{
-		// Until the logic is fully understood, this will be replacing the code below temporarily
+		startArea->SetIncursionDistance( teamNum, 0.0f );
+
 		ComputeIncursionDistance functor( teamNum );
 		SearchSurroundingAreas( startArea, functor );
-
-		/*CNavArea::ClearSearchLists();
-
-		startArea->AddToOpenList();
-		startArea->SetParent( NULL );
-		startArea->Mark();
-
-		CUtlVectorFixedGrowable<const NavConnect *, 64u> adjCons;
-
-		while ( !CNavArea::IsOpenListEmpty() )
-		{
-			CTFNavArea *area = static_cast<CTFNavArea *>( CNavArea::PopOpenList() );
-
-			adjCons.RemoveAll();
-
-			if ( !TFGameRules()->IsMannVsMachineMode() && !area->HasTFAttributes( RED_SETUP_GATE|BLUE_SETUP_GATE|SPAWN_ROOM_EXIT ) && area->IsBlocked( teamNum ) )
-				continue;
-
-			for ( int dir = 0; dir < NUM_DIRECTIONS; dir++ )
-			{
-				for ( int i=0; i<area->GetAdjacentCount( (NavDirType)dir ); ++i )
-					adjCons.AddToTail( &( *area->GetAdjacentAreas( (NavDirType)dir ) )[i] );
-			}
-
-			for ( int i=0; i<adjCons.Count(); ++i )
-			{
-				CTFNavArea *adj = static_cast<CTFNavArea *>( adjCons[i]->area );
-				if ( area->ComputeAdjacentConnectionHeightChange( adj ) <= 45.0f )
-				{
-					float flIncursionDist = area->GetIncursionDistance( teamNum ) + adjCons[i]->length;
-					if ( adj->GetIncursionDistance( teamNum ) < 0.0f || flIncursionDist > adj->GetIncursionDistance( teamNum ) )
-					{
-						adj->SetIncursionDistance( teamNum, flIncursionDist );
-						adj->Mark();
-						adj->SetParent( area );
-						if ( !adj->IsOpen() )
-							adj->AddToOpenListTail();
-					}
-				}
-			}
-		}*/
 	}
 }
 
@@ -708,43 +717,6 @@ void CTFNavMesh::ComputeInvasionAreas()
 	}
 }
 
-class CollectAndLabelSpawnRooms
-{
-public:
-	CollectAndLabelSpawnRooms( CFuncRespawnRoom *respawnRoom, int teamNum, CUtlVector<CTFNavArea *> *vector )
-		: m_vector( vector )
-	{
-		m_respawn = respawnRoom;
-		m_team = teamNum;
-	};
-
-	inline bool operator()( CNavArea *area )
-	{
-		if ( dynamic_cast<CTFNavArea *>( area ) == nullptr )
-			return false;
-
-		Vector nwCorner = area->GetCorner( NORTH_WEST ) + Vector( 0, 0, StepHeight );
-		Vector neCorner = area->GetCorner( NORTH_EAST ) + Vector( 0, 0, StepHeight );
-		Vector swCorner = area->GetCorner( SOUTH_WEST ) + Vector( 0, 0, StepHeight );
-		Vector seCorner = area->GetCorner( SOUTH_EAST ) + Vector( 0, 0, StepHeight );
-
-		if ( m_respawn->PointIsWithin( nwCorner ) ||
-			 m_respawn->PointIsWithin( neCorner ) ||
-			 m_respawn->PointIsWithin( swCorner ) ||
-			 m_respawn->PointIsWithin( seCorner ) )
-		{
-			( (CTFNavArea *)area )->AddTFAttributes( m_team == TF_TEAM_RED ? RED_SPAWN_ROOM : BLUE_SPAWN_ROOM );
-			m_vector->AddToTail( (CTFNavArea *)area );
-		}
-
-		return true;
-	}
-
-private:
-	CFuncRespawnRoom *m_respawn;
-	int m_team;
-	CUtlVector<CTFNavArea *> *m_vector;
-};
 void CTFNavMesh::DecorateMesh()
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
@@ -924,8 +896,6 @@ void CTFNavMesh::RecomputeInternalData()
 
 	m_recomputeTimer.Invalidate();
 }
-
-#define TF_ATTRIBUTE_RESET    (BLOCKED|RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT|AMMO|HEALTH|CONTROL_POINT|BLUE_SENTRY|RED_SENTRY)
 
 void CTFNavMesh::RemoveAllMeshDecoration()
 {

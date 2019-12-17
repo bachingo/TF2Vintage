@@ -31,6 +31,71 @@ ConVar tf_show_sniper_areas_safety_range( "tf_show_sniper_areas_safety_range", "
 
 int CTFNavArea::m_masterTFMark = 1;
 
+
+class CollectInvasionAreas
+{
+public:
+	CollectInvasionAreas( CTFNavArea *startArea, CUtlVector<CTFNavArea *> *redAreas, CUtlVector<CTFNavArea *> *blueAreas, int marker )
+		: m_redAreas( redAreas ), m_blueAreas( blueAreas ), m_pArea( startArea )
+	{
+		m_iMarker = marker;
+	}
+
+	bool operator()( CNavArea *a )
+	{
+		CTFNavArea *area = static_cast<CTFNavArea *>( a );
+		for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
+		{
+			for ( int i=0; i<area->GetAdjacentAreas( (NavDirType)dir )->Count(); ++i )
+			{
+				CTFNavArea *other = static_cast<CTFNavArea *>( ( *area->GetAdjacentAreas( (NavDirType)dir ) )[i].area );
+				if ( other->m_TFSearchMarker == m_iMarker )
+					continue;
+
+				if ( area->GetIncursionDistance( TF_TEAM_BLUE ) <= other->GetIncursionDistance( TF_TEAM_BLUE ) ||
+					 area->GetIncursionDistance( TF_TEAM_BLUE ) > m_pArea->GetIncursionDistance( TF_TEAM_BLUE ) + 100.0f )
+					continue;
+
+				m_redAreas->AddToTail( other );
+
+				if ( area->GetIncursionDistance( TF_TEAM_RED ) <= other->GetIncursionDistance( TF_TEAM_RED ) ||
+					 area->GetIncursionDistance( TF_TEAM_RED ) > m_pArea->GetIncursionDistance( TF_TEAM_RED ) + 100.0f )
+					continue;
+
+				m_blueAreas->AddToTail( other );
+			}
+
+			for ( int i=0; i<area->GetIncomingConnections( (NavDirType)dir )->Count(); ++i )
+			{
+				CTFNavArea *other = static_cast<CTFNavArea *>( ( *area->GetIncomingConnections( (NavDirType)dir ) )[i].area );
+				if ( other->m_TFSearchMarker == m_iMarker )
+					continue;
+
+				if ( area->GetIncursionDistance( TF_TEAM_BLUE ) <= other->GetIncursionDistance( TF_TEAM_BLUE ) ||
+					 area->GetIncursionDistance( TF_TEAM_BLUE ) > m_pArea->GetIncursionDistance( TF_TEAM_BLUE ) + 100.0f )
+					continue;
+
+				m_redAreas->AddToTail( other );
+
+				if ( area->GetIncursionDistance( TF_TEAM_RED ) <= other->GetIncursionDistance( TF_TEAM_RED ) ||
+					 area->GetIncursionDistance( TF_TEAM_RED ) > m_pArea->GetIncursionDistance( TF_TEAM_RED ) + 100.0f )
+					continue;
+
+				m_blueAreas->AddToTail( other );
+			}
+		}
+
+		return true;
+	}
+
+private:
+	CTFNavArea *const m_pArea;
+	CUtlVector<CTFNavArea *> *m_redAreas;
+	CUtlVector<CTFNavArea *> *m_blueAreas;
+	int m_iMarker;
+};
+
+
 CTFNavArea::CTFNavArea()
 {
 	Q_memset( &m_aIncursionDistances, 0, sizeof( m_aIncursionDistances ) );
@@ -339,85 +404,21 @@ CTFNavArea *CTFNavArea::GetNextIncursionArea( int teamNum ) const
 	return result;
 }
 
-class CollectInvasionAreas
-{
-public:
-	CollectInvasionAreas( CTFNavArea *startArea, CUtlVector<CTFNavArea *> *redAreas, CUtlVector<CTFNavArea *> *blueAreas, int marker )
-		: m_redAreas( redAreas ), m_blueAreas( blueAreas )
-	{
-		m_pArea = startArea;
-		m_iMarker = marker;
-	}
-
-	bool operator()( CNavArea *a )
-	{
-		CTFNavArea *area = static_cast<CTFNavArea *>( a );
-		for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
-		{
-			for ( int i=0; i<area->GetAdjacentAreas( (NavDirType)dir )->Count(); ++i )
-			{
-				CTFNavArea *other = static_cast<CTFNavArea *>( ( *area->GetAdjacentAreas( (NavDirType)dir ) )[i].area );
-				if ( other->m_TFSearchMarker == m_iMarker )
-					continue;
-
-				if ( area->GetIncursionDistance( TF_TEAM_BLUE ) <= other->GetIncursionDistance( TF_TEAM_BLUE ) ||
-					 area->GetIncursionDistance( TF_TEAM_BLUE ) > m_pArea->GetIncursionDistance( TF_TEAM_BLUE ) + 100.0f )
-					continue;
-
-				m_redAreas->AddToTail( other );
-
-				if ( area->GetIncursionDistance( TF_TEAM_RED ) <= other->GetIncursionDistance( TF_TEAM_RED ) ||
-					 area->GetIncursionDistance( TF_TEAM_RED ) > m_pArea->GetIncursionDistance( TF_TEAM_RED ) + 100.0f )
-					continue;
-
-				m_blueAreas->AddToTail( other );
-			}
-
-			for ( int i=0; i<area->GetIncomingConnections( (NavDirType)dir )->Count(); ++i )
-			{
-				CTFNavArea *other = static_cast<CTFNavArea *>( ( *area->GetIncomingConnections( (NavDirType)dir ) )[i].area );
-				if ( other->m_TFSearchMarker == m_iMarker )
-					continue;
-
-				if ( area->GetIncursionDistance( TF_TEAM_BLUE ) <= other->GetIncursionDistance( TF_TEAM_BLUE ) ||
-					 area->GetIncursionDistance( TF_TEAM_BLUE ) > m_pArea->GetIncursionDistance( TF_TEAM_BLUE ) + 100.0f )
-					continue;
-
-				m_redAreas->AddToTail( other );
-
-				if ( area->GetIncursionDistance( TF_TEAM_RED ) <= other->GetIncursionDistance( TF_TEAM_RED ) ||
-					 area->GetIncursionDistance( TF_TEAM_RED ) > m_pArea->GetIncursionDistance( TF_TEAM_RED ) + 100.0f )
-					continue;
-
-				m_blueAreas->AddToTail( other );
-			}
-		}
-
-		return true;
-	}
-
-private:
-	CTFNavArea *m_pArea;
-	CUtlVector<CTFNavArea *> *m_redAreas;
-	CUtlVector<CTFNavArea *> *m_blueAreas;
-	int m_iMarker;
-};
 void CTFNavArea::ComputeInvasionAreaVectors()
 {
 	for ( int i=0; i<4; ++i )
 		m_InvasionAreas[i].RemoveAll();
 
-	// Some inline method or a functor is going on here
-
 	static int searchMarker = RandomInt( 0, Square( 1024 ) );
 	searchMarker++;
-	auto MarkSearchAreas = [ = ]( CNavArea *a ) -> bool {
+
+	auto MarkVisibleSet = [ = ]( CNavArea *a ) {
 		CTFNavArea *area = static_cast<CTFNavArea *>( a );
 		area->m_TFSearchMarker = searchMarker;
 
 		return true;
 	};
-	ForAllCompletelyVisibleAreas( MarkSearchAreas );
+	ForAllCompletelyVisibleAreas( MarkVisibleSet );
 
 	CollectInvasionAreas functor( this, &m_InvasionAreas[TF_TEAM_RED], &m_InvasionAreas[TF_TEAM_BLUE], searchMarker );
 	ForAllCompletelyVisibleAreas( functor );
