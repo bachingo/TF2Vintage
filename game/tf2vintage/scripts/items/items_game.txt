@@ -4955,6 +4955,48 @@
 				}
 			}
 		}
+		"444"
+		{
+			"name"			"The Mantreads"
+			"prefab"		"weapon_wearable"
+			"year"				"2011"
+			"item_type_name" 	"#TF_Wearable_Boots"
+			"item_logname" "mantreads"
+			"item_iconname" "mantreads"
+			"item_name"		"#TF_Mantreads"
+			"item_slot"		"secondary"
+			"equip_region"	"feet"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/player/items/soldier/mantreads/mantreads"
+			"model_player"		"models/workshop/player/items/soldier/mantreads/mantreads.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"attributes"
+			{
+				"damage force reduction"
+				{
+					"attribute_class"	"damage_force_reduction"
+					"value"	"0.25"
+				}
+				"airblast vulnerability multiplier"
+				{
+					"attribute_class"	"airblast_vulnerability_multiplier"
+					"value"	"0.25"
+				}
+				"boots falling stomp"
+				{
+					"attribute_class"	"boots_falling_stomp"
+					"value" "1"
+				}
+				"mod_air_control_blast_jump"
+				{
+					"attribute_class"	"mod_air_control_blast_jump"
+					"value" "3.0"
+				}
+			}
+		}
 		"460"
 		{
 			"name"	"The Enforcer"
