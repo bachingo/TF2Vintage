@@ -6269,24 +6269,25 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 
 // We can use these to check between normal and boss behavior without writing out individual massive if statements each time.
 // For regular classes.
-bool CTFGameRules::IsNormalClass(CBaseEntity *pPlayer)
+bool CTFGameRules::IsNormalClass( CBaseEntity *pPlayer )
 {
-	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-	if (pTFPlayer->IsPlayerClass(TF_CLASS_SCOUT) || pTFPlayer->IsPlayerClass(TF_CLASS_SNIPER) || pTFPlayer->IsPlayerClass(TF_CLASS_SOLDIER) ||
-		pTFPlayer->IsPlayerClass(TF_CLASS_DEMOMAN) || pTFPlayer->IsPlayerClass(TF_CLASS_MEDIC) || pTFPlayer->IsPlayerClass(TF_CLASS_HEAVYWEAPONS) ||
-		pTFPlayer->IsPlayerClass(TF_CLASS_PYRO) || pTFPlayer->IsPlayerClass(TF_CLASS_SPY) || pTFPlayer->IsPlayerClass(TF_CLASS_ENGINEER))
-		return true;
-	else
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	if( pTFPlayer == nullptr )
 		return false;
+	
+	if ( pTFPlayer->GetPlayerClass()->GetClassIndex() >= TF_FIRST_NORMAL_CLASS && pTFPlayer->GetPlayerClass()->GetClassIndex() <= TF_LAST_NORMAL_CLASS )
+		return true;
+	
+	return false;
 }
 // For boss characters.
-bool CTFGameRules::IsBossClass(CBaseEntity *pPlayer)
+bool CTFGameRules::IsBossClass( CBaseEntity *pPlayer )
 {
-	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-	if (pTFPlayer->IsPlayerClass(TF_CLASS_SAXTON))
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	if ( pTFPlayer && pTFPlayer->IsPlayerClass( TF_CLASS_SAXTON ) )
 		return true;
-	else
-		return false;
+	
+	return false;
 }
 
 //-----------------------------------------------------------------------------
