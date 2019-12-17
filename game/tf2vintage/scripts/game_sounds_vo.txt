@@ -7399,6 +7399,17 @@
 	"wave"			"vo/heavy_Thanks03.wav"
 }
 
+"Heavy.Thanks04"
+{
+	"channel"		"CHAN_VOICE"
+	"volume"		"0.820"
+	"pitch"			"PITCH_NORM"
+
+	"soundlevel"	"SNDLVL_95dB"
+
+	"wave"			"vo/heavy_Thanks04.wav"
+}
+
 "Heavy.ThanksForTheHeal01"
 {
 	"channel"		"CHAN_VOICE"
