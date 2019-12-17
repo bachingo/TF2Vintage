@@ -4212,6 +4212,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 	const char *killer_weapon_name = GetKillingWeaponName( info, pTFPlayerVictim, iWeaponID );
 	const char *killer_weapon_log_name = NULL;
 
+
 	if ( iWeaponID && pScorer )
 	{
 		CTFWeaponBase *pWeapon = pScorer->Weapon_OwnsThisID( iWeaponID );
@@ -4228,7 +4229,13 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 			}
 		}
 	}
-
+	
+	if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BOOTS_STOMP )
+	{
+		killer_weapon_name = "mantreads";
+		killer_weapon_log_name = "mantreads";
+	}
+	
 	IGameEvent *event = gameeventmanager->CreateEvent( szName );
 	if ( event )
 	{
