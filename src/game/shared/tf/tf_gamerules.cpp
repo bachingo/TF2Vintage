@@ -5826,34 +5826,46 @@ void CTFGameRules::CollectDefendPoints( CBasePlayer *pPlayer, CUtlVector<CTeamCo
 //-----------------------------------------------------------------------------
 CTeamTrainWatcher *CTFGameRules::GetPayloadToPush( int iTeam )
 {
-	if ( m_nGameType != TF_GAMETYPE_ESCORT )
+	if ( GetGameType() != TF_GAMETYPE_ESCORT )
 		return nullptr;
+
+	if ( iTeam == TF_TEAM_BLUE )
+	{
+		if ( m_hBlueAttackTrain )
+			return m_hBlueAttackTrain;
+
+		CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
+		while ( pWatcher )
+		{
+			if ( !pWatcher->IsDisabled() && pWatcher->GetTeamNumber() == iTeam )
+			{
+				m_hBlueAttackTrain = pWatcher;
+				return m_hBlueAttackTrain;
+			}
+
+			pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+		}
+	}
 
 	if ( iTeam == TF_TEAM_RED )
 	{
-		if ( m_hRedAttackTrain || HasMultipleTrains() )
+		if ( m_hRedAttackTrain )
 			return m_hRedAttackTrain;
-	}
 
-	if ( iTeam != TF_TEAM_BLUE )
-		return nullptr;
-
-	if ( m_hBlueAttackTrain || HasMultipleTrains() )
-		return m_hBlueAttackTrain;
-
-	CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
-	while ( pWatcher )
-	{
-		if ( !pWatcher->IsDisabled() )
+		CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
+		while ( pWatcher )
 		{
-			m_hBlueAttackTrain = pWatcher;
-			return m_hBlueAttackTrain;
-		}
+			if ( !pWatcher->IsDisabled() && pWatcher->GetTeamNumber() == iTeam )
+			{
+				m_hRedAttackTrain = pWatcher;
+				return m_hRedAttackTrain;
+			}
 
-		pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+			pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+		}
 	}
 
-	return m_hBlueAttackTrain;
+	return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -5861,34 +5873,47 @@ CTeamTrainWatcher *CTFGameRules::GetPayloadToPush( int iTeam )
 //-----------------------------------------------------------------------------
 CTeamTrainWatcher *CTFGameRules::GetPayloadToBlock( int iTeam )
 {
-	if ( m_nGameType != TF_GAMETYPE_ESCORT )
+	if ( GetGameType() != TF_GAMETYPE_ESCORT )
 		return nullptr;
 
 	if ( iTeam == TF_TEAM_BLUE )
 	{
-		if ( m_hBlueDefendTrain || HasMultipleTrains() )
+		if ( m_hBlueDefendTrain )
 			return m_hBlueDefendTrain;
-	}
 
-	if ( iTeam != TF_TEAM_RED )
-		return nullptr;
-
-	if ( m_hRedDefendTrain || HasMultipleTrains() )
-		return m_hRedAttackTrain;
-
-	CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
-	while ( pWatcher )
-	{
-		if ( !pWatcher->IsDisabled() )
+		CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
+		while ( pWatcher )
 		{
-			m_hRedDefendTrain = pWatcher;
-			return m_hRedDefendTrain;
-		}
+			if ( !pWatcher->IsDisabled() && pWatcher->GetTeamNumber() != iTeam )
+			{
+				m_hBlueDefendTrain = pWatcher;
+				return m_hBlueDefendTrain;
+			}
 
-		pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+			pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+		}
 	}
 
-	return m_hRedDefendTrain;
+	if ( iTeam == TF_TEAM_RED )
+	{
+
+		if ( m_hRedDefendTrain )
+			return m_hRedDefendTrain;
+
+		CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
+		while ( pWatcher )
+		{
+			if ( !pWatcher->IsDisabled() && pWatcher->GetTeamNumber() != iTeam )
+			{
+				m_hRedDefendTrain = pWatcher;
+				return m_hRedDefendTrain;
+			}
+
+			pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+		}
+	}
+
+	return nullptr;
 }
 
 #endif
@@ -5911,7 +5936,7 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 		( pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE ) +
 		( pRoundStats->m_iStat[TFSTAT_DAMAGE] / TF_SCORE_DAMAGE_PER_POINT ) +
 		( pRoundStats->m_iStat[TFSTAT_BONUS] / TF_SCORE_BONUS_PER_POINT );
-	return max( iScore, 0 );
+	return Max( iScore, 0 );
 }
 
 //-----------------------------------------------------------------------------

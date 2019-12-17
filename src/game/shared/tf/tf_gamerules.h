@@ -501,7 +501,6 @@ private:
 
 	CUtlVector<CTFPlayer *> m_hArenaQueue;
 
-public:
 	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
 
 	CHandle<CTeamTrainWatcher> m_hRedAttackTrain;
