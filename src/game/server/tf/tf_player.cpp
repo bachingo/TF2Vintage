@@ -7956,6 +7956,12 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 		// Looping fire pain sound is done in CTFPlayerShared::ConditionThink
 		return;
 	}
+	
+	if ( info.GetDamageType() & TF_DMG_CUSTOM_BOOTS_STOMP )
+	{
+		EmitSound( "Weapon_Mantreads.Impact" );
+		return;
+	}
 
 	float flPainLength = 0;
 
