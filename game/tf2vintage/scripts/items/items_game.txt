@@ -4451,7 +4451,7 @@
 				"spunup_damage_resistance"
 				{
 					"attribute_class"		"spunup_damage_resistance"
-					"value"					"0.45"
+					"value"					"0.60"
 				}
 			}
 			"particle_suffix"	"brass_beast"
@@ -10863,6 +10863,336 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 			"armory_desc"	"on_hit"
+			"stored_as_integer"	"0"
+		}
+		"744"
+		{
+			"name"					"hide crate series number"
+			"attribute_class"		"hide_crate_series_number"
+			"hidden"				"1"
+			"stored_as_integer"	"1"
+		}
+		"745"
+		{
+			"name"					"has team color paintkit"
+			"attribute_class"		"has_team_color_paintkit"
+			"description_string"	"#Attrib_HasTeamColorPaintkit"
+			"description_format"	"value_is_additive"
+			"effect_type"			"neutral"
+			"stored_as_integer"		"1"
+		}
+		"746"
+		{
+			"name"	"cosmetic_allow_inspect"
+			"attribute_class"	"cosmetic_allow_inspect"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"747"
+		{
+			"name"	"hat only unusual effect"
+			"attribute_class"		"hat_only_unusual_effect"
+			"description_format"	"value_is_particle_index"
+			"hidden"	"1"
+			"effect_type"	"unusual"
+			"stored_as_integer"	"0"
+			"can_affect_market_name"	"1"
+		}
+		"748"
+		{
+			"name"	"items traded in for"
+			"attribute_class"		"items_traded_in_for"
+			"description_string"	"#Attrib_ItemsTradedIn"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"1"
+		}
+		"749"
+		{
+			"name"	"texture_wear_default"
+			"attribute_class"	"texture_wear_default"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"750"
+		{
+			"name"	"taunt only unusual effect"
+			"attribute_class"		"taunt_only_unusual_effect"
+			"description_format"	"value_is_particle_index"
+			"hidden"	"1"
+			"effect_type"	"unusual"
+			"can_affect_market_name"	"1"
+			"stored_as_integer"	"1"
+		}
+		"751"					
+		{
+			"name"	"deactive date"
+			"attribute_class"	"deactive_date"
+			"description_format"	"value_is_date"
+			"hidden"	"1"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"1"
+		}
+		"752"
+		{
+			"name"	"is giger counter"
+			"attribute_class"	"is_giger_counter"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"753"
+		{
+			"name"	"hide_strange_prefix"
+			"attribute_class"	"hide_strange_prefix"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"754"
+		{
+			"name"	"always_transmit_so"
+			"attribute_class"	"always_transmit_so"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"760"
+		{
+			"name"					"allow_halloween_offering"
+			"attribute_class"		"allow_halloween_offering"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"762"
+		{
+			"name"					"cannot_transmute"
+			"attribute_class"		"cannot_transmute"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"772"
+		{
+			"name"	"single wep holster time increased"
+			"attribute_class"	"mult_switch_from_wep_deploy_time"
+			"description_string"	"#Attrib_SingleWepHolsterPenalty"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"773"
+		{
+			"name"	"single wep deploy time increased"
+			"attribute_class"	"mult_single_wep_deploy_time"
+			"description_string"	"#Attrib_SingleWepDeployPenalty"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"774"
+		{
+			"name"	"charge time decreased"
+			"attribute_class"	"mod_charge_time"
+			"description_string"	"#Attrib_ChargeTime_Decrease"
+			"description_format"	"value_is_additive"
+			"effect_type"	"negative"
+			"armory_desc"	"on_wearer"
+		}
+		"775"
+		{
+			"name"	"dmg penalty vs buildings"
+			"attribute_class"	"mult_dmg_vs_buildings"
+			"description_string"	"#Attrib_DmgVsBuilding_decreased"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"negative"
+		}
+		"776"
+		{
+			"name"	"charge impact damage decreased"
+			"attribute_class"	"charge_impact_damage"
+			"description_string"	"#Attrib_ChargeImpactDamageDecreased"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"777"
+		{
+			"name"	"non economy"
+			"attribute_class"	"non_economy"
+			"description_string"	"#Attrib_NonEconomyItem"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"0"
+		}
+		"778"
+		{
+			"name"					"charge meter on hit"
+			"attribute_class"		"charge_meter_on_hit"
+			"description_string"	"#Attrib_HitsRefillMeter"
+			"description_format"	"value_is_additive_percentage"
+			"effect_type"			"positive"
+		}
+		"779"
+		{
+			"name"	"minicrit_boost_when_charged"
+			"attribute_class"	"minicrit_boost_when_charged"
+			"description_string"	"#Attrib_MiniCritBoost_WhenCharged"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+		}
+		"780"
+		{
+			"name" "minicrit_boost_charge_rate"
+			"attribute_class" "minicrit_boost_charge_rate"
+			"description_string" "#Attrib_MiniCritBoost_ChargeRate"
+			"description_format" "value_is_additive"
+			"hidden" "0"
+			"effect_type" "positive"
+			"stored_as_integer" "0"
+		}
+		"781"
+		{
+			"name" "is_a_sword"
+			"attribute_class" 	"is_a_sword"
+			"description_string" "#Attrib_IsASword"
+			"description_format" "value_is_additive"
+			"hidden" "0"
+			"effect_type" "neutral"
+		}
+		"782"
+		{
+			"name"	"ammo gives charge"
+			"attribute_class"	"ammo_gives_charge"
+			"description_string"	"#Attrib_AmmoGivesCharge"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"1"
+		}
+		"783"
+		{
+			"name"	"extinguish restores health"
+			"attribute_class"	"extinguish_restores_health"
+			"description_string"	"#Attrib_ExtinguishRestoresHealth"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+		}
+		"784"
+		{
+			"name" "extinguish reduces cooldown"
+			"attribute_class" "extinguish_reduces_cooldown"
+			"description_string" "#Attrib_ExtinguishReducesCooldown"
+			"description_format" "value_is_percentage"
+			"hidden" "0"
+			"effect_type" "positive"
+		}
+		"785"
+		{
+			"name"					"cannot giftwrap"
+			"attribute_class"		"cannot_giftwrap"
+			"hidden"				"1"
+			"stored_as_integer"	"1"
+		}
+		"786"
+		{
+			"name"					"tool needs giftwrap"
+			"attribute_class"		"tool_needs_giftwrap"
+			"hidden"				"1"
+			"stored_as_integer"	"1"
+		}
+		"787"
+		{
+			"name"	"fuse bonus"
+			"attribute_class"	"fuse_mult"
+			"description_string"	"#Attrib_Fuse_Bonus"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"788"
+		{
+			"name"	"move speed bonus shield required"
+			"attribute_class"	"mult_player_movespeed_shieldrequired"
+			"description_string"	"#Attrib_MoveSpeed_Bonus_ShieldRequired"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_wearer"
+			"stored_as_integer"	"0"
+		}
+		"789"
+		{
+			"name"	"damage bonus bullet vs sentry target"
+			"attribute_class"	"mult_dmg_bullet_vs_sentry_target"
+			"description_string"	"#Attrib_DamageBonusAgainstSentryTarget"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"790"
+		{
+			"name"	"mod teleporter cost"
+			"attribute_class"	"mod_teleporter_cost"
+			"description_string"	"#Attrib_TeleporterBuildCost"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"791"
+		{
+			"name"	"damage blast push"
+			"attribute_class"	"damage_blast_push"
+			"description_string"	"#Attrib_DamageBlastPush"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"792"
+		{
+			"name"	"move speed bonus resource level"
+			"attribute_class"	"mult_player_movespeed_resource_level"
+			"description_format"	"value_is_percentage"
+			"hidden"	"1"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"793"
+		{
+			"name"	"hype on damage"
+			"attribute_class"	"hype_on_damage"
+			"description_string"	"#Attrib_HypeOnDamage"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"794"
+		{
+			"name"	"dmg taken from fire reduced on active"
+			"attribute_class"	"mult_dmgtaken_from_fire_active"
+			"description_string"	"#Attrib_DmgTaken_From_Fire_ReducedActive"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_wearer"
+			"stored_as_integer"	"0"
+		}
+		"795"
+		{
+			"name"	"damage bonus vs burning"
+			"attribute_class"	"mult_dmg_vs_burning"
+			"description_string"	"#Attrib_DmgBonusVsBurning"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
 		"796"
