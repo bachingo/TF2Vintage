@@ -47,7 +47,7 @@ bool CCollectPayloadGuardVantagePoints::operator()( CNavArea *area, CNavArea *pr
 
 			if ( tf_bot_debug_payload_guard_vantage_points.GetBool() )
 			{
-				NDebugOverlay::Cross3D( point, 5.0f, 0xff, 0x00, 0xff, true, 120.0f );
+				NDebugOverlay::Cross3D( point, 5.0f, 0xFF, 0x00, 0xFF, true, 120.0f );
 			}
 		}
 	}
@@ -121,23 +121,24 @@ ActionResult<CTFBot> CTFBotPayloadGuard::Update( CTFBot *me, float dt )
 		m_vecVantagePoint = FindVantagePoint( me, pTrain );
 		m_recomputePathTimer.Invalidate();
 	}
-	else if ( m_vecVantagePoint.DistToSqr( me->GetAbsOrigin() ) <= Square( 25.0f ) )
+	
+	if ( m_vecVantagePoint.DistToSqr( me->GetAbsOrigin() ) > Square( 25.0f ) )
 	{
-		if ( CTFBotPrepareStickybombTrap::IsPossible( me ) )
-			return BaseClass::SuspendFor( new CTFBotPrepareStickybombTrap, "Laying sticky bombs!" );
+		if ( m_recomputePathTimer.IsElapsed() )
+		{
+			CTFBotPathCost func( me );
+			m_PathFollower.Compute( me, m_vecVantagePoint, func );
+
+			m_recomputePathTimer.Start( RandomFloat( 0.5f, 1.0f ) );
+		}
+
+		m_PathFollower.Update( me );
 
 		return BaseClass::Continue();
 	}
 
-	if ( m_recomputePathTimer.IsElapsed() )
-	{
-		CTFBotPathCost func( me );
-		m_PathFollower.Compute( me, m_vecVantagePoint, func );
-
-		m_recomputePathTimer.Start( RandomFloat( 0.5f, 1.0f ) );
-	}
-
-	m_PathFollower.Update( me );
+	if ( CTFBotPrepareStickybombTrap::IsPossible( me ) )
+		return BaseClass::SuspendFor( new CTFBotPrepareStickybombTrap, "Laying sticky bombs!" );
 
 	return BaseClass::Continue();
 }
