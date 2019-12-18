@@ -319,18 +319,14 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 //-----------------------------------------------------------------------------
 void CTFLunchBox::ApplyBerserkEffect( void )
 {
-	float flBuffaloSteakTime = 18.0f;
+	float flBuffaloSteakTime = 16.0f;
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner )
 	{
-		if (!pOwner->m_Shared.InCond(TF_COND_CANNOT_SWITCH_FROM_MELEE))
-			pOwner->m_Shared.AddCond(TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime);
-		if (!pOwner->m_Shared.InCond(TF_COND_SPEED_BOOST))
-			pOwner->m_Shared.AddCond(TF_COND_SPEED_BOOST, flBuffaloSteakTime);
-		if (!pOwner->m_Shared.InCond(TF_COND_MINICRITBOOSTED))
-			pOwner->m_Shared.AddCond(TF_COND_MINICRITBOOSTED, flBuffaloSteakTime);
-		if (!pOwner->m_Shared.InCond(TF_COND_ENERGY_BUFF))
-			pOwner->m_Shared.AddCond(TF_COND_ENERGY_BUFF, flBuffaloSteakTime);
+		pOwner->m_Shared.AddCond(TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime);
+		pOwner->m_Shared.AddCond(TF_COND_SPEED_BOOST, flBuffaloSteakTime);
+		pOwner->m_Shared.AddCond(TF_COND_MINICRITBOOSTED, flBuffaloSteakTime);
+		pOwner->m_Shared.AddCond(TF_COND_ENERGY_BUFF, flBuffaloSteakTime);
 	}
 }
 
