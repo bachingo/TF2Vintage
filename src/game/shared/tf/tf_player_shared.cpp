@@ -94,7 +94,7 @@ ConVar tf2v_clamp_speed_absolute( "tf2v_clamp_speed_absolute", "450", FCVAR_NOTI
 
 ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era move speed for spies." );
 ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
-
+ConVar tf2v_use_spy_moveattrib ("tf2v_use_spy_moveattrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should spies be affected by their disguise's speed attributes?" );
 
 ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
 
@@ -4383,7 +4383,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	}
 	
 	CTFWeaponBase *pWeapon;
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) && tf2v_use_spy_moveattrib.GetBool() )
 	{
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(m_Shared.GetDisguiseTarget()), maxfbspeed, mult_player_movespeed );
 		
@@ -4450,7 +4450,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( pWeapon )
 		maxfbspeed *= pWeapon->GetSpeedMod();
 	
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
+	if ( ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) ) && tf2v_use_spy_moveattrib.GetBool() )
 	{
 		if (ToTFPlayer(m_Shared.GetDisguiseTarget())->m_Shared.m_bShieldEquipped == true)
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ToTFPlayer(m_Shared.GetDisguiseTarget()), maxfbspeed, mult_player_movespeed_shieldrequired);
