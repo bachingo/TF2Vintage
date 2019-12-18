@@ -36,15 +36,6 @@ ConVar tf_bot_always_full_reload( "tf_bot_always_full_reload", "0", FCVAR_CHEAT 
 ConVar tf_bot_fire_weapon_allowed( "tf_bot_fire_weapon_allowed", "1", FCVAR_CHEAT, "If zero, TFBots will not pull the trigger of their weapons (but will act like they did)", true, 0.0, true, 1.0 );
 
 
-CTFBotMainAction::CTFBotMainAction()
-{
-}
-
-CTFBotMainAction::~CTFBotMainAction()
-{
-}
-
-
 const char *CTFBotMainAction::GetName( void ) const
 {
 	return "MainAction";
@@ -53,7 +44,7 @@ const char *CTFBotMainAction::GetName( void ) const
 
 Action<CTFBot> *CTFBotMainAction::InitialContainedAction( CTFBot *actor )
 {
-	return new CTFBotTacticalMonitor();
+	return new CTFBotTacticalMonitor;
 }
 
 
@@ -66,7 +57,7 @@ ActionResult<CTFBot> CTFBotMainAction::OnStart( CTFBot *me, Action<CTFBot> *prio
 	m_iDesiredDisguise = 0;
 	m_bReloadingBarrage = false;
 
-	return Action<CTFBot>::Continue();
+	return BaseClass::Continue();
 }
 
 ActionResult<CTFBot> CTFBotMainAction::Update( CTFBot *me, float dt )
@@ -74,22 +65,22 @@ ActionResult<CTFBot> CTFBotMainAction::Update( CTFBot *me, float dt )
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
 
 	if ( me->GetTeamNumber() != TF_TEAM_RED && me->GetTeamNumber() != TF_TEAM_BLUE )
-		return Action<CTFBot>::Done( "Not on a playing team" );
+		return BaseClass::Done( "Not on a playing team" );
 
 	me->GetVisionInterface()->SetFieldOfView( me->GetFOV() );
 
 	if ( TFGameRules()->IsInTraining() && me->GetTeamNumber() == TF_TEAM_BLUE )
 		me->GiveAmmo( 1000, TF_AMMO_METAL, true );
 
-	m_flYawDelta = me->EyeAngles()[YAW] - ( m_flPreviousYaw * dt + FLT_EPSILON );
-	m_flPreviousYaw = me->EyeAngles()[YAW];
+	m_flYawDelta = me->EyeAngles()[ YAW ] - ( m_flPreviousYaw * dt + FLT_EPSILON );
+	m_flPreviousYaw = me->EyeAngles()[ YAW ];
 
 	if ( tf_bot_sniper_aim_steady_rate.GetFloat() <= m_flYawDelta )
 		m_sniperSteadyInterval.Invalidate();
 	else if ( !m_sniperSteadyInterval.HasStarted() )
 		m_sniperSteadyInterval.Start();
 
-	if ( !me->IsFiringWeapon() && !me->m_Shared.InCond(TF_COND_DISGUISED) && !me->m_Shared.InCond(TF_COND_DISGUISING) )
+	if ( !me->IsFiringWeapon() && !me->m_Shared.InCond( TF_COND_DISGUISED ) && !me->m_Shared.InCond( TF_COND_DISGUISING ) )
 	{
 		if ( me->CanDisguise() )
 		{
@@ -114,14 +105,14 @@ ActionResult<CTFBot> CTFBotMainAction::Update( CTFBot *me, float dt )
 	FireWeaponAtEnemy( me );
 	Dodge( me );
 
-	return Action<CTFBot>::Continue();
+	return BaseClass::Continue();
 }
 
 
 EventDesiredResult<CTFBot> CTFBotMainAction::OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *trace )
 {
 	// some miniboss crush logic for MvM happens
-	return Action<CTFBot>::TryContinue();
+	return BaseClass::TryContinue();
 }
 
 EventDesiredResult<CTFBot> CTFBotMainAction::OnStuck( CTFBot *me )
@@ -144,10 +135,10 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnStuck( CTFBot *me )
 
 	me->GetLocomotionInterface()->Stop();
 
-	return Action<CTFBot>::TryContinue();
+	return BaseClass::TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotMainAction::OnInjured( CTFBot *me, const CTakeDamageInfo& info )
+EventDesiredResult<CTFBot> CTFBotMainAction::OnInjured( CTFBot *me, const CTakeDamageInfo &info )
 {
 	if ( !dynamic_cast<CBaseObject *>( info.GetInflictor() ) )
 	{
@@ -177,7 +168,7 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnInjured( CTFBot *me, const CTakeD
 
 			FOR_EACH_VEC( teammates, i )
 			{
-				CTFBot *bot = ToTFBot( teammates[i] );
+				CTFBot *bot = ToTFBot( teammates[ i ] );
 				if ( bot )
 				{
 					if ( !me->IsSelf( bot ) && me->IsRangeLessThan( bot, tf_bot_notice_backstab_max_chance.GetFloat() ) )
@@ -199,7 +190,7 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnInjured( CTFBot *me, const CTakeD
 		else
 		{
 			// I get the DMG_CRITICAL, but DMG_BURN?
-			if ( info.GetDamageType() & ( DMG_CRITICAL|DMG_BURN ) )
+			if ( info.GetDamageType() & ( DMG_CRITICAL | DMG_BURN ) )
 			{
 				if ( me->IsRangeLessThan( info.GetAttacker(), tf_bot_notice_backstab_max_chance.GetFloat() ) )
 					me->DelayedThreatNotice( info.GetAttacker(), 0.5 );
@@ -207,15 +198,15 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnInjured( CTFBot *me, const CTakeD
 		}
 	}
 
-	return Action<CTFBot>::TryContinue();
+	return BaseClass::TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotMainAction::OnKilled( CTFBot *me, const CTakeDamageInfo& info )
+EventDesiredResult<CTFBot> CTFBotMainAction::OnKilled( CTFBot *me, const CTakeDamageInfo &info )
 {
-	return Action<CTFBot>::TryChangeTo( new CTFBotDead(), RESULT_CRITICAL, "I died!" );
+	return BaseClass::TryChangeTo( new CTFBotDead, RESULT_CRITICAL, "I died!" );
 }
 
-EventDesiredResult<CTFBot> CTFBotMainAction::OnOtherKilled( CTFBot *me, CBaseCombatCharacter *who, const CTakeDamageInfo& info )
+EventDesiredResult<CTFBot> CTFBotMainAction::OnOtherKilled( CTFBot *me, CBaseCombatCharacter *who, const CTakeDamageInfo &info )
 {
 	me->GetVisionInterface()->ForgetEntity( who );
 
@@ -232,7 +223,7 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnOtherKilled( CTFBot *me, CBaseCom
 
 		if ( !pPlayer->IsBot() && me->IsEnemy( who ) )
 		{
-			float flRand = RandomFloat( 0.0f, 100.0f );
+			const float flRand = RandomFloat( 0.0f, 100.0f );
 			if ( flRand <= tf_bot_taunt_victim_chance.GetFloat() )
 				return Action<CTFBot>::TrySuspendFor( new CTFBotTaunt, RESULT_IMPORTANT, "Taunting our victim" );
 		}
@@ -286,7 +277,7 @@ QueryResultType CTFBotMainAction::ShouldAttack( const INextBot *me, const CKnown
 	return ANSWER_YES;
 }
 
-QueryResultType CTFBotMainAction::IsPositionAllowed( const INextBot *me, const Vector& pos ) const
+QueryResultType CTFBotMainAction::IsPositionAllowed( const INextBot *me, const Vector &pos ) const
 {
 	return ANSWER_YES;
 }
@@ -395,7 +386,7 @@ Vector CTFBotMainAction::SelectTargetPoint( const INextBot *me, const CBaseComba
 		}
 
 		Vector vecToActor = them->GetAbsOrigin() - actor->GetAbsOrigin();
-		
+
 
 		float flErrorSin, flErrorCos;
 		FastSinCos( m_flSniperAimError1, &flErrorSin, &flErrorCos );
@@ -500,16 +491,16 @@ void CTFBotMainAction::Dodge( CTFBot *actor )
 		}
 	}
 
-	Vector eye_vec;
-	actor->EyeVectors( &eye_vec );
+	Vector vecFwd;
+	actor->EyeVectors( &vecFwd );
 
-	Vector2D side_dir( -eye_vec.y, eye_vec.x );
-	side_dir.NormalizeInPlace();
+	Vector2D vecRight( -vecFwd.y, vecFwd.x );
+	vecRight.NormalizeInPlace();
 
 	int random = RandomInt( 0, 100 );
 	if ( random < 33 )
 	{
-		const Vector strafe_left = actor->GetAbsOrigin() + Vector( 25.0f * side_dir.x, 25.0f * side_dir.y, 0.0f );
+		const Vector strafe_left = actor->GetAbsOrigin() + Vector( 25.0f * vecRight.x, 25.0f * vecRight.y, 0.0f );
 		if ( !actor->GetLocomotionInterface()->HasPotentialGap( actor->GetAbsOrigin(), strafe_left ) )
 		{
 			actor->PressLeftButton();
@@ -517,7 +508,7 @@ void CTFBotMainAction::Dodge( CTFBot *actor )
 	}
 	else if ( random > 66 )
 	{
-		const Vector strafe_right = actor->GetAbsOrigin() - Vector( 25.0f * side_dir.x, 25.0f * side_dir.y, 0.0f );
+		const Vector strafe_right = actor->GetAbsOrigin() - Vector( 25.0f * vecRight.x, 25.0f * vecRight.y, 0.0f );
 		if ( !actor->GetLocomotionInterface()->HasPotentialGap( actor->GetAbsOrigin(), strafe_right ) )
 		{
 			actor->PressRightButton();
@@ -537,27 +528,27 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		return;
 	}
 
-	CTFWeaponBase *weapon = actor->GetActiveTFWeapon();
-	if ( weapon == nullptr )
+	CTFWeaponBase *pWeapon = actor->GetActiveTFWeapon();
+	if ( pWeapon == nullptr )
 	{
 		return;
 	}
 
-	if ( actor->IsPlayerClass( TF_CLASS_MEDIC ) && weapon->IsWeapon( TF_WEAPON_MEDIGUN ) )
+	if ( actor->IsPlayerClass( TF_CLASS_MEDIC ) && pWeapon->IsWeapon( TF_WEAPON_MEDIGUN ) )
 	{
 		return;
 	}
 
 	if ( actor->IsBarrageAndReloadWeapon() && tf_bot_always_full_reload.GetBool() )
 	{
-		if ( weapon->Clip1() <= 0 )
+		if ( pWeapon->Clip1() <= 0 )
 		{
 			m_bReloadingBarrage = true;
 		}
 
 		if ( m_bReloadingBarrage )
 		{
-			if ( weapon->Clip1() < weapon->GetMaxClip1() )
+			if ( pWeapon->Clip1() < pWeapon->GetMaxClip1() )
 				return;
 
 			m_bReloadingBarrage = false;
@@ -575,7 +566,7 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		}
 	}
 
-	const CKnownEntity *threat = actor->GetVisionInterface()->GetPrimaryKnownThreat( false );
+	const CKnownEntity *threat = actor->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat == nullptr || threat->GetEntity() == nullptr || !threat->IsVisibleRecently() )
 	{
 		return;
@@ -599,7 +590,7 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		return;
 	}
 
-	if ( weapon->IsMeleeWeapon() )
+	if ( pWeapon->IsMeleeWeapon() )
 	{
 		if ( actor->IsRangeLessThan( threat->GetEntity(), 250.0f ) )
 			actor->PressFireButton();
@@ -607,9 +598,9 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		return;
 	}
 
-	if ( weapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) )
+	if ( pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) )
 	{
-		CTFFlameThrower *flamethrower = static_cast<CTFFlameThrower *>( weapon );
+		CTFFlameThrower *flamethrower = static_cast<CTFFlameThrower *>( pWeapon );
 		if ( flamethrower->CanAirBlast() && actor->ShouldFireCompressionBlast() )
 		{
 			actor->PressAltFireButton();
@@ -626,9 +617,9 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		return;
 	}
 
-	if ( weapon->IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
+	if ( pWeapon->IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
 	{
-		CTFCompoundBow *huntsman = static_cast<CTFCompoundBow *>( weapon );
+		CTFCompoundBow *huntsman = static_cast<CTFCompoundBow *>( pWeapon );
 		if ( huntsman->GetCurrentCharge() >= 0.95f && actor->IsLineOfFireClear( threat->GetEntity() ) )
 			return;
 
@@ -636,7 +627,7 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		return;
 	}
 
-	if ( WeaponID_IsSniperRifle( weapon->GetWeaponID() ) )
+	if ( WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) )
 	{
 		if ( !actor->m_Shared.InCond( TF_COND_ZOOMED ) )
 			return;
@@ -875,10 +866,10 @@ const CKnownEntity *CTFBotMainAction::SelectMoreDangerousThreatInternal( const I
 
 	bool sentry1_danger =
 		( sentry1 && actor->IsRangeLessThan( sentry1, 1100.0f ) &&
-			!sentry1->HasSapper() && !sentry1->IsPlacing() );
+		  !sentry1->HasSapper() && !sentry1->IsPlacing() );
 	bool sentry2_danger =
 		( sentry2 && actor->IsRangeLessThan( sentry2, 1100.0f ) &&
-			!sentry2->HasSapper() && !sentry2->IsPlacing() );
+		  !sentry2->HasSapper() && !sentry2->IsPlacing() );
 
 	if ( sentry1_danger && sentry2_danger )
 	{

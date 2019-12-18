@@ -75,15 +75,6 @@ void FindSafeSentryApproachAreaScan::PostSearch()
 }
 
 
-CTFBotDestroyEnemySentry::CTFBotDestroyEnemySentry()
-{
-}
-
-CTFBotDestroyEnemySentry::~CTFBotDestroyEnemySentry()
-{
-}
-
-
 const char *CTFBotDestroyEnemySentry::GetName() const
 {
 	return "DestroyEnemySentry";

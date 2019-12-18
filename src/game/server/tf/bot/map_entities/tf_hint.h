@@ -20,6 +20,12 @@ public:
 	virtual ~CTFBotHint();
 
 	DECLARE_DATADESC();
+
+	enum
+	{
+		SNIPER_SPOT,
+		SENTRY_SPOT
+	};
 	
 	virtual void Spawn(void);
 	virtual void UpdateOnRemove(void);
@@ -29,7 +35,6 @@ public:
 	
 	bool IsFor( CTFBot *bot ) const;
 	
-private:
 	void UpdateNavDecoration();
 	
 	int m_team;

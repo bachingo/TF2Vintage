@@ -18,8 +18,7 @@ class CTFBotMainAction : public Action<CTFBot>
 {
 	DECLARE_CLASS( CTFBotMainAction, Action<CTFBot> )
 public:
-	CTFBotMainAction();
-	virtual ~CTFBotMainAction();
+	virtual ~CTFBotMainAction() {}
 
 	virtual const char *GetName( void ) const override;
 
