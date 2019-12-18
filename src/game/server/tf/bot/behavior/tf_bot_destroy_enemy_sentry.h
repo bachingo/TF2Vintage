@@ -18,8 +18,7 @@ class CTFBotDestroyEnemySentry : public Action<CTFBot>
 {
 	DECLARE_CLASS( CTFBotDestroyEnemySentry, Action<CTFBot> )
 public:
-	CTFBotDestroyEnemySentry();
-	virtual ~CTFBotDestroyEnemySentry();
+	virtual ~CTFBotDestroyEnemySentry() {}
 
 	virtual const char *GetName() const override;
 

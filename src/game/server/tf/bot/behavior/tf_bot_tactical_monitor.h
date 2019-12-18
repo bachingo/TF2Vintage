@@ -11,9 +11,9 @@ class CObjectTeleporter;
 
 class CTFBotTacticalMonitor : public Action<CTFBot>
 {
+	DECLARE_CLASS( CTFBotTacticalMonitor, Action<CTFBot> );
 public:
-	CTFBotTacticalMonitor();
-	virtual ~CTFBotTacticalMonitor();
+	virtual ~CTFBotTacticalMonitor() {}
 
 	virtual const char *GetName( void ) const override;
 
@@ -32,7 +32,7 @@ private:
 	void MonitorArmedStickybombs( CTFBot *actor );
 	bool ShouldOpportunisticallyTeleport( CTFBot *actor ) const;
 
-	// 34 CountdownTimer
+	CountdownTimer m_checkUseTeleportTimer;
 	// 40 CountdownTimer (related to taunting at humans)
 	// 4c CountdownTimer (related to taunting at humans)
 	// 58 CountdownTimer (related to taunting at humans)

@@ -886,12 +886,12 @@ CCPTimerLogic::CCPTimerLogic()
 	m_bOn10SecRemain = true;
 	m_bOn15SecRemain = true;
 	m_bRestartTimer = true;
-	SetContextThink( &CCPTimerLogic::Think, gpGlobals->curtime + 0.15, "CCPTimerLogicThink" );
 }
 
 void CCPTimerLogic::Spawn( void )
 {
 	BaseClass::Spawn();
+	SetContextThink( &CCPTimerLogic::Think, gpGlobals->curtime + 0.15, "CCPTimerLogicThink" );
 }
 
 void CCPTimerLogic::Think( void )
@@ -899,33 +899,33 @@ void CCPTimerLogic::Think( void )
 	if ( !TFGameRules() || !ObjectiveResource() )
 		return;
 
-	float flUnknown = 0.15f;
+	const float flThinkInterval = 0.15f;
+
 	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 	{
-		flUnknown = gpGlobals->curtime + 0.15f;
 		m_TimeRemaining.Invalidate();
-		SetNextThink( flUnknown );
+		SetNextThink( gpGlobals->curtime + flThinkInterval );
 	}
 
 	if ( m_hPoint )
 	{
-		int index = m_hPoint->GetPointIndex();
+		int iIndex = m_hPoint->GetPointIndex();
 
-		if ( TFGameRules()->TeamMayCapturePoint( TF_TEAM_BLUE, index ) )
+		if ( TFGameRules()->TeamMayCapturePoint( TF_TEAM_BLUE, iIndex ) )
 		{
 			if ( m_TimeRemaining.GetRemainingTime() <= 0.0 && m_bRestartTimer )
 			{
-				m_TimeRemaining.Start( flUnknown + m_nTimerLength );
+				m_TimeRemaining.Start( flThinkInterval + m_nTimerLength );
 				m_onCountdownStart.FireOutput( this, this );
-				ObjectiveResource()->SetCPTimerTime( index, gpGlobals->curtime + m_nTimerLength );
+				ObjectiveResource()->SetCPTimerTime( iIndex, gpGlobals->curtime + m_nTimerLength );
 				m_bRestartTimer = false;
 			}
 			else
 			{
-				if ( flUnknown <= m_TimeRemaining.GetRemainingTime() )
+				if ( flThinkInterval <= m_TimeRemaining.GetRemainingTime() )
 				{
 					// I don't think is actually doing anything
-					float flTime = m_TimeRemaining.GetRemainingTime() - flUnknown;
+					float flTime = m_TimeRemaining.GetRemainingTime() - flThinkInterval;
 					if ( flTime <= 15.0 && m_bOn15SecRemain )
 					{
 						m_bOn15SecRemain = false;
@@ -941,7 +941,7 @@ void CCPTimerLogic::Think( void )
 				}
 				else
 				{
-					if ( ObjectiveResource()->GetNumControlPoints() <= index || ObjectiveResource()->GetCappingTeam( index ) == TEAM_UNASSIGNED )
+					if ( ObjectiveResource()->GetNumControlPoints() <= iIndex || ObjectiveResource()->GetCappingTeam( iIndex ) == TEAM_UNASSIGNED )
 					{
 						m_TimeRemaining.Invalidate();
 						m_onCountdownEnd.FireOutput( this, this );
@@ -949,7 +949,7 @@ void CCPTimerLogic::Think( void )
 						m_bOn10SecRemain = true;
 						m_bOn5SecRemain = true;
 						m_bRestartTimer = true;
-						ObjectiveResource()->SetCPTimerTime( index, -1.0f );
+						ObjectiveResource()->SetCPTimerTime( iIndex, -1.0f );
 						SetNextThink( TICK_NEVER_THINK );
 					}
 				}
@@ -961,7 +961,8 @@ void CCPTimerLogic::Think( void )
 			m_bRestartTimer = true;
 		}
 	}
-	SetNextThink( gpGlobals->curtime + 0.15f );
+
+	SetNextThink( gpGlobals->curtime + flThinkInterval );
 }
 
 void CCPTimerLogic::InputRoundSpawn( inputdata_t &inputdata )

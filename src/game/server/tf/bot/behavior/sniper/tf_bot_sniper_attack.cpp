@@ -32,19 +32,17 @@ ActionResult<CTFBot> CTFBotSniperAttack::OnStart( CTFBot *me, Action<CTFBot> *pr
 
 ActionResult<CTFBot> CTFBotSniperAttack::Update( CTFBot *me, float dt )
 {
-	CBaseCombatWeapon *primary = me->Weapon_GetSlot( 0 );
-	if ( primary != nullptr )
+	CBaseCombatWeapon *pPrimary = me->Weapon_GetSlot( 0 );
+	if ( pPrimary != nullptr )
 	{
-		me->Weapon_Switch( primary );
+		me->Weapon_Switch( pPrimary );
 	}
 
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat( false );
 	if ( threat == nullptr || !threat->GetEntity()->IsAlive() || !threat->IsVisibleInFOVNow() )
 	{
 		if ( m_lingerDuration.IsElapsed() && !me->m_Shared.InCond( TF_COND_ZOOMED ) )
-		{
-			return Action<CTFBot>::Done( "No threat for awhile" );
-		}
+			return Action<CTFBot>::Done( "No threat for a while" );
 
 		return Action<CTFBot>::Continue();
 	}

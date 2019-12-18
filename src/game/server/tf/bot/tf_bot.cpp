@@ -1609,7 +1609,7 @@ void CTFBot::UpdateLookingAroundForEnemies( void )
 		{
 			for ( int i = 0; i < 10; ++i )
 			{
-				const Vector vSpot = functor.m_pSelected->GetRandomPoint() + Vector( 0, 0, 53.25f );
+				const Vector vSpot = functor.m_pSelected->GetRandomPoint() + Vector( 0, 0, HumanHeight * 0.75f );
 				if ( GetVisionInterface()->IsLineOfSightClear( vSpot ) )
 				{
 					GetBodyInterface()->AimHeadTowards( vSpot, IBody::IMPORTANT, 1.0f, nullptr, "Looking toward potentially visible area near known but hidden threat" );
@@ -1916,7 +1916,7 @@ void CTFBot::AccumulateSniperSpots( void )
 	{
 		for ( int i=0; i<m_sniperSpots.Count(); ++i )
 		{
-			NDebugOverlay::Cross3D( m_sniperSpots[i].m_vecHome, 5.0f, 255, 255, 205, false, 1 );
+			NDebugOverlay::Cross3D( m_sniperSpots[i].m_vecHome, 5.0f, 255, 0, 255, true, 0.1f );
 			NDebugOverlay::Line( m_sniperSpots[i].m_vecHome, m_sniperSpots[i].m_vecForward, 0, 200, 0, true, 0.1f );
 		}
 	}
@@ -1974,10 +1974,10 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 
 	if ( TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT )
 	{
-		if ( GetMyControlPoint()->GetOwner() == GetTeamNumber() )
+		if ( GetMyControlPoint()->GetOwner() == iMyTeam )
 		{
 			objectiveArea = TFNavMesh()->GetMainControlPointArea( GetMyControlPoint()->GetPointIndex() );
-			bCheckForward = GetMyControlPoint()->GetOwner() == GetTeamNumber();
+			bCheckForward = GetMyControlPoint()->GetOwner() == iMyTeam;
 		}
 	}
 	else

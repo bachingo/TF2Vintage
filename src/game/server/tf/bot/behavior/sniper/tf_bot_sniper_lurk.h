@@ -25,20 +25,20 @@ public:
 	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const override;
 
 private:
-	//CTFBotHint *FindHint(CTFBot *actor);
+	bool FindHint( CTFBot *actor );
 	bool FindNewHome( CTFBot *actor );
 
 	CountdownTimer m_patienceDuration;
 	CountdownTimer m_recomputePathTimer;
 	PathFollower m_PathFollower;
-	// 4820 int
+	int unused;
 	Vector m_vecHome;
 	bool m_bHasHome;
 	bool m_bNearHome;
 	CountdownTimer m_findHomeTimer;
 	bool m_bOpportunistic;
-	//CUtlVector< CHandle<CTFBotHint> > m_Hints;
-	//CHandle<CTFBotHint> m_hHint;
+	CUtlVector< CHandle<CTFBotHint> > m_Hints;
+	CHandle<CTFBotHint> m_hHint;
 };
 
 #endif

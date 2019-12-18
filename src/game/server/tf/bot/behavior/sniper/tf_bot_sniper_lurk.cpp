@@ -2,11 +2,13 @@
 #include "tf_gamerules.h"
 #include "team_control_point.h"
 #include "nav_mesh/tf_nav_mesh.h"
-#include "../../tf_bot.h"
+#include "tf_bot.h"
+#include "map_entities/tf_hint.h"
 #include "tf_bot_sniper_lurk.h"
-#include "../tf_bot_melee_attack.h"
+#include "behavior/tf_bot_melee_attack.h"
 
 
+ConVar tf_bot_debug_sniper( "tf_bot_debug_sniper", "0", FCVAR_CHEAT );
 ConVar tf_bot_sniper_patience_duration( "tf_bot_sniper_patience_duration", "10", FCVAR_CHEAT, "How long a Sniper bot will wait without seeing an enemy before picking a new spot" );
 ConVar tf_bot_sniper_target_linger_duration( "tf_bot_sniper_target_linger_duration", "2", FCVAR_CHEAT, "How long a Sniper bot will keep toward at a target it just lost sight of" );
 ConVar tf_bot_sniper_allow_opportunistic( "tf_bot_sniper_allow_opportunistic", "1", FCVAR_NONE, "If set, Snipers will stop on their way to their preferred lurking spot to snipe at opportunistic targets" );
@@ -35,72 +37,63 @@ ActionResult<CTFBot> CTFBotSniperLurk::OnStart( CTFBot *me, Action<CTFBot> *prio
 	m_vecHome = me->GetAbsOrigin();
 	m_bHasHome = false;
 	m_bNearHome = false;
-	// TODO: dword @ 0x4820 = 0
+	unused = 0;
 	m_bOpportunistic = tf_bot_sniper_allow_opportunistic.GetBool();
 
-	/*CBaseEntity *ent = nullptr;
+	CBaseEntity *ent = nullptr;
 	while ( ( ent = gEntList.FindEntityByClassname( ent, "func_tfbot_hint" ) ) != nullptr )
 	{
 		auto hint = static_cast<CTFBotHint *>( ent );
 
-		// TODO: is m_hint an enum or something?
-		if ( hint->m_hint == 0 )
+		if ( hint->m_hint == CTFBotHint::SNIPER_SPOT )
 		{
 			m_Hints.AddToTail( hint );
 
-			if ( actor->IsSelf( hint->GetOwnerEntity() ) )
+			if ( me->IsSelf( hint->GetOwnerEntity() ) )
 			{
 				hint->SetOwnerEntity( nullptr );
 			}
 		}
 	}
 
-	m_hHint = nullptr;*/
+	m_hHint = nullptr;
 
 	return Action<CTFBot>::Continue();
 }
 
 ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 {
-	me->AccumulateSniperSpots();
-
 	if ( !m_bHasHome )
 	{
 		FindNewHome( me );
 	}
 
-	bool attacking = false;
+	bool bIsAttacking = false;
 
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
-	if ( threat != nullptr && threat->GetEntity()->IsAlive() &&
-		 me->GetIntentionInterface()->ShouldAttack( me, threat ) )
+	if ( threat != nullptr && threat->GetEntity()->IsAlive() && me->GetIntentionInterface()->ShouldAttack( me, threat ) )
 	{
 		if ( threat->IsVisibleInFOVNow() )
 		{
-		// dword @ 0x4820 = 0
+			unused = 0;
 
-			float dist_sqr = threat->GetLastKnownPosition().DistToSqr( me->GetAbsOrigin() );
-			if ( dist_sqr >= Square( tf_bot_sniper_melee_range.GetFloat() ) )
-			{
-				return Action<CTFBot>::SuspendFor( new CTFBotMeleeAttack( 1.25f * tf_bot_sniper_melee_range.GetFloat() ),
-														 "Melee attacking nearby threat" );
-			}
+			if ( threat->GetLastKnownPosition().DistToSqr( me->GetAbsOrigin() ) < Square( tf_bot_sniper_melee_range.GetFloat() ) )
+				return Action<CTFBot>::SuspendFor( new CTFBotMeleeAttack( 1.25f * tf_bot_sniper_melee_range.GetFloat() ), "Melee attacking nearby threat" );
 		}
 
-		if ( threat->GetTimeSinceLastSeen() < tf_bot_sniper_target_linger_duration.GetFloat() &&
-			 me->IsLineOfFireClear( threat->GetEntity() ) )
+		if ( threat->GetTimeSinceLastSeen() < tf_bot_sniper_target_linger_duration.GetFloat() && me->IsLineOfFireClear( threat->GetEntity() ) )
 		{
 			if ( m_bOpportunistic )
 			{
-				CBaseCombatWeapon *primary = me->Weapon_GetSlot( 0 );
-				if ( primary != nullptr )
+				CBaseCombatWeapon *pPrimary = me->Weapon_GetSlot( 0 );
+				if ( pPrimary != nullptr )
 				{
-					me->Weapon_Switch( primary );
+					me->Weapon_Switch( pPrimary );
 				}
 
 				m_patienceDuration.Reset();
 
-				attacking = true;
+				bIsAttacking = true;
 
 				if ( !m_bHasHome )
 				{
@@ -108,32 +101,32 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 
 					m_patienceDuration.Start( RandomFloat( 0.9f, 1.1f ) * tf_bot_sniper_patience_duration.GetFloat() );
 
-					attacking = true;
+					bIsAttacking = true;
 				}
 			}
 			else
 			{
-				attacking = false;
+				bIsAttacking = false;
 
-				CBaseCombatWeapon *secondary = me->Weapon_GetSlot( 1 );
-				if ( secondary != nullptr )
+				CBaseCombatWeapon *pSecondary = me->Weapon_GetSlot( 1 );
+				if ( pSecondary != nullptr )
 				{
-					me->Weapon_Switch( secondary );
+					me->Weapon_Switch( pSecondary );
 				}
 			}
 		}
 	}
 
-	float dsqr_from_home = ( me->GetAbsOrigin().AsVector2D() - m_vecHome.AsVector2D() ).LengthSqr();
-	m_bNearHome = ( dsqr_from_home < Square( 25.0f ) );
+	float flDistToHome = ( me->GetAbsOrigin().AsVector2D() - m_vecHome.AsVector2D() ).LengthSqr();
+	m_bNearHome = ( flDistToHome < Square( 25.0f ) );
 
-	if ( dsqr_from_home < Square( 25.0f ) )
+	if ( flDistToHome < Square( 25.0f ) )
 	{
 		m_bOpportunistic = tf_bot_sniper_allow_opportunistic.GetBool();
 
 		if ( m_patienceDuration.IsElapsed() )
 		{
-		// increment int @ 0x4820
+			++unused;
 
 			if ( FindNewHome( me ) )
 			{
@@ -151,7 +144,7 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 	{
 		m_patienceDuration.Reset();
 
-		if ( !attacking )
+		if ( !bIsAttacking )
 		{
 			if ( m_recomputePathTimer.IsElapsed() )
 			{
@@ -172,13 +165,13 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 		}
 	}
 
-	CBaseCombatWeapon *primary = me->Weapon_GetSlot( 0 );
-	if ( primary != nullptr )
+	CBaseCombatWeapon *pPrimary = me->Weapon_GetSlot( 0 );
+	if ( pPrimary != nullptr )
 	{
-		me->Weapon_Switch( primary );
+		me->Weapon_Switch( pPrimary );
 
-		auto weapon = static_cast<CTFWeaponBase *>( primary );
-		if ( !me->m_Shared.InCond( TF_COND_ZOOMED ) && !weapon->IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
+		auto pWeapon = static_cast<CTFWeaponBase *>( pPrimary );
+		if ( !me->m_Shared.InCond( TF_COND_ZOOMED ) && !pWeapon->IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
 		{
 			me->PressAltFireButton();
 		}
@@ -194,7 +187,7 @@ void CTFBotSniperLurk::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
 		me->PressAltFireButton();
 	}
 
-	/*if ( m_hHint )
+	if ( m_hHint )
 	{
 		m_hHint->SetOwnerEntity( nullptr );
 
@@ -202,7 +195,7 @@ void CTFBotSniperLurk::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
 		{
 			DevMsg( "%3.2f: %s: Releasing hint.\n", gpGlobals->curtime, me->GetPlayerName() );
 		}
-	}*/
+	}
 }
 
 ActionResult<CTFBot> CTFBotSniperLurk::OnSuspend( CTFBot *me, Action<CTFBot> *newAction )
@@ -212,7 +205,7 @@ ActionResult<CTFBot> CTFBotSniperLurk::OnSuspend( CTFBot *me, Action<CTFBot> *ne
 		me->PressAltFireButton();
 	}
 
-	/*if ( m_hHint )
+	if ( m_hHint )
 	{
 		m_hHint->SetOwnerEntity( nullptr );
 
@@ -220,7 +213,7 @@ ActionResult<CTFBot> CTFBotSniperLurk::OnSuspend( CTFBot *me, Action<CTFBot> *ne
 		{
 			DevMsg( "%3.2f: %s: Releasing hint.\n", gpGlobals->curtime, me->GetPlayerName() );
 		}
-	}*/
+	}
 
 	return Action<CTFBot>::Continue();
 }
@@ -229,7 +222,7 @@ ActionResult<CTFBot> CTFBotSniperLurk::OnResume( CTFBot *me, Action<CTFBot> *pri
 {
 	m_recomputePathTimer.Invalidate();
 
-	//m_hHint = nullptr;
+	m_hHint = nullptr;
 	FindNewHome( me );
 
 	return Action<CTFBot>::Continue();
@@ -247,10 +240,108 @@ QueryResultType CTFBotSniperLurk::ShouldAttack( const INextBot *me, const CKnown
 }
 
 
-/*CTFBotHint *CTFBotSniperLurk::FindHint( CTFBot *actor )
+bool CTFBotSniperLurk::FindHint( CTFBot *actor )
 {
-	// TODO
-}*/
+	CUtlVector<CTFBotHint *> hints;
+	for ( CTFBotHint *pHint : m_Hints )
+	{
+		if ( !pHint->IsFor( actor ) )
+			continue;
+
+		hints.AddToTail( pHint );
+	}
+
+	if ( m_hHint )
+	{
+		m_hHint->SetOwnerEntity( NULL );
+		if ( tf_bot_debug_sniper.GetBool() )
+			DevMsg( "%3.2f: %s: Releasing hint.", gpGlobals->curtime, actor->GetPlayerName() );
+	}
+
+	CTFBotHint *pSelected = nullptr;
+	if ( !m_hHint || m_Hints.Count() > 1 )
+	{
+		CUtlVector<CTFPlayer *> enemies;
+		CollectPlayers( &enemies, GetEnemyTeam( actor ), true );
+
+		CUtlVector<CTFBotHint *> emptyHints;
+		CUtlVector<CTFBotHint *> dangerHints;
+		for ( CTFBotHint *pHint : hints )
+		{
+			if ( pHint->GetOwnerEntity() == nullptr )
+			{
+				emptyHints.AddToTail( pHint );
+
+				for ( CTFPlayer *pPlayer : enemies )
+				{
+					if ( !pPlayer->IsLineOfSightClear( pHint->WorldSpaceCenter(), CBaseCombatCharacter::IGNORE_ACTORS ) )
+						continue;
+
+					dangerHints.AddToTail( pHint );
+				}
+			}
+		}
+
+		if ( !dangerHints.IsEmpty() )
+		{
+			pSelected = dangerHints.Random();
+		}
+		else
+		{
+			if ( !emptyHints.IsEmpty() )
+			{
+				pSelected = emptyHints.Random();
+			}
+			else
+			{
+				pSelected = hints.Random();
+
+				if ( tf_bot_debug_sniper.GetBool() )
+					DevMsg( "%3.2f: %s: No un-owned hints available! Doubling up.\n", gpGlobals->curtime, actor->GetPlayerName() );
+			}
+		}
+
+		if ( pSelected )
+		{
+			Vector vecMins, vecMaxs;
+			pSelected->GetCollideable()->WorldSpaceSurroundingBounds( &vecMins, &vecMaxs );
+
+			Vector vecRandomBounds;
+			vecRandomBounds.x = RandomFloat( vecMins.x, vecMaxs.x );
+			vecRandomBounds.y = RandomFloat( vecMins.y, vecMaxs.y );
+			vecRandomBounds.z = ( vecMaxs.z + vecMins.z ) / 2.0f;
+
+			TheNavMesh->GetSimpleGroundHeight( vecRandomBounds, &vecRandomBounds.z );
+
+			m_bHasHome = true;
+			m_vecHome = vecRandomBounds;
+			m_hHint = pSelected;
+			pSelected->SetOwnerEntity( actor );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	CUtlVector<CTFBotHint *> backupHints;
+	if ( hints.IsEmpty() )
+	{
+		++unused;
+		return false;
+	}
+
+	for ( CTFBotHint *pHint : hints )
+	{
+		if ( m_hHint == pHint )
+			continue;
+
+		if ( m_hHint->WorldSpaceCenter().DistToSqr( pHint->WorldSpaceCenter() ) > Square( 500.0f ) )
+			continue;
+
+		backupHints.AddToTail( pHint );
+	}
+}
 
 bool CTFBotSniperLurk::FindNewHome( CTFBot *actor )
 {
@@ -259,8 +350,8 @@ bool CTFBotSniperLurk::FindNewHome( CTFBot *actor )
 
 	m_findHomeTimer.Start( RandomFloat( 1.0f, 2.0f ) );
 
-	/*if ( FindHint( actor ) )
-		return true;*/
+	if ( FindHint( actor ) )
+		return true;
 
 	if ( actor->m_sniperSpots.IsEmpty() )
 	{

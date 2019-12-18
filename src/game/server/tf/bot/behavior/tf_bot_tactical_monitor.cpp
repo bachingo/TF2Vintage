@@ -1,6 +1,7 @@
 #include "cbase.h"
 #include "NextBot/NavMeshEntities/func_nav_prerequisite.h"
-#include "../tf_bot.h"
+#include "tf_bot.h"
+#include "tf_weaponbase.h"
 #include "tf_bot_tactical_monitor.h"
 #include "tf_gamerules.h"
 #include "nav_mesh/tf_nav_mesh.h"
@@ -14,19 +15,24 @@
 #include "tf_bot_get_ammo.h"
 #include "tf_bot_get_health.h"
 #include "tf_bot_retreat_to_cover.h"
+#include "tf_bot_destroy_enemy_sentry.h"
+#include "tf_bot_use_teleporter.h"
 
 
 ConVar tf_bot_force_jump( "tf_bot_force_jump", "0", FCVAR_CHEAT, "Force bots to continuously jump", true, 0.0f, true, 1.0f );
 
-
-CTFBotTacticalMonitor::CTFBotTacticalMonitor()
+class DetonatePipebombsReply : public INextBotReply
 {
-}
+	virtual void OnSuccess( INextBot *bot )
+	{
+		CTFBot *actor = ToTFBot( bot->GetEntity() );
+		if ( actor->GetActiveWeapon() != actor->Weapon_GetSlot( 1 ) )
+			actor->Weapon_Switch( actor->Weapon_GetSlot( 1 ) );
 
-CTFBotTacticalMonitor::~CTFBotTacticalMonitor()
-{
-}
-
+		actor->PressAltFireButton();
+	}
+};
+static DetonatePipebombsReply detReply;
 
 const char *CTFBotTacticalMonitor::GetName( void ) const
 {
@@ -49,14 +55,14 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 		}
 		else
 		{
-			if ( me->GetVisionInterface()->GetPrimaryKnownThreat( true ) != nullptr )
+			if ( me->GetVisionInterface()->GetPrimaryKnownThreat( true ) )
 			{
-				return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover( -1.0f ), "Run away from threat!" );
+				return BaseClass::SuspendFor( new CTFBotRetreatToCover, "Run away from threat!" );
 			}
 			else
 			{
 				me->PressCrouchButton();
-				return Action<CTFBot>::Continue();
+				return BaseClass::Continue();
 			}
 		}
 	}
@@ -69,7 +75,7 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 
 	Action<CTFBot> *action = me->OpportunisticallyUseWeaponAbilities();
 	if ( action != nullptr )
-		return Action<CTFBot>::SuspendFor( action, "Opportunistically using buff item" );
+		return BaseClass::SuspendFor( action, "Opportunistically using buff item" );
 
 	if ( TFGameRules()->InSetup() )
 	{
@@ -77,31 +83,40 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 	}
 
 	QueryResultType retreat = me->GetIntentionInterface()->ShouldRetreat( me );
-	if ( !TFGameRules()->IsPVEModeActive() )
-	{
-		if ( retreat == ANSWER_YES )
-		{
-			return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover, "Backing off" );
-		}
+	if ( retreat == ANSWER_YES )
+		return BaseClass::SuspendFor( new CTFBotRetreatToCover, "Backing off" );
 
-		if ( retreat != ANSWER_NO )
+	if ( retreat != ANSWER_NO && !me->m_Shared.InCond( TF_COND_INVULNERABLE ) && me->m_iSkill >= CTFBot::HARD )
+	{
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)me->Weapon_GetSlot( 1 );
+		if ( pWeapon && me->IsBarrageAndReloadWeapon( pWeapon ) )
 		{
-			if ( !me->m_Shared.InCond( TF_COND_INVULNERABLE ) && me->m_iSkill >= CTFBot::HARD )
-			{
-				// TODO: out-of-ammo RetreatToCover
-			}
+			if ( me->GetAmmoCount( TF_AMMO_PRIMARY ) > 0 && pWeapon->Clip1() <= 1 )
+				return BaseClass::SuspendFor( new CTFBotRetreatToCover, "Moving to cover to reload" );
 		}
 	}
 
 	QueryResultType hurry = me->GetIntentionInterface()->ShouldHurry( me );
-	if ( hurry == ANSWER_YES/* ||  TODO: countdown timer @ 0x34 */ )
+	if ( hurry == ANSWER_YES || m_checkUseTeleportTimer.IsElapsed() )
 	{
-		// TODO
+		if ( ShouldOpportunisticallyTeleport( me ) )
+		{
+			CObjectTeleporter *pTeleporter = FindNearbyTeleporter( me );
+			if ( pTeleporter )
+			{
+				CTFNavArea *pTeleArea = (CTFNavArea *)TFNavMesh()->GetNearestNavArea( pTeleporter );
+				CTFNavArea *pMyArea = (CTFNavArea *)me->GetLastKnownArea();
+				if ( pTeleArea && pMyArea )
+				{
+					if ( ( pTeleArea->GetIncursionDistance( me->GetTeamNumber() ) + 350.0f ) > pMyArea->GetIncursionDistance( me->GetTeamNumber() ) )
+						return BaseClass::SuspendFor( new CTFBotUseTeleporter( pTeleporter ), "Using nearby teleporter" );
+				}
+			}
+		}
 	}
 	else
 	{
-		/* TODO: name */
-		//this->m_ct34.Start( RandomFloat( 0.3f, 0.5f ) );
+		m_checkUseTeleportTimer.Start( RandomFloat( 0.3f, 0.5f ) );
 
 		bool bLowHealth = false;
 
@@ -122,26 +137,24 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 		if ( me->IsAmmoLow() && CTFBotGetAmmo::IsPossible( me ) )
 			return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Grabbing nearby ammo" );
 
-		// TODO: logic for CTFBotDestroyEnemySentry
+		if ( me->m_hTargetSentry && CTFBotDestroyEnemySentry::IsPossible( me ) )
+			return BaseClass::SuspendFor( new CTFBotDestroyEnemySentry, "Going after an enemy sentry to destroy it" );
 	}
-	// TODO: figure out the control flow here, it's rather complex
-	// TODO: opportunistically use teleporter
-	// (suspend for CTFBotUseTeleporter)
 
 	MonitorArmedStickybombs( me );
+
 	if ( me->IsPlayerClass( TF_CLASS_SPY ) )
 		AvoidBumpingEnemies( me );
 
 	me->UpdateDelayedThreatNotices();
 
-	// TODO
 	return Action<CTFBot>::Continue();
 }
 
 
 Action<CTFBot> *CTFBotTacticalMonitor::InitialContainedAction( CTFBot *actor )
 {
-	return new CTFBotScenarioMonitor();
+	return new CTFBotScenarioMonitor;
 }
 
 
@@ -157,18 +170,18 @@ EventDesiredResult<CTFBot> CTFBotTacticalMonitor::OnNavAreaChanged( CTFBot *me, 
 		return Action<CTFBot>::TryContinue();
 	}
 
-	/*FOR_EACH_VEC( area1->GetPrerequisiteVector(), i )
+	FOR_EACH_VEC( area1->GetPrerequisiteVector(), i )
 	{
-		CFuncNavPrerequisite *prereq = area1->GetPrerequisiteVector()[i];
-		if ( prereq == nullptr )
+		CFuncNavPrerequisite *pPrereq = area1->GetPrerequisiteVector()[i];
+		if ( pPrereq == nullptr )
 			continue;
 
-		if ( prereq->IsTask( CFuncNavPrerequisite::TASK_WAIT ) )
-			return Action<CTFBot>::TrySuspendFor( new CTFBotNavEntWait( prereq ), RESULT_IMPORTANT, "Prerequisite commands me to wait" );
+		if ( pPrereq->IsTask( CFuncNavPrerequisite::TASK_WAIT ) )
+			return Action<CTFBot>::TrySuspendFor( new CTFBotNavEntWait( pPrereq ), RESULT_IMPORTANT, "Prerequisite commands me to wait" );
 
-		if ( prereq->IsTask( CFuncNavPrerequisite::TASK_MOVE_TO_ENTITY ) )
-			return Action<CTFBot>::TrySuspendFor( new CTFBotNavEntMoveTo( prereq ), RESULT_IMPORTANT, "Prerequisite commands me to move to an entity" );
-	}*/
+		if ( pPrereq->IsTask( CFuncNavPrerequisite::TASK_MOVE_TO_ENTITY ) )
+			return Action<CTFBot>::TrySuspendFor( new CTFBotNavEntMoveTo( pPrereq ), RESULT_IMPORTANT, "Prerequisite commands me to move to an entity" );
+	}
 
 	return Action<CTFBot>::TryContinue();
 }
@@ -313,12 +326,29 @@ void CTFBotTacticalMonitor::MonitorArmedStickybombs( CTFBot *actor )
 	m_stickyMonitorDelay.Start( RandomFloat( 0.3f, 1.0f ) );
 
 	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher *>( actor->Weapon_GetSlot( 1 ) );
-	if ( pLauncher )
+	if ( pLauncher == nullptr || pLauncher->m_Pipebombs.IsEmpty() )
+		return;
+	
+	CUtlVector<CKnownEntity> knowns;
+	actor->GetVisionInterface()->CollectKnownEntities( &knowns );
+	
+	for ( CTFGrenadePipebombProjectile *pGrenade : pLauncher->m_Pipebombs )
 	{
-		CUtlVector<CKnownEntity> knowns;
-		actor->GetVisionInterface()->CollectKnownEntities( &knowns );
+		for ( const CKnownEntity &pKnown : knowns )
+		{
+			if ( pKnown.IsObsolete() || pKnown.GetEntity()->IsBaseObject() )
+				continue;
+
+			if ( GetEnemyTeam( pKnown.GetEntity() ) == pGrenade->GetTeamNumber() )
+				continue;
+
+			if ( pGrenade->GetAbsOrigin().DistToSqr( pKnown.GetLastKnownPosition() ) >= Square( 150.0 ) )
+				continue;
+
+			actor->GetBodyInterface()->AimHeadTowards( pGrenade->WorldSpaceCenter() + RandomVector( -10.0f, 10.0f ), IBody::IMPORTANT, 0.5f, &detReply, "Looking toward stickies to detonate" );
+			return;
+		}
 	}
-	// TODO
 }
 
 bool CTFBotTacticalMonitor::ShouldOpportunisticallyTeleport( CTFBot *actor ) const
