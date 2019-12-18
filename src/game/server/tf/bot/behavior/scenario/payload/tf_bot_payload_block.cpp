@@ -51,7 +51,7 @@ ActionResult<CTFBot> CTFBotPayloadBlock::Update( CTFBot *me, float dt )
 		if ( pTrain == nullptr )
 			return BaseClass::Done( "Cart is missing" );
 
-		CTFBotPathCost func( me, DEFAULT_ROUTE );
+		CTFBotPathCost func( me, FASTEST_ROUTE );
 		m_PathFollower.Compute( me, pTrain->WorldSpaceCenter(), func, 0.0f, true );
 
 		m_recomputePathTimer.Start( RandomFloat( 0.2f, 0.4f ) );

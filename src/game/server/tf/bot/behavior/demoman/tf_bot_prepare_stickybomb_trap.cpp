@@ -9,8 +9,6 @@
 ConVar tf_bot_stickybomb_density( "tf_bot_stickybomb_density", "0.0001", FCVAR_CHEAT, "Number of stickies to place per square inch" );
 
 
-/* BUG: use of a static variable for the aim reply means that multiple bots
- * can't be aiming stickies at the same time */
 class PlaceStickyBombReply : public INextBotReply
 {
 public:

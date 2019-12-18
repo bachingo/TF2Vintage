@@ -73,7 +73,7 @@ ActionResult<CTFBot> CTFBotPayloadPush::Update( CTFBot *me, float dt )
 		}
 
 		CTFBotPathCost func( me );
-		m_PathFollower.Compute( me, vecGoal, func, 0.0f, true );
+		m_PathFollower.Compute( me, vecGoal, func );
 
 		m_recomputePathTimer.Start( RandomFloat( 0.2f, 0.4f ) );
 	}
