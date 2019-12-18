@@ -25,31 +25,28 @@ ActionResult<CTFBot> CTFBotDead::OnStart( CTFBot *me, Action<CTFBot> *priorActio
 
 ActionResult<CTFBot> CTFBotDead::Update( CTFBot *me, float interval )
 {
-	if (( m_flDeathTimestamp + 3.0f ) > gpGlobals->curtime)
+	if ( ( m_flDeathTimestamp + 3.0f ) > gpGlobals->curtime )
 	{
 		// I need some time to adjust after what just happened
 		return Action<CTFBot>::Continue();
 	}
 
-	if (me->IsAlive())
+	if ( me->IsAlive() )
 	{
-		// TODO: figure out constructor args for CTFBotMainAction
-		return Action<CTFBot>::ChangeTo( new CTFBotMainAction( /* TODO */ ), "This should not happen!" );
+		return Action<CTFBot>::ChangeTo( new CTFBotMainAction, "This should not happen!" );
 	}
 
-	/*if (( me->m_nBotAttrs & CTFBot::AttributeType::REMOVEONDEATH ) != 0)
+	if ( !!( me->m_nBotAttrs & CTFBot::AttributeType::REMOVEONDEATH ) )
 	{
 		// TODO: kickid stuff
 		return Action<CTFBot>::Continue();
 	}
 
-	if (( me->m_nBotAttrs & CTFBot::AttributeType::BECOMESPECTATORONDEATH ) == 0)
+	if ( !!( me->m_nBotAttrs & CTFBot::AttributeType::BECOMESPECTATORONDEATH ) )
 	{
-		return Action<CTFBot>::Continue();
+		me->ChangeTeam( TEAM_SPECTATOR, false, true );
+		return Action<CTFBot>::Done();
 	}
-
-	me->ChangeTeam( TEAM_SPECTATOR, false, true );
-	return Action<CTFBot>::Done();*/
 
 	return Action<CTFBot>::Continue();
 }
