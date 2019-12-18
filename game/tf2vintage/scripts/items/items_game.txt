@@ -2428,11 +2428,6 @@
 					"attribute_class"	"add_maxhealth"
 					"value" "25"
 				}
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
 				"kill refills meter"
 				{
 					"attribute_class"	"kill_refills_meter"
@@ -11123,6 +11118,17 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"26"
+		{
+			"name"	"max health additive bonus shield required"
+			"attribute_class"	"add_maxhealth_shieldrequired"
+			"description_string"	"#Attrib_MaxHealth_Positive"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
 		}
 	}

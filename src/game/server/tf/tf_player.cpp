@@ -1513,6 +1513,9 @@ int CTFPlayer::GetMaxHealthForBuffing( void ) const
 {
 	int iMaxHealth = const_cast<CTFPlayerClass &>( m_PlayerClass ).GetMaxHealth();
 	CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth );
+	
+	if (m_Shared.m_bShieldEquipped == true)
+		CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth_shieldrequired );
 
 	
 	// If we're using a boss weapon, apply player scaling to our health so that more player involved is more health.
