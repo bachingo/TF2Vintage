@@ -88,11 +88,13 @@ ConVar tf2v_critmod_range( "tf2v_critmod_range", "800", FCVAR_NOTIFY | FCVAR_REP
 
 ConVar tf2v_new_flame_damage( "tf2v_new_flame_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables Jungle Inferno fire and afterburn damage calculations." );
 
-ConVar tf2v_clamp_speed( "tf2v_clamp_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable maximum speed bonus a player can have at a single time." );
-ConVar tf2v_max_speed_difference( "tf2v_max_speed_difference", "105", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maxmimum speed a player can be boosted, in HU/s." );
+ConVar tf2v_clamp_speed( "tf2v_clamp_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable maximum speed bonuses a player can have at a single time." );
+ConVar tf2v_clamp_speed_difference( "tf2v_clamp_speed_difference", "105", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maxmimum speed a player can be boosted from their base speed in HU/s." );
+ConVar tf2v_clamp_speed_absolute( "tf2v_clamp_speed_absolute", "450", FCVAR_NOTIFY | FCVAR_REPLICATED, "Absolute max speed (HU/s) for non-charging players." );
 
 ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era move speed for spies." );
 ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
+
 
 ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
 
@@ -4348,19 +4350,6 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	
 	float flBaseSpeed = maxfbspeed;
 	
-	CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
-
-	// Speed Boost Effects.
-	if ( m_Shared.IsSpeedBoosted() )
-	{
-		// 40% Speed increase.
-		maxfbspeed *= 1.4f;
-	}
-	
-	// Clamp the max speed boost we can get.
-	if ( ( tf2v_clamp_speed.GetInt() ) && ( maxfbspeed > ( flBaseSpeed + tf2v_max_speed_difference.GetInt() ) ) )
-		maxfbspeed = ( flBaseSpeed + tf2v_max_speed_difference.GetInt() );
-	
 	// Slow us down if we're disguised as a slower class
 	// unless we're cloaked..
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
@@ -4371,9 +4360,41 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			flMaxDisguiseSpeed *= ( 320 / 300 );
 		
 		maxfbspeed = Min( flMaxDisguiseSpeed, maxfbspeed );
+		flBaseSpeed = maxfbspeed;
+	}
+	
+	if (m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+	{
+		// Charges use 250% movement speed, or 750HU/s.
+		maxfbspeed = 750.0f;
+		flBaseSpeed = maxfbspeed;
+	}
+	
+	if ( m_Shared.InCond( TF_COND_DISGUISED_AS_DISPENSER ) )
+	{
+		maxfbspeed *= 2.0f;
 	}
 
-	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+	// Speed Boost Effects.
+	if ( m_Shared.IsSpeedBoosted() )
+	{
+		// 40% Speed increase.
+		maxfbspeed *= 1.4f;
+	}
+	
+	CTFWeaponBase *pWeapon;
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
+	{
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(m_Shared.GetDisguiseTarget()), maxfbspeed, mult_player_movespeed );
+		
+		pWeapon = (CTFWeaponBase *)ToTFPlayer(m_Shared.GetDisguiseTarget())->Weapon_GetSlot(m_Shared.GetDisguiseItem()->GetItemSlot());
+	}
+	else
+	{
+		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
+		
+		pWeapon = GetActiveTFWeapon();
+	}
 
 	// Second, see if any flags are slowing them down
 	if ( HasItem() && GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG )
@@ -4429,20 +4450,21 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( pWeapon )
 		maxfbspeed *= pWeapon->GetSpeedMod();
 	
-	if (m_Shared.m_bShieldEquipped == true)
-		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed_shieldrequired );
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
+	{
+		if (ToTFPlayer(m_Shared.GetDisguiseTarget())->m_Shared.m_bShieldEquipped == true)
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ToTFPlayer(m_Shared.GetDisguiseTarget()), maxfbspeed, mult_player_movespeed_shieldrequired);
+	}
+	else
+	{
+		if (m_Shared.m_bShieldEquipped == true)
+			CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed_shieldrequired );
+	}
 		
 	CTFSword *pSword = dynamic_cast<CTFSword *>( Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
 	if (pSword)
 		maxfbspeed *= pSword->GetSwordSpeedMod();
 
-	if (m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
-		maxfbspeed = 750.0f;
-
-	if ( m_Shared.InCond( TF_COND_DISGUISED_AS_DISPENSER ) )
-	{
-		maxfbspeed *= 2.0f;
-	}
 
 	// (Potentially) Reduce our speed if we were stunned
 	if ( m_Shared.InCond( TF_COND_STUNNED ) && ( m_Shared.m_nStunFlags & TF_STUNFLAG_SLOWDOWN ) )
@@ -4450,6 +4472,35 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		maxfbspeed *= m_Shared.m_flStunMovementSpeed;
 	}
 
+	// If we have speed caps on, check for speed caps.
+	if ( tf2v_clamp_speed.GetInt() != 0 )
+	{
+		// Speed caps for shield charges.
+		if ( m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+		{
+			if ( maxfbspeed > flBaseSpeed )
+			{
+				// If we're shield charging and faster than our base charge, set it to the standard charge speed.
+				maxfbspeed = flBaseSpeed;
+			}
+		}
+		else // Non-shield charge related caps.
+		{
+			// Relative speed cap.
+			if ( maxfbspeed > ( flBaseSpeed + tf2v_clamp_speed_difference.GetInt() ) ) 
+			{
+				// If we're not charging, clamp the max speed boost we can get.
+				maxfbspeed = ( flBaseSpeed + tf2v_clamp_speed_difference.GetInt() );
+			}
+			// Absolute speed cap.
+			if ( maxfbspeed > tf2v_clamp_speed_absolute.GetInt() )
+			{
+				// If we're not in a shield charge, cap our speed to the max value allowed.
+				maxfbspeed = tf2v_clamp_speed_absolute.GetInt();
+			}
+		}
+	}
+	
 	// if we're in bonus time because a team has won, give the winners 110% speed and the losers 90% speed
 	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 	{

@@ -165,6 +165,18 @@ int CEconItemView::GetAnimationSlot( void )
 	return -1;
 }
 
+int CEconItemView::GetItemSlot( void )
+{
+	CEconItemDefinition *pStatic = GetStaticData();
+
+	if ( pStatic )
+	{
+		return pStatic->item_slot;
+	}
+
+	return -1;
+}
+
 Activity CEconItemView::GetActivityOverride( int iTeamNumber, Activity actOriginalActivity )
 {
 	CEconItemDefinition *pStatic = GetStaticData();
