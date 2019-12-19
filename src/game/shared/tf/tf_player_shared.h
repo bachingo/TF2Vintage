@@ -215,6 +215,7 @@ public:
 	CNewParticleEffect *m_pStun;
 	CNewParticleEffect *m_pSpeedTrails;
 	CNewParticleEffect *m_pBuffAura;
+	CNewParticleEffect *m_pMarkedIcon;
 #endif
 
 	void	UpdatePhaseEffects( void );
@@ -370,6 +371,7 @@ private:
 	void OnAddSpeedBoost( void );
 	void OnAddBuff( void );
 	void OnAddInPurgatory( void );
+	void OnAddMarkedForDeath( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -392,6 +394,7 @@ private:
 	void OnRemoveSpeedBoost( void );
 	void OnRemoveBuff( void );
 	void OnRemoveInPurgatory( void );
+	void OnRemoveMarkedForDeath( void );
 
 	float GetCritMult( void );
 

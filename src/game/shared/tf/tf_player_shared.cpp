@@ -856,6 +856,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 	case TF_COND_PURGATORY:
 		OnAddInPurgatory();
 		break;
+		
+	case TF_COND_MARKEDFORDEATH:
+		OnAddMarkedForDeath();
+		break;
 
 	default:
 		break;
@@ -972,6 +976,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_PURGATORY:
 		OnRemoveInPurgatory();
+		break;
+		
+	case TF_COND_MARKEDFORDEATH:
+		OnRemoveMarkedForDeath();
 		break;
 
 	default:
@@ -2073,6 +2081,35 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Appled when the player is Marked for Death
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddMarkedForDeath( void )
+{
+#ifdef CLIENT_DLL
+	// Start the Marked for Death icon
+	if ( !m_pMarkedIcon )
+	{
+		m_pMarkedIcon = m_pOuter->ParticleProp()->Create( "mark_for_death", PATTACH_POINT_FOLLOW, "head" );;
+	}
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Remove Marked for Death effects
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveMarkedForDeath( void )
+{
+#ifdef CLIENT_DLL
+	// Destroy the Marked for Death icon
+	if ( m_pMarkedIcon )
+	{
+		m_pOuter->ParticleProp()->StopEmission( m_pMarkedIcon );
+		m_pMarkedIcon = NULL;
+	}
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3722,10 +3759,6 @@ void CTFPlayerShared::SetHypeMeter( float value, bool bIsPercent  )
 				m_flHypeMeter = Min( ( m_flHypeMeter + ( value / ( flMaxDamage / 100 ) ) ) , 100.0f );
 			else if ( ( nHypeOnDamage != 0 || nBoostOnDamage != 0 ) && !bIsPercent ) 
 				m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
-			
-			// If we removed hype, never let our boost be negative.
-			if (m_flHypeMeter < 0.0f)
-				m_flHypeMeter = 0.0f;
 		}
 	}
 }
