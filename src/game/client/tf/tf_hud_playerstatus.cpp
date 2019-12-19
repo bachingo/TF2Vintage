@@ -314,10 +314,14 @@ CTFHudPlayerHealth::CTFHudPlayerHealth( Panel *parent, const char *name ) : Edit
 	// Buff Images
 	m_pSoldierOffenseBuff = new ImagePanel( this, "PlayerStatus_SoldierOffenseBuff" );
 	m_pSoldierDefenseBuff = new ImagePanel( this, "PlayerStatus_SoldierDefenseBuff" );
+	m_pSoldierHealOnHitBuff = new ImagePanel( this, "PlayerStatus_SoldierHealOnHitBuff" );
+	m_pSoldierMarkedBuff = new ImagePanel( this, "PlayerStatus_SoldierMarkedBuff" );
 
 	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierOffenseBuff, "../effects/soldier_buff_offense_red", "../effects/soldier_buff_offense_blue" ) );
 	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierDefenseBuff, "../effects/soldier_buff_defense_red", "../effects/soldier_buff_defense_blue" ) );
-
+	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierHealOnHitBuff, "../effects/soldier_buff_healonhit_red", "../effects/soldier_buff_healonhit_blue" ) );
+	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierMarkedBuff, "../vgui/marked_for_death", "../vgui/marked_for_death" ) );
+	
 	m_flNextThink = 0.0f;
 	m_nOffset = 0;
 }
@@ -502,6 +506,8 @@ void CTFHudPlayerHealth::OnThink()
 			// Player status effects
 			SetPlayerHealthImagePanelVisibility( TF_COND_OFFENSEBUFF, m_hBuffImages.Element( 0 ) );
 			SetPlayerHealthImagePanelVisibility( TF_COND_DEFENSEBUFF, m_hBuffImages.Element( 1 ) );
+			SetPlayerHealthImagePanelVisibility( TF_COND_REGENONDAMAGEBUFF, m_hBuffImages.Element( 2 ) );
+			SetPlayerHealthImagePanelVisibility( TF_COND_MARKEDFORDEATH, m_hBuffImages.Element( 3 ) );
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.05f;
