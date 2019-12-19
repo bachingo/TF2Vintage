@@ -316,6 +316,68 @@ bool CTFScatterGun::HasKnockback() const
 	return nScatterGunHasKnockback == 1;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFScatterGun::HasChargeBar( void )
+{
+	int nHypeOnDamage = 0;
+	CALL_ATTRIB_HOOK_INT( nHypeOnDamage, hype_on_damage );
+	int nBoostOnDamage = 0;
+	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
+	return ( ( nHypeOnDamage == 1) || ( nBoostOnDamage == 1 ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char* CTFScatterGun::GetEffectLabelText(void)
+{
+	int nHypeOnDamage = 0;
+	CALL_ATTRIB_HOOK_INT( nHypeOnDamage, hype_on_damage );
+	int nBoostOnDamage = 0;
+	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
+	if ( nHypeOnDamage == 1 )
+	 return "#TF_Hype";
+	else if ( nBoostOnDamage == 1 )
+	 return "#TF_Boost";
+	
+	return "#TF_Boost";
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+float CTFScatterGun::GetEffectBarProgress( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( pOwner)
+	{
+		return pOwner->m_Shared.GetHypeMeter() / 100.0f;
+	}
+
+	return 0.0f;
+}
+
+float CTFScatterGun::GetSpeedMod( void ) const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return 1.0f;
+
+	// Check if we get boost on damage.
+	int nBoostOnDamage = 0;
+	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
+	if ( nBoostOnDamage == 0 )
+		return 1.0f;	// No boost bails.
+
+	// Use a linear relationship between boost level and added speed.
+	// Original speed calculation ranged from 260HU/s at 0%, to 520HU/s at 100%.
+	// This is Output = (260/100)x + 260, and then divided by input 260 to get a ratio.
+	// The max ratio is 2, so we can simplify even further to get the result below.
+	return ((pOwner->m_Shared.GetHypeMeter() / 100) + 1);
+}
 
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFShotgun_Revenge, DT_TFShotgun_Revenge )

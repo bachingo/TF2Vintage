@@ -77,6 +77,10 @@ public:
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
 	virtual void	FinishReload( void );
 	virtual bool	SendWeaponAnim( int iActivity );
+	virtual bool		HasChargeBar( void );
+	virtual const char* GetEffectLabelText( void );
+	virtual float		GetEffectBarProgress( void );
+	virtual float		GetSpeedMod( void ) const;
 
 	bool			HasKnockback( void ) const;
 
