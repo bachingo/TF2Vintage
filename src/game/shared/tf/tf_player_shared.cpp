@@ -2137,7 +2137,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 	int nVictimIsFlameProof = 0;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ToTFPlayer(m_pOuter), nVictimIsFlameProof, set_fire_retardant);
 
-	if (nVictimIsFlameProof == 0 )
+	if (nVictimIsFlameProof == 0 && !m_pOuter->m_Shared.InCond(TF_COND_AFTERBURN_IMMUNE))
 	{
 		if (!InCond(TF_COND_BURNING))
 		{

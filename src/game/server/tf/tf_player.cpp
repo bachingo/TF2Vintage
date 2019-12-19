@@ -169,6 +169,9 @@ ConVar tf2v_generic_voicelines("tf2v_generic_voicelines", "0", FCVAR_NOTIFY, "Tu
 
 ConVar tf2v_use_new_ammo_drops("tf2v_use_new_ammo_drops","0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Drops generic ammoboxes instead of weapons.", true, 0, true, 1);
 
+ConVar tf2v_use_new_dead_ringer("tf2v_use_new_dead_ringer","0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Adds temporary afterburn and speed boost to Dead Ringers.", true, 0, true, 1);
+
+
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
 // -------------------------------------------------------------------------------- //
@@ -8532,6 +8535,13 @@ void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 	m_Shared.RemoveCond( TF_COND_BLEEDING );
 
 	m_Shared.AddCond( TF_COND_FEIGN_DEATH );
+	
+	if ( tf2v_use_new_dead_ringer.GetBool() )
+	{
+		// Make us immune to afterburn and add a speed boost for 3 seconds
+		m_Shared.AddCond( TF_COND_AFTERBURN_IMMUNE, 3.0 );
+		m_Shared.AddCond( TF_COND_SPEED_BOOST, 3.0 );
+	}
 
 	RemoveTeleportEffect();
 
