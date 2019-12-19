@@ -311,7 +311,15 @@ void CTFGameMovement::AirDash( void )
 {
 	// Apply approx. the jump velocity added to an air dash.
 	Assert( sv_gravity.GetFloat() == 800.0f );
-	float flDashZ = 268.3281572999747f;
+
+	float flHeightMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pTFPlayer, flHeightMult, mod_jump_height );
+
+	CTFWeaponBase *pWeapon = m_pTFPlayer->GetActiveTFWeapon();
+	if ( pWeapon )
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHeightMult, mod_jump_height_from_weapon );
+
+	float flDashZ = 268.3281572999747f * flHeightMult;
 
 	// Get the wish direction.
 	Vector vecForward, vecRight;
@@ -335,7 +343,8 @@ void CTFGameMovement::AirDash( void )
 	mv->m_vecVelocity.z += flDashZ;
 
 	// Update data and attributes.
-	m_pTFPlayer->m_Shared.SetLastDashTime(gpGlobals->curtime);
+	m_pTFPlayer->m_Shared.SetLastDashTime( gpGlobals->curtime );
+
 	int nLoseHypeOnJump = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump);
 	if (nLoseHypeOnJump != 0)
