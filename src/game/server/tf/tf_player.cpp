@@ -5957,12 +5957,15 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			if ( pWeapon->GetWeaponID() == GetWeaponFromDamage( info ) )
 			{
 				// Apply on-kill effects.
-				float flCritOnKill = 0.0f, flHealthOnKill = 0.0f, flMinicritOnKill = 0.0f;
+				float flCritOnKill = 0.0f, flHealthOnKill = 0.0f, flMinicritOnKill = 0.0f, flRestoreOnKill = 0.0f;
+				
+				// Crit on kill
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCritOnKill, add_onkill_critboost_time );
 				if ( flCritOnKill )
 				{
 					m_Shared.AddCond( TF_COND_CRITBOOSTED_ON_KILL, flCritOnKill );
 				}
+				// HP on kill
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHealthOnKill, heal_on_kill );
 				if ( flHealthOnKill )
 				{
@@ -5980,23 +5983,43 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 						}
 					}
 				}
+				// Minicrits on kill
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMinicritOnKill, add_onkill_minicritboost_time );
 				if ( flMinicritOnKill )
 				{
 					m_Shared.AddCond( TF_COND_MINICRITBOOSTED_ON_KILL, flMinicritOnKill );
 				}
+				// Shield meter on kill
 				float flAddChargeShieldKill = 0.0f;
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flAddChargeShieldKill, kill_refills_meter );
 				if ( flAddChargeShieldKill )
 				{
 					m_Shared.m_flChargeMeter = min( ( m_Shared.m_flChargeMeter + ( flAddChargeShieldKill * 100 ) ), 100.0f ) ;
 				}
-				
+				// Restore HP % on kill
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flRestoreOnKill, restore_health_on_kill );
+				if ( flRestoreOnKill )
+				{
+					int iHealthRestoredPercent = TakeHealth( ( ( flRestoreOnKill/100 ) * GetMaxHealth() ), DMG_IGNORE_MAXHEALTH );
+					if ( iHealthRestoredPercent )
+					{
+						IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+
+						if ( event )
+						{
+							event->SetInt( "amount", iHealthRestoredPercent );
+							event->SetInt( "entindex", entindex() );
+
+							gameeventmanager->FireEvent( event );
+						}
+					}
+				}
+				// Cloak meter on kill
 				int nAddCloakOnKill = 0;
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnKill, add_cloak_on_kill );
 				if ( nAddCloakOnKill > 0 )
 					m_Shared.AddToSpyCloakMeter( nAddCloakOnKill );
-
+				// Speed boost on kill
 				int nSpeedBoostOnKill = 0;
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnKill, speed_boost_on_kill );
 				if ( nSpeedBoostOnKill > 0)
