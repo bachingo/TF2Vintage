@@ -3662,14 +3662,25 @@ void CTFPlayerShared::SetJumping(bool bJumping)
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::CanAirDash( void )
 {
+	int nSetNoDoubleJump = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nSetNoDoubleJump, set_scout_doublejump_disabled );
+	if ( nSetNoDoubleJump == 1 )
+		return false;
+
+	if ( InCond( TF_COND_HALLOWEEN_KART ) )
+		return false;
+
+	if ( InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
+		return true;
+
 	// The regular amount of airjumps we can do is one, but attributes can affect this.
 	int nMaxAirJumps = 1;
 	
 	// Check to see if we have attributes for extra airdashes.
-	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, nMaxAirJumps, air_dash_count);
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nMaxAirJumps, air_dash_count );
 
 	// If in Soda Popper mode, get five dashes. Do not overlap with attributes.
-	if (InCond( TF_COND_SODAPOPPER_HYPE ) )
+	if ( InCond( TF_COND_SODAPOPPER_HYPE ) )
 		nMaxAirJumps = 5;
 	
 	return ( nMaxAirJumps > GetAirDashCount() );

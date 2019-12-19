@@ -19,6 +19,7 @@
 #define CTFShotgun_Pyro C_TFShotgun_Pyro
 #define CTFScatterGun C_TFScatterGun
 #define CTFSodaPopper C_TFSodaPopper
+#define CTFPepBrawlBlaster C_TFPepBrawlBlaster
 #define CTFShotgun_Revenge C_TFShotgun_Revenge
 #endif
 

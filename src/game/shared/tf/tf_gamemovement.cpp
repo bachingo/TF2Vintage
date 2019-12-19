@@ -43,6 +43,7 @@ ConVar	tf2v_bunnyjump_max_speed_factor("tf2v_bunnyjump_max_speed_factor", "1.2",
 ConVar  tf2v_autojump("tf2v_autojump", "0", FCVAR_REPLICATED, "Automatically jump while holding the jump button down");
 ConVar  tf2v_duckjump("tf2v_duckjump", "0", FCVAR_REPLICATED, "Toggles jumping while ducked");
 ConVar  tf2v_groundspeed_cap("tf2v_groundspeed_cap", "1", FCVAR_REPLICATED, "Toggles the max speed cap imposed when a player is standing on the ground");
+ConVar  tf2v_use_triple_jump_sound( "tf2v_use_triple_jump_sound", "1", FCVAR_REPLICATED, "Play the post MYM banana slip multijump sound?" );
 
 #define TF_MAX_SPEED   520
 
@@ -311,7 +312,15 @@ void CTFGameMovement::AirDash( void )
 {
 	// Apply approx. the jump velocity added to an air dash.
 	Assert( sv_gravity.GetFloat() == 800.0f );
-	float flDashZ = 268.3281572999747f;
+
+	float flHeightMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pTFPlayer, flHeightMult, mod_jump_height );
+
+	CTFWeaponBase *pWeapon = m_pTFPlayer->GetActiveTFWeapon();
+	if ( pWeapon )
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHeightMult, mod_jump_height_from_weapon );
+
+	float flDashZ = 268.3281572999747f * flHeightMult;
 
 	// Get the wish direction.
 	Vector vecForward, vecRight;
@@ -335,16 +344,46 @@ void CTFGameMovement::AirDash( void )
 	mv->m_vecVelocity.z += flDashZ;
 
 	// Update data and attributes.
-	m_pTFPlayer->m_Shared.SetLastDashTime(gpGlobals->curtime);
+	m_pTFPlayer->m_Shared.SetLastDashTime( gpGlobals->curtime );
+
 	int nLoseHypeOnJump = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump);
 	if (nLoseHypeOnJump != 0)
 		m_pTFPlayer->m_Shared.SetHypeMeter( (nLoseHypeOnJump * -1), false );
-	
-	m_pTFPlayer->m_Shared.IncrementAirDashCount();
 
-	// Play the gesture.
-	m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_DOUBLEJUMP );
+	if ( m_pTFPlayer->m_Shared.GetAirDashCount() > 0 )
+	{
+		if ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) && !m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
+		{
+			CTakeDamageInfo info( m_pTFPlayer, m_pTFPlayer, vec3_origin, m_pTFPlayer->WorldSpaceCenter(), 10.0f, DMG_BULLET );
+			m_pTFPlayer->TakeDamage( info );
+		}
+
+		m_pTFPlayer->m_Shared.IncrementAirDashCount();
+		m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_DOUBLEJUMP );
+
+		if( tf2v_use_triple_jump_sound.GetBool() )
+		{
+			CPVSFilter filter( m_pTFPlayer->GetAbsOrigin() );
+
+			m_pTFPlayer->StopSound( "General.banana_slip" );
+
+			EmitSound_t parms;
+			parms.m_pSoundName = "General.banana_slip";
+			parms.m_SoundLevel = SNDLVL_25dB;
+			parms.m_flVolume = 0.1f;
+			parms.m_nFlags |= SND_CHANGE_PITCH | SND_CHANGE_VOL;
+			parms.m_nPitch = ( m_pTFPlayer->m_Shared.GetAirDashCount() * -1 * 5 ) + 100;
+
+			m_pTFPlayer->EmitSound( filter, ENTINDEX( m_pTFPlayer ), parms);
+		}
+	}
+	else
+	{
+		m_pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_DOUBLE_JUMP, "started_jumping:1" );
+		m_pTFPlayer->m_Shared.IncrementAirDashCount();
+		m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_DOUBLEJUMP );
+	}
 }
 
 // Only allow bunny jumping up to 1.2x server / player maxspeed setting
