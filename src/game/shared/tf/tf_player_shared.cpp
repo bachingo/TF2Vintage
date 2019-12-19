@@ -184,7 +184,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_bJumping ) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult ) ),
-	RecvPropInt( RECVINFO( m_bAirDash ) ),
+	RecvPropInt( RECVINFO( m_nAirDashCount ) ),
 	RecvPropInt( RECVINFO( m_nAirDucked ) ),
 	RecvPropInt( RECVINFO( m_nPlayerState ) ),
 	RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
@@ -229,7 +229,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_nPlayerCondEx4, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nAirDucked, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iDesiredWeaponID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
@@ -264,7 +264,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nAirDashCount ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nAirDucked ), 2, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT ) + 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL ) + 1, SPROP_UNSIGNED ),
@@ -315,7 +315,7 @@ CTFPlayerShared::CTFPlayerShared()
 {
 	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
-	m_bAirDash = false;
+	m_nAirDashCount = 0;
 	m_flLastDashTime = 0;
 	m_nAirDucked = 0;
 	m_flStealthNoAttackExpire = 0.0f;
@@ -3608,11 +3608,21 @@ void CTFPlayerShared::SetJumping(bool bJumping)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Checks if we can do an airdash. Supercedes bAirDash. [ CTFPlayerShared::SetAirDash(bool bAirDash) ]
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::SetAirDash(bool bAirDash)
+bool CTFPlayerShared::CanAirDash( void )
 {
-	m_bAirDash = bAirDash;
+	// The regular amount of airjumps we can do is one, but attributes can affect this.
+	int nMaxAirJumps = 1;
+	
+	// Check to see if we have attributes for extra airdashes.
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, nMaxAirJumps, air_dash_count);
+
+	// If in Soda Popper mode, get five dashes. Do not overlap with attributes.
+	if (InCond( TF_COND_SODAPOPPER_HYPE ) )
+		nMaxAirJumps = 5;
+	
+	return ( nMaxAirJumps > GetAirDashCount() );
 }
 
 //-----------------------------------------------------------------------------

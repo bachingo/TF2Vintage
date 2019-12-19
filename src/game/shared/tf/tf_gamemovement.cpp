@@ -333,7 +333,14 @@ void CTFGameMovement::AirDash( void )
 	mv->m_vecVelocity = vecWishDirection;
 	mv->m_vecVelocity.z += flDashZ;
 
-	m_pTFPlayer->m_Shared.SetAirDash( true );
+	// Update data and attributes.
+	m_pTFPlayer->m_Shared.SetLastDashTime(gpGlobals->curtime);
+	int nLoseHypeOnJump = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump);
+	if (nLoseHypeOnJump != 0)
+		m_pTFPlayer->m_Shared.SetHypeMeter( (nLoseHypeOnJump * -1), false );
+	
+	m_pTFPlayer->m_Shared.IncrementAirDashCount();
 
 	// Play the gesture.
 	m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_DOUBLEJUMP );
@@ -409,7 +416,7 @@ bool CTFGameMovement::CheckJumpButton()
 	// In air, so ignore jumps (unless you are a scout).
 	if ( !bOnGround )
 	{
-		if ( bScout && !m_pTFPlayer->m_Shared.IsAirDashing() )
+		if ( bScout && m_pTFPlayer->m_Shared.CanAirDash() )
 		{
 			bAirDash = true;
 		}
@@ -424,11 +431,6 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( bAirDash )
 	{
 		AirDash();
-		m_pTFPlayer->m_Shared.SetLastDashTime(gpGlobals->curtime);
-		int nLoseHypeOnJump = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump);
-		if (nLoseHypeOnJump != 0)
-			m_pTFPlayer->m_Shared.SetHypeMeter( (nLoseHypeOnJump * -1), false );
 		return true;
 	}
 
@@ -1800,7 +1802,7 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 
 	if ( pNewGround )
 	{
-		m_pTFPlayer->m_Shared.SetAirDash( false );
+		m_pTFPlayer->m_Shared.ResetAirDashCount();
 		m_pTFPlayer->m_Shared.ResetAirDucks();
 		m_pTFPlayer->m_Shared.SetHasRecoiled( false );
 		m_pTFPlayer->m_Shared.SetKnockbackWeaponID( -1 );
