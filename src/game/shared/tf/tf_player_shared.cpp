@@ -2087,10 +2087,20 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 void CTFPlayerShared::OnAddMarkedForDeath( void )
 {
 #ifdef CLIENT_DLL
-	// Start the Marked for Death icon
-	if ( !m_pMarkedIcon )
+	if ( !m_pOuter->m_Shared.InCond(TF_COND_STEALTHED) && !m_pOuter->m_Shared.InCond(TF_COND_STEALTHED_BLINK) )
 	{
-		m_pMarkedIcon = m_pOuter->ParticleProp()->Create( "mark_for_death", PATTACH_POINT_FOLLOW, "head" );;
+		// Start the Marked for Death icon
+		if (!m_pMarkedIcon )
+			m_pMarkedIcon = m_pOuter->ParticleProp()->Create( "mark_for_death", PATTACH_POINT_FOLLOW, "head" );;
+	}
+	else
+	{
+		// We're cloaked, don't give our position away.
+		if (m_pMarkedIcon )
+		{
+			m_pOuter->ParticleProp()->StopEmission( m_pMarkedIcon );
+			m_pMarkedIcon = NULL;
+		}
 	}
 #endif
 }
@@ -2102,7 +2112,7 @@ void CTFPlayerShared::OnAddMarkedForDeath( void )
 void CTFPlayerShared::OnRemoveMarkedForDeath( void )
 {
 #ifdef CLIENT_DLL
-	// Destroy the Marked for Death icon
+	// Destroy the Marked for Death icon.
 	if ( m_pMarkedIcon )
 	{
 		m_pOuter->ParticleProp()->StopEmission( m_pMarkedIcon );
@@ -2728,7 +2738,7 @@ bool CTFPlayerShared::IsPlayerDominatingMe( int iPlayerIndex )
 void CTFPlayerShared::NoteLastDamageTime( int nDamage )
 {
 	// we took damage
-	if (nDamage > 5)
+	if ( nDamage > 5 && !InCond(TF_COND_BLINK_IMMUNE) )
 	{
 		m_flLastStealthExposeTime = gpGlobals->curtime;
 		AddCond( TF_COND_STEALTHED_BLINK );
@@ -2740,8 +2750,11 @@ void CTFPlayerShared::NoteLastDamageTime( int nDamage )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnSpyTouchedByEnemy( void )
 {
-	m_flLastStealthExposeTime = gpGlobals->curtime;
-	AddCond( TF_COND_STEALTHED_BLINK );
+	if ( !InCond(TF_COND_BLINK_IMMUNE) )
+	{
+		m_flLastStealthExposeTime = gpGlobals->curtime;
+		AddCond( TF_COND_STEALTHED_BLINK );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -4467,6 +4480,12 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( m_Shared.IsSpeedBoosted() )
 	{
 		// 40% Speed increase.
+		maxfbspeed *= 1.4f;
+	}
+	
+	if (m_Shared.InCond(TF_COND_STEALTHED) && m_Shared.InCond(TF_COND_SPEED_BOOST_FEIGN))
+	{
+		// 40% Speed increase. This allows for both speed boosts to be stacked.
 		maxfbspeed *= 1.4f;
 	}
 	
