@@ -5363,6 +5363,54 @@
 				"sound_burst"			"Weapon_ProSniperRifle.SingleCrit"
 			}
 		}
+		"772"
+		{
+			"name"	"Baby Face's Blaster"
+			"prefab"		"weapon_scattergun"
+			"year"				"2012"
+			"item_name"	"#TF_Weapon_PEP_Scattergun"
+			"item_logname"	"pep_brawlerblaster"
+			"item_iconname"	"pep_brawlerblaster"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_pep_scattergun/c_pep_scattergun"
+			"model_player"	"models/workshop/weapons/c_models/c_pep_scattergun/c_pep_scattergun.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -12"
+			}
+			"attributes"
+			{
+				"weapon spread bonus"
+				{
+					"attribute_class"	"mult_spread_scale"
+					"value"	"0.6"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.7"
+				}
+				"move speed penalty"
+				{
+					"attribute_class"	"mult_player_movespeed"
+					"value"	"0.65"
+				}
+				"hype resets on jump"
+				{
+					"attribute_class"	"hype_resets_on_jump"
+					"value"	"25"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value"				"0.66"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Brawler_Blaster.Single"
+				"sound_burst"		"Weapon_Brawler_Blaster.SingleCrit"
+			}
+		}
 		"773"
 		{
 			"name" "Pretty Boy's Pocket Pistol"
