@@ -4725,6 +4725,42 @@
 				}
 			}
 		}
+		"355"
+		{
+			"name"	"The Fan O'War"
+			"prefab"		"weapon_bat"
+			"year"				"2011"
+			"item_logname"	"warfan"
+			"item_iconname"	"warfan"
+			"item_type_name"	"#TF_Weapon_Gunbai"
+			"item_name"	"#TF_Gunbai"
+			"item_description"	"#TF_Gunbai_Desc"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_warfan/c_shogun_warfan"		
+			"model_player"	"models/workshop_partner/weapons/c_models/c_shogun_warfan/c_shogun_warfan.mdl"
+			"propername"	"1"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"mark for death"
+				{
+					"attribute_class"	"mark_for_death"
+					"value"	"15"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.25"
+				}
+				"minicrits become crits"
+				{
+					"attribute_class"	"minicrits_become_crits"
+					"value" "1"
+				}
+			}
+		}
 		"404"
 		{
 			"name"	"The Persian Persuader"
