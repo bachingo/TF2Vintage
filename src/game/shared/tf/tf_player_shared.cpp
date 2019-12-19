@@ -205,6 +205,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 	RecvPropFloat( RECVINFO( m_flEffectBarProgress ) ),
 	RecvPropFloat( RECVINFO( m_flChargeMeter ) ),
+	RecvPropFloat( RECVINFO( m_flHypeMeter ) ),
 	// Spy.
 	RecvPropTime( RECVINFO( m_flInvisChangeCompleteTime ) ),
 	RecvPropInt( RECVINFO( m_nDisguiseTeam ) ),
@@ -235,6 +236,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_iRespawnParticleID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flEffectBarProgress, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flChargeMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flHypeMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 
 // Server specific.
@@ -283,6 +285,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iMaxHealth ), 10 ),
 	SendPropFloat( SENDINFO( m_flEffectBarProgress ), 11, 0, 0.0f, 100.0f ),
 	SendPropFloat( SENDINFO( m_flChargeMeter ), 11, 0, 0.0f, 100.0f ),
+	SendPropFloat( SENDINFO( m_flHypeMeter ), 11, 0, 0.0f, 100.0f ),
 	// Spy
 	SendPropTime( SENDINFO( m_flInvisChangeCompleteTime ) ),
 	SendPropInt( SENDINFO( m_nDisguiseTeam ), 3, SPROP_UNSIGNED ),
@@ -3682,6 +3685,35 @@ float CTFPlayerShared::GetCritMult(void)
 	#endif*/
 
 	return flRemapCritMul;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Set hype/boost meter progress
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::SetHypeMeter( float value, bool bIsPercent  )
+{
+	if ( m_pOuter )
+	{
+		CTFScatterGun *pScattergun = ( CTFScatterGun * )m_pOuter->Weapon_GetSlot( TF_LOADOUT_SLOT_PRIMARY );
+		if ( pScattergun )
+		{
+			float flMaxDamage = 0;
+			// Build percent based on our scattergun.
+			int nHypeOnDamage = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pScattergun, nHypeOnDamage, hype_on_damage);
+			int nBoostOnDamage = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pScattergun, nBoostOnDamage, boost_on_damage);
+			if ( nHypeOnDamage == 1 && bIsPercent )
+				flMaxDamage = TF_SCATTERGUN_HYPE_COUNT;
+			else if ( nBoostOnDamage == 1 && bIsPercent )
+				flMaxDamage = TF_SCATTERGUN_BOOST_COUNT;
+			
+			if ( ( nHypeOnDamage != 0 || nBoostOnDamage != 0 ) && bIsPercent )
+				m_flHypeMeter = Min( ( m_flHypeMeter + ( value / ( flMaxDamage / 100 ) ) ) , 100.0f );
+			else if ( ( nHypeOnDamage != 0 || nBoostOnDamage != 0 ) && !bIsPercent ) 
+				m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

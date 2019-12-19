@@ -321,8 +321,8 @@ public:
 	// Scatterguns
 	bool	HasRecoiled( void ) const			{ return m_bRecoiled; }
 	void	SetHasRecoiled( bool value )		{ m_bRecoiled = value; }
-	float	GetHypeMeter( void ) const {}
-	void	SetHypeMeter(float value) {}
+	float	GetHypeMeter( void ) const			{ return m_flHypeMeter; }
+	void	SetHypeMeter( float value, bool bIsPercent );
 	
 	int		GetKnockbackWeaponID( void ) const  { return m_iWeaponKnockbackID; }
 	void	SetKnockbackWeaponID( int userid )  { m_iWeaponKnockbackID = userid; }
@@ -551,10 +551,12 @@ private:
 
 #ifdef CLIENT_DLL
 	CNetworkVar( float, m_flChargeMeter );
+	CNetworkVar( float, m_flHypeMeter );
 #endif
 #ifdef GAME_DLL
 	public:
 	CNetworkVar( float, m_flChargeMeter );
+	CNetworkVar( float, m_flHypeMeter );
 	private:
 #endif
 

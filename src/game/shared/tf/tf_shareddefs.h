@@ -1321,6 +1321,12 @@ enum
 };
 
 //--------------------------------------------------------------------------
+// Hype
+//--------------------------------------------------------------------------
+#define TF_SCATTERGUN_HYPE_COUNT 350 // Damage to give before filling the Soda Popper's HYPE meter.
+#define TF_SCATTERGUN_BOOST_COUNT 100 // Damage to give before filling the Baby Face Blaster's BOOST meter.
+
+//--------------------------------------------------------------------------
 // Rage
 //--------------------------------------------------------------------------
 enum
