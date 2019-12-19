@@ -424,6 +424,7 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( bAirDash )
 	{
 		AirDash();
+		m_pTFPlayer->m_Shared.SetLastDashTime(gpGlobals->curtime);
 		return true;
 	}
 

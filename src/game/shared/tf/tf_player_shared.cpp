@@ -313,6 +313,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
 	m_bAirDash = false;
+	m_flLastDashTime = 0;
 	m_nAirDucked = 0;
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
@@ -3614,6 +3615,14 @@ void CTFPlayerShared::SetAirDash(bool bAirDash)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFPlayerShared::SetLastDashTime(float flLastDash)
+{
+	m_flLastDashTime = flLastDash;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPlayerShared::IncrementAirDucks(void)
 {
 	m_nAirDucked++;
@@ -4386,13 +4395,11 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) && tf2v_use_spy_moveattrib.GetBool() )
 	{
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(m_Shared.GetDisguiseTarget()), maxfbspeed, mult_player_movespeed );
-		
 		pWeapon = (CTFWeaponBase *)ToTFPlayer(m_Shared.GetDisguiseTarget())->Weapon_GetSlot(m_Shared.GetDisguiseItem()->GetItemSlot());
 	}
 	else
 	{
 		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
-		
 		pWeapon = GetActiveTFWeapon();
 	}
 
