@@ -4704,6 +4704,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_DEFENSE);
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW / 100), TF_BUFF_REGENONDAMAGE);
 			}
+			// Build scattergun boost.
+			pTFAttacker->m_Shared.SetHypeMeter( info.GetDamage(), true );
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -5102,6 +5104,16 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		// Build rage on damage taken
 		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_DEFENSE_COUNT / 100), TF_BUFF_DEFENSE);
 		m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_DEFENSE_COUNT / 100), TF_BUFF_REGENONDAMAGE);
+	}
+	
+	// If we have an attribute reducing boost/hype, reduce our level.
+	if ( pWeapon )
+	{
+		int nLoseHypeOnDamage = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLoseHypeOnDamage, lose_hype_on_take_damage );
+		if ( nLoseHypeOnDamage != 0 )
+		pTFAttacker->m_Shared.SetHypeMeter( ( ( info.GetDamage() * nLoseHypeOnDamage ) * -1 ), false );
+		
 	}
 
 	// Early out if the base class took no damage
