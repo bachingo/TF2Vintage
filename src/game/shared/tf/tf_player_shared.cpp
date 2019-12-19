@@ -3722,6 +3722,10 @@ void CTFPlayerShared::SetHypeMeter( float value, bool bIsPercent  )
 				m_flHypeMeter = Min( ( m_flHypeMeter + ( value / ( flMaxDamage / 100 ) ) ) , 100.0f );
 			else if ( ( nHypeOnDamage != 0 || nBoostOnDamage != 0 ) && !bIsPercent ) 
 				m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
+			
+			// If we removed hype, never let our boost be negative.
+			if (m_flHypeMeter < 0.0f)
+				m_flHypeMeter = 0.0f;
 		}
 	}
 }
