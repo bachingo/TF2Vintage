@@ -348,7 +348,7 @@ void CTFGameMovement::AirDash( void )
 
 	int nLoseHypeOnJump = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump);
-	if (nLoseHypeOnJump != 0)
+	if ( nLoseHypeOnJump != 0 )
 		m_pTFPlayer->m_Shared.SetHypeMeter( (nLoseHypeOnJump * -1), false );
 
 	if ( m_pTFPlayer->m_Shared.GetAirDashCount() > 0 )
