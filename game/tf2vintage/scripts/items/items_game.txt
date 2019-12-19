@@ -5585,6 +5585,11 @@
 					"attribute_class"	"hype_resets_on_jump"
 					"value"	"25"
 				}
+				"lose hype on take damage"
+				{
+					"attribute_class"	"lose_hype_on_take_damage"
+					"value"	"1"
+				}
 				"clip size penalty"
 				{
 					"attribute_class"	"mult_clipsize"

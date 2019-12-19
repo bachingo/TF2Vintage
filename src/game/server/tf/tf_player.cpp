@@ -8538,9 +8538,12 @@ void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 	
 	if ( tf2v_use_new_dead_ringer.GetBool() )
 	{
-		// Make us immune to afterburn and add a speed boost for 3 seconds
-		m_Shared.AddCond( TF_COND_AFTERBURN_IMMUNE, 3.0 );
-		m_Shared.AddCond( TF_COND_SPEED_BOOST, 3.0 );
+		// Effect lasts 3 seconds
+		float flDREffectTime = 3.0f;
+		// Make us immune to afterburn, add a special speed boost, and prevent us from blinking.
+		m_Shared.AddCond( TF_COND_AFTERBURN_IMMUNE, flDREffectTime );
+		m_Shared.AddCond( TF_COND_SPEED_BOOST_FEIGN, flDREffectTime );
+		m_Shared.AddCond( TF_COND_BLINK_IMMUNE, flDREffectTime );
 	}
 
 	RemoveTeleportEffect();
