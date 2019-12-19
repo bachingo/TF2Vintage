@@ -1693,6 +1693,46 @@
 				}
 			}
 		}
+		"weapon_soda_popper"
+		{
+			"prefab"		"weapon_double_barrel"
+			"item_class"	"tf_weapon_soda_popper"
+			"item_name"	"#TF_SodaPopper"
+			"item_logname"	"soda_popper"
+			"item_iconname"	"soda_popper"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_soda_popper/c_soda_popper"
+			"model_player"	"models/workshop/weapons/c_models/c_soda_popper/c_soda_popper.mdl"
+			"attributes"
+			{
+				"Reload time decreased"
+				{
+					"attribute_class"	"mult_reload_time"
+					"value"	"0.75"
+				}
+			}
+			"visuals"
+			{
+				"animation_replacement"
+				{
+					"ACT_VM_IDLE"					"ACT_ITEM2_VM_IDLE"
+					"ACT_VM_DRAW"					"ACT_ITEM2_VM_DRAW"
+					"ACT_VM_HOLSTER"				"ACT_ITEM2_VM_HOLSTER"
+					"ACT_VM_PULLBACK"				"ACT_ITEM2_VM_PULLBACK"
+					"ACT_VM_PRIMARYATTACK"			"ACT_ITEM2_VM_PRIMARYATTACK"
+					"ACT_VM_SECONDARYATTACK"		"ACT_ITEM2_VM_SECONDARYATTACK"
+					"ACT_VM_RELOAD"					"ACT_ITEM2_VM_RELOAD"
+					"ACT_VM_DRYFIRE"				"ACT_ITEM2_VM_DRYFIRE"
+					"ACT_VM_IDLE_TO_LOWERED"		"ACT_ITEM2_VM_IDLE_TO_LOWERED"
+					"ACT_VM_IDLE_LOWERED"			"ACT_ITEM2_VM_IDLE_LOWERED"
+					"ACT_VM_LOWERED_TO_IDLE"		"ACT_ITEM2_VM_LOWERED_TO_IDLE"
+				}
+				"sound_single_shot"	"Weapon_Soda_Popper.Single"
+				"sound_burst"	"Weapon_Soda_Popper.SingleCrit"
+				"muzzle_flash"	"muzzle_bignasty"
+				"tracer_effect"	"bullet_bignasty_tracer01"
+			}
+		}
 		"weapon_huntsman"
 		{
 			"item_class"	"tf_weapon_compound_bow"
@@ -3361,66 +3401,6 @@
 			"name"	"Bonk! Atomic Punch"
 			"prefab"	"weapon_scout_drink"
 			"year"			"2009"
-		}
-		"47"
-		{
-			"name"	"Ludmila"
-			"prefab"	"weapon_minigun weapon_custom"
-			"year"			"2008"
-			"item_type_name"	"#TF_Weapon_Minigun"
-			"item_name"	"#TF_Unique_Achievement_Minigun2"
-			"item_logname"	"ludmila"
-			"item_iconname"	"natascha"
-			"image_inventory"	"backpack/weapons/c_models/c_w_ludmila/c_w_ludmila"
-			"model_world"	"models/weapons/w_models/w_minigun.mdl"
-			"attach_to_hands"	"0"
-			"attributes"
-			{
-				"heal on hit for slowfire"
-				{
-					"attribute_class"	"add_onhit_addhealth"
-					"value"	"3"
-				}
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0.75"
-				}
-				"fire rate penalty"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value"	"1.1"
-				}
-				"minigun spinup time increased"
-				{
-					"attribute_class"	"mult_minigun_spinup_time"
-					"value" "1.2"
-				}
-			}
-			"visuals"
-			{
-				"sound_reload"	"Weapon_Minifun.Reload"
-				"sound_empty"	"Weapon_Minifun.ClipEmpty"
-				"sound_double_shot"	"Weapon_Minifun.Fire"
-				"sound_special1"	"Weapon_Minifun.WindUp"
-				"sound_special2"	"Weapon_Minifun.WindDown"
-				"sound_special3"	"Weapon_Minifun.Spin"
-				"sound_burst"	"Weapon_Minifun.FireCrit"
-				"skin"	"2"
-				"attached_models"
-				{
-					"0"
-					{
-						"model_display_flags"	"1"
-						"model"	"models/weapons/c_models/c_w_ludmila/c_w_ludmila.mdl"
-					}
-					"1"
-					{
-						"model_display_flags"	"2"
-						"model" "models/weapons/c_models/c_v_ludmila/c_v_ludmila.mdl"
-					}
-				}
-			}
 		}
 		"56"
 		{
@@ -5182,6 +5162,21 @@
 			"year"				"2011"
 			"particle_suffix"	"disciplinary_action"
 		}
+		"448"
+		{
+			"name"	"The Soda Popper"
+			"prefab" "weapon_soda_popper"
+			"year"	"2011"
+			"particle_suffix"	"soda_popper"
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
+			}
+		}
 		"449"
 		{
 			"name"	"The Winger"
@@ -5713,6 +5708,66 @@
 			"prefab"	"weapon_quadball"
 			"year"			"2014"
 			"particle_suffix"	"iron_bomber"
+		}
+		"1152"
+		{
+			"name"	"Ludmila"
+			"prefab"	"weapon_minigun weapon_custom"
+			"year"			"2008"
+			"item_type_name"	"#TF_Weapon_Minigun"
+			"item_name"	"#TF_Unique_Achievement_Minigun2"
+			"item_logname"	"ludmila"
+			"item_iconname"	"natascha"
+			"image_inventory"	"backpack/weapons/c_models/c_w_ludmila/c_w_ludmila"
+			"model_world"	"models/weapons/w_models/w_minigun.mdl"
+			"attach_to_hands"	"0"
+			"attributes"
+			{
+				"heal on hit for slowfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"3"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.1"
+				}
+				"minigun spinup time increased"
+				{
+					"attribute_class"	"mult_minigun_spinup_time"
+					"value" "1.2"
+				}
+			}
+			"visuals"
+			{
+				"sound_reload"	"Weapon_Minifun.Reload"
+				"sound_empty"	"Weapon_Minifun.ClipEmpty"
+				"sound_double_shot"	"Weapon_Minifun.Fire"
+				"sound_special1"	"Weapon_Minifun.WindUp"
+				"sound_special2"	"Weapon_Minifun.WindDown"
+				"sound_special3"	"Weapon_Minifun.Spin"
+				"sound_burst"	"Weapon_Minifun.FireCrit"
+				"skin"	"2"
+				"attached_models"
+				{
+					"0"
+					{
+						"model_display_flags"	"1"
+						"model"	"models/weapons/c_models/c_w_ludmila/c_w_ludmila.mdl"
+					}
+					"1"
+					{
+						"model_display_flags"	"2"
+						"model" "models/weapons/c_models/c_v_ludmila/c_v_ludmila.mdl"
+					}
+				}
+			}
 		}
 		"121"
 		{

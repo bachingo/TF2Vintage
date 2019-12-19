@@ -89,6 +89,7 @@
 	"The Eviction Notice"							"1"
 	"The Mantreads"									"1"
 	"The Disciplinary Action"						"1"
+	"The Soda Popper"								"1"
 	"The Winger"									"1"
 	"The Atomizer"									"1"
 	"The Enforcer"									"1"
