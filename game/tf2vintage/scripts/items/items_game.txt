@@ -1912,6 +1912,44 @@
 				"min_viewmodel_offset"					"10 0 -11"
 			}
 		}
+		"weapon_winger_pistol"
+		{
+			"prefab"			"weapon_pistol"
+			"item_type_name"	"#TF_Weapon_Pistol"
+			"item_logname" "the_winger"
+			"item_iconname" "the_winger"
+			"item_name"	"#TF_Winger"
+			"propername" "1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_winger_pistol/c_winger_pistol"
+			"model_player"	"models/workshop/weapons/c_models/c_winger_pistol/c_winger_pistol.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"attributes"
+			{
+				"damage bonus"
+				{
+					"attribute_class"	"mult_dmg"
+					"value" "1.15"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "0.4"
+				}
+				"increased jump height from weapon"
+				{
+					"attribute_class"	"mod_jump_height_from_weapon"
+					"value" "1.25"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Winger.Single"
+				"sound_burst"	"Weapon_Winger.SingleCrit"
+			}
+		}
 		"weapon_wrangler"
 		{
 			"item_class"	"tf_weapon_laser_pointer"
@@ -5048,6 +5086,59 @@
 			"prefab" "weapon_disciplinary_action"
 			"year"				"2011"
 			"particle_suffix"	"disciplinary_action"
+		}
+		"449"
+		{
+			"name"	"The Winger"
+			"prefab"	"weapon_winger_pistol"
+			"year"				"2011"
+			"particle_suffix"	"winger"
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
+			}
+		}
+		"450"
+		{
+			"name"	"The Atomizer"
+			"prefab"		"weapon_bat"
+			"year"				"2011"
+			"item_logname" "atomizer"
+			"item_iconname" "atomizer"
+			"item_name"	"#TF_Atomizer"
+			"propername" "1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_bonk_bat/c_bonk_bat"
+			"model_player"	"models/workshop/weapons/c_models/c_bonk_bat/c_bonk_bat.mdl"
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
+			}
+			"attributes"
+			{
+				"air dash count"
+				{
+					"attribute_class"	"air_dash_count"
+					"value"	"1"
+				}
+				"single wep deploy time increased"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time"
+					"value"	"1.5"
+				}
+				"dmg penalty vs players"
+				{
+					"attribute_class"	"mult_dmg_vs_players"
+					"value"	"0.85"
+				}
+			}
 		}
 		"460"
 		{
