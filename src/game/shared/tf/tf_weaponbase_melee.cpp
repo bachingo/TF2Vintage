@@ -380,6 +380,25 @@ void CTFWeaponBaseMelee::Smack( void )
 			}
 		}
 
+		// Mark the player for death.
+		int nMarkForDeath = 0;
+		CALL_ATTRIB_HOOK_INT( nMarkForDeath, mark_for_death );
+		if( trace.m_pEnt->IsPlayer() && ( nMarkForDeath != 0 ) )
+		{
+			CTFPlayer *pTFPlayer = ToTFPlayer( trace.m_pEnt );
+			if (pTFPlayer)
+			{
+				// Add Marked For Death on enemies. We can set the attribute through the weapon.
+				if ( !pTFPlayer->InSameTeam( pPlayer ) )
+				{
+					pTFPlayer->m_Shared.AddCond( TF_COND_MARKEDFORDEATH, nMarkForDeath );
+				}
+			}
+			
+		}
+		
+	
+		
 		// Don't impact trace friendly players or objects
 		if ( trace.m_pEnt && trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() )
 		{
