@@ -37,6 +37,7 @@ ConVar  tf_solidobjects( "tf_solidobjects", "1", FCVAR_REPLICATED | FCVAR_CHEAT 
 ConVar	tf_clamp_back_speed( "tf_clamp_back_speed", "0.9", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar  tf_clamp_back_speed_min( "tf_clamp_back_speed_min", "100", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar	tf_clamp_airducks( "tf_clamp_airducks", "1", FCVAR_REPLICATED );
+ConVar	tf_scout_hype_mod( "tf_scout_hype_mod", "55", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
 ConVar	tf2v_bunnyjump_max_speed_factor("tf2v_bunnyjump_max_speed_factor", "1.2", FCVAR_REPLICATED);
 ConVar  tf2v_autojump("tf2v_autojump", "0", FCVAR_REPLICATED, "Automatically jump while holding the jump button down");
@@ -1529,6 +1530,23 @@ void CTFGameMovement::FullWalkMove()
 
 	// Make sure velocity is valid.
 	CheckVelocity();
+
+	if ( m_pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) )
+	{
+		CTFWeaponBase *pWeapon = m_pTFPlayer->GetActiveTFWeapon();
+		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_SODA_POPPER ) )
+		{
+			int nBuildsHype = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nBuildsHype, set_weapon_mode );
+
+			if ( nBuildsHype == 1 )
+			{
+				m_pTFPlayer->m_Shared.SetHypeMeter( 
+					( mv->m_vecVelocity.Length() * gpGlobals->frametime ) / tf_scout_hype_mod.GetFloat(), 
+					false );
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

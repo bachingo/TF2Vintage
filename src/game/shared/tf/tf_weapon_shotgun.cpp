@@ -325,6 +325,7 @@ bool CTFScatterGun::HasChargeBar( void )
 	CALL_ATTRIB_HOOK_INT( nHypeOnDamage, hype_on_damage );
 	int nBoostOnDamage = 0;
 	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
+
 	return ( ( nHypeOnDamage == 1) || ( nBoostOnDamage == 1 ) );
 }
 
@@ -337,12 +338,13 @@ const char* CTFScatterGun::GetEffectLabelText(void)
 	CALL_ATTRIB_HOOK_INT( nHypeOnDamage, hype_on_damage );
 	int nBoostOnDamage = 0;
 	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
+
 	if ( nHypeOnDamage == 1 )
-	 return "#TF_Hype";
+		return "#TF_Hype";
 	else if ( nBoostOnDamage == 1 )
-	 return "#TF_Boost";
+		return "#TF_Boost";
 	
-	return "#TF_Boost";
+	return "";
 }
 
 //-----------------------------------------------------------------------------
@@ -589,4 +591,43 @@ bool CTFShotgun_Revenge::CanGetRevengeCrits( void ) const
 	int nSentryRevenge = 0;
 	CALL_ATTRIB_HOOK_INT( nSentryRevenge, sentry_killed_revenge );
 	return nSentryRevenge == 1;
+}
+
+class CTFSodaPopper : public CTFScatterGun
+{
+public:
+	DECLARE_CLASS( CTFSodaPopper, CTFScatterGun );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SODA_POPPER; }
+	virtual bool	HasChargeBar( void );
+	virtual const char* GetEffectLabelText( void );
+	virtual float	GetEffectBarProgress( void );
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFSodaPopper, tf_weapon_soda_popper )
+
+bool CTFSodaPopper::HasChargeBar( void )
+{
+	int nBuildsHype = 0;
+	CALL_ATTRIB_HOOK_INT( nBuildsHype, set_weapon_mode );
+	return nBuildsHype == 1;
+}
+
+const char *CTFSodaPopper::GetEffectLabelText( void )
+{
+	return "#TF_Hype";
+}
+
+float CTFSodaPopper::GetEffectBarProgress( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( pOwner)
+	{
+		return pOwner->m_Shared.GetHypeMeter() / 100.0f;
+	}
+
+	return 0.0f;
 }

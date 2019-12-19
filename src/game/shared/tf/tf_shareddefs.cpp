@@ -526,6 +526,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SNIPERRIFLE_CLASSIC",
 	"TF_WEAPON_GRENADE_PIPEBOMB_BETA",
 	"TF_WEAPON_SHOVELFIST",
+	"TF_WEAPON_SODA_POPPER",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -619,6 +620,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BULLET | DMG_USE_HITLOCATIONS,			// TF_WEAPON_SNIPERRIFLE_CLASSIC,
 	DMG_BLAST | DMG_HALF_FALLOFF,               // TF_WEAPON_GRENADE_PIPEBOMB_BETA
 	DMG_CLUB,									// TF_WEAPON_SHOVELFIST
+	DMG_BUCKSHOT | DMG_USEDISTANCEMOD,          // TF_WEAPON_SODA_POPPER
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list

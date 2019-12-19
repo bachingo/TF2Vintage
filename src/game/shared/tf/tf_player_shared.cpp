@@ -3750,14 +3750,15 @@ void CTFPlayerShared::SetHypeMeter( float value, bool bIsPercent  )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pScattergun, nHypeOnDamage, hype_on_damage);
 			int nBoostOnDamage = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pScattergun, nBoostOnDamage, boost_on_damage);
+
 			if ( nHypeOnDamage == 1 && bIsPercent )
 				flMaxDamage = TF_SCATTERGUN_HYPE_COUNT;
 			else if ( nBoostOnDamage == 1 && bIsPercent )
 				flMaxDamage = TF_SCATTERGUN_BOOST_COUNT;
 			
-			if ( ( nHypeOnDamage != 0 || nBoostOnDamage != 0 ) && bIsPercent )
+			if ( bIsPercent )
 				m_flHypeMeter = Min( ( m_flHypeMeter + ( value / ( flMaxDamage / 100 ) ) ) , 100.0f );
-			else if ( ( nHypeOnDamage != 0 || nBoostOnDamage != 0 ) && !bIsPercent ) 
+			else
 				m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
 		}
 	}
