@@ -3225,7 +3225,6 @@
 			"image_inventory"	"backpack/weapons/c_models/c_w_ludmila/c_w_ludmila"
 			"model_world"	"models/weapons/w_models/w_minigun.mdl"
 			"attach_to_hands"	"0"
-			
 			"attributes"
 			{
 				"slow enemy on hit"
@@ -3362,6 +3361,66 @@
 			"name"	"Bonk! Atomic Punch"
 			"prefab"	"weapon_scout_drink"
 			"year"			"2009"
+		}
+		"47"
+		{
+			"name"	"Ludmila"
+			"prefab"	"weapon_minigun weapon_custom"
+			"year"			"2008"
+			"item_type_name"	"#TF_Weapon_Minigun"
+			"item_name"	"#TF_Unique_Achievement_Minigun2"
+			"item_logname"	"ludmila"
+			"item_iconname"	"natascha"
+			"image_inventory"	"backpack/weapons/c_models/c_w_ludmila/c_w_ludmila"
+			"model_world"	"models/weapons/w_models/w_minigun.mdl"
+			"attach_to_hands"	"0"
+			"attributes"
+			{
+				"heal on hit for slowfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"3"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.1"
+				}
+				"minigun spinup time increased"
+				{
+					"attribute_class"	"mult_minigun_spinup_time"
+					"value" "1.2"
+				}
+			}
+			"visuals"
+			{
+				"sound_reload"	"Weapon_Minifun.Reload"
+				"sound_empty"	"Weapon_Minifun.ClipEmpty"
+				"sound_double_shot"	"Weapon_Minifun.Fire"
+				"sound_special1"	"Weapon_Minifun.WindUp"
+				"sound_special2"	"Weapon_Minifun.WindDown"
+				"sound_special3"	"Weapon_Minifun.Spin"
+				"sound_burst"	"Weapon_Minifun.FireCrit"
+				"skin"	"2"
+				"attached_models"
+				{
+					"0"
+					{
+						"model_display_flags"	"1"
+						"model"	"models/weapons/c_models/c_w_ludmila/c_w_ludmila.mdl"
+					}
+					"1"
+					{
+						"model_display_flags"	"2"
+						"model" "models/weapons/c_models/c_v_ludmila/c_v_ludmila.mdl"
+					}
+				}
+			}
 		}
 		"56"
 		{

@@ -18,6 +18,7 @@
 	"The Sandman"									"1"
 	"The Force-a-Nature"							"1"
 	"Bonk! Atomic Punch"							"1"
+	"Ludmila"										"1"
 	"The Huntsman"									"1"
 	"The Razorback"									"1"
 	"Jarate"										"1"
