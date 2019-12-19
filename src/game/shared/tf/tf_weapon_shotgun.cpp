@@ -631,3 +631,15 @@ float CTFSodaPopper::GetEffectBarProgress( void )
 
 	return 0.0f;
 }
+
+class CTFPepBrawlerBlaster : public CTFScatterGun
+{
+public:
+	DECLARE_CLASS( CTFPepBrawlerBlaster, CTFScatterGun );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PEP_BRAWL_BLASTER; }
+};
+
+CREATE_SIMPLE_WEAPON_TABLE( TFPepBrawlerBlaster, tf_weapon_pep_brawler_blaster )
