@@ -326,12 +326,14 @@ public:
 	void	SetHasRecoiled( bool value )		{ m_bRecoiled = value; }
 	float	GetHypeMeter( void ) const			{ return m_flHypeMeter; }
 	void	SetHypeMeter( float value, bool bIsPercent );
+	void	SetHypeMeterAbsolute( float value )		{ m_flHypeMeter = value; }
 	
 	int		GetKnockbackWeaponID( void ) const  { return m_iWeaponKnockbackID; }
 	void	SetKnockbackWeaponID( int userid )  { m_iWeaponKnockbackID = userid; }
 	CBasePlayer *GetKnockbackWeaponOwner( void );
 
 	// Knights
+	void	IncrementDecapitationCount( void )       	 { m_iDecapitations += 1; }
 	int		GetDecapitationCount( void ) const       { return m_iDecapitations; }
 	void	SetDecapitationCount( int count )        { m_iDecapitations = count; }
 	bool	HasDemoShieldEquipped( void ) const;
@@ -343,6 +345,12 @@ public:
 	void	SetShieldChargeDrainRate( float flRate ) { m_flChargeDrainRate = flRate; }
 	void	SetShieldChargeRegenRate( float flRate ) { m_flChargeRegenRate = flRate; }
 	void	CalcChargeCrit( bool bForceFull );
+	
+	// Sniper rifle headshots
+	int		GetHeadshotCount( void ) const       { return m_iHeadshots; }
+	void	SetHeadshotCount( int count )        { m_iHeadshots = count; }
+	void	IncrementHeadshotCount( void )        { m_iHeadshots += 1; }
+	
 #ifdef GAME_DLL
 	void	UpdateChargeMeter( void );
 #endif
@@ -553,6 +561,8 @@ private:
 	CNetworkVar( int, m_iDecapitations );
 	CNetworkVar( bool, m_bShieldEquipped );
 	CNetworkVar( int, m_iNextMeleeCrit );
+	
+	CNetworkVar( int, m_iHeadshots );
 
 #ifdef CLIENT_DLL
 	CNetworkVar( float, m_flChargeMeter );

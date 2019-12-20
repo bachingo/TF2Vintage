@@ -194,6 +194,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropFloat( RECVINFO( m_flStunResistance ) ),
 	RecvPropEHandle( RECVINFO( m_hStunner ) ),
 	RecvPropInt( RECVINFO( m_iDecapitations ) ),
+	RecvPropInt( RECVINFO( m_iHeadshots ) ),
 	RecvPropInt( RECVINFO( m_bShieldEquipped ) ),
 	RecvPropInt( RECVINFO( m_iNextMeleeCrit ) ),
 	RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
@@ -274,6 +275,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropFloat( SENDINFO( m_flStunResistance ), 0, SPROP_NOSCALE ),
 	SendPropEHandle( SENDINFO( m_hStunner ) ),
 	SendPropInt( SENDINFO( m_iDecapitations ), 8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iHeadshots ), 8, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_bShieldEquipped ), 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iNextMeleeCrit ) ),
 	SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
@@ -335,6 +337,8 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bGunslinger = false;
 
 	m_iDecapitations = 0;
+	
+	m_iHeadshots = 0;
 
 #ifdef CLIENT_DLL
 	m_iDisguiseWeaponModelIndex = -1;

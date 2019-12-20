@@ -1221,6 +1221,8 @@ void CTFPlayer::Spawn()
 	GetViewModel( 1 )->SetWeaponModel( NULL, NULL );
 
 	m_Shared.SetDecapitationCount( 0 );
+	m_Shared.SetHeadshotCount( 0 );
+	m_Shared.SetHypeMeterAbsolute( 0 );
 	m_Shared.SetFeignReady( false );
 	m_Shared.SetHasRecoiled( false );
 
