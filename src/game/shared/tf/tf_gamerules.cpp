@@ -4281,6 +4281,7 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 				else if ( pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE ) || 	// Sniper Rifles: Check for headshot.
 						  pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE_CLASSIC ) || 
 						  pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE_REAL ) || 
+						  pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE_DECAP ) || 
 						  pActive->IsWeapon( TF_WEAPON_HUNTERRIFLE ) )
 					event->SetBool( "silent_kill", ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT && bIsSilent ) );
 				else

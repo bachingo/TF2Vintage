@@ -528,6 +528,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SHOVELFIST",
 	"TF_WEAPON_SODA_POPPER",
 	"TF_WEAPON_PEP_BRAWL_BLASTER",
+	"TF_WEAPON_SNIPERRIFLE_DECAP",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -623,6 +624,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_CLUB,									// TF_WEAPON_SHOVELFIST
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD,          // TF_WEAPON_SODA_POPPER
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD,          // TF_WEAPON_PEP_BRAWL_BLASTER
+	DMG_BULLET | DMG_USE_HITLOCATIONS,			// TF_WEAPON_SNIPERRIFLE_DECAP,
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list

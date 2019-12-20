@@ -158,4 +158,27 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_REAL; }
 };
 
+
+// Sniper logic used for the Bazaar Bargin.
+
+#if defined CLIENT_DLL
+#define CTFSniperRifle_Decap C_TFSniperRifle_Decap
+#endif
+
+class CTFSniperRifle_Decap : public CTFSniperRifle
+{
+public:
+
+	DECLARE_CLASS( CTFSniperRifle_Decap, CTFSniperRifle )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_DECAP; }
+	virtual bool	HasChargeBar( void )			{ return true; }
+	virtual const char* GetEffectLabelText( void ) { return "#TF_Berzerk"; }
+	virtual void	OnHeadshot( CTFPlayer *pVictim );
+	virtual float	GetSniperRechargeRate( void );
+	
+};
+
 #endif // TF_WEAPON_SNIPERRIFLE_H
