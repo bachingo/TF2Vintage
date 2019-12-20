@@ -44,6 +44,8 @@ CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Soldier, tf_weapon_shotgun_soldier )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_HWG, tf_weapon_shotgun_hwg )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Pyro, tf_weapon_shotgun_pyro )
 CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
+CREATE_SIMPLE_WEAPON_TABLE( TFPepBrawlBlaster, tf_weapon_pep_brawler_blaster)
+CREATE_SIMPLE_WEAPON_TABLE( TFSodaPopper, tf_weapon_soda_popper)
 
 //=============================================================================
 //
@@ -316,71 +318,6 @@ bool CTFScatterGun::HasKnockback() const
 	return nScatterGunHasKnockback == 1;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFScatterGun::HasChargeBar( void )
-{
-	int nHypeOnDamage = 0;
-	CALL_ATTRIB_HOOK_INT( nHypeOnDamage, hype_on_damage );
-	int nBoostOnDamage = 0;
-	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
-
-	return ( ( nHypeOnDamage == 1) || ( nBoostOnDamage == 1 ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-const char* CTFScatterGun::GetEffectLabelText(void)
-{
-	int nHypeOnDamage = 0;
-	CALL_ATTRIB_HOOK_INT( nHypeOnDamage, hype_on_damage );
-	int nBoostOnDamage = 0;
-	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
-
-	if ( nHypeOnDamage == 1 )
-		return "#TF_Hype";
-	else if ( nBoostOnDamage == 1 )
-		return "#TF_Boost";
-	
-	return "";
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-float CTFScatterGun::GetEffectBarProgress( void )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-
-	if ( pOwner)
-	{
-		return pOwner->m_Shared.GetHypeMeter() / 100.0f;
-	}
-
-	return 0.0f;
-}
-
-float CTFScatterGun::GetSpeedMod( void ) const
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return 1.0f;
-
-	// Check if we get boost on damage.
-	int nBoostOnDamage = 0;
-	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
-	if ( nBoostOnDamage == 0 )
-		return 1.0f;	// No boost bails.
-
-	// Use a linear relationship between boost level and added speed.
-	// Original speed calculation ranged from 260HU/s at 0%, to 520HU/s at 100%.
-	// This is Output = (260/100)x + 260, and then divided by input 260 to get a ratio.
-	// The max ratio is 2, so we can simplify even further to get the result below.
-	return ((pOwner->m_Shared.GetHypeMeter() / 100) + 1);
-}
-
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFShotgun_Revenge, DT_TFShotgun_Revenge )
 
@@ -593,34 +530,8 @@ bool CTFShotgun_Revenge::CanGetRevengeCrits( void ) const
 	return nSentryRevenge == 1;
 }
 
-class CTFSodaPopper : public CTFScatterGun
-{
-public:
-	DECLARE_CLASS( CTFSodaPopper, CTFScatterGun );
-	DECLARE_NETWORKCLASS(); 
-	DECLARE_PREDICTABLE();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SODA_POPPER; }
-	virtual bool	HasChargeBar( void );
-	virtual const char* GetEffectLabelText( void );
-	virtual float	GetEffectBarProgress( void );
-};
-
-CREATE_SIMPLE_WEAPON_TABLE( TFSodaPopper, tf_weapon_soda_popper )
-
-bool CTFSodaPopper::HasChargeBar( void )
-{
-	int nBuildsHype = 0;
-	CALL_ATTRIB_HOOK_INT( nBuildsHype, set_weapon_mode );
-	return nBuildsHype == 1;
-}
-
-const char *CTFSodaPopper::GetEffectLabelText( void )
-{
-	return "#TF_Hype";
-}
-
-float CTFSodaPopper::GetEffectBarProgress( void )
+float CTFSodaPopper::GetEffectBarProgress(void)
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
@@ -632,14 +543,37 @@ float CTFSodaPopper::GetEffectBarProgress( void )
 	return 0.0f;
 }
 
-class CTFPepBrawlerBlaster : public CTFScatterGun
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+float CTFPepBrawlBlaster::GetEffectBarProgress(void)
 {
-public:
-	DECLARE_CLASS( CTFPepBrawlerBlaster, CTFScatterGun );
-	DECLARE_NETWORKCLASS(); 
-	DECLARE_PREDICTABLE();
+	CTFPlayer *pOwner = GetTFPlayerOwner();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PEP_BRAWL_BLASTER; }
-};
+	if ( pOwner)
+	{
+		return pOwner->m_Shared.GetHypeMeter() / 100.0f;
+	}
 
-CREATE_SIMPLE_WEAPON_TABLE( TFPepBrawlerBlaster, tf_weapon_pep_brawler_blaster )
+	return 0.0f;
+}
+
+float CTFPepBrawlBlaster::GetSpeedMod(void) const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return 1.0f;
+
+	// Check if we get boost on damage.
+	int nBoostOnDamage = 0;
+	CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
+	if ( nBoostOnDamage == 0 )
+		return 1.0f;	// No boost bails.
+
+	// Use a linear relationship between boost level and added speed.
+	// Original speed calculation ranged from 260HU/s at 0%, to 520HU/s at 100%.
+	// This is Output = (260/100)x + 260, and then divided by input 260 to get a ratio.
+	// The max ratio is 2, so we can simplify even further to get the result below.
+	return ((pOwner->m_Shared.GetHypeMeter() / 100) + 1);
+}
+

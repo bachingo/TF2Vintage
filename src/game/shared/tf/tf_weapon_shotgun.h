@@ -79,15 +79,38 @@ public:
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
 	virtual void	FinishReload( void );
 	virtual bool	SendWeaponAnim( int iActivity );
-	virtual bool		HasChargeBar( void );
-	virtual const char* GetEffectLabelText( void );
-	virtual float		GetEffectBarProgress( void );
-	virtual float		GetSpeedMod( void ) const;
 
 	bool			HasKnockback( void ) const;
 
 private:
 	bool m_bAutoReload;
+};
+
+class CTFPepBrawlBlaster : public CTFScatterGun
+{
+public:
+	DECLARE_CLASS( CTFPepBrawlBlaster, CTFScatterGun);
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PEP_BRAWL_BLASTER; }
+	virtual bool	HasChargeBar( void )			{ return true; }
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_Boost"; }
+	virtual float	GetEffectBarProgress( void );
+	virtual float		GetSpeedMod( void ) const;
+};
+
+class CTFSodaPopper : public CTFScatterGun
+{
+public:
+	DECLARE_CLASS( CTFSodaPopper, CTFScatterGun );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SODA_POPPER; }
+	virtual bool	HasChargeBar( void )			{ return true; }
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_Hype"; }
+	virtual float	GetEffectBarProgress( void );
 };
 
 class CTFShotgun_Soldier : public CTFShotgun
