@@ -12,10 +12,16 @@
 #include "tf_weaponbase_gun.h"
 #include "Sprite.h"
 
+
 #if defined( CLIENT_DLL )
 #define CTFSniperRifle C_TFSniperRifle
 #define CSniperDot C_SniperDot
 #endif
+
+#ifdef GAME_DLL
+#include "GameEventListener.h"
+#endif
+
 
 //=============================================================================
 //
@@ -67,6 +73,8 @@ protected:
 	CNetworkVar( float, m_flChargeStartTime );
 };
 
+#define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0f
+
 //=============================================================================
 //
 // Sniper Rifle class.
@@ -98,6 +106,7 @@ public:
 	virtual bool Lower( void );
 	virtual float GetProjectileDamage( void );
 	virtual int	GetDamageType() const;
+	virtual float GetChargingRate( void )		{ return TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC; }
 
 	virtual void WeaponReset( void );
 
@@ -166,6 +175,9 @@ public:
 #endif
 
 class CTFSniperRifle_Decap : public CTFSniperRifle
+#ifdef GAME_DLL
+	, public CGameEventListener
+#endif
 {
 public:
 
@@ -176,9 +188,13 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_DECAP; }
 	virtual bool	HasChargeBar( void )			{ return true; }
 	virtual const char* GetEffectLabelText( void ) { return "#TF_Berzerk"; }
-	virtual void	OnHeadshot( CTFPlayer *pVictim );
-	virtual float	GetSniperRechargeRate( void );
-	
+#ifdef GAME_DLL
+	virtual void	SetupGameEventListeners( void );
+	virtual void	FireGameEvent( IGameEvent *event );
+#endif
+	virtual void	OnHeadshot( void );
+	virtual float 	GetChargingRate(void);
+	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 };
 
 #endif // TF_WEAPON_SNIPERRIFLE_H

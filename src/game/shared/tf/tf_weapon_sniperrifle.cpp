@@ -29,7 +29,6 @@
 void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #endif
 
-#define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0f
 #define TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC	75.0f
 #define	TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN		50.0f
 #define TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX		150.0f
@@ -324,7 +323,7 @@ void CTFSniperRifle::ItemPostFrame( void )
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
 		{
-			float flChargeRate = TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
+			float flChargeRate = GetChargingRate();
 			CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_sniper_charge_per_sec );
 			m_flChargedDamage = Min( m_flChargedDamage + gpGlobals->frametime * flChargeRate, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
 		}
@@ -719,6 +718,68 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 	return true;
 }
 
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Decap::SetupGameEventListeners( void )
+{
+	ListenForGameEvent( "player_death" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Decap::FireGameEvent( IGameEvent *event )
+{
+	if (FStrEq( event->GetName(), "player_death" ))
+	{
+		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+		if ( pOwner && engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "attacker" ) && 
+			 ( event->GetInt( "weaponid" ) == TF_WEAPON_SNIPERRIFLE_DECAP && event->GetInt( "customkill" ) == TF_DMG_CUSTOM_HEADSHOT ) )
+		{
+			OnHeadshot();
+		}
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Decap::OnHeadshot( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner == nullptr )
+		return;
+
+	pOwner->m_Shared.IncrementHeadshotCount();
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Tracks the current charging rate, from 50% at 0 Headshots to 200% at 6 Headshots.
+//-----------------------------------------------------------------------------
+float CTFSniperRifle_Decap::GetChargingRate( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+	if (pOwner == nullptr)
+		return TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
+
+	return 	( TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC * ( 0.5 + Min((pOwner->m_Shared.GetHeadshotCount()), 6 ) * 0.25 ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle_Decap::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+#ifdef GAME_DLL
+	StopListeningForAllEvents();
+#endif
+	return CTFSniperRifle::Holster(pSwitchingTo);
+}
+
 //=============================================================================
 //
 // Client specific functions.
@@ -951,7 +1012,15 @@ int CSniperDot::DrawModel( int flags )
 	pRenderContext->Bind( m_hSpriteMaterial, this );
 
 	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
-	float flStrength = RemapValClamped( flLifeTime, 0.0, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, 0.1, 1.0 );
+	
+	float flSniperChargeRatio;
+	CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+		if ( pWeapon )
+			flSniperChargeRatio = (TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / pWeapon->GetChargingRate());
+		else
+			flSniperChargeRatio = (TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC);
+		
+	float flStrength = RemapValClamped(flLifeTime, 0.0, flSniperChargeRatio, 0.1, 1.0);
 	
 	color32 innercolor = { 255, 255, 255, 255 };
 	color32 outercolor = { 255, 255, 255, 128 };
