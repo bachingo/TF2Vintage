@@ -16,6 +16,7 @@
 #include "tf_weapon_jar.h"
 #include "tf_weapon_buff_item.h"
 #include "tf_weapon_shotgun.h"
+#include "tf_weapon_sniperrifle.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -439,6 +440,33 @@ bool CHudItemEffectMeterTemp<C_TFBuffItem>::ShouldFlash( void )
 
 	return pPlayer->m_Shared.IsRageActive();
 }
+
+//-----------------------------------------------------------------------------
+// C_TFSniperRifle_Decap Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::IsEnabled( void )
+{
+	if ( GetWeapon() )
+		return true;
+
+	return false;
+}
+
+template<>
+int CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::GetCount( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer )
+	{
+		C_TFSniperRifle_Decap *pSniperRifle = GetWeapon();
+		if ( pSniperRifle )
+			return pPlayer->m_Shared.GetHeadshotCount();
+	}
+
+	return -1;
+}
+
 
 
 
