@@ -433,10 +433,10 @@ void CTFSniperRifle::ZoomIn( void )
 	pPlayer->TeamFortress_SetSpeed();
 
 	int nWeaponModeDot = 0;
-	CALL_ATTRIB_HOOK_INT( nWeaponModeDot, set_weapon_mode );
+	CALL_ATTRIB_HOOK_INT(nWeaponModeDot, sniper_no_dot);
 	
 #ifdef GAME_DLL
-	if ( nWeaponModeDot == 0 || nWeaponModeDot == 2 )
+	if (nWeaponModeDot == 0)
 	{
 		// Create the sniper dot.
 		CreateSniperDot();
@@ -492,11 +492,11 @@ void CTFSniperRifle::ZoomOut( void )
 
 	pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
 	pPlayer->TeamFortress_SetSpeed();
-
+	
 #ifdef GAME_DLL
-	// Destroy the sniper dot.
-	DestroySniperDot();
-	pPlayer->ClearExpression();
+		// Destroy the sniper dot.
+		DestroySniperDot();
+		pPlayer->ClearExpression();
 #endif
 
 	// if we are thinking about zooming, cancel it
@@ -525,28 +525,28 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	PrimaryAttack();
 
 	int nWeaponModeScope = 0;
-	CALL_ATTRIB_HOOK_INT( nWeaponModeScope, set_weapon_mode );
+	CALL_ATTRIB_HOOK_INT( nWeaponModeScope, sniper_no_zoomout );
 	
-	if ( IsZoomed() )
+	if (nWeaponModeScope == 0)
 	{
-		if (nWeaponModeScope == 0 || nWeaponModeScope == 1 )
+		if ( IsZoomed() )
 		{
-			// If we have more bullets, zoom out, play the bolt animation and zoom back in
-			if( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
-			{
-				SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
-			}
-			else	
-			{
-				//just zoom out
-				SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
-			}
+				// If we have more bullets, zoom out, play the bolt animation and zoom back in
+				if( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
+				{
+					SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
+				}
+				else	
+				{
+					//just zoom out
+					SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
+				}
 		}
-	}
-	else
-	{
-		// Prevent primary fire preventing zooms
-		m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+		else
+		{
+			// Prevent primary fire preventing zooms
+			m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+		}
 	}
 
 	m_flChargedDamage = 0.0f;
