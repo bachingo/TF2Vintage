@@ -5532,10 +5532,15 @@
 					"attribute_class"	"bodyshot_damage_modify"
 					"value" "0.75"
 				}
-				"lunchbox adds minicrits"
+				"sniper no zoomout"
 				{
-					"attribute_class"	"set_weapon_mode"
-					"value" "3"			
+					"attribute_class"	"sniper_no_zoomout"
+					"value" "1"			
+				}
+				"sniper no dot"
+				{
+					"attribute_class"	"sniper_no_dot"
+					"value" "1"			
 				}
 			}
 			"visuals"
@@ -11792,7 +11797,7 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
-		"26"
+		"10008"
 		{
 			"name"	"max health additive bonus shield required"
 			"attribute_class"	"add_maxhealth_shieldrequired"
@@ -11802,6 +11807,22 @@
 			"effect_type"	"positive"
 			"armory_desc"	"on_wearer"
 			"stored_as_integer"	"0"
+		}
+		"10009"
+		{
+			"name"	"sniper no zoomout"
+			"attribute_class"	"sniper_no_zoomout"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"positive"
+		}
+		"10010"
+		{
+			"name"	"sniper no dot"
+			"attribute_class"	"sniper_no_dot"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"positive"
 		}
 	}
 	"attribute_controlled_attached_particles"
