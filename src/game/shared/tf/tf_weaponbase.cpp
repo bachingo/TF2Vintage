@@ -1850,6 +1850,27 @@ const char *CTFWeaponBase::GetTracerType( void )
 
 	if ( GetWeaponID() == TF_WEAPON_MINIGUN )
 		return "BrightTracer";
+	
+	int nSniperFiresTracer = 0;
+	CALL_ATTRIB_HOOK_INT(nSniperFiresTracer, sniper_fires_tracer);
+	if (nSniperFiresTracer)
+	{
+		if (GetOwner() )
+		{
+			switch (GetOwner()->GetTeamNumber())
+			{
+			case TF_TEAM_RED:
+				return "dxhr_sniper_rail_red";
+				break;
+			case TF_TEAM_BLUE:
+				return "dxhr_sniper_rail_blue";
+				break;
+			default:
+				return "dxhr_sniper_rail_red";
+				break;
+			}
+		}
+	}
 
 	return BaseClass::GetTracerType();
 }
