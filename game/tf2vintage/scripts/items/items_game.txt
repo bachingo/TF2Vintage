@@ -5522,16 +5522,6 @@
 			}
 			"attributes"
 			{
-				"silent killer notaknife"
-				{
-					"attribute_class"	"set_silent_killer"
-					"value"	"1"
-				}
-				"damage penalty on bodyshot"
-				{
-					"attribute_class"	"bodyshot_damage_modify"
-					"value" "0.75"
-				}
 				"sniper no zoomout"
 				{
 					"attribute_class"	"sniper_no_zoomout"
@@ -5541,6 +5531,21 @@
 				{
 					"attribute_class"	"sniper_no_dot"
 					"value" "1"			
+				}
+				"silent killer notaknife"
+				{
+					"attribute_class"	"set_silent_killer"
+					"value"	"1"
+				}
+				"damage penalty on bodyshot"
+				{
+					"attribute_class"	"bodyshot_damage_modify"
+					"value" "0.80"
+				}
+				"sniper fires tracer"
+ 				{
+					"attribute_class"	"sniper_fires_tracer"
+					"value"	"1"
 				}
 			}
 			"visuals"
