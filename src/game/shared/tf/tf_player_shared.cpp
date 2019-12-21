@@ -4512,13 +4512,13 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	CTFWeaponBase *pWeapon;
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) && tf2v_use_spy_moveattrib.GetBool() )
 	{
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(m_Shared.GetDisguiseTarget()), maxfbspeed, mult_player_movespeed );
 		pWeapon = (CTFWeaponBase *)ToTFPlayer(m_Shared.GetDisguiseTarget())->Weapon_GetSlot(m_Shared.GetDisguiseItem()->GetItemSlot());
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(m_Shared.GetDisguiseTarget()), maxfbspeed, mult_player_movespeed );
 	}
 	else
 	{
-		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
 		pWeapon = GetActiveTFWeapon();
+		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_movespeed );
 	}
 
 	// Second, see if any flags are slowing them down
@@ -4541,20 +4541,26 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// if they're aiming or spun up, reduce their speed
 	if ( m_Shared.InCond( TF_COND_AIMING ) )
 	{
-		// Heavy moves slightly faster spun-up
-		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) )
+		int nNoZoomPenalty = 0;
+		CALL_ATTRIB_HOOK_FLOAT( nNoZoomPenalty, mod_zoom_speed_disabled );
+	
+		if (nNoZoomPenalty == 0)
 		{
-			if ( maxfbspeed > 110 )
-				maxfbspeed = 110;
+			// Heavy moves slightly faster spun-up
+			if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) )
+			{
+				if ( maxfbspeed > 110 )
+					maxfbspeed = 110;
+			}
+			else
+			{
+				if ( maxfbspeed > 80 )
+					maxfbspeed = 80;
+			}
+			
+			// Modify our movement speed when required.
+			CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_aiming_movespeed );
 		}
-		else
-		{
-			if ( maxfbspeed > 80 )
-				maxfbspeed = 80;
-		}
-		
-		// Modify our movement speed when required.
-		CALL_ATTRIB_HOOK_FLOAT( maxfbspeed, mult_player_aiming_movespeed );
 	}
 
 	// Engineer moves slower while a hauling an object.
