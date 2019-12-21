@@ -14,6 +14,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFSword C_TFSword
+#define CTFKatana C_TFKatana
 #endif
 
 
@@ -39,6 +40,29 @@ public:
 private:
 
 	CTFSword( const CTFSword& ) {}
+};
+
+
+class CTFKatana : public CTFDecapitationMeleeWeaponBase
+{
+public:
+	DECLARE_CLASS( CTFKatana, CTFDecapitationMeleeWeaponBase );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual bool	Deploy( void );
+	virtual int		GetSwingRange( void ) const;
+	virtual void 	FireGameEvent( IGameEvent *event );
+	virtual float	GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
+	virtual void	UpdateHonor( IGameEvent *event );
+	virtual int		GetSkinOverride( void );
+	virtual bool	CanHolster( void ) const;
+		
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_KATANA; }
+	
+	
+	private:
+	bool m_bHonorbound;
 };
 
 #endif // TF_WEAPON_SWORD_H
