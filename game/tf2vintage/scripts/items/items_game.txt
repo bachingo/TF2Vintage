@@ -4577,10 +4577,10 @@
 					"attribute_class"	"mult_player_aiming_movespeed"
 					"value" "0.4"
 				}
-				"spunup_damage_resistance"
+				"spunup_damage_resistance_full"
 				{
-					"attribute_class"		"spunup_damage_resistance"
-					"value"					"0.60"
+					"attribute_class"		"spunup_damage_resistance_full"
+					"value"					"0.80"
 				}
 			}
 			"particle_suffix"	"brass_beast"
@@ -6930,7 +6930,7 @@
 		"40"
 		{
 			"name"	"zoom speed mod disabled"
-			"attribute_class"	"unimplemented_mod_zoom_speed_disabled"
+			"attribute_class"	"mod_zoom_speed_disabled"
 			"description_string"	"#Attrib_ZoomSpeedMod_Disabled"
 			"description_format"	"value_is_additive"
 			"hidden"	"0"
@@ -11993,6 +11993,15 @@
 			"attribute_class"	"sniper_no_dot"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
+			"effect_type"	"positive"
+		}
+		"10011"
+		{
+			"name"	"spunup_damage_resistance_full"
+			"attribute_class"	"spunup_damage_resistance_full"
+			"description_string"	"#Attrib_spup_damage_resistance_active"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
 			"effect_type"	"positive"
 		}
 	}

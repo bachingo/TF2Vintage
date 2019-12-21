@@ -5507,13 +5507,24 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		
 		// Aiming resists, if actively using a minigun/sniper rifle and under 50% health.
-		if ( ( m_Shared.InCond(TF_COND_AIMING ) ) && ( GetHealth() < ( GetMaxHealth() / 2 ) ) )
+		if ( ( m_Shared.InCond(TF_COND_AIMING ) ) )
 		{
-			float flDamageAimMult = 1.0f;
-			CALL_ATTRIB_HOOK_FLOAT( flDamageAimMult, spunup_damage_resistance );
+			// Regular old spinup resistance.
+			float flDamageAimMultFull = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT( flDamageAimMultFull, spunup_damage_resistance_full );
 			if ( (nIgnoreResists == 1) && ( flDamageAimMult < 1.0f ) )
-				flDamageAimMult = 1.0f;
-			flDamage *= flDamageAimMult;
+				flDamageAimMultFull = 1.0f;
+			flDamage *= flDamageAimMultFull;
+			
+			// Newer resistance that only appliex under 50% health.
+			if ( ( GetHealth() < ( GetMaxHealth() / 2 ) ) )
+			{
+				float flDamageAimMult = 1.0f;
+				CALL_ATTRIB_HOOK_FLOAT( flDamageAimMult, spunup_damage_resistance );
+				if ( (nIgnoreResists == 1) && ( flDamageAimMult < 1.0f ) )
+					flDamageAimMult = 1.0f;
+				flDamage *= flDamageAimMult;
+			}
 		}
 		
 		if ( m_Shared.InCond(TF_COND_ENERGY_BUFF ) )
