@@ -4573,7 +4573,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	}
 
 	if ( pWeapon )
+	{
 		maxfbspeed *= pWeapon->GetSpeedMod();
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, maxfbspeed, mult_player_movespeed_active );
+	}
 	
 	if ( ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) ) && tf2v_use_spy_moveattrib.GetBool() )
 	{

@@ -4891,6 +4891,11 @@
 					"attribute_class"	"restore_health_on_kill"
 					"value"	"50"
 				}
+				"mult_player_movespeed_active"
+				{
+					"attribute_class"	"mult_player_movespeed_active"
+					"value"	"1.1"
+				}
 				"crit mod disabled"
 				{
 					"attribute_class"	"mult_crit_chance"
@@ -11671,6 +11676,50 @@
 			"attribute_type"	"string"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
+		}
+		"851"
+		{
+			"name"	"mult_player_movespeed_active"
+			"attribute_class"	"mult_player_movespeed_active"
+			"description_string"	"#Attrib_MoveSpeed_Bonus"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_active"
+			"stored_as_integer"	"0"
+		}
+		"852"
+		{
+			"name"	"mult_dmgtaken_active"
+			"attribute_class"	"mult_dmgtaken_active"
+			"description_string"	"#Attrib_DmgTaken_Increased"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"armory_desc"	"on_active"
+			"stored_as_integer"	"0"
+		}
+		"853"
+		{
+			"name"	"mult_patient_overheal_penalty_active"
+			"attribute_class"	"mult_patient_overheal_penalty_active"
+			"description_string"	"#Attrib_PatientOverheal_Penalty"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"armory_desc"	"on_active"
+			"stored_as_integer"	"0"
+		}
+		"854"
+		{
+			"name"	"mult_health_fromhealers_penalty_active"
+			"attribute_class"	"mult_health_fromhealers_penalty_active"
+			"description_string"	"#Attrib_HealthFromHealers_Reduced"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"armory_desc"	"on_wearer"
+			"stored_as_integer"	"0"
 		}
 		"1000"
 		{
