@@ -4852,6 +4852,57 @@
 				}
 			}
 		}
+		"357"
+		{
+			"name"	"The Half-Zatoichi"
+			"prefab"	"weapon_sword"
+			"year"				"2011"
+			"item_class"	"tf_weapon_katana"
+			"item_logname"	"demokatana"
+			"item_iconname"	"demokatana"
+			"item_type_name"	"#TF_Weapon_SoldierKatana"
+			"item_name"	"#TF_SoldierKatana"
+			"item_description"	"#TF_SoldierKatana_Desc"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+				"demoman"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 -5 -10"
+			}
+			"model_player_per_class"
+			{
+				"soldier"	"models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana_soldier.mdl"
+				"demoman"	"models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana.mdl"
+			}
+			"attributes"
+			{
+				"decapitate type"
+				{
+					"attribute_class"	"decapitate_type"
+					"value"	"1"
+				}
+				"restore health on kill"
+				{
+					"attribute_class"	"restore_health_on_kill"
+					"value"	"50"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"honorbound"
+				{
+					"attribute_class"	"honorbound"
+					"value"	"1"
+				}
+			}
+		}
 		"401"
 		{
 			"name"	"The Shahanshah"

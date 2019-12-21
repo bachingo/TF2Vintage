@@ -75,6 +75,7 @@
 	"Fire Retardant Suit"							"1"
 	"Sharpened Volcano Fragment"					"1"
 	"The Fan O'War"									"1"
+	"The Half-Zatoichi"								"1"
 	"The Shahanshah"								"1"
 	"The Bazaar Bargain"							"1"
 	"The Persian Persuader"							"1"
