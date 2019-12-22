@@ -1549,7 +1549,9 @@ void CTFBot::RealizeSpy( CTFPlayer *spy )
 void CTFBot::ForgetSpy( CTFPlayer *spy )
 {
 	StopSuspectingSpy( spy );
-	m_knownSpies.FindAndFastRemove( spy );
+
+	CHandle<CTFPlayer> hndl( spy );
+	m_knownSpies.FindAndFastRemove( hndl );
 }
 
 //-----------------------------------------------------------------------------
