@@ -258,6 +258,9 @@ bool CTFBotSniperLurk::FindHint( CTFBot *actor )
 			DevMsg( "%3.2f: %s: Releasing hint.", gpGlobals->curtime, actor->GetPlayerName() );
 	}
 
+	if ( hints.IsEmpty() )
+		return false;
+
 	CTFBotHint *pSelected = nullptr;
 	if ( !m_hHint || m_Hints.Count() > 1 )
 	{
