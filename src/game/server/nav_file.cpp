@@ -1217,9 +1217,12 @@ static NavErrorType CheckNavFile( const char *bspFilename )
 	{
 		navIsInBsp = true;
 		file = filesystem->Open( filename, "rb", "GAME" );	// ... and this looks for one if it's the only one around.
+
+		if ( !file )
+			file = filesystem->Open( "maps/embed.nav", "rb", "GAME" );	// ... aaand this looks for maps/embed.nav (TF2)
 	}
 
-	if (!file)
+	if ( !file )
 	{
 		return NAV_CANT_ACCESS_FILE;
 	}
@@ -1311,7 +1314,10 @@ const CUtlVector< Place > *CNavMesh::GetPlacesFromNavFile( bool *hasUnnamedPlace
 	{
 		if ( !filesystem->ReadFile( filename, "BSP", fileBuffer ) )	// ... and this looks for one if it's the only one around.
 		{
-			return NULL;
+			if ( !filesystem->ReadFile( "maps/embed.nav", "BSP", fileBuffer ) )	// ... aaand this looks for maps/embed.nav (TF2)
+			{
+				return NULL;
+			}
 		}
 	}
 	
@@ -1403,7 +1409,10 @@ NavErrorType CNavMesh::Load( void )
 		navIsInBsp = true;
 		if ( !filesystem->ReadFile( filename, "BSP", fileBuffer ) )	// ... and this looks for one if it's the only one around.
 		{
-			return NAV_CANT_ACCESS_FILE;
+			if ( !filesystem->ReadFile( "maps/embed.nav", "BSP", fileBuffer ) )	// ... aaand this looks for maps/embed.nav (TF2)
+			{
+				return NAV_CANT_ACCESS_FILE;
+			}
 		}
 	}
 
