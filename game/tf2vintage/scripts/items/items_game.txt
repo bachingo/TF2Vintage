@@ -1656,6 +1656,10 @@
 			{
 				"pyro"	"1"
 			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"
+			}
 			"attributes"
 			{
 				"hidden secondary max ammo penalty"
@@ -1664,9 +1668,52 @@
 					"value"	"0.5"
 				}
 			}
-			"static_attrs"
+		}
+		"weapon_detonator"
+		{
+			"item_class"	"tf_weapon_flaregun"
+			"item_logname" "detonator"
+			"item_iconname" "detonator"
+			"item_name"		"#TF_Weapon_Flaregun_Detonator"
+			"item_description"	"#TF_Weapon_Flaregun_Detonator_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_detonator/c_detonator"
+			"model_player"	"models/workshop/weapons/c_models/c_detonator/c_detonator.mdl"
+			"propername"	"0"
+			"attributes"
 			{
-				"min_viewmodel_offset"					"10 0 -10"
+				"blast dmg to self increased"
+				{
+					"attribute_class"	"blast_dmg_to_self"
+					"value"	"1.25"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
+				"minicrit vs burning player"
+				{
+					"attribute_class"	"or_minicrit_vs_playercond_burning"
+					"value"	"1"
+				}
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Detonator.Fire"
+				"sound_special1"	"Weapon_Detonator.Detonate"
+				"sound_special2"	"Weapon_Detonator.DetonateWorld"
+
+				"animation_replacement"
+				{
+					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_ITEM1_VM_INSPECT_START"
+					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_ITEM1_VM_INSPECT_IDLE"
+					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_ITEM1_VM_INSPECT_END"
+				}
 			}
 		}
 		"weapon_double_barrel"
@@ -3204,6 +3251,11 @@
 					"attribute_class"	"add_health_regen"
 					"value"	"-2"
 				}
+				"custom projectile model"
+				{
+					"attribute_class"	"custom_projectile_model"
+					"value"				"models/weapons/c_models/c_leechgun/c_leech_proj.mdl"
+				}
 			}
 		}
 		"37"
@@ -4125,48 +4177,6 @@
 				}
 			}
 		}
-		"227"
-		{
-			"name"	"The Concheror"
-			"prefab"		"weapon_buff_banner"
-			"year"			"2011"
-			"item_type_name"	"#TF_Weapon_SoldierSashimono"
-			"item_name"	"#TF_SoldierSashimono"
-			"propername"	"1"
-			"item_description"	"#TF_SoldierSashimono_Desc"
-			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack"
-			"model_player"	"models/workshop_partner/weapons/c_models/c_shogun_warhorn/c_shogun_warhorn.mdl"
-			"extra_wearable" "models/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack.mdl"
-			"anim_slot"		"melee"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 -5 -2"
-			}
-			"attributes"
-			{
-				"mod soldier buff type"
-				{
-					"attribute_class"	"set_buff_type"
-					"value"	"3"
-				}
-			}
-			"visuals"
-			{
-				"animation_replacement"
-				{
-					"ACT_ITEM1_VM_DRAW"	"ACT_ITEM2_VM_DRAW"
-					"ACT_ITEM1_VM_IDLE"	"ACT_ITEM2_VM_IDLE"
-					"ACT_ITEM1_VM_PRIMARYATTACK"	"ACT_ITEM2_VM_PRIMARYATTACK"
-					"ACT_ITEM1_VM_SECONDARYATTACK"	"ACT_ITEM2_VM_SECONDARYATTACK"
-					"ACT_MP_ATTACK_STAND_MELEE_SECONDARY"	"ACT_MP_ATTACK_STAND_ITEM2_SECONDARY"
-					"ACT_MP_ATTACK_CROUCH_MELEE_SECONDARY"	"ACT_MP_ATTACK_STAND_ITEM2_SECONDARY"
-					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_ITEM2_VM_INSPECT_START"
-					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_ITEM2_VM_INSPECT_IDLE"
-					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_ITEM2_VM_INSPECT_END"
-				}
-			}
-			
-		}
 		"228"
 		{
 			"name"	  "The Black Box"
@@ -4816,6 +4826,55 @@
 				}
 			}
 		}
+		"351"
+		{
+			"name"	"The Detonator"
+			"prefab"	"weapon_detonator"
+			"year"				"2011"
+			"particle_suffix"	"detonator"
+		}
+		"354"
+		{
+			"name"	"The Concheror"
+			"prefab"		"weapon_buff_banner"
+			"year"			"2011"
+			"item_type_name"	"#TF_Weapon_SoldierSashimono"
+			"item_name"	"#TF_SoldierSashimono"
+			"propername"	"1"
+			"item_description"	"#TF_SoldierSashimono_Desc"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_shogun_warhorn/c_shogun_warhorn.mdl"
+			"extra_wearable" "models/workshop_partner/weapons/c_models/c_shogun_warpack/c_shogun_warpack.mdl"
+			"anim_slot"		"melee"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 -5 -2"
+			}
+			"attributes"
+			{
+				"mod soldier buff type"
+				{
+					"attribute_class"	"set_buff_type"
+					"value"	"3"
+				}
+			}
+			"visuals"
+			{
+				"animation_replacement"
+				{
+					"ACT_ITEM1_VM_DRAW"	"ACT_ITEM2_VM_DRAW"
+					"ACT_ITEM1_VM_IDLE"	"ACT_ITEM2_VM_IDLE"
+					"ACT_ITEM1_VM_PRIMARYATTACK"	"ACT_ITEM2_VM_PRIMARYATTACK"
+					"ACT_ITEM1_VM_SECONDARYATTACK"	"ACT_ITEM2_VM_SECONDARYATTACK"
+					"ACT_MP_ATTACK_STAND_MELEE_SECONDARY"	"ACT_MP_ATTACK_STAND_ITEM2_SECONDARY"
+					"ACT_MP_ATTACK_CROUCH_MELEE_SECONDARY"	"ACT_MP_ATTACK_STAND_ITEM2_SECONDARY"
+					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_ITEM2_VM_INSPECT_START"
+					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_ITEM2_VM_INSPECT_IDLE"
+					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_ITEM2_VM_INSPECT_END"
+				}
+			}
+			
+		}
 		"355"
 		{
 			"name"	"The Fan O'War"
@@ -4849,6 +4908,36 @@
 				{
 					"attribute_class"	"minicrits_become_crits"
 					"value" "1"
+				}
+			}
+		}
+		"356"
+		{
+			"name"	"Conniver's Kunai"
+			"prefab"	"weapon_spy_knife_item2"
+			"year"	"2011"
+			"item_name"	"#TF_Kunai"
+			"item_description"	"#TF_Kunai_Desc"
+			"propername"	"0"
+			"item_logname"	"kunai"
+			"item_iconname"	"kunai"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -6"
+			}
+			"attributes"
+			{
+				"sanguisuge"
+				{
+					"attribute_class"	"sanguisuge"
+					"value"	"1"
+				}
+				"max health additive penalty"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value" "-55"
 				}
 			}
 		}
@@ -4972,6 +5061,81 @@
 				{
 					"attribute_class"	"mult_dmgtaken_from_explosions"
 					"value"			"0.8"
+				}
+			}
+		}
+		"411"
+		{
+			"name"	"The Quick-Fix"
+			"prefab"	"weapon_medigun"
+			"year"				"2011"
+			"item_type_name"	"#TF_Weapon_Medigun_Prototype"
+			"item_name"		"#TF_Unique_MediGun_QuickFix"
+			"item_description"	"#TF_Unique_MediGun_QuickFix_Desc"
+			"propername"		"1"
+			"equip_region"	"medigun_backpack"
+			"image_inventory"	"backpack/weapons/c_models/c_proto_medigun/c_proto_medigun"
+			"model_player"	"models/weapons/c_models/c_proto_medigun/c_proto_medigun.mdl"
+			"extra_wearable" "models/weapons/c_models/c_proto_backpack/c_proto_backpack.mdl"
+			"attributes"
+			{
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"2"
+				}
+				"heal rate bonus"
+				{
+					"attribute_class"	"mult_medigun_healrate"
+					"value" "1.4"
+				}
+				"medigun charge is megaheal"
+				{
+					"attribute_class"	"set_charge_type"
+					"value"	"2"
+				}
+				"ubercharge rate bonus"
+				{
+					"attribute_class"	"mult_medigun_uberchargerate"
+					"value"	"1.1"
+				}
+				"overheal penalty"
+				{
+					"attribute_class"	"mult_medigun_overheal_amount"
+					"value"	"0.5"
+				}
+				"kill eater score type"
+				{
+					"attribute_class"	"kill_eater_score_type"
+					"value"				"1"								
+				}
+				"kill eater score type 2"
+				{
+					"attribute_class"	"kill_eater_score_type_2"
+					"value" 			"2"								
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"medic_backpack"			"1"
+				}
+			}
+			"visuals_red"
+			{
+				"skin" "0"
+				"custom_particlesystem"
+				{
+					"system"	"medicgun_beam_attrib_overheal_red"
+				}
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
+				"custom_particlesystem"
+				{
+					"system"	"medicgun_beam_attrib_overheal_blue"
 				}
 			}
 		}
