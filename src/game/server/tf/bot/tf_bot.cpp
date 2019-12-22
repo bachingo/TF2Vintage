@@ -1557,7 +1557,7 @@ void CTFBot::ForgetSpy( CTFPlayer *spy )
 //-----------------------------------------------------------------------------
 void CTFBot::UpdateLookingAroundForEnemies( void )
 {
-	if ( !m_bLookingAroundForEnemies || m_Shared.IsControlStunned()/* || BYTE( this + 10061 ) & ( 1 << 2 ) */ )
+	if ( !m_bLookingAroundForEnemies || m_Shared.IsControlStunned() || ( m_nBotAttrs & AttributeType::DONTLOOKAROUND ) == AttributeType::DONTLOOKAROUND )
 		return;
 
 	const CKnownEntity *threat = GetVisionInterface()->GetPrimaryKnownThreat();

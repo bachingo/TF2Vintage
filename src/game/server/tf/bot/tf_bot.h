@@ -300,7 +300,7 @@ public:
 
 		REMOVEONDEATH           = (1 << 0),
 		AGGRESSIVE              = (1 << 1),
-		// 2?
+		DONTLOOKAROUND			= (1 << 2),
 		SUPPRESSFIRE            = (1 << 3),
 		DISABLEDODGE            = (1 << 4),
 		BECOMESPECTATORONDEATH  = (1 << 5),
