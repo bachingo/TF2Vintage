@@ -1989,6 +1989,13 @@ const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 	return "\0";
 }
 
+bool CTFWeaponBase::IsHonorBound( void ) const
+{
+	int nHonorBound = 0;
+	CALL_ATTRIB_HOOK_INT( nHonorBound, "honorbound" );
+	return nHonorBound == 1;
+}
+
 //=============================================================================
 //
 // TFWeaponBase functions (Server specific).

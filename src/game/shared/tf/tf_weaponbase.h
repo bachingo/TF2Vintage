@@ -288,6 +288,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual float		GetSpeedMod( void ) const { return 1.0f; }
 
+	bool				IsHonorBound( void ) const;
+
 // Server specific.
 #if !defined( CLIENT_DLL )
 
