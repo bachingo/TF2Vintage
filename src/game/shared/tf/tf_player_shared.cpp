@@ -1093,6 +1093,25 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			{
 				continue;
 			}
+			
+			// Check our overheal level, and cap if necessary.
+			if ( bHasFullHealth )
+			{
+				// Check our healer's overheal attribute.
+				if ( m_aHealers[i].pPlayer.IsValid() )
+				{
+					// Check the mult_medigun_overheal_amount attribute.
+					CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
+					float flOverhealAmount = 1.0f;
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
+					// Calculate out the max health we can heal up to for the person.
+					int iMaxOverheal = floor( ( ( GetMaxBuffedHealth() - GetMaxHealth() ) * flOverhealAmount ) + GetMaxHealth() );
+					// Don't heal if we're above our medigun's overheal ratio.
+					if ( iMaxOverheal > m_pOuter->GetHealth() )
+						continue;
+				}
+				
+			}
 
 			// Being healed by a medigun, don't decay our health
 			bDecayHealth = false;
@@ -1132,9 +1151,9 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 
 			// Cap it to the max we'll boost a player's health
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( ToTFPlayer(m_pOuter), nHealthToAdd, mult_health_fromhealers );
-			nHealthToAdd = clamp( nHealthToAdd, 0, iBoostMax - m_pOuter->GetHealth() );
-
-			m_pOuter->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
+			nHealthToAdd = clamp( nHealthToAdd, 0, ( iBoostMax - m_pOuter->GetHealth() ) );
+			m_pOuter->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );			
+			
 
 			// split up total healing based on the amount each healer contributes
 			for ( int i = 0; i < m_aHealers.Count(); i++ )
