@@ -6,6 +6,7 @@
 #include "tf_gamerules.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "tf_obj_teleporter.h"
+#include "tf_obj_sentrygun.h"
 #include "tf_weapon_pipebomblauncher.h"
 #include "tf_bot_scenario_monitor.h"
 #include "nav_entities/tf_bot_nav_ent_wait.h"

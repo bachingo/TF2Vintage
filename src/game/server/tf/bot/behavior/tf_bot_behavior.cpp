@@ -447,9 +447,10 @@ const CKnownEntity *CTFBotMainAction::SelectMoreDangerousThreat( const INextBot 
 void CTFBotMainAction::Dodge( CTFBot *actor )
 {
 	if ( actor->m_iSkill == CTFBot::EASY )
-	{
 		return;
-	}
+
+	if ( ( actor->m_nBotAttrs & CTFBot::AttributeType::DISABLEDODGE ) != 0 )
+		return;
 
 	if ( actor->m_Shared.IsInvulnerable() ||
 		 actor->m_Shared.InCond( TF_COND_ZOOMED ) ||
@@ -470,9 +471,7 @@ void CTFBotMainAction::Dodge( CTFBot *actor )
 
 	const CKnownEntity *threat = actor->GetVisionInterface()->GetPrimaryKnownThreat( false );
 	if ( threat == nullptr || !threat->IsVisibleRecently() )
-	{
 		return;
-	}
 
 	CTFWeaponBase *weapon = static_cast<CTFWeaponBase *>( actor->Weapon_GetSlot( 0 ) );
 	if ( weapon && weapon->IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
@@ -519,25 +518,20 @@ void CTFBotMainAction::Dodge( CTFBot *actor )
 void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 {
 	if ( !actor->IsAlive() )
-	{
 		return;
-	}
+
+	if ( ( actor->m_nBotAttrs & (CTFBot::AttributeType::SUPPRESSFIRE|CTFBot::AttributeType::IGNOREENEMIES) ) != 0 )
+		return;
 
 	if ( !tf_bot_fire_weapon_allowed.GetBool() )
-	{
 		return;
-	}
 
 	CTFWeaponBase *pWeapon = actor->GetActiveTFWeapon();
 	if ( pWeapon == nullptr )
-	{
 		return;
-	}
 
 	if ( actor->IsPlayerClass( TF_CLASS_MEDIC ) && pWeapon->IsWeapon( TF_WEAPON_MEDIGUN ) )
-	{
 		return;
-	}
 
 	if ( actor->IsBarrageAndReloadWeapon() && tf_bot_always_full_reload.GetBool() )
 	{
@@ -568,9 +562,7 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 
 	const CKnownEntity *threat = actor->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat == nullptr || threat->GetEntity() == nullptr || !threat->IsVisibleRecently() )
-	{
 		return;
-	}
 
 	if ( !actor->IsLineOfFireClear( threat->GetEntity()->EyePosition() ) &&
 		 !actor->IsLineOfFireClear( threat->GetEntity()->WorldSpaceCenter() ) &&
@@ -579,16 +571,11 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		return;
 	}
 
-	if ( !actor->GetIntentionInterface()->ShouldAttack( actor, threat ) ||
-		 TFGameRules()->InSetup() )
-	{
+	if ( !actor->GetIntentionInterface()->ShouldAttack( actor, threat ) || TFGameRules()->InSetup() )
 		return;
-	}
 
 	if ( !actor->GetBodyInterface()->IsHeadAimingOnTarget() )
-	{
 		return;
-	}
 
 	if ( pWeapon->IsMeleeWeapon() )
 	{
@@ -609,8 +596,8 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 
 		if ( threat->GetTimeSinceLastSeen() < 1.0f )
 		{
-			Vector threat_to_actor = ( actor->GetAbsOrigin() - threat->GetEntity()->GetAbsOrigin() );
-			if ( threat_to_actor.IsLengthLessThan( actor->GetMaxAttackRange() ) )
+			const Vector vecToActor = ( actor->GetAbsOrigin() - threat->GetEntity()->GetAbsOrigin() );
+			if ( vecToActor.IsLengthLessThan( actor->GetMaxAttackRange() ) )
 				actor->PressFireButton( tf_bot_fire_weapon_min_time.GetFloat() );
 		}
 
@@ -650,12 +637,10 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 		return;
 	}
 
-	Vector actor_to_threat = ( threat->GetEntity()->GetAbsOrigin() - actor->GetAbsOrigin() );
-	float dist_to_threat = actor_to_threat.Length();
-	if ( dist_to_threat >= actor->GetMaxAttackRange() )
-	{
+	const Vector vecToThreat = ( threat->GetEntity()->GetAbsOrigin() - actor->GetAbsOrigin() );
+	float flDistToThreat = vecToThreat.Length();
+	if ( flDistToThreat >= actor->GetMaxAttackRange() )
 		return;
-	}
 
 	if ( actor->IsContinuousFireWeapon() )
 	{
@@ -665,20 +650,22 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 
 	if ( actor->IsExplosiveProjectileWeapon() )
 	{
-		Vector aim_vec;
-		actor->EyeVectors( &aim_vec );
-		aim_vec *= ( 1.1f * dist_to_threat );
+		Vector vecFwd;
+		actor->EyeVectors( &vecFwd );
+		vecFwd.NormalizeInPlace();
+
+		vecFwd *= ( 1.1f * flDistToThreat );
 
 		trace_t trace;
 		UTIL_TraceLine( actor->EyePosition(),
-						actor->EyePosition() + aim_vec,
-						MASK_SHOT, actor, COLLISION_GROUP_NONE, &trace );
+						actor->EyePosition() + vecFwd,
+						MASK_SHOT,
+						actor,
+						COLLISION_GROUP_NONE,
+						&trace );
 
-		if ( ( trace.fraction * ( 1.1f * dist_to_threat ) ) < 146.0f &&
-			( trace.m_pEnt == nullptr || !trace.m_pEnt->IsCombatCharacter() ) )
-		{
+		if ( ( trace.fraction * ( 1.1f * flDistToThreat ) ) < 146.0f && ( trace.m_pEnt == nullptr || !trace.m_pEnt->IsCombatCharacter() ) )
 			return;
-		}
 	}
 
 	actor->PressFireButton();
@@ -687,28 +674,23 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 const CKnownEntity *CTFBotMainAction::GetHealerOfThreat( const CKnownEntity *threat ) const
 {
 	if ( threat == nullptr || threat->GetEntity() == nullptr )
-	{
 		return nullptr;
-	}
 
-	CTFPlayer *player = ToTFPlayer( threat->GetEntity() );
-	if ( player == nullptr )
-	{
+	CTFPlayer *pPlayer = ToTFPlayer( threat->GetEntity() );
+	if ( pPlayer == nullptr )
 		return threat;
-	}
 
 	const CKnownEntity *knownHealer = threat;
 
-	for ( int i = 0; i < player->m_Shared.GetNumHealers(); ++i )
+	for ( int i = 0; i < pPlayer->m_Shared.GetNumHealers(); ++i )
 	{
-		CTFPlayer *healer = ToTFPlayer( player->m_Shared.GetHealerByIndex( i ) );
-		if ( healer )
+		CTFPlayer *pHealer = ToTFPlayer( pPlayer->m_Shared.GetHealerByIndex( i ) );
+		if ( pHealer )
 		{
-			knownHealer = GetActor()->GetVisionInterface()->GetKnown( healer );
+			knownHealer = GetActor()->GetVisionInterface()->GetKnown( pHealer );
+
 			if ( knownHealer && knownHealer->IsVisibleInFOVNow() )
-			{
 				break;
-			}
 		}
 	}
 
@@ -719,85 +701,59 @@ bool CTFBotMainAction::IsImmediateThreat( const CBaseCombatCharacter *who, const
 {
 	CTFBot *actor = GetActor();
 	if ( actor == nullptr )
-	{
 		return false;
-	}
 
 	if ( !actor->IsSelf( who ) )
-	{
 		return false;
-	}
 
 	if ( actor->InSameTeam( threat->GetEntity() ) )
-	{
 		return false;
-	}
 
 	if ( !threat->GetEntity()->IsAlive() )
-	{
 		return false;
-	}
 
 	if ( !threat->IsVisibleRecently() )
-	{
 		return false;
-	}
 
 	if ( !actor->IsLineOfFireClear( threat->GetEntity() ) )
-	{
 		return false;
-	}
 
-	CTFPlayer *player = ToTFPlayer( threat->GetEntity() );
+	CTFPlayer *pPlayer = ToTFPlayer( threat->GetEntity() );
 
-	Vector threat_to_actor = actor->GetAbsOrigin() - threat->GetLastKnownPosition();
-	float dist = threat_to_actor.Length();
+	Vector vecToActor = actor->GetAbsOrigin() - threat->GetLastKnownPosition();
+	float flDistance = vecToActor.Length();
 
-	if ( dist < 500.0f )
-	{
+	if ( flDistance < 500.0f )
 		return true;
-	}
 
 	if ( actor->IsThreatFiringAtMe( threat->GetEntity() ) )
-	{
 		return true;
-	}
 
-	threat_to_actor.NormalizeInPlace();
+	vecToActor.NormalizeInPlace();
 
-	Vector threat_eye_vec;
+	Vector vecThreatFwd;
 
-	if ( player )
+	if ( pPlayer )
 	{
-		if ( player->IsPlayerClass( TF_CLASS_SNIPER ) )
+		if ( pPlayer->IsPlayerClass( TF_CLASS_SNIPER ) )
 		{
-			player->EyeVectors( &threat_eye_vec );
-			return ( threat_to_actor.Dot( threat_eye_vec ) > 0.0f );
+			pPlayer->EyeVectors( &vecThreatFwd );
+			return ( vecToActor.Dot( vecThreatFwd ) > 0.0f );
 		}
 
-		if ( actor->m_iSkill > CTFBot::NORMAL && player->IsPlayerClass( TF_CLASS_MEDIC ) )
-		{
+		if ( actor->m_iSkill > CTFBot::NORMAL && pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) )
 			return true;
-		}
 
-		if ( actor->m_iSkill > CTFBot::NORMAL && player->IsPlayerClass( TF_CLASS_ENGINEER ) )
-		{
+		if ( actor->m_iSkill > CTFBot::NORMAL && pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) )
 			return true;
-		}
 	}
 	else
 	{
-		CBaseEntity *ent = threat->GetEntity();
-		if ( ent == nullptr )
+		CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun *>( threat->GetEntity() );
+		if ( pSentry && !pSentry->HasSapper() && !pSentry->IsPlacing() && flDistance < SENTRYGUN_BASE_RANGE * 1.5f ) // slightly larger than radius in case of manual aiming
 		{
-			return false;
-		}
-
-		CObjectSentrygun *sentry = dynamic_cast<CObjectSentrygun *>( ent );
-		if ( sentry && !sentry->HasSapper() && !sentry->IsPlacing() && dist < SENTRYGUN_BASE_RANGE * 1.5f ) // slightly larger than radius in case of manual aiming
-		{
-			AngleVectors( sentry->GetTurretAngles(), &threat_eye_vec );
-			return ( threat_to_actor.Dot( threat_eye_vec ) > 0.8f );
+			AngleVectors( pSentry->GetTurretAngles(), &vecThreatFwd );
+			return ( vecToActor.Dot( vecThreatFwd ) > 0.8f );
 		}
 	}
 
@@ -817,15 +773,12 @@ const CKnownEntity *SelectClosestSpyToMe( CTFBot *actor, const CKnownEntity *kno
 	CTFPlayer *spy1 = ToTFPlayer( known1->GetEntity() );
 	CTFPlayer *spy2 = ToTFPlayer( known2->GetEntity() );
 
-	bool spy1_valid = ( spy1 && spy1->IsPlayerClass( TF_CLASS_SPY ) );
-	bool spy2_valid = ( spy2 && spy2->IsPlayerClass( TF_CLASS_SPY ) );
+	bool bValid1 = ( spy1 && spy1->IsPlayerClass( TF_CLASS_SPY ) );
+	bool bValid2 = ( spy2 && spy2->IsPlayerClass( TF_CLASS_SPY ) );
 
-	if ( spy1_valid && spy2_valid )
+	if ( bValid1 && bValid2 )
 	{
-		float range1 = actor->GetRangeSquaredTo( spy1 );
-		float range2 = actor->GetRangeSquaredTo( spy2 );
-
-		if ( range1 > range2 )
+		if ( actor->GetRangeSquaredTo( spy1 ) > actor->GetRangeSquaredTo( spy2 ) )
 		{
 			return known2;
 		}
@@ -835,11 +788,11 @@ const CKnownEntity *SelectClosestSpyToMe( CTFBot *actor, const CKnownEntity *kno
 		}
 	}
 
-	if ( spy1_valid )
+	if ( bValid1 )
 	{
 		return known1;
 	}
-	if ( spy2_valid )
+	if ( bValid2 )
 	{
 		return known2;
 	}
