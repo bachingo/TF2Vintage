@@ -351,6 +351,7 @@ void CTFGameMovement::AirDash( void )
 	if ( nLoseHypeOnJump != 0 )
 		m_pTFPlayer->m_Shared.SetHypeMeter( (nLoseHypeOnJump * -1), false );
 
+#if defined( GAME_DLL )
 	if ( m_pTFPlayer->m_Shared.GetAirDashCount() > 0 )
 	{
 		if ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) && !m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
@@ -384,6 +385,7 @@ void CTFGameMovement::AirDash( void )
 		m_pTFPlayer->m_Shared.IncrementAirDashCount();
 		m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_DOUBLEJUMP );
 	}
+#endif
 }
 
 // Only allow bunny jumping up to 1.2x server / player maxspeed setting
