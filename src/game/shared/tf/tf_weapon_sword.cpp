@@ -142,66 +142,20 @@ void CTFSword::OnDecapitation( CTFPlayer *pVictim )
 bool CTFKatana::Deploy( void )
 {
 	bool orgResult = BaseClass::Deploy();
-	if ( CanDecapitate() && orgResult )
-	{
-#ifdef GAME_DLL
-		SetupGameEventListeners();
-#endif
-		m_bHonorbound = false;	// Reset our honor on deploying.
-#ifdef CLIENT_DLL
-		GetSkinOverride();
-#endif //CLIENT_DLL
-		return true;
-	}
-	else
-	{
-		CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-		if (pOwner/* && DWORD( pOwner + 1917 )*/)
-		{
+	if ( m_bIsBloody )
+		m_bIsBloody = false;
 
-		}
-		if (orgResult)
-		{
-			m_bHonorbound = false;	// Reset our honor on deploying.
-#ifdef CLIENT_DLL
-			GetSkinOverride();
-#endif //CLIENT_DLL
-		}
-		return orgResult;
+	if ( CanDecapitate() )
+	{
+	#if defined( GAME_DLL )
+		if( orgResult )
+			SetupGameEventListeners();
+	#endif
 	}
+
+	return orgResult;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-int CTFKatana::GetSwingRange( void ) const
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( pOwner == nullptr )
-		return 72;
-
-	int iBaseRange = BaseClass::GetSwingRange();
-
-	return pOwner->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) ? iBaseRange + 96 : iBaseRange + 24;
-}
-
-#ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFKatana::FireGameEvent( IGameEvent *event )
-{
-	if (FStrEq( event->GetName(), "player_death" ))
-	{
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if (pOwner && engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "attacker" ) && 
-			 (event->GetInt( "weaponid" ) == TF_WEAPON_KATANA || event->GetInt( "customkill" ) == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING) )
-		{
-			UpdateHonor(event);
-		}
-	}
-}
-#endif
 //-----------------------------------------------------------------------------
 // Purpose: Do extra damage to other katana wielders.
 //-----------------------------------------------------------------------------
@@ -209,89 +163,102 @@ float CTFKatana::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
 	float flBaseDamage = CTFDecapitationMeleeWeaponBase::GetMeleeDamage( pTarget, iCustomDamage );
 
-	CTFPlayer *pOwner = GetTFPlayerOwner();
+	// Check to see if me and the current target have a katana equipped.
+	if ( !IsHonorBound() )
+		return flBaseDamage;
 
-	// Check to see if the current target also has a katana equipped.
-	if ( pOwner && pTarget->IsPlayer() && pTarget )	
+	CTFPlayer *pTFVictim = ToTFPlayer( pTarget );
+	if ( !pTFVictim || !pTFVictim->GetActiveWeapon() )
+		return flBaseDamage;
+
+	if( pTFVictim->GetActiveTFWeapon()->IsHonorBound() )
 	{
-		// Check to see if they're also holding a Katana.
-		if (ToTFPlayer(pTarget)->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_KATANA )
-		{
-			// Do twice the target's health so that it's a guaranteed kill.
-			flBaseDamage = pTarget->GetHealth() * 2;
-		}
+		// Do thrice the target's health so that it's a guaranteed kill.
+		flBaseDamage = pTarget->GetHealth() * 3;
 	}
 
 	return flBaseDamage;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Give us a visual indicator of fulfilling honorbound.
 //-----------------------------------------------------------------------------
-void CTFKatana::UpdateHonor( IGameEvent *event )
+int CTFKatana::GetSkinOverride()
 {
-	m_bHonorbound = true;
-#ifdef CLIENT_DLL
-	GetSkinOverride();
-#endif //CLIENT_DLL
+	if ( !m_bIsBloody )
+		return -1;
+
+	if ( UTIL_IsLowViolence() )
+		return -1;
+
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner == nullptr )
+		return -1;
+
+	switch ( pOwner->GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			return 2;
+		case TF_TEAM_BLUE:
+			return 3;
+	}
+
+	return 3;
+}
+
+void CTFKatana::OnDecapitation( CTFPlayer *pVictim )
+{
+#if defined( GAME_DLL )
+	m_bIsBloody = true;
+#endif
 }
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFKatana, DT_TFKatana )
 BEGIN_NETWORK_TABLE( CTFKatana, DT_TFKatana )
 #ifdef CLIENT_DLL
-	RecvPropInt( RECVINFO( m_nSkin ) ),
+	RecvPropBool( RECVINFO( m_bIsBloody ) ),
 #else
-	SendPropInt( SENDINFO( m_nSkin ), 2, SPROP_UNSIGNED ),
+	SendPropBool( SENDINFO( m_bIsBloody ) ),
 #endif
 END_NETWORK_TABLE()
-#ifdef CLIENT_DLL
-//-----------------------------------------------------------------------------
-// Purpose: Give us a visual indicator of fulfilling honorbound.
-//-----------------------------------------------------------------------------
-int CTFKatana::GetSkinOverride()
-{
 
-	int iCurrentSkin = CTFWeaponBase::GetSkin();
-	if (m_bHonorbound)
-	{
-		iCurrentSkin = CTFWeaponBase::GetSkin();
-		iCurrentSkin += 2;
-		m_nSkin = iCurrentSkin;
-		return iCurrentSkin;
-	}
-	
-	return BaseClass::GetSkinOverride();
-	
-	
-}
-#endif //CLIENT_DLL
-
-// -----------------------------------------------------------------------------
-// Purpose:
-// -----------------------------------------------------------------------------
-bool CTFKatana::CanHolster( void ) const
-{
-	float flHonorPenalty = 50;
-	bool bCanHolster = CTFWeaponBaseMelee::CanHolster();
-	// Honorbound affects holster.
-	if (!m_bHonorbound)	// We have no honor.
-	{
-		// Under 50HP, can't holster at all. Very dishonorable.
-		if (GetTFPlayerOwner()->GetHealth() <= flHonorPenalty)
-			bCanHolster = false;
-		else
-		{
-			// Check to see if we could normally holster.
-			if (bCanHolster)
-			{
-				// We can holster, but do 50HP of damage for being dishonorable.
-#ifdef GAME_DLL
-				GetTFPlayerOwner()->TakeHealth((flHonorPenalty * -1), DMG_GENERIC);
+#if defined( CLIENT_DLL )
+BEGIN_PREDICTION_DATA( CTFKatana )
+	DEFINE_PRED_FIELD( m_bIsBloody, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE )
+END_PREDICTION_DATA()
 #endif
-			}
-		}
+
+#if defined( CLIENT_DLL )
+acttable_t *CTFKatana::ActivityList( int &iActivityCount )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	acttable_t *pTable = BaseClass::ActivityList( iActivityCount );
+
+	if ( pOwner == nullptr )
+		return pTable;
+
+	if ( pOwner->IsPlayerClass( TF_CLASS_DEMOMAN ) )
+	{
+
+		pTable = s_acttableItem1;
+		iActivityCount = ARRAYSIZE( s_acttableItem1 );
 	}
-	
-	return bCanHolster;
-	
+
+	if ( pOwner->m_Shared.IsLoser() )
+	{
+		pTable = s_acttableLoserState;
+		iActivityCount = ARRAYSIZE( s_acttableLoserState );
+	}
+
+	return pTable;
 }
+#else //CLIENT_DLL
+int CTFKatana::GetActivityWeaponRole( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner && pOwner->IsPlayerClass( TF_CLASS_DEMOMAN ) )
+		return TF_WPN_TYPE_ITEM1;
+
+	return BaseClass::GetActivityWeaponRole();
+}
+#endif

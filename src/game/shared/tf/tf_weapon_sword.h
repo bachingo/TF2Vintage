@@ -51,18 +51,25 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual bool	Deploy( void );
-	virtual int		GetSwingRange( void ) const;
-	virtual void 	FireGameEvent( IGameEvent *event );
-	virtual float	GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
-	virtual void	UpdateHonor( IGameEvent *event );
 	virtual int		GetSkinOverride( void );
-	virtual bool	CanHolster( void ) const;
+	virtual void	OnDecapitation( CTFPlayer *pVictim );
+	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
 		
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_KATANA; }
+
+#if defined( GAME_DLL )
+	virtual int		GetActivityWeaponRole( void );
+#else
+	virtual acttable_t *ActivityList( int &iActivityCount );
+#endif
 	
 	
-	private:
-	bool m_bHonorbound;
+private:
+#if defined( GAME_DLL )
+	CNetworkVar( bool, m_bIsBloody );
+#else
+	bool m_bIsBloody;
+#endif
 };
 
 #endif // TF_WEAPON_SWORD_H
