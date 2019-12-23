@@ -375,9 +375,13 @@ private:
 };
 
 DEFINE_ENUM_BITWISE_OPERATORS( CTFBot::AttributeType )
-inline bool operator!(CTFBot::AttributeType const& rhs)
+inline bool operator!(CTFBot::AttributeType const &rhs)
 {
-	return (int const&)rhs == 0;
+	return (int const &)rhs == 0;
+}
+inline bool operator!=( CTFBot::AttributeType const &rhs, int const &lhs )
+{
+	return (int const &)rhs != lhs;
 }
 
 inline CTFBot *ToTFBot( CBaseEntity *ent )

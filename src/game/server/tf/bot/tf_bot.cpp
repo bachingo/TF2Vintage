@@ -2466,6 +2466,8 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 				Q_strcpy( szBotName, TheTFBots().GetRandomBotName() );
 
 			CTFBot *bot = NextBotCreatePlayerBot<CTFBot>( szBotName );
+			if ( bot == nullptr )
+				return;
 
 			char szTeam[10];
 			if ( args.ArgC() > 2 )
