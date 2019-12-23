@@ -344,6 +344,28 @@ bool CTFBotSniperLurk::FindHint( CTFBot *actor )
 
 		backupHints.AddToTail( pHint );
 	}
+
+	if ( backupHints.IsEmpty() )
+		return false;
+
+	pSelected = backupHints.Random();
+
+	Vector vecMins, vecMaxs;
+	pSelected->GetCollideable()->WorldSpaceSurroundingBounds( &vecMins, &vecMaxs );
+
+	Vector vecRandomBounds;
+	vecRandomBounds.x = RandomFloat( vecMins.x, vecMaxs.x );
+	vecRandomBounds.y = RandomFloat( vecMins.y, vecMaxs.y );
+	vecRandomBounds.z = ( vecMaxs.z + vecMins.z ) / 2.0f;
+
+	TheNavMesh->GetSimpleGroundHeight( vecRandomBounds, &vecRandomBounds.z );
+
+	m_bHasHome = true;
+	m_vecHome = vecRandomBounds;
+	m_hHint = pSelected;
+	pSelected->SetOwnerEntity( actor );
+
+	return true;
 }
 
 bool CTFBotSniperLurk::FindNewHome( CTFBot *actor )
