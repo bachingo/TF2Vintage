@@ -221,6 +221,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	static acttable_t s_acttableMeleeAllClass[];
 	static acttable_t s_acttableSecondary2[];
 	static acttable_t s_acttablePrimary2[];
+	static acttable_t s_acttableLoserState[];
+	static acttable_t s_acttableBuildingDeployed[];
 	static viewmodel_acttable_t s_viewmodelacttable[];
 
 #ifdef GAME_DLL

@@ -3023,7 +3023,48 @@ acttable_t CTFWeaponBase::s_acttablePrimary2[] =
 	{ ACT_MP_GESTURE_VC_THUMBSUP,		ACT_MP_GESTURE_VC_THUMBSUP_PRIMARY,		false },
 	{ ACT_MP_GESTURE_VC_NODYES,			ACT_MP_GESTURE_VC_NODYES_PRIMARY,		false },
 	{ ACT_MP_GESTURE_VC_NODNO,			ACT_MP_GESTURE_VC_NODNO_PRIMARY,		false },
-};	
+};
+
+acttable_t CTFWeaponBase::s_acttableLoserState[] =
+{
+	{ ACT_MP_STAND_IDLE,	ACT_MP_STAND_LOSERSTATE,      false },
+	{ ACT_MP_CROUCH_IDLE,	ACT_MP_CROUCH_LOSERSTATE,     false },
+	{ ACT_MP_RUN,			ACT_MP_RUN_LOSERSTATE,        false },
+	{ ACT_MP_WALK,			ACT_MP_WALK_LOSERSTATE,       false },
+	{ ACT_MP_AIRWALK,		ACT_MP_AIRWALK_LOSERSTATE,    false },
+	{ ACT_MP_CROUCHWALK,	ACT_MP_CROUCHWALK_LOSERSTATE, false },
+	{ ACT_MP_JUMP,			ACT_MP_JUMP_LOSERSTATE,       false },
+	{ ACT_MP_JUMP_START,	ACT_MP_JUMP_START_LOSERSTATE, false },
+	{ ACT_MP_JUMP_FLOAT,	ACT_MP_JUMP_FLOAT_LOSERSTATE, false },
+	{ ACT_MP_JUMP_LAND,		ACT_MP_JUMP_LAND_LOSERSTATE,  false },
+	{ ACT_MP_SWIM,			ACT_MP_SWIM_LOSERSTATE,       false },
+	{ ACT_MP_JUMP_LAND_LOSERSTATE, ACT_MP_DOUBLEJUMP_CROUCH_MELEE, false },
+};
+
+acttable_t CTFWeaponBase::s_acttableBuildingDeployed[] =
+{
+	{ ACT_MP_STAND_IDLE,	ACT_MP_STAND_BUILDING_DEPLOYED,		 false },
+	{ ACT_MP_CROUCH_IDLE,	ACT_MP_CROUCH_BUILDING_DEPLOYED,	 false },
+	{ ACT_MP_RUN,			ACT_MP_RUN_BUILDING_DEPLOYED,		 false },
+	{ ACT_MP_WALK,			ACT_MP_WALK_BUILDING_DEPLOYED,		 false },
+	{ ACT_MP_AIRWALK,		ACT_MP_AIRWALK_BUILDING_DEPLOYED,	 false },
+	{ ACT_MP_CROUCHWALK,	ACT_MP_CROUCHWALK_BUILDING_DEPLOYED, false },
+	{ ACT_MP_JUMP,			ACT_MP_JUMP_BUILDING_DEPLOYED,		 false },
+	{ ACT_MP_JUMP_START,	ACT_MP_JUMP_START_BUILDING_DEPLOYED, false },
+	{ ACT_MP_JUMP_FLOAT,	ACT_MP_JUMP_FLOAT_BUILDING_DEPLOYED, false },
+	{ ACT_MP_JUMP_LAND,		ACT_MP_JUMP_LAND_BUILDING_DEPLOYED,	 false },
+	{ ACT_MP_SWIM,			ACT_MP_SWIM_BUILDING_DEPLOYED,		 false },
+
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,		ACT_MP_ATTACK_STAND_BUILDING_DEPLOYED,	 false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,		ACT_MP_ATTACK_CROUCH_BUILDING_DEPLOYED,  false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,		ACT_MP_ATTACK_SWIM_BUILDING_DEPLOYED,	 false },
+	{ ACT_MP_ATTACK_AIRWALK_PRIMARYFIRE,	ACT_MP_ATTACK_AIRWALK_BUILDING_DEPLOYED, false },
+
+	{ ACT_MP_ATTACK_STAND_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED, false },
+	{ ACT_MP_ATTACK_CROUCH_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED, false },
+	{ ACT_MP_ATTACK_SWIM_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED, false },
+	{ ACT_MP_ATTACK_AIRWALK_GRENADE,	ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED, false },
+};
 
 viewmodel_acttable_t CTFWeaponBase::s_viewmodelacttable[] = 
 {
@@ -3240,6 +3281,24 @@ acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 		iActivityCount = ARRAYSIZE( s_acttablePrimary2 );
 		break;
 	}
+
+#if defined( CLIENT_DLL )
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner )
+	{
+		if ( pOwner->m_Shared.IsCarryingObject() )
+		{
+			pTable = s_acttableBuildingDeployed;
+			iActivityCount = ARRAYSIZE( s_acttableBuildingDeployed );
+		}
+
+		if( pOwner->m_Shared.IsLoser() )
+		{
+			pTable = s_acttableLoserState;
+			iActivityCount = ARRAYSIZE( s_acttableLoserState );
+		}
+	}
+#endif
 
 	return pTable;
 }
