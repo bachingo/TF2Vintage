@@ -1069,6 +1069,11 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	// Our health will only decay ( from being medic buffed ) if we are not being healed by a medic
 	// Dispensers can give us the TF_COND_HEALTH_BUFF, but will not maintain or give us health above 100%s
 	bool bDecayHealth = true;
+	
+	
+	// Get our overheal differences, and our base overheal.
+	int iOverhealDifference = ( GetMaxBuffedHealth() - GetMaxHealth() );
+	float flMaxOverheal = 1.0f;
 
 	// If we're being healed, heal ourselves
 	if ( InCond( TF_COND_HEALTH_BUFF ) )
@@ -1104,8 +1109,13 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 					CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
 					float flOverhealAmount = 1.0f;
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
+					
+					// Iterate our overheal amount, if we're a higher value.
+					if ( flOverhealAmount > flMaxOverheal )
+						flMaxOverheal = flOverhealAmount;
+					
 					// Calculate out the max health we can heal up to for the person.
-					int iMaxOverheal = floor( ( ( GetMaxBuffedHealth() - GetMaxHealth() ) * flOverhealAmount ) + GetMaxHealth() );
+					int iMaxOverheal = floor( ( iOverhealDifference * flOverhealAmount ) + GetMaxHealth() );
 					// Don't heal if we're above our medigun's overheal ratio.
 					if ( iMaxOverheal > m_pOuter->GetHealth() )
 						continue;
@@ -1135,7 +1145,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		{
 			m_flHealFraction -= nHealthToAdd;
 
-			int iBoostMax = GetMaxBuffedHealth();
+			int iBoostMax = GetMaxBuffedHealth() * flMaxOverheal;
 
 			if ( InCond( TF_COND_DISGUISED ) )
 			{
