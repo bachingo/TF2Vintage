@@ -1073,7 +1073,10 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	
 	// Get our overheal differences, and our base overheal.
 	int iOverhealDifference = ( GetMaxBuffedHealth() - GetMaxHealth() );
-	float flMaxOverhealRatio = 1.0f;
+	
+	// Start these off at 0 so we accept nerfs, but prefer buffs.
+	float flMaxOverhealRatio = 0.0;
+	float flMaxDecayRatio = 0.0;
 
 	// If we're being healed, heal ourselves
 	if ( InCond( TF_COND_HEALTH_BUFF ) )
@@ -1099,32 +1102,37 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				continue;
 			}
 			
+			// Being healed by a medigun, don't decay our health
+			bDecayHealth = false;
+			
 			// Check our overheal level, and cap if necessary.
-			if ( bHasFullHealth )
+			if ( m_aHealers[i].pPlayer.IsValid() )
 			{
+				// Check the mult_medigun_overheal_amount attribute.
+				CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
+				float flOverhealAmount = 1.0f;
+				float flDecayAmount = 1.0f;
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flDecayAmount, mult_medigun_overheal_decay);
+					
+				// Iterate our overheal amount, if we're a higher value.
+				if (flOverhealAmount > flMaxOverhealRatio)
+					flMaxOverhealRatio = flOverhealAmount;
+					
+				// Iterate our decay, if we're a higher value.
+				if (flDecayAmount > flMaxDecayRatio)
+					flMaxDecayRatio = flDecayAmount;
+				
 				// Check our healer's overheal attribute.
-				if ( m_aHealers[i].pPlayer.IsValid() )
-				{
-					// Check the mult_medigun_overheal_amount attribute.
-					CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
-					float flOverhealAmount = 1.0f;
-					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
-					
-					// Iterate our overheal amount, if we're a higher value.
-					if (flOverhealAmount > flMaxOverhealRatio)
-						flMaxOverhealRatio = flOverhealAmount;
-					
+				if ( bHasFullHealth )
+				{			
 					// Calculate out the max health we can heal up to for the person.
 					int iMaxOverheal = floor( ( iOverhealDifference * flOverhealAmount ) + GetMaxHealth() );
 					// Don't heal if we're above our medigun's overheal ratio.
 					if ( iMaxOverheal > m_pOuter->GetHealth() )
 						continue;
 				}
-				
 			}
-
-			// Being healed by a medigun, don't decay our health
-			bDecayHealth = false;
 
 			// Dispensers heal at a constant rate
 			if ( m_aHealers[i].bDispenserHeal )
@@ -1139,6 +1147,10 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 
 			fTotalHealAmount += m_aHealers[i].flAmount;
 		}
+		
+		// Failsafe for decay, since we cannot divide by zero.
+		if ( flMaxDecayRatio == 0 )
+			flMaxDecayRatio = FLT_EPSILON;
 
 		int nHealthToAdd = ( int )m_flHealFraction;
 		if ( nHealthToAdd > 0 )
@@ -1148,7 +1160,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			
 			int iBoostMax;
 			if ( flMaxOverhealRatio != 1.0f )
-				iBoostMax = ( ( GetMaxBuffedHealth() - GetMaxHealth() ) * flMaxOverhealRatio ) + GetMaxHealth();
+				iBoostMax = ( ( iOverhealDifference ) * flMaxOverhealRatio ) + GetMaxHealth();
 			else
 				iBoostMax = GetMaxBuffedHealth();
 
@@ -1205,15 +1217,30 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			}
 		}
 	}
+	
+	// Drain our Sanguisuge health, but at a much slower rate. (2HP per second)
+	if (m_pOuter->m_Shared.GetSanguisugeHealth() > 0)
+	{
+		int iSanguisugeDecay = 2;
+		m_flHealFraction += ( gpGlobals->frametime * iSanguisugeDecay );
+		int nHealthToDrain = ( int )m_flHealFraction;
+		if ( nHealthToDrain > 0 )
+		{
+			m_flHealFraction -= nHealthToDrain;
+
+			// Manually subtract the health from our Sanguisuge pool as well.
+			m_pOuter->m_iHealth -= nHealthToDrain;
+			m_pOuter->m_Shared.ChangeSanguisugeHealth(nHealthToDrain);
+		}
+	}
 
 	if ( bDecayHealth )
 	{
 		// If we're not being buffed, our health drains back to our max
-		if ( m_pOuter->GetHealth() > m_pOuter->GetMaxHealth() )
+		if ( m_pOuter->GetHealth() > ( m_pOuter->GetMaxHealth() + m_pOuter->m_Shared.GetSanguisugeHealth() ) )
 		{
 			float flBoostMaxAmount = GetMaxBuffedHealth() - m_pOuter->GetMaxHealth();
-			m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / tf_boost_drain_time.GetFloat() ) );
-
+			m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / ( tf_boost_drain_time.GetFloat() * flMaxDecayRatio ) ) );
 			int nHealthToDrain = ( int )m_flHealFraction;
 			if ( nHealthToDrain > 0 )
 			{
@@ -1223,6 +1250,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				m_pOuter->m_iHealth -= nHealthToDrain;
 			}
 		}
+		
 
 		if ( InCond( TF_COND_DISGUISED ) && m_iDisguiseHealth > m_iDisguiseMaxHealth )
 		{
