@@ -164,8 +164,8 @@ void CTFKnife::PrimaryAttack( void )
 		if ( !m_hBackstabVictim || m_hBackstabVictim->IsAlive() )
 			return;
 
-		int nHealthToSteal = Max( pPlayer->GetMaxHealth() * 3, pPlayer->GetHealth() + iVictimHealth );
-		int nHealthToAdd = pPlayer->GetHealth() - nHealthToSteal;
+		int nHealthToSteal = Max( 5, iVictimHealth );
+		int nHealthToAdd = clamp(nHealthToSteal, 0, ((pPlayer->m_Shared.GetMaxBuffedHealth() * 2) - pPlayer->GetHealth()));
 		if ( nHealthToAdd > 0 )
 		{
 			pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
