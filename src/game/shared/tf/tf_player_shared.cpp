@@ -1073,7 +1073,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	
 	// Get our overheal differences, and our base overheal.
 	int iOverhealDifference = ( GetMaxBuffedHealth() - GetMaxHealth() );
-	float flMaxOverheal = 1.0f;
+	float flMaxOverhealRatio = 1.0f;
 
 	// If we're being healed, heal ourselves
 	if ( InCond( TF_COND_HEALTH_BUFF ) )
@@ -1111,8 +1111,8 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
 					
 					// Iterate our overheal amount, if we're a higher value.
-					if ( flOverhealAmount > flMaxOverheal )
-						flMaxOverheal = flOverhealAmount;
+					if (flOverhealAmount > flMaxOverhealRatio)
+						flMaxOverhealRatio = flOverhealAmount;
 					
 					// Calculate out the max health we can heal up to for the person.
 					int iMaxOverheal = floor( ( iOverhealDifference * flOverhealAmount ) + GetMaxHealth() );
@@ -1145,7 +1145,12 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		{
 			m_flHealFraction -= nHealthToAdd;
 
-			int iBoostMax = GetMaxBuffedHealth() * flMaxOverheal;
+			
+			int iBoostMax;
+			if ( flMaxOverhealRatio != 1.0f )
+				iBoostMax = ( ( GetMaxBuffedHealth() - GetMaxHealth() ) * flMaxOverhealRatio ) + GetMaxHealth();
+			else
+				iBoostMax = GetMaxBuffedHealth();
 
 			if ( InCond( TF_COND_DISGUISED ) )
 			{
@@ -1156,7 +1161,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 				int nFakeHealthToAdd = nHealthToAdd;
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pDisguiseTarget, nFakeHealthToAdd, mult_health_fromhealers );
-				AddDisguiseHealth( nFakeHealthToAdd, true );
+				AddDisguiseHealth( nFakeHealthToAdd, true, flMaxOverhealRatio );
 			}
 
 			// Cap it to the max we'll boost a player's health
@@ -3052,7 +3057,7 @@ void CTFPlayerShared::SetDisguiseHealth(int iDisguiseHealth)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFPlayerShared::AddDisguiseHealth(int iHealthToAdd, bool bOverheal /*= false*/)
+int CTFPlayerShared::AddDisguiseHealth(int iHealthToAdd, bool bOverheal /*= false*/, float flOverhealAmount /*=1.0*/)
 {
 	Assert(InCond(TF_COND_DISGUISED));
 
@@ -3060,7 +3065,13 @@ int CTFPlayerShared::AddDisguiseHealth(int iHealthToAdd, bool bOverheal /*= fals
 	if (!bOverheal)
 		iMaxHealth = GetDisguiseMaxHealth();
 	else
-		iMaxHealth = GetDisguiseMaxBuffedHealth();
+	{
+		if ( flOverhealAmount != 1.0f )
+			iMaxHealth = ( ( GetDisguiseMaxBuffedHealth() - GetDisguiseMaxHealth() ) * flOverhealAmount ) + GetDisguiseMaxHealth();
+		else
+			iMaxHealth = GetDisguiseMaxBuffedHealth();
+	}
+		
 
 	iHealthToAdd = clamp(iHealthToAdd, 0, iMaxHealth - m_iDisguiseHealth);
 	if (iHealthToAdd <= 0)

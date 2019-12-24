@@ -127,11 +127,10 @@ public:
 
 	void	InvisibilityThink( void );
 
-	int		GetMaxBuffedHealth( void );
-
 	// Max Health
 	int		GetMaxHealth( void );
 	void	SetMaxHealth( int iMaxHealth )		{ m_iMaxHealth = iMaxHealth; }
+	int		GetMaxBuffedHealth(void);
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -168,7 +167,7 @@ public:
 	}
 	int		GetDisguiseHealth( void )			{ return m_iDisguiseHealth; }
 	void	SetDisguiseHealth( int iDisguiseHealth );
-	int		AddDisguiseHealth( int iHealthToAdd, bool bOverheal = false );
+	int		AddDisguiseHealth( int iHealthToAdd, bool bOverheal = false, float flOverhealAmount = 1.0f );
 	int		GetDisguiseMaxHealth( void );
 	int		GetDisguiseMaxBuffedHealth( void );
 
