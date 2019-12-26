@@ -4787,11 +4787,11 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		if (!m_Shared.m_aHealers[i].pPlayer.IsValid())
 			continue;
 
-		CTFPlayer *pPlayer = ToTFPlayer(m_Shared.m_aHealers[i].pPlayer);
-		if (!pPlayer)
+		CTFPlayer *pHealer = ToTFPlayer(m_Shared.m_aHealers[i].pPlayer);
+		if (!pHealer)
 			continue;
 
-		CTFWeaponBase *pMedigun = pPlayer->GetActiveTFWeapon();
+		CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( pHealer->Weapon_OwnsThisID( TF_WEAPON_MEDIGUN ) );
 		if (!pMedigun)
 			continue;
 		
@@ -4799,13 +4799,13 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		CALL_ATTRIB_HOOK_INT_ON_OTHER(pMedigun, nCanFollowCharges, set_weapon_mode);
 		// Beta Quick Fix: Always match speed.
 		if ( nCanFollowCharges == 4 )
-			pPlayer->SetMaxSpeed(maxfbspeed);
+			pHealer->SetMaxSpeed(maxfbspeed);
 		// Quick-Fix: Follow shield charges, but only when we are allowed to match speed.
 		if ( nCanFollowCharges == 2 && tf2v_use_medic_speed_match.GetBool() )
-			pPlayer->SetMaxSpeed(maxfbspeed);
+			pHealer->SetMaxSpeed(maxfbspeed);
 		// Other mediguns can match speed, but only when allowed to and not on shield charges.
 		else if ( tf2v_use_medic_speed_match.GetBool() && !m_Shared.InCond(TF_COND_SHIELD_CHARGE) )
-			pPlayer->SetMaxSpeed(maxfbspeed);
+			pHealer->SetMaxSpeed(maxfbspeed);
 	}
 #endif
 

@@ -5082,7 +5082,7 @@
 				"lunchbox adds minicrits"
 				{
 					"attribute_class"	"set_weapon_mode"
-					"value"	"4"
+					"value"	"2"
 				}
 				"heal rate bonus"
 				{

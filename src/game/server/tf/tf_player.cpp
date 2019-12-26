@@ -5067,8 +5067,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 
-	TeamFortress_SetSpeed();
-
 	if ( pWeapon && pTFAttacker )
 	{
 		int nAddCloakOnHit = 0;
@@ -5081,6 +5079,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		if ( nSpeedBoostOnHit > 0)
 			m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnHit );
 	}
+
+	TeamFortress_SetSpeed();
 
 	// Battalion's Backup resists
 	if ( m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
@@ -5582,6 +5582,34 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		return 0;
 
 	ApplyPushFromDamage( info, vecDir );
+	
+	// Apply the damage force to our medics with the shared jumper attribute.
+	// This only affects self damage, like explosive jumps.
+	if ( pTFAttacker == this )
+	{
+		for (int i = 0; i < pTFAttacker->m_Shared.m_aHealers.Count(); i++)
+		{
+			if (!pTFAttacker->m_Shared.m_aHealers[i].pPlayer)
+				continue;
+				
+			if (!pTFAttacker->m_Shared.m_aHealers[i].pPlayer.IsValid())
+				continue;
+
+			CTFPlayer *pHealer = ToTFPlayer(pTFAttacker->m_Shared.m_aHealers[i].pPlayer);
+			if (!pHealer)
+				continue;
+
+			CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( pHealer->Weapon_OwnsThisID( TF_WEAPON_MEDIGUN ) );
+			if (!pMedigun)
+				continue;
+			
+			int nCanFollowCharges = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pMedigun, nCanFollowCharges, set_weapon_mode);
+			// Quick-Fix: Copy our forces over to the medic healing us.
+			if ( nCanFollowCharges == 2 )
+				pHealer->ApplyPushFromDamage( info, vecDir );
+		}	
+	}
 
 	if ( bIgniting )
 		m_Shared.Burn( pTFAttacker, pTFWeapon );
