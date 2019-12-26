@@ -3249,43 +3249,43 @@ acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 	case TF_WPN_TYPE_PRIMARY:
 	default:
 		pTable = s_acttablePrimary;
-		iActivityCount = ARRAYSIZE( s_acttablePrimary );
+		iActivityCount = Q_ARRAYSIZE( s_acttablePrimary );
 		break;
 	case TF_WPN_TYPE_SECONDARY:
 		pTable = s_acttableSecondary;
-		iActivityCount = ARRAYSIZE( s_acttableSecondary );
+		iActivityCount = Q_ARRAYSIZE( s_acttableSecondary );
 		break;
 	case TF_WPN_TYPE_MELEE:
 		pTable = s_acttableMelee;
-		iActivityCount = ARRAYSIZE( s_acttableMelee );
+		iActivityCount = Q_ARRAYSIZE( s_acttableMelee );
 		break;
 	case TF_WPN_TYPE_BUILDING:
 		pTable = s_acttableBuilding;
-		iActivityCount = ARRAYSIZE( s_acttableBuilding );
+		iActivityCount = Q_ARRAYSIZE( s_acttableBuilding );
 		break;
 	case TF_WPN_TYPE_PDA:
 		pTable = s_acttablePDA;
-		iActivityCount = ARRAYSIZE( s_acttablePDA );
+		iActivityCount = Q_ARRAYSIZE( s_acttablePDA );
 		break;
 	case TF_WPN_TYPE_ITEM1:
 		pTable = s_acttableItem1;
-		iActivityCount = ARRAYSIZE( s_acttableItem1 );
+		iActivityCount = Q_ARRAYSIZE( s_acttableItem1 );
 		break;
 	case TF_WPN_TYPE_ITEM2:
 		pTable = s_acttableItem2;
-		iActivityCount = ARRAYSIZE( s_acttableItem2 );
+		iActivityCount = Q_ARRAYSIZE( s_acttableItem2 );
 		break;
 	case TF_WPN_TYPE_MELEE_ALLCLASS:
 		pTable = s_acttableMeleeAllClass;
-		iActivityCount = ARRAYSIZE( s_acttableMeleeAllClass );
+		iActivityCount = Q_ARRAYSIZE( s_acttableMeleeAllClass );
 		break;
 	case TF_WPN_TYPE_SECONDARY2:
 		pTable = s_acttableSecondary2;
-		iActivityCount = ARRAYSIZE( s_acttableSecondary2 );
+		iActivityCount = Q_ARRAYSIZE( s_acttableSecondary2 );
 		break;
 	case TF_WPN_TYPE_PRIMARY2: 
 		pTable = s_acttablePrimary2;
-		iActivityCount = ARRAYSIZE( s_acttablePrimary2 );
+		iActivityCount = Q_ARRAYSIZE( s_acttablePrimary2 );
 		break;
 	}
 
@@ -3296,13 +3296,13 @@ acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 		if ( pOwner->m_Shared.IsCarryingObject() )
 		{
 			pTable = s_acttableBuildingDeployed;
-			iActivityCount = ARRAYSIZE( s_acttableBuildingDeployed );
+			iActivityCount = Q_ARRAYSIZE( s_acttableBuildingDeployed );
 		}
 
 		if( pOwner->m_Shared.IsLoser() )
 		{
 			pTable = s_acttableLoserState;
-			iActivityCount = ARRAYSIZE( s_acttableLoserState );
+			iActivityCount = Q_ARRAYSIZE( s_acttableLoserState );
 		}
 	}
 #endif

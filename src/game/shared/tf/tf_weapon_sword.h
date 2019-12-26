@@ -39,7 +39,7 @@ public:
 
 private:
 
-	CTFSword( const CTFSword& ) {}
+	CTFSword( const CTFSword& );
 };
 
 
@@ -50,6 +50,9 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
+	CTFKatana();
+	virtual ~CTFKatana() {}
+
 	virtual bool	Deploy( void );
 	virtual int		GetSkinOverride( void );
 	virtual void	OnDecapitation( CTFPlayer *pVictim );
@@ -57,11 +60,8 @@ public:
 		
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_KATANA; }
 
-#if defined( GAME_DLL )
 	virtual int		GetActivityWeaponRole( void );
-#else
 	virtual acttable_t *ActivityList( int &iActivityCount );
-#endif
 	
 	
 private:
@@ -70,6 +70,8 @@ private:
 #else
 	bool m_bIsBloody;
 #endif
+
+	CTFKatana( const CTFKatana& );
 };
 
 #endif // TF_WEAPON_SWORD_H

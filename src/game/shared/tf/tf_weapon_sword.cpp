@@ -5,8 +5,6 @@
 //=============================================================================
 
 #include "cbase.h"
-#include "tf_weapon_sword.h"
-#include "decals.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -15,6 +13,9 @@
 #else
 #include "tf_player.h"
 #endif
+
+#include "tf_weapon_sword.h"
+#include "decals.h"
 
 //=============================================================================
 //
@@ -137,6 +138,16 @@ void CTFSword::OnDecapitation( CTFPlayer *pVictim )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CTFKatana::CTFKatana()
+{
+#if defined( CLIENT_DLL )
+	m_bIsBloody = false;
+#endif
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 bool CTFKatana::Deploy( void )
@@ -228,7 +239,6 @@ BEGIN_PREDICTION_DATA( CTFKatana )
 END_PREDICTION_DATA()
 #endif
 
-#if defined( CLIENT_DLL )
 acttable_t *CTFKatana::ActivityList( int &iActivityCount )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
@@ -239,20 +249,19 @@ acttable_t *CTFKatana::ActivityList( int &iActivityCount )
 
 	if ( pOwner->IsPlayerClass( TF_CLASS_DEMOMAN ) )
 	{
-
 		pTable = s_acttableItem1;
-		iActivityCount = ARRAYSIZE( s_acttableItem1 );
+		iActivityCount = Q_ARRAYSIZE( s_acttableItem1 );
 	}
 
 	if ( pOwner->m_Shared.IsLoser() )
 	{
 		pTable = s_acttableLoserState;
-		iActivityCount = ARRAYSIZE( s_acttableLoserState );
+		iActivityCount = Q_ARRAYSIZE( s_acttableLoserState );
 	}
 
 	return pTable;
 }
-#else //CLIENT_DLL
+
 int CTFKatana::GetActivityWeaponRole( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
@@ -261,4 +270,3 @@ int CTFKatana::GetActivityWeaponRole( void )
 
 	return BaseClass::GetActivityWeaponRole();
 }
-#endif
