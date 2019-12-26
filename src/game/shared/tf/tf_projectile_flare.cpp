@@ -35,6 +35,7 @@ END_NETWORK_TABLE()
 
 extern ConVar tf2v_minicrits_on_deflect;
 
+ConVar tf2v_use_new_flare_radius("tf2v_use_new_flare_radius", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses modern flare explosion sizes (110Hu)instead of older ones (92Hu) for exploding flares.");
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -197,13 +198,46 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		CPVSFilter filter( vecOrigin );
 		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pOther->entindex() );
 	}
+	
+	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
+	
+	// Detonator flares explode on a small radius.
+	int nFlareMode = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nFlareMode, set_weapon_mode);
+	if (nFlareMode != 0)
+	{
+		// We explode in a small radius, set us up as an explosion.
+		CTFRadiusDamageInfo radiusInfo;
+		radiusInfo.info.Set( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING, &vectorReported );
+		radiusInfo.m_vecSrc = vecOrigin;
+		float flRadius = GetFlareRadius();
+		radiusInfo.m_flRadius = flRadius;
+		radiusInfo.m_flSelfDamageRadius = flRadius;
 
-	CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING );
-	info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
-	pOther->TakeDamage( info );
+		TFGameRules()->RadiusDamage( radiusInfo );
+	}
+	else
+	{
+		// We deal with direct contact, do the regular logic.
+		CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING );
+		info.SetReportedPosition( vectorReported);
+		pOther->TakeDamage( info );
+	}
 
 	// Remove.
 	UTIL_Remove( this );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFProjectile_Flare::GetFlareRadius( void )
+{
+	if ( tf2v_use_new_flare_radius.GetBool() )
+		return 110.0;
+	
+	return 92.0;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -247,6 +281,23 @@ CTFProjectile_Flare *CTFProjectile_Flare::Create( CBaseEntity *pWeapon, const Ve
 
 	return pFlare;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFProjectile_Flare::Detonate( void )
+{
+	trace_t		tr;
+	Vector		vecSpot;// trace starts here!
+
+	SetThink( NULL );
+
+	vecSpot = GetAbsOrigin() + Vector ( 0 , 0 , 8 );
+	UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -32 ), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, & tr);
+
+	Explode( &tr, NULL );
+}
+
 #else
 
 //-----------------------------------------------------------------------------
@@ -282,4 +333,5 @@ void CTFProjectile_Flare::CreateTrails( void )
 
 	ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 }
+
 #endif

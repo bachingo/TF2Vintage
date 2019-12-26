@@ -49,3 +49,67 @@ void CTFFlareGun::Spawn(void)
 {
 	BaseClass::Spawn();
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFFlareGun::PrimaryAttack(void)
+{
+	//Short and simple attack.
+	BaseClass::PrimaryAttack();
+		
+	//Check if we do anything else, like keep track of flares.
+	int nWeaponMode = 0;
+	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
+	if (nWeaponMode == 1)
+	{
+		// Update our active flares.
+		#if 0
+		CBaseEntity *pFlare = 
+
+		if (pFlare)
+		{
+		#ifdef GAME_DLL
+
+			CTFGrenadePipebombProjectile *pFlare = (CTFGrenadePipebombProjectile*)pProjectile;
+			pFlare->SetLauncher(this);
+
+			FlareHandle hHandle;
+			hHandle = pFlare;
+			m_Flares.AddToTail(hHandle);
+		#endif
+		}
+		#endif
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Detonator - Detonate flares in midair
+//-----------------------------------------------------------------------------
+void CTFFlareGun::SecondaryAttack( void )
+{
+#ifdef GAME_DLL
+	int nWeaponMode = 0;
+	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
+	if (nWeaponMode == 1)
+	{
+		if ( !CanAttack() )
+			return;
+
+		// Get a valid player.
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+		if ( !pPlayer )
+			return;
+		for ( int i = 0; i < m_Flares.Count(); i++ )
+		{
+			CTFProjectile_Flare *pFlare = m_Flares[ i ];
+			pFlare->Detonate();
+			m_Flares.Remove(i);
+		}
+	}
+	else
+		BaseClass::SecondaryAttack();
+#endif
+	return;
+}
+

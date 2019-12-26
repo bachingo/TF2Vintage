@@ -55,6 +55,8 @@ public:
 
 	// Overrides.
 	virtual void				Explode( trace_t *pTrace, CBaseEntity *pOther );
+	virtual void				Detonate( void );
+	virtual float				GetFlareRadius( void );
 #else
 
 	virtual void				OnDataChanged( DataUpdateType_t updateType );
