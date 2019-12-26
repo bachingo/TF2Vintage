@@ -240,34 +240,11 @@ BEGIN_PREDICTION_DATA( CTFKatana )
 END_PREDICTION_DATA()
 #endif
 
-acttable_t *CTFKatana::ActivityList( int &iActivityCount )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	acttable_t *pTable = BaseClass::ActivityList( iActivityCount );
-
-	if ( pOwner == nullptr )
-		return pTable;
-
-	if ( pOwner->IsPlayerClass( TF_CLASS_DEMOMAN ) )
-	{
-		pTable = s_acttableItem1;
-		iActivityCount = Q_ARRAYSIZE(s_acttableItem1);
-	}
-
-	if ( pOwner->m_Shared.IsLoser() )
-	{
-		pTable = s_acttableLoserState;
-		iActivityCount = Q_ARRAYSIZE(s_acttableLoserState);
-	}
-
-	return pTable;
-}
-
 int CTFKatana::GetActivityWeaponRole( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && pOwner->IsPlayerClass( TF_CLASS_DEMOMAN ) )
 		return TF_WPN_TYPE_ITEM1;
 
-	return BaseClass::GetActivityWeaponRole();
+	return TF_WPN_TYPE_MELEE;
 }

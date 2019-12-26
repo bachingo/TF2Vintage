@@ -61,7 +61,6 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_KATANA; }
 
 	virtual int		GetActivityWeaponRole( void );
-	virtual acttable_t *ActivityList( int &iActivityCount );
 	
 	
 private:

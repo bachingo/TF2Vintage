@@ -4954,6 +4954,7 @@
 			"item_description"	"#TF_SoldierKatana_Desc"
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana"
+			"anim_slot"	"melee"
 			"used_by_classes"
 			{
 				"soldier"	"1"
