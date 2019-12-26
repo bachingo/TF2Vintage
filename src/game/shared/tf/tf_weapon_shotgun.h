@@ -93,11 +93,11 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PEP_BRAWL_BLASTER; }
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PEP_BRAWLER_BLASTER; }
 	virtual bool	HasChargeBar( void )			{ return true; }
 	virtual const char* GetEffectLabelText( void )			{ return "#TF_Boost"; }
 	virtual float	GetEffectBarProgress( void );
-	virtual float		GetSpeedMod( void ) const;
+	virtual float	GetSpeedMod( void ) const;
 };
 
 class CTFSodaPopper : public CTFScatterGun
