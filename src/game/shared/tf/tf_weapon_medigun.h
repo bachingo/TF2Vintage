@@ -50,6 +50,7 @@ public:
 	virtual void	PrimaryAttack( void );
 	virtual void	SecondaryAttack( void );
 	virtual void	WeaponIdle( void );
+	virtual bool	ShouldUpdateSpeed(CTFPlayer *pTarget);
 	void			DrainCharge( void );
 	void			AddCharge( float flAmount );
 	virtual void	WeaponReset( void );

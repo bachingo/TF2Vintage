@@ -95,6 +95,8 @@ ConVar tf2v_clamp_speed_absolute( "tf2v_clamp_speed_absolute", "450", FCVAR_NOTI
 ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era move speed for spies." );
 ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
 ConVar tf2v_use_spy_moveattrib ("tf2v_use_spy_moveattrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should spies be affected by their disguise's speed attributes?" );
+ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables movespeed matching for medics." );
+
 
 ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
 
@@ -4774,6 +4776,38 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			}
 		}
 	}
+	
+#ifdef GAME_DLL
+	// Check players healing us and update logic if needed.
+	for (int i = 0; i < m_Shared.m_aHealers.Count(); i++)
+	{
+		if (!m_Shared.m_aHealers[i].pPlayer)
+			continue;
+			
+		if (!m_Shared.m_aHealers[i].pPlayer.IsValid())
+			continue;
+
+		CTFPlayer *pPlayer = ToTFPlayer(m_Shared.m_aHealers[i].pPlayer);
+		if (!pPlayer)
+			continue;
+
+		CTFWeaponBase *pMedigun = pPlayer->GetActiveTFWeapon();
+		if (!pMedigun)
+			continue;
+		
+		int nCanFollowCharges = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pMedigun, nCanFollowCharges, set_weapon_mode);
+		// Beta Quick Fix: Always match speed.
+		if ( nCanFollowCharges == 4 )
+			pPlayer->SetMaxSpeed(maxfbspeed);
+		// Quick-Fix: Follow shield charges, but only when we are allowed to match speed.
+		if ( nCanFollowCharges == 2 && tf2v_use_medic_speed_match.GetBool() )
+			pPlayer->SetMaxSpeed(maxfbspeed);
+		// Other mediguns can match speed, but only when allowed to and not on shield charges.
+		else if ( tf2v_use_medic_speed_match.GetBool() && !m_Shared.InCond(TF_COND_SHIELD_CHARGE) )
+			pPlayer->SetMaxSpeed(maxfbspeed);
+	}
+#endif
 
 	// Set the speed
 	SetMaxSpeed( maxfbspeed );

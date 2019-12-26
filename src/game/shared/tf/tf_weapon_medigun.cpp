@@ -49,6 +49,8 @@ ConVar weapon_medigun_chargerelease_rate( "weapon_medigun_chargerelease_rate", "
 
 ConVar tf2v_setup_uber_rate("tf2v_setup_uber_rate", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Affects how Uber is built during Setup.", true, 0, true, 2);
 
+extern ConVar tf2v_use_medic_speed_match;
+
 #if defined (CLIENT_DLL)
 ConVar tf_medigun_autoheal( "tf_medigun_autoheal", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Setting this to 1 will cause the Medigun's primary attack to be a toggle instead of needing to be held down." );
 #endif
@@ -518,6 +520,8 @@ void CWeaponMedigun::FindNewTargetForSlot()
 			{
 				CTFPlayer *pTarget = ToTFPlayer( tr.m_pEnt );
 				pTarget->SpeakConceptIfAllowed( MP_CONCEPT_HEALTARGET_STARTEDHEALING );
+				if ( ShouldUpdateSpeed(pTarget) )
+					pOwner->SetMaxSpeed(pTarget->MaxSpeed());
 			}
 
 			// Start the heal target thinking.
@@ -552,6 +556,8 @@ void CWeaponMedigun::HealTargetThink( void )
 	if ( flTime > 5.0f || !AllowedToHealTarget(pTarget) )
 	{
 		RemoveHealingTarget( false );
+		if (ShouldUpdateSpeed(ToTFPlayer(pTarget)))
+			pOwner->TeamFortress_SetSpeed();
 	}
 
 	SetNextThink( gpGlobals->curtime + 0.2f, s_pszMedigunHealTargetThink );
@@ -610,6 +616,7 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 					flHealRate *= nMegaHealMult;
 				
 				pTFPlayer->m_Shared.Heal( pOwner, flHealRate );
+				
 			}
 
 			pTFPlayer->m_Shared.RecalculateChargeEffects( false );
@@ -1036,6 +1043,27 @@ void CWeaponMedigun::WeaponIdle( void )
 	}
 }
 
+bool CWeaponMedigun::ShouldUpdateSpeed(CTFPlayer *pTarget)
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( !pOwner )
+		return false;
+	
+	int nCanFollowCharges = 0;
+	CALL_ATTRIB_HOOK_INT( nCanFollowCharges, set_weapon_mode);
+	// Beta Quick Fix: Always match speed.
+	if ( nCanFollowCharges == 4 ) 
+		return true;
+	// Quick-Fix: Follow shield charges, but only when we are allowed to match speed.
+	else if ( nCanFollowCharges == 2 && tf2v_use_medic_speed_match.GetBool() )
+		return true;
+	// Other mediguns can match speed, but only when allowed to and not on shield charges.
+	else if ( tf2v_use_medic_speed_match.GetBool() && !pTarget->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+		return true;
+	
+	return false;
+}
+
 #if defined( CLIENT_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1272,4 +1300,5 @@ void CWeaponMedigun::UpdateEffects( void )
 		m_hHealingTargetEffect.pEffect = pEffect;
 	}
 }
+
 #endif
