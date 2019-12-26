@@ -255,7 +255,11 @@ bool CTFStunBall::CanStun( CTFPlayer *pOther )
 	// Don't stun players we can't damage
 	if ( pOther->m_Shared.InCond( TF_COND_INVULNERABLE ) || pOther->m_Shared.InCond( TF_COND_PHASE ) )
 		return false;
-
+	
+	// Don't stun players with megaheal.
+	if ( pOther->m_Shared.InCond( TF_COND_MEGAHEAL ) )
+		return false;
+	
 	return true;
 }
 

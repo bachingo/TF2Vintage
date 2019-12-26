@@ -603,6 +603,12 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 			if ( pTarget != pNewTarget && pNewTarget->IsPlayer() )
 			{
 				float flHealRate = GetHealRate();
+				
+				// Heal 3x faster if using the megaheal.
+				int nMegaHealMult = 3;
+				if (pOwner->m_Shared.InCond(TF_COND_MEGAHEAL) && pTFPlayer->m_Shared.InCond(TF_COND_MEGAHEAL))
+					flHealRate *= nMegaHealMult;
+				
 				pTFPlayer->m_Shared.Heal( pOwner, flHealRate );
 			}
 

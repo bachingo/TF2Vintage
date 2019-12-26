@@ -5668,6 +5668,9 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 {
 	CBaseEntity *pAttacker = info.GetAttacker();
 
+	if ( ToTFPlayer(pAttacker) && ToTFPlayer(pAttacker)->m_Shared.InCond(TF_COND_MEGAHEAL) )
+		return;
+	
 	if ( info.GetDamageType() & DMG_PREVENT_PHYSICS_FORCE )
 		return;
 
@@ -8240,6 +8243,9 @@ void CTFPlayer::PlayerUse( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ApplyAbsVelocityImpulse( Vector const &vecImpulse )
 {
+	if ( m_Shared.InCond( TF_COND_MEGAHEAL ) )
+		return;
+	
 	Vector vecModImpulse = vecImpulse;
 	float flImpulseScale = 1.0f;
 	if ( m_Shared.InCond( TF_COND_AIMING ) )

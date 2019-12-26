@@ -642,7 +642,7 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 	if ( !pVictim )
 		return;
 
-	if ( !pVictim->InSameTeam( pAttacker ) && CanAirBlastPushPlayers() )
+	if (!pVictim->InSameTeam(pAttacker) && CanAirBlastPushPlayers() && !pVictim->m_Shared.InCond(TF_COND_MEGAHEAL))
 	{
 		// Don't push players if they're too far off to the side. Ignore Z.
 		Vector vecVictimDir = pVictim->WorldSpaceCenter() - pAttacker->WorldSpaceCenter();
@@ -663,13 +663,13 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 			pVictim->EmitSound( "TFPlayer.AirBlastImpact" );
 			if ( tf2v_airblast.GetInt() == 1 )
 			{
-			pVictim->SetAbsVelocity( vecDir * 500 );
-			pVictim->m_Shared.AddCond( TF_COND_NO_MOVE, 0.5f );
+				pVictim->SetAbsVelocity( vecDir * 500 );
+				pVictim->m_Shared.AddCond( TF_COND_NO_MOVE, 0.5f );
 			}
 			else if ( tf2v_airblast.GetInt() == 2 )
 			{
-			pVictim->ApplyAbsVelocityImpulse( vecDir * 750 );
-			pVictim->m_Shared.AddCond( TF_COND_REDUCED_MOVE, 0.5f );
+				pVictim->ApplyAbsVelocityImpulse( vecDir * 750 );
+				pVictim->m_Shared.AddCond( TF_COND_REDUCED_MOVE, 0.5f );
 			}
 			// Add pusher as recent damager we he can get a kill credit for pushing a player to his death.
 			pVictim->AddDamagerToHistory( pAttacker );

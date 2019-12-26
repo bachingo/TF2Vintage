@@ -2137,7 +2137,7 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() ))
 			return;
 
-		if (!pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ))
+		if (!pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ) && !pTFVictim->m_Shared.InCond( TF_COND_MEGAHEAL ))
 		{
 			float flSlowOnHit = CAttributeManager::AttribHookValue<float>( 0, "mult_onhit_enemyspeed", this );
 			if (flSlowOnHit && RandomFloat() < flSlowOnHit)

@@ -765,6 +765,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 	case TF_COND_INVULNERABLE:
 		OnAddInvulnerable();
 		break;
+		
+	case TF_COND_MEGAHEAL:
+		OnAddMegaheal();
+		break;
 
 	case TF_COND_TELEPORTED:
 		OnAddTeleported();
@@ -903,6 +907,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_INVULNERABLE:
 		OnRemoveInvulnerable();
+		break;
+		
+	case TF_COND_MEGAHEAL:
+		OnRemoveMegaheal();
 		break;
 
 	case TF_COND_TELEPORTED:
@@ -1655,6 +1663,38 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 #endif
 }
 
+void CTFPlayerShared::OnAddMegaheal( void )
+{
+#ifndef CLIENT_DLL
+	
+#else
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		char *pEffectName = NULL;
+
+		switch( m_pOuter->GetTeamNumber() )
+		{
+		case TF_TEAM_BLUE:
+			pEffectName = "effects/invuln_overlay_blue";
+			break;
+		case TF_TEAM_RED:
+			pEffectName =  "effects/invuln_overlay_red";
+			break;
+		default:
+			pEffectName = "effects/invuln_overlay_blue";
+			break;
+		}
+
+		IMaterial *pMaterial = materials->FindMaterial( pEffectName, TEXTURE_GROUP_CLIENT_EFFECTS, false );
+		if ( !IsErrorMaterial( pMaterial ) )
+		{
+			view->SetScreenOverlayMaterial( pMaterial );
+		}
+	}
+#endif
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1668,10 +1708,24 @@ void CTFPlayerShared::OnRemoveInvulnerable(void)
 	// We need to revert the mask back to the regular disguise class.
 	if ( InCond( TF_COND_DISGUISED ) )
 	{	
-	m_pOuter->UpdateSpyMask();
+		m_pOuter->UpdateSpyMask();
 	}
 #endif
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveMegaheal(void)
+{
+#ifdef CLIENT_DLL
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		view->SetScreenOverlayMaterial( NULL );
+	}
+#endif
+}
+
 
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------

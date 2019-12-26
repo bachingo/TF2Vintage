@@ -17,6 +17,7 @@
 #include "tf_weapon_sword.h"
 #include "decals.h"
 
+
 //=============================================================================
 //
 // Weapon Sword tables.
@@ -250,13 +251,13 @@ acttable_t *CTFKatana::ActivityList( int &iActivityCount )
 	if ( pOwner->IsPlayerClass( TF_CLASS_DEMOMAN ) )
 	{
 		pTable = s_acttableItem1;
-		iActivityCount = Q_ARRAYSIZE( s_acttableItem1 );
+		iActivityCount = Q_ARRAYSIZE(s_acttableItem1);
 	}
 
 	if ( pOwner->m_Shared.IsLoser() )
 	{
 		pTable = s_acttableLoserState;
-		iActivityCount = Q_ARRAYSIZE( s_acttableLoserState );
+		iActivityCount = Q_ARRAYSIZE(s_acttableLoserState);
 	}
 
 	return pTable;

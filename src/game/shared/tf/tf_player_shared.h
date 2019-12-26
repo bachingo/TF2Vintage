@@ -366,6 +366,7 @@ private:
 	void OnAddStealthed( void );
 	void OnAddFeignDeath( void );
 	void OnAddInvulnerable( void );
+	void OnAddMegaheal( void );
 	void OnAddTeleported( void );
 	void OnAddBurning( void );
 	void OnAddDisguising( void );
@@ -392,6 +393,7 @@ private:
 	void OnRemoveDisguised( void );
 	void OnRemoveDisguising( void );
 	void OnRemoveInvulnerable( void );
+	void OnRemoveMegaheal( void );
 	void OnRemoveTeleported( void );
 	void OnRemoveTaunting( void );
 	void OnRemoveStunned( void );
