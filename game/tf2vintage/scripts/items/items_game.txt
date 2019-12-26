@@ -5104,16 +5104,6 @@
 					"attribute_class"	"mult_medigun_overheal_amount"
 					"value"	"0.5"
 				}
-				"kill eater score type"
-				{
-					"attribute_class"	"kill_eater_score_type"
-					"value"				"1"								
-				}
-				"kill eater score type 2"
-				{
-					"attribute_class"	"kill_eater_score_type_2"
-					"value" 			"2"								
-				}
 			}
 			"visuals"
 			{

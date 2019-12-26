@@ -127,11 +127,16 @@ public:
 
 	void	InvisibilityThink( void );
 
-	int		GetMaxBuffedHealth( void );
+	int		GetMaxBuffedHealth(void);
 
 	// Max Health
 	int		GetMaxHealth( void );
 	void	SetMaxHealth( int iMaxHealth )		{ m_iMaxHealth = iMaxHealth; }
+
+	// Sanguisuge
+	void	ChangeSanguisugeHealth(int value)		{ m_iLeechHealth += value; }
+	void	SetSanguisugeHealth( int iLeechHealth )		{ m_iLeechHealth = iLeechHealth; }
+	int		GetSanguisugeHealth( void )					{ return m_iLeechHealth; }
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -168,7 +173,7 @@ public:
 	}
 	int		GetDisguiseHealth( void )			{ return m_iDisguiseHealth; }
 	void	SetDisguiseHealth( int iDisguiseHealth );
-	int		AddDisguiseHealth( int iHealthToAdd, bool bOverheal = false );
+	int		AddDisguiseHealth( int iHealthToAdd, bool bOverheal = false, float flOverhealAmount = 1.0f );
 	int		GetDisguiseMaxHealth( void );
 	int		GetDisguiseMaxBuffedHealth( void );
 
@@ -446,6 +451,7 @@ private:
 	EHANDLE m_hForcedDisguise;
 
 	CNetworkVar( int, m_iMaxHealth );
+	CNetworkVar(int, m_iLeechHealth);
 
 	bool m_bEnableSeparation;		// Keeps separation forces on when player stops moving, but still penetrating
 	Vector m_vSeparationVelocity;	// Velocity used to keep player seperate from teammates

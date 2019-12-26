@@ -1225,6 +1225,7 @@ void CTFPlayer::Spawn()
 	m_Shared.SetHypeMeterAbsolute( 0 );
 	m_Shared.SetFeignReady( false );
 	m_Shared.SetHasRecoiled( false );
+	m_Shared.SetSanguisugeHealth(0);
 
 	// Kind of lame, but CBasePlayer::Spawn resets a lot of the state that we initially want on.
 	// So if we're in the welcome state, call its enter function to reset 
