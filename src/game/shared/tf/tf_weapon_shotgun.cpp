@@ -329,8 +329,11 @@ BEGIN_NETWORK_TABLE( CTFShotgun_Revenge, DT_TFShotgun_Revenge )
 #endif
 END_NETWORK_TABLE()
 
+#if defined( CLIENT_DLL )
 BEGIN_PREDICTION_DATA( CTFShotgun_Revenge )
+	DEFINE_PRED_FIELD( m_iRevengeCrits, FIELD_INTEGER, FTYPEDESC_INSENDTABLE )
 END_PREDICTION_DATA()
+#endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_sentry_revenge, CTFShotgun_Revenge );
 PRECACHE_WEAPON_REGISTER( tf_weapon_sentry_revenge );
