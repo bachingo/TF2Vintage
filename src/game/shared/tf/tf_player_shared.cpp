@@ -1167,7 +1167,15 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		{
 			m_flHealFraction -= nHealthToAdd;
 
-			
+			// Overheal modifier attributes
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(m_pOuter), flMaxOverhealRatio, mult_patient_overheal_penalty );
+			CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
+			if ( pWeapon )
+			{
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMaxOverhealRatio, mult_patient_overheal_penalty_active );
+			}
+
+			// Modify our max overheal.
 			int iBoostMax;
 			if ( flMaxOverhealRatio != 1.0f )
 				iBoostMax = ( ( iOverhealDifference ) * flMaxOverhealRatio ) + GetMaxHealth();
