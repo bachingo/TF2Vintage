@@ -36,6 +36,9 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_stickbomb );
 #define TF_STICKBOMB_NORMAL    0
 #define TF_STICKBOMB_DETONATED 1
 
+#ifdef GAME_DLL
+extern ConVar tf2v_use_new_caber;
+#endif
 
 CTFStickBomb::CTFStickBomb()
 {
@@ -88,10 +91,14 @@ void CTFStickBomb::Smack()
 			CPVSFilter filter( where );
 			TE_TFExplosion( filter, 0.0f, where, Vector( 0.0f, 0.0f, 1.0f ),
 				TF_WEAPON_GRENADELAUNCHER, ENTINDEX( owner ) );
+				
+			float flDamage = 100.0f;
+			if ( tf2v_use_new_caber.GetBool() )
+				flDamage = 75.0f;
 			
 			/* why is the damage force vector set to Weapon_ShootPosition()?
 			 * I dunno! */
-			CTakeDamageInfo dmginfo( owner, owner, this, where, where, 75.0f,
+			CTakeDamageInfo dmginfo( owner, owner, this, where, where, flDamage,
 				DMG_BLAST | DMG_CRITICAL | ( IsCurrentAttackACrit() ? DMG_USEDISTANCEMOD : 0 ),
 				TF_DMG_CUSTOM_STICKBOMB_EXPLOSION, &where );
 			

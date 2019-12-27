@@ -171,6 +171,8 @@ ConVar tf2v_use_new_ammo_drops("tf2v_use_new_ammo_drops","0", FCVAR_NOTIFY | FCV
 
 ConVar tf2v_use_new_dead_ringer("tf2v_use_new_dead_ringer","0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Adds temporary afterburn and speed boost to Dead Ringers.", true, 0, true, 1);
 
+ConVar tf2v_use_new_caber( "tf2v_use_new_caber", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the Ullapool Caber's explosion behavior to the newer format." );
+
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -5031,6 +5033,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 								// Scattergun gets 50% bonus of other weapons at short range
 								flRandomDamage *= 1.5;
 								break;
+							case TF_WEAPON_STICKBOMB:	
+								// Post-nerf Caber follows the standard explosive short range bonus.
+								if ( tf2v_use_new_caber.GetBool() )
+									flRandomDamage *= 0.5;
+								break;
+
 						}
 					}
 				}
