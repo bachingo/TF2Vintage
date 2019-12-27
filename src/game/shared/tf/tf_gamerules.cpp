@@ -1282,6 +1282,8 @@ CTFGameRules::CTFGameRules()
 	Assert( g_aWeaponDamageTypes[TF_WEAPON_COUNT] == TF_DMG_SENTINEL_VALUE );
 	Assert( FStrEq( g_aWeaponNames[TF_WEAPON_COUNT], "TF_WEAPON_COUNT" ) );
 
+	m_flGravityScale = 1.0;
+
 	m_iPreviousRoundWinners = TEAM_UNASSIGNED;
 	m_iBirthdayMode = HOLIDAY_RECALCULATE;
 	m_iHalloweenMode = HOLIDAY_RECALCULATE;

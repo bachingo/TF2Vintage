@@ -352,6 +352,9 @@ public:
 
 	virtual void	LevelShutdownPostEntity( void );
 
+	float			GetGravityMultiplier( void ) const { return m_flGravityScale; }
+	void			SetGravityMultiplier( float value ) { m_flGravityScale = value; }
+
 	bool			IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
@@ -461,6 +464,8 @@ public:
 
 	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
 
+	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
+
 private:
 
 	int				DefaultFOV( void ) { return 75; }
@@ -500,8 +505,6 @@ private:
 
 	CUtlVector<CTFPlayer *> m_hArenaQueue;
 
-	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
-
 	CHandle<CTeamTrainWatcher> m_hRedAttackTrain;
 	CHandle<CTeamTrainWatcher> m_hBlueAttackTrain;
 	CHandle<CTeamTrainWatcher> m_hRedDefendTrain;
@@ -527,6 +530,7 @@ private:
 	CNetworkVar( bool, m_bPlayingHybrid_CTF_CP );
 	CNetworkVar( bool, m_bCompetitiveMode );
 	CNetworkVar( bool, m_bPowerupMode );
+	CNetworkVar( float, m_flGravityScale );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( EHANDLE, m_itHandle );
