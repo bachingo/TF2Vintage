@@ -107,6 +107,7 @@
 	"The Hitman's Heatmaker"						"1"
 	"Baby Face's Blaster"							"1"
 	"Pretty Boy's Pocket Pistol"					"1"
+	"The Rescue Ranger"								"1"
 	"The Quickiebomb Launcher"						"1"
 	"The Iron Bomber"								"1"
 	

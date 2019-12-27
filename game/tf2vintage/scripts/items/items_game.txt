@@ -1286,6 +1286,64 @@
 				"sound_burst"	"Weapon_FamilyBusiness.SingleCrit"
 			}
 		}
+		"weapon_rescue_ranger"
+		{
+			"prefab"	"weapon_shotgun"
+			"item_logname"	"rescue_ranger"
+			"item_iconname"	"rescue_ranger"
+			"item_name"	"#TF_Weapon_Shotgun_Building_Rescue"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_tele_shotgun/c_tele_shotgun"
+			"model_player"	"models/workshop/weapons/c_models/c_tele_shotgun/c_tele_shotgun.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"			"10 0 -10"
+			}
+			"attributes"
+			{
+				"engineer building teleporting pickup"
+				{
+					"attribute_class"	"building_teleporting_pickup"
+					"value"	"100"
+				}
+				"arrow heals buildings"
+				{
+					"attribute_class"	"arrow_heals_buildings"
+					"value"				"75"
+				}
+				"override projectile type"
+				{
+					"attribute_class"	"override_projectile_type"
+					"value"				"18" 
+				}
+				"maxammo primary reduced"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"				"0.5"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value"				"0.66"
+				}
+			}
+			"visuals"
+			{
+				"attached_models"
+				{
+					"0"
+					{
+						"model"	"models/workshop/weapons/c_models/c_tele_shotgun/c_tele_shotgun_screen.mdl"
+					}
+				}
+				"sound_single_shot"	"Weapon_RescueRanger.Single"
+				"sound_burst"    "Weapon_RescueRanger.SingleCrit"
+			}
+		}
 		"weapon_smg"
 		{
 			"item_class"	"tf_weapon_smg"
@@ -5931,6 +5989,13 @@
 				"sound_single_shot"		"Weapon_PickPocket_Pistol.Single"
 				"sound_burst"			"Weapon_PickPocket_Pistol.SingleCrit"
 			}
+		}
+		"997"
+		{
+			"name"	"The Rescue Ranger"
+			"prefab" "weapon_rescue_ranger"
+			"year"				"2012"
+			"particle_suffix"	"rescue_ranger"
 		}
 		"1150"
 		{
