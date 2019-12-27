@@ -5177,6 +5177,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		pTFAttacker->m_Shared.SetHypeMeter( ( ( info.GetDamage() * nLoseHypeOnDamage ) * -1 ), false );
 		
 	}
+	
+	// If we have Sanguisuge health, reduce our pool by the damage we took.
+	if ( m_Shared.GetSanguisugeHealth() > 0 )
+	{
+		m_Shared.ChangeSanguisugeHealth( ( info.GetDamage() * -1 ) );
+		// We can't have a negative buff amount, so zero this out.
+		if ( m_Shared.GetSanguisugeHealth() < 0 )
+			m_Shared.SetSanguisugeHealth( 0 );
+	}
 
 	// Early out if the base class took no damage
 	if ( !bTookDamage )
