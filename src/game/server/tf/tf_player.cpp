@@ -275,6 +275,7 @@ public:
 	CNetworkVar( bool, m_bGoldRagdoll );
 	CNetworkVar( bool, m_bIceRagdoll );
 	CNetworkVar( bool, m_bCritOnHardHit );
+	CNetworkVar( float, m_flHeadScale );
 
 	CUtlVector< CHandle<CEconWearable> > m_hRagdollWearables;
 };
@@ -302,6 +303,7 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CTFRagdoll, DT_TFRagdoll )
 	SendPropBool( SENDINFO( m_bGoldRagdoll ) ),
 	SendPropBool( SENDINFO( m_bIceRagdoll ) ),
 	SendPropBool( SENDINFO( m_bCritOnHardHit ) ),
+	SendPropFloat( SENDINFO( m_flHeadScale ) ),
 END_SEND_TABLE()
 
 // -------------------------------------------------------------------------------- //
@@ -528,6 +530,8 @@ CTFPlayer::CTFPlayer()
 	m_hItem = NULL;
 	m_hTauntScene = NULL;
 
+	m_flHeadScale = 1.0f;
+
 	UseClientSideAnimation();
 	m_angEyeAngles.Init();
 	m_pStateInfo = NULL;
@@ -613,6 +617,8 @@ void CTFPlayer::TFPlayerThink()
 		m_iszExpressionScene = NULL_STRING;
 		UpdateExpression();
 	}
+
+	m_flHeadScale = Approach( GetDesiredHeadScale(), m_flHeadScale, GetHeadScaleSpeed() );
 
 	// Check to see if we are in the air and taunting.  Stop if so.
 	if ( GetGroundEntity() == NULL && m_Shared.InCond( TF_COND_TAUNTING ) )
@@ -2094,6 +2100,30 @@ void CTFPlayer::PostInventoryApplication( void )
 
 		gameeventmanager->FireEvent( event );
 	}
+}
+
+float CTFPlayer::GetDesiredHeadScale( void ) const
+{
+	float flHeadScale = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flHeadScale, head_scale );
+	return flHeadScale;
+}
+
+float CTFPlayer::GetHeadScaleSpeed( void )
+{
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) )
+		return GetDesiredHeadScale();
+
+	if ( m_Shared.InCond( TF_COND_BALLOON_HEAD ) )
+		return GetDesiredHeadScale();
+
+	if ( m_Shared.InCond( TF_COND_MELEE_ONLY ) )
+		return GetDesiredHeadScale();
+
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+		return GetDesiredHeadScale();
+
+	return gpGlobals->frametime;
 }
 
 //-----------------------------------------------------------------------------
@@ -8353,6 +8383,7 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 		pRagdoll->m_bOnGround = bOnGround;
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
+		pRagdoll->m_flHeadScale = m_flHeadScale;
 	}
 
 	// Turn off the player.
