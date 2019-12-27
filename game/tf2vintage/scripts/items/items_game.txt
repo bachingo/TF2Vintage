@@ -628,10 +628,15 @@
 					"attribute_class"	"set_weapon_mode"
 					"value" "1"
 				}
-				"cannot disguise"
+				"cannot disguise YER"
 				{
-					"attribute_class"	"set_cannot_disguise"
+					"attribute_class"	"set_cannot_disguise_yer"
 					"value" "1"
+				}
+				"mod_disguise_consumes_cloak_yer"
+				{
+					"attribute_class"	"mod_disguise_consumes_cloak_yer"
+					"value"				"1"
 				}
 			}
 		}
@@ -11832,6 +11837,16 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 		}
+		"816"
+		{
+			"name"	"mod_disguise_consumes_cloak"
+			"attribute_class"	"mod_disguise_consumes_cloak"
+			"description_string"	"#Attrib_DisguiseConsumesCloak"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"stored_as_integer"	"1"
+			"effect_type"	"negative"
+		}
 		"851"
 		{
 			"name"	"mult_player_movespeed_active"
@@ -12158,6 +12173,25 @@
 			"description_format"	"value_is_percentage"
 			"hidden"	"0"
 			"effect_type"	"positive"
+		}
+		"10012"
+		{
+			"name"	"cannot disguise YER"
+			"attribute_class"	"set_cannot_disguise_yer"
+			"description_string"	"#Attrib_CannotDisguise"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10013"
+		{
+			"name"	"mod_disguise_consumes_cloak_yer"
+			"attribute_class"	"mod_disguise_consumes_cloak_yer"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"1"
+			"effect_type"	"negative"
 		}
 	}
 	"attribute_controlled_attached_particles"
