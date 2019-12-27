@@ -554,6 +554,16 @@ void C_TFRagdoll::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Qua
 {
 	BaseClass::BuildTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed );
 
+	float flHeadScale = 1.0f;
+	if ( m_iPlayerIndex != TF_PLAYER_INDEX_NONE )
+	{
+		C_TFPlayer *pPlayer = dynamic_cast<C_TFPlayer *>( cl_entitylist->GetBaseEntity( m_iPlayerIndex ) );
+		if ( pPlayer )
+			flHeadScale = pPlayer->m_flHeadScale;
+	}
+
+	BuildBigHeadTransformation( this, pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed, flHeadScale );
+
 	if ( IsDecapitation() && !m_bHeadTransform )
 	{
 		m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
@@ -2159,13 +2169,15 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropDataTable( RECVINFO_DT( m_PlayerClass ), 0, &REFERENCE_RECV_TABLE( DT_TFPlayerClassShared ) ),
 	RecvPropDataTable( RECVINFO_DT( m_Shared ), 0, &REFERENCE_RECV_TABLE( DT_TFPlayerShared ) ),
 	RecvPropDataTable( RECVINFO_DT( m_AttributeManager ), 0, &REFERENCE_RECV_TABLE( DT_AttributeManager ) ),
-
+	
 	RecvPropEHandle( RECVINFO( m_hItem ) ),
 
 	RecvPropVector( RECVINFO( m_vecPlayerColor ) ),
 
 	RecvPropDataTable( "tflocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFLocalPlayerExclusive ) ),
 	RecvPropDataTable( "tfnonlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFNonLocalPlayerExclusive ) ),
+
+	RecvPropFloat( RECVINFO( m_flHeadScale ) ),
 
 	RecvPropInt( RECVINFO( m_nForceTauntCam ) ),
 	RecvPropBool( RECVINFO( m_bTyping ) ),
@@ -2215,6 +2227,8 @@ C_TFPlayer::C_TFPlayer() :
 	m_pTypingEffect = NULL;
 
 	m_aGibs.Purge();
+
+	m_flHeadScale = 1.0f;
 
 	m_bCigaretteSmokeActive = false;
 
@@ -3253,6 +3267,15 @@ void C_TFPlayer::ThirdPersonSwitch( bool bThirdPerson )
 
 	m_Shared.UpdateCritBoostEffect();
 	UpdateOverhealEffect();
+}
+
+void C_TFPlayer::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed )
+{
+	BaseClass::BuildTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed );
+
+	BuildBigHeadTransformation( this, pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed, m_flHeadScale );
+
+	BuildFirstPersonMeathookTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed, "bip_head" );
 }
 
 void C_TFPlayer::CalcMinViewmodelOffset( void )

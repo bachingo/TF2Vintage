@@ -499,6 +499,9 @@ public:
 	void				EnableVIP( TFPlayerClassData_t *pData , int iMedalType );
 
 	void				PostInventoryApplication( void );
+
+	float				GetDesiredHeadScale( void ) const;
+	float				GetHeadScaleSpeed( void );
 	
 	virtual bool		IsWhiteListed ( const char *pszClassname );
 
@@ -722,6 +725,8 @@ private:
 	bool				m_bAutoRezoom;	// does the player want to re-zoom after each shot for sniper rifles
 	bool				m_bAutoReload;
 	bool				m_bFlipViewModel;
+
+	CNetworkVar( float, m_flHeadScale );
 
 	float				m_flTauntAttackTime;
 	int					m_iTauntAttack;

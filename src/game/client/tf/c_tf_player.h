@@ -134,6 +134,8 @@ public:
 	bool			InTauntCam( void ) { return m_bWasTaunting; }
 	virtual void	ThirdPersonSwitch( bool bThirdperson );
 
+	void			BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
+
 	// Minimal Viewmodels
 	void			CalcMinViewmodelOffset( void );
 
@@ -385,6 +387,8 @@ public:
 	int				m_nOldWaterLevel;
 	float			m_flWaterEntryTime;
 	bool			m_bWaterExitEffectActive;
+
+	float			m_flHeadScale;
 
 	CMaterialReference	m_InvulnerableMaterial;
 

@@ -8,7 +8,7 @@
 #include "cbase.h"
 #include "movevars_shared.h"
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL ) || defined( TF_VINTAGE_CLIENT ) || defined( TF_VINTAGE )
 #include "tf_gamerules.h"
 #endif
 
@@ -24,7 +24,7 @@
 
 float GetCurrentGravity( void )
 {
-#if defined( TF_CLIENT_DLL ) || defined( TF_DLL )
+#if defined( TF_CLIENT_DLL ) || defined( TF_DLL ) || defined( TF_VINTAGE_CLIENT ) || defined( TF_VINTAGE )
 	if ( TFGameRules() )
 	{
 		return ( sv_gravity.GetFloat() * TFGameRules()->GetGravityMultiplier() );
