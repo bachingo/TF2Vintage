@@ -3542,11 +3542,6 @@
 					"attribute_class"	"set_blockbackstab_once"
 					"value" "1"
 				}
-				"kill eater score type"
-				{
-					"attribute_class"	"kill_eater_score_type"
-					"value" 	"5"									
-				}
 				"allowed in medieval mode"
 				{
 					"attribute_class"	"allowed_in_medieval_mode"
