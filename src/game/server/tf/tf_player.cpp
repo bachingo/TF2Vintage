@@ -3996,6 +3996,18 @@ bool CTFPlayer::CanDisguise( void )
 		// Not allowed
 		return false;
 	}
+	
+	int nRequiresCloak = 0;
+	CALL_ATTRIB_HOOK_INT( nRequiresCloak, mod_disguise_consumes_cloak );
+	if ( nRequiresCloak == 1 )
+	{
+		// Check our cloak level.
+		// We need a full bar in order to cloak.
+		if ( m_Shared.GetSpyCloakMeter() != 100 )
+			return false;
+		else	// Deduct all of our cloak, but let us disguise.
+			m_Shared.SetSpyCloakMeter(0);
+	}
 
 	return true;
 }
