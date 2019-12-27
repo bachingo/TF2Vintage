@@ -1330,6 +1330,11 @@
 					"attribute_class"	"mult_clipsize"
 					"value"				"0.66"
 				}
+				"repair health to metal ratio DISPLAY ONLY"
+				{
+					"attribute_class"	"repair_health_to_metal_ratio_DISPLAY_ONLY"
+					"value"				"4"
+				}
 			}
 			"visuals"
 			{
