@@ -5162,48 +5162,70 @@ bool CTFPlayer::TryToPickupBuilding( void )
 	Vector vecForward;
 	AngleVectors( EyeAngles(), &vecForward );
 	Vector vecSwingStart = Weapon_ShootPosition();
-	// 5500 with Rescue Ranger.
-	float flRange = 150.0f;
-	Vector vecSwingEnd = vecSwingStart + vecForward * flRange;
-
-	// only trace against objects
-
-	// See if we hit anything.
-	trace_t trace;
-
-	CTraceFilterIgnorePlayers traceFilter( NULL, COLLISION_GROUP_NONE );
-	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &traceFilter, &trace );
-
-	if ( trace.fraction < 1.0f &&
-		trace.m_pEnt &&
-		trace.m_pEnt->IsBaseObject() &&
-		trace.m_pEnt->GetTeamNumber() == GetTeamNumber() )
+	
+	// Check if we can pick up buildings remotely, and how much it costs.
+	bool bHasRemotePickup = false;
+	int nRemotePickup = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(GetActiveTFWeapon(), nRemotePickup, building_teleporting_pickup);
+	if ( nRemotePickup != 0 )
 	{
-		CBaseObject *pObject = dynamic_cast<CBaseObject *>( trace.m_pEnt );
-		if ( CanPickupBuilding( pObject ) )
+		// Check if we also have enough metal to perform a remote pickup.
+		if ( GetBuildResources() > nRemotePickup )
+			bHasRemotePickup = true;
+	}
+	
+	// Trace to see if we touch anything.
+	// First trace is the normal pickup, while second trace is for teleport pickups.
+	float flRange = 150.0f;
+	int iMaxHaulingChecks = ( bHasRemotePickup ? 2 : 1 );
+	for ( int iTraces = 1; iTraces <= iMaxHaulingChecks; iTraces++ )
+	{
+		// Increase our range on the teleport pickup iteration.
+		if ( iTraces == 2 )
+			flRange = 5500.0f;
+		
+		Vector vecSwingEnd = vecSwingStart + vecForward * flRange;
+		// only trace against objects
+		// See if we hit anything.
+		trace_t trace;
+
+		CTraceFilterIgnorePlayers traceFilter( NULL, COLLISION_GROUP_NONE );
+		UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &traceFilter, &trace );
+
+		if ( trace.fraction < 1.0f &&
+			trace.m_pEnt &&
+			trace.m_pEnt->IsBaseObject() &&
+			trace.m_pEnt->GetTeamNumber() == GetTeamNumber() )
 		{
-			CTFWeaponBase *pWpn = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
-
-			if ( pWpn )
+			CBaseObject *pObject = dynamic_cast<CBaseObject *>( trace.m_pEnt );
+			if ( CanPickupBuilding( pObject ) )
 			{
-				CTFWeaponBuilder *pBuilder = dynamic_cast< CTFWeaponBuilder * >( pWpn );
+				CTFWeaponBase *pWpn = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
 
-				// Is this the builder that builds the object we're looking for?
-				if ( pBuilder )
+				if ( pWpn )
 				{
-					pObject->MakeCarriedObject(this);
+					CTFWeaponBuilder *pBuilder = dynamic_cast< CTFWeaponBuilder * >( pWpn );
 
-					pBuilder->SetSubType( pObject->ObjectType() );
-					pBuilder->SetObjectMode( pObject->GetObjectMode() );
+					// Is this the builder that builds the object we're looking for?
+					if ( pBuilder )
+					{
+						pObject->MakeCarriedObject(this);
 
-					SpeakConceptIfAllowed( MP_CONCEPT_PICKUP_BUILDING );
+						pBuilder->SetSubType( pObject->ObjectType() );
+						pBuilder->SetObjectMode( pObject->GetObjectMode() );
 
-					// try to switch to this weapon
-					Weapon_Switch( pBuilder );
+						SpeakConceptIfAllowed( MP_CONCEPT_PICKUP_BUILDING );
 
-					m_flNextCarryTalkTime = gpGlobals->curtime + RandomFloat( 6.0f, 12.0f );
+						// try to switch to this weapon
+						Weapon_Switch( pBuilder );
 
-					return true;
+						m_flNextCarryTalkTime = gpGlobals->curtime + RandomFloat( 6.0f, 12.0f );
+
+						// If remote pickup, subtract the metal from our current metal reserve.
+						if ( iTraces == 2 )
+							RemoveBuildResources( nRemotePickup );
+						return true;
+					}
 				}
 			}
 		}
