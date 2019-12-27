@@ -226,6 +226,10 @@ const char *CHealthKitMedium::GetDefaultPowerupModel( void )
 		{
 			return "models/props_halloween/halloween_medkit_medium.mdl";
 		}
+		else if ( TFGameRules()->IsInMedievalMode() )
+		{
+			return "models/props_medieval/medieval_meat.mdl";
+		}
 	}
 
 	return "models/items/medkit_medium.mdl"; // default
