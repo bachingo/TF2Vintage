@@ -41,6 +41,9 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_knife, CTFKnife );
 PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
 
+
+ConVar tf2v_use_new_backstabs( "tf2v_use_new_backstabs", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force knives to be raised before a backstab can occur." );
+
 //=============================================================================
 //
 // Weapon Knife functions.
@@ -105,8 +108,14 @@ void CTFKnife::PrimaryAttack( void )
 
 			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
 			{
+				// Check to see if we can backstab.
+				bool bCanBackstab;
+				if ( tf2v_use_new_backstabs.GetBool() ) // Must be readied before allowed to backstab
+					bCanBackstab = ( IsBehindAndFacingTarget( pTarget ) && m_bReadyToBackstab );
+				else								  // Does not need to be readied to backstab
+					bCanBackstab = IsBehindAndFacingTarget( pTarget );
 				// Deal extra damage to players when stabbing them from behind
-				if ( IsBehindAndFacingTarget( pTarget ) )
+				if ( bCanBackstab )
 				{
 					// this will be a backstab, do the strong anim
 					m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
@@ -258,6 +267,16 @@ bool CTFKnife::CalcIsAttackCriticalHelper( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Checks to see if we raise or lower our knife.
+// 			This allows our knife to be much more responsive.
+//-----------------------------------------------------------------------------
+void CTFKnife::WeaponIdle( void )
+{
+	BackstabVMThink();
+	return BaseClass::WeaponIdle();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Allow melee weapons to send different anim events
 // Input  :  - 
 //-----------------------------------------------------------------------------
@@ -321,6 +340,19 @@ void CTFKnife::BackstabVMThink( void )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
 		return;
+	
+	// Don't raise the knife when cloaked.
+	if ( pOwner->m_Shared.InCond(TF_COND_STEALTHED) || pOwner->m_Shared.InCond(TF_COND_STEALTHED_BLINK) )
+	{
+		if ( m_bReadyToBackstab )
+		{
+			SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
+			m_bReadyToBackstab = false;
+		}
+		return;
+	}
+
+	
 	if ( GetActivity() == ACT_VM_IDLE ||
 		GetActivity() == ACT_MELEE_VM_IDLE ||
 		GetActivity() == ACT_BACKSTAB_VM_IDLE ||
@@ -336,16 +368,16 @@ void CTFKnife::BackstabVMThink( void )
 		{
 			if ( !m_bReadyToBackstab )
 			{
-				m_bReadyToBackstab = true;
 				SendWeaponAnim( ACT_BACKSTAB_VM_UP );
+				m_bReadyToBackstab = true;
 			}
 		}
 		else
 		{
 			if ( m_bReadyToBackstab )
 			{
-				m_bReadyToBackstab = false;
 				SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
+				m_bReadyToBackstab = false;
 			}
 		}
 	}

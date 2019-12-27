@@ -33,6 +33,7 @@ public:
 	virtual bool		Deploy( void );
 	virtual void		ItemPostFrame( void );
 	virtual void		PrimaryAttack( void );
+	virtual void		WeaponIdle(void);
 
 	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
 
