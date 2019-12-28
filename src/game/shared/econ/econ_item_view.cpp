@@ -365,6 +365,9 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
 
 bool CAttributeList::SetRuntimeAttributeValue( const EconAttributeDefinition *pDefinition, float flValue )
 {
+	if ( pDefinition == nullptr )
+		return false;
+
 	FOR_EACH_VEC( m_Attributes, i )
 	{
 		CEconItemAttribute *pAttrib = &m_Attributes[ i ];
