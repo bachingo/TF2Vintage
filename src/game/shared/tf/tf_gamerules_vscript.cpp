@@ -5,12 +5,14 @@
 // $NoKeywords: $
 //=============================================================================
 #include "cbase.h"
+#include "filesystem.h"
 #include "tf_gamerules.h"
 #include "vscript_shared.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#if defined( GAME_DLL )
 class CScriptConvars
 {
 public:
@@ -93,6 +95,7 @@ BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptConvars, "Convars", SCRIPT_SINGLETON "Provid
 	DEFINE_SCRIPTFUNC( SetValueString, "Sets the value of the convar to a string." )
 	DEFINE_SCRIPTFUNC( ExecuteConCommand, "Executes the convar command." )
 END_SCRIPTDESC();
+#endif
 
 static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szName, HSCRIPT hEntity )
 {
@@ -132,7 +135,9 @@ void CTFGameRules::RegisterScriptFunctions( void )
 {
 	ScriptRegisterFunctionNamed( g_pScriptVM, AttribHookValue, "GetAttribValue", "Fetch an attribute that is assigned to the provided weapon" );
 
+#if defined( GAME_DLL )
 	g_pScriptVM->RegisterInstance( &g_ConvarsVScript, "Convars" );
+#endif
 
 	char root[ MAX_PATH ]{};
 	Q_strncpy( root, "scripts\\vscripts", sizeof root );

@@ -203,6 +203,8 @@ public:
 	void			RevertSingleConvar( ConVarRef &cvar );
 	void			RevertSavedConvars();
 
+	virtual void	RegisterScriptFunctions( void ) override;
+
 #ifdef GAME_DLL
 public:
 	// Override this to prevent removal of game specific entities that need to persist
