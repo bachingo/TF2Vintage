@@ -316,6 +316,7 @@ private:
 	bool  m_bGoldRagdoll;
 	bool  m_bIceRagdoll;
 	bool  m_bCritOnHardHit;
+	float m_flHeadScale;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
 	float m_flBurnEffectEndTime;	// start time of burning, or 0 if not burning
 	float m_flDeathDelay;
@@ -355,6 +356,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropBool( RECVINFO( m_bGoldRagdoll ) ),
 	RecvPropBool( RECVINFO( m_bIceRagdoll ) ),
 	RecvPropBool( RECVINFO( m_bCritOnHardHit ) ),
+	RecvPropFloat( RECVINFO( m_flHeadScale ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
