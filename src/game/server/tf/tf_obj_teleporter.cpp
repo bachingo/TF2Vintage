@@ -1004,7 +1004,8 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 	bool bRepaired = false;
 	int iAmountToHeal = 0;
 	int iRepairCost = 0;
-	
+	int iRepairRateCost = 0;
+
 	float flRepairRate = 1;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
 
@@ -1014,17 +1015,17 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 		iAmountToHeal = min( (int)(flRepairRate * 100), GetMaxHealth() - GetHealth() );
 
 		// repair the building
-		int iRepairCost;
 		if ( tf2v_use_new_wrench_mechanics.GetBool() )
 		{
-			// 33 metal to repair 100HP (new repair cost)
-			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.33f );	
+			// 3HP per metal (new repair cost)
+			iRepairRateCost = 3;
 		}
 		else
 		{
-			// 20 metal to repair 100HP (old repair cost)
-			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );	
+			// 5HP per metal (old repair cost)
+			iRepairRateCost = 5;
 		}
+		iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / iRepairRateCost ) );
 
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
 			GetHealth(),
@@ -1040,7 +1041,7 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 
 			pActivator->RemoveBuildResources( iRepairCost );
 
-			float flNewHealth = min( GetMaxHealth(), GetHealth() + ( iRepairCost * 5 ) );
+			float flNewHealth = min( GetMaxHealth(), GetHealth() + ( iRepairCost * (iRepairRateCost) ) );
 			SetHealth( flNewHealth );
 
 			bRepaired = (iRepairCost > 0);
@@ -1049,7 +1050,7 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 
 			if ( pMatch && pMatch->GetState() != TELEPORTER_STATE_BUILDING && !pMatch->IsUpgrading() )
 			{
-				float flNewHealth = min( pMatch->GetMaxHealth(), pMatch->GetHealth() + ( iRepairCost * 5 ) );
+				float flNewHealth = min( pMatch->GetMaxHealth(), pMatch->GetHealth() + ( iRepairCost * (iRepairRateCost) ) );
 				pMatch->SetHealth( flNewHealth );
 			}
 		}
@@ -1059,10 +1060,20 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 		CObjectTeleporter *pMatch = GetMatchingTeleporter();
 		if ( pMatch->GetHealth() < pMatch->GetMaxHealth() && pMatch->GetState() != TELEPORTER_STATE_BUILDING && !pMatch->IsUpgrading() )
 		{
-			iAmountToHeal = min( 100, pMatch->GetMaxHealth() - pMatch->GetHealth() );
+			iAmountToHeal = min( (int)(flRepairRate * 100), pMatch->GetMaxHealth() - pMatch->GetHealth() );
 
 			// repair the building
-			iRepairCost = ceil( (float)(iAmountToHeal)* 0.2f );
+			if ( tf2v_use_new_wrench_mechanics.GetBool() )
+			{
+				// 3HP per metal (new repair cost)
+				iRepairRateCost = 3;
+			}
+			else
+			{
+				// 5HP per metal (old repair cost)
+				iRepairRateCost = 5;
+			}
+			iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / iRepairRateCost ) );
 
 			TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
 				pMatch->GetHealth(),
@@ -1078,7 +1089,7 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 
 				pActivator->RemoveBuildResources( iRepairCost );
 
-				float flNewHealth = min( pMatch->GetMaxHealth(), pMatch->GetHealth() + ( iRepairCost * 5 ) );
+				float flNewHealth = min( pMatch->GetMaxHealth(), pMatch->GetHealth() + ( iRepairCost * (iRepairRateCost) ) );
 				pMatch->SetHealth( flNewHealth );
 
 				bRepaired = (iRepairCost > 0);
