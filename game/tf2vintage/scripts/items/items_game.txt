@@ -3936,6 +3936,11 @@
 					"attribute_class"	"mult_dispenser_radius"
 					"value"			"3.0"
 				}
+				"reveal disguised victim on hit"
+				{
+					"attribute_class"	"reveal_disguised_victim_on_hit"
+					"value"			"1"
+				}
 				"damage penalty"
 				{
 					"attribute_class"	"mult_dmg"
