@@ -1188,6 +1188,8 @@ void CTFPlayer::InitialSpawn( void )
 	m_AttributeManager.InitializeAttributes( this );
 	m_AttributeManager.m_hOuter = this;
 
+	m_AttributeList.SetManager( &m_AttributeManager );
+
 	SetWeaponBuilder( NULL );
 
 	m_iMaxSentryKills = 0;
