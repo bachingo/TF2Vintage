@@ -1261,6 +1261,8 @@ CTFGameRules::CTFGameRules()
 
 	ListenForGameEvent( "game_newmap" );
 
+	SetUpVisionFilterKeyValues();
+
 #endif
 
 	m_flCapturePointEnableTime = 0;
@@ -7144,6 +7146,351 @@ bool CTFGameRules::ShouldBalanceTeams( void )
 }
 
 #ifdef CLIENT_DLL
+bool CTFGameRules::AllowMapVisionFilterShaders( void )
+{
+	if( m_pVisionFilterWhitelist )
+	{
+		const char *szMapName = engine->GetLevelName();
+
+		while ( szMapName )
+		{
+			char c = *szMapName++;
+			if ( c == '/' || c == '\\' )
+				return m_pVisionFilterWhitelist->GetInt( szMapName ) != 0;
+		}
+	}
+
+	return false;
+}
+
+char const *CTFGameRules::TranslateEffectForVisionFilter( char const *pchEffectType, char const *pchEffectName )
+{
+	if ( pchEffectType == NULL || pchEffectName == NULL )
+		return pchEffectName;
+
+	// Handle duplicate entries by just using the last one encountered
+	CUtlVector<char const *> strings;
+	strings.AddToTail( pchEffectName );
+
+	int iFlags = GetLocalPlayerVisionFilterFlags( FStrEq( pchEffectType, "weapons" ) );
+
+	KeyValues *pKV = m_pVisionFilterTranslations->FindKey( pchEffectType );
+	if ( pKV )
+	{
+		for ( KeyValues *pSubkey = pKV->GetFirstTrueSubKey(); pSubkey; pSubkey = pSubkey->GetNextTrueSubKey() )
+		{
+			int iFilterType = atoi( pSubkey->GetName() );
+			if( ( iFilterType & iFlags ) != 0 || iFilterType == 0 )
+			{
+				const char *pTranslation = pSubkey->GetString( pchEffectName );
+				if ( pTranslation[ 0 ] != '\0' )
+					strings.AddToHead( pTranslation );
+			}
+		}
+	}
+
+	return strings[0];
+}
+
+void CTFGameRules::SetUpVisionFilterKeyValues( void )
+{
+	m_pVisionFilterWhitelist = new KeyValues( "VisionFilterShadersMapWhitelist" );
+	m_pVisionFilterWhitelist->LoadFromFile( g_pFullFileSystem, "cfg/mtp.cfg", "MOD" );
+
+	m_pVisionFilterTranslations = new KeyValues( "VisionFilterTranslations" );
+
+	KeyValues *pParticles = new KeyValues( "particles" );
+	m_pVisionFilterTranslations->AddSubKey( pParticles );
+
+	{
+		KeyValues *pNoFilterTrans = new KeyValues( "0" );
+		pNoFilterTrans->SetString( "flamethrower_rainbow", "flamethrower" );
+		pNoFilterTrans->SetString( "flamethrower_rainbow_FP", "flamethrower" );
+		pNoFilterTrans->SetString( "flamethrower_rainbow_new_flame", "new_flame" );
+		pParticles->AddSubKey( pNoFilterTrans );
+
+		KeyValues *pFilteredTrans = new KeyValues( "1" );
+		pFilteredTrans->SetString("flamethrower", "flamethrower_rainbow");
+		pFilteredTrans->SetString("new_flame", "flamethrower_rainbow_new_flame");
+		pFilteredTrans->SetString("projectile_fireball", "projectile_fireball_pyrovision");
+		pFilteredTrans->SetString("taunt_pyro_gasblast_fireblast", "taunt_pyro_gasblast_rainbow");
+		pFilteredTrans->SetString("flamethrower_rainbow_new_flame", "flamethrower_rainbow_new_flame");
+		pFilteredTrans->SetString("flamethrower_rainbow", "flamethrower_rainbow");
+		pFilteredTrans->SetString("flamethrower_rainbow_FP", "flamethrower_rainbow_FP");
+		pFilteredTrans->SetString("burningplayer_blue", "burningplayer_rainbow_blue");
+		pFilteredTrans->SetString("burningplayer_red", "burningplayer_rainbow_red");
+		pFilteredTrans->SetString("burningplayer_corpse", "burningplayer_corpse_rainbow");
+		pFilteredTrans->SetString("water_blood_impact_red_01", "pyrovision_blood");
+		pFilteredTrans->SetString("blood_impact_red_01", "pyrovision_blood");
+		pFilteredTrans->SetString("blood_spray_red_01", "pyrovision_blood");
+		pFilteredTrans->SetString("blood_spray_red_01_far", "pyrovision_blood");
+		pFilteredTrans->SetString("ExplosionCore_wall", "pyrovision_explosion");
+		pFilteredTrans->SetString("ExplosionCore_buildings", "pyrovision_explosion");
+		pFilteredTrans->SetString("ExplosionCore_MidAir", "pyrovision_explosion");
+		pFilteredTrans->SetString("rockettrail", "pyrovision_rockettrail");
+		pFilteredTrans->SetString("rockettrail_!", "pyrovision_rockettrail");
+		pFilteredTrans->SetString("sentry_rocket", "pyrovision_rockettrail");
+		pFilteredTrans->SetString("flaregun_trail_blue", "pyrovision_flaregun_trail_blue");
+		pFilteredTrans->SetString("flaregun_trail_red", "pyrovision_flaregun_trail_red");
+		pFilteredTrans->SetString("flaregun_trail_crit_blue", "pyrovision_flaregun_trail_crit_blue");
+		pFilteredTrans->SetString("flaregun_trail_crit_red", "pyrovision_flaregun_trail_crit_red");
+		pFilteredTrans->SetString("flaregun_destroyed", "pyrovision_flaregun_destroyed");
+		pFilteredTrans->SetString("scorchshot_trail_blue", "pyrovision_scorchshot_trail_blue");
+		pFilteredTrans->SetString("scorchshot_trail_red", "pyrovision_scorchshot_trail_red");
+		pFilteredTrans->SetString("scorchshot_trail_crit_blue", "pyrovision_scorchshot_trail_crit_blue");
+		pFilteredTrans->SetString("scorchshot_trail_crit_red", "pyrovision_scorchshot_trail_crit_red");
+		pFilteredTrans->SetString("ExplosionCore_MidAir_Flare", "pyrovision_flaregun_destroyed");
+		pFilteredTrans->SetString("pyrotaunt_rainbow_norainbow", "pyrotaunt_rainbow");
+		pFilteredTrans->SetString("pyrotaunt_rainbow_bubbles_flame", "pyrotaunt_rainbow_bubbles");
+		pFilteredTrans->SetString("v_flaming_arrow", "pyrovision_v_flaming_arrow");
+		pFilteredTrans->SetString("flaming_arrow", "pyrovision_flaming_arrow");
+		pFilteredTrans->SetString("flying_flaming_arrow", "pyrovision_flying_flaming_arrow");
+		pFilteredTrans->SetString("taunt_pyro_balloon", "taunt_pyro_balloon_vision");
+		pFilteredTrans->SetString("taunt_pyro_balloon_explosion", "taunt_pyro_balloon_explosion_vision");
+		pParticles->AddSubKey( pFilteredTrans );
+	}
+
+	KeyValues *pSounds = new KeyValues( "sounds" );
+	m_pVisionFilterTranslations->AddSubKey( pSounds );
+
+	{
+		KeyValues *pNoFilterTrans = new KeyValues( "0" );
+		pNoFilterTrans->SetString("weapons/rainblower/rainblower_start.wav", "weapons/flame_thrower_start.wav");
+		pNoFilterTrans->SetString("weapons/rainblower/rainblower_loop.wav", "weapons/flame_thrower_loop.wav");
+		pNoFilterTrans->SetString("weapons/rainblower/rainblower_end.wav", "weapons/flame_thrower_end.wav");
+		pNoFilterTrans->SetString("weapons/rainblower/rainblower_hit.wav", "weapons/flame_thrower_fire_hit.wav");
+		pNoFilterTrans->SetString("weapons/rainblower/rainblower_pilot.wav", "weapons/flame_thrower_pilot.wav");
+		pNoFilterTrans->SetString(")weapons/rainblower/rainblower_start.wav", ")weapons/flame_thrower_start.wav");
+		pNoFilterTrans->SetString(")weapons/rainblower/rainblower_loop.wav", ")weapons/flame_thrower_loop.wav");
+		pNoFilterTrans->SetString(")weapons/rainblower/rainblower_end.wav", ")weapons/flame_thrower_end.wav");
+		pNoFilterTrans->SetString(")weapons/rainblower/rainblower_hit.wav", ")weapons/flame_thrower_fire_hit.wav");
+		pNoFilterTrans->SetString(")weapons/rainblower/rainblower_pilot.wav", "weapons/flame_thrower_pilot.wav");
+		pNoFilterTrans->SetString("Weapon_Rainblower.Fire", "Weapon_FlameThrower.Fire");
+		pNoFilterTrans->SetString("Weapon_Rainblower.FireLoop", "Weapon_FlameThrower.FireLoop");
+		pNoFilterTrans->SetString("Weapon_Rainblower.WindDown", "Weapon_FlameThrower.WindDown");
+		pNoFilterTrans->SetString("Weapon_Rainblower.FireHit", "Weapon_FlameThrower.FireHit");
+		pNoFilterTrans->SetString("Weapon_Rainblower.PilotLoop", "Weapon_FlameThrower.PilotLoop");
+		pNoFilterTrans->SetString("Taunt.PyroBalloonicorn", "Taunt.PyroHellicorn");
+		pNoFilterTrans->SetString(")items/pyro_music_tube.wav", "common/null.wav");
+		pSounds->AddSubKey( pNoFilterTrans );
+
+		KeyValues *pFilteredTrans = new KeyValues( "1" );
+		pFilteredTrans->SetString("weapons/rainblower/rainblower_start.wav", "weapons/rainblower/rainblower_start.wav");
+		pFilteredTrans->SetString("weapons/rainblower/rainblower_loop.wav", "weapons/rainblower/rainblower_loop.wav");
+		pFilteredTrans->SetString("weapons/rainblower/rainblower_end.wav", "weapons/rainblower/rainblower_end.wav");
+		pFilteredTrans->SetString("weapons/rainblower/rainblower_hit.wav", "weapons/rainblower/rainblower_hit.wav");
+		pFilteredTrans->SetString("weapons/rainblower/rainblower_pilot.wav", "weapons/rainblower/rainblower_pilot.wav");
+		pFilteredTrans->SetString(")weapons/rainblower/rainblower_start.wav", ")weapons/rainblower/rainblower_start.wav");
+		pFilteredTrans->SetString(")weapons/rainblower/rainblower_loop.wav", ")weapons/rainblower/rainblower_loop.wav");
+		pFilteredTrans->SetString(")weapons/rainblower/rainblower_end.wav", ")weapons/rainblower/rainblower_end.wav");
+		pFilteredTrans->SetString(")weapons/rainblower/rainblower_hit.wav", ")weapons/rainblower/rainblower_hit.wav");
+		pFilteredTrans->SetString(")weapons/rainblower/rainblower_pilot.wav", ")weapons/rainblower/rainblower_pilot.wav");
+		pFilteredTrans->SetString("Weapon_Rainblower.Fire", "Weapon_Rainblower.Fire");
+		pFilteredTrans->SetString("Weapon_Rainblower.FireLoop", "Weapon_Rainblower.FireLoop");
+		pFilteredTrans->SetString("Weapon_Rainblower.WindDown", "Weapon_Rainblower.WindDown");
+		pFilteredTrans->SetString("Weapon_Rainblower.FireHit", "Weapon_Rainblower.FireHit");
+		pFilteredTrans->SetString("Weapon_Rainblower.PilotLoop", "Weapon_Rainblower.PilotLoop");
+		pFilteredTrans->SetString("Taunt.PyroBalloonicorn", "Taunt.PyroBalloonicorn");
+		pFilteredTrans->SetString(")items/pyro_music_tube.wav", ")items/pyro_music_tube.wav");
+		pFilteredTrans->SetString("Taunt.Party_Trick", "Taunt.Party_Trick_Pyro_Vision");
+		pFilteredTrans->SetString("Taunt.GasBlast", "Taunt.GasBlastPyrovision");
+		pFilteredTrans->SetString("vo/demoman_PainCrticialDeath01.mp3", "vo/demoman_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainCrticialDeath02.mp3", "vo/demoman_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainCrticialDeath03.mp3", "vo/demoman_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainCrticialDeath04.mp3", "vo/demoman_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainCrticialDeath05.mp3", "vo/demoman_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSevere01.mp3", "vo/demoman_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSevere02.mp3", "vo/demoman_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSevere03.mp3", "vo/demoman_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSevere04.mp3", "vo/demoman_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSharp01.mp3", "vo/demoman_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSharp02.mp3", "vo/demoman_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSharp03.mp3", "vo/demoman_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSharp04.mp3", "vo/demoman_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSharp05.mp3", "vo/demoman_LaughShort05.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSharp06.mp3", "vo/demoman_LaughShort06.mp3");
+		pFilteredTrans->SetString("vo/demoman_PainSharp07.mp3", "vo/demoman_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/demoman_AutoOnFire01.mp3", "vo/demoman_PositiveVocalization02.mp3");
+		pFilteredTrans->SetString("vo/demoman_AutoOnFire02.mp3", "vo/demoman_PositiveVocalization03.mp3");
+		pFilteredTrans->SetString("vo/demoman_AutoOnFire03.mp3", "vo/demoman_PositiveVocalization04.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainCrticialDeath01.mp3", "vo/engineer_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainCrticialDeath02.mp3", "vo/engineer_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainCrticialDeath03.mp3", "vo/engineer_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainCrticialDeath04.mp3", "vo/engineer_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainCrticialDeath05.mp3", "vo/engineer_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainCrticialDeath06.mp3", "vo/engineer_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSevere01.mp3", "vo/engineer_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSevere02.mp3", "vo/engineer_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSevere03.mp3", "vo/engineer_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSevere04.mp3", "vo/engineer_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSevere05.mp3", "vo/engineer_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSevere06.mp3", "vo/engineer_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSevere07.mp3", "vo/engineer_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp01.mp3", "vo/engineer_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp02.mp3", "vo/engineer_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp03.mp3", "vo/engineer_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp04.mp3", "vo/engineer_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp05.mp3", "vo/engineer_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp06.mp3", "vo/engineer_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp07.mp3", "vo/engineer_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/engineer_PainSharp08.mp3", "vo/engineer_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/engineer_AutoOnFire01.mp3", "vo/engineer_PositiveVocalization01.mp3");
+		pFilteredTrans->SetString("vo/engineer_AutoOnFire02.mp3", "vo/engineer_Cheers01.mp3");
+		pFilteredTrans->SetString("vo/engineer_AutoOnFire03.mp3", "vo/engineer_Cheers02.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainCrticialDeath01.mp3", "vo/heavy_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainCrticialDeath02.mp3", "vo/heavy_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainCrticialDeath03.mp3", "vo/heavy_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSevere01.mp3", "vo/heavy_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSevere02.mp3", "vo/heavy_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSevere03.mp3", "vo/heavy_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSharp01.mp3", "vo/heavy_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSharp02.mp3", "vo/heavy_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSharp03.mp3", "vo/heavy_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSharp04.mp3", "vo/heavy_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/heavy_PainSharp05.mp3", "vo/heavy_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/heavy_AutoOnFire01.mp3", "vo/heavy_PositiveVocalization01.mp3");
+		pFilteredTrans->SetString("vo/heavy_AutoOnFire02.mp3", "vo/heavy_PositiveVocalization02.mp3");
+		pFilteredTrans->SetString("vo/heavy_AutoOnFire03.mp3", "vo/heavy_PositiveVocalization03.mp3");
+		pFilteredTrans->SetString("vo/heavy_AutoOnFire04.mp3", "vo/heavy_PositiveVocalization04.mp3");
+		pFilteredTrans->SetString("vo/heavy_AutoOnFire05.mp3", "vo/heavy_PositiveVocalization05.mp3");
+		pFilteredTrans->SetString("vo/medic_PainCrticialDeath01.mp3", "vo/medic_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/medic_PainCrticialDeath02.mp3", "vo/medic_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/medic_PainCrticialDeath03.mp3", "vo/medic_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/medic_PainCrticialDeath04.mp3", "vo/medic_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSevere01.mp3", "vo/medic_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSevere02.mp3", "vo/medic_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSevere03.mp3", "vo/medic_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSevere04.mp3", "vo/medic_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp01.mp3", "vo/medic_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp02.mp3", "vo/medic_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp03.mp3", "vo/medic_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp04.mp3", "vo/medic_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp05.mp3", "vo/medic_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp06.mp3", "vo/medic_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp07.mp3", "vo/medic_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/medic_PainSharp08.mp3", "vo/medic_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/medic_AutoOnFire01.mp3", "vo/medic_PositiveVocalization01.mp3");
+		pFilteredTrans->SetString("vo/medic_AutoOnFire02.mp3", "vo/medic_PositiveVocalization02.mp3");
+		pFilteredTrans->SetString("vo/medic_AutoOnFire03.mp3", "vo/medic_PositiveVocalization03.mp3");
+		pFilteredTrans->SetString("vo/medic_AutoOnFire04.mp3", "vo/medic_PositiveVocalization04.mp3");
+		pFilteredTrans->SetString("vo/medic_AutoOnFire05.mp3", "vo/medic_PositiveVocalization05.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainCrticialDeath01.mp3", "vo/pyro_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainCrticialDeath02.mp3", "vo/pyro_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainCrticialDeath03.mp3", "vo/pyro_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainSevere01.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainSevere02.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainSevere03.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainSevere04.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainSevere05.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/pyro_PainSevere06.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/pyro_AutoOnFire01.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/pyro_AutoOnFire02.mp3", "vo/pyro_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/scout_PainCrticialDeath01.mp3", "vo/scout_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/scout_PainCrticialDeath02.mp3", "vo/scout_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/scout_PainCrticialDeath03.mp3", "vo/scout_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSevere01.mp3", "vo/scout_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSevere02.mp3", "vo/scout_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSevere03.mp3", "vo/scout_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSevere04.mp3", "vo/scout_LaughHappy04.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSevere05.mp3", "vo/scout_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSevere06.mp3", "vo/scout_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp01.mp3", "vo/scout_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp02.mp3", "vo/scout_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp03.mp3", "vo/scout_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp04.mp3", "vo/scout_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp05.mp3", "vo/scout_LaughShort05.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp06.mp3", "vo/scout_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp07.mp3", "vo/scout_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/scout_PainSharp08.mp3", "vo/scout_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/scout_AutoOnFire01.mp3", "vo/scout_PositiveVocalization02.mp3");
+		pFilteredTrans->SetString("vo/scout_AutoOnFire02.mp3", "vo/scout_PositiveVocalization03.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainCrticialDeath01.mp3", "vo/sniper_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainCrticialDeath02.mp3", "vo/sniper_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainCrticialDeath03.mp3", "vo/sniper_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainCrticialDeath04.mp3", "vo/sniper_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSevere01.mp3", "vo/sniper_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSevere02.mp3", "vo/sniper_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSevere03.mp3", "vo/sniper_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSevere04.mp3", "vo/sniper_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSharp01.mp3", "vo/sniper_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSharp02.mp3", "vo/sniper_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSharp03.mp3", "vo/sniper_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/sniper_PainSharp04.mp3", "vo/sniper_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/sniper_AutoOnFire01.mp3", "vo/sniper_PositiveVocalization02.mp3");
+		pFilteredTrans->SetString("vo/sniper_AutoOnFire02.mp3", "vo/sniper_PositiveVocalization03.mp3");
+		pFilteredTrans->SetString("vo/sniper_AutoOnFire03.mp3", "vo/sniper_PositiveVocalization05.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainCrticialDeath01.mp3", "vo/soldier_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainCrticialDeath02.mp3", "vo/soldier_LaughLong02.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainCrticialDeath03.mp3", "vo/soldier_LaughLong03.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainCrticialDeath04.mp3", "vo/soldier_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSevere01.mp3", "vo/soldier_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSevere02.mp3", "vo/soldier_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSevere03.mp3", "vo/soldier_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSevere04.mp3", "vo/soldier_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSevere05.mp3", "vo/soldier_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSevere06.mp3", "vo/soldier_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp01.mp3", "vo/soldier_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp02.mp3", "vo/soldier_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp03.mp3", "vo/soldier_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp04.mp3", "vo/soldier_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp05.mp3", "vo/soldier_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp06.mp3", "vo/soldier_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp07.mp3", "vo/soldier_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/soldier_PainSharp08.mp3", "vo/soldier_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/soldier_AutoOnFire01.mp3", "vo/soldier_PositiveVocalization01.mp3");
+		pFilteredTrans->SetString("vo/soldier_AutoOnFire02.mp3", "vo/soldier_PositiveVocalization02.mp3");
+		pFilteredTrans->SetString("vo/soldier_AutoOnFire03.mp3", "vo/soldier_PositiveVocalization03.mp3");
+		pFilteredTrans->SetString("vo/spy_PainCrticialDeath01.mp3", "vo/spy_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/spy_PainCrticialDeath02.mp3", "vo/spy_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/spy_PainCrticialDeath03.mp3", "vo/spy_LaughLong01.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSevere01.mp3", "vo/spy_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSevere02.mp3", "vo/spy_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSevere03.mp3", "vo/spy_LaughHappy03.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSevere04.mp3", "vo/spy_LaughHappy01.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSevere05.mp3", "vo/spy_LaughHappy02.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSharp01.mp3", "vo/spy_LaughShort01.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSharp02.mp3", "vo/spy_LaughShort02.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSharp03.mp3", "vo/spy_LaughShort03.mp3");
+		pFilteredTrans->SetString("vo/spy_PainSharp04.mp3", "vo/spy_LaughShort04.mp3");
+		pFilteredTrans->SetString("vo/spy_AutoOnFire01.mp3", "vo/spy_PositiveVocalization02.mp3");
+		pFilteredTrans->SetString("vo/spy_AutoOnFire02.mp3", "vo/spy_PositiveVocalization04.mp3");
+		pFilteredTrans->SetString("vo/spy_AutoOnFire03.mp3", "vo/spy_PositiveVocalization05.mp3");
+		pSounds->AddSubKey( pFilteredTrans );
+	}
+
+	KeyValues *pWeapons = new KeyValues( "weapons" );
+	m_pVisionFilterTranslations->AddSubKey( pWeapons );
+
+	{
+		KeyValues *pNoFilterTrans = new KeyValues( "0" );
+		pNoFilterTrans->SetString(
+			"models/weapons/c_models/c_rainblower/c_rainblower.mdl",
+			"models/weapons/c_models/c_flamethrower/c_flamethrower.mdl");
+		pNoFilterTrans->SetString(
+			"models/weapons/c_models/c_lollichop/c_lollichop.mdl",
+			"models/weapons/w_models/w_fireaxe.mdl");
+		pWeapons->AddSubKey( pNoFilterTrans );
+
+		KeyValues *pFilteredTrans = new KeyValues( "1" );
+		pFilteredTrans->SetString(
+			"models/weapons/c_models/c_rainblower/c_rainblower.mdl",
+			"models/weapons/c_models/c_rainblower/c_rainblower.mdl");
+		pFilteredTrans->SetString(
+			"models/weapons/c_models/c_lollichop/c_lollichop.mdl",
+			"models/weapons/c_models/c_lollichop/c_lollichop.mdl");
+		pFilteredTrans->SetString(
+			"models/player/items/demo/demo_bombs.mdl",
+			"models/player/items/all_class/mtp_bottle_demo.mdl");
+		pFilteredTrans->SetString(
+			"models/player/items/pyro/xms_pyro_bells.mdl",
+			"models/player/items/all_class/mtp_bottle_pyro.mdl");
+		pFilteredTrans->SetString(
+			"models/player/items/soldier/ds_can_grenades.mdl",
+			"models/player/items/all_class/mtp_bottle_soldier.mdl");
+		pWeapons->AddSubKey( pFilteredTrans );
+	}
+}
+
 const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 {
 	char mapname[MAX_MAP_NAME];

@@ -377,6 +377,9 @@ public:
 	virtual void	HandleOvertimeBegin();
 	virtual void	GetTeamGlowColor( int nTeam, float &r, float &g, float &b );
 
+	virtual bool	AllowMapVisionFilterShaders( void );
+	virtual const char *TranslateEffectForVisionFilter( const char *pchEffectType, const char *pchEffectName );
+	void			SetUpVisionFilterKeyValues( void );
 
 	bool			ShouldShowTeamGoal( void );
 
@@ -385,6 +388,9 @@ public:
 	// AutoRP
 	virtual void	ModifySentChat( char *pBuf, int iBufSize );
 
+private:
+	KeyValues *m_pVisionFilterTranslations;
+	KeyValues *m_pVisionFilterWhitelist;
 #else
 
 	DECLARE_SERVERCLASS_NOBASE(); // This makes data tables able to access our private vars.
