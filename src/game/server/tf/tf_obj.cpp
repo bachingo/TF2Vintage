@@ -2622,17 +2622,18 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 
 		// repair the building
 		int iRepairCost;
+		int iRepairRateCost;
 		if ( tf2v_use_new_wrench_mechanics.GetBool() )
 		{
-			// 33 metal to repair 100HP (new repair cost)
-			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.33f );	
+			// 3HP per metal (new repair cost)
+			iRepairRateCost = 3;
 		}
 		else
 		{
-			// 20 metal to repair 100HP (old repair cost)
-			iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );	
+			// 5HP per metal (old repair cost)
+			iRepairRateCost = 5;
 		}
-		
+		iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / iRepairRateCost ) );	
 	
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
 			GetHealth(),
@@ -2648,7 +2649,7 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 
 			pActivator->RemoveBuildResources( iRepairCost );
 
-			float flNewHealth = min( GetMaxHealth(), m_flHealth + ( iRepairCost * 5 ) );
+			float flNewHealth = min( GetMaxHealth(), m_flHealth + ( iRepairCost * (iRepairRateCost) ) );
 			SetHealth( flNewHealth );
 	
 			return ( iRepairCost > 0 );

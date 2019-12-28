@@ -171,6 +171,8 @@ ConVar tf2v_use_new_ammo_drops("tf2v_use_new_ammo_drops","0", FCVAR_NOTIFY | FCV
 
 ConVar tf2v_use_new_dead_ringer("tf2v_use_new_dead_ringer","0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Adds temporary afterburn and speed boost to Dead Ringers.", true, 0, true, 1);
 
+ConVar tf2v_use_new_caber( "tf2v_use_new_caber", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the Ullapool Caber's explosion behavior to the newer format." );
+ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -1714,7 +1716,9 @@ void CTFPlayer::GiveDefaultItems()
 			// Can we Disguise?
 			int nCannotDisguise = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCannotDisguise, set_cannot_disguise );
-			if ( IsPlayerClass( TF_CLASS_SPY ) && nCannotDisguise == 1 )
+			if (!tf2v_use_new_yer.GetBool() )
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCannotDisguise, set_cannot_disguise_yer );
+			if ( IsPlayerClass( TF_CLASS_SPY ) && nCannotDisguise != 0 )
 			{
 				// Not allowed
 				if ( pWeapon == GetActiveWeapon() )
@@ -3989,10 +3993,26 @@ bool CTFPlayer::CanDisguise( void )
 
 	int nCannotDisguise = 0;
 	CALL_ATTRIB_HOOK_INT( nCannotDisguise, set_cannot_disguise );
-	if ( nCannotDisguise == 1 )
+	if (!tf2v_use_new_yer.GetBool() )
+		CALL_ATTRIB_HOOK_INT( nCannotDisguise, set_cannot_disguise_yer );
+	if ( nCannotDisguise != 0 )
 	{
 		// Not allowed
 		return false;
+	}
+	
+	int nRequiresCloak = 0;
+	CALL_ATTRIB_HOOK_INT( nRequiresCloak, mod_disguise_consumes_cloak );
+	if (tf2v_use_new_yer.GetBool() )
+		CALL_ATTRIB_HOOK_INT( nRequiresCloak, mod_disguise_consumes_cloak_yer );
+	if ( nRequiresCloak != 0 )
+	{
+		// Check our cloak level.
+		// We need a full bar in order to cloak.
+		if ( m_Shared.GetSpyCloakMeter() != 100 )
+			return false;
+		else	// Deduct all of our cloak, but let us disguise.
+			m_Shared.SetSpyCloakMeter(0);
 	}
 
 	return true;
@@ -5061,6 +5081,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 								// Scattergun gets 50% bonus of other weapons at short range
 								flRandomDamage *= 1.5;
 								break;
+							case TF_WEAPON_STICKBOMB:	
+								// Post-nerf Caber follows the standard explosive short range bonus.
+								if ( tf2v_use_new_caber.GetBool() )
+									flRandomDamage *= 0.5;
+								break;
+
 						}
 					}
 				}
@@ -5150,6 +5176,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		if ( nLoseHypeOnDamage != 0 )
 		pTFAttacker->m_Shared.SetHypeMeter( ( ( info.GetDamage() * nLoseHypeOnDamage ) * -1 ), false );
 		
+	}
+	
+	// If we have Sanguisuge health, reduce our pool by the damage we took.
+	if ( m_Shared.GetSanguisugeHealth() > 0 )
+	{
+		m_Shared.ChangeSanguisugeHealth( ( info.GetDamage() * -1 ) );
+		// We can't have a negative buff amount, so zero this out.
+		if ( m_Shared.GetSanguisugeHealth() < 0 )
+			m_Shared.SetSanguisugeHealth( 0 );
 	}
 
 	// Early out if the base class took no damage
