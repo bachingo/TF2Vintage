@@ -2265,6 +2265,14 @@ void CTFPlayerShared::RecalculatePlayerBodygroups(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFPlayerShared::Burn( CBaseCombatCharacter *pAttacker, float flFlameDuration )
+{
+	Burn( m_pOuter, NULL, flFlameDuration );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NULL*/, float flFlameDuration )
 {
 #ifdef CLIENT_DLL
