@@ -126,14 +126,12 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 	if ( tr.m_pEnt && !tr.m_pEnt->IsPlayer() )
 		UTIL_DecalTrace( &tr, "Scorch");
 
-	// FIXME: Gibs are causing crashes on some servers for unknown reasons
-
-	/*UserMessageBegin( filter, "BreakModel" );
+	UserMessageBegin( filter, "BreakModel" );
 		WRITE_SHORT( GetModelIndex() );
 		WRITE_VEC3COORD( GetAbsOrigin() );
 		WRITE_ANGLES( GetAbsAngles() );
 		WRITE_SHORT( m_nSkin );
-	MessageEnd();*/
+	MessageEnd();
 
 	m_OnDetonate.FireOutput( this, this, 0.0f );
 	BaseClass::Event_Killed( info );
@@ -173,14 +171,12 @@ void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 	if ( tr.m_pEnt && !tr.m_pEnt->IsPlayer() )
 		UTIL_DecalTrace( &tr, "Scorch");
 
-	// FIXME: Gibs are causing crashes on some servers for unknown reasons
-
-	/*UserMessageBegin( filter, "BreakModel" );
+	UserMessageBegin( filter, "BreakModel" );
 		WRITE_SHORT( GetModelIndex() );
 		WRITE_VEC3COORD( GetAbsOrigin() );
 		WRITE_ANGLES( GetAbsAngles() );
 		WRITE_SHORT( m_nSkin );
-	MessageEnd();*/
+	MessageEnd();
 }
 
 void CTFGenericBomb::BombTouch( CBaseEntity *pOther )
