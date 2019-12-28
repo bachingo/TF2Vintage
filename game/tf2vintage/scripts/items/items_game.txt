@@ -4909,6 +4909,42 @@
 				}
 			}
 		}
+		"349"
+		{
+			"name"	"Sun-on-a-Stick"
+			"prefab"	"weapon_bat"
+			"year"		"2011"
+			"item_type_name"	"#TF_Weapon_RiftFireMace"
+			"item_name"	"#TF_Unique_RiftFireMace"
+			"item_description"	"#TF_RiftFireMace_Desc"
+			"item_logname"	"lava_bat"
+			"item_iconname"	"lava_bat"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_rift_fire_mace/c_rift_fire_mace"
+			"model_player"	"models/workshop/weapons/c_models/c_rift_fire_mace/c_rift_fire_mace.mdl"
+			"propername"	"1"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"crit vs burning players"
+				{
+					"attribute_class"	"or_crit_vs_playercond"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
+				"dmg taken from fire reduced on active"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire_active"
+					"value"			"0.75"
+				}
+			}
+		}
 		"351"
 		{
 			"name"	"The Detonator"
