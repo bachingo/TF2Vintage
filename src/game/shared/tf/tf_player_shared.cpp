@@ -868,6 +868,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		break;
 		
 	case TF_COND_MARKEDFORDEATH:
+	case TF_COND_MARKEDFORDEATH_SELF:
 		OnAddMarkedForDeath();
 		break;
 
@@ -993,6 +994,7 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		break;
 		
 	case TF_COND_MARKEDFORDEATH:
+	case TF_COND_MARKEDFORDEATH_SELF:
 		OnRemoveMarkedForDeath();
 		break;
 

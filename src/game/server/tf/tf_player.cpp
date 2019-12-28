@@ -4595,8 +4595,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			return 0;
 		}
 	}
-
-	if ( m_Shared.InCond(TF_COND_URINE) || m_Shared.InCond(TF_COND_MARKEDFORDEATH) || m_Shared.InCond(TF_COND_MARKEDFORDEATH_SILENT) )
+	
+	int nMarkedWhenHauling = 0;
+	CALL_ATTRIB_HOOK_INT(nMarkedWhenHauling, mark_for_death_on_building_pickup);
+	bool bBuildingHauling = ( m_Shared.IsCarryingObject() && ( nMarkedWhenHauling != 0 ) );
+	if ( m_Shared.InCond(TF_COND_URINE) || m_Shared.InCond(TF_COND_MARKEDFORDEATH) || m_Shared.InCond(TF_COND_MARKEDFORDEATH_SELF) || bBuildingHauling )
 	{
 		// Jarate or Marked for Death players take mini crits.
 		bitsDamage |= DMG_MINICRITICAL;

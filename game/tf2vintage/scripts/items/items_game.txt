@@ -1320,6 +1320,11 @@
 					"attribute_class"	"override_projectile_type"
 					"value"				"18" 
 				}
+				"mark for death on building pickup"
+				{
+					"attribute_class"	"mark_for_death_on_building_pickup"
+					"value"				"1"
+				}
 				"maxammo primary reduced"
 				{
 					"attribute_class"	"mult_maxammo_primary"
