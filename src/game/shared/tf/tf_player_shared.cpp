@@ -872,6 +872,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddMarkedForDeath();
 		break;
 
+	case TF_COND_HALLOWEEN_THRILLER:
+		OnAddHalloweenThriller();
+		break;
+
 	default:
 		break;
 	}
@@ -996,6 +1000,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 	case TF_COND_MARKEDFORDEATH:
 	case TF_COND_MARKEDFORDEATH_SELF:
 		OnRemoveMarkedForDeath();
+		break;
+
+	case TF_COND_HALLOWEEN_THRILLER:
+		OnRemoveHalloweenThriller();
 		break;
 
 	default:
@@ -2250,6 +2258,33 @@ void CTFPlayerShared::OnRemoveMarkedForDeath( void )
 		m_pOuter->ParticleProp()->StopEmission( m_pMarkedIcon );
 		m_pMarkedIcon = NULL;
 	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddHalloweenThriller( void )
+{
+#if defined( CLIENT_DLL )
+	if ( m_pOuter == C_TFPlayer::GetLocalTFPlayer() )
+	{
+		m_pOuter->EmitSound( "Halloween.dance_howl" );
+		m_pOuter->EmitSound( "Halloween.dance_loop" );
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveHalloweenThriller( void )
+{
+#if defined( GAME_DLL )
+	StopHealing( m_pOuter );
+#else
+	if ( m_pOuter == C_TFPlayer::GetLocalTFPlayer() )
+		m_pOuter->StopSound( "Halloween.dance_loop" );
 #endif
 }
 

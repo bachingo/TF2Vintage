@@ -387,6 +387,7 @@ private:
 	void OnAddBuff( void );
 	void OnAddInPurgatory( void );
 	void OnAddMarkedForDeath( void );
+	void OnAddHalloweenThriller( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -411,6 +412,7 @@ private:
 	void OnRemoveBuff( void );
 	void OnRemoveInPurgatory( void );
 	void OnRemoveMarkedForDeath( void );
+	void OnRemoveHalloweenThriller( void );
 
 	float GetCritMult( void );
 

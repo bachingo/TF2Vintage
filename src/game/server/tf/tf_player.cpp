@@ -10018,6 +10018,9 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 		}
 	}
 
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+		criteriaSet.AppendCriteria( "IsHalloweenTaunt", "1" );
+
 	if ( TFGameRules() )
 	{
 		if ( this->GetTeamNumber() == TFGameRules()->GetWinningTeam() )
@@ -10192,6 +10195,11 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 	{
 		if ( iConcept == MP_CONCEPT_PLAYER_MEDIC )
 		{
+			int nWeaponBlocksHealing = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( GetActiveTFWeapon(), nWeaponBlocksHealing, weapon_blocks_healing );
+			if ( nWeaponBlocksHealing == 1 )
+				return false;
+
 			SaveMe();
 			
 			// Show the bubble, but use a generic voiceline.
