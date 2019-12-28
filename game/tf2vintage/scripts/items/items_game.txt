@@ -3931,6 +3931,16 @@
 					"attribute_class"	"mult_dmgtaken_from_fire"
 					"value"			"1.20"
 				}
+				"engy dispenser radius increased"
+				{
+					"attribute_class"	"mult_dispenser_radius"
+					"value"			"3.0"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.75"
+				}
 			}
 			"visuals"
 			{
@@ -4604,7 +4614,7 @@
 				"energy buff dmg taken multiplier"
 				{
 					"attribute_class"	"energy_buff_dmg_taken_multiplier"
-					"value"	"1.2"
+					"value"	"0.8"
 				}
 			}
 		}
@@ -11902,6 +11912,165 @@
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 		}
+		"797"
+		{
+			"name"	"dmg pierces resists absorbs"
+			"attribute_class"	"mod_pierce_resists_absorbs"
+			"description_string"	"#Attrib_PierceResists"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"798"
+		{
+			"name"	"energy buff dmg taken multiplier"
+			"attribute_class"	"energy_buff_dmg_taken_multiplier"
+			"description_format"	"value_is_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"799"
+		{
+			"name"	"lose revenge crits on death DISPLAY ONLY"
+			"attribute_class"	"lose_revenge_crits_on_death_DISPLAY_ONLY"
+			"description_string"	"#Attrib_LoseRevengeCritsOnDeath"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"800"
+		{
+			"name"	"patient overheal penalty"
+			"attribute_class"	"mult_patient_overheal_penalty"
+			"description_string"	"#Attrib_PatientOverheal_Penalty"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"armory_desc"	"on_wearer"
+			"stored_as_integer"	"0"
+		}
+		"801"
+		{
+			"name"	"item_meter_charge_rate"
+			"attribute_class"	"item_meter_charge_rate"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"804"
+		{
+			"name"	"mult_spread_scale_first_shot"
+			"attribute_class"	"mult_spread_scale_first_shot"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"805"
+		{
+			"name"	"unusualifier_attribute_template_name"
+			"attribute_class"	"unusualifier_attribute_template_name"
+			"attribute_type"	"string"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"806"
+		{
+			"name"	"tool_target_item_icon_offset"
+			"attribute_class"	"tool_target_item_icon_offset"
+			"attribute_type"	"string"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"807"
+		{
+			"name"	"add_head_on_kill"
+			"attribute_class"	"add_head_on_kill"
+			"description_string"	"#Attrib_AddHeadOnKill"
+			"description_format"	"value_is_additive_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_hit"
+			"stored_as_integer"	"0"
+		}
+		"808"
+		{
+			"name"	"mult_spread_scales_consecutive"
+			"attribute_class"	"mult_spread_scales_consecutive"
+			"description_string"	"#Attrib_SpreadPenaltyScalesCons"
+			"description_format"	"value_is_additive_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"armory_desc"	"on_hit"
+			"stored_as_integer"	"0"
+		}
+		"809"
+		{
+			"name"	"fixed_shot_pattern"
+			"attribute_class"	"fixed_shot_pattern"
+			"description_string"	"#Attrib_FixedShotPattern"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"1"
+		}
+		"810"
+		{
+			"name"	"mod_cloak_no_regen_from_items"
+			"attribute_class"	"mod_cloak_no_regen_from_items"
+			"description_string"	"#Attrib_NoCloakFromAmmo"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"negative"
+		}
+		"811"
+		{
+			"name"	"ubercharge_preserved_on_spawn_max"
+			"attribute_class"	"ubercharge_preserved_on_spawn_max"
+			"description_string"	"#Attrib_UberchargeSavedOnHit"
+			"description_format"	"value_is_additive_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"armory_desc"	"on_hit"
+			"stored_as_integer"	"0"
+		}
+		"812"
+		{
+			"name"	"mod_air_control_blast_jump"
+			"attribute_class"	"mod_air_control_blast_jump"
+			"description_string"	"#Attrib_AirControlBlastJump"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"813"
+		{
+			"name"	"spunup_push_force_immunity"
+			"attribute_class"	"spunup_push_force_immunity"
+			"description_string"	"#Attrib_SpunUpPushForceResist"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+		}
+		"814"
+		{
+			"name"	"mod_mark_attacker_for_death"
+			"attribute_class"	"mod_mark_attacker_for_death"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+		}
+		"815"
+		{
+			"name"	"use_model_cache_icon"
+			"attribute_class"	"use_model_cache_icon"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"1"
+		}
 		"816"
 		{
 			"name"	"mod_disguise_consumes_cloak"
@@ -11911,6 +12080,260 @@
 			"hidden"	"0"
 			"stored_as_integer"	"1"
 			"effect_type"	"negative"
+		}
+		"817"
+		{
+			"name"	"inspect_viewmodel_offset"
+			"attribute_class"	"inspect_viewmodel_offset"
+			"attribute_type"	"string"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+		}
+		"818"
+		{
+			"name"	"is_passive_weapon"
+			"attribute_class"	"is_passive_weapon"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"819"
+		{
+			"name"	"no_jump"
+			"attribute_class"	"no_jump"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"820"
+		{
+			"name"	"no_duck"
+			"attribute_class"	"no_duck"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"821"
+		{
+			"name"	"no_attack"
+			"attribute_class"	"no_attack"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"822"
+		{
+			"name"	"airblast_destroy_projectile"
+			"attribute_class"	"airblast_destroy_projectile"
+			"description_string"	"#Attrib_AirblastDestroyProjectile"
+			"description_format"	"value_is_additive"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"0"
+		}
+		"823"
+		{
+			"name"	"airblast_pushback_disabled"
+			"attribute_class"	"airblast_pushback_disabled"
+			"description_format"	"value_is_additive"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"824"
+		{
+			"name"	"airblast_pushback_no_stun"
+			"attribute_class"	"airblast_pushback_no_stun"
+			"description_format"	"value_is_additive"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"825"
+		{
+			"name"	"airblast_pushback_no_viewpunch"
+			"attribute_class"	"airblast_pushback_no_viewpunch"
+			"description_format"	"value_is_additive"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"826"
+		{
+			"name"	"airblast_deflect_projectiles_disabled"
+			"attribute_class"	"airblast_deflect_projectiles_disabled"
+			"description_format"	"value_is_additive"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"827"
+		{
+			"name"	"airblast_put_out_teammate_disabled"
+			"attribute_class"	"airblast_put_out_teammate_disabled"
+			"description_format"	"value_is_additive"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"828"
+		{
+			"name"	"afterburn duration penalty"
+			"attribute_class"	"afterburn_duration_mult"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"829"
+		{
+			"name"	"afterburn duration bonus"
+			"attribute_class"	"afterburn_duration_mult"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"830"
+		{
+			"name"	"aoe_deflection"
+			"attribute_class"	"aoe_deflection"
+			"description_format"	"value_is_additive"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"0"
+		}
+		"831"
+		{
+			"name"	"mult_end_flame_size"
+			"attribute_class"	"mult_end_flame_size"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+			"hidden"	"1"
+		}
+		"832"
+		{
+			"name"	"airblast_give_teammate_speed_boost"
+			"attribute_class"	"airblast_give_teammate_speed_boost"
+			"description_format"	"value_is_additive"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"833"
+		{
+			"name"	"airblast_turn_projectile_to_ammo"
+			"attribute_class"	"airblast_turn_projectile_to_ammo"
+			"description_format"	"value_is_additive"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"0"
+		}
+		"834"
+		{
+			"name"	"paintkit_proto_def_index"
+			"attribute_class"		"paintkit_proto_def_index"
+			"description_format"	"value_is_additive"
+			"effect_type"	"neutral"
+			"stored_as_integer"	"1"
+			"can_affect_market_name"	"1"
+		}
+		"835"
+		{
+			"name"	"taunt_attr_player_invis_percent"
+			"attribute_class"	"taunt_attr_player_invis_percent"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"837"
+		{
+			"name"	"redirected_flame_size_mult"
+			"attribute_class"	"redirected_flame_size_mult"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"838"
+		{
+			"name"	"flame_reflect_on_collision"
+			"attribute_class"	"flame_reflect_on_collision"
+			"description_format"	"value_is_additive"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"839"
+		{
+			"name"	"flame_spread_degree"
+			"attribute_class"	"flame_spread_degree"
+			"description_format"	"value_is_additive"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"840"
+		{
+			"name"	"holster_anim_time"
+			"attribute_class"	"holster_anim_time"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"841"
+		{
+			"name"	"flame_gravity"
+			"attribute_class"	"flame_gravity"
+			"description_format"	"value_is_additive"
+			"hidden"				"1"
+			"stored_as_integer"	"0"
+		}
+		"842"
+		{
+			"name"	"flame_ignore_player_velocity"
+			"attribute_class"	"flame_ignore_player_velocity"
+			"description_format"	"value_is_additive"
+			"hidden"				"1"
+			"stored_as_integer"	"0"
+		}
+		"843"
+		{
+			"name"	"flame_drag"
+			"attribute_class"	"flame_drag"
+			"description_format"	"value_is_additive"
+			"hidden"				"1"
+			"stored_as_integer"	"0"
+		}
+		"844"
+		{
+			"name"	"flame_speed"
+			"attribute_class"	"flame_speed"
+			"description_format"	"value_is_additive"
+			"hidden"				"1"
+			"stored_as_integer"	"0"
+		}
+		"845"
+		{
+			"name"	"grenades1_resupply_denied"
+			"attribute_class"	"grenades1_resupply_denied"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"846"
+		{
+			"name"	"grenades2_resupply_denied"
+			"attribute_class"	"grenades2_resupply_denied"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"847"
+		{
+			"name"	"grenades3_resupply_denied"
+			"attribute_class"	"grenades3_resupply_denied"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"stored_as_integer"	"0"
+		}
+		"848"
+		{
+			"name"	"item_meter_resupply_denied"
+			"attribute_class"	"item_meter_resupply_denied"
+			"description_string"	"#Attrib_MeterResupplyDenied"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
 		}
 		"851"
 		{
