@@ -680,6 +680,13 @@ int	ClientModeTFNormal::HudElementKeyInput( int down, ButtonCode_t keynum, const
 	}
 #endif
 
+	C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if( pPlayer )
+	{
+		if ( pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+			return 0;
+	}
+
 	// check for hud menus
 	if ( m_pMenuEngyBuild )
 	{
