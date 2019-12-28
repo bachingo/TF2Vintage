@@ -15,7 +15,6 @@ WeaponData
 	"TimeFireDelay"	"0.04"
 	"UseRapidFireCrits"	"1"
 	"MaxAmmo"		"200"
-	"SpawnAmmo"		"200"
 
 
 	// Ammo & Clip.

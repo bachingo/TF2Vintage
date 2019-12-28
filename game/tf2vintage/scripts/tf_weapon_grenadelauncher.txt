@@ -22,7 +22,6 @@ WeaponData
 	"TimeReloadStart"	"0.1"
 	"TimeReload"		"0.6"
 	"MaxAmmo"		"16"
-	"SpawnAmmo"		"8"
 
 	// Ammo & Clip.
 	"primary_ammo"		"TF_AMMO_PRIMARY"

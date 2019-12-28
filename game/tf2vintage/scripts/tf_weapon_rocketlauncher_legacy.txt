@@ -27,7 +27,6 @@ WeaponData
 	default_clip		4
 	"ProjectileType"	"projectile_rocket"
 	"MaxAmmo"		"36"
-	"SpawnAmmo"		"18"
 
 	// Secondary Attributes.
 	"secondary_ammo"	"None"

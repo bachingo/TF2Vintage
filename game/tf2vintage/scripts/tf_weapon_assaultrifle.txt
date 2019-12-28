@@ -22,8 +22,7 @@ WeaponData
 	"ProjectileType"	"projectile_bullet"
 	"BrassModel"		"models/weapons/shells/shell_pistol.mdl"
 	"UseRapidFireCrits"	"1"
-	"MaxAmmo"		"60"
-	"SpawnAmmo"		"60"
+	"MaxAmmo"		"150"
 
 	// Ammo & Clip.
 	"primary_ammo"		"TF_AMMO_PRIMARY"

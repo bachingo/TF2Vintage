@@ -28,7 +28,6 @@ WeaponData
 	"ProjectileType"		"projectile_bullet"
 	"AmmoPerShot"			"1"
 	"MaxAmmo"			"32"
-	"SpawnAmmo"			"12"
 	
 	"DoInstantEjectBrass"	"0"
 	"BrassModel"			"models/weapons/shells/shell_shotgun.mdl"	
