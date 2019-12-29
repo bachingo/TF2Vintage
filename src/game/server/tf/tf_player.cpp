@@ -5198,7 +5198,19 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		if ( m_Shared.GetSanguisugeHealth() < 0 )
 			m_Shared.SetSanguisugeHealth( 0 );
 	}
-
+	
+	// If we lose demo charge, reduce our charge level.
+	if ( m_Shared.InCond(TF_COND_SHIELD_CHARGE) )
+	{
+		float flLoseChargewhenCharged = 0.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flLoseChargewhenCharged, lose_demo_charge_on_damage_when_charging );
+		if ( flLoseChargewhenCharged > 0 )
+		{
+			// Subtract the damage amount from our charge level.
+			m_Shared.SetShieldChargeMeter( min( ( m_Shared.m_flChargeMeter - ( info.GetDamage() * flLoseChargewhenCharged ) ), 0.0 ) );
+		}
+	}
+	
 	// Early out if the base class took no damage
 	if ( !bTookDamage )
 	{
