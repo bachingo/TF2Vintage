@@ -4789,6 +4789,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	{
 		int nNoZoomPenalty = 0;
 		CALL_ATTRIB_HOOK_FLOAT( nNoZoomPenalty, mod_zoom_speed_disabled );
+		CALL_ATTRIB_HOOK_FLOAT( nNoZoomPenalty, unimplemented_mod_zoom_speed_disabled );
 	
 		if (nNoZoomPenalty == 0)
 		{
