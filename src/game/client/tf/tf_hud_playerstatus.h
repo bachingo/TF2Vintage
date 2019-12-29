@@ -142,6 +142,7 @@ private:
 	vgui::ImagePanel		*m_pSoldierDefenseBuff;
 	vgui::ImagePanel		*m_pSoldierHealOnHitBuff;
 	vgui::ImagePanel		*m_pSoldierMarkedBuff;
+	vgui::ImagePanel		*m_pParachutingBuff;
 
 	CUtlVector<CTFBuffInfo *> m_hBuffImages;
 

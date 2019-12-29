@@ -8352,7 +8352,7 @@ void CTFPlayer::ApplyAbsVelocityImpulse( Vector const &vecImpulse )
 	if ( m_Shared.InCond( TF_COND_HALLOWEEN_TINY ) )
 		flImpulseScale *= 2.0f;
 
-	if ( m_Shared.InCond( TF_COND_PARACHUTE_ACTIVE ) )
+	if ( m_Shared.IsParachuting() )
 	{
 		vecModImpulse.x *= 1.5f;
 		vecModImpulse.y *= 1.5f;

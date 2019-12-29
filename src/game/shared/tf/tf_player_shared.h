@@ -270,6 +270,11 @@ public:
 
 	bool	IsJumping( void )					{ return m_bJumping; }
 	void	SetJumping( bool bJumping );
+	bool	HasParachute( void );
+	bool	CanParachute(void);	
+	void	DeployParachute(void);
+	bool	IsParachuting(void);
+	void    ResetParachute(void);
 	bool	CanAirDash( void );
 	int		GetAirDashCount( void )				{ return m_nAirDashCount; }
 	void    IncrementAirDashCount( void )		{ m_nAirDashCount += 1; }

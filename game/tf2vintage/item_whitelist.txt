@@ -73,6 +73,7 @@
 	"Fists of Steel"								"1"
 	"Fire Retardant Suit"							"1"
 	"Sharpened Volcano Fragment"					"1"
+	"Sun-on-a-Stick"								"1"
 	"The Detonator"									"1"
 	"The Concheror"									"1"
 	"The Fan O'War"									"1"

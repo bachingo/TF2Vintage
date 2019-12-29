@@ -316,11 +316,13 @@ CTFHudPlayerHealth::CTFHudPlayerHealth( Panel *parent, const char *name ) : Edit
 	m_pSoldierDefenseBuff = new ImagePanel( this, "PlayerStatus_SoldierDefenseBuff" );
 	m_pSoldierHealOnHitBuff = new ImagePanel( this, "PlayerStatus_SoldierHealOnHitBuff" );
 	m_pSoldierMarkedBuff = new ImagePanel( this, "PlayerStatus_SoldierMarkedBuff" );
-
+	m_pParachutingBuff = new ImagePanel(this, "PlayerStatus_ParachutingBuff");
+	
 	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierOffenseBuff, "../effects/soldier_buff_offense_red", "../effects/soldier_buff_offense_blue" ) );
 	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierDefenseBuff, "../effects/soldier_buff_defense_red", "../effects/soldier_buff_defense_blue" ) );
 	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierHealOnHitBuff, "../effects/soldier_buff_healonhit_red", "../effects/soldier_buff_healonhit_blue" ) );
 	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pSoldierMarkedBuff, "../vgui/marked_for_death", "../vgui/marked_for_death" ) );
+	m_hBuffImages.AddToTail( new CTFBuffInfo( m_pParachutingBuff, "../hud/hud_parachute_active", "../hud/hud_parachute_active" ) );
 	
 	m_flNextThink = 0.0f;
 	m_nOffset = 0;
@@ -508,6 +510,7 @@ void CTFHudPlayerHealth::OnThink()
 			SetPlayerHealthImagePanelVisibility( TF_COND_DEFENSEBUFF, m_hBuffImages.Element( 1 ) );
 			SetPlayerHealthImagePanelVisibility( TF_COND_REGENONDAMAGEBUFF, m_hBuffImages.Element( 2 ) );
 			SetPlayerHealthImagePanelVisibility( TF_COND_MARKEDFORDEATH, m_hBuffImages.Element( 3 ) );
+			SetPlayerHealthImagePanelVisibility( TF_COND_PARACHUTE_ACTIVE, m_hBuffImages.Element( 4 ) );			
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.05f;

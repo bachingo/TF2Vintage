@@ -20,7 +20,6 @@ WeaponData
 	"HasTeamSkins_Viewmodel"	"1"
 	"TracerEffect"		"bullet_pistol_tracer01"
 	"MaxAmmo"		"24"
-	"SpawnAmmo"		"24"
 
 
 	// Ammo & Clip.

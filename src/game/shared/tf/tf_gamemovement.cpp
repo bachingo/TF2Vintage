@@ -427,7 +427,7 @@ bool CTFGameMovement::CheckJumpButton()
 
 	// Check to see if the player is a scout.
 	bool bScout = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_SCOUT );
-	bool bAirDash = false;
+	bool bAirDash = false, bParachute = false;
 	bool bOnGround = ( player->GetGroundEntity() != NULL );
 
 	// Cannot jump while ducked.
@@ -460,7 +460,13 @@ bool CTFGameMovement::CheckJumpButton()
 	{
 		if ( bScout && m_pTFPlayer->m_Shared.CanAirDash() )
 		{
+			// We can air dash.
 			bAirDash = true;
+		}
+		else if ( m_pTFPlayer->m_Shared.HasParachute() && m_pTFPlayer->m_Shared.CanParachute() )
+		{
+			// We can operate our parachute.
+			bParachute = true;
 		}
 		else
 		{
@@ -473,6 +479,13 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( bAirDash )
 	{
 		AirDash();
+		return true;
+	}
+	
+	// Check for parachute mechanics.
+	if ( bParachute )
+	{
+		m_pTFPlayer->m_Shared.DeployParachute();
 		return true;
 	}
 
@@ -1505,7 +1518,7 @@ void CTFGameMovement::FullWalkMoveUnderwater()
 //-----------------------------------------------------------------------------
 void CTFGameMovement::FullWalkMove()
 {
-	if ( !InWater() ) 
+	if ( !InWater() )
 	{
 		StartGravity();
 	}
@@ -1558,6 +1571,31 @@ void CTFGameMovement::FullWalkMove()
 	if ( !InWater() )
 	{
 		FinishGravity();
+	}
+	
+	CTFPlayer *TFPlayer = ToTFPlayer(player);
+	// If we're parachuting in the air, cap out our vertical descent.
+	if (TFPlayer)
+	{
+		if (TFPlayer->m_Shared.IsParachuting() && ( player->GetGroundEntity() == NULL && !InWater() ) )
+		{
+			if ( TFPlayer->m_Shared.InCond(TF_COND_BURNING) )
+			{
+				// If we're on fire, we updraft from the fire and don't descend at all.
+				mv->m_vecVelocity[2] = 0;
+			}
+			else
+			{
+				// Limit our downward velocity to 112HU.
+				mv->m_vecVelocity[2] = -112;
+			}
+		}
+	}
+	
+	// If we are on ground, no downward velocity.
+	if ( player->GetGroundEntity() != NULL )
+	{
+		mv->m_vecVelocity[2] = 0;
 	}
 
 	// If we are on ground, no downward velocity.
@@ -1865,6 +1903,7 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 		m_pTFPlayer->m_Shared.ResetAirDucks();
 		m_pTFPlayer->m_Shared.SetHasRecoiled( false );
 		m_pTFPlayer->m_Shared.SetKnockbackWeaponID( -1 );
+		m_pTFPlayer->m_Shared.ResetParachute();
 	}
 
 #ifdef GAME_DLL
