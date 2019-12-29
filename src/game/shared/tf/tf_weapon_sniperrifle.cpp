@@ -1014,7 +1014,7 @@ int CSniperDot::DrawModel( int flags )
 	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
 	
 	float flSniperChargeRatio;
-	CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+	CTFSniperRifle_Decap *pWeapon = assert_cast<CTFSniperRifle_Decap*>(pPlayer->GetActiveTFWeapon());
 		if ( pWeapon )
 			flSniperChargeRatio = (TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / pWeapon->GetChargingRate());
 		else
