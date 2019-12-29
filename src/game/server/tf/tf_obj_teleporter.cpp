@@ -1005,7 +1005,8 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 	int iAmountToHeal = 0;
 	int iRepairCost = 0;
 	int iRepairRateCost = 0;
-
+	float flModRepairCost = 1.0f;
+	
 	float flRepairRate = 1;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
 
@@ -1025,6 +1026,9 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 			// 5HP per metal (old repair cost)
 			iRepairRateCost = 5;
 		}
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flModRepairCost, mod_teleporter_cost );
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flModRepairCost, building_cost_reduction );
+		iRepairRateCost *= ( 1 / flModRepairCost );
 		iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / iRepairRateCost ) );
 
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
@@ -1073,6 +1077,9 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 				// 5HP per metal (old repair cost)
 				iRepairRateCost = 5;
 			}
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flModRepairCost, mod_teleporter_cost );
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flModRepairCost, building_cost_reduction );
+			iRepairRateCost *= ( 1 / flModRepairCost );
 			iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / iRepairRateCost ) );
 
 			TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
