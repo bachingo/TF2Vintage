@@ -295,7 +295,7 @@ CObjectTeleporter *CTFBotTacticalMonitor::FindNearbyTeleporter( CTFBot *actor )
 		CObjectTeleporter *pTele = static_cast<CObjectTeleporter *>( objects[i] );
 		pTele->UpdateLastKnownArea();
 
-		if ( pTele->GetObjectMode() != TELEPORTER_TYPE_ENTRANCE || !pTele->IsReady() || !pTele->GetLastKnownArea() || nearby.IsEmpty() )
+		if ( pTele->GetObjectMode() != TELEPORTER_TYPE_ENTRANCE || !pTele->IsReady() || pTele->GetLastKnownArea() == nullptr || nearby.IsEmpty() )
 			continue;
 
 		// the first element is the starting area, it will always exist
