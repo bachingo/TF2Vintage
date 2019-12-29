@@ -5652,7 +5652,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		{
 			// Regular old spinup resistance.
 			float flDamageAimMultFull = 1.0f;
-			CALL_ATTRIB_HOOK_FLOAT( flDamageAimMultFull, spunup_damage_resistance_full );
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamageAimMultFull, spunup_damage_resistance_full );
 			if ( (nIgnoreResists == 1) && ( flDamageAimMultFull < 1.0f ) )
 				flDamageAimMultFull = 1.0f;
 			flDamage *= flDamageAimMultFull;
@@ -5661,7 +5661,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			if ( ( GetHealth() < ( GetMaxHealth() / 2 ) ) )
 			{
 				float flDamageAimMult = 1.0f;
-				CALL_ATTRIB_HOOK_FLOAT( flDamageAimMult, spunup_damage_resistance );
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamageAimMult, spunup_damage_resistance );
 				if ( (nIgnoreResists == 1) && ( flDamageAimMult < 1.0f ) )
 					flDamageAimMult = 1.0f;
 				flDamage *= flDamageAimMult;
