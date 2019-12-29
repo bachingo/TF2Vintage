@@ -164,7 +164,8 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 
 	// Damage.
 	CBaseEntity *pAttacker = NULL;
-	pAttacker = pWeapon->GetOwnerEntity();
+	if( pWeapon )
+		pAttacker = pWeapon->GetOwnerEntity();
 
 	float flRadius = GetDamageRadius();
 

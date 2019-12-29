@@ -17,6 +17,8 @@
 static CMoveData g_MoveData;
 CMoveData *g_pMoveData = &g_MoveData;
 
+ConVar tf_demoman_charge_frametime_scaling( "tf_demoman_charge_frametime_scaling", "1", FCVAR_CHEAT, "When enabled, scale yaw limiting based on client performance (frametime)" );
+
 IPredictionSystem *IPredictionSystem::g_pPredictionSystems = NULL;
 
 
@@ -72,6 +74,30 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 				ucmd->sidemove = 0.0f;
 			}
 		}
+
+		if ( pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+		{
+			float flTurnRate = 0.45f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFPlayer, flTurnRate, charge_turn_control );
+
+			if ( tf_demoman_charge_frametime_scaling.GetBool() )
+			{
+				const float flInterval = gpGlobals->interval_per_tick / 5;
+				const float flTimeScale = gpGlobals->interval_per_tick * 2;
+				const float flScale = Clamp( ( gpGlobals->frametime - flInterval ) / flTimeScale - flInterval, 0.0f, 1.0f );
+				flTurnRate *= flScale * 1.75 + 0.25;
+			}
+
+			if ( abs( pTFPlayer->pl.v_angle.y ) - abs( ucmd->viewangles.y ) > flTurnRate * 2.5 )
+			{
+				if ( ucmd->viewangles.y < pTFPlayer->pl.v_angle.y )
+					ucmd->viewangles.y = pTFPlayer->pl.v_angle.y - ( flTurnRate * 2.5 );
+				else
+					ucmd->viewangles.y = ( flTurnRate * 2.5 ) + pTFPlayer->pl.v_angle.y;
+
+				pTFPlayer->SnapEyeAngles( ucmd->viewangles );
+			}
+		}
 	}
 
 	BaseClass::SetupMove( player, ucmd, pHelper, move );
@@ -81,7 +107,6 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	{
 		pVehicle->SetupMove( player, ucmd, pHelper, move );
 	}
-
 }
 
 
