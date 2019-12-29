@@ -2289,6 +2289,80 @@
 				"min_viewmodel_offset"					"12 0 -8"
 			}
 		}
+		"weapon_slapper"
+		{
+			"item_class"	"tf_weapon_slap"
+			"item_type_name"	"#TF_Weapon_Slap"
+			"item_name"	"#TF_Weapon_HotHand"
+			"item_description"	"#TF_Weapon_HotHand_Desc"
+			"item_slot"	"melee"
+			"anim_slot"	"MELEE_ALLCLASS"
+			"item_logname"	"hot_hand"
+			"item_iconname"	"hot_hand"
+			"image_inventory"	"backpack/weapons/c_models/c_slapping_glove/w_slapping_glove"
+			"model_player"		"models/weapons/c_models/c_slapping_glove/c_slapping_glove.mdl"
+			"attach_to_hands" "1"
+			"propername"	"1"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -7"
+			}
+			"attributes"
+			{
+				"speed_boost_on_hit_enemy"
+				{
+					"attribute_class"	"speed_boost_on_hit_enemy"
+					"value"	"1.0"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.8"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+				"disable weapon hiding for animations"
+				{
+					"attribute_class"	"disable_weapon_hiding_for_animations"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"animation_replacement"
+				{
+					"ACT_VM_IDLE"				"ACT_ITEM3_VM_IDLE"
+					"ACT_VM_DRAW"				"ACT_ITEM3_VM_DRAW"
+					"ACT_VM_HITCENTER"			"ACT_ITEM3_VM_PRIMARYATTACK"
+					"ACT_VM_SWINGHARD"			"ACT_ITEM3_VM_PRIMARYATTACK"
+					"ACT_MELEE_VM_INSPECT_START"		"ACT_ITEM3_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"			"ACT_ITEM3_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"			"ACT_ITEM3_VM_INSPECT_END"
+
+
+					"ACT_MP_ATTACK_STAND_MELEE_ALLCLASS"		"ACT_MP_ATTACK_STAND_ITEM3"
+					"ACT_MP_ATTACK_CROUCH_MELEE_ALLCLASS"		"ACT_MP_ATTACK_CROUCH_ITEM3"
+					"ACT_MP_ATTACK_SWIM_MELEE_ALLCLASS"			"ACT_MP_ATTACK_SWIM_ITEM3"
+				}
+				"player_poseparam"
+				{
+					"r_hand_grip"		"15"
+					"r_arm"				"3"
+				}
+				"sound_deploy"	"Weapon_Slap.Draw"
+				"sound_melee_miss"	"Weapon_Slap.Swing"
+				"sound_burst"	"Weapon_Slap.SwingCrit"
+				"sound_special1"	"Weapon_Slap.SwingFire"
+				"sound_special2"	"Weapon_Slap.SwingFireCrit"
+			}
+		}
 		"weapon_stickbomb"
 		{
 			"item_class"	"tf_weapon_stickbomb"
@@ -6353,6 +6427,12 @@
 			"prefab"	"weapon_trenchgun"
 			"year"				"2014"
 			"particle_suffix"	"panic_attack"
+		}
+		"1181"
+		{
+			"name"	"The Hot Hand"
+			"prefab"	"weapon_slapper"
+			"year"				"2017"
 		}
 		"1190"
 		{
