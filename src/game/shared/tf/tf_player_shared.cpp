@@ -3448,7 +3448,8 @@ void CTFPlayerShared::Heal(CTFPlayer *pPlayer, float flAmount, bool bDispenserHe
 void CTFPlayerShared::StopHealing(CTFPlayer *pPlayer)
 {
 	int iIndex = FindHealerIndex(pPlayer);
-	Assert(iIndex != m_aHealers.InvalidIndex());
+	if ( iIndex == m_aHealers.InvalidIndex() )
+		return;
 
 	m_aHealers.Remove(iIndex);
 
