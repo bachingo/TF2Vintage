@@ -458,15 +458,21 @@ bool HintCallbackNeedsResources_Sentrygun( CBasePlayer *pPlayer )
 	if ( !pTFPlayer )
 		return false;
 
-	return ( pPlayer->GetAmmoCount( TF_AMMO_METAL ) > CalculateObjectCost( OBJ_SENTRYGUN, pTFPlayer->HasGunslinger() ) );
+	return (pPlayer->GetAmmoCount(TF_AMMO_METAL) > pTFPlayer->ModCalculateObjectCost(OBJ_SENTRYGUN, pTFPlayer->HasGunslinger()));
 }
 bool HintCallbackNeedsResources_Dispenser( CBasePlayer *pPlayer )
 {
-	return ( pPlayer->GetAmmoCount( TF_AMMO_METAL ) > CalculateObjectCost( OBJ_DISPENSER ) );
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer)
+		return (pPlayer->GetAmmoCount(TF_AMMO_METAL) > pTFPlayer->ModCalculateObjectCost(OBJ_DISPENSER));
+	return (pPlayer->GetAmmoCount(TF_AMMO_METAL) > CalculateObjectCost(OBJ_DISPENSER));
 }
 bool HintCallbackNeedsResources_Teleporter( CBasePlayer *pPlayer )
 {
-	return ( pPlayer->GetAmmoCount( TF_AMMO_METAL ) > CalculateObjectCost( OBJ_TELEPORTER ) );
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
+	if (pTFPlayer)
+		return (pPlayer->GetAmmoCount(TF_AMMO_METAL) > pTFPlayer->ModCalculateObjectCost(OBJ_TELEPORTER));
+	return (pPlayer->GetAmmoCount(TF_AMMO_METAL) > CalculateObjectCost(OBJ_TELEPORTER));
 }
 
 
@@ -7915,7 +7921,7 @@ void CTFPlayer::StopPlacement( void )
 int	CTFPlayer::StartedBuildingObject( int iObjectType )
 {
 	// Deduct the cost of the object
-	int iCost = CalculateObjectCost( iObjectType, HasGunslinger() );
+	int iCost = ModCalculateObjectCost( iObjectType, HasGunslinger() );
 
 	if ( iCost > GetBuildResources() )
 	{
@@ -7938,7 +7944,7 @@ int	CTFPlayer::StartedBuildingObject( int iObjectType )
 void CTFPlayer::StoppedBuilding( int iObjectType )
 {
 	/*
-	int iCost = CalculateObjectCost( iObjectType );
+	int iCost = ModCalculateObjectCost( iObjectType );
 
 	AddBuildResources( iCost );
 

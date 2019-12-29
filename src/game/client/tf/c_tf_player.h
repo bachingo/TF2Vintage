@@ -61,6 +61,7 @@ public:
 	virtual void OnDataChanged( DataUpdateType_t updateType );
 	virtual void ProcessMuzzleFlashEvent();
 	virtual void ValidateModelIndex( void );
+	virtual int	 ModCalculateObjectCost(int iObjectType, bool bMini = false /*, int iNumberOfObjects, int iTeam, bool bLast = false*/);
 
 	virtual Vector GetObserverCamOrigin( void );
 	virtual int DrawModel( int flags );

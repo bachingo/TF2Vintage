@@ -609,7 +609,11 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 		if ( m_iAmmoShells < m_iMaxAmmoShells && iPlayerMetal > 0 )
 		{
 			int iMaxShellsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_shell.GetFloat() );
-
+			
+			float flModRearmCost = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flModRearmCost, building_cost_reduction );
+			iMaxShellsPlayerCanAfford *= ( 1 / flModRearmCost );
+			
 			// cap the amount we can add
 			int iAmountToAdd;
 			iAmountToAdd = Min( (int)( flRepairRate * SENTRYGUN_ADD_SHELLS ), iMaxShellsPlayerCanAfford );
@@ -630,6 +634,10 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 		if ( m_iAmmoRockets < m_iMaxAmmoRockets && m_iUpgradeLevel == 3 && iPlayerMetal > 0 )
 		{
 			int iMaxRocketsPlayerCanAfford = (int)( (float)iPlayerMetal / tf_sentrygun_metal_per_rocket.GetFloat() );
+			
+			float flModRearmCost = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flModRearmCost, building_cost_reduction );
+			iMaxRocketsPlayerCanAfford *= ( 1 / flModRearmCost );
 			
 			// cap the amount we can add
 			int iAmountToAdd;
@@ -669,6 +677,7 @@ bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
 		// repair the building
 		int iRepairCost;
 		int iRepairRateCost;
+		float flModRepairCost = 1.0f;
 		if ( tf2v_use_new_wrench_mechanics.GetBool() )
 		{
 			// 3HP per metal (new repair cost)
@@ -679,6 +688,8 @@ bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
 			// 5HP per metal (old repair cost)
 			iRepairRateCost = 5;
 		}
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flModRepairCost, building_cost_reduction );
+		iRepairRateCost *= ( 1 / flModRepairCost );
 		iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / iRepairRateCost ) );	
 
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime,

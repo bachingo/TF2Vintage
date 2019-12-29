@@ -149,7 +149,12 @@ void CHudMenuEngyBuild::ApplySchemeSettings( IScheme *pScheme )
 
 		GetBuildingIDAndModeFromSlot( i + 1, iBuilding, iMode );
 
-		int iCost = CalculateObjectCost( iBuilding );
+		CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		int iCost;
+		if (pPlayer)
+			iCost = pPlayer->ModCalculateObjectCost(iBuilding);
+		else
+			iCost = CalculateObjectCost(iBuilding);
 
 		m_pAvailableObjects[i]->SetDialogVariable( "metal", iCost );
 		m_pAlreadyBuiltObjects[i]->SetDialogVariable( "metal", iCost );
@@ -350,7 +355,7 @@ void CHudMenuEngyBuild::SendBuildMessage( int iSlot )
 	GetBuildingIDAndModeFromSlot( iSlot, iBuilding, iMode );
 
 	C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding, iMode );
-	int iCost = CalculateObjectCost( iBuilding, pLocalPlayer->HasGunslinger() );
+	int iCost = pLocalPlayer->ModCalculateObjectCost(iBuilding, pLocalPlayer->HasGunslinger());
 
 	if ( pObj == NULL && pLocalPlayer->GetAmmoCount( TF_AMMO_METAL ) >= iCost )
 	{
@@ -411,7 +416,7 @@ void CHudMenuEngyBuild::OnTick( void )
 		int iCost = 0;
 
 		GetBuildingIDAndModeFromSlot( i + 1, iRemappedObjectID, iMode );
-		iCost = CalculateObjectCost( iRemappedObjectID, pLocalPlayer->HasGunslinger() );
+		iCost = pLocalPlayer->ModCalculateObjectCost(iRemappedObjectID, pLocalPlayer->HasGunslinger());
 
 		// update this slot
 		C_BaseObject *pObj = NULL;

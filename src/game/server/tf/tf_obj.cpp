@@ -2580,6 +2580,13 @@ bool CBaseObject::CheckUpgradeOnHit( CTFPlayer *pPlayer )
 	if ( tf_cheapobjects.GetBool() == false )
 	{
 		pPlayer->RemoveAmmo( iAmountToAdd, TF_AMMO_METAL );
+		if ( GetType() == OBJ_TELEPORTER )
+		{
+			// Teleporters also get affected by the repair attribute when considering upgrading.
+			float flModUpgradeCost = 1.0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, flModUpgradeCost, mod_teleporter_cost );
+			iAmountToAdd *= ( 1 / flModUpgradeCost );
+		}
 	}
 	m_iUpgradeMetal += iAmountToAdd;
 
@@ -2623,6 +2630,7 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 		// repair the building
 		int iRepairCost;
 		int iRepairRateCost;
+		float flModRepairCost = 1.0f;
 		if ( tf2v_use_new_wrench_mechanics.GetBool() )
 		{
 			// 3HP per metal (new repair cost)
@@ -2633,6 +2641,8 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 			// 5HP per metal (old repair cost)
 			iRepairRateCost = 5;
 		}
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flModRepairCost, building_cost_reduction );
+		iRepairRateCost *= ( 1 / flModRepairCost );
 		iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / iRepairRateCost ) );	
 	
 		TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 

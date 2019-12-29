@@ -5044,7 +5044,7 @@ int CTFPlayer::CanBuild(int iObjectType, int iObjectMode)
 	}
 
 	// Find out how much the object should cost
-	int iCost = CalculateObjectCost( iObjectType, HasGunslinger() );
+	int iCost = ModCalculateObjectCost( iObjectType, HasGunslinger() );
 
 	// Make sure we have enough resources
 	if (GetBuildResources() < iCost)
@@ -5053,6 +5053,24 @@ int CTFPlayer::CanBuild(int iObjectType, int iObjectMode)
 	}
 
 	return CB_CAN_BUILD;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating object cost when we want to factor in attributes into the cost.
+//-----------------------------------------------------------------------------
+int CTFPlayer::ModCalculateObjectCost(int iObjectType, bool bMini /*= false*/)
+{
+	float flBuildCostRatio = 1.0f;
+
+	CALL_ATTRIB_HOOK_FLOAT(flBuildCostRatio, cannot_pick_up_intelligence);
+	if (iObjectType == OBJ_TELEPORTER)
+		CALL_ATTRIB_HOOK_FLOAT(flBuildCostRatio, cannot_pick_up_intelligence);
+
+	int iCost = CalculateObjectCost(iObjectType, bMini );
+	iCost *= flBuildCostRatio;
+
+	return iCost;
+
 }
 
 //-----------------------------------------------------------------------------
