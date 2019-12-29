@@ -52,6 +52,8 @@ bool C_TFSpyMask::ShouldDraw( void )
 int C_TFSpyMask::GetSkin( void )
 {
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( pOwner == nullptr )
+		return BaseClass::GetSkin();
 	
 	// If the target is being ubered, show the uber skin instead.
 	if (pOwner->m_Shared.InCond(TF_COND_INVULNERABLE))
