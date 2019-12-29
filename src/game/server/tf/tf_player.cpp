@@ -434,6 +434,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropDataTable( "tfnonlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFNonLocalPlayerExclusive ), SendProxy_SendNonLocalDataTable ),
 
 	SendPropInt( SENDINFO( m_nForceTauntCam ), 2, SPROP_UNSIGNED ),
+	SendPropFloat( SENDINFO( m_flHeadScale ) ),
 	SendPropBool( SENDINFO( m_bTyping ) ),
 	
 	SendPropInt( SENDINFO( m_iSpawnCounter ) ),
