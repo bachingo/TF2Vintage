@@ -490,6 +490,55 @@
 				"min_viewmodel_offset"					"10 -3 -10"
 			}
 		}
+		"weapon_atom_launcher"
+		{
+			"prefab"		"weapon_rocketlauncher"
+			"item_class"	"tf_weapon_rocketlauncher_airstrike"
+			"propername"	"1"
+			"item_name"	"#TF_Weapon_AirStrike"
+			"item_logname"	"airstrike"
+			"item_iconname"	"airstrike"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_atom_launcher/c_atom_launcher"
+			"model_player"	"models/workshop/weapons/c_models/c_atom_launcher/c_atom_launcher.mdl"
+			"attributes"
+			{
+				"Blast radius decreased"
+				{
+					"attribute_class"	"mult_explosion_radius"
+					"value"	"0.90"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.85"
+				}
+				"rocket jump damage reduction"	
+				{
+					"attribute_class"	"rocket_jump_dmg_reduction"
+					"value" "0.75"
+				}
+				"rocketjump attackrate bonus"
+				{
+					"attribute_class"	"rocketjump_attackrate_bonus"
+					"value" "0.35"
+				}
+				"mini rockets"
+				{
+					"attribute_class"	"mini_rockets"
+					"value"				"1"
+				}
+				"clipsize increase on kill"
+				{
+					"attribute_class"	"clipsize_increase_on_kill"
+					"value"				"4"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Airstrike.AltFire"
+				"sound_special1"		"Weapon_Airstrike.Explosion"
+			}
+		}
 		"weapon_stickybomb_launcher"
 		{
 			"item_class"	"tf_weapon_pipebomblauncher"
@@ -1654,6 +1703,28 @@
 		{
 			"prefab"	"weapon_wearable"
 			"equip_region"	"back"
+		}
+		"weapon_parachute"
+		{
+			"prefab"			"weapon_backpack"
+			"item_type_name"	"#TF_Weapon_Parachute"
+			"item_name"	"#TF_Weapon_BaseJumper"
+			"item_description"	"#TF_Weapon_BaseJumper_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_paratrooper_pack/c_paratrooper_pack"
+			"model_player" "models/workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"secondary"
+				"demoman"	"primary"
+			}
+			"attributes"
+			{
+				"parachute attribute"
+				{
+					"attribute_class"	"parachute_attribute"
+					"value"	"1"
+				}
+			}
 		}
 		"weapon_gunboats"
 		{
@@ -6152,6 +6223,19 @@
 					"value"			"0.75"
 				}
 			}
+		}
+		"1101"
+		{
+			"name"	"The B.A.S.E. Jumper"
+			"prefab"				"weapon_parachute"
+			"year"					"2014"
+		}
+		"1104"
+		{
+			"name"	"The Air Strike"
+			"prefab" "weapon_atom_launcher"
+			"year"					"2014"
+			"particle_suffix"	"air_strike"
 		}
 		"1150"
 		{

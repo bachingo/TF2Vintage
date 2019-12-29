@@ -109,6 +109,8 @@
 	"Pretty Boy's Pocket Pistol"					"1"
 	"The Rescue Ranger"								"1"
 	"The Tide Turner"								"1"
+	"The B.A.S.E. Jumper"							"1"
+	"The Air Strike"								"1"
 	"The Quickiebomb Launcher"						"1"
 	"The Iron Bomber"								"1"
 	"Panic Attack Shotgun"							"1"
