@@ -93,6 +93,7 @@ CTFProjectile_Jar *CTFProjectile_Jar::Create( CBaseEntity *pWeapon, const Vector
 void CTFProjectile_Jar::Precache( void )
 {
 	PrecacheModel( TF_WEAPON_JAR_MODEL );
+	PrecacheModel( TF_WEAPON_FESTIVE_URINE_MODEL );
 
 	PrecacheTeamParticles( "peejar_trail_%s", false, g_aTeamNamesShort );
 	PrecacheParticleSystem( "peejar_impact" );
