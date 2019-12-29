@@ -362,6 +362,11 @@ public:
 	void	SetHeadshotCount( int count )        { m_iHeadshots = count; }
 	void	IncrementHeadshotCount( void )        { m_iHeadshots += 1; }
 	
+	// Killstreaks (ie: Air Strike)
+	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
+	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
+	void	IncrementKillstreakCount( void )        { m_iKillstreak += 1; }
+	
 #ifdef GAME_DLL
 	void	UpdateChargeMeter( void );
 #endif
@@ -579,6 +584,7 @@ private:
 	CNetworkVar( int, m_iNextMeleeCrit );
 	
 	CNetworkVar( int, m_iHeadshots );
+	CNetworkVar( int, m_iKillstreak );
 
 #ifdef CLIENT_DLL
 	CNetworkVar( float, m_flChargeMeter );

@@ -17,6 +17,10 @@
 #define CTFRocketLauncher C_TFRocketLauncher
 #endif
 
+#ifdef GAME_DLL
+#include "GameEventListener.h"
+#endif
+
 //=============================================================================
 //
 // TF Weapon Rocket Launcher.
@@ -95,6 +99,33 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_ROCKETLAUNCHER_LEGACY; }
+};
+
+// Simple addon logic used for the Air Strike.
+#if defined CLIENT_DLL
+#define CTFRocketLauncher_Airstrike C_TFRocketLauncher_Airstrike
+#endif
+
+class CTFRocketLauncher_Airstrike : public CTFRocketLauncher
+#ifdef GAME_DLL
+	, public CGameEventListener
+#endif
+{
+public:
+
+	DECLARE_CLASS( CTFRocketLauncher_Airstrike, CTFRocketLauncher )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE; }
+	virtual bool	HasChargeBar( void )			{ return true; }
+	virtual const char* GetEffectLabelText( void ) { return "#TF_KILLS"; }
+#ifdef GAME_DLL
+	virtual void	SetupGameEventListeners( void );
+	virtual void	FireGameEvent( IGameEvent *event );
+#endif
+	virtual void	OnKill( void );
+	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 };
 
 

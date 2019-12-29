@@ -47,6 +47,7 @@ END_DATADESC()
 
 
 CREATE_SIMPLE_WEAPON_TABLE( TFRocketLauncher_Legacy, tf_weapon_rocketlauncher_legacy )
+CREATE_SIMPLE_WEAPON_TABLE( TFRocketLauncher_Airstrike, tf_weapon_rocketlauncher_airstrike )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -202,3 +203,54 @@ void CTFRocketLauncher::DrawCrosshair( void )
 */
 
 #endif
+
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFRocketLauncher_Airstrike::SetupGameEventListeners( void )
+{
+	ListenForGameEvent( "player_death" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFRocketLauncher_Airstrike::FireGameEvent( IGameEvent *event )
+{
+	if (FStrEq( event->GetName(), "player_death" ))
+	{
+		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+		if ( pOwner && engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "attacker" ) && 
+			 ( event->GetInt( "weaponid" ) == TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE ) )
+		{
+			OnKill();
+		}
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFRocketLauncher_Airstrike::OnKill( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner == nullptr )
+		return;
+
+	pOwner->m_Shared.IncrementKillstreakCount();
+	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFRocketLauncher_Airstrike::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+#ifdef GAME_DLL
+	StopListeningForAllEvents();
+#endif
+	return CTFRocketLauncher::Holster(pSwitchingTo);
+}

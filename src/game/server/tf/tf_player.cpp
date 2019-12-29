@@ -1232,6 +1232,7 @@ void CTFPlayer::Spawn()
 
 	m_Shared.SetDecapitationCount( 0 );
 	m_Shared.SetHeadshotCount( 0 );
+	m_Shared.SetKillstreakCount( 0 );
 	m_Shared.SetHypeMeterAbsolute( 0 );
 	m_Shared.SetFeignReady( false );
 	m_Shared.SetHasRecoiled( false );
