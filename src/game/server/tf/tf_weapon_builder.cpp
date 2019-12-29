@@ -605,7 +605,7 @@ bool CTFWeaponBuilder::HasAmmo( void )
 	if ( !pOwner )
 		return false;
 
-	int iCost = CalculateObjectCost( m_iObjectType, pOwner->HasGunslinger() );
+	int iCost = pOwner->ModCalculateObjectCost(m_iObjectType, pOwner->HasGunslinger());
 	return ( pOwner->GetBuildResources() >= iCost );
 }
 

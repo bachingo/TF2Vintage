@@ -140,6 +140,7 @@ public:
 	virtual bool		ShouldGainInstantSpawn( void );
 	virtual void		ResetScores( void );
 	virtual void		PlayerUse( void );
+	virtual int			ModCalculateObjectCost(int iObjectType, bool bMini = false /*, int iNumberOfObjects, int iTeam, bool bLast = false*/);
 
 	virtual void		ApplyAbsVelocityImpulse( Vector const &impulse );
 	void				ApplyAirBlastImpulse( Vector const &imuplse );
