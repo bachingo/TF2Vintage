@@ -171,7 +171,7 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 				if ( !pStatic || pStatic->hidden )
 					continue;
 
-				float flValue = (float)pAttribute->m_iRawValue32;
+				float flValue = BitsToFloat( pAttribute->m_iRawValue32 );
 			
 				switch ( pStatic->description_format )
 				{
