@@ -17,6 +17,7 @@
 #include "tf_weapon_buff_item.h"
 #include "tf_weapon_shotgun.h"
 #include "tf_weapon_sniperrifle.h"
+#include "tf_weapon_rocketlauncher.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -467,6 +468,33 @@ int CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::GetCount( void )
 	return -1;
 }
 
+
+
+//-----------------------------------------------------------------------------
+// C_TFRocketLauncher_Airstrike Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::IsEnabled( void )
+{
+	if ( GetWeapon() )
+		return true;
+
+	return false;
+}
+
+template<>
+int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer )
+	{
+		C_TFRocketLauncher_Airstrike *pRocketLauncher = GetWeapon();
+		if ( pRocketLauncher )
+			return pPlayer->m_Shared.GetKillstreakCount();
+	}
+
+	return -1;
+}
 
 
 
