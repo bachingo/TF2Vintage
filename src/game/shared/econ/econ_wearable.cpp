@@ -46,7 +46,9 @@ void CEconWearable::Spawn( void )
 		SetModel( GetItem()->GetPlayerDisplayModel() );
 	}
 
+#if defined ( GAME_DLL )
 	m_bItemFallsOff = GetItem()->GetStaticData()->itemfalloff;
+#endif
 	
 	BaseClass::Spawn();
 
