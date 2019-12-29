@@ -3868,6 +3868,74 @@ bool CTFPlayerShared::CanAirDash( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Checks if we have a parachute to deploy.
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::HasParachute( void )
+{
+	// No parachute, no deploy.
+	int nHasParachute = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nHasParachute, parachute_attribute );
+	if ( nHasParachute == 0 )
+		return false;
+	else if ( !InCond( TF_COND_PARACHUTE_DEPLOYED ) )
+	{
+		// If we haven't already pulled the parachute this jump, allow.
+		return true;
+	}
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if we can deploy a parachute.
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::CanParachute( void )
+{
+	if ( InCond(TF_COND_PARACHUTE_DEPLOYED) )
+		return false;
+	
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if we are currently parachuting.
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsParachuting( void )
+{
+	if ( InCond(TF_COND_PARACHUTE_ACTIVE) )
+		return true;
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Affects our parachute status.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::DeployParachute( void )
+{
+	// If we haven't opened a parachute, open one.
+	if ( !InCond( TF_COND_PARACHUTE_ACTIVE ) )
+		AddCond( TF_COND_PARACHUTE_ACTIVE );
+	else
+	{
+		// Close our parachute, and add the deployed condition.
+		RemoveCond( TF_COND_PARACHUTE_ACTIVE );
+		AddCond( TF_COND_PARACHUTE_DEPLOYED );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Resets our parachute.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::ResetParachute( void )
+{ 
+	if ( InCond(TF_COND_PARACHUTE_DEPLOYED) ) 
+		RemoveCond(TF_COND_PARACHUTE_DEPLOYED); 
+	if ( InCond(TF_COND_PARACHUTE_ACTIVE) ) 
+		RemoveCond(TF_COND_PARACHUTE_ACTIVE); 
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::SetLastDashTime(float flLastDash)
