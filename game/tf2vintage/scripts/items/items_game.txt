@@ -6230,6 +6230,52 @@
 			"prefab"				"weapon_parachute"
 			"year"					"2014"
 		}
+		"1103"
+		{
+			"name"	"The Back Scatter"
+			"prefab"		"weapon_scattergun"
+			"year"					"2014"
+			"item_type_name"	"#TF_Weapon_Scattergun"
+			"propername"	"1"
+			"item_name"			"#TF_Weapon_BackScatter"
+			"item_description"	"#TF_Weapon_BackScatter_Desc"
+			"item_logname"	"back_scatter"
+			"item_iconname"	"back_scatter"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_scatterdrum/c_scatterdrum"
+			"model_player"	"models/workshop/weapons/c_models/c_scatterdrum/c_scatterdrum.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"
+			}
+			"attributes"
+			{
+				"closerange backattack minicrits"
+				{
+					"attribute_class"	"closerange_backattack_minicrits"
+					"value"				"1"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "0.66"
+				}
+				"spread penalty"
+				{
+					"attribute_class" 	"mult_spread_scale"
+					"value" "1.20"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Back_Scatter.Single"
+				"sound_burst"		"Weapon_Back_Scatter.SingleCrit"
+			}
+		}
 		"1104"
 		{
 			"name"	"The Air Strike"
