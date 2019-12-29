@@ -4140,11 +4140,6 @@
 					"attribute_class"	"mult_dmgtaken_from_fire"
 					"value"			"1.20"
 				}
-				"engy dispenser radius increased"
-				{
-					"attribute_class"	"mult_dispenser_radius"
-					"value"			"3.0"
-				}
 				"reveal disguised victim on hit"
 				{
 					"attribute_class"	"reveal_disguised_victim_on_hit"
