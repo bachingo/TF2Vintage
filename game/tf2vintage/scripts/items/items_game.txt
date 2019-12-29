@@ -1354,6 +1354,55 @@
 				"sound_burst"    "Weapon_RescueRanger.SingleCrit"
 			}
 		}
+		"weapon_trenchgun"
+		{
+			"prefab"		"weapon_shotgun"
+			"item_name"	"#TF_Weapon_PanicAttack"
+			"item_logname"	"panic_attack"
+			"item_iconname"	"panic_attack"
+			"propername"		"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_trenchgun/c_trenchgun"
+			"model_player"	"models/workshop/weapons/c_models/c_trenchgun/c_trenchgun.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"primary"
+				"pyro" "secondary"
+				"soldier" "secondary"
+				"heavy" "secondary"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -11"			
+			}
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.8"
+				}
+				"single wep deploy time decreased"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time"
+					"value"	"0.5"
+				}
+				"bullets per shot bonus"
+				{
+					"attribute_class" 	"mult_bullets_per_shot"
+					"value" "1.5"
+				}
+				"weapon spread penalty"
+				{
+					"attribute_class"	"mult_spread_scale"
+					"value"	"1.4"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_BackShot_Shotty.Single"
+				"sound_burst"			"Weapon_BackShot_Shotty.SingleCrit"
+			}
+		}
 		"weapon_smg"
 		{
 			"item_class"	"tf_weapon_smg"
@@ -6063,6 +6112,47 @@
 			"year"				"2012"
 			"particle_suffix"	"rescue_ranger"
 		}
+		"1099"
+		{
+			"name"			"The Tide Turner"
+			"prefab"			"weapon_shield"
+			"year"		"2014"
+			"item_name"		"#TF_TideTurner"
+			"item_description"	"#TF_TideTurner_Desc"
+			"propername"	"1"
+			"item_logname"	"tide_turner"
+			"item_iconname"	"tide_turner"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_wheel_shield/c_wheel_shield"
+			"model_player"	"models/workshop/weapons/c_models/c_wheel_shield/c_wheel_shield.mdl"
+			"attributes"
+			{
+				"dmg taken from fire reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"			"0.85"
+				}
+				"dmg taken from blast reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_explosions"
+					"value"			"0.85"
+				}
+				"lose demo charge on damage when charging"
+				{
+					"attribute_class"	"lose_demo_charge_on_damage_when_charging"
+					"value"				"1"
+				}
+				"full charge turn control"
+				{
+					"attribute_class"	"charge_turn_control"
+					"value"			"50"
+				}
+				"kill refills meter"
+				{
+					"attribute_class"	"kill_refills_meter"
+					"value"			"0.75"
+				}
+			}
+		}
 		"1150"
 		{
 			"name"	"The Quickiebomb Launcher"
@@ -6127,7 +6217,14 @@
 			"year"			"2014"
 			"particle_suffix"	"iron_bomber"
 		}
-		"1152"
+		"1153"
+		{
+			"name"	"Panic Attack Shotgun"
+			"prefab"	"weapon_trenchgun"
+			"year"				"2014"
+			"particle_suffix"	"panic_attack"
+		}
+		"1156"
 		{
 			"name"	"Ludmila"
 			"prefab"	"weapon_minigun weapon_custom"
