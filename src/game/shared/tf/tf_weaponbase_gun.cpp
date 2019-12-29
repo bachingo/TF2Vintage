@@ -852,6 +852,18 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 {
 	float flSpread = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flSpread;
 	CALL_ATTRIB_HOOK_FLOAT( flSpread, mult_spread_scale );
+	
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( pPlayer )
+	{
+		float flHealthModSpread = 1;
+		CALL_ATTRIB_HOOK_FLOAT( flHealthModSpread, panic_attack_negative );
+		if (flHealthModSpread != 1)
+		{
+			flSpread *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, 1.0, flHealthModSpread );
+		}	
+	}
+	
 	return flSpread;
 }
 
