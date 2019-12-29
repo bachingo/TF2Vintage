@@ -130,7 +130,7 @@ ActionResult<CTFBot> CTFBotSpyAttack::Update( CTFBot *me, float dt )
 
 	if ( flLength >= tf_bot_spy_knife_range.GetFloat() )
 	{
-		if ( threat->IsVisibleInFOVNow() )
+		if ( victim->IsVisibleInFOVNow() )
 			bPullKnife |= ( me->m_iSkill == CTFBot::EASY || vecToActor.Dot( vecFwd ) > flDesiredDot );
 	}
 	else
