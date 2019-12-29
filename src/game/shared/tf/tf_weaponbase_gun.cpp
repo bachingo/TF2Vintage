@@ -118,6 +118,13 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	
 	if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
 			CALL_ATTRIB_HOOK_FLOAT( flFireDelay, rocketjump_attackrate_bonus );
+		
+	float flHealthModFireBonus = 1;
+	CALL_ATTRIB_HOOK_FLOAT( flHealthModFireBonus, mult_postfiredelay_with_reduced_health );
+	if (flHealthModFireBonus != 1)
+	{
+		flFireDelay *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, flHealthModFireBonus, 1.0 );
+	}
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
 
