@@ -6354,11 +6354,40 @@
 			"year"				"2014"
 			"particle_suffix"	"panic_attack"
 		}
-		"1156"
+		"1190"
+		{
+			"name"		"The Second Banana"
+			"prefab"		"weapon_sandvich"
+			"year"		"2017"
+			"item_name"		"#TF_Unique_Lunchbox_Banana"
+			"item_description"		"#TF_Lunchbox_Banana_desc"
+			"image_inventory"		"backpack/weapons/c_models/c_banana/c_banana"
+			"model_player"		"models/weapons/c_models/c_banana/c_banana.mdl"
+			"propername"		"1"
+			"attributes"
+			{
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"6"
+				}
+				"lunchbox healing decreased"
+				{
+					"attribute_class" "lunchbox_healing_scale"
+					"value" "0.67"
+				}
+				"charge recharge rate increased"
+				{
+					"attribute_class"	"charge_recharge_rate"
+					"value"	"1.5"
+				}
+			}
+		}
+		"1195"
 		{
 			"name"	"Ludmila"
 			"prefab"	"weapon_minigun weapon_custom"
-			"year"			"2008"
+			"year"			"2019"
 			"item_type_name"	"#TF_Weapon_Minigun"
 			"item_name"	"#TF_Unique_Achievement_Minigun2"
 			"item_logname"	"ludmila"
@@ -7031,12 +7060,113 @@
 				}
 			}
 		}
-		"11006"
+		"30474"
+		{
+			"name"		"The Nostromo Napalmer"
+			"prefab"		"weapon_flamethrower weapon_reskin"
+			"year"					"2014"
+			"item_logname"		"ai_flamethrower"
+			"item_iconname"		"ai_flamethrower"
+			"item_type_name"		"#TF_Weapon_Flamethrower"
+			"item_name"		"#TF_NostromoNapalmer"
+			"item_description"		"#TF_NostromoNapalmer_Desc"
+			"image_inventory"		"backpack/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower"
+			"model_player"		"models/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower.mdl"
+			"propername"		"1"
+		}
+		"30666"
+		{
+			"name"		"The C.A.P.P.E.R"
+			"prefab"		"weapon_pistol weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_pistol"
+			"item_description"		"#TF_invasion_pistol_Desc"
+			"item_logname"		"the_capper"
+			"item_iconname"		"the_capper"
+			"propername"		"1"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol.mdl"
+			"attributes"
+			{
+				"ragdolls become ash"
+				{
+					"attribute_class"	"ragdolls_become_ash"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Capper.Single"
+				"sound_burst"		"Weapon_Capper.SingleCrit"
+			}
+			"visuals_red"
+			{
+				"skin"		"0"
+				"muzzle_flash"		"muzzle_raygun_red"
+				"tracer_effect"		"bullet_tracer_raygun"
+			}
+			"visuals_blu"
+			{
+				"skin"		"1"
+				"muzzle_flash"		"muzzle_raygun_blue"
+				"tracer_effect"		"bullet_tracer_raygun"
+			}
+		}
+		"30667"
+		{
+			"name"		"Batsaber"
+			"prefab"		"weapon_bat weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_bat"
+			"item_description"		"#TF_invasion_bat_Desc"
+			"item_logname"		"batsaber"
+			"item_iconname"		"batsaber"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat.mdl"
+			"attributes"
+			{
+				"ragdolls plasma effect"
+				{
+					"attribute_class"	"ragdolls_plasma_effect"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_miss"		"Weapon_BatSaber.Swing"
+				"sound_melee_hit"		"Weapon_BatSaber.HitFlesh"
+				"sound_melee_hit_world"		"Weapon_BatSaber.HitWorld"
+				"sound_burst"		"Weapon_BatSaber.SwingCrit"
+				"sound_deploy"		"Weapon_BatSaber.Draw"
+			}
+			"visuals_red"
+			{
+				"skin"		"0"
+			}
+			"visuals_blu"
+			{
+				"skin"		"1"
+			}
+		}
+		"30668"
+		{
+			"name"		"The Giger Counter"
+			"prefab"		"weapon_wrangler weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_wrangler"
+			"item_description"		"#TF_invasion_wrangler_Desc"
+			"item_logname"		"giger_counter"
+			"item_iconname"		"giger_counter"
+			"propername"		"1"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
+		}
+		"90001"
 		{
 			"name"			"Ambassador Dark"
 			"prefab"		"weapon_ambassador weapon_reskin"
 			"item_description"	"#TF_PyroHazmat_Style3"
-			"year"			"2012"
+			"year"			"2019"
 			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador_dark.mdl"
 		}
 	}
