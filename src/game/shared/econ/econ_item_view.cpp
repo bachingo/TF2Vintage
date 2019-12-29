@@ -365,6 +365,7 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
 
 bool CAttributeList::SetRuntimeAttributeValue( const EconAttributeDefinition *pDefinition, float flValue )
 {
+	Assert( pDefinition );
 	if ( pDefinition == nullptr )
 		return false;
 
