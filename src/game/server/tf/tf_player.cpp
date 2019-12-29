@@ -5193,8 +5193,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 		int nSpeedBoostOnHit = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnHit, speed_boost_on_hit );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnHit, speed_boost_on_hit_enemy );
 		if ( nSpeedBoostOnHit > 0)
 			m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnHit );
+		
 	}
 
 	TeamFortress_SetSpeed();
