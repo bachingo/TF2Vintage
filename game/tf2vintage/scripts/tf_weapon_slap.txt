@@ -28,7 +28,9 @@ WeaponData
 	//"viewmodel"     -viewmodel is now defined in _items_main.txt
 	//"playermodel"   -playermodel is now defined in _items_main.txt
 	"anim_prefix"			"pipe"
-	"HasTeamSkins_Viewmodel"			"1"
+	"HasTeamSkins"			"1"
+	"HasTeamSkins_Worldmodel"	"1"
+	"HasTeamSkins_Viewmodel"	"1"
 
 	// Sounds for the weapon. There is a max of 16 sounds per category (i.e. max 16 "single_shot" sounds)
 	SoundData
