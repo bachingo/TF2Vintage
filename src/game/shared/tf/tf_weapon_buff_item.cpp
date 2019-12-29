@@ -395,3 +395,81 @@ void C_TFBuffItem::FireGameEvent(IGameEvent *event)
 	}
 }
 #endif
+
+
+#define MODEL_CLOSED	"workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack.mdl"
+#define MODEL_OPENED	"workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack_open.mdl"
+
+#define TF_PARACHUTE_CLOSED		0
+#define TF_PARACHUTE_OPEN 		1
+
+#define TF_PARACHUTE_MODE		4
+
+const char *CTFParachute::GetWorldModel() const
+{
+	if ( m_iDeployed == TF_PARACHUTE_OPEN )
+	{
+		return MODEL_OPENED;
+	}
+	
+	return BaseClass::GetWorldModel();
+}
+
+void CTFParachute::Precache()
+{
+	BaseClass::Precache();
+	
+	PrecacheModel( MODEL_CLOSED );
+	PrecacheModel( MODEL_OPENED );
+}
+
+void CTFParachute::DeployParachute()
+{
+	m_iDeployed = TF_PARACHUTE_OPEN;
+#ifdef CLIENT_DLL
+	C_TFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( !pOwner || !pOwner->IsAlive() )
+		return;
+
+	C_EconWearable *pWearable = pOwner->GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_SECONDARY );
+
+	// if we don't have a backpack for some reason don't make a banner
+	if ( !pWearable )
+		return;
+
+	// yes I really am using the arrow class as a base
+	// create the flag
+	C_TFProjectile_Arrow *pBanner = new C_TFProjectile_Arrow();
+	if ( pBanner )
+	{
+		pBanner->InitializeAsClientEntity( g_BannerModels[TF_PARACHUTE_MODE - 1], RENDER_GROUP_OPAQUE_ENTITY );
+
+		// Attach the flag to the backpack
+		int bone = pWearable->LookupBone( "bip_spine_3" );
+		if ( bone != -1 )
+		{
+			pBanner->AttachEntityToBone( pWearable, bone );
+		}
+	}
+#endif
+}
+
+
+void CTFParachute::RetractParachute()
+{
+	m_iDeployed = TF_PARACHUTE_CLOSED;
+#ifdef CLIENT_DLL
+	C_TFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( !pOwner || !pOwner->IsAlive() )
+		return;
+	// Find our banner.
+	C_TFProjectile_Arrow *pBanner = dynamic_cast <C_TFProjectile_Arrow*> (pOwner->GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_SECONDARY ));
+	if ( pBanner )
+	{
+		// Delete it immediately.
+		pBanner->SetDieTime( gpGlobals->curtime);
+	}
+#endif
+}

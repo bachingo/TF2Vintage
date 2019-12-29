@@ -3914,14 +3914,21 @@ bool CTFPlayerShared::IsParachuting( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::DeployParachute( void )
 {
+	CTFParachute *pParachute = dynamic_cast<CTFParachute *>(m_pOuter->Weapon_OwnsThisID(TF_WEAPON_PARACHUTE));
 	// If we haven't opened a parachute, open one.
 	if ( !InCond( TF_COND_PARACHUTE_ACTIVE ) )
+	{
 		AddCond( TF_COND_PARACHUTE_ACTIVE );
+		if (pParachute)
+			pParachute->DeployParachute();
+	}
 	else
 	{
 		// Close our parachute, and add the deployed condition.
 		RemoveCond( TF_COND_PARACHUTE_ACTIVE );
 		AddCond( TF_COND_PARACHUTE_DEPLOYED );
+		if (pParachute)
+			pParachute->RetractParachute();
 	}
 }
 
@@ -3930,10 +3937,13 @@ void CTFPlayerShared::DeployParachute( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::ResetParachute( void )
 { 
+	CTFParachute *pParachute = dynamic_cast<CTFParachute *>(m_pOuter->Weapon_OwnsThisID(TF_WEAPON_PARACHUTE));
 	if ( InCond(TF_COND_PARACHUTE_DEPLOYED) ) 
 		RemoveCond(TF_COND_PARACHUTE_DEPLOYED); 
 	if ( InCond(TF_COND_PARACHUTE_ACTIVE) ) 
-		RemoveCond(TF_COND_PARACHUTE_ACTIVE); 
+		RemoveCond(TF_COND_PARACHUTE_ACTIVE); 	
+	if (pParachute && pParachute->IsOpened() )
+			pParachute->RetractParachute();
 }
 
 //-----------------------------------------------------------------------------

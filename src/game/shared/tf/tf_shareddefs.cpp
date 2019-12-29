@@ -531,6 +531,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SNIPERRIFLE_DECAP",
 	"TF_WEAPON_KATANA",
 	"TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE",
+	"TF_WEAPON_PARACHUTE",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -629,6 +630,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BULLET | DMG_USE_HITLOCATIONS,			// TF_WEAPON_SNIPERRIFLE_DECAP,
 	DMG_SLASH,									// TF_WEAPON_KATANA,
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE,
+	DMG_GENERIC,								// 	TF_WEAPON_PARACHUTE,
 
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list

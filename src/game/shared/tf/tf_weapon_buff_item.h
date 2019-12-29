@@ -74,4 +74,32 @@ private:
 	CNetworkVar( bool, m_bBuffUsed );
 };
 
+//Parachute base.
+
+#if defined CLIENT_DLL
+#define CTFParachute C_TFParachute
+#endif
+
+class CTFParachute : public CTFBuffItem
+{
+public:
+
+	DECLARE_CLASS( CTFParachute, CTFBuffItem )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_PARACHUTE; }
+	virtual bool	HasChargeBar( void )			{ return false; }
+
+	virtual const char	*GetWorldModel() const;
+	virtual void		Precache();
+	virtual void	DeployParachute(void);
+	virtual void	RetractParachute(void);
+	
+	virtual bool	IsOpened(void)		{ return m_iDeployed == 1; }
+private:
+	CNetworkVar( int, m_iDeployed );
+};
+
+
 #endif // TF_WEAPON_BUFF_ITEM_H
