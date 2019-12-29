@@ -4429,6 +4429,22 @@ static float DamageForce( const Vector &size, float damage, float scale )
 	return force;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayer::IsBehindTarget( CBaseEntity *pVictim )
+{
+	Vector vecFwd;
+	QAngle angEyes = pVictim->EyeAngles();
+	AngleVectors( angEyes, &vecFwd );
+	vecFwd.NormalizeInPlace();
+
+	Vector vecPos = GetBaseVelocity();
+	vecPos.NormalizeInPlace();
+
+	return vecPos.AsVector2D().Dot( vecFwd.AsVector2D() ) > 0.8f;
+}
+
 ConVar tf_debug_damage( "tf_debug_damage", "0", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
@@ -4757,7 +4773,47 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				bitsDamage |= DMG_MINICRITICAL;
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
+			
+			
+			// Add minicrits for a close range back hit.
+			// Doing this here makes it so it can be applied to any weapon.
+			int nHasBackAttack = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nHasBackAttack, closerange_backattack_minicrits );
+			if ( bitsDamage & !DMG_MINICRITICAL && nHasBackAttack )
+			{
+				// Valid range is <500HU.
+				bool bIsValidRange = ( ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() < 500 );
+				if ( bIsValidRange && ToTFPlayer(pAttacker) )
+				{
+					bool bIsBehindTarget = ToTFPlayer(pAttacker)->IsBehindTarget(this);
+					if ( bIsBehindTarget )
+					{
+						bitsDamage |= DMG_MINICRITICAL;
+						info.AddDamageType( DMG_MINICRITICAL );
+					}
+				}
+				
+			}
+			
+			// Promote or demote Crits and Minicrits. Having both simultaneously negates the attribute.
+			int nMinicritsToCrits = 0;
+			int nCritsToMinicrits = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritsToCrits, minicrits_become_crits );
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritsToMinicrits, crits_become_minicrits );
+			// If we have something making minicrits turn into criticals, apply.
+			if ( bitsDamage & DMG_MINICRITICAL && (nMinicritsToCrits && !nCritsToMinicrits ) )
+			{
+				bitsDamage &= ~DMG_MINICRITICAL;
+				bitsDamage |= DMG_CRITICAL;
+			}
+			// If we have something reducing criticals to minicrits, apply.
+			if ( bitsDamage & DMG_CRITICAL && ( nCritsToMinicrits && !nMinicritsToCrits ) )
+			{
+				bitsDamage &= ~DMG_CRITICAL;
+				bitsDamage |= DMG_CRITICAL;
+			}
 
+			
 			// Notify the damaging weapon.
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
@@ -4783,14 +4839,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			// Reduce our damage
 			info.SetDamage( info.GetDamage() * m_Shared.m_flStunResistance );
 		}
-	}
-
-	int nMinicritsToCrits = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritsToCrits, minicrits_become_crits );
-	if ( bitsDamage & DMG_MINICRITICAL && nMinicritsToCrits )
-	{
-		bitsDamage &= ~DMG_MINICRITICAL;
-		bitsDamage |= DMG_CRITICAL;
 	}
 
 	if ( inputInfo.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )

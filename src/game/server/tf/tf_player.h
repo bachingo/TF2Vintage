@@ -167,6 +167,7 @@ public:
 	virtual bool		BecomeRagdoll( const CTakeDamageInfo &info, const Vector &forceVector );
 	virtual void		PlayerDeathThink( void );
 
+	virtual bool 		IsBehindTarget( CBaseEntity *pVictim );
 	virtual int			OnTakeDamage( const CTakeDamageInfo &inputInfo );
 	virtual int			OnTakeDamage_Alive( const CTakeDamageInfo &info );
 	void				ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir );
