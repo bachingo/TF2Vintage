@@ -1579,16 +1579,21 @@ void CTFGameMovement::FullWalkMove()
 	{
 		if (TFPlayer->m_Shared.IsParachuting() && ( player->GetGroundEntity() == NULL && !InWater() ) )
 		{
+			int nMaxFallSpeed;
 			if ( TFPlayer->m_Shared.InCond(TF_COND_BURNING) )
 			{
 				// If we're on fire, we updraft from the fire and don't descend at all.
-				mv->m_vecVelocity[2] = 0;
+				nMaxFallSpeed = 0;
 			}
 			else
 			{
 				// Limit our downward velocity to 112HU.
-				mv->m_vecVelocity[2] = -112;
+				nMaxFallSpeed = -112;
 			}
+			
+			// Cap out our speed if we're falling faster than we should be
+			if ( mv->m_vecVelocity[2] < nMaxFallSpeed )
+				mv->m_vecVelocity[2] = nMaxFallSpeed;
 		}
 	}
 	
