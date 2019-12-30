@@ -4774,6 +4774,21 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
 			
+			// Add crits for a back hit.
+			// Doing this here makes it so it can be applied to any weapon.
+			int nHasBackCrits = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nHasBackCrits, crit_from_behind );
+			if ( bitsDamage & !DMG_CRITICAL && nHasBackCrits )
+			{
+				if ( ToTFPlayer(pAttacker) )
+				{
+					if ( ToTFPlayer(pAttacker)->IsBehindTarget(this) )
+					{
+						bitsDamage |= DMG_CRITICAL;
+						info.AddDamageType( DMG_CRITICAL );
+					}
+				}
+			}
 			
 			// Add minicrits for a close range back hit.
 			// Doing this here makes it so it can be applied to any weapon.
@@ -4792,7 +4807,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 						info.AddDamageType( DMG_MINICRITICAL );
 					}
 				}
-				
 			}
 			
 			// Promote or demote Crits and Minicrits. Having both simultaneously negates the attribute.
@@ -4813,6 +4827,18 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				bitsDamage |= DMG_CRITICAL;
 			}
 
+			int nNoDamageOnCrit = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nNoDamageOnCrit, crit_does_no_damage );
+			if ( ( bitsDamage & DMG_CRITICAL ) && nNoDamageOnCrit )
+			{
+				info.SetDamage( 0.0f );
+				info.ScaleDamageForce( 0.0f );
+			}
+			
+			int nForceVictimToLaugh = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nForceVictimToLaugh, crit_forces_victim_to_laugh);
+			if ( ( bitsDamage & DMG_CRITICAL ) && nForceVictimToLaugh != 0 )
+				Taunt();
 			
 			// Notify the damaging weapon.
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
@@ -5668,15 +5694,26 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			}
 		}
 		
-		if ( m_Shared.InCond(TF_COND_ENERGY_BUFF ) )
+		// Check if we have the same weapon.
+		if (pTFWeapon && GetActiveTFWeapon() == pTFWeapon)
 		{
-			float flEnergyBuffMult = 1.0f;
-			CALL_ATTRIB_HOOK_FLOAT( flEnergyBuffMult, energy_buff_dmg_taken_multiplier );
-			flDamage *= flEnergyBuffMult;
+			int nForceLaughSameWeapon = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(GetActiveTFWeapon(), nForceLaughSameWeapon, tickle_enemies_wielding_same_weapon);
+			if (nForceLaughSameWeapon != 0)
+				Taunt();
 		}
-		
+	
 	}
-
+	
+	if ( m_Shared.InCond(TF_COND_ENERGY_BUFF ) )
+	{
+		float flEnergyBuffMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flEnergyBuffMult, energy_buff_dmg_taken_multiplier );
+		flDamage *= flEnergyBuffMult;
+	}
+	
+	
+		
 	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG )
 	{
 		if ( m_Shared.InCond( TF_COND_FEIGN_DEATH ) )
@@ -9318,6 +9355,7 @@ void CTFPlayer::Taunt( void )
 	char szResponse[AI_Response::MAX_RESPONSE_NAME];
 	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_TAUNT, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) || tf2v_random_weapons.GetBool() || tf2v_randomizer.GetBool() )
 	{
+		
 		// Get the duration of the scene.
 		float flDuration = GetSceneDuration( szResponse ) + 0.2f;
 
