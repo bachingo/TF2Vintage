@@ -18,6 +18,7 @@
 #include "tf_weapon_shotgun.h"
 #include "tf_weapon_sniperrifle.h"
 #include "tf_weapon_rocketlauncher.h"
+#include "tf_weapon_revolver.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -413,6 +414,15 @@ int CHudItemEffectMeterTemp<C_TFSword>::GetCount( void )
 // C_TFShotgun_Revenge Specialization
 //-----------------------------------------------------------------------------
 template<>
+bool CHudItemEffectMeterTemp<C_TFShotgun_Revenge>::IsEnabled( void )
+{
+	if ( GetWeapon() )
+		return true;
+
+	return false;
+}
+
+template<>
 int CHudItemEffectMeterTemp<C_TFShotgun_Revenge>::GetCount( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -495,6 +505,33 @@ int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
 
 	return -1;
 }
+
+//-----------------------------------------------------------------------------
+// C_TFRevolver_Dex Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFRevolver_Dex>::IsEnabled( void )
+{
+	if ( GetWeapon() )
+		return true;
+
+	return false;
+}
+
+template<>
+int CHudItemEffectMeterTemp<C_TFRevolver_Dex>::GetCount( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer )
+	{
+		C_TFRevolver_Dex *pRevenge = GetWeapon();
+		if ( pRevenge )
+			return pRevenge->GetCount();
+	}
+
+	return -1;
+}
+
 
 
 

@@ -16,6 +16,10 @@
 #define CTFRevolver_Secondary C_TFRevolver_Secondary
 #endif
 
+#ifdef GAME_DLL
+#include "GameEventListener.h"
+#endif
+
 //=============================================================================
 //
 // TF Weapon Revolver.
@@ -50,6 +54,47 @@ public:
 	DECLARE_CLASS( CTFRevolver_Secondary, CTFRevolver );
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
+};
+
+#if defined CLIENT_DLL
+#define CTFRevolver_Dex C_TFRevolver_Dex
+#endif
+
+class CTFRevolver_Dex : public CTFRevolver
+#ifdef GAME_DLL
+	, public CGameEventListener
+#endif
+{
+public:
+	DECLARE_CLASS( CTFRevolver_Dex, CTFRevolver );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	CTFRevolver_Dex();
+
+	virtual void	PrimaryAttack( void );
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_REVOLVER_DEX; }
+	virtual int		GetCount( void ) const;
+
+	virtual bool	Deploy( void );
+	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
+	virtual void	Detach( void );
+
+	virtual const char *GetEffectLabelText( void ) { return "#TF_CRITS"; }
+
+#ifdef GAME_DLL
+	virtual void	SetupGameEventListeners( void );
+	virtual void	FireGameEvent( IGameEvent *event );
+#endif
+	virtual void	StoreCriticalHit( void );
+
+	bool			CanGetSapperCrits( void ) const;
+
+private:
+
+	CNetworkVar( int, m_iSapperCrits );
+
+	CTFRevolver_Dex( CTFRevolver_Dex const& );
 };
 
 #endif // TF_WEAPON_REVOLVER_H
