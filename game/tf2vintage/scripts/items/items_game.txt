@@ -6012,6 +6012,43 @@
 				"sound_special1"		"Weapon_QuakeRPG.Explode"
 			}
 		}
+		"525"
+		{
+			"name"	"The Diamondback"
+			"prefab"			"weapon_revolver"
+			"first_sale_date"	"2011"
+			"item_class"	"tf_weapon_revolver_dex"
+			"item_name"	"#TF_DEX_Revolver"
+			"item_description"	"#TF_DEX_Revolver_Desc"
+			"propername"	"1"
+			"item_logname"	"diamondback"
+			"item_iconname"	"diamondback"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_dex_revolver/c_dex_revolver"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_dex_revolver/c_dex_revolver.mdl"
+			"attributes"
+			{
+				"sapper kills collect crits"
+				{
+					"attribute_class"	"sapper_kills_collect_crits"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.85"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Diamond_Back.Single"
+				"sound_burst"	"Weapon_Diamond_Back.SingleCrit"
+			}
+		}
 		"527"
 		{
 			"name"	"The Widowmaker"

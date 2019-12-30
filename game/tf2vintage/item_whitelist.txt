@@ -101,6 +101,7 @@
 	"The Enforcer"									"1"
 	"The Big Earner"								"1"
 	"The Original"									"1"
+	"The Diamondback"								"1"
 	"The Widowmaker"								"1"
 	"The Cozy Camper"								"1"
 	"The Holiday Punch"								"1"
