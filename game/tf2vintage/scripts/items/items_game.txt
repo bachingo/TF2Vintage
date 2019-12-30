@@ -6116,6 +6116,65 @@
 				}
 			}
 		}
+		"656"
+		{
+			"name"	"The Holiday Punch"
+			"prefab"	"weapon_fists"
+			"year"				"2011"
+			"item_type_name"	"#TF_Weapon_Fists"
+			"item_name"			"#TF_MasculineMittens"
+			"item_description"	"#TF_MasculineMittens_Desc"
+			"item_logname"	"holiday_punch"
+			"item_iconname"	"holiday_punch"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_xms_gloves/c_xms_gloves"			
+			"model_player"	"models/workshop/weapons/c_models/c_xms_gloves/c_xms_gloves.mdl"
+			"propername"	"1"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -10"
+			}
+			"hide_bodygroups_deployed_only"	"1"
+			"attributes"
+			{
+				"crit forces victim to laugh"
+				{
+					"attribute_class"	"crit_forces_victim_to_laugh"
+					"value" "1"
+				}
+				"crit from behind"
+				{
+					"attribute_class"	"crit_from_behind"
+					"value" "1"
+				}
+				"crit does no damage"
+				{
+					"attribute_class"	"crit_does_no_damage"
+					"value" "1"
+				}
+				"tickle enemies wielding same weapon"
+				{
+					"attribute_class"	"tickle_enemies_wielding_same_weapon"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hands"		"1"
+				}
+				"sound_deploy"			"Weapon_mittens.HitGlove"
+				"sound_melee_hit"		"Weapon_mittens.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_mittens.HitWorld"
+				"sound_burst"			"Weapon_mittens.CritHit"
+				"animation_replacement"
+				{
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT1_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT1_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
 		"740"
 		{
 			"name"	"The Scorch Shot"
