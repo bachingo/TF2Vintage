@@ -113,3 +113,56 @@ void CTFFlareGun::SecondaryAttack( void )
 	return;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFFlareGun::HasKnockback() const
+{
+	int nFlaresHaveKnockback = 0;
+	CALL_ATTRIB_HOOK_INT( nFlaresHaveKnockback, set_weapon_mode );
+	return nFlaresHaveKnockback == 3;
+}
+
+#if defined( GAME_DLL )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFFlareGun::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim )
+{
+	BaseClass::ApplyPostOnHitAttributes( info, pVictim );
+
+	CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
+	if ( pAttacker == NULL || pVictim == NULL )
+		return;
+
+	if ( !HasKnockback() || pVictim->m_Shared.InCond( TF_COND_MEGAHEAL ) )
+		return;
+
+	if ( pVictim->m_Shared.GetKnockbackWeaponID() >= 0 )
+		return;
+
+	Vector vecToVictim = pAttacker->WorldSpaceCenter() - pVictim->WorldSpaceCenter();
+
+	float flKnockbackMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flKnockbackMult, scattergun_knockback_mult );
+
+	// This check is a bit open ended and broad
+	if ( ( info.GetDamage() <= 30.0f || vecToVictim.LengthSqr() > Square( 400.0f ) ) && flKnockbackMult < 1.0f )
+		return;
+
+	vecToVictim.NormalizeInPlace();
+	
+	const float flSizeMag = pVictim->WorldAlignSize().x * pVictim->WorldAlignSize().y * pVictim->WorldAlignSize().z;
+	const float flHullMag = 48 * 48 * 82.0;
+
+	const float flDamageForce = info.GetDamage() * ( flHullMag / flSizeMag ) * flKnockbackMult;
+
+	float flDmgForce = Min( flDamageForce, 1000.0f );
+	Vector vecVelocityImpulse = vecToVictim * abs( flDmgForce );
+
+	pVictim->ApplyAirBlastImpulse( vecVelocityImpulse );
+	pVictim->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_LIMITMOVEMENT, pAttacker );
+
+	pVictim->m_Shared.SetKnockbackWeaponID( pAttacker->GetUserID() );
+}
+#endif
