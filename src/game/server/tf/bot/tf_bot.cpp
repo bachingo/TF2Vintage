@@ -1900,7 +1900,7 @@ void CTFBot::AccumulateSniperSpots( void )
 
 		newInfo.m_flIncursionDiff = flIncursion1 - flIncursion2;
 
-		if ( m_sniperSpots.Count() - tf_bot_sniper_spot_max_count.GetInt() <= 0 )
+		if ( m_sniperSpots.Count() < tf_bot_sniper_spot_max_count.GetInt() )
 			m_sniperSpots.AddToTail( newInfo );
 
 		for ( int j=0; j<m_sniperSpots.Count(); ++j )
@@ -1958,13 +1958,13 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 		pObjective = GetMyControlPoint();
 	}
 
-	if ( !pObjective )
+	if ( pObjective == nullptr )
 	{
 		ClearSniperSpots();
 		return;
 	}
 
-	if ( pObjective == m_sniperGoalEnt && Square( tf_bot_sniper_goal_entity_move_tolerance.GetFloat() ) > ( pObjective->GetAbsOrigin() - m_sniperGoal ).LengthSqr() )
+	if ( pObjective == m_sniperGoalEnt && Square( tf_bot_sniper_goal_entity_move_tolerance.GetFloat() ) > ( pObjective->WorldSpaceCenter() - m_sniperGoal ).LengthSqr() )
 		return;
 
 	ClearSniperSpots();
@@ -1972,26 +1972,26 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 	const int iMyTeam = GetTeamNumber();
 	const int iEnemyTeam = GetEnemyTeam( this );
 	bool bCheckForward = false;
-	CTFNavArea *objectiveArea = nullptr;
-
-	if ( TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT )
-	{
-		if ( GetMyControlPoint()->GetOwner() == iMyTeam )
-		{
-			objectiveArea = TFNavMesh()->GetMainControlPointArea( GetMyControlPoint()->GetPointIndex() );
-			bCheckForward = GetMyControlPoint()->GetOwner() == iMyTeam;
-		}
-	}
-	else
-	{
-		objectiveArea = static_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( pObjective->WorldSpaceCenter(), true, 500.0f ) );
-		bCheckForward = iEnemyTeam != pObjective->GetTeamNumber();
-	}
+	CTFNavArea *pObjectiveArea = nullptr;
 
 	m_sniperStandAreas.RemoveAll();
 	m_sniperLookAreas.RemoveAll();
 
-	if ( !objectiveArea )
+	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
+	{
+		pObjectiveArea = static_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( pObjective->WorldSpaceCenter(), true, 500.0f ) );
+		bCheckForward = iEnemyTeam != pObjective->GetTeamNumber();
+	}
+	else
+	{
+		if ( GetMyControlPoint()->GetPointIndex() >= MAX_CONTROL_POINTS )
+			return;
+
+		pObjectiveArea = TFNavMesh()->GetMainControlPointArea( GetMyControlPoint()->GetPointIndex() );
+		bCheckForward = GetMyControlPoint()->GetOwner() == iMyTeam;
+	}
+
+	if ( !pObjectiveArea )
 		return;
 
 	for ( int i=0; i<TheNavAreas.Count(); ++i )
@@ -2006,17 +2006,17 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 		if ( flEnemyIncursion < 0.0f )
 			continue;
 
-		if ( flEnemyIncursion <= objectiveArea->GetIncursionDistance( iEnemyTeam ) )
+		if ( flEnemyIncursion <= pObjectiveArea->GetIncursionDistance( iEnemyTeam ) )
 			m_sniperLookAreas.AddToTail( area );
 
 		if ( bCheckForward )
 		{
-			if ( objectiveArea->GetIncursionDistance( iMyTeam ) + tf_bot_sniper_spot_point_tolerance.GetFloat() >= flMyIncursion )
+			if ( pObjectiveArea->GetIncursionDistance( iMyTeam ) + tf_bot_sniper_spot_point_tolerance.GetFloat() >= flMyIncursion )
 				m_sniperStandAreas.AddToTail( area );
 		}
 		else
 		{
-			if ( objectiveArea->GetIncursionDistance( iMyTeam ) - tf_bot_sniper_spot_point_tolerance.GetFloat() >= flMyIncursion )
+			if ( pObjectiveArea->GetIncursionDistance( iMyTeam ) - tf_bot_sniper_spot_point_tolerance.GetFloat() >= flMyIncursion )
 				m_sniperStandAreas.AddToTail( area );
 		}
 	}
