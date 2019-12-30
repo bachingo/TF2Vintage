@@ -171,7 +171,7 @@ EventDesiredResult<CTFBot> CTFBotTacticalMonitor::OnNavAreaChanged( CTFBot *me, 
 		return Action<CTFBot>::TryContinue();
 	}
 
-	FOR_EACH_VEC( area1->GetPrerequisiteVector(), i )
+	/*FOR_EACH_VEC( area1->GetPrerequisiteVector(), i )
 	{
 		CFuncNavPrerequisite *pPrereq = area1->GetPrerequisiteVector()[i];
 		if ( pPrereq == nullptr )
@@ -182,7 +182,7 @@ EventDesiredResult<CTFBot> CTFBotTacticalMonitor::OnNavAreaChanged( CTFBot *me, 
 
 		if ( pPrereq->IsTask( CFuncNavPrerequisite::TASK_MOVE_TO_ENTITY ) )
 			return Action<CTFBot>::TrySuspendFor( new CTFBotNavEntMoveTo( pPrereq ), RESULT_IMPORTANT, "Prerequisite commands me to move to an entity" );
-	}
+	}*/
 
 	return Action<CTFBot>::TryContinue();
 }

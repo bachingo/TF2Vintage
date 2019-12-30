@@ -139,7 +139,7 @@ EventDesiredResult<CTFBot> CTFBotPushToCapturePoint::OnNavAreaChanged( CTFBot *m
 	if ( area1 == nullptr || !area1->HasPrerequisite() )
 		return BaseClass::TryContinue();
 
-	FOR_EACH_VEC( area1->GetPrerequisiteVector(), i )
+	/*FOR_EACH_VEC( area1->GetPrerequisiteVector(), i )
 	{
 		CFuncNavPrerequisite *prereq = area1->GetPrerequisiteVector()[ i ];
 		if ( prereq == nullptr || !prereq->IsEnabled() || !prereq->PassesTriggerFilters( me ) )
@@ -150,7 +150,7 @@ EventDesiredResult<CTFBot> CTFBotPushToCapturePoint::OnNavAreaChanged( CTFBot *m
 
 		if ( prereq->IsTask( CFuncNavPrerequisite::TASK_MOVE_TO_ENTITY ) )
 			return BaseClass::TrySuspendFor( new CTFBotNavEntWait( prereq ), RESULT_TRY, "Prerequisite commands me to wait" );
-	}
+	}*/
 
 	return BaseClass::TryContinue();
 }
