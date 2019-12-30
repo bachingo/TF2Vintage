@@ -2202,6 +2202,7 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 	CBaseEntity *pKiller = info.GetAttacker();
 	CTFPlayer *pScorer = ToTFPlayer( TFGameRules()->GetDeathScorer( pKiller, pInflictor, this ) );
 	CTFPlayer *pAssister = NULL;
+	CTFPlayer *pSapperOwner = NULL;
 
 	// if this object has a sapper on it, and was not killed by the sapper (killed by damage other than crush, since sapper does crushing damage),
 	// award an assist to the owner of the sapper since it probably contributed to destroying this object
@@ -2212,6 +2213,7 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 		{
 			// give an assist to the sapper's owner
 			pAssister = pSapper->GetOwner();
+			pSapperOwner = pSapper->GetOwner();
 			CTF_GameStats.Event_AssistDestroyBuilding( pAssister, this );
 		}
 	}
@@ -2255,6 +2257,10 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 			{
 				event->SetInt( "assister", pAssister->GetUserID() );
 			}
+			if ( pSapperOwner )
+			{
+				event->SetInt( "sapper", pSapperOwner->GetUserID() );
+			}
 			
 			event->SetInt( "attacker", pScorer->GetUserID() );	// attacker
 			event->SetString( "weapon", killer_weapon_name );
@@ -2262,6 +2268,7 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 			event->SetInt( "priority", 6 );		// HLTV event priority, not transmitted
 			event->SetInt( "objecttype", GetType() );
 			event->SetInt( "index", entindex() );	// object entity index
+			
 
 			gameeventmanager->FireEvent( event );
 		}

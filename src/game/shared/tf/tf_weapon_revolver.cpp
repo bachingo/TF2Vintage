@@ -180,8 +180,7 @@ void CTFRevolver_Dex::FireGameEvent( IGameEvent *event )
 	if (FStrEq( event->GetName(), "object_destroyed" ))
 	{
 		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if ( pOwner && ( engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "attacker" ) ) || 
-			 (  engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "assister" ) ) )
+		if ( pOwner && ( engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "sapper" ) ) )
 		{
 			StoreCriticalHit();
 		}
