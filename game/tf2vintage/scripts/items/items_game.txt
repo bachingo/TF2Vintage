@@ -977,28 +977,6 @@
 				}
 			}
 		}
-		"weapon_axtinguisher"
-		{
-			"prefab"	"weapon_fireaxe"
-			"attributes"
-			{
-				"crit vs burning players"
-				{
-					"attribute_class"	"or_crit_vs_playercond"
-					"value"	"1"
-				}
-				"dmg penalty vs nonburning"
-				{
-					"attribute_class"	"mult_dmg_vs_nonburning"
-					"value"	"0.5"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
-		}
 		"weapon_club"
 		{
 			"item_class"	"tf_weapon_club"
@@ -1752,27 +1730,6 @@
 				}
 			}
 		}
-		"weapon_bat_basher"
-		{
-			"prefab"	"weapon_bat"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -6"
-			}
-			"attributes"
-			{
-				"bleeding duration"
-				{
-					"attribute_class"	"bleeding_duration"
-					"value" "5"
-				}
-				"hit self on miss"
-				{
-					"attribute_class"	"hit_self_on_miss"
-					"value"	"1"
-				}
-			}
-		}
 		"weapon_sledgehammer"
 		{
 			"prefab"	"weapon_fireaxe"
@@ -2455,92 +2412,6 @@
 			{
 				"min_viewmodel_offset"		"12 0 -17"				
 			}
-		}
-		"weapon_stickybombjumper"
-		{
-			"prefab"	"weapon_stickybomb_launcher"
-			"item_name"	"#TF_Weapon_StickyBomb_Jump"
-			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
-			"propername"	"0"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "1"
-				}
-				"maxammo secondary increased"
-				{
-					"attribute_class"	"mult_maxammo_secondary"
-					"value" "3"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-				"custom projectile model"
-				{
-					"attribute_class"	 "custom_projectile_model"
-					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
-				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
-			}
-		}
-		"weapon_rocketjumper"
-		{
-			"prefab"	"weapon_rocketlauncher"
-			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
-			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
-			"propername"	"0"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "2"
-				}
-				"maxammo primary increased"
-				{
-					"attribute_class"	"mult_maxammo_primary"
-					"value" "3.0"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
-				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
-			}
-
 		}
 		"weapon_quadball"
 		{
@@ -3623,7 +3494,7 @@
 		"38"
 		{
 			"name"	"The Axtinguisher"			
-			"prefab"	"weapon_axtinguisher"
+			"prefab"	"weapon_fireaxe"
 			"year"			"2008"
 			"item_logname"	"axtinguisher"
 			"item_iconname"	"axtinguisher"
@@ -3631,6 +3502,24 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_axtinguisher/c_axtinguisher_pyro"
 			"model_player"	"models/weapons/c_models/c_axtinguisher/c_axtinguisher_pyro.mdl"
+			"attributes"
+			{
+				"crit vs burning players"
+				{
+					"attribute_class"	"or_crit_vs_playercond"
+					"value"	"1"
+				}
+				"dmg penalty vs nonburning"
+				{
+					"attribute_class"	"mult_dmg_vs_nonburning"
+					"value"	"0.5"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
 		}
 		"39"
 		{
@@ -4151,12 +4040,32 @@
 		"153"
 		{
 			"name"	"The Homewrecker"
-			"prefab"		"weapon_homewrecker"
+			"prefab"	"weapon_sledgehammer"
 			"propername"	"1"
 			"year"			"2010"
 			"item_logname"	"sledgehammer"
 			"item_iconname"	"sledgehammer"
 			"item_name"	"#TF_Unique_SledgeHammer"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer"
+			"model_player"	"models/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer.mdl"
+			"attributes"
+			{
+				"dmg bonus vs buildings"
+				{
+					"attribute_class"	"mult_dmg_vs_buildings"
+					"value"	"2.0"
+				}
+				"dmg penalty vs players"
+				{
+					"attribute_class"	"mult_dmg_vs_players"
+					"value"	"0.75"
+				}
+				"damage applies to sappers"
+				{
+					"attribute_class"	"set_dmg_apply_to_sapper"
+					"value"	"1"
+				}
+			}
 		}
 		"154"
 		{
@@ -4687,8 +4596,44 @@
 			"name"	"Legacy Rocket Jumper"
 			"prefab"	"weapon_rocketjumper"
 			"year"			"2010"
+			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
+			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
+			"propername"	"0"
 			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy"
 			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper_legacy.mdl"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "2"
+				}
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value" "3.0"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
+				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
+			}
 		}
 		"239"
 		{
@@ -4753,10 +4698,51 @@
 		"265"
 		{
 			"name"	"Legacy Stickybomb Jumper"
-			"prefab"	"weapon_stickybombjumper"
+			"prefab"	"weapon_stickybomb_launcher"
 			"year"			"2010"
+			"item_name"	"#TF_Weapon_StickyBomb_Jump"
+			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
+			"propername"	"0"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper_legacy.mdl"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "1"
+				}
+				"maxammo secondary increased"
+				{
+					"attribute_class"	"mult_maxammo_secondary"
+					"value" "3"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	 "custom_projectile_model"
+					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
+				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
+			}
 		}
 		"304"
 		{
@@ -4977,7 +4963,7 @@
 		"325"
 		{
 			"name"	"The Boston Basher"
-			"prefab"	"weapon_bat_basher"
+			"prefab"	"weapon_bat"
 			"year"			"2010"
 			"item_name"	"#TF_BostonBasher"
 			"propername"	"1"
@@ -4985,6 +4971,23 @@
 			"item_iconname"	"boston_basher"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_boston_basher/c_boston_basher"
 			"model_player"	"models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"bleeding duration"
+				{
+					"attribute_class"	"bleeding_duration"
+					"value" "5"
+				}
+				"hit self on miss"
+				{
+					"attribute_class"	"hit_self_on_miss"
+					"value"	"1"
+				}
+			}
 			"visuals"
 			{
 				"sound_melee_hit"		"BostonBasher.Impact"
@@ -6596,12 +6599,6 @@
 			"year"				"2014"
 			"particle_suffix"	"panic_attack"
 		}
-		"1181"
-		{
-			"name"	"The Hot Hand"
-			"prefab"	"weapon_slapper"
-			"year"				"2017"
-		}
 		"1190"
 		{
 			"name"		"The Second Banana"
@@ -6950,10 +6947,46 @@
 		"10237"
 		{
 			"name"	"Rocket Jumper"
-			"prefab"	"weapon_rocketjumper weapon_reskin"
+			"prefab"	"weapon_rocketlauncher weapon_reskin"
 			"year"			"2016"
+			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
+			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
+			"propername"	"0"
 			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper"
 			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper.mdl"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "2"
+				}
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value" "3.0"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
+				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
+			}
 		}
 		"10264"
 		{
@@ -6989,10 +7022,51 @@
 		"10265"
 		{
 			"name"	"Stickybomb Jumper"
-			"prefab"	"weapon_stickybombjumper weapon_reskin"
+			"prefab"	"weapon_stickybomb_launcher weapon_reskin"
 			"year"			"2016"
+			"item_name"	"#TF_Weapon_StickyBomb_Jump"
+			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
+			"propername"	"0"
 			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper"
 			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper.mdl"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "1"
+				}
+				"maxammo secondary increased"
+				{
+					"attribute_class"	"mult_maxammo_secondary"
+					"value" "3"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	 "custom_projectile_model"
+					"value"			   "models/weapons/w_models/w_stickybomb2.mdl"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
+				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
+			}
 		}
 		"10298"
 		{
@@ -7029,7 +7103,7 @@
 		"10452"
 		{
 			"name"	"Three-Rune Blade"
-			"prefab"	"weapon_bat_basher weapon_reskin"
+			"prefab"	"weapon_bat weapon_reskin"
 			"year"		"2011"
 			"item_type_name"	"#TF_Weapon_Sword"
 			"item_name"	"#TF_ScoutSword"
@@ -7039,6 +7113,23 @@
 			"propername"		"0"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_scout_sword/c_scout_sword"
 			"model_player"	"models/workshop/weapons/c_models/c_scout_sword/c_scout_sword.mdl"		
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"bleeding duration"
+				{
+					"attribute_class"	"bleeding_duration"
+					"value" "5"
+				}
+				"hit self on miss"
+				{
+					"attribute_class"	"hit_self_on_miss"
+					"value"	"1"
+				}
+			}
 			"visuals"
 			{
 				"sound_melee_miss"	"Weapon_Sword.Swing"
@@ -7052,7 +7143,7 @@
 		"10457"
 		{
 			"name"	"The Postal Pummeler"
-			"prefab"	"weapon_axtinguisher weapon_reskin"
+			"prefab"	"weapon_fireaxe weapon_reskin"
 			"year"			"2011"
 			"item_logname"	"mailbox"
 			"item_iconname"	"mailbox"
@@ -7065,11 +7156,29 @@
 			{
 				"min_viewmodel_offset"					"15 2 -12"				
 			}
+			"attributes"
+			{
+				"crit vs burning players"
+				{
+					"attribute_class"	"or_crit_vs_playercond"
+					"value"	"1"
+				}
+				"dmg penalty vs nonburning"
+				{
+					"attribute_class"	"mult_dmg_vs_nonburning"
+					"value"	"0.5"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
 		}
 		"10466"
 		{
 			"name"	"The Maul"
-			"prefab"	"weapon_homewrecker weapon_reskin"
+			"prefab"	"weapon_sledgehammer weapon_reskin"
 			"year"			"2011"
 			"item_logname"	"the_maul"
 			"item_iconname"	"the_maul"
@@ -7078,6 +7187,10 @@
 			"item_description"	"#TF_RFAHammer_Desc"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer"
 			"model_player"	"models/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"15 2 -12"				
+			}
 			"attributes"
 			{
 				"dmg bonus vs buildings"
@@ -7096,10 +7209,7 @@
 					"value"	"1"
 				}
 			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"15 2 -12"				
-			}
+
 		}
 		"10482"
 		{
