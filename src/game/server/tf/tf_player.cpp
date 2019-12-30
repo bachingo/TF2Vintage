@@ -4838,7 +4838,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			int nForceVictimToLaugh = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nForceVictimToLaugh, crit_forces_victim_to_laugh);
 			if ( ( bitsDamage & DMG_CRITICAL ) && nForceVictimToLaugh != 0 )
+			{
+				m_Shared.AddCond(TF_COND_TICKLED, 4.0f);
 				Taunt();
+			}
 			
 			// Notify the damaging weapon.
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
@@ -5700,7 +5703,10 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			int nForceLaughSameWeapon = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER(GetActiveTFWeapon(), nForceLaughSameWeapon, tickle_enemies_wielding_same_weapon);
 			if (nForceLaughSameWeapon != 0)
+			{
+				m_Shared.AddCond(TF_COND_TICKLED, 4.0f);
 				Taunt();
+			}
 		}
 	
 	}
@@ -6310,7 +6316,10 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		int nForceKillerToLaugh = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker, nForceKillerToLaugh, kill_forces_attacker_to_laugh );
 		if ( nForceKillerToLaugh != 0 )
+		{
+			pTFAttacker->m_Shared.AddCond(TF_COND_TICKLED, 4.0f);
 			pTFAttacker->Taunt();
+		}
 	}
 
 	RemoveTeleportEffect();
@@ -10128,6 +10137,9 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 
 	if ( m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
 		criteriaSet.AppendCriteria( "IsHalloweenTaunt", "1" );
+	
+	if ( m_Shared.InCond( TF_COND_TICKLED ) )
+		criteriaSet.AppendCriteria( "IsAprilFoolsTaunt", "1" );
 
 	if ( TFGameRules() )
 	{
