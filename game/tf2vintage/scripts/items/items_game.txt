@@ -2801,6 +2801,11 @@
 			"model_player"	"models/workshop/weapons/c_models/c_claidheamohmor/c_claidheamohmor.mdl"
 			"attributes"
 			{
+				"kill refills meter"
+				{
+					"attribute_class"	"kill_refills_meter"
+					"value"			"0.25"
+				}
 				"crit mod disabled"
 				{
 					"attribute_class"	"mult_crit_chance"
