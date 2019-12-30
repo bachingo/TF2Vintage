@@ -103,6 +103,7 @@
 	"The Original"									"1"
 	"The Widowmaker"								"1"
 	"The Cozy Camper"								"1"
+	"The Scorch Shot"								"1"
 	"The Cleaner's Carbine"							"1"
 	"The Hitman's Heatmaker"						"1"
 	"Baby Face's Blaster"							"1"
