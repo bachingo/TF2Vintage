@@ -122,6 +122,7 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 		m_pTitle->SetText( pItemData->GenerateLocalizedFullItemName() );
 
 		Color colTitle = pScheme->GetColor( g_szQualityColorStrings[pItemData->item_quality], m_colorTitle );
+		m_colQuality = colTitle;
 		m_pTitle->SetFgColor( colTitle );
 	}
 

@@ -71,8 +71,10 @@ void CTFAdvItemButton::Paint()
 {
 	BaseClass::Paint();
 
-	//We Color it the vintage color
-	pButton->SetFgColor(Color(71, 98, 145, 255));
+	//Default to Vintage Blue.
+	Color colButton;
+		colButton = Color(71, 98, 145, 255);
+	pButton->SetFgColor(colButton);
 	pButton->SetFontByString( "HudFontSmallestBold" );
 	pButton->SetCenterWrap( true );
 

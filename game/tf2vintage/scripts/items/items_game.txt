@@ -1440,11 +1440,6 @@
 					"attribute_class"	"mult_postfiredelay"
 					"value"	"0.70"
 				}
-				"Reload time decreased"
-				{
-					"attribute_class"	"mult_reload_time"
-					"value"	"0.50"
-				}
 				"clip size penalty HIDDEN"
 				{
 					"attribute_class"	"mult_clipsize"
@@ -1749,6 +1744,11 @@
 				{
 					"attribute_class"	"rocket_jump_dmg_reduction"
 					"value"	"0.4"
+				}
+				"cancel falling damage"
+				{
+					"attribute_class"	"cancel_falling_damage"
+					"value" "1"
 				}
 			}
 		}
@@ -4048,6 +4048,11 @@
 					"attribute_class"	"set_buff_type"
 					"value"	"1"
 				}
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value" "1.2"
+				}
 			}
 		}
 		"130"
@@ -5618,7 +5623,7 @@
 				"rocket jump damage reduction"
 				{
 					"attribute_class"	"rocket_jump_dmg_reduction"
-					"value" "0.75"
+					"value" "0.8"
 				}
 				"damage penalty"
 				{

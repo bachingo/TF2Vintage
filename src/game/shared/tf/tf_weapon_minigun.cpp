@@ -963,7 +963,7 @@ void CTFMinigun::WeaponSoundUpdate()
 		break;
 	case AC_STATE_SPINNING:
 		if ( (CAttributeManager::AttribHookValue<int>( 0, "minigun_no_spin_sounds", this ) ) && (CAttributeManager::AttribHookValue<int>( 0, "minigun_no_spin_sounds", this ) != 0) )
-			iSound = -1;		// silent spinning.
+			break;		// silent spinning.
 		else
 			iSound = SPECIAL3;	// spinning sound
 		break;

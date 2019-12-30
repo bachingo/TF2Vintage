@@ -47,19 +47,13 @@ CTFProjectile_Rocket *CTFProjectile_Rocket::Create( CBaseEntity *pWeapon, const 
 //-----------------------------------------------------------------------------
 void CTFProjectile_Rocket::Spawn()
 {
-	const char *pszRocketModel = ROCKET_MODEL;
-#if 0
-	CTFPlayer *pPlayer = dynamic_cast<CTFPlayer*>( GetOwnerEntity() );
-	if ( pPlayer )
-	{
-		if ( pPlayer->IsActiveTFWeapon( TF_WEAPON_ROCKETLAUNCHERBETA ) )
-			pszRocketModel = "models/weapons/w_models/w_rocketbeta.mdl";
-	}
+	const char *pszRocketModel;
 	int nUseMiniRockets = 0;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), nUseMiniRockets, mini_rockets);
 	if (nUseMiniRockets != 0)
 		pszRocketModel = MINIROCKET_MODEL;
-#endif
+	else
+		pszRocketModel = ROCKET_MODEL;
 
 	SetModel( pszRocketModel );
 	BaseClass::Spawn();

@@ -24,7 +24,7 @@ public:
 	virtual void Hide();
 	virtual void ShowToolTip( CEconItemDefinition *pItemData );
 	virtual void HideToolTip();
-
+	Color GetQualityColor(void) { return m_colQuality; }
 private:
 	int iItemID;
 	CExLabel	*m_pTitle;
@@ -34,6 +34,7 @@ private:
 	CTFAdvModelPanel *m_pClassModelPanel;
 	CUtlVector<CExLabel*> m_pAttributes;
 	Color	m_colorTitle;
+	Color m_colQuality;
 };
 
 #endif // TF_ITEMMODELTOOLTIPPANEL_H

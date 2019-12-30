@@ -406,7 +406,7 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 				if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
 				{
 					bool bTrue = pVisuals->player_bodygroups.Element( index );
-					if ( bTrue )
+					if ( ( bTrue ) && ( pItem == pActiveItem || pItemDef->act_as_wearable ) )
 					{
 						m_pClassModelPanel->SetBodygroup(i, 1);
 					}
