@@ -384,8 +384,6 @@ void CTFViewModel::StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quatern
 
 		int iBarrelBone = Studio_BoneIndexByName( hdr, "v_minigun_barrel" );
 
-		Assert( iBarrelBone != -1 );
-
 		if ( iBarrelBone != -1 && ( hdr->boneFlags( iBarrelBone ) & boneMask ) )
 		{
 			RadianEuler a;
