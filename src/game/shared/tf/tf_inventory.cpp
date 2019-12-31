@@ -280,13 +280,15 @@ int CTFInventory::GetWeaponPreset(int iClass, int iSlot)
 	KeyValues *pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
 	if (!pClass)	//cannot find class node
 	{	
-		ResetInventory();
+		if (iClass != TF_CLASS_UNDEFINED && iClass <= TF_LAST_NORMAL_CLASS)
+			ResetInventory();
 		return 0;
 	}
 	int iPreset = pClass->GetInt(g_LoadoutSlots[iSlot], -1);
-	if (iPreset == -1)	//cannot find slot node
+	if (iPreset == -1 ) //cannot find slot node	
 	{
-		ResetInventory();
+		if ( ( iSlot != TF_LOADOUT_SLOT_UTILITY && iSlot != TF_LOADOUT_SLOT_ACTION ) && iSlot < TF_LOADOUT_SLOT_ZOMBIE )
+			ResetInventory();
 		return 0;
 	}
 
@@ -301,7 +303,8 @@ void CTFInventory::SetWeaponPreset(int iClass, int iSlot, int iPreset)
 	KeyValues* pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
 	if (!pClass)	//cannot find class node
 	{
-		ResetInventory();
+		if (iClass != TF_CLASS_UNDEFINED && iClass <= TF_LAST_NORMAL_CLASS)
+			ResetInventory();
 		pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
 	}
 	pClass->SetInt(GetSlotName(iSlot), iPreset);
