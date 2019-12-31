@@ -719,7 +719,6 @@
 			"item_class"	"saxxy"
 			"anim_slot" "MELEE_ALLCLASS"
 			"item_slot"	"melee"
-			"anim_slot" "MELEE_ALLCLASS"
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -6"
@@ -1391,6 +1390,7 @@
 			"propername"		"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_trenchgun/c_trenchgun"
 			"model_player"	"models/workshop/weapons/c_models/c_trenchgun/c_trenchgun.mdl"
+			"item_slot"	"primary"
 			"used_by_classes"
 			{
 				"engineer"	"primary"
@@ -4152,7 +4152,7 @@
 			"item_type_name"	"#TF_Weapon_LunchBox"
 			"item_name"	"#TF_Unique_Lunchbox_Chocolate"
 			"propername"	"1"
-			"image_inventory"	"backpack/weapons/c_models/c_chocolate/c_chocolate"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_chocolate/c_chocolate"
 			"model_player"	"models/weapons/c_models/c_chocolate/c_chocolate.mdl"
 			"attributes"
 			{
