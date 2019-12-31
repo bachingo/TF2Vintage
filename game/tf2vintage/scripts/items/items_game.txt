@@ -1322,6 +1322,7 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_tele_shotgun/c_tele_shotgun"
 			"model_player"	"models/workshop/weapons/c_models/c_tele_shotgun/c_tele_shotgun.mdl"
+			"item_slot"	"primary"
 			"used_by_classes"
 			{
 				"engineer"	"1"
@@ -6069,6 +6070,7 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_dex_shotgun/c_dex_shotgun"
 			"model_player"	"models/workshop_partner/weapons/c_models/c_dex_shotgun/c_dex_shotgun.mdl"
+			"item_slot"	"primary"
 			"used_by_classes"
 			{
 				"engineer"	"1"
