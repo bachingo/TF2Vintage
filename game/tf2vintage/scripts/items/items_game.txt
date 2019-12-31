@@ -6295,11 +6295,6 @@
 					"attribute_class"	"sniper_no_zoomout"
 					"value" "1"			
 				}
-				"sniper no dot"
-				{
-					"attribute_class"	"sniper_no_dot"
-					"value" "1"			
-				}
 				"silent killer notaknife"
 				{
 					"attribute_class"	"set_silent_killer"
