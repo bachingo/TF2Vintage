@@ -560,6 +560,7 @@ bool CTFPlayerShared::IsMiniCritBoosted( void )
 bool CTFPlayerShared::IsSpeedBoosted( void )
 {
 	if (InCond( TF_COND_SPEED_BOOST ) ||
+		InCond( TF_COND_SPEED_BOOST_FEIGN ) ||
 		InCond( TF_COND_HALLOWEEN_SPEED_BOOST ))
 		return true;
 	return false;
