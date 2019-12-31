@@ -7446,6 +7446,11 @@
 			"propername"		"1"
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"engineer"	"1"
+			}
 			"attributes"
 			{
 				"ragdolls become ash"
