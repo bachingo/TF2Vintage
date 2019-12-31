@@ -1249,7 +1249,7 @@
 				"clip size penalty"
 				{
 					"attribute_class"	"mult_clipsize"
-					"value" "0.66"
+					"value" "0.67"
 				}
 				"mod mini-crit airborne"
 				{
@@ -1360,7 +1360,7 @@
 				"clip size penalty"
 				{
 					"attribute_class"	"mult_clipsize"
-					"value"				"0.66"
+					"value"				"0.67"
 				}
 				"repair health to metal ratio DISPLAY ONLY"
 				{
@@ -1422,7 +1422,7 @@
 				"clip size penalty HIDDEN"
 				{
 					"attribute_class"	"mult_clipsize"
-					"value"	"0.66"
+					"value"	"0.67"
 				}
 				"single wep deploy time decreased"
 				{
@@ -6376,7 +6376,7 @@
 				"clip size penalty"
 				{
 					"attribute_class"	"mult_clipsize"
-					"value"				"0.66"
+					"value"				"0.67"
 				}
 			}
 			"visuals"
@@ -6514,7 +6514,7 @@
 				"clip size penalty"
 				{
 					"attribute_class"	"mult_clipsize"
-					"value" "0.66"
+					"value" "0.67"
 				}
 				"spread penalty"
 				{
