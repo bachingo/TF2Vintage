@@ -2571,7 +2571,14 @@ void CTFPlayerShared::UpdatePhaseEffects(void)
 void CTFPlayerShared::UpdateSpeedBoostEffects(void)
 {
 	if ( !IsSpeedBoosted() )
+	{
+		if( m_pSpeedTrails )
+		{
+			m_pOuter->ParticleProp()->StopEmission( m_pSpeedTrails );
+			m_pSpeedTrails = NULL;
+		}
 		return;
+	}
 
 #ifdef CLIENT_DLL
 	if(  m_pOuter->GetAbsVelocity() != vec3_origin )
