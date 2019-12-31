@@ -10032,7 +10032,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 				break;
 		}
 
-		if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_SNIPERRIFLE )
+		if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_SNIPERRIFLE ||  pActiveWeapon->GetWeaponID() == TF_WEAPON_SNIPERRIFLE_DECAP )
 		{
 			CTFSniperRifle *pRifle = dynamic_cast<CTFSniperRifle *>( pActiveWeapon );
 			if ( pRifle && pRifle->IsZoomed() )
