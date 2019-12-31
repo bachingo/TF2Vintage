@@ -266,7 +266,7 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 
 			CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
 			bool bIsMinigun = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_MINIGUN );
-			bool bIsSniperRifle = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE );
+			bool bIsSniperRifle = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE_DECAP ) );
 			bool bIsRobotArm = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_ROBOT_ARM );
 
 			// Heavy weapons primary fire.

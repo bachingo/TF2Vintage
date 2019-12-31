@@ -3932,6 +3932,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 				switch ( pRocket->GetWeaponID() )
 				{
 					case TF_WEAPON_ROCKETLAUNCHER:
+					case TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE:
 						killer_weapon_name = "deflect_rocket";
 						break;
 					case TF_WEAPON_COMPOUND_BOW: //does this go here?

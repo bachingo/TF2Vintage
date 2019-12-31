@@ -4164,7 +4164,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 					// play the critical shot sound to the shooter	
 					if ( pWpn )
 					{
-						if ( pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE ) )
+						if ( pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE ) || pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE_DECAP ) )
 							pWpn->WeaponSound( BURST );
 
 						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWpn, flDamage, headshot_damage_modify );
@@ -5037,6 +5037,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 						switch ( pWeapon->GetWeaponID() )
 						{
 							case TF_WEAPON_ROCKETLAUNCHER:
+							case TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE:
 							case TF_WEAPON_PIPEBOMBLAUNCHER:
 								// Rocket launcher and sticky launcher only have half the bonus of the other weapons at short range
 								flRandomDamage *= 0.5;
@@ -5163,6 +5164,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 						switch ( pWeapon->GetWeaponID() )
 						{
 							case TF_WEAPON_ROCKETLAUNCHER:
+							case TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE:
 							case TF_WEAPON_PIPEBOMBLAUNCHER:
 								// Rocket launcher and sticky launcher only have half the bonus of the other weapons at short range
 								flRandomDamage *= 0.5;
