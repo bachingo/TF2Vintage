@@ -860,7 +860,7 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 		CALL_ATTRIB_HOOK_FLOAT( flHealthModSpread, panic_attack_negative );
 		if (flHealthModSpread != 1)
 		{
-			flSpread *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, 1.0, flHealthModSpread );
+			flSpread *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, flHealthModSpread, 1.0 );
 		}	
 	}
 	
