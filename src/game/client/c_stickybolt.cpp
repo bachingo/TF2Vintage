@@ -140,10 +140,11 @@ private:
 	Vector  m_vWorld;
 };
 
-void CreateCrossbowBolt(const Vector &vecOrigin, const Vector &vecDirection, char cArrowModel, int iSkin)
+void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin  )
 {
+	Assert( iType >= 0 && iType < ARRAYSIZE( g_pszArrowModelClient ) );
 	//repurpose old crossbow collision code for huntsman collisions
-	const model_t *pModel = engine->LoadModel( &cArrowModel );
+	const model_t *pModel = engine->LoadModel( g_pszArrowModelClient[ iType ] );
 
 	QAngle vAngles;
 	VectorAngles( vecDirection, vAngles );
@@ -154,7 +155,7 @@ void CreateCrossbowBolt(const Vector &vecOrigin, const Vector &vecDirection, cha
 
 }
 
-void StickRagdollNow(const Vector &vecOrigin, const Vector &vecDirection, char cArrowModel, int iSkin)
+void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin )
 {
 	Ray_t	shotRay;
 	trace_t tr;
@@ -171,7 +172,7 @@ void StickRagdollNow(const Vector &vecOrigin, const Vector &vecDirection, char c
 	CRagdollBoltEnumerator ragdollEnum( shotRay, vecOrigin );
 	partition->EnumerateElementsAlongRay( PARTITION_CLIENT_RESPONSIVE_EDICTS, shotRay, false, &ragdollEnum );
 	
-	CreateCrossbowBolt(vecOrigin, vecDirection, cArrowModel, iSkin);
+	CreateCrossbowBolt( vecOrigin, vecDirection, iType, iSkin  );
 }
 
 //-----------------------------------------------------------------------------
@@ -180,7 +181,7 @@ void StickRagdollNow(const Vector &vecOrigin, const Vector &vecDirection, char c
 //-----------------------------------------------------------------------------
 void StickyBoltCallback( const CEffectData &data )
 {
-	 StickRagdollNow( data.m_vOrigin, data.m_vNormal, data.m_cModel, data.m_nSkin );
+	 StickRagdollNow( data.m_vOrigin, data.m_vNormal, data.m_iType, data.m_nSkin );
 }
 
 

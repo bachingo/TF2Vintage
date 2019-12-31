@@ -416,7 +416,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 					data.m_vOrigin = tr.endpos;
 					data.m_vNormal = vForward;
 					data.m_nEntIndex = tr.fraction != 1.0f;
-					data.m_cModel = *strdup(g_pszArrowModels[m_iType]);
+					data.m_iType = m_iType;
 					data.m_nSkin = m_nSkin;
 					DispatchEffect( "BoltImpact", data );
 				}
@@ -483,7 +483,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				data.m_vOrigin = tr.endpos;
 				data.m_vNormal = vForward;
 				data.m_nEntIndex = tr.fraction != 1.0f;
-				data.m_cModel = *strdup(g_pszArrowModels[m_iType]);
+				data.m_iType = m_iType;
 				data.m_nSkin = m_nSkin;
 				DispatchEffect( "BoltImpact", data );
 			}
