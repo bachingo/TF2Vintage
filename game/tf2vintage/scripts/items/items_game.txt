@@ -3941,7 +3941,32 @@
 		"131"
 		{
 			"name"	"Legacy Chargin' Targe"
-
+			"prefab"	"weapon_shield"
+			"year"		"2009"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
+			"model_player"	"models/weapons/c_models/c_targe/c_targe_team.mdl"
+			"attributes"
+			{
+				"dmg taken from fire reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"			"0.5"
+				}
+				"dmg taken from blast reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_explosions"
+					"value"			"0.6"
+				}
+			}
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
 		}
 		"132"
 		{
@@ -6907,11 +6932,27 @@
 		"10131"
 		{
 			"name"	"The Chargin' Targe"
-			"prefab"	"weapon_shield weapon_reskin"
+			"prefab"	"weapon_wearable weapon_reskin"
 			"year"		"2010"
+			"demoknight"	"1"
 			"propername"	"1"
+			"item_class"		"tf_wearable_demoshield"
+			"item_type_name"	"#TF_Wearable_Shield"
+			"item_name"		"#TF_Unique_Achievement_Shield"
+			"item_description"	"#TF_Unique_Achievement_Shield_Desc"
+			"item_slot"		"secondary"
+			"equip_region"	"arms"
+			"item_logname"	"demoshield"
+			"item_iconname"	"demoshield"
+			"act_as_wearable" "1"
+			"attach_to_hands"	"0"
+			"attach_to_hands_vm_only"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
 			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
 			"attributes"
 			{
 				"dmg taken from fire reduced"
@@ -6923,6 +6964,11 @@
 				{
 					"attribute_class"	"mult_dmgtaken_from_explosions"
 					"value"			"0.6"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
 				}
 			}
 		}
