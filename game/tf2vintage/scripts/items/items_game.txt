@@ -1731,39 +1731,6 @@
 				}
 			}
 		}
-		"weapon_sledgehammer"
-		{
-			"prefab"	"weapon_fireaxe"
-			"item_type_name"	"#TF_Weapon_SledgeHammer"
-			"visuals"
-			{
-				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
-			}
-		}
-		"weapon_homewrecker"
-		{
-			"prefab"	"weapon_sledgehammer"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer"
-			"model_player"	"models/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer.mdl"
-			"attributes"
-			{
-				"dmg bonus vs buildings"
-				{
-					"attribute_class"	"mult_dmg_vs_buildings"
-					"value"	"2.0"
-				}
-				"dmg penalty vs players"
-				{
-					"attribute_class"	"mult_dmg_vs_players"
-					"value"	"0.75"
-				}
-				"damage applies to sappers"
-				{
-					"attribute_class"	"set_dmg_apply_to_sapper"
-					"value"	"1"
-				}
-			}
-		}
 		"weapon_gloves"
 		{
 			"item_class"	"tf_weapon_fists"
@@ -2596,12 +2563,63 @@
 				"sound_special2"	"Sword.Idle"
 			}
 		}
+		"weapon_katana"
+		{
+			"item_class"	"tf_weapon_katana"
+			"item_type_name"	"#TF_Weapon_Sword"
+			"demoknight"	"1"
+			"item_slot"	"melee"
+			"anim_slot"	"item1"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+				"demoman"	"1"
+			}
+			"model_player_per_class"
+			{
+				"soldier"	"models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana_soldier.mdl"
+				"demoman"	"models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana.mdl"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 -5 -10"
+			}
+			"attributes"
+			{
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_miss"	"Weapon_Sword.Swing"
+				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
+				"sound_burst"		"Weapon_Sword.SwingCrit"
+				"sound_special1"	"Sword.Hit"
+				"sound_special2"	"Sword.Idle"
+			}
+		}
 		"weapon_eyelander"
 		{
-			"prefab"	"weapon_sword"
+			"item_class"	"tf_weapon_sword"
+			"demoknight"	"1"
+			"item_slot"	"melee"
+			"anim_slot"	"item1"
 			"item_type_name"	"#TF_Weapon_Sword"
 			"image_inventory"	"backpack/weapons/c_models/c_claymore/c_claymore"
 			"model_player"	"models/weapons/c_models/c_claymore/c_claymore.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"			"12 -3 -10"		
+			}
 			"attributes"
 			{
 				"crit mod disabled"
@@ -2630,9 +2648,14 @@
 					"value"	"6"			
 				}
 			}
-			"static_attrs"
+			"visuals"
 			{
-				"min_viewmodel_offset"			"12 -3 -10"		
+				"sound_melee_miss"	"Weapon_Sword.Swing"
+				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
+				"sound_burst"		"Weapon_Sword.SwingCrit"
+				"sound_special1"	"Sword.Hit"
+				"sound_special2"	"Sword.Idle"
 			}
 		}
 		"weapon_battleaxe"
@@ -4041,11 +4064,12 @@
 		"153"
 		{
 			"name"	"The Homewrecker"
-			"prefab"	"weapon_sledgehammer"
+			"prefab"	"weapon_fireaxe"
 			"propername"	"1"
 			"year"			"2010"
 			"item_logname"	"sledgehammer"
 			"item_iconname"	"sledgehammer"
+			"item_type_name"	"#TF_Weapon_SledgeHammer"
 			"item_name"	"#TF_Unique_SledgeHammer"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer"
 			"model_player"	"models/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer.mdl"
@@ -4066,6 +4090,10 @@
 					"attribute_class"	"set_dmg_apply_to_sapper"
 					"value"	"1"
 				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
 			}
 		}
 		"154"
@@ -4260,10 +4288,11 @@
 		"214"
 		{
 			"name"	"The Powerjack"
-			"prefab"	"weapon_sledgehammer"
+			"prefab"	"weapon_fireaxe"
 			"year"			"2010"
 			"item_logname"	"powerjack"
 			"item_iconname"	"powerjack"
+			"item_type_name"	"#TF_Weapon_SledgeHammer"
 			"item_name"	"#TF_ThePowerjack"
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_powerjack/c_powerjack"
@@ -4290,6 +4319,10 @@
 					"attribute_class"	"mult_dmgtaken"
 					"value"	"1.2"
 				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
 			}
 		}
 		"215"
@@ -5326,31 +5359,14 @@
 		"357"
 		{
 			"name"	"The Half-Zatoichi"
-			"prefab"	"weapon_sword"
+			"prefab"	"weapon_katana"
 			"year"				"2011"
-			"item_class"	"tf_weapon_katana"
 			"item_logname"	"demokatana"
 			"item_iconname"	"demokatana"
 			"item_type_name"	"#TF_Weapon_SoldierKatana"
 			"item_name"	"#TF_SoldierKatana"
 			"item_description"	"#TF_SoldierKatana_Desc"
 			"propername"	"1"
-			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana"
-			"anim_slot"	"melee"
-			"used_by_classes"
-			{
-				"soldier"	"1"
-				"demoman"	"1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 -5 -10"
-			}
-			"model_player_per_class"
-			{
-				"soldier"	"models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana_soldier.mdl"
-				"demoman"	"models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana.mdl"
-			}
 			"attributes"
 			{
 				"decapitate type"
@@ -7175,10 +7191,11 @@
 		"10466"
 		{
 			"name"	"The Maul"
-			"prefab"	"weapon_sledgehammer weapon_reskin"
+			"prefab"	"weapon_fireaxe weapon_reskin"
 			"year"			"2011"
 			"item_logname"	"the_maul"
 			"item_iconname"	"the_maul"
+			"item_type_name"	"#TF_Weapon_SledgeHammer"
 			"item_name"	"#TF_RFAHammer"
 			"propername"	"1"
 			"item_description"	"#TF_RFAHammer_Desc"
@@ -7206,7 +7223,10 @@
 					"value"	"1"
 				}
 			}
-
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
+			}
 		}
 		"10482"
 		{
