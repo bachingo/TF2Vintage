@@ -1423,6 +1423,11 @@
 					"attribute_class"	"repair_health_to_metal_ratio_DISPLAY_ONLY"
 					"value"				"4"
 				}
+				"damage bonus HIDDEN"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"				"6.67"
+				}
 			}
 			"visuals"
 			{
