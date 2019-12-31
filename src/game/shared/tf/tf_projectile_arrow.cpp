@@ -140,9 +140,6 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 				iType = 5;
 			}
 		}	
-
-		// Set arrow type.
-		pArrow->SetType( iType );
 		
 		if (iType == 0 || iType == 3 )	// Huntsman Arrows.
 		{
@@ -180,6 +177,9 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 				flSpeed = 1500.00f;
 			}
 		}
+
+		// Set arrow type.
+		pArrow->SetType(iType);
 
 		// Spawn.
 		DispatchSpawn( pArrow );
