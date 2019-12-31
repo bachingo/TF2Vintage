@@ -560,7 +560,6 @@ bool CTFPlayerShared::IsMiniCritBoosted( void )
 bool CTFPlayerShared::IsSpeedBoosted( void )
 {
 	if (InCond( TF_COND_SPEED_BOOST ) ||
-		InCond( TF_COND_SPEED_BOOST_FEIGN ) ||
 		InCond( TF_COND_HALLOWEEN_SPEED_BOOST ))
 		return true;
 	return false;
@@ -854,6 +853,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 
 	case TF_COND_SPEED_BOOST:
 	case TF_COND_HALLOWEEN_SPEED_BOOST:
+	case TF_COND_SPEED_BOOST_FEIGN:
 		OnAddSpeedBoost();
 		break;
 
@@ -987,6 +987,12 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		OnRemovePhase();
 		break;
 
+	case TF_COND_SPEED_BOOST:
+	case TF_COND_HALLOWEEN_SPEED_BOOST:
+	case TF_COND_SPEED_BOOST_FEIGN:
+		OnRemoveSpeedBoost();
+		break;
+		
 	case TF_COND_OFFENSEBUFF:
 	case TF_COND_DEFENSEBUFF:
 	case TF_COND_REGENONDAMAGEBUFF:
