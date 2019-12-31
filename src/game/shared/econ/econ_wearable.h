@@ -39,6 +39,8 @@ public:
 	virtual void			UpdateWearableBodyGroups( CBasePlayer *pPlayer );
 	virtual void			GiveTo( CBaseEntity *pEntity );
 	virtual void			RemoveFrom( CBaseEntity *pEntity );
+	
+	virtual bool			ItemFallsOffPlayer( void )	{return m_bItemFallsOff = true;}
 
 #ifdef GAME_DLL
 	virtual void			Equip( CBasePlayer *pPlayer );

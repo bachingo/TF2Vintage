@@ -914,7 +914,7 @@ void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue, C_TFPlayer *pPlayer )
 		if ( pItem && pItem->GetItem()->GetStaticData() ) // If valid item
 		{
 			// Add the items to the ragdoll. Skip over items that fall off when dying.
-			bool bItemFallsOff = pItem->GetItem()->GetStaticData()->itemfalloff;
+			bool bItemFallsOff = pItem->ItemFallsOffPlayer();
 			if ( !bItemFallsOff || ( bItemFallsOff && bIsStatue ) )
 			{
 				pItem->ValidateModelIndex();
@@ -4435,7 +4435,7 @@ void C_TFPlayer::DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVe
 		CEconWearable* pItem = m_hMyWearables[i];
 		if ( pItem && pItem->GetItem()->GetStaticData() )
 		{
-			if ( pItem->m_bItemFallsOff )
+			if ( pItem->ItemFallsOffPlayer() == true )
 			{
 				breakmodel_t breakModel;
 				if (pItem->m_bExtraWearable)
