@@ -1694,6 +1694,7 @@
 			"item_type_name"	"#TF_Weapon_Parachute"
 			"item_name"	"#TF_Weapon_BaseJumper"
 			"item_description"	"#TF_Weapon_BaseJumper_Desc"
+			"item_slot"	"secondary"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_paratrooper_pack/c_paratrooper_pack"
 			"model_player" "models/workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack.mdl"
 			"used_by_classes"
@@ -2805,52 +2806,6 @@
 				}
 			}
 		}
-		"weapon_demoman_boots"
-		{
-			"prefab"			"weapon_wearable"
-			"demoknight"	"1"
-			"item_type_name" 	"#TF_Wearable_Boots"
-			"base_item_name"	"The Bootlegger"
-			"item_slot"		"primary"
-			"equip_region"	"feet"
-			"anim_slot"		"FORCE_NOT_USED"
-			"propername"	"0"
-			"act_as_wearable" "1"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"attributes"
-			{
-				"mult charge turn control"
-				{
-					"attribute_class"	"charge_turn_control"
-					"value"			"3"
-				}
-				"max health additive bonus"
-				{
-					"attribute_class"	"add_maxhealth"
-					"value" "25"
-				}
-				"kill refills meter"
-				{
-					"attribute_class"	"kill_refills_meter"
-					"value"			"0.25"
-				}
-				"move speed bonus"
-				{
-					"attribute_class"	"mult_player_movespeed"
-					"value"	"1.10"
-				}
-			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"shoes"			"1"
-				}
-			}
-		}
 		"weapon_shield"
 		{
 			"prefab"	"weapon_wearable"
@@ -2876,25 +2831,6 @@
 				{
 					"attribute_class"	"allowed_in_medieval_mode"
 					"value"	"1"
-				}
-			}
-		}
-		"weapon_targe"
-		{
-			"prefab"	"weapon_shield"
-			"propername"	"1"
-			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
-			"attributes"
-			{
-				"dmg taken from fire reduced"
-				{
-					"attribute_class"	"mult_dmgtaken_from_fire"
-					"value"			"0.5"
-				}
-				"dmg taken from blast reduced"
-				{
-					"attribute_class"	"mult_dmgtaken_from_explosions"
-					"value"			"0.6"
 				}
 			}
 		}
@@ -4005,9 +3941,7 @@
 		"131"
 		{
 			"name"	"Legacy Chargin' Targe"
-			"prefab"	"weapon_targe"
-			"year"		"2009"
-			"model_player"	"models/weapons/c_models/c_targe/c_targe_team.mdl"
+
 		}
 		"132"
 		{
@@ -5420,12 +5354,52 @@
 		"405"
 		{
 			"name"			"Ali Baba's Wee Booties"
-			"prefab"			"weapon_demoman_boots"
+			"prefab"			"weapon_wearable"
 			"year"				"2011"
+			"demoknight"		"1"
 			"item_type_name" 	"#TF_Wearable_Boots"
 			"item_name"		"#TF_Ali_Babas_Wee_Booties"
+			"item_slot"		"primary"
+			"equip_region"	"feet"
+			"anim_slot"		"FORCE_NOT_USED"
+			"propername"	"0"
+			"act_as_wearable" "1"
 			"image_inventory"	"backpack/workshop/player/items/demo/demo_booties/demo_booties"
 			"model_player"		"models/workshop/player/items/demo/demo_booties/demo_booties.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"attributes"
+			{
+				"mult charge turn control"
+				{
+					"attribute_class"	"charge_turn_control"
+					"value"			"3"
+				}
+				"max health additive bonus"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value" "25"
+				}
+				"kill refills meter"
+				{
+					"attribute_class"	"kill_refills_meter"
+					"value"			"0.25"
+				}
+				"move speed bonus"
+				{
+					"attribute_class"	"mult_player_movespeed"
+					"value"	"1.10"
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"shoes"			"1"
+				}
+			}
 		}
 		"406"
 		{
@@ -6933,9 +6907,24 @@
 		"10131"
 		{
 			"name"	"The Chargin' Targe"
-			"prefab"	"weapon_targe weapon_reskin"
+			"prefab"	"weapon_shield weapon_reskin"
 			"year"		"2010"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
 			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
+			"attributes"
+			{
+				"dmg taken from fire reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"			"0.5"
+				}
+				"dmg taken from blast reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_explosions"
+					"value"			"0.6"
+				}
+			}
 		}
 		"10221"
 		{
@@ -7303,13 +7292,52 @@
 		"10608"
 		{
 			"name"	"The Bootlegger"
+			"prefab"			"weapon_wearable weapon_reskin"
 			"year"				"2011"
-			"prefab"			"weapon_demoman_boots weapon_reskin"
+			"demoknight"		"1"
 			"propername"		"1"
 			"item_name"			"#TF_Bootlegger"
 			"item_description"	"#TF_Bootlegger_Desc"
+			"item_slot"		"primary"
+			"equip_region"	"feet"
+			"anim_slot"		"FORCE_NOT_USED"
 			"image_inventory"	"backpack/workshop/player/items/demo/pegleg/pegleg"
 			"model_player"		"models/workshop/player/items/demo/pegleg/pegleg.mdl"
+			"act_as_wearable" "1"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"attributes"
+			{
+				"mult charge turn control"
+				{
+					"attribute_class"	"charge_turn_control"
+					"value"			"3"
+				}
+				"max health additive bonus"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value" "25"
+				}
+				"kill refills meter"
+				{
+					"attribute_class"	"kill_refills_meter"
+					"value"			"0.25"
+				}
+				"move speed bonus"
+				{
+					"attribute_class"	"mult_player_movespeed"
+					"value"	"1.10"
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"shoes"			"1"
+				}
+			}
 		}
 		"10609"
 		{
