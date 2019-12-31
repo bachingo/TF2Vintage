@@ -149,7 +149,7 @@ ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "
 
 ConVar tf2v_disable_holiday_loot( "tf2v_disable_holiday_loot", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disable loot drops in holiday gamemodes" );
 
-ConVar tf2v_player_misses( "tf2v_player_misses", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
+ConVar tf2v_player_misses( "tf2v_player_misses", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random misses are enabled." );
 ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Percent chance for a random miss.");
 
 ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
@@ -4562,7 +4562,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	
 	// We calculate out a random chance of a critical miss happening.
 	bool bIsCriticalMiss = false;
-	if ( ( tf2v_misschance.GetFloat() > 0.0f ) && ( tf2v_player_misses.GetBool() ) )
+	if ( ( tf2v_misschance.GetFloat() > 0.0f ) && ( tf2v_player_misses.GetBool() == true ) )
 	{
 		int iRandomChance = RandomInt(0.0,100.0);
 		if ( iRandomChance <= tf2v_misschance.GetFloat() )
