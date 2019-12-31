@@ -2572,11 +2572,13 @@ void CTFPlayerShared::UpdateSpeedBoostEffects(void)
 {
 	if ( !IsSpeedBoosted() )
 	{
+#ifdef CLIENT_DLL
 		if( m_pSpeedTrails )
 		{
 			m_pOuter->ParticleProp()->StopEmission( m_pSpeedTrails );
 			m_pSpeedTrails = NULL;
 		}
+#endif
 		return;
 	}
 
