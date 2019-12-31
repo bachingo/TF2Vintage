@@ -2530,7 +2530,7 @@ int CTFWeaponBase::GetWorldModelIndex( void )
 		{
 			int iModelIndex = pPlayer->m_Shared.GetDisguiseWeaponModelIndex();
 
-			Assert( iModelIndex != -1 );
+			//Assert( iModelIndex != -1 );
 
 			return iModelIndex;
 		}	
