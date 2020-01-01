@@ -1132,24 +1132,35 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			// Being healed by a medigun, don't decay our health
 			bDecayHealth = false;
 			
-			// Check our overheal level, and cap if necessary.
-			if ( m_aHealers[i].pPlayer.IsValid() )
+			// Dispensers heal at a constant rate
+			if ( m_aHealers[i].bDispenserHeal )
 			{
-				// Check the mult_medigun_overheal_amount attribute.
-				CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
+				// Dispensers heal at a slower rate, but ignore flScale
+				m_flHealFraction += gpGlobals->frametime * m_aHealers[i].flAmount;
+			}
+			else	// We're being healed by a medic
+			{
+				// We're being healed by a medic
 				float flOverhealAmount = 1.0f;
-				float flDecayAmount = 1.0f;
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flDecayAmount, mult_medigun_overheal_decay);
-					
+				float flDecayAmount = 1.0f;		
+				// Check our overheal level, and cap if necessary.
+				if ( m_aHealers[i].pPlayer.IsValid() )
+				{
+					// Check the mult_medigun_overheal_amount attribute.
+					CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
+
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flDecayAmount, mult_medigun_overheal_decay);
+				}
+						
 				// Iterate our overheal amount, if we're a higher value.
 				if (flOverhealAmount > flMaxOverhealRatio)
 					flMaxOverhealRatio = flOverhealAmount;
-					
+						
 				// Iterate our decay, if we're a higher value.
 				if (flDecayAmount > flMaxDecayRatio)
 					flMaxDecayRatio = flDecayAmount;
-				
+					
 				// Check our healer's overheal attribute.
 				if ( bHasFullHealth )
 				{			
@@ -1159,17 +1170,8 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 					if ( iMaxOverheal > m_pOuter->GetHealth() )
 						continue;
 				}
-			}
-
-			// Dispensers heal at a constant rate
-			if ( m_aHealers[i].bDispenserHeal )
-			{
-				// Dispensers heal at a slower rate, but ignore flScale
-				m_flHealFraction += gpGlobals->frametime * m_aHealers[i].flAmount;
-			}
-			else	// player heals are affected by the last damage time
-			{
-				m_flHealFraction += gpGlobals->frametime * m_aHealers[i].flAmount * flScale;
+					// Player heals are affected by the last damage time
+					m_flHealFraction += gpGlobals->frametime * m_aHealers[i].flAmount * flScale;
 			}
 
 			fTotalHealAmount += m_aHealers[i].flAmount;
