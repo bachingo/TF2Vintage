@@ -1336,10 +1336,6 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_russian_riot/c_russian_riot"
 			"model_player"	"models/workshop/weapons/c_models/c_russian_riot/c_russian_riot.mdl"
-			"used_by_classes"
-			{
-				"heavy"	"1"
-			}
 			"static_attrs"
 			{
 				"min_viewmodel_offset"				"10 0 -10"
@@ -1354,7 +1350,7 @@
 				"clip size bonus"
 				{
 					"attribute_class"	"mult_clipsize"
-					"value" "1.33"
+					"value" "1.34"
 				}
 				"fire rate bonus"
 				{
@@ -5796,6 +5792,10 @@
 			"name"	"The Family Business"
 			"prefab"	"weapon_russian_riot"
 			"year"			"2011"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
 			"particle_suffix"	"family_business"
 		}
 		"426"
@@ -5855,6 +5855,20 @@
 					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT3_VM_INSPECT_END"
 				}
 			}
+		}
+		"427"
+		{
+			"name"	"The Family Business (Multi-Class)"
+			"prefab"	"weapon_russian_riot"
+			"year"			"2011"
+			"particle_suffix"	"family_business"
+			"used_by_classes"
+			{
+				"pyro"	"secondary"
+				"soldier"	"secondary"
+				"engineer"	"primary"
+			}
+
 		}
 		"444"
 		{
@@ -6706,6 +6720,49 @@
 				{
 					"attribute_class"	"charge_recharge_rate"
 					"value"	"1.5"
+				}
+			}
+		}
+		"1194"
+		{
+			"name"		"Spawn Camper"
+			"prefab"		"weapon_backpack weapon_custom"
+			"item_name"		"#TF_sum19_spawn_camper_backpack"
+			"item_description"		"#TF_sum19_spawn_camper_backpack_Desc"
+			"item_type_name"		"#TF_Wearable_Backpack"
+			"image_inventory"		"backpack/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack"
+			"model_player"			"models/workshop/player/items/pyro/sum19_spawn_camper_backpack/sum19_spawn_camper_backpack.mdl"
+			"item_slot"	"secondary"
+			"used_by_classes"
+			{
+				"pyro"		"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"backpack"		"1"
+				}
+			}
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
+			"attributes"
+			{
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value" "1.5"
+				}
+				"health regen"
+				{
+					"attribute_class"	"add_health_regen"
+					"value"	"6"
 				}
 			}
 		}

@@ -93,6 +93,7 @@
 	"Tomislav"										"1"
 	"The Family Business"							"1"
 	"The Eviction Notice"							"1"
+	"The Family Business (Multi-Class)"				"1"
 	"The Mantreads"									"1"
 	"The Disciplinary Action"						"1"
 	"The Soda Popper"								"1"
@@ -119,6 +120,7 @@
 	"The Iron Bomber"								"1"
 	"Panic Attack Shotgun"							"1"
 	"The Second Banana"								"1"
+	"Spawn Camper"									"1"
 	"Ludmila"										"1"
 	
 	// Reskins
