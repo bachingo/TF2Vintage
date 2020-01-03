@@ -153,6 +153,7 @@ enum
 
 extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
+extern const char *g_aPlayerLoadoutPresets[];			// Loadout slots for the player
 
 bool IsPlayerClassName( const char *name );
 int GetClassIndexFromString( const char *name, int maxClass );
