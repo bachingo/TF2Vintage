@@ -66,7 +66,7 @@ public:
 	bool ApplyToEntity( CBaseEntity *pEntity );
 
 public:
-	CTakeDamageInfo info;
+	const CTakeDamageInfo *info;
 	Vector m_vecSrc;
 	float m_flRadius;
 	float m_flSelfDamageRadius;

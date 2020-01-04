@@ -207,8 +207,9 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	if (nFlareMode != 0)
 	{
 		// We explode in a small radius, set us up as an explosion.
+		CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING, &vectorReported );
 		CTFRadiusDamageInfo radiusInfo;
-		radiusInfo.info.Set( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING, &vectorReported );
+		radiusInfo.info = &newInfo;
 		radiusInfo.m_vecSrc = vecOrigin;
 		float flRadius = GetFlareRadius();
 		radiusInfo.m_flRadius = flRadius;
