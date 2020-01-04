@@ -512,39 +512,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 
 		//UTIL_Remove( this );
 	}
-	else if ( pOther->IsBaseObject() && pOther->GetTeamNumber() == ToTFPlayer(pAttacker)->GetTeamNumber() )
-	{
-		// We hit a friendly building.
-		float flArrowheal = 0;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), flArrowheal, arrow_heals_buildings);
-		if (flArrowheal > 0)
-		{
-			// Heal our building.
-			int	iAmountToHeal = min( (int)(flArrowheal), pOther->GetMaxHealth() - pOther->GetHealth() );
-			float flHealthtoMetalRatio = 0;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), flHealthtoMetalRatio, repair_health_to_metal_ratio_DISPLAY_ONLY);
-			float flNewHealth;
-			if ( flHealthtoMetalRatio != 0 )
-			{
-				// Deduct the metal from our pool.
-				int iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / flHealthtoMetalRatio) );
-				// If it costs too much, downgrade how much we can heal by.
-				if ( iRepairCost > ToTFPlayer(pAttacker)->GetBuildResources() )
-				{
-					iRepairCost = ToTFPlayer(pAttacker)->GetBuildResources();
-				}
-				ToTFPlayer(pAttacker)->RemoveBuildResources( iRepairCost );
-				flNewHealth = min( pOther->GetMaxHealth(), pOther->GetHealth() + ( iRepairCost * flHealthtoMetalRatio ) );
-			}
-			else
-			{
-				// Don't worry about calculating out metal, just heal.
-				flNewHealth = min( pOther->GetMaxHealth(), pOther->GetHealth() + iAmountToHeal );
-			}
-
-			pOther->SetHealth( flNewHealth );
-		}
-	}
 	else
 	{
 		// If we're an item with gibs (Arrow, Festive Arrow, Repair Claw) then gib.
@@ -605,6 +572,39 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				gameeventmanager->FireEvent( event );
 			}	
 		}		
+	}
+	else if ( pOther->IsBaseObject() && pOther->GetTeamNumber() == ToTFPlayer(pAttacker)->GetTeamNumber() )
+	{
+		// We hit a friendly building.
+		float flArrowheal = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), flArrowheal, arrow_heals_buildings);
+		if (flArrowheal > 0)
+		{
+			// Heal our building.
+			int	iAmountToHeal = min( (int)(flArrowheal), pOther->GetMaxHealth() - pOther->GetHealth() );
+			float flHealthtoMetalRatio = 0;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), flHealthtoMetalRatio, repair_health_to_metal_ratio_DISPLAY_ONLY);
+			float flNewHealth;
+			if ( flHealthtoMetalRatio != 0 )
+			{
+				// Deduct the metal from our pool.
+				int iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / flHealthtoMetalRatio) );
+				// If it costs too much, downgrade how much we can heal by.
+				if ( iRepairCost > ToTFPlayer(pAttacker)->GetBuildResources() )
+				{
+					iRepairCost = ToTFPlayer(pAttacker)->GetBuildResources();
+				}
+				ToTFPlayer(pAttacker)->RemoveBuildResources( iRepairCost );
+				flNewHealth = min( pOther->GetMaxHealth(), pOther->GetHealth() + ( iRepairCost * flHealthtoMetalRatio ) );
+			}
+			else
+			{
+				// Don't worry about calculating out metal, just heal.
+				flNewHealth = min( pOther->GetMaxHealth(), pOther->GetHealth() + iAmountToHeal );
+			}
+
+			pOther->SetHealth( flNewHealth );
+		}
 	}
 
 	// Remove.
