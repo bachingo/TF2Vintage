@@ -103,7 +103,7 @@ void CTFStickBomb::Smack()
 				TF_DMG_CUSTOM_STICKBOMB_EXPLOSION, &where );
 			
 			CTFRadiusDamageInfo radius;
-			radius.info       = dmginfo;
+			radius.info       = &dmginfo;
 			radius.m_vecSrc   = where;
 			radius.m_flRadius = 100.0f;
 			TFGameRules()->RadiusDamage( radius );

@@ -534,6 +534,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_PARACHUTE",
 	"TF_WEAPON_SLAP",
 	"TF_WEAPON_REVOLVER_DEX",
+	"TF_WEAPON_PUMPKNI_BOMB",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -635,6 +636,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC,								// 	TF_WEAPON_PARACHUTE,
 	DMG_CLUB,									// TF_WEAPON_SLAP,
 	DMG_BULLET | DMG_USEDISTANCEMOD,			// TF_WEAPON_REVOLVER_DEX,
+	DMG_BLAST | DMG_HALF_FALLOFF,               // TF_WEAPON_PUMPKIN_BOMB,
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
