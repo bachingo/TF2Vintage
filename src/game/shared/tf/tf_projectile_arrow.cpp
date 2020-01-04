@@ -104,40 +104,52 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		pArrow->SetLauncher( pWeapon );
 		
 		// Compensate iTypes from shareddefs to a more usable range for our use.
-		if ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
+		if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
 		{
-			switch (iType)
+			switch (iType)  // If it's the holidays, use festive projectiles.
 			{
 			case TF_PROJECTILE_ARROW:
-				iType = 0;
+				iType = 3;
+				break;
 			case TF_PROJECTILE_HEALING_BOLT:
-				iType = 1;
+				iType = 4;
+				break;
 			case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
 				iType = 2;
+				break;
 			case TF_PROJECTILE_FESTITIVE_ARROW:
-				iType = 0;
+				iType = 3;
+				break;
 			case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
-				iType = 1;
+				iType = 4;
+				break;
 			case TF_PROJECTILE_GRAPPLINGHOOK:
 				iType = 5;
+				break;
 			}
 		}
-		else // If it's the holidays, use festive projectiles.
+		else
 		{
 			switch (iType)
 			{
 			case TF_PROJECTILE_ARROW:
-				iType = 3;
+				iType = 0;
+				break;
 			case TF_PROJECTILE_HEALING_BOLT:
-				iType = 4;
+				iType = 1;
+				break;
 			case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
 				iType = 2;
+				break;
 			case TF_PROJECTILE_FESTITIVE_ARROW:
-				iType = 3;
+				iType = 0;
+				break;
 			case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
-				iType = 4;
+				iType = 1;
+				break;
 			case TF_PROJECTILE_GRAPPLINGHOOK:
 				iType = 5;
+				break;
 			}
 		}	
 		
@@ -180,6 +192,7 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 
 		// Set arrow type.
 		pArrow->SetType(iType);
+		pArrow->SetModel( g_pszArrowModels[iType] );
 
 		// Spawn.
 		DispatchSpawn( pArrow );
@@ -215,7 +228,7 @@ void CTFProjectile_Arrow::Precache( void )
 	// Precache all arrow models we have.
 	for ( int i = 0; i < ARRAYSIZE( g_pszArrowModels ); i++ )
 	{
-		int iIndex = PrecacheModel( g_pszArrowModels[i] );
+		int iIndex = PrecacheModel(g_pszArrowModels[i]);
 		PrecacheGibsForModel( iIndex );
 	}
 
@@ -243,8 +256,6 @@ void CTFProjectile_Arrow::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::Spawn( void )
 {
-	
-	SetModel( g_pszArrowModels[m_iType]);
 
 	BaseClass::Spawn();
 
