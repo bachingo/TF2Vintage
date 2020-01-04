@@ -180,6 +180,11 @@ void StickRagdollNow(const Vector &vecOrigin, const Vector &vecDirection, char c
 //-----------------------------------------------------------------------------
 void StickyBoltCallback( const CEffectData &data )
 {
+	if (data.m_cModel == NULL_STRING )
+	{
+		Assert(data.m_cModel);
+		return;
+	}
 	 StickRagdollNow( data.m_vOrigin, data.m_vNormal, data.m_cModel, data.m_nSkin );
 }
 
