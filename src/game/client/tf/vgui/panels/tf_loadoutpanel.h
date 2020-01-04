@@ -38,6 +38,7 @@ public:
 	const char *GetWeaponModel( CEconItemDefinition *pItemDef, int iClass );
 	const char *GetExtraWearableModel( CEconItemDefinition *pItemDef );
 	void UpdateModelWeapons( void );
+	void UpdateMenuBodygroups(void);
 	void SetModelClass(int iClass);
 	void SetSlotAndPreset(int iSlot, int iPreset);
 	void ResetRows();

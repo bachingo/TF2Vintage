@@ -907,6 +907,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 //-----------------------------------------------------------------------------
 void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue, C_TFPlayer *pPlayer )
 {
+#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
 	// Grab all the wearables the player has.
 	for ( int i=0; i<(pPlayer->m_hMyWearables.Count()); ++i )
 	{
@@ -925,6 +926,7 @@ void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue, C_TFPlayer *pPlayer )
 				pItem->UpdatePlayerBodygroups();	
 		}
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
