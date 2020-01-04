@@ -131,7 +131,7 @@ ActionResult<CTFBot> CTFBotSpyAttack::Update( CTFBot *me, float dt )
 	if ( flLength >= tf_bot_spy_knife_range.GetFloat() )
 	{
 		if ( victim->IsVisibleInFOVNow() )
-			bPullKnife |= ( me->m_iSkill == CTFBot::EASY || vecToActor.Dot( vecFwd ) > flDesiredDot );
+			bPullKnife = ( me->m_iSkill == CTFBot::EASY || vecToActor.Dot( vecFwd ) > flDesiredDot );
 	}
 	else
 	{
@@ -140,7 +140,7 @@ ActionResult<CTFBot> CTFBotSpyAttack::Update( CTFBot *me, float dt )
 
 	float flTimeSinceHurt = me->GetTimeSinceLastInjury( GetEnemyTeam( me ) );
 	if ( flTimeSinceHurt < 1.0f || me->IsThreatAimingTowardsMe( victimPlayer, 0.99f ) )
-		m_bInDanger |= victimPlayer->GetTimeSinceWeaponFired() < 0.25f;
+		m_bInDanger = victimPlayer->GetTimeSinceWeaponFired() < 0.25f;
 
 	int iDesiredSlot = TF_WPN_TYPE_MELEE;
 	if ( m_bInDanger ||

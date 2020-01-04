@@ -30,6 +30,10 @@ void TFExplosionCallback( const Vector &vecOrigin, const Vector &vecNormal, int 
 	case TF_WEAPON_GRENADE_PIPEBOMB_BETA:
 		pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_PIPEBOMBLAUNCHER );
 		break;
+	case TF_WEAPON_SENTRY_ROCKET:
+	case TF_WEAPON_PUMPKIN_BOMB:
+		pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_ROCKETLAUNCHER );
+		break;
 	default:
 		pWeaponInfo = GetTFWeaponInfo( iWeaponID );
 		break;
@@ -110,6 +114,9 @@ void TFExplosionCallback( const Vector &vecOrigin, const Vector &vecNormal, int 
 			pszSound = pItemDef->GetVisuals()->aWeaponSounds[SPECIAL1];
 		}
 	}
+
+	if ( iWeaponID == TF_WEAPON_PUMPKIN_BOMB )
+		pszSound = "Halloween.PumpkinExplode";
 	
 	CLocalPlayerFilter filter;
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, pszSound, &vecOrigin );

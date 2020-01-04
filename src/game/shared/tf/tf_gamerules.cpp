@@ -2113,6 +2113,18 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 	CTraceFilterHitPlayer filter( info->GetInflictor(), pEntity, COLLISION_GROUP_PROJECTILE );
 	UTIL_TraceLine( m_vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 
+	if ( tr.startsolid && tr.m_pEnt )
+	{
+		if ( tr.m_pEnt->IsCombatItem() )
+		{
+			if ( pEntity->InSameTeam( tr.m_pEnt ) && pEntity != tr.m_pEnt )
+				return false;
+		}
+
+		filter.SetPassEntity( tr.m_pEnt );
+		UTIL_TraceLine( m_vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
+	}
+
 	if ( tr.fraction != 1.0 && tr.m_pEnt != pEntity )
 		return false;
 
