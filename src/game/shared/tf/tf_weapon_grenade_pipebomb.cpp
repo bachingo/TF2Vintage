@@ -52,6 +52,7 @@ ConVar tf_grenadelauncher_chargescale( "tf_grenadelauncher_chargescale", "1.0", 
 ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf2v_grenades_explode_contact( "tf2v_grenades_explode_contact", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should Demoman grenades explode on contact?" );
+ConVar tf2v_fizzle_in_skybox( "tf2v_fizzle_in_skybox", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 #ifndef CLIENT_DLL
 ConVar tf_grenadelauncher_min_contact_speed( "tf_grenadelauncher_min_contact_speed", "100", FCVAR_DEVELOPMENTONLY );
@@ -632,6 +633,18 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 			Fizzle();
 			Detonate();
 		}
+		else
+		{
+			int nNoBounce = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOwnerEntity(), nNoBounce, grenade_no_bounce );
+			if ( nNoBounce )
+			{
+				Vector velocity; AngularImpulse impulse;
+				VPhysicsGetObject()->GetVelocity( &velocity, &impulse );
+				velocity /= 10;
+				VPhysicsGetObject()->SetVelocity( &velocity, &impulse );
+			}
+		}
 
 		m_bTouched = true;
 		return;
@@ -639,11 +652,10 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 
 	// Handle hitting skybox (disappear).
 	surfacedata_t *pprops = physprops->GetSurfaceData( pEvent->surfaceProps[otherIndex] );
-	if ( pprops->game.material == 'X' )
+	if ( pprops->game.material == 'X' && tf2v_fizzle_in_skybox.GetBool() )
 	{
-		// uncomment to destroy grenade upon hitting sky brush
-		//SetThink( &CTFGrenadePipebombProjectile::SUB_Remove );
-		//SetNextThink( gpGlobals->curtime );
+		SetThink( &CBaseEntity::SUB_Remove );
+		SetNextThink( gpGlobals->curtime );
 		return;
 	}
 

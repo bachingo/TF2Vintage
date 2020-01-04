@@ -2129,7 +2129,7 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 		float flToWorldSpaceCenter = ( m_vecSrc - pEntity->WorldSpaceCenter() ).Length();
 		float flToOrigin = ( m_vecSrc - pEntity->GetAbsOrigin() ).Length();
 
-		flDistanceToEntity = min( flToWorldSpaceCenter, flToOrigin );
+		flDistanceToEntity = Min( flToWorldSpaceCenter, flToOrigin );
 	}
 	else
 	{
