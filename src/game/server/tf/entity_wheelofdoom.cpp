@@ -1174,5 +1174,5 @@ int CWheelOfDoom::WOD_Dance::GetNumOfTeamDancing( int iTeam )
 void CWheelOfDoom::WOD_Dance::SlamPosAndAngles(CTFPlayer *pTarget, Vector const &pos, QAngle const &ang)
 {
 	pTarget->Teleport( &pos, &ang, &vec3_origin );
-	pTarget->pl.v_angle = ang;
+	pTarget->m_angPrevEyeAngles = ang;
 }
