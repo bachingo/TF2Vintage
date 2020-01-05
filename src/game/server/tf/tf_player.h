@@ -681,9 +681,14 @@ private:
 	// Networked.
 	CNetworkQAngle( m_angEyeAngles );					// Copied from EyeAngles() so we can send it to the client.
 
+public:
+	QAngle				m_angPrevEyeAngles;
+
+protected:
 	CTFPlayerClass		m_PlayerClass;
 	int					m_WeaponPreset[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER];
 
+private:
 	CTFPlayerAnimState *m_PlayerAnimState;
 	int					m_iLastWeaponFireUsercmd;				// Firing a weapon.  Last usercmd we shot a bullet on.
 	int					m_iLastSkin;
