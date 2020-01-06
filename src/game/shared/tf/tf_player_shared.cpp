@@ -1474,60 +1474,9 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::ConditionThink( void )
 {
-#ifndef CLIENT_DLL
-	if (m_pOuter->IsPlayerClass( TF_CLASS_SPY ))
+	if ( InCond( TF_COND_PHASE ) )
 	{
-		if (InCond( TF_COND_STEALTHED ))
-		{
-			if (m_bHasMotionCloak)
-			{
-				float flSpeed = m_pOuter->GetAbsVelocity().LengthSqr();
-				if (flSpeed == 0.0f)
-				{
-					m_flCloakMeter += gpGlobals->frametime * m_flCloakRegenRate;
-
-					if (m_flCloakMeter >= 100.0f)
-						m_flCloakMeter = 100.0f;
-				}
-				else
-				{
-					float flMaxSpeed = Square( m_pOuter->MaxSpeed() );
-					if (flMaxSpeed == 0.0f)
-					{
-						m_flCloakMeter -= m_flCloakDrainRate * gpGlobals->frametime * 1.5f;
-					}
-					else
-					{
-						m_flCloakMeter -= ( m_flCloakDrainRate * gpGlobals->frametime * 1.5f ) * Min( flSpeed / flMaxSpeed, 1.0f );
-					}
-				}
-			}
-			else
-			{
-				m_flCloakMeter -= gpGlobals->frametime * m_flCloakDrainRate;
-			}
-
-			if (m_flCloakMeter <= 0.0f)
-			{
-				m_flCloakMeter = 0.0f;
-
-				if (!m_bHasMotionCloak)
-					FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
-			}
-		}
-		else
-		{
-			m_flCloakMeter += gpGlobals->frametime * m_flCloakRegenRate;
-
-			if (m_flCloakMeter >= 100.0f)
-				m_flCloakMeter = 100.0f;
-		}
-}
-#endif
-
-	if (InCond( TF_COND_PHASE ))
-	{
-		if (gpGlobals->curtime > m_flPhaseTime)
+		if ( gpGlobals->curtime > m_flPhaseTime )
 		{
 			UpdatePhaseEffects();
 
@@ -1539,6 +1488,7 @@ void CTFPlayerShared::ConditionThink( void )
 	UpdateRageBuffsAndRage();
 
 #ifdef GAME_DLL
+	UpdateCloakMeter();
 	UpdateChargeMeter();
 	UpdateEnergyDrinkMeter();
 #endif
@@ -4300,6 +4250,60 @@ void CTFPlayerShared::CalcChargeCrit( bool bForceCrit )
 }
 
 #ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateCloakMeter( void )
+{
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_SPY ) )
+	{
+		if ( InCond( TF_COND_STEALTHED ) )
+		{
+			if ( m_bHasMotionCloak )
+			{
+				float flSpeed = m_pOuter->GetAbsVelocity().LengthSqr();
+				if ( flSpeed == 0.0f )
+				{
+					m_flCloakMeter += gpGlobals->frametime * m_flCloakRegenRate;
+
+					if ( m_flCloakMeter >= 100.0f )
+						m_flCloakMeter = 100.0f;
+				}
+				else
+				{
+					float flMaxSpeed = Square( m_pOuter->MaxSpeed() );
+					if ( flMaxSpeed == 0.0f )
+					{
+						m_flCloakMeter -= m_flCloakDrainRate * gpGlobals->frametime * 1.5f;
+					}
+					else
+					{
+						m_flCloakMeter -= ( m_flCloakDrainRate * gpGlobals->frametime * 1.5f ) * Min( flSpeed / flMaxSpeed, 1.0f );
+					}
+				}
+			}
+			else
+			{
+				m_flCloakMeter -= gpGlobals->frametime * m_flCloakDrainRate;
+			}
+
+			if (m_flCloakMeter <= 0.0f)
+			{
+				m_flCloakMeter = 0.0f;
+
+				if ( !m_bHasMotionCloak )
+					FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
+			}
+		}
+		else
+		{
+			m_flCloakMeter += gpGlobals->frametime * m_flCloakRegenRate;
+
+			if (m_flCloakMeter >= 100.0f)
+				m_flCloakMeter = 100.0f;
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

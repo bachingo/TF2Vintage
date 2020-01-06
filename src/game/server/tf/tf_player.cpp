@@ -5704,16 +5704,13 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			}
 		}
 		
-		// Check if we have the same weapon.
-		if (pTFWeapon && GetActiveTFWeapon() == pTFWeapon)
+		int nForceLaughSameWeapon = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFWeapon, nForceLaughSameWeapon, tickle_enemies_wielding_same_weapon );
+		if ( nForceLaughSameWeapon != 0 )
 		{
-			int nForceLaughSameWeapon = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(GetActiveTFWeapon(), nForceLaughSameWeapon, tickle_enemies_wielding_same_weapon);
-			if (nForceLaughSameWeapon != 0)
-			{
-				m_Shared.AddCond(TF_COND_TICKLED, 4.0f);
-				Taunt();
-			}
+			// Check if we have the same weapon.
+			if ( ItemsMatch( pTFWeapon->GetItem(), GetActiveTFWeapon()->GetItem() ) )
+				Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
 		}
 	}
 	

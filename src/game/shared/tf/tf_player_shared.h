@@ -368,6 +368,7 @@ public:
 	void	IncrementKillstreakCount( void )       { m_iKillstreak += 1; }
 	
 #ifdef GAME_DLL
+	void	UpdateCloakMeter( void );
 	void	UpdateChargeMeter( void );
 	void	UpdateEnergyDrinkMeter( void );
 #endif
