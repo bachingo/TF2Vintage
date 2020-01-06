@@ -74,6 +74,9 @@ ConVar tf_spy_cloak_no_attack_time( "tf_spy_cloak_no_attack_time", "2.0", FCVAR_
 ConVar tf_demoman_charge_drain_time( "tf_demoman_charge_drain_time", "1.5", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
 ConVar tf_demoman_charge_regen_rate( "tf_demoman_charge_regen_rate", "8.3", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
 
+ConVar tf_scout_energydrink_consume_rate( "tf_scout_energydrink_consume_rate", "12.5", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
+ConVar tf_scout_energydrink_regen_rate( "tf_scout_energydrink_regen_rate", "3.3", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
+
 ConVar tf_tournament_hide_domination_icons( "tf_tournament_hide_domination_icons", "0", FCVAR_REPLICATED, "Tournament mode server convar that forces clients to not display the domination icons above players dominating them." );
 
 ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
@@ -207,6 +210,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_iRespawnParticleID ) ),
 	RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 	RecvPropFloat( RECVINFO( m_flEffectBarProgress ) ),
+	RecvPropFloat( RECVINFO( m_flEnergyDrinkMeter ) ),
 	RecvPropFloat( RECVINFO( m_flChargeMeter ) ),
 	RecvPropFloat( RECVINFO( m_flHypeMeter ) ),
 	// Spy.
@@ -238,6 +242,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_iDesiredWeaponID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iRespawnParticleID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flEffectBarProgress, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flEnergyDrinkMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flChargeMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flHypeMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
@@ -288,6 +293,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iRespawnParticleID ), 0, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iMaxHealth ), 10 ),
 	SendPropFloat( SENDINFO( m_flEffectBarProgress ), 11, 0, 0.0f, 100.0f ),
+	SendPropFloat( SENDINFO( m_flEnergyDrinkMeter ), 11, 0, 0.0f, 100.0f ),
 	SendPropFloat( SENDINFO( m_flChargeMeter ), 11, 0, 0.0f, 100.0f ),
 	SendPropFloat( SENDINFO( m_flHypeMeter ), 11, 0, 0.0f, 100.0f ),
 	// Spy
@@ -341,6 +347,9 @@ CTFPlayerShared::CTFPlayerShared()
 	m_iDecapitations = 0;
 	
 	m_iHeadshots = 0;
+
+	m_flEnergyDrinkDrainRate = tf_scout_energydrink_consume_rate.GetFloat();
+	m_flEnergyDrinkRegenRate = tf_scout_energydrink_regen_rate.GetFloat();
 
 #ifdef CLIENT_DLL
 	m_iDisguiseWeaponModelIndex = -1;
@@ -547,9 +556,7 @@ bool CTFPlayerShared::IsMiniCritBoosted( void )
 	if (InCond( TF_COND_OFFENSEBUFF ) ||
 		InCond( TF_COND_ENERGY_BUFF ) ||
 		InCond( TF_COND_SODAPOPPER_HYPE ) ||
-		InCond( TF_COND_MINICRITBOOSTED_ON_KILL ) ||
-		InCond( TF_COND_MINICRITBOOSTED ) ||
-		InCond( TF_COND_BERSERK ) )
+		InCond( TF_COND_MINICRITBOOSTED_ON_KILL ) )
 		return true;
 	return false;
 }
@@ -828,6 +835,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		break;
 
 	case TF_COND_DISGUISED_AS_DISPENSER:
+	case TF_COND_ENERGY_BUFF:
 		m_pOuter->TeamFortress_SetSpeed();
 		break;
 
@@ -962,6 +970,11 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 #ifdef CLIENT_DLL
 		m_pOuter->UpdateOverhealEffect();
 #endif
+
+	case TF_COND_DISGUISED_AS_DISPENSER:
+	case TF_COND_ENERGY_BUFF:
+		m_pOuter->TeamFortress_SetSpeed();
+		break;
 
 	case TF_COND_STUNNED:
 		OnRemoveStunned();
@@ -1524,8 +1537,10 @@ void CTFPlayerShared::ConditionThink( void )
 	}
 
 	UpdateRageBuffsAndRage();
+
 #ifdef GAME_DLL
 	UpdateChargeMeter();
+	UpdateEnergyDrinkMeter();
 #endif
 }
 
@@ -4305,6 +4320,55 @@ void CTFPlayerShared::UpdateChargeMeter( void )
 	{
 		m_flChargeMeter += m_flChargeRegenRate * gpGlobals->frametime;
 		m_flChargeMeter = Min( m_flChargeMeter.Get(), 100.0f );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
+{
+	if ( InCond( TF_COND_SODAPOPPER_HYPE ) )
+	{
+		m_flHypeMeter -= ( gpGlobals->frametime * m_flEnergyDrinkDrainRate ) * 0.75;
+
+		if ( m_flHypeMeter <= 0.0f )
+			RemoveCond( TF_COND_SODAPOPPER_HYPE );
+	}
+
+	if ( InCond( TF_COND_PHASE ) || InCond( TF_COND_ENERGY_BUFF ) )
+	{
+		m_flEnergyDrinkMeter -= m_flEnergyDrinkDrainRate * gpGlobals->frametime;
+
+		if ( m_flEnergyDrinkMeter <= 0.0f )
+		{
+			RemoveCond( TF_COND_PHASE );
+			RemoveCond( TF_COND_ENERGY_BUFF );
+
+			m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_TIRED );
+		}
+		else if ( InCond( TF_COND_PHASE ) )
+		{
+			UpdatePhaseEffects();
+		}
+	}
+	else
+	{
+		if ( m_flEnergyDrinkMeter == 100.0f )
+			return;
+
+		m_flEnergyDrinkMeter += m_flEnergyDrinkRegenRate * gpGlobals->frametime;
+
+		if ( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_LUNCHBOX_DRINK ) )
+		{
+			if ( m_flEnergyDrinkMeter >= 100.0f )
+				return;
+
+			if ( m_pOuter->GetAmmoCount( TF_AMMO_GRENADES2 ) != m_pOuter->GetMaxAmmo( TF_AMMO_GRENADES2 ) )
+				return;
+		}
+
+		m_flEnergyDrinkMeter = Min( m_flEnergyDrinkMeter.Get(), 100.0f );
 	}
 }
 #endif

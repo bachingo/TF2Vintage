@@ -312,6 +312,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	bool IsSilentKiller( void ) const;
 
+	virtual bool OwnerCanTaunt( void ) const { return true; }
+
 // Client specific.
 #else
 

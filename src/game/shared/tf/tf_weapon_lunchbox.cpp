@@ -323,10 +323,11 @@ void CTFLunchBox::ApplyBerserkEffect( void )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner )
 	{
-		pOwner->m_Shared.AddCond(TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime);
-		pOwner->m_Shared.AddCond(TF_COND_SPEED_BOOST, flBuffaloSteakTime);
-		pOwner->m_Shared.AddCond(TF_COND_MINICRITBOOSTED, flBuffaloSteakTime);
-		pOwner->m_Shared.AddCond(TF_COND_ENERGY_BUFF, flBuffaloSteakTime);
+		pOwner->m_Shared.AddCond( TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime );
+		pOwner->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffaloSteakTime );
+		pOwner->m_Shared.AddCond( TF_COND_ENERGY_BUFF, flBuffaloSteakTime );
+
+		pOwner->Weapon_Switch( pOwner->Weapon_GetWeaponByType( TF_WPN_TYPE_MELEE ) );
 	}
 }
 

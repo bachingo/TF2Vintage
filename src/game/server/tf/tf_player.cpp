@@ -115,7 +115,7 @@ ConVar tf_allow_player_use( "tf_allow_player_use", "0", FCVAR_NOTIFY, "Allow pla
 
 ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player to slide for a bit after taunting." );
 
-ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT );
+ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
 
 
@@ -132,6 +132,7 @@ extern ConVar tf_spy_invis_time;
 extern ConVar tf_spy_invis_unstealth_time;
 extern ConVar tf_stalematechangeclasstime;
 extern ConVar tf_damage_disablespread;
+extern ConVar tf_scout_energydrink_consume_rate;
 
 // TF2V commands
 ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout and class." );
@@ -2103,46 +2104,6 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::PostInventoryApplication( void )
-{
-	m_Shared.RecalculatePlayerBodygroups();
-
-	IGameEvent *event = gameeventmanager->CreateEvent( "post_inventory_application" );
-	if ( event )
-	{
-		event->SetInt( "userid", GetUserID() );
-
-		gameeventmanager->FireEvent( event );
-	}
-}
-
-float CTFPlayer::GetDesiredHeadScale( void ) const
-{
-	float flHeadScale = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT( flHeadScale, head_scale );
-	return flHeadScale;
-}
-
-float CTFPlayer::GetHeadScaleSpeed( void )
-{
-	if ( m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) )
-		return GetDesiredHeadScale();
-
-	if ( m_Shared.InCond( TF_COND_BALLOON_HEAD ) )
-		return GetDesiredHeadScale();
-
-	if ( m_Shared.InCond( TF_COND_MELEE_ONLY ) )
-		return GetDesiredHeadScale();
-
-	if ( m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
-		return GetDesiredHeadScale();
-
-	return gpGlobals->frametime;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
 	
@@ -2507,6 +2468,22 @@ void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData , int iMedalType )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::PostInventoryApplication( void )
+{
+	m_Shared.RecalculatePlayerBodygroups();
+
+	IGameEvent *event = gameeventmanager->CreateEvent( "post_inventory_application" );
+	if ( event )
+	{
+		event->SetInt( "userid", GetUserID() );
+
+		gameeventmanager->FireEvent( event );
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Get preset from the vector
 //-----------------------------------------------------------------------------
 CEconItemView *CTFPlayer::GetLoadoutItem( int iClass, int iSlot )
@@ -2825,6 +2802,36 @@ void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
 		CTFNavArea *area = static_cast<CTFNavArea *>( ( *areas )[i] );
 		area->IncreaseDanger( GetTeamNumber(), ( area->GetCenter() - GetAbsOrigin() ).Length() );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFPlayer::GetDesiredHeadScale( void ) const
+{
+	float flHeadScale = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flHeadScale, head_scale );
+	return flHeadScale;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFPlayer::GetHeadScaleSpeed( void )
+{
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) )
+		return GetDesiredHeadScale();
+
+	if ( m_Shared.InCond( TF_COND_BALLOON_HEAD ) )
+		return GetDesiredHeadScale();
+
+	if ( m_Shared.InCond( TF_COND_MELEE_ONLY ) )
+		return GetDesiredHeadScale();
+
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+		return GetDesiredHeadScale();
+
+	return gpGlobals->frametime;
 }
 
 //-----------------------------------------------------------------------------
@@ -3477,10 +3484,9 @@ const Vector &CTFPlayer::EstimateProjectileImpactPosition( float pitch, float ya
 	const float g = sv_gravity.GetFloat();
 
 	Vector alongDir = vecForward;
-	alongDir.z = 0.0f;
-	alongDir.NormalizeInPlace();
+	alongDir.AsVector2D().NormalizeInPlace();
 
-	float alongVel = FastSqrt( vecVelocity.x * vecVelocity.x + vecVelocity.y * vecVelocity.y );
+	float alongVel = vecVelocity.AsVector2D().Length();
 
 	trace_t                        trace;
 	NextBotTraceFilterIgnoreActors traceFilter( this, COLLISION_GROUP_NONE );
@@ -4836,11 +4842,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 			
 			int nForceVictimToLaugh = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nForceVictimToLaugh, crit_forces_victim_to_laugh);
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nForceVictimToLaugh, crit_forces_victim_to_laugh );
 			if ( ( bitsDamage & DMG_CRITICAL ) && nForceVictimToLaugh != 0 )
 			{
-				m_Shared.AddCond(TF_COND_TICKLED, 4.0f);
-				Taunt();
+				Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
 			}
 			
 			// Notify the damaging weapon.
@@ -5668,7 +5673,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 				flDamageRangedMult = 1.0f;
 			flDamage *= flDamageRangedMult;
 		}
-			
+		
 		if ( info.GetDamageType() & DMG_BURN|DMG_IGNITE )
 		{
 			float flDamageFireActiveMult = 1.0f;
@@ -5679,7 +5684,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		
 		// Aiming resists, if actively using a minigun/sniper rifle and under 50% health.
-		if ( ( m_Shared.InCond(TF_COND_AIMING ) ) )
+		if ( ( m_Shared.InCond( TF_COND_AIMING ) ) )
 		{
 			// Regular old spinup resistance.
 			float flDamageAimMultFull = 1.0f;
@@ -5710,17 +5715,14 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 				Taunt();
 			}
 		}
-	
 	}
 	
-	if ( m_Shared.InCond(TF_COND_ENERGY_BUFF ) )
+	if ( m_Shared.InCond( TF_COND_ENERGY_BUFF ) )
 	{
 		float flEnergyBuffMult = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT( flEnergyBuffMult, energy_buff_dmg_taken_multiplier );
 		flDamage *= flEnergyBuffMult;
 	}
-	
-	
 		
 	if ( IsPlayerClass( TF_CLASS_SPY ) && info.GetDamageCustom() != TF_DMG_CUSTOM_TELEFRAG )
 	{
@@ -6314,14 +6316,10 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		if ( nDropHealthOnKill != 0 )
 			DropHealthPack();
 
-		// TODO: Play specific sequence
 		int nForceKillerToLaugh = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFAttacker, nForceKillerToLaugh, kill_forces_attacker_to_laugh );
 		if ( nForceKillerToLaugh != 0 )
-		{
-			pTFAttacker->m_Shared.AddCond(TF_COND_TICKLED, 4.0f);
-			pTFAttacker->Taunt();
-		}
+			pTFAttacker->Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
 	}
 
 	RemoveTeleportEffect();
@@ -8712,7 +8710,6 @@ void CTFPlayer::OnMyWeaponFired( CBaseCombatWeapon *pWeapon )
 		case TF_WEAPON_LUNCHBOX:
 		case TF_WEAPON_LUNCHBOX_DRINK:
 		case TF_WEAPON_BUFF_ITEM:
-		//case TF_WEAPON_PDA_SPY_BUILD:
 			return;
 
 		default:
@@ -9335,27 +9332,14 @@ void CTFPlayer::CheckUncoveringSpies( CTFPlayer *pTouchedPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::Taunt( void )
+void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 {
 	// Check to see if we can taunt again!
-	if ( m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( !IsAllowedToTaunt() || eTaunt == 3 /*TODO: Name*/ )
 		return;
 
-	// Check to see if we are in water (above our waist).
-	if ( GetWaterLevel() > WL_Waist )
-		return;
-
-	// Check to see if we are on the ground.
-	if ( GetGroundEntity() == NULL )
-		return;
-
-	// Can't taunt while cloaked.
-	if ( m_Shared.InCond( TF_COND_STEALTHED ) )
-		return;
-
-	// Can't taunt while disguised.
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) )
-		return;
+	if ( eTaunt == 2 )
+		iConcept = MP_CONCEPT_PLAYER_SHOW_ITEM_TAUNT;
 
 	// Allow voice commands, etc to be interrupted.
 	CMultiplayer_Expresser *pExpresser = GetMultiplayerExpresser();
@@ -9364,7 +9348,7 @@ void CTFPlayer::Taunt( void )
 
 	m_bInitTaunt = true;
 	char szResponse[AI_Response::MAX_RESPONSE_NAME];
-	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_TAUNT, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) || tf2v_random_weapons.GetBool() || tf2v_randomizer.GetBool() )
+	if ( SpeakConceptIfAllowed( iConcept, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) || tf2v_random_weapons.GetBool() || tf2v_randomizer.GetBool() )
 	{
 		
 		// Get the duration of the scene.
@@ -9491,6 +9475,64 @@ void CTFPlayer::Taunt( void )
 	}
 
 	pExpresser->DisallowMultipleScenes();
+}
+
+bool CTFPlayer::IsAllowedToTaunt( void )
+{
+	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+
+	// Can't start another taunt in the middle of taunting
+	if ( m_Shared.InCond( TF_COND_TAUNTING ) )
+		return false;
+
+	if ( !IsAlive() )
+		return false;
+
+	if ( GetWaterLevel() > WL_Waist )
+		return false;
+
+	if ( GetGroundEntity() == NULL && !m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+		return false;
+
+	// Will our weapon let us taunt?
+	if ( pWeapon )
+	{
+		if( !pWeapon->OwnerCanTaunt() )
+			return false;
+
+		if ( pWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_BUILD || pWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_DESTROY )
+			return false;
+	}
+
+	// Can't taunt while charging
+	if ( m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+		return false;
+
+	// Can't taunt while cloaked.
+	if ( m_Shared.IsStealthed() || m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+		return false;
+
+	// Can't taunt while disguised.
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) || m_Shared.InCond( TF_COND_DISGUISING ) )
+		return false;
+
+	if( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LUNCHBOX_DRINK )
+	{
+		// If we're already in a buff, prevent another from getting applied
+		if ( m_Shared.InCond( TF_COND_ENERGY_BUFF ) || m_Shared.InCond( TF_COND_PHASE ) )
+			return false;
+
+		// Can't use unless fully charged
+		if ( m_Shared.m_flEnergyDrinkMeter < 100.0f )
+			return false;
+
+		int nLunchBoxAddsMinicrits = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLunchBoxAddsMinicrits, set_weapon_mode );
+		if ( nLunchBoxAddsMinicrits == 3 )
+			return false;
+	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -9744,6 +9786,8 @@ void CTFPlayer::DoTauntAttack( void )
 				m_flTauntAttackTime = gpGlobals->curtime + 0.1f;
 			}
 			break;
+
+			SelectLastItem();
 		}
 		case TAUNTATK_SNIPER_ARROW_STAB_IMPALE:
 		case TAUNTATK_SNIPER_ARROW_STAB_KILL:
@@ -10139,9 +10183,6 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 
 	if ( m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
 		criteriaSet.AppendCriteria( "IsHalloweenTaunt", "1" );
-	
-	if ( m_Shared.InCond( TF_COND_TICKLED ) )
-		criteriaSet.AppendCriteria( "IsAprilFoolsTaunt", "1" );
 
 	if ( TFGameRules() )
 	{

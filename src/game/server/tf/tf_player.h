@@ -488,7 +488,7 @@ public:
 	virtual bool		Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0 );
 	virtual void		Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget, const Vector *pVelocity );
 
-	bool				ItemsMatch( CEconItemView *pItem1, CEconItemView *pItem2, CTFWeaponBase *pWeapon );
+	bool				ItemsMatch( CEconItemView *pItem1, CEconItemView *pItem2, CTFWeaponBase *pWeapon = NULL );
 	void				ValidateWeapons( bool bRegenerate );
 	void				ValidateWearables( void );
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
@@ -516,7 +516,8 @@ public:
 	const Vector		&EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
 
 	// Taunts.
-	void				Taunt( void );
+	void				Taunt( taunts_t eTaunt = TAUNT_NORMAL, int iConcept = MP_CONCEPT_PLAYER_TAUNT );
+	bool				IsAllowedToTaunt( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }
 	void				DoTauntAction( void );
 	void				DoTauntActionThink( void );
@@ -524,7 +525,7 @@ public:
 	int					m_iSpecialTauntType;
 	void				DoTauntAttack( void );
 	void				ClearTauntAttack( void );
-	QAngle	m_angTauntCamera;
+	QAngle				m_angTauntCamera;
 
 	virtual float		PlayScene( const char *pszScene, float flDelay = 0.0f, AI_Response *response = NULL, IRecipientFilter *filter = NULL );
 	void				ResetTauntHandle( void ) { m_hTauntScene = NULL; }
