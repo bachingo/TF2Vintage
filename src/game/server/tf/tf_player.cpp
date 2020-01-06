@@ -8783,6 +8783,23 @@ void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 	DeathSound( info );
 	TFGameRules()->DeathNotice( this, info );
 
+	if ( GetActiveWeapon() )
+	{
+		int nDropsHealthPack = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( GetActiveWeapon(), nDropsHealthPack, drop_health_pack_on_kill );
+		if ( nDropsHealthPack == 1 )
+			DropHealthPack();
+	}
+
+	CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
+	if ( pAttacker )
+	{
+		int nKillForcesLaugh = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pAttacker, nKillForcesLaugh, kill_forces_attacker_to_laugh );
+		if ( nKillForcesLaugh == 1 )
+			pAttacker->Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
+	}
+
 	SpeakConceptIfAllowed( MP_CONCEPT_DIED );
 
 	DropAmmoPack( false, true );
