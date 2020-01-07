@@ -104,6 +104,7 @@ CTFLoadoutPanel::CTFLoadoutPanel(vgui::Panel* parent, const char *panelName) : C
 CTFLoadoutPanel::~CTFLoadoutPanel()
 {
 	m_pWeaponIcons.RemoveAll();
+	
 }
 
 bool CTFLoadoutPanel::Init()
@@ -129,7 +130,7 @@ bool CTFLoadoutPanel::Init()
 		if ( pszClassModels[iClassIndex][0] != '\0' )
 			modelinfo->FindOrLoadModel( pszClassModels[iClassIndex] );
 	}
-
+	
 	return true;
 }
 
@@ -167,6 +168,7 @@ void CTFLoadoutPanel::SetCurrentClass(int iClass)
 	m_iCurrentClass = iClass;
 	m_iCurrentSlot = g_aClassLoadoutSlots[iClass][0];
 	DefaultLayout();
+	UpdateMenuBodygroups();
 
 };
 
