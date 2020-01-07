@@ -304,8 +304,7 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 		flAmt = (1/12); // 1/3 of 25%, so 1/12.
 	
 	// Adjust our healing scale if defined.
-	if (CAttributeManager::AttribHookValue<float>( 0, "lunchbox_healing_scale", this ) )
-		flAmt *= (CAttributeManager::AttribHookValue<float>( 0, "lunchbox_healing_scale", this ) );
+	CALL_ATTRIB_HOOK_FLOAT( flAmt, lunchbox_healing_scale );
 
 	if ( pOwner )
 	{
@@ -323,10 +322,11 @@ void CTFLunchBox::ApplyBerserkEffect( void )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner )
 	{
-		pOwner->m_Shared.AddCond(TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime);
-		pOwner->m_Shared.AddCond(TF_COND_SPEED_BOOST, flBuffaloSteakTime);
-		pOwner->m_Shared.AddCond(TF_COND_MINICRITBOOSTED, flBuffaloSteakTime);
-		pOwner->m_Shared.AddCond(TF_COND_ENERGY_BUFF, flBuffaloSteakTime);
+		pOwner->m_Shared.AddCond( TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime );
+		pOwner->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffaloSteakTime );
+		pOwner->m_Shared.AddCond( TF_COND_ENERGY_BUFF, flBuffaloSteakTime );
+
+		pOwner->Weapon_Switch( pOwner->Weapon_GetWeaponByType( TF_WPN_TYPE_MELEE ) );
 	}
 }
 
@@ -337,7 +337,9 @@ bool CTFLunchBox::CanDrop( void ) const
 {
 	if ( !tf2v_new_sandvich_behavior.GetBool() )
 	{
-		if ( (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
+		int nSetLunchboxMode = 0;
+		CALL_ATTRIB_HOOK_INT( nSetLunchboxMode, set_weapon_mode );
+		if ( ( nSetLunchboxMode == 1 ) || ( nSetLunchboxMode == 7 ) )
 			return false;
 	}
 	
