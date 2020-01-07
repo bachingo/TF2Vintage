@@ -23,7 +23,7 @@
 		"fieldName"			"FakeBGImage"
 		"xpos"				"0"
 		"ypos"				"0"	
-		"zpos"				"200"		
+		"zpos"				"-19"		
 		"wide"				"f0"
 		"tall"				"f0"
 		"visible"			"0"

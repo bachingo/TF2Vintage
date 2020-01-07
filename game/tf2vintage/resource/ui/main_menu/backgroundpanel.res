@@ -6,7 +6,7 @@
 		"fieldName"		"BackgroundVideo"
 		"xpos"			"0"
 		"ypos"			"0"
-		"zpos"			"0"		
+		"zpos"			"-19"		
 		"wide"			"f-1"
 		"tall"			"f-1"
 		"autoResize"	"1"
