@@ -1286,6 +1286,13 @@ bool CBaseCombatWeapon::HasSecondaryAmmo( void )
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::UsesPrimaryAmmo( void )
 {
+	int iNotRegularAmmo = 0;
+	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, energy_weapon_no_ammo);
+	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, mod_use_metal_ammo_type);
+
+	if (iNotRegularAmmo > 0)
+		return false;
+
 	if ( m_iPrimaryAmmoType < 0 )
 		return false;
 	return true;
@@ -1296,6 +1303,13 @@ bool CBaseCombatWeapon::UsesPrimaryAmmo( void )
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::UsesSecondaryAmmo( void )
 {
+	int iNotRegularAmmo = 0;
+	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, energy_weapon_no_ammo);
+	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, mod_use_metal_ammo_type);
+
+	if (iNotRegularAmmo > 0)
+		return false;
+
 	if ( m_iSecondaryAmmoType < 0 )
 		return false;
 	return true;
