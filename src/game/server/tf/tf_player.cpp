@@ -1924,16 +1924,17 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 
 			if ( !ItemsMatch( pWeapon->GetItem(), pLoadoutItem, pWeapon ) )
 			{
+
+				// **HACK: Extra wearables aren't dying correctly sometimes so
+				// try and remove them here just in case ValidateWearables() fails
+				CEconWearable *pWearable = GetWearableForLoadoutSlot( iSlot );
+				if ( pWearable )
+				{
+					RemoveWearable( pWearable );
+				}
+				
 				if ( pWeapon->GetWeaponID() == TF_WEAPON_BUFF_ITEM )
 				{
-					// **HACK: Extra wearables aren't dying correctly sometimes so
-					// try and remove them here just in case ValidateWearables() fails
-					CEconWearable *pWearable = GetWearableForLoadoutSlot( iSlot );
-					if ( pWearable )
-					{
-						RemoveWearable( pWearable );
-					}
-
 					// Reset rage
 					m_Shared.ResetRageSystem();
 				}
