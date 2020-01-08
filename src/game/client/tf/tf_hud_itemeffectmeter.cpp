@@ -456,15 +456,6 @@ bool CHudItemEffectMeterTemp<C_TFBuffItem>::ShouldFlash( void )
 // C_TFSniperRifle_Decap Specialization
 //-----------------------------------------------------------------------------
 template<>
-bool CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-		return true;
-
-	return false;
-}
-
-template<>
 int CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::GetCount( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -484,15 +475,6 @@ int CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::GetCount( void )
 // C_TFRocketLauncher_Airstrike Specialization
 //-----------------------------------------------------------------------------
 template<>
-bool CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-		return true;
-
-	return false;
-}
-
-template<>
 int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -509,15 +491,6 @@ int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
 //-----------------------------------------------------------------------------
 // C_TFRevolver_Dex Specialization
 //-----------------------------------------------------------------------------
-template<>
-bool CHudItemEffectMeterTemp<C_TFRevolver_Dex>::IsEnabled( void )
-{
-	if ( GetWeapon() )
-		return true;
-
-	return false;
-}
-
 template<>
 int CHudItemEffectMeterTemp<C_TFRevolver_Dex>::GetCount( void )
 {
@@ -656,7 +629,7 @@ void CHudItemEffects::SetPlayer( void )
 			break;
 		case TF_CLASS_SNIPER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJar>( "HudItemEffectMeter" ) );
-			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>( "HudItemEffectMeter", "resource/UI/huditemeffectmeter_sniper.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>( "HudItemEffectMeter", "resource/UI/HudItemEfectMeter_Sniper.res" ) );
 			break;
 		case TF_CLASS_SOLDIER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBuffItem>( "HudItemEffectMeter" ) );
@@ -670,7 +643,7 @@ void CHudItemEffects::SetPlayer( void )
 			break;
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
-			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/huditemeffectmeter_spy.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) );
 			break;
 		case TF_CLASS_ENGINEER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFShotgun_Revenge>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Engineer.res" ) );

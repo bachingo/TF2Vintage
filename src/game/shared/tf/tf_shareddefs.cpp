@@ -863,6 +863,11 @@ bool WeaponID_IsSniperRifle( int iWeaponID )
 	return iWeaponID == TF_WEAPON_SNIPERRIFLE || iWeaponID == TF_WEAPON_SNIPERRIFLE_DECAP || iWeaponID == TF_WEAPON_SNIPERRIFLE_CLASSIC;
 }
 
+bool WeaponID_IsLunchbox( int iWeaponID )
+{
+	return iWeaponID == TF_WEAPON_LUNCHBOX || iWeaponID == TF_WEAPON_LUNCHBOX_DRINK;
+}
+
 //-----------------------------------------------------------------------------
 // Conditions stuff.
 //-----------------------------------------------------------------------------
