@@ -10015,6 +10015,30 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 {
 	BaseClass::ModifyOrAppendCriteria( criteriaSet );
 
+	CTFWeaponBase *pActiveWeapon = m_Shared.GetActiveTFWeapon();
+
+	// Handle rage taunting
+	if ( pActiveWeapon )
+	{
+		int nGeneratesRage = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pActiveWeapon, nGeneratesRage, generates_rage_on_dmg );
+
+		if ( nGeneratesRage && pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN )
+		{
+			if ( m_Shared.GetRageProgress() < 100.0f )
+			{
+				if ( m_Shared.IsRageActive() )
+					return;
+			}
+			else
+			{
+				if ( !m_Shared.IsRageActive() )
+					m_Shared.SetRageActive( true );
+
+				EmitSound( "Heavy.Battlecry03" );
+			}
+		}
+	}
 	// If we have 'disguiseclass' criteria, pretend that we are actually our
 	// disguise class. That way we just look up the scene we would play as if 
 	// we were that class.
@@ -10061,7 +10085,6 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 	}
 
 	// Current weapon role
-	CTFWeaponBase *pActiveWeapon = m_Shared.GetActiveTFWeapon();
 	if ( pActiveWeapon )
 	{
 		int iWeaponRole = pActiveWeapon->GetTFWpnData().m_iWeaponType;
@@ -10091,7 +10114,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 				break;
 		}
 
-		if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_SNIPERRIFLE ||  pActiveWeapon->GetWeaponID() == TF_WEAPON_SNIPERRIFLE_DECAP )
+		if ( WeaponID_IsSniperRifle( pActiveWeapon->GetWeaponID() ) )
 		{
 			CTFSniperRifle *pRifle = dynamic_cast<CTFSniperRifle *>( pActiveWeapon );
 			if ( pRifle && pRifle->IsZoomed() )
@@ -10196,8 +10219,8 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 		}
 	}
 
-	if ( m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
-		criteriaSet.AppendCriteria( "IsHalloweenTaunt", "1" );
+	int nSpecialTaunt = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pActiveWeapon, nSpecialTaunt, special_taunt );
 
 	if ( TFGameRules() )
 	{
@@ -10215,7 +10238,44 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 
 		bool bIsRedTeam = GetTeamNumber() == TF_TEAM_RED;
 		criteriaSet.AppendCriteria( "OnRedTeam", UTIL_VarArgs( "%d", bIsRedTeam ) );
+
+		if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) && nSpecialTaunt == 0 )
+		{
+			if ( pActiveWeapon )
+			{
+				int nGeneratesRage = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pActiveWeapon, nGeneratesRage, burn_dmg_earns_rage );
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pActiveWeapon, nGeneratesRage, generate_rage_on_dmg );
+
+				if ( !WeaponID_IsLunchbox( pActiveWeapon->GetWeaponID() ) && ( nGeneratesRage == 0 || m_Shared.GetRageProgress() < 100.0f ) )
+				{
+					const float flRand = rand() / VALVE_RAND_MAX;
+					if ( flRand < 0.4f )
+						criteriaSet.AppendCriteria( "IsHalloweenTaunt", "1" );
+				}
+			}
+		}
+
+		if ( TFGameRules()->IsHolidayActive( kHoliday_AprilFools ) && nSpecialTaunt == 0 )
+		{
+			if ( pActiveWeapon )
+			{
+				int nGeneratesRage = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pActiveWeapon, nGeneratesRage, burn_dmg_earns_rage );
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pActiveWeapon, nGeneratesRage, generate_rage_on_dmg );
+
+				if ( !WeaponID_IsLunchbox( pActiveWeapon->GetWeaponID() ) && ( nGeneratesRage == 0 || m_Shared.GetRageProgress() < 100.0f ) )
+				{
+					const float flRand = rand() / VALVE_RAND_MAX;
+					if ( flRand < 0.8f )
+						criteriaSet.AppendCriteria( "IsHalloweenTaunt", "1" );
+				}
+			}
+		}
 	}
+
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+		criteriaSet.AppendCriteria( "IsHalloweenTaunt", "1" );
 
 	// Active Contexts
 

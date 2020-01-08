@@ -328,6 +328,7 @@ public:
 	void	SetRageMeter( float flRagePercent, int iBuffType );
 	void	ActivateRageBuff( CBaseEntity *pEntity, int iBuffType );
 	void	PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ );
+	void	SetRageActive( bool bSet )          { m_bRageActive = bSet; }
 	bool	IsRageActive( void )				{ return m_bRageActive; }
 	float	GetRageProgress( void )				{ return m_flEffectBarProgress; }
 	void	ResetRageSystem( void );

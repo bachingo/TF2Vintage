@@ -568,6 +568,7 @@ const char *WeaponIdToClassname( int iWeapon );
 const char *TranslateWeaponEntForClass( const char *pszName, int iClass );
 
 bool WeaponID_IsSniperRifle( int iWeaponID );
+bool WeaponID_IsLunchbox( int iWeaponID );
 
 enum
 {
