@@ -70,7 +70,8 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
-	CTFRevolver_Dex();
+	CTFRevolver_Dex() {}
+	~CTFRevolver_Dex() {}
 
 	virtual void	PrimaryAttack( void );
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_REVOLVER_DEX; }

@@ -37,6 +37,7 @@ ConVar tf2v_revolver_scale_crosshair( "tf2v_revolver_scale_crosshair", "1", FCVA
 
 CREATE_SIMPLE_WEAPON_TABLE( TFRevolver, tf_weapon_revolver )
 CREATE_SIMPLE_WEAPON_TABLE( TFRevolver_Secondary, tf_weapon_revolver_secondary )
+CREATE_SIMPLE_WEAPON_TABLE( TFRevolver_Dex, tf_weapon_revolver_dex )
 
 //=============================================================================
 //

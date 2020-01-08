@@ -24,6 +24,11 @@
 //
 CREATE_SIMPLE_WEAPON_TABLE( TFSword, tf_weapon_sword )
 
+
+LINK_ENTITY_TO_CLASS(tf_weapon_katana, CTFKatana);
+PRECACHE_REGISTER(tf_weapon_katana);
+
+
 //=============================================================================
 //
 // Weapon Sword functions.
