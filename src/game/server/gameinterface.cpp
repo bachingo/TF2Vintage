@@ -667,7 +667,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	if ( IsX360() && (matchmaking = (IMatchmaking *)appSystemFactory( VENGINE_MATCHMAKING_VERSION, NULL )) == NULL )
 		return false;
 
-	if ( !CommandLine()->CheckParm( "-noscripting" ) )
+	if ( CommandLine()->CheckParm( "-vscript" ) )
 	{
 	#if defined( TF_VINTAGE )
 		char szCwd[1024];
