@@ -104,7 +104,7 @@ public:
 	void			SetHomingTarget( CBaseEntity *pHomingTarget );
 
 	virtual void	IncremenentDeflected( void );
-	virtual void	SetLauncher( CBaseEntity *pLauncher );
+	virtual void	SetLauncher( CBaseEntity *pLauncher )	{ m_hLauncher = pLauncher; }
 
 protected:
 

@@ -25,7 +25,7 @@ public:
 	~CTFProjectile_Nail();
 
 	// Creation.
-	static CTFProjectile_Nail *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false);
+	static CTFProjectile_Nail *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false, CBaseEntity *pWeapon = NULL);
 
 	virtual const char *GetProjectileModelName(void);
 	virtual float GetGravity(void);
@@ -46,7 +46,7 @@ public:
 	~CTFProjectile_Syringe();
 
 	// Creation.
-	static CTFProjectile_Syringe *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false );	
+	static CTFProjectile_Syringe *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false, CBaseEntity *pWeapon = NULL);
 
 	virtual const char *GetProjectileModelName( void );
 	virtual float GetGravity( void );
@@ -67,7 +67,7 @@ public:
 	~CTFProjectile_Dart();
 
 	// Creation.
-	static CTFProjectile_Dart *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false);
+	static CTFProjectile_Dart *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false, CBaseEntity *pWeapon = NULL);
 
 	virtual const char *GetProjectileModelName(void);
 	virtual float GetGravity(void);

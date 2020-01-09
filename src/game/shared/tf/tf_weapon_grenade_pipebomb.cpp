@@ -309,8 +309,6 @@ int CTFGrenadePipebombProjectile::DrawModel( int flags )
 #define TF_WEAPON_GRENADE_MODEL        		 "models/weapons/w_models/w_grenade_grenadelauncher.mdl"
 #define TF_WEAPON_STICKYBOMB_MODEL           "models/weapons/w_models/w_stickybomb.mdl"
 #define TF_WEAPON_STICKYBOMB_DEFENSIVE_MODEL "models/weapons/w_models/w_stickybomb_d.mdl"
-#define TF_WEAPON_QUADBALL_MODEL 			 "models/workshop/weapons/c_models/c_quadball/w_quadball_grenade.mdl"
-#define TF_WEAPON_KINGMAKER_MODEL 			 "models/workshop/weapons/c_models/c_kingmaker_sticky/w_kingmaker_stickybomb.mdl"
 #define TF_WEAPON_PIPEBOMB_BOUNCE_SOUND	   	 "Weapon_Grenade_Pipebomb.Bounce"
 #define TF_WEAPON_GRENADE_DETONATE_TIME    2.0f
 #define TF_WEAPON_GRENADE_XBOX_DAMAGE      112
@@ -449,12 +447,6 @@ void CTFGrenadePipebombProjectile::Precache()
 	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
 	
 	index = PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
-	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
-	
-	index = PrecacheModel( TF_WEAPON_QUADBALL_MODEL );
-	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
-	
-	index = PrecacheModel( TF_WEAPON_KINGMAKER_MODEL );
 	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
 
 	PrecacheScriptSound( TF_WEAPON_PIPEBOMB_BOUNCE_SOUND );

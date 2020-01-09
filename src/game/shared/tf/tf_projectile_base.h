@@ -62,7 +62,10 @@ public:
 
 	bool		  IsCritical( void )				{ return m_bCritical; }
 	virtual void  SetCritical( bool bCritical )		{ m_bCritical = bCritical; }
+	virtual void	SetLauncher( CBaseEntity *pLauncher )	{ m_hLauncher = pLauncher; }
 
+	CNetworkHandle( CBaseEntity, m_hLauncher );
+		
 private:
 
 	int				m_iWeaponID;
@@ -74,7 +77,7 @@ protected:
 	CNetworkVector( m_vInitialVelocity );
 
 	static CTFBaseProjectile *Create( const char *pszClassname, const Vector &vecOrigin, 
-		const QAngle &vecAngles, CBaseEntity *pOwner, float flVelocity, short iProjModelIndex, const char *pszDispatchEffect = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false );
+		const QAngle &vecAngles, CBaseEntity *pOwner, float flVelocity, short iProjModelIndex, const char *pszDispatchEffect = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false, CBaseEntity *pWeapon = NULL);
 
 	virtual const char *GetProjectileModelName( void );
 	virtual float GetGravity( void ) { return 0.001f; }

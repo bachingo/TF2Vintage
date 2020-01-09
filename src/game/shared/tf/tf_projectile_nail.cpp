@@ -46,9 +46,9 @@ CTFProjectile_Syringe::~CTFProjectile_Syringe()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFProjectile_Syringe *CTFProjectile_Syringe::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical )
+CTFProjectile_Syringe *CTFProjectile_Syringe::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical, CBaseEntity *pWeapon )
 {
-	return static_cast<CTFProjectile_Syringe *>( CTFBaseProjectile::Create( "tf_projectile_syringe", vecOrigin, vecAngles, pOwner, CTFProjectile_Syringe::GetInitialVelocity(), g_sModelIndexSyringe, SYRINGE_DISPATCH_EFFECT, pScorer, bCritical ) );
+	return static_cast<CTFProjectile_Syringe *>(CTFBaseProjectile::Create("tf_projectile_syringe", vecOrigin, vecAngles, pOwner, CTFProjectile_Syringe::GetInitialVelocity(), g_sModelIndexSyringe, SYRINGE_DISPATCH_EFFECT, pScorer, bCritical, pWeapon ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -142,9 +142,9 @@ CTFProjectile_Nail::~CTFProjectile_Nail()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFProjectile_Nail *CTFProjectile_Nail::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical )
+CTFProjectile_Nail *CTFProjectile_Nail::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical, CBaseEntity *pWeapon )
 {
-	return static_cast<CTFProjectile_Nail *>( CTFBaseProjectile::Create( "tf_projectile_nail", vecOrigin, vecAngles, pOwner, CTFProjectile_Nail::GetInitialVelocity(), g_sModelIndexNail, NAILGUN_NAIL_DISPATCH_EFFECT, pScorer, bCritical ) );
+	return static_cast<CTFProjectile_Nail *>(CTFBaseProjectile::Create("tf_projectile_nail", vecOrigin, vecAngles, pOwner, CTFProjectile_Nail::GetInitialVelocity(), g_sModelIndexNail, NAILGUN_NAIL_DISPATCH_EFFECT, pScorer, bCritical, pWeapon ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -227,9 +227,9 @@ CTFProjectile_Dart::~CTFProjectile_Dart()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFProjectile_Dart *CTFProjectile_Dart::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical )
+CTFProjectile_Dart *CTFProjectile_Dart::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical, CBaseEntity *pWeapon )
 {
-	return static_cast<CTFProjectile_Dart *>( CTFBaseProjectile::Create( "tf_projectile_dart", vecOrigin, vecAngles, pOwner, CTFProjectile_Dart::GetInitialVelocity(), g_sModelIndexTranqDart, TRANQDART_DISPATCH_EFFECT, pScorer, bCritical ) );
+	return static_cast<CTFProjectile_Dart *>( CTFBaseProjectile::Create("tf_projectile_dart", vecOrigin, vecAngles, pOwner, CTFProjectile_Dart::GetInitialVelocity(), g_sModelIndexTranqDart, TRANQDART_DISPATCH_EFFECT, pScorer, bCritical, pWeapon ) );
 }
 
 //-----------------------------------------------------------------------------
