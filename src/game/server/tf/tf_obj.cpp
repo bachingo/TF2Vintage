@@ -2214,6 +2214,7 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 			// give an assist to the sapper's owner
 			pAssister = pSapper->GetOwner();
 			pSapperOwner = pSapper->GetOwner();
+			pSapperOwner->m_Shared.StoreSapperKillCount();
 			CTF_GameStats.Event_AssistDestroyBuilding( pAssister, this );
 		}
 	}

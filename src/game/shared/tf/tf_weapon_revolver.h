@@ -61,9 +61,6 @@ public:
 #endif
 
 class CTFRevolver_Dex : public CTFRevolver
-#ifdef GAME_DLL
-	, public CGameEventListener
-#endif
 {
 public:
 	DECLARE_CLASS( CTFRevolver_Dex, CTFRevolver );
@@ -75,19 +72,15 @@ public:
 
 	virtual void	PrimaryAttack( void );
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_REVOLVER_DEX; }
-	virtual int		GetCount( void ) const;
-
+	
+	virtual void	ItemPostFrame( void );
+	virtual void	CritThink( void );
+	
 	virtual bool	Deploy( void );
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
 	virtual void	Detach( void );
 
 	virtual const char *GetEffectLabelText( void ) { return "#TF_CRITS"; }
-
-#ifdef GAME_DLL
-	virtual void	SetupGameEventListeners( void );
-	virtual void	FireGameEvent( IGameEvent *event );
-#endif
-	virtual void	StoreCriticalHit( void );
 
 	bool			CanGetSapperCrits( void ) const;
 

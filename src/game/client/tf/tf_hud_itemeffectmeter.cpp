@@ -499,7 +499,7 @@ int CHudItemEffectMeterTemp<C_TFRevolver_Dex>::GetCount( void )
 	{
 		C_TFRevolver_Dex *pRevenge = GetWeapon();
 		if ( pRevenge )
-			return pRevenge->GetCount();
+			return pPlayer->m_Shared.GetSapperKillCount();
 	}
 
 	return -1;

@@ -358,7 +358,7 @@ public:
 	void	SetShieldChargeRegenRate( float flRate ) { m_flChargeRegenRate = flRate; }
 	void	CalcChargeCrit( bool bForceFull );
 	
-	// Sniper rifle headshots
+	// Sniper rifle headshots (ie: Bazaar Bargin)
 	int		GetHeadshotCount( void ) const       { return m_iHeadshots; }
 	void	SetHeadshotCount( int count )        { m_iHeadshots = count; }
 	void	IncrementHeadshotCount( void )       { m_iHeadshots += 1; }
@@ -367,6 +367,13 @@ public:
 	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
 	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
 	void	IncrementKillstreakCount( void )       { m_iKillstreak += 1; }
+
+	// Sapper/Backstab content (ie: Diamondback)
+	int		GetSapperKillCount(void) const       { return m_iSapperKill; }
+	void	SetSapperKillCount(int count)        { m_iSapperKill = count; }
+	void	IncrementSapperKillCount(void)       { m_iSapperKill += 1; } // Not affected by TF_WEAPON_MAX_REVENGE
+	void	StoreSapperKillCount(void)			 { m_iSapperKill = Min( (m_iSapperKill + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
+	void	DeductSapperKillCount(void)			 { m_iSapperKill = Max( (m_iSapperKill - 1), 0 ); } // Affected by TF_WEAPON_MAX_REVENGE
 	
 #ifdef GAME_DLL
 	void	UpdateCloakMeter( void );
@@ -588,7 +595,7 @@ private:
 	
 	CNetworkVar( int, m_iHeadshots );
 	CNetworkVar( int, m_iKillstreak );
-
+	CNetworkVar(int, m_iSapperKill);
 #ifdef GAME_DLL
 public:
 	CNetworkVar( float, m_flEnergyDrinkMeter );

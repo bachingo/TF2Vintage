@@ -91,23 +91,44 @@ void CTFRevolver_Dex::PrimaryAttack( void )
 		return;
 
 	BaseClass::PrimaryAttack();
-
-	m_iSapperCrits = Max( m_iSapperCrits - 1, 0 );
-
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && pOwner->IsAlive() )
 	{
-		if ( m_iSapperCrits == 0 )
+		pOwner->m_Shared.DeductSapperKillCount();
+		
+		if ( pOwner->m_Shared.GetSapperKillCount() == 0 )
 			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-int CTFRevolver_Dex::GetCount( void ) const
+void CTFRevolver_Dex::ItemPostFrame( void )
 {
-	return m_iSapperCrits;
+	CritThink();
+	BaseClass::ItemPostFrame();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for checking if we are critboosted or not.
+//-----------------------------------------------------------------------------
+void CTFRevolver_Dex::CritThink( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner )
+	{
+		if ( pOwner->m_Shared.GetSapperKillCount() > 0 )
+		{
+			if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
+				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+		}
+		else
+		{
+			if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
+				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -118,11 +139,8 @@ bool CTFRevolver_Dex::Deploy( void )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && BaseClass::Deploy() )
 	{
-		if ( m_iSapperCrits > 0 )
+		if ( pOwner->m_Shared.GetSapperKillCount() > 0 )
 			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
-#ifdef GAME_DLL
-		SetupGameEventListeners();
-#endif
 		return true;
 	}
 
@@ -138,9 +156,6 @@ bool CTFRevolver_Dex::Holster( CBaseCombatWeapon *pSwitchTo )
 	if ( pOwner && CTFRevolver::Holster( pSwitchTo ) )
 	{
 		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
-#ifdef GAME_DLL
-		StopListeningForAllEvents();
-#endif
 		return true;
 	}
 
@@ -156,65 +171,3 @@ void CTFRevolver_Dex::Detach( void )
 	BaseClass::Detach();
 }
 
-#ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFRevolver_Dex::SetupGameEventListeners( void )
-{
-	ListenForGameEvent( "player_death" );
-	ListenForGameEvent( "object_destroyed" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFRevolver_Dex::FireGameEvent( IGameEvent *event )
-{
-	// Increment when we score a backstab.
-	if (FStrEq( event->GetName(), "player_death" ))
-	{
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if ( pOwner && engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "attacker" ) && 
-			 (  event->GetInt( "customkill" ) == TF_DMG_CUSTOM_BACKSTAB ) )
-		{
-			StoreCriticalHit();
-		}
-	}
-	else //Increment on building destruction.
-	if (FStrEq( event->GetName(), "object_destroyed" ))
-	{
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if ( pOwner && ( engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "sapper" ) ) )
-		{
-			StoreCriticalHit();
-		}
-	}
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFRevolver_Dex::StoreCriticalHit( void )
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( pOwner == nullptr )
-		return;
-
-		m_iSapperCrits = Min( (m_iSapperCrits + 1), TF_WEAPON_MAX_REVENGE );
-
-		if ( pOwner && pOwner->GetActiveWeapon() == this )
-		{
-			if ( m_iSapperCrits > 0 )
-			{
-				if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
-					pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
-			}
-			else
-			{
-				if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
-					pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
-			}
-		}
-}

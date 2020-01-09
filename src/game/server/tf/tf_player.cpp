@@ -1241,6 +1241,7 @@ void CTFPlayer::Spawn()
 	m_Shared.SetDecapitationCount( 0 );
 	m_Shared.SetHeadshotCount( 0 );
 	m_Shared.SetKillstreakCount( 0 );
+	m_Shared.SetSapperKillCount( 0 );
 	m_Shared.SetHypeMeterAbsolute( 0 );
 	m_Shared.SetFeignReady( false );
 	m_Shared.SetHasRecoiled( false );
@@ -4915,6 +4916,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				WRITE_BYTE( this->entindex() );
 			MessageEnd();
 		}
+
 	}
 
 	// If we're not damaging ourselves, apply randomness
@@ -6264,6 +6266,11 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			{
 				m_Shared.SetMaxHealth( GetMaxHealth() );
 			}
+			
+			// If we killed them from a backstab, increase our sapper kill count.
+			if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
+				m_Shared.StoreSapperKillCount();
+			
 		}
 	}
 	else
