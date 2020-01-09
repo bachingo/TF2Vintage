@@ -689,6 +689,9 @@ void CEconItemSchema::Precache( void )
 				CBaseEntity::PrecacheModel( pszModel );
 		}
 
+		if ( pItem->extra_wearable[0] != '\0' )
+			CBaseEntity::PrecacheModel( pItem->extra_wearable );
+		
 		// Precache visuals.
 		for ( int i = 0; i < TF_TEAM_COUNT; i++ )
 		{
