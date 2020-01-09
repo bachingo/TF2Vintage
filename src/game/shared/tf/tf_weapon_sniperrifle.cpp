@@ -718,6 +718,40 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle_Decap::Deploy( void )
+{
+	if ( CTFSniperRifle::Deploy() )
+	{
+#ifdef GAME_DLL
+		SetupGameEventListeners();
+#endif
+		return true;
+	}
+
+	return false;
+}
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle_Decap::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	if (CTFSniperRifle::Holster(pSwitchingTo))
+	{
+#ifdef GAME_DLL
+		StopListeningForAllEvents();
+#endif
+		return true;
+	}
+
+	return false;
+}
+
 #ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -767,17 +801,6 @@ float CTFSniperRifle_Decap::GetChargingRate( void )
 		return TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
 
 	return 	( TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC * ( 0.5 + Min((pOwner->m_Shared.GetHeadshotCount()), 6 ) * 0.25 ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle_Decap::Holster( CBaseCombatWeapon *pSwitchingTo )
-{
-#ifdef GAME_DLL
-	StopListeningForAllEvents();
-#endif
-	return CTFSniperRifle::Holster(pSwitchingTo);
 }
 
 //=============================================================================

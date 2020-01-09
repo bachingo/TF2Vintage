@@ -120,12 +120,13 @@ public:
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE; }
 	virtual bool	HasChargeBar( void )			{ return true; }
 	virtual const char* GetEffectLabelText( void ) { return "#TF_KILLS"; }
+	virtual bool	Deploy( void );
+	virtual bool 	Holster( CBaseCombatWeapon *pSwitchingTo );
 #ifdef GAME_DLL
 	virtual void	SetupGameEventListeners( void );
 	virtual void	FireGameEvent( IGameEvent *event );
 #endif
 	virtual void	OnKill( void );
-	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 };
 
 

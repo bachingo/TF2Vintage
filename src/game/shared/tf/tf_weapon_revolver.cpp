@@ -120,7 +120,9 @@ bool CTFRevolver_Dex::Deploy( void )
 	{
 		if ( m_iSapperCrits > 0 )
 			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
-
+#ifdef GAME_DLL
+		SetupGameEventListeners();
+#endif
 		return true;
 	}
 
@@ -133,10 +135,12 @@ bool CTFRevolver_Dex::Deploy( void )
 bool CTFRevolver_Dex::Holster( CBaseCombatWeapon *pSwitchTo )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && BaseClass::Holster( pSwitchTo ) )
+	if ( pOwner && CTFRevolver::Holster( pSwitchTo ) )
 	{
 		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
-
+#ifdef GAME_DLL
+		StopListeningForAllEvents();
+#endif
 		return true;
 	}
 

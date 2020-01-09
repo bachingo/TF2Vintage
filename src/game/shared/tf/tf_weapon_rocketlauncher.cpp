@@ -204,6 +204,39 @@ void CTFRocketLauncher::DrawCrosshair( void )
 
 #endif
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFRocketLauncher_Airstrike::Deploy( void )
+{
+	if ( CTFRocketLauncher::Deploy() )
+	{
+#ifdef GAME_DLL
+		SetupGameEventListeners();
+#endif
+		return true;
+	}
+
+	return false;
+}
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFRocketLauncher_Airstrike::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	if (CTFRocketLauncher::Holster( pSwitchingTo ))
+	{
+#ifdef GAME_DLL
+		StopListeningForAllEvents();
+#endif
+		return true;
+	}
+
+	return false;
+}
 
 #ifdef GAME_DLL
 //-----------------------------------------------------------------------------
@@ -242,15 +275,4 @@ void CTFRocketLauncher_Airstrike::OnKill( void )
 
 	pOwner->m_Shared.IncrementKillstreakCount();
 	
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFRocketLauncher_Airstrike::Holster( CBaseCombatWeapon *pSwitchingTo )
-{
-#ifdef GAME_DLL
-	StopListeningForAllEvents();
-#endif
-	return CTFRocketLauncher::Holster(pSwitchingTo);
 }
