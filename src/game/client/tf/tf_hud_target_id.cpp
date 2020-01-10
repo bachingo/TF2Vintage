@@ -428,13 +428,16 @@ void CTargetID::UpdateID( void )
 					g_pVGuiLocalize->ConstructString( sDataString, sizeof( sDataString ), g_pVGuiLocalize->Find( "#TF_playerid_mediccharge" ), 1, wszChargeLevel );
 				}
 			}
+				
+			int nSeeEnemyHealth = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pLocalTFPlayer, nSeeEnemyHealth, see_enemy_health );
 			
 			if (pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR || pPlayer->InSameTeam(pLocalTFPlayer) || (bDisguisedEnemy && pPlayer->m_Shared.GetDisguiseTeam() == pLocalTFPlayer->GetTeamNumber()))
 			{
 				printFormatString = "#TF_playerid_sameteam";
 				bShowHealth = true;
 			}
-			else if ( pLocalTFPlayer->IsPlayerClass( TF_CLASS_SPY ) && !pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) )
+			else if ( ( pLocalTFPlayer->IsPlayerClass( TF_CLASS_SPY ) && !pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) ) || nSeeEnemyHealth )
 			{
 				// Spy can see enemy's health.
 				printFormatString = "#TF_playerid_diffteam";
