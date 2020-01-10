@@ -629,7 +629,7 @@ void CHudItemEffects::SetPlayer( void )
 			break;
 		case TF_CLASS_SNIPER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJar>( "HudItemEffectMeter" ) );
-			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>( "HudItemEffectMeter", "resource/UI/HudItemEfectMeter_Sniper.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Sniper.res" ) );
 			break;
 		case TF_CLASS_SOLDIER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBuffItem>( "HudItemEffectMeter" ) );
