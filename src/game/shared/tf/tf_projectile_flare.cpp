@@ -158,11 +158,15 @@ void CTFProjectile_Flare::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
+void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther, bool bDetonate )
 {
 	// Save this entity as enemy, they will take 100% damage.
 	m_hEnemy = pOther;
 
+	// Check the flare mode.
+	int nFlareMode = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nFlareMode, set_weapon_mode);
+	
 	// Invisible.
 	SetModelName( NULL_STRING );
 	AddSolidFlags( FSOLID_NOT_SOLID );
@@ -196,23 +200,31 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	{
 		// Hit world, do the explosion effect.
 		CPVSFilter filter( vecOrigin );
-		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pOther->entindex() );
+		// Pick our explosion effect. Manual Detonator and Scorch shot explode.
+		if ( ( nFlareMode == 0 || nFlareMode == 2 ) || ( nFlareMode == 1 && !bDetonate ) )
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pOther->entindex() );
+		else
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, TF_WEAPON_ROCKETLAUNCHER, pOther->entindex() );
 	}
 	
 	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
 	
-	// Detonator flares explode on a small radius.
-	int nFlareMode = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nFlareMode, set_weapon_mode);
-	if (nFlareMode != 0)
+	// Scorch shot and Detonator explode.
+	if ( (nFlareMode == 3 && !pPlayer) || ( nFlareMode == 1 ) )
 	{
 		// We explode in a small radius, set us up as an explosion.
 		CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING, &vectorReported );
 		CTFRadiusDamageInfo radiusInfo;
 		radiusInfo.info = &newInfo;
 		radiusInfo.m_vecSrc = vecOrigin;
+		
+		// Check the radius.
 		float flRadius = GetFlareRadius();
-		radiusInfo.m_flRadius = flRadius;
+		if (nFlareMode == 1 && !bDetonate )	// If we're a Detonator that wasn't triggered manually...
+			radiusInfo.m_flRadius = 0;	// ...No radius for damaging anyone except ourselves.
+		else
+			radiusInfo.m_flRadius = flRadius;
+		
 		radiusInfo.m_flSelfDamageRadius = flRadius;
 
 		TFGameRules()->RadiusDamage( radiusInfo );
@@ -296,7 +308,7 @@ void CTFProjectile_Flare::Detonate( void )
 	vecSpot = GetAbsOrigin() + Vector ( 0 , 0 , 8 );
 	UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -32 ), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, & tr);
 
-	Explode( &tr, NULL );
+	Explode( &tr, NULL, true );
 }
 
 #else
