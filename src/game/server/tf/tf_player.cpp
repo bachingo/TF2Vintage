@@ -4688,36 +4688,29 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, crit_vs_burning_FLARES_DISPLAY_ONLY );
-
-		if ( nCritOnCond )
-		{
-			for ( int i = 0; condition_to_attribute_translation[i] != TF_COND_LAST; i++ )
-			{
-				int nCond = condition_to_attribute_translation[i];
-				int nFlag = ( 1 << i );
-				if ( ( nCritOnCond & nFlag ) && m_Shared.InCond( nCond ) )
-				{
-					bitsDamage |= DMG_CRITICAL;
-					info.AddDamageType( DMG_CRITICAL );
-					break;
-				}
-			}
-		}
-		
 		int nMinicritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnCond, or_minicrit_vs_playercond_burning );
-		// We have the attribute name set up for burning, but since we only have burn checks it's still usable.
-		if ( nMinicritOnCond )
+
+		if ( nCritOnCond || nMinicritOnCond )
 		{
 			for ( int i = 0; condition_to_attribute_translation[i] != TF_COND_LAST; i++ )
 			{
 				int nCond = condition_to_attribute_translation[i];
 				int nFlag = ( 1 << i );
-				if ( ( nCritOnCond & nFlag ) && m_Shared.InCond( nCond ) )
+				if ( ( nFlag ) && m_Shared.InCond( nCond ) )
 				{
-					bitsDamage |= DMG_MINICRITICAL;
-					info.AddDamageType( DMG_MINICRITICAL );
-					break;
+					if ( nCritOnCond )
+					{
+						bitsDamage |= DMG_CRITICAL;
+						info.AddDamageType( DMG_CRITICAL );
+						break;
+					}
+					else if ( nMinicritOnCond )
+					{
+						bitsDamage |= DMG_MINICRITICAL;
+						info.AddDamageType( DMG_MINICRITICAL );
+						break;	
+					}
 				}
 			}
 		}
@@ -6770,14 +6763,24 @@ void CTFPlayer::DropHealthPack( void )
 		return;
 
 	// Investigate for constant expression
-	Vector vecRand;
-	vecRand.x = ( rand() * 0.000061037019 ) + -1.0f;
-	vecRand.y = ( rand() * 0.000061037019 ) + -1.0f;
-	vecRand.z = rand();
+	Vector vecRight, vecUp;
+	AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
+		
+	Vector vecImpulse( 0.0f, 0.0f, 0.0f );
+	vecImpulse += vecUp * random->RandomFloat( -0.25, 0.25 );
+	vecImpulse += vecRight * random->RandomFloat( -0.25, 0.25 );
+	VectorNormalize( vecImpulse );
+	vecImpulse *= random->RandomFloat( tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat() );
+	vecImpulse += GetAbsVelocity();
 
-	vecRand.AsVector2D().NormalizeInPlace();
+	// Cap the impulse.
+	float flSpeed = vecImpulse.Length();
+	if ( flSpeed > tf_weapon_ragdoll_maxspeed.GetFloat() )
+	{
+		VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
+	}
 
-	pPack->DropSingleInstance( 250 * vecRand, this, 0.0f, 0.1f );
+	pPack->DropSingleInstance( vecImpulse, this, 0.0f, 0.1f );
 }
 
 //-----------------------------------------------------------------------------
