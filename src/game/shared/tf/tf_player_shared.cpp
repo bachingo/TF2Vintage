@@ -1116,6 +1116,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	
 	// Start these off at 0 so we accept nerfs, but prefer buffs.
 	float flMaxOverhealRatio = 0.0;
+	float flOverhealAmount;
 
 	// If we're being healed, heal ourselves
 	if ( InCond( TF_COND_HEALTH_BUFF ) )
@@ -1153,7 +1154,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			else	// We're being healed by a medic
 			{
 				// We're being healed by a medic
-				float flOverhealAmount = 1.0f;
+				flOverhealAmount = 1.0f;
 				// Check our overheal level, and cap if necessary.
 				if ( m_aHealers[i].pPlayer.IsValid() )
 				{
