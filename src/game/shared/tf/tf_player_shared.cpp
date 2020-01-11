@@ -1116,7 +1116,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	
 	// Start these off at 0 so we accept nerfs, but prefer buffs.
 	float flMaxOverhealRatio = 0.0;
-	float flMaxDecayRatio = 0.0;
 
 	// If we're being healed, heal ourselves
 	if ( InCond( TF_COND_HEALTH_BUFF ) )
@@ -1155,7 +1154,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			{
 				// We're being healed by a medic
 				float flOverhealAmount = 1.0f;
-				float flDecayAmount = 1.0f;		
 				// Check our overheal level, and cap if necessary.
 				if ( m_aHealers[i].pPlayer.IsValid() )
 				{
@@ -1163,16 +1161,11 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 					CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
 
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
-					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flDecayAmount, mult_medigun_overheal_decay);
 				}
 						
 				// Iterate our overheal amount, if we're a higher value.
 				if (flOverhealAmount > flMaxOverhealRatio)
 					flMaxOverhealRatio = flOverhealAmount;
-						
-				// Iterate our decay, if we're a higher value.
-				if (flDecayAmount > flMaxDecayRatio)
-					flMaxDecayRatio = flDecayAmount;
 					
 				// Check our healer's overheal attribute.
 				if ( bHasFullHealth )
@@ -1189,10 +1182,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 
 			fTotalHealAmount += m_aHealers[i].flAmount;
 		}
-		
-		// Failsafe for decay, since we cannot divide by zero.
-		if ( flMaxDecayRatio == 0 )
-			flMaxDecayRatio = FLT_EPSILON;
 
 		int nHealthToAdd = ( int )m_flHealFraction;
 		if ( nHealthToAdd > 0 )
@@ -1284,7 +1273,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		if ( m_pOuter->GetHealth() > ( m_pOuter->GetMaxHealth() + m_pOuter->m_Shared.GetSanguisugeHealth() ) )
 		{
 			float flBoostMaxAmount = GetMaxBuffedHealth() - m_pOuter->GetMaxHealth();
-			m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / ( tf_boost_drain_time.GetFloat() * flMaxDecayRatio ) ) );
+			m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / ( tf_boost_drain_time.GetFloat() ) ) );
 			int nHealthToDrain = ( int )m_flHealFraction;
 			if ( nHealthToDrain > 0 )
 			{
