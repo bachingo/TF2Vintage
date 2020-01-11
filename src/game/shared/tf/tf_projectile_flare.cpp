@@ -209,8 +209,8 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther, bool bD
 	
 	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
 	
-	// Scorch shot and Detonator explode.
-	if ( (nFlareMode == 3 && !pPlayer) || ( nFlareMode == 1 ) )
+	// Scorch shot and Detonator explode when touching the world, or if Detonator was triggered.
+	if ( ( nFlareMode == 3 && !pPlayer ) || ( nFlareMode == 1 && ( !pPlayer || bDetonate ) ) )
 	{
 		// We explode in a small radius, set us up as an explosion.
 		CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING, &vectorReported );
@@ -228,13 +228,6 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther, bool bD
 		radiusInfo.m_flSelfDamageRadius = flRadius;
 
 		TFGameRules()->RadiusDamage( radiusInfo );
-		
-		if (nFlareMode == 1 && !bDetonate )	// We also deal with a direct contact here as well for Detonators not triggered.
-		{
-			CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING );
-			info.SetReportedPosition( vectorReported);
-			pOther->TakeDamage( info );
-		}
 	}
 	else
 	{
