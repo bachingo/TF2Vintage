@@ -37,6 +37,8 @@
 
 using namespace vgui;
 
+ConVar tf2v_show_killstreak_counter("tf2v_show_killstreak_counter", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Displays the Killstreak counter on the HUD.", true, 0.0f, true, 1.0f);
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -75,6 +77,28 @@ private:
 
 protected:
 	bool m_bEnabled;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CHudItemEffectMeterKillstreak : public CHudItemEffectMeter
+{
+	DECLARE_CLASS_SIMPLE( CHudItemEffectMeterKillstreak, CHudItemEffectMeter );
+public:
+	CHudItemEffectMeterKillstreak(const char *pElementName, const char *pResourceName = nullptr)
+		: CHudItemEffectMeter(pElementName), m_pszResource(pResourceName)
+	{
+	}
+
+	virtual int     GetCount(void);
+	virtual bool    IsEnabled(void);
+	virtual const char* GetLabelText(void)				{ return "#TF_KillStreak"; }
+	virtual const char* GetResourceName(void)			{ return "resource/UI/HudItemEffectMeter_Killstreak.res"; }
+
+
+private:
+	const char *m_pszResource;
 };
 
 
@@ -482,7 +506,7 @@ int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
 	{
 		C_TFRocketLauncher_Airstrike *pRocketLauncher = GetWeapon();
 		if ( pRocketLauncher )
-			return pPlayer->m_Shared.GetKillstreakCount();
+			return pPlayer->m_Shared.GetStrikeCount();
 	}
 
 	return -1;
@@ -530,6 +554,27 @@ bool CHudItemEffectMeterTemp<C_TFSodaPopper>::IsEnabled( void )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Killstreak Specialization
+//-----------------------------------------------------------------------------
+bool CHudItemEffectMeterKillstreak::IsEnabled( void )
+{
+	if ( tf2v_show_killstreak_counter.GetBool() )
+		return true;
+
+	return false;
+}
+
+int CHudItemEffectMeterKillstreak::GetCount( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer )
+	{
+		return pPlayer->m_Shared.GetKillstreakCount();
+	}
+
+	return -1;
+}
 
 
 CHudItemEffects::CHudItemEffects()
@@ -618,6 +663,7 @@ void CHudItemEffects::SetPlayer( void )
 			delete m_pEffectBars[i].Get();
 	}
 
+	AddItemMeter( new CHudItemEffectMeterKillstreak( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Killstreak.res" ) );
 	switch ( pPlayer->GetPlayerClass()->GetClassIndex() )
 	{
 		case TF_CLASS_SCOUT:
