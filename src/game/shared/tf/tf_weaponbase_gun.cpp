@@ -784,8 +784,12 @@ void CTFWeaponBaseGun::PlayWeaponShootSound( void )
 //-----------------------------------------------------------------------------
 int CTFWeaponBaseGun::GetAmmoPerShot( void ) const
 {
-	int iAmmoPerShot = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
-	CALL_ATTRIB_HOOK_INT( iAmmoPerShot, mod_ammo_per_shot );
+	int nCustomAmmoPerShot = 0;
+	CALL_ATTRIB_HOOK_INT( nCustomAmmoPerShot, mod_ammo_per_shot );
+	if (nCustomAmmoPerShot)
+		return nCustomAmmoPerShot;
+
+	int iAmmoPerShot = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot
 	return iAmmoPerShot;
 }
 
