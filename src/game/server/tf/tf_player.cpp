@@ -5928,6 +5928,11 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 		if ( flForceMultiplier != 1.0f )
 			vecForce *= flForceMultiplier;
 		
+		// Add some extra force to Pyro jumps.
+		// This is an approximation of the old blast model.
+		if ( IsPlayerClass( TF_CLASS_PYRO ) )
+			vecForce *= 1.5;
+		
 	}
 	else
 	{
