@@ -11,11 +11,6 @@
 #include "tf_inventory.h"
 #include "econ_item_system.h"
 
-#ifdef CLIENT_DLL
-ConVar tf2v_show_reskins_in_armory("tf2v_show_reskins_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
-ConVar tf2v_show_cosmetics_in_armory("tf2v_show_cosmetics_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
-#endif
-
 static CTFInventory g_TFInventory;
 
 CTFInventory *GetTFInventory()
@@ -48,14 +43,6 @@ CTFInventory::~CTFInventory()
 
 bool CTFInventory::Init( void )
 {
-#ifdef CLIENT_DLL
-	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
-	bool bCosmeticsEnabled = tf2v_show_cosmetics_in_armory.GetBool();
-#endif
-#ifdef GAME_DLL
-	bool bReskinsEnabled = true;
-	bool bCosmeticsEnabled = true;
-#endif
 
 	GetItemSchema()->Init();
 
@@ -76,8 +63,6 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || bCosmeticsEnabled ) || ( pItemDef->baseitem ) || ( ( iSlot == TF_LOADOUT_SLOT_MEDAL ) || ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) ) )
-				{
 					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) && ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )	// Skip MISC2 since we do it below.
 					{
 						if ( pItemDef->baseitem )
@@ -96,7 +81,7 @@ bool CTFInventory::Init( void )
 #endif
 							m_Items[iClass][iSlot][0] = pNewItem;
 						}
-						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) )
+						else if ( pItemDef->show_in_armory )
 						{
 							CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -137,7 +122,7 @@ bool CTFInventory::Init( void )
 #endif
 								m_Items[iClass][iSlot][0] = pNewItem;
 							}
-							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) )
+							else if ( pItemDef->show_in_armory )
 							{
 								CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -148,7 +133,6 @@ bool CTFInventory::Init( void )
 							}
 						}
 					}
-				}
 			}
 		}
 	}
