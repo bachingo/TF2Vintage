@@ -2627,7 +2627,7 @@
 			"item_type_name"	"#TF_Weapon_Sword"
 			"demoknight"	"1"
 			"item_slot"	"melee"
-			"anim_slot"	"item1"
+			"anim_slot"	"melee"
 			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana"
 			"used_by_classes"
 			{
@@ -3748,8 +3748,8 @@
 		{
 			"name"	"The Huntsman"
 			"prefab"	"weapon_huntsman"
-			"propername"	"1"
 			"year"			"2009"
+			"propername"	"1"
 		}
 		"57"
 		{
@@ -4897,6 +4897,11 @@
 				{
 					"attribute_class"	"add_maxhealth"
 					"value" "-20"
+				}
+				"heal on kill"
+				{
+					"attribute_class"	"heal_on_kill"
+					"value"	"50"
 				}
 			}
 		}
