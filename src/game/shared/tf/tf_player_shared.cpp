@@ -5383,7 +5383,7 @@ bool CTFPlayer::TryToPickupBuilding( void )
 	if ( nRemotePickup != 0 )
 	{
 		// Check if we also have enough metal to perform a remote pickup.
-		if ( GetBuildResources() > nRemotePickup )
+		if ( GetBuildResources() >= nRemotePickup )
 			bHasRemotePickup = true;
 	}
 	
