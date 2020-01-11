@@ -219,6 +219,7 @@ CTFWeaponBase::CTFWeaponBase()
 	m_flLastCritCheckTime = 0;
 	m_iLastCritCheckFrame = 0;
 	m_bCurrentAttackIsCrit = false;
+	m_bCurrentAttackIsMiniCrit = false;
 	m_iCurrentSeed = -1;
 	m_flLastFireTime = 0.0f;
 
