@@ -273,6 +273,6 @@ void CTFRocketLauncher_Airstrike::OnKill( void )
 	if ( pOwner == nullptr )
 		return;
 
-	pOwner->m_Shared.IncrementKillstreakCount();
+	pOwner->m_Shared.IncrementStrikeCount();
 	
 }

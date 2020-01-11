@@ -1070,7 +1070,7 @@ int CTFWeaponBase::GetMaxClip1( void ) const
 	int nClipSizePerKill = 0;
 	CALL_ATTRIB_HOOK_INT( nClipSizePerKill, clipsize_increase_on_kill );
 
-	iMaxClip = Min( ( iMaxClip + nClipSizePerKill ), ( iMaxClip + pOwner->m_Shared.GetKillstreakCount() ) );
+	iMaxClip = Min( ( iMaxClip + nClipSizePerKill ), ( iMaxClip + pOwner->m_Shared.GetStrikeCount() ) );
 
 	return iMaxClip;
 }

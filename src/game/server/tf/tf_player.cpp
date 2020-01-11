@@ -1202,6 +1202,7 @@ void CTFPlayer::InitialSpawn( void )
 
 	m_iMaxSentryKills = 0;
 	CTF_GameStats.Event_MaxSentryKills( this, 0 );
+	m_Shared.SetKillstreakCount( 0 );
 
 	StateEnter( TF_STATE_WELCOME );
 }
@@ -1240,7 +1241,7 @@ void CTFPlayer::Spawn()
 
 	m_Shared.SetDecapitationCount( 0 );
 	m_Shared.SetHeadshotCount( 0 );
-	m_Shared.SetKillstreakCount( 0 );
+	m_Shared.SetStrikeCount( 0 );
 	m_Shared.SetSapperKillCount( 0 );
 	m_Shared.SetHypeMeterAbsolute( 0 );
 	m_Shared.SetFeignReady( false );
@@ -6273,6 +6274,9 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			// If we killed them from a backstab, increase our sapper kill count.
 			if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
 				m_Shared.StoreSapperKillCount();
+			
+			// Increase our killstreak counter.
+			m_Shared.IncrementKillstreakCount();
 			
 		}
 	}

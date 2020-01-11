@@ -363,10 +363,10 @@ public:
 	void	SetHeadshotCount( int count )        { m_iHeadshots = count; }
 	void	IncrementHeadshotCount( void )       { m_iHeadshots += 1; }
 	
-	// Killstreaks (ie: Air Strike)
-	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
-	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
-	void	IncrementKillstreakCount( void )       { m_iKillstreak += 1; }
+	// Killstreak for attribute items (ie: Air Strike)
+	int		GetStrikeCount( void ) const       { return m_iStrike; }
+	void	SetStrikeCount( int count )        { m_iStrike = count; }
+	void	IncrementStrikeCount( void )       { m_iStrike += 1; }
 
 	// Sapper/Backstab content (ie: Diamondback)
 	int		GetSapperKillCount(void) const       { return m_iSapperKill; }
@@ -374,6 +374,11 @@ public:
 	void	IncrementSapperKillCount(void)       { m_iSapperKill += 1; } // Not affected by TF_WEAPON_MAX_REVENGE
 	void	StoreSapperKillCount(void)			 { m_iSapperKill = Min( (m_iSapperKill + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
 	void	DeductSapperKillCount(void)			 { m_iSapperKill = Max( (m_iSapperKill - 1), 0 ); } // Affected by TF_WEAPON_MAX_REVENGE
+	
+	// Killstreak counter, for HUD.
+	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
+	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
+	void	IncrementKillstreakCount( void )       { m_iKillstreak += 1; }
 	
 #ifdef GAME_DLL
 	void	UpdateCloakMeter( void );
@@ -594,6 +599,7 @@ private:
 	CNetworkVar( int, m_iNextMeleeCrit );
 	
 	CNetworkVar( int, m_iHeadshots );
+	CNetworkVar( int, m_iStrike );
 	CNetworkVar( int, m_iKillstreak );
 	CNetworkVar(int, m_iSapperKill);
 #ifdef GAME_DLL
