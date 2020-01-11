@@ -3933,6 +3933,15 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 						break;
 				}
 			}
+			else
+			{
+				killer_weapon_name = pRocket->GetClassname();
+				CTFWeaponBase *pLauncher = dynamic_cast<CTFWeaponBase *>( pRocket->m_hLauncher.Get() );
+				if ( pLauncher )
+				{
+					iWeaponID = pLauncher->GetWeaponID();
+				}
+			}
 		}
 		else if ( CTFWeaponBaseGrenadeProj *pGrenade = dynamic_cast<CTFWeaponBaseGrenadeProj *>( pInflictor ) )
 		{
@@ -4011,15 +4020,6 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		// look out for sentry rocket as weapon and map it to sentry gun, so we get the L3 sentry death icon
 		killer_weapon_name = "obj_sentrygun3";
 	}
-
-	// make sure standard arrow kills are mapped to their weapon.
-	else if ( !V_strcmp( killer_weapon_name, "tf_projectile_arrow" ) || !V_strcmp( killer_weapon_name, "tf_projectile_festitive_arrow" ) )
-	{
-		CTFWeaponBase *pActiveWpn = pScorer->GetActiveTFWeapon();
-		killer_weapon_name = pActiveWpn->GetClassname();
-		iWeaponID = pActiveWpn->GetWeaponID();
-	}
-
 
 	else if ( iWeaponID )
 	{
