@@ -789,7 +789,7 @@ int CTFWeaponBaseGun::GetAmmoPerShot( void ) const
 	if (nCustomAmmoPerShot)
 		return nCustomAmmoPerShot;
 
-	int iAmmoPerShot = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot
+	int iAmmoPerShot = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_iAmmoPerShot;
 	return iAmmoPerShot;
 }
 

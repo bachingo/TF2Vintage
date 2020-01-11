@@ -414,7 +414,7 @@ bool CTFBot::IsCombatWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_BUFF_ITEM:
 		case (int)WeaponId::TF_WEAPON_PDA_SPY_BUILD:
 		case (int)WeaponId::TF_WEAPON_PASSTIME_GUN:
-		case (int)WeaponId::TF_WEAPON_PARACHUTE:
+		case TF_WEAPON_PARACHUTE:
 		case (int)WeaponId::TF_WEAPON_ROCKETPACK:
 			return false;
 
