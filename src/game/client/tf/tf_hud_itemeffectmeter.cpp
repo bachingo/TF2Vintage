@@ -633,7 +633,7 @@ void CHudItemEffects::SetPlayer( void )
 			break;
 		case TF_CLASS_SOLDIER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBuffItem>( "HudItemEffectMeter" ) );
-			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>( "HudItemEffectMeter" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) ); // This shares the Diamondback's HUD location, strangely.
 			break;
 		case TF_CLASS_DEMOMAN:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSword>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Demoman.res" ) );
