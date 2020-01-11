@@ -55,31 +55,96 @@ void CTFFlareGun::Spawn(void)
 //-----------------------------------------------------------------------------
 void CTFFlareGun::PrimaryAttack(void)
 {
-	//Short and simple attack.
-	BaseClass::PrimaryAttack();
-		
 	//Check if we do anything else, like keep track of flares.
 	int nWeaponMode = 0;
 	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
-	if (nWeaponMode == 1)
+	
+	if (nWeaponMode != 1)
 	{
-		// Update our active flares.
-		#if 0
-		CBaseEntity *pFlare = 
+		//Short and simple attack.
+		BaseClass::PrimaryAttack();
+	}
+	else	// This is just BaseClass:PrimaryAttack() but with the added flare tracking.
+	{
+				// Check for ammunition.
+		if ( m_iClip1 <= 0 && UsesClipsForAmmo1() )
+			return;
 
-		if (pFlare)
+		// Are we capable of firing again?
+		if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+			return;
+
+		// Get the player owning the weapon.
+		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+		if ( !pPlayer )
+			return;
+
+		if ( !CanAttack() )
+			return;
+
+		CalcIsAttackCritical();
+
+#ifndef CLIENT_DLL
+		pPlayer->RemoveInvisibility();
+		pPlayer->RemoveDisguise();
+
+		// Minigun has custom handling
+		if ( GetWeaponID() != TF_WEAPON_MINIGUN )
 		{
-		#ifdef GAME_DLL
+			pPlayer->SpeakWeaponFire();
+		}
+		CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+#endif
 
-			CTFGrenadePipebombProjectile *pFlare = (CTFGrenadePipebombProjectile*)pProjectile;
+		// Set the weapon mode.
+		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+
+		SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+
+		pPlayer->SetAnimation( PLAYER_ATTACK1 );
+
+		// Update our active flares.
+		CBaseEntity *pFlareProjectile = static_cast<CTFProjectile_Flare *>(FireProjectile(ToTFPlayer(GetOwner())));
+
+		if (pFlareProjectile)
+		{
+#ifdef GAME_DLL
+			CTFProjectile_Flare *pFlare = (CTFProjectile_Flare*)pFlareProjectile;
 			pFlare->SetLauncher(this);
 
 			FlareHandle hHandle;
 			hHandle = pFlare;
 			m_Flares.AddToTail(hHandle);
-		#endif
+#endif
 		}
-		#endif
+
+		m_flLastFireTime  = gpGlobals->curtime;
+
+		// Set next attack times.
+		float flFireDelay = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay );
+		
+		if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+				CALL_ATTRIB_HOOK_FLOAT( flFireDelay, rocketjump_attackrate_bonus );
+			
+		float flHealthModFireBonus = 1;
+		CALL_ATTRIB_HOOK_FLOAT( flHealthModFireBonus, mult_postfiredelay_with_reduced_health );
+		if (flHealthModFireBonus != 1)
+		{
+			flFireDelay *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, flHealthModFireBonus, 1.0 );
+		}
+
+		m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
+
+		// Don't push out secondary attack, because our secondary fire
+		// systems are all separate from primary fire (sniper zooming, demoman pipebomb detonating, etc)
+		//m_flNextSecondaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+
+		// Set the idle animation times based on the sequence duration, so that we play full fire animations
+		// that last longer than the refire rate may allow.
+		SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
+
+		AbortReload();
 	}
 }
 
@@ -88,7 +153,6 @@ void CTFFlareGun::PrimaryAttack(void)
 //-----------------------------------------------------------------------------
 void CTFFlareGun::SecondaryAttack( void )
 {
-#ifdef GAME_DLL
 	int nWeaponMode = 0;
 	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
 	if (nWeaponMode == 1)
@@ -100,16 +164,17 @@ void CTFFlareGun::SecondaryAttack( void )
 		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 		if ( !pPlayer )
 			return;
+#ifdef GAME_DLL
 		for ( int i = 0; i < m_Flares.Count(); i++ )
 		{
 			CTFProjectile_Flare *pFlare = m_Flares[ i ];
 			pFlare->Detonate();
 			m_Flares.Remove(i);
 		}
+#endif
 	}
 	else
 		BaseClass::SecondaryAttack();
-#endif
 	return;
 }
 
