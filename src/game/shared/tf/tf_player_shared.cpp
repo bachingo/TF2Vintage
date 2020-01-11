@@ -1142,7 +1142,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				continue;
 			}
 			
-			// Being healed by a medigun, don't decay our health
+			// Being healed, don't decay our health
 			bDecayHealth = false;
 			
 			// Dispensers heal at a constant rate
@@ -1272,16 +1272,10 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	if (m_pOuter->m_Shared.GetSanguisugeHealth() > 0)
 	{
 		int iSanguisugeDecay = 2;
-		m_flHealFraction += ( gpGlobals->frametime * iSanguisugeDecay );
-		int nHealthToDrain = ( int )m_flHealFraction;
-		if ( nHealthToDrain > 0 )
-		{
-			m_flHealFraction -= nHealthToDrain;
-
-			// Manually subtract the health from our Sanguisuge pool as well.
-			m_pOuter->m_iHealth -= nHealthToDrain;
-			m_pOuter->m_Shared.ChangeSanguisugeHealth(nHealthToDrain);
-		}
+		int nHealthtoRemove = (int)( gpGlobals->frametime * iSanguisugeDecay );
+		// Manually subtract the health from our Sanguisuge pool as well.
+		m_pOuter->m_iHealth -= nHealthtoRemove;
+		m_pOuter->m_Shared.ChangeSanguisugeHealth( nHealthtoRemove );
 	}
 
 	if ( bDecayHealth )
