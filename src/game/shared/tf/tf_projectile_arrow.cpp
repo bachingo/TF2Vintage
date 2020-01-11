@@ -710,7 +710,9 @@ void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 //-----------------------------------------------------------------------------
 bool CTFProjectile_Arrow::CanHeadshot( void )
 {
-	return ( m_iType == TF_PROJECTILE_ARROW || m_iType == TF_PROJECTILE_FESTITIVE_ARROW );
+	// ( m_iType == TF_PROJECTILE_ARROW || m_iType == TF_PROJECTILE_FESTITIVE_ARROW )
+	// The exception is that we translate this to our local type value. (0 and 3 respectively)
+	return ( m_iType == 0 || m_iType == 3 );
 }
 
 //-----------------------------------------------------------------------------
