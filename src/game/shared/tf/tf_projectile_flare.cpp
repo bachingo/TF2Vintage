@@ -201,10 +201,10 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther, bool bD
 		// Hit world, do the explosion effect.
 		CPVSFilter filter( vecOrigin );
 		// Pick our explosion effect. Manual Detonator and Scorch shot explode.
-		if ( ( nFlareMode == 0 || nFlareMode == 2 ) || ( nFlareMode == 1 && !bDetonate ) )
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pOther->entindex() );
-		else
+		if ( ( nFlareMode == 3 ) || ( nFlareMode == 1 && bDetonate ) )
 			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, TF_WEAPON_ROCKETLAUNCHER, pOther->entindex() );
+		else
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pOther->entindex() );
 	}
 	
 	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
