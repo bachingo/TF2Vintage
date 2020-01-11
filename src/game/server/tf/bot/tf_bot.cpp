@@ -412,6 +412,10 @@ bool CTFBot::IsCombatWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_INVIS:
 		case TF_WEAPON_LUNCHBOX:
 		case TF_WEAPON_BUFF_ITEM:
+		case (int)WeaponId::TF_WEAPON_PDA_SPY_BUILD:
+		case (int)WeaponId::TF_WEAPON_PASSTIME_GUN:
+		case (int)WeaponId::TF_WEAPON_PARACHUTE:
+		case (int)WeaponId::TF_WEAPON_ROCKETPACK:
 			return false;
 
 		default:
@@ -445,10 +449,7 @@ bool CTFBot::IsQuietWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_MEDIGUN:
 		case TF_WEAPON_DISPENSER:
 		case TF_WEAPON_INVIS:
-		case TF_WEAPON_FLAREGUN:
-		case TF_WEAPON_LUNCHBOX:
-		case TF_WEAPON_JAR:
-		case TF_WEAPON_COMPOUND_BOW:
+		case (int)WeaponId::TF_WEAPON_PDA_SPY_BUILD:
 			return true;
 
 		default:
@@ -483,6 +484,8 @@ bool CTFBot::IsHitScanWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_SHOTGUN_PYRO:
 		case TF_WEAPON_SCATTERGUN:
 		case TF_WEAPON_SNIPERRIFLE:
+		case TF_WEAPON_SNIPERRIFLE_DECAP:
+		case TF_WEAPON_SNIPERRIFLE_CLASSIC:
 		case TF_WEAPON_MINIGUN:
 		case TF_WEAPON_SMG:
 		case TF_WEAPON_PISTOL:
@@ -490,6 +493,10 @@ bool CTFBot::IsHitScanWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_REVOLVER:
 		case TF_WEAPON_SENTRY_BULLET:
 		case TF_WEAPON_HANDGUN_SCOUT_PRIMARY:
+		case TF_WEAPON_PEP_BRAWLER_BLASTER:
+		case TF_WEAPON_SODA_POPPER:
+		case (int)WeaponId::TF_WEAPON_CHARGED_SMG:
+		case (int)WeaponId::TF_WEAPON_HANDGUN_SCOUT_SEC:
 			return true;
 
 		default:
@@ -518,6 +525,9 @@ bool CTFBot::IsExplosiveProjectileWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_PIPEBOMBLAUNCHER:
 		case TF_WEAPON_SENTRY_ROCKET:
 		case TF_WEAPON_JAR:
+		case TF_WEAPON_JAR_MILK:
+		case (int)WeaponId::TF_WEAPON_DIRECTHIT:
+		case (int)WeaponId::TF_WEAPON_JAR_GAS:
 			return true;
 
 		default:
@@ -552,6 +562,7 @@ bool CTFBot::IsContinuousFireWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_PISTOL_SCOUT:
 		case TF_WEAPON_FLAMETHROWER:
 		case TF_WEAPON_LASER_POINTER:
+		case (int)WeaponId::TF_WEAPON_CHARGED_SMG:
 			return true;
 
 		default:
