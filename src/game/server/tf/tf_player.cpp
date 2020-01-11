@@ -5047,6 +5047,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 								// Scattergun gets 50% bonus of other weapons at short range
 								flRandomDamage *= 1.5;
 								break;
+							case TF_WEAPON_STICKBOMB:	
+								// Post-nerf Caber follows the standard explosive short range bonus.
+								if ( tf2v_use_new_caber.GetBool() )
+									flRandomDamage *= 0.5;
+								break;
 						}
 					}	
 				}
