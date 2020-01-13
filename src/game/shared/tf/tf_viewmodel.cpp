@@ -314,7 +314,7 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 	AngleVectors(eyeAngles, &forward, &right, &up);
 
 	// Don't use offsets if minimal viewmodels are active
-	if ( tf_use_min_viewmodels.GetBool() )
+	if ( tf_use_min_viewmodels.GetBool() || ( pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) ) )
 	{
 		vecNewOrigin += forward*m_vOffset.x + right*m_vOffset.y + up*m_vOffset.z;
 	}

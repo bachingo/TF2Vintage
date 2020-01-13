@@ -452,13 +452,15 @@ float ClientModeTFNormal::GetViewModelFOV( void )
 //-----------------------------------------------------------------------------
 bool ClientModeTFNormal::ShouldDrawViewModel()
 {
+	// We used to hide the viewmodel when zooming, but now we force it to minimize instead to preserve weapon bones.
+/*	
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
 	{
 		if ( pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 			return false;
 	}
-
+*/
 	return r_drawviewmodel.GetBool();
 }
 
