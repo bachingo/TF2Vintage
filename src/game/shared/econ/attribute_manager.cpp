@@ -23,6 +23,141 @@ END_NETWORK_TABLE();
 
 ConVar tf2v_attrib_mult( "tf2v_attrib_mult", "1" , FCVAR_NOTIFY | FCVAR_REPLICATED, "Amount to multiply on attribute values." );
 
+
+bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, unsigned int value )
+{
+	string_t name = pDefinition->m_iAttributeClass;
+	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
+	{
+		name = AllocPooledString( pDefinition->attribute_class );
+		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+	}
+
+	if ( m_iName == name )
+	{
+		if ( m_pOutProviders )
+		{
+			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+				m_pOutProviders->AddToTail( m_hOwner );
+		}
+
+		switch ( pDefinition->description_format )
+		{
+			case ATTRIB_FORMAT_ADDITIVE:
+			case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
+			{
+				*m_flOut += BitsToFloat( value );
+				break;
+			}
+			case ATTRIB_FORMAT_PERCENTAGE:
+			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
+			{
+				*m_flOut *= BitsToFloat( value );
+				break;
+			}
+			case ATTRIB_FORMAT_OR:
+			{
+				// Oh, man...
+				int iValue = FloatBits( *m_flOut );
+				iValue |= value;
+				*m_flOut = BitsToFloat( iValue );
+				break;
+			}
+			default:
+			{
+				*m_flOut = BitsToFloat( value );
+				break;
+			}
+		}
+	}
+
+	*m_flOut *=	tf2v_attrib_mult.GetFloat();
+
+	return true;
+}
+
+bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, float value )
+{
+	string_t name = pDefinition->m_iAttributeClass;
+	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
+	{
+		name = AllocPooledString( pDefinition->attribute_class );
+		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+	}
+
+	if ( m_iName == name )
+	{
+		if ( m_pOutProviders )
+		{
+			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+				m_pOutProviders->AddToTail( m_hOwner );
+		}
+
+		switch ( pDefinition->description_format )
+		{
+			case ATTRIB_FORMAT_ADDITIVE:
+			case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
+			{
+				*m_flOut += value;
+				break;
+			}
+			case ATTRIB_FORMAT_PERCENTAGE:
+			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
+			{
+				*m_flOut *= value;
+				break;
+			}
+			case ATTRIB_FORMAT_OR:
+			{
+				// Oh, man...
+				int iValue = FloatBits( *m_flOut );
+				iValue |= FloatBits( value );
+				*m_flOut = BitsToFloat( iValue );
+				break;
+			}
+			default:
+			{
+				*m_flOut = value;
+				break;
+			}
+		}
+	}
+
+	*m_flOut *=	tf2v_attrib_mult.GetFloat();
+
+	return true;
+}
+
+
+bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t value )
+{
+	string_t name = pDefinition->m_iAttributeClass;
+	if ( !name && pDefinition->attribute_class[0] )
+	{
+		name = AllocPooledString( pDefinition->attribute_class );
+		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+	}
+
+	// Pointer comparison, bad
+	if ( m_iName == name )
+	{
+		if ( m_pOutProviders )
+		{
+			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+				m_pOutProviders->AddToTail( m_hOwner );
+		}
+
+		*m_pOut = value;
+
+		// Break off and only match once
+		return false;
+	}
+
+	return true;
+}
+
+
+
 CAttributeManager::CAttributeManager()
 {
 	m_bParsingMyself = false;
@@ -229,12 +364,13 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 
 	m_bParsingMyself = true;
 
-	CEconItemAttributeIterator_ApplyAttributeFloat func( m_hOuter.Get(), strAttributeClass, &flValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeFloat func( m_hOuter.Get(), strAttributeClass, &flValue, pOutProviders );
 	GetItem()->IterateAttributes( func );
 
 	m_bParsingMyself = false;
 
-	return BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
+	flValue = BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
+	return flValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -247,12 +383,13 @@ string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBa
 
 	m_bParsingMyself = true;
 
-	CEconItemAttributeIterator_ApplyAttributeString func( m_hOuter.Get(), strAttributeClass, &strValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeString func( m_hOuter.Get(), strAttributeClass, &strValue, pOutProviders );
 	GetItem()->IterateAttributes( func );
 
 	m_bParsingMyself = false;
 
-	return BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
+	strValue = BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
+	return strValue;
 }
 
 void CAttributeContainer::OnAttributesChanged( void )

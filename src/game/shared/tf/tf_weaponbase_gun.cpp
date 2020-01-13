@@ -239,6 +239,17 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 	}
 
+#if !defined( CLIENT_DLL )
+	if ( pProjectile )
+	{
+		string_t strModelOverride = NULL_STRING;
+		if ( GetProjectileOverrideModel( &strModelOverride ) )
+		{
+			pProjectile->SetModel( STRING( strModelOverride ) );
+		}
+	}
+#endif
+
 	DoFireEffects();
 
 	RemoveAmmo( pPlayer );

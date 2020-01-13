@@ -114,8 +114,6 @@ void CTFStickBomb::Smack()
 
 void CTFStickBomb::SwitchBodyGroups()
 {
-	DevMsg( "CTFStickBomb::SwitchBodyGroups\n" );
-
 #ifdef CLIENT_DLL
 	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
 	if ( pAttach )

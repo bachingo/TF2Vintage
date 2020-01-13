@@ -109,6 +109,7 @@ struct EconAttributeDefinition
 		string_attribute = false;
 		description_format = -1;
 		hidden = false;
+		attribute_type = -1;
 		effect_type = -1;
 		stored_as_integer = false;
 		m_iAttributeClass = NULL_STRING;
@@ -120,6 +121,7 @@ struct EconAttributeDefinition
 	char description_string[128];
 	bool string_attribute;
 	int description_format;
+	int attribute_type;
 	int effect_type;
 	bool hidden;
 	bool stored_as_integer;
@@ -137,17 +139,24 @@ struct AttachedModel_t
 
 typedef union
 {
-	int iVal;
+	unsigned iVal;
 	float flVal;
 	string_t sVal;
 } attrib_data_union_t;
+
+struct static_attrib_t
+{
+	char name[128];
+	EconAttributeDefinition const *attribute;
+	KeyValues const *schema;
+};
 
 class IEconAttributeIterator
 {
 public:
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) = 0;
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) = 0;
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) = 0;
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t ) = 0;
 };
 
 // Client specific.

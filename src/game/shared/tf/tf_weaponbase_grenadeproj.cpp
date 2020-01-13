@@ -255,17 +255,6 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
 	SetDamageRadius( weaponInfo.m_flDamageRadius );
 
-	// m_hLauncher is only set this early for stickies and grenades currently
-	if ( m_hLauncher.Get() )
-	{
-		string_t strModelOverride = NULL_STRING;
-		CALL_ATTRIB_HOOK_STRING_ON_OTHER( m_hLauncher.Get(), strModelOverride, custom_projectile_model );
-		if ( strModelOverride != NULL_STRING )
-		{
-			SetModel( STRING( strModelOverride ) );
-		}
-	}
-
 	ChangeTeam( pOwner->GetTeamNumber() );
 
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();

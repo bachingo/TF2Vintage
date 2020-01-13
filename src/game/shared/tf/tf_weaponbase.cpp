@@ -2264,6 +2264,29 @@ bool CTFWeaponBase::IsSilentKiller( void ) const
 	return nSilentKiller == 1;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+bool CTFWeaponBase::GetProjectileOverrideModel( string_t *pOut )
+{
+	static static_attrib_t pAttrDef_CustomProjectile ={
+		"custom projectile model",
+		GetItemSchema()->GetAttributeDefinitionByName( "custom projectile model" ),
+		NULL
+	};
+
+	if ( pAttrDef_CustomProjectile.attribute )
+	{
+		string_t strProjectileModel = NULL_STRING;
+		CAttributeIterator_GetSpecificAttribute<string_t> func( pAttrDef_CustomProjectile, &strProjectileModel );
+		GetAttributeContainer()->GetItem()->IterateAttributes( func );
+
+		*pOut = strProjectileModel;
+		return func.m_bFound;
+	}
+
+	return false;
+}
 #else
 
 void TE_DynamicLight( IRecipientFilter& filter, float delay,
