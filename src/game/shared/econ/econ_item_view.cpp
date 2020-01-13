@@ -55,6 +55,11 @@ CEconItemView::CEconItemView()
 	Init( -1 );
 }
 
+CEconItemView::CEconItemView( CEconItemView const &other )
+{
+	Init( -1 );
+	*this = other;
+}
 
 CEconItemView::CEconItemView( int iItemID )
 {
@@ -67,6 +72,7 @@ CEconItemView::CEconItemView( int iItemID )
 void CEconItemView::Init( int iItemID )
 {
 	SetItemDefIndex( iItemID );
+	m_AttributeList.Init();
 }
 
 //-----------------------------------------------------------------------------
@@ -358,8 +364,37 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
 {
 	FOR_EACH_VEC( m_Attributes, i )
 	{
-		if ( !iter.OnIterateAttributeValue( m_Attributes[i].GetStaticData(), m_Attributes[i].m_iRawValue32 ) )
-			return;
+		EconAttributeDefinition const *pDefinition = m_Attributes[ i ].GetStaticData();
+		attrib_data_union_t u;
+		u.iVal = m_Attributes[ i ].m_iRawValue32;
+
+		switch ( pDefinition->attribute_type )
+		{
+			case ATTRTYPE_INT:
+			case ATTRTYPE_UINT64:
+			{
+				if ( !iter.OnIterateAttributeValue( pDefinition, u.iVal ) )
+					return;
+
+				break;
+			}
+			case ATTRTYPE_FLOAT:
+			{
+				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( u.iVal ) ) )
+					return;
+
+				break;
+			}
+			case ATTRTYPE_STRING:
+			{
+				if ( !iter.OnIterateAttributeValue( pDefinition, u.sVal ) )
+					return;
+
+				break;
+			}
+			default:
+				return;
+		}
 	}
 }
 

@@ -42,7 +42,9 @@ class CEconItemView
 public:
 	DECLARE_CLASS_NOBASE( CEconItemView );
 	DECLARE_EMBEDDED_NETWORKVAR();
+
 	CEconItemView();
+	CEconItemView( CEconItemView const &other );
 	CEconItemView( int iItemID );
 
 	void Init( int iItemID );
@@ -77,7 +79,7 @@ public:
 private:
 	CNetworkVar( short, m_iItemDefinitionIndex );
 
-	CNetworkVar( int, m_iEntityQuality ); // maybe an enum?
+	CNetworkVar( int, m_iEntityQuality );
 	CNetworkVar( int, m_iEntityLevel );
 
 	CNetworkVar( int, m_iTeamNumber );

@@ -82,8 +82,8 @@ public:
 
 	virtual void PlayAnimForPlaybackEvent(wearableanimplayback_t iPlayback) {};
 
-	void SetItem( CEconItemView const& pItem ) { m_AttributeManager.m_Item.CopyFrom( pItem ); }
-	CEconItemView *GetItem() const { return const_cast<CEconEntity *>( this )->GetAttributeContainer()->GetItem(); }
+	void SetItem( CEconItemView const &pItem );
+	CEconItemView *GetItem() const { return m_AttributeManager.GetItem(); }
 	bool HasItemDefinition() const;
 	int GetItemID() const;
 

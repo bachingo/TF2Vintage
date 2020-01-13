@@ -489,7 +489,7 @@ float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBase
 
 	m_bParsingMyself = true;;
 
-	CEconItemAttributeIterator_ApplyAttributeFloat func( m_hOuter, strAttributeClass, &flValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeFloat func( m_hOuter, strAttributeClass, &flValue, pOutProviders );
 	m_hOuter->m_AttributeList.IterateAttributes( func );
 
 	m_bParsingMyself = false;
@@ -507,7 +507,7 @@ string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, con
 
 	m_bParsingMyself = true;
 
-	CEconItemAttributeIterator_ApplyAttributeString func( m_hOuter, strAttributeClass, &strValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeString func( m_hOuter, strAttributeClass, &strValue, pOutProviders );
 	m_hOuter->m_AttributeList.IterateAttributes( func );
 
 	m_bParsingMyself = false;

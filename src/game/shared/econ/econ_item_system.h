@@ -9,6 +9,15 @@
 
 class CEconSchemaParser;
 
+enum
+{
+	ATTRTYPE_INVALID = -1,
+	ATTRTYPE_INT,
+	ATTRTYPE_UINT64,
+	ATTRTYPE_FLOAT,
+	ATTRTYPE_STRING
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -28,6 +37,7 @@ public:
 	EconAttributeDefinition *GetAttributeDefinitionByName( const char* name );
 	EconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );
 	int GetAttributeIndex( const char *classname );
+	int GetAttributeType( const char *type ) const;
 
 protected:
 	CUtlDict< int, unsigned short >					m_GameInfo;

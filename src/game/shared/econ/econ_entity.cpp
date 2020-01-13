@@ -315,6 +315,17 @@ void CEconEntity::UpdateModelToClass( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CEconEntity::SetItem( CEconItemView const &pItem )
+{
+#if defined( GAME_DLL )
+	m_AttributeManager.m_Item.CopyFrom( pItem );
+	m_AttributeManager.NetworkStateChanged();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CEconEntity::HasItemDefinition( void ) const
 {
 	return ( GetItem()->GetItemDefIndex() >= 0 );

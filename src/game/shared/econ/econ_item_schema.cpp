@@ -229,10 +229,38 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 
 void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 {
-	// Returning the first attribute found.
 	FOR_EACH_VEC( attributes, i )
 	{
-		if ( !iter.OnIterateAttributeValue( attributes[i].GetStaticData(), attributes[i].m_iRawValue32 ) )
-			return;
+		EconAttributeDefinition const *pDefinition = attributes[ i ].GetStaticData();
+		attrib_data_union_t u;
+		u.iVal = attributes[ i ].m_iRawValue32;
+
+		switch ( pDefinition->attribute_type )
+		{
+			case ATTRTYPE_INT:
+			case ATTRTYPE_UINT64:
+			{
+				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[ i ].m_iRawValue32 ) )
+					return;
+
+				break;
+			}
+			case ATTRTYPE_FLOAT:
+			{
+				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( u.iVal ) ) )
+					return;
+
+				break;
+			}
+			case ATTRTYPE_STRING:
+			{
+				if ( !iter.OnIterateAttributeValue( pDefinition, u.sVal ) )
+					return;
+
+				break;
+			}
+			default:
+				return;
+		}
 	}
 }
