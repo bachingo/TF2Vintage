@@ -3799,6 +3799,19 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Used to deduct cloak from the player.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::RemoveFromSpyCloakMeter(float amt)
+{
+	CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
+	if ( !pInvis )
+		return;
+
+	// Remove cloak, but never let us fall under 0.
+	m_flCloakMeter = Max( m_flCloakMeter - amt, 0.0f );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::SetJumping(bool bJumping)
