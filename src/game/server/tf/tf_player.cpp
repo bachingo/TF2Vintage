@@ -5257,6 +5257,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			info.SetDamage( flDamage * 0.65f );
 		}
 	}
+
 	
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
@@ -5589,6 +5590,26 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	{
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nIgnoreResists, mod_pierce_resists_absorbs );
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDamage, mult_dmg_vs_players );
+		
+		// Remove Ubercharge level.
+		float flDeductCharge = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDeductCharge, subtract_victim_medigun_charge_onhit );
+		if ( flDeductCharge )
+		{
+			CWeaponMedigun *pMedigun = GetMedigun();
+
+			if ( pMedigun )
+			{
+				pMedigun->RemoveCharge( flDeductCharge );
+			}
+		}
+		
+		// Remove cloak level.
+		float flDeductCloak = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDeductCloak, subtract_victim_cloak_on_hit );
+		if ( flDeductCloak )
+			m_Shared.AddToSpyCloakMeter( ( flDeductCloak ) );
+
 	}
 	
 	// We check the original resistance first to see if it's a resistance/vurnerability.
