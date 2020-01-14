@@ -58,7 +58,7 @@ public:
 		
 	void			SetCritical( bool bCritical ) 	{ m_bCritical = bCritical; }
 
-	virtual bool	IsDeflectable() 				{ return true; }
+	virtual bool	IsDeflectable();
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );

@@ -61,7 +61,7 @@ public:
 	void				SetCritical( bool bCritical ) 	{ m_bCritical = bCritical; }
 	int					GetDamageType();
 
-	virtual bool		IsDeflectable() 				{ return true; }
+	virtual bool		IsDeflectable();
 	virtual void		Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	bool				CanHeadshot( void );

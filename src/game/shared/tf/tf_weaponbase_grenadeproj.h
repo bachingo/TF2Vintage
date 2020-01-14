@@ -111,7 +111,7 @@ public:
 
 	virtual void			SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
 
-	virtual bool			IsDeflectable() { return true; }
+	virtual bool			IsDeflectable();
 	virtual void			Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 	virtual void			IncremenentDeflected( void );
 

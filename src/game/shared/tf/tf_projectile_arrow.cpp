@@ -667,6 +667,20 @@ int	CTFProjectile_Arrow::GetDamageType()
 	return iDmgType;
 }
 
+bool CTFProjectile_Arrow::IsDeflectable(void)
+{
+	// Don't deflect projectiles with non-deflect attributes.
+	if (m_hLauncher.Get())
+	{
+		// Check to see if this is a non-deflectable projectile, like an energy projectile.
+		int nCannotDeflect = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nCannotDeflect, energy_weapon_no_deflect);
+		if (nCannotDeflect != 0)
+			return false;
+	}
+	return true;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

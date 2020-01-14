@@ -38,7 +38,7 @@ public:
 	void	SetCritical( bool bCritical ) { m_bCritical = bCritical; }
 	virtual int		GetDamageType();
 
-	virtual bool IsDeflectable() { return true; }
+	virtual bool IsDeflectable();
 	virtual void Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 private:
