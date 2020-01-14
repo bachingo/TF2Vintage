@@ -53,6 +53,7 @@ public:
 	virtual bool	ShouldUpdateSpeed(CTFPlayer *pTarget);
 	void			DrainCharge( void );
 	void			AddCharge( float flAmount );
+	void			RemoveCharge( float flAmount );
 	virtual void	WeaponReset( void );
 
 	virtual float	GetTargetRange( void );

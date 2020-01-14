@@ -722,6 +722,22 @@ void CWeaponMedigun::AddCharge( float flAmount )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CWeaponMedigun::RemoveCharge( float flAmount )
+{
+	float flChargeRate = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_medigun_uberchargerate );
+	if ( !flChargeRate ) // Can't earn uber, don't bother.
+		return;
+
+	// Never let us fall under 0%.
+	float flNewLevel = max( m_flChargeLevel - ( flAmount / 100), 0.0 );
+
+	m_flChargeLevel = flNewLevel;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CWeaponMedigun::ItemHolsterFrame( void )
 {
 	BaseClass::ItemHolsterFrame();
