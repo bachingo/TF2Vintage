@@ -1222,7 +1222,8 @@ bool CTFWeaponBase::ReloadSingly( void )
 			if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
 			{
 				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
-				pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+				if (!IsEnergyWeapon() )
+					pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
 
 			SwitchBodyGroups(); // Update number of pills in the launcher
@@ -1270,7 +1271,8 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 			if ( pOperator->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
 			{
 				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
-				pOperator->RemoveAmmo( 1, m_iPrimaryAmmoType );
+				if (!IsEnergyWeapon() )
+					pOperator->RemoveAmmo( 1, m_iPrimaryAmmoType );
 			}
 
 			//if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
@@ -2012,6 +2014,40 @@ bool CTFWeaponBase::IsHonorBound( void ) const
 	CALL_ATTRIB_HOOK_INT( nHonorBound, "honorbound" );
 	return nHonorBound == 1;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating energy weapon logic.
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsEnergyWeapon(void)
+{
+	int iUseEnergyWeaponRules = 0;
+	CALL_ATTRIB_HOOK_INT(iUseEnergyWeaponRules, energy_weapon_no_ammo);
+	return (iUseEnergyWeaponRules != 0);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating out the percentage of charge left, from 0 to 1.
+//-----------------------------------------------------------------------------
+float CTFWeaponBase::GetEnergyPercentage(void)
+{
+	// Check our magazine amount and convert to a percentage.
+	if ( UsesClipsForAmmo1() )
+	{
+		return ( m_iClip1 / GetMaxClip1() );
+	}
+	else if ( UsesClipsForAmmo2() )
+	{
+		return ( m_iClip2 / GetMaxClip2() );
+	}
+	
+	// We either have all or nothing.
+	int iClipT = m_iClip1 + m_iClip2;
+	if (iClipT > 1) // In case we have more than one for some reason.
+		return 1;
+	
+	return iClipT / 1;
+}
+
 
 //=============================================================================
 //
@@ -3670,7 +3706,8 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 		if ( pPlayer && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
 		{
 			m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
-			pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+			if (!IsEnergyWeapon() )
+				pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
 		}
 
 		m_bReloadedThroughAnimEvent = true;

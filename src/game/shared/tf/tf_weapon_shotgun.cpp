@@ -255,7 +255,8 @@ void CTFScatterGun::FinishReload()
 
 	m_iClip1 += Min( GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount( m_iPrimaryAmmoType ) );
 
-	pOwner->RemoveAmmo( GetMaxClip1(), m_iPrimaryAmmoType );
+	if ( !BaseClass::IsEnergyWeapon() )
+		pOwner->RemoveAmmo( GetMaxClip1(), m_iPrimaryAmmoType );
 }
 
 //-----------------------------------------------------------------------------

@@ -485,7 +485,8 @@ void CTFFlameThrower::PrimaryAttack()
 	int iAmmoToSubtract = (int)m_flAmmoUseRemainder;
 	if ( iAmmoToSubtract > 0 )
 	{
-		pOwner->RemoveAmmo( iAmmoToSubtract, m_iPrimaryAmmoType );
+		if ( !BaseClass::IsEnergyWeapon() )
+			pOwner->RemoveAmmo( iAmmoToSubtract, m_iPrimaryAmmoType );
 		m_flAmmoUseRemainder -= iAmmoToSubtract;
 		// round to 2 digits of precision
 		m_flAmmoUseRemainder = (float)( (int)( m_flAmmoUseRemainder * 100 ) ) / 100.0f;
@@ -618,7 +619,8 @@ void CTFFlameThrower::SecondaryAttack()
 	float flAmmoPerSecondaryAttack = TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK;
 	CALL_ATTRIB_HOOK_FLOAT( flAmmoPerSecondaryAttack, mult_airblast_cost );
 
-	pOwner->RemoveAmmo( flAmmoPerSecondaryAttack, m_iPrimaryAmmoType );
+	if ( !BaseClass::IsEnergyWeapon() )
+		pOwner->RemoveAmmo( flAmmoPerSecondaryAttack, m_iPrimaryAmmoType );
 
 	// Don't allow firing immediately after airblasting.
 	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 0.75f;

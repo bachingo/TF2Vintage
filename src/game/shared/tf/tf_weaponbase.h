@@ -290,6 +290,10 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	bool				IsHonorBound( void ) const;
 
+	// Energy Weapons
+	bool IsEnergyWeapon(void);
+	float GetEnergyPercentage(void);
+	
 // Server specific.
 #if !defined( CLIENT_DLL )
 
@@ -315,7 +319,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool OwnerCanTaunt( void ) const { return true; }
 
 	virtual bool GetProjectileOverrideModel( string_t *pOut );
-
+	
 // Client specific.
 #else
 
