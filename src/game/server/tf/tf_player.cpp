@@ -5583,14 +5583,12 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 	}
 	
-	// Check to see if the weapon pierces through our resistances.
+	// Check to see if the weapon has resistance piercing, or changed damage based on hitting a player.
 	int nIgnoreResists = 0;
-	if ( pInflictor )
+	if ( pTFAttacker != this && pWeapon )
 	{
-		if ( pTFWeapon )
-		{
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFWeapon, nIgnoreResists, mod_pierce_resists_absorbs );
-		}
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nIgnoreResists, mod_pierce_resists_absorbs );
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDamage, mult_dmg_vs_players );
 	}
 	
 	// We check the original resistance first to see if it's a resistance/vurnerability.

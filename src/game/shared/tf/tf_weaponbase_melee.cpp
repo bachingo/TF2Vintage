@@ -468,7 +468,6 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 	if ( ((iWillGibCrit != 0) && bIsCritKill) || ( iWillGibAlways != 0 ) )
 	{
 		iDmgType |= DMG_ALWAYSGIB;
-		bIsCritKill = true;
 	}
 	else
 	{
@@ -496,18 +495,8 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
-
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
-
-	if (pTarget->IsBaseObject())
-	{
-		CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg_vs_buildings);
-	}
-	else if (pTarget->IsPlayer())
-	{
-		CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg_vs_players);
-	}
-
+	
 	return flDamage;
 }
 
