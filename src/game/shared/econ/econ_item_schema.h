@@ -229,6 +229,8 @@ typedef struct EconPerTeamVisuals
 		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
 		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
+		CLEAR_STR(muzzle_flash);
+		CLEAR_STR(tracer_effect);
 		skin = -1;
 	}
 
@@ -239,6 +241,8 @@ typedef struct EconPerTeamVisuals
 	CUtlVector< AttachedModel_t > attached_models;
 	char aWeaponSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
 	char custom_particlesystem[128];
+	char muzzle_flash[128];
+	char tracer_effect[128];
 	//CUtlDict< ItemStyle_t*, unsigned short > styles;
 	int skin;
 } PerTeamVisuals_t;

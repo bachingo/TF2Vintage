@@ -1794,11 +1794,18 @@ const char *CTFWeaponBase::GetMuzzleFlashParticleEffect( void )
 { 
 	const char *pszPEffect = GetTFWpnData().m_szMuzzleFlashParticleEffect;
 
+	// Override Muzzle Flash, if we have a custom one.
+	CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
+	if ( pItemDef && pItemDef->GetVisuals()->muzzle_flash[0] != '\0' )
+	{
+		pszPEffect = pItemDef->GetVisuals()->muzzle_flash;
+	}
+	
 	if ( Q_strlen( pszPEffect ) > 0 )
 	{
 		return pszPEffect;
 	}
-
+		
 	return NULL;
 }
 
@@ -1839,6 +1846,13 @@ const char *CTFWeaponBase::GetTracerType( void )
 				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, "red");
 				break;
 			}
+		}
+
+		// Override tracer effect, if we have a custom one.
+		CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
+		if ( pItemDef && pItemDef->GetVisuals()->tracer_effect[0] != '\0' )
+		{
+			Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", pItemDef->GetVisuals()->tracer_effect );
 		}
 
 		//if ( !m_szTracerName[0] )

@@ -343,6 +343,16 @@ public:
 			{
 				V_strncpy( pVisuals->custom_particlesystem, pVisualData->GetString( "system" ), sizeof( pVisuals->custom_particlesystem ) );
 			}
+			else if ( !V_stricmp(pVisualData->GetName(), "muzzle_flash" ) )
+			{
+				// Fetching this similar to weapon script file parsing.
+				V_strncpy( pVisuals->muzzle_flash, pVisualData->GetString( "system" ), sizeof( pVisuals->muzzle_flash ) );
+			}
+			else if ( !V_stricmp(pVisualData->GetName(), "tracer_effect") )
+			{
+				// Fetching this similar to weapon script file parsing.
+				V_strncpy( pVisuals->tracer_effect, pVisualData->GetString( "system" ), sizeof( pVisuals->tracer_effect ) );
+			}
 			else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
 			{
 				for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
@@ -725,12 +735,27 @@ void CEconItemSchema::Precache( void )
 					CBaseEntity::PrecacheModel( pszModel );
 			}
 
-			// Precache custom particles
+			// Precache particles
+			// Custom Particles
 			const char *pszParticle = pVisuals->custom_particlesystem;
 			if ( pszParticle[0] != '\0' )
 			{
 				PrecacheParticleSystem( pszParticle );
 			}
+			// Muzzle Flash
+			const char *pszMuzzleFlash = pVisuals->muzzle_flash;
+			if (pszParticle[0] != '\0')
+			{
+				PrecacheParticleSystem(pszMuzzleFlash);
+			}
+			// Tracer Effect
+			const char *pszTracerEffect = pVisuals->tracer_effect;
+			if (pszParticle[0] != '\0')
+			{
+				PrecacheParticleSystem(pszTracerEffect);
+			}
+
+
 		}
 
 		// Cache all attrbute names.
