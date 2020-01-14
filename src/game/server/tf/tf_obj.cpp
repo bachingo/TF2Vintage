@@ -1867,7 +1867,7 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 		int nEnergyWeaponNoDamage = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nEnergyWeaponNoDamage, energy_weapon_no_hurt_building);
 		if ( nEnergyWeaponNoDamage != 0 )
-			flDamage = 0;
+			flDamage *= 0.2;
 			
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDamage, mult_dmg_vs_buildings );
 	}
