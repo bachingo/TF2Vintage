@@ -882,6 +882,7 @@ bool CTFWeaponBaseGun::IsFlameArrow(void)
 float CTFWeaponBaseGun::GetWeaponSpread( void )
 {
 	float flSpread = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flSpread;
+	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
 	CALL_ATTRIB_HOOK_FLOAT( flSpread, mult_spread_scale );
 	
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
