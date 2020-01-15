@@ -110,6 +110,7 @@
 	"The Cleaner's Carbine"							"1"
 	"The Hitman's Heatmaker"						"1"
 	"Baby Face's Blaster"							"1"
+	"The Beggar's Bazooka"							"1"
 	"Pretty Boy's Pocket Pistol"					"1"
 	"The Rescue Ranger"								"1"
 	"The Tide Turner"								"1"
