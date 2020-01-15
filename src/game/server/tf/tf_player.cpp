@@ -2354,7 +2354,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			if ( pItemDef->specialitem )
 			{
 				CTFPlayer *pPlayer = this;
-				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
+				if ( pPlayer->m_iPlayerVIPRanking != -1 )
 					bIsSpecialRestricted = true;
 			}
 			

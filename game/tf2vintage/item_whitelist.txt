@@ -124,6 +124,9 @@
 	"Spawn Camper"									"1"
 	"Ludmila"										"1"
 	
+	// Secret Developer Weapons
+	"Robin's Rocket Launcher"						"1"
+	
 	// Reskins
 	"TTG Max Pistol"								"1"
 	"TTG Sam Revolver"								"1"

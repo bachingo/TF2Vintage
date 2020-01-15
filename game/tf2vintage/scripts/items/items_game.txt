@@ -2989,6 +2989,12 @@
 			"is_custom_content"			"1"
 			"item_quality" "community"
 		}
+		"weapon_special"
+		{
+			"specialitem"			"1"
+			"item_quality" 			"valve"
+			"show_in_armory"		"0"
+		}
 	}
 	"items"
 	{
@@ -6886,6 +6892,54 @@
 						"model_display_flags"	"2"
 						"model" "models/weapons/c_models/c_v_ludmila/c_v_ludmila.mdl"
 					}
+				}
+			}
+		}
+		"1200"
+		{
+			"name"	"Robin's Rocket Launcher"
+			"prefab"	"weapon_rocketlauncher weapon_special"
+			"year"			"2007"
+			"attach_to_hands" "0"
+			"item_name"	"Robin Walker's Rocket Launcher"
+			"item_logname"	"RW-V-RL"
+			"model_world"	"models/weapons/w_models/w_rocketlauncher.mdl"
+			"attributes"
+			{
+				"damage bonus"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"10099"
+				}
+				"clip size bonus"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value" "100099"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"0.25"
+				}
+				"heal on hit for slowfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"250"
+				}
+				"critboost on kill"
+				{
+					"attribute_class"	"add_onkill_critboost_time"
+					"value"	"10"
+				}
+				"Projectile speed increased"
+				{
+					"attribute_class"	"mult_projectile_speed"
+					"value"	"1.5"
+				}
+				"move speed bonus"
+				{
+					"attribute_class"	"mult_player_movespeed"
+					"value" "2.00"
 				}
 			}
 		}
