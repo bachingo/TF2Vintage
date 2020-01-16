@@ -1068,6 +1068,13 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 
 		if ( bCreateRagdoll )
 		{
+			
+			// Delete our mask if we're disguised.
+			if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED))
+			{			
+				pPlayer->UpdateSpyMask();
+			}
+		
 			if ( m_bGib )
 			{
 				CreateTFGibs( !m_bDissolve, false );
@@ -1075,7 +1082,7 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 			else
 			{
 				CreateTFRagdoll();
-
+				
 				if ( IsDecapitation() )
 				{
 					CreateTFHeadGib();
@@ -2968,30 +2975,41 @@ void C_TFPlayer::UpdateSpyMask(void)
 {
 	C_TFSpyMask *pMask = m_hSpyMask.Get();
 
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) )
+	if ( IsAlive() )
 	{
-		// Create mask if we don't already have one.
-		if ( !pMask )
+		if ( m_Shared.InCond( TF_COND_DISGUISED ) )
 		{
-			pMask = new C_TFSpyMask();
-
-			if ( !pMask->InitializeAsClientEntity( "models/player/items/spy/spyMask.mdl", RENDER_GROUP_OPAQUE_ENTITY ) )
+			// Create mask if we don't already have one.
+			if ( !pMask )
 			{
-				pMask->Release();
-				return;
+				pMask = new C_TFSpyMask();
+
+				if ( !pMask->InitializeAsClientEntity( "models/player/items/spy/spyMask.mdl", RENDER_GROUP_OPAQUE_ENTITY ) )
+				{
+					pMask->Release();
+					return;
+				}
+
+				pMask->SetOwnerEntity( this );
+				pMask->FollowEntity( this );
+				pMask->UpdateVisibility();
+
+				m_hSpyMask = pMask;
 			}
-
-			pMask->SetOwnerEntity( this );
-			pMask->FollowEntity( this );
-			pMask->UpdateVisibility();
-
-			m_hSpyMask = pMask;
+		}
+		else if ( pMask )
+		{
+			pMask->Release();
+			m_hSpyMask = NULL;
 		}
 	}
-	else if ( pMask )
+	else
 	{
-		pMask->Release();
-		m_hSpyMask = NULL;
+		if ( pMask )
+		{
+			pMask->Release();
+			m_hSpyMask = NULL;
+		}	
 	}
 }
 

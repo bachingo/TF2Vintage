@@ -1641,7 +1641,7 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 		// We need to add the ubercharge effect to the Spy's mask.
 		if ( InCond( TF_COND_DISGUISED ) )
 		{	
-		m_pOuter->UpdateSpyMask();
+			m_pOuter->UpdateSpyMask();
 		}
 	}
 #endif
