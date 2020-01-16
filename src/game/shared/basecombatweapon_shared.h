@@ -289,8 +289,10 @@ public:
 	bool					DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 	bool					ReloadsSingly( void ) const;
 
-	virtual bool			AutoFiresFullClip( void ) const { return false; }
+	virtual bool			AutoFiresFullClip( void );
 	virtual void			UpdateAutoFire( void );
+	virtual bool			CanOverload(void);
+	void					Overload(void);
 
 	// Weapon firing
 	virtual void			PrimaryAttack( void );						// do "+ATTACK"
@@ -586,7 +588,8 @@ public:
 	// Weapon state
 	bool					m_bInReload;			// Are we in the middle of a reload;
 	bool					m_bFireOnEmpty;			// True when the gun is empty and the player is still holding down the attack key(s)
-	bool					m_bFiringWholeClip;		// Are we in the middle of firing the whole clip;
+	bool					m_bFiringWholeClip;		// Are we in the middle of firing the whole clip,
+	bool					m_bIsOverLoaded;		// If we overloaded and are misfiring,
 	// Weapon art
 	CNetworkVar( int, m_iViewModelIndex );
 	CNetworkVar( int, m_iWorldModelIndex );

@@ -1489,6 +1489,7 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 	// cancel any reload in progress.
 	m_bInReload = false; 
 	m_bFiringWholeClip = false;
+	m_bIsOverLoaded = false;
 
 	// kill any think functions
 	SetThink(NULL);
@@ -2132,6 +2133,7 @@ char *CBaseCombatWeapon::GetDeathNoticeName( void )
 //====================================================================================
 void CBaseCombatWeapon::CheckReload( void )
 {
+	
 	if ( m_bReloadsSingly )
 	{
 		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
@@ -2152,8 +2154,8 @@ void CBaseCombatWeapon::CheckReload( void )
 				FinishReload();
 				return;
 			}
-			// If clip not full reload again
-			else if (m_iClip1 < GetMaxClip1())
+			// If clip not full reload again, no overload.
+			else if ( !CanOverload() && ( m_iClip1 < GetMaxClip1() ) )
 			{
 				// Add them to the clip
 				m_iClip1 += 1;
@@ -2161,6 +2163,36 @@ void CBaseCombatWeapon::CheckReload( void )
 
 				Reload();
 				return;
+			}
+			// If clip not full reload again, with overload.
+			else if ( CanOverload() && ( m_iClip1 <= GetMaxClip1() ) )
+			{
+				if (!m_bIsOverLoaded)
+				{
+					// Add them to the clip
+					m_iClip1 += 1;
+				}
+				else
+				{
+					if ( m_iClip1 > 0 )
+						Overload();
+					else
+						m_bIsOverLoaded = false;
+				}
+				
+				pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+				
+				if ( m_iClip1 > GetMaxClip1() )
+				{
+					m_iClip1 -= 1;
+					m_bIsOverLoaded = true;
+					Overload();
+				}
+				
+				Reload();
+				return;
+				
+				
 			}
 			// Clip full, stop reloading
 			else
@@ -2240,6 +2272,7 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 	{
 		// Ready to reload again
 		m_bFiringWholeClip = false;
+		m_bIsOverLoaded = false;
 	}
 
 	if ( m_bFiringWholeClip )
@@ -2273,6 +2306,39 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 		// Fake the attack key
 		pOwner->m_nButtons |= IN_ATTACK;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating if we fire a clip all at once.
+//-----------------------------------------------------------------------------
+bool CBaseCombatWeapon::AutoFiresFullClip(void)
+{
+	int iUseAutoFireRules = 0;
+	CALL_ATTRIB_HOOK_INT(iUseAutoFireRules, auto_fires_full_clip);
+	return (iUseAutoFireRules != 0);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating if we fire a clip all at once.
+//-----------------------------------------------------------------------------
+bool CBaseCombatWeapon::CanOverload(void)
+{
+	int iCanOverload = 0;
+	CALL_ATTRIB_HOOK_INT(iCanOverload, can_overload);
+	return (iCanOverload != 0);
+}
+
+//-----------------------------------------------------------------------------
+// Controls our overload explosions.
+//-----------------------------------------------------------------------------
+void CBaseCombatWeapon::Overload(void)
+{
+	if (!m_bIsOverLoaded)
+		return;
+	
+	
+	// Todo: blow up on the player.
+	return;
 }
 
 //-----------------------------------------------------------------------------
@@ -2679,6 +2745,7 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 	DEFINE_FIELD( m_bInReload, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFireOnEmpty, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFiringWholeClip, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_bIsOverLoaded, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextEmptySoundTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_Activity, FIELD_INTEGER ),
 	DEFINE_FIELD( m_fFireDuration, FIELD_FLOAT ),
