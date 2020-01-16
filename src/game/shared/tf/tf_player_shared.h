@@ -602,7 +602,7 @@ private:
 	CNetworkVar( int, m_iHeadshots );
 	CNetworkVar( int, m_iStrike );
 	CNetworkVar( int, m_iKillstreak );
-	CNetworkVar(int, m_iSapperKill);
+	CNetworkVar( int, m_iSapperKill );
 #ifdef GAME_DLL
 public:
 	CNetworkVar( float, m_flEnergyDrinkMeter );
