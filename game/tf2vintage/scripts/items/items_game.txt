@@ -1481,6 +1481,16 @@
 					"attribute_class"	"mult_clipsize"
 					"value"	"0.67"
 				}
+				"reload time decreased"
+				{
+					"attribute_class"	"mult_reload_time"
+					"value" "0.5"
+				}
+				"auto fires full clip"
+				{
+					"attribute_class"	"auto_fires_full_clip"
+					"value"	"1"
+				}
 				"single wep deploy time decreased"
 				{
 					"attribute_class"	"mult_single_wep_deploy_time"
@@ -6503,6 +6513,16 @@
 				{
 					"attribute_class"	"mult_postfiredelay"
 					"value"	"0.3"
+				}
+				"auto fires full clip"
+				{
+					"attribute_class"	"auto_fires_full_clip"
+					"value"	"1"
+				}
+				"can overload"
+				{
+					"attribute_class"	"can_overload"
+					"value"	"1"
 				}
 				"reload time increased hidden"
 				{
