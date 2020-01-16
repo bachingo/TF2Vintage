@@ -699,6 +699,7 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::Deploy( void )
 {
+
 #ifndef CLIENT_DLL
 	if ( m_iAltFireHint )
 	{
@@ -720,6 +721,16 @@ bool CTFWeaponBase::Deploy( void )
 		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 		if ( !pPlayer )
 			return false;
+		
+#ifndef CLIENT_DLL
+		// Auto Fire items:
+		// Refund our ammo currently loaded and reset the magazine to zero.
+		if (pPlayer && AutoFiresFullClip())
+		{
+			pPlayer->GiveAmmo( m_iClip1, m_iPrimaryAmmoType );
+			m_iClip1 = 0;
+		}
+#endif
 
 #ifdef CLIENT_DLL
 		pPlayer->CalcMinViewmodelOffset();
