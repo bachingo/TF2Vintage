@@ -84,6 +84,9 @@ enum
 #define TF_DAMAGE_CRIT_MULTIPLIER			3.0f
 #define TF_DAMAGE_MINICRIT_MULTIPLIER		1.35f
 
+#define TF_ROCKET_RADIUS	146.0f	// Matches grenade radius.
+#define TF_ROCKET_SELF_DAMAGE_RADIUS	121.0f	// Original rocket radius, used for self damage.
+#define TF_ROCKET_SELF_RADIUS_RATIO ( TF_ROCKET_SELF_DAMAGE_RADIUS / TF_ROCKET_RADIUS ) // Used for self damage calculations on certain projectiles.
 
 //-----------------------------------------------------------------------------
 // TF-specific viewport panels

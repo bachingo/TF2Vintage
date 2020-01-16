@@ -7,6 +7,7 @@
 #include "tf_weaponbase_rocket.h"
 #include "tf_gamerules.h"
 #include "tf_projectile_arrow.h"
+#include "tf_shareddefs.h"
 
 // Server specific.
 #ifdef GAME_DLL
@@ -372,7 +373,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	radiusInfo.info = &newInfo;
 	radiusInfo.m_vecSrc = vecOrigin;
 	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = 121.0f; // Original rocket radius?
+	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
 
 	TFGameRules()->RadiusDamage( radiusInfo );
 

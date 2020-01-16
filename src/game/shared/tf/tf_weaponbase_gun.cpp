@@ -12,6 +12,7 @@
 #include "tf_projectile_nail.h"
 #include "tf_projectile_arrow.h"
 #include "tf_projectile_jar.h"
+#include "tf_shareddefs.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -1081,7 +1082,7 @@ void CTFWeaponBaseGun::Overload( void )
 	radiusInfo.info = &newInfo;
 	radiusInfo.m_vecSrc = vecOrigin;
 	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = 121.0f; // Original rocket radius?
+	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
 
 	TFGameRules()->RadiusDamage( radiusInfo );
 

@@ -365,7 +365,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	radiusInfo.info = &newInfo;
 	radiusInfo.m_vecSrc = vecOrigin;
 	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = 146.0f;
+	radiusInfo.m_flSelfDamageRadius = flRadius;
 
 	TFGameRules()->RadiusDamage( radiusInfo );
 
