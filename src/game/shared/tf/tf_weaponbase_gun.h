@@ -80,6 +80,8 @@ public:
 
 	virtual void RemoveAmmo( CTFPlayer *pPlayer );
 
+	void Overload(void);
+
 private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );

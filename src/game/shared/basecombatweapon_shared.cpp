@@ -2174,10 +2174,7 @@ void CBaseCombatWeapon::CheckReload( void )
 				}
 				else
 				{
-					if ( m_iClip1 > 0 )
-						Overload();
-					else
-						m_bIsOverLoaded = false;
+					Overload();
 				}
 				
 				pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
@@ -2329,15 +2326,26 @@ bool CBaseCombatWeapon::CanOverload(void)
 }
 
 //-----------------------------------------------------------------------------
-// Controls our overload explosions.
+// Controls our base overload mechanics.
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::Overload(void)
 {
+	// If we're empty, don't misfire.
+	if ( m_iClip1 == 0 )
+		m_bIsOverLoaded = false;
+	
+	// If we're not overloaded, don't even bother to explode.
 	if (!m_bIsOverLoaded)
 		return;
+		
+	// Deduct a round.
+	if ( m_iClip1 > 0 )
+		 m_iClip1 -= 1;
+	 
+	 // If we're empty, clear misfires.
+	if ( m_iClip1 == 0 )
+		m_bIsOverLoaded = false;
 	
-	
-	// Todo: blow up on the player.
 	return;
 }
 

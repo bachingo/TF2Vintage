@@ -25,6 +25,9 @@
 	#include "tf_projectile_flare.h"
 	#include "te.h"
 
+	#include "tf_gamerules.h"
+	#include "soundent.h"
+
 #else	// Client specific.
 
 	#include "c_tf_player.h"
@@ -1030,4 +1033,58 @@ void CTFWeaponBaseGun::ZoomOutIn( void )
 	//Zoom out, set think to zoom back in.
 	ZoomOut();
 	SetContextThink( &CTFWeaponBaseGun::ZoomIn, gpGlobals->curtime + ZOOM_REZOOM_TIME, ZOOM_CONTEXT );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Explodes the player if we cause a misfire.
+//-----------------------------------------------------------------------------
+void CTFWeaponBaseGun::Overload( void )
+{
+	CTFPlayer *pTFOwner = GetTFPlayerOwner();
+	
+	if (!pTFOwner)
+		return;
+	
+	// Base logic.
+	BaseClass::Overload();
+
+#ifdef GAME_DLL
+
+	// Use a rocket launcher's explosion as a base.
+	// We essentially spawn a rocket's explosion where our weapon is attacking.
+
+	// Figure out Econ ID.
+	int iItemID = GetItemID();
+
+	// Play explosion sound and effect.
+	
+	Vector vecOrigin = pTFOwner->Weapon_ShootPosition();
+	CPVSFilter filter( vecOrigin );
+	TE_TFExplosion(filter, 0.0f, vecOrigin, Vector(0.0f, 0.0f, 1.0f), GetWeaponID(), pTFOwner->entindex(), iItemID);
+	CSoundEnt::InsertSound ( SOUND_COMBAT, vecOrigin, 1024, 3.0 );
+
+
+	// Damage.
+	CBaseEntity *pAttacker = GetOwnerEntity();
+	IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
+	if ( pScorerInterface )
+	{
+		pAttacker = pScorerInterface->GetScorer();
+	}
+
+	float flRadius = TF_ROCKET_RADIUS;
+	CALL_ATTRIB_HOOK_FLOAT( flRadius, mult_explosion_radius );
+
+	CTakeDamageInfo newInfo(pAttacker, pAttacker, this, vec3_origin, vecOrigin, GetProjectileDamage(), GetDamageType());
+	CTFRadiusDamageInfo radiusInfo;
+	radiusInfo.info = &newInfo;
+	radiusInfo.m_vecSrc = vecOrigin;
+	radiusInfo.m_flRadius = flRadius;
+	radiusInfo.m_flSelfDamageRadius = 121.0f; // Original rocket radius?
+
+	TFGameRules()->RadiusDamage( radiusInfo );
+
+#endif
+
 }
