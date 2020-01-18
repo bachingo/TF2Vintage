@@ -1202,7 +1202,6 @@ void CTFPlayer::InitialSpawn( void )
 
 	m_iMaxSentryKills = 0;
 	CTF_GameStats.Event_MaxSentryKills( this, 0 );
-	m_Shared.SetKillstreakCount( 0 );
 
 	StateEnter( TF_STATE_WELCOME );
 }
@@ -1247,6 +1246,7 @@ void CTFPlayer::Spawn()
 	m_Shared.SetFeignReady( false );
 	m_Shared.SetHasRecoiled( false );
 	m_Shared.SetSanguisugeHealth(0);
+	m_Shared.SetKillstreakCount( 0 );
 
 	// Kind of lame, but CBasePlayer::Spawn resets a lot of the state that we initially want on.
 	// So if we're in the welcome state, call its enter function to reset 
@@ -1642,6 +1642,34 @@ void CTFPlayer::GiveDefaultItems()
 	{
 		SetBodygroup( i, 0 );
 	}
+	
+	// Nuke wearables
+	for ( int i = 0; i < GetNumWearables(); i++ )
+	{
+		CTFWearable *pWearable = static_cast<CTFWearable *>( GetWearable( i ) );
+
+		if ( !pWearable )
+			continue;
+
+		RemoveWearable( pWearable );
+	}
+
+	// Nuke weapons
+	for ( int i = 0; i < WeaponCount(); i++ )
+	{
+		CTFWeaponBase *pWeapon = static_cast<CTFWeaponBase *>( GetWeapon( i ) );
+
+		if ( !pWeapon )
+			continue;
+
+		// Holster our active weapon
+		if ( pWeapon == GetActiveWeapon() )
+			pWeapon->Holster();
+
+		Weapon_Detach( pWeapon );
+		UTIL_Remove( pWeapon );
+	}
+		
 
 	RemoveAllAmmo();
 
@@ -1917,7 +1945,7 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 		if ( pWeapon->IsWeapon( TF_WEAPON_BUILDER ) )
 			continue;
 
-		CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
+	CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
 
 		if ( pItemDef )
 		{
