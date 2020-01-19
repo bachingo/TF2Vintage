@@ -1112,6 +1112,18 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		}
 	}
 
+
+	// Drain our Sanguisuge health, but at a much slower rate. (2HP per second)
+	if (m_pOuter->m_Shared.GetSanguisugeHealth() > 0)
+	{
+		int iSanguisugeDecay = 2;
+		int nHealthtoRemove = (int)( gpGlobals->frametime * iSanguisugeDecay );
+		// Manually subtract the health from our Sanguisuge pool as well.
+		m_pOuter->m_iHealth -= nHealthtoRemove;
+		m_pOuter->m_Shared.ChangeSanguisugeHealth( nHealthtoRemove );
+	}
+	
+	
 	// Our health will only decay ( from being medic buffed ) if we are not being healed by a medic
 	// Dispensers can give us the TF_COND_HEALTH_BUFF, but will not maintain or give us health above 100%s
 	bool bDecayHealth = true;
@@ -1119,14 +1131,14 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	
 	// Get our overheal differences, and our base overheal.
 	int iOverhealDifference = ( GetMaxBuffedHealth() - GetMaxHealth() );
-	
-	// Start these off at 0 so we accept nerfs, but prefer buffs.
-	float flMaxOverhealRatio = 0.0;
-	float flOverhealAmount;
 
 	// If we're being healed, heal ourselves
 	if ( InCond( TF_COND_HEALTH_BUFF ) )
 	{
+		// Start these off at 0 so we accept nerfs, but prefer buffs.
+		float flMaxOverhealRatio = 0.0;
+		float flOverhealAmount;
+	
 		// Heal faster if we haven't been in combat for a while
 		float flTimeSinceDamage = gpGlobals->curtime - m_pOuter->GetLastDamageTime();
 		float flScale = RemapValClamped( flTimeSinceDamage, 10, 15, 1.0, 3.0 );
@@ -1179,8 +1191,8 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				{			
 					// Calculate out the max health we can heal up to for the person.
 					int iMaxOverheal = floor( ( iOverhealDifference * flOverhealAmount ) + GetMaxHealth() );
-					// Don't heal if we're above our medigun's overheal ratio.
-					if ( iMaxOverheal > m_pOuter->GetHealth() )
+					// Don't heal if our health is above the overheal ratio.
+					if ( m_pOuter->GetHealth() > iMaxOverheal )
 						continue;
 				}
 					// Player heals are affected by the last damage time
@@ -1269,7 +1281,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	{
 		int iSanguisugeDecay = 2;
 		int nHealthtoRemove = (int)( gpGlobals->frametime * iSanguisugeDecay );
-		// Manually subtract the health from our Sanguisuge pool as well.
+		// Manually subtract the health from our normal health, and the Sanguisuge health.
 		m_pOuter->m_iHealth -= nHealthtoRemove;
 		m_pOuter->m_Shared.ChangeSanguisugeHealth( nHealthtoRemove );
 	}
