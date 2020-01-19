@@ -297,11 +297,12 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 
 	// Heal 25% of the player's max health per second for a total of 100%.
 	CTFPlayer *pOwner = GetTFPlayerOwner();
-	int iPlayerMaxHealth = pOwner->GetMaxHealth();
+	
+	bool bIsChocolate = ( CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7);
 
-	float flAmt = iPlayerMaxHealth * (1/4); // 25%.
-	if ( ( CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
-		flAmt = (1/12); // 1/3 of 25%, so 1/12.
+	float flAmt = 75.0;
+	if ( bIsChocolate )
+		flAmt = 25.0;
 	
 	// Adjust our healing scale if defined.
 	CALL_ATTRIB_HOOK_FLOAT( flAmt, lunchbox_healing_scale );
