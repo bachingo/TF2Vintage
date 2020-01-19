@@ -722,7 +722,7 @@ void CWeaponMedigun::AddCharge( float flAmount )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CWeaponMedigun::RemoveCharge( float flAmount )
+void CWeaponMedigun::RemoveCharge( float flAmount, bool bDrainSound /* = false */ )
 {
 	float flChargeRate = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_medigun_uberchargerate );
@@ -730,9 +730,25 @@ void CWeaponMedigun::RemoveCharge( float flAmount )
 		return;
 
 	// Never let us fall under 0%.
-	float flNewLevel = max( m_flChargeLevel - ( flAmount / 100), 0.0 );
+	if ( m_flChargeLevel > 0 )
+	{
+		float flNewLevel = max( m_flChargeLevel - ( flAmount / 100), 0.0 );
+		
+#ifdef GAME_DLL
+		if (bDrainSound)
+		{
+			// Emit a sound, to warn us that our charge was drained.
+			CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+			if (pOwner)
+			{
+				CSingleUserRecipientFilter filter( pOwner );
+				pOwner->EmitSound( filter, pOwner->entindex(), "Weapon_Pomson.DrainedVictim" );
+			}
+		}
+#endif
 
-	m_flChargeLevel = flNewLevel;
+		m_flChargeLevel = flNewLevel;
+	}
 }
 
 //-----------------------------------------------------------------------------
