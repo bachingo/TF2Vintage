@@ -196,18 +196,15 @@ void CTFLunchBox::DepleteAmmo( void )
 	if ( !pOwner )
 		return;
 
+	int nLunchboxAddsMaxHealth = 0;
+	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
 	
-	if ( !tf2v_new_sandvich_behavior.GetBool() )
+	if ( !tf2v_new_sandvich_behavior.GetBool() && ( nLunchboxAddsMaxHealth == 1 ) || ( nLunchboxAddsMaxHealth == 7 ) )
 	{
-		int nLunchboxAddsMaxHealth = 0;
-		
-		CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
-		if ( ( nLunchboxAddsMaxHealth == 1 ) || ( nLunchboxAddsMaxHealth == 7 ) )
-			return;
-		
+		return;
 	}
 
-	if ( pOwner->HealthFraction() >= 1.0f )
+	if ( pOwner->HealthFraction() >= 1.0f && ( nLunchboxAddsMaxHealth != 2 ) )
 		return;
 
 	// Switch away from it immediately, don't want it to stick around.
@@ -292,7 +289,9 @@ void CTFLunchBox::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 {
-	if ( !bHurt )
+	bool bIsSteak = ( CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 2);
+	
+	if ( !bHurt && !bIsSteak )
 		return;
 
 	// Heal 25% of the player's max health per second for a total of 100%.
@@ -307,27 +306,9 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	// Adjust our healing scale if defined.
 	CALL_ATTRIB_HOOK_FLOAT( flAmt, lunchbox_healing_scale );
 
-	if ( pOwner )
+	if ( pOwner && !bIsSteak )
 	{
 		pOwner->TakeHealth( flAmt, DMG_GENERIC );
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFLunchBox::ApplyBerserkEffect( void )
-{
-	float flBuffaloSteakTime = 16.0f;
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner )
-	{
-		pOwner->m_Shared.AddCond( TF_COND_CANNOT_SWITCH_FROM_MELEE, flBuffaloSteakTime );
-		pOwner->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffaloSteakTime );
-		pOwner->m_Shared.AddCond( TF_COND_ENERGY_BUFF, flBuffaloSteakTime );
-
-		pOwner->Weapon_Switch( pOwner->Weapon_GetWeaponByType( TF_WPN_TYPE_MELEE ) );
 	}
 }
 

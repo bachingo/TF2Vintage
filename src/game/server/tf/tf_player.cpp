@@ -4472,15 +4472,35 @@ static float DamageForce( const Vector &size, float damage, float scale )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::IsBehindTarget( CBaseEntity *pVictim )
 {
-	Vector vecFwd;
-	QAngle angEyes = pVictim->EyeAngles();
-	AngleVectors( angEyes, &vecFwd );
-	vecFwd.NormalizeInPlace();
+	Assert( pVictim );
 
-	Vector vecPos = GetBaseVelocity();
-	vecPos.NormalizeInPlace();
+	// Get the forward view vector of the target, ignore Z
+	Vector vecVictimForward;
+	AngleVectors( pVictim->EyeAngles(), &vecVictimForward );
+	vecVictimForward.z = 0.0f;
+	vecVictimForward.NormalizeInPlace();
 
-	return vecPos.AsVector2D().Dot( vecFwd.AsVector2D() ) > 0.8f;
+	// Get a vector from my origin to my targets origin
+	Vector vecToTarget;
+	vecToTarget = pVictim->WorldSpaceCenter() - WorldSpaceCenter();
+	vecToTarget.z = 0.0f;
+	vecToTarget.NormalizeInPlace();
+
+	// Get a forward vector of the attacker.
+	Vector vecOwnerForward;
+	AngleVectors( EyeAngles(), &vecOwnerForward );
+	vecOwnerForward.z = 0.0f;
+	vecOwnerForward.NormalizeInPlace();
+
+	float flDotOwner = DotProduct( vecOwnerForward, vecToTarget );
+	float flDotVictim = DotProduct( vecVictimForward, vecToTarget );
+
+	// Make sure they're actually facing the target.
+	// This needs to be done because lag compensation can place target slightly behind the attacker.
+	if ( flDotOwner > 0.5 )
+		return ( flDotVictim > -0.1 );
+
+	return false;
 }
 
 ConVar tf_debug_damage( "tf_debug_damage", "0", FCVAR_CHEAT );
@@ -4811,13 +4831,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nHasBackCrits, crit_from_behind );
 			if ( bitsDamage & !DMG_CRITICAL && nHasBackCrits )
 			{
-				if ( ToTFPlayer(pAttacker) )
+				if ( pTFAttacker->IsBehindTarget(this) )
 				{
-					if ( ToTFPlayer(pAttacker)->IsBehindTarget(this) )
-					{
-						bitsDamage |= DMG_CRITICAL;
-						info.AddDamageType( DMG_CRITICAL );
-					}
+					bitsDamage |= DMG_CRITICAL;
+					info.AddDamageType( DMG_CRITICAL );
 				}
 			}
 			
@@ -4828,10 +4845,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( bitsDamage & !DMG_MINICRITICAL && nHasBackAttack )
 			{
 				// Valid range is <500HU.
-				bool bIsValidRange = ( ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() < 500 );
-				if ( bIsValidRange && ToTFPlayer(pAttacker) )
+				bool bIsValidRange = ( ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() <= 500 );
+				if ( bIsValidRange && pTFAttacker )
 				{
-					bool bIsBehindTarget = ToTFPlayer(pAttacker)->IsBehindTarget(this);
+					bool bIsBehindTarget = pTFAttacker->IsBehindTarget(this);
 					if ( bIsBehindTarget )
 					{
 						bitsDamage |= DMG_MINICRITICAL;
@@ -4992,103 +5009,106 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				bitsDamage |= DMG_USEDISTANCEMOD;
 			}
 
-			// Do any calculations regarding bonus ramp up/falloff compensation.
-			float flRandomDamage = info.GetDamage() * tf_damage_range.GetFloat();			
-			if ( tf_damage_lineardist.GetBool() )
+			if ( DMG_USEDISTANCEMOD )
 			{
-				float flBaseDamage = info.GetDamage() - flRandomDamage;
-				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				// Do any calculations regarding bonus ramp up/falloff compensation.
+				float flRandomDamage = info.GetDamage() * tf_damage_range.GetFloat();			
+				if ( tf_damage_lineardist.GetBool() )
 				{
-					// If we're a crossbow, invert our damage formula.
-					flDamage = flBaseDamage - RandomFloat( 0, flRandomDamage * 2 );
-				}
-				else
-					flDamage = flBaseDamage + RandomFloat( 0, flRandomDamage * 2 );
-				
-				// Negate any potential damage falloff.
-				if ( flDamage < info.GetDamage() )
-					flDamage = info.GetDamage();
-			}
-			else if ( DMG_USEDISTANCEMOD ) // If we have damage falloff, compensate falloff and add ramp up damage to our minicrit.
-			{
-				// Distance should be calculated from sentry
-				pAttacker = info.GetAttacker();
-				
-				float flCenter = 0.5;
-				float flCenVar = ( tf2v_bonus_distance_range.GetFloat() / 100 ) ;	
-				float flMin = flCenter - flCenVar;
-				float flMax = flCenter + flCenVar;
-
-
-				float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() );
-				float flOptimalDistance = 512.0;
-
-				// We have damage ramp up, but no damage falloff for minicrit.
-				flCenter = RemapValClamped( flDistance / flOptimalDistance, 0.0, 1.0, 1.0, 0.5 );
-				if ( bitsDamage & DMG_NOCLOSEDISTANCEMOD )
-				{
-					if ( flCenter > 0.5 )
+					float flBaseDamage = info.GetDamage() - flRandomDamage;
+					if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
 					{
-						// Reduce the damage bonus at close range
-						flCenter = RemapVal( flCenter, 0.5, 1.0, 0.5, 0.65 );
+						// If we're a crossbow, invert our damage formula.
+						flDamage = flBaseDamage - RandomFloat( 0, flRandomDamage * 2 );
 					}
+					else
+						flDamage = flBaseDamage + RandomFloat( 0, flRandomDamage * 2 );
+					
+					// Negate any potential damage falloff.
+					if ( flDamage < info.GetDamage() )
+						flDamage = info.GetDamage();
 				}
-				
-				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				else  // If we have damage falloff, compensate falloff and add ramp up damage to our minicrit.
 				{
-					// Unlike other weapons, we don't get any compensation here.
-					flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 0.0, 0.5 );
-				}
+					// Distance should be calculated from sentry
+					pAttacker = info.GetAttacker();
+					
+					float flCenter = 0.5;
+					float flCenVar = ( tf2v_bonus_distance_range.GetFloat() / 100 ) ;	
+					float flMin = flCenter - flCenVar;
+					float flMax = flCenter + flCenVar;
 
-				flMin = ( 0.0 > (flCenter + flCenVar) ? 0.0 : (flCenter + flCenVar) ); // Our version of MAX.
-				flMax = ( 1.0 < (flCenter + flCenVar) ? 1.0 : (flCenter - flCenVar) ); // Our version of MIN.
 
-				if ( bDebug )
-				{
-					Warning( "    RANDOM: Dist %.2f, Ctr: %.2f, Min: %.2f, Max: %.2f\n", flDistance, flCenter, flMin, flMax );
-				}
+					float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() );
+					float flOptimalDistance = 512.0;
 
-				//Msg("Range: %.2f - %.2f\n", flMin, flMax );
-				float flRandomVal;
-
-				if ( tf_damage_disablespread.GetBool() )
-				{
-					flRandomVal = flCenter;
-				}
-				else
-				{
-					flRandomVal = RandomFloat( flMin, flMax );
-				}
-
-				if ( flRandomVal > 0.5 )
-				{
-					// Rocket launcher, Sticky launcher and Scattergun have different short range bonuses
-					if ( pWeapon )
+					// We have damage ramp up, but no damage falloff for minicrit.
+					flCenter = RemapValClamped( flDistance / flOptimalDistance, 0.0, 1.0, 1.0, 0.5 );
+					if ( bitsDamage & DMG_NOCLOSEDISTANCEMOD )
 					{
-						switch ( pWeapon->GetWeaponID() )
+						if ( flCenter > 0.5 )
 						{
-							case TF_WEAPON_ROCKETLAUNCHER:
-							case TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE:
-							case TF_WEAPON_PIPEBOMBLAUNCHER:
-								// Rocket launcher and sticky launcher only have half the bonus of the other weapons at short range
-								flRandomDamage *= 0.5;
-								break;
-							case TF_WEAPON_SCATTERGUN:
-								// Scattergun gets 50% bonus of other weapons at short range
-								flRandomDamage *= 1.5;
-								break;
-							case TF_WEAPON_STICKBOMB:	
-								// Post-nerf Caber follows the standard explosive short range bonus.
-								if ( tf2v_use_new_caber.GetBool() )
-									flRandomDamage *= 0.5;
-								break;
+							// Reduce the damage bonus at close range
+							flCenter = RemapVal( flCenter, 0.5, 1.0, 0.5, 0.65 );
 						}
-					}	
-				}
+					}
+					
+					if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+					{
+						// Unlike other weapons, we don't get any compensation here.
+						flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 0.0, 0.5 );
+					}
 
-				float flOut = SimpleSplineRemapValClamped( flRandomVal, 0, 1, -flRandomDamage, flRandomDamage );
-				
-				flDamage = ( info.GetDamage() + flOut );
+					flMin = ( 0.0 > (flCenter + flCenVar) ? 0.0 : (flCenter + flCenVar) ); // Our version of MAX.
+					flMax = ( 1.0 < (flCenter + flCenVar) ? 1.0 : (flCenter - flCenVar) ); // Our version of MIN.
+
+					if ( bDebug )
+					{
+						Warning( "    RANDOM: Dist %.2f, Ctr: %.2f, Min: %.2f, Max: %.2f\n", flDistance, flCenter, flMin, flMax );
+					}
+
+					//Msg("Range: %.2f - %.2f\n", flMin, flMax );
+					float flRandomVal;
+
+					if ( tf_damage_disablespread.GetBool() )
+					{
+						flRandomVal = flCenter;
+					}
+					else
+					{
+						flRandomVal = RandomFloat( flMin, flMax );
+					}
+
+					if ( flRandomVal > 0.5 )
+					{
+						// Rocket launcher, Sticky launcher and Scattergun have different short range bonuses
+						if ( pWeapon )
+						{
+							switch ( pWeapon->GetWeaponID() )
+							{
+								case TF_WEAPON_ROCKETLAUNCHER:
+								case TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE:
+								case TF_WEAPON_PIPEBOMBLAUNCHER:
+									// Rocket launcher and sticky launcher only have half the bonus of the other weapons at short range
+									flRandomDamage *= 0.5;
+									break;
+								case TF_WEAPON_SCATTERGUN:
+									// Scattergun gets 50% bonus of other weapons at short range
+									flRandomDamage *= 1.5;
+									break;
+								case TF_WEAPON_STICKBOMB:	
+									// Post-nerf Caber follows the standard explosive short range bonus.
+									if ( tf2v_use_new_caber.GetBool() )
+										flRandomDamage *= 0.5;
+									break;
+							}
+						}	
+					}
+
+					float flOut = SimpleSplineRemapValClamped( flRandomVal, 0, 1, -flRandomDamage, flRandomDamage );
+					
+					flDamage = ( info.GetDamage() + flOut );
+				}
 			}
 			else
 				flDamage = info.GetDamage(); // This is kind of anticlimatic.
@@ -5262,7 +5282,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnHit, speed_boost_on_hit );
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnHit, speed_boost_on_hit_enemy );
 		if ( nSpeedBoostOnHit > 0)
-			m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnHit );
+			pTFAttacker->m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnHit );
 		
 	}
 
@@ -5797,7 +5817,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 	}
 	
-	if ( m_Shared.InCond( TF_COND_ENERGY_BUFF ) )
+	if ( m_Shared.InCond( TF_COND_ENERGY_BUFF ) || m_Shared.InCond( TF_COND_BERSERK ) )
 	{
 		float flEnergyBuffMult = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT( flEnergyBuffMult, energy_buff_dmg_taken_multiplier );
@@ -9890,15 +9910,10 @@ void CTFPlayer::DoTauntAttack( void )
 					
 				}
 
-				if (nLunchboxAddsMaxHealth != 2 )
-				{	
-					if ( HealthFraction() <= 1.0f )
-					{
-						pLunch->ApplyBiteEffects( true );
-					}
+				if ( HealthFraction() <= 1.0f )
+				{
+					pLunch->ApplyBiteEffects( true );
 				}
-				else
-					pLunch->ApplyBerserkEffect();
 
 				m_iTauntAttack = TAUNTATK_HEAVY_EAT;
 				m_flTauntAttackTime = gpGlobals->curtime + 1.0f;
@@ -10071,6 +10086,15 @@ void CTFPlayer::ClearTauntAttack( void )
 		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
 		{
 			SpeakConceptIfAllowed( MP_CONCEPT_ATE_FOOD );
+			
+			int nLunchBoxAddsMinicrits = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLunchBoxAddsMinicrits, set_weapon_mode );
+			if ( nLunchBoxAddsMinicrits == 2 )
+			{
+				float flBuffaloSteakTime = 16.0f;
+				m_Shared.AddCond( TF_COND_BERSERK, flBuffaloSteakTime );
+				Weapon_Switch( Weapon_GetWeaponByType( TF_WPN_TYPE_MELEE ) );
+			}
 		}
 	}
 	else if ( m_iTauntAttack == TAUNTATK_SCOUT_DRINK )

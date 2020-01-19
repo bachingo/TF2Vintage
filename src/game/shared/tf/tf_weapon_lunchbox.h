@@ -51,7 +51,6 @@ public:
 #ifdef GAME_DLL
 	virtual void		Precache( void );
 	virtual void		ApplyBiteEffects( bool bHurt );
-	virtual void		ApplyBerserkEffect( void );
 	virtual bool		CanDrop( void ) const;
 #endif
 

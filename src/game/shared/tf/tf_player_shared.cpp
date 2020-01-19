@@ -561,6 +561,7 @@ bool CTFPlayerShared::IsMiniCritBoosted( void )
 {
 	if (InCond( TF_COND_OFFENSEBUFF ) ||
 		InCond( TF_COND_ENERGY_BUFF ) ||
+		InCond( TF_COND_BERSERK ) ||
 		InCond( TF_COND_SODAPOPPER_HYPE ) ||
 		InCond( TF_COND_MINICRITBOOSTED_ON_KILL ) )
 		return true;
@@ -842,6 +843,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 
 	case TF_COND_DISGUISED_AS_DISPENSER:
 	case TF_COND_ENERGY_BUFF:
+	case TF_COND_BERSERK:
 		m_pOuter->TeamFortress_SetSpeed();
 		break;
 
@@ -979,6 +981,7 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 
 	case TF_COND_DISGUISED_AS_DISPENSER:
 	case TF_COND_ENERGY_BUFF:
+	case TF_COND_BERSERK:	
 		m_pOuter->TeamFortress_SetSpeed();
 		break;
 
@@ -4872,7 +4875,14 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		maxfbspeed *= 1.4f;
 	}
 	
-	if (m_Shared.InCond(TF_COND_STEALTHED) && m_Shared.InCond(TF_COND_SPEED_BOOST_FEIGN))
+	// Berserk Effect. Normally this wouldn't stack with other speed boosts.
+	if ( m_Shared.InCond(TF_COND_BERSERK) )
+	{
+		// 30% Speed increase.
+		maxfbspeed *= 1.3f;
+	}
+	
+	if ( m_Shared.InCond(TF_COND_STEALTHED) && m_Shared.InCond(TF_COND_SPEED_BOOST_FEIGN) )
 	{
 		// 40% Speed increase. This allows for both speed boosts to be stacked.
 		maxfbspeed *= 1.4f;
