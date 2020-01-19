@@ -728,7 +728,7 @@ void CTFPlayer::MedicRegenThink( void )
 	}
 
 	// Throw the event for health regen.
-	if ( ( iHealthDrain != 0 && iHealthDrain > 0 ) || ( iHealthRegenLegacy != 0 && iHealthRegenLegacy > 0 ) )
+	if ( ( iHealthDrain != 0 ) || ( iHealthRegenLegacy != 0 ) )
 	{
 		if ( IsAlive() )
 		{
@@ -5776,7 +5776,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 				flDamageAimMultFull = 1.0f;
 			flDamage *= flDamageAimMultFull;
 			
-			// Newer resistance that only appliex under 50% health.
+			// Newer resistance that only applies under 50% health.
 			if ( ( GetHealth() < ( GetMaxHealth() / 2 ) ) )
 			{
 				float flDamageAimMult = 1.0f;
@@ -9884,8 +9884,11 @@ void CTFPlayer::DoTauntAttack( void )
 
 				int nLunchboxAddsMaxHealth = 0;
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pLunch, nLunchboxAddsMaxHealth, set_weapon_mode );
-				if ( ( (nLunchboxAddsMaxHealth == 1) || (nLunchboxAddsMaxHealth == 7) ) && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF ) )
+				if ( ( nLunchboxAddsMaxHealth == 1 ) || ( nLunchboxAddsMaxHealth == 7 ) )
+				{
 					m_Shared.AddCond( TF_COND_LUNCHBOX_HEALTH_BUFF, 30.0f );
+					
+				}
 
 				if (nLunchboxAddsMaxHealth != 2 )
 				{	
