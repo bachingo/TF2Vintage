@@ -1977,6 +1977,10 @@ void CTFPlayerShared::OnRemoveCritboosted(void)
 
 void CTFPlayerShared::OnAddSpeedBoost( void )
 {
+#ifdef GAME_DLL
+ 	CSingleUserRecipientFilter filter( m_pOuter );
+ 	m_pOuter->EmitSound( filter, m_pOuter->entindex(), "DisciplineDevice.PowerUp" );
+#endif
 	m_pOuter->TeamFortress_SetSpeed();
 	UpdateSpeedBoostEffects();
 }
@@ -1987,7 +1991,7 @@ void CTFPlayerShared::OnAddSpeedBoost( void )
  {
  #ifdef GAME_DLL
  	CSingleUserRecipientFilter filter( m_pOuter );
- 	m_pOuter->EmitSound( filter, m_pOuter->entindex(), "PowerupSpeedBoost.WearOff" );
+ 	m_pOuter->EmitSound( filter, m_pOuter->entindex(), "DisciplineDevice.PowerDown" );
 #endif
 	m_pOuter->TeamFortress_SetSpeed();
 	UpdateSpeedBoostEffects();
