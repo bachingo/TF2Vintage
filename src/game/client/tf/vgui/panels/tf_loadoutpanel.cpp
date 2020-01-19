@@ -362,7 +362,13 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 			const char *pszModel = GetWeaponModel( pItemDef, m_iCurrentClass );
 			if ( pszModel[0] != '\0' )
 			{
-				m_pClassModelPanel->SetMergeMDL(pszModel, NULL, m_iCurrentSkin);
+				PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( ( m_iCurrentSkin == 0 ? TF_TEAM_RED : TF_TEAM_BLUE ) );
+				if ( pVisuals && pVisuals->skin != -1 )
+				{
+					m_pClassModelPanel->SetMergeMDL(pszModel, NULL, pVisuals->skin);
+				}
+				else
+					m_pClassModelPanel->SetMergeMDL(pszModel, NULL, m_iCurrentSkin);
 			}
 		}
 
