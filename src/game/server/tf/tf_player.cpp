@@ -174,6 +174,7 @@ ConVar tf2v_use_new_dead_ringer("tf2v_use_new_dead_ringer","0", FCVAR_NOTIFY | F
 
 ConVar tf2v_use_new_caber( "tf2v_use_new_caber", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the Ullapool Caber's explosion behavior to the newer format." );
 ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
+ConVar tf2v_use_new_pomson( "tf2v_use_new_pomson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Pomson's Drain Uber+Cloak to be based on modern falloff settings." );
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -5619,24 +5620,57 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nIgnoreResists, mod_pierce_resists_absorbs );
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDamage, mult_dmg_vs_players );
 		
-		// Remove Ubercharge level.
+
 		float flDeductCharge = 0;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDeductCharge, subtract_victim_medigun_charge_onhit );
-		if ( flDeductCharge )
+		float flDeductCloak = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDeductCloak, subtract_victim_cloak_on_hit );
+		
+		float flDistMult = 0.0;
+		// If we have an attribute affected by distance, calculate falloff.
+		if ( flDeductCharge || flDeductCloak )
+		{
+			// Calculate attribute falloff.
+			float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pTFAttacker->WorldSpaceCenter() ).Length() );
+			float flOptimalDistance = 512.0;
+			float flDistanceRatio = flDistance / flOptimalDistance;
+			
+			if ( tf2v_use_new_pomson.GetBool() )
+			{
+				// 100% mult from 0HU to 512HU, then falloff to 0% from 512HU to 1536HU.
+				if ( flDistanceRatio > 1.0 && flDistanceRatio < 3.0 )
+					flDistMult = RemapValClamped( flDistanceRatio, 1.0, 3.0, 1.0, 0.0 );
+				else if ( flDistanceRatio <= 1.0 )
+					flDistMult = 1.0;
+				else // ( flDistanceRatio > 3.0 )
+					flDistMult = 0.0;
+			}
+			else
+			{
+				// 150% mult at point blank, 100% at 512HU, down to 0% at 1024HU.
+				flDistMult = RemapValClamped( flDistanceRatio, 0.0, 2.0, 1.0, 0.0 );
+				if ( flDistanceRatio <= 2.0 )	// Compensate for the extra 50% falloff value.
+					flDistMult += 0.5;
+				
+			}
+			
+		}
+		
+		// Remove Ubercharge level.
+		if ( flDeductCharge && flDistMult )
 		{
 			CWeaponMedigun *pMedigun = GetMedigun();
 
 			if ( pMedigun )
-			{
-				pMedigun->RemoveCharge( flDeductCharge );
+			{	
+				pMedigun->RemoveCharge( ( flDeductCharge * flDistMult ), true );
 			}
+			
 		}
 		
 		// Remove cloak level.
-		float flDeductCloak = 0;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDeductCloak, subtract_victim_cloak_on_hit );
-		if ( flDeductCloak )
-			m_Shared.AddToSpyCloakMeter( ( flDeductCloak ) );
+		if ( flDeductCloak && flDistMult )
+			m_Shared.RemoveFromSpyCloakMeter( ( flDeductCloak * flDistMult ), true );
 
 	}
 	
