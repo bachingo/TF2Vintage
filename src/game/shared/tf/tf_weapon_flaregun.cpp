@@ -226,7 +226,7 @@ void CTFFlareGun::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlay
 	Vector vecVelocityImpulse = vecToVictim * abs( flDmgForce );
 
 	pVictim->ApplyAirBlastImpulse( vecVelocityImpulse );
-	pVictim->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_LIMITMOVEMENT, pAttacker );
+	pVictim->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_NOSOUNDOREFFECT , pAttacker );
 
 	pVictim->m_Shared.SetKnockbackWeaponID( pAttacker->GetUserID() );
 }

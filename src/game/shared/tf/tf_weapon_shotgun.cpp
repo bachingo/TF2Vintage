@@ -110,7 +110,7 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 	{
 		pOwner->m_Shared.SetHasRecoiled( true );
 
-		pOwner->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_SLOWDOWN, NULL );
+		pOwner->m_Shared.StunPlayer( 0.3f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_SLOWDOWN | TF_STUNFLAG_NOSOUNDOREFFECT, NULL );
 
 	#if defined( GAME_DLL )
 		EntityMatrix matrix;
