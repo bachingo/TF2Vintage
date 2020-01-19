@@ -3807,14 +3807,26 @@ bool CTFPlayerShared::AddToSpyCloakMeter( float amt, bool bForce, bool bIgnoreAt
 //-----------------------------------------------------------------------------
 // Purpose: Used to deduct cloak from the player.
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::RemoveFromSpyCloakMeter(float amt)
+void CTFPlayerShared::RemoveFromSpyCloakMeter(float amt, bool bDrainSound /* = false */)
 {
 	CTFWeaponInvis *pInvis = dynamic_cast<CTFWeaponInvis *>( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_INVIS ) );
 	if ( !pInvis )
 		return;
 
 	// Remove cloak, but never let us fall under 0.
-	m_flCloakMeter = Max( m_flCloakMeter - amt, 0.0f );
+	if ( m_flCloakMeter > 0)
+	{
+		m_flCloakMeter = Max( m_flCloakMeter - amt, 0.0f );
+		
+#ifdef GAME_DLL
+		if (bDrainSound)
+		{
+			// Emit a sound, to warn us that our charge was drained.
+			CSingleUserRecipientFilter filter( m_pOuter );
+			m_pOuter->EmitSound( filter, m_pOuter->entindex(), "Weapon_Pomson.DrainedVictim" );
+		}
+#endif
+	}
 }
 
 //-----------------------------------------------------------------------------
