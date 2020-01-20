@@ -78,15 +78,11 @@ public:
 	
 	virtual bool	Deploy( void );
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
-	virtual void	Detach( void );
 
 	virtual const char *GetEffectLabelText( void ) { return "#TF_CRITS"; }
 
-	bool			CanGetSapperCrits( void ) const;
 
 private:
-
-	CNetworkVar( int, m_iSapperCrits );
 
 	CTFRevolver_Dex( CTFRevolver_Dex const& );
 };

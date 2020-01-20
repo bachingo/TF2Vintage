@@ -162,12 +162,3 @@ bool CTFRevolver_Dex::Holster( CBaseCombatWeapon *pSwitchTo )
 	return false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFRevolver_Dex::Detach( void )
-{
-	m_iSapperCrits = 0;
-	BaseClass::Detach();
-}
-
