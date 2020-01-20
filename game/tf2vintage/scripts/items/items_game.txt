@@ -1637,6 +1637,7 @@
 			"item_type_name"	"#TF_Weapon_Watch"
 			"item_name"	"#TF_Weapon_Watch"
 			"item_description"	"#TF_Weapon_Watch_desc"
+			"attach_to_hands"	"0"
 			"item_slot"	"pda2"
 			"anim_slot" "FORCE_NOT_USED"
 			"image_inventory"	"backpack/weapons/c_models/c_spy_watch/parts/c_spy_watch"
