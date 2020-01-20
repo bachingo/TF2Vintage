@@ -35,10 +35,6 @@ class CEconEntity : public CBaseAnimating, public IHasAttributes
 	DECLARE_CLASS( CEconEntity, CBaseAnimating );
 	DECLARE_NETWORKCLASS();
 
-#ifdef CLIENT_DLL
-	DECLARE_PREDICTABLE();
-#endif
-
 public:
 	CEconEntity();
 	virtual ~CEconEntity() {};
@@ -98,7 +94,6 @@ public:
 
 #ifdef GAME_DLL
 	void UpdateModelToClass( void );
-
 #endif
 
 	virtual void UpdatePlayerBodygroups( void );
