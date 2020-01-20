@@ -1177,6 +1177,14 @@
 		scene "scenes/player/spy/low/taunt01_v4.vcd"
 		scene "scenes/player/spy/low/taunt01_v5.vcd"
 	}
+	response "SpyTauntPrimaryDex"
+	{
+		scene "scenes/player/spy/low/taunt01_v1.vcd"
+		scene "scenes/player/spy/low/taunt01_v2.vcd"
+		scene "scenes/player/spy/low/taunt01_v3.vcd"
+		scene "scenes/player/spy/low/taunt01_v4.vcd"
+		scene "scenes/player/spy/low/taunt01_v5.vcd"
+	}
 	response "SpyTauntSecondary"
 	{
 		scene "scenes/player/spy/low/taunt02.vcd"
@@ -1203,6 +1211,11 @@
 	rule SpyTauntPlayerPrimary
 	{
 		criteria ConceptPlayerTaunt IsSpy WeaponIsRevolver
+		response SpyTauntPrimary
+	}
+	rule SpyTauntPlayerPrimaryDex
+	{
+		criteria ConceptPlayerTaunt IsSpy WeaponIsRevolverDex
 		response SpyTauntPrimary
 	}
 	rule SpyTauntPlayerSecondary
