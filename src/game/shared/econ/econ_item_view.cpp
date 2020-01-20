@@ -320,7 +320,8 @@ CEconItemView &CEconItemView::operator=( CEconItemView const &rhs )
 	m_iEntityQuality = rhs.m_iEntityQuality;
 	m_iEntityLevel = rhs.m_iEntityLevel;
 	m_iTeamNumber = rhs.m_iTeamNumber;
-	m_AttributeList = rhs.m_AttributeList;
+
+	m_AttributeList.CopyFrom( rhs.m_AttributeList );
 
 #ifdef GAME_DLL
 	m_bOnlyIterateItemViewAttributes = rhs.m_bOnlyIterateItemViewAttributes;
