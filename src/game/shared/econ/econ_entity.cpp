@@ -36,12 +36,6 @@ BEGIN_NETWORK_TABLE( CEconEntity, DT_EconEntity )
 #endif
 END_NETWORK_TABLE()
 
-#ifdef CLIENT_DLL
-BEGIN_PREDICTION_DATA( C_EconEntity )
-	DEFINE_PRED_TYPEDESCRIPTION( m_AttributeManager, CAttributeContainer ),
-END_PREDICTION_DATA()
-#endif
-
 CEconEntity::CEconEntity()
 {
 	m_pAttributes = this;
@@ -319,7 +313,6 @@ void CEconEntity::SetItem( CEconItemView const &pItem )
 {
 #if defined( GAME_DLL )
 	m_AttributeManager.m_Item.CopyFrom( pItem );
-	m_AttributeManager.NetworkStateChanged();
 #endif
 }
 
