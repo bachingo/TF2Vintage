@@ -503,6 +503,7 @@ public:
 		GET_INT( pItem, pData, image_inventory_size_h );
 
 		GET_STRING( pItem, pData, model_player );
+		GET_STRING( pItem, pData, model_vision_filtered );
 		GET_STRING( pItem, pData, model_world );
 		GET_STRING( pItem, pData, extra_wearable );
 

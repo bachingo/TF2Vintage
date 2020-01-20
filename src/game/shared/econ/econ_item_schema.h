@@ -78,7 +78,8 @@ extern const char *g_szQualityLocalizationStrings[];
 #define CLEAR_STR(name) \
 		name[0] = '\0'
 
-struct EconQuality
+
+typedef struct EconQuality
 {
 	EconQuality()
 	{
@@ -86,9 +87,9 @@ struct EconQuality
 	}
 
 	int value;
-};
+} EconQuality_t;
 
-struct EconColor
+typedef struct EconColor
 {
 	EconColor()
 	{
@@ -96,9 +97,9 @@ struct EconColor
 	}
 
 	char color_name[128];
-};
+} EconColor_t;
 
-struct EconAttributeDefinition
+typedef struct EconAttributeDefinition
 {
 	EconAttributeDefinition()
 	{
@@ -126,7 +127,7 @@ struct EconAttributeDefinition
 	bool hidden;
 	bool stored_as_integer;
 	string_t m_iAttributeClass;
-};
+} EconAttributeDefinition_t;
 
 // Attached Models
 #define AM_WORLDMODEL	(1 << 0)
@@ -151,12 +152,14 @@ struct static_attrib_t
 	KeyValues const *schema;
 };
 
+
+
 class IEconAttributeIterator
 {
 public:
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) = 0;
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) = 0;
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t ) = 0;
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) = 0;
 };
 
 // Client specific.
@@ -276,9 +279,10 @@ public:
 		image_inventory_size_w = 128;
 		image_inventory_size_h = 82;
 		CLEAR_STR(model_player);
+		CLEAR_STR(model_vision_filtered);
 		CLEAR_STR(model_world);
 		CLEAR_STR(equip_region);
-		memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
+		Q_memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
 		CLEAR_STR(extra_wearable);
@@ -323,6 +327,7 @@ public:
 	int	 image_inventory_size_w;
 	int	 image_inventory_size_h;
 	char model_player[128];
+	char model_vision_filtered[128];
 	char model_world[128];
 	char equip_region[128];
 	char model_player_per_class[TF_CLASS_COUNT_ALL][128];

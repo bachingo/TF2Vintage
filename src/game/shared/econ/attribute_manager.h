@@ -14,7 +14,7 @@ class CEconItemSpecificAttributeIterator : public IEconAttributeIterator
 public:
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) { return true; }
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) { return true; }
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t ) { return true; }
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) { return true; }
 };
 
 class CAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
@@ -39,7 +39,7 @@ public:
 	CAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t *outValue, ProviderVector *outVector )
 		: m_hOwner( hOwner ), m_iName( iName ), m_pOut( outValue ), m_pOutProviders( outVector ) {}
 
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t value );
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t const &value );
 
 private:
 	EHANDLE m_hOwner;

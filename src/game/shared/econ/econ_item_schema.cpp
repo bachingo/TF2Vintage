@@ -240,7 +240,7 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 			case ATTRTYPE_INT:
 			case ATTRTYPE_UINT64:
 			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[ i ].m_iRawValue32 ) )
+				if ( !iter.OnIterateAttributeValue( pDefinition, u.iVal ) )
 					return;
 
 				break;
