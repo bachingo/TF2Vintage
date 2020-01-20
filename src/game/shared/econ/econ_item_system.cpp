@@ -769,7 +769,7 @@ void CEconItemSchema::Precache( void )
 			// Special case for custom_projectile_model attribute.
 			if ( pAttribute->m_iAttributeClass == strPrecacheAttribute )
 			{
-				CBaseEntity::PrecacheModel( STRING( value.sVal ) );
+				Assert( CBaseEntity::PrecacheModel( STRING( value.sVal ) ) != -1 );
 			}
 		}
 	}
