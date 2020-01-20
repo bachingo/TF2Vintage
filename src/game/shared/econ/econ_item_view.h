@@ -14,6 +14,7 @@ class CAttributeList
 	DECLARE_CLASS_NOBASE( CAttributeList );
 	DECLARE_EMBEDDED_NETWORKVAR();
 public:
+	DECLARE_DATADESC();
 	CAttributeList();
 
 	void Init( void );

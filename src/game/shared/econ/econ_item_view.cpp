@@ -16,13 +16,16 @@
 
 #ifdef CLIENT_DLL
 BEGIN_RECV_TABLE_NOBASE( CAttributeList, DT_AttributeList )
-	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_Attributes ), MAX_ATTRIBUTES_SENT, RecvPropDataTable( NULL, 0, 0, &REFERENCE_RECV_TABLE( DT_EconItemAttribute ) ) )
+	RecvPropUtlVectorDataTable( m_Attributes, MAX_ATTRIBUTES_SENT, DT_EconItemAttribute )
 END_RECV_TABLE()
 #else
 BEGIN_SEND_TABLE_NOBASE( CAttributeList, DT_AttributeList )
-	SendPropUtlVector( SENDINFO_UTLVECTOR( m_Attributes ), MAX_ATTRIBUTES_SENT, SendPropDataTable( NULL, 0, &REFERENCE_SEND_TABLE( DT_EconItemAttribute ) ) )
+	SendPropUtlVectorDataTable( m_Attributes, MAX_ATTRIBUTES_SENT, DT_EconItemAttribute )
 END_SEND_TABLE()
 #endif
+
+BEGIN_DATADESC_NO_BASE( CAttributeList )
+END_DATADESC()
 
 #ifdef CLIENT_DLL
 BEGIN_RECV_TABLE_NOBASE( CEconItemView, DT_ScriptCreatedItem )

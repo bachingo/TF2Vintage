@@ -253,7 +253,7 @@ END_DATADESC()
 BEGIN_DATADESC( CBasePlayer )
 
 	DEFINE_EMBEDDED( m_Local ),
-#if defined USES_ECON_ITEMS
+#if defined USES_ECON_ITEMS || defined TF_VINTAGE
 	DEFINE_EMBEDDED( m_AttributeList ),
 #endif
 	DEFINE_UTLVECTOR( m_hTriggerSoundscapeList, FIELD_EHANDLE ),

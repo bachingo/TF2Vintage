@@ -21,7 +21,7 @@
 #include "KeyValues.h"
 #endif
 
-#ifdef TF_DLL
+#if defined TF_DLL || defined TF_VINTAGE
 #include "tf_gamerules.h"
 #endif // TF_DLL
 
@@ -337,7 +337,7 @@ void CBaseDoor::Spawn()
 
 	CreateVPhysics();
 
-#ifdef TF_DLL
+#if defined TF_DLL || defined TF_VINTAGE
 	if ( TFGameRules() && TFGameRules()->IsMultiplayer() )
 	{
 		// Never block doors in TF2 - to prevent various exploits.
