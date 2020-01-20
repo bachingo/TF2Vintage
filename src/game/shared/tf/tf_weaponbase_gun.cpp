@@ -256,16 +256,15 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 	}
 
-#if !defined( CLIENT_DLL )
 	if ( pProjectile )
 	{
 		string_t strModelOverride = NULL_STRING;
-		if ( GetProjectileOverrideModel( &strModelOverride ) )
+		CALL_ATTRIB_HOOK_STRING( strModelOverride, custom_projectile_model );
+		if ( strModelOverride != NULL_STRING )
 		{
 			pProjectile->SetModel( STRING( strModelOverride ) );
 		}
 	}
-#endif
 
 	DoFireEffects();
 
