@@ -744,13 +744,13 @@ void CEconItemSchema::Precache( void )
 			}
 			// Muzzle Flash
 			const char *pszMuzzleFlash = pVisuals->muzzle_flash;
-			if (pszParticle[0] != '\0')
+			if ( pszMuzzleFlash[0] != '\0' )
 			{
 				PrecacheParticleSystem(pszMuzzleFlash);
 			}
 			// Tracer Effect
 			const char *pszTracerEffect = pVisuals->tracer_effect;
-			if (pszParticle[0] != '\0')
+			if ( pszTracerEffect[0] != '\0' )
 			{
 				PrecacheParticleSystem(pszTracerEffect);
 			}
