@@ -838,7 +838,7 @@ void CProxySniperRifleCharge::OnBind( void *pC_BaseEntity )
 
 	if ( pPlayer )
 	{
-		CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+		CTFSniperRifle *pWeapon = static_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
 		if ( pWeapon )
 		{
 			float flChargeValue = ( ( 1.0 - pWeapon->GetHUDDamagePerc() ) * 0.8 ) + 0.6;
@@ -1037,7 +1037,7 @@ int CSniperDot::DrawModel( int flags )
 	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
 	
 	float flSniperChargeRatio;
-	CTFSniperRifle_Decap *pWeapon = assert_cast<CTFSniperRifle_Decap*>(pPlayer->GetActiveTFWeapon());
+	CTFSniperRifle *pWeapon = static_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
 		if ( pWeapon )
 			flSniperChargeRatio = (TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / pWeapon->GetChargingRate());
 		else
