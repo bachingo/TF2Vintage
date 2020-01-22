@@ -732,7 +732,7 @@ void CEconItemSchema::Precache( void )
 			for ( int i = 0; i < pVisuals->attached_models.Count(); i++ )
 			{
 				const char *pszModel = pVisuals->attached_models[i].model;
-				if ( pszModel != '\0' )
+				if ( pszModel[0] != '\0' )
 					CBaseEntity::PrecacheModel( pszModel );
 			}
 
@@ -756,9 +756,9 @@ void CEconItemSchema::Precache( void )
 				PrecacheParticleSystem(pszTracerEffect);
 			}
 
-
 		}
 
+		const char *pszProjectile;
 		// Cache all attrbute names.
 		for ( int i = 0; i < pItem->attributes.Count(); i++ )
 		{
@@ -769,7 +769,9 @@ void CEconItemSchema::Precache( void )
 			// Special case for custom_projectile_model attribute.
 			if ( pAttribute->m_iAttributeClass == strPrecacheAttribute )
 			{
-				Assert( CBaseEntity::PrecacheModel( STRING( value.sVal ) ) != -1 );
+				pszProjectile = STRING(value.sVal);
+				if (pszProjectile[0] != '\0')
+					CBaseEntity::PrecacheModel(pszProjectile);
 			}
 		}
 	}
