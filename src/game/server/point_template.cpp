@@ -129,11 +129,11 @@ void PrecachePointTemplates()
 //-----------------------------------------------------------------------------
 void CPointTemplate::Spawn( void )
 {
-	/*
+
 	Precache();
 	ScriptInstallPreSpawnHook();
 	ValidateScriptScope();
-	*/
+
 }
 
 void CPointTemplate::Precache()
