@@ -5645,7 +5645,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		
 		float flDistMult = 0.0;
 		// If we have an attribute affected by distance, calculate falloff.
-		if ( flDeductCharge || flDeductCloak )
+		if ( ( flDeductCharge || flDeductCloak ) && !m_Shared.InCond(TF_COND_INVULNERABLE) )
 		{
 			// Calculate attribute falloff.
 			float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pTFAttacker->WorldSpaceCenter() ).Length() );
@@ -5674,7 +5674,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		
 		// Remove Ubercharge level.
-		if ( flDeductCharge && flDistMult )
+		if ( flDeductCharge && flDistMult != 0 )
 		{
 			CWeaponMedigun *pMedigun = GetMedigun();
 
@@ -5686,7 +5686,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		
 		// Remove cloak level.
-		if ( flDeductCloak && flDistMult )
+		if ( flDeductCloak && flDistMult != 0  )
 			m_Shared.RemoveFromSpyCloakMeter( ( flDeductCloak * flDistMult ), true );
 
 	}
