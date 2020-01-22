@@ -442,6 +442,9 @@ void CPointTemplate::InputForceSpawn( inputdata_t &inputdata )
 void ScriptInstallPreSpawnHook()
 {
 #ifdef IS_WINDOWS_PC
+	if ( !g_pScriptVM )
+		return;
+
 	if ( !g_pScriptVM->ValueExists( "__ExecutePreSpawn " ) )
 	{
 		g_pScriptVM->Run( g_Script_spawn_helper );
