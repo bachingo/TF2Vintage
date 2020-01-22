@@ -721,11 +721,11 @@ bool CTFWeaponBase::Deploy( void )
 		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 		if ( !pPlayer )
 			return false;
-		
-#ifndef CLIENT_DLL
+
+#ifdef GAME_DLL
 		// Auto Fire items:
 		// Refund our ammo currently loaded and reset the magazine to zero.
-		if (pPlayer && AutoFiresFullClip())
+		if (pPlayer && AutoFiresFullClip() && m_iClip1 > 0)
 		{
 			pPlayer->GiveAmmo( m_iClip1, m_iPrimaryAmmoType );
 			m_iClip1 = 0;

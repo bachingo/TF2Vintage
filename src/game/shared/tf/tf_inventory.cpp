@@ -12,8 +12,11 @@
 #include "econ_item_system.h"
 
 #ifdef CLIENT_DLL
+
+#include "tier0/icommandline.h"
+
 ConVar tf2v_show_reskins_in_armory("tf2v_show_reskins_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
-ConVar tf2v_show_cosmetics_in_armory("tf2v_show_cosmetics_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
+
 #endif
 
 static CTFInventory g_TFInventory;
@@ -49,12 +52,10 @@ CTFInventory::~CTFInventory()
 bool CTFInventory::Init( void )
 {
 #ifdef CLIENT_DLL
-	bool bReskinsEnabled = tf2v_show_reskins_in_armory.GetBool();
-	bool bCosmeticsEnabled = tf2v_show_cosmetics_in_armory.GetBool();
+	bool bReskinsEnabled = CommandLine()->CheckParm( "-showreskins" );
 #endif
 #ifdef GAME_DLL
 	bool bReskinsEnabled = true;
-	bool bCosmeticsEnabled = true;
 #endif
 
 	GetItemSchema()->Init();
@@ -76,7 +77,7 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || bCosmeticsEnabled ) || ( pItemDef->baseitem ) || ( ( iSlot == TF_LOADOUT_SLOT_MEDAL ) || ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) ) )
+				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) ) || ( pItemDef->baseitem ) || ( ( iSlot == TF_LOADOUT_SLOT_MEDAL ) || ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) ) )
 				{
 					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) && ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )	// Skip MISC2 since we do it below.
 					{

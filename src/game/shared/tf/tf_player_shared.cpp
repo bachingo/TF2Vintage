@@ -225,6 +225,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_iDisguiseHealth ) ),
 	RecvPropInt( RECVINFO( m_iDisguiseMaxHealth ) ),
 	RecvPropFloat( RECVINFO( m_flDisguiseChargeLevel ) ),
+	RecvPropInt( RECVINFO( m_iLeechHealth ) ),
 	RecvPropDataTable( RECVINFO_DT( m_DisguiseItem ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
 	// Local Data.
 	RecvPropDataTable( "tfsharedlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFPlayerSharedLocal ) ),
@@ -311,6 +312,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iDisguiseHealth ), 10 ),
 	SendPropInt( SENDINFO( m_iDisguiseMaxHealth ), 10 ),
 	SendPropFloat( SENDINFO(m_flDisguiseChargeLevel ), 0, SPROP_NOSCALE ),
+	SendPropInt( SENDINFO( m_iLeechHealth ), 10 ),
 	SendPropDataTable( SENDINFO_DT( m_DisguiseItem ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 	// Local Data.
 	SendPropDataTable( "tfsharedlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFPlayerSharedLocal ), SendProxy_SendLocalDataTable ),
@@ -1114,17 +1116,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			}
 		}
 	}
-
-
-	// Drain our Sanguisuge health, but at a much slower rate. (2HP per second)
-	if (m_pOuter->m_Shared.GetSanguisugeHealth() > 0)
-	{
-		int iSanguisugeDecay = 2;
-		int nHealthtoRemove = (int)( gpGlobals->frametime * iSanguisugeDecay );
-		// Manually subtract the health from our Sanguisuge pool as well.
-		m_pOuter->m_iHealth -= nHealthtoRemove;
-		m_pOuter->m_Shared.ChangeSanguisugeHealth( nHealthtoRemove );
-	}
 	
 	
 	// Our health will only decay ( from being medic buffed ) if we are not being healed by a medic
@@ -1277,16 +1268,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				bleed->m_flEndTime -= flReduction * gpGlobals->frametime;
 			}
 		}
-	}
-	
-	// Drain our Sanguisuge health, but at a much slower rate. (2HP per second)
-	if (m_pOuter->m_Shared.GetSanguisugeHealth() > 0)
-	{
-		int iSanguisugeDecay = 2;
-		int nHealthtoRemove = (int)( gpGlobals->frametime * iSanguisugeDecay );
-		// Manually subtract the health from our normal health, and the Sanguisuge health.
-		m_pOuter->m_iHealth -= nHealthtoRemove;
-		m_pOuter->m_Shared.ChangeSanguisugeHealth( nHealthtoRemove );
 	}
 
 	if ( bDecayHealth )
@@ -1494,6 +1475,7 @@ void CTFPlayerShared::ConditionThink( void )
 
 #ifdef GAME_DLL
 	UpdateCloakMeter();
+	UpdateSanguisugeHealth();
 	UpdateChargeMeter();
 	UpdateEnergyDrinkMeter();
 #endif
@@ -4339,6 +4321,24 @@ void CTFPlayerShared::UpdateCloakMeter( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateSanguisugeHealth( void )
+{
+	// Drain our Sanguisuge health, but at a much slower rate. (2HP per second)
+	if ( (m_pOuter->m_Shared.GetSanguisugeHealth() > 0) && (gpGlobals->curtime >= m_pOuter->m_Shared.m_iLeechDecayTime ) )
+	{
+		float flHealthtoRemove = 1; // 2HP per second; 1HP two ticks a second.
+		// Manually subtract the health from our Sanguisuge pool as well.
+		m_pOuter->m_iHealth -= (int)flHealthtoRemove;
+		m_pOuter->m_Shared.ChangeSanguisugeHealth( (int)flHealthtoRemove * -1 );
+		m_pOuter->m_Shared.SetNextSanguisugeDecay();
+		if (m_pOuter->m_Shared.GetSanguisugeHealth() < 0) // Can't be below 0.
+			m_pOuter->m_Shared.SetSanguisugeHealth(0);
+	}
+}
+	
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

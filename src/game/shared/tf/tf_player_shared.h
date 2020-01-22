@@ -137,6 +137,7 @@ public:
 	void	ChangeSanguisugeHealth(int value)		{ m_iLeechHealth += value; }
 	void	SetSanguisugeHealth( int iLeechHealth )		{ m_iLeechHealth = iLeechHealth; }
 	int		GetSanguisugeHealth( void )					{ return m_iLeechHealth; }
+	void	SetNextSanguisugeDecay()		{ m_iLeechDecayTime = gpGlobals->curtime + 0.5; }
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -383,6 +384,7 @@ public:
 	
 #ifdef GAME_DLL
 	void	UpdateCloakMeter( void );
+	void 	UpdateSanguisugeHealth( void );
 	void	UpdateChargeMeter( void );
 	void	UpdateEnergyDrinkMeter( void );
 #endif
@@ -483,6 +485,7 @@ private:
 
 	CNetworkVar( int, m_iMaxHealth );
 	CNetworkVar(int, m_iLeechHealth);
+	float m_iLeechDecayTime;
 
 	bool m_bEnableSeparation;		// Keeps separation forces on when player stops moving, but still penetrating
 	Vector m_vSeparationVelocity;	// Velocity used to keep player seperate from teammates

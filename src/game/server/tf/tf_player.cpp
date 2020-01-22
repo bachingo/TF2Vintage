@@ -4963,6 +4963,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( ( pAttacker != this || info.GetAttacker() != this ) && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
 	{
 		float flDamage = 0;
+		if ( info.GetAmmoType() == TF_AMMO_PRIMARY && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LASER_POINTER )
+		{
+			// Wrangled shots should have damage falloff
+			bitsDamage |= DMG_USEDISTANCEMOD;
+
+			// Distance should be calculated from sentry
+			pAttacker = info.GetAttacker();
+		}
+				
 		if ( bitsDamage & DMG_CRITICAL )
 		{
 			if ( bDebug )
@@ -5003,12 +5012,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				Warning( "    MINI CRITICAL!\n" );
 			}
 			
-			if ( info.GetAmmoType() == TF_AMMO_PRIMARY && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LASER_POINTER )
-			{
-				// Wrangled shots should be affected by distance.
-				bitsDamage |= DMG_USEDISTANCEMOD;
-			}
-
 			if ( DMG_USEDISTANCEMOD )
 			{
 				// Do any calculations regarding bonus ramp up/falloff compensation.
@@ -5140,7 +5143,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT, "damagecritical:1" );
 			}
 		}
-		else
+		else if ( DMG_USEDISTANCEMOD )
 		{
 			float flRandomDamage = info.GetDamage() * tf_damage_range.GetFloat();
 			if ( tf_damage_lineardist.GetBool() )
@@ -5156,15 +5159,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 			else
 			{
-				if ( info.GetAmmoType() == TF_AMMO_PRIMARY && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LASER_POINTER )
-				{
-					// Wrangled shots should have damage falloff
-					bitsDamage |= DMG_USEDISTANCEMOD;
-
-					// Distance should be calculated from sentry
-					pAttacker = info.GetAttacker();
-				}
-
 				float flCenter = 0.5;
 				float flCenVar = ( tf2v_bonus_distance_range.GetFloat() / 100 ) ;	
 				float flMin = flCenter - flCenVar;
@@ -5252,12 +5246,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				*/
 			}
 
+
 			// Burn sounds are handled in ConditionThink()
 			if ( !( bitsDamage & DMG_BURN ) )
 			{
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 			}
 		}
+		else
+			flDamage = info.GetDamage(); // This is kind of anticlimatic.
 
 		info.SetDamage( flDamage );
 	}
@@ -5648,7 +5645,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		
 		float flDistMult = 0.0;
 		// If we have an attribute affected by distance, calculate falloff.
-		if ( flDeductCharge || flDeductCloak )
+		if ( ( flDeductCharge || flDeductCloak ) && !m_Shared.InCond(TF_COND_INVULNERABLE) )
 		{
 			// Calculate attribute falloff.
 			float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pTFAttacker->WorldSpaceCenter() ).Length() );
@@ -5677,7 +5674,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		
 		// Remove Ubercharge level.
-		if ( flDeductCharge && flDistMult )
+		if ( flDeductCharge && flDistMult != 0 )
 		{
 			CWeaponMedigun *pMedigun = GetMedigun();
 
@@ -5689,7 +5686,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		
 		// Remove cloak level.
-		if ( flDeductCloak && flDistMult )
+		if ( flDeductCloak && flDistMult != 0  )
 			m_Shared.RemoveFromSpyCloakMeter( ( flDeductCloak * flDistMult ), true );
 
 	}

@@ -573,7 +573,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			}	
 		}		
 	}
-	else if ( pOther->IsBaseObject() && pOther->GetTeamNumber() == ToTFPlayer(pAttacker)->GetTeamNumber() )
+	else if ( ( m_iType == 2 ) && pOther->IsBaseObject() && pOther->GetTeamNumber() == ToTFPlayer(pAttacker)->GetTeamNumber() )
 	{
 		// We hit a friendly building.
 		float flArrowheal = 0;

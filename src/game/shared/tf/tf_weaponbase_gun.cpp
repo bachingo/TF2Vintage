@@ -75,6 +75,11 @@ CTFWeaponBaseGun::CTFWeaponBaseGun()
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PrimaryAttack( void )
 {
+	if ( AutoFiresFullClip() && !m_bFiringWholeClip )
+	{
+		UpdateAutoFire();
+		return;
+	}
 
 	// Check for ammunition.
 	if ( ( m_iClip1 < GetAmmoPerShot() ) && UsesClipsForAmmo1() )
