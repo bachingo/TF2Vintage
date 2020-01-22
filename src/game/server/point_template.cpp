@@ -472,7 +472,7 @@ bool ScriptPreInstanceSpawn( CScriptScope *pScriptScope, CBaseEntity *pChild, st
 
 void ScriptPostSpawn( CScriptScope *pScriptScope, CBaseEntity **ppEntities, int nEntities )
 {
-	if ( !pScriptScope->IsInitialized() )
+	if ( !g_pScriptVM || !pScriptScope->IsInitialized() )
 		return;
 
 	HSCRIPT hPostSpawnFunc = pScriptScope->LookupFunction( "PostSpawn" );
