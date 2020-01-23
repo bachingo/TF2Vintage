@@ -289,7 +289,7 @@ private:
 	void CreateTFRagdoll( void );
 	void CreateTFGibs( bool bKill, bool bLocalOrigin );
 	void CreateTFHeadGib( void );
-	void UpdateRagdollWearables(bool bIsStatue, C_TFPlayer *pPlayer);
+	void UpdateRagdollWearables(bool bIsStatue);
 	//void CreateWearableGibs( void );
 private:
 
@@ -332,7 +332,7 @@ private:
 
 	CMaterialReference m_MatOverride;
 
-	CUtlVector< CHandle<C_EconEntity> > m_hRagdollWearables;
+	CUtlVector< CHandle<CEconWearable> > m_hRagdollWearables;
 };
 
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
@@ -898,29 +898,29 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	
 	// If we're a ragdoll, update what our corpse has. Do this only on standard ragdolls.
 	if ( !m_bElectrocuted && !m_bBecomeAsh && !m_bDissolve && !m_bGib )
-		UpdateRagdollWearables( ( m_bGoldRagdoll || m_bIceRagdoll ), pPlayer );
+		UpdateRagdollWearables( ( m_bGoldRagdoll || m_bIceRagdoll ) );
 	
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue, C_TFPlayer *pPlayer )
+void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue )
 {
 #if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
 	// Grab all the wearables the player has.
-	for ( int i=0; i<(pPlayer->m_hMyWearables.Count()); ++i )
+	for ( int i=0; i<(m_hRagdollWearables.Count()); ++i )
 	{
-		CEconWearable* pItem = pPlayer->m_hMyWearables[i];
-		if ( pItem && pItem->GetItem()->GetStaticData() ) // If valid item
+		CEconWearable* pItem = m_hRagdollWearables[i];
+		CEconItemDefinition *pItemDef = pItem ? pItem->GetItem()->GetStaticData() : NULL;
+		if ( pItem && pItemDef ) // If valid item
 		{
 			// Add the items to the ragdoll. Skip over items that fall off when dying.
 			bool bItemFallsOff = pItem->ItemFallsOffPlayer();
 			if ( !bItemFallsOff || ( bItemFallsOff && bIsStatue ) )
 			{
-				pItem->ValidateModelIndex();
-				pItem->UpdateVisibility();
-				pItem->CreateShadow();
+				pItem->FollowEntity(this, true);
+				pItem->SetOwnerEntity(this);
 			}
 			// Update bodygroup, even for items that fell off.
 				pItem->UpdatePlayerBodygroups();	

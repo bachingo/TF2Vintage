@@ -8660,6 +8660,7 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
 		pRagdoll->m_flHeadScale = m_flHeadScale;
+		pRagdoll->m_hRagdollWearables = m_hMyWearables;
 	}
 
 	// Turn off the player.
