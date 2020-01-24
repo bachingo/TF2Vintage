@@ -723,12 +723,10 @@ void CTFPlayer::MedicRegenThink( void )
 			float flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 3.0, 6.0 );
 
 			int iHealAmount = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
-			TakeHealth( iHealAmount, DMG_GENERIC );
+			TakeHealth( iHealAmount + iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
 		}
 	}
-
-	// Throw the event for health regen.
-	if ( ( iHealthDrain != 0 ) || ( iHealthRegenLegacy != 0 ) )
+	else 	// Throw the event for health regen.
 	{
 		if ( IsAlive() )
 		{
