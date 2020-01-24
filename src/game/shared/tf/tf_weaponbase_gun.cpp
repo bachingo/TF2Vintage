@@ -263,11 +263,10 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	if ( pProjectile )
 	{
-		string_t strModelOverride = NULL_STRING;
-		CALL_ATTRIB_HOOK_STRING( strModelOverride, custom_projectile_model );
-		if ( strModelOverride != NULL_STRING )
+		CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
+		if ( pItemDef && pItemDef->custom_projectile_model[0] != '\0' )
 		{
-			pProjectile->SetModel( STRING( strModelOverride ) );
+			pProjectile->SetModel( pItemDef->custom_projectile_model );
 		}
 	}
 

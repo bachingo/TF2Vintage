@@ -519,6 +519,7 @@ public:
 		GET_BOOL(pItem, pData, itemfalloff);
 		GET_INT(pItem, pData, year);
 		GET_BOOL(pItem, pData, is_custom_content);
+		GET_STRING(pItem, pData, custom_projectile_model);
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
@@ -689,13 +690,16 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
-	string_t strPrecacheAttribute = AllocPooledString( "custom_projectile_model" );
 
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
 	{
 		CEconItemDefinition *pItem = m_Items[i];
 
+		// Precache projectiles.
+		if ( pItem->custom_projectile_model[0] != '\0' )
+			CBaseEntity::PrecacheModel( pItem->custom_projectile_model );
+		
 		// Precache models.
 		if ( pItem->model_world[0] != '\0' )
 			CBaseEntity::PrecacheModel( pItem->model_world );
@@ -758,23 +762,16 @@ void CEconItemSchema::Precache( void )
 
 		}
 
-		const char *pszProjectile;
 		// Cache all attrbute names.
-		for ( int i = 0; i < pItem->attributes.Count(); i++ )
+		for (int i = 0; i < pItem->attributes.Count(); i++)
 		{
 			CEconItemAttribute *pAttribute = &pItem->attributes[i];
-
 			attrib_data_union_t value;
 			value.iVal = pAttribute->m_iRawValue32;
-			// Special case for custom_projectile_model attribute.
-			if ( pAttribute->m_iAttributeClass == strPrecacheAttribute )
-			{
-				pszProjectile = STRING(value.sVal);
-				if (pszProjectile[0] != '\0')
-					CBaseEntity::PrecacheModel(pszProjectile);
-			}
 		}
+		
 	}
+		
 }
 
 CEconItemDefinition* CEconItemSchema::GetItemDefinition( int id )

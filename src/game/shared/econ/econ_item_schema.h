@@ -295,6 +295,7 @@ public:
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		CLEAR_STR(holiday_restriction);
+		CLEAR_STR(custom_projectile_model);
 	}
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
@@ -343,6 +344,7 @@ public:
 	bool itemfalloff;
 	int year;
 	bool is_custom_content;
+	char custom_projectile_model[128];
 	
 	CUtlVector<CEconItemAttribute> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];
