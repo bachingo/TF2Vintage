@@ -909,6 +909,7 @@ void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue )
 {
 #if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
 	// Grab all the wearables the player has.
+	int nTeamSkin = GetTeamNumber() - 2;
 	for ( int i=0; i<(m_hRagdollWearables.Count()); ++i )
 	{
 		CEconWearable* pItem = m_hRagdollWearables[i];
@@ -919,8 +920,27 @@ void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue )
 			bool bItemFallsOff = pItem->ItemFallsOffPlayer();
 			if ( !bItemFallsOff || ( bItemFallsOff && bIsStatue ) )
 			{
-				pItem->FollowEntity(this, true);
-				pItem->SetOwnerEntity(this);
+				// Find the skin to use for our ragdoll.
+				int nCurrentSkin = nTeamSkin;
+				PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( ( nTeamSkin == 0 ? TF_TEAM_RED : TF_TEAM_BLUE ) );
+				if ( pVisuals && pVisuals->skin != -1 )
+				{
+					nCurrentSkin = pVisuals->skin;
+				}
+				
+				// Get the model for our wearable.
+				const char *pszModel;
+				if ( pItemDef->extra_wearable[0] != '\0' )
+					pszModel = pItemDef->extra_wearable;
+				else if ( pItemDef->model_player_per_class[m_iClass][0] != '\0' )
+					pszModel = pItemDef->model_player_per_class[m_iClass];
+				else
+					pszModel = pItemDef->model_player;
+				
+				// Add the model to the ragdoll.
+				//TODO: Find an alternate equivalent of SetMergeMDL for ragdolls.
+				//if (pszModel)
+					//SetMergeMDL(pszModel, NULL, nCurrentSkin);
 			}
 			// Update bodygroup, even for items that fell off.
 				pItem->UpdatePlayerBodygroups();	
