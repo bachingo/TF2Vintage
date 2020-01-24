@@ -4957,10 +4957,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	}
 
+
 	// If we're not damaging ourselves, apply randomness
 	if ( ( pAttacker != this || info.GetAttacker() != this ) && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
 	{
-		float flDamage = 0;
+		float flDamage = info.GetDamage();
 		if ( info.GetAmmoType() == TF_AMMO_PRIMARY && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LASER_POINTER )
 		{
 			// Wrangled shots should have damage falloff
@@ -4970,178 +4971,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			pAttacker = info.GetAttacker();
 		}
 				
-		if ( bitsDamage & DMG_CRITICAL )
-		{
-			if ( bDebug )
-			{
-				Warning( "    CRITICAL!\n" );
-			}
-
-			flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
-
-			// Show the attacker, unless the target is a disguised spy
-			if ( pAttacker && pAttacker->IsPlayer() && !m_Shared.InCond( TF_COND_DISGUISED ) )
-			{
-				CEffectData	data;
-				data.m_nHitBox = GetParticleSystemIndex( "crit_text" );
-				data.m_vOrigin = WorldSpaceCenter() + Vector( 0, 0, 32 );
-				data.m_vAngles = vec3_angle;
-				data.m_nEntIndex = 0;
-
-				CSingleUserRecipientFilter filter( (CBasePlayer *)pAttacker );
-				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
-
-				EmitSound_t params;
-				params.m_flSoundTime = 0;
-				params.m_pSoundName = "TFPlayer.CritHit";
-				EmitSound( filter, info.GetAttacker()->entindex(), params );
-			}
-
-			// Burn sounds are handled in ConditionThink()
-			if ( !( bitsDamage & DMG_BURN ) )
-			{
-				SpeakConceptIfAllowed( MP_CONCEPT_HURT, "damagecritical:1" );
-			}
-		}
-		else if ( bitsDamage & DMG_MINICRITICAL )
-		{
-			if ( bDebug )
-			{
-				Warning( "    MINI CRITICAL!\n" );
-			}
-			
-			if ( DMG_USEDISTANCEMOD )
-			{
-				// Do any calculations regarding bonus ramp up/falloff compensation.
-				float flRandomDamage = info.GetDamage() * tf_damage_range.GetFloat();			
-				if ( tf_damage_lineardist.GetBool() )
-				{
-					float flBaseDamage = info.GetDamage() - flRandomDamage;
-					if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
-					{
-						// If we're a crossbow, invert our damage formula.
-						flDamage = flBaseDamage - RandomFloat( 0, flRandomDamage * 2 );
-					}
-					else
-						flDamage = flBaseDamage + RandomFloat( 0, flRandomDamage * 2 );
-					
-					// Negate any potential damage falloff.
-					if ( flDamage < info.GetDamage() )
-						flDamage = info.GetDamage();
-				}
-				else  // If we have damage falloff, compensate falloff and add ramp up damage to our minicrit.
-				{
-					// Distance should be calculated from sentry
-					pAttacker = info.GetAttacker();
-					
-					float flCenter = 0.5;
-					float flCenVar = ( tf2v_bonus_distance_range.GetFloat() / 100 ) ;	
-					float flMin = flCenter - flCenVar;
-					float flMax = flCenter + flCenVar;
-
-
-					float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() );
-					float flOptimalDistance = 512.0;
-
-					// We have damage ramp up, but no damage falloff for minicrit.
-					flCenter = RemapValClamped( flDistance / flOptimalDistance, 0.0, 1.0, 1.0, 0.5 );
-					if ( bitsDamage & DMG_NOCLOSEDISTANCEMOD )
-					{
-						if ( flCenter > 0.5 )
-						{
-							// Reduce the damage bonus at close range
-							flCenter = RemapVal( flCenter, 0.5, 1.0, 0.5, 0.65 );
-						}
-					}
-					
-					if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
-					{
-						// Unlike other weapons, we don't get any compensation here.
-						flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 0.0, 0.5 );
-					}
-
-					flMin = ( 0.0 > (flCenter + flCenVar) ? 0.0 : (flCenter + flCenVar) ); // Our version of MAX.
-					flMax = ( 1.0 < (flCenter + flCenVar) ? 1.0 : (flCenter - flCenVar) ); // Our version of MIN.
-
-					if ( bDebug )
-					{
-						Warning( "    RANDOM: Dist %.2f, Ctr: %.2f, Min: %.2f, Max: %.2f\n", flDistance, flCenter, flMin, flMax );
-					}
-
-					//Msg("Range: %.2f - %.2f\n", flMin, flMax );
-					float flRandomVal;
-
-					if ( tf_damage_disablespread.GetBool() )
-					{
-						flRandomVal = flCenter;
-					}
-					else
-					{
-						flRandomVal = RandomFloat( flMin, flMax );
-					}
-
-					if ( flRandomVal > 0.5 )
-					{
-						// Rocket launcher, Sticky launcher and Scattergun have different short range bonuses
-						if ( pWeapon )
-						{
-							switch ( pWeapon->GetWeaponID() )
-							{
-								case TF_WEAPON_ROCKETLAUNCHER:
-								case TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE:
-								case TF_WEAPON_PIPEBOMBLAUNCHER:
-									// Rocket launcher and sticky launcher only have half the bonus of the other weapons at short range
-									flRandomDamage *= 0.5;
-									break;
-								case TF_WEAPON_SCATTERGUN:
-									// Scattergun gets 50% bonus of other weapons at short range
-									flRandomDamage *= 1.5;
-									break;
-								case TF_WEAPON_STICKBOMB:	
-									// Post-nerf Caber follows the standard explosive short range bonus.
-									if ( tf2v_use_new_caber.GetBool() )
-										flRandomDamage *= 0.5;
-									break;
-							}
-						}	
-					}
-
-					float flOut = SimpleSplineRemapValClamped( flRandomVal, 0, 1, -flRandomDamage, flRandomDamage );
-					
-					flDamage = ( info.GetDamage() + flOut );
-				}
-			}
-			else
-				flDamage = info.GetDamage(); // This is kind of anticlimatic.
-
-			// Now we can finally add on the minicrit multiplier.
-			flDamage *= TF_DAMAGE_MINICRIT_MULTIPLIER;
-
-			// Show the attacker, unless the target is a disguised spy
-			if ( pAttacker && pAttacker->IsPlayer() && !m_Shared.InCond( TF_COND_DISGUISED ) )
-			{
-				CEffectData	data;
-				data.m_nHitBox = GetParticleSystemIndex( "minicrit_text" );
-				data.m_vOrigin = WorldSpaceCenter() + Vector( 0, 0, 32 );
-				data.m_vAngles = vec3_angle;
-				data.m_nEntIndex = 0;
-
-				CSingleUserRecipientFilter filter( (CBasePlayer *)pAttacker );
-				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
-
-				EmitSound_t params;
-				params.m_flSoundTime = 0;
-				params.m_pSoundName = "TFPlayer.CritHitMini";
-				EmitSound( filter, info.GetAttacker()->entindex(), params );
-			}
-
-			// Burn sounds are handled in ConditionThink()
-			if ( !( bitsDamage & DMG_BURN ) )
-			{
-				SpeakConceptIfAllowed( MP_CONCEPT_HURT, "damagecritical:1" );
-			}
-		}
-		else if ( DMG_USEDISTANCEMOD )
+		if ( DMG_USEDISTANCEMOD )
 		{
 			float flRandomDamage = info.GetDamage() * tf_damage_range.GetFloat();
 			if ( tf_damage_lineardist.GetBool() )
@@ -5162,34 +4992,31 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				float flMin = flCenter - flCenVar;
 				float flMax = flCenter + flCenVar;
 
-				if ( bitsDamage & DMG_USEDISTANCEMOD )
+				float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() );
+				float flOptimalDistance = 512.0;
+
+				flCenter = RemapValClamped( flDistance / flOptimalDistance, 0.0, 2.0, 1.0, 0.0 );
+				if ( bitsDamage & DMG_NOCLOSEDISTANCEMOD )
 				{
-					float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() );
-					float flOptimalDistance = 512.0;
-
-					flCenter = RemapValClamped( flDistance / flOptimalDistance, 0.0, 2.0, 1.0, 0.0 );
-					if ( bitsDamage & DMG_NOCLOSEDISTANCEMOD )
+					if ( flCenter > 0.5 )
 					{
-						if ( flCenter > 0.5 )
-						{
-							// Reduce the damage bonus at close range
-							flCenter = RemapVal( flCenter, 0.5, 1.0, 0.5, 0.65 );
-						}
+						// Reduce the damage bonus at close range
+						flCenter = RemapVal( flCenter, 0.5, 1.0, 0.5, 0.65 );
 					}
+				}
 					
-					if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
-					{
-						// If we're a crossbow, change our falloff band so that our 100% is at long range.
-						flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 0.0, 0.5 );
-					}
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				{
+					// If we're a crossbow, change our falloff band so that our 100% is at long range.
+					flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 0.0, 0.5 );
+				}
 					
-					flMin = ( 0.0 > (flCenter + flCenVar) ? 0.0 : (flCenter + flCenVar) ); // Our version of MAX.
-					flMax = ( 1.0 < (flCenter + flCenVar) ? 1.0 : (flCenter - flCenVar) ); // Our version of MIN.
+				flMin = ( 0.0 > (flCenter + flCenVar) ? 0.0 : (flCenter + flCenVar) ); // Our version of MAX.
+				flMax = ( 1.0 < (flCenter + flCenVar) ? 1.0 : (flCenter - flCenVar) ); // Our version of MIN.
 
-					if ( bDebug )
-					{
-						Warning( "    RANDOM: Dist %.2f, Ctr: %.2f, Min: %.2f, Max: %.2f\n", flDistance, flCenter, flMin, flMax );
-					}
+				if ( bDebug )
+				{
+					Warning( "    RANDOM: Dist %.2f, Ctr: %.2f, Min: %.2f, Max: %.2f\n", flDistance, flCenter, flMin, flMax );
 				}
 
 				//Msg("Range: %.2f - %.2f\n", flMin, flMax );
@@ -5226,9 +5053,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 								if ( tf2v_use_new_caber.GetBool() )
 									flRandomDamage *= 0.5;
 								break;
-
+							default:
+								break;
 						}
 					}
+				}
+				else if ( ( bitsDamage & DMG_MINICRITICAL ) && ( pWeapon->GetWeaponID() != TF_WEAPON_CROSSBOW ) )
+				{
+					// If we're below .5 (100% damage) and have minicrits, bump our distance closer.
+					flRandomVal = 0.5;
 				}
 
 				float flOut = SimpleSplineRemapValClamped( flRandomVal, 0, 1, -flRandomDamage, flRandomDamage );
@@ -5244,17 +5077,84 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				*/
 			}
 
-
 			// Burn sounds are handled in ConditionThink()
 			if ( !( bitsDamage & DMG_BURN ) )
 			{
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 			}
 		}
-		else
-			flDamage = info.GetDamage(); // This is kind of anticlimatic.
 
+		// Critical calbulations.
+		if (bitsDamage & DMG_CRITICAL)
+		{
+			if (bDebug)
+			{
+				Warning("    CRITICAL!\n");
+			}
+
+			flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
+
+			// Show the attacker, unless the target is a disguised spy
+			if (pAttacker && pAttacker->IsPlayer() && !m_Shared.InCond(TF_COND_DISGUISED))
+			{
+				CEffectData	data;
+				data.m_nHitBox = GetParticleSystemIndex("crit_text");
+				data.m_vOrigin = WorldSpaceCenter() + Vector(0, 0, 32);
+				data.m_vAngles = vec3_angle;
+				data.m_nEntIndex = 0;
+
+				CSingleUserRecipientFilter filter((CBasePlayer *)pAttacker);
+				te->DispatchEffect(filter, 0.0, data.m_vOrigin, "ParticleEffect", data);
+
+				EmitSound_t params;
+				params.m_flSoundTime = 0;
+				params.m_pSoundName = "TFPlayer.CritHit";
+				EmitSound(filter, info.GetAttacker()->entindex(), params);
+			}
+
+			// Burn sounds are handled in ConditionThink()
+			if (!(bitsDamage & DMG_BURN))
+			{
+				SpeakConceptIfAllowed(MP_CONCEPT_HURT, "damagecritical:1");
+			}
+		}
+		else if (bitsDamage & DMG_MINICRITICAL)
+		{
+			if (bDebug)
+			{
+				Warning("    MINI CRITICAL!\n");
+			}
+
+			flDamage *= TF_DAMAGE_MINICRIT_MULTIPLIER;
+
+			// Show the attacker, unless the target is a disguised spy
+			if (pAttacker && pAttacker->IsPlayer() && !m_Shared.InCond(TF_COND_DISGUISED))
+			{
+				CEffectData	data;
+				data.m_nHitBox = GetParticleSystemIndex("minicrit_text");
+				data.m_vOrigin = WorldSpaceCenter() + Vector(0, 0, 32);
+				data.m_vAngles = vec3_angle;
+				data.m_nEntIndex = 0;
+
+				CSingleUserRecipientFilter filter((CBasePlayer *)pAttacker);
+				te->DispatchEffect(filter, 0.0, data.m_vOrigin, "ParticleEffect", data);
+
+				EmitSound_t params;
+				params.m_flSoundTime = 0;
+				params.m_pSoundName = "TFPlayer.CritHitMini";
+				EmitSound(filter, info.GetAttacker()->entindex(), params);
+			}
+
+			// Burn sounds are handled in ConditionThink()
+			if (!(bitsDamage & DMG_BURN))
+			{
+				SpeakConceptIfAllowed(MP_CONCEPT_HURT, "damagecritical:1");
+			}
+
+		}
+		
 		info.SetDamage( flDamage );
+		
 	}
 
 	if ( m_debugOverlays & OVERLAY_BUDDHA_MODE )
