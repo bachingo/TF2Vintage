@@ -4956,7 +4956,25 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 
 	}
+	
+	// Battalion's Backup resists
+	if ( m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
+	{
+		// // Battalion's Backup negates all crit damage
+		// bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
 
+		float flDamage = info.GetDamage();
+		if ( bObject && tf2v_sentry_resist_bonus.GetBool() )
+		{
+			// 50% resistance to sentry damage
+			info.SetDamage( flDamage * 0.50f );
+		}
+		else
+		{
+			// 35% to all other sources
+			info.SetDamage( flDamage * 0.65f );
+		}
+	}
 
 	// If we're not damaging ourselves, apply randomness
 	if ( ( pAttacker != this || info.GetAttacker() != this ) && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
@@ -5156,7 +5174,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		info.SetDamage( flDamage );
 		
 	}
-
+	
 	if ( m_debugOverlays & OVERLAY_BUDDHA_MODE )
 	{
 		if ( ( m_iHealth - info.GetDamage() ) <= 0 )
@@ -5181,30 +5199,25 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 	}
 
-	TeamFortress_SetSpeed();
-
-	// Battalion's Backup resists
-	if ( m_Shared.InCond( TF_COND_DEFENSEBUFF ) )
-	{
-		// Battalion's Backup negates all crit damage
-		bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
-
-		float flDamage = info.GetDamage();
-		if ( bObject && tf2v_sentry_resist_bonus.GetBool() )
-		{
-			// 50% resistance to sentry damage
-			info.SetDamage( flDamage * 0.50f );
-		}
-		else
-		{
-			// 35% to all other sources
-			info.SetDamage( flDamage * 0.65f );
-		}
-	}
-
-	
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
+	
+	// Early out if the base class took no damage
+	if ( !bTookDamage )
+	{
+		if ( bDebug )
+		{
+			Warning( "    ABORTED: Player failed to take the damage.\n" );
+		}
+		return 0;
+	}
+
+	if ( bDebug )
+	{
+		Warning( "    DEALT: Player took %.2f damage.\n", info.GetDamage() );
+		Warning( "    HEALTH LEFT: %d\n", GetHealth() );
+	}
+
 
 	// Make sure we're not building damage off of ourself or fall damage
 	if ( ( pAttacker != this && !( bitsDamage & DMG_FALL ) ) & ( !tf2v_use_new_buff_charges.GetBool() ) )
@@ -5245,21 +5258,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 	}
 	
-	// Early out if the base class took no damage
-	if ( !bTookDamage )
-	{
-		if ( bDebug )
-		{
-			Warning( "    ABORTED: Player failed to take the damage.\n" );
-		}
-		return 0;
-	}
-
-	if ( bDebug )
-	{
-		Warning( "    DEALT: Player took %.2f damage.\n", info.GetDamage() );
-		Warning( "    HEALTH LEFT: %d\n", GetHealth() );
-	}
+	TeamFortress_SetSpeed();
 
 	// Send the damage message to the client for the hud damage indicator
 	// Don't do this for damage types that don't use the indicator
