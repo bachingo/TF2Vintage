@@ -16,7 +16,7 @@
 #define CTFGrenadeLauncher C_TFGrenadeLauncher
 #endif
 
-#define TF_GRENADE_LAUNCHER_XBOX_CLIP 4
+#define TF_GRENADE_LAUNCHER_XBOX_CLIP 6
 
 //=============================================================================
 //
