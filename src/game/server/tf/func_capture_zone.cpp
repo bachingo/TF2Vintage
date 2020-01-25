@@ -88,12 +88,12 @@ void CCaptureZone::CaptureTouch( CBaseEntity *pOther )
 				// does this capture point have a team number asssigned?
 				if ( GetTeamNumber() != TEAM_UNASSIGNED )
 				{
-					// TF2V exclusive: We use different capture zones for regular CTF, same capture zones for Assault CTF.
+					// TF2V exclusive: We use the enemy's capture zone for Assault CTF.
 					bool bIsTeamCapturePoint;
 					if ( pFlag->GetGameType() == TF_FLAGTYPE_CTF && tf2v_assault_ctf_rules.GetBool() )
-						bIsTeamCapturePoint = pPlayer->GetTeamNumber() != GetTeamNumber();
-					else
 						bIsTeamCapturePoint = pPlayer->GetTeamNumber() == GetTeamNumber();
+					else
+						bIsTeamCapturePoint = pPlayer->GetTeamNumber() != GetTeamNumber();
 					
 					// Check to see if the capture zone team matches the player's team.
 					if ( pPlayer->GetTeamNumber() != TEAM_UNASSIGNED && bIsTeamCapturePoint )
