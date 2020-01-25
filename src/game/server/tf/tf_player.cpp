@@ -134,6 +134,8 @@ extern ConVar tf_stalematechangeclasstime;
 extern ConVar tf_damage_disablespread;
 extern ConVar tf_scout_energydrink_consume_rate;
 
+extern ConVar tf2v_allow_disguiseweapons;
+
 // TF2V commands
 ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout and class." );
 ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "0", FCVAR_NOTIFY, "Enable or disable cosmetics on the server." );
@@ -3744,6 +3746,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "disguise" ) )
 	{
+		ClickPDA();
 		if ( args.ArgC() >= 3 )
 		{
 			if ( CanDisguise() )
@@ -3756,12 +3759,14 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 				m_Shared.Disguise( ( nTeam == 1 ) ? TF_TEAM_BLUE : TF_TEAM_RED, nClass );
 			}
 		}
+		
 		return true;
 	}
 	else if ( FStrEq( pcmd, "lastdisguise" ) )
 	{
+		ClickPDA();
 		// disguise as our last known disguise. desired disguise will be initted to something sensible
-		if ( CanDisguise() )
+		if ( CanDisguise() && !m_Shared.InCond(TF_COND_DISGUISED) )
 		{
 			// disguise as the previous class, if one exists
 			int nClass = m_Shared.GetDesiredDisguiseClass();
@@ -3791,6 +3796,29 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 			}
 
 			m_Shared.Disguise( nTeam, nClass );
+		}
+		else if ( m_Shared.InCond(TF_COND_DISGUISED) && tf2v_allow_disguiseweapons.GetBool() )// If we're already disguised, change our weapon we're holding.
+		{
+			// Get our current TF Weapon.
+			int iSlot = TF_LOADOUT_SLOT_PRIMARY;
+			CTFWeaponBase *currentweapon = GetActiveTFWeapon();
+			
+			// We need to figure out what loadout slot this weapon exists in.
+			for (int iDisguiseSlot = TF_LOADOUT_SLOT_PRIMARY; iDisguiseSlot <= TF_LOADOUT_SLOT_BUILDING; iDisguiseSlot++ )
+			{
+				CTFWeaponBase *slottedweapon = dynamic_cast<CTFWeaponBase *>( Weapon_GetSlot( iDisguiseSlot ) );
+				// Is this our currently equipped weapon?
+				if ( currentweapon == slottedweapon )
+				{
+					// Set our disguising to this slot.
+					iSlot = iDisguiseSlot;
+					break;
+				}
+			}
+			
+			// Change our disguise weapon, using the slot we're currently using. Use primary if it fails.
+			m_Shared.RecalcDisguiseWeapon(iSlot);
+			
 		}
 
 		return true;
@@ -3865,7 +3893,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	{
 		int iBuilding = 0;
 		int iMode = 0;
-
+		ClickPDA();
 		if ( args.ArgC() == 2 )
 		{
 			// player wants to build something
@@ -3897,7 +3925,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	{
 		int iBuilding = 0;
 		int iMode = 0;
-
+		ClickPDA();
 		if ( args.ArgC() == 2 )
 		{
 			// player wants to destroy something
@@ -3975,6 +4003,32 @@ void CTFPlayer::SetClassMenuOpen( bool bOpen )
 bool CTFPlayer::IsClassMenuOpen( void )
 {
 	return m_bIsClassMenuOpen;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Plays the animation for clicking the PDA.
+// Output: Whether we clicked the PDA or not.
+//-----------------------------------------------------------------------------
+bool CTFPlayer::ClickPDA(void)
+{
+		// Find our PDA.
+		CTFWeaponBase *pWpn = GetActiveTFWeapon();
+		if (!pWpn)
+			return false;
+
+		CTFWeaponPDA *pPDA = dynamic_cast<CTFWeaponPDA *>( pWpn );
+		if (!pPDA)
+			return false;
+
+		// If we're disguised, don't click the PDA.
+		if ( !m_Shared.InCond( TF_COND_DISGUISED ) )
+		{
+			// Play the PDA click.
+			DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			return true;
+		}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------

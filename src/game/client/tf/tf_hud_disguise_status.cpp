@@ -19,6 +19,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+extern ConVar tf2v_allow_disguiseweapons;
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -193,7 +195,9 @@ void CDisguiseStatus::ShowAndUpdateStatus(void)
 
 	if (m_pWeaponNameLabel)
 	{
-		m_pWeaponNameLabel->SetVisible(true);
+		// Only show weapon name when we can swap disguise weapons.
+		if ( tf2v_allow_disguiseweapons.GetBool() )
+			m_pWeaponNameLabel->SetVisible(true);
 		CheckWeapon();
 	}
 

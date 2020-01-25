@@ -639,6 +639,7 @@ private:
 	virtual bool		SetObserverMode( int mode );
 	virtual void		AttemptToExitFreezeCam( void );
 
+	virtual bool		ClickPDA(void);
 	bool				PlayGesture( const char *pGestureName );
 	bool				PlaySpecificSequence( const char *pSequenceName );
 	bool				PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo &info_modified );

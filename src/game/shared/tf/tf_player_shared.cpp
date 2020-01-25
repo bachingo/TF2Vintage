@@ -107,6 +107,8 @@ ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | 
 
 ConVar tf_enable_grenades( "tf_enable_grenade_equipment", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
 
+ConVar tf2v_allow_disguiseweapons( "tf2v_allow_disguiseweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spy to change disguise weapon using lastdisguise.", true, 0, true, 1);
+
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
 #endif
