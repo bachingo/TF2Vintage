@@ -1700,8 +1700,11 @@ void CTFPlayer::GiveDefaultItems()
 	
 	// If we're a VIP player, give a medal.
 	CTFPlayer *pPlayer = this;
-	if ( pPlayer && ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 ) )
-		EnableVIP( pData, pPlayer->m_iPlayerVIPRanking );
+	if ( pPlayer && pPlayer->m_iPlayerVIPRanking != 0 )
+	{
+		if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
+			EnableVIP( pData, pPlayer->m_iPlayerVIPRanking );	
+	}
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )

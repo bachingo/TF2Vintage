@@ -3405,10 +3405,10 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	
 		
 	// Check if the player is someone of note.
-	if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
+	pTFPlayer->m_iPlayerVIPRanking = pTFPlayer->GetPlayerVIPRanking();
+	if ( pTFPlayer->m_iPlayerVIPRanking != 0 )
 	{
-		pTFPlayer->m_iPlayerVIPRanking = pTFPlayer->GetPlayerVIPRanking();
-		if ( pTFPlayer->m_iPlayerVIPRanking != 0 )
+		if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
 		{
 			pTFPlayer->m_bIsPlayerAVIP = true;
 			if ( pTFPlayer->m_iPlayerVIPRanking == 1 )	// Rank 1 members are developers.
