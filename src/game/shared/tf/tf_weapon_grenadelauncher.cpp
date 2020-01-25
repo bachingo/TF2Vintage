@@ -47,7 +47,7 @@ END_DATADESC()
 
 CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Legacy, tf_weapon_grenadelauncher_legacy )
 
-extern ConVar tf2v_console_grenadelauncher;
+extern ConVar tf2v_console_grenadelauncher_magazine;
 
 //=============================================================================
 //
@@ -107,7 +107,7 @@ int CTFGrenadeLauncher::GetMaxClip1( void ) const
 
 	// BaseClass::GetMaxClip1() but with the base set to TF_GRENADE_LAUNCHER_XBOX_CLIP.
 	// We need to do it this way in order to consider attributes.
-	if ( tf2v_console_grenadelauncher.GetBool() )
+	if ( tf2v_console_grenadelauncher_magazine.GetBool() )
 	{
 		
 		int iMaxClip = TF_GRENADE_LAUNCHER_XBOX_CLIP;
@@ -144,7 +144,7 @@ int CTFGrenadeLauncher::GetDefaultClip1( void ) const
 #endif
 
 	// BaseClass::GetDefaultClip1() is just checking GetMaxClip1(), nothing fancy to do here.
-	if ( tf2v_console_grenadelauncher.GetBool() )
+	if ( tf2v_console_grenadelauncher_magazine.GetBool() )
 		return GetMaxClip1();
 	 
 	return BaseClass::GetDefaultClip1();
