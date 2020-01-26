@@ -147,7 +147,9 @@ typedef union
 
 struct static_attrib_t
 {
-	char name[128];
+	EXPLICIT static_attrib_t( char const *szName );
+
+	char const *name;
 	EconAttributeDefinition const *attribute;
 	KeyValues const *schema;
 };

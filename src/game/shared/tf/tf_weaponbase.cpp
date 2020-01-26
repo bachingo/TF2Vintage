@@ -2330,11 +2330,7 @@ bool CTFWeaponBase::IsSilentKiller( void ) const
 // ----------------------------------------------------------------------------
 bool CTFWeaponBase::GetProjectileOverrideModel( string_t *pOut )
 {
-	static static_attrib_t pAttrDef_CustomProjectile ={
-		"custom projectile model",
-		GetItemSchema()->GetAttributeDefinitionByName( "custom projectile model" ),
-		NULL
-	};
+	static static_attrib_t pAttrDef_CustomProjectile( "custom projectile model" );
 
 	if ( pAttrDef_CustomProjectile.attribute )
 	{

@@ -690,11 +690,7 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
-	static static_attrib_t pAttribDef_CustomProjectile ={
-		"custom projectile model",
-		GetAttributeDefinitionByName( "custom projectile model" ),
-		NULL
-	};
+	static static_attrib_t pAttribDef_CustomProjectile( "custom projectile model" );
 
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
