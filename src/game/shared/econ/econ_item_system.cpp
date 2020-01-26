@@ -690,6 +690,11 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
+	static static_attrib_t pAttribDef_CustomProjectile ={
+		"custom projectile model",
+		GetAttributeDefinitionByName( "custom projectile model" ),
+		NULL
+	};
 
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
@@ -768,10 +773,14 @@ void CEconItemSchema::Precache( void )
 			CEconItemAttribute *pAttribute = &pItem->attributes[i];
 			attrib_data_union_t value;
 			value.iVal = pAttribute->m_iRawValue32;
+
+			// Special case for custom_projectile_model attribute.
+			if ( pAttribute->GetStaticData() == pAttribDef_CustomProjectile.attribute )
+			{
+				CBaseEntity::PrecacheModel( STRING( value.sVal ) );
+			}
 		}
-		
 	}
-		
 }
 
 CEconItemDefinition* CEconItemSchema::GetItemDefinition( int id )

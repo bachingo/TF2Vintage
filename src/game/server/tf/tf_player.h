@@ -98,19 +98,6 @@ private:
 	float m_flDeathDropHeight;
 };
 
-class CAttributeContainerPlayer : public CAttributeManager
-{
-public:
-	DECLARE_CLASS( CAttributeContainerPlayer, CAttributeManager );
-	DECLARE_EMBEDDED_NETWORKVAR();
-
-	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
-	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
-	void	OnAttributesChanged( void ) override;
-
-	CHandle<CTFPlayer> m_hOuter;
-};
-
 //=============================================================================
 //
 // TF Player

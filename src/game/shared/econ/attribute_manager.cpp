@@ -396,3 +396,62 @@ void CAttributeContainer::OnAttributesChanged( void )
 {
 	BaseClass::OnAttributesChanged();
 }
+
+
+BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainerPlayer, DT_AttributeContainerPlayer )
+#ifdef CLIENT_DLL
+	RecvPropEHandle( RECVINFO( m_hOuter ) ),
+	RecvPropInt( RECVINFO( m_iReapplyProvisionParity ) ),
+	RecvPropEHandle( RECVINFO( m_hPlayer ) ),
+#else
+	SendPropEHandle( SENDINFO( m_hOuter ) ),
+	SendPropInt( SENDINFO( m_iReapplyProvisionParity ), ATTRIB_REAPPLY_PARITY_BITS, SPROP_UNSIGNED ),
+	SendPropEHandle( SENDINFO( m_hPlayer ) ),
+#endif
+END_NETWORK_TABLE();
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
+{
+	if ( m_bParsingMyself || m_hPlayer.Get() == NULL )
+		return flValue;
+
+	m_bParsingMyself = true;;
+
+	CAttributeIterator_ApplyAttributeFloat func( m_hPlayer.Get(), strAttributeClass, &flValue, pOutProviders );
+	m_hPlayer->m_AttributeList.IterateAttributes( func );
+
+	m_bParsingMyself = false;
+
+	flValue = BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
+	return flValue;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
+{
+	if ( m_bParsingMyself || m_hPlayer.Get() == NULL )
+		return strValue;
+
+	m_bParsingMyself = true;
+
+	CAttributeIterator_ApplyAttributeString func( m_hPlayer.Get(), strAttributeClass, &strValue, pOutProviders );
+	m_hPlayer->m_AttributeList.IterateAttributes( func );
+
+	m_bParsingMyself = false;
+
+	strValue = BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
+	return strValue;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAttributeContainerPlayer::OnAttributesChanged( void )
+{
+	m_hPlayer->NetworkStateChanged();
+}
