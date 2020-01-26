@@ -43,6 +43,13 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 	}
 }
 
+CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_iRawValue32 = src.m_iRawValue32;
+	m_iAttributeClass = src.m_iAttributeClass;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

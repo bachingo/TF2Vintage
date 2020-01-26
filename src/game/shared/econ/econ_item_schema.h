@@ -87,7 +87,7 @@ typedef struct EconQuality
 	}
 
 	int value;
-} EconQuality_t;
+} Quality_t;
 
 typedef struct EconColor
 {
@@ -97,7 +97,7 @@ typedef struct EconColor
 	}
 
 	char color_name[128];
-} EconColor_t;
+} Color_t;
 
 typedef struct EconAttributeDefinition
 {
@@ -127,7 +127,7 @@ typedef struct EconAttributeDefinition
 	bool hidden;
 	bool stored_as_integer;
 	string_t m_iAttributeClass;
-} EconAttributeDefinition_t;
+} AttributeDefinition_t;
 
 // Attached Models
 #define AM_WORLDMODEL	(1 << 0)
@@ -194,6 +194,7 @@ public:
 	{
 		Init( iIndex, pszValue, pszAttributeClass );
 	}
+	CEconItemAttribute( CEconItemAttribute const &src );
 
 	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
 	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
