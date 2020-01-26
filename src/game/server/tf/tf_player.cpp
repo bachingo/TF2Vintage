@@ -5037,16 +5037,18 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( ( pAttacker != this || info.GetAttacker() != this ) && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
 	{
 		float flDamage = info.GetDamage();
-		if ( info.GetAmmoType() == TF_AMMO_PRIMARY && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LASER_POINTER )
+		if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_LASER_POINTER && info.GetAmmoType() == TF_AMMO_PRIMARY )
 		{
 			// Wrangled shots should have damage falloff
 			bitsDamage |= DMG_USEDISTANCEMOD;
+			info.AddDamageType(DMG_USEDISTANCEMOD);
 
 			// Distance should be calculated from sentry
 			pAttacker = info.GetAttacker();
 		}
-				
-		if ( DMG_USEDISTANCEMOD )
+		
+		// Distance falloff calculations
+		if ( bitsDamage & DMG_USEDISTANCEMOD )
 		{
 			float flRandomDamage = info.GetDamage() * tf_damage_range.GetFloat();
 			if ( tf_damage_lineardist.GetBool() )
@@ -5152,11 +5154,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				*/
 			}
 
-			// Burn sounds are handled in ConditionThink()
-			if ( !( bitsDamage & DMG_BURN ) )
-			{
-				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
-			}
 		}
 
 		// Critical calbulations.
@@ -5231,6 +5228,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		info.SetDamage( flDamage );
 		
 	}
+	
+		// Burn sounds are handled in ConditionThink()
+		if ( !( bitsDamage & DMG_BURN ) )
+		{
+			SpeakConceptIfAllowed( MP_CONCEPT_HURT );
+		}
 	
 	if ( m_debugOverlays & OVERLAY_BUDDHA_MODE )
 	{
