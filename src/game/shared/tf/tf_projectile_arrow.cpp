@@ -806,7 +806,6 @@ void CTFProjectile_Arrow::BreakArrow( void )
 		WRITE_SHORT( GetModelIndex() );
 		WRITE_VEC3COORD( GetAbsOrigin() );
 		WRITE_ANGLES( GetAbsAngles() );
-		WRITE_SHORT(m_iType);
 		WRITE_SHORT( m_nSkin );
 	MessageEnd();
 }
