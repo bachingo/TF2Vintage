@@ -2999,7 +2999,7 @@
 		"weapon_special"
 		{
 			"specialitem"			"1"
-			"item_quality" 			"valve"
+			"item_quality" 			"developer"
 			"show_in_armory"		"0"
 		}
 	}
