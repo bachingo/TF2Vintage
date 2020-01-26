@@ -5229,11 +5229,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 	}
 	
-		// Burn sounds are handled in ConditionThink()
-		if ( !( bitsDamage & DMG_BURN ) )
-		{
-			SpeakConceptIfAllowed( MP_CONCEPT_HURT );
-		}
+	// Burn sounds are handled in ConditionThink()
+	if ( !( bitsDamage & DMG_BURN ) )
+	{
+		SpeakConceptIfAllowed( MP_CONCEPT_HURT );
+	}
 	
 	if ( m_debugOverlays & OVERLAY_BUDDHA_MODE )
 	{

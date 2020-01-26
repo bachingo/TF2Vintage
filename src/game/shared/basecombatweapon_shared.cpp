@@ -2271,6 +2271,13 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 		m_bFiringWholeClip = false;
 		m_bIsOverLoaded = false;
 	}
+	
+	if ( m_iClip1 == GetMaxClip1() && !CanOverload() )
+	{
+		// At max ammo, start firing immediately.
+		m_bFiringWholeClip = true;
+		return;
+	}
 
 	if ( m_bFiringWholeClip )
 	{
