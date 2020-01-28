@@ -339,7 +339,7 @@ public:
 					pVisuals->attached_models.AddToTail( attached_model );
 				}
 			}
-			else if ( !V_strcmp( pVisualData->GetName(), "custom_particlesystem" ) )
+			else if ( !V_stricmp( pVisualData->GetName(), "custom_particlesystem" ) )
 			{
 				V_strncpy( pVisuals->custom_particlesystem, pVisualData->GetString( "system" ), sizeof( pVisuals->custom_particlesystem ) );
 			}
@@ -385,36 +385,34 @@ public:
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "styles" ) )
 			{
-				/*
 				for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
 				{
 					EconItemStyle *style;
-					IF_ELEMENT_FOUND(visual->styles, pStyleData->GetName())
+					IF_ELEMENT_FOUND( pVisuals->styles, pStyleData->GetName() )
 					{
-						style = visual->styles.Element(index);
+						style = pVisuals->styles.Element( index );
 					}
 					else
 					{
-						style = new EconItemStyle();
-						visual->styles.Insert(pStyleData->GetName(), style);
+						style = new EconItemStyle;
+						pVisuals->styles.Insert( pStyleData->GetName(), style );
 					}
 
-					GET_STRING(style, pStyleData, name);
-					GET_STRING(style, pStyleData, model_player);
-					GET_STRING(style, pStyleData, image_inventory);
-					GET_BOOL(style, pStyleData, selectable);
-					GET_INT(style, pStyleData, skin_red);
-					GET_INT(style, pStyleData, skin_blu);
+					GET_STRING( style, pStyleData, name );
+					GET_STRING( style, pStyleData, model_player );
+					GET_STRING( style, pStyleData, image_inventory );
+					GET_BOOL( style, pStyleData, selectable );
+					GET_INT( style, pStyleData, skin_red );
+					GET_INT( style, pStyleData, skin_blu );
 
-					for (KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey())
+					for ( KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey() )
 					{
-						if (!V_stricmp(pStyleModelData->GetName(), "model_player_per_class"))
+						if ( !V_stricmp( pStyleModelData->GetName(), "model_player_per_class" ) )
 						{
-							GET_VALUES_FAST_STRING(style->model_player_per_class, pStyleModelData);
+							GET_VALUES_FAST_STRING( style->model_player_per_class, pStyleModelData );
 						}
 					}
 				}
-				*/
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "skin" ) )
 			{
@@ -799,11 +797,6 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
 
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const char *name )
 {
-	//unsigned int index = m_Attributes.Find(name);
-	//if (index < m_Attributes.Count())
-	//{
-	//	return &m_Attributes[index];
-	//}
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
 		if ( !V_stricmp( m_Attributes[i]->name, name ) )
@@ -817,11 +810,6 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const ch
 
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const char *classname )
 {
-	//unsigned int index = m_Attributes.Find(name);
-	//if (index < m_Attributes.Count())
-	//{
-	//	return &m_Attributes[index];
-	//}
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
 		if ( !V_stricmp( m_Attributes[i]->attribute_class, classname ) )
