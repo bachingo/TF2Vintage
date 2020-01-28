@@ -11,6 +11,10 @@
 #include "tf_player.h"
 #else
 #include "c_tf_player.h"
+#include "vcollide.h"
+#include "vcollide_parse.h"
+
+extern ConVar r_propsmaxdist;
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -45,7 +49,7 @@ void CEconWearable::Spawn( void )
 	}
 
 #if defined ( GAME_DLL )
-	if (GetItem()->GetStaticData() )
+	if ( GetItem()->GetStaticData() )
 		m_bItemFallsOff = GetItem()->GetStaticData()->itemfalloff;
 #endif
 	
@@ -197,6 +201,211 @@ bool CEconWearable::ShouldDraw( void )
 		return false;
 
 	return BaseClass::ShouldDraw();
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconWearableGib::CEconWearableGib()
+{
+	m_bAttachedModel = false;
+	m_flFadeTime = -1.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CollideType_t CEconWearableGib::GetCollideType( void )
+{
+	return ENTITY_SHOULD_RESPOND;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconWearableGib::ImpactTrace(trace_t *pTrace, int dmgBits, char const *szWeaponName)
+{
+	if ( m_pPhysicsObject == nullptr )
+		return;
+
+	const Vector &vecDir = pTrace->endpos - pTrace->startpos;
+	if ( dmgBits & DMG_BLAST )
+	{
+		const Vector &vecVelocity = vecDir * 500.0f;
+		m_pPhysicsObject->ApplyForceCenter( vecVelocity );
+	}
+	else
+	{
+		const Vector &vecWorldOffset = pTrace->startpos + ( pTrace->fraction * vecDir );
+		const Vector &vecVelocity = vecDir.Normalized() * 4000.0f;
+		m_pPhysicsObject->ApplyForceOffset( vecVelocity, vecWorldOffset );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconWearableGib::Spawn( void )
+{
+	BaseClass::Spawn();
+	UseClientSideAnimation();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconWearableGib::SpawnClientEntity( void )
+{
+	if ( IsDynamicModelLoading() )
+	{
+		FinishModelInitialization();
+		return;
+	}
+
+	m_unk2 = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CStudioHdr *CEconWearableGib::OnNewModel( void )
+{
+	CStudioHdr *pStudio = BaseClass::OnNewModel();
+
+	if ( m_unk2 )
+	{
+		if ( !IsDynamicModelLoading() )
+			FinishModelInitialization();
+	}
+
+	return pStudio;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconWearableGib::ClientThink( void )
+{
+	if ( m_flFadeTime > 0.0f )
+	{
+		if ( ( m_flFadeTime - gpGlobals->curtime ) < 1.0f )
+		{
+			if ( m_flFadeTime <= gpGlobals->curtime )
+			{
+				Release();
+				return;
+			}
+
+			SetRenderMode( kRenderTransTexture );
+			SetRenderColorA( ( m_flFadeTime - gpGlobals->curtime ) * 256.0f );
+		}
+	}
+
+	if ( m_flFadeTime <= 0.0f )
+	{
+		SetNextClientThink( CLIENT_THINK_NEVER );
+	}
+	else
+	{
+		if( ( m_flFadeTime - gpGlobals->curtime ) < 1.0f )
+			SetNextClientThink( CLIENT_THINK_ALWAYS );
+		else
+			SetNextClientThink( m_flFadeTime - 1.0f );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconWearableGib::StartFadeOut( float flTime )
+{
+	m_flFadeTime = gpGlobals->curtime + flTime + 1.0f;
+	if ( m_flFadeTime <= 0.0f )
+	{
+		SetNextClientThink( CLIENT_THINK_NEVER );
+	}
+	else
+	{
+		if( ( m_flFadeTime - gpGlobals->curtime ) < 1.0f )
+			SetNextClientThink( CLIENT_THINK_ALWAYS );
+		else
+			SetNextClientThink( m_flFadeTime - 1.0f );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconWearableGib::FinishModelInitialization( void )
+{
+	if ( m_flFadeTime <= 0.0f )
+	{
+		SetNextClientThink( CLIENT_THINK_NEVER );
+	}
+	else
+	{
+		if( ( m_flFadeTime - gpGlobals->curtime ) < 1.0f )
+			SetNextClientThink( CLIENT_THINK_ALWAYS );
+		else
+			SetNextClientThink( m_flFadeTime - 1.0f );
+	}
+
+	const model_t *pModel = GetModel();
+	if ( pModel )
+	{
+		Vector vecMins, vecMaxs;
+		modelinfo->GetModelBounds( pModel, vecMins, vecMaxs );
+
+		SetCollisionBounds( vecMins, vecMaxs );
+	}
+
+	if ( !m_bAttachedModel )
+	{
+		solid_t solid;
+		if ( !PhysModelParseSolid( solid, this, GetModelIndex() ) )
+		{
+			DevMsg( __FUNCTION__ ": PhysModelParseSolid failed for entity %i.\n", GetModelIndex() );
+			return;
+		}
+
+		m_pPhysicsObject = VPhysicsInitNormal( SOLID_VPHYSICS, 0, false );
+		if ( m_pPhysicsObject == nullptr )
+		{
+			DevMsg( __FUNCTION__ ": VPhysicsInitNormal() failed for %s.\n", GetModelName() );
+			return;
+		}
+	}
+
+	if ( m_fadeMinDist < 0.0f )
+	{
+		m_fadeMaxDist = r_propsmaxdist.GetFloat();
+		m_fadeMinDist = r_propsmaxdist.GetFloat() * 0.75f;
+	}
+
+	Spawn();
+
+	SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+	UpdatePartitionListEntry();
+	CollisionProp()->UpdatePartition();
+
+	SetBlocksLOS( false );
+	CreateShadow();
+	UpdateVisibility();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CEconWearableGib::Initialize( bool bAttached )
+{
+	m_bAttachedModel = bAttached;
+
+	const char *model = STRING( GetModelName() );
+	if( InitializeAsClientEntity( model, RENDER_GROUP_OPAQUE_ENTITY ) )
+		return true;
+
+	return false;
 }
 
 #endif
