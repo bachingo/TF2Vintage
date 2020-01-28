@@ -146,14 +146,18 @@ typedef union
 	string_t sVal;
 } attrib_data_union_t;
 
-struct static_attrib_t
+typedef struct static_attrib
 {
-	EXPLICIT static_attrib_t( char const *szName );
+	EXPLICIT inline static_attrib( char const *szName )
+		: name( szName ) {
+		attribute = GetItemSchema()->GetAttributeDefinitionByName( szName );
+		schema = GetItemSchema()->m_pSchema;
+	}
 
 	char const *name;
 	EconAttributeDefinition const *attribute;
 	KeyValues const *schema;
-};
+} static_attrib_t;
 
 
 

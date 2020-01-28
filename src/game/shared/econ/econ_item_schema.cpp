@@ -271,9 +271,3 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 		}
 	}
 }
-
-static_attrib_t::static_attrib_t( char const *szName )
-	: name( szName )
-{
-	attribute = GetItemSchema()->GetAttributeDefinitionByName( szName );
-}
