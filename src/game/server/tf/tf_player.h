@@ -235,6 +235,8 @@ public:
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
 
+	virtual void		OnEmitFootstepSound( CSoundParameters const &sound, Vector const &pos, float volume );
+
 	// Utility.
 	void				UpdateModel( void );
 	void				UpdateSkin( int iTeam );

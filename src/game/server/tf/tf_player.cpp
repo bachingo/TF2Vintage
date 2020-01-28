@@ -1475,6 +1475,44 @@ void CTFPlayer::InitClass( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFPlayer::OnEmitFootstepSound( CSoundParameters const &params, Vector const &vecOrigin, float flVolume )
+{
+	int nJingleOnStep = 0;
+	CALL_ATTRIB_HOOK_INT( nJingleOnStep, add_jingle_to_footsteps );
+	if ( nJingleOnStep > 0 )
+	{
+		const char *szSound = NULL;
+		switch ( nJingleOnStep )
+		{
+			case 1:
+				szSound = "xmas.jingle";
+				break;
+			case 2:
+			default:
+				szSound = "xmas.jingle_higher";
+				break;
+		}
+
+		CPASFilter filter( vecOrigin );
+		if ( 1 < gpGlobals->maxClients )
+			filter.RemoveRecipientsByPVS( vecOrigin );
+
+		EmitSound_t parm;
+		parm.m_nChannel = CHAN_BODY;
+		parm.m_pSoundName = szSound;
+		parm.m_flVolume = flVolume;
+		parm.m_SoundLevel = params.soundlevel;
+		parm.m_nFlags = SND_CHANGE_VOL;
+		parm.m_nPitch = params.pitch;
+		parm.m_pOrigin = &vecOrigin;
+
+		CBaseEntity::EmitSound( filter, entindex(), parm );
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Return class based, stat based max health
 //-----------------------------------------------------------------------------
 int CTFPlayer::GetMaxHealth( void ) const
