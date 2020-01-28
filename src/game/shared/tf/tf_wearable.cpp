@@ -18,6 +18,14 @@ END_NETWORK_TABLE()
 LINK_ENTITY_TO_CLASS( tf_wearable, CTFWearable );
 PRECACHE_REGISTER( tf_wearable );
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFWearableVM, DT_TFWearableVM );
+
+BEGIN_NETWORK_TABLE( CTFWearable, DT_TFWearableVM )
+END_NETWORK_TABLE()
+
+LINK_ENTITY_TO_CLASS( tf_wearable_vm, CTFWearableVM );
+PRECACHE_REGISTER( tf_wearable_vm );
+
 #ifdef GAME_DLL
 
 //-----------------------------------------------------------------------------

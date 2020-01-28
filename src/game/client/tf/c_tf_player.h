@@ -27,6 +27,7 @@
 
 class C_MuzzleFlashModel;
 class C_BaseObject;
+class C_TFRagdoll;
 
 extern ConVar tf_medigun_autoheal;
 extern ConVar cl_autorezoom;

@@ -14,6 +14,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFWearable C_TFWearable
+#define CTFWearableVM C_TFWearableVM
 #endif
 
 class CTFWearable : public CEconWearable
@@ -21,6 +22,8 @@ class CTFWearable : public CEconWearable
 public:
 	DECLARE_CLASS( CTFWearable, CEconWearable );
 	DECLARE_NETWORKCLASS();
+
+	virtual bool	IsViewModelWearable( void ) const { return false; }
 
 #ifdef GAME_DLL
 	virtual void	Equip( CBasePlayer *pPlayer );
@@ -30,6 +33,15 @@ public:
 	virtual int		InternalDrawModel( int flags );
 	void			UpdateModelToClass(void);
 #endif
+};
+
+class CTFWearableVM : public CTFWearable
+{
+	DECLARE_CLASS( CTFWearableVM, CTFWearable );
+public:
+	DECLARE_NETWORKCLASS();
+
+	virtual bool	IsViewModelWearable( void ) const { return true; }
 };
 
 #endif // TF_WEARABLE_H

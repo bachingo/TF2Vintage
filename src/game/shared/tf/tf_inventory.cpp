@@ -53,8 +53,7 @@ bool CTFInventory::Init( void )
 {
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = CommandLine()->CheckParm( "-showreskins" );
-#endif
-#ifdef GAME_DLL
+#else
 	bool bReskinsEnabled = true;
 #endif
 
