@@ -243,6 +243,7 @@ typedef struct EconPerTeamVisuals
 		CLEAR_STR( muzzle_flash );
 		CLEAR_STR( tracer_effect );
 		skin = -1;
+		use_per_class_bodygroups = 0;
 	}
 
 	CUtlDict< bool, unsigned short > player_bodygroups;
@@ -256,6 +257,7 @@ typedef struct EconPerTeamVisuals
 	char tracer_effect[128];
 	CUtlDict< ItemStyle_t*, unsigned short > styles;
 	int skin;
+	int use_per_class_bodygroups;
 } PerTeamVisuals_t;
 
 class CEconItemDefinition
