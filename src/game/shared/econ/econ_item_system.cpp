@@ -130,29 +130,29 @@ public:
 		if (from->GetString(#name, NULL))												\
 			V_strncpy(copyto->name, from->GetString(#name), sizeof(copyto->name))
 
-#define GET_STRING_DEFAULT(copyto, from, name, defaultstring)		\
+#define GET_STRING_DEFAULT(copyto, from, name, defaultstring) \
 		V_strncpy(copyto->name, from->GetString(#name, #defaultstring), sizeof(copyto->name))
 
-#define GET_BOOL(copyto, from, name)													\
+#define GET_BOOL(copyto, from, name) \
 		copyto->name = from->GetBool(#name, copyto->name)
 
-#define GET_FLOAT(copyto, from, name)													\
+#define GET_FLOAT(copyto, from, name) \
 		copyto->name = from->GetFloat(#name, copyto->name)
 
-#define GET_INT(copyto, from, name)														\
+#define GET_INT(copyto, from, name) \
 		copyto->name = from->GetInt(#name, copyto->name)
 
-#define GET_STRING_CONVERT(copyto, from, name)											\
+#define GET_STRING_CONVERT(copyto, from, name) \
 		if (from->GetString(#name, NULL))
 
 #define FIND_ELEMENT(map, key, val)						\
 		unsigned int index = map.Find(key);				\
-		if (index != map.InvalidIndex())						\
+		if (index != map.InvalidIndex())				\
 			val = map.Element(index)				
 
 #define FIND_ELEMENT_STRING(map, key, val)						\
 		unsigned int index = map.Find(key);						\
-		if (index != map.InvalidIndex())								\
+		if (index != map.InvalidIndex())						\
 			Q_snprintf(val, sizeof(val), map.Element(index))
 
 #define IF_ELEMENT_FOUND(map, key)						\
@@ -161,30 +161,30 @@ public:
 
 #define GET_VALUES_FAST_BOOL(dict, keys)\
 		for (KeyValues *pKeyData = keys->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey())\
-				{													\
+		{													\
 			IF_ELEMENT_FOUND(dict, pKeyData->GetName())		\
-				{												\
+			{												\
 				dict.Element(index) = pKeyData->GetBool();	\
-				}												\
-						else											\
-				{												\
+			}												\
+			else											\
+			{												\
 				dict.Insert(pKeyData->GetName(), pKeyData->GetBool());\
-				}												\
-				}
+			}												\
+		}
 
 
 #define GET_VALUES_FAST_STRING(dict, keys)\
 		for (KeyValues *pKeyData = keys->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey())	\
-				{													\
+		{													\
 			IF_ELEMENT_FOUND(dict, pKeyData->GetName())		\
-				{												\
+			{												\
 				Q_snprintf((char*)dict.Element(index), sizeof(dict.Element(index)), pKeyData->GetString());		\
-				}												\
-						else											\
-				{												\
+			}												\
+			else											\
+			{												\
 				dict.Insert(pKeyData->GetName(), strdup(pKeyData->GetString()));\
-				}												\
-				}	
+			}												\
+		}	
 
 	void Parse( KeyValues *pKeyValuesData, bool bWildcard, const char *szFileWithoutEXT )
 	{
@@ -320,7 +320,7 @@ public:
 
 	bool ParseVisuals( KeyValues *pData, CEconItemDefinition* pItem, int iIndex )
 	{
-		PerTeamVisuals_t *pVisuals = &pItem->visual[iIndex];
+		EconPerTeamVisuals *pVisuals = &pItem->visual[iIndex];
 
 		for ( KeyValues *pVisualData = pData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
 		{
@@ -343,12 +343,12 @@ public:
 			{
 				V_strncpy( pVisuals->custom_particlesystem, pVisualData->GetString( "system" ), sizeof( pVisuals->custom_particlesystem ) );
 			}
-			else if ( !V_stricmp(pVisualData->GetName(), "muzzle_flash" ) )
+			else if ( !V_stricmp( pVisualData->GetName(), "muzzle_flash" ) )
 			{
 				// Fetching this similar to weapon script file parsing.
 				V_strncpy( pVisuals->muzzle_flash, pVisualData->GetString( "system" ), sizeof( pVisuals->muzzle_flash ) );
 			}
-			else if ( !V_stricmp(pVisualData->GetName(), "tracer_effect") )
+			else if ( !V_stricmp( pVisualData->GetName(), "tracer_effect" ) )
 			{
 				// Fetching this similar to weapon script file parsing.
 				V_strncpy( pVisuals->tracer_effect, pVisualData->GetString( "system" ), sizeof( pVisuals->tracer_effect ) );
@@ -417,6 +417,10 @@ public:
 			else if ( !V_stricmp( pVisualData->GetName(), "skin" ) )
 			{
 				pVisuals->skin = pVisualData->GetInt();
+			}
+			else if ( !V_stricmp( pVisualData->GetName(), "use_per_class_bodygroups" ) )
+			{
+				pVisuals->use_per_class_bodygroups = pVisualData->GetInt();
 			}
 			else
 			{
@@ -510,14 +514,14 @@ public:
 		GET_BOOL( pItem, pData, act_as_wearable );
 		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
 		
-		GET_BOOL(pItem, pData, is_reskin);
-		GET_BOOL(pItem, pData, specialitem);
-		GET_BOOL(pItem, pData, demoknight);
-		GET_STRING(pItem, pData, holiday_restriction);
-		GET_BOOL(pItem, pData, itemfalloff);
-		GET_INT(pItem, pData, year);
-		GET_BOOL(pItem, pData, is_custom_content);
-		GET_STRING(pItem, pData, custom_projectile_model);
+		GET_BOOL( pItem, pData, is_reskin );
+		GET_BOOL( pItem, pData, specialitem );
+		GET_BOOL( pItem, pData, demoknight );
+		GET_STRING( pItem, pData, holiday_restriction );
+		GET_BOOL( pItem, pData, itemfalloff );
+		GET_INT( pItem, pData, year );
+		GET_BOOL( pItem, pData, is_custom_content );
+		GET_STRING( pItem, pData, custom_projectile_model );
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
@@ -750,13 +754,13 @@ void CEconItemSchema::Precache( void )
 			const char *pszMuzzleFlash = pVisuals->muzzle_flash;
 			if ( pszMuzzleFlash[0] != '\0' )
 			{
-				PrecacheParticleSystem(pszMuzzleFlash);
+				PrecacheParticleSystem( pszMuzzleFlash );
 			}
 			// Tracer Effect
 			const char *pszTracerEffect = pVisuals->tracer_effect;
 			if ( pszTracerEffect[0] != '\0' )
 			{
-				PrecacheParticleSystem(pszTracerEffect);
+				PrecacheParticleSystem( pszTracerEffect );
 			}
 
 		}

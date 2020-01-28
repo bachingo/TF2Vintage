@@ -6,6 +6,7 @@
 #endif
 
 #include "tf_shareddefs.h"
+#include "econ_item_system.h"
 
 enum
 {
@@ -93,7 +94,7 @@ typedef struct EconColor
 {
 	EconColor()
 	{
-		CLEAR_STR(color_name);
+		CLEAR_STR( color_name );
 	}
 
 	char color_name[128];
@@ -104,9 +105,9 @@ typedef struct EconAttributeDefinition
 	EconAttributeDefinition()
 	{
 		index = 0xFFFF;
-		CLEAR_STR(name);
-		CLEAR_STR(attribute_class);
-		CLEAR_STR(description_string);
+		CLEAR_STR( name );
+		CLEAR_STR( attribute_class );
+		CLEAR_STR( description_string );
 		string_attribute = false;
 		description_format = -1;
 		hidden = false;
@@ -211,9 +212,9 @@ typedef struct EconItemStyle
 {
 	EconItemStyle()
 	{
-		CLEAR_STR(name);
-		CLEAR_STR(model_player);
-		CLEAR_STR(image_inventory);
+		CLEAR_STR( name );
+		CLEAR_STR( model_player );
+		CLEAR_STR( image_inventory );
 		skin_red = 0;
 		skin_blu = 0;
 		selectable = false;
@@ -258,37 +259,37 @@ class CEconItemDefinition
 public:
 	CEconItemDefinition()
 	{
-		CLEAR_STR(name);
+		CLEAR_STR( name );
 		used_by_classes = 0;
 
 		for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
 			item_slot_per_class[i] = -1;
 
 		show_in_armory = true;
-		CLEAR_STR(item_class);
-		CLEAR_STR(item_type_name);
-		CLEAR_STR(item_name);
-		CLEAR_STR(item_description);
+		CLEAR_STR( item_class );
+		CLEAR_STR( item_type_name );
+		CLEAR_STR( item_name );
+		CLEAR_STR( item_description );
 		item_slot = -1;
 		anim_slot = -1;
 		item_quality = QUALITY_VINTAGE;
 		baseitem = false;
 		propername = false;
-		CLEAR_STR(item_logname);
-		CLEAR_STR(item_iconname);
+		CLEAR_STR( item_logname );
+		CLEAR_STR( item_iconname );
 		min_ilevel = 0;
 		max_ilevel = 0;
-		CLEAR_STR(image_inventory);
+		CLEAR_STR( image_inventory );
 		image_inventory_size_w = 128;
 		image_inventory_size_h = 82;
-		CLEAR_STR(model_player);
-		CLEAR_STR(model_vision_filtered);
-		CLEAR_STR(model_world);
-		CLEAR_STR(equip_region);
+		CLEAR_STR( model_player );
+		CLEAR_STR( model_vision_filtered );
+		CLEAR_STR( model_world );
+		CLEAR_STR( equip_region );
 		Q_memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
-		CLEAR_STR(extra_wearable);
+		CLEAR_STR( extra_wearable );
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 		is_reskin = false;
@@ -297,8 +298,8 @@ public:
 		itemfalloff = false;
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
-		CLEAR_STR(holiday_restriction);
-		CLEAR_STR(custom_projectile_model);
+		CLEAR_STR( holiday_restriction );
+		CLEAR_STR( custom_projectile_model );
 	}
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
