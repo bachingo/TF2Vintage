@@ -289,9 +289,7 @@ private:
 	void CreateTFRagdoll( void );
 	void CreateTFGibs( bool bKill, bool bLocalOrigin );
 	void CreateTFHeadGib( void );
-	void UpdateRagdollWearables(bool bIsStatue);
-	//void CreateWearableGibs( void );
-private:
+	void CreateWearableGibs( bool bDisguised );
 
 protected:
 	CNetworkVector( m_vecRagdollVelocity );
@@ -883,58 +881,6 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 			}
 		}
 	}
-	
-	// If we're a ragdoll, update what our corpse has. Do this only on standard ragdolls.
-	if ( !m_bElectrocuted && !m_bBecomeAsh && !m_bDissolve && !m_bGib )
-		UpdateRagdollWearables( ( m_bGoldRagdoll || m_bIceRagdoll ) );
-	
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void C_TFRagdoll::UpdateRagdollWearables( bool bIsStatue )
-{
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
-	// Grab all the wearables the player has.
-	int nTeamSkin = GetTeamNumber() - 2;
-	for ( int i=0; i<(m_hRagdollWearables.Count()); ++i )
-	{
-		CEconWearable* pItem = m_hRagdollWearables[i];
-		CEconItemDefinition *pItemDef = pItem ? pItem->GetItem()->GetStaticData() : NULL;
-		if ( pItem && pItemDef ) // If valid item
-		{
-			// Add the items to the ragdoll. Skip over items that fall off when dying.
-			bool bItemFallsOff = pItem->ItemFallsOffPlayer();
-			if ( !bItemFallsOff || ( bItemFallsOff && bIsStatue ) )
-			{
-				// Find the skin to use for our ragdoll.
-				int nCurrentSkin = nTeamSkin;
-				PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( ( nTeamSkin == 0 ? TF_TEAM_RED : TF_TEAM_BLUE ) );
-				if ( pVisuals && pVisuals->skin != -1 )
-				{
-					nCurrentSkin = pVisuals->skin;
-				}
-				
-				// Get the model for our wearable.
-				const char *pszModel;
-				if ( pItemDef->extra_wearable[0] != '\0' )
-					pszModel = pItemDef->extra_wearable;
-				else if ( pItemDef->model_player_per_class[m_iClass][0] != '\0' )
-					pszModel = pItemDef->model_player_per_class[m_iClass];
-				else
-					pszModel = pItemDef->model_player;
-				
-				// Add the model to the ragdoll.
-				//TODO: Find an alternate equivalent of SetMergeMDL for ragdolls.
-				//if (pszModel)
-					//SetMergeMDL(pszModel, NULL, nCurrentSkin);
-			}
-			// Update bodygroup, even for items that fell off.
-				pItem->UpdatePlayerBodygroups();	
-		}
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -980,7 +926,7 @@ void C_TFRagdoll::CreateTFGibs( bool bKill, bool bLocalOrigin )
 			else
 				vecOrigin = m_vecRagdollOrigin;
 
-			pPlayer->CreatePlayerGibs( vecOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false );
+			pPlayer->CreatePlayerGibs( vecOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false, false, m_bWasDisguised );
 		}
 	}
 
@@ -1018,7 +964,26 @@ void C_TFRagdoll::CreateTFHeadGib( void )
 	{
 		Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
 		VectorNormalize( vecVelocity );
-		pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, true );
+		pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, false, true, m_bWasDisguised );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFRagdoll::CreateWearableGibs( bool bDisguised )
+{
+	C_TFPlayer *pPlayer = NULL;
+	EHANDLE hPlayer = GetPlayerHandle();
+	if ( hPlayer )
+	{
+		pPlayer = dynamic_cast<C_TFPlayer *>( hPlayer.Get() );
+	}
+	if ( pPlayer )
+	{
+		Vector vecVelocity = m_vecForce + m_vecRagdollVelocity;
+		VectorNormalize( vecVelocity );
+		pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length(), m_bBurning, true, false, bDisguised );
 	}
 }
 
@@ -4428,7 +4393,7 @@ void C_TFPlayer::InitPlayerGibs( void )
 //			&vecVelocity - 
 //			&vecImpactVelocity - 
 //-----------------------------------------------------------------------------
-void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bHeadGib )
+void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bWearables, bool bHeadGib, bool bDisguised )
 {
 	// Make sure we have Gibs to create.
 	if ( m_aGibs.Count() == 0 )
@@ -4451,51 +4416,135 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 	breakablepropparams_t breakParams( vecOrigin, GetRenderAngles(), vecBreakVelocity, angularImpulse );
 	breakParams.impactEnergyScale = 1.0f;
 
-	// Break up the player.
-	m_hSpawnedGibs.Purge();
-
-	if ( bHeadGib )
+	if ( bWearables )
 	{
-		if ( !UTIL_IsLowViolence() )
+		for ( C_EconWearable *pWearable : m_hMyWearables )
 		{
-			CUtlVector<breakmodel_t> list;
-			const int iClassIdx = GetPlayerClass()->GetClassIndex();
-			for ( int i=0; i<m_aGibs.Count(); ++i )
-			{
-				breakmodel_t const &breakModel = m_aGibs[i];
-				if ( !V_stricmp( breakModel.modelName, g_pszHeadGibs[iClassIdx] ) )
-					list.AddToHead( breakModel );
-			}
+			C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( pWearable );
+			if ( pTFWearable == nullptr )
+				continue;
 
-			m_hFirstGib = CreateGibsFromList( list, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
-			if ( m_hFirstGib )
+			/*if ( pTFWearable->GetDropType() != 2 )
+				continue;*/
+
+			/*if ( bDisguised && !pTFWearable->m_bDisguiseWearable ||
+				 !bDisguised && pTFWearable->m_bDisguiseWearable )
+				continue;*/
+
+			if ( pWearable->IsDynamicModelLoading() && pWearable->GetModelPtr() == nullptr )
+				continue;
+
+			const model_t *pModel = modelinfo->GetModel( pWearable->GetModelIndex() );
+			const char *szModel = modelinfo->GetModelName( pModel );
+			if ( !szModel || !*szModel )
+				continue;
+
+			Vector vecOrigin; matrix3x4_t root;
+			if ( pWearable->IsDynamicModelLoading() || !pWearable->GetRootBone( root ) )
+				vecOrigin = pWearable->GetAbsOrigin();
+			else
+				MatrixGetColumn( root, 3, &vecOrigin );
+
+			if( IsEntityPositionReasonable( vecOrigin ) )
 			{
-				Vector velocity, impulse;
-				IPhysicsObject *pPhys = m_hFirstGib->VPhysicsGetObject();
-				if ( pPhys )
+				CTraceFilterNoNPCsOrPlayer filter( this, COLLISION_GROUP_DEBRIS );
+				Vector vecMins, vecMaxs;
+				modelinfo->GetModelBounds( pModel, vecMins, vecMaxs );
+
+				trace_t tr;
+				UTIL_TraceHull( vecOrigin, vecOrigin, vecMins, vecMaxs, MASK_SOLID, &filter, &tr );
+				if ( tr.startsolid )
+					continue;
+
+				C_EconWearableGib *pProp = new C_EconWearableGib;
+				if ( pProp == nullptr )
+					return;
+
+				const CEconItemView *pItem = pTFWearable->GetItem();
+				if ( pItem )
+					pProp->SetItem( *pItem );
+
+				string_t iModel = AllocPooledString( szModel );
+				pProp->SetModelName( iModel );
+
+				pProp->SetAbsOrigin( vecOrigin );
+				pProp->SetAbsAngles( pWearable->GetAbsAngles() );
+
+				pProp->SetOwnerEntity( this );
+				pProp->ChangeTeam( GetTeamNumber() );
+
+				if ( pProp->Initialize( false ) )
 				{
-					pPhys->GetVelocity( &velocity, &impulse );
-					impulse.x *= 6.0f;
-					pPhys->AddVelocity( &velocity, &impulse );
+					pProp->m_nSkin = pTFWearable->GetSkin();
+					pProp->StartFadeOut( 15.0f );
+
+					if ( pProp->VPhysicsGetObject() )
+					{
+						IPhysicsObject *pPhysics = pProp->VPhysicsGetObject();
+
+						Vector vecDir = vecVelocity.Normalized();
+						vecDir.x += RandomFloat( -1.0f, 1.0f );
+						vecDir.y += RandomFloat( -1.0f, 1.0f );
+						vecDir.z += RandomFloat( 0.0f, 1.0f );
+
+						vecDir.NormalizeInPlace();
+
+						Vector vecNewVelocity = vecVelocity + vecDir * vecVelocity.Normalized() * RandomFloat( -0.25f, 0.25f );
+						pPhysics->AddVelocity( &vecNewVelocity, &angularImpulse );
+					}
+				}
+				else
+				{
+					pProp->Release();
 				}
 			}
 		}
 	}
 	else
 	{
-		m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
+		// Break up the player.
+		m_hSpawnedGibs.Purge();
+
+		if ( bHeadGib )
+		{
+			if ( !UTIL_IsLowViolence() )
+			{
+				CUtlVector<breakmodel_t> list;
+				const int iClassIdx = GetPlayerClass()->GetClassIndex();
+				for ( int i=0; i < m_aGibs.Count(); ++i )
+				{
+					breakmodel_t const &breakModel = m_aGibs[ i ];
+					if ( !V_stricmp( breakModel.modelName, g_pszHeadGibs[ iClassIdx ] ) )
+						list.AddToHead( breakModel );
+				}
+
+				m_hFirstGib = CreateGibsFromList( list, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
+				if ( m_hFirstGib )
+				{
+					Vector velocity, impulse;
+					IPhysicsObject *pPhys = m_hFirstGib->VPhysicsGetObject();
+					if ( pPhys )
+					{
+						pPhys->GetVelocity( &velocity, &impulse );
+						impulse.x *= 6.0f;
+						pPhys->AddVelocity( &velocity, &impulse );
+					}
+				}
+			}
+		}
+		else
+		{
+			m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
+		}
 	}
 
 	DropPartyHat( breakParams, vecBreakVelocity );
-	if ( TFGameRules() && TFGameRules()->IsBirthday() )
-		DropHat( breakParams, vecBreakVelocity );
-
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFPlayer::DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity )
+void C_TFPlayer::DropPartyHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity )
 {
 	if ( m_hPartyHat )
 	{
@@ -4521,7 +4570,7 @@ void C_TFPlayer::DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBr
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void C_TFPlayer::DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity )
+void C_TFPlayer::DropHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity )
 {
 	for ( int i=0; i<m_hMyWearables.Count(); ++i )
 	{

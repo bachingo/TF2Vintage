@@ -149,7 +149,7 @@ public:
 
 	// Gibs.
 	void InitPlayerGibs( void );
-	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bHeadGib );
+	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bWearables, bool bBurning, bool bHeadGib, bool bDisguised );
 	void DropPartyHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity );
 	void DropHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity );
 
