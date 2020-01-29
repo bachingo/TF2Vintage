@@ -40,11 +40,11 @@ const char *g_pszArrowModels[] =
 
 const char *g_pszArrowHits[] =
 {
-	"arrow_impact"
-	"bolt_impact"
-	"claw_impact"
-	"arrow_impact"
-	"bolt_impact"
+	"arrow_impact",
+	"bolt_impact",
+	"claw_impact",
+	"arrow_impact",
+	"bolt_impact",
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
