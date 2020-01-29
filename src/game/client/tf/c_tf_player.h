@@ -138,6 +138,8 @@ public:
 
 	void			BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
 
+	void			CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool bDisguised );
+
 	// Minimal Viewmodels
 	void			CalcMinViewmodelOffset( void );
 
@@ -148,8 +150,8 @@ public:
 	// Gibs.
 	void InitPlayerGibs( void );
 	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bHeadGib );
-	void DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
-	void DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
+	void DropPartyHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity );
+	void DropHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity );
 
 	int	GetObjectCount( void );
 	C_BaseObject *GetObject( int index );

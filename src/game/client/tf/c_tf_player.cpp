@@ -281,7 +281,7 @@ public:
 	}
 
 private:
-
+	friend class C_TFPlayer;
 	C_TFRagdoll( const C_TFRagdoll & ) {}
 
 	void Interp_Copy( C_BaseAnimatingOverlay *pSourceEntity );
@@ -293,6 +293,7 @@ private:
 	//void CreateWearableGibs( void );
 private:
 
+protected:
 	CNetworkVector( m_vecRagdollVelocity );
 	CNetworkVector( m_vecRagdollOrigin );
 	int	  m_iPlayerIndex;
@@ -853,7 +854,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 	if ( pPlayer )
 	{
-		//pPlayer->CreateBoneAttachmentsFromWearables( this, m_bWasDisguised );
+		pPlayer->CreateBoneAttachmentsFromWearables( this, m_bWasDisguised );
 		pPlayer->MoveBoneAttachments( this );
 
 		int nBombinomiconDeath = 0;
@@ -861,19 +862,6 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		if ( nBombinomiconDeath == 1 && !m_bGib && !m_bGoldRagdoll )
 			m_flDeathDelay = 1.2f;
 	}
-
-
-	AngularImpulse angularImpulse( RandomFloat( 0.0f, 120.0f ), RandomFloat( 0.0f, 120.0f ), 0.0 );
-	breakablepropparams_t breakParams( m_vecRagdollOrigin, GetRenderAngles(), m_vecRagdollVelocity, angularImpulse );
-	breakParams.impactEnergyScale = 1.0f;
-	// Birthday mode.
-	if (pPlayer && TFGameRules() && TFGameRules()->IsBirthday())
-	{
-		pPlayer->DropPartyHat( breakParams, m_vecRagdollVelocity.GetForModify() );
-	}
-	// Also drop a hat if we're wearing one.
-	if ( !m_bGoldRagdoll || !m_bIceRagdoll )
-		pPlayer->DropHat(breakParams, m_vecRagdollVelocity.GetForModify());
 
 	const char *pszMaterial = NULL;
 	if ( m_bGoldRagdoll )
@@ -3318,6 +3306,71 @@ void C_TFPlayer::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quat
 	BuildBigHeadTransformation( this, pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed, m_flHeadScale );
 
 	BuildFirstPersonMeathookTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed, "bip_head" );
+}
+
+void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool bDisguised )
+{
+	if ( bDisguised && !ShouldDrawSpyAsDisguised() )
+		return;
+
+	for ( C_EconWearable *pWearable : m_hMyWearables )
+	{
+		C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( pWearable );
+		if ( pTFWearable == nullptr )
+			continue;
+
+		if ( pTFWearable->IsViewModelWearable() )
+			continue;
+
+		/*if ( bDisguised && !pTFWearable->m_bDisguiseWearable ||
+			 !bDisguised && pTFWearable->m_bDisguiseWearable )
+			continue;*/
+
+		if ( pTFWearable->GetFlags() & EF_NODRAW )
+			continue;
+
+		//pTFWearable->OnWearerDeath();
+
+		/*if ( pTFWearable->GetDropType() > 1 )
+			continue;*/
+
+		if ( pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS || 
+			 pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_MERASMUS_DECAPITATION )
+			continue;
+
+		C_EconWearableGib *pProp = new C_EconWearableGib;
+		if ( pProp == nullptr )
+			return;
+
+		const model_t *pModel = pWearable->GetModel();
+		const char *szModel = modelinfo->GetModelName( pModel );
+		if ( !szModel || !*szModel || *szModel == '?' )
+			continue;
+
+		const CEconItemView *pItem = pTFWearable->GetItem();
+		if ( pItem )
+			pProp->SetItem( *pItem );
+
+		string_t iModel = AllocPooledString( szModel );
+		pProp->SetModelName( iModel );
+
+		if ( pProp->Initialize( true ) )
+		{
+			pProp->m_nSkin = pTFWearable->GetSkin();
+			pProp->AttachEntityToBone( this );
+
+			if ( pItem && pItem->GetStaticData() )
+			{
+				PerTeamVisuals_t *pVisuals = pItem->GetStaticData()->GetVisuals( GetTeamNumber() );
+				if ( pVisuals && pVisuals->use_per_class_bodygroups )
+					pProp->SetBodygroup( 1, pRagdoll->m_iClass - 1 );
+			}
+		}
+		else
+		{
+			pProp->Release();
+		}
+	}
 }
 
 void C_TFPlayer::CalcMinViewmodelOffset( void )
