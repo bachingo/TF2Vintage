@@ -14,6 +14,10 @@
 #include "c_tf_viewmodeladdon.h"
 #endif
 
+#ifdef GAME_DLL
+#include "tf_player.h"
+#endif
+
 //=============================================================================
 //
 // Weapon Bonesaw tables.
@@ -65,5 +69,30 @@ void C_TFBonesaw::UpdateChargePoseParam( void )
 			pAttachment->SetPoseParameter( "syringe_charge_level", pMedigun->GetChargeLevel() );
 		}
 	}
+}
+#endif
+
+#ifdef GAME_DLL
+void CTFBonesaw::SecondaryAttack( void )
+{
+	int nAOEHeal = 0;
+	CALL_ATTRIB_HOOK_INT(nAOEHeal, enables_aoe_heal);
+	
+	if ( nAOEHeal )
+	{
+		// semi-auto behaviour
+		if ( m_bInAttack2 )
+			return;
+
+		// Get the player owning the weapon.
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+		if ( !pPlayer )
+			return;
+		
+		pPlayer->Taunt();
+		return;
+	}
+	
+	BaseClass::SecondaryAttack();
 }
 #endif

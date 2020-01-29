@@ -37,6 +37,9 @@ public:
 	void				UpdateChargePoseParam( void );
 #endif
 
+#ifdef GAME_DLL
+	void				SecondaryAttack(void);
+#endif
 private:
 
 	CTFBonesaw( const CTFBonesaw & ) {}
