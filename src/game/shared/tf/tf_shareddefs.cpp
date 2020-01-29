@@ -43,7 +43,7 @@ const char *g_aTeamParticleNames[TF_TEAM_COUNT] =
 	"blue",
 };
 
-// Putting a dummy boolean for the old dm shit for now
+// Putting a dummy boolean for the old dm content for now
 
 const char *GetTeamParticleName( int iTeam, bool bDummyBoolean /*= false*/, const char **pNames/* = g_aTeamParticleNames*/ )
 {
