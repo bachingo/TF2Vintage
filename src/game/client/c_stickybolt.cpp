@@ -118,7 +118,7 @@ public:
 			physenv->CreateBallsocketConstraint( pReference, pPhysicsObject, NULL, ballsocket );
 
 			//Play a sound
-			/*CPASAttenuationFilter filter( pEnt );
+			CPASAttenuationFilter filter( pEnt );
 
 			EmitSound_t ep;
 			ep.m_nChannel = CHAN_VOICE;
@@ -127,7 +127,7 @@ public:
 			ep.m_SoundLevel = SNDLVL_NORM;
 			ep.m_pOrigin = &pEnt->GetAbsOrigin();
 
-			C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, ep );*/
+			C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, ep );
 	
 			return ITERATION_STOP;
 		}
@@ -140,22 +140,17 @@ private:
 	Vector  m_vWorld;
 };
 
-void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin  )
+void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 {
-	Assert( iType >= 0 && iType < ARRAYSIZE( g_pszArrowModelClient ) );
-	//repurpose old crossbow collision code for huntsman collisions
-	const model_t *pModel = engine->LoadModel( g_pszArrowModelClient[ iType ] );
+	const model_t *pModel = engine->LoadModel( "models/crossbow_bolt.mdl" );
 
 	QAngle vAngles;
 	VectorAngles( vecDirection, vAngles );
-	float flLifeTime = ( TEMP_OBJECT_LIFETIME * 3); // A little longer than normal temporary entities.
 
-	C_LocalTempEntity *pTemp = tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), flLifeTime, FTENT_NONE );
-	pTemp->m_nSkin = iSkin;
-
+	tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 8, vAngles, Vector( 0, 0, 0 ), 30.0f, FTENT_NONE );
 }
 
-void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int iType, int iSkin )
+void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection )
 {
 	Ray_t	shotRay;
 	trace_t tr;
@@ -172,7 +167,7 @@ void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int i
 	CRagdollBoltEnumerator ragdollEnum( shotRay, vecOrigin );
 	partition->EnumerateElementsAlongRay( PARTITION_CLIENT_RESPONSIVE_EDICTS, shotRay, false, &ragdollEnum );
 	
-	CreateCrossbowBolt( vecOrigin, vecDirection, iType, iSkin  );
+	CreateCrossbowBolt( vecOrigin, vecDirection );
 }
 
 //-----------------------------------------------------------------------------
@@ -181,9 +176,101 @@ void StickRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, int i
 //-----------------------------------------------------------------------------
 void StickyBoltCallback( const CEffectData &data )
 {
-	 StickRagdollNow( data.m_vOrigin, data.m_vNormal, data.m_iType, data.m_nSkin );
+	 StickRagdollNow( data.m_vOrigin, data.m_vNormal );
 }
 
-
-
 DECLARE_CLIENT_EFFECT( "BoltImpact", StickyBoltCallback );
+
+
+void CreateTFCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iProjType, byte nSkin )
+{
+	Assert( iProjType >= 0 && iProjType < ARRAYSIZE( g_pszArrowModelClient ) );
+	const model_t *pModel = engine->LoadModel( g_pszArrowModelClient[ iProjType ] );
+
+	QAngle vAngles;
+	VectorAngles( vecDirection, vAngles );
+
+	C_LocalTempEntity *pTemp = tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 5.f, vAngles, vec3_origin, TEMP_OBJECT_LIFETIME, FTENT_NONE );
+	if ( pTemp )
+	{
+		pTemp->SetModelScale( 1.0f );
+		pTemp->m_nSkin = nSkin;
+	}
+}
+
+void StickTFRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, ClientEntityHandle_t const &pEntity, int iBone, int iPhysicsBone, int iOwner, int iHitGroup, int iVictim, int iProjType, byte nSkin )
+{
+	trace_t tr;
+	UTIL_TraceLine( vecOrigin, vecOrigin - vecDirection * 16.f, MASK_SOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &tr );
+
+	if ( tr.surface.flags & SURF_SKY )
+		return;
+
+	C_BaseAnimating *pModel = dynamic_cast<C_BaseAnimating *>( ClientEntityList().GetBaseEntityFromHandle( pEntity ) );
+	if ( pModel && pModel->m_pRagdoll )
+	{
+		IPhysicsObject *pPhysics = NULL;
+		if ( iPhysicsBone >= 0 )
+		{
+			ragdoll_t *pRagdoll = pModel->m_pRagdoll->GetRagdoll();
+
+			if ( iPhysicsBone < pRagdoll->listCount )
+			{
+				pPhysics = pRagdoll->list[iPhysicsBone].pObject;
+			}
+		}
+
+		if ( GetWorldPhysObject() && pPhysics )
+		{
+			Vector vecPhyOrigin; QAngle vecPhyAngle;
+			pPhysics->GetPosition( &vecPhyOrigin, &vecPhyAngle );
+
+			vecPhyOrigin = vecOrigin - ( vecDirection * ( rand() / VALVE_RAND_MAX ) ) * 7.f + vecDirection * 7.f;
+			pPhysics->SetPosition( vecPhyOrigin, vecPhyAngle, true );
+
+			pPhysics->EnableMotion( false );
+
+
+		}
+	}
+
+	UTIL_ImpactTrace( &tr, DMG_GENERIC );
+	CreateTFCrossbowBolt( vecOrigin, vecDirection, iProjType, nSkin );
+
+	// Notify achievements
+	if ( iHitGroup == HITGROUP_HEAD )
+	{
+		C_TFPlayer *pPlayer = CTFPlayer::GetLocalTFPlayer();
+		if ( pPlayer && pPlayer->entindex() == iOwner )
+		{
+			C_TFPlayer *pVictim = ToTFPlayer( UTIL_PlayerByIndex( iVictim ) );
+			if ( pVictim && pVictim->IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
+			{
+				IGameEvent *event = gameeventmanager->CreateEvent( "player_pinned" );
+				if ( event )
+					gameeventmanager->FireEventClientSide( event );
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &data - 
+//-----------------------------------------------------------------------------
+void TFStickyBoltCallback( const CEffectData &data )
+{
+	// This is a mess
+	StickTFRagdollNow( data.m_vOrigin, 
+					   data.m_vNormal,
+					   data.m_hEntity,
+					   0,
+					   data.m_nMaterial,
+					   data.m_nHitBox,
+					   data.m_nDamageType,
+					   data.m_nSurfaceProp,
+					   data.m_fFlags,
+					   data.m_nColor );
+}
+
+DECLARE_CLIENT_EFFECT( "TFBoltImpact", TFStickyBoltCallback );
