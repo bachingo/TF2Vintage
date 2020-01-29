@@ -65,6 +65,7 @@ public:
 	virtual void		Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	bool				CanHeadshot( void );
+	virtual int			GetProjectileType( void ) const { return m_iType; }
 	void				ArrowTouch( CBaseEntity *pOther );
 	void				FlyThink( void );
 	const char			*GetTrailParticleName( void );
@@ -76,7 +77,7 @@ public:
 	// Arrow attachment functions
 	bool				PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimating *pAnim );
 	void				GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnimating *pAnim, Vector &vecOrigin, QAngle &vecAngles, int &bone, int &iPhysicsBone );
-	void				CheckRagdollPinned( Vector &, Vector &, int, int, CBaseEntity *, int, int );
+	bool				CheckRagdollPinned( Vector const& vecOrigin, Vector const& vecDirection, int iBone, int iPhysBone, CBaseEntity *pEntity, int iHitGroup, int unk );
 
 	void				PlayImpactSound( CTFPlayer *pAttacker, const char *pszImpactSound, bool bIsPlayerImpact = false );
 

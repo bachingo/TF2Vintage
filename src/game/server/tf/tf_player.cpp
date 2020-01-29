@@ -6742,6 +6742,16 @@ bool CTFPlayer::PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo
 
 //-----------------------------------------------------------------------------
 // Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::StopRagdollDeathAnim( void )
+{
+	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll *>( m_hRagdoll.Get() );
+	if ( pRagdoll )
+		pRagdoll->m_iDamageCustom = 0; //??
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
 // Input  : *pWeapon - 
 //			&vecOrigin - 
 //			&vecAngles - 
@@ -8606,7 +8616,6 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
 		pRagdoll->m_flHeadScale = m_flHeadScale;
-		pRagdoll->m_hRagdollWearables = m_hMyWearables;
 	}
 
 	// Turn off the player.

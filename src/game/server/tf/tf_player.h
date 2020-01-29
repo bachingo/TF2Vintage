@@ -152,6 +152,7 @@ public:
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 	virtual bool		Event_Gibbed( const CTakeDamageInfo &info );
 	virtual bool		BecomeRagdoll( const CTakeDamageInfo &info, const Vector &forceVector );
+	void				StopRagdollDeathAnim( void );
 	virtual void		PlayerDeathThink( void );
 
 	virtual bool 		IsBehindTarget( CBaseEntity *pVictim );
