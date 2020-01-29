@@ -166,7 +166,7 @@ class IEconAttributeIterator
 public:
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) = 0;
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) = 0;
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) = 0;
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t ) = 0;
 };
 
 // Client specific.
