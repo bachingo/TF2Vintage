@@ -54,7 +54,7 @@ CTEFireBullets::~CTEFireBullets( void )
 }
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEFireBullets, DT_TEFireBullets )
-	SendPropVector( SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropVector( SENDINFO( m_vecOrigin ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 0 ), 7, 0 ),
 	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 1 ), 7, 0 ),
 	SendPropInt( SENDINFO( m_iWeaponID ), Q_log2(TF_WEAPON_COUNT)+1, SPROP_UNSIGNED ),
@@ -217,12 +217,12 @@ void CTETFParticleEffect::Init( void )
 
 
 IMPLEMENT_SERVERCLASS_ST( CTETFParticleEffect, DT_TETFParticleEffect )
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropQAngles( SENDINFO_NOCHECK( m_vecAngles ), 7 ),
 	SendPropInt( SENDINFO_NOCHECK( m_iParticleSystemIndex ), 16, SPROP_UNSIGNED ),	// probably way too high
 	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS ),
@@ -234,9 +234,9 @@ IMPLEMENT_SERVERCLASS_ST( CTETFParticleEffect, DT_TETFParticleEffect )
 	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor2 ) ),
 	SendPropInt( SENDINFO_NOCHECK( m_bControlPoint1 ) ),
 	SendPropInt( SENDINFO_NOCHECK( m_ControlPoint1.m_eParticleAttachment ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 0 ] ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 1 ] ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 2 ] ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[0] ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[1] ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[2] ) ),
 END_SEND_TABLE()
 
 //-----------------------------------------------------------------------------

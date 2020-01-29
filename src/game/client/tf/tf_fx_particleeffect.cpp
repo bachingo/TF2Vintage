@@ -124,7 +124,7 @@ IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TETFParticleEffect, DT_TETFParticleEffect, CTE
 	RecvPropVector( RECVINFO( m_CustomColors.m_vecColor2 ) ),
 	RecvPropInt( RECVINFO( m_bControlPoint1 ) ),
 	RecvPropInt( RECVINFO( m_ControlPoint1.m_eParticleAttachment ) ),
-	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[ 0 ] ) ),
-	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[ 1 ] ) ),
-	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[ 2 ] ) ),
+	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[0] ) ),
+	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[1] ) ),
+	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[2] ) ),
 END_RECV_TABLE()
