@@ -54,15 +54,15 @@ CTEFireBullets::~CTEFireBullets( void )
 }
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEFireBullets, DT_TEFireBullets )
-SendPropVector( SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_INTEGRAL ),
-SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 0 ), 7, 0 ),
-SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 1 ), 7, 0 ),
-SendPropInt( SENDINFO( m_iWeaponID ), Q_log2(TF_WEAPON_COUNT)+1, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_iMode ), 1, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_iSeed ), NUM_BULLET_SEED_BITS, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_iPlayer ), 6, SPROP_UNSIGNED ), 	// max 64 players, see MAX_PLAYERS
-SendPropFloat( SENDINFO( m_flSpread ), 8, 0, 0.0f, 1.0f ),	
-SendPropBool( SENDINFO( m_bCritical ) ),
+	SendPropVector( SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 0 ), 7, 0 ),
+	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 1 ), 7, 0 ),
+	SendPropInt( SENDINFO( m_iWeaponID ), Q_log2(TF_WEAPON_COUNT)+1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iMode ), 1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iSeed ), NUM_BULLET_SEED_BITS, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iPlayer ), 6, SPROP_UNSIGNED ), 	// max 64 players, see MAX_PLAYERS
+	SendPropFloat( SENDINFO( m_flSpread ), 8, 0, 0.0f, 1.0f ),	
+	SendPropBool( SENDINFO( m_bCritical ) ),
 END_SEND_TABLE()
 
 // Singleton
@@ -179,6 +179,12 @@ public:
 	int m_iAttachmentPointIndex;
 
 	bool m_bResetParticles;
+
+	bool							m_bCustomColors;
+	te_tf_particle_effects_colors_t	m_CustomColors;
+
+	bool									m_bControlPoint1;
+	te_tf_particle_effects_control_point_t	m_ControlPoint1;
 };
 
 // Singleton to fire explosion objects
@@ -211,18 +217,26 @@ void CTETFParticleEffect::Init( void )
 
 
 IMPLEMENT_SERVERCLASS_ST( CTETFParticleEffect, DT_TETFParticleEffect )
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropQAngles( SENDINFO_NOCHECK( m_vecAngles ), 7 ),
 	SendPropInt( SENDINFO_NOCHECK( m_iParticleSystemIndex ), 16, SPROP_UNSIGNED ),	// probably way too high
 	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS ),
 	SendPropInt( SENDINFO_NOCHECK( m_iAttachType ), 5, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO_NOCHECK( m_iAttachmentPointIndex ), Q_log2(MAX_PATTACH_TYPES) + 1, SPROP_UNSIGNED ),
-	SendPropBool( SENDINFO_NOCHECK( m_bResetParticles ) ),
+	SendPropInt( SENDINFO_NOCHECK( m_iAttachmentPointIndex ), Q_log2( MAX_PATTACH_TYPES ) + 1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NOCHECK( m_bResetParticles ) ),
+	SendPropInt( SENDINFO_NOCHECK( m_bCustomColors ) ),
+	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor1 ) ),
+	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor2 ) ),
+	SendPropInt( SENDINFO_NOCHECK( m_bControlPoint1 ) ),
+	SendPropInt( SENDINFO_NOCHECK( m_ControlPoint1.m_eParticleAttachment ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 0 ] ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 1 ] ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 2 ] ) ),
 END_SEND_TABLE()
 
 //-----------------------------------------------------------------------------
