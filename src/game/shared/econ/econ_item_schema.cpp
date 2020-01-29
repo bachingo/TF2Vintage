@@ -43,6 +43,13 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 	}
 }
 
+CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_iRawValue32 = src.m_iRawValue32;
+	m_iAttributeClass = src.m_iAttributeClass;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -51,7 +58,7 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 	m_iAttributeDefinitionIndex = iIndex;
 
 	attrib_data_union_t value;
-	value.sVal = AllocPooledString_StaticConstantStringPointer( pszValue );
+	value.sVal = AllocPooledString( pszValue );
 	m_iRawValue32 = value.iVal;
 
 	if ( pszAttributeClass )

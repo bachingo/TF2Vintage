@@ -5,9 +5,12 @@
 #pragma once
 #endif
 
-#include "econ_item_schema.h"
 
 class CEconSchemaParser;
+class CEconItemDefinition;
+struct EconAttributeDefinition;
+struct EconQuality;
+struct EconColor;
 
 enum
 {
@@ -38,6 +41,8 @@ public:
 	EconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );
 	int GetAttributeIndex( const char *classname );
 	int GetAttributeType( const char *type ) const;
+
+	KeyValues *m_pSchema;
 
 protected:
 	CUtlDict< int, unsigned short >					m_GameInfo;

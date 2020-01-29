@@ -37,6 +37,12 @@ public:
 	int m_iAttachmentPointIndex;
 
 	bool m_bResetParticles;
+
+	bool							m_bCustomColors;
+	te_tf_particle_effects_colors_t	m_CustomColors;
+
+	bool									m_bControlPoint1;
+	te_tf_particle_effects_control_point_t	m_ControlPoint1;
 };
 
 //-----------------------------------------------------------------------------
@@ -113,4 +119,12 @@ IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TETFParticleEffect, DT_TETFParticleEffect, CTE
 	RecvPropInt( RECVINFO( m_iAttachType ) ),
 	RecvPropInt( RECVINFO( m_iAttachmentPointIndex ) ),
 	RecvPropInt( RECVINFO( m_bResetParticles ) ),
+	RecvPropInt( RECVINFO( m_bCustomColors ) ),
+	RecvPropVector( RECVINFO( m_CustomColors.m_vecColor1 ) ),
+	RecvPropVector( RECVINFO( m_CustomColors.m_vecColor2 ) ),
+	RecvPropInt( RECVINFO( m_bControlPoint1 ) ),
+	RecvPropInt( RECVINFO( m_ControlPoint1.m_eParticleAttachment ) ),
+	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[0] ) ),
+	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[1] ) ),
+	RecvPropFloat( RECVINFO( m_ControlPoint1.m_vecOffset[2] ) ),
 END_RECV_TABLE()

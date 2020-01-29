@@ -27,6 +27,7 @@
 
 class C_MuzzleFlashModel;
 class C_BaseObject;
+class C_TFRagdoll;
 
 extern ConVar tf_medigun_autoheal;
 extern ConVar cl_autorezoom;
@@ -137,6 +138,8 @@ public:
 
 	void			BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
 
+	void			CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool bDisguised );
+
 	// Minimal Viewmodels
 	void			CalcMinViewmodelOffset( void );
 
@@ -146,9 +149,9 @@ public:
 
 	// Gibs.
 	void InitPlayerGibs( void );
-	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bBurning, bool bHeadGib );
-	void DropPartyHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
-	void DropHat( breakablepropparams_t &breakParams, Vector &vecBreakVelocity );
+	void CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVelocity, float flImpactScale, bool bWearables, bool bBurning, bool bHeadGib, bool bDisguised );
+	void DropPartyHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity );
+	void DropHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity );
 
 	int	GetObjectCount( void );
 	C_BaseObject *GetObject( int index );

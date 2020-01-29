@@ -130,29 +130,29 @@ public:
 		if (from->GetString(#name, NULL))												\
 			V_strncpy(copyto->name, from->GetString(#name), sizeof(copyto->name))
 
-#define GET_STRING_DEFAULT(copyto, from, name, defaultstring)		\
+#define GET_STRING_DEFAULT(copyto, from, name, defaultstring) \
 		V_strncpy(copyto->name, from->GetString(#name, #defaultstring), sizeof(copyto->name))
 
-#define GET_BOOL(copyto, from, name)													\
+#define GET_BOOL(copyto, from, name) \
 		copyto->name = from->GetBool(#name, copyto->name)
 
-#define GET_FLOAT(copyto, from, name)													\
+#define GET_FLOAT(copyto, from, name) \
 		copyto->name = from->GetFloat(#name, copyto->name)
 
-#define GET_INT(copyto, from, name)														\
+#define GET_INT(copyto, from, name) \
 		copyto->name = from->GetInt(#name, copyto->name)
 
-#define GET_STRING_CONVERT(copyto, from, name)											\
+#define GET_STRING_CONVERT(copyto, from, name) \
 		if (from->GetString(#name, NULL))
 
 #define FIND_ELEMENT(map, key, val)						\
 		unsigned int index = map.Find(key);				\
-		if (index != map.InvalidIndex())						\
+		if (index != map.InvalidIndex())				\
 			val = map.Element(index)				
 
 #define FIND_ELEMENT_STRING(map, key, val)						\
 		unsigned int index = map.Find(key);						\
-		if (index != map.InvalidIndex())								\
+		if (index != map.InvalidIndex())						\
 			Q_snprintf(val, sizeof(val), map.Element(index))
 
 #define IF_ELEMENT_FOUND(map, key)						\
@@ -161,30 +161,30 @@ public:
 
 #define GET_VALUES_FAST_BOOL(dict, keys)\
 		for (KeyValues *pKeyData = keys->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey())\
-				{													\
+		{													\
 			IF_ELEMENT_FOUND(dict, pKeyData->GetName())		\
-				{												\
+			{												\
 				dict.Element(index) = pKeyData->GetBool();	\
-				}												\
-						else											\
-				{												\
+			}												\
+			else											\
+			{												\
 				dict.Insert(pKeyData->GetName(), pKeyData->GetBool());\
-				}												\
-				}
+			}												\
+		}
 
 
 #define GET_VALUES_FAST_STRING(dict, keys)\
 		for (KeyValues *pKeyData = keys->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey())	\
-				{													\
+		{													\
 			IF_ELEMENT_FOUND(dict, pKeyData->GetName())		\
-				{												\
+			{												\
 				Q_snprintf((char*)dict.Element(index), sizeof(dict.Element(index)), pKeyData->GetString());		\
-				}												\
-						else											\
-				{												\
+			}												\
+			else											\
+			{												\
 				dict.Insert(pKeyData->GetName(), strdup(pKeyData->GetString()));\
-				}												\
-				}	
+			}												\
+		}	
 
 	void Parse( KeyValues *pKeyValuesData, bool bWildcard, const char *szFileWithoutEXT )
 	{
@@ -320,7 +320,7 @@ public:
 
 	bool ParseVisuals( KeyValues *pData, CEconItemDefinition* pItem, int iIndex )
 	{
-		PerTeamVisuals_t *pVisuals = &pItem->visual[iIndex];
+		EconPerTeamVisuals *pVisuals = &pItem->visual[iIndex];
 
 		for ( KeyValues *pVisualData = pData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
 		{
@@ -339,16 +339,16 @@ public:
 					pVisuals->attached_models.AddToTail( attached_model );
 				}
 			}
-			else if ( !V_strcmp( pVisualData->GetName(), "custom_particlesystem" ) )
+			else if ( !V_stricmp( pVisualData->GetName(), "custom_particlesystem" ) )
 			{
 				V_strncpy( pVisuals->custom_particlesystem, pVisualData->GetString( "system" ), sizeof( pVisuals->custom_particlesystem ) );
 			}
-			else if ( !V_stricmp(pVisualData->GetName(), "muzzle_flash" ) )
+			else if ( !V_stricmp( pVisualData->GetName(), "muzzle_flash" ) )
 			{
 				// Fetching this similar to weapon script file parsing.
 				V_strncpy( pVisuals->muzzle_flash, pVisualData->GetString( "system" ), sizeof( pVisuals->muzzle_flash ) );
 			}
-			else if ( !V_stricmp(pVisualData->GetName(), "tracer_effect") )
+			else if ( !V_stricmp( pVisualData->GetName(), "tracer_effect" ) )
 			{
 				// Fetching this similar to weapon script file parsing.
 				V_strncpy( pVisuals->tracer_effect, pVisualData->GetString( "system" ), sizeof( pVisuals->tracer_effect ) );
@@ -385,40 +385,42 @@ public:
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "styles" ) )
 			{
-				/*
 				for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
 				{
 					EconItemStyle *style;
-					IF_ELEMENT_FOUND(visual->styles, pStyleData->GetName())
+					IF_ELEMENT_FOUND( pVisuals->styles, pStyleData->GetName() )
 					{
-						style = visual->styles.Element(index);
+						style = pVisuals->styles.Element( index );
 					}
 					else
 					{
-						style = new EconItemStyle();
-						visual->styles.Insert(pStyleData->GetName(), style);
+						style = new EconItemStyle;
+						pVisuals->styles.Insert( pStyleData->GetName(), style );
 					}
 
-					GET_STRING(style, pStyleData, name);
-					GET_STRING(style, pStyleData, model_player);
-					GET_STRING(style, pStyleData, image_inventory);
-					GET_BOOL(style, pStyleData, selectable);
-					GET_INT(style, pStyleData, skin_red);
-					GET_INT(style, pStyleData, skin_blu);
+					GET_STRING( style, pStyleData, name );
+					GET_STRING( style, pStyleData, model_player );
+					GET_STRING( style, pStyleData, image_inventory );
+					GET_BOOL( style, pStyleData, selectable );
+					GET_INT( style, pStyleData, skin_red );
+					GET_INT( style, pStyleData, skin_blu );
 
-					for (KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey())
+					for ( KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey() )
 					{
-						if (!V_stricmp(pStyleModelData->GetName(), "model_player_per_class"))
+						if ( !V_stricmp( pStyleModelData->GetName(), "model_player_per_class" ) )
 						{
-							GET_VALUES_FAST_STRING(style->model_player_per_class, pStyleModelData);
+							GET_VALUES_FAST_STRING( style->model_player_per_class, pStyleModelData );
 						}
 					}
 				}
-				*/
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "skin" ) )
 			{
 				pVisuals->skin = pVisualData->GetInt();
+			}
+			else if ( !V_stricmp( pVisualData->GetName(), "use_per_class_bodygroups" ) )
+			{
+				pVisuals->use_per_class_bodygroups = pVisualData->GetInt();
 			}
 			else
 			{
@@ -512,14 +514,14 @@ public:
 		GET_BOOL( pItem, pData, act_as_wearable );
 		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
 		
-		GET_BOOL(pItem, pData, is_reskin);
-		GET_BOOL(pItem, pData, specialitem);
-		GET_BOOL(pItem, pData, demoknight);
-		GET_STRING(pItem, pData, holiday_restriction);
-		GET_BOOL(pItem, pData, itemfalloff);
-		GET_INT(pItem, pData, year);
-		GET_BOOL(pItem, pData, is_custom_content);
-		GET_STRING(pItem, pData, custom_projectile_model);
+		GET_BOOL( pItem, pData, is_reskin );
+		GET_BOOL( pItem, pData, specialitem );
+		GET_BOOL( pItem, pData, demoknight );
+		GET_STRING( pItem, pData, holiday_restriction );
+		GET_BOOL( pItem, pData, itemfalloff );
+		GET_INT( pItem, pData, year );
+		GET_BOOL( pItem, pData, is_custom_content );
+		GET_STRING( pItem, pData, custom_projectile_model );
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
@@ -690,6 +692,7 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
+	static static_attrib_t pAttribDef_CustomProjectile( "custom projectile model" );
 
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
@@ -751,13 +754,13 @@ void CEconItemSchema::Precache( void )
 			const char *pszMuzzleFlash = pVisuals->muzzle_flash;
 			if ( pszMuzzleFlash[0] != '\0' )
 			{
-				PrecacheParticleSystem(pszMuzzleFlash);
+				PrecacheParticleSystem( pszMuzzleFlash );
 			}
 			// Tracer Effect
 			const char *pszTracerEffect = pVisuals->tracer_effect;
 			if ( pszTracerEffect[0] != '\0' )
 			{
-				PrecacheParticleSystem(pszTracerEffect);
+				PrecacheParticleSystem( pszTracerEffect );
 			}
 
 		}
@@ -768,10 +771,14 @@ void CEconItemSchema::Precache( void )
 			CEconItemAttribute *pAttribute = &pItem->attributes[i];
 			attrib_data_union_t value;
 			value.iVal = pAttribute->m_iRawValue32;
+
+			// Special case for custom_projectile_model attribute.
+			if ( pAttribute->GetStaticData() == pAttribDef_CustomProjectile.attribute )
+			{
+				CBaseEntity::PrecacheModel( STRING( value.sVal ) );
+			}
 		}
-		
 	}
-		
 }
 
 CEconItemDefinition* CEconItemSchema::GetItemDefinition( int id )
@@ -794,11 +801,6 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
 
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const char *name )
 {
-	//unsigned int index = m_Attributes.Find(name);
-	//if (index < m_Attributes.Count())
-	//{
-	//	return &m_Attributes[index];
-	//}
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
 		if ( !V_stricmp( m_Attributes[i]->name, name ) )
@@ -812,11 +814,6 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const ch
 
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const char *classname )
 {
-	//unsigned int index = m_Attributes.Find(name);
-	//if (index < m_Attributes.Count())
-	//{
-	//	return &m_Attributes[index];
-	//}
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
 		if ( !V_stricmp( m_Attributes[i]->attribute_class, classname ) )

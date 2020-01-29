@@ -19,6 +19,7 @@
 
 #if defined( CLIENT_DLL )
 #define CEconWearable C_EconWearable
+#define CEconWearableGib C_EconWearableGib
 #endif
 
 
@@ -66,5 +67,33 @@ private:
 #endif
 
 };
+
+#if defined( CLIENT_DLL )
+class CEconWearableGib : public CEconEntity
+{
+	DECLARE_CLASS( CEconWearableGib, CEconEntity );
+public:
+	CEconWearableGib();
+	virtual ~CEconWearableGib() {}
+
+	virtual CollideType_t GetCollideType( void );
+	virtual void ImpactTrace( trace_t *pTrace, int dmgCustom, char const *szWeaponName );
+
+	virtual void Spawn( void );
+	virtual void SpawnClientEntity( void );
+	virtual CStudioHdr *OnNewModel( void );
+
+	virtual void ClientThink( void );
+	
+	void StartFadeOut( float flTime );
+	void FinishModelInitialization( void );
+	bool Initialize( bool bAttached );
+
+private:
+	bool m_bAttachedModel;
+	bool m_unk2;
+	float m_flFadeTime;
+};
+#endif
 
 #endif

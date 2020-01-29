@@ -485,52 +485,6 @@ bool HintCallbackNeedsResources_Teleporter( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
-{
-	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
-		return flValue;
-
-	m_bParsingMyself = true;;
-
-	CAttributeIterator_ApplyAttributeFloat func( m_hOuter, strAttributeClass, &flValue, pOutProviders );
-	m_hOuter->m_AttributeList.IterateAttributes( func );
-
-	m_bParsingMyself = false;
-
-	return BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
-{
-	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
-		return strValue;
-
-	m_bParsingMyself = true;
-
-	CAttributeIterator_ApplyAttributeString func( m_hOuter, strAttributeClass, &strValue, pOutProviders );
-	m_hOuter->m_AttributeList.IterateAttributes( func );
-
-	m_bParsingMyself = false;
-
-	return BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CAttributeContainerPlayer::OnAttributesChanged( void )
-{
-	m_hOuter->NetworkStateChanged();
-}
-
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 CTFPlayer::CTFPlayer()
 {
 	m_pAttributes = this;
@@ -1195,7 +1149,7 @@ void CTFPlayer::InitialSpawn( void )
 	BaseClass::InitialSpawn();
 
 	m_AttributeManager.InitializeAttributes( this );
-	m_AttributeManager.m_hOuter = this;
+	m_AttributeManager.m_hPlayer = this;
 
 	m_AttributeList.SetManager( &m_AttributeManager );
 
@@ -1518,6 +1472,44 @@ void CTFPlayer::InitClass( void )
 
 	// Reset active contexts;
 	m_hActiveContexts.RemoveAll();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFPlayer::OnEmitFootstepSound( CSoundParameters const &params, Vector const &vecOrigin, float flVolume )
+{
+	int nJingleOnStep = 0;
+	CALL_ATTRIB_HOOK_INT( nJingleOnStep, add_jingle_to_footsteps );
+	if ( nJingleOnStep > 0 )
+	{
+		const char *szSound = NULL;
+		switch ( nJingleOnStep )
+		{
+			case 1:
+				szSound = "xmas.jingle";
+				break;
+			case 2:
+			default:
+				szSound = "xmas.jingle_higher";
+				break;
+		}
+
+		CPASFilter filter( vecOrigin );
+		if ( 1 < gpGlobals->maxClients )
+			filter.RemoveRecipientsByPVS( vecOrigin );
+
+		EmitSound_t parm;
+		parm.m_nChannel = CHAN_BODY;
+		parm.m_pSoundName = szSound;
+		parm.m_flVolume = flVolume;
+		parm.m_SoundLevel = params.soundlevel;
+		parm.m_nFlags = SND_CHANGE_VOL;
+		parm.m_nPitch = params.pitch;
+		parm.m_pOrigin = &vecOrigin;
+
+		CBaseEntity::EmitSound( filter, entindex(), parm );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -6753,6 +6745,16 @@ bool CTFPlayer::PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo
 
 //-----------------------------------------------------------------------------
 // Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::StopRagdollDeathAnim( void )
+{
+	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll *>( m_hRagdoll.Get() );
+	if ( pRagdoll )
+		pRagdoll->m_iDamageCustom = 0; //??
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
 // Input  : *pWeapon - 
 //			&vecOrigin - 
 //			&vecAngles - 
@@ -8617,7 +8619,6 @@ void CTFPlayer::CreateRagdollEntity( bool bGibbed, bool bBurning, bool bElectroc
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
 		pRagdoll->m_flHeadScale = m_flHeadScale;
-		pRagdoll->m_hRagdollWearables = m_hMyWearables;
 	}
 
 	// Turn off the player.

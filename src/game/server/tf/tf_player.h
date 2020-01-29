@@ -98,19 +98,6 @@ private:
 	float m_flDeathDropHeight;
 };
 
-class CAttributeContainerPlayer : public CAttributeManager
-{
-public:
-	DECLARE_CLASS( CAttributeContainerPlayer, CAttributeManager );
-	DECLARE_EMBEDDED_NETWORKVAR();
-
-	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
-	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
-	void	OnAttributesChanged( void ) override;
-
-	CHandle<CTFPlayer> m_hOuter;
-};
-
 //=============================================================================
 //
 // TF Player
@@ -165,6 +152,7 @@ public:
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 	virtual bool		Event_Gibbed( const CTakeDamageInfo &info );
 	virtual bool		BecomeRagdoll( const CTakeDamageInfo &info, const Vector &forceVector );
+	void				StopRagdollDeathAnim( void );
 	virtual void		PlayerDeathThink( void );
 
 	virtual bool 		IsBehindTarget( CBaseEntity *pVictim );
@@ -247,6 +235,8 @@ public:
 
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
+
+	virtual void		OnEmitFootstepSound( CSoundParameters const &sound, Vector const &pos, float volume );
 
 	// Utility.
 	void				UpdateModel( void );

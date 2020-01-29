@@ -267,7 +267,7 @@ void CTFCompoundBow::Extinguish( void )
 {
 #ifndef CLIENT_DLL
 	m_bFlame = false;
-#else CLIENT_DLL
+#else
 	if ( m_hFlameEffectHost.Get() )
 	{
 		m_hFlameEffectHost->ParticleProp()->StopEmission();

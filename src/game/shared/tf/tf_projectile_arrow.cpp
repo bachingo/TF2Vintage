@@ -40,11 +40,11 @@ const char *g_pszArrowModels[] =
 
 const char *g_pszArrowHits[] =
 {
-	"arrow_impact"
-	"bolt_impact"
-	"claw_impact"
-	"arrow_impact"
-	"bolt_impact"
+	"arrow_impact",
+	"bolt_impact",
+	"claw_impact",
+	"arrow_impact",
+	"bolt_impact",
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
@@ -326,19 +326,27 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	}
 
 	Vector vecOrigin = GetAbsOrigin();
-	Vector vecDir = GetAbsVelocity();
 	CTFPlayer *pPlayer = ToTFPlayer( pOther );
 	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
 	trace_t trHit, tr;
 	trHit = *pTrace;
 	const char* pszImpactSound = NULL;
 	bool bPlayerImpact = false;
+	// Determine where we should land
+	Vector vecDir = GetAbsVelocity();
+	VectorNormalizeFast( vecDir );
+
+	int iCustomDamage = m_bFlame ? TF_DMG_CUSTOM_BURNING_ARROW : TF_DMG_CUSTOM_NONE;
+
+	// Do damage.
+	CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType(), iCustomDamage );
+	CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, vecOrigin );
+	info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
+	pOther->DispatchTraceAttack( info, vecDir, &trHit );
+	ApplyMultiDamage();
 
 	if ( pPlayer && !pPlayer->m_Shared.IsInvulnerable() )
 	{
-		// Determine where we should land
-		Vector vecDir = GetAbsVelocity();
-		VectorNormalizeFast( vecDir );
 		CStudioHdr *pStudioHdr = pPlayer->GetModelPtr();
 		if ( !pStudioHdr )
 			return;
@@ -366,7 +374,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			pPlayer->GetBonePosition( pCurrentBox->bone, boxPosition, boxAngles );
 			Vector vecCross = CrossProduct( vecOrigin + vecDir * 16, boxPosition );
 
-			trace_t tr;
 			UTIL_TraceLine( vecOrigin, boxPosition, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
 
 			float flLengthSqr = ( boxPosition - vecCross ).LengthSqr();
@@ -397,57 +404,30 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			return;
 		}
 
-		Vector vecOrigin;
-		QAngle vecAngles;
-		int bone, iPhysicsBone;
-		GetBoneAttachmentInfo( pBox, pPlayer, vecOrigin, vecAngles, bone, iPhysicsBone );
+		Vector vecBoneOrigin;
+		QAngle vecBoneAngles;
+		int iBone, iPhysicsBone;
+		GetBoneAttachmentInfo( pBox, pPlayer, vecBoneOrigin, vecBoneAngles, iBone, iPhysicsBone );
 
-		// TODO: Redo the whole "BoltImpact" logic
-
-		// CTFProjectile_Arrow::CheckRagdollPinned
-		if( GetDamage() > pPlayer->GetHealth() )
+		if( CheckRagdollPinned( vecOrigin, vecDir, iBone, iPhysicsBone, pPlayer->m_hRagdoll, pBox->group, 0 ) )
 		{
-			// pPlayer->StopRagdollDeathAnim();
-			Vector vForward;
-
-			AngleVectors( GetAbsAngles(), &vForward );
-			VectorNormalize ( vForward );
-
-			UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + vForward * 256, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
-
-			if ( tr.fraction != 1.0f )
-			{
-				//NDebugOverlay::Box( tr.endpos, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 255, 0, 0, 10 );
-				//NDebugOverlay::Box( GetAbsOrigin(), Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 0, 255, 0, 10 );
-
-				if ( tr.m_pEnt == NULL || ( tr.m_pEnt && tr.m_pEnt->GetMoveType() == MOVETYPE_NONE ) )
-				{
-					CEffectData	data;
-
-					data.m_vOrigin = tr.endpos;
-					data.m_vNormal = vForward;
-					data.m_nEntIndex = tr.fraction != 1.0f;
-					data.m_iType = m_iType;
-					data.m_nSkin = m_nSkin;
-					DispatchEffect( "BoltImpact", data );
-				}
-			}
+			pPlayer->StopRagdollDeathAnim();
 		}
 		else
 		{
-			IGameEvent *event = gameeventmanager->CreateEvent( g_pszArrowHits[m_iType] );
+			IGameEvent *event = gameeventmanager->CreateEvent( g_pszArrowHits[ m_iType ] );
 			
 			if ( event )
 			{
 				event->SetInt( "attachedEntity", pOther->entindex() );
 				event->SetInt( "shooter", pAttacker->entindex() );
-				event->SetInt( "boneIndexAttached", bone );
-				event->SetFloat( "bonePositionX", vecOrigin.x );
-				event->SetFloat( "bonePositionY", vecOrigin.y );
-				event->SetFloat( "bonePositionZ", vecOrigin.z );
-				event->SetFloat( "boneAnglesX", vecAngles.x );
-				event->SetFloat( "boneAnglesY", vecAngles.y );
-				event->SetFloat( "boneAnglesZ", vecAngles.z );
+				event->SetInt( "boneIndexAttached", iBone );
+				event->SetFloat( "bonePositionX", vecBoneOrigin.x );
+				event->SetFloat( "bonePositionY", vecBoneOrigin.y );
+				event->SetFloat( "bonePositionZ", vecBoneOrigin.z );
+				event->SetFloat( "boneAnglesX", vecBoneAngles.x );
+				event->SetFloat( "boneAnglesY", vecBoneAngles.y );
+				event->SetFloat( "boneAnglesZ", vecBoneAngles.z );
 				
 				gameeventmanager->FireEvent( event );
 			}
@@ -490,13 +470,16 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			if ( tr.m_pEnt == NULL || ( tr.m_pEnt && tr.m_pEnt->GetMoveType() == MOVETYPE_NONE ) )
 			{
 				CEffectData	data;
-
 				data.m_vOrigin = tr.endpos;
 				data.m_vNormal = vForward;
-				data.m_nEntIndex = tr.fraction != 1.0f;
-				data.m_iType = m_iType;
-				data.m_nSkin = m_nSkin;
-				DispatchEffect( "BoltImpact", data );
+				data.m_nEntIndex = pOther ? pOther->entindex() : 0;
+				data.m_fFlags = GetProjectileType();
+				data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
+
+				if ( GetScorer() )
+					data.m_nHitBox = GetScorer()->entindex();
+
+				DispatchEffect( "TFBoltImpact", data );
 			}
 		}
 
@@ -525,15 +508,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 	{
 		PlayImpactSound( ToTFPlayer( pAttacker ), pszImpactSound, bPlayerImpact );
 	}
-
-	int iCustomDamage = m_bFlame ? TF_DMG_CUSTOM_BURNING_ARROW : TF_DMG_CUSTOM_NONE;
-
-	// Do damage.
-	CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType(), iCustomDamage );
-	CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, vecOrigin );
-	info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
-	pOther->DispatchTraceAttack( info, vecDir, &trHit );
-	ApplyMultiDamage();
 	
 	if ( ( pPlayer && ( m_iType == 1 || m_iType == 4 ) ) && ( tf2v_healing_bolts.GetBool() || TFGameRules()->IsInMedievalMode() ) ) // Crossbow bolts can heal teammates if the convar is enabled, or it's medieval.
 	{	
@@ -670,12 +644,12 @@ int	CTFProjectile_Arrow::GetDamageType()
 bool CTFProjectile_Arrow::IsDeflectable(void)
 {
 	// Don't deflect projectiles with non-deflect attributes.
-	if (m_hLauncher.Get())
+	if ( m_hLauncher.Get() )
 	{
 		// Check to see if this is a non-deflectable projectile, like an energy projectile.
 		int nCannotDeflect = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nCannotDeflect, energy_weapon_no_deflect);
-		if (nCannotDeflect != 0)
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher.Get(), nCannotDeflect, energy_weapon_no_deflect );
+		if ( nCannotDeflect != 0 )
 			return false;
 	}
 	return true;
@@ -806,7 +780,6 @@ void CTFProjectile_Arrow::BreakArrow( void )
 		WRITE_SHORT( GetModelIndex() );
 		WRITE_VEC3COORD( GetAbsOrigin() );
 		WRITE_ANGLES( GetAbsAngles() );
-		WRITE_SHORT(m_iType);
 		WRITE_SHORT( m_nSkin );
 	MessageEnd();
 }
@@ -865,8 +838,33 @@ void CTFProjectile_Arrow::GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnima
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_Arrow::CheckRagdollPinned( Vector &, Vector &, int, int, CBaseEntity *, int, int )
+bool CTFProjectile_Arrow::CheckRagdollPinned( Vector const& vecOrigin, Vector const& vecDirection, int iBone, int iPhysBone, CBaseEntity *pOther, int iHitGroup, int iVictim )
 {
+	trace_t tr;
+	UTIL_TraceLine( vecOrigin, vecOrigin + vecDirection * 256.f, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
+
+	if ( tr.fraction != 1.0f && tr.DidHitWorld() )
+	{
+		CEffectData data;
+		data.m_vOrigin = vecOrigin;
+		data.m_vNormal = vecDirection;
+		data.m_nEntIndex = pOther ? pOther->entindex() : 0;
+		data.m_fFlags = GetProjectileType();
+		data.m_nAttachmentIndex = iBone;
+		data.m_nMaterial = iPhysBone;
+		data.m_nDamageType = iHitGroup;
+		data.m_nSurfaceProp = iVictim;
+		data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
+
+		if ( GetScorer() )
+			data.m_nHitBox = GetScorer()->entindex();
+
+		DispatchEffect( "TFBoltImpact", data );
+
+		return true;
+	}
+
+	return false;
 }
 
 // ----------------------------------------------------------------------------

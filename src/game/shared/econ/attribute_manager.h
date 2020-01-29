@@ -14,7 +14,7 @@ class CEconItemSpecificAttributeIterator : public IEconAttributeIterator
 public:
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) { return true; }
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) { return true; }
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) { return true; }
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t ) { return true; }
 };
 
 class CAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
@@ -39,7 +39,7 @@ public:
 	CAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t *outValue, ProviderVector *outVector )
 		: m_hOwner( hOwner ), m_iName( iName ), m_pOut( outValue ), m_pOutProviders( outVector ) {}
 
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t const &value );
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t value );
 
 private:
 	EHANDLE m_hOwner;
@@ -78,10 +78,12 @@ public:
 #ifdef CLIENT_DLL
 EXTERN_RECV_TABLE( DT_AttributeManager );
 EXTERN_RECV_TABLE( DT_AttributeContainer );
+EXTERN_RECV_TABLE( DT_AttributeContainerPlayer );
 // Server specific.
 #else
 EXTERN_SEND_TABLE( DT_AttributeManager );
 EXTERN_SEND_TABLE( DT_AttributeContainer );
+EXTERN_SEND_TABLE( DT_AttributeContainerPlayer );
 #endif
 
 class CAttributeManager
@@ -160,7 +162,7 @@ class CAttributeContainer : public CAttributeManager
 {
 public:
 	DECLARE_CLASS( CAttributeContainer, CAttributeManager );
-#ifdef CLIENT_DLL
+#if defined( CLIENT_DLL )
 	DECLARE_PREDICTABLE();
 #endif
 	DECLARE_EMBEDDED_NETWORKVAR();
@@ -177,6 +179,25 @@ protected:
 	CNetworkVarEmbedded( CEconItemView, m_Item );
 
 	friend class CEconEntity;
+};
+
+
+class CAttributeContainerPlayer : public CAttributeManager
+{
+public:
+	DECLARE_CLASS( CAttributeContainerPlayer, CAttributeManager );
+	DECLARE_EMBEDDED_NETWORKVAR();
+
+	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
+	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
+	void	OnAttributesChanged( void ) override;
+
+protected:
+	CNetworkHandle( CBasePlayer, m_hPlayer );
+
+#if defined( GAME_DLL )
+	friend class CTFPlayer;
+#endif
 };
 
 #endif // ATTRIBUTE_MANAGER_H

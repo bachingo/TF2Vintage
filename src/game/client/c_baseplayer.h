@@ -614,9 +614,7 @@ protected:
 
 #if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
 	// Wearables
-	public:
-	CUtlVector<CHandle<C_EconWearable > >	m_hMyWearables;
-	protected:
+	CUtlVector< CHandle<C_EconWearable > >	m_hMyWearables;
 #endif
 
 private:

@@ -6,6 +6,7 @@
 #endif
 
 #include "tf_shareddefs.h"
+#include "econ_item_system.h"
 
 enum
 {
@@ -87,26 +88,26 @@ typedef struct EconQuality
 	}
 
 	int value;
-} EconQuality_t;
+} Quality_t;
 
 typedef struct EconColor
 {
 	EconColor()
 	{
-		CLEAR_STR(color_name);
+		CLEAR_STR( color_name );
 	}
 
 	char color_name[128];
-} EconColor_t;
+} Color_t;
 
 typedef struct EconAttributeDefinition
 {
 	EconAttributeDefinition()
 	{
 		index = 0xFFFF;
-		CLEAR_STR(name);
-		CLEAR_STR(attribute_class);
-		CLEAR_STR(description_string);
+		CLEAR_STR( name );
+		CLEAR_STR( attribute_class );
+		CLEAR_STR( description_string );
 		string_attribute = false;
 		description_format = -1;
 		hidden = false;
@@ -127,7 +128,7 @@ typedef struct EconAttributeDefinition
 	bool hidden;
 	bool stored_as_integer;
 	string_t m_iAttributeClass;
-} EconAttributeDefinition_t;
+} AttributeDefinition_t;
 
 // Attached Models
 #define AM_WORLDMODEL	(1 << 0)
@@ -145,12 +146,18 @@ typedef union
 	string_t sVal;
 } attrib_data_union_t;
 
-struct static_attrib_t
+typedef struct static_attrib
 {
-	char name[128];
+	EXPLICIT inline static_attrib( char const *szName )
+		: name( szName ) {
+		attribute = GetItemSchema()->GetAttributeDefinitionByName( szName );
+		schema = GetItemSchema()->m_pSchema;
+	}
+
+	char const *name;
 	EconAttributeDefinition const *attribute;
 	KeyValues const *schema;
-};
+} static_attrib_t;
 
 
 
@@ -159,7 +166,7 @@ class IEconAttributeIterator
 public:
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) = 0;
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) = 0;
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) = 0;
+	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t ) = 0;
 };
 
 // Client specific.
@@ -194,6 +201,7 @@ public:
 	{
 		Init( iIndex, pszValue, pszAttributeClass );
 	}
+	CEconItemAttribute( CEconItemAttribute const &src );
 
 	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
 	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
@@ -208,9 +216,9 @@ typedef struct EconItemStyle
 {
 	EconItemStyle()
 	{
-		CLEAR_STR(name);
-		CLEAR_STR(model_player);
-		CLEAR_STR(image_inventory);
+		CLEAR_STR( name );
+		CLEAR_STR( model_player );
+		CLEAR_STR( image_inventory );
 		skin_red = 0;
 		skin_blu = 0;
 		selectable = false;
@@ -232,9 +240,10 @@ typedef struct EconPerTeamVisuals
 		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
 		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
-		CLEAR_STR(muzzle_flash);
-		CLEAR_STR(tracer_effect);
+		CLEAR_STR( muzzle_flash );
+		CLEAR_STR( tracer_effect );
 		skin = -1;
+		use_per_class_bodygroups = 0;
 	}
 
 	CUtlDict< bool, unsigned short > player_bodygroups;
@@ -246,8 +255,9 @@ typedef struct EconPerTeamVisuals
 	char custom_particlesystem[128];
 	char muzzle_flash[128];
 	char tracer_effect[128];
-	//CUtlDict< ItemStyle_t*, unsigned short > styles;
+	CUtlDict< ItemStyle_t*, unsigned short > styles;
 	int skin;
+	int use_per_class_bodygroups;
 } PerTeamVisuals_t;
 
 class CEconItemDefinition
@@ -255,37 +265,37 @@ class CEconItemDefinition
 public:
 	CEconItemDefinition()
 	{
-		CLEAR_STR(name);
+		CLEAR_STR( name );
 		used_by_classes = 0;
 
 		for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
 			item_slot_per_class[i] = -1;
 
 		show_in_armory = true;
-		CLEAR_STR(item_class);
-		CLEAR_STR(item_type_name);
-		CLEAR_STR(item_name);
-		CLEAR_STR(item_description);
+		CLEAR_STR( item_class );
+		CLEAR_STR( item_type_name );
+		CLEAR_STR( item_name );
+		CLEAR_STR( item_description );
 		item_slot = -1;
 		anim_slot = -1;
 		item_quality = QUALITY_VINTAGE;
 		baseitem = false;
 		propername = false;
-		CLEAR_STR(item_logname);
-		CLEAR_STR(item_iconname);
+		CLEAR_STR( item_logname );
+		CLEAR_STR( item_iconname );
 		min_ilevel = 0;
 		max_ilevel = 0;
-		CLEAR_STR(image_inventory);
+		CLEAR_STR( image_inventory );
 		image_inventory_size_w = 128;
 		image_inventory_size_h = 82;
-		CLEAR_STR(model_player);
-		CLEAR_STR(model_vision_filtered);
-		CLEAR_STR(model_world);
-		CLEAR_STR(equip_region);
+		CLEAR_STR( model_player );
+		CLEAR_STR( model_vision_filtered );
+		CLEAR_STR( model_world );
+		CLEAR_STR( equip_region );
 		Q_memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
-		CLEAR_STR(extra_wearable);
+		CLEAR_STR( extra_wearable );
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 		is_reskin = false;
@@ -294,8 +304,8 @@ public:
 		itemfalloff = false;
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
-		CLEAR_STR(holiday_restriction);
-		CLEAR_STR(custom_projectile_model);
+		CLEAR_STR( holiday_restriction );
+		CLEAR_STR( custom_projectile_model );
 	}
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
