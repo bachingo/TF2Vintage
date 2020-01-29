@@ -20,7 +20,7 @@
 // Ground placed version
 #define DISPENSER_MODEL_PLACEMENT			"models/buildables/dispenser_blueprint.mdl"
 // *_UPGRADE models are models used during the upgrade transition
-// Valve fucked up the naming of the models. the _light ones (which should be the transition models)
+// Valve messed up the naming of the models. the _light ones (which should be the transition models)
 // are actually the ones that are set AFTER the upgrade transition.
 
 #define DISPENSER_MODEL_LEVEL_1				"models/buildables/dispenser_light.mdl"
@@ -38,6 +38,8 @@
 
 #define REFILL_CONTEXT			"RefillContext"
 #define DISPENSE_CONTEXT		"DispenseContext"
+
+ConVar tf2v_explosive_dispensers("tf2v_explosive_dispensers","0", FCVAR_NOTIFY, "Exploding dispensers do nearby damage." );
 
 //-----------------------------------------------------------------------------
 // Purpose: SendProxy that converts the Healing list UtlVector to entindices
@@ -418,20 +420,21 @@ int CObjectDispenser::GetMaxUpgradeLevel(void)
 //-----------------------------------------------------------------------------
 void CObjectDispenser::DetonateObject( void )
 {
-	/*
-	float flDamage = min( 100 + m_iAmmoMetal, 250 );
+	if ( tf2v_explosive_dispensers.GetBool() )
+	{
+		float flDamage = min( 100 + m_iAmmoMetal, 250 );
 
-	ExplosionCreate( 
-		GetAbsOrigin(),
-		GetAbsAngles(),
-		GetBuilder(),
-		flDamage,	//magnitude
-		flDamage,		//radius
-		0,
-		0.0f,				//explosion force
-		this,				//inflictor
-		DMG_BLAST | DMG_HALF_FALLOFF);
-	*/
+		ExplosionCreate( 
+			GetAbsOrigin(),
+			GetAbsAngles(),
+			GetBuilder(),
+			flDamage,	//magnitude
+			flDamage,		//radius
+			0,
+			0.0f,				//explosion force
+			this,				//inflictor
+			DMG_BLAST | DMG_HALF_FALLOFF);
+	}
 
 	BaseClass::DetonateObject();
 }
