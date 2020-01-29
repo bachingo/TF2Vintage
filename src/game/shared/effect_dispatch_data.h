@@ -46,8 +46,6 @@ public:
 	Vector m_vNormal;
 	QAngle m_vAngles;
 	int		m_fFlags;
-	int		m_nSkin;
-	int		m_iType;
 #ifdef CLIENT_DLL
 	ClientEntityHandle_t m_hEntity;
 #else
@@ -83,8 +81,6 @@ public:
 		m_vAngles.Init();
 
 		m_fFlags = 0;
-		m_nSkin = 0;
-		m_iType = 0;
 #ifdef CLIENT_DLL
 		m_hEntity = INVALID_EHANDLE_INDEX;
 #else
