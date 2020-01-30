@@ -53,8 +53,12 @@ bool CTFInventory::Init( void )
 {
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = CommandLine()->CheckParm( "-showreskins" );
+	bool bCosmeticsEnabled = CommandLine()->CheckParm( "-showcosmetics" );
+	bool bSpecialsEnabled = CommandLine()->CheckParm( "-goldenboy" );
 #else
 	bool bReskinsEnabled = true;
+	bool bCosmeticsEnabled = true;
+	bool bSpecialsEnabled = true;
 #endif
 
 	GetItemSchema()->Init();
@@ -76,7 +80,7 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) ) || ( pItemDef->baseitem ) || ( ( iSlot == TF_LOADOUT_SLOT_MEDAL ) || ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) ) )
+				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || ( bCosmeticsEnabled ) ) || ( pItemDef->baseitem ) || ( ( iSlot == TF_LOADOUT_SLOT_MEDAL ) || ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) ) )
 				{
 					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) && ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )	// Skip MISC2 since we do it below.
 					{
@@ -96,7 +100,7 @@ bool CTFInventory::Init( void )
 #endif
 							m_Items[iClass][iSlot][0] = pNewItem;
 						}
-						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) )
+						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) && ( ( ( pItemDef->specialitem == 0 ) || ( ( pItemDef->specialitem == 1 ) && bSpecialsEnabled ) ) ) )
 						{
 							CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -137,7 +141,7 @@ bool CTFInventory::Init( void )
 #endif
 								m_Items[iClass][iSlot][0] = pNewItem;
 							}
-							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) )
+							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) && ( ( ( pItemDef->specialitem == 0 ) || ( ( pItemDef->specialitem == 1 ) && bSpecialsEnabled ) ) ) )
 							{
 								CEconItemView *pNewItem = new CEconItemView( iItemID );
 

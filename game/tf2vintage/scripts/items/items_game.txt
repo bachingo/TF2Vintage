@@ -1567,45 +1567,6 @@
 				"min_viewmodel_offset"					"10 0 -6"
 			}
 		}
-		"weapon_ambassador"
-		{
-			"prefab"		"weapon_revolver"
-			"item_name"	"#TF_Unique_Achievement_Revolver"
-			"propername"	"1"
-			"item_logname"	"ambassador"
-			"item_iconname"	"ambassador"
-			"image_inventory"	"backpack/weapons/c_models/c_ambassador/parts/c_ambassador_opt"
-			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador.mdl"
-			"attributes"
-			{
-				"revolver use hit locations"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"1"
-				}
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value" "0.85"
-				}
-				"fire rate penalty"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value"	"1.2"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot" "Weapon_Ambassador.Single"
-				"sound_burst" "Weapon_Ambassador.SingleCrit"
-			}
-			"xifier_class_remap"	"ambassador"
-		}
 		"weapon_pda_engineer_build"
 		{
 			"item_class"	"tf_weapon_pda_engineer_build"
@@ -3867,8 +3828,43 @@
 		"61"
 		{
 			"name"	"The Ambassador"
-			"prefab"	"weapon_ambassador"
+			"prefab"		"weapon_revolver"
 			"year"			"2009"
+			"item_name"	"#TF_Unique_Achievement_Revolver"
+			"propername"	"1"
+			"item_logname"	"ambassador"
+			"item_iconname"	"ambassador"
+			"image_inventory"	"backpack/weapons/c_models/c_ambassador/parts/c_ambassador_opt"
+			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador.mdl"
+			"attributes"
+			{
+				"revolver use hit locations"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value" "0.85"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.2"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_Ambassador.Single"
+				"sound_burst" "Weapon_Ambassador.SingleCrit"
+			}
+			"xifier_class_remap"	"ambassador"
 		}
 		"127"
 		{
@@ -6900,51 +6896,23 @@
 				}
 			}
 		}
-		"1200"
+		"169"
 		{
-			"name"	"Robin's Rocket Launcher"
-			"prefab"	"weapon_rocketlauncher weapon_special"
-			"year"			"2007"
-			"attach_to_hands" "0"
-			"item_name"	"Robin Walker's Rocket Launcher"
-			"item_logname"	"RW-V-RL"
-			"model_world"	"models/weapons/w_models/w_rocketlauncher.mdl"
+			"name"	"Golden Wrench"
+			"prefab"			"weapon_wrench weapon_special"
+			"year"	"2010"
+			"item_name"		"#TF_Unique_Golden_Wrench"
+			"propername"	"1"
+			"item_logname"	"wrench_golden"
+			"item_iconname"	"wrench_golden"
+			"image_inventory"	"backpack/weapons/c_models/c_wrench/gold_wrench"
+			"model_player"	"models/weapons/c_models/c_wrench/gold_wrench.mdl"
 			"attributes"
 			{
-				"damage bonus"
+				"turn to gold"
 				{
-					"attribute_class"	"mult_dmg"
-					"value"	"10099"
-				}
-				"clip size bonus"
-				{
-					"attribute_class"	"mult_clipsize"
-					"value" "100099"
-				}
-				"fire rate bonus"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value"	"0.25"
-				}
-				"heal on hit for slowfire"
-				{
-					"attribute_class"	"add_onhit_addhealth"
-					"value"	"250"
-				}
-				"critboost on kill"
-				{
-					"attribute_class"	"add_onkill_critboost_time"
-					"value"	"10"
-				}
-				"Projectile speed increased"
-				{
-					"attribute_class"	"mult_projectile_speed"
-					"value"	"1.5"
-				}
-				"move speed bonus"
-				{
-					"attribute_class"	"mult_player_movespeed"
-					"value" "2.00"
+					"attribute_class"	"set_turn_to_gold"
+					"value" "1"
 				}
 			}
 		}
@@ -7862,10 +7830,44 @@
 		"90001"
 		{
 			"name"			"Ambassador Dark"
-			"prefab"		"weapon_ambassador weapon_reskin"
-			"item_description"	"#TF_PyroHazmat_Style3"
+			"prefab"		"weapon_revolver weapon_reskin"
 			"year"			"2019"
+			"item_name"	"#TF_Unique_Achievement_Revolver"
+			"item_description"	"#TF_PyroHazmat_Style3"
+			"propername"	"1"
+			"item_logname"	"ambassador"
+			"item_iconname"	"ambassador"
+			"image_inventory"	"backpack/weapons/c_models/c_ambassador/parts/c_ambassador_opt"
 			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador_dark.mdl"
+			"attributes"
+			{
+				"revolver use hit locations"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value" "0.85"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value"	"1.2"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_Ambassador.Single"
+				"sound_burst" "Weapon_Ambassador.SingleCrit"
+			}
+			"xifier_class_remap"	"ambassador"
 		}
 	}
 	"attributes"
