@@ -5893,6 +5893,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 		break;
 
 	case TF_AMMO_GRENADES1:
+	case TF_AMMO_GRENADES2:
 		CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_grenades1 );
 		break;
 
