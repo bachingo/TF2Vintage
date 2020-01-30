@@ -24,7 +24,7 @@ public:
 	DECLARE_CLASS( CTFGrenadeMirvProjectile, CTFWeaponBaseGrenadeProj );
 
 	// Unique identifier.
-	//virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_MIRV; }
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_MIRV; }
 
 	// Creation.
 	static CTFGrenadeMirvProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
@@ -55,7 +55,7 @@ public:
 	static CTFGrenadeMirvBomb *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
 		                               const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, float timer );
 
-	//virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_MIRV; }
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_MIRV; }
 
 	virtual void	Spawn( void );
 	virtual void	Precache( void );

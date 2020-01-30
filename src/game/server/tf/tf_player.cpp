@@ -797,6 +797,16 @@ void CTFPlayer::PreThink()
 			pGrenade->Deploy();
 		}
 	}
+	
+	if ( m_nButtons & IN_GRENADE2 )
+	{
+		TFPlayerClassData_t *pData = m_PlayerClass.GetData();
+		CTFWeaponBase *pGrenade = Weapon_OwnsThisID( pData->m_aGrenades[1] );
+		if ( pGrenade )
+		{
+			pGrenade->Deploy();
+		}
+	}
 
 	// Reset bullet force accumulator, only lasts one frame, for ragdoll forces from multiple shots.
 	m_vecTotalBulletForce = vec3_origin;
