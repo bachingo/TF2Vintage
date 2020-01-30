@@ -323,10 +323,24 @@
 				}
 			}
 		}
+		"hatattachment"
+		{
+			"public_prefab"	"1"
+			"prefab"	"cosmetic"
+			"item_slot" "head"
+			"item_type_name"	"#TF_Wearable_Hat"
+			"equip_region"	"hat"
+			"itemfalloff"	"0"
+		}
 		"base_hat"
 		{
 			"public_prefab"	"1"
 			"prefab"	"hat"
+		}
+		"base_hatattachment"
+		{
+			"public_prefab"	"1"
+			"prefab"	"hatattachment"
 		}
 		"base_misc"
 		{
@@ -3319,7 +3333,7 @@
 		"32"
 		{
 			"name"	"TF2V_COSMETIC_HAT"
-			"prefab"	"hat"
+			"prefab"	"hatattachment"
 			"item_quality" "normal"
 			"used_by_classes"
 			{
@@ -3333,15 +3347,7 @@
 				"sniper"	"1"
 				"spy"		"1"
 			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"hat"	"0"
-				}
-			}
 			"baseitem"	"1"
-			"itemfalloff"	"0"
 		}
 		"33"
 		{
