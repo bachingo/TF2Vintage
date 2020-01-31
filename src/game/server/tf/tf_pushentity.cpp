@@ -127,8 +127,7 @@ bool CTFPhysicsPushEntities::RotationPushTFPlayer( PhysicsPushedInfo_t &info , c
 				}
 				else
 				{
-					// Note: 0.017453292 approx. =  pi / 180
-					m_flOffset = fabs( tan( rotPushMove.amove.x * 0.017453292 ) * flRootRadius ) * 1.1;
+					m_flOffset = fabs( tan( DEG2RAD( rotPushMove.amove.x ) ) * flRootRadius ) * 1.1;
 				}
 			}
 			else
@@ -190,7 +189,7 @@ bool CTFPhysicsPushEntities::RotationCheckPush( PhysicsPushedInfo_t &info )
 		// if the player is blocking the train try nudging him around to fix accumulated error
 		for ( int checkCount = 0; checkCount < 3; checkCount++ )
 		{
-			MovePlayer( pBlocker, info, 0.34999999, pRoot->GetMoveParent() ? true : false );
+			MovePlayer( pBlocker, info, 0.35f, pRoot->GetMoveParent() ? true : false );
 			if ( !IsPlayerAABBIntersetingPusherOBB ( pBlocker, pRoot ) )
 			{
 				break;
