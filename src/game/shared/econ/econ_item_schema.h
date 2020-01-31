@@ -206,6 +206,8 @@ public:
 	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
 	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
 
+	CEconItemAttribute &operator=( CEconItemAttribute const &src );
+
 public:
 	CNetworkVar( int, m_iAttributeDefinitionIndex );
 	CNetworkVar( unsigned int, m_iRawValue32 );

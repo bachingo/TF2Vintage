@@ -4281,6 +4281,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				break;
 			}
 			default:
+			{
 				// We did a bodyshot, check if that affects our damage.
 				CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
 				if ( pWpn )
@@ -4295,6 +4296,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 					}
 				}
 				break;
+			}
 		}
 	}
 

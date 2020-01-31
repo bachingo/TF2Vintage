@@ -21,6 +21,16 @@ END_NETWORK_TABLE()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_iRawValue32 = src.m_iRawValue32;
+	m_iAttributeClass = src.m_iAttributeClass;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttributeClass /*= NULL*/ )
 {
 	m_iAttributeDefinitionIndex = iIndex;
@@ -41,13 +51,6 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 			m_iAttributeClass = AllocPooledString( pAttribDef->attribute_class );
 		}
 	}
-}
-
-CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
-{
-	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
-	m_iRawValue32 = src.m_iRawValue32;
-	m_iAttributeClass = src.m_iAttributeClass;
 }
 
 //-----------------------------------------------------------------------------
@@ -75,6 +78,21 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconItemAttribute &CEconItemAttribute::operator=( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_iRawValue32 = src.m_iRawValue32;
+	m_iAttributeClass = src.m_iAttributeClass;
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 EconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 {
 	return GetItemSchema()->GetAttributeDefinition( m_iAttributeDefinitionIndex );
