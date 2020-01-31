@@ -41,14 +41,14 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 
 	if ( pszAttributeClass )
 	{
-		m_iAttributeClass = AllocPooledString( pszAttributeClass );
+		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
 	}
 	else
 	{
 		EconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			m_iAttributeClass = AllocPooledString( pAttribDef->attribute_class );
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
 		}
 	}
 }
@@ -66,14 +66,14 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 
 	if ( pszAttributeClass )
 	{
-		m_iAttributeClass = AllocPooledString( pszAttributeClass );
+		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
 	}
 	else
 	{
 		EconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			m_iAttributeClass = AllocPooledString( pAttribDef->attribute_class );
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
 		}
 	}
 }

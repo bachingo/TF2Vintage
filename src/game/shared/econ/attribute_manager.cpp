@@ -29,7 +29,7 @@ bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttrib
 	string_t name = pDefinition->m_iAttributeClass;
 	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
 	{
-		name = AllocPooledString( pDefinition->attribute_class );
+		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
 		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
 	}
 
@@ -81,7 +81,7 @@ bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttrib
 	string_t name = pDefinition->m_iAttributeClass;
 	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
 	{
-		name = AllocPooledString( pDefinition->attribute_class );
+		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
 		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
 	}
 
@@ -134,7 +134,7 @@ bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( EconAttri
 	string_t name = pDefinition->m_iAttributeClass;
 	if ( !name && pDefinition->attribute_class[0] )
 	{
-		name = AllocPooledString( pDefinition->attribute_class );
+		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
 		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
 	}
 
