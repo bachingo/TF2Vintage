@@ -29,7 +29,8 @@ extern bool IsInCommentaryMode();
 extern ConVar tf_cheapobjects;
 extern ConVar tf_obj_upgrade_per_hit;
 extern ConVar tf2v_use_new_wrench_mechanics;
-ConVar tf2v_use_new_sentry_sappers( "tf2v_use_new_sentry_sappers", "0", FCVAR_NOTIFY, "Changes damage resistance and sentry behaviors when using sappers to modern values." );
+ConVar tf2v_use_new_sapper_damage( "tf2v_use_new_sapper_damage", "0", FCVAR_NOTIFY, "Decreases the damage resistance of a sapped sentry from 66% to 33%." );
+ConVar tf2v_use_new_sapper_disable( "tf2v_use_new_sapper_disable", "0", FCVAR_NOTIFY, "Sapped sentries will be disabled for a few seconds after removing the sapper." );
 
 
 // Ground placed version
@@ -1629,7 +1630,7 @@ void CObjectSentrygun::OnEndDisabled( void )
 
 	m_vecGoalAngles.x = 0;
 
-	if ( tf2v_use_new_sentry_sappers.GetBool() )
+	if ( tf2v_use_new_sapper_disable.GetBool() )
 		SapperRecovery();
 	
 	BaseClass::OnEndDisabled();
@@ -1828,7 +1829,7 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 		if ( pSapper && ( info.GetAttacker() == pSapper->GetOwner() ) )
 		{
 			float flDamage;
-			if ( tf2v_use_new_sentry_sappers.GetBool() )
+			if ( tf2v_use_new_sapper_damage.GetBool() )
 				flDamage = newInfo.GetDamage() * SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER_GUNMETTLE;
 			else
 				flDamage = newInfo.GetDamage() * SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER;
