@@ -75,7 +75,6 @@ CTFWeaponBaseGun::CTFWeaponBaseGun()
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PrimaryAttack( void )
 {
-	m_bDisguised = false;
 	if ( AutoFiresFullClip() && !m_bFiringWholeClip )
 	{
 		UpdateAutoFire();
@@ -112,6 +111,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	CalcIsAttackCritical();
 
+	m_bDisguised = false;
 	if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED))
 		m_bDisguised = true;
 

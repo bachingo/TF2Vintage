@@ -4877,11 +4877,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
 			
-			// Add crits for a back hit.
-			// Doing this here makes it so it can be applied to any weapon.
+
 			int nHasBackCrits = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nHasBackCrits, crit_from_behind );
-			if ( bitsDamage & !DMG_CRITICAL && nHasBackCrits )
+			int nHasBackAttack = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nHasBackAttack, closerange_backattack_minicrits );
+			
+			// Add crits for a back hit.
+			if ( !(bitsDamage & DMG_CRITICAL) && nHasBackCrits )
 			{
 				if ( pTFAttacker->IsBehindTarget(this) )
 				{
@@ -4891,17 +4894,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 			
 			// Add minicrits for a close range back hit.
-			// Doing this here makes it so it can be applied to any weapon.
-			int nHasBackAttack = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nHasBackAttack, closerange_backattack_minicrits );
-			if ( bitsDamage & !DMG_MINICRITICAL && nHasBackAttack )
+			if ( !( bitsDamage & DMG_MINICRITICAL) && nHasBackAttack )
 			{
 				// Valid range is <500HU.
 				bool bIsValidRange = ( ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() <= 500 );
-				if ( bIsValidRange && pTFAttacker )
+				if ( bIsValidRange )
 				{
-					bool bIsBehindTarget = pTFAttacker->IsBehindTarget(this);
-					if ( bIsBehindTarget )
+					if ( pTFAttacker->IsBehindTarget(this) )
 					{
 						bitsDamage |= DMG_MINICRITICAL;
 						info.AddDamageType( DMG_MINICRITICAL );
@@ -4915,16 +4914,16 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritsToCrits, minicrits_become_crits );
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritsToMinicrits, crits_become_minicrits );
 			// If we have something making minicrits turn into criticals, apply.
-			if ( bitsDamage & DMG_MINICRITICAL && (nMinicritsToCrits && !nCritsToMinicrits ) )
+			if ( ( bitsDamage & DMG_MINICRITICAL ) && (nMinicritsToCrits && !nCritsToMinicrits ) )
 			{
 				bitsDamage &= ~DMG_MINICRITICAL;
 				bitsDamage |= DMG_CRITICAL;
 			}
 			// If we have something reducing criticals to minicrits, apply.
-			if ( bitsDamage & DMG_CRITICAL && ( nCritsToMinicrits && !nMinicritsToCrits ) )
+			else if ( ( bitsDamage & DMG_CRITICAL ) && ( nCritsToMinicrits && !nMinicritsToCrits ) )
 			{
 				bitsDamage &= ~DMG_CRITICAL;
-				bitsDamage |= DMG_CRITICAL;
+				bitsDamage |= DMG_MINICRITICAL;
 			}
 
 			int nNoDamageOnCrit = 0;
