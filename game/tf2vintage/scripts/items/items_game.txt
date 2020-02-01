@@ -4756,14 +4756,12 @@
 		"304"
 		{
 			"name"			"The Amputator"
-			"prefab"		"weapon_amputator"
 			"year"				"2010"
 			"particle_suffix"	"amputator"
 		}
 		"305"
 		{
 			"name"	"The Crusader's Crossbow"
-			"prefab" "weapon_crusaders_crossbow"
 			"propername"	"1"
 			"year"			"2010"
 			"particle_suffix"	"crusaders_crossbow"
@@ -6380,6 +6378,7 @@
 		{
 			"name"	"Baby Face's Blaster"
 			"prefab"		"weapon_scattergun"
+			"item_class"	"tf_weapon_pep_brawler_blaster"
 			"year"				"2012"
 			"item_name"	"#TF_Weapon_PEP_Scattergun"
 			"item_logname"	"pep_brawlerblaster"
@@ -6543,7 +6542,6 @@
 		"997"
 		{
 			"name"	"The Rescue Ranger"
-			"prefab" "weapon_rescue_ranger"
 			"year"				"2012"
 			"particle_suffix"	"rescue_ranger"
 		}

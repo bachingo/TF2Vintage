@@ -564,6 +564,9 @@ float CTFPepBrawlBlaster::GetEffectBarProgress(void)
 
 float CTFPepBrawlBlaster::GetSpeedMod(void) const
 {
+	if ( m_bLowered )
+		return 1.0f;
+
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 		return 1.0f;

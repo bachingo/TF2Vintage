@@ -4047,7 +4047,9 @@ void CTFPlayerShared::SetHypeMeter( float value, bool bIsPercent  )
 			else
 				m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
 
-			
+			if (m_flHypeMeter < 0)
+				m_flHypeMeter = 0.0;
+
 			if ( !nHypeOnDamage )
 				m_pOuter->TeamFortress_SetSpeed();
 		}
