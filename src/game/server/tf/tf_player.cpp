@@ -4855,13 +4855,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				bitsDamage |= DMG_MINICRITICAL;
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
-
-			if ( pTFAttacker->m_Shared.InCond( TF_COND_DISGUISED ) )
-			{
-				float flDisguisedMod = info.GetDamage();
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDisguisedMod, mult_dmg_disguised );
-				info.SetDamage( flDisguisedMod );
-			}
 			
 			int nCritWhileAirborne = 0, nMiniCritWhileAirborne = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileAirborne, crit_while_airborne );
@@ -4869,9 +4862,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			
 			bool bIsAirborne = false;
 			if ( tf2v_blastjump_only_airborne.GetBool() )
-				bIsAirborne	= ( pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) );
+				bIsAirborne	= ( m_Shared.InCond( TF_COND_BLASTJUMPING ) );
 			else
-				bIsAirborne	= ( ( pTFAttacker->m_Shared.InCond( TF_COND_BLASTJUMPING ) ) || !(pTFAttacker->GetFlags() & FL_ONGROUND) );
+				bIsAirborne	= ( ( m_Shared.InCond( TF_COND_BLASTJUMPING ) ) || !(GetFlags() & FL_ONGROUND) );
 			
 			if ( nCritWhileAirborne && bIsAirborne )
 			{
