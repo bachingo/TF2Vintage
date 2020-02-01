@@ -75,6 +75,7 @@ CTFWeaponBaseGun::CTFWeaponBaseGun()
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PrimaryAttack( void )
 {
+	m_bDisguised = false;
 	if ( AutoFiresFullClip() && !m_bFiringWholeClip )
 	{
 		UpdateAutoFire();
@@ -111,7 +112,11 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	CalcIsAttackCritical();
 
+	if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED))
+		m_bDisguised = true;
+
 #ifndef CLIENT_DLL
+
 	pPlayer->RemoveInvisibility();
 	pPlayer->RemoveDisguise();
 
@@ -310,7 +315,7 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 		m_iWeaponMode,
 		CBaseEntity::GetPredictionRandomSeed() & 255,
 		GetWeaponSpread(),
-		GetProjectileDamage(),
+		GetProjectileDamage(m_bDisguised),
 		IsCurrentAttackACrit() );
 }
 
@@ -504,7 +509,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
 	}
 	return pProjectile;
 
@@ -554,7 +559,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		pProjectile->SetWeaponID( GetWeaponID() );
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 #ifdef GAME_DLL
-		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
 #endif
 	}
 	
@@ -662,7 +667,7 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
 	}
 	return pProjectile;
 #endif
@@ -711,7 +716,7 @@ CBaseEntity *CTFWeaponBaseGun::FireJar( CTFPlayer *pPlayer, int iType )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
 	}
 	return pProjectile;
 #endif
@@ -745,7 +750,7 @@ CBaseEntity *CTFWeaponBaseGun::FireArrow( CTFPlayer *pPlayer, int iType )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
 	}
 	return pProjectile;
 #endif
@@ -909,10 +914,12 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 //-----------------------------------------------------------------------------
 // Purpose: Accessor for damage, so sniper etc can modify damage
 //-----------------------------------------------------------------------------
-float CTFWeaponBaseGun::GetProjectileDamage( void )
+float CTFWeaponBaseGun::GetProjectileDamage( bool bCurrentlyDisguised/* = false*/)
 {
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
+	if (bCurrentlyDisguised)
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg_disguised );	
 	return flDamage;
 }
 

@@ -67,7 +67,7 @@ public:
 	virtual bool  IsFlameArrow( void );
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
-	virtual float GetProjectileDamage( void );
+	virtual float GetProjectileDamage( bool bCurrentlyDisguised = false);
 
 
 	virtual void ZoomIn( void );
@@ -83,6 +83,8 @@ public:
 private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );
+	
+	bool m_bDisguised;
 };
 
 #endif // TF_WEAPONBASE_GUN_H
