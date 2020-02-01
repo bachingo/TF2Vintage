@@ -6,6 +6,7 @@
 #include "cbase.h"
 #include "tf_projectile_flare.h"
 #include "tf_gamerules.h"
+#include "tf_weapon_flaregun.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -223,8 +224,8 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther, bool bD
 	
 	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
 	
-	// Scorch shot and Detonator explode when touching the world, or if Detonator was triggered.
-	if ( ( nFlareMode == 3 && !pPlayer ) || ( nFlareMode == 1 && ( !pPlayer || bDetonate ) ) )
+	// Scorch Shot and Detonator explode when touching the world, or if Detonator was triggered.
+	if ( ( nFlareMode == 1 && ( !pPlayer || bDetonate ) ) )
 	{
 		// We explode in a small radius, set us up as an explosion.
 		CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING, &vectorReported );
@@ -234,8 +235,8 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther, bool bD
 		
 		// Check the radius.
 		float flRadius = GetFlareRadius();
-		if (nFlareMode == 1 && !bDetonate )	// If we're a Detonator that wasn't triggered manually...
-			radiusInfo.m_flRadius = 0;	// ...No radius for damaging anyone except ourselves.
+		if (!bDetonate )	// If we're a Detonator that wasn't triggered manually...
+			radiusInfo.m_flRadius = 0.001;	// ...No radius for damaging anyone except ourselves.
 		else
 			radiusInfo.m_flRadius = flRadius;
 		
@@ -334,6 +335,13 @@ void CTFProjectile_Flare::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
+	CTFFlareGun *pLauncher = dynamic_cast<CTFFlareGun*>( m_hLauncher.Get() );
+
+	if ( pLauncher )
+	{
+		pLauncher->AddFlare( this );
+	}
+		
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
 		CreateTrails();		

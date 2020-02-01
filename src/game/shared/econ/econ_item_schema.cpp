@@ -259,7 +259,7 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 	FOR_EACH_VEC( attributes, i )
 	{
 		EconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
-		attrib_data_union_t u = attributes[i].value;
+		//attrib_data_union_t u = attributes[i].value;
 
 		switch ( pDefinition->attribute_type )
 		{
