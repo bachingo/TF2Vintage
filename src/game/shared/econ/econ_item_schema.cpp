@@ -291,6 +291,41 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CSchemaFieldHandle<EconAttributeDefinition>::CSchemaFieldHandle( char const *name )
+	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+{
+	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( name );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CSchemaFieldHandle<EconAttributeDefinition>::operator const EconAttributeDefinition *( )
+{
+	if ( m_pSchema == GetItemSchema()->m_pSchema )
+		return m_pHandle;
+
+	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( m_pName );
+	m_pSchema = GetItemSchema()->m_pSchema;
+
+	return m_pHandle;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
+	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+{
+	m_pHandle = GetItemSchema()->GetItemDefinitionByName( name );
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

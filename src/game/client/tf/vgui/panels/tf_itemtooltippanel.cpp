@@ -167,12 +167,12 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 			} 
 			else
 			{
-				CEconItemAttribute *pAttribute = &pItemData->attributes[i];
-				EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
+				static_attrib_t *pAttribute = &pItemData->attributes[i];
+				const EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
 				if ( !pStatic || pStatic->hidden )
 					continue;
 
-				float flValue = BitsToFloat( pAttribute->m_iRawValue32 );
+				float flValue = BitsToFloat( pAttribute->value.iVal );
 			
 				switch ( pStatic->description_format )
 				{
