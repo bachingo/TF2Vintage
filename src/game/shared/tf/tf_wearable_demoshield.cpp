@@ -20,6 +20,9 @@ END_NETWORK_TABLE()
 LINK_ENTITY_TO_CLASS( tf_wearable_demoshield, CTFWearableDemoShield );
 PRECACHE_REGISTER( tf_wearable_demoshield );
 
+ConVar tf2v_demo_charge_debuff_remove("tf2v_demo_charge_debuff_remove", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Removes debuffs when starting a shield charge.");
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -185,6 +188,18 @@ bool CTFWearableDemoShield::DoSpecialAction( CTFPlayer *pUser )
 			pUser->m_Shared.SetShieldChargeDrainRate( flChargeDuration );
 			pUser->m_Shared.SetShieldChargeRegenRate( flChargeRechargeRate );
 			pUser->m_Shared.AddCond( TF_COND_SHIELD_CHARGE, flChargeDuration );
+			
+			if ( tf2v_demo_charge_debuff_remove.GetBool() )
+			{
+				if ( pUser->m_Shared.InCond( TF_COND_BLEEDING ) )
+					pUser->m_Shared.AddCond( TF_COND_BLEEDING );
+				if ( pUser->m_Shared.InCond( TF_COND_BURNING ) )
+					pUser->m_Shared.AddCond( TF_COND_BURNING );
+				if ( pUser->m_Shared.InCond( TF_COND_MAD_MILK ) )
+					pUser->m_Shared.AddCond( TF_COND_MAD_MILK );
+				if ( pUser->m_Shared.InCond( TF_COND_URINE ) )
+					pUser->m_Shared.AddCond( TF_COND_URINE );
+			}
 			
 			// Start screaming if we're a Demoman.
 			if ( pUser->IsPlayerClass(TF_CLASS_DEMOMAN) )
