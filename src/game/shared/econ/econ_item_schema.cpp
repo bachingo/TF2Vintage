@@ -251,7 +251,9 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 	return wszFullName;
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 {
 	FOR_EACH_VEC( attributes, i )

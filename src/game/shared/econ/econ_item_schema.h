@@ -267,6 +267,7 @@ class CEconItemDefinition
 public:
 	CEconItemDefinition()
 	{
+		index = 0xFFFFFFFF;
 		CLEAR_STR( name );
 		used_by_classes = 0;
 
@@ -317,6 +318,7 @@ public:
 	void IterateAttributes( IEconAttributeIterator &iter );
 
 public:
+	unsigned int index;
 	char name[128];
 	CUtlDict< bool, unsigned short > capabilities;
 	CUtlDict< bool, unsigned short > tags;
@@ -345,16 +347,16 @@ public:
 	char equip_region[128];
 	char model_player_per_class[TF_CLASS_COUNT_ALL][128];
 	char extra_wearable[128];
-	int attach_to_hands;
-	int attach_to_hands_vm_only;
+	int  attach_to_hands;
+	int  attach_to_hands_vm_only;
 	bool act_as_wearable;
-	int hide_bodygroups_deployed_only;
+	int  hide_bodygroups_deployed_only;
 	bool is_reskin;
 	bool specialitem;
 	bool demoknight;
 	char holiday_restriction[128];
 	bool itemfalloff;
-	int year;
+	int  year;
 	bool is_custom_content;
 	char custom_projectile_model[128];
 	

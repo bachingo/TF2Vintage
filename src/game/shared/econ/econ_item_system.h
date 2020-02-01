@@ -36,6 +36,7 @@ public:
 	void Precache( void );
 
 	CEconItemDefinition* GetItemDefinition( int id );
+	CEconItemDefinition* GetItemDefinitionByName( const char* name );
 	EconAttributeDefinition *GetAttributeDefinition( int id );
 	EconAttributeDefinition *GetAttributeDefinitionByName( const char* name );
 	EconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );

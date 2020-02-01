@@ -276,6 +276,7 @@ public:
 
 			if ( ParseItemRec( pSubData, Item ) )
 			{
+				Item->index = index;
 				GetItemSchema()->m_Items.Insert( index, Item );
 			}
 			else
@@ -788,6 +789,19 @@ CEconItemDefinition* CEconItemSchema::GetItemDefinition( int id )
 	CEconItemDefinition *itemdef = NULL;
 	FIND_ELEMENT( m_Items, id, itemdef );
 	return itemdef;
+}
+
+CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name )
+{
+	FOR_EACH_MAP_FAST( m_Items, i )
+	{
+		if ( m_Items[i]->index > -1 && !V_stricmp( m_Items[i]->name, name ) )
+		{
+			return m_Items[i];
+		}
+	}
+
+	return NULL;
 }
 
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
