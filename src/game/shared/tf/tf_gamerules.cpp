@@ -122,6 +122,8 @@ ConVar tf2v_allow_objective_glow_pl( "tf2v_allow_objective_glow_pl", "0", FCVAR_
 ConVar tf2v_console_grenadelauncher_damage("tf2v_console_grenadelauncher_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the grenade launcher damage to reflect console values.", true, 0, true, 1 );
 ConVar tf2v_console_grenadelauncher_magazine("tf2v_console_grenadelauncher_magazine", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the grenade launcher magazaine capacity to reflect console values.", true, 0, true, 1 );
 
+ConVar tf2v_remove_loser_disguise("tf2v_remove_loser_disguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Forces spies on a losing team to undisguise.", true, 0, true, 1 );
+
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", ( IsX360() ? "15" : "30" ), FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
@@ -5407,7 +5409,8 @@ void CTFGameRules::InternalHandleTeamWin( int iWinningTeam )
 				if ( pPlayer->GetTeamNumber() != iWinningTeam )
 				{
 					pPlayer->RemoveInvisibility();
-					//pPlayer->RemoveDisguise();
+					if ( tf2v_remove_loser_disguise.GetBool() )
+						pPlayer->RemoveDisguise();
 
 					if ( pPlayer->HasTheFlag() )
 					{
