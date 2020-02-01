@@ -84,6 +84,52 @@ void CTFFlareGun::SecondaryAttack( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Add pipebombs to our list as they're fired
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFFlareGun::FireProjectile( CTFPlayer *pPlayer )
+{
+	int nWeaponMode = 0;
+	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
+	if (nWeaponMode == 1)
+	{
+		CBaseEntity *pProjectile = BaseClass::FireProjectile( pPlayer );
+		if ( pProjectile )
+		{
+		#ifdef GAME_DLL
+			FlareHandle hHandle;
+			hHandle = (CTFProjectile_Flare *)pProjectile;
+			m_Flares.AddToTail( hHandle );
+		#endif
+		}
+
+		return pProjectile;
+	}
+	else
+		return BaseClass::FireProjectile( pPlayer );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: If a flare is exploded, remove from list.
+//-----------------------------------------------------------------------------
+void CTFFlareGun::DeathNotice(CBaseEntity *pVictim)
+{
+	int nWeaponMode = 0;
+	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
+	if (nWeaponMode == 1)
+	{
+		Assert( dynamic_cast<CTFProjectile_Flare *>( pVictim ) );
+
+		FlareHandle hHandle;
+		hHandle = (CTFProjectile_Flare *)pVictim;
+		m_Flares.FindAndRemove( hHandle );
+		
+	}
+
+	return;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 bool CTFFlareGun::HasKnockback() const

@@ -34,6 +34,8 @@ public:
 	virtual void	Spawn( void );
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_FLAREGUN; }
 	virtual void	SecondaryAttack();
+	virtual 		CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
+	void			DeathNotice( CBaseEntity *pVictim );
 	bool			HasKnockback() const;
 	void			AddFlare(CTFProjectile_Flare *pFlare);
 

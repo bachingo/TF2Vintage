@@ -54,7 +54,8 @@ public:
 	virtual void 				Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 	// Overrides.
-	virtual void				Explode(trace_t *pTrace, CBaseEntity *pOther, bool bDetonate = false);
+	virtual void				Explode(trace_t *pTrace, CBaseEntity *pOther);
+	virtual void				Airburst(trace_t *pTrace, CBaseEntity *pOther);
 	virtual void				Detonate( void );
 	virtual float				GetFlareRadius( void );
 #else
