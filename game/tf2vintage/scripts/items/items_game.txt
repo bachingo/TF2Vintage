@@ -4232,6 +4232,7 @@
 		"173"
 		{
 			"name"	"The Vita-Saw"
+			"prefab"	"weapon_bonesaw"
 			"year"			"2010"
 			"item_logname"	"battleneedle"
 			"item_iconname"	"battleneedle"
