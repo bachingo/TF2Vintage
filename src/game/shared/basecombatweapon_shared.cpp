@@ -2272,9 +2272,9 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 		m_bIsOverLoaded = false;
 	}
 	
-	if ( m_iClip1 == GetMaxClip1() && !CanOverload() )
+	if ((m_iClip1 == GetMaxClip1() && !CanOverload()) || pOwner->GetAmmoCount(m_iPrimaryAmmoType) == 0)
 	{
-		// At max ammo, start firing immediately.
+		// At max ammo or out of ammo to reload, start firing immediately.
 		m_bFiringWholeClip = true;
 		return;
 	}
@@ -2337,23 +2337,8 @@ bool CBaseCombatWeapon::CanOverload(void)
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::Overload(void)
 {
-	// If we're empty, don't misfire.
-	if ( m_iClip1 == 0 )
-		m_bIsOverLoaded = false;
-	
-	// If we're not overloaded, don't even bother to explode.
-	if (!m_bIsOverLoaded)
-		return;
-		
-	// Deduct a round.
-	if ( m_iClip1 > 0 )
-		 m_iClip1 -= 1;
-	 
-	 // If we're empty, clear misfires.
-	if ( m_iClip1 == 0 )
-		m_bIsOverLoaded = false;
-	
-	return;
+	// Intentionally left blank.
+	// We use this as a hook in tf_weaponbase.cpp
 }
 
 //-----------------------------------------------------------------------------

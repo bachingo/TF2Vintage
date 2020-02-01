@@ -360,6 +360,7 @@ protected:
 	void SetReloadTimer( float flReloadTime );
 	bool ReloadSingly( void );
 	void ReloadSinglyPostFrame( void );
+	void Overload(void);
 
 	virtual float InternalGetEffectBarRechargeTime( void ) { return 0.0f; }
 

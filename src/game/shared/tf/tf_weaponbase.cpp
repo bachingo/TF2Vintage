@@ -15,6 +15,10 @@
 // Server specific.
 #if !defined( CLIENT_DLL )
 	#include "tf_player.h"
+	#include "soundent.h"
+	#include "te_effect_dispatch.h"
+	#include "tf_fx.h"
+	#include "iscorer.h"
 // Client specific.
 #else
 	#include "vgui/ISurface.h"
@@ -659,6 +663,12 @@ bool CTFWeaponBase::CanHolster( void ) const
 	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
 		return false;
 
+	int iUseAutoFireRules = 0;
+	CALL_ATTRIB_HOOK_INT(iUseAutoFireRules, auto_fires_full_clip);
+	// Not if we have ammo in our Auto Firing weapon.
+	if (iUseAutoFireRules != 0 && (m_iClip1 > 0) )
+		return false;
+
 	return BaseClass::CanHolster();
 }
 
@@ -1232,14 +1242,24 @@ bool CTFWeaponBase::ReloadSingly( void )
 			// If we have ammo, remove ammo and add it to clip
 			if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
 			{
-				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
-				if (!IsEnergyWeapon() )
-					pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+				if (!CanOverload())
+					m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
+				else
+					m_iClip1 = min((m_iClip1 + 1), (GetMaxClip1() + 1));
+				if (!IsEnergyWeapon())
+					pPlayer->RemoveAmmo(1, m_iPrimaryAmmoType);
+				if (CanOverload() && m_iClip1 > GetMaxClip1())
+				{
+					m_bIsOverLoaded = true;
+					m_iClip1 = GetMaxClip1();
+				}
+				if (m_bIsOverLoaded)
+					Overload();
 			}
 
 			SwitchBodyGroups(); // Update number of pills in the launcher
 
-			if ( Clip1() == GetMaxClip1() || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
+			if ( ( Clip1() == GetMaxClip1() && !CanOverload() ) || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 			{
 				m_iReloadMode.Set( TF_RELOAD_FINISH );
 			}
@@ -1269,6 +1289,72 @@ bool CTFWeaponBase::ReloadSingly( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Explodes the player if we cause a misfire.
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::Overload(void)
+{
+	CTFPlayer *pTFOwner = GetTFPlayerOwner();
+
+	if (!pTFOwner)
+		return;
+
+	// Base logic.
+
+	// If we're empty, don't misfire.
+	if (m_iClip1 == 0)
+		m_bIsOverLoaded = false;
+
+	// If we're not overloaded, don't even bother to explode.
+	if (!m_bIsOverLoaded)
+		return;
+
+	// Deduct a round.
+	if (m_iClip1 > 0)
+		m_iClip1 -= 1;
+
+#ifdef GAME_DLL
+
+	// Use a rocket launcher's explosion as a base.
+	// We essentially spawn a rocket's explosion where our weapon is attacking.
+
+	// Figure out Econ ID.
+	int iItemID = GetItemID();
+
+	// Play explosion sound and effect.
+
+	Vector vecOrigin = pTFOwner->Weapon_ShootPosition();
+	CPVSFilter filter(vecOrigin);
+	TE_TFExplosion(filter, 0.0f, vecOrigin, Vector(0.0f, 0.0f, 1.0f), GetWeaponID(), pTFOwner->entindex(), iItemID);
+	CSoundEnt::InsertSound(SOUND_COMBAT, vecOrigin, 1024, 3.0);
+
+
+	// Damage.
+	CBaseEntity *pAttacker = GetOwnerEntity();
+	IScorer *pScorerInterface = dynamic_cast<IScorer*>(pAttacker);
+	if (pScorerInterface)
+	{
+		pAttacker = pScorerInterface->GetScorer();
+	}
+
+	float flRadius = TF_ROCKET_RADIUS;
+	CALL_ATTRIB_HOOK_FLOAT(flRadius, mult_explosion_radius);
+	float flDamage = (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
+	CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg);
+
+	CTakeDamageInfo newInfo(pAttacker, pAttacker, this, vec3_origin, vecOrigin, flDamage, GetDamageType());
+	CTFRadiusDamageInfo radiusInfo;
+	radiusInfo.info = &newInfo;
+	radiusInfo.m_vecSrc = vecOrigin;
+	radiusInfo.m_flRadius = flRadius;
+	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
+
+	TFGameRules()->RadiusDamage(radiusInfo);
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pEvent - 
 //			*pOperator - 
@@ -1281,9 +1367,19 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 		{
 			if ( pOperator->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
 			{
-				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
-				if (!IsEnergyWeapon() )
-					pOperator->RemoveAmmo( 1, m_iPrimaryAmmoType );
+				if (!CanOverload())
+					m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
+				else if (!m_bIsOverLoaded)
+					m_iClip1 = min((m_iClip1 + 1), (GetMaxClip1() + 1));
+				if (!IsEnergyWeapon())
+					pOperator->RemoveAmmo(1, m_iPrimaryAmmoType);
+				if (CanOverload() && m_iClip1 > GetMaxClip1())
+				{
+					m_bIsOverLoaded = true;
+					m_iClip1 = GetMaxClip1();
+				}
+				if (m_bIsOverLoaded)
+					Overload();
 			}
 
 			//if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
@@ -3712,9 +3808,19 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 
 		if ( pPlayer && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
 		{
-			m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
-			if (!IsEnergyWeapon() )
-				pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+			if (!CanOverload())
+				m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
+			else
+				m_iClip1 = min((m_iClip1 + 1), (GetMaxClip1() + 1));
+			if (!IsEnergyWeapon())
+				pPlayer->RemoveAmmo(1, m_iPrimaryAmmoType);
+			if (CanOverload() && m_iClip1 > GetMaxClip1())
+			{
+				m_bIsOverLoaded = true;
+				m_iClip1 = GetMaxClip1();
+			}
+			if (m_bIsOverLoaded)
+				Overload();
 		}
 
 		m_bReloadedThroughAnimEvent = true;
