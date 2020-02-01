@@ -573,12 +573,6 @@ public:
 			{
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
-					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
-					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
-
-					if ( !pAttrib || iAttributeID == -1 )
-						continue;
-
 					static_attrib_t attribute;
 					if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
 						continue;
@@ -590,12 +584,6 @@ public:
 			{
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
-					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
-					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
-
-					if ( !pAttrib || iAttributeID == -1 )
-						continue;
-
 					static_attrib_t attribute;
 					if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
 						continue;

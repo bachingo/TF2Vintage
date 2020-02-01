@@ -205,15 +205,15 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 				Color attrcolor;
 				switch ( pStatic->effect_type )
 				{
-				case ATTRIB_EFFECT_NEUTRAL: 
-					attrcolor = GETSCHEME()->GetColor( "ItemAttribNeutral", COLOR_WHITE );
-					break;
-				case ATTRIB_EFFECT_POSITIVE:
-					attrcolor = GETSCHEME()->GetColor( "ItemAttribPositive", COLOR_WHITE );
-					break;
-				case ATTRIB_EFFECT_NEGATIVE:
-					attrcolor = GETSCHEME()->GetColor( "ItemAttribNegative", COLOR_WHITE );
-					break;
+					case ATTRIB_EFFECT_NEUTRAL: 
+						attrcolor = GETSCHEME()->GetColor( "ItemAttribNeutral", COLOR_WHITE );
+						break;
+					case ATTRIB_EFFECT_POSITIVE:
+						attrcolor = GETSCHEME()->GetColor( "ItemAttribPositive", COLOR_WHITE );
+						break;
+					case ATTRIB_EFFECT_NEGATIVE:
+						attrcolor = GETSCHEME()->GetColor( "ItemAttribNegative", COLOR_WHITE );
+						break;
 				}
 				pLabel->SetFgColor( attrcolor );
 				pLabel->SetVisible( true );

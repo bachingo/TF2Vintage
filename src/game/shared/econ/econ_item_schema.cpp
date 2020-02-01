@@ -342,11 +342,11 @@ bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
 		case ATTRTYPE_STRING:
 			value.sVal = AllocPooledString( kv->GetString() );
 			break;
-		case ATTRTYPE_FLOAT:
-			value.flVal = kv->GetFloat();
+		case ATTRTYPE_UINT64:
+			value.iVal = kv->GetUint64();
 			break;
 		default:
-			value.iVal = FloatBits( kv->GetFloat() );
+			value.flVal = kv->GetFloat();
 			break;
 	}
 
@@ -369,11 +369,11 @@ bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 		case ATTRTYPE_STRING:
 			value.sVal = AllocPooledString( kv->GetString("value") );
 			break;
-		case ATTRTYPE_FLOAT:
-			value.flVal = kv->GetFloat("value");
+		case ATTRTYPE_UINT64:
+			value.iVal = kv->GetUint64("value");
 			break;
 		default:
-			value.iVal = FloatBits( kv->GetFloat("value") );
+			value.flVal = kv->GetFloat("value");
 			break;
 	}
 
