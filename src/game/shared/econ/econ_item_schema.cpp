@@ -258,30 +258,29 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 {
 	FOR_EACH_VEC( attributes, i )
 	{
-		EconAttributeDefinition const *pDefinition = attributes[ i ].GetStaticData();
-		attrib_data_union_t u;
-		u.iVal = attributes[ i ].m_iRawValue32;
+		EconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
+		attrib_data_union_t u = attributes[i].value;
 
 		switch ( pDefinition->attribute_type )
 		{
 			case ATTRTYPE_INT:
 			case ATTRTYPE_UINT64:
 			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, u.iVal ) )
+				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[i].value.iVal ) )
 					return;
 
 				break;
 			}
 			case ATTRTYPE_FLOAT:
 			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( u.iVal ) ) )
+				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( attributes[i].value.iVal ) ) )
 					return;
 
 				break;
 			}
 			case ATTRTYPE_STRING:
 			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, u.sVal ) )
+				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[i].value.sVal ) )
 					return;
 
 				break;
@@ -290,4 +289,58 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 				return;
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
+{
+	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
+	if( pAttrib == nullptr || pAttrib->index == -1 )
+		return false;
+
+	iAttribIndex = pAttrib->index;
+
+	switch ( pAttrib->attribute_type )
+	{
+		case ATTRTYPE_STRING:
+			value.sVal = AllocPooledString( kv->GetString() );
+			break;
+		case ATTRTYPE_FLOAT:
+			value.flVal = kv->GetFloat();
+			break;
+		default:
+			value.iVal = FloatBits( kv->GetFloat() );
+			break;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
+{
+	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
+	if( pAttrib == nullptr || pAttrib->index == -1 )
+		return false;
+
+	iAttribIndex = pAttrib->index;
+
+	switch ( pAttrib->attribute_type )
+	{
+		case ATTRTYPE_STRING:
+			value.sVal = AllocPooledString( kv->GetString("value") );
+			break;
+		case ATTRTYPE_FLOAT:
+			value.flVal = kv->GetFloat("value");
+			break;
+		default:
+			value.iVal = FloatBits( kv->GetFloat("value") );
+			break;
+	}
+
+	return true;
 }

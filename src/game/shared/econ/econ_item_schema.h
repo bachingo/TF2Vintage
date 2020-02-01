@@ -146,18 +146,19 @@ typedef union
 	string_t sVal;
 } attrib_data_union_t;
 
-typedef struct static_attrib
+typedef struct
 {
-	EXPLICIT inline static_attrib( char const *szName )
-		: name( szName ) {
-		attribute = GetItemSchema()->GetAttributeDefinitionByName( szName );
-		schema = GetItemSchema()->m_pSchema;
+	EconAttributeDefinition const *GetStaticData( void )
+	{
+		return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
 	}
+	bool BInitFromKV_SingleLine( KeyValues *const kv );
+	bool BInitFromKV_MultiLine( KeyValues *const kv );
 
-	char const *name;
-	EconAttributeDefinition const *attribute;
-	KeyValues const *schema;
+	unsigned short iAttribIndex;
+	attrib_data_union_t value;
 } static_attrib_t;
+static_assert( sizeof( static_attrib_t ) == 8, "" );
 
 
 
@@ -360,7 +361,7 @@ public:
 	bool is_custom_content;
 	char custom_projectile_model[128];
 	
-	CUtlVector<CEconItemAttribute> attributes;
+	CUtlVector<static_attrib_t> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];
 };
 

@@ -3725,12 +3725,12 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 					Msg( "Attributes:\n" );
 					for ( int i = 0; i < itemdef->attributes.Count(); i++ )
 					{
-						CEconItemAttribute *pAttribute = &itemdef->attributes[i];
-						EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
+						static_attrib_t *pAttribute = &itemdef->attributes[i];
+						const EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
 
 						if ( pStatic )
 						{
-							float value = BitsToFloat( pAttribute->m_iRawValue32 );
+							float value = BitsToFloat( pAttribute->value.iVal );
 							if ( pStatic->description_format == ATTRIB_FORMAT_PERCENTAGE || pStatic->description_format == ATTRIB_FORMAT_INVERTED_PERCENTAGE )
 							{
 								value *= 100.0f;

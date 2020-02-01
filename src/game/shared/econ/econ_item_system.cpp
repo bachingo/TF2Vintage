@@ -579,16 +579,9 @@ public:
 					if ( !pAttrib || iAttributeID == -1 )
 						continue;
 
-					CEconItemAttribute attribute;
-
-					if ( pAttrib->string_attribute )
-					{
-						attribute.Init( iAttributeID, pAttribData->GetString( "value" ), pAttribData->GetString( "attribute_class" ) );
-					}
-					else
-					{
-						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
-					}
+					static_attrib_t attribute;
+					if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
+						continue;
 
 					pItem->attributes.AddToTail( attribute );
 				}
@@ -603,16 +596,9 @@ public:
 					if ( !pAttrib || iAttributeID == -1 )
 						continue;
 
-					CEconItemAttribute attribute;
-
-					if ( pAttrib->string_attribute )
-					{
-						attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
-					}
-					else
-					{
-						attribute.Init( iAttributeID, pAttribData->GetFloat(), pAttribData->GetName() );
-					}
+					static_attrib_t attribute;
+					if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
+						continue;
 
 					pItem->attributes.AddToTail( attribute );
 				}
@@ -767,16 +753,14 @@ void CEconItemSchema::Precache( void )
 		}
 
 		// Cache all attrbute names.
-		for (int i = 0; i < pItem->attributes.Count(); i++)
+		for ( static_attrib_t attrib : pItem->attributes )
 		{
-			CEconItemAttribute *pAttribute = &pItem->attributes[i];
-			attrib_data_union_t value;
-			value.iVal = pAttribute->m_iRawValue32;
+			const EconAttributeDefinition *pAttribute = attrib.GetStaticData();
 
 			// Special case for custom_projectile_model attribute.
-			if ( pAttribute->GetStaticData() == pAttribDef_CustomProjectile.attribute )
+			if ( pAttribute == pAttribDef_CustomProjectile )
 			{
-				CBaseEntity::PrecacheModel( STRING( value.sVal ) );
+				CBaseEntity::PrecacheModel( STRING( attrib.value.sVal ) );
 			}
 		}
 	}
