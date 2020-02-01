@@ -100,7 +100,6 @@ ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTI
 ConVar tf2v_use_spy_moveattrib ("tf2v_use_spy_moveattrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should spies be affected by their disguise's speed attributes?" );
 ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables movespeed matching for medics." );
 
-
 ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
 
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
@@ -108,6 +107,8 @@ ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | 
 ConVar tf_enable_grenades( "tf_enable_grenades", "0", FCVAR_REPLICATED, "Enable outfitting the grenade loadout slots" );
 
 ConVar tf2v_allow_disguiseweapons( "tf2v_allow_disguiseweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spy to change disguise weapon using lastdisguise.", true, 0, true, 1);
+ConVar tf2v_use_fast_redisguise( "tf2v_use_fast_redisguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disguising while currently disguised is faster.", true, 0, true, 1);
+
 
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
@@ -3055,8 +3056,8 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer *pTarget, bool 
 	// Start the think to complete our disguise
 	float flDisguiseTime = gpGlobals->curtime + TF_TIME_TO_DISGUISE;
 
-	// Switching disguises is faster if we're already disguised
-	if ( InCond(TF_COND_DISGUISED ) )
+	// Switching disguises is faster if we're already disguised (and we're using modern disguise times)
+	if ( InCond(TF_COND_DISGUISED ) && tf2v_use_fast_redisguise.GetBool() )
 		flDisguiseTime = gpGlobals->curtime + TF_TIME_TO_CHANGE_DISGUISE;
 	
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, flDisguiseTime, disguise_speed_penalty );
