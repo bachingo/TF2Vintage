@@ -52,7 +52,7 @@ template<typename T>
 class CAttributeIterator_GetSpecificAttribute : public CEconItemSpecificAttributeIterator
 {
 public:
-	CAttributeIterator_GetSpecificAttribute(const static_attrib_t &attribute, T *outValue)
+	CAttributeIterator_GetSpecificAttribute( EconAttributeDefinition const *attribute, T *outValue )
 		: m_pAttribute( attribute ), m_pOut( outValue )
 	{
 		m_bFound = false;
@@ -60,7 +60,7 @@ public:
 
 	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, T value )
 	{
-		if ( m_pAttribute.attribute == pDefinition )
+		if ( m_pAttribute == pDefinition )
 		{
 			m_bFound = true;
 			*m_pOut = value;
@@ -69,7 +69,7 @@ public:
 		return !m_bFound;
 	}
 
-	static_attrib_t m_pAttribute;
+	EconAttributeDefinition const *m_pAttribute;
 	bool m_bFound;
 	T *m_pOut;
 };

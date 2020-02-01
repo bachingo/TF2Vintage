@@ -472,12 +472,9 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				CEffectData	data;
 				data.m_vOrigin = tr.endpos;
 				data.m_vNormal = vForward;
-				data.m_nEntIndex = pOther ? pOther->entindex() : 0;
+				data.m_nEntIndex = pOther->entindex();
 				data.m_fFlags = GetProjectileType();
 				data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
-
-				if ( GetScorer() )
-					data.m_nHitBox = GetScorer()->entindex();
 
 				DispatchEffect( "TFBoltImpact", data );
 			}
@@ -492,15 +489,12 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		{
 			UTIL_ImpactTrace( &trHit, DMG_BULLET, "ImpactArrow" );
 		}
-
-		//UTIL_Remove( this );
 	}
 	else
 	{
 		// If we're an item with gibs (Arrow, Festive Arrow, Repair Claw) then gib.
 		if ( ( m_iType == 0 ) || ( m_iType == 3 ) || ( m_iType == 2 ) )
 			BreakArrow();
-		UTIL_Remove( this );
 	}
 
 	// Play sound
@@ -841,14 +835,14 @@ void CTFProjectile_Arrow::GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnima
 bool CTFProjectile_Arrow::CheckRagdollPinned( Vector const& vecOrigin, Vector const& vecDirection, int iBone, int iPhysBone, CBaseEntity *pOther, int iHitGroup, int iVictim )
 {
 	trace_t tr;
-	UTIL_TraceLine( vecOrigin, vecOrigin + vecDirection * 256.f, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceLine( vecOrigin, vecOrigin + vecDirection * 120.f, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
 
 	if ( tr.fraction != 1.0f && tr.DidHitWorld() )
 	{
 		CEffectData data;
-		data.m_vOrigin = vecOrigin;
+		data.m_vOrigin = tr.endpos;
 		data.m_vNormal = vecDirection;
-		data.m_nEntIndex = pOther ? pOther->entindex() : 0;
+		data.m_nEntIndex = pOther->entindex();
 		data.m_fFlags = GetProjectileType();
 		data.m_nAttachmentIndex = iBone;
 		data.m_nMaterial = iPhysBone;
@@ -856,7 +850,7 @@ bool CTFProjectile_Arrow::CheckRagdollPinned( Vector const& vecOrigin, Vector co
 		data.m_nSurfaceProp = iVictim;
 		data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
 
-		if ( GetScorer() )
+		if( GetScorer() )
 			data.m_nHitBox = GetScorer()->entindex();
 
 		DispatchEffect( "TFBoltImpact", data );

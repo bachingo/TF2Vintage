@@ -276,6 +276,7 @@ public:
 
 			if ( ParseItemRec( pSubData, Item ) )
 			{
+				Item->index = index;
 				GetItemSchema()->m_Items.Insert( index, Item );
 			}
 			else
@@ -572,22 +573,9 @@ public:
 			{
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
-					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
-					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
-
-					if ( !pAttrib || iAttributeID == -1 )
+					static_attrib_t attribute;
+					if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
 						continue;
-
-					CEconItemAttribute attribute;
-
-					if ( pAttrib->string_attribute )
-					{
-						attribute.Init( iAttributeID, pAttribData->GetString( "value" ), pAttribData->GetString( "attribute_class" ) );
-					}
-					else
-					{
-						attribute.Init( iAttributeID, pAttribData->GetFloat( "value" ), pAttribData->GetString( "attribute_class" ) );
-					}
 
 					pItem->attributes.AddToTail( attribute );
 				}
@@ -596,22 +584,9 @@ public:
 			{
 				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
 				{
-					int iAttributeID = GetItemSchema()->GetAttributeIndex( pAttribData->GetName() );
-					EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( pAttribData->GetName() );
-
-					if ( !pAttrib || iAttributeID == -1 )
+					static_attrib_t attribute;
+					if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
 						continue;
-
-					CEconItemAttribute attribute;
-
-					if ( pAttrib->string_attribute )
-					{
-						attribute.Init( iAttributeID, pAttribData->GetString(), pAttribData->GetName() );
-					}
-					else
-					{
-						attribute.Init( iAttributeID, pAttribData->GetFloat(), pAttribData->GetName() );
-					}
 
 					pItem->attributes.AddToTail( attribute );
 				}
@@ -692,7 +667,7 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
-	static static_attrib_t pAttribDef_CustomProjectile( "custom projectile model" );
+	static CSchemaFieldHandle<AttributeDefinition_t> pAttribDef_CustomProjectile( "custom projectile model" );
 
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
@@ -766,16 +741,14 @@ void CEconItemSchema::Precache( void )
 		}
 
 		// Cache all attrbute names.
-		for (int i = 0; i < pItem->attributes.Count(); i++)
+		for ( static_attrib_t attrib : pItem->attributes )
 		{
-			CEconItemAttribute *pAttribute = &pItem->attributes[i];
-			attrib_data_union_t value;
-			value.iVal = pAttribute->m_iRawValue32;
+			const EconAttributeDefinition *pAttribute = attrib.GetStaticData();
 
 			// Special case for custom_projectile_model attribute.
-			if ( pAttribute->GetStaticData() == pAttribDef_CustomProjectile.attribute )
+			if ( pAttribute == pAttribDef_CustomProjectile )
 			{
-				CBaseEntity::PrecacheModel( STRING( value.sVal ) );
+				CBaseEntity::PrecacheModel( STRING( attrib.value.sVal ) );
 			}
 		}
 	}
@@ -788,6 +761,19 @@ CEconItemDefinition* CEconItemSchema::GetItemDefinition( int id )
 	CEconItemDefinition *itemdef = NULL;
 	FIND_ELEMENT( m_Items, id, itemdef );
 	return itemdef;
+}
+
+CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name )
+{
+	FOR_EACH_MAP_FAST( m_Items, i )
+	{
+		if ( m_Items[i]->index > -1 && !V_stricmp( m_Items[i]->name, name ) )
+		{
+			return m_Items[i];
+		}
+	}
+
+	return NULL;
 }
 
 EconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )

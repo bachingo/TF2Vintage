@@ -2426,9 +2426,9 @@ bool CTFWeaponBase::IsSilentKiller( void ) const
 // ----------------------------------------------------------------------------
 bool CTFWeaponBase::GetProjectileOverrideModel( string_t *pOut )
 {
-	static static_attrib_t pAttrDef_CustomProjectile( "custom projectile model" );
+	static CSchemaFieldHandle<EconAttributeDefinition> pAttrDef_CustomProjectile( "custom projectile model" );
 
-	if ( pAttrDef_CustomProjectile.attribute )
+	if ( pAttrDef_CustomProjectile )
 	{
 		string_t strProjectileModel = NULL_STRING;
 		CAttributeIterator_GetSpecificAttribute<string_t> func( pAttrDef_CustomProjectile, &strProjectileModel );

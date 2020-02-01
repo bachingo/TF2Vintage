@@ -167,12 +167,12 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 			} 
 			else
 			{
-				CEconItemAttribute *pAttribute = &pItemData->attributes[i];
-				EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
+				static_attrib_t *pAttribute = &pItemData->attributes[i];
+				const EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
 				if ( !pStatic || pStatic->hidden )
 					continue;
 
-				float flValue = BitsToFloat( pAttribute->m_iRawValue32 );
+				float flValue = BitsToFloat( pAttribute->value.iVal );
 			
 				switch ( pStatic->description_format )
 				{
@@ -205,15 +205,15 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 				Color attrcolor;
 				switch ( pStatic->effect_type )
 				{
-				case ATTRIB_EFFECT_NEUTRAL: 
-					attrcolor = GETSCHEME()->GetColor( "ItemAttribNeutral", COLOR_WHITE );
-					break;
-				case ATTRIB_EFFECT_POSITIVE:
-					attrcolor = GETSCHEME()->GetColor( "ItemAttribPositive", COLOR_WHITE );
-					break;
-				case ATTRIB_EFFECT_NEGATIVE:
-					attrcolor = GETSCHEME()->GetColor( "ItemAttribNegative", COLOR_WHITE );
-					break;
+					case ATTRIB_EFFECT_NEUTRAL: 
+						attrcolor = GETSCHEME()->GetColor( "ItemAttribNeutral", COLOR_WHITE );
+						break;
+					case ATTRIB_EFFECT_POSITIVE:
+						attrcolor = GETSCHEME()->GetColor( "ItemAttribPositive", COLOR_WHITE );
+						break;
+					case ATTRIB_EFFECT_NEGATIVE:
+						attrcolor = GETSCHEME()->GetColor( "ItemAttribNegative", COLOR_WHITE );
+						break;
 				}
 				pLabel->SetFgColor( attrcolor );
 				pLabel->SetVisible( true );

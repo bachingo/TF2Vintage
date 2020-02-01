@@ -21,6 +21,16 @@ END_NETWORK_TABLE()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_iRawValue32 = src.m_iRawValue32;
+	m_iAttributeClass = src.m_iAttributeClass;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttributeClass /*= NULL*/ )
 {
 	m_iAttributeDefinitionIndex = iIndex;
@@ -31,23 +41,16 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 
 	if ( pszAttributeClass )
 	{
-		m_iAttributeClass = AllocPooledString( pszAttributeClass );
+		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
 	}
 	else
 	{
 		EconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			m_iAttributeClass = AllocPooledString( pAttribDef->attribute_class );
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
 		}
 	}
-}
-
-CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
-{
-	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
-	m_iRawValue32 = src.m_iRawValue32;
-	m_iAttributeClass = src.m_iAttributeClass;
 }
 
 //-----------------------------------------------------------------------------
@@ -63,18 +66,33 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 
 	if ( pszAttributeClass )
 	{
-		m_iAttributeClass = AllocPooledString( pszAttributeClass );
+		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
 	}
 	else
 	{
 		EconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			m_iAttributeClass = AllocPooledString( pAttribDef->attribute_class );
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
 		}
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconItemAttribute &CEconItemAttribute::operator=( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_iRawValue32 = src.m_iRawValue32;
+	m_iAttributeClass = src.m_iAttributeClass;
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 EconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 {
 	return GetItemSchema()->GetAttributeDefinition( m_iAttributeDefinitionIndex );
@@ -233,35 +251,36 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 	return wszFullName;
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 {
 	FOR_EACH_VEC( attributes, i )
 	{
-		EconAttributeDefinition const *pDefinition = attributes[ i ].GetStaticData();
-		attrib_data_union_t u;
-		u.iVal = attributes[ i ].m_iRawValue32;
+		EconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
+		attrib_data_union_t u = attributes[i].value;
 
 		switch ( pDefinition->attribute_type )
 		{
 			case ATTRTYPE_INT:
 			case ATTRTYPE_UINT64:
 			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, u.iVal ) )
+				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[i].value.iVal ) )
 					return;
 
 				break;
 			}
 			case ATTRTYPE_FLOAT:
 			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( u.iVal ) ) )
+				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( attributes[i].value.iVal ) ) )
 					return;
 
 				break;
 			}
 			case ATTRTYPE_STRING:
 			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, u.sVal ) )
+				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[i].value.sVal ) )
 					return;
 
 				break;
@@ -270,4 +289,93 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 				return;
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CSchemaFieldHandle<EconAttributeDefinition>::CSchemaFieldHandle( char const *name )
+	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+{
+	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( name );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CSchemaFieldHandle<EconAttributeDefinition>::operator const EconAttributeDefinition *( )
+{
+	if ( m_pSchema == GetItemSchema()->m_pSchema )
+		return m_pHandle;
+
+	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( m_pName );
+	m_pSchema = GetItemSchema()->m_pSchema;
+
+	return m_pHandle;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
+	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+{
+	m_pHandle = GetItemSchema()->GetItemDefinitionByName( name );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
+{
+	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
+	if( pAttrib == nullptr || pAttrib->index == -1 )
+		return false;
+
+	iAttribIndex = pAttrib->index;
+
+	switch ( pAttrib->attribute_type )
+	{
+		case ATTRTYPE_STRING:
+			value.sVal = AllocPooledString( kv->GetString() );
+			break;
+		case ATTRTYPE_UINT64:
+			value.iVal = kv->GetUint64();
+			break;
+		default:
+			value.flVal = kv->GetFloat();
+			break;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
+{
+	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
+	if( pAttrib == nullptr || pAttrib->index == -1 )
+		return false;
+
+	iAttribIndex = pAttrib->index;
+
+	switch ( pAttrib->attribute_type )
+	{
+		case ATTRTYPE_STRING:
+			value.sVal = AllocPooledString( kv->GetString("value") );
+			break;
+		case ATTRTYPE_UINT64:
+			value.iVal = kv->GetUint64("value");
+			break;
+		default:
+			value.flVal = kv->GetFloat("value");
+			break;
+	}
+
+	return true;
 }

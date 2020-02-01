@@ -146,18 +146,19 @@ typedef union
 	string_t sVal;
 } attrib_data_union_t;
 
-typedef struct static_attrib
+typedef struct
 {
-	EXPLICIT inline static_attrib( char const *szName )
-		: name( szName ) {
-		attribute = GetItemSchema()->GetAttributeDefinitionByName( szName );
-		schema = GetItemSchema()->m_pSchema;
+	EconAttributeDefinition const *GetStaticData( void )
+	{
+		return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
 	}
+	bool BInitFromKV_SingleLine( KeyValues *const kv );
+	bool BInitFromKV_MultiLine( KeyValues *const kv );
 
-	char const *name;
-	EconAttributeDefinition const *attribute;
-	KeyValues const *schema;
+	unsigned short iAttribIndex;
+	attrib_data_union_t value;
 } static_attrib_t;
+static_assert( sizeof( static_attrib_t ) == 8, "" );
 
 
 
@@ -205,6 +206,8 @@ public:
 
 	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
 	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
+
+	CEconItemAttribute &operator=( CEconItemAttribute const &src );
 
 public:
 	CNetworkVar( int, m_iAttributeDefinitionIndex );
@@ -265,6 +268,7 @@ class CEconItemDefinition
 public:
 	CEconItemDefinition()
 	{
+		index = 0xFFFFFFFF;
 		CLEAR_STR( name );
 		used_by_classes = 0;
 
@@ -315,6 +319,7 @@ public:
 	void IterateAttributes( IEconAttributeIterator &iter );
 
 public:
+	unsigned int index;
 	char name[128];
 	CUtlDict< bool, unsigned short > capabilities;
 	CUtlDict< bool, unsigned short > tags;
@@ -343,20 +348,20 @@ public:
 	char equip_region[128];
 	char model_player_per_class[TF_CLASS_COUNT_ALL][128];
 	char extra_wearable[128];
-	int attach_to_hands;
-	int attach_to_hands_vm_only;
+	int  attach_to_hands;
+	int  attach_to_hands_vm_only;
 	bool act_as_wearable;
-	int hide_bodygroups_deployed_only;
+	int  hide_bodygroups_deployed_only;
 	bool is_reskin;
 	bool specialitem;
 	bool demoknight;
 	char holiday_restriction[128];
 	bool itemfalloff;
-	int year;
+	int  year;
 	bool is_custom_content;
 	char custom_projectile_model[128];
 	
-	CUtlVector<CEconItemAttribute> attributes;
+	CUtlVector<static_attrib_t> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];
 };
 

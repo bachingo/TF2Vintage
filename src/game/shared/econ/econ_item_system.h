@@ -36,6 +36,7 @@ public:
 	void Precache( void );
 
 	CEconItemDefinition* GetItemDefinition( int id );
+	CEconItemDefinition* GetItemDefinitionByName( const char* name );
 	EconAttributeDefinition *GetAttributeDefinition( int id );
 	EconAttributeDefinition *GetAttributeDefinitionByName( const char* name );
 	EconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );
@@ -55,6 +56,25 @@ protected:
 private:
 	bool m_bInited;
 };
+
+template<class T>
+class CSchemaFieldHandle
+{
+public:
+	EXPLICIT CSchemaFieldHandle( char const *name );
+
+	operator T const *();
+
+private:
+	char const *m_pName;
+	T *m_pHandle;
+	KeyValues *m_pSchema;
+};
+
+inline CSchemaFieldHandle<CEconItemDefinition>::operator const CEconItemDefinition *( )
+{
+	return m_pHandle;
+}
 
 CEconItemSchema *GetItemSchema();
 
