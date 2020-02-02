@@ -1440,6 +1440,12 @@ void CTFPlayer::Regenerate( void )
 		m_Shared.RemoveCond( TF_COND_PHASE );
 	}
 	
+	// Remove Soda Popper phase
+	if ( m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
+	{
+		m_Shared.RemoveCond( TF_COND_SODAPOPPER_HYPE );
+	}
+	
 	// Remove Marked for Death effects
 	if ( m_Shared.InCond( TF_COND_MARKEDFORDEATH ) )
 	{
@@ -1973,6 +1979,12 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 				{
 					// Reset rage
 					m_Shared.ResetRageSystem();
+				}
+				
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_PEP_BRAWLER_BLASTER || pWeapon->GetWeaponID() == TF_WEAPON_SODA_POPPER )
+				{
+					// Reset hype/boost
+					m_Shared.SetHypeMeterAbsolute( 0 );
 				}
 
 				// If this is not a weapon we're supposed to have in this loadout slot then nuke it.
@@ -4957,7 +4969,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW / 100), TF_BUFF_REGENONDAMAGE);
 			}
 			// Build scattergun boost.
-			pTFAttacker->m_Shared.SetHypeMeter( info.GetDamage(), true );
+			int nHypeOnDamage = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nHypeOnDamage, hype_on_damage);
+			int nBoostOnDamage = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nBoostOnDamage, boost_on_damage);
+			if (nHypeOnDamage)
+				pTFAttacker->m_Shared.AddHypeMeter( ( info.GetDamage() * ( 100 / TF_SCATTERGUN_HYPE_COUNT ) ) );
+			if (nBoostOnDamage)
+				pTFAttacker->m_Shared.AddHypeMeter( ( info.GetDamage() * ( 100 / TF_SCATTERGUN_BOOST_COUNT ) ) );			
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -5284,14 +5303,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 	
 	// If we have an attribute reducing boost/hype, reduce our level.
-	if ( pWeapon )
-	{
-		int nLoseHypeOnDamage = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nLoseHypeOnDamage, lose_hype_on_take_damage );
-		if ( nLoseHypeOnDamage != 0 )
-		pTFAttacker->m_Shared.SetHypeMeter( ( ( info.GetDamage() * nLoseHypeOnDamage ) * -1 ), false );
-		
-	}
+	int nLoseHypeOnDamage = 0;
+	CALL_ATTRIB_HOOK_INT(nLoseHypeOnDamage, lose_hype_on_take_damage );
+	if ( nLoseHypeOnDamage != 0 )
+	m_Shared.RemoveHypeMeter( ( info.GetDamage() * nLoseHypeOnDamage ) );
 	
 	// If we have Sanguisuge health, reduce our pool by the damage we took.
 	if ( m_Shared.GetSanguisugeHealth() > 0 )

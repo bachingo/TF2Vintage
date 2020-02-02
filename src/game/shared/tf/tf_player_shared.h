@@ -339,7 +339,8 @@ public:
 	bool	HasRecoiled( void ) const			{ return m_bRecoiled; }
 	void	SetHasRecoiled( bool value )		{ m_bRecoiled = value; }
 	float	GetHypeMeter( void ) const			{ return m_flHypeMeter; }
-	void	SetHypeMeter( float value, bool bIsPercent );
+	void	AddHypeMeter( float value );
+	void	RemoveHypeMeter( float value );
 	void	SetHypeMeterAbsolute( float value )	{ m_flHypeMeter = value; }
 	
 	int		GetKnockbackWeaponID( void ) const  { return m_iWeaponKnockbackID; }

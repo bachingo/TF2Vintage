@@ -349,7 +349,7 @@ void CTFGameMovement::AirDash( void )
 	int nLoseHypeOnJump = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump);
 	if ( nLoseHypeOnJump != 0 )
-		m_pTFPlayer->m_Shared.SetHypeMeter( (nLoseHypeOnJump * -1), false );
+		m_pTFPlayer->m_Shared.RemoveHypeMeter( nLoseHypeOnJump );
 
 #if defined( GAME_DLL )
 	if ( m_pTFPlayer->m_Shared.GetAirDashCount() > 0 )
@@ -1625,9 +1625,8 @@ void CTFGameMovement::FullWalkMove()
 
 			if ( nBuildsHype == 1 )
 			{
-				m_pTFPlayer->m_Shared.SetHypeMeter( 
-					( mv->m_vecVelocity.Length() * gpGlobals->frametime ) / tf_scout_hype_mod.GetFloat(), 
-					false );
+				m_pTFPlayer->m_Shared.AddHypeMeter( 
+					( ( mv->m_vecVelocity.Length() * gpGlobals->frametime ) / tf_scout_hype_mod.GetFloat() ) );
 			}
 		}
 	}

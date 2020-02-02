@@ -1954,6 +1954,16 @@
 			"model_player"	"models/workshop/weapons/c_models/c_soda_popper/c_soda_popper.mdl"
 			"attributes"
 			{
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"hype on damage"
+				{
+					"attribute_class"	"hype_on_damage"
+					"value"	"1"
+				}
 				"Reload time decreased"
 				{
 					"attribute_class"	"mult_reload_time"
@@ -6391,6 +6401,11 @@
 			}
 			"attributes"
 			{
+				"boost on damage"
+				{
+					"attribute_class"	"boost_on_damage"
+					"value"	"1"
+				}
 				"weapon spread bonus"
 				{
 					"attribute_class"	"mult_spread_scale"

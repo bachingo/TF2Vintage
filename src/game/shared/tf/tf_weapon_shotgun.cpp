@@ -183,7 +183,6 @@ void CTFScatterGun::Equip( CBaseCombatCharacter *pEquipTo )
 		CTFPlayer *pOwner = ToTFPlayer( pEquipTo );
 		if ( pOwner )
 		{
-			// CTFPlayerShared::SetScoutHypeMeter
 		#if defined( CLIENT_DLL )
 			m_bAutoReload = cl_autoreload.GetBool();
 		#else
@@ -584,3 +583,17 @@ float CTFPepBrawlBlaster::GetSpeedMod(void) const
 	return ((pOwner->m_Shared.GetHypeMeter() / 100) + 1);
 }
 
+void CTFSodaPopper::SecondaryAttack(void)
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+	if (!pOwner)
+		return;
+
+	int nBuildsHype = 0;
+	CALL_ATTRIB_HOOK_INT( nBuildsHype, set_weapon_mode );
+	if ( nBuildsHype == 1 )
+	{
+		if (pOwner->m_Shared.GetHypeMeter() >= 100.0f)
+			pOwner->m_Shared.AddCond(TF_COND_SODAPOPPER_HYPE, 10.0f);
+	}
+}

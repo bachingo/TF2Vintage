@@ -847,7 +847,6 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		break;
 
 	case TF_COND_DISGUISED_AS_DISPENSER:
-	case TF_COND_ENERGY_BUFF:
 	case TF_COND_BERSERK:
 		m_pOuter->TeamFortress_SetSpeed();
 		break;
@@ -985,7 +984,6 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 #endif
 
 	case TF_COND_DISGUISED_AS_DISPENSER:
-	case TF_COND_ENERGY_BUFF:
 	case TF_COND_BERSERK:	
 		m_pOuter->TeamFortress_SetSpeed();
 		break;
@@ -4023,37 +4021,17 @@ float CTFPlayerShared::GetCritMult(void)
 //-----------------------------------------------------------------------------
 // Purpose: Set hype/boost meter progress
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::SetHypeMeter( float value, bool bIsPercent  )
+void CTFPlayerShared::AddHypeMeter( float value )
 {
-	if ( m_pOuter )
-	{
-		CTFScatterGun *pScattergun = ( CTFScatterGun * )m_pOuter->Weapon_GetSlot( TF_LOADOUT_SLOT_PRIMARY );
-		if ( pScattergun )
-		{
-			float flMaxDamage = 0;
-			// Build percent based on our scattergun.
-			int nHypeOnDamage = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pScattergun, nHypeOnDamage, hype_on_damage);
-			int nBoostOnDamage = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pScattergun, nBoostOnDamage, boost_on_damage);
+	m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
+}
 
-			if ( nHypeOnDamage == 1 && bIsPercent )
-				flMaxDamage = TF_SCATTERGUN_HYPE_COUNT;
-			else if ( nBoostOnDamage == 1 && bIsPercent )
-				flMaxDamage = TF_SCATTERGUN_BOOST_COUNT;
-			
-			if ( bIsPercent )
-				m_flHypeMeter = Min( ( m_flHypeMeter + ( value / ( flMaxDamage / 100 ) ) ) , 100.0f );
-			else
-				m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
-
-			if (m_flHypeMeter < 0)
-				m_flHypeMeter = 0.0;
-
-			if ( !nHypeOnDamage )
-				m_pOuter->TeamFortress_SetSpeed();
-		}
-	}
+//-----------------------------------------------------------------------------
+// Purpose: Set hype/boost meter progress
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::RemoveHypeMeter( float value )
+{
+	m_flHypeMeter = Max( ( m_flHypeMeter - value ) , 0.0f );
 }
 
 //-----------------------------------------------------------------------------
