@@ -15,8 +15,6 @@
 
 #include "tier0/icommandline.h"
 
-ConVar tf2v_show_reskins_in_armory("tf2v_show_reskins_in_armory", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Display reskin items in the armory.");
-
 #endif
 
 static CTFInventory g_TFInventory;

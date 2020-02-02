@@ -56,7 +56,7 @@ void CTFFlareGun::Spawn(void)
 void CTFFlareGun::SecondaryAttack( void )
 {
 	int nWeaponMode = 0;
-	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
+	//CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
 	if (nWeaponMode == 1)
 	{
 		if ( !CanAttack() )

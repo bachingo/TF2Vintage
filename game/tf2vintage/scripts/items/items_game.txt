@@ -2935,7 +2935,6 @@
 		{
 			"specialitem"			"1"
 			"item_quality" 			"developer"
-			"show_in_armory"		"0"
 		}
 	}
 	"items"
@@ -6859,26 +6858,6 @@
 				}
 			}
 		}
-		"169"
-		{
-			"name"	"Golden Wrench"
-			"prefab"			"weapon_wrench weapon_special"
-			"year"	"2010"
-			"item_name"		"#TF_Unique_Golden_Wrench"
-			"propername"	"1"
-			"item_logname"	"wrench_golden"
-			"item_iconname"	"wrench_golden"
-			"image_inventory"	"backpack/weapons/c_models/c_wrench/gold_wrench"
-			"model_player"	"models/weapons/c_models/c_wrench/gold_wrench.mdl"
-			"attributes"
-			{
-				"turn to gold"
-				{
-					"attribute_class"	"set_turn_to_gold"
-					"value" "1"
-				}
-			}
-		}
 		"121"
 		{
 			"name"	"The Devanon Special"
@@ -7790,7 +7769,7 @@
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
 		}
-		"90001"
+		"30669"
 		{
 			"name"			"Ambassador Dark"
 			"prefab"		"weapon_revolver weapon_reskin"
@@ -7831,6 +7810,26 @@
 				"sound_burst" "Weapon_Ambassador.SingleCrit"
 			}
 			"xifier_class_remap"	"ambassador"
+		}
+		"30670"
+		{
+			"name"	"Golden Wrench"
+			"prefab"		"weapon_wrench weapon_special"
+			"year"	"2010"
+			"item_name"		"#TF_Unique_Golden_Wrench"
+			"propername"	"1"
+			"item_logname"	"wrench_golden"
+			"item_iconname"	"wrench_golden"
+			"image_inventory"	"backpack/weapons/c_models/c_wrench/gold_wrench"
+			"model_player"	"models/weapons/c_models/c_wrench/gold_wrench.mdl"
+			"attributes"
+			{
+				"turn to gold"
+				{
+					"attribute_class"	"set_turn_to_gold"
+					"value" "1"
+				}
+			}
 		}
 	}
 	"attributes"

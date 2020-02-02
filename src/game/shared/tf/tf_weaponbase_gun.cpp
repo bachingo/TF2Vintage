@@ -315,7 +315,7 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 		m_iWeaponMode,
 		CBaseEntity::GetPredictionRandomSeed() & 255,
 		GetWeaponSpread(),
-		GetProjectileDamage(m_bDisguised),
+		GetProjectileDamage(),
 		IsCurrentAttackACrit() );
 }
 
@@ -509,7 +509,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
+		pProjectile->SetDamage( GetProjectileDamage() );
 	}
 	return pProjectile;
 
@@ -559,7 +559,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		pProjectile->SetWeaponID( GetWeaponID() );
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 #ifdef GAME_DLL
-		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
+		pProjectile->SetDamage( GetProjectileDamage() );
 #endif
 	}
 	
@@ -667,7 +667,7 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
+		pProjectile->SetDamage( GetProjectileDamage() );
 	}
 	return pProjectile;
 #endif
@@ -716,7 +716,7 @@ CBaseEntity *CTFWeaponBaseGun::FireJar( CTFPlayer *pPlayer, int iType )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
+		pProjectile->SetDamage( GetProjectileDamage() );
 	}
 	return pProjectile;
 #endif
@@ -750,7 +750,7 @@ CBaseEntity *CTFWeaponBaseGun::FireArrow( CTFPlayer *pPlayer, int iType )
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
-		pProjectile->SetDamage( GetProjectileDamage(m_bDisguised) );
+		pProjectile->SetDamage( GetProjectileDamage() );
 	}
 	return pProjectile;
 #endif
@@ -914,11 +914,11 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 //-----------------------------------------------------------------------------
 // Purpose: Accessor for damage, so sniper etc can modify damage
 //-----------------------------------------------------------------------------
-float CTFWeaponBaseGun::GetProjectileDamage( bool bCurrentlyDisguised/* = false*/)
+float CTFWeaponBaseGun::GetProjectileDamage( void )
 {
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
-	if (bCurrentlyDisguised)
+	if (m_bDisguised)
 		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg_disguised );	
 	return flDamage;
 }

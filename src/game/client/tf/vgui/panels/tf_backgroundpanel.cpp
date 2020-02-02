@@ -79,6 +79,7 @@ void CTFBackgroundPanel::VideoReplay()
 	{
 		m_pVideo->Activate();
 		m_pVideo->BeginPlaybackNoAudio(m_pzVideoLink);
+		m_pVideo->SetZPos(-20);
 	}
 	else
 	{
@@ -94,7 +95,6 @@ void CTFBackgroundPanel::OnTick()
 void CTFBackgroundPanel::OnThink()
 {
 	BaseClass::OnThink();
-	SetZPos(-19);
 };
 
 void CTFBackgroundPanel::DefaultLayout()

@@ -1709,12 +1709,14 @@ void CTFPlayer::GiveDefaultItems()
 		EnableZombies( pData );
 	
 	// If we're a VIP player, give a medal.
+	/*
 	CTFPlayer *pPlayer = this;
 	if ( pPlayer && pPlayer->m_iPlayerVIPRanking != 0 )
 	{
 		if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
 			EnableVIP( pData, pPlayer->m_iPlayerVIPRanking );	
 	}
+	*/
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -2112,7 +2114,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( pItemDef->specialitem )
 			{
 				CTFPlayer *pPlayer = this;
-				if ( ( !pPlayer->m_bIsPlayerADev ) || ( pPlayer->m_iPlayerVIPRanking != -1 ) )
+				if ( ( !pPlayer->m_bIsPlayerADev ) && ( pPlayer->m_iPlayerVIPRanking != -1 ) )
 					bIsSpecialRestricted = true;
 			}
 		

@@ -110,7 +110,7 @@ void CTFAdvCheckButton::PerformLayout()
 	pButtonImage->SetDrawColor(GETSCHEME()->GetColor(pImageColorDefault, Color(255, 255, 255, 255)));
 	pButtonImage->SetVisible(true);
 	pButtonImage->SetPos(iShift, iShift);
-	pButtonImage->SetZPos(2);
+	pButtonImage->SetZPos(3);
 	pButtonImage->SetWide(fWidth);
 	pButtonImage->SetTall(fWidth);
 	pButtonImage->SetShouldScaleImage(true);
@@ -120,7 +120,7 @@ void CTFAdvCheckButton::PerformLayout()
 	pCheckImage->SetDrawColor(GETSCHEME()->GetColor(pImageColorDefault, Color(255, 255, 255, 255)));
 	pCheckImage->SetVisible(m_bBorderVisible);
 	pCheckImage->SetPos(GetWide() - GetTall() + iShift, iShift);
-	pCheckImage->SetZPos(3);
+	pCheckImage->SetZPos(2);
 	pCheckImage->SetWide(fWidth);
 	pCheckImage->SetTall(fWidth);
 	pCheckImage->SetShouldScaleImage(true);

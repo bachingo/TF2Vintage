@@ -67,7 +67,7 @@ public:
 	virtual bool  IsFlameArrow( void );
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
-	virtual float GetProjectileDamage( bool bCurrentlyDisguised = false);
+	virtual float GetProjectileDamage( void );
 
 
 	virtual void ZoomIn( void );
