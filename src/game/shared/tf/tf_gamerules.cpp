@@ -223,7 +223,6 @@ void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
 
 void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
 {
-
 #ifdef GAME_DLL
 	ConVarRef var( pConVar );
 
@@ -6476,17 +6475,17 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		( collisionGroup1 == TFCOLLISION_GROUP_ROCKETS ) )
 		return false;
 
-	if ( ( collisionGroup0 == TF_COLLISIONGROUP_GRENADES ) &&
+	if ( ( collisionGroup0 == TFCOLLISION_GROUP_GRENADES ) &&
 		( collisionGroup1 == TFCOLLISION_GROUP_ROCKETS ) )
 		return false;
 
 	// Grenades don't collide with players. They handle collision while flying around manually.
 	if ( ( collisionGroup0 == COLLISION_GROUP_PLAYER ) &&
-		( collisionGroup1 == TF_COLLISIONGROUP_GRENADES ) )
+		( collisionGroup1 == TFCOLLISION_GROUP_GRENADES ) )
 		return false;
 
 	if ( ( collisionGroup0 == COLLISION_GROUP_PLAYER_MOVEMENT ) &&
-		( collisionGroup1 == TF_COLLISIONGROUP_GRENADES ) )
+		( collisionGroup1 == TFCOLLISION_GROUP_GRENADES ) )
 		return false;
 
 	// Respawn rooms only collide with players
@@ -6526,8 +6525,8 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 */
 	// don't want caltrops and other grenades colliding with each other
 	// caltops getting stuck on other caltrops, etc.)
-	if ( ( collisionGroup0 == TF_COLLISIONGROUP_GRENADES ) &&
-		( collisionGroup1 == TF_COLLISIONGROUP_GRENADES ) )
+	if ( ( collisionGroup0 == TFCOLLISION_GROUP_GRENADES ) &&
+		( collisionGroup1 == TFCOLLISION_GROUP_GRENADES ) )
 	{
 		return false;
 	}
@@ -6555,7 +6554,7 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		( collisionGroup1 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) )
 		return true;
 
-	if ( ( collisionGroup0 == TF_COLLISIONGROUP_GRENADES ) &&
+	if ( ( collisionGroup0 == TFCOLLISION_GROUP_GRENADES ) &&
 		( collisionGroup1 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) )
 		return false;
 

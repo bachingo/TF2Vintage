@@ -282,7 +282,7 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	UTIL_SetSize( this, Vector( -2.0f, -2.0f, -2.0f ), Vector( 2.0f, 2.0f, 2.0f ) );
 
 	// Set the movement type.
-	SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
+	SetCollisionGroup( TFCOLLISION_GROUP_GRENADES );
 
 	// Don't collide with players on the owner's team for the first bit of our life
 	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
@@ -697,7 +697,7 @@ public:
 		{
 			if ( pEntity == m_pPassEnt2 )
 				return false;
-			if ( pEntity->GetCollisionGroup() == TF_COLLISIONGROUP_GRENADES )
+			if ( pEntity->GetCollisionGroup() == TFCOLLISION_GROUP_GRENADES )
 				return false;
 			if ( pEntity->GetCollisionGroup() == TFCOLLISION_GROUP_ROCKETS )
 				return false;

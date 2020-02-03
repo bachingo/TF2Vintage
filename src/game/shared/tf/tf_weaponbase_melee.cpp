@@ -504,14 +504,14 @@ void CTFWeaponBaseMelee::OnEntityHit( CBaseEntity *pEntity )
 {
 #ifdef GAME_DLL
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if (pPlayer && TFGameRules()->GetIT() && ToBasePlayer( pEntity ))
+	if ( pPlayer && TFGameRules()->GetIT() && ToBasePlayer( pEntity ) )
 	{
-		if (TFGameRules()->GetIT() == pPlayer)
+		if ( TFGameRules()->GetIT() == pPlayer )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "tagged_player_as_it" );
-			if (event)
+			if ( event )
 			{
-				event->SetInt( "player", engine->GetPlayerUserId( pPlayer->edict() ) );
+				event->SetInt( "player", pPlayer->GetUserID() );
 
 				gameeventmanager->FireEvent( event );
 			}
