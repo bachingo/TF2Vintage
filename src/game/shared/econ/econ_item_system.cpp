@@ -439,9 +439,10 @@ public:
 
 		if ( prefab[0] != '\0' )
 		{
-			char * pch;
-			pch = strtok( prefab, " " );
-			while ( pch != NULL )
+			CUtlStringList strings;
+			V_SplitString( prefab, " ", strings );
+
+			for( const char *pch : strings )
 			{
 				KeyValues *pPrefabValues = NULL;
 				FIND_ELEMENT( GetItemSchema()->m_PrefabsValues, pch, pPrefabValues );
@@ -449,7 +450,6 @@ public:
 				{
 					ParseItemRec( pPrefabValues, pItem );
 				}
-				pch = strtok( NULL, " " );
 			}
 		}
 
