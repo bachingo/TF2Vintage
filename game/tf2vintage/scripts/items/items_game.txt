@@ -1268,11 +1268,6 @@
 			"model_player"		"models/workshop/weapons/c_models/c_amputator/c_amputator.mdl"
 			"attributes"
 			{
-				"provide on active"
-				{
-					"attribute_class"	"provide_on_active"
-					"value" "1"
-				}
 				"damage penalty"
 				{
 					"attribute_class"	"mult_dmg"
