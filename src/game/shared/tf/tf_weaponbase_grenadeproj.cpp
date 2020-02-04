@@ -285,7 +285,7 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	SetCollisionGroup( TFCOLLISION_GROUP_GRENADES );
 
 	// Don't collide with players on the owner's team for the first bit of our life
-	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
+	m_flCollideWithTeammatesTime = gpGlobals->curtime + GetCollideWithTeammatesDelay();
 	m_bCollideWithTeammates = false;
 
 	VPhysicsInitNormal( SOLID_BBOX, 0, false );

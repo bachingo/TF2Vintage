@@ -153,7 +153,7 @@ void CTFBaseRocket::Spawn( void )
 	SetNextThink( gpGlobals->curtime );
 
 	// Don't collide with players on the owner's team for the first bit of our life
-	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
+	m_flCollideWithTeammatesTime = gpGlobals->curtime + GetCollideWithTeammatesDelay();
 	m_bCollideWithTeammates = false;
 
 #endif
