@@ -184,8 +184,33 @@ DECLARE_CLIENT_EFFECT( "BoltImpact", StickyBoltCallback );
 
 void CreateTFCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, int iProjType, byte nSkin )
 {
-	Assert( iProjType >= 0 && iProjType < ARRAYSIZE( g_pszArrowModelClient ) );
-	const model_t *pModel = engine->LoadModel( g_pszArrowModelClient[ iProjType ] );
+	Assert( iProjType > 0 && iProjType < TF_NUM_PROJECTILES );
+
+	const char *pszModel = NULL;
+	switch ( iProjType )
+	{
+		case TF_PROJECTILE_ARROW:
+			pszModel = g_pszArrowModelClient[0];
+			break;
+		case TF_PROJECTILE_HEALING_BOLT:
+			pszModel = g_pszArrowModelClient[1];
+			break;
+		case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
+			pszModel = g_pszArrowModelClient[2];
+			break;
+		case TF_PROJECTILE_FESTIVE_ARROW:
+			pszModel = g_pszArrowModelClient[3];
+			break;
+		case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
+			pszModel = g_pszArrowModelClient[4];
+			break;
+		case TF_PROJECTILE_GRAPPLINGHOOK:
+			pszModel = g_pszArrowModelClient[5];
+			break;
+		default:
+			return;
+	}
+	const model_t *pModel = engine->LoadModel( pszModel );
 
 	QAngle vAngles;
 	VectorAngles( vecDirection, vAngles );
