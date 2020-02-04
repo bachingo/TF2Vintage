@@ -95,11 +95,9 @@ public:
 #else
 	virtual void		ClientThink( void );
 	virtual void		OnDataChanged( DataUpdateType_t updateType );
-	virtual void		Light( void );
+	void				CreateCritTrail( void );
 
 	virtual void   		NotifyBoneAttached( C_BaseAnimating* attachTarget );
-
-
 
 	// Tell the object when to die
 	void				SetDieTime( float flDieTime ) 	{ m_flDieTime = flDieTime; }
@@ -118,12 +116,14 @@ protected:
 
 	EHANDLE m_hSpriteTrail;
 #else
-	bool		bEmitting;
 	bool		m_bCritical;
 	bool		m_bFlame;
 	int			m_iProjType;
 	float		m_flDieTime;
 	bool		m_bAttachment;
+
+	CNewParticleEffect *m_pCritEffect;
+	int m_iDeflectedParity;
 #endif
 };
 

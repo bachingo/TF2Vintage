@@ -112,15 +112,16 @@ PRECACHE_REGISTER( tf_projectile_arrow );
 
 CTFProjectile_Arrow::CTFProjectile_Arrow()
 {
+#ifdef CLIENT_DLL
+	m_pCritEffect = NULL;
+#endif
 }
 
 CTFProjectile_Arrow::~CTFProjectile_Arrow()
 {
 #ifdef CLIENT_DLL
 	ParticleProp()->StopEmission();
-	bEmitting = false;
-#else
-
+	m_pCritEffect->StopEmission();
 #endif
 }
 
@@ -1073,8 +1074,37 @@ void C_TFProjectile_Arrow::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		SetNextClientThink( gpGlobals->curtime + 0.1f );	
+		SetNextClientThink( gpGlobals->curtime + 0.1f );
+
+		if ( m_bFlame )
+			ParticleProp()->Create( "flying_flaming_arrow", PATTACH_POINT_FOLLOW, "muzzle" );
 	}
+
+	if ( m_bCritical )
+	{
+		if ( updateType == DATA_UPDATE_CREATED || m_iDeflected != m_iDeflectedParity )
+			CreateCritTrail();
+	}
+
+	m_iDeflectedParity = m_iDeflected;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_Arrow::CreateCritTrail( void )
+{
+	if ( IsDormant() )
+		return;
+
+	if ( m_pCritEffect )
+	{
+		m_pCritEffect->StopEmission();
+		m_pCritEffect = NULL;
+	}
+
+	char const *pszEffect = ConstructTeamParticle( "critical_rocket_%s", GetTeamNumber() );
+	m_pCritEffect = ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN_FOLLOW );
 }
 
 //-----------------------------------------------------------------------------
@@ -1090,25 +1120,7 @@ void C_TFProjectile_Arrow::ClientThink( void )
 		return;
 	}
 
-	if ( m_bFlame && !bEmitting )
-	{
-		Light();
-		SetNextClientThink( CLIENT_THINK_NEVER );
-		return;
-	}
-
 	SetNextClientThink( gpGlobals->curtime + 0.1f );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFProjectile_Arrow::Light( void )
-{
-	if ( IsDormant() || !m_bFlame || ( m_iProjType != TF_PROJECTILE_ARROW && m_iProjType != TF_PROJECTILE_FESTIVE_ARROW ) )
-		return;
-
-	ParticleProp()->Create( "flying_flaming_arrow", PATTACH_ABSORIGIN_FOLLOW );
 }
 
 //-----------------------------------------------------------------------------
