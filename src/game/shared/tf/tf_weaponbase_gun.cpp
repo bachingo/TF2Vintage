@@ -111,10 +111,6 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	CalcIsAttackCritical();
 
-	m_bDisguised = false;
-	if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED))
-		m_bDisguised = true;
-
 #ifndef CLIENT_DLL
 
 	pPlayer->RemoveInvisibility();
@@ -234,7 +230,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 			break;
 
 		case TF_PROJECTILE_FLARE:
-			pProjectile = FireFlare(pPlayer);
+			pProjectile = FireFlare( pPlayer );
 			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 			break;
 
@@ -243,7 +239,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		case TF_PROJECTILE_FESTIVE_URINE:
 		case TF_PROJECTILE_BREADMONSTER_JARATE:
 		case TF_PROJECTILE_BREADMONSTER_MADMILK:
-			pProjectile = FireJar(pPlayer, iProjectile);
+			pProjectile = FireJar( pPlayer, iProjectile );
 			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 			break;
 
@@ -253,7 +249,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		case TF_PROJECTILE_FESTIVE_ARROW:
 		case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
 		case TF_PROJECTILE_GRAPPLINGHOOK:
-			pProjectile = FireArrow(pPlayer, iProjectile);
+			pProjectile = FireArrow( pPlayer, iProjectile );
 			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 			break;
 
@@ -920,8 +916,11 @@ float CTFWeaponBaseGun::GetProjectileDamage( void )
 {
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
-	if (m_bDisguised)
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg_disguised );	
+
 	return flDamage;
 }
 

@@ -74,6 +74,7 @@ public:
 	virtual void		ImpactTeamPlayer( CTFPlayer *pTarget ) {}
 	void				HealBuilding( CBaseEntity *pTarget );
 
+	virtual float		GetCollideWithTeammatesDelay( void ) const { return 0.10; }
 	void				FlyThink( void );
 
 	const char			*GetTrailParticleName( void );
@@ -105,13 +106,14 @@ public:
 
 #endif
 
-private:
+protected:
 #ifdef GAME_DLL
 	EHANDLE m_Scorer;
 	CNetworkVar( bool, m_bCritical );
 	CNetworkVar( bool, m_bFlame);
 	CNetworkVar( int, m_iProjType );
 
+	float m_flCreationTime;
 	bool m_bImpacted;
 
 	EHANDLE m_hSpriteTrail;

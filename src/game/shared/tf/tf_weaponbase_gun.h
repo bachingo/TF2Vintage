@@ -83,8 +83,7 @@ public:
 private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );
-	
-	bool m_bDisguised;
+
 };
 
 #endif // TF_WEAPONBASE_GUN_H

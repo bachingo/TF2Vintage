@@ -26,8 +26,6 @@
 
 #ifdef GAME_DLL
 ConVar tf_debug_arrows( "tf_debug_arrows", "0", FCVAR_CHEAT );
-ConVar tf2v_healing_bolts("tf2v_healing_bolts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables crossbow bolts to be able to heal teammates." );
-ConVar tf2v_healing_bolts_heal_factor("tf2v_healing_bolts_heal_factor", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Multiplication factor of healing when using a healing bolt." );
 #endif
 
 extern ConVar tf2v_minicrits_on_deflect;
@@ -130,7 +128,18 @@ CTFProjectile_Arrow::~CTFProjectile_Arrow()
 
 CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, float flSpeed, float flGravity, bool bFlame, CBaseEntity *pOwner, CBaseEntity *pScorer, int iType )
 {
-	CTFProjectile_Arrow *pArrow = static_cast<CTFProjectile_Arrow *>( CBaseEntity::CreateNoSpawn( "tf_projectile_arrow", vecOrigin, vecAngles, pOwner ) );
+	const char *pszEntClass = "tf_projectile_arrow";
+	switch ( iType )
+	{
+		case TF_PROJECTILE_HEALING_BOLT:
+		case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
+			pszEntClass = "tf_projectile_healing_bolt";
+			break;
+		default:
+			pszEntClass = "tf_projectile_arrow";
+			break;
+	}
+	CTFProjectile_Arrow *pArrow = static_cast<CTFProjectile_Arrow *>( CBaseEntity::CreateNoSpawn( pszEntClass, vecOrigin, vecAngles, pOwner ) );
 
 	if ( pArrow )
 	{
@@ -303,10 +312,6 @@ void CTFProjectile_Arrow::Spawn( void )
 	SetTouch( &CTFProjectile_Arrow::ArrowTouch );
 	SetThink( &CTFProjectile_Arrow::FlyThink );
 	SetNextThink(gpGlobals->curtime);
-	
-	// Don't interact with teammates for the first fraction of a second.
-	m_bCollideWithTeammates = false;
-	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.10;
 }
 
 //-----------------------------------------------------------------------------
@@ -722,6 +727,8 @@ void CTFProjectile_Arrow::HealBuilding( CBaseEntity *pTarget )
 			event->SetInt( "building", pObject->entindex() );
 			event->SetInt( "healer", pOwner->entindex() );
 			event->SetInt( "amount", nHealthToAdd - nHealth );
+
+			gameeventmanager->FireEvent( event );
 		}
 
 		CPVSFilter filter( GetAbsOrigin() );
