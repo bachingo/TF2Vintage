@@ -4771,6 +4771,7 @@
 		"305"
 		{
 			"name"	"The Crusader's Crossbow"
+			"prefab"		"weapon_crusaders_crossbow"
 			"propername"	"1"
 			"year"			"2010"
 			"particle_suffix"	"crusaders_crossbow"
@@ -6556,6 +6557,7 @@
 		"997"
 		{
 			"name"	"The Rescue Ranger"
+			"prefab"			"weapon_rescue_ranger"
 			"year"				"2012"
 			"particle_suffix"	"rescue_ranger"
 		}

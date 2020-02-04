@@ -82,7 +82,7 @@ CTFProjectile_Arrow::~CTFProjectile_Arrow()
 	ParticleProp()->StopEmission();
 	bEmitting = false;
 #else
-	m_bCollideWithTeammates = false;
+
 #endif
 }
 
@@ -273,7 +273,10 @@ void CTFProjectile_Arrow::Spawn( void )
 	SetTouch( &CTFProjectile_Arrow::ArrowTouch );
 	SetThink( &CTFProjectile_Arrow::FlyThink );
 	SetNextThink(gpGlobals->curtime);
-
+	
+	// Don't interact with teammates for the first fraction of a second.
+	m_bCollideWithTeammates = false;
+	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.10;
 }
 
 //-----------------------------------------------------------------------------
@@ -541,7 +544,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			}	
 		}		
 	}
-	else if ( ( m_iType == 2 ) && pOther->IsBaseObject() && pOther->GetTeamNumber() == ToTFPlayer(pAttacker)->GetTeamNumber() )
+	else if ( ( m_iType == 2 ) && pOther && pOther->IsBaseObject() && pOther->GetTeamNumber() == ToTFPlayer(pAttacker)->GetTeamNumber() )
 	{
 		// We hit a friendly building.
 		float flArrowheal = 0;
@@ -584,6 +587,12 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::FlyThink(void)
 {
+	// If we're an arrow that involves teammates, make sure we can interact with our teammates.
+	if ( ( m_iType == 2 || m_iType == 1 || m_iType == 4 ) && ( gpGlobals->curtime > m_flCollideWithTeammatesTime && m_bCollideWithTeammates == false ) )
+	{
+		m_bCollideWithTeammates = true;
+	}
+	
 	QAngle angles;
 
 	VectorAngles(GetAbsVelocity(), angles);
