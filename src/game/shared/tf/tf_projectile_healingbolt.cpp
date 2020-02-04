@@ -111,6 +111,18 @@ float CTFProjectile_HealingBolt::GetDamage( void )
 }
 
 #else
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_HealingBolt::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
 
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		char const *pszEffect = ConstructTeamParticle( "healshot_trail_%s", GetTeamNumber() );
+		ParticleProp()->Create( pszEffect, PATTACH_ABSORIGIN_FOLLOW );
+	}
+}
 
 #endif

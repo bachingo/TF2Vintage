@@ -39,7 +39,7 @@ public:
 
 	virtual float		GetDamage( void ) override;
 #else
-
+	virtual void		OnDataChanged( DataUpdateType_t updateType );
 #endif
 
 private:
