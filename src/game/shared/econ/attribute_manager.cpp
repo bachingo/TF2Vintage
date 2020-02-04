@@ -129,7 +129,7 @@ bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttrib
 }
 
 
-bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t value )
+bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t const &value )
 {
 	string_t name = pDefinition->m_iAttributeClass;
 	if ( !name && pDefinition->attribute_class[0] )
