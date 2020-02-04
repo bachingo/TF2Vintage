@@ -4169,14 +4169,12 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 						pPlayer->m_Shared.AddCond( TF_COND_REGENONDAMAGEBUFF, 1.2f );
 						break;
 					case TF_COND_RADIUSHEAL:
-					{
 						if (!pPlayer->m_Shared.InCond( TF_COND_RADIUSHEAL ) )
 						{
 							pPlayer->m_Shared.AddCond(TF_COND_RADIUSHEAL, TF_MEDIC_REGEN_TIME);
 							pPlayer->AOEHeal(pPlayer, pOuter);
 						}
 						break;
-					}
 				}
 
 				// Achievements

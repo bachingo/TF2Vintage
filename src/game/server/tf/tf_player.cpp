@@ -739,7 +739,7 @@ void CTFPlayer::AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer )
 		}
 		
 	}
-	else
+
 		return;	// Not healing.
 }
 
@@ -9483,6 +9483,12 @@ void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 		{
 			m_Shared.RemoveCond( TF_COND_DISGUISING );
 		}
+		
+		// Clear cloak state.
+		if ( m_Shared.InCond( TF_COND_STEALTHED ) )
+		{
+			m_Shared.RemoveCond( TF_COND_STEALTHED );
+		}
 
 		// Set player state as taunting.
 		m_Shared.AddCond( TF_COND_TAUNTING );
@@ -9513,12 +9519,6 @@ void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 		if ( pWeapon )
 		{
-			// Check if we do an AOE Taunt.
-			int nEnablesAOEHeal = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nEnablesAOEHeal, enables_aoe_heal );
-			if ( nEnablesAOEHeal != 0 )
-				m_Shared.ActivateRageBuff( this, TF_COND_RADIUSHEAL );
-		
 			// Lunchbox taunts.
 			if ( pWeapon->IsWeapon( TF_WEAPON_LUNCHBOX ) )
 			{
@@ -9531,6 +9531,13 @@ void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 				m_iTauntAttack = TAUNTATK_SCOUT_DRINK;
 			}
 			pWeapon->DepleteAmmo();
+			
+			
+			// Check if we do an AOE Taunt.
+			int nEnablesAOEHeal = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nEnablesAOEHeal, enables_aoe_heal );
+			if ( nEnablesAOEHeal != 0 )
+				m_Shared.ActivateRageBuff( this, TF_COND_RADIUSHEAL );
 		}
 
 		if ( V_stricmp( szResponse, "scenes/player/pyro/low/taunt02.vcd" ) == 0 )
@@ -9664,10 +9671,8 @@ void CTFPlayer::DoTauntAction( void )
 	{
 		case 1: // Regular Violin
 		case 2:	// Uber Violin
-		{
 			m_flTauntEmitTime += ((23 / 30) / host_timescale.GetFloat()); // Framerate based!
 			break;
-		}
 		default:
 			break;
 	}
@@ -9688,18 +9693,14 @@ void CTFPlayer::DoTauntActionThink( void )
 		// Now that we waited, do our action.
 		switch (m_iSpecialTauntType)
 		{
-		case 1: // Regular Violin
-		{
-			EmitSound("Taunt.MedicViolin");
-			break;
-		}
-		case 2:	// Uber Violin
-		{
-			EmitSound("Taunt.MedicViolinUber");
-			break;
-		}
-		default:
-			break;
+			case 1: // Regular Violin
+				EmitSound("Taunt.MedicViolin");
+				break;
+			case 2:	// Uber Violin
+				EmitSound("Taunt.MedicViolinUber");
+				break;
+			default:
+				break;
 		}
 		m_iSpecialTauntType = 0; // Reset our taunt type.
 		return;

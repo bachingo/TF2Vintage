@@ -4765,6 +4765,7 @@
 		"304"
 		{
 			"name"			"The Amputator"
+			"prefab"			"weapon_amputator"
 			"year"				"2010"
 			"particle_suffix"	"amputator"
 		}
