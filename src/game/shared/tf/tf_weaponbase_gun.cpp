@@ -200,80 +200,82 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	switch( iProjectile )
 	{
-	case TF_PROJECTILE_BULLET:
-		FireBullet( pPlayer );
-		break;
+		case TF_PROJECTILE_BULLET:
+			FireBullet( pPlayer );
+			break;
 
-	case TF_PROJECTILE_ROCKET:
-		pProjectile = FireRocket( pPlayer );
-		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-		break;
+		case TF_PROJECTILE_ROCKET:
+			pProjectile = FireRocket( pPlayer );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
 		
-	case TF_PROJECTILE_SYRINGE:
-	case TF_PROJECTILE_NAIL:
-	case TF_PROJECTILE_DART:
-		pProjectile = FireNail( pPlayer, iProjectile );
-		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-		break;
+		case TF_PROJECTILE_SYRINGE:
+		case TF_PROJECTILE_NAIL:
+		case TF_PROJECTILE_DART:
+			pProjectile = FireNail( pPlayer, iProjectile );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
 
-	case TF_PROJECTILE_PIPEBOMB:
-	case TF_PROJECTILE_CANNONBALL:
-		pProjectile = FirePipeBomb( pPlayer, 0 );
-		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-		break;
+		case TF_PROJECTILE_PIPEBOMB:
+		case TF_PROJECTILE_CANNONBALL:
+			pProjectile = FirePipeBomb( pPlayer, 0 );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
 
-	case TF_PROJECTILE_PIPEBOMB_REMOTE:
-	case TF_PROJECTILE_PIPEBOMB_REMOTE_PRACTICE:
-		pProjectile = FirePipeBomb( pPlayer, 1 );
-		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-		break;
+		case TF_PROJECTILE_PIPEBOMB_REMOTE:
+		case TF_PROJECTILE_PIPEBOMB_REMOTE_PRACTICE:
+			pProjectile = FirePipeBomb( pPlayer, 1 );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
 
-	case TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE:
-		pProjectile = FirePipeBomb( pPlayer, 3 );
-		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
-		break;
+		case TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE:
+			pProjectile = FirePipeBomb( pPlayer, 3 );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
 
-	case TF_PROJECTILE_FLARE:
-		pProjectile = FireFlare(pPlayer);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
-		break;
+		case TF_PROJECTILE_FLARE:
+			pProjectile = FireFlare(pPlayer);
+			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+			break;
 
-	case TF_PROJECTILE_JAR:
-	case TF_PROJECTILE_JAR_MILK:
-	case TF_PROJECTILE_FESTITIVE_URINE:
-	case TF_PROJECTILE_BREADMONSTER_JARATE:
-	case TF_PROJECTILE_BREADMONSTER_MADMILK:
-		pProjectile = FireJar(pPlayer, iProjectile);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
-		break;
+		case TF_PROJECTILE_JAR:
+		case TF_PROJECTILE_JAR_MILK:
+		case TF_PROJECTILE_FESTIVE_URINE:
+		case TF_PROJECTILE_BREADMONSTER_JARATE:
+		case TF_PROJECTILE_BREADMONSTER_MADMILK:
+			pProjectile = FireJar(pPlayer, iProjectile);
+			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+			break;
 
-	case TF_PROJECTILE_ARROW:
-	case TF_PROJECTILE_HEALING_BOLT:
-	case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
-	case TF_PROJECTILE_FESTITIVE_ARROW:
-	case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
-	case TF_PROJECTILE_GRAPPLINGHOOK:
-		pProjectile = FireArrow(pPlayer, iProjectile);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
-		break;
+		case TF_PROJECTILE_ARROW:
+		case TF_PROJECTILE_HEALING_BOLT:
+		case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
+		case TF_PROJECTILE_FESTIVE_ARROW:
+		case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
+		case TF_PROJECTILE_GRAPPLINGHOOK:
+			pProjectile = FireArrow(pPlayer, iProjectile);
+			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+			break;
 
-	case TF_PROJECTILE_CLEAVER:
-	case TF_PROJECTILE_THROWABLE:
-	case TF_PROJECTILE_NONE:
-	default:
-		// do nothing!
-		DevMsg( "Weapon does not have a projectile type set\n" );
-		break;
+		case TF_PROJECTILE_CLEAVER:
+		case TF_PROJECTILE_THROWABLE:
+		case TF_PROJECTILE_NONE:
+		default:
+			// do nothing!
+			DevMsg( "Weapon does not have a projectile type set\n" );
+			break;
 	}
 
+#if defined( GAME_DLL )
 	if ( pProjectile )
 	{
-		CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
-		if ( pItemDef && pItemDef->custom_projectile_model[0] != '\0' )
+		string_t iCustomMdl = NULL_STRING;
+		if ( GetProjectileOverrideModel( &iCustomMdl ) )
 		{
-			pProjectile->SetModel( pItemDef->custom_projectile_model );
+			pProjectile->SetModel( STRING( iCustomMdl ) );
 		}
 	}
+#endif
 
 	DoFireEffects();
 
@@ -702,15 +704,15 @@ CBaseEntity *CTFWeaponBaseGun::FireJar( CTFPlayer *pPlayer, int iType )
 
 	switch ( iType )
 	{
-	case TF_PROJECTILE_JAR:
-	case TF_PROJECTILE_FESTITIVE_URINE:
-	case TF_PROJECTILE_BREADMONSTER_JARATE:
-		pProjectile = CTFProjectile_Jar::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
-		break;
-	case TF_PROJECTILE_JAR_MILK:
-	case TF_PROJECTILE_BREADMONSTER_MADMILK:
-		pProjectile = CTFProjectile_JarMilk::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
-		break;
+		case TF_PROJECTILE_JAR:
+		case TF_PROJECTILE_FESTIVE_URINE:
+		case TF_PROJECTILE_BREADMONSTER_JARATE:
+			pProjectile = CTFProjectile_Jar::Create( this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+			break;
+		case TF_PROJECTILE_JAR_MILK:
+		case TF_PROJECTILE_BREADMONSTER_MADMILK:
+			pProjectile = CTFProjectile_JarMilk::Create( this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+			break;
 	}
 	
 	if ( pProjectile )

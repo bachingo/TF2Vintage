@@ -10,13 +10,18 @@
 #include "tf_gamerules.h"
 
 #ifdef GAME_DLL
-#include "SpriteTrail.h"
-#include "props_shared.h"
-#include "debugoverlay_shared.h"
-#include "te_effect_dispatch.h"
-#include "decals.h"
-#include "bone_setup.h"
-#include "tf_gamestats.h"
+	#include "SpriteTrail.h"
+	#include "props_shared.h"
+	#include "debugoverlay_shared.h"
+	#include "collisionutils.h"
+	#include "te_effect_dispatch.h"
+	#include "decals.h"
+	#include "bone_setup.h"
+	#include "tf_fx.h"
+	#include "tf_gamestats.h"
+	#include "tf_generic_bomb.h"
+	#include "tf_obj.h"
+	#include "tf_halloween_boss.h"
 #endif
 
 #ifdef GAME_DLL
@@ -38,28 +43,63 @@ const char *g_pszArrowModels[] =
 	"models/weapons/c_models/c_grapple_proj.mdl",
 };
 
-const char *g_pszArrowHits[] =
+#define ARROW_FADE_TIME		3.f
+
+
+class CTraceFilterCollisionArrows : public CTraceFilterEntitiesOnly
 {
-	"arrow_impact",
-	"bolt_impact",
-	"claw_impact",
-	"arrow_impact",
-	"bolt_impact",
+public:
+	CTraceFilterCollisionArrows( CBaseEntity *pPass1, CBaseEntity *pPass2 )
+		: m_pArrow( pPass1 ), m_pOwner( pPass2 ) {}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pEntity, int contentsMask )
+	{
+		if ( !PassServerEntityFilter( pEntity, m_pArrow ) )
+			return false;
+
+		const CBaseEntity *pEntTouch = EntityFromEntityHandle( pEntity );
+		if ( pEntTouch == nullptr )
+			return true;
+
+		if ( pEntTouch == m_pOwner )
+			return false;
+
+		int iCollisionGroup = pEntTouch->GetCollisionGroup();
+		if ( iCollisionGroup == COLLISION_GROUP_DEBRIS )
+			return false;
+
+		if ( iCollisionGroup == TFCOLLISION_GROUP_GRENADES )
+			return false;
+
+		if ( iCollisionGroup == TFCOLLISION_GROUP_ROCKETS )
+			return false;
+
+		if ( iCollisionGroup == TFCOLLISION_GROUP_RESPAWNROOMS )
+			return false;
+
+		if ( iCollisionGroup == TFCOLLISION_GROUP_ARROWS )
+			return false;
+
+		return iCollisionGroup != COLLISION_GROUP_NONE;
+	}
+
+private:
+	IHandleEntity *m_pArrow;
+	IHandleEntity *m_pOwner;
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Arrow, DT_TFProjectile_Arrow )
-
 BEGIN_NETWORK_TABLE( CTFProjectile_Arrow, DT_TFProjectile_Arrow )
 #ifdef CLIENT_DLL
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 	RecvPropBool( RECVINFO( m_bFlame ) ),
-	RecvPropInt( RECVINFO( m_iType ) ),
+	RecvPropInt( RECVINFO( m_iProjType ) ),
 	RecvPropInt( RECVINFO( m_nSkin ) ),
 #else
 	SendPropBool( SENDINFO( m_bCritical ) ),
 	SendPropBool( SENDINFO( m_bFlame ) ),
-	SendPropInt( SENDINFO( m_iType ), 0, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_nSkin ), 0, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iProjType ) ),
+	SendPropInt( SENDINFO( m_nSkin ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -106,54 +146,41 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		// Compensate iTypes from shareddefs to a more usable range for our use.
 		if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
 		{
-			switch (iType)  // If it's the holidays, use festive projectiles.
+			switch ( iType )  // If it's the holidays, use festive projectiles.
 			{
-			case TF_PROJECTILE_ARROW:
-				iType = 3;
-				break;
-			case TF_PROJECTILE_HEALING_BOLT:
-				iType = 4;
-				break;
-			case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
-				iType = 2;
-				break;
-			case TF_PROJECTILE_FESTITIVE_ARROW:
-				iType = 3;
-				break;
-			case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
-				iType = 4;
-				break;
-			case TF_PROJECTILE_GRAPPLINGHOOK:
-				iType = 5;
-				break;
+				case TF_PROJECTILE_ARROW:
+					iType = TF_PROJECTILE_FESTIVE_ARROW;
+					break;
+				case TF_PROJECTILE_HEALING_BOLT:
+					iType = TF_PROJECTILE_FESTIVE_HEALING_BOLT;
+					break;
 			}
 		}
-		else
+		
+		const char *pszArrowModel = "";
+		switch ( iType )
 		{
-			switch (iType)
-			{
 			case TF_PROJECTILE_ARROW:
-				iType = 0;
+				pszArrowModel = "models/weapons/w_models/w_arrow.mdl";
 				break;
 			case TF_PROJECTILE_HEALING_BOLT:
-				iType = 1;
+				pszArrowModel = "models/weapons/w_models/w_syringe_proj.mdl";
 				break;
 			case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
-				iType = 2;
+				pszArrowModel = "models/weapons/w_models/w_repair_claw.mdl";
 				break;
-			case TF_PROJECTILE_FESTITIVE_ARROW:
-				iType = 0;
+			case TF_PROJECTILE_FESTIVE_ARROW:
+				pszArrowModel = "models/weapons/w_models/w_arrow_xmas.mdl";
 				break;
-			case TF_PROJECTILE_FESTITIVE_HEALING_BOLT:
-				iType = 1;
+			case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
+				pszArrowModel = "models/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow_xmas_proj.mdl";
 				break;
 			case TF_PROJECTILE_GRAPPLINGHOOK:
-				iType = 5;
+				pszArrowModel = "models/weapons/c_models/c_grapple_proj.mdl";
 				break;
-			}
-		}	
+		}
 		
-		if (iType == 0 || iType == 3 )	// Huntsman Arrows.
+		if ( iType == TF_PROJECTILE_ARROW || iType == TF_PROJECTILE_FESTIVE_ARROW )	// Huntsman Arrows.
 		{
 			// Set flame arrow.
 			pArrow->SetFlameArrow( bFlame );
@@ -162,21 +189,24 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 			pArrow->m_nSkin = 0;
 		}
 		else
-		{	
+		{
 			//Never light on fire.
 			pArrow->SetFlameArrow( false );
 			
-			if (iType != 5) // Bolts & Repair Claw
+			if ( iType != TF_PROJECTILE_GRAPPLINGHOOK ) // Bolts & Repair Claw
 			{
 				// Set our skin.
-				switch (pOwner->GetTeamNumber())
+				switch ( pOwner->GetTeamNumber() )
 				{
-				case TF_TEAM_RED:
-					pArrow->m_nSkin = 0;
-					break;
-				case TF_TEAM_BLUE:
-					pArrow->m_nSkin = 1;
-					break;
+					case TF_TEAM_RED:
+						pArrow->m_nSkin = 0;
+						break;
+					case TF_TEAM_BLUE:
+						pArrow->m_nSkin = 1;
+						break;
+					default:
+						pArrow->m_nSkin = 0;
+						break;
 				}
 				// Set our speed.
 				flSpeed = 2400.00f;
@@ -191,8 +221,8 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		}
 
 		// Set arrow type.
-		pArrow->SetType(iType);
-		pArrow->SetModel( g_pszArrowModels[iType] );
+		pArrow->SetType( iType );
+		pArrow->SetModel( pszArrowModel );
 
 		// Spawn.
 		DispatchSpawn( pArrow );
@@ -228,7 +258,7 @@ void CTFProjectile_Arrow::Precache( void )
 	// Precache all arrow models we have.
 	for ( int i = 0; i < ARRAYSIZE( g_pszArrowModels ); i++ )
 	{
-		int iIndex = PrecacheModel(g_pszArrowModels[i]);
+		int iIndex = PrecacheModel( g_pszArrowModels[i] );
 		PrecacheGibsForModel( iIndex );
 	}
 
@@ -302,16 +332,15 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 {
 	// Verify a correct "other."
 	Assert( pOther );
-	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
-	{
-		return;
-	}
 
-	// Handle hitting skybox (disappear).
-	trace_t *pTrace = const_cast<trace_t *>( &CBaseEntity::GetTouchTrace() );
-	if ( pTrace->surface.flags & SURF_SKY )
+	bool bImpactedItem = false;
+	if ( pOther->IsCombatItem() )
+		bImpactedItem = !InSameTeam( pOther );
+
+	CTFPumpkinBomb *pPumpkin = dynamic_cast<CTFPumpkinBomb *>( pOther );
+
+	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) && !pPumpkin && ! bImpactedItem )
 	{
-		UTIL_Remove( this );
 		return;
 	}
 
@@ -328,258 +357,384 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		pAttacker = pScorerInterface->GetScorer();
 	}
 
-	Vector vecOrigin = GetAbsOrigin();
-	CTFPlayer *pPlayer = ToTFPlayer( pOther );
-	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
-	trace_t trHit, tr;
-	trHit = *pTrace;
-	const char* pszImpactSound = NULL;
-	bool bPlayerImpact = false;
-	// Determine where we should land
-	Vector vecDir = GetAbsVelocity();
-	VectorNormalizeFast( vecDir );
-
-	int iCustomDamage = m_bFlame ? TF_DMG_CUSTOM_BURNING_ARROW : TF_DMG_CUSTOM_NONE;
-
-	// Do damage.
-	CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType(), iCustomDamage );
-	CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, vecOrigin );
-	info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
-	pOther->DispatchTraceAttack( info, vecDir, &trHit );
-	ApplyMultiDamage();
-
-	if ( pPlayer && !pPlayer->m_Shared.IsInvulnerable() )
+	CBaseCombatCharacter *pActor = dynamic_cast<CBaseCombatCharacter *>( pOther );
+	if ( pActor == nullptr )
 	{
-		CStudioHdr *pStudioHdr = pPlayer->GetModelPtr();
-		if ( !pStudioHdr )
-			return;
+		pActor = dynamic_cast<CBaseCombatCharacter *>( pOther->GetOwnerEntity() );
+	}
 
-		mstudiohitboxset_t *set = pStudioHdr->pHitboxSet( pPlayer->GetHitboxSet() );
-		if ( !set )
-			return;
+	//CTFRobotDestruction_Robot *pRobot = dynamic_cast<CTFRobotDestruction_Robot *>( pOther );
+	//CTFMerasmusTrickOrTreatProp *pMerasProp = dynamic_cast<CTFMerasmusTrickOrTreatProp *>( pOther );
 
-		// Oh boy... we gotta figure out the closest hitbox on player model to land a hit on.
-
-		QAngle angHit;
-		float flClosest = FLT_MAX;
-		mstudiobbox_t *pBox = NULL, *pCurrentBox = NULL;
-		//int bone = -1;
-		//int group = 0;
-		//Msg( "\nNum of Hitboxes: %i", set->numhitboxes );
-
-		for ( int i = 0; i < set->numhitboxes; i++ )
+	if ( !FNullEnt( pOther->edict() ) &&
+		( pActor != nullptr || pPumpkin != nullptr/* || pMerasProp != nullptr || pRobot != nullptr*/ || bImpactedItem ) )
+	{
+		CBaseAnimating *pAnimating = dynamic_cast<CBaseAnimating *>( pOther );
+		if ( !pAnimating )
 		{
-			pCurrentBox = set->pHitbox( i );
-			//Msg( "\nGroup: %i", pBox->group );
-
-			Vector boxPosition;
-			QAngle boxAngles;
-			pPlayer->GetBonePosition( pCurrentBox->bone, boxPosition, boxAngles );
-			Vector vecCross = CrossProduct( vecOrigin + vecDir * 16, boxPosition );
-
-			UTIL_TraceLine( vecOrigin, boxPosition, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
-
-			float flLengthSqr = ( boxPosition - vecCross ).LengthSqr();
-			if ( flLengthSqr < flClosest )
-			{
-				//Msg( "\nCLOSER: %i", pBox->group );
-				//group = pBox->group;
-				flClosest = flLengthSqr;
-				trHit = tr;
-				pBox = pCurrentBox;
-			}
-		}
-		//Msg("\nClosest: %i\n", group);
-
-		if ( tf_debug_arrows.GetBool() )
-		{
-			//Msg("\nHitBox: %i\nHitgroup: %i\n", trHit.hitbox, trHit.hitgroup);
-			NDebugOverlay::Line( trHit.startpos, trHit.endpos, 0, 255, 0, true, 5.0f );
-			NDebugOverlay::Line( vecOrigin, vecOrigin + vecDir * 16, 255, 0, 0, true, 5.0f );
-		}
-		pszImpactSound = "Weapon_Arrow.ImpactFlesh";
-		bPlayerImpact = true;
-
-		if ( !PositionArrowOnBone( pBox , pPlayer ) )
-		{
-			// This shouldn't happen
 			UTIL_Remove( this );
 			return;
 		}
 
-		Vector vecBoneOrigin;
-		QAngle vecBoneAngles;
-		int iBone, iPhysicsBone;
-		GetBoneAttachmentInfo( pBox, pPlayer, vecBoneOrigin, vecBoneAngles, iBone, iPhysicsBone );
-
-		if( CheckRagdollPinned( vecOrigin, vecDir, iBone, iPhysicsBone, pPlayer->m_hRagdoll, pBox->group, 0 ) )
+		CStudioHdr *pStudioHdr = pAnimating->GetModelPtr();
+		if ( !pStudioHdr )
 		{
-			pPlayer->StopRagdollDeathAnim();
+			UTIL_Remove( this );
+			return;
 		}
-		else
+
+		mstudiohitboxset_t *pSet = pStudioHdr->pHitboxSet( pAnimating->GetHitboxSet() );
+		if ( !pSet )
 		{
-			IGameEvent *event = gameeventmanager->CreateEvent( g_pszArrowHits[ m_iType ] );
-			
-			if ( event )
+			UTIL_Remove( this );
+			return;
+		}
+
+		// Determine where we should land
+		Vector vecOrigin = GetAbsOrigin();
+		Vector vecDir = GetAbsVelocity();
+		VectorNormalizeFast( vecDir );
+
+		trace_t tr;
+
+		CTraceFilterCollisionArrows filter( this, GetOwnerEntity() );
+		UTIL_TraceLine( vecOrigin, vecOrigin + vecDir * gpGlobals->frametime, CONTENTS_SOLID|CONTENTS_HITBOX|CONTENTS_MONSTER, &filter, &tr );
+
+		if ( tr.m_pEnt && tr.m_pEnt->GetTeamNumber() != GetTeamNumber() )
+		{
+			mstudiobbox_t *pBox = pSet->pHitbox( tr.hitbox );
+			if ( pBox )
 			{
-				event->SetInt( "attachedEntity", pOther->entindex() );
-				event->SetInt( "shooter", pAttacker->entindex() );
-				event->SetInt( "boneIndexAttached", iBone );
-				event->SetFloat( "bonePositionX", vecBoneOrigin.x );
-				event->SetFloat( "bonePositionY", vecBoneOrigin.y );
-				event->SetFloat( "bonePositionZ", vecBoneOrigin.z );
-				event->SetFloat( "boneAnglesX", vecBoneAngles.x );
-				event->SetFloat( "boneAnglesY", vecBoneAngles.y );
-				event->SetFloat( "boneAnglesZ", vecBoneAngles.z );
-				
-				gameeventmanager->FireEvent( event );
-			}
-		}
-	}
-	else if ( pOther->GetMoveType() == MOVETYPE_NONE )
-	{	
-		surfacedata_t *psurfaceData = physprops->GetSurfaceData( trHit.surface.surfaceProps );
-		int iMaterial = psurfaceData->game.material;
-		bool bArrowSound = false;
+				if ( !StrikeTarget( pBox, pOther ) )
+					BreakArrow();
 
-		if ( ( iMaterial == CHAR_TEX_CONCRETE ) || ( iMaterial == CHAR_TEX_TILE ) )
-		{
-			pszImpactSound = "Weapon_Arrow.ImpactConcrete";
-			bArrowSound = true;
-		}
-		else if ( iMaterial == CHAR_TEX_WOOD )
-		{
-			pszImpactSound = "Weapon_Arrow.ImpactWood";
-			bArrowSound = true;
-		}
-		else if ( ( iMaterial == CHAR_TEX_METAL ) || ( iMaterial == CHAR_TEX_VENT ) )
-		{
-			pszImpactSound = "Weapon_Arrow.ImpactMetal";
-			bArrowSound = true;
-		}
+				if ( bImpactedItem )
+					BreakArrow();
 
-		Vector vForward;
-
-		AngleVectors( GetAbsAngles(), &vForward );
-		VectorNormalize ( vForward );
-
-		UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + vForward * 256, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
-
-		if ( tr.fraction != 1.0f )
-		{
-			//NDebugOverlay::Box( tr.endpos, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 255, 0, 0, 10 );
-			//NDebugOverlay::Box( GetAbsOrigin(), Vector( -16, -16, -16 ), Vector( 16, 16, 16 ), 0, 0, 255, 0, 10 );
-
-			if ( tr.m_pEnt == NULL || ( tr.m_pEnt && tr.m_pEnt->GetMoveType() == MOVETYPE_NONE ) )
-			{
-				CEffectData	data;
-				data.m_vOrigin = tr.endpos;
-				data.m_vNormal = vForward;
-				data.m_nEntIndex = pOther->entindex();
-				data.m_fFlags = GetProjectileType();
-				data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
-
-				DispatchEffect( "TFBoltImpact", data );
+				return;
 			}
 		}
 
-		// If we didn't play a collision sound already, play a bullet collision sound for this prop
-		if( !bArrowSound )
+		Vector vecFwd;
+		AngleVectors( GetAbsAngles(), &vecFwd );
+		Vector vecArrowEnd = GetAbsOrigin() + vecFwd * 16;
+
+		// Find the closest hitbox we crossed
+		float flClosest = 99999.f;
+		mstudiobbox_t *pBox = NULL, *pCurrent = NULL;
+		for ( int i = 0; i < pSet->numhitboxes; i++ )
 		{
-			UTIL_ImpactTrace( &trHit, DMG_BULLET );
+			pCurrent = pSet->pHitbox( i );
+
+			Vector boxPosition;
+			QAngle boxAngles;
+			pAnimating->GetBonePosition( pCurrent->bone, boxPosition, boxAngles );
+
+			Ray_t ray;
+			ray.Init( boxPosition, vecArrowEnd );
+
+			trace_t trace;
+			IntersectRayWithBox( ray, boxPosition + pCurrent->bbmin, boxPosition + pCurrent->bbmax, 0, &trace );
+
+			float flDistance = ( trace.endpos - vecArrowEnd ).Length();
+			if ( flDistance < flClosest )
+			{
+				pBox = pCurrent;
+				flClosest = flDistance;
+			}
 		}
-		else
+
+		if ( pBox )
 		{
-			UTIL_ImpactTrace( &trHit, DMG_BULLET, "ImpactArrow" );
+			if ( !StrikeTarget( pBox, pOther ) )
+				BreakArrow();
+
+			if ( !m_bImpacted )
+				SetAbsOrigin( vecOrigin );
+
+			if ( bImpactedItem )
+				BreakArrow();
+
+			if ( !m_bImpacted )
+				m_bImpacted = true;
 		}
 	}
 	else
 	{
-		// If we're an item with gibs (Arrow, Festive Arrow, Repair Claw) then gib.
-		if ( ( m_iType == 0 ) || ( m_iType == 3 ) || ( m_iType == 2 ) )
-			BreakArrow();
+		CheckSkyboxImpact( pOther );
+		// TODO: Achievment hunters
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarget )
+{
+	if ( pTarget == nullptr )
+		return false;
+
+	if ( pTarget->IsBaseObject() && InSameTeam( pTarget ) )
+	{
+		HealBuilding( pTarget );
+		return false;
+	}
+
+	CTFPlayer *pPlayer = ToTFPlayer( pTarget );
+	if ( pPlayer && pPlayer->m_Shared.IsInvulnerable() )
+		return false;
+
+	CBaseAnimating *pAnimating = dynamic_cast<CBaseAnimating *>( pTarget );
+	if ( pAnimating == nullptr )
+		return false;
+
+	bool bBreakArrow = false; // TODO: Better name
+	if ( dynamic_cast<CHalloweenBaseBoss *>( pTarget )/* || dynamic_cast<CTFTankBoss *>( pTarget )*/ )
+		bBreakArrow = true;
+
+	if ( !bBreakArrow )
+	{
+		if ( !PositionArrowOnBone( pBox, pAnimating ) )
+			return false;
+	}
+
+	bool bHeadshot = false;
+	if ( pBox->group == HITGROUP_HEAD && CanHeadshot() )
+		bHeadshot = true;
+
+	Vector vecOrigin = GetAbsOrigin();
+	Vector vecDir = GetAbsVelocity();
+	VectorNormalizeFast( vecDir );
+
+	CBaseEntity *pAttacker = GetScorer();
+	if ( pAttacker == nullptr )
+	{
+		pAttacker = GetOwnerEntity();
+	}
+
+	int iDmgCustom = TF_DMG_CUSTOM_NONE;
+	int iDmgType = GetDamageType();
+	bool bImpact = true; // TODO: Some strange check involving a UtlVector on the arrow
+
+	if( pAttacker )
+	{
+		if ( InSameTeam( pTarget ) )
+		{
+			if ( bImpact )
+				ImpactTeamPlayer( ToTFPlayer( pTarget ) );
+		}
+		else
+		{
+			IScorer *pScorer = dynamic_cast<IScorer *>( pAttacker );
+			if ( pScorer )
+				pAttacker = pScorer->GetScorer();
+
+			if ( m_bFlame )
+			{
+				iDmgType |= DMG_IGNITE;
+				iDmgCustom = TF_DMG_CUSTOM_BURNING_ARROW;
+			}
+
+			if ( bHeadshot )
+			{
+				iDmgType |= DMG_CRITICAL;
+				iDmgCustom = TF_DMG_CUSTOM_HEADSHOT;
+			}
+
+			if ( m_bCritical )
+				iDmgType |= DMG_CRITICAL;
+
+			if ( bImpact )
+			{
+				CTakeDamageInfo info( this, pAttacker, m_hLauncher, GetAbsOrigin(), GetAbsVelocity(), GetDamage(), iDmgType, iDmgCustom );
+				pTarget->TakeDamage( info );
+
+				PlayImpactSound( ToTFPlayer( pAttacker ), "Weapon_Arrow.ImpactFlesh", true );
+			}
+		}
+
+		if( !m_bImpacted && !bBreakArrow )
+		{
+			Vector vecBoneOrigin;
+			QAngle vecBoneAngles;
+			int iBone, iPhysicsBone;
+			GetBoneAttachmentInfo( pBox, pAnimating, vecBoneOrigin, vecBoneAngles, iBone, iPhysicsBone );
+
+			if ( pPlayer && !pPlayer->IsAlive() )
+			{
+				if ( CheckRagdollPinned( vecOrigin, vecDir, iBone, iPhysicsBone, pPlayer->m_hRagdoll, pBox->group, pPlayer->entindex() ) )
+				{
+					pPlayer->StopRagdollDeathAnim();
+				}
+				else
+				{
+					IGameEvent *event = gameeventmanager->CreateEvent( "arrow_impact" );
+
+					if ( event )
+					{
+						event->SetInt( "attachedEntity", pTarget->entindex() );
+						event->SetInt( "shooter", pAttacker->entindex() );
+						event->SetInt( "boneIndexAttached", iBone );
+						event->SetFloat( "bonePositionX", vecBoneOrigin.x );
+						event->SetFloat( "bonePositionY", vecBoneOrigin.y );
+						event->SetFloat( "bonePositionZ", vecBoneOrigin.z );
+						event->SetFloat( "boneAnglesX", vecBoneAngles.x );
+						event->SetFloat( "boneAnglesY", vecBoneAngles.y );
+						event->SetFloat( "boneAnglesZ", vecBoneAngles.z );
+
+						gameeventmanager->FireEvent( event );
+					}
+				}
+			}
+			else
+			{
+				IGameEvent *event = gameeventmanager->CreateEvent( "arrow_impact" );
+
+				if ( event )
+				{
+					event->SetInt( "attachedEntity", pTarget->entindex() );
+					event->SetInt( "shooter", pAttacker->entindex() );
+					event->SetInt( "boneIndexAttached", iBone );
+					event->SetFloat( "bonePositionX", vecBoneOrigin.x );
+					event->SetFloat( "bonePositionY", vecBoneOrigin.y );
+					event->SetFloat( "bonePositionZ", vecBoneOrigin.z );
+					event->SetFloat( "boneAnglesX", vecBoneAngles.x );
+					event->SetFloat( "boneAnglesY", vecBoneAngles.y );
+					event->SetFloat( "boneAnglesZ", vecBoneAngles.z );
+
+					gameeventmanager->FireEvent( event );
+				}
+			}
+
+			FadeOut( ARROW_FADE_TIME );
+		}
+	}
+
+	trace_t tr;
+	CTraceFilterCollisionArrows filter( this, GetOwnerEntity() );
+	UTIL_TraceLine( vecOrigin, vecOrigin - vecDir * gpGlobals->frametime, CONTENTS_SOLID|CONTENTS_HITBOX|CONTENTS_MONSTER, &filter, &tr );
+
+	UTIL_ImpactTrace( &tr, 0 );
+
+	return !bBreakArrow;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFProjectile_Arrow::CheckSkyboxImpact( CBaseEntity *pOther )
+{
+	Vector vecFwd = GetAbsVelocity();
+	vecFwd.NormalizeInPlace();
+
+	Vector vecOrigin = GetAbsOrigin();
+
+	trace_t tr;
+	UTIL_TraceLine( vecOrigin, vecOrigin + vecFwd * 32, MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &tr );
+
+	if ( tr.fraction < 1.0f && ( tr.surface.flags & SURF_SKY ) )
+	{
+		FadeOut( ARROW_FADE_TIME );
+		return true;
+	}
+
+	if ( !FNullEnt( pOther->edict() ) )
+	{
+		BreakArrow();
+		return false;
+	}
+
+	CEffectData	data;
+	data.m_vOrigin = tr.endpos;
+	data.m_vNormal = vecFwd;
+	data.m_nEntIndex = pOther->entindex();
+	data.m_fFlags = GetProjectileType();
+	data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
+
+	DispatchEffect( "TFBoltImpact", data );
+
+	const char* pszImpactSound = "Weapon_Arrow.ImpactMetal";
+	surfacedata_t *psurfaceData = physprops->GetSurfaceData( tr.surface.surfaceProps );
+	if( psurfaceData )
+	{
+		switch ( psurfaceData->game.material )
+		{
+			case CHAR_TEX_CONCRETE:
+				pszImpactSound = "Weapon_Arrow.ImpactConcrete";
+				break;
+			case CHAR_TEX_WOOD:
+				pszImpactSound = "Weapon_Arrow.ImpactWood";
+				break;
+			default:
+				pszImpactSound = "Weapon_Arrow.ImpactMetal";
+				break;
+		}
 	}
 
 	// Play sound
 	if ( pszImpactSound )
 	{
-		PlayImpactSound( ToTFPlayer( pAttacker ), pszImpactSound, bPlayerImpact );
+		PlayImpactSound( ToTFPlayer( GetScorer() ), pszImpactSound );
 	}
-	
-	if ( ( pPlayer && ( m_iType == 1 || m_iType == 4 ) ) && ( tf2v_healing_bolts.GetBool() || TFGameRules()->IsInMedievalMode() ) ) // Crossbow bolts can heal teammates if the convar is enabled, or it's medieval.
-	{	
-		CTFPlayer *pHealer = ToTFPlayer( pAttacker );
-		// Is this someone we can heal?
-		bool bCanBeHealed = false;
-		bool bStealthed = pPlayer->m_Shared.InCond( TF_COND_STEALTHED );
-		bool bDisguised = pPlayer->m_Shared.InCond( TF_COND_DISGUISED );
 
-		// Check to see if they are restricted from healing.
-		int nWeaponBlocksHealing = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nWeaponBlocksHealing, weapon_blocks_healing );
+	FadeOut( ARROW_FADE_TIME );
+	return false;
+}
 
-		// We can heal teammates and enemies that are disguised as teammates.
-		if ( !bStealthed &&
-			( pPlayer->InSameTeam( pHealer ) ||
-			 ( bDisguised && pPlayer->m_Shared.GetDisguiseTeam() == pHealer->GetTeamNumber() ) ) && ( nWeaponBlocksHealing == 0 ) )
-		{
-			bCanBeHealed = true;
-		}
-		
-		if (bCanBeHealed)
-		{
-			// We hit someone that can be healed, so heal them.
-			int iHealthRestored = pPlayer->TakeHealth( ( GetDamage() * tf2v_healing_bolts_heal_factor.GetFloat() ), DMG_GENERIC ); // Bolts always heal double the damage.
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, iHealthRestored, mult_health_fromhealers );
-			CTF_GameStats.Event_PlayerHealedOther( pHealer, iHealthRestored );
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFProjectile_Arrow::HealBuilding( CBaseEntity *pTarget )
+{
+	if ( !pTarget->IsBaseObject() )
+		return;
 
-			IGameEvent *event = gameeventmanager->CreateEvent( "player_healed" );
-			if ( event )
-			{
-				event->SetInt( "patient", pPlayer->GetUserID() );
-				event->SetInt( "healer", pHealer->GetUserID() );
-				event->SetInt( "amount", iHealthRestored );
-				
-				gameeventmanager->FireEvent( event );
-			}	
-		}		
-	}
-	else if ( ( m_iType == 2 ) && pOther && pOther->IsBaseObject() && pOther->GetTeamNumber() == ToTFPlayer(pAttacker)->GetTeamNumber() )
+	CBasePlayer *pOwner = GetScorer();
+	if ( pOwner == nullptr )
+		return;
+
+	if ( GetTeamNumber() != pTarget->GetTeamNumber() )
+		return;
+
+	int nArrowHealsBuilding = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pOwner, nArrowHealsBuilding, arrow_heals_buildings );
+	if ( nArrowHealsBuilding == 0 )
+		return;
+
+	CBaseObject *pObject = dynamic_cast<CBaseObject *>( pTarget );
+	if ( pObject == nullptr )
+		return;
+
+	if ( pObject->HasSapper() || pObject->IsBeingCarried() || pObject->IsRedeploying() )
+		return;
+
+	int nHealth = pObject->GetHealth();
+	int nHealthToAdd = Min( nArrowHealsBuilding + nHealth, pObject->GetMaxHealth() );
+
+	if ( ( nHealthToAdd - nHealth ) > 0 )
 	{
-		// We hit a friendly building.
-		float flArrowheal = 0;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), flArrowheal, arrow_heals_buildings);
-		if (flArrowheal > 0)
-		{
-			// Heal our building.
-			int	iAmountToHeal = min( (int)(flArrowheal), pOther->GetMaxHealth() - pOther->GetHealth() );
-			float flHealthtoMetalRatio = 0;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), flHealthtoMetalRatio, repair_health_to_metal_ratio_DISPLAY_ONLY);
-			float flNewHealth;
-			if ( flHealthtoMetalRatio != 0 )
-			{
-				// Deduct the metal from our pool.
-				int iRepairCost = ceil( (float)( iAmountToHeal ) * (1 / flHealthtoMetalRatio) );
-				// If it costs too much, downgrade how much we can heal by.
-				if ( iRepairCost > ToTFPlayer(pAttacker)->GetBuildResources() )
-				{
-					iRepairCost = ToTFPlayer(pAttacker)->GetBuildResources();
-				}
-				ToTFPlayer(pAttacker)->RemoveBuildResources( iRepairCost );
-				flNewHealth = min( pOther->GetMaxHealth(), pOther->GetHealth() + ( iRepairCost * flHealthtoMetalRatio ) );
-			}
-			else
-			{
-				// Don't worry about calculating out metal, just heal.
-				flNewHealth = min( pOther->GetMaxHealth(), pOther->GetHealth() + iAmountToHeal );
-			}
+		pObject->SetHealth( nHealthToAdd );
 
-			pOther->SetHealth( flNewHealth );
+		IGameEvent *event = gameeventmanager->CreateEvent( "building_healed" );
+		if ( event )
+		{
+			event->SetInt( "priority", 1 ); // HLTV priority
+			event->SetInt( "building", pObject->entindex() );
+			event->SetInt( "healer", pOwner->entindex() );
+			event->SetInt( "amount", nHealthToAdd - nHealth );
+		}
+
+		CPVSFilter filter( GetAbsOrigin() );
+		switch ( GetTeamNumber() )
+		{
+			case TF_TEAM_BLUE:
+				TE_TFParticleEffect( filter, 0, "repair_claw_heal_blue", GetAbsOrigin(), vec3_angle );
+				break;
+			default:
+				TE_TFParticleEffect( filter, 0, "repair_claw_heal_red", GetAbsOrigin(), vec3_angle );
+				break;
 		}
 	}
-
-	// Remove.
-	UTIL_Remove( this );
 }
 
 //-----------------------------------------------------------------------------
@@ -587,12 +742,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::FlyThink(void)
 {
-	// If we're an arrow that involves teammates, make sure we can interact with our teammates.
-	if ( ( m_iType == 2 || m_iType == 1 || m_iType == 4 ) && ( gpGlobals->curtime > m_flCollideWithTeammatesTime && m_bCollideWithTeammates == false ) )
-	{
-		m_bCollideWithTeammates = true;
-	}
-	
 	QAngle angles;
 
 	VectorAngles(GetAbsVelocity(), angles);
@@ -620,7 +769,7 @@ int	CTFProjectile_Arrow::GetDamageType()
 		}
 	}
 
-	if ( ( m_iType == 1 || m_iType == 4 ) || m_iType == 2 )
+	if ( m_iProjType == TF_PROJECTILE_HEALING_BOLT || m_iProjType == TF_PROJECTILE_FESTIVE_HEALING_BOLT || m_iProjType == TF_PROJECTILE_BUILDING_REPAIR_BOLT )
 	{
 		iDmgType |= DMG_USEDISTANCEMOD;
 	}
@@ -663,7 +812,7 @@ bool CTFProjectile_Arrow::IsDeflectable(void)
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	if (m_iType != 5) // Don't allow grappling hooks to be deflected.
+	if ( m_iProjType != TF_PROJECTILE_GRAPPLINGHOOK ) // Don't allow grappling hooks to be deflected.
 	{
 		// Get arrow's speed.
 		float flVel = GetAbsVelocity().Length();
@@ -679,7 +828,7 @@ void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 		IncremenentDeflected();
 		SetOwnerEntity( pDeflectedBy );
 		ChangeTeam( pDeflectedBy->GetTeamNumber() );
-		if (m_iType != 0 && m_iType != 3)
+		if ( m_iProjType != TF_PROJECTILE_ARROW && m_iProjType != TF_PROJECTILE_FESTIVE_ARROW )
 		{
 			m_nSkin = ( pDeflectedBy->GetTeamNumber() - 2 );
 		}
@@ -701,9 +850,7 @@ void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 //-----------------------------------------------------------------------------
 bool CTFProjectile_Arrow::CanHeadshot( void )
 {
-	// ( m_iType == TF_PROJECTILE_ARROW || m_iType == TF_PROJECTILE_FESTITIVE_ARROW )
-	// The exception is that we translate this to our local type value. (0 and 3 respectively)
-	return ( m_iType == 0 || m_iType == 3 );
+	return ( m_iProjType == TF_PROJECTILE_ARROW || m_iProjType == TF_PROJECTILE_FESTIVE_ARROW );
 }
 
 //-----------------------------------------------------------------------------
@@ -715,14 +862,14 @@ const char *CTFProjectile_Arrow::GetTrailParticleName( void )
 	const char *pszFormat = NULL;
 	bool bLongTeamName = false;
 
-	switch( m_iType )
+	switch( m_iProjType )
 	{
-	case 3:
+	case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
 		pszFormat = "effects/repair_claw_trail_%s.vmt";
 		bLongTeamName = true;
 		break;
-	case 1:
-	case 4:
+	case TF_PROJECTILE_HEALING_BOLT:
+	case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
 		pszFormat = "effects/healingtrail_%s.vmt";
 		break;
 	default:
@@ -745,7 +892,7 @@ void CTFProjectile_Arrow::CreateTrail( void )
 	{
 		pTrail->FollowEntity( this );
 		pTrail->SetTransparency( kRenderTransAlpha, -1, -1, -1, 255, kRenderFxNone );
-		pTrail->SetStartWidth( m_iType == TF_PROJECTILE_BUILDING_REPAIR_BOLT ? 5.0f : 3.0f );
+		pTrail->SetStartWidth( m_iProjType == TF_PROJECTILE_BUILDING_REPAIR_BOLT ? 5.0f : 3.0f );
 		pTrail->SetTextureResolution( 0.01f );
 		pTrail->SetLifeTime( 0.3f );
 		pTrail->TurnOn();
@@ -767,16 +914,33 @@ void CTFProjectile_Arrow::UpdateOnRemove( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Sends to the client information for arrow gibs
+// Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_Arrow::BreakArrow( void )
+void CTFProjectile_Arrow::AdjustDamageDirection( CTakeDamageInfo const &info, Vector &vecDirection, CBaseEntity *pEntity )
+{
+	if ( pEntity )
+		vecDirection = ( info.GetDamagePosition() - info.GetDamageForce() ) - pEntity->WorldSpaceCenter();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Setup to remove ourselves
+//-----------------------------------------------------------------------------
+void CTFProjectile_Arrow::FadeOut( int iTime )
 {
 	SetMoveType( MOVETYPE_NONE, MOVECOLLIDE_DEFAULT );
 	SetAbsVelocity( vec3_origin );
 	SetSolidFlags( FSOLID_NOT_SOLID );
 	AddEffects( EF_NODRAW );
 
-	SetContextThink( &CTFProjectile_Arrow::RemoveThink, gpGlobals->curtime + 3.0, "ARROW_REMOVE_THINK" );
+	SetContextThink( &CTFProjectile_Arrow::RemoveThink, gpGlobals->curtime + iTime, NULL );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sends to the client information for arrow gibs
+//-----------------------------------------------------------------------------
+void CTFProjectile_Arrow::BreakArrow( void )
+{
+	FadeOut( ARROW_FADE_TIME );
 
 	CPVSFilter filter( GetAbsOrigin() );
 	UserMessageBegin( filter, "BreakModel" );
@@ -814,7 +978,7 @@ bool CTFProjectile_Arrow::PositionArrowOnBone(mstudiobbox_t *pbox, CBaseAnimatin
 	vecResult = vecMaxs - vecMins;
 
 	// This is a mess
-	SetAbsOrigin( ( ( ( vecResult ) * 0.60000002f ) + vecMins ) + ( ( ( rand() / RAND_MAX ) *  vecResult ) * -0.2f ) );
+	SetAbsOrigin( ( ( ( vecResult ) * 0.6f ) + vecMins ) + ( ( ( rand() / RAND_MAX ) *  vecResult ) * -0.2f ) );
 
 	return true;
 }
@@ -934,7 +1098,7 @@ void C_TFProjectile_Arrow::ClientThink( void )
 //-----------------------------------------------------------------------------
 void C_TFProjectile_Arrow::Light( void )
 {
-	if ( ( ( IsDormant() || !m_bFlame ) ) && ( ( m_iType != 0 ) && ( m_iType != 3 ) ) )
+	if ( IsDormant() || !m_bFlame || ( m_iProjType != TF_PROJECTILE_ARROW && m_iProjType != TF_PROJECTILE_FESTIVE_ARROW ) )
 		return;
 
 	ParticleProp()->Create( "flying_flaming_arrow", PATTACH_ABSORIGIN_FOLLOW );
