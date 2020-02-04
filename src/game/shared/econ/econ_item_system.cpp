@@ -741,7 +741,7 @@ void CEconItemSchema::Precache( void )
 		}
 
 		// Cache all attrbute names.
-		for ( static_attrib_t attrib : pItem->attributes )
+		for ( static_attrib_t const &attrib : pItem->attributes )
 		{
 			const EconAttributeDefinition *pAttribute = attrib.GetStaticData();
 

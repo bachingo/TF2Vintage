@@ -122,7 +122,9 @@ CTFProjectile_Arrow::~CTFProjectile_Arrow()
 {
 #ifdef CLIENT_DLL
 	ParticleProp()->StopEmission();
-	m_pCritEffect->StopEmission();
+
+	if( m_pCritEffect )
+		m_pCritEffect->StopEmission();
 #endif
 }
 
