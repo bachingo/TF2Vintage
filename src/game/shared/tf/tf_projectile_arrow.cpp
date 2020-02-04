@@ -42,6 +42,7 @@ const char *g_pszArrowModels[] =
 };
 
 #define ARROW_FADE_TIME		3.f
+#define MASK_TFARROWS		CONTENTS_SOLID|CONTENTS_HITBOX|CONTENTS_MONSTER
 
 
 class CTraceFilterCollisionArrows : public CTraceFilterEntitiesOnly
@@ -404,7 +405,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		trace_t tr;
 
 		CTraceFilterCollisionArrows filter( this, GetOwnerEntity() );
-		UTIL_TraceLine( vecOrigin, vecOrigin + vecDir * gpGlobals->frametime, CONTENTS_SOLID|CONTENTS_HITBOX|CONTENTS_MONSTER, &filter, &tr );
+		UTIL_TraceLine( vecOrigin, vecOrigin + vecDir * gpGlobals->frametime, MASK_TFARROWS, &filter, &tr );
 
 		if ( tr.m_pEnt && tr.m_pEnt->GetTeamNumber() != GetTeamNumber() )
 		{
@@ -618,7 +619,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 
 	trace_t tr;
 	CTraceFilterCollisionArrows filter( this, GetOwnerEntity() );
-	UTIL_TraceLine( vecOrigin, vecOrigin - vecDir * gpGlobals->frametime, CONTENTS_SOLID|CONTENTS_HITBOX|CONTENTS_MONSTER, &filter, &tr );
+	UTIL_TraceLine( vecOrigin, vecOrigin - vecDir * gpGlobals->frametime, MASK_TFARROWS, &filter, &tr );
 
 	UTIL_ImpactTrace( &tr, 0 );
 
@@ -1074,7 +1075,7 @@ void C_TFProjectile_Arrow::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		SetNextClientThink( gpGlobals->curtime + 0.1f );
+		SetNextClientThink( CLIENT_THINK_ALWAYS );
 
 		if ( m_bFlame )
 			ParticleProp()->Create( "flying_flaming_arrow", PATTACH_POINT_FOLLOW, "muzzle" );
@@ -1112,15 +1113,72 @@ void C_TFProjectile_Arrow::CreateCritTrail( void )
 //-----------------------------------------------------------------------------
 void C_TFProjectile_Arrow::ClientThink( void )
 {
-	if ( m_bAttachment && m_flDieTime < gpGlobals->curtime )
+	if ( !m_bWhizzed && gpGlobals->curtime > m_flCheckNearMiss )
 	{
-		// Die
-		SetNextClientThink( CLIENT_THINK_NEVER );
+		CheckNearMiss();
+		m_flCheckNearMiss = gpGlobals->curtime + 0.05f;
+	}
+
+	if ( ( gpGlobals->curtime - m_flDieTime ) > 40.0f )
+	{
 		Remove();
 		return;
 	}
 
-	SetNextClientThink( gpGlobals->curtime + 0.1f );
+	if ( IsDormant() && !( GetEffects() & EF_NODRAW ) )
+	{
+		AddEffects( EF_NODRAW );
+		UpdateVisibility();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_Arrow::CheckNearMiss( void )
+{
+	C_TFPlayer *pLocal = C_TFPlayer::GetLocalTFPlayer();
+	if ( pLocal == nullptr || !pLocal->IsAlive() )
+		return;
+
+	if ( pLocal->GetTeamNumber() == GetTeamNumber() )
+		return;
+
+	Vector vecOrigin = GetAbsOrigin();
+	Vector vecTarget = pLocal->GetAbsOrigin();
+
+	Vector vecFwd;
+	AngleVectors( GetAbsAngles(), &vecFwd );
+
+	Vector vecDirection = vecOrigin + vecFwd * 200;
+	if ( ( vecDirection - vecTarget ).LengthSqr() > ( vecOrigin - vecTarget ).LengthSqr() )
+	{
+		// We passed right by him between frames, doh!
+		m_bWhizzed = true;
+		return;
+	}
+
+	Vector vecClosest; float flDistance;
+	CalcClosestPointOnLineSegment( vecTarget, vecOrigin, vecDirection, vecClosest, &flDistance );
+
+	flDistance = ( vecClosest - vecTarget ).Length();
+	if ( flDistance <= 120.f )
+	{
+		m_bWhizzed = true;
+		SetNextClientThink( CLIENT_THINK_NEVER );
+
+		trace_t tr;
+		UTIL_TraceLine( vecOrigin, vecOrigin + vecFwd * 400, MASK_TFARROWS, this, COLLISION_GROUP_NONE, &tr );
+
+		if ( tr.DidHit() )
+			return;
+
+		EmitSound_t parm;
+		parm.m_pSoundName = "Weapon_Arrow.Nearmiss";
+
+		CSingleUserRecipientFilter filter( pLocal );
+		C_BaseEntity::EmitSound( filter, entindex(), parm );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1131,6 +1189,8 @@ void C_TFProjectile_Arrow::NotifyBoneAttached( C_BaseAnimating* attachTarget )
 	BaseClass::NotifyBoneAttached( attachTarget );
 
 	m_bAttachment = true;
+	m_flDieTime = gpGlobals->curtime;
+
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
 

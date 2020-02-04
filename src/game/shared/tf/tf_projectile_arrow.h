@@ -96,6 +96,7 @@ public:
 	virtual void		ClientThink( void );
 	virtual void		OnDataChanged( DataUpdateType_t updateType );
 	void				CreateCritTrail( void );
+	void				CheckNearMiss( void );
 
 	virtual void   		NotifyBoneAttached( C_BaseAnimating* attachTarget );
 
@@ -107,6 +108,7 @@ public:
 protected:
 #ifdef GAME_DLL
 	EHANDLE m_Scorer;
+
 	CNetworkVar( bool, m_bCritical );
 	CNetworkVar( bool, m_bFlame);
 	CNetworkVar( int, m_iProjType );
@@ -119,11 +121,13 @@ protected:
 	bool		m_bCritical;
 	bool		m_bFlame;
 	int			m_iProjType;
+
 	float		m_flDieTime;
 	bool		m_bAttachment;
-
+	bool		m_bWhizzed;
+	float       m_flCheckNearMiss;
 	CNewParticleEffect *m_pCritEffect;
-	int m_iDeflectedParity;
+	int         m_iDeflectedParity;
 #endif
 };
 
