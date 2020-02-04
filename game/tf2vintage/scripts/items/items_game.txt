@@ -7597,6 +7597,16 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_ham/c_ham"
 			"model_player"	"models/workshop/weapons/c_models/c_ham/c_ham.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"sniper"	"1"
+				"soldier"	"1"
+				"demoman"	"1"
+				"medic"	"1"
+				"heavy"	"1"
+				"pyro" "1"
+			}
 			"visuals"
 			{
 				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
