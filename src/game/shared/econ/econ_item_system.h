@@ -48,7 +48,7 @@ public:
 	CEconAttributeDefinition *GetAttributeDefinitionByName( const char* name );
 	CEconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );
 	int GetAttributeIndex( const char *classname );
-	int GetAttributeType( const char *type ) const;
+	ISchemaAttributeType *GetAttributeType( const char *type ) const;
 
 	KeyValues *m_pSchema;
 

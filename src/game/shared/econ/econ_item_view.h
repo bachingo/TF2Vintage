@@ -22,7 +22,7 @@ public:
 
 	CEconItemAttribute const *GetAttribByID( int iNum );
 	CEconItemAttribute const *GetAttribByName( char const *szName );
-	void IterateAttributes( IEconAttributeIterator &iter );
+	void IterateAttributes( IEconAttributeIterator *iter );
 
 	bool SetRuntimeAttributeValue( const CEconAttributeDefinition *pAttrib, float flValue );
 	bool RemoveAttribute( const CEconAttributeDefinition *pAttrib );
@@ -68,7 +68,7 @@ public:
 
 	bool AddAttribute( CEconItemAttribute *pAttribute );
 	void SkipBaseAttributes( bool bSkip );
-	void IterateAttributes( IEconAttributeIterator &iter );
+	void IterateAttributes( IEconAttributeIterator *iter );
 	CAttributeList *GetAttributeList( void ) { return &m_AttributeList; }
 
 	void SetItemDefIndex( int iItemID );

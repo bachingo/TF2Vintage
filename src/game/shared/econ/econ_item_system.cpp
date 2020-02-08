@@ -2,6 +2,7 @@
 #include "econ_item_system.h"
 #include "script_parser.h"
 #include "activitylist.h"
+#include "attribute_types.h"
 
 const char *g_TeamVisualSections[TF_TEAM_COUNT] =
 {
@@ -35,13 +36,6 @@ const char *g_EffectTypes[] =
 	"neutral",
 	"positive",
 	"negative"
-};
-
-static const char *const g_szAttributeTypes[] ={
-	"",
-	"uint64",
-	"float",
-	"string",
 };
 
 const char *g_szQualityStrings[] =
@@ -310,7 +304,7 @@ public:
 			pAttribute->effect_type = UTIL_StringFieldToInt( szEffect, g_EffectTypes, ARRAYSIZE( g_EffectTypes ) );
 
 			const char *szType = pSubData->GetString( "attribute_type" );
-			pAttribute->attribute_type = GetItemSchema()->GetAttributeType( szType );
+			pAttribute->type = GetItemSchema()->GetAttributeType( szType );
 
 			GET_BOOL( pAttribute, pSubData, hidden );
 			GET_BOOL( pAttribute, pSubData, stored_as_integer );
@@ -641,6 +635,17 @@ CEconItemSchema::CEconItemSchema()
 
 CEconItemSchema::~CEconItemSchema()
 {
+	FOR_EACH_DICT_FAST( m_PrefabsValues, i )
+	{
+		m_PrefabsValues[i]->deleteThis();
+	}
+	m_PrefabsValues.RemoveAll();
+
+	m_Items.PurgeAndDeleteElements();
+	m_Attributes.PurgeAndDeleteElements();
+
+	for ( attr_type_t const &atype : m_AttributeTypes )
+		delete atype.pType;
 }
 
 //-----------------------------------------------------------------------------
@@ -658,6 +663,26 @@ bool CEconItemSchema::Init( void )
 		g_EconSchemaParser.InitParser( "scripts/items/items_game.txt", true, false );
 		float flEndTime = engine->Time();
 		Msg( "Processing item schema took %.02fms. Parsed %d items and %d attributes.\n", ( flEndTime - flStartTime ) * 1000.0f, m_Items.Count(), m_Attributes.Count() );
+
+		attr_type_t defaultType;
+		defaultType.szName = NULL;
+		defaultType.pType = new CSchemaAttributeType_Default;
+		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = defaultType;
+
+		attr_type_t longType;
+		longType.szName = "uint64";
+		longType.pType = new CSchemaAttributeType_UInt64;
+		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = longType;
+
+		attr_type_t floatType;
+		floatType.szName = "float";
+		floatType.pType = new CSchemaAttributeType_Float;
+		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = floatType;
+
+		attr_type_t stringType;
+		stringType.szName = "string";
+		stringType.pType = new CSchemaAttributeType_String;
+		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = stringType;
 
 		m_bInited = true;
 	}
@@ -827,13 +852,13 @@ int CEconItemSchema::GetAttributeIndex( const char *name )
 	return -1;
 }
 
-int CEconItemSchema::GetAttributeType( const char *type ) const
+ISchemaAttributeType *CEconItemSchema::GetAttributeType( const char *name ) const
 {
-	for ( int i=0; i < ARRAYSIZE( g_szAttributeTypes ); ++i )
+	for ( attr_type_t const &type : m_AttributeTypes )
 	{
-		if ( !V_stricmp( type, g_szAttributeTypes[ i ] ) )
-			return i;
+		if ( type.szName == name )
+			return type.pType;
 	}
 
-	return -1;
+	return nullptr;
 }

@@ -2,6 +2,7 @@
 #include "econ_item_view.h"
 #include "econ_item_system.h"
 #include "activitylist.h"
+#include "attribute_types.h"
 
 #ifdef CLIENT_DLL
 #include "dt_utlvector_recv.h"
@@ -290,7 +291,7 @@ void CEconItemView::SkipBaseAttributes( bool bSkip )
 	m_bOnlyIterateItemViewAttributes = bSkip;
 }
 
-void CEconItemView::IterateAttributes( IEconAttributeIterator &iter )
+void CEconItemView::IterateAttributes( IEconAttributeIterator *iter )
 {
 	m_AttributeList.IterateAttributes( iter );
 
@@ -364,7 +365,7 @@ CEconItemAttribute const *CAttributeList::GetAttribByName( char const *szName )
 	return nullptr;
 }
 
-void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
+void CAttributeList::IterateAttributes( IEconAttributeIterator *iter )
 {
 	FOR_EACH_VEC( m_Attributes, i )
 	{
@@ -372,33 +373,8 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
 		attrib_data_union_t value;
 		value.iVal = m_Attributes[ i ].m_iRawValue32;
 
-		switch ( pDefinition->attribute_type )
-		{
-			case ATTRTYPE_INT:
-			case ATTRTYPE_UINT64:
-			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, u.iVal ) )
-					return;
-
-				break;
-			}
-			case ATTRTYPE_FLOAT:
-			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( u.iVal ) ) )
-					return;
-
-				break;
-			}
-			case ATTRTYPE_STRING:
-			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, u.sVal ) )
-					return;
-
-				break;
-			}
-			default:
-				return;
-		}
+		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, value ) )
+			return;
 	}
 }
 

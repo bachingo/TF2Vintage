@@ -364,7 +364,7 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 	m_bParsingMyself = true;
 
 	CAttributeIterator_ApplyAttributeFloat func( m_hOuter.Get(), strAttributeClass, &flValue, pOutProviders );
-	GetItem()->IterateAttributes( func );
+	GetItem()->IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 
@@ -383,7 +383,7 @@ string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBa
 	m_bParsingMyself = true;
 
 	CAttributeIterator_ApplyAttributeString func( m_hOuter.Get(), strAttributeClass, &strValue, pOutProviders );
-	GetItem()->IterateAttributes( func );
+	GetItem()->IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 
@@ -420,7 +420,7 @@ float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBase
 	m_bParsingMyself = true;;
 
 	CAttributeIterator_ApplyAttributeFloat func( m_hPlayer.Get(), strAttributeClass, &flValue, pOutProviders );
-	m_hPlayer->m_AttributeList.IterateAttributes( func );
+	m_hPlayer->m_AttributeList.IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 
@@ -439,7 +439,7 @@ string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, con
 	m_bParsingMyself = true;
 
 	CAttributeIterator_ApplyAttributeString func( m_hPlayer.Get(), strAttributeClass, &strValue, pOutProviders );
-	m_hPlayer->m_AttributeList.IterateAttributes( func );
+	m_hPlayer->m_AttributeList.IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 

@@ -1,6 +1,7 @@
 #include "cbase.h"
 #include "econ_item_schema.h"
 #include "econ_item_system.h"
+#include "attribute_types.h"
 #include "tier3/tier3.h"
 #include "vgui/ILocalize.h"
 
@@ -69,7 +70,7 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 	}
 	else
 	{
-		EconAttributeDefinition *pAttribDef = GetStaticData();
+		CEconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
 			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
@@ -103,6 +104,22 @@ CEconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 // CEconItemDefinition
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconItemDefinition::~CEconItemDefinition()
+{
+	FOR_EACH_VEC( attributes, i )
+	{
+		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
+		pDefinition->type->UnloadEconAttributeValue( &attributes[i].value );
+	}
+	attributes.RemoveAll();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 PerTeamVisuals_t *CEconItemDefinition::GetVisuals( int iTeamNum /*= TEAM_UNASSIGNED*/ )
 {
 	if ( iTeamNum > LAST_SHARED_TEAM && iTeamNum < TF_TEAM_COUNT )
@@ -113,6 +130,9 @@ PerTeamVisuals_t *CEconItemDefinition::GetVisuals( int iTeamNum /*= TEAM_UNASSIG
 	return &visual[TEAM_UNASSIGNED];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CEconItemDefinition::GetLoadoutSlot( int iClass /*= TF_CLASS_UNDEFINED*/ )
 {
 	if ( iClass && item_slot_per_class[iClass] != -1 )
@@ -253,40 +273,13 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
+void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter )
 {
 	FOR_EACH_VEC( attributes, i )
 	{
-		//attrib_data_union_t u = attributes[i].value;
-
-		switch ( pDefinition->attribute_type )
-		{
-			case ATTRTYPE_INT:
-			case ATTRTYPE_UINT64:
-			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[i].value.iVal ) )
-					return;
-
-				break;
-			}
-			case ATTRTYPE_FLOAT:
-			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, BitsToFloat( attributes[i].value.iVal ) ) )
-					return;
-
-				break;
-			}
-			case ATTRTYPE_STRING:
-			{
-				if ( !iter.OnIterateAttributeValue( pDefinition, attributes[i].value.sVal ) )
-					return;
-
-				break;
-			}
-			default:
-				return;
-		}
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
+		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, attributes[ i ].value ) )
+			return;
 	}
 }
 
@@ -336,18 +329,10 @@ bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
 
 	iAttribIndex = pAttrib->index;
 
-	switch ( pAttrib->attribute_type )
-	{
-		case ATTRTYPE_STRING:
-			value.sVal = AllocPooledString( kv->GetString() );
-			break;
-		case ATTRTYPE_UINT64:
-			value.iVal = kv->GetUint64();
-			break;
-		default:
-			value.flVal = kv->GetFloat();
-			break;
-	}
+	pAttrib->type->InitializeNewEconAttributeValue( &value );
+
+	if ( !pAttrib->type->BConvertStringToEconAttributeValue( pAttrib, kv->GetString(), &value ) )
+		return false;
 
 	return true;
 }
@@ -357,24 +342,92 @@ bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
 //-----------------------------------------------------------------------------
 bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 {
-	if( pAttrib == nullptr || pAttrib->index == -1 )
 	CEconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
+	if( pAttrib == nullptr || pAttrib->index == -1 || pAttrib->type == nullptr )
 		return false;
 
 	iAttribIndex = pAttrib->index;
 
-	switch ( pAttrib->attribute_type )
-	{
-		case ATTRTYPE_STRING:
-			value.sVal = AllocPooledString( kv->GetString("value") );
-			break;
-		case ATTRTYPE_UINT64:
-			value.iVal = kv->GetUint64("value");
-			break;
-		default:
-			value.flVal = kv->GetFloat("value");
-			break;
-	}
+	pAttrib->type->InitializeNewEconAttributeValue( &value );
+
+	if ( !pAttrib->type->BConvertStringToEconAttributeValue( pAttrib, kv->GetString( "value" ), &value ) )
+		return false;
 
 	return true;
 }
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Construction
+//-----------------------------------------------------------------------------
+CAttribute_String::CAttribute_String()
+{
+	m_pString = &_default_value_;
+	m_nLength = 0;
+	m_bInitialized = false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CAttribute_String::CAttribute_String( CAttribute_String const &src )
+{
+	CAttribute_String();
+
+	*this = src;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destruction
+//-----------------------------------------------------------------------------
+CAttribute_String::~CAttribute_String()
+{
+	if ( m_pString != &_default_value_ && m_pString != nullptr )
+		delete m_pString;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAttribute_String::Clear( void )
+{
+	if ( m_bInitialized && m_pString != &_default_value_ )
+	{
+		m_pString->Clear();
+	}
+
+	m_bInitialized = false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Copy assignment
+//-----------------------------------------------------------------------------
+CAttribute_String &CAttribute_String::operator=( CAttribute_String const &src )
+{
+	Assert( this != &src );
+
+	if ( src.m_bInitialized )
+	{
+		Initialize();
+		*m_pString = *src.m_pString;
+	}
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: String assignment
+//-----------------------------------------------------------------------------
+CAttribute_String &CAttribute_String::operator=( char const *src )
+{
+	Clear();
+	Initialize();
+
+	*m_pString = src;
+
+	return *this;
+}
+
+CUtlConstString CAttribute_String::_default_value_;

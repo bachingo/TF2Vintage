@@ -178,19 +178,18 @@ public:
 		string_attribute = false;
 		description_format = -1;
 		hidden = false;
-		attribute_type = -1;
 		effect_type = -1;
 		stored_as_integer = false;
 		m_iAttributeClass = NULL_STRING;
 	}
 
 	unsigned short index;
+	ISchemaAttributeType *type;
 	char name[128];
 	char attribute_class[128];
 	char description_string[128];
 	bool string_attribute;
 	int description_format;
-	int attribute_type;
 	int effect_type;
 	bool hidden;
 	bool stored_as_integer;
@@ -376,7 +375,7 @@ public:
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
-	void IterateAttributes( IEconAttributeIterator &iter );
+	void IterateAttributes( IEconAttributeIterator *iter );
 
 public:
 	unsigned int index;
