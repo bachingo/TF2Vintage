@@ -295,7 +295,7 @@ public:
 	{
 		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
-			EconAttributeDefinition *pAttribute = new EconAttributeDefinition;
+			CEconAttributeDefinition *pAttribute = new CEconAttributeDefinition;
 			pAttribute->index = V_atoi( pSubData->GetName() );
 
 			GET_STRING_DEFAULT( pAttribute, pSubData, name, ( unnamed ) );
@@ -667,7 +667,7 @@ bool CEconItemSchema::Init( void )
 
 void CEconItemSchema::Precache( void )
 {
-	static CSchemaFieldHandle<AttributeDefinition_t> pAttribDef_CustomProjectile( "custom projectile model" );
+	static CSchemaFieldHandle<CEconAttributeDefinition> pAttribDef_CustomProjectile( "custom projectile model" );
 
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )
@@ -743,7 +743,7 @@ void CEconItemSchema::Precache( void )
 		// Cache all attrbute names.
 		for ( static_attrib_t const &attrib : pItem->attributes )
 		{
-			const EconAttributeDefinition *pAttribute = attrib.GetStaticData();
+			const CEconAttributeDefinition *pAttribute = attrib.GetStaticData();
 
 			// Special case for custom_projectile_model attribute.
 			if ( pAttribute == pAttribDef_CustomProjectile )
@@ -776,16 +776,16 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name 
 	return NULL;
 }
 
-EconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
+CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
 {
 	if (id < 0)
 		return NULL;
-	EconAttributeDefinition *attribdef = NULL;
+	CEconAttributeDefinition *attribdef = NULL;
 	FIND_ELEMENT( m_Attributes, id, attribdef );
 	return attribdef;
 }
 
-EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const char *name )
+CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const char *name )
 {
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
@@ -798,7 +798,7 @@ EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const ch
 	return NULL;
 }
 
-EconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const char *classname )
+CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const char *classname )
 {
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{

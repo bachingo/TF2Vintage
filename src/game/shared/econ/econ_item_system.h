@@ -6,9 +6,10 @@
 #endif
 
 
+class ISchemaAttributeType;
 class CEconSchemaParser;
 class CEconItemDefinition;
-struct EconAttributeDefinition;
+class CEconAttributeDefinition;
 struct EconQuality;
 struct EconColor;
 
@@ -20,6 +21,12 @@ enum
 	ATTRTYPE_FLOAT,
 	ATTRTYPE_STRING
 };
+
+typedef struct
+{
+	CUtlConstString szName;
+	ISchemaAttributeType *pType;
+} attr_type_t;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -37,9 +44,9 @@ public:
 
 	CEconItemDefinition* GetItemDefinition( int id );
 	CEconItemDefinition* GetItemDefinitionByName( const char* name );
-	EconAttributeDefinition *GetAttributeDefinition( int id );
-	EconAttributeDefinition *GetAttributeDefinitionByName( const char* name );
-	EconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );
+	CEconAttributeDefinition *GetAttributeDefinition( int id );
+	CEconAttributeDefinition *GetAttributeDefinitionByName( const char* name );
+	CEconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );
 	int GetAttributeIndex( const char *classname );
 	int GetAttributeType( const char *type ) const;
 
@@ -51,7 +58,7 @@ protected:
 	CUtlDict< EconColor, unsigned short >			m_Colors;
 	CUtlDict< KeyValues *, unsigned short >			m_PrefabsValues;
 	CUtlMap< int, CEconItemDefinition * >			m_Items;
-	CUtlMap< int, EconAttributeDefinition * >		m_Attributes;
+	CUtlMap< int, CEconAttributeDefinition * >		m_Attributes;
 
 private:
 	bool m_bInited;

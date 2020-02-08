@@ -12,10 +12,10 @@ typedef CUtlVector< CHandle<CBaseEntity> > ProviderVector;
 class CEconItemSpecificAttributeIterator : public IEconAttributeIterator
 {
 public:
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) { return true; }
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) { return true; }
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) { return true; }
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned long long const & ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned int ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned long long const & ) { return true; }
 };
 
 class CAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
@@ -24,8 +24,8 @@ public:
 	CAttributeIterator_ApplyAttributeFloat( EHANDLE hOwner, string_t iName, float *outValue, ProviderVector *outVector )
 		: m_hOwner( hOwner ), m_iName( iName ), m_flOut( outValue ), m_pOutProviders( outVector ) {}
 
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, unsigned int value );
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, float value );
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value );
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, float value );
 
 private:
 	EHANDLE m_hOwner;
@@ -40,7 +40,7 @@ public:
 	CAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t *outValue, ProviderVector *outVector )
 		: m_hOwner( hOwner ), m_iName( iName ), m_pOut( outValue ), m_pOutProviders( outVector ) {}
 
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t const &value );
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value );
 
 private:
 	EHANDLE m_hOwner;
@@ -49,30 +49,24 @@ private:
 	ProviderVector *m_pOutProviders;
 };
 
-template<typename T>
-class CAttributeIterator_GetSpecificAttribute : public CEconItemSpecificAttributeIterator
+template<typename TIn, typename TOut=TIn>
+class CAttributeIterator_GetSpecificAttribute : public IEconAttributeIterator
 {
 public:
-	CAttributeIterator_GetSpecificAttribute( EconAttributeDefinition const *attribute, T *outValue )
+	CAttributeIterator_GetSpecificAttribute( CEconAttributeDefinition const *attribute, TIn *outValue )
 		: m_pAttribute( attribute ), m_pOut( outValue )
 	{
 		m_bFound = false;
 	}
 
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, T value )
-	{
-		if ( m_pAttribute == pDefinition )
-		{
-			m_bFound = true;
-			*m_pOut = value;
-		}
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned int ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned long long const & ) { return true; }
 
-		return !m_bFound;
-	}
-
-	EconAttributeDefinition const *m_pAttribute;
+	CEconAttributeDefinition const *m_pAttribute;
 	bool m_bFound;
-	T *m_pOut;
+	TOut *m_pOut;
 };
 
 // Client specific.

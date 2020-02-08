@@ -278,7 +278,7 @@ bool CEconItemView::HasTag( const char* name )
 bool CEconItemView::AddAttribute( CEconItemAttribute *pAttribute )
 {
 	// Make sure this attribute exists.
-	EconAttributeDefinition *pAttribDef = pAttribute->GetStaticData();
+	CEconAttributeDefinition *pAttribDef = pAttribute->GetStaticData();
 	if ( pAttribDef )
 		return m_AttributeList.SetRuntimeAttributeValue( pAttribDef, BitsToFloat( pAttribute->m_iRawValue32 ) );
 
@@ -353,7 +353,7 @@ CEconItemAttribute const *CAttributeList::GetAttribByID( int iNum )
 
 CEconItemAttribute const *CAttributeList::GetAttribByName( char const *szName )
 {
-	EconAttributeDefinition *pDefinition = GetItemSchema()->GetAttributeDefinitionByName( szName );
+	CEconAttributeDefinition *pDefinition = GetItemSchema()->GetAttributeDefinitionByName( szName );
 
 	FOR_EACH_VEC( m_Attributes, i )
 	{
@@ -368,9 +368,9 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
 {
 	FOR_EACH_VEC( m_Attributes, i )
 	{
-		EconAttributeDefinition const *pDefinition = m_Attributes[ i ].GetStaticData();
 		attrib_data_union_t u;
 		u.iVal = m_Attributes[ i ].m_iRawValue32;
+		CEconAttributeDefinition const *pDefinition = m_Attributes[ i ].GetStaticData();
 
 		switch ( pDefinition->attribute_type )
 		{
@@ -402,7 +402,7 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
 	}
 }
 
-bool CAttributeList::SetRuntimeAttributeValue( const EconAttributeDefinition *pDefinition, float flValue )
+bool CAttributeList::SetRuntimeAttributeValue( const CEconAttributeDefinition *pDefinition, float flValue )
 {
 	Assert( pDefinition );
 	if ( pDefinition == nullptr )
@@ -425,7 +425,7 @@ bool CAttributeList::SetRuntimeAttributeValue( const EconAttributeDefinition *pD
 	return true;
 }
 
-bool CAttributeList::RemoveAttribute( const EconAttributeDefinition *pDefinition )
+bool CAttributeList::RemoveAttribute( const CEconAttributeDefinition *pDefinition )
 {
 	FOR_EACH_VEC( m_Attributes, i )
 	{

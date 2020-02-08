@@ -3740,7 +3740,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 					for ( int i = 0; i < itemdef->attributes.Count(); i++ )
 					{
 						static_attrib_t *pAttribute = &itemdef->attributes[i];
-						const EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
+						const CEconAttributeDefinition *pStatic = pAttribute->GetStaticData();
 
 						if ( pStatic )
 						{

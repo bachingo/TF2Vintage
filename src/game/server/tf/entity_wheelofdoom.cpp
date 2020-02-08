@@ -747,7 +747,7 @@ void CWheelOfDoom::ApplyAttributeToAllPlayers( char const *szAtribName, float fl
 //-----------------------------------------------------------------------------
 void CWheelOfDoom::ApplyAttributeToPlayer( CTFPlayer *pTarget, char const *szAtribName, float flValue )
 {
-	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( szAtribName );
+	CEconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( szAtribName );
 	pTarget->GetAttributeList()->SetRuntimeAttributeValue( pAttrib, flValue );
 	pTarget->TeamFortress_SetSpeed();
 }
@@ -769,7 +769,7 @@ void CWheelOfDoom::RemoveAttributeFromAllPlayers( char const *szAtribName )
 //-----------------------------------------------------------------------------
 void CWheelOfDoom::RemoveAttributeFromPlayer( CTFPlayer *pTarget, char const *szAtribName )
 {
-	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( szAtribName );
+	CEconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( szAtribName );
 	pTarget->GetAttributeList()->RemoveAttribute( pAttrib );
 	pTarget->TeamFortress_SetSpeed();
 }

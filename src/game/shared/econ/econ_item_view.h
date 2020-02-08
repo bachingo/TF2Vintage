@@ -8,6 +8,7 @@
 #include "econ_item_schema.h"
 
 class CAttributeManager;
+class IEconAttributeIterator;
 
 class CAttributeList
 {
@@ -23,8 +24,8 @@ public:
 	CEconItemAttribute const *GetAttribByName( char const *szName );
 	void IterateAttributes( IEconAttributeIterator &iter );
 
-	bool SetRuntimeAttributeValue( const EconAttributeDefinition *pAttrib, float flValue );
-	bool RemoveAttribute( const EconAttributeDefinition *pAttrib );
+	bool SetRuntimeAttributeValue( const CEconAttributeDefinition *pAttrib, float flValue );
+	bool RemoveAttribute( const CEconAttributeDefinition *pAttrib );
 	bool RemoveAttribByIndex( int iIndex );
 
 	void SetManager( CAttributeManager *pManager );

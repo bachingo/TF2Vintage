@@ -45,7 +45,7 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 	}
 	else
 	{
-		EconAttributeDefinition *pAttribDef = GetStaticData();
+		CEconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
 			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
@@ -59,10 +59,9 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *pszAttributeClass /*= NULL*/ )
 {
 	m_iAttributeDefinitionIndex = iIndex;
+	
+	m_iRawValue32 = *(unsigned int *)STRING( AllocPooledString( pszValue ) );
 
-	attrib_data_union_t value;
-	value.sVal = AllocPooledString( pszValue );
-	m_iRawValue32 = value.iVal;
 
 	if ( pszAttributeClass )
 	{
@@ -93,7 +92,7 @@ CEconItemAttribute &CEconItemAttribute::operator=( CEconItemAttribute const &src
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-EconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
+CEconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 {
 	return GetItemSchema()->GetAttributeDefinition( m_iAttributeDefinitionIndex );
 }
@@ -258,7 +257,6 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 {
 	FOR_EACH_VEC( attributes, i )
 	{
-		EconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
 		//attrib_data_union_t u = attributes[i].value;
 
 		switch ( pDefinition->attribute_type )
@@ -288,6 +286,7 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 			default:
 				return;
 		}
+		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
 	}
 }
 
@@ -295,7 +294,7 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator &iter )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CSchemaFieldHandle<EconAttributeDefinition>::CSchemaFieldHandle( char const *name )
+CSchemaFieldHandle<CEconAttributeDefinition>::CSchemaFieldHandle( char const *name )
 	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
 {
 	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( name );
@@ -304,7 +303,7 @@ CSchemaFieldHandle<EconAttributeDefinition>::CSchemaFieldHandle( char const *nam
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CSchemaFieldHandle<EconAttributeDefinition>::operator const EconAttributeDefinition *( )
+CSchemaFieldHandle<CEconAttributeDefinition>::operator const CEconAttributeDefinition *( )
 {
 	if ( m_pSchema == GetItemSchema()->m_pSchema )
 		return m_pHandle;
@@ -331,7 +330,7 @@ CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
 //-----------------------------------------------------------------------------
 bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
 {
-	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
+	CEconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
 	if( pAttrib == nullptr || pAttrib->index == -1 )
 		return false;
 
@@ -358,8 +357,8 @@ bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
 //-----------------------------------------------------------------------------
 bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 {
-	EconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
 	if( pAttrib == nullptr || pAttrib->index == -1 )
+	CEconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
 		return false;
 
 	iAttribIndex = pAttrib->index;

@@ -168,7 +168,7 @@ void CTFItemToolTipPanel::ShowToolTip(CEconItemDefinition *pItemData)
 			else
 			{
 				static_attrib_t *pAttribute = &pItemData->attributes[i];
-				const EconAttributeDefinition *pStatic = pAttribute->GetStaticData();
+				const CEconAttributeDefinition *pStatic = pAttribute->GetStaticData();
 				if ( !pStatic || pStatic->hidden )
 					continue;
 

@@ -8,6 +8,8 @@
 #include "tf_shareddefs.h"
 #include "econ_item_system.h"
 
+class IEconAttributeIterator;
+
 enum
 {
 	ATTRIB_FORMAT_INVALID = -1,
@@ -100,9 +102,10 @@ typedef struct EconColor
 	char color_name[128];
 } Color_t;
 
-typedef struct EconAttributeDefinition
+class CEconAttributeDefinition
 {
-	EconAttributeDefinition()
+public:
+	CEconAttributeDefinition()
 	{
 		index = 0xFFFF;
 		CLEAR_STR( name );
@@ -128,7 +131,7 @@ typedef struct EconAttributeDefinition
 	bool hidden;
 	bool stored_as_integer;
 	string_t m_iAttributeClass;
-} AttributeDefinition_t;
+};
 
 // Attached Models
 #define AM_WORLDMODEL	(1 << 0)
@@ -145,10 +148,11 @@ typedef union
 	float flVal;
 	string_t sVal;
 } attrib_data_union_t;
+static_assert( sizeof( attrib_data_union_t ) == 4, "If the size changes you've done something wrong!" );
 
 typedef struct
 {
-	EconAttributeDefinition const *GetStaticData( void )
+	CEconAttributeDefinition const *GetStaticData( void ) const
 	{
 		return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
 	}
@@ -158,8 +162,6 @@ typedef struct
 	unsigned short iAttribIndex;
 	attrib_data_union_t value;
 } static_attrib_t;
-static_assert( sizeof( static_attrib_t ) == 8, "" );
-
 
 
 class IEconAttributeIterator
@@ -173,10 +175,10 @@ public:
 
 // Client specific.
 #ifdef CLIENT_DLL
-EXTERN_RECV_TABLE( DT_EconItemAttribute );
+	EXTERN_RECV_TABLE( DT_EconItemAttribute );
 // Server specific.
 #else
-EXTERN_SEND_TABLE( DT_EconItemAttribute );
+	EXTERN_SEND_TABLE( DT_EconItemAttribute );
 #endif
 
 class CEconItemAttribute
@@ -185,7 +187,7 @@ public:
 	DECLARE_EMBEDDED_NETWORKVAR();
 	DECLARE_CLASS_NOBASE( CEconItemAttribute );
 
-	EconAttributeDefinition *GetStaticData( void );
+	CEconAttributeDefinition *GetStaticData( void );
 
 	CEconItemAttribute()
 	{
@@ -312,6 +314,7 @@ public:
 		CLEAR_STR( holiday_restriction );
 		CLEAR_STR( custom_projectile_model );
 	}
+	~CEconItemDefinition();
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );

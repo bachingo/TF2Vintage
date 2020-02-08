@@ -24,13 +24,13 @@ END_NETWORK_TABLE();
 ConVar tf2v_attrib_mult( "tf2v_attrib_mult", "1" , FCVAR_NOTIFY | FCVAR_REPLICATED, "Amount to multiply on attribute values." );
 
 
-bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, unsigned int value )
+bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value )
 {
 	string_t name = pDefinition->m_iAttributeClass;
 	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
 	{
 		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
-		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+		const_cast<CEconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
 	}
 
 	if ( m_iName == name )
@@ -76,13 +76,13 @@ bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttrib
 	return true;
 }
 
-bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, float value )
+bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, float value )
 {
 	string_t name = pDefinition->m_iAttributeClass;
 	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
 	{
 		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
-		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+		const_cast<CEconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
 	}
 
 	if ( m_iName == name )
@@ -129,13 +129,13 @@ bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( EconAttrib
 }
 
 
-bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( EconAttributeDefinition const *pDefinition, string_t const &value )
+bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value )
 {
 	string_t name = pDefinition->m_iAttributeClass;
 	if ( !name && pDefinition->attribute_class[0] )
 	{
 		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
-		const_cast<EconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+		const_cast<CEconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
 	}
 
 	// Pointer comparison, bad
@@ -155,7 +155,6 @@ bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( EconAttri
 
 	return true;
 }
-
 
 
 CAttributeManager::CAttributeManager()
