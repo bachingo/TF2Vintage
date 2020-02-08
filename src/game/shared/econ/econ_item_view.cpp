@@ -368,9 +368,9 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator &iter )
 {
 	FOR_EACH_VEC( m_Attributes, i )
 	{
-		attrib_data_union_t u;
-		u.iVal = m_Attributes[ i ].m_iRawValue32;
 		CEconAttributeDefinition const *pDefinition = m_Attributes[ i ].GetStaticData();
+		attrib_data_union_t value;
+		value.iVal = m_Attributes[ i ].m_iRawValue32;
 
 		switch ( pDefinition->attribute_type )
 		{

@@ -2430,11 +2430,11 @@ bool CTFWeaponBase::GetProjectileOverrideModel( string_t *pOut )
 
 	if ( pAttrDef_CustomProjectile )
 	{
-		string_t strProjectileModel = NULL_STRING;
-		CAttributeIterator_GetSpecificAttribute<string_t> func( pAttrDef_CustomProjectile, &strProjectileModel );
-		GetAttributeContainer()->GetItem()->IterateAttributes( func );
+		CAttribute_String strProjectileModel;
+		CAttributeIterator_GetSpecificAttribute<CAttribute_String> func( pAttrDef_CustomProjectile, &strProjectileModel );
+		GetAttributeContainer()->GetItem()->IterateAttributes( &func );
 
-		*pOut = strProjectileModel;
+		*pOut = MAKE_STRING( strProjectileModel );
 		return func.m_bFound;
 	}
 

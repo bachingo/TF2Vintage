@@ -82,6 +82,70 @@ extern const char *g_szQualityLocalizationStrings[];
 		name[0] = '\0'
 
 
+class CAttribute_String
+{
+	DECLARE_CLASS_NOBASE( CAttribute_String );
+public:
+
+	CAttribute_String();
+	// Explicitly copy construct
+	EXPLICIT CAttribute_String( CAttribute_String const &src );
+	virtual ~CAttribute_String();
+
+	FORCEINLINE void Initialize( void )
+	{
+		m_bInitialized = true;
+
+		if ( m_pString == &_default_value_ )
+			m_pString = new CUtlConstString;
+	}
+
+	void CopyFrom( CAttribute_String const &src )
+	{
+		Clear();
+
+		*this = src;
+	}
+
+	void Assign( char const *src )
+	{
+		Initialize();
+
+		*m_pString = src;
+	}
+
+	void Clear( void );
+
+	CAttribute_String &operator=( CAttribute_String const &src );
+	CAttribute_String &operator=( char const *src );
+
+#if defined GAME_DLL
+	CAttribute_String &operator=( string_t const &src )
+	{
+		return this->operator=( STRING( src ) );
+	}
+#endif
+
+	// Inner string access
+	const char *Get( void ) const { return m_pString->Get(); }
+	CUtlConstString *GetForModify( void ) { return m_pString; }
+
+	operator char const *( ) { return Get(); }
+	operator char const *( ) const { return Get(); }
+
+#if defined GAME_DLL
+	operator string_t ( ) { return MAKE_STRING( Get() ); }
+	operator string_t ( ) const { return MAKE_STRING( Get() ); }
+#endif
+
+protected:
+	static CUtlConstString _default_value_;
+
+	CUtlConstString *m_pString;
+	int m_nLength;
+	bool m_bInitialized;
+};
+
 typedef struct EconQuality
 {
 	EconQuality()
@@ -146,7 +210,8 @@ typedef union
 {
 	unsigned iVal;
 	float flVal;
-	string_t sVal;
+	uint64 *lVal;
+	CAttribute_String *sVal;
 } attrib_data_union_t;
 static_assert( sizeof( attrib_data_union_t ) == 4, "If the size changes you've done something wrong!" );
 
@@ -163,15 +228,6 @@ typedef struct
 	attrib_data_union_t value;
 } static_attrib_t;
 
-
-class IEconAttributeIterator
-{
-public:
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned int ) = 0;
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, float ) = 0;
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, string_t const & ) = 0;
-	virtual bool OnIterateAttributeValue( EconAttributeDefinition const *, unsigned long long const & ) = 0;
-};
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -367,6 +423,16 @@ public:
 	
 	CUtlVector<static_attrib_t> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];
+};
+
+
+class IEconAttributeIterator
+{
+public:
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned int ) = 0;
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) = 0;
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) = 0;
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, uint64 const & ) = 0;
 };
 
 #endif // ECON_ITEM_SCHEMA_H

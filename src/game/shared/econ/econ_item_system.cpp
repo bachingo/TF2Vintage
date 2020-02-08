@@ -748,7 +748,7 @@ void CEconItemSchema::Precache( void )
 			// Special case for custom_projectile_model attribute.
 			if ( pAttribute == pAttribDef_CustomProjectile )
 			{
-				CBaseEntity::PrecacheModel( STRING( attrib.value.sVal ) );
+				CBaseEntity::PrecacheModel( attrib.value.sVal->Get() );
 			}
 		}
 	}

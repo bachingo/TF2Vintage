@@ -69,16 +69,38 @@ public:
 	TOut *m_pOut;
 };
 
+#define DEFINE_ATTRIBUTE_ITERATOR( inputType, outputType, overrideParam ) \
+	bool CAttributeIterator_GetSpecificAttribute<inputType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value ) \
+	{ \
+		DevMsg( "Hit CAttributeIterator_GetSpecificAttribute<%s, %s>::OnIterateAttributeValue(EconAttributeDefinition const*, %s) succesfully.\n", #inputType, #outputType, #overrideParam ); \
+		if ( m_pAttribute == pDefinition ) \
+		{ \
+			m_bFound = true; \
+			*m_pOut = value; \
+		} \
+		return !m_bFound; \
+	}
+
+#define ATTRIBUTE_ITERATOR( inputType, outputType, overrideParam ) \
+	bool CAttributeIterator_GetSpecificAttribute<inputType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value )
+
+DEFINE_ATTRIBUTE_ITERATOR( CAttribute_String, CAttribute_String, CAttribute_String const& )
+DEFINE_ATTRIBUTE_ITERATOR( float, float, float )
+DEFINE_ATTRIBUTE_ITERATOR( unsigned int, unsigned int, unsigned int )
+DEFINE_ATTRIBUTE_ITERATOR( uint64, uint64, uint64 const& )
+DEFINE_ATTRIBUTE_ITERATOR( float, unsigned int, unsigned int )
+DEFINE_ATTRIBUTE_ITERATOR( unsigned int, float, float )
+
 // Client specific.
 #ifdef CLIENT_DLL
-EXTERN_RECV_TABLE( DT_AttributeManager );
-EXTERN_RECV_TABLE( DT_AttributeContainer );
-EXTERN_RECV_TABLE( DT_AttributeContainerPlayer );
+	EXTERN_RECV_TABLE( DT_AttributeManager );
+	EXTERN_RECV_TABLE( DT_AttributeContainer );
+	EXTERN_RECV_TABLE( DT_AttributeContainerPlayer );
 // Server specific.
 #else
-EXTERN_SEND_TABLE( DT_AttributeManager );
-EXTERN_SEND_TABLE( DT_AttributeContainer );
-EXTERN_SEND_TABLE( DT_AttributeContainerPlayer );
+	EXTERN_SEND_TABLE( DT_AttributeManager );
+	EXTERN_SEND_TABLE( DT_AttributeContainer );
+	EXTERN_SEND_TABLE( DT_AttributeContainerPlayer );
 #endif
 
 class CAttributeManager
