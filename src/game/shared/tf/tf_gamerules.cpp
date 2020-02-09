@@ -98,12 +98,20 @@ extern ConVar mp_tournament;
 ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
-ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "", HalloweenChanged );
+ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, ""
+				 #if defined( CLIENT_DLL )
+					 , HalloweenChanged
+				 #endif
+                   );
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar tf_fullmoon( "tf_fullmoon", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "");
 //ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
 ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
-ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9, ValidateCapturesPerRound );
+ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9
+						   #if defined( GAME_DLL )
+							   , ValidateCapturesPerRound
+						   #endif
+                             );
 
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
