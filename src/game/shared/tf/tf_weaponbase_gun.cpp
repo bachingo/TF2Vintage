@@ -265,10 +265,10 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 #if defined( GAME_DLL )
 	if ( pProjectile )
 	{
-		string_t iCustomMdl = NULL_STRING;
-		if ( GetProjectileOverrideModel( &iCustomMdl ) )
+		CAttribute_String strCustomMdl;
+		if ( GetProjectileModelOverride( &strCustomMdl ) )
 		{
-			pProjectile->SetModel( STRING( iCustomMdl ) );
+			pProjectile->SetModel( strCustomMdl );
 		}
 	}
 #endif
