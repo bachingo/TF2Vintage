@@ -973,7 +973,7 @@ bool CTFProjectile_Arrow::PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimati
 
 	matrix3x4_t *pBone = pCache->GetCachedBone( pbox->bone );
 	if ( pBone == nullptr )
-		return;
+		return false;
 	
 	Vector vecMins, vecMaxs, vecResult;
 	TransformAABB( *pBone, pbox->bbmin, pbox->bbmax, vecMins, vecMaxs );
