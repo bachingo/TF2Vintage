@@ -956,7 +956,7 @@ void CTFProjectile_Arrow::BreakArrow( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFProjectile_Arrow::PositionArrowOnBone(mstudiobbox_t *pbox, CBaseAnimating *pAnim )
+bool CTFProjectile_Arrow::PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimating *pAnim )
 {
 	CStudioHdr *pStudioHdr = pAnim->GetModelPtr();	
 	if ( !pStudioHdr )
@@ -971,15 +971,16 @@ bool CTFProjectile_Arrow::PositionArrowOnBone(mstudiobbox_t *pbox, CBaseAnimatin
 	if ( !pCache )
 		return false;
 
-	matrix3x4_t *bones;
-	pCache->ReadCachedBonePointers( &bones, pStudioHdr->numbones() );
+	matrix3x4_t *pBone = pCache->GetCachedBone( pbox->bone );
+	if ( pBone == nullptr )
+		return;
 	
 	Vector vecMins, vecMaxs, vecResult;
-	TransformAABB( bones[pbox->bone], pbox->bbmin, pbox->bbmax, vecMins, vecMaxs );
+	TransformAABB( *pBone, pbox->bbmin, pbox->bbmax, vecMins, vecMaxs );
 	vecResult = vecMaxs - vecMins;
 
 	// This is a mess
-	SetAbsOrigin( ( vecResult * 0.6f + vecMins ) + ( ( rand() / RAND_MAX ) *  vecResult * -0.2f ) );
+	SetAbsOrigin( ( vecResult * 0.6f + vecMins ) - ( rand() / RAND_MAX * vecResult ) );
 
 	return true;
 }
