@@ -9,6 +9,7 @@
 #include "hud.h"
 #include "hudelement.h"
 #include "c_tf_player.h"
+#include "c_baseobject.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -146,6 +147,7 @@ CDamageAccountPanel::CDamageAccountPanel( const char *pElementName ) : CHudEleme
 
 	ListenForGameEvent( "player_hurt" );
 	ListenForGameEvent( "player_healed" );
+	ListenForGameEvent( "building_healed" );
 	ListenForGameEvent( "player_bonuspoints" );
 	ListenForGameEvent( "npc_hurt" );
 }
@@ -162,7 +164,7 @@ void CDamageAccountPanel::FireGameEvent( IGameEvent *event )
 	{
 		OnDamaged( event );
 	}
-	else if ( V_strcmp( type, "player_healed" ) == 0 )
+	else if ( V_strcmp( type, "player_healed" ) == 0 || V_strcmp( type, "building_healed" ) == 0 )
 	{
 		OnHealed( event );
 	}
@@ -349,6 +351,7 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 		return;
 
 	int iPatient = event->GetInt( "patient" );
+	int iBuilding = event->GetInt( "building" );
 	int iHealer = event->GetInt( "healer" );
 	int iAmount = event->GetInt( "amount" );
 
@@ -360,9 +363,16 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 	if ( iAmount == 0 )
 		return;
 
-	C_BasePlayer *pPatient = UTIL_PlayerByUserId( iPatient );
-	if ( !pPatient )
+	C_BaseEntity *pPatient = UTIL_PlayerByUserId( iPatient );
+	C_BaseEntity *pObject = cl_entitylist->GetBaseEntity( iBuilding );
+	if ( !pPatient && ( !pObject || !dynamic_cast<C_BaseObject *>( pObject ) ) )
 		return;
+
+	if ( pPatient == nullptr )
+	{
+		if ( pObject != nullptr )
+			pPatient = pObject;
+	}
 
 	// Don't show the numbers if we can't see the patient.
 	trace_t tr;
@@ -370,7 +380,7 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 	if ( tr.fraction != 1.0f )
 		return;
 
-	Vector vecTextPos = pPatient->EyePosition();
+	Vector vecTextPos = pPatient->GetAbsOrigin() + Vector( 0, 0, pPatient->CollisionProp()->OBBMaxs().z );
 	dmg_account_delta_t *pDelta = &m_AccountDeltaItems[iAccountDeltaHead];
 	iAccountDeltaHead++;
 	iAccountDeltaHead %= NUM_ACCOUNT_DELTA_ITEMS;
@@ -378,7 +388,7 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 	pDelta->m_flDieTime = gpGlobals->curtime + m_flDeltaLifetime;
 	pDelta->m_iAmount = iAmount;
 	pDelta->m_hEntity = pPatient;
-	pDelta->m_vDamagePos = vecTextPos + Vector( 0, 0, 18 );
+	pDelta->m_vDamagePos = vecTextPos + Vector( 0, 0, 8 );
 	pDelta->bCrit = false;
 	pDelta->m_iType = DELTA_TYPE_HEAL;
 }
