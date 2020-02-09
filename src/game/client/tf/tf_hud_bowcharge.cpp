@@ -145,25 +145,79 @@ void CHudBowChargeMeter::FireGameEvent( IGameEvent *event )
 {
 	const char *eventName = event->GetName();
 
-	if ( !Q_strcmp( eventName, "arrow_impact" ) || !Q_strcmp( eventName, "bolt_impact" ) || !Q_strcmp( eventName, "claw_impact" ) )
+	if ( Q_strcasecmp( eventName, "arrow_impact" ) == 0 )
 	{
-		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer * >( cl_entitylist->GetBaseEntity( event->GetInt( "attachedEntity" ) ) );
+		C_TFPlayer *pPlayer = dynamic_cast<C_TFPlayer *>( cl_entitylist->GetBaseEntity( event->GetInt( "attachedEntity" ) ) );
 		if ( pPlayer )
 		{
 			C_TFProjectile_Arrow *pArrow = new C_TFProjectile_Arrow();
 			if ( pArrow )
 			{
-				if ( !Q_strcmp( eventName, "arrow_impact" ) )
-					pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_arrow.mdl", RENDER_GROUP_OPAQUE_ENTITY );
-				else if ( !Q_strcmp( eventName, "bolt_impact" ) )
-					pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_syringe_proj.mdl", RENDER_GROUP_OPAQUE_ENTITY );
-				else
-					pArrow->InitializeAsClientEntity( "models/weapons/w_models/w_repair_claw.mdl", RENDER_GROUP_OPAQUE_ENTITY );
 				int bone = event->GetInt( "boneIndexAttached" );
 				Vector vecPosition( event->GetFloat( "bonePositionX" ), event->GetFloat( "bonePositionY" ), event->GetFloat( "bonePositionZ" ) );
 				QAngle vecAngles( event->GetFloat( "boneAnglesX" ), event->GetFloat( "boneAnglesY" ), event->GetFloat( "boneAnglesZ" ) );
-				pArrow->SetDieTime( gpGlobals->curtime + 60.0f );
+
+				extern const char *g_pszArrowModels[];
+
+				const char *szModel; float flModelScale;
+				switch ( event->GetInt( "projectileType" ) )
+				{
+					case TF_PROJECTILE_ARROW:
+					{
+						szModel = g_pszArrowModels[0];
+						flModelScale = 1.0f;
+						break;
+					}
+					case TF_PROJECTILE_HEALING_BOLT:
+					{
+						szModel = g_pszArrowModels[1];
+						flModelScale = 1.6f;
+
+						Vector vecFwd;
+						AngleVectors( vecAngles, &vecFwd );
+
+						vecPosition -= vecFwd * 12;
+
+						break;
+					}
+					case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
+					{
+						szModel = g_pszArrowModels[2];
+						flModelScale = 1.0f;
+						break;
+					}
+					case TF_PROJECTILE_FESTIVE_ARROW:
+					{
+						szModel = g_pszArrowModels[3];
+						flModelScale = 1.0f;
+						break;
+					}
+					case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
+					{
+						szModel = g_pszArrowModels[4];
+						flModelScale = 1.6f;
+
+						Vector vecFwd;
+						AngleVectors( vecAngles, &vecFwd );
+
+						vecPosition -= vecFwd * 12;
+
+						break;
+					}
+					default:
+					{
+						Warning( " Unsupported Projectile type on event arrow_impact - %d", event->GetInt( "projectileType" ) );
+						return;
+					}
+				}
+
+				pArrow->InitializeAsClientEntity( szModel, RENDER_GROUP_OPAQUE_ENTITY );
+
+				pArrow->SetModelScale( flModelScale );
+
 				pArrow->AttachEntityToBone( pPlayer, bone, vecPosition, vecAngles );
+
+				pArrow->SetDieTime( gpGlobals->curtime + 60.0f );
 			}
 		}
 	}
