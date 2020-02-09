@@ -659,35 +659,40 @@ bool CEconItemSchema::Init( void )
 		ActivityList_Free();
 		ActivityList_RegisterSharedActivities();
 
+		InitAttributeTypes();
+
 		float flStartTime = engine->Time();
 		g_EconSchemaParser.InitParser( "scripts/items/items_game.txt", true, false );
 		float flEndTime = engine->Time();
 		Msg( "Processing item schema took %.02fms. Parsed %d items and %d attributes.\n", ( flEndTime - flStartTime ) * 1000.0f, m_Items.Count(), m_Attributes.Count() );
 
-		attr_type_t defaultType;
-		defaultType.szName = NULL;
-		defaultType.pType = new CSchemaAttributeType_Default;
-		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = defaultType;
-
-		attr_type_t longType;
-		longType.szName = "uint64";
-		longType.pType = new CSchemaAttributeType_UInt64;
-		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = longType;
-
-		attr_type_t floatType;
-		floatType.szName = "float";
-		floatType.pType = new CSchemaAttributeType_Float;
-		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = floatType;
-
-		attr_type_t stringType;
-		stringType.szName = "string";
-		stringType.pType = new CSchemaAttributeType_String;
-		m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = stringType;
-
 		m_bInited = true;
 	}
 
 	return true;
+}
+
+void CEconItemSchema::InitAttributeTypes( void )
+{
+	attr_type_t defaultType;
+	defaultType.szName = NULL;
+	defaultType.pType = new CSchemaAttributeType_Default;
+	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = defaultType;
+
+	attr_type_t longType;
+	longType.szName = "uint64";
+	longType.pType = new CSchemaAttributeType_UInt64;
+	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = longType;
+
+	attr_type_t floatType;
+	floatType.szName = "float";
+	floatType.pType = new CSchemaAttributeType_Float;
+	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = floatType;
+
+	attr_type_t stringType;
+	stringType.szName = "string";
+	stringType.pType = new CSchemaAttributeType_String;
+	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = stringType;
 }
 
 void CEconItemSchema::Precache( void )

@@ -40,6 +40,7 @@ public:
 	~CEconItemSchema();
 
 	bool Init( void );
+	void InitAttributeTypes( void );
 	void Precache( void );
 
 	CEconItemDefinition* GetItemDefinition( int id );

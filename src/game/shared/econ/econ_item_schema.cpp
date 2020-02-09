@@ -324,7 +324,7 @@ CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
 bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
 {
 	CEconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );
-	if( pAttrib == nullptr || pAttrib->index == -1 )
+	if( pAttrib == nullptr || pAttrib->index == -1 || pAttrib->type == nullptr )
 		return false;
 
 	iAttribIndex = pAttrib->index;
@@ -411,7 +411,8 @@ CAttribute_String &CAttribute_String::operator=( CAttribute_String const &src )
 	if ( src.m_bInitialized )
 	{
 		Initialize();
-		*m_pString = *src.m_pString;
+		
+		m_pString->Set( src.Get() );
 	}
 
 	return *this;
@@ -425,7 +426,7 @@ CAttribute_String &CAttribute_String::operator=( char const *src )
 	Clear();
 	Initialize();
 
-	*m_pString = src;
+	m_pString->Set( src );
 
 	return *this;
 }
