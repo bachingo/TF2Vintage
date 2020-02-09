@@ -102,6 +102,7 @@ private:
 DECLARE_HUDELEMENT( CDamageAccountPanel );
 
 ConVar hud_combattext( "hud_combattext", "1", FCVAR_ARCHIVE, "" );
+ConVar hud_combattext_healing( "hud_combattext_healing", "1", FCVAR_ARCHIVE, "" );
 ConVar hud_combattext_batching( "hud_combattext_batching", "0", FCVAR_ARCHIVE, "If set to 1, numbers that are too close together are merged." );
 ConVar hud_combattext_batching_window( "hud_combattext_batching_window", "0.2", FCVAR_ARCHIVE, "Maximum delay between damage events in order to batch numbers." );
 
@@ -347,7 +348,7 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 	if ( !pPlayer || !pPlayer->IsAlive() )
 		return;
 
-	if ( !hud_combattext.GetBool() )
+	if ( !hud_combattext.GetBool() || !hud_combattext_healing.GetBool() )
 		return;
 
 	int iPatient = event->GetInt( "patient" );
