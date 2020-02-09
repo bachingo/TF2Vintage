@@ -113,18 +113,12 @@ PRECACHE_REGISTER( tf_projectile_arrow );
 
 CTFProjectile_Arrow::CTFProjectile_Arrow()
 {
-#ifdef CLIENT_DLL
-	m_pCritEffect = NULL;
-#endif
 }
 
 CTFProjectile_Arrow::~CTFProjectile_Arrow()
 {
 #ifdef CLIENT_DLL
 	ParticleProp()->StopEmission();
-
-	if( m_pCritEffect )
-		m_pCritEffect->StopEmission();
 #endif
 }
 
@@ -353,11 +347,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		return;
 	}
 
-	// Invisible.
-	SetModelName( NULL_STRING );
-	AddSolidFlags( FSOLID_NOT_SOLID );
-	m_takedamage = DAMAGE_NO;
-
 	// Damage.
 	CBaseEntity *pAttacker = GetOwnerEntity();
 	IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
@@ -443,7 +432,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			ray.Init( boxPosition, vecArrowEnd );
 
 			trace_t trace;
-			IntersectRayWithBox( ray, boxPosition + pCurrent->bbmin, boxPosition + pCurrent->bbmax, 0, &trace );
+			IntersectRayWithBox( ray, boxPosition - pCurrent->bbmin, boxPosition + pCurrent->bbmax, 0, &trace );
 
 			float flDistance = ( trace.endpos - vecArrowEnd ).Length();
 			if ( flDistance < flClosest )
@@ -497,7 +486,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 	if ( pAnimating == nullptr )
 		return false;
 
-	bool bBreakArrow = false; // TODO: Better name
+	bool bBreakArrow = false;
 	if ( dynamic_cast<CHalloweenBaseBoss *>( pTarget )/* || dynamic_cast<CTFTankBoss *>( pTarget )*/ )
 		bBreakArrow = true;
 
@@ -583,6 +572,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 					{
 						event->SetInt( "attachedEntity", pTarget->entindex() );
 						event->SetInt( "shooter", pAttacker->entindex() );
+						event->SetInt( "projectileType", GetProjectileType() );
 						event->SetInt( "boneIndexAttached", iBone );
 						event->SetFloat( "bonePositionX", vecBoneOrigin.x );
 						event->SetFloat( "bonePositionY", vecBoneOrigin.y );
@@ -603,6 +593,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 				{
 					event->SetInt( "attachedEntity", pTarget->entindex() );
 					event->SetInt( "shooter", pAttacker->entindex() );
+					event->SetInt( "projectileType", GetProjectileType() );
 					event->SetInt( "boneIndexAttached", iBone );
 					event->SetFloat( "bonePositionX", vecBoneOrigin.x );
 					event->SetFloat( "bonePositionY", vecBoneOrigin.y );
@@ -623,7 +614,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 	CTraceFilterCollisionArrows filter( this, GetOwnerEntity() );
 	UTIL_TraceLine( vecOrigin, vecOrigin - vecDir * gpGlobals->frametime, MASK_TFARROWS, &filter, &tr );
 
-	UTIL_ImpactTrace( &tr, 0 );
+	UTIL_ImpactTrace( &tr, DMG_GENERIC );
 
 	return !bBreakArrow;
 }
@@ -658,7 +649,7 @@ bool CTFProjectile_Arrow::CheckSkyboxImpact( CBaseEntity *pOther )
 	data.m_vNormal = vecFwd;
 	data.m_nEntIndex = pOther->entindex();
 	data.m_fFlags = GetProjectileType();
-	data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
+	data.m_nColor = (GetTeamNumber() == TF_TEAM_BLUE); //Skin
 
 	DispatchEffect( "TFBoltImpact", data );
 
@@ -967,8 +958,6 @@ void CTFProjectile_Arrow::BreakArrow( void )
 //-----------------------------------------------------------------------------
 bool CTFProjectile_Arrow::PositionArrowOnBone(mstudiobbox_t *pbox, CBaseAnimating *pAnim )
 {
-	matrix3x4_t *bones[MAXSTUDIOBONES];
-
 	CStudioHdr *pStudioHdr = pAnim->GetModelPtr();	
 	if ( !pStudioHdr )
 		return false;
@@ -982,14 +971,15 @@ bool CTFProjectile_Arrow::PositionArrowOnBone(mstudiobbox_t *pbox, CBaseAnimatin
 	if ( !pCache )
 		return false;
 
-	pCache->ReadCachedBonePointers( bones, pStudioHdr->numbones() );
+	matrix3x4_t *bones;
+	pCache->ReadCachedBonePointers( &bones, pStudioHdr->numbones() );
 	
 	Vector vecMins, vecMaxs, vecResult;
-	TransformAABB( *bones[pbox->bone], pbox->bbmin, pbox->bbmax, vecMins, vecMaxs );
+	TransformAABB( bones[pbox->bone], pbox->bbmin, pbox->bbmax, vecMins, vecMaxs );
 	vecResult = vecMaxs - vecMins;
 
 	// This is a mess
-	SetAbsOrigin( ( ( ( vecResult ) * 0.6f ) + vecMins ) + ( ( ( rand() / RAND_MAX ) *  vecResult ) * -0.2f ) );
+	SetAbsOrigin( ( vecResult * 0.6f + vecMins ) + ( ( rand() / RAND_MAX ) *  vecResult * -0.2f ) );
 
 	return true;
 }
@@ -1032,7 +1022,7 @@ bool CTFProjectile_Arrow::CheckRagdollPinned( Vector const& vecOrigin, Vector co
 		data.m_nMaterial = iPhysBone;
 		data.m_nDamageType = iHitGroup;
 		data.m_nSurfaceProp = iVictim;
-		data.m_nColor = (GetTeamNumber() == 3) ? 1 : 0; //Skin
+		data.m_nColor = (GetTeamNumber() == TF_TEAM_BLUE); //Skin
 
 		if( GetScorer() )
 			data.m_nHitBox = GetScorer()->entindex();
@@ -1059,6 +1049,7 @@ void CTFProjectile_Arrow::PlayImpactSound( CTFPlayer *pAttacker, const char *psz
 		if ( bIsPlayerImpact )
 		{
 			filter.RemoveRecipient( pAttacker );
+
 			CSingleUserRecipientFilter filterAttacker( pAttacker );
 			EmitSound( filterAttacker, pAttacker->entindex(), pszImpactSound );
 		}
@@ -1102,7 +1093,7 @@ void C_TFProjectile_Arrow::CreateCritTrail( void )
 
 	if ( m_pCritEffect )
 	{
-		m_pCritEffect->StopEmission();
+		ParticleProp()->StopEmission( m_pCritEffect );
 		m_pCritEffect = NULL;
 	}
 
@@ -1121,10 +1112,31 @@ void C_TFProjectile_Arrow::ClientThink( void )
 		m_flCheckNearMiss = gpGlobals->curtime + 0.05f;
 	}
 
-	if ( ( gpGlobals->curtime - m_flDieTime ) > 40.0f )
+	if ( !m_bCritical )
 	{
-		Remove();
-		return;
+		if ( m_pCritEffect )
+		{
+			ParticleProp()->StopEmission( m_pCritEffect );
+			m_pCritEffect = NULL;
+		}
+	}
+
+	if( m_pAttachedTo != nullptr )
+	{
+		if ( ( gpGlobals->curtime - m_flDieTime ) > 40.0f )
+		{
+			Remove();
+			return;
+		}
+
+		if ( m_pAttachedTo->GetEffects() & EF_NODRAW )
+		{
+			if ( !( GetEffects() & EF_NODRAW ) )
+			{
+				AddEffects( EF_NODRAW );
+				UpdateVisibility();
+			}
+		}
 	}
 
 	if ( IsDormant() && !( GetEffects() & EF_NODRAW ) )
