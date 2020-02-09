@@ -250,7 +250,7 @@ void StickTFRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, Cli
 			Vector vecPhyOrigin; QAngle vecPhyAngle;
 			pPhysics->GetPosition( &vecPhyOrigin, &vecPhyAngle );
 
-			vecPhyOrigin = vecOrigin - ( vecDirection * ( rand() / VALVE_RAND_MAX ) ) * 7.f + vecDirection * 7.f;
+			vecPhyOrigin = vecOrigin + ( vecDirection * ( rand() / VALVE_RAND_MAX ) ) * 7.f + vecDirection * 7.f;
 			pPhysics->SetPosition( vecPhyOrigin, vecPhyAngle, true );
 
 			pPhysics->EnableMotion( false );

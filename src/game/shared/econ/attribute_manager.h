@@ -72,7 +72,6 @@ public:
 #define DEFINE_ATTRIBUTE_ITERATOR( inputType, outputType, overrideParam ) \
 	bool CAttributeIterator_GetSpecificAttribute<inputType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value ) \
 	{ \
-		DevMsg( "Hit CAttributeIterator_GetSpecificAttribute<%s, %s>::OnIterateAttributeValue(EconAttributeDefinition const*, %s) succesfully.\n", #inputType, #outputType, #overrideParam ); \
 		if ( m_pAttribute == pDefinition ) \
 		{ \
 			m_bFound = true; \
