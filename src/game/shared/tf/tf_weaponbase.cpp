@@ -2424,7 +2424,7 @@ bool CTFWeaponBase::IsSilentKiller( void ) const
 //-----------------------------------------------------------------------------
 // Purpose:
 // ----------------------------------------------------------------------------
-bool CTFWeaponBase::GetProjectileOverrideModel( string_t *pOut )
+bool CTFWeaponBase::GetProjectileModelOverride( CAttribute_String *pOut )
 {
 	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_CustomProjectile( "custom projectile model" );
 
@@ -2434,7 +2434,7 @@ bool CTFWeaponBase::GetProjectileOverrideModel( string_t *pOut )
 		CAttributeIterator_GetSpecificAttribute<CAttribute_String> func( pAttrDef_CustomProjectile, &strProjectileModel );
 		GetAttributeContainer()->GetItem()->IterateAttributes( &func );
 
-		*pOut = MAKE_STRING( strProjectileModel );
+		*pOut = strProjectileModel;
 		return func.m_bFound;
 	}
 
