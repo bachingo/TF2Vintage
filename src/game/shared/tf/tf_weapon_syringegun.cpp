@@ -26,7 +26,6 @@ END_DATADESC()
 #endif
 
 CREATE_SIMPLE_WEAPON_TABLE( TFSyringeGun, tf_weapon_syringegun_medic )
-CREATE_SIMPLE_WEAPON_TABLE( TFCrossbow, tf_weapon_crossbow )
 
 //=============================================================================
 //

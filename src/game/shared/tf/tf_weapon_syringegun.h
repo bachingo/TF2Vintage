@@ -46,21 +46,4 @@ private:
 	CTFSyringeGun( CTFSyringeGun const& );
 };
 
-// Temporary Crossbow, for now.
-
-#if defined CLIENT_DLL
-#define CTFCrossbow C_TFCrossbow
-#endif
-
-class CTFCrossbow : public CTFSyringeGun
-{
-public:
-
-	DECLARE_CLASS( CTFCrossbow, CTFSyringeGun )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_CROSSBOW; }
-};
-
 #endif // TF_WEAPON_SYRINGEGUN_H
