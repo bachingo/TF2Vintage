@@ -865,6 +865,9 @@ void CTFWeaponBase::IncrementAmmo( void )
 	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 		return;
 
+	if ( m_iClip1 >= GetMaxClip1() )
+		return;
+
 	m_iClip1 = Min( m_iClip1 + 1, GetMaxClip1() );
 
 	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
