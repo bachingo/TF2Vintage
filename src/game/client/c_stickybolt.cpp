@@ -186,28 +186,35 @@ void CreateTFCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, 
 {
 	Assert( iProjType > 0 && iProjType < TF_NUM_PROJECTILES );
 
-	const char *pszModel = NULL;
+	const char *pszModel; float flModelScale;
 	switch ( iProjType )
 	{
 		case TF_PROJECTILE_ARROW:
 			pszModel = g_pszArrowModelClient[0];
+			flModelScale = 1.f;
 			break;
 		case TF_PROJECTILE_HEALING_BOLT:
 			pszModel = g_pszArrowModelClient[1];
+			flModelScale = 1.6f;
 			break;
 		case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
 			pszModel = g_pszArrowModelClient[2];
+			flModelScale = 1.f;
 			break;
 		case TF_PROJECTILE_FESTIVE_ARROW:
 			pszModel = g_pszArrowModelClient[3];
+			flModelScale = 1.f;
 			break;
 		case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
 			pszModel = g_pszArrowModelClient[4];
+			flModelScale = 1.6f;
 			break;
 		case TF_PROJECTILE_GRAPPLINGHOOK:
 			pszModel = g_pszArrowModelClient[5];
+			flModelScale = 1.f;
 			break;
 		default:
+			Warning( " Unsupported Projectile type in CreateTFCrossbowBolt - %d\n\n", iProjType );
 			return;
 	}
 	const model_t *pModel = engine->LoadModel( pszModel );
@@ -218,7 +225,7 @@ void CreateTFCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, 
 	C_LocalTempEntity *pTemp = tempents->SpawnTempModel( pModel, vecOrigin - vecDirection * 5.f, vAngles, vec3_origin, TEMP_OBJECT_LIFETIME, FTENT_NONE );
 	if ( pTemp )
 	{
-		pTemp->SetModelScale( 1.0f );
+		pTemp->SetModelScale( flModelScale );
 		pTemp->m_nSkin = nSkin;
 	}
 }

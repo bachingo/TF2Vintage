@@ -206,7 +206,7 @@ void CHudBowChargeMeter::FireGameEvent( IGameEvent *event )
 					}
 					default:
 					{
-						Warning( " Unsupported Projectile type on event arrow_impact - %d", event->GetInt( "projectileType" ) );
+						Warning( " Unsupported Projectile type on event arrow_impact - %d\n\n", event->GetInt( "projectileType" ) );
 						return;
 					}
 				}
