@@ -856,6 +856,23 @@ bool CTFWeaponBase::IsViewModelFlipped( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFWeaponBase::IncrementAmmo( void )
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner == nullptr )
+		return;
+
+	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
+		return;
+
+	m_iClip1 = Min( m_iClip1 + 1, GetMaxClip1() );
+
+	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponBase::ReapplyProvision( void )
 {
 	int iProvideOnActive = 0;
