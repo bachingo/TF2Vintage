@@ -199,32 +199,6 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		{
 			//Never light on fire.
 			pArrow->SetFlameArrow( false );
-			
-			if ( iType != TF_PROJECTILE_GRAPPLINGHOOK ) // Bolts & Repair Claw
-			{
-				// Set our skin.
-				switch ( pOwner->GetTeamNumber() )
-				{
-					case TF_TEAM_RED:
-						pArrow->m_nSkin = 0;
-						break;
-					case TF_TEAM_BLUE:
-						pArrow->m_nSkin = 1;
-						break;
-					default:
-						pArrow->m_nSkin = 0;
-						break;
-				}
-				// Set our speed.
-				flSpeed = 2400.00f;
-			}
-			else // Grappling Hook
-			{
-				// Use the default skin.
-				pArrow->m_nSkin = 0;
-				// Set our speed.
-				flSpeed = 1500.00f;
-			}
 		}
 
 		// Set arrow type.
@@ -300,10 +274,31 @@ void CTFProjectile_Arrow::Spawn( void )
 	SetSolidFlags( FSOLID_NOT_SOLID | FSOLID_TRIGGER );
 #endif
 
+	if ( m_iProjType == TF_PROJECTILE_HEALING_BOLT || m_iProjType == TF_PROJECTILE_FESTIVE_HEALING_BOLT )
+		SetModelScale( 3.0f );
+
 	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
-	SetGravity( 0.3f ); // TODO: Check again later.
 
 	UTIL_SetSize( this, -Vector( 1, 1, 1 ), Vector( 1, 1, 1 ) );
+
+	SetSolid( SOLID_BBOX );
+	SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
+
+	AddEffects( EF_NOSHADOW );
+	AddFlag( FL_GRENADE );
+
+	switch ( GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			m_nSkin = 0;
+			break;
+		case TF_TEAM_BLUE:
+			m_nSkin = 1;
+			break;
+		default:
+			m_nSkin = 0;
+			break;
+	}
 
 	CreateTrail();
 
@@ -391,7 +386,6 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		// Determine where we should land
 		Vector vecOrigin = GetAbsOrigin();
 		Vector vecDir = GetAbsVelocity();
-		VectorNormalizeFast( vecDir );
 
 		trace_t tr;
 
@@ -406,8 +400,14 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				if ( !StrikeTarget( pBox, pOther ) )
 					BreakArrow();
 
+				if ( !m_bImpacted )
+					SetAbsOrigin( vecOrigin );
+
 				if ( bImpactedItem )
 					BreakArrow();
+
+				if ( !m_bImpacted )
+					m_bImpacted = true;
 
 				return;
 			}
@@ -1122,9 +1122,9 @@ void C_TFProjectile_Arrow::ClientThink( void )
 		}
 	}
 
-	if( m_pAttachedTo != nullptr )
+	if( m_pAttachedTo.Get() )
 	{
-		if ( ( gpGlobals->curtime - m_flDieTime ) > 40.0f )
+		if ( gpGlobals->curtime < m_flDieTime )
 		{
 			Remove();
 			return;
@@ -1204,7 +1204,6 @@ void C_TFProjectile_Arrow::NotifyBoneAttached( C_BaseAnimating* attachTarget )
 	BaseClass::NotifyBoneAttached( attachTarget );
 
 	m_bAttachment = true;
-	m_flDieTime = gpGlobals->curtime;
 
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
