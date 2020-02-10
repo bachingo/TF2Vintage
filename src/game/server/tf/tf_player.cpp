@@ -1651,34 +1651,6 @@ void CTFPlayer::GiveDefaultItems()
 	{
 		SetBodygroup( i, 0 );
 	}
-	
-	// Nuke wearables
-	for ( int i = 0; i < GetNumWearables(); i++ )
-	{
-		CTFWearable *pWearable = static_cast<CTFWearable *>( GetWearable( i ) );
-
-		if ( !pWearable )
-			continue;
-
-		RemoveWearable( pWearable );
-	}
-
-	// Nuke weapons
-	for ( int i = 0; i < WeaponCount(); i++ )
-	{
-		CTFWeaponBase *pWeapon = static_cast<CTFWeaponBase *>( GetWeapon( i ) );
-
-		if ( !pWeapon )
-			continue;
-
-		// Holster our active weapon
-		if ( pWeapon == GetActiveWeapon() )
-			pWeapon->Holster();
-
-		Weapon_Detach( pWeapon );
-		UTIL_Remove( pWeapon );
-	}
-		
 
 	RemoveAllAmmo();
 
