@@ -1122,13 +1122,6 @@ bool CTFPlayer::IsReadyToSpawn( void )
 		return false;
 	}
 
-	/*CEconWearable *pWearable = (CEconWearable*)CreateEntityByName( "econ_wearable" );
-	pWearable->SetSpecialParticleEffect( UEFF_SUPERRARE_GREENENERGY );
-	PrecacheModel( "models/player/items/scout/batter_helmet.mdl" );
-	pWearable->SetModel( "models/player/items/scout/batter_helmet.mdl" );
-
-	EquipWearable( pWearable );*/
-
 	return ( StateGet() != TF_STATE_DYING );
 }
 

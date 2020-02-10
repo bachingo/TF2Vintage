@@ -287,40 +287,6 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CSchemaFieldHandle<CEconAttributeDefinition>::CSchemaFieldHandle( char const *name )
-	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
-{
-	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( name );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CSchemaFieldHandle<CEconAttributeDefinition>::operator const CEconAttributeDefinition *( )
-{
-	if ( m_pSchema == GetItemSchema()->m_pSchema )
-		return m_pHandle;
-
-	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( m_pName );
-	m_pSchema = GetItemSchema()->m_pSchema;
-
-	return m_pHandle;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
-	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
-{
-	m_pHandle = GetItemSchema()->GetItemDefinitionByName( name );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool static_attrib_t::BInitFromKV_SingleLine( KeyValues *const kv )
 {
 	CEconAttributeDefinition *pAttrib = GetItemSchema()->GetAttributeDefinitionByName( kv->GetName() );

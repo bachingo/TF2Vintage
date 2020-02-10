@@ -66,6 +66,8 @@ private:
 	bool m_bInited;
 };
 
+CEconItemSchema *GetItemSchema();
+
 template<class T>
 class CSchemaFieldHandle
 {
@@ -80,11 +82,45 @@ private:
 	KeyValues *m_pSchema;
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline CSchemaFieldHandle<CEconAttributeDefinition>::CSchemaFieldHandle( char const *name )
+	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+{
+	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( name );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline CSchemaFieldHandle<CEconAttributeDefinition>::operator const CEconAttributeDefinition *( )
+{
+	if ( m_pSchema == GetItemSchema()->m_pSchema )
+		return m_pHandle;
+
+	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( m_pName );
+	m_pSchema = GetItemSchema()->m_pSchema;
+
+	return m_pHandle;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
+	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+{
+	m_pHandle = GetItemSchema()->GetItemDefinitionByName( name );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 inline CSchemaFieldHandle<CEconItemDefinition>::operator const CEconItemDefinition *( )
 {
 	return m_pHandle;
 }
-
-CEconItemSchema *GetItemSchema();
 
 #endif // ECON_ITEM_SYSTEM_H
