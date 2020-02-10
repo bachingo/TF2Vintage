@@ -18,13 +18,6 @@
 #include "tf_gamestats.h"
 #endif
 
-#define TF_BOW_MIN_CHARGE_DAMAGE 50.0f
-#define TF_BOW_MIN_CHARGE_VEL 1800
-#define TF_BOW_MAX_CHARGE_VEL 2600
-#define TF_BOW_MAX_CHARGE_TIME 1.0f
-#define TF_BOW_CHARGE_TIRED_TIME 5.0f
-#define TF_BOW_TIRED_SPREAD 6.0f
-
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCompoundBow, DT_WeaponCompoundBow )
 
 BEGIN_NETWORK_TABLE( CTFCompoundBow, DT_WeaponCompoundBow )
