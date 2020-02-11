@@ -367,7 +367,6 @@ public:
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		CLEAR_STR( holiday_restriction );
-		CLEAR_STR( custom_projectile_model );
 	}
 	~CEconItemDefinition();
 
@@ -418,7 +417,6 @@ public:
 	bool itemfalloff;
 	int  year;
 	bool is_custom_content;
-	char custom_projectile_model[128];
 	
 	CUtlVector<static_attrib_t> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];

@@ -516,7 +516,6 @@ public:
 		GET_BOOL( pItem, pData, itemfalloff );
 		GET_INT( pItem, pData, year );
 		GET_BOOL( pItem, pData, is_custom_content );
-		GET_STRING( pItem, pData, custom_projectile_model );
 
 		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
@@ -703,10 +702,6 @@ void CEconItemSchema::Precache( void )
 	FOR_EACH_MAP( m_Items, i )
 	{
 		CEconItemDefinition *pItem = m_Items[i];
-
-		// Precache projectiles.
-		if ( pItem->custom_projectile_model[0] != '\0' )
-			CBaseEntity::PrecacheModel( pItem->custom_projectile_model );
 		
 		// Precache models.
 		if ( pItem->model_world[0] != '\0' )
