@@ -1652,10 +1652,6 @@ void CTFPlayer::GiveDefaultItems()
 	{
 		GiveAmmo( GetMaxAmmo( iAmmo ), iAmmo, false, TF_AMMO_SOURCE_RESUPPLY );
 	}
-	
-	// Validate our inventory.
-	ValidateWeapons( true );
-	ValidateWearables();
 
 	// Give weapons.
 	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating )
@@ -1924,7 +1920,7 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 		if ( pWeapon->IsWeapon( TF_WEAPON_BUILDER ) )
 			continue;
 
-	CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
+		CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
 
 		if ( pItemDef )
 		{
@@ -1934,18 +1930,18 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 			if ( !ItemsMatch( pWeapon->GetItem(), pLoadoutItem, pWeapon ) )
 			{
 
-				// **HACK: Extra wearables aren't dying correctly sometimes so
-				// try and remove them here just in case ValidateWearables() fails
-				CEconWearable *pWearable = GetWearableForLoadoutSlot( iSlot );
-				if ( pWearable )
-				{
-					RemoveWearable( pWearable );
-				}
-				
 				if ( pWeapon->GetWeaponID() == TF_WEAPON_BUFF_ITEM )
 				{
 					// Reset rage
 					m_Shared.ResetRageSystem();
+
+					// **HACK: Extra wearables aren't dying correctly sometimes so
+					// try and remove them here just in case ValidateWearables() fails
+					CEconWearable *pWearable = GetWearableForLoadoutSlot( iSlot );
+					if ( pWearable )
+					{
+						RemoveWearable( pWearable );
+					}
 				}
 				
 				if ( pWeapon->GetWeaponID() == TF_WEAPON_PEP_BRAWLER_BLASTER || pWeapon->GetWeaponID() == TF_WEAPON_SODA_POPPER )
@@ -2015,6 +2011,9 @@ void CTFPlayer::ValidateWearables( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
+	// Validate our inventory.
+	ValidateWearables();
+	ValidateWeapons( true );
 
 	for (int iSlot = 0; iSlot <= TF_PLAYER_WEAPON_COUNT; ++iSlot)
 	{
@@ -2110,11 +2109,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			{
 				pEntity->GiveTo( this );
 			}
-			
 		}
-		
 	}
-
 }
 
 //-----------------------------------------------------------------------------
