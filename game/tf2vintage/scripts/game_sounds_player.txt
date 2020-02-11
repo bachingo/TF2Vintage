@@ -1495,8 +1495,14 @@
 {
 	"channel"	"CHAN_VOICE"
 	"volume"	"1.0"
-	"soundlevel"  	"SNDLVL_NORM"		
-	"wave"	"vo/soldier_DirectHitTaunt02.mp3"
+	"soundlevel"  	"SNDLVL_NORM"	
+	"rndwave"
+	{
+		"wave"		"vo/soldier_DirectHitTaunt01.wav"
+		"wave"		"vo/soldier_DirectHitTaunt02.wav"
+		"wave"		"vo/soldier_DirectHitTaunt03.wav"
+		"wave"		"vo/soldier_DirectHitTaunt04.wav"
+	}	
 }
 
 "Taunt.SoldierChestThump"
@@ -1566,10 +1572,10 @@
 
 "Taunt.SoldierTaps"
 {
-            "channel"          "CHAN_STATIC"
-            "volume"           "1.0"
-            "soundlevel"      "SNDLVL_NORM"
-             "wave"              ")misc/taps_02.wav"
+	"channel"          "CHAN_STATIC"
+	"volume"           "1.0"
+	"soundlevel"      "SNDLVL_NORM"
+	"wave"              ")misc/taps_02.wav"
 }
 
 "Taunt.Soldier02GrenadeCatch"

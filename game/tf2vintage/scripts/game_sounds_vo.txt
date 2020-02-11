@@ -6549,7 +6549,7 @@
 
 	"soundlevel"	"SNDLVL_95dB"
 
-	"wave"			"vo/heavy_laugherbigsnort01.wav"
+	"wave"			"vo/heavy_laugherbigsnort01.mp3"
 }
 
 "Heavy.Medic01"
@@ -10099,7 +10099,7 @@
 
 	"soundlevel"	"SNDLVL_95dB"
 
-	"wave"			"vo/pyro_laugh_addl04.wav"
+	"wave"			"vo/pyro_laugh_addl04.mp3"
 }
 
 "Pyro.Medic01"
