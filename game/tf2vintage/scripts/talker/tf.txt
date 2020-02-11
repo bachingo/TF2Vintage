@@ -551,10 +551,6 @@
 	{
 		scene "scenes/player/medic/low/taunt03.vcd"
 	}
-	response "MedicTauntMeleeUber"
-	{
-		scene "scenes/player/medic/low/taunt03_uber.vcd"
-	}
 	response "MedicTauntHalloween"
 	{
 		scene "scenes/player/medic/low/taunt07.vcd"
@@ -567,7 +563,11 @@
 	{
 		scene "scenes/player/medic/low/taunt08.vcd"
 	}
-
+	response "MedicTauntMeleeVitasaw"
+	{
+		scene "scenes/player/medic/low/taunt03_uber.vcd"
+	}
+	
 	rule MedicTauntPlayerPrimary
 	{
 		criteria ConceptPlayerTaunt IsMedic WeaponIsSyringe
@@ -580,13 +580,8 @@
 	}
 	rule MedicTauntPlayerMelee
 	{
-		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw WeaponIsNotVitasaw
+		criteria ConceptPlayerTaunt IsMedic WeaponIsBonesaw
 		response MedicTauntMelee
-	}
-	rule MedicTauntPlayerMeleeUber
-	{
-		criteria ConceptPlayerTaunt IsMedic WeaponIsVitasaw
-		response MedicTauntMeleeUber
 	}
 	rule MedicTauntPlayerKritzkrieg
 	{
@@ -607,6 +602,11 @@
 	{
 		criteria ConceptPlayerTaunt IsMedic WeaponIsFestiveUbersaw
 		response MedicTauntUbersaw
+	}
+	rule MedicTauntPlayerVitasaw
+	{
+		criteria ConceptPlayerTaunt IsMedic WeaponIsVitasaw
+		response MedicTauntVitasaw
 	}
 	Rule MedicTauntSaxxy
 	{

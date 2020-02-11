@@ -9470,7 +9470,7 @@ void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 			DoTauntAction();
 		}
 
-		if (V_stricmp(szResponse, "scenes/player/medic/low/taunt03_uber.vcd") == 0)
+		if ( V_stricmp(szResponse, "scenes/player/medic/low/taunt03_uber.vcd") == 0 )
 		{
 			m_iSpecialTauntType = 2;
 			DoTauntAction();
@@ -9625,14 +9625,13 @@ bool CTFPlayer::IsAllowedToTaunt( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::DoTauntAction( void )
 {
-	m_flTauntEmitTime = gpGlobals->curtime;
 	ConVarRef host_timescale( "host_timescale" );
 	// Adjust our frame time.
 	switch (m_iSpecialTauntType)
 	{
 		case 1: // Regular Violin
 		case 2:	// Uber Violin
-			m_flTauntEmitTime += ((23 / 30) / host_timescale.GetFloat()); // Framerate based!
+			m_flTauntEmitTime = gpGlobals->curtime + ((23 / 30) / host_timescale.GetFloat()); // Framerate based!
 			break;
 		default:
 			break;
@@ -9649,7 +9648,7 @@ void CTFPlayer::DoTauntAction( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::DoTauntActionThink( void )
 {
-	if (gpGlobals->curtime > m_flTauntEmitTime)
+	if (gpGlobals->curtime >= m_flTauntEmitTime)
 	{
 		// Now that we waited, do our action.
 		switch (m_iSpecialTauntType)
@@ -9664,6 +9663,7 @@ void CTFPlayer::DoTauntActionThink( void )
 				break;
 		}
 		m_iSpecialTauntType = 0; // Reset our taunt type.
+		m_flTauntEmitTime = 0;
 		return;
 	}
 	else
