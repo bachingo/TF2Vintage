@@ -812,7 +812,7 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 	Q_FixSlashes( loadfile );
 
 	void *pBuffer = 0;
-	CChoreoScene *pScene = NULL;
+	CChoreoScene *pScene;
 
 	int fileSize = filesystem->ReadFileEx( loadfile, "MOD", &pBuffer, true );
 	if (fileSize)
@@ -847,7 +847,7 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 		}
 	}
 
-	if ( pScene )
+	if(pScene)
 	{
 		pScene->SetPrintFunc( Scene_Printf );
 		pScene->SetEventCallbackInterface( this );
