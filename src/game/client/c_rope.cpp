@@ -10,7 +10,7 @@
 #include "view.h"
 #include "env_wind_shared.h"
 #include "input.h"
-#ifdef TF_CLIENT_DLL
+#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
 #include "cdll_util.h"
 #include "tf_gamerules.h"
 #endif
@@ -652,7 +652,7 @@ bool CRopeManager::IsHolidayLightMode( void )
 
 	bool bDrawHolidayLights = false;
 
-#ifdef USES_ECON_ITEMS
+#if defined(USES_ECON_ITEMS) || defined(TF_VINTAGE) || defined(TF_VINTAGE_CLIENT)
 	if ( !m_bHolidayInitialized && GameRules() )
 	{
 		m_bHolidayInitialized = true;
@@ -662,7 +662,7 @@ bool CRopeManager::IsHolidayLightMode( void )
 	bDrawHolidayLights = m_bDrawHolidayLights;
 	m_nHolidayLightsStyle = 0;
 
-#ifdef TF_CLIENT_DLL
+#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
 	// Turn them on in Pyro-vision too
 	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 	{
@@ -1974,7 +1974,7 @@ bool C_RopeKeyframe::GetEndPointPos( int iPt, Vector &vPos )
 
 IMaterial* C_RopeKeyframe::GetSolidMaterial( void )
 {
-#ifdef TF_CLIENT_DLL
+#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
 	if ( RopeManager()->IsHolidayLightMode() )
 	{
 		if ( RopeManager()->GetHolidayLightStyle() == 1 )

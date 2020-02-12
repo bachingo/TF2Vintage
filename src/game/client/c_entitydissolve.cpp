@@ -508,7 +508,7 @@ void C_EntityDissolve::ClientThink( void )
 		return;
 
 	bool bIsRagdoll;
-#ifdef TF_CLIENT_DLL
+#if defined TF_CLIENT_DLL || defined TF_VINTAGE_CLIENT
 	bIsRagdoll = true;
 #else
 	C_BaseAnimating *pAnimating = GetMoveParent() ? GetMoveParent()->GetBaseAnimating() : NULL;
@@ -572,7 +572,7 @@ void C_EntityDissolve::ClientThink( void )
 			{
 				pRagdoll->ReleaseRagdoll();
 			}
-#ifdef TF_CLIENT_DLL
+#if defined(TF_CLIENT_DLL) || defined(TF_VINTAGE_CLIENT)
 			else
 			{
 				// Hide the ragdoll -- don't actually delete it or else things get unhappy when
