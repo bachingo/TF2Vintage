@@ -806,51 +806,44 @@ CChoreoStringPool g_ChoreoStringPool;
 
 CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 {
-	char loadfile[MAX_PATH];
+	char loadfile[ 512 ];
 	Q_strncpy( loadfile, filename, sizeof( loadfile ) );
 	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
 	Q_FixSlashes( loadfile );
 
-	void *pBuffer = 0;
-	CChoreoScene *pScene;
+	char *pBuffer = NULL;
+	size_t bufsize = scenefilecache->GetSceneBufferSize( loadfile );
+	if ( bufsize <= 0 )
+		return NULL;
 
-	int fileSize = filesystem->ReadFileEx( loadfile, "MOD", &pBuffer, true );
-	if (fileSize)
+	pBuffer = new char[ bufsize ];
+	if ( !scenefilecache->GetSceneData( filename, (byte *)pBuffer, bufsize ) )
 	{
-		g_TokenProcessor.SetBuffer((char*)pBuffer);
-		pScene = ChoreoLoadScene( loadfile, this, &g_TokenProcessor, Scene_Printf );
+		delete[] pBuffer;
+		return NULL;
+	}
+
+	CChoreoScene *pScene;
+	if ( IsBufferBinaryVCD( pBuffer, bufsize ) )
+	{
+		pScene = new CChoreoScene( this );
+		CUtlBuffer buf( pBuffer, bufsize, CUtlBuffer::READ_ONLY );
+		if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
+		{
+			Warning( "Unable to restore binary scene '%s'\n", loadfile );
+			delete pScene;
+			pScene = NULL;
+		}
+		else
+		{
+			pScene->SetPrintFunc( Scene_Printf );
+			pScene->SetEventCallbackInterface( this );
+		}
 	}
 	else
 	{
-		fileSize = scenefilecache->GetSceneBufferSize( loadfile );
-		if ( fileSize <= 0 )
-			return NULL;
-
-		pBuffer = new char[ fileSize ];
-		if ( !scenefilecache->GetSceneData( filename, (byte *)pBuffer, fileSize ) )
-		{
-			delete[] pBuffer;
-			return NULL;
-		}
-
-	
-		if ( IsBufferBinaryVCD( (char*)pBuffer, fileSize ) )
-		{
-			pScene = new CChoreoScene( this );
-			CUtlBuffer buf( pBuffer, fileSize, CUtlBuffer::READ_ONLY );
-			if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
-			{
-				Warning( "Unable to restore scene '%s'\n", loadfile );
-				delete pScene;
-				pScene = NULL;
-			}
-		}
-	}
-
-	if(pScene)
-	{
-		pScene->SetPrintFunc( Scene_Printf );
-		pScene->SetEventCallbackInterface( this );
+		g_TokenProcessor.SetBuffer( pBuffer );
+		pScene = ChoreoLoadScene( loadfile, this, &g_TokenProcessor, Scene_Printf );
 	}
 
 	delete[] pBuffer;
