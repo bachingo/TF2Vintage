@@ -15,16 +15,17 @@
 
 extern ConVar r_drawothermodels;
 
-void C_ViewmodelAttachmentModel::SetViewmodel( C_TFViewModel *vm )
+CBaseEntity *C_ViewmodelAttachmentModel::GetOwnerViaInterface( void )
 {
-	m_viewmodel.Set(vm);
+	return m_hOwner;
 }
 
 int C_ViewmodelAttachmentModel::InternalDrawModel( int flags )
 {
+	Assert( m_ViewModel );
 	CMatRenderContextPtr pRenderContext(materials);
 
-	if (m_viewmodel->ShouldFlipViewModel())
+	if (m_ViewModel->ShouldFlipViewModel())
 		pRenderContext->CullMode(MATERIAL_CULLMODE_CW);
 
 	int ret = BaseClass::InternalDrawModel(flags);
@@ -41,11 +42,9 @@ bool C_ViewmodelAttachmentModel::OnPostInternalDrawModel( ClientModelRenderInfo_
 {
 	if ( BaseClass::OnPostInternalDrawModel( pInfo ) )
 	{
-		C_EconEntity *pEntity = GetOwningWeapon();
-		if ( pEntity )
-		{
-			DrawEconEntityAttachedModels( this, pEntity, pInfo, AM_VIEWMODEL );
-		}
+		if ( m_hOwner )
+			DrawEconEntityAttachedModels( this, m_hOwner, pInfo, AM_VIEWMODEL );
+
 		return true;
 	}
 	return false;
@@ -102,14 +101,14 @@ int C_ViewmodelAttachmentModel::DrawModel( int flags )
 	if ( !IsVisible() )
 		return 0;
 
-	if (m_viewmodel.Get() == NULL)
+	if (m_ViewModel.Get() == NULL)
 		return 0;
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	C_TFPlayer *pPlayer = ToTFPlayer( m_viewmodel.Get()->GetOwner() );
+	C_TFPlayer *pPlayer = ToTFPlayer( m_ViewModel.Get()->GetOwner() );
 
 	if ( pLocalPlayer && pLocalPlayer->IsObserver() 
-		&& pLocalPlayer->GetObserverTarget() != m_viewmodel.Get()->GetOwner() )
+		&& pLocalPlayer->GetObserverTarget() != m_ViewModel.Get()->GetOwner() )
 		return false;
 
 	if ( pLocalPlayer && !pLocalPlayer->IsObserver() && ( pLocalPlayer != pPlayer ) )
@@ -124,10 +123,10 @@ int C_ViewmodelAttachmentModel::DrawModel( int flags )
 void C_ViewmodelAttachmentModel::StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask )
 {
 	BaseClass::StandardBlendingRules( hdr, pos, q, currentTime, boneMask );
-	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_viewmodel->GetOwningWeapon();
+	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_ViewModel->GetOwningWeapon();
 	if ( !pWeapon )
 		return;
-	if ( m_viewmodel->GetViewModelType() == VMTYPE_TF2 )
+	if ( m_ViewModel->GetViewModelType() == VMTYPE_TF2 )
 	{
 		pWeapon->SetMuzzleAttachment( LookupAttachment( "muzzle" ) );
 	}

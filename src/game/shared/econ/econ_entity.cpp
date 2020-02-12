@@ -206,12 +206,13 @@ void C_EconEntity::UpdateAttachmentModels( void )
 						return;
 					}
 
-					C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
+					/*C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
 					if ( !pAddon )
 						return;
 
 					if ( pAddon->InitializeAsClientEntity( GetItem()->GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
 					{
+						pAddon->SetOwner( this );
 						pAddon->SetOwnerEntity( this );
 						pAddon->SetParent( pViewmodel );
 						pAddon->SetLocalOrigin( vec3_origin );
@@ -220,7 +221,7 @@ void C_EconEntity::UpdateAttachmentModels( void )
 						pAddon->UpdateVisibility();
 
 						m_hAttachmentParent = pAddon;
-					}
+					}*/
 				}
 				else
 				{

@@ -115,6 +115,7 @@ void CTFViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *wea
 void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname, int index /*= 0*/ )
 {
 	C_ViewmodelAttachmentModel *pAddon = m_hViewmodelAddon[index].Get();
+	C_EconEntity *pWeapon = GetOwningWeapon();
 
 	if ( pAddon )
 	{
@@ -127,7 +128,8 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname, int index /*=
 				pAddon->FollowEntity( this );
 				pAddon->m_nRenderFX = m_nRenderFX;
 				pAddon->UpdateVisibility();
-				pAddon->SetViewmodel( this );
+				pAddon->m_ViewModel = this;
+				pAddon->m_hOwner = pWeapon;
 			}
 			return; // we already have the correct add-on
 		}
@@ -147,13 +149,15 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname, int index /*=
 		return;
 	}
 
-	m_hViewmodelAddon[index] = pAddon;
 	pAddon->m_nSkin = GetSkin();
 	pAddon->FollowEntity( this );
 	pAddon->UpdatePartitionListEntry();
-	pAddon->CollisionProp()->MarkPartitionHandleDirty();
+	pAddon->CollisionProp()->UpdatePartition();
 	pAddon->UpdateVisibility();
-	pAddon->SetViewmodel( this );
+	pAddon->m_ViewModel = this;
+	pAddon->m_hOwner = pWeapon;
+
+	m_hViewmodelAddon[index] = pAddon;
 }
 
 //-----------------------------------------------------------------------------
@@ -591,7 +595,7 @@ void CViewModelInvisProxy::OnBind( C_BaseEntity *pEnt )
 	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast< C_ViewmodelAttachmentModel * >( pEnt );
 	if ( pVMAddon )
 	{
-		pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_viewmodel.Get() );
+		pVM = dynamic_cast< C_TFViewModel * >( pVMAddon->m_ViewModel.Get() );
 	}
 	else
 	{

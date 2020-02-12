@@ -1489,7 +1489,7 @@ public:
 					C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>( pEntity );
 					if ( pVMAddon )
 					{
-						pVM = pVMAddon->m_viewmodel.Get();
+						pVM = pVMAddon->m_ViewModel.Get();
 						if ( pVM )
 							pPlayer = (C_TFPlayer *)pVM->GetOwner();
 					}
@@ -1633,7 +1633,7 @@ public:
 				C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>( pEntity );
 				if ( pVMAddon )
 				{
-					pVM = dynamic_cast<C_TFViewModel *>( pVMAddon->m_viewmodel.Get() );
+					pVM = dynamic_cast<C_TFViewModel *>( pVMAddon->m_ViewModel.Get() );
 				}
 				else
 				{
@@ -1698,7 +1698,7 @@ public:
 				C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>( pEntity );
 				if ( pVMAddon )
 				{
-					pVM = dynamic_cast<C_TFViewModel *>( pVMAddon->m_viewmodel.Get() );
+					pVM = dynamic_cast<C_TFViewModel *>( pVMAddon->m_ViewModel.Get() );
 				}
 				else
 				{
@@ -1979,7 +1979,7 @@ void CInvisProxy::OnBind( C_BaseEntity *pEnt )
 	C_ViewmodelAttachmentModel *pVMAddon = dynamic_cast<C_ViewmodelAttachmentModel *>( pEnt );
 	if ( pVMAddon )
 	{
-		pVM = dynamic_cast<C_TFViewModel *>( pVMAddon->m_viewmodel.Get() );
+		pVM = dynamic_cast<C_TFViewModel *>( pVMAddon->m_ViewModel.Get() );
 	}
 	else
 	{
