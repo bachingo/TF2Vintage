@@ -3503,7 +3503,6 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_backburner/c_backburner"
 			"model_player"	"models/weapons/c_models/c_backburner/c_backburner.mdl"
-			
 			"attributes"
 			{
 				"mod flamethrower back crit"
