@@ -369,7 +369,7 @@ void CWheelOfDoom::SpeakMagicConceptToAllPlayers( char const *szConcept )
 	else return;
 
 	CUtlVector<CTFPlayer *> players;
-	CollectPlayers( &players, TEAM_ANY, true );
+	CollectPlayers( &players, TEAM_ANY );
 
 	for ( CTFPlayer *pPlayer : players )
 		pPlayer->SpeakConceptIfAllowed( iConcept );

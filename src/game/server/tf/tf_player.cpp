@@ -1864,7 +1864,7 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 				if ( TFGameRules()->IsInMedievalMode() )
 				{
 					// Medieval
-					float iAllowedInMedieval = 0;
+					int iAllowedInMedieval = 0;
 					CALL_ATTRIB_HOOK_INT_ON_OTHER( pBuilder, iAllowedInMedieval, allowed_in_medieval_mode );
 					if ( iAllowedInMedieval == 0 )
 					{
@@ -9429,6 +9429,11 @@ void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 	if ( SpeakConceptIfAllowed( iConcept, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) || tf2v_random_weapons.GetBool() || tf2v_randomizer.GetBool() )
 	{
 		
+		CAttribute_String strCosmeticTaunt;
+		CALL_ATTRIB_HOOK_STRING( strCosmeticTaunt, cosmetic_taunt_sound );
+		if ( strCosmeticTaunt && *strCosmeticTaunt )
+			EmitSound( strCosmeticTaunt );
+
 		// Get the duration of the scene.
 		float flDuration = GetSceneDuration( szResponse ) + 0.2f;
 

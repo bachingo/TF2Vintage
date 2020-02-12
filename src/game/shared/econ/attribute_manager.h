@@ -102,6 +102,17 @@ DEFINE_ATTRIBUTE_ITERATOR( unsigned int, float, float )
 	EXTERN_SEND_TABLE( DT_AttributeContainerPlayer );
 #endif
 
+inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
+{
+	if ( pEntity == nullptr )
+		return nullptr;
+
+	IHasAttributes *pInteface = pEntity->GetHasAttributesInterfacePtr();
+	Assert( dynamic_cast<IHasAttributes *>( (CBaseEntity *)pEntity ) == pInteface );
+
+	return pInteface ? pInteface : nullptr;
+}
+
 class CAttributeManager
 {
 public:
@@ -114,10 +125,7 @@ public:
 	template <typename type>
 	static type AttribHookValue( type value, const char* text, const CBaseEntity *pEntity, CUtlVector<EHANDLE> *pOutList = NULL )
 	{
-		if ( !pEntity )
-			return value;
-
-		IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+		IHasAttributes *pAttribInteface = GetAttribInterface( pEntity );
 
 		if ( pAttribInteface )
 		{
@@ -159,10 +167,7 @@ protected:
 template<>
 inline string_t CAttributeManager::AttribHookValue<string_t>( string_t strValue, const char *text, const CBaseEntity *pEntity, CUtlVector<EHANDLE> *pOutList )
 {
-	if ( !pEntity )
-		return strValue;
-
-	IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+	IHasAttributes *pAttribInteface = GetAttribInterface( pEntity );
 
 	if ( pAttribInteface )
 	{
