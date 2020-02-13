@@ -52,3 +52,49 @@ float CTFShotgun_BuildingRescue::GetProjectileGravity( void )
 	                          0.5f,
 	                          0.1f );*/
 }
+
+#ifdef CLIENT_DLL
+#include "c_tf_player.h"
+#include "functionproxy.h"
+#include "toolframework_client.h"
+
+class CProxyBuildingRescueLevel : public CResultProxy
+{
+public:
+	virtual void OnBind( void *pArg );
+};
+
+
+void CProxyBuildingRescueLevel::OnBind( void *pArg )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( pPlayer == nullptr )
+		return;
+
+	int nTeleportBuildings = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nTeleportBuildings, building_teleporting_pickup );
+	if ( nTeleportBuildings == 0 )
+		return;
+
+	float flScale = 10.f;
+	const int nMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
+
+	if ( nMetal >= nTeleportBuildings )
+		flScale = ( 3.f - ( ( ( nMetal - nTeleportBuildings ) / ( pPlayer->GetMaxAmmo( TF_AMMO_METAL ) - nTeleportBuildings ) ) * 3.f ) ) + 1.f;
+
+	VMatrix matrix, output;
+	MatrixBuildTranslation( output, -0.5, -0.5, 0.0 );
+	MatrixBuildScale( matrix, 1.0, flScale, 1.0 );
+	MatrixMultiply( matrix, output, output );
+	MatrixBuildTranslation( matrix, 0.5, 0.5, 0.0 );
+	MatrixMultiply( matrix, output, output );
+
+	m_pResult->SetMatrixValue( output );
+
+	if ( ToolsEnabled() )
+		ToolFramework_RecordMaterialParams( GetMaterial() );
+}
+
+EXPOSE_INTERFACE( CProxyBuildingRescueLevel, IMaterialProxy, "BuildingRescueLevel" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+#endif
