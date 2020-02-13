@@ -55,7 +55,6 @@ public:
 	virtual void		Precache( void );
 	virtual void		Spawn( void );
 	virtual void		RemoveThink( void ) 			{ UTIL_Remove( this ); }
-	virtual void		UpdateOnRemove( void );
 
 	void				SetScorer( CBaseEntity *pScorer );
 
