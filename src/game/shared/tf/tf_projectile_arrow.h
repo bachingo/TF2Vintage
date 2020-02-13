@@ -64,6 +64,7 @@ public:
 
 	virtual bool		IsDeflectable();
 	virtual void		Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+	virtual void		IncremenentDeflected( void );
 
 	virtual bool		CanHeadshot( void );
 
@@ -79,6 +80,7 @@ public:
 
 	const char			*GetTrailParticleName( void );
 	void				CreateTrail( void );
+	void				RemoveTrail( void );
 
 	void				FadeOut( int iTime );
 	void				BreakArrow( void );
@@ -116,6 +118,7 @@ protected:
 	float m_flCreationTime;
 	bool m_bImpacted;
 
+	float m_flTrailReflectLifetime;
 	EHANDLE m_hSpriteTrail;
 #else
 	bool		m_bCritical;
