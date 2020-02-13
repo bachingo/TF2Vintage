@@ -476,7 +476,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 	if ( pTarget->IsBaseObject() && InSameTeam( pTarget ) )
 	{
 		HealBuilding( pTarget );
-		return false;
+		return true;
 	}
 
 	CTFPlayer *pPlayer = ToTFPlayer( pTarget );
@@ -815,37 +815,47 @@ bool CTFProjectile_Arrow::IsDeflectable(void)
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	if ( m_iProjType != TF_PROJECTILE_GRAPPLINGHOOK ) // Don't allow grappling hooks to be deflected.
+	CTFPlayer *pDeflector = ToTFPlayer( pDeflectedBy );
+	if ( pDeflector == nullptr || m_iProjType == TF_PROJECTILE_GRAPPLINGHOOK ) // Don't allow grappling hooks to be deflected.
+		return;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( pOwner )
+		pOwner->SpeakConceptIfAllowed( MP_CONCEPT_DEFLECTED, "projectile:1,victim:1" );
+
+	// Get arrow's speed.
+	float flVel = GetAbsVelocity().Length();
+
+	QAngle angForward;
+	VectorAngles( vecDir, angForward );
+
+	// Now change arrow's direction.
+	SetAbsAngles( angForward );
+	SetAbsVelocity( vecDir * flVel );
+
+	// And change owner.
+	IncremenentDeflected();
+	SetOwnerEntity( pDeflectedBy );
+	SetScorer( pDeflectedBy );
+	ChangeTeam( pDeflectedBy->GetTeamNumber() );
+
+	if ( m_iProjType != TF_PROJECTILE_ARROW && m_iProjType != TF_PROJECTILE_FESTIVE_ARROW )
 	{
-		// Get arrow's speed.
-		float flVel = GetAbsVelocity().Length();
-
-		QAngle angForward;
-		VectorAngles( vecDir, angForward );
-
-		// Now change arrow's direction.
-		SetAbsAngles( angForward );
-		SetAbsVelocity( vecDir * flVel );
-
-		// And change owner.
-		IncremenentDeflected();
-		SetOwnerEntity( pDeflectedBy );
-		ChangeTeam( pDeflectedBy->GetTeamNumber() );
-		if ( m_iProjType != TF_PROJECTILE_ARROW && m_iProjType != TF_PROJECTILE_FESTIVE_ARROW )
-		{
-			m_nSkin = ( pDeflectedBy->GetTeamNumber() - 2 );
-		}
-		
-		SetScorer( pDeflectedBy );
-
-		// Change trail color.
-		if ( m_hSpriteTrail.Get() )
-		{
-			UTIL_Remove( m_hSpriteTrail.Get() );
-		}
-
-		CreateTrail();
+		m_nSkin = ( pDeflectedBy->GetTeamNumber() - 2 );
 	}
+
+	if ( pDeflector->m_Shared.IsCritBoosted() )
+		m_bCritical = true;
+
+	// Change trail color.
+	if ( m_hSpriteTrail.Get() )
+	{
+		m_hSpriteTrail->Remove();
+	}
+
+	CreateTrail();
+}
+
 void CTFProjectile_Arrow::IncremenentDeflected( void )
 {
 	m_iDeflected++;
