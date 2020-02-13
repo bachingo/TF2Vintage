@@ -143,7 +143,7 @@ void CTFViewModel::UpdateViewmodelAddon( const char *pszModelname, int index /*=
 	if ( !pAddon )
 		return;
 
-	if ( pAddon->InitializeAsClientEntity( pszModelname, RENDER_GROUP_VIEW_MODEL_TRANSLUCENT ) == false )
+	if ( !pAddon->InitializeAsClientEntity( pszModelname, RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
 	{
 		pAddon->Release();
 		return;
