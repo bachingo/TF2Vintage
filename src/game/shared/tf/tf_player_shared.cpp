@@ -1872,6 +1872,12 @@ void CTFPlayerShared::OnAddShieldCharge( void )
 	m_pOuter->TeamFortress_SetSpeed();
 
 	UpdatePhaseEffects();
+
+#ifdef CLIENT_DLL
+	// Start screaming if we're a Demoman.
+	if ( m_pOuter->IsPlayerClass( TF_CLASS_DEMOMAN ) )
+		m_pOuter->EmitSound( "DemoCharge.Charging" );
+#endif
 }
 
 //-----------------------------------------------------------------------------
