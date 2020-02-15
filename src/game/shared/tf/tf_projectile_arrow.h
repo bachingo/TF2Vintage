@@ -114,7 +114,6 @@ protected:
 	CNetworkVar( bool, m_bFlame);
 	CNetworkVar( int, m_iProjType );
 
-	float m_flCreationTime;
 	bool m_bImpacted;
 
 	float m_flTrailReflectLifetime;

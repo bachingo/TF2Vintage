@@ -93,12 +93,10 @@ BEGIN_NETWORK_TABLE( CTFProjectile_Arrow, DT_TFProjectile_Arrow )
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 	RecvPropBool( RECVINFO( m_bFlame ) ),
 	RecvPropInt( RECVINFO( m_iProjType ) ),
-	RecvPropInt( RECVINFO( m_nSkin ) ),
 #else
 	SendPropBool( SENDINFO( m_bCritical ) ),
 	SendPropBool( SENDINFO( m_bFlame ) ),
 	SendPropInt( SENDINFO( m_iProjType ) ),
-	SendPropInt( SENDINFO( m_nSkin ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -301,6 +299,8 @@ void CTFProjectile_Arrow::Spawn( void )
 			break;
 	}
 
+	m_flCreateTime = gpGlobals->curtime;
+
 	CreateTrail();
 
 	SetTouch( &CTFProjectile_Arrow::ArrowTouch );
@@ -329,8 +329,17 @@ CBasePlayer *CTFProjectile_Arrow::GetScorer( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 {
+	float flTimeAlive = gpGlobals->curtime - m_flCreateTime;
+	if ( flTimeAlive >= 10.0 )
+	{
+		Warning( "Arrow alive for %f3.2 seconds\n", flTimeAlive );
+		UTIL_Remove( this );
+	}
+
 	// Verify a correct "other."
 	Assert( pOther );
+	if ( m_bImpacted )
+		return;
 
 	bool bImpactedItem = false;
 	if ( pOther->IsCombatItem() )
@@ -338,12 +347,11 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 
 	CTFPumpkinBomb *pPumpkin = dynamic_cast<CTFPumpkinBomb *>( pOther );
 
-	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) && !pPumpkin && ! bImpactedItem )
+	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) && !pPumpkin && !bImpactedItem )
 	{
 		return;
 	}
 
-	// Damage.
 	CBaseEntity *pAttacker = GetOwnerEntity();
 	IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
 	if ( pScorerInterface )
@@ -407,9 +415,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 				if ( bImpactedItem )
 					BreakArrow();
 
-				if ( !m_bImpacted )
-					m_bImpacted = true;
-
+				m_bImpacted = true;
 				return;
 			}
 		}
@@ -454,8 +460,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			if ( bImpactedItem )
 				BreakArrow();
 
-			if ( !m_bImpacted )
-				m_bImpacted = true;
+			m_bImpacted = true;
 		}
 	}
 	else
