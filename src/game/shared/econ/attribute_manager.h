@@ -25,7 +25,6 @@ public:
 		: m_hOwner( hOwner ), m_iName( iName ), m_flOut( outValue ), m_pOutProviders( outVector ) {}
 
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value );
-	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, float value );
 
 private:
 	EHANDLE m_hOwner;
@@ -64,6 +63,9 @@ public:
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) { return true; }
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned long long const & ) { return true; }
 
+	bool Found( void ) const { return m_bFound; }
+
+private:
 	CEconAttributeDefinition const *m_pAttribute;
 	bool m_bFound;
 	TOut *m_pOut;
@@ -128,6 +130,44 @@ inline int AttributeConvertFromFloat( float flValue )
 {
 	__m128 X = _mm_load_ss( &flValue );
 	return _mm_cvt_ss2si( X );
+}
+
+FORCEINLINE void ApplyAttribute( CEconAttributeDefinition const *pDefinition, float *pOutput, float flValue )
+{
+	switch ( pDefinition->description_format )
+	{
+		case ATTRIB_FORMAT_ADDITIVE:
+		case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
+		{
+			*pOutput += flValue;
+			break;
+		}
+		case ATTRIB_FORMAT_PERCENTAGE:
+		case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
+		{
+			*pOutput *= flValue;
+			break;
+		}
+		case ATTRIB_FORMAT_OR:
+		{
+			// Oh, man...
+			int iValue = FloatBits( *pOutput );
+			iValue |= FloatBits( flValue );
+			*pOutput = BitsToFloat( iValue );
+			break;
+		}
+		case ATTRIB_FORMAT_KILLSTREAKEFFECT_INDEX:
+		case ATTRIB_FORMAT_KILLSTREAK_IDLEEFFECT_INDEX:
+		case ATTRIB_FORMAT_FROM_LOOKUP_TABLE:
+		{
+			*pOutput = flValue;
+			break;
+		}
+		default:
+		{
+			return;
+		}
+	}
 }
 
 class CAttributeManager

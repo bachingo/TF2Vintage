@@ -65,6 +65,9 @@ void CTFProjectile_HealingBolt::ImpactTeamPlayer( CTFPlayer *pTarget )
 	if ( pOwner == nullptr )
 		return;
 
+	float flHealing = GetDamage() * tf2v_healing_bolts_heal_factor.GetFloat();
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTarget, flHealing, mult_healing_from_medics );
+
 	CTFWeaponBase *pWeapon = pTarget->GetActiveTFWeapon();
 	if ( pWeapon )
 	{
@@ -72,11 +75,14 @@ void CTFProjectile_HealingBolt::ImpactTeamPlayer( CTFPlayer *pTarget )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nBlocksHealing, weapon_blocks_healing );
 		if ( nBlocksHealing == 1 )
 			return;
-	}
 
-	float flHealing = GetDamage() * tf2v_healing_bolts_heal_factor.GetFloat();
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHealing, mult_health_fromhealers_penalty_active );
+	}
+	
 	if ( pTarget->TakeHealth( flHealing, DMG_GENERIC ) )
 	{
+		PlayImpactSound( pOwner, "Weapon_Arrow.ImpactFleshCrossbowHeal" );
+
 		CTF_GameStats.Event_PlayerHealedOther( pOwner, flHealing );
 
 		event = gameeventmanager->CreateEvent( "player_healed" );
@@ -106,7 +112,7 @@ void CTFProjectile_HealingBolt::ImpactTeamPlayer( CTFPlayer *pTarget )
 
 float CTFProjectile_HealingBolt::GetDamage( void )
 {
-	float flScale = Clamp( ( gpGlobals->curtime - m_flCreationTime ) / 0.6f, 0.0f, 1.0f );
+	float flScale = Clamp( ( gpGlobals->curtime - m_flCreateTime ) / 0.6f, 0.0f, 1.0f );
 	return m_flDamage * ( ( flScale / 2.f ) + 0.5f );
 }
 

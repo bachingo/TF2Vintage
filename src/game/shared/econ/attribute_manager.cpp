@@ -42,89 +42,9 @@ bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( CEconAttri
 				m_pOutProviders->AddToTail( m_hOwner );
 		}
 
-		switch ( pDefinition->description_format )
-		{
-			case ATTRIB_FORMAT_ADDITIVE:
-			case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
-			{
-				*m_flOut += BitsToFloat( value );
-				break;
-			}
-			case ATTRIB_FORMAT_PERCENTAGE:
-			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
-			{
-				*m_flOut *= BitsToFloat( value );
-				break;
-			}
-			case ATTRIB_FORMAT_OR:
-			{
-				// Oh, man...
-				int iValue = FloatBits( *m_flOut );
-				iValue |= value;
-				*m_flOut = BitsToFloat( iValue );
-				break;
-			}
-			default:
-			{
-				*m_flOut = BitsToFloat( value );
-				break;
-			}
-		}
+		ApplyAttribute( pDefinition, m_flOut, BitsToFloat( value ) );
+		*m_flOut *=	tf2v_attrib_mult.GetFloat();
 	}
-
-	*m_flOut *=	tf2v_attrib_mult.GetFloat();
-
-	return true;
-}
-
-bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, float value )
-{
-	string_t name = pDefinition->m_iAttributeClass;
-	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
-	{
-		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
-		const_cast<CEconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
-	}
-
-	if ( m_iName == name )
-	{
-		if ( m_pOutProviders )
-		{
-			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
-				m_pOutProviders->AddToTail( m_hOwner );
-		}
-
-		switch ( pDefinition->description_format )
-		{
-			case ATTRIB_FORMAT_ADDITIVE:
-			case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
-			{
-				*m_flOut += value;
-				break;
-			}
-			case ATTRIB_FORMAT_PERCENTAGE:
-			case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
-			{
-				*m_flOut *= value;
-				break;
-			}
-			case ATTRIB_FORMAT_OR:
-			{
-				// Oh, man...
-				int iValue = FloatBits( *m_flOut );
-				iValue |= FloatBits( value );
-				*m_flOut = BitsToFloat( iValue );
-				break;
-			}
-			default:
-			{
-				*m_flOut = value;
-				break;
-			}
-		}
-	}
-
-	*m_flOut *=	tf2v_attrib_mult.GetFloat();
 
 	return true;
 }

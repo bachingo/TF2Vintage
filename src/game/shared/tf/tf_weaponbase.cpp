@@ -2455,7 +2455,7 @@ bool CTFWeaponBase::GetProjectileModelOverride( CAttribute_String *pOut )
 		GetAttributeContainer()->GetItem()->IterateAttributes( &func );
 
 		*pOut = strProjectileModel;
-		return func.m_bFound;
+		return func.Found();
 	}
 
 	return false;
