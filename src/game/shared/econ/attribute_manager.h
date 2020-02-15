@@ -108,9 +108,15 @@ inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
 		return nullptr;
 
 	IHasAttributes *pInteface = pEntity->GetHasAttributesInterfacePtr();
-	Assert( dynamic_cast<IHasAttributes *>( (CBaseEntity *)pEntity ) == pInteface );
+	if( pInteface )
+	{
+		Assert( dynamic_cast<IHasAttributes *>( (CBaseEntity *)pEntity ) == pInteface );
+		return pInteface;
+	}
 
-	return pInteface ? pInteface : nullptr;
+	return nullptr;
+}
+
 template<typename T>
 inline T AttributeConvertFromFloat( float flValue )
 {
