@@ -797,6 +797,9 @@ public:
 	float				GetSimulationTime() const;
 	void				SetSimulationTime( float st );
 
+	float				GetCreateTime()										{ return m_flCreateTime; }
+	void				SetCreateTime( float flCreateTime )					{ m_flCreateTime = flCreateTime; }
+
 	void				SetRenderMode( RenderMode_t nRenderMode );
 	RenderMode_t		GetRenderMode() const;
 
