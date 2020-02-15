@@ -479,10 +479,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 		return false;
 
 	if ( pTarget->IsBaseObject() && InSameTeam( pTarget ) )
-	{
 		HealBuilding( pTarget );
-		return true;
-	}
 
 	CTFPlayer *pPlayer = ToTFPlayer( pTarget );
 	if ( pPlayer && pPlayer->m_Shared.IsInvulnerable() )
@@ -752,11 +749,11 @@ void CTFProjectile_Arrow::FlyThink(void)
 {
 	QAngle angles;
 
-	VectorAngles(GetAbsVelocity(), angles);
+	VectorAngles( GetAbsVelocity(), angles );
 
-	SetAbsAngles(angles);
+	SetAbsAngles( angles );
 
-	SetNextThink(gpGlobals->curtime + 0.1f);
+	SetNextThink( gpGlobals->curtime + 0.1f );
 }
 
 //-----------------------------------------------------------------------------
@@ -922,7 +919,6 @@ void CTFProjectile_Arrow::CreateTrail( void )
 		pTrail->SetStartWidth( m_iProjType == TF_PROJECTILE_BUILDING_REPAIR_BOLT ? 5.0f : 3.0f );
 		pTrail->SetTextureResolution( 0.01f );
 		pTrail->SetLifeTime( 0.3f );
-		pTrail->TurnOn();
 		pTrail->SetAttachment( this, PATTACH_ABSORIGIN );
 		pTrail->SetContextThink( &CTFProjectile_Arrow::RemoveTrail, gpGlobals->curtime + 3.0f, "FadeTrail" );
 
