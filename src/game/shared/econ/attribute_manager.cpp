@@ -1,4 +1,5 @@
 #include "cbase.h"
+#include "vprof.h"
 #include "attribute_manager.h"
 #include "econ_item_schema.h"
 
@@ -246,6 +247,8 @@ void CAttributeManager::InitializeAttributes( CBaseEntity *pEntity )
 
 float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return flValue;
 
@@ -289,6 +292,8 @@ float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *
 //-----------------------------------------------------------------------------
 string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return strValue;
 
@@ -393,6 +398,7 @@ string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBa
 
 void CAttributeContainer::OnAttributesChanged( void )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
 	BaseClass::OnAttributesChanged();
 }
 
@@ -414,6 +420,8 @@ END_NETWORK_TABLE();
 //-----------------------------------------------------------------------------
 float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( m_bParsingMyself || m_hPlayer.Get() == NULL )
 		return flValue;
 
@@ -433,6 +441,8 @@ float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBase
 //-----------------------------------------------------------------------------
 string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( m_bParsingMyself || m_hPlayer.Get() == NULL )
 		return strValue;
 
@@ -452,5 +462,6 @@ string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, con
 //-----------------------------------------------------------------------------
 void CAttributeContainerPlayer::OnAttributesChanged( void )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
 	m_hPlayer->NetworkStateChanged();
 }
