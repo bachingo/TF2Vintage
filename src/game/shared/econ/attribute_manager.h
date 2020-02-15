@@ -111,6 +111,17 @@ inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
 	Assert( dynamic_cast<IHasAttributes *>( (CBaseEntity *)pEntity ) == pInteface );
 
 	return pInteface ? pInteface : nullptr;
+template<typename T>
+inline T AttributeConvertFromFloat( float flValue )
+{
+	return flValue;
+}
+
+template<>
+inline int AttributeConvertFromFloat( float flValue )
+{
+	__m128 X = _mm_load_ss( &flValue );
+	return _mm_cvt_ss2si( X );
 }
 
 class CAttributeManager
@@ -131,7 +142,7 @@ public:
 		{
 			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
 			float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( (float)value, pEntity, strAttributeClass, pOutList );
-			value = (type)flResult;
+			value = AttributeConvertFromFloat<type>( flResult );
 		}
 
 		return value;

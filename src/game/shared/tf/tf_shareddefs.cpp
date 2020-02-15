@@ -318,7 +318,8 @@ const char *g_aAmmoNames[] =
 	"TF_AMMO_SECONDARY",
 	"TF_AMMO_METAL",
 	"TF_AMMO_GRENADES1",
-	"TF_AMMO_GRENADES2"
+	"TF_AMMO_GRENADES2",
+	"TF_AMMO_GRENADES3"
 };
 
 struct pszWpnEntTranslationListEntry
