@@ -98,7 +98,7 @@ bool CTFInventory::Init( void )
 #endif
 							m_Items[iClass][iSlot][0] = pNewItem;
 						}
-						else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) && ( ( ( pItemDef->specialitem == 0 ) || ( ( pItemDef->specialitem == 1 ) && bSpecialsEnabled ) ) ) )
+						else if ( pItemDef->show_in_armory && ( pItemDef->is_reskin == 0 || bReskinsEnabled ) && ( pItemDef->specialitem == 0 || bSpecialsEnabled ) )
 						{
 							CEconItemView *pNewItem = new CEconItemView( iItemID );
 
@@ -139,7 +139,7 @@ bool CTFInventory::Init( void )
 #endif
 								m_Items[iClass][iSlot][0] = pNewItem;
 							}
-							else if ( ( pItemDef->show_in_armory ) && ( ( ( pItemDef->is_reskin == 0 ) || ( ( pItemDef->is_reskin == 1 ) && bReskinsEnabled ) ) ) && ( ( ( pItemDef->specialitem == 0 ) || ( ( pItemDef->specialitem == 1 ) && bSpecialsEnabled ) ) ) )
+							else if ( pItemDef->show_in_armory && ( pItemDef->is_reskin == 0 || bReskinsEnabled ) && ( pItemDef->specialitem == 0 || bSpecialsEnabled ) )
 							{
 								CEconItemView *pNewItem = new CEconItemView( iItemID );
 
