@@ -112,8 +112,7 @@ void CTFProjectile_HealingBolt::ImpactTeamPlayer( CTFPlayer *pTarget )
 
 float CTFProjectile_HealingBolt::GetDamage( void )
 {
-	float flScale = Clamp( ( gpGlobals->curtime - m_flCreateTime ) / 0.6f, 0.0f, 1.0f );
-	return m_flDamage * ( ( flScale / 2.f ) + 0.5f );
+	return m_flDamage * RemapValClamped( gpGlobals->curtime - m_flCreateTime, 0.0f, 0.6f, 0.5f, 1.0f );
 }
 
 #else

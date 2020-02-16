@@ -30,11 +30,11 @@ BEGIN_NETWORK_TABLE( CTFCompoundBow, DT_WeaponCompoundBow )
 #endif
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CTFCompoundBow )
 #ifdef CLIENT_DLL
+BEGIN_PREDICTION_DATA( CTFCompoundBow )
 	DEFINE_PRED_FIELD( m_flChargeBeginTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
-#endif
 END_PREDICTION_DATA()
+#endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_compound_bow, CTFCompoundBow );
 PRECACHE_WEAPON_REGISTER( tf_weapon_compound_bow );
