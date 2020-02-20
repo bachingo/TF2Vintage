@@ -1626,7 +1626,8 @@ void CTFGameMovement::FullWalkMove()
 			if ( nBuildsHype == 1 )
 			{
 				m_pTFPlayer->m_Shared.AddHypeMeter( 
-					( ( mv->m_vecVelocity.Length() * gpGlobals->frametime ) / tf_scout_hype_mod.GetFloat() ) );
+					( ( mv->m_vecVelocity.Length() * gpGlobals->frametime ) / tf_scout_hype_mod.GetFloat() ) 
+				);
 			}
 		}
 	}

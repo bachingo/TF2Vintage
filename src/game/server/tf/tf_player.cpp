@@ -4930,16 +4930,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_DEFENSE);
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW / 100), TF_BUFF_REGENONDAMAGE);
-			}
-			// Build scattergun boost.
-			int nHypeOnDamage = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nHypeOnDamage, hype_on_damage);
-			int nBoostOnDamage = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nBoostOnDamage, boost_on_damage);
-			if (nHypeOnDamage)
-				pTFAttacker->m_Shared.AddHypeMeter( ( info.GetDamage() * ( 100 / TF_SCATTERGUN_HYPE_COUNT ) ) );
-			if (nBoostOnDamage)
-				pTFAttacker->m_Shared.AddHypeMeter( ( info.GetDamage() * ( 100 / TF_SCATTERGUN_BOOST_COUNT ) ) );			
+			}			
 		}
 
 		// Check if we're stunned and should have reduced damage taken

@@ -2303,24 +2303,25 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 	if ( !pOwner || !pOwner->IsAlive() )
 		return;
 
-	if (pAttacker)
+	if ( pAttacker )
 	{
-		if( pOwner != pAttacker )
+		if ( pOwner != pAttacker )
 			pOwner = pAttacker;
 	}
 
-	if (pTFVictim)
+	if ( pTFVictim )
 	{
 		// Afterburn shouldn't trigger on-hit effects.
 		// Disguised spies shouldn't trigger on-hit effects.
-		if (( info.GetDamageType() & DMG_BURN ) ||
-			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() ))
+		if ( ( info.GetDamageType() & DMG_BURN ) ||
+			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() ) )
 			return;
 
-		if (!pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ) && !pTFVictim->m_Shared.InCond( TF_COND_MEGAHEAL ))
+		if ( !pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ) && !pTFVictim->m_Shared.InCond( TF_COND_MEGAHEAL ) )
 		{
-			float flSlowOnHit = CAttributeManager::AttribHookValue<float>( 0, "mult_onhit_enemyspeed", this );
-			if (flSlowOnHit && RandomFloat() < flSlowOnHit)
+			float flSlowOnHit = 0.0f;
+			CALL_ATTRIB_HOOK_FLOAT( flSlowOnHit, mult_onhit_enemyspeed );
+			if ( flSlowOnHit && RandomFloat() < flSlowOnHit )
 			{
 				pTFVictim->m_Shared.StunPlayer(
 					0.2f,
@@ -2330,36 +2331,47 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 					pAttacker );
 			}
 
-			flSlowOnHit = CAttributeManager::AttribHookValue<float>( 0, "mult_onhit_enemyspeed_major", this );
-			if (flSlowOnHit)
-				pTFVictim->m_Shared.StunPlayer( flSlowOnHit, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_NOSOUNDOREFFECT, pAttacker );
+			float flSlowOnHitMajor = 0.0f;
+			CALL_ATTRIB_HOOK_FLOAT( flSlowOnHitMajor, mult_onhit_enemyspeed_major );
+			if ( flSlowOnHitMajor )
+				pTFVictim->m_Shared.StunPlayer( flSlowOnHitMajor, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_NOSOUNDOREFFECT, pAttacker );
 		}
 
-		int iRevealCloaked = 0;
-		CALL_ATTRIB_HOOK_INT( iRevealCloaked, reveal_cloaked_victim_on_hit );
-		if (iRevealCloaked > 0)
+		int nRevealCloaked = 0;
+		CALL_ATTRIB_HOOK_INT( nRevealCloaked, reveal_cloaked_victim_on_hit );
+		if ( nRevealCloaked > 0 )
 		{
 			pTFVictim->RemoveInvisibility();
-			UTIL_ScreenFade( pVictim, { 255, 255, 255, 255 }, 0.25f, 0.1f, FFADE_IN );
+			UTIL_ScreenFade( pVictim, {255, 255, 255, 255}, 0.25f, 0.1f, FFADE_IN );
 		}
 
-		int iRevealDisguised = 0;
-		CALL_ATTRIB_HOOK_INT( iRevealDisguised, reveal_disguised_victim_on_hit );
-		if (iRevealDisguised > 0)
+		int nRevealDisguised = 0;
+		CALL_ATTRIB_HOOK_INT( nRevealDisguised, reveal_disguised_victim_on_hit );
+		if ( nRevealDisguised > 0 )
 			pTFVictim->RemoveDisguise();
 
-		int iStunWaistHighAirborneTime = 0;
-		CALL_ATTRIB_HOOK_INT( iStunWaistHighAirborneTime, stun_waist_high_airborne );
-		if (iStunWaistHighAirborneTime > 0 && !( pVictim->GetFlags() & FL_ONGROUND ) && !pVictim->GetGroundEntity())
+		int nStunWaistHighAirborneTime = 0;
+		CALL_ATTRIB_HOOK_INT( nStunWaistHighAirborneTime, stun_waist_high_airborne );
+		if ( nStunWaistHighAirborneTime > 0 && !( pVictim->GetFlags() & FL_ONGROUND ) && !pVictim->GetGroundEntity() )
 		{
 			Vector vecEye = pOwner->EyePosition();
 			Vector vecWaist = pVictim->WorldSpaceCenter();
-			if (vecEye.z < vecWaist.z)
+			if ( vecEye.z < vecWaist.z )
 			{
-				pTFVictim->m_Shared.StunPlayer( iStunWaistHighAirborneTime, 0.5f, 0.75f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_BONKSTUCK|TF_STUNFLAG_THIRDPERSON, pOwner );
+				pTFVictim->m_Shared.StunPlayer( nStunWaistHighAirborneTime, 0.5f, 0.75f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_BONKSTUCK|TF_STUNFLAG_THIRDPERSON, pOwner );
 				pTFVictim->EmitSound( "Halloween.PlayerScream" );
 			}
 		}
+
+		int nHypeOnDamage = 0;
+		CALL_ATTRIB_HOOK_INT( nHypeOnDamage, hype_on_damage );
+		if ( nHypeOnDamage )
+			pAttacker->m_Shared.AddHypeMeter( ( info.GetDamage() * ( 100 / TF_SCATTERGUN_HYPE_COUNT ) ) );
+
+		int nBoostOnDamage = 0;
+		CALL_ATTRIB_HOOK_INT( nBoostOnDamage, boost_on_damage );
+		if ( nBoostOnDamage )
+			pAttacker->m_Shared.AddHypeMeter( ( info.GetDamage() * ( 100 / TF_SCATTERGUN_BOOST_COUNT ) ) );	
 	}
 
 	float flAddCharge = 0.0f;
@@ -2373,7 +2385,7 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 			pMedigun->AddCharge( flAddCharge );
 		}
 	}
-	
+
 	float flAddChargeShield = 0.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flAddChargeShield, charge_meter_on_hit );
 	if ( flAddChargeShield )
@@ -2403,14 +2415,12 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 
 	int iAddAmmo = 0;
 	CALL_ATTRIB_HOOK_INT( iAddAmmo, add_onhit_addammo );
-	if (iAddAmmo)
+	if ( iAddAmmo )
 	{
-		if (pTFVictim &&
-			pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) &&
-			!pTFVictim->m_Shared.IsStealthed() &&
-			!pTFVictim->m_Shared.InCond( TF_COND_STEALTHED_BLINK ))
+		if ( pTFVictim && pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) )
 		{
-			iAddAmmo = 0;
+			if ( !pTFVictim->m_Shared.IsStealthed() && !pTFVictim->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+				iAddAmmo = 0;
 		}
 
 		iAddAmmo *= info.GetDamage() / 100.0f;
