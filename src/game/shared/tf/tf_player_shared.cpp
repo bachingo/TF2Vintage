@@ -5858,20 +5858,18 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 	// If we're using 2007 era ammocounts, re-adjust our ammo pools.
 	if ( tf2v_use_old_ammocounts.GetInt() == 1 )
 	{
-		
 		switch (iClassNumber)
 		{
-		
 			case TF_CLASS_SOLDIER:
 				if ( iAmmoIndex == TF_AMMO_PRIMARY )
-					iMaxAmmo *= ( 36 / 20 ); 
+					iMaxAmmo *= ( 36.f / 20.f ); 
 				break;
 			
 			case TF_CLASS_DEMOMAN:
 				if ( iAmmoIndex == TF_AMMO_PRIMARY )
-					iMaxAmmo *= ( 30 / 16 ); 
+					iMaxAmmo *= ( 30.f / 16.f ); 
 				else if ( iAmmoIndex == TF_AMMO_SECONDARY )
-					iMaxAmmo *= ( 40 / 24 ); 
+					iMaxAmmo *= ( 40.f / 24.f ); 
 				break;
 	
 			default:
@@ -5882,32 +5880,29 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 	{
 		// If we're using 2008 ammo settings, reduce only the Rocket Launcher.
 		if ( (iClassNumber == TF_CLASS_SOLDIER) && ( iAmmoIndex == TF_AMMO_PRIMARY ) )
-		iMaxAmmo *= ( 16 / 20 ); 
+			iMaxAmmo *= ( 16.f / 20.f ); 
 	}
 
 	switch ( iAmmoIndex )
 	{
-	case TF_AMMO_PRIMARY:
-		CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_primary );
-		break;
-
-	case TF_AMMO_SECONDARY:
-		CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_secondary );
-		break;
-
-	case TF_AMMO_METAL:
-		CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_metal );
-		break;
-
-	case TF_AMMO_GRENADES1:
-	case TF_AMMO_GRENADES2:
-		CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_grenades1 );
-		break;
-
-	case 6:
-	default:
-		iMaxAmmo = 1;
-		break;
+		case TF_AMMO_PRIMARY:
+			CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_primary );
+			break;
+		case TF_AMMO_SECONDARY:
+			CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_secondary );
+			break;
+		case TF_AMMO_METAL:
+			CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_metal );
+			break;
+		case TF_AMMO_GRENADES1:
+			CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_grenades1 );
+			break;
+		case TF_AMMO_GRENADES2:
+			CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_grenades2 );
+			break;
+		case TF_AMMO_GRENADES3:
+			iMaxAmmo = 1;
+			break;
 	}
 
 	return iMaxAmmo;
