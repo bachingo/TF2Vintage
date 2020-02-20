@@ -314,7 +314,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iDisguiseTargetIndex ), 7, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDisguiseHealth ), 10 ),
 	SendPropInt( SENDINFO( m_iDisguiseMaxHealth ), 10 ),
-	SendPropFloat( SENDINFO(m_flDisguiseChargeLevel ), 0, SPROP_NOSCALE ),
+	SendPropFloat( SENDINFO( m_flDisguiseChargeLevel ), 0, SPROP_NOSCALE ),
 	SendPropInt( SENDINFO( m_iLeechHealth ), 10 ),
 	SendPropDataTable( SENDINFO_DT( m_DisguiseItem ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 	// Local Data.
@@ -863,6 +863,19 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddUrine();
 		break;
 
+#ifdef CLIENT_DLL
+	case TF_COND_BLEEDING:
+		if ( m_pOuter->IsLocalPlayer() )
+		{
+			IMaterial *pMaterial = materials->FindMaterial( "effects/bleed_overlay", TEXTURE_GROUP_CLIENT_EFFECTS, false );
+			if ( !IsErrorMaterial( pMaterial ) )
+			{
+				view->SetScreenOverlayMaterial( pMaterial );
+			}
+		}
+		break;
+#endif
+
 	case TF_COND_MAD_MILK:
 		OnAddMadMilk();
 		break;
@@ -1003,6 +1016,15 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 	case TF_COND_URINE:
 		OnRemoveUrine();
 		break;
+
+#ifdef CLIENT_DLL
+	case TF_COND_BLEEDING:
+		if ( m_pOuter->IsLocalPlayer() )
+		{
+			view->SetScreenOverlayMaterial( NULL );
+		}
+		break;
+#endif
 
 	case TF_COND_MAD_MILK:
 		OnRemoveMadMilk();
