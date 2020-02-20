@@ -317,32 +317,6 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 		IsCurrentAttackACrit() );
 }
 
-class CTraceFilterIgnoreTeammates : public CTraceFilterSimple
-{
-public:
-	// It does have a base, but we'll never network anything below here..
-	DECLARE_CLASS( CTraceFilterIgnoreTeammates, CTraceFilterSimple );
-
-	CTraceFilterIgnoreTeammates( const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam )
-		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( iIgnoreTeam )
-	{
-	}
-
-	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
-	{
-		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-
-		if ( pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam )
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	int m_iIgnoreTeam;
-};
-
 //-----------------------------------------------------------------------------
 // Purpose: Return angles for a projectile reflected by airblast
 //-----------------------------------------------------------------------------
