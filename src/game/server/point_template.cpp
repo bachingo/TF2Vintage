@@ -398,11 +398,13 @@ bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecA
 
 	SpawnHierarchicalList( iTemplates, pSpawnList, true );
 
+	const float flCreateTime = gpGlobals->curtime;
 	for ( i = 0; i < iTemplates; ++i )
 	{
 		if ( pSpawnList[i].m_pEntity )
 		{
 			pEntities->AddToTail( pSpawnList[i].m_pEntity );
+			pSpawnList[i].m_pEntity->SetCreateTime( flCreateTime );
 		}
 	}
 

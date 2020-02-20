@@ -664,6 +664,11 @@ CBasePlayer::~CBasePlayer( )
 //-----------------------------------------------------------------------------
 void CBasePlayer::UpdateOnRemove( void )
 {
+	if ( !g_pGameRules->IsMultiplayer() && g_pScriptVM )
+	{
+		g_pScriptVM->SetValue( "player", SCRIPT_VARIANT_NULL );
+	}
+
 	VPhysicsDestroyObject();
 
 	// Remove him from his current team
@@ -5070,6 +5075,11 @@ void CBasePlayer::Spawn( void )
 	UpdateLastKnownArea();
 
 	m_weaponFiredTimer.Invalidate();
+
+	if ( !g_pGameRules->IsMultiplayer() && g_pScriptVM )
+	{
+		g_pScriptVM->SetValue( "player", GetScriptInstance() );
+	}
 }
 
 void CBasePlayer::Activate( void )
