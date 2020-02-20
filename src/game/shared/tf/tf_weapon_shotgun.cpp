@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "props_shared.h"
+#include "in_buttons.h"
 #include "tf_weapon_shotgun.h"
 #include "decals.h"
 #include "tf_fx_shared.h"
@@ -319,6 +320,11 @@ bool CTFScatterGun::HasKnockback() const
 }
 
 
+//=============================================================================
+//
+// Weapon Shotgun Revenge tables.
+//
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFShotgun_Revenge, DT_TFShotgun_Revenge )
 
 BEGIN_NETWORK_TABLE( CTFShotgun_Revenge, DT_TFShotgun_Revenge )
@@ -338,6 +344,11 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_sentry_revenge, CTFShotgun_Revenge );
 PRECACHE_WEAPON_REGISTER( tf_weapon_sentry_revenge );
 
+
+//=============================================================================
+//
+// Weapon Shotgun Revenge functions.
+//
 
 CTFShotgun_Revenge::CTFShotgun_Revenge()
 {
@@ -533,7 +544,14 @@ bool CTFShotgun_Revenge::CanGetRevengeCrits( void ) const
 	return nSentryRevenge == 1;
 }
 
+//=============================================================================
+//
+// Weapon Soda Popper functions.
+//
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 float CTFSodaPopper::GetEffectBarProgress(void)
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
@@ -545,6 +563,44 @@ float CTFSodaPopper::GetEffectBarProgress(void)
 
 	return 0.0f;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Activate special ability
+//-----------------------------------------------------------------------------
+void CTFSodaPopper::SecondaryAttack(void)
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+	if ( !pOwner )
+		return;
+
+	int nBuildsHype = 0;
+	CALL_ATTRIB_HOOK_INT( nBuildsHype, set_weapon_mode );
+	if ( nBuildsHype == 1 )
+	{
+		if ( pOwner->m_Shared.GetHypeMeter() >= 100.0f )
+			pOwner->m_Shared.AddCond( TF_COND_SODAPOPPER_HYPE );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSodaPopper::ItemBusyFrame( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) )
+		SecondaryAttack();
+
+	BaseClass::ItemBusyFrame();
+}
+
+//=============================================================================
+//
+// Weapon Pep Brawl Blaster functions.
+//
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -561,6 +617,9 @@ float CTFPepBrawlBlaster::GetEffectBarProgress(void)
 	return 0.0f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 float CTFPepBrawlBlaster::GetSpeedMod(void) const
 {
 	if ( m_bLowered )
@@ -580,20 +639,5 @@ float CTFPepBrawlBlaster::GetSpeedMod(void) const
 	// Original speed calculation ranged from 260HU/s at 0%, to 520HU/s at 100%.
 	// This is Output = (260/100)x + 260, and then divided by input 260 to get a ratio.
 	// The max ratio is 2, so we can simplify even further to get the result below.
-	return ((pOwner->m_Shared.GetHypeMeter() / 100) + 1);
-}
-
-void CTFSodaPopper::SecondaryAttack(void)
-{
-	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
-	if (!pOwner)
-		return;
-
-	int nBuildsHype = 0;
-	CALL_ATTRIB_HOOK_INT( nBuildsHype, set_weapon_mode );
-	if ( nBuildsHype == 1 )
-	{
-		if (pOwner->m_Shared.GetHypeMeter() >= 100.0f)
-			pOwner->m_Shared.AddCond(TF_COND_SODAPOPPER_HYPE, 10.0f);
-	}
+	return ( ( pOwner->m_Shared.GetHypeMeter() / 100 ) + 1 );
 }

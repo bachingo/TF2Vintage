@@ -515,7 +515,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 
 	int iDmgCustom = TF_DMG_CUSTOM_NONE;
 	int iDmgType = GetDamageType();
-	bool bImpact = true; // TODO: Some strange check involving a UtlVector on the arrow
+	bool bImpact = true; // TODO: Some strange check involving a UtlVector on the arrow, possibly for pierce
 
 	if( pAttacker )
 	{

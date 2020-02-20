@@ -112,6 +112,7 @@ public:
 	virtual const char* GetEffectLabelText( void )			{ return "#TF_Hype"; }
 	virtual float	GetEffectBarProgress( void );
 	virtual void	SecondaryAttack( void );
+	virtual void	ItemBusyFrame( void );
 };
 
 class CTFShotgun_Soldier : public CTFShotgun
