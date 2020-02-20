@@ -1160,6 +1160,9 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		float flTimeSinceDamage = gpGlobals->curtime - m_pOuter->GetLastDamageTime();
 		float flScale = RemapValClamped( flTimeSinceDamage, 10, 15, 1.0, 3.0 );
 
+		if ( InCond( TF_COND_MEGAHEAL ) )
+			flScale = 3.0f;
+
 		bool bHasFullHealth = m_pOuter->GetHealth() >= m_pOuter->GetMaxHealth();
 
 		float fTotalHealAmount = 0.0f;
@@ -1455,6 +1458,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 
 	TestAndExpireChargeEffect( TF_CHARGE_INVULNERABLE );
 	TestAndExpireChargeEffect( TF_CHARGE_CRITBOOSTED );
+	TestAndExpireChargeEffect( TF_CHARGE_MEGAHEAL );
 
 	if ( InCond( TF_COND_STEALTHED_BLINK ) )
 	{
