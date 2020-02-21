@@ -6121,6 +6121,24 @@ bool CTFPlayer::ShouldGib( const CTakeDamageInfo &info )
 			return true;
 	}
 
+	if( info.GetWeapon() )
+	{
+		int nWillGibCrit = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), nWillGibCrit, crit_kill_will_gib );
+		int nWillGibAlways = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( info.GetWeapon(), nWillGibAlways, kill_will_gib );
+
+		if ( nWillGibAlways == 0 )
+		{
+			if ( nWillGibCrit != 0 && info.GetDamageType() & ( DMG_CRITICAL|DMG_MINICRITICAL ) )
+				return true;
+		}
+		else
+		{
+			return true;
+		}
+	}
+
 	return false;
 }
 
