@@ -302,7 +302,7 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, Mel
 	AngleVectors( pPlayer->EyeAngles(), &vecForward );
 	Vector vecSwingStart = pPlayer->Weapon_ShootPosition();
 	Vector vecSwingEnd = vecSwingStart + vecForward * GetSwingRange();
-	CTraceFilterIgnoreTeammates filter( this, COLLISION_GROUP_NONE, GetTeamNumber() );
+	CTraceFilterIgnoreTeammates filterFriendlies( this, COLLISION_GROUP_NONE, GetTeamNumber() );
 
 	if ( bCleave )
 	{
@@ -345,11 +345,11 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, Mel
 		CALL_ATTRIB_HOOK_INT( nDamagesSappers, set_dmg_apply_to_sapper );
 		if ( nDamagesSappers != 0 )
 		{
-			CTraceFilterIgnorePlayers filter( NULL, COLLISION_GROUP_NONE );
-			UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &filter, &trace );
+			CTraceFilterIgnorePlayers filterPlayers( NULL, COLLISION_GROUP_NONE );
+			UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &filterPlayers, &trace );
 			if ( trace.fraction >= 1.0 )
 			{
-				UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins * flBoundsMult, vecSwingMaxs * flBoundsMult, MASK_SOLID, &filter, &trace );
+				UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins * flBoundsMult, vecSwingMaxs * flBoundsMult, MASK_SOLID, &filterPlayers, &trace );
 				if ( trace.fraction < 1.0 )
 				{
 					// Ensure valid target
