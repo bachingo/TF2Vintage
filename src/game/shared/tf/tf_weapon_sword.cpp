@@ -25,8 +25,23 @@
 CREATE_SIMPLE_WEAPON_TABLE( TFSword, tf_weapon_sword )
 
 
-LINK_ENTITY_TO_CLASS(tf_weapon_katana, CTFKatana);
-PRECACHE_REGISTER(tf_weapon_katana);
+IMPLEMENT_NETWORKCLASS_ALIASED( TFKatana, DT_TFKatana )
+BEGIN_NETWORK_TABLE( CTFKatana, DT_TFKatana )
+#ifdef CLIENT_DLL
+RecvPropBool( RECVINFO( m_bIsBloody ) ),
+#else
+SendPropBool( SENDINFO( m_bIsBloody ) ),
+#endif
+END_NETWORK_TABLE()
+
+#if defined( CLIENT_DLL )
+BEGIN_PREDICTION_DATA( CTFKatana )
+DEFINE_PRED_FIELD( m_bIsBloody, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE )
+END_PREDICTION_DATA()
+#endif
+
+LINK_ENTITY_TO_CLASS( tf_weapon_katana, CTFKatana );
+PRECACHE_REGISTER( tf_weapon_katana );
 
 
 //=============================================================================
@@ -176,9 +191,9 @@ bool CTFKatana::Deploy( void )
 //-----------------------------------------------------------------------------
 // Purpose: Do extra damage to other katana wielders.
 //-----------------------------------------------------------------------------
-float CTFKatana::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
+float CTFKatana::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage )
 {
-	float flBaseDamage = CTFDecapitationMeleeWeaponBase::GetMeleeDamage( pTarget, iCustomDamage );
+	float flBaseDamage = BaseClass::GetMeleeDamage( pTarget, iDamageType, iCustomDamage );
 
 	// Check to see if me and the current target have a katana equipped.
 	if ( !IsHonorBound() )
@@ -229,21 +244,6 @@ void CTFKatana::OnDecapitation( CTFPlayer *pVictim )
 	m_bIsBloody = true;
 #endif
 }
-
-IMPLEMENT_NETWORKCLASS_ALIASED( TFKatana, DT_TFKatana )
-BEGIN_NETWORK_TABLE( CTFKatana, DT_TFKatana )
-#ifdef CLIENT_DLL
-	RecvPropBool( RECVINFO( m_bIsBloody ) ),
-#else
-	SendPropBool( SENDINFO( m_bIsBloody ) ),
-#endif
-END_NETWORK_TABLE()
-
-#if defined( CLIENT_DLL )
-BEGIN_PREDICTION_DATA( CTFKatana )
-	DEFINE_PRED_FIELD( m_bIsBloody, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE )
-END_PREDICTION_DATA()
-#endif
 
 int CTFKatana::GetActivityWeaponRole( void )
 {

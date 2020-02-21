@@ -17,6 +17,7 @@
 #define CTFWeaponBaseMelee C_TFWeaponBaseMelee
 #endif
 
+typedef CUtlVector< CGameTrace > MeleePartitionVector;
 //=============================================================================
 //
 // Weapon Base Melee Class
@@ -53,11 +54,11 @@ public:
 
 	virtual void	DoViewModelAnimation( void );
 
-	bool			DoSwingTrace( trace_t &tr );
+	virtual bool	DoSwingTrace( trace_t &tr );
 	virtual void	Smack( void );
-	virtual void	DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace );
+	virtual void	DoMeleeDamage( CBaseEntity *pTarget, trace_t &trace );
 
-	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
+	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
 	virtual int		GetCustomDamageType() const						{ return TF_DMG_CUSTOM_NONE; }
 
 #ifndef CLIENT_DLL
@@ -81,6 +82,7 @@ public:
 protected:
 
 	virtual void	Swing( CTFPlayer *pPlayer );
+	bool			DoSwingTraceInternal( trace_t &tr, bool bCleave, MeleePartitionVector *enumResults );
 
 protected:
 

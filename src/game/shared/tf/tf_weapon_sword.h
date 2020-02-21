@@ -56,7 +56,7 @@ public:
 	virtual bool	Deploy( void );
 	virtual int		GetSkinOverride( void );
 	virtual void	OnDecapitation( CTFPlayer *pVictim );
-	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
+	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
 		
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_KATANA; }
 

@@ -86,9 +86,9 @@ bool CTFDecapitationMeleeWeaponBase::CanDecapitate( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-float CTFDecapitationMeleeWeaponBase::GetMeleeDamage( CBaseEntity * pTarget, int &iCustomDamage )
+float CTFDecapitationMeleeWeaponBase::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage )
 {
-	float res = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
+	float res = BaseClass::GetMeleeDamage( pTarget, iDamageType, iCustomDamage );
 	iCustomDamage = TF_DMG_CUSTOM_DECAPITATION;
 	return res;
 }

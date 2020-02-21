@@ -264,7 +264,6 @@ int CTFWeaponBaseMelee::GetSwingRange( void ) const
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Input  :  - 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::ItemPostFrame()
 {
@@ -435,7 +434,6 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 #if !defined( CLIENT_DLL )
 	// Do Damage.
 	int iCustomDamage = GetCustomDamageType();
-	float flDamage = GetMeleeDamage(pTarget, iCustomDamage);
 	
 	int iWillGibCrit = 0;
 	CALL_ATTRIB_HOOK_INT( iWillGibCrit, crit_kill_will_gib );
@@ -473,6 +471,7 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 	{
 		iDmgType |= DMG_NEVERGIB;
 	}
+	float flDamage = GetMeleeDamage( pTarget, iDmgType, iCustomDamage );
 	
 	CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
 
@@ -492,7 +491,7 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, CGameTrace &trace 
 // Purpose: 
 // Output : float
 //-----------------------------------------------------------------------------
-float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
+float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageTyoe, int &iCustomDamage )
 {
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
