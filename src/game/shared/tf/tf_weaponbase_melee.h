@@ -67,6 +67,7 @@ public:
 
 	// Call when we hit an entity. Use for special weapon effects on hit.
 	virtual void	OnEntityHit( CBaseEntity *pEntity );
+	virtual void	OnSwingHit( trace_t &trace );
 
 	virtual void	SendPlayerAnimEvent( CTFPlayer *pPlayer );
 

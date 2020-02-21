@@ -427,52 +427,14 @@ void CTFWeaponBaseMelee::Smack( void )
 			WeaponSound( MELEE_HIT_WORLD );
 		}
 		
-		// Ally buff calculations.
-		int nCanBuffAllies = 0;
-		CALL_ATTRIB_HOOK_INT( nCanBuffAllies, speed_buff_ally );
-		if( nCanBuffAllies == 1 )
+		if ( nMeleeCleaves )
 		{
-			// Check to see if they can be buffed.
-			CTFPlayer *pTFPlayer = ToTFPlayer( trace.m_pEnt );
-			if ( pTFPlayer )
-			{
-				// We can buff our team, and spies disguised as teammates.
-				if ( pTFPlayer->InSameTeam( pPlayer ) || pTFPlayer->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() )
-				{
-					const float flBuffDuration = tf2v_speed_buff_duration.GetFloat();
-					pPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, (flBuffDuration * 1.75) );
-					pTFPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffDuration );
-				}
-			}
+			for ( int i=0; i<results.Count(); ++i )
+				OnSwingHit( results[i] );
 		}
-
-		// Mark the player for death.
-		int nMarkForDeath = 0;
-		CALL_ATTRIB_HOOK_INT( nMarkForDeath, mark_for_death );
-		if( trace.m_pEnt->IsPlayer() && ( nMarkForDeath != 0 ) )
+		else
 		{
-			CTFPlayer *pTFPlayer = ToTFPlayer( trace.m_pEnt );
-			if (pTFPlayer)
-			{
-				// Add Marked For Death on enemies. We can set the attribute through the weapon.
-				if ( !pTFPlayer->InSameTeam( pPlayer ) )
-				{
-					pTFPlayer->m_Shared.AddCond( TF_COND_MARKEDFORDEATH, nMarkForDeath );
-				}
-			}
-			
-		}
-
-		// Do Damage.
-		DoMeleeDamage( trace.m_pEnt, trace );
-		
-		// Don't impact trace friendly players or objects
-		if ( trace.m_pEnt && trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() )
-		{
-#if defined( CLIENT_DLL )
-			UTIL_ImpactTrace( &trace, DMG_CLUB );
-#endif
-			m_bConnected = true;
+			OnSwingHit( trace );
 		}
 	}
 	else
@@ -645,6 +607,62 @@ void CTFWeaponBaseMelee::OnEntityHit( CBaseEntity *pEntity )
 		}
 	}
 #endif
+}
+
+void CTFWeaponBaseMelee::OnSwingHit( trace_t &trace )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer == nullptr )
+		return;
+
+#if defined( GAME_DLL )
+	// Ally buff calculations.
+	int nCanBuffAllies = 0;
+	CALL_ATTRIB_HOOK_INT( nCanBuffAllies, speed_buff_ally );
+
+	int nTradeHealthPool = 0;
+	CALL_ATTRIB_HOOK_INT( nTradeHealthPool, add_give_health_to_teammate_on_hit );
+
+	// Check to see if they can be buffed.
+	CTFPlayer *pTFPlayer = ToTFPlayer( trace.m_pEnt );
+	if ( pTFPlayer )
+	{
+		// We can buff our team, and spies disguised as teammates.
+		if ( pTFPlayer->InSameTeam( pPlayer ) || pTFPlayer->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() )
+		{
+			if( nCanBuffAllies == 1 )
+			{
+				const float flBuffDuration = tf2v_speed_buff_duration.GetFloat();
+				pTFPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffDuration );
+				// We buff ourselves a little bit longer
+				pPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, (flBuffDuration * 1.25) );
+			}
+
+			if ( nTradeHealthPool != 0 )
+			{
+				nTradeHealthPool = Min( nTradeHealthPool, pPlayer->GetHealth() - 1 );
+
+				if ( pTFPlayer->TakeHealth( nTradeHealthPool, DMG_GENERIC ) )
+				{
+					CTakeDamageInfo info( pPlayer, pPlayer, this, nTradeHealthPool, DMG_PREVENT_PHYSICS_FORCE );
+					pPlayer->TakeDamage( info );
+				}
+			}
+		}
+	}
+#endif
+
+	// Do Damage.
+	DoMeleeDamage( trace.m_pEnt, trace );
+
+	// Don't impact trace friendly players or objects
+	if ( trace.m_pEnt && trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() )
+	{
+	#if defined( CLIENT_DLL )
+		UTIL_ImpactTrace( &trace, DMG_CLUB );
+	#endif
+		m_bConnected = true;
+	}
 }
 
 //-----------------------------------------------------------------------------
