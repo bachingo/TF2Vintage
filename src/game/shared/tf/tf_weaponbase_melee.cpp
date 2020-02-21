@@ -348,18 +348,14 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, Mel
 			CTraceFilterIgnorePlayers filterPlayers( NULL, COLLISION_GROUP_NONE );
 			UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &filterPlayers, &trace );
 			if ( trace.fraction >= 1.0 )
-			{
 				UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins * flBoundsMult, vecSwingMaxs * flBoundsMult, MASK_SOLID, &filterPlayers, &trace );
-				if ( trace.fraction < 1.0 )
-				{
-					// Ensure valid target
-					if ( trace.m_pEnt && trace.m_pEnt->IsBaseObject() )
-					{
-						CBaseObject *pObject = static_cast<CBaseObject *>( trace.m_pEnt );
-						if ( pObject->GetTeamNumber() == pPlayer->GetTeamNumber() && pObject->HasSapper() )
-							return true;
-					}
-				}
+
+			// Ensure valid target
+			if ( trace.m_pEnt && trace.m_pEnt->IsBaseObject() )
+			{
+				CBaseObject *pObject = static_cast<CBaseObject *>( trace.m_pEnt );
+				if ( pObject->GetTeamNumber() == pPlayer->GetTeamNumber() && pObject->HasSapper() )
+					return ( trace.fraction < 1.0 );
 			}
 		}
 
