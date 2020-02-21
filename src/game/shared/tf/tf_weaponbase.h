@@ -48,6 +48,42 @@ class CTFPlayer;
 class CBaseObject;
 class CTFWeaponBaseGrenadeProj;
 
+class CTraceFilterIgnoreFriendlyCombatItems : public CTraceFilterSimple
+{
+	DECLARE_CLASS_GAMEROOT( CTraceFilterIgnoreFriendlyCombatItems, CTraceFilterSimple );
+public:
+	CTraceFilterIgnoreFriendlyCombatItems( IHandleEntity const *ignore, int collissionGroup, int teamNumber )
+		: CTraceFilterSimple( ignore, collissionGroup )
+	{
+		m_iTeamNumber = teamNumber;
+		m_bSkipBaseTrace = false;
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pHandleEntity, int contentsMask )
+	{
+		CBaseEntity *pEntity = EntityFromEntityHandle( pHandleEntity );
+		if ( pEntity == nullptr )
+			return false;
+
+		if ( !pEntity->IsCombatItem() )
+			return BaseClass::ShouldHitEntity( pHandleEntity, contentsMask );
+
+		if ( pEntity->GetTeamNumber() == m_iTeamNumber )
+			return false;
+
+		if( !m_bSkipBaseTrace )
+			return BaseClass::ShouldHitEntity( pHandleEntity, contentsMask );
+
+		return true;
+	}
+
+	void AlwaysHitItems( void ) { m_bSkipBaseTrace = true; }
+
+private:
+	int m_iTeamNumber;
+	bool m_bSkipBaseTrace;
+};
+
 // Given an ammo type (like from a weapon's GetPrimaryAmmoType()), this compares it
 // against the ammo name you specify.
 // TFTODO: this should use indexing instead of searching and strcmp()'ing all the time.
