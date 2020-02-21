@@ -400,16 +400,13 @@ void CTFWeaponBaseMelee::Smack( void )
 	trace_t trace;
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( !pPlayer )
+	if ( pPlayer == nullptr )
 		return;
 
 #if !defined( CLIENT_DLL )
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
 #endif
-	
-	int nSelfHarm = 0;
-	CALL_ATTRIB_HOOK_INT( nSelfHarm, hit_self_on_miss );
 
 	int nMeleeCleaves = 0;
 	CALL_ATTRIB_HOOK_INT( nMeleeCleaves, melee_cleave_attack );
@@ -439,6 +436,8 @@ void CTFWeaponBaseMelee::Smack( void )
 	}
 	else
 	{
+		int nSelfHarm = 0;
+		CALL_ATTRIB_HOOK_INT( nSelfHarm, hit_self_on_miss );
 		if ( nSelfHarm != 0 ) // Hit ourselves, dummy!
 		{
 			// Do Damage.
