@@ -48,7 +48,7 @@ END_DATADESC()
 ConVar tf_meleeattackforcescale( "tf_meleeattackforcescale", "80.0", FCVAR_CHEAT | FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY );
 #endif
 
-ConVar tf2v_new_speed_buff_duration( "tf2v_new_speed_buff_duration", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Swaps between using old (3s) and new (2s) speed buffing times." );
+ConVar tf2v_speed_buff_duration( "tf2v_new_speed_buff_duration", "2.0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Swaps between using old (3s) and new (2s) speed buffing times." );
 
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
 extern ConVar tf_weapon_criticals;
@@ -396,6 +396,7 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, Mel
 // -----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::Smack( void )
 {
+	CUtlVector<trace_t> results;
 	trace_t trace;
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
@@ -413,7 +414,6 @@ void CTFWeaponBaseMelee::Smack( void )
 	int nMeleeCleaves = 0;
 	CALL_ATTRIB_HOOK_INT( nMeleeCleaves, melee_cleave_attack );
 
-	CUtlVector<trace_t> results;
 	// We hit, setup the smack.
 	if ( DoSwingTraceInternal( trace, nMeleeCleaves > 0, &results ) )
 	{
@@ -430,7 +430,7 @@ void CTFWeaponBaseMelee::Smack( void )
 		// Ally buff calculations.
 		int nCanBuffAllies = 0;
 		CALL_ATTRIB_HOOK_INT( nCanBuffAllies, speed_buff_ally );
-		if( trace.m_pEnt->IsPlayer() && ( nCanBuffAllies != 0 ) )
+		if( nCanBuffAllies == 1 )
 		{
 			// Check to see if they can be buffed.
 			CTFPlayer *pTFPlayer = ToTFPlayer( trace.m_pEnt );
@@ -439,7 +439,7 @@ void CTFWeaponBaseMelee::Smack( void )
 				// We can buff our team, and spies disguised as teammates.
 				if ( pTFPlayer->InSameTeam( pPlayer ) || pTFPlayer->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() )
 				{
-					const float flBuffDuration = tf2v_new_speed_buff_duration.GetBool() ? TF_SPEED_BUFF_DURATION_MODERN : TF_SPEED_BUFF_DURATION_LEGACY ;
+					const float flBuffDuration = tf2v_speed_buff_duration.GetFloat();
 					pPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, (flBuffDuration * 1.75) );
 					pTFPlayer->m_Shared.AddCond( TF_COND_SPEED_BOOST, flBuffDuration );
 				}
