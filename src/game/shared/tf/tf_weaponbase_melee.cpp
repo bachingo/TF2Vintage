@@ -552,6 +552,18 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, trace_t &trace )
 	ApplyMultiDamage();
 
 	OnEntityHit( pTarget );
+
+	int nCritMakesThemLaugh = 0;
+	CALL_ATTRIB_HOOK_INT( nCritMakesThemLaugh, crit_forces_victim_to_laugh );
+	if ( nCritMakesThemLaugh )
+	{
+		if ( m_bCurrentAttackIsCrit || ( iDmgType & DMG_CRITICAL ) )
+		{
+			CTFPlayer *pTFTarget = ToTFPlayer( pTarget );
+			if ( pTFTarget )
+				pTFTarget->Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
+		}
+	}
 #endif
 }
 
