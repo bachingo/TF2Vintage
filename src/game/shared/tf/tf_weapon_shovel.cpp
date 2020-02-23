@@ -64,7 +64,7 @@ float CTFShovel::GetSpeedMod( void ) const
 
 	int nShovelSpeedBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelSpeedBoost, set_weapon_mode );
-	if ( nShovelSpeedBoost != 2 || nShovelSpeedBoost != 3 )
+	if ( nShovelSpeedBoost != 2 && nShovelSpeedBoost != 3 )
 		return 1.0f;
 
 	float flFraction = (float)pOwner->GetHealth() / pOwner->GetMaxHealth();
@@ -86,7 +86,7 @@ float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iC
 
 	int nShovelDamageBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelDamageBoost, set_weapon_mode );
-	if ( nShovelDamageBoost != 1 || nShovelDamageBoost != 3 )
+	if ( nShovelDamageBoost != 1 && nShovelDamageBoost != 3 )
 		return flDmg;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
