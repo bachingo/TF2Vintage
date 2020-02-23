@@ -80,9 +80,9 @@ float CTFShovel::GetSpeedMod( void ) const
 		return 1.6f;
 }
 
-float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
+float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage )
 {
-	float flDmg = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
+	float flDmg = BaseClass::GetMeleeDamage( pTarget, iDamageType, iCustomDamage );
 
 	int nShovelDamageBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelDamageBoost, set_weapon_mode );

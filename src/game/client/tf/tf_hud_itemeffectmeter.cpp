@@ -670,7 +670,7 @@ void CHudItemEffects::SetPlayer( void )
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBat_Wood>( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFLunchBox_Drink>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Scout.res" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJarMilk>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Scout.res" ) );
-			AddItemMeter(new CHudItemEffectMeterTemp<C_TFPepBrawlBlaster>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_sodapopper.res") );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFPepBrawlBlaster>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_sodapopper.res") );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSodaPopper>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_sodapopper.res" ) );
 			break;
 		case TF_CLASS_SNIPER:

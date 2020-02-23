@@ -105,8 +105,8 @@ void CTFSyringe::Smack( void )
 			{
 			#if defined( GAME_DLL )
 				CTFPlayer *pPatient = ToTFPlayer( trace.m_pEnt );
-				int iDamageCustom = GetCustomDamageType();
-				int iHealthRestored = pPatient->TakeHealth( GetMeleeDamage( trace.m_pEnt, iDamageCustom ), DMG_GENERIC );
+				int iDamageCustom = GetCustomDamageType(), iDamageType = DMG_GENERIC;
+				int iHealthRestored = pPatient->TakeHealth( GetMeleeDamage( trace.m_pEnt, iDamageType, iDamageCustom ), iDamageType );
 				CTF_GameStats.Event_PlayerHealedOther( pPlayer, iHealthRestored );
 
 				IGameEvent *event = gameeventmanager->CreateEvent( "player_healed" );

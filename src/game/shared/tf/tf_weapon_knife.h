@@ -35,7 +35,7 @@ public:
 	virtual void		PrimaryAttack( void );
 	virtual void		WeaponIdle(void);
 
-	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
+	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
 
 	virtual void		SendPlayerAnimEvent( CTFPlayer *pPlayer );
 

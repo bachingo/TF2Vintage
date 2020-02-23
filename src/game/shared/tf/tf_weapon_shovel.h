@@ -32,7 +32,7 @@ public:
 	virtual int			GetWeaponID( void ) const { return TF_WEAPON_SHOVEL; }
 	virtual int			GetCustomDamageType() const;
 	virtual float		GetSpeedMod( void ) const;
-	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
+	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
 
 private:
 

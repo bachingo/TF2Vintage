@@ -189,9 +189,9 @@ void CTFKnife::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: Do backstab damage
 //-----------------------------------------------------------------------------
-float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
+float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage )
 {
-	float flBaseDamage = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
+	float flBaseDamage = BaseClass::GetMeleeDamage( pTarget, iDamageType, iCustomDamage );
 
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 
