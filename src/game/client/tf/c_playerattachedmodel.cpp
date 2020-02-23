@@ -8,12 +8,12 @@
 #include "c_playerattachedmodel.h"
 
 // Todo: Turn these all into parameters
-#define PAM_ANIMATE_TIME		0.075
-#define PAM_ROTATE_TIME			0.075
+#define PAM_ANIMATE_TIME		0.075f
+#define PAM_ROTATE_TIME			0.075f
 
-#define PAM_SCALE_SPEED			7
-#define PAM_MAX_SCALE			3
-#define PAM_SPIN_SPEED			360
+#define PAM_SCALE_SPEED			7.f
+#define PAM_MAX_SCALE			3.f
+#define PAM_SPIN_SPEED			360.f
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -97,15 +97,15 @@ void C_PlayerAttachedModel::ClientThink( void )
 
 	if ( m_iFlags & PAM_ANIMATE_RANDOMLY && gpGlobals->curtime > m_flAnimateAt )
 	{
-		float flDelta = RandomFloat(0.2,0.4) * (RandomInt(0,1) == 1 ? 1 : -1);
-		float flCycle = clamp( GetCycle() + flDelta, 0, 1 );
+		float flDelta = RandomFloat(0.2, 0.4) * (RandomInt(0, 1) == 1 ? 1 : -1);
+		float flCycle = Clamp( GetCycle() + flDelta, 0.f, 1.f );
 		SetCycle( flCycle );
 		m_flAnimateAt = gpGlobals->curtime + PAM_ANIMATE_TIME;
 	}
 
 	if ( m_iFlags & PAM_ROTATE_RANDOMLY && gpGlobals->curtime > m_flRotateAt )
 	{
-		SetLocalAngles( QAngle(0,0,RandomFloat(0,360)) );
+		SetLocalAngles( QAngle(0, 0, RandomFloat(0, 360) ) );
 		m_flRotateAt = gpGlobals->curtime + PAM_ROTATE_TIME;
 	}
 
@@ -117,7 +117,7 @@ void C_PlayerAttachedModel::ClientThink( void )
 
 	if ( m_iFlags & PAM_SCALEUP )
 	{
-		m_flScale = min( m_flScale + (gpGlobals->frametime * PAM_SCALE_SPEED), PAM_MAX_SCALE );
+		m_flScale = Min( m_flScale + (gpGlobals->frametime * PAM_SCALE_SPEED), PAM_MAX_SCALE );
 	}
 }
 
@@ -134,4 +134,67 @@ void C_PlayerAttachedModel::ApplyBoneMatrixTransform( matrix3x4_t& transform )
 	VectorScale( transform[0], m_flScale, transform[0] );
 	VectorScale( transform[1], m_flScale, transform[1] );
 	VectorScale( transform[2], m_flScale, transform[2] );
+}
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_PlayerRelativeModel::Initialize( const char *szModelName, C_BaseEntity *pParent, Vector vecOffset, QAngle vecAngle, float flMovementScale, float flLifetime, int iFlags )
+{
+	AddEffects( EF_NORECEIVESHADOW | EF_NOSHADOW );
+	if ( !InitializeAsClientEntity( szModelName, RENDER_GROUP_OPAQUE_ENTITY ) )
+	{
+		Release();
+		return false;
+	}
+
+	SetParent( pParent ); 
+	SetLocalOrigin( vec3_origin );
+	SetLocalAngles( vec3_angle );
+
+	AddSolidFlags( FSOLID_NOT_SOLID );
+
+	SetLifetime( flLifetime );
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
+	SetCycle( 0 );
+
+	m_angMutation = vec3_angle;
+	m_iFlags = iFlags;
+	m_flScale = flMovementScale;
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_PlayerRelativeModel::ClientThink( void )
+{
+	CBaseEntity *pMoveParent = GetOwnerEntity();
+	if ( pMoveParent == nullptr )
+	{
+		Release();
+		return;
+	}
+
+	if ( m_flExpiresAt != PAM_PERMANENT )
+	{
+		if( m_flExpiresAt < gpGlobals->curtime )
+		{
+			Release();
+			return;
+		}
+	}
+
+	Vector vecTranslation( 0 );
+	if ( m_iFlags & PAM_SPIN_Z )
+	{
+		m_angMutation.y += gpGlobals->frametime * m_flScale;
+		VectorRotate( m_vecOffset, m_angMutation, vecTranslation );
+	}
+
+	SetAbsOrigin( pMoveParent->GetAbsOrigin() + vecTranslation );
+	SetAbsAngles( m_vecAngOffset + m_angMutation );
 }

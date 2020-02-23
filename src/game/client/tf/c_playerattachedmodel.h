@@ -40,4 +40,34 @@ private:
 	float	m_flScale;
 };
 
+class C_PlayerRelativeModel : public C_BaseAnimating
+{
+	DECLARE_CLASS( C_PlayerRelativeModel, C_BaseAnimating );
+public:
+	
+	bool	Initialize( const char *pszModelName, C_BaseEntity *pParent, Vector vecOffset, QAngle vecAngle, float flMovementScale, float flLifetime, int iFlags );
+	void	ClientThink( void );
+
+	void	SetLifetime( float flLifetime )
+	{
+		if ( flLifetime == PAM_PERMANENT )
+		{
+			m_flExpiresAt = PAM_PERMANENT;
+		}
+		else
+		{
+			// Expire when the lifetime is up
+			m_flExpiresAt = gpGlobals->curtime + flLifetime;
+		}
+	}
+
+protected:
+	float m_flExpiresAt;
+	int m_iFlags;
+	float m_flScale;
+	Vector m_vecOffset;
+	QAngle m_vecAngOffset;
+	QAngle m_angMutation;
+};
+
 #endif // C_PLAYERATTACHEDMODEL_H
