@@ -18,6 +18,7 @@
 // Client specific.
 #else
 #include "c_tf_player.h"
+#include "c_baseobject.h"
 #endif
 
 #define TF_SPEED_BUFF_DURATION_LEGACY 3.0f	// Values used before mid-2016.
@@ -329,7 +330,7 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, Mel
 									 vecSwingMaxs * flBoundsMult, 
 									 pList[i], COLLISION_GROUP_NONE, &trace );
 
-					enumResults->AddToTail( trace );
+					enumResults->Element( enumResults->AddToTail() ) = trace;
 				}
 			}
 
