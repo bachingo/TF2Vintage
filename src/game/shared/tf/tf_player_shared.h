@@ -325,6 +325,11 @@ public:
 
 	int		GetSequenceForDeath( CBaseAnimating *pAnim, int iDamageCustom );
 
+#ifdef GAME_DLL
+	void	AddAttributeToPlayer( char const *szName, float flValue );
+	void	RemoveAttributeFromPlayer( char const *szName );
+#endif
+
 	// Banners
 	void	UpdateRageBuffsAndRage( void );
 	void	SetRageMeter( float flRagePercent, int iBuffType );
@@ -417,6 +422,7 @@ private:
 	void OnAddInPurgatory( void );
 	void OnAddMarkedForDeath( void );
 	void OnAddHalloweenThriller( void );
+	void OnAddHalloweenBombHead( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -442,6 +448,7 @@ private:
 	void OnRemoveInPurgatory( void );
 	void OnRemoveMarkedForDeath( void );
 	void OnRemoveHalloweenThriller( void );
+	void OnRemoveHalloweenBombHead( void );
 
 	float GetCritMult( void );
 

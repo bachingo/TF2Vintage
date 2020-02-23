@@ -58,6 +58,7 @@
 #include "basemodelpanel.h"
 #include "c_team.h"
 #include "collisionutils.h"
+#include "c_merasmus_bomb_effect.h"
 // for spy material proxy
 #include "proxyentity.h"
 #include "materialsystem/imaterial.h"
@@ -4893,6 +4894,8 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 	// Reset rage
 	m_Shared.ResetRageSystem();
 
+	m_flCreateBombHeadAt = -1.0f;
+
 	m_hFirstGib = NULL;
 	m_hSpawnedGibs.Purge();
 }
@@ -5556,6 +5559,54 @@ CBaseCombatWeapon *C_TFPlayer::Weapon_GetSlot( int slot ) const
 	}
 
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void C_TFPlayer::CreateBombinomiconHint( void )
+{
+	if ( !IsLocalPlayer() )
+		return;
+
+	Vector vecOffset( -40.0, 0, 120.0 ); QAngle angOffset( 30.0, 0, 0 );
+	m_hBombinomicon = C_MerasmusBombEffect::Create( "models/props_halloween/bombonomicon.mdl", this, vecOffset, angOffset, 100.0f, 4.0f, PAM_SPIN_Z );
+
+	m_flCreateBombHeadAt = gpGlobals->curtime + 2.0;
+
+	CSoundParameters parms;
+	if ( !GetParametersForSound( "Halloween.BombinomiconSpin", parms, "" ) )
+		return;
+
+	CSingleUserRecipientFilter filter( this );
+	EmitSound_t emit( parms );
+	EmitSound( filter, m_hBombinomicon->entindex(), emit );
+}
+
+void C_TFPlayer::DestroyBombinomiconHint( void )
+{
+	if ( m_hBombinomicon )
+		m_hBombinomicon->Release();
+}
+
+void C_TFPlayer::UpdateHalloweenBombHead( void )
+{
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) )
+	{
+		if( m_hBombHat != nullptr )
+			return;
+
+		if ( m_flCreateBombHeadAt > gpGlobals->curtime )
+			return;
+
+		int iHead = LookupAttachment( "head" );
+		m_hBombHat = C_PlayerAttachedModel::Create( "models/props_lakeside_event/bomb_temp_hat.mdl", this, iHead, vec3_origin, PAM_PERMANENT );
+	}
+	else
+	{
+		if ( m_hBombHat )
+			m_hBombHat->Release();
+	}
 }
 
 //-----------------------------------------------------------------------------

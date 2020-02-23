@@ -566,6 +566,12 @@ public:
 
 	IntervalTimer m_lastCalledMedic;
 
+	void				SetBombHeadTimestamp( void );
+	float				GetTimeSinceWasBombHead( void ) const;
+	void				BombHeadExplode( bool bSuicide );
+	IntervalTimer		m_lastWasBombHead;
+	bool				m_bDiedWithBombHead;
+
 private:
 
 	int					GetAutoTeam( void );

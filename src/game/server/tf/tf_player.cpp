@@ -1283,6 +1283,7 @@ void CTFPlayer::Spawn()
 
 	m_purgatoryDuration.Invalidate();
 	m_lastCalledMedic.Invalidate();
+	m_lastWasBombHead.Invalidate();
 
 	m_nForceTauntCam = 0;
 
@@ -1318,6 +1319,8 @@ void CTFPlayer::Spawn()
 	m_Shared.ResetRageSystem();
 
 	m_Shared.SetShieldChargeMeter( 100.0f );
+
+	m_bDiedWithBombHead = false;
 
 	// This makes the surrounding box always the same size as the standing collision box
 	// helps with parts of the hitboxes that extend out of the crouching hitbox, eg with the
@@ -2873,6 +2876,42 @@ void CTFPlayer::PhysObjectWake()
 	IPhysicsObject *pObj = VPhysicsGetObject();
 	if ( pObj )
 		pObj->Wake();
+}
+
+void CTFPlayer::SetBombHeadTimestamp( void )
+{
+	m_lastWasBombHead.Start();
+}
+
+float CTFPlayer::GetTimeSinceWasBombHead( void ) const
+{
+	return m_lastWasBombHead.GetElapsedTime();
+}
+
+void CTFPlayer::BombHeadExplode( bool bKilled )
+{
+	if ( TFGameRules()->m_hBosses.IsEmpty() || TFGameRules()->m_hBosses.Head() == nullptr )
+		return;
+
+	if ( TFGameRules()->State_Get() != GR_STATE_RND_RUNNING )
+		return;
+
+	Vector vecOrigin = EyePosition();
+	CPVSFilter filter( vecOrigin );
+
+	TE_TFExplosion( filter, 0, vecOrigin, Vector( 0, 0, 1.0f ), -1, entindex() );
+
+	CTakeDamageInfo info( this, this, NULL, vecOrigin, vecOrigin, 40.f, DMG_BLAST | DMG_USEDISTANCEMOD, TF_DMG_CUSTOM_MERASMUS_PLAYER_BOMB, &vecOrigin );
+	CTFRadiusDamageInfo radiusInfo;
+	radiusInfo.info	= &info;
+	radiusInfo.m_flRadius = 100.0;
+	radiusInfo.m_vecSrc = vecOrigin;
+
+	if ( bKilled )
+		radiusInfo.m_pEntityIgnore = this;
+
+	TFGameRules()->RadiusDamage( radiusInfo );
+	UTIL_ScreenShake( vecOrigin, 15.0, 5.0, 2.0, 750.0, SHAKE_START, true );
 }
 
 //-----------------------------------------------------------------------------
@@ -6466,6 +6505,9 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	CTakeDamageInfo info_modified = info;
 	int iDamageCustom = info.GetDamageCustom();
 
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) )
+		m_bDiedWithBombHead = true;
+
 	// Ragdoll, gib, or death animation.
 	bool bRagdoll = true;
 	bool bGib = false;
@@ -7113,7 +7155,11 @@ void CTFPlayer::DropFakeWeapon( CTFWeaponBase *pWeapon )
 //-----------------------------------------------------------------------------
 void CTFPlayer::PlayerDeathThink( void )
 {
-	//overridden, do nothing
+	if ( m_bDiedWithBombHead )
+	{
+		m_bDiedWithBombHead = false;
+		BombHeadExplode( true );
+	}
 }
 
 //-----------------------------------------------------------------------------

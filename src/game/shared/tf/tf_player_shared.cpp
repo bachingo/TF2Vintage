@@ -910,6 +910,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 		OnAddHalloweenThriller();
 		break;
 
+	case TF_COND_HALLOWEEN_BOMB_HEAD:
+		OnAddHalloweenBombHead();
+		break;
+
 	default:
 		break;
 	}
@@ -1060,10 +1064,29 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		OnRemoveHalloweenThriller();
 		break;
 
+	case TF_COND_HALLOWEEN_BOMB_HEAD:
+		OnRemoveHalloweenBombHead();
+		break;
+
 	default:
 		break;
 	}
 }
+
+#ifdef GAME_DLL
+void CTFPlayerShared::AddAttributeToPlayer( char const *szName, float flValue )
+{
+	CEconAttributeDefinition *pDefinition = GetItemSchema()->GetAttributeDefinitionByName( szName );
+	if ( pDefinition )
+		m_pOuter->GetAttributeList()->SetRuntimeAttributeValue( pDefinition, flValue );
+}
+
+void CTFPlayerShared::RemoveAttributeFromPlayer( char const *szName )
+{
+	CEconAttributeDefinition *pDefinition = GetItemSchema()->GetAttributeDefinitionByName( szName );
+	m_pOuter->GetAttributeList()->RemoveAttribute( pDefinition );
+}
+#endif
 
 int CTFPlayerShared::GetMaxBuffedHealth( void )
 {
@@ -1505,6 +1528,8 @@ void CTFPlayerShared::ConditionThink( void )
 	UpdateSanguisugeHealth();
 	UpdateChargeMeter();
 	UpdateEnergyDrinkMeter();
+#else
+	m_pOuter->UpdateHalloweenBombHead();
 #endif
 }
 
@@ -2283,6 +2308,46 @@ void CTFPlayerShared::OnRemoveHalloweenThriller( void )
 #else
 	if ( m_pOuter == C_TFPlayer::GetLocalTFPlayer() )
 		m_pOuter->StopSound( "Halloween.dance_loop" );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddHalloweenBombHead( void )
+{
+#ifdef GAME_DLL
+	if ( InCond( TF_COND_HALLOWEEN_KART ) )
+		RemoveAttributeFromPlayer( "head scale" );
+#else
+	m_pOuter->UpdateHalloweenBombHead();
+	m_pOuter->CreateBombinomiconHint();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveHalloweenBombHead( void )
+{
+#ifdef GAME_DLL
+	if ( InCond( TF_COND_HALLOWEEN_KART ) )
+		AddAttributeToPlayer( "head scale", 3.0 );
+
+	if ( m_pOuter->IsAlive() )
+	{
+		Vector vecOrigin = m_pOuter->GetAbsOrigin();
+		m_pOuter->BombHeadExplode( false );
+
+		if ( TFGameRules()->State_Get() != GR_STATE_PREROUND )
+			TFGameRules()->PushAllPlayersAway( vecOrigin, 150.0, 350.0, TEAM_ANY, NULL );
+
+		CPVSFilter filter( vecOrigin );
+		TE_TFParticleEffect( filter, 0, "bombinomicon_burningdebris", vecOrigin, vec3_angle );
+	}
+#else
+	m_pOuter->UpdateHalloweenBombHead();
+	m_pOuter->DestroyBombinomiconHint();
 #endif
 }
 

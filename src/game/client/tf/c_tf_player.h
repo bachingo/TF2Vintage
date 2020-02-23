@@ -287,6 +287,10 @@ public:
 
 	bool ShouldDrawSpyAsDisguised( void );
 
+	void CreateBombinomiconHint( void );
+	void DestroyBombinomiconHint( void );
+	void UpdateHalloweenBombHead( void );
+
 protected:
 
 	void ResetFlexWeights( CStudioHdr *pStudioHdr );
@@ -308,6 +312,10 @@ private:
 
 	QAngle				m_angTauntPredViewAngles;
 	QAngle				m_angTauntEngViewAngles;
+
+	CHandle<CBaseAnimating> m_hBombHat;
+	CHandle<CBaseAnimating> m_hBombinomicon;
+	float				m_flCreateBombHeadAt;
 
 public:
 
