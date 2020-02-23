@@ -128,6 +128,7 @@
 	"TTG Sam Revolver"								"1"
 	"The Chargin' Targe"							"1"
 	"The Holy Mackerel"								"1"
+	"Team Fists of Steel"							"1"
 	"Rocket Jumper"									"1"
 	"Frying Pan"									"1"
 	"The Horseless Headless Horseman's Headtaker" 	"1"

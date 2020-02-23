@@ -7163,6 +7163,53 @@
 			}
 			"particle_suffix"	"holy_mackerel"
 		}
+		"10331"
+		{
+			"name"	"Team Fists of Steel"
+			"prefab"	"weapon_gloves weapon_reskin"
+			"year"		"2011"
+			"item_name"	"#TF_FistsOfSteel"
+			"propername"	"1"
+			"item_logname"	"steel_fists"
+			"item_iconname"	"steel_fists"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel_legacy"			
+			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel_legacy.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hands"			"1"
+				}
+				"sound_melee_miss"	"Weapon_MetalGloves.Miss"
+				"sound_melee_hit"	"Weapon_MetalGloves.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_MetalGloves.HitWorld"
+				"sound_burst"		"Weapon_MetalGloves.MissCrit"
+				"animation_replacement"
+				{
+					"ACT_VM_DRAW"	"ACT_MELEE_VM_ITEM1_DRAW"
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT1_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT1_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT1_VM_INSPECT_END"
+				}
+			}
+			"attributes"
+			{
+				"dmg from ranged reduced"
+				{
+					"attribute_class"	"dmg_from_ranged"
+					"value"	"0.4"
+				}
+				"dmg from melee increased"
+				{
+					"attribute_class"	"dmg_from_melee"
+					"value"	"2.0"
+				}
+			}
+		}
 		"10237"
 		{
 			"name"	"Rocket Jumper"
