@@ -89,7 +89,7 @@ public:
 
 	static CTFWeaponBaseGrenadeProj *Create( const char *szName, const Vector &position, const QAngle &angles, 
 				const Vector &velocity, const AngularImpulse &angVelocity, 
-				CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer );
+				CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags = 0 );
 
 	int						OnTakeDamage( const CTakeDamageInfo &info );
 
@@ -151,8 +151,7 @@ public:
 	DECLARE_CLASS( CTFWeaponBaseMerasmusGrenade, CTFWeaponBaseGrenadeProj );
 	DECLARE_NETWORKCLASS();
 
-	CTFWeaponBaseMerasmusGrenade();
-	virtual					~CTFWeaponBaseMerasmusGrenade();
+	virtual					~CTFWeaponBaseMerasmusGrenade() {}
 
 	virtual int				GetDamageCustom( void ) const { return TF_DMG_CUSTOM_MERASMUS_GRENADE; }
 	virtual int				GetCustomParticleIndex( void );
