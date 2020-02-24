@@ -161,6 +161,19 @@ void CTFWeaponBaseGrenadeProj::Precache( void )
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFWeaponBaseGrenadeProj::GetCustomParticleIndex( void ) const
+{
+	int nHalloweenExplosion = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nHalloweenExplosion, halloween_pumpkin_explosions );
+	if( nHalloweenExplosion == 0 )
+		return -1;
+
+	return GetParticleSystemIndex( "halloween_explosion" );
+}
+
 //=============================================================================
 //
 // Client specific functions.
@@ -232,19 +245,6 @@ CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, 
 	}
 
 	return pGrenade;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFWeaponBaseGrenadeProj::GetCustomParticleIndex( void ) const
-{
-	int nHalloweenExplosion = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nHalloweenExplosion, halloween_pumpkin_explosions );
-	if( nHalloweenExplosion == 0 )
-		return -1;
-
-	return GetParticleSystemIndex( "halloween_explosion" );
 }
 
 //-----------------------------------------------------------------------------
