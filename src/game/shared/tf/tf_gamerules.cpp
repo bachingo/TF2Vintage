@@ -3865,7 +3865,19 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 			pszCustomKill = "headtaker";
 			break;
 		case TF_DMG_CUSTOM_BLEEDING:
-			pszCustomKill = "bleed_kill";
+			pszCustomKill = "tf_weapon_bleed_kill";
+			break;
+		case TF_DMG_CUSTOM_MERASMUS_PLAYER_BOMB:
+			pszCustomKill = "merasmus_player_bomb";
+			break;
+		case TF_DMG_CUSTOM_MERASMUS_GRENADE:
+			pszCustomKill = "merasmus_grenade";
+			break;
+		case TF_DMG_CUSTOM_MERASMUS_ZAP:
+			pszCustomKill = "merasmus_zap";
+			break;
+		case TF_DMG_CUSTOM_MERASMUS_DECAPITATION:
+			pszCustomKill = "merasmus_decap";
 			break;
 	}
 
