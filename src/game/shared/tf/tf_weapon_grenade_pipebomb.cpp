@@ -636,7 +636,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		else
 		{
 			int nNoBounce = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOwnerEntity(), nNoBounce, grenade_no_bounce );
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), nNoBounce, grenade_no_bounce );
 			if ( nNoBounce )
 			{
 				Vector velocity; AngularImpulse impulse;

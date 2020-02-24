@@ -222,7 +222,7 @@ void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 //-----------------------------------------------------------------------------
 CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, const Vector &position, const QAngle &angles, 
 													   const Vector &velocity, const AngularImpulse &angVelocity, 
-													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags )
+													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer )
 {
 	CTFWeaponBaseGrenadeProj *pGrenade = static_cast<CTFWeaponBaseGrenadeProj*>( CBaseEntity::Create( szName, position, angles, pOwner ) );
 	if ( pGrenade )
@@ -232,6 +232,19 @@ CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, 
 	}
 
 	return pGrenade;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFWeaponBaseGrenadeProj::GetCustomParticleIndex( void ) const
+{
+	int nHalloweenExplosion = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nHalloweenExplosion, halloween_pumpkin_explosions );
+	if( nHalloweenExplosion == 0 )
+		return -1;
+
+	return GetParticleSystemIndex( "halloween_explosion" );
 }
 
 //-----------------------------------------------------------------------------
@@ -324,29 +337,39 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 
 	CSoundEnt::InsertSound ( SOUND_COMBAT, GetAbsOrigin(), BASEGRENADE_EXPLOSION_VOLUME, 3.0 );
 
+	int nLargeExplosions = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nLargeExplosions, use_large_smoke_explosion );
+	if ( nLargeExplosions == 1 )
+	{
+		DispatchParticleEffect( "explosionTrail_seeds_mvm", GetAbsOrigin(), GetAbsAngles() );
+		DispatchParticleEffect( "fluidSmokeExpl_ring_mvm", GetAbsOrigin(), GetAbsAngles() );
+	}
+
+	CTFPlayer *pVictim = ToTFPlayer( pTrace->m_pEnt );
+
 	// Explosion effect on client
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
 	if ( UseImpactNormal() )
 	{
-		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
+		if ( pVictim )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), pVictim->entindex(), SPECIAL1, GetCustomParticleIndex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), -1, SPECIAL1, GetCustomParticleIndex() );
 		}
 	}
 	else
 	{
-		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
+		if ( pVictim )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pVictim->entindex(), SPECIAL1, GetCustomParticleIndex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), -1, SPECIAL1, GetCustomParticleIndex() );
 		}
 	}
 
@@ -360,7 +383,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 		DrawRadius( flRadius );
 	}
 
-	CTakeDamageInfo newInfo( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, TF_DMG_CUSTOM_NONE, &vecReported );
+	CTakeDamageInfo newInfo( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, GetDamageCustom(), &vecReported );
 	CTFRadiusDamageInfo radiusInfo;
 	radiusInfo.info = &newInfo;
 	radiusInfo.m_vecSrc = vecOrigin;
@@ -839,4 +862,31 @@ void CTFWeaponBaseGrenadeProj::DrawRadius( float flRadius )
 }
 
 
+#endif
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponBaseMerasmusGrenade, DT_TFWeaponBaseMerasmusGrenade )
+
+BEGIN_NETWORK_TABLE( CTFWeaponBaseMerasmusGrenade, DT_TFWeaponBaseMerasmusGrenade )
+END_NETWORK_TABLE()
+
+LINK_ENTITY_TO_CLASS( tf_weaponbase_merasmus_grenade, CTFWeaponBaseMerasmusGrenade );
+PRECACHE_REGISTER( tf_weaponbase_merasmus_grenade );
+
+int CTFWeaponBaseMerasmusGrenade::GetCustomParticleIndex( void )
+{
+	return GetParticleSystemIndex( "merasmus_dazed_explosion" );
+}
+
+#ifdef CLIENT_DLL
+int CTFWeaponBaseMerasmusGrenade::DrawModel( int flags )
+{
+	float flTimeAlive = gpGlobals->curtime - m_flSpawnTime;
+	if( flTimeAlive < 0.1 )
+		return 0;
+
+	if ( flTimeAlive < 0.2 )
+		SetModelScale( (flTimeAlive + -0.1) * 10.0f );
+
+	return BaseClass::DrawModel( flags );
+}
 #endif

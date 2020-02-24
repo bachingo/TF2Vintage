@@ -111,6 +111,8 @@ public:
 	int m_iWeaponID;
 	int m_iItemID;
 	int m_nEntIndex;
+	int m_nSound;
+	int m_nParticleIndex;
 };
 
 // Singleton to fire explosion objects
@@ -127,24 +129,30 @@ CTETFExplosion::CTETFExplosion( const char *name ) : CBaseTempEntity( name )
 	m_iWeaponID = TF_WEAPON_NONE;
 	m_iItemID = -1;
 	m_nEntIndex = 0;
+	m_nSound = SPECIAL1;
+	m_nParticleIndex = -1;
 }
 
 IMPLEMENT_SERVERCLASS_ST( CTETFExplosion, DT_TETFExplosion )
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropVector( SENDINFO_NOCHECK( m_vecNormal ), 6, 0, -1.0f, 1.0f ),
-	SendPropInt( SENDINFO_NOCHECK( m_iWeaponID ), Q_log2( TF_WEAPON_COUNT )+1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NOCHECK( m_iWeaponID ), Q_log2( TF_WEAPON_COUNT ) + 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO_NOCHECK( m_iItemID ) ),
+	SendPropInt( SENDINFO_NOCHECK( m_nSound ) ),
+	SendPropInt( SENDINFO_NOCHECK( m_nParticleIndex ) ),
 	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS ),
-END_SEND_TABLE()
+END_SEND_TABLE();
 
-void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex, int iItemID /*= -1*/ )
+void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex, int iItemID /*= -1*/, int nSound /*= SPECIAL1*/, int nParticleIndex /*= -1*/ )
 {
 	VectorCopy( vecOrigin, g_TETFExplosion.m_vecOrigin );
 	VectorCopy( vecNormal, g_TETFExplosion.m_vecNormal );
 	g_TETFExplosion.m_iWeaponID	= iWeaponID;	
 	g_TETFExplosion.m_nEntIndex	= nEntIndex;
+	g_TETFExplosion.m_nSound = nSound;
+	g_TETFExplosion.m_nParticleIndex = nParticleIndex;
 
 	// Send it over the wire
 	g_TETFExplosion.Create( filter, flDelay );
@@ -217,12 +225,12 @@ void CTETFParticleEffect::Init( void )
 
 
 IMPLEMENT_SERVERCLASS_ST( CTETFParticleEffect, DT_TETFParticleEffect )
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecStart[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropQAngles( SENDINFO_NOCHECK( m_vecAngles ), 7 ),
 	SendPropInt( SENDINFO_NOCHECK( m_iParticleSystemIndex ), 16, SPROP_UNSIGNED ),	// probably way too high
 	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS ),
@@ -234,10 +242,10 @@ IMPLEMENT_SERVERCLASS_ST( CTETFParticleEffect, DT_TETFParticleEffect )
 	SendPropVector( SENDINFO_NOCHECK( m_CustomColors.m_vecColor2 ) ),
 	SendPropInt( SENDINFO_NOCHECK( m_bControlPoint1 ) ),
 	SendPropInt( SENDINFO_NOCHECK( m_ControlPoint1.m_eParticleAttachment ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[0] ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[1] ) ),
-	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[2] ) ),
-END_SEND_TABLE()
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 0 ] ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 1 ] ) ),
+	SendPropFloat( SENDINFO_NOCHECK( m_ControlPoint1.m_vecOffset[ 2 ] ) ),
+END_SEND_TABLE();
 
 //-----------------------------------------------------------------------------
 // Purpose: 
