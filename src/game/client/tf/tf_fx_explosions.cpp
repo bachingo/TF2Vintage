@@ -191,5 +191,5 @@ IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TETFExplosion, DT_TETFExplosion, CTETFExplosio
 	RecvPropInt( RECVINFO( m_nSound ) ),
 	RecvPropInt( RECVINFO( m_nParticleIndex ) ),
 	RecvPropInt( "entindex", 0, SIZEOF_IGNORE, 0, RecvProxy_ExplosionEntIndex ),
-END_RECV_TABLE()
+END_RECV_TABLE();
 

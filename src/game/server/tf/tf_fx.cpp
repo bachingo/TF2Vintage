@@ -134,9 +134,9 @@ CTETFExplosion::CTETFExplosion( const char *name ) : CBaseTempEntity( name )
 }
 
 IMPLEMENT_SERVERCLASS_ST( CTETFExplosion, DT_TETFExplosion )
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 0 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 1 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
-	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[ 2 ] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[0] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[1] ), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropFloat( SENDINFO_NOCHECK( m_vecOrigin[2] ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropVector( SENDINFO_NOCHECK( m_vecNormal ), 6, 0, -1.0f, 1.0f ),
 	SendPropInt( SENDINFO_NOCHECK( m_iWeaponID ), Q_log2( TF_WEAPON_COUNT ) + 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO_NOCHECK( m_iItemID ) ),
