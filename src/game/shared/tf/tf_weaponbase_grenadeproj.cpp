@@ -250,8 +250,16 @@ CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity,
+											CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo )
+{
+	InitGrenade( velocity, angVelocity, pOwner, weaponInfo.m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage, weaponInfo.m_flDamageRadius );
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, 
-									CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo )
+									CBaseCombatCharacter *pOwner, int nDamage, float flRadius )
 {
 	// We can't use OwnerEntity for grenades, because then the owner can't shoot them with his hitscan weapons (due to collide rules)
 	// Thrower is used to store the person who threw the grenade, for damage purposes.
@@ -265,8 +273,8 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetFriction( 0.2f ); /*BaseClass::GetGrenadeFriction()*/
 	SetElasticity( 0.45f );  /*BaseClass::GetGrenadeElasticity()*/
 
-	SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
-	SetDamageRadius( weaponInfo.m_flDamageRadius );
+	SetDamage( nDamage );
+	SetDamageRadius( flRadius );
 
 	ChangeTeam( pOwner->GetTeamNumber() );
 

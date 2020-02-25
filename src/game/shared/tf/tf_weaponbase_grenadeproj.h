@@ -36,6 +36,7 @@ public:
 	virtual void			Precache();
 
 	void					InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo );
+	virtual void			InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, int nDamage, float flRadius );
 
 	// Unique identifier.
 	virtual int GetWeaponID( void ) const				{ return TF_WEAPON_NONE; }
