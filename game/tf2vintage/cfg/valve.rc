@@ -15,6 +15,6 @@ stuffcmds
 
 // display the startup level
 // UNCOMMENT THIS IF YOU WANT TO SEE THE BACKGROUND MAP
-//startupmenu
+startupmenu
 
 sv_unlockedchapters 99
