@@ -36,9 +36,8 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 {
 	m_iAttributeDefinitionIndex = iIndex;
 	
-	attrib_data_union_t value;
-	value.flVal = flValue;
-	m_iRawValue32 = value.iVal;
+	m_iRawValue32 = FloatBits( flValue );
+
 
 	if ( pszAttributeClass )
 	{
