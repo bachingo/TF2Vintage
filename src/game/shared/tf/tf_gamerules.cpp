@@ -2689,7 +2689,7 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 	else if ( /*IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE )*/false )
 	{
 		/*CWheelOfDoom *pWheelOfDoom = (CWheelOfDoom *)gEntList.FindEntityByClassname( NULL, "wheel_of_doom" );
-		if ( pWheelOfDoom && !pWheelOfDoom->IsDoneBoardcastingEffectSound() )
+		if ( pWheelOfDoom && !pWheelOfDoom->IsDoneBroadcastingEffectSound() )
 			return;
 
 		if (CMerasmus::m_level > 3)

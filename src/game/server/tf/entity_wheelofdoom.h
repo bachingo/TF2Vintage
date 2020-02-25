@@ -71,6 +71,8 @@ public:
 	void			SpinThink( void );
 	void			IdleThink( void );
 
+	bool			IsDoneBroadcastingEffectSound( void ) const;
+
 	void			InputSpin( inputdata_t &data );
 	void			InputClearAllEffects( inputdata_t &data );
 

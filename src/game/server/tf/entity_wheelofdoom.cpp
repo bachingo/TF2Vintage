@@ -628,6 +628,11 @@ void CWheelOfDoom::IdleThink( void )
 	}
 }
 
+bool CWheelOfDoom::IsDoneBroadcastingEffectSound( void ) const
+{
+	return gpGlobals->curtime < m_flEffectEndTime;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
