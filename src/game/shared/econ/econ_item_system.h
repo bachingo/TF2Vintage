@@ -51,7 +51,7 @@ public:
 	int GetAttributeIndex( const char *classname );
 	ISchemaAttributeType *GetAttributeType( const char *type ) const;
 
-	KeyValues *m_pSchema;
+	KeyValues *GetSchemaKeyValues( void ) const { return m_pSchema; }
 
 protected:
 	CUtlDict< int, unsigned short >					m_GameInfo;
@@ -63,6 +63,7 @@ protected:
 	CUtlVector< attr_type_t >						m_AttributeTypes;
 
 private:
+	KeyValues *m_pSchema;
 	bool m_bInited;
 };
 
@@ -79,14 +80,14 @@ public:
 private:
 	char const *m_pName;
 	T *m_pHandle;
-	KeyValues *m_pSchema;
+	KeyValues *const m_pSchema;
 };
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 inline CSchemaFieldHandle<CEconAttributeDefinition>::CSchemaFieldHandle( char const *name )
-	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+	: m_pName( name ), m_pSchema( GetItemSchema()->GetSchemaKeyValues() )
 {
 	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( name );
 }
@@ -96,12 +97,6 @@ inline CSchemaFieldHandle<CEconAttributeDefinition>::CSchemaFieldHandle( char co
 //-----------------------------------------------------------------------------
 inline CSchemaFieldHandle<CEconAttributeDefinition>::operator const CEconAttributeDefinition *( )
 {
-	if ( m_pSchema == GetItemSchema()->m_pSchema )
-		return m_pHandle;
-
-	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( m_pName );
-	m_pSchema = GetItemSchema()->m_pSchema;
-
 	return m_pHandle;
 }
 
@@ -110,7 +105,7 @@ inline CSchemaFieldHandle<CEconAttributeDefinition>::operator const CEconAttribu
 // Purpose: 
 //-----------------------------------------------------------------------------
 inline CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
-	: m_pName( name ), m_pSchema( GetItemSchema()->m_pSchema )
+	: m_pName( name ), m_pSchema( GetItemSchema()->GetSchemaKeyValues() )
 {
 	m_pHandle = GetItemSchema()->GetItemDefinitionByName( name );
 }
