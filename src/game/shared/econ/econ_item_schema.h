@@ -326,6 +326,7 @@ class CEconItemDefinition
 public:
 	CEconItemDefinition()
 	{
+		m_pDefinition = NULL;
 		index = 0xFFFFFFFF;
 		CLEAR_STR( name );
 		used_by_classes = 0;
@@ -367,6 +368,7 @@ public:
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		CLEAR_STR( holiday_restriction );
+		Q_memset( visual, 0, sizeof( PerTeamVisuals_t ) * TF_TEAM_COUNT );
 	}
 	~CEconItemDefinition();
 
@@ -377,6 +379,7 @@ public:
 	void IterateAttributes( IEconAttributeIterator *iter );
 
 public:
+	KeyValues *m_pDefinition;
 	unsigned int index;
 	char name[128];
 	CUtlDict< bool, unsigned short > capabilities;
