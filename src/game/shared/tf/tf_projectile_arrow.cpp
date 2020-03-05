@@ -439,7 +439,7 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			ray.Init( boxPosition, vecArrowEnd );
 
 			trace_t trace;
-			IntersectRayWithBox( ray, boxPosition - pCurrent->bbmin, boxPosition + pCurrent->bbmax, 0, &trace );
+			IntersectRayWithBox( ray, boxPosition + pCurrent->bbmin, boxPosition + pCurrent->bbmax, 0, &trace );
 
 			float flDistance = ( trace.endpos - vecArrowEnd ).Length();
 			if ( flDistance < flClosest )

@@ -134,7 +134,7 @@ void CScriptParser::InitParser(const char *pszPath,
 		} 
 		if(!FileParser(g_szSwap, false,ExtCMP(g_szSwap,GetEncryptedEXT())))
 		{
-			DevMsg("[script_parser.cpp] ERROR: Unable to Parse Passed Script File!");
+			DevMsg("[script_parser.cpp] ERROR: Unable to Parse Passed Script File! %s", g_szSwap);
 		}
 	}
 	m_bParsed = true;
