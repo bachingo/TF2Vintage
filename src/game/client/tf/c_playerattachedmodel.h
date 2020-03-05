@@ -40,12 +40,15 @@ private:
 	float	m_flScale;
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: A clientside, visual only model that's attached to players relatively in world space
+//-----------------------------------------------------------------------------
 class C_PlayerRelativeModel : public C_BaseAnimating
 {
 	DECLARE_CLASS( C_PlayerRelativeModel, C_BaseAnimating );
 public:
 	
-	bool	Initialize( const char *pszModelName, C_BaseEntity *pParent, Vector vecOffset, QAngle vecAngle, float flMovementScale, float flLifetime, int iFlags );
+	bool	Initialize( const char *pszModelName, C_BaseEntity *pParent, Vector vecOffset, QAngle angOffset, float flMovementScale, float flLifetime, int iFlags );
 	void	ClientThink( void );
 
 	void	SetLifetime( float flLifetime )

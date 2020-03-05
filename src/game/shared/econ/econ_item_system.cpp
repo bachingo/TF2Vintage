@@ -182,6 +182,8 @@ public:
 
 	void Parse( KeyValues *pKeyValuesData, bool bWildcard, const char *szFileWithoutEXT )
 	{
+		GetItemSchema()->m_pSchema = pKeyValuesData->MakeCopy();
+
 		KeyValues *pPrefabs = pKeyValuesData->FindKey( "prefabs" );
 		if ( pPrefabs )
 		{
@@ -252,6 +254,12 @@ public:
 	{
 		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
+			if ( GetItemSchema()->m_PrefabsValues.IsValidIndex( GetItemSchema()->m_PrefabsValues.Find( pSubData->GetName() ) ) )
+			{
+				Error( "Duplicate prefab name (%s)\n", pSubData->GetName() );
+				continue;
+			}
+
 			KeyValues *Values = pSubData->MakeCopy();
 			GetItemSchema()->m_PrefabsValues.Insert( pSubData->GetName(), Values );
 		}

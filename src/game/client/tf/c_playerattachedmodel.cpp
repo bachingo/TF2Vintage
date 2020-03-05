@@ -141,7 +141,7 @@ void C_PlayerAttachedModel::ApplyBoneMatrixTransform( matrix3x4_t& transform )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool C_PlayerRelativeModel::Initialize( const char *szModelName, C_BaseEntity *pParent, Vector vecOffset, QAngle vecAngle, float flMovementScale, float flLifetime, int iFlags )
+bool C_PlayerRelativeModel::Initialize( const char *szModelName, C_BaseEntity *pParent, Vector vecOffset, QAngle angOffset, float flMovementScale, float flLifetime, int iFlags )
 {
 	AddEffects( EF_NORECEIVESHADOW | EF_NOSHADOW );
 	if ( !InitializeAsClientEntity( szModelName, RENDER_GROUP_OPAQUE_ENTITY ) )
@@ -163,6 +163,8 @@ bool C_PlayerRelativeModel::Initialize( const char *szModelName, C_BaseEntity *p
 	m_angMutation = vec3_angle;
 	m_iFlags = iFlags;
 	m_flScale = flMovementScale;
+	m_vecOffset = vecOffset;
+	m_vecAngOffset = angOffset;
 
 	return true;
 }
