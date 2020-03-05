@@ -574,9 +574,6 @@ void CTFMinigun::HandleFireOnEmpty( void )
 //-----------------------------------------------------------------------------
 void CTFMinigun::UseRealMinigunBrassEject( void )
 {
-#ifdef GAME_DLL
-	return;
-#endif
 #ifdef CLIENT_DLL
 	// If minigun shells or shells in general aren't enabled, bail.
 	if (tf2v_minigun_ejectbrass.GetBool() && cl_ejectbrass.GetBool() )
@@ -671,7 +668,7 @@ void CTFMinigun::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Qua
 		RadianEuler a;
 		QuaternionAngles( q[ iBarrelBone ], a );
 		a.x = GetBarrelRotation();
-		AngleQuaternion( RadianEuler( 0, 0, GetBarrelRotation() ), q[iBarrelBone] );
+		AngleQuaternion( a, q[ iBarrelBone ] );
 	}
 }
 
@@ -962,9 +959,7 @@ void CTFMinigun::WeaponSoundUpdate()
 		}
 		break;
 	case AC_STATE_SPINNING:
-		if ( (CAttributeManager::AttribHookValue<int>( 0, "minigun_no_spin_sounds", this ) ) && (CAttributeManager::AttribHookValue<int>( 0, "minigun_no_spin_sounds", this ) != 0) )
-			break;		// silent spinning.
-		else
+		if ( CAttributeManager::AttribHookValue<int>( 0, "minigun_no_spin_sounds", this ) == 0 )
 			iSound = SPECIAL3;	// spinning sound
 		break;
 	case AC_STATE_DRYFIRE:
