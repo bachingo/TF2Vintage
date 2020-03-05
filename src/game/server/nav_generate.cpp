@@ -20,6 +20,8 @@
 
 #ifdef TERROR
 #include "func_simpleladder.h"
+#else
+#include "func_ladder.h"
 #endif
 
 // NOTE: This has to be the last file included!
@@ -150,12 +152,15 @@ void CNavMesh::BuildLadders( void )
 #ifdef TERROR
 	CFuncSimpleLadder *ladder = NULL;
 	while( (ladder = dynamic_cast< CFuncSimpleLadder * >(gEntList.FindEntityByClassname( ladder, "func_simpleladder" ))) != NULL )
+#else
+	CFuncLadder *ladder = NULL;
+	while( (ladder = dynamic_cast< CFuncLadder * >(gEntList.FindEntityByClassname( ladder, "func_ladder" ))) != NULL )
+#endif
 	{
 		Vector mins, maxs;
 		ladder->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
 		CreateLadder( mins, maxs, 0.0f );
 	}
-#endif
 }
 
 
