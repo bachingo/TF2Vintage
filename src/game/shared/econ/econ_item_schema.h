@@ -355,7 +355,7 @@ public:
 		CLEAR_STR( model_vision_filtered );
 		CLEAR_STR( model_world );
 		CLEAR_STR( equip_region );
-		Q_memset( model_player_per_class, 0, sizeof( model_player_per_class ) );
+		Q_memset( &model_player_per_class, 0, sizeof( model_player_per_class ) );
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
 		CLEAR_STR( extra_wearable );
@@ -368,7 +368,6 @@ public:
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		CLEAR_STR( holiday_restriction );
-		Q_memset( visual, 0, sizeof( PerTeamVisuals_t ) * TF_TEAM_COUNT );
 	}
 	~CEconItemDefinition();
 
