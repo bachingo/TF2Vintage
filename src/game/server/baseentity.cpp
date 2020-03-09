@@ -8133,10 +8133,13 @@ void CC_Ent_Create( const CCommand& args )
 	MDLCACHE_CRITICAL_SECTION();
 
 	CBasePlayer *pPlayer = UTIL_GetCommandClient();
-	if (!pPlayer)
+	if ( !pPlayer )
 	{
 		return;
 	}
+
+	if ( !Q_stricmp( args[1], "player" ) || !Q_stricmp( args[1], "tf_bot" ) || !Q_stricmp( args[1], "worldspawn" ) )
+		return;
 
 	// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
 	if ( !Q_stricmp( args[1], "point_servercommand" ) )
