@@ -13,34 +13,54 @@
 #include "gameeventlistener.h"
 #include <igamesystem.h>
 
+template<typename T, typename I = unsigned short>
+class CCopyableStringMap : public CUtlMap<char const *, T, I>
+{
+public:
+	explicit CCopyableStringMap( int growSize = 0, int initSize = 0 )
+		: CUtlMap<char const *, T, I>( growSize, initSize, CaselessStringLessThan ) {}
+	CCopyableStringMap( CCopyableStringMap const &map ) 
+		: CUtlMap<char const *, T, I>( CaselessStringLessThan ) { DeepCopyMap( map, this ); }
+	CCopyableStringMap<T, I> &operator=( const CCopyableStringMap<T, I> &other ) { DeepCopyMap( other, this ); return *this; }
+};
+typedef CCopyableStringMap<KeyValues::types_t> ParamMap_t;
+
 // Used to intercept game events for VScript and call OnGameEvent_<eventname>.
 class CScriptGameEventListener : public CGameEventListener, public CBaseGameSystem
 {
 public:
-	CScriptGameEventListener();
 	virtual ~CScriptGameEventListener();
 
 	virtual void SetVScriptEventValues( IGameEvent *event, HSCRIPT table );
 
-public: // IGameEventListener Interface
-	
-	void ListenForGameEvent( const char *name )
+	enum
 	{
-		gameeventmanager->AddListener( this, name, true );
-	}
+		TYPE_LOCAL, 
+		TYPE_STRING,
+		TYPE_FLOAT,
+		TYPE_LONG,
+		TYPE_SHORT,
+		TYPE_BYTE,
+		TYPE_BOOL,
+	};
 
-	void StopListeningForAllEvents()
-	{
-		gameeventmanager->RemoveListener( this );
-	}
+public: // IGameEventListener Interface
 
 	virtual void FireGameEvent( IGameEvent * event );
 	
 public: // CBaseGameSystem overrides
 
 	virtual bool Init();
+
+private:
+	typedef struct
+	{
+		char const *m_szEventName;
+		ParamMap_t m_EventParams;
+	} GameEvents_t;
+	CUtlDict<GameEvents_t> m_GameEvents;
 };
 
-extern CScriptGameEventListener *g_pScriptGameEventListener;
+extern CScriptGameEventListener *ScriptGameEventListener();
 
 #endif

@@ -667,7 +667,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	if ( IsX360() && (matchmaking = (IMatchmaking *)appSystemFactory( VENGINE_MATCHMAKING_VERSION, NULL )) == NULL )
 		return false;
 
-	if ( CommandLine()->CheckParm( "-vscript" ) )
+	if ( !CommandLine()->CheckParm( "-noscripting" ) )
 	{
 	#if defined( TF_VINTAGE )
 		char szCwd[1024];
@@ -765,7 +765,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	IGameSystem::Add( SoundEmitterSystem() );
 
 	// Add VScript game event listener system
-	IGameSystem::Add( g_pScriptGameEventListener );
+	IGameSystem::Add( ScriptGameEventListener() );
 
 	// load Mod specific game events ( MUST be before InitAllSystems() so it can pickup the mod specific events)
 	gameeventmanager->LoadEventsFromFile("resource/ModEvents.res");
