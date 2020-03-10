@@ -152,7 +152,10 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
+		{
+			Error( "%s not found.\n", filename );
 			return false;
+		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )
@@ -172,7 +175,10 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
+		{
+			Error( "%s not found.\n", filename );
 			return false;
+		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )
@@ -192,7 +198,10 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
+		{
+			Error( "%s not found.\n", filename );
 			return false;
+		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )
@@ -212,7 +221,10 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
+		{
+			Error( "%s not found.\n", filename );
 			return false;
+		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )
