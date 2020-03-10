@@ -2665,10 +2665,9 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 void CTFGameRules::SpawnHalloweenBoss( void )
 {
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
-	{
-		SpawnZombieMob();
-		return;
-	}
+		return;		// ??
+	if ( !IsHolidayActive( kHoliday_Halloween ) )
+		return SpawnZombieMob();
 
 	float fSpawnInterval;
 	float fSpawnVariation;
