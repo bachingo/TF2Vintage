@@ -11,6 +11,34 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+
+template<typename T, typename I>
+CCopyableStringMap<T, I>::CCopyableStringMap( CCopyableStringMap<T, I> const &other )
+	: CUtlMap<char const *, T, I>( CaselessStringLessThan )
+{
+	Purge();
+	FOR_EACH_MAP_FAST( other, i )
+	{
+		const char *key = V_strdup( other.Key( i ) );
+		Insert( key, other.Element( i ) );
+	}
+}
+
+template<typename T, typename I>
+CCopyableStringMap<T, I> &CCopyableStringMap<T, I>::operator=( CCopyableStringMap<T, I> const &other )
+{
+	Purge();
+	FOR_EACH_MAP_FAST( other, i )
+	{
+		const char *key = V_strdup( other.Key( i ) );
+		Insert( key, other.Element( i ) );
+	}
+
+	return *this;
+}
+
+
+
 static const char *const g_sGameEventTypeMap[] =
 {
 	"local",	// 0 : don't network this field
@@ -35,14 +63,15 @@ CScriptGameEventListener::~CScriptGameEventListener()
 //-----------------------------------------------------------------------------
 void CScriptGameEventListener::FireGameEvent( IGameEvent *event )
 {
-	if ( !g_pScriptVM )
-		return;
-
 	char szGameEventFunctionName[256];
 	Q_snprintf( szGameEventFunctionName, sizeof(szGameEventFunctionName), "OnGameEvent_%s", event->GetName() );
 
 	if ( sv_debug_script_events.GetBool() )
 		DevMsg( "\t\"%s\"", szGameEventFunctionName );
+
+
+	if ( !g_pScriptVM )
+		return;
 
 	HSCRIPT hGameEventFunc = g_pScriptVM->LookupFunction( szGameEventFunctionName );
 	if ( hGameEventFunc )
@@ -101,7 +130,7 @@ void CScriptGameEventListener::SetVScriptEventValues( IGameEvent *event, HSCRIPT
 //-----------------------------------------------------------------------------
 bool CScriptGameEventListener::Init()
 {
-	auto RegisterEvent =[ & ]( KeyValues *pEvent ) {
+	auto RegisterEvent =[&]( KeyValues *pEvent ) {
 		if ( pEvent == NULL )
 			return false;
 
@@ -113,7 +142,7 @@ bool CScriptGameEventListener::Init()
 			const char *keyName = pSubKey->GetName();
 			const char *type = pSubKey->GetString();
 
-			auto const GetType =[ = ] () -> int {
+			auto const GetType =[=] () -> int {
 				for ( int i=0; i < ARRAYSIZE( g_sGameEventTypeMap ); ++i )
 				{
 					if ( Q_stricmp( type, g_sGameEventTypeMap[ i ] ) == 0 )
@@ -152,10 +181,7 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
-		{
-			Error( "%s not found.\n", filename );
 			return false;
-		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )
@@ -175,10 +201,7 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
-		{
-			Error( "%s not found.\n", filename );
 			return false;
-		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )
@@ -198,10 +221,7 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
-		{
-			Error( "%s not found.\n", filename );
 			return false;
-		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )
@@ -221,10 +241,7 @@ bool CScriptGameEventListener::Init()
 		KeyValuesAD autodelete( key );
 
 		if  ( !key->LoadFromFile( filesystem, filename, "GAME" ) )
-		{
-			Error( "%s not found.\n", filename );
 			return false;
-		}
 
 		int count = 0;	// number new events
 		FOR_EACH_TRUE_SUBKEY( key, pSubKey )

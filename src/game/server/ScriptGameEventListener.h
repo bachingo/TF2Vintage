@@ -17,13 +17,25 @@ template<typename T, typename I = unsigned short>
 class CCopyableStringMap : public CUtlMap<char const *, T, I>
 {
 public:
+	virtual ~CCopyableStringMap();
 	explicit CCopyableStringMap( int growSize = 0, int initSize = 0 )
 		: CUtlMap<char const *, T, I>( growSize, initSize, CaselessStringLessThan ) {}
-	CCopyableStringMap( CCopyableStringMap const &map ) 
-		: CUtlMap<char const *, T, I>( CaselessStringLessThan ) { DeepCopyMap( map, this ); }
-	CCopyableStringMap<T, I> &operator=( const CCopyableStringMap<T, I> &other ) { DeepCopyMap( other, this ); return *this; }
+	CCopyableStringMap( CCopyableStringMap const &map );
+	CCopyableStringMap<T, I> &operator=( const CCopyableStringMap<T, I> &other );
 };
 typedef CCopyableStringMap<KeyValues::types_t> ParamMap_t;
+
+template<typename T, typename I>
+inline CCopyableStringMap<T, I>::~CCopyableStringMap()
+{
+	for ( int i=0; i < MaxElement(); ++i )
+	{
+		if ( !IsValidIndex( i ) )
+			continue;
+
+		delete[] Key( i );
+	}
+}
 
 // Used to intercept game events for VScript and call OnGameEvent_<eventname>.
 class CScriptGameEventListener : public CGameEventListener, public CBaseGameSystem
