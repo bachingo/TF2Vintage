@@ -1915,8 +1915,8 @@ void CTFPlayer::ValidateWeapons( bool bRegenerate )
 
 	for ( int i = 0; i < WeaponCount(); i++ )
 	{
-		CTFWeaponBase *pWeapon = static_cast<CTFWeaponBase *>( GetWeapon( i ) );
-		if ( !pWeapon )
+		CTFWeaponBase *pWeapon = assert_cast<CTFWeaponBase *>( GetWeapon( i ) );
+		if ( pWeapon == nullptr )
 			continue;
 
 		// Skip builder as we'll handle it separately.
@@ -1984,13 +1984,11 @@ void CTFPlayer::ValidateWearables( void )
 
 	for ( int i = 0; i < GetNumWearables(); i++ )
 	{
-		CTFWearable *pWearable = static_cast<CTFWearable *>( GetWearable( i ) );
-
-		if ( !pWearable )
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+		if ( pWearable == nullptr )
 			continue;
 
 		CEconItemDefinition *pItemDef = pWearable->GetItem()->GetStaticData();
-
 		if ( pItemDef )
 		{
 			int iSlot = pItemDef->GetLoadoutSlot( iClass );

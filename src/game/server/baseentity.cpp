@@ -582,10 +582,6 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	// Therefore, we set the TeamNum from the InitialTeamNum in Activate
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetTeam", InputSetTeam ),
 
-	DEFINE_INPUT( m_fadeMinDist, FIELD_FLOAT, "fademindist" ),
-	DEFINE_INPUT( m_fadeMaxDist, FIELD_FLOAT, "fademaxdist" ),
-	DEFINE_KEYFIELD( m_flFadeScale, FIELD_FLOAT, "fadescale" ),
-
 	DEFINE_INPUTFUNC( FIELD_VOID, "Kill", InputKill ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "KillHierarchy", InputKillHierarchy ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Use", InputUse ),
