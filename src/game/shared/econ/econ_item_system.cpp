@@ -252,7 +252,7 @@ public:
 
 	void ParsePrefabs( KeyValues *pKeyValuesData )
 	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
 		{
 			if ( GetItemSchema()->m_PrefabsValues.IsValidIndex( GetItemSchema()->m_PrefabsValues.Find( pSubData->GetName() ) ) )
 			{
@@ -267,35 +267,194 @@ public:
 
 	void ParseItems( KeyValues *pKeyValuesData )
 	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+		for ( KeyValues *pData = pKeyValuesData->GetFirstTrueSubKey(); pData != NULL; pData = pData->GetNextTrueSubKey() )
 		{
 			// Skip over default item, not sure why it's there.
-			if ( !V_stricmp( pSubData->GetName(), "default" ) )
+			if ( V_stricmp( pData->GetName(), "default" ) == 0 )
 				continue;
 
-			CEconItemDefinition *Item = new CEconItemDefinition;
-			int index = atoi( pSubData->GetName() );
+			CEconItemDefinition *pItem = new CEconItemDefinition;
+			int index = atoi( pData->GetName() );
+			pItem->index = index;
 
-			if ( ParseItemRec( pSubData, Item ) )
+			KeyValues *pDefinition = new KeyValues( pData->GetName() );
+			MergeDefinitionPrefabs( pDefinition, pData );
+			pItem->m_pDefinition = pDefinition;
+
+			GET_STRING( pItem, pDefinition, name );
+			GET_BOOL( pItem, pDefinition, show_in_armory );
+
+			GET_STRING( pItem, pDefinition, item_class );
+			GET_STRING( pItem, pDefinition, item_name );
+			GET_STRING( pItem, pDefinition, item_description );
+			GET_STRING( pItem, pDefinition, item_type_name );
+
+			const char *pszQuality = pDefinition->GetString( "item_quality" );
+			if ( pszQuality[0] )
 			{
-				Item->index = index;
-				GetItemSchema()->m_Items.Insert( index, Item );
+				int iQuality = UTIL_StringFieldToInt( pszQuality, g_szQualityStrings, ARRAYSIZE( g_szQualityStrings ) );
+				if ( iQuality != -1 )
+				{
+					pItem->item_quality = iQuality;
+				}
 			}
-			else
+
+			// All items are vintage quality
+			//pItem->item_quality = QUALITY_VINTAGE;
+
+			GET_STRING( pItem, pDefinition, item_logname );
+			GET_STRING( pItem, pDefinition, item_iconname );
+
+			const char *pszLoadoutSlot = pDefinition->GetString( "item_slot" );
+
+			if ( pszLoadoutSlot[0] )
 			{
-				delete Item;
+				pItem->item_slot = UTIL_StringFieldToInt( pszLoadoutSlot, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
 			}
+
+			const char *pszAnimSlot = pDefinition->GetString( "anim_slot" );
+			if ( pszAnimSlot[0] )
+			{
+				if ( V_strcmp( pszAnimSlot, "FORCE_NOT_USED" ) != 0 )
+				{
+					pItem->anim_slot = UTIL_StringFieldToInt( pszAnimSlot, g_AnimSlots, TF_WPN_TYPE_COUNT );
+				}
+				else
+				{
+					pItem->anim_slot = -2;
+				}
+			}
+
+			GET_BOOL( pItem, pDefinition, baseitem );
+			GET_INT( pItem, pDefinition, min_ilevel );
+			GET_INT( pItem, pDefinition, max_ilevel );
+
+			GET_STRING( pItem, pDefinition, image_inventory );
+			GET_INT( pItem, pDefinition, image_inventory_size_w );
+			GET_INT( pItem, pDefinition, image_inventory_size_h );
+
+			GET_STRING( pItem, pDefinition, model_player );
+			GET_STRING( pItem, pDefinition, model_vision_filtered );
+			GET_STRING( pItem, pDefinition, model_world );
+			GET_STRING( pItem, pDefinition, extra_wearable );
+
+			GET_INT( pItem, pDefinition, attach_to_hands );
+			GET_INT( pItem, pDefinition, attach_to_hands_vm_only );
+			GET_BOOL( pItem, pDefinition, act_as_wearable );
+			GET_INT( pItem, pDefinition, hide_bodygroups_deployed_only );
+
+			GET_BOOL( pItem, pDefinition, is_reskin );
+			GET_BOOL( pItem, pDefinition, specialitem );
+			GET_BOOL( pItem, pDefinition, demoknight );
+			GET_STRING( pItem, pDefinition, holiday_restriction );
+			GET_BOOL( pItem, pDefinition, itemfalloff );
+			GET_INT( pItem, pDefinition, year );
+			GET_BOOL( pItem, pDefinition, is_custom_content );
+
+			for ( KeyValues *pSubData = pDefinition->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+			{
+				if ( !V_stricmp( pSubData->GetName(), "capabilities" ) )
+				{
+					GET_VALUES_FAST_BOOL( pItem->capabilities, pSubData );
+				}
+				else if ( !V_stricmp( pSubData->GetName(), "tags" ) )
+				{
+					GET_VALUES_FAST_BOOL( pItem->tags, pSubData );
+				}
+				else if ( !V_stricmp( pSubData->GetName(), "model_player_per_class" ) )
+				{
+					for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
+					{
+						const char *pszClass = pClassData->GetName();
+						int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+
+						if ( iClass != -1 )
+						{
+							V_strncpy( pItem->model_player_per_class[iClass], pClassData->GetString(), 128 );
+						}
+					}
+				}
+				else if ( !V_stricmp( pSubData->GetName(), "used_by_classes" ) )
+				{
+					for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
+					{
+						const char *pszClass = pClassData->GetName();
+						int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+
+						if ( iClass != -1 )
+						{
+							pItem->used_by_classes |= ( 1 << iClass );
+							const char *pszSlotname = pClassData->GetString();
+
+							if ( pszSlotname[0] != '1' )
+							{
+								int iSlot = UTIL_StringFieldToInt( pszSlotname, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
+
+								if ( iSlot != -1 )
+									pItem->item_slot_per_class[iClass] = iSlot;
+							}
+						}
+					}
+				}
+				else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
+				{
+					for ( KeyValues *pAttribData = pSubData->GetFirstTrueSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextTrueSubKey() )
+					{
+						static_attrib_t attribute;
+						if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
+							continue;
+
+						pItem->attributes.AddToTail( attribute );
+					}
+				}
+				else if ( !V_stricmp( pSubData->GetName(), "static_attrs" ) )
+				{
+					for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
+					{
+						static_attrib_t attribute;
+						if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
+							continue;
+
+						pItem->attributes.AddToTail( attribute );
+					}
+				}
+				else if ( !V_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
+				{
+					// Deliberately skipping this.
+				}
+				else if ( !V_strnicmp( pSubData->GetName(), "visuals", 7 ) )
+				{
+					// Figure out what team is this meant for.
+					int iVisuals = UTIL_StringFieldToInt( pSubData->GetName(), g_TeamVisualSections, TF_TEAM_COUNT );
+
+					if ( iVisuals != -1 )
+					{
+						if ( iVisuals == TEAM_UNASSIGNED )
+						{
+							// Hacky: for standard visuals block, assign it to all teams at once.
+							for ( int i = 0; i < TF_TEAM_COUNT; i++ )
+							{
+								if ( i == TEAM_SPECTATOR )
+									continue;
+
+								ParseVisuals( pSubData, pItem, i );
+							}
+						}
+						else
+						{
+							ParseVisuals( pSubData, pItem, iVisuals );
+						}
+					}
+				}
+			}
+
+			GetItemSchema()->m_Items.Insert( index, pItem );
 		}
-		for ( unsigned int i = 0; i < GetItemSchema()->m_PrefabsValues.Count(); i++ )
-		{
-			GetItemSchema()->m_PrefabsValues[i]->deleteThis();
-		}
-		GetItemSchema()->m_PrefabsValues.RemoveAll();
 	};
 
 	void ParseAttributes( KeyValues *pKeyValuesData )
 	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
 		{
 			CEconAttributeDefinition *pAttribute = new CEconAttributeDefinition;
 			pAttribute->index = V_atoi( pSubData->GetName() );
@@ -434,198 +593,85 @@ public:
 		return true;
 	}
 
-	bool ParseItemRec( KeyValues *pData, CEconItemDefinition* pItem )
+protected:
+	void MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues *pSchemeData )
 	{
 		char prefab[64];
-		Q_snprintf( prefab, sizeof( prefab ), pData->GetString( "prefab" ) );	//check if there's prefab for prefab.. PREFABSEPTION
+		Q_snprintf( prefab, sizeof( prefab ), pSchemeData->GetString( "prefab" ) );
 
 		if ( prefab[0] != '\0' )
 		{
+			//check if there's prefab for prefab.. PREFABSEPTION
 			CUtlStringList strings;
 			V_SplitString( prefab, " ", strings );
 
-			for( const char *pch : strings )
+			FOR_EACH_VEC_BACK( strings, i )
 			{
 				KeyValues *pPrefabValues = NULL;
-				FIND_ELEMENT( GetItemSchema()->m_PrefabsValues, pch, pPrefabValues );
+				FIND_ELEMENT( GetItemSchema()->m_PrefabsValues, strings[i], pPrefabValues );
 				if ( pPrefabValues )
-				{
-					ParseItemRec( pPrefabValues, pItem );
-				}
+					MergeDefinitionPrefabs( pDefinition, pPrefabValues );
 			}
 		}
 
-		GET_STRING( pItem, pData, name );
-		GET_BOOL( pItem, pData, show_in_armory );
+		InheritKVRec( pSchemeData, pDefinition );
+	}
 
-		GET_STRING( pItem, pData, item_class );
-		GET_STRING( pItem, pData, item_name );
-		GET_STRING( pItem, pData, item_description );
-		GET_STRING( pItem, pData, item_type_name );
-		
-		const char *pszQuality = pData->GetString( "item_quality" );
-		if ( pszQuality[0] )
+	void InheritKVRec( KeyValues *pFrom, KeyValues *pTo )
+	{
+		for ( KeyValues *pSubData = pFrom->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 		{
-			int iQuality = UTIL_StringFieldToInt( pszQuality, g_szQualityStrings, ARRAYSIZE( g_szQualityStrings ) );
-			if ( iQuality != -1 )
+			switch ( pSubData->GetDataType() )
 			{
-				pItem->item_quality = iQuality;
+				// Identifies the start of a subsection
+				case KeyValues::TYPE_NONE:
+				{
+					KeyValues *pKey = pTo->FindKey( pSubData->GetName() );
+					if ( pKey == NULL )
+					{
+						pKey = pTo->CreateNewKey();
+						pKey->SetName( pSubData->GetName() );
+					}
+
+					InheritKVRec( pSubData, pKey );
+					break;
+				}
+				// Actual types
+				case KeyValues::TYPE_STRING:
+				{
+					pTo->SetString( pSubData->GetName(), pSubData->GetString() );
+					break;
+				}
+				case KeyValues::TYPE_INT:
+				{
+					pTo->SetInt( pSubData->GetName(), pSubData->GetInt() );
+					break;
+				}
+				case KeyValues::TYPE_FLOAT:
+				{
+					pTo->SetFloat( pSubData->GetName(), pSubData->GetFloat() );
+					break;
+				}
+				case KeyValues::TYPE_WSTRING:
+				{
+					pTo->SetWString( pSubData->GetName(), pSubData->GetWString() );
+					break;
+				}
+				case KeyValues::TYPE_COLOR:
+				{
+					pTo->SetColor( pSubData->GetName(), pSubData->GetColor() );
+					break;
+				}
+				case KeyValues::TYPE_UINT64:
+				{
+					pTo->SetUint64( pSubData->GetName(), pSubData->GetUint64() );
+					break;
+				}
+				default:
+					break;
 			}
 		}
-		
-		// All items are vintage quality
-		//pItem->item_quality = QUALITY_VINTAGE;
-
-		GET_STRING( pItem, pData, item_logname );
-		GET_STRING( pItem, pData, item_iconname );
-
-		const char *pszLoadoutSlot = pData->GetString( "item_slot" );
-
-		if ( pszLoadoutSlot[0] )
-		{
-			pItem->item_slot = UTIL_StringFieldToInt( pszLoadoutSlot, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
-		}
-
-		const char *pszAnimSlot = pData->GetString( "anim_slot" );
-		if ( pszAnimSlot[0] )
-		{
-			if ( V_strcmp( pszAnimSlot, "FORCE_NOT_USED" ) != 0 )
-			{
-				pItem->anim_slot = UTIL_StringFieldToInt( pszAnimSlot, g_AnimSlots, TF_WPN_TYPE_COUNT );
-			}
-			else
-			{
-				pItem->anim_slot = -2;
-			}
-		}
-
-		GET_BOOL( pItem, pData, baseitem );
-		GET_INT( pItem, pData, min_ilevel );
-		GET_INT( pItem, pData, max_ilevel );
-
-		GET_STRING( pItem, pData, image_inventory );
-		GET_INT( pItem, pData, image_inventory_size_w );
-		GET_INT( pItem, pData, image_inventory_size_h );
-
-		GET_STRING( pItem, pData, model_player );
-		GET_STRING( pItem, pData, model_vision_filtered );
-		GET_STRING( pItem, pData, model_world );
-		GET_STRING( pItem, pData, extra_wearable );
-
-		GET_INT( pItem, pData, attach_to_hands );
-		GET_INT( pItem, pData, attach_to_hands_vm_only );
-		GET_BOOL( pItem, pData, act_as_wearable );
-		GET_INT( pItem, pData, hide_bodygroups_deployed_only );
-		
-		GET_BOOL( pItem, pData, is_reskin );
-		GET_BOOL( pItem, pData, specialitem );
-		GET_BOOL( pItem, pData, demoknight );
-		GET_STRING( pItem, pData, holiday_restriction );
-		GET_BOOL( pItem, pData, itemfalloff );
-		GET_INT( pItem, pData, year );
-		GET_BOOL( pItem, pData, is_custom_content );
-
-		for ( KeyValues *pSubData = pData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
-		{
-			if ( !V_stricmp( pSubData->GetName(), "capabilities" ) )
-			{
-				GET_VALUES_FAST_BOOL( pItem->capabilities, pSubData );
-			}
-			else if ( !V_stricmp( pSubData->GetName(), "tags" ) )
-			{
-				GET_VALUES_FAST_BOOL( pItem->tags, pSubData );
-			}
-			else if ( !V_stricmp( pSubData->GetName(), "model_player_per_class" ) )
-			{
-				for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
-				{
-					const char *pszClass = pClassData->GetName();
-					int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-
-					if ( iClass != -1 )
-					{
-						V_strncpy( pItem->model_player_per_class[iClass], pClassData->GetString(), 128 );
-					}
-				}
-			}
-			else if ( !V_stricmp( pSubData->GetName(), "used_by_classes" ) )
-			{
-				for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
-				{
-					const char *pszClass = pClassData->GetName();
-					int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-
-					if ( iClass != -1 )
-					{
-						pItem->used_by_classes |= ( 1 << iClass );
-						const char *pszSlotname = pClassData->GetString();
-
-						if ( pszSlotname[0] != '1' )
-						{
-							int iSlot = UTIL_StringFieldToInt( pszSlotname, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
-							
-							if ( iSlot != -1 )
-								pItem->item_slot_per_class[iClass] = iSlot;
-						}
-					}
-				}
-			}
-			else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
-			{
-				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
-				{
-					static_attrib_t attribute;
-					if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
-						continue;
-
-					pItem->attributes.AddToTail( attribute );
-				}
-			}
-			else if ( !V_stricmp( pSubData->GetName(), "static_attrs" ) )
-			{
-				for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
-				{
-					static_attrib_t attribute;
-					if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
-						continue;
-
-					pItem->attributes.AddToTail( attribute );
-				}
-			}
-			else if ( !V_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
-			{
-				// Deliberately skipping this.
-			}
-			else if ( !V_strnicmp( pSubData->GetName(), "visuals", 7 ) )
-			{
-				// Figure out what team is this meant for.
-				int iVisuals = UTIL_StringFieldToInt( pSubData->GetName(), g_TeamVisualSections, TF_TEAM_COUNT );
-
-				if ( iVisuals != -1 )
-				{
-					if ( iVisuals == TEAM_UNASSIGNED )
-					{
-						// Hacky: for standard visuals block, assign it to all teams at once.
-						for ( int i = 0; i < TF_TEAM_COUNT; i++ )
-						{
-							if ( i == TEAM_SPECTATOR )
-								continue;
-
-							ParseVisuals( pSubData, pItem, i );
-						}
-					}
-					else
-					{
-						ParseVisuals( pSubData, pItem, iVisuals );
-					}
-				}
-			}
-		}
-
-		return true;
-	};
-
-private:
+	}
 };
 CEconSchemaParser g_EconSchemaParser;
 

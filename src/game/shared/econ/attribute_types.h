@@ -13,7 +13,7 @@ class ISchemaAttributeType
 {
 public:
 	virtual ~ISchemaAttributeType() {}
-	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bGC = true ) const = 0;
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool b1 = true ) const = 0;
 	virtual void ConvertEconAttributeValueToString( const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t& value, std::string *pString ) const = 0;
 	virtual void InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const = 0;
 	virtual void UnloadEconAttributeValue( attrib_data_union_t *pValue ) const = 0;
@@ -100,12 +100,12 @@ inline bool CSchemaAttributeTypeBase<CAttribute_String>::OnIterateAttributeValue
 class CSchemaAttributeType_Default : public CSchemaAttributeTypeBase<unsigned int>
 {
 public:
-	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bGC = true ) const
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
 	{
-		if ( bGC )
+		if ( bUnk )
 		{
 			double val = 0.0;
-			if ( pString && pString[ 0 ] )
+			if ( pString && pString[0] )
 				val = strtod( pString, NULL );
 
 			pValue->flVal = val;
@@ -149,7 +149,7 @@ public:
 class CSchemaAttributeType_UInt64 : public CSchemaAttributeTypeBase<unsigned long long>
 {
 public:
-	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bGC = true ) const
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
 	{
 		*(pValue->lVal) = V_atoui64( pString );
 		return true;
@@ -175,7 +175,7 @@ public:
 class CSchemaAttributeType_Float : public CSchemaAttributeTypeBase<float>
 {
 public:
-	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bGC = true ) const
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
 	{
 		pValue->flVal = V_atof( pString );
 		return true;
@@ -201,7 +201,7 @@ public:
 class CSchemaAttributeType_String : public CSchemaAttributeTypeBase<CAttribute_String>
 {
 public:
-	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bGC = true ) const
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
 	{
 		CAttribute_String tmp;
 		tmp.Assign( pString );
