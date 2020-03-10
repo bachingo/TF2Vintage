@@ -97,7 +97,6 @@
 			"labelText"		"0:00"
 		}	
 	}
-}
 	
 	"ActiveTimerBG"
 	{
