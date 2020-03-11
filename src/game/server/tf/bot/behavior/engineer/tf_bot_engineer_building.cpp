@@ -38,7 +38,6 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::OnStart( CTFBot *me, Action<CTFBot>
 	m_iTries = 5;
 	m_outOfPositionTimer.Invalidate();
 	m_bHadASentry = false;
-	unk6 = false;
 	m_iMetalSource = UNKNOWN;
 
 	return Action<CTFBot>::Continue();
@@ -46,17 +45,17 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::OnStart( CTFBot *me, Action<CTFBot>
 
 ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 {
-	CBaseObject *sentry    = me->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
-	CBaseObject *dispenser = me->GetObjectOfType( OBJ_DISPENSER, OBJECT_MODE_NONE );
-	CBaseObject *entrance  = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_ENTRANCE );
-	CBaseObject *exit      = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_EXIT );
-
-	bool sentry_sapped = sentry ? sentry->HasSapper() : false;
-	bool dispenser_sapped = dispenser ? dispenser->HasSapper() : false;
+	CBaseObject *pSentry    = me->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
+	CBaseObject *pDispenser = me->GetObjectOfType( OBJ_DISPENSER, OBJECT_MODE_NONE );
+	CBaseObject *pEntrance  = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_ENTRANCE );
+	CBaseObject *pExit      = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_EXIT );
 
 	me->m_bLookingAroundForEnemies = true;
 
-	if ( !sentry )
+	bool bSentrySapped = pSentry ? pSentry->HasSapper() : false;
+	bool bDispenserSapped = pDispenser ? pDispenser->HasSapper() : false;
+
+	if ( !pSentry )
 	{
 		m_iMetalSource = UNKNOWN;
 
@@ -86,22 +85,19 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 		m_hHint = nullptr;
 	}
 
-	//if ( !unk6 )
 	if ( m_outOfPositionTimer.IsElapsed() )
 	{
 		m_outOfPositionTimer.Start( RandomFloat( 3.0f, 5.0f ) );
 		CheckIfSentryIsOutOfPosition( me );
 	}
 
-	unk6 = false;
-
-	if ( dispenser && dispenser->GetAbsOrigin().DistToSqr( sentry->GetAbsOrigin() ) > Square( 500.0f ) )
+	if ( pDispenser && pDispenser->GetAbsOrigin().DistToSqr( pSentry->GetAbsOrigin() ) > Square( 500.0f ) )
 	{
-		dispenser->DestroyObject();
-		dispenser = nullptr;
+		pDispenser->DestroyObject();
+		pDispenser = nullptr;
 	}
 
-	if ( sentry->GetUpgradeLevel() <= 2 )
+	if ( pSentry->GetUpgradeLevel() <= 2 )
 	{
 		if ( m_iMetalSource == UNKNOWN )
 			m_iMetalSource = IsMetalSourceNearby( me ) ? AVAILABLE : UNAVAILABLE;
@@ -113,15 +109,15 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 		}
 	}
 
-	bool b1 = sentry_sapped || sentry->GetTimeSinceLastInjury() < 1.0f || dispenser_sapped;
+	bool bPrioritizeRepair = bSentrySapped || me->GetTimeSinceLastInjury() < 1.0f || bDispenserSapped;
 
-	if ( !TFGameRules()->IsInTraining() || exit )
+	if ( !TFGameRules()->IsInTraining() || pExit )
 	{
-		if ( dispenser )
+		if ( pDispenser )
 		{
 			m_buildDispenserTimer.Reset();
 		}
-		else if ( m_buildDispenserTimer.IsElapsed() && !b1 )
+		else if ( m_buildDispenserTimer.IsElapsed() && !bPrioritizeRepair )
 		{
 			m_buildDispenserTimer.Start( 10.0f );
 			return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildDispenser, "Building a Dispenser" );
@@ -132,7 +128,7 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 	if ( TFGameRules()->IsInTraining() )
 		flBuildTeleTime = 5.0f;
 
-	if ( exit )
+	if ( pExit )
 	{
 		m_buildTeleportTimer.Reset();
 		
@@ -140,24 +136,34 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 		return Action<CTFBot>::Continue();
 	}
 
-	UpgradeAndMaintainBuildings( me );
-
-	if ( m_buildTeleportTimer.IsElapsed() && entrance && !b1 )
+	if ( m_buildTeleportTimer.IsElapsed() && pEntrance && !bPrioritizeRepair )
 	{
 		m_buildTeleportTimer.Start( flBuildTeleTime );
 
-		if ( !m_hHint )
+		if ( m_hHint )
 		{
-			if ( me->IsRangeLessThan( sentry, 300.0f ) )
-				return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit(), "Building Teleporter exit" );
+			CUtlVector<CBaseEntity *> hints;
+			CBaseTFBotHintEntity *pEntity = (CBaseTFBotHintEntity *)gEntList.FirstEnt();
+			while ( pEntity )
+			{
+				if ( !pEntity->IsDisabled() && me->InSameTeam( pEntity ) )
+					hints.AddToTail( pEntity );
 
-			UpgradeAndMaintainBuildings( me );
-			return Action<CTFBot>::Continue();
+				pEntity = (CBaseTFBotHintEntity *)gEntList.FindEntityByClassname( pEntity, "bot_hint_teleporter_exit" );
+			}
+
+			CBaseEntity *pHint = SelectClosestEntityByTravelDistance( me, hints, pSentry->GetLastKnownArea(), tf_bot_engineer_exit_near_sentry_range.GetFloat() );
+
+			Vector vecOrigin = pHint->GetAbsOrigin();
+			float flYaw = pHint->GetAbsAngles()[ YAW ];
+			return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit( vecOrigin, flYaw ), "Building teleporter exit at nearby hint" );
 		}
-	}
 
-	// Some collection of hints and a SearchSurroundingAreas happens
-	// return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit( hint ), "Building teleporter exit at nearby hint" );
+		if ( me->IsRangeLessThan( pSentry, 300.0f ) )
+			return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit(), "Building Teleporter exit" );
+	}
+	
+	UpgradeAndMaintainBuildings( me );
 	return Action<CTFBot>::Continue();
 }
 
@@ -172,48 +178,51 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::OnResume( CTFBot *me, Action<CTFBot
 }
 
 
-EventDesiredResult<CTFBot> CTFBotEngineerBuilding::OnTerritoryCaptured( CTFBot *actor, int territoryID )
+EventDesiredResult<CTFBot> CTFBotEngineerBuilding::OnTerritoryCaptured( CTFBot *me, int territoryID )
 {
 	return Action<CTFBot>::TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotEngineerBuilding::OnTerritoryLost( CTFBot *actor, int territoryID )
+EventDesiredResult<CTFBot> CTFBotEngineerBuilding::OnTerritoryLost( CTFBot *me, int territoryID )
 {
 	return Action<CTFBot>::TryContinue();
 }
 
 
-bool CTFBotEngineerBuilding::CheckIfSentryIsOutOfPosition( CTFBot *actor ) const
+bool CTFBotEngineerBuilding::CheckIfSentryIsOutOfPosition( CTFBot *me ) const
 {
-	CBaseObject *sentry = actor->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
-	if ( sentry == nullptr )
+	CBaseObject *pSentry = me->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
+	if ( pSentry == nullptr )
 		return false;
 
 	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 	{
-		CTeamTrainWatcher *pTrain = TFGameRules()->GetPayloadToPush( actor->GetTeamNumber() );
+		CTeamTrainWatcher *pTrain = TFGameRules()->GetPayloadToPush( me->GetTeamNumber() );
 		if ( pTrain )
 		{
 			float flDistance;
-			pTrain->ProjectPointOntoPath( sentry->GetAbsOrigin(), NULL, &flDistance );
+			pTrain->ProjectPointOntoPath( pSentry->GetAbsOrigin(), NULL, &flDistance );
 			if ( flDistance + SENTRYGUN_BASE_RANGE < pTrain->GetTrainDistanceAlongTrack() )
 				return true;
 		}
 
-		pTrain = TFGameRules()->GetPayloadToBlock( actor->GetTeamNumber() );
+		pTrain = TFGameRules()->GetPayloadToBlock( me->GetTeamNumber() );
 		if ( pTrain )
 		{
 			float flDistance;
-			pTrain->ProjectPointOntoPath( sentry->GetAbsOrigin(), NULL, &flDistance );
+			pTrain->ProjectPointOntoPath( pSentry->GetAbsOrigin(), NULL, &flDistance );
 			if ( flDistance + SENTRYGUN_BASE_RANGE < pTrain->GetTrainDistanceAlongTrack() )
 				return true;
 		}
 	}
 
-	sentry->UpdateLastKnownArea();
-	CNavArea *pArea = sentry->GetLastKnownArea();
-	CTeamControlPoint *pPoint = actor->GetMyControlPoint();
-	if ( !pArea || !pPoint )
+	pSentry->UpdateLastKnownArea();
+	CNavArea *pArea = pSentry->GetLastKnownArea();
+	if ( pArea == nullptr )
+		return false;
+
+	CTeamControlPoint *pPoint = me->GetMyControlPoint();
+	if ( pPoint == nullptr )
 		return false;
 
 	CNavArea *pCPArea = TFNavMesh()->GetMainControlPointArea( pPoint->GetPointIndex() );
@@ -221,114 +230,132 @@ bool CTFBotEngineerBuilding::CheckIfSentryIsOutOfPosition( CTFBot *actor ) const
 		return false;
 
 	// If a path can be built given the max distance then we aren't too far away yet
-	CTFBotPathCost cost( actor, FASTEST_ROUTE );
-	if ( NavAreaTravelDistance( pArea, pCPArea, cost, tf_bot_engineer_max_sentry_travel_distance_to_point.GetFloat() ) >= 0.0f ||
-		 NavAreaTravelDistance( pCPArea, pArea, cost, tf_bot_engineer_max_sentry_travel_distance_to_point.GetFloat() ) >= 0.0f )
-		return false;
-
-	return true;
-}
-
-bool CTFBotEngineerBuilding::IsMetalSourceNearby( CTFBot *actor ) const
-{
-	CUtlVector<CNavArea *> areas;
-	CollectSurroundingAreas( &areas, actor->GetLastKnownArea(), 2000.0f, 
-							 actor->GetLocomotionInterface()->GetStepHeight(), actor->GetLocomotionInterface()->GetDeathDropHeight() );
-
-	for ( int i=0; i<areas.Count(); ++i )
+	CTFBotPathCost func( me, FASTEST_ROUTE );
+	if ( NavAreaTravelDistance( pArea, pCPArea, func, tf_bot_engineer_max_sentry_travel_distance_to_point.GetFloat() ) < 0.0f )
 	{
-		CTFNavArea *pArea = static_cast<CTFNavArea *>( areas[i] );
-		if ( pArea->HasTFAttributes( AMMO ) )
-			return true;
-
-		if ( actor->GetTeamNumber() == TF_TEAM_RED && pArea->HasTFAttributes( RED_SPAWN_ROOM ) )
-			return true;
-
-		if ( actor->GetTeamNumber() == TF_TEAM_BLUE && pArea->HasTFAttributes( BLUE_SPAWN_ROOM ) )
+		if( NavAreaTravelDistance( pCPArea, pArea, func, tf_bot_engineer_max_sentry_travel_distance_to_point.GetFloat() ) < 0.0f )
 			return true;
 	}
 
 	return false;
 }
 
-void CTFBotEngineerBuilding::UpgradeAndMaintainBuildings( CTFBot *actor )
+bool CTFBotEngineerBuilding::IsMetalSourceNearby( CTFBot *me ) const
 {
-	CBaseObject *sentry    = actor->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
-	CBaseObject *dispenser = actor->GetObjectOfType( OBJ_DISPENSER, OBJECT_MODE_NONE );
+	CUtlVector<CTFNavArea *> areas;
+	CollectSurroundingAreas( &areas, me->GetLastKnownArea(), 2000.0f, 
+							 me->GetLocomotionInterface()->GetStepHeight(), me->GetLocomotionInterface()->GetDeathDropHeight() );
 
-	CBaseCombatWeapon *melee = actor->Weapon_GetSlot( 2 );
-	if ( melee )
-		actor->Weapon_Switch( melee );
-
-	if ( dispenser == nullptr )
+	for ( CTFNavArea *pArea : areas )
 	{
-		float dist = ( actor->GetAbsOrigin() - sentry->GetAbsOrigin() ).LengthSqr();
+		if ( pArea->HasTFAttributes( AMMO ) )
+			return true;
 
-		if ( dist < Square( 90.0f ) )
-			actor->PressCrouchButton( 0.5f );
+		if ( me->GetTeamNumber() == TF_TEAM_RED && pArea->HasTFAttributes( RED_SPAWN_ROOM ) )
+			return true;
 
-		if ( dist > Square( 75.0f ) )
+		if ( me->GetTeamNumber() == TF_TEAM_BLUE && pArea->HasTFAttributes( BLUE_SPAWN_ROOM ) )
+			return true;
+	}
+
+	return false;
+}
+
+void CTFBotEngineerBuilding::UpgradeAndMaintainBuildings( CTFBot *me )
+{
+	CBaseObject *pSentry    = me->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
+	CBaseObject *pDispenser = me->GetObjectOfType( OBJ_DISPENSER, OBJECT_MODE_NONE );
+
+	CBaseCombatWeapon *pMelee = me->Weapon_GetSlot( TF_LOADOUT_SLOT_MELEE );
+	if ( pMelee )
+		me->Weapon_Switch( pMelee );
+
+	if ( pDispenser == nullptr )
+	{
+		float flDist = ( me->GetAbsOrigin() - pSentry->GetAbsOrigin() ).Length();
+
+		if ( flDist < 90.0f )
+			me->PressCrouchButton( 0.5f );
+
+		if ( flDist > 75.0f )
 		{
 			if ( m_recomputePathTimer.IsElapsed() )
 			{
-				CTFBotPathCost cost( actor, FASTEST_ROUTE );
-				m_PathFollower.Compute( actor, sentry->WorldSpaceCenter(), cost );
+				CTFBotPathCost cost( me, FASTEST_ROUTE );
+				m_PathFollower.Compute( me, pSentry->WorldSpaceCenter(), cost );
 
 				m_recomputePathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
 			}
 			
-			m_PathFollower.Update( actor );
+			m_PathFollower.Update( me );
 		}
 		else
 		{
-			actor->m_bLookingAroundForEnemies = false;
+			me->m_bLookingAroundForEnemies = false;
 
-			actor->GetBodyInterface()->AimHeadTowards( sentry->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, nullptr, "Work on my Sentry" );
-			actor->PressFireButton();
+			me->GetBodyInterface()->AimHeadTowards( pSentry->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, nullptr, "Work on my Sentry" );
+			me->PressFireButton();
 		}
 
 		return;
 	}
 
-	Vector vecBetweenBuildings = ( dispenser->GetAbsOrigin() + sentry->GetAbsOrigin() ) / 2.0f;
-	float flSentryDist = ( actor->GetAbsOrigin() - sentry->GetAbsOrigin() ).LengthSqr();
-	float flDispenserDist = ( actor->GetAbsOrigin() - dispenser->GetAbsOrigin() ).LengthSqr();
+	Vector vecBetweenBuildings = ( pDispenser->GetAbsOrigin() + pSentry->GetAbsOrigin() ) / 2.0f;
+	float flSentryDist = ( me->GetAbsOrigin() - pSentry->GetAbsOrigin() ).Length();
+	float flDispenserDist = ( me->GetAbsOrigin() - pDispenser->GetAbsOrigin() ).Length();
 
-	if ( flSentryDist < Square( 90.0f ) || flDispenserDist < Square( 90.0f ) )
-		actor->PressCrouchButton( 0.5f );
+	if ( flSentryDist < 90.0f && flDispenserDist < 90.0f )
+		me->PressCrouchButton( 0.5f );
 
-	if ( abs( flSentryDist - flDispenserDist ) > Square( 25.0f ) || flSentryDist > Square( 75.0f ) || flDispenserDist > Square( 75.0f ) )
+	if ( abs( flSentryDist - flDispenserDist ) > 25.0f || flSentryDist > 75.0f || flDispenserDist > 75.0f )
 	{
 		if ( m_recomputePathTimer.IsElapsed() )
 		{
-			CTFBotPathCost cost( actor, FASTEST_ROUTE );
-			m_PathFollower.Compute( actor, vecBetweenBuildings, cost );
+			CTFBotPathCost cost( me, FASTEST_ROUTE );
+			m_PathFollower.Compute( me, vecBetweenBuildings, cost );
 
 			m_recomputePathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
 		}
 
-		m_PathFollower.Update( actor );
+		m_PathFollower.Update( me );
 	}
-	else if ( flSentryDist < Square( 75.0f ) || flDispenserDist < Square( 75.0f ) )
+	else if ( flSentryDist < 75.0f || flDispenserDist < 75.0f )
 	{
-		unk1.Invalidate();
-
 		// This is a horrible mess
-		CBaseObject *workingObject = sentry;
-		if ( sentry->HasSapper() )
-			workingObject = sentry;
-		else if ( dispenser->HasSapper() )
-			workingObject = dispenser;
-		else if ( sentry->GetTimeSinceLastInjury() >= 1.0f && sentry->GetHealth() >= sentry->GetMaxHealth() && !sentry->IsBuilding() )
-			workingObject = dispenser;
-		else if ( sentry->GetUpgradeLevel() > 2 )
-			workingObject = dispenser;
-		else if ( dispenser->GetHealth() >= dispenser->GetMaxHealth() && !dispenser->IsBuilding() )
-			workingObject = sentry;
+		CBaseObject *workingObject = pSentry;
+		if ( !pSentry->HasSapper() )
+		{
+			if ( pDispenser->HasSapper() )
+			{
+				workingObject = pDispenser;
+			}
+			else if ( pSentry->GetTimeSinceLastInjury() > 1.0 )
+			{
+				if ( pSentry->GetMaxHealth() <= pSentry->GetHealth() && !pSentry->IsBuilding() )
+				{
+					if ( pDispenser->IsBuilding() )
+					{
+						workingObject = pDispenser;
+					}
+					else if ( pSentry->GetUpgradeLevel() >= pSentry->GetMaxUpgradeLevel() )
+					{
+						if ( pDispenser->GetMaxHealth() <= pDispenser->GetHealth() )
+						{
+							if ( pDispenser->GetUpgradeLevel() < pSentry->GetUpgradeLevel() )
+								workingObject = pDispenser;
+						}
+						else
+						{
+							workingObject = pDispenser;
+						}
+					}
+				}
+			}
+		}
 
-		actor->m_bLookingAroundForEnemies = false;
+		me->m_bLookingAroundForEnemies = false;
 
-		actor->GetBodyInterface()->AimHeadTowards( workingObject->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, nullptr, "Work on my buildings" );
-		actor->PressFireButton();
+		me->GetBodyInterface()->AimHeadTowards( workingObject->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, nullptr, "Work on my buildings" );
+		me->PressFireButton();
 	}
 }

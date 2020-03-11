@@ -304,9 +304,7 @@ void CTFBotEngineerMoveToBuild::SelectBuildLocation( CTFBot *actor )
 	CTFBotHintSentrygun *pHint = dynamic_cast<CTFBotHintSentrygun *>( gEntList.FindEntityByClassname( NULL, "bot_hint_sentrygun" ) );
 	while ( pHint )
 	{
-		if ( pHint->m_hOwner && actor == pHint->m_hOwner )
-			pHint->m_hOwner = nullptr;
-		else if ( !actor )
+		if ( pHint->m_hOwner == actor )
 			pHint->m_hOwner = nullptr;
 
 		if ( pHint->IsAvailableForSelection( actor ) )

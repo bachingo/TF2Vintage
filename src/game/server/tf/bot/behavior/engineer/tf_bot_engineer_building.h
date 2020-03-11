@@ -36,11 +36,8 @@ private:
 	bool IsMetalSourceNearby( CTFBot *actor ) const;
 	void UpgradeAndMaintainBuildings( CTFBot *actor );
 
-	CountdownTimer unk1;
-	CountdownTimer unk2;
-	CountdownTimer m_recomputePathTimer;
-	// 0058 CountdownTimer
 	int m_iTries;
+	CountdownTimer m_recomputePathTimer;
 	CountdownTimer m_buildDispenserTimer;
 	CountdownTimer m_buildTeleportTimer;
 	PathFollower m_PathFollower;
@@ -48,7 +45,6 @@ private:
 	bool m_bHadASentry;
 	int m_iMetalSource;
 	CountdownTimer m_outOfPositionTimer;
-	bool unk6;
 };
 
 #endif

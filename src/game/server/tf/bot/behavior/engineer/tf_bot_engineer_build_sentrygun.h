@@ -28,7 +28,7 @@ private:
 	// 0064 CountdownTimer
 	int m_iTries;
 	PathFollower m_PathFollower;      // +0x0074
-	CTFBotHintSentrygun *m_pHint;     // +0x4848
+	CHandle<CTFBotHintSentrygun> m_pHint;     // +0x4848
 	Vector m_vecTarget;               // +0x484c
 	int m_iShimmyDirection;
 	// 485c bool

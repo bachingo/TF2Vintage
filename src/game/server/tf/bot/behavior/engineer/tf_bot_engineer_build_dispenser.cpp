@@ -116,11 +116,8 @@ ActionResult<CTFBot> CTFBotEngineerBuildDispenser::Update( CTFBot *me, float dt 
 			Vector vecToSentry = sentry->GetAbsOrigin() - me->GetAbsOrigin();
 			float flLength = vecToSentry.NormalizeInPlace();
 
-			// Investigate for constant
-			float exp = RandomFloat( -1.57079632f, 1.57079632f );
-
 			float flSin, flCos;
-			FastSinCos( exp, &flSin, &flCos );
+			FastSinCos( RandomFloat( -M_PI_F/2, M_PI_F/2 ), &flSin, &flCos );
 
 			float x = ( ( vecToSentry.x*flLength ) * flCos ) - ( ( vecToSentry.y*flLength ) * flSin );
 			float y = ( ( vecToSentry.x*flLength ) * flSin ) + ( ( vecToSentry.y*flLength ) * flCos );
