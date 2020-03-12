@@ -246,7 +246,7 @@ void CreateBotName( int iTeamNum, int iClassIdx, int iSkillLevel, char *out, int
 	}
 	else
 	{
-		Q_strncpy( szName, GetRandomBotName(), sizeof( szName ) );
+		Q_strncpy( szName, TheTFBots().GetRandomBotName(), sizeof( szName ) );
 	}
 
 	if ( tf_bot_prefix_name_with_difficulty.GetBool() )
@@ -343,16 +343,16 @@ void CTFBotManager::OnForceKickedBots( int count )
 
 bool CTFBotManager::IsAllBotTeam( int teamNum )
 {
-	CTeam *team = GetGlobalTeam( teamNum );
-	if ( team == nullptr )
+	CTeam *pTeam = GetGlobalTeam( teamNum );
+	if ( pTeam == nullptr )
 		return false;
 
-	if ( team->GetNumPlayers() > 0 )
+	if ( pTeam->GetNumPlayers() > 0 )
 	{
-		for ( int i=0; i<team->GetNumPlayers(); ++i )
+		for ( int i=0; i<pTeam->GetNumPlayers(); ++i )
 		{
-			CBasePlayer *player = team->GetPlayer( i );
-			if ( player->IsNetClient() && !player->IsFakeClient() )
+			CTFPlayer *pPlayer = ToTFPlayer( pTeam->GetPlayer( i ) );
+			if ( pPlayer && !pPlayer->IsBot() )
 				return false;
 		}
 	}
@@ -521,9 +521,9 @@ const char *CTFBotManager::GetRandomBotName()
 	if( m_BotNames.Count() == 0 )
 		return "Unnamed";
 
-	Q_strncpy( szName,
-			   STRING( m_BotNames[ RandomInt( 0, m_BotNames.Count() - 1 ) ] ),
-			   sizeof szName );
+	static int nameIndex = RandomInt( 0, m_BotNames.Count() - 1 );
+	const char *pszName = STRING( m_BotNames[ ++nameIndex % m_BotNames.Count() ] );
+	Q_strncpy( szName, pszName, sizeof szName );
 
 	return szName;
 }
@@ -535,7 +535,6 @@ void CTFBotManager::ReloadBotNames()
 }
 
 #define BOT_NAMES_FILE	"scripts/tf_bot_names.txt"
-
 bool CTFBotManager::LoadBotNames()
 {
 	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_OTHER_FILESYSTEM );
@@ -551,7 +550,7 @@ bool CTFBotManager::LoadBotNames()
 		return false;
 	}
 
-	for ( KeyValues *pSubData = pBotNames->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	FOR_EACH_VALUE( pBotNames, pSubData )
 	{
 		if ( FStrEq( pSubData->GetString(), "" ) )
 			continue;
@@ -561,6 +560,7 @@ bool CTFBotManager::LoadBotNames()
 			m_BotNames[ m_BotNames.AddToTail() ] = iName;
 	}
 
+	pBotNames->deleteThis();
 	return true;
 }
 
