@@ -9,6 +9,19 @@
 ConVar tf_bot_sticky_base_range( "tf_bot_sticky_base_range", "800", FCVAR_CHEAT );
 ConVar tf_bot_sticky_charge_rate( "tf_bot_sticky_charge_rate", "0.01", FCVAR_CHEAT, "Seconds of charge per unit range beyond base" );
 
+class DetonatePipebombsReply : public INextBotReply
+{
+	virtual void OnSuccess( INextBot *bot )
+	{
+		CTFBot *actor = ToTFBot( bot->GetEntity() );
+		if ( actor->GetActiveWeapon() != actor->Weapon_GetSlot( 1 ) )
+			actor->Weapon_Switch( actor->Weapon_GetSlot( 1 ) );
+
+		actor->PressAltFireButton();
+	}
+};
+static DetonatePipebombsReply detReply;
+
 
 CTFBotStickybombSentrygun::CTFBotStickybombSentrygun( CObjectSentrygun *pSentry )
 {
@@ -98,7 +111,7 @@ ActionResult<CTFBot> CTFBotStickybombSentrygun::Update( CTFBot *me, float dt )
 				return BaseClass::Continue();
 		}
 
-		me->PressAltFireButton();
+		me->GetBodyInterface()->AimHeadTowards( m_hSentry, IBody::IMPORTANT, 0.5f, &detReply, "Looking toward stickies to detonate" );
 
 		if ( me->GetAmmoCount( TF_AMMO_SECONDARY ) <= 0 )
 			return BaseClass::Done( "Out of ammo" );
