@@ -115,7 +115,7 @@ public:
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }
 
-	virtual void			SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
+	virtual void			SetLauncher( CBaseEntity *pLauncher );
 
 	virtual bool			IsDeflectable();
 	virtual void			Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );

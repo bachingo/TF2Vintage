@@ -649,6 +649,12 @@ void CTFWeaponBaseGrenadeProj::RemoveGrenade( bool bBlinkOut )
 	}
 }
 
+void CTFWeaponBaseGrenadeProj::SetLauncher( CBaseEntity *pLauncher )
+{
+	m_hLauncher = pLauncher;
+	CBaseProjectile::SetLauncher( pLauncher );
+}
+
 bool CTFWeaponBaseGrenadeProj::IsDeflectable(void)
 {
 	// Don't deflect projectiles with non-deflect attributes.

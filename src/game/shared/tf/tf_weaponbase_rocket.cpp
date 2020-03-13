@@ -474,6 +474,15 @@ void CTFBaseRocket::IncremenentDeflected( void )
 	m_iDeflected++;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFBaseRocket::SetLauncher( CBaseEntity *pLauncher )
+{
+	m_hLauncher = pLauncher;
+	CBaseProjectile::SetLauncher( pLauncher );
+}
+
 void CTFBaseRocket::FlyThink( void )
 {
 	if ( gpGlobals->curtime > m_flCollideWithTeammatesTime && m_bCollideWithTeammates == false )
