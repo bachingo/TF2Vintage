@@ -3937,6 +3937,16 @@ void CTFPlayerShared::SetJumping(bool bJumping)
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::CanGoombaStomp( void )
+{
+	int nBootsStomp = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nBootsStomp, boots_falling_stomp );
+	return nBootsStomp == 1;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Checks if we can do an airdash. Supercedes bAirDash. [ CTFPlayerShared::SetAirDash(bool bAirDash) ]
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::CanAirDash( void )

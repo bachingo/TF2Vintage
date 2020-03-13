@@ -421,8 +421,6 @@ public:
 	virtual CAttributeList *GetAttributeList() { return &m_AttributeList; }
 	virtual void		ReapplyProvision( void ) { /*Do nothing*/ };
 
-	void				UpdatePlayerColor( void );
-
 	// Entity inputs
 	void				InputIgnitePlayer( inputdata_t &inputdata );
 	void				InputExtinguishPlayer( inputdata_t &inputdata );
