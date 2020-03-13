@@ -54,6 +54,7 @@ public:
 	virtual ~CTFKatana() {}
 
 	virtual bool	Deploy( void );
+	virtual bool	CanHolster( void );
 	virtual int		GetSkinOverride( void );
 	virtual void	OnDecapitation( CTFPlayer *pVictim );
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
