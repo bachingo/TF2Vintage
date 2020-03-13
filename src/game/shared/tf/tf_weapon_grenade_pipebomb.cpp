@@ -633,7 +633,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 			Fizzle();
 			Detonate();
 		}
-		else
+		else if ( !m_bTouched )
 		{
 			int nNoBounce = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), nNoBounce, grenade_no_bounce );
