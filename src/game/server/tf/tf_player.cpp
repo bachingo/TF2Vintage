@@ -5880,10 +5880,22 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	if ( pTFWeapon )
 	{
-		float flJarateDuration = 0.0f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFWeapon, flJarateDuration, jarate_duration );
-		if ( flJarateDuration > 0.0f )
-			m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+		// Special case for Sydney, we base it on charge
+		if ( pTFWeapon->IsWeapon( TF_WEAPON_SNIPERRIFLE ) )
+		{
+			CTFSniperRifle *pSniper = assert_cast<CTFSniperRifle *>( pTFWeapon );
+
+			float flJarateDuration = pSniper->GetJarateTime();
+			if ( flJarateDuration > 0.0f )
+				m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+		}
+		else
+		{
+			float flJarateDuration = 0.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFWeapon, flJarateDuration, jarate_duration );
+			if ( flJarateDuration > 0.0f )
+				m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+		}
 	}
 
 	// Fire a global game event - "player_hurt"
