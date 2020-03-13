@@ -5044,6 +5044,17 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			maxfbspeed *= 0.75f;
 	}
 
+	if ( Weapon_OwnsThisID(TF_WEAPON_MEDIGUN) )
+	{
+		float flResourceMult = 1.f;
+		CALL_ATTRIB_HOOK_FLOAT( flResourceMult, mult_player_movespeed_resource_level );
+		if ( flResourceMult != 1.0f )
+		{
+			CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( Weapon_OwnsThisID( TF_WEAPON_MEDIGUN ) );
+			maxfbspeed *= RemapValClamped( pMedigun->GetChargeLevel(), 0.0, 1.0, 1.0, flResourceMult );
+		}
+	}
+
 	if ( m_Shared.InCond( TF_COND_STEALTHED ) )
 	{
 		if ( maxfbspeed > tf_spy_max_cloaked_speed.GetFloat() )
