@@ -157,7 +157,7 @@ ActionResult<CTFBot> CTFBotSpyAttack::Update( CTFBot *me, float dt )
 
 	if ( me->GetActiveTFWeapon() && me->GetActiveTFWeapon()->IsMeleeWeapon() )
 	{
-		if ( threat->IsVisibleInFOVNow() && flLength < 100.0f )
+		if ( victim->IsVisibleInFOVNow() && flLength < 100.0f )
 		{
 			me->GetBodyInterface()->AimHeadTowards( victimPlayer, IBody::MANDATORY, 0.1f, nullptr, "Aiming my stab" );
 
