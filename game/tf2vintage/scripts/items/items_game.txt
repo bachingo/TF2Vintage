@@ -3497,7 +3497,7 @@
 			"item_name"	"#TF_Unique_Achievement_Flamethrower"
 			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_backburner/c_backburner"
-			"model_player"	"models/weapons/c_models/c_backburner/c_backburner.mdl"
+			"model_player"	"models/weapons/c_models/c_flamethrower/c_flamethrower.mdl"
 			"attributes"
 			{
 				"mod flamethrower back crit"
@@ -3526,6 +3526,17 @@
 				"sound_single_shot"	"Weapon_BackBurner.FireStart"
 				"sound_special1"	"Weapon_BackBurner.FireLoop"
 				"sound_burst"	"Weapon_BackBurner.FireLoopCrit"
+				"attached_models"
+				{
+					"0"
+					{
+						"model"	"models/weapons/c_models/c_flamethrower/c_flamethrower_pilotlight.mdl"
+					}
+					"1"
+					{
+						"model"	"models/weapons/c_models/c_backburner/c_backburner.mdl"
+					}
+				}
 			}
 		}
 		"41"
