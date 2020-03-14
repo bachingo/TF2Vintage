@@ -718,6 +718,16 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 	return true;
 }
 
+float CTFSniperRifle::GetJarateTime( void )
+{
+	float flJarateDuration = 0;
+	CALL_ATTRIB_HOOK_FLOAT( flJarateDuration, jarate_duration );
+	if ( flJarateDuration > 0.0 )
+		return RemapValClamped( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX, 2.0, flJarateDuration );
+
+	return 0.0f;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

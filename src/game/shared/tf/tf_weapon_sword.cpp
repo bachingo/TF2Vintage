@@ -176,7 +176,7 @@ bool CTFKatana::Deploy( void )
 	bool orgResult = BaseClass::Deploy();
 	if ( m_bIsBloody )
 		m_bIsBloody = false;
-
+	
 	if ( CanDecapitate() )
 	{
 	#if defined( GAME_DLL )
@@ -186,6 +186,14 @@ bool CTFKatana::Deploy( void )
 	}
 
 	return orgResult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFKatana::CanHolster( void )
+{
+	return m_bIsBloody;
 }
 
 //-----------------------------------------------------------------------------

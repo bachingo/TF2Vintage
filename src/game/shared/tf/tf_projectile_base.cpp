@@ -221,6 +221,15 @@ const char *CTFBaseProjectile::GetProjectileModelName( void )
 	return "";
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFBaseProjectile::SetLauncher( CBaseEntity *pLauncher )
+{
+	m_hLauncher = pLauncher;
+	CBaseProjectile::SetLauncher( pLauncher );
+}
+
 //=============================================================================
 //
 // Client specific functions.

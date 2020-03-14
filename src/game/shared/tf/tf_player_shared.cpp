@@ -3937,6 +3937,16 @@ void CTFPlayerShared::SetJumping(bool bJumping)
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::CanGoombaStomp( void )
+{
+	int nBootsStomp = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nBootsStomp, boots_falling_stomp );
+	return nBootsStomp == 1;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Checks if we can do an airdash. Supercedes bAirDash. [ CTFPlayerShared::SetAirDash(bool bAirDash) ]
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::CanAirDash( void )
@@ -5032,6 +5042,17 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			maxfbspeed *= 0.90f;
 		else
 			maxfbspeed *= 0.75f;
+	}
+
+	if ( Weapon_OwnsThisID(TF_WEAPON_MEDIGUN) )
+	{
+		float flResourceMult = 1.f;
+		CALL_ATTRIB_HOOK_FLOAT( flResourceMult, mult_player_movespeed_resource_level );
+		if ( flResourceMult != 1.0f )
+		{
+			CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( Weapon_OwnsThisID( TF_WEAPON_MEDIGUN ) );
+			maxfbspeed *= RemapValClamped( pMedigun->GetChargeLevel(), 0.0, 1.0, 1.0, flResourceMult );
+		}
 	}
 
 	if ( m_Shared.InCond( TF_COND_STEALTHED ) )

@@ -62,7 +62,7 @@ public:
 
 	bool		  IsCritical( void )				{ return m_bCritical; }
 	virtual void  SetCritical( bool bCritical )		{ m_bCritical = bCritical; }
-	virtual void	SetLauncher( CBaseEntity *pLauncher )	{ m_hLauncher = pLauncher; }
+	virtual void  SetLauncher( CBaseEntity *pLauncher );
 
 	CNetworkHandle( CBaseEntity, m_hLauncher );
 		

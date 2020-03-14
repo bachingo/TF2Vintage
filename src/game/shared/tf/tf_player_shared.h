@@ -272,17 +272,20 @@ public:
 
 	bool	IsJumping( void )					{ return m_bJumping; }
 	void	SetJumping( bool bJumping );
+	bool	CanGoombaStomp( void );
 	bool	HasParachute( void );
 	bool	CanParachute(void);	
 	void	DeployParachute(void);
 	bool	IsParachuting(void);
 	void    ResetParachute(void);
+
 	bool	CanAirDash( void );
 	int		GetAirDashCount( void )				{ return m_nAirDashCount; }
 	void    IncrementAirDashCount( void )		{ m_nAirDashCount += 1; }
 	void    ResetAirDashCount( void )			{ m_nAirDashCount = 0; }
 	float	GetLastDashTime(void)				{ return m_flLastDashTime; }
 	void	SetLastDashTime( float flLastDash );
+
 	int		GetAirDucks( void )					{ return m_nAirDucked; }
 	void	IncrementAirDucks( void );
 	void	ResetAirDucks( void );

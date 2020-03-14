@@ -699,8 +699,12 @@ bool CTFPlayerAnimState::HandleJumping( Activity &idealActivity )
 		}
 		else if ( ( GetBasePlayer()->GetFlags() & FL_ONGROUND ) == 0 )
 		{
+			// TODO: Figure out what 1897 is
 			// In an air walk.
-			idealActivity = ACT_MP_AIRWALK;
+			/*if ( GetTFPlayer()->m_Shared.CanGoombaStomp() && GetTFPlayer()->m_Local.m_flFallVelocity > 580 )
+				idealActivity = 1897;
+			else*/
+				idealActivity = ACT_MP_AIRWALK;
 			m_bInAirWalk = true;
 		}
 	}

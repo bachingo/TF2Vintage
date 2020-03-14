@@ -42,8 +42,6 @@ public:
 
 	virtual void	SetupGameEventListeners( void );
 	virtual void	FireGameEvent( IGameEvent *event );
-#else
-	virtual void	UpdateViewModel( void ) override;
 #endif
 
 private:

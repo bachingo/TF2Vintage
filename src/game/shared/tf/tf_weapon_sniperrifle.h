@@ -112,6 +112,8 @@ public:
 
 	virtual bool CanFireCriticalShot( bool bIsHeadshot = false );
 
+	float		 GetJarateTime( void );
+
 #ifdef CLIENT_DLL
 	float GetHUDDamagePerc( void );
 #endif

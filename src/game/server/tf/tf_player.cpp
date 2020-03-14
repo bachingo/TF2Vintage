@@ -2187,9 +2187,8 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 	// Nuke wearables
 	for ( int i = 0; i < GetNumWearables(); i++ )
 	{
-		CTFWearable *pWearable = static_cast<CTFWearable *>( GetWearable( i ) );
-
-		if ( !pWearable )
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+		if ( pWearable == nullptr )
 			continue;
 
 		RemoveWearable( pWearable );
@@ -2198,9 +2197,8 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 	// Nuke weapons
 	for ( int i = 0; i < WeaponCount(); i++ )
 	{
-		CTFWeaponBase *pWeapon = static_cast<CTFWeaponBase *>( GetWeapon( i ) );
-
-		if ( !pWeapon )
+		CTFWeaponBase *pWeapon = assert_cast<CTFWeaponBase *>( GetWeapon( i ) );
+		if ( pWeapon == nullptr )
 			continue;
 
 		// Holster our active weapon
@@ -2211,7 +2209,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for (int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i)
+	for ( int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i )
 	{
 		// Only allow for melee items, if we enable it or are in a special gamemode.
 		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && (i != TF_LOADOUT_SLOT_MELEE) )
@@ -2240,7 +2238,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 		int iPreset = RandomInt( 0, pInv->GetNumPresets( iClass, iSlot ) - 1 );
 
-		CEconItemView *pItem;
+		CEconItemView *pItem = NULL;
 
 		// Engineers always get PDAs
 		// Spies should get their disguise PDA
@@ -2256,19 +2254,16 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 
 		if ( pItem )
 		{
-			CEconEntity *pEntity;
 			const char *pszClassname = pItem->GetEntityName();
 			Assert( pszClassname );
 
-			pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem, iClass ) );
-
+			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem, iClass ) );
 			if ( pEntity )
 			{
 				pEntity->GiveTo( this );
 			}
 		}
 	}
-
 }
 
 
@@ -4639,6 +4634,25 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		return 0;
 	}
 
+	if ( info.GetDamageType() & DMG_FALL )
+	{
+		CTFPlayer *pLandingPad = ToTFPlayer( GetGroundEntity() );
+		if ( pLandingPad && m_Shared.CanGoombaStomp() && pLandingPad->GetTeamNumber() != GetTeamNumber() )
+		{
+			float flDamage = info.GetDamage() * 3 + 10.f; // Minimum 10 damage
+			CBaseEntity *pBoots = GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_SECONDARY );
+			CTakeDamageInfo stompInfo( this, this, pBoots, flDamage, DMG_FALL, TF_DMG_CUSTOM_BOOTS_STOMP );
+			pLandingPad->TakeDamage( stompInfo );
+
+			m_Local.m_flFallVelocity = 0;
+			info.SetDamage( 0 );
+
+			EmitSound( "Weapon_Mantreads.Impact" );
+			EmitSound( "Player.FallDamageDealt" );
+			UTIL_ScreenShake( WorldSpaceCenter(), 15.0, 150.0, 1.0, 500.0, SHAKE_START );
+		}
+	}
+
 	AddDamagerToHistory( pAttacker );
 
 	// keep track of amount of damage last sustained
@@ -5866,10 +5880,22 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	if ( pTFWeapon )
 	{
-		float flJarateDuration = 0.0f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFWeapon, flJarateDuration, jarate_duration );
-		if ( flJarateDuration > 0.0f )
-			m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+		// Special case for Sydney, we base it on charge
+		if ( pTFWeapon->IsWeapon( TF_WEAPON_SNIPERRIFLE ) )
+		{
+			CTFSniperRifle *pSniper = assert_cast<CTFSniperRifle *>( pTFWeapon );
+
+			float flJarateDuration = pSniper->GetJarateTime();
+			if ( flJarateDuration > 0.0f )
+				m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+		}
+		else
+		{
+			float flJarateDuration = 0.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFWeapon, flJarateDuration, jarate_duration );
+			if ( flJarateDuration > 0.0f )
+				m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+		}
 	}
 
 	// Fire a global game event - "player_hurt"
@@ -8351,20 +8377,23 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 	// TF2 pain sounds or the new TF2 pain sounds by doing it here instead.
 	if ( info.GetDamageType() & DMG_FALL )
 	{
-		if ( tf2v_use_new_fallsounds.GetInt() != 2 )
+		if( !m_Shared.CanGoombaStomp() || !GetGroundEntity() || !ToTFPlayer( GetGroundEntity() ) )
 		{
-			if ( tf2v_use_new_fallsounds.GetInt() == 1 )	// Standard fall damage sounds.
-				EmitSound( "Player.FallDamage" );
-			else											// Day One Orange Box fall damage sounds.
-				EmitSound( "Player.FallDamageBeta" );
-			
-			// No additional pain shouts on old falldamage sounds.
-			return;	
-		}
-		else
-		{
-			// We also shout on new falldamage.
-			EmitSound( "Player.FallDamageNew" );
+			if ( tf2v_use_new_fallsounds.GetInt() != 2 )
+			{
+				if ( tf2v_use_new_fallsounds.GetInt() == 1 )	// Standard fall damage sounds.
+					EmitSound( "Player.FallDamage" );
+				else											// Day One Orange Box fall damage sounds.
+					EmitSound( "Player.FallDamageBeta" );
+
+				// No additional pain shouts on old falldamage sounds.
+				return;	
+			}
+			else
+			{
+				// We also shout on new falldamage.
+				EmitSound( "Player.FallDamageNew" );
+			}
 		}
 	}
 
