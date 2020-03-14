@@ -1764,11 +1764,6 @@
 					"attribute_class"	"rocket_jump_dmg_reduction"
 					"value"	"0.4"
 				}
-				"cancel falling damage"
-				{
-					"attribute_class"	"cancel_falling_damage"
-					"value" "1"
-				}
 			}
 		}
 		"weapon_gloves"
@@ -3502,7 +3497,7 @@
 			"item_name"	"#TF_Unique_Achievement_Flamethrower"
 			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_backburner/c_backburner"
-			"model_player"	"models/weapons/c_models/c_flamethrower/c_flamethrower.mdl"
+			"model_player"	"models/weapons/c_models/c_backburner/c_backburner.mdl"
 			"attributes"
 			{
 				"mod flamethrower back crit"
@@ -3531,17 +3526,6 @@
 				"sound_single_shot"	"Weapon_BackBurner.FireStart"
 				"sound_special1"	"Weapon_BackBurner.FireLoop"
 				"sound_burst"	"Weapon_BackBurner.FireLoopCrit"
-				"attached_models"
-				{
-					"0"
-					{
-						"model"	"models/weapons/c_models/c_flamethrower/c_flamethrower_pilotlight.mdl"
-					}
-					"1"
-					{
-						"model"	"models/weapons/c_models/c_backburner/c_backburner.mdl"
-					}
-				}
 			}
 		}
 		"41"
@@ -5105,15 +5089,15 @@
 		}
 		"331"
 		{
-			"name"	"Fists of Steel"
+			"name"	"Team Fists of Steel"
 			"prefab"	"weapon_gloves"
 			"year"		"2010"
 			"item_name"	"#TF_FistsOfSteel"
 			"propername"	"1"
 			"item_logname"	"steel_fists"
 			"item_iconname"	"steel_fists"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel"			
-			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel_legacy"			
+			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel_legacy.mdl"
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -10"
@@ -7176,15 +7160,15 @@
 		}
 		"10331"
 		{
-			"name"	"Team Fists of Steel"
+			"name"	"Fists of Steel"
 			"prefab"	"weapon_gloves weapon_reskin"
 			"year"		"2011"
 			"item_name"	"#TF_FistsOfSteel"
 			"propername"	"1"
 			"item_logname"	"steel_fists"
 			"item_iconname"	"steel_fists"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel_legacy"			
-			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel_legacy.mdl"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel"			
+			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -10"
