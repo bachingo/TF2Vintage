@@ -6314,14 +6314,15 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flRestoreOnKill, restore_health_on_kill );
 				if ( flRestoreOnKill )
 				{
-					int iHealthRestoredPercent = TakeHealth( ( ( flRestoreOnKill/100 ) * GetMaxHealth() ), DMG_IGNORE_MAXHEALTH );
-					if ( iHealthRestoredPercent )
+					int nHealthToAdd = ( flRestoreOnKill/100 ) * GetMaxHealth();
+					int nHealthToRestore = clamp(nHealthToAdd, 0, ( ( GetMaxHealth() * ( 1 + ( 1 * ( flRestoreOnKill/100 ) ) ) ) - GetHealth() ) );
+					if (nHealthToRestore > 0 )
 					{
+						TakeHealth( nHealthToRestore, DMG_IGNORE_MAXHEALTH );
 						IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
-
 						if ( event )
 						{
-							event->SetInt( "amount", iHealthRestoredPercent );
+							event->SetInt( "amount", nHealthToRestore );
 							event->SetInt( "entindex", entindex() );
 
 							gameeventmanager->FireEvent( event );
