@@ -56,6 +56,7 @@ extern ConVar tf2v_muzzlelight;
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
 ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
 ConVar tf2v_use_new_weapon_swap_speed( "tf2v_use_new_weapon_swap_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables faster weapon switching." );
+ConVar tf_dev_marked_for_death_lifetime( "tf_dev_marked_for_death_lifetime", "1", FCVAR_DEVELOPMENTONLY );
 
 //=============================================================================
 //
@@ -2365,6 +2366,16 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 			CALL_ATTRIB_HOOK_FLOAT( flSlowOnHitMajor, mult_onhit_enemyspeed_major );
 			if ( flSlowOnHitMajor )
 				pTFVictim->m_Shared.StunPlayer( flSlowOnHitMajor, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_NOSOUNDOREFFECT, pAttacker );
+		}
+
+		int nMarkForDeath = 0;
+		CALL_ATTRIB_HOOK_INT( nMarkForDeath, mark_for_death );
+		if ( nMarkForDeath == 1 )
+		{
+			if ( pTFVictim->m_Shared.InCond( TF_COND_MARKEDFORDEATH ) )
+				pTFVictim->m_Shared.RemoveCond( TF_COND_MARKEDFORDEATH );
+
+			pTFVictim->m_Shared.AddCond( TF_COND_MARKEDFORDEATH, tf_dev_marked_for_death_lifetime.GetFloat() );
 		}
 
 		int nRevealCloaked = 0;
