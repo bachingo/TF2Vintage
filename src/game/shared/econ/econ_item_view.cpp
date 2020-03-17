@@ -237,6 +237,40 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 	return NULL;
 }
 
+float CEconItemView::GetModifiedRGBValue( bool bAlternate )
+{
+	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_Paint( "set item tint rgb" );
+	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_Paint2( "set item tint rgb 2" );
+
+	float flResult = 0;
+	if ( pAttrDef_Paint )
+	{
+		float flPaintRGB = 0;
+		CAttributeIterator_GetSpecificAttribute<unsigned int, float> iter( pAttrDef_Paint, &flPaintRGB );
+		IterateAttributes( &iter );
+		
+		if ( iter.Found() )
+		{
+			if ( flPaintRGB == 1.0 )
+				return bAlternate ? 0x5885A2 : 0xB8383B;
+
+			if ( pAttrDef_Paint2 )
+			{
+				CAttributeIterator_GetSpecificAttribute<unsigned int, float> iter2( pAttrDef_Paint2, &flResult );
+				IterateAttributes( &iter2 );
+
+				if ( !iter2.Found() )
+					flResult = flPaintRGB;
+			}
+
+			if ( !bAlternate )
+				flResult = flPaintRGB;
+		}
+	}
+
+	return flResult;
+}
+
 int CEconItemView::GetSkin( int iTeamNum, bool bViewmodel ) const
 {
 	if (iTeamNum <= TF_TEAM_COUNT)
