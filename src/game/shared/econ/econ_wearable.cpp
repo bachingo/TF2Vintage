@@ -55,7 +55,8 @@ void CEconWearable::Spawn( void )
 	
 	BaseClass::Spawn();
 
-	AddEffects( EF_BONEMERGE|EF_BONEMERGE_FASTCULL );
+	AddEffects( EF_BONEMERGE );
+	AddEffects( EF_BONEMERGE_FASTCULL );
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 	SetBlocksLOS( false );
 }
