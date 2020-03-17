@@ -37,6 +37,7 @@ public:
 	virtual void SendPlayerAnimEvent( CTFPlayer *pPlayer );
 
 	virtual void DoViewModelAnimation( void );
+	virtual void SetWeaponVisible( bool visible ) {} //NUB
 
 	void Punch( void );
 
