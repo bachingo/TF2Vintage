@@ -38,6 +38,8 @@ public:
 
 	virtual void DoViewModelAnimation( void );
 
+	virtual bool HideWhenStunned( void ) const				{ return false; }
+
 	void Punch( void );
 
 private:

@@ -2150,7 +2150,9 @@ const char *CTFWeaponBase::GetTracerType( void )
 void CTFWeaponBase::OnControlStunned( void )
 {
 	AbortReload();
-	SetWeaponVisible( false );
+
+	if( HideWhenStunned() )
+		SetWeaponVisible( false );
 }
 
 const char *CTFWeaponBase::GetExtraWearableModel( void ) const

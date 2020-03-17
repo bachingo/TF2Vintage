@@ -176,6 +176,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// World model.
 	virtual const char *GetWorldModel( void ) const;
 
+	virtual bool HideWhenStunned( void ) const { return true; }
+
 #ifdef CLIENT_DLL
 	virtual void UpdateViewModel( void );
 
