@@ -1324,6 +1324,8 @@ void C_TFRagdoll::EndFadeOut()
 	ClearRagdoll();
 	SetRenderMode( kRenderNone );
 	UpdateVisibility();
+	ParticleProp()->StopParticlesInvolving( this );
+	DestroyBoneAttachments();
 }
 
 //-----------------------------------------------------------------------------
