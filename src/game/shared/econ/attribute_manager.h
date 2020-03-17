@@ -48,11 +48,11 @@ private:
 	ProviderVector *m_pOutProviders;
 };
 
-template<typename TIn, typename TOut=TIn>
+template<typename TArg, typename TOut=TArg>
 class CAttributeIterator_GetSpecificAttribute : public IEconAttributeIterator
 {
 public:
-	CAttributeIterator_GetSpecificAttribute( CEconAttributeDefinition const *attribute, TIn *outValue )
+	CAttributeIterator_GetSpecificAttribute( CEconAttributeDefinition const *attribute, TOut *outValue )
 		: m_pAttribute( attribute ), m_pOut( outValue )
 	{
 		m_bFound = false;
@@ -71,8 +71,8 @@ private:
 	TOut *m_pOut;
 };
 
-#define DEFINE_ATTRIBUTE_ITERATOR( inputType, outputType, overrideParam ) \
-	bool CAttributeIterator_GetSpecificAttribute<inputType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value ) \
+#define DEFINE_ATTRIBUTE_ITERATOR( overrideParam, outputType ) \
+	bool CAttributeIterator_GetSpecificAttribute<overrideParam, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value ) \
 	{ \
 		if ( m_pAttribute == pDefinition ) \
 		{ \
@@ -82,15 +82,26 @@ private:
 		return !m_bFound; \
 	}
 
-#define ATTRIBUTE_ITERATOR( inputType, outputType, overrideParam ) \
-	bool CAttributeIterator_GetSpecificAttribute<inputType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value )
+#define DEFINE_ATTRIBUTE_ITERATOR_REF( overrideParam, outputType ) \
+	bool CAttributeIterator_GetSpecificAttribute<overrideParam, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam const &value ) \
+	{ \
+		if ( m_pAttribute == pDefinition ) \
+		{ \
+			m_bFound = true; \
+			*m_pOut = value; \
+		} \
+		return !m_bFound; \
+	}
 
-DEFINE_ATTRIBUTE_ITERATOR( CAttribute_String, CAttribute_String, CAttribute_String const& )
-DEFINE_ATTRIBUTE_ITERATOR( float, float, float )
-DEFINE_ATTRIBUTE_ITERATOR( unsigned int, unsigned int, unsigned int )
-DEFINE_ATTRIBUTE_ITERATOR( uint64, uint64, uint64 const& )
-DEFINE_ATTRIBUTE_ITERATOR( float, unsigned int, unsigned int )
-DEFINE_ATTRIBUTE_ITERATOR( unsigned int, float, float )
+#define ATTRIBUTE_ITERATOR( paramType, outputType, overrideParam ) \
+	bool CAttributeIterator_GetSpecificAttribute<paramType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value )
+
+DEFINE_ATTRIBUTE_ITERATOR( float, float )
+DEFINE_ATTRIBUTE_ITERATOR( unsigned int, unsigned int )
+DEFINE_ATTRIBUTE_ITERATOR( float, unsigned int )
+DEFINE_ATTRIBUTE_ITERATOR( unsigned int, float )
+DEFINE_ATTRIBUTE_ITERATOR_REF( CAttribute_String, CAttribute_String )
+DEFINE_ATTRIBUTE_ITERATOR_REF( uint64, uint64 )
 
 // Client specific.
 #ifdef CLIENT_DLL
