@@ -324,8 +324,8 @@ void CEconEntity::UpdateModelToClass( void )
 		if ( pDefinition )
 		{
 			const char *szModel = NULL;
-			if ( pDefinition->attach_to_hands )
-				szModel = pOwner->GetPlayerClass()->GetHandModelName();
+			if ( pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+				szModel = GetAttributeContainer()->GetItem()->GetPlayerDisplayModel( pOwner->m_Shared.GetDisguiseClass() );
 			else
 				szModel = GetAttributeContainer()->GetItem()->GetPlayerDisplayModel( m_iVisibleClassFor );
 
@@ -336,8 +336,10 @@ void CEconEntity::UpdateModelToClass( void )
 					if( pDefinition->loadondemand )
 					{
 						modelinfo->RegisterDynamicModel( szModel, false );
-						if( pDefinition->model_player_per_class[ m_iVisibleClassFor ] )
-							modelinfo->RegisterDynamicModel( pDefinition->model_player_per_class[ m_iVisibleClassFor ], false );
+
+						const char *szClassModel = pDefinition->model_player_per_class[ m_iVisibleClassFor ];
+						if ( szClassModel && V_strlen( szClassModel ) > 3 )
+							modelinfo->RegisterDynamicModel( szClassModel, false );
 					}
 
 					SetModel( szModel );
