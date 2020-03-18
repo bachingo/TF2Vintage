@@ -1026,6 +1026,11 @@ bool CObjectSentrygun::ValidTargetPlayer( CTFPlayer *pPlayer, const Vector &vecS
 	if ( pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pPlayer->m_Shared.GetDisguiseTeam() == GetTeamNumber() && pPlayer != m_hEnemy )
 		return false;
 
+	// Don't target them while they are changing disguise to their victim
+	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+	if ( pWeapon && pWeapon->IsSilentKiller() && pPlayer->m_Shared.InCond( TF_COND_DISGUISING ) )
+		return false;
+
 	// Not across water boundary.
 	if ( ( GetWaterLevel() == 0 && pPlayer->GetWaterLevel() >= 3 ) || ( GetWaterLevel() == 3 && pPlayer->GetWaterLevel() <= 0 ) )
 		return false;
