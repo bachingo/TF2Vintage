@@ -333,6 +333,23 @@ void CTFClassMenu::OnKeyCodePressed( KeyCode code )
 			}
 		}
 	}
+	else if ( ( code > KEY_NONE && code < KEY_A ) || ( code > KEY_Z && code < KEY_PAD_DIVIDE ) )
+	{
+		if( code > KEY_PAD_0 )
+			m_iCurrentClassIndex = GetIndexForClass( code - KEY_PAD_0 );
+		else if ( code > KEY_0 )
+			m_iCurrentClassIndex = GetIndexForClass( code - KEY_0 );
+		else if ( code == KEY_PAD_0 || code == KEY_0 )
+			m_iCurrentClassIndex = GetIndexForClass( TF_CLASS_RANDOM );
+
+		CImageMouseOverButton<CTFClassInfoPanel> *pButton = m_pClassButtons[ iRemapIndexToClass[m_iCurrentClassIndex] ];
+		if ( pButton )
+		{
+			pButton->OnCursorEntered();
+		}
+
+		ipanel()->SendMessage( GetFocusNavGroup().GetDefaultButton(), new KeyValues( "PressButton" ), GetVPanel() );
+	}
 	else
 	{
 		BaseClass::OnKeyCodePressed( code );
