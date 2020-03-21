@@ -328,7 +328,6 @@ public:
 			GET_BOOL( pItem, pDefinition, baseitem );
 			GET_INT( pItem, pDefinition, min_ilevel );
 			GET_INT( pItem, pDefinition, max_ilevel );
-			GET_BOOL( pItem, pDefinition, loadondemand );
 
 			GET_STRING( pItem, pDefinition, image_inventory );
 			GET_INT( pItem, pDefinition, image_inventory_size_w );

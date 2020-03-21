@@ -74,7 +74,6 @@ public:
 	CMaterialReference m_aMaterials[4];
 #endif
 
-	virtual CStudioHdr *OnNewModel( void );
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }
 
 	virtual void PlayAnimForPlaybackEvent(wearableanimplayback_t iPlayback) {};
@@ -94,8 +93,6 @@ public:
 	void InitializeAttributes( void );
 
 #ifdef GAME_DLL
-	void OnOwnerClassChange( void );
-
 	void UpdateModelToClass( void );
 #endif
 
@@ -110,8 +107,6 @@ private:
 	CNetworkVarEmbedded( CAttributeContainer, m_AttributeManager );
 
 	CAttributeList m_AttributeList;
-
-	int m_iVisibleClassFor;
 #ifdef CLIENT_DLL
 	CHandle<C_ViewmodelAttachmentModel> m_hAttachmentParent;
 #endif
