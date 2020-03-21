@@ -7966,15 +7966,6 @@ void CTFPlayer::ForceRespawn( void )
 			CTF_GameStats.Event_PlayerChangedClass( this );
 
 		m_PlayerAnimState = CreateTFPlayerAnimState( this );
-
-		for ( int i=0; i < MAX_WEAPONS; ++i )
-		{
-			CEconEntity *pWeapon = GetWeapon( i );
-			if ( pWeapon == nullptr )
-				continue;
-
-			pWeapon->OnOwnerClassChange();
-		}
 	}
 
 	m_Shared.RemoveAllCond( NULL );
