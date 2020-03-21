@@ -4242,7 +4242,6 @@
 			"year"			"2010"
 			"item_logname"	"battleneedle"
 			"item_iconname"	"battleneedle"
-			"item_type_name"	"#TF_Weapon_Bonesaw"
 			"item_name"	"#TF_Unique_BattleSaw"
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_uberneedle/c_uberneedle"
@@ -4264,10 +4263,6 @@
 					"attribute_class"	"set_weapon_mode"
 					"value"	"2"
 				}
-			}
-			"visuals"
-			{
-				"sound_taunt"	"Taunt.MedicViolinUber"
 			}
 		}
 		"214"
@@ -5139,7 +5134,7 @@
             "name"            "Fire Retardant Suit"
             "prefab"        "weapon_wearable weapon_custom"
             "year"            "2010"
-            "item_type_name"    "TF_Wearable_Shirt"
+            "item_type_name"    "#TF_Wearable_Shirt"
             "item_name"        "#TF_jul13_soot_suit"
             "propername"    "0"
             "item_slot"        "secondary"
