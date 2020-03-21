@@ -1984,7 +1984,7 @@ void CTFPlayer::ValidateWearables( void )
 
 	for ( int i = 0; i < GetNumWearables(); i++ )
 	{
-		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+		CEconWearable *pWearable = GetWearable( i );
 		if ( pWearable == nullptr )
 			continue;
 
@@ -1998,10 +1998,6 @@ void CTFPlayer::ValidateWearables( void )
 			{
 				// Not supposed to carry this wearable, nuke it.
 				RemoveWearable( pWearable );
-			}
-			else
-			{
-				pWearable->UpdateModelToClass();
 			}
 		}
 	}
@@ -7970,6 +7966,15 @@ void CTFPlayer::ForceRespawn( void )
 			CTF_GameStats.Event_PlayerChangedClass( this );
 
 		m_PlayerAnimState = CreateTFPlayerAnimState( this );
+
+		for ( int i=0; i < MAX_WEAPONS; ++i )
+		{
+			CEconEntity *pWeapon = GetWeapon( i );
+			if ( pWeapon == nullptr )
+				continue;
+
+			pWeapon->OnOwnerClassChange();
+		}
 	}
 
 	m_Shared.RemoveAllCond( NULL );

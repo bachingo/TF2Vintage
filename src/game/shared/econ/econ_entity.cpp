@@ -39,6 +39,7 @@ END_NETWORK_TABLE()
 CEconEntity::CEconEntity()
 {
 	m_pAttributes = this;
+	m_iVisibleClassFor = -1;
 }
 
 #ifdef CLIENT_DLL
@@ -294,18 +295,84 @@ void C_EconEntity::SetMaterialOverride( int iTeam, CMaterialReference &material 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CEconEntity::OnOwnerClassChange( void )
+{
+	UpdateModelToClass();
+	UpdatePlayerBodygroups();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CEconEntity::UpdateModelToClass( void )
 {
 	MDLCACHE_CRITICAL_SECTION();
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-	if ( pOwner == nullptr )
-		return;
+	auto const GetVisibleClassFor =[=] () {
+		if ( pOwner == nullptr )
+			return 0;
 
+		return pOwner->GetPlayerClass()->GetClassIndex();
+	};
 
+	m_iVisibleClassFor = GetVisibleClassFor();
+
+	if ( pOwner )
+	{
+		CEconItemDefinition *pDefinition = GetAttributeContainer()->GetItem()->GetStaticData();
+		if ( pDefinition )
+		{
+			const char *szModel = NULL;
+			if ( pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+				szModel = GetAttributeContainer()->GetItem()->GetPlayerDisplayModel( pOwner->m_Shared.GetDisguiseClass() );
+			else
+				szModel = GetAttributeContainer()->GetItem()->GetPlayerDisplayModel( m_iVisibleClassFor );
+
+			if ( szModel && szModel[0] )
+			{
+				if ( V_stricmp( szModel, STRING( GetModelName() ) ) != 0 )
+				{
+					if( pDefinition->loadondemand )
+					{
+						modelinfo->RegisterDynamicModel( szModel, false );
+
+						const char *szClassModel = pDefinition->model_player_per_class[ m_iVisibleClassFor ];
+						if ( szClassModel && V_strlen( szClassModel ) > 3 )
+							modelinfo->RegisterDynamicModel( szClassModel, false );
+					}
+
+					SetModel( szModel );
+				}
+			}
+		}
+	}
+
+	OnNewModel();
 }
 
 #endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CStudioHdr *CEconEntity::OnNewModel( void )
+{
+	CStudioHdr *pStudio = BaseClass::OnNewModel();
+
+	if ( m_iVisibleClassFor > 0 )
+	{
+		CEconItemDefinition *pDefinition = GetAttributeContainer()->GetItem()->GetStaticData();
+		if ( pDefinition )
+		{
+			PerTeamVisuals_t *pVisuals = pDefinition->GetVisuals( GetTeamNumber() );
+			if ( pVisuals->use_per_class_bodygroups )
+				SetBodygroup( 1, m_iVisibleClassFor - 1 );
+		}
+	}
+
+	return pStudio;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -347,6 +414,10 @@ void CEconEntity::ReapplyProvision( void )
 {
 	CBaseEntity *pOwner = GetOwnerEntity();
 	CBaseEntity *pOldOwner = m_hOldOwner.Get();
+
+#ifdef GAME_DLL
+	UpdateModelToClass();
+#endif
 
 	if ( pOwner != pOldOwner )
 	{

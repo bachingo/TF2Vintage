@@ -38,6 +38,9 @@ public:
 
 	virtual void DoViewModelAnimation( void );
 
+	virtual void SetWeaponVisible(bool visible) {}
+	virtual bool HideWhenStunned( void ) const				{ return false; }
+
 	void Punch( void );
 
 private:

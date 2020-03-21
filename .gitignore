@@ -61,6 +61,9 @@ src/lib/public/mathlib.lib
 src/lib/public/raytrace.lib
 src/lib/public/tier1.lib
 src/lib/public/vgui_controls.lib
+src/thirdparty/bullet/build/lib
+src/vphysics/Release
+src/vphysics/Debug
 
 # misc files
 fgdlib.lib

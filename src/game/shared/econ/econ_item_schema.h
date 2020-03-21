@@ -408,6 +408,7 @@ public:
 	char equip_region[128];
 	char model_player_per_class[TF_CLASS_COUNT_ALL][128];
 	char extra_wearable[128];
+	bool loadondemand;
 	int  attach_to_hands;
 	int  attach_to_hands_vm_only;
 	bool act_as_wearable;
