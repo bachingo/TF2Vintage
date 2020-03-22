@@ -1615,7 +1615,7 @@ void CTFGameMovement::FullWalkMove()
 	// Make sure velocity is valid.
 	CheckVelocity();
 
-	if ( m_pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) && !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
+	if ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
 	{
 		CTFWeaponBase *pWeapon = m_pTFPlayer->GetActiveTFWeapon();
 		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_SODA_POPPER ) )
