@@ -59,13 +59,26 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 	if ( IsDormant() )
 		return;
 
-	if ( enginetrace->GetPointContents( GetAbsOrigin() ) & MASK_WATER )
+	int iAttachment = LookupAttachment( "trail" );
+	if( iAttachment > -1 )
 	{
-		ParticleProp()->Create( "rockettrail_underwater", PATTACH_POINT_FOLLOW, "trail" );
-	}
-	else
-	{	
-		ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, "trail" );
+		if ( enginetrace->GetPointContents( GetAbsOrigin() ) & MASK_WATER )
+		{
+			ParticleProp()->Create( "rockettrail_underwater", PATTACH_POINT_FOLLOW, iAttachment );
+		}
+		else
+		{	
+			ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, iAttachment );
+		}
+
+		int nUseMiniRockets = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), nUseMiniRockets, mini_rockets );
+		if ( nUseMiniRockets == 1 )
+		{
+			C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+			if( pOwner && pOwner->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+				ParticleProp()->Create( "rockettrail_airstrike_line", PATTACH_POINT_FOLLOW, iAttachment );
+		}
 	}
 
 	if ( m_bCritical )
@@ -92,6 +105,11 @@ const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
 {
 	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 		return "halloween_rockettrail";
-	else
-		return "rockettrail";
+	
+	int nUseMiniRockets = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), nUseMiniRockets, mini_rockets );
+	if ( nUseMiniRockets == 1 )
+		return "rockettrail_airstrike";
+
+	return "rockettrail";
 }

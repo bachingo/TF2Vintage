@@ -189,7 +189,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	CALL_ATTRIB_HOOK_INT( iProjectile, override_projectile_type );
 
-	if ( !iProjectile )
+	if ( iProjectile == TF_PROJECTILE_NONE )
 		iProjectile = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iProjectile;
 
 	CBaseEntity *pProjectile = NULL;

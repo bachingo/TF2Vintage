@@ -47,15 +47,8 @@ CTFProjectile_Rocket *CTFProjectile_Rocket::Create( CBaseEntity *pWeapon, const 
 //-----------------------------------------------------------------------------
 void CTFProjectile_Rocket::Spawn()
 {
-	const char *pszRocketModel;
-	int nUseMiniRockets = 0;
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_hLauncher.Get(), nUseMiniRockets, mini_rockets);
-	if (nUseMiniRockets != 0)
-		pszRocketModel = MINIROCKET_MODEL;
-	else
-		pszRocketModel = ROCKET_MODEL;
-
-	SetModel( pszRocketModel );
+	UseClientSideAnimation();
+	SetModel( ROCKET_MODEL );
 	BaseClass::Spawn();
 }
 
