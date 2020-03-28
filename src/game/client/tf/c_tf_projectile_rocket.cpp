@@ -72,7 +72,7 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 		}
 
 		int nUseMiniRockets = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), nUseMiniRockets, mini_rockets );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nUseMiniRockets, mini_rockets );
 		if ( nUseMiniRockets == 1 )
 		{
 			C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
@@ -107,7 +107,7 @@ const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
 		return "halloween_rockettrail";
 	
 	int nUseMiniRockets = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOriginalLauncher(), nUseMiniRockets, mini_rockets );
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nUseMiniRockets, mini_rockets );
 	if ( nUseMiniRockets == 1 )
 		return "rockettrail_airstrike";
 
