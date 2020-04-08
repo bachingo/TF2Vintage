@@ -3445,7 +3445,7 @@ static const char *g_aTaggedConVars[] =
 	"friendlyfire",
 
 	"tf_weapon_criticals",
-	"nocrits",
+	"criticals",
 
 	"tf_damage_disablespread",
 	"dmgspread",
