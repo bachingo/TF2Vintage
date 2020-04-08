@@ -304,23 +304,9 @@ void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, const char *p
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, CBaseEntity *pEntity /*= NULL*/, int iAttachType /*= PATTACH_CUSTOMORIGIN*/ )
+void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, CBaseEntity *pEntity /*= NULL*/, ParticleAttachment_t iAttachType /*= PATTACH_CUSTOMORIGIN*/ )
 {
-	g_TETFParticleEffect.Init();
-
-	g_TETFParticleEffect.m_iParticleSystemIndex = GetParticleSystemIndex( pszParticleName );
-
-	VectorCopy( vecOrigin, g_TETFParticleEffect.m_vecOrigin );
-	VectorCopy( vecAngles, g_TETFParticleEffect.m_vecAngles );
-
-	if ( pEntity )
-	{
-		g_TETFParticleEffect.m_nEntIndex = pEntity->entindex();
-		g_TETFParticleEffect.m_iAttachType = iAttachType;
-	}
-
-	// Send it over the wire
-	g_TETFParticleEffect.Create( filter, flDelay );
+	TE_TFParticleEffectComplex( filter, flDelay, pszParticleName, vecOrigin, vecAngles, NULL, NULL, pEntity, iAttachType );
 }
 
 //-----------------------------------------------------------------------------
@@ -340,6 +326,38 @@ void TE_TFParticleEffect( IRecipientFilter &filter, float flDelay, int iEffectIn
 	{
 		g_TETFParticleEffect.m_nEntIndex = pEntity->entindex();
 		g_TETFParticleEffect.m_iAttachType = PATTACH_CUSTOMORIGIN;
+	}
+
+	// Send it over the wire
+	g_TETFParticleEffect.Create( filter, flDelay );
+}
+
+void TE_TFParticleEffectComplex( IRecipientFilter &filter, float flDelay, const char *pszParticleName, Vector vecOrigin, QAngle vecAngles, te_tf_particle_effects_colors_t *pColors, te_tf_particle_effects_control_point_t *pControlPoint, CBaseEntity *pEntity, ParticleAttachment_t iAttachType, Vector vecStart )
+{
+	g_TETFParticleEffect.Init();
+
+	g_TETFParticleEffect.m_iParticleSystemIndex = GetParticleSystemIndex( pszParticleName );
+
+	VectorCopy( vecOrigin, g_TETFParticleEffect.m_vecOrigin );
+	VectorCopy( vecStart, g_TETFParticleEffect.m_vecStart );
+	VectorCopy( vecAngles, g_TETFParticleEffect.m_vecAngles );
+
+	if ( pEntity )
+	{
+		g_TETFParticleEffect.m_nEntIndex = pEntity->entindex();
+		g_TETFParticleEffect.m_iAttachType = iAttachType;
+	}
+
+	if ( pColors )
+	{
+		g_TETFParticleEffect.m_bCustomColors = true;
+		g_TETFParticleEffect.m_CustomColors = *pColors;
+	}
+
+	if ( pControlPoint )
+	{
+		g_TETFParticleEffect.m_bControlPoint1 = true;
+		g_TETFParticleEffect.m_ControlPoint1 = *pControlPoint;
 	}
 
 	// Send it over the wire

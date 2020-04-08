@@ -808,6 +808,11 @@ void CTFPlayer::PreThink()
 		}
 	}
 
+	float flHypeDecay = 0.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flHypeDecay, hype_decays_over_time );
+	if ( flHypeDecay != 0.0f )
+		m_Shared.RemoveHypeMeter( flHypeDecay );
+
 	// Reset bullet force accumulator, only lasts one frame, for ragdoll forces from multiple shots.
 	m_vecTotalBulletForce = vec3_origin;
 
@@ -7966,15 +7971,6 @@ void CTFPlayer::ForceRespawn( void )
 			CTF_GameStats.Event_PlayerChangedClass( this );
 
 		m_PlayerAnimState = CreateTFPlayerAnimState( this );
-
-		for ( int i=0; i < MAX_WEAPONS; ++i )
-		{
-			CEconEntity *pWeapon = GetWeapon( i );
-			if ( pWeapon == nullptr )
-				continue;
-
-			pWeapon->OnOwnerClassChange();
-		}
 	}
 
 	m_Shared.RemoveAllCond( NULL );

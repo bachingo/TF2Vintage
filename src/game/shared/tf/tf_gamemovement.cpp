@@ -347,7 +347,7 @@ void CTFGameMovement::AirDash( void )
 	m_pTFPlayer->m_Shared.SetLastDashTime( gpGlobals->curtime );
 
 	int nLoseHypeOnJump = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump);
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pTFPlayer, nLoseHypeOnJump, hype_resets_on_jump );
 	if ( nLoseHypeOnJump != 0 )
 		m_pTFPlayer->m_Shared.RemoveHypeMeter( nLoseHypeOnJump );
 
@@ -1615,7 +1615,7 @@ void CTFGameMovement::FullWalkMove()
 	// Make sure velocity is valid.
 	CheckVelocity();
 
-	if ( m_pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) )
+	if ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
 	{
 		CTFWeaponBase *pWeapon = m_pTFPlayer->GetActiveTFWeapon();
 		if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_SODA_POPPER ) )

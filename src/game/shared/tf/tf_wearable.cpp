@@ -43,6 +43,31 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFWearable::UpdateModelToClass( void )
+{
+	if ( m_bExtraWearable && GetItem()->GetStaticData() )
+	{
+		SetModel( GetItem()->GetStaticData()->extra_wearable );
+	}
+	else 
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+
+		if ( pOwner )
+		{
+			const char *pszModel = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
+
+			if ( pszModel[0] != '\0' )
+			{
+				SetModel( pszModel );
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWearable::Break( void )
 {
 	CPVSFilter filter( GetAbsOrigin() );
@@ -77,6 +102,40 @@ int C_TFWearable::InternalDrawModel( int flags )
 	}
 
 	return ret;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFWearable::UpdateModelToClass(void)
+{
+	if ( m_bExtraWearable && GetItem()->GetStaticData() )
+	{
+		SetModel( GetItem()->GetStaticData()->extra_wearable );
+	}
+	else
+	{
+		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+		if ( pOwner )
+		{
+			const char *pszModel = nullptr;
+			if ( pOwner->m_Shared.InCond(TF_COND_DISGUISED) && pOwner->IsEnemyPlayer() )
+			{
+				pszModel = GetItem()->GetPlayerDisplayModel( pOwner->m_Shared.GetDisguiseClass() );
+			}
+			else
+			{
+				pszModel = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
+			}
+
+
+			if ( pszModel && *pszModel )
+			{
+				SetModel( pszModel );
+			}
+		}
+
+	}
 }
 
 #endif

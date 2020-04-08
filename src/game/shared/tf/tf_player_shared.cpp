@@ -4131,6 +4131,7 @@ float CTFPlayerShared::GetCritMult(void)
 void CTFPlayerShared::AddHypeMeter( float value )
 {
 	m_flHypeMeter = Min( ( m_flHypeMeter + value ) , 100.0f );
+	m_pOuter->TeamFortress_SetSpeed();
 }
 
 //-----------------------------------------------------------------------------
@@ -4139,6 +4140,7 @@ void CTFPlayerShared::AddHypeMeter( float value )
 void CTFPlayerShared::RemoveHypeMeter( float value )
 {
 	m_flHypeMeter = Max( ( m_flHypeMeter - value ) , 0.0f );
+	m_pOuter->TeamFortress_SetSpeed();
 }
 
 //-----------------------------------------------------------------------------

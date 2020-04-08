@@ -237,7 +237,7 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 	return NULL;
 }
 
-float CEconItemView::GetModifiedRGBValue( bool bAlternate )
+unsigned int CEconItemView::GetModifiedRGBValue( bool bAlternate )
 {
 	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_Paint( "set item tint rgb" );
 	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_Paint2( "set item tint rgb 2" );
@@ -252,7 +252,7 @@ float CEconItemView::GetModifiedRGBValue( bool bAlternate )
 		if ( iter.Found() )
 		{
 			if ( flPaintRGB == 1.0 )
-				return bAlternate ? 0x5885A2 : 0xB8383B;
+				return bAlternate ? 0x005885A2 : 0x00B8383B;
 
 			if ( pAttrDef_Paint2 )
 			{
@@ -268,7 +268,7 @@ float CEconItemView::GetModifiedRGBValue( bool bAlternate )
 		}
 	}
 
-	return flResult;
+	return (unsigned int)flResult;
 }
 
 int CEconItemView::GetSkin( int iTeamNum, bool bViewmodel ) const

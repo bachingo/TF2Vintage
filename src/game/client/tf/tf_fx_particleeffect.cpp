@@ -97,6 +97,12 @@ void C_TETFParticleEffect::PostDataUpdate( DataUpdateType_t updateType )
 		data.m_fFlags |= PARTICLE_DISPATCH_RESET_PARTICLES;
 	}
 
+	data.m_bCustomColors = m_bCustomColors;
+	data.m_CustomColors = m_CustomColors;
+
+	data.m_bControlPoint1 = m_bControlPoint1;
+	data.m_ControlPoint1 = m_ControlPoint1;
+
 	DispatchEffect( "ParticleEffect", data );
 }
 
