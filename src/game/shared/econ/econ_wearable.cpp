@@ -79,10 +79,25 @@ int CEconWearable::GetSkin( void )
 
 	switch ( iVisibleTeam )
 	{
-		case TF_TEAM_BLUE:
-			return 1;
 		case TF_TEAM_RED:
 			return 0;
+			break;
+
+		case TF_TEAM_BLUE:
+			return 1;
+			break;
+
+		case TF_TEAM_GREEN:
+			return 2;
+			break;
+
+		case TF_TEAM_YELLOW:
+			return 3;
+			break;
+
+		default:
+			return 0;
+			break;
 	}
 
 	return m_nSkin;

@@ -142,6 +142,8 @@ const char *pszHeadLabelNames[] =
 {
 	"effects/speech_voice_red",
 	"effects/speech_voice_blue",
+	"effects/speech_voice_green",
+	"effects/speech_voice_yellow"
 };
 
 const char *g_pszHeadGibs[] = {
@@ -159,11 +161,15 @@ const char *g_pszHeadGibs[] = {
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
 #define TF_PLAYER_HEAD_LABEL_BLUE 1
+#define TF_PLAYER_HEAD_LABEL_GREEN 2
+#define TF_PLAYER_HEAD_LABEL_YELLOW 3
 
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheInvuln )
 CLIENTEFFECT_MATERIAL( "models/effects/invulnfx_blue.vmt" )
 CLIENTEFFECT_MATERIAL( "models/effects/invulnfx_red.vmt" )
+CLIENTEFFECT_MATERIAL( "models/effects/invulnfx_green.vmt" )
+CLIENTEFFECT_MATERIAL( "models/effects/invulnfx_yellow.vmt" )
 CLIENTEFFECT_REGISTER_END()
 
 // -------------------------------------------------------------------------------- //
@@ -615,32 +621,38 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	{
 		SetModelIndex( nModelIndex );
 		
+		switch ( m_iTeam )
+		{
+				
+			case TF_TEAM_RED:
+				m_nSkin = 0;
+				break;
+					
+			case TF_TEAM_BLUE:
+				m_nSkin = 1;
+				break;
+				
+			case TF_TEAM_GREEN:
+				m_nSkin = 8;
+				break;
+
+			case TF_TEAM_YELLOW:
+				m_nSkin = 9;
+				break;
+				
+			default:
+				m_nSkin = 0;
+				break;
+				
+		}
+		
 		if ( TFGameRules()->IsHolidayActive(kHoliday_Halloween) && !m_bGib )
 		{
-			switch ( m_iTeam )
-			{
-				case TF_TEAM_RED:
-					m_nSkin = 4;
-					break;
-				case TF_TEAM_BLUE:
-					m_nSkin = 5;
-					break;
-			}
+			m_nSkin += 4;
 			if ( m_iClass == TF_CLASS_SPY )
 				m_nSkin += 18;
 		}
-		else
-		{
-			switch ( m_iTeam )
-			{
-				case TF_TEAM_RED:
-					m_nSkin = 0;
-					break;
-				case TF_TEAM_BLUE:
-					m_nSkin = 1;
-					break;
-			}
-		}
+		
 	}
 
 	//if ( pPlayer && pPlayer->BRenderAsZombie( false ) )
@@ -1430,6 +1442,14 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 		case TF_TEAM_BLUE:
 			r = 0.4; g = 0.5; b = 1.0;
 			break;
+			
+		case TF_TEAM_GREEN:
+			r = 0.4; g = 1.0; b = 0.5;
+			break;
+
+		case TF_TEAM_YELLOW:
+			r = 1.0; g = 0.5; b = 0.5;
+			break;
 
 		default:
 			r = 0.4; g = 0.5; b = 1.0;
@@ -1732,11 +1752,17 @@ public:
 				switch ( pPlayer->GetTeamNumber() )
 				{
 					case TF_TEAM_RED:
-						vecColor = Vector( 94, 8, 5 );
-						break;
+					vecColor = Vector( 94, 8, 5 );
+					break;
 					case TF_TEAM_BLUE:
-						vecColor = Vector( 6, 21, 80 );
-						break;
+					vecColor = Vector( 6, 21, 80 );
+					break;
+					case TF_TEAM_GREEN:
+					vecColor = Vector( 1, 28, 9 );
+					break;
+					case TF_TEAM_YELLOW:
+					vecColor = Vector( 28, 28, 9 );
+					break;
 				}
 			}
 		}
@@ -2013,6 +2039,14 @@ void CInvisProxy::HandleSpyInvis( C_TFPlayer *pPlayer )
 
 		case TF_TEAM_BLUE:
 			r = 0.4; g = 0.5; b = 1.0;
+			break;
+			
+		case TF_TEAM_GREEN:
+			r = 0.4; g = 1.0; b = 0.5;
+			break;
+
+		case TF_TEAM_YELLOW:
+			r = 1.0; g = 0.5; b = 0.5;
 			break;
 
 		default:
@@ -2619,6 +2653,14 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 						pTeam = "blue";
 						break;
 
+					case TF_TEAM_GREEN:
+						pTeam = "green";
+						break;
+
+					case TF_TEAM_YELLOW:
+						pTeam = "yellow";
+						break;
+						
 					case TEAM_SPECTATOR:
 						pTeam = "spectate";
 						break;
@@ -2714,6 +2756,12 @@ void C_TFPlayer::InitInvulnerableMaterial( void )
 		case TF_TEAM_BLUE:
 			pszMaterial = "models/effects/invulnfx_blue.vmt";
 			break;
+		case TF_TEAM_GREEN:
+			pszMaterial = "models/effects/invulnfx_green.vmt";
+			break;
+		case TF_TEAM_YELLOW:
+			pszMaterial = "models/effects/invulnfx_yellow.vmt";
+			break;
 		default:
 			break;
 	}
@@ -2772,6 +2820,14 @@ void C_TFPlayer::GetGlowEffectColor( float *r, float *g, float *b )
 			*r = 0.74f; *g = 0.23f; *b = 0.23f;
 			break;
 
+		case TF_TEAM_GREEN:
+			*r = 0.03f; *g = 0.68f; *b = 0;
+			break;
+
+		case TF_TEAM_YELLOW:
+			*r = 1.0f; *g = 0.62f; *b = 0;
+			break;
+			
 		default:
 			*r = 0.76f; *g = 0.76f; *b = 0.76f;
 			break;
@@ -3020,13 +3076,19 @@ bool C_TFPlayer::IsEnemyPlayer( void )
 	switch ( pLocalPlayer->GetTeamNumber() )
 	{
 		case TF_TEAM_RED:
-			return ( GetTeamNumber() == TF_TEAM_BLUE );
+			return ( GetTeamNumber() == TF_TEAM_BLUE || GetTeamNumber() == TF_TEAM_GREEN || GetTeamNumber() == TF_TEAM_YELLOW );
 
 		case TF_TEAM_BLUE:
-			return ( GetTeamNumber() == TF_TEAM_RED );
+			return ( GetTeamNumber() == TF_TEAM_RED || GetTeamNumber() == TF_TEAM_GREEN || GetTeamNumber() == TF_TEAM_YELLOW );
+
+		case TF_TEAM_GREEN:
+			return ( GetTeamNumber() == TF_TEAM_RED || GetTeamNumber() == TF_TEAM_BLUE || GetTeamNumber() == TF_TEAM_YELLOW );
+
+		case TF_TEAM_YELLOW:
+			return ( GetTeamNumber() == TF_TEAM_RED || GetTeamNumber() == TF_TEAM_BLUE || GetTeamNumber() == TF_TEAM_GREEN );
 
 		default:
-			break;
+			return false;
 	}
 
 	return false;
@@ -4318,6 +4380,16 @@ void C_TFPlayer::GetTeamColor( Color &color )
 			color[1] = 109;
 			color[2] = 129;
 			break;
+		case TF_TEAM_GREEN:
+			color[0] = 59;
+			color[1] = 120;
+			color[2] = 55;
+			break;
+		case TF_TEAM_YELLOW:
+			color[0] = 145;
+			color[1] = 145;
+			color[2] = 55;
+			break;
 		default:
 			color[0] = 255;
 			color[1] = 255;
@@ -4657,6 +4729,16 @@ bool C_TFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 				if ( !( contentsMask & CONTENTS_BLUETEAM ) )
 					return false;
 				break;
+				
+			case TF_TEAM_GREEN:
+				if ( !(contentsMask & CONTENTS_GREENTEAM ) )
+					return false;
+				break;
+
+			case TF_TEAM_YELLOW:
+				if ( !(contentsMask & CONTENTS_YELLOWTEAM ) )
+					return false;
+				break;
 		}
 	}
 	return BaseClass::ShouldCollide( collisionGroup, contentsMask );
@@ -4689,56 +4771,38 @@ int C_TFPlayer::GetSkin()
 
 	switch (iVisibleTeam)
 	{
-	case TF_TEAM_RED:
-		if ( TFGameRules()->IsHolidayActive(kHoliday_Halloween) )
-		{
-			if (IsPlayerClass(TF_CLASS_SPY))
-			{
-				nSkin = 22;
-			}
-			else
-			{
-				nSkin = 4;
-			}
-
-		}
-		else
-		{
+		case TF_TEAM_RED:
 			nSkin = 0;
-		}
+			break;
 
-		break;
-
-	case TF_TEAM_BLUE:
-		if ( TFGameRules()->IsHolidayActive(kHoliday_Halloween) )
-		{
-			if (IsPlayerClass(TF_CLASS_SPY))
-			{
-				nSkin = 23;
-			}
-			else
-			{
-				nSkin = 5;
-			}
-
-		}
-		else
-		{
+		case TF_TEAM_BLUE:
 			nSkin = 1;
-		}
-		break;
+			break;
+			
+		case TF_TEAM_GREEN:
+			nSkin = 8;
+			break;
 
-	default:
-		nSkin = 0;
-		break;
+		case TF_TEAM_YELLOW:
+			nSkin = 9;
+			break;
+
+		default:
+			nSkin = 0;
+			break;
 	}
 
-	// 3 and 4 are invulnerable
+	if ( TFGameRules()->IsHolidayActive(kHoliday_Halloween) )
+	{
+		nSkin += 4;
+		if ( IsPlayerClass(TF_CLASS_SPY) )
+			nSkin += 18;
+	}	
+
+	// 3, 4, 8, 9 are invulnerable
 	if (m_Shared.InCond(TF_COND_INVULNERABLE))
 	{
 		nSkin += 2;
-
-
 	}
 	// This part shouldn't matter anymore.
 	/*
@@ -5379,6 +5443,15 @@ IMaterial *C_TFPlayer::GetHeadLabelMaterial( void )
 		case TF_TEAM_BLUE:
 			return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_BLUE];
 			break;
+			
+		case TF_TEAM_GREEN:
+			return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_GREEN];
+			break;
+
+		case TF_TEAM_YELLOW:
+			return g_pHeadLabelMaterial[TF_PLAYER_HEAD_LABEL_YELLOW];
+			break;
+			
 	}
 
 	return BaseClass::GetHeadLabelMaterial();

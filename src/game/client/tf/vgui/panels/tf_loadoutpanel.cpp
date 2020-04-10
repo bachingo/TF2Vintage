@@ -362,13 +362,32 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 			const char *pszModel = GetWeaponModel( pItemDef, m_iCurrentClass );
 			if ( pszModel[0] != '\0' )
 			{
-				PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( ( m_iCurrentSkin == 0 ? TF_TEAM_RED : TF_TEAM_BLUE ) );
-				if ( pVisuals && pVisuals->skin != -1 )
+				int nSkin = m_iCurrentSkin;
+				PerTeamVisuals_t *pVisuals = NULL;
+				switch ( m_iCurrentSkin )
 				{
-					m_pClassModelPanel->SetMergeMDL(pszModel, NULL, pVisuals->skin);
+					case TF_TEAM_RED:
+						pVisuals = pItemDef->GetVisuals( TF_TEAM_RED );
+						break;
+					case TF_TEAM_BLUE:
+						pVisuals = pItemDef->GetVisuals( TF_TEAM_BLUE );
+						break;
+					case TF_TEAM_GREEN:
+						pVisuals = pItemDef->GetVisuals( TF_TEAM_GREEN );
+						nSkin -= 6; // Convert from player skin number to weapon skin number.
+						break;
+					case TF_TEAM_YELLOW:
+						pVisuals = pItemDef->GetVisuals( TF_TEAM_YELLOW );
+						nSkin -= 6; // Convert from player skin number to weapon skin number.
+						break;
 				}
-				else
-					m_pClassModelPanel->SetMergeMDL(pszModel, NULL, m_iCurrentSkin);
+
+				if (pVisuals && pVisuals->skin != -1)
+				{
+					nSkin = pVisuals->skin;
+				}
+
+				m_pClassModelPanel->SetMergeMDL(pszModel, NULL, nSkin);
 			}
 		}
 
@@ -504,13 +523,23 @@ void CTFLoadoutPanel::DefaultLayout()
 {
 	BaseClass::DefaultLayout();
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( pPlayer && pPlayer->m_iOldTeam == TF_TEAM_BLUE )
+	if ( pPlayer )
 	{
-		m_iCurrentSkin = TF_TEAM_BLUE - 2;
-	}
-	else
-	{
-		m_iCurrentSkin = TF_TEAM_RED - 2;
+		switch ( pPlayer->GetTeamNumber() )
+		{
+		case TF_TEAM_RED:
+			m_iCurrentSkin = 0;
+			break;
+		case TF_TEAM_BLUE:
+			m_iCurrentSkin = 1;
+			break;
+		case TF_TEAM_GREEN:
+			m_iCurrentSkin = 8;
+			break;
+		case TF_TEAM_YELLOW:
+			m_iCurrentSkin = 9;
+			break;
+		}
 	}
 
 	UpdateModelPanels();

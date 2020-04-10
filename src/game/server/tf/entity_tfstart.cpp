@@ -169,4 +169,24 @@ void CTFTeamSpawn::InputRoundSpawn( inputdata_t &input )
 			Warning("%s failed to find control point round named '%s'\n", GetClassname(), STRING(m_iszRoundRedSpawn) );
 		}
 	}
+	
+	if (m_iszRoundGreenSpawn != NULL_STRING)
+	{
+		// We need to re-find our control point round, because they're recreated over round restarts
+		m_hRoundGreenSpawn = dynamic_cast<CTeamControlPointRound*>(gEntList.FindEntityByName(NULL, m_iszRoundGreenSpawn));
+		if (!m_hRoundGreenSpawn)
+		{
+			Warning("%s failed to find control point round named '%s'\n", GetClassname(), STRING(m_iszRoundGreenSpawn));
+		}
+	}
+
+	if (m_iszRoundYellowSpawn != NULL_STRING)
+	{
+		// We need to re-find our control point round, because they're recreated over round restarts
+		m_hRoundYellowSpawn = dynamic_cast<CTeamControlPointRound*>(gEntList.FindEntityByName(NULL, m_iszRoundYellowSpawn));
+		if (!m_hRoundYellowSpawn)
+		{
+			Warning("%s failed to find control point round named '%s'\n", GetClassname(), STRING(m_iszRoundYellowSpawn));
+		}
+	}
 }

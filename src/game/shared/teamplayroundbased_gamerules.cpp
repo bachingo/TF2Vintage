@@ -3535,7 +3535,14 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 
 	CTeam *pTeam;
 
+#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
+	int iTeamCount = GetNumberOfTeams();
+	if (TFGameRules())
+		iTeamCount = TFGameRules()->IsFourTeamGame() ? 5 : 3;
+	for ( pTeam = GetGlobalTeam(i); i <= iTeamCount; pTeam = GetGlobalTeam(++i) )
+#else
 	for ( pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )
+#endif
 	{
 		if ( pTeam == pNewTeam )
 			continue;
@@ -3579,7 +3586,14 @@ bool CTeamplayRoundBasedRules::AreTeamsUnbalanced( int &iHeaviestTeam, int &iLig
 
 	int i = FIRST_GAME_TEAM;
 
+#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
+	int iTeamCount = GetNumberOfTeams();
+	if (TFGameRules())
+		iTeamCount = TFGameRules()->IsFourTeamGame() ? 5 : 3;
+	for ( CTeam *pTeam = GetGlobalTeam(i); i <= iTeamCount; pTeam = GetGlobalTeam(++i) )
+#else
 	for ( CTeam *pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )
+#endif
 	{
 		int iNumPlayers = pTeam->GetNumPlayers();
 

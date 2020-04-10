@@ -85,27 +85,42 @@ public:
 	DECLARE_DATADESC();
 	void	InputSetRedTeamRespawnWaveTime( inputdata_t &inputdata );
 	void	InputSetBlueTeamRespawnWaveTime( inputdata_t &inputdata );
+	void	InputSetGreenTeamRespawnWaveTime(inputdata_t &inputdata);
+	void	InputSetYellowTeamRespawnWaveTime(inputdata_t &inputdata);
 	void	InputAddRedTeamRespawnWaveTime( inputdata_t &inputdata );
 	void	InputAddBlueTeamRespawnWaveTime( inputdata_t &inputdata );
+	void	InputAddGreenTeamRespawnWaveTime(inputdata_t &inputdata);
+	void	InputAddYellowTeamRespawnWaveTime(inputdata_t &inputdata);
 	void	InputSetRedTeamGoalString( inputdata_t &inputdata );
 	void	InputSetBlueTeamGoalString( inputdata_t &inputdata );
+	void	InputSetGreenTeamGoalString(inputdata_t &inputdata);
+	void	InputSetYellowTeamGoalString(inputdata_t &inputdata);
 	void	InputSetRedTeamRole( inputdata_t &inputdata );
 	void	InputSetBlueTeamRole( inputdata_t &inputdata );
+	void	InputSetGreenTeamRole( inputdata_t &inputdata );
+	void	InputSetYellowTeamRole( inputdata_t &inputdata );
 	void	InputAddRedTeamScore( inputdata_t &inputdata );
 	void	InputAddBlueTeamScore( inputdata_t &inputdata );
+	void	InputAddGreenTeamScore( inputdata_t &inputdata );
+	void	InputAddYellowTeamScore( inputdata_t &inputdata );
 
 	void	InputSetRedKothClockActive( inputdata_t &inputdata );
 	void	InputSetBlueKothClockActive( inputdata_t &inputdata );
+	void	InputSetGreenKothClockActive( inputdata_t &inputdata );
+	void	InputSetYellowKothClockActive( inputdata_t &inputdata );
 
 	void	InputSetCTFCaptureBonusTime( inputdata_t &inputdata );
 
 	void	InputPlayVO( inputdata_t &inputdata );
 	void	InputPlayVORed( inputdata_t &inputdata );
 	void	InputPlayVOBlue( inputdata_t &inputdata );
+	void	InputPlayVOGreen( inputdata_t &inputdata );
+	void	InputPlayVOYellow( inputdata_t &inputdata );
 
 	virtual void Activate();
 
 	int		m_iHud_Type;
+	bool	m_bFourTeamMode;
 	bool	m_bCTF_Overtime;
 
 #endif
@@ -186,6 +201,8 @@ public:
 
 	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { if (IsInKothMode()) return m_hBlueKothTimer.Get(); else return NULL; }
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { if (IsInKothMode()) return m_hRedKothTimer.Get(); else return NULL; }
+	CTeamRoundTimer* GetGreenKothRoundTimer( void ) { return m_hGreenKothTimer.Get(); }
+	CTeamRoundTimer* GetYellowKothRoundTimer( void ) { return m_hYellowKothTimer.Get(); }
 
 	CBaseEntity*	GetIT( void ) const { return m_itHandle.Get(); }
 	void			SetIT( CBaseEntity *pPlayer );
@@ -293,6 +310,8 @@ public:
 
 	void			SetBlueKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hBlueKothTimer.Set( pTimer ); }
 	void			SetRedKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hRedKothTimer.Set( pTimer ); }
+	void			SetGreenKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hGreenKothTimer.Set( pTimer ); }
+	void			SetYellowKothRoundTimer( CTeamRoundTimer *pTimer ) { m_hYellowKothTimer.Set( pTimer ); }
 	float			GetRoundStartTime( void ) { return m_flRoundStartTime; }
 
 	virtual bool	ClientConnected( edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen );
@@ -357,6 +376,7 @@ public:
 	float			GetGravityMultiplier( void ) const { return m_flGravityScale; }
 	void			SetGravityMultiplier( float value ) { m_flGravityScale = value; }
 
+	virtual bool	IsFourTeamGame( void ){ return m_bFourTeamMode; };
 	bool			IsMannVsMachineMode( void ) { return false; };
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
@@ -526,6 +546,8 @@ private:
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
+	CNetworkString( m_pszTeamGoalStringGreen, MAX_TEAMGOAL_STRING );
+	CNetworkString( m_pszTeamGoalStringYellow, MAX_TEAMGOAL_STRING );
 	CNetworkVar( float, m_flCapturePointEnableTime );
 	CNetworkVar( int, m_nHudType );
 	CNetworkVar( bool, m_bPlayingKoth );
@@ -541,6 +563,8 @@ private:
 	CNetworkVar( float, m_flGravityScale );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
+	CNetworkVar( CHandle<CTeamRoundTimer>, m_hGreenKothTimer );
+	CNetworkVar( CHandle<CTeamRoundTimer>, m_hYellowKothTimer );
 	CNetworkVar( EHANDLE, m_itHandle );
 	CNetworkVar( int, m_nHalloweenEffect );
 	CNetworkVar( float, m_flHalloweenEffectStartTime );
@@ -561,6 +585,8 @@ public:
 	int	m_iBreadUpdateMode;
 	int	m_iEOTLMode;
 
+	CNetworkVar( bool, m_bFourTeamMode );
+	
 #ifdef GAME_DLL
 	float m_flCTFBonusTime;
 #endif

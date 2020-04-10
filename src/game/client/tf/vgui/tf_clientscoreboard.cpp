@@ -174,24 +174,38 @@ void CTFClientScoreBoardDialog::ShowPanel( bool bShow )
 	int iRenderGroup = gHUD.LookupRenderGroupIndexByName( "global" );
 
 	if ( bShow )
-	{		
-		SetVisible(true);
-		MoveToFront();
-
-		gHUD.LockRenderGroup(iRenderGroup);
-
-		// Clear the selected item, this forces the default to the local player
-		SectionedListPanel *pList = GetSelectedPlayerList();
-		if (pList)
+	{	
+		if ( TFGameRules() && TFGameRules()->IsFourTeamGame())
 		{
-			pList->ClearSelection();
+			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSCOREBOARD, true );
+		}
+		else
+		{
+			SetVisible(true);
+			MoveToFront();
+
+			gHUD.LockRenderGroup(iRenderGroup);
+
+			// Clear the selected item, this forces the default to the local player
+			SectionedListPanel *pList = GetSelectedPlayerList();
+			if (pList)
+			{
+				pList->ClearSelection();
+			}
 		}
 	}
 	else
 	{
-		SetVisible(false);
+		if (TFGameRules() && TFGameRules()->IsFourTeamGame())
+		{
+			gViewPortInterface->ShowPanel( PANEL_FOURTEAMSCOREBOARD, false );
+		}
+		else
+		{
+			SetVisible(false);
 
-		gHUD.UnlockRenderGroup(iRenderGroup);
+			gHUD.UnlockRenderGroup(iRenderGroup);
+		}
 	}
 }
 
@@ -390,10 +404,16 @@ void CTFClientScoreBoardDialog::UpdateTeamInfo( void )
 
 bool AreEnemyTeams( int iTeam1, int iTeam2 )
 {
-	if ( iTeam1 == TF_TEAM_RED && iTeam2 == TF_TEAM_BLUE )
+	if (iTeam1 == TF_TEAM_RED && (iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_GREEN || iTeam2 == TF_TEAM_YELLOW))
 		return true;
 
-	if ( iTeam1 == TF_TEAM_BLUE && iTeam2 == TF_TEAM_RED )
+	if (iTeam1 == TF_TEAM_BLUE && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_GREEN || iTeam2 == TF_TEAM_YELLOW))
+		return true;
+
+	if (iTeam1 == TF_TEAM_GREEN && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_YELLOW))
+		return true;
+
+	if (iTeam1 == TF_TEAM_YELLOW && (iTeam2 == TF_TEAM_RED || iTeam2 == TF_TEAM_BLUE || iTeam2 == TF_TEAM_GREEN))
 		return true;
 
 	return false;

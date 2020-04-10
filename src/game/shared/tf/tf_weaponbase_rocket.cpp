@@ -302,21 +302,29 @@ unsigned int CTFBaseRocket::PhysicsSolidMaskForEntity( void ) const
 	{
 		// Only collide with the other team
 
-		switch (GetTeamNumber())
+		switch ( GetTeamNumber() )
 		{
 			case TF_TEAM_RED:
-				teamContents = CONTENTS_BLUETEAM;
+				teamContents = CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
 				break;
 
 			case TF_TEAM_BLUE:
-				teamContents = CONTENTS_REDTEAM;
+				teamContents = CONTENTS_REDTEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
+				break;
+
+			case TF_TEAM_GREEN:
+				teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_YELLOWTEAM;
+				break;
+
+			case TF_TEAM_YELLOW:
+				teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM;
 				break;
 		}
 	}
 	else
 	{
 		// Collide with all teams
-		teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM;
+		teamContents = CONTENTS_REDTEAM | CONTENTS_BLUETEAM | CONTENTS_GREENTEAM | CONTENTS_YELLOWTEAM;
 	}
 
 	return BaseClass::PhysicsSolidMaskForEntity() | teamContents;

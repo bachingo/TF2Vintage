@@ -27,7 +27,8 @@ enum
 {
 	TF_TEAM_RED = FIRST_GAME_TEAM,
 	TF_TEAM_BLUE,
-
+	TF_TEAM_GREEN,
+	TF_TEAM_YELLOW,
 	TF_TEAM_COUNT,
 
 	TF_TEAM_NPC
@@ -57,6 +58,8 @@ void PrecacheTeamParticles( const char *pszFormat, bool bDummyBoolean = false, c
 
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
+#define CONTENTS_GREENTEAM	CONTENTS_UNUSED
+#define CONTENTS_YELLOWTEAM	CONTENTS_UNUSED6
 			
 // Team roles
 enum 
@@ -93,9 +96,14 @@ enum
 //-----------------------------------------------------------------------------
 #define PANEL_CLASS_BLUE		"class_blue"
 #define PANEL_CLASS_RED			"class_red"
+#define PANEL_CLASS_GREEN		"class_green"
+#define PANEL_CLASS_YELLOW		"class_yellow"
 #define PANEL_MAPINFO			"mapinfo"
 #define PANEL_ROUNDINFO			"roundinfo"
-#define PANEL_ARENATEAMSELECT "arenateamselect"
+#define PANEL_ARENATEAMSELECT 	"arenateamselect"
+
+#define PANEL_FOURTEAMSCOREBOARD "fourteamscoreboard"
+#define PANEL_FOURTEAMSELECT	"fourteamselect"
 
 // file we'll save our list of viewed intro movies in
 #define MOVIES_FILE				"viewed.res"
@@ -112,6 +120,8 @@ enum
 
 #define COLOR_TF_BLUE	Color( 64, 64, 255, 255 )
 #define COLOR_TF_RED	Color( 255, 64, 64, 255 )
+#define COLOR_TF_GREEN	Color( 64, 255, 64, 255 )
+#define COLOR_TF_YELLOW	Color( 255, 255, 64, 255 )
 #define COLOR_TF_SPECTATOR Color( 245, 229, 196, 255 )
 
 #define COLOR_EYEBALLBOSS_TEXT	Color( 134, 80, 172, 255 )

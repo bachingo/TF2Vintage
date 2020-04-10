@@ -1,8 +1,8 @@
- @include "base.fgd"
+@include "base.fgd"
 
 
 //
-// TF2 game definition file (.fgd)
+// TF2V game definition file (.fgd)
 //
 
 @MaterialExclusion
@@ -105,6 +105,8 @@
 		0 : "Any"
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 	input SetTeam(integer) : "Changes the entity's team."
 ]
@@ -158,12 +160,16 @@
 	//[
 	//	2 : "RED"
 	//	3 : "BLU"
+	//	4 : "GRN"
+	//	5 : "YLW"
 	//]
 
 	//team2choice(choices) : "Team 2" : 3 : "Sets the Defender team" =
 	//[
 	//	2 : "RED"
 	//	3 : "BLU"
+	//	4 : "GRN"
+	//	5 : "YLW"
 	//]
 
 	fourteammode(choices) : "Four Team Map" : 0 : "Overrides the above values and allows all 4 teams in the map." =
@@ -174,21 +180,35 @@
 
 	input SetRedTeamRespawnWaveTime(float) : "Set the RED team's respawn wave time"
 	input SetBlueTeamRespawnWaveTime(float) : "Set the BLU team's respawn wave time"
+	input SetGreenTeamRespawnWaveTime(float) : "Set the GRN team's respawn wave time"
+	input SetYellowTeamRespawnWaveTime(float) : "Set the YLW team's respawn wave time"
 	input AddRedTeamRespawnWaveTime(float) : "Add to the RED team's respawn wave time"
 	input AddBlueTeamRespawnWaveTime(float) : "Add to the BLU team's respawn wave time"
+	input AddGreenTeamRespawnWaveTime(float) : "Add to the GRN team's respawn wave time"
+	input AddYellowTeamRespawnWaveTime(float) : "Add to the YLW team's respawn wave time"
 	input SetRedTeamGoalString(string) : "Set the RED team's goal string to show in the hud"
 	input SetBlueTeamGoalString(string) : "Set the BLU team's goal string to show in the hud"
+	input SetGreenTeamGoalString(string) : "Set the GRN team's goal string to show in the hud"
+	input SetYellowTeamGoalString(string) : "Set the YLW team's goal string to show in the hud"
 	input SetRedTeamRole(integer) : "Set RED team role, 0=none, 1=defenders, 2=attackers"
 	input SetBlueTeamRole(integer) : "Set BLU team role, 0=none, 1=defenders, 2=attackers"
+	input SetGreenTeamRole(integer) : "Set GRN team role, 0=none, 1=defenders, 2=attackers"
+	input SetYellowTeamRole(integer) : "Set YLW team role, 0=none, 1=defenders, 2=attackers"
 	input AddRedTeamScore(integer) : "Add to the RED team score (can be a negative number)"
 	input AddBlueTeamScore(integer) : "Add to the BLU team score (can be a negative number)"
+	input AddGreenTeamScore(integer) : "Add to the GRN team score (can be a negative number)"
+	input AddYellowTeamScore(integer) : "Add to the YLW team score (can be a negative number)"
 	//input SetRequiredObserverTarget(string) : "Sets the given entity (by name) to be the required observer target for all spectators. Must be cleared to allow spectators to cycle through targets normally again."
 	//input SetStalemateOnTimelimit(bool) : "Determines whether mp_timelimit can end the match in the middle of a round."
 	input SetRedKothClockActive(void) : "Set the RED team clock active for KOTH maps."
 	input SetBlueKothClockActive(void) : "Set the BLU team clock active for KOTH maps."
+	input SetGreenKothClockActive(void) : "Set the GRN team clock active for KOTH maps."
+	input SetYellowKothClockActive(void) : "Set the YLW team clock active for KOTH maps."
 	input SetCTFCaptureBonusTime(float) : "Set the length (in seconds) of team crit time for CTF captures. 0 = none"
 	input PlayVORed(string) : "Play the given sound entry via the VO channel"
 	input PlayVOBlue(string) : "Play the given sound entry via the VO channel"
+	input PlayVOGreen(string) : "Play the given sound entry via the VO channel"
+	input PlayVOYellow(string) : "Play the given sound entry via the VO channel"
 	input PlayVO(string) : "Play the given sound entry via the VO channel"
 	//input HandleMapEvent(string) : "Handles map events. This will be different events for different maps."
 	//input SetCustomUpgradesFile(string) : "Specifies the path relative to the game directory to the upgrades file to be used."
@@ -206,6 +226,8 @@
 
  	round_bluespawn(target_destination) : "Blue spawn for round" : : "Blue spawn point when the associated round is being played."
 	round_redspawn(target_destination) : "Red spawn for round" : : "Red spawn point when the associated round is being played."
+	round_greenspawn(target_destination) : "Green spawn for round" : : "Green spawn point when the associated round is being played."
+	round_yellowspawn(target_destination) : "Yellow spawn for round" : : "Yellow spawn point when the associated round is being played."
 ]
 
 @PointClass base(Targetname) = game_forcerespawn :
@@ -248,10 +270,14 @@
 	output OnPickup(void)  : "Sent when the flag is picked up."
 	output OnPickupTeam1(void) : "Sent when the flag is picked up by RED."
 	output OnPickupTeam2(void) : "Sent when the flag is picked up by BLU."
+	output OnPickupTeam3(void) : "Sent when the flag is picked up by GRN."
+	output OnPickupTeam4(void) : "Sent when the flag is picked up by YLW."
 	output OnDrop(void)    : "Sent when the flag is dropped."
 	output OnCapture(void) : "Sent when the flag is captured."
 	output OnCapTeam1(void) : "Sent when the flag is captured by RED."
 	output OnCapTeam2(void) : "Sent when the flag is captured by BLU."
+	output OnCapTeam3(void) : "Sent when the flag is captured by GRN."
+	output OnCapTeam4(void) : "Sent when the flag is captured by YLW."
 	output OnTouchSameTeam(void) : "Sent when the flag is touched by a player on the same team (BLU player touches BLU flag, RED player touches RED flag)."
 
 ]
@@ -285,6 +311,8 @@
 		0 : "None (Sudden Death)"
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 
 	force_map_reset(choices) : "Force map reset" : 1 : "Force the map to reset during the force respawn after the round is over." =
@@ -526,6 +554,8 @@
 		0 : "None (Shared)"
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 
 	step_number(integer) : "Step Number. Intro starts at 1." : 1
@@ -569,6 +599,8 @@
 		0 : "Neither"
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 	point_index(integer) : "Index" : 0 : "Index of this point (must be unique)."
 
@@ -590,22 +622,32 @@
 	// Per team data
 	team_timedpoints_2(integer) : "Time-based point value for RED." : 0
 	team_timedpoints_3(integer) : "Time-based point value for BLUE." : 0
+	team_timedpoints_4(integer) : "Time-based point value for GREEN." : 0
+	team_timedpoints_5(integer) : "Time-based point value for YELLOW." : 0
 
 	team_capsound_0(sound) : "Reset Sound" : "" : "Sound made when point resets."
 	team_capsound_2(sound) : "Red Capture Sound" : "" : "Sound made when RED captures."
 	team_capsound_3(sound) : "Blue Capture Sound" : "" : "Sound made when BLUE captures."
+	team_capsound_4(sound) : "Green Capture Sound" : "" : "Sound made when GREEN captures."
+	team_capsound_5(sound) : "Yellow Capture Sound" : "" : "Sound made when YELLOW captures."
 
 	team_model_0(studio) 	: "Reset Model" : "models/effects/cappoint_hologram.mdl" : "Model when point reset."
 	team_model_2(studio) 	: "RED Model" : "models/effects/cappoint_hologram.mdl" : "Model when RED owns the point."
 	team_model_3(studio) 	: "BLUE Model" : "models/effects/cappoint_hologram.mdl" : "Model when BLUE owns the point."
+	team_model_4(studio) 	: "GREEN Model" : "models/effects/cappoint_hologram.mdl" : "Model when GREEN owns the point."
+	team_model_5(studio) 	: "YELLOW Model" : "models/effects/cappoint_hologram.mdl" : "Model when YELLOW owns the point."
 
 	team_bodygroup_0(integer) : "Reset model bodygroup" : 3
 	team_bodygroup_2(integer) : "RED model bodygroup" : 1
 	team_bodygroup_3(integer) : "BLUE model bodygroup" : 1
+	team_bodygroup_4(integer) : "GREEN model bodygroup" : 1
+	team_bodygroup_5(integer) : "YELLOW model bodygroup" : 1
 
 	team_icon_0(material)	: "HUD icon neutral" : "sprites/obj_icons/icon_obj_neutral" : "HUD icon material when no one owns the point."
 	team_icon_2(material)	: "HUD icon RED" : "sprites/obj_icons/icon_obj_red" : "HUD icon material when RED owns the point."
 	team_icon_3(material)	: "HUD icon BLUE" : "sprites/obj_icons/icon_obj_blu" : "HUD icon material when BLUE owns the point."
+	team_icon_4(material)	: "HUD icon GREEN" : "sprites/obj_icons/icon_obj_grn" : "HUD icon material when GREEN owns the point."
+	team_icon_5(material)	: "HUD icon YELLOW" : "sprites/obj_icons/icon_obj_ylw" : "HUD icon material when YELLOW owns the point."
 
 	team_overlay_0(material) : "HUD overlay neutral" : "" : "HUD material that will overlay the icon when no one owns the point."
 	team_overlay_2(material) : "HUD overlay RED" : "" : "HUD material that will overlay the icon when RED owns the point."
@@ -619,18 +661,30 @@
 	team_previouspoint_3_0(target_source) : "BLUE Previous Required Point 1" : "" : "The name of a previous capture point that BLUE must own to be able to capture this point. If empty, the team must own all points preceding this one."
 	team_previouspoint_3_1(target_source) : "BLUE Previous Required Point 2" : "" : "The name of a second previous capture point that BLUE must own to be able to capture this point."
 	team_previouspoint_3_2(target_source) : "BLUE Previous Required Point 3" : "" : "The name of a third previous capture point that BLUE must own to be able to capture this point."
+ 	team_previouspoint_4_0(target_source) : "GREEN Previous Required Point 1" : "" : "The name of a previous capture point that GREEN must own to be able to capture this point. If empty, the team must own all points preceding this one."
+	team_previouspoint_4_1(target_source) : "GREEN Previous Required Point 2" : "" : "The name of a second previous capture point that GREEN must own to be able to capture this point."
+	team_previouspoint_4_2(target_source) : "GREEN Previous Required Point 3" : "" : "The name of a third previous capture point that GREEN must own to be able to capture this point."
+	team_previouspoint_5_0(target_source) : "YELLOW Previous Required Point 1" : "" : "The name of a previous capture point that YELLOW must own to be able to capture this point. If empty, the team must own all points preceding this one."
+	team_previouspoint_5_1(target_source) : "YELLOW Previous Required Point 2" : "" : "The name of a second previous capture point that YELLOW must own to be able to capture this point."
+	team_previouspoint_5_2(target_source) : "YELLOW Previous Required Point 3" : "" : "The name of a third previous capture point that YELLOW must own to be able to capture this point."
 
 	// Outputs
 	output OnOwnerChangedToTeam1(void) : "Sent when owner is changed to RED."
 	output OnOwnerChangedToTeam2(void) : "Sent when owner is changed to BLUE."
+	output OnOwnerChangedToTeam3(void) : "Sent when owner is changed to GREEN."
+	output OnOwnerChangedToTeam4(void) : "Sent when owner is changed to YELLOW."
 
 	output OnCapReset(void) : "Sent when owner is changed to neutral."
 
 	output OnRoundStartOwnedByTeam1(void) : "Sent when a round is starting and the point is owned by RED."
 	output OnRoundStartOwnedByTeam2(void) : "Sent when a round is starting and the point is owned by BLUE."
+	output OnRoundStartOwnedByTeam3(void) : "Sent when a round is starting and the point is owned by GREEN."
+	output OnRoundStartOwnedByTeam4(void) : "Sent when a round is starting and the point is owned by YELLOW."
 
 	output OnCapTeam1(void) : "Sent when RED capture this point."
 	output OnCapTeam2(void) : "Sent when BLUE capture this point."
+	output OnCapTeam3(void) : "Sent when GREEN capture this point."
+	output OnCapTeam4(void) : "Sent when YELLOW capture this point."
 
 	output OnUnlocked(void) : "Sent when point is unlocked via the SetLocked(0) or SetUnlockTime inputs."
 	
@@ -657,18 +711,24 @@
 		1 : "Both"
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 
 	output OnStart(void) : "Sent when this round is selected to be played."
 	output OnEnd(void) : "Sent when this round is finished."
 	output OnWonByTeam1(void) : "Sent when RED wins this round."
 	output OnWonByTeam2(void) : "Sent when BLUE wins this round."
+	output OnWonByTeam3(void) : "Sent when GREEN wins this round."
+	output OnWonByTeam4(void) : "Sent when YELLOW wins this round."
 ]
 
 @PointClass base(Targetname, EnableDisable) = team_control_point_master : "Control Point Master"
 [
 	team_base_icon_2(material) : "Material for the RED Base icon" : "sprites/obj_icons/icon_base_red"
 	team_base_icon_3(material) : "Material for the BLUE Base icon" : "sprites/obj_icons/icon_base_blu"
+	team_base_icon_4(material) : "Material for the GREEN Base icon" : "sprites/obj_icons/icon_base_grn"
+	team_base_icon_5(material) : "Material for the YELLOW Base icon" : "sprites/obj_icons/icon_base_ylw"
 	caplayout(string) : "Cap Layout" : "" : "A string that tells the HUD how to lay out the cap points. It should be a string with indexes of cap points seperated by commas to denote a new line. So <2,0 1> would create a pyramid, with cap point 2 on the top and cap points 0 & 1 on the bottom."
 	custom_position_x(float) : "Custom cap position X" : -1 : "Set the cap layout custom X position [0,1]"
 	custom_position_y(float) : "Custom cap position Y" : -1 : "Set the cap layout custom Y position [0,1]"
@@ -679,6 +739,8 @@
 		1 : "Both"
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 
 	switch_teams(choices) : "Switch teams on map win?" : 0 : "Switch the teams when one team has won the map and the game is going to be reset." =
@@ -703,6 +765,8 @@
 	
 	output OnWonByTeam1(void) : "Sent when RED wins the game."
 	output OnWonByTeam2(void) : "Sent when BLUE wins the game."
+	output OnWonByTeam3(void) : "Sent when GREEN wins the game."
+	output OnWonByTeam4(void) : "Sent when YELLOW wins the game."
 
 	input SetWinner(integer) : "Set the winner of the round to this team (0 for a stalemate)."
 	input SetCapLayout(string) : "Set the cap layout string."
@@ -724,15 +788,32 @@
 		1 : "Yes"
 		0 : "No"
 	]
+	team_cancap_4(choices) : "Can GREEN Cap?" : 1 =
+	[
+		1 : "Yes"
+		0 : "No"
+	]
+	team_cancap_5(choices) : "Can YELLOW Cap?" : 1 =
+	[
+		1 : "Yes"
+		0 : "No"
+	]
 	
 	team_startcap_2(integer) : "Number of RED players to start capping" : 1 
 	team_startcap_3(integer) : "Number of BLUE players to start capping" : 1 
+	team_startcap_4(integer) : "Number of GREEN players to start capping" : 1 
+	team_startcap_5(integer) : "Number of YELLOW players to start capping" : 1 
 
 	team_numcap_2(integer) : "Number of RED players to cap" : 1
 	team_numcap_3(integer) : "Number of BLUE players to cap" : 1
+	team_numcap_4(integer) : "Number of GREEN players to cap" : 1
+	team_numcap_5(integer) : "Number of YELLOW players to cap" : 1
 
 	team_spawn_2(integer) : "Red Spawn Adjust" : 0 : "Adjust the minimum respawn time for the red team by this amount (in seconds) when red captures this point. If the red team owns this point when blue captures it, this adjustment is reversed."
 	team_spawn_3(integer) : "Blue Spawn Adjust" : 0 : "Adjust the minimum respawn time for the blue team by this amount (in seconds) when blue captures this point. If the blue team owns this point when red captures it, this adjustment is reversed."
+	team_spawn_4(integer) : "Green Spawn Adjust" : 0 : "Adjust the minimum respawn time for the green team by this amount (in seconds) when green captures this point. If the red team owns this point when blue captures it, this adjustment is reversed."
+	team_spawn_5(integer) : "Yellow Spawn Adjust" : 0 : "Adjust the minimum respawn time for the yellow team by this amount (in seconds) when yellow captures this point. If the blue team owns this point when red captures it, this adjustment is reversed."
+
 
 	area_time_to_cap(integer) : "Time to cap (sec)" : 5
 
@@ -744,6 +825,14 @@
 	output OnStartTeam2(void) : "Sent when BLUE start capture."
 	output OnBreakTeam2(void) : "Sent when a BLUE capture is broken."
 	output OnCapTeam2(void)   : "Sent when BLUE end capture."
+
+	output OnStartTeam3(void) : "Sent when GREEN start capture."
+	output OnBreakTeam3(void) : "Sent when a GREEN capture is broken."
+	output OnCapTeam3(void)   : "Sent when GREEN end capture."
+
+	output OnStartTeam4(void) : "Sent when YELLOW start capture."
+	output OnBreakTeam4(void) : "Sent when a YELLOW capture is broken."
+	output OnCapTeam4(void)   : "Sent when YELLOW end capture."
 
 	output OnStartCap(void) : "Sent when either team starts capture."
 	output OnBreakCap(void) : "Sent when either team break capture."
@@ -835,6 +924,8 @@
 		0 : "Everyone"
 		2 : "Red Team Only"
 		3 : "Blue Team Only"
+		4 : "Green Team Only"
+		5 : "Yellow Team Only"
 	]
 
 	background(Choices) : "Background Panel Color" : 0 =
@@ -842,6 +933,8 @@
 		0 : "Grey"
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 
 	// Inputs
@@ -854,6 +947,8 @@
 	[
 		2 : "Red"
 		3 : "Blue"
+		4 : "Green"
+		5 : "Yellow"
 	]
 	
 	// invuln
@@ -956,10 +1051,7 @@
 	input Disable(void) : "Disable this entity."
 ]
 
-@PointClass base(Targetname) = tf_logic_deathmatch :
-	"Deathmatch mode entity. Use this to set the map to DM mode" []
-	
-	
+
 @PointClass base(Targetname,Parentname,BaseObject) iconsprite("editor/bullseye.vmt") = mapobj_cart_dispenser : 
 	"TF2 Dispenser" 
 [
@@ -1003,9 +1095,13 @@
 
 	input SetRedTimer(integer)	:	"Set the time remaining for the RED timer."
 	input SetBlueTimer(integer)	:	"Set the time remaining for the BLUE timer."
+	input SetGreenTimer(integer)	:	"Set the time remaining for the GREEN timer."
+	input SetYellowTimer(integer)	:	"Set the time remaining for the YELLOW timer."
 
 	input AddRedTimer(integer)	:	"Add time to the RED timer."
 	input AddBlueTimer(integer)	:	"Add time to the BLUE timer."
+	input AddGreenTimer(integer)	:	"Add time to the GREEN timer."
+	input AddYellowTimer(integer)	:	"Add time to the YELLOW timer."
 
 ]	
 	
@@ -1119,6 +1215,69 @@
 	// Outputs
 	output OnDetonate(void) : "Fired when this bomb detonates."
 ]
+
+@PointClass base(Targetname) size(-8 -8 -8, 8 8 8) = tf_player_equip : 
+	"An entity that gives equipment to the player who activates it."
+[
+	spawnflags(flags) =
+	[
+		1: "Use Only" : 0
+	]
+
+	stripweapons(Choices) : "Strip weapons" : 0 : "Remove players' current weapons before equipping new ones" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	weapon1(Choices) : "Weapon 1" : 0 =
+	[
+		0 : "-none-"
+		15 : "Scattergun ( Primary )"
+		16 : "Sniper rifle ( Primary )"
+		17 : "Minigun ( Primary )"
+		21 : "Rocket launcher ( Primary )"
+		22 : "Pipebomb launcher ( Primary )"
+		24 : "Flamethrower ( Primary )"
+		12 : "Shotgun ( Secondary )"
+		18 : "SMG ( Secondary )"
+		37 : "Pistol ( Secondary )"
+	]
+
+	weapon2(Choices) : "Weapon 2" : 0 =
+	[
+		0 : "-none-"
+		15 : "Scattergun ( Primary )"
+		16 : "Sniper rifle ( Primary )"
+		17 : "Minigun ( Primary )"
+		21 : "Rocket launcher ( Primary )"
+		22 : "Pipebomb launcher ( Primary )"
+		24 : "Flamethrower ( Primary )"
+		75 : "Double barrel shotgun ( Primary )"
+		12 : "Shotgun ( Secondary )"
+		18 : "SMG ( Secondary )"
+		37 : "Pistol ( Secondary )"
+	]
+
+	weapon3(Choices) : "Weapon 3" : 0 =
+	[
+		0 : "-none-"
+		65 : "Shotgun ( Primary )"
+		66 : "Scattergun ( Primary )"
+		67 : "Flamethrower ( Primary )"
+		70 : "Sniper rifle ( Primary )"
+		71 : "Pipebomb launcher ( Primary )"
+		75 : "Double barrel shotgun ( Primary )"
+		21 : "Rocket launcher ( Primary )"
+		17 : "Minigun ( Primary )"
+		68 : "Pistol ( Secondary )"
+		69 : "SMG ( Secondary )"
+	]
+	
+	// Inputs
+	//input EquipWeapons(void) : "Equips all of the players on the current server with the specified weapons."
+]
+
 
 @PointClass color(0 0 255) size(-1 -1 -64, 1 1 -8) sidelist(sides) iconsprite("editor/env_cubemap.vmt") = env_cubemap : 
 	"An entity that creates a sample point for the Cubic Environment Map."

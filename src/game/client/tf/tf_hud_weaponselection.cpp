@@ -805,6 +805,14 @@ void CHudWeaponSelection::DrawPlusStyleBox(int x, int y, int wide, int tall, boo
 			case TF_TEAM_BLUE:
 				iMaterial = m_iBGImage_Blue;
 				break;
+				
+			case TF_TEAM_GREEN:
+				iMaterial = m_iBGImage_Green;
+				break;
+
+			case TF_TEAM_YELLOW:
+				iMaterial = m_iBGImage_Yellow;
+				break;
 
 			default:
 				iMaterial = m_iBGImage_Blue;

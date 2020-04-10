@@ -25,6 +25,8 @@ const char *g_aTeamNames[TF_TEAM_COUNT] =
 	"Spectator",
 	"Red",
 	"Blue",
+	"Green",
+	"Yellow",
 };
 
 const char *g_aTeamNamesShort[TF_TEAM_COUNT] =
@@ -33,6 +35,8 @@ const char *g_aTeamNamesShort[TF_TEAM_COUNT] =
 	"red", // Spectator
 	"red",
 	"blu",
+	"grn",
+	"ylw",
 };
 
 const char *g_aTeamParticleNames[TF_TEAM_COUNT] =
@@ -41,6 +45,8 @@ const char *g_aTeamParticleNames[TF_TEAM_COUNT] =
 	"red",
 	"red",
 	"blue",
+	"green",
+	"yellow",
 };
 
 // Putting a dummy boolean for the old dm content for now
@@ -73,6 +79,8 @@ color32 g_aTeamColors[TF_TEAM_COUNT] =
 	{ 0, 0, 0, 0 }, // Spectator
 	{ 255, 0, 0, 0 }, // Red
 	{ 0, 0, 255, 0 }, // Blue
+	{ 0, 255, 0, 0 }, // Green
+	{ 255, 255, 0, 0 } // Yellow
 };
 
 bool IsGameTeam( int iTeam )

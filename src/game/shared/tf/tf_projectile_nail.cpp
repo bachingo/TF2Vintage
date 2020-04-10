@@ -100,6 +100,13 @@ void ClientsideProjectileSyringeCallback( const CEffectData &data )
 				case TF_TEAM_BLUE:
 					pSyringe->m_nSkin = 1;
 					break;
+				case TF_TEAM_GREEN:
+					pSyringe->m_nSkin = 2;
+					break;
+				case TF_TEAM_YELLOW:
+					pSyringe->m_nSkin = 3;
+					break;
+					
 			}
 			bool bCritical = ( ( data.m_nDamageType & DMG_CRITICAL ) != 0 );
 			pSyringe->AddParticleEffect( GetSyringeTrailParticleName( pPlayer->GetTeamNumber(), bCritical ) );
@@ -185,6 +192,14 @@ void ClientsideProjectileNailCallback( const CEffectData &data )
 				case TF_TEAM_BLUE:
 					pNail->m_nSkin = 1;
 					break;
+					
+				case TF_TEAM_GREEN:
+					pNail->m_nSkin = 2;
+					break;
+				case TF_TEAM_YELLOW:
+					pNail->m_nSkin = 3;
+					break;
+					
 			}
 			bool bCritical = ( ( data.m_nDamageType & DMG_CRITICAL ) != 0 );
 			pNail->AddParticleEffect( GetSyringeTrailParticleName( pPlayer->GetTeamNumber(), bCritical ) );
@@ -269,6 +284,12 @@ void ClientsideProjectileTranqDartCallback( const CEffectData &data )
 					break;
 				case TF_TEAM_BLUE:
 					pSyringe->m_nSkin = 1;
+					break;
+				case TF_TEAM_GREEN:
+					pSyringe->m_nSkin = 2;
+					break;
+				case TF_TEAM_YELLOW:
+					pSyringe->m_nSkin = 3;
 					break;
 			}
 			bool bCritical = ( ( data.m_nDamageType & DMG_CRITICAL ) != 0 );

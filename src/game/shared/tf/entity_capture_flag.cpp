@@ -246,6 +246,8 @@ void CCaptureFlag::Precache( void )
 	char tempChar[ 512 ];
 	PrecacheModel( GetTrailEffect( TF_TEAM_RED, tempChar, sizeof( tempChar ) ) );
 	PrecacheModel( GetTrailEffect( TF_TEAM_BLUE, tempChar, sizeof( tempChar ) ) );
+	PrecacheModel( GetTrailEffect( TF_TEAM_GREEN, tempChar, sizeof( tempChar ) ) );
+	PrecacheModel( GetTrailEffect( TF_TEAM_YELLOW, tempChar, sizeof( tempChar ) ) );
 
 }
 
@@ -403,6 +405,12 @@ int CCaptureFlag::GetIntelSkin(int iTeamNum, bool bPickupSkin)
 		break;
 	case TF_TEAM_BLUE:
 		return bPickupSkin ? 4 : 1;
+		break;
+	case TF_TEAM_GREEN:
+		return bPickupSkin ? 8 : 6;
+		break;
+	case TF_TEAM_YELLOW:
+		return bPickupSkin ? 9 : 7;
 		break;
 	default:
 		return bPickupSkin ? 5 : 2;
@@ -742,13 +750,21 @@ void CCaptureFlag::PickUp( CTFPlayer *pPlayer, bool bInvisible )
 
 	switch ( pPlayer->GetTeamNumber() )
 	{
-	case TF_TEAM_RED:
-		m_outputOnPickUpTeam1.FireOutput( this, this );
-		break;
+		case TF_TEAM_RED:
+			m_outputOnPickUpTeam1.FireOutput( this, this );
+			break;
 
-	case TF_TEAM_BLUE:
-		m_outputOnPickUpTeam2.FireOutput(this, this);
-		break;
+		case TF_TEAM_BLUE:
+			m_outputOnPickUpTeam2.FireOutput(this, this);
+			break;
+			
+		case TF_TEAM_GREEN:
+			m_outputOnPickUpTeam3.FireOutput(this, this);
+			break;
+
+		case TF_TEAM_YELLOW:
+			m_outputOnPickUpTeam4.FireOutput(this, this);
+			break;
 	}
 
 	DestroyReturnIcon();
@@ -948,13 +964,21 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 
 	switch (pPlayer->GetTeamNumber())
 	{
-	case TF_TEAM_RED:
-		m_outputOnCapTeam1.FireOutput(this, this);
-		break;
+		case TF_TEAM_RED:
+			m_outputOnCapTeam1.FireOutput(this, this);
+			break;
 
-	case TF_TEAM_BLUE:
-		m_outputOnCapTeam2.FireOutput(this, this);
-		break;
+		case TF_TEAM_BLUE:
+			m_outputOnCapTeam2.FireOutput(this, this);
+			break;
+
+		case TF_TEAM_GREEN:
+			m_outputOnCapTeam3.FireOutput(this, this);
+			break;
+
+		case TF_TEAM_YELLOW:
+			m_outputOnCapTeam4.FireOutput(this, this);
+			break;
 	}
 
 	m_bCaptured = true;
@@ -1575,6 +1599,16 @@ void CCaptureFlagReturnIcon::DrawReturnProgressBar( void )
 		ubColor[0] = 0;
 		ubColor[1] = 0;
 		ubColor[2] = 255;
+		break;
+	case TF_TEAM_GREEN:
+		ubColor[0] = 0;
+		ubColor[1] = 255;
+		ubColor[2] = 0;
+		break;
+	case TF_TEAM_YELLOW:
+		ubColor[0] = 255;
+		ubColor[1] = 255;
+		ubColor[2] = 0;
 		break;
 	default:
 		ubColor[0] = 100;

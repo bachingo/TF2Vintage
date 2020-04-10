@@ -22,6 +22,8 @@ struct CTFBuffInfo
 	vgui::ImagePanel *m_pBuffImage;
 	string_t m_iszRedImage;
 	string_t m_iszBlueImage;
+	string_t m_iszGreenImage;
+	string_t m_iszYellowImage;
 	int m_iXPos;
 	int m_nOffset;
 

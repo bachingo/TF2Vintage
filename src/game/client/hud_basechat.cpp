@@ -49,8 +49,7 @@ Color g_ColorDarkGreen( 64, 255, 64, 255 );
 Color g_ColorYellow( 255, 178, 0, 255 );
 Color g_ColorGrey( 204, 204, 204, 255 );
 Color g_ColorGreenText( 120, 153, 34, 255 );
-Color g_ColorFaggotText( 231, 153, 163, 255 );
-//Color g_ColorRedText( 159, 0, 15, 255 );
+Color g_ColorPinkText( 224, 114, 127, 255 );
 
 
 // removes all color markup characters, so Msg can deal with the string properly
@@ -1564,7 +1563,7 @@ void CBaseHudChatLine::Colorize(int alpha)
 				}
 				else if (wText[1] == ':' && wText[4] == '<' && color[0] == 251 && color[1] == 235 && color[2] == 202)
 				{
-					color = g_ColorFaggotText;
+					color = g_ColorPinkText;
 				}
 			}
 				

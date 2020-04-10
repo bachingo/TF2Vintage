@@ -66,22 +66,32 @@ int C_TFSpyMask::GetSkin( void )
 		{
 			iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
 		}
-
-		// Our mask's uber skins are on 9 and 10 (0 and 1 offset 9)
+		
+		// Convert to local team skin number.
 		switch (iVisibleTeam)
 		{
 			case TF_TEAM_RED:
-			nSkin = 9;
+			nSkin = 0;
 			break;
 
 			case TF_TEAM_BLUE:
-			nSkin = 10;
+			nSkin = 1;
 			break;
 		
+			case TF_TEAM_GREEN:
+			nSkin = 2;
+			break;
+			
+			case TF_TEAM_YELLOW:
+			nSkin = 3;
+			break;
+			
 			default:
-			nSkin = 9;
+			nSkin = 0;
 			break;
 		}
+		
+		nSkin += 9; // Our mask's uber skins are on 9 10, 11, 12 (0, 1, 2, 3 offset 9)
 		return nSkin;
 	}
 		

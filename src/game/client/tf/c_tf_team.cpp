@@ -76,6 +76,14 @@ char* C_TFTeam::Get_Name( void )
 	{
 		return "RED";
 	}
+	else if (Q_stricmp(m_szTeamname, "green") == 0)
+	{
+		return "GRN";
+	}
+	else if (Q_stricmp(m_szTeamname, "yellow") == 0)
+	{
+		return "YLW";
+	}
 
 	return m_szTeamname;
 }

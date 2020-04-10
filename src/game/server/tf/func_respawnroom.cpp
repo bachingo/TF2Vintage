@@ -435,15 +435,25 @@ bool CFuncRespawnRoomVisualizer::ShouldCollide( int collisionGroup, int contents
 	{
 		switch( GetTeamNumber() )
 		{
-		case TF_TEAM_BLUE:
-			if ( !(contentsMask & CONTENTS_BLUETEAM) )
-				return false;
-			break;
+			case TF_TEAM_BLUE:
+				if ( !(contentsMask & CONTENTS_BLUETEAM) )
+					return false;
+				break;
 
-		case TF_TEAM_RED:
-			if ( !(contentsMask & CONTENTS_REDTEAM) )
-				return false;
-			break;
+			case TF_TEAM_RED:
+				if ( !(contentsMask & CONTENTS_REDTEAM) )
+					return false;
+				break;
+				
+			case TF_TEAM_GREEN:
+				if ( !(contentsMask & CONTENTS_GREENTEAM ) )
+					return false;
+				break;
+
+			case TF_TEAM_YELLOW:
+				if ( !(contentsMask & CONTENTS_YELLOWTEAM ) )
+					return false;
+				break;
 		}
 
 		return true;
