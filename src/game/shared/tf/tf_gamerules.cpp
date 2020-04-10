@@ -4827,12 +4827,12 @@ void CTFGameRules::SendWinPanelInfo( void )
 				case TF_TEAM_GREEN:
 					if ( !IsFourTeamGame() )
 						break;
-					iGreenScorePrev = ( iGreenScore - TEAMPLAY_ROUND_WIN_SCORE >= 0 ) ? (iBlueScore - TEAMPLAY_ROUND_WIN_SCORE ) : 0;
+					iGreenScorePrev = ( iGreenScore - TEAMPLAY_ROUND_WIN_SCORE >= 0 ) ? (iGreenScore - TEAMPLAY_ROUND_WIN_SCORE ) : 0;
 					break;
 				case TF_TEAM_YELLOW:
 					if ( !IsFourTeamGame() )
 						break;
-					iYellowScorePrev = ( iYellowScore - TEAMPLAY_ROUND_WIN_SCORE >= 0 ) ? (iRedScore - TEAMPLAY_ROUND_WIN_SCORE ) : 0;
+					iYellowScorePrev = ( iYellowScore - TEAMPLAY_ROUND_WIN_SCORE >= 0 ) ? (iYellowScore - TEAMPLAY_ROUND_WIN_SCORE ) : 0;
 					break;
 				
 				case TEAM_UNASSIGNED:
@@ -4853,10 +4853,10 @@ void CTFGameRules::SendWinPanelInfo( void )
 		
 		if ( IsFourTeamGame() )
 		{
-			winEvent->SetInt( "green_score", iBlueScore );
-			winEvent->SetInt( "yellow_score", iRedScore );
-			winEvent->SetInt( "green_score_prev", iBlueScorePrev );
-			winEvent->SetInt( "yellow_score_prev", iRedScorePrev );	
+			winEvent->SetInt( "green_score", iGreenScore );
+			winEvent->SetInt( "yellow_score", iYellowScore );
+			winEvent->SetInt( "green_score_prev", iGreenScorePrev );
+			winEvent->SetInt( "yellow_score_prev", iYellowScorePrev );	
 		}
 
 		CTFPlayerResource *pResource = dynamic_cast<CTFPlayerResource *>( g_pPlayerResource );
