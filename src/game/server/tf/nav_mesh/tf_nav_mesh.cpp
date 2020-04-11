@@ -441,15 +441,30 @@ void CTFNavMesh::CollectSpawnRoomThresholdAreas( CUtlVector<CTFNavArea*> *areas,
 		{
 			CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
 			
-			for ( int dir = 0; dir < NUM_DIRECTIONS; ++dir )
+			CTFNavArea *exitArea = NULL;
+			float flMaxAreaSize = 0.0f;
+
+			for( int dir=0; dir<NUM_DIRECTIONS; ++dir )
 			{
 				for ( int j=0; j<area->GetAdjacentCount( (NavDirType)dir ); ++j )
 				{
-					CTFNavArea *adj = static_cast<CTFNavArea *>( area->GetAdjacentArea( (NavDirType)dir, j ) );
+					CTFNavArea *adjArea = static_cast<CTFNavArea *>( area->GetAdjacentArea( (NavDirType)dir, j ) );
 
-					if ( !adj->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT ) && adj->GetSizeY() * adj->GetSizeX() > 0.0f )
-						areas->AddToTail( adj );
+					if ( !adjArea->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM|SPAWN_ROOM_EXIT ) )
+					{
+						float size = adjArea->GetSizeX() * adjArea->GetSizeY();
+						if ( size > flMaxAreaSize )
+						{
+							exitArea = adjArea;
+							flMaxAreaSize = size;
+						}
+					}
 				}
+			}
+
+			if ( exitArea )
+			{
+				areas->AddToTail( exitArea );
 			}
 		}
 	}
