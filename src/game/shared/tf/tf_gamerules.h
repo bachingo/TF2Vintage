@@ -323,6 +323,8 @@ public:
 	void			RegisterBoss( CBaseCombatCharacter *pNPC )  { if( m_hBosses.Find( pNPC ) == m_hBosses.InvalidIndex() ) m_hBosses.AddToHead( pNPC ); }
 	void			RemoveBoss( CBaseCombatCharacter *pNPC )    { EHANDLE hNPC( pNPC ); m_hBosses.FindAndRemove( hNPC ); }
 
+	void			StartBossTimer( float time )				{ m_bossSpawnTimer.Start( time ); }
+
 protected:
 	virtual void	InitTeams( void );
 

@@ -305,7 +305,7 @@ CObjectTeleporter *CTFBotTacticalMonitor::FindNearbyTeleporter( CTFBot *actor )
 		}
 		else
 		{
-			for ( int j=0; i<nearby.Count(); ++j )
+			for ( int j=0; j<nearby.Count(); ++j )
 			{
 				if ( nearby[j]->GetID() == pTele->GetLastKnownArea()->GetID() )
 					candidates.AddToTail( pTele );

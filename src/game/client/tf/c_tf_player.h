@@ -93,6 +93,7 @@ public:
 	bool CanAttack( void );
 
 	C_TFPlayerClass *GetPlayerClass( void ) { return &m_PlayerClass; }
+	C_TFPlayerClass const *GetPlayerClass( void ) const { return &m_PlayerClass; }
 	bool IsPlayerClass( int iClass );
 	virtual int GetMaxHealth( void ) const;
 	virtual int	GetMaxHealthForBuffing( void ) const;
@@ -240,7 +241,7 @@ public:
 	bool	DoClassSpecialSkill( void );
 	bool	CanGoInvisible( bool bFeigning = false );
 
-	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
+	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 ) const;
 
 	virtual CAttributeManager *GetAttributeManager() { return &m_AttributeManager; }
 	virtual CAttributeContainer *GetAttributeContainer() { return NULL; }

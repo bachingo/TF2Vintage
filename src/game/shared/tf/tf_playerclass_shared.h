@@ -87,16 +87,17 @@ public:
 
 	bool		Init( int iClass );
 	bool		IsClass( int iClass ) const						{ return ( m_iClass == iClass ); }
-	int			GetClassIndex( void )							{ return m_iClass; }
+	int			GetClassIndex( void ) const						{ return m_iClass; }
 
 	const char	*GetName( void ) const							{ return GetPlayerClassData( m_iClass )->m_szClassName; }
 	const char	*GetModelName( void ) const						{ return GetPlayerClassData( m_iClass )->GetModelName(); }	
 	const char	*GetHandModelName( bool bGunslinger = false ) const;		
-	float		GetMaxSpeed( void )								{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
-	int			GetMaxHealth( void )							{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
-	int			GetMaxArmor( void )								{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }
+	float		GetMaxSpeed( void )	const						{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
+	int			GetMaxHealth( void ) const						{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
+	int			GetMaxArmor( void ) const						{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }
 
 	TFPlayerClassData_t  *GetData( void )						{ return GetPlayerClassData( m_iClass ); }
+	TFPlayerClassData_t const *GetData( void ) const			{ return GetPlayerClassData( m_iClass ); }
 
 	// If needed, put this into playerclass scripts
 	bool CanBuildObject( int iObjectType );

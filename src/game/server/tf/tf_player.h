@@ -209,6 +209,7 @@ public:
 
 	// Class.
 	CTFPlayerClass		*GetPlayerClass( void ) { return &m_PlayerClass; }
+	CTFPlayerClass const*GetPlayerClass( void ) const { return &m_PlayerClass; }
 	int					GetDesiredPlayerClassIndex( void ) { return m_Shared.m_iDesiredPlayerClass; }
 	void				SetDesiredPlayerClassIndex( int iClass ) { m_Shared.m_iDesiredPlayerClass = iClass; }
 
@@ -244,7 +245,7 @@ public:
 
 	virtual int			GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound = false );
 	virtual int			GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound, EAmmoSource ammosource );
-	int					GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
+	int					GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 ) const;
 
 	bool				CanAttack( void );
 
