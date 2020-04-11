@@ -4961,7 +4961,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		float flPenaltyHealth = info.GetDamage();
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flPenaltyHealth, mult_dmg_penalty_while_half_alive );
 
-		if ( GetHealth() >= ( GetMaxHealth() / 2 ) )
+		if ( pAttacker->GetHealth() >= ( pAttacker->GetMaxHealth() / 2 ) )
 		{
 			info.SetDamage( flPenaltyHealth );
 		}
@@ -4969,7 +4969,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		float flBonusHealth = info.GetDamage();
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flBonusHealth, mult_dmg_bonus_while_half_dead );
 
-		if ( GetHealth() < ( GetMaxHealth() / 2 ) )
+		if ( pAttacker->GetHealth() < ( pAttacker->GetMaxHealth() / 2 ) )
 		{
 			info.SetDamage( flBonusHealth );
 		}
