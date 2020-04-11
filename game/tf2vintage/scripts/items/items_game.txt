@@ -2205,6 +2205,14 @@
 			{
 				"min_viewmodel_offset"					"10 0 -11"
 			}
+			"attributes"
+			{
+				"slow enemy on hit shortstop"
+				{
+					"attribute_class"	"mult_onhit_enemyspeed_shortstop"
+					"value"	"0.5"
+				}
+			}
 		}
 		"weapon_winger_pistol"
 		{
@@ -15935,6 +15943,16 @@
 			"name"	"allowed in 2006 mode"
 			"attribute_class"	"allowed_in_2006_mode"
 			"hidden"	"1"
+		}
+		"10015"
+		{
+			"name"	"slow enemy on hit shortstop"
+			"attribute_class"	"mult_onhit_enemyspeed_shortstop"
+			"description_format"	"value_is_additive"
+			"hidden"	"1"
+			"effect_type"	"positive"
+			"armory_desc"	"on_hit"
+			"stored_as_integer"	"0"
 		}
 	}
 	"attribute_controlled_attached_particles"

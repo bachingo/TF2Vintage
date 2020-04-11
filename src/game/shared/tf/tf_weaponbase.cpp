@@ -47,6 +47,7 @@ extern ConVar tf_useparticletracers;
 extern ConVar tf2v_critchance;
 extern ConVar tf2v_critchance_rapid;
 extern ConVar tf2v_crit_duration_rapid;
+extern ConVar tf2v_use_shortstop_slowdown;
 
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
@@ -2366,6 +2367,8 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 
 			float flSlowOnHitMajor = 0.0f;
 			CALL_ATTRIB_HOOK_FLOAT( flSlowOnHitMajor, mult_onhit_enemyspeed_major );
+			if (tf2v_use_shortstop_slowdown.GetBool() )
+				CALL_ATTRIB_HOOK_FLOAT( flSlowOnHitMajor, mult_onhit_enemyspeed_shortstop );
 			if ( flSlowOnHitMajor )
 				pTFVictim->m_Shared.StunPlayer( flSlowOnHitMajor, 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN|TF_STUNFLAG_NOSOUNDOREFFECT, pAttacker );
 		}
