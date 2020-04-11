@@ -151,7 +151,7 @@ public:
 			++m_iTotal;
 			CTFPlayer *pTFPlayer = static_cast<CTFPlayer *>( player );
 			if ( !m_pBot->IsSelf( player ) )
-				++m_aClassCounts[ pTFPlayer->GetDesiredPlayerClassIndex() ];
+				++m_aClassCounts[ pTFPlayer->GetPlayerClass()->GetClassIndex() ];
 		}
 
 		return true;
@@ -613,7 +613,7 @@ bool CTFBot::IsAmmoLow( void ) const
 		{
 			// int ammoType = weapon->GetPrimaryAmmoType();
 			int current = GetAmmoCount( 1 );
-			return current / const_cast<CTFBot *>( this )->GetMaxAmmo( 1 ) < 0.2f;
+			return current / GetMaxAmmo( 1 ) < 0.2f;
 		}
 
 		return false;
@@ -632,13 +632,13 @@ bool CTFBot::IsAmmoFull( void ) const
 		return false;
 
 	int primaryCount = GetAmmoCount( TF_AMMO_PRIMARY );
-	bool primaryFull = primaryCount >= const_cast<CTFBot *>( this )->GetMaxAmmo( TF_AMMO_PRIMARY );
+	bool primaryFull = primaryCount >= GetMaxAmmo( TF_AMMO_PRIMARY );
 
 	int secondaryCount = GetAmmoCount( TF_AMMO_SECONDARY );
-	bool secondaryFull = secondaryCount >= const_cast<CTFBot *>( this )->GetMaxAmmo( TF_AMMO_SECONDARY );
+	bool secondaryFull = secondaryCount >= GetMaxAmmo( TF_AMMO_SECONDARY );
 
 	if ( !IsPlayerClass( TF_CLASS_ENGINEER ) )
-		return primaryFull & secondaryFull;
+		return primaryFull && secondaryFull;
 
 	return GetAmmoCount( TF_AMMO_METAL ) >= 200;
 }
@@ -880,8 +880,8 @@ CTeamControlPoint *CTFBot::SelectPointToDefend( CUtlVector<CTeamControlPoint *> 
 	if ( candidates.IsEmpty() )
 		return nullptr;
 
-	/*if ( BYTE( this + 10061 ) & ( 1 << 4 ) )
-		return SelectClosestPointByTravelDistance( candidates );*/
+	if ( ( m_nBotAttrs & CTFBot::AttributeType::DISABLEDODGE ) != 0 )
+		return SelectClosestPointByTravelDistance( candidates );
 
 	return candidates.Random();
 }
@@ -993,23 +993,23 @@ CCaptureFlag *CTFBot::GetFlagToFetch( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFBot::IsLineOfFireClear( CBaseEntity *to ) const
+bool CTFBot::IsLineOfFireClear( CBaseEntity *to )
 {
-	return IsLineOfFireClear( const_cast<CTFBot *>( this )->EyePosition(), to );
+	return IsLineOfFireClear( EyePosition(), to );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFBot::IsLineOfFireClear( const Vector &to ) const
+bool CTFBot::IsLineOfFireClear( const Vector &to )
 {
-	return IsLineOfFireClear( const_cast<CTFBot *>( this )->EyePosition(), to );
+	return IsLineOfFireClear( EyePosition(), to );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFBot::IsLineOfFireClear( const Vector &from, CBaseEntity *to ) const
+bool CTFBot::IsLineOfFireClear( const Vector &from, CBaseEntity *to )
 {
 	NextBotTraceFilterIgnoreActors filter( nullptr, COLLISION_GROUP_NONE );
 
@@ -1022,7 +1022,7 @@ bool CTFBot::IsLineOfFireClear( const Vector &from, CBaseEntity *to ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFBot::IsLineOfFireClear( const Vector &from, const Vector &to ) const
+bool CTFBot::IsLineOfFireClear( const Vector &from, const Vector &to )
 {
 	NextBotTraceFilterIgnoreActors filter( nullptr, COLLISION_GROUP_NONE );
 
@@ -1113,7 +1113,7 @@ bool CTFBot::IsThreatFiringAtMe( CBaseEntity *threat ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFBot::IsEntityBetweenTargetAndSelf( CBaseEntity *blocker, CBaseEntity *target )
+bool CTFBot::IsEntityBetweenTargetAndSelf( CBaseEntity *blocker, CBaseEntity *target ) const
 {
 	Vector vecToTarget = ( target->GetAbsOrigin() - GetAbsOrigin() );
 	Vector vecToEntity = ( blocker->GetAbsOrigin() - GetAbsOrigin() );
@@ -1213,7 +1213,7 @@ float CTFBot::GetDesiredPathLookAheadRange( void ) const
 //-----------------------------------------------------------------------------
 bool CTFBot::IsDebugFilterMatch( const char *name ) const
 {
-	if ( !Q_stricmp( name, const_cast<CTFBot *>( this )->GetPlayerClass()->GetName() ) )
+	if ( !Q_stricmp( name, GetPlayerClass()->GetName() ) )
 		return true;
 
 	return INextBot::IsDebugFilterMatch( name );
@@ -2144,10 +2144,10 @@ CTFPlayer *CTFBot::SelectRandomReachableEnemy( void )
 		validEnemies.AddToTail( pEnemy );
 	}
 
-	if ( validEnemies.IsEmpty() )
-		return nullptr;
+	if ( !validEnemies.IsEmpty() )
+		return validEnemies.Random();
 
-	return validEnemies.Random();
+	return nullptr;
 }
 
 //-----------------------------------------------------------------------------

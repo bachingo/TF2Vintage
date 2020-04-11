@@ -204,15 +204,14 @@ public:
 	virtual IBody *GetBodyInterface( void ) const override { return m_body; }
 	virtual IVision *GetVisionInterface( void ) const override { return m_vision; }
 
-	bool			IsLineOfFireClear( CBaseEntity *to ) const;
-	bool			IsLineOfFireClear( const Vector& to ) const;
-	bool			IsLineOfFireClear( const Vector& from, CBaseEntity *to ) const;
-	bool			IsLineOfFireClear( const Vector& from, const Vector& to ) const;
+	bool			IsLineOfFireClear( CBaseEntity *to );
+	bool			IsLineOfFireClear( const Vector& to );
+	bool			IsLineOfFireClear( const Vector& from, CBaseEntity *to );
+	bool			IsLineOfFireClear( const Vector& from, const Vector& to );
 	bool			IsAnyEnemySentryAbleToAttackMe( void ) const;
 	bool			IsThreatAimingTowardsMe( CBaseEntity *threat, float dotTolerance = 0.8 ) const;
 	bool			IsThreatFiringAtMe( CBaseEntity *threat ) const;
-
-	bool			IsEntityBetweenTargetAndSelf( CBaseEntity *blocker, CBaseEntity *target );
+	bool			IsEntityBetweenTargetAndSelf( CBaseEntity *blocker, CBaseEntity *target ) const;
 
 	bool			IsAmmoLow( void ) const;
 	bool			IsAmmoFull( void ) const;
@@ -344,7 +343,7 @@ private:
 
 	CountdownTimer m_useWeaponAbilityTimer;
 
-	CUtlVectorConservative< CHandle<CTFWeaponBase> > m_requiredEquipStack;
+	CUtlVector< CHandle<CTFWeaponBase> > m_requiredEquipStack;
 
 	CUtlVector<DelayedNoticeInfo> m_delayedThreatNotices;
 

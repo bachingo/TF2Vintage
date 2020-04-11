@@ -1549,21 +1549,11 @@ int CTFPlayer::GetMaxHealth( void ) const
 //-----------------------------------------------------------------------------
 int CTFPlayer::GetMaxHealthForBuffing( void ) const
 {
-	int iMaxHealth = const_cast<CTFPlayerClass &>( m_PlayerClass ).GetMaxHealth();
+	int iMaxHealth = m_PlayerClass.GetMaxHealth();
 	CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth );
 	
 	if (m_Shared.m_bShieldEquipped == true)
 		CALL_ATTRIB_HOOK_INT( iMaxHealth, add_maxhealth_shieldrequired );
-
-	
-	// If we're using a boss weapon, apply player scaling to our health so that more player involved is more health.
-	CTFShovelFist *pBoss = dynamic_cast<CTFShovelFist *>(const_cast<CTFPlayer *>(this)->Weapon_OwnsThisID(TF_WEAPON_SHOVELFIST));
-	if ( pBoss )
-	{
-		CUtlVector<CTFPlayer *> pListPlayers;
-		int iPlayerScale = ( pListPlayers.Count() - 1 ); // Amount of active players, minus the boss player.
-		iMaxHealth += pow(((760.8 + (iPlayerScale))*((iPlayerScale)-1)), 1.0341); // We already add the 2046HP in the playerclass file.
-	}
 
 	CTFSword *pSword = dynamic_cast<CTFSword *>( const_cast<CTFPlayer *>( this )->Weapon_OwnsThisID( TF_WEAPON_SWORD ) );
 	if ( pSword )
@@ -6621,7 +6611,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Remove all items...
 	RemoveAllItems( true );
 
-	for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon )
+	for ( int iWeapon = 0; iWeapon < MAX_WEAPONS; ++iWeapon )
 	{
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 

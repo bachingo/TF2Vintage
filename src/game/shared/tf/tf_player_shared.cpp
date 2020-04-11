@@ -5914,7 +5914,7 @@ CEconWearable *CTFPlayer::GetWearableForLoadoutSlot(int iSlot)
 	return NULL;
 }
 
-int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
+int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ ) const
 {
 	if ( !GetPlayerClass()->GetData() )
 		return 0;
