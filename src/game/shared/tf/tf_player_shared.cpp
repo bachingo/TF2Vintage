@@ -4456,6 +4456,10 @@ void CTFPlayerShared::UpdateChargeMeter( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 {
+	if ( m_flEnergyDrinkMeter > 100.0f ) // Prevent our meter from going over 100
+	{
+		m_flEnergyDrinkMeter = 100.0f;
+	}
 		
 	if ( InCond( TF_COND_SODAPOPPER_HYPE ) )
 	{
@@ -4463,8 +4467,10 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 
 		if ( m_flHypeMeter <= 0.0f )
 			RemoveCond( TF_COND_SODAPOPPER_HYPE );
+		
+		return;
 	}
-
+	
 	if ( InCond( TF_COND_PHASE ) || InCond( TF_COND_ENERGY_BUFF ) )
 	{
 		m_flEnergyDrinkMeter -= m_flEnergyDrinkDrainRate * gpGlobals->frametime;
@@ -4480,32 +4486,27 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 		{
 			UpdatePhaseEffects();
 		}
+		
+		return;	
 	}
-	else
-	{
-		
-		if ( m_flEnergyDrinkMeter > 100.0f ) // Prevent our meter from going over 100
-		{
-			m_flEnergyDrinkMeter = 100.0f;
-			return;		
-		}
-		
-		if ( m_flEnergyDrinkMeter == 100.0f )
+
+	// No Bonk/Cola/Popper active, regen our meter
+	if ( m_flEnergyDrinkMeter >= 100.0f )
 			return;
 
-		m_flEnergyDrinkMeter += m_flEnergyDrinkRegenRate * gpGlobals->frametime;
+	m_flEnergyDrinkMeter += m_flEnergyDrinkRegenRate * gpGlobals->frametime;
 
-		if ( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_LUNCHBOX_DRINK ) )
-		{
-			if ( m_flEnergyDrinkMeter >= 100.0f )
-				return;
+	if ( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_LUNCHBOX_DRINK ) )
+	{
+		if ( m_flEnergyDrinkMeter >= 100.0f )
+			return;
 
-			if ( m_pOuter->GetAmmoCount( TF_AMMO_GRENADES2 ) != m_pOuter->GetMaxAmmo( TF_AMMO_GRENADES2 ) )
-				return;
-		}
-
-		m_flEnergyDrinkMeter = Min( m_flEnergyDrinkMeter.Get(), 100.0f );
+		if ( m_pOuter->GetAmmoCount( TF_AMMO_GRENADES2 ) != m_pOuter->GetMaxAmmo( TF_AMMO_GRENADES2 ) )
+			return;
 	}
+
+	m_flEnergyDrinkMeter = Min( m_flEnergyDrinkMeter.Get(), 100.0f );
+	
 }
 #endif
 
