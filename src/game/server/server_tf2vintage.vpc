@@ -351,6 +351,8 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_sniperrifle_classic.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_slap.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_slap.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_crossbow.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_crossbow.h"
 					}
 					$Folder	"Classic Content"
 					{
