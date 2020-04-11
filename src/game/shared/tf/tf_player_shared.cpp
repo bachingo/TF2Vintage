@@ -4456,6 +4456,7 @@ void CTFPlayerShared::UpdateChargeMeter( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 {
+		
 	if ( InCond( TF_COND_SODAPOPPER_HYPE ) )
 	{
 		m_flHypeMeter -= ( gpGlobals->frametime * m_flEnergyDrinkDrainRate ) * 0.75;
@@ -4482,6 +4483,13 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 	}
 	else
 	{
+		
+		if ( m_flEnergyDrinkMeter > 100.0f ) // Prevent our meter from going over 100
+		{
+			m_flEnergyDrinkMeter = 100.0f;
+			return;		
+		}
+		
 		if ( m_flEnergyDrinkMeter == 100.0f )
 			return;
 
