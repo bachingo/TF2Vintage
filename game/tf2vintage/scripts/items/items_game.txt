@@ -6343,6 +6343,11 @@
 					"attribute_class"	"mult_crit_chance"
 					"value"	"0"
 				}
+				"hidden on killfeed"
+				{
+					"attribute_class"	"set_hidden_killer"
+					"value"	"1"
+				}
 			}
 			"visuals"
 			{
@@ -6372,11 +6377,6 @@
 					"attribute_class"	"sniper_no_zoomout"
 					"value" "1"			
 				}
-				"silent killer notaknife"
-				{
-					"attribute_class"	"set_silent_killer"
-					"value"	"1"
-				}
 				"damage penalty on bodyshot"
 				{
 					"attribute_class"	"bodyshot_damage_modify"
@@ -6385,6 +6385,11 @@
 				"sniper fires tracer"
  				{
 					"attribute_class"	"sniper_fires_tracer"
+					"value"	"1"
+				}
+				"hidden on killfeed"
+				{
+					"attribute_class"	"set_hidden_killer"
 					"value"	"1"
 				}
 			}
@@ -15876,8 +15881,8 @@
 		}
 		"10007"
 		{
-			"name"	"silent killer notaknife"
-			"attribute_class"	"set_silent_killer"
+			"name"	"hidden on killfeed"
+			"attribute_class"	"set_hidden_killer"
 			"description_format"	"value_is_additive"
 			"hidden"	"1"
 			"effect_type"	"positive"

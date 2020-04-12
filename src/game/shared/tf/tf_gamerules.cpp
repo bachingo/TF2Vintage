@@ -4635,14 +4635,9 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 				bool bIsSilent = pActive->IsSilentKiller();
 				if ( pActive->IsWeapon( TF_WEAPON_KNIFE ) )	// Knife only: Check for backstab.
 					event->SetBool( "silent_kill", ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB && bIsSilent ) );
-				else if ( pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE ) || 	// Sniper Rifles: Check for headshot.
-						  pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE_CLASSIC ) || 
-						  pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE_REAL ) || 
-						  pActive->IsWeapon( TF_WEAPON_SNIPERRIFLE_DECAP ) || 
-						  pActive->IsWeapon( TF_WEAPON_HUNTERRIFLE ) )
-					event->SetBool( "silent_kill", ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT && bIsSilent ) );
-				else
-					event->SetBool( "silent_kill", ( bIsSilent ) );
+					
+				bool bHideKillFeed = pActive->IsHiddenKiller();
+				event->SetBool( "hide_killfeed", ( bHideKillFeed ) );
 			}
 		}
 

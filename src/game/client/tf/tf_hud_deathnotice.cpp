@@ -133,7 +133,7 @@ Color CTFHudDeathNotice::GetInfoTextColor( int iDeathNoticeMsg )
 
 bool CTFHudDeathNotice::ShouldShowDeathNotice( IGameEvent *event ) const
 {
-	if ( event->GetBool( "silent_kill" ) )
+	if ( event->GetBool( "silent_kill" ) || event->GetBool( "hide_killfeed" ) )
 	{
 		int iVictim = engine->GetPlayerForUserID( event->GetInt( "userid" ) );
 		C_TFPlayer *pVictim = ToTFPlayer( UTIL_PlayerByIndex( iVictim ) );

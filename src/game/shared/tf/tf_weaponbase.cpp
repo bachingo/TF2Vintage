@@ -2498,6 +2498,16 @@ bool CTFWeaponBase::IsSilentKiller( void ) const
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Hides the kill on the killfeed, but doesn't hide anything else (sound/corpse).
+// ----------------------------------------------------------------------------
+bool CTFWeaponBase::IsHiddenKiller( void ) const
+{
+	int nHiddenKiller = 0;
+	CALL_ATTRIB_HOOK_INT( nHiddenKiller, set_hidden_killer );
+	return nHiddenKiller == 1;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 // ----------------------------------------------------------------------------
 bool CTFWeaponBase::GetProjectileModelOverride( CAttribute_String *pOut )

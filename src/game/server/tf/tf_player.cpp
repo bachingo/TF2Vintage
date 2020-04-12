@@ -6746,7 +6746,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-	bool bDisguiseOnStab = false, bTurnToIce = false, bTurnToGold = false;
+	bool bCloak = false, bTurnToIce = false, bTurnToGold = false;
 	if ( pTFAttacker )
 	{
 		if ( TF_DMG_CUSTOM_HEADSHOT == iDamageCustom )
@@ -6761,10 +6761,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 				int nTurnToIce = 0;
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nTurnToIce, freeze_backstab_victim );
 				bTurnToIce = nTurnToIce != 0;
-
-				int nDisguiseOnBackstab = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nDisguiseOnBackstab, set_disguise_on_backstab );
-				bDisguiseOnStab = nDisguiseOnBackstab != 0;
 			}
 		}
 
@@ -6773,6 +6769,10 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			int nTurnToGold = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nTurnToGold, set_turn_to_gold );
 			bTurnToGold = nTurnToGold != 0;
+			
+			int nHideOnSilentKill = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nHideOnSilentKill, set_silent_killer );
+			bCloak = nHideOnSilentKill != 0;
 		}
 	}
 
@@ -6785,7 +6785,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Create the ragdoll entity.
 	if ( bGib || bRagdoll )
 	{
-		CreateRagdollEntity( bGib, bBurning, bElectrocute, bOnGround, bDisguiseOnStab, bTurnToGold, bTurnToIce, bTurnToAsh, iDamageCustom, bCritOnHardHit );
+		CreateRagdollEntity( bGib, bBurning, bElectrocute, bOnGround, bCloak, bTurnToGold, bTurnToIce, bTurnToAsh, iDamageCustom, bCritOnHardHit );
 	}
 
 	// Don't overflow the value for this.
@@ -8518,6 +8518,16 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 
 	if ( m_flNextPainSoundTime > gpGlobals->curtime )
 		return;
+	
+	// Hide pain sounds from silent weapons.
+	CBaseEntity *pWeapon = info.GetWeapon();
+	if (pWeapon)
+	{
+		int nSilentAttack = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nSilentAttack, set_silent_killer);
+		if ( nSilentAttack != 0 )
+			return;
+	}
 
 	// This used to be handled elsewhere, but we can let servers decide to use the old
 	// TF2 pain sounds or the new TF2 pain sounds by doing it here instead.

@@ -354,7 +354,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim );
 
 	bool IsSilentKiller( void ) const;
-
+	bool IsHiddenKiller( void ) const;
+	
 	virtual bool OwnerCanTaunt( void ) const { return true; }
 
 	virtual bool GetProjectileModelOverride( CAttribute_String *pOut );
