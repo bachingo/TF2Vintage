@@ -423,12 +423,13 @@ void CTFShotgun_Revenge::PrimaryAttack( void )
 
 	BaseClass::PrimaryAttack();
 
-	m_iRevengeCrits = Max( m_iRevengeCrits - 1, 0 );
-
 	CTFPlayer *pOwner = GetTFPlayerOwner();
+	
 	if ( pOwner && pOwner->IsAlive() )
 	{
-		if ( m_iRevengeCrits == 0 )
+		!pOwner->m_Shared.DeductRevengeCrit();
+
+		if ( !pOwner->m_Shared.HasRevengeCrits() )
 			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 	}
 }
@@ -436,17 +437,10 @@ void CTFShotgun_Revenge::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFShotgun_Revenge::GetCount( void ) const
-{
-	return m_iRevengeCrits;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 int CTFShotgun_Revenge::GetCustomDamageType( void ) const
 {
-	if ( m_iRevengeCrits > 0 )
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner && pOwner->m_Shared.HasRevengeCrits() )
 		return TF_DMG_CUSTOM_SHOTGUN_REVENGE_CRIT;
 
 	return TF_DMG_CUSTOM_NONE;
@@ -460,7 +454,7 @@ bool CTFShotgun_Revenge::Deploy( void )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && BaseClass::Deploy() )
 	{
-		if ( m_iRevengeCrits > 0 )
+		if ( pOwner->m_Shared.HasRevengeCrits() )
 			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
 
 		return true;
@@ -500,15 +494,19 @@ void CTFShotgun_Revenge::Detach( void )
 //-----------------------------------------------------------------------------
 void CTFShotgun_Revenge::OnSentryKilled( CObjectSentrygun *pSentry )
 {
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner == nullptr )
+		return;
+	
 	if ( CanGetRevengeCrits() )
 	{
-		m_iRevengeCrits = Min( m_iRevengeCrits + pSentry->GetAssists() + ( pSentry->GetKills() * 2 ), TF_WEAPON_MAX_REVENGE );
+		int nRevengeCrits = Min( pOwner->m_Shared.GetRevengeCritCount() + pSentry->GetAssists() + ( pSentry->GetKills() * 2 ), TF_WEAPON_MAX_REVENGE );
 
-		CTFPlayer *pOwner = GetTFPlayerOwner();
-
+		pOwner->m_Shared.SetRevengeCritCount(nRevengeCrits);
+	
 		if ( pOwner && pOwner->GetActiveWeapon() == this )
 		{
-			if ( m_iRevengeCrits > 0 )
+			if ( pOwner->m_Shared.HasRevengeCrits() )
 			{
 				if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
 					pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );

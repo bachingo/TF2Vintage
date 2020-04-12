@@ -454,7 +454,7 @@ int CHudItemEffectMeterTemp<C_TFShotgun_Revenge>::GetCount( void )
 	{
 		C_TFShotgun_Revenge *pRevenge = GetWeapon();
 		if ( pRevenge && pRevenge->CanGetRevengeCrits() )
-			return pRevenge->GetCount();
+			return pPlayer->m_Shared.GetRevengeCritCount();
 	}
 
 	return -1;
@@ -521,8 +521,8 @@ int CHudItemEffectMeterTemp<C_TFRevolver_Dex>::GetCount( void )
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
 	{
-		C_TFRevolver_Dex *pRevenge = GetWeapon();
-		if ( pRevenge )
+		C_TFRevolver_Dex *pRevolver = GetWeapon();
+		if ( pRevolver )
 			return pPlayer->m_Shared.GetSapperKillCount();
 	}
 

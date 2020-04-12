@@ -386,6 +386,13 @@ public:
 	void	StoreSapperKillCount(void)			 { m_iSapperKill = Min( (m_iSapperKill + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
 	void	DeductSapperKillCount(void)			 { m_iSapperKill = Max( (m_iSapperKill - 1), 0 ); } // Affected by TF_WEAPON_MAX_REVENGE
 	
+	// Revenge Crit Counter (ie: Frontier Justice)
+	int		GetRevengeCritCount( void ) const        { return m_iRevengeCrits; }
+	void	SetRevengeCritCount(int count)      	 { m_iRevengeCrits = count; }
+	void	IncrementRevengeCrit( int count )     	 { m_iRevengeCrits += 1; }	
+	void	DeductRevengeCrit( int count )     	 	 { m_iRevengeCrits = Max( (m_iRevengeCrits - 1), 0 ); }
+	bool	HasRevengeCrits( void )      			 { return m_iRevengeCrits > 0; }
+	
 	// Killstreak counter, for HUD.
 	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
 	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
@@ -617,6 +624,7 @@ private:
 	CNetworkVar( int, m_iStrike );
 	CNetworkVar( int, m_iKillstreak );
 	CNetworkVar( int, m_iSapperKill );
+	CNetworkVar( int, m_iRevengeCrits );
 #ifdef GAME_DLL
 public:
 	CNetworkVar( float, m_flEnergyDrinkMeter );

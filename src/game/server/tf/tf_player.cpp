@@ -1202,15 +1202,18 @@ void CTFPlayer::Spawn()
 	// Make sure it has no model set, in case it had one before
 	GetViewModel( 1 )->SetWeaponModel( NULL, NULL );
 
+	// Reset our meters
 	m_Shared.SetDecapitationCount( 0 );
 	m_Shared.SetHeadshotCount( 0 );
 	m_Shared.SetStrikeCount( 0 );
 	m_Shared.SetSapperKillCount( 0 );
+	m_Shared.SetRevengeCritCount( 0 );
 	m_Shared.SetHypeMeterAbsolute( 0 );
-	m_Shared.SetFeignReady( false );
-	m_Shared.SetHasRecoiled( false );
 	m_Shared.SetSanguisugeHealth(0);
 	m_Shared.SetKillstreakCount( 0 );
+	
+	m_Shared.SetFeignReady( false );
+	m_Shared.SetHasRecoiled( false );
 
 	// Kind of lame, but CBasePlayer::Spawn resets a lot of the state that we initially want on.
 	// So if we're in the welcome state, call its enter function to reset 

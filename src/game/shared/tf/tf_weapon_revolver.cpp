@@ -96,7 +96,7 @@ void CTFRevolver_Dex::PrimaryAttack( void )
 	{
 		pOwner->m_Shared.DeductSapperKillCount();
 		
-		if ( pOwner->m_Shared.GetSapperKillCount() == 0 )
+		if ( pOwner->m_Shared.GetSapperKillCount() < 1 )
 			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
 	}
 }

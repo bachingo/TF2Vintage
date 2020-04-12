@@ -166,7 +166,6 @@ public:
 
 	virtual void	PrimaryAttack( void );
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SENTRY_REVENGE; }
-	virtual int		GetCount( void ) const;
 
 	virtual int		GetCustomDamageType( void ) const;
 	
@@ -183,8 +182,6 @@ public:
 	bool			CanGetRevengeCrits( void ) const;
 
 private:
-
-	CNetworkVar( int, m_iRevengeCrits );
 
 	CTFShotgun_Revenge( CTFShotgun_Revenge const& );
 };
