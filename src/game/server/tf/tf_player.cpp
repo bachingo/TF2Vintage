@@ -6394,7 +6394,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 
-			if ( !pWeapon->IsSilentKiller() )
+			if ( !pWeapon->IsSilentKiller() && !pWeapon->IsHiddenKiller() )
 			{
 				CFmtStrN<128> modifiers( "%s,%s,victimclass:%s", pszCustomDeath, pszDomination, g_aPlayerClassNames_NonLocalized[pTFVictim->GetPlayerClass()->GetClassIndex()] );
 				SpeakConceptIfAllowed( MP_CONCEPT_KILLED_PLAYER, modifiers );
@@ -6528,7 +6528,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		UpdateModel();
 	}
 
-	if ( !pTFInflictor || !pTFInflictor->IsSilentKiller() )
+	if ( !pTFInflictor || ( !pTFInflictor->IsSilentKiller() && !pTFInflictor->IsHiddenKiller() ) )
 		SpeakConceptIfAllowed( MP_CONCEPT_DIED );
 
 	if ( pTFAttacker )
@@ -6770,9 +6770,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nTurnToGold, set_turn_to_gold );
 			bTurnToGold = nTurnToGold != 0;
 			
-			int nHideOnSilentKill = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nHideOnSilentKill, set_silent_killer );
-			bCloak = nHideOnSilentKill != 0;
+			bCloak = pTFInflictor->IsSilentKiller();
 		}
 	}
 
@@ -8520,14 +8518,9 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 		return;
 	
 	// Hide pain sounds from silent weapons.
-	CBaseEntity *pWeapon = info.GetWeapon();
-	if (pWeapon)
-	{
-		int nSilentAttack = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nSilentAttack, set_silent_killer);
-		if ( nSilentAttack != 0 )
+	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
+		if ( pTFInflictor && ( pTFInflictor->IsSilentKiller() || pTFInflictor->IsHiddenKiller() ) )
 			return;
-	}
 
 	// This used to be handled elsewhere, but we can let servers decide to use the old
 	// TF2 pain sounds or the new TF2 pain sounds by doing it here instead.
@@ -8629,13 +8622,10 @@ void CTFPlayer::DeathSound( const CTakeDamageInfo &info )
 	if ( !pData )
 		return;
 
-	CTFPlayer *pTFAttacker = ToTFPlayer( info.GetAttacker() );
-	if ( pTFAttacker && pTFAttacker->GetActiveTFWeapon() )
-	{
-		CTFWeaponBase *pActive = pTFAttacker->GetActiveTFWeapon();
-		if ( pActive->IsSilentKiller() )
-			return;
-	}
+	// Don't play death sounds on silent weapons.
+	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
+	if ( pTFInflictor && ( pTFInflictor->IsSilentKiller() || pTFInflictor->IsHiddenKiller() ) )
+		return;
 
 	if ( m_LastDamageType & DMG_FALL ) // Did we die from falling?
 	{
