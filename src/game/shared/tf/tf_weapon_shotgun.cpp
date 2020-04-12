@@ -44,6 +44,7 @@ CREATE_SIMPLE_WEAPON_TABLE( TFShotgun, tf_weapon_shotgun_primary )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Soldier, tf_weapon_shotgun_soldier )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_HWG, tf_weapon_shotgun_hwg )
 CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Pyro, tf_weapon_shotgun_pyro )
+CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Revenge, tf_weapon_sentry_revenge )
 CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
 CREATE_SIMPLE_WEAPON_TABLE( TFPepBrawlBlaster, tf_weapon_pep_brawler_blaster)
 CREATE_SIMPLE_WEAPON_TABLE( TFSodaPopper, tf_weapon_soda_popper)
@@ -320,30 +321,6 @@ bool CTFScatterGun::HasKnockback() const
 }
 
 
-//=============================================================================
-//
-// Weapon Shotgun Revenge tables.
-//
-
-IMPLEMENT_NETWORKCLASS_ALIASED( TFShotgun_Revenge, DT_TFShotgun_Revenge )
-
-BEGIN_NETWORK_TABLE( CTFShotgun_Revenge, DT_TFShotgun_Revenge )
-#if !defined( CLIENT_DLL )
-	SendPropFloat( SENDINFO( m_iRevengeCrits ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
-#else
-	RecvPropFloat( RECVINFO( m_iRevengeCrits ) ),
-#endif
-END_NETWORK_TABLE()
-
-#if defined( CLIENT_DLL )
-BEGIN_PREDICTION_DATA( CTFShotgun_Revenge )
-	DEFINE_PRED_FIELD( m_iRevengeCrits, FIELD_INTEGER, FTYPEDESC_INSENDTABLE )
-END_PREDICTION_DATA()
-#endif
-
-LINK_ENTITY_TO_CLASS( tf_weapon_sentry_revenge, CTFShotgun_Revenge );
-PRECACHE_WEAPON_REGISTER( tf_weapon_sentry_revenge );
-
 
 //=============================================================================
 //
@@ -353,7 +330,6 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_sentry_revenge );
 CTFShotgun_Revenge::CTFShotgun_Revenge()
 {
 	m_bReloadsSingly = true;
-	m_iRevengeCrits = 0;
 }
 
 #if defined( CLIENT_DLL )
@@ -427,7 +403,7 @@ void CTFShotgun_Revenge::PrimaryAttack( void )
 	
 	if ( pOwner && pOwner->IsAlive() )
 	{
-		!pOwner->m_Shared.DeductRevengeCrit();
+		pOwner->m_Shared.DeductRevengeCrit();
 
 		if ( !pOwner->m_Shared.HasRevengeCrits() )
 			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
@@ -484,7 +460,6 @@ bool CTFShotgun_Revenge::Holster( CBaseCombatWeapon *pSwitchTo )
 //-----------------------------------------------------------------------------
 void CTFShotgun_Revenge::Detach( void )
 {
-	m_iRevengeCrits = 0;
 	BaseClass::Detach();
 }
 

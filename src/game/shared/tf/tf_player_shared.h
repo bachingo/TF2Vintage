@@ -389,8 +389,8 @@ public:
 	// Revenge Crit Counter (ie: Frontier Justice)
 	int		GetRevengeCritCount( void ) const        { return m_iRevengeCrits; }
 	void	SetRevengeCritCount(int count)      	 { m_iRevengeCrits = count; }
-	void	IncrementRevengeCrit( int count )     	 { m_iRevengeCrits += 1; }	
-	void	DeductRevengeCrit( int count )     	 	 { m_iRevengeCrits = Max( (m_iRevengeCrits - 1), 0 ); }
+	void	IncrementRevengeCrit( void )     		 { m_iRevengeCrits += 1; }	
+	void	DeductRevengeCrit( void )     	 		 { m_iRevengeCrits = Max( (m_iRevengeCrits - 1), 0 ); }
 	bool	HasRevengeCrits( void )      			 { return m_iRevengeCrits > 0; }
 	
 	// Killstreak counter, for HUD.
