@@ -6382,11 +6382,6 @@
 					"attribute_class"	"bodyshot_damage_modify"
 					"value" "0.80"
 				}
-				"sniper fires tracer"
- 				{
-					"attribute_class"	"sniper_fires_tracer"
-					"value"	"1"
-				}
 				"hidden on killfeed"
 				{
 					"attribute_class"	"set_hidden_killer"
