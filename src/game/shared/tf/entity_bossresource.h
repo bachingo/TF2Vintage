@@ -41,9 +41,13 @@ public:
 	void HideBossHealthMeter( void );
 	void HideBossStunMeter( void );
 	void HideSkillShotComboMeter( void );
+
+	void SetBossState( int state ) { m_iBossState = state; }
 #else
 	float GetBossHealthPercentage( void ) const;
 	float GetBossStunPercentage( void ) const;
+
+	int GetBossState( void ) const { return m_iBossState; }
 #endif
 
 private:
@@ -55,6 +59,8 @@ private:
 
 #ifdef GAME_DLL
 	DECLARE_DATADESC()
+#else
+	friend class CHudBossHealthMeter;
 #endif
 };
 
