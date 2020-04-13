@@ -6884,7 +6884,7 @@
 			"item_type_name"		"#TF_Wearable_Provisions"
 			"image_inventory"		"backpack/workshop/player/items/engineer/dec16_packable_provisions/dec16_packable_provisions"
 			"model_player"		"models/workshop/player/items/engineer/dec16_packable_provisions/dec16_packable_provisions.mdl"
-			"item_slot"	"primary"
+			"item_slot"	"secondary"
 			"used_by_classes"
 			{
 				"engineer"		"1"
@@ -6904,15 +6904,37 @@
 					"attribute_class"	"mult_dispenser_radius"
 					"value"				"3.0"
 				}
-				"maxammo metal increased"
+			}
+		}
+		"1197"
+		{
+			"name"		"Winter Backup"
+			"year"			"2020"
+			"prefab"		"weapon_backpack weapon_custom"
+			"item_name"		"#TF_dec15_winter_backup"
+			"item_description"		"#TF_dec15_winter_backup_Desc"
+			"item_type_name"		"#TF_Wearable_Backpack"
+			"image_inventory"		"backpack/workshop/player/items/engineer/dec15_winter_backup/dec15_winter_backup"
+			"model_player"		"models/workshop/player/items/engineer/dec15_winter_backup/dec15_winter_backup.mdl"
+			"item_slot"	"secondary"
+			"used_by_classes"
+			{
+				"engineer"		"1"
+			}
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
+			"attributes"
+			{
+				"bidirectional teleport"
 				{
-					"attribute_class"	"mult_maxammo_metal"
-					"value"				"1.5"
-				}
-				"maxammo secondary reduced"
-				{
-					"attribute_class"	"mult_maxammo_secondary"
-					"value"				"0.05"
+					"attribute_class"	"bidirectional_teleport"
+					"value"				"1"
 				}
 			}
 		}
