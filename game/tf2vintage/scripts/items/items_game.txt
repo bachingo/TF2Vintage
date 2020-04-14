@@ -6904,6 +6904,11 @@
 					"attribute_class"	"mult_dispenser_radius"
 					"value"				"3.0"
 				}
+				"engy dispenser rate increased"
+				{
+					"attribute_class"	"mult_dispenser_rate"
+					"value"				"1.10"
+				}
 			}
 		}
 		"1197"
@@ -6935,6 +6940,11 @@
 				{
 					"attribute_class"	"bidirectional_teleport"
 					"value"				"1"
+				}
+				"mod teleporter cost"
+				{
+					"attribute_class"	"mod_teleporter_cost"
+					"value" "0.75"
 				}
 			}
 		}
@@ -16016,6 +16026,16 @@
 			"hidden"	"1"
 			"effect_type"	"positive"
 			"armory_desc"	"on_hit"
+			"stored_as_integer"	"0"
+		}
+		"10016"
+		{
+			"name"	"engy dispenser rate increased"
+			"attribute_class"	"mult_dispenser_rate"
+			"description_string"	"#Attrib_MaxammoMetal_Increased_shortdesc"
+			"description_format"	"value_is_percentage"
+			"hidden"	"1"
+			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
 	}
