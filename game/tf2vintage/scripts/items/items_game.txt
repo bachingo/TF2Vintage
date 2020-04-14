@@ -3510,7 +3510,7 @@
 			"item_name"	"#TF_Unique_Achievement_Flamethrower"
 			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_backburner/c_backburner"
-			"model_player"	"models/weapons/c_models/c_backburner/c_backburner.mdl"
+			"model_player"	"models/weapons/c_models/c_backburner/c_backburner_full.mdl"
 			"attributes"
 			{
 				"mod flamethrower back crit"
