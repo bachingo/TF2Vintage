@@ -260,6 +260,13 @@ void CDamageAccountPanel::OnDamaged( IGameEvent *event )
 			// Don't show damage notifications for spies disguised as our team.
 			if ( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && pTFVictim->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() )
 				return;
+			
+			// Don't show damage notifications for cloaked enemies.
+			if ( pTFVictim->m_Shared.InCond( TF_COND_STEALTHED ) ||
+				 pTFVictim->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) ||
+				 pTFVictim->m_Shared.InCond( TF_COND_BLINK_IMMUNE ) )
+				return;
+			
 		}
 
 		// Play hit sound, if appliable.

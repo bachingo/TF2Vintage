@@ -9068,6 +9068,9 @@ void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 		m_Shared.AddCond( TF_COND_AFTERBURN_IMMUNE, flDREffectTime );
 		m_Shared.AddCond( TF_COND_SPEED_BOOST_FEIGN, flDREffectTime );
 		m_Shared.AddCond( TF_COND_BLINK_IMMUNE, flDREffectTime );
+		// Remove any blink, if we have one.
+		if ( m_Shared.InCond( TF_COND_STEALTHED_BLINK ) )
+			m_Shared.RemoveCond( TF_COND_STEALTHED_BLINK );
 	}
 
 	RemoveTeleportEffect();
