@@ -6368,24 +6368,31 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		}
 
 		// Check if those involved were friends.
+		bool bSteamFriends = false;
 		const char *pszRelationship = "relation:none";
 		#ifndef NO_STEAM
 		player_info_t piv;
 		player_info_t pia;
 		// Get the information about the attacker.
 		CBaseEntity *pAttacker = info.GetAttacker();
-		// Grab the indexes of the players involved.
-		int iPlayerIndexAttacker =pAttacker->entindex();
-		int iPlayerIndexVictim =pVictim->entindex();
-		// If player info is there, check friendship status on Steam.
-		if ( (engine->GetPlayerInfo(iPlayerIndexVictim, &piv)) && (engine->GetPlayerInfo(iPlayerIndexAttacker, &pia)) )
+		if ( pAttacker && ( pAttacker != pVictim ) )
 		{
-			if (piv.friendsID && pia.friendsID)
+			// Grab the indexes of the players involved.
+			int iPlayerIndexAttacker = pAttacker->entindex();
+			int iPlayerIndexVictim = pVictim->entindex();
+			if ( iPlayerIndexAttacker && iPlayerIndexVictim )
 			{
-				// check and see if they're on the local player's friends list
-				CSteamID steamID(piv.friendsID, pia.friendsID, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual);
-				if (steamapicontext->SteamFriends()->HasFriend(steamID, /*k_EFriendFlagImmediate*/ 0x04))
-				pszRelationship = "relation:friends";
+				// If player info is there, check friendship status on Steam.
+				engine->GetPlayerInfo(iPlayerIndexVictim, &piv); 
+				engine->GetPlayerInfo(iPlayerIndexAttacker, &pia);
+				if ( piv.friendsID && pia.friendsID )
+				{
+					// check and see if they're on the local player's friends list
+					CSteamID steamID(piv.friendsID, pia.friendsID, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual);
+					bSteamFriends = steamapicontext->SteamFriends()->HasFriend(steamID, 0x04 /*k_EFriendFlagImmediate*/);
+					if (bSteamFriends)
+					pszRelationship = "relation:friends";
+				}
 			}
 		}
 		#endif
