@@ -6369,7 +6369,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 
 		// Check if those involved were friends.
 		bool bSteamFriends = false;
-		const char *pszRelationship = "relation:none";
 		#ifndef NO_STEAM
 		player_info_t piv;
 		player_info_t pia;
@@ -6390,12 +6389,14 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 					// check and see if they're on the local player's friends list
 					CSteamID steamID(piv.friendsID, pia.friendsID, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual);
 					bSteamFriends = steamapicontext->SteamFriends()->HasFriend(steamID, 0x04 /*k_EFriendFlagImmediate*/);
-					if (bSteamFriends)
-					pszRelationship = "relation:friends";
+
 				}
 			}
 		}
-		#endif
+#endif
+		const char *pszRelationship = "relation:none";
+		if (bSteamFriends)
+			pszRelationship = "relation:friends";
 
 		if ( IsAlive() )
 		{
