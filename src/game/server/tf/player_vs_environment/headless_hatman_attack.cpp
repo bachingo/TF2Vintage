@@ -345,7 +345,7 @@ bool CHeadlessHatmanAttack::IsPotentiallyChaseable( CHeadlessHatman *actor, CTFP
 	if (!area || area->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM ))
 		return false;
 
-	if (!actor->GetGroundEntity())
+	if (!victim->GetGroundEntity())
 	{
 		if (( victim->GetAbsOrigin() - m_vecHome ).LengthSqr() > Square( tf_halloween_bot_quit_range.GetFloat() ))
 			return false;
