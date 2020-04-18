@@ -1037,7 +1037,7 @@ void CTFPlayer::Precache()
 void CTFPlayer::PrecachePlayerModels( void )
 {
 	int i;
-	for ( i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+	for (i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++)
 	{
 		const char *pszModel = GetPlayerClassData( i )->m_szModelName;
 		if ( pszModel && pszModel[0] )
