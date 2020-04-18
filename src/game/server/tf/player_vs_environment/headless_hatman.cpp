@@ -16,7 +16,7 @@
 
 ConVar tf_halloween_bot_health_base( "tf_halloween_bot_health_base", "3000", FCVAR_CHEAT );
 ConVar tf_halloween_bot_health_per_player( "tf_halloween_bot_health_per_player", "200", FCVAR_CHEAT );
-ConVar tf_halloween_bot_min_player_count( "tf_halloween_bot_min_player_count", "1", FCVAR_CHEAT );
+ConVar tf_halloween_bot_min_player_count( "tf_halloween_bot_min_player_count", "10", FCVAR_CHEAT );
 ConVar tf_halloween_bot_speed( "tf_halloween_bot_speed", "400", FCVAR_CHEAT );
 ConVar tf_halloween_bot_attack_range( "tf_halloween_bot_attack_range", "200", FCVAR_CHEAT );
 ConVar tf_halloween_bot_speed_recovery_rate( "tf_halloween_bot_speed_recovery_rate", "100", FCVAR_CHEAT, "Movement units/second" );

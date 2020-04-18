@@ -2187,14 +2187,6 @@ void CTFPlayerShared::OnRemoveBuff( void )
 void CTFPlayerShared::OnAddInPurgatory( void )
 {
 #ifdef GAME_DLL
-	// Some CountdownTimer (possibly not m_purgatoryDuration?)
-	/*
-	(**(m_pOuter + 9004))(m_pOuter + 9004);
-	*(m_pOuter + 9008) = 40.0f;
-	*(m_pOuter + 9012) = Now() + 40.0f;
-	*(*(m_pOuter + 9016) = 1;
-	*/
-
 	m_pOuter->SetHealth( GetMaxHealth() );
 	m_pOuter->RemoveOwnedProjectiles();
 	AddCond( TF_COND_INVULNERABLE, 1.5f );
@@ -2212,22 +2204,16 @@ void CTFPlayerShared::OnRemoveInPurgatory( void )
 		AddCond( TF_COND_INVULNERABLE, 10.0f );
 		AddCond( TF_COND_SPEED_BOOST, 10.0f );
 		AddCond( TF_COND_CRITBOOSTED_PUMPKIN, 10.0f );
-		m_pOuter->SetHealth( GetMaxBuffedHealth() );
-
-		// m_purgatoryDuration(?)
-		/*
-		(**(m_pOuter + 8992))(m_pOuter + 8992);
-		*(m_pOuter + 8996) = 10.0f;
-		*(m_pOuter + 9000) = Now() + 10.0f;
-		*/
 		m_pOuter->m_purgatoryDuration.Start( 10.0f );
 
-		TeamplayRoundBasedRules()->BroadcastSound( 255, "Halloween.PlayerEscapedUnderworld" );
+		m_pOuter->SetHealth( GetMaxHealth() );
+
 		m_pOuter->RemoveOwnedProjectiles();
 
 		// Write to chat that player has escaped the underworld
 		CReliableBroadcastRecipientFilter filter;
 		UTIL_SayText2Filter( filter, m_pOuter, false, TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_LAKESIDE ) ? "#TF_Halloween_Skull_Island_Escape" : "#TF_Halloween_Underworld", m_pOuter->GetPlayerName() );
+		TFGameRules()->BroadcastSound( 255, "Halloween.PlayerEscapedUnderworld" );
 
 		// Let the map know we escaped the underworld
 		IGameEvent *event = gameeventmanager->CreateEvent( "escaped_loot_island" );

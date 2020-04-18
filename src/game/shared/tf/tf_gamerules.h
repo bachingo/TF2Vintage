@@ -322,6 +322,7 @@ public:
 
 	void			RegisterBoss( CBaseCombatCharacter *pNPC )  { if( m_hBosses.Find( pNPC ) == m_hBosses.InvalidIndex() ) m_hBosses.AddToHead( pNPC ); }
 	void			RemoveBoss( CBaseCombatCharacter *pNPC )    { EHANDLE hNPC( pNPC ); m_hBosses.FindAndRemove( hNPC ); }
+	CBaseCombatCharacter *GetActiveBoss( void ) const           { if ( m_hBosses.IsEmpty() ) return nullptr; return m_hBosses[0]; }
 
 	void			StartBossTimer( float time )				{ m_bossSpawnTimer.Start( time ); }
 
