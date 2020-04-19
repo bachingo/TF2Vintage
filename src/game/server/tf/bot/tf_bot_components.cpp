@@ -35,9 +35,12 @@ float CTFBotBody::GetHeadAimTrackingInterval( void ) const
 
 void CTFBotLocomotion::Update( void )
 {
+	CTFBot *actor = ToTFBot( this->GetEntity() );
+	if ( actor->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+		return;
+
 	BaseClass::Update();
 
-	CTFBot *actor = ToTFBot( this->GetEntity() );
 	if ( actor && !IsOnGround() )
 		actor->PressCrouchButton( 0.3f );
 }

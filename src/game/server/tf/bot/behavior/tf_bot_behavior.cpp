@@ -525,6 +525,9 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 	if ( !tf_bot_fire_weapon_allowed.GetBool() )
 		return;
 
+	if ( actor->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+		return;
+
 	CTFWeaponBase *pWeapon = actor->GetActiveTFWeapon();
 	if ( pWeapon == nullptr )
 		return;

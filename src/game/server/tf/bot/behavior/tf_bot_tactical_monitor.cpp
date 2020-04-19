@@ -329,6 +329,9 @@ void CTFBotTacticalMonitor::MonitorArmedStickybombs( CTFBot *actor )
 	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher *>( actor->Weapon_GetSlot( 1 ) );
 	if ( pLauncher == nullptr || pLauncher->m_Pipebombs.IsEmpty() )
 		return;
+
+	if ( actor->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+		return;
 	
 	CUtlVector<CKnownEntity> knowns;
 	actor->GetVisionInterface()->CollectKnownEntities( &knowns );
