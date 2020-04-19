@@ -149,7 +149,7 @@ public:
 			QAngle ang;
 			CHandle<CTFPlayer> hPlayer;
 		} Dancer_t;
-		CUtlVector<Dancer_t *> m_Dancers;
+		CUtlVector<Dancer_t> m_Dancers;
 
 		typedef struct MerasmusCreateInfo
 		{

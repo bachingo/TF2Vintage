@@ -181,7 +181,8 @@ END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( merasmus_dancer, CMerasmusDancer );
 
-#define WHEEL_SPIN_TIME		5.75f
+#define WHEEL_SPIN_TIME			5.75f
+#define WHEEL_EFFECT_DURATION	10.0f
 
 // TODO: More fitting names
 #define WOD_BAD_EFFECT		(1<<0)
@@ -526,7 +527,7 @@ void CWheelOfDoom::StartSpin( void )
 	m_flSpinDuration = gpGlobals->curtime + WHEEL_SPIN_TIME;
 	m_flNextThinkTick = CalcNextTickTime();
 	m_flSpinAnnounce = gpGlobals->curtime + 1.6;
-	m_flEffectEndTime = m_flSpinDuration + 10.0;
+	m_flEffectEndTime = m_flSpinDuration + WHEEL_EFFECT_DURATION;
 
 	SetThink( &CWheelOfDoom::SpinThink );
 	SetNextThink( gpGlobals->curtime );
@@ -893,7 +894,7 @@ bool CWheelOfDoom::EffectManager::UpdateAndClearExpiredEffects( void )
 
 void CWheelOfDoom::WOD_Burn::InitEffect( float flDuration )
 {
-	this->flDuration = gpGlobals->curtime + 10.0;
+	this->flDuration = gpGlobals->curtime + WHEEL_EFFECT_DURATION;
 }
 
 void CWheelOfDoom::WOD_Burn::ActivateEffect( EffectData_t &data )
@@ -959,7 +960,7 @@ void CWheelOfDoom::WOD_Ghosts::DeactivateEffect( EffectData_t &data )
 
 void CWheelOfDoom::WOD_UberEffect::InitEffect( float flDuration )
 {
-	this->flDuration = Min( flDuration, 10.0f ) + gpGlobals->curtime;
+	this->flDuration = Min( flDuration, WHEEL_EFFECT_DURATION ) + gpGlobals->curtime;
 }
 
 void CWheelOfDoom::WOD_UberEffect::ActivateEffect( EffectData_t &data )
@@ -1057,14 +1058,12 @@ void CWheelOfDoom::WOD_Dance::InitEffect( float flDuration )
 
 	m_iSpawnSide = RandomInt( 0, 1 );
 
-	m_Dancers.PurgeAndDeleteElements();
-
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, TEAM_ANY, true );
 	
 	int nDancers = 0;
 	float flMaxY = FLT_MAX;
-	float flMinY = -FLT_MAX;
+	float flMinY = FLT_MIN;
 	float flAvgX = 0.0f;
 	float flZ = 0.0f;
 
@@ -1075,17 +1074,18 @@ void CWheelOfDoom::WOD_Dance::InitEffect( float flDuration )
 																		GetNumOfTeamDancing( pPlayer->GetTeamNumber() ) ) );
 		if ( pPoint )
 		{
-			Dancer_t *pDancer = new Dancer_t;
-			pDancer->pos = pPoint->GetAbsOrigin();
-			pDancer->ang = pPoint->GetAbsAngles();
-			pDancer->hPlayer = pPlayer;
+			Dancer_t pDancer ={
+				pPoint->GetAbsOrigin(),
+				pPoint->GetAbsAngles(),
+				pPlayer
+			};
 
-			SlamPosAndAngles( pPlayer, pDancer->pos, pDancer->ang );
+			SlamPosAndAngles( pPlayer, pDancer.pos, pDancer.ang );
 
-			flMaxY = Min( flMaxY, pDancer->pos.y );
-			flMinY = Max( flMinY, pDancer->pos.y );
-			flZ = pDancer->pos.z;
-			flAvgX += pDancer->pos.x;
+			flMaxY = Min( flMaxY, pDancer.pos.y );
+			flMinY = Max( flMinY, pDancer.pos.y );
+			flZ = pDancer.pos.z;
+			flAvgX += pDancer.pos.x;
 
 			pPlayer->m_Shared.AddCond( TF_COND_HALLOWEEN_THRILLER );
 
@@ -1117,19 +1117,18 @@ void CWheelOfDoom::WOD_Dance::UpdateEffect( EffectData_t &data )
 
 	FOR_EACH_VEC_BACK( m_Dancers, i )
 	{
-		Dancer_t *pDancer = m_Dancers[i];
-		CTFPlayer *pPlayer = pDancer->hPlayer.Get();
+		Dancer_t const &pDancer = m_Dancers[i];
+		CTFPlayer *pPlayer = pDancer.hPlayer.Get();
 		if ( pPlayer )
 		{
 			if ( bSwitchSides )
 				pPlayer->Taunt();
 
 			if ( m_flNextDance - gpGlobals->curtime < 0.2 )
-				SlamPosAndAngles( pPlayer, pDancer->pos, pDancer->ang );
+				SlamPosAndAngles( pPlayer, pDancer.pos, pDancer.ang );
 		}
 		else
 		{
-			delete pDancer;
 			m_Dancers.Remove( i );
 		}
 	}
@@ -1162,14 +1161,15 @@ void CWheelOfDoom::WOD_Dance::DeactivateEffect( EffectData_t &data )
 	m_hDancer->BlastOff();
 
 	m_CreateInfos.RemoveAll();
+	m_Dancers.RemoveAll();
 }
 
 int CWheelOfDoom::WOD_Dance::GetNumOfTeamDancing( int iTeam )
 {
 	int iCount = 0;
-	for ( Dancer_t *pDancer : m_Dancers )
+	for ( Dancer_t &pDancer : m_Dancers )
 	{
-		if ( pDancer->hPlayer != nullptr && pDancer->hPlayer->GetTeamNumber() == iTeam )
+		if ( pDancer.hPlayer != nullptr && pDancer.hPlayer->GetTeamNumber() == iTeam )
 			++iCount;
 	}
 
