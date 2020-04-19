@@ -114,7 +114,7 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 			m_iImageDominating[i] = m_pImageList->AddImage(scheme()->GetImage(g_aDominationEmblems[i], true));
 		}
 
-		for (int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++)
+		for (int i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++)
 		{
 			m_iClassEmblem[i] = m_pImageList->AddImage(scheme()->GetImage(g_aPlayerClassEmblems[i - 1], true));
 			m_iClassEmblemDead[i] = m_pImageList->AddImage(scheme()->GetImage(g_aPlayerClassEmblemsDead[i - 1], true));

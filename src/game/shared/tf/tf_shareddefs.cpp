@@ -66,7 +66,7 @@ const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDummy
 
 void PrecacheTeamParticles(const char *pszFormat, bool bDummyBoolean /*= false*/, const char **pNames/* = g_aTeamParticleNames*/)
 {
-	for (int i = FIRST_GAME_TEAM; i < TEAM_COUNT_NORMAL; i++)
+	for (int i = FIRST_GAME_TEAM; i < TF_TEAM_COUNT; i++)
 	{
 		const char *pszParticle = ConstructTeamParticle(pszFormat, i, false, pNames);
 		PrecacheParticleSystem(pszParticle);

@@ -3538,7 +3538,7 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 #if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
 	int iTeamCount = GetNumberOfTeams();
 	if (TFGameRules())
-		iTeamCount = TFGameRules()->IsFourTeamGame() ? 5 : 3;
+		iTeamCount = TFGameRules()->IsFourTeamGame() ? 5 : 3; // Team count + 1
 	for ( pTeam = GetGlobalTeam(i); i <= iTeamCount; pTeam = GetGlobalTeam(++i) )
 #else
 	for ( pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )

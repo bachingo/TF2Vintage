@@ -10661,7 +10661,7 @@ IResponseSystem *CTFPlayer::GetResponseSystem()
 		iClass = m_Shared.GetDisguiseClass();
 	}
 
-	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_CLASS_COUNT_ALL );
+	bool bValidClass = ( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_CLASS_COUNT_ALL );
 	bool bValidConcept = ( m_iCurrentConcept >= 0 && m_iCurrentConcept < MP_TF_CONCEPT_COUNT );
 	Assert( bValidClass );
 	Assert( bValidConcept );
