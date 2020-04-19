@@ -44,6 +44,7 @@
 #include "tf_fx.h"
 #include "util.h"
 #include "tf_team.h"
+#include "player_vs_environment/merasmus.h"
 #include "tf_gamestats.h"
 #include "tf_playerclass.h"
 #include "tf_weapon_builder.h"
@@ -1532,6 +1533,19 @@ void CTFPlayerShared::ConditionThink( void )
 	UpdateEnergyDrinkMeter();
 #else
 	m_pOuter->UpdateHalloweenBombHead();
+#endif
+
+#if defined(GAME_DLL)
+	if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_LAKESIDE ) )
+	{
+		CMerasmus *pMerasmus = assert_cast<CMerasmus *>( TFGameRules()->GetActiveBoss() );
+		if ( pMerasmus && InCond( TF_COND_HALLOWEEN_BOMB_HEAD ) && m_pOuter->IsAlive() )
+		{
+			Vector vecToMerasmus = m_pOuter->EyePosition() - pMerasmus->WorldSpaceCenter();
+			if ( vecToMerasmus.LengthSqr() < Square( 100.0f ) )
+				pMerasmus->AddStun( m_pOuter );
+		}
+	}
 #endif
 }
 

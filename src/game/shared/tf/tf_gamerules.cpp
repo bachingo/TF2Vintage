@@ -55,6 +55,8 @@
 	#include "eventqueue.h"
 	#include "nav_mesh.h"
 	#include "bot/tf_bot_manager.h"
+	#include "entity_wheelofdoom.h"
+	#include "player_vs_environment/merasmus.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1426,9 +1428,6 @@ void __MsgFunc_SavedConvar( bf_read &msg )
 	if ( bReadKey && bReadValue )
 	{
 		ConVarRef cvar( szKey );
-
-		Assert( cvar.IsValid() );
-		Assert( cvar.IsFlagSet( FCVAR_REPLICATED ) );
 
 		if ( cvar.IsValid() && cvar.IsFlagSet( FCVAR_REPLICATED ) )
 			TFGameRules()->m_SavedConvars[ szKey ] = AllocPooledString( szValue );
@@ -2997,9 +2996,9 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 		fSpawnInterval = tf_halloween_eyeball_boss_spawn_interval.GetFloat();
 		fSpawnVariation = tf_halloween_eyeball_boss_spawn_interval_variation.GetFloat();
 	}
-	else if ( /*IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE )*/false )
+	else if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
 	{
-		/*CWheelOfDoom *pWheelOfDoom = (CWheelOfDoom *)gEntList.FindEntityByClassname( NULL, "wheel_of_doom" );
+		CWheelOfDoom *pWheelOfDoom = (CWheelOfDoom *)gEntList.FindEntityByClassname( NULL, "wheel_of_doom" );
 		if ( pWheelOfDoom && !pWheelOfDoom->IsDoneBroadcastingEffectSound() )
 			return;
 
@@ -3012,7 +3011,7 @@ void CTFGameRules::SpawnHalloweenBoss( void )
 		{
 			fSpawnInterval = tf_merasmus_spawn_interval.GetFloat();
 			fSpawnVariation = tf_merasmus_spawn_interval_variation.GetFloat();
-		}*/
+		}
 		eBossType = CHalloweenBaseBoss::MERASMUS;
 	}
 	else

@@ -36,8 +36,8 @@ private:
 	CPanelAnimationVarAliasType( int, m_nHealthDeadPosY, "health_dead_pos_y", "90", "proportional_ypos" );
 	CPanelAnimationVarAliasType( int, m_nHealthBarWide, "health_bar_wide", "168", "proportional_xpos" );
 
-	CPanelAnimationVar( Color, m_BarColor, "HealthBarColor", "0 0 0 0" );
-	CPanelAnimationVar( Color, m_BorderColor, "HealthBarBorderColor", "0 0 0 0" );
+	CPanelAnimationVar( Color, m_BarColor, "HealthBarColor", "255 255 255 255" );
+	CPanelAnimationVar( Color, m_BorderColor, "HealthBarBorderColor", "255 255 255 255" );
 	CPanelAnimationVar( Color, m_BossStateColor, "AlternateStateColor", "0 255 0 255" );
 };
 
