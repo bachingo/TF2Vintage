@@ -1415,11 +1415,11 @@ void __MsgFunc_SavedConvar( bf_read &msg )
 	if ( !TFGameRules() )
 		return;
 
-	char szKey[2048];
+	char szKey[64];
 	bool bReadKey = msg.ReadString( szKey, sizeof( szKey ) );
 	Assert( bReadKey );
 
-	char szValue[2048];
+	char szValue[256];
 	bool bReadValue = msg.ReadString( szValue, sizeof( szValue ) );
 	Assert( bReadValue );
 

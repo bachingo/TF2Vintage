@@ -280,7 +280,7 @@ bool CTFPlayerClassShared::Init( int iClass )
 //-----------------------------------------------------------------------------
 // Purpose: Initialize the player class.
 //-----------------------------------------------------------------------------
-const char	*CTFPlayerClassShared::GetHandModelName( bool bGunslinger /*= false*/ ) const
+const char *CTFPlayerClassShared::GetHandModelName( bool bGunslinger /*= false*/ ) const
 {
 	// hacky method to make the gunslinger show up
 	if ( bGunslinger )
