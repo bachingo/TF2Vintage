@@ -110,6 +110,7 @@ ConVar tf_enable_grenades( "tf_enable_grenades", "0", FCVAR_REPLICATED, "Enable 
 ConVar tf2v_allow_disguiseweapons( "tf2v_allow_disguiseweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spy to change disguise weapon using lastdisguise.", true, 0, true, 1);
 ConVar tf2v_use_fast_redisguise( "tf2v_use_fast_redisguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disguising while currently disguised is faster.", true, 0, true, 1);
 
+ConVar tf2v_use_new_atomizer( "tf2v_use_new_atomizer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between the old and modern Atomizer airdash mechanic.", true, 0, true, 1);
 
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
@@ -3968,8 +3969,16 @@ bool CTFPlayerShared::CanAirDash( void )
 	int nMaxAirJumps = 1;
 	
 	// Check to see if we have attributes for extra airdashes.
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nMaxAirJumps, air_dash_count );
-
+	// How we check this depends on old or new logic.
+	if (tf2v_use_new_atomizer.GetBool()) // Modern logic: Check based on active weapon.
+	{
+		CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
+		if (pWeapon)
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMaxAirJumps, air_dash_count );	
+	}
+	else								// Old logic: Check based on player.
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nMaxAirJumps, air_dash_count );
+	
 	// If in Soda Popper mode, get five dashes. Do not overlap with attributes.
 	if ( InCond( TF_COND_SODAPOPPER_HYPE ) )
 		nMaxAirJumps = 5;
