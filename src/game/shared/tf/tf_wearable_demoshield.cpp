@@ -192,13 +192,13 @@ bool CTFWearableDemoShield::DoSpecialAction( CTFPlayer *pUser )
 			if ( tf2v_demo_charge_debuff_remove.GetBool() )
 			{
 				if ( pUser->m_Shared.InCond( TF_COND_BLEEDING ) )
-					pUser->m_Shared.AddCond( TF_COND_BLEEDING );
+					pUser->m_Shared.RemoveCond( TF_COND_BLEEDING );
 				if ( pUser->m_Shared.InCond( TF_COND_BURNING ) )
-					pUser->m_Shared.AddCond( TF_COND_BURNING );
+					pUser->m_Shared.RemoveCond( TF_COND_BURNING );
 				if ( pUser->m_Shared.InCond( TF_COND_MAD_MILK ) )
-					pUser->m_Shared.AddCond( TF_COND_MAD_MILK );
+					pUser->m_Shared.RemoveCond( TF_COND_MAD_MILK );
 				if ( pUser->m_Shared.InCond( TF_COND_URINE ) )
-					pUser->m_Shared.AddCond( TF_COND_URINE );
+					pUser->m_Shared.RemoveCond( TF_COND_URINE );
 			}
 
 			m_bBashed = false;
