@@ -14,7 +14,7 @@
 #include "isaverestore.h"
 #include "gamerules.h"
 #ifdef _WIN32
-//#include "vscript_client_nut.h"
+#include "vscript_client_nut.h"
 #endif
 
 extern IScriptManager *scriptmanager;
@@ -22,19 +22,7 @@ extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 /*extern */void RegisterScriptedWeapon( char const *szName ) {}
 /*extern */void RegisterScriptedEntity( char const *szName ) {}
 
-// #define VMPROFILE 1
-
-#ifdef VMPROFILE
-
-#define VMPROF_START float debugStartTime = Plat_FloatTime();
-#define VMPROF_SHOW( funcname, funcdesc  ) DevMsg("***VSCRIPT PROFILE***: %s %s: %6.4f milliseconds\n", (##funcname), (##funcdesc), (Plat_FloatTime() - debugStartTime)*1000.0 );
-
-#else // !VMPROFILE
-
-#define VMPROF_START
-#define VMPROF_SHOW
-
-#endif // VMPROFILE
+static ConVar cl_mapspawn_nut_exec( "cl_mapspawn_nut_exec", "0", FCVAR_NONE, "If set to 1, client will execute scripts/vscripts/mapspawn.nut file" );
 
 //-----------------------------------------------------------------------------
 //
@@ -115,10 +103,13 @@ bool VScriptClientInit()
 
 				if ( scriptLanguage == SL_SQUIRREL )
 				{
-					//g_pScriptVM->Run( g_Script_vscript_client );
+					g_pScriptVM->Run( g_Script_vscript_client );
 				}
 
-				VScriptRunScript( "mapspawn", false );
+				if ( cl_mapspawn_nut_exec.GetBool() )
+				{
+					VScriptRunScript( "mapspawn", false );
+				}
 
 				VMPROF_SHOW( pszScriptLanguage, "virtual machine startup" );
 
@@ -141,7 +132,7 @@ bool VScriptClientInit()
 
 void VScriptClientTerm()
 {
-	if( g_pScriptVM != NULL )
+	if( scriptmanager != NULL )
 	{
 		if( g_pScriptVM )
 		{

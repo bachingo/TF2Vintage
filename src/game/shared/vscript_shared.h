@@ -13,6 +13,20 @@
 #pragma once
 #endif
 
+// #define VMPROFILE 1
+
+#ifdef VMPROFILE
+
+#define VMPROF_START float debugStartTime = Plat_FloatTime();
+#define VMPROF_SHOW( funcname, funcdesc  ) DevMsg("***VSCRIPT PROFILE***: %s %s: %6.4f milliseconds\n", (##funcname), (##funcdesc), (Plat_FloatTime() - debugStartTime)*1000.0 );
+
+#else // !VMPROFILE
+
+#define VMPROF_START
+#define VMPROF_SHOW
+
+#endif // VMPROFILE
+
 extern IScriptVM *g_pScriptVM;
 
 const char *VScriptCutDownString( const char *str );

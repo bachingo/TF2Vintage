@@ -88,8 +88,11 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 
 		if( !bResult )
 		{
-			Warning( "Script not found (%s) \n", scriptPath );
-			Assert( "Error running script" );
+			if( bWarnMissing )
+			{
+				Warning( "Script not found (%s) \n", scriptPath.Get() );
+				Assert( "Error running script" );
+			}
 		}
 
 		pBase = (const char *) bufferScript.Base();
@@ -106,7 +109,7 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 	HSCRIPT hScript = g_pScriptVM->CompileScript( pBase, pszFilename );
 	if ( !hScript )
 	{
-		Warning( "FAILED to compile and execute script file named %s\n", scriptPath );
+		Warning( "FAILED to compile and execute script file named %s\n", scriptPath.Get() );
 		Assert( "Error running script" );
 	}
 	return hScript;
