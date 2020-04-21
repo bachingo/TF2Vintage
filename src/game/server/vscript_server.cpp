@@ -26,20 +26,6 @@ extern ScriptClassDesc_t *GetScriptDesc( CBaseEntity * );
 /*extern */void RegisterScriptedWeapon( char const *szName ) {}
 /*extern */void RegisterScriptedEntity( char const *szName ) {}
 
-// #define VMPROFILE 1
-
-#ifdef VMPROFILE
-
-#define VMPROF_START float debugStartTime = Plat_FloatTime();
-#define VMPROF_SHOW( funcname, funcdesc  ) DevMsg("***VSCRIPT PROFILE***: %s %s: %6.4f milliseconds\n", (##funcname), (##funcdesc), (Plat_FloatTime() - debugStartTime)*1000.0 );
-
-#else // !VMPROFILE
-
-#define VMPROF_START
-#define VMPROF_SHOW
-
-#endif // VMPROFILE
-
 
 //-----------------------------------------------------------------------------
 //
@@ -865,7 +851,7 @@ bool VScriptServerInit()
 
 void VScriptServerTerm()
 {
-	if( g_pScriptVM != NULL )
+	if( scriptmanager != NULL )
 	{
 		if( g_pScriptVM )
 		{
