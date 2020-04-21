@@ -171,7 +171,9 @@ ConVar tf2v_force_melee( "tf2v_force_melee", "0", FCVAR_NOTIFY, "Allow players t
 
 ConVar tf2v_blastjump_only_airborne("tf2v_blastjump_only_airborne", "0", FCVAR_NOTIFY, "Allows conditions for airborne to be counted only when blastjumping.", true, 0, true, 1);
 
-ConVar tf2v_generic_voicelines("tf2v_generic_voicelines", "0", FCVAR_NOTIFY, "Turns the death and medic sounds into generic trailer versions.", true, 0, true, 1);
+ConVar tf2v_generic_voice_death("tf2v_generic_voice_death", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns the death screams into the trailer versions.", true, 0, true, 1);
+ConVar tf2v_generic_voice_medic("tf2v_generic_voice_medic", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns the medic calls into the trailer versions.", true, 0, true, 1);
+
 
 ConVar tf2v_use_new_ammo_drops("tf2v_use_new_ammo_drops","0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Drops generic ammoboxes instead of weapons.", true, 0, true, 1);
 
@@ -8645,21 +8647,21 @@ void CTFPlayer::DeathSound( const CTakeDamageInfo &info )
 	if ( m_LastDamageType & DMG_FALL ) // Did we die from falling?
 	{
 		// They died in the fall. Play a splat sound.
-		if (!tf2v_generic_voicelines.GetBool() )
+		if (!tf2v_generic_voice_death.GetBool() )
 			EmitSound( "Player.FallGib" );
 		else
 			EmitSound( "Player.FallGibBeta" );
 	}
 	else if ( m_LastDamageType & DMG_BLAST )
 	{
-		if (!tf2v_generic_voicelines.GetBool() )
+		if (!tf2v_generic_voice_death.GetBool() )
 			EmitSound( pData->m_szExplosionDeathSound );
 		else
 			EmitSound( "Player.ExplosionDeathBeta" );
 	}
 	else if ( m_LastDamageType & DMG_CRITICAL )
 	{
-		if (!tf2v_generic_voicelines.GetBool() )
+		if (!tf2v_generic_voice_death.GetBool() )
 			EmitSound( pData->m_szCritDeathSound );
 		else
 			EmitSound( "TFPlayer.CritDeathBeta" );
@@ -8668,14 +8670,14 @@ void CTFPlayer::DeathSound( const CTakeDamageInfo &info )
 	}
 	else if ( m_LastDamageType & DMG_CLUB )
 	{
-		if (!tf2v_generic_voicelines.GetBool() )
+		if (!tf2v_generic_voice_death.GetBool() )
 			EmitSound( pData->m_szMeleeDeathSound );
 		else
 			EmitSound( "Player.MeleeDeathBeta" );
 	}
 	else
 	{
-		if (!tf2v_generic_voicelines.GetBool() )
+		if (!tf2v_generic_voice_death.GetBool() )
 			EmitSound( pData->m_szDeathSound );
 		else
 			EmitSound( "Player.DeathBeta" );
@@ -10698,6 +10700,8 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 		if ( iConcept != MP_CONCEPT_DIED )
 			return false;
 	}
+	
+	bool bCallingforMedicGeneric = ( iConcept == MP_CONCEPT_PLAYER_MEDIC && tf2v_generic_voice_medic.GetBool() );
 
 	// Save the current concept.
 	m_iCurrentConcept = iConcept;
@@ -10728,8 +10732,12 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 		}
 
 		m_bSpeakingConceptAsDisguisedSpy = true;
-
-		bool bPlayedDisguised = SpeakIfAllowed( g_pszMPConcepts[iConcept], buf, pszOutResponseChosen, bufsize, &disguisedFilter );
+		
+		bool bPlayedDisguised;
+		if (bCallingforMedicGeneric)
+			bPlayedDisguised = SpeakIfAllowed(g_pszMPConcepts[iConcept], buf, pszOutResponseChosen, bufsize, nullptr);
+		else
+			bPlayedDisguised = SpeakIfAllowed( g_pszMPConcepts[iConcept], buf, pszOutResponseChosen, bufsize, &disguisedFilter );
 
 		m_bSpeakingConceptAsDisguisedSpy = false;
 
@@ -10739,16 +10747,28 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 		undisguisedFilter.RemoveRecipient( this );
 
 		// play normal concept to teammates
-		bool bPlayedNormally = SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, &undisguisedFilter );
-
+		bool bPlayedNormally;
+		if (bCallingforMedicGeneric)
+			bPlayedNormally = SpeakIfAllowed(g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, nullptr);
+		else
+			bPlayedNormally = SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, &undisguisedFilter );
+		
 		pExpresser->DisallowMultipleScenes();
 
 		bReturn = ( bPlayedDisguised && bPlayedNormally );
 	}
 	else
 	{
-		// play normally
-		bReturn = SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, filter );
+		if ( bCallingforMedicGeneric )
+		{
+			// Speak, but don't play it to anyone.
+			bReturn = SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, nullptr );	
+		}
+		else 	
+		{
+			// play normally
+			bReturn = SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, filter );
+		}
 	}
 
 	//Add bubble on top of a player calling for medic.
@@ -10763,12 +10783,12 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 
 			SaveMe();
 			
-			// Show the bubble, but use a generic voiceline.
-			if (tf2v_generic_voicelines.GetBool() )
+			// Use a generic voiceline.
+			if ( tf2v_generic_voice_medic.GetBool() )
 			{
-				bReturn = false;
 				EmitSound( "TFPlayer.SaveMe" );
 			}
+			
 		}
 	}
 
