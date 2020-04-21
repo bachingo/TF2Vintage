@@ -55,6 +55,7 @@ public:
 #if defined( CLIENT_DLL )
 	int GetWeaponPreset( int iClass, int iSlot );
 	void SetWeaponPreset( int iClass, int iSlot, int iPreset );
+	void ChangeLoadoutSlot(int iClass, int iLoadoutSlot);
 	const char* GetSlotName( int iSlot );
 #endif
 

@@ -288,6 +288,7 @@ enum
 
 extern const char *g_AnimSlots[];
 extern const char *g_LoadoutSlots[];
+extern const char *g_InventoryLoadoutSlots[];
 extern const char *g_LoadoutTranslations[];
 
 //-----------------------------------------------------------------------------

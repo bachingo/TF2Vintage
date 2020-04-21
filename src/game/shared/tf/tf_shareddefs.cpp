@@ -283,6 +283,14 @@ const char *g_AnimSlots[] =
 	"PRIMARY2"
 };
 
+const char *g_InventoryLoadoutSlots[] =
+{
+	"A",
+	"B",
+	"C",
+	"D",
+};
+
 const char *g_LoadoutSlots[] =
 {
 	"primary",

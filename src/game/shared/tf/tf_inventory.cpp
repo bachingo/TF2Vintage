@@ -264,13 +264,20 @@ void CTFInventory::ResetInventory()
 	for (int i = TF_FIRST_NORMAL_CLASS; i <= TF_LAST_NORMAL_CLASS; i++)
 	{
 		KeyValues *pClassInv = new KeyValues(g_aPlayerClassNames_NonLocalized[i]);
-		for (int j = 0; j < TF_LOADOUT_SLOT_ZOMBIE; j++)
+		pClassInv->SetInt( "activeslot", 0 ); // Set our active loadout to A
+		for (int j = 0; j <= 3; j++) // A=0, B=1, C=2, D=3
 		{
-			if (j == TF_LOADOUT_SLOT_UTILITY || j == TF_LOADOUT_SLOT_ACTION )
-				continue;
-			
-			pClassInv->SetInt( g_LoadoutSlots[j], 0 );
+			KeyValues *pClassLoadoutSlot = new KeyValues(g_InventoryLoadoutSlots[j]);
+			for (int k = 0; k < TF_LOADOUT_SLOT_ZOMBIE; k++)
+			{
+				if (k == TF_LOADOUT_SLOT_UTILITY || k == TF_LOADOUT_SLOT_ACTION )
+					continue;
+				
+				pClassLoadoutSlot->SetInt( g_LoadoutSlots[k], 0 );
+			}
+			pClassInv->AddSubKey(pClassLoadoutSlot);
 		}
+		
 		m_pInventory->AddSubKey(pClassInv);
 	}
 
@@ -282,11 +289,20 @@ int CTFInventory::GetWeaponPreset(int iClass, int iSlot)
 	KeyValues *pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
 	if (!pClass)	//cannot find class node
 	{	
-		if (iClass != TF_CLASS_UNDEFINED && iClass <= TF_LAST_NORMAL_CLASS)
+		if (iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_LAST_NORMAL_CLASS)
 			ResetInventory();
 		return 0;
 	}
-	int iPreset = pClass->GetInt(g_LoadoutSlots[iSlot], -1);
+	
+	int iActiveSlot = pClass->GetInt("activeslot", 0);
+	KeyValues *pClassLoadoutSlot = pClass->FindKey(g_InventoryLoadoutSlots[iActiveSlot]);
+	if (!pClassLoadoutSlot)	//cannot find loadout node
+	{	
+		ResetInventory();
+		return 0;
+	}
+			
+	int iPreset = pClassLoadoutSlot->GetInt(g_LoadoutSlots[iSlot], -1);
 	if (iPreset == -1 ) //cannot find slot node	
 	{
 		if ( ( iSlot != TF_LOADOUT_SLOT_UTILITY && iSlot != TF_LOADOUT_SLOT_ACTION ) && iSlot < TF_LOADOUT_SLOT_ZOMBIE )
@@ -305,11 +321,21 @@ void CTFInventory::SetWeaponPreset(int iClass, int iSlot, int iPreset)
 	KeyValues* pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
 	if (!pClass)	//cannot find class node
 	{
-		if (iClass != TF_CLASS_UNDEFINED && iClass <= TF_LAST_NORMAL_CLASS)
+		if (iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_LAST_NORMAL_CLASS)
 			ResetInventory();
 		pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
 	}
-	pClass->SetInt(GetSlotName(iSlot), iPreset);
+	int iActiveSlot = pClass->GetInt( "activeslot", 0 ); // Get the active loadout. Default to A.
+	KeyValues* pClassLoadoutSlot = pClass->FindKey(g_InventoryLoadoutSlots[iActiveSlot]); // Find the loadout to save it to
+	
+	pClassLoadoutSlot->SetInt(GetSlotName(iSlot), iPreset);
+	SaveInventory();
+}
+
+void CTFInventory::ChangeLoadoutSlot(int iClass, int iLoadoutSlot)
+{
+	KeyValues* pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
+	pClass->SetInt( "activeslot", iLoadoutSlot );
 	SaveInventory();
 }
 
