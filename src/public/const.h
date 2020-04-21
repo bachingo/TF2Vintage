@@ -32,6 +32,12 @@
 #define MINIMUM_TICK_INTERVAL   (0.001)
 #define MAXIMUM_TICK_INTERVAL	(0.1)
 
+#define DEFAULT_CLIENT_TICK_INTERVAL	(0.015)		// 15 msec is the default
+#define MINIMUM_CLIENT_TICK_INTERVAL   (0.001)
+#define MAXIMUM_CLIENT_TICK_INTERVAL	(0.1)
+
+#define DEFAULT_XBOX_CLIENT_VPHYSICS_TICK	0.025	// 25ms ticks on xbox ragdolls
+
 // This is the max # of players the engine can handle
 #define ABSOLUTE_PLAYER_LIMIT 255  // not 256, so we can send the limit as a byte 
 #define ABSOLUTE_PLAYER_LIMIT_DW	( (ABSOLUTE_PLAYER_LIMIT/32) + 1 )
