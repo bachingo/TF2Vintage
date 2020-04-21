@@ -353,6 +353,7 @@ public:
 			GET_BOOL( pItem, pDefinition, itemfalloff );
 			GET_INT( pItem, pDefinition, year );
 			GET_BOOL( pItem, pDefinition, is_custom_content );
+			GET_BOOL( pItem, pDefinition, is_vintage_addon );
 
 			for ( KeyValues *pSubData = pDefinition->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 			{

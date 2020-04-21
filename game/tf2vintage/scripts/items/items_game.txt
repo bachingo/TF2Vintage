@@ -2933,6 +2933,11 @@
 			"is_reskin"			"1"
 			"item_quality" "unique"
 		}
+		"weapon_vintageplus"
+		{
+			"is_vintage_addon"			"1"
+			"item_quality" "vintage"
+		}
 		"weapon_custom"
 		{
 			"is_custom_content"			"1"
@@ -4024,14 +4029,22 @@
 			"item_slot"		"secondary"
 			"used_by_classes"
 			{
-				"soldier"	"secondary"
-				"demoman"	"primary"
+				"soldier"	"1"
 			}
-			"model_player_per_class"
+			"model_player"	"models/weapons/c_models/c_rocketboots_soldier.mdl"
+		}
+		"134"
+		{
+			"name"	"The Gunboats (Demoman)"
+			"prefab"		"weapon_gunboats weapon_vintageplus"
+			"propername"	"1"
+			"year"			"2009"
+			"item_slot"		"primary"
+			"used_by_classes"
 			{
-				"soldier"	"models/weapons/c_models/c_rocketboots_soldier.mdl"
-				"demoman"	"models/weapons/c_models/c_rocketboots_demo.mdl"
+				"demoman"	"1"
 			}
+			"model_player"	"models/weapons/c_models/c_rocketboots_demo.mdl"
 		}
 		"140"
 		{
@@ -4160,7 +4173,7 @@
 		"156"
 		{
 			"name"	"The Pain Train (Pyro)"
-			"prefab"	"weapon_paintrain"
+			"prefab"	"weapon_paintrain weapon_vintageplus"
 			"propername"	"1"
 			"year"			"2010"
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain_pyro.mdl"
@@ -5145,7 +5158,7 @@
 		"333"
         {
             "name"            "Fire Retardant Suit"
-            "prefab"        "weapon_wearable weapon_custom"
+            "prefab"        "weapon_wearable weapon_vintageplus"
             "year"            "2010"
             "item_type_name"    "#TF_Wearable_Shirt"
             "item_name"        "#TF_jul13_soot_suit"
@@ -5753,7 +5766,7 @@
 		"417"
 		{
 			"name"	"The Reserve Shooter (Engineer)"
-			"prefab"	"weapon_reserve_shooter"
+			"prefab"	"weapon_reserve_shooter weapon_vintageplus"
 			"propername"	"1"
 			"year"			"2011"
 			"item_slot"	"primary"
@@ -5841,7 +5854,7 @@
 		"427"
 		{
 			"name"	"The Family Business (Multi-Class)"
-			"prefab"	"weapon_russian_riot"
+			"prefab"	"weapon_russian_riot weapon_vintageplus"
 			"year"			"2011"
 			"particle_suffix"	"family_business"
 			"used_by_classes"
@@ -6817,7 +6830,7 @@
 		"1195"
 		{
 			"name"	"Ludmila"
-			"prefab"	"weapon_minigun weapon_custom"
+			"prefab"	"weapon_minigun weapon_vintageplus"
 			"year"			"2019"
 			"item_type_name"	"#TF_Weapon_Minigun"
 			"item_name"	"#TF_Unique_Achievement_Minigun2"
