@@ -367,7 +367,8 @@ public:
 		itemfalloff = false;
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
-		is_vintage_addon = false;
+		is_cut_content = false;
+		is_multiclass_item = false;
 		CLEAR_STR( holiday_restriction );
 	}
 	~CEconItemDefinition();
@@ -421,7 +422,8 @@ public:
 	bool itemfalloff;
 	int  year;
 	bool is_custom_content;
-	bool is_vintage_addon;
+	bool is_cut_content;
+	bool is_multiclass_item;
 	
 	CUtlVector<static_attrib_t> attributes;
 	PerTeamVisuals_t visual[TF_TEAM_COUNT];

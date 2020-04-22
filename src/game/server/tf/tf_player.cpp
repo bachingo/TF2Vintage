@@ -145,7 +145,8 @@ ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes pla
 ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
 ConVar tf2v_allow_demoknights( "tf2v_allow_demoknights", "1", FCVAR_NOTIFY, "Allows players to use Demoknight content." );
 ConVar tf2v_allow_mod_weapons( "tf2v_allow_mod_weapons", "1", FCVAR_NOTIFY, "Allows players to use non-standard TF2 weapons." );
-ConVar tf2v_allow_vintage_extras( "tf2v_allow_vintage_extras", "1", FCVAR_NOTIFY, "Allows players to use the vanilla custom TF2V weapons." );
+ConVar tf2v_allow_cut_weapons( "tf2v_allow_cut_weapons", "1", FCVAR_NOTIFY, "Allows players to use cut TF2 weapons." );
+ConVar tf2v_allow_multiclass_weapons( "tf2v_allow_multiclass_weapons", "1", FCVAR_NOTIFY, "Allows players to use multi-class variants of weapons, such as shotguns." );
 
 ConVar tf2v_bonus_distance_range( "tf2v_bonus_distance_range", "10", FCVAR_NOTIFY, "Percent variation in range calculations for damage." );
 ConVar tf2v_enforce_whitelist( "tf2v_enforce_whitelist", "0", FCVAR_NOTIFY, "Requires items to be verified from a server whitelist." );
@@ -2045,7 +2046,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			bool bIsDemoknight = false;		// Defaulted to false, since Demoknights are more allowed than not.
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
 			bool bIsCustomContent = false;	
-			bool bIsVintageAddon = false;
+			bool bIsCutContent = false;
+			bool bIsMultiClassItem = false;
 			bool bIsSpecialRestricted = false;
 			
 			// Only run these checks when necessary.
@@ -2062,8 +2064,11 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( !tf2v_allow_mod_weapons.GetBool() )	// Checks if it's a custom weapon.
 				bIsCustomContent = pItemDef->is_custom_content;
 				
-			if ( !tf2v_allow_vintage_extras.GetBool() )	// Checks if it's a custom weapon.
-				bIsVintageAddon = pItemDef->is_vintage_addon;
+			if ( !tf2v_allow_cut_weapons.GetBool() )	// Checks if it's a custom weapon.
+				bIsCutContent = pItemDef->is_cut_content;
+				
+			if ( !tf2v_allow_multiclass_weapons.GetBool() )	// Checks if it's a custom weapon.
+				bIsMultiClassItem = pItemDef->is_multiclass_item;
 				
 			if ( tf2v_force_year_items.GetBool() )
 			{
@@ -2103,7 +2108,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					bHolidayRestrictedItem = true;
 			}
 			
-			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsSpecialRestricted == true ) ) || ( bIsDemoknight == true ) || ( bIsVintageAddon == true ) ) // If the weapon is banned, swap for a stock weapon.
+			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsSpecialRestricted == true ) ) || ( bIsDemoknight == true ) || ( bIsCutContent == true ) || ( bIsMultiClassItem == true ) ) // If the weapon is banned, swap for a stock weapon.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
