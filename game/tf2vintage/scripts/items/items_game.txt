@@ -2224,10 +2224,6 @@
 			"propername" "1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_winger_pistol/c_winger_pistol"
 			"model_player"	"models/workshop/weapons/c_models/c_winger_pistol/c_winger_pistol.mdl"
-			"used_by_classes"
-			{
-				"scout"	"1"
-			}
 			"attributes"
 			{
 				"damage bonus"
@@ -2250,6 +2246,14 @@
 			{
 				"sound_single_shot"	"Weapon_Winger.Single"
 				"sound_burst"	"Weapon_Winger.SingleCrit"
+			}
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
 			}
 		}
 		"weapon_wrangler"
@@ -2886,6 +2890,48 @@
 			}
 			"xifier_class_remap"	"crusaders_crossbow"
 		}
+		"weapon_pocket_pistol"
+		{
+			"prefab"	"weapon_pistol"
+			"item_name"	"#TF_Weapon_PEP_Pistol"
+			"item_logname"	"pep_pistol"
+			"item_iconname"	"pep_pistol"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_pep_pistol/c_pep_pistol"
+			"model_player"	"models/workshop/weapons/c_models/c_pep_pistol/c_pep_pistol.mdl"
+			"attributes"
+			{
+				"cancel falling damage"
+				{
+					"attribute_class"	"cancel_falling_damage"
+					"value" "1"
+				}
+				"heal on hit for rapidfire"
+				{
+					"attribute_class"	"add_onhit_addhealth"
+					"value"	"7"
+				}
+				"fire rate penalty"
+				{
+					"attribute_class"	"mult_postfiredelay"
+					"value" "1.25"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value"				"0.75"
+				}
+				"dmg taken from fire increased"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"	"1.50"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_PickPocket_Pistol.Single"
+				"sound_burst"			"Weapon_PickPocket_Pistol.SingleCrit"
+			}
+		}
 		"weapon_bossmelee"
 		{
 			"item_class"	"tf_weapon_shovelfist"
@@ -2933,10 +2979,15 @@
 			"is_reskin"			"1"
 			"item_quality" "unique"
 		}
-		"weapon_vintageplus"
+		"weapon_cutcontent"
 		{
-			"is_vintage_addon"			"1"
+			"is_cut_content"			"1"
 			"item_quality" "vintage"
+		}
+		weapon_multiclass_item"
+		{
+			"is_multiclass_item"			"1"
+			"item_quality" "strange"
 		}
 		"weapon_custom"
 		{
@@ -4036,7 +4087,7 @@
 		"134"
 		{
 			"name"	"The Gunboats (Demoman)"
-			"prefab"		"weapon_gunboats weapon_vintageplus"
+			"prefab"		"weapon_gunboats weapon_cutcontent"
 			"propername"	"1"
 			"year"			"2009"
 			"item_slot"		"primary"
@@ -4173,7 +4224,7 @@
 		"156"
 		{
 			"name"	"The Pain Train (Pyro)"
-			"prefab"	"weapon_paintrain weapon_vintageplus"
+			"prefab"	"weapon_paintrain weapon_cutcontent"
 			"propername"	"1"
 			"year"			"2010"
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain_pyro.mdl"
@@ -5158,7 +5209,7 @@
 		"333"
         {
             "name"            "Fire Retardant Suit"
-            "prefab"        "weapon_wearable weapon_vintageplus"
+            "prefab"        "weapon_wearable weapon_cutcontent"
             "year"            "2010"
             "item_type_name"    "#TF_Wearable_Shirt"
             "item_name"        "#TF_jul13_soot_suit"
@@ -5725,8 +5776,8 @@
 			"item_slot"	"secondary"
 			"used_by_classes"
 			{
-				"pyro" "1"
-				"soldier" "1"
+				"pyro" "secondary"
+				"soldier" "secondary"
 			}
 		}
 		"416"
@@ -5765,14 +5816,15 @@
 		}
 		"417"
 		{
-			"name"	"The Reserve Shooter (Engineer)"
-			"prefab"	"weapon_reserve_shooter weapon_vintageplus"
+			"name"	"The Reserve Shooter (Multi-Class)"
+			"prefab"	"weapon_reserve_shooter	weapon_multiclass_item"
 			"propername"	"1"
 			"year"			"2011"
-			"item_slot"	"primary"
+			"item_slot"	"secondary"
 			"used_by_classes"
 			{
-				"engineer"	"1"
+				"engineer" "primary"
+				"heavy" "secondary"
 			}
 		}
 		"424"
@@ -5854,7 +5906,7 @@
 		"427"
 		{
 			"name"	"The Family Business (Multi-Class)"
-			"prefab"	"weapon_russian_riot weapon_vintageplus"
+			"prefab"	"weapon_russian_riot weapon_multiclass_item"
 			"year"			"2011"
 			"particle_suffix"	"family_business"
 			"used_by_classes"
@@ -5940,13 +5992,9 @@
 			"prefab"	"weapon_winger_pistol"
 			"year"				"2011"
 			"particle_suffix"	"winger"
-			"visuals_red"
+			"used_by_classes"
 			{
-				"skin" "0"
-			}
-			"visuals_blu"
-			{
-				"skin" "1"
+				"scout"	"1"
 			}
 		}
 		"450"
@@ -5985,6 +6033,17 @@
 					"attribute_class"	"mult_dmg_vs_players"
 					"value"	"0.85"
 				}
+			}
+		}
+		"451"
+		{
+			"name"	"The Winger (Multi-Class)"
+			"prefab"	"weapon_winger_pistol weapon_multiclass_item"
+			"year"				"2011"
+			"particle_suffix"	"winger"
+			"used_by_classes"
+			{
+				"engineer"	"1"
 			}
 		}
 		"460"
@@ -6532,49 +6591,21 @@
 		"773"
 		{
 			"name" "Pretty Boy's Pocket Pistol"
-			"prefab"			"weapon_pistol"
+			"prefab"			"weapon_pocket_pistol"
 			"year" 			"2012"
-			"item_name"	"#TF_Weapon_PEP_Pistol"
-			"item_logname"	"pep_pistol"
-			"item_iconname"	"pep_pistol"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_pep_pistol/c_pep_pistol"
-			"model_player"	"models/workshop/weapons/c_models/c_pep_pistol/c_pep_pistol.mdl"
 			"used_by_classes"
 			{
 				"scout"	"1"
 			}
-			"attributes"
+		}
+		"774"
+		{
+			"name" "Pretty Boy's Pocket Pistol (Multi-Class)"
+			"prefab"			"weapon_pocket_pistol"
+			"year" 			"2012"
+			"used_by_classes"
 			{
-				"cancel falling damage"
-				{
-					"attribute_class"	"cancel_falling_damage"
-					"value" "1"
-				}
-				"heal on hit for rapidfire"
-				{
-					"attribute_class"	"add_onhit_addhealth"
-					"value"	"7"
-				}
-				"fire rate penalty"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value" "1.25"
-				}
-				"clip size penalty"
-				{
-					"attribute_class"	"mult_clipsize"
-					"value"				"0.75"
-				}
-				"dmg taken from fire increased"
-				{
-					"attribute_class"	"mult_dmgtaken_from_fire"
-					"value"	"1.50"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_PickPocket_Pistol.Single"
-				"sound_burst"			"Weapon_PickPocket_Pistol.SingleCrit"
+				"engineer"	"1"
 			}
 		}
 		"997"
@@ -6830,7 +6861,7 @@
 		"1195"
 		{
 			"name"	"Ludmila"
-			"prefab"	"weapon_minigun weapon_vintageplus"
+			"prefab"	"weapon_minigun weapon_cutcontent"
 			"year"			"2019"
 			"item_type_name"	"#TF_Weapon_Minigun"
 			"item_name"	"#TF_Unique_Achievement_Minigun2"
