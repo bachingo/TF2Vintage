@@ -2982,7 +2982,7 @@
 		"weapon_cutcontent"
 		{
 			"is_cut_content"			"1"
-			"item_quality" "vintage"
+			"item_quality" "collectors"
 		}
 		weapon_multiclass_item"
 		{
@@ -6601,7 +6601,7 @@
 		"774"
 		{
 			"name" "Pretty Boy's Pocket Pistol (Multi-Class)"
-			"prefab"			"weapon_pocket_pistol"
+			"prefab"			"weapon_pocket_pistol weapon_multiclass_item"
 			"year" 			"2012"
 			"used_by_classes"
 			{
