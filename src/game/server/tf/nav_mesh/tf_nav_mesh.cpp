@@ -51,6 +51,7 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 		Vector neCorner = area->GetCorner( NORTH_EAST );
 		Vector swCorner = area->GetCorner( SOUTH_WEST );
 		Vector seCorner = area->GetCorner( SOUTH_EAST );
+		const Vector vecMins( 0, 0, StepHeight );
 
 		Vector vecStart, vecEnd, vecMaxs, vecTest;
 		if ( abs( nwCorner.z - neCorner.z ) >= 1.0f )
@@ -86,17 +87,17 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 			vecStart = vecTest;
 		}
 
-		vecMaxs.z = 12.0f;
+		vecMaxs.z = HalfHumanHeight;
 
 		Ray_t ray;
-		ray.Init( vecStart, vecEnd, Vector( 0 ), vecMaxs );
+		ray.Init( vecStart, vecEnd, vecMins, vecMaxs );
 
 		trace_t tr;
 		enginetrace->TraceRay( ray, MASK_PLAYERSOLID, &filter, &tr );
 
 		if ( tr.DidHit() )
 		{
-			if ( tr.m_pEnt && ( dynamic_cast<CBaseDoor *>( tr.m_pEnt ) || dynamic_cast<CBaseObject *>( tr.m_pEnt ) ) )
+			if ( tr.m_pEnt && !tr.m_pEnt->ShouldBlockNav() )
 				continue;
 
 			area->MarkAsBlocked( TEAM_ANY, pBlocker );
@@ -609,16 +610,21 @@ void CTFNavMesh::ComputeBlockedAreas()
 		{
 			CTFNavArea *area = potentiallyBlockedAreas[i];
 
-			if ( !area->HasTFAttributes( DOOR_NEVER_BLOCKS ) )
-				area->MarkAsBlocked( iNavTeam, pDoor );
+			bool bDoorBlocks = false;
+			if ( area->HasTFAttributes( DOOR_ALWAYS_BLOCKS ) )
+				bDoorBlocks = bDoorClosed;
+			else
+				bDoorBlocks = ( !bFiltered && bDoorClosed ) || iNavTeam > 0;
 
-			if ( area->HasTFAttributes( DOOR_ALWAYS_BLOCKS ) && bDoorClosed )
-				area->MarkAsBlocked( iNavTeam, pDoor );
-
-			if ( ( !bFiltered && bDoorClosed ) || iNavTeam > 0 )
-				continue;
-
-			area->UnblockArea( iNavTeam );
+			if ( bDoorBlocks )
+			{
+				if ( !area->HasTFAttributes( DOOR_NEVER_BLOCKS ) )
+					area->MarkAsBlocked( iNavTeam, pDoor );
+			}
+			else
+			{
+				area->UnblockArea( iNavTeam );
+			}
 		}
 	}
 }
