@@ -263,7 +263,18 @@ public:
 		m_vecRagdollOrigin.Init();
 		m_vecRagdollVelocity.Init();
 	}
-
+	~CTFRagdoll()
+	{
+		for ( int i = 0 ; i < m_hRagdollWearables.Count(); i++ )
+		{
+			if ( m_hRagdollWearables[i] )
+			{
+				m_hRagdollWearables[i]->Remove();
+			}
+		}
+		m_hRagdollWearables.Purge();
+	}
+	
 	// Transmit ragdolls to everyone.
 	virtual int UpdateTransmitState()
 	{
@@ -4983,6 +4994,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 		if ( pTFAttacker )
 		{
+		
+			
 			if ( pTFAttacker->m_Shared.IsMiniCritBoosted() )
 			{
 				bitsDamage |= DMG_MINICRITICAL;

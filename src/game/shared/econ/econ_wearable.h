@@ -41,7 +41,8 @@ public:
 	virtual void			GiveTo( CBaseEntity *pEntity );
 	virtual void			RemoveFrom( CBaseEntity *pEntity );
 	
-	virtual bool			ItemFallsOffPlayer( void )	{return m_bItemFallsOff = true;}
+	virtual	int 			GetDropType( void );
+	virtual	int 			GetLoadoutSlot(void);
 
 #ifdef GAME_DLL
 	virtual void			Equip( CBasePlayer *pPlayer );
@@ -54,7 +55,6 @@ public:
 	virtual bool			ShouldDraw( void );
 #endif
 
-	CNetworkVar(bool, m_bItemFallsOff);
 	CNetworkVar( bool, m_bExtraWearable );
 
 private:
@@ -74,7 +74,7 @@ class CEconWearableGib : public CEconEntity
 	DECLARE_CLASS( CEconWearableGib, CEconEntity );
 public:
 	CEconWearableGib();
-	virtual ~CEconWearableGib() {}
+	~CEconWearableGib();
 
 	virtual CollideType_t GetCollideType( void );
 	virtual void ImpactTrace( trace_t *pTrace, int dmgCustom, char const *szWeaponName );

@@ -364,7 +364,7 @@ public:
 		is_reskin = false;
 		specialitem = false;
 		demoknight = false;
-		itemfalloff = false;
+		drop = false;
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		is_cut_content = false;
@@ -419,7 +419,7 @@ public:
 	bool specialitem;
 	bool demoknight;
 	char holiday_restriction[128];
-	bool itemfalloff;
+	bool drop;
 	int  year;
 	bool is_custom_content;
 	bool is_cut_content;
