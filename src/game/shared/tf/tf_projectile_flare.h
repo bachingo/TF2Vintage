@@ -58,6 +58,8 @@ public:
 	virtual void				Airburst(trace_t *pTrace, CBaseEntity *pOther);
 	virtual void				Detonate( void );
 	virtual float				GetFlareRadius( void );
+	
+	virtual void				UpdateOnRemove( void );
 #else
 
 	virtual void				OnDataChanged( DataUpdateType_t updateType );

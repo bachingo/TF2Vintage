@@ -309,10 +309,13 @@ void CTFProjectile_Flare::Airburst(trace_t *pTrace, CBaseEntity *pOther)
 //-----------------------------------------------------------------------------
 float CTFProjectile_Flare::GetFlareRadius( void )
 {
+	float flRadius = 92.0f;
 	if ( tf2v_use_new_flare_radius.GetBool() )
-		return 110.0;
+		flRadius = 110.0;
 	
-	return 92.0;
+	CALL_ATTRIB_HOOK_FLOAT(flRadius, mult_explosion_radius);
+	
+	return flRadius;
 
 }
 
@@ -374,6 +377,24 @@ void CTFProjectile_Flare::Detonate( void )
 	Airburst( &tr, NULL );
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFProjectile_Flare::UpdateOnRemove( void )
+{
+	// Tell our launcher that we were removed
+	CTFFlareGun *pFlareGun = dynamic_cast<CTFFlareGun*>( m_hLauncher.Get() );
+
+	if ( pFlareGun )
+	{
+		pFlareGun->DeathNotice( this );
+	}
+
+	BaseClass::UpdateOnRemove();
+}
+
+
 #else
 
 //-----------------------------------------------------------------------------
@@ -382,16 +403,16 @@ void CTFProjectile_Flare::Detonate( void )
 void CTFProjectile_Flare::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
-
-	CTFFlareGun *pLauncher = dynamic_cast<CTFFlareGun*>( m_hLauncher.Get() );
-
-	if ( pLauncher )
-	{
-		pLauncher->AddFlare( this );
-	}
 		
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
+		CTFFlareGun *pLauncher = dynamic_cast<CTFFlareGun*>( m_hLauncher.Get() );
+
+		if ( pLauncher )
+		{
+			pLauncher->AddFlare( this );
+		}
+	
 		CreateTrails();		
 	}
 
@@ -402,6 +423,7 @@ void CTFProjectile_Flare::OnDataChanged( DataUpdateType_t updateType )
 		CreateTrails();
 	}
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

@@ -56,7 +56,7 @@ void CTFFlareGun::Spawn(void)
 void CTFFlareGun::SecondaryAttack( void )
 {
 	int nWeaponMode = 0;
-	//CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
+	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
 	if (nWeaponMode == 1)
 	{
 		if ( !CanAttack() )
@@ -73,7 +73,6 @@ void CTFFlareGun::SecondaryAttack( void )
 			if (pFlare)
 			{
 				pFlare->Detonate();
-				m_Flares.Remove(i);
 			}
 		}
 #endif
@@ -84,30 +83,22 @@ void CTFFlareGun::SecondaryAttack( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Add pipebombs to our list as they're fired
+// Purpose: Add flares to our list as they're fired
 //-----------------------------------------------------------------------------
-CBaseEntity *CTFFlareGun::FireProjectile( CTFPlayer *pPlayer )
+void CTFFlareGun::AddFlare( CTFProjectile_Flare *pFlare )
 {
 	int nWeaponMode = 0;
 	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
 	if (nWeaponMode == 1)
 	{
-		CBaseEntity *pProjectile = BaseClass::FireProjectile( pPlayer );
-		if ( pProjectile )
-		{
 		#ifdef GAME_DLL
-			FlareHandle hHandle;
-			hHandle = (CTFProjectile_Flare *)pProjectile;
-			m_Flares.AddToTail( hHandle );
+		FlareHandle hHandle;
+		hHandle = pFlare;
+		m_Flares.AddToTail( hHandle );
 		#endif
-		}
-
-		return pProjectile;
 	}
-	else
-		return BaseClass::FireProjectile( pPlayer );
+	return;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: If a flare is exploded, remove from list.
@@ -118,14 +109,14 @@ void CTFFlareGun::DeathNotice(CBaseEntity *pVictim)
 	CALL_ATTRIB_HOOK_INT(nWeaponMode, set_weapon_mode);
 	if (nWeaponMode == 1)
 	{
+		#ifdef GAME_DLL
 		Assert( dynamic_cast<CTFProjectile_Flare *>( pVictim ) );
 
 		FlareHandle hHandle;
 		hHandle = (CTFProjectile_Flare *)pVictim;
 		m_Flares.FindAndRemove( hHandle );
-		
+		#endif
 	}
-
 	return;
 }
 
@@ -137,14 +128,4 @@ bool CTFFlareGun::HasKnockback() const
 	int nFlaresHaveKnockback = 0;
 	CALL_ATTRIB_HOOK_INT( nFlaresHaveKnockback, set_weapon_mode );
 	return nFlaresHaveKnockback == 3;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFFlareGun::AddFlare( CTFProjectile_Flare *pFlare )
-{
-	FlareHandle hHandle;
-	hHandle = pFlare;
-	m_Flares.AddToTail( hHandle );
 }
