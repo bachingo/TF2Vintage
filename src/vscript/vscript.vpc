@@ -1,0 +1,131 @@
+//-----------------------------------------------------------------------------
+//	VSCRIPT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;..\public\vscript;$SRCDIR\thirdparty\SQUIRREL2\include;$SRCDIR\thirdparty\SQUIRREL2\squirrel;$SRCDIR\thirdparty\SQUIRREL2\sqplus;$SRCDIR\thirdparty\lua-5.1.1"
+		$PreprocessorDefinitions		"$BASE;_CRT_SECURE_NO_WARNINGS"
+		$WarningLevel					"Level 3 (/W3)"
+		$TreatWarningsAsErrors			"No (/WX-)"
+	}
+}
+
+$Project "VScript"
+{
+	$Folder	"Source Files"
+	{
+		$File   "vscript_init.nut"
+		$File   "vscript.cpp"
+		$File   "squirrel_vm.cpp"
+		$File   "sq_vector.cpp"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\vscript\ivscript.h"	
+		$File	"$SRCDIR\public\vscript\vscript_templates.h"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File   "vscript_init_nut.h"
+		$File   "squirrel_vm.h"
+		$File   "sq_vector.h"
+	}
+
+	$Folder "Squirrel Lang"
+	{
+		$Folder "Source Files"
+		{
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqapi.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqbaselib.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqclass.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqcompiler.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqdbg\sqdbgserver.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqdebug.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqfuncstate.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqlexer.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqmem.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqobject.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqdbg\sqrdbg.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqstate.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqtable.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqvm.cpp"
+		}
+
+		$Folder "Header Files"
+		{
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqarray.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqclass.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqclosure.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqcompiler.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqfuncproto.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqfuncstate.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqlexer.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqobject.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqopcodes.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqpcheader.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqstate.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqstring.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqtable.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\squserdata.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\squtils.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\squirrel\sqvm.h"
+		}
+
+		$Folder "SQSTDLib"
+		{
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdblob.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdio.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdmath.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdrex.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdstring.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdstream.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdsystem.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdaux.cpp"
+		}
+
+		$Folder "SqPlus"
+		{
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SqPlus.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\sqplus.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SqPlusOCharBuf.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SqPlusOCharBuf.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SquirrelBindingsUtils.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SquirrelBindingsUtils.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SquirrelObject.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SquirrelObject.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SquirrelVM.cpp"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqplus\SquirrelVM.h"
+		}
+
+		$Folder "Public Header Files"
+		{
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\sqstdaux.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\sqstdio.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\sqstdmath.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\sqstdstring.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\sqstdsystem.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\squirrel.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\sqrdbg.h"
+			$File   "$SRCDIR\thirdparty\SQUIRREL2\include\sqdbgserver.h"
+		}
+	}
+
+	$Folder	"Link Libraries" 
+	{
+		$Lib 	mathlib
+		$Lib 	tier1
+		$Lib 	vstdlib
+	}
+}

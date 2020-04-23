@@ -64,6 +64,8 @@ src/lib/public/vgui_controls.lib
 src/thirdparty/bullet/build/lib
 src/vphysics/Release
 src/vphysics/Debug
+src/vscript/Release
+src/vscript/Debug
 
 # misc files
 fgdlib.lib
