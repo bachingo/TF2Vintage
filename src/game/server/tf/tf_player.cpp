@@ -570,6 +570,7 @@ CTFPlayer::CTFPlayer()
 	m_bIsPlayerAVIP = false;
 	m_iPlayerVIPRanking = 0;
 	
+	ResetWetTime();
 	m_flStunTime = 0.0f;
 
 	m_bInArenaQueue = false;

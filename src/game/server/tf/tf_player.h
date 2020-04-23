@@ -224,7 +224,8 @@ public:
 	float m_flWetTime;
 	virtual float PlayerWetTime( void ) { return m_flWetTime; }
 	virtual void  SetWetTime( void ) { m_flWetTime = gpGlobals->curtime; }
-	virtual bool PlayerIsDrippingWet( void ) { return ( ( gpGlobals->curtime - PlayerWetTime() ) <= 5 ); }
+	virtual void  ResetWetTime( void ) { m_flWetTime = 0; }
+	virtual bool PlayerIsDrippingWet( void ) { return ( ( m_flWetTime > 0 ) && ( gpGlobals->curtime - PlayerWetTime() ) <= 5 ); }
 	virtual bool PlayerIsSoaked( void );
 
 	// Flashlight controls for SFM - JasonM
