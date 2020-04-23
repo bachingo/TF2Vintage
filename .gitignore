@@ -74,3 +74,6 @@ vc120.pdb
 *.VC.*
 src/Output-Build.txt
 src/utils/vvis_launcher/vvis_launcher.vpc.sentinel
+game/bin/vscript.dll
+game/bin/vscript.pdb
+src/vscript/vscript.vpc.sentinel
