@@ -4994,7 +4994,20 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 		if ( pTFAttacker )
 		{
-		
+			
+			if ( pTFAttacker->IsPlayerClass( TF_CLASS_ENGINEER ) )
+			{
+				float flSentryCoordinationBonus = info.GetDamage();
+				CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pTFAttacker->GetObjectOfType(OBJ_SENTRYGUN, OBJECT_MODE_NONE) );
+				if ( pSentry )
+				{
+					if (pSentry->GetCurrentTarget() == this)
+					{
+						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flSentryCoordinationBonus, mult_dmg_bullet_vs_sentry_target);
+						info.SetDamage(flSentryCoordinationBonus);
+					}
+				}
+			}
 			
 			if ( pTFAttacker->m_Shared.IsMiniCritBoosted() )
 			{

@@ -6233,9 +6233,9 @@
 			}
 			"attributes"
 			{
-				"damage bonus"
+				"damage bonus bullet vs sentry target"
 				{
-					"attribute_class"	"mult_dmg"
+					"attribute_class"	"mult_dmg_bullet_vs_sentry_target"
 					"value"	"1.1"
 				}
 				"mod ammo per shot"

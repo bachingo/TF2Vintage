@@ -50,6 +50,8 @@ public:
 	virtual void	Killed( const CTakeDamageInfo &info );
 	virtual void	SetModel( const char *pModel );
 
+	CBaseEntity		*GetCurrentTarget(void) { return m_hEnemy.Get(); }
+
 	virtual bool	StartBuilding( CBaseEntity *pBuilder );
 	virtual void	StartPlacement( CTFPlayer *pPlayer );
 
