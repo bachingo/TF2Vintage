@@ -139,12 +139,7 @@ inline T AttributeConvertFromFloat( float flValue )
 template<>
 inline int AttributeConvertFromFloat( float flValue )
 {
-#if defined(_M_IX86)
-	__m128 X = _mm_load_ss( &flValue );
-	return _mm_cvt_ss2si( X );
-#else
-	return (int)flValue;
-#endif
+	return RoundFloatToInt( flValue );
 }
 
 FORCEINLINE void ApplyAttribute( CEconAttributeDefinition const *pDefinition, float *pOutput, float flValue )
