@@ -57,6 +57,7 @@ typedef struct
 } ScriptClass_t;
 
 
+const HSQOBJECT INVALID_HSQOBJECT = { OT_INVALID, (SQTable *)-1 };
 class CSquirrelVM : public IScriptVM
 {
 	typedef CSquirrelVM ThisClass;
@@ -67,7 +68,7 @@ public:
 
 	enum
 	{
-		MAX_FUNCTION_PARAMS = 63
+		MAX_FUNCTION_PARAMS = 14
 	};
 
 	bool				Init( void );
@@ -137,7 +138,7 @@ private:
 
 	void						RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc = NULL );
 
-	HSQOBJECT					LookupObject( char const *szName, HSCRIPT hScope, bool bRefCount );
+	HSQOBJECT					LookupObject( char const *szName, HSCRIPT hScope = NULL, bool bRefCount = true );
 
 	//---------------------------------------------------------------------------------------------
 	// Squirrel Function Callbacks
@@ -226,8 +227,8 @@ bool CSquirrelVM::Init( void )
 	Run( g_Script_init );
 
 	// store a reference to the scope utilities from the init script
-	m_CreateScopeClosure = LookupObject( "VSquirrel_OnCreateScope", NULL, true );
-	m_ReleaseScopeClosure = LookupObject( "VSquirrel_OnReleaseScope", NULL, true );
+	m_CreateScopeClosure = LookupObject( "VSquirrel_OnCreateScope" );
+	m_ReleaseScopeClosure = LookupObject( "VSquirrel_OnReleaseScope" );
 
 	return true;
 }
@@ -391,7 +392,7 @@ void CSquirrelVM::ReleaseScope( HSCRIPT hScript )
 
 HSCRIPT CSquirrelVM::LookupFunction( const char *pszFunction, HSCRIPT hScope )
 {
-	SQObjectPtr pFunc = LookupObject( pszFunction, hScope, true );
+	SQObjectPtr pFunc = LookupObject( pszFunction, hScope );
 	// did we find it?
 	if ( sq_isnull( pFunc ) )
 		return NULL;
@@ -429,7 +430,7 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 	if ( hFunction == NULL )
 	{
 		if ( pReturn )
-			*pReturn = 0;
+			pReturn->m_type = FIELD_VOID;
 
 		return SCRIPT_ERROR;
 	}
@@ -466,7 +467,7 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 		sq_pop( GetVM(), 1 );
 
 		if ( pReturn )
-			*pReturn = 0;
+			pReturn->m_type = FIELD_VOID;
 
 		return SCRIPT_ERROR;
 	}
@@ -803,7 +804,7 @@ int CSquirrelVM::GetKeyValue( HSCRIPT hScope, int nIterator, ScriptVariant_t *pK
 
 bool CSquirrelVM::GetValue( HSCRIPT hScope, const char *pszKey, ScriptVariant_t *pValue )
 {
-	SQObjectPtr pObject = LookupObject( pszKey, hScope, true );
+	SQObjectPtr pObject = LookupObject( pszKey, hScope );
 	ConvertToVariant( pObject, pValue );
 
 	return !sq_isnull( pObject );
@@ -975,6 +976,7 @@ void CSquirrelVM::ConvertToVariant( SQObject const &pValue, ScriptVariant_t *pVa
 			pObject->_unVal = pValue._unVal;
 
 			*pVariant = (HSCRIPT)pObject;
+			pVariant->m_flags |= SV_FREE;
 
 			break;
 		}
@@ -1052,7 +1054,6 @@ void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiat
 	}
 }
 
-static HSQOBJECT INVALID_HSQOBJECT{OT_INVALID, 0};
 HSQOBJECT CSquirrelVM::CreateClass( ScriptClassDesc_t *pClassDesc )
 {
 	int nArgs = sq_gettop( GetVM() );
@@ -1278,11 +1279,7 @@ SQInteger CSquirrelVM::GetFunctionSignature( HSQUIRRELVM pVM )
 SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 {
 	StackHandler hndl( pVM );
-
-	enum {
-		MAX_PARAMS = 14
-	};
-	CUtlVectorFixed<ScriptVariant_t, MAX_PARAMS> parameters;
+	CUtlVectorFixed<ScriptVariant_t, MAX_FUNCTION_PARAMS> parameters;
 
 	SQUserPointer pData = hndl.GetUserData( hndl.GetParamCount() );
 	ScriptFunctionBinding_t *pFuncBinding = ( (ScriptFunction_t *)pData )->m_pFunctionBinding;
@@ -1326,7 +1323,7 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 			}
 			case FIELD_VECTOR:
 			{
-				SQUserPointer pInstance = hndl.GetInstanceUp( i+2, (SQUserPointer)VECTOR_TYPE_TAG );
+				SQUserPointer pInstance = hndl.GetInstanceUp( i+2, VECTOR_TYPE_TAG );
 				if ( pInstance == NULL )
 					return hndl.ThrowError( "Vector argument expected" );
 
@@ -1447,14 +1444,7 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 
 	for ( int i=0; i < parameters.Count(); ++i )
 	{
-		if ( !( parameters[ i ].m_flags & SV_FREE ) )
-			continue;
-
-		if ( parameters[ i ].m_type != FIELD_HSCRIPT && parameters[ i ].m_type != FIELD_CSTRING && parameters[ i ].m_type != FIELD_VECTOR )
-			continue;
-
-		if( parameters[ i ].m_hScript )
-			delete parameters[ i ].m_hScript;
+		parameters[i].Free();
 	}
 
 	if ( !sq_isnull( pVM->GetVScript()->m_Error ) )

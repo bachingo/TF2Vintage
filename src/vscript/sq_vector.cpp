@@ -57,7 +57,7 @@ SQRESULT RegisterVector( HSQUIRRELVM pVM )
 
 	// Setup class table
 	sq_getstackobj( pVM, -1, &pTable );
-	sq_settypetag( pVM, -1, (SQUserPointer)VECTOR_TYPE_TAG );
+	sq_settypetag( pVM, -1, VECTOR_TYPE_TAG );
 
 	// Add to VM
 	sq_createslot( pVM, -3 );

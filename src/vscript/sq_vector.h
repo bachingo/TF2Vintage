@@ -5,7 +5,7 @@
 #pragma once
 #endif
 
-#define VECTOR_TYPE_TAG		0xFEEDFACE
+#define VECTOR_TYPE_TAG		((SQUserPointer)0xFEEDFACE)
 
 SQRESULT RegisterVector( HSQUIRRELVM pVM );
 extern SQRegFunction g_VectorFuncs[];
