@@ -2653,6 +2653,24 @@ bool CTFPlayer::CheckBlockBackstab( CTFPlayer *pAttacker )
 	return false;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if the player is or recently has been in water.
+//-----------------------------------------------------------------------------
+bool CTFPlayer::PlayerIsSoaked( void )
+{
+	if 	( m_Shared.InCond( TF_COND_URINE ) ||	// Hit by Jarate
+		( m_Shared.InCond(TF_COND_MAD_MILK) ||	// Hit by Mad Milk
+		( GetWaterLevel() > WL_NotInWater ) || // Standing in water
+		( PlayerIsDrippingWet() ) ) )	// Dripping wet
+	{
+		return true;
+	}
+	
+	return false;
+	
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Find a spawn point for the player.
 //-----------------------------------------------------------------------------
@@ -5013,6 +5031,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				bitsDamage |= DMG_MINICRITICAL;
 				info.AddDamageType( DMG_MINICRITICAL );
+			}
+			
+			int iCritWhileWet = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iCritWhileWet, crit_vs_wet_players );
+			if ( iCritWhileWet && PlayerIsSoaked() )
+			{
+				bitsDamage |= DMG_CRITICAL;
+				info.AddDamageType( DMG_CRITICAL );
 			}
 			
 			// Runs when the ATTACKER is airborne.

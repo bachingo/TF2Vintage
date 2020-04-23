@@ -219,6 +219,13 @@ public:
 
 	// mp_fadetoblack
 	void				HandleFadeToBlack( void );
+	
+	// Water.
+	float m_flWetTime;
+	virtual float PlayerWetTime( void ) { return m_flWetTime; }
+	virtual void  SetWetTime( void ) { m_flWetTime = gpGlobals->curtime; }
+	virtual bool PlayerIsDrippingWet( void ) { return ( ( gpGlobals->curtime - PlayerWetTime() ) <= 5 ); }
+	virtual bool PlayerIsSoaked( void );
 
 	// Flashlight controls for SFM - JasonM
 	virtual int			FlashlightIsOn( void );

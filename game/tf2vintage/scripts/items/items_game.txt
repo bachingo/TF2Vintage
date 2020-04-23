@@ -1771,6 +1771,56 @@
 				}
 			}
 		}
+		"weapon_annihilator"
+		{
+			"prefab"	"weapon_fireaxe"
+			"base_item_name"	"The Neon Annihilator"
+			"item_logname"	"annihilator"
+			"item_iconname"	"annihilator"
+			"item_type_name"	"#TF_Weapon_Sign"
+			"item_name"	"#TF_SD_Sign"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_sd_neonsign/c_sd_neonsign"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_sd_neonsign/c_sd_neonsign.mdl"
+			"propername"	"1"
+			"xifier_class_remap"	"neon_annihilator"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -15"				
+			}
+			"attributes"
+			{
+				"dmg penalty vs players"
+				{
+					"attribute_class"	"mult_dmg_vs_players"
+					"value"	"0.80"
+				}
+				"ragdolls plasma effect"
+				{
+					"attribute_class"	"ragdolls_plasma_effect"
+					"value"	"1"
+				}
+				"crit vs wet players"
+				{
+					"attribute_class"	"crit_vs_wet_players"
+					"value"	"1"
+				}
+				"damage applies to sappers"
+				{
+					"attribute_class"	"set_dmg_apply_to_sapper"
+					"value"	"1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Neon_Sign.ImpactFlesh"
+				"sound_melee_hit_world"	"Neon_Sign.ImpactWorld"
+			}
+		}
 		"weapon_gloves"
 		{
 			"item_class"	"tf_weapon_fists"
@@ -6607,6 +6657,12 @@
 			{
 				"engineer"	"1"
 			}
+		}
+		"813"
+		{
+			"name"	"The Neon Annihilator"
+			"prefab"		"weapon_annihilator"
+			"year"	"2012"
 		}
 		"997"
 		{

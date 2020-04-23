@@ -622,6 +622,13 @@ bool CTFGameMovement::CheckWater( void )
 	{
 		m_flWaterEntryTime = gpGlobals->curtime;
 	}
+	#ifdef GAME_DLL
+	// If we're deep enough to become dripping wet, we keep track of when we got wet.
+	if ( m_nOldWaterLevel == WL_Eyes && ( wl == WL_NotInWater ) )
+	{
+		m_pTFPlayer->SetWetTime();
+	}
+	#endif
 
 	return ( wl > WL_Feet );
 }
