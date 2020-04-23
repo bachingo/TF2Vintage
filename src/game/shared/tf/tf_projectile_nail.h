@@ -72,7 +72,7 @@ public:
 	virtual const char *GetProjectileModelName(void);
 	virtual float GetGravity(void);
 
-	static float	GetInitialVelocity(void) { return 2400.0; }
+	static float	GetInitialVelocity(void) { return 2000.0; }
 };
 
 #endif	//TF_PROJECTILE_NAIL_H
