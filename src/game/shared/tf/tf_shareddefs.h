@@ -719,6 +719,8 @@ extern const char *g_szProjectileNames[];
 #define TF_DISGUISE_TARGET_INDEX_NONE	( MAX_PLAYERS + 1 )
 #define TF_PLAYER_INDEX_NONE			( MAX_PLAYERS + 1 )
 
+#define TF_MAX_PRESETS 4		// Needs to match g_InventoryLoadoutPresets
+
 // Most of these conds aren't actually implemented but putting them here for compatibility.
 enum
 {

@@ -57,6 +57,13 @@ enum
 	QUALITY_DECORATED,
 };
 
+enum
+{
+	DROPTYPE_NONE,
+	DROPTYPE_DROP,
+	DROPTYPE_BREAK,
+};
+
 extern const char *g_szQualityColorStrings[];
 extern const char *g_szQualityLocalizationStrings[];
 
@@ -364,7 +371,7 @@ public:
 		is_reskin = false;
 		specialitem = false;
 		demoknight = false;
-		drop_type = 0;
+		drop_type = DROPTYPE_NONE;
 		year = 2005; // Generic value for hiding the year. (No items came out before 2006)
 		is_custom_content = false;
 		is_cut_content = false;

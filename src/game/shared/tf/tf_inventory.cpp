@@ -265,9 +265,9 @@ void CTFInventory::ResetInventory()
 	{
 		KeyValues *pClassInv = new KeyValues(g_aPlayerClassNames_NonLocalized[i]);
 		pClassInv->SetInt( "activeslot", 0 ); // Set our active loadout to A
-		for (int j = 0; j <= 3; j++) // A=0, B=1, C=2, D=3
+		for (int j = 0; j < TF_MAX_PRESETS; j++) // A=0, B=1, C=2, D=3
 		{
-			KeyValues *pClassLoadoutSlot = new KeyValues(g_InventoryLoadoutSlots[j]);
+			KeyValues *pClassLoadoutSlot = new KeyValues(g_InventoryLoadoutPresets[j]);
 			for (int k = 0; k < TF_LOADOUT_SLOT_ZOMBIE; k++)
 			{
 				if (k == TF_LOADOUT_SLOT_UTILITY || k == TF_LOADOUT_SLOT_ACTION )
@@ -295,7 +295,7 @@ int CTFInventory::GetWeaponPreset(int iClass, int iSlot)
 	}
 	
 	int iActiveSlot = pClass->GetInt("activeslot", 0);
-	KeyValues *pClassLoadoutSlot = pClass->FindKey(g_InventoryLoadoutSlots[iActiveSlot]);
+	KeyValues *pClassLoadoutSlot = pClass->FindKey(g_InventoryLoadoutPresets[iActiveSlot]);
 	if (!pClassLoadoutSlot)	//cannot find loadout node
 	{	
 		ResetInventory();
@@ -326,7 +326,7 @@ void CTFInventory::SetWeaponPreset(int iClass, int iSlot, int iPreset)
 		pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
 	}
 	int iActiveSlot = pClass->GetInt( "activeslot", 0 ); // Get the active loadout. Default to A.
-	KeyValues* pClassLoadoutSlot = pClass->FindKey(g_InventoryLoadoutSlots[iActiveSlot]); // Find the loadout to save it to
+	KeyValues* pClassLoadoutSlot = pClass->FindKey(g_InventoryLoadoutPresets[iActiveSlot]); // Find the loadout to save it to
 	
 	pClassLoadoutSlot->SetInt(GetSlotName(iSlot), iPreset);
 	SaveInventory();

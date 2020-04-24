@@ -100,6 +100,13 @@ const char *g_szQualityLocalizationStrings[] =
 	"#paintkitWeapon",
 };
 
+const char *g_LoadoutDropTypes[] =
+{
+	"none",
+	"drop",
+	"break",
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: for the UtlMap
 //-----------------------------------------------------------------------------
@@ -355,15 +362,16 @@ public:
 			GET_BOOL( pItem, pDefinition, is_cut_content );
 			GET_BOOL( pItem, pDefinition, is_multiclass_item );
 			
-			const char *pszDropType = pDefinition->GetString( "drop_type" );
+			const char *pszDropType = pDefinition->GetString("drop_type");
 			if ( pszDropType[0] )
 			{
-				int pszDropType = UTIL_StringFieldToInt( pszDropType, g_LoadoutDropTypes, ARRAYSIZE( g_LoadoutDropTypes ) );
-				if ( pszDropType != -1 )
+				int iDropType = UTIL_StringFieldToInt( pszDropType, g_LoadoutDropTypes, ARRAYSIZE( g_LoadoutDropTypes ) );
+				if (iDropType != -1)
 				{
-					pItem->drop_type = pszDropType;
+					pItem->drop_type = iDropType;
 				}
 			}
+
 
 			for ( KeyValues *pSubData = pDefinition->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 			{
