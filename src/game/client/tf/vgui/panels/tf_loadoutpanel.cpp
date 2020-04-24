@@ -167,6 +167,7 @@ void CTFLoadoutPanel::SetCurrentClass(int iClass)
 
 	m_iCurrentClass = iClass;
 	m_iCurrentSlot = g_aClassLoadoutSlots[iClass][0];
+	GetTFInventory()->SetMostRecentClass(iClass);
 	DefaultLayout();
 	UpdateMenuBodygroups();
 
@@ -595,4 +596,158 @@ void CTFLoadoutPanel::SetWeaponPreset( int iClass, int iSlot, int iPreset )
 	}
 
 	DefaultLayout();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel *pParent, const char *pName)
+:	EditablePanel( pParent, "loadout_preset_panel" )
+{
+	V_memset( m_pPresetButtons, 0, sizeof( m_pPresetButtons ) );
+
+	m_iCurrentClass = TF_CLASS_UNDEFINED;
+	m_pPresetButtonKv = NULL;
+	m_iActivePreset = 0; // Assume A
+
+	// Create all buttons
+	for ( int i = 0; i < TF_MAX_PRESETS; ++i )
+	{
+		const char *cInventorySlot = g_InventoryLoadoutPresets[i];
+		char *szButton = NULL;
+		Q_snprintf(szButton, sizeof(szButton), "LoadPresetButton%i", i);
+		const char *cszName = szButton;
+		wchar_t *pwszPresetName = g_pVGuiLocalize->Find(cInventorySlot);
+		m_pPresetButtons[i] = new CExButton(this, cszName, pwszPresetName);
+	}
+	
+	// Fill in our data
+	m_iCurrentClass = GetTFInventory()->GetMostRecentClass(); // What's our current class?
+	m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass); // Get the active loadout. Default to A.
+	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLoadoutPresetPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
+{
+	BaseClass::ApplySchemeSettings( pScheme );
+
+	LoadControlSettings( "Resource/UI/LoadoutPresetPanel.res" );
+
+	m_aDefaultColors[LOADED][FG][DEFAULT] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Econ.Button.PresetDefaultColorFg", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[LOADED][FG][ARMED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Econ.Button.PresetArmedColorFg", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[LOADED][FG][DEPRESSED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Econ.Button.PresetDepressedColorFg", Color( 255, 255, 255, 255 ) );
+
+	m_aDefaultColors[LOADED][BG][DEFAULT] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Econ.Button.PresetDefaultColorBg", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[LOADED][BG][ARMED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Econ.Button.PresetArmedColorBg", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[LOADED][BG][DEPRESSED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Econ.Button.PresetDepressedColorBg", Color( 255, 255, 255, 255 ) );
+
+	m_aDefaultColors[NOTLOADED][FG][DEFAULT] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Button.TextColor", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[NOTLOADED][FG][ARMED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Button.ArmedTextColor", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[NOTLOADED][FG][DEPRESSED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Button.DepressedTextColor", Color( 255, 255, 255, 255 ) );
+
+	m_aDefaultColors[NOTLOADED][BG][DEFAULT] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Button.BgColor", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[NOTLOADED][BG][ARMED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Button.ArmedBgColor", Color( 255, 255, 255, 255 ) );
+	m_aDefaultColors[NOTLOADED][BG][DEPRESSED] = vgui::scheme()->GetIScheme( GetScheme() )->GetColor( "Button.DepressedBgColor", Color( 255, 255, 255, 255 ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLoadoutPresetPanel::ApplySettings(KeyValues *pInResourceData)
+{
+	BaseClass::ApplySettings( pInResourceData );
+
+	KeyValues *pPresetButtonKv = pInResourceData->FindKey( "presetbutton_kv" );
+	if ( pPresetButtonKv && !m_pPresetButtonKv )
+	{
+		m_pPresetButtonKv = new KeyValues( "presetbutton_kv" );
+		pPresetButtonKv->CopySubkeys( m_pPresetButtonKv );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLoadoutPresetPanel::PerformLayout()
+{
+	BaseClass::PerformLayout();
+
+	if ( !m_pPresetButtons[0] )
+		return;
+
+	const int nBuffer = XRES( 2 );
+
+	for ( int i = 0; i < TF_MAX_PRESETS; ++i )
+	{
+		if ( m_pPresetButtonKv )
+		{
+			m_pPresetButtons[i]->ApplySettings( m_pPresetButtonKv );
+		}
+
+		const int nButtonWidth = m_pPresetButtons[0]->GetWide();
+		const int nStartX = 0.5f * ( GetWide() - TF_MAX_PRESETS * ( nButtonWidth + nBuffer ) );
+		m_pPresetButtons[i]->SetPos( nStartX + i * ( nButtonWidth + nBuffer ), 0 );
+		m_pPresetButtons[i]->SetVisible( true );
+	}
+
+	vgui::ivgui()->AddTickSignal( GetVPanel(), 150 );
+
+	UpdatePresetButtonStates();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLoadoutPresetPanel::OnCommand(const char *command)
+{
+	
+	if ( !V_strnicmp( command, "loadpreset_", 11 ) )
+	{
+		const int iPresetIndex = atoi( command + 11 );
+		if (iPresetIndex < TF_MAX_PRESETS)
+		{
+			m_iActivePreset = iPresetIndex;
+			GetTFInventory()->ChangeLoadoutSlot( m_iCurrentClass, m_iActivePreset );
+			UpdatePresetButtonStates();
+		}
+	}
+	else
+	{
+		BaseClass::OnCommand( command );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLoadoutPresetPanel::UpdatePresetButtonStates()
+{
+	int iActivePreset = m_iActivePreset;
+
+	for ( int i = 0; i < TF_MAX_PRESETS; ++i )
+	{
+		if ( i == iActivePreset )
+		{
+			m_pPresetButtons[i]->SetDefaultColor( m_aDefaultColors[LOADED][FG][DEFAULT], m_aDefaultColors[LOADED][BG][DEFAULT] );
+			m_pPresetButtons[i]->SetArmedColor( m_aDefaultColors[LOADED][FG][ARMED], m_aDefaultColors[LOADED][BG][ARMED] );
+			m_pPresetButtons[i]->SetDepressedColor( m_aDefaultColors[LOADED][FG][DEPRESSED], m_aDefaultColors[LOADED][BG][DEPRESSED] );
+		}
+		else
+		{
+			m_pPresetButtons[i]->SetDefaultColor( m_aDefaultColors[NOTLOADED][FG][DEFAULT], m_aDefaultColors[NOTLOADED][BG][DEFAULT] );
+			m_pPresetButtons[i]->SetArmedColor( m_aDefaultColors[NOTLOADED][FG][ARMED], m_aDefaultColors[NOTLOADED][BG][ARMED] );
+			m_pPresetButtons[i]->SetDepressedColor( m_aDefaultColors[NOTLOADED][FG][DEPRESSED], m_aDefaultColors[NOTLOADED][BG][DEPRESSED] );
+		}
+
+		char *szCmd = NULL;
+		Q_snprintf(szCmd, sizeof(szCmd), "loadpreset_%i", i);
+		const char *cszCmd = szCmd;
+		m_pPresetButtons[i]->SetCommand(cszCmd);
+	}
 }

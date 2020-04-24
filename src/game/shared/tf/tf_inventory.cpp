@@ -312,7 +312,7 @@ int CTFInventory::GetWeaponPreset(int iClass, int iSlot)
 
 	if ( CheckValidWeapon( iClass, iSlot, iPreset ) == false )
 		return 0;
-
+	
 	return iPreset;
 };
 
@@ -330,6 +330,14 @@ void CTFInventory::SetWeaponPreset(int iClass, int iSlot, int iPreset)
 	
 	pClassLoadoutSlot->SetInt(GetSlotName(iSlot), iPreset);
 	SaveInventory();
+}
+
+int CTFInventory::GetCurrentLoadoutSlot(int iClass)
+{
+	int iActiveSlot = 0;
+	KeyValues* pClass = m_pInventory->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
+	iActiveSlot = pClass->GetInt("activeslot", 0);
+	return iActiveSlot;
 }
 
 void CTFInventory::ChangeLoadoutSlot(int iClass, int iLoadoutSlot)

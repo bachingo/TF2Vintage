@@ -55,8 +55,11 @@ public:
 #if defined( CLIENT_DLL )
 	int GetWeaponPreset( int iClass, int iSlot );
 	void SetWeaponPreset( int iClass, int iSlot, int iPreset );
+	int GetCurrentLoadoutSlot(int iClass);
 	void ChangeLoadoutSlot(int iClass, int iLoadoutSlot);
 	const char* GetSlotName( int iSlot );
+	int GetMostRecentClass(void) {return m_iCurrentClass;}
+	void SetMostRecentClass(int iClass) { m_iCurrentClass = iClass;}
 #endif
 
 private:
@@ -69,6 +72,7 @@ private:
 	void ResetInventory();
 	void SaveInventory();
 	KeyValues* m_pInventory;
+	int m_iCurrentClass;
 #endif
 };
 
