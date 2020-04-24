@@ -287,6 +287,8 @@ public:
 		return RemapValClamped( m_flUncloakCompleteTime - gpGlobals->curtime, 0.0f, 2.0f, 0.0f, 1.0f );
 	}
 
+	bool IsPlayingDeathAnim( void ) const { return m_bPlayDeathAnim; }
+
 private:
 	friend class C_TFPlayer;
 	C_TFRagdoll( const C_TFRagdoll & ) {}
@@ -329,8 +331,8 @@ protected:
 	bool  m_bFixedConstraints;
 	bool  m_bFadingOut;
 	bool  m_bPlayDeathAnim;
-	CountdownTimer m_timer1; // TODO: Name
-	CountdownTimer m_timer2;
+	CountdownTimer m_freezeTimer; // TODO: Name
+	CountdownTimer m_frozenTimer;
 
 	// Decapitation
 	matrix3x4_t m_Head;
@@ -380,8 +382,8 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bSlamRagdoll = false;
 	m_bFadingOut = false;
 	m_bCloaked = false;
-	m_timer1.Invalidate();
-	m_timer2.Invalidate();
+	m_freezeTimer.Invalidate();
+	m_frozenTimer.Invalidate();
 	m_iTeam = -1;
 	m_iClass = -1;
 	m_nForceBone = -1;
@@ -511,7 +513,7 @@ void C_TFRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCu
 //-----------------------------------------------------------------------------
 float C_TFRagdoll::FrameAdvance( float flInterval )
 {
-	if ( m_timer1.HasStarted() && !m_timer1.IsElapsed() )
+	if ( m_freezeTimer.HasStarted() && !m_freezeTimer.IsElapsed() )
 		return BaseClass::FrameAdvance( flInterval );
 
 	float flRet = 0.0f; 
@@ -520,12 +522,12 @@ float C_TFRagdoll::FrameAdvance( float flInterval )
 	matrix3x4_t currentBones[MAXSTUDIOBONES];
 	const float boneDt = 0.05f;
 
-	if ( m_timer2.HasStarted() )
+	if ( m_frozenTimer.HasStarted() )
 	{
-		if ( !m_timer2.IsElapsed() )
+		if ( !m_frozenTimer.IsElapsed() )
 			return flRet;
 
-		m_timer2.Invalidate();
+		m_frozenTimer.Invalidate();
 		m_nRenderFX = kRenderFxRagdoll;
 
 		GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
@@ -669,8 +671,8 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		EmitSound( "Icicle.TurnToIce" );
 		ParticleProp()->Create( "xms_icicle_impact_dryice", PATTACH_ABSORIGIN_FOLLOW );
 
-		m_timer1.Start( RandomFloat( 0.1f, 0.75f ) );
-		m_timer2.Start( RandomFloat( 9.0f, 11.0f ) );
+		m_freezeTimer.Start( RandomFloat( 0.1f, 0.75f ) );
+		m_frozenTimer.Start( RandomFloat( 9.0f, 11.0f ) );
 	}
 
 	if ( pPlayer && !pPlayer->IsDormant() )
@@ -714,7 +716,8 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 			Interp_Reset( varMap );
 		}
 
-		m_nBody = pPlayer->GetBody();
+		if ( !m_bFeignDeath || m_bWasDisguised )
+			m_nBody = pPlayer->GetBody();
 	}
 	else
 	{
@@ -776,58 +779,59 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 		else if ( m_bIceRagdoll )
 		{
-			m_timer1.Invalidate();
-			m_timer2.Invalidate();
+			m_freezeTimer.Invalidate();
+			m_frozenTimer.Invalidate();
 			m_bFixedConstraints = true;
 		}
 	}
 
 	// Turn it into a ragdoll.
-	if ( !m_bPlayDeathAnim )
+	if ( !m_bPlayDeathAnim && cl_ragdoll_physics_enable.GetBool() )
 	{
-		if ( cl_ragdoll_physics_enable.GetBool() )
+		// Make us a ragdoll..
+		m_nRenderFX = kRenderFxRagdoll;
+
+		matrix3x4_t boneDelta0[MAXSTUDIOBONES];
+		matrix3x4_t boneDelta1[MAXSTUDIOBONES];
+		matrix3x4_t currentBones[MAXSTUDIOBONES];
+		const float boneDt = 0.05f;
+
+		// We have to make sure that we're initting this client ragdoll off of the same model.
+		// GetRagdollInitBoneArrays uses the *player* Hdr, which may be a different model than
+		// the ragdoll Hdr, if we try to create a ragdoll in the same frame that the player
+		// changes their player model.
+		CStudioHdr *pRagdollHdr = GetModelPtr();
+		CStudioHdr *pPlayerHdr = NULL;
+		if ( pPlayer )
+			pPlayerHdr = pPlayer->GetModelPtr();
+
+		bool bChangedModel = false;
+
+		if ( pRagdollHdr && pPlayerHdr )
 		{
-			// Make us a ragdoll..
-			m_nRenderFX = kRenderFxRagdoll;
+			bChangedModel = pRagdollHdr->GetVirtualModel() != pPlayerHdr->GetVirtualModel();
 
-			matrix3x4_t boneDelta0[MAXSTUDIOBONES];
-			matrix3x4_t boneDelta1[MAXSTUDIOBONES];
-			matrix3x4_t currentBones[MAXSTUDIOBONES];
-			const float boneDt = 0.05f;
+			AssertMsg( !bChangedModel, "C_TFRagdoll::CreateTFRagdoll: Trying to create ragdoll with a different model than the player it's based on" );
+		}
 
-			// We have to make sure that we're initting this client ragdoll off of the same model.
-			// GetRagdollInitBoneArrays uses the *player* Hdr, which may be a different model than
-			// the ragdoll Hdr, if we try to create a ragdoll in the same frame that the player
-			// changes their player model.
-			CStudioHdr *pRagdollHdr = GetModelPtr();
-			CStudioHdr *pPlayerHdr = NULL;
-			if ( pPlayer )
-				pPlayerHdr = pPlayer->GetModelPtr();
-
-			bool bChangedModel = false;
-
-			if ( pRagdollHdr && pPlayerHdr )
-			{
-				bChangedModel = pRagdollHdr->GetVirtualModel() != pPlayerHdr->GetVirtualModel();
-
-				Assert( !bChangedModel && "C_TFRagdoll::CreateTFRagdoll: Trying to create ragdoll with a different model than the player it's based on" );
-			}
-
-			if ( pPlayer && !pPlayer->IsDormant() && !bChangedModel )
-			{
-				pPlayer->GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
-			}
-			else
-			{
-				GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
-			}
-
-			InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt, m_bFixedConstraints );
+		bool bBoneArraysInited;
+		if ( pPlayer && !pPlayer->IsDormant() && !bChangedModel )
+		{
+			bBoneArraysInited = pPlayer->GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
 		}
 		else
 		{
-			ClientLeafSystem()->SetRenderGroup( GetRenderHandle(), RENDER_GROUP_TRANSLUCENT_ENTITY );
+			bBoneArraysInited = GetRagdollInitBoneArrays( boneDelta0, boneDelta1, currentBones, boneDt );
 		}
+
+		if ( bBoneArraysInited )
+		{
+			InitAsClientRagdoll( boneDelta0, boneDelta1, currentBones, boneDt, m_bFixedConstraints );
+		}
+	}
+	else
+	{
+		ClientLeafSystem()->SetRenderGroup( GetRenderHandle(), RENDER_GROUP_TRANSLUCENT_ENTITY );
 	}
 
 	StartFadeOut( cl_ragdoll_fade_time.GetFloat() );
@@ -943,12 +947,20 @@ void C_TFRagdoll::CreateTFGibs( bool bKill, bool bLocalOrigin )
 		}
 	}
 
-	if ( pPlayer && TFGameRules() && ( TFGameRules()->IsBirthday() || UTIL_IsLowViolence() ) )
+	if ( pPlayer )
 	{
-		DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector( 0, 0, 32 ), vec3_angle );
+		if( TFGameRules() && ( TFGameRules()->IsBirthday() || UTIL_IsLowViolence() ) )
+		{
+			DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector( 0, 0, 32 ), vec3_angle );
 
-		if( TFGameRules()->IsBirthday() )
-			C_BaseEntity::EmitSound( "Game.HappyBirthday" );
+			if( TFGameRules()->IsBirthday() )
+				C_BaseEntity::EmitSound( "Game.HappyBirthday" );
+		}
+		else
+		{
+			if( m_bCritOnHardHit && !UTIL_IsLowViolence() )
+				DispatchParticleEffect( "tfc_sniper_mist", pPlayer->WorldSpaceCenter(), vec3_angle );
+		}
 	}
 
 	if ( bKill )
@@ -1054,7 +1066,6 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 
 		if ( bCreateRagdoll )
 		{
-			
 			// Delete our mask if we're disguised.
 			if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED))
 			{			
@@ -1080,8 +1091,8 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 					}
 				}
 			}
-			
-			CreateWearableGibs( m_bWasDisguised );			
+
+			CreateWearableGibs( m_bWasDisguised );
 		}
 	}
 	else
@@ -1426,8 +1437,9 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 	}
 	else
 	{
-		C_TFRagdoll *pRagdoll = dynamic_cast<C_TFRagdoll *>( pEnt );
+		C_TFPlayer *pOwner = ToTFPlayer( pEnt->GetOwnerEntity() );
 
+		C_TFRagdoll *pRagdoll = dynamic_cast<C_TFRagdoll *>( pEnt );
 		if ( pRagdoll )
 		{
 			pPlayer = ToTFPlayer( pRagdoll->GetPlayerHandle().Get() );
@@ -1435,7 +1447,11 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 		}
 		else
 		{
-			m_pPercentInvisible->SetFloatValue( 0.0 );
+			if ( pOwner )
+				m_pPercentInvisible->SetFloatValue( pOwner->GetEffectiveInvisibilityLevel() );
+			else
+				m_pPercentInvisible->SetFloatValue( 0.0 );
+
 			return;
 		}
 	}
@@ -4098,10 +4114,18 @@ int C_TFPlayer::DrawModel( int flags )
 		{
 			m_hPartyHat->SetEffects( EF_NODRAW );
 		}
+		if ( m_hBombHat && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) && !m_hBombHat->IsEffectActive( EF_NODRAW ) )
+		{
+			m_hBombHat->SetEffects( EF_NODRAW );
+		}
 		return 0;
 	}
 	else
 	{
+		if ( m_hBombHat && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) && m_hBombHat->IsEffectActive( EF_NODRAW ) )
+		{
+			m_hBombHat->RemoveEffects( EF_NODRAW );
+		}
 		if ( m_hPartyHat && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) && m_hPartyHat->IsEffectActive( EF_NODRAW ) )
 		{
 			m_hPartyHat->RemoveEffects( EF_NODRAW );
@@ -4289,11 +4313,20 @@ void C_TFPlayer::CalcDeathCamView( Vector &eyeOrigin, QAngle &eyeAngles, float &
 	QAngle aForward = eyeAngles = EyeAngles();
 	Vector origin = EyePosition();
 
-	IRagdoll *pRagdoll = GetRepresentativeRagdoll();
-	if ( pRagdoll )
+	if ( m_hRagdoll )
 	{
-		origin = pRagdoll->GetRagdollOrigin();
-		origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over ragdoll, not through
+		C_TFRagdoll *pRagdoll = assert_cast<C_TFRagdoll *>( m_hRagdoll.Get() );
+		if ( pRagdoll && pRagdoll->IsPlayingDeathAnim() )
+			origin.z += VEC_DEAD_VIEWHEIGHT_SCALED( this ).z * 4;
+	}
+	else
+	{
+		IRagdoll *pRagdoll = GetRepresentativeRagdoll();
+		if ( pRagdoll )
+		{
+			origin = pRagdoll->GetRagdollOrigin();
+			origin.z += VEC_DEAD_VIEWHEIGHT_SCALED( this ).z; // look over ragdoll, not through
+		}
 	}
 
 	if ( killer && ( killer != this ) )
@@ -4620,6 +4653,19 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 		}
 		else
 		{
+			CUtlVector<breakmodel_t> list;
+			list.AddVectorToTail( m_aGibs );
+			if ( UTIL_IsLowViolence() )
+			{
+				if ( Q_strcmp( m_aGibs[0].modelName, g_pszBDayGibs[4]) != 0 )
+				{
+					for( int i=0; i<list.Count(); ++i )
+					{
+						V_strncpy( list[i].modelName, g_pszBDayGibs[ RandomInt( 4, ARRAYSIZE( g_pszBDayGibs )-1 ) ], sizeof list[i].modelName );
+					}
+				}
+			}
+
 			m_hFirstGib = CreateGibsFromList( m_aGibs, GetModelIndex(), NULL, breakParams, this, -1, false, true, &m_hSpawnedGibs, bBurning );
 		}
 	}

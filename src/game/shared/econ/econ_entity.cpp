@@ -312,9 +312,7 @@ void CEconEntity::UpdateModelToClass( void )
 //-----------------------------------------------------------------------------
 void CEconEntity::SetItem( CEconItemView const &pItem )
 {
-#if defined( GAME_DLL )
 	m_AttributeManager.m_Item.CopyFrom( pItem );
-#endif
 }
 
 //-----------------------------------------------------------------------------

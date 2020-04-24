@@ -263,16 +263,16 @@ void CEconWearableGib::ImpactTrace(trace_t *pTrace, int dmgBits, char const *szW
 	if ( m_pPhysicsObject == nullptr )
 		return;
 
-	const Vector &vecDir = pTrace->endpos - pTrace->startpos;
+	const Vector vecDir = pTrace->endpos - pTrace->startpos;
 	if ( dmgBits & DMG_BLAST )
 	{
-		const Vector &vecVelocity = vecDir * 500.0f;
+		const Vector vecVelocity = vecDir * 500.0f;
 		m_pPhysicsObject->ApplyForceCenter( vecVelocity );
 	}
 	else
 	{
-		const Vector &vecWorldOffset = pTrace->startpos + ( pTrace->fraction * vecDir );
-		const Vector &vecVelocity = vecDir.Normalized() * 4000.0f;
+		const Vector vecWorldOffset = pTrace->startpos + ( pTrace->fraction * vecDir );
+		const Vector vecVelocity = vecDir.Normalized() * 4000.0f;
 		m_pPhysicsObject->ApplyForceOffset( vecVelocity, vecWorldOffset );
 	}
 }
@@ -283,7 +283,7 @@ void CEconWearableGib::ImpactTrace(trace_t *pTrace, int dmgBits, char const *szW
 void CEconWearableGib::Spawn( void )
 {
 	BaseClass::Spawn();
-	UseClientSideAnimation();
+	m_takedamage = DAMAGE_EVENTS_ONLY;
 }
 
 //-----------------------------------------------------------------------------
@@ -297,7 +297,7 @@ void CEconWearableGib::SpawnClientEntity( void )
 		return;
 	}
 
-	m_unk2 = true;
+	m_bDynamicLoad = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -307,7 +307,7 @@ CStudioHdr *CEconWearableGib::OnNewModel( void )
 {
 	CStudioHdr *pStudio = BaseClass::OnNewModel();
 
-	if ( m_unk2 )
+	if ( m_bDynamicLoad )
 	{
 		if ( !IsDynamicModelLoading() )
 			FinishModelInitialization();
@@ -331,8 +331,9 @@ void CEconWearableGib::ClientThink( void )
 				return;
 			}
 
+			const float flAlpha = ( m_flFadeTime - gpGlobals->curtime ) / 1;
 			SetRenderMode( kRenderTransTexture );
-			SetRenderColorA( ( m_flFadeTime - gpGlobals->curtime ) * 256.0f );
+			SetRenderColorA( RoundFloatToByte( flAlpha * 255 ) );
 		}
 	}
 

@@ -74,7 +74,7 @@ class CEconWearableGib : public CEconEntity
 	DECLARE_CLASS( CEconWearableGib, CEconEntity );
 public:
 	CEconWearableGib();
-	~CEconWearableGib();
+	virtual ~CEconWearableGib();
 
 	virtual CollideType_t GetCollideType( void );
 	virtual void ImpactTrace( trace_t *pTrace, int dmgCustom, char const *szWeaponName );
@@ -91,7 +91,7 @@ public:
 
 private:
 	bool m_bAttachedModel;
-	bool m_unk2;
+	bool m_bDynamicLoad;
 	float m_flFadeTime;
 };
 #endif
