@@ -47,11 +47,6 @@ void CEconWearable::Spawn( void )
 	{
 		SetModel( GetItem()->GetPlayerDisplayModel() );
 	}
-
-#if defined ( GAME_DLL )
-	if ( GetItem()->GetStaticData() )
-		m_bItemFallsOff = GetItem()->GetStaticData()->itemfalloff;
-#endif
 	
 	BaseClass::Spawn();
 
@@ -119,6 +114,24 @@ void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )
 		}
 	}
 }
+
+int CEconWearable::GetDropType( void )
+{
+	if ( GetItem() && GetItem()->GetStaticData() )
+		return GetItem()->GetStaticData()->drop;
+	
+	return 0;
+}
+
+
+int CEconWearable::GetLoadoutSlot(void)
+{
+	if ( GetItem() && GetItem()->GetStaticData() )
+		return GetItem()->GetStaticData()->item_slot;
+
+	return TF_LOADOUT_SLOT_MISC1;
+}
+
 
 void CEconWearable::SetParticle(const char* name)
 {

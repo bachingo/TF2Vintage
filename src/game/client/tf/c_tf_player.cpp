@@ -1351,6 +1351,16 @@ void C_TFRagdoll::EndFadeOut()
 	UpdateVisibility();
 	ParticleProp()->StopEmission();
 	DestroyBoneAttachments();
+	
+	for ( int i = 0; i < m_hRagdollWearables.Count(); i++ )
+	{
+		if ( m_hRagdollWearables[i] )
+		{
+			m_hRagdollWearables[i]->AddEffects( EF_NODRAW );
+			m_hRagdollWearables[i]->SetMoveType( MOVETYPE_NONE );
+		}
+	}
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -3046,6 +3056,8 @@ void C_TFPlayer::UpdateSpyMask(void)
 	{
 		if ( pMask )
 		{
+			pMask->AddEffects(EF_NODRAW);
+			pMask->SetMoveType(MOVETYPE_NONE);
 			pMask->Release();
 			m_hSpyMask = NULL;
 		}	
@@ -3368,12 +3380,18 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 
 		//pTFWearable->OnWearerDeath();
 
-		/*if ( pTFWearable->GetDropType() > 1 )
-			continue;*/
+		if ( pTFWearable->GetDropType() > 1 ) // Fall off or break
+			continue;
 
 		if ( pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS || 
-			 pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_MERASMUS_DECAPITATION )
-			continue;
+			 pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_MERASMUS_DECAPITATION ||
+			 pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING || 
+			 pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION )
+		 {
+			// Don't put a hat on a decapitated corpse!
+			 if (pWearable->GetLoadoutSlot() == TF_LOADOUT_SLOT_HAT)
+				continue; 
+		 }
 
 		C_EconWearableGib *pProp = new C_EconWearableGib;
 		if ( pProp == nullptr )
@@ -3394,18 +3412,20 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 		if ( pProp->Initialize( true ) )
 		{
 			pProp->m_nSkin = pTFWearable->GetSkin();
-			pProp->AttachEntityToBone( this );
+			pProp->AttachEntityToBone( this, -1, Vector(0,0,0), QAngle(0,0,0) );
 
-			if ( pItem && pItem->GetStaticData() )
+			// We set this when we update the wearables, no need to do it twice.
+			/*if ( pItem && pItem->GetStaticData() )
 			{
 				PerTeamVisuals_t *pVisuals = pItem->GetStaticData()->GetVisuals( GetTeamNumber() );
 				if ( pVisuals && pVisuals->use_per_class_bodygroups )
 					pProp->SetBodygroup( 1, pRagdoll->m_iClass - 1 );
-			}
+			}*/
 		}
 		else
 		{
 			pProp->Release();
+			continue;
 		}
 	}
 }
@@ -4689,7 +4709,7 @@ void C_TFPlayer::DropHat( breakablepropparams_t const &breakParams, Vector const
 		CEconWearable* pItem = m_hMyWearables[i];
 		if ( pItem && pItem->GetItem()->GetStaticData() )
 		{
-			if ( pItem->ItemFallsOffPlayer() == true )
+			if (pItem->GetDropType() > 0)
 			{
 				breakmodel_t breakModel;
 				if (pItem->m_bExtraWearable)

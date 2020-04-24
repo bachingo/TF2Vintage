@@ -350,7 +350,7 @@ public:
 			GET_BOOL( pItem, pDefinition, specialitem );
 			GET_BOOL( pItem, pDefinition, demoknight );
 			GET_STRING( pItem, pDefinition, holiday_restriction );
-			GET_BOOL( pItem, pDefinition, itemfalloff );
+			GET_BOOL( pItem, pDefinition, drop );
 			GET_INT( pItem, pDefinition, year );
 			GET_BOOL( pItem, pDefinition, is_custom_content );
 			GET_BOOL( pItem, pDefinition, is_cut_content );

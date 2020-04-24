@@ -263,7 +263,18 @@ public:
 		m_vecRagdollOrigin.Init();
 		m_vecRagdollVelocity.Init();
 	}
-
+	~CTFRagdoll()
+	{
+		for ( int i = 0 ; i < m_hRagdollWearables.Count(); i++ )
+		{
+			if ( m_hRagdollWearables[i] )
+			{
+				m_hRagdollWearables[i]->Remove();
+			}
+		}
+		m_hRagdollWearables.Purge();
+	}
+	
 	// Transmit ragdolls to everyone.
 	virtual int UpdateTransmitState()
 	{
@@ -559,6 +570,7 @@ CTFPlayer::CTFPlayer()
 	m_bIsPlayerAVIP = false;
 	m_iPlayerVIPRanking = 0;
 	
+	ResetWetTime();
 	m_flStunTime = 0.0f;
 
 	m_bInArenaQueue = false;
@@ -2640,6 +2652,24 @@ bool CTFPlayer::CheckBlockBackstab( CTFPlayer *pAttacker )
 	}
 
 	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if the player is or recently has been in water.
+//-----------------------------------------------------------------------------
+bool CTFPlayer::PlayerIsSoaked( void )
+{
+	if 	( m_Shared.InCond( TF_COND_URINE ) ||	// Hit by Jarate
+		( m_Shared.InCond(TF_COND_MAD_MILK) ||	// Hit by Mad Milk
+		( GetWaterLevel() > WL_NotInWater ) || // Standing in water
+		( PlayerIsDrippingWet() ) ) )	// Dripping wet
+	{
+		return true;
+	}
+	
+	return false;
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -4983,10 +5013,33 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 		if ( pTFAttacker )
 		{
+			
+			if ( pTFAttacker->IsPlayerClass( TF_CLASS_ENGINEER ) )
+			{
+				float flSentryCoordinationBonus = info.GetDamage();
+				CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pTFAttacker->GetObjectOfType(OBJ_SENTRYGUN, OBJECT_MODE_NONE) );
+				if ( pSentry )
+				{
+					if (pSentry->GetCurrentTarget() == this)
+					{
+						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flSentryCoordinationBonus, mult_dmg_bullet_vs_sentry_target);
+						info.SetDamage(flSentryCoordinationBonus);
+					}
+				}
+			}
+			
 			if ( pTFAttacker->m_Shared.IsMiniCritBoosted() )
 			{
 				bitsDamage |= DMG_MINICRITICAL;
 				info.AddDamageType( DMG_MINICRITICAL );
+			}
+			
+			int iCritWhileWet = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iCritWhileWet, crit_vs_wet_players );
+			if ( iCritWhileWet && PlayerIsSoaked() )
+			{
+				bitsDamage |= DMG_CRITICAL;
+				info.AddDamageType( DMG_CRITICAL );
 			}
 			
 			// Runs when the ATTACKER is airborne.
