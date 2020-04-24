@@ -118,7 +118,7 @@ void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )
 int CEconWearable::GetDropType( void )
 {
 	if ( GetItem() && GetItem()->GetStaticData() )
-		return GetItem()->GetStaticData()->drop;
+		return GetItem()->GetStaticData()->drop_type;
 	
 	return 0;
 }

@@ -350,11 +350,20 @@ public:
 			GET_BOOL( pItem, pDefinition, specialitem );
 			GET_BOOL( pItem, pDefinition, demoknight );
 			GET_STRING( pItem, pDefinition, holiday_restriction );
-			GET_BOOL( pItem, pDefinition, drop );
 			GET_INT( pItem, pDefinition, year );
 			GET_BOOL( pItem, pDefinition, is_custom_content );
 			GET_BOOL( pItem, pDefinition, is_cut_content );
 			GET_BOOL( pItem, pDefinition, is_multiclass_item );
+			
+			const char *pszDropType = pDefinition->GetString( "drop_type" );
+			if ( pszDropType[0] )
+			{
+				int pszDropType = UTIL_StringFieldToInt( pszDropType, g_LoadoutDropTypes, ARRAYSIZE( g_LoadoutDropTypes ) );
+				if ( pszDropType != -1 )
+				{
+					pItem->drop_type = pszDropType;
+				}
+			}
 
 			for ( KeyValues *pSubData = pDefinition->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 			{

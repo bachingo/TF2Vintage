@@ -283,7 +283,8 @@ const char *g_AnimSlots[] =
 	"PRIMARY2"
 };
 
-const char *g_InventoryLoadoutSlots[] =
+#DEFINE MAX_PRESETS 4
+const char *g_InventoryLoadoutPresets[] =
 {
 	"A",
 	"B",
@@ -322,6 +323,12 @@ const char *g_LoadoutTranslations[] ={
 	"#LoadoutSlot_Action",
 	"#LoadoutSlot_Misc",
 	"Undefined"
+};
+
+const char *g_LoadoutDropTypes[] ={
+	"none",
+	"drop",
+	"break",
 };
 
 //-----------------------------------------------------------------------------
