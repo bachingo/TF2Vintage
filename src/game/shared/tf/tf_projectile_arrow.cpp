@@ -1000,7 +1000,7 @@ bool CTFProjectile_Arrow::PositionArrowOnBone( mstudiobbox_t *pbox, CBaseAnimati
 
 	mstudiohitboxset_t *set = pStudioHdr->pHitboxSet( pAnim->GetHitboxSet() );
 
-	if ( !set->numhitboxes || pbox->bone > 127 )
+	if ( !set || !set->numhitboxes || pbox->bone > 127 )
 		return false;
 
 	CBoneCache *pCache = pAnim->GetBoneCache();
