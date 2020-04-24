@@ -750,6 +750,15 @@ CBaseEntity *CTFWeaponBaseGun::FireArrow( CTFPlayer *pPlayer, int iType )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetCollisionGroup( TFCOLLISION_GROUP_ARROWS );
+
+		int nCanPenetrate = 0;
+		CALL_ATTRIB_HOOK_INT( nCanPenetrate, projectile_penetration );
+		if ( nCanPenetrate == 1 )
+		{
+			pProjectile->SetCanPenetrate( true );
+			pProjectile->SetSolidFlags( FSOLID_NOT_SOLID | FSOLID_TRIGGER );
+		}
 	}
 	return pProjectile;
 #endif

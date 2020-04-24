@@ -74,6 +74,9 @@ public:
 	virtual void		ImpactTeamPlayer( CTFPlayer *pTarget ) {}
 	void				HealBuilding( CBaseEntity *pTarget );
 
+	bool				CanPenetrate( void ) const { return m_bCanPenetrate; }
+	void				SetCanPenetrate( bool bSet ) { m_bCanPenetrate = bSet; }
+
 	virtual float		GetCollideWithTeammatesDelay( void ) const { return 0.10; }
 	void				FlyThink( void );
 
@@ -115,6 +118,9 @@ protected:
 	CNetworkVar( int, m_iProjType );
 
 	bool m_bImpacted;
+
+	bool m_bCanPenetrate;
+	CUtlVector<int16> m_aHitEnemies;
 
 	float m_flTrailReflectLifetime;
 	EHANDLE m_hSpriteTrail;

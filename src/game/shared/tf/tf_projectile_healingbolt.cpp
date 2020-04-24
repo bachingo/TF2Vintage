@@ -79,7 +79,7 @@ void CTFProjectile_HealingBolt::ImpactTeamPlayer( CTFPlayer *pTarget )
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHealing, mult_health_fromhealers_penalty_active );
 	}
 	
-	if ( pTarget->TakeHealth( flHealing, DMG_GENERIC ) )
+	if ( pTarget->TakeHealth( flHealing, DMG_GENERIC ) > 0 )
 	{
 		PlayImpactSound( pOwner, "Weapon_Arrow.ImpactFleshCrossbowHeal" );
 

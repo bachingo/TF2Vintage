@@ -77,9 +77,6 @@ void CTFFlareGun::SecondaryAttack( void )
 		}
 #endif
 	}
-	else
-		BaseClass::SecondaryAttack();
-	return;
 }
 
 //-----------------------------------------------------------------------------

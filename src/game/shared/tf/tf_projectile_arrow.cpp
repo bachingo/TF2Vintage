@@ -206,6 +206,8 @@ CTFProjectile_Arrow *CTFProjectile_Arrow::Create( CBaseEntity *pWeapon, const Ve
 		// Spawn.
 		DispatchSpawn( pArrow );
 		pArrow->m_flTrailReflectLifetime = 0;
+		// don't hit ourselves
+		pArrow->m_aHitEnemies.AddToTail( pOwner->entindex() );
 
 		// Setup the initial velocity.
 		Vector vecForward, vecRight, vecUp;
@@ -404,18 +406,22 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 		if ( tr.m_pEnt && tr.m_pEnt->GetTeamNumber() != GetTeamNumber() )
 		{
 			mstudiobbox_t *pBox = pSet->pHitbox( tr.hitbox );
+
+			// Our aim was true, strike the hitbox we immediately hit
 			if ( pBox )
 			{
 				if ( !StrikeTarget( pBox, pOther ) )
 					BreakArrow();
 
-				if ( !m_bImpacted )
+				if ( !CanPenetrate() )
 					SetAbsOrigin( vecOrigin );
 
 				if ( bImpactedItem )
 					BreakArrow();
 
-				m_bImpacted = true;
+				if( !CanPenetrate() )
+					m_bImpacted = true;
+
 				return;
 			}
 		}
@@ -454,19 +460,19 @@ void CTFProjectile_Arrow::ArrowTouch( CBaseEntity *pOther )
 			if ( !StrikeTarget( pBox, pOther ) )
 				BreakArrow();
 
-			if ( !m_bImpacted )
+			if ( !CanPenetrate() )
 				SetAbsOrigin( vecOrigin );
 
 			if ( bImpactedItem )
 				BreakArrow();
 
-			m_bImpacted = true;
+			if( !CanPenetrate() )
+				m_bImpacted = true;
 		}
 	}
 	else
 	{
 		CheckSkyboxImpact( pOther );
-		// TODO: Achievment hunters
 	}
 }
 
@@ -519,6 +525,14 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 
 	if( pAttacker )
 	{
+		if ( CanPenetrate() )
+		{
+			if ( m_aHitEnemies.Find( ENTINDEX( pTarget ) ) != m_aHitEnemies.InvalidIndex() )
+				return true;
+
+			m_aHitEnemies.AddToTail( ENTINDEX( pTarget ) );
+		}
+
 		if ( InSameTeam( pTarget ) )
 		{
 			if ( bImpact )
@@ -554,7 +568,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pTarge
 			}
 		}
 
-		if( !m_bImpacted && !bBreakArrow )
+		if( !CanPenetrate() && !bBreakArrow )
 		{
 			Vector vecBoneOrigin;
 			QAngle vecBoneAngles;
@@ -856,6 +870,11 @@ void CTFProjectile_Arrow::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 	}
 
 	CreateTrail();
+
+	// clean up so we can hit these things again
+	m_aHitEnemies.Purge();
+	// don't hit ourselves
+	m_aHitEnemies.AddToTail( ENTINDEX( pDeflectedBy ) );
 }
 
 void CTFProjectile_Arrow::IncremenentDeflected( void )
@@ -1045,6 +1064,9 @@ void CTFProjectile_Arrow::GetBoneAttachmentInfo( mstudiobbox_t *pbox, CBaseAnima
 //-----------------------------------------------------------------------------
 bool CTFProjectile_Arrow::CheckRagdollPinned( Vector const& vecOrigin, Vector const& vecDirection, int iBone, int iPhysBone, CBaseEntity *pOther, int iHitGroup, int iVictim )
 {
+	if ( pOther == nullptr )
+		return false;
+
 	trace_t tr;
 	UTIL_TraceLine( vecOrigin, vecOrigin + vecDirection * 120.f, MASK_BLOCKLOS, pOther, COLLISION_GROUP_NONE, &tr );
 
