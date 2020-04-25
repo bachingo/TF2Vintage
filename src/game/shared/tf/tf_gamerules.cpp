@@ -57,6 +57,7 @@
 	#include "bot/tf_bot_manager.h"
 	#include "entity_wheelofdoom.h"
 	#include "player_vs_environment/merasmus.h"
+	#include "player_vs_environment/ghost.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1290,6 +1291,9 @@ public:
 	void InputHalloweenSetUsingSpells( inputdata_t &inputdata );
 	void InputHalloweenTeleportToHell( inputdata_t &inputdata );
 
+	int GetHolidayType( void ) const { return m_nHolidayType; }
+	bool ShouldAllowHaunting( void ) const { return m_nAllowHaunting != 0; }
+
 private:
 	int m_nHolidayType;
 	int m_nTauntInHell;
@@ -1833,6 +1837,12 @@ void CTFGameRules::Activate()
 		m_nGameType.Set( TF_GAMETYPE_CP );
 		tf_gamemode_cp.SetValue( 1 );
 		return;
+	}
+
+	CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity*> ( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
+	if ( pHolidayEntity )
+	{
+		m_nMapHolidayType = pHolidayEntity->GetHolidayType();
 	}
 }
 
@@ -2970,13 +2980,66 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 	RunPlayerConditionThink();
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinLifetime, float flMaxLifetime )
+{
+	if ( !IsHolidayActive( kHoliday_Halloween ) )
+		return;
+
+	if ( !IsHalloweenScenario( HALLOWEEN_SCENARIO_VIADUCT ) && !IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
+	{
+		CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity*> ( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
+		if ( !pHolidayEntity || !pHolidayEntity->ShouldAllowHaunting() )
+			return;
+	}
+
+	if ( IGhostAutoList::AutoList().Count() >= nDesiredCount )
+		return;
+
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players, TF_TEAM_RED, true );
+	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
+
+	const int nNumToSpawn = nDesiredCount - IGhostAutoList::AutoList().Count();
+
+	CUtlVector<Vector> locations;
+	FOR_EACH_VEC( TheNavAreas, i )
+	{
+		CTFNavArea *pArea = (CTFNavArea *)TheNavAreas[ i ];
+		if ( pArea->HasTFAttributes( RED_SPAWN_ROOM | BLUE_SPAWN_ROOM ) )
+			continue;
+
+		Vector vecSpot = pArea->GetRandomPoint();
+
+		int j = 0;
+		for ( j; j < players.Count(); ++j )
+		{
+			if ( ( players[ i ]->GetAbsOrigin() - vecSpot ).LengthSqr() < Square( 240.0 ) )
+				break;
+		}
+
+		if ( j == players.Count() )
+			locations.AddToTail( vecSpot );
+	}
+
+	if ( locations.IsEmpty() )
+		return;
+
+	for ( int i=0; i < nNumToSpawn; ++i )
+	{
+		int nLocation = RandomInt( 0, locations.Count() - 1 );
+		CGhost::Create( locations[ nLocation ], vec3_angle, RandomFloat( flMinLifetime, flMaxLifetime ) );
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFGameRules::SpawnHalloweenBoss( void )
 {
-	if ( !IsHolidayActive( kHoliday_Halloween ) )
-		return;		// ??
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
 		return SpawnZombieMob();
 
@@ -7037,6 +7100,9 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 				CTF_GameStats.Event_PlayerCapturedPoint( pPlayer );
 			}
 		}
+
+		if ( !IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
+			BeginHaunting( 5, 25.0, 35.0 );
 	}
 	else if ( !Q_strcmp( eventName, "teamplay_capture_blocked" ) )
 	{
