@@ -75,6 +75,14 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 			}
 		}
 
+		if ( pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+		{
+			ucmd->forwardmove = 0;
+			ucmd->upmove = 0;
+			ucmd->sidemove = 0;
+			ucmd->viewangles = pTFPlayer->pl.v_angle;
+		}
+
 		if ( pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 		{
 			float flTurnRate = 0.45f;
