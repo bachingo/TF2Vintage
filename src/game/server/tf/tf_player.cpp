@@ -5014,7 +5014,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		if ( pTFAttacker )
 		{
 			
-			if ( pTFAttacker->IsPlayerClass( TF_CLASS_ENGINEER ) )
+			int nSentryAimBonus = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSentryAimBonus, mult_dmg_bullet_vs_sentry_target );
+			if ( nSentryAimBonus && pTFAttacker->IsPlayerClass( TF_CLASS_ENGINEER ) )
 			{
 				float flSentryCoordinationBonus = info.GetDamage();
 				CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pTFAttacker->GetObjectOfType(OBJ_SENTRYGUN, OBJECT_MODE_NONE) );
@@ -5022,7 +5024,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				{
 					if (pSentry->GetCurrentTarget() == this)
 					{
-						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flSentryCoordinationBonus, mult_dmg_bullet_vs_sentry_target);
+						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flSentryCoordinationBonus, mult_dmg_bullet_vs_sentry_target);
 						info.SetDamage(flSentryCoordinationBonus);
 					}
 				}
@@ -5034,9 +5036,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
 			
-			int iCritWhileWet = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iCritWhileWet, crit_vs_wet_players );
-			if ( iCritWhileWet && PlayerIsSoaked() )
+			int nCritWhileWet = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritWhileWet, crit_vs_wet_players );
+			if ( nCritWhileWet && PlayerIsSoaked() )
 			{
 				bitsDamage |= DMG_CRITICAL;
 				info.AddDamageType( DMG_CRITICAL );
@@ -5129,6 +5131,41 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( ( bitsDamage & DMG_CRITICAL ) && nForceVictimToLaugh != 0 )
 			{
 				Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
+			}
+			
+			// If we're being healed, damage them too.
+			int nDamageHealers = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDamageHealers, damage_all_connected );
+			if ( nDamageHealers )
+			{
+				// Get all the players healing us.
+				for ( int i = 0; i < m_Shared.m_aHealers.Count(); i++ )
+				{
+					// Check to see if it's a player.
+					if (m_Shared.m_aHealers[i].pPlayer.IsValid())
+					{
+						CTFPlayer *pTFHealer = static_cast< CTFPlayer  *>(static_cast< CBaseEntity  *>(m_Shared.m_aHealers[i].pPlayer));
+						if ( pTFHealer && ( pTFHealer != this ) )
+						{
+							// Copy our damage to them!
+							pTFHealer->TakeDamage( info );
+						}
+					}
+				}
+				// If we're damaging a healer, damage their patient.
+				CWeaponMedigun *pMedigun = dynamic_cast<CWeaponMedigun *>( GetActiveTFWeapon() );
+				if (pMedigun)
+				{
+					if ( pMedigun->GetHealTarget() && pMedigun->GetHealTarget()->IsPlayer() )
+					{
+						CTFPlayer *pTFPatient = ToTFPlayer( pMedigun->GetHealTarget() );
+						if ( pTFPatient && ( pTFPatient != this ) )
+						{
+							// Copy our damage to them!
+							pTFPatient->TakeDamage( info );
+						}
+					}
+				}
 			}
 			
 			// Notify the damaging weapon.
