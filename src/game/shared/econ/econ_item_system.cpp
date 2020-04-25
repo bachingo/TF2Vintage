@@ -772,7 +772,7 @@ void CEconItemSchema::InitAttributeTypes( void )
 
 void CEconItemSchema::Precache( void )
 {
-	static CSchemaFieldHandle<CEconAttributeDefinition> pAttribDef_CustomProjectile( "custom projectile model" );
+	static CSchemaAttributeHandle pAttribDef_CustomProjectile( "custom projectile model" );
 
 	// Precache everything from schema.
 	FOR_EACH_MAP( m_Items, i )

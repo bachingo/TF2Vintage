@@ -239,8 +239,8 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 
 unsigned int CEconItemView::GetModifiedRGBValue( bool bAlternate )
 {
-	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_Paint( "set item tint rgb" );
-	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_Paint2( "set item tint rgb 2" );
+	static CSchemaAttributeHandle pAttrDef_Paint( "set item tint rgb" );
+	static CSchemaAttributeHandle pAttrDef_Paint2( "set item tint rgb 2" );
 
 	float flResult = 0;
 	if ( pAttrDef_Paint )
@@ -251,7 +251,7 @@ unsigned int CEconItemView::GetModifiedRGBValue( bool bAlternate )
 		
 		if ( iter.Found() )
 		{
-			if ( flPaintRGB == 1.0 )
+			if ( (unsigned int)flPaintRGB == 1 )
 				return bAlternate ? 0x005885A2 : 0x00B8383B;
 
 			if ( pAttrDef_Paint2 )

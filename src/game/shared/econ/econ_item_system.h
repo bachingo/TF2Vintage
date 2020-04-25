@@ -76,12 +76,16 @@ public:
 	EXPLICIT CSchemaFieldHandle( char const *name );
 
 	operator T const *();
+	T const *operator->();
 
 private:
 	char const *m_pName;
 	T *m_pHandle;
-	KeyValues *const m_pSchema;
+	mutable KeyValues const *m_pSchema;
 };
+
+typedef CSchemaFieldHandle<CEconAttributeDefinition>	CSchemaAttributeHandle;
+typedef CSchemaFieldHandle<CEconItemDefinition>			CSchemaItemHandle;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -100,6 +104,14 @@ inline CSchemaFieldHandle<CEconAttributeDefinition>::operator const CEconAttribu
 	return m_pHandle;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline CEconAttributeDefinition const *CSchemaFieldHandle<CEconAttributeDefinition>::operator ->( )
+{
+	return m_pHandle;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -114,6 +126,14 @@ inline CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *
 // Purpose: 
 //-----------------------------------------------------------------------------
 inline CSchemaFieldHandle<CEconItemDefinition>::operator const CEconItemDefinition *( )
+{
+	return m_pHandle;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline CEconItemDefinition const *CSchemaFieldHandle<CEconItemDefinition>::operator ->( )
 {
 	return m_pHandle;
 }

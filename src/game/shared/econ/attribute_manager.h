@@ -77,7 +77,7 @@ private:
 		if ( m_pAttribute == pDefinition ) \
 		{ \
 			m_bFound = true; \
-			*m_pOut = value; \
+			*m_pOut = *reinterpret_cast<const overrideParam *>( &value ); \
 		} \
 		return !m_bFound; \
 	}
@@ -88,7 +88,7 @@ private:
 		if ( m_pAttribute == pDefinition ) \
 		{ \
 			m_bFound = true; \
-			*m_pOut = value; \
+			*m_pOut = *reinterpret_cast<const overrideParam *>( &value ); \
 		} \
 		return !m_bFound; \
 	}
