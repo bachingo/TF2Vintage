@@ -6328,6 +6328,37 @@
 				}
 			}
 		}
+		"593"
+		{
+			"name"	"The Third Degree"
+			"prefab"		"weapon_fireaxe"
+			"year"	"2011"
+			"item_logname"	"thirddegree"
+			"item_iconname"	"thirddegree"
+			"item_name"	"#TF_ThirdDegree"
+			"item_description"	"#TF_ThirdDegree_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_drg_thirddegree/c_drg_thirddegree"
+			"model_player"	"models/workshop/weapons/c_models/c_drg_thirddegree/c_drg_thirddegree.mdl"
+			"propername"	"1"
+			"attributes"
+			{
+				"damage all connected"
+				{
+					"attribute_class"	"damage_all_connected"
+					"value" "1"
+				}
+				"ragdolls become ash"
+				{
+					"attribute_class"	"ragdolls_become_ash"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_3rd_degree.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_3rd_degree.HitWorld"
+			}
+		}
 		"642"
 		{
 			"name"			"The Cozy Camper"
