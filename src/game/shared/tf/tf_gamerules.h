@@ -501,6 +501,7 @@ private:
 
 	int				DefaultFOV( void ) { return 75; }
 
+	void			BeginHaunting( int nDesiredCount, float flMinLifetime, float flMaxLifetime );
 	void			SpawnHalloweenBoss( void );
 	void			SpawnZombieMob( void );
 	CountdownTimer	m_bossSpawnTimer;
@@ -547,6 +548,7 @@ private:
 
 private:
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
+	CNetworkVar( int, m_nMapHolidayType );
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringGreen, MAX_TEAMGOAL_STRING );

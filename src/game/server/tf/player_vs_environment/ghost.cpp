@@ -13,6 +13,8 @@ IMPLEMENT_INTENTION_INTERFACE( CGhost, CGhostBehavior );
 
 LINK_ENTITY_TO_CLASS( ghost, CGhost )
 
+IMPLEMENT_AUTO_LIST( IGhostAutoList );
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

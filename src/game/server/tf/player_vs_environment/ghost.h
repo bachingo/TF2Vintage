@@ -28,7 +28,8 @@ public:
 	virtual float GetMaxDeceleration( void ) const { return 500; }
 };
 
-class CGhost : public NextBotCombatCharacter
+DECLARE_AUTO_LIST( IGhostAutoList );
+class CGhost : public NextBotCombatCharacter, IGhostAutoList
 {
 	DECLARE_CLASS( CGhost, NextBotCombatCharacter );
 public:

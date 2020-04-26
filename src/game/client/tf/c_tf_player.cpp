@@ -1794,6 +1794,10 @@ public:
 				}
 			}
 		}
+		else if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) )
+		{
+			vecColor = Vector( 50, 2, 48 );
+		}
 		else if ( pPlayer && pPlayer->m_Shared.IsMiniCritBoosted() )
 		{
 			if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) ||
