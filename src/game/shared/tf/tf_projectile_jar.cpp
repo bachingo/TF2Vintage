@@ -15,6 +15,8 @@
 #define TF_WEAPON_FESTIVE_URINE_MODEL "models/weapons/c_models/c_xms_urinejar.mdl"
 #define TF_WEAPON_JARMILK_MODEL "models/weapons/c_models/c_madmilk/c_madmilk.mdl"
 #define TF_WEAPON_JAR_LIFETIME  2.0f
+#define TF_WEAPON_CLEAVER_MODEL	"models/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver.mdl"
+
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Jar, DT_TFProjectile_Jar )
 
@@ -118,7 +120,8 @@ void CTFProjectile_Jar::Spawn( void )
 			SetModel( TF_WEAPON_JAR_MODEL );
 	}
 	
-	SetDetonateTimerLength( TF_WEAPON_JAR_LIFETIME );
+	if ( GetEffectCondition() == TF_COND_BLEEDING )
+		SetModel( TF_WEAPON_CLEAVER_MODEL );
 
 	BaseClass::Spawn();
 	SetTouch( &CTFProjectile_Jar::JarTouch );
@@ -463,5 +466,168 @@ void CTFProjectile_JarMilk::Precache( void )
 	PrecacheParticleSystem( "peejar_impact_milk" );
 
 	BaseClass::Precache();
+}
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFProjectile_Cleaver, DT_TFProjectile_Cleaver)
+
+BEGIN_NETWORK_TABLE(CTFProjectile_Cleaver, DT_TFProjectile_Cleaver)
+END_NETWORK_TABLE()
+
+#ifdef GAME_DLL
+BEGIN_DATADESC(CTFProjectile_Cleaver)
+END_DATADESC()
+#endif
+
+LINK_ENTITY_TO_CLASS(tf_projectile_cleaver, CTFProjectile_Cleaver);
+PRECACHE_REGISTER(tf_projectile_cleaver);
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFProjectile_Cleaver::Precache( void )
+{
+	PrecacheModel( TF_WEAPON_CLEAVER_MODEL );
+	PrecacheScriptSound( "Cleaver.ImpactFlesh" );
+	PrecacheScriptSound( "Cleaver.ImpactWorld" );
+
+	BaseClass::Precache();
+}
+#endif
+
+CTFProjectile_Cleaver *CTFProjectile_Cleaver::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo )
+{
+	CTFProjectile_Cleaver *pCleaver = static_cast<CTFProjectile_Cleaver *>( CBaseEntity::CreateNoSpawn( "tf_projectile_cleaver", vecOrigin, vecAngles, pOwner ) );
+
+	if ( pCleaver )
+	{
+		// Set scorer.
+		pCleaver->SetScorer( pScorer );
+
+		// Set firing weapon.
+		pCleaver->SetLauncher( pWeapon );
+
+		DispatchSpawn( pCleaver );
+
+		pCleaver->InitGrenade( vecVelocity, angVelocity, pOwner, weaponInfo );
+
+		pCleaver->ApplyLocalAngularVelocityImpulse( angVelocity );
+		
+		pCleaver->m_flCreationTime = gpGlobals->curtime;
+	}
+
+	return pCleaver;
+}
+
+void CTFProjectile_Cleaver::JarTouch( CBaseEntity *pOther )
+{
+	if ( pOther == GetThrower() )
+	{
+		// Make us solid if we're not already
+		if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE )
+		{
+			SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
+		}
+		return;
+	}
+
+	// Verify a correct "other."
+	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
+		return;
+
+	// Handle hitting skybox (disappear).
+	trace_t pTrace;
+	Vector velDir = GetAbsVelocity();
+	VectorNormalize( velDir );
+	Vector vecSpot = GetAbsOrigin() - velDir * 32;
+	UTIL_TraceLine( vecSpot, vecSpot + velDir * 64, MASK_SOLID, this, COLLISION_GROUP_NONE, &pTrace );
+
+	if ( pTrace.fraction < 1.0 && pTrace.surface.flags & SURF_SKY )
+	{
+		UTIL_Remove( this );
+		return;
+	}
+
+	// Invisible.
+	SetModelName( NULL_STRING );
+	AddSolidFlags( FSOLID_NOT_SOLID );
+	m_takedamage = DAMAGE_NO;
+
+	// Pull out of the wall a bit
+	if (pTrace.fraction != 1.0)
+	{
+		SetAbsOrigin( pTrace.endpos + ( pTrace.plane.normal * 1.0f ) );
+	}
+
+	// Damage.
+	CBaseEntity *pAttacker = GetOwnerEntity();
+	IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
+	if ( pScorerInterface )
+	{
+		pAttacker = pScorerInterface->GetScorer();
+	}
+
+	// Play explosion sound and effect.
+	Vector vecOrigin = GetAbsOrigin();
+	CTFPlayer *pPlayer = ToTFPlayer( pOther );
+
+	if ( pPlayer )
+	{
+		// We get a MiniCrit if we've been flying in the air for at least a whole second.
+		float flAirTime = gpGlobals->curtime - m_flCreationTime;
+				
+		bool bMiniCrit = false;
+		if ( flAirTime >= 1.0 )
+		{
+			bMiniCrit = true;
+			// Also reduce our cooldown a little.
+			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
+			if (pWeapon)
+				pWeapon->SetEffectBarProgress( pWeapon->GetEffectBarProgress() * 0.75 ); // 4.5 / 6 = 75%.
+		}
+		
+		// We get crits if we hit someone stunned.
+		bool bCriticalHit = false;
+		if ( pPlayer->m_Shared.InCond(TF_COND_STUNNED) )
+			bCriticalHit = true;
+		
+		// Add the crits/minicrits to our damages.
+		int iDamageType = GetDamageType();
+		if ( bCriticalHit )
+		{
+			iDamageType |= DMG_CRITICAL;
+		}
+		else if ( bMiniCrit )
+		{
+			iDamageType |= DMG_MINICRITICAL;
+		}
+		
+		// We deal with direct contact, do the regular logic.
+		CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), iDamageType, (bMiniCrit ? TF_DMG_CUSTOM_CLEAVER_CRIT : TF_DMG_CUSTOM_CLEAVER) );
+		Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
+		info.SetReportedPosition( vectorReported);
+		pOther->TakeDamage( info );
+		
+		// Also make them bleed too!
+		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>(m_hLauncher.Get());
+		if (ToTFPlayer(pAttacker) && pTFWeapon)
+			pPlayer->m_Shared.MakeBleed(ToTFPlayer(pAttacker), pTFWeapon, 5.0, TF_BLEEDING_DAMAGE);
+		
+		// Hit player, do impact sound
+		CPVSFilter filter( vecOrigin );
+		EmitSound( filter, pPlayer->entindex(), "Cleaver.ImpactFlesh" );
+		
+	}
+	else
+	{
+		// Nothing interesting here.
+	
+		// Hit something other a player, make a CLANG.
+		CPVSFilter filter( vecOrigin );
+		EmitSound( filter, pPlayer->entindex(), "Cleaver.ImpactWorld" );
+	}
+
+	// Remove.
+	UTIL_Remove( this );
 }
 #endif

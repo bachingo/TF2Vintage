@@ -15,6 +15,7 @@
 #ifdef CLIENT_DLL
 #define CTFJar C_TFJar
 #define CTFJarMilk C_TFJarMilk
+#define CTFCleaver C_TFCleaver
 #endif
 
 class CTFJar : public CTFWeaponBaseGun
@@ -65,5 +66,27 @@ public:
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual const char* ModifyEventParticles( const char* token );
 #endif
+};
+
+class CTFCleaver : public CTFJar
+{
+public:
+	DECLARE_CLASS( CTFCleaver, CTFJar );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	// Server specific.
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+	
+	virtual float		GetProjectileDamage( void )			{ return 50.0; }
+	virtual float		GetProjectileSpeed(void)			{ return 3000.0; }
+	virtual float		GetProjectileGravity(void)			{ return 0.5f; } // Same as pipebomb
+
+	virtual int			GetWeaponID( void ) const 			{ return TF_WEAPON_GRENADE_CLEAVER; }
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_Cleaver"; }
+	virtual float		InternalGetEffectBarRechargeTime()	{ return 6.0; }
+
 };
 #endif // TF_WEAPON_JAR_H

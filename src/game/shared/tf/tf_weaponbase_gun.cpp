@@ -239,6 +239,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		case TF_PROJECTILE_FESTIVE_URINE:
 		case TF_PROJECTILE_BREADMONSTER_JARATE:
 		case TF_PROJECTILE_BREADMONSTER_MADMILK:
+		case TF_PROJECTILE_CLEAVER:
 			pProjectile = FireJar( pPlayer, iProjectile );
 			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 			break;
@@ -253,7 +254,6 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 			break;
 
-		case TF_PROJECTILE_CLEAVER:
 		case TF_PROJECTILE_THROWABLE:
 		case TF_PROJECTILE_NONE:
 		default:
@@ -700,6 +700,9 @@ CBaseEntity *CTFWeaponBaseGun::FireJar( CTFPlayer *pPlayer, int iType )
 		case TF_PROJECTILE_JAR_MILK:
 		case TF_PROJECTILE_BREADMONSTER_MADMILK:
 			pProjectile = CTFProjectile_JarMilk::Create( this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+			break;
+		case TF_PROJECTILE_CLEAVER:
+			pProjectile = CTFProjectile_Cleaver::Create( this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
 			break;
 	}
 	

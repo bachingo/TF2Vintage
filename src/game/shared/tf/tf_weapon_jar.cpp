@@ -199,3 +199,28 @@ const char* C_TFJarMilk::ModifyEventParticles( const char* token )
 }
 #endif
 
+//=============================================================================
+//
+// Weapon Cleaver
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFCleaver, DT_WeaponCleaver)
+
+BEGIN_NETWORK_TABLE( CTFJar, DT_WeaponCleaver )
+#ifdef CLIENT_DLL
+#else
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCleaver )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_cleaver, CTFCleaver );
+PRECACHE_WEAPON_REGISTER( tf_weapon_cleaver );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFCleaver )
+END_DATADESC()
+#endif
+

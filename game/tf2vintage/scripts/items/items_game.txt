@@ -1771,6 +1771,70 @@
 				}
 			}
 		}
+		"weapon_guillotine"
+		{
+			"item_class"	"tf_weapon_cleaver"
+			"base_item_name"	"The Flying Guillotine"
+			"item_type_name"	"#TF_Weapon_Cleaver"
+			"item_name"	"#TF_SD_Cleaver"
+			"item_logname"	"guillotine"
+			"item_iconname"	"guillotine"
+			"item_slot"	"secondary"
+			"anim_slot"	"item1"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver.mdl"
+			"xifier_class_remap"	"guillotine"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -8"
+			}
+			"attributes"
+			{
+				"cleaver description"
+				{
+					"attribute_class"	"desc_cleaver_description"
+					"value"	"1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_deploy"		"Cleaver.Draw"
+				"sound_single_shot"	"Cleaver.Single"
+				"animation_replacement"
+				{
+					"ACT_VM_IDLE"						"ACT_ITEM3_VM_IDLE"
+					"ACT_VM_DRAW"						"ACT_ITEM3_VM_DRAW"
+					"ACT_VM_PRIMARYATTACK"				"ACT_ITEM3_VM_THROW"
+					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_SECONDARY_ALT1_VM_INSPECT_START"
+					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_SECONDARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_SECONDARY_ALT1_VM_INSPECT_END"
+
+				}
+			}
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "0"
+			}
+		}
 		"weapon_annihilator"
 		{
 			"prefab"	"weapon_fireaxe"
@@ -6688,6 +6752,12 @@
 			{
 				"engineer"	"1"
 			}
+		}
+		 "812"
+		{
+			"name"	"The Flying Guillotine"
+			"prefab"		"weapon_guillotine"
+			"year"	"2012"
 		}
 		"813"
 		{

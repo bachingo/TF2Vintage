@@ -19,6 +19,7 @@
 #ifdef CLIENT_DLL
 #define CTFProjectile_Jar C_TFProjectile_Jar
 #define CTFProjectile_JarMilk C_TFProjectile_JarMilk
+#define CTFProjectile_Cleaver C_TFProjectile_Cleaver
 #endif
 
 #ifdef GAME_DLL
@@ -101,6 +102,35 @@ class C_TFProjectile_JarMilk : public C_TFProjectile_Jar
 	virtual void	Precache( void );
 
 	virtual int		GetEffectCondition( void ) { return TF_COND_MAD_MILK; }
+#endif
+};
+
+
+#ifdef GAME_DLL
+class CTFProjectile_Cleaver : public CTFProjectile_Jar
+#else
+class C_TFProjectile_Cleaver : public C_TFProjectile_Jar
+#endif
+{
+public:
+	DECLARE_CLASS(CTFProjectile_Cleaver, CTFProjectile_Jar);
+	DECLARE_NETWORKCLASS();
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	virtual int	GetWeaponID( void ) const 			{ return TF_WEAPON_GRENADE_CLEAVER; }
+
+#ifdef GAME_DLL
+	static CTFProjectile_Cleaver	*Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo );
+
+	virtual void	Precache( void );
+
+	void 			JarTouch( CBaseEntity *pOther );
+	virtual int		GetEffectCondition( void ) { return TF_COND_BLEEDING; }
+
+	private:
+	float		m_flCreationTime;
 #endif
 };
 #endif // TF_PROJECTILE_JAR_H
