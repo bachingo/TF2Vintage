@@ -10,6 +10,10 @@
 #include "particles_new.h"
 #endif
 
+#ifdef GAME_DLL
+ConVar tf2v_use_new_guillotine("tf2v_use_new_guillotine", "0", FCVAR_NOTIFY, "Replaces the Crit and Minicrits for cooldown reduction.");
+#endif
+
 
 #define TF_WEAPON_JAR_MODEL		"models/weapons/c_models/urinejar.mdl"
 #define TF_WEAPON_FESTIVE_URINE_MODEL "models/weapons/c_models/c_xms_urinejar.mdl"
@@ -573,22 +577,26 @@ void CTFProjectile_Cleaver::JarTouch( CBaseEntity *pOther )
 
 	if ( pPlayer )
 	{
-		// We get a MiniCrit if we've been flying in the air for at least a whole second.
+
 		float flAirTime = gpGlobals->curtime - m_flCreationTime;
 				
 		bool bMiniCrit = false;
-		if ( flAirTime >= 1.0 )
+		if ( flAirTime >= 1.0 && !tf2v_use_new_guillotine.GetBool() )
 		{
-			bMiniCrit = true;
-			// Also reduce our cooldown a little.
+				// We get a Minicrit if we've been flying in the air for at least a whole second.
+				bMiniCrit = true;
+		}
+		else if ( flAirTime >= 0.5 && tf2v_use_new_guillotine.GetBool() )
+		{
+			// Reduce our cooldown a little, if we flew over half a second.
 			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
 			if (pWeapon)
-				pWeapon->SetEffectBarProgress( pWeapon->GetEffectBarProgress() * 0.75 ); // 4.5 / 6 = 75%.
+				pWeapon->SetEffectBarProgress( pWeapon->GetEffectBarProgress() * 0.75 ); // 4.5s / 6s = 75%.
 		}
 		
 		// We get crits if we hit someone stunned.
 		bool bCriticalHit = false;
-		if ( pPlayer->m_Shared.InCond(TF_COND_STUNNED) )
+		if ( pPlayer->m_Shared.InCond(TF_COND_STUNNED) && !tf2v_use_new_guillotine.GetBool() )
 			bCriticalHit = true;
 		
 		// Add the crits/minicrits to our damages.
