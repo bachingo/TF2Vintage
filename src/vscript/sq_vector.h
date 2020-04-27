@@ -16,6 +16,7 @@ SQInteger VectorGet( HSQUIRRELVM pVM );
 SQInteger VectorSet( HSQUIRRELVM pVM );
 SQInteger VectorToString( HSQUIRRELVM pVM );
 SQInteger VectorTypeInfo( HSQUIRRELVM pVM );
+SQInteger VectorEquals( HSQUIRRELVM pVM );
 SQInteger VectorIterate( HSQUIRRELVM pVM );
 SQInteger VectorAdd( HSQUIRRELVM pVM );
 SQInteger VectorSubtract( HSQUIRRELVM pVM );
