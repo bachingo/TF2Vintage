@@ -2135,7 +2135,8 @@ const char *CTFWeaponBase::GetTracerType( void )
  		float flTimeLeft = m_flEffectBarRegenTime - gpGlobals->curtime;
  		float flRechargeTime = InternalGetEffectBarRechargeTime();
 		CALL_ATTRIB_HOOK_FLOAT( flRechargeTime, charge_recharge_rate );
-
+		CALL_ATTRIB_HOOK_FLOAT( flRechargeTime, effectbar_recharge_rate );
+		
 		// Don't divide by zero
 		flRechargeTime = Max( flRechargeTime, FLT_EPSILON );
 		
