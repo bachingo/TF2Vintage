@@ -2412,6 +2412,7 @@
 			"item_iconname"	"hot_hand"
 			"image_inventory"	"backpack/weapons/c_models/c_slapping_glove/w_slapping_glove"
 			"model_player"		"models/weapons/c_models/c_slapping_glove/c_slapping_glove.mdl"
+			"model_world"		"models/weapons/c_models/c_slapping_glove/w_slapping_glove.mdl"
 			"attach_to_hands" "1"
 			"propername"	"1"
 			"used_by_classes"
@@ -6993,6 +6994,12 @@
 			"prefab"	"weapon_trenchgun"
 			"year"				"2014"
 			"particle_suffix"	"panic_attack"
+		}
+		"1181"
+		{
+			"name"			"The Hot Hand"
+			"year"			"2017"
+			"prefab"		"weapon_slapper"
 		}
 		"1190"
 		{

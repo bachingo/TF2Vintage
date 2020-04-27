@@ -27,16 +27,25 @@ public:
 	DECLARE_CLASS( CTFSlap, CTFWeaponBaseMelee );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
+	
+#ifdef GAME_DLL
 
-	CTFSlap() {}
+	CTFSlap();
+
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_SLAP; }
 	virtual void		PrimaryAttack();
+	virtual void		ItemPostFrame( void );
+	virtual void		WeaponIdle( void );
+	virtual bool CanHolster( void ) const;
 	virtual void		PrimaryAttackFollowup();
-	virtual void		SwingFollowup( CTFPlayer *pPlayer );
 
 private:
 
 	CTFSlap( const CTFSlap & ) {}
+	float m_flNextSlapTime;
+	bool  m_bWaitforSecondSlap;
+#endif
+
 };
 
 #endif // TF_WEAPON_SLAP_H

@@ -20,7 +20,7 @@
 
 //=============================================================================
 //
-// Weapon FireAxe tables.
+// Weapon Slapper table tables.
 //
 IMPLEMENT_NETWORKCLASS_ALIASED( TFSlap, DT_TFWeaponSlap )
 
@@ -34,20 +34,63 @@ LINK_ENTITY_TO_CLASS( tf_weapon_slap, CTFSlap );
 
 PRECACHE_WEAPON_REGISTER( tf_weapon_slap );
 
+#define TF_NEXT_SLAP_TIME 0.5f
+
+#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Sets up our attack.
 //-----------------------------------------------------------------------------
-void CTFSlap::PrimaryAttack()
+CTFSlap::CTFSlap()
 {
-	BaseClass::PrimaryAttack();
-	PrimaryAttackFollowup();
+	m_flNextSlapTime = 0;
+	m_bWaitforSecondSlap = false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Second slap.
+// Purpose: Sets up our attack.
 //-----------------------------------------------------------------------------
-void CTFSlap::PrimaryAttackFollowup()
+void CTFSlap::PrimaryAttack( void )
 {
+	BaseClass::PrimaryAttack();
+	m_flNextSlapTime = gpGlobals->curtime + TF_NEXT_SLAP_TIME;
+	m_bWaitforSecondSlap = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for checking if we should start the second slap attack trace.
+//-----------------------------------------------------------------------------
+void CTFSlap::ItemPostFrame( void )
+{
+	if ( ( ( m_flNextSlapTime > 0 ) && ( gpGlobals->curtime >= m_flNextSlapTime ) ) && m_bWaitforSecondSlap ) 
+		PrimaryAttackFollowup();
+	return BaseClass::ItemPostFrame();
+}
+void CTFSlap::WeaponIdle( void )
+{
+	if ( ( ( m_flNextSlapTime > 0 ) && ( gpGlobals->curtime >= m_flNextSlapTime ) ) && m_bWaitforSecondSlap ) 
+		PrimaryAttackFollowup();
+	return BaseClass::WeaponIdle();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFSlap::CanHolster( void ) const
+{
+	// Haven't slapped again, wait.
+	if (gpGlobals->curtime <= m_flNextSlapTime)
+		return false;
+	
+	return BaseClass::CanHolster();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Second slap trace. Do this ~0.5s after the first slap.
+//-----------------------------------------------------------------------------
+void CTFSlap::PrimaryAttackFollowup( void )
+{
+	m_bWaitforSecondSlap = false;
+	
 	// Get the current player.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )
@@ -60,26 +103,9 @@ void CTFSlap::PrimaryAttackFollowup()
 	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 	m_bConnected = false;
 
-#ifdef GAME_DLL
 	pPlayer->EndClassSpecialSkill();
-#endif
-
+	
 	// Swing the weapon.
-	SwingFollowup( pPlayer );
-
-	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != kCritType_None;
-
-#if !defined( CLIENT_DLL ) 
-	pPlayer->SpeakWeaponFire();
-	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACritical() );
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Logic for second slap. We don't play a new animation/sound.
-//-----------------------------------------------------------------------------
-void CTFSlap::SwingFollowup(CTFPlayer *pPlayer)
-{
 	CalcIsAttackCritical();
 	CalcIsAttackMiniCritical();
 
@@ -92,4 +118,11 @@ void CTFSlap::SwingFollowup(CTFPlayer *pPlayer)
 	SetWeaponIdleTime( m_flNextPrimaryAttack + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdleEmpty );
 
 	m_flSmackTime = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flSmackDelay;
+
+	m_bCurrentAttackIsMiniCrit = pPlayer->m_Shared.GetNextMeleeCrit() != kCritType_None;
+
+	pPlayer->SpeakWeaponFire();
+	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACritical() );
 }
+
+#endif

@@ -125,6 +125,7 @@
 	"The Quickiebomb Launcher"						"1"
 	"The Iron Bomber"								"1"
 	"Panic Attack Shotgun"							"1"
+	"The Hot Hand"									"1"
 	"The Second Banana"								"1"
 	"Spawn Camper"									"1"
 	"Ludmila"										"1"
