@@ -204,4 +204,22 @@ public:
 
 };
 
+
+// Sniper logic used for the Classic.
+
+#if defined CLIENT_DLL
+#define CTFSniperRifle_Classic C_TFSniperRifle_Classic
+#endif
+
+class CTFSniperRifle_Classic : public CTFSniperRifle
+{
+public:
+
+	DECLARE_CLASS( CTFSniperRifle_Classic, CTFSniperRifle )
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_CLASSIC; }
+
+};
 #endif // TF_WEAPON_SNIPERRIFLE_H
