@@ -2027,9 +2027,13 @@ const char *CTFWeaponBase::GetTracerType( void )
 	if ( GetWeaponID() == TF_WEAPON_MINIGUN )
 		return "BrightTracer";
 	
+	if ( GetWeaponID() == TF_WEAPON_SNIPERRIFLE_CLASSIC )
+		return "tfc_sniper_distortion_trail";
+	
 	int nSniperFiresTracer = 0;
 	CALL_ATTRIB_HOOK_INT(nSniperFiresTracer, sniper_fires_tracer);
-	if (nSniperFiresTracer)
+	CALL_ATTRIB_HOOK_INT(nSniperFiresTracer, sniper_fires_tracer_HIDDEN);
+	if (nSniperFiresTracer || (ToTFPlayer(GetOwner()) && (ToTFPlayer(GetOwner())->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF))))
 	{
 		if (GetOwner() )
 		{

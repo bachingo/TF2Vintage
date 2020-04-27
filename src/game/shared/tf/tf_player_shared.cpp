@@ -4800,12 +4800,8 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 				
 #endif
 				const char *pszTracerEffect = GetTracerType();
-
-				// Tracers use an alternate logic to render them.
-				int nFireAltTracer = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFWeapon, nFireAltTracer, sniper_fires_tracer);
-				CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFWeapon, nFireAltTracer, sniper_fires_tracer_HIDDEN);
-				if (nFireAltTracer != 0)
+				// Use alternate tracer logic on Sniper Rifles when zoomed in.
+				if (( pTFWeapon && WeaponID_IsSniperRifle(pTFWeapon->GetWeaponID()) ) && m_Shared.InCond(TF_COND_ZOOMED))
 				{
 					// Set up our beam starting point. This preserves location, even when zoomed.
 					Vector vecStartSniper;
