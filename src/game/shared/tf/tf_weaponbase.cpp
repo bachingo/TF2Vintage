@@ -2177,6 +2177,25 @@ bool CTFWeaponBase::IsHonorBound( void ) const
 	return nHonorBound == 1;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating penetrating shots.
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsPenetrating(void)
+{
+	if (GetCustomDamageType() == TF_DMG_CUSTOM_PENETRATE_ALL_PLAYERS)
+		return true;
+	
+	int iShotsPenetrate = 0;
+	if ( IsEnergyWeapon() )
+		CALL_ATTRIB_HOOK_INT(iShotsPenetrate, energy_weapon_penetration);
+	
+	CALL_ATTRIB_HOOK_INT(iShotsPenetrate, projectile_penetration);
+	CALL_ATTRIB_HOOK_INT(iShotsPenetrate, shot_penetrate_all_players);
+	
+	return (iShotsPenetrate != 0);
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Used for calculating energy weapon logic.
 //-----------------------------------------------------------------------------

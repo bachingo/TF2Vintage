@@ -329,6 +329,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	bool				IsHonorBound( void ) const;
 
+	bool 				IsPenetrating(void);
+
 	// Energy Weapons
 	bool IsEnergyWeapon(void);
 	float GetEnergyPercentage(void);

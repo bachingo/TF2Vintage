@@ -114,6 +114,8 @@ public:
 
 	float		 GetJarateTime( void );
 
+	bool 		IsPenetrating(void);
+	
 #ifdef CLIENT_DLL
 	float GetHUDDamagePerc( void );
 #endif

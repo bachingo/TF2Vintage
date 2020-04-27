@@ -591,11 +591,12 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 float CTFSniperRifle::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	float flFamage = Max( m_flChargedDamage.Get(), TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+	float flDamage = Max( m_flChargedDamage.Get(), TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+	// Fully charged? Add extra damage attribute.
 	if ( m_flChargedDamage == TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX )
-		CALL_ATTRIB_HOOK_FLOAT (flFamage, sniper_full_charge_damage_bonus);
+		CALL_ATTRIB_HOOK_FLOAT (flDamage, sniper_full_charge_damage_bonus);
 	
-	return flFamage;
+	return flDamage;
 }
 
 //-----------------------------------------------------------------------------
@@ -745,6 +746,25 @@ float CTFSniperRifle::GetJarateTime( void )
 		return RemapValClamped( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX, 2.0, flJarateDuration );
 
 	return 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating penetrating shots.
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::IsPenetrating(void)
+{
+	// If we penetrate on full charges, check our charge level.
+	if ( m_flChargedDamage == TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX )
+	{
+		int nFullChargePenetrate = 0;
+		CALL_ATTRIB_HOOK_INT(nFullChargePenetrate, sniper_penetrate_players_when_charged);
+		
+		if ( nFullChargePenetrate != 0 )
+			return true;
+		
+	}
+	
+	return BaseClass::IsPenetrating();
 }
 
 //-----------------------------------------------------------------------------
