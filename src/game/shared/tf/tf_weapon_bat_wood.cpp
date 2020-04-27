@@ -21,7 +21,7 @@
 
 ConVar sv_proj_stunball_damage( "sv_proj_stunball_damage", "15", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball damage." );
 ConVar tf_scout_stunball_regen_rate( "tf_scout_stunball_regen_rate", "15.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball regen rate." );
-ConVar tf_scout_stunball_base_speed( "tf_scout_stunball_base_speed", "2990.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball base speed." );
+ConVar tf_scout_stunball_base_speed( "tf_scout_stunball_base_speed", "3000.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball base speed." );
 ConVar tf_scout_bat_launch_delay( "tf_scout_bat_launch_delay", "0.1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies delay for stunball launch" );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFBat_Wood, DT_TFWeaponBat_Wood )
@@ -336,3 +336,91 @@ void C_TFBat_Wood::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QA
 	BaseClass::CreateMove( flInputSampleTime, pCmd, vecOldViewAngles );
 }
 #endif
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFBat_Giftwrap, DT_TFWeaponBat_Giftwrap )
+
+BEGIN_NETWORK_TABLE( CTFBat_Giftwrap, DT_TFWeaponBat_Giftwrap )
+#ifdef CLIENT_DLL
+	RecvPropTime( RECVINFO( m_flNextFireTime ) ),
+	RecvPropBool( RECVINFO( m_bFiring ) ),
+#else
+	SendPropTime( SENDINFO( m_flNextFireTime ) ),
+	SendPropBool( SENDINFO( m_bFiring ) ),
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFBat_Giftwrap )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_bat_giftwrap, CTFBat_Giftwrap );
+PRECACHE_WEAPON_REGISTER( tf_weapon_bat_giftwrap );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFBat_Giftwrap::Precache( void )
+{
+	PrecacheModel( TF_BAUBLE_VIEWMODEL );
+	BaseClass::Precache();
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFBat_Giftwrap::LaunchBallThink( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if ( pPlayer )
+	{
+#ifdef GAME_DLL
+		LaunchBall( GetTFPlayerOwner() );
+		pPlayer->RemoveAmmo( 1, m_iPrimaryAmmoType );
+
+		CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
+#endif
+		StartEffectBarRegen();
+	}
+
+	m_bFiring = false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Launch a ball
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFBat_Giftwrap::LaunchBall( CTFPlayer *pPlayer )
+{
+	WeaponSound( SPECIAL2 );
+
+#ifdef GAME_DLL
+	AngularImpulse spin = AngularImpulse( random->RandomInt( -1200, 1200 ), 0, 0 );
+
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+	// The ball always launches at the player's crouched eye position
+	// so that it always passes through the bbox
+	Vector vecSrc = pPlayer->GetAbsOrigin() + VEC_DUCK_VIEW_SCALED( pPlayer );
+	vecSrc +=  vecForward * -64.0f;
+
+
+	//NDebugOverlay::Line( pPlayer->EyePosition(), vecSrc, 0, 255, 0, true, 5.0f );
+	
+	Vector vecVelocity = ( vecForward * tf_scout_stunball_base_speed.GetFloat() ) + ( vecUp * 200.0f );
+
+	//GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, false );
+
+	CTFStunBall *pProjectile = CTFBauble::Create(this, vecSrc, pPlayer->EyeAngles(), vecVelocity, pPlayer, pPlayer, spin, GetTFWpnData() );
+	if ( pProjectile )
+	{
+		CalcIsAttackCritical();
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( sv_proj_stunball_damage.GetFloat() );
+	}
+
+	return pProjectile;
+#endif
+	return NULL;
+}

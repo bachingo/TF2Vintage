@@ -13,9 +13,11 @@
 #include "tf_weaponbase_melee.h"
 
 #define TF_STUNBALL_VIEWMODEL "models/weapons/v_models/v_baseball.mdl"
+#define TF_BAUBLE_VIEWMODEL "models/weapons/c_models/c_xms_festive_ornament.mdl"
 
 #ifdef CLIENT_DLL
 #define CTFBat_Wood C_TFBat_Wood
+#define CTFBat_Giftwrap C_TFBat_Giftwrap
 #endif
 
 class CTFBat_Wood : public CTFWeaponBaseMelee
@@ -59,6 +61,34 @@ private:
 
 private:
 	CTFBat_Wood( const CTFBat_Wood & ) {}
+
+	// prediction
+	CNetworkVar( float, m_flNextFireTime );
+	CNetworkVar( bool, m_bFiring );
+};
+
+class CTFBat_Giftwrap : public CTFBat_Wood
+{
+public:
+
+	DECLARE_CLASS( CTFBat_Giftwrap, CTFBat_Wood );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual void		Precache( void );
+	virtual int			GetWeaponID( void ) const					{ return TF_WEAPON_BAT_GIFTWRAP; }
+
+	CBaseEntity			*LaunchBall( CTFPlayer *pPlayer );
+	virtual void		LaunchBallThink( void );
+
+#ifdef CLIENT_DLL
+
+	virtual const char	*GetStunballViewmodel( void )				{ return ( m_bHasBall ? TF_BAUBLE_VIEWMODEL : NULL_STRING ); }
+
+private:
+	bool m_bHasBall;
+#endif
+
 
 	// prediction
 	CNetworkVar( float, m_flNextFireTime );

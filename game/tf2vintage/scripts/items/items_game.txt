@@ -6464,6 +6464,57 @@
 				}
 			}
 		}
+		"648"
+		{
+			"name"			"The Wrap Assassin"
+			"prefab"		"weapon_bat"
+			"year"			"2011"
+			"item_class"	"tf_weapon_bat_giftwrap"
+			"item_name"	"#TF_BallBuster"
+			"item_description"	"#TF_BallBuster_Desc"
+			"item_logname"	"wrap_assassin"
+			"item_iconname"	"wrap_assassin"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_xms_giftwrap/c_xms_giftwrap"			
+			"model_player"	"models/workshop/weapons/c_models/c_xms_giftwrap/c_xms_giftwrap.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"mod bat launches ornaments"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0.35"
+				}
+				"effect bar recharge rate increased"
+				{
+					"attribute_class"	"effectbar_recharge_rate"
+					"value" "0.75"
+				}
+			}
+			"visuals"
+			{
+				"sound_deploy"			"BallBuster.Ornament_DrawCatch"
+				"sound_melee_hit"		"BallBuster.HitFlesh"
+				"sound_melee_hit_world"	"BallBuster.HitWorld"
+				"sound_special2"		"BallBuster.HitBall"
+			}
+			"visuals_red"
+			{
+				"skin"	"2"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
+		}
 		"656"
 		{
 			"name"	"The Holiday Punch"

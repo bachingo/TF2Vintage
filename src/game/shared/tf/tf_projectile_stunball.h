@@ -18,6 +18,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFStunBall C_TFStunBall
+#define CTFBauble C_TFBauble
 #endif
 
 #ifdef GAME_DLL
@@ -72,6 +73,52 @@ public:
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	CreateTrails( void );
 	virtual int		DrawModel( int flags );
+#endif
+
+private:
+#ifdef GAME_DLL
+	CNetworkVar( bool, m_bCritical );
+
+	CHandle<CBaseEntity>	m_hEnemy;
+	EHANDLE					m_Scorer;
+	EHANDLE					m_hSpriteTrail;
+#else
+	bool					m_bCritical;
+#endif
+
+	float					m_flCreationTime;
+};
+
+#ifdef GAME_DLL
+class CTFBauble : public CTFStunBall
+#else
+class C_TFBauble : public C_TFStunBall
+#endif
+{
+public:
+	DECLARE_CLASS( CTFBauble, CTFStunBall );
+	DECLARE_NETWORKCLASS();
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	virtual int			GetWeaponID( void ) const 	{ return TF_WEAPON_BAT_GIFTWRAP; }
+
+#ifdef GAME_DLL
+	static CTFBauble 	*Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo );
+
+	virtual void	Precache( void );
+	virtual void	Spawn( void );
+	
+	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+
+	void			BaubleTouch( CBaseEntity *pOther );
+
+	void			SetCritical( bool bCritical )	{ m_bCritical = bCritical; }
+
+	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
+	virtual void	Shatter( trace_t *pTrace, int bitsDamageType );
+
 #endif
 
 private:
