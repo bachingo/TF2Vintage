@@ -6508,7 +6508,7 @@
 			}
 			"visuals_red"
 			{
-				"skin"	"2"
+				"skin"	"0"
 			}
 			"visuals_blu"
 			{
