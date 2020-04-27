@@ -38,6 +38,15 @@
 	#undef RegisterClass
 #endif
 
+// we don't want bad actors being malicious
+extern "C" 
+{
+	SQRESULT sqstd_loadfile(HSQUIRRELVM, SQChar const *, SQBool)
+	{
+		return SQ_ERROR;
+	}
+}
+
 
 typedef struct
 {
@@ -137,6 +146,7 @@ private:
 	bool						CreateInstance( ScriptClassDesc_t *pClassDesc, ScriptInstance_t *pInstance, SQRELEASEHOOK fnRelease );
 
 	void						RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc = NULL );
+	void						RegisterDocumentation( HSQOBJECT pClosure, ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc = NULL );
 
 	HSQOBJECT					LookupObject( char const *szName, HSCRIPT hScope = NULL, bool bRefCount = true );
 
@@ -1116,58 +1126,57 @@ bool CSquirrelVM::CreateInstance( ScriptClassDesc_t *pClassDesc, ScriptInstance_
 
 void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc )
 {
-	static char szSignature[512];
 	if ( pFunction->m_desc.m_Parameters.Count() > MAX_FUNCTION_PARAMS )
 		return;
 
 	char szParamCheck[ MAX_FUNCTION_PARAMS+1 ];
 	szParamCheck[0] = '.';
 
-	int i = 0;
-	for ( ; i < pFunction->m_desc.m_Parameters.Count(); ++i )
+	char *pCurrent = &szParamCheck[1];
+	for ( int i=0; i < pFunction->m_desc.m_Parameters.Count(); ++i, pCurrent++ )
 	{
-		switch ( pFunction->m_desc.m_Parameters[ i ] )
+		switch ( pFunction->m_desc.m_Parameters[i] )
 		{
 			case FIELD_INTEGER:
 			{
-				szParamCheck[ i + 1 ] = 'n';
+				*pCurrent = 'n';
 				break;
 			}
 			case FIELD_FLOAT:
 			{
-				szParamCheck[ i + 1 ] = 'n';
+				*pCurrent = 'n';
 				break;
 			}
 			case FIELD_BOOLEAN:
 			{
-				szParamCheck[ i + 1 ] = 'b';
+				*pCurrent = 'b';
 				break;
 			}
 			case FIELD_VECTOR:
 			{
-				szParamCheck[ i + 1 ] = 'x';
+				*pCurrent = 'x';
 				break;
 			}
 			case FIELD_CSTRING:
 			{
-				szParamCheck[ i + 1 ] = 's';
+				*pCurrent = 's';
 				break;
 			}
 			case FIELD_HSCRIPT:
 			{
-				szParamCheck[ i + 1 ] = '.';
+				*pCurrent = '.';
 				break;
 			}
 			default:
 			{
-				szParamCheck[ i + 1 ] = '\0';
+				*pCurrent = '\0';
 				break;
 			}
 		}
 	}
 
 	// null terminate
-	szParamCheck[ i + 1 ] = '\0';
+	*pCurrent = '\0';
 
 	HSQOBJECT pClosure;
 	
@@ -1177,10 +1186,119 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 	pData->m_pFunctionBinding = pFunction;
 	
 	sq_newclosure( GetVM(), &CSquirrelVM::TranslateCall, 1 );
-		sq_getstackobj( GetVM(), -1, &pClosure );
-		sq_setnativeclosurename( GetVM(), -1, pFunction->m_desc.m_pszScriptName );
-		sq_setparamscheck( GetVM(), pFunction->m_desc.m_Parameters.Count() + 1, szParamCheck );
+	sq_getstackobj( GetVM(), -1, &pClosure );
+	sq_setnativeclosurename( GetVM(), -1, pFunction->m_desc.m_pszScriptName );
+	sq_setparamscheck( GetVM(), pFunction->m_desc.m_Parameters.Count() + 1, szParamCheck );
+
 	sq_createslot( GetVM(), -3 );
+
+	if ( m_hDeveloper.GetInt() )
+	{
+		if ( !pFunction->m_desc.m_pszDescription || *pFunction->m_desc.m_pszDescription == *SCRIPT_HIDE )
+			return;
+
+		RegisterDocumentation( pClosure, pFunction, pClassDesc );
+	}
+}
+
+void CSquirrelVM::RegisterDocumentation( HSQOBJECT pClosure, ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc )
+{
+	char szName[128]{};
+	if ( pClassDesc )
+	{
+		V_strcat( szName, pClassDesc->m_pszScriptName, sizeof szName );
+		V_strcat( szName, "::", sizeof szName );
+	}
+	V_strcat( szName, pFunction->m_desc.m_pszScriptName, sizeof szName );
+
+	char const *pszReturnType = "void";
+	switch ( pFunction->m_desc.m_ReturnType )
+	{
+		case FIELD_VOID:
+			pszReturnType = "void";
+			break;
+		case FIELD_FLOAT:
+			pszReturnType = "float";
+			break;
+		case FIELD_CSTRING:
+			pszReturnType = "string";
+			break;
+		case FIELD_VECTOR:
+			pszReturnType = "Vector";
+			break;
+		case FIELD_INTEGER:
+			pszReturnType = "int";
+			break;
+		case FIELD_BOOLEAN:
+			pszReturnType = "bool";
+			break;
+		case FIELD_CHARACTER:
+			pszReturnType = "char";
+			break;
+		case FIELD_HSCRIPT:
+			pszReturnType = "handle";
+			break;
+		default:
+			pszReturnType = "<unknown>";
+			break;
+	}
+
+	char szSignature[512]{};
+	V_strcat( szSignature, pszReturnType, sizeof szSignature );
+	V_strcat( szSignature, " ", sizeof szSignature );
+	V_strcat( szSignature, szName, sizeof szSignature );
+	V_strcat( szSignature, "(", sizeof szSignature );
+	FOR_EACH_VEC( pFunction->m_desc.m_Parameters, i )
+	{
+		if ( i != 0 )
+			V_strcat( szSignature, ", ", sizeof szSignature );
+
+		char const *pszArgumentType = "int";
+		switch ( pFunction->m_desc.m_Parameters[i] )
+		{
+			case FIELD_FLOAT:
+				pszArgumentType = "float";
+				break;
+			case FIELD_CSTRING:
+				pszArgumentType = "string";
+				break;
+			case FIELD_VECTOR:
+				pszArgumentType = "Vector";
+				break;
+			case FIELD_INTEGER:
+				pszArgumentType = "int";
+				break;
+			case FIELD_BOOLEAN:
+				pszArgumentType = "bool";
+				break;
+			case FIELD_CHARACTER:
+				pszArgumentType = "char";
+				break;
+			case FIELD_HSCRIPT:
+				pszArgumentType = "handle";
+				break;
+			default:
+				pszReturnType = "<unknown>";
+				break;
+		}
+
+		V_strcat( szSignature, pszArgumentType, sizeof szSignature );
+	}
+	V_strcat( szSignature, ")", sizeof szSignature );
+
+	SQObjectPtr pRegisterDocumentation = LookupObject( "RegisterFunctionDocumentation", NULL, false );
+	sq_pushobject( GetVM(), pRegisterDocumentation );
+	// push our parameters
+	sq_pushroottable( GetVM() );
+	sq_pushobject( GetVM(), pClosure );
+	sq_pushstring( GetVM(), szName, -1 );
+	sq_pushstring( GetVM(), szSignature, -1 );
+	sq_pushstring( GetVM(), pFunction->m_desc.m_pszDescription, -1 );
+	// this pops off the number of parameters automatically
+	sq_call( GetVM(), 5, SQFalse, SQTrue );
+
+	// pop off the closure
+	sq_pop( GetVM(), 1 );
 }
 
 SQInteger CSquirrelVM::CallConstructor( HSQUIRRELVM pVM )
