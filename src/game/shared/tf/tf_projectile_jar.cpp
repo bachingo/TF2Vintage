@@ -471,6 +471,7 @@ void CTFProjectile_JarMilk::Precache( void )
 
 	BaseClass::Precache();
 }
+#endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED(TFProjectile_Cleaver, DT_TFProjectile_Cleaver)
 
@@ -499,6 +500,7 @@ void CTFProjectile_Cleaver::Precache( void )
 }
 #endif
 
+#ifdef GAME_DLL
 CTFProjectile_Cleaver *CTFProjectile_Cleaver::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo )
 {
 	CTFProjectile_Cleaver *pCleaver = static_cast<CTFProjectile_Cleaver *>( CBaseEntity::CreateNoSpawn( "tf_projectile_cleaver", vecOrigin, vecAngles, pOwner ) );
