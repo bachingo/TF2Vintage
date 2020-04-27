@@ -4655,6 +4655,9 @@ int	CTFPlayerShared::GetNumKillsInTime(float flTime)
 //-----------------------------------------------------------------------------
 void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int nDamageType, int nCustomDamageType /*= TF_DMG_CUSTOM_NONE*/)
 {
+	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+	CTFWeaponBase *pTFWeapon = dynamic_cast< CTFWeaponBase* >(pWeapon);
+
 	// Fire a bullet (ignoring the shooter).
 	Vector vecStart = info.m_vecSrc;
 	Vector vecEnd = vecStart + info.m_vecDirShooting * info.m_flDistance;
@@ -4744,11 +4747,9 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 				int iUseAttachment = TRACER_DONT_USE_ATTACHMENT;
 				int iAttachment = 1;
 
-				C_BaseCombatWeapon *pWeapon = GetActiveWeapon();
 
 				if (pWeapon)
 				{
-					C_TFWeaponBase *pTFWeapon = dynamic_cast< C_TFWeaponBase* >( pWeapon );
 					if ( pTFWeapon )
 					{
 						C_BaseViewModel *vm = pTFWeapon->GetViewmodelAddon();
@@ -4776,7 +4777,6 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 				else if (!IsDormant())
 				{
 					// fill in with third person weapon model index
-					C_BaseCombatWeapon *pWeapon = GetActiveWeapon();
 
 					if (pWeapon)
 					{
@@ -4797,10 +4797,45 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 						}
 					}
 				}
+				
+#endif
+				const char *pszTracerEffect = GetTracerType();
 
-				if (tf_useparticletracers.GetBool())
+				// Tracers use an alternate logic to render them.
+				int nFireAltTracer = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFWeapon, nFireAltTracer, sniper_fires_tracer);
+				CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFWeapon, nFireAltTracer, sniper_fires_tracer_HIDDEN);
+				if (nFireAltTracer != 0)
 				{
-					const char *pszTracerEffect = GetTracerType();
+					// Set up our beam starting point. This preserves location, even when zoomed.
+					Vector vecStartSniper;
+					Vector vForward, vRight, vUp;
+					AngleVectors(EyeAngles(), &vForward, &vRight, &vUp);
+
+					vecStartSniper = trace.startpos - (vForward * 60.9f)
+													- (vRight * 13.1f)
+													- (vUp * -15.1f);
+
+					if (pszTracerEffect && pszTracerEffect[0])
+					{
+#ifdef GAME_DLL
+						te_tf_particle_effects_control_point_t controlPoint = { PATTACH_WORLDORIGIN, trace.endpos };
+						CBroadcastNonOwnerRecipientFilter filter( this );
+						TE_TFParticleEffectComplex(filter, 0.0f, pszTracerEffect, vecStartSniper, QAngle(0, 0, 0), NULL, &controlPoint, pWeapon, PATTACH_CUSTOMORIGIN);
+#else
+						CSmartPtr<CNewParticleEffect> pEffect = pWeapon->ParticleProp()->Create(pszTracerEffect, PATTACH_CUSTOMORIGIN, 0);
+						if (pEffect.IsValid() && pEffect->IsValid())
+						{
+							pEffect->SetSortOrigin(vecStartSniper);
+							pEffect->SetControlPoint(0, vecStartSniper);
+							pEffect->SetControlPoint(1, trace.endpos);
+						}
+#endif
+					}
+				}
+#ifdef CLIENT_DLL
+				else if (tf_useparticletracers.GetBool())
+				{
 					if (pszTracerEffect && pszTracerEffect[0])
 					{
 						char szTracerEffect[128];
@@ -4810,6 +4845,7 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 							pszTracerEffect = szTracerEffect;
 						}
 
+						
 						UTIL_ParticleTracer(pszTracerEffect, vecStart, trace.endpos, entindex(), iUseAttachment, true);
 					}
 				}

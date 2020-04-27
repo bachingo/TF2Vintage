@@ -519,6 +519,19 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 		HandleFireOnEmpty();
 		return;
 	}
+	
+	int nRequiresZoom = 0;
+	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
+	if ( nRequiresZoom && !pPlayer->m_Shared.InCond(TF_COND_ZOOMED) )
+	{
+		// Make a fizzing noise, and draw sparks.
+		WeaponSound( SPECIAL2 );
+#ifdef CLIENT_DLL
+		ParticleProp()->Init( this );
+		ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
+#endif	
+		return;
+	}
 
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return;
@@ -578,7 +591,11 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 float CTFSniperRifle::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	return Max( m_flChargedDamage.Get(), TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+	float flFamage = Max( m_flChargedDamage.Get(), TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+	if ( m_flChargedDamage == TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX )
+		CALL_ATTRIB_HOOK_FLOAT (flFamage, sniper_full_charge_damage_bonus);
+	
+	return flFamage;
 }
 
 //-----------------------------------------------------------------------------

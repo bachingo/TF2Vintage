@@ -214,14 +214,7 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	if ( iWeapon != TF_WEAPON_MINIGUN )
 	{
 		fireInfo.m_iTracerFreq = 2;
-	}
-
-	int nTracerEveryShot = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nTracerEveryShot, sniper_fires_tracer );
-	if (nTracerEveryShot )
-	{
-		fireInfo.m_iTracerFreq = 1;
-	}		
+	}	
 		
 	// Reset multi-damage structures.
 	ClearMultiDamage();
