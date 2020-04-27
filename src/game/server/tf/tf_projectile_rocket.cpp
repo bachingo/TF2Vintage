@@ -58,6 +58,7 @@ void CTFProjectile_Rocket::Spawn()
 void CTFProjectile_Rocket::Precache()
 {
 	PrecacheModel( ROCKET_MODEL );
+	PrecacheModel( MINIROCKET_MODEL );
 	PrecacheModel( "models/weapons/w_models/w_rocketbeta.mdl" );
 	
 	PrecacheTeamParticles( "critical_rocket_%s", true );
