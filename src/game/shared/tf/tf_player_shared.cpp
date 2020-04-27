@@ -4801,7 +4801,7 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 #endif
 				const char *pszTracerEffect = GetTracerType();
 				// Use alternate tracer logic on Sniper Rifles when zoomed in.
-				if (( pTFWeapon && WeaponID_IsSniperRifle(pTFWeapon->GetWeaponID()) ) && m_Shared.InCond(TF_COND_ZOOMED))
+				if ( ( pTFWeapon && WeaponID_IsSniperRifle(pTFWeapon->GetWeaponID()) ) && m_Shared.InCond(TF_COND_ZOOMED) )
 				{
 					// Set up our beam starting point. This preserves location, even when zoomed.
 					Vector vecStartSniper;
@@ -4856,10 +4856,20 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 
 		// Server specific.
 #ifndef CLIENT_DLL
-		// See what material we hit.
-		CTakeDamageInfo dmgInfo( this, info.m_pAttacker, GetActiveWeapon(), info.m_flDamage, nDamageType, nCustomDamageType );
-		CalculateBulletDamageForce(&dmgInfo, info.m_iAmmoType, info.m_vecDirShooting, trace.endpos, 1.0);	//MATTTODO bullet forces
-		trace.m_pEnt->DispatchTraceAttack(dmgInfo, info.m_vecDirShooting, &trace);
+		if (!pTFWeapon->IsPenetrating() )
+		{
+			// See what material we hit.
+			CTakeDamageInfo dmgInfo( this, info.m_pAttacker, GetActiveWeapon(), info.m_flDamage, nDamageType, nCustomDamageType );
+			CalculateBulletDamageForce(&dmgInfo, info.m_iAmmoType, info.m_vecDirShooting, trace.endpos, 1.0);	//MATTTODO bullet forces
+			trace.m_pEnt->DispatchTraceAttack(dmgInfo, info.m_vecDirShooting, &trace);
+		}
+		else
+		{
+			// Placeholder for penetration mechanics.
+			
+			
+			
+		}
 #endif
 	}
 }
