@@ -270,22 +270,25 @@ int CObjectSapper::OnTakeDamage( const CTakeDamageInfo &info )
 	if ( !GetParentObject() )
 		return BaseClass::OnTakeDamage( info );
 
-	CTakeDamageInfo newInfo = info;
-	newInfo.AddDamageType( DMG_PLASMA );
-
-	CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( GetParentObject() );
-	if ( pTeleporter )
+	if( !(info.GetDamageType() & DMG_PLASMA ) )
 	{
-		CObjectTeleporter *pSibling = pTeleporter->GetMatchingTeleporter();
-		if ( pSibling && pSibling->HasSapper() )
-		{
-			for ( int i=0; i<pSibling->GetNumObjectsOnMe(); ++i )
-			{
-				CBaseObject *pObject = pSibling->GetBuildPointObject( i );
-				if ( !pObject || !pObject->IsHostileUpgrade() )
-					continue;
+		CTakeDamageInfo newInfo = info;
+		newInfo.AddDamageType( DMG_PLASMA );
 
-				pObject->TakeDamage( newInfo );
+		CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( GetParentObject() );
+		if ( pTeleporter )
+		{
+			CObjectTeleporter *pSibling = pTeleporter->GetMatchingTeleporter();
+			if ( pSibling && pSibling->HasSapper() )
+			{
+				for ( int i=0; i<pSibling->GetNumObjectsOnMe(); ++i )
+				{
+					CBaseObject *pObject = pSibling->GetBuildPointObject( i );
+					if ( !pObject || !pObject->IsHostileUpgrade() )
+						continue;
+
+					pObject->TakeDamage( newInfo );
+				}
 			}
 		}
 	}
