@@ -855,6 +855,44 @@ float CTFSniperRifle_Decap::GetChargingRate( void )
 // Weapon Classic Start
 
 
+//-----------------------------------------------------------------------------
+// Purpose: Constructor.
+//-----------------------------------------------------------------------------
+CTFSniperRifle_Classic::CTFSniperRifle_Classic()
+{
+	m_bIsChargingAttack = false;
+#ifdef CLIENT_DLL
+	m_pLaserSight = NULL;
+#endif
+	CTFSniperRifle::CTFSniperRifle();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor.
+//-----------------------------------------------------------------------------
+CTFSniperRifle_Classic::~CTFSniperRifle_Classic()
+{
+	m_bIsChargingAttack = false;
+#ifdef CLIENT_DLL
+	if (m_pLaserSight)
+	ToggleLaser();
+#endif
+	CTFSniperRifle::~CTFSniperRifle();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:	Precaches the laser sights.
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Classic::Precache()
+{
+	BaseClass::Precache();
+	PrecacheParticleSystem( "tfc_sniper_charge_red" );
+	PrecacheParticleSystem( "tfc_sniper_charge_blue" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handles our charging.
+//-----------------------------------------------------------------------------
 void CTFSniperRifle_Classic::ItemPostFrame( void )
 {
 	// If we're lowered, we're not allowed to fire
@@ -1064,6 +1102,47 @@ void CTFSniperRifle_Classic::ZoomOut( void )
 {
 	CTFWeaponBaseGun::ZoomOut();
 }
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Used for creating or destroying the laser sight.
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Classic::ToggleLaser( void )
+{
+	if ( m_bIsChargingAttack )
+	{
+		if ( !m_pLaserSight )
+		{
+			switch ( GetTeamNumber() )
+			{
+				case TF_TEAM_RED:
+					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
+					break;
+				case TF_TEAM_BLUE:
+					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_blue", PATTACH_POINT_FOLLOW, "laser" );
+					break;
+				case TF_TEAM_GREEN:
+					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_green", PATTACH_POINT_FOLLOW, "laser" );
+					break;
+				case TF_TEAM_YELLOW:
+					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_yellow", PATTACH_POINT_FOLLOW, "laser" );
+					break;
+				default:
+					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
+					break;
+			}
+		}
+	}
+	else
+	{
+		if ( m_pLaserSight )
+		{
+			ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserSight );
+			m_pLaserSight = NULL;
+		}
+	}
+}
+#endif
 
 //=============================================================================
 //

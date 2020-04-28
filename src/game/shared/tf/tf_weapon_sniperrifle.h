@@ -216,15 +216,25 @@ class CTFSniperRifle_Classic : public CTFSniperRifle
 {
 public:
 
+	CTFSniperRifle_Classic();
+	~CTFSniperRifle_Classic();
+	
 	DECLARE_CLASS( CTFSniperRifle_Classic, CTFSniperRifle )
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_CLASSIC; }
 	
+	virtual void 	Precache();
 	virtual void 	ItemPostFrame( void );
 	virtual bool 	Holster( CBaseCombatWeapon *pSwitchingTo );
 	bool			CanFire( void );
+	
+#ifdef CLIENT_DLL
+	virtual void 	ToggleLaser( void );
+private:
+	HPARTICLEFFECT	m_pLaserSight;
+#endif
 	
 private:
 	
