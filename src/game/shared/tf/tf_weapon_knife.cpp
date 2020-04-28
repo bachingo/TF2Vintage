@@ -517,7 +517,7 @@ float CTFKnife::GetEffectBarProgress(void)
 
 	if ( pOwner)
 	{
-		return ( ( gpGlobals->curtime - m_flKnifeRegenTime ) / TF_KNIFE_REGEN_TIME );
+		return ( Min( gpGlobals->curtime - m_flKnifeRegenTime, (float) TF_KNIFE_REGEN_TIME) / TF_KNIFE_REGEN_TIME );
 	}
 
 	return 0.0f;
