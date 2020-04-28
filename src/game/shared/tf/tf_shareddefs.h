@@ -1623,6 +1623,7 @@ typedef enum
 {
 	TAUNT_NORMAL,
 	TAUNT_LAUGH,
+	TAUNT_EUREKA,
 } taunts_t;
 
 // Taunt attack types

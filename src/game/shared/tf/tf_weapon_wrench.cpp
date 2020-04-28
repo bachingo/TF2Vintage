@@ -8,6 +8,7 @@
 #include "tf_weapon_wrench.h"
 #include "decals.h"
 #include "baseobject_shared.h"
+#include "in_buttons.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -108,6 +109,56 @@ void CTFWrench::Smack( void )
 		BaseClass::Smack();
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if our wrench is the Eureka Effect variant.
+//-----------------------------------------------------------------------------
+bool CTFWrench::IsEurekaEffect( void )
+{
+	int nEureka = 0;
+	CALL_ATTRIB_HOOK_INT(nEureka, alt_fire_teleport_to_spawn);
+	
+	return (nEureka != 0);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if our wrench is the Eureka Effect variant.
+//-----------------------------------------------------------------------------
+void CTFWrench::ItemPostFrame( void )
+{
+#ifdef GAME_DLL
+	if (IsEurekaEffect())
+	{
+		// Eureka Effect checks if we pressed the reload key.
+		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+		if ( pOwner->m_nButtons & IN_RELOAD )
+		EurekaTeleport();
+		
+	}
+#endif
+	BaseClass::ItemPostFrame();
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Sets up our teleporting.
+//-----------------------------------------------------------------------------
+void CTFWrench::EurekaTeleport( void )
+{
+	// Get our owner.
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if (!pOwner)
+		return;
+	
+	if ( OwnerCanTaunt() )
+	{
+		pOwner->StartEurekaTeleport();
+		pOwner->SetEurekaTeleportTime();
+		pOwner->Taunt( TAUNT_EUREKA, MP_CONCEPT_TAUNT_EUREKA_EFFECT_TELEPORT );
+	}
+	
+}
+#endif
 
 //=============================================================================
 //

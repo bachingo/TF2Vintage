@@ -6393,6 +6393,58 @@
 				}
 			}
 		}
+		"589"
+		{
+			"name"	"The Eureka Effect"
+			"prefab"			"weapon_wrench"
+			"first_sale_date"	"2011"
+			"item_name"	"#TF_Wrenchmotron"
+			"item_description"	"#TF_Wrenchmotron_Desc"
+			"item_logname"	"eureka_effect"
+			"item_iconname"	"eureka_effect"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_drg_wrenchmotron/c_drg_wrenchmotron"
+			"model_player"	"models/workshop/weapons/c_models/c_drg_wrenchmotron/c_drg_wrenchmotron.mdl"
+			"attributes"
+			{
+				"alt fire teleport to spawn"
+				{
+					"attribute_class"	"alt_fire_teleport_to_spawn"
+					"value" "1"
+				}
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value" "1"
+				}
+				"Construction rate decreased"
+				{
+					"attribute_class"	"mult_construction_value"
+					"value" "0.50"
+				}
+				"metal_pickup_decreased"
+				{
+					"attribute_class"	"mult_metal_pickup"
+					"value" "0.8"
+				}
+				"mod teleporter cost"
+				{
+					"attribute_class"	"mod_teleporter_cost"
+					"value" "0.5"
+				}
+			}
+			"visuals"
+			{
+				"attached_particlesystems"
+				{
+					"0"
+					{
+						"system"	"drg_wrenchmotron_idle"
+						"attachment" "electrode_0"
+					}
+				}
+			}
+		}
 		"593"
 		{
 			"name"	"The Third Degree"

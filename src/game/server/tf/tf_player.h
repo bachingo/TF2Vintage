@@ -578,6 +578,13 @@ public:
 	void				BombHeadExplode( bool bSuicide );
 	IntervalTimer		m_lastWasBombHead;
 	bool				m_bDiedWithBombHead;
+	
+	// Eureka Effect.
+	
+	void StartEurekaTeleport( void ) {m_bEurekaTeleport = true;}
+	void SetEurekaTeleportTime( void ) { m_flEurekaTeleportTime = gpGlobals->curtime + 2.0f; }
+	bool m_bEurekaTeleport;
+	float m_flEurekaTeleportTime;
 
 private:
 

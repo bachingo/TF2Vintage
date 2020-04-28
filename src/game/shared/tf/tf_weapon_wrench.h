@@ -33,8 +33,13 @@ public:
 	CTFWrench();
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_WRENCH; }
 	virtual void		Smack( void );
+	
+	virtual bool		IsEurekaEffect( void );
+	virtual void 		ItemPostFrame( void );
 
 #ifdef GAME_DLL
+	virtual void		EurekaTeleport(void);
+
 	virtual void OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector vecHitPos );
 #endif
 

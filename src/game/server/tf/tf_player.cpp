@@ -654,6 +654,31 @@ void CTFPlayer::TFPlayerThink()
 			m_flNextHealthRegen = gpGlobals->curtime + TF_MEDIC_REGEN_TIME;
 		}
 	}
+	
+	// Check us teleporting back home.
+	if ( m_bEurekaTeleport )
+	{
+		if ( m_flEurekaTeleportTime >= gpGlobals->curtime )
+		{
+			Vector origin = GetAbsOrigin();
+			CPVSFilter filter( origin );
+
+			DispatchParticleEffect( "drg_wrenchmotron_teleport", PATTACH_ABSORIGIN );
+		}
+		
+		if ( !IsTaunting() )
+		{
+			// Drop the flag, and teleport us back to spawn.
+			DropFlag();
+			m_bEurekaTeleport = false;
+			m_flEurekaTeleportTime = 0;
+			EmitSound( "Building_Teleporter.Send" );
+			TeleportEffect();		
+			TFGameRules()->GetPlayerSpawnSpot( this );
+		}
+	}
+	
+	
 
 	SetContextThink( &CTFPlayer::TFPlayerThink, gpGlobals->curtime, "TFPlayerThink" );
 }
@@ -9767,7 +9792,7 @@ void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 	if ( !IsAllowedToTaunt() || eTaunt == 3 /*TODO: Name*/ )
 		return;
 
-	if ( eTaunt == 2 )
+	if ( eTaunt == 3 )
 		iConcept = MP_CONCEPT_PLAYER_SHOW_ITEM_TAUNT;
 
 	// Allow voice commands, etc to be interrupted.

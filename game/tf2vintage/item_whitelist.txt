@@ -105,6 +105,7 @@
 	"The Original"									"1"
 	"The Diamondback"								"1"
 	"The Widowmaker"								"1"
+	"The Eureka Effect"								"1"
 	"The Third Degree"								"1"
 	"The Cozy Camper"								"1"
 	"The Wrap Assassin"								"1"
