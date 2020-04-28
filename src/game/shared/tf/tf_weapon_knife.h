@@ -48,12 +48,25 @@ public:
 
 	void				BackstabVMThink( void );
 	void				DisguiseOnKill( void );
-	void				BackstabBlocked( void );
+	void				BackstabBlocked(void);
+	
+	bool 				CanHolster( void );
+	bool 				CanDeploy( void );	
+	
+	bool				CanExtinguish( void );
+	void				Extinguish( void );
+	
+	virtual bool		HasChargeBar(void);
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_KNIFE"; }
+	virtual float	GetEffectBarProgress( void );
 
 private:
 	CHandle<CTFPlayer> m_hBackstabVictim;
 	CNetworkVar( bool, m_bReadyToBackstab );
-
+	CNetworkVar( float, m_flKnifeRegenTime );
+	CNetworkVar( bool, m_bForcedSwap );
+	CNetworkVar( float, m_flSwapBlocked);
+	
 	CTFKnife( const CTFKnife & ) {}
 };
 

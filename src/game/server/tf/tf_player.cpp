@@ -5906,7 +5906,11 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		CALL_ATTRIB_HOOK_FLOAT( flDamageFireMult, mult_dmgtaken_from_fire );
 		if ( (nIgnoreResists == 1) && ( flDamageFireMult < 1.0f ) )
 			flDamageFireMult = 1.0f;
-		flDamage *= flDamageFireMult;			
+		flDamage *= flDamageFireMult;	
+
+		// Immune to fire, no damage.
+		if ( m_Shared.InCond(TF_COND_FIRE_IMMUNE) )
+			return 0;		
 	}
 
 	if ( info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT )

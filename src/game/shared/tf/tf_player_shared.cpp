@@ -15,6 +15,7 @@
 #include "tf_weapon_medigun.h"
 #include "tf_weapon_pipebomblauncher.h"
 #include "tf_weapon_shotgun.h"
+#include "tf_weapon_knife.h"
 #include "in_buttons.h"
 #include "tf_viewmodel.h"
 #include "tf_weapon_invis.h"
@@ -2448,6 +2449,26 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 		m_hBurnAttacker = pAttacker;
 		m_hBurnWeapon = pWeapon;
 		
+		// Do our extinguish here.
+		int nFireproofOnBurned = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter->GetActiveTFWeapon(), nFireproofOnBurned, become_fireproof_on_hit_by_fire);
+		if (nFireproofOnBurned)
+		{
+			// This is specifically for the knife right now.
+			CTFKnife *pKnife = dynamic_cast<CTFKnife *>(m_pOuter->m_Shared.GetActiveTFWeapon());
+			if (pKnife)
+			{
+				if (pKnife->CanExtinguish() )
+				{
+					// We have an extinguish, remove the afterburn and make fire immune.
+					RemoveCond(TF_COND_BURNING);
+					AddCond(TF_COND_FIRE_IMMUNE, 1.0); // Block all fire damage for 1 second
+					AddCond(TF_COND_AFTERBURN_IMMUNE, nFireproofOnBurned); // Don't allow any afterburn for nFireproofOnBurned seconds.
+					m_pOuter->EmitSound( "TFPlayer.FlameOut" );
+					pKnife->Extinguish();
+				}
+			}
+		}
 	}
 	else // Don't burn players with fire retardant items.
 	{

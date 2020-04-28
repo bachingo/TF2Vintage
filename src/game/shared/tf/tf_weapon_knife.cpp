@@ -27,8 +27,14 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFKnife, DT_TFWeaponKnife )
 BEGIN_NETWORK_TABLE( CTFKnife, DT_TFWeaponKnife )
 #ifdef CLIENT_DLL
 	RecvPropBool( RECVINFO( m_bReadyToBackstab ) ),
+	RecvPropFloat( RECVINFO( m_flKnifeRegenTime ) ),
+	RecvPropBool( RECVINFO( m_bForcedSwap ) ),
+	RecvPropBool( RECVINFO( m_flSwapBlocked ) ),
 #else
 	SendPropBool( SENDINFO( m_bReadyToBackstab ) ),
+	SendPropFloat( SENDINFO( m_flKnifeRegenTime ), 0, SPROP_NOSCALE ),
+	SendPropBool( SENDINFO( m_bForcedSwap ) ),
+	SendPropFloat( SENDINFO( m_flSwapBlocked), 0, SPROP_NOSCALE ),
 #endif
 END_NETWORK_TABLE()
 
@@ -54,6 +60,9 @@ ConVar tf2v_use_new_backstabs( "tf2v_use_new_backstabs", "0", FCVAR_NOTIFY | FCV
 //-----------------------------------------------------------------------------
 CTFKnife::CTFKnife()
 {
+	m_flSwapBlocked = false;
+	m_bForcedSwap = false;
+	m_flKnifeRegenTime = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -412,6 +421,104 @@ void CTFKnife::BackstabBlocked( void )
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + 2.0f;
 	m_flNextSecondaryAttack = gpGlobals->curtime + 2.0f;
+	m_flSwapBlocked = gpGlobals->curtime + 2.0f;
 
 	SendWeaponAnim( ACT_MELEE_VM_PULLBACK );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFKnife::CanDeploy( void )
+{
+	// Haven't regenerated yet, can't use.
+	if ( gpGlobals->curtime > m_flKnifeRegenTime )
+	{
+		return false;
+	}
+
+	return BaseClass::CanDeploy();
+}
+
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+bool CTFKnife::CanHolster( void )
+{
+	// Forced holster
+	if ( m_bForcedSwap )
+		return true;
+	
+	// Got our backstab blocked? Don't let us swap.
+	if ( m_flSwapBlocked > gpGlobals->curtime )
+		return false;
+
+	return BaseClass::CanHolster();
+}
+
+// -----------------------------------------------------------------------------
+// Purpose: Checks if we can extinguish ourselves.
+// -----------------------------------------------------------------------------
+bool CTFKnife::CanExtinguish( void )
+{
+	int nMeltsinFire = 0;
+	CALL_ATTRIB_HOOK_INT( nMeltsinFire, melts_in_fire );
+	if (nMeltsinFire)
+	{
+		// If we have a knife right now, we can extinguish ourselves.
+		if ( gpGlobals->curtime > m_flKnifeRegenTime )
+			return true;
+	}
+	return false;
+}
+
+#define TF_KNIFE_REGEN_TIME 15
+// -----------------------------------------------------------------------------
+// Purpose: Processess the extinguish effects.
+// -----------------------------------------------------------------------------
+void CTFKnife::Extinguish( void )
+{
+	// Set our knife regeneration time.
+	m_flKnifeRegenTime = gpGlobals->curtime + TF_KNIFE_REGEN_TIME;
+	
+	CTFPlayer *pTFOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pTFOwner )
+	{
+		// Make the melting sound.
+		pTFOwner->EmitSound( "Icicle.Melt" );
+		
+		// Force ourselves to swap weapon.
+		pTFOwner->SwitchToNextBestWeapon(this);
+	}
+}
+
+
+// -----------------------------------------------------------------------------
+// Purpose: Displays if we have a charge bar or not.
+// -----------------------------------------------------------------------------
+bool CTFKnife::HasChargeBar( void )
+{
+	int nMeltsinFire = 0;
+	CALL_ATTRIB_HOOK_INT( nMeltsinFire, melts_in_fire );
+	if (nMeltsinFire)
+		return true;
+	
+	return false;
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+float CTFKnife::GetEffectBarProgress(void)
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+
+	if ( pOwner)
+	{
+		return ( ( gpGlobals->curtime - m_flKnifeRegenTime ) / TF_KNIFE_REGEN_TIME );
+	}
+
+	return 0.0f;
 }

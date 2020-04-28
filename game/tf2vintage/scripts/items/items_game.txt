@@ -6516,6 +6516,60 @@
 				"skin"	"1"
 			}
 		}
+		"649"
+		{
+			"name"	"The Spy-cicle"
+			"prefab"	"weapon_spy_knife_item2"
+			"year"	"2011"
+			"item_name"	"#TF_SpyCicle"
+			"item_description"	"#TF_SpyCicle_Desc"
+			"propername"	"1"
+			"item_logname"	"spy_cicle"
+			"item_iconname"	"spy_cicle"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_xms_cold_shoulder/c_xms_cold_shoulder"
+			"model_player"	"models/workshop/weapons/c_models/c_xms_cold_shoulder/c_xms_cold_shoulder.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -6"
+			}
+			"attributes"
+			{
+				"freeze backstab victim"
+				{
+					"attribute_class"	"freeze_backstab_victim"
+					"value" "1"
+				}
+				"melts in fire"
+				{
+					"attribute_class"	"melts_in_fire"
+					"value" "15"
+				}
+				"become fireproof on hit by fire"
+				{
+					"attribute_class"	"become_fireproof_on_hit_by_fire"
+					"value" "10"
+				}
+				"set icicle knife mode"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value" "3"
+				}
+			}
+			"visuals"
+			{
+				"attached_particlesystems"
+				{
+					"0"
+					{
+						"system"	"xms_icicle_idle"
+						"attachment" "bip_middle_0_R"
+					}
+				}
+				"sound_melee_miss"		""
+				"sound_melee_hit"		""
+				"sound_melee_hit_world"	"Icicle.HitWorld"
+			}
+		}
 		"656"
 		{
 			"name"	"The Holiday Punch"
