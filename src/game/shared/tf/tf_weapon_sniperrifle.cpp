@@ -949,7 +949,8 @@ void CTFSniperRifle_Classic::ItemPostFrame( void )
 		float flChargeRate = GetChargingRate();
 		CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_sniper_charge_per_sec );
 		m_flChargedDamage = Min( m_flChargedDamage + gpGlobals->frametime * flChargeRate, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
-		m_bIsChargingAttack = true;
+		if (!m_bIsChargingAttack)
+			m_bIsChargingAttack = true;
 		// We're now charging our shot, slow us down.
 		if ( !pPlayer->m_Shared.InCond(TF_COND_AIMING) )
 		{

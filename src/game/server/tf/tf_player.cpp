@@ -5138,6 +5138,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDamageHealers, damage_all_connected );
 			if ( nDamageHealers )
 			{
+				// Log the current time.
+				m_flRecursiveDamage = gpGlobals->curtime;
+				
 				// Get all the players healing us.
 				for ( int i = 0; i < m_Shared.m_aHealers.Count(); i++ )
 				{
@@ -5145,7 +5148,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 					if (m_Shared.m_aHealers[i].pPlayer.IsValid())
 					{
 						CTFPlayer *pTFHealer = static_cast< CTFPlayer  *>(static_cast< CBaseEntity  *>(m_Shared.m_aHealers[i].pPlayer));
-						if ( pTFHealer && ( pTFHealer != this ) )
+						if ( pTFHealer && ( pTFHealer != this ) && ( m_flRecursiveDamage - pTFHealer->GetRecursiveDamageTime() > 0.1 ) )
 						{
 							// Copy our damage to them!
 							pTFHealer->TakeDamage( info );
@@ -5159,7 +5162,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 					if ( pMedigun->GetHealTarget() && pMedigun->GetHealTarget()->IsPlayer() )
 					{
 						CTFPlayer *pTFPatient = ToTFPlayer( pMedigun->GetHealTarget() );
-						if ( pTFPatient && ( pTFPatient != this ) )
+						if ( pTFPatient && ( pTFPatient != this ) && ( m_flRecursiveDamage - pTFPatient->GetRecursiveDamageTime() > 0.1 ) )
 						{
 							// Copy our damage to them!
 							pTFPatient->TakeDamage( info );

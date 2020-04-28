@@ -650,6 +650,9 @@ private:
 	bool				GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, int numSceneBufferBytes );
 
 	void				AddContext( AppliedContext_t context );
+	
+	float				GetRecursiveDamageTime() { return m_flRecursiveDamage; }
+	float				m_flRecursiveDamage;
 
 private:
 	// Map introductions
