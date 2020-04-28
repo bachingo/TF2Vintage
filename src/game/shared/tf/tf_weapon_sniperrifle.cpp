@@ -942,6 +942,10 @@ void CTFSniperRifle_Classic::ItemPostFrame( void )
 		if (!m_hSniperDot)
 			CreateSniperDot();
 #endif
+#ifdef CLIENT_DLL
+		if (!m_pLaserSight)
+			ToggleLaser();
+#endif
 		float flChargeRate = GetChargingRate();
 		CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_sniper_charge_per_sec );
 		m_flChargedDamage = Min( m_flChargedDamage + gpGlobals->frametime * flChargeRate, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
@@ -987,6 +991,11 @@ bool CTFSniperRifle_Classic::Holster( CBaseCombatWeapon *pSwitchingTo )
 #ifdef GAME_DLL
 	// Destroy the sniper dot.
 	DestroySniperDot();
+#endif
+#ifdef CLIENT_DLL
+	// Destroy the laser sight.
+	if (m_pLaserSight)
+		ToggleLaser();
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
@@ -1071,6 +1080,11 @@ void CTFSniperRifle_Classic::Fire(CTFPlayer *pPlayer)
 	// Destroy the sniper dot.
 	// This is implicit; since we just fired we're not charging the rifle.
 	DestroySniperDot();
+#endif
+#ifdef CLIENT_DLL
+	// Destroy the laser sight as well.
+	if (m_pLaserSight)
+		ToggleLaser();
 #endif
 }
 
