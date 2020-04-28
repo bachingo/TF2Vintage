@@ -116,17 +116,19 @@ public:
 
 	bool 		IsPenetrating(void);
 	
+	void CreateSniperDot(void);
+	void DestroySniperDot(void);
+	void UpdateSniperDot(void);
+
+#ifdef GAME_DLL
+	CHandle<CSniperDot>		m_hSniperDot;
+#endif
+
 #ifdef CLIENT_DLL
 	float GetHUDDamagePerc( void );
 #endif
 
 	bool IsZoomed( void );
-
-private:
-
-	void CreateSniperDot( void );
-	void DestroySniperDot( void );
-	void UpdateSniperDot( void );
 
 private:
 	// Auto-rezooming handling
@@ -138,13 +140,12 @@ private:
 	void ZoomOut( void );
 	void Fire( CTFPlayer *pPlayer );
 
-private:
+
+public:
 
 	CNetworkVar( float,	m_flChargedDamage );
 
-#ifdef GAME_DLL
-	CHandle<CSniperDot>		m_hSniperDot;
-#endif
+private:
 
 	// Handles rezooming after the post-fire unzoom
 	float m_flUnzoomTime;
@@ -220,6 +221,18 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_SNIPERRIFLE_CLASSIC; }
+	
+	virtual void 	ItemPostFrame( void );
+	virtual bool 	Holster( CBaseCombatWeapon *pSwitchingTo );
+	bool			CanFire( void );
+	
+private:
+	
+	void ZoomIn( void );
+	void ZoomOut( void );
+	
+	bool m_bIsChargingAttack;
+	void Fire(CTFPlayer *pPlayer);
 
 };
 #endif // TF_WEAPON_SNIPERRIFLE_H

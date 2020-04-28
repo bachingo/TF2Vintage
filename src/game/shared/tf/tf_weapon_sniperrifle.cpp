@@ -499,7 +499,6 @@ void CTFSniperRifle::ZoomOut( void )
 #ifdef GAME_DLL
 		// Destroy the sniper dot.
 		DestroySniperDot();
-		pPlayer->ClearExpression();
 #endif
 
 	// if we are thinking about zooming, cancel it
@@ -523,7 +522,7 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	
 	int nRequiresZoom = 0;
 	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
-	if ( nRequiresZoom && !pPlayer->m_Shared.InCond(TF_COND_ZOOMED) )
+	if ( nRequiresZoom && !IsZoomed() )
 	{
 		// Make a fizzing noise, and draw sparks.
 		WeaponSound( SPECIAL2 );
@@ -768,6 +767,7 @@ bool CTFSniperRifle::IsPenetrating(void)
 	return BaseClass::IsPenetrating();
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -783,8 +783,6 @@ bool CTFSniperRifle_Decap::Deploy( void )
 
 	return false;
 }
-
-
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -851,6 +849,220 @@ float CTFSniperRifle_Decap::GetChargingRate( void )
 		return TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
 
 	return 	( TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC * ( 0.5 + Min((pOwner->m_Shared.GetHeadshotCount()), 6 ) * 0.25 ) );
+}
+
+
+// Weapon Classic Start
+
+
+void CTFSniperRifle_Classic::ItemPostFrame( void )
+{
+	// If we're lowered, we're not allowed to fire
+	if ( m_bLowered )
+		return;
+
+	// Get the owning player.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+	
+	CheckReload();
+
+	if ( !CanAttack() )
+	{
+		if ( IsZoomed() )
+		{
+			ToggleZoom();
+		}
+		return;
+	}
+
+	HandleZooms();
+
+#ifdef GAME_DLL
+	// Update the sniper dot position if we have one
+	if ( m_hSniperDot )
+	{
+		UpdateSniperDot();
+	}
+#endif
+
+	// Start charging when we're zoomed in, and allowed to fire
+	if ( pPlayer->m_Shared.IsJumping() )
+	{
+		// Unzoom if we're jumping
+		if ( IsZoomed() )
+		{
+			ToggleZoom();
+		}
+	}
+
+	// We're holding down the attack button, charge up our shot.
+	if ( pPlayer->m_nButtons & IN_ATTACK )
+	{
+#ifdef GAME_DLL
+		if (!m_hSniperDot)
+			CreateSniperDot();
+#endif
+		float flChargeRate = GetChargingRate();
+		CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_sniper_charge_per_sec );
+		m_flChargedDamage = Min( m_flChargedDamage + gpGlobals->frametime * flChargeRate, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
+		m_bIsChargingAttack = true;
+		// We're now charging our shot, slow us down.
+		if ( !pPlayer->m_Shared.InCond(TF_COND_AIMING) )
+		{
+			pPlayer->m_Shared.AddCond( TF_COND_AIMING );
+			pPlayer->TeamFortress_SetSpeed();
+		}
+	}
+	else
+	{
+		// We charged up our shot and released the primary, fire.
+		if (m_bIsChargingAttack)
+			Fire( pPlayer );
+	}
+	
+	//  Reload pressed / Clip Empty
+	if ( ( pPlayer->m_nButtons & IN_RELOAD ) && !m_bInReload ) 
+	{
+		// reload when reload is pressed, or if no buttons are down and weapon is empty.
+		Reload();
+	}
+
+	// Idle.
+	if ( !( ( pPlayer->m_nButtons & IN_ATTACK) || ( pPlayer->m_nButtons & IN_ATTACK2 ) ) )
+	{
+		// No fire buttons down or reloading
+		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
+		{
+			WeaponIdle();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle_Classic::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+// Server specific.
+#ifdef GAME_DLL
+	// Destroy the sniper dot.
+	DestroySniperDot();
+#endif
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
+	{
+		ZoomOut();
+	}
+	
+	// Remove our charging.
+	m_bIsChargingAttack = false;	
+	if ( pPlayer->m_Shared.InCond(TF_COND_AIMING) )
+	{
+		pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
+		pPlayer->TeamFortress_SetSpeed();
+	}
+
+	m_flChargedDamage = 0.0f;
+	ResetTimers();
+
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+bool CTFSniperRifle_Classic::CanFire( void )
+{
+	// Get the owning player.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return true;
+	
+	// Can't shoot while jumping/airborne.
+	if (!(pPlayer->GetFlags() & FL_ONGROUND))
+		return false;
+	
+	return true;
+	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Classic::Fire(CTFPlayer *pPlayer)
+{
+	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
+	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
+	{
+		HandleFireOnEmpty();
+		return;
+	}
+	
+	int nRequiresZoom = 0;
+	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
+	if ( nRequiresZoom && !IsZoomed() )
+	{
+		// Make a fizzing noise, and draw sparks.
+		WeaponSound( SPECIAL2 );
+#ifdef CLIENT_DLL
+		ParticleProp()->Init( this );
+		ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
+#endif	
+		return;
+	}
+
+	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		return;
+
+	// Fire the sniper shot.
+	// If we are airborne then skip over this.
+	if ( CanFire() )
+		PrimaryAttack();
+	
+	// Reset our attack status.
+	m_flChargedDamage = 0.0f;
+	m_bIsChargingAttack = false;	
+	if ( pPlayer->m_Shared.InCond(TF_COND_AIMING) )
+	{
+		pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
+		pPlayer->TeamFortress_SetSpeed();
+	}
+
+#ifdef GAME_DLL
+	// Destroy the sniper dot.
+	// This is implicit; since we just fired we're not charging the rifle.
+	DestroySniperDot();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Classic::ZoomIn( void )
+{
+	// Start aiming.
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if ( !pPlayer )
+		return;
+
+	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
+		return;
+
+	CTFWeaponBaseGun::ZoomIn();
+	
+#ifdef GAME_DLL
+	pPlayer->ClearExpression();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle_Classic::ZoomOut( void )
+{
+	CTFWeaponBaseGun::ZoomOut();
 }
 
 //=============================================================================

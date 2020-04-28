@@ -118,6 +118,7 @@
 	"The Flying Guillotine"							"1"
 	"The Neon Annihilator"							"1"
 	"The Rescue Ranger"								"1"
+	"The Classic"									"1"
 	"The Tide Turner"								"1"
 	"The B.A.S.E. Jumper"							"1"
 	"The Back Scatter"								"1"

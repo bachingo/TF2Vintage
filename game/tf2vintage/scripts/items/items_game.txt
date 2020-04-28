@@ -6824,6 +6824,58 @@
 			"year"				"2012"
 			"particle_suffix"	"rescue_ranger"
 		}
+		"1098"
+		{
+			"name"	"The Classic"
+			"prefab"	"weapon_sniperrifle"
+			"first_sale_date"		"2014"
+			"item_class"	"tf_weapon_sniperrifle_classic"
+			"item_logname"	"the_classic"
+			"item_iconname"	"the_classic"
+			"item_name"	"#TF_ClassicSniperRifle"
+			"item_description"	"#TF_ClassicSniperRifle_Desc"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/c_models/c_tfc_sniperrifle/c_tfc_sniperrifle"
+			"model_player"	"models/weapons/c_models/c_tfc_sniperrifle/c_tfc_sniperrifle.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"5 0 -8"				
+			}
+			"attributes"
+			{
+				"crit on hard hit"
+				{
+					"attribute_class"	"crit_on_hard_hit"
+					"value"	"1"
+				}
+				"damage penalty on bodyshot"
+				{
+					"attribute_class"	"bodyshot_damage_modify"
+					"value"	"0.90"
+				}
+				"sniper no headshot without full charge"
+				{
+					"attribute_class"	"sniper_no_headshot_without_full_charge"
+					"value" "1"
+				}
+				"sniper crit no scope"
+				{
+					"attribute_class"	"sniper_crit_no_scope"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_ClassicSniperRifle.Single"
+				"sound_burst"	"Weapon_ClassicSniperRifle.SingleCrit"
+				"animation_replacement"
+				{
+					"ACT_PRIMARY_VM_INSPECT_START"	"ACT_PRIMARY_ALT1_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"	"ACT_PRIMARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"	"ACT_PRIMARY_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
 		"1099"
 		{
 			"name"			"The Tide Turner"
