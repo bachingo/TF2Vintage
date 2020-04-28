@@ -33,9 +33,11 @@
 			// Note that this folder is scanned only when the game is booted.
 			// TF2V mods take priority, followed by Retail TF2 mods.
 			game+mod			"|gameinfo_path|custom/*"
+			game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/custom/*"
 			
 			// Secondly, add the customizable TF2V parameters in.
 			game+mod			"|gameinfo_path|customplayer/*"
+
 			
 			// Search loose files.  We'll set the directory containing the gameinfo.txt file
 			// as the first "mod" search path (after any user customizations). This is also the one
@@ -61,7 +63,8 @@
 			game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/tf2_textures.vpk"
 			game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/tf2_sound_misc.vpk"
 			game+mod+vgui		"|all_source_engine_paths|../Team Fortress 2/tf/tf2_misc.vpk"
-			
+						
+						
 			// We search VPK files before ordinary folders, because most files will be found in
 			// VPK and we can avoid making thousands of file system calls to attempt to open files
 			// in folders where they don't exist.  (Searching a VPK is much faster than making an 
@@ -71,6 +74,7 @@
 			game				"|all_source_engine_paths|hl2/hl2_sound_misc.vpk"	
 			game+vgui			"|all_source_engine_paths|hl2/hl2_misc.vpk"
 			platform+vgui		"|all_source_engine_paths|platform/platform_misc.vpk"
+			
 			
 			// Add the HL2 directory as a game search path.  This is also where where writes			
 			// to the "game" path go.			
