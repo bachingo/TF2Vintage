@@ -29,7 +29,7 @@ BEGIN_NETWORK_TABLE( CTFKnife, DT_TFWeaponKnife )
 	RecvPropBool( RECVINFO( m_bReadyToBackstab ) ),
 	RecvPropFloat( RECVINFO( m_flKnifeRegenTime ) ),
 	RecvPropBool( RECVINFO( m_bForcedSwap ) ),
-	RecvPropBool( RECVINFO( m_flSwapBlocked ) ),
+	RecvPropFloat( RECVINFO( m_flSwapBlocked ) ),
 #else
 	SendPropBool( SENDINFO( m_bReadyToBackstab ) ),
 	SendPropFloat( SENDINFO( m_flKnifeRegenTime ), 0, SPROP_NOSCALE ),
