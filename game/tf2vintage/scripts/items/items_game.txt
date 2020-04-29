@@ -487,6 +487,49 @@
 				"skin" "1"
 			}
 		}
+		"weapon_long_heatmaker"
+		{
+			"prefab"			"weapon_minigun"
+			"base_item_name"	"The Huo Long Heatmaker"
+			"item_name"	"#TF_SD_Minigun"
+			"item_logname"	"long_heatmaker"
+			"item_iconname"	"long_heatmaker"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_canton/c_canton"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_canton/c_canton.mdl"
+			"propername"	"1"
+			"xifier_class_remap"	"long_heatmaker"
+			"visuals"
+			{
+				"sound_double_shot"	"Dragon_Minigun.Fire"
+				"sound_special1"	"Dragon_Minigun.WindUp"
+				"sound_special2"	"Dragon_Minigun.WindDown"
+				"sound_special3"	"Dragon_Minigun.Spin"
+				"sound_burst"		"Dragon_Minigun.FireCrit"
+			}
+			"attributes"
+			{
+				"ring of fire while aiming"
+				{
+					"attribute_class"	"ring_of_fire_while_aiming"
+					"value"	"12"
+				}
+				"uses ammo while aiming"
+				{
+					"attribute_class"	"uses_ammo_while_aiming"
+					"value" "4"
+				}
+				"damage penalty"
+				{
+					"attribute_class" 	"mult_dmg"
+					"value" "0.9"
+				}
+				"damage bonus vs burning"
+				{
+					"attribute_class"	"mult_dmg_vs_burning"
+					"value"	"1.25"
+				}
+			}
+		}
 		"weapon_rocketlauncher"
 		{
 			"item_class"	"tf_weapon_rocketlauncher"
@@ -6915,6 +6958,12 @@
 			{
 				"engineer"	"1"
 			}
+		}
+		"811"
+		{
+			"name"	"The Huo Long Heatmaker"
+			"prefab"		"weapon_long_heatmaker"
+			"year"			"2012"
 		}
 		 "812"
 		{
