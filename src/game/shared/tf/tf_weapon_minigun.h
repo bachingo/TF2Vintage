@@ -57,6 +57,7 @@ public:
 	virtual void	UseRealMinigunBrassEject( void );
 	virtual void	SecondaryAttack();
 	void			SharedAttack();
+	void			FireAttack(int nDamageAmount);
 	virtual void	WeaponIdle();
 	virtual bool	SendWeaponAnim( int iActivity );
 	virtual bool	CanHolster( void ) const;
@@ -122,6 +123,7 @@ private:
 	float			m_flStartedFiringAt;
 	float			m_flStartedWindingAt;
 	float			m_flDrainTime;
+	float			m_flNextFireAttack;
 	float	m_flBarrelCurrentVelocity;
 	float	m_flBarrelTargetVelocity;
 	int		m_iBarrelBone;

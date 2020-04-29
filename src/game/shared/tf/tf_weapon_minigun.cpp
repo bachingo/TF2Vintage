@@ -20,6 +20,8 @@
 // Server specific.
 #else
 #include "tf_player.h"
+#include "tf_gamerules.h"
+#include "takedamageinfo.h"
 #endif
 
 #ifdef CLIENT_DLL
@@ -223,6 +225,7 @@ void CTFMinigun::SharedAttack()
 			m_flStartedFiringAt = -1;
 			m_flStartedWindingAt = -1;
 			m_flDrainTime = -1;
+			m_flNextFireAttack = -1;
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRE );
 			break;
 		}
@@ -337,6 +340,25 @@ void CTFMinigun::SharedAttack()
 			break;
 		}
 	}
+	
+
+	if ( m_iWeaponState == AC_STATE_FIRING || m_iWeaponState == AC_STATE_SPINNING )
+	{
+		// Drain ammo when winding, if we have the trait.
+		if ( iAmmoDrain != 0 && gpGlobals->curtime > m_flDrainTime )
+		{
+			// If we're above the drain time, take bullets away.
+			m_iClip1 -= iAmmoDrain;
+			m_flDrainTime = gpGlobals->curtime + iDrainTimeInterval;
+		}
+		
+		// Check if we should do an AOE fire attack.
+		int nFireAttack = 0;
+		CALL_ATTRIB_HOOK_INT( nFireAttack, ring_of_fire_while_aiming );
+		if ( nFireAttack )
+			FireAttack(nFireAttack);
+	}
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -349,6 +371,37 @@ void CTFMinigun::SecondaryAttack( void )
 		return;
 
 	SharedAttack();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Causes a fire puff attack.
+//-----------------------------------------------------------------------------
+void CTFMinigun::FireAttack( int nDamageAmount )
+{
+	if ( m_flNextFireAttack > gpGlobals->curtime )
+		return;
+	
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+	
+#ifdef CLIENT_DLL
+	DispatchParticleEffect( "heavy_ring_of_fire_fp", pOwner->GetAbsOrigin(), vec3_angle );
+#else
+	DispatchParticleEffect("heavy_ring_of_fire", pOwner->GetAbsOrigin(), vec3_angle);
+	// We explode in a small radius, set us up as an explosion.
+	CTakeDamageInfo newInfo(pOwner, pOwner, this, vec3_origin, pOwner->GetAbsOrigin(), nDamageAmount, DMG_IGNITE);
+	CTFRadiusDamageInfo radiusInfo;
+	radiusInfo.info = &newInfo;
+	radiusInfo.m_vecSrc = pOwner->GetAbsOrigin();
+	radiusInfo.m_flRadius = 135;
+	radiusInfo.m_flSelfDamageRadius = 0;
+
+	TFGameRules()->RadiusDamage( radiusInfo );
+		
+#endif
+	// Update the time for the next fire attack.
+	m_flNextFireAttack = gpGlobals->curtime + 0.5;
 }
 
 //-----------------------------------------------------------------------------
