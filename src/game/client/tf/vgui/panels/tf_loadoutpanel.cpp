@@ -167,7 +167,6 @@ void CTFLoadoutPanel::SetCurrentClass(int iClass)
 
 	m_iCurrentClass = iClass;
 	m_iCurrentSlot = g_aClassLoadoutSlots[iClass][0];
-	GetTFInventory()->SetMostRecentClass(iClass);
 	DefaultLayout();
 	UpdateMenuBodygroups();
 
@@ -178,7 +177,7 @@ void CTFLoadoutPanel::OnCommand ( const char* command )
 {
 	if ( !Q_strcmp ( command, "back" ) || (!Q_strcmp ( command, "vguicancel" )) )
 	{
-		Hide ();
+		Hide();
 	}
 	else if ( !Q_strcmp ( command, "select_scout" ) )
 	{
@@ -615,7 +614,7 @@ CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel *pParent, const char *p
 {
 	V_memset( m_pPresetButtons, 0, sizeof( m_pPresetButtons ) );
 	
-	m_iCurrentClass = TF_CLASS_UNDEFINED;
+	m_iCurrentClass = TF_CLASS_SCOUT;
 	m_iActivePreset = 0;
 
 	m_pPresetButtonKv = NULL;
@@ -632,7 +631,13 @@ CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel *pParent, const char *p
 	}
 	
 	// Fill these in.
-	m_iCurrentClass = GetTFInventory()->GetMostRecentClass();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if (pPlayer)
+	{
+		int iClass = pPlayer->m_Shared.GetDesiredPlayerClassIndex();
+		if (iClass >= TF_CLASS_SCOUT)
+			m_iCurrentClass = iClass;
+	}
 	m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
 }
 
@@ -712,7 +717,60 @@ void CTFLoadoutPresetPanel::PerformLayout()
 //-----------------------------------------------------------------------------
 void CTFLoadoutPresetPanel::OnCommand(const char *command)
 {
-	
+	if ( !Q_strcmp ( command, "select_scout" ) && ( m_iCurrentClass != TF_CLASS_SCOUT ) )
+	{
+		m_iCurrentClass = TF_CLASS_SCOUT;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_soldier" )  && ( m_iCurrentClass != TF_CLASS_SOLDIER ) )
+	{
+		m_iCurrentClass = TF_CLASS_SOLDIER;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_pyro" )  && ( m_iCurrentClass != TF_CLASS_PYRO ) )
+	{
+		m_iCurrentClass = TF_CLASS_PYRO;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_demoman" )  && ( m_iCurrentClass != TF_CLASS_DEMOMAN ) )
+	{
+		m_iCurrentClass = TF_CLASS_DEMOMAN;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_heavyweapons" )  && ( m_iCurrentClass != TF_CLASS_HEAVYWEAPONS ) )
+	{
+		m_iCurrentClass = TF_CLASS_HEAVYWEAPONS;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_engineer" )  && ( m_iCurrentClass != TF_CLASS_ENGINEER ) )
+	{
+		m_iCurrentClass = TF_CLASS_ENGINEER;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_medic" )  && ( m_iCurrentClass != TF_CLASS_MEDIC ) )
+	{
+		m_iCurrentClass = TF_CLASS_MEDIC;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_sniper" )  && ( m_iCurrentClass != TF_CLASS_SNIPER ) )
+	{
+		m_iCurrentClass = TF_CLASS_SNIPER;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
+	else if ( !Q_strcmp ( command, "select_spy" )  && ( m_iCurrentClass != TF_CLASS_SPY ) )
+	{
+		m_iCurrentClass = TF_CLASS_SPY;
+		m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
+		UpdatePresetButtonStates();
+	}
 	if ( !Q_strnicmp( command, "loadpreset_", 11 ) )
 	{
 		const int iPresetIndex = atoi( command + 11 );

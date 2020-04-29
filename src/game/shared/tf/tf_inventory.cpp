@@ -332,6 +332,11 @@ void CTFInventory::SetWeaponPreset(int iClass, int iSlot, int iPreset)
 	SaveInventory();
 }
 
+const char* CTFInventory::GetSlotName(int iSlot)
+{
+	return g_LoadoutSlots[iSlot];
+};
+
 int CTFInventory::GetCurrentLoadoutSlot(int iClass)
 {
 	int iActiveSlot = 0;
@@ -346,11 +351,6 @@ void CTFInventory::ChangeLoadoutSlot(int iClass, int iLoadoutSlot)
 	pClass->SetInt( "activeslot", iLoadoutSlot );
 	SaveInventory();
 }
-
-const char* CTFInventory::GetSlotName(int iSlot)
-{
-	return g_LoadoutSlots[iSlot];
-};
 
 #endif
 
