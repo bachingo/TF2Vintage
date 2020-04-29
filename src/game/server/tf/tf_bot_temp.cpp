@@ -23,6 +23,7 @@
 #include "in_buttons.h"
 #include "movehelper_server.h"
 #include "tf_playerclass_shared.h"
+#include "tf_weapon_builder.h"
 #include "datacache/imdlcache.h"
 
 void ClientPutInServer( edict_t *pEdict, const char *playername );
@@ -648,6 +649,117 @@ void Bot_Think( CTFPlayer *pBot )
 
 	RunPlayerMove( pBot, vecViewAngles, forwardmove, sidemove, upmove, buttons, impulse, frametime );
 }
+
+
+//------------------------------------------------------------------------------
+// Purpose: Force the specified bot to create & equip an item
+//------------------------------------------------------------------------------
+void BotGenerateAndWearItem( CTFPlayer *pBot, const char *itemName )
+{
+	if ( !pBot )
+		return;
+
+	CEconItemDefinition *pItem = GetItemSchema()->GetItemDefinitionByName( itemName );
+	CEconItemView itemView( pItem->index );
+
+	char const *pszEntName = pItem->item_class;
+	CEconEntity *pEcon = dynamic_cast<CEconEntity *>( CreateEntityByName( pszEntName ) );
+	if ( pEcon && pItem )
+	{
+		pEcon->SetItem( itemView );
+	}
+
+	if ( pEcon && pItem )
+	{
+		// If it's a weapon, remove the current one, and give us this one.
+		CBaseCombatWeapon *pExisting = pBot->Weapon_OwnsThisType( pItem->item_class );
+		if ( pExisting )
+		{
+			pBot->Weapon_Detach( pExisting );
+			UTIL_Remove( pExisting );
+		}
+
+		DispatchSpawn( pEcon );
+		pEcon->GiveTo( pBot );
+
+		pBot->PostInventoryApplication();
+	}
+	else
+	{
+		extern ConVar tf_bot_use_items;
+		if ( !tf_bot_use_items.GetInt() )
+		{
+			Msg( "Failed to create an item named %s\n", itemName );
+		}
+	}
+}
+
+void BotGenerateAndWearItem( CTFPlayer *pBot, CEconItemView *pItem )
+{
+	int iClass = pBot->GetPlayerClass()->GetClassIndex();
+	const char *pTranslatedWeaponName = TranslateWeaponEntForClass( pItem->GetStaticData()->item_class, iClass );
+	CTFWeaponBase *pNewItem = dynamic_cast<CTFWeaponBase *>( pBot->GiveNamedItem( pTranslatedWeaponName, 0, pItem ) );
+	if ( pNewItem )
+	{
+		CTFWeaponBuilder *pBuilder = dynamic_cast<CTFWeaponBuilder *>( (CBaseEntity*)pNewItem );
+		if ( pBuilder )
+		{
+			pBuilder->SetSubType( pBot->GetPlayerClass()->GetData()->m_aBuildable[0] );
+		}
+
+		int iItemSlot = pItem->GetStaticData()->GetLoadoutSlot( iClass );
+		CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( pBot->GetEntityForLoadoutSlot( iItemSlot ) );			
+		if ( pWeapon )
+		{
+			pBot->Weapon_Detach( pWeapon );
+			UTIL_Remove( pWeapon );
+		}
+
+		pNewItem->GiveTo( pBot );
+	}
+	else
+	{
+		BotGenerateAndWearItem( pBot, pItem->GetStaticData()->name );
+	}
+}
+
+//------------------------------------------------------------------------------
+// Purpose: Force the specified bot to create & equip an item
+//------------------------------------------------------------------------------
+void cc_bot_equip( const CCommand &args )
+{
+	CUtlVector<CTFPlayer *> bots;
+	if ( args.ArgC() < 3 )
+	{
+		Msg( "Too few parameters. Usage: bot_equip <bot name> <item name>\n" );
+		return;
+	}
+
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players );
+	FOR_EACH_VEC( players, i )
+	{
+		if ( !players[i]->IsFakeClient() )
+			continue;
+
+		if ( !FStrEq( args[ 1 ], "all" ) && V_stricmp( players[ i ]->GetPlayerName(), args[ 1 ] ) )
+			continue;
+		
+		bots.AddToTail( players[i] );
+	}
+
+	if ( bots.IsEmpty() )
+	{
+		Msg( "No bot with name %s\n", args[1] );
+		return;
+	}
+
+	FOR_EACH_VEC( bots, i )
+	{
+		BotGenerateAndWearItem( bots[i], args[2] );
+	}
+}
+static ConCommand bot_equip( "bot_equip", cc_bot_equip, "Generate an item and have the bot equip it.\n\tFormat: bot_equip <bot name> <item name>", FCVAR_CHEAT );
 
 //------------------------------------------------------------------------------
 // Purpose: sends the specified command from a bot
