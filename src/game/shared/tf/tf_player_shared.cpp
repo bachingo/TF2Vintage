@@ -1415,6 +1415,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		{
 			float flBurnDamage = tf2v_new_flame_damage.GetBool() ? TF_BURNING_DMG_JI : TF_BURNING_DMG;
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hBurnWeapon, flBurnDamage, mult_wpn_burndmg );
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hBurnAttacker->GetActiveTFWeapon(), flBurnDamage, mult_dmg_vs_burning ); // This attribute is based on being the active weapon for afterburn.
 
 			// Burn the player (if not pyro, who does not take persistent burning damage)
 			CTakeDamageInfo info( m_hBurnAttacker, m_hBurnAttacker, m_hBurnWeapon, flBurnDamage, DMG_BURN | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BURNING );

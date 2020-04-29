@@ -4980,7 +4980,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	// Handle on-hit effects.
 	// Don't apply on-hit effects if a building did it, or if it's done by afterburn.
-	if ( ( pWeapon && pAttacker != this ) && (!bObject) )
+	if ( ( pWeapon && pAttacker != this ) && (!bObject) && !( info.GetDamageType() & DMG_BURN ))
 	{
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
@@ -4989,7 +4989,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnCond, or_minicrit_vs_playercond_burning );
 
 		// Crit players. Don't crit afterburn.
-		if ( ( nCritOnCond || nMinicritOnCond ) && !( info.GetDamageType() & DMG_BURN ) )
+		if ( ( nCritOnCond || nMinicritOnCond ) )
 		{
 			for ( int i = 0; condition_to_attribute_translation[i] != TF_COND_LAST; i++ )
 			{
