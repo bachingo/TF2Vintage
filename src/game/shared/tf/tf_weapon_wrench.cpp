@@ -150,7 +150,7 @@ void CTFWrench::EurekaTeleport( void )
 	if (!pOwner)
 		return;
 	
-	if ( OwnerCanTaunt() )
+	if ( pOwner->IsAllowedToTaunt() )
 	{
 		pOwner->StartEurekaTeleport();
 		pOwner->SetEurekaTeleportTime();

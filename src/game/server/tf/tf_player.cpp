@@ -4980,7 +4980,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	// Handle on-hit effects.
 	// Don't apply on-hit effects if a building did it, or if it's done by afterburn.
-	if ( ( pWeapon && pAttacker != this ) && ( (!bObject) && !( info.GetDamageType() & DMG_BURN ) ) )
+	if ( ( pWeapon && pAttacker != this ) && (!bObject) )
 	{
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
@@ -4988,7 +4988,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		int nMinicritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnCond, or_minicrit_vs_playercond_burning );
 
-		if ( nCritOnCond || nMinicritOnCond )
+		// Crit players. Don't crit afterburn.
+		if ( ( nCritOnCond || nMinicritOnCond ) && !( info.GetDamageType() & DMG_BURN ) )
 		{
 			for ( int i = 0; condition_to_attribute_translation[i] != TF_COND_LAST; i++ )
 			{
@@ -5011,7 +5012,16 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 			}
 		}
+		
+		// This burning attribute also affects afterburn.
+		float nDamageBurningPlayers = info.GetDamage();
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDamageBurningPlayers, mult_dmg_vs_burning );
+		if ( m_Shared.InCond( TF_COND_BURNING ) )
+		{
+			info.SetDamage( nDamageBurningPlayers );
+		}		
 
+		// For when a player isn't on fire.
 		float flPenaltyNonBurning = info.GetDamage();
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flPenaltyNonBurning, mult_dmg_vs_nonburning );
 
@@ -6114,6 +6124,26 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	if ( bIgniting )
 		m_Shared.Burn( pTFAttacker, pTFWeapon );
+	
+	// Do our extinguish here.
+	int nFireproofOnBurned = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_Shared.GetActiveTFWeapon(), nFireproofOnBurned, become_fireproof_on_hit_by_fire);
+	if (nFireproofOnBurned && m_Shared.InCond(TF_COND_BURNING) )
+	{
+		// We have an extinguish, remove the afterburn and make fire immune.
+		m_Shared.RemoveCond(TF_COND_BURNING);
+		m_Shared.AddCond(TF_COND_FIRE_IMMUNE, 1.0); // Block all fire damage for 1 second
+		m_Shared.AddCond(TF_COND_AFTERBURN_IMMUNE, nFireproofOnBurned); // Don't allow any afterburn for nFireproofOnBurned seconds.
+		EmitSound("TFPlayer.FlameOut");	// Play the sound.
+
+		// This is specifically for the knife right now.
+		// This tells our knife to "melt" and remove itself from play until it regenerates.
+		CTFKnife *pKnife = dynamic_cast<CTFKnife *>(m_Shared.GetActiveTFWeapon());
+		if (pKnife && pKnife->CanExtinguish())
+		{
+			pKnife->Extinguish();
+		}
+	}
 
 	if ( flBleedDuration > 0.0f )
 	{
