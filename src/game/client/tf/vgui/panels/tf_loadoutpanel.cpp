@@ -248,6 +248,15 @@ void CTFLoadoutPanel::OnCommand ( const char* command )
 		}
 		return;
 	}
+	else if ( !Q_strncmp( command, "loadpreset_", 11 ) )
+	{
+		const int iPresetIndex = atoi( command + 11 );
+		if (iPresetIndex < TF_MAX_PRESETS)
+		{
+			GetTFInventory()->ChangeLoadoutSlot( m_iCurrentClass, iPresetIndex );
+			DefaultLayout();
+		}
+	}
 	else
 	{
 		BaseClass::OnCommand ( command );
@@ -601,17 +610,15 @@ void CTFLoadoutPanel::SetWeaponPreset( int iClass, int iSlot, int iPreset )
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel *pParent, const char *pName)
 :	EditablePanel( pParent, "loadout_preset_panel" )
 {
 	V_memset( m_pPresetButtons, 0, sizeof( m_pPresetButtons ) );
-
+	
 	m_iCurrentClass = TF_CLASS_UNDEFINED;
+	m_iActivePreset = 0;
+
 	m_pPresetButtonKv = NULL;
-	m_iActivePreset = 0; // Assume A
 
 	// Create all buttons
 	for ( int i = 0; i < TF_MAX_PRESETS; ++i )
@@ -624,10 +631,9 @@ CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel *pParent, const char *p
 		m_pPresetButtons[i] = new CExButton(this, cszName, pwszPresetName);
 	}
 	
-	// Fill in our data
-	m_iCurrentClass = GetTFInventory()->GetMostRecentClass(); // What's our current class?
-	m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass); // Get the active loadout. Default to A.
-	
+	// Fill these in.
+	m_iCurrentClass = GetTFInventory()->GetMostRecentClass();
+	m_iActivePreset = GetTFInventory()->GetCurrentLoadoutSlot(m_iCurrentClass);
 }
 
 //-----------------------------------------------------------------------------
@@ -707,13 +713,12 @@ void CTFLoadoutPresetPanel::PerformLayout()
 void CTFLoadoutPresetPanel::OnCommand(const char *command)
 {
 	
-	if ( !V_strnicmp( command, "loadpreset_", 11 ) )
+	if ( !Q_strnicmp( command, "loadpreset_", 11 ) )
 	{
 		const int iPresetIndex = atoi( command + 11 );
 		if (iPresetIndex < TF_MAX_PRESETS)
 		{
 			m_iActivePreset = iPresetIndex;
-			GetTFInventory()->ChangeLoadoutSlot( m_iCurrentClass, m_iActivePreset );
 			UpdatePresetButtonStates();
 		}
 	}
