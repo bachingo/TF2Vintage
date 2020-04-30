@@ -18,6 +18,7 @@
 #endif
 
 #define TF_WEAPON_FLARE_MODEL		"models/weapons/w_models/w_flaregun_shell.mdl"
+#define TF_FLARE_GRAVITY			0.3f
 
 BEGIN_DATADESC( CTFProjectile_Flare )
 END_DATADESC()
@@ -83,7 +84,12 @@ void CTFProjectile_Flare::Spawn()
 	SetModel( TF_WEAPON_FLARE_MODEL );
 	BaseClass::Spawn();
 	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
-	SetGravity( 0.3f );
+	
+	CTFWeaponBase *pLauncher = dynamic_cast<CTFWeaponBase*>(m_hLauncher.Get());
+	if (pLauncher && pLauncher->IsEnergyWeapon()) // Energy beam
+		SetGravity( 0.0f );	
+	else								 		  // Regular flare
+		SetGravity( TF_FLARE_GRAVITY);
 }
 
 //-----------------------------------------------------------------------------
