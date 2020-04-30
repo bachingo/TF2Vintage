@@ -107,6 +107,7 @@
 	"The Widowmaker"								"1"
 	"The Eureka Effect"								"1"
 	"The Third Degree"								"1"
+	"The Manmelter"									"1"
 	"The Cozy Camper"								"1"
 	"The Wrap Assassin"								"1"
 	"The Spy-cicle"									"1"

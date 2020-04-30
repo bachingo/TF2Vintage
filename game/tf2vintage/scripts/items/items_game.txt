@@ -6519,6 +6519,65 @@
 				"sound_melee_hit_world"	"Weapon_3rd_degree.HitWorld"
 			}
 		}
+		"595"
+		{
+			"name"	"The Manmelter"
+			"prefab"			"weapon_flaregun"	
+			"year"	"2011"
+			"item_class"	"tf_weapon_flaregun_revenge"
+			"item_logname"	"manmelter"
+			"item_iconname"	"manmelter"
+			"item_type_name"	"#TF_Weapon_IndivisibleParticleSmasher"
+			"item_name"	"#TF_ManMelter"
+			"item_description"	"#TF_ManMelter_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_drg_manmelter/c_drg_manmelter"
+			"model_player"	"models/workshop/weapons/c_models/c_drg_manmelter/c_drg_manmelter.mdl"
+			"propername"	"1"
+			"attributes"
+			{
+				"energy weapon no ammo"
+				{
+					"attribute_class"	"energy_weapon_no_ammo"
+					"value" "1"
+				}
+				"Projectile speed increased"
+				{
+					"attribute_class"	"mult_projectile_speed"
+					"value"	"1.5"
+				}
+				"extinguish earns revenge crits"
+				{
+					"attribute_class"	"extinguish_revenge"
+					"value"	"1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"ragdolls become ash"
+				{
+					"attribute_class"	"ragdolls_become_ash"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"animation_replacement"
+				{
+					"ACT_VM_IDLE"	"ACT_SECONDARY2_VM_IDLE"
+					"ACT_VM_DRAW"	"ACT_SECONDARY2_VM_DRAW"
+					"ACT_VM_PRIMARYATTACK"	"ACT_SECONDARY2_VM_PRIMARYATTACK"
+					"ACT_MP_ATTACK_STAND_PRIMARYFIRE"	"ACT_MP_ATTACK_STAND_SECONDARY2"
+					"ACT_MP_ATTACK_CROUCH_PRIMARYFIRE"	"ACT_MP_ATTACK_CROUCH_SECONDARY2"
+					"ACT_MP_ATTACK_SWIM_PRIMARYFIRE"	"ACT_MP_ATTACK_SWIM_SECONDARY2"
+					"ACT_MP_ATTACK_STANDACT_MP_ATTACK_AIRWALK_PRIMARYFIRE_PRIMARYFIRE"	"ACT_MP_ATTACK_AIRWALK_SECONDARY2"
+					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_ITEM1_VM_INSPECT_START"
+					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_ITEM1_VM_INSPECT_IDLE"
+					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_ITEM1_VM_INSPECT_END"
+				}
+			}
+		}
 		"642"
 		{
 			"name"			"The Cozy Camper"
