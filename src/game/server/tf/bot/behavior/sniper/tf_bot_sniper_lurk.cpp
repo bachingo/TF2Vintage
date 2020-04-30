@@ -68,7 +68,7 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 		FindNewHome( me );
 	}
 
-	bool bIsAttacking = false;
+	bool bWantsToZoom = false;
 
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat != nullptr && threat->GetEntity()->IsAlive() && me->GetIntentionInterface()->ShouldAttack( me, threat ) )
@@ -93,21 +93,17 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 
 				m_patienceDuration.Reset();
 
-				bIsAttacking = true;
+				bWantsToZoom = true;
 
 				if ( !m_bHasHome )
 				{
 					m_vecHome = me->GetAbsOrigin();
 
 					m_patienceDuration.Start( RandomFloat( 0.9f, 1.1f ) * tf_bot_sniper_patience_duration.GetFloat() );
-
-					bIsAttacking = true;
 				}
 			}
 			else
 			{
-				bIsAttacking = false;
-
 				CBaseCombatWeapon *pSecondary = me->Weapon_GetSlot( 1 );
 				if ( pSecondary != nullptr )
 				{
@@ -120,8 +116,9 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 	float flDistToHome = ( me->GetAbsOrigin().AsVector2D() - m_vecHome.AsVector2D() ).LengthSqr();
 	m_bNearHome = ( flDistToHome < Square( 25.0f ) );
 
-	if ( flDistToHome < Square( 25.0f ) )
+	if ( m_bNearHome )
 	{
+		bWantsToZoom = true;
 		m_bOpportunistic = tf_bot_sniper_allow_opportunistic.GetBool();
 
 		if ( m_patienceDuration.IsElapsed() )
@@ -144,7 +141,7 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 	{
 		m_patienceDuration.Reset();
 
-		if ( !bIsAttacking )
+		if ( !bWantsToZoom )
 		{
 			if ( m_recomputePathTimer.IsElapsed() )
 			{
@@ -170,7 +167,7 @@ ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 	{
 		me->Weapon_Switch( pPrimary );
 
-		auto pWeapon = static_cast<CTFWeaponBase *>( pPrimary );
+		CTFWeaponBase *pWeapon = static_cast<CTFWeaponBase *>( pPrimary );
 		if ( !me->m_Shared.InCond( TF_COND_ZOOMED ) && !pWeapon->IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
 		{
 			me->PressAltFireButton();

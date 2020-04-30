@@ -331,7 +331,7 @@ protected:
 	bool  m_bFixedConstraints;
 	bool  m_bFadingOut;
 	bool  m_bPlayDeathAnim;
-	CountdownTimer m_freezeTimer; // TODO: Name
+	CountdownTimer m_freezeTimer;
 	CountdownTimer m_frozenTimer;
 
 	// Decapitation
@@ -1046,7 +1046,7 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 		}
 
 		C_TFPlayer *pPlayer = ToTFPlayer( hPlayer );
-		if ( !m_bCloaked && pPlayer && pPlayer->GetPercentInvisible() > 0 )
+		if ( !m_bCloaked && pPlayer )
 			m_flUncloakCompleteTime = gpGlobals->curtime * 2.0f + pPlayer->GetPercentInvisible();
 
 		if ( m_iDamageCustom == TF_DMG_CUSTOM_PLASMA_CHARGED )
@@ -1234,12 +1234,25 @@ void C_TFRagdoll::ClientThink( void )
 					{
 						if ( !bBombinomiconDeath )
 						{
-							// TODO: Figure out why SUB_Remove boots to main menu when that's what they do in live
-							EndFadeOut();
-							return;
-						}
+							AddEffects( EF_NODRAW );
+							ParticleProp()->StopParticlesNamed( "drg_fiery_death", true, true );
 
-						CreateTFGibs( !m_bDissolve, true );
+							for ( C_BaseEntity *pEntity = ClientEntityList().FirstBaseEntity(); pEntity; pEntity = ClientEntityList().NextBaseEntity(pEntity) )
+							{
+								if ( pEntity->GetFollowedEntity() == this )
+								{
+									CEconEntity *pItem = dynamic_cast< CEconEntity * >( pEntity );
+									if ( pItem )
+									{
+										pItem->AddEffects( EF_NODRAW );
+									}
+								}
+							}
+						}
+						else
+						{
+							CreateTFGibs( !m_bDissolve, true );
+						}
 						return;
 					}
 				}
@@ -1249,8 +1262,21 @@ void C_TFRagdoll::ClientThink( void )
 		{
 			m_bDissolve = false;
 			m_flDeathDelay = 1.2f;
+
 			DissolveEntity( this );
 			EmitSound( "TFPlayer.Dissolve" );
+
+			for ( C_BaseEntity *pEntity = ClientEntityList().FirstBaseEntity(); pEntity; pEntity = ClientEntityList().NextBaseEntity(pEntity) )
+			{
+				if ( pEntity->GetFollowedEntity() == this )
+				{
+					CEconEntity *pItem = dynamic_cast< CEconEntity * >( pEntity );
+					if ( pItem )
+					{
+						DissolveEntity( pItem );
+					}
+				}
+			}
 		}
 	}
 	else
