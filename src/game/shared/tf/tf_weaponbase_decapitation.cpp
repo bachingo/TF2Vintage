@@ -76,16 +76,6 @@ int CTFDecapitationMeleeWeaponBase::TranslateViewmodelHandActivity( int iActivit
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFDecapitationMeleeWeaponBase::CanDecapitate( void )
-{
-	if (GetItem() && GetItem()->GetStaticData())
-		return CAttributeManager::AttribHookValue<int>( 0, "decapitate_type", this ) != 0;
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 float CTFDecapitationMeleeWeaponBase::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage )
 {
 	float res = BaseClass::GetMeleeDamage( pTarget, iDamageType, iCustomDamage );

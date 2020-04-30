@@ -30,7 +30,6 @@ public:
 
 	virtual int		TranslateViewmodelHandActivity( int iActivity );
 
-	virtual bool	CanDecapitate( void );
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
 	virtual int		GetWeaponID( void ) const						{ return TF_WEAPON_SWORD; }
 	virtual int		GetCustomDamageType( void ) const				{ return TF_DMG_CUSTOM_DECAPITATION; }

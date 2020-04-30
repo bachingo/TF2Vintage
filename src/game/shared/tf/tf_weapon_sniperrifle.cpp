@@ -324,7 +324,7 @@ void CTFSniperRifle::ItemPostFrame( void )
 	else if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
 	{
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
-		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
+		if ( ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot ) || ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF) ) ) 
 		{
 			float flChargeRate = GetChargingRate();
 			CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_sniper_charge_per_sec );
@@ -346,7 +346,10 @@ void CTFSniperRifle::ItemPostFrame( void )
 	if ( ( pPlayer->m_nButtons & IN_RELOAD ) && !m_bInReload ) 
 	{
 		// reload when reload is pressed, or if no buttons are down and weapon is empty.
-		Reload();
+		if ( HasFocus() )
+			ActivateFocus();
+		else
+			Reload();
 	}
 
 	// Idle.
@@ -542,7 +545,7 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	int nWeaponModeScope = 0;
 	CALL_ATTRIB_HOOK_INT( nWeaponModeScope, sniper_no_zoomout );
 	
-	if (nWeaponModeScope == 0)
+	if (nWeaponModeScope == 0 || pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF))
 	{
 		if ( IsZoomed() )
 		{
@@ -767,6 +770,43 @@ bool CTFSniperRifle::IsPenetrating(void)
 	return BaseClass::IsPenetrating();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Used for calculating Focus.
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::HasFocus(void)
+{
+	int nHasFocus = 0;
+	CALL_ATTRIB_HOOK_INT(nHasFocus, sniper_rage_DISPLAY_ONLY);
+		
+	if ( nHasFocus != 0 )
+		return true;
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Displays the Charge bar.
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::HasChargeBar(void)
+{
+	if ( HasFocus() )
+		return true;
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Activates focus on our sniper rifle.
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::ActivateFocus(void)
+{
+		CTFPlayer *pPlayer = GetTFPlayerOwner();
+		if (!pPlayer)
+			return;
+		
+		if (!pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF) && pPlayer->m_Shared.HasFocusCharge())
+			pPlayer->m_Shared.AddCond(TF_COND_SNIPERCHARGE_RAGE_BUFF);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

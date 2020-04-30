@@ -330,6 +330,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	bool				IsHonorBound( void ) const;
 
 	bool 				IsPenetrating(void);
+	
+	virtual bool		CanDecapitate( void );
 
 	// Energy Weapons
 	bool IsEnergyWeapon(void);

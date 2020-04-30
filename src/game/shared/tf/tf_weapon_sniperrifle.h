@@ -116,6 +116,11 @@ public:
 
 	bool 		IsPenetrating(void);
 	
+	virtual bool	HasFocus( void );
+	virtual bool	HasChargeBar( void );
+	virtual const char* GetEffectLabelText( void ) { return "#TF_SniperRage"; }
+	virtual void	ActivateFocus( void );
+	
 	void CreateSniperDot(void);
 	void DestroySniperDot(void);
 	void UpdateSniperDot(void);
@@ -151,6 +156,9 @@ private:
 	float m_flUnzoomTime;
 	float m_flRezoomTime;
 	bool m_bRezoomAfterShot;
+	
+	// Deals with focus.
+	float m_flFocusLevel;
 
 	CTFSniperRifle( const CTFSniperRifle & );
 };

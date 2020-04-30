@@ -494,7 +494,22 @@ int CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::GetCount( void )
 	return -1;
 }
 
+//-----------------------------------------------------------------------------
+// C_TFSniperRifle Specialization
+//-----------------------------------------------------------------------------
+template<>
+float CHudItemEffectMeterTemp<C_TFSniperRifle>::GetProgress( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer )
+	{
+		C_TFSniperRifle *pSniperRifle = GetWeapon();
+		if ( pSniperRifle && pSniperRifle->HasFocus() )
+			return pPlayer->m_Shared.GetFocusLevel() / 100;
+	}
 
+	return 1.0;
+}
 
 //-----------------------------------------------------------------------------
 // C_TFRocketLauncher_Airstrike Specialization
@@ -693,6 +708,7 @@ void CHudItemEffects::SetPlayer( void )
 		case TF_CLASS_SNIPER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJar>( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Sniper.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Sniperfocus.res" ) );
 			break;
 		case TF_CLASS_SOLDIER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBuffItem>( "HudItemEffectMeter" ) );

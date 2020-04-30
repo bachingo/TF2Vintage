@@ -6761,11 +6761,6 @@
 					"attribute_class"	"mult_crit_chance"
 					"value"	"0"
 				}
-				"hidden on killfeed"
-				{
-					"attribute_class"	"set_hidden_killer"
-					"value"	"1"
-				}
 			}
 			"visuals"
 			{
@@ -6790,25 +6785,30 @@
 			}
 			"attributes"
 			{
-				"sniper no zoomout"
+				"decapitate type"
 				{
-					"attribute_class"	"sniper_no_zoomout"
-					"value" "1"			
-				}
-				"sniper no dot"
-				{
-					"attribute_class"	"sniper_no_dot"
-					"value" "1"			
+					"attribute_class"	"decapitate_type"
+					"value"	"1"
 				}
 				"damage penalty on bodyshot"
 				{
 					"attribute_class"	"bodyshot_damage_modify"
 					"value" "0.80"
 				}
-				"hidden on killfeed"
+				"rage on kill"
 				{
-					"attribute_class"	"set_hidden_killer"
-					"value"	"1"
+					"attribute_class"	"rage_on_kill"
+					"value" "35"
+				}
+				"rage on assists"
+				{
+					"attribute_class"	"rage_on_assists"
+					"value" "15"
+				}
+				"sniper rage DISPLAY ONLY"
+				{
+					"attribute_class"	"sniper_rage_DISPLAY_ONLY"
+					"value" "0"
 				}
 			}
 			"visuals"

@@ -1254,6 +1254,7 @@ void CTFPlayer::Spawn()
 	m_Shared.SetHypeMeterAbsolute( 0 );
 	m_Shared.SetSanguisugeHealth(0);
 	m_Shared.SetKillstreakCount( 0 );
+	m_Shared.SetFocusLevel( 0 );
 	
 	m_Shared.SetFeignReady( false );
 	m_Shared.SetHasRecoiled( false );
@@ -4428,7 +4429,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 					// play the critical shot sound to the shooter	
 					if ( pWpn )
 					{
-						if ( pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE ) || pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE_DECAP ) )
+						if ( pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE ) || pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE_DECAP ) || pWpn->IsWeapon( TF_WEAPON_SNIPERRIFLE_CLASSIC )  )
 							pWpn->WeaponSound( BURST );
 
 						CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWpn, flDamage, headshot_damage_modify );
@@ -6658,9 +6659,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			// If we killed them from a backstab, increase our sapper kill count.
 			if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
 				m_Shared.StoreSapperKillCount();
-			
-			// Increase our killstreak counter.
-			m_Shared.IncrementKillstreakCount();
 			
 		}
 	}

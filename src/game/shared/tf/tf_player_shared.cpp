@@ -220,6 +220,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_iMaxHealth ) ),
 	RecvPropFloat( RECVINFO( m_flEffectBarProgress ) ),
 	RecvPropFloat( RECVINFO( m_flEnergyDrinkMeter ) ),
+	RecvPropFloat( RECVINFO( m_flFocusLevel ) ),
 	RecvPropFloat( RECVINFO( m_flChargeMeter ) ),
 	RecvPropFloat( RECVINFO( m_flHypeMeter ) ),
 	// Spy.
@@ -253,6 +254,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_iRespawnParticleID, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flEffectBarProgress, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flEnergyDrinkMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flFocusLevel, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flChargeMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flHypeMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
@@ -308,6 +310,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iMaxHealth ), 10 ),
 	SendPropFloat( SENDINFO( m_flEffectBarProgress ), 11, 0, 0.0f, 100.0f ),
 	SendPropFloat( SENDINFO( m_flEnergyDrinkMeter ), 11, 0, 0.0f, 100.0f ),
+	SendPropFloat( SENDINFO( m_flFocusLevel ), 11, 0, 0.0f, 100.0f ),
 	SendPropFloat( SENDINFO( m_flChargeMeter ), 11, 0, 0.0f, 100.0f ),
 	SendPropFloat( SENDINFO( m_flHypeMeter ), 11, 0, 0.0f, 100.0f ),
 	// Spy
@@ -1533,6 +1536,7 @@ void CTFPlayerShared::ConditionThink( void )
 	UpdateSanguisugeHealth();
 	UpdateChargeMeter();
 	UpdateEnergyDrinkMeter();
+	UpdateFocusLevel();
 #else
 	m_pOuter->UpdateHalloweenBombHead();
 #endif
@@ -4518,6 +4522,53 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 
 	m_flEnergyDrinkMeter = Min( m_flEnergyDrinkMeter.Get(), 100.0f );
 	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Updates our Sniper's Focus level.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateFocusLevel( void )
+{
+	if ( m_flFocusLevel > 100.0f ) // Prevent our meter from going over 100
+	{
+		m_flFocusLevel = 100.0f;
+	}
+		
+	if ( InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF ) )
+	{
+		m_flFocusLevel -= ( gpGlobals->frametime * 10 );	// Max is 10 seconds.
+
+		if ( m_flFocusLevel <= 0.0f )
+		{
+			RemoveCond( TF_COND_SNIPERCHARGE_RAGE_BUFF );
+			m_flFocusLevel = 0;
+		}
+	}
+	
+	return;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Adds focus to our character. input is kill (true) or assist (false).
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::AddFocusLevel(bool bKillOrAssist)
+{
+	if (bKillOrAssist)	// Kill
+	{
+		float flKillLevel = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, flKillLevel, rage_on_kill);
+		if (flKillLevel)
+			m_flFocusLevel = Min(m_flFocusLevel + flKillLevel, 100.0f);
+		return;
+	}
+	else 				//Assist
+	{
+		float flAssistLevel = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, flAssistLevel, rage_on_assist);
+		if (flAssistLevel)
+			m_flFocusLevel = Min(m_flFocusLevel + flAssistLevel, 100.0f);
+		return;
+	}
 }
 #endif
 

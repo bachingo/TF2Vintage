@@ -2201,6 +2201,22 @@ bool CTFWeaponBase::IsPenetrating(void)
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Used to calculate if a weapon causes decapitations.
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanDecapitate( void )
+{
+	if (GetCustomDamageType() == TF_DMG_CUSTOM_DECAPITATION_BOSS || 
+		GetCustomDamageType() == TF_DMG_CUSTOM_MERASMUS_DECAPITATION ||
+		GetCustomDamageType() == TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING || 
+		GetCustomDamageType() == TF_DMG_CUSTOM_DECAPITATION )
+		 return true;
+			 
+	int nDecapitateType = 0;
+	CALL_ATTRIB_HOOK_INT(nDecapitateType, decapitate_type);
+	return ( nDecapitateType != 0 && ( GetCustomDamageType() ==  TF_DMG_CUSTOM_HEADSHOT ) );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Used for calculating energy weapon logic.
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::IsEnergyWeapon(void)

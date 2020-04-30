@@ -403,7 +403,15 @@ public:
 	void 	UpdateSanguisugeHealth( void );
 	void	UpdateChargeMeter( void );
 	void	UpdateEnergyDrinkMeter( void );
+	
+	// Focus.
+	void	UpdateFocusLevel( void );
+	void	AddFocusLevel(bool bKillOrAssist);
+	void	SetFocusLevel( float amount )        { m_flFocusLevel = amount; }
 #endif
+	bool	HasFocusCharge(void)	{return m_flFocusLevel > 0;}
+	float	GetFocusLevel(void)		{return m_flFocusLevel;}
+	
 	void	EndCharge( void );
 
 private:
@@ -628,11 +636,13 @@ private:
 #ifdef GAME_DLL
 public:
 	CNetworkVar( float, m_flEnergyDrinkMeter );
+	CNetworkVar( float, m_flFocusLevel );
 	CNetworkVar( float, m_flChargeMeter );
 	CNetworkVar( float, m_flHypeMeter );
 private:
 #else
 	float m_flEnergyDrinkMeter;
+	float m_flFocusLevel;
 	float m_flChargeMeter;
 	float m_flHypeMeter;
 #endif
