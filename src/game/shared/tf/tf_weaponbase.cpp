@@ -1960,6 +1960,14 @@ const char *CTFWeaponBase::GetMuzzleFlashParticleEffect( void )
 	if ( pItemDef && pItemDef->GetVisuals()->muzzle_flash[0] != '\0' )
 	{
 		pszPEffect = pItemDef->GetVisuals()->muzzle_flash;
+		return pszPEffect;
+	}
+	// If we have team specific, check those too.			
+	PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
+	if ( pVisuals && pVisuals->muzzle_flash[0] != '\0' )
+	{
+		pszPEffect = pItemDef->GetVisuals()->muzzle_flash;
+		return pszPEffect;
 	}
 	
 	if ( Q_strlen( pszPEffect ) > 0 )
@@ -1991,6 +1999,7 @@ float CTFWeaponBase::GetMuzzleFlashModelScale(void)
 //-----------------------------------------------------------------------------
 const char *CTFWeaponBase::GetTracerType( void )
 { 
+		
 	if ( tf_useparticletracers.GetBool() && GetTFWpnData().m_szTracerEffect && GetTFWpnData().m_szTracerEffect[0] )
 	{
 		if (GetOwner() && !m_szTracerName[0])
@@ -2009,26 +2018,31 @@ const char *CTFWeaponBase::GetTracerType( void )
 			}
 		}
 
-		// Override tracer effect, if we have a custom one.
-		CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
-		if ( pItemDef && pItemDef->GetVisuals()->tracer_effect[0] != '\0' )
-		{
-			Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", pItemDef->GetVisuals()->tracer_effect );
-		}
-
 		//if ( !m_szTracerName[0] )
 		//{
 		//	Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, tempString);
 		//}
 
-		return m_szTracerName;
 	}
 
 	if ( GetWeaponID() == TF_WEAPON_MINIGUN )
-		return "BrightTracer";
+		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", "BrightTracer" );
 	
 	if ( GetWeaponID() == TF_WEAPON_SNIPERRIFLE_CLASSIC )
-		return "tfc_sniper_distortion_trail";
+		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", "tfc_sniper_distortion_trail" );
+	
+	// Override tracer effect, if we have a custom one.
+	CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
+	if ( pItemDef && pItemDef->GetVisuals()->tracer_effect[0] != '\0' )
+	{
+		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", pItemDef->GetVisuals()->tracer_effect );
+	}
+	// If we have team specific, check those too.			
+	PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
+	if ( pVisuals && pVisuals->tracer_effect[0] != '\0' )
+	{
+		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", pVisuals->tracer_effect );
+	}
 	
 	int nSniperFiresTracer = 0;
 	CALL_ATTRIB_HOOK_INT(nSniperFiresTracer, sniper_fires_tracer);
@@ -2040,17 +2054,20 @@ const char *CTFWeaponBase::GetTracerType( void )
 			switch (GetOwner()->GetTeamNumber())
 			{
 			case TF_TEAM_RED:
-				return "dxhr_sniper_rail_red";
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", "dxhr_sniper_rail_red" );
 				break;
 			case TF_TEAM_BLUE:
-				return "dxhr_sniper_rail_blue";
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", "dxhr_sniper_rail_blue" );
 				break;
 			default:
-				return "dxhr_sniper_rail_red";
+				Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", "dxhr_sniper_rail_blue" );
 				break;
 			}
 		}
 	}
+	
+	if ( m_szTracerName[0] != '\0' )
+		return m_szTracerName;
 
 	return BaseClass::GetTracerType();
 }
