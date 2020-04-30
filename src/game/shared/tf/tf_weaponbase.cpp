@@ -2249,6 +2249,34 @@ float CTFWeaponBase::GetEnergyPercentage(void)
 	return iClipT / 1;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Used for coloring in energy weapon effects.
+//-----------------------------------------------------------------------------
+Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( !pOwner )
+		return Vector(0,0,0);
+	
+	if (pOwner->GetTeamNumber() == TF_TEAM_RED)
+	{
+		if ( bUseAlternateColorPalette )
+			return Vector( 0.72, 0.22, 0.23 );
+		else
+			return Vector( 0.5, 0.18, 0.125 );	
+	}
+	else
+	{
+		if ( !bUseAlternateColorPalette )
+			return Vector( 0.345, 0.52, 0.635 );
+		else
+			return Vector( 0.145, 0.427, 0.55 );
+	}	
+	
+	// You shouldn't come here, at least in standard team mode.
+	return Vector(0,0,0);
+}
+
 
 //=============================================================================
 //

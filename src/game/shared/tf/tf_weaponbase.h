@@ -336,6 +336,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Energy Weapons
 	bool IsEnergyWeapon(void);
 	float GetEnergyPercentage(void);
+	Vector GetEnergyWeaponColor( bool bUseAlternateColorPalette );
 	
 // Server specific.
 #if !defined( CLIENT_DLL )

@@ -1251,6 +1251,7 @@ void CTFPlayer::Spawn()
 	m_Shared.SetStrikeCount( 0 );
 	m_Shared.SetSapperKillCount( 0 );
 	m_Shared.SetRevengeCritCount( 0 );
+	m_Shared.SetAirblastCritCount( 0 );
 	m_Shared.SetHypeMeterAbsolute( 0 );
 	m_Shared.SetSanguisugeHealth(0);
 	m_Shared.SetKillstreakCount( 0 );

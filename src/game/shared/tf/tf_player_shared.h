@@ -393,6 +393,14 @@ public:
 	void	DeductRevengeCrit( void )     	 		 { m_iRevengeCrits = Max( (m_iRevengeCrits - 1), 0 ); }
 	bool	HasRevengeCrits( void )      			 { return m_iRevengeCrits > 0; }
 	
+	// Airblast Crit Counter (ie: Manmelter)
+	int		GetAirblastCritCount( void ) const        { return m_iAirblastCrits; }
+	void	SetAirblastCritCount(int count)      	 { m_iAirblastCrits = count; }
+	void	IncrementAirblastCrit( void )     		 { m_iAirblastCrits += 1; }	
+	void	DeductAirblastCrit( void )     	 		 { m_iAirblastCrits = Max( (m_iAirblastCrits - 1), 0 ); }
+	bool	HasAirblastCrits( void )      			 { return m_iAirblastCrits > 0; }
+	
+	
 	// Killstreak counter, for HUD.
 	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
 	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
@@ -633,6 +641,7 @@ private:
 	CNetworkVar( int, m_iKillstreak );
 	CNetworkVar( int, m_iSapperKill );
 	CNetworkVar( int, m_iRevengeCrits );
+	CNetworkVar( int, m_iAirblastCrits );
 #ifdef GAME_DLL
 public:
 	CNetworkVar( float, m_flEnergyDrinkMeter );
