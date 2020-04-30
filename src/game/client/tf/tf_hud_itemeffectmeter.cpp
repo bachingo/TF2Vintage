@@ -235,7 +235,7 @@ bool CHudItemEffectMeter::ShouldDraw( void )
 		bResult = CHudElement::ShouldDraw();
 	}
 
-	if ( bResult ^ IsVisible() )
+	if ( bResult != IsVisible() )
 	{
 		SetVisible( bResult );
 		if ( bResult )
@@ -274,7 +274,7 @@ void CHudItemEffectMeter::Update( C_TFPlayer *pPlayer )
 		if ( ShouldFlash() )
 		{
 			// Meter is depleting
-			int r = 10 * ( (int)( gpGlobals->realtime * 10.0f ) % 10 ) - 96;
+			int r = 10 * ( (int)( gpGlobals->realtime * 10.0f ) % 10 ) + 160;
 			m_pEffectMeter->SetFgColor( Color( r, 0, 0, 255 ) );
 		}
 		else
@@ -639,6 +639,7 @@ void CHudItemEffects::Shutdown( void )
 	}
 
 	StopListeningForAllEvents();
+	m_pEffectBars.Purge();
 }
 
 //-----------------------------------------------------------------------------
