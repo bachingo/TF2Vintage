@@ -433,8 +433,16 @@ void CTFProjectile_Flare::CreateTrails( void )
 	if ( IsDormant() )
 		return;
 
-	const char *pszFormat = m_bCritical ? "flaregun_trail_crit_%s" : "flaregun_trail_%s";
-	const char *pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber(), false );
+	const char *pszFormat = nullptr;
+	const char *pszEffectName = nullptr;
+	CTFWeaponBase *pLauncher = dynamic_cast<CTFWeaponBase*>(m_hLauncher.Get());
+	if (pLauncher && pLauncher->IsEnergyWeapon()) // Energy beam
+		pszFormat = "drg_manmelter_projectile";	
+	else // Standard flare
+	{		
+		pszFormat = m_bCritical ? "flaregun_trail_crit_%s" : "flaregun_trail_%s";
+		pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber(), false );
+	}
 
 	ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 }
