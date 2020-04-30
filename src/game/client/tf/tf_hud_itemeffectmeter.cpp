@@ -20,6 +20,7 @@
 #include "tf_weapon_rocketlauncher.h"
 #include "tf_weapon_revolver.h"
 #include "tf_weapon_knife.h"
+#include "tf_weapon_flaregun.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -721,6 +722,8 @@ void CHudItemEffects::SetPlayer( void )
 		case TF_CLASS_HEAVYWEAPONS:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFLunchBox>( "HudItemEffectMeter" ) );
 			break;
+		case TF_CLASS_PYRO:
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFFlareGunRevenge>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Engineer.res"));
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) );
