@@ -2249,9 +2249,18 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 		{
 			// give an assist to the sapper's owner
 			pAssister = pSapper->GetOwner();
+			CTF_GameStats.Event_AssistDestroyBuilding( pAssister, this );
+		}
+	}
+	
+	// Whether we killed it or not if there's a sapper on the building when it was destroyed, award a sapper crit.
+	if ( HasSapper() )
+	{
+		CObjectSapper *pSapper = dynamic_cast<CObjectSapper *>( FirstMoveChild() );
+		if ( pSapper )
+		{
 			pSapperOwner = pSapper->GetOwner();
 			pSapperOwner->m_Shared.StoreSapperKillCount();
-			CTF_GameStats.Event_AssistDestroyBuilding( pAssister, this );
 		}
 	}
 
