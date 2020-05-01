@@ -1545,6 +1545,11 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			
 		}
 	}
+	else if (!tf2v_allow_spy_sprint.GetBool() && GetSpySprint() ) // Don't allow us to spy sprint.
+	{
+		SetSpySprint(false);
+		m_pOuter->TeamFortress_SetSpeed();
+	}
 	
 #endif
 }
