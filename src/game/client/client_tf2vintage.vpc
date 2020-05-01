@@ -387,6 +387,10 @@ $Project "Client (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_slap.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_crossbow.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_crossbow.h"
+						$File	"$SRCDIR\game\shared\tf\tf_projectile_energyball.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_projectile_energyball.h"	
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_particlecannon.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_particlecannon.h"	
 					}
 					$Folder	"Classic Content"
 					{

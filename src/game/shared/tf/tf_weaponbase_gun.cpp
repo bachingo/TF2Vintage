@@ -12,6 +12,7 @@
 #include "tf_projectile_nail.h"
 #include "tf_projectile_arrow.h"
 #include "tf_projectile_jar.h"
+#include "tf_projectile_energyball.h"
 #include "tf_shareddefs.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
@@ -202,6 +203,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 		case TF_PROJECTILE_ROCKET:
 			pProjectile = FireRocket( pPlayer );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
+			
+		case TF_PROJECTILE_ENERGY_BALL:
+			pProjectile = FireEnergyBall( pPlayer );
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;
 		
@@ -487,7 +493,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 		angForward.y += RandomFloat(-flSpread, flSpread);
 	}
 
-	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
@@ -499,6 +505,70 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 
 	return NULL;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Fires an energy ball.
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bCharged /* ==false */ )
+{
+	if ( IsCurrentAttackACrit() || bCharged )
+	{
+		WeaponSound( BURST );
+	}
+	else
+	{
+		WeaponSound( SINGLE );
+	}
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	Vector vecSrc;
+	Vector vecOffset( 0.0f, 0.0f, 0.0f );
+	QAngle angForward;
+
+	int isQuakeRL = 0;
+	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
+
+	if( isQuakeRL > 0 )
+	{
+		vecOffset.z = -3.0f;
+	}
+	else
+	{
+		vecOffset.x = 23.5f;
+		vecOffset.y = 12.0f;
+		vecOffset.z = -3.0f;
+	}
+
+	if ( pPlayer->GetFlags() & FL_DUCKING )
+	{
+		vecOffset.z = 8.0f;
+	}
+	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
+
+	// Add attribute spread.
+	float flSpread = 0;
+	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
+	if ( flSpread != 0)
+	{
+		angForward.x += RandomFloat(-flSpread, flSpread);
+		angForward.y += RandomFloat(-flSpread, flSpread);
+	}
+
+	CTFEnergyBall *pProjectile = CTFEnergyBall::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetIsCharged(bCharged);
+	}
+	return pProjectile;
+
+#endif
+
+	return NULL;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Fire a projectile nail
