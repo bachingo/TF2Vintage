@@ -75,7 +75,7 @@ public:
 
 	virtual bool IsPotentiallyVisibleToTeam( int iTeamNum ) const override
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_TEAM_COUNT );
 		return !m_PVNPCs[ iTeamNum ].IsEmpty();
 	}
 
@@ -87,11 +87,17 @@ public:
 	bool IsAwayFromInvasionAreas( int iTeamNum, float radius ) const;
 	const CUtlVector<CTFNavArea *> &GetInvasionAreasForTeam( int iTeamNum ) const
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_TEAM_COUNT );
 		return m_InvasionAreas[ iTeamNum ];
 	}
 
 	void AddPotentiallyVisibleActor( CBaseCombatCharacter *actor );
+	inline void RemovePotentiallyVisibleActor( CBaseCombatCharacter *actor )
+	{
+		CHandle<CBaseCombatCharacter> hActor( actor );
+		for( int i=0; i<TF_TEAM_COUNT; ++i )
+			m_PVNPCs[i].FindAndFastRemove( hActor );
+	}
 
 	float GetCombatIntensity() const;
 	bool IsInCombat() const;
@@ -121,12 +127,12 @@ public:
 
 	void SetIncursionDistance( int iTeamNum, float distance )
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_TEAM_COUNT );
 		m_aIncursionDistances[ iTeamNum ] = distance;
 	}
 	float GetIncursionDistance( int iTeamNum ) const
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_TEAM_COUNT );
 		return m_aIncursionDistances[ iTeamNum ];
 	}
 
@@ -159,8 +165,8 @@ public:
 	static int m_masterTFMark;
 
 private:
-	float m_aIncursionDistances[4];
-	CUtlVector<CTFNavArea *> m_InvasionAreas[4];
+	float m_aIncursionDistances[ TF_TEAM_COUNT ];
+	CUtlVector<CTFNavArea *> m_InvasionAreas[ TF_TEAM_COUNT ];
 
 public:
 	int m_TFSearchMarker;
@@ -168,7 +174,7 @@ public:
 private:
 	int m_nAttributes;
 
-	CUtlVector< CHandle<CBaseCombatCharacter> > m_PVNPCs[4];
+	CUtlVector< CHandle<CBaseCombatCharacter> > m_PVNPCs[ TF_TEAM_COUNT ];
 
 	float m_fCombatIntensity;
 	IntervalTimer m_combatTimer;
