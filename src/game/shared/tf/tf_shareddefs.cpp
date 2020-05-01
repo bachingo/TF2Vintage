@@ -588,6 +588,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_JAR_GAS",
 	"TF_WEAPON_GRENADE_JAR_GAS",
 	"TF_WEAPON_FLAME_BALL",
+	"TF_WEAPON_FLAREGUN_REVENGE",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
@@ -726,6 +727,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC,								// TF_WEAPON_JAR_GAS,
 	DMG_GENERIC,								// TF_WEAPON_GRENADE_JAR_GAS,
 	DMG_IGNITE | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,	// TF_WEAPON_FLAME_BALL,
+	DMG_IGNITE,                                 // TF_WEAPON_FLAREGUN_REVENGE
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -865,7 +867,7 @@ const char *g_pszHintMessages[] =
 int GetWeaponId( const char *pszWeaponName )
 {
 	// if this doesn't match, you need to add missing weapons to the array
-	assert( ARRAYSIZE( g_aWeaponNames ) == ( TF_WEAPON_COUNT + 1 ) );
+	Assert( ARRAYSIZE( g_aWeaponNames ) == ( TF_WEAPON_COUNT + 1 ) );
 
 	for ( int iWeapon = 0; iWeapon < ARRAYSIZE( g_aWeaponNames ); ++iWeapon )
 	{
@@ -883,7 +885,7 @@ int GetWeaponId( const char *pszWeaponName )
 const char *WeaponIdToAlias( int iWeapon )
 {
 	// if this doesn't match, you need to add missing weapons to the array
-	assert( ARRAYSIZE( g_aWeaponNames ) == ( TF_WEAPON_COUNT + 1 ) );
+	Assert( ARRAYSIZE( g_aWeaponNames ) == ( TF_WEAPON_COUNT + 1 ) );
 
 	if ( ( iWeapon >= ARRAYSIZE( g_aWeaponNames ) ) || ( iWeapon < 0 ) )
 		return NULL;
