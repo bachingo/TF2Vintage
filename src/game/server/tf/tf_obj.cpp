@@ -49,6 +49,8 @@
 
 #define ROPE_HANG_DIST	150
 
+#define TF_EMP_TIME 4.0f
+
 ConVar tf_obj_gib_velocity_min( "tf_obj_gib_velocity_min", "100", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_obj_gib_velocity_max( "tf_obj_gib_velocity_max", "450", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 ConVar tf_obj_gib_maxspeed( "tf_obj_gib_maxspeed", "800", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
@@ -118,6 +120,7 @@ IMPLEMENT_SERVERCLASS_ST( CBaseObject, DT_BaseObject )
 	SendPropInt( SENDINFO( m_fObjectFlags ), OF_BIT_COUNT, SPROP_UNSIGNED ),
 	SendPropEHandle( SENDINFO( m_hBuiltOnEntity ) ),
 	SendPropBool( SENDINFO( m_bDisabled ) ),
+	SendPropFloat( SENDINFO( m_flEMPTime ), 0, SPROP_NOSCALE ),
 	SendPropEHandle( SENDINFO( m_hBuilder ) ),
 	SendPropVector( SENDINFO( m_vecBuildMaxs ), -1, SPROP_COORD ),
 	SendPropVector( SENDINFO( m_vecBuildMins ), -1, SPROP_COORD ),
@@ -196,6 +199,7 @@ CBaseObject::CBaseObject()
 	m_bCarryDeploy = false;
 	m_Activity = ACT_INVALID;
 	m_bDisabled = false;
+	m_flEMPTime = 0;
 	m_SolidToPlayers = SOLID_TO_PLAYER_USE_DEFAULT;
 	m_bPlacementOK = false;
 	m_aGibs.Purge();
@@ -711,7 +715,22 @@ void CBaseObject::BaseObjectThink( void )
 		UpgradeThink();
 		return;
 	}
-
+	
+	// Don't allow anything if it's being EMP'd.
+	if (m_flEMPTime > 0)
+	{
+		bool bEMPDisabled = m_flEMPTime > gpGlobals->curtime;
+		if (bEMPDisabled && !m_bDisabled)
+		SetDisabled( true );
+		if (!bEMPDisabled)
+		{
+			if (m_bDisabled)
+				SetDisabled( true );
+			m_flEMPTime = 0;
+		}
+		return;
+	}
+	
 	if ( m_bCarryDeploy )
 	{
 		if ( m_iUpgradeLevel < m_iGoalUpgradeLevel )
@@ -2449,6 +2468,16 @@ bool CBaseObject::ShowVGUIScreen( int panelIndex, bool bShow )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Overrides disabling for four seconds.
+//-----------------------------------------------------------------------------
+void CBaseObject::OnEMP( void )
+{
+	m_flEMPTime = gpGlobals->curtime + TF_EMP_TIME;
+	if (!m_bDisabled)
+		SetDisabled( true );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CBaseObject::InputShow( inputdata_t &inputdata )
@@ -3025,6 +3054,16 @@ void CBaseObject::RotateBuildAngles( void )
 //-----------------------------------------------------------------------------
 void CBaseObject::UpdateDisabledState( void )
 {
+	// EMP overrides sapper placement.
+	if (m_flEMPTime > 0)
+	{
+		bool bEMPDisabled = m_flEMPTime > gpGlobals->curtime;
+		SetDisabled(bEMPDisabled || HasSapper());
+		if (!bEMPDisabled)
+			m_flEMPTime = 0;
+		return;
+	}
+	
 	SetDisabled( HasSapper() );
 }
 

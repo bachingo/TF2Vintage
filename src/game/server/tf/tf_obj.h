@@ -206,6 +206,7 @@ public:
 	void			SetDisabled( bool bDisabled );
 	virtual void	OnStartDisabled( void );
 	virtual void	OnEndDisabled( void );
+	void			OnEMP(void);
 
 	// Animation
 	virtual void	PlayStartupAnimation( void );
@@ -398,6 +399,7 @@ private:
 
 	// Disabled
 	CNetworkVar( bool, m_bDisabled );
+	CNetworkVar(float, m_flEMPTime);
 
 	// Building
 	CNetworkVar( bool, m_bBuilding );				// True while the object's still constructing itself
