@@ -902,7 +902,8 @@ void CTFWeaponBase::IncrementAmmo( void )
 
 	m_iClip1 = Min( m_iClip1 + 1, GetMaxClip1() );
 
-	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+	if ( !IsEnergyWeapon() )
+		pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
 }
 
 //-----------------------------------------------------------------------------
@@ -1169,7 +1170,7 @@ bool CTFWeaponBase::Reload( void )
 	if ( m_iReloadMode == TF_RELOAD_START ) 
 	{
 		// If I don't have any spare ammo, I can't reload
-		if ( GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) <= 0 )
+		if (!IsEnergyWeapon() && GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
 			return false;
 
 		if ( Clip1() >= GetMaxClip1())
@@ -1460,7 +1461,9 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( UsesClipsForAmmo1() )
 	{
 		// need to reload primary clip?
-		int primary	= Min( iClipSize1 - m_iClip1, pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) );
+		int primary = Min(iClipSize1 - m_iClip1, pPlayer->GetAmmoCount(m_iPrimaryAmmoType));
+		if (IsEnergyWeapon())
+			primary = iClipSize1 - m_iClip1;
 		if ( primary != 0 )
 		{
 			bReloadPrimary = true;
@@ -1723,7 +1726,8 @@ void CTFWeaponBase::ReloadSinglyPostFrame( void )
 		return;
 
 	// if the clip is empty and we have ammo remaining, 
-	if ( ( ( Clip1() == 0 ) && ( GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) > 0 ) ) ||
+	if (((Clip1() == 0) && (GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) > 0) && !IsEnergyWeapon() ) ||
+		 ( ( Clip1() == 0) && IsEnergyWeapon()) ||
 		// or we are already in the process of reloading but not finished
 		( m_iReloadMode != TF_RELOAD_START ) )
 	{
@@ -3983,7 +3987,7 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 	{
 		CTFPlayer *pPlayer = GetTFPlayerOwner();
 
-		if ( pPlayer && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
+		if ( pPlayer && ( ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !IsEnergyWeapon() ) || IsEnergyWeapon() ) && !m_bReloadedThroughAnimEvent )
 		{
 			if (!CanOverload())
 				m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
