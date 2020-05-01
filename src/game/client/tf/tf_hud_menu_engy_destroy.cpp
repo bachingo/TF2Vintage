@@ -77,12 +77,12 @@ void CHudMenuEngyDestroy::ApplySchemeSettings( IScheme *pScheme )
 	// load control settings...
 	LoadControlSettings( "resource/UI/destroy_menu/HudMenuEngyDestroy.res" );
 
-	int bStandard = 0;
+	int nStandard = 0;
 	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(pPlayer, bStandard, set_custom_buildmenu);
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pPlayer, nStandard, set_custom_buildmenu);
 	
-	if (bStandard == 0)	// Use the standard menus.
+	if (nStandard == 0)	// Use the standard menus.
 	{
 		m_pActiveItems[0]->LoadControlSettings( "resource/UI/destroy_menu/sentry_active.res" );
 		m_pActiveItems[1]->LoadControlSettings( "resource/UI/destroy_menu/dispenser_active.res" );

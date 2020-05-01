@@ -118,12 +118,12 @@ void CHudMenuEngyBuild::ApplySchemeSettings( IScheme *pScheme )
 
 		// Load the already built images, not destroyable
 		
-		int bStandard = 0;
+		int nStandard = 0;
 		CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 		if ( pPlayer )
-			CALL_ATTRIB_HOOK_INT_ON_OTHER(pPlayer, bStandard, set_custom_buildmenu);
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pPlayer, nStandard, set_custom_buildmenu);
 
-		if (bStandard == 0)	// Use the standard menus.
+		if (nStandard == 0)	// Use the standard menus.
 		{
 			m_pAlreadyBuiltObjects[0]->LoadControlSettings( "resource/UI/build_menu/sentry_already_built.res" );
 			m_pAlreadyBuiltObjects[1]->LoadControlSettings( "resource/UI/build_menu/dispenser_already_built.res" );
