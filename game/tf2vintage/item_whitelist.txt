@@ -94,6 +94,7 @@
 	"The Family Business"							"1"
 	"The Eviction Notice"							"1"
 	"The Family Business (Multi-Class)"				"1"
+	"The Cow Mangler 5000"							"1"
 	"The Mantreads"									"1"
 	"The Disciplinary Action"						"1"
 	"The Soda Popper"								"1"

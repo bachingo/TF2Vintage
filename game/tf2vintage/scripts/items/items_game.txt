@@ -6113,6 +6113,61 @@
 			}
 
 		}
+		"441"
+		{
+			"name"	"The Cow Mangler 5000"
+			"prefab"			"weapon_rocketlauncher"
+			"year"	"2011"
+			"item_class"	"tf_weapon_particle_cannon"
+			"item_logname"	"cow_mangler"
+			"item_iconname"	"cow_mangler"
+			"item_type_name"	"#TF_Weapon_FocusedWaveProjector"
+			"item_name"	"#TF_CowMangler"
+			"anim_slot" "primary2"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_drg_cowmangler/c_drg_cowmangler"
+			"model_player"	"models/workshop/weapons/c_models/c_drg_cowmangler/c_drg_cowmangler.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -11"
+			}
+			"attributes"
+			{
+				"energy weapon no ammo"
+				{
+					"attribute_class"	"energy_weapon_no_ammo"
+					"value"	"1"
+				}
+				"energy weapon charged shot"	
+				{
+					"attribute_class"	"energy_weapon_charged_shot"
+					"value"	"1"
+				}
+				"energy weapon no hurt building"
+				{
+					"attribute_class"	"energy_weapon_no_hurt_building"
+					"value" "1"
+				}
+				"crits_become_minicrits"
+				{
+					"attribute_class"	"crits_become_minicrits"
+					"value" "1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value" "0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_CowMangler.Single"
+				"sound_burst"		"Weapon_CowMangler.SingleCharged"
+				"sound_reload"		"Weapon_CowMangler.Reload"
+				"sound_special1"	"Weapon_CowMangler.Charging"
+				"sound_special2"	"Weapon_CowMangler.Idle"
+			}
+		}
 		"444"
 		{
 			"name"			"The Mantreads"
