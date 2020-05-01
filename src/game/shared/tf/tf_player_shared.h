@@ -390,6 +390,7 @@ public:
 	int		GetRevengeCritCount( void ) const        { return m_iRevengeCrits; }
 	void	SetRevengeCritCount(int count)      	 { m_iRevengeCrits = count; }
 	void	IncrementRevengeCrit( void )     		 { m_iRevengeCrits += 1; }	
+	void	StoreRevengeCrit(void)					 { m_iRevengeCrits = Min( (m_iRevengeCrits + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
 	void	DeductRevengeCrit( void )     	 		 { m_iRevengeCrits = Max( (m_iRevengeCrits - 1), 0 ); }
 	bool	HasRevengeCrits( void )      			 { return m_iRevengeCrits > 0; }
 	
@@ -397,6 +398,7 @@ public:
 	int		GetAirblastCritCount( void ) const        { return m_iAirblastCrits; }
 	void	SetAirblastCritCount(int count)      	 { m_iAirblastCrits = count; }
 	void	IncrementAirblastCrit( void )     		 { m_iAirblastCrits += 1; }	
+	void	StoreAirblastCrit(void)					 { m_iAirblastCrits = Min( (m_iAirblastCrits + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
 	void	DeductAirblastCrit( void )     	 		 { m_iAirblastCrits = Max( (m_iAirblastCrits - 1), 0 ); }
 	bool	HasAirblastCrits( void )      			 { return m_iAirblastCrits > 0; }
 	

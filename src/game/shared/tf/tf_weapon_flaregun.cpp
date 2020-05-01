@@ -389,7 +389,7 @@ void CTFFlareGunRevenge::SecondaryAttack( void )
 
 				// Give us revenge crits as well.
 				if (CanGetAirblastCrits())
-					pOwner->m_Shared.IncrementAirblastCrit();
+					pOwner->m_Shared.StoreAirblastCrit();
 
 				if (pOwner && pOwner->GetActiveWeapon() == this)
 				{
