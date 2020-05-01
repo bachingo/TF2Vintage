@@ -117,20 +117,46 @@ void CHudMenuEngyBuild::ApplySchemeSettings( IScheme *pScheme )
 		LoadControlSettings( "resource/UI/build_menu/HudMenuEngyBuild.res" );
 
 		// Load the already built images, not destroyable
-		m_pAlreadyBuiltObjects[0]->LoadControlSettings( "resource/UI/build_menu/sentry_already_built.res" );
-		m_pAlreadyBuiltObjects[1]->LoadControlSettings( "resource/UI/build_menu/dispenser_already_built.res" );
-		m_pAlreadyBuiltObjects[2]->LoadControlSettings( "resource/UI/build_menu/tele_entrance_already_built.res" );
-		m_pAlreadyBuiltObjects[3]->LoadControlSettings( "resource/UI/build_menu/tele_exit_already_built.res" );
+		
+		int bStandard = 0;
+		CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer )
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pPlayer, bStandard, set_custom_buildmenu);
 
-		m_pAvailableObjects[0]->LoadControlSettings( "resource/UI/build_menu/sentry_active.res" );
-		m_pAvailableObjects[1]->LoadControlSettings( "resource/UI/build_menu/dispenser_active.res" );
-		m_pAvailableObjects[2]->LoadControlSettings( "resource/UI/build_menu/tele_entrance_active.res" );
-		m_pAvailableObjects[3]->LoadControlSettings( "resource/UI/build_menu/tele_exit_active.res" );
+		if (bStandard == 0)	// Use the standard menus.
+		{
+			m_pAlreadyBuiltObjects[0]->LoadControlSettings( "resource/UI/build_menu/sentry_already_built.res" );
+			m_pAlreadyBuiltObjects[1]->LoadControlSettings( "resource/UI/build_menu/dispenser_already_built.res" );
+			m_pAlreadyBuiltObjects[2]->LoadControlSettings( "resource/UI/build_menu/tele_entrance_already_built.res" );
+			m_pAlreadyBuiltObjects[3]->LoadControlSettings( "resource/UI/build_menu/tele_exit_already_built.res" );
 
-		m_pCantAffordObjects[0]->LoadControlSettings( "resource/UI/build_menu/sentry_cant_afford.res" );
-		m_pCantAffordObjects[1]->LoadControlSettings( "resource/UI/build_menu/dispenser_cant_afford.res" );
-		m_pCantAffordObjects[2]->LoadControlSettings( "resource/UI/build_menu/tele_entrance_cant_afford.res" );
-		m_pCantAffordObjects[3]->LoadControlSettings( "resource/UI/build_menu/tele_exit_cant_afford.res" );
+			m_pAvailableObjects[0]->LoadControlSettings( "resource/UI/build_menu/sentry_active.res" );
+			m_pAvailableObjects[1]->LoadControlSettings( "resource/UI/build_menu/dispenser_active.res" );
+			m_pAvailableObjects[2]->LoadControlSettings( "resource/UI/build_menu/tele_entrance_active.res" );
+			m_pAvailableObjects[3]->LoadControlSettings( "resource/UI/build_menu/tele_exit_active.res" );
+
+			m_pCantAffordObjects[0]->LoadControlSettings( "resource/UI/build_menu/sentry_cant_afford.res" );
+			m_pCantAffordObjects[1]->LoadControlSettings( "resource/UI/build_menu/dispenser_cant_afford.res" );
+			m_pCantAffordObjects[2]->LoadControlSettings( "resource/UI/build_menu/tele_entrance_cant_afford.res" );
+			m_pCantAffordObjects[3]->LoadControlSettings( "resource/UI/build_menu/tele_exit_cant_afford.res" );
+		}
+		else				// Use the Pip-Boy menus.
+		{
+			m_pAlreadyBuiltObjects[0]->LoadControlSettings( "resource/UI/build_menu/pipboy/sentry_already_built.res" );
+			m_pAlreadyBuiltObjects[1]->LoadControlSettings( "resource/UI/build_menu/pipboy/dispenser_already_built.res" );
+			m_pAlreadyBuiltObjects[2]->LoadControlSettings( "resource/UI/build_menu/pipboy/tele_entrance_already_built.res" );
+			m_pAlreadyBuiltObjects[3]->LoadControlSettings( "resource/UI/build_menu/pipboy/tele_exit_already_built.res" );
+
+			m_pAvailableObjects[0]->LoadControlSettings( "resource/UI/build_menu/pipboy/sentry_active.res" );
+			m_pAvailableObjects[1]->LoadControlSettings( "resource/UI/build_menu/pipboy/dispenser_active.res" );
+			m_pAvailableObjects[2]->LoadControlSettings( "resource/UI/build_menu/pipboy/tele_entrance_active.res" );
+			m_pAvailableObjects[3]->LoadControlSettings( "resource/UI/build_menu/pipboy/tele_exit_active.res" );
+
+			m_pCantAffordObjects[0]->LoadControlSettings( "resource/UI/build_menu/pipboy/sentry_cant_afford.res" );
+			m_pCantAffordObjects[1]->LoadControlSettings( "resource/UI/build_menu/pipboy/dispenser_cant_afford.res" );
+			m_pCantAffordObjects[2]->LoadControlSettings( "resource/UI/build_menu/pipboy/tele_entrance_cant_afford.res" );
+			m_pCantAffordObjects[3]->LoadControlSettings( "resource/UI/build_menu/pipboy/tele_exit_cant_afford.res" );
+		}
 
 		m_pActiveSelection = NULL;
 

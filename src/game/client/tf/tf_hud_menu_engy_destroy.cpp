@@ -77,15 +77,35 @@ void CHudMenuEngyDestroy::ApplySchemeSettings( IScheme *pScheme )
 	// load control settings...
 	LoadControlSettings( "resource/UI/destroy_menu/HudMenuEngyDestroy.res" );
 
-	m_pActiveItems[0]->LoadControlSettings( "resource/UI/destroy_menu/sentry_active.res" );
-	m_pActiveItems[1]->LoadControlSettings( "resource/UI/destroy_menu/dispenser_active.res" );
-	m_pActiveItems[2]->LoadControlSettings( "resource/UI/destroy_menu/tele_entrance_active.res" );
-	m_pActiveItems[3]->LoadControlSettings( "resource/UI/destroy_menu/tele_exit_active.res" );
+	int bStandard = 0;
+	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer )
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pPlayer, bStandard, set_custom_buildmenu);
+	
+	if (bStandard == 0)	// Use the standard menus.
+	{
+		m_pActiveItems[0]->LoadControlSettings( "resource/UI/destroy_menu/sentry_active.res" );
+		m_pActiveItems[1]->LoadControlSettings( "resource/UI/destroy_menu/dispenser_active.res" );
+		m_pActiveItems[2]->LoadControlSettings( "resource/UI/destroy_menu/tele_entrance_active.res" );
+		m_pActiveItems[3]->LoadControlSettings( "resource/UI/destroy_menu/tele_exit_active.res" );
 
-	m_pInactiveItems[0]->LoadControlSettings( "resource/UI/destroy_menu/sentry_inactive.res" );
-	m_pInactiveItems[1]->LoadControlSettings( "resource/UI/destroy_menu/dispenser_inactive.res" );
-	m_pInactiveItems[2]->LoadControlSettings( "resource/UI/destroy_menu/tele_entrance_inactive.res" );
-	m_pInactiveItems[3]->LoadControlSettings( "resource/UI/destroy_menu/tele_exit_inactive.res" );
+		m_pInactiveItems[0]->LoadControlSettings( "resource/UI/destroy_menu/sentry_inactive.res" );
+		m_pInactiveItems[1]->LoadControlSettings( "resource/UI/destroy_menu/dispenser_inactive.res" );
+		m_pInactiveItems[2]->LoadControlSettings( "resource/UI/destroy_menu/tele_entrance_inactive.res" );
+		m_pInactiveItems[3]->LoadControlSettings( "resource/UI/destroy_menu/tele_exit_inactive.res" );
+	}
+	else				// Use the Pip-Boy menus.
+	{
+		m_pActiveItems[0]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/sentry_active.res" );
+		m_pActiveItems[1]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/dispenser_active.res" );
+		m_pActiveItems[2]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/tele_entrance_active.res" );
+		m_pActiveItems[3]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/tele_exit_active.res" );
+
+		m_pInactiveItems[0]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/sentry_inactive.res" );
+		m_pInactiveItems[1]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/dispenser_inactive.res" );
+		m_pInactiveItems[2]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/tele_entrance_inactive.res" );
+		m_pInactiveItems[3]->LoadControlSettings( "resource/UI/destroy_menu/pipboy/tele_exit_inactive.res" );
+	}
 
 	BaseClass::ApplySchemeSettings( pScheme );
 }
