@@ -23,6 +23,9 @@
 const char *g_sapperModel = "models/buildables/sapper_placed.mdl";
 const char *g_sapperModelPlacement = "models/buildables/sapper_placement.mdl";
 
+const char *g_sapperModelSD = "models/buildables/sd_sapper_placed.mdl";
+const char *g_sapperModelPlacementSD = "models/buildables/sd_sapper_placement.mdl";
+
 #define SAPPER_MODEL_SENTRY_1	"models/buildables/sapper_sentry1.mdl"
 #define SAPPER_MODEL_SENTRY_2	"models/buildables/sapper_sentry2.mdl"
 #define SAPPER_MODEL_SENTRY_3	"models/buildables/sapper_sentry3.mdl"
@@ -186,10 +189,16 @@ const char *CObjectSapper::GetSapperModelName( SapperModel_t iModelType )
 
 	if ( iModelType == SAPPER_MODEL_PLACEMENT )
 	{
-		return g_sapperModelPlacement;
+		if ( ReverseBuildingConstruction() != 0)
+			return g_sapperModelPlacementSD;	
+		else
+			return g_sapperModelPlacement;
 	}
 
-	return g_sapperModel;
+	if ( ReverseBuildingConstruction() != 0)
+		return g_sapperModelSD;	
+	else
+		return g_sapperModel;
 }
 
 //-----------------------------------------------------------------------------
@@ -347,5 +356,17 @@ int CObjectSapper::GetBaseHealth( void )
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iBaseHealth, mult_sapper_health );
 
 	return iBaseHealth;
+}
+
+float CObjectSapper::ReverseBuildingConstruction( void )
+{
+	CTFPlayer *pPlayer = GetOwner();
+	if ( !pPlayer )	
+		return 0;
+	
+	float flReverseSpeed = 0;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flReverseSpeed, sapper_degenerates_buildings );
+
+	return flReverseSpeed;
 }
 

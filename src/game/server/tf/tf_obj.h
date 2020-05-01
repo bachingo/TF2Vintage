@@ -144,6 +144,9 @@ public:
 	void			OnConstructionHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vector vecHitPos );
 	float			GetConstructionMultiplier( void );
 
+	bool			ReverseBuild(void);
+	void			DowngradeBuilding(void);
+
 	// Destruction
 	virtual void	DetonateObject( void );
 	virtual bool	ShouldAutoRemove( void );

@@ -886,8 +886,8 @@ void CBaseObject::StartUpgrading(void)
 	// Increase level
 	m_iUpgradeLevel++;
 
-	// more health
-	if ( !IsRedeploying() )
+	// more health when not deployed or reversing.
+	if ( !IsRedeploying() && !ReverseBuild() )
 	{
 		int iMaxHealth = GetMaxHealth();
 		SetMaxHealth( iMaxHealth * 1.2 );
@@ -909,6 +909,13 @@ void CBaseObject::FinishUpgrading( void )
 	if ( !m_iDefaultUpgrade )
 	{
 		EmitSound( GetObjectInfo( ObjectType() )->m_pUpgradeSound );
+	}
+	
+	// Downgrade our building if we're reversing construction.
+	if ( ReverseBuild() )
+	{
+		m_iUpgradeLevel--;
+		DowngradeBuilding();
 	}
 }
 
@@ -1608,6 +1615,7 @@ void CBaseObject::FinishedBuilding( void )
 
 	// Spawn any objects on this one
 	SpawnObjectPoints();
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -2086,6 +2094,7 @@ void CBaseObject::OnConstructionHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vec
 
 float CBaseObject::GetConstructionMultiplier( void )
 {
+	
 	float flMultiplier = 1.0f;
 
 	// Minis deploy faster.
@@ -2095,6 +2104,14 @@ float CBaseObject::GetConstructionMultiplier( void )
 	// Re-deploy twice as fast.
 	if ( IsRedeploying() )
 		flMultiplier *= 2.0f;
+	
+	// Reverse our construction amount.
+	// Don't be affected by buffs.
+	if ( ReverseBuild() )
+	{
+		flMultiplier *= -1;
+		return flMultiplier;
+	}
 
 	// expire all the old 
 	int i = m_RepairerList.LastInorder();
@@ -2126,6 +2143,48 @@ float CBaseObject::GetConstructionMultiplier( void )
 
 	return flMultiplier;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if our building speed is reversed.
+//-----------------------------------------------------------------------------
+bool CBaseObject::ReverseBuild( void )
+{
+	CObjectSapper *pSapper = dynamic_cast<CObjectSapper *>(FirstMoveChild());
+	if (!pSapper)
+		return false;
+
+	return (pSapper->ReverseBuildingConstruction() != 0);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Downgrades our building.
+//-----------------------------------------------------------------------------
+void CBaseObject::DowngradeBuilding( void )
+{
+	m_iHighestUpgradeLevel = m_iUpgradeLevel;
+	m_iUpgradeMetal = 0;
+
+	int iMaxHealth = GetMaxHealthForCurrentLevel();
+	SetMaxHealth( iMaxHealth );
+	if ( GetHealth() > iMaxHealth )
+	{
+		SetHealth( iMaxHealth );
+	}
+
+	if ( m_iUpgradeLevel > 1 )
+	{
+		m_iUpgradeLevel--;
+		StartUpgrading();
+	}
+	else
+	{
+		m_bBuilding = true;
+		m_bCarryDeploy = false;
+		m_flTotalConstructionTime = m_flConstructionTimeLeft = GetTotalTime();
+		SetControlPanelsActive( false );
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Object is exploding because it was killed or detonate
@@ -2345,8 +2404,41 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 		}	
 	}
 
-	// Do an explosion.
-	Explode();
+	// Revert into a toolbox if the sapper is the only damage.
+	if ( ReverseBuild() && ( DMG_CRUSH & info.GetDamageType() ) != 0 )
+	{
+		CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create(GetAbsOrigin(), GetAbsAngles(), this, "models/weapons/w_models/w_toolbox.mdl");
+
+		// Change the toolbox color to match the team.
+		switch (GetTeamNumber())
+		{
+		case TF_TEAM_RED:
+			pAmmoPack->m_nSkin = 0;
+			break;
+		case TF_TEAM_BLUE:
+			pAmmoPack->m_nSkin = 1;
+			break;
+		case TF_TEAM_GREEN:
+			pAmmoPack->m_nSkin = 2;
+			break;
+		case TF_TEAM_YELLOW:
+			pAmmoPack->m_nSkin = 3;
+			break;
+		}
+
+		if (pAmmoPack)
+		{
+			pAmmoPack->SetBodygroup(1, 1);
+		}
+
+		CObjectSapper *pSapper = dynamic_cast<CObjectSapper *>(FirstMoveChild());
+		if ( pSapper )
+		{
+			pSapper->Explode();
+		}
+	}
+	else 	// Do an explosion.
+		Explode();
 
 	UTIL_Remove( this );
 }
@@ -2442,6 +2534,11 @@ void CBaseObject::OnAddSapper( void )
 		//pPlayer->HintMessage( HINT_OBJECT_YOUR_OBJECT_SAPPED, true );
 		pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_SPY_SAPPER, GetResponseRulesModifier() );
 	}
+	
+	// Check if our sapper should reverse building construction.
+	CObjectSapper *pSapper = dynamic_cast<CObjectSapper *>( FirstMoveChild() );
+	if ( pSapper && pSapper->ReverseBuildingConstruction())
+		DowngradeBuilding();
 
 	UpdateDisabledState();
 }

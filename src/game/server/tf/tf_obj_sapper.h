@@ -46,6 +46,7 @@ public:
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 	virtual void	Killed(const CTakeDamageInfo &info);
 
+	virtual float	ReverseBuildingConstruction(void);
 private:
 	float m_flSapperDamageAccumulator;
 	float m_flLastThinkTime;
