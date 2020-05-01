@@ -253,6 +253,9 @@ public:
 	void	SetCloakDrainRate( float flRate )	{ m_flCloakDrainRate = flRate; }
 	void	SetCloakRegenRate( float flRate )	{ m_flCloakRegenRate = flRate; }
 
+	void	SetSpySprint(bool bSet)		{ m_bSpySprint = bSet; }
+	float	GetSpySprint(void)			{ return m_bSpySprint; }
+
 	int		GetDesiredPlayerClassIndex( void );
 
 	int		GetDesiredWeaponIndex( void )		{ return m_iDesiredWeaponID; }
@@ -538,6 +541,8 @@ private:
 	bool m_bRageActive;
 
 	bool m_bRecoiled;			// Recoil in midair from scattergun
+	
+	bool m_bSpySprint;			// Allow spies to override disguise speed.
 
 #ifdef GAME_DLL
 	// Healer handling

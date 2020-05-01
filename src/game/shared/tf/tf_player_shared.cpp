@@ -100,6 +100,7 @@ ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NO
 ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
 ConVar tf2v_use_spy_moveattrib ("tf2v_use_spy_moveattrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should spies be affected by their disguise's speed attributes?" );
 ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables movespeed matching for medics." );
+ConVar tf2v_allow_spy_sprint( "tf2v_allow_spy_sprint", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to override their disguise speed by holding reload." );
 
 ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
 
@@ -370,6 +371,8 @@ CTFPlayerShared::CTFPlayerShared()
 
 	m_flEnergyDrinkDrainRate = tf_scout_energydrink_consume_rate.GetFloat();
 	m_flEnergyDrinkRegenRate = tf_scout_energydrink_regen_rate.GetFloat();
+	
+	m_bSpySprint = false;
 
 #ifdef CLIENT_DLL
 	m_iDisguiseWeaponModelIndex = -1;
@@ -1512,6 +1515,37 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			}
 		}
 	}
+	
+	// Check to see if we should use the disguised class' speed, or our own.
+	if ( ( InCond( TF_COND_DISGUISED ) && !InCond(TF_COND_STEALTHED) ) && tf2v_allow_spy_sprint.GetBool() )
+	{
+		// Override disguise speed when holding down the reload key
+		if (m_pOuter->m_nButtons & IN_RELOAD)
+		{
+			// Check to see if this needs reloading first.
+			CTFWeaponBase *pWpn = m_pOuter->GetActiveTFWeapon();
+			if ((pWpn->Clip1() >= pWpn->GetMaxClip1()) || (m_pOuter->GetAmmoCount(pWpn->GetPrimaryAmmoType()) <= 0))
+			{
+				if ( !GetSpySprint() )
+				{
+					SetSpySprint(true);
+					m_pOuter->TeamFortress_SetSpeed();
+
+				}
+			}
+		}
+		else	// Turn it off, use the standard disguise speed.
+		{
+			if ( GetSpySprint() )
+			{
+				SetSpySprint(false);
+				m_pOuter->TeamFortress_SetSpeed();
+
+			}			
+			
+		}
+	}
+	
 #endif
 }
 
@@ -5053,8 +5087,8 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	float flBaseSpeed = maxfbspeed;
 	
 	// Slow us down if we're disguised as a slower class
-	// unless we're cloaked..
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
+	// unless we're cloaked.
+	if (m_Shared.InCond(TF_COND_DISGUISED) && !m_Shared.InCond(TF_COND_STEALTHED) && !m_Shared.GetSpySprint() )
 	{
 		float flMaxDisguiseSpeed = GetPlayerClassData( m_Shared.GetDisguiseClass() )->m_flMaxSpeed;
 		
