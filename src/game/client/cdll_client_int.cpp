@@ -597,7 +597,6 @@ void DisplayBoneSetupEnts()
 #ifdef TF_VINTAGE_CLIENT
 // We don't have access to engine includes so the best that
 // can be done is a manual definition to make it work
-class CSfxTable;
 struct StartSoundParams_t
 {
 	StartSoundParams_t() :
@@ -625,7 +624,7 @@ struct StartSoundParams_t
 	int				userdata;
 	int				soundsource;
 	int				entchannel;
-	CSfxTable      *pSfx;
+	class CSfxTable *pSfx;
 	Vector			origin;
 	Vector			direction;
 	bool			bUpdatePositions;
@@ -909,7 +908,7 @@ static void MountAdditionalContent()
 	// case sensitivity
 	pMainFile->LoadFromFile( filesystem, "GameInfo.txt", "MOD" );
 	if ( !pMainFile )
-	#endif
+#endif
 		pMainFile->LoadFromFile( filesystem, "gameinfo.txt", "MOD" );
 
 	if ( pMainFile )
@@ -924,8 +923,36 @@ static void MountAdditionalContent()
 					int appid = abs( pKey->GetInt() );
 					if ( appid )
 					{
-						if ( filesystem->MountSteamContent( -appid ) != FILESYSTEM_MOUNT_OK )
+						if ( !steamapicontext->SteamApps()->BIsAppInstalled( appid ) )
 							Warning( "Unable to mount extra content with appId: %i\n", appid );
+
+						char szAppDirectory[ MAX_PATH ];
+						steamapicontext->SteamApps()->GetAppInstallDir( appid, szAppDirectory, sizeof szAppDirectory );
+
+					#ifdef TF_VINTAGE_CLIENT
+						V_AppendSlash( szAppDirectory, sizeof szAppDirectory );
+						V_strcat_safe( szAppDirectory, "tf" );
+					#endif
+
+						filesystem->AddSearchPath( szAppDirectory, "MOD" );
+						filesystem->AddSearchPath( szAppDirectory, "GAME" );
+
+						FileFindHandle_t fh;
+						char const *fn = filesystem->FindFirst( szAppDirectory, &fh );
+						while ( fn )
+						{
+							if ( fn[0] != '.' )
+							{
+								char ext[ 10 ];
+								V_ExtractFileExtension( fn, ext, sizeof ext );
+
+								if ( !V_stricmp( ext, ".vpk" ) && strstr( fn, "_dir" ) )
+									filesystem->AddSearchPath( fn, "GAME" );
+							}
+
+							fn = filesystem->FindNext( fh );
+						}
+						filesystem->FindClose( fh );
 					}
 				}
 			}

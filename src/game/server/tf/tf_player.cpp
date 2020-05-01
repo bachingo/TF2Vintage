@@ -5315,7 +5315,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( tf_damage_lineardist.GetBool() )
 			{
 				float flBaseDamage = info.GetDamage() - flRandomDamage;
-				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
 				{
 					// If we're a crossbow, invert our damage formula.
 					flDamage = flBaseDamage - RandomFloat( 0, flRandomDamage * 2 );
@@ -5343,7 +5343,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 					}
 				}
 					
-				if ( pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
+				if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_CROSSBOW )
 				{
 					// If we're a crossbow, change our falloff band so that our 100% is at long range.
 					flCenter = RemapVal( flDistance / flOptimalDistance, 0.0, 2.0, 0.0, 0.5 );
@@ -5396,7 +5396,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 						}
 					}
 				}
-				else if ( ( bitsDamage & DMG_MINICRITICAL ) && ( pWeapon->GetWeaponID() != TF_WEAPON_CROSSBOW ) )
+				else if ( ( bitsDamage & DMG_MINICRITICAL ) && ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_CROSSBOW ) )
 				{
 					// If we're below .5 (100% damage) and have minicrits, bump our distance closer.
 					flRandomVal = 0.5;
