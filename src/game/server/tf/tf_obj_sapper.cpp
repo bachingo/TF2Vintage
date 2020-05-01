@@ -69,7 +69,11 @@ CObjectSapper::CObjectSapper()
 //-----------------------------------------------------------------------------
 void CObjectSapper::UpdateOnRemove()
 {
-	StopSound( "Weapon_Sapper.Timer" );
+	if ( ReverseBuildingConstruction() )
+		StopSound( "Weapon_sd_sapper.Timer" );	// Red-Tape Recorder
+	else
+		StopSound( "Weapon_Sapper.Timer" );		// Standard Sapper
+
 
 	BaseClass::UpdateOnRemove();
 }
@@ -106,9 +110,9 @@ void CObjectSapper::Precache()
 	PrecacheGibsForModel( iModelIndex );
 
 	PrecacheModel( GetSapperModelName( SAPPER_MODEL_PLACEMENT ) );
-
 	PrecacheScriptSound( "Weapon_Sapper.Plant" );
 	PrecacheScriptSound( "Weapon_Sapper.Timer" );
+	PrecacheScriptSound( "Weapon_sd_sapper.Timer" );
 
 	BaseClass::Precache();
 }
@@ -128,7 +132,10 @@ void CObjectSapper::FinishedBuilding( void )
 	EmitSound( "Weapon_Sapper.Plant" );
 
 	// start looping "Weapon_Sapper.Timer", killed when we die
-	EmitSound( "Weapon_Sapper.Timer" );
+	if ( ReverseBuildingConstruction() )
+		EmitSound( "Weapon_sd_sapper.Timer" );	// Red-Tape Recorder
+	else
+		EmitSound( "Weapon_Sapper.Timer" );		// Standard Sapper
 
 	m_flSapperDamageAccumulator = 0;
 	m_flLastThinkTime = gpGlobals->curtime;
