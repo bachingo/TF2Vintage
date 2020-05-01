@@ -21,6 +21,7 @@
 #include "tf_weapon_revolver.h"
 #include "tf_weapon_knife.h"
 #include "tf_weapon_flaregun.h"
+#include "tf_weapon_particlecannon.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -586,6 +587,25 @@ float CHudItemEffectMeterTemp<C_TFSodaPopper>::GetProgress( void )
 }
 
 //-----------------------------------------------------------------------------
+// C_TFParticleCannon Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFParticleCannon>::ShouldBeep( void )
+{
+	return false;
+}
+
+template<>
+float CHudItemEffectMeterTemp<C_TFParticleCannon>::GetProgress( void )
+{
+		C_TFParticleCannon *pParticleCannon = GetWeapon();
+		if ( pParticleCannon )
+			return pParticleCannon->GetEnergyPercentage();
+
+	return 1.0f;
+}
+
+//-----------------------------------------------------------------------------
 // Killstreak Specialization
 //-----------------------------------------------------------------------------
 bool CHudItemEffectMeterKillstreak::IsEnabled( void )
@@ -715,6 +735,7 @@ void CHudItemEffects::SetPlayer( void )
 		case TF_CLASS_SOLDIER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBuffItem>( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_AirStrike.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFParticleCannon>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_particlecannon.res" ) );
 			break;
 		case TF_CLASS_DEMOMAN:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSword>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Demoman.res" ) );
