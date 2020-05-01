@@ -229,6 +229,11 @@ void CObjectSapper::SapperThink( void )
 	// how much damage to give this think?
 	float flTimeSinceLastThink = gpGlobals->curtime - m_flLastThinkTime;
 	float flDamageToGive = ( flTimeSinceLastThink ) * obj_sapper_amount.GetFloat();
+	
+	CTFPlayer *pOwner = pObject->GetBuilder();
+	if (pOwner)
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pOwner, flDamageToGive, mult_sapper_damage);
+
 
 	// add to accumulator
 	m_flSapperDamageAccumulator += flDamageToGive;
