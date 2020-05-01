@@ -83,7 +83,10 @@ public:
 	bool			FireRockets( void );
 
 	void			OnStopWrangling( void );
+	void			OnRemoveSapper( void );
 	void			SapperRecovery( void );
+	
+	void			PointDown( void );
 
 	// Wrangler
 	void			SetShouldFire( bool bFire ) { m_bShouldFire = bFire; }

@@ -229,14 +229,34 @@ void CObjectSentrygun::OnStopWrangling( void )
 {
 	// Wait 3 seconds before resuming function
 	m_flRecoveryTime = gpGlobals->curtime + WRANGLER_RECOVERY_TIME;
+	
+	// Add the pointing down effect, and pause operation.
+	PointDown();
 	m_iState.Set( SENTRY_STATE_WRANGLED_RECOVERY );
+}
+
+void CObjectSentrygun::OnRemoveSapper( void )
+{
+	if ( tf2v_use_new_sapper_disable.GetBool() )
+		SapperRecovery();
+	BaseClass::OnRemoveSapper();
 }
 
 void CObjectSentrygun::SapperRecovery( void )
 {
 	// Wait 0.5 seconds before resuming function
 	m_flRecoveryTime = gpGlobals->curtime + SAPPER_RECOVERY_TIME;
+	
+	// Add the pointing down effect, and pause operation.
+	PointDown();
 	m_iState.Set( SENTRY_STATE_SAPPER_RECOVERY );
+}
+
+void CObjectSentrygun::PointDown( void )
+{
+	// Point downwards, to give visual indication of being disabled. 
+	m_vecGoalAngles.x = m_vecCurAngles.x;
+	m_vecGoalAngles.y = m_vecCurAngles.y;
 }
 
 void CObjectSentrygun::SentryThink( void )
@@ -1608,8 +1628,7 @@ void CObjectSentrygun::SentryRotate( void )
 void CObjectSentrygun::OnStartDisabled( void )
 {
 	// stay at current rotation, angle down
-	m_vecGoalAngles.x = m_vecCurAngles.x;
-	m_vecGoalAngles.y = m_vecCurAngles.y;
+	PointDown();
 
 	// target = nULL
 
@@ -1634,9 +1653,6 @@ void CObjectSentrygun::OnEndDisabled( void )
 	}
 
 	m_vecGoalAngles.x = 0;
-
-	if ( tf2v_use_new_sapper_disable.GetBool() )
-		SapperRecovery();
 	
 	BaseClass::OnEndDisabled();
 }
