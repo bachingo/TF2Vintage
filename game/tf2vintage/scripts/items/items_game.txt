@@ -1770,6 +1770,44 @@
 				}
 			}
 		}
+		"weapon_red_tape_recorder"
+		{
+			"prefab"		"weapon_builder_spy"
+			"item_name"	"#TF_SD_Sapper"
+			"item_logname"	"recorder"
+			"item_iconname"	"recorder"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_sd_sapper/c_sd_sapper"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_sd_sapper/c_sd_sapper.mdl"
+			"propername"	"1"
+			"xifier_class_remap"	"red_tape_recorder"
+			"attributes"
+			{
+				"kill eater score type"
+				{
+					"attribute_class"	"kill_eater_score_type"
+					"value"				"24"								
+				}
+				"sapper degenerates buildings"
+				{
+					"attribute_class"	"sapper_degenerates_buildings"
+					"value"	"0.5"
+				}
+				"sapper damage penalty"
+				{
+					"attribute_class"	"mult_sapper_damage"
+					"value" "0.0"
+				}
+			}
+			"visuals"
+			{
+				"animation_replacement"
+				{
+					"ACT_VM_DRAW"			"ACT_ITEM3_VM_DRAW"
+					"ACT_VM_DRAW_DEPLOYED"	"ACT_ITEM3_VM_DRAW"
+					"ACT_VM_IDLE"			"ACT_ITEM3_VM_IDLE"
+				}
+			}
+		}
 		"weapon_backpack"
 		{
 			"prefab"	"weapon_wearable"
@@ -7017,6 +7055,12 @@
 			{
 				"engineer"	"1"
 			}
+		}
+		"810"
+		{
+			"name"	"The Red-Tape Recorder"
+			"prefab"		"weapon_red_tape_recorder"
+			"year"			"2012"
 		}
 		"811"
 		{

@@ -118,6 +118,7 @@
 	"The Beggar's Bazooka"							"1"
 	"Pretty Boy's Pocket Pistol"					"1"
 	"Pretty Boy's Pocket Pistol (Multi-Class)"		"1"
+	"The Red-Tape Recorder"							"1"
 	"The Huo Long Heatmaker"						"1"
 	"The Flying Guillotine"							"1"
 	"The Neon Annihilator"							"1"
