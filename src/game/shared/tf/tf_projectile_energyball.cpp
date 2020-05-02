@@ -27,7 +27,7 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFEnergyBall, DT_TFEnergyBall )
 
 BEGIN_NETWORK_TABLE( CTFEnergyBall, DT_TFEnergyBall )
 #ifdef CLIENT_DLL
-	RecvPropBool(RECVINFO(m_iDeflected)),
+	RecvPropBool(RECVINFO(m_bCritical)),
 	RecvPropBool(RECVINFO(m_bChargedBeam)),
 #else
 	SendPropBool(SENDINFO(m_bCritical)),
