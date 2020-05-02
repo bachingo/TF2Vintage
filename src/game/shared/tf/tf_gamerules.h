@@ -183,6 +183,7 @@ public:
 	bool			IsAprilFools( void );
 	bool			IsEOTL( void );
 	bool			IsBreadUpdate( void );
+	bool			IsRememberingSoldier( void );
 	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
 
 	bool 			IsNormalClass(CBaseEntity *pPlayer);
@@ -458,6 +459,7 @@ private:
 
 	// Sets up g_pPlayerResource.
 	virtual void	CreateStandardEntities();
+	void			CreateSoldierStatue( void );
 
 	virtual void	PlayerKilled( CBasePlayer *pVictim, CTakeDamageInfo const &info );
 	virtual void	DeathNotice( CBasePlayer *pVictim, CTakeDamageInfo const &info, char const *szName );
@@ -544,6 +546,8 @@ private:
 
 	CUtlVector<EHANDLE> m_hAmmoEntities;
 	CUtlVector<EHANDLE> m_hHealthEntities;
+
+	CHandle<CBaseEntity> m_hSoldierStatue;
 #endif
 
 private:
@@ -589,6 +593,7 @@ public:
 	int	m_iAprilFoolsMode;
 	int	m_iBreadUpdateMode;
 	int	m_iEOTLMode;
+	int m_iSoldierMemorialMode;
 
 	CNetworkVar( bool, m_bFourTeamMode );
 	

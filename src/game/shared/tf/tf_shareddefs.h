@@ -1504,6 +1504,7 @@ enum EHoliday
 	kHoliday_HalloweenOrFullMoonOrValentines,
 	kHoliday_AprilFools,
 	kHoliday_BreadUpdate,
+	kHoliday_SoldierMemorial,
 
 	kHolidayCount,
 };
