@@ -721,7 +721,7 @@ void CBaseObject::BaseObjectThink( void )
 	{
 		bool bEMPDisabled = m_flEMPTime > gpGlobals->curtime;
 		if (bEMPDisabled && !m_bDisabled)
-		SetDisabled( true );
+			SetDisabled( true );
 		if (!bEMPDisabled)
 		{
 			if (m_bDisabled)

@@ -244,6 +244,7 @@ private:
 	bool			m_bCarryDeploy;
 	bool			m_bMiniBuilding;
 	bool			m_bDisabled;
+	float			m_flEMPTime;
 	bool			m_bOldDisabled;
 	float			m_flPercentageConstructed;
 	EHANDLE			m_hBuiltOnEntity;
