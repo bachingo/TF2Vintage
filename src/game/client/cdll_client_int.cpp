@@ -937,6 +937,8 @@ static void MountAdditionalContent()
 						filesystem->AddSearchPath( szAppDirectory, "MOD" );
 						filesystem->AddSearchPath( szAppDirectory, "GAME" );
 
+						V_AppendSlash( szAppDirectory, sizeof szAppDirectory );
+
 						FileFindHandle_t fh;
 						char const *fn = filesystem->FindFirst( szAppDirectory, &fh );
 						while ( fn )
@@ -947,7 +949,13 @@ static void MountAdditionalContent()
 								V_ExtractFileExtension( fn, ext, sizeof ext );
 
 								if ( !V_stricmp( ext, ".vpk" ) && strstr( fn, "_dir" ) )
-									filesystem->AddSearchPath( fn, "GAME" );
+								{
+									char vpk[ MAX_PATH ];
+									V_StrSlice( fn, 0, V_strlen( fn ) - 8, vpk, sizeof vpk );
+									V_strcat_safe( vpk, ".vpk" );
+
+									filesystem->AddSearchPath( vpk, "GAME" );
+								}
 							}
 
 							fn = filesystem->FindNext( fh );
