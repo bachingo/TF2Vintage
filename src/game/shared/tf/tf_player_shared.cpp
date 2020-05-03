@@ -112,6 +112,10 @@ ConVar tf2v_allow_disguiseweapons( "tf2v_allow_disguiseweapons", "1", FCVAR_NOTI
 ConVar tf2v_use_fast_redisguise( "tf2v_use_fast_redisguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disguising while currently disguised is faster.", true, 0, true, 1);
 
 ConVar tf2v_use_new_atomizer( "tf2v_use_new_atomizer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between the old and modern Atomizer airdash mechanic.", true, 0, true, 1);
+ConVar tf2v_use_new_sodapopper( "tf2v_use_new_sodapopper", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between minicrits versus five airdashes when under Soda Popper Hype.", true, 0, true, 1);
+
+
+
 
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
@@ -579,7 +583,7 @@ bool CTFPlayerShared::IsMiniCritBoosted( void )
 	if (InCond( TF_COND_OFFENSEBUFF ) ||
 		InCond( TF_COND_ENERGY_BUFF ) ||
 		InCond( TF_COND_BERSERK ) ||
-		InCond( TF_COND_SODAPOPPER_HYPE ) ||
+		( InCond( TF_COND_SODAPOPPER_HYPE ) && !tf2v_use_new_sodapopper.GetBool() )||
 		InCond( TF_COND_MINICRITBOOSTED_ON_KILL ) )
 		return true;
 	return false;
@@ -4025,7 +4029,7 @@ bool CTFPlayerShared::CanAirDash( void )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nMaxAirJumps, air_dash_count );
 	
 	// If in Soda Popper mode, get five dashes. Do not overlap with attributes.
-	if ( InCond( TF_COND_SODAPOPPER_HYPE ) )
+	if ( InCond( TF_COND_SODAPOPPER_HYPE ) && tf2v_use_new_sodapopper.GetBool() )
 		nMaxAirJumps = 5;
 	
 	return ( nMaxAirJumps > GetAirDashCount() );

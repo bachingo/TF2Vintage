@@ -55,6 +55,7 @@ ConVar  tf2v_use_triple_jump_sound( "tf2v_use_triple_jump_sound", "1", FCVAR_REP
 #define TF_MAX_AIR_DUCKS 2
 
 extern ConVar tf2v_use_new_atomizer;
+extern ConVar tf2v_use_new_sodapopper;
 
 class CTFGameMovement : public CGameMovement
 {
@@ -364,7 +365,7 @@ void CTFGameMovement::AirDash( void )
 #if defined( GAME_DLL )
 	if ( m_pTFPlayer->m_Shared.GetAirDashCount() > 0 )
 	{
-		if ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) && !m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
+		if ( ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) || ( m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) && !tf2v_use_new_sodapopper.GetBool() ) ) && !m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
 		{
 			if (!tf2v_use_new_atomizer.GetBool())	// Old Atomizer logic: Take damage on jumping.
 			{
