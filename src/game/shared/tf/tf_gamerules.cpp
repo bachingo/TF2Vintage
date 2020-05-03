@@ -253,6 +253,45 @@ void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flO
 #endif
 }
 
+struct StatueInfo_t
+{
+	char const *pszMapName;
+	Vector vecOrigin;
+	QAngle vecAngles;
+};
+
+static StatueInfo_t s_StatueMaps[] ={
+	{"ctf_2fort",			{483, 613, 0},			{0, 180, 0}},
+	{"cp_dustbowl",			{-596, 2650, -256},		{0, 180, 0}},
+	{"cp_granary",			{-544, -510, -416},		{0, 180, 0}},
+	{"cp_well",				{1255, 515, -512},		{0, 180, 0}},
+	{"cp_foundry",			{-85, 912, 0},			{0, -90, 0}},
+	{"cp_gravelpit",		{-4624, 660, -512},		{0, 0, 0}},
+	{"ctf_well",			{1000, -240, -512},		{0, 180, 0}},
+	{"cp_badlands",			{808, -1079, 64},		{0, 135, 0}},
+	{"pl_goldrush",			{-2780, -650, 0},		{0, 90, 0}},
+	{"pl_badwater",			{2690, -416, 131},		{0, -90, 0}},
+	{"plr_pipeline",		{220, -2527, 128},		{0, 90, 0}},
+	{"cp_gorge",			{-6970, 5920, -42},		{0, 0, 0}},
+	{"ctf_doublecross",		{1304, -206, 8},		{0, 180, 0}},
+	{"pl_thundermountain",	{-720, -1058, 128},		{0, -90, 0}},
+	{"cp_mountainlab",		{-2930, 1606, -1069},	{0, 90, 0}},
+	{"cp_degrootkeep",		{-1000, 4580, -255},	{0, -25, 0}},
+	{"pl_barnblitz",		{3415, -2144, -54},		{0, 90, 0}},
+	{"pl_upwward",			{-736, -2275, 63},		{0, 90, 0}},
+	{"plr_hightower",		{5632, 7747, 8},		{0, 0, 0}},
+	{"koth_viaduct",		{-979, 0, 240},			{0, 180, 0}},
+	{"koth_king",			{715, -395, -224},		{0, 135, 0}},
+	{"sd_doomsday",			{-1025, 675, 128},		{0, 90, 0}},
+	{"cp_mercenarypark",	{-2800, -775, -40},		{0, 0, 0}},
+	{"ctf_turbine",			{718, 0, -256},			{0, 180, 0}},
+	{"koth_harvest_final",	{-1428, 220, -15},		{0, 0, 0}},
+	{"pl_swiftwater_final", {706, -2785, -934},		{0, 0, 0}},
+	{"pl_frontier_final",	{3070, -3013, -193},	{0, -90, 0}},
+	{"cp_process_final",	{650, -980, 535},		{0, 90, 0}},
+	{"cp_gullywash_final",  {200, 83, 47},			{0, -102, 0}},
+	{"cp_sunshine",			{-4725, 5860, 65},		{0, 180, 0}},
+};
 
 /**
  * Player hull & eye position for standing, ducking, etc.  This version has a taller
@@ -1590,6 +1629,7 @@ CTFGameRules::CTFGameRules()
 	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
 	m_iEOTLMode = HOLIDAY_RECALCULATE;
+	m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
@@ -1721,6 +1761,7 @@ void CTFGameRules::Activate()
 	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
 	m_iEOTLMode = HOLIDAY_RECALCULATE;
+	m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
 
 	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
 
@@ -1844,6 +1885,8 @@ void CTFGameRules::Activate()
 	{
 		m_nMapHolidayType = pHolidayEntity->GetHolidayType();
 	}
+
+	CreateSoldierStatue();
 }
 
 void CTFGameRules::OnNavMeshLoad( void )
@@ -4198,6 +4241,37 @@ void CTFGameRules::CreateStandardEntities()
 
 	CKickIssue *pIssue = new CKickIssue( "Kick" );
 	pIssue->Init();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: create a memorial to our fallen comrade
+//-----------------------------------------------------------------------------
+void CTFGameRules::CreateSoldierStatue( void )
+{
+	if ( m_hSoldierStatue )
+		return;
+
+	if ( !IsHolidayActive( kHoliday_SoldierMemorial ) )
+		return;
+
+	char const *pszMapName = NULL;
+	if ( STRING( gpGlobals->mapname ) )
+		pszMapName = STRING( gpGlobals->mapname );
+
+	for ( int i=0; i < ARRAYSIZE( s_StatueMaps ); ++i )
+	{
+		if ( V_stricmp( pszMapName, s_StatueMaps[i].pszMapName ) == 0 )
+		{
+			m_hSoldierStatue = CreateEntityByName( "entity_soldier_statue" );
+			if ( m_hSoldierStatue )
+			{
+				m_hSoldierStatue->SetAbsOrigin( s_StatueMaps[i].vecOrigin );
+				m_hSoldierStatue->SetAbsAngles( s_StatueMaps[i].vecAngles );
+
+				DispatchSpawn( m_hSoldierStatue );
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -6743,6 +6817,31 @@ bool CTFGameRules::IsBreadUpdate( void )
 	return ( m_iBreadUpdateMode == HOLIDAY_ON );
 }
 
+bool CTFGameRules::IsRememberingSoldier( void )
+{
+	if ( IsX360() )
+		return false;
+
+	if ( m_iSoldierMemorialMode == HOLIDAY_RECALCULATE )
+	{
+		m_iSoldierMemorialMode = HOLIDAY_OFF;
+		
+		time_t ltime = time( 0 );
+		const time_t *ptime = &ltime;
+		struct tm *today = localtime( ptime );
+		if ( today )
+		{
+			// April till the end of March
+			if ( today->tm_mon > (3-1) && today->tm_mon < (6-1) )
+			{
+				m_iSoldierMemorialMode = HOLIDAY_ON;
+			}
+		}
+	}
+
+	return ( m_iSoldierMemorialMode == HOLIDAY_ON );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -6776,20 +6875,19 @@ bool CTFGameRules::IsHolidayActive( int eHoliday )
 		case kHoliday_HalloweenOrFullMoon:
 			if ( IsHalloween() || IsFullMoon() )
 				bActive = true;
-			else
-				bActive = false;
 			break;
 		case kHoliday_HalloweenOrFullMoonOrValentines:
 			if ( ( IsHalloween() || IsFullMoon() ) || IsValentinesDay() )
-				bActive = true;
-			else
-				bActive = false;				
+				bActive = true;				
 			break;
 		case kHoliday_AprilFools:
 			bActive = IsAprilFools();
 			break;
 		case kHoliday_BreadUpdate:
 			bActive = IsBreadUpdate();
+			break;
+		case kHoliday_SoldierMemorial:
+			bActive = IsRememberingSoldier();
 			break;
 		default:
 			break;
@@ -7151,6 +7249,7 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
 		m_iEOTLMode = HOLIDAY_RECALCULATE;
+		m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
 	}
 #endif
 }
@@ -7348,6 +7447,7 @@ void CTFGameRules::OnDataChanged( DataUpdateType_t updateType )
 		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
 		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
 		m_iEOTLMode = HOLIDAY_RECALCULATE;
+		m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
 	}
 }
 
