@@ -9060,6 +9060,7 @@ void CTFPlayer::CreateFeignDeathRagdoll( CTakeDamageInfo const &info, bool bGibb
 		pRagdoll->m_bWasDisguised = bFriendlyDisguise;
 		pRagdoll->m_bFeignDeath = true;
 		pRagdoll->m_bOnGround = !!( GetFlags() & FL_ONGROUND );
+		pRagdoll->m_iTeam = GetTeamNumber();
 
 		if ( bFriendlyDisguise )
 		{
