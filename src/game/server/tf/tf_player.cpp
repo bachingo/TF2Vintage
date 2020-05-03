@@ -6952,7 +6952,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			
 			int nSilentKiller = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFInflictor, nSilentKiller, set_silent_killer);
-			bCloak = ( nSilentKiller == 1);
+			bCloak = ( nSilentKiller != 0);
 		}
 	}
 
