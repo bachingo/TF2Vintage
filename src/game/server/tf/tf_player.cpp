@@ -6683,7 +6683,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	CBaseEntity *pAttacker = info.GetAttacker();
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
-	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
+	CBaseEntity *pTFInflictor = info.GetWeapon();
 
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)
@@ -6701,8 +6701,15 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		UpdateModel();
 	}
 
-	if ( !pTFInflictor || ( !pTFInflictor->IsSilentKiller() && !pTFInflictor->IsHiddenKiller() ) )
+	if ( !pTFInflictor )
 		SpeakConceptIfAllowed( MP_CONCEPT_DIED );
+	else
+	{
+		int nSilentKiller = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFInflictor, nSilentKiller, set_silent_killer);
+		if (!nSilentKiller)
+			SpeakConceptIfAllowed(MP_CONCEPT_DIED);
+	}
 
 	if ( pTFAttacker )
 	{
@@ -6943,7 +6950,9 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFInflictor, nTurnToGold, set_turn_to_gold );
 			bTurnToGold = nTurnToGold != 0;
 			
-			bCloak = pTFInflictor->IsSilentKiller();
+			int nSilentKiller = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFInflictor, nSilentKiller, set_silent_killer);
+			bCloak = ( nSilentKiller == 1);
 		}
 	}
 
