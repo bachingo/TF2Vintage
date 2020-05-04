@@ -90,10 +90,7 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 
 			if ( tf_demoman_charge_frametime_scaling.GetBool() )
 			{
-				const float flInterval = gpGlobals->interval_per_tick / 5;
-				const float flTimeScale = gpGlobals->interval_per_tick * 2;
-				const float flScale = Clamp( ( gpGlobals->frametime - flInterval ) / flTimeScale - flInterval, 0.0f, 1.0f );
-				flTurnRate *= flScale * 1.75 + 0.25;
+				flTurnRate *= RemapValClamped( gpGlobals->frametime, TICKS_TO_TIME( 0.2 ), TICKS_TO_TIME( 2.0 ), 0.25, 2.0 );
 			}
 
 			if ( abs( pTFPlayer->m_angPrevEyeAngles.y ) - abs( ucmd->viewangles.y ) > ( flTurnRate * 2.5 ) )

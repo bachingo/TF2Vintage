@@ -18,6 +18,25 @@ using namespace SqPlus;
 		sq_setreleasehook( vm, -1, VectorRelease ); \
 	sq_remove( vm, -2 );
 
+Vector GetVectorByValue( HSQUIRRELVM pVM, int nIndex )
+{
+	StackHandler hndl( pVM );
+	// support vector = vector + 15
+	if ( hndl.GetType( nIndex ) & SQOBJECT_NUMERIC )
+	{
+		float flValue = hndl.GetFloat( nIndex );
+		return Vector( flValue );
+	}
+
+	Vector *pVector = (Vector *)hndl.GetInstanceUp( nIndex, 0 );
+	if ( pVector == nullptr )
+	{
+		hndl.ThrowError( "Null vector" );
+		return Vector();
+	}
+
+	return *pVector;
+}
 
 static SQRegFunction g_VectorFuncs[] ={
 	{_SC( "constructor" ),		VectorConstruct				},
@@ -25,6 +44,7 @@ static SQRegFunction g_VectorFuncs[] ={
 	{MM_SET,					VectorSet,			2,		_SC( ".." )},
 	{MM_TOSTRING,				VectorToString,		3,		_SC( "..n" )},
 	{MM_TYPEOF,					VectorTypeInfo				},
+	{MM_CMP,					VectorEquals,		2,		0},
 	{MM_NEXTI,					VectorIterate				},
 	{MM_ADD, 					VectorAdd,			2,		0},
 	{MM_SUB,					VectorSubtract,		2,		0},
@@ -186,6 +206,19 @@ SQInteger VectorTypeInfo( HSQUIRRELVM pVM )
 	return hndl.Return( "Vector" );
 }
 
+SQInteger VectorEquals( HSQUIRRELVM pVM )
+{
+	StackHandler hndl( pVM );
+
+	Vector *pLHS = (Vector *)hndl.GetInstanceUp( 1, 0 );
+	sq_checkvector( pVM, pLHS );
+
+	Vector *pRHS = (Vector *)hndl.GetInstanceUp( 2, 0 );
+	sq_checkvector( pVM, pRHS );
+
+	return hndl.Return( VectorsAreEqual( *pLHS, *pRHS, 0.01 ) );
+}
+
 SQInteger VectorIterate( HSQUIRRELVM pVM )
 {
 	StackHandler hndl( pVM );
@@ -224,17 +257,12 @@ SQInteger VectorIterate( HSQUIRRELVM pVM )
 
 SQInteger VectorAdd( HSQUIRRELVM pVM )
 {
-	StackHandler hndl( pVM );
-
-	Vector *pLHS = (Vector *)hndl.GetInstanceUp( 1, 0 );
-	sq_checkvector( pVM, pLHS );
-
-	Vector *pRHS = (Vector *)hndl.GetInstanceUp( 2, 0 );
-	sq_checkvector( pVM, pRHS );
+	Vector LHS = GetVectorByValue( pVM, 1 );
+	Vector RHS = GetVectorByValue( pVM, 2 );
 
 	// Create a new vector so we can keep the values of the other
 	Vector *pNewVector = new Vector;
-	*pNewVector = *pLHS + *pRHS;
+	*pNewVector = LHS + RHS;
 
 	sq_pushvector( pVM, pNewVector );
 
@@ -243,17 +271,12 @@ SQInteger VectorAdd( HSQUIRRELVM pVM )
 
 SQInteger VectorSubtract( HSQUIRRELVM pVM )
 {
-	StackHandler hndl( pVM );
-
-	Vector *pLHS = (Vector *)hndl.GetInstanceUp( 1, 0 );
-	sq_checkvector( pVM, pLHS );
-
-	Vector *pRHS = (Vector *)hndl.GetInstanceUp( 2, 0 );
-	sq_checkvector( pVM, pRHS );
+	Vector LHS = GetVectorByValue( pVM, 1 );
+	Vector RHS = GetVectorByValue( pVM, 2 );
 
 	// Create a new vector so we can keep the values of the other
 	Vector *pNewVector = new Vector;
-	*pNewVector = *pLHS - *pRHS;
+	*pNewVector = LHS - RHS;
 
 	sq_pushvector( pVM, pNewVector );
 
@@ -263,14 +286,13 @@ SQInteger VectorSubtract( HSQUIRRELVM pVM )
 SQInteger VectorMultiply( HSQUIRRELVM pVM )
 {
 	StackHandler hndl( pVM );
-	Vector *pVector = (Vector *)hndl.GetInstanceUp( 1, 0 );
-	sq_checkvector( pVM, pVector );
+	Vector vector = GetVectorByValue( pVM, 1 );
 
 	const float flScale = hndl.GetFloat( 2 );
 
 	// Create a new vector so we can keep the values of the other
 	Vector *pNewVector = new Vector;
-	*pNewVector = *pVector * flScale;
+	*pNewVector = vector * flScale;
 
 	sq_pushvector( pVM, pNewVector );
 
@@ -325,7 +347,7 @@ SQInteger VectorLength2DSqr( HSQUIRRELVM pVM )
 SQInteger VectorDotProduct( HSQUIRRELVM pVM )
 {
 	StackHandler hndl( pVM );
-
+	
 	Vector *pLHS = (Vector *)hndl.GetInstanceUp( 1, 0 );
 	sq_checkvector( pVM, pLHS );
 
