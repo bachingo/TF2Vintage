@@ -934,13 +934,13 @@ static void MountAdditionalContent()
 						V_strcat_safe( szAppDirectory, "tf" );
 					#endif
 
-						filesystem->AddSearchPath( szAppDirectory, "MOD" );
-						filesystem->AddSearchPath( szAppDirectory, "GAME" );
+						g_pFullFileSystem->AddSearchPath( szAppDirectory, "MOD" );
+						g_pFullFileSystem->AddSearchPath( szAppDirectory, "GAME" );
 
 						V_AppendSlash( szAppDirectory, sizeof szAppDirectory );
 
 						FileFindHandle_t fh;
-						char const *fn = filesystem->FindFirst( szAppDirectory, &fh );
+						char const *fn = g_pFullFileSystem->FindFirst( szAppDirectory, &fh );
 						while ( fn )
 						{
 							if ( fn[0] != '.' )
@@ -954,13 +954,13 @@ static void MountAdditionalContent()
 									V_StrSlice( fn, 0, V_strlen( fn ) - 8, vpk, sizeof vpk );
 									V_strcat_safe( vpk, ".vpk" );
 
-									filesystem->AddSearchPath( vpk, "GAME" );
+									g_pFullFileSystem->AddSearchPath( vpk, "GAME" );
 								}
 							}
 
-							fn = filesystem->FindNext( fh );
+							fn = g_pFullFileSystem->FindNext( fh );
 						}
-						filesystem->FindClose( fh );
+						g_pFullFileSystem->FindClose( fh );
 					}
 				}
 			}
