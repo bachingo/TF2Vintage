@@ -7469,7 +7469,6 @@ void CBasePlayer::RemoveWearable( CEconWearable *pItem )
 #endif
 }
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
 //-----------------------------------------------------------------------------
 // Purpose: Add this wearable to the players' equipment list.
 //-----------------------------------------------------------------------------
@@ -7480,6 +7479,7 @@ void CBasePlayer::EquipDisguiseWearable( CEconWearable *pItem )
 	if ( pItem )
 	{
 		m_hDisguiseWearables.AddToHead( pItem );
+		pItem->SetDisguiseWearable( true );
 		pItem->Equip( this );
 	}
 
@@ -7546,7 +7546,8 @@ void CBasePlayer::RemoveDisguiseWearable( CEconWearable *pItem )
 		}
 	}
 }*/ //Commented until we get wearableanimplayback_t -danielmm8888
-#endif // USES_ECON_ITEMS
+
+#endif  // USES_ECON_ITEMS
 
 //================================================================================
 // TEAM HANDLING

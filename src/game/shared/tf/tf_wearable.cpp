@@ -37,7 +37,8 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 	UpdateModelToClass();
 
 	// player_bodygroups
-	UpdatePlayerBodygroups();
+	if (!m_bDisguiseWearable)
+		UpdatePlayerBodygroups();
 }
 
 //-----------------------------------------------------------------------------
@@ -53,7 +54,7 @@ void CTFWearable::UpdateModelToClass( void )
 	{
 		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 
-		if ( pOwner )
+		if ( pOwner && !m_bDisguiseWearable)
 		{
 			const char *pszModel = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 
@@ -138,5 +139,30 @@ void C_TFWearable::UpdateModelToClass(void)
 	}
 }
 
-#endif
+//-----------------------------------------------------------------------------
+// Purpose: Used for showing and hiding regular/disguise wearables.
+//-----------------------------------------------------------------------------
+bool C_TFWearable::ShouldDraw()
+{
+	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 
+	// If disguised, show/hide normal and disguise wearables differently.
+	if ( pOwner && ( pOwner->m_Shared.InCond( TF_COND_DISGUISED ) && pOwner->IsEnemyPlayer() ) )
+	{
+		// Swap between showing disguise wearables and normal wearables to enemy players.
+		if (m_bDisguiseWearable)
+			return BaseClass::ShouldDraw();
+		else
+			return false;			
+	}
+	
+	// By default normal wearables are on, disguise wearables are not.
+	if (m_bDisguiseWearable)
+		return false;
+	else
+		return BaseClass::ShouldDraw();
+	
+	
+}
+
+#endif

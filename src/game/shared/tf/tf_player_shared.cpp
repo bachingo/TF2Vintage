@@ -21,6 +21,7 @@
 #include "tf_wearable_demoshield.h"
 #include "tf_weapon_buff_item.h"
 #include "tf_weapon_sword.h"
+#include "animation.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -369,14 +370,26 @@ CTFPlayerShared::CTFPlayerShared()
 
 	m_bGunslinger = false;
 
-	m_iDecapitations = 0;
-	
-	m_iHeadshots = 0;
+	// Reset our meters
+	SetDecapitationCount( 0 );
+	SetHeadshotCount( 0 );
+	SetStrikeCount( 0 );
+	SetSapperKillCount( 0 );
+	SetRevengeCritCount( 0 );
+	SetAirblastCritCount( 0 );
+	SetHypeMeterAbsolute( 0 );
+	SetSanguisugeHealth(0);
+	SetKillstreakCount( 0 );
+	SetFocusLevel( 0 );
 
 	m_flEnergyDrinkDrainRate = tf_scout_energydrink_consume_rate.GetFloat();
 	m_flEnergyDrinkRegenRate = tf_scout_energydrink_regen_rate.GetFloat();
 	
 	m_bSpySprint = false;
+	
+	m_iWearableBodygroups = 0;
+	m_iDisguiseBodygroups = 0;
+	m_iWeaponBodygroup = 0;
 
 #ifdef CLIENT_DLL
 	m_iDisguiseWeaponModelIndex = -1;
@@ -3303,8 +3316,8 @@ void CTFPlayerShared::CompleteDisguise(void)
 	m_DisguiseItem.SetItemDefIndex( -1 );
 
 	RecalcDisguiseWeapon();
-	
 	CalculateDisguiseWearables();
+	
 #endif
 }
 
@@ -3366,16 +3379,16 @@ void CTFPlayerShared::RemoveDisguise(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::CalculateDisguiseWearables(void)
 {
-#ifndef CLIENT_DLL
+#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
 
 	// Remove our current disguise wearables.
-	for ( int i = 0; i < GetNumDisguiseWearables(); i++ )
+	for (int i = 0; i < m_pOuter->GetNumDisguiseWearables(); i++)
 	{
-		CEconWearable *pWearable = GetDisguiseWearable( i );
+		CEconWearable *pWearable =  m_pOuter->GetDisguiseWearable(i);
 		if ( !pWearable )
 			continue;
 
-		RemoveDisguiseWearable( pWearable );
+		m_pOuter->RemoveDisguiseWearable(pWearable);
 	}
 	
 	// Purge all of our disguise bodygroups.
@@ -3395,15 +3408,13 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 					continue;
 
 				// Add this wearable to my list of disguise wearables.
-				EquipDisguiseWearable(pWearable);
+				m_pOuter->EquipDisguiseWearable(pWearable);
 				
 			}
 		}
 		
-		AddWearable( pWearable );
-		
 		// Update the disguise bodygroups as well.
-		SetDisguiseBodygroups(pDisguiseTarget->GetBodygroups());
+		SetDisguiseBodygroups(pDisguiseTarget->m_Shared.GetWearableBodygroups());
 	}
 	
 #endif
@@ -3463,7 +3474,7 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 		//AssertMsg( pDisguiseItem, "Cannot find primary disguise weapon for desired disguise class %d\n", m_nDisguiseClass );
 
 		// Don't need this assert anymore, just check the next slot.
-		return RecalcDisguiseWeapon(iSlot+ );
+		return RecalcDisguiseWeapon(iSlot+1);
 	}
 	else if ( iSlot == 2 )
 		return RecalcDisguiseWeapon(0);
@@ -3510,8 +3521,10 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 						bool bTrue = pVisuals->player_bodygroups.Element( index );
 						if ( bTrue )
 						{
-							AddWeaponDisguiseBodygroup(i, 1);
+							SetBodygroup(ToTFPlayer(GetDisguiseTarget())->GetModelPtr(), m_iWeaponBodygroup, i, 1);
 						}
+						else
+							SetBodygroup(ToTFPlayer(GetDisguiseTarget())->GetModelPtr(), m_iWeaponBodygroup, i, 0);
 					}
 				}
 			}

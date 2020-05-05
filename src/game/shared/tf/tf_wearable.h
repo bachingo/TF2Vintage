@@ -32,6 +32,7 @@ public:
 #else
 	virtual int		InternalDrawModel( int flags );
 	void			UpdateModelToClass(void);
+	bool 			ShouldDraw(void);
 #endif
 };
 

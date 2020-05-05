@@ -27,9 +27,11 @@ BEGIN_NETWORK_TABLE( CEconWearable, DT_EconWearable )
 #ifdef GAME_DLL
 	SendPropString( SENDINFO( m_ParticleName ) ),
 	SendPropBool( SENDINFO( m_bExtraWearable ) ),
+	SendPropBool( SENDINFO( m_bDisguiseWearable ) ),
 #else
 	RecvPropString( RECVINFO( m_ParticleName ) ),
 	RecvPropBool( RECVINFO( m_bExtraWearable ) ),
+	RecvPropBool( RECVINFO( m_bDisguiseWearable ) ),
 #endif
 END_NETWORK_TABLE()
 

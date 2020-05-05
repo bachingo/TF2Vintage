@@ -393,7 +393,7 @@ public:
 	
 	virtual void			UpdateDisguiseWearables();
 	C_EconWearable			*GetDisguiseWearable( int i ) { return m_hDisguiseWearables[i]; }
-	int						GetNumDisguiseWearables( void ) const { return m_hDisguiseWearables.Count(); }
+	int						GetNumDisguiseWearables( void ) { return m_hDisguiseWearables.Count(); }
 #endif
 
 	bool					HasFiredWeapon( void ) { return m_bFiredWeapon; }

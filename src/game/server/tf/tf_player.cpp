@@ -1244,18 +1244,6 @@ void CTFPlayer::Spawn()
 	CreateViewModel( 1 );
 	// Make sure it has no model set, in case it had one before
 	GetViewModel( 1 )->SetWeaponModel( NULL, NULL );
-
-	// Reset our meters
-	m_Shared.SetDecapitationCount( 0 );
-	m_Shared.SetHeadshotCount( 0 );
-	m_Shared.SetStrikeCount( 0 );
-	m_Shared.SetSapperKillCount( 0 );
-	m_Shared.SetRevengeCritCount( 0 );
-	m_Shared.SetAirblastCritCount( 0 );
-	m_Shared.SetHypeMeterAbsolute( 0 );
-	m_Shared.SetSanguisugeHealth(0);
-	m_Shared.SetKillstreakCount( 0 );
-	m_Shared.SetFocusLevel( 0 );
 	
 	m_Shared.SetFeignReady( false );
 	m_Shared.SetHasRecoiled( false );
@@ -1687,6 +1675,7 @@ void CTFPlayer::GiveDefaultItems()
 	TFPlayerClassData_t *pData = m_PlayerClass.GetData();
 
 	// Reset all bodygroups
+	m_Shared.SetWearableBodygroups(0);
 	for ( int i = 0; i < GetNumBodyGroups(); i++ )
 	{
 		SetBodygroup( i, 0 );
@@ -1796,7 +1785,6 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->WeaponRegenerate();
 
 			// player_bodygroups
-			m_Shared.SetBodygroups(0);
 			pWeapon->UpdatePlayerBodygroups();
 
 			// Extra wearables
