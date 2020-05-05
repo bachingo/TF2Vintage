@@ -473,6 +473,8 @@ bool CLuaVM::SetValue( HSCRIPT hScope, const char *pszKey, const char *pszValue 
 		lua_pushstring( GetVM(), pszValue );
 		lua_settable( GetVM(), LUA_GLOBALSINDEX );
 	}
+
+	return true;
 }
 
 bool CLuaVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVariant_t &value )
