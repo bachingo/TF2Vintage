@@ -6535,9 +6535,12 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			pszDomination = "domination:dominated";
 		}
 
+
+/*
+		const char *pszRelationship = "relation:none";
+#ifndef NO_STEAM
 		// Check if those involved were friends.
 		bool bSteamFriends = false;
-		#ifndef NO_STEAM
 		player_info_t piv;
 		player_info_t pia;
 		// Get the information about the attacker.
@@ -6556,21 +6559,22 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				{
 					// check and see if they're on the local player's friends list
 					CSteamID steamID(piv.friendsID, pia.friendsID, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual);
-					bSteamFriends = steamapicontext->SteamFriends()->HasFriend(steamID, 0x04 /*k_EFriendFlagImmediate*/);
+					bSteamFriends = steamapicontext->SteamFriends()->HasFriend(steamID, 0x04 );
 
 				}
 			}
 		}
-#endif
-		const char *pszRelationship = "relation:none";
+		
 		if (bSteamFriends)
-			pszRelationship = "relation:friends";
+		pszRelationship = "relation:friends";
+#endif
+*/
 
 		if ( IsAlive() )
 		{
 			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 
-			if ( !pWeapon->IsSilentKiller() && !pWeapon->IsHiddenKiller() )
+			if ( !pWeapon->IsSilentKiller() )
 			{
 				CFmtStrN<128> modifiers( "%s,%s,victimclass:%s", pszCustomDeath, pszDomination, g_aPlayerClassNames_NonLocalized[pTFVictim->GetPlayerClass()->GetClassIndex()] );
 				SpeakConceptIfAllowed( MP_CONCEPT_KILLED_PLAYER, modifiers );
@@ -8701,7 +8705,7 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 	
 	// Hide pain sounds from silent weapons.
 	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
-		if ( pTFInflictor && ( pTFInflictor->IsSilentKiller() || pTFInflictor->IsHiddenKiller() ) )
+		if ( pTFInflictor && ( pTFInflictor->IsSilentKiller() ) )
 			return;
 
 	// This used to be handled elsewhere, but we can let servers decide to use the old
@@ -8805,9 +8809,14 @@ void CTFPlayer::DeathSound( const CTakeDamageInfo &info )
 		return;
 
 	// Don't play death sounds on silent weapons.
-	CTFWeaponBase *pTFInflictor = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
-	if ( pTFInflictor && ( pTFInflictor->IsSilentKiller() || pTFInflictor->IsHiddenKiller() ) )
-		return;
+	CBaseEntity *pTFInflictor = info.GetWeapon();
+	if (pTFInflictor)
+	{
+		int nSilentDeath = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pTFInflictor, nSilentDeath, set_silent_killer);
+		if ( nSilentDeath != 0 )
+			return;
+	}
 
 	if ( m_LastDamageType & DMG_FALL ) // Did we die from falling?
 	{
