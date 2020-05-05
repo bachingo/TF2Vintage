@@ -52,6 +52,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_BaseObject, DT_BaseObject, CBaseObject )
 	RecvPropInt( RECVINFO( m_fObjectFlags ) ),
 	RecvPropEHandle( RECVINFO( m_hBuiltOnEntity ) ),
 	RecvPropBool( RECVINFO( m_bDisabled ) ),
+	RecvPropFloat( RECVINFO( m_flEMPTime ) ),
 	RecvPropEHandle( RECVINFO( m_hBuilder ) ),
 	RecvPropVector( RECVINFO( m_vecBuildMaxs ) ),
 	RecvPropVector( RECVINFO( m_vecBuildMins ) ),

@@ -904,7 +904,6 @@ CTFSniperRifle_Classic::CTFSniperRifle_Classic()
 #ifdef CLIENT_DLL
 	m_pLaserSight = NULL;
 #endif
-	CTFSniperRifle::CTFSniperRifle();
 }
 
 //-----------------------------------------------------------------------------
@@ -915,9 +914,8 @@ CTFSniperRifle_Classic::~CTFSniperRifle_Classic()
 	m_bIsChargingAttack = false;
 #ifdef CLIENT_DLL
 	if (m_pLaserSight)
-	ToggleLaser();
+		ToggleLaser();
 #endif
-	CTFSniperRifle::~CTFSniperRifle();
 }
 
 //-----------------------------------------------------------------------------
