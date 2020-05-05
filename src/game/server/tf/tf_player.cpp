@@ -1796,6 +1796,7 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->WeaponRegenerate();
 
 			// player_bodygroups
+			m_Shared.SetBodygroups(0);
 			pWeapon->UpdatePlayerBodygroups();
 
 			// Extra wearables

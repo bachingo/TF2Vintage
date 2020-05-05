@@ -390,6 +390,10 @@ public:
 	virtual void			UpdateWearables();
 	C_EconWearable			*GetWearable( int i ) { return m_hMyWearables[i]; }
 	int						GetNumWearables( void ) { return m_hMyWearables.Count(); }
+	
+	virtual void			UpdateDisguiseWearables();
+	C_EconWearable			*GetDisguiseWearable( int i ) { return m_hDisguiseWearables[i]; }
+	int						GetNumDisguiseWearables( void ) const { return m_hDisguiseWearables.Count(); }
 #endif
 
 	bool					HasFiredWeapon( void ) { return m_bFiredWeapon; }
@@ -615,6 +619,7 @@ protected:
 #if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
 	// Wearables
 	CUtlVector< CHandle<C_EconWearable > >	m_hMyWearables;
+	CUtlVector<CHandle<C_EconWearable > >	m_hDisguiseWearables;
 #endif
 
 private:

@@ -3303,6 +3303,8 @@ void CTFPlayerShared::CompleteDisguise(void)
 	m_DisguiseItem.SetItemDefIndex( -1 );
 
 	RecalcDisguiseWeapon();
+	
+	CalculateDisguiseWearables();
 #endif
 }
 
@@ -3354,8 +3356,59 @@ void CTFPlayerShared::RemoveDisguise(void)
 #else
 	RemoveCond(TF_COND_DISGUISED);
 	RemoveCond(TF_COND_DISGUISING);
+
+	CalculateDisguiseWearables();
 #endif
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::CalculateDisguiseWearables(void)
+{
+#ifndef CLIENT_DLL
+
+	// Remove our current disguise wearables.
+	for ( int i = 0; i < GetNumDisguiseWearables(); i++ )
+	{
+		CEconWearable *pWearable = GetDisguiseWearable( i );
+		if ( !pWearable )
+			continue;
+
+		RemoveDisguiseWearable( pWearable );
+	}
+	
+	// Purge all of our disguise bodygroups.
+	SetDisguiseBodygroups(0);
+	
+	if (InCond(TF_COND_DISGUISED))
+	{
+		// Get our disguise target.
+		CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
+		if (pDisguiseTarget)
+		{
+			// Get the wearables that they have.
+			for (int i = 0; i < pDisguiseTarget->GetNumWearables(); i++)
+			{
+				CTFWearable *pWearable = dynamic_cast<CTFWearable *>(pDisguiseTarget->GetWearable(i));
+				if (pWearable == nullptr)
+					continue;
+
+				// Add this wearable to my list of disguise wearables.
+				EquipDisguiseWearable(pWearable);
+				
+			}
+		}
+		
+		AddWearable( pWearable );
+		
+		// Update the disguise bodygroups as well.
+		SetDisguiseBodygroups(pDisguiseTarget->GetBodygroups());
+	}
+	
+#endif
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3377,11 +3430,8 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 	CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 
 	// Find the weapon in the same slot
-	for ( int i = 0; i < TF_LOADOUT_SLOT_BUFFER; i++ )	
+	for ( int i = 0; i < TF_LOADOUT_SLOT_UTILITY; i++ )	
 	{
-		
-		if ( i == TF_LOADOUT_SLOT_UTILITY )
-		continue;	// Never check this slot.
 	
 		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) ) && ( i == TF_LOADOUT_SLOT_ZOMBIE ) )
 		continue;	// If it's not Halloween, skip the zombie slot.
@@ -3408,11 +3458,16 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 			}
 		}
 
-	if ( iSlot == 0 )
+	if ( iSlot == 0 || iSlot == 1)
 	{
-		AssertMsg( pDisguiseItem, "Cannot find primary disguise weapon for desired disguise class %d\n", m_nDisguiseClass );
-	}
+		//AssertMsg( pDisguiseItem, "Cannot find primary disguise weapon for desired disguise class %d\n", m_nDisguiseClass );
 
+		// Don't need this assert anymore, just check the next slot.
+		return RecalcDisguiseWeapon(iSlot+ );
+	}
+	else if ( iSlot == 2 )
+		return RecalcDisguiseWeapon(0);
+	
 	// Don't switch to builder as it's too complicated.
 	if ( pDisguiseItem )
 	{
@@ -3435,8 +3490,35 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 	{
 		m_iDisguiseWeaponModelIndex = modelinfo->GetModelIndex(m_DisguiseItem.GetWorldDisplayModel());
 	}
+
 #endif
+	// If we have a weapon that changes bodygroup (ie: gloves) update the bodygroup for it.
+	SetWeaponDisguiseBodygroups(0);
+	if (GetDisguiseItem()->GetStaticData() && GetDisguiseItem()->GetStaticData()->hide_bodygroups_deployed_only)
+	{
+		CEconItemDefinition *pStatic = GetDisguiseItem()->GetStaticData();
+		if ( pStatic )
+		{
+			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
+			if ( pVisuals )
+			{
+				for (int i = 0; i < ToTFPlayer(GetDisguiseTarget())->GetNumBodyGroups(); i++)
+				{
+					unsigned int index = pVisuals->player_bodygroups.Find(ToTFPlayer(GetDisguiseTarget())->GetBodygroupName(i));
+					if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
+					{
+						bool bTrue = pVisuals->player_bodygroups.Element( index );
+						if ( bTrue )
+						{
+							AddWeaponDisguiseBodygroup(i, 1);
+						}
+					}
+				}
+			}
+		}	
+	}
 }
+
 
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------

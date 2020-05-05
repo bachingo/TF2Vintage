@@ -626,6 +626,8 @@ public:
 	// Wearables
 	virtual void			EquipWearable( CEconWearable *pItem );
 	virtual void			RemoveWearable( CEconWearable *pItem );
+	virtual void			EquipDisguiseWearable( CEconWearable *pItem );
+	virtual void			RemoveDisguiseWearable( CEconWearable *pItem );
 	//void					PlayWearableAnimsForPlaybackEvent( wearableanimplayback_t iPlayback ); Commented until we get wearableanimplayback_t -danielmm8888
 #endif
 
@@ -903,6 +905,10 @@ public:
 	CEconWearable			*GetWearable( int i ) { return m_hMyWearables[i]; }
 	const CEconWearable		*GetWearable( int i ) const { return m_hMyWearables[i]; }
 	int						GetNumWearables( void ) const { return m_hMyWearables.Count(); }
+	
+	CEconWearable			*GetDisguiseWearable( int i ) { return m_hDisguiseWearables[i]; }
+	const CEconWearable		*GetDisguiseWearable( int i ) const { return m_hDisguiseWearables[i]; }
+	int						GetNumDisguiseWearables( void ) const { return m_hDisguiseWearables.Count(); }
 #endif
 
 private:
@@ -1079,6 +1085,7 @@ protected:
 #if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
 	// Wearables
 	CUtlVector<CHandle<CEconWearable > >	m_hMyWearables;
+	CUtlVector<CHandle<CEconWearable > >	m_hDisguiseWearables;
 #endif
 
 private:

@@ -178,8 +178,29 @@ public:
 	int		GetDisguiseMaxHealth( void );
 	int		GetDisguiseMaxBuffedHealth( void );
 
-	CEconItemView *GetDisguiseItem( void )		{ return &m_DisguiseItem; }
+	CEconItemView *GetDisguiseItem( void )				{ return &m_DisguiseItem; }
 	void	RecalcDisguiseWeapon( int iSlot = 0 );
+	void	CalculateDisguiseWearables(void);
+	
+	// Wearable bodygroups.
+	int		GetWearableBodygroups(void)							{return m_iWearableBodygroups; }
+	void	SetWearableBodygroups(int input)					{ m_iWearableBodygroups = input; }
+	void	AddWearableBodygroup(int group, int value)			{ m_iWearableBodygroups += ((group*group) + value); }
+	int		m_iWearableBodygroups;
+	
+	int		GetFullDisguiseWearables(void)				{ return GetDisguiseBodygroups() + GetWeaponDisguiseBodygroups(); }
+	
+	// Wearable disguises.
+	int		GetDisguiseBodygroups(void)						{return m_iDisguiseBodygroups;}
+	void	SetDisguiseBodygroups(int input)				{m_iDisguiseBodygroups = input;}
+	void	AddDisguiseBodygroup(int group, int value)		{ m_iDisguiseBodygroups += ((group*group) + value); }
+	int		m_iDisguiseBodygroups;
+	
+	// Weapon disguise bodygroups.
+	int		GetWeaponDisguiseBodygroups(void)						{ return m_iWeaponBodygroup; }
+	void	SetWeaponDisguiseBodygroups(int input)					{ m_iWeaponBodygroup = input; }
+	void	AddWeaponDisguiseBodygroup(int group, int value)		{ m_iWeaponBodygroup += ((group*group) + value); }
+	int		m_iWeaponBodygroup;
 
 #ifdef CLIENT_DLL
 	void	OnDisguiseChanged( void );

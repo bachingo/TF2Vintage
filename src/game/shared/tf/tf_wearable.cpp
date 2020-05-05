@@ -139,3 +139,4 @@ void C_TFWearable::UpdateModelToClass(void)
 }
 
 #endif
+

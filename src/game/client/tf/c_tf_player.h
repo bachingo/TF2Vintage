@@ -258,6 +258,7 @@ public:
 	virtual IRagdoll *GetRepresentativeRagdoll() const;
 	EHANDLE	m_hRagdoll;
 	Vector m_vecRagdollVelocity;
+	virtual int GetBody(void);
 
 	// Objects
 	int CanBuild( int iObjectType, int iObjectMode );

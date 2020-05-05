@@ -5888,6 +5888,20 @@ void C_TFPlayer::UpdateTypingBubble( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Determines if we show the original spy body or the disguised body.
+//-----------------------------------------------------------------------------
+int C_TFPlayer::GetBody(void)
+{
+	// Enemies disguised use a different set of bodygroups.
+	if ( m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer() )
+		return m_Shared.GetFullDisguiseWearables();
+
+	return m_nBody;
+}
+
+
+
 #include "c_obj_sentrygun.h"
 
 
