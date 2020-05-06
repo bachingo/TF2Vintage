@@ -2696,6 +2696,7 @@ CON_COMMAND_F( tf_bot_kick, "Remove a TFBot by name, or all bots (\"all\").", FC
 
 CTFBotItemSchema s_BotSchema( "TFBotItemSchema" );
 
+// Based on https://forums.alliedmods.net/showthread.php?p=1539933
 void CTFBotItemSchema::PostInit()
 {
 	if ( !m_pSchema )
