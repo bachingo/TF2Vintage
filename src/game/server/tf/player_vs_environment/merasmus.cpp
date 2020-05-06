@@ -179,6 +179,9 @@ IMPLEMENT_INTENTION_INTERFACE( CMerasmus, CMerasmusBehavior )
 
 
 IMPLEMENT_SERVERCLASS_ST( CMerasmus, DT_Merasmus )
+	SendPropBool( SENDINFO( m_bRevealed ) ),
+	SendPropBool( SENDINFO(m_bDoingAOEAttack)),
+	SendPropBool( SENDINFO(m_bStunned)),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( merasmus, CMerasmus );
