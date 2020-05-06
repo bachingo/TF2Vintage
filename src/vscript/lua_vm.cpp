@@ -380,11 +380,10 @@ HSCRIPT CLuaVM::RegisterInstance( ScriptClassDesc_t *pDesc, void *pInstance )
 	if ( !RegisterClass( pDesc ) )
 		return INVALID_HSCRIPT;
 
-	ScriptInstance_t *pScriptInstance = new ScriptInstance_t;
+	ScriptInstance_t *pScriptInstance = (ScriptInstance_t *)lua_newuserdata( GetVM(), sizeof ScriptInstance_t );
 	pScriptInstance->m_pInstance = pInstance;
 	pScriptInstance->m_pClassDesc = pDesc;
 
-	lua_pushlightuserdata( GetVM(), pScriptInstance );
 	luaL_getmetatable( GetVM(), pDesc->m_pszScriptName );
 	lua_setmetatable( GetVM(), -2 );
 
@@ -394,7 +393,7 @@ HSCRIPT CLuaVM::RegisterInstance( ScriptClassDesc_t *pDesc, void *pInstance )
 void *CLuaVM::GetInstanceValue( HSCRIPT hInstance, ScriptClassDesc_t *pExpectedType )
 {
 	lua_getref( GetVM(), (intptr_t)hInstance );
-	if( !lua_islightuserdata(GetVM(), -1) )
+	if( !lua_isuserdata( GetVM(), -1 ) )
 		return NULL;
 
 	ScriptInstance_t *pInstance = (ScriptInstance_t *)lua_touserdata( GetVM(), -1 );
