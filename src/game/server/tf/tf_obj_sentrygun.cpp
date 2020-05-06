@@ -31,6 +31,7 @@ extern ConVar tf_obj_upgrade_per_hit;
 extern ConVar tf2v_use_new_wrench_mechanics;
 ConVar tf2v_use_new_sapper_damage( "tf2v_use_new_sapper_damage", "0", FCVAR_NOTIFY, "Decreases the damage resistance of a sapped sentry from 66% to 33%." );
 ConVar tf2v_use_new_sapper_disable( "tf2v_use_new_sapper_disable", "0", FCVAR_NOTIFY, "Sapped sentries will be disabled for a few seconds after removing the sapper." );
+ConVar tf2v_use_new_sentry_minigun_resist( "tf2v_use_new_sentry_minigun_resist", "0", FCVAR_NOTIFY, "Swaps from the original 20% and 33% resistance on level 2 and 3 sentries to the newer 15% and 20% respectively." );
 
 
 // Ground placed version
@@ -62,8 +63,12 @@ ConVar tf2v_use_new_sapper_disable( "tf2v_use_new_sapper_disable", "0", FCVAR_NO
 #define SENTRYGUN_RECENTLY_ATTACKED_TIME 2.0
 
 #define SENTRYGUN_MINIGUN_RESIST_LVL_1		0.0
-#define SENTRYGUN_MINIGUN_RESIST_LVL_2		0.15
-#define SENTRYGUN_MINIGUN_RESIST_LVL_3		0.20
+#define SENTRYGUN_MINIGUN_RESIST_LVL_2		0.20
+#define SENTRYGUN_MINIGUN_RESIST_LVL_3		0.33
+
+#define SENTRYGUN_MINIGUN_RESIST_LVL_1_GUNMETTLE		0.0
+#define SENTRYGUN_MINIGUN_RESIST_LVL_2_GUNMETTLE		0.15
+#define SENTRYGUN_MINIGUN_RESIST_LVL_3_GUNMETTLE		0.20
 
 
 #define SENTRYGUN_SAPPER_OWNER_DAMAGE_MODIFIER	0.33f
@@ -517,6 +522,9 @@ void CObjectSentrygun::StartUpgrading( void )
 	{
 		case 2:
 			SetModel( SENTRY_MODEL_LEVEL_2_UPGRADE );
+			if (tf2v_use_new_sentry_minigun_resist.GetBool())
+				m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_2_GUNMETTLE;			
+			else
 			m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_2;
 			SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_2 );
 			m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_2;
@@ -524,7 +532,10 @@ void CObjectSentrygun::StartUpgrading( void )
 		case 3:
 			SetModel( SENTRY_MODEL_LEVEL_3_UPGRADE );
 			m_iAmmoRockets = SENTRYGUN_MAX_ROCKETS;
-			m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_3;
+			if (tf2v_use_new_sentry_minigun_resist.GetBool())
+				m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_3_GUNMETTLE;			
+			else
+				m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_3;
 			SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_3 );
 			m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_3;
 			break;
