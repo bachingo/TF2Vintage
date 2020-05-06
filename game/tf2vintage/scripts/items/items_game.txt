@@ -2516,10 +2516,20 @@
 					"attribute_class"	"mult_dmg"
 					"value"	"0.8"
 				}
+				"move speed bonus"
+				{
+					"attribute_class"	"mult_player_movespeed"
+					"value"	"1.15"
+				}
 				"allowed in medieval mode"
 				{
 					"attribute_class"	"allowed_in_medieval_mode"
 					"value"	"1"
+				}
+				"dmg taken increased"
+				{
+					"attribute_class"	"mult_dmgtaken"
+					"value"	"1.2"
 				}
 				"disable weapon hiding for animations"
 				{
@@ -4562,14 +4572,9 @@
 					"attribute_class"	"heal_on_kill"
 					"value"	"75"
 				}
-				"move speed bonus"
+				"dmg from melee increased"
 				{
-					"attribute_class"	"mult_player_movespeed"
-					"value"	"1.15"
-				}
-				"dmg taken increased"
-				{
-					"attribute_class"	"mult_dmgtaken"
+					"attribute_class"	"dmg_from_melee"
 					"value"	"1.2"
 				}
 			}
