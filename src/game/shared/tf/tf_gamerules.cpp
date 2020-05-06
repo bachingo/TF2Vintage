@@ -3690,7 +3690,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 		return NULL;
 	}
 
-	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
 
 	const char *pszFormat = NULL;
 
@@ -3721,7 +3721,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 		}
 	}
-	/* else if ( pTFPlayer->m_bIsPlayerADev )
+	else if ( pTFPlayer->m_bIsPlayerADev )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
@@ -3738,12 +3738,12 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 				pszFormat = "TF_Chat_Dev";
 			}
 		}
-	}*/
+	}
 	else
-	{
+	{	
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
-			pszFormat = "TF_Chat_AllSpec";
+			pszFormat = "TF_Chat_AllSpec";	
 		}
 		else
 		{
@@ -3753,7 +3753,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 			else
 			{
-				pszFormat = "TF_Chat_All";
+				pszFormat = "TF_Chat_All";	
 			}
 		}
 	}
