@@ -1,0 +1,471 @@
+"items_config"
+{
+	"settings"
+	{
+		"wearables"			"1"
+		"drop_chance"		"0.0"
+		"unusual_chance"	"0.0"
+		"paint_chance"		"50.0"
+		"vintage_chance"	"25.0"
+		"genuine_chance"	"0.0"
+		"strange_chance"	"50.0"
+		"community_chance"	"0.0"
+		"itemset_echance"	"81.25"
+		"itemset_chance"	"50.0"
+		"action_slot"		"0"
+	}
+	"items"
+	{
+		///////////////////
+		// ALLOWED ITEMS //
+		///////////////////
+		
+		"46,163,222"
+		{
+			// Scout Secondary
+			"drop_chance"		"90.0"
+		}
+		"0,190,221,572,44,317,325,452,349,355,450,648"
+		{
+			// Scout Melee
+			"drop_chance"		"90.0"
+		}
+		"111,453,760,652"
+		{
+			// Scout Head
+			"drop_chance"		"90.0"
+		}
+		"347,454,490,653,722"
+		{
+			// Scout Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"56"
+		{
+			// Sniper Primary
+			"drop_chance"		"90.0"
+		}
+		"57,231,642"
+		{
+			// Sniper Secondary
+			"drop_chance"		"90.0"
+		}
+		"3,171,193,232,401"
+		{
+			// Sniper Melee
+			"drop_chance"		"90.0"
+		}
+		"53,110,117,314,759,564,600,229"
+		{
+			// Sniper Head
+			"drop_chance"		"90.0"
+		}
+		"393,618,646,645"
+		{
+			// Sniper Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"129,226,354,444"
+		{
+			// Soldier Secondary
+			"drop_chance"		"90.0"
+		}
+		"6,128,196,416,447,775,880"
+		{
+			// Soldier Melee
+			"drop_chance"		"90.0"
+		}
+		"98,101,240,250,339,340,434,395,721,719,152"
+		{
+			// Soldier Head
+			"drop_chance"		"90.0"
+		}
+		"852,650"
+		{
+			// Soldier Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"405,608"
+		{
+			// Demoman Primary
+			"drop_chance"		"90.0"
+		}
+		"131,406"
+		{
+			// Demoman Secondary
+			"drop_chance"		"90.0"
+		}
+		"1,191,609,132,172,266,327404,482,307"
+		{
+			// Demoman Melee
+			"drop_chance"		"90.0"
+		}
+		"100,179,259,216,342,359,403,514,607"
+		{
+			// Demoman Head
+			"drop_chance"		"90.0"
+		}
+		"295,610,708,709,771,776,874"
+		{
+			// Demoman Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"357,154"
+		{
+			// Soldier Demoman Melee
+			"drop_chance"		"90.0"
+		}
+		"875"
+		{
+			// Soldier Demoman Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"305"
+		{
+			// Medic Primary
+			"drop_chance"		"90.0"
+		}
+		"8,37,198,304,413"
+		{
+			// Medic Melee
+			"drop_chance"		"90.0"
+		}
+		"50,104,101,184,303,323,383"
+		{
+			// Medic Head
+			"drop_chance"		"90.0"
+		}
+		"144,315,828"
+		{
+			// Medic Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"42,159,311,433"
+		{
+			// Heavy Secondary
+			"drop_chance"		"90.0"
+		}
+		"5,43,195,310,331,587,656"
+		{
+			// Heavy Melee
+			"drop_chance"		"90.0"
+		}
+		"330,309,313,517,535,613,601,635"
+		{
+			// Heavy Head
+			"drop_chance"		"90.0"
+		}
+		"485,757,777,876"
+		{
+			// Heavy Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"2,38,153,192,214,326,348,739,813,834"
+		{
+			// Pyro Melee
+			"drop_chance"		"90.0"
+		}
+		"51,99,182,316,318,394,481,615,753,644"
+		{
+			// Pyro Head
+			"drop_chance"		"90.0"
+		}
+		"778,632,387,571,651"
+		{
+			// Pyro Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"4,194,225,356,461,574,638,649"
+		{
+			// Spy Melee
+			"drop_chance"		"90.0"
+		}
+		"27,30,59,60,212,297,735,736,810,830"
+		{
+			// Spy PDAs Watches Sappers
+			"drop_chance"		"90.0"
+		}
+		"147,180,223,637"
+		{
+			// Spy Head
+			"drop_chance"		"90.0"
+		}
+		"337,462,483,782,872"
+		{
+			// Spy Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"7,169,197,662,142"
+		{
+			// Engineer Melee
+			"drop_chance"		"90.0"
+		}
+		"25,26,28,737"
+		{
+			// Engineer PDAs
+			"drop_chance"		"90.0"
+		}
+		"118,382,605,399,436"
+		{
+			// Engineer Head
+			"drop_chance"		"90.0"
+		}
+		"386,484,606,755,784"
+		{
+			// Engineer Misc
+			"drop_chance"		"90.0"
+		}
+		
+		"264,474"
+		{
+			// AnyClass Melee
+			"drop_chance"		"90.0"
+		}
+		"291,287,576,578,579,580,332,333,334,473"
+		{
+			// AnyClass Head
+			"drop_chance"		"90.0"
+		}
+		"734,617,392,541,5075,738,583,873"
+		{
+			// AnyClass Misc
+			"drop_chance"		"90.0"
+		}
+		
+		////////////////////
+		// FORCED CHANCES //
+		////////////////////
+		
+		"260" // Wiki Cap
+		{
+			"drop_chance"		"90"
+			"community_chance"	"100"
+		}
+		
+		// The Cross-Comm Crash Helmet, The Cross-Comm Express, The Doublecross-Comm
+		"764,765,766"
+		{
+			"drop_chance"		"90"
+			"genuine_chance"	"100"
+		}
+	}
+	"itemsets"
+	{
+		"The Gas Jockey's Gear"
+		{
+			"class"		"pyro"
+			
+			"primary"	"215"	// Degreaser
+			"melee"		"214"	// Powerjack
+			"head"		"213"	// Attendant
+		}
+		"Pyromaniac" // Custom
+		{
+			"class"		"pyro"
+			
+			"melee"		"739"	// Lollichop
+			"head"		"51"	// Pyro's Beanie
+			"misc"		"745"	// Infernal Orchestrina
+			"misc2"		"746"	// Burning Bongos
+		}
+		"Wasteland Pyro" // Custom
+		{
+			"class"		"pyro"
+			
+			"melee"		"326"	// Back Scratcher
+			"head"		"435"	// Dead Cone
+			"misc"		"783"	// HazMat Headcase
+			"misc2"		"754"	// Scrap Pack
+		}
+		"One Thousand and One Demoknights"
+		{
+			"class"		"demoman"
+			
+			"primary"	"405"	// Ali Baba's Wee Booties
+			"secondary"	"406"	// Splendid Screen
+			"melee"		"404"	// Persian Persuader
+			"head"		"403"	// Sultan's Ceremonial
+			"misc"		"708"	// Aladdin's Private Reserve
+		}
+		"Swashbuckler's Swag 1"
+		{
+			"class"		"demoman"
+			
+			"primary"	"608"	// Bootlegger
+			"melee"		"609"	// Scottish Handshake
+			"head"		"607"	// Buccaneer's Bicorne
+			"misc"		"610"	// A Whiff of the Old Brimstone
+			"misc2"		"776"	// Bird-Man of Aberdeen
+		}
+		"Swashbuckler's Swag 2"
+		{
+			"class"		"demoman"
+			
+			"primary"	"608"	// Bootlegger
+			"melee"		"609"	// Scottish Handshake
+			"head"		"332"	// Bounty Hat
+			"misc"		"610"	// A Whiff of the Old Brimstone
+			"misc2"		"771"	// Liquor Locker
+		}
+		"Demopan"
+		{
+			"class"		"demoman"
+			"secondary"	"131"	
+			{
+				// Chargin' Targe
+				"item_id"	"131"
+			}
+			"melee"		"264"	
+			{
+				// Frying Pan
+				"item_id"	"264"
+			}
+			"head"		"332"	
+			{
+				// Bounty Hat
+				"item_id"	"332"
+			}
+			"misc"
+			{
+				// Dangeresque, Too?
+				"item_id"	"295"
+			}
+		}
+		"The Hibernating Bear"
+		{
+			"strip"		"1"
+			"class"		"heavy"
+			
+			"secondary"	"311"	// Buffalo Steak Sandvich
+			"melee"		"310"	// Warrior's Spirit
+			"head"		"309"	// Big Chief
+		}
+		"Group Fighter 1" // Custom
+		{
+			"strip"		"1"
+			"class"		"heavy"
+			
+			"melee"		"43"	// Killing Gloves of Boxing
+			"head"		"246"	// Pugilist's Protector
+			"misc"		"392"	// Pocket Medic
+		}
+		"Group Fighter 2" // Custom
+		{
+			"strip"		"1"
+			"class"		"heavy"
+			
+			"melee"		"239"	// Gloves of Running Urgently
+			"head"		"246"	// Pugilist's Protector
+			"misc"		"757"	// Toss-Proof Towel
+		}
+		"Group Fighter 3" // Custom
+		{
+			"strip"		"1"
+			"class"		"heavy"
+			
+			"melee"		"239"	// Gloves of Running Urgently
+			"head"		"587"	// Apoco-Fists
+			"misc"		"585"	// Cold War Luchador
+		}
+		"Soviet Heavy" // Custom
+		{
+			"class"		"heavy"
+			
+			"melee"		"5"		// Fists
+			"head"		"96"	// Officer's Ushanka
+			"misc"		"777"	// Apparatchik's Apparel
+			"misc2"		"647"	// All-Father
+		}
+		"Winter Heavy" // Custom
+		{
+			"strip"		"1"
+			"class"		"heavy"
+			"melee"		"656"	// Holiday Punch
+			"head"
+			{
+				// Tough Guy's Toque
+				"item_id"	"97"
+				"attributes"
+				{
+					"142"
+					{
+						"value"	"12955537"
+					}
+				}
+			}
+			"misc"		"643"	// Sandwich Safe
+			"action"	"673"	// Noisemaker - Winter 2011
+		}
+		"Clerk" // Custom
+		{
+			"class"		"engineer"
+			
+			"head"		"605"	// Pencil Pusher
+			"misc"		"606"	// Builder's Blueprints
+			"misc2"		"784"	// Idea Tube
+		}
+		"Medieval Medic"
+		{
+			"class"		"medic"
+			
+			"primary"	"305"	// Crusader's Crossbow
+			"melee"		"304"	// Amputator
+			"head"		"303"	// Berliner's Bucket Helm
+		}
+		"The Clinical Trial 1"
+		{
+			"strip"		"1"
+			"class"		"medic"
+			
+			"melee"		"413"	// Solemn Vow
+			"misc"		"828"	// Archimedes
+		}
+		"The Clinical Trial 2"
+		{
+			"class"		"medic"
+			
+			"melee"		"413"	// Solemn Vow
+			"misc"		"828"	// Archimedes
+		}
+		"The Croc-o-Style Kit"
+		{
+			"class"		"sniper"
+			
+			"secondary"	"231"	// Darwin's Danger Shield
+			"melee"		"232"	// Bushwacka
+			"head"		"229"	// Ol' Snaggletooth
+		}
+		"Dual-Purpose Fruit"
+		{
+			"class"		"sniper"
+			
+			"primary"	"56"	// Huntsman
+			"head"		"759"	// Fruit Shoot
+		}
+		"The Saharan Spy"
+		{
+			"class"		"spy"
+			
+			"primary"	"224"	// L'Etranger
+			"melee"		"225"	// Your Eternal Reward
+			"head"		"223"	// Familiar Fez
+		}
+		"Detective" // Custom
+		{
+			"class"		"spy"
+			
+			"head"		"55"	// Fancy Fedora
+			"misc"		"782"	// Business Casual
+			"misc2"		"343"	// Professor Speks
+		}
+	}
+}

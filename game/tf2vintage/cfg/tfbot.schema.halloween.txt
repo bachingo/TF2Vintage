@@ -1,0 +1,703 @@
+"items_config"
+{
+	"settings"
+	{
+		"wearables"			"1"		//---------	allow hats and misc items for bots (not s)
+		"drop_chance"		"95.0"	//---------	global give/drop chance
+		"unusual_chance"	"25.0"	//---------	chance of unusual variants
+		"paint_chance"		"50.0"	//---------	chance of painted variants
+		"vintage_chance"	"25.0"	//---------	chance of vintage variants
+		"genuine_chance"	"10.0"	//---------	chance of genuine variants
+		"strange_chance"	"32.5"	//---------	chance of strange variants
+		"community_chance"	"0.0"	//---------	chance of community variants
+		"itemset_echance"	"62.5"	//---------	chance of equiping any itemset, not just random items
+		"itemset_chance"	"50.0"	//---------	chance of equiping some special itemset
+		"action_slot"		"1"		//---------	give action items to bots or not
+	}
+	"items"
+	{
+//////////////////////////////////////////////////////////////////////
+// EXAMPLES ARE GOES HERE //
+////////////////////////////
+//
+//		"0"	-----------------------------------	item definition ID
+//		{
+//			Note: all settings are optional, no need to use all of them
+//			
+//			"drop_chance"		"0"		-------	'drop' chance
+//			"unusual_chance"	"50"	-------	unusual variant chance
+//			"paint_chance"		"50"	-------	painted variant chance
+//			"genuine_chance"	"50"	-------	genuine variant chance
+//			"vintage_chance"	"50"	-------	vintage variant chance
+//			"strange_chance"	"50"	-------	strange variant chance
+//			"community_chance"	"50"	-------	community variant chance
+//			
+//			Note: setting chances for item that cannot be unusual,
+//			painted, genuine, and/or vintage don't take any effect.
+//			Example: knife with paint_chance 100 wont be painted.
+//		}
+//
+//		"1,2,3,4,5"	---------------------------	multiple iems
+//		{
+//		}
+//
+//////////////////////////////////////////////////////////////////////
+		
+		
+		// IGNORE ITEMS //
+		
+		// propaganda contest hats
+		"134"
+		{
+			"drop_chance"	"0"
+		}
+		"136"
+		{
+			"drop_chance"	"0"
+		}
+		"138"
+		{
+			"drop_chance"	"0"
+		}
+		
+		// tournament medals
+		"496"
+		{
+			"drop_chance"	"0"
+		}
+		"497"
+		{
+			"drop_chance"	"0"
+		}
+		"498"
+		{
+			"drop_chance"	"0"
+		}
+		"499"
+		{
+			"drop_chance"	"0"
+		}
+		"500"
+		{
+			"drop_chance"	"0"
+		}
+		"501"
+		{
+			"drop_chance"	"0"
+		}
+		"502"
+		{
+			"drop_chance"	"0"
+		}
+		"503"
+		{
+			"drop_chance"	"0"
+		}
+		"504"
+		{
+			"drop_chance"	"0"
+		}
+		"505"
+		{
+			"drop_chance"	"0"
+		}
+		"506"
+		{
+			"drop_chance"	"0"
+		}
+		"507"
+		{
+			"drop_chance"	"0"
+		}
+		"508"
+		{
+			"drop_chance"	"0"
+		}
+		"509"
+		{
+			"drop_chance"	"0"
+		}
+		"510"
+		{
+			"drop_chance"	"0"
+		}
+		"511"
+		{
+			"drop_chance"	"0"
+		}
+		"512"
+		{
+			"drop_chance"	"0"
+		}
+		"680"
+		{
+			"drop_chance"	"0"
+		}
+		"681"
+		{
+			"drop_chance"	"0"
+		}
+		"682"
+		{
+			"drop_chance"	"0"
+		}
+		"683"
+		{
+			"drop_chance"	"0"
+		}
+		"684"
+		{
+			"drop_chance"	"0"
+		}
+		"685"
+		{
+			"drop_chance"	"0"
+		}
+		"686"
+		{
+			"drop_chance"	"0"
+		}
+		"687"
+		{
+			"drop_chance"	"0"
+		}
+		"688"
+		{
+			"drop_chance"	"0"
+		}
+		"689"
+		{
+			"drop_chance"	"0"
+		}
+		"690"
+		{
+			"drop_chance"	"0"
+		}
+		"691"
+		{
+			"drop_chance"	"0"
+		}
+		"692"
+		{
+			"drop_chance"	"0"
+		}
+		"693"
+		{
+			"drop_chance"	"0"
+		}
+		"694"
+		{
+			"drop_chance"	"0"
+		}
+		"695"
+		{
+			"drop_chance"	"0"
+		}
+		"696"
+		{
+			"drop_chance"	"0"
+		}
+		"697"
+		{
+			"drop_chance"	"0"
+		}
+		"698"
+		{
+			"drop_chance"	"0"
+		}
+		"8000"
+		{
+			"drop_chance"	"0"
+		}
+		"8001"
+		{
+			"drop_chance"	"0"
+		}
+		"8002"
+		{
+			"drop_chance"	"0"
+		}
+		"8003"
+		{
+			"drop_chance"	"0"
+		}
+		"8004"
+		{
+			"drop_chance"	"0"
+		}
+		"8005"
+		{
+			"drop_chance"	"0"
+		}
+		"8006"
+		{
+			"drop_chance"	"0"
+		}
+		"8007"
+		{
+			"drop_chance"	"0"
+		}
+		"8008"
+		{
+			"drop_chance"	"0"
+		}
+		"8009"
+		{
+			"drop_chance"	"0"
+		}
+		"8010"
+		{
+			"drop_chance"	"0"
+		}
+		"8011"
+		{
+			"drop_chance"	"0"
+		}
+		"8012"
+		{
+			"drop_chance"	"0"
+		}
+		"8013"
+		{
+			"drop_chance"	"0"
+		}
+		"8014"
+		{
+			"drop_chance"	"0"
+		}
+		"8015"
+		{
+			"drop_chance"	"0"
+		}
+		"8016"
+		{
+			"drop_chance"	"0"
+		}
+		"8017"
+		{
+			"drop_chance"	"0"
+		}
+		"8018"
+		{
+			"drop_chance"	"0"
+		}
+		"8019"
+		{
+			"drop_chance"	"0"
+		}
+		"8020"
+		{
+			"drop_chance"	"0"
+		}
+		"8021"
+		{
+			"drop_chance"	"0"
+		}
+		"8022"
+		{
+			"drop_chance"	"0"
+		}
+		"8023"
+		{
+			"drop_chance"	"0"
+		}
+		"8024"
+		{
+			"drop_chance"	"0"
+		}
+		"8025"
+		{
+			"drop_chance"	"0"
+		}
+		"8026"
+		{
+			"drop_chance"	"0"
+		}
+		"8027,8028,8028,8029,8030,8031,8032,8033,8034,8035,8036,8037,8038,8039,8040"
+		{
+			"drop_chance"	"0"
+		}
+		"8041,8042,8043,8044,8045,8046,8047,8048,8049,8050,8051,8052,8053,8054,8055"
+		{
+			"drop_chance"	"0"
+		}
+		"8056,8057,8058,8059,8060,8061,8062,8063,8064,8065,8066,8067,8068,8069"
+		{
+			"drop_chance"	"0"
+		}
+		
+		"717" // Map makers medal
+		{
+			"drop_chance"	"0"
+		}
+		
+		// gifts, mini-games, etc.
+		"233"
+		{
+			"drop_chance"	"0"
+		}
+		"234"
+		{
+			"drop_chance"	"0"
+		}
+		"241"
+		{
+			"drop_chance"	"0"
+		}
+		"495"
+		{
+			"drop_chance"	"0"
+		}
+		"577"
+		{
+			"drop_chance"	"0"
+		}
+		"599"
+		{
+			"drop_chance"	"0"
+		}
+		"729"
+		{
+			"drop_chance"	"0"
+		}
+		"5607"
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// CREEPY ITEMS (FOR BOTS) //
+		
+		// foods and drinks
+		"42"
+		{
+			"drop_chance"	"0"
+		}
+		"46"
+		{
+			"drop_chance"	"0"
+		}
+		"159"
+		{
+			"drop_chance"	"0"
+		}
+		"163"
+		{
+			"drop_chance"	"0"
+		}
+		"311"
+		{
+			"drop_chance"	"0"
+		}
+		"433"
+		{
+			"drop_chance"	"0"
+		}
+		"1002"
+		{
+			"drop_chance"	"0"
+		}
+		
+		"998" // server crashing vaccinator
+		{
+			"drop_chance"	"0"
+		}
+		
+		// rocket jumper
+		"237"
+		{
+			"drop_chance"	"0"
+		}
+		
+		// sticky jumper
+		"265"
+		{
+			"drop_chance"	"0"
+		}
+		
+		// buff banners
+		"129"
+		{
+			"drop_chance"	"0"
+		}
+		"226"
+		{
+			"drop_chance"	"0"
+		}
+		"354"
+		{
+			"drop_chance"	"0"
+		}
+		
+		"140" // Wrangler
+		{
+			"drop_chance"	"0"
+		}
+		
+		"730" // Beggar's Bazooka
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// ONE-OF-A-KIND ITEMS //
+		
+		"640" // Top Notch
+		{
+			"drop_chance"	"0"
+		}
+		
+		// Daily hats
+		"711"
+		{
+			"drop_chance"	"0"
+		}
+		"712"
+		{
+			"drop_chance"	"0"
+		}
+		"713"
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// RARE ITEMS //
+		
+		"423" // Saxxy
+		{
+			"drop_chance"	"1"
+		}
+		"423" // Conscientious Objector
+		{
+			"drop_chance"	"10"
+		}
+		
+		"334" // Hat of Undeniable Wealth And Respect
+		{
+			"drop_chance"	"1"
+		}
+		
+		// Japan Charity (event)
+		"408"
+		{
+			"drop_chance"	"1"
+		}
+		"409"
+		{
+			"drop_chance"	"0.5"
+		}
+		"410"
+		{
+			"drop_chance"	"0.1"
+		}
+		
+		// The Great Gift Pile (event)
+		"666"
+		{
+			"drop_chance"	"5"
+		}
+		"667"
+		{
+			"drop_chance"	"5"
+		}
+		"675"
+		{
+			"drop_chance"	"5"
+		}
+		
+		"170" // Primeval Warrior
+		{
+			"drop_chance"	"3"
+		}
+		"164" // Grizzled Veteran
+		{
+			"drop_chance"	"12"
+		}
+		"164" // Soldier of Fortune
+		{
+			"drop_chance"	"25"
+		}
+		"164" // Mercenary
+		{
+			"drop_chance"	"50"
+		}
+		
+		"245" // Platinum Dueling Badge
+		{
+			"drop_chance"	"3"
+		}
+		"244" // Gold Dueling Badge
+		{
+			"drop_chance"	"15"
+		}
+		"243" // Silver Dueling Badge
+		{
+			"drop_chance"	"32"
+		}
+		"242" // Bronze Dueling Badge
+		{
+			"drop_chance"	"75"
+		}
+		
+		
+		// FORCED ITEMS CHANCES //
+		
+		"160" // Lugermorph (old)
+		{
+			"vintage_chance"	"100"
+		}
+		
+		"260" // Wiki Cap
+		{
+			"community_chance"	"100"
+		}
+		
+		"299" // Companion Cube Pin
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"335" // Foster's Facade
+		{
+			"genuine_chance"	"100"
+		}
+		"336" // Stockbroker's Scarf
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"420" // Aperture Labs Hard Hat
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"470" // Lo-Fi Longwave
+		{
+			"vintage_chance"	"75"
+		}
+		
+		"743" // Autogrant Pyrovision Goggles
+		{
+			"vintage_chance"	"100"
+		}
+		
+		// The Cross-Comm Crash Helmet, The Cross-Comm Express, The Doublecross-Comm
+		"764,765,766"
+		{
+			"genuine_chance"	"100"
+		}
+		
+		// The Atomic Accolade, The Professor's Pineapple, The Quadwrangler
+		"767,768,769"
+		{
+			"genuine_chance"	"100"
+		}
+		
+		// Botkiller Weapons
+		"792,793,794,795,796,797,798,799,800" // Normal
+		{
+			"strange_chance"	"100"
+		}
+		"801,802,803,804,805,806,807,808,809" // Gold
+		{
+			"strange_chance"	"100"
+		}
+	}
+	"itemsets"
+	{
+//////////////////////////////////////////////////////////////////////
+// EXAMPLES ARE GOES HERE //
+////////////////////////////
+//
+//		"Om Nom Nom Heavy"	---------------	Name as you wish!
+//		{
+//			Note: all settings are required
+//			
+//			"chance"		"50.0"	-------	chance of equiping this itemset
+//			"strip"			"1"		------- (dis)allow items for unused slots
+//			"class"			"heavy"	------- class for which itemset is designed
+
+//			Note: possible 'class' values are:
+//			scout, soldier, pyro, demoman, heavy, engineer, medic, sniper, spy.
+//			
+//			"melee"			"5"		------- Fists
+//			"secondary"		"42"	------- Sandwich
+//			"head"			"97"	------- Tough Guy's Toque
+//			"misc"			"643"	------- Sandwich Safe
+//			"misc2"			"777"	------- Apparatchik's Apparel
+//			
+//			Note: possible slot names are:
+//			primary, secondary, melee, head, building, misc, misc2, action.
+//			Slot with item -1 - empty slot.
+//		}
+//
+//////////////////////////////////////////////////////////////////////
+		
+		// HALLOWEEN SETS //
+		
+		"The Curse-a-Nature"
+		{
+			"class"		"scout"
+			"head"		"546"
+			"misc"		"547"
+			"misc2"		"548"
+		}
+		"The Tin Soldier"
+		{
+			"class"		"soldier"
+			"head"		"555"
+			"misc"		"556"
+			"misc2"		"557"
+		}
+		"The Infernal Imp"
+		{
+			"class"		"pyro"
+			"head"		"549"
+			"misc"		"550"
+			"misc2"		"551"
+		}
+		"The Highland Hound"
+		{
+			"class"		"demoman"
+			"head"		"543"
+			"misc"		"544"
+			"misc2"		"545"
+		}
+		"The FrankenHeavy"
+		{
+			"class"		"heavy"
+			"head"		"561"
+			"misc"		"562"
+			"misc2"		"563"
+		}
+		"The Brundle Bundle"
+		{
+			"class"		"engineer"
+			"head"		"567"
+			"misc"		"568"
+			"misc2"		"569"
+		}
+		"The Mad Doktor"
+		{
+			"class"		"medic"
+			"head"		"552"
+			"misc"		"553"
+			"misc2"		"554"
+		}
+		"Camper Van Helsing"
+		{
+			"class"		"sniper"
+			"head"		"564"
+			"misc"		"565"
+			"misc2"		"566"
+		}
+		"The Invisible Rogue"
+		{
+			"class"		"spy"
+			"head"		"558"
+			"misc"		"559"
+			"misc2"		"560"
+		}
+	}
+}

@@ -14,7 +14,7 @@
 
 #include "NextBot/Player/NextBotPlayer.h"
 #include "tf_player.h"
-#include "GameEventListener.h"
+#include "tf_gamerules.h"
 #include "tf_path_follower.h"
 
 class CTeamControlPoint;
@@ -110,47 +110,37 @@ public:
 		bool TestForRealizing()
 		{
 			extern ConVar tf_bot_suspect_spy_touch_interval;
-			int t_now = (int)floor( gpGlobals->curtime );
-			int t_first = t_now - tf_bot_suspect_spy_touch_interval.GetInt();
+			int nCurTime = (int)floor( gpGlobals->curtime );
+			int nMinTime = nCurTime - tf_bot_suspect_spy_touch_interval.GetInt();
 
-			for ( int i=this->m_times.Count()-1; i >= 0; --i )
+			for ( int i=m_times.Count()-1; i >= 0; --i )
 			{
-				if ( this->m_times[i] <= t_first )
-				{
-					this->m_times.Remove( i );
-				}
+				if ( m_times[i] <= nMinTime )
+					m_times.Remove( i );
 			}
 
-			this->m_times.AddToHead( t_now );
+			m_times.AddToHead( nCurTime );
 
 			CUtlVector<bool> checks;
 
 			checks.SetCount( tf_bot_suspect_spy_touch_interval.GetInt() );
-			for ( int i=0; i<checks.Count(); ++i )
-			{
-				checks[i] = false;
-			}
+			for ( int i=0; i < checks.Count(); ++i )
+				checks[ i ] = false;
 
-			for ( int i=0; i<this->m_times.Count(); ++i )
+			for ( int i=0; i<m_times.Count(); ++i )
 			{
-				int idx = t_now - this->m_times[i];
+				int idx = nCurTime - m_times[i];
 				if ( checks.IsValidIndex( idx ) )
-				{
-					checks[idx] = true;
-				}
+					checks[ idx ] = true;
 			}
 
-			bool realized = true;
 			for ( int i=0; i<checks.Count(); ++i )
 			{
-				if ( !checks[i] )
-				{
-					realized = false;
-					break;
-				}
+				if ( !checks[ i ] )
+					return false;
 			}
 
-			return realized;
+			return true;
 		}
 	};
 	SuspectedSpyInfo *IsSuspectedSpy( CTFPlayer *spy );
@@ -332,6 +322,8 @@ public:
 	
 
 private:
+	void ManageRandomWeapons( void );
+
 	CountdownTimer m_lookForEnemiesTimer;
 
 	CTFPlayer *m_controlling;
@@ -394,6 +386,36 @@ inline CTFBot *ToTFBot( CBaseEntity *ent )
 
 	Assert( dynamic_cast<CTFBot *>( ent ) );
 	return static_cast<CTFBot *>( ent );
+}
+
+class CTFBotItemSchema : public CAutoGameSystem
+{
+	DECLARE_CLASS_GAMEROOT( CTFBotItemSchema, CAutoGameSystem );
+public:
+	CTFBotItemSchema(char const *name)
+		: CAutoGameSystem( name )
+	{
+		m_pSchema = NULL;
+	}
+
+	virtual void PostInit();
+	virtual void Shutdown();
+
+	virtual void LevelInitPreEntity()		{ PostInit(); }
+	virtual void LevelShutdownPostEntity()  { Shutdown(); }
+
+	float		 GetItemChance( char const *pszItemDefIndex, char const *pszChanceName, char const *pszClassName = NULL );
+	float		 GetItemSetChance( char const *pszItemSetName );
+
+	KeyValues *operator->() { return m_pSchema; }
+private:
+	KeyValues *m_pSchema;
+};
+
+extern CTFBotItemSchema s_BotSchema;
+inline CTFBotItemSchema &TFBotItemSchema( void )
+{
+	return s_BotSchema;
 }
 
 #endif
