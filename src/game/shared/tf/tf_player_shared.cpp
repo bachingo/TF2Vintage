@@ -4357,7 +4357,7 @@ void CTFPlayerShared::ActivateRageBuff( CBaseEntity *pEntity, int iBuffType )
 	if ( iBuffType != TF_COND_RADIUSHEAL )
 		flBuffDuration = tf_soldier_buff_pulses.GetFloat();
 	else
-		flBuffDuration = 4.0f; // Taunt duration
+		flBuffDuration = 4.5f; // Taunt duration
 
 	float flModBuffDuration = 0.0f;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_pOuter, flModBuffDuration, mod_buff_duration);
@@ -4433,11 +4433,8 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 						pPlayer->m_Shared.AddCond( TF_COND_REGENONDAMAGEBUFF, 1.2f );
 						break;
 					case TF_COND_RADIUSHEAL:
-						if (!pPlayer->m_Shared.InCond( TF_COND_RADIUSHEAL ) )
-						{
-							pPlayer->m_Shared.AddCond(TF_COND_RADIUSHEAL, TF_MEDIC_REGEN_TIME);
-							pPlayer->AOEHeal(pPlayer, pOuter);
-						}
+						pPlayer->m_Shared.AddCond(TF_COND_RADIUSHEAL, TF_MEDIC_REGEN_TIME);
+						pPlayer->AOEHeal(pPlayer, pOuter);
 						break;
 				}
 
@@ -4453,6 +4450,12 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 						gameeventmanager->FireEvent( event );
 					}
 				}
+			}
+			else if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED) && !pPlayer->m_Shared.InCond(TF_COND_STEALTHED) && (!pPlayer->InSameTeam(pOuter) && pPlayer->m_Shared.GetDisguiseTeam() == pOuter->GetTeamNumber()) && m_iActiveBuffType == TF_COND_RADIUSHEAL)
+			{
+				// Also heal disguised spies.
+				pPlayer->m_Shared.AddCond(TF_COND_RADIUSHEAL, TF_MEDIC_REGEN_TIME);
+				pPlayer->AOEHeal(pPlayer, pOuter);
 			}
 		}
 	}

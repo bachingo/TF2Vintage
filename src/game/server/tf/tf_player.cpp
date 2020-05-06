@@ -765,7 +765,7 @@ void CTFPlayer::AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer )
 		// More time since combat equals faster healing. Healing increases up to 300%.
 		int iAoEHealthBase = 26; 
 		float flTimeSinceDamageAOE = gpGlobals->curtime - pPatient->m_flLastDamageTime;
-		float flScaleAoE = RemapValClamped( flTimeSinceDamageAOE, 5, 10, iAoEHealthBase, (iAoEHealthBase * 3 ) );
+		float flScaleAoE = RemapValClamped( flTimeSinceDamageAOE, 10, 15, iAoEHealthBase, (iAoEHealthBase * 3 ) );
 		iHealthRegenAOE = ceil( TF_MEDIC_REGEN_AMOUNT * flScaleAoE );
 		
 		// Check how much health we give.
