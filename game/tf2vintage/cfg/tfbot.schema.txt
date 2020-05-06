@@ -1,0 +1,681 @@
+"items_config"
+{
+	"settings"
+	{
+		"drop_chance"		"95.0"	//---------	global give/drop chance
+		"vintage_chance"	"25.0"	//---------	chance of vintage variants
+		"genuine_chance"	"10.0"	//---------	chance of genuine variants
+		"strange_chance"	"32.5"	//---------	chance of strange variants
+		"community_chance"	"0.0"	//---------	chance of community variants
+		"itemset_echance"	"62.5"	//---------	chance of equiping any itemset, not just random items
+		"itemset_chance"	"50.0"	//---------	chance of equiping some special itemset
+	}
+	"items"
+	{
+//////////////////////////////////////////////////////////////////////
+// EXAMPLES ARE GOES HERE //
+////////////////////////////
+//
+//		"0"	-----------------------------------	item definition ID
+//		{
+//			Note: all settings are optional, no need to use all of them
+//			
+//			"drop_chance"		"0"		-------	'drop' chance
+//			"unusual_chance"	"50"	-------	unusual variant chance
+//			"paint_chance"		"50"	-------	painted variant chance
+//			"genuine_chance"	"50"	-------	genuine variant chance
+//			"vintage_chance"	"50"	-------	vintage variant chance
+//			"strange_chance"	"50"	-------	strange variant chance
+//			"community_chance"	"50"	-------	community variant chance
+//			
+//			Note: setting chances for item that cannot be unusual,
+//			painted, genuine, and/or vintage don't take any effect.
+//			Example: knife with paint_chance 100 wont be painted.
+//		}
+//
+//		"1,2,3,4,5"	---------------------------	multiple iems
+//		{
+//		}
+//
+//////////////////////////////////////////////////////////////////////
+		
+		
+		// FILTERED ITEMS //
+
+		"134,136,138" // Propaganda Contest's Winner Hats
+		{
+			"drop_chance"	"0"
+		}
+		"496..512,680..698,8000..8306" // Tournament Medals
+		{
+			"drop_chance"	"0"
+		}
+		"30143..30161" // Rome Vision Robot Skins
+		{
+			"drop_chance"	"0"
+		}
+		"233..234,241,495,577,599,729,839,5607" // gifts, mini-games, etc.
+		{
+			"drop_chance"	"0"
+		}
+		
+
+		// CREEPY ITEMS (FOR BOTS) //
+		
+		// foods and drinks
+		"42,46,159,163,311,433,1002"
+		{
+			"drop_chance"	"0"
+		}
+		"998" // server crashing vaccinator
+		{
+			"drop_chance"	"0"
+		}
+		"237,265" // Rocket/Sticky Jumper
+		{
+			"drop_chance"	"0"
+		}
+		"129,226,354" // Buff Banners
+		{
+			"drop_chance"	"0"
+		}
+		"140" // Wrangler
+		{
+			"drop_chance"	"0"
+		}
+		"405" // Ali Baba's Wee Booties
+		{
+			"drop_chance"	"0"
+		}
+		"608" // Bootlegger
+		{
+			"drop_chance"	"0"
+		}
+		"730" // Beggar's Bazooka
+		{
+			"drop_chance"	"0"
+		}
+		"996" // Loose Cannon
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// ONE-OF-A-KIND ITEMS //
+		
+		"640" // Top Notch
+		{
+			"drop_chance"	"0"
+		}
+		
+		// Daily hats
+		"711"
+		{
+			"drop_chance"	"0"
+		}
+		"712"
+		{
+			"drop_chance"	"0"
+		}
+		"713"
+		{
+			"drop_chance"	"0"
+		}
+		
+		"790,791" // Promo Packages (TripleA mercs)
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// RARE ITEMS //
+		
+		"423" // Saxxy
+		{
+			"drop_chance"	"1"
+		}
+		"474" // Conscientious Objector
+		{
+			"drop_chance"	"10"
+		}
+		
+		"334" // Hat of Undeniable Wealth And Respect
+		{
+			"drop_chance"	"1"
+		}
+		
+		// Japan Charity (event)
+		"408"
+		{
+			"drop_chance"	"1"
+		}
+		"409"
+		{
+			"drop_chance"	"0.5"
+		}
+		"410"
+		{
+			"drop_chance"	"0.1"
+		}
+		
+		// The Great Gift Pile (event)
+		"666"
+		{
+			"drop_chance"	"5"
+		}
+		"667"
+		{
+			"drop_chance"	"5"
+		}
+		"675"
+		{
+			"drop_chance"	"5"
+		}
+		
+		"170" // Primeval Warrior
+		{
+			"drop_chance"	"3"
+		}
+		"164" // Grizzled Veteran
+		{
+			"drop_chance"	"12"
+		}
+		"165" // Soldier of Fortune
+		{
+			"drop_chance"	"25"
+		}
+		"166" // Mercenary
+		{
+			"drop_chance"	"50"
+		}
+		
+		"245" // Platinum Dueling Badge
+		{
+			"drop_chance"	"3"
+		}
+		"244" // Gold Dueling Badge
+		{
+			"drop_chance"	"15"
+		}
+		"243" // Silver Dueling Badge
+		{
+			"drop_chance"	"32"
+		}
+		"242" // Bronze Dueling Badge
+		{
+			"drop_chance"	"75"
+		}
+		
+		
+		// FORCED ITEMS CHANCES //
+		
+		"160" // Lugermorph (old)
+		{
+			"vintage_chance"	"100"
+		}
+	}
+	"itemsets"
+	{
+//////////////////////////////////////////////////////////////////////
+// EXAMPLES ARE GOES HERE //
+////////////////////////////
+//
+//		"Om Nom Nom Heavy"	---------------	Name as you wish!
+//		{
+//			Note: all settings are required
+//			
+//			"chance"		"50.0"	-------	chance of equiping this itemset
+//			"strip"			"1"		------- (dis)allow items for unused slots
+//			"class"			"heavy"	------- class for which itemset is designed
+
+//			Note: possible 'class' values are:
+//			scout, soldier, pyro, demoman, heavy, engineer, medic, sniper, spy.
+//			
+//			"melee"			"5"		------- Fists
+//			"secondary"		"42"	------- Sandwich
+//			"head"			"97"	------- Tough Guy's Toque
+//			"misc"			"643"	------- Sandwich Safe
+//			"misc2"			"777"	------- Apparatchik's Apparel
+//			
+//			Note: possible slot names are:
+//			primary, secondary, melee, head, building, misc, misc2, action.
+//			Slot with item -1 - empty slot.
+//		}
+//
+//////////////////////////////////////////////////////////////////////
+		
+		// SCOUT //
+		
+		"The Special Delivery"
+		{
+			"class"		"scout"
+			
+			"primary"	"220"	// Shortstop
+			"secondary"	"222"	// Mad Milk
+			"melee"		"221"	// Holy Mackerel
+			"head"		"219"	// Milkman
+		}
+		"The #1 Fan"
+		{
+			"class"		"scout"
+			
+			"primary"	"448"	// Soda Popper
+			"secondary"	"449"	// Winger
+			"melee"		"450"	// Atomizer
+			"head"		"106"	// Bonk Helm
+			"misc"		"451"	// Bonk Boy
+		}
+		"Santa's Little Accomplice"
+		{
+			"class"		"scout"
+			
+			"melee"		"648"	// Wrap Assassin
+			"head"		"652"	// Big Elfin Deal
+			"misc"		"653"	// Bootie Time
+		}
+		"Public Enemy"
+		{
+			"class"		"scout"
+			
+			"primary"	"772"	// Baby Face's Blaster
+			"secondary"	"773"	// Pretty Boy's Pocket Pistol
+			"head"		"780"	// Fed-Fightin' Fedora
+			"misc"		"781"	// Dillinger's Duffel
+		}
+		
+		"High School Player" // Custom
+		{
+			"strip"		"1"
+			"class"		"scout"
+			
+			"secondary"	"23"	// Pistol
+			"melee"		"44"	// Sandman
+			"head"		"617"	// Backwards Ballcap
+			"misc"		"722"	// Fast Learner
+			"misc2"
+			{
+				// Essential Accessories
+				"item_id"	"347"
+				"attributes"
+				{
+					"142"
+					{
+						"value"	"8400928" // 12955537
+					}
+					"261"
+					{
+						"value"	"2452877"
+					}
+				}
+			}
+		}
+		"Soccer Player" // Custom
+		{
+			"class"		"scout"
+			
+			"secondary"	"23"	// Pistol
+			"melee"		"221"	// Holy Mackerel
+			"misc"		"827"	// Track Terrorizer
+			"misc2"		"540"	// Ball-Kicking Boots
+		}
+		
+		// SOLDIER //
+		
+		"The Tank Buster"
+		{
+			"class"		"soldier"
+			
+			"primary"	"228"	// Black Box
+			"secondary"	"226"	// Battalion's Backup
+			"head"		"227"	// Grenadier's Softcap
+		}
+		"The General's Formals"
+		{
+			"class"		"soldier"
+			
+			"secondary"	"444"	// Mantreads
+			"melee"		"447"	// Disciplinary Action
+			"head"		"445"	// Armored Authority
+			"misc"		"446"	// Fancy Dress Uniform
+		}
+		"Airborne Armaments"
+		{
+			"class"		"soldier"
+			
+			"primary"	"414"	// Liberty Launcher
+			"secondary"	"415"	// Reserve Shooter
+			"melee"		"416"	// Market Gardener
+			"head"		"417"	// Jumper's Jeepcap
+		}
+		"Dr. Grordbort's Victory Pack"
+		{
+			"class"		"soldier"
+			
+			"primary"	"441"	// Cow Mangler 5000
+			"secondary"	"441"	// Righteous Bison
+			"head"		"439"	// Lord Cockswain's Pith Helmet
+			"misc"		"440"	// Lord Cockswain's Novelty Mutton Chops and Pipe
+		}
+		"Dumpster Diver"
+		{
+			"class"		"soldier"
+			
+			"primary"	"730"	// Beggar's Bazooka
+			"head"		"732"	// Helmet Without a Home
+			"misc"		"731"	// Captain's Cocktails
+		}
+		
+		// PYRO //
+		
+		"The Gas Jockey's Gear"
+		{
+			"class"		"pyro"
+			
+			"primary"	"215"	// Degreaser
+			"melee"		"214"	// Powerjack
+			"head"		"213"	// Attendant
+		}
+		"Dr. Grordbort's Moonman Pack"
+		{
+			"class"		"pyro"
+			
+			"primary"	"594"	// Phlogistinator
+			"secondary"	"595"	// Manmelter
+			"melee"		"593"	// Third Degree
+			"head"		"597"	// Bubble Pipe
+			"misc"		"596"	// Moonman Backpack
+		}
+		
+		"Pyromaniac" // Custom
+		{
+			"class"		"pyro"
+			
+			"primary"	"741"	// Rainblower
+			"secondary"	"740"	// Scorch Shot
+			"melee"		"739"	// Lollichop
+			"head"		"51"	// Pyro's Beanie
+			"misc"		"745"	// Infernal Orchestrina
+			"misc2"		"746"	// Burning Bongos
+		}
+		"Wasteland Pyro" // Custom
+		{
+			"class"		"pyro"
+			
+			"primary"	"40"	// Backburner
+			"secondary"	"351"	// Detonator
+			"melee"		"326"	// Back Scratcher
+			"head"		"435"	// Dead Cone
+			"misc"		"783"	// HazMat Headcase
+			"misc2"		"754"	// Scrap Pack
+		}
+		"Killing Floor Promo" // Custom
+		{
+			"class"		"pyro"
+			
+			"head"		"335"	// Foster's Facade
+			"misc"		"336"	// Stockbroker's Scarf
+		}
+		
+		// DEMOMAN //
+		
+		"One Thousand and One Demoknights"
+		{
+			"class"		"demoman"
+			
+			"primary"	"405"	// Ali Baba's Wee Booties
+			"secondary"	"406"	// Splendid Screen
+			"melee"		"404"	// Persian Persuader
+			"head"		"403"	// Sultan's Ceremonial
+			"misc"		"708"	// Aladdin's Private Reserve
+		}
+		"Swashbuckler's Swag 1"
+		{
+			"class"		"demoman"
+			
+			"primary"	"608"	// Bootlegger
+			"melee"		"609"	// Scottish Handshake
+			"head"		"607"	// Buccaneer's Bicorne
+			"misc"		"610"	// A Whiff of the Old Brimstone
+			"misc2"		"776"	// Bird-Man of Aberdeen
+		}
+		"Swashbuckler's Swag 2"
+		{
+			"class"		"demoman"
+			
+			"primary"	"608"	// Bootlegger
+			"melee"		"609"	// Scottish Handshake
+			"head"		"332"	// Bounty Hat
+			"misc"		"610"	// A Whiff of the Old Brimstone
+			"misc2"		"771"	// Liquor Locker
+		}
+		
+		"Demoknight 1" // Custom
+		{
+			"class"		"demoman"
+			
+			"primary"	"19"	// Grenade Launcher
+			"secondary"	"131"	// Chargin' Targe
+			"melee"		"132"	// Eyelander
+			"head"		"342"	// Prince Tavish's Crown
+			"misc"		"874"	// The King of Scotland Cape
+			"misc2"		"5075"	// Something Special For Someone Special
+		}
+		
+		// HEAVY //
+		
+		"The Hibernating Bear"
+		{
+			"class"		"heavy"
+			
+			"primary"	"312"	// Brass Beast
+			"secondary"	"311"	// Buffalo Steak Sandvich
+			"melee"		"310"	// Warrior's Spirit
+			"head"		"309"	// Big Chief
+		}
+		"Black Market Business"
+		{
+			"class"		"heavy"
+			
+			"primary"	"424"	// Tomislav
+			"secondary"	"425"	// Family Business
+			"melee"		"426"	// Eviction Notice
+			"head"		"427"	// Capo's Capper
+			"misc"		"777"	// Apparatchik's Apparel
+		}
+		
+		"Group Fighter 1" // Custom
+		{
+			"class"		"heavy"
+			
+			"primary"	"41"	// Natascha
+			"melee"		"43"	// Killing Gloves of Boxing
+			"head"		"246"	// Pugilist's Protector
+			"misc"		"392"	// Pocket Medic
+			"misc2"		"143"	// Earbuds
+		}
+		"Group Fighter 2" // Custom
+		{
+			"class"		"heavy"
+			
+			"primary"	"41"	// Natascha
+			"melee"		"239"	// Gloves of Running Urgently
+			"head"		"246"	// Pugilist's Protector
+			"misc"		"485"	// Big Steel Jaw of Summer Fun
+			"misc2"		"757"	// Toss-Proof Towel
+		}
+		"Group Fighter 3" // Custom
+		{
+			"class"		"heavy"
+			
+			"melee"		"239"	// Gloves of Running Urgently
+			"head"		"587"	// Apoco-Fists
+			"misc"		"585"	// Cold War Luchador
+		}
+		"Soviet Heavy" // Custom
+		{
+			"class"		"heavy"
+			
+			"primary"	"298"	// Iron Curtain
+			"secondary"	"11"	// Shotgun
+			"melee"		"5"		// Fists
+			"head"		"96"	// Officer's Ushanka
+			"misc"		"777"	// Apparatchik's Apparel
+			"misc2"		"647"	// All-Father
+		}
+		"Winter Heavy" // Custom
+		{
+			"strip"		"1"
+			"class"		"heavy"
+			"primary"	"654"	// Festive Minigun
+			"secondary"	"11"	// Shotgun
+			"melee"		"656"	// Holiday Punch
+			"head"
+			{
+				// Tough Guy's Toque
+				"item_id"	"97"
+				"attributes"
+				{
+					"142"
+					{
+						"value"	"12955537"
+					}
+				}
+			}
+			"misc"		"643"	// Sandwich Safe
+			"action"	"673"	// Noisemaker - Winter 2011
+		}
+		
+		// ENGINEER //
+		
+		"Dr. Grordbort's Brainiac Pack"
+		{
+			"class"		"engineer"
+			
+			"primary"	"588"	// Pomson 6000
+			"melee"		"589"	// Eureka Effect
+			"head"		"118"	// Texas Slim's Dome Shine
+			"misc"		"590"	// Brainiac Hairpiece
+			"misc2"		"591"	// Brainiac Goggles
+		}
+		
+		"Clerk" // Custom
+		{
+			"class"		"engineer"
+			
+			"head"		"605"	// Pencil Pusher
+			"misc"		"606"	// Builder's Blueprints
+			"misc2"		"784"	// Idea Tube
+		}
+		"Custom Engineer Set 1" // Custom
+		{
+			"class"		"engineer"
+			
+			"head"		"148"	// Hotrod
+			"misc"		"520"	// Wingstick
+			"misc2"		"519"	// Pip-Boy
+		}
+		
+		// MEDIC //
+		
+		"Medieval Medic"
+		{
+			"class"		"medic"
+			
+			"primary"	"305"	// Crusader's Crossbow
+			"melee"		"304"	// Amputator
+			"head"		"303"	// Berliner's Bucket Helm
+		}
+		"The Clinical Trial"
+		{
+			"class"		"medic"
+			
+			"primary"	"412"	// Overdose
+			"secondary"	"411"	// Quick-Fix
+			"melee"		"413"	// Solemn Vow
+			"misc"		"828"	// Archimedes
+		}
+		"Eliminating The Impossible"
+		{
+			"class"		"medic"
+			
+			"head"		"388"	// Private Eye?
+			"misc"		"657"	// Nine-Pipe Problem
+		}
+		
+		// SNIPER //
+		
+		"The Croc-o-Style Kit"
+		{
+			"class"		"sniper"
+			
+			"primary"	"230"	// Sydney Sleeper
+			"secondary"	"231"	// Darwin's Danger Shield
+			"melee"		"232"	// Bushwacka
+			"head"		"229"	// Ol' Snaggletooth
+		}
+		"Lawrence of Australia"
+		{
+			"class"		"sniper"
+			
+			"primary"	"402"	// Bazaar Bargain
+			"melee"		"401"	// Shahanshah
+			"head"		"400"	// Desert Marauder
+		}
+		"Dual-Purpose Fruit"
+		{
+			"class"		"sniper"
+			
+			"primary"	"56"	// Huntsman
+			"head"		"759"	// Fruit Shoot
+		}
+		"Urban Professional"
+		{
+			"class"		"sniper"
+			
+			"primary"	"752"	// Hitman's Heatmaker
+			"secondary"	"751"	// Cleaner's Carbine
+			"head"		"779"	// Liquidator's Lid
+		}
+		
+		// SPY //
+		
+		"The Saharan Spy"
+		{
+			"class"		"spy"
+			
+			"primary"	"224"	// L'Etranger
+			"melee"		"225"	// Your Eternal Reward
+			"head"		"223"	// Familiar Fez
+		}
+		"The Man of Honor"
+		{
+			"class"		"spy"
+			
+			"primary"	"460"	// Enforcer
+			"melee"		"461"	// Big Earner
+			"head"		"459"	// Cosa Nostra Cap
+			"misc"		"462"	// Made Man
+		}
+		
+		"Detective" // Custom
+		{
+			"class"		"spy"
+			
+			"head"		"55"	// Fancy Fedora
+			"misc"		"782"	// Business Casual
+			"misc2"		"343"	// Professor Speks
+		}
+		"Dr Enforcicle" // Custom
+		{
+			"class"		"spy"
+			
+			"primary"	"460"	// Enforcer
+			"melee"		"649"	// Spy-cicle
+			"pda2"		"59"	// Dead Ringer
+			//"head"		"104"	// Otolaryngologist's Mirror (MEDIC ITEM)
+			"head"		"147"	// Magistrate's Mullet
+			"misc"		"629"	// Spectre's Spectacles
+			"misc2"		"639"	// Dr. Whoa
+		}
+	}
+}

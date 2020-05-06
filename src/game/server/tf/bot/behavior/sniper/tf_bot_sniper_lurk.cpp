@@ -40,19 +40,17 @@ ActionResult<CTFBot> CTFBotSniperLurk::OnStart( CTFBot *me, Action<CTFBot> *prio
 	unused = 0;
 	m_bOpportunistic = tf_bot_sniper_allow_opportunistic.GetBool();
 
-	CBaseEntity *ent = nullptr;
-	while ( ( ent = gEntList.FindEntityByClassname( ent, "func_tfbot_hint" ) ) != nullptr )
+	CBaseEntity *pEntity = nullptr;
+	while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_tfbot_hint" ) ) != nullptr )
 	{
-		auto hint = static_cast<CTFBotHint *>( ent );
+		CTFBotHint *pHint = static_cast<CTFBotHint *>( pEntity );
 
-		if ( hint->m_hint == CTFBotHint::SNIPER_SPOT )
+		if ( pHint->m_hint == CTFBotHint::SNIPER_SPOT )
 		{
-			m_Hints.AddToTail( hint );
+			m_Hints.AddToTail( pHint );
 
-			if ( me->IsSelf( hint->GetOwnerEntity() ) )
-			{
-				hint->SetOwnerEntity( nullptr );
-			}
+			if ( me->IsSelf( pHint->GetOwnerEntity() ) )
+				pHint->SetOwnerEntity( nullptr );
 		}
 	}
 
@@ -63,10 +61,10 @@ ActionResult<CTFBot> CTFBotSniperLurk::OnStart( CTFBot *me, Action<CTFBot> *prio
 
 ActionResult<CTFBot> CTFBotSniperLurk::Update( CTFBot *me, float dt )
 {
+	me->AccumulateSniperSpots();
+
 	if ( !m_bHasHome )
-	{
 		FindNewHome( me );
-	}
 
 	bool bWantsToZoom = false;
 

@@ -1,0 +1,376 @@
+"items_config"
+{
+	"settings"
+	{
+		"wearables"			"1"		//---------	allow hats and misc items for bots (not s)
+		"drop_chance"		"95.0"	//---------	global give/drop chance
+		"unusual_chance"	"1.0"	//---------	chance of unusual variants
+		"paint_chance"		"50.0"	//---------	chance of painted variants
+		"vintage_chance"	"25.0"	//---------	chance of vintage variants
+		"genuine_chance"	"10.0"	//---------	chance of genuine variants
+		"strange_chance"	"32.5"	//---------	chance of strange variants
+		"community_chance"	"0.0"	//---------	chance of community variants
+		"itemset_echance"	"62.5"	//---------	chance of equiping any itemset, not just random items
+		"itemset_chance"	"50.0"	//---------	chance of equiping some special itemset
+		"action_slot"		"1"		//---------	give action items to bots or not
+	}
+	"items"
+	{
+//////////////////////////////////////////////////////////////////////
+// EXAMPLES ARE GOES HERE //
+////////////////////////////
+//
+//		"0"	-----------------------------------	item definition ID
+//		{
+//			Note: all settings are optional, no need to use all of them
+//			
+//			"drop_chance"		"0"		-------	'drop' chance
+//			"unusual_chance"	"50"	-------	unusual variant chance
+//			"paint_chance"		"50"	-------	painted variant chance
+//			"genuine_chance"	"50"	-------	genuine variant chance
+//			"vintage_chance"	"50"	-------	vintage variant chance
+//			"strange_chance"	"50"	-------	strange variant chance
+//			"community_chance"	"50"	-------	community variant chance
+//			
+//			Note: setting chances for item that cannot be unusual,
+//			painted, genuine, and/or vintage don't take any effect.
+//			Example: knife with paint_chance 100 wont be painted.
+//		}
+//
+//		"1,2,3,4,5"	---------------------------	multiple iems
+//		{
+//		}
+//
+//////////////////////////////////////////////////////////////////////
+		
+		
+		// FILTERED ITEMS //
+		
+		"134,136,138" // Propaganda Contest's Winner Hats
+		{
+			"drop_chance"	"0"
+		}
+		"496..512,680..698,8000..8306" // Tournament Medals
+		{
+			"drop_chance"	"0"
+		}
+		"30143..30161" // Rome Vision Robot Skins
+		{
+			"drop_chance"	"0"
+		}
+		"233..234,241,495,577,599,729,839,5607" // gifts, mini-games, etc.
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// CREEPY ITEMS (FOR BOTS) //
+		
+		// foods and drinks
+		"42,46,159,163,311,433,1002"
+		{
+			"drop_chance"	"0"
+		}
+		"998" // server crashing vaccinator
+		{
+			"drop_chance"	"0"
+		}
+		"237,265" // Rocket/Sticky Jumper
+		{
+			"drop_chance"	"0"
+		}
+		"129,226,354" // Buff Banners
+		{
+			"drop_chance"	"0"
+		}
+		"140" // Wrangler
+		{
+			"drop_chance"	"0"
+		}
+		"405" // Ali Baba's Wee Booties
+		{
+			"drop_chance"	"0"
+		}
+		"608" // Bootlegger
+		{
+			"drop_chance"	"0"
+		}
+		"730" // Beggar's Bazooka
+		{
+			"drop_chance"	"0"
+		}
+		"996" // Loose Cannon
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// ONE-OF-A-KIND ITEMS //
+		
+		"640" // Top Notch
+		{
+			"drop_chance"	"0"
+		}
+		
+		// Daily hats
+		"711"
+		{
+			"drop_chance"	"0"
+		}
+		"712"
+		{
+			"drop_chance"	"0"
+		}
+		"713"
+		{
+			"drop_chance"	"0"
+		}
+		
+		"790,791" // Promo Packages (TripleA mercs)
+		{
+			"drop_chance"	"0"
+		}
+		
+		
+		// RARE ITEMS //
+		
+		"423" // Saxxy
+		{
+			"drop_chance"	"1"
+		}
+		"474" // Conscientious Objector
+		{
+			"drop_chance"	"10"
+		}
+		
+		"334" // Hat of Undeniable Wealth And Respect
+		{
+			"drop_chance"	"1"
+		}
+		
+		// Japan Charity (event)
+		"408"
+		{
+			"drop_chance"	"1"
+		}
+		"409"
+		{
+			"drop_chance"	"0.5"
+		}
+		"410"
+		{
+			"drop_chance"	"0.1"
+		}
+		
+		// The Great Gift Pile (event)
+		"666"
+		{
+			"drop_chance"	"5"
+		}
+		"667"
+		{
+			"drop_chance"	"5"
+		}
+		"675"
+		{
+			"drop_chance"	"5"
+		}
+		
+		"170" // Primeval Warrior
+		{
+			"drop_chance"	"3"
+		}
+		"164" // Grizzled Veteran
+		{
+			"drop_chance"	"12"
+		}
+		"165" // Soldier of Fortune
+		{
+			"drop_chance"	"25"
+		}
+		"166" // Mercenary
+		{
+			"drop_chance"	"50"
+		}
+		
+		"245" // Platinum Dueling Badge
+		{
+			"drop_chance"	"3"
+		}
+		"244" // Gold Dueling Badge
+		{
+			"drop_chance"	"15"
+		}
+		"243" // Silver Dueling Badge
+		{
+			"drop_chance"	"32"
+		}
+		"242" // Bronze Dueling Badge
+		{
+			"drop_chance"	"75"
+		}
+		
+		
+		// FORCED ITEMS CHANCES //
+		
+		"160" // Lugermorph (old)
+		{
+			"vintage_chance"	"100"
+		}
+		
+		// Upgradeable Weapons
+		"190,191,192,193,194,195,196,197,198,199"
+		{
+			"strange_chance"	"100"
+		}
+		"200,201,202,203,204,205,206,207,208,209"
+		{
+			"strange_chance"	"100"
+		}
+		"210,211,736,737"
+		{
+			"strange_chance"	"100"
+		}
+		
+		"260" // Wiki Cap
+		{
+			"community_chance"	"100"
+		}
+		
+		"299" // Companion Cube Pin
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"335" // Foster's Facade
+		{
+			"genuine_chance"	"100"
+		}
+		"336" // Stockbroker's Scarf
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"420" // Aperture Labs Hard Hat
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"470" // Lo-Fi Longwave
+		{
+			"vintage_chance"	"75"
+		}
+		
+		"717" // Map Maker's Medallion
+		{
+			"drop_chance"		"0"
+			"genuine_chance"	"100"
+		}
+		
+		"743" // Autogrant Pyrovision Goggles
+		{
+			"vintage_chance"	"100"
+		}
+		
+		// The Cross-Comm Crash Helmet, The Cross-Comm Express, The Doublecross-Comm
+		"764..766"
+		{
+			"genuine_chance"	"100"
+		}
+		
+		// The Atomic Accolade, The Professor's Pineapple, The Quadwrangler
+		"767..769"
+		{
+			"genuine_chance"	"100"
+		}
+		
+		// Botkiller Weapons
+		"792..800" // Normal
+		{
+			"drop_chance"		"5"
+			"strange_chance"	"100"
+		}
+		"801..809" // Gold
+		{
+			"drop_chance"		"2.5"
+			"strange_chance"	"100"
+		}
+		"881..889" // Rust
+		{
+			"drop_chance"		"1.5"
+			"strange_chance"	"100"
+		}
+		"890..898" // Blood
+		{
+			"drop_chance"		"1"
+			"strange_chance"	"100"
+		}
+		"899..907" // Carbonado
+		{
+			"drop_chance"		"0.5"
+			"strange_chance"	"100"
+		}
+		"908..916" // Diamond
+		{
+			"drop_chance"		"0.25"
+			"strange_chance"	"100"
+		}
+		
+		"818" // Awesomenauts Badge
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"819" // Lone Star
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"820" // Russian Rocketeer
+		{
+			"genuine_chance"	"100"
+		}
+		
+		
+		// Trad Pack Promo
+		"831..838"
+		{
+			"genuine_chance"	"100"
+		}
+		
+		"863" // Robo-Sandvich
+		{
+			"drop_chance"	"0"
+			"genuine_chance"	"100"
+		}
+		"864" // Friends Forever Companion Square Badge
+		{
+			"genuine_chance"	"100"
+		}
+		"865" // TripleA Badge
+		{
+			"genuine_chance"	"100"
+		}
+		
+		// Total War Master Collection Promo
+		"872..880"
+		{
+			"genuine_chance"	"100"
+		}
+		
+		// Real-World Goods
+		"2061,2066..2068,2070"
+		{
+			"genuine_chance"	"100"
+		}
+		
+		// 	Something Special For Someone Special
+		"5075"
+		{
+			"drop_chance"	"1"
+		}
+	}
+	"itemsets"
+	{
+	}
+}

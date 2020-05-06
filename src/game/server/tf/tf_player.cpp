@@ -2063,7 +2063,6 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		
 		// Give us an item from the inventory.
 		CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
-
 		if ( pItem)
 		{
 			const char *pszClassname = pItem->GetEntityName();
@@ -2102,12 +2101,12 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			{
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
-					if ( (pItemDef->year) > 2007 ) 
+					if ( pItemDef->year > 2007 ) 
 						bWhiteListedWeapon = false;
 				}
 				else
 				{
-					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt())
+					if ( pItemDef->year > tf2v_allowed_year_items.GetInt())
 						bWhiteListedWeapon = false;
 				}
 			}
@@ -2116,7 +2115,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( pItemDef->specialitem )
 			{
 				CTFPlayer *pPlayer = this;
-				if ( ( !pPlayer->m_bIsPlayerADev ) && ( pPlayer->m_iPlayerVIPRanking != -1 ) )
+				if ( !pPlayer->m_bIsPlayerADev && ( pPlayer->m_iPlayerVIPRanking != -1 ) )
 					bIsSpecialRestricted = true;
 			}
 		
@@ -2136,13 +2135,31 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					bHolidayRestrictedItem = true;
 			}
 			
-			if ( ( ( bWhiteListedWeapon == false ) || ( bIsReskin == true ) ) || ( ( bHolidayRestrictedItem == true ) || ( bIsSpecialRestricted == true ) ) || ( bIsDemoknight == true ) || ( bIsCutContent == true ) || ( bIsMultiClassItem == true ) ) // If the weapon is banned, swap for a stock weapon.
+			if ( !bWhiteListedWeapon || bIsReskin || bHolidayRestrictedItem || bIsSpecialRestricted || bIsDemoknight || bIsCutContent || bIsMultiClassItem ) // If the weapon is banned, swap for a stock weapon.
 			{
 				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
 			}
+
+			CTFBot *myBot = ToTFBot( this );
+			if ( myBot )
+			{
+				char szItemDefIndex[16];
+				itoa( pItem->GetItemDefIndex(), szItemDefIndex, sizeof szItemDefIndex );
+
+				float flVintageChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "vintage_chance" );
+				if ( ( flVintageChance * 0.1f ) > RandomFloat() )
+				{
+					pItem->SetItemQuality( QUALITY_VINTAGE );
+				}
+				else
+				{
+					float flGenuineChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "genuine_chance" );
+					if ( ( flGenuineChance * 0.1f ) > RandomFloat() )
+						pItem->SetItemQuality( QUALITY_GENUINE );
+				}
+			}
 			
 			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
-
 			if ( pEntity )
 			{
 				pEntity->GiveTo( this );

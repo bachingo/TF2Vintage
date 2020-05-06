@@ -9,7 +9,6 @@
 #include "mathlib/mathlib.h"
 #include "team_control_point_master.h"
 #include "team_train_watcher.h"
-#include "tf_gamerules.h"
 #include "tf_obj.h"
 #include "tf_obj_sentrygun.h"
 #include "tf_weapon_buff_item.h"
@@ -27,11 +26,11 @@
 void DifficultyChanged( IConVar *var, const char *pOldValue, float flOldValue );
 void PrefixNameChanged( IConVar *var, const char *pOldValue, float flOldValue );
 
-ConVar tf_bot_difficulty( "tf_bot_difficulty", "1", FCVAR_GAMEDLL, "Defines the skill of bots joining the game.  Values are: 0=easy, 1=normal, 2=hard, 3=expert.", &DifficultyChanged );
-ConVar tf_bot_force_class( "tf_bot_force_class", "", FCVAR_GAMEDLL, "If set to a class name, all TFBots will respawn as that class" );
-ConVar tf_bot_keep_class_after_death( "tf_bot_keep_class_after_death", "0", FCVAR_GAMEDLL );
-ConVar tf_bot_prefix_name_with_difficulty( "tf_bot_prefix_name_with_difficulty", "0", FCVAR_GAMEDLL, "Append the skill level of the bot to the bot's name", &PrefixNameChanged );
-ConVar tf_bot_path_lookahead_range( "tf_bot_path_lookahead_range", "300", FCVAR_GAMEDLL, "", true, 0.0f, false, 0.0f );
+ConVar tf_bot_difficulty( "tf_bot_difficulty", "1", FCVAR_NONE, "Defines the skill of bots joining the game.  Values are: 0=easy, 1=normal, 2=hard, 3=expert.", &DifficultyChanged );
+ConVar tf_bot_force_class( "tf_bot_force_class", "", FCVAR_NONE, "If set to a class name, all TFBots will respawn as that class" );
+ConVar tf_bot_keep_class_after_death( "tf_bot_keep_class_after_death", "0" );
+ConVar tf_bot_prefix_name_with_difficulty( "tf_bot_prefix_name_with_difficulty", "0", FCVAR_NONE, "Append the skill level of the bot to the bot's name", &PrefixNameChanged );
+ConVar tf_bot_path_lookahead_range( "tf_bot_path_lookahead_range", "300", FCVAR_NONE, "", true, 0.0f, true, 1500.0f );
 ConVar tf_bot_near_point_travel_distance( "tf_bot_near_point_travel_distance", "750", FCVAR_CHEAT );
 ConVar tf_bot_pyro_shove_away_range( "tf_bot_pyro_shove_away_range", "250", FCVAR_CHEAT, "If a Pyro bot's target is closer than this, compression blast them away" );
 ConVar tf_bot_pyro_always_reflect( "tf_bot_pyro_always_reflect", "0", FCVAR_CHEAT, "Pyro bots will always reflect projectiles fired at them. For tesing/debugging purposes.", true, 0.0f, true, 1.0f );
@@ -45,7 +44,15 @@ ConVar tf_bot_sniper_goal_entity_move_tolerance( "tf_bot_sniper_goal_entity_move
 ConVar tf_bot_suspect_spy_touch_interval( "tf_bot_suspect_spy_touch_interval", "5", FCVAR_CHEAT, "How many seconds back to look for touches against suspicious spies", true, 0.0f, false, 0.0f );
 ConVar tf_bot_suspect_spy_forget_cooldown( "tf_bot_suspect_spy_forced_cooldown", "5", FCVAR_CHEAT, "How long to consider a suspicious spy as suspicious", true, 0.0f, false, 0.0f );
 
-ConVar tf_bot_use_items( "tf_bot_use_items", "1", FCVAR_GAMEDLL );
+ConVar tf_bot_use_items( "tf_bot_use_items", "1" );
+ConVar tf_bot_debug_items( "tf_bot_debug_items", "0", FCVAR_CHEAT );
+ConVar tf_bot_random_loadouts( "tf_bot_random_loadouts", "0", FCVAR_NOTIFY, "Randomly outfit class specific items to bots?" );
+ConVar tf_bot_reroll_loadout_chance( "tf_bot_reroll_loadout_chance", "33", FCVAR_NONE, "The chance to reroll a loadout selection if tf_bot_keep_items_after_death = 1" );
+ConVar tf_bot_keep_items_after_death( "tf_bot_keep_items_after_death", "1", FCVAR_NONE, "Keep our item sets we were given when respawning?" );
+
+
+extern ConVar tf2v_force_melee;
+
 
 LINK_ENTITY_TO_CLASS( tf_bot, CTFBot )
 
@@ -200,6 +207,9 @@ CTFBot::~CTFBot()
 //-----------------------------------------------------------------------------
 void CTFBot::Spawn( void )
 {
+	// Perform before spawn so we override getting new weapons
+	ManageRandomWeapons();
+
 	BaseClass::Spawn();
 
 	m_iSkill = (DifficultyType)tf_bot_difficulty.GetInt();
@@ -223,15 +233,38 @@ void CTFBot::Spawn( void )
 //-----------------------------------------------------------------------------
 void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 {
-	OnKilled( info );
-	CTFPlayer::Event_Killed( info );
+	BaseClass::Event_Killed( info );
 
 	LeaveSquad();
 
-	if ( !tf_bot_keep_class_after_death.GetBool() && TFGameRules()->CanBotChangeClass( this ) )
+	if ( !tf_bot_keep_class_after_death.GetBool() )
 	{
-		const char *pszClassname = GetNextSpawnClassname();
-		HandleCommand_JoinClass( pszClassname );
+		if( TFGameRules()->CanBotChangeClass( this ) )
+		{
+			const char *pszClassname = GetNextSpawnClassname();
+			HandleCommand_JoinClass( pszClassname );
+		}
+	}
+
+	CTFNavArea *pArea = GetLastKnownArea();
+	if ( pArea )
+	{
+		// remove us from old visible set
+		NavAreaCollector visibleSet;
+		pArea->ForAllPotentiallyVisibleAreas( visibleSet );
+
+		for( CNavArea *pVisible : visibleSet.m_area )
+			static_cast<CTFNavArea *>( pVisible )->RemovePotentiallyVisibleActor( this );
+	}
+
+	if ( info.GetInflictor() && info.GetInflictor()->GetTeamNumber() != GetTeamNumber() )
+	{
+		CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun *>( info.GetInflictor() );
+		if ( pSentry )
+		{
+			m_hTargetSentry = pSentry;
+			m_vecLastHurtBySentry = GetAbsOrigin();
+		}
 	}
 }
 
@@ -671,16 +704,21 @@ bool CTFBot::AreAllPointsUncontestedSoFar( void ) const
 //-----------------------------------------------------------------------------
 bool CTFBot::IsNearPoint( CTeamControlPoint *point ) const
 {
+	if ( !point )
+		return false;
+
 	CTFNavArea *myArea = GetLastKnownArea();
-	if ( myArea )
+	if ( !myArea )
+		return false;
+	
+	int iPointIdx = point->GetPointIndex();
+	if ( iPointIdx < MAX_CONTROL_POINTS )
 	{
-		int iPointIdx = point->GetPointIndex();
-		if ( iPointIdx < MAX_CONTROL_POINTS )
-		{
-			CTFNavArea *cpArea = TFNavMesh()->GetMainControlPointArea( iPointIdx );
-			if ( cpArea )
-				return ( abs( myArea->GetIncursionDistance( GetTeamNumber() ) - cpArea->GetIncursionDistance( GetTeamNumber() ) ) < tf_bot_near_point_travel_distance.GetFloat() );
-		}
+		CTFNavArea *cpArea = TFNavMesh()->GetMainControlPointArea( iPointIdx );
+		if ( !cpArea )
+			return false;
+
+		return abs( myArea->GetIncursionDistance( GetTeamNumber() ) - cpArea->GetIncursionDistance( GetTeamNumber() ) ) < tf_bot_near_point_travel_distance.GetFloat();
 	}
 
 	return false;
@@ -948,7 +986,14 @@ CCaptureFlag *CTFBot::GetFlagToFetch( void )
 		if ( HasTheFlag(/* 0, 0 */) && pFlag->GetOwnerEntity() == this )
 			return pFlag;
 
-		if ( pFlag->GetGameType() >= TF_FLAGTYPE_CTF && pFlag->GetGameType() <= TF_FLAGTYPE_INVADE )
+		if ( pFlag->GetGameType() > TF_FLAGTYPE_CTF && pFlag->GetGameType() <= TF_FLAGTYPE_INVADE )
+		{
+			if ( pFlag->GetTeamNumber() != GetEnemyTeam( this ) )
+				flags.AddToTail( pFlag );
+
+			nNumStolen += pFlag->IsStolen();
+		}
+		else if ( pFlag->GetGameType() == TF_FLAGTYPE_CTF )
 		{
 			if ( pFlag->GetTeamNumber() == GetEnemyTeam( this ) )
 				flags.AddToTail( pFlag );
@@ -962,33 +1007,29 @@ CCaptureFlag *CTFBot::GetFlagToFetch( void )
 	CCaptureFlag *pClosest = NULL;
 	CCaptureFlag *pClosestStolen = NULL;
 
-	for ( int i=0; i<flags.Count(); ++i )
+	for ( CCaptureFlag *pFlag : flags )
 	{
-		CCaptureFlag *pFlag = flags[i];
-		if ( !pFlag )
-			continue;
-
 		float flDistance = ( pFlag->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr();
-		if ( flDistance > flMinStolenDist )
+		if ( flDistance > flMinDist )
 		{
-			flMinStolenDist = flDistance;
-			pClosestStolen = pFlag;
+			flMinDist = flDistance;
+			pClosest = pFlag;
 		}
 
 		if ( flags.Count() > nNumStolen )
 		{
-			if ( pFlag->IsStolen() || flMinDist <= flDistance )
+			if ( pFlag->IsStolen() || flMinStolenDist <= flDistance )
 				continue;
 
-			flMinDist = flDistance;
-			pClosest = pFlag;
+			flMinStolenDist = flDistance;
+			pClosestStolen = pFlag;
 		}
 	}
 
-	if ( pClosest )
-		return pClosest;
+	if ( pClosestStolen )
+		return pClosestStolen;
 
-	return pClosestStolen;
+	return pClosest;
 }
 
 //-----------------------------------------------------------------------------
@@ -1583,7 +1624,7 @@ void CTFBot::UpdateLookingAroundForEnemies( void )
 
 	if ( threat->IsVisibleInFOVNow() )
 	{
-		if ( IsPlayerClass( TF_CLASS_SPY ) && m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.IsStealthed() )
+		if ( IsPlayerClass( TF_CLASS_SPY ) && m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.IsStealthed() && m_iSkill > DifficultyType::NORMAL )
 		{
 			UpdateLookingForIncomingEnemies( false );
 		}
@@ -2325,6 +2366,78 @@ float CTFBot::GetUberHealthThreshold( void ) const
 	return flThreshold > 0.0f ? flThreshold : 50.0f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Equip a random loadout for our class
+//-----------------------------------------------------------------------------
+void CTFBot::ManageRandomWeapons( void )
+{
+	// If we're in randomizer then we're already receiving random loadouts
+	extern ConVar tf2v_randomizer;
+	if ( tf2v_randomizer.GetBool() )
+		return;
+
+	// Are we already being handed random weapons?
+	extern ConVar tf2v_random_weapons;
+	if ( tf2v_random_weapons.GetBool() )
+		return;
+
+	// Are we even allowed random weapons?
+	if ( !tf_bot_random_loadouts.GetBool() )
+		return;
+
+	if ( tf_bot_keep_items_after_death.GetBool() )
+	{
+		int nChance = tf_bot_reroll_loadout_chance.GetInt();
+		if ( nChance <= RandomInt( 0, 100 ) )
+			return;
+	}
+
+	Assert( GetTFInventory() );
+
+	KeyValues *pItemSets = TFBotItemSchema()->FindKey( "itemsets" );
+	FOR_EACH_TRUE_SUBKEY( pItemSets, pItemSet )
+	{
+
+	}
+
+	for ( int i = 0, iSlot = 0; i <= TF_PLAYER_WEAPON_COUNT; iSlot = ++i )
+	{
+		// Only allow for melee items, if we enable it or are in a special gamemode.
+		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && ( i != TF_LOADOUT_SLOT_MELEE ) )
+			continue;
+
+		// Spy's equip slots do not correct match the weapon slot so we need to accommodate for that
+		int iClass = m_PlayerClass.GetClassIndex();
+		if ( iClass == TF_CLASS_SPY )
+		{
+			switch ( i )
+			{
+				case TF_LOADOUT_SLOT_PRIMARY:
+					iSlot = TF_LOADOUT_SLOT_SECONDARY;
+					break;
+				case TF_LOADOUT_SLOT_SECONDARY:
+					iSlot = TF_LOADOUT_SLOT_BUILDING;
+					break;
+			}
+		}
+
+		int iPreset = RandomInt( 0, GetTFInventory()->GetNumPresets( iClass, iSlot ) - 1 );
+		CEconItemView *pItem = GetTFInventory()->GetItem( iClass, iSlot, iPreset );
+		if ( pItem )
+		{
+			char szItemDefIndex[16];
+			itoa( pItem->GetItemDefIndex(), szItemDefIndex, sizeof szItemDefIndex );
+
+			float flChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "drop_chance" );
+			if ( ( flChance * 0.1f ) <= RandomFloat() )
+				return;
+		}
+
+		// Just store in weapon preset, GiveDefaultItems will handle the rest
+		m_WeaponPreset[ iClass ][ iSlot ] = iPreset;
+	}
+}
+
 
 
 CTFBotPathCost::CTFBotPathCost( CTFBot *actor, RouteType routeType )
@@ -2471,11 +2584,11 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 		int count = Clamp( Q_atoi( args.Arg( 1 ) ), 1, gpGlobals->maxClients );
 		for ( int i = 0; i < count; ++i )
 		{
-			char szBotName[32];
+			char szBotName[64];
 			if ( args.ArgC() > 4 )
-				Q_snprintf( szBotName, 32, args.Arg( 4 ) );
+				Q_snprintf( szBotName, sizeof szBotName, args.Arg( 4 ) );
 			else
-				Q_strcpy( szBotName, TheTFBots().GetRandomBotName() );
+				V_strcpy_safe( szBotName, TheTFBots().GetRandomBotName() );
 
 			CTFBot *bot = NextBotCreatePlayerBot<CTFBot>( szBotName );
 			if ( bot == nullptr )
@@ -2485,15 +2598,15 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 			if ( args.ArgC() > 2 )
 			{
 				if ( IsTeamName( args.Arg( 2 ) ) )
-					Q_snprintf( szTeam, 10, args.Arg( 2 ) );
+					Q_snprintf( szTeam, sizeof szTeam, args.Arg( 2 ) );
 				else
 				{
 					Warning( "Invalid argument '%s'\n", args.Arg( 2 ) );
-					Q_snprintf( szTeam, 5, "auto" );
+					Q_snprintf( szTeam, sizeof szTeam, "auto" );
 				}
 			}
 			else
-				Q_snprintf( szTeam, 5, "auto" );
+				Q_snprintf( szTeam, sizeof szTeam, "auto" );
 
 			bot->HandleCommand_JoinTeam( szTeam );
 
@@ -2501,15 +2614,15 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 			if ( args.ArgC() > 3 )
 			{
 				if ( IsPlayerClassName( args.Arg( 3 ) ) )
-					Q_snprintf( szClassName, 16, args.Arg( 3 ) );
+					Q_snprintf( szClassName, sizeof szClassName, args.Arg( 3 ) );
 				else
 				{
 					Warning( "Invalid argument '%s'\n", args.Arg( 3 ) );
-					Q_snprintf( szClassName, 7, "random" );
+					Q_snprintf( szClassName, sizeof szClassName, "random" );
 				}
 			}
 			else
-				Q_snprintf( szClassName, 7, "random" );
+				Q_snprintf( szClassName, sizeof szClassName, "random" );
 
 			bot->HandleCommand_JoinClass( szClassName );
 		}
@@ -2579,4 +2692,195 @@ CON_COMMAND_F( tf_bot_kick, "Remove a TFBot by name, or all bots (\"all\").", FC
 			}
 		}
 	}
+}
+
+CTFBotItemSchema s_BotSchema( "TFBotItemSchema" );
+
+// Based on https://forums.alliedmods.net/showthread.php?p=1539933
+void CTFBotItemSchema::PostInit()
+{
+	if ( !m_pSchema )
+	{
+		static char const *const szChances[] = {
+			"drop_chance", "vintage_chance", "genuine_chance",
+			"strange_chance", "itemset_echance", "itemset_chance"
+		};
+		static char const *const szClasses[] = {
+			"scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer"
+		};
+
+		char const *pszConfigName = "cfg\\tfbot.schema.txt";
+		if( TFGameRules() )
+		{
+			if ( TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
+				pszConfigName = "cfg\\tfbot.schema.halloween.txt";
+			if ( TFGameRules()->IsInMedievalMode() ) // intentionally overriding here
+				pszConfigName = "cfg\\tfbot.schema.medieval.txt";
+		}
+
+		KeyValuesAD kvConfig( "items_config" );
+		if ( !kvConfig->LoadFromFile( g_pFullFileSystem, pszConfigName, "GAME", true ) )
+			return;
+
+		m_pSchema = new KeyValues( "BotWeaponSchema" );
+
+		if ( KeyValues *pSettings = kvConfig->FindKey( "settings" ) )
+		{
+			KeyValues *pNewKey = m_pSchema->CreateNewKey();
+			pNewKey->SetName( "settings" );
+			pSettings->CopySubkeys( pNewKey );
+		}
+
+		if ( KeyValues *pItemSets = kvConfig->FindKey( "itemsets" ) )
+		{
+			KeyValues *pNewKey = m_pSchema->CreateNewKey();
+			pNewKey->SetName( "itemsets" );
+			pItemSets->CopySubkeys( pNewKey );
+		}
+
+		if ( KeyValues *pItems = kvConfig->FindKey( "items" ) )
+		{
+			FOR_EACH_TRUE_SUBKEY( pItems, pSubKey )
+			{
+				char const *pszName = pSubKey->GetName();
+				
+				CUtlVector<char *> indexTokens, rangeTokens;
+				V_SplitString( pszName, ",", indexTokens );
+
+				for( int i=0; i < indexTokens.Count(); ++i )
+				{
+					if ( V_stristr( indexTokens[i], ".." ) )
+					{
+						V_SplitString( indexTokens[i], "..", rangeTokens );
+
+						int iMin = atoi( rangeTokens[0] ), iMax = atoi( rangeTokens[1] );
+						if( iMin <= 0 && !FStrEq( "0", rangeTokens[0] ) || iMax <= 0 && !FStrEq( "0", rangeTokens[1] ) || iMin > iMax )
+						{
+							Warning("Error while parsing config file: invalid range of indexes '%s'", indexTokens[i]);
+							continue;
+						}
+
+						for ( int j=iMin; j <= iMax; ++j )
+						{
+							char szIndex[32];
+							itoa( j, szIndex, sizeof szIndex );
+
+							KeyValues *pItem = NULL;
+							if ( ( pItem = m_pSchema->FindKey( szIndex ) ) != NULL )
+								Warning( "Duplicate entry found in %s: '%d'", pszConfigName, j );
+							else
+								pItem = m_pSchema->FindKey( szIndex, true );
+
+							if( pItem )
+							{
+								KeyValues *pSettings = kvConfig->FindKey( "settings" );
+								for ( int k=0; k < ARRAYSIZE( szChances ); ++k )
+								{
+									KeyValues *pChances = pSubKey->FindKey( szChances[k] );
+									if ( pChances && pChances->GetFloat( NULL, -1.f ) < 0 )
+									{
+										float flChance = pChances->GetFloat( "any", pSettings->GetFloat( szChances[k] ) );
+										pItem->SetFloat( szChances[k], flChance );
+
+										for ( int l=0; l < ARRAYSIZE( szClasses ); ++l )
+										{
+											flChance = pSubKey->GetFloat( szClasses[l], -1.f );
+											if ( flChance >= 0 )
+												pItem->SetFloat( CFmtStr( "%s_%s", szChances[k], szClasses[l] ), flChance );
+										}
+									}
+									else
+									{
+										// assign a default value from our global settings
+										float flChance = pSubKey->GetFloat( szChances[k], pSettings->GetFloat( szChances[k] ) );
+										pItem->SetFloat( szChances[k], flChance );
+									}
+								}
+							}
+						}
+					}
+					else
+					{
+						int nItemIndex = atoi( indexTokens[i] );
+						if ( nItemIndex <= 0 )
+						{
+							Warning( "Error while parsing %s: invalid item index '%d'", pszConfigName, nItemIndex );
+							continue;
+						}
+
+						KeyValues *pItem = NULL;
+						if ( ( pItem = m_pSchema->FindKey( indexTokens[i] ) ) != NULL )
+							Warning( "Duplicate entry found in %s: '%d'", pszConfigName, nItemIndex );
+						else
+							pItem = m_pSchema->FindKey( indexTokens[i], true );
+
+						if( pItem )
+						{
+							KeyValues *pSettings = kvConfig->FindKey( "settings" );
+							for ( int j=0; j < ARRAYSIZE( szChances ); ++j )
+							{
+								KeyValues *pChances = pSubKey->FindKey( szChances[j] );
+								if ( pChances && pChances->GetFloat( NULL, -1.f ) < 0 )
+								{
+									float flChance = pChances->GetFloat( "any", pSettings->GetFloat( szChances[j] ) );
+									pItem->SetFloat( szChances[j], flChance );
+
+									for ( int k=0; k < ARRAYSIZE( szClasses ); ++k )
+									{
+										flChance = pSubKey->GetFloat( szClasses[k], -1.f );
+										if ( flChance >= 0 )
+											pItem->SetFloat( CFmtStr( "%s_%s", szChances[j], szClasses[k] ), flChance );
+									}
+								}
+								else
+								{
+									// assign a default value from our global settings
+									float flChance = pSubKey->GetFloat( szChances[j], pSettings->GetFloat( szChances[j] ) );
+									pItem->SetFloat( szChances[j], flChance );
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if ( tf_bot_debug_items.GetBool() )
+	{
+		m_pSchema->SaveToFile( g_pFullFileSystem, "cfg\\tfbot.schema.dump.txt", NULL, false, true );
+	}
+}
+
+void CTFBotItemSchema::Shutdown()
+{
+	if ( m_pSchema )
+	{
+		m_pSchema->deleteThis();
+		m_pSchema = NULL;
+	}
+}
+
+float CTFBotItemSchema::GetItemChance( char const *pszItemDefIndex, char const *pszChanceName, char const *pszClassName )
+{
+	KeyValues *pSettings = m_pSchema->FindKey( "settings" );
+	if ( KeyValues *pItem = m_pSchema->FindKey( pszItemDefIndex ) )
+	{
+		float flChance = pItem->GetFloat( pszChanceName, pSettings->GetFloat( pszChanceName ) );
+		if ( pszClassName && !FStrEq( pszClassName, "" ) )
+			return pItem->GetFloat( CFmtStr( "%s_%s", pszChanceName, pszClassName ), flChance );
+
+		return flChance;
+	}
+
+	return pSettings->GetFloat( pszChanceName );
+}
+
+float CTFBotItemSchema::GetItemSetChance( char const *pszItemSetName )
+{
+	KeyValues *pSettings = m_pSchema->FindKey( "settings" );
+	if ( KeyValues *pItemSet = m_pSchema->FindKey( pszItemSetName ) )
+		return pItemSet->GetFloat( "chance", pSettings->GetFloat( "itemset_chance" ) );
+
+	return pSettings->GetFloat( "itemset_chance" );
 }

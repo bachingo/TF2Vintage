@@ -1,0 +1,64 @@
+"items_config"
+{
+	"settings"
+	{
+		"wearables"		"0"
+		"whitelist"		"1"
+	}
+	"items"
+	{
+		// scout
+		"13,23,0" // scatter gun, pistol, bat
+		{
+			"drop_chance"	"100"
+		}
+		
+		// sniper
+		"17,16,3" // sniper rifle, smg, club
+		{
+			"drop_chance"	"100"
+		}
+		
+		// soldier
+		"18,10,6" // rocket launcher, shotgun, shovel
+		{
+			"drop_chance"	"100"
+		}
+		
+		// demoman
+		"19,20,1" // grenade launcher, sticky bomb launcher, bottle
+		{
+			"drop_chance"	"100"
+		}
+		
+		// medic
+		"17,8,29" // syringe gun, bonesaw, medigun
+		{
+			"drop_chance"	"100"
+		}
+		
+		// heavy
+		"15,11,5" // minigun, shotgun, fists
+		{
+			"drop_chance"	"100"
+		}
+		
+		// pyro
+		"21,12,2" // flamethrower, shotgun, fireaxe
+		{
+			"drop_chance"	"100"
+		}
+		
+		// spy
+		"24,4,27,30,735" // revolver, knife, disguse kit, watches, sapper
+		{
+			"drop_chance"	"100"
+		}
+		
+		// engineer
+		"9,22,7,25,26,28" // shotgun, pistol, wrench, building pda, destroy pda, building box
+		{
+			"drop_chance"	"100"
+		}
+	}
+}
