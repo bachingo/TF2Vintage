@@ -3721,7 +3721,7 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 		}
 	}
-	else if ( pTFPlayer->m_bIsPlayerADev )
+	else if ( pTFPlayer->m_bIsPlayerADev && ( Q_atoi( engine->GetClientConVarValue( pTFPlayer->entindex(), "tf2v_show_dev_tag" ) ) > 0 ) )
 	{
 		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
@@ -3869,12 +3869,9 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	pTFPlayer->m_iPlayerVIPRanking = pTFPlayer->GetPlayerVIPRanking();
 	if ( pTFPlayer->m_iPlayerVIPRanking != 0 )
 	{
-		if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
-		{
-			pTFPlayer->m_bIsPlayerAVIP = true;
-			if ( pTFPlayer->m_iPlayerVIPRanking == 1 )	// Rank 1 members are developers.
-				pTFPlayer->m_bIsPlayerADev = true;
-		}
+		pTFPlayer->m_bIsPlayerAVIP = true;
+		if ( pTFPlayer->m_iPlayerVIPRanking == 1 )	// Rank 1 members are developers.
+			pTFPlayer->m_bIsPlayerADev = true;
 	}
 	
 }
