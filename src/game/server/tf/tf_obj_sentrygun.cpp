@@ -32,6 +32,7 @@ extern ConVar tf2v_use_new_wrench_mechanics;
 ConVar tf2v_use_new_sapper_damage( "tf2v_use_new_sapper_damage", "0", FCVAR_NOTIFY, "Decreases the damage resistance of a sapped sentry from 66% to 33%." );
 ConVar tf2v_use_new_sapper_disable( "tf2v_use_new_sapper_disable", "0", FCVAR_NOTIFY, "Sapped sentries will be disabled for a few seconds after removing the sapper." );
 ConVar tf2v_use_new_sentry_minigun_resist( "tf2v_use_new_sentry_minigun_resist", "0", FCVAR_NOTIFY, "Swaps from the original 20% and 33% resistance on level 2 and 3 sentries to the newer 15% and 20% respectively." );
+ConVar tf2v_use_new_wrangler_repair( "tf2v_use_new_wrangler_repair", "0", FCVAR_NOTIFY, "Adds a 66% reduction to repairs on a shielded sentry." );
 
 
 // Ground placed version
@@ -614,8 +615,8 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 	float flRepairRate = 1;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flRepairRate, mult_repair_value);
 		
-	// Wrangled sentries have 33% of normal repair rate
-	if ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY )
+	// Wrangled sentries have 33% of normal repair rate (as of Gun Mettle)
+	if ( ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY ) && tf2v_use_new_wrangler_repair.GetBool() )
 		flRepairRate *= .33f;
 
 	bRepair = Command_Repair( pPlayer/*, pWrench->GetRepairValue()*/ );
