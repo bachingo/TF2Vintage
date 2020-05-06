@@ -54,17 +54,26 @@ END_SEND_TABLE()
 			val = map.Element(index)
 
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CEconItemView::CEconItemView()
 {
 	Init( -1 );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CEconItemView::CEconItemView( CEconItemView const &other )
 {
 	Init( -1 );
 	*this = other;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CEconItemView::CEconItemView( int iItemID )
 {
 	Init( iItemID );
@@ -96,11 +105,49 @@ int CEconItemView::GetItemDefIndex( void ) const
 	return m_iItemDefinitionIndex;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CEconItemView::SetItemQuality( int nQuality )
+{
+	m_iEntityQuality = nQuality;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CEconItemView::GetItemQuality( void ) const
+{
+	return m_iEntityQuality;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CEconItemView::SetItemLevel( int nLevel )
+{
+	m_iEntityLevel = nLevel;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CEconItemView::GetItemLevel( void ) const
+{
+	return m_iEntityLevel;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CEconItemDefinition *CEconItemView::GetStaticData( void ) const
 {
 	return GetItemSchema()->GetItemDefinition( m_iItemDefinitionIndex );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 const char *CEconItemView::GetWorldDisplayModel( int iClass/* = 0*/ ) const
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -123,6 +170,9 @@ const char *CEconItemView::GetWorldDisplayModel( int iClass/* = 0*/ ) const
 	return pszModelName;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 const char *CEconItemView::GetPlayerDisplayModel( int iClass/* = 0*/ ) const
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -138,6 +188,9 @@ const char *CEconItemView::GetPlayerDisplayModel( int iClass/* = 0*/ ) const
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 const char* CEconItemView::GetEntityName()
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -150,6 +203,9 @@ const char* CEconItemView::GetEntityName()
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CEconItemView::IsCosmetic()
 {
 	bool result = false;
@@ -163,6 +219,9 @@ bool CEconItemView::IsCosmetic()
 	return result;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 int CEconItemView::GetAnimationSlot( void )
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -175,6 +234,9 @@ int CEconItemView::GetAnimationSlot( void )
 	return -1;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 int CEconItemView::GetItemSlot( void )
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -187,6 +249,9 @@ int CEconItemView::GetItemSlot( void )
 	return -1;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 Activity CEconItemView::GetActivityOverride( int iTeamNumber, Activity actOriginalActivity )
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -205,6 +270,9 @@ Activity CEconItemView::GetActivityOverride( int iTeamNumber, Activity actOrigin
 	return actOriginalActivity;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 const char *CEconItemView::GetActivityOverride( int iTeamNumber, const char *name )
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -224,6 +292,9 @@ const char *CEconItemView::GetActivityOverride( int iTeamNumber, const char *nam
 	return name;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) const
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -237,6 +308,9 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 unsigned int CEconItemView::GetModifiedRGBValue( bool bAlternate )
 {
 	static CSchemaAttributeHandle pAttrDef_Paint( "set item tint rgb" );
@@ -271,6 +345,9 @@ unsigned int CEconItemView::GetModifiedRGBValue( bool bAlternate )
 	return (unsigned int)flResult;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 int CEconItemView::GetSkin( int iTeamNum, bool bViewmodel ) const
 {
 	if (iTeamNum <= TF_TEAM_COUNT)
@@ -284,6 +361,9 @@ int CEconItemView::GetSkin( int iTeamNum, bool bViewmodel ) const
 	return -1;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CEconItemView::HasCapability( const char* name )
 {
 	bool result = false;
@@ -297,6 +377,9 @@ bool CEconItemView::HasCapability( const char* name )
 	return result;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CEconItemView::HasTag( const char* name )
 {
 	bool result = false;
@@ -310,6 +393,9 @@ bool CEconItemView::HasTag( const char* name )
 	return result;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CEconItemView::AddAttribute( CEconItemAttribute *pAttribute )
 {
 	// Make sure this attribute exists.
@@ -320,11 +406,17 @@ bool CEconItemView::AddAttribute( CEconItemAttribute *pAttribute )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CEconItemView::SkipBaseAttributes( bool bSkip )
 {
 	m_bOnlyIterateItemViewAttributes = bSkip;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CEconItemView::IterateAttributes( IEconAttributeIterator *iter )
 {
 	m_AttributeList.IterateAttributes( iter );
@@ -336,6 +428,9 @@ void CEconItemView::IterateAttributes( IEconAttributeIterator *iter )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 const char *CEconItemView::GetExtraWearableModel( void ) const
 {
 	CEconItemDefinition *pStatic = GetStaticData();
@@ -349,6 +444,9 @@ const char *CEconItemView::GetExtraWearableModel( void ) const
 	return "\0";
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CEconItemView &CEconItemView::operator=( CEconItemView const &rhs )
 {
 	m_iItemDefinitionIndex = rhs.m_iItemDefinitionIndex;
@@ -366,15 +464,25 @@ CEconItemView &CEconItemView::operator=( CEconItemView const &rhs )
 	return *this;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CAttributeList::CAttributeList()
 {
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CAttributeList::Init( void )
 {
 	m_Attributes.Purge();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CEconItemAttribute const *CAttributeList::GetAttribByID( int iNum )
 {
 	FOR_EACH_VEC( m_Attributes, i )
@@ -386,6 +494,9 @@ CEconItemAttribute const *CAttributeList::GetAttribByID( int iNum )
 	return nullptr;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CEconItemAttribute const *CAttributeList::GetAttribByName( char const *szName )
 {
 	CEconAttributeDefinition *pDefinition = GetItemSchema()->GetAttributeDefinitionByName( szName );
@@ -399,6 +510,9 @@ CEconItemAttribute const *CAttributeList::GetAttribByName( char const *szName )
 	return nullptr;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CAttributeList::IterateAttributes( IEconAttributeIterator *iter )
 {
 	FOR_EACH_VEC( m_Attributes, i )
@@ -412,6 +526,9 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator *iter )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CAttributeList::SetRuntimeAttributeValue( const CEconAttributeDefinition *pDefinition, float flValue )
 {
 	Assert( pDefinition );
@@ -435,6 +552,9 @@ bool CAttributeList::SetRuntimeAttributeValue( const CEconAttributeDefinition *p
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CAttributeList::RemoveAttribute( const CEconAttributeDefinition *pDefinition )
 {
 	FOR_EACH_VEC( m_Attributes, i )
@@ -450,6 +570,9 @@ bool CAttributeList::RemoveAttribute( const CEconAttributeDefinition *pDefinitio
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CAttributeList::RemoveAttribByIndex( int iIndex )
 {
 	if( iIndex == m_Attributes.InvalidIndex() || iIndex > m_Attributes.Count() )
@@ -460,16 +583,25 @@ bool CAttributeList::RemoveAttribByIndex( int iIndex )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CAttributeList::SetManager( CAttributeManager *pManager )
 {
 	m_pManager = pManager;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CAttributeList::NotifyManagerOfAttributeValueChanges( void )
 {
 	m_pManager->OnAttributesChanged();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CAttributeList &CAttributeList::operator=( CAttributeList const &rhs )
 {
 	m_Attributes.RemoveAll();

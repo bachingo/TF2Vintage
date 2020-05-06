@@ -74,6 +74,10 @@ public:
 
 	void SetItemDefIndex( int iItemID );
 	int GetItemDefIndex( void ) const;
+	void SetItemQuality( int iQuality );
+	int GetItemQuality( void ) const;
+	void SetItemLevel( int nLevel );
+	int GetItemLevel( void ) const;
 
 	const char*	GetExtraWearableModel(void) const;
 

@@ -89,7 +89,7 @@ bool CTFBotLocomotion::IsAreaTraversable( const CNavArea *baseArea ) const
 	if ( !BaseClass::IsAreaTraversable( baseArea ) )
 		return false;
 
-	const CTFNavArea *tfArea = dynamic_cast<const CTFNavArea *>( baseArea );
+	const CTFNavArea *tfArea = static_cast<const CTFNavArea *>( baseArea );
 	if ( tfArea == nullptr )
 		return false;
 
