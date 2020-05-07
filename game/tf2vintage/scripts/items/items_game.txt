@@ -973,6 +973,72 @@
 				"min_viewmodel_offset"			"5 0 -8"		
 			}
 		}
+		"weapon_machina"
+		{
+			"item_class"	"tf_weapon_sniperrifle""
+			"base_item_name"	"The Machina"
+			"item_type_name"	"#TF_Weapon_SniperRifle"
+			"item_name"	"#TF_DEX_Rifle"
+			"item_description"	"#TF_DEX_Rifle_Desc"
+			"item_slot"	"primary"
+			"propername"	"1"
+			"item_logname"	"machina"
+			"item_iconname"	"machina"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_dex_sniperrifle/c_dex_sniperrifle"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_dex_sniperrifle/c_dex_sniperrifle.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"5 0 -8"
+			}
+			"attributes"
+			{
+				"sniper penetrate players when charged"
+				{
+					"attribute_class"	"sniper_penetrate_players_when_charged"
+					"value"	"1"
+				}
+				"sniper only fire zoomed"
+				{
+					"attribute_class"	"sniper_only_fire_zoomed"
+					"value"	"1"
+				}
+				"sniper full charge damage bonus"
+				{
+					"attribute_class"	"sniper_full_charge_damage_bonus"
+					"value"				"1.15"
+ 				}
+ 				"sniper fires tracer"
+ 				{
+					"attribute_class"	"sniper_fires_tracer"
+					"value"	"1"
+				}
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"2"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_SniperRailgun_Large.Single"
+				"sound_burst"		"Weapon_SniperRailgun_Large.SingleCrit"
+				"sound_reload"		"Weapon_SniperRailgun.WorldReload"
+				"sound_empty"		"Weapon_SniperRailgun.ClipEmpty"
+				"sound_special2"	"Weapon_SniperRailgun.NonScoped"
+				"sound_special3"	"Weapon_SniperRailgun.Single"
+				"muzzle_flash"		"dxhr_sniper_muzzleflash"
+				"animation_replacement"
+				{
+					"ACT_PRIMARY_VM_INSPECT_START"	"ACT_PRIMARY_ALT1_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"	"ACT_PRIMARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"	"ACT_PRIMARY_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
 		"weapon_bat"
 		{
 			"item_class"	"tf_weapon_bat"
@@ -6470,6 +6536,12 @@
 				"sound_burst"	"Weapon_Diamond_Back.SingleCrit"
 			}
 		}
+		"526"
+		{
+			"name"	"The Machina"
+			"year"	"2011"
+			"prefab"	"weapon_machina"
+		}
 		"527"
 		{
 			"name"	"The Widowmaker"
@@ -8461,6 +8533,44 @@
 			"image_inventory"		"backpack/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower"
 			"model_player"		"models/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower.mdl"
 			"propername"		"1"
+		}
+		"30665"
+		{
+			"name"		"Shooting Star"
+			"prefab"		"weapon_machina weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_sniperrifle"
+			"item_description"		"#TF_invasion_sniperrifle_Desc"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_sniperrifle/c_invasion_sniperrifle"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_sniperrifle/c_invasion_sniperrifle.mdl"
+			"item_logname"		"shooting_star"
+			"item_iconname"		"shooting_star"
+			"attributes"
+			{
+				"ragdolls become ash"
+				{
+					"attribute_class"	"ragdolls_become_ash"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_ShootingStar.SingleCharged"
+				"sound_burst"		"Weapon_ShootingStar.SingleCrit"
+				"sound_reload"		"Weapon_SniperRailgun.WorldReload"
+				"sound_empty"		"Weapon_SniperRailgun.ClipEmpty"
+				"sound_special2"		"Weapon_SniperRailgun.NonScoped"
+				"sound_special3"		"Weapon_ShootingStar.Single"
+				"muzzle_flash"		"dxhr_sniper_muzzleflash"
+			}
+			"visuals_red"
+			{
+				"skin"		"0"
+			}
+			"visuals_blu"
+			{
+				"skin"		"1"
+			}
 		}
 		"30666"
 		{
