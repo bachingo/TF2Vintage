@@ -464,7 +464,6 @@ void CTFGameStats::Event_AssistKill( CTFPlayer *pAttacker, CBaseEntity *pVictim 
 		// keep track of how many times every player kills every other player
 		CTFPlayer *pPlayerVictim = ToTFPlayer( pVictim );
 		TrackKillStats( pAttacker, pPlayerVictim );
-		pAttacker->m_Shared.AddFocusLevel(false);
 	}
 }
 
@@ -729,8 +728,6 @@ void CTFGameStats::Event_PlayerKilledOther( CBasePlayer *pAttacker, CBaseEntity 
 	CTFPlayer *pPlayerAttacker = static_cast< CTFPlayer * >( pAttacker );
 	
 	IncrementStat( pPlayerAttacker, TFSTAT_KILLS, 1 );
-	pPlayerAttacker->m_Shared.IncrementKillstreakCount();
-	pPlayerAttacker->m_Shared.AddFocusLevel(true);
 
 	// keep track of how many times every player kills every other player
 	CTFPlayer *pPlayerVictim = ToTFPlayer( pVictim );

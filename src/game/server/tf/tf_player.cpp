@@ -6539,44 +6539,11 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			pszDomination = "domination:dominated";
 		}
 
-
-/*
-		const char *pszRelationship = "relation:none";
-#ifndef NO_STEAM
-		// Check if those involved were friends.
-		bool bSteamFriends = false;
-		player_info_t piv;
-		player_info_t pia;
-		// Get the information about the attacker.
-		CBaseEntity *pAttacker = info.GetAttacker();
-		if ( pAttacker && ( pAttacker != pVictim ) )
+		if ( IsAlive() && pTFVictim != this )
 		{
-			// Grab the indexes of the players involved.
-			int iPlayerIndexAttacker = pAttacker->entindex();
-			int iPlayerIndexVictim = pVictim->entindex();
-			if ( iPlayerIndexAttacker && iPlayerIndexVictim )
-			{
-				// If player info is there, check friendship status on Steam.
-				engine->GetPlayerInfo(iPlayerIndexVictim, &piv); 
-				engine->GetPlayerInfo(iPlayerIndexAttacker, &pia);
-				if ( piv.friendsID && pia.friendsID )
-				{
-					// check and see if they're on the local player's friends list
-					CSteamID steamID(piv.friendsID, pia.friendsID, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual);
-					bSteamFriends = steamapicontext->SteamFriends()->HasFriend(steamID, 0x04 );
-
-				}
-			}
-		}
-		
-		if (bSteamFriends)
-		pszRelationship = "relation:friends";
-#endif
-*/
-
-		if ( IsAlive() )
-		{
-			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( info.GetWeapon() );
+			if (!pWeapon)
+				return;
 
 			if ( !pWeapon->IsSilentKiller() )
 			{
@@ -6584,90 +6551,102 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				SpeakConceptIfAllowed( MP_CONCEPT_KILLED_PLAYER, modifiers );
 			}
 
-			m_Shared.IncKillstreak( pWeapon->GetSlot() );
-
-			if ( pWeapon->GetWeaponID() == GetWeaponFromDamage( info ) )
-			{
-				// Apply on-kill effects.
-				float flCritOnKill = 0.0f, flHealthOnKill = 0.0f, flMinicritOnKill = 0.0f, flRestoreOnKill = 0.0f;
-				
-				// Crit on kill
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCritOnKill, add_onkill_critboost_time );
-				if ( flCritOnKill )
-				{
-					m_Shared.AddCond( TF_COND_CRITBOOSTED_ON_KILL, flCritOnKill );
-				}
-				// HP on kill
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHealthOnKill, heal_on_kill );
-				if ( flHealthOnKill )
-				{
-					int iHealthRestored = TakeHealth( flHealthOnKill, DMG_GENERIC );
-					if ( iHealthRestored )
-					{
-						IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
-
-						if ( event )
-						{
-							event->SetInt( "amount", iHealthRestored );
-							event->SetInt( "entindex", entindex() );
-
-							gameeventmanager->FireEvent( event );
-						}
-					}
-				}
-				// Minicrits on kill
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMinicritOnKill, add_onkill_minicritboost_time );
-				if ( flMinicritOnKill )
-				{
-					m_Shared.AddCond( TF_COND_MINICRITBOOSTED_ON_KILL, flMinicritOnKill );
-				}
-				// Shield meter on kill
-				float flAddChargeShieldKill = 0.0f;
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flAddChargeShieldKill, kill_refills_meter );
-				if ( flAddChargeShieldKill )
-				{
-					m_Shared.m_flChargeMeter = min( ( m_Shared.m_flChargeMeter + ( flAddChargeShieldKill * 100 ) ), 100.0f ) ;
-				}
-				// Restore HP % on kill
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flRestoreOnKill, restore_health_on_kill );
-				if ( flRestoreOnKill )
-				{
-					int nHealthToAdd = ( flRestoreOnKill/100 ) * GetMaxHealth();
-					int nHealthToRestore = clamp(nHealthToAdd, 0, ( ( GetMaxHealth() * ( 1 + ( 1 * ( flRestoreOnKill/100 ) ) ) ) - GetHealth() ) );
-					if (nHealthToRestore > 0 )
-					{
-						TakeHealth( nHealthToRestore, DMG_IGNORE_MAXHEALTH );
-						IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
-						if ( event )
-						{
-							event->SetInt( "amount", nHealthToRestore );
-							event->SetInt( "entindex", entindex() );
-
-							gameeventmanager->FireEvent( event );
-						}
-					}
-				}
-				// Cloak meter on kill
-				int nAddCloakOnKill = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnKill, add_cloak_on_kill );
-				if ( nAddCloakOnKill > 0 )
-					m_Shared.AddToSpyCloakMeter( nAddCloakOnKill );
-				// Speed boost on kill
-				int nSpeedBoostOnKill = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnKill, speed_boost_on_kill );
-				if ( nSpeedBoostOnKill > 0)
-					m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnKill );
-	
-			}
-
-			if ( pWeapon->GetWeaponID() == TF_WEAPON_SWORD )
-			{
-				m_Shared.SetMaxHealth( GetMaxHealth() );
-			}
+			// Increase our killstreaks.
+			m_Shared.IncrementKillstreakCount();
+			if (pWeapon->GetSlot() && !bInflictor)
+				m_Shared.IncKillstreak( pWeapon->GetSlot() );
 			
-			// If we killed them from a backstab, increase our sapper kill count.
-			if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
-				m_Shared.StoreSapperKillCount();
+			// Don't apply attributes when a base object gets a kill
+			if (!bInflictor)
+			{
+
+				if ( pWeapon->GetWeaponID() == GetActiveTFWeapon()->GetWeaponID() )
+				{
+					// Apply on-kill effects.
+					float flCritOnKill = 0.0f, flHealthOnKill = 0.0f, flMinicritOnKill = 0.0f, flRestoreOnKill = 0.0f;
+					
+					// Crit on kill
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCritOnKill, add_onkill_critboost_time );
+					if ( flCritOnKill )
+					{
+						m_Shared.AddCond( TF_COND_CRITBOOSTED_ON_KILL, flCritOnKill );
+					}
+					// HP on kill
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHealthOnKill, heal_on_kill );
+					if ( flHealthOnKill )
+					{
+						int iHealthRestored = TakeHealth( flHealthOnKill, DMG_GENERIC );
+						if ( iHealthRestored )
+						{
+							IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+
+							if ( event )
+							{
+								event->SetInt( "amount", iHealthRestored );
+								event->SetInt( "entindex", entindex() );
+
+								gameeventmanager->FireEvent( event );
+							}
+						}
+					}
+					// Minicrits on kill
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMinicritOnKill, add_onkill_minicritboost_time );
+					if ( flMinicritOnKill )
+					{
+						m_Shared.AddCond( TF_COND_MINICRITBOOSTED_ON_KILL, flMinicritOnKill );
+					}
+					// Shield meter on kill
+					float flAddChargeShieldKill = 0.0f;
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flAddChargeShieldKill, kill_refills_meter );
+					if ( flAddChargeShieldKill )
+					{
+						m_Shared.m_flChargeMeter = min( ( m_Shared.m_flChargeMeter + ( flAddChargeShieldKill * 100 ) ), 100.0f ) ;
+					}
+					// Restore HP % on kill
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flRestoreOnKill, restore_health_on_kill );
+					if ( flRestoreOnKill )
+					{
+						int nHealthToAdd = ( flRestoreOnKill/100 ) * GetMaxHealth();
+						int nHealthToRestore = clamp(nHealthToAdd, 0, ( ( GetMaxHealth() * ( 1 + ( 1 * ( flRestoreOnKill/100 ) ) ) ) - GetHealth() ) );
+						if (nHealthToRestore > 0 )
+						{
+							TakeHealth( nHealthToRestore, DMG_IGNORE_MAXHEALTH );
+							IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+							if ( event )
+							{
+								event->SetInt( "amount", nHealthToRestore );
+								event->SetInt( "entindex", entindex() );
+
+								gameeventmanager->FireEvent( event );
+							}
+						}
+					}
+					// Cloak meter on kill
+					int nAddCloakOnKill = 0;
+					CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnKill, add_cloak_on_kill );
+					if ( nAddCloakOnKill > 0 )
+						m_Shared.AddToSpyCloakMeter( nAddCloakOnKill );
+					// Speed boost on kill
+					int nSpeedBoostOnKill = 0;
+					CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnKill, speed_boost_on_kill );
+					if ( nSpeedBoostOnKill > 0)
+						m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnKill );
+					
+					// Award Focus
+					m_Shared.AddFocusLevel(true);
+		
+				}
+
+				if ( pWeapon->GetWeaponID() == TF_WEAPON_SWORD )
+				{
+					m_Shared.SetMaxHealth( GetMaxHealth() );
+				}
+				
+				// If we killed them from a backstab, increase our sapper kill count.
+				if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
+					m_Shared.StoreSapperKillCount();
+				
+			}
 			
 		}
 	}
@@ -7550,6 +7529,16 @@ void CTFPlayer::RemoveAllWeapons( void )
 			continue;
 
 		RemoveWearable( pWearable );
+	}
+	
+	// Remove all disguise wearables.
+	for ( int i = 0; i < GetNumDisguiseWearables(); i++ )
+	{
+		CEconWearable *pWearable = GetDisguiseWearable( i );
+		if ( !pWearable )
+			continue;
+
+		RemoveDisguiseWearable( pWearable );
 	}
 }
 
