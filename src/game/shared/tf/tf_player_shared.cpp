@@ -4857,6 +4857,8 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 	Vector vecEnd = vecStart + info.m_vecDirShooting * info.m_flDistance;
 	trace_t trace;
 	UTIL_TraceLine(vecStart, vecEnd, (MASK_SOLID | CONTENTS_HITBOX), this, COLLISION_GROUP_NONE, &trace);
+	
+	
 
 #ifdef GAME_DLL
 	if (tf_debug_bullets.GetBool())
@@ -5058,11 +5060,34 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 			trace.m_pEnt->DispatchTraceAttack(dmgInfo, info.m_vecDirShooting, &trace);
 		}
 		else
-		{
-			// Placeholder for penetration mechanics.
-			
-			
-			
+		{		
+			// Penetration mechanics.
+			// We need to trace each entity it hit with a ray and see if it's a player.
+			CBaseEntity *pEnt[256];
+			Ray_t ray;
+			ray.Init( vecStart, vecEnd );
+			int nTargets = UTIL_EntitiesAlongRay(pEnt, ARRAYSIZE(pEnt), ray, FL_CLIENT | FL_OBJECT);
+			for (int i = 0; i< nTargets; i++)
+			{
+				// Get the entity information.
+				CBaseEntity *pTarget = pEnt[i];
+				if (!pTarget)
+					continue;
+
+				// Don't attack ourselves.
+				if (pTarget == info.m_pAttacker)
+					continue;
+				
+				// Don't attack friendlies.
+				if (info.m_pAttacker->GetTeamNumber() == pTarget->GetTeamNumber())
+					continue;
+					
+				// See what material we hit.
+				CTakeDamageInfo dmgInfo( this, info.m_pAttacker, GetActiveWeapon(), info.m_flDamage, nDamageType, nCustomDamageType );
+				CalculateBulletDamageForce(&dmgInfo, info.m_iAmmoType, info.m_vecDirShooting, trace.endpos, 1.0);	//MATTTODO bullet forces
+				pTarget->DispatchTraceAttack(dmgInfo, info.m_vecDirShooting, &trace);
+				
+			}
 		}
 #endif
 	}
