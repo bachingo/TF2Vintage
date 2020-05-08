@@ -4273,8 +4273,8 @@
 			"item_name"	"#TF_Unique_Achievement_Pickaxe"
 			"propername"	"1"
 			"item_logname"	"unique_pickaxe"
-			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe"	
-			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe.mdl"
+			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe_s2"
+			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe_s2.mdl"
 			"attributes"
 			{
 				"provide on active"
@@ -4282,14 +4282,9 @@
 					"attribute_class"	"provide_on_active"
 					"value" "1"
 				}
-				"mod shovel boosts"
+				"mod shovel damage boost"
 				{
 					"attribute_class"	"set_weapon_mode"
-					"value"	"3"
-				}
-				"mod shovel boosts speed null"
-				{
-					"attribute_class"	"null"
 					"value"	"1"
 				}
 				"mod weapon blocks healing"
@@ -5624,7 +5619,7 @@
 				"dmg taken from fire reduced on active"
 				{
 					"attribute_class"	"mult_dmgtaken_from_fire_active"
-					"value"			"0.75"
+					"value"			"0.66"
 				}
 			}
 		}
@@ -7243,6 +7238,35 @@
 			"used_by_classes"
 			{
 				"engineer"	"1"
+			}
+		}
+		"775"
+		{
+			"name"	"The Escape Plan"
+			"prefab"	"weapon_pickaxe"
+			"year"			"2012"
+			"item_name"	"#TF_Unique_Pickaxe_EscapePlan"
+			"propername"	"1"
+			"item_logname"	"unique_pickaxe_escape"
+			"image_inventory" "backpack/weapons/c_models/c_pickaxe/c_pickaxe"
+			"model_player"	"models/weapons/c_models/c_pickaxe/c_pickaxe.mdl"
+			"attributes"
+			{
+				"provide on active"
+				{
+					"attribute_class"	"provide_on_active"
+					"value" "1"
+				}
+				"mod shovel speed boost"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"2"
+				}
+				"mod weapon blocks healing"
+				{
+					"attribute_class"	"weapon_blocks_healing"
+					"value" "1"
+				}
 			}
 		}
 		"810"
