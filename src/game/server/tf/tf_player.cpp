@@ -9949,6 +9949,11 @@ void CTFPlayer::Taunt( taunts_t eTaunt, int iConcept )
 			m_flTauntAttackTime = gpGlobals->curtime + 3.5;
 			m_iTauntAttack = TAUNTATK_SOLDIER_GRENADE_KILL;
 		}
+		else if ( V_stricmp( szResponse, "scenes/player/pyro/low/taunt_scorch_shot.vcd" ) == 0 )
+		{
+			m_flTauntAttackTime = gpGlobals->curtime + 1.9f;
+			m_iTauntAttack = TAUNTATK_PYRO_SCORCHSHOT;
+		}
 	}
 
 	pExpresser->DisallowMultipleScenes();
@@ -10402,6 +10407,18 @@ void CTFPlayer::DoTauntAttack( void )
 
 			CTakeDamageInfo info( this, this, GetActiveWeapon(), vec3_origin, vecBoneOrigin, 200.0f, DMG_BLAST|DMG_USEDISTANCEMOD, TF_DMG_CUSTOM_TAUNTATK_GRENADE, &vecBoneOrigin );
 			TFGameRules()->RadiusDamage( info, vecBoneOrigin, 100.0f, 0, NULL );
+		}
+		case TAUNTATK_PYRO_SCORCHSHOT:
+		{
+			CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+			if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_FLAREGUN )
+			{
+				CTFWeaponBaseGun *pGun = dynamic_cast< CTFWeaponBaseGun* >( pWeapon );
+				if ( pGun )
+				{
+					pGun->FireProjectile( this );
+				}
+			}
 		}
 	}
 }
