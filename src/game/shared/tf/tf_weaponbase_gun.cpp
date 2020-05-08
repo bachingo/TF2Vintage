@@ -219,7 +219,6 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 			break;
 
 		case TF_PROJECTILE_PIPEBOMB:
-		case TF_PROJECTILE_CANNONBALL:
 			pProjectile = FirePipeBomb( pPlayer, 0 );
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;
@@ -232,6 +231,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 		case TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE:
 			pProjectile = FirePipeBomb( pPlayer, 3 );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
+			
+		case TF_PROJECTILE_CANNONBALL:
+			pProjectile = FirePipeBomb( pPlayer, 4 );
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;
 
@@ -637,6 +641,10 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iRemoteDeto
 	else if ( iRemoteDetonate == 3 )
 	{
 		iMode = TF_GL_MODE_BETA_DETONATE;
+	}
+	else if ( iRemoteDetonate == 4 )
+	{
+		iMode = TF_GL_MODE_CANNONBALL;
 	}
 
 	Vector vecForward, vecRight, vecUp;
