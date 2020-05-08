@@ -637,6 +637,65 @@
 				"min_viewmodel_offset"					"10 0 -10"
 			}
 		}
+		"weapon_demo_cannon"
+		{
+			"item_class"		"tf_weapon_cannon"
+			"item_logname"	"loose_cannon"
+			"item_iconname"	"loose_cannon_explosion"
+			"item_type_name"	"#TF_Weapon_GrenadeLauncher"
+			"item_name"		"#TF_Weapon_Cannon"
+			"item_description"		"#TF_Weapon_Cannon_desc"
+			"item_slot"		"primary"
+			"anim_slot"		"secondary"
+			"propername"		"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_demo_cannon/c_demo_cannon"
+			"model_player"	"models/workshop/weapons/c_models/c_demo_cannon/c_demo_cannon.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"
+			}
+			"attributes"
+			{
+				"override projectile type"
+				{
+					"attribute_class"	"override_projectile_type"
+					"value"				"17"
+				}
+				"grenade launcher mortar mode"
+				{
+					"attribute_class"	"grenade_launcher_mortar_mode"
+					"value"				"1"
+				}
+				"grenade not explode on impact"
+				{
+					"attribute_class"	"grenade_not_explode_on_impact"
+					"value"				"1"
+				}
+				"Projectile speed increased"
+				{
+					"attribute_class"	"mult_projectile_speed"
+					"value"	"1.2"
+				}
+				"cannonball push back"
+				{
+					"attribute_class"	"cannonball_push_back"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"animation_replacement"
+				{
+					"ACT_PRIMARY_VM_INSPECT_START"		"ACT_PRIMARY_ALT1_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"		"ACT_PRIMARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"		"ACT_PRIMARY_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
 		"weapon_flamethrower"
 		{
 			"item_class"	"tf_weapon_flamethrower"
@@ -7293,9 +7352,16 @@
 			"prefab"		"weapon_annihilator"
 			"year"	"2012"
 		}
+		"996"
+		{
+			"name"			"The Loose Cannon"
+			"prefab"		"weapon_demo_cannon"
+			"first_sale_date"	"2012"
+			"particle_suffix" 	"loose_cannon"
+		}
 		"997"
 		{
-			"name"	"The Rescue Ranger"
+			"name"			"The Rescue Ranger"
 			"prefab"			"weapon_rescue_ranger"
 			"year"				"2012"
 			"particle_suffix"	"rescue_ranger"

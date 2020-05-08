@@ -126,6 +126,7 @@
 	"The Huo Long Heatmaker"						"1"
 	"The Flying Guillotine"							"1"
 	"The Neon Annihilator"							"1"
+	"The Loose Cannon"								"1"
 	"The Rescue Ranger"								"1"
 	"The Classic"									"1"
 	"The Tide Turner"								"1"
