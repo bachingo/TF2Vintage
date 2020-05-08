@@ -17,6 +17,7 @@
 #include "engine/IEngineSound.h"
 #include "tf_weapon_grenade_pipebomb.h"
 #include "tf_weapon_pipebomblauncher.h"
+#include "tf_weapon_grenadelauncher.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -116,8 +117,10 @@ int CTFGrenadePipebombProjectile::GetWeaponID( void ) const
 		return TF_WEAPON_GRENADE_PIPEBOMB;
 	else if ( m_iType == TF_GL_MODE_BETA_DETONATE )
 		return TF_WEAPON_GRENADE_PIPEBOMB_BETA;
+	else if ( m_iType == TF_GL_MODE_CANNONBALL )
+		return TF_WEAPON_CANNON;
 	else
-	return TF_WEAPON_GRENADE_DEMOMAN;
+		return TF_WEAPON_GRENADE_DEMOMAN;
 }
 
 //-----------------------------------------------------------------------------
@@ -310,6 +313,8 @@ int CTFGrenadePipebombProjectile::DrawModel( int flags )
 #define TF_WEAPON_STICKYBOMB_MODEL           "models/weapons/w_models/w_stickybomb.mdl"
 #define TF_WEAPON_STICKYBOMB_DEFENSIVE_MODEL "models/weapons/w_models/w_stickybomb_d.mdl"
 #define TF_WEAPON_PIPEBOMB_BOUNCE_SOUND	   	 "Weapon_Grenade_Pipebomb.Bounce"
+#define TF_WEAPON_CANNONBALL_MODEL			 "models/weapons/w_models/w_cannonball.mdl"
+#define TF_WEAPON_CANNON_IMPACT_SOUND		 "Weapon_LooseCannon.BallImpact"
 #define TF_WEAPON_GRENADE_DETONATE_TIME    2.0f
 #define TF_WEAPON_GRENADE_XBOX_DAMAGE      112
 
@@ -340,6 +345,8 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 		szClassName = "tf_projectile_pipe_remote";
 	else if ( iMode == TF_GL_MODE_BETA_DETONATE )
 		szClassName = "tf_weapon_grenade_pipebomb_projectile";
+	else if ( iMode == TF_GL_MODE_CANNONBALL )
+		szClassName = "tf_projectile_cannonball";
 	else
 		szClassName = "tf_projectile_pipe";
 
@@ -405,13 +412,20 @@ void CTFGrenadePipebombProjectile::Spawn()
 		SetDetonateTimerLength( FLT_MAX );
 		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
 	}
-	else
+	else 
 	{
+		if ( m_iType == TF_GL_MODE_CANNONBALL )
+		{
+			SetModel( TF_WEAPON_CANNONBALL_MODEL );
+		}
+		else
+		{
+			SetModel( TF_WEAPON_GRENADE_MODEL );
+		}
 		float flDetonateTime = TF_WEAPON_GRENADE_DETONATE_TIME;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), flDetonateTime, fuse_mult );
 		SetDetonateTimerLength( flDetonateTime );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
-		SetModel( TF_WEAPON_GRENADE_MODEL );
 	}
 
 	BaseClass::Spawn();
@@ -448,8 +462,12 @@ void CTFGrenadePipebombProjectile::Precache()
 	
 	index = PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
 	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_STICKYBOMB_MODEL ) );
+	
+	index = PrecacheModel( TF_WEAPON_CANNONBALL_MODEL );
+	PrecacheGibsForModel( PrecacheModel( TF_WEAPON_CANNONBALL_MODEL ) );
 
 	PrecacheScriptSound( TF_WEAPON_PIPEBOMB_BOUNCE_SOUND );
+	PrecacheScriptSound( TF_WEAPON_CANNON_IMPACT_SOUND );
 
 	BaseClass::Precache();
 }
@@ -546,6 +564,7 @@ void CTFGrenadePipebombProjectile::DetonateStickies( void )
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 {
+
 	if ( pOther == GetThrower() )
 		return;
 
@@ -569,7 +588,9 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 	// If we already touched a surface then we're not exploding on contact anymore.
 	// This behavior doesn't apply to the launch era grenades.
 	// If we're a launch era grenade, explode on the second touch.
-	if ( ( m_bTouched == true && tf2v_grenades_explode_contact.GetBool() ) || (!tf2v_grenades_explode_contact.GetBool() && m_bTouched == false )  )
+
+
+	if ( m_iType == TF_GL_MODE_REGULAR && ( ( m_bTouched == true && tf2v_grenades_explode_contact.GetBool() ) || (!tf2v_grenades_explode_contact.GetBool() && m_bTouched == false )  ) )
 		return;
 		
 	// Blow up if we hit an enemy we can damage
@@ -586,6 +607,58 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 			}
 		}
 
+		// Cannonballs get knockback damage and set up DOUBLE DONK
+		if ( m_iType == TF_GL_MODE_CANNONBALL )
+		{
+			// Cannonball does knockback damage.
+
+			// Make sure only our knockback force blasts them backward.
+			int iDamageType = GetDamageType();
+			iDamageType |= DMG_PREVENT_PHYSICS_FORCE;
+			
+			// Do damage.
+			int iDamage = 60;
+			
+			// We deal with direct contact, do the regular logic.		
+			CTakeDamageInfo info(this, GetThrower(), m_hLauncher.Get(), iDamage, iDamageType, TF_DMG_CUSTOM_CANNONBALL_PUSH);
+			info.SetReportedPosition( GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin);
+			pOther->TakeDamage( info );
+			
+			CTFPlayer *pTFPlayer = ToTFPlayer(pOther);
+			if (pTFPlayer)
+			{
+				int nPushBack = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nPushBack, cannonball_push_back);
+				if (nPushBack)
+				{
+					// Set up knockback.
+					// Faster projectile = more knockback.
+					Vector vecToVictim = GetAbsVelocity();
+					vecToVictim.NormalizeInPlace();
+					vecToVictim.z = 1.0;
+
+					int iForce = 100;
+					Vector vecVelocityImpulse = vecToVictim;
+					pTFPlayer->ApplyAirBlastImpulse(vecVelocityImpulse * iForce);
+					pTFPlayer->m_Shared.StunPlayer(0.5f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_NOSOUNDOREFFECT, ToTFPlayer(GetThrower()));
+
+				}
+			}
+
+			// Play the impact sound.
+			EmitSound( TF_WEAPON_CANNON_IMPACT_SOUND );
+			
+			
+			// Save this entity as an enemy as a potential donk target.	
+			// Do this on the launcher itself.
+
+		}
+
+		int nNoExplodeOnImpact = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nNoExplodeOnImpact, grenade_not_explode_on_impact);
+		if (nNoExplodeOnImpact)
+			return;
+		
 		// Restore damage. See comment in CTFGrenadePipebombProjectile::Create() above to understand this.
 		m_flDamage = m_flFullDamage;
 		// Save this entity as enemy, they will take 100% damage.
@@ -613,13 +686,13 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 	if ( !pHitEntity )
 		return;
 
-	if ( m_iType != TF_GL_MODE_REMOTE_DETONATE )
+	if ( m_iType == TF_GL_MODE_REGULAR || m_iType == TF_GL_MODE_CANNONBALL )
 	{
 		// Blow up if we hit an enemy we can damage
 		if ( pHitEntity->IsCombatCharacter() && pHitEntity->GetTeamNumber() != GetTeamNumber() && pHitEntity->m_takedamage != DAMAGE_NO )
 		{
 			// Blow up if we hit an enemy with a contact grenade, or an enemy touches our launch era grenade.
-			if ( tf2v_grenades_explode_contact.GetBool() || (!tf2v_grenades_explode_contact.GetBool() && m_bTouched == true ) )
+			if ( m_iType != TF_GL_MODE_REGULAR || ( m_iType == TF_GL_MODE_REGULAR && ( tf2v_grenades_explode_contact.GetBool() || (!tf2v_grenades_explode_contact.GetBool() && m_bTouched == true ) ) ) )
 			{
 				// Save this entity as enemy, they will take 100% damage.
 				m_hEnemy = pHitEntity;

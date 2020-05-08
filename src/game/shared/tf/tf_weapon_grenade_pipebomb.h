@@ -38,7 +38,7 @@ public:
 
 	void				SetChargeTime( float flChargeTime )		{ m_flChargeTime = flChargeTime; }
 
-	CNetworkVar( int, m_iType ); // TF_GL_MODE_REGULAR, TF_GL_MODE_REMOTE_DETONATE, TF_GL_MODE_FIZZLE or TF_GL_MODE_BETA_DETONATE
+	CNetworkVar( int, m_iType ); // TF_GL_MODE_REGULAR, TF_GL_MODE_REMOTE_DETONATE, TF_GL_MODE_FIZZLE,  TF_GL_MODE_BETA_DETONATE, TF_GL_MODE_CANNONBALL
 	CNetworkVar( bool, m_bDefensiveBomb );
 	float		m_flCreationTime;
 	float		m_flChargeTime;
@@ -99,6 +99,7 @@ private:
 	float		m_flMinSleepTime;
 
 	CHandle<CBaseEntity>	m_hEnemy;
+
 #endif
 };
 #endif // TF_WEAPON_GRENADE_PIPEBOMB_H
