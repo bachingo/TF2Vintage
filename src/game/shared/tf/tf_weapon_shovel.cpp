@@ -31,6 +31,8 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_shovel, CTFShovel );
 PRECACHE_WEAPON_REGISTER( tf_weapon_shovel );
 
+ConVar tf2v_use_new_split_equalizer("tf2v_use_new_split_equalizer", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Splits the Equalizer and Escape Plan into their modern versions.", true, 0, true, 1);
+
 //=============================================================================
 //
 // Weapon Shovel functions.
@@ -47,7 +49,7 @@ int CTFShovel::GetCustomDamageType() const
 {
 	int nShovelWeaponMode = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelWeaponMode, set_weapon_mode );
-	if ( nShovelWeaponMode == 1 || nShovelWeaponMode == 2 || nShovelWeaponMode == 3)
+	if ( nShovelWeaponMode == 1 || nShovelWeaponMode == 2 )
 		return TF_DMG_CUSTOM_PICKAXE;
 
 	return TF_DMG_CUSTOM_NONE;
@@ -64,7 +66,7 @@ float CTFShovel::GetSpeedMod( void ) const
 
 	int nShovelSpeedBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelSpeedBoost, set_weapon_mode );
-	if ( nShovelSpeedBoost != 2 && nShovelSpeedBoost != 3 )
+	if ( !nShovelSpeedBoost || ( nShovelSpeedBoost != 2 && tf2v_use_new_split_equalizer.GetBool() ) )
 		return 1.0f;
 
 	float flFraction = (float)pOwner->GetHealth() / pOwner->GetMaxHealth();
@@ -86,7 +88,7 @@ float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iC
 
 	int nShovelDamageBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelDamageBoost, set_weapon_mode );
-	if ( nShovelDamageBoost != 1 && nShovelDamageBoost != 3 )
+	if ( !nShovelDamageBoost || ( nShovelDamageBoost != 1 && tf2v_use_new_split_equalizer.GetBool() ) )
 		return flDmg;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
