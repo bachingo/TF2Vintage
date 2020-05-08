@@ -1042,6 +1042,8 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "DemoCharge.ChargeCritOn" );
 	PrecacheScriptSound( "DemoCharge.ChargeCritOff" );
 	
+	PrecacheScriptSound( "TFPlayer.DoubleDonk" );
+	
 	// Beta/Trailer player sounds.
 	PrecacheScriptSound( "Player.ExplosionDeathBeta" );
 	PrecacheScriptSound( "TFPlayer.CritDeathBeta" );
@@ -1051,6 +1053,7 @@ void CTFPlayer::Precache()
 	// Precache particle systems
 	PrecacheParticleSystem( "crit_text" );
 	PrecacheParticleSystem( "minicrit_text" );
+	PrecacheParticleSystem( "doubledonk_text" );
 	PrecacheParticleSystem( "cig_smoke" );
 	PrecacheParticleSystem( "speech_mediccall" );
 	PrecacheTeamParticles( "player_recent_teleport_%s" );
@@ -4745,6 +4748,7 @@ ConVar tf_debug_damage( "tf_debug_damage", "0", FCVAR_CHEAT );
 int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 {
 	CTakeDamageInfo info = inputInfo;
+	bool bReplaceMiniCritWithDoubleDonk = false;
 
 	if ( GetFlags() & FL_GODMODE )
 		return 0;
@@ -5110,6 +5114,18 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
 			
+			// Checks for a double donk on explosion.
+			if (bitsDamage & DMG_BLAST)
+			{
+				CTFWeaponBaseGun *pGun = dynamic_cast<CTFWeaponBaseGun*>( pWeapon );
+				if ( pGun && pGun->IsDoubleDonk(this) )
+				{
+					bitsDamage |= DMG_MINICRITICAL;
+					info.AddDamageType( DMG_MINICRITICAL );
+					bReplaceMiniCritWithDoubleDonk = true;
+				}
+			}
+			
 
 			int nHasBackCrits = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nHasBackCrits, crit_from_behind );
@@ -5421,7 +5437,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 		}
 
-		// Critical calbulations.
+		// Critical calculations.
 		if (bitsDamage & DMG_CRITICAL)
 		{
 			if (bDebug)
@@ -5468,7 +5484,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if (pAttacker && pAttacker->IsPlayer() && !m_Shared.InCond(TF_COND_DISGUISED))
 			{
 				CEffectData	data;
-				data.m_nHitBox = GetParticleSystemIndex("minicrit_text");
+				if (bReplaceMiniCritWithDoubleDonk)
+					data.m_nHitBox = GetParticleSystemIndex("doubledonk_text");
+				else
+					data.m_nHitBox = GetParticleSystemIndex("minicrit_text");
 				data.m_vOrigin = WorldSpaceCenter() + Vector(0, 0, 32);
 				data.m_vAngles = vec3_angle;
 				data.m_nEntIndex = 0;
@@ -5478,7 +5497,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 				EmitSound_t params;
 				params.m_flSoundTime = 0;
-				params.m_pSoundName = "TFPlayer.CritHitMini";
+				if (bReplaceMiniCritWithDoubleDonk)
+					params.m_pSoundName = "TFPlayer.DoubleDonk";					
+				else
+					params.m_pSoundName = "TFPlayer.CritHitMini";
 				EmitSound(filter, info.GetAttacker()->entindex(), params);
 			}
 

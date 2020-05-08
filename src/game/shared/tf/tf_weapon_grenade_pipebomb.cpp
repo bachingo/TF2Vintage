@@ -651,7 +651,9 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 			
 			// Save this entity as an enemy as a potential donk target.	
 			// Do this on the launcher itself.
-
+			CTFWeaponBaseGun *pGun = dynamic_cast<CTFWeaponBaseGun*>( m_hLauncher.Get() );
+			if (pGun)
+				pGun->AddDoubleDonk(pOther);
 		}
 
 		int nNoExplodeOnImpact = 0;

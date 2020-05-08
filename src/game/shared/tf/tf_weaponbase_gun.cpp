@@ -1136,3 +1136,44 @@ void CTFWeaponBaseGun::ZoomOutIn( void )
 	ZoomOut();
 	SetContextThink( &CTFWeaponBaseGun::ZoomIn, gpGlobals->curtime + ZOOM_REZOOM_TIME, ZOOM_CONTEXT );
 }
+
+
+#define TF_DOUBLE_DONK_TIMELIMIT 0.5f
+//-----------------------------------------------------------------------------
+// Purpose: Adds the donked target to our table to check later.
+//-----------------------------------------------------------------------------
+void CTFWeaponBaseGun::AddDoubleDonk(CBaseEntity* pVictim )
+{
+	// Clean up expired donks.
+	FOR_EACH_VEC_BACK( hDonkedPlayers, i )
+	{
+		if( hDonkedTimeLimit[i] <= gpGlobals->curtime )
+		{
+			hDonkedPlayers.Remove( i );
+			hDonkedTimeLimit.Remove( i );
+		}
+	}
+	
+	hDonkedPlayers.AddToTail(pVictim);
+	hDonkedTimeLimit.AddToTail(gpGlobals->curtime + TF_DOUBLE_DONK_TIMELIMIT);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if this is a Double Donk attack.
+//-----------------------------------------------------------------------------
+bool CTFWeaponBaseGun::IsDoubleDonk(CBaseEntity* pVictim )
+{
+	// Check the players hit by donks.
+	FOR_EACH_VEC( hDonkedPlayers, i )
+	{
+		// Not our victim, skip.
+		if (hDonkedPlayers[i] != pVictim)
+			continue;
+		
+		// Check if it's within the time limit.
+		if( hDonkedTimeLimit[i] <= gpGlobals->curtime )
+			return true;
+	}
+	
+	return false;
+}

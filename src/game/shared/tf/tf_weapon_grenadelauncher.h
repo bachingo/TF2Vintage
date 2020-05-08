@@ -74,6 +74,12 @@ public:
 	CNewParticleEffect	*m_pCannonFuse;
 #endif
 
+	// Donk table.
+	struct Donk_t
+	{
+		CHandle <CBaseEntity> m_hDonk;
+		float m_flDonkTime;
+	};
 
 public:
 

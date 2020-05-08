@@ -80,6 +80,12 @@ public:
 	virtual int GetAmmoPerShot( void ) const;
 
 	virtual void RemoveAmmo( CTFPlayer *pPlayer );
+	
+	virtual void AddDoubleDonk(CBaseEntity* pVictim );
+	virtual bool IsDoubleDonk(CBaseEntity* pVictim );
+	
+	CUtlVector<CBaseEntity*> hDonkedPlayers;
+	CUtlVector<float> hDonkedTimeLimit;
 
 private:
 
