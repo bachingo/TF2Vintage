@@ -351,7 +351,6 @@ public:
 
 	// Dropping Ammo
 	void				DropAmmoPack( bool bLunchbox = false, bool bFeigning = false );
-	void				DropAmmoPackGeneric( void );
 	void				DropFakeWeapon( CTFWeaponBase *pWeapon );
 	void				DropHealthPack( void );
 

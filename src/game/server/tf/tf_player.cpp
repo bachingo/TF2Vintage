@@ -6722,10 +6722,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 
 	// Drop a pack with their leftover ammo
-	if (tf2v_use_new_ammo_drops.GetBool() && !bLunchbox)
-		DropAmmoPackGeneric();
-	else
-		DropAmmoPack( bLunchbox );
+	DropAmmoPack( bLunchbox );
 	
 	// If we're playing Medieval, drop a small health pack.
 	if ( TFGameRules()->IsInMedievalMode() )
@@ -7188,44 +7185,12 @@ void CTFPlayer::DropHealthPack( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: DropAmmoPack, but uses a generic pickup like newer TF2.
-//-----------------------------------------------------------------------------
-void CTFPlayer::DropAmmoPackGeneric( void )
-{
-	// Since weapon is hidden in loser state don't drop ammo pack.
-	if ( m_Shared.IsLoser() )
-		return;
-	
-	CTFPowerup *pPack = (CTFPowerup *)CBaseEntity::Create( "item_ammopack_medium", WorldSpaceCenter(), vec3_angle );
-	if ( !pPack )
-		return;
-
-	// Investigate for constant expression
-	Vector vecRand;
-	vecRand.x = ( rand() * 0.000061037019 ) + -1.0f;
-	vecRand.y = ( rand() * 0.000061037019 ) + -1.0f;
-	vecRand.z = rand();
-
-	vecRand.AsVector2D().NormalizeInPlace();
-
-	pPack->DropSingleInstance( 250 * vecRand, this, 0.0f, 0.1f );
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropAmmoPack( bool bLunchbox, bool bFeigning )
 {
 	// Since weapon is hidden in loser state don't drop ammo pack.
 	if ( m_Shared.IsLoser() )
-		return;
-	
-	// If we use the newer ammo drop system, only do this when we're dropping a holiday pack.
-	bool bIsHolidayPackDrop = ( rand() / float( VALVE_RAND_MAX ) < 0.3 );
-	if ( tf2v_use_new_ammo_drops.GetBool() && ( !bIsHolidayPackDrop || tf2v_disable_holiday_loot.GetBool() ) )
-		return;
-	// Also bail if it's not a holiday where we would drop a holiday pack.
-	if ( tf2v_use_new_ammo_drops.GetBool() && ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) && !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) )
 		return;
 	
 	// We want the ammo packs to look like the player's weapon model they were carrying.
@@ -7284,7 +7249,12 @@ void CTFPlayer::DropAmmoPack( bool bLunchbox, bool bFeigning )
 	int iMetal = max( 5, GetAmmoCount( TF_AMMO_METAL ) );
 
 	// Create the ammo pack.
-	CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel, bFeigning );
+	CTFAmmoPack *pAmmoPack;
+	if (tf2v_use_new_ammo_drops.GetBool() && !bLunchbox )	// Generic medium ammo box.
+		pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, "models/items/ammopack_medium.mdl", bFeigning );		
+	else 									// Weapon model.
+		pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel, bFeigning );
+	
 	Assert( pAmmoPack );
 	if ( pAmmoPack )
 	{
@@ -7292,7 +7262,7 @@ void CTFPlayer::DropAmmoPack( bool bLunchbox, bool bFeigning )
 		if ( !tf2v_disable_holiday_loot.GetBool() && ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) || TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) )
 		{
 			// Only make a holiday pack 3 times out of 10
-			if ( bIsHolidayPackDrop )
+			if ( ( rand() / float( VALVE_RAND_MAX ) < 0.3 ) )
 			{
 				pAmmoPack->MakeHolidayPack();
 				bHolidayPack = true;
