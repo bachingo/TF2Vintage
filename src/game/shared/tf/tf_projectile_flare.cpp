@@ -188,11 +188,6 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	// Check the flare mode.
 	int nFlareMode = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nFlareMode, set_weapon_mode);
-	
-	// Invisible.
-	SetModelName( NULL_STRING );
-	AddSolidFlags( FSOLID_NOT_SOLID );
-	m_takedamage = DAMAGE_NO;
 
 	// Pull out a bit.
 	if ( pTrace->fraction != 1.0 )
@@ -212,11 +207,73 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	Vector vecOrigin = GetAbsOrigin();
 	CTFPlayer *pPlayer = ToTFPlayer( pOther );
 
+	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin;
+	
+	// Invisible.
+	if ( nFlareMode != 3 || ( nFlareMode == 3 && !pPlayer ) )
+	{
+		SetModelName( NULL_STRING );
+		AddSolidFlags( FSOLID_NOT_SOLID );
+		m_takedamage = DAMAGE_NO;
+	}
+
 	if ( pPlayer )
 	{
 		// Hit player, do impact sound
 		CPVSFilter filter( vecOrigin );
-		EmitSound( filter, pPlayer->entindex(), "TFPlayer.FlareImpact" );
+		
+		if ( nFlareMode != 3 )
+			EmitSound( filter, pPlayer->entindex(), "TFPlayer.FlareImpact" );
+		else
+		{
+			// Scorch shot does knockback damage, and loses all of its speed on impact.
+
+			// Make sure only our knockback force blasts them backward.
+			int iDamageType = GetDamageType();
+			iDamageType |= DMG_PREVENT_PHYSICS_FORCE;
+			
+			// We deal with direct contact, do the regular logic.		
+			CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), iDamageType, TF_DMG_CUSTOM_BURNING );
+			info.SetReportedPosition( vectorReported);
+			pOther->TakeDamage( info );
+			
+			// Set up knockback.
+			// Faster projectile = more knockback.
+			Vector vecToVictim = GetAbsVelocity();
+			vecToVictim.NormalizeInPlace();
+			vecToVictim.z = 1.0;
+			
+			// Burning players get more knockback.
+			int iForce = 100;
+			if (pPlayer->m_Shared.InCond(TF_COND_BURNING))
+				iForce *= 2;
+			
+			Vector vecVelocityImpulse = vecToVictim;
+			pPlayer->ApplyAirBlastImpulse( vecVelocityImpulse * iForce );
+			pPlayer->m_Shared.StunPlayer(0.5f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_NOSOUNDOREFFECT , ToTFPlayer(pAttacker));
+			
+			// Stop all of our momentum forwards and backwards.
+			vecToVictim.x *= 0.05;
+			vecToVictim.y *= 0.05;
+			vecToVictim.z = 5.00;
+
+			// Point the new direction and randomly flip
+			QAngle angForward;
+			VectorAngles( vecToVictim, angForward );
+			SetAbsAngles( angForward );
+
+			QAngle angVel = RandomAngle( 0, 360 );
+			angVel.x *= RandomFloat(-2,2);
+			angVel.y *= RandomFloat(-2,2);
+			angVel.z *= RandomFloat(-2,2);
+			SetLocalAngularVelocity( angVel );
+
+
+			// Play the impact sound.
+			EmitSound( filter, pPlayer->entindex(), "Rubber.BulletImpact" );
+			// Return to wait to hit another object.
+			return;
+		}
 	}
 	else
 	{
@@ -226,10 +283,8 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pOther->entindex() );
 	}
 	
-	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
-	
 	// Scorch Shot and Detonator explode when touching the world, or if Detonator was triggered.
-	if ( ( nFlareMode == 1 && ( !pPlayer ) ) )
+	if ( ( ( nFlareMode == 1 || nFlareMode == 3 ) && ( !pPlayer ) ) )
 	{
 		// We explode in a small radius, set us up as an explosion.
 		CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BURNING, &vectorReported );
@@ -239,7 +294,11 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		
 		// Check the radius.
 		float flRadius = GetFlareRadius();
-			radiusInfo.m_flRadius = 0;	// ...No radius for damaging anyone except ourselves.
+		
+		if (nFlareMode == 3)
+			radiusInfo.m_flRadius = flRadius;	// Scorch Shot has full radius damage.
+		else
+			radiusInfo.m_flRadius = 0;	// ...Detonator gets no radius for damaging anyone except ourselves.
 		
 		radiusInfo.m_flSelfDamageRadius = flRadius;
 
