@@ -584,7 +584,8 @@ bool CTFPlayerShared::IsCritBoosted( void )
 		InCond( TF_COND_CRITBOOSTED_CTF_CAPTURE ) ||
 		InCond( TF_COND_CRITBOOSTED_ON_KILL ) ||
 		InCond( TF_COND_CRITBOOSTED_CARD_EFFECT ) ||
-		InCond( TF_COND_CRITBOOSTED_RUNE_TEMP ))
+		InCond( TF_COND_CRITBOOSTED_RUNE_TEMP ) ||
+		InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
 		return true;
 	return false;
 }
@@ -858,6 +859,7 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 	case TF_COND_CRITBOOSTED_ON_KILL:
 	case TF_COND_CRITBOOSTED_CARD_EFFECT:
 	case TF_COND_CRITBOOSTED_RUNE_TEMP:
+	case TF_COND_CRITBOOSTED_ACTIVEWEAPON:
 		OnAddCritboosted();
 		break;
 
@@ -1017,6 +1019,7 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 	case TF_COND_CRITBOOSTED_ON_KILL:
 	case TF_COND_CRITBOOSTED_CARD_EFFECT:
 	case TF_COND_CRITBOOSTED_RUNE_TEMP:
+	case TF_COND_CRITBOOSTED_ACTIVEWEAPON:
 		OnRemoveCritboosted();
 		break;
 

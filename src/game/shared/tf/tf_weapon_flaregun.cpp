@@ -166,7 +166,7 @@ bool CTFFlareGunRevenge::Deploy( void )
 	if (pOwner && CTFWeaponBaseGun::Deploy())
 	{
 		if ( pOwner->m_Shared.HasAirblastCrits() )
-			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 
 		return true;
 	}
@@ -182,7 +182,7 @@ bool CTFFlareGunRevenge::Holster( CBaseCombatWeapon *pSwitchTo )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if (pOwner && CTFWeaponBaseGun::Holster(pSwitchTo))
 	{
-		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 
 		return true;
 	}
@@ -288,7 +288,7 @@ void CTFFlareGunRevenge::PrimaryAttack(void)
 		pPlayer->m_Shared.DeductAirblastCrit();
 
 		if (!pPlayer->m_Shared.HasAirblastCrits())
-			pPlayer->m_Shared.RemoveCond(TF_COND_CRITBOOSTED);
+			pPlayer->m_Shared.RemoveCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON);
 	}
 
 	// Don't push out secondary attack, because our secondary fire
@@ -395,13 +395,13 @@ void CTFFlareGunRevenge::SecondaryAttack( void )
 				{
 					if (pOwner->m_Shared.HasAirblastCrits())
 					{
-						if (!pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED))
-							pOwner->m_Shared.AddCond(TF_COND_CRITBOOSTED);
+						if (!pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON))
+							pOwner->m_Shared.AddCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON);
 					}
 					else
 					{
-						if (pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED))
-							pOwner->m_Shared.RemoveCond(TF_COND_CRITBOOSTED);
+						if (pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON))
+							pOwner->m_Shared.RemoveCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON);
 					}
 				}
 

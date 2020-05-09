@@ -224,11 +224,13 @@ bool CTFFlameThrower::Holster( CBaseCombatWeapon *pSwitchingTo )
 #endif
 
 	// if in Mmmph mode, remove crits.
-	if ( HasMmmph() )
+	if ( HasMmmph() && BaseClass::Holster( pSwitchingTo ) )
 	{
 		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-		if ( pOwner && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
-			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		if (pOwner && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
+				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
+
+		return true;
 	}
 
 	return BaseClass::Holster( pSwitchingTo );
@@ -253,10 +255,10 @@ void CTFFlameThrower::ItemPostFrame()
 		if ( pOwner && pOwner->IsAlive() )
 		{
 			// Mmmph crits.
-			if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
-				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
-			else
-				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );			
+			if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) && !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
+				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
+			else if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
+				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );			
 		}
 	}
 
@@ -829,8 +831,10 @@ bool CTFFlameThrower::Deploy( void )
 	if ( HasMmmph() && BaseClass::Deploy() )
 	{
 		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-		if (pOwner && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
-			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+		if ( pOwner && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
+				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );	
+			
+		return true;
 	}
 	
 	return BaseClass::Deploy();
@@ -1304,7 +1308,7 @@ void CTFFlameThrower::ActivateMmmph(void)
 				pPlayer->SetHealth( pPlayer->GetMaxHealth() );
 				pPlayer->Taunt();
 				m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
-				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 			}
 		}
 #endif

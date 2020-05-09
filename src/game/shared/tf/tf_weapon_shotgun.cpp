@@ -406,7 +406,7 @@ void CTFShotgun_Revenge::PrimaryAttack( void )
 		pOwner->m_Shared.DeductRevengeCrit();
 
 		if ( !pOwner->m_Shared.HasRevengeCrits() )
-			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 	}
 }
 
@@ -431,7 +431,7 @@ bool CTFShotgun_Revenge::Deploy( void )
 	if ( pOwner && BaseClass::Deploy() )
 	{
 		if ( pOwner->m_Shared.HasRevengeCrits() )
-			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 
 		return true;
 	}
@@ -447,7 +447,7 @@ bool CTFShotgun_Revenge::Holster( CBaseCombatWeapon *pSwitchTo )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && BaseClass::Holster( pSwitchTo ) )
 	{
-		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 
 		return true;
 	}
@@ -483,13 +483,13 @@ void CTFShotgun_Revenge::OnSentryKilled( CObjectSentrygun *pSentry )
 		{
 			if ( pOwner->m_Shared.HasRevengeCrits() )
 			{
-				if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
-					pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+				if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
+					pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 			}
 			else
 			{
-				if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
-					pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+				if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
+					pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 			}
 		}
 	}

@@ -97,7 +97,7 @@ void CTFRevolver_Dex::PrimaryAttack( void )
 		pOwner->m_Shared.DeductSapperKillCount();
 		
 		if ( pOwner->m_Shared.GetSapperKillCount() < 1 )
-			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 	}
 }
 
@@ -120,13 +120,13 @@ void CTFRevolver_Dex::CritThink( void )
 	{
 		if ( pOwner->m_Shared.GetSapperKillCount() > 0 )
 		{
-			if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
-				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+			if ( !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
+				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 		}
 		else
 		{
-			if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
-				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+			if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
+				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 		}
 	}
 }
@@ -140,7 +140,7 @@ bool CTFRevolver_Dex::Deploy( void )
 	if ( pOwner && BaseClass::Deploy() )
 	{
 		if ( pOwner->m_Shared.GetSapperKillCount() > 0 )
-			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 		return true;
 	}
 
@@ -155,7 +155,7 @@ bool CTFRevolver_Dex::Holster( CBaseCombatWeapon *pSwitchTo )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && CTFRevolver::Holster( pSwitchTo ) )
 	{
-		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+		pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
 		return true;
 	}
 
