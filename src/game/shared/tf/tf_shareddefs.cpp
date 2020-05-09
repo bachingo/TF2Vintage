@@ -221,7 +221,7 @@ int GetClassIndexFromString( char const *name, int maxClass )
 {	// what's the point of the second argument?
 	for (int i = TF_FIRST_NORMAL_CLASS; i <= maxClass; ++i)
 	{
-		// what's the point of checking length? investigate for inlines...
+		// check length so "demo" matches "demoman", "heavy" matches "heavyweapons" etc.
 		size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
 		if (length <= strlen( name ) && !Q_strnicmp( g_aPlayerClassNames_NonLocalized[i], name, length ))
 			return i;
