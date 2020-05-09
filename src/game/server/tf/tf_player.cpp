@@ -118,7 +118,6 @@ ConVar tf_allow_sliding_taunt( "tf_allow_sliding_taunt", "0", 0, "Allow player t
 ConVar tf_halloween_giant_health_scale( "tf_halloween_giant_health_scale", "10", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
 
-
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
@@ -184,6 +183,9 @@ ConVar tf2v_use_new_caber( "tf2v_use_new_caber", "0", FCVAR_NOTIFY | FCVAR_REPLI
 ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
 ConVar tf2v_use_new_pomson( "tf2v_use_new_pomson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Pomson's Drain Uber+Cloak to be based on modern falloff settings." );
 ConVar tf2v_use_shortstop_slowdown( "tf2v_use_shortstop_slowdown", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the Shortstop's slowdown on hit ability." );
+
+
+ConVar tf2v_use_new_phlog_fill( "tf2v_use_new_phlog_fill", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between the old 225 damage to fill Mmmph versus the modern 300." );
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -5261,7 +5263,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		int nEarnFireRage = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER(pAttacker, nEarnFireRage, burn_damage_earns_rage);
 		if (nEarnFireRage != 0)
-			pTFAttacker->m_Shared.AddFireRage(info.GetDamage());
+		{
+			int nFireRageAmount = 225;
+			if ( tf2v_use_new_phlog_fill.GetBool() )
+				nFireRageAmount = 300;
+			pTFAttacker->m_Shared.AddFireRage( info.GetDamage() / nFireRageAmount );
+		}
 	}
 
 	if ( inputInfo.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )

@@ -74,6 +74,8 @@ ConVar tf2v_use_extinguish_heal( "tf2v_use_extinguish_heal", "0", FCVAR_REPLICAT
 
 #ifdef GAME_DLL
 	ConVar tf2v_debug_airblast( "tf2v_debug_airblast", "0", FCVAR_CHEAT, "Visualize airblast box." );
+	ConVar tf2v_use_new_phlog_taunt( "tf2v_use_new_phlog_taunt", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes behavior when activating Mmmph.", true, 0, true, 2 );
+
 #endif
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrower, DT_WeaponFlameThrower )
@@ -1302,13 +1304,22 @@ void CTFFlameThrower::ActivateMmmph(void)
 		{
 			if ( pPlayer->IsAllowedToTaunt() )
 			{
-				// Throw uber, add the critboost, replenish their health, and taunt.
-				pPlayer->m_Shared.AddCond(TF_COND_INVULNERABLE, 1.0f);
-				pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED_RAGE_BUFF);
-				pPlayer->SetHealth( pPlayer->GetMaxHealth() );
+				// Throw a taunt.
 				pPlayer->Taunt();
-				m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
 				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON );
+				m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
+				pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED_RAGE_BUFF);
+				
+				// What bonuses we give is based off of the time period.
+				
+				// 0, 1: Fully heal player.
+				if ( tf2v_use_new_phlog_taunt.GetInt() == 0 || tf2v_use_new_phlog_taunt.GetInt() == 1 )
+					pPlayer->SetHealth( pPlayer->GetMaxHealth() );		
+				
+				// 1, 2: Add Uber through taunt.
+				if ( tf2v_use_new_phlog_taunt.GetInt() == 1 || tf2v_use_new_phlog_taunt.GetInt() == 2 )
+					pPlayer->m_Shared.AddCond(TF_COND_INVULNERABLE, 1.0f);			
+
 			}
 		}
 #endif
