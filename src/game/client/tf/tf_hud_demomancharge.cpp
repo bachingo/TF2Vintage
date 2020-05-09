@@ -17,6 +17,7 @@
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weaponbase.h"
+#include "tf_weapon_grenadelauncher.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -92,7 +93,18 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 
 	if ( iWeaponID != TF_WEAPON_PIPEBOMBLAUNCHER  )
 	{
-		return false;
+		// Check if we're using a mortar.
+		if ( iWeaponID == TF_WEAPON_GRENADELAUNCHER || iWeaponID == TF_WEAPON_CANNON )
+		{
+			CTFGrenadeLauncher *pLauncher = dynamic_cast< CTFGrenadeLauncher *>( pWpn );
+			if (pLauncher && pLauncher->IsMortar() )
+				CHudElement::ShouldDraw();
+		
+			return false;
+		
+		}
+		else
+			return false;
 	}
 
 	return CHudElement::ShouldDraw();

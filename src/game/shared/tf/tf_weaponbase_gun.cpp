@@ -219,7 +219,6 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 			break;
 
 		case TF_PROJECTILE_PIPEBOMB:
-		case TF_PROJECTILE_CANNONBALL:
 			pProjectile = FirePipeBomb( pPlayer, 0 );
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;
@@ -232,6 +231,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 		case TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE:
 			pProjectile = FirePipeBomb( pPlayer, 3 );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;
+			
+		case TF_PROJECTILE_CANNONBALL:
+			pProjectile = FirePipeBomb( pPlayer, 4 );
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;
 
@@ -637,6 +641,10 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, int iRemoteDeto
 	else if ( iRemoteDetonate == 3 )
 	{
 		iMode = TF_GL_MODE_BETA_DETONATE;
+	}
+	else if ( iRemoteDetonate == 4 )
+	{
+		iMode = TF_GL_MODE_CANNONBALL;
 	}
 
 	Vector vecForward, vecRight, vecUp;
@@ -1127,4 +1135,45 @@ void CTFWeaponBaseGun::ZoomOutIn( void )
 	//Zoom out, set think to zoom back in.
 	ZoomOut();
 	SetContextThink( &CTFWeaponBaseGun::ZoomIn, gpGlobals->curtime + ZOOM_REZOOM_TIME, ZOOM_CONTEXT );
+}
+
+
+#define TF_DOUBLE_DONK_TIMELIMIT 0.5f
+//-----------------------------------------------------------------------------
+// Purpose: Adds the donked target to our table to check later.
+//-----------------------------------------------------------------------------
+void CTFWeaponBaseGun::AddDoubleDonk(CBaseEntity* pVictim )
+{
+	// Clean up expired donks.
+	FOR_EACH_VEC_BACK( hDonkedPlayers, i )
+	{
+		if( hDonkedTimeLimit[i] <= gpGlobals->curtime )
+		{
+			hDonkedPlayers.Remove( i );
+			hDonkedTimeLimit.Remove( i );
+		}
+	}
+	
+	hDonkedPlayers.AddToTail(pVictim);
+	hDonkedTimeLimit.AddToTail(gpGlobals->curtime + TF_DOUBLE_DONK_TIMELIMIT);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if this is a Double Donk attack.
+//-----------------------------------------------------------------------------
+bool CTFWeaponBaseGun::IsDoubleDonk(CBaseEntity* pVictim )
+{
+	// Check the players hit by donks.
+	FOR_EACH_VEC( hDonkedPlayers, i )
+	{
+		// Not our victim, skip.
+		if (hDonkedPlayers[i] != pVictim)
+			continue;
+		
+		// Check if it's within the time limit.
+		if( hDonkedTimeLimit[i] <= gpGlobals->curtime )
+			return true;
+	}
+	
+	return false;
 }
