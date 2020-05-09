@@ -3963,7 +3963,7 @@
 				"airblast cost increased"
 				{
 					"attribute_class"	"mult_airblast_cost"
-					"value" "1.50"
+					"value" "2.50"
 				}
                 "crit mod disabled hidden"
                 {
