@@ -4361,6 +4361,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		case TF_DMG_CUSTOM_MERASMUS_DECAPITATION:
 			pszCustomKill = "merasmus_decap";
 			break;
+		case TF_DMG_CUSTOM_CANNONBALL_PUSH:
+			pszCustomKill = "loose_cannon_impact";
+			break;
 	}
 
 	if ( pszCustomKill != NULL )
