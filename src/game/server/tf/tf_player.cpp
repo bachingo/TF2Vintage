@@ -2030,10 +2030,127 @@ void CTFPlayer::ValidateWearables( void )
 			int iSlot = pItemDef->GetLoadoutSlot( iClass );
 			CEconItemView *pLoadoutItem = GetLoadoutItem( iClass, iSlot );
 
-			if ( !ItemsMatch( pWearable->GetItem(), pLoadoutItem, NULL ) )
+			if (!ItemsMatch(pWearable->GetItem(), pLoadoutItem) )
 			{
 				// Not supposed to carry this wearable, nuke it.
 				RemoveWearable( pWearable );
+				UTIL_Remove(pWearable);
+			}
+		}
+	}
+}
+	
+//-----------------------------------------------------------------------------
+// Purpose: Validates weapon slots.
+//-----------------------------------------------------------------------------
+void CTFPlayer::ValidateWeaponSlots( void )
+{
+	int iClass = m_PlayerClass.GetClassIndex();
+	// Validate weapons by slot.
+	for ( int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i )
+	{	
+		CTFWeaponBase *pWeapon = assert_cast<CTFWeaponBase *>( GetWeapon( i ) );
+		if ( pWeapon == nullptr )
+			continue;
+			
+		// Skip builder as we'll handle it separately.
+		if ( pWeapon->IsWeapon( TF_WEAPON_BUILDER ) )
+			continue;
+			
+		CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
+
+		if ( pItemDef )
+		{
+			int iSlot = pItemDef->GetLoadoutSlot( iClass );
+			CEconItemView *pLoadoutItem = GetLoadoutItem( iClass, iSlot );
+
+			if ( !ItemsMatch( pWeapon->GetItem(), pLoadoutItem, pWeapon ) )
+			{
+				// Holster our active weapon
+				if ( pWeapon == GetActiveWeapon() )
+				pWeapon->Holster();
+
+				Weapon_Detach( pWeapon );
+				UTIL_Remove( pWeapon );		
+			}
+		}
+	}
+	
+	// Validate warables by slot.
+	for ( int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i )
+	{	
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+		if ( pWearable == nullptr )
+			continue;
+			
+		CEconItemDefinition *pItemDef = pWearable->GetItem()->GetStaticData();
+
+		if ( pItemDef )
+		{
+			int iSlot = pItemDef->GetLoadoutSlot( iClass );
+			CEconItemView *pLoadoutItem = GetLoadoutItem( iClass, iSlot );
+
+			if (!ItemsMatch(pWearable->GetItem(), pLoadoutItem))
+			{
+				// Not supposed to carry this wearable, nuke it.
+				RemoveWearable(pWearable);
+				UTIL_Remove(pWearable);
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Validates acosmetic slots.
+//-----------------------------------------------------------------------------
+void CTFPlayer::ValidateWearableSlots( void )
+{
+	int iClass = m_PlayerClass.GetClassIndex();
+	// Validate weapons by slot.
+	for ( int i = TF_LOADOUT_SLOT_HAT; i < TF_LOADOUT_SLOT_BUFFER; ++i )
+	{	
+		CTFWeaponBase *pWeapon = assert_cast<CTFWeaponBase *>( GetWeapon( i ) );
+		if ( pWeapon == nullptr )
+			continue;
+			
+		CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
+
+		if ( pItemDef )
+		{
+			int iSlot = pItemDef->GetLoadoutSlot( iClass );
+			CEconItemView *pLoadoutItem = GetLoadoutItem( iClass, iSlot );
+
+			if ( !ItemsMatch( pWeapon->GetItem(), pLoadoutItem, pWeapon ) )
+			{
+				// Holster our active weapon
+				if ( pWeapon == GetActiveWeapon() )
+				pWeapon->Holster();
+
+				Weapon_Detach( pWeapon );
+				UTIL_Remove( pWeapon );		
+			}
+		}
+	}
+	
+	// Validate warables by slot.
+	for ( int i = TF_LOADOUT_SLOT_HAT; i < TF_LOADOUT_SLOT_BUFFER; ++i )
+	{	
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+		if ( pWearable == nullptr )
+			continue;
+			
+		CEconItemDefinition *pItemDef = pWearable->GetItem()->GetStaticData();
+
+		if (pItemDef)
+		{
+			int iSlot = pItemDef->GetLoadoutSlot(iClass);
+			CEconItemView *pLoadoutItem = GetLoadoutItem(iClass, iSlot);
+
+			if (!ItemsMatch(pWearable->GetItem(), pLoadoutItem))
+			{
+				// Not supposed to carry this wearable, nuke it.
+				RemoveWearable(pWearable);
+				UTIL_Remove(pWearable);
 			}
 		}
 	}
@@ -2045,6 +2162,7 @@ void CTFPlayer::ValidateWearables( void )
 void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
 	// Validate our inventory.
+	ValidateWeaponSlots();
 	ValidateWearables();
 	ValidateWeapons( true );
 
@@ -2374,7 +2492,8 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 {
-
+	ValidateWearableSlots();
+	
 	for (int iSlot = TF_LOADOUT_SLOT_HAT; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
 	{
 		if ( ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) )
