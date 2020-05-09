@@ -6793,6 +6793,70 @@
 				"sound_melee_hit_world"	"Weapon_3rd_degree.HitWorld"
 			}
 		}
+		"594"
+		{
+			"name"	"The Phlogistinator"
+			"prefab"	"weapon_flamethrower"
+			"first_sale_date"	"2011"
+			"item_logname"	"phlogistinator"
+			"item_iconname"	"phlogistinator"
+			"item_name"	"#TF_Phlogistinator"
+			"item_description"	"#TF_Phlogistinator_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_drg_phlogistinator/c_drg_phlogistinator"
+			"model_player"	"models/workshop/weapons/c_models/c_drg_phlogistinator/c_drg_phlogistinator.mdl"
+			"propername"	"1"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -12"		
+			}
+			"attributes"
+			{
+				"burn damage earns rage"
+				{
+					"attribute_class"	"burn_damage_earns_rage"
+					"value" "1"
+				}
+				"airblast disabled"
+				{
+					"attribute_class"	"airblast_disabled"
+					"value" "1"
+				}
+				"ragdolls become ash"
+				{
+					"attribute_class"	"ragdolls_become_ash"
+					"value"	"1"
+				}
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_phlogistinator.FireStart"
+				"sound_special1"	"Weapon_phlogistinator.FireLoop"
+				"sound_special3"	"Weapon_phlogistinator.WindDown"
+				"sound_burst"		"Weapon_phlogistinator.FireLoopCrit"
+
+				"animation_replacement"
+				{
+					"ACT_PRIMARY_VM_INSPECT_START"		"ACT_PRIMARY_ALT1_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"		"ACT_PRIMARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"		"ACT_PRIMARY_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
 		"595"
 		{
 			"name"	"The Manmelter"
