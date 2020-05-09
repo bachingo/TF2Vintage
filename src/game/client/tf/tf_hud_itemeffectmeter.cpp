@@ -22,6 +22,7 @@
 #include "tf_weapon_knife.h"
 #include "tf_weapon_flaregun.h"
 #include "tf_weapon_particlecannon.h"
+#include "tf_weapon_flamethrower.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -606,6 +607,26 @@ float CHudItemEffectMeterTemp<C_TFParticleCannon>::GetProgress( void )
 }
 
 //-----------------------------------------------------------------------------
+// C_TFFlameThrower Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFFlameThrower>::ShouldBeep( void )
+{
+	return true;
+}
+
+template<>
+float CHudItemEffectMeterTemp<C_TFFlameThrower>::GetProgress( void )
+{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer && IsEnabled() )
+			return pPlayer->m_Shared.GetFireRage() / 100;
+
+	return 1.0f;
+}
+
+
+//-----------------------------------------------------------------------------
 // Killstreak Specialization
 //-----------------------------------------------------------------------------
 bool CHudItemEffectMeterKillstreak::IsEnabled( void )
@@ -745,6 +766,7 @@ void CHudItemEffects::SetPlayer( void )
 			break;
 		case TF_CLASS_PYRO:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFFlareGunRevenge>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Engineer.res"));
+			AddItemMeter(new CHudItemEffectMeterTemp<C_TFFlameThrower>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Pyro.res"));
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) );

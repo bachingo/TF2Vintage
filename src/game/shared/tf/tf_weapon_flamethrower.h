@@ -71,9 +71,10 @@ public:
 
 	int				GetBuffType( void ) const;
 
+	virtual bool	Deploy( void );
+	
 	// Client specific.
 #if defined( CLIENT_DLL )
-	virtual bool	Deploy( void );
 
 	virtual void	OnDataChanged(DataUpdateType_t updateType);
 	virtual void	UpdateOnRemove( void );
@@ -105,6 +106,11 @@ public:
 	bool			CanAirBlastDeflectProjectile( void );
 	bool			CanAirBlastPushPlayers( void );
 	bool			CanAirBlastPutOutTeammate( void );
+	
+	bool			HasMmmph(void);
+	virtual void	ActivateMmmph(void);
+	virtual bool	HasChargeBar( void );
+	virtual const char* GetEffectLabelText( void ) { return "#TF_PyroRage"; }
 
 protected:
 	Vector GetMuzzlePosHelper( bool bVisualPos );

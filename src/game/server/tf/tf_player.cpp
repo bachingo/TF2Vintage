@@ -4990,7 +4990,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	// Handle on-hit effects.
 	// Don't apply on-hit effects if a building did it, or if it's done by afterburn.
-	if ( ( pWeapon && pAttacker != this ) && (!bObject) && !( info.GetDamageType() & DMG_BURN ))
+	if ( ( pWeapon && pAttacker != this ) && (!bObject) && !( info.GetDamageType() & DMG_BURN ) )
 	{
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
@@ -5242,7 +5242,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_OFFENSE);
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_OFFENSE_COUNT / 100), TF_BUFF_DEFENSE);
 				pTFAttacker->m_Shared.SetRageMeter(info.GetDamage() / (TF_BUFF_REGENONDAMAGE_OFFENSE_COUNT_NEW / 100), TF_BUFF_REGENONDAMAGE);
-			}			
+			}	
+
+			
 		}
 
 		// Check if we're stunned and should have reduced damage taken
@@ -5251,6 +5253,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			// Reduce our damage
 			info.SetDamage( info.GetDamage() * m_Shared.m_flStunResistance );
 		}
+	}
+	
+	// For Fire and burn damage, add to fire rage.
+	if ( pTFAttacker && ( ( pWeapon && pAttacker != this ) && (!bObject) && ( ( info.GetDamageType() & DMG_IGNITE|DMG_BURN ) ) ) )
+	{
+		int nEarnFireRage = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pAttacker, nEarnFireRage, burn_damage_earns_rage);
+		if (nEarnFireRage != 0)
+			pTFAttacker->m_Shared.AddFireRage(info.GetDamage());
 	}
 
 	if ( inputInfo.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )

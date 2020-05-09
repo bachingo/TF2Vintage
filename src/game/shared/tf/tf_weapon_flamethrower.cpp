@@ -223,6 +223,14 @@ bool CTFFlameThrower::Holster( CBaseCombatWeapon *pSwitchingTo )
 	StopPilotLight();
 #endif
 
+	// if in Mmmph mode, remove crits.
+	if ( HasMmmph() )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+		if ( pOwner && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
+			pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );
+	}
+
 	return BaseClass::Holster( pSwitchingTo );
 }
 
@@ -238,6 +246,19 @@ void CTFFlameThrower::ItemPostFrame()
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
 		return;
+	
+	// if in Mmmph mode, add crits.
+	if ( HasMmmph() )
+	{
+		if ( pOwner && pOwner->IsAlive() )
+		{
+			// Mmmph crits.
+			if ( pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
+				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+			else
+				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED );			
+		}
+	}
 
 	int iAmmo = pOwner->GetAmmoCount( m_iPrimaryAmmoType );
 	bool bFired = false;
@@ -506,11 +527,19 @@ void CTFFlameThrower::PrimaryAttack()
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::SecondaryAttack()
 {
-	if ( tf2v_airblast.GetInt() != 1 && tf2v_airblast.GetInt() != 2 )
-		return;
 
 	// Are we capable of firing again?
 	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
+		return;
+	
+	// Can we use our Mmmph?
+	if (HasMmmph())
+	{
+		ActivateMmmph();
+		return;
+	}
+	
+	if ( tf2v_airblast.GetInt() != 1 && tf2v_airblast.GetInt() != 2 )
 		return;
 
 	// Get the player owning the weapon.
@@ -789,15 +818,25 @@ int CTFFlameThrower::GetBuffType( void ) const
 	return iBuffType;
 }
 
-#if defined( CLIENT_DLL )
 
 bool CTFFlameThrower::Deploy( void )
 {
+#if defined( CLIENT_DLL )
 	StartPilotLight();
+#endif
 
+	// if in Mmmph mode, add crits.
+	if ( HasMmmph() && BaseClass::Deploy() )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+		if (pOwner && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
+			pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+	}
+	
 	return BaseClass::Deploy();
 }
 
+#if defined( CLIENT_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -870,12 +909,34 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		szParticleEffect = "flamethrower_underwater";
 	}
 
+	int nFireType = 0;
+	CALL_ATTRIB_HOOK_INT(nFireType, set_weapon_mode);
+	if ( nFireType == 1 )	 // Phlogistinator.
+	{
+		if ( m_bCritFire )		
+			return "drg_phlo_stream_crit";
+		else
+			return "drg_phlo_stream";
+	}
+	else if (nFireType == 3) // Rainblower.
+	{
+		if ( !tf2v_new_flames.GetBool() )
+		{
+			return "flamethrower_rainbow";
+		}
+		else
+		{
+			return "tf2v_flamethrower_rainbow_new_flame";
+		}		
+	}
+
+
 	if ( !tf2v_new_flames.GetBool() )
 	{
 		if ( m_bCritFire )
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				szParticleEffect = "flamethrower_rainbow_FP";
+				szParticleEffect = "flamethrower_rainbow";
 			else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 				szParticleEffect = ConstructTeamParticle( "flamethrower_halloween_crit_%s", iTeam, true );
 			else
@@ -884,7 +945,7 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 		else
 		{
 			if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-				szParticleEffect = "flamethrower_rainbow_FP";
+				szParticleEffect = "flamethrower_rainbow";
 			else if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
 				szParticleEffect = "flamethrower_halloween";
 			else
@@ -1207,6 +1268,58 @@ bool CTFFlameThrower::CanAirBlastPutOutTeammate( void )
 	int iExtinguishDisabled = 0;
 	CALL_ATTRIB_HOOK_INT( iExtinguishDisabled, airblast_put_out_teammate_disabled );
 	return iExtinguishDisabled == 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if we have a Mmmph mode.
+//-----------------------------------------------------------------------------
+bool CTFFlameThrower::HasMmmph( void )
+{
+	// Don't let us have airblast and Mmmph. (key conflict)
+	if ( CanAirBlast() )
+		return false;
+
+	int iMmmphMode = 0;
+	CALL_ATTRIB_HOOK_INT( iMmmphMode, burn_damage_earns_rage );
+	return iMmmphMode != 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Activates Mmmph on the flamethrower.
+//-----------------------------------------------------------------------------
+void CTFFlameThrower::ActivateMmmph(void)
+{
+#ifdef GAME_DLL
+		CTFPlayer *pPlayer = GetTFPlayerOwner();
+		if (!pPlayer)
+			return;
+		
+		if ( !pPlayer->m_Shared.InCond(TF_COND_CRITBOOSTED_RAGE_BUFF) && pPlayer->m_Shared.HasFullFireRage())
+		{
+			if ( pPlayer->IsAllowedToTaunt() )
+			{
+				// Throw uber, add the critboost, replenish their health, and taunt.
+				pPlayer->m_Shared.AddCond(TF_COND_INVULNERABLE, 1.0f);
+				pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED_RAGE_BUFF);
+				pPlayer->SetHealth( pPlayer->GetMaxHealth() );
+				pPlayer->Taunt();
+				m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
+				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+			}
+		}
+#endif
+		return;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Displays the Charge bar.
+//-----------------------------------------------------------------------------
+bool CTFFlameThrower::HasChargeBar(void)
+{
+	if ( HasMmmph() )
+		return true;
+	
+	return false;
 }
 
 

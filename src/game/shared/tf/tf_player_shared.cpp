@@ -381,6 +381,7 @@ CTFPlayerShared::CTFPlayerShared()
 	SetSanguisugeHealth(0);
 	SetKillstreakCount( 0 );
 	SetFocusLevel( 0 );
+	SetFireRageMeter(0);
 
 	m_flEnergyDrinkDrainRate = tf_scout_energydrink_consume_rate.GetFloat();
 	m_flEnergyDrinkRegenRate = tf_scout_energydrink_regen_rate.GetFloat();
@@ -1595,6 +1596,7 @@ void CTFPlayerShared::ConditionThink( void )
 	UpdateChargeMeter();
 	UpdateEnergyDrinkMeter();
 	UpdateFocusLevel();
+	UpdateFireRage();
 #else
 	m_pOuter->UpdateHalloweenBombHead();
 #endif
@@ -4713,6 +4715,31 @@ void CTFPlayerShared::AddFocusLevel(bool bKillOrAssist)
 		return;
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Updates our Fire Rage.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateFireRage( void )
+{
+	if ( m_flFireRage > 100.0f ) // Prevent our meter from going over 100
+	{
+		m_flFireRage = 100.0f;
+	}
+		
+	if ( InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
+	{
+		m_flFireRage -= ( gpGlobals->frametime * 10 );	// Max is 10 seconds.
+
+		if ( m_flFireRage <= 0.0f )
+		{
+			RemoveCond( TF_COND_CRITBOOSTED_RAGE_BUFF );
+			m_flFireRage = 0;
+		}
+	}
+	
+	return;
+}
+
 #endif
 
 //-----------------------------------------------------------------------------

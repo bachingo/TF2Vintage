@@ -430,6 +430,7 @@ public:
 	void	IncrementKillstreakCount( void )       { m_iKillstreak += 1; }
 	
 	void	SetFocusLevel(float amount)        { m_flFocusLevel = amount; }
+	
 #ifdef GAME_DLL
 	void	UpdateCloakMeter( void );
 	void 	UpdateSanguisugeHealth( void );
@@ -444,6 +445,15 @@ public:
 	float	GetFocusLevel(void)		{return m_flFocusLevel;}
 	
 	void	EndCharge( void );
+	
+#ifdef GAME_DLL
+	// Mmmph.
+	void	UpdateFireRage( void );
+	void	AddFireRage(float input) { m_flFireRage = Min( (m_flFireRage + input), 100.0f ); }
+#endif
+	void	SetFireRageMeter( float value ) {m_flFireRage = value;}
+	bool	HasFullFireRage(void)	{return m_flFireRage >= 100.0f;}
+	float	GetFireRage(void)		{return m_flFireRage;}
 
 private:
 
@@ -673,12 +683,14 @@ public:
 	CNetworkVar( float, m_flFocusLevel );
 	CNetworkVar( float, m_flChargeMeter );
 	CNetworkVar( float, m_flHypeMeter );
+	CNetworkVar( float, m_flFireRage );
 private:
 #else
 	float m_flEnergyDrinkMeter;
 	float m_flFocusLevel;
 	float m_flChargeMeter;
 	float m_flHypeMeter;
+	float m_flFireRage;
 #endif
 	float m_flEnergyDrinkDrainRate;
 	float m_flEnergyDrinkRegenRate;
