@@ -15,6 +15,8 @@
 #include "basegrenade_shared.h"
 #ifdef GAME_DLL
 #include "SpriteTrail.h"
+#else
+#include "c_te_legacytempents.h"
 #endif
 
 // Client specific.
@@ -241,6 +243,12 @@ public:
 	CNewParticleEffect *m_pSpeedTrails;
 	CNewParticleEffect *m_pBuffAura;
 	CNewParticleEffect *m_pMarkedIcon;
+	
+	CNewParticleEffect *m_pResistanceIcon;
+	C_BaseAnimating	   *m_pResistanceShield;
+	int				m_nCurrentResistanceIcon;
+	int				m_nResistanceIconTeam;
+	int				m_nResistanceShieldTeam;
 #endif
 
 	void	UpdatePhaseEffects( void );
@@ -480,6 +488,8 @@ private:
 	void OnAddBuff( void );
 	void OnAddInPurgatory( void );
 	void OnAddMarkedForDeath( void );
+	void UpdateResistanceIcon(void);
+	void UpdateResistanceShield(void);
 	void OnAddHalloweenThriller( void );
 	void OnAddHalloweenBombHead( void );
 

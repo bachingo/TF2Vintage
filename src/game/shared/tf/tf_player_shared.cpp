@@ -946,6 +946,18 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 	case TF_COND_HALLOWEEN_BOMB_HEAD:
 		OnAddHalloweenBombHead();
 		break;
+		
+	case TF_COND_MEDIGUN_SMALL_BULLET_RESIST:
+	case TF_COND_MEDIGUN_SMALL_BLAST_RESIST:
+	case TF_COND_MEDIGUN_SMALL_FIRE_RESIST:
+		UpdateResistanceIcon();
+		break;
+	case TF_COND_MEDIGUN_UBER_BULLET_RESIST:
+	case TF_COND_MEDIGUN_UBER_BLAST_RESIST:
+	case TF_COND_MEDIGUN_UBER_FIRE_RESIST:	
+		UpdateResistanceIcon();
+		UpdateResistanceShield();
+		break;
 
 	default:
 		break;
@@ -1102,6 +1114,18 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 		OnRemoveHalloweenBombHead();
 		break;
 
+	case TF_COND_MEDIGUN_SMALL_BULLET_RESIST:
+	case TF_COND_MEDIGUN_SMALL_BLAST_RESIST:
+	case TF_COND_MEDIGUN_SMALL_FIRE_RESIST:
+		UpdateResistanceIcon();
+		break;
+	case TF_COND_MEDIGUN_UBER_BULLET_RESIST:
+	case TF_COND_MEDIGUN_UBER_BLAST_RESIST:
+	case TF_COND_MEDIGUN_UBER_FIRE_RESIST:	
+		UpdateResistanceIcon();
+		UpdateResistanceShield();
+		break;
+	
 	default:
 		break;
 	}
@@ -2351,6 +2375,188 @@ void CTFPlayerShared::OnRemoveMarkedForDeath( void )
 		m_pMarkedIcon = NULL;
 	}
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Appled on resistance changes.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateResistanceIcon(void)
+{
+#ifdef CLIENT_DLL
+	bool bShouldUpdate = false;
+	int nCurrentResistance = 0;
+
+	// Hide the icon when cloaked.
+	if (m_pOuter->m_Shared.InCond(TF_COND_STEALTHED) || m_pOuter->m_Shared.InCond(TF_COND_STEALTHED_BLINK))
+	{
+		if (m_pResistanceIcon)
+		{
+			m_pOuter->ParticleProp()->StopEmission(m_pResistanceIcon);
+			m_pResistanceIcon = NULL;
+		}
+		return;
+	}
+
+	if (m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_SMALL_BULLET_RESIST) || m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_UBER_BULLET_RESIST))
+		nCurrentResistance = 3;
+	else if (m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_SMALL_BLAST_RESIST) || m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_UBER_BLAST_RESIST))
+		nCurrentResistance = 4;
+	else if (m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_SMALL_FIRE_RESIST) || m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_UBER_FIRE_RESIST))
+		nCurrentResistance = 5;
+
+	// Different icon, update.
+	if (m_nCurrentResistanceIcon != nCurrentResistance)
+		bShouldUpdate = true;
+
+	// Check if we should change team icon.
+	int iVisibleTeam = m_pOuter->GetTeamNumber();
+	// if this player is disguised and on the other team, use disguise team
+	if (m_pOuter->m_Shared.InCond(TF_COND_DISGUISED) && m_pOuter->IsEnemyPlayer())
+		iVisibleTeam = m_pOuter->m_Shared.GetDisguiseTeam();
+
+	if (iVisibleTeam != m_nResistanceIconTeam)
+		bShouldUpdate = true;
+
+	// Generate a new icon
+	if (bShouldUpdate)
+	{
+		// No buff, turn off our resistance icon.
+		if (!nCurrentResistance && m_pResistanceIcon)
+		{
+			m_pOuter->ParticleProp()->StopEmission(m_pResistanceIcon);
+			m_pResistanceIcon = NULL;
+			m_nResistanceIconTeam = 0;
+			m_nCurrentResistanceIcon = 0;
+			return;
+		}
+
+		// Kill the current icon.
+		if (m_pResistanceIcon)
+		{
+			m_pOuter->ParticleProp()->StopEmission(m_pResistanceIcon);
+			m_pResistanceIcon = NULL;
+		}
+
+		// Generate icon.
+		const char* pszEffect = nullptr;
+		if (iVisibleTeam == TF_TEAM_RED)
+		{
+			switch (nCurrentResistance)
+			{
+			case 3:
+				pszEffect = "vaccinator_red_buff1";
+				break;
+
+			case 4:
+				pszEffect = "vaccinator_red_buff2";
+				break;
+
+			case 5:
+				pszEffect = "vaccinator_red_buff3";
+				break;
+			}
+		}
+		else
+		{
+			switch (nCurrentResistance)
+			{
+			case 3:
+				pszEffect = "vaccinator_blue_buff1";
+				break;
+
+			case 4:
+				pszEffect = "vaccinator_blue_buff2";
+				break;
+
+			case 5:
+				pszEffect = "vaccinator_blue_buff3";
+				break;
+			}
+		}
+
+		if (pszEffect[0] == '\0')
+		{
+			m_pResistanceIcon = m_pOuter->ParticleProp()->Create(pszEffect, PATTACH_POINT_FOLLOW, "head");
+			m_nCurrentResistanceIcon = nCurrentResistance;
+			m_nResistanceIconTeam = iVisibleTeam;
+		}
+		return;
+	}
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Appled on shield add/remove.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateResistanceShield(void)
+{
+#ifdef CLIENT_DLL
+	bool bDisplayShield = false;
+
+	// Hide the shield when cloaked.
+	if (m_pOuter->m_Shared.InCond(TF_COND_STEALTHED) || m_pOuter->m_Shared.InCond(TF_COND_STEALTHED_BLINK))
+	{
+		if (m_pResistanceShield)
+		{
+			m_pResistanceShield->Remove();
+			m_pResistanceShield = NULL;
+			m_nResistanceShieldTeam = -1;
+		}
+		return;
+	}
+
+	// Display a shield if we have a "big" resist.
+	if (m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_UBER_BULLET_RESIST))
+		bDisplayShield = true;
+	else if (m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_UBER_BLAST_RESIST))
+		bDisplayShield = true;
+	else if (m_pOuter->m_Shared.InCond(TF_COND_MEDIGUN_UBER_FIRE_RESIST))
+		bDisplayShield = true;
+
+
+	// Not supposed to have a shield, remove it and bail.
+	if (!bDisplayShield && m_pResistanceShield)
+	{
+		m_pResistanceShield->Remove();
+		m_pResistanceShield = NULL;
+		m_nResistanceShieldTeam = -1;
+		return;
+	}
+
+	bool bRefreshShield = false;
+	// Check if we should change team icon.
+	int iVisibleTeam = m_pOuter->GetTeamNumber();
+	// if this player is disguised and on the other team, use disguise team
+	if (m_pOuter->m_Shared.InCond(TF_COND_DISGUISED) && m_pOuter->IsEnemyPlayer())
+		iVisibleTeam = m_pOuter->m_Shared.GetDisguiseTeam();
+
+	if (iVisibleTeam != m_nResistanceShieldTeam)
+		bRefreshShield = true;
+
+	// Generate a new shield
+	if (bRefreshShield)
+	{
+		if (m_pResistanceShield)
+		{
+			m_pResistanceShield->Remove();
+			m_pResistanceShield = NULL;
+		}
+
+		m_pResistanceShield = new C_BaseAnimating(); 
+		if (m_pResistanceShield)
+		{
+			m_pResistanceShield->SetModel("models/effects/resist_shield/resist_shield.mdl");
+			m_pResistanceShield->SetAbsOrigin(m_pOuter->GetAbsOrigin());
+			m_pResistanceShield->ChangeTeam(iVisibleTeam);
+			m_pResistanceShield->m_nSkin = (iVisibleTeam) ? 0 : 1;
+			m_pResistanceShield->SetModelScale(m_pOuter->GetModelScale());
+		}
+
+		m_nResistanceShieldTeam = iVisibleTeam;
+	}
+#endif
+
 }
 
 //-----------------------------------------------------------------------------
