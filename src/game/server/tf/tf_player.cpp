@@ -5450,6 +5450,59 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			info.SetDamage( flDamage * 0.65f );
 		}
 	}
+	
+	
+	// Vaccinator resists.
+	// Bullet, Explosions (Blast), Fire.
+	float flDamageResistor = info.GetDamage();
+	if ( bitsDamage & ( DMG_BULLET|DMG_BUCKSHOT ) )		// Bullets.
+	{
+		if (m_Shared.InCond(TF_COND_MEDIGUN_UBER_BULLET_RESIST))
+		{
+			// Decrease our damage by 75%.
+			info.SetDamage(flDamageResistor * 0.25f);
+			
+			// Negate all crit damage.
+			bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
+		}
+		else if (m_Shared.InCond(TF_COND_MEDIGUN_SMALL_BULLET_RESIST))
+		{
+			// Decrease our damage by 10%.
+			info.SetDamage(flDamageResistor * 0.90f);
+		}
+	}
+	else if ( bitsDamage & ( DMG_BLAST ) )				// Explosions.
+	{
+		if (m_Shared.InCond(TF_COND_MEDIGUN_UBER_BLAST_RESIST))
+		{
+			// Decrease our damage by 75%.
+			info.SetDamage(flDamageResistor * 0.25f);
+			
+			// Negate all crit damage.
+			bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
+		}
+		else if (m_Shared.InCond(TF_COND_MEDIGUN_SMALL_BLAST_RESIST))
+		{
+			// Decrease our damage by 10%.
+			info.SetDamage(flDamageResistor * 0.90f);
+		}
+	}
+	else if ( bitsDamage & ( DMG_IGNITE|DMG_BURN) )		// Fire.
+	{
+		if (m_Shared.InCond(TF_COND_MEDIGUN_UBER_FIRE_RESIST))
+		{
+			// Decrease our damage by 75%.
+			info.SetDamage(flDamageResistor * 0.25f);
+			
+			// Negate all crit damage.
+			bitsDamage &= ~( DMG_CRITICAL | DMG_MINICRITICAL );
+		}
+		else if (m_Shared.InCond(TF_COND_MEDIGUN_SMALL_FIRE_RESIST))
+		{
+			// Decrease our damage by 10%.
+			info.SetDamage(flDamageResistor * 0.90f);
+		}
+	}
 
 	// If we're not damaging ourselves, apply randomness
 	if ( ( pAttacker != this || info.GetAttacker() != this ) && !( bitsDamage & ( DMG_DROWN | DMG_FALL ) ) )
