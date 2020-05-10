@@ -66,6 +66,12 @@ public:
 
 	bool			IsReleasingCharge( void ) { return (m_bChargeRelease && !m_bHolstered); }
 	medigun_charge_types GetChargeType( void );
+	
+	int 			GetCurrentResistanceType(void)		{return m_iResistanceType;}
+	bool			HasMultipleHealingModes(void);
+	void 			SwapResistanceType(void);
+	int				m_iResistanceType;
+
 
 	CBaseEntity		*GetHealTarget( void ) { return m_hHealingTarget.Get(); }
 
@@ -123,6 +129,7 @@ protected:
 	CNetworkVar( bool,		m_bHolstered );
 	CNetworkVar( bool,		m_bChargeRelease );
 	CNetworkVar( float,		m_flChargeLevel );
+	CNetworkVar( float,		m_flFinalUberLevel );
 
 	float					m_flNextTargetCheckTime;
 	bool					m_bCanChangeTarget; // used to track the PrimaryAttack key being released for AutoHeal mode
@@ -150,6 +157,8 @@ protected:
 	CNewParticleEffect	*m_pChargeEffect;
 	EHANDLE				m_hChargeEffectHost;
 	CSoundPatch			*m_pChargedSound;
+#else
+	int					m_nVaccinatorUberChunks = 0;
 #endif
 
 private:														

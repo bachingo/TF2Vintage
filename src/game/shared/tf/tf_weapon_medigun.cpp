@@ -88,6 +88,7 @@ BEGIN_NETWORK_TABLE( CWeaponMedigun, DT_WeaponMedigun )
 	SendPropBool( SENDINFO( m_bAttacking ) ),
 	SendPropBool( SENDINFO( m_bChargeRelease ) ),
 	SendPropBool( SENDINFO( m_bHolstered ) ),
+	SendPropFloat( SENDINFO( m_flFinalUberLevel ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 #else
 	RecvPropFloat( RECVINFO(m_flChargeLevel) ),
 	RecvPropEHandle( RECVINFO( m_hHealingTarget ), RecvProxy_HealingTarget ),
@@ -95,6 +96,7 @@ BEGIN_NETWORK_TABLE( CWeaponMedigun, DT_WeaponMedigun )
 	RecvPropBool( RECVINFO( m_bAttacking ) ),
 	RecvPropBool( RECVINFO( m_bChargeRelease ) ),
 	RecvPropBool( RECVINFO( m_bHolstered ) ),
+	RecvPropFloat( RECVINFO(m_flFinalUberLevel) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -120,6 +122,8 @@ END_PREDICTION_DATA()
 #define PARTICLE_PATH_VEL				140.0
 #define NUM_PATH_PARTICLES_PER_SEC		300.0f
 #define NUM_MEDIGUN_PATH_POINTS		8
+#define TF_MEGAHEAL_BOOST 3.0
+#define VACCINATOR_UBER_COUNT 4
 
 extern ConVar tf_max_health_boost;
 
@@ -172,6 +176,7 @@ void CWeaponMedigun::WeaponReset( void )
 	{
 		m_flChargeLevel = 0.0f;
 	}
+	m_flFinalUberLevel = 0.0f;
 
 	RemoveHealingTarget( true );
 
@@ -185,6 +190,8 @@ void CWeaponMedigun::WeaponReset( void )
 
 	m_pChargeEffect = NULL;
 	m_pChargedSound = NULL;
+#else
+	m_nVaccinatorUberChunks = 0;
 #endif
 
 }
@@ -208,6 +215,11 @@ void CWeaponMedigun::Precache()
 	PrecacheTeamParticles( "medicgun_invulnstatus_fullcharge_%s" );
 	PrecacheTeamParticles( "medicgun_beam_%s" );
 	PrecacheTeamParticles( "medicgun_beam_%s_invun" );
+
+	PrecacheTeamParticles( "vaccinator_%s_beam1" );
+	PrecacheTeamParticles( "vaccinator_%s_beam2" );	
+	PrecacheTeamParticles( "vaccinator_%s_beam3" );
+
 
 	// Precache charge sounds.
 	for ( int i = 0; i < TF_CHARGE_COUNT; i++ )
@@ -351,12 +363,39 @@ medigun_charge_types CWeaponMedigun::GetChargeType( void )
 {
 	int iChargeType = TF_CHARGE_INVULNERABLE;
 	CALL_ATTRIB_HOOK_INT( iChargeType, set_charge_type );
+	
+	// Vaccinator: Swap between the charge types.
+	if (iChargeType == 3)
+		return (medigun_charge_types)GetCurrentResistanceType();
 
 	if ( iChargeType > TF_CHARGE_NONE && iChargeType < TF_CHARGE_COUNT )
 		return (medigun_charge_types)iChargeType;
 
 	AssertMsg( 0, "Invalid charge type!\n" );
 	return TF_CHARGE_NONE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if this is a medigun that has swappable modes.
+//-----------------------------------------------------------------------------
+bool CWeaponMedigun::HasMultipleHealingModes(void)
+{
+	int iChargeType = 0;
+	CALL_ATTRIB_HOOK_INT( iChargeType, set_charge_type );
+	
+	return (iChargeType == 3);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Swaps between Bullet, Explosive, and Fire Resist types.
+//-----------------------------------------------------------------------------
+void CWeaponMedigun::SwapResistanceType(void)
+{
+	// If swapping from fire, scroll back to bullet
+	if (m_iResistanceType == 5)
+		m_iResistanceType = 3;
+	else	// Increase from bullet to explosive to fire.
+		m_iResistanceType += 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -611,8 +650,8 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 				float flHealRate = GetHealRate();
 				
 				// Heal 3x faster if using the megaheal.
-				int nMegaHealMult = 3;
-				if (pOwner->m_Shared.InCond(TF_COND_MEGAHEAL) && pTFPlayer->m_Shared.InCond(TF_COND_MEGAHEAL))
+				int nMegaHealMult = TF_MEGAHEAL_BOOST;
+				if (pTFPlayer->m_Shared.InCond(TF_COND_MEGAHEAL))
 					flHealRate *= nMegaHealMult;
 				
 				pTFPlayer->m_Shared.Heal( pOwner, flHealRate );
@@ -774,20 +813,21 @@ void CWeaponMedigun::DrainCharge( void )
 			return;
 
 		float flChargeAmount = gpGlobals->frametime / weapon_medigun_chargerelease_rate.GetFloat();
-		m_flChargeLevel = max( m_flChargeLevel - flChargeAmount, 0.0 );
-		if ( !m_flChargeLevel )
+		
+		m_flChargeLevel = max( m_flChargeLevel - flChargeAmount, m_flFinalUberLevel );
+		if ( m_flChargeLevel <= m_flFinalUberLevel )
 		{
 			m_bChargeRelease = false;
 			m_flReleaseStartedAt = 0;
+			m_flFinalUberLevel = 0;
 
 #ifdef GAME_DLL
-			/*
+
 			if ( m_bHealingSelf )
 			{
 				m_bHealingSelf = false;
 				pOwner->m_Shared.StopHealing( pOwner );
 			}
-			*/
 
 			pOwner->m_Shared.RecalculateChargeEffects();
 #endif
@@ -863,6 +903,16 @@ void CWeaponMedigun::ItemPostFrame( void )
 	if ( pOwner->m_nButtons & IN_ATTACK2 )
 	{
 		SecondaryAttack();
+	}
+	
+	if ( pOwner->m_nButtons & IN_RELOAD )
+	{
+		if ( HasMultipleHealingModes() )
+		{
+			// Swap our current resistance type, and play a sound.
+			SwapResistanceType();
+			EmitSound( "WeaponMedigun_Vaccinator.Toggle" );
+		}
 	}
 
 	WeaponIdle();
@@ -949,16 +999,22 @@ void CWeaponMedigun::PrimaryAttack( void )
 		return;
 
 #ifdef GAME_DLL
-	/*
+
+	int iChargeType = TF_CHARGE_INVULNERABLE;
+	CALL_ATTRIB_HOOK_INT(iChargeType, set_charge_type);
+
 	// Start boosting ourself if we're not
-	if ( m_bChargeRelease && !m_bHealingSelf )
+	if (m_bChargeRelease && !m_bHealingSelf && iChargeType == TF_CHARGE_MEGAHEAL)
 	{
-		float flHealRate = GetHealRate() * 2;
+		float flHealRate = GetHealRate();
+		int nMegaHealMult = TF_MEGAHEAL_BOOST;
+			if (pOwner->m_Shared.InCond(TF_COND_MEGAHEAL))
+				flHealRate *= nMegaHealMult;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flHealRate, mult_health_fromhealers );
 		pOwner->m_Shared.Heal( pOwner, flHealRate );
 		m_bHealingSelf = true;
 	}
-	*/
+
 #endif
 
 #if !defined (CLIENT_DLL)
@@ -1003,9 +1059,13 @@ void CWeaponMedigun::SecondaryAttack( void )
 
 	if ( !CanAttack() )
 		return;
+	
+	bool bHasFullCharge = (m_flChargeLevel < 1.0);
+	if ( HasMultipleHealingModes() )
+		bHasFullCharge = m_flChargeLevel < (1.0 / VACCINATOR_UBER_COUNT );
 
 	// Ensure they have a full charge and are not already in charge release mode
-	if ( m_flChargeLevel < 1.0 || m_bChargeRelease )
+	if ( bHasFullCharge || m_bChargeRelease )
 	{
 #ifdef CLIENT_DLL
 		// Deny, flash
@@ -1031,9 +1091,28 @@ void CWeaponMedigun::SecondaryAttack( void )
 	// Start super charge
 	m_bChargeRelease = true;
 	m_flReleaseStartedAt = 0;//gpGlobals->curtime;
+	
+	// Log our Uber level so we stop there.
+	if ( HasMultipleHealingModes() )
+		m_flFinalUberLevel = m_flChargeLevel - ( m_flChargeLevel / VACCINATOR_UBER_COUNT );
+	else	// Stop our uber when it drains completely.
+		m_flFinalUberLevel = 0;
 
 #ifdef GAME_DLL
-	CTF_GameStats.Event_PlayerInvulnerable( pOwner );
+	// Award invurn point for every full Ubercharge bar deployed.
+	if ( HasMultipleHealingModes() )
+	{
+		m_nVaccinatorUberChunks += 1;
+		if (m_nVaccinatorUberChunks == VACCINATOR_UBER_COUNT)
+		{
+			// Award a point and reset our counter.
+			CTF_GameStats.Event_PlayerInvulnerable( pOwner );
+			m_nVaccinatorUberChunks = 0;
+		}
+	}
+	else
+		CTF_GameStats.Event_PlayerInvulnerable( pOwner );
+	
 	pOwner->m_Shared.RecalculateChargeEffects();
 
 	pOwner->SpeakConceptIfAllowed( MP_CONCEPT_MEDIC_CHARGEDEPLOYED );
@@ -1127,8 +1206,14 @@ void CWeaponMedigun::ManageChargeEffect( void )
 	{
 		bOwnerTaunting = true;
 	}
+	
+	// Run uber effects on a full bar, unless we use Vaccinator chunks.
+	bool bAtUberLevel = (m_flChargeLevel >= 1.0f);
+	if ( HasMultipleHealingModes() )
+		bAtUberLevel = m_flChargeLevel >= (1.0f / VACCINATOR_UBER_COUNT );
+	
 
-	if ( GetTFPlayerOwner() && bOwnerTaunting == false && m_bHolstered == false && ( m_flChargeLevel >= 1.0f || m_bChargeRelease == true ) )
+	if ( GetTFPlayerOwner() && bOwnerTaunting == false && m_bHolstered == false && ( bAtUberLevel || m_bChargeRelease == true ) )
 	{
 		C_BaseEntity *pEffectOwner = GetWeaponForEffect();
 
@@ -1145,8 +1230,29 @@ void CWeaponMedigun::ManageChargeEffect( void )
 			CLocalPlayerFilter filter;
 
 			CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
-
-			m_pChargedSound = controller.SoundCreate( filter, entindex(), "WeaponMedigun.Charged" );
+			
+			if ( HasMultipleHealingModes() )
+			{
+				// Vaccinator has multiple Ubercharge level sounds.
+				switch ((int)floor( m_flChargeLevel / (1.0f / VACCINATOR_UBER_COUNT ) ) )
+				{
+					case 1:	// Bar at 25%
+					m_pChargedSound = controller.SoundCreate( filter, entindex(), "WeaponMedigun_Vaccinator.Charged_tier_01" );
+					break;
+					case 2:	// Bar at 50%
+					m_pChargedSound = controller.SoundCreate( filter, entindex(), "WeaponMedigun_Vaccinator.Charged_tier_02" );
+					break;					
+					case 3:	// Bar at 75%
+					m_pChargedSound = controller.SoundCreate( filter, entindex(), "WeaponMedigun_Vaccinator.Charged_tier_03" );
+					break;					
+					case 4:	// Bar at 100%
+					m_pChargedSound = controller.SoundCreate( filter, entindex(), "WeaponMedigun_Vaccinator.Charged_tier_04" );
+					break;					
+				}
+			}
+			else
+				m_pChargedSound = controller.SoundCreate( filter, entindex(), "WeaponMedigun.Charged" );
+			
 			controller.Play( m_pChargedSound, 1.0, 100 );
 		}
 	}
@@ -1304,7 +1410,26 @@ void CWeaponMedigun::UpdateEffects( void )
 		if ( m_hHealingTargetEffect.pTarget == m_hHealingTarget )
 			return;
 
-		const char *pszFormat = IsReleasingCharge() ? "medicgun_beam_%s_invun" : "medicgun_beam_%s";
+		const char *pszFormat = 0;
+		// Unused asset from TF2:
+		// Vaccinator's different beams have different particle effects.
+		if ( HasMultipleHealingModes() )
+		{
+			switch (GetCurrentResistanceType())
+			{
+				case 3:	// Bullet
+					pszFormat = "vaccinator_%s_beam1";
+				break;
+				case 4: // Explosive
+					pszFormat = "vaccinator_%s_beam2";
+				break;
+				case 5: // Fire
+					pszFormat = "vaccinator_%s_beam3";
+				break;
+			}
+		}
+		else
+			pszFormat = IsReleasingCharge() ? "medicgun_beam_%s_invun" : "medicgun_beam_%s";
 		const char *pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber() );
 
 		CNewParticleEffect *pEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
@@ -1317,6 +1442,7 @@ void CWeaponMedigun::UpdateEffects( void )
 			if ( pVisuals )
 			{
 				const char *pszCustomEffectName = pVisuals->custom_particlesystem;
+					
 				if ( pszCustomEffectName[0] != '\0' )
 				{
 					CNewParticleEffect *pCustomEffect = pEffectOwner->ParticleProp()->Create( pszCustomEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
