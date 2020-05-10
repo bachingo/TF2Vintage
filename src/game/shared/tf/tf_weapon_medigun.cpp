@@ -219,7 +219,10 @@ void CWeaponMedigun::Precache()
 	PrecacheTeamParticles( "vaccinator_%s_beam1" );
 	PrecacheTeamParticles( "vaccinator_%s_beam2" );	
 	PrecacheTeamParticles( "vaccinator_%s_beam3" );
-
+	
+	PrecacheTeamParticles( "vaccinator_%s_buff1" );
+	PrecacheTeamParticles( "vaccinator_%s_buff2" );
+	PrecacheTeamParticles( "vaccinator_%s_buff3" );
 
 	// Precache charge sounds.
 	for ( int i = 0; i < TF_CHARGE_COUNT; i++ )
