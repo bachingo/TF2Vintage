@@ -728,7 +728,6 @@
 			}
 			"static_attrs"
 			{
-				"weapon_stattrak_module_scale"			"1"
 				"min_viewmodel_offset"					"10 0 -9"
 			}
 		}
@@ -7429,6 +7428,64 @@
 			"prefab"			"weapon_rescue_ranger"
 			"year"				"2012"
 			"particle_suffix"	"rescue_ranger"
+		}
+		"998"
+		{
+			"name"	"The Vaccinator"
+			"prefab"			"weapon_medigun"
+			"year"	"2012"
+			"item_type_name"	"#TF_Weapon_Medigun_Resist"
+			"item_name"		"#TF_Unique_MediGun_Resist"
+			"item_description"	"#TF_Unique_MediGun_Resist_Desc"
+			"propername"		"1"
+			"equip_region"	"medigun_backpack"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_medigun_defense/c_medigun_defense"
+			"model_player"	"models/workshop/weapons/c_models/c_medigun_defense/c_medigun_defense.mdl"
+			"extra_wearable" "models/workshop/weapons/c_models/c_medigun_defense/c_medigun_defensepack.mdl"
+			"attach_to_hands"	"1"
+			"attributes"
+			{
+				"lunchbox adds minicrits"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"3"
+				}
+				"ubercharge rate bonus"
+				{
+					"attribute_class"	"mult_medigun_uberchargerate"
+					"value"	"1.67"
+				}
+				"ubercharge overheal rate penalty"
+				{
+					"attribute_class"	"mult_medigun_overheal_uberchargerate"
+					"value"	"0.67"
+				}
+				"overheal fill rate reduced"
+				{
+					"attribute_class"	"overheal_fill_rate"
+					"value" "0.34"
+				}
+				"medigun charge is resists"
+				{
+					"attribute_class"	"set_charge_type"
+					"value"	"3"
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"medic_backpack"			"1"
+				}
+			}
+			"visuals_red"
+			{
+				"skin" "0"
+			}
+			"visuals_blu"
+			{
+				"skin" "1"
+			}
 		}
 		"1098"
 		{

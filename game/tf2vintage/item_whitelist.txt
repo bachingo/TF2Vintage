@@ -129,6 +129,7 @@
 	"The Neon Annihilator"							"1"
 	"The Loose Cannon"								"1"
 	"The Rescue Ranger"								"1"
+	"The Vaccinator"								"1"
 	"The Classic"									"1"
 	"The Tide Turner"								"1"
 	"The B.A.S.E. Jumper"							"1"
