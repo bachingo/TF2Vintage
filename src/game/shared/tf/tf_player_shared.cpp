@@ -1217,9 +1217,6 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		float flTimeSinceDamage = gpGlobals->curtime - m_pOuter->GetLastDamageTime();
 		float flScale = RemapValClamped( flTimeSinceDamage, 10, 15, 1.0, 3.0 );
 
-		if ( InCond( TF_COND_MEGAHEAL ) )
-			flScale = 3.0f;
-
 		bool bHasFullHealth = m_pOuter->GetHealth() >= m_pOuter->GetMaxHealth();
 
 		float fTotalHealAmount = 0.0f;
@@ -3688,6 +3685,26 @@ void CTFPlayerShared::StopHealing(CTFPlayer *pPlayer)
 	m_nNumHealers = m_aHealers.Count();
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFPlayerShared::GetPassiveChargeEffect( CTFPlayer *pPlayer )
+{
+	if ( !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && !tf2v_randomizer.GetBool() )
+		return 0;
+
+	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
+	if ( !pWpn )
+		return 0;
+
+	CWeaponMedigun *pMedigun = dynamic_cast < CWeaponMedigun * >( pWpn );
+	if ( pMedigun && pMedigun->HasMultipleHealingModes()  )
+		return pMedigun->GetCurrentResistanceType();
+
+	return 0;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3701,7 +3718,7 @@ medigun_charge_types CTFPlayerShared::GetChargeEffectBeingProvided( CTFPlayer *p
 		return TF_CHARGE_NONE;
 
 	CWeaponMedigun *pMedigun = dynamic_cast < CWeaponMedigun * >( pWpn );
-	if ( pMedigun && pMedigun->IsReleasingCharge() )
+	if ( pMedigun && pMedigun->IsReleasingCharge()  )
 		return pMedigun->GetChargeType();
 
 	return TF_CHARGE_NONE;
@@ -3716,7 +3733,7 @@ void CTFPlayerShared::RecalculateChargeEffects(bool bInstantRemove)
 	CTFPlayer *pProviders[TF_CHARGE_COUNT] = {};
 
 	medigun_charge_types selfCharge = GetChargeEffectBeingProvided(m_pOuter);
-
+	
 	// Charging self?
 	if (selfCharge != TF_CHARGE_NONE)
 	{
@@ -3756,17 +3773,48 @@ void CTFPlayerShared::RecalculateChargeEffects(bool bInstantRemove)
 		float flRemoveTime = i == TF_CHARGE_INVULNERABLE ? tf_invuln_time.GetFloat() : 0.0f;
 		SetChargeEffect((medigun_charge_types)i, bShouldCharge[i], bInstantRemove, g_MedigunEffects[i], flRemoveTime, pProviders[i]);
 	}
+	
+	// Check passive resistances.
+	bool bShouldResist[TF_CHARGE_COUNT] = {};
+	CTFPlayer *pResistors[TF_CHARGE_COUNT] = {};
+	int nPassiveChargeType = GetPassiveChargeEffect(m_pOuter);
+	if (nPassiveChargeType != 0)
+	{
+		bShouldResist[nPassiveChargeType] = true;
+		pResistors[nPassiveChargeType] = m_pOuter;
+	}
+	else
+	{
+		// Check players healing us.
+		for (int i = 0; i < m_aHealers.Count(); i++)
+		{
+			if (!m_aHealers[i].pPlayer)
+				continue;
+
+			CTFPlayer *pPlayer = ToTFPlayer(m_aHealers[i].pPlayer);
+			if (!pPlayer)
+				continue;
+
+			int chargeType = GetPassiveChargeEffect(pPlayer);
+
+			if (chargeType)
+			{
+				bShouldResist[chargeType] = true;
+				pResistors[chargeType] = pPlayer;
+			}
+		}
+	}
+	
+	// Start at 3 because that's where resistances kick in.
+	for (int i = 3; i < TF_CHARGE_COUNT; i++)
+	{
+		SetPassiveResist(i, bShouldResist[i], pProviders[i]);	
+	}
+	
 }
 
 void CTFPlayerShared::SetChargeEffect(medigun_charge_types chargeType, bool bShouldCharge, bool bInstantRemove, const MedigunEffects_t &chargeEffect, float flRemoveTime, CTFPlayer *pProvider)
 {
-	CTFShotgun_Revenge *pShotgun = dynamic_cast<CTFShotgun_Revenge *>( GetActiveTFWeapon() );
-	if (pShotgun && pShotgun->CanGetRevengeCrits())
-	{
-		if (chargeEffect.condition_enable == TF_COND_CRITBOOSTED)
-			return;
-	}
-
 	if (InCond(chargeEffect.condition_enable) == bShouldCharge)
 	{
 		if (bShouldCharge && m_flChargeOffTime[chargeType] != 0.0f)
@@ -3832,6 +3880,51 @@ void CTFPlayerShared::SetChargeEffect(medigun_charge_types chargeType, bool bSho
 				AddCond(chargeEffect.condition_disable);
 
 			m_flChargeOffTime[chargeType] = gpGlobals->curtime + flRemoveTime;
+		}
+	}
+}
+
+
+void CTFPlayerShared::SetPassiveResist(int nResistanceType, bool bShouldResist, CTFPlayer *pProvider)
+{
+	// Don't have a resistance for any others, just bail.
+	if (nResistanceType < 3 || nResistanceType > 5)
+		return;
+
+	int nConditionSmall = 0; // The "small" resistance.
+	int nConditionBig = 0;	// The "big" resistance.
+
+	switch (nResistanceType)
+	{
+		case 3:	// Bullets.
+			nConditionSmall = TF_COND_MEDIGUN_SMALL_BULLET_RESIST;
+			nConditionBig = TF_COND_MEDIGUN_UBER_BULLET_RESIST;
+			break;
+		case 4:	// Explosives.
+			nConditionSmall = TF_COND_MEDIGUN_SMALL_BLAST_RESIST;
+			nConditionBig = TF_COND_MEDIGUN_UBER_BLAST_RESIST;
+			break;
+		case 5:	// Fire
+			nConditionSmall = TF_COND_MEDIGUN_SMALL_FIRE_RESIST;
+			nConditionBig = TF_COND_MEDIGUN_UBER_FIRE_RESIST;
+			break;
+	}
+
+	// Don't allow the resistances to stack.
+	if ( InCond(nConditionBig) && InCond(nConditionSmall) )
+	{
+		RemoveCond(nConditionSmall);
+	}
+	else if ( !InCond(nConditionBig) )
+	{
+		if (bShouldResist)
+		{
+			// Charge on.
+			AddCond(nConditionSmall);
+		}
+		else
+		{
+			RemoveCond(nConditionSmall);
 		}
 	}
 }

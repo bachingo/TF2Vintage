@@ -521,6 +521,11 @@ private:
 	medigun_charge_types  GetChargeEffectBeingProvided( CTFPlayer *pPlayer );
 	void  SetChargeEffect( medigun_charge_types chargeType, bool bShouldCharge, bool bInstantRemove, const MedigunEffects_t &chargeEffect, float flRemoveTime, CTFPlayer *pProvider );
 	void  TestAndExpireChargeEffect( medigun_charge_types chargeType );
+	
+	// Resistances.
+	int		GetPassiveChargeEffect( CTFPlayer *pPlayer );
+	void	SetPassiveResist(int nResistanceType, bool bShouldResist, CTFPlayer *pProvider);
+	
 #endif
 
 private:
