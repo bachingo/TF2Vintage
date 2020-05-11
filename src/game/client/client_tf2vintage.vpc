@@ -395,6 +395,8 @@ $Project "Client (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_dragons_fury.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_dragons_fury.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_dragons_fury.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_mechanical_arm.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_mechanical_arm.h"
 					}
 					$Folder	"Classic Content"
 					{
