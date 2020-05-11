@@ -116,6 +116,8 @@ ConVar tf2v_use_fast_redisguise( "tf2v_use_fast_redisguise", "0", FCVAR_NOTIFY |
 ConVar tf2v_use_new_atomizer( "tf2v_use_new_atomizer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between the old and modern Atomizer airdash mechanic.", true, 0, true, 1);
 ConVar tf2v_use_new_sodapopper( "tf2v_use_new_sodapopper", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between minicrits versus five airdashes when under Soda Popper Hype.", true, 0, true, 1);
 
+ConVar tf2v_use_new_short_circuit( "tf2v_use_new_short_circuit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps the Short Circuit's Secondary Attack.", true, 0, true, 1);
+
 
 
 
