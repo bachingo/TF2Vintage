@@ -69,10 +69,12 @@ int CEconWearable::GetSkin( void )
 
 	int iVisibleTeam = GetTeamNumber();
 	// if this player is disguised and on the other team, use disguise team
-	if ( pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+#ifdef CLIENT_DLL
+	if ( pOwner->m_Shared.InCond( TF_COND_DISGUISED ) && pOwner->IsEnemyPlayer() )
 	{
 		iVisibleTeam = pOwner->m_Shared.GetDisguiseTeam();
 	}
+#endif
 
 	switch ( iVisibleTeam )
 	{
