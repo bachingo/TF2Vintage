@@ -728,6 +728,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC,								// TF_WEAPON_GRENADE_JAR_GAS,
 	DMG_IGNITE | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,	// TF_WEAPON_FLAME_BALL,
 	DMG_IGNITE,                                 // TF_WEAPON_FLAREGUN_REVENGE
+	DMG_IGNITE | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,	// TF_WEAPON_ROCKETLAUNCHER_FIREBALL
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
