@@ -985,6 +985,26 @@
 				"min_viewmodel_offset"					"10 0 -11"
 			}
 		}
+		"weapon_nailgun"
+		{
+			"item_class"	"tf_weapon_nailgun"
+			"item_type_name"	"#TF_Weapon_Nailgun"
+			"item_name"	"#TF_Weapon_Nailgun"
+			"item_slot"	"primary"
+			"anim_slot"	"secondary"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/w_models/w_nailgun"
+			"model_world"	"models/weapons/w_models/w_nailgun.mdl"
+			"model_player"	"models/weapons/v_models/v_nailgun_scout.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -11"
+			}
+		}
 		"weapon_sniperrifle"
 		{
 			"item_class"	"tf_weapon_sniperrifle"
@@ -1746,6 +1766,34 @@
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -6"
+			}
+		}
+		"weapon_tranq"
+		{
+			"item_class"	"tf_weapon_tranq"
+			"item_type_name"	"#TF_Weapon_Tranq"
+			"item_name"	"#TF_Weapon_Tranq"
+			"item_slot"	"primary"
+			"anim_slot"	"secondary"
+			"propername"	"1"
+			"image_inventory"	"backpack/weapons/w_models/w_tranq"
+			"model_world"	"models/weapons/w_models/w_tranq.mdl"
+			"model_player"	"models/weapons/v_models/v_tranq_spy.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"slow enemy on hit"
+				{
+					"attribute_class"	"mult_onhit_enemyspeed"
+					"value"	"6.0"
+				}
 			}
 		}
 		"weapon_pda_engineer_build"
@@ -7851,8 +7899,8 @@
 		"1196"
 		{
 			"name"		"Packable Provisions"
-			"year"			"2020"
 			"prefab"		"weapon_backpack weapon_custom"
+			"year"			"2020"
 			"item_name"		"#TF_dec16_packable_provisions"
 			"item_description"		"#TF_dec16_packable_provisions_Desc"
 			"item_type_name"		"#TF_Wearable_Provisions"
@@ -7888,8 +7936,8 @@
 		"1197"
 		{
 			"name"		"Winter Backup"
-			"year"			"2020"
 			"prefab"		"weapon_backpack weapon_custom"
+			"year"			"2020"
 			"item_name"		"#TF_dec15_winter_backup"
 			"item_description"		"#TF_dec15_winter_backup_Desc"
 			"item_type_name"		"#TF_Wearable_Backpack"
@@ -7921,6 +7969,22 @@
 					"value" "0.75"
 				}
 			}
+		}
+		"1198"
+		{
+			"name"		"The Tranq"
+			"prefab"		"weapon_tranq weapon_custom"
+			"year"			"2020"
+			"attach_to_hands"	"0"
+			"enabled"			"0"
+		}
+		"1199"
+		{
+			"name"		"The Nailgun"
+			"prefab"		"weapon_nailgun weapon_custom"
+			"year"			"2020"
+			"attach_to_hands"	"0"
+			"enabled"			"0"
 		}
 		"121"
 		{
