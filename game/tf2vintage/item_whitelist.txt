@@ -107,6 +107,7 @@
 	"The Diamondback"								"1"
 	"The Machina"									"1"
 	"The Widowmaker"								"1"
+	"The Short Circuit"								"1"
 	"The Eureka Effect"								"1"
 	"The Third Degree"								"1"
 	"The Phlogistinator"							"1"

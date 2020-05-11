@@ -2708,6 +2708,82 @@
 				"min_viewmodel_offset"					"12 0 -8"
 			}
 		}
+		"weapon_mechanical_arm"
+		{
+			"item_class"	"tf_weapon_mechanical_arm"
+			"item_type_name"	"#TF_Weapon_Robot_Arm"
+			"item_logname" "short_circuit"
+			"item_iconname" "short_circuit"
+			"item_name"	"#TF_DEX_Pistol"
+			"item_description"	"#TF_DEX_Pistol_Desc"
+			"item_slot"	"secondary"
+			"anim_slot"	"secondary"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_dex_arm/c_dex_arm"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_dex_arm/c_dex_arm.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -8"
+			}
+			"attributes"
+			{
+				"mod ammo per shot"
+				{
+					"attribute_class"	"mod_ammo_per_shot"
+					"value"	"5"
+				}
+				"electrical airblast DISPLAY ONLY"
+				{
+					"attribute_class"	"electrical_airblast_DISPLAY_ONLY"
+					"value"	"1"
+				}
+				"mod use metal ammo type"
+				{
+					"attribute_class"	"mod_use_metal_ammo_type"
+					"value"	"1"
+				}
+				"mod no reload DISPLAY ONLY"
+				{
+					"attribute_class"	"mod_no_reload_display_only"
+					"value"				"1"
+				}
+				"mod max primary clip override"
+				{
+					"attribute_class"	"mod_max_primary_clip_override"
+					"value"	"-1"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"disable weapon hiding for animations"
+				{
+					"attribute_class"	"disable_weapon_hiding_for_animations"
+					"value"	"1"
+				}
+			}
+			"hide_bodygroups_deployed_only"	"1"
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_BarretsArm.Zap"
+				"sound_empty"		"Weapon_BarretsArm.Fizzle"
+				"sound_deploy"		"Weapon_BarretsArm.Draw"
+				"sound_special3"	"Weapon_BarretsArm.Shot"
+				"wm_bodygroup_override"			"2"
+				"wm_bodygroup_state_override"			"2"
+				"animation_replacement"
+				{
+					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_SECONDARY_ALT2_VM_INSPECT_START"
+					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_SECONDARY_ALT2_VM_INSPECT_IDLE"
+					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_SECONDARY_ALT2_VM_INSPECT_END"
+				}
+			}	
+		}
 		"weapon_slapper"
 		{
 			"item_class"	"tf_weapon_slap"
@@ -6828,6 +6904,12 @@
 					"ACT_PRIMARY_VM_INSPECT_END"		"ACT_PRIMARY_ALT1_VM_INSPECT_END"
 				}
 			}
+		}
+		"528"
+		{
+			"name"	"The Short Circuit"
+			"prefab"		"weapon_mechanical_arm"
+			"year"	"2011"
 		}
 		"589"
 		{
