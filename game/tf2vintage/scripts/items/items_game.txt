@@ -3402,6 +3402,73 @@
 				}
 			}
 		}
+		"weapon_dragonsfury"
+		{
+			"item_class"	"tf_weapon_rocketlauncher_fireball"
+			"item_type_name"	"#TF_Weapon_FireballLauncher"
+			"particle_suffix"	"dragons_fury"
+			"propername"	"1"
+			"item_name"	"#TF_Weapon_DragonsFury"
+			"item_description"	"#TF_Weapon_DragonsFury_Desc"
+			"item_slot"	"primary"
+			"anim_slot"		"primary"
+			"item_logname"	"dragons_fury"
+			"item_iconname"	"dragons_fury"
+			"image_inventory"	"backpack/weapons/c_models/c_flameball/c_flameball"
+			"model_player"	"models/weapons/c_models/c_flameball/c_flameball.mdl"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 -3 -10"
+			}
+			"attributes"
+			{
+				"item_meter_charge_type"
+				{
+					"attribute_class"	"item_meter_charge_type"
+					"value"	"1"
+				}
+				"item_meter_charge_rate"
+				{
+					"attribute_class"	"item_meter_charge_rate"
+					"value"	"0.8"
+				}
+				"hidden primary max ammo bonus"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"	"0.2"
+				}
+				"airblast cost scale hidden"
+				{
+					"attribute_class"	"mult_airblast_cost"
+					"value"	"0.25"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Airstrike.AltFire"
+				"sound_special1"		"Weapon_Airstrike.Explosion"
+				"animation_replacement"
+				{
+					"ACT_VM_PRIMARYATTACK"		"ACT_PRIMARY_VM_PRIMARYATTACK_3"
+
+					"ACT_PRIMARY_VM_INSPECT_START"		"ACT_ITEM4_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"		"ACT_ITEM4_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"		"ACT_ITEM4_VM_INSPECT_END"
+
+					"ACT_MP_ATTACK_CROUCH_PRIMARY"		"ACT_MP_ATTACK_CROUCH_PRIMARY_ALT"
+					"ACT_MP_ATTACK_STAND_PRIMARY"		"ACT_MP_ATTACK_STAND_PRIMARY_ALT"
+					"ACT_MP_ATTACK_SWIM_PRIMARY"		"ACT_MP_ATTACK_SWIM_PRIMARY_ALT"
+
+					"ACT_MP_ATTACK_CROUCH_SECONDARYFIRE"	"ACT_MP_ATTACK_CROUCH_PRIMARY_ALT"
+					"ACT_MP_ATTACK_STAND_SECONDARYFIRE"		"ACT_MP_ATTACK_STAND_PRIMARY_ALT"
+					"ACT_MP_ATTACK_SWIM_SECONDARYFIRE"		"ACT_MP_ATTACK_SWIM_PRIMARY_ALT"
+				}
+			}
+		}
 		"weapon_reskin"
 		{
 			"is_reskin"			"1"
@@ -7757,6 +7824,12 @@
 			"prefab"	"weapon_trenchgun"
 			"year"				"2014"
 			"particle_suffix"	"panic_attack"
+		}
+		"1178"
+		{
+			"name"	"The Dragon's Fury"
+			"prefab"	"weapon_dragonsfury"
+			"year"					"2017"
 		}
 		"1181"
 		{
