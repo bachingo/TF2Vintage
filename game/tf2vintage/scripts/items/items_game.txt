@@ -2022,6 +2022,11 @@
 					"attribute_class"	"rocket_jump_dmg_reduction"
 					"value"	"0.4"
 				}
+				"cancel falling damage"
+				{
+					"attribute_class"	"cancel_falling_damage"
+					"value"	"1"
+				}
 			}
 		}
 		"weapon_guillotine"
