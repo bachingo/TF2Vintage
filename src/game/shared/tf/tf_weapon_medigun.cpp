@@ -48,6 +48,7 @@ ConVar weapon_medigun_chargerelease_rate( "weapon_medigun_chargerelease_rate", "
 
 
 ConVar tf2v_setup_uber_rate("tf2v_setup_uber_rate", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Affects how Uber is built during Setup.", true, 0, true, 2);
+ConVar tf2v_uber_juggle_penalty("tf2v_uber_juggle_penalty", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Adds Ubercharge Drain penalty when juggling multiple Uber targets.", true, 0, true, 1);
 
 extern ConVar tf2v_use_medic_speed_match;
 
@@ -58,6 +59,8 @@ ConVar tf_medigun_autoheal( "tf_medigun_autoheal", "0", FCVAR_CLIENTDLL | FCVAR_
 #if !defined (CLIENT_DLL)
 ConVar tf_medigun_lagcomp(  "tf_medigun_lagcomp", "1", FCVAR_DEVELOPMENTONLY );
 #endif
+
+extern ConVar tf_invuln_time;
 
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
@@ -179,6 +182,7 @@ void CWeaponMedigun::WeaponReset( void )
 	m_flFinalUberLevel = 0.0f;
 
 	RemoveHealingTarget( true );
+	m_ExtraInvurns.Purge();
 
 #if defined( CLIENT_DLL )
 	m_bPlayingSound = false;
@@ -817,12 +821,39 @@ void CWeaponMedigun::DrainCharge( void )
 
 		float flChargeAmount = gpGlobals->frametime / weapon_medigun_chargerelease_rate.GetFloat();
 		
+		// Targets other than our own Uber suffer drain penalties.
+		if ( tf2v_uber_juggle_penalty.GetBool() )
+		{
+			int nUberedPlayers = 1;
+			// Check who is ubered by us and who isn't.
+			for (int i = 0; i <= m_ExtraInvurns.Count(); i++)
+			{
+				if ( m_ExtraInvurns[i].hPlayer && m_ExtraInvurns[i].hPlayer->IsAlive() )
+				{
+					if ( m_ExtraInvurns[i].hPlayer.Get() != m_hHealingTarget.Get() &&	// Not our current target
+					 ( ( m_ExtraInvurns[i].flTime + tf_invuln_time.GetFloat() ) > gpGlobals->curtime ) )	// Affected by Uber
+					{
+						// Add to our count.
+						nUberedPlayers++;
+						continue;
+					}
+				}
+				// Remove from our list.
+				m_ExtraInvurns.Remove(i);
+				
+			}
+			// Adjust our drain rate for the extra players.
+			if ( nUberedPlayers > 1 )
+			flChargeAmount += ( ( flChargeAmount * 0.5 ) * ( nUberedPlayers - 1) );
+		}
+		
 		m_flChargeLevel = max( m_flChargeLevel - flChargeAmount, m_flFinalUberLevel );
 		if ( m_flChargeLevel <= m_flFinalUberLevel )
 		{
 			m_bChargeRelease = false;
 			m_flReleaseStartedAt = 0;
 			m_flFinalUberLevel = 0;
+			m_ExtraInvurns.Purge();
 
 #ifdef GAME_DLL
 
@@ -948,6 +979,26 @@ void CWeaponMedigun::RemoveHealingTarget( bool bSilent )
 	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	if ( !pOwner )
 		return;
+
+	// If this guy is already in our detached target list, update the time. Otherwise, add him.
+	if ( m_bChargeRelease )
+	{
+		int i = 0;
+		for ( i = 0; i < m_ExtraInvurns.Count(); i++ )
+		{
+			if ( m_ExtraInvurns[i].hPlayer == m_hHealingTarget )
+			{
+				m_ExtraInvurns[i].flTime = gpGlobals->curtime;
+				break;
+			}
+		}
+		if ( i == m_ExtraInvurns.Count() )
+		{
+			int iIdx = m_ExtraInvurns.AddToTail();
+			m_ExtraInvurns[iIdx].hPlayer = m_hHealingTarget;
+			m_ExtraInvurns[iIdx].flTime = gpGlobals->curtime;
+		}
+	}
 
 #ifdef GAME_DLL
 	if ( m_hHealingTarget )

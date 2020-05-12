@@ -134,6 +134,13 @@ protected:
 	float					m_flNextTargetCheckTime;
 	bool					m_bCanChangeTarget; // used to track the PrimaryAttack key being released for AutoHeal mode
 	
+	struct extrainvurns_t
+	{
+		EHANDLE	hPlayer;
+		float	flTime;
+	};
+	CUtlVector<extrainvurns_t>		m_ExtraInvurns;
+	
 #ifdef GAME_DLL
 	CDamageModifier			m_DamageModifier;		// This attaches to whoever we're healing.
 	bool					m_bHealingSelf;
