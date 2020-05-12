@@ -2161,13 +2161,6 @@
 			"attach_to_hands_vm_only"	"1"
 			"extra_wearable" "models/weapons/c_models/c_rocketpack/c_rocketpack.mdl" 
 			"propername"	"1"
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"backpack"		"1"
-				}
-			}
 			"used_by_classes"
 			{
 				"pyro"	"1"
@@ -2175,6 +2168,14 @@
 			"static_attrs"
 			{
 				"min_viewmodel_offset"					"10 0 -9"	
+			}
+			"attributes"
+			{
+				"damage force increase hidden"
+				{
+					"attribute_class"	"damage_force_reduction"
+					"value"	"1.5"
+				}
 			}
 			"taunt"
 			{
@@ -2185,6 +2186,13 @@
 				"custom_taunt_prop_per_class"
 				{
 					"pyro"	"models/player/items/taunts/matchbox/matchbox.mdl"
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"backpack"		"1"
 				}
 			}
 			"visuals_red"
