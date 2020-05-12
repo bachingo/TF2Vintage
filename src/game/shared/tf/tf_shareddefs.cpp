@@ -1001,7 +1001,8 @@ int ConditionExpiresFast( int nCond )
 
 	// Liquids
 	if ( nCond == TF_COND_URINE ||
-		nCond == TF_COND_MAD_MILK )
+		 nCond == TF_COND_MAD_MILK ||
+		 nCond == TF_COND_GAS )
 		return true;
 
 	return false;

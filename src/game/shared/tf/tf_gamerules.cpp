@@ -2643,6 +2643,9 @@ bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
 					case TF_COND_MAD_MILK:
 						pTFPlayer->m_Shared.m_hMilkAttacker.Set( pAttacker );
 						break;
+					case TF_COND_GAS:
+						pTFPlayer->m_Shared.m_hGasAttacker.Set( pAttacker );
+						break;
 					default:
 						break;
 				}
@@ -2652,6 +2655,9 @@ bool CTFGameRules::RadiusJarEffect( CTFRadiusDamageInfo &radiusInfo, int iCond )
 				if ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
 				{
 					pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
+					if (pTFPlayer->m_Shared.InCond(TF_COND_BURNING_PYRO))
+						pTFPlayer->m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
+					
 					pTFPlayer->EmitSound( "TFPlayer.FlameOut" );
 
 					if ( pEntity != pAttacker )
@@ -4565,12 +4571,20 @@ CBasePlayer *CTFGameRules::GetAssister( CBasePlayer *pVictim, CBasePlayer *pScor
 				return pThrower;
 		}
 
-		// Mad milk after jarate
+		// Mad Milk after jarate
 		CTFPlayer *pThrowerMilk = ToTFPlayer( static_cast<CBaseEntity *>( pTFVictim->m_Shared.m_hMilkAttacker.Get() ) );
 		if ( pThrowerMilk )
 		{
 			if ( pThrowerMilk != pTFScorer )
 				return pThrowerMilk;
+		}
+		
+		// Gas after Mad Milk
+		CTFPlayer *pThrowerGas = ToTFPlayer( static_cast<CBaseEntity *>( pTFVictim->m_Shared.m_hGasAttacker.Get() ) );
+		if ( pThrowerGas )
+		{
+			if ( pThrowerGas != pTFScorer )
+				return pThrowerGas;
 		}
 
 		// See who has damaged the victim 2nd most recently (most recent is the killer), and if that is within a certain time window.

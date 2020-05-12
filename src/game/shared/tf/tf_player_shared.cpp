@@ -914,6 +914,10 @@ void CTFPlayerShared::OnConditionAdded(int nCond)
 	case TF_COND_MAD_MILK:
 		OnAddMadMilk();
 		break;
+		
+	case TF_COND_GAS:
+		OnAddGas();
+		break;
 
 	case TF_COND_PHASE:
 		OnAddPhase();
@@ -1081,6 +1085,10 @@ void CTFPlayerShared::OnConditionRemoved(int nCond)
 	case TF_COND_MAD_MILK:
 		OnRemoveMadMilk();
 		break;
+		
+	case TF_COND_GAS:
+		OnRemoveGas();
+		break;
 
 	case TF_COND_PHASE:
 		OnRemovePhase();
@@ -1206,7 +1214,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 					// If we're being healed, we reduce bad conditions faster
 					if ( m_aHealers.Count() > 0 )
 					{
-						if ( i == TF_COND_URINE || i == TF_COND_MAD_MILK )
+						if ( i == TF_COND_URINE || i == TF_COND_MAD_MILK || i == TF_COND_GAS  )
 							flReduction *= m_aHealers.Count() + 1;
 						else
 							flReduction += ( m_aHealers.Count() * flReduction * 4 );
@@ -1463,8 +1471,10 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		if ( gpGlobals->curtime > m_flFlameRemoveTime || m_pOuter->GetWaterLevel() >= WL_Waist )
 		{
 			RemoveCond( TF_COND_BURNING );
+			if (InCond(TF_COND_BURNING_PYRO))
+				RemoveCond(TF_COND_BURNING_PYRO);
 		}
-		else if ( ( gpGlobals->curtime >= m_flFlameBurnTime ) && ( ( TF_CLASS_PYRO != m_pOuter->GetPlayerClass()->GetClassIndex() ) || m_pOuter->m_Shared.InCond(TF_COND_GAS) ) )
+		else if ( ( gpGlobals->curtime >= m_flFlameBurnTime ) && ( ( TF_CLASS_PYRO != m_pOuter->GetPlayerClass()->GetClassIndex() ) || m_pOuter->m_Shared.InCond(TF_COND_BURNING_PYRO) ) )
 		{
 			float flBurnDamage = tf2v_new_flame_damage.GetBool() ? TF_BURNING_DMG_JI : TF_BURNING_DMG;
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hBurnWeapon, flBurnDamage, mult_wpn_burndmg );
@@ -1516,6 +1526,11 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 		if ( InCond( TF_COND_MAD_MILK ) )
 		{
 			RemoveCond( TF_COND_MAD_MILK );
+		}
+		
+		if ( InCond( TF_COND_GAS ) )
+		{
+			RemoveCond( TF_COND_GAS );
 		}
 	}
 
@@ -1756,6 +1771,8 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 	if ( InCond( TF_COND_BURNING ) )
 	{
 		RemoveCond( TF_COND_BURNING );
+		if (InCond(TF_COND_BURNING_PYRO))
+			RemoveCond(TF_COND_BURNING_PYRO);
 	}
 
 	if ( InCond( TF_COND_URINE ) )
@@ -1766,6 +1783,11 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 	if ( InCond( TF_COND_MAD_MILK ) )
 	{
 		RemoveCond( TF_COND_MAD_MILK );
+	}
+	
+	if ( InCond( TF_COND_GAS ) )
+	{
+		RemoveCond( TF_COND_GAS );
 	}
 	
 	if ( InCond( TF_COND_MARKEDFORDEATH ) )
@@ -2228,6 +2250,48 @@ void CTFPlayerShared::OnRemoveMadMilk( void )
 #endif
 }
 
+// ---------------------------------------------------------------------------- -
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddGas( void )
+{
+#ifdef GAME_DLL
+	m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
+#else
+	m_pOuter->ParticleProp()->Create( "peejar_drips_gas", PATTACH_ABSORIGIN_FOLLOW );
+
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		IMaterial *pMaterial = materials->FindMaterial( "effects/gas_overlay", TEXTURE_GROUP_CLIENT_EFFECTS, false );
+		if ( !IsErrorMaterial( pMaterial ) )
+		{
+			view->SetScreenOverlayMaterial( pMaterial );
+		}
+	}
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveGas( void )
+{
+#ifdef GAME_DLL
+	if ( m_nPlayerState != TF_STATE_DYING )
+	{
+		m_hMilkAttacker = NULL;
+	}
+#else
+	m_pOuter->ParticleProp()->StopParticlesNamed( "peejar_drips_gas" );
+
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		view->SetScreenOverlayMaterial( NULL );
+	}
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2668,6 +2732,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 		if (!InCond(TF_COND_BURNING))
 		{
 			AddCond(TF_COND_BURNING);
+				
 			m_flFlameBurnTime = gpGlobals->curtime;	//asap
 			// let the attacker know he burned me
 			if (pAttacker && ( !bVictimIsPyro || bVictimIsGassed ) )
@@ -2676,17 +2741,32 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 			}
 			if (tf2v_new_flame_damage.GetBool())	// Start keeping track of flame stacks.
 				m_flFlameStack = 0;
+				
+			//Pyros don't usually burn, but we need to check if we should burn a pyro that is gassed.
+			if (bVictimIsPyro && bVictimIsGassed)
+			{
+				if (!m_pOuter->m_Shared.InCond(TF_COND_BURNING_PYRO))
+					m_pOuter->m_Shared.AddCond(TF_COND_BURNING_PYRO);
+			}
+				
 		}
+		
+		bool bBurningPyro = m_pOuter->m_Shared.InCond(TF_COND_BURNING_PYRO);
 
-		if (tf2v_new_flame_damage.GetBool())	// Jungle Inferno Calculations
+		if (bVictimIsGassed)	// Character is gassed, do a long burn.
+		{
+			m_flFlameLife = TF_BURNING_FLAME_LIFE_MAX_JI; // 10 seconds.
+
+			if ( flFlameDuration != -1.0f  )
+				m_flFlameLife = flFlameDuration;
+		}
+		else if (tf2v_new_flame_damage.GetBool())	// Jungle Inferno Calculations
 		{
 			CTFWeaponBase *pWeapon = pAttacker->GetActiveTFWeapon(); // Check the weapon we're using to calculate afterburn.
-			if ( ( !bVictimIsPyro || bVictimIsGassed) && ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER ) ) // If we have a Flamethrower, stack our afterburn from 4-10 seconds.
+			if ( ( bVictimIsPyro || bVictimIsGassed) && ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER ) ) // If we have a Flamethrower, stack our afterburn from 4-10 seconds.
 			{
 				m_flFlameStack += 1;	// Add a flame to our stack.
-				float flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MIN_JI + (0.4 * (m_flFlameStack - 1) ); // Duration is 4 + ( 0.4 * (n - 1 ) ) seconds, where n is flame thrower hits.
-				if (flFlameLifeAdjusted > TF_BURNING_FLAME_LIFE_MAX_JI )	// Max out at 10 seconds
-					flFlameLifeAdjusted = TF_BURNING_FLAME_LIFE_MAX_JI;
+				float flFlameLifeAdjusted = Min( (TF_BURNING_FLAME_LIFE_MIN_JI + (0.4 * (m_flFlameStack - 1) ) ), TF_BURNING_FLAME_LIFE_MAX_JI ); // Duration is 4 + ( 0.4 * (n - 1 ) ) seconds, where n is flame thrower hits.
 				if ( m_flFlameRemoveTime && ( ( flFlameLifeAdjusted + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If we're less than the original remove time, increase the duration.
 					flFlameLifeAdjusted = ( m_flFlameRemoveTime - gpGlobals->curtime ); // Reset the afterburn time to the longer value.
 				
@@ -2698,7 +2778,7 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 			}
 			else // Something other than a flame thrower, or we're attacking a pyro.
 			{
-				m_flFlameLife = ( bVictimIsPyro && !bVictimIsGassed ) ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE_JI;
+				m_flFlameLife = ( bVictimIsPyro && !bBurningPyro ) ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE_JI;
 
 				if ( m_flFlameRemoveTime && ( ( m_flFlameLife + gpGlobals->curtime ) < m_flFlameRemoveTime ) ) // If less than original remove time, increase duration.
 				{
@@ -2711,11 +2791,14 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 		}
 		else	// Original Flame Calculations
 		{
-			m_flFlameLife = ( bVictimIsPyro && !bVictimIsGassed ) ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
+			m_flFlameLife = ( bVictimIsPyro && !bBurningPyro ) ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
 
 			if ( flFlameDuration != -1.0f  )
 				m_flFlameLife = flFlameDuration;
 		}
+		
+		if (bVictimIsGassed)	// If hit by gas, remove the gas.
+			m_pOuter->m_Shared.RemoveCond(TF_COND_GAS);
 
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pAttacker, m_flFlameLife, mult_wpn_burntime);
 			
@@ -2729,6 +2812,8 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon /*= NUL
 		{
 			// If we're on fire, stop burning and prevent us from being burnt.
 			RemoveCond(TF_COND_BURNING);
+			if (InCond(TF_COND_BURNING_PYRO))
+				RemoveCond(TF_COND_BURNING_PYRO);
 		}
 	}
 
@@ -3310,7 +3395,7 @@ void CTFPlayerShared::InvisibilityThink( void )
 {
 	float flTargetInvis = 0.0f;
 	float flTargetInvisScale = 1.0f;
-	if ( InCond( TF_COND_STEALTHED_BLINK ) || InCond( TF_COND_URINE ) || InCond( TF_COND_MAD_MILK ) )
+	if ( InCond( TF_COND_STEALTHED_BLINK ) || InCond( TF_COND_URINE ) || InCond( TF_COND_MAD_MILK ) || InCond(TF_COND_GAS) )
 	{
 		// We were bumped into or hit for some damage.
 		flTargetInvisScale = TF_SPY_STEALTH_BLINKSCALE;/*tf_spy_stealth_blink_scale.GetFloat();*/
@@ -4224,7 +4309,11 @@ EHANDLE CTFPlayerShared::GetFirstHealer()
 void CTFPlayerShared::HealthKitPickupEffects( int iAmount )
 {
 	if ( InCond( TF_COND_BURNING ) )
+	{
 		RemoveCond( TF_COND_BURNING );
+		if (InCond(TF_COND_BURNING_PYRO))
+			RemoveCond(TF_COND_BURNING_PYRO);
+	}
 	if ( InCond( TF_COND_BLEEDING ) )
 		RemoveCond( TF_COND_BLEEDING );
 

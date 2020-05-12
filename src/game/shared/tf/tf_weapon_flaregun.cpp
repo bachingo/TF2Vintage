@@ -385,6 +385,9 @@ void CTFFlareGunRevenge::SecondaryAttack( void )
 			{
 				// Extinguish teammates.
 				pTFPlayer->m_Shared.RemoveCond(TF_COND_BURNING);
+				if (pTFPlayer->m_Shared.InCond(TF_COND_BURNING_PYRO))
+					pTFPlayer->m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
+			
 				pTFPlayer->EmitSound("TFPlayer.FlameOut");
 
 				// Give us revenge crits as well.

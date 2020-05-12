@@ -195,10 +195,14 @@ bool CTFWearableDemoShield::DoSpecialAction( CTFPlayer *pUser )
 					pUser->m_Shared.RemoveCond( TF_COND_BLEEDING );
 				if ( pUser->m_Shared.InCond( TF_COND_BURNING ) )
 					pUser->m_Shared.RemoveCond( TF_COND_BURNING );
+				if (pUser->m_Shared.InCond(TF_COND_BURNING_PYRO))
+					pUser->m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
 				if ( pUser->m_Shared.InCond( TF_COND_MAD_MILK ) )
 					pUser->m_Shared.RemoveCond( TF_COND_MAD_MILK );
 				if ( pUser->m_Shared.InCond( TF_COND_URINE ) )
 					pUser->m_Shared.RemoveCond( TF_COND_URINE );
+				if ( pUser->m_Shared.InCond( TF_COND_GAS ) )
+					pUser->m_Shared.RemoveCond( TF_COND_GAS );
 			}
 
 			m_bBashed = false;

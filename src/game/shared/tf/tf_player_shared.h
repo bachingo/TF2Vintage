@@ -224,6 +224,9 @@ public:
 
 	// Milk Player
 	EHANDLE	m_hMilkAttacker;
+
+	// Gas Player
+	EHANDLE m_hGasAttacker;
 #endif
 	int		GetNumHealers( void )				{ return m_nNumHealers; }
 
@@ -483,6 +486,7 @@ private:
 	void OnAddHalloweenTiny( void );
 	void OnAddUrine( void );
 	void OnAddMadMilk(void);
+	void OnAddGas(void);
 	void OnAddPhase( void );
 	void OnAddSpeedBoost( void );
 	void OnAddBuff( void );
@@ -511,6 +515,7 @@ private:
 	void OnRemoveHalloweenTiny( void );
 	void OnRemoveUrine( void );
 	void OnRemoveMadMilk( void );
+	void OnRemoveGas( void );
 	void OnRemovePhase( void );
 	void OnRemoveSpeedBoost( void );
 	void OnRemoveBuff( void );

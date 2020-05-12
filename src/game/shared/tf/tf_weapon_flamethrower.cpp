@@ -716,6 +716,8 @@ void CTFFlameThrower::DeflectPlayer( CTFPlayer *pVictim, CTFPlayer *pAttacker, V
 		{
 			// Extinguish teammates.
 			pVictim->m_Shared.RemoveCond( TF_COND_BURNING );
+			if (pVictim->m_Shared.InCond(TF_COND_BURNING_PYRO))
+					pVictim->m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
 			pVictim->EmitSound( "TFPlayer.FlameOut" );
 
 			// Bonus points.

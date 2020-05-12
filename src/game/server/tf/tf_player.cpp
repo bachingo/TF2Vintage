@@ -1458,6 +1458,8 @@ void CTFPlayer::Regenerate( void )
 	if ( m_Shared.InCond( TF_COND_BURNING ) )
 	{
 		m_Shared.RemoveCond( TF_COND_BURNING );
+		if (m_Shared.InCond(TF_COND_BURNING_PYRO))
+			m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
 	}
 
 	// Remove jarate condition
@@ -1475,6 +1477,12 @@ void CTFPlayer::Regenerate( void )
 	if ( m_Shared.InCond( TF_COND_BLEEDING ) )
 	{
 		m_Shared.RemoveCond( TF_COND_BLEEDING );
+	}
+	
+	// Remove Gas Condition
+	if ( m_Shared.InCond( TF_COND_GAS ) )
+	{
+		m_Shared.RemoveCond( TF_COND_GAS );
 	}
 
 	// Remove bonk! atomic punch phase
@@ -2817,8 +2825,9 @@ bool CTFPlayer::PlayerIsSoaked( void )
 {
 	if 	( m_Shared.InCond( TF_COND_URINE ) ||	// Hit by Jarate
 		( m_Shared.InCond(TF_COND_MAD_MILK) ||	// Hit by Mad Milk
+		( m_Shared.InCond(TF_COND_GAS) ||		// Hit by Gas (TF2V exclusive)
 		( GetWaterLevel() > WL_NotInWater ) || // Standing in water
-		( PlayerIsDrippingWet() ) ) )	// Dripping wet
+		( PlayerIsDrippingWet() ) ) ) )	// Dripping wet
 	{
 		return true;
 	}
@@ -5085,6 +5094,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			gameeventmanager->FireEvent( event );
 		}
 	}
+	
+	// Hit by gas, add ignite damage.
+	// TF2V exclusive: We only ignite when it's someone else hitting us, not ourselves.
+	if ( (pAttacker != this ) && !( info.GetDamageType() & DMG_IGNITE|DMG_BURN ) )
+	{
+		bitsDamage |= DMG_IGNITE;
+		info.AddDamageType( DMG_IGNITE );
+	}
 
 	if (pTFAttacker && pTFAttacker->m_Shared.InCond(TF_COND_REGENONDAMAGEBUFF))
 	{
@@ -6350,6 +6367,8 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	{
 		// We have an extinguish, remove the afterburn and make fire immune.
 		m_Shared.RemoveCond(TF_COND_BURNING);
+		if (m_Shared.InCond(TF_COND_BURNING_PYRO))
+			m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
 		m_Shared.AddCond(TF_COND_FIRE_IMMUNE, 1.0); // Block all fire damage for 1 second
 		m_Shared.AddCond(TF_COND_AFTERBURN_IMMUNE, nFireproofOnBurned); // Don't allow any afterburn for nFireproofOnBurned seconds.
 		EmitSound("TFPlayer.FlameOut");	// Play the sound.
@@ -6886,7 +6905,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)
-	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() );
+	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() ) || m_Shared.InCond(TF_COND_BURNING_PYRO) );
 	// Ragdoll uncloak
 	//bool bCloaked = m_Shared.IsStealthed();
 	bool bOnGround = ( GetFlags() & FL_ONGROUND );
@@ -7749,6 +7768,8 @@ void CTFPlayer::InputExtinguishPlayer( inputdata_t &inputdata )
 	{
 		EmitSound( "TFPlayer.FlameOut" );
 		m_Shared.RemoveCond( TF_COND_BURNING );
+		if (m_Shared.InCond(TF_COND_BURNING_PYRO))
+			m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
 	}
 }
 
@@ -9423,6 +9444,8 @@ void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 		DropFlag();
 
 	m_Shared.RemoveCond( TF_COND_BURNING );
+	if (m_Shared.InCond(TF_COND_BURNING_PYRO))
+			m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
 	m_Shared.RemoveCond( TF_COND_BLEEDING );
 
 	m_Shared.AddCond( TF_COND_FEIGN_DEATH );
