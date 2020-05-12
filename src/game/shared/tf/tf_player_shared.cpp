@@ -4487,7 +4487,7 @@ bool CTFPlayerShared::CanGoombaStomp( void )
 {
 	int nBootsStomp = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_pOuter, nBootsStomp, boots_falling_stomp );
-	return nBootsStomp == 1;
+	return ( ( nBootsStomp == 1 ) || InCond(TF_COND_ROCKETPACK) );
 }
 
 //-----------------------------------------------------------------------------

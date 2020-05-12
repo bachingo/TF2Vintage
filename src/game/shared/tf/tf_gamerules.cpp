@@ -4872,7 +4872,7 @@ float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 			// Check to see if we can stomp on people.
 			int nFallingStomp = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFPlayer, nFallingStomp, boots_falling_stomp );
-			if ( nFallingStomp != 0)
+			if ( nFallingStomp != 0 || pTFPlayer->m_Shared.InCond(TF_COND_ROCKETPACK) )
 			{
 				// Run a trace to see if we fell on a person.
 				trace_t trace;

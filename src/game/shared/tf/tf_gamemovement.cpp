@@ -27,6 +27,7 @@
 #else
 	#include "tf_player.h"
 	#include "team.h"
+	#include "tf_fx.h"
 #endif
 
 ConVar	tf_maxspeed( "tf_maxspeed", "400", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT  | FCVAR_DEVELOPMENTONLY);
@@ -1939,6 +1940,29 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 		if ( m_pTFPlayer->GetBlastJumpFlags() != 0 )
 		{
 			m_pTFPlayer->ClearBlastJumpState();
+		}
+		
+		// Do a radius attack.
+		if ( m_pTFPlayer->m_Shared.InCond( TF_COND_ROCKETPACK ) )
+		{
+			m_pTFPlayer->m_Shared.RemoveCond( TF_COND_ROCKETPACK );
+
+			Vector where = m_pTFPlayer->GetAbsOrigin();
+
+			CPVSFilter filter(where);
+			TE_TFExplosion(filter, 0.0f, where, Vector(0.0f, 0.0f, 1.0f),
+				TF_WEAPON_ROCKETLAUNCHER, ENTINDEX(m_pTFPlayer));
+
+			CTakeDamageInfo dmginfo( m_pTFPlayer, m_pTFPlayer, m_pTFPlayer, where, where, 50.0f, DMG_BLAST | DMG_USEDISTANCEMOD, TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING, &where );
+			
+			CTFRadiusDamageInfo radius;
+			radius.info       = &dmginfo;
+			radius.m_vecSrc   = where;
+			radius.m_flRadius = 100.0f;
+			radius.m_flSelfDamageRadius = 0.0f;
+			radius.m_pEntityIgnore = m_pTFPlayer;
+			TFGameRules()->RadiusDamage( radius );
+			m_pTFPlayer->EmitSound( "Weapon_RocketPack.Land" );
 		}
 	}
 #endif
