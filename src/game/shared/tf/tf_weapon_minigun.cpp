@@ -75,6 +75,9 @@ extern ConVar cl_ejectbrass;
 ConVar tf2v_minigun_ejectbrass( "tf2v_minigun_ejectbrass", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Use real shells instead of sprites?");
 #endif
 
+ConVar tf2v_use_new_minigun_spinup("tf2v_use_new_minigun_spinup", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Makes winding and unwinding the minigun 25% faster." );
+
+
 //=============================================================================
 //
 // Weapon Minigun functions.
@@ -213,11 +216,14 @@ void CTFMinigun::SharedAttack()
 			WindUp();
 
 			float flSpinupTime = 0.75f;
+			if (!tf2v_use_new_minigun_spinup.GetBool())
+				flSpinupTime *= (4/3);
+			
 			CALL_ATTRIB_HOOK_FLOAT( flSpinupTime, mult_minigun_spinup_time );
 			flSpinupTime = Max( flSpinupTime, FLT_EPSILON ); // Don't divide by 0
 
 			if (pPlayer->GetViewModel( m_nViewModelIndex ))
-				pPlayer->GetViewModel( m_nViewModelIndex )->SetPlaybackRate( 0.75 / flSpinupTime );
+				pPlayer->GetViewModel( m_nViewModelIndex )->SetPlaybackRate( 0.75 / Max( flSpinupTime, FLT_EPSILON) );
 
 			m_flNextPrimaryAttack = gpGlobals->curtime + flSpinupTime;
 			m_flNextSecondaryAttack = gpGlobals->curtime + flSpinupTime;
@@ -493,6 +499,13 @@ void CTFMinigun::WindDown( void )
 	if ( !pPlayer )
 		return;
 
+	float flSpinDownTime = 2.0f;
+	if (!tf2v_use_new_minigun_spinup.GetBool())
+	{
+		flSpinDownTime *= (4/3);
+		if (pPlayer->GetViewModel( m_nViewModelIndex ))
+			pPlayer->GetViewModel( m_nViewModelIndex )->SetPlaybackRate( 2.0 / Max( flSpinDownTime, FLT_EPSILON) );
+	}
 	SendWeaponAnim( ACT_MP_ATTACK_STAND_POSTFIRE );
 
 	// Set the appropriate firing state.
@@ -505,7 +518,7 @@ void CTFMinigun::WindDown( void )
 #endif
 
 	// Time to weapon idle.
-	m_flTimeWeaponIdle = gpGlobals->curtime + 2.0;
+	m_flTimeWeaponIdle = gpGlobals->curtime + flSpinDownTime;
 
 	// Update player's speed
 	pPlayer->TeamFortress_SetSpeed();
