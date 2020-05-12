@@ -681,6 +681,8 @@ enum
 	TF_WEAPON_GRENADE_PIPEBOMB_PROJECTILE,
 	// End of grenade content.
 	// Add new ones below this line!
+	TF_PROJECTILE_BALLOFFIRE,
+	
 
 	TF_NUM_PROJECTILES
 };

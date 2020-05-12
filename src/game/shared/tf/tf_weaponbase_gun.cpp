@@ -25,6 +25,7 @@
 	#include "tf_projectile_rocket.h"
 	#include "tf_weapon_grenade_pipebomb.h"
 	#include "tf_projectile_flare.h"
+	#include "tf_projectile_dragons_fury.h"
 	#include "te.h"
 
 	#include "tf_gamerules.h"
@@ -210,6 +211,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 			pProjectile = FireEnergyBall( pPlayer );
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;
+			
+			case TF_PROJECTILE_BALLOFFIRE:
+			pProjectile = FireFireBall( pPlayer );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;	
 		
 		case TF_PROJECTILE_SYRINGE:
 		case TF_PROJECTILE_NAIL:
@@ -572,6 +578,62 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bCharged
 
 	return NULL;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Fires a fire ball.
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireFireBall( CTFPlayer *pPlayer )
+{
+	PlayWeaponShootSound();
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	Vector vecSrc;
+	Vector vecOffset( 0.0f, 0.0f, 0.0f );
+	QAngle angForward;
+
+	int isQuakeRL = 0;
+	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
+
+	if( isQuakeRL > 0 )
+	{
+		vecOffset.z = -3.0f;
+	}
+	else
+	{
+		vecOffset.x = 23.5f;
+		vecOffset.y = 12.0f;
+		vecOffset.z = -3.0f;
+	}
+
+	if ( pPlayer->GetFlags() & FL_DUCKING )
+	{
+		vecOffset.z = 8.0f;
+	}
+	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
+
+	// Add attribute spread.
+	float flSpread = 0;
+	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
+	if ( flSpread != 0)
+	{
+		angForward.x += RandomFloat(-flSpread, flSpread);
+		angForward.y += RandomFloat(-flSpread, flSpread);
+	}
+
+	CTFProjectile_BallOfFire *pProjectile = CTFProjectile_BallOfFire::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
+	}
+	return pProjectile;
+
+#endif
+
+	return NULL;
+}
+
 
 
 //-----------------------------------------------------------------------------
