@@ -799,7 +799,7 @@ void CHudItemEffects::SetPlayer( void )
 			break;
 		case TF_CLASS_SOLDIER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBuffItem>( "HudItemEffectMeter" ) );
-			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_AirStrike.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Demoman.res" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFParticleCannon>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_particlecannon.res" ) );
 			break;
 		case TF_CLASS_DEMOMAN:
@@ -812,6 +812,7 @@ void CHudItemEffects::SetPlayer( void )
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFFlareGunRevenge>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Engineer.res"));
 			AddItemMeter(new CHudItemEffectMeterTemp<C_TFFlameThrower>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Pyro.res"));
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRaygun>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_raygun.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJarGas>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Pyro.res" ) );
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) );
