@@ -1796,6 +1796,143 @@
 				}
 			}
 		}
+		"weapon_raygun"
+		{
+			"item_class"	"tf_weapon_raygun"
+			"item_type_name"	"#TF_Weapon_IndivisibleParticleSmasher"
+			"item_description"	"#TF_RighteousBison_Desc"
+			"item_name"	"#TF_RighteousBison"
+			"item_slot"	"secondary"
+			"anim_slot" "secondary2"
+			"item_logname"	"righteous_bison"
+			"item_iconname"	"righteous_bison"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_drg_righteousbison/c_drg_righteousbison"
+			"model_player"	"models/workshop/weapons/c_models/c_drg_righteousbison/c_drg_righteousbison.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -9"
+			}
+			"attributes"
+			{
+				"energy weapon no ammo"
+				{
+					"attribute_class"	"energy_weapon_no_ammo"
+					"value" "1"
+				}
+				"energy weapon penetration"
+				{
+					"attribute_class"	"energy_weapon_penetration"
+					"value"	"1"
+				}
+				"energy weapon no hurt building"
+				{
+					"attribute_class"	"energy_weapon_no_hurt_building"
+					"value" "1"
+				}
+				"energy weapon no deflect"
+				{
+					"attribute_class"	"energy_weapon_no_deflect"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Bison.Single"
+				"sound_burst"		"Weapon_Bison.SingleCrit"
+				"sound_reload"		"Weapon_Bison.Reload"
+				"animation_replacement"
+				{
+					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_SECONDARY_ALT1_VM_INSPECT_START"
+					"ACT_SECONDARY_VM_INSPECT_IDLE"		"ACT_SECONDARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_SECONDARY_VM_INSPECT_END"		"ACT_SECONDARY_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
+		"weapon_pomson"
+		{
+			"item_class"	"tf_weapon_drg_pomson"
+			"item_type_name"	"#TF_Weapon_IndivisibleParticleSmasher"
+			"item_name"	"#TF_Pomson"
+			"item_description"	"#TF_Pomson_Desc"
+			"item_slot"	"primary"
+			"item_logname"	"pomson"
+			"item_iconname"	"pomson"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_drg_pomson/c_drg_pomson"
+			"model_player"	"models/workshop/weapons/c_models/c_drg_pomson/c_drg_pomson.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -10"
+			}
+			"attributes"
+			{
+				"energy weapon no ammo"
+				{
+					"attribute_class"	"energy_weapon_no_ammo"
+					"value" "1"
+				}
+				"energy weapon no deflect"
+				{
+					"attribute_class"	"energy_weapon_no_deflect"
+					"value" "1"
+				}
+				"subtract victim medigun charge on hit"
+				{
+					"attribute_class"	"subtract_victim_medigun_charge_onhit"
+					"value" "10"
+				}
+				"subtract victim cloak on hit"
+				{
+					"attribute_class"	"subtract_victim_cloak_on_hit"
+					"value" "20"
+				}
+				"energy weapon no hurt building"
+				{
+					"attribute_class"	"energy_weapon_no_hurt_building"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Pomson.Single"
+				"sound_burst"		"Weapon_Pomson.SingleCrit"
+				"sound_reload"		"Weapon_Pomson.Reload"
+				"muzzle_flash"		"drg_pomson_muzzleflash"
+				"animation_replacement"
+				{
+					"ACT_VM_IDLE"	"ACT_SECONDARY2_VM_IDLE"
+					"ACT_VM_DRAW"	"ACT_SECONDARY2_VM_DRAW"
+					"ACT_VM_PRIMARYATTACK"	"ACT_SECONDARY2_VM_PRIMARYATTACK"
+					"ACT_RELOAD_START"	"ACT_SECONDARY2_RELOAD_START"
+					"ACT_RELOAD_FINISH"	"ACT_SECONDARY2_RELOAD_FINISH"
+					"ACT_VM_RELOAD"	"ACT_SECONDARY2_VM_RELOAD"
+					"ACT_MP_RELOAD_STAND"	"ACT_MP_RELOAD_STAND_SECONDARY2"
+					"ACT_MP_RELOAD_STAND_LOOP"	"ACT_MP_RELOAD_STAND_SECONDARY2_LOOP"
+					"ACT_MP_RELOAD_STAND_END"	"ACT_MP_RELOAD_STAND_SECONDARY2_END"
+					"ACT_MP_RELOAD_CROUCH"	"ACT_MP_RELOAD_CROUCH_SECONDARY2"
+					"ACT_MP_RELOAD_CROUCH_LOOP"	"ACT_MP_RELOAD_CROUCH_SECONDARY2_LOOP"
+					"ACT_MP_RELOAD_CROUCH_END"	"ACT_MP_RELOAD_CROUCH_SECONDARY2_END"
+					"ACT_MP_RELOAD_SWIM"	"ACT_MP_RELOAD_SWIM_SECONDARY2"
+					"ACT_MP_RELOAD_SWIM_LOOP"	"ACT_MP_RELOAD_SWIM_SECONDARY2_LOOP"
+					"ACT_MP_RELOAD_SWIM_END"	"ACT_MP_RELOAD_SWIM_SECONDARY2_END"
+					"ACT_MP_RELOAD_AIRWALK"	"ACT_MP_RELOAD_AIRWALK_SECONDARY2"
+					"ACT_MP_RELOAD_AIRWALK_LOOP"	"ACT_MP_RELOAD_AIRWALK_SECONDARY2_LOOP"
+					"ACT_MP_RELOAD_AIRWALK_END"	"ACT_MP_RELOAD_AIRWALK_SECONDARY2_END"
+					"ACT_PRIMARY_VM_INSPECT_START"	"ACT_SECONDARY_ALT1_VM_INSPECT_START"
+					"ACT_PRIMARY_VM_INSPECT_IDLE"	"ACT_SECONDARY_ALT1_VM_INSPECT_IDLE"
+					"ACT_PRIMARY_VM_INSPECT_END"	"ACT_SECONDARY_ALT1_VM_INSPECT_END"
+				}
+			}
+		}
 		"weapon_pda_engineer_build"
 		{
 			"item_class"	"tf_weapon_pda_engineer_build"
@@ -6538,6 +6675,12 @@
 				"sound_special2"	"Weapon_CowMangler.Idle"
 			}
 		}
+		"442"
+		{
+			"name"		"The Righteous Bison"
+			"weapon"	"weapon_raygun"
+			"year"		"2011"
+		}
 		"444"
 		{
 			"name"			"The Mantreads"
@@ -6907,9 +7050,15 @@
 		}
 		"528"
 		{
-			"name"	"The Short Circuit"
+			"name"		"The Short Circuit"
 			"prefab"		"weapon_mechanical_arm"
-			"year"	"2011"
+			"year"			"2011"
+		}
+		"588"
+		{
+			"name"		"The Pomson 6000"
+			"prefab"		"weapon_pomson"
+			"year"			"2011"
 		}
 		"589"
 		{
