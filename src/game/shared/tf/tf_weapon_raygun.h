@@ -4,8 +4,8 @@
 //
 //=============================================================================
 
-#ifndef TF_WEAPON_SHOTGUN_H
-#define TF_WEAPON_SHOTGUN_H
+#ifndef TF_WEAPON_RAYGUN_H
+#define TF_WEAPON_RAYGUN_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -65,4 +65,4 @@ private:
 };
 
 
-#endif // TF_WEAPON_SHOTGUN_H
+#endif // TF_WEAPON_RAYGUN_H
