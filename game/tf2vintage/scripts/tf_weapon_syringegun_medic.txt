@@ -19,7 +19,7 @@ WeaponData
 	"TimeFireDelay"			"0.1"
 	"ProjectileType"		"projectile_syringe"
 	"UseRapidFireCrits"		"1"
-	"MaxAmmo"			"150"
+	"MaxAmmo"			"160"
 
 	// Ammo & Clip.
 	"primary_ammo"			"TF_AMMO_PRIMARY"
