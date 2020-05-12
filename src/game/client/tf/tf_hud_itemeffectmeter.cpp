@@ -22,6 +22,7 @@
 #include "tf_weapon_knife.h"
 #include "tf_weapon_flaregun.h"
 #include "tf_weapon_particlecannon.h"
+#include "tf_weapon_raygun.h"
 #include "tf_weapon_flamethrower.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
@@ -607,6 +608,45 @@ float CHudItemEffectMeterTemp<C_TFParticleCannon>::GetProgress( void )
 }
 
 //-----------------------------------------------------------------------------
+// C_TFRaygun Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFRaygun>::ShouldBeep(void)
+{
+	return false;
+}
+
+template<>
+float CHudItemEffectMeterTemp<C_TFRaygun>::GetProgress(void)
+{
+	C_TFParticleCannon *pRayGun = GetWeapon();
+	if (pRayGun)
+		return pRayGun->GetEnergyPercentage();
+
+	return 1.0f;
+}
+
+//-----------------------------------------------------------------------------
+// C_TFPomson Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFPomson>::ShouldBeep(void)
+{
+	return false;
+}
+
+template<>
+float CHudItemEffectMeterTemp<C_TFPomson>::GetProgress(void)
+{
+	C_TFPomson *pPomson = GetWeapon();
+	if (pPomson)
+		return pPomson->GetEnergyPercentage();
+
+	return 1.0f;
+}
+
+
+//-----------------------------------------------------------------------------
 // C_TFFlameThrower Specialization
 //-----------------------------------------------------------------------------
 template<>
@@ -632,7 +672,13 @@ float CHudItemEffectMeterTemp<C_TFFlameThrower>::GetProgress( void )
 bool CHudItemEffectMeterKillstreak::IsEnabled( void )
 {
 	if ( tf2v_show_killstreak_counter.GetBool() )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( pPlayer && pPlayer->m_Shared.InCond(TF_COND_DISGUISED) )
+			return false;
+		
 		return true;
+	}
 
 	return false;
 }
@@ -641,9 +687,7 @@ int CHudItemEffectMeterKillstreak::GetCount( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
-	{
 		return pPlayer->m_Shared.GetKillstreakCount();
-	}
 
 	return -1;
 }
@@ -767,6 +811,7 @@ void CHudItemEffects::SetPlayer( void )
 		case TF_CLASS_PYRO:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFFlareGunRevenge>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Engineer.res"));
 			AddItemMeter(new CHudItemEffectMeterTemp<C_TFFlameThrower>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Pyro.res"));
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRaygun>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_raygun.res" ) );
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) );
@@ -774,6 +819,7 @@ void CHudItemEffects::SetPlayer( void )
 			break;
 		case TF_CLASS_ENGINEER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFShotgun_Revenge>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Engineer.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFPomson>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_pomson.res" ) );
 			break;
 		default:
 			break;
