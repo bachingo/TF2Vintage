@@ -24,6 +24,7 @@
 #include "tf_weapon_particlecannon.h"
 #include "tf_weapon_raygun.h"
 #include "tf_weapon_flamethrower.h"
+#include "tf_weapon_rocketpack.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -813,6 +814,7 @@ void CHudItemEffects::SetPlayer( void )
 			AddItemMeter(new CHudItemEffectMeterTemp<C_TFFlameThrower>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Pyro.res"));
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRaygun>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_raygun.res" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJarGas>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Pyro.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketPack>( "HudItemEffectMeter", "resource/UI/HudRocketPack.res" ) );
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) );

@@ -158,26 +158,6 @@ void CTFRocketPack::InitiateLaunch( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFRocketPack::ItemPostFrame( void )
-{
-	BaseClass::ItemPostFrame();
-
-	if ( m_flInitLaunchTime > gpGlobals->curtime )
-		PassengerDelayLaunchThink();
-	/*else
-		PreLaunch();*/
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFRocketPack::PassengerDelayLaunchThink( void )
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFRocketPack::PreLaunch( void )
 {
 	if ( m_flLaunchTime > gpGlobals->curtime )

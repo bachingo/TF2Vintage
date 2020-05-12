@@ -39,19 +39,18 @@ public:
 	virtual bool		Deploy( void );
 	virtual bool		CanHolster( void ) const;
 
-	virtual void		ItemPostFrame( void );
-
 	virtual bool		CanFire( void ) const;
 
 	virtual void		WeaponReset( void );
 
-	virtual bool		VisibleInWeaponSelection( void )	{ return true; }
-
 	void				InitiateLaunch( void );
 	void				PreLaunch( void );
 	void				Launch( void );
-	void				PassengerDelayLaunchThink( void );
 	void				RocketLaunchPlayer( CTFPlayer *pPlayer, const Vector& vecLaunch );
+	
+	virtual bool		HasChargeBar( void )				{ return true; }
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_RocketPack_Charges"; }
+	virtual float		InternalGetEffectBarRechargeTime()	{ return 30.0; }
 
 private:
 
