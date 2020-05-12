@@ -403,6 +403,8 @@ $Project "Server (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_projectile_energy_ring.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_raygun.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_raygun.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_rocketpack.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_rocketpack.h"
 					}
 					$Folder	"Classic Content"
 					{
