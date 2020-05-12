@@ -187,6 +187,10 @@ ConVar tf2v_use_shortstop_slowdown( "tf2v_use_shortstop_slowdown", "0", FCVAR_NO
 
 ConVar tf2v_use_new_phlog_fill( "tf2v_use_new_phlog_fill", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps between the old 225 damage to fill Mmmph versus the modern 300." );
 
+ConVar tf2v_use_new_medic_regen( "tf2v_use_new_medic_regen", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Medic to use the old regen logic of 1HP/s-3HP/s.", true, 0, true, 1 );
+
+
+
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
 // -------------------------------------------------------------------------------- //
@@ -722,7 +726,11 @@ void CTFPlayer::MedicRegenThink( void )
 		{
 			// Heal faster if we haven't been in combat for a while
 			float flTimeSinceDamage = gpGlobals->curtime - GetLastDamageTime();
-			float flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 3.0, 6.0 );
+			float flScale;
+			if (tf2v_use_new_medic_regen.GetBool())
+				flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 3.0, 6.0 );
+			else
+				flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 1.0, 3.0 );
 
 			int iHealAmount = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
 			TakeHealth( iHealAmount + iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
