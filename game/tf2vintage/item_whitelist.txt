@@ -149,8 +149,11 @@
 	"The Second Banana"								"1"
 	"Spawn Camper"									"1"
 	"Ludmila"										"1"
+	"Packable Provisions"							"1"
+	"Winter Backup"									"1"
 	"The Tranq"										"1"
 	"The Nailgun"									"1"
+
 	
 	// Reskins
 	"TTG Max Pistol"								"1"
