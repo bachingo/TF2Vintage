@@ -55,6 +55,7 @@ public:
 	virtual void FireBullet( CTFPlayer *pPlayer );
 	CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	CBaseEntity *FireEnergyBall( CTFPlayer *pPlayer, bool bCharged = false );
+	CBaseEntity *FireEnergyRing( CTFPlayer *pPlayer );
 	CBaseEntity *FireFireBall( CTFPlayer *pPlayer );
 	CBaseEntity *FireEnergyOrb(CTFPlayer *pPlayer);
 	CBaseEntity *FireNail( CTFPlayer *pPlayer, int iSpecificNail );
