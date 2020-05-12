@@ -619,7 +619,7 @@ bool CHudItemEffectMeterTemp<C_TFRaygun>::ShouldBeep(void)
 template<>
 float CHudItemEffectMeterTemp<C_TFRaygun>::GetProgress(void)
 {
-	C_TFParticleCannon *pRayGun = GetWeapon();
+	C_TFRaygun *pRayGun = GetWeapon();
 	if (pRayGun)
 		return pRayGun->GetEnergyPercentage();
 
