@@ -268,6 +268,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		case TF_PROJECTILE_BREADMONSTER_JARATE:
 		case TF_PROJECTILE_BREADMONSTER_MADMILK:
 		case TF_PROJECTILE_CLEAVER:
+		case TF_PROJECTILE_JAR_GAS:
 			pProjectile = FireJar( pPlayer, iProjectile );
 			pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 			break;

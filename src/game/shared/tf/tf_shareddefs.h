@@ -683,6 +683,7 @@ enum
 	// Add new ones below this line!
 	TF_PROJECTILE_BALLOFFIRE,
 	TF_PROJECTILE_ENERGYORB,
+	TF_PROJECTILE_JAR_GAS,
 	
 	
 
