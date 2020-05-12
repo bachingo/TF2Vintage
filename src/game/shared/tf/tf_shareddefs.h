@@ -682,6 +682,8 @@ enum
 	// End of grenade content.
 	// Add new ones below this line!
 	TF_PROJECTILE_BALLOFFIRE,
+	TF_PROJECTILE_ENERGYORB,
+	
 	
 
 	TF_NUM_PROJECTILES

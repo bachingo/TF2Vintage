@@ -26,6 +26,7 @@
 	#include "tf_weapon_grenade_pipebomb.h"
 	#include "tf_projectile_flare.h"
 	#include "tf_projectile_dragons_fury.h"
+	#include "tf_weapon_mechanical_arm.h"
 	#include "te.h"
 
 	#include "tf_gamerules.h"
@@ -212,8 +213,13 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;
 			
-			case TF_PROJECTILE_BALLOFFIRE:
+		case TF_PROJECTILE_BALLOFFIRE:
 			pProjectile = FireFireBall( pPlayer );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			break;	
+			
+		case TF_PROJECTILE_ENERGYORB:
+			pProjectile = FireEnergyOrb( pPlayer );
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 			break;	
 		
@@ -628,6 +634,60 @@ CBaseEntity *CTFWeaponBaseGun::FireFireBall( CTFPlayer *pPlayer )
 		pProjectile->SetDamage( GetProjectileDamage() );
 	}
 	return pProjectile;
+
+#endif
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fires an energy orb.
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireEnergyOrb(CTFPlayer *pPlayer)
+{
+	PlayWeaponShootSound();
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	Vector vecSrc;
+	Vector vecOffset(0.0f, 0.0f, 0.0f);
+	QAngle angForward;
+
+	int isQuakeRL = 0;
+	CALL_ATTRIB_HOOK_INT(isQuakeRL, centerfire_projectile);
+
+	if (isQuakeRL > 0)
+	{
+		vecOffset.z = -3.0f;
+	}
+	else
+	{
+		vecOffset.x = 23.5f;
+		vecOffset.y = 12.0f;
+		vecOffset.z = -3.0f;
+	}
+
+	if (pPlayer->GetFlags() & FL_DUCKING)
+	{
+		vecOffset.z = 8.0f;
+	}
+	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
+
+	// Add attribute spread.
+	float flSpread = 0;
+	CALL_ATTRIB_HOOK_FLOAT(flSpread, projectile_spread_angle);
+	if (flSpread != 0)
+	{
+		angForward.x += RandomFloat(-flSpread, flSpread);
+		angForward.y += RandomFloat(-flSpread, flSpread);
+	}
+
+	CTFProjectile_MechanicalArmOrb *pOrb = CTFProjectile_MechanicalArmOrb::Create(this, vecSrc, angForward, pPlayer, pPlayer);
+	if (pOrb)
+	{
+		pOrb->SetDamage(GetProjectileDamage());
+	}
+	return pOrb;
 
 #endif
 

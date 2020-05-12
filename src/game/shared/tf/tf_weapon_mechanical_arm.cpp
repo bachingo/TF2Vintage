@@ -316,30 +316,9 @@ void CTFMechanicalArm::LaunchElectricalBall()
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation(pOwner, pOwner->GetCurrentCommand());
 
-	CTFProjectile_MechanicalArmOrb *pOrb = static_cast<CTFProjectile_MechanicalArmOrb*>(CBaseEntity::CreateNoSpawn("tf_projectile_mechanicalarmorb", pOwner->Weapon_ShootPosition(), pOwner->EyeAngles(), pOwner));
-	if ( pOrb )
-	{
-		pOrb->ChangeTeam( pOwner->GetTeamNumber() );
-		pOrb->SetScorer( pOwner );
-		pOrb->SetLauncher( this );
-		DispatchSpawn( pOrb );
 
-		// Setup the initial velocity.
-		Vector vecForward, vecRight, vecUp;
-		AngleVectors( pOwner->EyeAngles(), &vecForward, &vecRight, &vecUp );
-
-		float flVelocity = 800.0f;
-		CALL_ATTRIB_HOOK_FLOAT( flVelocity, mult_projectile_speed );
-
-		Vector vecVelocity = vecForward * flVelocity;
-		pOrb->SetAbsVelocity( vecVelocity );
-		pOrb->SetupInitialTransmittedGrenadeVelocity( vecVelocity );
-
-		// Setup the initial angles.
-		QAngle angles;
-		VectorAngles( vecVelocity, angles );
-		pOrb->SetAbsAngles( angles );
-	}
+	// Launch a ball.
+	CTFProjectile_MechanicalArmOrb::Create(this, pOwner->Weapon_ShootPosition(), pOwner->EyeAngles(), pOwner, pOwner);
 
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_MACHINEGUN, 1.0, pOwner, SOUNDENT_CHANNEL_WEAPON );
 
@@ -382,8 +361,8 @@ void CTFMechanicalArm::OnDataChanged( DataUpdateType_t updateType )
 BEGIN_DATADESC( CTFProjectile_MechanicalArmOrb )
 END_DATADESC()
 
-LINK_ENTITY_TO_CLASS( tf_projectile_mechanicalarmorb, CTFProjectile_MechanicalArmOrb );
-PRECACHE_REGISTER( tf_projectile_mechanicalarmorb );
+LINK_ENTITY_TO_CLASS( tf_projectile_energyorb, CTFProjectile_MechanicalArmOrb );
+PRECACHE_REGISTER( tf_projectile_energyorb );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_MechanicalArmOrb, DT_TFProjectile_MechanicalArmOrb )
 BEGIN_NETWORK_TABLE( CTFProjectile_MechanicalArmOrb, DT_TFProjectile_MechanicalArmOrb )
@@ -463,6 +442,52 @@ void CTFProjectile_MechanicalArmOrb::Precache()
 }
 
 #ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFProjectile_MechanicalArmOrb *CTFProjectile_MechanicalArmOrb::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
+{
+	CTFProjectile_MechanicalArmOrb *pOrb = static_cast<CTFProjectile_MechanicalArmOrb*>(CBaseEntity::CreateNoSpawn("tf_projectile_energyorb", vecOrigin, vecAngles, pOwner));
+
+	if ( pOrb )
+	{
+		// Set team.
+		pOrb->ChangeTeam( pOwner->GetTeamNumber() );
+
+		// Set scorer.
+		pOrb->SetScorer( pScorer );
+
+		// Set firing weapon.
+		pOrb->SetLauncher( pWeapon );
+
+		// Spawn.
+		DispatchSpawn( pOrb );
+
+		// Setup the initial velocity.
+		Vector vecForward, vecRight, vecUp;
+		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
+
+		float flVelocity = 800;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flVelocity, mult_projectile_speed );
+
+		Vector vecVelocity = vecForward * flVelocity;
+		pOrb->SetAbsVelocity( vecVelocity );
+		pOrb->SetupInitialTransmittedGrenadeVelocity( vecVelocity );
+
+		// Setup the initial angles.
+		QAngle angles;
+		VectorAngles( vecVelocity, angles );
+		pOrb->SetAbsAngles( angles );
+		
+		float flGravity = 0.0f;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flGravity, mod_rocket_gravity );
+
+		return pOrb;
+	}
+
+	return pOrb;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Think method
 //-----------------------------------------------------------------------------
