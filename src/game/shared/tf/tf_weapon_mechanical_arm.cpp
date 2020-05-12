@@ -640,7 +640,6 @@ void CTFProjectile_MechanicalArmOrb::SetScorer( CBaseEntity *pScorer )
 {
 	m_Scorer = pScorer;
 }
-
 #endif
 
 //-----------------------------------------------------------------------------
