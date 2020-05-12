@@ -104,7 +104,11 @@ ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTI
 ConVar tf2v_allow_spy_sprint( "tf2v_allow_spy_sprint", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to override their disguise speed by holding reload." );
 ConVar tf2v_disguise_speed_match( "tf2v_disguise_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to always move at their disguised class' speed, including faster classes." );
 
+
+
 ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
+
+ConVar tf2v_use_new_minigun_aim_speed("tf2v_use_new_minigun_aim_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Aims the minigun at 110HU/s compared to the original 80HU/s." );
 
 ConVar tf_feign_death_duration( "tf_feign_death_duration", "6.0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Time that feign death buffs last." );
 
@@ -5728,7 +5732,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		if (nNoZoomPenalty == 0)
 		{
 			// Heavy moves slightly faster spun-up
-			if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) )
+			if ( pWeapon && pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) && tf2v_use_new_minigun_aim_speed.GetBool() )
 			{
 				if ( maxfbspeed > 110 )
 					maxfbspeed = 110;
