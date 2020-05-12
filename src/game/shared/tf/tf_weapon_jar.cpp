@@ -224,3 +224,28 @@ BEGIN_DATADESC( CTFCleaver )
 END_DATADESC()
 #endif
 
+
+//=============================================================================
+//
+// Weapon JarGas
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFJarGas, DT_WeaponJarGas )
+
+BEGIN_NETWORK_TABLE( CTFJar, DT_WeaponJarGas )
+#ifdef CLIENT_DLL
+#else
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFJarGas )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_jar_gas, CTFJarGas );
+PRECACHE_WEAPON_REGISTER( tf_weapon_jar_gas );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFJarGas )
+END_DATADESC()
+#endif

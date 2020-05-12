@@ -16,6 +16,7 @@
 #define CTFJar C_TFJar
 #define CTFJarMilk C_TFJarMilk
 #define CTFCleaver C_TFCleaver
+#define CTFJarGas C_TFJarGas
 #endif
 
 class CTFJar : public CTFWeaponBaseGun
@@ -48,6 +49,8 @@ public:
 	virtual float		InternalGetEffectBarRechargeTime()	{ return 20.0; }
 };
 
+// Mad Milk Weapon.
+
 class CTFJarMilk : public CTFJar
 {
 public:
@@ -67,6 +70,8 @@ public:
 	virtual const char* ModifyEventParticles( const char* token );
 #endif
 };
+
+// Flying Guillotine Weapon.
 
 class CTFCleaver : public CTFJar
 {
@@ -89,4 +94,25 @@ public:
 	virtual float		InternalGetEffectBarRechargeTime()	{ return 6.0; }
 
 };
+
+// Gas Passer Weapon.
+
+class CTFJarGas : public CTFJar
+{
+public:
+	DECLARE_CLASS( CTFJarGas, CTFJar );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	// Server specific.
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	virtual int			GetWeaponID( void ) const 			{ return TF_WEAPON_JAR_GAS; }
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_Gas"; }
+	virtual float		InternalGetEffectBarRechargeTime()	{ return 30.0; }
+
+};
+
 #endif // TF_WEAPON_JAR_H

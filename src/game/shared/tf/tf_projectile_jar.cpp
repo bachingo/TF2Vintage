@@ -18,8 +18,10 @@ ConVar tf2v_use_new_guillotine("tf2v_use_new_guillotine", "0", FCVAR_NOTIFY, "Re
 #define TF_WEAPON_JAR_MODEL		"models/weapons/c_models/urinejar.mdl"
 #define TF_WEAPON_FESTIVE_URINE_MODEL "models/weapons/c_models/c_xms_urinejar.mdl"
 #define TF_WEAPON_JARMILK_MODEL "models/weapons/c_models/c_madmilk/c_madmilk.mdl"
-#define TF_WEAPON_JAR_LIFETIME  2.0f
 #define TF_WEAPON_CLEAVER_MODEL	"models/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver.mdl"
+#define TF_WEAPON_JARGAS_MODEL "models/weapons/c_models/c_gascan/c_gascan.mdl"
+
+#define TF_WEAPON_JAR_LIFETIME  2.0f
 
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Jar, DT_TFProjectile_Jar )
@@ -76,17 +78,14 @@ CTFProjectile_Jar *CTFProjectile_Jar::Create( CBaseEntity *pWeapon, const Vector
 
 		pJar->ApplyLocalAngularVelocityImpulse( angVelocity );
 		
-		if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
+		switch (pOwner->GetTeamNumber())
 		{
-			switch (pOwner->GetTeamNumber())
-			{
 			case TF_TEAM_RED:
 				pJar->m_nSkin = 0;
 				break;
 			case TF_TEAM_BLUE:
 				pJar->m_nSkin = 1;
 				break;
-			}
 		}
 	}
 
@@ -105,6 +104,7 @@ void CTFProjectile_Jar::Precache( void )
 	PrecacheParticleSystem( "peejar_impact" );
 
 	PrecacheScriptSound( "Jar.Explode" );
+	PrecacheScriptSound("Weapon_GasCan.Explode");
 
 	BaseClass::Precache();
 }
@@ -114,18 +114,28 @@ void CTFProjectile_Jar::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_Jar::Spawn( void )
 {
-	if ( GetEffectCondition() != TF_COND_URINE )
-		SetModel( TF_WEAPON_JARMILK_MODEL );
-	else 
+	switch (GetEffectCondition())
 	{
-		if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
-			SetModel( TF_WEAPON_FESTIVE_URINE_MODEL );
-		else
-			SetModel( TF_WEAPON_JAR_MODEL );
+		case TF_COND_URINE:
+			if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) )
+				SetModel( TF_WEAPON_FESTIVE_URINE_MODEL );
+			else
+				SetModel( TF_WEAPON_JAR_MODEL );
+			break;
+			
+		case TF_COND_MAD_MILK:
+			SetModel( TF_WEAPON_JARMILK_MODEL );
+			break;
+			
+		case TF_COND_BLEEDING:
+			SetModel( TF_WEAPON_CLEAVER_MODEL );
+			break;
+			
+		case TF_COND_GAS:
+			SetModel( TF_WEAPON_JARGAS_MODEL );
+			break;
+		
 	}
-	
-	if ( GetEffectCondition() == TF_COND_BLEEDING )
-		SetModel( TF_WEAPON_CLEAVER_MODEL );
 
 	BaseClass::Spawn();
 	SetTouch( &CTFProjectile_Jar::JarTouch );
@@ -372,6 +382,15 @@ void CTFProjectile_Jar::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 	IncremenentDeflected();
 	m_hDeflectOwner = pDeflectedBy;
 	SetThrower( pBCC );
+	switch (pDeflectedBy->GetTeamNumber())
+	{
+		case TF_TEAM_RED:
+			m_nSkin = 0;
+			break;
+		case TF_TEAM_BLUE:
+			m_nSkin = 1;
+			break;
+	}
 	ChangeTeam( pDeflectedBy->GetTeamNumber() );
 }
 #else
@@ -639,5 +658,58 @@ void CTFProjectile_Cleaver::JarTouch( CBaseEntity *pOther )
 
 	// Remove.
 	UTIL_Remove( this );
+}
+#endif
+
+//=============================================================================
+//
+// Weapon JarGas
+//
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_JarGas, DT_TFProjectile_JarGas )
+
+BEGIN_NETWORK_TABLE( CTFProjectile_JarGas, DT_TFProjectile_JarGas )
+END_NETWORK_TABLE()
+
+#ifdef GAME_DLL
+BEGIN_DATADESC( CTFProjectile_JarGas )
+END_DATADESC()
+#endif
+
+LINK_ENTITY_TO_CLASS( tf_projectile_jar_gas, CTFProjectile_JarGas );
+PRECACHE_REGISTER( tf_projectile_jar_gas );
+
+#ifdef GAME_DLL
+CTFProjectile_JarGas *CTFProjectile_JarGas::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo )
+{
+	CTFProjectile_JarGas *pJar = static_cast<CTFProjectile_JarGas *>( CBaseEntity::CreateNoSpawn( "tf_projectile_jar_gas", vecOrigin, vecAngles, pOwner ) );
+
+	if ( pJar )
+	{
+		// Set scorer.
+		pJar->SetScorer( pScorer );
+
+		// Set firing weapon.
+		pJar->SetLauncher( pWeapon );
+
+		DispatchSpawn( pJar );
+
+		pJar->InitGrenade( vecVelocity, angVelocity, pOwner, weaponInfo );
+
+		pJar->ApplyLocalAngularVelocityImpulse( angVelocity );
+	}
+
+	return pJar;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFProjectile_JarGas::Precache( void )
+{
+	PrecacheModel( TF_WEAPON_JARGAS_MODEL );
+	PrecacheParticleSystem( "peejar_impact_gas" );
+
+	BaseClass::Precache();
 }
 #endif
