@@ -31,6 +31,7 @@
 #endif
 
 #define MAX_BARREL_SPIN_VELOCITY	20
+#define TF_MINIGUN_PENALTY_TIME 1
 
 //=============================================================================
 //
@@ -76,6 +77,7 @@ ConVar tf2v_minigun_ejectbrass( "tf2v_minigun_ejectbrass", "0", FCVAR_CLIENTDLL|
 #endif
 
 ConVar tf2v_use_new_minigun_spinup("tf2v_use_new_minigun_spinup", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Makes winding and unwinding the minigun 25% faster." );
+ConVar tf2v_use_new_minigun_rampup("tf2v_use_new_minigun_rampup", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes the accuracy and damage of the minigun based on fire time.", true, 0, true, 3 );
 
 
 //=============================================================================
@@ -215,12 +217,7 @@ void CTFMinigun::SharedAttack()
 			// Removed the need for cells to powerup the AC
 			WindUp();
 
-			float flSpinupTime = 0.75f;
-			if (!tf2v_use_new_minigun_spinup.GetBool())
-				flSpinupTime *= (4/3);
-			
-			CALL_ATTRIB_HOOK_FLOAT( flSpinupTime, mult_minigun_spinup_time );
-			flSpinupTime = Max( flSpinupTime, FLT_EPSILON ); // Don't divide by 0
+			float flSpinupTime = GetSpinUpLength();
 
 			if (pPlayer->GetViewModel( m_nViewModelIndex ))
 				pPlayer->GetViewModel( m_nViewModelIndex )->SetPlaybackRate( 0.75 / Max( flSpinupTime, FLT_EPSILON) );
@@ -608,6 +605,82 @@ void CTFMinigun::HandleFireOnEmpty( void )
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFMinigun::GetProjectileDamage( void )
+{
+	float flDamage = BaseClass::GetProjectileDamage();
+
+	if ( tf2v_use_new_minigun_rampup.GetInt() != 0)
+	{
+		float flDamageMod = 1.0f;
+		switch (tf2v_use_new_minigun_rampup.GetInt())
+		{
+			case 1:	// Rampup based on firing time.
+			case 2:
+			if ( GetFiringTime() < TF_MINIGUN_PENALTY_TIME )
+				flDamageMod = RemapValClamped( GetFiringTime(), 0.2, TF_MINIGUN_PENALTY_TIME, 0.5, 1 );			
+			break;
+			case 3:	// Rampup based on spinning time.
+			if ( GetWindingTime() < TF_MINIGUN_PENALTY_TIME + GetSpinUpLength() )
+				flDamageMod = RemapValClamped( GetWindingTime(), 0.2, (TF_MINIGUN_PENALTY_TIME + GetSpinUpLength()), 0.5, 1 );				
+			break;
+		}
+		
+		if ( flDamageMod != 1.0f )	// If damage modified, adjust.
+			flDamage *= flDamageMod;
+	}
+	
+	return flDamage;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFMinigun::GetWeaponSpread( void )
+{
+	float flSpread = BaseClass::GetWeaponSpread();
+
+	if ( tf2v_use_new_minigun_rampup.GetInt() != 0)
+	{
+		float flSpreadMod = 1.0f;
+		switch (tf2v_use_new_minigun_rampup.GetInt())
+		{
+			case 1:	// Rampup based on firing time.
+			case 2:
+			if ( GetFiringTime() < TF_MINIGUN_PENALTY_TIME )
+				flSpreadMod = RemapValClamped( GetFiringTime(), 0.2, TF_MINIGUN_PENALTY_TIME, 0.5, 1 );			
+			break;
+			case 3:	// Rampup based on spinning time.
+			if ( GetWindingTime() < TF_MINIGUN_PENALTY_TIME + GetSpinUpLength() )
+				flSpreadMod = RemapValClamped( GetWindingTime(), 0.2, (TF_MINIGUN_PENALTY_TIME + GetSpinUpLength()), 0.5, 1 );				
+			break;
+		}
+		
+		if ( flSpreadMod != 1.0f )	// If damage modified, adjust.
+			flSpread *= flSpreadMod;
+	}
+	
+	return flSpread;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFMinigun::GetSpinUpLength( void )
+{
+	float flSpinupTime = 0.75f;
+	if (!tf2v_use_new_minigun_spinup.GetBool())
+	flSpinupTime *= (4/3);
+			
+	CALL_ATTRIB_HOOK_FLOAT( flSpinupTime, mult_minigun_spinup_time );
+	flSpinupTime = Max( flSpinupTime, FLT_EPSILON ); // Don't divide by 0
+	return flSpinupTime;
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -715,9 +788,7 @@ void CTFMinigun::UpdateBarrelMovement()
 {
 	if ( m_flBarrelCurrentVelocity != m_flBarrelTargetVelocity )
 	{
-		float flSpinupTime = 1.0f;
-		CALL_ATTRIB_HOOK_FLOAT( flSpinupTime, mult_minigun_spinup_time );
-		flSpinupTime = Max( flSpinupTime, FLT_EPSILON ); // Don't divide by 0
+		float flSpinupTime = GetSpinUpLength();
 
 		// update barrel velocity to bring it up to speed or to rest
 		m_flBarrelCurrentVelocity = Approach( m_flBarrelTargetVelocity, m_flBarrelCurrentVelocity, 0.1 / flSpinupTime );

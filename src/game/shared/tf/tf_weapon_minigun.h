@@ -64,6 +64,11 @@ public:
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual bool	Lower( void );
 	virtual void	HandleFireOnEmpty( void );
+	
+	virtual float	GetProjectileDamage( void );
+	virtual float	GetWeaponSpread( void );
+	
+	
 	virtual void	WeaponReset( void );
 
 	virtual bool	CanReload( void ) { return false; }
@@ -75,8 +80,9 @@ public:
 
 	virtual int		GetCustomDamageType() const { return TF_DMG_CUSTOM_MINIGUN; }
 
-	float			GetFiringTime( void ) { return (m_flStartedFiringAt >= 0) ? (gpGlobals->curtime - m_flStartedFiringAt) : 0; }
-
+	float			GetFiringTime( void ) { return (m_flStartedFiringAt > 0) ? (gpGlobals->curtime - m_flStartedFiringAt) : 0; }
+	float			GetWindingTime( void ) { return (m_flStartedWindingAt > 0) ? (gpGlobals->curtime - m_flStartedWindingAt) : 0; }
+	float			GetSpinUpLength( void );
 
 #ifdef CLIENT_DLL
 	float			GetBarrelRotation();
