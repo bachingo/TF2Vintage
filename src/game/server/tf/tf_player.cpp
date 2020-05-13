@@ -1286,7 +1286,7 @@ void CTFPlayer::Spawn()
 		EmitSound( "Player.Spawn" );
 		InitClass();
 		m_Shared.RemoveAllCond( NULL ); // Remove conc'd, burning, rotting, hallucinating, etc.
-
+		m_Shared.AddCond( TF_COND_TEAM_GLOWS, 10 );	// Add team glows for 10 seconds.
 		UpdateSkin( GetTeamNumber() );
 		TeamFortress_SetSpeed();
 
