@@ -2996,7 +2996,7 @@
 	"volume"	"0.7"
 	"soundlevel"	"SNDLVL_NORM"
 
-	"wave"		"weapons/smg1/smg1_reload.wav"
+	"wave"		"weapons/smg1/nail_gun_reload.wav"
 }
 
 "Weapon_NailGun.ClipEmpty"

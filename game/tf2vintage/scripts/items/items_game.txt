@@ -992,7 +992,8 @@
 			"item_name"	"#TF_Weapon_Nailgun"
 			"item_slot"	"primary"
 			"anim_slot"	"secondary"
-			"propername"	"1"
+			"item_logname"	"nailgun"
+			"item_iconname"	"nailgun"
 			"image_inventory"	"backpack/weapons/w_models/w_nailgun"
 			"model_world"	"models/weapons/w_models/w_nailgun.mdl"
 			"model_player"	"models/weapons/v_models/v_nailgun_scout.mdl"
@@ -8406,7 +8407,6 @@
 			"prefab"		"weapon_nailgun weapon_custom"
 			"year"			"2020"
 			"attach_to_hands"	"0"
-			"enabled"			"0"
 		}
 		"121"
 		{
