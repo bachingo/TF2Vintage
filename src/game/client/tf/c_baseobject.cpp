@@ -38,6 +38,8 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 // Remove aliasing of name due to shared code
 #undef CBaseObject
 
+IMPLEMENT_AUTO_LIST( IBaseObjectAutoList );
+
 IMPLEMENT_CLIENTCLASS_DT( C_BaseObject, DT_BaseObject, CBaseObject )
 	RecvPropInt( RECVINFO( m_iHealth ) ),
 	RecvPropInt( RECVINFO( m_iMaxHealth ) ),

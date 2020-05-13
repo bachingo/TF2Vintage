@@ -3523,7 +3523,7 @@ void C_TFPlayer::ClientThink()
 	BaseClass::ClientThink();
 
 	UpdateIDTarget();
-
+	UpdatePlayerGlows();
 	UpdateLookAt();
 
 	// Handle invisibility.
@@ -3691,6 +3691,192 @@ void C_TFPlayer::UpdateLookAt( void )
 	*/
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Adds glow to players and buildings.
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdatePlayerGlows()
+{
+	if ( !g_PR )
+		return;
+		
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if (!pLocalPlayer)
+		return;
+
+	if ( pLocalPlayer->m_Shared.InCond( TF_COND_TEAM_GLOWS ) ) 
+	{
+
+		int nLocalPlayerTeam = pLocalPlayer->GetTeamNumber();
+		
+		// loop through the players
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			if ( !g_PR->IsConnected( i ) )
+				continue;
+
+			C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( !pPlayer || ( pPlayer == pLocalPlayer ) )
+				continue;
+			
+			int nPlayerTeamNumber = pPlayer->GetTeamNumber();
+
+			// remove the entities we don't want to draw anymore
+			if ( pPlayer->IsDormant() ||
+				( nPlayerTeamNumber < FIRST_GAME_TEAM ) ||
+				( !pPlayer->IsAlive() ) ||
+				( pPlayer->m_Shared.IsStealthed() && ( nLocalPlayerTeam >= FIRST_GAME_TEAM ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) ) ||
+				( !pPlayer->IsPlayerClass( TF_CLASS_SPY ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) ) ||
+				( pPlayer->IsPlayerClass( TF_CLASS_SPY ) && !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) ) ||
+				( pPlayer->IsPlayerClass( TF_CLASS_SPY ) && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) && ( pPlayer->m_Shared.GetDisguiseTeam() != nLocalPlayerTeam ) ) )
+			{
+				if ( pPlayer->IsClientSideGlowEnabled() )
+				{
+					pPlayer->SetClientSideGlowEnabled( false );
+				}
+				continue;
+			}
+
+			// passed all of the tests, so make sure they're in the list
+			int nVecIndex = -1;
+			FOR_EACH_VEC( m_vecEntitiesToDraw, nTemp )
+			{
+				if ( m_vecEntitiesToDraw[nTemp].m_nEntIndex == i )
+				{
+					nVecIndex = nTemp;
+					break;
+				}
+			}
+			if ( nVecIndex == -1 )
+			{
+				nVecIndex = m_vecEntitiesToDraw.AddToTail();
+			}
+
+			// set the player index
+			m_vecEntitiesToDraw[nVecIndex].m_nEntIndex = i;
+
+			// disguised Spy?
+			C_TFPlayer *pDisguiseTarget = NULL;
+			if ( nLocalPlayerTeam >= FIRST_GAME_TEAM )
+			{
+				if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && ( nPlayerTeamNumber != nLocalPlayerTeam ) )
+				{
+					pDisguiseTarget = ToTFPlayer( pPlayer->m_Shared.GetDisguiseTarget() );
+				}
+			}
+
+ 			// what color should we use?
+			float r, g, b;
+			pPlayer->GetGlowEffectColor( &r, &g, &b );
+			m_vecEntitiesToDraw[nVecIndex].m_clrGlowColor = Color( r * 255, g * 255, b * 255, 255 );
+
+			if ( !pPlayer->IsClientSideGlowEnabled() )
+			{
+				pPlayer->SetClientSideGlowEnabled( true );
+			}
+		}
+
+		// loop through the buildings
+		for ( int nCount = 0; nCount < IBaseObjectAutoList::AutoList().Count(); nCount++ )
+		{
+			bool bDraw = false;
+			C_BaseObject *pObject = static_cast<C_BaseObject*>( IBaseObjectAutoList::AutoList()[nCount] );
+			if ( !pObject->IsDormant() && !pObject->IsEffectActive( EF_NODRAW ) )
+			{
+				if ( ( nLocalPlayerTeam >= FIRST_GAME_TEAM ) && ( nLocalPlayerTeam == pObject->GetTeamNumber() ) )
+				{
+					bDraw = true;
+				}
+			}
+
+			if ( bDraw )
+			{
+				int nVecIndex = -1;
+				FOR_EACH_VEC( m_vecEntitiesToDraw, nTemp )
+				{
+					if ( m_vecEntitiesToDraw[nTemp].m_nEntIndex == pObject->entindex() )
+					{
+						nVecIndex = nTemp;
+						break;
+					}
+				}
+				if ( nVecIndex == -1 )
+				{
+					nVecIndex = m_vecEntitiesToDraw.AddToTail();
+				}
+
+				// set the player index
+				m_vecEntitiesToDraw[nVecIndex].m_nEntIndex = pObject->entindex();
+
+				if ( pObject->GetType() == OBJ_TELEPORTER )
+				{
+					m_vecEntitiesToDraw[nVecIndex].m_nOffset = 30;
+				}
+				else if ( pObject->GetType() == OBJ_DISPENSER )
+				{
+					m_vecEntitiesToDraw[nVecIndex].m_nOffset = 70;
+				}
+				else
+				{
+					switch ( pObject->GetUpgradeLevel() )
+					{
+					case 1:
+						m_vecEntitiesToDraw[nVecIndex].m_nOffset = 50;
+						break;
+					case 2:
+						m_vecEntitiesToDraw[nVecIndex].m_nOffset = 65;
+						break;
+					case 3:
+					default:
+						m_vecEntitiesToDraw[nVecIndex].m_nOffset = 80;
+						break;
+					}
+				}
+
+				// what color should we use?
+				float r, g, b;
+				pObject->GetGlowEffectColor( &r, &g, &b );
+				m_vecEntitiesToDraw[nVecIndex].m_clrGlowColor = Color( r * 255, g * 255, b * 255, 255 );
+
+				if ( !pObject->IsClientSideGlowEnabled() )
+				{
+					pObject->SetClientSideGlowEnabled( true );
+				}
+			}
+			else
+			{
+				if ( pObject->IsClientSideGlowEnabled() )
+				{
+					pObject->SetClientSideGlowEnabled( false );
+				}
+				continue;
+			}
+		}
+	}
+	else if (m_vecEntitiesToDraw.Count() > 0 )
+	{
+		if ( !g_PR )
+			return;
+
+		FOR_EACH_VEC( m_vecEntitiesToDraw, i )
+		{
+			int nEntIndex = m_vecEntitiesToDraw[i].m_nEntIndex;
+			if ( IsPlayerIndex( nEntIndex ) && !g_PR->IsConnected( nEntIndex ) )
+				continue;
+
+			CBaseCombatCharacter *pEnt = dynamic_cast< CBaseCombatCharacter* >( cl_entitylist->GetEnt( nEntIndex ) );
+			if ( !pEnt )
+				continue;
+
+			if ( pEnt->IsClientSideGlowEnabled() )
+			{
+				pEnt->SetClientSideGlowEnabled( false );
+			}
+		}
+
+		m_vecEntitiesToDraw.Purge();
+	}
+	
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Try to steer away from any players and objects we might interpenetrate

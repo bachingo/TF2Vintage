@@ -192,6 +192,15 @@ public:
 
 	void			InitializePoseParams( void );
 	void			UpdateLookAt( void );
+	
+	void			UpdatePlayerGlows(void);
+	typedef struct
+	{
+		int m_nEntIndex;
+		Color m_clrGlowColor;
+		int m_nOffset;
+	} player_glow_t;
+	CUtlVector< player_glow_t > m_vecEntitiesToDraw;
 
 	bool			IsEnemyPlayer( void );
 	void			ShowNemesisIcon( bool bShow );

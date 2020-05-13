@@ -30,7 +30,8 @@ extern mstudioevent_t *GetEventIndexForSequence( mstudioseqdesc_t &seqdesc );
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class C_BaseObject : public C_BaseCombatCharacter, public IHasBuildPoints, public ITargetIDProvidesHint
+DECLARE_AUTO_LIST(IBaseObjectAutoList)
+class C_BaseObject : public C_BaseCombatCharacter, public IHasBuildPoints, public ITargetIDProvidesHint, public IBaseObjectAutoList
 {
 	DECLARE_CLASS( C_BaseObject, C_BaseCombatCharacter );
 public:

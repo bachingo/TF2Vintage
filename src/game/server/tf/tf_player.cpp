@@ -189,6 +189,7 @@ ConVar tf2v_use_new_phlog_fill( "tf2v_use_new_phlog_fill", "0", FCVAR_NOTIFY | F
 
 ConVar tf2v_use_new_medic_regen( "tf2v_use_new_medic_regen", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Medic to use the old regen logic of 1HP/s-3HP/s.", true, 0, true, 1 );
 
+ConVar tf2v_use_spawn_glows( "tf2v_use_spawn_glows", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows players to see the glow of teammates when spawning. Input is seconds." );
 
 
 // -------------------------------------------------------------------------------- //
@@ -1286,9 +1287,13 @@ void CTFPlayer::Spawn()
 		EmitSound( "Player.Spawn" );
 		InitClass();
 		m_Shared.RemoveAllCond( NULL ); // Remove conc'd, burning, rotting, hallucinating, etc.
-		m_Shared.AddCond( TF_COND_TEAM_GLOWS, 10 );	// Add team glows for 10 seconds.
+				
 		UpdateSkin( GetTeamNumber() );
 		TeamFortress_SetSpeed();
+
+		// If we just spawned and have the convar, add spawn glows.
+		if ( tf2v_use_spawn_glows.GetInt() > 0 )
+			m_Shared.AddCond( TF_COND_TEAM_GLOWS, tf2v_use_spawn_glows.GetFloat() );	// Add team glows. (10 seconds is the default in 2015 onward)
 
 		// Prevent firing for a second so players don't blow their faces off
 		SetNextAttack( gpGlobals->curtime + 1.0 );
