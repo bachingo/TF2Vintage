@@ -3243,7 +3243,15 @@
 	"channel"	"CHAN_WEAPON"	
 	"soundlevel"	"SNDLVL_94dB"
 	"volume"	"1.0"
-	"wave"		"misc/null.wav"
+	"wave"		"misc/tranq_shoot.wav"
+}
+
+"Weapon_Tranq.SingleCrit"
+{
+	"channel"	"CHAN_WEAPON"	
+	"soundlevel"	"SNDLVL_94dB"
+	"volume"	"1.0"
+	"wave"		"misc/tranq_shoot_crit.wav"
 }
 
 "Weapon_Tranq.Reload"
@@ -3252,7 +3260,7 @@
 	"volume"	"0.7"
 	"soundlevel"	"SNDLVL_NORM"
 
-	"wave"		"weapons/smg1/smg1_reload.wav"
+	"wave"		"weapons/revolver_worldreload.wav"
 }
 
 "Weapon_Tranq.ClipEmpty"

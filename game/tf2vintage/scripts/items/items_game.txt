@@ -991,7 +991,7 @@
 			"item_type_name"	"#TF_Weapon_Nailgun"
 			"item_name"	"#TF_Weapon_Nailgun"
 			"item_slot"	"primary"
-			"anim_slot"	"secondary"
+			"anim_slot"	"primary"
 			"item_logname"	"nailgun"
 			"item_iconname"	"nailgun"
 			"image_inventory"	"backpack/weapons/w_models/w_nailgun"
@@ -8395,16 +8395,15 @@
 		}
 		"1198"
 		{
-			"name"		"The Tranq"
-			"prefab"		"weapon_tranq weapon_custom"
+			"name"		"The Nailgun"
+			"prefab"		"weapon_nailgun weapon_custom"
 			"year"			"2020"
 			"attach_to_hands"	"0"
-			"enabled"			"0"
 		}
 		"1199"
 		{
-			"name"		"The Nailgun"
-			"prefab"		"weapon_nailgun weapon_custom"
+			"name"		"The Tranq"
+			"prefab"		"weapon_tranq weapon_custom"
 			"year"			"2020"
 			"attach_to_hands"	"0"
 		}
