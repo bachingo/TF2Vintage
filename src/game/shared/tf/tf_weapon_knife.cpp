@@ -48,7 +48,7 @@ LINK_ENTITY_TO_CLASS( tf_weapon_knife, CTFKnife );
 PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
 
 
-ConVar tf2v_use_new_backstabs( "tf2v_use_new_backstabs", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes knife backstab behavior.", true, 0, true, 2 );
+ConVar tf2v_use_new_backstabs( "tf2v_use_new_backstabs", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes knife backstab behavior.", true, 0, true, 2 );
 
 //=============================================================================
 //
@@ -147,7 +147,7 @@ void CTFKnife::PrimaryAttack( void )
 	// Swing the weapon.
 	Swing( pPlayer );
 	
-	if (tf2v_use_new_backstabs.GetInt() > 0)
+	if (tf2v_use_new_backstabs.GetInt() == 2 )
 	{
 		// And hit instantly.
 		Smack();
@@ -209,7 +209,7 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCu
 	{
 
 		bool bIsBackstab = ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget ); // Since Swing and Smack are done in the same frame now we don't need to run additional checks anymore.
-		if (tf2v_use_new_backstabs.GetInt() == 0) // Unless we use old backstabs.
+		if (tf2v_use_new_backstabs.GetInt() != 2) // Unless we use old backstabs.
 		bIsBackstab = IsBehindTarget(pTarget) || bIsBackstab; 
 
 		if (bIsBackstab)
@@ -278,7 +278,7 @@ bool CTFKnife::IsBehindAndFacingTarget( CBaseEntity *pTarget )
 bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
 {
 	// If using newer backstabs, use the better backstab algorithm instead.
-	if (tf2v_use_new_backstabs.GetInt() != 0)
+	if ( tf2v_use_new_backstabs.GetInt() == 2 )
 		return IsBehindAndFacingTarget(pTarget);
 	
 	Assert( pTarget );
