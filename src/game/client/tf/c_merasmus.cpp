@@ -15,7 +15,7 @@ public:
 	DECLARE_PREDICTABLE();
 
 	C_Merasmus();
-	virtual ~C_Merasmus() {}
+	virtual ~C_Merasmus();
 
 	virtual Vector	GetObserverCamOrigin( void ) override	{ return EyePosition(); }
 
@@ -35,9 +35,9 @@ private:
 	bool m_bStunned;
 	bool m_bStunnedParity;
 
-	CSmartPtr<CNewParticleEffect> m_pBodyAura;
-	CSmartPtr<CNewParticleEffect> m_pBookParticle;
-	CSmartPtr<CNewParticleEffect> m_pStunnedParticle;
+	HPARTICLEFFECT m_pBodyAura;
+	HPARTICLEFFECT m_pBookParticle;
+	HPARTICLEFFECT m_pStunnedParticle;
 };
 
 
@@ -53,11 +53,30 @@ END_PREDICTION_DATA()
 
 C_Merasmus::C_Merasmus()
 {
-	UseClientSideAnimation();
-
 	m_pBodyAura = NULL;
 	m_pBookParticle = NULL;
 	m_pStunnedParticle = NULL;
+}
+
+C_Merasmus::~C_Merasmus()
+{
+	if ( m_pBodyAura )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pBodyAura );
+		m_pBodyAura = NULL;
+	}
+
+	if ( m_pBookParticle )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pBookParticle );
+		m_pBookParticle = NULL;
+	}
+
+	if ( m_pStunnedParticle )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pStunnedParticle );
+		m_pStunnedParticle = NULL;
+	}
 }
 
 void C_Merasmus::Spawn( void )
@@ -70,12 +89,12 @@ void C_Merasmus::Spawn( void )
 int C_Merasmus::GetSkin( void )
 {
 	if ( m_bDoingAOEAttack )
-		return 1;
+		return 0;
 
 	if ( m_bStunned )
-		return 1;
+		return 0;
 
-	return 0;
+	return 1;
 }
 
 void C_Merasmus::OnPreDataChanged( DataUpdateType_t updateType )
@@ -95,14 +114,14 @@ void C_Merasmus::OnDataChanged( DataUpdateType_t updateType )
 	{
 		if ( m_bRevealed )
 		{
-			if( m_pBodyAura == nullptr )
+			if( !m_pBodyAura )
 			{
 				m_pBodyAura = ParticleProp()->Create( "merasmus_ambient_body", PATTACH_ABSORIGIN_FOLLOW );
 			}
 		}
-		else if ( m_pBodyAura.IsValid() )
+		else if ( m_pBodyAura )
 		{
-			ParticleProp()->StopEmission( m_pBodyAura.GetObject() );
+			ParticleProp()->StopEmission( m_pBodyAura );
 			m_pBodyAura = nullptr;
 		}
 	}
@@ -111,15 +130,15 @@ void C_Merasmus::OnDataChanged( DataUpdateType_t updateType )
 	{
 		if ( m_bStunned )
 		{
-			if ( m_pStunnedParticle == nullptr )
+			if ( !m_pStunnedParticle )
 			{
 				int iHeadBone = LookupAttachment( "head" );
 				m_pStunnedParticle = ParticleProp()->Create( "merasmus_dazed", PATTACH_POINT_FOLLOW, iHeadBone );
 			}
 		}
-		else if ( m_pStunnedParticle.IsValid() )
+		else if ( m_pStunnedParticle )
 		{
-			ParticleProp()->StopEmission( m_pStunnedParticle.GetObject() );
+			ParticleProp()->StopEmission( m_pStunnedParticle );
 			m_pStunnedParticle = nullptr;
 		}
 	}
@@ -128,15 +147,15 @@ void C_Merasmus::OnDataChanged( DataUpdateType_t updateType )
 	{
 		if ( m_bDoingAOEAttack )
 		{
-			if ( m_pBookParticle == nullptr )
+			if ( !m_pBookParticle )
 			{
 				int iHandBone = LookupAttachment( "effect_hand_R" );
 				m_pBookParticle = ParticleProp()->Create( "merasmus_book_attack", PATTACH_POINT_FOLLOW, iHandBone );
 			}
 		}
-		else if ( m_pBookParticle.IsValid() )
+		else if ( m_pBookParticle )
 		{
-			ParticleProp()->StopEmission( m_pBookParticle.GetObject() );
+			ParticleProp()->StopEmission( m_pBookParticle );
 			m_pBookParticle = nullptr;
 		}
 	}
