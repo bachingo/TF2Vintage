@@ -16,9 +16,9 @@
 
 float CTFBotBody::GetHeadAimTrackingInterval( void ) const
 {
-	CTFBot *bot = static_cast<CTFBot *>( this->GetBot() );
+	CTFBot *me = static_cast<CTFBot *>( GetBot() );
 
-	switch( bot->m_iSkill )
+	switch( me->m_iSkill )
 	{
 		case CTFBot::NORMAL:
 			return 0.30f;
@@ -35,14 +35,14 @@ float CTFBotBody::GetHeadAimTrackingInterval( void ) const
 
 void CTFBotLocomotion::Update( void )
 {
-	CTFBot *actor = ToTFBot( this->GetEntity() );
-	if ( actor->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
+	CTFBot *me = ToTFBot( GetEntity() );
+	if ( me->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
 		return;
 
 	BaseClass::Update();
 
-	if ( actor && !IsOnGround() )
-		actor->PressCrouchButton( 0.3f );
+	if ( !IsOnGround() )
+		me->PressCrouchButton( 0.3f );
 }
 
 void CTFBotLocomotion::Approach( const Vector &pos, float goalWeight )
@@ -57,14 +57,14 @@ void CTFBotLocomotion::Jump( void )
 {
 	BaseClass::Jump();
 
-	CTFBot *actor = ToTFBot( this->GetEntity() );
+	CTFBot *me = ToTFBot( GetEntity() );
 
 	int nCustomJumpParticle = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( actor, nCustomJumpParticle, bot_custom_jump_particle );
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( me, nCustomJumpParticle, bot_custom_jump_particle );
 	if ( nCustomJumpParticle != 0 )
 	{
-		DispatchParticleEffect( "rocketjump_smoke", PATTACH_POINT_FOLLOW, actor, "foot_L" );
-		DispatchParticleEffect( "rocketjump_smoke", PATTACH_POINT_FOLLOW, actor, "foot_R" );
+		DispatchParticleEffect( "rocketjump_smoke", PATTACH_POINT_FOLLOW, me, "foot_L" );
+		DispatchParticleEffect( "rocketjump_smoke", PATTACH_POINT_FOLLOW, me, "foot_R" );
 	}
 }
 
@@ -80,8 +80,8 @@ float CTFBotLocomotion::GetDeathDropHeight( void ) const
 
 float CTFBotLocomotion::GetRunSpeed( void ) const
 {
-	CTFBot *actor = ToTFBot( this->GetEntity() );
-	return actor->GetPlayerClass()->GetMaxSpeed();
+	CTFBot *me = ToTFBot( GetEntity() );
+	return me->GetPlayerClass()->GetMaxSpeed();
 }
 
 bool CTFBotLocomotion::IsAreaTraversable( const CNavArea *baseArea ) const
@@ -96,7 +96,7 @@ bool CTFBotLocomotion::IsAreaTraversable( const CNavArea *baseArea ) const
 	// unless the round is over and we are the winning team, we can't enter the other teams spawn
 	if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN )
 	{
-		switch ( this->GetEntity()->GetTeamNumber() )
+		switch ( GetEntity()->GetTeamNumber() )
 		{
 			case TF_TEAM_RED:
 			{
@@ -118,7 +118,7 @@ bool CTFBotLocomotion::IsAreaTraversable( const CNavArea *baseArea ) const
 	}
 	else
 	{
-		if ( TFGameRules()->GetWinningTeam() != this->GetEntity()->GetTeamNumber() )
+		if ( TFGameRules()->GetWinningTeam() != GetEntity()->GetTeamNumber() )
 			return false;
 	}
 
@@ -135,8 +135,8 @@ bool CTFBotLocomotion::IsEntityTraversable( CBaseEntity *ent, TraverseWhenType w
 
 		if ( ent->IsBaseObject() )
 		{
-			CBaseObject *obj = static_cast<CBaseObject *>( ent );
-			if ( obj->GetBuilder() == this->GetEntity() ) // we can't walk through our own buildings...
+			CBaseObject *pObject = static_cast<CBaseObject *>( ent );
+			if ( pObject->GetBuilder() == GetEntity() ) // we can't walk through our own buildings...
 				return false;
 		}
 	}
@@ -169,21 +169,21 @@ void CTFBotVision::Update( void )
 
 	BaseClass::Update();
 
-	CTFBot *actor = ToTFBot( GetBot()->GetEntity() );
-	if ( actor == nullptr )
+	CTFBot *me = ToTFBot( GetBot()->GetEntity() );
+	if ( me == nullptr )
 		return;
 
 	CUtlVector<CTFPlayer *> enemies;
-	CollectPlayers( &enemies, GetEnemyTeam( actor ), true );
+	CollectPlayers( &enemies, GetEnemyTeam( me ), true );
 
-	for ( CTFPlayer *enemy : enemies )
+	for ( CTFPlayer *pPlayer : enemies )
 	{
-		if ( enemy->IsPlayerClass( TF_CLASS_SPY ) )
+		if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
 		{
-			const CKnownEntity *known = GetKnown( enemy );
+			const CKnownEntity *known = GetKnown( pPlayer );
 
-			if ( known && ( known->IsVisibleRecently() || !enemy->m_Shared.InCond( TF_COND_DISGUISING ) ) )
-				actor->ForgetSpy( enemy );
+			if ( known && ( known->IsVisibleRecently() || !pPlayer->m_Shared.InCond( TF_COND_DISGUISING ) ) )
+				me->ForgetSpy( pPlayer );
 		}
 	}
 }
@@ -196,60 +196,60 @@ void CTFBotVision::CollectPotentiallyVisibleEntities( CUtlVector<CBaseEntity *> 
 
 	for ( int i=0; i < gpGlobals->maxClients; ++i )
 	{
-		CBasePlayer *client = UTIL_PlayerByIndex( i );
-		if ( client && client->IsConnected() && client->IsAlive() )
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
+		if ( pPlayer && pPlayer->IsConnected() && pPlayer->IsAlive() )
 		{
-			ents->AddToTail( client );
+			ents->AddToTail( pPlayer );
 		}
 	}
 
-	this->UpdatePotentiallyVisibleNPCs();
+	UpdatePotentiallyVisibleNPCs();
 	for ( int i=0; i < m_PVNPCs.Count(); ++i )
 	{
-		CBaseEntity *npc = m_PVNPCs[i];
-		ents->AddToTail( npc );
+		CBaseEntity *pEntity = m_PVNPCs[i];
+		ents->AddToTail( pEntity );
 	}
 }
 
 bool CTFBotVision::IsVisibleEntityNoticed( CBaseEntity *ent ) const
 {
-	CTFBot *actor = ToTFBot( GetBot()->GetEntity() );
+	CTFBot *me = ToTFBot( GetBot()->GetEntity() );
 
-	CTFPlayer *player = ToTFPlayer( ent );
-	if ( player == nullptr )
+	CTFPlayer *pPlayer = ToTFPlayer( ent );
+	if ( pPlayer == nullptr )
 	{
 		return true;
 	}
 
 	// we should always be aware of our "friends"
-	if ( !actor->IsEnemy( player ) )
+	if ( !me->IsEnemy( pPlayer ) )
 	{
 		return true;
 	}
 
 
-	if ( player->m_Shared.InCond( TF_COND_BURNING ) ||
-		 player->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) ||
-		 player->m_Shared.InCond( TF_COND_BLEEDING ) )
+	if ( pPlayer->m_Shared.InCond( TF_COND_BURNING ) ||
+		 pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) ||
+		 pPlayer->m_Shared.InCond( TF_COND_BLEEDING ) )
 	{
-		if ( player->IsPlayerClass( TF_CLASS_SPY ) )
+		if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
 		{
-			actor->RealizeSpy( player );
+			me->RealizeSpy( pPlayer );
 		}
 
 		return true;
 	}
 
-	if ( player->m_Shared.IsStealthed() )
+	if ( pPlayer->m_Shared.IsStealthed() )
 	{
-		if ( player->m_Shared.GetPercentInvisible() < 0.75f )
+		if ( pPlayer->m_Shared.GetPercentInvisible() < 0.75f )
 		{
-			actor->RealizeSpy( player );
+			me->RealizeSpy( pPlayer );
 			return true;
 		}
 		else
 		{
-			actor->ForgetSpy( player );
+			me->ForgetSpy( pPlayer );
 			return false;
 		}
 	}
@@ -259,41 +259,41 @@ bool CTFBotVision::IsVisibleEntityNoticed( CBaseEntity *ent ) const
 
 bool CTFBotVision::IsIgnored( CBaseEntity *ent ) const
 {
-	CTFBot *actor = ToTFBot( GetBot()->GetEntity() );
-	if ( !actor->IsEnemy( ent ) )
+	CTFBot *me = ToTFBot( GetBot()->GetEntity() );
+	if ( !me->IsEnemy( ent ) )
 		return false;
 
 	if ( ( ent->GetEffects() & EF_NODRAW ) != 0 )
 		return true;
 
-	CTFPlayer *player = ToTFPlayer( ent );
-	if ( player )
+	CTFPlayer *pPlayer = ToTFPlayer( ent );
+	if ( pPlayer )
 	{
-		if ( player->m_Shared.InCond( TF_COND_BURNING )
-			 || player->m_Shared.InCond( TF_COND_STEALTHED_BLINK )
-			 || player->m_Shared.InCond( TF_COND_BLEEDING ) )
+		if ( pPlayer->m_Shared.InCond( TF_COND_BURNING )
+			 || pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK )
+			 || pPlayer->m_Shared.InCond( TF_COND_BLEEDING ) )
 		{
 			return false;
 		}
 
-		if ( player->m_Shared.IsStealthed() )
+		if ( pPlayer->m_Shared.IsStealthed() )
 		{
-			return ( player->m_Shared.GetPercentInvisible() >= 0.75f );
+			return ( pPlayer->m_Shared.GetPercentInvisible() >= 0.75f );
 		}
 
-		if ( !player->m_Shared.InCond( TF_COND_DISGUISED ) ||
-			 player->m_Shared.InCond( TF_COND_DISGUISING ) )
+		if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) ||
+			 pPlayer->m_Shared.InCond( TF_COND_DISGUISING ) )
 		{
 			return false;
 		}
 
-		return ( player->m_Shared.GetDisguiseTeam() == actor->GetTeamNumber() );
+		return ( pPlayer->m_Shared.GetDisguiseTeam() == me->GetTeamNumber() );
 	}
 
 	if ( ent->IsBaseObject() )
 	{
-		CBaseObject *obj = static_cast<CBaseObject *>( ent );
-		if ( obj->IsPlacing() || obj->IsBeingCarried() )
+		CBaseObject *pObject = static_cast<CBaseObject *>( ent );
+		if ( pObject->IsPlacing() || pObject->IsBeingCarried() )
 			return true;
 	}
 
@@ -307,9 +307,9 @@ float CTFBotVision::GetMaxVisionRange() const
 
 float CTFBotVision::GetMinRecognizeTime( void ) const
 {
-	CTFBot *actor = static_cast<CTFBot *>( this->GetBot() );
+	CTFBot *me = static_cast<CTFBot *>( GetBot() );
 
-	switch ( actor->m_iSkill )
+	switch ( me->m_iSkill )
 	{
 		case CTFBot::NORMAL:
 			return 0.50f;
@@ -336,20 +336,20 @@ void CTFBotVision::UpdatePotentiallyVisibleNPCs()
 
 	for ( int i=0; i < IBaseObjectAutoList::AutoList().Count(); ++i )
 	{
-		CBaseObject *obj = static_cast<CBaseObject *>( IBaseObjectAutoList::AutoList()[i] );
+		CBaseObject *pObj = static_cast<CBaseObject *>( IBaseObjectAutoList::AutoList()[i] );
 
-		if ( obj->GetType() == OBJ_SENTRYGUN || ( obj->GetType() == OBJ_DISPENSER && obj->ClassMatches( "obj_dispenser" ) ) || obj->GetType() == OBJ_TELEPORTER )
+		if ( pObj->GetType() == OBJ_SENTRYGUN || ( pObj->GetType() == OBJ_DISPENSER && pObj->ClassMatches( "obj_dispenser" ) ) || pObj->GetType() == OBJ_TELEPORTER )
 		{
-			m_PVNPCs.AddToTail( obj );
+			m_PVNPCs.AddToTail( pObj );
 		}
 	}
 
 	CUtlVector<INextBot *> nextbots;
 	TheNextBots().CollectAllBots( &nextbots );
-	for ( INextBot *nextbot : nextbots )
+	for ( INextBot *pBot : nextbots )
 	{
-		CBaseCombatCharacter *ent = nextbot->GetEntity();
-		if ( ent && !ent->IsPlayer() )
-			m_PVNPCs.AddToTail( ent );
+		CBaseCombatCharacter *pEntity = pBot->GetEntity();
+		if ( pEntity && !pEntity->IsPlayer() )
+			m_PVNPCs.AddToTail( pEntity );
 	}
 }
