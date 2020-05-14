@@ -576,19 +576,19 @@ void CTFNavMesh::ComputeBlockedAreas()
 	CBaseToggle *pDoor = NULL;
 	while ( ( pDoor = (CBaseToggle *)gEntList.FindEntityByClassname( pDoor, "func_door*" ) ) != NULL )
 	{
-		Extent doorExent;
+		Extent doorExent, triggerExtent;
 		doorExent.Init( pDoor );
 
 		bool bDoorClosed = pDoor->m_toggle_state == TS_AT_BOTTOM || pDoor->m_toggle_state == TS_GOING_DOWN;
 
-		int iBlockedTeam = 0;
+		int iBlockedTeam = TEAM_UNASSIGNED;
 		bool bFiltered = false;
 
 		CBaseTrigger *pTrigger = NULL;
 		while ( ( pTrigger = (CBaseTrigger *)gEntList.FindEntityByClassname( pTrigger, "trigger_multiple" ) ) != NULL )
 		{
-			Extent triggerExtent;
 			triggerExtent.Init( pTrigger );
+
 			if ( doorExent.IsOverlapping( triggerExtent ) && !pTrigger->m_bDisabled )
 			{
 				CBaseFilter *pFilter = pTrigger->m_hFilter;
@@ -603,7 +603,7 @@ void CTFNavMesh::ComputeBlockedAreas()
 		CollectAreasOverlappingExtent( doorExent, &potentiallyBlockedAreas );
 
 		int iNavTeam = TEAM_ANY;
-		if ( iBlockedTeam > 0 )
+		if ( iBlockedTeam > TEAM_UNASSIGNED )
 			iNavTeam = ( iBlockedTeam == TF_TEAM_RED ) ? TF_TEAM_BLUE : TF_TEAM_RED;
 
 		for ( int i=0; i<potentiallyBlockedAreas.Count(); ++i )
@@ -614,7 +614,7 @@ void CTFNavMesh::ComputeBlockedAreas()
 			if ( area->HasTFAttributes( DOOR_ALWAYS_BLOCKS ) )
 				bDoorBlocks = bDoorClosed;
 			else
-				bDoorBlocks = ( !bFiltered && bDoorClosed ) || iNavTeam > 0;
+				bDoorBlocks = ( !bFiltered && bDoorClosed ) || iNavTeam > TEAM_UNASSIGNED;
 
 			if ( bDoorBlocks )
 			{
