@@ -796,7 +796,7 @@ const char *g_szProjectileNames[] =
 	"weapon_grenade_pipebomb_projectile",
 	"projectile_balloffire",
 	"projectile_energyorb",
-	
+	"projectile_jar_gas"
 };
 
 // these map to the projectiles named in g_szProjectileNames
