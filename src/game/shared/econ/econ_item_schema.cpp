@@ -12,10 +12,11 @@
 BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
-	RecvPropInt( RECVINFO( m_iRawValue32 ) ),
+	RecvPropInt( RECVINFO_NAME( m_flValue, m_iRawValue32 ) ),
+	RecvPropFloat( RECVINFO( m_flValue ), SPROP_NOSCALE ),
 #else
-	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ) ),
-	SendPropInt( SENDINFO( m_iRawValue32 ), -1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ), -1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NAME( m_flValue, m_iRawValue32 ), 32, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -25,7 +26,7 @@ END_NETWORK_TABLE()
 CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
 {
 	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
-	m_iRawValue32 = src.m_iRawValue32;
+	m_flValue = src.m_flValue;
 	m_iAttributeClass = src.m_iAttributeClass;
 }
 
@@ -36,7 +37,7 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 {
 	m_iAttributeDefinitionIndex = iIndex;
 	
-	m_iRawValue32 = FloatBits( flValue );
+	m_flValue = flValue;
 
 
 	if ( pszAttributeClass )
@@ -60,7 +61,7 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 {
 	m_iAttributeDefinitionIndex = iIndex;
 	
-	m_iRawValue32 = *(unsigned int *)STRING( AllocPooledString( pszValue ) );
+	m_flValue = *(float *)( (unsigned int *)STRING( AllocPooledString( pszValue ) ) );
 
 
 	if ( pszAttributeClass )
@@ -83,7 +84,7 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 CEconItemAttribute &CEconItemAttribute::operator=( CEconItemAttribute const &src )
 {
 	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
-	m_iRawValue32 = src.m_iRawValue32;
+	m_flValue = src.m_flValue;
 	m_iAttributeClass = src.m_iAttributeClass;
 
 	return *this;
