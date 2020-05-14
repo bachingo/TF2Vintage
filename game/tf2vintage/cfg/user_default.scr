@@ -246,6 +246,13 @@ DESCRIPTION INFO_OPTIONS
 		{ BOOL }
 		{ "0" }
 	}
+	
+	"tf2v_show_killstreak_counter"
+	{
+		"#Attrib_KillStreakTier"
+		{ BOOL }
+		{ "0" }
+	}
 
 	"category4"
 	{
