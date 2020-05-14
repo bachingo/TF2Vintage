@@ -120,6 +120,7 @@ void CTFMainMenuPanel::OnCommand( const char* command )
 	else if ( !Q_strcmp( command, "newloadout" ) )
 	{
 		MAINMENU_ROOT->ShowPanel( LOADOUT_MENU );
+		MAINMENU_ROOT->ShowPanel( PRESETS_MENU );
 	}
 	else if ( !Q_strcmp( command, "newstats" ) )
 	{

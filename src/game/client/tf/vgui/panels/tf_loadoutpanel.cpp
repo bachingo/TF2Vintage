@@ -609,8 +609,7 @@ void CTFLoadoutPanel::SetWeaponPreset( int iClass, int iSlot, int iPreset )
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel *pParent, const char *pName)
-:	EditablePanel( pParent, "loadout_preset_panel" )
+CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel* parent, const char *panelName) : CTFMenuPanelBase(parent, panelName)
 {
 	V_memset( m_pPresetButtons, 0, sizeof( m_pPresetButtons ) );
 	

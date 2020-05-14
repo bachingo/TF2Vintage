@@ -14,6 +14,7 @@ enum MenuPanel //position in this enum = zpos on the screen
 	PAUSE_MENU,
 	SHADEBACKGROUND_MENU, //add popup/additional menus below:		
 	LOADOUT_MENU,
+	PRESETS_MENU,
 	ITEMSELCTION_MENU,
 	STATSUMMARY_MENU,
 	OPTIONSDIALOG_MENU,

@@ -70,13 +70,12 @@ public:
 };
 
 
-#include "vgui_controls/EditablePanel.h"
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CTFLoadoutPresetPanel : public vgui::EditablePanel
+class CTFLoadoutPresetPanel : public CTFMenuPanelBase
 {
-	DECLARE_CLASS_SIMPLE(CTFLoadoutPresetPanel, vgui::EditablePanel);
+	DECLARE_CLASS_SIMPLE(CTFLoadoutPresetPanel, CTFMenuPanelBase);
 
 public:
 	CTFLoadoutPresetPanel(vgui::Panel* parent, const char *panelName);
