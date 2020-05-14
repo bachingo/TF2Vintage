@@ -20,8 +20,14 @@ public:
 	virtual void Spawn( void ) override;
 	virtual void UpdateClientSideAnimation( void ) override;
 
+	virtual ShadowType_t ShadowCastType( void );
+	void UpdateShadowLOD( void );
+
 private:
 	C_NextBotCombatCharacter( C_NextBotCombatCharacter const& ); // not defined, not accessible
+
+	ShadowType_t m_nShadowType;
+	CountdownTimer m_shadowUpdateTimer;
 };
 
 
