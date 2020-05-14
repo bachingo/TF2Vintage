@@ -281,7 +281,7 @@
 			"item_class"	"tf_wearable"
 			"anim_slot"	"FORCE_NOT_USED"
 			"loadondemand"	"1"
-			"drop"	"none"
+			"drop_type"	"none"
 			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
 			"act_as_wearable"	"1"
 			"attributes"
@@ -340,7 +340,7 @@
 		"base_hatattachment"
 		{
 			"public_prefab"	"1"
-			"prefab"	"hatattachment"
+			"prefab"	"hat_attachment"
 		}
 		"base_misc"
 		{
@@ -592,7 +592,7 @@
 				"custom projectile model"
 				{
 					"attribute_class"	"custom_projectile_model"
-					"value"				"models/weapons/w_models/w_rocket_airstrike/w_rocket_airstrike.mdl
+					"value"				"models/weapons/w_models/w_rocket_airstrike/w_rocket_airstrike.mdl"
 				}
 			}
 			"visuals"
@@ -1034,10 +1034,9 @@
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_bazaar_sniper/c_bazaar_sniper"
 			"model_player"	"models/workshop/weapons/c_models/c_bazaar_sniper/c_bazaar_sniper.mdl"
-			"visuals"
+			"static_attrs"
 			{
-				"sound_single_shot"	"Weapon_Bazaar_Bargain.Single"
-				"sound_burst"	"Weapon_Bazaar_Bargain.SingleCrit"
+				"min_viewmodel_offset"			"5 0 -8"		
 			}
 			"attributes"
 			{
@@ -1047,14 +1046,15 @@
 					"value"				"1.5"
 				}
 			}
-			"static_attrs"
+			"visuals"
 			{
-				"min_viewmodel_offset"			"5 0 -8"		
+				"sound_single_shot"	"Weapon_Bazaar_Bargain.Single"
+				"sound_burst"	"Weapon_Bazaar_Bargain.SingleCrit"
 			}
 		}
 		"weapon_machina"
 		{
-			"item_class"	"tf_weapon_sniperrifle""
+			"item_class"	"tf_weapon_sniperrifle"
 			"base_item_name"	"The Machina"
 			"item_type_name"	"#TF_Weapon_SniperRifle"
 			"item_name"	"#TF_DEX_Rifle"
@@ -1496,6 +1496,8 @@
 			"item_name"	"#TF_ReserveShooter"
 			"item_logname"	"reserve_shooter"
 			"item_iconname"	"reserve_shooter"
+			"item_slot"	"secondary"
+			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_reserve_shooter/c_reserve_shooter"
 			"model_player"	"models/workshop/weapons/c_models/c_reserve_shooter/c_reserve_shooter.mdl"
 			"static_attrs"
@@ -1517,7 +1519,7 @@
 				"deploy time decreased"
 				{
 					"attribute_class"	"mult_deploy_time"
-					"value"	".85"
+					"value"	"0.85"
 				}
 			}
 			"visuals"
@@ -1525,7 +1527,6 @@
 				"sound_single_shot"	"Weapon_Reserve_Shooter.Single"
 				"sound_burst"		"Weapon_Reserve_Shooter.SingleCrit"
 			}
-			"particle_suffix"	"reserve_shooter"
 		}
 		"weapon_russian_riot"
 		{
@@ -2853,7 +2854,7 @@
 					"ACT_VM_DRAW"	"ACT_SECONDARY_VM_DRAW_2"
 					"ACT_VM_PRIMARYATTACK"	"ACT_SECONDARY_VM_PRIMARYATTACK_2"
 					"ACT_MP_ATTACK_STAND_SECONDARYFIRE" "ACT_MP_PUSH_STAND_SECONDARY"
-					"ACT_MP_ATTACK_CROUCH_SECONDARYFIRE""ACT_MP_PUSH_CROUCH_SECONDARY"
+					"ACT_MP_ATTACK_CROUCH_SECONDARYFIRE" "ACT_MP_PUSH_CROUCH_SECONDARY"
 					"ACT_MP_ATTACK_SWIM_SECONDARYFIRE"	"ACT_MP_PUSH_SWIM_SECONDARY"
 					"ACT_VM_RELOAD"	"ACT_SECONDARY_VM_RELOAD_2"
 					"ACT_MP_RELOAD_STAND"	"ACT_MP_RELOAD_STAND_SECONDARY_2"
@@ -3726,7 +3727,6 @@
 		{
 			"item_class"	"tf_weapon_rocketlauncher_fireball"
 			"item_type_name"	"#TF_Weapon_FireballLauncher"
-			"particle_suffix"	"dragons_fury"
 			"propername"	"1"
 			"item_name"	"#TF_Weapon_DragonsFury"
 			"item_description"	"#TF_Weapon_DragonsFury_Desc"
@@ -3799,7 +3799,7 @@
 			"is_cut_content"			"1"
 			"item_quality" "collectors"
 		}
-		weapon_multiclass_item"
+		"weapon_multiclass_item"
 		{
 			"is_multiclass_item"			"1"
 			"item_quality" "strange"
@@ -4170,7 +4170,7 @@
 		"32"
 		{
 			"name"	"TF2V_COSMETIC_HAT"
-			"prefab"	"hatattachment"
+			"prefab"	"hat_attachment"
 			"item_quality" "normal"
 			"used_by_classes"
 			{
@@ -4754,7 +4754,7 @@
 			"Visuals"
 			{
 			"sound_single_shot"	"Weapon_RPG_DirectHit.Single"
-			"sound_ExplosionSound"	""Weapon_RPG_DirectHit.Explode""
+			"sound_ExplosionSound"	"Weapon_RPG_DirectHit.Explode"
 			"sound_burst"			"Weapon_RPG_DirectHit.SingleCrit"
 			}
 		}
@@ -5230,7 +5230,6 @@
 			"prefab" "weapon_shortstop"
 			"propername"	"1"
 			"year"			"2010"
-			"particle_suffix"	"shortstop"
 		}
 		"222"
 		{
@@ -5374,7 +5373,6 @@
 					"ACT_MP_RELOAD_AIRWALK_LOOP"	"ACT_MP_RELOAD_AIRWALK_PRIMARY_LOOP_2"
 				}
 			}
-			"particle_suffix"		"blackbox"
 		}
 		"230"
 		{
@@ -5645,7 +5643,6 @@
 			"name"			"The Amputator"
 			"prefab"			"weapon_amputator"
 			"year"				"2010"
-			"particle_suffix"	"amputator"
 		}
 		"305"
 		{
@@ -5653,7 +5650,6 @@
 			"prefab"		"weapon_crusaders_crossbow"
 			"propername"	"1"
 			"year"			"2010"
-			"particle_suffix"	"crusaders_crossbow"
 		}
 		"307"
 		{
@@ -5822,7 +5818,6 @@
 					"value"					"0.80"
 				}
 			}
-			"particle_suffix"	"brass_beast"
 		}
 		"317"
 		{
@@ -5929,7 +5924,6 @@
 					"value"			"1.5"
 				}
 			}
-			"particle_suffix"	"back_scratcher"
 		}
 		"327"
 		{
@@ -6121,7 +6115,6 @@
 			"name"	"The Detonator"
 			"prefab"	"weapon_detonator"
 			"year"				"2011"
-			"particle_suffix"	"detonator"
 		}
 		"354"
 		{
@@ -6276,21 +6269,18 @@
 			"name"	"The Shahanshah"
 			"prefab"	"weapon_scimitar"
 			"year"				"2011"
-			"particle_suffix"	"shahanshah"
 		}
 		"402"
 		{
 			"name"	"The Bazaar Bargain"
 			"prefab"	"weapon_bazaar_sniper"
 			"year"				"2011"
-			"particle_suffix"	"bazaar_bargain"
 		}
 		"404"
 		{
 			"name"	"The Persian Persuader"
 			"prefab"	"weapon_demo_sultan_sword"
 			"year"	"2011"
-			"particle_suffix"	"persian_persuader"
 		}
 		"405"
 		{
@@ -6576,9 +6566,7 @@
 		{
 			"name"	"The Reserve Shooter"
 			"prefab"	"weapon_reserve_shooter"
-			"propername"	"1"
 			"year"			"2011"
-			"item_slot"	"secondary"
 			"used_by_classes"
 			{
 				"pyro" "secondary"
@@ -6622,10 +6610,8 @@
 		"417"
 		{
 			"name"	"The Reserve Shooter (Multi-Class)"
-			"prefab"	"weapon_reserve_shooter	weapon_multiclass_item"
-			"propername"	"1"
+			"prefab"	"weapon_reserve_shooter weapon_multiclass_item"
 			"year"			"2011"
-			"item_slot"	"secondary"
 			"used_by_classes"
 			{
 				"engineer" "primary"
@@ -6637,7 +6623,6 @@
 			"name"	"Tomislav"
 			"prefab" "weapon_tomislav"
 			"year"		"2011"
-			"particle_suffix"	"tomislav"
 		}
 		"425"
 		{
@@ -6648,7 +6633,6 @@
 			{
 				"heavy"	"1"
 			}
-			"particle_suffix"	"family_business"
 		}
 		"426"
 		{
@@ -6713,14 +6697,12 @@
 			"name"	"The Family Business (Multi-Class)"
 			"prefab"	"weapon_russian_riot weapon_multiclass_item"
 			"year"			"2011"
-			"particle_suffix"	"family_business"
 			"used_by_classes"
 			{
 				"pyro"	"secondary"
 				"soldier"	"secondary"
 				"engineer"	"primary"
 			}
-
 		}
 		"441"
 		{
@@ -6835,14 +6817,12 @@
 			"name"	"The Disciplinary Action"
 			"prefab" "weapon_disciplinary_action"
 			"year"				"2011"
-			"particle_suffix"	"disciplinary_action"
 		}
 		"448"
 		{
 			"name"	"The Soda Popper"
 			"prefab" "weapon_soda_popper"
 			"year"	"2011"
-			"particle_suffix"	"soda_popper"
 			"visuals_red"
 			{
 				"skin" "0"
@@ -6857,7 +6837,6 @@
 			"name"	"The Winger"
 			"prefab"	"weapon_winger_pistol"
 			"year"				"2011"
-			"particle_suffix"	"winger"
 			"used_by_classes"
 			{
 				"scout"	"1"
@@ -6906,7 +6885,6 @@
 			"name"	"The Winger (Multi-Class)"
 			"prefab"	"weapon_winger_pistol weapon_multiclass_item"
 			"year"				"2011"
-			"particle_suffix"	"winger"
 			"used_by_classes"
 			{
 				"engineer"	"1"
@@ -7578,7 +7556,6 @@
 			"name"	"The Scorch Shot"
 			"prefab" "weapon_scorch_shot"
 			"year"	"2012"
-			"particle_suffix"	"scorch_shot"
 		}
 		"751"
 		{
@@ -7873,14 +7850,12 @@
 			"name"			"The Loose Cannon"
 			"prefab"		"weapon_demo_cannon"
 			"first_sale_date"	"2012"
-			"particle_suffix" 	"loose_cannon"
 		}
 		"997"
 		{
 			"name"			"The Rescue Ranger"
 			"prefab"			"weapon_rescue_ranger"
 			"year"				"2012"
-			"particle_suffix"	"rescue_ranger"
 		}
 		"998"
 		{
@@ -8090,7 +8065,6 @@
 			"name"	"The Air Strike"
 			"prefab" "weapon_atom_launcher"
 			"year"					"2014"
-			"particle_suffix"	"air_strike"
 		}
 		"1150"
 		{
@@ -8154,14 +8128,12 @@
 			"name"	"The Iron Bomber"
 			"prefab"	"weapon_quadball"
 			"year"			"2014"
-			"particle_suffix"	"iron_bomber"
 		}
 		"1153"
 		{
 			"name"	"Panic Attack Shotgun"
 			"prefab"	"weapon_trenchgun"
 			"year"				"2014"
-			"particle_suffix"	"panic_attack"
 		}
 		"1178"
 		{
@@ -8393,20 +8365,10 @@
 				}
 			}
 		}
-		"1198"
-		{
-			"name"		"The Nailgun"
-			"prefab"		"weapon_nailgun weapon_custom"
-			"year"			"2020"
-			"attach_to_hands"	"0"
-		}
-		"1199"
-		{
-			"name"		"The Tranq"
-			"prefab"		"weapon_tranq weapon_custom"
-			"year"			"2020"
-			"attach_to_hands"	"0"
-		}
+		
+
+
+
 		"121"
 		{
 			"name"	"The Devanon Special"
@@ -8604,6 +8566,9 @@
 			"item_description"	"#TF_Item_ZombieSniper_Desc"
 			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
 		}
+		
+		
+		
 		"10160"
 		{
 			"name"	"TTG Max Pistol"
@@ -8697,7 +8662,6 @@
 				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
 				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
 			}
-			"particle_suffix"	"holy_mackerel"
 		}
 		"10331"
 		{
