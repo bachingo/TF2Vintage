@@ -48,7 +48,7 @@ LINK_ENTITY_TO_CLASS( tf_weapon_knife, CTFKnife );
 PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
 
 
-ConVar tf2v_use_new_backstabs( "tf2v_use_new_backstabs", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force knives to be raised before a backstab can occur." );
+ConVar tf2v_use_new_backstabs( "tf2v_use_new_backstabs", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes knife backstab behavior.", true, 0, true, 2 );
 
 //=============================================================================
 //
@@ -118,11 +118,9 @@ void CTFKnife::PrimaryAttack( void )
 			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
 			{
 				// Check to see if we can backstab.
-				bool bCanBackstab;
-				if ( tf2v_use_new_backstabs.GetBool() ) // Must be readied before allowed to backstab
-					bCanBackstab = ( IsBehindAndFacingTarget( pTarget ) && m_bReadyToBackstab );
-				else								  // Does not need to be readied to backstab
-					bCanBackstab = IsBehindAndFacingTarget( pTarget );
+				bool bCanBackstab = IsBehindTarget(pTarget);
+				if ( tf2v_use_new_backstabs.GetInt() == 2 ) // Must be readied before allowed to backstab
+					bCanBackstab = ( bCanBackstab && m_bReadyToBackstab );
 				// Deal extra damage to players when stabbing them from behind
 				if ( bCanBackstab )
 				{
@@ -149,9 +147,12 @@ void CTFKnife::PrimaryAttack( void )
 	// Swing the weapon.
 	Swing( pPlayer );
 	
-	// And hit instantly.
-	Smack();
-	m_flSmackTime = -1.0f;
+	if (tf2v_use_new_backstabs.GetInt() > 0)
+	{
+		// And hit instantly.
+		Smack();
+		m_flSmackTime = -1.0f;
+	}
 
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
@@ -206,8 +207,12 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCu
 
 	if ( pOwner && pTarget->IsPlayer() )
 	{
-		// Since Swing and Smack are done in the same frame now we don't need to run additional checks anymore.
-		if ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget )
+
+		bool bIsBackstab = ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget ); // Since Swing and Smack are done in the same frame now we don't need to run additional checks anymore.
+		if (tf2v_use_new_backstabs.GetInt() == 0) // Unless we use old backstabs.
+		bIsBackstab = IsBehindTarget(pTarget) || bIsBackstab; 
+
+		if (bIsBackstab)
 		{
 			// this will be a backstab, do the strong anim.
 			if (!TFGameRules()->IsBossClass(pTarget))
@@ -232,7 +237,7 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCu
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Newer backstab check to prevent facestabs.
 //-----------------------------------------------------------------------------
 bool CTFKnife::IsBehindAndFacingTarget( CBaseEntity *pTarget )
 {
@@ -266,6 +271,35 @@ bool CTFKnife::IsBehindAndFacingTarget( CBaseEntity *pTarget )
 
 	return false;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: The old, original backstab check.
+//-----------------------------------------------------------------------------
+bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
+{
+	// If using newer backstabs, use the better backstab algorithm instead.
+	if (tf2v_use_new_backstabs.GetInt() != 0)
+		return IsBehindAndFacingTarget(pTarget);
+	
+	Assert( pTarget );
+
+	// Get the forward view vector of the target, ignore Z
+	Vector vecVictimForward;
+	AngleVectors( pTarget->EyeAngles(), &vecVictimForward, NULL, NULL );
+	vecVictimForward.z = 0.0f;
+	vecVictimForward.NormalizeInPlace();
+
+	// Get a vector from my origin to my targets origin
+	Vector vecToTarget;
+	vecToTarget = pTarget->WorldSpaceCenter() - GetOwner()->WorldSpaceCenter();
+	vecToTarget.z = 0.0f;
+	vecToTarget.NormalizeInPlace();
+
+	float flDot = DotProduct( vecVictimForward, vecToTarget );
+
+	return ( flDot > -0.1 );
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -374,7 +408,7 @@ void CTFKnife::BackstabVMThink( void )
 		trace_t tr;
 		if ( CanAttack() && DoSwingTrace( tr ) &&
 			tr.m_pEnt->IsPlayer() && tr.m_pEnt->GetTeamNumber() != pOwner->GetTeamNumber() &&
-			IsBehindAndFacingTarget( tr.m_pEnt ) )
+			IsBehindTarget(tr.m_pEnt))
 		{
 			if ( !m_bReadyToBackstab )
 			{
