@@ -69,9 +69,9 @@ public:
 		int  modeltype;
 		const model_t *model;
 	};
-	CUtlVector<AttachedModelData_t> m_aAttachments;
+	CUtlVector<AttachedModelData_t> m_Attachments;
 
-	CMaterialReference m_aMaterials[4];
+	CMaterialReference m_aMaterials[ TF_TEAM_COUNT ];
 #endif
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }

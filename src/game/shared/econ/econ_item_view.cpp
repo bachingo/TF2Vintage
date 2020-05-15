@@ -453,11 +453,11 @@ CEconItemView &CEconItemView::operator=( CEconItemView const &rhs )
 	m_iEntityQuality = rhs.m_iEntityQuality;
 	m_iEntityLevel = rhs.m_iEntityLevel;
 	m_iTeamNumber = rhs.m_iTeamNumber;
+	m_bOnlyIterateItemViewAttributes = rhs.m_bOnlyIterateItemViewAttributes;
 
-	m_AttributeList.CopyFrom( rhs.m_AttributeList );
+	m_AttributeList = rhs.m_AttributeList;
 
 #ifdef GAME_DLL
-	m_bOnlyIterateItemViewAttributes = rhs.m_bOnlyIterateItemViewAttributes;
 	m_iClassNumber = rhs.m_iClassNumber;
 #endif
 
@@ -602,10 +602,9 @@ void CAttributeList::NotifyManagerOfAttributeValueChanges( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CAttributeList &CAttributeList::operator=( CAttributeList const &rhs )
+void CAttributeList::operator=( CAttributeList const &rhs )
 {
-	m_Attributes.RemoveAll();
 	m_Attributes = rhs.m_Attributes;
+
 	m_pManager = nullptr;
-	return *this;
 }

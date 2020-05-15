@@ -31,7 +31,7 @@ public:
 	void SetManager( CAttributeManager *pManager );
 	void NotifyManagerOfAttributeValueChanges( void );
 
-	CAttributeList &operator=( CAttributeList const &rhs );
+	void operator=( CAttributeList const &rhs );
 	
 private:
 	CUtlVector<CEconItemAttribute> m_Attributes;

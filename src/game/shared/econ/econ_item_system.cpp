@@ -606,6 +606,10 @@ public:
 			{
 				pVisuals->use_per_class_bodygroups = pVisualData->GetInt();
 			}
+			else if ( !V_stricmp( pVisualData->GetName(), "material_override" ) )
+			{
+				V_strncpy( pVisuals->material_override, pVisualData->GetString(), sizeof( pVisuals->material_override ) );
+			}
 			else
 			{
 				GET_VALUES_FAST_STRING( pVisuals->misc_info, pVisualData );
@@ -618,7 +622,7 @@ public:
 protected:
 	void MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues *pSchemeData )
 	{
-		char prefab[64];
+		char prefab[64]{0};
 		Q_snprintf( prefab, sizeof( prefab ), pSchemeData->GetString( "prefab" ) );
 
 		if ( prefab[0] != '\0' )

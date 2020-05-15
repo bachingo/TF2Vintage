@@ -323,6 +323,7 @@ typedef struct EconPerTeamVisuals
 	char custom_particlesystem[128];
 	char muzzle_flash[128];
 	char tracer_effect[128];
+	char material_override[128];
 	CUtlDict< ItemStyle_t*, unsigned short > styles;
 	int skin;
 	int use_per_class_bodygroups;

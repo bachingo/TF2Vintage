@@ -57,11 +57,28 @@ void C_EconEntity::OnPreDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 void C_EconEntity::OnDataChanged( DataUpdateType_t updateType )
 {
-	BaseClass::OnDataChanged( updateType );
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		InitializeAttributes();
+	}
 
+	BaseClass::OnDataChanged( updateType );
 	m_AttributeManager.OnDataChanged( updateType );
 
 	UpdateAttachmentModels();
+
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		CEconItemView *pItem = GetItem();
+		for ( int i = 0; i < TF_TEAM_COUNT; i++ )
+		{
+			const char *pszMaterial = pItem->GetStaticData()->GetVisuals( i )->material_override;
+			if ( pszMaterial )
+			{
+				m_aMaterials[i].Init( pszMaterial, TEXTURE_GROUP_CLIENT_EFFECTS );
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
