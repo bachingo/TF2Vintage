@@ -3746,16 +3746,6 @@
 			}
 			"attributes"
 			{
-				"item_meter_charge_type"
-				{
-					"attribute_class"	"item_meter_charge_type"
-					"value"	"1"
-				}
-				"item_meter_charge_rate"
-				{
-					"attribute_class"	"item_meter_charge_rate"
-					"value"	"0.8"
-				}
 				"hidden primary max ammo bonus"
 				{
 					"attribute_class"	"mult_maxammo_primary"
@@ -3765,6 +3755,11 @@
 				{
 					"attribute_class"	"mult_airblast_cost"
 					"value"	"0.25"
+				}
+				"dragons fury positive properties"
+				{
+					"attribute_class"	"dragons_fury_positive_properties"
+					"value"	"1"
 				}
 			}
 			"visuals"

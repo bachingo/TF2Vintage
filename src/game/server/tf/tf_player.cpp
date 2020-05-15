@@ -5191,13 +5191,20 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 		}
 		
-		// This burning attribute also affects afterburn.
+		// For when a player is on fire.
 		float nDamageBurningPlayers = info.GetDamage();
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDamageBurningPlayers, mult_dmg_vs_burning );
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDamageBurningPlayers, mult_dmg_vs_burning ); // mult_dmg_vs_burning also affects afterburn, but that's handled elsewhere.
 		if ( m_Shared.InCond( TF_COND_BURNING ) )
 		{
+			// Dragon's fury attribute gives a 300% static damage increase.
+			int nDragonsFuryBurn = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDragonsFuryBurn, dragons_fury_positive_properties );
+			if ( nDragonsFuryBurn != 0)
+				nDamageBurningPlayers *= 3;
+			
 			info.SetDamage( nDamageBurningPlayers );
 		}		
+
 
 		// For when a player isn't on fire.
 		float flPenaltyNonBurning = info.GetDamage();
