@@ -24,6 +24,8 @@ ConVar tf_scout_stunball_regen_rate( "tf_scout_stunball_regen_rate", "15.0", FCV
 ConVar tf_scout_stunball_base_speed( "tf_scout_stunball_base_speed", "3000.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stunball base speed." );
 ConVar tf_scout_bat_launch_delay( "tf_scout_bat_launch_delay", "0.1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies delay for stunball launch" );
 
+ConVar tf2v_use_new_ball_regen( "tf2v_use_new_ball_regen", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Increases ball regeneration by 33%. Best used when tf_scout_stunball_regen_rate set at 15." );
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFBat_Wood, DT_TFWeaponBat_Wood )
 
 BEGIN_NETWORK_TABLE( CTFBat_Wood, DT_TFWeaponBat_Wood )
@@ -305,7 +307,11 @@ bool CTFBat_Wood::SendWeaponAnim( int iActivity )
 }
 float CTFBat_Wood::InternalGetEffectBarRechargeTime( void )
 {
-	return tf_scout_stunball_regen_rate.GetFloat();
+	float flRegenTime = tf_scout_stunball_regen_rate.GetFloat();
+	if (tf2v_use_new_ball_regen.GetBool())
+		flRegenTime *= (10/15);
+	
+	return flRegenTime;
 }
 
 #ifdef CLIENT_DLL
