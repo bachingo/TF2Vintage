@@ -622,7 +622,7 @@ CTFLoadoutPresetPanel::CTFLoadoutPresetPanel(vgui::Panel* parent, const char *pa
 	for ( int i = 0; i < TF_MAX_PRESETS; ++i )
 	{
 		const char *cInventorySlot = g_InventoryLoadoutPresets[i];
-		char *szButton = NULL;
+		char szButton[64];
 		Q_snprintf(szButton, sizeof(szButton), "LoadPresetButton%i", i);
 		const char *cszName = szButton;
 		wchar_t *pwszPresetName = g_pVGuiLocalize->Find(cInventorySlot);
@@ -807,7 +807,7 @@ void CTFLoadoutPresetPanel::UpdatePresetButtonStates()
 			m_pPresetButtons[i]->SetDepressedColor( m_aDefaultColors[NOTLOADED][FG][DEPRESSED], m_aDefaultColors[NOTLOADED][BG][DEPRESSED] );
 		}
 
-		char *szCmd = NULL;
+		char szCmd[64];
 		Q_snprintf(szCmd, sizeof(szCmd), "loadpreset_%i", i);
 		const char *cszCmd = szCmd;
 		m_pPresetButtons[i]->SetCommand(cszCmd);
