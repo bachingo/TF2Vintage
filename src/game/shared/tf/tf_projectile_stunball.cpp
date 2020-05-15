@@ -20,6 +20,7 @@ ConVar tf_scout_stunball_base_duration( "tf_scout_stunball_base_duration", "6.0"
 
 extern ConVar tf2v_minicrits_on_deflect;
 
+ConVar tf2v_sandman_stun_type( "tf2v_sandman_stun_type", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies Sandman stun types.", true, 0, true, 2 );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFStunBall, DT_TFStunBall )
 
@@ -144,9 +145,15 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		float flStunDuration = tf_scout_stunball_base_duration.GetFloat();
 		Vector vecDir = GetAbsOrigin();
 		VectorNormalize( vecDir );
+		bool bIsMoonShot = ( tf2v_sandman_stun_type.GetInt() == 2 )  ? flAirTime >= 1.0f : flAirTime >= 0.8f;
+		
 
+		int iDamageAmt = GetDamage();
+		if (tf2v_sandman_stun_type.GetInt() == 2 && bIsMoonShot)	// New Moonshot type increases damage by 50%.
+			iDamageAmt *= 1.5;
+		
 		// Do damage.
-		CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), GetDamageType(), TF_DMG_CUSTOM_BASEBALL );
+		CTakeDamageInfo info( this, pAttacker, pWeapon, iDamageAmt, GetDamageType(), TF_DMG_CUSTOM_BASEBALL );
 		CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, GetAbsOrigin() );
 		info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
 		pPlayer->DispatchTraceAttack( info, vecDir, pTrace );
@@ -156,23 +163,62 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		{
 
 			int iBonus = 1;
-			if ( flAirTime >= 1.0f )
+			switch (tf2v_sandman_stun_type.GetInt())
 			{
-				// Maximum stun is base duration + 1 second
-				flAirTime = 1.0f;
-				flStunDuration += 1.0f;
+			case 0:							// Old, broken stun that full stunned everything including Ubers.
+				if (bIsMoonShot)
+				{
+					// Maximum stun is base duration + 1 second
+					flAirTime = 1.0f;
+					flStunDuration += 1.0f;
 
-				// 2 points for moonshots
-				iBonus++;
+					// 2 points for moonshots
+					iBonus++;
 
-				// Big stun
-				pPlayer->m_Shared.StunPlayer(flStunDuration * ( flAirTime ), 0.0f, 0.75f, TF_STUNFLAGS_BIGBONK, pAttacker );
+					// Big stun
+					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.0f, 1.0f, TF_STUNFLAGS_BIGBONK, pAttacker);
+				}
+				else
+				{
+					// Big Stun (but no crowd cheer)
+					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.0f, 1.0f, TF_STUNFLAG_BONKSTUCK, pAttacker);
+				}
+				break;
+			case 1:							// The middle of the road version, featuring full stuns on Moonshots and loser state on everything else.
+				if (bIsMoonShot)
+				{
+					// Maximum stun is base duration + 1 second
+					flAirTime = 1.0f;
+					flStunDuration += 1.0f;
+
+					// 2 points for moonshots
+					iBonus++;
+
+					// Big stun
+					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.0f, 0.75f, TF_STUNFLAGS_BIGBONK, pAttacker);
+				}
+				else
+				{
+					// Small stun
+					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.8f, 0.0f, TF_STUNFLAGS_SMALLBONK, pAttacker);
+				}
+				break;
+			case 2:							// Modern variant that only slows down targets.
+				if (bIsMoonShot)
+				{
+					// Maximum stun is base duration + 1 second
+					flAirTime = 1.0f;
+					flStunDuration += 1.0f;
+
+					// 2 points for moonshots
+					iBonus++;
+
+				}
+				// Slowdown only.
+				pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN, pAttacker);
+				break;
 			}
-			else
-			{
-				// Small stun
-				pPlayer->m_Shared.StunPlayer(flStunDuration * ( flAirTime ), 0.8f, 0.0f, TF_STUNFLAGS_SMALLBONK, pAttacker );
-			}
+
 
 			pAttacker->SpeakConceptIfAllowed( MP_CONCEPT_STUNNED_TARGET );
 
@@ -254,7 +300,7 @@ bool CTFStunBall::CanStun( CTFPlayer *pOther )
 		return false;
 
 	// Don't stun players we can't damage
-	if ( pOther->m_Shared.InCond( TF_COND_INVULNERABLE ) || pOther->m_Shared.InCond( TF_COND_PHASE ) )
+	if ( ( pOther->m_Shared.InCond( TF_COND_INVULNERABLE ) && tf2v_sandman_stun_type.GetInt() == 0 ) || pOther->m_Shared.InCond( TF_COND_PHASE ) )
 		return false;
 	
 	// Don't stun players with megaheal.
