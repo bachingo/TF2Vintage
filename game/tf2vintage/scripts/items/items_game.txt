@@ -419,6 +419,24 @@
 		{
 			"holiday_restriction"	"birthday"
 		}
+		"taunt"
+		{
+			"public_prefab"			"1"
+			"item_class"		"no_entity"
+			"item_type_name"	"#TF_TauntEnabler"
+			"item_name"			"#Hud_Menu_Taunt_Title"
+			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
+			"anim_slot"			"FORCE_NOT_USED"
+			"item_slot"			"taunt"
+			"attributes"
+			{
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
+		}
 		
 		
 		"weapon_minigun"
@@ -9437,6 +9455,26 @@
 					"value" "1"
 				}
 			}
+		}
+		
+		"350"
+		{
+			"name"	"TF2V_COSMETIC_TAUNT"
+			"prefab"	"taunt"
+			"item_quality" "normal"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
+			"baseitem"	"1"
 		}
 	}
 	"attributes"
