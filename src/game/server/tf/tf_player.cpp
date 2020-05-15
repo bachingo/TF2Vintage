@@ -1717,11 +1717,11 @@ void CTFPlayer::GiveDefaultItems()
 	}
 
 	// Give weapons.
-	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating )
+	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating ) 
 		ManageRandomWeapons( pData );
-	else if ( tf2v_legacy_weapons.GetBool() )
+	else if ( tf2v_legacy_weapons.GetBool() || tf2v_allowed_year_items.GetInt() <= 2007 )
 		ManageRegularWeaponsLegacy( pData );
-	else if ( !tf2v_randomizer.GetBool() )
+	else if ( !tf2v_randomizer.GetBool() && tf2v_allowed_year_items.GetInt() > 2007 )
 		ManageRegularWeapons( pData );
 	
 	// Give ourselves cosmetic items.
