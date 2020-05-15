@@ -669,7 +669,7 @@ void CTFNavMesh::ComputeIncursionDistances()
 				if ( !pRespawnRoom->PointIsWithin( pTeamSpawn->GetAbsOrigin() ) )
 					continue;
 
-				CTFNavArea *pArea = static_cast<CTFNavArea *>( GetNearestNavArea( pTeamSpawn ) );
+				CTFNavArea *pArea = static_cast<CTFNavArea *>( GetNearestNavArea( pTeamSpawn, GETNAVAREA_ALLOW_BLOCKED_AREAS|GETNAVAREA_CHECK_GROUND ) );
 				if ( pArea )
 				{
 					ComputeIncursionDistances( pArea, iSpawnTeam );
