@@ -5635,6 +5635,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 						{
 							case TF_WEAPON_ROCKETLAUNCHER:
 							case TF_WEAPON_ROCKETLAUNCHER_AIRSTRIKE:
+							case TF_WEAPON_ROCKETLAUNCHER_FIREBALL:
 							case TF_WEAPON_PIPEBOMBLAUNCHER:
 								// Rocket launcher and sticky launcher only have half the bonus of the other weapons at short range
 								flRandomDamage *= 0.5;
