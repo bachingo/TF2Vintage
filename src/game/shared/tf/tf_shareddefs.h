@@ -303,8 +303,8 @@ enum
 	TF_LOADOUT_SLOT_MELEE,
 	TF_LOADOUT_SLOT_PDA1,
 	TF_LOADOUT_SLOT_PDA2,
-	TF_LOADOUT_SLOT_BUILDING,	
-	TF_LOADOUT_SLOT_UTILITY,		// TF_PLAYER_WEAPON_COUNT
+	TF_LOADOUT_SLOT_BUILDING,		// TF_PLAYER_WEAPON_COUNT	
+	TF_LOADOUT_SLOT_UTILITY,		
 	
 	TF_LOADOUT_SLOT_HAT,	// TF_FIRST_COSMETIC_SLOT
 	TF_LOADOUT_SLOT_MISC1,
@@ -330,7 +330,7 @@ extern const char *g_aAmmoNames[];
 //-----------------------------------------------------------------------------
 // Weapons.
 //-----------------------------------------------------------------------------
-#define TF_PLAYER_WEAPON_COUNT		TF_LOADOUT_SLOT_UTILITY		// This is for weapon slots. for all slots, see TF_LOADOUT_SLOT_COUNT.
+#define TF_PLAYER_WEAPON_COUNT		TF_LOADOUT_SLOT_BUILDING		// This is for weapon slots. for all slots, see TF_LOADOUT_SLOT_COUNT.
 #define TF_PLAYER_GRENADE_COUNT		2
 #define TF_PLAYER_BUILDABLE_COUNT	4
 
