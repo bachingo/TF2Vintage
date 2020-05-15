@@ -2069,7 +2069,7 @@ void CTFPlayer::ValidateWeaponSlots( void )
 {
 	int iClass = m_PlayerClass.GetClassIndex();
 	// Validate weapons by slot.
-	for ( int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i )
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
 	{	
 		CTFWeaponBase *pWeapon = assert_cast<CTFWeaponBase *>( GetWeapon( i ) );
 		if ( pWeapon == nullptr )
@@ -2099,7 +2099,7 @@ void CTFPlayer::ValidateWeaponSlots( void )
 	}
 	
 	// Validate wearables by slot.
-	for ( int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i )
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
 	{	
 		if (!GetWearable( i ))
 		continue;
@@ -2132,7 +2132,7 @@ void CTFPlayer::ValidateWearableSlots( void )
 {
 	int iClass = m_PlayerClass.GetClassIndex();
 	// Validate weapons by slot.
-	for ( int i = TF_LOADOUT_SLOT_HAT; i < TF_LOADOUT_SLOT_BUFFER; ++i )
+	for ( int i = TF_FIRST_COSMETIC_SLOT; i <= TF_LAST_COSMETIC_SLOT; ++i )
 	{	
 		CTFWeaponBase *pWeapon = assert_cast<CTFWeaponBase *>( GetWeapon( i ) );
 		if ( pWeapon == nullptr )
@@ -2158,7 +2158,7 @@ void CTFPlayer::ValidateWearableSlots( void )
 	}
 	
 	// Validate wearables by slot.
-	for ( int i = TF_LOADOUT_SLOT_HAT; i < TF_LOADOUT_SLOT_BUFFER; ++i )
+	for ( int i = TF_FIRST_COSMETIC_SLOT; i <= TF_LAST_COSMETIC_SLOT; ++i )
 	{	
 		if (!GetWearable( i ))
 			continue;
@@ -2194,7 +2194,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	ValidateWearables();
 	ValidateWeapons( true );
 
-	for (int iSlot = 0; iSlot <= TF_PLAYER_WEAPON_COUNT; ++iSlot)
+	for (int iSlot = 0; iSlot < TF_PLAYER_WEAPON_COUNT; ++iSlot)
 	{
 		
 		// Only allow for melee items, if we enable it or are in a special gamemode.
@@ -2323,7 +2323,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 {
 	
-	for (int iWeapon = 0; iWeapon <= TF_PLAYER_WEAPON_COUNT; ++iWeapon)
+	for (int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon)
 	{
 		// Only allow for melee items if we enable it or are in a special gamemode.
 		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && (iWeapon != TF_LOADOUT_SLOT_MELEE) )
@@ -2412,7 +2412,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWeapon );
 	}
 
-	for ( int i = 0; i <= TF_PLAYER_WEAPON_COUNT; ++i )
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
 	{
 		// Only allow for melee items, if we enable it or are in a special gamemode.
 		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && (i != TF_LOADOUT_SLOT_MELEE) )
@@ -2522,7 +2522,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 {
 	ValidateWearableSlots();
 	
-	for (int iSlot = TF_LOADOUT_SLOT_HAT; iSlot < TF_LOADOUT_SLOT_BUFFER; ++iSlot)
+	for (int iSlot = TF_FIRST_COSMETIC_SLOT; iSlot <= TF_LAST_COSMETIC_SLOT; ++iSlot)
 	{
 		if ( ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) )
 		continue;	// These are special slots, we don't deal with these.
@@ -4009,7 +4009,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "getweaponinfos" ) )
 	{
-		for ( int iWeapon = 0; iWeapon < TF_LOADOUT_SLOT_BUFFER; ++iWeapon )
+		for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
 		{
 			CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 

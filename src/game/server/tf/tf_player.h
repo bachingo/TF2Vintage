@@ -702,7 +702,7 @@ public:
 
 protected:
 	CTFPlayerClass		m_PlayerClass;
-	int					m_WeaponPreset[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER];
+	int					m_WeaponPreset[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
 
 private:
 	CTFPlayerAnimState *m_PlayerAnimState;

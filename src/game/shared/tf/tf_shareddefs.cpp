@@ -300,13 +300,24 @@ const char *g_LoadoutSlots[] =
 	"pda2",
 	"building",
 	"utility",
+	
 	"head",
 	"misc",
 	"action",
 	"misc2",
 	"zombie",
 	"medal",
-	"buffer"
+	
+	"taunt",
+	"taunt2",
+	"taunt3",
+	"taunt4",
+	"taunt5",
+	"taunt6",
+	"taunt7",
+	"taunt8",
+	
+	"count"
 };
 
 const char *g_LoadoutTranslations[] ={

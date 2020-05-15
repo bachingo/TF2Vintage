@@ -52,10 +52,12 @@ bool CTFInventory::Init( void )
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = CommandLine()->CheckParm( "-showreskins" );
 	bool bCosmeticsEnabled = CommandLine()->CheckParm( "-showcosmetics" );
+	bool bTauntsEnabled = CommandLine()->CheckParm( "-showtaunts" );
 	bool bSpecialsEnabled = CommandLine()->CheckParm( "-goldenboy" );
 #else
 	bool bReskinsEnabled = true;
 	bool bCosmeticsEnabled = true;
+	bool bTauntsEnabled = true;
 	bool bSpecialsEnabled = true;
 #endif
 
@@ -78,9 +80,9 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				if ( ( ( iSlot < TF_LOADOUT_SLOT_HAT ) || ( bCosmeticsEnabled ) ) || ( pItemDef->baseitem ) || ( ( iSlot == TF_LOADOUT_SLOT_MEDAL ) || ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) ) )
+				if (((iSlot < TF_LOADOUT_SLOT_HAT) || ((iSlot >= TF_FIRST_COSMETIC_SLOT && iSlot <= TF_LAST_COSMETIC_SLOT) && (bCosmeticsEnabled)) || ((iSlot >= TF_FIRST_TAUNT_SLOT && iSlot <= TF_LAST_TAUNT_SLOT) && (bTauntsEnabled)) ) || (pItemDef->baseitem) || ((iSlot == TF_LOADOUT_SLOT_MEDAL) || (iSlot == TF_LOADOUT_SLOT_ZOMBIE)))
 				{
-					if ( ( iSlot != TF_LOADOUT_SLOT_MISC1 ) && ( iSlot != TF_LOADOUT_SLOT_MISC2 ) )	// Skip MISC2 since we do it below.
+					if ((iSlot != TF_LOADOUT_SLOT_MISC1) && (iSlot != TF_LOADOUT_SLOT_MISC2) && (iSlot < TF_LOADOUT_SLOT_TAUNT1 && iSlot > TF_LOADOUT_SLOT_TAUNT8) )	// Skip MISC2, TAUNT since we do it below.
 					{
 						if ( pItemDef->baseitem )
 						{
@@ -108,7 +110,7 @@ bool CTFInventory::Init( void )
 							m_Items[iClass][iSlot].AddToTail( pNewItem );
 						}
 					}
-					else if ( iSlot != TF_LOADOUT_SLOT_MISC2 ) // We need to duplicate across all misc slots.
+					else if (iSlot == TF_LOADOUT_SLOT_MISC1 ) // We need to duplicate across all misc slots.
 					{
 						for (int iMiscSlot = 1; iMiscSlot <= TF_PLAYER_MISC_COUNT; ++iMiscSlot)
 						{
@@ -149,6 +151,43 @@ bool CTFInventory::Init( void )
 								m_Items[iClass][iSlot].AddToTail(pNewItem);
 							}
 						}
+					}
+					else if (iSlot == TF_LOADOUT_SLOT_TAUNT1) // We need to duplicate across all taunt slots.
+					{
+						for (int iTauntSlot = 1; iTauntSlot <= TF_PLAYER_TAUNT_COUNT; ++iTauntSlot)
+						{
+
+							if (pItemDef->baseitem)
+							{
+								CEconItemView *pBaseItem = m_Items[iClass][iSlot][0];
+								if (pBaseItem != NULL)
+								{
+									Warning("Duplicate base item %d for class %s in slot %s!\n", iItemID, g_aPlayerClassNames_NonLocalized[iClass], g_LoadoutSlots[iSlot]);
+									delete pBaseItem;
+								}
+
+								CEconItemView *pNewItem = new CEconItemView(iItemID);
+
+#if defined ( GAME_DLL )
+								pNewItem->SetItemClassNumber(iClass);
+#endif
+								m_Items[iClass][iSlot][0] = pNewItem;
+							}
+							else if (pItemDef->show_in_armory && (pItemDef->is_reskin == 0 || bReskinsEnabled) && (pItemDef->specialitem == 0 || bSpecialsEnabled))
+							{
+								CEconItemView *pNewItem = new CEconItemView(iItemID);
+
+#if defined ( GAME_DLL )
+								pNewItem->SetItemClassNumber(iClass);
+#endif
+								m_Items[iClass][iSlot].AddToTail(pNewItem);
+							}
+
+							// Increase our slot value.
+							iSlot += 1;
+						}
+						// Reset our slot back when we're done.
+						iSlot = TF_LOADOUT_SLOT_TAUNT1;
 					}
 				}
 			}
@@ -355,7 +394,7 @@ void CTFInventory::ChangeLoadoutSlot(int iClass, int iLoadoutSlot)
 #endif
 
 // Legacy array, used when we're forced to use old method of giving out weapons.
-const int CTFInventory::Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER] =
+const int CTFInventory::Weapons[TF_CLASS_COUNT_ALL][TF_PLAYER_WEAPON_COUNT] =
 {
 	{
 

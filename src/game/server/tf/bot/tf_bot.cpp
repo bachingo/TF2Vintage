@@ -2400,7 +2400,7 @@ void CTFBot::ManageRandomWeapons( void )
 
 	}
 
-	for ( int i = 0, iSlot = 0; i <= TF_PLAYER_WEAPON_COUNT; iSlot = ++i )
+	for ( int i = 0, iSlot = 0; i < TF_PLAYER_WEAPON_COUNT; iSlot = ++i )
 	{
 		// Only allow for melee items, if we enable it or are in a special gamemode.
 		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && ( i != TF_LOADOUT_SLOT_MELEE ) )

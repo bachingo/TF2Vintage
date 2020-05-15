@@ -64,7 +64,7 @@ public:
 #endif
 
 private:
-	static const int Weapons[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_BUFFER];
+	static const int Weapons[TF_CLASS_COUNT_ALL][TF_PLAYER_WEAPON_COUNT];
 	CUtlVector<CEconItemView *> m_Items[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
 
 #if defined( CLIENT_DLL )

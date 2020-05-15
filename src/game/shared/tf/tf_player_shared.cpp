@@ -3742,14 +3742,8 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 	CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 
 	// Find the weapon in the same slot
-	for ( int i = 0; i < TF_LOADOUT_SLOT_UTILITY; i++ )	
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; i++ )	
 	{
-	
-		if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) ) && ( i == TF_LOADOUT_SLOT_ZOMBIE ) )
-		continue;	// If it's not Halloween, skip the zombie slot.
-		
-		if ( ( !tf2v_allow_cosmetics.GetBool() && ( i > TF_PLAYER_WEAPON_COUNT ) ) && ( i != TF_LOADOUT_SLOT_ZOMBIE ) )
-		continue; // If cosmetics aren't enabled, also bail. (Unless it's Halloween where we do check the zombie slot.)
 			
 		// Use disguise target's weapons if possible.
 		CEconItemView *pItem = NULL;
