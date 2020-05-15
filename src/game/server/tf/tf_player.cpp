@@ -2099,9 +2099,13 @@ void CTFPlayer::ValidateWeaponSlots( void )
 	}
 	
 	// Validate wearables by slot.
-	for ( int i = 0; i < GetNumWearables(); ++i )
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
 	{	
-		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+		if (!GetWearableForLoadoutSlot( i ))
+		continue;
+		
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( i ) );
+
 		if ( pWearable == nullptr )
 			continue;
 			
@@ -2157,10 +2161,11 @@ void CTFPlayer::ValidateWearableSlots( void )
 	// Validate wearables by slot.
 	for ( int i = TF_FIRST_COSMETIC_SLOT; i <= TF_LAST_COSMETIC_SLOT; ++i )
 	{	
-		if (!GetWearable( i ))
+		if (!GetWearableForLoadoutSlot( i ))
 			continue;
 		
-		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( i ) );
+		
 		if ( pWearable == nullptr )
 			continue;
 			
