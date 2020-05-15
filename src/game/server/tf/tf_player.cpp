@@ -2099,11 +2099,8 @@ void CTFPlayer::ValidateWeaponSlots( void )
 	}
 	
 	// Validate wearables by slot.
-	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
+	for ( int i = 0; i < GetNumWearables(); ++i )
 	{	
-		if (!GetWearable( i ))
-		continue;
-		
 		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
 		if ( pWearable == nullptr )
 			continue;
