@@ -401,7 +401,7 @@ bool CEconItemView::AddAttribute( CEconItemAttribute *pAttribute )
 	// Make sure this attribute exists.
 	CEconAttributeDefinition *pAttribDef = pAttribute->GetStaticData();
 	if ( pAttribDef )
-		return m_AttributeList.SetRuntimeAttributeValue( pAttribDef, BitsToFloat( pAttribute->m_iRawValue32 ) );
+		return m_AttributeList.SetRuntimeAttributeValue( pAttribDef, pAttribute->m_flValue );
 
 	return false;
 }
@@ -517,9 +517,9 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator *iter )
 {
 	FOR_EACH_VEC( m_Attributes, i )
 	{
-		CEconAttributeDefinition const *pDefinition = m_Attributes[ i ].GetStaticData();
+		CEconAttributeDefinition const *pDefinition = m_Attributes[i].GetStaticData();
 		attrib_data_union_t value;
-		value.iVal = m_Attributes[ i ].m_iRawValue32;
+		value.flVal = m_Attributes[i].m_flValue;
 
 		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, value ) )
 			return;
@@ -537,10 +537,10 @@ bool CAttributeList::SetRuntimeAttributeValue( const CEconAttributeDefinition *p
 
 	FOR_EACH_VEC( m_Attributes, i )
 	{
-		CEconItemAttribute *pAttrib = &m_Attributes[ i ];
+		CEconItemAttribute *pAttrib = &m_Attributes[i];
 		if ( pAttrib->GetStaticData() == pDefinition )
 		{
-			pAttrib->m_iRawValue32 = FloatBits( flValue );
+			pAttrib->m_flValue = flValue;
 			m_pManager->OnAttributesChanged();
 			return true;
 		}

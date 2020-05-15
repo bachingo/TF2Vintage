@@ -275,8 +275,8 @@ public:
 	CEconItemAttribute &operator=( CEconItemAttribute const &src );
 
 public:
-	CNetworkVar( int, m_iAttributeDefinitionIndex );
-	CNetworkVar( unsigned int, m_iRawValue32 );
+	CNetworkVar( uint16, m_iAttributeDefinitionIndex );
+	CNetworkVar( float, m_flValue );
 	string_t m_iAttributeClass;
 };
 
