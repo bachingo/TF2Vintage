@@ -692,4 +692,111 @@
 			}
 		}
 	}
+	
+	"preset_a"
+	{
+		"ControlName"		"CTFAdvButton"
+		"fieldName"			"preset_a"
+		"xpos"				"c-60"
+		"ypos"				"c100"
+		"zpos"				"20"
+		"wide"				"25"
+		"tall"				"25"
+		"scaleimage"		"0"	
+		"visible"			"1"
+		"enabled"			"1"
+		"bordervisible"		"0"		
+		"command"			"loadpreset_0"
+		"labelText"			"#TF_ItemPresetName0"
+		"SubButton"
+		{
+			"labelText" 		""
+			"textAlignment"		"south"
+			"font"				"TallTextSmall"
+			"defaultFgColor_override"		"MainMenuTextDefault"
+			"armedFgColor_override"			"MainMenuTextArmed"
+			"depressedFgColor_override"		"MainMenuTextDepressed"	
+		}
+		
+	}
+	
+	"preset_b"
+	{
+		"ControlName"		"CTFAdvButton"
+		"fieldName"			"preset_b"
+		"xpos"				"c-30"
+		"ypos"				"c100"
+		"zpos"				"20"
+		"wide"				"25"
+		"tall"				"25"
+		"scaleimage"		"0"	
+		"visible"			"1"
+		"enabled"			"1"
+		"bordervisible"		"0"		
+		"command"			"loadpreset_1"
+		"labelText"			"#TF_ItemPresetName1"
+		"SubButton"
+		{
+			"labelText" 		""
+			"textAlignment"		"south"
+			"font"				"TallTextSmall"
+			"defaultFgColor_override"		"MainMenuTextDefault"
+			"armedFgColor_override"			"MainMenuTextArmed"
+			"depressedFgColor_override"		"MainMenuTextDepressed"	
+		}
+
+	}
+	
+	"preset_c"
+	{
+		"ControlName"		"CTFAdvButton"
+		"fieldName"			"preset_c"
+		"xpos"				"c30"
+		"ypos"				"c100"
+		"zpos"				"20"
+		"wide"				"25"
+		"tall"				"25"
+		"scaleimage"		"0"	
+		"visible"			"1"
+		"enabled"			"1"
+		"bordervisible"		"0"	
+		"command"			"loadpreset_2"
+		"labelText"			"#TF_ItemPresetName2"
+		"SubButton"
+		{
+			"labelText" 		""
+			"textAlignment"		"south"
+			"font"				"TallTextSmall"
+			"defaultFgColor_override"		"MainMenuTextDefault"
+			"armedFgColor_override"			"MainMenuTextArmed"
+			"depressedFgColor_override"		"MainMenuTextDepressed"	
+		}
+
+	}
+	
+	"preset_d"
+	{
+		"ControlName"		"CTFAdvButton"
+		"fieldName"			"preset_d"
+		"xpos"				"c60"
+		"ypos"				"c100"
+		"zpos"				"20"
+		"wide"				"25"
+		"tall"				"25"
+		"scaleimage"		"0"	
+		"visible"			"1"
+		"enabled"			"1"
+		"bordervisible"		"0"	
+		"command"			"loadpreset_3"
+		"SubButton"
+		{
+			"labelText" 		""
+			"textAlignment"		"south"
+			"font"				"TallTextSmall"
+			"defaultFgColor_override"		"MainMenuTextDefault"
+			"armedFgColor_override"			"MainMenuTextArmed"
+			"depressedFgColor_override"		"MainMenuTextDepressed"	
+		}
+	}
+	
 }
