@@ -91,7 +91,6 @@ void CTFPauseMenuPanel::OnCommand(const char* command)
 	{
 		bFromPause = true;
 		MAINMENU_ROOT->ShowPanel(LOADOUT_MENU);
-		MAINMENU_ROOT->ShowPanel(PRESETS_MENU);
 	}
 	else if (!Q_strcmp(command, "newstats"))
 	{

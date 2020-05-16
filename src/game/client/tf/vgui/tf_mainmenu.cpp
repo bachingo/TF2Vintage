@@ -52,7 +52,6 @@ CON_COMMAND( showloadout, "Show loadout screen (new)" )
 	bFromPause = false;
 	engine->ClientCmd( "gameui_activate" );
 	MAINMENU_ROOT->ShowPanel( LOADOUT_MENU, true );
-	MAINMENU_ROOT->ShowPanel( PRESETS_MENU, true );
 }
 
 //-----------------------------------------------------------------------------
@@ -82,7 +81,6 @@ CTFMainMenu::CTFMainMenu( VPANEL parent ) : vgui::EditablePanel( NULL, "MainMenu
 	AddMenuPanel( new CTFPauseMenuPanel( this, "CTFPauseMenuPanel" ), PAUSE_MENU );
 	AddMenuPanel( new CTFBackgroundPanel( this, "CTFBackgroundPanel" ), BACKGROUND_MENU );
 	AddMenuPanel( new CTFLoadoutPanel( this, "CTFLoadoutPanel" ), LOADOUT_MENU );
-	AddMenuPanel( new CTFLoadoutPresetPanel( this, "CTFLoadoutPresetPanel" ), PRESETS_MENU );
 	AddMenuPanel(new CTFItemPanel(dynamic_cast<CTFLoadoutPanel*>(GetMenuPanel(LOADOUT_MENU)), "CTFLoadoutPanel"), ITEMSELCTION_MENU);
 	AddMenuPanel( new CTFShadeBackgroundPanel( this, "CTFShadeBackgroundPanel" ), SHADEBACKGROUND_MENU );
 	AddMenuPanel( new CTFQuitDialogPanel( this, "CTFQuitDialogPanel" ), QUIT_MENU );
@@ -96,7 +94,6 @@ CTFMainMenu::CTFMainMenu( VPANEL parent ) : vgui::EditablePanel( NULL, "MainMenu
 	ShowPanel( BACKGROUND_MENU );
 	HidePanel( SHADEBACKGROUND_MENU );
 	HidePanel( LOADOUT_MENU );
-	HidePanel( PRESETS_MENU );
 	HidePanel(ITEMSELCTION_MENU);
 	HidePanel( QUIT_MENU );
 	HidePanel( OPTIONSDIALOG_MENU );

@@ -69,37 +69,4 @@ public:
 	void OnCommand(const char* command);
 };
 
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-class CTFLoadoutPresetPanel : public CTFMenuPanelBase
-{
-	DECLARE_CLASS_SIMPLE(CTFLoadoutPresetPanel, CTFMenuPanelBase);
-
-public:
-	CTFLoadoutPresetPanel(vgui::Panel* parent, const char *panelName);
-	virtual void	ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void	ApplySettings( KeyValues *pInResourceData );
-	virtual void	PerformLayout();
-	virtual void	OnCommand( const char *command );
-	virtual void	UpdatePresetButtonStates( void );
-
-private:
-
-	int m_iCurrentClass;
-	KeyValues *m_pPresetButtonKv;
-	int m_iActivePreset;
-	CExButton				*m_pPresetButtons[ TF_MAX_PRESETS ];
-	
-	enum PresetButtonColors_t
-	{
-		LOADED = 0, NOTLOADED,
-		FG = 0, BG,
-		DEFAULT = 0, ARMED, DEPRESSED
-	};
-	Color					m_aDefaultColors[2][2][3];	// [LOADED|NOTLOADED][FG|BG][DEFAULT|ARMED|DEPRESSED]
-	
-};
-
 #endif // TFMAINMENULOADOUTPANEL_H
