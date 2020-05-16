@@ -11,6 +11,8 @@
 // Client specific.
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
+#include "tf_viewmodel.h"
+#include "c_tf_viewmodeladdon.h"
 // Server specific.
 #else
 #include "tf_player.h"
@@ -91,6 +93,13 @@ void CTFBottle::SwitchBodyGroups( void )
 			pTFPlayer->GetViewModel()->SetBodygroup( TF_BOTTLE_SWITCHGROUP, iState );
 		}
 	}
+	
+#ifndef GAME_DLL
+	// Also update the c_models.
+	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
+	if (pAttach)
+		pAttach->SetBodygroup(TF_BOTTLE_SWITCHGROUP, iState);
+#endif
 }
 
 void CTFBottle::Smack( void )
