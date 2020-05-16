@@ -1388,12 +1388,3 @@ void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio
 	}
 #endif
 }
-
-const char *g_aPlayerLoadoutPresets[] =
-{
-	"A",
-	"B",
-	"C",
-	"D",
-};
-
