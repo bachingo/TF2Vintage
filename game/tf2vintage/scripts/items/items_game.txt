@@ -300,6 +300,14 @@
 			"item_quality"	"unique"
 			"item_type_name"	"#TF_Wearable_CosmeticItem"
 			"item_name"	"#TF_Spectator_Default"
+			"visuals_red"
+			{
+				"skin"		"0"
+			}
+			"visuals_blue"
+			{
+				"skin"		"1"
+			}
 		}
 		"misc"
 		{
