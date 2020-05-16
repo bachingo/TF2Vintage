@@ -3762,17 +3762,25 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 				pDisguiseItem = pItem;
 				break;
 			}
-		}
-
-	if ( iSlot == 0 || iSlot == 1)
-	{
-		//AssertMsg( pDisguiseItem, "Cannot find primary disguise weapon for desired disguise class %d\n", m_nDisguiseClass );
-
-		// Don't need this assert anymore, just check the next slot.
-		return RecalcDisguiseWeapon(iSlot+1);
 	}
-	else if ( iSlot == 2 )
-		return RecalcDisguiseWeapon(0);
+
+	// Can't find the disguise item in this loadout, cycle the next one.
+	// We always have at least one of these slots available for the player to use.
+	if (pDisguiseItem == NULL)
+	{
+		switch (iSlot)
+		{
+			case TF_LOADOUT_SLOT_PRIMARY:
+				return RecalcDisguiseWeapon(TF_LOADOUT_SLOT_SECONDARY);			
+				break;			
+			case TF_LOADOUT_SLOT_SECONDARY:
+				return RecalcDisguiseWeapon(TF_LOADOUT_SLOT_MELEE);			
+				break;		
+			case TF_LOADOUT_SLOT_MELEE:
+				return RecalcDisguiseWeapon(TF_LOADOUT_SLOT_PRIMARY);	
+				break;
+		}
+	}
 	
 	// Don't switch to builder as it's too complicated.
 	if ( pDisguiseItem )
