@@ -71,7 +71,6 @@
 	"The Claidheamohmor"							"1"
 	"The Jag"										"1"
 	"Team Fists of Steel"							"1"
-	"Fire Retardant Suit"							"1"
 	"Sharpened Volcano Fragment"					"1"
 	"Sun-on-a-Stick"								"1"
 	"The Detonator"									"1"
@@ -147,10 +146,6 @@
 	"The Gas Passer"								"1"
 	"The Hot Hand"									"1"
 	"The Second Banana"								"1"
-	"Spawn Camper"									"1"
-	"Ludmila"										"1"
-	"Packable Provisions"							"1"
-	"Winter Backup"									"1"
 
 	// Reskins
 	"TTG Max Pistol"								"1"
