@@ -77,6 +77,8 @@ ConVar tf2v_use_new_wrangler_repair( "tf2v_use_new_wrangler_repair", "0", FCVAR_
 
 #define MINI_SENTRYGUN_PITCH	120
 
+#define TF_WRANGLER_STRENGTH 0.3333f
+
 enum
 {
 	SENTRYGUN_ATTACHMENT_MUZZLE = 0,
@@ -617,7 +619,7 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 		
 	// Wrangled sentries have 33% of normal repair rate (as of Gun Mettle)
 	if ( ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY ) && tf2v_use_new_wrangler_repair.GetBool() )
-		flRepairRate *= .33f;
+		flRepairRate *= TF_WRANGLER_STRENGTH;
 
 	bRepair = Command_Repair( pPlayer/*, pWrench->GetRepairValue()*/ );
 
@@ -702,8 +704,10 @@ bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
 		float flRepairRate = 1;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
 
-		if ( m_iState != SENTRY_STATE_WRANGLED && m_iState != SENTRY_STATE_WRANGLED_RECOVERY )
-			flRepairRate *= .33f;
+
+		// Wrangled sentries have 33% of normal repair rate (as of Gun Mettle)
+		if ( ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY ) && tf2v_use_new_wrangler_repair.GetBool() )
+			flRepairRate *= TF_WRANGLER_STRENGTH;
 
 		iAmountToHeal = Min( (int)(flRepairRate * 100), GetMaxHealth() - GetHealth() );
 					
@@ -757,13 +761,15 @@ bool CObjectSentrygun::CheckUpgradeOnHit( CTFPlayer *pPlayer )
 
 	int iPlayerMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
 	int iAmountToAdd;
-	if ( m_iState != SENTRY_STATE_WRANGLED && m_iState != SENTRY_STATE_WRANGLED_RECOVERY )
+
+	// Wrangled sentries have 33% of normal upgrade rate (as of Gun Mettle)
+	if ( ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY ) && tf2v_use_new_wrangler_repair.GetBool() )
 	{
-		iAmountToAdd = Min( tf_obj_upgrade_per_hit.GetInt(), iPlayerMetal );
+		iAmountToAdd = Min( (int)( tf_obj_upgrade_per_hit.GetInt() * TF_WRANGLER_STRENGTH ), iPlayerMetal );
 	}
 	else
 	{
-		iAmountToAdd = Min( (int)( tf_obj_upgrade_per_hit.GetInt() * .33f ), iPlayerMetal );
+		iAmountToAdd = Min( tf_obj_upgrade_per_hit.GetInt(), iPlayerMetal );
 	}
 
 	if ( iAmountToAdd > ( m_iUpgradeMetalRequired - m_iUpgradeMetal ) )
@@ -1876,7 +1882,7 @@ int CObjectSentrygun::OnTakeDamage( const CTakeDamageInfo &info )
 		float flDamage = newInfo.GetDamage();
 
 		// Wrangler shield absorbs 66% of damage
-		newInfo.SetDamage( flDamage * 0.34 );
+		newInfo.SetDamage( flDamage * TF_WRANGLER_STRENGTH );
 	}
 
 	int iDamageTaken = BaseClass::OnTakeDamage( newInfo );
