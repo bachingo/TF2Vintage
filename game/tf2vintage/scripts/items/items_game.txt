@@ -446,7 +446,7 @@
 			"item_name"	"#TF_Weapon_Minigun"
 			"item_slot"	"primary"
 			"image_inventory"	"backpack/weapons/w_models/w_minigun"
-			"model_player"	"models/weapons/v_models/v_minigun_heavy.mdl"
+			"model_player"	"models/weapons/c_models/c_minigun/c_minigun.mdl"
 			"used_by_classes"
 			{
 				"heavy"	"1"
@@ -555,7 +555,7 @@
 			"item_name"	"#TF_Weapon_RocketLauncher"
 			"item_slot"	"primary"
 			"image_inventory"	"backpack/weapons/w_models/w_rocketlauncher"
-			"model_player"	"models/weapons/v_models/v_rocketlauncher_soldier.mdl"
+			"model_player"	"models/weapons/c_models/c_rocketlauncher/c_rocketlauncher.mdl"
 			"used_by_classes"
 			{
 				"soldier"	"1"
@@ -627,7 +627,7 @@
 			"item_slot"	"secondary"
 			"anim_slot"	"primary"
 			"image_inventory"	"backpack/weapons/w_models/w_stickybomb_launcher"
-			"model_player"	"models/weapons/v_models/v_stickybomb_launcher_demo.mdl"
+			"model_player"	"models/weapons/c_models/c_stickybomb_launcher/c_stickybomb_launcher.mdl"
 			"used_by_classes"
 			{
 				"demoman"	"1"
@@ -645,7 +645,7 @@
 			"item_slot"	"primary"
 			"anim_slot"	"secondary"
 			"image_inventory"	"backpack/weapons/w_models/w_grenadelauncher"
-			"model_player"	"models/weapons/v_models/v_grenadelauncher_demo.mdl"
+			"model_player"	"models/weapons/c_models/c_grenadelauncher/c_grenadelauncher.mdl"
 			"used_by_classes"
 			{
 				"demoman"	"1"
@@ -721,7 +721,7 @@
 			"item_name"	"#TF_Weapon_FlameThrower"
 			"item_slot"	"primary"
 			"image_inventory"	"backpack/weapons/c_models/c_flamethrower/c_flamethrower"
-			"model_player"	"models/weapons/v_models/v_flamethrower_pyro.mdl"
+			"model_player"	"models/weapons/c_models/c_flamethrower/c_flamethrower.mdl"
 			"used_by_classes"
 			{
 				"pyro"	"1"
@@ -756,7 +756,7 @@
 			"item_name"	"#TF_Weapon_Knife"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/w_models/w_knife"
-			"model_player"	"models/weapons/v_models/v_knife_spy.mdl"
+			"model_player"	"models/weapons/c_models/c_knife/c_knife.mdl"
 			"used_by_classes"
 			{
 				"spy"	"1"
@@ -781,7 +781,7 @@
 			"item_name"	"#TF_Weapon_Knife"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/w_models/w_knife"
-			"model_player"	"models/weapons/v_models/v_knife_spy.mdl"
+			"model_player"	"models/weapons/c_models/c_knife/c_knife.mdl"
 			"used_by_classes"
 			{
 				"spy"	"1"
@@ -823,7 +823,7 @@
 			"item_name"	"#TF_Weapon_Knife"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/w_models/w_knife"
-			"model_player"	"models/weapons/v_models/v_knife_spy.mdl"
+			"model_player"	"models/weapons/c_models/c_knife/c_knife.mdl"
 			"used_by_classes"
 			{
 				"spy"	"1"
@@ -890,7 +890,7 @@
 			"item_name"	"#TF_Weapon_Wrench"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/w_models/w_wrench"
-			"model_player"	"models/weapons/v_models/v_wrench_engineer.mdl"
+			"model_player"	"models/weapons/c_models/c_wrench/c_wrench.mdl"
 			"used_by_classes"
 			{
 				"engineer"	"1"
@@ -993,7 +993,7 @@
 			"item_name"	"#TF_Weapon_Scattergun"
 			"item_slot"	"primary"
 			"image_inventory"	"backpack/weapons/c_models/c_scattergun"
-			"model_player"	"models/weapons/v_models/v_scattergun_scout.mdl"
+			"model_player"	"models/weapons/c_models/c_scattergun.mdl"
 			"used_by_classes"
 			{
 				"scout"	"1"
@@ -1015,6 +1015,7 @@
 			"image_inventory"	"backpack/weapons/w_models/w_nailgun"
 			"model_world"	"models/weapons/w_models/w_nailgun.mdl"
 			"model_player"	"models/weapons/v_models/v_nailgun_scout.mdl"
+			"attach_to_hands"	"0"
 			"used_by_classes"
 			{
 				"scout"	"1"
@@ -1031,7 +1032,7 @@
 			"item_name"	"#TF_Weapon_SniperRifle"
 			"item_slot"	"primary"
 			"image_inventory"	"backpack/weapons/w_models/w_sniperrifle"
-			"model_player"	"models/weapons/v_models/v_sniperrifle_sniper.mdl"
+			"model_player"	"models/weapons/c_models/c_sniperrifle/c_sniperrifle.mdl"
 			"used_by_classes"
 			{
 				"sniper"	"1"
@@ -1143,7 +1144,7 @@
 			"item_name"	"#TF_Weapon_Bat"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/c_models/c_bat"
-			"model_player"	"models/weapons/v_models/v_bat_scout.mdl"
+			"model_player"	"models/weapons/c_models/c_bat.mdl"
 			"used_by_classes"
 			{
 				"scout"	"1"
@@ -1168,7 +1169,7 @@
 			"item_name"	"#TF_Weapon_Bottle"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/w_models/w_bottle"
-			"model_player"	"models/weapons/v_models/v_bottle_demoman.mdl"
+			"model_player"	"models/weapons/c_models/c_bottle/c_bottle.mdl"
 			"used_by_classes"
 			{
 				"demoman"	"1"
@@ -1239,7 +1240,7 @@
 			"item_name"	"#TF_Weapon_FireAxe"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/c_models/c_fireaxe_pyro/c_fireaxe_pyro"
-			"model_player"	"models/weapons/v_models/v_fireaxe_pyro.mdl"
+			"model_player"	"models/weapons/c_models/c_fireaxe_pyro/c_fireaxe_pyro.mdl"
 			"used_by_classes"
 			{
 				"pyro"	"1"
@@ -1264,7 +1265,7 @@
 			"item_name"	"#TF_Weapon_Club"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/w_models/w_machete"
-			"model_player"	"models/weapons/v_models/v_machete_sniper.mdl"
+			"model_player"	"models/weapons/c_models/c_machete/c_machete.mdl"
 			"used_by_classes"
 			{
 				"sniper"	"1"
@@ -1289,7 +1290,7 @@
 			"item_name"	"#TF_Weapon_Fists"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/v_models/v_fist_heavy"
-			"model_player"	"models/weapons/v_models/v_fist_heavy.mdl"
+			"model_player"	""
 			"used_by_classes"
 			{
 				"heavy"	"1"
@@ -1325,7 +1326,7 @@
 			"item_name"	"#TF_Weapon_Shovel"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/w_models/w_shovel"
-			"model_player"	"models/weapons/v_models/v_shovel_soldier.mdl"
+			"model_player"	"models/weapons/c_models/c_shovel/c_shovel.mdl"
 			"used_by_classes"
 			{
 				"soldier"	"1"
@@ -1450,7 +1451,7 @@
 			"item_name"	"#TF_Weapon_Bonesaw"
 			"item_slot"	"melee"
 			"image_inventory"	"backpack/weapons/c_models/c_bonesaw/c_bonesaw"
-			"model_player"	"models/weapons/v_models/v_bonesaw_medic.mdl"
+			"model_player"	"models/weapons/c_models/c_bonesaw/c_bonesaw.mdl"
 			"used_by_classes"
 			{
 				"medic"	"1"
@@ -1731,7 +1732,7 @@
 			"item_name"	"#TF_Weapon_SMG"
 			"item_slot"	"secondary"
 			"image_inventory"	"backpack/weapons/w_models/w_smg"
-			"model_player"	"models/weapons/v_models/v_smg_sniper.mdl"
+			"model_player"	"models/weapons/c_models/c_smg/c_smg.mdl"
 			"used_by_classes"
 			{
 				"sniper"	"1"
@@ -1748,7 +1749,7 @@
 			"item_name"	"#TF_Weapon_SyringeGun"
 			"item_slot"	"primary"
 			"image_inventory"	"backpack/weapons/w_models/w_syringegun"
-			"model_player"	"models/weapons/v_models/v_syringegun_medic.mdl"
+			"model_player"	"models/weapons/c_models/c_syringegun/c_syringegun.mdl"
 			"used_by_classes"
 			{
 				"medic"	"1"
@@ -1778,7 +1779,7 @@
 			"item_name"	"#TF_Weapon_Revolver"
 			"item_slot"	"secondary"
 			"image_inventory"	"backpack/weapons/w_models/w_revolver"
-			"model_player"	"models/weapons/v_models/v_revolver_spy.mdl"
+			"model_player"	"models/weapons/c_models/c_revolver/c_revolver.mdl"
 			"used_by_classes"
 			{
 				"spy"	"1"
@@ -1799,6 +1800,7 @@
 			"image_inventory"	"backpack/weapons/w_models/w_tranq"
 			"model_world"	"models/weapons/w_models/w_tranq.mdl"
 			"model_player"	"models/weapons/v_models/v_tranq_spy.mdl"
+			"attach_to_hands" "0"
 			"used_by_classes"
 			{
 				"spy"	"1"
@@ -2039,7 +2041,7 @@
 			"item_slot"	"building"
 			"anim_slot"	"building"
 			"image_inventory"	"backpack/weapons/w_models/w_sapper"
-			"model_player"	"models/weapons/v_models/v_sapper_spy.mdl"
+			"model_player"	"models/weapons/c_models/c_sapper/c_sapper.mdl"
 			"used_by_classes"
 			{
 				"spy"	"1"
@@ -2081,7 +2083,7 @@
 			"item_type_name"	"#TF_Weapon_Disguise_Kit_Type"
 			"item_slot"	"pda"
 			"image_inventory"	"backpack/weapons/w_models/w_cigarette_case"
-			"model_player"	"models/weapons/v_models/v_pda_spy.mdl"
+			"model_player"	"models/weapons/w_models/w_cigarette_case.mdl"
 			"used_by_classes"
 			{
 				"spy"	"1"
@@ -3845,8 +3847,6 @@
 			"prefab"	"weapon_bat"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_bat.mdl"
 			"baseitem"	"1"
 		}
 		"1"
@@ -3855,8 +3855,6 @@
 			"prefab"	"weapon_bottle"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_bottle.mdl"
 			"baseitem"	"1"
 		}
 		"2"
@@ -3865,8 +3863,6 @@
 			"prefab"	"weapon_fireaxe"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_fireaxe.mdl"
 			"baseitem"	"1"
 		}
 		"3"
@@ -3875,8 +3871,6 @@
 			"prefab"	"weapon_club"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_machete.mdl"
 			"baseitem"	"1"
 		}
 		"4"
@@ -3885,8 +3879,6 @@
 			"prefab"	"weapon_knife"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_knife.mdl"
 			"baseitem"	"1"
 		}
 		"5"
@@ -3895,7 +3887,6 @@
 			"prefab"	"weapon_fists"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
 			"baseitem"	"1"
 		}
 		"6"
@@ -3904,8 +3895,6 @@
 			"prefab"	"weapon_shovel"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_shovel.mdl"
 			"baseitem"	"1"
 		}
 		"7"
@@ -3914,8 +3903,6 @@
 			"prefab"	"weapon_wrench"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_wrench.mdl"
 			"baseitem"	"1"
 		}
 		"8"
@@ -3924,8 +3911,6 @@
 			"prefab"	"weapon_bonesaw"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_bonesaw.mdl"
 			"baseitem"	"1"
 		}
 		"9"
@@ -3949,9 +3934,6 @@
 			"year"			"2007"
 			"baseitem"	"1"
 			"item_slot"	"secondary"
-			"attach_to_hands" "0"
-			"model_player"	"models/weapons/v_models/v_shotgun_soldier.mdl"
-			"model_world"	"models/weapons/w_models/w_shotgun.mdl"
 			"used_by_classes"
 			{
 				"soldier"	"1"
@@ -3965,9 +3947,6 @@
 			"year"			"2007"
 			"baseitem"	"1"
 			"item_slot"	"secondary"
-			"attach_to_hands" "0"
-			"model_player"	"models/weapons/v_models/v_shotgun_heavy.mdl"
-			"model_world"	"models/weapons/w_models/w_shotgun.mdl"
 			"used_by_classes"
 			{
 				"heavy"	"1"
@@ -3981,9 +3960,6 @@
 			"year"			"2007"
 			"baseitem"	"1"
 			"item_slot"	"secondary"
-			"attach_to_hands" "0"
-			"model_player"	"models/weapons/v_models/v_shotgun_pyro.mdl"
-			"model_world"	"models/weapons/w_models/w_shotgun.mdl"
 			"used_by_classes"
 			{
 				"pyro"	"1"
@@ -3995,8 +3971,6 @@
 			"prefab"	"weapon_scattergun"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_scattergun.mdl"
 			"baseitem"	"1"
 		}
 		"14"
@@ -4005,8 +3979,6 @@
 			"prefab"	"weapon_sniperrifle"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_sniperrifle.mdl"
 			"baseitem"	"1"
 		}
 		"15"
@@ -4015,8 +3987,6 @@
 			"prefab"	"weapon_minigun"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_minigun.mdl"
 			"baseitem"	"1"
 		}
 		"16"
@@ -4025,8 +3995,6 @@
 			"prefab"	"weapon_smg"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_smg.mdl"
 			"baseitem"	"1"
 		}
 		"17"
@@ -4035,8 +4003,6 @@
 			"prefab"	"weapon_syringegun"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_syringegun.mdl"
 			"baseitem"	"1"
 		}
 		"18"
@@ -4045,8 +4011,6 @@
 			"prefab"	"weapon_rocketlauncher"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_rocketlauncher.mdl"
 			"baseitem"	"1"
 		}
 		"19"
@@ -4055,8 +4019,6 @@
 			"prefab"	"weapon_grenade_launcher"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_grenadelauncher.mdl"
 			"baseitem"	"1"
 		}
 		"20"
@@ -4065,8 +4027,6 @@
 			"prefab"	"weapon_stickybomb_launcher"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_stickybomb_launcher.mdl"
 			"baseitem"	"1"
 		}
 		"21"
@@ -4075,9 +4035,17 @@
 			"prefab"	"weapon_flamethrower"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_flamethrower.mdl"
 			"baseitem"	"1"
+			"visuals"
+			{
+				"attached_models"
+				{
+					"0"
+					{
+						"model"	"models/weapons/c_models/c_flamethrower/c_flamethrower_pilotlight.mdl"
+					}
+				}
+			}
 		}
 		"22"
 		{
@@ -4109,8 +4077,6 @@
 			"prefab"	"weapon_revolver"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_revolver.mdl"
 			"baseitem"	"1"
 		}
 		"25"
@@ -4135,8 +4101,6 @@
 			"prefab"	"weapon_pda_spy"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_cigarette_case.mdl"
 			"baseitem"	"1"
 		}
 		"28"
@@ -4169,8 +4133,6 @@
 			"prefab"	"weapon_builder_spy"
 			"item_quality" "normal"
 			"year"			"2007"
-			"attach_to_hands" "0"
-			"model_world"	"models/weapons/w_models/w_sapper.mdl"
 			"baseitem"	"1"
 		}
 		"31"
@@ -4394,7 +4356,7 @@
 			"item_name"	"#TF_Unique_Achievement_Flamethrower"
 			"propername"	"1"
 			"image_inventory"	"backpack/weapons/c_models/c_backburner/c_backburner"
-			"model_player"	"models/weapons/c_models/c_backburner/c_backburner_full.mdl"
+			"model_player"	"models/weapons/c_models/c_flamethrower/c_backburner.mdl"
 			"attributes"
 			{
 				"mod flamethrower back crit"
@@ -4423,6 +4385,13 @@
 				"sound_single_shot"	"Weapon_BackBurner.FireStart"
 				"sound_special1"	"Weapon_BackBurner.FireLoop"
 				"sound_burst"	"Weapon_BackBurner.FireLoopCrit"
+				"attached_models"
+				{
+					"0"
+					{
+						"model"	"models/weapons/c_models/c_flamethrower/c_flamethrower_pilotlight.mdl"
+					}
+				}
 			}
 		}
 		"41"
@@ -4435,8 +4404,7 @@
 			"item_logname"	"natascha"
 			"item_iconname"	"natascha"
 			"image_inventory"	"backpack/weapons/c_models/c_w_ludmila/c_w_ludmila"
-			"model_world"	"models/weapons/w_models/w_minigun.mdl"
-			"attach_to_hands"	"0"
+			"model_player"	"models/weapons/c_models/c_minigun/c_minigun_natascha.mdl"
 			"attributes"
 			{
 				"slow enemy on hit"
@@ -4469,20 +4437,6 @@
 				"sound_special2"	"Weapon_Minifun.WindDown"
 				"sound_special3"	"Weapon_Minifun.Spin"
 				"sound_burst"	"Weapon_Minifun.FireCrit"
-				"skin"	"2"
-				"attached_models"
-				{
-					"0"
-					{
-						"model_display_flags"	"1"
-						"model"	"models/weapons/c_models/c_w_ludmila/c_w_ludmila.mdl"
-					}
-					"1"
-					{
-						"model_display_flags"	"2"
-						"model" "models/weapons/c_models/c_v_ludmila/c_v_ludmila.mdl"
-					}
-				}
 			}
 		}
 		"42"
@@ -4910,7 +4864,7 @@
 		"134"
 		{
 			"name"	"The Gunboats (Demoman)"
-			"prefab"		"weapon_gunboats weapon_cutcontent"
+			"prefab"		"weapon_gunboats weapon_multiclass_item"
 			"propername"	"1"
 			"year"			"2009"
 			"item_slot"		"primary"
@@ -5047,7 +5001,7 @@
 		"156"
 		{
 			"name"	"The Pain Train (Pyro)"
-			"prefab"	"weapon_paintrain weapon_cutcontent"
+			"prefab"	"weapon_paintrain weapon_multiclass_item"
 			"propername"	"1"
 			"year"			"2010"
 			"model_player"	"models/workshop/weapons/c_models/c_paintrain/c_paintrain_pyro.mdl"
@@ -5210,7 +5164,7 @@
 			"item_name"	"#TF_TheDegreaser"
 			"propername"	"1"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_degreaser/c_degreaser"
-			"model_player"	"models/weapons/c_models/c_degreaser/c_degreaser.mdl"
+			"model_player"	"models/workshop/weapons/c_models/c_degreaser/c_degreaser.mdl"
 			"attributes"
 			{
 				"deploy time decreased"
@@ -5231,6 +5185,13 @@
 			}
 			"visuals"
 			{
+				"attached_models"
+				{
+					"0"
+					{
+						"model"	"models/workshop/weapons/c_models/c_degreaser/c_degreaser_pilotlight.mdl"
+					}
+				}
 				"sound_single_shot"	"Weapon_Degreaser.FireStart"
 				"sound_special1"	"Weapon_Degreaser.FireLoop"
 				"sound_burst"	"Weapon_Degreaser.FireLoopCrit"
@@ -7883,7 +7844,6 @@
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_medigun_defense/c_medigun_defense"
 			"model_player"	"models/workshop/weapons/c_models/c_medigun_defense/c_medigun_defense.mdl"
 			"extra_wearable" "models/workshop/weapons/c_models/c_medigun_defense/c_medigun_defensepack.mdl"
-			"attach_to_hands"	"1"
 			"attributes"
 			{
 				"lunchbox adds minicrits"
