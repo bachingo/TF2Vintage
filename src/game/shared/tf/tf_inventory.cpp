@@ -82,7 +82,7 @@ bool CTFInventory::Init( void )
 
 				if (((iSlot < TF_LOADOUT_SLOT_HAT) || ((iSlot >= TF_FIRST_COSMETIC_SLOT && iSlot <= TF_LAST_COSMETIC_SLOT) && (bCosmeticsEnabled)) || ((iSlot >= TF_FIRST_TAUNT_SLOT && iSlot <= TF_LAST_TAUNT_SLOT) && (bTauntsEnabled)) ) || (pItemDef->baseitem) || ((iSlot == TF_LOADOUT_SLOT_MEDAL) || (iSlot == TF_LOADOUT_SLOT_ZOMBIE)))
 				{
-					if ((iSlot != TF_LOADOUT_SLOT_MISC1) && (iSlot != TF_LOADOUT_SLOT_MISC2) && (iSlot < TF_LOADOUT_SLOT_TAUNT1 || iSlot > TF_LOADOUT_SLOT_TAUNT8) )	// Skip MISC2, TAUNT since we do it below.
+					if ( iSlot <= TF_LOADOUT_SLOT_HAT || ( iSlot == TF_LOADOUT_SLOT_MEDAL || iSlot == TF_LOADOUT_SLOT_ZOMBIE ) )	// Standard parse items in these slots.
 					{
 						if ( pItemDef->baseitem )
 						{
