@@ -104,17 +104,20 @@ int CEconWearable::GetSkin( void )
 
 void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )
 {
-	PerTeamVisuals_t *visual = GetItem()->GetStaticData()->GetVisuals( GetTeamNumber() );
- 	for ( unsigned int i = 0; i < visual->player_bodygroups.Count(); i++ )
+	PerTeamVisuals_t *pVisuals = GetItem()->GetStaticData()->GetVisuals( GetTeamNumber() );
+	if( pVisuals )
 	{
-		const char *szBodyGroupName = visual->player_bodygroups.GetElementName(i);
-
-		if ( szBodyGroupName )
+		for ( unsigned int i = 0; i < pVisuals->player_bodygroups.Count(); i++ )
 		{
-			int iBodyGroup = pPlayer->FindBodygroupByName( szBodyGroupName );
-			int iBodyGroupValue = visual->player_bodygroups.Element(i);
+			const char *szBodyGroupName = pVisuals->player_bodygroups.GetElementName(i);
 
-			pPlayer->SetBodygroup( iBodyGroup, iBodyGroupValue );
+			if ( szBodyGroupName )
+			{
+				int iBodyGroup = pPlayer->FindBodygroupByName( szBodyGroupName );
+				int iBodyGroupValue = pVisuals->player_bodygroups.Element(i);
+
+				pPlayer->SetBodygroup( iBodyGroup, iBodyGroupValue );
+			}
 		}
 	}
 }
