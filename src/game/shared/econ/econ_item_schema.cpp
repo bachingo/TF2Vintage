@@ -163,6 +163,9 @@ PerTeamVisuals_t *CEconItemDefinition::GetVisuals( int iTeamNum /*= TEAM_UNASSIG
 {
 	if ( iTeamNum > LAST_SHARED_TEAM && iTeamNum < TF_TEAM_COUNT )
 	{
+		if ( visual[ iTeamNum ] == NULL )
+			return visual[ TEAM_UNASSIGNED ];
+
 		return visual[ iTeamNum ];
 	}
 
