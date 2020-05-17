@@ -51,13 +51,9 @@ bool CTFInventory::Init( void )
 {
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = CommandLine()->CheckParm( "-showreskins" );
-	bool bCosmeticsEnabled = CommandLine()->CheckParm( "-showcosmetics" );
-	bool bTauntsEnabled = CommandLine()->CheckParm( "-showtaunts" );
 	bool bSpecialsEnabled = CommandLine()->CheckParm( "-goldenboy" );
 #else
 	bool bReskinsEnabled = true;
-	bool bCosmeticsEnabled = true;
-	bool bTauntsEnabled = true;
 	bool bSpecialsEnabled = true;
 #endif
 
@@ -80,7 +76,7 @@ bool CTFInventory::Init( void )
 				// Show it if it's either base item or has show_in_armory flag.
 				int iSlot = pItemDef->GetLoadoutSlot( iClass );
 
-				if (((iSlot < TF_LOADOUT_SLOT_HAT) || ((iSlot >= TF_FIRST_COSMETIC_SLOT && iSlot <= TF_LAST_COSMETIC_SLOT) && (bCosmeticsEnabled)) || ((iSlot >= TF_FIRST_TAUNT_SLOT && iSlot <= TF_LAST_TAUNT_SLOT) && (bTauntsEnabled)) ) || (pItemDef->baseitem) || ((iSlot == TF_LOADOUT_SLOT_MEDAL) || (iSlot == TF_LOADOUT_SLOT_ZOMBIE)))
+				if (iSlot >= TF_LOADOUT_SLOT_PRIMARY && iSlot < TF_LOADOUT_SLOT_COUNT)
 				{
 					if ( iSlot <= TF_LOADOUT_SLOT_HAT || ( iSlot == TF_LOADOUT_SLOT_MEDAL || iSlot == TF_LOADOUT_SLOT_ZOMBIE ) )	// Standard parse items in these slots.
 					{
