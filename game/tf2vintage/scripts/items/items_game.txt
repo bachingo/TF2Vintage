@@ -323,13 +323,6 @@
 			"item_type_name"	"#TF_Wearable_Hat"
 			"equip_region"	"hat"
 			"drop_type"	"drop"
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"hat"	"1"
-				}
-			}
 		}
 		"hat_attachment"
 		{
@@ -344,11 +337,6 @@
 		{
 			"public_prefab"	"1"
 			"prefab"	"hat"
-		}
-		"base_hatattachment"
-		{
-			"public_prefab"	"1"
-			"prefab"	"hat_attachment"
 		}
 		"base_misc"
 		{
