@@ -392,19 +392,24 @@ public:
 					for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
 					{
 						const char *pszClass = pClassData->GetName();
-						int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-						if ( iClass != -1 )
-						{
-							pItem->model_player_per_class[iClass] = pClassData->GetString();
-						}
 						
-						// Generic item, assign a model for every class.
 						if ( !V_stricmp( pszClass, "basename" ) )
 						{
+							// Generic item, assign a model for every class.
 							for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_LAST_NORMAL_CLASS; i++ )
 							{
 								// Add to the player model per class.
 								pItem->model_player_per_class[i] = UTIL_VarArgs( pClassData->GetString(), g_aRawPlayerClassNamesShort[i] );
+							}
+						}
+						else
+						{
+							// Check the class this item is for and assign it to them.
+							int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+							if ( iClass != -1 )
+							{
+								// Valid class, assign to it.
+								pItem->model_player_per_class[iClass] = pClassData->GetString();
 							}
 						}
 					}

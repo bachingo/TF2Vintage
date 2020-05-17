@@ -195,7 +195,7 @@ const char* CEconItemView::GetEntityName()
 
 	if ( pStatic )
 	{
-		Assert( pStatic->item_class );
+		Assert( pStatic->GetClassName() );
 		return pStatic->GetClassName();
 	}
 
