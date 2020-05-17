@@ -2487,11 +2487,6 @@
 					"attribute_class"	"mult_dmgself_push_force"
 					"value"		"0.65"
 				}
-				"minicrit vs burning player"
-				{
-					"attribute_class"	"or_minicrit_vs_playercond_burning"
-					"value"	"1"
-				}
 				"damage penalty"
 				{
 					"attribute_class"	"mult_dmg"
