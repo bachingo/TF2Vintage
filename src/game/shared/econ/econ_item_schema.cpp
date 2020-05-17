@@ -5,6 +5,10 @@
 #include "tier3/tier3.h"
 #include "vgui/ILocalize.h"
 
+#if defined(CLIENT_DLL)
+#define UTIL_VarArgs  VarArgs
+#endif
+
 //-----------------------------------------------------------------------------
 // CEconItemAttribute
 //-----------------------------------------------------------------------------
@@ -49,7 +53,7 @@ void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttribu
 		CEconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
 		}
 	}
 }
@@ -73,7 +77,7 @@ void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *psz
 		CEconAttributeDefinition *pAttribDef = GetStaticData();
 		if ( pAttribDef )
 		{
-			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->attribute_class );
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
 		}
 	}
 }
@@ -99,6 +103,35 @@ CEconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
 }
 
 
+//-----------------------------------------------------------------------------
+// CEconAttributeDefinition
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconAttributeDefinition &CEconAttributeDefinition::operator=( CEconAttributeDefinition const &rhs )
+{
+	index = rhs.index;
+	type = rhs.type;
+	string_attribute = rhs.string_attribute;
+	description_format = rhs.description_format;
+	effect_type = rhs.effect_type;
+	hidden = rhs.hidden;
+	stored_as_integer = rhs.stored_as_integer;
+	m_iAttributeClass = rhs.m_iAttributeClass;
+
+	definition = rhs.definition;
+	if ( definition )
+	{
+		V_strcpy_safe( name, definition->GetString( "name", "( unnamed )" ) );
+		V_strcpy_safe( attribute_class, definition->GetString( "attribute_class" ) );
+		V_strcpy_safe( description_string, definition->GetString( "description_string" ) );
+	}
+
+	return *this;
+}
+
 
 //-----------------------------------------------------------------------------
 // CEconItemDefinition
@@ -114,7 +147,13 @@ CEconItemDefinition::~CEconItemDefinition()
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
 		pDefinition->type->UnloadEconAttributeValue( &attributes[i].value );
 	}
-	attributes.RemoveAll();
+	attributes.Purge();
+
+	for ( int team = TEAM_UNASSIGNED; team < TF_TEAM_COUNT; team++ )
+	{
+		if ( visual[ team ] )
+			delete visual[ team ];
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -124,10 +163,21 @@ PerTeamVisuals_t *CEconItemDefinition::GetVisuals( int iTeamNum /*= TEAM_UNASSIG
 {
 	if ( iTeamNum > LAST_SHARED_TEAM && iTeamNum < TF_TEAM_COUNT )
 	{
-		return &visual[iTeamNum];
+		return visual[ iTeamNum ];
 	}
 
-	return &visual[TEAM_UNASSIGNED];
+	return visual[ TEAM_UNASSIGNED ];
+}
+
+char const *CEconItemDefinition::GetPerClassModel( int iClass /*= TF_CLASS_UNDEFINED*/ )
+{
+	if ( iClass < TF_CLASS_COUNT_ALL )
+	{
+		if( model_player_per_class[ iClass ] && model_player_per_class[ iClass ][0] != '\0' )
+			return model_player_per_class[ iClass ];
+	}
+
+	return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -135,9 +185,9 @@ PerTeamVisuals_t *CEconItemDefinition::GetVisuals( int iTeamNum /*= TEAM_UNASSIG
 //-----------------------------------------------------------------------------
 int CEconItemDefinition::GetLoadoutSlot( int iClass /*= TF_CLASS_UNDEFINED*/ )
 {
-	if ( iClass && item_slot_per_class[iClass] != -1 )
+	if ( iClass && item_slot_per_class[ iClass ] != -1 )
 	{
-		return item_slot_per_class[iClass];
+		return item_slot_per_class[ iClass ];
 	}
 
 	return item_slot;
@@ -278,9 +328,107 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter )
 	FOR_EACH_VEC( attributes, i )
 	{
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
-		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, attributes[ i ].value ) )
+		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, attributes[i].value ) )
 			return;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconItemDefinition &CEconItemDefinition::operator=( CEconItemDefinition const &rhs )
+{
+	index = rhs.index;
+	attributes = rhs.attributes;
+	used_by_classes = rhs.used_by_classes;
+	show_in_armory = rhs.show_in_armory;
+	item_slot = rhs.item_slot;
+	anim_slot = rhs.anim_slot;
+	item_quality = rhs.item_quality;
+	baseitem = rhs.baseitem;
+	propername = rhs.propername;
+	min_ilevel = rhs.min_ilevel;
+	max_ilevel = rhs.max_ilevel;
+	image_inventory_size_h = rhs.image_inventory_size_h;
+	image_inventory_size_w = rhs.image_inventory_size_w;
+	loadondemand = rhs.loadondemand;
+	attach_to_hands = rhs.attach_to_hands;
+	attach_to_hands_vm_only = rhs.attach_to_hands_vm_only;
+	act_as_wearable = rhs.act_as_wearable;
+	hide_bodygroups_deployed_only = rhs.hide_bodygroups_deployed_only;
+	is_reskin = rhs.is_reskin;
+	specialitem = rhs.specialitem;
+	demoknight = rhs.demoknight;
+	drop_type = rhs.drop_type;
+	year = rhs.year;
+	is_custom_content = rhs.is_custom_content;
+	is_cut_content = rhs.is_cut_content;
+	is_multiclass_item = rhs.is_multiclass_item;
+
+	FOR_EACH_DICT_FAST( rhs.capabilities, i )
+	{
+		capabilities.Insert( rhs.capabilities.GetElementName( i ), rhs.capabilities.Element( i ) );
+	}
+
+	FOR_EACH_DICT_FAST( rhs.tags, i )
+	{
+		tags.Insert( rhs.tags.GetElementName( i ), rhs.tags.Element( i ) );
+	}
+
+	for ( int team = TEAM_UNASSIGNED; team < TF_TEAM_COUNT; ++team )
+	{
+		visual[team] = rhs.visual[team];
+	}
+
+	for ( int _class = TF_CLASS_UNDEFINED; _class < TF_CLASS_COUNT_ALL; ++_class )
+	{
+		model_player_per_class[_class] = NULL;
+		item_slot_per_class[_class] = rhs.item_slot_per_class[_class];
+	}
+
+	definition = rhs.definition;
+	if ( definition )
+	{
+		name = definition->GetString( "name", "( unnamed )" );
+		model_player = definition->GetString( "model_player" );
+		model_vision_filtered = definition->GetString( "model_vision_filtered" );
+		model_world = definition->GetString( "model_world" );
+		extra_wearable = definition->GetString( "extra_wearable" );
+		item_class = definition->GetString( "item_class" );
+		item_type_name = definition->GetString( "item_type_name" );
+		item_name = definition->GetString( "item_name" );
+		item_description = definition->GetString( "item_description" );
+		item_logname = definition->GetString( "item_logname" );
+		item_iconname = definition->GetString( "item_iconname" );
+		image_inventory = definition->GetString( "image_inventory" );
+		equip_region = definition->GetString( "equip_region" );
+		holiday_restriction = definition->GetString( "holiday_restriction" );
+
+		if ( KeyValues *pSubData = definition->FindKey( "model_player_per_class" ) )
+		{
+			for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
+			{
+				const char *pszClass = pClassData->GetName();
+				int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+				if ( iClass != -1 )
+				{
+					model_player_per_class[iClass] = pClassData->GetString();
+				}
+
+				// Generic item, assign a model for every class.
+				if ( !V_stricmp( pszClass, "basename" ) )
+				{
+					for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_LAST_NORMAL_CLASS; i++ )
+					{
+						// Add to the player model per class.
+						model_player_per_class[i] = UTIL_VarArgs( pClassData->GetString(), g_aRawPlayerClassNamesShort[i] );
+					}
+				}
+			}
+		}
+	}
+
+	return *this;
 }
 
 
@@ -355,19 +503,6 @@ CAttribute_String::~CAttribute_String()
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CAttribute_String::Clear( void )
-{
-	if ( m_bInitialized && m_pString != &_default_value_ )
-	{
-		m_pString->Clear();
-	}
-
-	m_bInitialized = false;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Copy assignment
 //-----------------------------------------------------------------------------
 CAttribute_String &CAttribute_String::operator=( CAttribute_String const &src )
@@ -376,9 +511,7 @@ CAttribute_String &CAttribute_String::operator=( CAttribute_String const &src )
 
 	if ( src.m_bInitialized )
 	{
-		Initialize();
-		
-		m_pString->Set( src.Get() );
+		*this = src.Get();
 	}
 
 	return *this;
@@ -389,10 +522,10 @@ CAttribute_String &CAttribute_String::operator=( CAttribute_String const &src )
 //-----------------------------------------------------------------------------
 CAttribute_String &CAttribute_String::operator=( char const *src )
 {
-	Clear();
 	Initialize();
 
 	m_pString->Set( src );
+	m_nLength = V_strlen( src );
 
 	return *this;
 }

@@ -4737,11 +4737,11 @@ void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &inf
 			CEconItemDefinition *pItemDef = pWeapon->GetItem()->GetStaticData();
 			if ( pItemDef )
 			{
-				if ( pItemDef->item_iconname[0] )
-					killer_weapon_name = pItemDef->item_iconname;
+				if ( pItemDef->GetItemIcon() )
+					killer_weapon_name = pItemDef->GetItemIcon();
 
-				if ( pItemDef->item_logname[0] )
-					killer_weapon_log_name = pItemDef->item_logname;
+				if ( pItemDef->GetLogName() )
+					killer_weapon_log_name = pItemDef->GetLogName();
 			}
 		}
 	}

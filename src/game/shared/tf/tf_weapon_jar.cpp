@@ -183,14 +183,17 @@ const char* C_TFJarMilk::ModifyEventParticles( const char* token )
 		CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 		if ( pStatic )
 		{
-			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );
-			if ( pVisuals )
+			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( TEAM_UNASSIGNED );
+			if ( pVisuals && pVisuals->GetCustomParticleSystem() )
 			{
-				const char *pszCustomEffectName = pVisuals->custom_particlesystem;
-				if ( pszCustomEffectName[0] != '\0' )
-				{
-					return pszCustomEffectName;
-				}
+				return pVisuals->GetCustomParticleSystem();
+			}
+
+			// If we have team visuals, check those too.
+			pVisuals = pStatic->GetVisuals( GetTeamNumber() );
+			if ( pVisuals && pVisuals->GetCustomParticleSystem() )
+			{
+				return pVisuals->GetCustomParticleSystem();
 			}
 		}
 	}

@@ -43,7 +43,7 @@ void CEconWearable::Spawn( void )
 
 	if ( m_bExtraWearable && GetItem()->GetStaticData() )
 	{
-		SetModel( GetItem()->GetStaticData()->extra_wearable );
+		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
 	}
 	else
 	{

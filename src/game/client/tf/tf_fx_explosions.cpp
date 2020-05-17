@@ -40,12 +40,16 @@ void TFExplosionCallback( const Vector &vecOrigin, const Vector &vecNormal, int 
 	}
 
 	bool bIsPlayer = false;
+	int iTeamNumber = TEAM_UNASSIGNED;
 	if ( hEntity.Get() )
 	{
 		C_BaseEntity *pEntity = C_BaseEntity::Instance( hEntity );
-		if ( pEntity && pEntity->IsPlayer() )
+		if ( pEntity )
 		{
-			bIsPlayer = true;
+			iTeamNumber = pEntity->GetTeamNumber();
+
+			if( pEntity->IsPlayer() )
+				bIsPlayer = true;
 		}
 	}
 
@@ -69,7 +73,7 @@ void TFExplosionCallback( const Vector &vecOrigin, const Vector &vecNormal, int 
 	// Base explosion effect and sound.
 	char *pszEffect = (nParticleSystemIndex == -1) ?
 		"ExplosionCore_wall" : GetParticleSystemNameFromIndex( nParticleSystemIndex );
-	char *pszSound = "BaseExplosionEffect.Sound";
+	char pszSound[64] = "BaseExplosionEffect.Sound";
 
 	if ( pWeaponInfo )
 	{
@@ -105,7 +109,7 @@ void TFExplosionCallback( const Vector &vecOrigin, const Vector &vecNormal, int 
 		// Sound.
 		if ( Q_strlen( pWeaponInfo->m_szExplosionSound ) > 0 )
 		{
-			pszSound = pWeaponInfo->m_szExplosionSound;
+			V_strncpy( pszSound, pWeaponInfo->m_szExplosionSound, sizeof pszSound );
 		}
 	}
 
@@ -113,14 +117,27 @@ void TFExplosionCallback( const Vector &vecOrigin, const Vector &vecNormal, int 
 	if ( iItemID >= 0 )
 	{
 		CEconItemDefinition *pItemDef = GetItemSchema()->GetItemDefinition( iItemID );
-		if ( pItemDef && pItemDef->GetVisuals()->aWeaponSounds[nSoundIndex][0] != '\0' )
+		if ( pItemDef )
 		{
-			pszSound = pItemDef->GetVisuals()->aWeaponSounds[nSoundIndex];
+			PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals();
+			if( pVisuals && pVisuals->GetWeaponShootSound( nSoundIndex ) )
+			{
+				V_strncpy( pszSound, pVisuals->GetWeaponShootSound( nSoundIndex ), sizeof pszSound );
+			}
+
+			if ( iTeamNumber > TEAM_SPECTATOR )
+			{
+				pVisuals = pItemDef->GetVisuals( iTeamNumber );
+				if( pVisuals && pVisuals->GetWeaponShootSound( nSoundIndex ) )
+				{
+					V_strncpy( pszSound, pVisuals->GetWeaponShootSound( nSoundIndex ), sizeof pszSound );
+				}
+			}
 		}
 	}
 
 	if ( iWeaponID == TF_WEAPON_PUMPKIN_BOMB )
-		pszSound = "Halloween.PumpkinExplode";
+		V_strncpy( pszSound, "Halloween.PumpkinExplode", sizeof pszSound );
 	
 	CLocalPlayerFilter filter;
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, pszSound, &vecOrigin );

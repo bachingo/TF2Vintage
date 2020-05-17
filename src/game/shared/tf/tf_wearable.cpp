@@ -48,7 +48,7 @@ void CTFWearable::UpdateModelToClass( void )
 {
 	if ( m_bExtraWearable && GetItem()->GetStaticData() )
 	{
-		SetModel( GetItem()->GetStaticData()->extra_wearable );
+		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
 	}
 	else 
 	{
@@ -112,7 +112,7 @@ void C_TFWearable::UpdateModelToClass(void)
 {
 	if ( m_bExtraWearable && GetItem()->GetStaticData() )
 	{
-		SetModel( GetItem()->GetStaticData()->extra_wearable );
+		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
 	}
 	else
 	{

@@ -1961,17 +1961,20 @@ const char *CTFWeaponBase::GetMuzzleFlashParticleEffect( void )
 
 	// Override Muzzle Flash, if we have a custom one.
 	CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
-	if ( pItemDef && pItemDef->GetVisuals()->muzzle_flash[0] != '\0' )
+	if ( pItemDef )
 	{
-		pszPEffect = pItemDef->GetVisuals()->muzzle_flash;
-		return pszPEffect;
-	}
-	// If we have team specific, check those too.			
-	PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
-	if ( pVisuals && pVisuals->muzzle_flash[0] != '\0' )
-	{
-		pszPEffect = pItemDef->GetVisuals()->muzzle_flash;
-		return pszPEffect;
+		PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( TEAM_UNASSIGNED );
+		if( pVisuals && pVisuals->GetMuzzleFlash() )
+		{
+			return pVisuals->GetMuzzleFlash();
+		}
+
+		// If we have team specific, check those too.	
+		pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
+		if ( pVisuals && pVisuals->GetMuzzleFlash() )
+		{
+			return pVisuals->GetMuzzleFlash();
+		}
 	}
 	
 	if ( Q_strlen( pszPEffect ) > 0 )
@@ -2002,8 +2005,7 @@ float CTFWeaponBase::GetMuzzleFlashModelScale(void)
 // Purpose: 
 //-----------------------------------------------------------------------------
 const char *CTFWeaponBase::GetTracerType( void )
-{ 
-		
+{
 	if ( tf_useparticletracers.GetBool() && GetTFWpnData().m_szTracerEffect && GetTFWpnData().m_szTracerEffect[0] )
 	{
 		if (GetOwner() && !m_szTracerName[0])
@@ -2026,7 +2028,6 @@ const char *CTFWeaponBase::GetTracerType( void )
 		//{
 		//	Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, tempString);
 		//}
-
 	}
 
 	if ( GetWeaponID() == TF_WEAPON_MINIGUN )
@@ -2037,23 +2038,28 @@ const char *CTFWeaponBase::GetTracerType( void )
 	
 	// Override tracer effect, if we have a custom one.
 	CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
-	if ( pItemDef && pItemDef->GetVisuals()->tracer_effect[0] != '\0' )
+	if ( pItemDef )
 	{
-		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", pItemDef->GetVisuals()->tracer_effect );
-	}
-	// If we have team specific, check those too.			
-	PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
-	if ( pVisuals && pVisuals->tracer_effect[0] != '\0' )
-	{
-		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", pVisuals->tracer_effect );
+		PerTeamVisuals_t *pVisuals = pItemDef->GetVisuals( TEAM_UNASSIGNED );
+		if( pVisuals && pVisuals->GetTracerFX() )
+		{
+			Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s", pVisuals->GetTracerFX() );
+		}
+
+		// If we have team specific, check those too.	
+		pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
+		if ( pVisuals && pVisuals->GetTracerFX() )
+		{
+			Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s", pVisuals->GetTracerFX() );
+		}
 	}
 	
 	int nSniperFiresTracer = 0;
-	CALL_ATTRIB_HOOK_INT(nSniperFiresTracer, sniper_fires_tracer);
-	CALL_ATTRIB_HOOK_INT(nSniperFiresTracer, sniper_fires_tracer_HIDDEN);
-	if (nSniperFiresTracer || (ToTFPlayer(GetOwner()) && (ToTFPlayer(GetOwner())->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF))))
+	CALL_ATTRIB_HOOK_INT( nSniperFiresTracer, sniper_fires_tracer );
+	CALL_ATTRIB_HOOK_INT( nSniperFiresTracer, sniper_fires_tracer_HIDDEN );
+	if ( nSniperFiresTracer || (ToTFPlayer(GetOwner()) && (ToTFPlayer(GetOwner())->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF))))
 	{
-		if (GetOwner() )
+		if ( GetOwner() )
 		{
 			switch (GetOwner()->GetTeamNumber())
 			{
@@ -2189,7 +2195,7 @@ const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 	if ( pStatic )
 	{
 		// We have an extra wearable
-		return pStatic->extra_wearable;
+		return pStatic->GetExtraWearableModel();
 	}
 
 	return "\0";
@@ -4115,7 +4121,7 @@ CTFWeaponInfo *GetTFWeaponInfoForItem( int iItemID, int iClass )
 	if ( !pItemDef )
 		return NULL;
 
-	const char *pszClassname = TranslateWeaponEntForClass( pItemDef->item_class, iClass );
+	const char *pszClassname = TranslateWeaponEntForClass( pItemDef->GetClassName(), iClass );
 
 	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pszClassname );
 	if ( hWpnInfo == GetInvalidWeaponInfoHandle() )

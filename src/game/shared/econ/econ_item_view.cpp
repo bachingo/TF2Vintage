@@ -155,16 +155,14 @@ const char *CEconItemView::GetWorldDisplayModel( int iClass/* = 0*/ ) const
 
 	if ( pStatic )
 	{
-		pszModelName = pStatic->model_world;
-		
+		pszModelName = pStatic->GetWorldModel();
 
 		// Assuming we're using same model for both 1st person and 3rd person view.
-		if ( !pszModelName[0] && pStatic->attach_to_hands == 1 )
-		{
-			pszModelName = pStatic->model_player;
-		}
-		if (pStatic->model_player_per_class[iClass][0] != '\0' && pStatic->attach_to_hands == 1)
-			pszModelName = pStatic->model_player_per_class[iClass];
+		if ( !pszModelName && pStatic->attach_to_hands == 1 )
+			pszModelName = pStatic->GetPlayerModel();
+		
+		if ( pStatic->GetPerClassModel( iClass ) )
+			pszModelName = pStatic->GetPerClassModel( iClass );
 	}
 
 	return pszModelName;
@@ -179,10 +177,10 @@ const char *CEconItemView::GetPlayerDisplayModel( int iClass/* = 0*/ ) const
 
 	if ( pStatic )
 	{
-		if ( pStatic->model_player_per_class[iClass][0] != '\0' )
-			return pStatic->model_player_per_class[iClass];
+		if ( pStatic->GetPerClassModel( iClass ) )
+			return pStatic->GetPerClassModel( iClass );
 
-		return pStatic->model_player;
+		return pStatic->GetPlayerModel();
 	}
 
 	return NULL;
@@ -197,7 +195,8 @@ const char* CEconItemView::GetEntityName()
 
 	if ( pStatic )
 	{
-		return pStatic->item_class;
+		Assert( pStatic->item_class );
+		return pStatic->GetClassName();
 	}
 
 	return NULL;
@@ -302,7 +301,8 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 	if ( pStatic )
 	{
 		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( iTeamNum );
-		return pVisuals->aWeaponSounds[iIndex];
+		if( pVisuals )
+			return pVisuals->GetWeaponShootSound( iIndex );
 	}
 
 	return NULL;
@@ -438,7 +438,7 @@ const char *CEconItemView::GetExtraWearableModel( void ) const
 	if ( pStatic )
 	{
 		// We have an extra wearable
-		return pStatic->extra_wearable;
+		return pStatic->GetExtraWearableModel();
 	}
 
 	return "\0";

@@ -4,6 +4,10 @@
 #include "activitylist.h"
 #include "attribute_types.h"
 
+#if defined(CLIENT_DLL)
+#define UTIL_VarArgs  VarArgs
+#endif
+
 const char *g_TeamVisualSections[TF_TEAM_COUNT] =
 {
 	"visuals",			// TEAM_UNASSIGNED
@@ -131,10 +135,10 @@ public:
 
 #define GET_STRING(copyto, from, name)													\
 		if (from->GetString(#name, NULL))												\
-			V_strncpy(copyto->name, from->GetString(#name), sizeof(copyto->name))
+			copyto->name = from->GetString(#name)
 
 #define GET_STRING_DEFAULT(copyto, from, name, defaultstring) \
-		V_strncpy(copyto->name, from->GetString(#name, #defaultstring), sizeof(copyto->name))
+		copyto->name = from->GetString(#name, #defaultstring)
 
 #define GET_BOOL(copyto, from, name) \
 		copyto->name = from->GetBool(#name, copyto->name)
@@ -282,13 +286,13 @@ public:
 			if ( V_stricmp( pData->GetName(), "default" ) == 0 )
 				continue;
 
-			CEconItemDefinition *pItem = new CEconItemDefinition;
+			CEconItemDefinition *pItem = GetItemSchema()->CreateNewItemDefinition();
 			int index = atoi( pData->GetName() );
 			pItem->index = index;
 
 			KeyValues *pDefinition = new KeyValues( pData->GetName() );
 			MergeDefinitionPrefabs( pDefinition, pData );
-			pItem->m_pDefinition = pDefinition;
+			pItem->definition = pDefinition;
 
 			GET_STRING( pItem, pDefinition, name );
 			GET_BOOL( pItem, pDefinition, show_in_armory );
@@ -388,27 +392,21 @@ public:
 					for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
 					{
 						const char *pszClass = pClassData->GetName();
+						int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+						if ( iClass != -1 )
+						{
+							pItem->model_player_per_class[iClass] = pClassData->GetString();
+						}
 						
 						// Generic item, assign a model for every class.
-						if ( !strcmp(pszClass, "basename") )
+						if ( !V_stricmp( pszClass, "basename" ) )
 						{
 							for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_LAST_NORMAL_CLASS; i++ )
 							{
 								// Add to the player model per class.
-								if (i != TF_CLASS_DEMOMAN)
-									Q_snprintf(pItem->model_player_per_class[i], 128, pClassData->GetString(), g_aPlayerClassNames_NonLocalized[i]);
-								else	// Demoman gets called demo, so adjust the string.
-									Q_snprintf(pItem->model_player_per_class[i], 128, pClassData->GetString(), "Demo");
-							}	
+								pItem->model_player_per_class[i] = UTIL_VarArgs( pClassData->GetString(), g_aRawPlayerClassNamesShort[i] );
+							}
 						}
-
-						int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-
-						if ( iClass != -1 )
-						{
-							V_strncpy( pItem->model_player_per_class[iClass], pClassData->GetString(), 128 );
-						}
-
 					}
 				}
 				else if ( !V_stricmp( pSubData->GetName(), "used_by_classes" ) )
@@ -474,11 +472,13 @@ public:
 								if ( i == TEAM_SPECTATOR )
 									continue;
 
+								pItem->visual[i] = NULL;
 								ParseVisuals( pSubData, pItem, i );
 							}
 						}
 						else
 						{
+							pItem->visual[ iVisuals ] = NULL;
 							ParseVisuals( pSubData, pItem, iVisuals );
 						}
 					}
@@ -493,12 +493,13 @@ public:
 	{
 		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
 		{
-			CEconAttributeDefinition *pAttribute = new CEconAttributeDefinition;
+			CEconAttributeDefinition *pAttribute = GetItemSchema()->CreateNewAttribDefinition();
 			pAttribute->index = V_atoi( pSubData->GetName() );
 
-			GET_STRING_DEFAULT( pAttribute, pSubData, name, ( unnamed ) );
-			GET_STRING( pAttribute, pSubData, attribute_class );
-			GET_STRING( pAttribute, pSubData, description_string );
+			V_strcpy_safe( pAttribute->name, pSubData->GetString( "name", "( unnamed )" ) );
+			V_strcpy_safe( pAttribute->attribute_class, pSubData->GetString( "attribute_class" ) );
+			V_strcpy_safe( pAttribute->description_string, pSubData->GetString( "description_string" ) );
+
 			pAttribute->string_attribute = ( V_stricmp( pSubData->GetString( "attribute_type" ), "string" ) == 0 );
 
 			const char *szFormat = pSubData->GetString( "description_format" );
@@ -513,13 +514,15 @@ public:
 			GET_BOOL( pAttribute, pSubData, hidden );
 			GET_BOOL( pAttribute, pSubData, stored_as_integer );
 
+			pAttribute->definition = pSubData->MakeCopy();
+
 			GetItemSchema()->m_Attributes.Insert( pAttribute->index, pAttribute );
 		}
 	};
 
-	bool ParseVisuals( KeyValues *pData, CEconItemDefinition* pItem, int iIndex )
+	bool ParseVisuals( KeyValues *pData, CEconItemDefinition *pItem, int iIndex )
 	{
-		EconPerTeamVisuals *pVisuals = &pItem->visual[iIndex];
+		PerTeamVisuals_t *pVisuals = new PerTeamVisuals_t;
 
 		for ( KeyValues *pVisualData = pData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
 		{
@@ -540,17 +543,17 @@ public:
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "custom_particlesystem" ) )
 			{
-				V_strncpy( pVisuals->custom_particlesystem, pVisualData->GetString( "system" ), sizeof( pVisuals->custom_particlesystem ) );
+				pVisuals->custom_particlesystem = pVisualData->GetString( "system" );
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "muzzle_flash" ) )
 			{
 				// Fetching this similar to weapon script file parsing.
-				V_strncpy( pVisuals->muzzle_flash, pVisualData->GetString( "system" ), sizeof( pVisuals->muzzle_flash ) );
+				pVisuals->muzzle_flash = pVisualData->GetString();
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "tracer_effect" ) )
 			{
 				// Fetching this similar to weapon script file parsing.
-				V_strncpy( pVisuals->tracer_effect, pVisualData->GetString( "system" ), sizeof( pVisuals->tracer_effect ) );
+				pVisuals->tracer_effect = pVisualData->GetString();
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
 			{
@@ -569,31 +572,38 @@ public:
 			{
 				GET_VALUES_FAST_STRING( pVisuals->playback_activity, pVisualData );
 			}
+			else if ( !V_strnicmp( pVisualData->GetName(), "custom_sound", 12 ) )
+			{
+				int iSound = 0;
+				if ( pVisualData->GetName()[12] )
+				{
+					iSound = Clamp( V_atoi( pVisualData->GetName() + 12 ), 0, MAX_CUSTOM_WEAPON_SOUNDS - 1 );
+				}
+
+				pVisuals->aCustomWeaponSounds[ iSound ] = pVisualData->GetString();
+			}
 			else if ( !V_strnicmp( pVisualData->GetName(), "sound_", 6 ) )
 			{
-				// Fetching this similar to weapon script file parsing.
-				const char *pszSoundName = pVisualData->GetString();
-				
 				// Advancing pointer past sound_ prefix... why couldn't they just make a subsection for sounds?
 				int iSound = GetWeaponSoundFromString( pVisualData->GetName() + 6 );
 
 				if ( iSound != -1 )
 				{
-					V_strncpy( pVisuals->aWeaponSounds[iSound], pszSoundName, MAX_WEAPON_STRING );
+					pVisuals->aWeaponSounds[ iSound ] = pVisualData->GetString();
 				}
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "styles" ) )
 			{
 				for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
 				{
-					EconItemStyle *style;
+					ItemStyle_t *style;
 					IF_ELEMENT_FOUND( pVisuals->styles, pStyleData->GetName() )
 					{
 						style = pVisuals->styles.Element( index );
 					}
 					else
 					{
-						style = new EconItemStyle;
+						style = new ItemStyle_t;
 						pVisuals->styles.Insert( pStyleData->GetName(), style );
 					}
 
@@ -623,13 +633,15 @@ public:
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "material_override" ) )
 			{
-				V_strncpy( pVisuals->material_override, pVisualData->GetString(), sizeof( pVisuals->material_override ) );
+				pVisuals->material_override = pVisualData->GetString();
 			}
 			else
 			{
 				GET_VALUES_FAST_STRING( pVisuals->misc_info, pVisualData );
 			}
 		}
+
+		pItem->visual[ iIndex ] = pVisuals;
 
 		return true;
 	}
@@ -736,7 +748,7 @@ CEconItemSchema::~CEconItemSchema()
 	m_PrefabsValues.RemoveAll();
 
 	m_Items.PurgeAndDeleteElements();
-	m_Attributes.PurgeAndDeleteElements();
+	m_Attributes.Purge();
 
 	for ( attr_type_t const &atype : m_AttributeTypes )
 		delete atype.pType;
@@ -799,34 +811,36 @@ void CEconItemSchema::Precache( void )
 		CEconItemDefinition *pItem = m_Items[i];
 		
 		// Precache models.
-		if ( pItem->model_world[0] != '\0' )
+		if ( pItem->model_world && pItem->model_world[0] != '\0' )
 			CBaseEntity::PrecacheModel( pItem->model_world );
 
-		if ( pItem->model_player[0] != '\0' )
+		if ( pItem->model_player && pItem->model_player[0] != '\0' )
 			CBaseEntity::PrecacheModel( pItem->model_player );
 
 		for ( int iClass = 0; iClass < TF_CLASS_COUNT_ALL; iClass++ )
 		{
 			const char *pszModel = pItem->model_player_per_class[iClass];
-			if ( pszModel[0] != '\0' )
+			if ( pszModel && pszModel[0] != '\0' )
 				CBaseEntity::PrecacheModel( pszModel );
 		}
 
-		if ( pItem->extra_wearable[0] != '\0' )
+		if ( pItem->extra_wearable && pItem->extra_wearable[0] != '\0' )
 			CBaseEntity::PrecacheModel( pItem->extra_wearable );
 		
 		// Precache visuals.
-		for ( int i = 0; i < TF_TEAM_COUNT; i++ )
+		for ( int i = TEAM_UNASSIGNED; i < TF_TEAM_COUNT; i++ )
 		{
 			if ( i == TEAM_SPECTATOR )
 				continue;
 
-			PerTeamVisuals_t *pVisuals = &pItem->visual[i];
+			PerTeamVisuals_t *pVisuals = pItem->GetVisuals( i );
+			if ( pVisuals == NULL )
+				continue;
 
 			// Precache sounds.
 			for ( int i = 0; i < NUM_SHOOT_SOUND_TYPES; i++ )
 			{
-				if ( pVisuals->aWeaponSounds[i][0] != '\0' )
+				if ( pVisuals->aWeaponSounds[i] && pVisuals->aWeaponSounds[i][0] != '\0' )
 					CBaseEntity::PrecacheScriptSound( pVisuals->aWeaponSounds[i] );
 			}
 
@@ -834,26 +848,26 @@ void CEconItemSchema::Precache( void )
 			for ( int i = 0; i < pVisuals->attached_models.Count(); i++ )
 			{
 				const char *pszModel = pVisuals->attached_models[i].model;
-				if ( pszModel[0] != '\0' )
+				if ( pszModel && pszModel[0] != '\0' )
 					CBaseEntity::PrecacheModel( pszModel );
 			}
 
 			// Precache particles
 			// Custom Particles
 			const char *pszParticle = pVisuals->custom_particlesystem;
-			if ( pszParticle[0] != '\0' )
+			if ( pszParticle && pszParticle[0] != '\0' )
 			{
 				PrecacheParticleSystem( pszParticle );
 			}
 			// Muzzle Flash
 			const char *pszMuzzleFlash = pVisuals->muzzle_flash;
-			if ( pszMuzzleFlash[0] != '\0' )
+			if ( pszMuzzleFlash && pszMuzzleFlash[0] != '\0' )
 			{
 				PrecacheParticleSystem( pszMuzzleFlash );
 			}
 			// Tracer Effect
 			const char *pszTracerEffect = pVisuals->tracer_effect;
-			if ( pszTracerEffect[0] != '\0' )
+			if ( pszTracerEffect && pszTracerEffect[0] != '\0' )
 			{
 				PrecacheParticleSystem( pszTracerEffect );
 			}
@@ -887,6 +901,7 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name 
 {
 	FOR_EACH_MAP_FAST( m_Items, i )
 	{
+		Assert( m_Items[i]->index > -1 && m_Items[i]->name );
 		if ( m_Items[i]->index > -1 && !V_stricmp( m_Items[i]->name, name ) )
 		{
 			return m_Items[i];
@@ -898,11 +913,11 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name 
 
 CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
 {
-	if (id < 0)
-		return NULL;
-	CEconAttributeDefinition *attribdef = NULL;
-	FIND_ELEMENT( m_Attributes, id, attribdef );
-	return attribdef;
+	uint16 index = m_Attributes.Find( id );
+	if ( index != m_Attributes.InvalidIndex() )
+		return m_Attributes[index];
+
+	return NULL;
 }
 
 CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const char *name )
@@ -956,4 +971,14 @@ ISchemaAttributeType *CEconItemSchema::GetAttributeType( const char *name ) cons
 	}
 
 	return nullptr;
+}
+
+CEconItemDefinition *CEconItemSchema::CreateNewItemDefinition( void )
+{
+	return new CEconItemDefinition;
+}
+
+CEconAttributeDefinition *CEconItemSchema::CreateNewAttribDefinition( void )
+{
+	return new CEconAttributeDefinition;
 }

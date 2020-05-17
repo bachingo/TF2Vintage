@@ -277,7 +277,7 @@ int CTFLoadoutPanel::GetAnimSlot( CEconItemDefinition *pItemDef, int iClass )
 	if ( iSlot == -1 )
 	{
 		// Fall back to script file data.
-		const char *pszClassname = TranslateWeaponEntForClass( pItemDef->item_class, iClass );
+		const char *pszClassname = TranslateWeaponEntForClass( pItemDef->GetClassName(), iClass );
 		_WeaponData *pWeaponInfo = g_TFWeaponScriptParser.GetTFWeaponInfo( pszClassname );
 		Assert( pWeaponInfo );
 
@@ -294,29 +294,31 @@ const char *CTFLoadoutPanel::GetWeaponModel( CEconItemDefinition *pItemDef, int 
 
 	if ( pItemDef->act_as_wearable )
 	{
-		if ( pItemDef->model_player_per_class[iClass][0] != '\0' )
-			return pItemDef->model_player_per_class[iClass];
+		if ( pItemDef->GetPerClassModel( iClass ) )
+			return pItemDef->GetPerClassModel( iClass );
 
-		return pItemDef->model_player;
+		return pItemDef->GetPlayerModel();
 	}
 
-	const char *pszModel = pItemDef->model_world;
+	const char *pszModel = pItemDef->GetWorldModel();
 
-	if ( pszModel[0] == '\0' && pItemDef->attach_to_hands == 1 )
+	if ( !pszModel && pItemDef->attach_to_hands == 1 )
 	{
-		pszModel = pItemDef->model_player;
+		pszModel = pItemDef->GetPlayerModel();
 	}
-	if ( pItemDef->model_player_per_class[iClass][0] != '\0' && pItemDef->attach_to_hands == 1 )
-		pszModel = pItemDef->model_player_per_class[iClass];
+	if ( pItemDef->GetPerClassModel( iClass ) && pItemDef->attach_to_hands == 1 )
+	{
+		pszModel = pItemDef->GetPerClassModel( iClass );
+	}
 
 	return pszModel;
 }
 
 const char *CTFLoadoutPanel::GetExtraWearableModel( CEconItemDefinition *pItemDef )
 {
-	if ( pItemDef && pItemDef->extra_wearable )
+	if ( pItemDef && pItemDef->GetExtraWearableModel() )
 	{
-		return pItemDef->extra_wearable;
+		return pItemDef->GetExtraWearableModel();
 	}
 
 	return "";
@@ -369,7 +371,7 @@ void CTFLoadoutPanel::UpdateModelWeapons( void )
 		if ( pItem == pActiveItem || pItemDef->act_as_wearable )
 		{
 			const char *pszModel = GetWeaponModel( pItemDef, m_iCurrentClass );
-			if ( pszModel[0] != '\0' )
+			if ( pszModel && pszModel[0] != '\0' )
 			{
 				int nSkin = m_iCurrentSkin;
 				PerTeamVisuals_t *pVisuals = NULL;

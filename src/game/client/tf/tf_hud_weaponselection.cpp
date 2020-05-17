@@ -159,9 +159,9 @@ void CItemModelPanel::SetWeapon(C_BaseCombatWeapon *pWeapon, int iBorderStyle, i
 	wchar_t *pText = NULL;
 	if (pItemDefinition)
 	{
-		pText = g_pVGuiLocalize->Find(pItemDefinition->item_name);
+		pText = g_pVGuiLocalize->Find(pItemDefinition->GetLocalizationName());
 		char szImage[128];
-		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->image_inventory);
+		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->GetInventoryImage());
 		m_pWeaponImage->SetImage(szImage);
 		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 5.0) + XRES(4), GetWide() - XRES(8), GetWide() - XRES(8));
 	}
@@ -200,9 +200,9 @@ void CItemModelPanel::SetWeapon(CEconItemDefinition *pItemDefinition, int iBorde
 	wchar_t *pText = NULL;
 	if (pItemDefinition)
 	{
-		pText = g_pVGuiLocalize->Find(pItemDefinition->item_name);
+		pText = g_pVGuiLocalize->Find(pItemDefinition->GetLocalizationName());
 		char szImage[128];
-		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->image_inventory);
+		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->GetInventoryImage());
 		m_pWeaponImage->SetImage(szImage);
 		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 5.0) + XRES(4), GetWide() - XRES(8), GetWide() - XRES(8));
 	}

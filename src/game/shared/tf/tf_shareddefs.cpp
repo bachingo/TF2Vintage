@@ -138,6 +138,40 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Saxton",
 };
 
+const char *g_aRawPlayerClassNamesShort[TF_CLASS_MENU_BUTTONS] =
+{
+	"undefined",
+	"scout",
+	"sniper",
+	"soldier",
+	"demo",
+	"medic",
+	"heavy",
+	"pyro",
+	"spy",
+	"engineer",
+	"saxton",
+	"",
+	"random"
+};
+
+const char *g_aRawPlayerClassNames[TF_CLASS_MENU_BUTTONS] =
+{
+	"undefined",
+	"scout",
+	"sniper",
+	"soldier",
+	"demoman",
+	"medic",
+	"heavyweapons",
+	"pyro",
+	"spy",
+	"engineer",
+	"saxtonhale",
+	"",
+	"random"
+};
+
 const char *g_aDominationEmblems[] =
 {
 	"../hud/leaderboard_dom1",

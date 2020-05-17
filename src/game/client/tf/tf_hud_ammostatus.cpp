@@ -197,7 +197,7 @@ void CTFHudWeaponAmmo::OnThink()
 			if ( pItemDefinition )
 			{
 				char szImage[128];
-				Q_snprintf (szImage, sizeof( szImage ), "../%s_large", pItemDefinition->image_inventory );
+				Q_snprintf( szImage, sizeof( szImage ), "../%s_large", pItemDefinition->GetInventoryImage() );
 				m_pWeaponBucket->SetImage( szImage );
 				bShowIcon = true;
 			}

@@ -1816,7 +1816,7 @@ void CTFPlayer::GiveDefaultItems()
 
 			// Extra wearables
 			const char *iszModel = pWeapon->GetExtraWearableModel();
-			if ( iszModel[0] )
+			if ( iszModel )
 			{
 				CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable" );
 				pWearable->SetItem( *pWeapon->GetItem() );
@@ -2274,17 +2274,17 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		
 			// Checks for holiday restrictions.
 			// We don't want to always execute this, so only execute when we have a holiday restriction listed.
-			if ( pItemDef->holiday_restriction[0] != '\0' )
+			if ( pItemDef->GetHolidayRestriction() )
 			{
-				if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) )
+				if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon_or_valentines") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon_or_valentines") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "christmas") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "birthday") == 0 ) )
 					bHolidayRestrictedItem = true;
 			}
 			
@@ -2573,17 +2573,17 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			
 			// Checks for holiday restrictions.
 			// We don't want to always execute this, so only execute when we have a holiday restriction listed.
-			if ( pItemDef->holiday_restriction[0] != '\0' )
+			if ( pItemDef->GetHolidayRestriction() )
 			{
-				if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( strcmp(pItemDef->holiday_restriction, "halloween") == 0 ) )
+				if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( strcmp(pItemDef->holiday_restriction, "halloween_or_fullmoon_or_valentines") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon_or_valentines") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( strcmp(pItemDef->holiday_restriction, "christmas") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "christmas") == 0 ) )
 					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( strcmp(pItemDef->holiday_restriction, "birthday") == 0 ) )
+				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "birthday") == 0 ) )
 					bHolidayRestrictedItem = true;
 			}
 			
@@ -4025,7 +4025,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 				if ( itemdef )
 				{
 					Msg( "ItemID %i:\nname %s\nitem_class %s\nitem_type_name %s\n",
-						pWeapon->GetItemID(), itemdef->name, itemdef->item_class, itemdef->item_type_name );
+						pWeapon->GetItemID(), itemdef->GetName(), itemdef->GetClassName(), itemdef->GetTypeName() );
 					
 					Msg("Year: %s\n",
 						itemdef->year);
@@ -4044,7 +4044,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 								value *= 100.0f;
 							}
 
-							Msg( "%s %g\n", pStatic->description_string, value );
+							Msg( "%s %g\n", pStatic->GetDescription(), value );
 						}
 					}
 					Msg( "\n" );
@@ -10898,7 +10898,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 		CEconItemDefinition *pItemDef = pActiveWeapon->GetItem()->GetStaticData();
 		if ( pItemDef )
 		{
-			criteriaSet.AppendCriteria( "item_name", pItemDef->name );
+			criteriaSet.AppendCriteria( "item_name", pItemDef->GetName() );
 		}
 	}
 
@@ -11744,7 +11744,7 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 		}
 	}
 
-	const char *pszClassname = args.ArgC() > 2 ? args[2] : pItemDef->item_class;
+	const char *pszClassname = args.ArgC() > 2 ? args[2] : pItemDef->GetClassName();
 	CEconEntity *pEconEnt = dynamic_cast<CEconEntity *>( pPlayer->GiveNamedItem( pszClassname, 0, &econItem ) );
 
 	if ( pEconEnt )

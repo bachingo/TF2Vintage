@@ -1492,18 +1492,25 @@ void CWeaponMedigun::UpdateEffects( void )
 		CEconItemDefinition *pStatic = GetItem()->GetStaticData();
 		if ( pStatic )
 		{
-			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );
+			const char *pszCustomEffectName = NULL;
+			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( TEAM_UNASSIGNED );
 			if ( pVisuals )
 			{
-				const char *pszCustomEffectName = pVisuals->custom_particlesystem;
-					
-				if ( pszCustomEffectName[0] != '\0' )
-				{
-					CNewParticleEffect *pCustomEffect = pEffectOwner->ParticleProp()->Create( pszCustomEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
-					pEffectOwner->ParticleProp()->AddControlPoint( pCustomEffect, 1, m_hHealingTarget, PATTACH_ABSORIGIN_FOLLOW, NULL, Vector(0,0,50) );
+				pszCustomEffectName = pVisuals->GetCustomParticleSystem();
+			}
 
-					m_hHealingTargetEffect.pCustomEffect = pCustomEffect;
-				}
+			pVisuals = pStatic->GetVisuals( GetTeamNumber() );
+			if ( pVisuals )
+			{
+				pszCustomEffectName = pVisuals->GetCustomParticleSystem();
+			}
+
+			if ( pszCustomEffectName && pszCustomEffectName[0] != '\0' )
+			{
+				CNewParticleEffect *pCustomEffect = pEffectOwner->ParticleProp()->Create( pszCustomEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
+				pEffectOwner->ParticleProp()->AddControlPoint( pCustomEffect, 1, m_hHealingTarget, PATTACH_ABSORIGIN_FOLLOW, NULL, Vector(0,0,50) );
+
+				m_hHealingTargetEffect.pCustomEffect = pCustomEffect;
 			}
 		}
 

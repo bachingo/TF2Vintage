@@ -4926,13 +4926,14 @@ void C_TFPlayer::DropHat( breakablepropparams_t const &breakParams, Vector const
 		CEconWearable* pItem = m_hMyWearables[i];
 		if ( pItem && pItem->GetItem()->GetStaticData() )
 		{
-			if (pItem->GetDropType() > 0)
+			if ( pItem->GetDropType() > 0 )
 			{
 				breakmodel_t breakModel;
 				if (pItem->m_bExtraWearable)
-					strcpy(breakModel.modelName, ( pItem->GetItem()->GetStaticData()->extra_wearable ) );
+					V_strcpy_safe(breakModel.modelName, pItem->GetItem()->GetStaticData()->GetExtraWearableModel() );
 				else
-					strcpy(breakModel.modelName, ( pItem->GetItem()->GetStaticData()->model_player ) );
+					V_strcpy_safe(breakModel.modelName, pItem->GetItem()->GetStaticData()->GetPlayerModel() );
+
 				breakModel.health = 1;
 				breakModel.fadeTime = RandomFloat( 5, 10 );
 				breakModel.fadeMinDist = 0.0f;

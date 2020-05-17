@@ -72,10 +72,14 @@ void C_EconEntity::OnDataChanged( DataUpdateType_t updateType )
 		CEconItemView *pItem = GetItem();
 		for ( int i = 0; i < TF_TEAM_COUNT; i++ )
 		{
-			const char *pszMaterial = pItem->GetStaticData()->GetVisuals( i )->material_override;
-			if ( pszMaterial )
+			PerTeamVisuals_t *pVisuals = pItem->GetStaticData()->GetVisuals( i );
+			if( pVisuals )
 			{
-				m_aMaterials[i].Init( pszMaterial, TEXTURE_GROUP_CLIENT_EFFECTS );
+				const char *pszMaterial = pVisuals->GetMaterialOverride();
+				if ( pszMaterial )
+				{
+					m_aMaterials[i].Init( pszMaterial, TEXTURE_GROUP_CLIENT_EFFECTS );
+				}
 			}
 		}
 	}
@@ -210,35 +214,32 @@ void C_EconEntity::UpdateAttachmentModels( void )
 				C_BasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
 				if ( pPlayer && pPlayer->IsAlive() && !pPlayer->ShouldDrawThisPlayer() )
 				{
-					if ( !m_hAttachmentParent || m_hAttachmentParent != GetMoveParent() )
-					{
-						// Some validation or something
-						return;
-					}
-
 					CBaseViewModel *pViewmodel = pPlayer->GetViewModel();
-					if ( !pViewmodel )
+					if ( pViewmodel )
 					{
-						// Same thing as above
-						return;
+						/*C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
+						if ( !pAddon )
+							return;
+
+						if ( pAddon->InitializeAsClientEntity( GetItem()->GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
+						{
+							pAddon->SetOwner( this );
+							pAddon->SetParent( pViewmodel );
+							pAddon->SetLocalOrigin( vec3_origin );
+							pAddon->UpdatePartitionListEntry();
+							pAddon->CollisionProp()->UpdatePartition();
+							pAddon->UpdateVisibility();
+
+							m_hAttachmentParent = pAddon;
+						}*/
 					}
-
-					/*C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
-					if ( !pAddon )
-						return;
-
-					if ( pAddon->InitializeAsClientEntity( GetItem()->GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
+					else
 					{
-						pAddon->SetOwner( this );
-						pAddon->SetOwnerEntity( this );
-						pAddon->SetParent( pViewmodel );
-						pAddon->SetLocalOrigin( vec3_origin );
-						pAddon->UpdatePartitionListEntry();
-						pAddon->CollisionProp()->UpdatePartition();
-						pAddon->UpdateVisibility();
+						if ( m_hAttachmentParent )
+						{
 
-						m_hAttachmentParent = pAddon;
-					}*/
+						}
+					}
 				}
 				else
 				{
@@ -293,8 +294,8 @@ bool C_EconEntity::GetAttachment( int iAttachment, matrix3x4_t &matrix )
 //-----------------------------------------------------------------------------
 void C_EconEntity::SetMaterialOverride( int iTeam, const char *pszMaterial )
 {
-	if ( iTeam < 4 )
-		m_aMaterials[iTeam].Init( pszMaterial, "ClientEffect textures", true );
+	Assert( iTeam >= 0 && iTeam < TF_TEAM_COUNT );
+	m_aMaterials[iTeam].Init( pszMaterial, TEXTURE_GROUP_CLIENT_EFFECTS, true );
 }
 
 //-----------------------------------------------------------------------------
@@ -302,8 +303,8 @@ void C_EconEntity::SetMaterialOverride( int iTeam, const char *pszMaterial )
 //-----------------------------------------------------------------------------
 void C_EconEntity::SetMaterialOverride( int iTeam, CMaterialReference &material )
 {
-	if ( iTeam < 4 )
-		m_aMaterials[iTeam].Init( material );
+	Assert( iTeam >= 0 && iTeam < TF_TEAM_COUNT );
+	m_aMaterials[iTeam].Init( material );
 }
 
 #else

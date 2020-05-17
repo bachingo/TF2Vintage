@@ -662,7 +662,7 @@ void BotGenerateAndWearItem( CTFPlayer *pBot, const char *itemName )
 	CEconItemDefinition *pItem = GetItemSchema()->GetItemDefinitionByName( itemName );
 	CEconItemView itemView( pItem->index );
 
-	char const *pszEntName = pItem->item_class;
+	char const *pszEntName = pItem->GetClassName();
 	CEconEntity *pEcon = dynamic_cast<CEconEntity *>( CreateEntityByName( pszEntName ) );
 	if ( pEcon && pItem )
 	{
@@ -672,7 +672,7 @@ void BotGenerateAndWearItem( CTFPlayer *pBot, const char *itemName )
 	if ( pEcon && pItem )
 	{
 		// If it's a weapon, remove the current one, and give us this one.
-		CBaseCombatWeapon *pExisting = pBot->Weapon_OwnsThisType( pItem->item_class );
+		CBaseCombatWeapon *pExisting = pBot->Weapon_OwnsThisType( pItem->GetClassName() );
 		if ( pExisting )
 		{
 			pBot->Weapon_Detach( pExisting );
@@ -697,7 +697,7 @@ void BotGenerateAndWearItem( CTFPlayer *pBot, const char *itemName )
 void BotGenerateAndWearItem( CTFPlayer *pBot, CEconItemView *pItem )
 {
 	int iClass = pBot->GetPlayerClass()->GetClassIndex();
-	const char *pTranslatedWeaponName = TranslateWeaponEntForClass( pItem->GetStaticData()->item_class, iClass );
+	const char *pTranslatedWeaponName = TranslateWeaponEntForClass( pItem->GetStaticData()->GetClassName(), iClass );
 	CTFWeaponBase *pNewItem = dynamic_cast<CTFWeaponBase *>( pBot->GiveNamedItem( pTranslatedWeaponName, 0, pItem ) );
 	if ( pNewItem )
 	{
@@ -719,7 +719,7 @@ void BotGenerateAndWearItem( CTFPlayer *pBot, CEconItemView *pItem )
 	}
 	else
 	{
-		BotGenerateAndWearItem( pBot, pItem->GetStaticData()->name );
+		BotGenerateAndWearItem( pBot, pItem->GetStaticData()->GetName() );
 	}
 }
 

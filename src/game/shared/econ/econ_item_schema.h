@@ -86,7 +86,7 @@ extern const char *g_szQualityLocalizationStrings[];
 		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent, __VA_ARGS__)
 
 #define CLEAR_STR(name) \
-		name[0] = '\0'
+		name = NULL
 
 
 class CAttribute_String
@@ -170,7 +170,7 @@ typedef struct EconColor
 		CLEAR_STR( color_name );
 	}
 
-	char color_name[128];
+	char const *color_name;
 } Color_t;
 
 class CEconAttributeDefinition
@@ -178,10 +178,11 @@ class CEconAttributeDefinition
 public:
 	CEconAttributeDefinition()
 	{
+		definition = NULL;
 		index = 0xFFFF;
-		CLEAR_STR( name );
-		CLEAR_STR( attribute_class );
-		CLEAR_STR( description_string );
+		name[0] = '\0';
+		attribute_class[0] = '\0';
+		description_string[0] = '\0';
 		string_attribute = false;
 		description_format = -1;
 		hidden = false;
@@ -189,18 +190,49 @@ public:
 		stored_as_integer = false;
 		m_iAttributeClass = NULL_STRING;
 	}
+	CEconAttributeDefinition( CEconAttributeDefinition const &src )
+	{
+		*this = src;
+	}
 
+	CEconAttributeDefinition &operator=( CEconAttributeDefinition const &rhs );
+
+	char const *GetName( void ) const
+	{
+		Assert( name && name[0] );
+		return name;
+	}
+	char const *GetClassName( void ) const
+	{
+		Assert( attribute_class && attribute_class[0] );
+		return attribute_class;
+	}
+	char const *GetDescription( void ) const
+	{
+		Assert( description_string && description_string[0] );
+		return description_string;
+	}
+
+private:
+	char name[128];
+	char attribute_class[64];
+	char description_string[32];
+
+	KeyValues *definition;
+
+public:
 	unsigned short index;
 	ISchemaAttributeType *type;
-	char name[128];
-	char attribute_class[128];
-	char description_string[128];
 	bool string_attribute;
 	int description_format;
 	int effect_type;
 	bool hidden;
 	bool stored_as_integer;
-	string_t m_iAttributeClass;
+
+	mutable string_t m_iAttributeClass;
+
+	friend class CEconItemSchema;
+	friend class CEconSchemaParser;
 };
 
 // Attached Models
@@ -291,42 +323,112 @@ typedef struct EconItemStyle
 		skin_blu = 0;
 		selectable = false;
 	}
+	~EconItemStyle()
+	{
+		model_player_per_class.PurgeAndDeleteElements();
+	}
 
+private:
+	char const *name;
+	char const *model_player;
+	char const *image_inventory;
+
+public:
 	int skin_red;
 	int skin_blu;
 	bool selectable;
-	char name[128];
-	char model_player[128];
-	char image_inventory[128];
 	CUtlDict< const char*, unsigned short > model_player_per_class;
+
+	friend class CEconItemSchema;
+	friend class CEconSchemaParser;
 } ItemStyle_t;
 
+#define MAX_CUSTOM_WEAPON_SOUNDS   10
 typedef struct EconPerTeamVisuals
 {
 	EconPerTeamVisuals()
 	{
 		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
-		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
+		V_memset( &aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
+		V_memset( &aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
 		CLEAR_STR( muzzle_flash );
 		CLEAR_STR( tracer_effect );
 		skin = -1;
 		use_per_class_bodygroups = 0;
 	}
+	~EconPerTeamVisuals()
+	{
+		playback_activity.PurgeAndDeleteElements();
+		misc_info.PurgeAndDeleteElements();
+		styles.PurgeAndDeleteElements();
+	}
 
+	char const *GetWeaponShootSound( int sound )
+	{
+		Assert( sound >= 0 && sound < NUM_SHOOT_SOUND_TYPES );
+		if ( aWeaponSounds[sound] && aWeaponSounds[sound][0] != '\0' )
+			return aWeaponSounds[sound];
+
+		return NULL;
+	}
+	char const *GetCustomWeaponSound( int sound )
+	{
+		Assert( sound >= 0 && sound <= MAX_CUSTOM_WEAPON_SOUNDS );
+		if ( aWeaponSounds[sound] && aWeaponSounds[sound][0] != '\0' )
+			return aWeaponSounds[sound];
+
+		return NULL;
+	}
+	char const *GetMuzzleFlash( void ) const
+	{
+		if ( muzzle_flash && muzzle_flash[0] != '\0' )
+			return muzzle_flash;
+
+		return NULL;
+	}
+	char const *GetTracerFX( void ) const
+	{
+		if ( tracer_effect && tracer_effect[0] != '\0' )
+			return tracer_effect;
+
+		return NULL;
+	}
+	char const *GetMaterialOverride( void ) const
+	{
+		if ( material_override && material_override[0] != '\0' )
+			return material_override;
+
+		return NULL;
+	}
+	char const *GetCustomParticleSystem( void ) const
+	{
+		if ( custom_particlesystem && custom_particlesystem[0] != '\0' )
+			return custom_particlesystem;
+
+		return NULL;
+	}
+
+private:
+	char const *aCustomWeaponSounds[ MAX_CUSTOM_WEAPON_SOUNDS ];
+	char const *aWeaponSounds[ NUM_SHOOT_SOUND_TYPES ];
+	char const *custom_particlesystem;
+	char const *muzzle_flash;
+	char const *tracer_effect;
+	char const *material_override;
+
+public:
 	CUtlDict< bool, unsigned short > player_bodygroups;
 	CUtlMap< int, int > animation_replacement;
+	int skin;
+	int use_per_class_bodygroups;
 	CUtlDict< const char*, unsigned short > playback_activity;
 	CUtlDict< const char*, unsigned short > misc_info;
 	CUtlVector< AttachedModel_t > attached_models;
-	char aWeaponSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
-	char custom_particlesystem[128];
-	char muzzle_flash[128];
-	char tracer_effect[128];
-	char material_override[128];
 	CUtlDict< ItemStyle_t*, unsigned short > styles;
-	int skin;
-	int use_per_class_bodygroups;
+
+	friend class CEconItemSchema;
+	friend class CEconSchemaParser;
 } PerTeamVisuals_t;
 
 class CEconItemDefinition
@@ -334,13 +436,15 @@ class CEconItemDefinition
 public:
 	CEconItemDefinition()
 	{
-		m_pDefinition = NULL;
+		definition = NULL;
 		index = 0xFFFFFFFF;
 		CLEAR_STR( name );
 		used_by_classes = 0;
 
 		for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
 			item_slot_per_class[i] = -1;
+		for ( int team = 0; team < TF_TEAM_COUNT; team++ )
+			visual[team] = NULL;
 
 		show_in_armory = true;
 		CLEAR_STR( item_class );
@@ -363,7 +467,7 @@ public:
 		CLEAR_STR( model_vision_filtered );
 		CLEAR_STR( model_world );
 		CLEAR_STR( equip_region );
-		Q_memset( &model_player_per_class, 0, sizeof( model_player_per_class ) );
+		V_memset( &model_player_per_class, 0, sizeof( model_player_per_class ) );
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
 		CLEAR_STR( extra_wearable );
@@ -379,49 +483,144 @@ public:
 		is_multiclass_item = false;
 		CLEAR_STR( holiday_restriction );
 	}
+	CEconItemDefinition( CEconItemDefinition const &src )
+	{
+		*this = src;
+	}
 	~CEconItemDefinition();
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
+	char const *GetPerClassModel( int iClass = TF_CLASS_UNDEFINED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
 	void IterateAttributes( IEconAttributeIterator *iter );
 
+	CEconItemDefinition &operator=( CEconItemDefinition const &rhs );
+
+	char const *GetName( void ) const
+	{
+		Assert( name && *name );
+		return name;
+	}
+	char const *GetPlayerModel( void ) const
+	{
+		if ( model_player && model_player[0] != '\0' )
+			return model_player;
+
+		return NULL;
+	}
+	char const *GetWorldModel( void ) const
+	{
+		if ( model_world && model_world[0] != '\0' )
+			return model_world;
+
+		return NULL;
+	}
+	char const *GetVisionFilteredModel( void ) const
+	{
+		if ( model_vision_filtered && model_vision_filtered[0] != '\0' )
+			return model_vision_filtered;
+
+		return NULL;
+	}
+	char const *GetExtraWearableModel( void ) const
+	{
+		if ( extra_wearable && extra_wearable[0] != '\0' )
+			return extra_wearable;
+
+		return NULL;
+	}
+	char const *GetLocalizationName( void ) const
+	{
+		Assert( item_name && *item_name );
+		return item_name;
+	}
+	char const *GetDescription( void ) const
+	{
+		if ( item_description && item_description[0] != '\0' )
+			return item_description;
+
+		return NULL;
+	}
+	char const *GetLogName( void ) const
+	{
+		Assert( item_logname && *item_logname );
+		return item_logname;
+	}
+	char const *GetItemIcon( void ) const
+	{
+		if ( item_iconname && item_iconname[0] != '\0' )
+			return item_iconname;
+
+		return NULL;
+	}
+	char const *GetInventoryImage( void ) const
+	{
+		Assert( image_inventory && *image_inventory );
+		return image_inventory;
+	}
+	char const *GetClassName( void ) const
+	{
+		Assert( item_class && *item_class );
+		return item_class;
+	}
+	char const *GetTypeName( void ) const
+	{
+		if ( item_type_name && item_type_name[0] != '\0' )
+			return item_type_name;
+
+		return NULL;
+	}
+	char const *GetHolidayRestriction( void ) const
+	{
+		if ( holiday_restriction && holiday_restriction[0] != '\0' )
+			return holiday_restriction;
+
+		return NULL;
+	}
+
+private:
+	char const *name;
+	char const *model_player;
+	char const *model_vision_filtered;
+	char const *model_world;
+	char const *model_player_per_class[ TF_CLASS_COUNT_ALL ];
+	char const *extra_wearable;
+	char const *item_class;
+	char const *item_type_name;
+	char const *item_name;
+	char const *item_description;
+	char const *item_logname;
+	char const *item_iconname;
+	char const *image_inventory;
+	char const *equip_region;
+	char const *holiday_restriction;
+
+	KeyValues *definition;
+
 public:
-	KeyValues *m_pDefinition;
 	unsigned int index;
-	char name[128];
-	CUtlDict< bool, unsigned short > capabilities;
-	CUtlDict< bool, unsigned short > tags;
+	CUtlVector<static_attrib_t> attributes;
+	PerTeamVisuals_t *visual[ TF_TEAM_COUNT ];
 	int used_by_classes;
-	int item_slot_per_class[TF_CLASS_COUNT_ALL];
+	int item_slot_per_class[ TF_CLASS_COUNT_ALL ];
 	bool show_in_armory;
-	char item_class[128];
-	char item_type_name[128];
-	char item_name[128];
-	char item_description[128];
 	int  item_slot;
 	int  anim_slot;
 	int  item_quality;
 	bool baseitem;
 	bool propername;
-	char item_logname[128];
-	char item_iconname[128];
 	int	 min_ilevel;
 	int	 max_ilevel;
-	char image_inventory[128];
 	int	 image_inventory_size_w;
 	int	 image_inventory_size_h;
 	char model_player[128];
-	char model_vision_filtered[128];
-	char model_world[128];
-	char equip_region[128];
-	char model_player_per_class[TF_CLASS_COUNT_ALL][128];
-	char extra_wearable[128];
 	bool loadondemand;
 	int  attach_to_hands;
 	int  attach_to_hands_vm_only;
 	bool act_as_wearable;
+	CUtlDict< bool, unsigned short > capabilities;
 	int  hide_bodygroups_deployed_only;
 	bool is_reskin;
 	bool specialitem;
@@ -432,10 +631,6 @@ public:
 	bool is_custom_content;
 	bool is_cut_content;
 	bool is_multiclass_item;
-	
-	CUtlVector<static_attrib_t> attributes;
-	PerTeamVisuals_t visual[TF_TEAM_COUNT];
-};
 
 
 class IEconAttributeIterator
@@ -445,6 +640,8 @@ public:
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) = 0;
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) = 0;
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, uint64 const & ) = 0;
+	friend class CEconItemSchema;
+	friend class CEconSchemaParser;
 };
 
 #endif // ECON_ITEM_SCHEMA_H

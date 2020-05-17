@@ -51,6 +51,9 @@ public:
 	int GetAttributeIndex( const char *classname );
 	ISchemaAttributeType *GetAttributeType( const char *type ) const;
 
+	CEconItemDefinition *CreateNewItemDefinition( void );
+	CEconAttributeDefinition *CreateNewAttribDefinition( void );
+
 	KeyValues *GetSchemaKeyValues( void ) const { return m_pSchema; }
 
 protected:

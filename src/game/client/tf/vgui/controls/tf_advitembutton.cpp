@@ -112,7 +112,7 @@ void CTFAdvItemButton::SetItemDefinition(CEconItemDefinition *pItemData)
 	m_pItemDefinition = pItemData;
 
 	char szIcon[128];
-	Q_snprintf(szIcon, sizeof(szIcon), "../%s_large", pItemData->image_inventory);
+	Q_snprintf(szIcon, sizeof(szIcon), "../%s_large", pItemData->GetInventoryImage());
 	SetImage(szIcon);
 
 	pButton->SetText( pItemData->GenerateLocalizedFullItemName() );
