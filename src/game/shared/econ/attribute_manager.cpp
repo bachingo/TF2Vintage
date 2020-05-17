@@ -1,7 +1,7 @@
 #include "cbase.h"
 #include "vprof.h"
-#include "attribute_manager.h"
 #include "econ_item_schema.h"
+#include "attribute_manager.h"
 
 #ifdef CLIENT_DLL
 #include "prediction.h"
@@ -24,14 +24,28 @@ END_NETWORK_TABLE();
 
 ConVar tf2v_attrib_mult( "tf2v_attrib_mult", "1" , FCVAR_NOTIFY | FCVAR_REPLICATED, "Amount to multiply on attribute values." );
 
+class CAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
+{
+public:
+	CAttributeIterator_ApplyAttributeFloat( EHANDLE hOwner, string_t iName, float *outValue, ProviderVector *outVector )
+		: m_hOwner( hOwner ), m_iName( iName ), m_flOut( outValue ), m_pOutProviders( outVector ) {}
+
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value );
+
+private:
+	EHANDLE m_hOwner;
+	string_t m_iName;
+	float *m_flOut;
+	ProviderVector *m_pOutProviders;
+};
 
 bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value )
 {
 	string_t name = pDefinition->m_iAttributeClass;
-	if ( !name && pDefinition->attribute_class[0] || !( IDENT_STRINGS( name, pDefinition->attribute_class ) ) )
+	if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
 	{
-		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
-		const_cast<CEconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+		name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
+		pDefinition ->m_iAttributeClass = name;
 	}
 
 	if ( m_iName == name )
@@ -49,14 +63,28 @@ bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( CEconAttri
 	return true;
 }
 
+class CAttributeIterator_ApplyAttributeString : public CEconItemSpecificAttributeIterator
+{
+public:
+	CAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t *outValue, ProviderVector *outVector )
+		: m_hOwner( hOwner ), m_iName( iName ), m_pOut( outValue ), m_pOutProviders( outVector ) {}
+
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value );
+
+private:
+	EHANDLE m_hOwner;
+	string_t m_iName;
+	string_t *m_pOut;
+	ProviderVector *m_pOutProviders;
+};
 
 bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value )
 {
 	string_t name = pDefinition->m_iAttributeClass;
-	if ( !name && pDefinition->attribute_class[0] )
+	if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
 	{
-		name = AllocPooledString_StaticConstantStringPointer( pDefinition->attribute_class );
-		const_cast<CEconAttributeDefinition *>( pDefinition )->m_iAttributeClass = name;
+		name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
+		pDefinition->m_iAttributeClass = name;
 	}
 
 	// Pointer comparison, bad
