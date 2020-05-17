@@ -161,8 +161,10 @@ ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
 ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
 
-ConVar tf2v_force_year_items( "tf2v_force_year_items", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit items based on year." );
-ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for weapons for tf2v_force_year_weapons." );
+ConVar tf2v_force_year_weapons( "tf2v_force_year_weapons", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit weapons based on year." );
+ConVar tf2v_force_year_cosmetics( "tf2v_force_year_cosmetics", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit cosmetics based on year." );
+
+ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
 
 ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "1", FCVAR_NOTIFY, "Allows servers to choose between the launch, retail, and F2P fall damage sound types.", true, 0, true, 2 );
 ConVar tf2v_use_new_wrench_mechanics( "tf2v_use_new_wrench_mechanics", "0", FCVAR_NOTIFY, "Allows servers to choose between early and modern wrench build and repair mechanics." );
@@ -1719,7 +1721,7 @@ void CTFPlayer::GiveDefaultItems()
 	// Give weapons.
 	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating ) 
 		ManageRandomWeapons( pData );
-	else if ( tf2v_legacy_weapons.GetBool() || ( tf2v_force_year_items.GetBool() && tf2v_allowed_year_items.GetInt() <= 2007 ) )
+	else if (tf2v_legacy_weapons.GetBool() || (tf2v_force_year_weapons.GetBool() && tf2v_allowed_year_items.GetInt() <= 2007))
 		ManageRegularWeaponsLegacy( pData );
 	else if ( !tf2v_randomizer.GetBool() )
 		ManageRegularWeapons( pData );
@@ -2248,7 +2250,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( !tf2v_allow_multiclass_weapons.GetBool() )	// Checks if it's a custom weapon.
 				bIsMultiClassItem = pItemDef->is_multiclass_item;
 				
-			if ( tf2v_force_year_items.GetBool() )
+			if ( tf2v_force_year_weapons.GetBool() )
 			{
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
@@ -2547,7 +2549,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			bool bWhiteListedCosmetic = true; // Only concerned with this when it's before the item's time (Time Paradox!)
 			bool bIsSpecialRestricted = false;
 			
-			if ( tf2v_force_year_items.GetBool() )
+			if ( tf2v_force_year_cosmetics.GetBool() )
 			{
 				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
 				{
