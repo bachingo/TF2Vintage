@@ -206,6 +206,10 @@ public:
 	{
 		*this = src;
 	}
+	~CEconAttributeDefinition()
+	{
+		definition->deleteThis();
+	}
 
 	CEconAttributeDefinition &operator=( CEconAttributeDefinition const &rhs );
 

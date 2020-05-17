@@ -121,13 +121,11 @@ CEconAttributeDefinition &CEconAttributeDefinition::operator=( CEconAttributeDef
 	stored_as_integer = rhs.stored_as_integer;
 	m_iAttributeClass = rhs.m_iAttributeClass;
 
-	definition = rhs.definition;
-	if ( definition )
-	{
-		V_strcpy_safe( name, definition->GetString( "name", "( unnamed )" ) );
-		V_strcpy_safe( attribute_class, definition->GetString( "attribute_class" ) );
-		V_strcpy_safe( description_string, definition->GetString( "description_string" ) );
-	}
+	definition = rhs.definition->MakeCopy();
+	
+	V_strcpy_safe( name, rhs.name );
+	V_strcpy_safe( attribute_class, rhs.attribute_class );
+	V_strcpy_safe( description_string, rhs.description_string );
 
 	return *this;
 }
@@ -154,6 +152,8 @@ CEconItemDefinition::~CEconItemDefinition()
 		if ( visual[ team ] )
 			delete visual[ team ];
 	}
+
+	definition->deleteThis();
 }
 
 //-----------------------------------------------------------------------------
@@ -389,7 +389,7 @@ CEconItemDefinition &CEconItemDefinition::operator=( CEconItemDefinition const &
 		item_slot_per_class[_class] = rhs.item_slot_per_class[_class];
 	}
 
-	definition = rhs.definition;
+	definition = rhs.definition->MakeCopy();
 	if ( definition )
 	{
 		name = definition->GetString( "name", "( unnamed )" );
@@ -412,11 +412,6 @@ CEconItemDefinition &CEconItemDefinition::operator=( CEconItemDefinition const &
 			for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
 			{
 				const char *pszClass = pClassData->GetName();
-				int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-				if ( iClass != -1 )
-				{
-					model_player_per_class[iClass] = pClassData->GetString();
-				}
 
 				// Generic item, assign a model for every class.
 				if ( !V_stricmp( pszClass, "basename" ) )
@@ -425,6 +420,14 @@ CEconItemDefinition &CEconItemDefinition::operator=( CEconItemDefinition const &
 					{
 						// Add to the player model per class.
 						model_player_per_class[i] = UTIL_VarArgs( pClassData->GetString(), g_aRawPlayerClassNamesShort[i] );
+					}
+				}
+				else
+				{
+					int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+					if ( iClass != -1 )
+					{
+						model_player_per_class[iClass] = pClassData->GetString();
 					}
 				}
 			}
