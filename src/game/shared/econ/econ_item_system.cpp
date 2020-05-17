@@ -396,7 +396,7 @@ public:
 						if ( !V_stricmp( pszClass, "basename" ) )
 						{
 							// Generic item, assign a model for every class.
-							for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_LAST_NORMAL_CLASS; i++ )
+							for ( int i = TF_FIRST_NORMAL_CLASS; i <= TF_LAST_NORMAL_CLASS; i++ )
 							{
 								// Add to the player model per class.
 								pItem->model_player_per_class[i] = UTIL_VarArgs( pClassData->GetString(), g_aRawPlayerClassNamesShort[i] );
