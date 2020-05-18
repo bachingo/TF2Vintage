@@ -4155,8 +4155,11 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	{
 		pAssister = ToTFPlayer( GetAssister( pVictim, pScorer, pInflictor ) );
 		
-		// Award them with Focus.
-		pAssister->m_Shared.AddFocusLevel(false);
+		if( pAssister && pAssister->IsAlive() )
+		{
+			// Award them with Focus.
+			pAssister->m_Shared.AddFocusLevel(false);
+		}
 	}
 
 	//find the area the player is in and see if his death causes a block
