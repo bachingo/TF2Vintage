@@ -125,7 +125,7 @@ void CTFLunchBox::SecondaryAttack( void )
 
 	int nLunchboxAddsMaxHealth = 0;
 	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
-	if ( ( nLunchboxAddsMaxHealth == 1 ) || ( nLunchboxAddsMaxHealth == 6 ) || ( nLunchboxAddsMaxHealth == 7 ) ) // Chocolate, Fishcake and Banana are small health drops
+	if ( IsChocolateOrFishcake() || ( nLunchboxAddsMaxHealth == 6 ) ) // Chocolate, Fishcake and Banana are small health drops
 		pszItemName = "item_healthkit_small";
 
 	CTFPowerup *pPowerup = static_cast<CTFPowerup *>( CBaseEntity::Create( pszItemName, vecSrc, vec3_angle, pOwner ) );
@@ -195,7 +195,7 @@ void CTFLunchBox::DepleteAmmo( void )
 	int nLunchboxAddsMaxHealth = 0;
 	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
 	
-	if ( !tf2v_new_sandvich_behavior.GetBool() && ( nLunchboxAddsMaxHealth == 1 ) || ( nLunchboxAddsMaxHealth == 7 ) )
+	if ( !tf2v_new_sandvich_behavior.GetBool() && IsChocolateOrFishcake() )
 	{
 		return;
 	}
@@ -212,11 +212,8 @@ void CTFLunchBox::DepleteAmmo( void )
 
 bool CTFLunchBox::UsesPrimaryAmmo( void )
 {
-	if ( !tf2v_new_sandvich_behavior.GetBool() )
-	{
-		if ( (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
-			return false;
-	}
+	if (!tf2v_new_sandvich_behavior.GetBool() && IsChocolateOrFishcake() )
+		return false;
 
 	return BaseClass::UsesPrimaryAmmo();
 }
@@ -224,15 +221,35 @@ bool CTFLunchBox::UsesPrimaryAmmo( void )
 float CTFLunchBox::InternalGetEffectBarRechargeTime( void )
 {
 	// If we're using the Dalokoh, regen in 10 seconds.
-	if ( (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7) )
-		return 10.0f;
+		if ( IsChocolateOrFishcake() )
+			return 10.0f;
 	
 	// Everything else is 30 seconds.
 	return 30.0f;
 	
-	
 }
 
+bool CTFLunchBox::HasChargeBar( void )
+{
+	// Chocolate and Fishcake do not have a bar when they have infinite ammo.
+	if ( !tf2v_new_sandvich_behavior.GetBool() && IsChocolateOrFishcake() )
+			return false;
+	
+	// This item probably has a bar, return true.
+	return true;
+}
+
+bool CTFLunchBox::IsChocolateOrFishcake()
+{
+	int nSetLunchboxMode = 0;
+		CALL_ATTRIB_HOOK_INT( nSetLunchboxMode, set_weapon_mode );
+		if ( ( nSetLunchboxMode == 1 ) || ( nSetLunchboxMode == 7 ) )
+			return true;
+	
+	return false;
+	
+}
+	
 //-----------------------------------------------------------------------------
 // Purpose: Update the sandvich bite effects
 //-----------------------------------------------------------------------------
@@ -293,10 +310,8 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	// Heal 25% of the player's max health per second for a total of 100%.
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	
-	bool bIsChocolate = ( CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 1) || (CAttributeManager::AttribHookValue<int>( 0, "set_weapon_mode", this ) == 7);
-
 	float flAmt = 75.0;
-	if ( bIsChocolate )
+	if ( IsChocolateOrFishcake() )
 		flAmt = 25.0;
 	
 	// Adjust our healing scale if defined.
@@ -313,7 +328,7 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 //-----------------------------------------------------------------------------
 bool CTFLunchBox::CanDrop( void ) const
 {
-	if ( !tf2v_new_sandvich_behavior.GetBool() )
+	if (!tf2v_new_sandvich_behavior.GetBool() )
 	{
 		int nSetLunchboxMode = 0;
 		CALL_ATTRIB_HOOK_INT( nSetLunchboxMode, set_weapon_mode );
