@@ -37,6 +37,8 @@ public:
 
 	virtual void		WeaponReset( void );
 	virtual void		ItemPostFrame( void );
+	virtual void 		WeaponIdle( void );
+	virtual void		BiteLunchThink( void );
 	
 	virtual void		DepleteAmmo( void );
 	

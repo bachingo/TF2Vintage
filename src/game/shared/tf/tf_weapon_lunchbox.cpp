@@ -76,7 +76,25 @@ void CTFLunchBox::BiteLunch( void )
 //-----------------------------------------------------------------------------
 void CTFLunchBox::ItemPostFrame( void )
 {
-	// Intentionally wait before doing our action.
+	BiteLunchThink();
+	BaseClass::ItemPostFrame();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Times our bite to make it look more authentic.
+//-----------------------------------------------------------------------------
+void CTFLunchBox::WeaponIdle( void )
+{
+	BiteLunchThink();
+	return BaseClass::WeaponIdle();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Check for bite swap conditions.
+//-----------------------------------------------------------------------------
+void CTFLunchBox::BiteLunchThink( void )
+{
+	// Only bother checking the bite when we're not bitten already.
 	if ( !m_bBitten )
 	{
 		// If we have a bite time and aren't using the bitten model, swap.
@@ -89,8 +107,7 @@ void CTFLunchBox::ItemPostFrame( void )
 			return;
 		}
 	}
-	
-	BaseClass::ItemPostFrame();
+	return;
 }
 
 //-----------------------------------------------------------------------------
