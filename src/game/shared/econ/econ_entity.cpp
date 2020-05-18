@@ -135,6 +135,9 @@ bool C_EconEntity::IsOverridingViewmodel( void ) const
 		return false;
 
 	PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( GetTeamNumber() );
+	if ( pVisuals == nullptr )
+		return false;
+
 	if ( !pVisuals->attached_models.IsEmpty() )
 		return true;
 

@@ -634,6 +634,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_GRENADE_JAR_GAS",
 	"TF_WEAPON_FLAME_BALL",
 	"TF_WEAPON_FLAREGUN_REVENGE",
+	"TF_WEAPON_ROCKETLAUNCHER_FIREBALL",
 	
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
