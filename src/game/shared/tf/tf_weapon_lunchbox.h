@@ -32,10 +32,12 @@ public:
 
 	virtual void		PrimaryAttack( void );
 	virtual void		BiteLunch( void );
-	virtual void		BiteLunchThink( void );
 	float				m_flBiteTime;
 	virtual void		SecondaryAttack( void );
 
+	virtual void		WeaponReset( void );
+	virtual void		ItemPostFrame( void );
+	
 	virtual void		DepleteAmmo( void );
 	
 	virtual bool		UsesPrimaryAmmo( void );
@@ -45,7 +47,6 @@ public:
 	virtual const char	*GetEffectLabelText( void )					{ return "#TF_Sandwich"; }
 	virtual void		SwitchBodyGroups( void );
 	virtual void		WeaponRegenerate();
-	virtual void		WeaponReset();
 
 
 #ifdef GAME_DLL

@@ -66,35 +66,31 @@ void CTFLunchBox::BiteLunch( void )
 		return;
 	
 	// Our bite happens around the 25th frame of animation.
-	ConVarRef host_timescale( "host_timescale" );
-	m_flBiteTime = gpGlobals->curtime + ( (25 / 30) / host_timescale.GetFloat() );
-
-	SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
-	SetThink( &CTFLunchBox::BiteLunchThink );
+	m_flBiteTime = gpGlobals->curtime + (25 / 30);
 
 	return;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Times our bite to make it look more authentic.
 //-----------------------------------------------------------------------------
-void CTFLunchBox::BiteLunchThink( void )
+void CTFLunchBox::ItemPostFrame( void )
 {
 	// Intentionally wait before doing our action.
-	if ( gpGlobals->curtime > m_flBiteTime )
+	if ( !m_bBitten )
 	{
-		// We waited for the bite, switch bodygroups.
-		m_bBitten = true;
-		m_flBiteTime = 0;
-		SwitchBodyGroups();	
-		return;
-	}
-	else
-	{
-		SetNextThink( gpGlobals->curtime + ( 1 / 30 ) );
-		SetThink( &CTFLunchBox::BiteLunchThink );
+		// If we have a bite time and aren't using the bitten model, swap.
+		if ( gpGlobals->curtime >= m_flBiteTime && m_flBiteTime > 0 )
+		{
+			// We waited for the bite, switch bodygroups.
+			m_bBitten = true;
+			m_flBiteTime = 0;
+			SwitchBodyGroups();	
+			return;
+		}
 	}
 	
+	BaseClass::ItemPostFrame();
 }
 
 //-----------------------------------------------------------------------------
@@ -254,14 +250,14 @@ void CTFLunchBox::SwitchBodyGroups( void )
 
 void CTFLunchBox::WeaponRegenerate()
 {
-	m_bBitten = false;
-	SetContextThink( &CTFLunchBox::SwitchBodyGroups, gpGlobals->curtime + 0.01f, "SwitchBodyGroups" );
 	BaseClass::WeaponRegenerate();
 }
 
 void CTFLunchBox::WeaponReset()
 {
 	m_bBitten = false;
+	m_flBiteTime = 0;
+	SwitchBodyGroups();
 	BaseClass::WeaponReset();
 }
 
