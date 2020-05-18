@@ -272,11 +272,19 @@ bool CTFLunchBox::IsChocolateOrFishcake()
 //-----------------------------------------------------------------------------
 void CTFLunchBox::SwitchBodyGroups( void )
 {
+	int iState = m_bBitten ? SANDVICH_STATE_BITTEN : SANDVICH_STATE_NORMAL;
+	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
+	if ( pTFPlayer && pTFPlayer->GetActiveWeapon() == this )
+	{
+		if ( pTFPlayer->GetViewModel() )
+		{
+			pTFPlayer->GetViewModel()->SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
+		}
+	}
 #ifndef GAME_DLL
 	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
 	if ( pAttach )
 	{
-		int iState = m_bBitten ? SANDVICH_STATE_BITTEN : SANDVICH_STATE_NORMAL;
 		pAttach->SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
 	}
 #endif
