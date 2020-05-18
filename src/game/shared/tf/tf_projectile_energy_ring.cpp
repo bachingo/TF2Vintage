@@ -28,6 +28,8 @@
 
 #define TF_WEAPON_ENERGYRING_MODEL	"models/empty.mdl"
 
+ConVar tf2v_use_new_bison( "tf2v_use_new_bison", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Bison's damage mechanics.", true, 0, true, 2 );
+
 //=============================================================================
 //
 // Dragon's Fury Projectile
@@ -122,6 +124,7 @@ void CTFProjectile_EnergyRing::Spawn()
 
 	float flRadius = 0.01f;
 	UTIL_SetSize( this, -Vector( flRadius, flRadius, flRadius ), Vector( flRadius, flRadius, flRadius ) );
+	m_nPenetratedCount = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -131,32 +134,84 @@ void CTFProjectile_EnergyRing::RocketTouch( CBaseEntity *pOther )
 {
 	if ( pOther->m_takedamage != DAMAGE_NO )
 	{
-		// Damage.
-		CBaseEntity *pAttacker = GetOwnerEntity();
-		IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
-		if ( pScorerInterface )
-			pAttacker = pScorerInterface->GetScorer();
+		
+		bool bShouldDamage = true;
+		// Bison with mid era selection does not double dip damage.
+		if ( UsePenetratingBeam() && tf2v_use_new_bison.GetInt() == 1 )
+		{
+			// Check the players hit.
+			FOR_EACH_VEC( hPenetratedPlayers, i )
+			{
+				// Is our victim, don't damage them.
+				if (hPenetratedPlayers[i] && hPenetratedPlayers[i] == pOther)
+				{
+					bShouldDamage = false;
+					break;
+				}
+			}
+		}
+		
+		if (bShouldDamage)
+		{
+			// Damage.
+			CBaseEntity *pAttacker = GetOwnerEntity();
+			IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
+			if ( pScorerInterface )
+				pAttacker = pScorerInterface->GetScorer();
 
-		float flDamage = 20;
-		int iDamageType = GetDamageType();
+			float flDamage = GetDamage();
+			if ( UsePenetratingBeam() )
+			{
+				// Damage done with Bison beams depends on era.
+				switch (tf2v_use_new_bison.GetInt())
+				{
+					case 1:
+						// This goes down 25% for each thing we hit. (100%, 75%, 50%, 25%, 0%.)
+						flDamage = GetDamage() - (0.25 * m_nPenetratedCount) * GetDamage();
+						break;
+					
+					case 2:
+						// This value is a constant 20.
+						flDamage = 20;
+						break;
+					
+					case 0:
+					default:
+						break;
+				}
+			}
+			
+			int iDamageType = GetDamageType();
 
-		CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
+			CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
 
-		CTakeDamageInfo info( GetOwnerEntity(), pAttacker, pWeapon, flDamage, iDamageType | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_PLASMA );
-		pOther->TakeDamage( info );
+			CTakeDamageInfo info( GetOwnerEntity(), pAttacker, pWeapon, flDamage, iDamageType | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_PLASMA );
+			pOther->TakeDamage( info );
 
-		info.SetReportedPosition( pAttacker->GetAbsOrigin() );	
+			info.SetReportedPosition( pAttacker->GetAbsOrigin() );	
 
-		// We collided with pOther, so try to find a place on their surface to show blood
-		trace_t pTrace;
-		UTIL_TraceLine(WorldSpaceCenter(), pOther->WorldSpaceCenter(), /*MASK_SOLID*/ MASK_SHOT | CONTENTS_HITBOX, this, COLLISION_GROUP_DEBRIS, &pTrace);
+			// We collided with pOther, so try to find a place on their surface to show blood
+			trace_t pTrace;
+			UTIL_TraceLine(WorldSpaceCenter(), pOther->WorldSpaceCenter(), /*MASK_SOLID*/ MASK_SHOT | CONTENTS_HITBOX, this, COLLISION_GROUP_DEBRIS, &pTrace);
 
-		pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
+			pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
 
-		ApplyMultiDamage();
+			ApplyMultiDamage();
+			
+			if (UsePenetratingBeam())	
+			{
+				// Save this entity so we don't double dip damage on it.
+				hPenetratedPlayers.AddToTail(pOther);
+				m_nPenetratedCount++;
+			}
+		}
 
-		// Delete the beam on the first thing we hit.
+		// Non Penetrating: Delete the beam on the first thing we hit.
 		if (!UsePenetratingBeam())
+			UTIL_Remove(this);
+		
+		// Penetrating: Delete the beam after hitting the 4th target, when on mid era.
+		if ( m_nPenetratedCount >= 4 && tf2v_use_new_bison.GetInt() == 1 )		
 			UTIL_Remove(this);
 	}
 	else
@@ -225,6 +280,7 @@ CTFProjectile_EnergyRing *CTFProjectile_EnergyRing::Create( CBaseEntity *pWeapon
 		// Setup the initial velocity.
 		Vector vecForward, vecRight, vecUp;
 		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
+
 
 		float flVelocity = 1200.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flVelocity, mult_projectile_speed );

@@ -70,6 +70,10 @@ CTFProjectile_EnergyRing::ImpactTeamPlayer(CTFPlayer*)
 CTFProjectile_EnergyRing::PlayImpactEffects(Vector const&, bool)
 CTFProjectile_EnergyRing::ResolveFlyCollisionCustom(CGameTrace&, Vector&)*/
 private:
+
+	CUtlVector<CBaseEntity*> hPenetratedPlayers;
+	int m_nPenetratedCount;
+	
 #ifdef GAME_DLL
 
 	CBaseHandle m_Scorer;
