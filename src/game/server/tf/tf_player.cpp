@@ -164,7 +164,8 @@ ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY
 ConVar tf2v_force_year_weapons( "tf2v_force_year_weapons", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit weapons based on year." );
 ConVar tf2v_force_year_cosmetics( "tf2v_force_year_cosmetics", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit cosmetics based on year." );
 
-ConVar tf2v_allowed_year_items( "tf2v_allowed_year_items", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
+ConVar tf2v_allowed_year_weapons( "tf2v_allowed_year_weapons", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
+ConVar tf2v_allowed_year_cosmetics( "tf2v_allowed_year_cosmetics", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
 
 ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "1", FCVAR_NOTIFY, "Allows servers to choose between the launch, retail, and F2P fall damage sound types.", true, 0, true, 2 );
 ConVar tf2v_use_new_wrench_mechanics( "tf2v_use_new_wrench_mechanics", "0", FCVAR_NOTIFY, "Allows servers to choose between early and modern wrench build and repair mechanics." );
@@ -1721,13 +1722,12 @@ void CTFPlayer::GiveDefaultItems()
 	// Give weapons.
 	if ( ( tf2v_randomizer.GetBool() || tf2v_random_weapons.GetBool() ) && !m_bRegenerating ) 
 		ManageRandomWeapons( pData );
-	else if (tf2v_legacy_weapons.GetBool() || (tf2v_force_year_weapons.GetBool() && tf2v_allowed_year_items.GetInt() <= 2007))
+	else if (tf2v_legacy_weapons.GetBool() || (tf2v_force_year_weapons.GetBool() && tf2v_allowed_year_weapons.GetInt() <= 2007))
 		ManageRegularWeaponsLegacy( pData );
 	else if ( !tf2v_randomizer.GetBool() )
 		ManageRegularWeapons( pData );
 	
-	// Give ourselves cosmetic items.
-	if ( tf2v_allow_cosmetics.GetBool() )
+	// Manage our cosmetic items.
 		ManagePlayerCosmetics( pData );
 	
 	// Give ourselves zombie skins when it's Halloween.
@@ -2252,14 +2252,14 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				
 			if ( tf2v_force_year_weapons.GetBool() )
 			{
-				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
+				if ( tf2v_allowed_year_weapons.GetInt() <= 2007 )
 				{
 					if ( pItemDef->year > 2007 ) 
 						bWhiteListedWeapon = false;
 				}
 				else
 				{
-					if ( pItemDef->year > tf2v_allowed_year_items.GetInt())
+					if ( pItemDef->year > tf2v_allowed_year_weapons.GetInt())
 						bWhiteListedWeapon = false;
 				}
 			}
@@ -2524,6 +2524,27 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 {
+	
+	if ( !tf2v_allow_cosmetics.GetBool() )
+	{
+		// Cosmetics disabled, nuke any cosmetic wearables we have.
+		for ( int i = TF_FIRST_COSMETIC_SLOT; i <= TF_LAST_COSMETIC_SLOT; ++i )
+		{	
+			if (!GetWearableForLoadoutSlot( i ))
+				continue;
+			
+			CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( i ) );
+			
+			if ( pWearable == nullptr )
+				continue;
+
+			RemoveWearable(pWearable);
+			UTIL_Remove(pWearable);
+		}
+		return;
+	}	
+	
+	// Make sure we're allowed to have something here.
 	ValidateWearableSlots();
 	
 	for (int iSlot = TF_FIRST_COSMETIC_SLOT; iSlot <= TF_LAST_COSMETIC_SLOT; ++iSlot)
@@ -2551,14 +2572,15 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			
 			if ( tf2v_force_year_cosmetics.GetBool() )
 			{
-				if ( tf2v_allowed_year_items.GetInt() <= 2007 )
+				if ( tf2v_allowed_year_cosmetics.GetInt() <= 2007 )
 				{
+					// Prevent the value from being below 2007.
 					if ( (pItemDef->year) > 2007 ) 
 						bWhiteListedCosmetic = false;
 				}
 				else
 				{
-					if ( (pItemDef->year) > tf2v_allowed_year_items.GetInt() )
+					if ( (pItemDef->year) > tf2v_allowed_year_cosmetics.GetInt() )
 						bWhiteListedCosmetic = false;
 				}
 			}
