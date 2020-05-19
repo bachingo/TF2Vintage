@@ -198,6 +198,10 @@ ConVar tf2v_use_spawn_glows( "tf2v_use_spawn_glows", "0", FCVAR_NOTIFY | FCVAR_R
 
 ConVar tf2v_use_new_ambassador("tf2v_use_new_ambassador", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Adds damage falloff and crit falloff to long range Ambassador headshots." );
 
+ConVar tf2v_use_new_healonkill("tf2v_use_new_healonkill", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Does not grant overheal when getting health on kill." );
+
+
+
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
 // -------------------------------------------------------------------------------- //
@@ -6899,7 +6903,13 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flHealthOnKill, heal_on_kill );
 					if ( flHealthOnKill )
 					{
-						int iHealthRestored = TakeHealth( flHealthOnKill, DMG_GENERIC );
+						int iHealthRestored;
+
+						if (tf2v_use_new_healonkill.GetBool())
+							iHealthRestored = TakeHealth( Min(m_Shared.GetMaxBuffedHealth() - m_Shared.GetMaxHealth(), (int)flHealthOnKill), DMG_IGNORE_MAXHEALTH );
+						else
+							iHealthRestored	= TakeHealth( flHealthOnKill, DMG_GENERIC );
+						
 						if ( iHealthRestored )
 						{
 							IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
