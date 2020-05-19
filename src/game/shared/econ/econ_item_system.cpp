@@ -232,6 +232,46 @@ public:
 		{
 			ParseItems( pItems );
 		}
+		
+		// TF2V exclusive lists start here.
+		// None of these are necessary but they help in organizing the item schema.
+		
+		// Stockweapons is just for cataloging stock content.
+		KeyValues *pStockItems = pKeyValuesData->FindKey( "stockitems" );
+		if ( pStockItems )
+		{
+			ParseItems( pStockItems );
+		}
+		
+		// Base Unlocks catalogs the standard unlock weapons.
+		KeyValues *pUnlockItems = pKeyValuesData->FindKey( "unlockitems" );
+		if ( pUnlockItems )
+		{
+			ParseItems( pUnlockItems );
+		}
+		
+		// Stock Cosmetics are for the typical cosmetics.
+		KeyValues *pCosmeticItems = pKeyValuesData->FindKey( "cosmeticitems" );
+		if ( pCosmeticItems )
+		{
+			ParseItems( pCosmeticItems );
+		}
+		
+		// Reskins is for reskin weapons.
+		KeyValues *pReskinItems = pKeyValuesData->FindKey( "reskinitems" );
+		if ( pReskinItems )
+		{
+			ParseItems( pReskinItems );
+		}
+		
+		// Special is for special items, like medals and zombies.
+		KeyValues *pSpecialItems = pKeyValuesData->FindKey( "specialitems" );
+		if ( pSpecialItems )
+		{
+			ParseItems( pSpecialItems );
+		}
+		
+		
 	};
 
 	void ParseGameInfo( KeyValues *pKeyValuesData )

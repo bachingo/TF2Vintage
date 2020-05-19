@@ -3827,9 +3827,9 @@
 			"item_name"	"#TF_Spectator_Default"
 			"item_slot"	"melee"
 		}
-		
-		// Stock Weapons.
-		
+	}
+	"stockitems"
+	{
 		"0"
 		{
 			"name"	"TF_WEAPON_BAT"
@@ -4207,9 +4207,9 @@
 			}
 			"baseitem"	"1"
 		}
-		
-		// Basic Unlockables.
-		
+	}
+	"unlockitems"
+	{
 		"35"
 		{
 			"name"	"The Kritzkrieg"
@@ -8139,1047 +8139,9 @@
 				}
 			}
 		}
-
-		// Reskin Weapons.
-		
-		"10160"
-		{
-			"name"	"TTG Max Pistol"
-			"prefab"	"weapon_pistol weapon_reskin"
-			"year"			"2010"
-			"item_name"	"#TF_TTG_MaxGun"
-			"propername"	"1"
-			"item_description"	"#TF_TTG_MaxGun_Desc"
-			"item_logname"	"maxgun"
-			"item_iconname"	"maxgun"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun"
-			"model_player"	"models/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun.mdl"
-			"used_by_classes"
-			{
-				"scout"	"1"
-				"engineer"	"1"
-			}
-		}
-		"10161"
-		{
-			"name"	"TTG Sam Revolver"
-			"prefab"	"weapon_revolver weapon_reskin"
-			"year"			"2010"
-			"item_name"	"#TF_TTG_SamRevolver"
-			"propername"	"1"
-			"item_description"	"#TF_TTG_SamRevolver_Desc"
-			"item_logname"	"samrevolver"
-			"item_iconname"	"samrevolver"
-			"propername"	"1"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun"
-			"model_player"	"models/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun.mdl"
-		}
-		"10131"
-		{
-			"name"	"The Chargin' Targe"
-			"prefab"	"weapon_wearable weapon_reskin"
-			"year"		"2010"
-			"demoknight"	"1"
-			"propername"	"1"
-			"item_class"		"tf_wearable_demoshield"
-			"item_type_name"	"#TF_Wearable_Shield"
-			"item_name"		"#TF_Unique_Achievement_Shield"
-			"item_description"	"#TF_Unique_Achievement_Shield_Desc"
-			"item_slot"		"secondary"
-			"equip_region"	"arms"
-			"item_logname"	"demoshield"
-			"item_iconname"	"demoshield"
-			"act_as_wearable" "1"
-			"attach_to_hands"	"0"
-			"attach_to_hands_vm_only"	"1"
-			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
-			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"attributes"
-			{
-				"dmg taken from fire reduced"
-				{
-					"attribute_class"	"mult_dmgtaken_from_fire"
-					"value"			"0.5"
-				}
-				"dmg taken from blast reduced"
-				{
-					"attribute_class"	"mult_dmgtaken_from_explosions"
-					"value"			"0.6"
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class"	"allowed_in_medieval_mode"
-					"value"	"1"
-				}
-			}
-		}
-		"10221"
-		{
-			"name"	"The Holy Mackerel"
-			"prefab"	"weapon_bat weapon_reskin"
-			"year"			"2010"
-			"item_type_name"	"#TF_Weapon_Fish"
-			"item_name"	"#TF_TheHolyMackerel"
-			"propername"	"1"
-			"item_description"	"#TF_TheHolyMackerel_Desc"
-			"item_logname"	"holymackerel"
-			"item_iconname"	"holymackerel"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_holymackerel/c_holymackerel"
-			"model_player"	"models/workshop/weapons/c_models/c_holymackerel/c_holymackerel.mdl"
-			"visuals"
-			{
-				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
-			}
-		}
-		"10331"
-		{
-			"name"	"Fists of Steel"
-			"prefab"	"weapon_gloves weapon_reskin"
-			"year"		"2011"
-			"item_name"	"#TF_FistsOfSteel"
-			"propername"	"1"
-			"item_logname"	"steel_fists"
-			"item_iconname"	"steel_fists"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel"			
-			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -10"
-			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"hands"			"1"
-				}
-				"sound_melee_miss"	"Weapon_MetalGloves.Miss"
-				"sound_melee_hit"	"Weapon_MetalGloves.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_MetalGloves.HitWorld"
-				"sound_burst"		"Weapon_MetalGloves.MissCrit"
-				"animation_replacement"
-				{
-					"ACT_VM_DRAW"	"ACT_MELEE_VM_ITEM1_DRAW"
-					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT1_VM_INSPECT_START"
-					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT1_VM_INSPECT_IDLE"
-					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT1_VM_INSPECT_END"
-				}
-			}
-			"attributes"
-			{
-				"dmg from ranged reduced"
-				{
-					"attribute_class"	"dmg_from_ranged"
-					"value"	"0.4"
-				}
-				"dmg from melee increased"
-				{
-					"attribute_class"	"dmg_from_melee"
-					"value"	"2.0"
-				}
-			}
-		}
-		"10237"
-		{
-			"name"	"Rocket Jumper"
-			"prefab"	"weapon_rocketlauncher weapon_reskin"
-			"year"			"2016"
-			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
-			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
-			"propername"	"0"
-			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper"
-			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper.mdl"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "2"
-				}
-				"maxammo primary increased"
-				{
-					"attribute_class"	"mult_maxammo_primary"
-					"value" "3.0"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
-				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
-			}
-		}
-		"10264"
-		{
-			"name"	"Frying Pan"
-			"prefab"	"weapon_fryingpan weapon_reskin"
-			"propername"	"1"
-			"year"			"2009"
-		}
-		"10266"
-		{
-			"name"	"The Horseless Headless Horseman's Headtaker"
-			"prefab"	"weapon_eyelander weapon_reskin"
-			"year"			"2010"
-			"item_type_name"	"#TF_Weapon_Axe"
-			"item_name"	"#TF_HalloweenBoss_Axe"
-			"propername"	"1"
-			"item_description"	"#TF_HalloweenBoss_Axe_Desc"
-			"item_quality"	"rarity4"
-			"item_logname"	"headtaker"
-			"item_iconname"	"headtaker"
-			"image_inventory"	"backpack/weapons/c_models/c_headtaker/c_headtaker"
-			"model_player"	"models/weapons/c_models/c_headtaker/c_headtaker.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"12 -3 -10"
-			}
-			"visuals"
-			{
-				"sound_melee_hit"	"Halloween.HeadlessBossAxeHitFlesh"
-				"sound_melee_hit_world"	"Halloween.HeadlessBossAxeHitWorld"
-			}
-		}
-		"10265"
-		{
-			"name"	"Stickybomb Jumper"
-			"prefab"	"weapon_stickybomb_launcher weapon_reskin"
-			"year"			"2016"
-			"item_name"	"#TF_Weapon_StickyBomb_Jump"
-			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
-			"propername"	"0"
-			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper"
-			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper.mdl"
-			"attributes"
-			{
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value"	"0"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-				"no self blast dmg"
-				{
-					"attribute_class"	"no_self_blast_dmg"
-					"value" "1"
-				}
-				"maxammo secondary increased"
-				{
-					"attribute_class"	"mult_maxammo_secondary"
-					"value" "3"
-				}
-				"cannot pick up intelligence"
-				{
-					"attribute_class"	"cannot_pick_up_intelligence"
-					"value"				"1"
-				}
-				"custom projectile model"
-				{
-					"attribute_class"	"custom_projectile_model"
-					"value"				"models/weapons/w_models/w_stickybomb2.mdl"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
-				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
-			}
-		}
-		"10298"
-		{
-			"name"	"Iron Curtain"
-			"prefab"	"weapon_minigun weapon_reskin"
-			"year"			"2010"
-			"item_name"	"#TF_Iron_Curtain"
-			"propername"	"1"
-			"item_logname"	"iron_curtain"
-			"item_iconname"	"iron_curtain"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain"
-			"model_player"	"models/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain.mdl"
-		}
-		"10433"
-		{
-			"name"	"Fishcake"
-			"prefab"	"weapon_sandvich weapon_reskin"
-			"year"			"2011"
-			"item_type_name"	"#TF_SpaceChem_Fishcake_Type"
-			"item_name"	"#TF_SpaceChem_Fishcake"
-			"item_description"	"#TF_SpaceChem_Fishcake_Desc"
-			"propername"	"0"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_fishcake/c_fishcake"
-			"model_player"	"models/workshop/weapons/c_models/c_fishcake/c_fishcake.mdl"
-			"attributes"
-			{
-				"lunchbox adds maxhealth bonus"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"7"
-				}
-			}
-		}
-		"10452"
-		{
-			"name"	"Three-Rune Blade"
-			"prefab"	"weapon_bat weapon_reskin"
-			"year"		"2011"
-			"item_type_name"	"#TF_Weapon_Sword"
-			"item_name"	"#TF_ScoutSword"
-			"item_description"	"#TF_ScoutSword_Desc"
-			"item_logname"	"scout_sword"
-			"item_iconname"	"scout_sword"
-			"propername"		"0"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_scout_sword/c_scout_sword"
-			"model_player"	"models/workshop/weapons/c_models/c_scout_sword/c_scout_sword.mdl"		
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -6"
-			}
-			"attributes"
-			{
-				"bleeding duration"
-				{
-					"attribute_class"	"bleeding_duration"
-					"value" "5"
-				}
-				"hit self on miss"
-				{
-					"attribute_class"	"hit_self_on_miss"
-					"value"	"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_melee_miss"	"Weapon_Sword.Swing"
-				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
-				"sound_burst"		"Weapon_Sword.SwingCrit"
-				"sound_special1"	"Sword.Hit"
-				"sound_special2"	"Sword.Idle"
-			}
-		}
-		"10457"
-		{
-			"name"	"The Postal Pummeler"
-			"prefab"	"weapon_fireaxe weapon_reskin"
-			"year"			"2011"
-			"item_logname"	"mailbox"
-			"item_iconname"	"mailbox"
-			"item_name"	"#TF_Mailbox"
-			"item_type_name"	"#TF_Weapon_Mailbox"
-			"propername"	"1"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_mailbox/c_mailbox"
-			"model_player"	"models/workshop/weapons/c_models/c_mailbox/c_mailbox.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"15 2 -12"				
-			}
-			"attributes"
-			{
-				"crit vs burning players"
-				{
-					"attribute_class"	"or_crit_vs_playercond"
-					"value"	"1"
-				}
-				"dmg penalty vs nonburning"
-				{
-					"attribute_class"	"mult_dmg_vs_nonburning"
-					"value"	"0.5"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
-			}
-		}
-		"10466"
-		{
-			"name"	"The Maul"
-			"prefab"	"weapon_fireaxe weapon_reskin"
-			"year"			"2011"
-			"item_logname"	"the_maul"
-			"item_iconname"	"the_maul"
-			"item_type_name"	"#TF_Weapon_SledgeHammer"
-			"item_name"	"#TF_RFAHammer"
-			"propername"	"1"
-			"item_description"	"#TF_RFAHammer_Desc"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer"
-			"model_player"	"models/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"15 2 -12"				
-			}
-			"attributes"
-			{
-				"dmg bonus vs buildings"
-				{
-					"attribute_class"	"mult_dmg_vs_buildings"
-					"value"	"2.0"
-				}
-				"dmg penalty vs players"
-				{
-					"attribute_class"	"mult_dmg_vs_players"
-					"value"	"0.75"
-				}
-				"damage applies to sappers"
-				{
-					"attribute_class"	"set_dmg_apply_to_sapper"
-					"value"	"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
-			}
-		}
-		"10482"
-		{
-			"name"	"Nessie's Nine Iron"
-			"prefab"	"weapon_eyelander weapon_reskin"
-			"year"			"2011"
-			"item_type_name"	"#TF_Weapon_GolfClub"
-			"item_name"	"#TF_NineIron"
-			"item_description"	"#TF_NineIron_Desc"
-			"item_logname"	"nessieclub"
-			"item_iconname"	"nessieclub"
-			"propername"	"0"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_golfclub/c_golfclub"
-			"model_player"	"models/workshop/weapons/c_models/c_golfclub/c_golfclub.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"		"10 0 -11"				
-			}
-			"xifier_class_remap"	"Nessie's Nine Iron"
-		}
-		"10574"
-		{
-			"name"	"The Wanga Prick"
-			"prefab"	"weapon_eternal_reward weapon_reskin"
-			"year"			"2011"
-			"item_name"	"#TF_VoodooPin"
-			"propername"	"1"
-			"item_logname"	"voodoo_pin"
-			"item_iconname"	"voodoo_pin"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_voodoo_pin/c_voodoo_pin"
-			"model_player"	"models/workshop/weapons/c_models/c_voodoo_pin/c_voodoo_pin.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"		"10 0 -6"
-			}
-		}
-		"10587"
-		{
-			"name"	"Apoco-Fists"
-			"prefab"	"weapon_fists weapon_reskin"
-			"year"			"2011"
-			"item_name"	"#TF_Apocofists"
-			"propername"	"1"
-			"item_description"	"#TF_Apocofists_Desc"
-			"item_logname"	"apocofists"
-			"item_iconname"	"apocofists"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch"					
-			"model_player"	"models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"		"10 0 -10"
-			}
-			"attributes"
-			{
-				"crit kill will gib"
-				{
-					"attribute_class"	"crit_kill_will_gib"
-					"value"	"1"
-				}
-			}
-			"hide_bodygroups_deployed_only"	"1"
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"hands"			"1"
-				}
-				"sound_melee_miss"	"Weapon_BoxingGloves.Miss"
-				"sound_melee_hit"	"Weapon_BoxingGloves.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_BoxingGloves.HitWorld"
-				"sound_burst"		"Weapon_BoxingGloves.MissCrit"
-			}
-		}
-		"10608"
-		{
-			"name"	"The Bootlegger"
-			"prefab"			"weapon_wearable weapon_reskin"
-			"year"				"2011"
-			"demoknight"		"1"
-			"propername"		"1"
-			"item_name"			"#TF_Bootlegger"
-			"item_description"	"#TF_Bootlegger_Desc"
-			"item_slot"		"primary"
-			"equip_region"	"feet"
-			"anim_slot"		"FORCE_NOT_USED"
-			"image_inventory"	"backpack/workshop/player/items/demo/pegleg/pegleg"
-			"model_player"		"models/workshop/player/items/demo/pegleg/pegleg.mdl"
-			"act_as_wearable" "1"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"attributes"
-			{
-				"mult charge turn control"
-				{
-					"attribute_class"	"charge_turn_control"
-					"value"			"3"
-				}
-				"max health additive bonus"
-				{
-					"attribute_class"	"add_maxhealth"
-					"value" "25"
-				}
-				"kill refills meter"
-				{
-					"attribute_class"	"kill_refills_meter"
-					"value"			"0.25"
-				}
-				"move speed bonus"
-				{
-					"attribute_class"	"mult_player_movespeed"
-					"value"	"1.10"
-				}
-			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"shoes"			"1"
-				}
-			}
-		}
-		"10609"
-		{
-			"name"	"The Scottish Handshake"
-			"prefab"		"weapon_bottle weapon_reskin"
-			"year"			"2011"
-			"item_name"	"#TF_ScottishHandshake"
-			"item_description"	"#TF_ScottishHandshake_Desc"
-			"item_logname"	"scotland_shard"
-			"item_iconname"	"scotland_shard"
-			"propername"	"1"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_scotland_shard/c_scotland_shard"		
-			"model_player"	"models/workshop/weapons/c_models/c_scotland_shard/c_scotland_shard.mdl"
-		}
-		"10727"
-		{
-			"name"			"The Black Rose"
-			"prefab"	"weapon_knife weapon_reskin"
-			"year"			"2012"
-			"item_name"			"#TF_BlackRose"
-			"propername"	"1"
-			"item_description"	"#TF_BlackRose_Desc"
-			"item_logname"	"black_rose"
-			"item_iconname"	"black_rose"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_ava_roseknife/c_ava_roseknife_v"
-			"model_player"		"models/workshop/weapons/c_models/c_ava_roseknife/c_ava_roseknife.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"		"10 0 -6"
-			}
-		}
-		"10851"
-		{
-			"name"	"The AWPer Hand"
-			"prefab"	"weapon_sniperrifle weapon_reskin"
-			"year"			"2012"
-			"item_name"	"#TF_CSGO_AWP"
-			"propername"	"1"
-			"item_description"	"#TF_CSGO_AWP_Desc"
-			"image_inventory"	"backpack/weapons/c_models/c_csgo_awp/c_csgo_awp"
-			"model_player"	"models/weapons/c_models/c_csgo_awp/c_csgo_awp.mdl"
-			"item_logname"	"awper_hand"
-			"visuals"
-			{
-				"sound_single_shot"	"Weapon_AWP.Single"
-				"sound_burst"		"Weapon_AWP.SingleCrit"
-			}
-		}
-		"11013"
-		{
-			"name"	"The Ham Shank"
-			"prefab"	"weapon_melee_allclass weapon_reskin"
-			"year"			"2013"
-			"item_logname"	"ham_shank"
-			"item_iconname"	"ham_shank"
-			"item_type_name"	"#TF_Weapon_Pork_Product"
-			"item_name"	"#TF_HamShank"
-			"item_description"	"#TF_HamShank_Desc"
-			"propername"	"1"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_ham/c_ham"
-			"model_player"	"models/workshop/weapons/c_models/c_ham/c_ham.mdl"
-			"used_by_classes"
-			{
-				"scout"	"1"
-				"sniper"	"1"
-				"soldier"	"1"
-				"demoman"	"1"
-				"medic"	"1"
-				"heavy"	"1"
-				"pyro" "1"
-			}
-			"visuals"
-			{
-				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
-				"sound_melee_miss"	"Weapon_Machete.Miss"
-				"sound_burst"		"Weapon_Machete.MissCrit"
-			}
-		}
-		"11092"
-		{
-			"name"	"The Fortified Compound"
-			"prefab"	"weapon_huntsman weapon_reskin"
-			"year"			"2014"
-			"item_name"	"#TF_FortifiedCompound"
-			"propername"	"1"
-			"item_description"	"#TF_FortifiedCompound_Desc"
-			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief"
-			"model_player"	"models/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief.mdl"
-		}
-		"10638"
-		{
-			"name"	"The Sharp Dresser"
-			"prefab"	"weapon_knife weapon_reskin"
-			"year"			"2011"
-			"item_name"	"#TF_SharpDresser"
-			"propername"	"1"
-			"item_description"	"#TF_SharpDresser_Desc"
-			"item_logname"	"sharp_dresser"
-			"item_iconname"	"sharp_dresser"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade"
-			"model_player"	"models/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"		"10 0 -6"
-			}
-			"anim_slot"	"ITEM1"
-			"visuals"
-			{
-				"sound_melee_hit"	"Weapon_Assassin_Knife.HitFlesh"
-				"animation_replacement"
-				{
-					"ACT_VM_DRAW"	"ACT_ITEM1_VM_DRAW"
-					"ACT_VM_IDLE"	"ACT_ITEM1_VM_IDLE"
-					"ACT_VM_HITCENTER"	"ACT_ITEM1_VM_HITCENTER"
-					"ACT_VM_HITCENTER2"	"ACT_ITEM1_VM_HITCENTER2"
-					"ACT_VM_SWINGHARD"	"ACT_ITEM1_VM_SWINGHARD"
-					"ACT_BACKSTAB_VM_UP"	"ACT_ITEM1_BACKSTAB_VM_UP"
-					"ACT_BACKSTAB_VM_DOWN"	"ACT_ITEM1_BACKSTAB_VM_DOWN"
-					"ACT_BACKSTAB_VM_IDLE"	"ACT_ITEM1_BACKSTAB_VM_IDLE"
-					"ACT_MELEE_VM_STUN"	"ACT_MELEE_VM_ITEM1_STUN"
-					"ACT_MELEE_VM_INSPECT_START"	"ACT_ITEM1_VM_INSPECT_START"
-					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_ITEM1_VM_INSPECT_IDLE"
-					"ACT_MELEE_VM_INSPECT_END"		"ACT_ITEM1_VM_INSPECT_END"
-				}
-			}
-			"attributes"
-			{
-				"disable fancy class select anim"
-				{
-					"attribute_class"	"disable_fancy_class_select_anim"
-					"value"	"1"
-				}
-			}
-		}
-		"30474"
-		{
-			"name"		"The Nostromo Napalmer"
-			"prefab"		"weapon_flamethrower weapon_reskin"
-			"year"					"2014"
-			"item_logname"		"ai_flamethrower"
-			"item_iconname"		"ai_flamethrower"
-			"item_type_name"		"#TF_Weapon_Flamethrower"
-			"item_name"		"#TF_NostromoNapalmer"
-			"item_description"		"#TF_NostromoNapalmer_Desc"
-			"image_inventory"		"backpack/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower"
-			"model_player"		"models/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower.mdl"
-			"propername"		"1"
-		}
-		"30665"
-		{
-			"name"		"Shooting Star"
-			"prefab"		"weapon_machina weapon_reskin"
-			"year"					"2015"
-			"item_name"		"#TF_invasion_sniperrifle"
-			"item_description"		"#TF_invasion_sniperrifle_Desc"
-			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_sniperrifle/c_invasion_sniperrifle"
-			"model_player"		"models/workshop/weapons/c_models/c_invasion_sniperrifle/c_invasion_sniperrifle.mdl"
-			"item_logname"		"shooting_star"
-			"item_iconname"		"shooting_star"
-			"attributes"
-			{
-				"ragdolls become ash"
-				{
-					"attribute_class"	"ragdolls_become_ash"
-					"value"	"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_ShootingStar.SingleCharged"
-				"sound_burst"		"Weapon_ShootingStar.SingleCrit"
-				"sound_reload"		"Weapon_SniperRailgun.WorldReload"
-				"sound_empty"		"Weapon_SniperRailgun.ClipEmpty"
-				"sound_special2"		"Weapon_SniperRailgun.NonScoped"
-				"sound_special3"		"Weapon_ShootingStar.Single"
-				"muzzle_flash"		"dxhr_sniper_muzzleflash"
-			}
-			"visuals_red"
-			{
-				"skin"		"0"
-			}
-			"visuals_blu"
-			{
-				"skin"		"1"
-			}
-		}
-		"30666"
-		{
-			"name"		"The C.A.P.P.E.R"
-			"prefab"		"weapon_pistol weapon_reskin"
-			"year"					"2015"
-			"item_name"		"#TF_invasion_pistol"
-			"item_description"		"#TF_invasion_pistol_Desc"
-			"item_logname"		"the_capper"
-			"item_iconname"		"the_capper"
-			"propername"		"1"
-			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol"
-			"model_player"		"models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol.mdl"
-			"used_by_classes"
-			{
-				"scout"	"1"
-				"engineer"	"1"
-			}
-			"attributes"
-			{
-				"ragdolls become ash"
-				{
-					"attribute_class"	"ragdolls_become_ash"
-					"value"	"1"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot"		"Weapon_Capper.Single"
-				"sound_burst"		"Weapon_Capper.SingleCrit"
-			}
-			"visuals_red"
-			{
-				"skin"		"0"
-				"muzzle_flash"		"muzzle_raygun_red"
-				"tracer_effect"		"bullet_tracer_raygun"
-			}
-			"visuals_blu"
-			{
-				"skin"		"1"
-				"muzzle_flash"		"muzzle_raygun_blue"
-				"tracer_effect"		"bullet_tracer_raygun"
-			}
-		}
-		"30667"
-		{
-			"name"		"Batsaber"
-			"prefab"		"weapon_bat weapon_reskin"
-			"year"					"2015"
-			"item_name"		"#TF_invasion_bat"
-			"item_description"		"#TF_invasion_bat_Desc"
-			"item_logname"		"batsaber"
-			"item_iconname"		"batsaber"
-			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat"
-			"model_player"		"models/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat.mdl"
-			"attributes"
-			{
-				"ragdolls plasma effect"
-				{
-					"attribute_class"	"ragdolls_plasma_effect"
-					"value" "1"
-				}
-			}
-			"visuals"
-			{
-				"sound_melee_miss"		"Weapon_BatSaber.Swing"
-				"sound_melee_hit"		"Weapon_BatSaber.HitFlesh"
-				"sound_melee_hit_world"		"Weapon_BatSaber.HitWorld"
-				"sound_burst"		"Weapon_BatSaber.SwingCrit"
-				"sound_deploy"		"Weapon_BatSaber.Draw"
-			}
-			"visuals_red"
-			{
-				"skin"		"0"
-			}
-			"visuals_blu"
-			{
-				"skin"		"1"
-			}
-		}
-		"30668"
-		{
-			"name"		"The Giger Counter"
-			"prefab"		"weapon_wrangler weapon_reskin"
-			"year"					"2015"
-			"item_name"		"#TF_invasion_wrangler"
-			"item_description"		"#TF_invasion_wrangler_Desc"
-			"item_logname"		"giger_counter"
-			"item_iconname"		"giger_counter"
-			"propername"		"1"
-			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
-			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
-		}
-	
-		// Special Medals.
-		
-		"121"
-		{
-			"name"	"The Devanon Special"
-			"prefab"		"medal"
-			"item_type_name"	"#TF_Wearable_Medal"
-			"item_name"	"#TF_Soldier_Medal_Web_Sleuth"
-			"item_description"	"#TF_Soldier_Medal_Web_Sleuth_Desc"
-			"image_inventory"	"backpack/player/items/soldier/medal"
-			"model_player"			"models/player/items/soldier/medal.mdl"
-			"visuals_red"
-			{
-				"skin"	"0"
-			}
-			"visuals_blu"
-			{
-				"skin"	"1"
-			}
-		}
-		"170"
-		{
-			"name"	"Employee Badge Plat"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_Plat"
-			"item_description"	"#TF_Employee_Badge_Plat_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_platinum"
-			"visuals"
-			{
-				"skin" "3"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"164"
-		{
-			"name"	"Employee Badge A"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_A"
-			"item_description"	"#TF_Employee_Badge_A_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_gold"
-			"visuals"
-			{
-				"skin" "0"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"165"
-		{
-			"name"	"Employee Badge B"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_B"
-			"item_description"	"#TF_Employee_Badge_B_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_silver"
-			"visuals"
-			{
-				"skin" "1"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"166"
-		{
-			"name"	"Employee Badge C"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_C"
-			"item_description"	"#TF_Employee_Badge_C_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_bronze"
-			"visuals"
-			{
-				"skin" "2"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"30670"
-		{
-			"name"	"Golden Wrench"
-			"prefab"		"weapon_wrench weapon_special"
-			"year"	"2010"
-			"item_name"		"#TF_Unique_Golden_Wrench"
-			"propername"	"1"
-			"item_logname"	"wrench_golden"
-			"item_iconname"	"wrench_golden"
-			"image_inventory"	"backpack/weapons/c_models/c_wrench/gold_wrench"
-			"model_player"	"models/weapons/c_models/c_wrench/gold_wrench.mdl"
-			"attributes"
-			{
-				"turn to gold"
-				{
-					"attribute_class"	"set_turn_to_gold"
-					"value" "1"
-				}
-			}
-		}
-		
-		// Zombie Skins.
-		
-		"5617"
-		{
-			"name"		"Zombie Scout"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieScout"
-			"equip_regions"
-			{
-				"zombie_body"			"1"
-				"feet"					"1"
-			}
-			"used_by_classes"
-			{
-				"scout"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieScout_Desc"
-			"image_inventory"	"backpack/player/items/scout/scout_zombie"
-		}
-		"5618"
-		{
-			"name"		"Zombie Soldier"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieSoldier"
-			"used_by_classes"
-			{
-				"soldier"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSoldier_Desc"
-			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
-		}
-		"5619"
-		{
-			"name"		"Zombie Heavy"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieHeavy"
-			"used_by_classes"
-			{
-				"heavy"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieHeavy_Desc"
-			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
-		}
-		"5620"
-		{
-			"name"		"Zombie Demo"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieDemoman"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieDemoman_Desc"
-			"image_inventory"	"backpack/player/items/demo/demo_zombie"
-		}
-		"5621"
-		{
-			"name"		"Zombie Engineer"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieEngineer"
-			"used_by_classes"
-			{
-				"engineer"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieEngineer_Desc"
-			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
-		}
-		"5622"
-		{
-			"name"		"Zombie Medic"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieMedic"
-			"used_by_classes"
-			{
-				"medic"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieMedic_Desc"
-			"image_inventory"	"backpack/player/items/medic/medic_zombie"
-		}
-		"5623"
-		{
-			"name"		"Zombie Spy"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieSpy"
-			"used_by_classes"
-			{
-				"spy"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSpy_Desc"
-			"image_inventory"	"backpack/player/items/spy/spy_zombie"
-		}
-		"5624"
-		{
-			"name"		"Zombie Pyro"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombiePyro"
-			"equip_regions"
-			{
-				"zombie_body"			"1"
-				"pyro_head_replacement"	"1"
-			}
-			"used_by_classes"
-			{
-				"pyro"	"1"
-			}
-			"item_description"	"#TF_Item_ZombiePyro_Desc"
-			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
-		}
-		"5625"
-		{
-			"name"		"Zombie Sniper"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieSniper"
-			"used_by_classes"
-			{
-				"sniper"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSniper_Desc"
-			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
-		}
-		
-		// Cosmetics.
-		
+	}
+	"cosmeticitems"
+	{
 		"47"	
 		{
 			"name"	"Demoman's Fro"
@@ -10081,10 +9043,1042 @@
 				"heavy"	"1"
 			}
 		}
+	}
+	"reskinitems"
+	{	
+		"10160"
+		{
+			"name"	"TTG Max Pistol"
+			"prefab"	"weapon_pistol weapon_reskin"
+			"year"			"2010"
+			"item_name"	"#TF_TTG_MaxGun"
+			"propername"	"1"
+			"item_description"	"#TF_TTG_MaxGun_Desc"
+			"item_logname"	"maxgun"
+			"item_iconname"	"maxgun"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun"
+			"model_player"	"models/workshop/weapons/c_models/c_ttg_max_gun/c_ttg_max_gun.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"engineer"	"1"
+			}
+		}
+		"10161"
+		{
+			"name"	"TTG Sam Revolver"
+			"prefab"	"weapon_revolver weapon_reskin"
+			"year"			"2010"
+			"item_name"	"#TF_TTG_SamRevolver"
+			"propername"	"1"
+			"item_description"	"#TF_TTG_SamRevolver_Desc"
+			"item_logname"	"samrevolver"
+			"item_iconname"	"samrevolver"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun"
+			"model_player"	"models/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun.mdl"
+		}
+		"10131"
+		{
+			"name"	"The Chargin' Targe"
+			"prefab"	"weapon_wearable weapon_reskin"
+			"year"		"2010"
+			"demoknight"	"1"
+			"propername"	"1"
+			"item_class"		"tf_wearable_demoshield"
+			"item_type_name"	"#TF_Wearable_Shield"
+			"item_name"		"#TF_Unique_Achievement_Shield"
+			"item_description"	"#TF_Unique_Achievement_Shield_Desc"
+			"item_slot"		"secondary"
+			"equip_region"	"arms"
+			"item_logname"	"demoshield"
+			"item_iconname"	"demoshield"
+			"act_as_wearable" "1"
+			"attach_to_hands"	"0"
+			"attach_to_hands_vm_only"	"1"
+			"image_inventory"	"backpack/weapons/c_models/c_targe/c_targe"
+			"model_player"	"models/weapons/c_models/c_targe/c_targe.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"attributes"
+			{
+				"dmg taken from fire reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_fire"
+					"value"			"0.5"
+				}
+				"dmg taken from blast reduced"
+				{
+					"attribute_class"	"mult_dmgtaken_from_explosions"
+					"value"			"0.6"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class"	"allowed_in_medieval_mode"
+					"value"	"1"
+				}
+			}
+		}
+		"10221"
+		{
+			"name"	"The Holy Mackerel"
+			"prefab"	"weapon_bat weapon_reskin"
+			"year"			"2010"
+			"item_type_name"	"#TF_Weapon_Fish"
+			"item_name"	"#TF_TheHolyMackerel"
+			"propername"	"1"
+			"item_description"	"#TF_TheHolyMackerel_Desc"
+			"item_logname"	"holymackerel"
+			"item_iconname"	"holymackerel"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_holymackerel/c_holymackerel"
+			"model_player"	"models/workshop/weapons/c_models/c_holymackerel/c_holymackerel.mdl"
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
+			}
+		}
+		"10331"
+		{
+			"name"	"Fists of Steel"
+			"prefab"	"weapon_gloves weapon_reskin"
+			"year"		"2011"
+			"item_name"	"#TF_FistsOfSteel"
+			"propername"	"1"
+			"item_logname"	"steel_fists"
+			"item_iconname"	"steel_fists"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel"			
+			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hands"			"1"
+				}
+				"sound_melee_miss"	"Weapon_MetalGloves.Miss"
+				"sound_melee_hit"	"Weapon_MetalGloves.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_MetalGloves.HitWorld"
+				"sound_burst"		"Weapon_MetalGloves.MissCrit"
+				"animation_replacement"
+				{
+					"ACT_VM_DRAW"	"ACT_MELEE_VM_ITEM1_DRAW"
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT1_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT1_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT1_VM_INSPECT_END"
+				}
+			}
+			"attributes"
+			{
+				"dmg from ranged reduced"
+				{
+					"attribute_class"	"dmg_from_ranged"
+					"value"	"0.4"
+				}
+				"dmg from melee increased"
+				{
+					"attribute_class"	"dmg_from_melee"
+					"value"	"2.0"
+				}
+			}
+		}
+		"10237"
+		{
+			"name"	"Rocket Jumper"
+			"prefab"	"weapon_rocketlauncher weapon_reskin"
+			"year"			"2016"
+			"item_name"	"#TF_Weapon_RocketLauncher_Jump"
+			"item_description"	"#TF_Weapon_RocketLauncher_Jump_Desc"
+			"propername"	"0"
+			"image_inventory"	"backpack/weapons/c_models/c_rocketjumper/c_rocketjumper"
+			"model_player"	"models/weapons/c_models/c_rocketjumper/c_rocketjumper.mdl"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "2"
+				}
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value" "3.0"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Rocket_Jumper.Single"
+				"sound_special1"		"Weapon_Rocket_Jumper.Explode"
+			}
+		}
+		"10264"
+		{
+			"name"	"Frying Pan"
+			"prefab"	"weapon_fryingpan weapon_reskin"
+			"propername"	"1"
+			"year"			"2009"
+		}
+		"10266"
+		{
+			"name"	"The Horseless Headless Horseman's Headtaker"
+			"prefab"	"weapon_eyelander weapon_reskin"
+			"year"			"2010"
+			"item_type_name"	"#TF_Weapon_Axe"
+			"item_name"	"#TF_HalloweenBoss_Axe"
+			"propername"	"1"
+			"item_description"	"#TF_HalloweenBoss_Axe_Desc"
+			"item_quality"	"rarity4"
+			"item_logname"	"headtaker"
+			"item_iconname"	"headtaker"
+			"image_inventory"	"backpack/weapons/c_models/c_headtaker/c_headtaker"
+			"model_player"	"models/weapons/c_models/c_headtaker/c_headtaker.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"12 -3 -10"
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Halloween.HeadlessBossAxeHitFlesh"
+				"sound_melee_hit_world"	"Halloween.HeadlessBossAxeHitWorld"
+			}
+		}
+		"10265"
+		{
+			"name"	"Stickybomb Jumper"
+			"prefab"	"weapon_stickybomb_launcher weapon_reskin"
+			"year"			"2016"
+			"item_name"	"#TF_Weapon_StickyBomb_Jump"
+			"item_description"	"#TF_Weapon_StickyBomb_Jump_Desc"
+			"propername"	"0"
+			"image_inventory"	"backpack/weapons/c_models/c_sticky_jumper/c_sticky_jumper"
+			"model_player"	"models/weapons/c_models/c_sticky_jumper/c_sticky_jumper.mdl"
+			"attributes"
+			{
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"	"0"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+				"no self blast dmg"
+				{
+					"attribute_class"	"no_self_blast_dmg"
+					"value" "1"
+				}
+				"maxammo secondary increased"
+				{
+					"attribute_class"	"mult_maxammo_secondary"
+					"value" "3"
+				}
+				"cannot pick up intelligence"
+				{
+					"attribute_class"	"cannot_pick_up_intelligence"
+					"value"				"1"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	"custom_projectile_model"
+					"value"				"models/weapons/w_models/w_stickybomb2.mdl"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_Sticky_Jumper.Single"
+				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
+			}
+		}
+		"10298"
+		{
+			"name"	"Iron Curtain"
+			"prefab"	"weapon_minigun weapon_reskin"
+			"year"			"2010"
+			"item_name"	"#TF_Iron_Curtain"
+			"propername"	"1"
+			"item_logname"	"iron_curtain"
+			"item_iconname"	"iron_curtain"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain"
+			"model_player"	"models/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain.mdl"
+		}
+		"10433"
+		{
+			"name"	"Fishcake"
+			"prefab"	"weapon_sandvich weapon_reskin"
+			"year"			"2011"
+			"item_type_name"	"#TF_SpaceChem_Fishcake_Type"
+			"item_name"	"#TF_SpaceChem_Fishcake"
+			"item_description"	"#TF_SpaceChem_Fishcake_Desc"
+			"propername"	"0"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fishcake/c_fishcake"
+			"model_player"	"models/workshop/weapons/c_models/c_fishcake/c_fishcake.mdl"
+			"attributes"
+			{
+				"lunchbox adds maxhealth bonus"
+				{
+					"attribute_class"	"set_weapon_mode"
+					"value"	"7"
+				}
+			}
+		}
+		"10452"
+		{
+			"name"	"Three-Rune Blade"
+			"prefab"	"weapon_bat weapon_reskin"
+			"year"		"2011"
+			"item_type_name"	"#TF_Weapon_Sword"
+			"item_name"	"#TF_ScoutSword"
+			"item_description"	"#TF_ScoutSword_Desc"
+			"item_logname"	"scout_sword"
+			"item_iconname"	"scout_sword"
+			"propername"		"0"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_scout_sword/c_scout_sword"
+			"model_player"	"models/workshop/weapons/c_models/c_scout_sword/c_scout_sword.mdl"		
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -6"
+			}
+			"attributes"
+			{
+				"bleeding duration"
+				{
+					"attribute_class"	"bleeding_duration"
+					"value" "5"
+				}
+				"hit self on miss"
+				{
+					"attribute_class"	"hit_self_on_miss"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_miss"	"Weapon_Sword.Swing"
+				"sound_melee_hit"	"Weapon_Sword.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_Sword.HitWorld"
+				"sound_burst"		"Weapon_Sword.SwingCrit"
+				"sound_special1"	"Sword.Hit"
+				"sound_special2"	"Sword.Idle"
+			}
+		}
+		"10457"
+		{
+			"name"	"The Postal Pummeler"
+			"prefab"	"weapon_fireaxe weapon_reskin"
+			"year"			"2011"
+			"item_logname"	"mailbox"
+			"item_iconname"	"mailbox"
+			"item_name"	"#TF_Mailbox"
+			"item_type_name"	"#TF_Weapon_Mailbox"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_mailbox/c_mailbox"
+			"model_player"	"models/workshop/weapons/c_models/c_mailbox/c_mailbox.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"15 2 -12"				
+			}
+			"attributes"
+			{
+				"crit vs burning players"
+				{
+					"attribute_class"	"or_crit_vs_playercond"
+					"value"	"1"
+				}
+				"dmg penalty vs nonburning"
+				{
+					"attribute_class"	"mult_dmg_vs_nonburning"
+					"value"	"0.5"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class"	"mult_crit_chance"
+					"value"	"0"
+				}
+			}
+		}
+		"10466"
+		{
+			"name"	"The Maul"
+			"prefab"	"weapon_fireaxe weapon_reskin"
+			"year"			"2011"
+			"item_logname"	"the_maul"
+			"item_iconname"	"the_maul"
+			"item_type_name"	"#TF_Weapon_SledgeHammer"
+			"item_name"	"#TF_RFAHammer"
+			"propername"	"1"
+			"item_description"	"#TF_RFAHammer_Desc"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer"
+			"model_player"	"models/workshop/weapons/c_models/c_rfa_hammer/c_rfa_hammer.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"15 2 -12"				
+			}
+			"attributes"
+			{
+				"dmg bonus vs buildings"
+				{
+					"attribute_class"	"mult_dmg_vs_buildings"
+					"value"	"2.0"
+				}
+				"dmg penalty vs players"
+				{
+					"attribute_class"	"mult_dmg_vs_players"
+					"value"	"0.75"
+				}
+				"damage applies to sappers"
+				{
+					"attribute_class"	"set_dmg_apply_to_sapper"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_Machete.HitFlesh"
+			}
+		}
+		"10482"
+		{
+			"name"	"Nessie's Nine Iron"
+			"prefab"	"weapon_eyelander weapon_reskin"
+			"year"			"2011"
+			"item_type_name"	"#TF_Weapon_GolfClub"
+			"item_name"	"#TF_NineIron"
+			"item_description"	"#TF_NineIron_Desc"
+			"item_logname"	"nessieclub"
+			"item_iconname"	"nessieclub"
+			"propername"	"0"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_golfclub/c_golfclub"
+			"model_player"	"models/workshop/weapons/c_models/c_golfclub/c_golfclub.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -11"				
+			}
+			"xifier_class_remap"	"Nessie's Nine Iron"
+		}
+		"10574"
+		{
+			"name"	"The Wanga Prick"
+			"prefab"	"weapon_eternal_reward weapon_reskin"
+			"year"			"2011"
+			"item_name"	"#TF_VoodooPin"
+			"propername"	"1"
+			"item_logname"	"voodoo_pin"
+			"item_iconname"	"voodoo_pin"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_voodoo_pin/c_voodoo_pin"
+			"model_player"	"models/workshop/weapons/c_models/c_voodoo_pin/c_voodoo_pin.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -6"
+			}
+		}
+		"10587"
+		{
+			"name"	"Apoco-Fists"
+			"prefab"	"weapon_fists weapon_reskin"
+			"year"			"2011"
+			"item_name"	"#TF_Apocofists"
+			"propername"	"1"
+			"item_description"	"#TF_Apocofists_Desc"
+			"item_logname"	"apocofists"
+			"item_iconname"	"apocofists"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch"					
+			"model_player"	"models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -10"
+			}
+			"attributes"
+			{
+				"crit kill will gib"
+				{
+					"attribute_class"	"crit_kill_will_gib"
+					"value"	"1"
+				}
+			}
+			"hide_bodygroups_deployed_only"	"1"
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hands"			"1"
+				}
+				"sound_melee_miss"	"Weapon_BoxingGloves.Miss"
+				"sound_melee_hit"	"Weapon_BoxingGloves.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_BoxingGloves.HitWorld"
+				"sound_burst"		"Weapon_BoxingGloves.MissCrit"
+			}
+		}
+		"10608"
+		{
+			"name"	"The Bootlegger"
+			"prefab"			"weapon_wearable weapon_reskin"
+			"year"				"2011"
+			"demoknight"		"1"
+			"propername"		"1"
+			"item_name"			"#TF_Bootlegger"
+			"item_description"	"#TF_Bootlegger_Desc"
+			"item_slot"		"primary"
+			"equip_region"	"feet"
+			"anim_slot"		"FORCE_NOT_USED"
+			"image_inventory"	"backpack/workshop/player/items/demo/pegleg/pegleg"
+			"model_player"		"models/workshop/player/items/demo/pegleg/pegleg.mdl"
+			"act_as_wearable" "1"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"attributes"
+			{
+				"mult charge turn control"
+				{
+					"attribute_class"	"charge_turn_control"
+					"value"			"3"
+				}
+				"max health additive bonus"
+				{
+					"attribute_class"	"add_maxhealth"
+					"value" "25"
+				}
+				"kill refills meter"
+				{
+					"attribute_class"	"kill_refills_meter"
+					"value"			"0.25"
+				}
+				"move speed bonus"
+				{
+					"attribute_class"	"mult_player_movespeed"
+					"value"	"1.10"
+				}
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"shoes"			"1"
+				}
+			}
+		}
+		"10609"
+		{
+			"name"	"The Scottish Handshake"
+			"prefab"		"weapon_bottle weapon_reskin"
+			"year"			"2011"
+			"item_name"	"#TF_ScottishHandshake"
+			"item_description"	"#TF_ScottishHandshake_Desc"
+			"item_logname"	"scotland_shard"
+			"item_iconname"	"scotland_shard"
+			"propername"	"1"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_scotland_shard/c_scotland_shard"		
+			"model_player"	"models/workshop/weapons/c_models/c_scotland_shard/c_scotland_shard.mdl"
+		}
+		"10727"
+		{
+			"name"			"The Black Rose"
+			"prefab"	"weapon_knife weapon_reskin"
+			"year"			"2012"
+			"item_name"			"#TF_BlackRose"
+			"propername"	"1"
+			"item_description"	"#TF_BlackRose_Desc"
+			"item_logname"	"black_rose"
+			"item_iconname"	"black_rose"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_ava_roseknife/c_ava_roseknife_v"
+			"model_player"		"models/workshop/weapons/c_models/c_ava_roseknife/c_ava_roseknife.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -6"
+			}
+		}
+		"10851"
+		{
+			"name"	"The AWPer Hand"
+			"prefab"	"weapon_sniperrifle weapon_reskin"
+			"year"			"2012"
+			"item_name"	"#TF_CSGO_AWP"
+			"propername"	"1"
+			"item_description"	"#TF_CSGO_AWP_Desc"
+			"image_inventory"	"backpack/weapons/c_models/c_csgo_awp/c_csgo_awp"
+			"model_player"	"models/weapons/c_models/c_csgo_awp/c_csgo_awp.mdl"
+			"item_logname"	"awper_hand"
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_AWP.Single"
+				"sound_burst"		"Weapon_AWP.SingleCrit"
+			}
+		}
+		"11013"
+		{
+			"name"	"The Ham Shank"
+			"prefab"	"weapon_melee_allclass weapon_reskin"
+			"year"			"2013"
+			"item_logname"	"ham_shank"
+			"item_iconname"	"ham_shank"
+			"item_type_name"	"#TF_Weapon_Pork_Product"
+			"item_name"	"#TF_HamShank"
+			"item_description"	"#TF_HamShank_Desc"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_ham/c_ham"
+			"model_player"	"models/workshop/weapons/c_models/c_ham/c_ham.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"sniper"	"1"
+				"soldier"	"1"
+				"demoman"	"1"
+				"medic"	"1"
+				"heavy"	"1"
+				"pyro" "1"
+			}
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_HolyMackerel.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
+				"sound_melee_miss"	"Weapon_Machete.Miss"
+				"sound_burst"		"Weapon_Machete.MissCrit"
+			}
+		}
+		"11092"
+		{
+			"name"	"The Fortified Compound"
+			"prefab"	"weapon_huntsman weapon_reskin"
+			"year"			"2014"
+			"item_name"	"#TF_FortifiedCompound"
+			"propername"	"1"
+			"item_description"	"#TF_FortifiedCompound_Desc"
+			"image_inventory"	"backpack/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief"
+			"model_player"	"models/workshop_partner/weapons/c_models/c_bow_thief/c_bow_thief.mdl"
+		}
+		"10638"
+		{
+			"name"	"The Sharp Dresser"
+			"prefab"	"weapon_knife weapon_reskin"
+			"year"			"2011"
+			"item_name"	"#TF_SharpDresser"
+			"propername"	"1"
+			"item_description"	"#TF_SharpDresser_Desc"
+			"item_logname"	"sharp_dresser"
+			"item_iconname"	"sharp_dresser"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade"
+			"model_player"	"models/workshop/weapons/c_models/c_acr_hookblade/c_acr_hookblade.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -6"
+			}
+			"anim_slot"	"ITEM1"
+			"visuals"
+			{
+				"sound_melee_hit"	"Weapon_Assassin_Knife.HitFlesh"
+				"animation_replacement"
+				{
+					"ACT_VM_DRAW"	"ACT_ITEM1_VM_DRAW"
+					"ACT_VM_IDLE"	"ACT_ITEM1_VM_IDLE"
+					"ACT_VM_HITCENTER"	"ACT_ITEM1_VM_HITCENTER"
+					"ACT_VM_HITCENTER2"	"ACT_ITEM1_VM_HITCENTER2"
+					"ACT_VM_SWINGHARD"	"ACT_ITEM1_VM_SWINGHARD"
+					"ACT_BACKSTAB_VM_UP"	"ACT_ITEM1_BACKSTAB_VM_UP"
+					"ACT_BACKSTAB_VM_DOWN"	"ACT_ITEM1_BACKSTAB_VM_DOWN"
+					"ACT_BACKSTAB_VM_IDLE"	"ACT_ITEM1_BACKSTAB_VM_IDLE"
+					"ACT_MELEE_VM_STUN"	"ACT_MELEE_VM_ITEM1_STUN"
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_ITEM1_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_ITEM1_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_ITEM1_VM_INSPECT_END"
+				}
+			}
+			"attributes"
+			{
+				"disable fancy class select anim"
+				{
+					"attribute_class"	"disable_fancy_class_select_anim"
+					"value"	"1"
+				}
+			}
+		}
+		"30474"
+		{
+			"name"		"The Nostromo Napalmer"
+			"prefab"		"weapon_flamethrower weapon_reskin"
+			"year"					"2014"
+			"item_logname"		"ai_flamethrower"
+			"item_iconname"		"ai_flamethrower"
+			"item_type_name"		"#TF_Weapon_Flamethrower"
+			"item_name"		"#TF_NostromoNapalmer"
+			"item_description"		"#TF_NostromoNapalmer_Desc"
+			"image_inventory"		"backpack/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower"
+			"model_player"		"models/workshop_partner/weapons/c_models/c_ai_flamethrower/c_ai_flamethrower.mdl"
+			"propername"		"1"
+		}
+		"30665"
+		{
+			"name"		"Shooting Star"
+			"prefab"		"weapon_machina weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_sniperrifle"
+			"item_description"		"#TF_invasion_sniperrifle_Desc"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_sniperrifle/c_invasion_sniperrifle"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_sniperrifle/c_invasion_sniperrifle.mdl"
+			"item_logname"		"shooting_star"
+			"item_iconname"		"shooting_star"
+			"attributes"
+			{
+				"ragdolls become ash"
+				{
+					"attribute_class"	"ragdolls_become_ash"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_ShootingStar.SingleCharged"
+				"sound_burst"		"Weapon_ShootingStar.SingleCrit"
+				"sound_reload"		"Weapon_SniperRailgun.WorldReload"
+				"sound_empty"		"Weapon_SniperRailgun.ClipEmpty"
+				"sound_special2"		"Weapon_SniperRailgun.NonScoped"
+				"sound_special3"		"Weapon_ShootingStar.Single"
+				"muzzle_flash"		"dxhr_sniper_muzzleflash"
+			}
+			"visuals_red"
+			{
+				"skin"		"0"
+			}
+			"visuals_blu"
+			{
+				"skin"		"1"
+			}
+		}
+		"30666"
+		{
+			"name"		"The C.A.P.P.E.R"
+			"prefab"		"weapon_pistol weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_pistol"
+			"item_description"		"#TF_invasion_pistol_Desc"
+			"item_logname"		"the_capper"
+			"item_iconname"		"the_capper"
+			"propername"		"1"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"engineer"	"1"
+			}
+			"attributes"
+			{
+				"ragdolls become ash"
+				{
+					"attribute_class"	"ragdolls_become_ash"
+					"value"	"1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Capper.Single"
+				"sound_burst"		"Weapon_Capper.SingleCrit"
+			}
+			"visuals_red"
+			{
+				"skin"		"0"
+				"muzzle_flash"		"muzzle_raygun_red"
+				"tracer_effect"		"bullet_tracer_raygun"
+			}
+			"visuals_blu"
+			{
+				"skin"		"1"
+				"muzzle_flash"		"muzzle_raygun_blue"
+				"tracer_effect"		"bullet_tracer_raygun"
+			}
+		}
+		"30667"
+		{
+			"name"		"Batsaber"
+			"prefab"		"weapon_bat weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_bat"
+			"item_description"		"#TF_invasion_bat_Desc"
+			"item_logname"		"batsaber"
+			"item_iconname"		"batsaber"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat.mdl"
+			"attributes"
+			{
+				"ragdolls plasma effect"
+				{
+					"attribute_class"	"ragdolls_plasma_effect"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_melee_miss"		"Weapon_BatSaber.Swing"
+				"sound_melee_hit"		"Weapon_BatSaber.HitFlesh"
+				"sound_melee_hit_world"		"Weapon_BatSaber.HitWorld"
+				"sound_burst"		"Weapon_BatSaber.SwingCrit"
+				"sound_deploy"		"Weapon_BatSaber.Draw"
+			}
+			"visuals_red"
+			{
+				"skin"		"0"
+			}
+			"visuals_blu"
+			{
+				"skin"		"1"
+			}
+		}
+		"30668"
+		{
+			"name"		"The Giger Counter"
+			"prefab"		"weapon_wrangler weapon_reskin"
+			"year"					"2015"
+			"item_name"		"#TF_invasion_wrangler"
+			"item_description"		"#TF_invasion_wrangler_Desc"
+			"item_logname"		"giger_counter"
+			"item_iconname"		"giger_counter"
+			"propername"		"1"
+			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
+			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
+		}
+	}
+	"specialitems"
+	{
 		
-		
-	
-	
+		"121"
+		{
+			"name"	"The Devanon Special"
+			"prefab"		"medal"
+			"item_type_name"	"#TF_Wearable_Medal"
+			"item_name"	"#TF_Soldier_Medal_Web_Sleuth"
+			"item_description"	"#TF_Soldier_Medal_Web_Sleuth_Desc"
+			"image_inventory"	"backpack/player/items/soldier/medal"
+			"model_player"			"models/player/items/soldier/medal.mdl"
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
+		}
+		"170"
+		{
+			"name"	"Employee Badge Plat"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_Plat"
+			"item_description"	"#TF_Employee_Badge_Plat_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_platinum"
+			"visuals"
+			{
+				"skin" "3"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"164"
+		{
+			"name"	"Employee Badge A"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_A"
+			"item_description"	"#TF_Employee_Badge_A_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_gold"
+			"visuals"
+			{
+				"skin" "0"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"165"
+		{
+			"name"	"Employee Badge B"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_B"
+			"item_description"	"#TF_Employee_Badge_B_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_silver"
+			"visuals"
+			{
+				"skin" "1"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"166"
+		{
+			"name"	"Employee Badge C"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_C"
+			"item_description"	"#TF_Employee_Badge_C_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_bronze"
+			"visuals"
+			{
+				"skin" "2"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"30670"
+		{
+			"name"	"Golden Wrench"
+			"prefab"		"weapon_wrench weapon_special"
+			"year"	"2010"
+			"item_name"		"#TF_Unique_Golden_Wrench"
+			"propername"	"1"
+			"item_logname"	"wrench_golden"
+			"item_iconname"	"wrench_golden"
+			"image_inventory"	"backpack/weapons/c_models/c_wrench/gold_wrench"
+			"model_player"	"models/weapons/c_models/c_wrench/gold_wrench.mdl"
+			"attributes"
+			{
+				"turn to gold"
+				{
+					"attribute_class"	"set_turn_to_gold"
+					"value" "1"
+				}
+			}
+		}
+		"5617"
+		{
+			"name"		"Zombie Scout"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieScout"
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"feet"					"1"
+			}
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieScout_Desc"
+			"image_inventory"	"backpack/player/items/scout/scout_zombie"
+		}
+		"5618"
+		{
+			"name"		"Zombie Soldier"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieSoldier"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSoldier_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
+		}
+		"5619"
+		{
+			"name"		"Zombie Heavy"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieHeavy"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieHeavy_Desc"
+			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
+		}
+		"5620"
+		{
+			"name"		"Zombie Demo"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieDemoman"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieDemoman_Desc"
+			"image_inventory"	"backpack/player/items/demo/demo_zombie"
+		}
+		"5621"
+		{
+			"name"		"Zombie Engineer"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieEngineer"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieEngineer_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
+		}
+		"5622"
+		{
+			"name"		"Zombie Medic"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieMedic"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieMedic_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_zombie"
+		}
+		"5623"
+		{
+			"name"		"Zombie Spy"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieSpy"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSpy_Desc"
+			"image_inventory"	"backpack/player/items/spy/spy_zombie"
+		}
+		"5624"
+		{
+			"name"		"Zombie Pyro"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombiePyro"
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"pyro_head_replacement"	"1"
+			}
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+			"item_description"	"#TF_Item_ZombiePyro_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
+		}
+		"5625"
+		{
+			"name"		"Zombie Sniper"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieSniper"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSniper_Desc"
+			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
+		}
 	}
 	"attributes"
 	{
