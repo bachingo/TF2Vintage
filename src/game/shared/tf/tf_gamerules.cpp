@@ -6849,8 +6849,8 @@ bool CTFGameRules::IsRememberingSoldier( void )
 		struct tm *today = localtime( ptime );
 		if ( today )
 		{
-			// April till the end of March
-			if ( today->tm_mon > (3-1) && today->tm_mon < (6-1) )
+			// April 8th till the end of May
+			if ( ( today->tm_mon == (4-1) && ( today->tm_mday >= 8 ) ) || today->tm_mon == (5-1) )
 			{
 				m_iSoldierMemorialMode = HOLIDAY_ON;
 			}
