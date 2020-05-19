@@ -2325,6 +2325,11 @@ C_TFPlayer::C_TFPlayer() :
 	ListenForGameEvent( "player_regenerate" );
 	ListenForGameEvent( "sticky_jump" );
 	ListenForGameEvent( "rocket_jump" );
+	
+	// Load phonemes from files.
+	engine->AddPhonemeFile( "scripts/game_sounds_vo_phonemes.txt" );	// Basic English.
+	engine->AddPhonemeFile( "scripts/game_sounds_vo_phonemes_local.txt" ); // Localized translations.
+	engine->AddPhonemeFile( NULL );	// Finish loading phonemes.
 }
 
 C_TFPlayer::~C_TFPlayer()
