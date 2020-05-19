@@ -122,7 +122,7 @@ ConVar tf2v_use_new_sodapopper( "tf2v_use_new_sodapopper", "0", FCVAR_NOTIFY | F
 
 ConVar tf2v_use_new_short_circuit( "tf2v_use_new_short_circuit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps the Short Circuit's Secondary Attack.", true, 0, true, 1);
 
-
+ConVar tf2v_use_new_cloak( "tf2v_use_new_cloak", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Gives cloaked spies a 20% damage resist and 25% shorter debuff duration.", true, 0, true, 1);
 
 
 #ifdef CLIENT_DLL
@@ -4952,6 +4952,58 @@ void CTFPlayerShared::UpdateCloakMeter( void )
 			else
 			{
 				m_flCloakMeter -= gpGlobals->frametime * m_flCloakDrainRate;
+			}
+			
+			// New cloak increases debuff speed by 25%
+			if (tf2v_use_new_cloak.GetBool())
+			{
+				float flReduction = 0.75f * gpGlobals->frametime;
+				if ( InCond( TF_COND_BURNING ) )
+				{
+					// Reduce the duration of this burn 
+					m_flFlameRemoveTime -=  flReduction;
+				}
+				if ( InCond( TF_COND_BLEEDING ) )
+				{
+					for ( int i=0; i<m_aBleeds.Count(); ++i )
+					{
+						bleed_struct_t *bleed = &m_aBleeds[i];
+						bleed->m_flEndTime -= flReduction;
+					}
+				}
+				
+				// Reduce Jarate
+				if ( InCond( TF_COND_URINE ) )
+				{
+					m_flCondExpireTimeLeft.Set( TF_COND_URINE, max( m_flCondExpireTimeLeft[TF_COND_URINE] - flReduction, 0 ) );
+
+					if ( m_flCondExpireTimeLeft[TF_COND_URINE] == 0 )
+					{
+						RemoveCond( TF_COND_URINE );
+					}
+				}
+
+				// Reduce Mad Milk
+				if ( InCond( TF_COND_MAD_MILK ) )
+				{
+					m_flCondExpireTimeLeft.Set( TF_COND_MAD_MILK, max( m_flCondExpireTimeLeft[TF_COND_MAD_MILK] - flReduction, 0 ) );
+
+					if ( m_flCondExpireTimeLeft[TF_COND_MAD_MILK] == 0 )
+					{
+						RemoveCond( TF_COND_MAD_MILK );
+					}
+				}
+				
+				// Reduce Gas
+				if ( InCond( TF_COND_GAS ) )
+				{
+					m_flCondExpireTimeLeft.Set( TF_COND_MAD_MILK, max( m_flCondExpireTimeLeft[TF_COND_MAD_MILK] - flReduction, 0 ) );
+
+					if ( m_flCondExpireTimeLeft[TF_COND_MAD_MILK] == 0 )
+					{
+						RemoveCond( TF_COND_MAD_MILK );
+					}
+				}
 			}
 
 			if (m_flCloakMeter <= 0.0f)

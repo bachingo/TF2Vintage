@@ -134,6 +134,7 @@ extern ConVar tf_damage_disablespread;
 extern ConVar tf_scout_energydrink_consume_rate;
 
 extern ConVar tf2v_allow_disguiseweapons;
+extern ConVar tf2v_use_new_cloak;
 
 // TF2V commands
 ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout and class." );
@@ -5526,9 +5527,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 		else
 		{
-			// 35% to all other sources
+			// 35% resistance to all other sources
 			info.SetDamage( flDamage * 0.65f );
 		}
+	}
+	
+	// New cloak variant spies have a 20% damage reduction while cloaked.
+	if ( m_Shared.InCond(TF_COND_STEALTHED) && tf2v_use_new_cloak.GetBool() )
+	{
+		float flDamage = info.GetDamage();
+		// 20% resistance to all sources
+		info.SetDamage( flDamage * 0.80f );
 	}
 	
 	
