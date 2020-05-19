@@ -41,7 +41,21 @@ public:
 
 #if defined( CLIENT_DLL )
 	virtual void	GetWeaponCrosshairScale( float &flScale ) override;
+
+	int 			TranslateViewmodelHandActivity( int iActivity ) override;
 #endif
+
+	virtual bool	HasSapperCrits(void);
+
+	virtual void	PrimaryAttack(void);
+	virtual void	ItemPostFrame(void);
+	virtual void	CritThink(void);
+
+	virtual bool	Deploy(void);
+	virtual bool	Holster(CBaseCombatWeapon *pSwitchTo);
+
+	virtual const char *GetEffectLabelText(void) { return "#TF_CRITS"; }
+
 
 private:
 
@@ -54,37 +68,6 @@ public:
 	DECLARE_CLASS( CTFRevolver_Secondary, CTFRevolver );
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
-};
-
-#if defined CLIENT_DLL
-#define CTFRevolver_Dex C_TFRevolver_Dex
-#endif
-
-class CTFRevolver_Dex : public CTFRevolver
-{
-public:
-	DECLARE_CLASS( CTFRevolver_Dex, CTFRevolver );
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	CTFRevolver_Dex() {}
-	~CTFRevolver_Dex() {}
-
-	virtual void	PrimaryAttack( void );
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_REVOLVER_DEX; }
-	
-	virtual void	ItemPostFrame( void );
-	virtual void	CritThink( void );
-	
-	virtual bool	Deploy( void );
-	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
-
-	virtual const char *GetEffectLabelText( void ) { return "#TF_CRITS"; }
-
-
-private:
-
-	CTFRevolver_Dex( CTFRevolver_Dex const& );
 };
 
 #endif // TF_WEAPON_REVOLVER_H

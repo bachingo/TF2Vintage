@@ -540,17 +540,30 @@ int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
 // C_TFRevolver_Dex Specialization
 //-----------------------------------------------------------------------------
 template<>
-int CHudItemEffectMeterTemp<C_TFRevolver_Dex>::GetCount( void )
+bool CHudItemEffectMeterTemp<C_TFRevolver>::IsEnabled(void)
+{
+	if (GetWeapon())
+	{ 
+		C_TFRevolver *pRevolver = GetWeapon();
+		if (pRevolver && pRevolver->HasSapperCrits())
+			return true;
+	}
+
+	return false;
+}
+
+template<>
+int CHudItemEffectMeterTemp<C_TFRevolver>::GetCount( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
 	{
-		C_TFRevolver_Dex *pRevolver = GetWeapon();
-		if ( pRevolver )
+		C_TFRevolver *pRevolver = GetWeapon();
+		if (pRevolver && pRevolver->HasSapperCrits())
 			return pPlayer->m_Shared.GetSapperKillCount();
 	}
 
-	return -1;
+	return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -852,7 +865,7 @@ void CHudItemEffects::SetPlayer( void )
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketPack>( "HudItemEffectMeter", "resource/UI/HudRocketPack.res" ) );
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
-			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRevolver_Dex>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res" ) );
+			AddItemMeter(new CHudItemEffectMeterTemp<C_TFRevolver>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res"));
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFKnife>( "HudItemEffectMeter", "resource/UI/huditemeffectmeter_spyknife.res" ) );
 			break;
 		case TF_CLASS_ENGINEER:
