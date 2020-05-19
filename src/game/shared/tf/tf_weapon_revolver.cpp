@@ -99,7 +99,7 @@ int CTFRevolver::TranslateViewmodelHandActivity( int iActivity )
 {
 	int iTranslation = iActivity;
 
-	if ( iActivity == ACT_SECONDARY_VM_RELOAD && tf2v_new_revolver_reload.GetBool() )
+	if ( iActivity == ACT_SECONDARY_VM_RELOAD && !tf2v_new_revolver_reload.GetBool() )
 		iTranslation = ACT_SECONDARY_VM_RELOAD2;
 
 	return BaseClass::TranslateViewmodelHandActivity( iTranslation );
