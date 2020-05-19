@@ -3827,6 +3827,9 @@
 			"item_name"	"#TF_Spectator_Default"
 			"item_slot"	"melee"
 		}
+		
+		// Stock Weapons.
+		
 		"0"
 		{
 			"name"	"TF_WEAPON_BAT"
@@ -4185,6 +4188,28 @@
 			}
 			"baseitem"	"1"
 		}
+		"736"
+		{
+			"name"	"TF2V_COSMETIC_TAUNT"
+			"prefab"	"taunt"
+			"item_quality" "normal"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"soldier"	"1"
+				"pyro"		"1"
+				"demoman"	"1"
+				"heavy"		"1"
+				"engineer"	"1"
+				"medic"		"1"
+				"sniper"	"1"
+				"spy"		"1"
+			}
+			"baseitem"	"1"
+		}
+		
+		// Basic Unlockables.
+		
 		"35"
 		{
 			"name"	"The Kritzkrieg"
@@ -8114,209 +8139,8 @@
 				}
 			}
 		}
-		
 
-
-
-		"121"
-		{
-			"name"	"The Devanon Special"
-			"prefab"		"medal"
-			"item_type_name"	"#TF_Wearable_Medal"
-			"item_name"	"#TF_Soldier_Medal_Web_Sleuth"
-			"item_description"	"#TF_Soldier_Medal_Web_Sleuth_Desc"
-			"image_inventory"	"backpack/player/items/soldier/medal"
-			"model_player"			"models/player/items/soldier/medal.mdl"
-			"visuals_red"
-			{
-				"skin"	"0"
-			}
-			"visuals_blu"
-			{
-				"skin"	"1"
-			}
-		}
-		"170"
-		{
-			"name"	"Employee Badge Plat"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_Plat"
-			"item_description"	"#TF_Employee_Badge_Plat_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_platinum"
-			"visuals"
-			{
-				"skin" "3"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"164"
-		{
-			"name"	"Employee Badge A"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_A"
-			"item_description"	"#TF_Employee_Badge_A_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_gold"
-			"visuals"
-			{
-				"skin" "0"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"165"
-		{
-			"name"	"Employee Badge B"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_B"
-			"item_description"	"#TF_Employee_Badge_B_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_silver"
-			"visuals"
-			{
-				"skin" "1"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"166"
-		{
-			"name"	"Employee Badge C"
-			"prefab"		"veteran_medal"
-			"item_name"	"#TF_Employee_Badge_C"
-			"item_description"	"#TF_Employee_Badge_C_Desc"
-			"image_inventory"	"backpack/player/items/all_class/id_badge_bronze"
-			"visuals"
-			{
-				"skin" "2"
-				"use_per_class_bodygroups" "1"
-			}
-		}
-		"5617"
-		{
-			"name"		"Zombie Scout"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieScout"
-			"equip_regions"
-			{
-				"zombie_body"			"1"
-				"feet"					"1"
-			}
-			"used_by_classes"
-			{
-				"scout"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieScout_Desc"
-			"image_inventory"	"backpack/player/items/scout/scout_zombie"
-		}
-		"5618"
-		{
-			"name"		"Zombie Soldier"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieSoldier"
-			"used_by_classes"
-			{
-				"soldier"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSoldier_Desc"
-			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
-		}
-		"5619"
-		{
-			"name"		"Zombie Heavy"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieHeavy"
-			"used_by_classes"
-			{
-				"heavy"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieHeavy_Desc"
-			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
-		}
-		"5620"
-		{
-			"name"		"Zombie Demo"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieDemoman"
-			"used_by_classes"
-			{
-				"demoman"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieDemoman_Desc"
-			"image_inventory"	"backpack/player/items/demo/demo_zombie"
-		}
-		"5621"
-		{
-			"name"		"Zombie Engineer"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieEngineer"
-			"used_by_classes"
-			{
-				"engineer"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieEngineer_Desc"
-			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
-		}
-		"5622"
-		{
-			"name"		"Zombie Medic"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieMedic"
-			"used_by_classes"
-			{
-				"medic"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieMedic_Desc"
-			"image_inventory"	"backpack/player/items/medic/medic_zombie"
-		}
-		"5623"
-		{
-			"name"		"Zombie Spy"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieSpy"
-			"used_by_classes"
-			{
-				"spy"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSpy_Desc"
-			"image_inventory"	"backpack/player/items/spy/spy_zombie"
-		}
-		"5624"
-		{
-			"name"		"Zombie Pyro"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombiePyro"
-			"equip_regions"
-			{
-				"zombie_body"			"1"
-				"pyro_head_replacement"	"1"
-			}
-			"used_by_classes"
-			{
-				"pyro"	"1"
-			}
-			"item_description"	"#TF_Item_ZombiePyro_Desc"
-			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
-		}
-		"5625"
-		{
-			"name"		"Zombie Sniper"
-			"prefab"	"zombie"
-			"baseitem"	"1"
-			"item_name"	"#TF_Item_ZombieSniper"
-			"used_by_classes"
-			{
-				"sniper"	"1"
-			}
-			"item_description"	"#TF_Item_ZombieSniper_Desc"
-			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
-		}
-		
-		
+		// Reskin Weapons.
 		
 		"10160"
 		{
@@ -9130,47 +8954,78 @@
 			"image_inventory"		"backpack/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler"
 			"model_player"		"models/workshop/weapons/c_models/c_invasion_wrangler/c_invasion_wrangler.mdl"
 		}
-		"30669"
+	
+		// Special Medals.
+		
+		"121"
 		{
-			"name"			"Ambassador Dark"
-			"prefab"		"weapon_revolver weapon_reskin"
-			"year"			"2019"
-			"item_name"	"#TF_Unique_Achievement_Revolver"
-			"item_description"	"#TF_PyroHazmat_Style3"
-			"propername"	"1"
-			"item_logname"	"ambassador"
-			"item_iconname"	"ambassador"
-			"image_inventory"	"backpack/weapons/c_models/c_ambassador/parts/c_ambassador_opt"
-			"model_player"	"models/weapons/c_models/c_ambassador/c_ambassador_dark.mdl"
-			"attributes"
+			"name"	"The Devanon Special"
+			"prefab"		"medal"
+			"item_type_name"	"#TF_Wearable_Medal"
+			"item_name"	"#TF_Soldier_Medal_Web_Sleuth"
+			"item_description"	"#TF_Soldier_Medal_Web_Sleuth_Desc"
+			"image_inventory"	"backpack/player/items/soldier/medal"
+			"model_player"			"models/player/items/soldier/medal.mdl"
+			"visuals_red"
 			{
-				"revolver use hit locations"
-				{
-					"attribute_class"	"set_weapon_mode"
-					"value"	"1"
-				}
-				"damage penalty"
-				{
-					"attribute_class"	"mult_dmg"
-					"value" "0.85"
-				}
-				"fire rate penalty"
-				{
-					"attribute_class"	"mult_postfiredelay"
-					"value"	"1.2"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class"	"mult_crit_chance"
-					"value"	"0"
-				}
+				"skin"	"0"
 			}
+			"visuals_blu"
+			{
+				"skin"	"1"
+			}
+		}
+		"170"
+		{
+			"name"	"Employee Badge Plat"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_Plat"
+			"item_description"	"#TF_Employee_Badge_Plat_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_platinum"
 			"visuals"
 			{
-				"sound_single_shot" "Weapon_Ambassador.Single"
-				"sound_burst" "Weapon_Ambassador.SingleCrit"
+				"skin" "3"
+				"use_per_class_bodygroups" "1"
 			}
-			"xifier_class_remap"	"ambassador"
+		}
+		"164"
+		{
+			"name"	"Employee Badge A"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_A"
+			"item_description"	"#TF_Employee_Badge_A_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_gold"
+			"visuals"
+			{
+				"skin" "0"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"165"
+		{
+			"name"	"Employee Badge B"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_B"
+			"item_description"	"#TF_Employee_Badge_B_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_silver"
+			"visuals"
+			{
+				"skin" "1"
+				"use_per_class_bodygroups" "1"
+			}
+		}
+		"166"
+		{
+			"name"	"Employee Badge C"
+			"prefab"		"veteran_medal"
+			"item_name"	"#TF_Employee_Badge_C"
+			"item_description"	"#TF_Employee_Badge_C_Desc"
+			"image_inventory"	"backpack/player/items/all_class/id_badge_bronze"
+			"visuals"
+			{
+				"skin" "2"
+				"use_per_class_bodygroups" "1"
+			}
 		}
 		"30670"
 		{
@@ -9193,25 +9048,1043 @@
 			}
 		}
 		
-		"350"
+		// Zombie Skins.
+		
+		"5617"
 		{
-			"name"	"TF2V_COSMETIC_TAUNT"
-			"prefab"	"taunt"
-			"item_quality" "normal"
+			"name"		"Zombie Scout"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieScout"
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"feet"					"1"
+			}
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieScout_Desc"
+			"image_inventory"	"backpack/player/items/scout/scout_zombie"
+		}
+		"5618"
+		{
+			"name"		"Zombie Soldier"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieSoldier"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSoldier_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_zombie"
+		}
+		"5619"
+		{
+			"name"		"Zombie Heavy"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieHeavy"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieHeavy_Desc"
+			"image_inventory"	"backpack/player/items/heavy/heavy_zombie"
+		}
+		"5620"
+		{
+			"name"		"Zombie Demo"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieDemoman"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieDemoman_Desc"
+			"image_inventory"	"backpack/player/items/demo/demo_zombie"
+		}
+		"5621"
+		{
+			"name"		"Zombie Engineer"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieEngineer"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieEngineer_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engineer_zombie"
+		}
+		"5622"
+		{
+			"name"		"Zombie Medic"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieMedic"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieMedic_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_zombie"
+		}
+		"5623"
+		{
+			"name"		"Zombie Spy"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieSpy"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSpy_Desc"
+			"image_inventory"	"backpack/player/items/spy/spy_zombie"
+		}
+		"5624"
+		{
+			"name"		"Zombie Pyro"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombiePyro"
+			"equip_regions"
+			{
+				"zombie_body"			"1"
+				"pyro_head_replacement"	"1"
+			}
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+			"item_description"	"#TF_Item_ZombiePyro_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_zombie"
+		}
+		"5625"
+		{
+			"name"		"Zombie Sniper"
+			"prefab"	"zombie"
+			"baseitem"	"1"
+			"item_name"	"#TF_Item_ZombieSniper"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"item_description"	"#TF_Item_ZombieSniper_Desc"
+			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
+		}
+		
+		// Cosmetics.
+		
+		"47"	
+		{
+			"name"	"Demoman's Fro"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Demo_Hat_1"
+			"item_description"	"#TF_Demo_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/demo/demo_afro"
+			"model_player"	"models/player/items/demo/demo_afro.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+		}
+		"48"	
+		{
+			"name"	"Mining Light"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Engineer_Hat_1"
+			"item_description"	"#TF_Engineer_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/engineer/mining_hat"
+			"model_player"	"models/player/items/engineer/mining_hat.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+		}
+		"49"	
+		{
+			"name"	"Football Helmet"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Heavy_Hat_1"
+			"item_description"	"#TF_Heavy_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/heavy/football_helmet"
+			"model_player"	"models/player/items/heavy/football_helmet.mdl"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+		}
+		"50"	
+		{
+			"name"	"Prussian Pickelhaube"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Medic_Hat_1"
+			"item_description"	"#TF_Medic_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_helmet"
+			"model_player"	"models/player/items/medic/medic_helmet.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+		}
+		"51"	
+		{
+			"name"	"Pyro's Beanie"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Pyro_Hat_1"
+			"item_description"	"#TF_Pyro_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_hat"
+			"model_player"	"models/player/items/pyro/pyro_hat.mdl"
+			"drop_type"	"drop"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+		}
+		"52"	
+		{
+			"name"	"Batter's Helmet"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Scout_Hat_1"
+			"item_description"	"#TF_Scout_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/scout/batter_helmet"
+			"model_player"	"models/player/items/scout/batter_helmet.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+		}
+		"53"	
+		{
+			"name"	"Trophy Belt"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Sniper_Hat_1"
+			"item_description"	"#TF_Sniper_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/sniper/tooth_hat"
+			"model_player"	"models/player/items/sniper/tooth_hat.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+		}
+		"54"	
+		{
+			"name"	"Soldier's Stash"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Soldier_Hat_1"
+			"item_description"	"#TF_Soldier_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_hat"
+			"model_player"	"models/player/items/soldier/soldier_hat.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+		}
+		"55"	
+		{
+			"name"	"Fancy Fedora"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Spy_Hat_1"
+			"item_description"	"#TF_Spy_Hat_1_Desc"
+			"image_inventory"	"backpack/player/items/spy/spy_hat"
+			"model_player"	"models/player/items/spy/spy_hat.mdl"
+			"drop_type"	"drop"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+		}
+		
+		
+		"94"
+		{
+			"name"	"Texas Ten Gallon"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Engineer_Cowboy_Hat"
+			"item_description"	"#TF_Engineer_Cowboy_Hat_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engineer_cowboy_hat"
+			"model_player"	"models/player/items/engineer/engineer_cowboy_hat.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"		"1"
+				}
+			}
+		}
+		"95"
+		{
+			"name"	"Engineer's Cap"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Engineer_Train_Hat"
+			"item_description"	"#TF_Engineer_Train_Hat_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engineer_train_hat"
+			"model_player"	"models/player/items/engineer/engineer_train_hat.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"		"1"
+				}
+			}
+		}
+		"96"
+		{
+			"name"	"Officer's Ushanka"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Heavy_Ushanka_Hat"
+			"item_description"	"#TF_Heavy_Ushanka_Hat_Desc"
+			"image_inventory"	"backpack/player/items/heavy/heavy_ushanka"
+			"model_player"	"models/player/items/heavy/heavy_ushanka.mdl"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+		}
+		"97"
+		{
+			"name"	"Tough Guy's Toque"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Heavy_Stocking_cap"
+			"item_description"	"#TF_Heavy_Stocking_cap_Desc"
+			"image_inventory"	"backpack/player/items/heavy/heavy_stocking_cap"
+			"model_player"	"models/player/items/heavy/heavy_stocking_cap.mdl"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+		}
+		"98"
+		{
+			"name"	"Stainless Pot"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Soldier_Pot_Hat"
+			"item_description"	"#TF_Soldier_Pot_Hat_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_pot"
+			"model_player"	"models/player/items/soldier/soldier_pot.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"		"1"
+				}
+			}
+		}
+		"99"
+		{
+			"name"	"Tyrant's Helm"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Soldier_Viking_Hat"
+			"item_description"	"#TF_Soldier_Viking_Hat_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_viking"
+			"model_player"	"models/player/items/soldier/soldier_viking.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"		"1"
+				}
+			}
+		}
+		"100"
+		{
+			"name"	"Glengarry Bonnet"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Demo_Scott_Hat"
+			"item_description"	"#TF_Demo_Scott_Hat_Desc"
+			"image_inventory"	"backpack/player/items/demo/demo_scott"
+			"model_player"	"models/player/items/demo/demo_scott.mdl"
+			"drop_type"	"drop"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+		}
+		"101"
+		{
+			"name"	"Vintage Tyrolean"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Medic_Tyrolean_Hat"
+			"item_description"	"#TF_Medic_Tyrolean_Hat_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_tyrolean"
+			"model_player"	"models/player/items/medic/medic_tyrolean.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+		}
+		"102"
+		{
+			"name"	"Respectless Rubber Glove"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Pyro_Chicken_Hat"
+			"item_description"	"#TF_Pyro_Chicken_Hat_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_chicken"
+			"model_player"	"models/player/items/pyro/pyro_chicken.mdl"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+		}
+		"103"
+		{
+			"name"	"Camera Beard"
+			"prefab"	"misc"
+			"year"	"2009"
+			"item_type_name"	"#TF_Wearable_FacialHair"
+			"item_name"	"#TF_Spy_Camera_Beard"
+			"item_description"	"#TF_Spy_Camera_Beard_Desc"
+			"equip_region"	"beard"
+			"image_inventory"	"backpack/player/items/spy/spy_camera_beard"
+			"model_player"	"models/player/items/spy/spy_camera_beard.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+		}
+		"104"
+		{
+			"name"	"Otolaryngologist's Mirror"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Medic_Mirror_Hat"
+			"item_description"	"#TF_Medic_Mirror_Hat_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_mirror"
+			"model_player"	"models/player/items/medic/medic_mirror.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+		}
+		"105"
+		{
+			"name"	"Brigade Helm"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Pyro_Fireman_Helmet"
+			"item_description"	"#TF_Pyro_Fireman_Helmet_Desc"
+			"image_inventory"	"backpack/player/items/pyro/fireman_helmet"
+			"model_player"	"models/player/items/pyro/fireman_helmet.mdl"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+		}
+		"106"
+		{
+			"name"	"Bonk Helm"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Scout_Bonk_Helmet"
+			"item_description"	"#TF_Scout_Bonk_Helmet_Desc"
+			"image_inventory"	"backpack/player/items/scout/bonk_helmet"
+			"model_player"	"models/player/items/scout/bonk_helmet.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+					"headphones"	"1"
+				}
+			}
+		}
+		"107"
+		{
+			"name"	"Ye Olde Baker Boy"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Scout_Newsboy_Cap"
+			"item_description"	"#TF_Scout_Newsboy_Cap_Desc"
+			"image_inventory"	"backpack/player/items/scout/newsboy_cap"
+			"model_player"	"models/player/items/scout/newsboy_cap.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+					"headphones"	"1"
+				}
+			}
+		}
+		"108"
+		{
+			"name"	"Backbiter's Billycock"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Spy_Derby_Hat"
+			"item_description"	"#TF_Spy_Derby_Hat_Desc"
+			"image_inventory"	"backpack/player/items/spy/derby_hat"
+			"model_player"	"models/player/items/spy/derby_hat.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+		}
+		"109"
+		{
+			"name"	"Professional's Panama"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Sniper_Straw_Hat"
+			"item_description"	"#TF_Sniper_Straw_Hat_Desc"
+			"image_inventory"	"backpack/player/items/sniper/straw_hat"
+			"model_player"	"models/player/items/sniper/straw_hat.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"110"
+		{
+			"name"	"Master's Yellow Belt"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Sniper_Jarate_Headband"
+			"item_description"	"#TF_Sniper_Jarate_Headband_Desc"
+			"equip_region"	"sniper_headband"
+			"image_inventory"	"backpack/player/items/sniper/jarate_headband"
+			"model_player"	"models/player/items/sniper/jarate_headband.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"111"
+		{
+			"name"	"Baseball Bill's Sports Shine"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Hatless_Scout"
+			"item_description"	"#TF_Hatless_Scout_Desc"
+			"image_inventory"	"backpack/player/items/scout/scout_nohat"
+			"model_player"	"models/player/items/scout/scout_nohat.mdl"
 			"used_by_classes"
 			{
 				"scout"		"1"
-				"soldier"	"1"
-				"pyro"		"1"
-				"demoman"	"1"
-				"heavy"		"1"
-				"engineer"	"1"
-				"medic"		"1"
-				"sniper"	"1"
-				"spy"		"1"
 			}
-			"baseitem"	"1"
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+					"headphones"	"1"
+				}
+			}
 		}
+		"117"
+		{
+			"name"	"Ritzy Rick's Hair Fixative"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Hatless_Sniper"
+			"item_description"	"#TF_Hatless_Sniper_Desc"
+			"image_inventory"	"backpack/player/items/sniper/sniper_nohat"
+			"model_player"	"models/player/items/sniper/sniper_nohat.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"118"
+		{
+			"name"	"Texas Slim's Dome Shine"
+			"prefab"	"hat_attachment"
+			"year"	"2009"
+			"item_name"	"#TF_Hatless_Engineer"
+			"item_description"	"#TF_Hatless_Engineer_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engineer_nohat"
+			"model_player"	"models/player/items/engineer/engineer_nohat.mdl"
+			"used_by_classes"
+			{
+				"engineer"		"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"120"
+		{
+			"name"	"Scotsman's Stove Pipe"
+			"prefab"	"hat"
+			"year"	"2009"
+			"item_name"	"#TF_Demo_Top_Hat"
+			"item_description"	"#TF_Demo_Top_Hat_Desc"
+			"image_inventory"	"backpack/player/items/demo/top_hat"
+			"model_player"	"models/player/items/demo/top_hat.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"visuals"
+			{
+				"skin"	"0"
+			}
+		}
+		
+		
+		"144"
+		{
+			"name"	"Medic Mask"
+			"year"	"2010"
+			"prefab"		"misc"
+			"item_type_name" "#TF_Wearable_Mask"
+			"item_name"	"#TF_MedicMask"
+			"item_description"	"#TF_MedicMask_Desc"
+			"equip_region"	"beard"
+			"image_inventory"	"backpack/workshop/player/items/medic/medic_mask/medic_mask"
+			"model_player"	"models/workshop/player/items/medic/medic_mask/medic_mask.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+		}
+		"145"
+		{
+			"name"	"Heavy Hair"
+			"year"	"2010"
+			"prefab"		"hat_attachment"
+			"item_name"	"#TF_HeavyHair"
+			"item_description"	"#TF_HeavyHair_Desc"
+			"equip_regions"
+			{
+				"hat"		"1"
+				"glasses"	"1"			
+			}
+			"image_inventory"	"backpack/player/items/heavy/hounddog"
+			"model_player"	"models/player/items/heavy/hounddog.mdl"
+			"propername"	"1"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+		}
+		"146"
+		{
+			"name"	"Demoman Hallmark"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_DemomanHallmark"
+			"item_description"	"#TF_DemomanHallmark_Desc"
+			"image_inventory"	"backpack/player/items/demo/hallmark"
+			"model_player"	"models/player/items/demo/hallmark.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"147"
+		{
+			"name"	"Spy Noble Hair"
+			"year"	"2010"
+			"prefab"		"hat_attachment"
+			"item_name"	"#TF_SpyNobleHair"
+			"item_description"	"#TF_SpyNobleHair_Desc"
+			"image_inventory"	"backpack/player/items/spy/noblehair"
+			"model_player"	"models/player/items/spy/noblehair.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"148"
+		{
+			"name"	"Engineer Welding Mask"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_EngineerWeldingMask"
+			"item_description"	"#TF_EngineerWeldingMask_Desc"
+			"image_inventory"	"backpack/player/items/engineer/weldingmask"
+			"model_player"	"models/player/items/engineer/weldingmask.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+				"playback_activity"
+				{
+					"on_spawn"	"ACT_IDLE"
+					"start_building"	"ACT_RUN"
+					"stop_building"	"ACT_IDLE"
+				}
+			}
+		}
+		"150"
+		{
+			"name"	"Scout Beanie"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_ScoutBeanie"
+			"item_description"	"#TF_ScoutBeanie_Desc"
+			"image_inventory"	"backpack/player/items/scout/beanie"
+			"model_player"	"models/player/items/scout/beanie.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+					"headphones"	"1"
+				}
+			}
+			"visuals_red"
+			{
+				"skin"	"0"
+			}
+			"visuals_blu"
+			{
+				"skin"	"1"	
+			}
+		}
+		"151"
+		{
+			"name"	"Pyro Brain Sucker"
+			"year"	"2010"
+			"prefab"		"hat_attachment"
+			"item_name"	"#TF_PyroBrainSucker"
+			"item_description"	"#TF_PyroBrainSucker_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_brainsucker"
+			"model_player"	"models/player/items/pyro/pyro_brainsucker.mdl"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+		}
+		"152"
+		{
+			"name"	"Soldier Samurai Hat"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_SoldierSamurai"
+			"item_description"	"#TF_SoldierSamurai_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_samurai"
+			"model_player"	"models/player/items/soldier/soldier_samurai.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}	
+
+
+		"174"
+		{
+			"name"	"Scout Whoopee Cap"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_ScoutWhoopee"
+			"item_description"	"#TF_ScoutWhoopee_Desc"
+			"image_inventory"	"backpack/player/items/scout/scout_whoopee"
+			"model_player"	"models/player/items/scout/scout_whoopee.mdl"
+			"used_by_classes"
+			{
+				"scout"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+					"headphones"	"1"
+				}
+			}
+		}
+		"175"
+		{
+			"name"	"Pyro Monocle"
+			"year"	"2010"
+			"prefab"		"misc"
+			"item_type_name" "#TF_Wearable_FacialHair"
+			"item_name"	"#TF_PyroMonocle"
+			"equip_region"	"beard"
+			"item_description"	"#TF_PyroMonocle_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_monocle"
+			"model_player"	"models/player/items/pyro/pyro_monocle.mdl"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+		}
+		"177"
+		{
+			"name"	"Medic Goggles"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_type_name" "#TF_Wearable_Glasses"
+			"item_name"	"#TF_MedicGoggles"
+			"item_description"	"#TF_MedicGoggles_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_goggles"
+			"model_player"	"models/player/items/medic/medic_goggles.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"178"
+		{
+			"name"	"Engineer Earmuffs"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_EngineerEarmuffs"
+			"item_description"	"#TF_EngineerEarmuffs_Desc"
+			"image_inventory"	"backpack/player/items/engineer/engy_earphones"
+			"model_player"	"models/player/items/engineer/engy_earphones.mdl"
+			"used_by_classes"
+			{
+				"engineer"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"179"
+		{
+			"name"	"Demoman Tricorne"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_DemomanTricorne"
+			"item_description"	"#TF_DemomanTricorne_Desc"
+			"image_inventory"	"backpack/player/items/demo/demo_tricorne"
+			"model_player"	"models/player/items/demo/demo_tricorne.mdl"
+			"used_by_classes"
+			{
+				"demoman"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"180"
+		{
+			"name"	"Spy Beret"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_SpyBeret"
+			"item_description"	"#TF_SpyBeret_Desc"
+			"image_inventory"	"backpack/player/items/spy/spy_beret"
+			"model_player"	"models/player/items/spy/spy_beret.mdl"
+			"used_by_classes"
+			{
+				"spy"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"181"
+		{
+			"name"	"Sniper Fishing Hat"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_SniperFishingHat"
+			"item_description"	"#TF_SniperFishingHat_Desc"
+			"image_inventory"	"backpack/player/items/sniper/sniper_fishinghat"
+			"model_player"	"models/player/items/sniper/sniper_fishinghat.mdl"
+			"used_by_classes"
+			{
+				"sniper"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"182"
+		{
+			"name"	"Pyro Helm"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_PyroHelm"
+			"item_description"	"#TF_PyroHelm_Desc"
+			"image_inventory"	"backpack/player/items/pyro/pyro_pyrolean"
+			"model_player"	"models/player/items/pyro/pyro_pyrolean.mdl"
+			"used_by_classes"
+			{
+				"pyro"	"1"
+			}
+		}
+		"183"
+		{
+			"name"	"Soldier Drill Hat"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_SoldierDrillHat"
+			"item_description"	"#TF_SoldierDrillHat_Desc"
+			"image_inventory"	"backpack/player/items/soldier/soldier_sargehat"
+			"model_player"	"models/player/items/soldier/soldier_sargehat.mdl"
+			"used_by_classes"
+			{
+				"soldier"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"184"
+		{
+			"name"	"Medic Gatsby"
+			"year"	"2010"
+			"prefab"		"hat"
+			"item_name"	"#TF_MedicGatsby"
+			"item_description"	"#TF_MedicGatsby_Desc"
+			"image_inventory"	"backpack/player/items/medic/medic_gatsby"
+			"model_player"	"models/player/items/medic/medic_gatsby.mdl"
+			"used_by_classes"
+			{
+				"medic"	"1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+				}
+			}
+		}
+		"185"
+		{
+			"name"	"Heavy Do-rag"
+			"year"	"2010"
+			"prefab"		"hat_attachment"
+			"item_name"	"#TF_HeavyDorag"
+			"item_description"	"#TF_HeavyDorag_Desc"
+			"image_inventory"	"backpack/player/items/heavy/heavy_bandana"
+			"model_player"	"models/player/items/heavy/heavy_bandana.mdl"
+			"propername"	"1"
+			"used_by_classes"
+			{
+				"heavy"	"1"
+			}
+		}
+		
+		
+	
+	
 	}
 	"attributes"
 	{
