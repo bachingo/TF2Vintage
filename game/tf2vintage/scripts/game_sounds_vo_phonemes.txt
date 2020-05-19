@@ -146696,7 +146696,7 @@ voice_duck 0
 }
 }
 
-vo\soldier_dominationdemomanupdate01.mp3
+vo\soldier_dominationdemonmanupdate01.mp3
 {
 VERSION 1.0
 PLAINTEXT
@@ -146785,7 +146785,7 @@ voice_duck 0
 }
 }
 
-vo\soldier_dominationdemomanupdate02.mp3
+vo\soldier_dominationdemonmanupdate02.mp3
 {
 VERSION 1.0
 PLAINTEXT
@@ -146935,7 +146935,7 @@ voice_duck 0
 }
 }
 
-vo\soldier_dominationdemomanupdate03.mp3
+vo\soldier_dominationdemonmanupdate03.mp3
 {
 VERSION 1.0
 PLAINTEXT
@@ -147027,7 +147027,7 @@ voice_duck 0
 }
 }
 
-vo\soldier_dominationdemomanupdate04.mp3
+vo\soldier_dominationdemonmanupdate04.mp3
 {
 VERSION 1.0
 PLAINTEXT
@@ -147103,7 +147103,7 @@ voice_duck 0
 }
 }
 
-vo\soldier_dominationdemomanupdate05.mp3
+vo\soldier_dominationdemonmanupdate05.mp3
 {
 VERSION 1.0
 PLAINTEXT
