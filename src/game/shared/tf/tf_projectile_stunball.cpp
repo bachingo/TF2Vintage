@@ -148,7 +148,7 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		bool bIsMoonShot = ( tf2v_sandman_stun_type.GetInt() == 2 )  ? flAirTime >= 1.0f : flAirTime >= 0.8f;
 		
 
-		int iDamageAmt = GetDamage();
+		int iDamageAmt = 15;	// Balls do a fixed damage amount.
 		if (tf2v_sandman_stun_type.GetInt() == 2 && bIsMoonShot)	// New Moonshot type increases damage by 50%.
 			iDamageAmt *= 1.5;
 		
