@@ -71,6 +71,8 @@ private:
 #ifdef GAME_DLL
 	CBaseHandle m_Scorer;
 	CNetworkVar( bool,	m_bCritical );
+
+	bool m_bTauntShot;
 #else
 	bool		m_bCritical;
 #endif

@@ -44,7 +44,9 @@ ConVar tf2v_use_new_flare_radius("tf2v_use_new_flare_radius", "0", FCVAR_NOTIFY 
 //-----------------------------------------------------------------------------
 CTFProjectile_Flare::CTFProjectile_Flare()
 {
-
+#ifdef GAME_DLL
+	m_bTauntShot = false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -69,6 +71,11 @@ void CTFProjectile_Flare::Precache()
 
 	PrecacheTeamParticles( "flaregun_trail_%s", true );
 	PrecacheTeamParticles( "flaregun_trail_crit_%s", true );
+	
+	PrecacheParticleSystem("drg_manmelter_projectile");
+	
+	PrecacheTeamParticles( "scorchshot_trail__%s", true );
+	PrecacheTeamParticles( "scorchshot_trail__crit_%s", true );
 
 	PrecacheScriptSound( "TFPlayer.FlareImpact" );
 	BaseClass::Precache();
@@ -90,6 +97,13 @@ void CTFProjectile_Flare::Spawn()
 		SetGravity( 0.0f );	
 	else								 		  // Regular flare
 		SetGravity( TF_FLARE_GRAVITY);
+		
+	// If we made this while taunting, record it as a taunt shot.
+	CTFPlayer *pScorer = ToTFPlayer( GetScorer() );
+	if ( pScorer && pScorer->IsTaunting() )
+	{
+		m_bTauntShot = true;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -229,11 +243,11 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 			// Scorch shot does knockback damage, and loses all of its speed on impact.
 
 			// Make sure only our knockback force blasts them backward.
-			int iDamageType = GetDamageType();
+			int iDamageType = m_bTauntShot ? 400 : GetDamageType();	// Taunt fired hits are immensely more powerful.
 			iDamageType |= DMG_PREVENT_PHYSICS_FORCE;
 			
 			// We deal with direct contact, do the regular logic.		
-			CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), iDamageType, TF_DMG_CUSTOM_BURNING );
+			CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), iDamageType, TF_DMG_CUSTOM_FLARE_PELLET );
 			info.SetReportedPosition( vectorReported);
 			pOther->TakeDamage( info );
 			
@@ -501,8 +515,18 @@ void CTFProjectile_Flare::CreateTrails( void )
 	const char *pszFormat = nullptr;
 	const char *pszEffectName = nullptr;
 	CTFWeaponBase *pLauncher = dynamic_cast<CTFWeaponBase*>(m_hLauncher.Get());
+	
+	int nWeaponMode = 0;
+	if (pLauncher)
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pLauncher, nWeaponMode, set_weapon_mode);
+	
 	if (pLauncher && pLauncher->IsEnergyWeapon()) // Energy beam
 		pszFormat = "drg_manmelter_projectile";	
+	else if (nWeaponMode == 3) // Scorch Shot
+	{
+		pszFormat = m_bCritical ? "scorchshot_trail_crit_%s" : "scorchshot_trail__%s";
+		pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber(), false );		
+	}
 	else // Standard flare
 	{		
 		pszFormat = m_bCritical ? "flaregun_trail_crit_%s" : "flaregun_trail_%s";
