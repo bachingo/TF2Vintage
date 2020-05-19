@@ -124,6 +124,8 @@ ConVar tf2v_use_new_short_circuit( "tf2v_use_new_short_circuit", "0", FCVAR_NOTI
 
 ConVar tf2v_use_new_cloak( "tf2v_use_new_cloak", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Gives cloaked spies a 20% damage resist and 25% shorter debuff duration.", true, 0, true, 1);
 
+ConVar tf2v_use_new_cleaners( "tf2v_use_new_cleaners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps Minicrit on Kill for the CRIKEY meter.", true, 0, true, 1);
+
 
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
@@ -389,6 +391,7 @@ CTFPlayerShared::CTFPlayerShared()
 	SetKillstreakCount( 0 );
 	SetFocusLevel( 0 );
 	SetFireRageMeter(0);
+	SetCrikeyMeter(0);
 
 	m_flEnergyDrinkDrainRate = tf_scout_energydrink_consume_rate.GetFloat();
 	m_flEnergyDrinkRegenRate = tf_scout_energydrink_regen_rate.GetFloat();
@@ -606,6 +609,7 @@ bool CTFPlayerShared::IsMiniCritBoosted( void )
 		InCond( TF_COND_ENERGY_BUFF ) ||
 		InCond( TF_COND_BERSERK ) ||
 		( InCond( TF_COND_SODAPOPPER_HYPE ) && !tf2v_use_new_sodapopper.GetBool() )||
+		InCond( TF_COND_MINICRITBOOSTED_RAGE_BUFF ) ||
 		InCond( TF_COND_MINICRITBOOSTED_ON_KILL ) )
 		return true;
 	return false;
@@ -1643,6 +1647,7 @@ void CTFPlayerShared::ConditionThink( void )
 	UpdateEnergyDrinkMeter();
 	UpdateFocusLevel();
 	UpdateFireRage();
+	UpdateCrikeyMeter();
 #else
 	m_pOuter->UpdateHalloweenBombHead();
 #endif
@@ -5192,6 +5197,42 @@ void CTFPlayerShared::UpdateFireRage( void )
 	
 	return;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Updates our Crikey.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateCrikeyMeter( void )
+{
+	if ( m_flCrikeyMeter > 100.0f ) // Prevent our meter from going over 100
+	{
+		m_flCrikeyMeter = 100.0f;
+	}
+	
+	float flCrikeyDuration = 0;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_pOuter, flCrikeyDuration, minicrit_boost_when_charged);
+		
+	if ( InCond( TF_COND_MINICRITBOOSTED_RAGE_BUFF ) )
+	{
+		if (flCrikeyDuration > 0)
+		{
+			m_flCrikeyMeter -= ( gpGlobals->frametime * (100/flCrikeyDuration) );	// Regularly 8 seconds. Don't allow division by zero.
+
+			if ( m_flCrikeyMeter <= 0.0f )
+			{
+				RemoveCond( TF_COND_MINICRITBOOSTED_RAGE_BUFF );
+				m_flCrikeyMeter = 0;
+			}
+		}
+		else
+		{
+			RemoveCond( TF_COND_MINICRITBOOSTED_RAGE_BUFF );
+			m_flCrikeyMeter = 0;
+		}	
+	}
+	
+	return;
+}
+
 
 #endif
 

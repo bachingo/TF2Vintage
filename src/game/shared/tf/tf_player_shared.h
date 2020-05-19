@@ -461,11 +461,18 @@ public:
 	// Mmmph.
 	void	UpdateFireRage( void );
 	void	AddFireRage(float input) { m_flFireRage = Min( (m_flFireRage + input), 100.0f ); }
+	
+	// CRIKEY.
+	void	UpdateCrikeyMeter( void );
+	void	AddCrikeyMeter(float input) { m_flCrikeyMeter = Min( (m_flCrikeyMeter + input), 100.0f ); }
 #endif
 	void	SetFireRageMeter( float value ) {m_flFireRage = value;}
 	bool	HasFullFireRage(void)	{return m_flFireRage >= 100.0f;}
 	float	GetFireRage(void)		{return m_flFireRage;}
 
+	void	SetCrikeyMeter( float value ) {m_flCrikeyMeter = value;}
+	bool	HasFullCrikeyMeter(void)	{return m_flCrikeyMeter >= 100.0f;}
+	float	GetCrikeyMeter(void)		{return m_flCrikeyMeter;}
 private:
 
 	void OnAddStealthed( void );
@@ -704,6 +711,7 @@ public:
 	CNetworkVar( float, m_flChargeMeter );
 	CNetworkVar( float, m_flHypeMeter );
 	CNetworkVar( float, m_flFireRage );
+	CNetworkVar( float, m_flCrikeyMeter );
 private:
 #else
 	float m_flEnergyDrinkMeter;
@@ -711,6 +719,7 @@ private:
 	float m_flChargeMeter;
 	float m_flHypeMeter;
 	float m_flFireRage;
+	float m_flCrikeyMeter;
 #endif
 	float m_flEnergyDrinkDrainRate;
 	float m_flEnergyDrinkRegenRate;

@@ -135,6 +135,7 @@ extern ConVar tf_scout_energydrink_consume_rate;
 
 extern ConVar tf2v_allow_disguiseweapons;
 extern ConVar tf2v_use_new_cloak;
+extern ConVar tf2v_use_new_cleaners;
 
 // TF2V commands
 ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout and class." );
@@ -5430,6 +5431,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 			}
 			
+			if (tf2v_use_new_cleaners.GetBool())
+			{
+				// Build Crikey boost.
+				float flBuildMinicritBoost = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, flBuildMinicritBoost, minicrit_boost_charge_rate );
+				if ( flBuildMinicritBoost > 0 )
+				{
+					pTFAttacker->m_Shared.AddCrikeyMeter(info.GetDamage() * flBuildMinicritBoost);
+				}
+			}
+			
 			// Notify the damaging weapon.
 			pWeapon->ApplyOnHitAttributes( this, pTFAttacker, info );
 
@@ -6875,7 +6887,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				if ( pWeapon->GetWeaponID() == GetActiveTFWeapon()->GetWeaponID() )
 				{
 					// Apply on-kill effects.
-					float flCritOnKill = 0.0f, flHealthOnKill = 0.0f, flMinicritOnKill = 0.0f, flRestoreOnKill = 0.0f;
+					float flCritOnKill = 0.0f, flHealthOnKill = 0.0f, flMinicritOnKill = 0.0f, flMiniCritRageOnKill = 0.0f, flRestoreOnKill = 0.0f;
 					
 					// Crit on kill
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flCritOnKill, add_onkill_critboost_time );
@@ -6901,12 +6913,23 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 							}
 						}
 					}
+
 					// Minicrits on kill
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMinicritOnKill, add_onkill_minicritboost_time );
 					if ( flMinicritOnKill )
 					{
 						m_Shared.AddCond( TF_COND_MINICRITBOOSTED_ON_KILL, flMinicritOnKill );
 					}
+
+					// Old style Cleaner's Carbine, provides Minicrits on kill.
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMiniCritRageOnKill, minicrit_boost_when_charged );					
+					if (!tf2v_use_new_cleaners.GetBool() && flMiniCritRageOnKill > 0 )
+					{
+						// Set CRIKEY meter to 100% and activate CRIKEY automatically.
+						m_Shared.SetCrikeyMeter( 100.0f );
+						m_Shared.AddCond( TF_COND_MINICRITBOOSTED_RAGE_BUFF );
+					}
+
 					// Shield meter on kill
 					float flAddChargeShieldKill = 0.0f;
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flAddChargeShieldKill, kill_refills_meter );
@@ -6914,6 +6937,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 					{
 						m_Shared.m_flChargeMeter = min( ( m_Shared.m_flChargeMeter + ( flAddChargeShieldKill * 100 ) ), 100.0f ) ;
 					}
+
 					// Restore HP % on kill
 					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flRestoreOnKill, restore_health_on_kill );
 					if ( flRestoreOnKill )
@@ -6933,11 +6957,13 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 							}
 						}
 					}
+
 					// Cloak meter on kill
 					int nAddCloakOnKill = 0;
 					CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nAddCloakOnKill, add_cloak_on_kill );
 					if ( nAddCloakOnKill > 0 )
 						m_Shared.AddToSpyCloakMeter( nAddCloakOnKill );
+
 					// Speed boost on kill
 					int nSpeedBoostOnKill = 0;
 					CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnKill, speed_boost_on_kill );

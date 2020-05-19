@@ -25,6 +25,7 @@
 #include "tf_weapon_raygun.h"
 #include "tf_weapon_flamethrower.h"
 #include "tf_weapon_rocketpack.h"
+#include "tf_weapon_smg.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
 #include <vgui/ILocalize.h>
@@ -44,6 +45,8 @@
 using namespace vgui;
 
 ConVar tf2v_show_killstreak_counter("tf2v_show_killstreak_counter", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Displays the Killstreak counter on the HUD.", true, 0.0f, true, 1.0f);
+
+extern ConVar tf2v_use_new_cleaners;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -659,9 +662,40 @@ bool CHudItemEffectMeterTemp<C_TFFlameThrower>::ShouldBeep( void )
 template<>
 float CHudItemEffectMeterTemp<C_TFFlameThrower>::GetProgress( void )
 {
-		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-		if ( pPlayer && IsEnabled() )
-			return pPlayer->m_Shared.GetFireRage() / 100;
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && IsEnabled() )
+		return pPlayer->m_Shared.GetFireRage() / 100;
+
+	return 1.0f;
+}
+
+//-----------------------------------------------------------------------------
+// C_TFSMG_Charged Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::IsEnabled( void )
+{
+	if (tf2v_use_new_cleaners.GetBool())
+		return true;
+
+	return false;
+}
+
+template<>
+bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::ShouldBeep( void )
+{
+	if (tf2v_use_new_cleaners.GetBool())
+		return true;
+
+	return false;
+}
+
+template<>
+float CHudItemEffectMeterTemp<C_TFSMG_Charged>::GetProgress( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && IsEnabled() )
+		return pPlayer->m_Shared.GetCrikeyMeter() / 100;
 
 	return 1.0f;
 }
@@ -797,6 +831,7 @@ void CHudItemEffects::SetPlayer( void )
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJar>( "HudItemEffectMeter" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Sniper.res" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSniperRifle>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Sniperfocus.res" ) );
+			AddItemMeter( new CHudItemEffectMeterTemp<C_TFSMG_Charged>( "HudItemEffectMeter" ) );
 			break;
 		case TF_CLASS_SOLDIER:
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFBuffItem>( "HudItemEffectMeter" ) );

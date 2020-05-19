@@ -7521,16 +7521,6 @@
 			"model_player"	"models/workshop/weapons/c_models/c_pro_smg/c_pro_smg.mdl"
 			"attributes"
 			{
-				"minicritboost on kill"
-				{
-					"attribute_class"	"add_onkill_minicritboost_time"
-					"value"	"8"
-				}
-				"weapon spread bonus"
-				{
-					"attribute_class"	"mult_spread_scale"
-					"value"	"0.80"
-				}
 				"fire rate penalty"
 				{
 					"attribute_class"	"mult_postfiredelay"
@@ -7545,6 +7535,16 @@
 				{
 					"attribute_class"	"mult_crit_chance"
 					"value"	"0"
+				}
+				"minicrit_boost_charge_rate"
+				{
+					"attribute_class" "minicrit_boost_charge_rate"
+					"value" "1"
+				}
+				"minicrit_boost_when_charged"
+				{
+					"attribute_class" "minicrit_boost_when_charged"
+					"value" "8"
 				}
 			}
 			"visuals"

@@ -14,6 +14,7 @@
 #ifdef CLIENT_DLL
 #define CTFSMG C_TFSMG
 #define CTFSMG_Primary C_TFSMG_Primary
+#define CTFSMG_Charged C_TFSMG_Charged
 #endif
 
 //=============================================================================
@@ -49,6 +50,21 @@ public:
 	DECLARE_CLASS( CTFSMG_Primary, CTFSMG );
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
+};
+
+class CTFSMG_Charged : public CTFSMG
+{
+public:
+	DECLARE_CLASS( CTFSMG_Charged, CTFSMG );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_CHARGED_SMG; }
+	virtual bool	HasChargeBar( void );
+	virtual const char* GetEffectLabelText( void )			{ return "#TF_SmgCharge"; }
+	virtual float	GetEffectBarProgress( void );
+	virtual void	SecondaryAttack( void );
+	virtual void	ItemBusyFrame( void );
 };
 
 #endif // TF_WEAPON_SMG_H
