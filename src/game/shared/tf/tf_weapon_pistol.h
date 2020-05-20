@@ -70,6 +70,16 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_HANDGUN_SCOUT_PRIMARY; }
+	
+	void 			Precache( void );
+	
+	void			SecondaryAttack( void );
+	void 			Shove( void );
+	
+	void 			ItemPostFrame( void );
+	bool 			Holster( CBaseCombatWeapon *pSwitchingTo );
+	
+	float m_flPushDelay;
 };
 
 #endif // TF_WEAPON_PISTOL_H
