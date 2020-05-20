@@ -385,13 +385,14 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
 
 	float flRadius = GetDamageRadius();
+	int iDamage = GetDamage();
 
 	if ( tf_grenade_show_radius.GetBool() )
 	{
 		DrawRadius( flRadius );
 	}
 
-	CTakeDamageInfo newInfo( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, GetDamageCustom(), &vecReported );
+	CTakeDamageInfo newInfo( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), iDamage, bitsDamageType, GetDamageCustom(), &vecReported );
 	CTFRadiusDamageInfo radiusInfo;
 	radiusInfo.info = &newInfo;
 	radiusInfo.m_vecSrc = vecOrigin;

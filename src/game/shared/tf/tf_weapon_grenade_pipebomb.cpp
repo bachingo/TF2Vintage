@@ -56,6 +56,8 @@ ConVar tf2v_grenades_explode_contact( "tf2v_grenades_explode_contact", "1", FCVA
 ConVar tf2v_fizzle_in_skybox( "tf2v_fizzle_in_skybox", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 ConVar tf2v_use_stickybomb_radius_rampup("tf2v_use_stickybomb_radius_rampup", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Ramps up the radius of new and untouched stickies.");
+ConVar tf2v_use_stickybomb_damage_rampup("tf2v_use_stickybomb_damage_rampup", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Ramps up the damage of new stickies.");
+
 
 #ifndef CLIENT_DLL
 ConVar tf_grenadelauncher_min_contact_speed( "tf_grenadelauncher_min_contact_speed", "100", FCVAR_DEVELOPMENTONLY );
@@ -885,13 +887,34 @@ float CTFGrenadePipebombProjectile::GetDamageRadius( void )
 		if ( GetType() == TF_GL_MODE_REMOTE_DETONATE && m_bTouched == false )
 		{
 			// Start at 85% at the arming time, ramping up to 100% at 2 seconds after arming.
-			float flArmTime = tf_grenadelauncher_livetime.GetFloat();
+			float flArmTime = GetLiveTime();
 			flRadius *= RemapValClamped( (gpGlobals->curtime - m_flCreationTime ),flArmTime,(2 + flArmTime), 0.85, 1.0 );
 		}
 	}
 	
 	return flRadius;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFGrenadePipebombProjectile::GetDamage( void )
+{
+	// If we ramp up stickybomb damage, run the calculation.
+	if (tf2v_use_stickybomb_damage_rampup.GetBool())
+	{
+		// We only call this if our bomb is armed, so make sure we set the damage correctly.
+		if ( GetType() == TF_GL_MODE_REMOTE_DETONATE && ( gpGlobals->curtime >= (m_flCreationTime + GetLiveTime() ) ) )
+		{
+			// Start at 50% at the arming time, ramping up to 100% at 2 seconds after firing.
+			float flArmTime = GetLiveTime();
+			m_flDamage *= RemapValClamped( (gpGlobals->curtime - m_flCreationTime ),flArmTime, 2, 0.50, 1.0 );		
+		}
+	}
+
+	return m_flDamage;
+}
+
 
 #endif
 

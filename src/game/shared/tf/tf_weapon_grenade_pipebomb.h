@@ -93,6 +93,7 @@ public:
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 	
 	virtual float 	GetDamageRadius( void );
+	virtual float	GetDamage(void);
 
 private:
 
