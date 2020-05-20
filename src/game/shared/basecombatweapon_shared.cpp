@@ -62,6 +62,8 @@ ConVar tf_weapon_criticals_bucket_bottom( "tf_weapon_criticals_bucket_bottom", "
 ConVar tf_weapon_criticals_bucket_default( "tf_weapon_criticals_bucket_default", "300.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // TF
 
+ConVar tf2v_use_new_autofire( "tf2v_use_new_autofire", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows Autofire weapons to hold their shots when fully loaded." );
+
 CBaseCombatWeapon::CBaseCombatWeapon()
 {
 	// Constructor must call this
@@ -2272,7 +2274,9 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 		m_bIsOverLoaded = false;
 	}
 	
-	if ((m_iClip1 == GetMaxClip1() && !CanOverload()) || pOwner->GetAmmoCount(m_iPrimaryAmmoType) == 0)
+	// If we overload and have no ammo, or we run out of ammo/have max ammo and can't hold our shot in, start firing.
+	if ( ( CanOverload() && ( pOwner->GetAmmoCount(m_iPrimaryAmmoType) == 0) ) ||
+		( !CanOverload() && ( ( m_iClip1 == GetMaxClip1() ) || pOwner->GetAmmoCount(m_iPrimaryAmmoType) == 0 ) && !tf2v_use_new_autofire.GetBool() ) )
 	{
 		// At max ammo or out of ammo to reload, start firing immediately.
 		m_bFiringWholeClip = true;
