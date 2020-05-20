@@ -28,7 +28,8 @@
 
 #define TF_WEAPON_ENERGYRING_MODEL	"models/empty.mdl"
 
-ConVar tf2v_use_new_bison( "tf2v_use_new_bison", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Bison's damage mechanics.", true, 0, true, 2 );
+ConVar tf2v_use_new_bison_damage( "tf2v_use_new_bison_damage", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Bison's damage mechanics.", true, 0, true, 2 );
+ConVar tf2v_use_new_bison_speed( "tf2v_use_new_bison_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Decreases Bison speed by 30%." );
 
 //=============================================================================
 //
@@ -122,7 +123,10 @@ void CTFProjectile_EnergyRing::Spawn()
 	SetModel( TF_WEAPON_ENERGYRING_MODEL );
 	BaseClass::Spawn();
 
+
 	float flRadius = 0.01f;
+	if ( UsePenetratingBeam() && tf2v_use_new_bison_damage.GetInt() != 2) // Use bigger hitboxes on older Bisons.
+		flRadius = 0.02f;
 	UTIL_SetSize( this, -Vector( flRadius, flRadius, flRadius ), Vector( flRadius, flRadius, flRadius ) );
 	m_nPenetratedCount = 0;
 }
@@ -137,7 +141,7 @@ void CTFProjectile_EnergyRing::RocketTouch( CBaseEntity *pOther )
 		
 		bool bShouldDamage = true;
 		// Bison with mid era selection does not double dip damage.
-		if ( UsePenetratingBeam() && tf2v_use_new_bison.GetInt() == 1 )
+		if ( UsePenetratingBeam() && tf2v_use_new_bison_damage.GetInt() == 1 )
 		{
 			// Check the players hit.
 			FOR_EACH_VEC( hPenetratedPlayers, i )
@@ -159,27 +163,28 @@ void CTFProjectile_EnergyRing::RocketTouch( CBaseEntity *pOther )
 			if ( pScorerInterface )
 				pAttacker = pScorerInterface->GetScorer();
 
-			float flDamage = GetDamage();
+			float flDamage;
 			if ( UsePenetratingBeam() )
 			{
 				// Damage done with Bison beams depends on era.
-				switch (tf2v_use_new_bison.GetInt())
+				switch (tf2v_use_new_bison_damage.GetInt())
 				{
 					case 1:
 						// This goes down 25% for each thing we hit. (100%, 75%, 50%, 25%, 0%.)
-						flDamage = GetDamage() - (0.25 * m_nPenetratedCount) * GetDamage();
+						// On the upside, this does have a base 45 damage.
+						flDamage = 45 - (0.25 * m_nPenetratedCount) * 45;
 						break;
 					
-					case 2:
-						// This value is a constant 20.
-						flDamage = 20;
-						break;
-					
+					// These are solid 20 damage, but they can do damage multiple times.
 					case 0:
+					case 2:
 					default:
+						flDamage = 20;
 						break;
 				}
 			}
+			else // Just call our damage, nothing interesting.
+				flDamage = 60;
 			
 			int iDamageType = GetDamageType();
 
@@ -211,7 +216,7 @@ void CTFProjectile_EnergyRing::RocketTouch( CBaseEntity *pOther )
 			UTIL_Remove(this);
 		
 		// Penetrating: Delete the beam after hitting the 4th target, when on mid era.
-		if ( m_nPenetratedCount >= 4 && tf2v_use_new_bison.GetInt() == 1 )		
+		if ( m_nPenetratedCount >= 4 && tf2v_use_new_bison_damage.GetInt() == 1 )		
 			UTIL_Remove(this);
 	}
 	else
@@ -283,6 +288,8 @@ CTFProjectile_EnergyRing *CTFProjectile_EnergyRing::Create( CBaseEntity *pWeapon
 
 
 		float flVelocity = 1200.0f;
+		if (pRing->UsePenetratingBeam() && tf2v_use_new_bison_speed.GetBool()) // New Bison speed is much slower.
+			flVelocity *= 0.7;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flVelocity, mult_projectile_speed );
 
 		Vector vecVelocity = vecForward * flVelocity;
