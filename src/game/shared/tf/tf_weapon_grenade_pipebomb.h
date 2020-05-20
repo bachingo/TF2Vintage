@@ -91,6 +91,8 @@ public:
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 	
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+	
+	virtual float 	GetDamageRadius( void );
 
 private:
 

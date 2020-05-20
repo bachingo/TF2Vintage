@@ -55,6 +55,8 @@ ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_
 ConVar tf2v_grenades_explode_contact( "tf2v_grenades_explode_contact", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should Demoman grenades explode on contact?" );
 ConVar tf2v_fizzle_in_skybox( "tf2v_fizzle_in_skybox", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
+ConVar tf2v_use_stickybomb_radius_rampup("tf2v_use_stickybomb_radius_rampup", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Ramps up the radius of new and untouched stickies.");
+
 #ifndef CLIENT_DLL
 ConVar tf_grenadelauncher_min_contact_speed( "tf_grenadelauncher_min_contact_speed", "100", FCVAR_DEVELOPMENTONLY );
 #endif
@@ -871,6 +873,25 @@ void CTFGrenadePipebombProjectile::Deflected( CBaseEntity *pDeflectedBy, Vector 
 	// TODO: Live TF2 adds white trail to reflected pipes and stickies. We need one as well.
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFGrenadePipebombProjectile::GetDamageRadius( void )
+{
+	float flRadius = BaseClass::GetDamageRadius();
+	if ( tf2v_use_stickybomb_radius_rampup.GetBool() )
+	{	
+		// If we're a sticky, and we haven't touched anything.
+		if ( GetType() == TF_GL_MODE_REMOTE_DETONATE && m_bTouched == false )
+		{
+			// Start at 85% at the arming time, ramping up to 100% at 2 seconds after arming.
+			float flArmTime = tf_grenadelauncher_livetime.GetFloat();
+			flRadius *= RemapValClamped( (gpGlobals->curtime - m_flCreationTime ),flArmTime,(2 + flArmTime), 0.85, 1.0 );
+		}
+	}
+	
+	return flRadius;
+}
 
 #endif
 

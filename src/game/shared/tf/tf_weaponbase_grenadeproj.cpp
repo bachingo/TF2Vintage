@@ -132,7 +132,7 @@ float CTFWeaponBaseGrenadeProj::GetDamageRadius( void )
 {
 	float flRadius = BaseClass::GetDamageRadius();
 	if ( tf2v_use_new_grenade_radius.GetBool() )
-		flRadius *= (159 / 146 );
+		flRadius *= (146 / 159 );
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), flRadius, mult_explosion_radius );
 	// If we're blast jumping with an attack bonus, decrease radius by 20%.
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
