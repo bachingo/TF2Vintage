@@ -125,8 +125,6 @@ void CTFProjectile_EnergyRing::Spawn()
 
 
 	float flRadius = 0.01f;
-	if ( UsePenetratingBeam() && tf2v_use_new_bison_damage.GetInt() != 2) // Use bigger hitboxes on older Bisons.
-		flRadius = 0.02f;
 	UTIL_SetSize( this, -Vector( flRadius, flRadius, flRadius ), Vector( flRadius, flRadius, flRadius ) );
 	m_nPenetratedCount = 0;
 }
