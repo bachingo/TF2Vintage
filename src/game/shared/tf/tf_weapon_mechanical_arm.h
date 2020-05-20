@@ -51,8 +51,6 @@ public:
 #ifdef CLIENT_DLL
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	StopParticleBeam( void );
-#else
-	virtual void	ShockAttack();
 #endif
 
 	//void		UpdateBodygroups( CBaseCombatCharacter *pOwner, int );

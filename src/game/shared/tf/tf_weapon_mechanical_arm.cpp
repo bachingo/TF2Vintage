@@ -147,14 +147,6 @@ void CTFMechanicalArm::StopParticleBeam( void )
 	ParticleProp()->StopEmission( m_pZap );
 	m_pZap = NULL;
 }
-#else
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFMechanicalArm::ShockAttack()
-{
-	
-}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -204,6 +196,7 @@ void CTFMechanicalArm::LaunchElectricalShock()
 	Vector vecSrc = pOwner->Weapon_ShootPosition();
 	Vector vecEnd = vecSrc + vecForward * m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flRange;
 
+	// Make a trace. This doesn't do anything for deleting projectiles but does damage + gives client a visual ending.
 	trace_t tr;
 	UTIL_TraceLine(vecSrc, vecEnd, MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &tr);
 
@@ -216,31 +209,48 @@ void CTFMechanicalArm::LaunchElectricalShock()
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation(pOwner, pOwner->GetCurrentCommand());
 	
-	// Do a radius check on where we fires to see what we delete.
+	// Do a check on where we fire to see what we delete.
 	int nDeletedProjectiles = 0;
-	CBaseEntity *pEntity = NULL;
- 	for ( CEntitySphereQuery sphere( vecEnd, (TF_WEAPON_MECHANICALARM_RADIUS) ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+	
+	// Set up a box around our shot.
+	Vector vecSize = Vector( 128, 128, 64 );
+	float flBlastDist = Max(Max(vecSize.x, vecSize.y), vecSize.z);
+	Vector vecOrigin = 	pOwner->EyePosition() + vecForward * flBlastDist;
+	
+	CBaseEntity *pList[64];
+	int count = UTIL_EntitiesInBox( pList, 64, vecOrigin - vecSize, vecOrigin + vecSize, FL_CLIENT|FL_GRENADE );
+	for ( int i = 0; i < count; i++ )
 	{
+		CBaseEntity *pEntity = pList[i];
+			
 		if ( !pEntity )
 			continue;
 
-		if ( InSameTeam( pEntity ) )
+		if ( pEntity == pOwner )
 			continue;
 
- 		Vector vecHitPoint;
-		pEntity->CollisionProp()->CalcNearestPoint( vecEnd, &vecHitPoint );
-		Vector vecDir = vecHitPoint - vecEnd;
+		// Don't affect teammate projectiles.
+		if ( InSameTeam( pEntity ) )
+			continue;
 		
-		// Valid projectile, delete.
- 		if ( vecDir.LengthSqr() < ( TF_WEAPON_MECHANICALARM_RADIUS * TF_WEAPON_MECHANICALARM_RADIUS ) )
+		// Base projectile, delete it.
+		CBaseProjectile *pProj = dynamic_cast<CBaseProjectile *>( pList[i] );
+		if ( pProj )
 		{
-			CBaseProjectile *pProj = dynamic_cast<CBaseProjectile *>( pEntity );
-			if (pProj)
-			{
-				pEntity->EmitSound("Weapon_BarretsArm.Fizzle");
-				UTIL_Remove(pEntity);
-				nDeletedProjectiles++;
-			}
+			pEntity->EmitSound("Weapon_BarretsArm.Fizzle");
+			UTIL_Remove(pEntity);
+			nDeletedProjectiles++;
+			continue;
+		}
+		
+		// Base grenade, delete it.
+		CBaseGrenade *pGren = dynamic_cast<CBaseGrenade *>(pList[i]);
+		if ( pGren )
+		{
+			pEntity->EmitSound("Weapon_BarretsArm.Fizzle");
+			UTIL_Remove(pEntity);
+			nDeletedProjectiles++;
+			continue;
 		}
 	}
 
