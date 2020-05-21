@@ -3022,12 +3022,14 @@
 			"hide_bodygroups_deployed_only"	"1"
 			"visuals"
 			{
+				"player_bodygroups"
+				{
+					"rightarm"			"2"
+				}
 				"sound_single_shot"	"Weapon_BarretsArm.Zap"
 				"sound_empty"		"Weapon_BarretsArm.Fizzle"
 				"sound_deploy"		"Weapon_BarretsArm.Draw"
 				"sound_special3"	"Weapon_BarretsArm.Shot"
-				"wm_bodygroup_override"			"2"
-				"wm_bodygroup_state_override"			"2"
 				"animation_replacement"
 				{
 					"ACT_SECONDARY_VM_INSPECT_START"	"ACT_SECONDARY_ALT2_VM_INSPECT_START"
