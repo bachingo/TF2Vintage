@@ -6715,7 +6715,7 @@
 		"442"
 		{
 			"name"		"The Righteous Bison"
-			"weapon"	"weapon_raygun"
+			"prefab"	"weapon_raygun"
 			"year"		"2011"
 		}
 		"444"
