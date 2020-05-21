@@ -314,7 +314,9 @@ const char *g_AnimSlots[] =
 	"MISC",
 	"MELEE_ALLCLASS",
 	"SECONDARY2",
-	"PRIMARY2"
+	"PRIMARY2",
+	"ITEM3",
+	"ITEM4",
 };
 
 const char *g_InventoryLoadoutPresets[] =
