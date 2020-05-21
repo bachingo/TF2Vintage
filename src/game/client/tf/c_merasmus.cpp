@@ -29,11 +29,12 @@ public:
 
 private:
 	bool m_bRevealedParity;
-	bool m_bRevealed;
-	bool m_bDoingAOEAttack;
 	bool m_bDoingAOEAttackParity;
-	bool m_bStunned;
 	bool m_bStunnedParity;
+	
+	CNetworkVar( bool, m_bRevealed );
+	CNetworkVar( bool, m_bIsDoingAOEAttack );
+	CNetworkVar( bool, m_bStunned );
 
 	HPARTICLEFFECT m_pBodyAura;
 	HPARTICLEFFECT m_pBookParticle;

@@ -130,6 +130,7 @@ public:
 	CNetworkVar( bool, m_bDoingAOEAttack );
 	CNetworkVar( bool, m_bStunned );
 
+
 	CountdownTimer m_lifeTimeDuration;
 	float m_flTimeLeftAlive;
 
