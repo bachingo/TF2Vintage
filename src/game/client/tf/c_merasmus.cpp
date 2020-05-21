@@ -33,9 +33,9 @@ private:
 	bool m_bStunnedParity;
 	
 	CNetworkVar( bool, m_bRevealed );
-	CNetworkVar( bool, m_bIsDoingAOEAttack );
+	CNetworkVar( bool, m_bDoingAOEAttack );
 	CNetworkVar( bool, m_bStunned );
-
+	
 	HPARTICLEFFECT m_pBodyAura;
 	HPARTICLEFFECT m_pBookParticle;
 	HPARTICLEFFECT m_pStunnedParticle;
