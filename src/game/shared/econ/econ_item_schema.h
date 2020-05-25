@@ -226,7 +226,7 @@ public:
 private:
 	char name[128];
 	char attribute_class[64];
-	char description_string[32];
+	char description_string[64];
 
 	KeyValues *definition;
 
