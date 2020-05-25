@@ -920,6 +920,7 @@ static void MountAdditionalContent()
 			{
 				if ( Q_stricmp( pKey->GetName(), "AdditionalContentId" ) == 0 )
 				{
+				#ifndef NO_STEAM
 					int appid = abs( pKey->GetInt() );
 					if ( appid )
 					{
@@ -962,6 +963,7 @@ static void MountAdditionalContent()
 						}
 						g_pFullFileSystem->FindClose( fh );
 					}
+				#endif
 				}
 			}
 		}
