@@ -202,16 +202,10 @@ public:
 		stored_as_integer = false;
 		m_iAttributeClass = NULL_STRING;
 	}
-	CEconAttributeDefinition( CEconAttributeDefinition const &src )
-	{
-		*this = src;
-	}
 	~CEconAttributeDefinition()
 	{
 		definition->deleteThis();
 	}
-
-	CEconAttributeDefinition &operator=( CEconAttributeDefinition const &rhs );
 
 	char const *GetName( void ) const
 	{
@@ -500,10 +494,6 @@ public:
 		is_multiclass_item = false;
 		CLEAR_STR( holiday_restriction );
 	}
-	CEconItemDefinition( CEconItemDefinition const &src )
-	{
-		*this = src;
-	}
 	~CEconItemDefinition();
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
@@ -512,8 +502,6 @@ public:
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
 	void IterateAttributes( IEconAttributeIterator *iter );
-
-	CEconItemDefinition &operator=( CEconItemDefinition const &rhs );
 
 	char const *GetName( void ) const
 	{
