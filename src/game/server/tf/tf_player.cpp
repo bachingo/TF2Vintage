@@ -1130,6 +1130,11 @@ void CTFPlayer::PrecachePlayerModels( void )
 		}
 	}
 
+	for ( i = 4; i < ARRAYSIZE( g_pszBDayGibs ); ++i )
+	{
+		PrecacheModel( g_pszBDayGibs[i] );
+	}
+
 	if ( TFGameRules() && TFGameRules()->IsBirthday() )
 	{
 		for ( i = 1; i < ARRAYSIZE( g_pszBDayGibs ); i++ )
