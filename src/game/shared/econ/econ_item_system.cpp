@@ -796,7 +796,10 @@ CEconItemSchema::~CEconItemSchema()
 	m_Attributes.Purge();
 
 	for ( attr_type_t const &atype : m_AttributeTypes )
+	{
 		delete atype.pType;
+	}
+	m_AttributeTypes.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------
@@ -888,6 +891,11 @@ void CEconItemSchema::Precache( void )
 				if ( pVisuals->aWeaponSounds[i] && pVisuals->aWeaponSounds[i][0] != '\0' )
 					CBaseEntity::PrecacheScriptSound( pVisuals->aWeaponSounds[i] );
 			}
+			for ( int i = 0; i < MAX_CUSTOM_WEAPON_SOUNDS; i++ )
+			{
+				if ( pVisuals->aCustomWeaponSounds[i] && pVisuals->aCustomWeaponSounds[i][0] != '\0' )
+					CBaseEntity::PrecacheScriptSound( pVisuals->aCustomWeaponSounds[i] );
+			}
 
 			// Precache attachments.
 			for ( int i = 0; i < pVisuals->attached_models.Count(); i++ )
@@ -933,7 +941,7 @@ void CEconItemSchema::Precache( void )
 	}
 }
 
-CEconItemDefinition* CEconItemSchema::GetItemDefinition( int id )
+CEconItemDefinition *CEconItemSchema::GetItemDefinition( int id )
 {
 	if ( id < 0 )
 		return NULL;
@@ -958,17 +966,18 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name 
 
 CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
 {
-	uint16 index = m_Attributes.Find( id );
-	if ( index != m_Attributes.InvalidIndex() )
-		return m_Attributes[index];
-
-	return NULL;
+	if ( id < 0 )
+		return NULL;
+	CEconAttributeDefinition *itemdef = NULL;
+	FIND_ELEMENT( m_Attributes, id, itemdef );
+	return itemdef;
 }
 
 CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const char *name )
 {
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
+		Assert( m_Attributes[i]->name[0] );
 		if ( !V_stricmp( m_Attributes[i]->name, name ) )
 		{
 			return m_Attributes[i];
@@ -982,6 +991,7 @@ CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const 
 {
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
+		Assert( m_Attributes[i]->attribute_class[0] );
 		if ( !V_stricmp( m_Attributes[i]->attribute_class, classname ) )
 		{
 			return m_Attributes[i];
