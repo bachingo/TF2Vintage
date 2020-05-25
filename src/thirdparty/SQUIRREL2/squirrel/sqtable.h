@@ -24,7 +24,7 @@ inline SQHash HashObj(const SQObjectPtr &key)
 
 struct SQTable : public SQDelegable 
 {
-private:
+public:
 	struct _HashNode
 	{
 		_HashNode() { next = NULL; }
@@ -36,7 +36,8 @@ private:
 	_HashNode *_nodes;
 	SQInteger _numofnodes;
 	SQInteger _usednodes;
-	
+
+private:
 ///////////////////////////
 	void AllocNodes(SQInteger nSize);
 	void Rehash(bool force);
