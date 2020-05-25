@@ -1137,7 +1137,7 @@ void CTFPlayer::PrecachePlayerModels( void )
 
 	if ( TFGameRules() && TFGameRules()->IsBirthday() )
 	{
-		for ( i = 1; i < ARRAYSIZE( g_pszBDayGibs ); i++ )
+		for ( i = 0; i < 4; i++ )
 		{
 			PrecacheModel( g_pszBDayGibs[i] );
 		}
