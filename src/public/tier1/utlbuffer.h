@@ -197,6 +197,10 @@ public:
 	{
 		GetStringInternal( pString, maxLenInChars );
 	}
+	void			GetString( char *pString, int maxLenInChars )
+	{
+		GetStringManualCharCount( pString, maxLenInChars );
+	}
 
 	void GetStringManualCharCount( char *pString, size_t maxLenInChars )
 	{
