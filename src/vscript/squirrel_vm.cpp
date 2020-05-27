@@ -9,6 +9,7 @@
 #include "tier1.h"
 #include "utlvector.h"
 #include "utlhash.h"
+#include "utlbuffer.h"
 #include "fmtstr.h"
 
 #include "vscript_init_nut.h"
@@ -26,6 +27,8 @@
 #include "sqstdmath.h"
 #include "sqstdaux.h"
 
+#include "sq_vmstate.h"
+
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
 
@@ -41,7 +44,17 @@
 // we don't want bad actors being malicious
 extern "C" 
 {
-	SQRESULT sqstd_loadfile(HSQUIRRELVM, SQChar const *, SQBool)
+	SQRESULT sqstd_loadfile(HSQUIRRELVM,const SQChar*,SQBool)
+	{
+		return SQ_ERROR;
+	}
+
+	SQRESULT sqstd_register_iolib(HSQUIRRELVM)
+	{
+		return SQ_ERROR;
+	}
+
+	SQInteger sqstd_register_systemlib(HSQUIRRELVM)
 	{
 		return SQ_ERROR;
 	}
@@ -55,15 +68,6 @@ typedef struct
 	SQObjectPtr m_instanceUniqueId;
 } ScriptInstance_t;
 
-typedef struct
-{
-	ScriptFunctionBinding_t *m_pFunctionBinding;
-} ScriptFunction_t;
-
-typedef struct
-{
-	ScriptClassDesc_t *m_pClasDescriptor;
-} ScriptClass_t;
 
 
 const HSQOBJECT INVALID_HSQOBJECT = { OT_INVALID, (SQTable *)-1 };
@@ -126,8 +130,12 @@ public:
 	bool				ClearValue( HSCRIPT hScope, const char *pszKey );
 	int					GetNumTableEntries( HSCRIPT hScope );
 
-	void				WriteState( CUtlBuffer *pBuffer ) {}
-	void				ReadState( CUtlBuffer *pBuffer ) {}
+	enum
+	{
+		SAVE_VERSION = 2
+	};
+	void				WriteState( CUtlBuffer *pBuffer );
+	void				ReadState( CUtlBuffer *pBuffer );
 	void				DumpState() {}
 
 	bool				ConnectDebugger();
@@ -551,8 +559,8 @@ bool CSquirrelVM::RegisterClass( ScriptClassDesc_t *pClassDesc )
 		{
 			sq_pushstring( GetVM(), "constructor", -1 );
 
-			ScriptClass_t *pData = (ScriptClass_t *)sq_newuserdata( GetVM(), sizeof( ScriptClass_t * ) );
-			pData->m_pClasDescriptor = pClassDesc;
+			ScriptClassDesc_t **pClassDescription = (ScriptClassDesc_t **)sq_newuserdata( GetVM(), sizeof( ScriptClassDesc_t * ) );
+			*pClassDescription = pClassDesc;
 
 			sq_newclosure( GetVM(), &CSquirrelVM::CallConstructor, 1 );
 			sq_createslot( GetVM(), -3 );
@@ -890,6 +898,32 @@ int CSquirrelVM::GetNumTableEntries( HSCRIPT hScope )
 	return nEntries;
 }
 
+void CSquirrelVM::WriteState( CUtlBuffer *pBuffer )
+{
+	sq_collectgarbage( GetVM() );
+
+	pBuffer->PutInt( SAVE_VERSION );
+	pBuffer->PutInt64( m_nUniqueKeyQueries );
+
+	SquirrelStateWriter writer( GetVM(), pBuffer ); writer.BeginWrite();
+}
+
+void CSquirrelVM::ReadState( CUtlBuffer *pBuffer )
+{
+	if ( pBuffer->GetInt() != SAVE_VERSION )
+	{
+		DevMsg( "Incompatible script version\n" );
+		return;
+	}
+
+	sq_collectgarbage( GetVM() );
+
+	int64 serial = pBuffer->GetInt64();
+	m_nUniqueKeyQueries = Max( m_nUniqueKeyQueries, serial );
+
+	SquirrelStateReader reader( GetVM(), pBuffer ); reader.BeginRead();
+}
+
 bool CSquirrelVM::ConnectDebugger()
 {
 	if( m_hDeveloper.GetInt() == 0 )
@@ -1119,7 +1153,7 @@ bool CSquirrelVM::CreateInstance( ScriptClassDesc_t *pClassDesc, ScriptInstance_
 	if ( SQ_FAILED( sq_setinstanceup( GetVM(), -1, pInstance ) ) )
 		return false;
 
-	sq_setreleasehook( GetVM(), -1, &CSquirrelVM::ExternalReleaseHook );
+	sq_setreleasehook( GetVM(), -1, fnRelease );
 
 	return true;
 }
@@ -1182,8 +1216,8 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 	
 	sq_pushstring( GetVM(), pFunction->m_desc.m_pszScriptName, -1 );
 	
-	ScriptFunction_t *pData = (ScriptFunction_t *)sq_newuserdata( GetVM(), sizeof( ScriptFunction_t * ) );
-	pData->m_pFunctionBinding = pFunction;
+	ScriptFunctionBinding_t **pFunctionBinding = (ScriptFunctionBinding_t **)sq_newuserdata( GetVM(), sizeof( ScriptFunctionBinding_t * ) );
+	*pFunctionBinding = pFunction;
 	
 	sq_newclosure( GetVM(), &CSquirrelVM::TranslateCall, 1 );
 	sq_getstackobj( GetVM(), -1, &pClosure );
@@ -1306,7 +1340,7 @@ SQInteger CSquirrelVM::CallConstructor( HSQUIRRELVM pVM )
 	StackHandler hndl( pVM );
 
 	SQUserPointer pData = hndl.GetUserData( hndl.GetParamCount() );
-	ScriptClassDesc_t *pClassDesc = ( (ScriptClass_t *)pData )->m_pClasDescriptor;
+	ScriptClassDesc_t *pClassDesc = ( *(ScriptClassDesc_t **)pData );
 
 	ScriptInstance_t *pInstance = new ScriptInstance_t;
 	pInstance->m_pClassDesc = pClassDesc;
@@ -1400,7 +1434,7 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 	CUtlVectorFixed<ScriptVariant_t, MAX_FUNCTION_PARAMS> parameters;
 
 	SQUserPointer pData = hndl.GetUserData( hndl.GetParamCount() );
-	ScriptFunctionBinding_t *pFuncBinding = ( (ScriptFunction_t *)pData )->m_pFunctionBinding;
+	ScriptFunctionBinding_t *pFuncBinding = ( *(ScriptFunctionBinding_t **)pData );
 	CUtlVector<ScriptDataType_t> const &fnParams = pFuncBinding->m_desc.m_Parameters;
 
 	parameters.SetCount( fnParams.Count() );
