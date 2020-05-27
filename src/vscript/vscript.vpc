@@ -28,6 +28,7 @@ $Project "VScript"
 		$File   "vscript.cpp"
 		$File   "squirrel_vm.cpp"
 		$File   "sq_vector.cpp"
+		$File   "sq_vmstate.cpp"
 		$File	"lua_vm.cpp"
 		$File	"lua_vector.cpp"
 	}
@@ -43,6 +44,7 @@ $Project "VScript"
 		$File   "vscript_init_nut.h"
 		$File   "squirrel_vm.h"
 		$File   "sq_vector.h"
+		$File   "sq_vmstate.h"
 		$File	"lua_vm.h"
 		$File	"lua_vector.h"
 	}
@@ -90,12 +92,10 @@ $Project "VScript"
 		$Folder "SQSTDLib"
 		{
 			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdblob.cpp"
-			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdio.cpp"
 			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdmath.cpp"
 			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdrex.cpp"
 			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdstring.cpp"
 			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdstream.cpp"
-			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdsystem.cpp"
 			$File   "$SRCDIR\thirdparty\SQUIRREL2\sqstdlib\sqstdaux.cpp"
 		}
 
