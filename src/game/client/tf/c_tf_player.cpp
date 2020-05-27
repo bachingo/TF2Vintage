@@ -5437,7 +5437,7 @@ void C_TFPlayer::LoadInventory( void )
 {
 	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
 	{
-		for ( int iSlot = 0; iSlot < TF_LOADOUT_SLOT_ZOMBIE; iSlot++ )
+		for ( int iSlot = 0; iSlot <= TF_LOADOUT_SLOT_MISC2; iSlot++ )
 		{
 			int iPreset = GetTFInventory()->GetWeaponPreset( iClass, iSlot );
 			char szCmd[64];
