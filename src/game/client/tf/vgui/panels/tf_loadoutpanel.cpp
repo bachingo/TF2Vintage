@@ -253,6 +253,12 @@ void CTFLoadoutPanel::OnCommand ( const char* command )
 		if (iPresetIndex < TF_MAX_PRESETS)
 		{
 			GetTFInventory()->ChangeLoadoutSlot( m_iCurrentClass, iPresetIndex );
+			
+			// Need to update our character's active loadout ingame, since they swapped presets.
+			C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+			if (pPlayer)
+				pPlayer->LoadInventory();
+			
 			DefaultLayout();
 		}
 	}
