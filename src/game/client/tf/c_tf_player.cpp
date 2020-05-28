@@ -6116,3 +6116,26 @@ static void cc_tf_debugsentrydmg()
 	}
 }
 static ConCommand tf_debugsentrydamage( "tf_debugsentrydamage", cc_tf_debugsentrydmg, "", FCVAR_DEVELOPMENTONLY );
+
+#include "clientsteamcontext.h"
+
+const char *pszTF2VHideousEasterEgg[] =
+{
+	"https://wiki.teamfortress.com/wiki/Well-Rounded_Rifleman",
+	"https://wiki.teamfortress.com/wiki/Graybanns",
+	"https://wiki.teamfortress.com/wiki/HDMI_Patch",
+	"https://wiki.teamfortress.com/wiki/Soldered_Sensei",
+	"https://wiki.teamfortress.com/wiki/Soldier%27s_Sparkplug",
+	"https://wiki.teamfortress.com/wiki/Steel_Shako",
+	"https://wiki.teamfortress.com/wiki/Timeless_Topper",
+	"https://wiki.teamfortress.com/wiki/Western_Wear",
+};
+
+static void cc_tf2v_hideous()
+{
+	if ( steamapicontext && steamapicontext->SteamFriends() )
+	{
+		steamapicontext->SteamFriends()->ActivateGameOverlayToWebPage( pszTF2VHideousEasterEgg[RandomInt(0,7)]);
+	}
+}
+static ConCommand hideous( "hideous", cc_tf2v_hideous, "", FCVAR_NONE );
