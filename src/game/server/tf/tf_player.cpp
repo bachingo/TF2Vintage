@@ -200,6 +200,7 @@ ConVar tf2v_use_new_ambassador("tf2v_use_new_ambassador", "0", FCVAR_NOTIFY | FC
 
 ConVar tf2v_use_new_healonkill("tf2v_use_new_healonkill", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Does not grant overheal when getting health on kill." );
 
+ConVar tf_preround_push_from_damage_enable( "tf_preround_push_from_damage_enable", "1", FCVAR_REPLICATED, "If enabled, this will allow players using damage to move during the pre-round freeze time." );
 
 
 // -------------------------------------------------------------------------------- //
@@ -6576,6 +6577,10 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir )
 {
+	// If it's preround damage and we don't allow moving, don't give them a push.
+	if ( !tf_preround_push_from_damage_enable.GetBool() && (TFGameRules() && TFGameRules()->InRoundRestart() ) )
+		return;
+	
 	CBaseEntity *pAttacker = info.GetAttacker();
 
 	if ( ToTFPlayer(pAttacker) && ToTFPlayer(pAttacker)->m_Shared.InCond(TF_COND_MEGAHEAL) )
