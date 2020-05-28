@@ -202,6 +202,7 @@ ConVar tf2v_use_new_healonkill("tf2v_use_new_healonkill", "0", FCVAR_NOTIFY | FC
 
 ConVar tf_preround_push_from_damage_enable( "tf_preround_push_from_damage_enable", "1", FCVAR_REPLICATED, "If enabled, this will allow players using damage to move during the pre-round freeze time." );
 
+ConVar tf2v_misc_slot_count("tf2v_misc_slot_count", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "Sets the maximum miscs allowed on a player. Slots higher than this are not loaded." );
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -2603,6 +2604,29 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 				CTFPlayer *pPlayer = this;
 				if ( pPlayer->m_iPlayerVIPRanking != -1 )
 					bIsSpecialRestricted = true;
+			}
+			
+			// Limit the amount of max misc slots based on our convar.
+			switch (tf2v_misc_slot_count.GetInt())
+			{
+				case 0:
+					if ( ( iSlot == TF_LOADOUT_SLOT_MISC1 ) || ( iSlot == TF_LOADOUT_SLOT_MISC2 ) || ( iSlot == TF_LOADOUT_SLOT_MISC3 ) )
+						bIsSpecialRestricted = true;
+					break;
+
+				case 1:
+					if ( ( iSlot == TF_LOADOUT_SLOT_MISC2 ) || ( iSlot == TF_LOADOUT_SLOT_MISC3 ) )
+						bIsSpecialRestricted = true;
+					break;
+
+				case 2:
+					if ( iSlot == TF_LOADOUT_SLOT_MISC3 )
+						bIsSpecialRestricted = true;
+					break;
+					
+				case 3:
+				default:
+					break;	
 			}
 			
 			// Checks for holiday restrictions.
