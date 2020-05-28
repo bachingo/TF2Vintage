@@ -335,12 +335,14 @@ const char *g_LoadoutSlots[] =
 	"pda",
 	"pda2",
 	"building",
+	
 	"utility",
+	"action",	
 	
 	"head",
 	"misc",
-	"action",
 	"misc2",
+	"misc3",
 	"zombie",
 	"medal",
 	

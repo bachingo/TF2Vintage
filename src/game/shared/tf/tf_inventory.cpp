@@ -119,6 +119,10 @@ bool CTFInventory::Init( void )
 								case 2:
 									iSlot = TF_LOADOUT_SLOT_MISC2;
 									break;
+								
+								case 3:
+									iSlot = TF_LOADOUT_SLOT_MISC3;
+									break;
 							}
 		
 							if ( pItemDef->baseitem )
