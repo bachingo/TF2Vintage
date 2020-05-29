@@ -191,7 +191,7 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 	radiusInfo.info = &newInfo;
 	radiusInfo.m_vecSrc = vecOrigin;
 	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
+	radiusInfo.m_flSelfDamageRadius = flRadius;
 
 	// If we extinguish a friendly player reduce our recharge time by 20%
 	if ( TFGameRules()->RadiusJarEffect( radiusInfo, GetEffectCondition() ) && m_iDeflected == 0 && pWeapon ) 
