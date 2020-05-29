@@ -550,8 +550,10 @@ public:
 	}
 	char const *GetLogName( void ) const
 	{
-		Assert( item_logname && *item_logname );
-		return item_logname;
+		if (item_logname && item_logname[0] != '\0')
+			return item_logname;
+
+		return NULL;
 	}
 	char const *GetItemIcon( void ) const
 	{
