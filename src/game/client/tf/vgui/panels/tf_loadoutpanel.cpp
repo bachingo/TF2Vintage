@@ -18,15 +18,15 @@ using namespace vgui;
 static char* pszClassModels[TF_CLASS_COUNT_ALL] =
 {
 	"",
-	"models/player/scout.mdl",
-	"models/player/sniper.mdl",
-	"models/player/soldier.mdl",
-	"models/player/demo.mdl",
-	"models/player/medic.mdl",
-	"models/player/heavy.mdl",
-	"models/player/pyro.mdl",
-	"models/player/spy.mdl",
-	"models/player/engineer.mdl",
+	"models/player/hwm/scout.mdl",
+	"models/player/hwm/sniper.mdl",
+	"models/player/hwm/soldier.mdl",
+	"models/player/hwm/demo.mdl",
+	"models/player/hwm/medic.mdl",
+	"models/player/hwm/heavy.mdl",
+	"models/player/hwm/pyro.mdl",
+	"models/player/hwm/spy.mdl",
+	"models/player/hwm/engineer.mdl",
 	"models/player/saxton_hale_jungle_inferno/saxton_hale.mdl",
 };
 
