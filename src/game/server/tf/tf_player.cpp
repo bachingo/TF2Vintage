@@ -202,7 +202,7 @@ ConVar tf2v_use_new_healonkill("tf2v_use_new_healonkill", "0", FCVAR_NOTIFY | FC
 
 ConVar tf_preround_push_from_damage_enable( "tf_preround_push_from_damage_enable", "1", FCVAR_REPLICATED, "If enabled, this will allow players using damage to move during the pre-round freeze time." );
 
-ConVar tf2v_misc_slot_count("tf2v_misc_slot_count", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "Sets the maximum miscs allowed on a player. Slots higher than this are not loaded." );
+ConVar tf2v_misc_slot_count("tf2v_misc_slot_count", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "Sets the maximum miscs allowed on a player. Slots higher than this are not loaded.", true, 0, true, 3 );
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
