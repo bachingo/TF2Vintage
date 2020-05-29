@@ -2713,7 +2713,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 		}
 
 		// Skip the attacker as we'll handle him separately.
-		if ( pEntity == pAttacker && radiusInfo.m_flSelfDamageRadius != 0.0f )
+		if ( pEntity == pAttacker )
 			continue;
 
 		// Checking distance from source because Valve were apparently too lazy to fix the engine function.
