@@ -407,13 +407,10 @@ CTFPlayerShared::CTFPlayerShared()
 	m_pDisguiseWeaponInfo = NULL;
 	m_pCritSound = NULL;
 	m_pCritEffect = NULL;
-
 #else
 	memset( m_flChargeOffTime, 0, sizeof( m_flChargeOffTime ) );
 	memset( m_bChargeSounds, 0, sizeof( m_bChargeSounds ) );
 #endif
-
-
 }
 
 void CTFPlayerShared::Init( CTFPlayer *pPlayer )
@@ -423,16 +420,6 @@ void CTFPlayerShared::Init( CTFPlayer *pPlayer )
 	m_flNextBurningSound = 0;
 
 	SetJumping( false );
-#ifdef CLIENT_DLL	
-	if (m_pOuter->GetPlayerClass())
-	{
-		if (TF_CLASS_UNDEFINED != m_pOuter->GetPlayerClass()->GetClassIndex())
-		{
-			int iIndex = modelinfo->GetModelIndex(m_pOuter->GetPlayerClass()->GetModelName());
-			m_pOuter->SetModelIndex(iIndex);
-		}
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1765,14 +1752,6 @@ void CTFPlayerShared::OnAddDisguised(void)
 		m_pOuter->m_pDisguisingEffect = NULL;
 	}
 	m_pOuter->m_flDisguiseEndEffectStartTime = gpGlobals->curtime;
-	
-	if ( m_pOuter->IsEnemyPlayer() )
-	{
-		TFPlayerClassData_t *pData = GetPlayerClassData(m_pOuter->m_Shared.GetDisguiseClass());
-		int iIndex = modelinfo->GetModelIndex( pData->GetModelName() );
-		
-		m_pOuter->SetModelIndex( iIndex );
-	}
 #endif
 }
 
