@@ -537,7 +537,7 @@ int CHudItemEffectMeterTemp<C_TFRocketLauncher_Airstrike>::GetCount( void )
 }
 
 //-----------------------------------------------------------------------------
-// C_TFRevolver_Dex Specialization
+// C_TFRevolver Specialization
 //-----------------------------------------------------------------------------
 template<>
 bool CHudItemEffectMeterTemp<C_TFRevolver>::IsEnabled(void)
@@ -666,6 +666,19 @@ float CHudItemEffectMeterTemp<C_TFPomson>::GetProgress(void)
 //-----------------------------------------------------------------------------
 // C_TFFlameThrower Specialization
 //-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFFlameThrower>::IsEnabled(void)
+{
+	if (GetWeapon())
+	{ 
+		C_TFFlameThrower *pFlamethrower = GetWeapon();
+		if (pFlamethrower && pFlamethrower->HasMmmph())
+			return true;
+	}
+
+	return false;
+}
+
 template<>
 bool CHudItemEffectMeterTemp<C_TFFlameThrower>::ShouldBeep( void )
 {
