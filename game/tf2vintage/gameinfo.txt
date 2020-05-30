@@ -43,6 +43,7 @@
 			// as the first "mod" search path (after any user customizations). This is also the one
 			// that's used when writing to the "mod" path.
 			game+mod+mod_write+default_write_path		"|gameinfo_path|."
+			game+mod									"|all_source_engine_paths|../Team Fortress 2/tf/maps/*"
 			
 			//  Load base TF2V assets.
 			game_lv					"|gameinfo_path|vpk/base/tf2v_lv.vpk"
