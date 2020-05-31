@@ -3333,25 +3333,35 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 	Q_strncpy( loadfile, filename, sizeof( loadfile ) );
 	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
 	Q_FixSlashes( loadfile );
+	
+	void *pBuffer = 0;
+	CChoreoScene *pScene;
 
-	// binary compiled vcd
-	void *pBuffer;
-	int fileSize;
-	if ( !CopySceneFileIntoMemory( loadfile, &pBuffer, &fileSize ) )
+	int fileSize = filesystem->ReadFileEx( loadfile, "MOD", &pBuffer, true );
+	if (fileSize)
 	{
-		MissingSceneWarning( loadfile );
-		return NULL;
-	}
-
-	CChoreoScene *pScene = new CChoreoScene( NULL );
-	CUtlBuffer buf( pBuffer, fileSize, CUtlBuffer::READ_ONLY );
-	if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
-	{
-		Warning( "CSceneEntity::LoadScene: Unable to load binary scene '%s'\n", loadfile );
-		delete pScene;
-		pScene = NULL;
+		g_TokenProcessor.SetBuffer((char*)pBuffer);
+		pScene = ChoreoLoadScene( loadfile, NULL, &g_TokenProcessor, LocalScene_Printf );
 	}
 	else
+	{
+		// binary compiled vcd
+		pScene = new CChoreoScene( NULL );
+		if ( !CopySceneFileIntoMemory( loadfile, &pBuffer, &fileSize ) )
+		{
+			MissingSceneWarning( loadfile );
+			return NULL;
+		}
+		CUtlBuffer buf( pBuffer, fileSize, CUtlBuffer::READ_ONLY );
+		if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
+		{
+			Warning( "CSceneEntity::LoadScene: Unable to load scene '%s'\n", loadfile );
+			delete pScene;
+			pScene = NULL;
+		}
+	}
+	
+	if(pScene)
 	{
 		pScene->SetPrintFunc( LocalScene_Printf );
 		pScene->SetEventCallbackInterface( pCallback );
@@ -4739,39 +4749,74 @@ int GetSceneSpeechCount( char const *pszScene )
 void PrecacheInstancedScene( char const *pszScene )
 {
 	static int nMakingReslists = -1;
-	
-	if ( nMakingReslists == -1 )
+
+	if (nMakingReslists == -1)
 	{
-		nMakingReslists = CommandLine()->FindParm( "-makereslists" ) > 0 ? 1 : 0;
+		nMakingReslists = CommandLine()->FindParm("-makereslists") > 0 ? 1 : 0;
 	}
 
-	if ( nMakingReslists == 1 )
+	if (nMakingReslists == 1)
 	{
 		// Just stat the file to add to reslist
-		g_pFullFileSystem->Size( pszScene );
+		g_pFullFileSystem->Size(pszScene);
 	}
 
-	// verify existence, cache is pre-populated, should be there
 	SceneCachedData_t sceneData;
-	if ( !scenefilecache->GetSceneCachedData( pszScene, &sceneData ) )
+
+	char loadfile[MAX_PATH];
+	Q_strncpy(loadfile, pszScene, sizeof(loadfile));
+	Q_SetExtension(loadfile, ".vcd", sizeof(loadfile));
+	Q_FixSlashes(loadfile);
+
+	// Attempt to precache manually
+	void *pBuffer = NULL;
+	if (filesystem->ReadFileEx(loadfile, "MOD", &pBuffer, false, true))
 	{
-		// Scenes are sloppy and don't always exist.
-		// A scene that is not in the pre-built cache image, but on disk, is a true error.
-		if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
+		g_TokenProcessor.SetBuffer((char*)pBuffer);
+		CChoreoScene *pScene = ChoreoLoadScene(loadfile, NULL, &g_TokenProcessor, LocalScene_Printf);
+		if (pScene)
 		{
-			Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
+			for (int i = 0; i < pScene->GetNumEvents(); i++)
+			{
+				CChoreoEvent *pEvent = pScene->GetEvent(i);
+				if (pEvent && pEvent->GetType() == CChoreoEvent::SPEAK)
+				{
+					CBaseEntity::PrecacheScriptSound(pEvent->GetParameters());
+
+					// Precache CC token
+					if (pEvent->GetCloseCaptionType() == CChoreoEvent::CC_MASTER &&
+						pEvent->GetNumSlaves() > 0)
+					{
+						char tok[CChoreoEvent::MAX_CCTOKEN_STRING];
+						if (pEvent->GetPlaybackCloseCaptionToken(tok, sizeof(tok)))
+						{
+							CBaseEntity::PrecacheScriptSound(tok);
+						}
+					}
+				}
+			}
 		}
+	}
+	else if (!scenefilecache->GetSceneCachedData(pszScene, &sceneData))
+	{
+		// This warning was meant for when scenes.image was supposed to be the sole method of loading scenes.
+		// It's been deactivated as part of the raw file support, as even if this was somehow on the Xbox 360,
+		// it would never trip anyway because if the file existed, it would've been read earlier.
+		//if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
+		//{
+		//	Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
+		//}
 	}
 	else
 	{
-		for ( int i = 0; i < sceneData.numSounds; ++i )
+		for (int i = 0; i < sceneData.numSounds; ++i)
 		{
-			short stringId = scenefilecache->GetSceneCachedSound( sceneData.sceneId, i );
-			CBaseEntity::PrecacheScriptSound( scenefilecache->GetSceneString( stringId ) );
+			short stringId = scenefilecache->GetSceneCachedSound(sceneData.sceneId, i);
+			CBaseEntity::PrecacheScriptSound(scenefilecache->GetSceneString(stringId));
 		}
 	}
 
-	g_pStringTableClientSideChoreoScenes->AddString( CBaseEntity::IsServer(), pszScene );
+	g_pStringTableClientSideChoreoScenes->AddString(CBaseEntity::IsServer(), pszScene);
 }
 
 //-----------------------------------------------------------------------------
