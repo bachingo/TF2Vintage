@@ -6471,6 +6471,11 @@
 					"attribute_class"	"see_enemy_health"
 					"value" "1"
 				}
+				"move speed bonus"
+				{
+					"attribute_class"	"mult_player_movespeed"
+					"value" "1.1"
+				}
 			}
 			"visuals"
 			{
