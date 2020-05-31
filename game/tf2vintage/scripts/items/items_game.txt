@@ -1486,6 +1486,11 @@
 					"attribute_class"	"enables_aoe_heal"
 					"value"	"1"
 				}
+				"drop health pack on kill"
+				{
+					"attribute_class"	"drop_health_pack_on_kill"
+					"value"			"1"
+				}
 				"health regen"
 				{
 					"attribute_class"	"add_health_regen_passive"
