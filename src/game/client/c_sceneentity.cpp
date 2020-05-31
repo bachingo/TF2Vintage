@@ -812,7 +812,7 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 	Q_FixSlashes( loadfile );
 
 	void *pBuffer = 0;
-	CChoreoScene *pScene = nullptr;
+	CChoreoScene *pScene = NULL;
 
 	int fileSize = filesystem->ReadFileEx( loadfile, "MOD", &pBuffer, true );
 	if (fileSize)
@@ -836,7 +836,7 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 	
 		if ( IsBufferBinaryVCD( (char*)pBuffer, fileSize ) )
 		{
-			pScene = new CChoreoScene( this );
+			pScene = new CChoreoScene( NULL );
 			CUtlBuffer buf( pBuffer, fileSize, CUtlBuffer::READ_ONLY );
 			if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
 			{
@@ -847,7 +847,7 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 		}
 	}
 
-	if(pScene)
+	if( pScene )
 	{
 		pScene->SetPrintFunc( Scene_Printf );
 		pScene->SetEventCallbackInterface( this );
