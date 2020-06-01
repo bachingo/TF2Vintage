@@ -280,7 +280,6 @@
 		{
 			"item_class"	"tf_wearable"
 			"anim_slot"	"FORCE_NOT_USED"
-			"loadondemand"	"1"
 			"drop_type"	"none"
 			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
 			"act_as_wearable"	"1"
@@ -297,6 +296,7 @@
 		{
 			"public_prefab"	"1"
 			"prefab"	"weapon_wearable"
+			"loadondemand"	"1"
 			"item_quality"	"unique"
 			"item_type_name"	"#TF_Wearable_CosmeticItem"
 			"item_name"	"#TF_Spectator_Default"
