@@ -466,9 +466,16 @@ void CTFKnife::BackstabBlocked( void )
 bool CTFKnife::CanDeploy( void )
 {
 	// Haven't regenerated yet, can't use.
-	if ( gpGlobals->curtime > m_flKnifeRegenTime )
+	if ( gpGlobals->curtime < m_flKnifeRegenTime && m_flKnifeRegenTime > 0 )
 	{
 		return false;
+	}
+	
+	if (BaseClass::CanDeploy() && m_flKnifeRegenTime != 0)
+	{
+		// Reset our regen time.
+		m_flKnifeRegenTime = 0;
+		return true;
 	}
 
 	return BaseClass::CanDeploy();
