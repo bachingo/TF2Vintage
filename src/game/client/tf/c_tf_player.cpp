@@ -1880,44 +1880,55 @@ public:
 	void OnBind( void *pC_BaseEntity )
 	{
 		Assert( m_pResult );
-		m_pResult->SetVecValue( 0, 0, 0 );
 
 		if ( !pC_BaseEntity )
+		{
+			m_pResult->SetVecValue( 1, 1, 1 );
 			return;
+		}
 
 		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
 		if ( !pEntity )
 			return;
 
-		bool bBlueTeam = pEntity->GetTeam() && pEntity->GetTeamNumber() == TF_TEAM_BLUE;
-		C_EconEntity *pEconEnt = dynamic_cast<C_EconEntity *>( pEntity );
-
-		CEconItemView *pItem = NULL;
-		if ( pEconEnt )
+		CModelPanelModel *pPanelModel = dynamic_cast<CModelPanelModel *>( pEntity );
+		if ( pPanelModel )
 		{
-			pItem = pEconEnt->GetItem();
-		}
-		else
-		{
-			C_EconEntity *pOwner = dynamic_cast<C_EconEntity *>( pEntity->GetOwnerEntity() );
-			if ( pOwner )
-				pItem = pOwner->GetItem();
-		}
-
-		if ( !pItem )
+			m_pResult->SetVecValue( pPanelModel->m_vecModelColor.x, pPanelModel->m_vecModelColor.y, pPanelModel->m_vecModelColor.z );
 			return;
-
-		uint nPaintRGB = pItem->GetModifiedRGBValue( bBlueTeam );
-		if( nPaintRGB != 0 )
-		{
-			float flPaint[3] ={
-				Clamp( ( nPaintRGB >> 8 ) / 255.0f, 0.0f, 1.0f ),
-				Clamp( ( nPaintRGB >> 4 ) / 255.0f, 0.0f, 1.0f ),
-				Clamp( ( nPaintRGB ) / 255.0f, 0.0f, 1.0f )
-			};
-
-			m_pResult->SetVecValue( flPaint[0], flPaint[1], flPaint[2] );
 		}
+
+		C_TFPlayer *pPlayer = NULL;
+
+		C_TFRagdoll *pRagdoll = dynamic_cast<C_TFRagdoll *>( pEntity );
+		if ( pRagdoll )
+		{
+			EHANDLE hPlayer = pRagdoll->GetPlayerHandle();
+			pPlayer = ToTFPlayer( hPlayer.Get() );
+		}
+
+		if ( !pPlayer )
+		{
+			C_TFWeaponBase *pWeapon = dynamic_cast<C_TFWeaponBase *>( pEntity );
+			if ( pWeapon )
+			{
+				pPlayer = ToTFPlayer( pWeapon->GetOwner() );
+			}
+		}
+
+		if ( !pPlayer )
+		{
+			pPlayer = ToTFPlayer( pEntity );
+		}
+
+		// Final check to see if it's a player
+		if ( pPlayer )
+		{
+			m_pResult->SetVecValue( pPlayer->m_vecPlayerColor.x, pPlayer->m_vecPlayerColor.y, pPlayer->m_vecPlayerColor.z );
+			return;
+		}
+
+		m_pResult->SetVecValue( 1, 1, 1 );
 	}
 };
 
@@ -5404,6 +5415,43 @@ void C_TFPlayer::ValidateModelIndex( void )
 
 		if ( GetLocalPlayer() != this )
 			SetAbsAngles( vec3_angle );
+	}
+	else if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+	{
+		TFPlayerClassData_t *pData = GetPlayerClassData( m_Shared.GetDisguiseClass() );
+		m_nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
+
+		for (int i = 0; i < GetNumWearables(); i++)
+		{
+			C_TFWearable *pWearable = static_cast<C_TFWearable *>(GetWearable(i));
+
+			if (!pWearable)
+				continue;
+
+
+			pWearable->UpdateModelToClass();
+
+		}
+	}
+	else
+	{
+		C_TFPlayerClass *pClass = GetPlayerClass();
+		if ( pClass )
+		{
+			m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );
+		}
+
+		for (int i = 0; i < GetNumWearables(); i++)
+		{
+			C_TFWearable *pWearable = static_cast<C_TFWearable *>(GetWearable(i));
+
+			if (!pWearable)
+				continue;
+
+
+			pWearable->UpdateModelToClass();
+
+		}
 	}
 	
 	// Don't need to set bodygroup anymore.
