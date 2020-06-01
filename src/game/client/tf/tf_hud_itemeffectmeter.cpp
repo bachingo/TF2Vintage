@@ -47,6 +47,7 @@ using namespace vgui;
 ConVar tf2v_show_killstreak_counter("tf2v_show_killstreak_counter", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Displays the Killstreak counter on the HUD.", true, 0.0f, true, 1.0f);
 
 extern ConVar tf2v_use_new_cleaners;
+extern ConVar tf2v_new_sandvich_behavior;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -516,6 +517,19 @@ int CHudItemEffectMeterTemp<C_TFSniperRifle_Decap>::GetCount( void )
 // C_TFSniperRifle Specialization
 //-----------------------------------------------------------------------------
 template<>
+bool CHudItemEffectMeterTemp<C_TFSniperRifle>::IsEnabled(void)
+{
+	if (GetWeapon())
+	{ 
+		C_TFSniperRifle *pSniperRifle = GetWeapon();
+		if ( pSniperRifle && pSniperRifle->HasFocus() )
+			return true;
+	}
+
+	return false;
+}
+
+template<>
 float CHudItemEffectMeterTemp<C_TFSniperRifle>::GetProgress( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -734,6 +748,38 @@ float CHudItemEffectMeterTemp<C_TFSMG_Charged>::GetProgress( void )
 		return pPlayer->m_Shared.GetCrikeyMeter() / 100;
 
 	return 1.0f;
+}
+
+//-----------------------------------------------------------------------------
+// C_TFKnife Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFKnife>::IsEnabled(void)
+{
+	if (GetWeapon())
+	{ 
+		C_TFKnife *pKnife = GetWeapon();
+		if (pKnife && pKnife->CanExtinguish())
+			return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// C_TFLunchBox Specialization
+//-----------------------------------------------------------------------------
+template<>
+bool CHudItemEffectMeterTemp<C_TFLunchBox>::IsEnabled(void)
+{
+	if (GetWeapon())
+	{ 
+		C_TFLunchBox *pFood = GetWeapon();
+		if ( !tf2v_new_sandvich_behavior.GetBool() && pFood->IsChocolateOrFishcake() )
+			return false;
+	}
+
+	return true;
 }
 
 
