@@ -11,6 +11,7 @@
 #include "tf_gamerules.h"
 #include "eventlist.h"
 #include "tf_viewmodel.h"
+#include "tf_wearable_demoshield.h"
 
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -461,7 +462,7 @@ void CTFWeaponBase::UpdateViewModel( void )
 
 	int vmType = vm->GetViewModelType();
 	const char *pszModel = NULL;
-	const char *pszStunballModel = GetStunballViewmodel();
+	string_t pszStunballModel = GetStunballViewmodel();
 
 	if ( vmType == VMTYPE_L4D )
 	{
@@ -490,6 +491,35 @@ void CTFWeaponBase::UpdateViewModel( void )
 		else
 		{
 			vm->RemoveViewmodelAddon( 1 );
+		}
+
+		if( pszStunballModel == NULL_STRING )
+		{
+			if( pTFPlayer->m_Shared.HasDemoShieldEquipped() )
+			{
+				CTFWearableDemoShield *pShield = GetEquippedDemoShield( pTFPlayer );
+				if( pShield )
+				{
+					vmType = pShield->GetItem()->GetStaticData()->attach_to_hands_vm_only;
+					if ( vmType == VMTYPE_TF2 )
+					{
+						pszModel = pShield->GetItem()->GetPlayerDisplayModel( pTFPlayer->GetPlayerClass()->GetClassIndex() );
+					}
+
+					if ( pszModel && pszModel[0] != '\0' )
+					{
+						vm->UpdateViewmodelAddon( pszModel, 1 );
+					}
+					else
+					{
+						vm->RemoveViewmodelAddon( 1 );
+					}
+				}
+			}
+			else
+			{
+				vm->RemoveViewmodelAddon( 1 );
+			}
 		}
 	}
 	else
