@@ -7605,7 +7605,7 @@
 				"sniper rage DISPLAY ONLY"
 				{
 					"attribute_class"	"sniper_rage_DISPLAY_ONLY"
-					"value" "0"
+					"value" "1"
 				}
 			}
 			"visuals"
