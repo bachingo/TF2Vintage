@@ -136,3 +136,20 @@ void CTFFists::DoViewModelAnimation( void )
 
 	SendWeaponAnim( act );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Show/hide weapon and corresponding view model if any
+// Input  : visible - 
+//-----------------------------------------------------------------------------
+void CTFFists::SetWeaponVisible( bool visible )
+{
+	if ( visible )
+	{
+		RemoveEffects( EF_NODRAW );
+#ifdef CLIENT_DLL
+		UpdateVisibility();
+#endif
+	}
+
+	return;
+}
