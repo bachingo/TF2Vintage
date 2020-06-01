@@ -128,6 +128,7 @@ public:
 	virtual bool    ShouldBeep( void );
 	virtual bool    ShouldFlash( void )       { return false; }
 	virtual bool    IsEnabled( void );
+	virtual bool	ShouldDraw(void);
 
 	virtual Class*  GetWeapon( void );
 
@@ -386,6 +387,15 @@ bool CHudItemEffectMeterTemp<Class>::IsEnabled( void )
 		return true;
 
 	return CHudItemEffectMeter::IsEnabled();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+template<typename Class>
+bool CHudItemEffectMeterTemp<Class>::ShouldDraw(void)
+{
+	return CHudItemEffectMeter::ShouldDraw();
 }
 
 //-----------------------------------------------------------------------------
@@ -876,6 +886,7 @@ void CHudItemEffects::SetPlayer( void )
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRaygun>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_raygun.res" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFJarGas>( "HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Pyro.res" ) );
 			AddItemMeter( new CHudItemEffectMeterTemp<C_TFRocketPack>( "HudItemEffectMeter", "resource/UI/HudRocketPack.res" ) );
+			break;
 		case TF_CLASS_SPY:
 			AddItemMeter( new CHudItemEffectMeter( "HudItemEffectMeter" ) );
 			AddItemMeter(new CHudItemEffectMeterTemp<C_TFRevolver>("HudItemEffectMeter", "resource/UI/HudItemEffectMeter_Spy.res"));
