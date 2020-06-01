@@ -204,7 +204,6 @@ public:
 #ifdef CLIENT_DLL
 	void	OnDisguiseChanged( void );
 	int		GetDisguiseWeaponModelIndex( void ) { return m_iDisguiseWeaponModelIndex; }
-	void	RecalcDisguiseWeaponLegacy( void );
 	CTFWeaponInfo *GetDisguiseWeaponInfo( void );
 
 	void	UpdateCritBoostEffect( bool bForceHide = false );
