@@ -6991,7 +6991,6 @@
 			"name"	"The Diamondback"
 			"prefab"			"weapon_revolver"
 			"first_sale_date"	"2011"
-			"item_class"	"tf_weapon_revolver_dex"
 			"item_name"	"#TF_DEX_Revolver"
 			"item_description"	"#TF_DEX_Revolver_Desc"
 			"propername"	"1"
