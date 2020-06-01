@@ -1210,8 +1210,7 @@ void CBaseHudChat::StartMessageMode( int iMessageModeType )
 	vgui::input()->SetCursorPos( x + ( w/2), y + (h/2) );
 
 	m_flHistoryFadeTime = gpGlobals->curtime + CHAT_HISTORY_FADE_TIME;
-	
-	m_nMessageMode = MM_NONE;
+
 
 	m_pFilterPanel->SetVisible( false );
 
