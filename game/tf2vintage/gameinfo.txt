@@ -64,6 +64,7 @@
 			game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/tf2_textures.vpk"
 			game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/tf2_sound_misc.vpk"
 			game+mod+vgui		"|all_source_engine_paths|../Team Fortress 2/tf/tf2_misc.vpk"
+			game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/tf2_sound_vo_english.vpk"
 						
 						
 			// We search VPK files before ordinary folders, because most files will be found in
