@@ -102,7 +102,6 @@ ConVar tf2v_muzzlelight( "tf2v_muzzlelight", "0", FCVAR_ARCHIVE, "Enable dynamic
 ConVar tf2v_showchatbubbles( "tf2v_showchatbubbles", "1", FCVAR_ARCHIVE, "Show bubble icons over typing players" );
 
 ConVar tf2v_show_veterancy( "tf2v_show_veterancy", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Enable or disable veterancy status if awarded." );
-ConVar tf2v_show_dev_tag("tf2v_show_dev_tag", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Uses [DEV] in chat, if available.");
 
 extern ConVar tf_halloween;
 extern ConVar tf2v_new_flame_damage;

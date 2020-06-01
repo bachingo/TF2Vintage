@@ -3696,20 +3696,18 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 		return NULL;
 	}
 
-	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
-
 	const char *pszFormat = NULL;
 
 	// team only
 	if ( bTeamOnly == true )
 	{
-		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
+		if ( pPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
 			pszFormat = "TF_Chat_Spec";
 		}
 		else
 		{
-			if ( pTFPlayer->IsAlive() == false && State_Get() != GR_STATE_TEAM_WIN )
+			if ( pPlayer->IsAlive() == false && State_Get() != GR_STATE_TEAM_WIN )
 			{
 				pszFormat = "TF_Chat_Team_Dead";
 			}
@@ -3727,33 +3725,16 @@ const char *CTFGameRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 			}
 		}
 	}
-	else if ( pTFPlayer->m_bIsPlayerADev && ( Q_atoi( engine->GetClientConVarValue( pTFPlayer->entindex(), "tf2v_show_dev_tag" ) ) > 0 ) )
-	{
-		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
-		{
-			pszFormat = "TF_Chat_DevSpec";
-		}
-		else
-		{
-			if (pTFPlayer->IsAlive() == false && State_Get() != GR_STATE_TEAM_WIN)
-			{
-				pszFormat = "TF_Chat_DevDead";
-			}
-			else
-			{
-				pszFormat = "TF_Chat_Dev";
-			}
-		}
-	}
+	// everyone
 	else
 	{	
-		if ( pTFPlayer->GetTeamNumber() == TEAM_SPECTATOR )
+		if ( pPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 		{
 			pszFormat = "TF_Chat_AllSpec";	
 		}
 		else
 		{
-			if ( pTFPlayer->IsAlive() == false && State_Get() != GR_STATE_TEAM_WIN )
+			if ( pPlayer->IsAlive() == false && State_Get() != GR_STATE_TEAM_WIN )
 			{
 				pszFormat = "TF_Chat_AllDead";
 			}
