@@ -333,7 +333,6 @@ bool CHudItemEffectMeter::ShouldBeep( void )
 template<typename Class>
 float CHudItemEffectMeterTemp<Class>::GetProgress( void )
 {
-	Assert( dynamic_cast<C_TFWeaponBase *>( GetWeapon() ) );
 
 	C_TFWeaponBase *pWeapon = GetWeapon();
 	if ( pWeapon )
