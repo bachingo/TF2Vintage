@@ -29,7 +29,7 @@ int CTFDecapitationMeleeWeaponBase::TranslateViewmodelHandActivity( int iActivit
 
 	if (GetTFPlayerOwner())
 	{
-		if (( !GetItem() || GetItem()->GetAnimationSlot() != TF_WPN_TYPE_MELEE_ALLCLASS )/* && DWORD( pOwner + 9236 ) == 4*/)
+		if (( !GetItem() || GetItem()->GetAnimationSlot() != TF_WPN_TYPE_MELEE_ALLCLASS ) && GetTFPlayerOwner()->IsPlayerClass( TF_CLASS_DEMOMAN ))
 		{
 			switch (iActivity)
 			{

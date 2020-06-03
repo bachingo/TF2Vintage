@@ -74,18 +74,9 @@ bool CTFSword::Deploy( void )
 #ifdef GAME_DLL
 		SetupGameEventListeners();
 #endif
-		return true;
 	}
-	else
-	{
-		CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-		if (pOwner/* && DWORD( pOwner + 1917 )*/)
-		{
 
-		}
-
-		return orgResult;
-	}
+	return orgResult;
 }
 
 //-----------------------------------------------------------------------------

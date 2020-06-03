@@ -4859,7 +4859,8 @@ void CTFPlayerShared::PulseRageBuff( /*CTFPlayerShared::ERageBuffSlot*/ )
 					}
 				}
 			}
-			else if (pPlayer->m_Shared.InCond(TF_COND_DISGUISED) && !pPlayer->m_Shared.InCond(TF_COND_STEALTHED) && (!pPlayer->InSameTeam(pOuter) && pPlayer->m_Shared.GetDisguiseTeam() == pOuter->GetTeamNumber()) && m_iActiveBuffType == TF_COND_RADIUSHEAL)
+ 			
+			if (pPlayer && pPlayer->m_Shared.InCond(TF_COND_DISGUISED) && !pPlayer->m_Shared.InCond(TF_COND_STEALTHED) && (!pPlayer->InSameTeam(pOuter) && pPlayer->m_Shared.GetDisguiseTeam() == pOuter->GetTeamNumber()) && m_iActiveBuffType == TF_COND_RADIUSHEAL)
 			{
 				// Also heal disguised spies.
 				pPlayer->m_Shared.AddCond(TF_COND_RADIUSHEAL, TF_MEDIC_REGEN_TIME);
