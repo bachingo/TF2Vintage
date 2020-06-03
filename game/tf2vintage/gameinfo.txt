@@ -33,7 +33,7 @@
 			// Note that this folder is scanned only when the game is booted.
 			// TF2V mods take priority, followed by Retail TF2 mods.
 			game+mod			"|gameinfo_path|custom/*"
-			game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/custom/*"
+			//game+mod			"|all_source_engine_paths|../Team Fortress 2/tf/custom/*"
 			
 			// Secondly, add the customizable TF2V parameters in.
 			game+mod			"|gameinfo_path|customplayer/*"
