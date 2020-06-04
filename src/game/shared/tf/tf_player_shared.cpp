@@ -5480,9 +5480,16 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 				}
 
 				bool bInToolRecordingMode = clienttools->IsInRecordingMode();
+				bool bZoomedSniperRifle = false;
+				
+				if (pTFWeapon)
+				{
+					if ( WeaponID_IsSniperRifle( pTFWeapon->GetWeaponID() ) && m_Shared.InCond(TF_COND_ZOOMED) )
+						bZoomedSniperRifle = true;
+				}
 
 				// try to align tracers to actual weapon barrel if possible
-				if (!ShouldDrawThisPlayer() && !bInToolRecordingMode)
+				if (!ShouldDrawThisPlayer() && !bInToolRecordingMode && !bZoomedSniperRifle)
 				{
 					C_TFViewModel *pViewModel = dynamic_cast<C_TFViewModel *>(GetViewModel());
 
@@ -5515,41 +5522,10 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 						}
 					}
 				}
-				
-#endif
-				const char *pszTracerEffect = GetTracerType();
-				// Use alternate tracer logic on Sniper Rifles when zoomed in.
-				if ( ( pTFWeapon && WeaponID_IsSniperRifle(pTFWeapon->GetWeaponID()) ) && m_Shared.InCond(TF_COND_ZOOMED) )
-				{
-					// Set up our beam starting point. This preserves location, even when zoomed.
-					Vector vecStartSniper;
-					Vector vForward, vRight, vUp;
-					AngleVectors(EyeAngles(), &vForward, &vRight, &vUp);
 
-					vecStartSniper = trace.startpos - (vForward * 60.9f)
-													- (vRight * 13.1f)
-													- (vUp * -15.1f);
-
-					if (pszTracerEffect && pszTracerEffect[0])
-					{
-#ifdef GAME_DLL
-						te_tf_particle_effects_control_point_t controlPoint = { PATTACH_WORLDORIGIN, trace.endpos };
-						CBroadcastNonOwnerRecipientFilter filter( this );
-						TE_TFParticleEffectComplex(filter, 0.0f, pszTracerEffect, vecStartSniper, QAngle(0, 0, 0), NULL, &controlPoint, pWeapon, PATTACH_CUSTOMORIGIN);
-#else
-						CSmartPtr<CNewParticleEffect> pEffect = pWeapon->ParticleProp()->Create(pszTracerEffect, PATTACH_CUSTOMORIGIN, 0);
-						if (pEffect.IsValid() && pEffect->IsValid())
-						{
-							pEffect->SetSortOrigin(vecStartSniper);
-							pEffect->SetControlPoint(0, vecStartSniper);
-							pEffect->SetControlPoint(1, trace.endpos);
-						}
-#endif
-					}
-				}
-#ifdef CLIENT_DLL
-				else if (tf_useparticletracers.GetBool())
+				if (tf_useparticletracers.GetBool())
 				{
+					const char *pszTracerEffect = GetTracerType();
 					if (pszTracerEffect && pszTracerEffect[0])
 					{
 						char szTracerEffect[128];
@@ -5559,7 +5535,6 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 							pszTracerEffect = szTracerEffect;
 						}
 
-						
 						UTIL_ParticleTracer(pszTracerEffect, vecStart, trace.endpos, entindex(), iUseAttachment, true);
 					}
 				}
