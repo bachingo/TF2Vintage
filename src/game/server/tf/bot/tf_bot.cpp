@@ -239,11 +239,8 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 
 	if ( !tf_bot_keep_class_after_death.GetBool() )
 	{
-		if( TFGameRules()->CanBotChangeClass( this ) )
-		{
-			const char *pszClassname = GetNextSpawnClassname();
-			HandleCommand_JoinClass( pszClassname );
-		}
+		if ( TFGameRules()->CanBotChangeClass( this ) )
+			m_bWantsToChangeClass = true;
 	}
 
 	CTFNavArea *pArea = GetLastKnownArea();
@@ -356,6 +353,14 @@ void CTFBot::PhysicsSimulate( void )
 
 	if ( m_pSquad && ( m_pSquad->GetMemberCount() <= 1 || !m_pSquad->GetLeader() ) )
 		LeaveSquad();
+
+	if ( !IsAlive() && m_bWantsToChangeClass )
+	{
+		const char *pszClassname = GetNextSpawnClassname();
+		HandleCommand_JoinClass( pszClassname );
+
+		m_bWantsToChangeClass = false;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2220,42 +2225,64 @@ bool CTFBot::CanChangeClass( void )
 //-----------------------------------------------------------------------------
 const char *CTFBot::GetNextSpawnClassname( void )
 {
-	static const int offenseRoster[] ={
-		TF_CLASS_SCOUT,
-		TF_CLASS_ENGINEER,
-		TF_CLASS_SOLDIER,
-		TF_CLASS_HEAVYWEAPONS,
-		TF_CLASS_MEDIC,
-		TF_CLASS_DEMOMAN,
-		TF_CLASS_SCOUT,
-		TF_CLASS_PYRO,
-		TF_CLASS_SOLDIER,
-		TF_CLASS_DEMOMAN,
-		TF_CLASS_SNIPER,
-		TF_CLASS_MEDIC,
-		TF_CLASS_SPY
+	typedef struct
+	{
+		int m_iClass;
+		int m_nMinTeamSize;
+		int m_nRatioTeamSize;
+		int m_nMinimum;
+		int m_nMaximum[ DifficultyType::MAX ];
+	} ClassSelection_t;
+
+	static ClassSelection_t defenseRoster[] = 
+	{
+		{ TF_CLASS_ENGINEER, 0, 4, 1, { 1, 2, 3, 3 } },
+		{ TF_CLASS_SOLDIER, 0, 0, 0, { -1, -1, -1, -1 } },
+		{ TF_CLASS_DEMOMAN, 0, 0, 0, { 2, 3, 3, 3 } },
+		{ TF_CLASS_PYRO, 3, 0, 0, { -1, -1, -1, -1 } },
+		{ TF_CLASS_HEAVYWEAPONS, 3, 0, 0, { 1, 1, 2, 2 } },
+		{ TF_CLASS_MEDIC, 4, 4, 1, { 1, 1, 2, 2 } },
+		{ TF_CLASS_SNIPER, 5, 0, 0, { 0, 1, 1, 1 } },
+		{ TF_CLASS_SPY, 5, 0, 0, { 0, 1, 2, 2 } },
+		{ TF_CLASS_UNDEFINED, 0, -1 },
 	};
-	static const int defenseRoster[] ={
-		TF_CLASS_MEDIC,
-		TF_CLASS_ENGINEER,
-		TF_CLASS_SOLDIER,
-		TF_CLASS_DEMOMAN,
-		TF_CLASS_SCOUT,
-		TF_CLASS_HEAVYWEAPONS,
-		TF_CLASS_MEDIC,
-		TF_CLASS_SNIPER,
-		TF_CLASS_ENGINEER,
-		TF_CLASS_SOLDIER,
-		TF_CLASS_MEDIC,
-		TF_CLASS_PYRO,
-		TF_CLASS_SPY
+
+	static ClassSelection_t offenseRoster[] = 
+	{
+		{ TF_CLASS_SCOUT, 0, 0, 1, { 3, 3, 3, 3 } },
+		{ TF_CLASS_SOLDIER, 0, 0, 0, { -1, -1, -1, -1 } },
+		{ TF_CLASS_DEMOMAN, 0, 0, 0, { 2, 3, 3, 3 } },
+		{ TF_CLASS_PYRO, 3, 0, 0, { -1, -1, -1, -1 } },
+		{ TF_CLASS_HEAVYWEAPONS, 3, 0, 0, { 1, 1, 2, 2 } },
+		{ TF_CLASS_MEDIC, 4, 4, 1, { 1, 1, 2, 2 } },
+		{ TF_CLASS_SNIPER, 5, 0, 0, { 0, 1, 1, 1 } },
+		{ TF_CLASS_SPY, 5, 0, 0, { 0, 1, 2, 2 } },
+		{ TF_CLASS_ENGINEER, 5, 0, 0, { 1, 1, 1, 1 } },
+		{ TF_CLASS_UNDEFINED, 0, -1 },
 	};
-	static const int rosterSize = ( ARRAYSIZE( offenseRoster ) + ARRAYSIZE( defenseRoster ) ) / 2;
+
+	static ClassSelection_t compRoster[] =
+	{
+		{ TF_CLASS_SCOUT, 0, 0, 0, { 0, 0, 2, 2 } },
+		{ TF_CLASS_SOLDIER, 0, 0, 0, { 0, 0, -1, -1 } },
+		{ TF_CLASS_DEMOMAN, 0, 0, 0, { 0, 0, 2, 2 } },
+		{ TF_CLASS_PYRO, 0, -1 },
+		{ TF_CLASS_HEAVYWEAPONS, 3, 0, 0, { 0, 0, 2, 2 } },
+		{ TF_CLASS_MEDIC, 1, 0, 1, { 0, 0, 1, 1 } },
+		{ TF_CLASS_SNIPER, 0, -1 },
+		{ TF_CLASS_SPY, 0, -1 },
+		{ TF_CLASS_ENGINEER, 0, -1 },
+		{ TF_CLASS_UNDEFINED, 0, -1 },
+	};
+
+	static auto ClassBits =[] ( int i ) {
+		return ( 1 << ( i - 1 ) );
+	};
 
 	const char *szClassName = tf_bot_force_class.GetString();
 	if ( !FStrEq( szClassName, "" ) )
 	{
-		const int iClassIdx = GetClassIndexFromString( szClassName, TF_LAST_NORMAL_CLASS );
+		const int iClassIdx = GetClassIndexFromString( szClassName );
 		if ( iClassIdx != TF_CLASS_UNDEFINED )
 			return GetPlayerClassData( iClassIdx )->m_szClassName;
 	}
@@ -2266,84 +2293,106 @@ const char *CTFBot::GetNextSpawnClassname( void )
 	CountClassMembers func( this, GetTeamNumber() );
 	ForEachPlayer( func );
 
-	const int *pRoster = NULL;
+	const ClassSelection_t *pRoster = offenseRoster;
 	if ( !TFGameRules()->IsInKothMode() )
 	{
 		if ( TFGameRules()->GetGameType() != TF_GAMETYPE_CP )
 		{
 			if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT && GetTeamNumber() == TF_TEAM_RED )
 				pRoster = defenseRoster;
-			else
-				pRoster = offenseRoster;
 		}
 		else
 		{
-			CUtlVector<CTeamControlPoint *> defensePoints;
 			CUtlVector<CTeamControlPoint *> attackPoints;
 			TFGameRules()->CollectCapturePoints( this, &attackPoints );
+
+			CUtlVector<CTeamControlPoint *> defensePoints;
 			TFGameRules()->CollectDefendPoints( this, &defensePoints );
 
 			if ( attackPoints.IsEmpty() && !defensePoints.IsEmpty() )
 				pRoster = defenseRoster;
-			else
-				pRoster = offenseRoster;
 		}
 	}
 	else
 	{
-		CTeamControlPoint *pPoint = this->GetMyControlPoint();
+		CTeamControlPoint *pPoint = GetMyControlPoint();
 		if ( pPoint )
 		{
 			if ( GetTeamNumber() == ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) )
 				pRoster = defenseRoster;
-			else
-				pRoster = offenseRoster;
 		}
-		else
-			pRoster = offenseRoster;
 	}
-
-	if( pRoster == NULL )
-		return "random";
-
-	float flClassWeight[ TF_CLASS_COUNT_ALL ] = { 1.0f };
-	for ( int i=0; i < rosterSize; ++i )
-	{
-		if ( !TFGameRules()->CanBotChooseClass( this, pRoster[i] ) )
-			continue;
-
-		flClassWeight[ pRoster[i] ] += 1.0f;
-
-		if ( m_PlayerClass.GetClassIndex() == pRoster[i] )
-			flClassWeight[ pRoster[i] ] *= 0.1f;
-
-		flClassWeight[ pRoster[i] ] /= func.m_aClassCounts[ pRoster[i] ] + 1;
-	}
-
-	float flTotalFitness = 0;
-	for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
-		flTotalFitness += flClassWeight[i];
-
-	float flRandom = RandomFloat(0.0f, flTotalFitness);
-
-	flTotalFitness = 0;
 
 	int iDesiredClass = TF_CLASS_UNDEFINED;
-	for ( int i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; i++ )
-	{
-		flTotalFitness += flClassWeight[i];
+	int iAllowedClasses = 0;
 
-		if ( flRandom <= flTotalFitness )
+	for ( int i=0; pRoster[i].m_iClass != TF_CLASS_UNDEFINED; ++i )
+	{
+		ClassSelection_t const *pInfo = &pRoster[i];
+		if ( !TFGameRules()->CanBotChooseClass( this, pInfo->m_iClass ) )
+			continue;
+
+		if ( func.m_iTotal < pInfo->m_nMinTeamSize )
+			continue;
+
+		if ( func.m_aClassCounts[ pInfo->m_iClass ] < pInfo->m_nMinimum )
 		{
-			iDesiredClass = i;
+			iDesiredClass = pInfo->m_iClass;
 			break;
 		}
+
+		const int nMaximum = pInfo->m_nMaximum[ m_iSkill ];
+		if ( nMaximum > -1 && func.m_aClassCounts[ pInfo->m_iClass ] >= nMaximum )
+			continue;
+
+		if ( pInfo->m_nRatioTeamSize > 0 )
+		{
+			const int nNumPerSize = func.m_iTotal / pInfo->m_nRatioTeamSize;
+			const int nActualCount = func.m_aClassCounts[ pInfo->m_iClass ] - pInfo->m_nMinTeamSize;
+			if ( nActualCount < nNumPerSize )
+			{
+				iDesiredClass = pInfo->m_iClass;
+				break;
+			}
+		}
+
+		iAllowedClasses |= ClassBits( pInfo->m_iClass );
+	}
+
+	if ( iAllowedClasses == 0 )
+	{
+		Warning( "TFBot unable to get data for desired class, defaulting to 'auto'\n" );
+		return "auto";
+	}
+
+	if ( iDesiredClass == TF_CLASS_UNDEFINED )
+	{
+		for( int i=0; i < TF_CLASS_COUNT_ALL; ++i )
+		{
+			int iRandom = RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
+			if ( iAllowedClasses & ClassBits( iRandom ) )
+			{
+				iDesiredClass = iRandom;
+				break;
+			}
+		}
+	}
+
+	if ( m_hTargetSentry )
+	{
+		if ( iAllowedClasses & ClassBits( TF_CLASS_DEMOMAN ) )
+			iDesiredClass = TF_CLASS_DEMOMAN;
+		else if ( iAllowedClasses & ClassBits( TF_CLASS_SPY ) )
+			iDesiredClass = TF_CLASS_SPY;
+		else if ( iAllowedClasses & ClassBits( TF_CLASS_SOLDIER ) )
+			iDesiredClass = TF_CLASS_SOLDIER;
 	}
 
 	if ( iDesiredClass > TF_CLASS_UNDEFINED )
 		return GetPlayerClassData( iDesiredClass )->m_szClassName;
 
-	return "random";
+	Warning( "TFBot unable to get data for desired class, defaulting to 'auto'\n" );
+	return "auto";
 }
 
 //-----------------------------------------------------------------------------

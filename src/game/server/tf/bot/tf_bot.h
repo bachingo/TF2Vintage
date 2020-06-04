@@ -279,7 +279,8 @@ public:
 		EASY   = 0,
 		NORMAL = 1,
 		HARD   = 2,
-		EXPERT = 3
+		EXPERT = 3,
+		MAX
 	}
 	m_iSkill;
 
@@ -323,6 +324,8 @@ public:
 
 private:
 	void ManageRandomWeapons( void );
+
+	bool m_bWantsToChangeClass;
 
 	CountdownTimer m_lookForEnemiesTimer;
 
