@@ -2016,7 +2016,11 @@ bool CTFGameRules::CanBotChooseClass( CBasePlayer *pBot, int iDesiredClassIndex 
 //-----------------------------------------------------------------------------
 bool CTFGameRules::CanBotChangeClass( CBasePlayer *pBot )
 {
-	if ( !pBot || !pBot->IsPlayer()/* || !DWORD(a2 + 2309) */ )
+	CTFPlayer *pPlayer = ToTFPlayer( pBot );
+	if ( !pPlayer || pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED )
+		return true;
+
+	if ( IsMannVsMachineMode() || IsInVSHMode() )
 		return false;
 
 	// TODO: Implement CTFBotRoster entity
