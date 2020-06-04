@@ -67,6 +67,7 @@ float MerasmusModifyDamage( CTakeDamageInfo const& info )
 			case TF_WEAPON_REVOLVER:
 				return flDamage * 2;
 			case TF_WEAPON_MINIGUN:
+			case TF_WEAPON_MINIGUN_REAL:
 				return flDamage / 2;
 			case TF_WEAPON_HANDGUN_SCOUT_PRIMARY:
 				return flDamage * 1.75;

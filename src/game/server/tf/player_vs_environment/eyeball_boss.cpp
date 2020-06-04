@@ -59,7 +59,7 @@ static const float EyeBallBossModifyDamage( CTakeDamageInfo const& info )
 	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
 	if ( pWeapon )
 	{
-		if ( pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) )
+		if ( pWeapon->IsWeapon( TF_WEAPON_MINIGUN ) || pWeapon->IsWeapon( TF_WEAPON_MINIGUN_REAL ) )
 			return flDamage / 4;
 
 		if ( pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) )

@@ -10889,7 +10889,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 		int nGeneratesRage = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pActiveWeapon, nGeneratesRage, generates_rage_on_dmg );
 
-		if ( nGeneratesRage && pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN )
+		if ( nGeneratesRage && ( pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN_REAL ) )
 		{
 			if ( m_Shared.GetRageProgress() < 100.0f )
 			{
@@ -10988,7 +10988,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet )
 				criteriaSet.AppendCriteria( "sniperzoomed", "1" );
 			}
 		}
-		else if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN )
+		else if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN_REAL )
 		{
 			CTFMinigun *pMinigun = dynamic_cast<CTFMinigun *>( pActiveWeapon );
 			if ( pMinigun )
