@@ -1,6 +1,7 @@
 #include "tier1.h"
 #include "ivscript.h"
 #include "squirrel_vm.h"
+#include "lua_vm.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -24,6 +25,8 @@ IScriptVM *CScriptManager::CreateVM( ScriptLanguage_t language )
 		case SL_SQUIRREL:
 			pVM = CreateSquirrelVM();
 			break;
+		case SL_LUA:
+			pVM = CreateLuaVM();
 		default:
 			return NULL;
 	}

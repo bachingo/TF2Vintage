@@ -884,3 +884,18 @@ int CLuaVM::PrintFunc( lua_State *L )
 
 	return 0;
 }
+
+
+IScriptVM *CreateLuaVM( void )
+{
+	return new CLuaVM();
+}
+
+void DestroyLuaVM( IScriptVM *pVM )
+{
+	if( pVM )
+	{
+		pVM->Shutdown();
+		delete pVM;
+	}
+}
