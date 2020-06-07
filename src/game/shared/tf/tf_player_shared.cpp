@@ -97,7 +97,7 @@ ConVar tf2v_clamp_speed( "tf2v_clamp_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf2v_clamp_speed_difference( "tf2v_clamp_speed_difference", "105", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maxmimum speed a player can be boosted from their base speed in HU/s." );
 ConVar tf2v_clamp_speed_absolute( "tf2v_clamp_speed_absolute", "450", FCVAR_NOTIFY | FCVAR_REPLICATED, "Absolute max speed (HU/s) for non-charging players." );
 
-ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era move speed for spies." );
+ConVar tf2v_use_new_spy_movespeeds( "tf2v_use_new_spy_movespeeds", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the MYM era move speed for spies." );
 ConVar tf2v_use_new_hauling_speed( "tf2v_use_new_hauling_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables the F2P era movement decrease type for building hauling." );
 ConVar tf2v_use_spy_moveattrib ("tf2v_use_spy_moveattrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Should spies be affected by their disguise's speed attributes?" );
 ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables movespeed matching for medics." );
