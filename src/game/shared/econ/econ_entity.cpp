@@ -186,69 +186,60 @@ void C_EconEntity::ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Q
 //-----------------------------------------------------------------------------
 void C_EconEntity::UpdateAttachmentModels( void )
 {
-	m_Attachments.RemoveAll();
+	m_Attachments.Purge();
 
-	if ( GetItem()->GetStaticData() )
+	if ( GetItem()->GetStaticData() && AttachmentModelsShouldBeVisible() )
 	{
 		CEconItemDefinition *pItem = GetItem()->GetStaticData();
 
-		if ( AttachmentModelsShouldBeVisible() )
+		PerTeamVisuals_t *pVisuals = pItem->GetVisuals( GetTeamNumber() );
+		if ( pVisuals )
 		{
-			PerTeamVisuals_t *pVisuals = pItem->GetVisuals( GetTeamNumber() );
-			if ( pVisuals )
+			for ( int i=0; i<pVisuals->attached_models.Count(); ++i )
 			{
-				for ( int i=0; i<pVisuals->attached_models.Count(); ++i )
+				AttachedModel_t const &attachment = pVisuals->attached_models[i];
+				int iMdlIndex = modelinfo->GetModelIndex( attachment.model );
+				if ( iMdlIndex >= 0 )
 				{
-					AttachedModel_t attachment = pVisuals->attached_models[i];
-					int iMdlIndex = modelinfo->GetModelIndex( attachment.model );
-					if ( iMdlIndex >= 0 )
-					{
-						AttachedModelData_t attachmentData;
-						attachmentData.model = modelinfo->GetModel( iMdlIndex );
-						attachmentData.modeltype = attachment.model_display_flags;
+					AttachedModelData_t attachmentData;
+					attachmentData.model = modelinfo->GetModel( iMdlIndex );
+					attachmentData.modeltype = attachment.model_display_flags;
 
-						m_Attachments.AddToTail( attachmentData );
-					}
+					m_Attachments.AddToTail( attachmentData );
 				}
 			}
+		}
 
-			if ( pItem->attach_to_hands || pItem->attach_to_hands_vm_only )
+		if ( pItem->attach_to_hands || pItem->attach_to_hands_vm_only )
+		{
+			C_BasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
+			if ( pPlayer && !pPlayer->ShouldDrawThisPlayer() )
 			{
-				C_BasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
-				if ( pPlayer && pPlayer->IsAlive() && !pPlayer->ShouldDrawThisPlayer() )
+				CBaseViewModel *pViewmodel = pPlayer->GetViewModel();
+				if ( pViewmodel )
 				{
-					CBaseViewModel *pViewmodel = pPlayer->GetViewModel();
-					if ( pViewmodel )
+					/*C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
+					if ( !pAddon )
+						return;
+
+					pAddon->SetOwner( this );
+
+					if ( pAddon->InitializeAsClientEntity( GetItem()->GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
 					{
-						/*C_ViewmodelAttachmentModel *pAddon = new C_ViewmodelAttachmentModel;
-						if ( !pAddon )
-							return;
+						pAddon->SetParent( pViewmodel );
+						pAddon->SetLocalOrigin( vec3_origin );
+						pAddon->UpdatePartitionListEntry();
+						pAddon->CollisionProp()->UpdatePartition();
+						pAddon->UpdateVisibility();
 
-						if ( pAddon->InitializeAsClientEntity( GetItem()->GetPlayerDisplayModel(), RENDER_GROUP_VIEW_MODEL_OPAQUE ) )
-						{
-							pAddon->SetOwner( this );
-							pAddon->SetParent( pViewmodel );
-							pAddon->SetLocalOrigin( vec3_origin );
-							pAddon->UpdatePartitionListEntry();
-							pAddon->CollisionProp()->UpdatePartition();
-							pAddon->UpdateVisibility();
-
-							m_hAttachmentParent = pAddon;
-						}*/
-					}
-					else
-					{
-						if ( m_hAttachmentParent )
-						{
-
-						}
-					}
+						m_hAttachmentParent = pAddon;
+					}*/
 				}
-				else
-				{
-					if ( m_hAttachmentParent )
-						m_hAttachmentParent->Release();
-				}
+			}
+			else
+			{
+				if ( m_hAttachmentParent )
+					m_hAttachmentParent->Release();
 			}
 		}
 	}
