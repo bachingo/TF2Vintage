@@ -2289,16 +2289,17 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			// We don't want to always execute this, so only execute when we have a holiday restriction listed.
 			if ( pItemDef->GetHolidayRestriction() )
 			{
-				if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon_or_valentines") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "christmas") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "birthday") == 0 ) )
-					bHolidayRestrictedItem = true;
+				bHolidayRestrictedItem = true;
+				if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon_or_valentines") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "christmas") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "birthday") == 0 ) )
+					bHolidayRestrictedItem = false;
 			}
 			
 			if ( !bWhiteListedWeapon || bIsReskin || bHolidayRestrictedItem || bIsSpecialRestricted || bIsDemoknight || bIsCutContent || bIsMultiClassItem ) // If the weapon is banned, swap for a stock weapon.
@@ -2655,16 +2656,17 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			// We don't want to always execute this, so only execute when we have a holiday restriction listed.
 			if ( pItemDef->GetHolidayRestriction() )
 			{
-				if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon_or_valentines") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "christmas") == 0 ) )
-					bHolidayRestrictedItem = true;
-				else if ( ( !TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "birthday") == 0 ) )
-					bHolidayRestrictedItem = true;
+				bHolidayRestrictedItem = true;
+				if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoon ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_HalloweenOrFullMoonOrValentines ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "halloween_or_fullmoon_or_valentines") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "christmas") == 0 ) )
+					bHolidayRestrictedItem = false;
+				else if ( ( TFGameRules()->IsHolidayActive( kHoliday_TF2Birthday ) ) && ( V_stricmp(pItemDef->GetHolidayRestriction(), "birthday") == 0 ) )
+					bHolidayRestrictedItem = false;
 			}
 			
 			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic == false ) || ( bIsSpecialRestricted == true ) )  // If the item is banned, swap to the default cosmetic.
