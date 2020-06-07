@@ -20,6 +20,7 @@
 #include "collisionutils.h"
 #include "tf_team.h"
 #include "props.h"
+#include "tf_weapon_compound_bow.h"
 #endif
 
 #ifdef CLIENT_DLL
@@ -58,6 +59,8 @@ CTFProjectile_EnergyRing::CTFProjectile_EnergyRing()
 {
 #ifdef CLIENT_DLL
 	m_pRing = NULL;
+#else
+	m_bCollideWithTeammates = true;
 #endif
 }
 
@@ -137,6 +140,26 @@ void CTFProjectile_EnergyRing::RocketTouch( CBaseEntity *pOther )
 	if ( pOther->m_takedamage != DAMAGE_NO )
 	{
 		
+		// if the entity is on our team check if it's a player carrying a bow
+		if ( pOther->GetTeam() == GetTeam() )
+		{
+			CTFCompoundBow *pBow = NULL;
+			CTFPlayer *pPlayer = ToTFPlayer( pOther );
+			pBow = dynamic_cast<CTFCompoundBow *>( pPlayer->GetActiveTFWeapon() );
+			if ( !pBow )
+			{
+				// not a valid target
+				return;
+			}
+			else
+			{
+				// Light the bow on fire.
+				pBow->LightArrow();
+				return;
+			
+			}
+		}
+	
 		bool bShouldDamage = true;
 		// Bison with mid era selection does not double dip damage.
 		if ( UsePenetratingBeam() && tf2v_use_new_bison_damage.GetInt() == 1 )
