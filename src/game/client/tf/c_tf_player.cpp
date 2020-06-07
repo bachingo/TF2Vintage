@@ -1882,7 +1882,7 @@ public:
 
 		if ( !pC_BaseEntity )
 		{
-			m_pResult->SetVecValue( 1, 1, 1 );
+			m_pResult->SetVecValue( 0, 0, 0 );
 			return;
 		}
 
