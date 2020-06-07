@@ -2578,7 +2578,7 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 		if ( pItem == GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 ) )
 			continue;
 
-		if ( pItem)
+		if ( pItem )
 		{
 			const char *pszClassname = pItem->GetEntityName();
 			CEconItemDefinition *pItemDef = pItem->GetStaticData();
@@ -2632,6 +2632,23 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 				case 3:
 				default:
 					break;	
+			}
+			
+			// Check to make sure we didn't already give this item already.
+			switch (iSlot)
+			{
+				case TF_LOADOUT_SLOT_MISC2:
+					if ( pItem == GetLoadoutItem( m_PlayerClass.GetClassIndex(), TF_LOADOUT_SLOT_MISC1 ) )
+						bIsSpecialRestricted = true;
+					break;
+
+				case TF_LOADOUT_SLOT_MISC3:
+					if ( ( pItem == GetLoadoutItem( m_PlayerClass.GetClassIndex(), TF_LOADOUT_SLOT_MISC1 ) ) || ( pItem == GetLoadoutItem( m_PlayerClass.GetClassIndex(), TF_LOADOUT_SLOT_MISC2 ) ) )
+						bIsSpecialRestricted = true;
+					break;
+				
+				default:
+					break;
 			}
 			
 			// Checks for holiday restrictions.
