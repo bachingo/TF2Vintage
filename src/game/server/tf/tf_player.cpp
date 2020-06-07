@@ -2573,11 +2573,16 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 		
 		// Give us an item from the inventory.
 		CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), iSlot );
+		
+		// Don't equip defaults in order to prevent a memory crash.
+		if ( pItem == GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 ) )
+			continue;
 
 		if ( pItem)
 		{
 			const char *pszClassname = pItem->GetEntityName();
 			CEconItemDefinition *pItemDef = pItem->GetStaticData();
+			
 			Assert( pszClassname );
 			bool bHolidayRestrictedItem = false; // Only fire off when it's not a holiday.
 			bool bWhiteListedCosmetic = true; // Only concerned with this when it's before the item's time (Time Paradox!)
@@ -2647,7 +2652,8 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 			
 			if ( ( bHolidayRestrictedItem == true ) || ( bWhiteListedCosmetic == false ) || ( bIsSpecialRestricted == true ) )  // If the item is banned, swap to the default cosmetic.
 			{
-				pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), iSlot, 0 );
+				// Normally we would give the default item, but since we don't give default cosmetics we bail.
+				continue;
 			}
 			
 			CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
