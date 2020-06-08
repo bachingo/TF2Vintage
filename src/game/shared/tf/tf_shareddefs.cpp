@@ -343,6 +343,7 @@ const char *g_LoadoutSlots[] =
 	"misc",
 	"misc2",
 	"misc3",
+	
 	"zombie",
 	"medal",
 	
@@ -355,6 +356,11 @@ const char *g_LoadoutSlots[] =
 	"taunt7",
 	"taunt8",
 	
+	"paint",
+	"paint2",
+	"paint3",
+	"paint4",
+	
 	"count"
 };
 
@@ -362,14 +368,35 @@ const char *g_LoadoutTranslations[] ={
 	"#LoadoutSlot_Primary",
 	"#LoadoutSlot_Secondary",
 	"#LoadoutSlot_Melee",
-	"#LoadoutSlot_Building",
 	"#LoadoutSlot_pda",
 	"#LoadoutSlot_pda2",
+	"#LoadoutSlot_Building",
+	
 	"#LoadoutSlot_Utility",
+	"#LoadoutSlot_Action",
+
 	"#LoadoutSlot_Head",
 	"#LoadoutSlot_Misc",
-	"#LoadoutSlot_Action",
 	"#LoadoutSlot_Misc",
+	"#LoadoutSlot_Misc",
+	
+	"#TF_Item_Zombie_Armory",
+	"#TF_Wearable_Medal",
+	
+	"#Hud_Menu_Taunt_Title",
+	"#Hud_Menu_Taunt_Title",
+	"#Hud_Menu_Taunt_Title",	
+	"#Hud_Menu_Taunt_Title",
+	"#Hud_Menu_Taunt_Title",
+	"#Hud_Menu_Taunt_Title",
+	"#Hud_Menu_Taunt_Title",
+	"#Hud_Menu_Taunt_Title",
+	
+	"#TF_Tool_PaintCan",
+	"#TF_Tool_PaintCan",
+	"#TF_Tool_PaintCan",
+	"#TF_Tool_PaintCan",
+	
 	"Undefined"
 };
 
