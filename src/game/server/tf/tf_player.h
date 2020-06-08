@@ -700,8 +700,10 @@ private:
 public:
 	QAngle				m_angPrevEyeAngles;
 
-protected:
+
+
 	CTFPlayerClass		m_PlayerClass;
+protected:
 	int					m_WeaponPreset[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
 
 private:

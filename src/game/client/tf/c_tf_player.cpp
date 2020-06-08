@@ -1905,8 +1905,43 @@ public:
 
 		if ( !pItem )
 			return;
-
+		
 		uint nPaintRGB = pItem->GetModifiedRGBValue( bBlueTeam );
+		
+		// Alternate check: See if we have a paint color.
+		// Run this second in case our item has an override over this.
+		if (nPaintRGB == 0)
+		{
+			// Check if we're applying this to a wearable so we can call the player's paints.
+			// We need to figure out who owns this item though.
+			C_TFPlayer *pTFPlayer = ToTFPlayer(dynamic_cast<C_EconEntity *>(pEntity->GetOwnerEntity()));
+			if (pTFPlayer)
+			{
+				for (C_EconWearable *pWearable : pTFPlayer->m_hMyWearables)
+				{
+					// Get the base wearable.
+					C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>(pWearable);
+					if (pTFWearable == nullptr)
+						continue;
+
+					// Check if this wearable is in a paintable slot.
+					if (pTFWearable->GetLoadoutSlot() >= TF_FIRST_COSMETIC_SLOT && pTFWearable->GetLoadoutSlot() <= TF_LAST_COSMETIC_SLOT)
+					{
+						// Get the object info.
+						CEconItemView *pWearableItem = pTFWearable->GetItem();
+						if (pWearableItem)
+						{
+							// If these match, use the equivalent paint.
+							if (pItem == pWearableItem)
+							{
+								nPaintRGB = pTFWearable->GetPaintOverride(bBlueTeam);
+							}
+						}
+					}
+				}
+			}
+		}
+		
 		if( nPaintRGB != 0 )
 		{
 			float flPaint[3] ={
@@ -1917,6 +1952,7 @@ public:
 
 			m_pResult->SetVecValue( flPaint[0], flPaint[1], flPaint[2] );
 		}
+
 	}
 };
 
