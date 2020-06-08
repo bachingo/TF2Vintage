@@ -433,7 +433,25 @@
 				}
 			}
 		}
-		
+		"paint_can"
+		{
+			"item_class"	"tool"
+			"anim_slot"	"FORCE_NOT_USED"
+			"item_type_name"	"#TF_T"
+			"item_description"	"#TF_Tool_PaintCan_Desc"
+			"image_inventory"	"backpack/player/items/crafting/paintcan"
+			"image_inventory_overlay"	"backpack/player/items/crafting/paintcan_paintcolor"
+		}
+		"paint_can_team_color"
+		{
+			"item_class"	"tool"
+			"anim_slot"	"FORCE_NOT_USED"
+			"item_type_name"	"#TF_T"
+			"item_description"	"#TF_Tool_PaintCan_TeamColor_Desc"
+			"image_inventory"	"backpack/player/items/crafting/teampaint"
+			"image_inventory_overlay"	"backpack/player/items/crafting/teampaint_blu_mask"
+			"image_inventory_overlay2"	"backpack/player/items/crafting/teampaint_red_mask"
+		}	
 		
 		"weapon_minigun"
 		{
@@ -10091,6 +10109,371 @@
 			"item_description"	"#TF_Item_ZombieSniper_Desc"
 			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
 		}
+	}
+	"paints"
+	{
+		"5023"
+		{
+			"name"	"Paint Can"
+			"item_class"	"tool"
+			"anim_slot"	"FORCE_NOT_USED"
+			"year"	"2010"
+			"item_type_name"	"#TF_T"
+			"item_name"		"#TF_Wearable_CosmeticItem"
+			"item_description"	"#TF_Tool_PaintCan"
+			"image_inventory"	"backpack/player/items/all_class/all_tf2v"
+			"baseitem"		"1"
+		}
+		"5027"
+		{
+			"name"	"Paint Can 1"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_1"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "7511618"	
+				}
+			}
+		}
+		"5028"
+		{
+			"name"	"Paint Can 2"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_2"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "4345659"	
+				}
+			}
+		}
+		"5029"
+		{
+			"name"	"Paint Can 3"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_3"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "5322826"	
+				}
+			}
+		}
+		"5030"
+		{
+			"name"	"Paint Can 4"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_4"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "14204632"	
+				}
+			}
+		}
+		"5031"
+		{
+			"name"	"Paint Can 5"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_5"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "8208497"	
+				}
+			}
+		}
+		"5032"
+		{
+			"name"	"Paint Can 6"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_6"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "13595446"	
+				}
+			}
+		}
+		"5033"
+		{
+			"name"	"Paint Can 7"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_7"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "10843461"	
+				}
+			}
+		}
+		"5034"
+		{
+			"name"	"Paint Can 8"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_8"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "12955537"	
+				}
+			}
+		}
+		"5035"
+		{
+			"name"	"Paint Can 9"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_9"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "6901050"	
+				}
+			}
+		}
+		"5036"
+		{
+			"name"	"Paint Can 10"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_10"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "8154199"	
+				}
+			}
+		}
+		"5037"
+		{
+			"name"	"Paint Can 11"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_11"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "15185211"	
+				}
+			}
+		}
+		"5038"
+		{
+			"name"	"Paint Can 12"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_12"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "8289918"	
+				}
+			}
+		}
+		"5039"
+		{
+			"name"	"Paint Can 13"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_13"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "15132390"	
+				}
+			}
+		}
+		"5040"
+		{
+			"name"	"Paint Can 14"
+			"prefab"	"paint_can"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_14"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "1315860"	
+				}
+			}
+		}
+		"5046"
+		{
+			"name"	"Paint Can Team Color"
+			"prefab"	"paint_can_team_color"
+			"year"	"2010"
+			"item_name"		"#TF_Tool_PaintCan_TeamColor"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "12073019" 
+				}
+				"set item tint RGB 2"
+				{
+					"attribute_class"	"set_item_tint_rgb_2"
+					"value" "5801378" 
+				}
+			}
+		}
+		"5060"
+		{
+			"name"	"Paint Can Team Color 2"
+			"prefab"	"paint_can_team_color"
+			"year"	"2011"
+			"item_name"		"#TF_Tool_PaintCan_TeamColor2"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "4732984" 
+				}
+				"set item tint RGB 2"
+				{
+					"attribute_class"	"set_item_tint_rgb_2"
+					"value" "3686984" 
+				}
+			}
+		}
+		"5061"
+		{
+			"name"	"Paint Can Team Color 3"
+			"prefab"	"paint_can_team_color"
+			"year"	"2011"
+			"item_name"		"#TF_Tool_PaintCan_TeamColor3"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "11049612" 
+				}
+				"set item tint RGB 2"
+				{
+					"attribute_class"	"set_item_tint_rgb_2"
+					"value" "8626083" 
+				}
+			}
+		}
+		"5062"
+		{
+			"name"	"Paint Can Team Color 4"
+			"prefab"	"paint_can_team_color"
+			"year"	"2011"
+			"item_name"		"#TF_Tool_PaintCan_TeamColor4"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "3874595" 
+				}
+				"set item tint RGB 2"
+				{
+					"attribute_class"	"set_item_tint_rgb_2"
+					"value" "1581885" 
+				}
+			}
+		}
+		"5063"
+		{
+			"name"	"Paint Can Team Color 5"
+			"prefab"	"paint_can_team_color"
+			"year"	"2011"
+			"item_name"		"#TF_Tool_PaintCan_TeamColor5"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "6637376" 
+				}
+				"set item tint RGB 2"
+				{
+					"attribute_class"	"set_item_tint_rgb_2"
+					"value" "2636109" 
+				}
+			}
+		}
+		"5064"
+		{
+			"name"	"Paint Can Team Color 6"
+			"prefab"	"paint_can_team_color"
+			"year"	"2011"
+			"item_name"		"#TF_Tool_PaintCan_TeamColor6"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "8400928" 
+				}
+				"set item tint RGB 2"
+				{
+					"attribute_class"	"set_item_tint_rgb_2"
+					"value" "2452877" 
+				}
+			}
+		}
+		"5065"
+		{
+			"name"	"Paint Can Team Color 7"
+			"prefab"	"paint_can_team_color"
+			"year"	"2011"
+			"item_name"		"#TF_Tool_PaintCan_TeamColor7"
+			"attributes"
+			{
+				"set item tint RGB"
+				{
+					"attribute_class"	"set_item_tint_rgb"
+					"value" "12807213" 
+				}
+				"set item tint RGB 2"
+				{
+					"attribute_class"	"set_item_tint_rgb_2"
+					"value" "12091445" 
+				}
+			}
+		}	
 	}
 	"attributes"
 	{
