@@ -13,6 +13,13 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWearable, DT_TFWearable );
 
 BEGIN_NETWORK_TABLE( CTFWearable, DT_TFWearable )
+#ifdef CLIENT_DLL
+	RecvPropInt( RECVINFO( m_iPaintOverride ) ),
+	RecvPropInt( RECVINFO( m_iPaintOverride2 ) ),
+#else
+	SendPropInt( SENDINFO( m_iPaintOverride ), 6, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iPaintOverride2 ), 6, SPROP_UNSIGNED ),
+#endif
 END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_wearable, CTFWearable );
@@ -26,6 +33,7 @@ END_NETWORK_TABLE()
 LINK_ENTITY_TO_CLASS( tf_wearable_vm, CTFWearableVM );
 PRECACHE_REGISTER( tf_wearable_vm );
 
+	
 #ifdef GAME_DLL
 
 //-----------------------------------------------------------------------------
@@ -39,6 +47,8 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 	// player_bodygroups
 	if (!m_bDisguiseWearable)
 		UpdatePlayerBodygroups();
+	
+	SetPaintOverride();
 }
 
 //-----------------------------------------------------------------------------
@@ -80,7 +90,59 @@ void CTFWearable::Break( void )
 	MessageEnd();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Used for defining the paint tint of a wearable.
+//-----------------------------------------------------------------------------
+void CTFWearable::SetPaintOverride( void )
+{
+	// Set our paints to 0.
+	m_iPaintOverride = 0;
+	m_iPaintOverride2 = 0;
+	
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+		if (!pOwner)
+			return;
+		
+	// Find the equivalent paint slot.
+	int iPaintSlot = 0;
+	switch (GetLoadoutSlot())
+	{
+		case TF_LOADOUT_SLOT_HAT:
+			iPaintSlot = TF_LOADOUT_SLOT_PAINT1;
+			break;
+		case TF_LOADOUT_SLOT_MISC1:
+			iPaintSlot = TF_LOADOUT_SLOT_PAINT2;
+			break;
+		case TF_LOADOUT_SLOT_MISC2:
+			iPaintSlot = TF_LOADOUT_SLOT_PAINT3;
+			break;
+		case TF_LOADOUT_SLOT_MISC3:
+			iPaintSlot = TF_LOADOUT_SLOT_PAINT4;
+			break;
+		default:
+			return;
+	}
+
+	// Give us the corresponding paint from the inventory.
+	CEconItemView *pPaint = nullptr;
+	pPaint = pOwner->GetLoadoutItem(pOwner->m_PlayerClass.GetClassIndex(), iPaintSlot);
+
+	if (!pPaint)
+		return;
+
+	m_iPaintOverride = pPaint->GetModifiedRGBValue( false );
+	m_iPaintOverride2 = pPaint->GetModifiedRGBValue( true );
+}
+
 #else
+	
+unsigned int CTFWearable::GetPaintOverride(bool bAlternate)
+{
+	if (bAlternate)
+		return m_iPaintOverride2;
+	
+	return m_iPaintOverride;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Overlay Uber

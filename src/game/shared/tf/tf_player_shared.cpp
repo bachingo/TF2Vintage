@@ -2422,7 +2422,7 @@ void CTFPlayerShared::OnAddMarkedForDeath( void )
 	{
 		// Start the Marked for Death icon
 		if (!m_pMarkedIcon )
-			m_pMarkedIcon = m_pOuter->ParticleProp()->Create( "mark_for_death", PATTACH_POINT_FOLLOW, "head" );;
+			m_pMarkedIcon = m_pOuter->ParticleProp()->Create( "mark_for_death", PATTACH_POINT_FOLLOW, "head" );
 	}
 	else
 	{

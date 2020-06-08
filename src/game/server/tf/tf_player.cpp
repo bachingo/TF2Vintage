@@ -1741,19 +1741,13 @@ void CTFPlayer::GiveDefaultItems()
 		ManageRegularWeapons( pData );
 	
 	// Manage our cosmetic items.
-		ManagePlayerCosmetics( pData );
+	ManagePlayerCosmetics( pData );
 	
 	// Give ourselves zombie skins when it's Halloween.
-	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
-		EnableZombies( pData );
+	ManagePlayerZombie( pData );
 	
 	// If we're a VIP player, give a medal.
-	CTFPlayer *pPlayer = this;
-	if ( pPlayer && pPlayer->m_iPlayerVIPRanking != 0 )
-	{
-		if ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 )
-			EnableVIP( pData, pPlayer->m_iPlayerVIPRanking );	
-	}
+	ManageVIPMedal( pData );	
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -2563,8 +2557,6 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 	
 	for (int iSlot = TF_FIRST_COSMETIC_SLOT; iSlot <= TF_LAST_COSMETIC_SLOT; ++iSlot)
 	{
-		if ( ( iSlot == TF_LOADOUT_SLOT_ZOMBIE ) || ( iSlot == TF_LOADOUT_SLOT_MEDAL ) )
-		continue;	// These are special slots, we don't deal with these.
 	
 		if ( GetEntityForLoadoutSlot( iSlot ) != NULL )
 		{
@@ -2691,8 +2683,27 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
+void CTFPlayer::ManagePlayerZombie( TFPlayerClassData_t *pData )
 {
+	// If it's not Halloween, check if we've got a zombie model here and delete it.
+	if ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+	{
+		// Nothing here, just bail.
+		if (!GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) )
+			return;
+		
+		// Check if we got a zombie model on.
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) );
+			
+		if (pWearable == nullptr)
+			return;
+
+		// Delete it.
+		RemoveWearable(pWearable);
+		UTIL_Remove(pWearable);
+		return;		
+	}
+	
 	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) == NULL )
 	{
 		// If there is no item in this slot (which there should always be for zombies) error and return.
@@ -2721,15 +2732,40 @@ void CTFPlayer::EnableZombies( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::EnableVIP( TFPlayerClassData_t *pData , int iMedalType )
+void CTFPlayer::ManageVIPMedal( TFPlayerClassData_t *pData )
 {
+	int iPlayerRank = 0;
+	bool bAwardMedal = false;
+	
+	CTFPlayer *pPlayer = this;
+	if (pPlayer)
+	{
+		iPlayerRank = pPlayer->m_iPlayerVIPRanking;
+		bAwardMedal = ( ( Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf2v_show_veterancy" ) ) > 0 ) && iPlayerRank != 0 );
+	}
+	
+	// Nuke any medal we have and return.
+	if ( !bAwardMedal )
+	{
+		// No medal, just bail.
+		if ( !GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_MEDAL ) )
+			return;
+		
+		// Check our medal and remove it.
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_MEDAL ) );
+			
+		if ( pWearable == nullptr )
+			return;
+
+		RemoveWearable(pWearable);
+		UTIL_Remove(pWearable);
+		return;
+	}
+	
 	// Check to determine which of the VIP medals we should give them.
 	int iItemID = 34;
 	
-	if ( iMedalType == 0 )
-		return;		// Nothing to do here.
-	
-	switch (iMedalType)
+	switch (iPlayerRank)
 	{
 		case -1:
 			iItemID = 121;

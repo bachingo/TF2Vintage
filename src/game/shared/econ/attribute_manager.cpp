@@ -373,7 +373,7 @@ float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBase
 	if ( m_bParsingMyself || m_hPlayer.Get() == NULL )
 		return flValue;
 
-	m_bParsingMyself = true;;
+	m_bParsingMyself = true;
 
 	CAttributeIterator_ApplyAttributeFloat func( m_hPlayer.Get(), strAttributeClass, &flValue, pOutProviders );
 	m_hPlayer->m_AttributeList.IterateAttributes( &func );
