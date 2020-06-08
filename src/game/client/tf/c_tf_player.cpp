@@ -1899,6 +1899,7 @@ public:
 		C_EconEntity *pEconEnt = dynamic_cast<C_EconEntity *>( pEntity );
 
 		CEconItemView *pItem = NULL;
+		if (pEconEnt)
 		{
 			pItem = pEconEnt->GetItem();
 		}
