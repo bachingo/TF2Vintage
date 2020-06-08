@@ -24,15 +24,6 @@ typedef struct
 	char m_szUniqueId[64];
 } ScriptInstance_t;
 
-typedef struct
-{
-	ScriptFunctionBinding_t *m_pFunctionBinding;
-} ScriptFunction_t;
-
-typedef struct
-{
-	ScriptClassDesc_t *m_pClasDescriptor;
-} ScriptClass_t;
 
 class CLuaVM : public IScriptVM
 {
@@ -174,7 +165,6 @@ void CLuaVM::AddSearchPath( const char *pszSearchPath )
 	lua_getglobal( GetVM(), "package" );
 	if ( !lua_istable( GetVM(), -1 ) )
 	{
-		Assert( 0 );
 		lua_pop( GetVM(), 1 );
 		return;
 	}
@@ -182,7 +172,6 @@ void CLuaVM::AddSearchPath( const char *pszSearchPath )
 	lua_getfield( GetVM(), -1, "path" );
 	if ( !lua_isstring( GetVM(), -1 ) )
 	{
-		Assert( 0 );
 		lua_pop( GetVM(), 1 );
 		return;
 	}
@@ -202,7 +191,7 @@ HSCRIPT CLuaVM::CompileScript( const char *pszScript, const char *pszId )
 	else
 	{
 		Warning( "%s", lua_tostring( GetVM(), -1 ) );
-		return INVALID_HSCRIPT;
+		return NULL;
 	}
 }
 
@@ -216,12 +205,51 @@ ScriptStatus_t CLuaVM::Run( const char *pszScript, bool bWait )
 
 ScriptStatus_t CLuaVM::Run( HSCRIPT hScript, HSCRIPT hScope, bool bWait )
 {
-	return ExecuteFunction( hScript, NULL, 0, NULL, hScope, bWait );
+	lua_getref( GetVM(), (intptr_t)hScript );
+	int nStatus = lua_pcall( GetVM(), 0, LUA_MULTRET, 0 );
+
+	switch ( nStatus )
+	{
+		case LUA_ERRERR:
+		case LUA_ERRMEM:
+		case LUA_ERRRUN:
+		{
+			Warning( "%s", lua_tostring( GetVM(), -1 ) );
+			return SCRIPT_ERROR;
+		}
+	}
+
+	if ( hScope )
+	{
+		lua_getref( GetVM(), (intptr_t)hScope );
+		if ( lua_istable( GetVM(), -1 ) )
+		{
+
+		}
+
+		lua_pop( GetVM(), 1 );
+	}
+
+	return SCRIPT_DONE;
 }
 
 ScriptStatus_t CLuaVM::Run( HSCRIPT hScript, bool bWait )
 {
-	return ExecuteFunction( hScript, NULL, 0, NULL, NULL, bWait );
+	lua_getref( GetVM(), (intptr_t)hScript );
+	int nStatus = lua_pcall( GetVM(), 0, LUA_MULTRET, 0 );
+
+	switch ( nStatus )
+	{
+		case LUA_ERRERR:
+		case LUA_ERRMEM:
+		case LUA_ERRRUN:
+		{
+			Warning( "%s", lua_tostring( GetVM(), -1 ) );
+			return SCRIPT_ERROR;
+		}
+	}
+
+	return SCRIPT_DONE;
 }
 
 void CLuaVM::ReleaseScript( HSCRIPT hScript )
@@ -234,16 +262,16 @@ HSCRIPT CLuaVM::CreateScope( const char *pszScope, HSCRIPT hParent )
 	if ( !luaL_newmetatable( GetVM(), pszScope ) )
 	{
 		lua_pop( GetVM(), 1 );
-		return INVALID_HSCRIPT;
+		return NULL;
 	}
 
-	if ( hParent != INVALID_HSCRIPT )
+	if ( hParent )
 	{
 		lua_getref( GetVM(), (intptr_t)hParent );
 		if ( lua_isnil( GetVM(), -1 ) || !lua_istable( GetVM(), -1 ) )
-			return INVALID_HSCRIPT;
+			return NULL;
 
-		lua_setmetatable( GetVM(), -1 );
+		lua_setmetatable( GetVM(), -2 );
 	}
 
 	return (HSCRIPT)lua_ref( GetVM(), true );
@@ -256,7 +284,7 @@ void CLuaVM::ReleaseScope( HSCRIPT hScript )
 
 HSCRIPT CLuaVM::LookupFunction( const char *pszFunction, HSCRIPT hScope )
 {
-	if ( hScope != INVALID_HSCRIPT )
+	if ( hScope )
 	{
 		lua_getref( GetVM(), (intptr_t)hScope );
 		if ( lua_isnil( GetVM(), -1 ) || !lua_istable( GetVM(), -1 ) )
@@ -298,12 +326,6 @@ void CLuaVM::ReleaseFunction( HSCRIPT hScript )
 
 ScriptStatus_t CLuaVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t *pArgs, int nArgs, ScriptVariant_t *pReturn, HSCRIPT hScope, bool bWait )
 {
-	if ( hScope == INVALID_HSCRIPT )
-	{
-		DevWarning( "Invalid scope handed to script VM\n" );
-		return SCRIPT_ERROR;
-	}
-
 	if ( hFunction == NULL )
 	{
 		if ( pReturn )
@@ -378,7 +400,7 @@ bool CLuaVM::RegisterClass( ScriptClassDesc_t *pClassDesc )
 HSCRIPT CLuaVM::RegisterInstance( ScriptClassDesc_t *pDesc, void *pInstance )
 {
 	if ( !RegisterClass( pDesc ) )
-		return INVALID_HSCRIPT;
+		return NULL;
 
 	ScriptInstance_t *pScriptInstance = (ScriptInstance_t *)lua_newuserdata( GetVM(), sizeof ScriptInstance_t );
 	pScriptInstance->m_pInstance = pInstance;
@@ -414,7 +436,7 @@ void *CLuaVM::GetInstanceValue( HSCRIPT hInstance, ScriptClassDesc_t *pExpectedT
 
 void CLuaVM::RemoveInstance( HSCRIPT hScript )
 {
-	if ( hScript == INVALID_HSCRIPT )
+	if ( !hScript )
 		return;
 
 	lua_getref( GetVM(), (intptr_t)hScript );
@@ -427,7 +449,7 @@ void CLuaVM::RemoveInstance( HSCRIPT hScript )
 
 void CLuaVM::SetInstanceUniqeId( HSCRIPT hInstance, const char *pszId )
 {
-	if ( hInstance == INVALID_HSCRIPT )
+	if ( !hInstance )
 		return;
 
 	lua_getref( GetVM(), (intptr_t)hInstance );
@@ -456,9 +478,6 @@ bool CLuaVM::SetValue( HSCRIPT hScope, const char *pszKey, const char *pszValue 
 {
 	if ( hScope )
 	{
-		if ( hScope == INVALID_HSCRIPT )
-			return false;
-
 		lua_getref( GetVM(), (intptr_t)hScope );
 		lua_pushstring( GetVM(), pszKey );
 		lua_pushstring( GetVM(), pszValue );
@@ -480,9 +499,6 @@ bool CLuaVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVariant_t
 {
 	if ( hScope )
 	{
-		if ( hScope == INVALID_HSCRIPT )
-			return false;
-
 		lua_getref( GetVM(), (intptr_t)hScope );
 		lua_pushstring( GetVM(), pszKey );
 		PushVariant( GetVM(), value );
@@ -534,9 +550,6 @@ bool CLuaVM::GetValue( HSCRIPT hScope, const char *pszKey, ScriptVariant_t *pVal
 	const int nOldStack = GetStackSize();
 	if ( hScope )
 	{
-		if ( hScope == INVALID_HSCRIPT )
-			return false;
-
 		lua_getref( GetVM(), (intptr_t)hScope );
 		lua_getfield( GetVM(), -1, pszKey );
 		if ( lua_isnil( GetVM(), -1 ) )
@@ -573,7 +586,7 @@ bool CLuaVM::ClearValue( HSCRIPT hScope, const char *pszKey )
 
 int CLuaVM::GetNumTableEntries( HSCRIPT hScope )
 {
-	if( hScope == INVALID_HSCRIPT )
+	if( !hScope )
 		return 0;
 
 	int nEntries = 0;
@@ -583,11 +596,11 @@ int CLuaVM::GetNumTableEntries( HSCRIPT hScope )
 	lua_pushnil( GetVM() );
 	while ( lua_next( GetVM(), -2 ) )
 	{
-		lua_pop( GetVM(), 1 );
+		lua_pop( GetVM(), 1 ); // pop off the value
 		++nEntries;
 	}
 
-	lua_pop( GetVM(), 1 );
+	lua_pop( GetVM(), 1 ); // pop off the key
 
 	return nEntries;
 }
