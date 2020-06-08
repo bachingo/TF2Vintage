@@ -1888,11 +1888,17 @@ public:
 		if ( !pEntity )
 			return;
 
-		bool bBlueTeam = pEntity->GetTeam() && pEntity->GetTeamNumber() == TF_TEAM_BLUE;
+		CModelPanelModel *pPanelModel = dynamic_cast<CModelPanelModel *>( pEntity );
+		if ( pPanelModel )
+		{
+			m_pResult->SetVecValue( pPanelModel->m_vecModelColor.x, pPanelModel->m_vecModelColor.y, pPanelModel->m_vecModelColor.z );
+			return;
+		}
+
+		bool bBlueTeam = pEntity->GetTeam() > 0 && pEntity->GetTeamNumber() == TF_TEAM_BLUE;
 		C_EconEntity *pEconEnt = dynamic_cast<C_EconEntity *>( pEntity );
 
 		CEconItemView *pItem = NULL;
-		if ( pEconEnt )
 		{
 			pItem = pEconEnt->GetItem();
 		}
@@ -1904,19 +1910,33 @@ public:
 		}
 
 		if ( !pItem )
-			return;
-
-		uint nPaintRGB = pItem->GetModifiedRGBValue( bBlueTeam );
-		if( nPaintRGB != 0 )
 		{
-			float flPaint[3] ={
-				Clamp( ( nPaintRGB >> 8 ) / 255.0f, 0.0f, 1.0f ),
-				Clamp( ( nPaintRGB >> 4 ) / 255.0f, 0.0f, 1.0f ),
-				Clamp( ( nPaintRGB ) / 255.0f, 0.0f, 1.0f )
-			};
-
-			m_pResult->SetVecValue( flPaint[0], flPaint[1], flPaint[2] );
+			C_TFWeaponBaseGrenadeProj *pProjectile = dynamic_cast<C_TFWeaponBaseGrenadeProj *>( pEntity );
+			if ( pProjectile )
+			{
+				pEconEnt = dynamic_cast<C_EconEntity *>( pProjectile->m_hLauncher.Get() );
+				if ( pEconEnt )
+					pItem = pEconEnt->GetItem();
+			}
 		}
+
+		if( pItem )
+		{
+			uint nPaintRGB = pItem->GetModifiedRGBValue( bBlueTeam );
+			if ( nPaintRGB != 0 )
+			{
+				float flPaint[3] ={
+					Clamp( ( (nPaintRGB & 0x00FF0000) >> 16 ) / 255.0f, 0.0f, 1.0f ),
+					Clamp( ( (nPaintRGB & 0x0000FF00) >> 8 ) / 255.0f, 0.0f, 1.0f ),
+					Clamp( ( (nPaintRGB & 0x000000FF) ) / 255.0f, 0.0f, 1.0f )
+				};
+
+				m_pResult->SetVecValue( flPaint[0], flPaint[1], flPaint[2] );
+			}
+			return;
+		}
+
+		m_pResult->SetVecValue( 0, 0, 0 );
 	}
 };
 
