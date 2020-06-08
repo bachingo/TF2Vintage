@@ -617,7 +617,6 @@ protected:
 	int				m_nLocalPlayerVisionFlags;
 
 #if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
-public:
 	// Wearables
 	CUtlVector< CHandle<C_EconWearable > >	m_hMyWearables;
 	CUtlVector<CHandle<C_EconWearable > >	m_hDisguiseWearables;

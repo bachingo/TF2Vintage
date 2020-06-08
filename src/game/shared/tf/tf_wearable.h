@@ -29,16 +29,11 @@ public:
 	virtual void	Equip( CBasePlayer *pPlayer );
 	void			UpdateModelToClass( void );
 	void			Break( void );
-	virtual void	SetPaintOverride( void );
 #else
-	unsigned int	GetPaintOverride(bool bAlternate);
 	virtual int		InternalDrawModel( int flags );
 	void			UpdateModelToClass(void);
 	bool 			ShouldDraw(void);
 #endif
-
-	CNetworkVar(unsigned int, m_iPaintOverride);
-	CNetworkVar(unsigned int, m_iPaintOverride2);	
 };
 
 class CTFWearableVM : public CTFWearable
