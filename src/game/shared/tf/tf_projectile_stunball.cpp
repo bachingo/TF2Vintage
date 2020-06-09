@@ -750,11 +750,11 @@ void CTFBauble::Shatter( trace_t *pTrace, int bitsDamageType )
 	// Add a small explosion.
 	if ( pAttacker && pAttacker->GetTeamNumber() == TF_TEAM_RED )
 	{
-		DispatchParticleEffect( "xms_ornament_smash_red", GetAbsOrigin(), GetAbsAngles() );
+		DispatchParticleEffect( "xms_ornament_smash_red", GetAbsOrigin(), vec3_angle );
 	}
 	else
 	{
-		DispatchParticleEffect( "xms_ornament_smash_blue", GetAbsOrigin(), GetAbsAngles() );
+		DispatchParticleEffect( "xms_ornament_smash_blue", GetAbsOrigin(), vec3_angle );
 	}
 	// Add the glass breaking sound.
 	EmitSound( "BallBuster.OrnamentImpact" );
