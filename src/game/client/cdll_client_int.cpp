@@ -142,7 +142,7 @@
 
 // Discord RPC
 #include "discord_register.h"
-ConVar cl_discord_appid( "cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_PROTECTED );
+ConVar cl_discord_appid( "cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_PROTECTED, "This is for your Client ID for Discord Applications and is unique per sourcemod." );
 
 #ifdef TF_VINTAGE_CLIENT
 #include "tf_presence.h"

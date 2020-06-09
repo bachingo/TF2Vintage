@@ -22,6 +22,7 @@
 #include "steam/steam_api.h"
 #include "tier0/icommandline.h"
 #include "discord_rpc.h"
+#include "discord_register.h"
 #include <time.h>
 #include <functional>
 
@@ -676,7 +677,10 @@ bool CTFDiscordPresence::Init( void )
 	DECL_DISCORD_HANDLER( handlers, spectateGame, OnSpectateGame );
 	DECL_DISCORD_HANDLER( handlers, joinRequest, OnJoinRequested );
 
-	Discord_Initialize( cl_discord_appid.GetString(), &handlers, 1, CFmtStr( "%d", engine->GetAppID() ) );
+	char command[512];
+	V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam\n", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
+	Discord_Register( cl_discord_appid.GetString(), command );
+	Discord_Initialize( cl_discord_appid.GetString(), &handlers, false, CFmtStr( "%d", engine->GetAppID() ) );
 
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "localplayer_changeclass" );
@@ -735,6 +739,9 @@ void CTFDiscordPresence::OnReady( const DiscordUser* user )
 		return;
 	}
 
+	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Ready!\n" );
+	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] User %s#%s - %s\n", user->username, user->discriminator, user->userId );
+	
 	rpc->Reset();
 }
 
@@ -759,6 +766,7 @@ void CTFDiscordPresence::OnError( int errorCode, const char *szMessage )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::OnJoinedGame( const char *joinSecret )
 {
+	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Game: %s\n", joinSecret );
 	char szCommand[128];
 	Q_snprintf( szCommand, sizeof( szCommand ), "connect %s\n", joinSecret );
 	engine->ExecuteClientCmd( szCommand );
@@ -779,6 +787,8 @@ void CTFDiscordPresence::OnJoinRequested( const DiscordUser *joinRequest )
 {
 	// TODO: Popup dialog
 	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Request: %s#%s\n", joinRequest->username, joinRequest->discriminator );
+	ConColorMsg( Color( 114, 137, 218, 255 ), "[Rich Presence] Join Request Accepted\n" );
+	Discord_Respond( joinRequest->userId, DISCORD_REPLY_YES );
 }
 
 //-----------------------------------------------------------------------------
