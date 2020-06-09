@@ -199,14 +199,20 @@ void CTFFlareGunRevenge::ItemPostFrame( void )
 	{
 		// Add the sparks when we're ready to shoot.
 #ifdef CLIENT_DLL
-		ParticleProp()->Init( this );
-		CNewParticleEffect* pMuzzle = ParticleProp()->Create( "drg_bison_idle", PATTACH_POINT_FOLLOW, "muzzle" );
-		if ( pMuzzle )
+		C_BaseEntity *pModel = GetWeaponForEffect();
+		if ( pModel )
 		{
-			pMuzzle->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
-			pMuzzle->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+			pModel->ParticleProp()->Create( "drg_bison_idle", PATTACH_POINT_FOLLOW, "muzzle" );
+				
+			CNewParticleEffect* pMuzzle = pModel->ParticleProp()->Create( "drg_bison_idle", PATTACH_POINT_FOLLOW, "muzzle" );
+			if ( pMuzzle )
+			{
+				pMuzzle->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
+				pMuzzle->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+			}
+			
+			pModel->ParticleProp()->Create( "drg_manmelter_idle", PATTACH_POINT_FOLLOW, "muzzle" );
 		}
-		ParticleProp()->Create( "drg_manmelter_idle", PATTACH_POINT_FOLLOW, "muzzle" );
 #endif
 
 		// Play a ding when we're ready to shoot.
