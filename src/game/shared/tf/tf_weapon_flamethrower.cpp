@@ -1206,20 +1206,19 @@ void CTFFlameThrower::RestartParticleEffect( void )
 		if ( pModel )
 		{
 			// Handle Phlog rage visuals.
-			C_BaseEntity *pEffectOwner = GetWeaponForEffect();
-			if ( pEffectOwner && pOwner->m_Shared.HasFullFireRage() )
+			if ( pOwner->m_Shared.HasFullFireRage() )
 			{
 				if ( !m_pChargeEffect )
 				{
 					const char *pszEffectName = ConstructTeamParticle( "medicgun_invulnstatus_fullcharge_%s", GetTFPlayerOwner()->GetTeamNumber() );
-					m_pChargeEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
+					m_pChargeEffect = pModel->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
 				}
 			}
-			else if ( pEffectOwner && ( !pOwner->m_Shared.HasFullFireRage() && !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) ) )
+			else if ( !pOwner->m_Shared.HasFullFireRage() && !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) )
 			{
 				if ( m_pChargeEffect )
 				{
-					pEffectOwner->ParticleProp()->StopEmission( m_pChargeEffect );
+					pModel->ParticleProp()->StopEmission( m_pChargeEffect );
 					m_pChargeEffect = NULL;
 				}
 			}
