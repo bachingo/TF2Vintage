@@ -527,19 +527,8 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
 	if ( nRequiresZoom && !IsZoomed() )
 	{
-		// Play this effect only when we can play the empty clip sound to prevent endless SPAM
-		if ( m_flNextEmptySoundTime < gpGlobals->curtime )
-		{
-			// Make a fizzing noise, and draw sparks.
-			WeaponSound( SPECIAL2 );
-#ifdef CLIENT_DLL
-			ParticleProp()->Init( this );
-			ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
-#endif	
-			// Delay the next empty clip sound.
-			m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
-			return;
-		}
+		DenySniperShot();
+		return;
 	}
 
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
@@ -581,6 +570,29 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 		m_hSniperDot->ResetChargeTime();
 	}
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::DenySniperShot( void )
+{
+		// Play this effect only when we can play the empty clip sound to prevent endless SPAM
+		if ( m_flNextEmptySoundTime < gpGlobals->curtime )
+		{
+#ifdef CLIENT_DLL
+			// Make a fizzing noise, and draw sparks.
+			WeaponSound( SPECIAL2 );
+			C_BaseEntity *pModel = GetWeaponForEffect();
+			if ( pModel )
+			{
+				pModel->ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
+			}
+#endif	
+			// Delay the next empty clip sound.
+			m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
+			return;
+		}
 }
 
 //-----------------------------------------------------------------------------
@@ -1095,12 +1107,7 @@ void CTFSniperRifle_Classic::Fire(CTFPlayer *pPlayer)
 	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
 	if ( nRequiresZoom && !IsZoomed() )
 	{
-		// Make a fizzing noise, and draw sparks.
-		WeaponSound( SPECIAL2 );
-#ifdef CLIENT_DLL
-		ParticleProp()->Init( this );
-		ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
-#endif	
+		DenySniperShot();
 		return;
 	}
 

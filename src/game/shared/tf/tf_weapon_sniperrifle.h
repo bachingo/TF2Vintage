@@ -134,7 +134,8 @@ public:
 #endif
 
 	bool IsZoomed( void );
-
+	void DenySniperShot( void );
+	
 private:
 	// Auto-rezooming handling
 	void SetRezoom( bool bRezoom, float flDelay );
