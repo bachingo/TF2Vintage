@@ -438,13 +438,26 @@ void CTFFlareGunRevenge::SecondaryAttack( void )
 
 #endif
 
-	// Do our sound and effects as well.
-	WeaponSound(SPECIAL1);
 #ifdef CLIENT_DLL
-	if ( nExtinguished != pOwner->m_Shared.GetAirblastCritCount() ) // We extinguished someone in between, play the extinguished variant.
-		DispatchParticleEffect("drg_manmelter_vacuum_flames", PATTACH_POINT_FOLLOW, GetAppropriateWorldOrViewModel(), "muzzle", GetEnergyWeaponColor(false), GetEnergyWeaponColor(true));
-	else // No extinguish, play the standard variant.
-		DispatchParticleEffect("drg_manmelter_vacuum", PATTACH_POINT_FOLLOW, GetAppropriateWorldOrViewModel(), "muzzle", GetEnergyWeaponColor(false), GetEnergyWeaponColor(true));
+	C_BaseEntity *pModel = GetWeaponForEffect();
+	if (pModel)
+	{
+		CNewParticleEffect* pVacuum;
+		if ( nExtinguished != pOwner->m_Shared.GetAirblastCritCount() ) // We extinguished someone in between, play the extinguished variant.
+		{	
+			// We play our sound here for extinguishing feedback.
+			WeaponSound(SPECIAL1);
+			pVacuum = pModel->ParticleProp()->Create("drg_manmelter_vacuum_flames", PATTACH_POINT_FOLLOW, "muzzle");
+		}
+		else // No extinguish, play the standard variant.
+			pVacuum = pModel->ParticleProp()->Create("drg_manmelter_vacuum", PATTACH_POINT_FOLLOW, "muzzle");
+		
+		if ( pVacuum )
+		{
+			pVacuum->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
+			pVacuum->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+		}
+	}
 #endif
 
 	// Don't allow firing immediately after airblasting.
