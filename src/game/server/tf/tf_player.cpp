@@ -137,6 +137,10 @@ extern ConVar tf2v_allow_disguiseweapons;
 extern ConVar tf2v_use_new_cloak;
 extern ConVar tf2v_use_new_cleaners;
 
+extern ConVar tf2v_legacy_weapons;
+extern ConVar tf2v_force_year_weapons;
+extern ConVar tf2v_allowed_year_weapons;
+
 // TF2V commands
 ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout and class." );
 
@@ -153,7 +157,6 @@ ConVar tf2v_bonus_distance_range( "tf2v_bonus_distance_range", "10", FCVAR_NOTIF
 ConVar tf2v_enforce_whitelist( "tf2v_enforce_whitelist", "0", FCVAR_NOTIFY, "Requires items to be verified from a server whitelist." );
 
 ConVar tf2v_force_stock_weapons( "tf2v_force_stock_weapons", "0", FCVAR_NOTIFY, "Forces players to use the stock loadout." );
-ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_DEVELOPMENTONLY, "Disables all new weapons as well as Econ Item System." );
 
 ConVar tf2v_disable_holiday_loot( "tf2v_disable_holiday_loot", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disable loot drops in holiday gamemodes" );
 
@@ -163,10 +166,8 @@ ConVar tf2v_misschance( "tf2v_misschance", "2.0", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf2v_sentry_resist_bonus( "tf2v_sentry_resist_bonus", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables extra damage resistance on sentries for Defensive Buffs." );
 ConVar tf2v_use_new_buff_charges( "tf2v_use_new_buff_charges", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Uses the modern charges for banner rage." );
 
-ConVar tf2v_force_year_weapons( "tf2v_force_year_weapons", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit weapons based on year." );
 ConVar tf2v_force_year_cosmetics( "tf2v_force_year_cosmetics", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit cosmetics based on year." );
 
-ConVar tf2v_allowed_year_weapons( "tf2v_allowed_year_weapons", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
 ConVar tf2v_allowed_year_cosmetics( "tf2v_allowed_year_cosmetics", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
 
 ConVar tf2v_use_new_fallsounds( "tf2v_use_new_fallsounds", "1", FCVAR_NOTIFY, "Allows servers to choose between the launch, retail, and F2P fall damage sound types.", true, 0, true, 2 );
@@ -2342,11 +2343,11 @@ void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 		// Only allow for melee items if we enable it or are in a special gamemode.
 		if ( ( TFGameRules()->IsInDRMode() || tf2v_force_melee.GetBool() ) && (iWeapon != TF_LOADOUT_SLOT_MELEE) )
 			continue;
-		
-		int iWeaponID = GetTFInventory()->GetWeapon( m_PlayerClass.GetClassIndex(), iWeapon );
 
-		if ( iWeaponID != TF_WEAPON_NONE )
+		if ( pData->m_aWeapons[iWeapon] != TF_WEAPON_NONE )
 		{
+			int iWeaponID = pData->m_aWeapons[iWeapon];
+			
 			const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
 
 			CTFWeaponBase *pWeapon = (CTFWeaponBase *)Weapon_GetSlot( iWeapon );

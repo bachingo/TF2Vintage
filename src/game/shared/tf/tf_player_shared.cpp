@@ -138,6 +138,10 @@ extern ConVar tf2v_randomizer;
 extern ConVar tf2v_random_weapons;
 #endif
 
+ConVar tf2v_legacy_weapons( "tf2v_legacy_weapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disables all new weapons as well as Econ Item System." );
+ConVar tf2v_force_year_weapons( "tf2v_force_year_weapons", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Limit weapons based on year." );
+ConVar tf2v_allowed_year_weapons( "tf2v_allowed_year_weapons", "2020", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum year allowed for items." );
+
 extern ConVar tf2v_assault_ctf_rules;
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
@@ -3733,6 +3737,14 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 {
+	// If we're using legacy weapons, calculate the disguise weapon using that logic instead.
+	if (tf2v_legacy_weapons.GetBool() || (tf2v_force_year_weapons.GetBool() && tf2v_allowed_year_weapons.GetInt() <= 2007))
+	{
+#ifdef CLIENT_DLL
+		RecalcDisguiseWeaponLegacy();
+#endif
+		return;
+	}
 #ifndef CLIENT_DLL
 	// IMPORTANT!!! - This whole function will need to be rewritten if we switch to using item schema.
 	// So please remind me about this when we do. (Nicknine)
@@ -3933,6 +3945,58 @@ void CTFPlayerShared::UpdateCritBoostEffect( bool bForceHide /*= false*/ )
 			CSoundEnvelopeController::GetController().SoundDestroy( m_pCritSound );
 			m_pCritSound = NULL;
 		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::RecalcDisguiseWeaponLegacy( void )
+{
+	if ( !InCond( TF_COND_DISGUISED ) ) 
+	{
+		m_iDisguiseWeaponModelIndex = -1;
+		m_pDisguiseWeaponInfo = NULL;
+		return;
+	}
+
+	Assert( m_pOuter->GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY );
+
+	CTFWeaponInfo *pDisguiseWeaponInfo = NULL;
+
+	TFPlayerClassData_t *pData = GetPlayerClassData( m_nDisguiseClass );
+
+	Assert( pData );
+
+	// Find the weapon in the same slot
+	int i;
+	for ( i=0;i<TF_PLAYER_WEAPON_COUNT;i++ )
+	{
+		if ( pData->m_aWeapons[i] != TF_WEAPON_NONE )
+		{
+			const char *pWpnName = WeaponIdToAlias( pData->m_aWeapons[i] );
+
+			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWpnName );
+			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+
+			// find the primary weapon
+			if ( pWeaponInfo && pWeaponInfo->iSlot == 0 )
+			{
+				pDisguiseWeaponInfo = pWeaponInfo;
+				break;
+			}
+		}
+	}
+
+	Assert( pDisguiseWeaponInfo != NULL && "Cannot find slot 0 primary weapon for desired disguise class\n" );
+
+	m_pDisguiseWeaponInfo = pDisguiseWeaponInfo;
+	m_iDisguiseWeaponModelIndex = -1;
+
+	if ( pDisguiseWeaponInfo )
+	{
+		m_iDisguiseWeaponModelIndex = modelinfo->GetModelIndex( pDisguiseWeaponInfo->szWorldModel );
 	}
 }
 
