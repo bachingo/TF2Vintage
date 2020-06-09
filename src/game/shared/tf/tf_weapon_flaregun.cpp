@@ -6,6 +6,7 @@
 #include "cbase.h"
 #include "tf_weapon_flaregun.h"
 #include "tf_weapon_flamethrower.h"
+#include "in_buttons.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -160,6 +161,18 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+CTFFlareGunRevenge::CTFFlareGunRevenge()
+{
+	WeaponReset();
+
+#if defined( CLIENT_DLL )
+	m_pVacuumEffect = NULL;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFFlareGunRevenge::Deploy( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
@@ -195,7 +208,15 @@ bool CTFFlareGunRevenge::Holster( CBaseCombatWeapon *pSwitchTo )
 //-----------------------------------------------------------------------------
 void CTFFlareGunRevenge::ItemPostFrame( void )
 {
-	if (gpGlobals->curtime >= m_flNextPrimaryAttack )
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	
+	if (!pOwner)
+	{
+		CTFWeaponBaseGun::ItemPostFrame();
+		return;
+	}
+	
+	if ( ( pOwner->m_nButtons & ~IN_ATTACK2 ) && ( gpGlobals->curtime >= m_flNextPrimaryAttack ) )
 	{
 		// Add the sparks when we're ready to shoot.
 #ifdef CLIENT_DLL
@@ -223,6 +244,32 @@ void CTFFlareGunRevenge::ItemPostFrame( void )
 		}
 	}
 	
+#ifdef CLIENT_DLL
+	C_BaseEntity *pModel = GetWeaponForEffect();
+	if ( pModel )
+	{
+		if ( pOwner->m_nButtons & IN_ATTACK2 )
+		{
+			if (!m_pVacuumEffect)
+				m_pVacuumEffect = pModel->ParticleProp()->Create( "drg_manmelter_vacuum", PATTACH_POINT_FOLLOW, "muzzle" );
+			
+			if (m_pVacuumEffect)
+			{
+				m_pVacuumEffect->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
+				m_pVacuumEffect->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+			}
+		}
+		else
+		{
+			if (m_pVacuumEffect)
+			{
+				pModel->ParticleProp()->StopEmission( m_pVacuumEffect );
+				m_pVacuumEffect = NULL;
+			}
+		}	
+	}
+#endif
+
 	CTFWeaponBaseGun::ItemPostFrame();
 }	
 
@@ -442,20 +489,17 @@ void CTFFlareGunRevenge::SecondaryAttack( void )
 	C_BaseEntity *pModel = GetWeaponForEffect();
 	if (pModel)
 	{
-		CNewParticleEffect* pVacuum;
+		CNewParticleEffect* pVacuum = NULL;
 		if ( nExtinguished != pOwner->m_Shared.GetAirblastCritCount() ) // We extinguished someone in between, play the extinguished variant.
 		{	
 			// We play our sound here for extinguishing feedback.
 			WeaponSound(SPECIAL1);
 			pVacuum = pModel->ParticleProp()->Create("drg_manmelter_vacuum_flames", PATTACH_POINT_FOLLOW, "muzzle");
-		}
-		else // No extinguish, play the standard variant.
-			pVacuum = pModel->ParticleProp()->Create("drg_manmelter_vacuum", PATTACH_POINT_FOLLOW, "muzzle");
-		
-		if ( pVacuum )
-		{
-			pVacuum->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
-			pVacuum->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+			if (pVacuum)
+			{
+				pVacuum->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
+				pVacuum->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+			}
 		}
 	}
 #endif

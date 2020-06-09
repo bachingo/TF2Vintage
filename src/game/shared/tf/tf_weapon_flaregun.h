@@ -56,6 +56,8 @@ public:
 	DECLARE_DATADESC();
 #endif
 
+	CTFFlareGunRevenge();
+	
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_FLAREGUN_REVENGE; }
 	virtual bool	Deploy( void );
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchTo );
@@ -70,6 +72,9 @@ public:
 	bool			bWaitingtoFire;
 	bool			CanGetAirblastCrits( void ) const;
 	
+#ifdef CLIENT_DLL
+	CNewParticleEffect *m_pVacuumEffect;
+#endif
 };
 
 #endif // TF_WEAPON_FLAREGUN_H
