@@ -54,6 +54,7 @@ extern ConVar tf2v_use_medic_speed_match;
 
 #if defined (CLIENT_DLL)
 ConVar tf_medigun_autoheal( "tf_medigun_autoheal", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Setting this to 1 will cause the Medigun's primary attack to be a toggle instead of needing to be held down." );
+ConVar hud_medichealtargetmarker( "hud_medichealtargetmarker", "0", FCVAR_ARCHIVE | FCVAR_USERINFO );
 #endif
 
 #if !defined (CLIENT_DLL)
@@ -1378,6 +1379,9 @@ void CWeaponMedigun::OnDataChanged( DataUpdateType_t updateType )
 	}
 
 	ManageChargeEffect();
+	
+
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -1483,7 +1487,19 @@ void CWeaponMedigun::UpdateEffects( void )
 			}
 		}
 		else
-			pszFormat = IsReleasingCharge() ? "medicgun_beam_%s_invun" : "medicgun_beam_%s";
+		{
+			if ( hud_medichealtargetmarker.GetBool() && !IsReleasingCharge() )
+			{
+				C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+				if (pLocalPlayer && ( pLocalPlayer == pFiringPlayer ) )
+					pszFormat = "medicgun_beam_%s_targeted" ;
+				
+				pszFormat = "medicgun_beam_%s";
+			}
+			else
+				pszFormat = IsReleasingCharge() ? "medicgun_beam_%s_invun" : "medicgun_beam_%s";
+		}
+		
 		const char *pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber() );
 
 		CNewParticleEffect *pEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
