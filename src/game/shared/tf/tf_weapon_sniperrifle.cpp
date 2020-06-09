@@ -527,13 +527,19 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
 	if ( nRequiresZoom && !IsZoomed() )
 	{
-		// Make a fizzing noise, and draw sparks.
-		WeaponSound( SPECIAL2 );
+		// Play this effect only when we can play the empty clip sound to prevent endless SPAM
+		if ( m_flNextEmptySoundTime < gpGlobals->curtime )
+		{
+			// Make a fizzing noise, and draw sparks.
+			WeaponSound( SPECIAL2 );
 #ifdef CLIENT_DLL
-		ParticleProp()->Init( this );
-		ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
+			ParticleProp()->Init( this );
+			ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
 #endif	
-		return;
+			// Delay the next empty clip sound.
+			m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
+			return;
+		}
 	}
 
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
