@@ -117,6 +117,7 @@ CTFFlameThrower::CTFFlameThrower()
 
 #if defined( CLIENT_DLL )
 	m_pFlameEffect = NULL;
+	m_pChargeEffect = NULL;
 	m_pFiringStartSound = NULL;
 	m_pFiringLoop = NULL;
 	m_bFiringLoopCritical = false;
@@ -920,11 +921,20 @@ char const *CTFFlameThrower::GetFlameEffectInternal( void ) const
 	int nFireType = 0;
 	CALL_ATTRIB_HOOK_INT(nFireType, set_weapon_mode);
 	if ( nFireType == 1 )	 // Phlogistinator.
-	{
-		if ( m_bCritFire )		
-			return "drg_phlo_stream_crit";
+	{	if ( !tf2v_new_flames.GetBool() )
+		{
+			if ( m_bCritFire )		
+				return "drg_phlo_stream_crit";
+			else
+				return "drg_phlo_stream";
+		}
 		else
-			return "drg_phlo_stream";
+		{
+			if ( m_bCritFire )		
+				return "tf2v_drg_phlo_stream_crit_new_flame";
+			else
+				return "tf2v_drg_phlo_stream_new_flame";
+		}
 	}
 	else if (nFireType == 3) // Rainblower.
 	{
@@ -1195,6 +1205,25 @@ void CTFFlameThrower::RestartParticleEffect( void )
 		C_BaseEntity *pModel = GetWeaponForEffect();
 		if ( pModel )
 		{
+			// Handle Phlog rage visuals.
+			C_BaseEntity *pEffectOwner = GetWeaponForEffect();
+			if ( pEffectOwner && pOwner->m_Shared.HasFullFireRage() )
+			{
+				if ( !m_pChargeEffect )
+				{
+					const char *pszEffectName = ConstructTeamParticle( "medicgun_invulnstatus_fullcharge_%s", GetTFPlayerOwner()->GetTeamNumber() );
+					m_pChargeEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
+				}
+			}
+			else if ( pEffectOwner && ( !pOwner->m_Shared.HasFullFireRage() && !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_ACTIVEWEAPON ) ) )
+			{
+				if ( m_pChargeEffect )
+				{
+					pEffectOwner->ParticleProp()->StopEmission( m_pChargeEffect );
+					m_pChargeEffect = NULL;
+				}
+			}
+			
 			m_pFlameEffect = pModel->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
 			m_hFlameEffectHost = pModel;
 		}
@@ -1407,11 +1436,16 @@ void CTFFlameEntity::ClientThink( void )
 {
 	if ( !m_pFlameEffect )
 	{
+		int nFireType = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(GetOwnerEntity(), nFireType, set_weapon_mode);
+	
 		const char *pszParticleEffect = "tf2v_new_flame_core";
 		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_waterfall_core";
-		if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
+		else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_core_halloween";
+		else if ( nFireType == 1 )
+			pszParticleEffect = "tf2v_new_flame_phlo_core";
 
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
 	}

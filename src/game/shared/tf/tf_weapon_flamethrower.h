@@ -132,6 +132,8 @@ protected:
 
 	CNewParticleEffect *m_pFlameEffect;
 	EHANDLE		m_hFlameEffectHost;
+	
+	CNewParticleEffect *m_pChargeEffect;
 
 	CSoundPatch *m_pPilotLightSound;
 
