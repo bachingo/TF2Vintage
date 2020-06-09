@@ -48,6 +48,7 @@ extern ConVar tf2v_critchance;
 extern ConVar tf2v_critchance_rapid;
 extern ConVar tf2v_crit_duration_rapid;
 extern ConVar tf2v_use_shortstop_slowdown;
+extern ConVar tf2v_use_new_beggars;
 
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
@@ -1362,7 +1363,7 @@ void CTFWeaponBase::Overload(void)
 		return;
 
 	// Deduct a round.
-	if (m_iClip1 > 0)
+	if (m_iClip1 > 0 && ( ( GetWeaponID() != TF_WEAPON_ROCKETLAUNCHER ) || ( ( GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER ) && tf2v_use_new_beggars.GetBool() ) ) )
 		m_iClip1 -= 1;
 
 #ifdef GAME_DLL
