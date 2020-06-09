@@ -204,6 +204,10 @@ ConVar tf_preround_push_from_damage_enable( "tf_preround_push_from_damage_enable
 
 ConVar tf2v_misc_slot_count("tf2v_misc_slot_count", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "Sets the maximum miscs allowed on a player. Slots higher than this are not loaded.", true, 0, true, 3 );
 
+ConVar tf2v_use_new_health_regen_attrib("tf2v_use_new_health_regen_attrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes health regen attributes from a flate rate to based on damage time." );
+
+
+
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
 // -------------------------------------------------------------------------------- //
@@ -717,7 +721,7 @@ void CTFPlayer::MedicRegenThink( void )
 	CALL_ATTRIB_HOOK_INT( iHealthRegenLegacy, add_health_regen_passive );
 	
 	// If we heal, use an algorithm similar to medic's to determine healing.
-	if ( iHealthDrain != 0 && iHealthDrain > 0 )
+	if ( ( iHealthDrain != 0 && iHealthDrain > 0 ) && tf2v_use_new_health_regen_attrib.GetBool() )
 	{
 		if ( IsAlive() )
 		{
@@ -732,6 +736,7 @@ void CTFPlayer::MedicRegenThink( void )
 			}
 		}
 	}
+
 	
 	if ( IsPlayerClass( TF_CLASS_MEDIC ) )
 	{
@@ -746,25 +751,22 @@ void CTFPlayer::MedicRegenThink( void )
 				flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 1.0, 3.0 );
 
 			int iHealAmount = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
-			TakeHealth( iHealAmount + iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
+			TakeHealth( iHealAmount, DMG_GENERIC );
 		}
 	}
-	else 	// Throw the event for health regen.
+
+	if ( IsAlive() )
 	{
-		if ( IsAlive() )
+		int iHealthRestored = TakeHealth( iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
+		if ( iHealthRestored != 0 )
 		{
-			int iHealthRestored = TakeHealth( iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
-			if ( iHealthRestored )
+			IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+			if ( event )
 			{
-				IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
+				event->SetInt( "amount", iHealthRestored );
+				event->SetInt( "entindex", entindex() );
 
-				if ( event )
-				{
-					event->SetInt( "amount", iHealthRestored );
-					event->SetInt( "entindex", entindex() );
-
-					gameeventmanager->FireEvent( event );
-				}
+				gameeventmanager->FireEvent( event );
 			}
 		}
 	}
