@@ -28,7 +28,7 @@ CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 #define SANDVICH_STATE_NORMAL 0
 
 ConVar tf2v_new_chocolate_behavior( "tf2v_new_chocolate_behavior", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Use Gun Mettle rebalancing on chocolates." );
-
+ConVar tf2v_original_sandvich("tf2v_original_sandvich", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Swaps between the old sandwich mechanics..");
 
 //-----------------------------------------------------------------------------
 // Purpose: Give us a fresh sandwich.
@@ -336,14 +336,21 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	// Heal 25% of the player's max health per second for a total of 100%.
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	
+	if (!pOwner)
+		return;
+	
 	float flAmt = 75.0;
+	
+	if ( !tf2v_original_sandvich.GetBool() )
+		flAmt = 30.0; // Heals 120HP total
+	
 	if ( IsChocolateOrFishcake() )
-		flAmt = 25.0;
+		flAmt *= 1/3;
 	
 	// Adjust our healing scale if defined.
 	CALL_ATTRIB_HOOK_FLOAT( flAmt, lunchbox_healing_scale );
 
-	if ( pOwner && !bIsSteak )
+	if ( !bIsSteak )
 	{
 		pOwner->TakeHealth( flAmt, DMG_GENERIC );
 	}
@@ -354,6 +361,11 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 //-----------------------------------------------------------------------------
 bool CTFLunchBox::CanDrop( void ) const
 {
+	// Old Sandwich can't throw at all.
+	if ( !tf2v_original_sandvich.GetBool() )
+			return false;
+	
+	// Old chocolates can't throw.
 	if (!tf2v_new_chocolate_behavior.GetBool() )
 	{
 		int nSetLunchboxMode = 0;
