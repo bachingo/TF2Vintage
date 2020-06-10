@@ -54,7 +54,7 @@ extern ConVar tf2v_use_medic_speed_match;
 
 #if defined (CLIENT_DLL)
 ConVar tf_medigun_autoheal( "tf_medigun_autoheal", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Setting this to 1 will cause the Medigun's primary attack to be a toggle instead of needing to be held down." );
-ConVar hud_medichealtargetmarker( "hud_medichealtargetmarker", "0", FCVAR_ARCHIVE | FCVAR_USERINFO );
+ConVar hud_medichealtargetmarker("hud_medichealtargetmarker", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO);
 #endif
 
 #if !defined (CLIENT_DLL)
@@ -827,25 +827,28 @@ void CWeaponMedigun::DrainCharge( void )
 		{
 			int nUberedPlayers = 1;
 			// Check who is ubered by us and who isn't.
-			for (int i = 0; i <= m_ExtraInvurns.Count(); i++)
+			if (m_ExtraInvurns.Count() > 0)
 			{
-				if ( m_ExtraInvurns[i].hPlayer && m_ExtraInvurns[i].hPlayer->IsAlive() )
+				for (int i = 0; i < m_ExtraInvurns.Count(); i++)
 				{
-					if ( m_ExtraInvurns[i].hPlayer.Get() != m_hHealingTarget.Get() &&	// Not our current target
-					 ( ( m_ExtraInvurns[i].flTime + tf_invuln_time.GetFloat() ) > gpGlobals->curtime ) )	// Affected by Uber
+					if (m_ExtraInvurns[i].hPlayer && m_ExtraInvurns[i].hPlayer->IsAlive())
 					{
-						// Add to our count.
-						nUberedPlayers++;
-						continue;
+						if (m_ExtraInvurns[i].hPlayer.Get() != m_hHealingTarget.Get() &&	// Not our current target
+							((m_ExtraInvurns[i].flTime + tf_invuln_time.GetFloat()) > gpGlobals->curtime))	// Affected by Uber
+						{
+							// Add to our count.
+							nUberedPlayers++;
+							continue;
+						}
 					}
+					// Remove from our list.
+					m_ExtraInvurns.Remove(i);
+
 				}
-				// Remove from our list.
-				m_ExtraInvurns.Remove(i);
-				
+				// Adjust our drain rate for the extra players.
+				if (nUberedPlayers > 1)
+					flChargeAmount += ((flChargeAmount * 0.5) * (nUberedPlayers - 1));
 			}
-			// Adjust our drain rate for the extra players.
-			if ( nUberedPlayers > 1 )
-			flChargeAmount += ( ( flChargeAmount * 0.5 ) * ( nUberedPlayers - 1) );
 		}
 		
 		m_flChargeLevel = max( m_flChargeLevel - flChargeAmount, m_flFinalUberLevel );
