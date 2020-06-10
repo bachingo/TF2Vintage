@@ -250,9 +250,31 @@ float CTFWeaponInvis::GetEffectBarProgress( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponInvis::GetControlPanelInfo( int nPanelIndex, const char *&pPanelName )
 {
-	if( HasFeignDeath() )
+	// Get the name of the viewmodel.
+	char* cViewModel = nullptr;
+	cViewModel = (char*)GetViewModel(0);
+
+	// Assume it's the default and return.
+	if (!cViewModel)
+	{
+		pPanelName = "pda_panel_spy_invis";
+		return;
+	}
+	
+	// Search the viewmodels for the following strings.
+	if (Q_stristr(cViewModel, "v_watch_pocket_spy")) // Dead Ringer
+	{
 		pPanelName = "pda_panel_spy_invis_pocket";
-	else
+	}
+	else if (Q_stristr(cViewModel, "v_ttg_watch_spy")) // TTG Watch [Enthusiast's Timepiece]
+	{
+		pPanelName = "pda_panel_spy_invis_pocket_ttg";
+	}
+	else if (Q_stristr(cViewModel, "v_hm_watch"))	// Quackenbirdt
+	{
+		pPanelName = "pda_panel_spy_invis_pocket_hm";
+	}
+	else // v_watch_spy [Invis Watch], v_watch_leather_spy [Cloak and Dagger]
 		pPanelName = "pda_panel_spy_invis";
 }
 
