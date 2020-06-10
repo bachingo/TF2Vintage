@@ -1175,6 +1175,10 @@ void CTFSniperRifle_Classic::ZoomOut( void )
 //-----------------------------------------------------------------------------
 void CTFSniperRifle_Classic::ToggleLaser( void )
 {
+	C_BaseEntity *pModel = GetWeaponForEffect();
+		if ( !pModel )
+		return;
+			
 	if ( m_bIsChargingAttack )
 	{
 		if ( !m_pLaserSight )
@@ -1182,19 +1186,19 @@ void CTFSniperRifle_Classic::ToggleLaser( void )
 			switch ( GetTeamNumber() )
 			{
 				case TF_TEAM_RED:
-					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
+					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
 					break;
 				case TF_TEAM_BLUE:
-					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_blue", PATTACH_POINT_FOLLOW, "laser" );
+					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_blue", PATTACH_POINT_FOLLOW, "laser" );
 					break;
 				case TF_TEAM_GREEN:
-					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_green", PATTACH_POINT_FOLLOW, "laser" );
+					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_green", PATTACH_POINT_FOLLOW, "laser" );
 					break;
 				case TF_TEAM_YELLOW:
-					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_yellow", PATTACH_POINT_FOLLOW, "laser" );
+					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_yellow", PATTACH_POINT_FOLLOW, "laser" );
 					break;
 				default:
-					m_pLaserSight = ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
+					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
 					break;
 			}
 		}
@@ -1203,7 +1207,7 @@ void CTFSniperRifle_Classic::ToggleLaser( void )
 	{
 		if ( m_pLaserSight )
 		{
-			ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserSight );
+			pModel->ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserSight );
 			m_pLaserSight = NULL;
 		}
 	}
