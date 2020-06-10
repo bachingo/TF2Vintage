@@ -47,7 +47,7 @@ using namespace vgui;
 ConVar tf2v_show_killstreak_counter("tf2v_show_killstreak_counter", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Displays the Killstreak counter on the HUD.", true, 0.0f, true, 1.0f);
 
 extern ConVar tf2v_use_new_cleaners;
-extern ConVar tf2v_new_sandvich_behavior;
+extern ConVar tf2v_new_chocolate_behavior;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -774,7 +774,7 @@ bool CHudItemEffectMeterTemp<C_TFLunchBox>::IsEnabled(void)
 	if (GetWeapon())
 	{ 
 		C_TFLunchBox *pFood = GetWeapon();
-		if ( !tf2v_new_sandvich_behavior.GetBool() && pFood->IsChocolateOrFishcake() )
+		if ( !tf2v_new_chocolate_behavior.GetBool() && pFood->IsChocolateOrFishcake() )
 			return false;
 	}
 

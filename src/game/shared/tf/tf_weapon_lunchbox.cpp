@@ -27,7 +27,8 @@ CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 #define SANDVICH_STATE_BITTEN 1
 #define SANDVICH_STATE_NORMAL 0
 
-ConVar tf2v_new_sandvich_behavior( "tf2v_new_sandvich_behavior", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Use Gun Mettle rebalancing on sandviches." );
+ConVar tf2v_new_chocolate_behavior( "tf2v_new_chocolate_behavior", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Use Gun Mettle rebalancing on chocolates." );
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Give us a fresh sandwich.
@@ -212,7 +213,7 @@ void CTFLunchBox::DepleteAmmo( void )
 	int nLunchboxAddsMaxHealth = 0;
 	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
 	
-	if ( !tf2v_new_sandvich_behavior.GetBool() && IsChocolateOrFishcake() )
+	if ( !tf2v_new_chocolate_behavior.GetBool() && IsChocolateOrFishcake() )
 	{
 		return;
 	}
@@ -229,7 +230,7 @@ void CTFLunchBox::DepleteAmmo( void )
 
 bool CTFLunchBox::UsesPrimaryAmmo( void )
 {
-	if (!tf2v_new_sandvich_behavior.GetBool() && IsChocolateOrFishcake() )
+	if (!tf2v_new_chocolate_behavior.GetBool() && IsChocolateOrFishcake() )
 		return false;
 
 	return BaseClass::UsesPrimaryAmmo();
@@ -249,7 +250,7 @@ float CTFLunchBox::InternalGetEffectBarRechargeTime( void )
 bool CTFLunchBox::HasChargeBar( void )
 {
 	// Chocolate and Fishcake do not have a bar when they have infinite ammo.
-	if ( !tf2v_new_sandvich_behavior.GetBool() && IsChocolateOrFishcake() )
+	if ( !tf2v_new_chocolate_behavior.GetBool() && IsChocolateOrFishcake() )
 			return false;
 	
 	// This item probably has a bar, return true.
@@ -353,7 +354,7 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 //-----------------------------------------------------------------------------
 bool CTFLunchBox::CanDrop( void ) const
 {
-	if (!tf2v_new_sandvich_behavior.GetBool() )
+	if (!tf2v_new_chocolate_behavior.GetBool() )
 	{
 		int nSetLunchboxMode = 0;
 		CALL_ATTRIB_HOOK_INT( nSetLunchboxMode, set_weapon_mode );
