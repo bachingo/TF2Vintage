@@ -776,9 +776,11 @@ bool CHudItemEffectMeterTemp<C_TFLunchBox>::IsEnabled(void)
 		C_TFLunchBox *pFood = GetWeapon();
 		if ( !tf2v_new_chocolate_behavior.GetBool() && pFood->IsChocolateOrFishcake() )
 			return false;
+		
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 
