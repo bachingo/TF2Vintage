@@ -106,7 +106,7 @@ ConVar tf2v_disguise_speed_match( "tf2v_disguise_speed_match", "0", FCVAR_NOTIFY
 
 
 
-ConVar tf2v_use_old_ammocounts("tf2v_use_old_ammocounts", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
+ConVar tf2v_era_ammocounts("tf2v_era_ammocounts", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables retail launch ammo pools for the Rocket Launcher, Grenade Launcher and Stickybomb Launcher." );
 
 ConVar tf2v_use_new_minigun_aim_speed("tf2v_use_new_minigun_aim_speed", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Aims the minigun at 110HU/s compared to the original 80HU/s." );
 
@@ -6795,7 +6795,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ ) const
 	}
 	
 	// If we're using 2007 era ammocounts, re-adjust our ammo pools.
-	if ( tf2v_use_old_ammocounts.GetInt() == 1 )
+	if ( tf2v_era_ammocounts.GetInt() == 0 )
 	{
 		switch (iClassNumber)
 		{
@@ -6815,7 +6815,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ ) const
 				break;
 		}
 	}
-	else if ( tf2v_use_old_ammocounts.GetInt() == 2 )
+	else if ( tf2v_era_ammocounts.GetInt() == 1 )
 	{
 		// If we're using 2008 ammo settings, reduce only the Rocket Launcher.
 		if ( (iClassNumber == TF_CLASS_SOLDIER) && ( iAmmoIndex == TF_AMMO_PRIMARY ) )
