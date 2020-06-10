@@ -265,17 +265,22 @@ void CTFWeaponInvis::GetControlPanelInfo( int nPanelIndex, const char *&pPanelNa
 	if (Q_stristr(cViewModel, "v_watch_pocket_spy")) // Dead Ringer
 	{
 		pPanelName = "pda_panel_spy_invis_pocket";
+		return;
 	}
 	else if (Q_stristr(cViewModel, "v_ttg_watch_spy")) // TTG Watch [Enthusiast's Timepiece]
 	{
 		pPanelName = "pda_panel_spy_invis_pocket_ttg";
+		return;
 	}
 	else if (Q_stristr(cViewModel, "v_hm_watch"))	// Quackenbirdt
 	{
 		pPanelName = "pda_panel_spy_invis_pocket_hm";
+		return;
 	}
 	else // v_watch_spy [Invis Watch], v_watch_leather_spy [Cloak and Dagger]
 		pPanelName = "pda_panel_spy_invis";
+		
+	return;
 }
 
 #endif
