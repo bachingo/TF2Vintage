@@ -9170,53 +9170,6 @@
 				"sound_melee_hit_world"	"Weapon_HolyMackerel.HitWorld"
 			}
 		}
-		"10331"
-		{
-			"name"	"Fists of Steel"
-			"prefab"	"weapon_gloves weapon_reskin"
-			"year"		"2011"
-			"item_name"	"#TF_FistsOfSteel"
-			"propername"	"1"
-			"item_logname"	"steel_fists"
-			"item_iconname"	"steel_fists"
-			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel"			
-			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
-			"static_attrs"
-			{
-				"min_viewmodel_offset"					"10 0 -10"
-			}
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"hands"			"1"
-				}
-				"sound_melee_miss"	"Weapon_MetalGloves.Miss"
-				"sound_melee_hit"	"Weapon_MetalGloves.HitFlesh"
-				"sound_melee_hit_world"	"Weapon_MetalGloves.HitWorld"
-				"sound_burst"		"Weapon_MetalGloves.MissCrit"
-				"animation_replacement"
-				{
-					"ACT_VM_DRAW"	"ACT_MELEE_VM_ITEM1_DRAW"
-					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT1_VM_INSPECT_START"
-					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT1_VM_INSPECT_IDLE"
-					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT1_VM_INSPECT_END"
-				}
-			}
-			"attributes"
-			{
-				"dmg from ranged reduced"
-				{
-					"attribute_class"	"dmg_from_ranged"
-					"value"	"0.4"
-				}
-				"dmg from melee increased"
-				{
-					"attribute_class"	"dmg_from_melee"
-					"value"	"2.0"
-				}
-			}
-		}
 		"10237"
 		{
 			"name"	"Rocket Jumper"
@@ -9341,6 +9294,15 @@
 				"sound_special1"	"Weapon_Sticky_Jumper.Explode"
 			}
 		}
+		"10297"
+		{
+			"name"	"TTG Watch"
+			"prefab"	"weapon_invis weapon_reskin"
+			"year"	"2010"
+			"item_name"	"#TF_TTG_Watch"
+			"image_inventory"	"backpack/weapons/c_models/c_ttg_watch/c_ttg_watch"
+			"model_player"	"models/weapons/v_models/v_ttg_watch_spy.mdl"
+		}
 		"10298"
 		{
 			"name"	"Iron Curtain"
@@ -9352,6 +9314,53 @@
 			"item_iconname"	"iron_curtain"
 			"image_inventory"	"backpack/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain"
 			"model_player"	"models/workshop/weapons/c_models/c_iron_curtain/c_iron_curtain.mdl"
+		}
+		"10331"
+		{
+			"name"	"Fists of Steel"
+			"prefab"	"weapon_gloves weapon_reskin"
+			"year"		"2011"
+			"item_name"	"#TF_FistsOfSteel"
+			"propername"	"1"
+			"item_logname"	"steel_fists"
+			"item_iconname"	"steel_fists"
+			"image_inventory"	"backpack/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel"			
+			"model_player"	"models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"					"10 0 -10"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hands"			"1"
+				}
+				"sound_melee_miss"	"Weapon_MetalGloves.Miss"
+				"sound_melee_hit"	"Weapon_MetalGloves.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_MetalGloves.HitWorld"
+				"sound_burst"		"Weapon_MetalGloves.MissCrit"
+				"animation_replacement"
+				{
+					"ACT_VM_DRAW"	"ACT_MELEE_VM_ITEM1_DRAW"
+					"ACT_MELEE_VM_INSPECT_START"	"ACT_MELEE_ALT1_VM_INSPECT_START"
+					"ACT_MELEE_VM_INSPECT_IDLE"		"ACT_MELEE_ALT1_VM_INSPECT_IDLE"
+					"ACT_MELEE_VM_INSPECT_END"		"ACT_MELEE_ALT1_VM_INSPECT_END"
+				}
+			}
+			"attributes"
+			{
+				"dmg from ranged reduced"
+				{
+					"attribute_class"	"dmg_from_ranged"
+					"value"	"0.4"
+				}
+				"dmg from melee increased"
+				{
+					"attribute_class"	"dmg_from_melee"
+					"value"	"2.0"
+				}
+			}
 		}
 		"10433"
 		{
@@ -9656,6 +9665,17 @@
 				"sound_single_shot"	"Weapon_AWP.Single"
 				"sound_burst"		"Weapon_AWP.SingleCrit"
 			}
+		}
+		"10947"
+		{
+			"name"	"The Quackenbirdt"
+			"prefab"	"weapon_invis weapon_reskin"
+			"year"	"2012"
+			"item_name"	"#TF_HM_Watch"
+			"item_description"	"#TF_HM_Watch_Desc"
+			"propername"	"1"
+			"image_inventory"	"backpack/workshop_partner/weapons/v_models/v_hm_watch/v_hm_watch"
+			"model_player"	"models/workshop_partner/weapons/v_models/v_hm_watch/v_hm_watch.mdl"
 		}
 		"11013"
 		{
