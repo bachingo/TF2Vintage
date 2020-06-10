@@ -289,6 +289,12 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 		switch (iCustomDamage)
 		{
 			case TF_DMG_CUSTOM_BACKSTAB:
+				// Use a different backstab icon for the Sharp Dresser
+				if ( FStrEq( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_sharp_dresser" ) )
+				{
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_sharp_dresser_backstab", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				}
+				else
 				Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_backstab", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
 				break;
 			case TF_DMG_CUSTOM_HEADSHOT:
