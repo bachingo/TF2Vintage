@@ -28,7 +28,7 @@ CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
 #define SANDVICH_STATE_NORMAL 0
 
 ConVar tf2v_new_chocolate_behavior( "tf2v_new_chocolate_behavior", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Use Gun Mettle rebalancing on chocolates." );
-ConVar tf2v_original_sandvich("tf2v_original_sandvich", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Swaps between the old sandwich mechanics..");
+ConVar tf2v_sandvich_behavior("tf2v_sandvich_behavior", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Changes Sandvich mechanics.", true, 0, true, 2);
 
 //-----------------------------------------------------------------------------
 // Purpose: Give us a fresh sandwich.
@@ -341,7 +341,7 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 	
 	float flAmt = 75.0;
 	
-	if ( !tf2v_original_sandvich.GetBool() )
+	if ( tf2v_sandvich_behavior.GetInt() == 0 )
 		flAmt = 30.0; // Heals 120HP total
 	
 	if ( IsChocolateOrFishcake() )
@@ -362,7 +362,7 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 bool CTFLunchBox::CanDrop( void ) const
 {
 	// Old Sandwich can't throw at all.
-	if ( !tf2v_original_sandvich.GetBool() )
+	if ( !tf2v_sandvich_behavior.GetInt() == 0 )
 			return false;
 	
 	// Old chocolates can't throw.
