@@ -5649,6 +5649,8 @@ void CTFPlayer::FireBullet(const FireBulletsInfo_t &info, bool bDoEffects, int n
 					
 				// See what material we hit.
 				CTakeDamageInfo dmgInfo( this, info.m_pAttacker, GetActiveWeapon(), info.m_flDamage, nDamageType, nCustomDamageType );
+				// Increment our penetration count.
+				dmgInfo.SetPlayerPenetrationCount( i );
 				CalculateBulletDamageForce(&dmgInfo, info.m_iAmmoType, info.m_vecDirShooting, trace.endpos, 1.0);	//MATTTODO bullet forces
 				pTarget->DispatchTraceAttack(dmgInfo, info.m_vecDirShooting, &trace);
 				

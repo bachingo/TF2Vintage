@@ -274,6 +274,17 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 			}
 		}
 
+		bool bPenetrating = (event->GetInt("playerpenetratecount") && event->GetInt("playerpenetratecount") != 0);
+		// Penetrations have a special killicon and sound.
+		if (bPenetrating)
+		{
+			// Play the sound that we killed a player by penetrating.
+			CLocalPlayerFilter filter;
+			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "Game.PenetrationKill" );
+			// Use the special player penetration killicon.
+			Q_strncpy(m_DeathNotices[iDeathNoticeMsg].szIcon, "d_player_penetration", ARRAYSIZE(m_DeathNotices[iDeathNoticeMsg].szIcon));
+		}
+				
 		const wchar_t *pMsg = NULL;
 		switch (iCustomDamage)
 		{
@@ -296,6 +307,11 @@ void CTFHudDeathNotice::OnGameEvent(IGameEvent *event, int iDeathNoticeMsg)
 				else if ( FStrEq( event->GetString( "weapon" ), "deflect_huntsman_flyingburn" ) )
 				{
 					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_deflect_huntsman_flyingburn_headshot", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
+				}
+				else if (bPenetrating)
+				{
+					// Penetrating headshots also have a special icon.
+					Q_strncpy( m_DeathNotices[iDeathNoticeMsg].szIcon, "d_headshot_player_penetration", ARRAYSIZE( m_DeathNotices[iDeathNoticeMsg].szIcon ) );
 				}
 				else 
 				{
