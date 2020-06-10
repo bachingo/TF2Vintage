@@ -1046,7 +1046,7 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 		}
 
 		C_TFPlayer *pPlayer = ToTFPlayer( hPlayer );
-		if ( !m_bCloaked && pPlayer )
+		if ( m_bCloaked && pPlayer )
 			m_flUncloakCompleteTime = gpGlobals->curtime * 2.0f + pPlayer->GetPercentInvisible();
 
 		if ( m_iDamageCustom == TF_DMG_CUSTOM_PLASMA_CHARGED )
