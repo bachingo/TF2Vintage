@@ -147,6 +147,7 @@ ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spa
 ConVar tf2v_allow_cosmetics( "tf2v_allow_cosmetics", "0", FCVAR_NOTIFY, "Enable or disable cosmetics on the server." );
 ConVar tf2v_random_classes( "tf2v_random_classes", "0", FCVAR_NOTIFY, "Makes players spawn with random classes." );
 ConVar tf2v_random_weapons( "tf2v_random_weapons", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout." );
+ConVar tf2v_unrestrict_random_weapons( "tf2v_unrestrict_random_weapons", "1", FCVAR_NOTIFY, "Allows random weapons and randomizer to select items from every class or the current class." );
 ConVar tf2v_allow_reskins( "tf2v_allow_reskins", "0", FCVAR_NOTIFY, "Allows players to use reskin items." );
 ConVar tf2v_allow_demoknights( "tf2v_allow_demoknights", "1", FCVAR_NOTIFY, "Allows players to use Demoknight content." );
 ConVar tf2v_allow_mod_weapons( "tf2v_allow_mod_weapons", "1", FCVAR_NOTIFY, "Allows players to use non-standard TF2 weapons." );
@@ -2402,14 +2403,19 @@ void CTFPlayer::ManageRegularWeaponsLegacy( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 {
-	// Nuke wearables
-	for ( int i = 0; i < GetNumWearables(); i++ )
-	{
-		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearable( i ) );
+	// Nuke wearables for weapon slots
+	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; ++i )
+	{	
+		if (!GetWearableForLoadoutSlot( i ))
+			continue;
+			
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( i ) );
+			
 		if ( pWearable == nullptr )
 			continue;
 
-		RemoveWearable( pWearable );
+		RemoveWearable(pWearable);
+		UTIL_Remove(pWearable);
 	}
 
 	// Nuke weapons
@@ -2437,7 +2443,7 @@ void CTFPlayer::ManageRandomWeapons( TFPlayerClassData_t *pData )
 		Assert( pInv );
 
 		// Get a random item for our weapon slot
-		int iClass = RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
+		int iClass = tf2v_unrestrict_random_weapons.GetBool() ? RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS ) : m_PlayerClass.GetClassIndex() ;
 		int iSlot = i;
 
 		// Spy's equip slots do not correct match the weapon slot so we need to accommodate for that
