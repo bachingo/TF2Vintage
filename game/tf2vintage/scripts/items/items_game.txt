@@ -4161,6 +4161,7 @@
 		{
 			"name"	"TF2V_COSMETIC_HAT"
 			"prefab"	"hat_attachment"
+			"year"			"2009"
 			"item_quality" "normal"
 			"used_by_classes"
 			{
@@ -4180,6 +4181,7 @@
 		{
 			"name"	"TF2V_COSMETIC_MISC"
 			"prefab"	"misc"
+			"year"			"2009"
 			"item_quality" "normal"
 			"used_by_classes"
 			{
@@ -4199,6 +4201,7 @@
 		{
 			"name"	"TF2V_COSMETIC_MEDAL"
 			"prefab"	"medal"
+			"year"			"2009"
 			"item_quality" "normal"
 			"used_by_classes"
 			{
@@ -4218,6 +4221,7 @@
 		{
 			"name"	"TF2V_COSMETIC_TAUNT"
 			"prefab"	"taunt"
+			"year"			"2011"
 			"item_quality" "normal"
 			"used_by_classes"
 			{
