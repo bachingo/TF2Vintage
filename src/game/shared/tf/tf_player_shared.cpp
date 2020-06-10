@@ -3501,7 +3501,10 @@ void CTFPlayerShared::Disguise( int nTeam, int nClass, CTFPlayer *pTarget, bool 
 	if ( nTeam == m_nDisguiseTeam && nClass == m_nDisguiseClass && !b1 )
 	{
 		CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
-		RecalcDisguiseWeapon( pWeapon ? pWeapon->GetSlot() : 0 );
+		if ( tf2v_allow_disguiseweapons.GetBool() ) // Disguise to whatever slot we're currently holding.
+			RecalcDisguiseWeapon( pWeapon ? pWeapon->GetSlot() : 0 );
+		else // Force the primary weapon.
+			RecalcDisguiseWeapon( 0 );
 		return;
 	}
 
