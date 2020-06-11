@@ -149,6 +149,20 @@ bool CTFWeaponInvis::HasMotionCloak( void ) const
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char* CTFWeaponInvis::GetEffectLabelText(void)
+{
+	if (HasFeignDeath())
+		return "#TF_Feign";
+	else if (HasMotionCloak())
+		return "#TF_CloakDagger";
+	
+	return "#TF_Cloak";
+	
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Clear out the view model when we hide
 //-----------------------------------------------------------------------------
 void CTFWeaponInvis::HideThink( void )
