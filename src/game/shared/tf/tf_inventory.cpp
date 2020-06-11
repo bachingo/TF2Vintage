@@ -78,7 +78,7 @@ bool CTFInventory::Init( void )
 
 				if (iSlot >= TF_LOADOUT_SLOT_PRIMARY && iSlot < TF_LOADOUT_SLOT_COUNT)
 				{
-					if ( iSlot <= TF_LOADOUT_SLOT_HAT || ( iSlot == TF_LOADOUT_SLOT_MEDAL || iSlot == TF_LOADOUT_SLOT_ZOMBIE ) )	// Standard parse items in these slots.
+					if ( iSlot <= TF_LOADOUT_SLOT_HAT || ( iSlot == TF_LOADOUT_SLOT_MEDAL || iSlot == TF_LOADOUT_SLOT_EVENT ) )	// Standard parse items in these slots.
 					{
 						if ( pItemDef->baseitem )
 						{
@@ -310,7 +310,7 @@ void CTFInventory::ResetInventory()
 			for (int k = 0; k < TF_LOADOUT_SLOT_COUNT; k++)
 			{
 				// Ignore special slots. (Gamemode specific, zombie, action)
-				if (k == TF_LOADOUT_SLOT_UTILITY || k == TF_LOADOUT_SLOT_ACTION || k == TF_LOADOUT_SLOT_ZOMBIE || k == TF_LOADOUT_SLOT_MEDAL )
+				if (k == TF_LOADOUT_SLOT_UTILITY || k == TF_LOADOUT_SLOT_ACTION || k == TF_LOADOUT_SLOT_EVENT || k == TF_LOADOUT_SLOT_MEDAL )
 					continue;
 				
 				pClassLoadoutSlot->SetInt( g_LoadoutSlots[k], 0 );
@@ -345,7 +345,7 @@ int CTFInventory::GetWeaponPreset(int iClass, int iSlot)
 	int iPreset = pClassLoadoutSlot->GetInt(g_LoadoutSlots[iSlot], -1);
 	if (iPreset == -1 ) //cannot find slot node	
 	{
-		if ( ( iSlot != TF_LOADOUT_SLOT_UTILITY && iSlot != TF_LOADOUT_SLOT_ACTION && iSlot != TF_LOADOUT_SLOT_ZOMBIE && iSlot != TF_LOADOUT_SLOT_MEDAL ) && iSlot < TF_LOADOUT_SLOT_COUNT )
+		if ( ( iSlot != TF_LOADOUT_SLOT_UTILITY && iSlot != TF_LOADOUT_SLOT_ACTION && iSlot != TF_LOADOUT_SLOT_EVENT && iSlot != TF_LOADOUT_SLOT_MEDAL ) && iSlot < TF_LOADOUT_SLOT_COUNT )
 			ResetInventory();
 		return 0;
 	}

@@ -343,7 +343,7 @@ const char *g_LoadoutSlots[] =
 	"misc",
 	"misc2",
 	"misc3",
-	"zombie",
+	"event",
 	"medal",
 	
 	"taunt",

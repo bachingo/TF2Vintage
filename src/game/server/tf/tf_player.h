@@ -495,7 +495,7 @@ public:
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 	void				ManageGrenades( TFPlayerClassData_t *pData );
 	void				ManagePlayerCosmetics( TFPlayerClassData_t *pData );
-	void				ManagePlayerZombie( TFPlayerClassData_t *pData );
+	void				ManagePlayerEventCosmetic( TFPlayerClassData_t *pData );
 	void				ManageVIPMedal( TFPlayerClassData_t *pData );
 
 	void				PostInventoryApplication( void );

@@ -440,7 +440,7 @@ void CTFLoadoutPanel::UpdateMenuBodygroups(void)
 	
 	// Update all applicable bodygroups.
 	// Check through all inventory slots and see if they affect bodygroups.
-	for (int iSlot = TF_LOADOUT_SLOT_PRIMARY; iSlot < TF_LOADOUT_SLOT_ZOMBIE; iSlot++)
+	for (int iSlot = TF_LOADOUT_SLOT_PRIMARY; iSlot < TF_LOADOUT_SLOT_EVENT; iSlot++)
 	{
 		// Don't check special slots.
 		if ( iSlot == TF_LOADOUT_SLOT_ACTION || iSlot == TF_LOADOUT_SLOT_UTILITY )

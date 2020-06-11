@@ -1755,7 +1755,7 @@ void CTFPlayer::GiveDefaultItems()
 	ManagePlayerCosmetics( pData );
 	
 	// Give ourselves zombie skins when it's Halloween.
-	ManagePlayerZombie( pData );
+	ManagePlayerEventCosmetic( pData );
 	
 	// If we're a VIP player, give a medal.
 	ManageVIPMedal( pData );	
@@ -2699,43 +2699,67 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::ManagePlayerZombie( TFPlayerClassData_t *pData )
+void CTFPlayer::ManagePlayerEventCosmetic( TFPlayerClassData_t *pData )
 {
-	// If it's not Halloween, check if we've got a zombie model here and delete it.
-	if ( !TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
-	{
-		// Nothing here, just bail.
-		if (!GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) )
-			return;
-		
-		// Check if we got a zombie model on.
-		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) );
-			
-		if (pWearable == nullptr)
-			return;
-
-		// Delete it.
-		RemoveWearable(pWearable);
-		UTIL_Remove(pWearable);
-		return;		
-	}
 	
-	if ( GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ) == NULL )
+	// Nuke whatever is in this slot.
+	if (GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_EVENT ) )
 	{
-		// If there is no item in this slot (which there should always be for zombies) error and return.
-		Assert(GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ZOMBIE ));
-		return;
+		// Check what wearable this is.
+		CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_EVENT ) );
+				
+		if (pWearable)
+		{
+			// Delete it.
+			RemoveWearable(pWearable);
+			UTIL_Remove(pWearable);	
+		}		
 	}
 
-	// Give us an item from the inventory.
-	CEconItemView *pItem = GetLoadoutItem( m_PlayerClass.GetClassIndex(), TF_LOADOUT_SLOT_ZOMBIE );
+	int iSlot = 0;
+	CEconItemView *pItem = NULL;
+	
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) ) // Halloween
+	{
+		// Halloween is the base item.
+		
+		// Give us an item from the inventory.
+		pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), TF_LOADOUT_SLOT_EVENT, iSlot );		
+	}
+	else if ( TFGameRules()->IsHolidayActive( kHoliday_Christmas ) ) // Holidays
+	{
+		// Christmas hat is the next slot.
+		iSlot = 1;
+		
+		// Give us an item from the inventory.
+		pItem = GetTFInventory()->GetItem( m_PlayerClass.GetClassIndex(), TF_LOADOUT_SLOT_EVENT, iSlot );
+		
+		// Christmas hat conflicts with hat, so delete our normal hat.
+		if (pItem)
+		{
+			if (GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_HAT ) )
+			{
+				// Check what wearable this is.
+				CTFWearable *pWearable = assert_cast<CTFWearable *>( GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_HAT ) );
+						
+				if (pWearable)
+				{
+					// Delete it.
+					RemoveWearable(pWearable);
+					UTIL_Remove(pWearable);	
+				}		
+			}
+		}
+	}
 
+
+	// Give this item to us.
 	if ( pItem )
 	{
 		const char *pszClassname = pItem->GetEntityName();
 		Assert( pszClassname );
 
-		CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, 0, pItem ) );
+		CEconEntity *pEntity = dynamic_cast<CEconEntity *>( GiveNamedItem( pszClassname, iSlot, pItem ) );
 
 		if ( pEntity )
 		{
