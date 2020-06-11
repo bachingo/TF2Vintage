@@ -64,6 +64,9 @@ PRECACHE_REGISTER( obj_teleporter );
 ConVar tf_teleporter_fov_start( "tf_teleporter_fov_start", "120", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Starting FOV for teleporter zoom.", true, 1, false, 0 );
 ConVar tf_teleporter_fov_time( "tf_teleporter_fov_time", "0.5", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "How quickly to restore FOV after teleport.", true, 0.0, false, 0 );
 
+ConVar tf2v_disguise_spy_teleport( "tf2v_disguise_spy_teleport", "1", FCVAR_NOTIFY, "Allows disguised spies to travel through enemy teleporters." );
+
+
 extern ConVar tf2v_use_new_wrench_mechanics;
 
 LINK_ENTITY_TO_CLASS( obj_teleporter,	CObjectTeleporter );
@@ -406,7 +409,7 @@ bool CObjectTeleporter::PlayerCanBeTeleported( CTFPlayer *pSender )
 			int iTeamNumber = pSender->GetTeamNumber();
 
 			// Don't teleport enemies (unless it's a spy)
-			if ( GetTeamNumber() != pSender->GetTeamNumber() && pSender->IsPlayerClass( TF_CLASS_SPY ) )
+			if ( GetTeamNumber() != pSender->GetTeamNumber() && pSender->IsPlayerClass( TF_CLASS_SPY ) && tf2v_disguise_spy_teleport.GetBool() )
 				iTeamNumber = pSender->m_Shared.GetDisguiseTeam();
 
 			if ( GetTeamNumber() == iTeamNumber )
