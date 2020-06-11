@@ -79,6 +79,8 @@ ConVar tf_demoman_charge_regen_rate( "tf_demoman_charge_regen_rate", "8.3", FCVA
 ConVar tf_scout_energydrink_consume_rate( "tf_scout_energydrink_consume_rate", "12.5", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
 ConVar tf_scout_energydrink_regen_rate( "tf_scout_energydrink_regen_rate", "3.3", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
 
+ConVar tf2v_use_new_bonk_length( "tf2v_use_new_bonk_length", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables standard length BONK duration." );
+
 ConVar tf_tournament_hide_domination_icons( "tf_tournament_hide_domination_icons", "0", FCVAR_REPLICATED, "Tournament mode server convar that forces clients to not display the domination icons above players dominating them." );
 
 ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
@@ -5160,7 +5162,7 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 	
 	if ( InCond( TF_COND_PHASE ) || InCond( TF_COND_ENERGY_BUFF ) )
 	{
-		m_flEnergyDrinkMeter -= m_flEnergyDrinkDrainRate * gpGlobals->frametime;
+		m_flEnergyDrinkMeter -= ( m_flEnergyDrinkDrainRate * ( tf2v_use_new_bonk_length.GetBool() ? 1 : 4/3 ) ) * gpGlobals->frametime;
 
 		if ( m_flEnergyDrinkMeter <= 0.0f )
 		{
