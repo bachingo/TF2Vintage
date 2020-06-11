@@ -827,7 +827,7 @@ void CWeaponMedigun::DrainCharge( void )
 		{
 			int nUberedPlayers = 1;
 			// Check who is ubered by us and who isn't.
-			if (m_ExtraInvurns.Count() > 0)
+			if (m_ExtraInvurns.Count() != NULL )
 			{
 				for (int i = 0; i < m_ExtraInvurns.Count(); i++)
 				{

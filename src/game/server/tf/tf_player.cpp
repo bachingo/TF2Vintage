@@ -208,6 +208,7 @@ ConVar tf2v_misc_slot_count("tf2v_misc_slot_count", "3", FCVAR_NOTIFY | FCVAR_RE
 
 ConVar tf2v_use_new_health_regen_attrib("tf2v_use_new_health_regen_attrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes health regen attributes from a flate rate to based on damage time." );
 
+ConVar tf2v_new_feign_death_activate( "tf2v_new_feign_death_activate", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Reduces the damage reduction of Dead Ringer activation to 50%." );
 
 
 // -------------------------------------------------------------------------------- //
@@ -6491,7 +6492,12 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		else if ( m_Shared.IsFeignDeathReady() )
 		{
-			flDamage *= tf_feign_death_activate_damage_scale.GetFloat();
+			float flActivateDamageReduction = tf_feign_death_activate_damage_scale.GetFloat();
+			
+			if (tf2v_new_feign_death_activate.GetBool())
+				flActivateDamageReduction = 0.5;
+				
+			flDamage *= flActivateDamageReduction;
 		}
 	}
 
