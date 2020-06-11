@@ -4634,15 +4634,25 @@
 					"attribute_class"	"set_weapon_mode"
 					"value"	"1"
 				}
-				"mult cloak meter consume rate"
+				"cloak consume rate decreased"
 				{
 					"attribute_class"	"mult_cloak_meter_consume_rate"
-					"value"	"1.6"
+					"value"	"0.6"
+				}
+				"cloak_consume_on_feign_death_activate"
+				{
+					"attribute_class"	"cloak_consume_on_feign_death_activate"
+					"value"	"0.5"
 				}
 				"mult cloak meter regen rate"
 				{
 					"attribute_class"	"mult_cloak_meter_regen_rate"
-					"value"	"1.8"
+					"value"	"1.5"
+				}
+				"mod_cloak_no_regen_from_items"
+				{
+					"attribute_class"	"mod_cloak_no_regen_from_items"
+					"value"	"1"
 				}
 				"kill eater score type"
 				{
@@ -4676,6 +4686,16 @@
 				{
 					"attribute_class"	"mult_cloak_meter_regen_rate"
 					"value"	"2.0"
+				}
+				"NoCloakWhenCloaked"
+				{
+					"attribute_class"	"NoCloakWhenCloaked"
+					"value"	"1"
+				}
+				"ReducedCloakFromAmmo"
+				{
+					"attribute_class"	"ReducedCloakFromAmmo"
+					"value"	"0.65"
 				}
 			}
 		}
