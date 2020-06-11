@@ -32,7 +32,7 @@ LINK_ENTITY_TO_CLASS( tf_weapon_shovel, CTFShovel );
 PRECACHE_WEAPON_REGISTER( tf_weapon_shovel );
 
 ConVar tf2v_use_new_split_equalizer("tf2v_use_new_split_equalizer", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Splits the Equalizer and Escape Plan into their modern versions.", true, 0, true, 1);
-ConVar tf2v_use_new_equalizer_damage("tf2v_use_new_equalizer_damage", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Makes the Equalizer's damage boost use the newer formula.", true, 0, true, 1);
+ConVar tf2v_use_new_equalizer_damage("tf2v_use_new_equalizer_damage", "1", FCVAR_REPLICATED|FCVAR_NOTIFY, "Makes the Equalizer's damage boost use the newer formula.", true, 0, true, 1);
 
 //=============================================================================
 //
