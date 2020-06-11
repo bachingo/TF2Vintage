@@ -349,7 +349,7 @@
 			"propername" "0"
 			"item_type_name"	"#TF_Item_Zombie_Armory"
 			"item_quality"	"haunted"
-			"item_slot"	"zombie"
+			"item_slot"	"event"
 			"equip_region"	"zombie_body"
 			"model_player_per_class"
 			{
@@ -10152,6 +10152,42 @@
 			}
 			"item_description"	"#TF_Item_ZombieSniper_Desc"
 			"image_inventory"	"backpack/player/items/sniper/sniper_zombie"
+		}
+		"5626"
+		{
+			"name"	"The B.M.O.C."
+			"year"	"2011"
+			"prefab"	"hat"
+			"item_slot"	"event"
+			"item_name"	"#TF_Winter2011_SantaHat"
+			"item_description"	"#TF_Winter2011_SantaHat_Desc"
+			"image_inventory"	"backpack/player/items/all_class/xms_santa_hat_demo"
+			"propername" "1"
+			"drop_type"	"drop"
+			"model_player_per_class"
+			{
+				"basename"	"models/player/items/all_class/xms_santa_hat_%s.mdl"
+			}
+			"used_by_classes"
+			{
+				"scout"	"1"
+				"sniper"	"1"
+				"soldier"	"1"
+				"demoman"	"1"
+				"medic"	"1"
+				"heavy"	"1"
+				"spy" "1"
+				"engineer" "1"
+				"pyro" "1"
+			}
+			"visuals"
+			{
+				"player_bodygroups"
+				{
+					"hat"			"1"
+					"headphones"	"1"
+				}
+			}
 		}
 	}
 	"paints"
