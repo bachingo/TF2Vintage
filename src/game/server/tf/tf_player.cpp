@@ -105,6 +105,8 @@ ConVar tf_damagescale_self_soldier( "tf_damagescale_self_soldier", "0.60", FCVAR
 
 ConVar tf_feign_death_activate_damage_scale( "tf_feign_death_activate_damage_scale", "0.1", FCVAR_CHEAT | FCVAR_NOTIFY );
 ConVar tf_feign_death_damage_scale( "tf_feign_death_damage_scale", "0.1", FCVAR_CHEAT | FCVAR_NOTIFY );
+ConVar tf_feign_death_damage_scale_new( "tf_feign_death_damage_scale_new", "0.35", FCVAR_CHEAT | FCVAR_NOTIFY );
+ConVar tf_stealth_damage_reduction( "tf_stealth_damage_reduction", "0.8", FCVAR_CHEAT | FCVAR_NOTIFY );
 
 ConVar tf_damage_lineardist( "tf_damage_lineardist", "0", FCVAR_DEVELOPMENTONLY );
 ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_DEVELOPMENTONLY );
@@ -208,7 +210,8 @@ ConVar tf2v_misc_slot_count("tf2v_misc_slot_count", "3", FCVAR_NOTIFY | FCVAR_RE
 
 ConVar tf2v_use_new_health_regen_attrib("tf2v_use_new_health_regen_attrib", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes health regen attributes from a flate rate to based on damage time." );
 
-ConVar tf2v_new_feign_death_activate( "tf2v_new_feign_death_activate", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Reduces the damage reduction of Dead Ringer activation to 50%." );
+ConVar tf2v_new_feign_death_activate( "tf2v_new_feign_death_activate", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Reduces the damage reduction of Dead Ringer activation.", true, 0, true, 2 );
+ConVar tf2v_new_feign_death_stealth( "tf2v_new_feign_death_stealth", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Makes Dead Ringer damage resistance while cloaked scale based on cloak amount." );
 
 
 // -------------------------------------------------------------------------------- //
@@ -5650,11 +5653,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 	
 	// New cloak variant spies have a 20% damage reduction while cloaked.
-	if ( m_Shared.InCond(TF_COND_STEALTHED) && tf2v_use_new_cloak.GetBool() )
+	// This does not apply to Dead Ringer, because Dead Ringer has a scaling damage reduction.
+	if ( m_Shared.InCond(TF_COND_STEALTHED) && tf2v_use_new_cloak.GetBool() && !m_Shared.InCond( TF_COND_FEIGN_DEATH ) )
 	{
 		float flDamage = info.GetDamage();
-		// 20% resistance to all sources
-		info.SetDamage( flDamage * 0.80f );
+		// 20% resistance to all sources by default
+		info.SetDamage( flDamage * tf_stealth_damage_reduction.GetFloat() );
 	}
 	
 	
@@ -6485,18 +6489,23 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	{
 		if ( m_Shared.InCond( TF_COND_FEIGN_DEATH ) )
 		{
-			// Some variable is being incremented by some wack ass formula
-			//if( !m_Shared.IsFeignDeathReady() )
-
-			flDamage *= tf_feign_death_damage_scale.GetFloat();
+			float flDamageReduction = tf_feign_death_damage_scale.GetFloat();
+		
+			// New Dead Ringer reduces damage based on cloak meter amount
+			if ( tf2v_new_feign_death_stealth.GetBool() )
+				flDamageReduction = RemapValClamped( m_Shared.GetSpyCloakMeter(), 50.0f, 0.0f, tf_feign_death_damage_scale_new.GetFloat(), tf_stealth_damage_reduction.GetFloat() );
+		
+			flDamage *= flDamageReduction;
 		}
 		else if ( m_Shared.IsFeignDeathReady() )
 		{
 			float flActivateDamageReduction = tf_feign_death_activate_damage_scale.GetFloat();
 			
-			if (tf2v_new_feign_death_activate.GetBool())
+			if (tf2v_new_feign_death_activate.GetInt() == 1)
 				flActivateDamageReduction = 0.5;
-				
+			else if (tf2v_new_feign_death_activate.GetInt() == 2)
+				flActivateDamageReduction = 0.25;
+			
 			flDamage *= flActivateDamageReduction;
 		}
 	}
