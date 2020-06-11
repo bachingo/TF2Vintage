@@ -213,6 +213,9 @@ ConVar tf2v_use_new_health_regen_attrib("tf2v_use_new_health_regen_attrib", "0",
 ConVar tf2v_new_feign_death_activate( "tf2v_new_feign_death_activate", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Reduces the damage reduction of Dead Ringer activation.", true, 0, true, 2 );
 ConVar tf2v_new_feign_death_stealth( "tf2v_new_feign_death_stealth", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Makes Dead Ringer damage resistance while cloaked scale based on cloak amount." );
 
+ConVar tf2v_use_new_diamondback( "tf2v_use_new_diamondback", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allows Diamondback to earn crits by backstabs." );
+
+
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -7110,7 +7113,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				}
 				
 				// If we killed them from a backstab, increase our sapper kill count.
-				if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
+				if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB && tf2v_use_new_diamondback.GetBool() )
 					m_Shared.StoreSapperKillCount();
 				
 			}
