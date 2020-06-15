@@ -5326,77 +5326,72 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, crit_vs_burning_FLARES_DISPLAY_ONLY );
-		int nMinicritOnCond = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnCond, or_minicrit_vs_playercond_burning );
 
 		// Crit players. Don't crit afterburn.
-		if ( ( nCritOnCond || nMinicritOnCond ) )
+		if ( nCritOnCond > 0 )
 		{
-			for ( int i = 0; condition_to_attribute_translation[i] != TF_COND_LAST; i++ )
+			for ( int i = 0; condition_to_attribute_translation[i] <= TF_COND_LAST; i++ )
 			{
 				int nCond = condition_to_attribute_translation[i];
-				int nFlag = ( 1 << i );
-				if ( ( nFlag ) && m_Shared.InCond( nCond ) )
+				if ( ( nCritOnCond - 1 ) && m_Shared.InCond( nCond ) )
 				{
-					if ( nCritOnCond )
-					{
-						bitsDamage |= DMG_CRITICAL;
-						info.AddDamageType( DMG_CRITICAL );
-						break;
-					}
-					else if ( nMinicritOnCond )
-					{
-						bitsDamage |= DMG_MINICRITICAL;
-						info.AddDamageType( DMG_MINICRITICAL );
-						break;	
-					}
+					bitsDamage |= DMG_CRITICAL;
+					info.AddDamageType( DMG_CRITICAL );
+					break;
 				}
 			}
 		}
 		
 		// For when a player is on fire.
-		float nDamageBurningPlayers = info.GetDamage();
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDamageBurningPlayers, mult_dmg_vs_burning ); // mult_dmg_vs_burning also affects afterburn, but that's handled elsewhere.
 		if ( m_Shared.InCond( TF_COND_BURNING ) )
 		{
+			float flDamageBurningPlayers = 1.0f;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, flDamageBurningPlayers, mult_dmg_vs_burning); // mult_dmg_vs_burning also affects afterburn, but that's handled elsewhere.
+			if (flDamageBurningPlayers != 1.0f)
+				info.SetDamage( info.GetDamage() * flDamageBurningPlayers );
+			
 			// Dragon's fury attribute gives a 300% static damage increase.
 			int nDragonsFuryBurn = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nDragonsFuryBurn, dragons_fury_positive_properties );
 			if ( nDragonsFuryBurn != 0)
-				nDamageBurningPlayers *= 3;
+				info.SetDamage( info.GetDamage() * 3 );
 			
-			info.SetDamage( nDamageBurningPlayers );
+			int nMinicritOnCond = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nMinicritOnCond, or_minicrit_vs_playercond_burning );
+			if ( nMinicritOnCond )
+			{
+				bitsDamage |= DMG_MINICRITICAL;
+				info.AddDamageType( DMG_MINICRITICAL );
+			}
 		}		
 
 
 		// For when a player isn't on fire.
-		float flPenaltyNonBurning = info.GetDamage();
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flPenaltyNonBurning, mult_dmg_vs_nonburning );
-
 		if ( !m_Shared.InCond( TF_COND_BURNING ) )
 		{
+			float flPenaltyNonBurning = info.GetDamage();
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flPenaltyNonBurning, mult_dmg_vs_nonburning);
 			info.SetDamage( flPenaltyNonBurning );
 		}
 
-		float flPenaltyHealth = info.GetDamage();
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flPenaltyHealth, mult_dmg_penalty_while_half_alive );
 
 		if ( pAttacker->GetHealth() >= ( pAttacker->GetMaxHealth() / 2 ) )
 		{
+			float flPenaltyHealth = info.GetDamage();
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flPenaltyHealth, mult_dmg_penalty_while_half_alive);
 			info.SetDamage( flPenaltyHealth );
 		}
 		
-		float flBonusHealth = info.GetDamage();
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flBonusHealth, mult_dmg_bonus_while_half_dead );
 
 		if ( pAttacker->GetHealth() < ( pAttacker->GetMaxHealth() / 2 ) )
 		{
+			float flBonusHealth = info.GetDamage();
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flBonusHealth, mult_dmg_bonus_while_half_dead);
 			info.SetDamage( flBonusHealth );
 		}
 		
 		if ( pTFAttacker )
 		{
-			
 			int nSentryAimBonus = 0;
 			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSentryAimBonus, mult_dmg_bullet_vs_sentry_target );
 			if ( nSentryAimBonus && pTFAttacker->IsPlayerClass( TF_CLASS_ENGINEER ) )
