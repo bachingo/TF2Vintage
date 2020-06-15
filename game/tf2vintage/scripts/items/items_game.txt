@@ -2617,6 +2617,10 @@
 			}
 			"visuals"
 			{
+				"sound_single_shot"	"Weapon_Soda_Popper.Single"
+				"sound_burst"	"Weapon_Soda_Popper.SingleCrit"
+				"muzzle_flash"	"muzzle_bignasty"
+				"tracer_effect"	"bullet_bignasty_tracer01"
 				"animation_replacement"
 				{
 					"ACT_VM_IDLE"					"ACT_ITEM2_VM_IDLE"
@@ -2631,10 +2635,6 @@
 					"ACT_VM_IDLE_LOWERED"			"ACT_ITEM2_VM_IDLE_LOWERED"
 					"ACT_VM_LOWERED_TO_IDLE"		"ACT_ITEM2_VM_LOWERED_TO_IDLE"
 				}
-				"sound_single_shot"	"Weapon_Soda_Popper.Single"
-				"sound_burst"	"Weapon_Soda_Popper.SingleCrit"
-				"muzzle_flash"	"muzzle_bignasty"
-				"tracer_effect"	"bullet_bignasty_tracer01"
 			}
 		}
 		"weapon_huntsman"
