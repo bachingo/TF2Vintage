@@ -200,7 +200,7 @@ ConVar tf2v_use_new_medic_regen( "tf2v_use_new_medic_regen", "1", FCVAR_NOTIFY |
 
 ConVar tf2v_use_spawn_glows( "tf2v_use_spawn_glows", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows players to see the glow of teammates when spawning. Input is seconds." );
 
-ConVar tf2v_use_new_ambassador("tf2v_use_new_ambassador", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Adds damage falloff and crit falloff to long range Ambassador headshots." );
+ConVar tf2v_use_new_ambassador("tf2v_use_new_ambassador", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Adds damage falloff and crit falloff to long range Ambassador headshots.", true, 0, true, 2 );
 
 ConVar tf2v_use_new_healonkill("tf2v_use_new_healonkill", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Does not grant overheal when getting health on kill." );
 
@@ -4735,6 +4735,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 				float flDamage = info_modified.GetDamage();
 				bool bCritical = true;
+				bool bIsRevolver = ( pWpn && pWpn->IsWeapon( TF_WEAPON_REVOLVER ) );
 
 				if ( pWpn && !pWpn->CanFireCriticalShot( true ) )
 				{
@@ -4742,7 +4743,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				}
 				
 				// New Ambassador, check some logic first.
-				if ( pWpn && pWpn->IsWeapon( TF_WEAPON_REVOLVER ) && tf2v_use_new_ambassador.GetBool() )
+				if ( bIsRevolver && tf2v_use_new_ambassador.GetInt() == 2 ) 
 				{
 					// Need to see how far we are away from the target.
 					float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() );
@@ -4753,7 +4754,13 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 				if ( bCritical )
 				{
-					int damageBits = info.GetDamageType() | DMG_CRITICAL;
+					int damageBits = info.GetDamageType();
+					if ( bIsRevolver && tf2v_use_new_ambassador.GetInt() == 0)
+					{	
+						damageBits |= DMG_MINICRITICAL;
+					}
+					else				
+						damageBits |= DMG_CRITICAL;
 
 					info_modified.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
 
@@ -5859,7 +5866,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 			
 			// Ambassador using the new headshot mechanics? Set the damage now if it we had falloff.
-			if ( ( pWeapon && ( pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER ) ) && ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT ) && tf2v_use_new_ambassador.GetBool() )
+			if ( ( pWeapon && ( pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER ) ) && ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT ) && tf2v_use_new_ambassador.GetInt() == 2 )
 			{
 				float flDistance = Max( 1.0f, ( WorldSpaceCenter() - pAttacker->WorldSpaceCenter() ).Length() );
 				if (flDistance > 512)
