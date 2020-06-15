@@ -2031,9 +2031,6 @@ const char *CTFWeaponBase::GetTracerType( void )
 		//	Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", GetTFWpnData().m_szTracerEffect, tempString);
 		//}
 	}
-
-	if ( GetWeaponID() == TF_WEAPON_SNIPERRIFLE_CLASSIC )
-		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", "tfc_sniper_distortion_trail" );
 	
 	// Override tracer effect, if we have a custom one.
 	CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
@@ -2044,14 +2041,32 @@ const char *CTFWeaponBase::GetTracerType( void )
 		{
 			Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s", pVisuals->GetTracerFX() );
 		}
-
-		// If we have team specific, check those too.	
-		pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
-		if ( pVisuals && pVisuals->GetTracerFX() )
+	
+		if (GetOwner()->GetTeamNumber())
 		{
-			Q_snprintf( m_szTracerName, MAX_TRACER_NAME, "%s", pVisuals->GetTracerFX() );
+			// If we have team specific, check those too.	
+			pVisuals = pItemDef->GetVisuals( GetOwner()->GetTeamNumber() );
+			if ( pVisuals && pVisuals->GetTracerFX() )
+			{
+				// Make these for the right team.
+				switch (GetOwner()->GetTeamNumber())
+				{
+					case TF_TEAM_RED:
+						Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", pVisuals->GetTracerFX(), "red");
+						break;
+					case TF_TEAM_BLUE:
+						Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", pVisuals->GetTracerFX(), "blue");
+						break;
+					default:
+						Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s_%s", pVisuals->GetTracerFX(), "red");
+						break;
+				}
+			}
 		}
 	}
+	
+	if ( GetWeaponID() == TF_WEAPON_SNIPERRIFLE_CLASSIC )
+		Q_snprintf(m_szTracerName, MAX_TRACER_NAME, "%s", "tfc_sniper_distortion_trail" );
 	
 	int nSniperFiresTracer = 0;
 	CALL_ATTRIB_HOOK_INT( nSniperFiresTracer, sniper_fires_tracer );
