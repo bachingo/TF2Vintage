@@ -2754,9 +2754,6 @@ void CTFBotItemSchema::PostInit()
 			"drop_chance", "vintage_chance", "genuine_chance",
 			"strange_chance", "itemset_echance", "itemset_chance"
 		};
-		static char const *const szClasses[] = {
-			"scout", "sniper", "soldier", "demoman", "medic", "heavy", "pyro", "spy", "engineer"
-		};
 
 		char const *pszConfigName = "cfg\\tfbot.schema.txt";
 		if( TFGameRules() )
@@ -2831,11 +2828,11 @@ void CTFBotItemSchema::PostInit()
 										float flChance = pChances->GetFloat( "any", pSettings->GetFloat( szChances[k] ) );
 										pItem->SetFloat( szChances[k], flChance );
 
-										for ( int l=0; l < ARRAYSIZE( szClasses ); ++l )
+										for ( int l=0; l < ARRAYSIZE( g_aRawPlayerClassNamesShort ); ++l )
 										{
-											flChance = pSubKey->GetFloat( szClasses[l], -1.f );
+											flChance = pSubKey->GetFloat( g_aRawPlayerClassNamesShort[l], -1.f );
 											if ( flChance >= 0 )
-												pItem->SetFloat( CFmtStr( "%s_%s", szChances[k], szClasses[l] ), flChance );
+												pItem->SetFloat( CFmtStr( "%s_%s", szChances[k], g_aRawPlayerClassNamesShort[l] ), flChance );
 										}
 									}
 									else
@@ -2874,11 +2871,11 @@ void CTFBotItemSchema::PostInit()
 									float flChance = pChances->GetFloat( "any", pSettings->GetFloat( szChances[j] ) );
 									pItem->SetFloat( szChances[j], flChance );
 
-									for ( int k=0; k < ARRAYSIZE( szClasses ); ++k )
+									for ( int k=0; k < ARRAYSIZE( g_aRawPlayerClassNamesShort ); ++k )
 									{
-										flChance = pSubKey->GetFloat( szClasses[k], -1.f );
+										flChance = pSubKey->GetFloat( g_aRawPlayerClassNamesShort[k], -1.f );
 										if ( flChance >= 0 )
-											pItem->SetFloat( CFmtStr( "%s_%s", szChances[j], szClasses[k] ), flChance );
+											pItem->SetFloat( CFmtStr( "%s_%s", szChances[j], g_aRawPlayerClassNamesShort[k] ), flChance );
 									}
 								}
 								else
