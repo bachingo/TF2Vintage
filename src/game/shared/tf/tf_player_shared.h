@@ -101,7 +101,8 @@ public:
 	// Initialization.
 	CTFPlayerShared();
 	void Init( OuterClass *pOuter );
-
+	void 	ResetMeters( void );
+	
 	// State (TF_STATE_*).
 	int		GetState() const					{ return m_nPlayerState; }
 	void	SetState( int nState )				{ m_nPlayerState = nState; }

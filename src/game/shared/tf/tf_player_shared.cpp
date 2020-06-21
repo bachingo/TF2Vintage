@@ -385,20 +385,8 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bArenaSpectator = false;
 
 	m_bGunslinger = false;
-
-	// Reset our meters
-	SetDecapitationCount( 0 );
-	SetHeadshotCount( 0 );
-	SetStrikeCount( 0 );
-	SetSapperKillCount( 0 );
-	SetRevengeCritCount( 0 );
-	SetAirblastCritCount( 0 );
-	SetHypeMeterAbsolute( 0 );
-	SetSanguisugeHealth(0);
-	SetKillstreakCount( 0 );
-	SetFocusLevel( 0 );
-	SetFireRageMeter(0);
-	SetCrikeyMeter(0);
+	
+	ResetMeters();
 
 	m_flEnergyDrinkDrainRate = tf_scout_energydrink_consume_rate.GetFloat();
 	m_flEnergyDrinkRegenRate = tf_scout_energydrink_regen_rate.GetFloat();
@@ -427,6 +415,27 @@ void CTFPlayerShared::Init( CTFPlayer *pPlayer )
 	m_flNextBurningSound = 0;
 
 	SetJumping( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Add a condition and duration
+// duration of PERMANENT_CONDITION means infinite duration
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::ResetMeters( void )
+{
+	// Reset our meters
+	SetDecapitationCount( 0 );
+	SetHeadshotCount( 0 );
+	SetStrikeCount( 0 );
+	SetSapperKillCount( 0 );
+	SetRevengeCritCount( 0 );
+	SetAirblastCritCount( 0 );
+	SetHypeMeterAbsolute( 0 );
+	SetSanguisugeHealth(0);
+	SetKillstreakCount( 0 );
+	SetFocusLevel( 0 );
+	SetFireRageMeter(0);
+	SetCrikeyMeter(0);	
 }
 
 //-----------------------------------------------------------------------------
@@ -5144,16 +5153,11 @@ void CTFPlayerShared::UpdateChargeMeter( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
-{
-	if ( m_flEnergyDrinkMeter > 100.0f ) // Prevent our meter from going over 100
-	{
-		m_flEnergyDrinkMeter = 100.0f;
-	}
-		
+{	
 	if ( InCond( TF_COND_SODAPOPPER_HYPE ) )
 	{
-		m_flHypeMeter -= ( gpGlobals->frametime * m_flEnergyDrinkDrainRate ) * 0.75;
-
+		m_flHypeMeter = Max( (float)( m_flHypeMeter - ( gpGlobals->frametime * m_flEnergyDrinkDrainRate ) * 0.75 ), 0.0f );
+		
 		if ( m_flHypeMeter <= 0.0f )
 			RemoveCond( TF_COND_SODAPOPPER_HYPE );
 		
@@ -5162,7 +5166,7 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 	
 	if ( InCond( TF_COND_PHASE ) || InCond( TF_COND_ENERGY_BUFF ) )
 	{
-		m_flEnergyDrinkMeter -= ( m_flEnergyDrinkDrainRate * ( tf2v_use_new_bonk_length.GetBool() ? 1 : 4/3 ) ) * gpGlobals->frametime;
+		m_flEnergyDrinkMeter = Max( (float)( m_flEnergyDrinkMeter - ( ( m_flEnergyDrinkDrainRate * ( tf2v_use_new_bonk_length.GetBool() ? 1 : 4/3 ) ) * gpGlobals->frametime ) ), 0.0f );
 
 		if ( m_flEnergyDrinkMeter <= 0.0f )
 		{
@@ -5183,7 +5187,7 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 	if ( m_flEnergyDrinkMeter >= 100.0f )
 			return;
 
-	m_flEnergyDrinkMeter += m_flEnergyDrinkRegenRate * gpGlobals->frametime;
+	m_flEnergyDrinkMeter = Min( m_flEnergyDrinkMeter + ( m_flEnergyDrinkRegenRate * gpGlobals->frametime ), 100.0f );
 
 	if ( m_pOuter->Weapon_OwnsThisID( TF_WEAPON_LUNCHBOX_DRINK ) )
 	{
@@ -5193,8 +5197,6 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 		if ( m_pOuter->GetAmmoCount( TF_AMMO_GRENADES2 ) != m_pOuter->GetMaxAmmo( TF_AMMO_GRENADES2 ) )
 			return;
 	}
-
-	m_flEnergyDrinkMeter = Min( m_flEnergyDrinkMeter.Get(), 100.0f );
 	
 }
 
@@ -5203,19 +5205,14 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::UpdateFocusLevel( void )
 {
-	if ( m_flFocusLevel > 100.0f ) // Prevent our meter from going over 100
-	{
-		m_flFocusLevel = 100.0f;
-	}
 		
 	if ( InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF ) )
 	{
-		m_flFocusLevel -= ( gpGlobals->frametime * 10 );	// Max is 10 seconds.
+		m_flFocusLevel = Max( m_flFocusLevel - ( gpGlobals->frametime * 10 ), 0.0f );	// Max is 10 seconds.
 
 		if ( m_flFocusLevel <= 0.0f )
 		{
 			RemoveCond( TF_COND_SNIPERCHARGE_RAGE_BUFF );
-			m_flFocusLevel = 0;
 		}
 	}
 	
@@ -5250,19 +5247,14 @@ void CTFPlayerShared::AddFocusLevel(bool bKillOrAssist)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::UpdateFireRage( void )
 {
-	if ( m_flFireRage > 100.0f ) // Prevent our meter from going over 100
-	{
-		m_flFireRage = 100.0f;
-	}
 		
 	if ( InCond( TF_COND_CRITBOOSTED_RAGE_BUFF ) )
 	{
-		m_flFireRage -= ( gpGlobals->frametime * 10 );	// Max is 10 seconds.
+		m_flFireRage = Max((m_flFireRage - (gpGlobals->frametime * 10)), 0.0f);	// Max is 10 seconds.
 
 		if ( m_flFireRage <= 0.0f )
 		{
 			RemoveCond( TF_COND_CRITBOOSTED_RAGE_BUFF );
-			m_flFireRage = 0;
 		}
 	}
 	
@@ -5274,11 +5266,7 @@ void CTFPlayerShared::UpdateFireRage( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::UpdateCrikeyMeter( void )
 {
-	if ( m_flCrikeyMeter > 100.0f ) // Prevent our meter from going over 100
-	{
-		m_flCrikeyMeter = 100.0f;
-	}
-	
+
 	float flCrikeyDuration = 0;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(m_pOuter, flCrikeyDuration, minicrit_boost_when_charged);
 		
@@ -5286,12 +5274,11 @@ void CTFPlayerShared::UpdateCrikeyMeter( void )
 	{
 		if (flCrikeyDuration > 0)
 		{
-			m_flCrikeyMeter -= ( gpGlobals->frametime * (100/flCrikeyDuration) );	// Regularly 8 seconds. Don't allow division by zero.
+			m_flCrikeyMeter = Max((m_flCrikeyMeter - (gpGlobals->frametime * (100 / flCrikeyDuration))), 0.0f);	// Regularly 8 seconds. Don't allow division by zero.
 
 			if ( m_flCrikeyMeter <= 0.0f )
 			{
 				RemoveCond( TF_COND_MINICRITBOOSTED_RAGE_BUFF );
-				m_flCrikeyMeter = 0;
 			}
 		}
 		else
