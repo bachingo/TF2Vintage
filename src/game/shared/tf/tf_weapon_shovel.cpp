@@ -67,7 +67,7 @@ float CTFShovel::GetSpeedMod( void ) const
 
 	int nShovelSpeedBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelSpeedBoost, set_weapon_mode );
-	if ( !nShovelSpeedBoost || ( nShovelSpeedBoost != 2 && tf2v_use_new_split_equalizer.GetBool() ) )
+	if ( !nShovelSpeedBoost || ( nShovelSpeedBoost == 1 && tf2v_use_new_split_equalizer.GetBool() ) )
 		return 1.0f;
 
 	float flFraction = (float)pOwner->GetHealth() / pOwner->GetMaxHealth();
@@ -89,21 +89,21 @@ float CTFShovel::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iC
 
 	int nShovelDamageBoost = 0;
 	CALL_ATTRIB_HOOK_INT( nShovelDamageBoost, set_weapon_mode );
-	if ( !nShovelDamageBoost || ( nShovelDamageBoost != 1 && tf2v_use_new_split_equalizer.GetBool() ) )
+	if ( !nShovelDamageBoost || ( nShovelDamageBoost == 2 && tf2v_use_new_split_equalizer.GetBool() ) )
 		return flDmg;
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 		return 0.0f;
 
-	float flFraction = Clamp( (float)pOwner->GetHealth() / pOwner->GetMaxHealth(), 0.0f, 1.0f );
+	float flFraction = Clamp( ((float)pOwner->GetHealth() / (float)pOwner->GetMaxHealth()), 0.0f, 1.0f );
 	
 	// Get the damage output.
 	float flDamageOutput = 0;
 	if (tf2v_use_new_equalizer_damage.GetBool()) // New algorithm [107.25 - 0.37295 * HP ] converted to ratio output and %HP input.
-		flDamageOutput = Clamp( flFraction, 1.65f, 0.5025f );
+		flDamageOutput =  RemapValClamped( flFraction, 0.0f, 1.0f, 1.65f, 0.5025f );
 	else 										 // Old algorithm [162.5 - 0.65 * HP ] converted to ratio output and %HP input.
-		flDamageOutput = Clamp( flFraction, 2.5f, 0.5f );
+		flDamageOutput =  RemapValClamped( flFraction, 0.0f, 1.0f, 2.5f, 0.5f );
 	
 	flDmg *= flDamageOutput;
 
