@@ -522,19 +522,6 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, trace_t &trace )
 				pTFTarget->Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
 		}
 	}
-
-	int nTickleEnemiesWithSameWeapon = 0;
-	CALL_ATTRIB_HOOK_INT( nTickleEnemiesWithSameWeapon, tickle_enemies_wielding_same_weapon );
-	if ( nTickleEnemiesWithSameWeapon )
-	{
-		CTFPlayer *pTFTarget = ToTFPlayer( pTarget );
-		if ( pTFTarget && pTFTarget->GetActiveTFWeapon() )
-		{
-			CTFWeaponBase *pWeapon = pTFTarget->GetActiveTFWeapon();
-			if ( pWeapon->GetItemID() == GetItemID() )
-				pTFTarget->Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
-		}
-	}
 #endif
 }
 
