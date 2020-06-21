@@ -63,6 +63,8 @@ public:
 };
 
 
+#define TF_BOT_TYPE		1337
+
 class CTFBot : public NextBotPlayer<CTFPlayer>, public CGameEventListener
 {
 	DECLARE_CLASS( CTFBot, NextBotPlayer<CTFPlayer> )
@@ -154,7 +156,7 @@ public:
 	virtual void	Event_Killed( const CTakeDamageInfo &info );
 	virtual void	UpdateOnRemove( void ) override;
 	virtual void	FireGameEvent( IGameEvent *event );
-	virtual int		GetBotType() const { return 1337; }
+	virtual int		GetBotType() const { return TF_BOT_TYPE; }
 	virtual int		DrawDebugTextOverlays( void );
 	virtual void	PhysicsSimulate( void );
 	virtual void	Touch( CBaseEntity *other );
@@ -369,7 +371,7 @@ private:
 };
 
 DEFINE_ENUM_BITWISE_OPERATORS( CTFBot::AttributeType )
-inline bool operator!(CTFBot::AttributeType const &rhs)
+inline bool operator!( CTFBot::AttributeType const &rhs )
 {
 	return (int const &)rhs == 0;
 }
@@ -384,7 +386,7 @@ inline CTFBot *ToTFBot( CBaseEntity *ent )
 	if ( player == nullptr )
 		return NULL;
 
-	if ( !player->IsBotOfType( 1337 ) )
+	if ( !player->IsBotOfType( TF_BOT_TYPE ) )
 		return NULL;
 
 	Assert( dynamic_cast<CTFBot *>( ent ) );
@@ -395,7 +397,7 @@ class CTFBotItemSchema : public CAutoGameSystem
 {
 	DECLARE_CLASS_GAMEROOT( CTFBotItemSchema, CAutoGameSystem );
 public:
-	CTFBotItemSchema(char const *name)
+	CTFBotItemSchema( char const *name )
 		: CAutoGameSystem( name )
 	{
 		m_pSchema = NULL;
