@@ -117,9 +117,6 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 #ifndef CLIENT_DLL
 
-	pPlayer->RemoveInvisibility();
-	pPlayer->RemoveDisguise();
-
 	// Minigun has custom handling
 	if ( GetWeaponID() != TF_WEAPON_MINIGUN )
 	{
@@ -164,6 +161,12 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 
 	AbortReload();
+	
+	// Put these at the end, so we get the disguise/invis bonuses.
+#ifndef CLIENT_DLL
+	pPlayer->RemoveInvisibility();
+	pPlayer->RemoveDisguise();
+#endif
 }	
 
 //-----------------------------------------------------------------------------
