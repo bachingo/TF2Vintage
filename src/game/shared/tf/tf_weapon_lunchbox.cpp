@@ -362,7 +362,7 @@ void CTFLunchBox::ApplyBiteEffects( bool bHurt )
 bool CTFLunchBox::CanDrop( void ) const
 {
 	// Old Sandwich can't throw at all.
-	if ( !tf2v_sandvich_behavior.GetInt() == 0 )
+	if ( tf2v_sandvich_behavior.GetInt() == 0 )
 			return false;
 	
 	// Old chocolates can't throw.
