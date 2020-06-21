@@ -366,9 +366,12 @@ void CTFGameMovement::AirDash( void )
 #if defined( GAME_DLL )
 	if ( m_pTFPlayer->m_Shared.GetAirDashCount() > 0 )
 	{
-		if ( ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) || ( m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) && !tf2v_use_new_sodapopper.GetBool() ) ) && !m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) )
+		if (!tf2v_use_new_atomizer.GetBool())	// Old Atomizer logic: Take damage on jumping.
 		{
-			if (!tf2v_use_new_atomizer.GetBool())	// Old Atomizer logic: Take damage on jumping.
+			// Make sure we're not in any form of airjump buff.
+			if ( ( !m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE )   // Not in any soda popper hype...
+			   || ( m_pTFPlayer->m_Shared.InCond( TF_COND_SODAPOPPER_HYPE ) && !tf2v_use_new_sodapopper.GetBool() ) ) // Or in old variant soda popper hype...
+			    && !m_pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_SPEED_BOOST ) ) // And not in Halloween Speed Boost.
 			{
 				CTakeDamageInfo info( m_pTFPlayer, m_pTFPlayer, vec3_origin, m_pTFPlayer->WorldSpaceCenter(), 10.0f, DMG_BULLET );
 				m_pTFPlayer->TakeDamage( info );
