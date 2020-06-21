@@ -646,23 +646,17 @@ void CTFBauble::BaubleTouch( CBaseEntity *pOther )
 	}
 
 	// Do direct hit and bleed damage to an enemy we hit.
-	if ( pPlayer && ( gpGlobals->curtime - m_flCreationTime > 0.2f || GetTeamNumber() != pPlayer->GetTeamNumber() ) )
+	if ( pPlayer && ( ( gpGlobals->curtime - m_flCreationTime > 0.2f ) || ( GetTeamNumber() != pPlayer->GetTeamNumber() ) ) )
 	{
-		if ( !m_bTouched )
-		{
-			// Save who we hit for calculations
-			m_hEnemy = pOther;
-			m_hSpriteTrail->SUB_FadeOut();
-			Explode( &pTrace, GetDamageType() );
-			m_bTouched = true;
-		}
+		// Save who we hit for calculations
+		m_hEnemy = pOther;
+		m_hSpriteTrail->SUB_FadeOut();
+		Explode( &pTrace, GetDamageType() );
+		m_bTouched = true;
 	}
 
 	// Once we touched something (player/world) shatter the bauble.
-	if (m_bTouched)
-	{
-		Shatter( &pTrace, GetDamageType() );
-	}
+	Shatter( &pTrace, GetDamageType() );
 }
 
 //-----------------------------------------------------------------------------
