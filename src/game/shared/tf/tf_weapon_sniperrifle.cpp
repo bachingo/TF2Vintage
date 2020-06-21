@@ -841,7 +841,7 @@ bool CTFSniperRifle::ShouldDrawCrosshair( void )
 		CTFPlayer *pPlayer = GetTFPlayerOwner();
 		if (pPlayer)
 		{
-			if (pPlayer->m_Shared.InCond(TF_COND_AIMING))
+			if (!pPlayer->m_Shared.InCond(TF_COND_AIMING) && !pPlayer->m_Shared.InCond(TF_COND_ZOOMED))
 				return true;
 		}
 
