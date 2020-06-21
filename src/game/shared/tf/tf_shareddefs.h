@@ -166,8 +166,8 @@ enum
 
 extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
-extern const char *g_aRawPlayerClassNames[];
-extern const char *g_aRawPlayerClassNamesShort[];
+extern const char *g_aRawPlayerClassNames[TF_CLASS_MENU_BUTTONS];
+extern const char *g_aRawPlayerClassNamesShort[TF_CLASS_MENU_BUTTONS];
 
 bool IsPlayerClassName( const char *name );
 int GetClassIndexFromString( const char *name, int maxClass = TF_LAST_NORMAL_CLASS );
