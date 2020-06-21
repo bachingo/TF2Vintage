@@ -692,7 +692,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 	if ( !pHitEntity )
 		return;
 
-	if ( m_iType == TF_GL_MODE_REGULAR || m_iType == TF_GL_MODE_CANNONBALL )
+	if ( m_iType == TF_GL_MODE_REGULAR || m_iType == TF_GL_MODE_CANNONBALL ||  m_iType == TF_GL_MODE_FIZZLE )
 	{
 		// Blow up if we hit an enemy we can damage
 		if ( pHitEntity->IsCombatCharacter() && pHitEntity->GetTeamNumber() != GetTeamNumber() && pHitEntity->m_takedamage != DAMAGE_NO )
