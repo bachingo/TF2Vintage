@@ -83,16 +83,16 @@ WeaponData
 		"crosshair"
 		{
 				"file"		"sprites/crosshairs"
-				"x"		"0"
-				"y"		"32"
+				"x"			"64"
+				"y"			"0"
 				"width"		"32"
 				"height"	"32"
 		}
 		"autoaim"
 		{
 				"file"		"sprites/crosshairs"
-				"x"		"0"
-				"y"		"48"
+				"x"			"0"
+				"y"			"48"
 				"width"		"24"
 				"height"	"24"
 		}

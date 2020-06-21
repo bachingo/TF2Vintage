@@ -91,7 +91,7 @@ public:
 	~CTFSniperRifle();
 
 	virtual int	GetWeaponID( void ) const			{ return TF_WEAPON_SNIPERRIFLE; }
-	virtual bool	ShouldDrawCrosshair( void )						{ return false; }
+	virtual bool	ShouldDrawCrosshair( void );
 	virtual void Spawn();
 	virtual void Precache();
 	void		 ResetTimers( void );

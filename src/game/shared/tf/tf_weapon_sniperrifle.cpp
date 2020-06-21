@@ -43,6 +43,10 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #define SNIPER_DOT_SPRITE_YELLOW	"effects/sniperdot_yellow.vmt"
 #define SNIPER_DOT_SPRITE_CLEAR		"effects/sniperdot_clear.vmt"
 
+#ifdef CLIENT_DLL
+	ConVar tf2v_sniper_crosshair( "tf2v_sniper_crosshair", "0", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Shows the crosshair on Sniper Rifles.", true, 0, true, 1 );
+#endif
+
 //=============================================================================
 //
 // Weapon Sniper Rifles tables.
@@ -824,6 +828,28 @@ void CTFSniperRifle::ActivateFocus(void)
 		
 		if (!pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF) && pPlayer->m_Shared.HasFocusCharge())
 			pPlayer->m_Shared.AddCond(TF_COND_SNIPERCHARGE_RAGE_BUFF);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Enables or disables the sniper crosshair.
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::ShouldDrawCrosshair( void )
+{
+#ifdef CLIENT_DLL
+	if (tf2v_sniper_crosshair.GetBool())
+	{
+		CTFPlayer *pPlayer = GetTFPlayerOwner();
+		if (pPlayer)
+		{
+			if (pPlayer->m_Shared.InCond(TF_COND_AIMING))
+				return true;
+		}
+
+	}
+#endif
+	
+	return false;
+	
 }
 
 //-----------------------------------------------------------------------------
