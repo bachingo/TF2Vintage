@@ -252,6 +252,7 @@ void CTFProjectile_Jar::JarTouch( CBaseEntity *pOther )
 	// Blow up if we hit a player
 	if ( pOther->IsPlayer() )
 	{
+		m_hEnemy = pOther;
 		Explode( &pTrace, GetDamageType() );
 	}
 	// We should bounce off of certain surfaces (resupply cabinets, spawn doors, etc.)
@@ -544,45 +545,12 @@ CTFProjectile_Cleaver *CTFProjectile_Cleaver::Create( CBaseEntity *pWeapon, cons
 	return pCleaver;
 }
 
-void CTFProjectile_Cleaver::JarTouch( CBaseEntity *pOther )
+void CTFProjectile_Cleaver::Explode(trace_t *pTrace, int bitsDamageType)
 {
-	if ( pOther == GetThrower() )
-	{
-		// Make us solid if we're not already
-		if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE )
-		{
-			SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
-		}
-		return;
-	}
-
-	// Verify a correct "other."
-	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
-		return;
-
-	// Handle hitting skybox (disappear).
-	trace_t pTrace;
-	Vector velDir = GetAbsVelocity();
-	VectorNormalize( velDir );
-	Vector vecSpot = GetAbsOrigin() - velDir * 32;
-	UTIL_TraceLine( vecSpot, vecSpot + velDir * 64, MASK_SOLID, this, COLLISION_GROUP_NONE, &pTrace );
-
-	if ( pTrace.fraction < 1.0 && pTrace.surface.flags & SURF_SKY )
-	{
-		UTIL_Remove( this );
-		return;
-	}
-
 	// Invisible.
 	SetModelName( NULL_STRING );
 	AddSolidFlags( FSOLID_NOT_SOLID );
 	m_takedamage = DAMAGE_NO;
-
-	// Pull out of the wall a bit
-	if (pTrace.fraction != 1.0)
-	{
-		SetAbsOrigin( pTrace.endpos + ( pTrace.plane.normal * 1.0f ) );
-	}
 
 	// Damage.
 	CBaseEntity *pAttacker = GetOwnerEntity();
@@ -594,7 +562,7 @@ void CTFProjectile_Cleaver::JarTouch( CBaseEntity *pOther )
 
 	// Play explosion sound and effect.
 	Vector vecOrigin = GetAbsOrigin();
-	CTFPlayer *pPlayer = ToTFPlayer( pOther );
+	CTFPlayer *pPlayer = ToTFPlayer( m_hEnemy.Get() );
 
 	if ( pPlayer )
 	{
@@ -635,7 +603,7 @@ void CTFProjectile_Cleaver::JarTouch( CBaseEntity *pOther )
 		CTakeDamageInfo info( this, pAttacker, m_hLauncher.Get(), GetDamage(), iDamageType, (bMiniCrit ? TF_DMG_CUSTOM_CLEAVER_CRIT : TF_DMG_CUSTOM_CLEAVER) );
 		Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin ;
 		info.SetReportedPosition( vectorReported);
-		pOther->TakeDamage( info );
+		pPlayer->TakeDamage(info);
 		
 		// Also make them bleed too!
 		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>(m_hLauncher.Get());

@@ -65,6 +65,9 @@ public:
 
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
 	virtual int		GetEffectCondition( void ) { return TF_COND_URINE; }
+
+	CHandle<CBaseEntity>	m_hEnemy;
+
 #else
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	CreateTrails( void );
@@ -130,7 +133,7 @@ public:
 
 	virtual void	Precache( void );
 
-	void 			JarTouch( CBaseEntity *pOther );
+	virtual void	Explode(trace_t *pTrace, int bitsDamageType);
 	virtual int		GetEffectCondition( void ) { return TF_COND_BLEEDING; }
 
 	private:
