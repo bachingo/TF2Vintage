@@ -483,20 +483,6 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, trace_t &trace )
 		iDmgType |= DMG_IGNITE;
 	}
 
-	int nCritFromBehind = 0;
-	CALL_ATTRIB_HOOK_INT( nCritFromBehind, crit_from_behind );
-	if ( nCritFromBehind == 1 )
-	{
-		Vector vecTargetFwd;
-		AngleVectors( pTarget->EyeAngles(), &vecTargetFwd );
-
-		Vector vecToTarget = pPlayer->GetAbsOrigin() - pTarget->GetAbsOrigin();
-		vecToTarget.NormalizeInPlace();
-
-		if ( vecTargetFwd.Dot( vecToTarget ) > DOT_45DEGREE )
-			iDmgType |= DMG_CRITICAL;
-	}
-
 	float flDamage = GetMeleeDamage( pTarget, iDmgType, iCustomDamage );
 	
 	CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
@@ -511,17 +497,6 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity *pTarget, trace_t &trace )
 
 	OnEntityHit( pTarget );
 
-	int nCritMakesThemLaugh = 0;
-	CALL_ATTRIB_HOOK_INT( nCritMakesThemLaugh, crit_forces_victim_to_laugh );
-	if ( nCritMakesThemLaugh )
-	{
-		if ( m_bCurrentAttackIsCrit || ( iDmgType & DMG_CRITICAL ) )
-		{
-			CTFPlayer *pTFTarget = ToTFPlayer( pTarget );
-			if ( pTFTarget )
-				pTFTarget->Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
-		}
-	}
 #endif
 }
 
@@ -534,25 +509,9 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageTyoe
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
 
-	int nCritNegatesDamage = 0;
-	CALL_ATTRIB_HOOK_INT( nCritNegatesDamage, crit_does_no_damage );
-	if ( nCritNegatesDamage == 1 )
-	{
-		if ( m_bCurrentAttackIsCrit )
-			return 0.0f;
-
-		if ( iDamageTyoe & DMG_CRITICAL )
-			return 0.0f;
-	}
-
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer == nullptr || !pPlayer->IsAlive() )
 		return flDamage;
-
-	if ( ( pPlayer->GetMaxHealth() / 2 ) <= pPlayer->GetHealth() )
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg_penalty_while_half_alive );
-	else
-		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg_penalty_while_half_dead );
 
 	float flHealthMult = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flHealthMult, mult_dmg_with_reduced_health );
