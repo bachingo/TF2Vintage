@@ -271,13 +271,6 @@ public:
 			ParseItems( pSpecialItems );
 		}
 		
-		// Paint Tints.
-		KeyValues *pPaints = pKeyValuesData->FindKey( "paints" );
-		if ( pPaints )
-		{
-			ParseItems( pPaints );
-		}
-		
 	};
 
 	void ParseGameInfo( KeyValues *pKeyValuesData )

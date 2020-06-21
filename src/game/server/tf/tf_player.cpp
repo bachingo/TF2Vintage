@@ -9734,7 +9734,7 @@ void CTFPlayer::SpyDeadRingerDeath( CTakeDamageInfo const &info )
 	float flCloakDeductOnFeign = 0;
 	CALL_ATTRIB_HOOK_FLOAT(flCloakDeductOnFeign, cloak_consume_on_feign_death_activate);
 	if ( flCloakDeductOnFeign > 0 )
-		m_Shared.SetSpyCloakMeter( Max(m_Shared.GetSpyCloakMeter() - (flCloakDeductOnFeign * 100), 0.0f ) );
+		m_Shared.SetSpyCloakMeter( Max((m_Shared.GetSpyCloakMeter() - (flCloakDeductOnFeign * 100)), 0.0f ) );
 	
 	if ( tf2v_use_new_dead_ringer.GetBool() )
 	{
