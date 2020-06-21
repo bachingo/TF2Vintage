@@ -6644,11 +6644,14 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		// Special case for Sydney, we base it on charge
 		if ( pTFWeapon->IsWeapon( TF_WEAPON_SNIPERRIFLE ) )
 		{
-			CTFSniperRifle *pSniper = assert_cast<CTFSniperRifle *>( pTFWeapon );
-
-			float flJarateDuration = pSniper->GetJarateTime();
-			if ( flJarateDuration > 0.0f )
-				m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+			// We need to make sure the attacker is zoomed in before we apply this.
+			if ( pTFAttacker && pTFAttacker->m_Shared.InCond(TF_COND_ZOOMED) )
+			{
+				CTFSniperRifle *pSniper = assert_cast<CTFSniperRifle *>( pTFWeapon );
+				float flJarateDuration = pSniper->GetJarateTime();
+				if ( flJarateDuration > 0.0f )
+					m_Shared.AddCond( TF_COND_URINE, flJarateDuration );
+			}
 		}
 		else
 		{
