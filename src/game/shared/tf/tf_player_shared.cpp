@@ -6421,6 +6421,30 @@ bool CTFPlayer::TryToPickupBuilding( void )
 					// Is this the builder that builds the object we're looking for?
 					if ( pBuilder )
 					{
+						// If remote pickup, subtract the metal from our current metal reserve.
+						if ( iTraces == 2 )
+						{
+							// Subtract metal.
+							RemoveBuildResources( nRemotePickup );
+							
+							// Remote pickup particles.
+
+							// Teleport effect at the building
+							Vector origin = pObject->GetAbsOrigin();
+							CPVSFilter filter( origin );
+							TE_TFParticleEffect( filter, 0.0, GetTeamNumber() == TF_TEAM_RED ? "teleported_red" : "teleported_blue", origin, vec3_angle );
+
+							// Add a tracer between the building position and our position
+							Vector BuildingHeight(0, 0, 32); // Come out at half standard height
+							te_tf_particle_effects_control_point_t ControlPoint = { PATTACH_WORLDORIGIN, pObject->GetAbsOrigin() + BuildingHeight };
+							TE_TFParticleEffectComplex(filter, 0.0f, GetTeamNumber() == TF_TEAM_RED ? "dxhr_sniper_rail_red" : "dxhr_sniper_rail_blue", GetAbsOrigin() + BuildingHeight, vec3_angle, NULL, &ControlPoint);
+							
+							// Remote pickup sounds.
+							// Play a teleport in at the building spot and a teleport out at our position.
+							pObject->EmitSound( "Building_Teleporter.Send" );
+							EmitSound( "Building_Teleporter.Receive" );
+						}
+						
 						pObject->MakeCarriedObject(this);
 
 						pBuilder->SetSubType( pObject->ObjectType() );
@@ -6433,9 +6457,6 @@ bool CTFPlayer::TryToPickupBuilding( void )
 
 						m_flNextCarryTalkTime = gpGlobals->curtime + RandomFloat( 6.0f, 12.0f );
 
-						// If remote pickup, subtract the metal from our current metal reserve.
-						if ( iTraces == 2 )
-							RemoveBuildResources( nRemotePickup );
 						return true;
 					}
 				}
