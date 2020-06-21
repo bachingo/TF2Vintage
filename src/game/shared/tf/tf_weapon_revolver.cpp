@@ -185,7 +185,7 @@ bool CTFRevolver::Holster( CBaseCombatWeapon *pSwitchTo )
 	if (HasSapperCrits())
 	{
 		CTFPlayer *pOwner = GetTFPlayerOwner();
-		if (pOwner && CTFRevolver::Holster(pSwitchTo))
+		if (pOwner && BaseClass::Holster(pSwitchTo))
 		{
 			if (pOwner->m_Shared.InCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON))
 				pOwner->m_Shared.RemoveCond(TF_COND_CRITBOOSTED_ACTIVEWEAPON);
