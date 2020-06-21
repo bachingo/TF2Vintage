@@ -49,6 +49,7 @@ public:
 	};
 
 	virtual void	Spawn( void );
+	virtual void	Precache( void );
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PIPEBOMBLAUNCHER; }
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
 	virtual void	ItemPostFrame( void );

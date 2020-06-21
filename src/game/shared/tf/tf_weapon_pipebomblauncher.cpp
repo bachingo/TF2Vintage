@@ -105,6 +105,14 @@ void CTFPipebombLauncher::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFPipebombLauncher::Precache()
+{
+	PrecacheScriptSound("Weapon_StickyBombLauncher.ChargeUp");
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Reset the charge when we holster
 //-----------------------------------------------------------------------------
 bool CTFPipebombLauncher::Holster( CBaseCombatWeapon *pSwitchingTo )
@@ -167,6 +175,8 @@ void CTFPipebombLauncher::PrimaryAttack( void )
 		m_flChargeBeginTime = gpGlobals->curtime;
 
 		SendWeaponAnim( ACT_VM_PULLBACK );
+		
+		EmitSound( "Weapon_StickyBombLauncher.ChargeUp" );
 	}
 	else
 	{
