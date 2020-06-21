@@ -1879,7 +1879,6 @@ public:
 	void OnBind( void *pC_BaseEntity )
 	{
 		Assert( m_pResult );
-		m_pResult->SetVecValue( 0, 0, 0 );
 
 		if ( !pC_BaseEntity )
 			return;
