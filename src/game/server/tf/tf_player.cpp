@@ -746,7 +746,7 @@ void CTFPlayer::MedicRegenThink( void )
 		}
 	}
 
-	
+	int iHealAmountMedic = 0;
 	if ( IsPlayerClass( TF_CLASS_MEDIC ) )
 	{
 		if ( IsAlive() )
@@ -759,14 +759,13 @@ void CTFPlayer::MedicRegenThink( void )
 			else
 				flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 1.0, 3.0 );
 
-			int iHealAmount = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
-			TakeHealth( iHealAmount, DMG_GENERIC );
+			iHealAmountMedic = ceil( TF_MEDIC_REGEN_AMOUNT * flScale );
 		}
 	}
 
 	if ( IsAlive() )
 	{
-		int iHealthRestored = TakeHealth( iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
+		int iHealthRestored = TakeHealth( iHealAmountMedic + iHealthDrain + iHealthRegenLegacy, DMG_GENERIC );
 		if ( iHealthRestored != 0 )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent( "player_healonhit" );
@@ -1083,6 +1082,9 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "TFPlayer.CritDeathBeta" );
 	PrecacheScriptSound( "Player.MeleeDeathBeta" );
 	PrecacheScriptSound( "Player.DeathBeta" );
+	PrecacheScriptSound("General.banana_slip");
+	PrecacheScriptSound("DisciplineDevice.PowerUp");
+	PrecacheScriptSound("DisciplineDevice.PowerDown");
 
 	// Precache particle systems
 	PrecacheParticleSystem( "crit_text" );
@@ -5149,7 +5151,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			m_Local.m_flFallVelocity = 0;
 			info.SetDamage( 0 );
 
-			EmitSound( "Weapon_Mantreads.Impact" );
 			EmitSound( "Player.FallDamageDealt" );
 			UTIL_ScreenShake( WorldSpaceCenter(), 15.0, 150.0, 1.0, 500.0, SHAKE_START );
 		}
@@ -5332,15 +5333,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		int nCritOnCond = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, or_crit_vs_playercond );
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, crit_vs_burning_FLARES_DISPLAY_ONLY );
 
-		// Crit players. Don't crit afterburn.
-		if ( nCritOnCond > 0 )
+		// Crit players when they have this condition.
+		if ( nCritOnCond )
 		{
-			for ( int i = 0; condition_to_attribute_translation[i] <= TF_COND_LAST; i++ )
+			for ( int i = 0; condition_to_attribute_translation[i] != TF_COND_LAST; i++ )
 			{
 				int nCond = condition_to_attribute_translation[i];
-				if ( ( nCritOnCond - 1 ) && m_Shared.InCond( nCond ) )
+				int nFlag = ( 1 << i );
+				if ( ( nCritOnCond & nFlag ) && m_Shared.InCond( nCond ) )
 				{
 					bitsDamage |= DMG_CRITICAL;
 					info.AddDamageType( DMG_CRITICAL );
@@ -5370,6 +5371,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				bitsDamage |= DMG_MINICRITICAL;
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
+			
+			int nCritOnCond = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, crit_vs_burning_FLARES_DISPLAY_ONLY );
+			if ( nCritOnCond )
+			{
+				bitsDamage |= DMG_CRITICAL;
+				info.AddDamageType( DMG_CRITICAL );
+			}		
 		}		
 
 
@@ -7053,8 +7062,8 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 					{
 						int iHealthRestored;
 
-						if (tf2v_use_new_healonkill.GetBool())
-							iHealthRestored = TakeHealth( Min(m_Shared.GetMaxBuffedHealth() - m_Shared.GetMaxHealth(), (int)flHealthOnKill), DMG_IGNORE_MAXHEALTH );
+						if (!tf2v_use_new_healonkill.GetBool())
+							iHealthRestored = TakeHealth( Min((float)(m_Shared.GetMaxBuffedHealth() - m_Shared.GetMaxHealth()), flHealthOnKill) , DMG_IGNORE_MAXHEALTH );
 						else
 							iHealthRestored	= TakeHealth( flHealthOnKill, DMG_GENERIC );
 						
@@ -9205,7 +9214,7 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 		return;
 	}
 	
-	if ( info.GetDamageType() & TF_DMG_CUSTOM_BOOTS_STOMP )
+	if (info.GetDamageCustom() == TF_DMG_CUSTOM_BOOTS_STOMP)
 	{
 		EmitSound( "Weapon_Mantreads.Impact" );
 		return;
