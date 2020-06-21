@@ -4855,34 +4855,6 @@ float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 			flFallDamage *= random->RandomFloat( 0.8, 1.2 );
 		}
 		
-		if ( pTFPlayer )
-		{
-			// Check to see if we can stomp on people.
-			int nFallingStomp = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFPlayer, nFallingStomp, boots_falling_stomp );
-			if ( nFallingStomp != 0 || pTFPlayer->m_Shared.InCond(TF_COND_ROCKETPACK) )
-			{
-				// Run a trace to see if we fell on a person.
-				trace_t trace;
-				bool bHitSomething = DoStompTrace( pTFPlayer, trace );
-				if ( bHitSomething )
-				{
-					// We fell on top of a person.
-					CTFPlayer *pTFVictim = ToTFPlayer( trace.m_pEnt );
-					if ( pTFVictim && !pTFVictim->InSameTeam( pTFPlayer ) )
-					{
-						// Damage is triple the fall damage, plus 10.
-						CTakeDamageInfo info( pPlayer, pPlayer, ( ( flFallDamage * 3 ) + 10 ), DMG_CRUSH, TF_DMG_CUSTOM_BOOTS_STOMP );
-						pTFVictim->TakeDamage( info );
-						// We take no fall damage on a successful stomp.
-						return 0;
-					}
-					
-				}
-				
-			}
-		}
-		
 		// If we're a boss, no fall damage.
 		if ( IsBossClass(pPlayer) )
 		{
@@ -4894,41 +4866,6 @@ float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 
 	// Fall caused no damage
 	return 0;
-}
-
-bool CTFGameRules::DoStompTrace( CTFPlayer *pTFPlayer, trace_t &trace )
-{
-	// Use a very tiny box for our vectors.
-	static Vector vecSwingMins( -3, -3, -3 );
-	static Vector vecSwingMaxs( 3, 3, 3 );
-
-	// Setup the swing range. We're looking for a swing underneath us.
-	Vector vecSwingStart = pTFPlayer->GetAbsOrigin();
-	static Vector vecSwingBottom(0, 0, -1);
-	Vector vecSwingEnd =  vecSwingStart + vecSwingBottom;
-
-	// See if we hit anything.
-	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, pTFPlayer, COLLISION_GROUP_NONE, &trace );
-	if ( trace.fraction >= 1.0 )
-	{
-		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, pTFPlayer, COLLISION_GROUP_NONE, &trace );
-		if ( trace.fraction < 1.0 )
-		{
-			// Calculate the point of intersection of the line (or hull) and the object we hit
-			// This is and approximation of the "best" intersection
-			CBaseEntity *pHit = trace.m_pEnt;
-			if ( !pHit || pHit->IsBSPModel() )
-			{
-				// Why duck hull min/max?
-				FindHullIntersection( vecSwingStart, trace, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, pTFPlayer );
-			}
-
-			// This is the point on the actual surface (the hull could have hit space)
-			vecSwingEnd = trace.endpos;	
-		}
-	}
-
-	return ( trace.fraction < 1.0f );
 }
 
 void CTFGameRules::SendWinPanelInfo( void )

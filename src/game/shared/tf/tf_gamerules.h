@@ -479,7 +479,6 @@ private:
 	virtual void	RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
 	
 	virtual float	FlPlayerFallDamage( CBasePlayer *pPlayer );
-	virtual bool 	DoStompTrace( CTFPlayer *pTFPlayer, trace_t &trace );
 
 	virtual bool	FlPlayerFallDeathDoesScreenFade( CBasePlayer *pl ) { return false; }
 
