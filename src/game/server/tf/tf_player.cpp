@@ -8774,6 +8774,7 @@ void CTFPlayer::ForceRespawn( void )
 	}
 
 	m_Shared.RemoveAllCond( NULL );
+	m_Shared.ResetMeters();
 
 	RemoveAllItems( true );
 
