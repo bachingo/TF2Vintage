@@ -91,7 +91,7 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 
 	int iWeaponID = pWpn->GetWeaponID();
 
-	if ( iWeaponID != TF_WEAPON_PIPEBOMBLAUNCHER  )
+	if ( iWeaponID != TF_WEAPON_PIPEBOMBLAUNCHER )
 	{
 		// Check if we're using a mortar.
 		if ( iWeaponID == TF_WEAPON_GRENADELAUNCHER || iWeaponID == TF_WEAPON_CANNON )

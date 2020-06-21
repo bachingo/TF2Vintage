@@ -94,6 +94,14 @@ void CTFGrenadeLauncher::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGrenadeLauncher::Precache()
+{
+	PrecacheScriptSound("Weapon_LooseCannon.Charge");
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Reset the charge when we holster
 //-----------------------------------------------------------------------------
 bool CTFGrenadeLauncher::Holster( CBaseCombatWeapon *pSwitchingTo )
