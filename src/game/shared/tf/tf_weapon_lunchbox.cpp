@@ -239,8 +239,8 @@ bool CTFLunchBox::UsesPrimaryAmmo( void )
 float CTFLunchBox::InternalGetEffectBarRechargeTime( void )
 {
 	// If we're using the Dalokoh, regen in 10 seconds.
-		if ( IsChocolateOrFishcake() )
-			return 10.0f;
+	if ( IsChocolateOrFishcake() )
+		return 10.0f;
 	
 	// Everything else is 30 seconds.
 	return 30.0f;
@@ -251,7 +251,7 @@ bool CTFLunchBox::HasChargeBar( void )
 {
 	// Chocolate and Fishcake do not have a bar when they have infinite ammo.
 	if ( !tf2v_new_chocolate_behavior.GetBool() && IsChocolateOrFishcake() )
-			return false;
+		return false;
 	
 	// This item probably has a bar, return true.
 	return true;
