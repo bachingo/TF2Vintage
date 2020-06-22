@@ -705,7 +705,14 @@ bool CHudItemEffectMeterTemp<C_TFFlameThrower>::IsEnabled(void)
 template<>
 bool CHudItemEffectMeterTemp<C_TFFlameThrower>::ShouldBeep( void )
 {
-	return true;
+	if (GetWeapon())
+	{ 
+		C_TFFlameThrower *pFlamethrower = GetWeapon();
+		if (pFlamethrower && pFlamethrower->HasMmmph())
+			return true;
+	}
+	
+	return false;
 }
 
 template<>
@@ -732,6 +739,15 @@ bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::IsEnabled( void )
 
 template<>
 bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::ShouldBeep( void )
+{
+	if (tf2v_use_new_cleaners.GetBool())
+		return true;
+
+	return false;
+}
+
+template<>
+bool CHudItemEffectMeterTemp<C_TFSMG_Charged>::ShouldFlash( void )
 {
 	if (tf2v_use_new_cleaners.GetBool())
 		return true;
