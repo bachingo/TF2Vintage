@@ -274,6 +274,7 @@ bool CTFLunchBox::IsChocolateOrFishcake()
 void CTFLunchBox::SwitchBodyGroups( void )
 {
 	int iState = m_bBitten ? SANDVICH_STATE_BITTEN : SANDVICH_STATE_NORMAL;
+	SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
 	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
 	if ( pTFPlayer && pTFPlayer->GetActiveWeapon() == this )
 	{
