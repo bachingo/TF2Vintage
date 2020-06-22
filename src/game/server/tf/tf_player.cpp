@@ -5300,7 +5300,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	
 	// Hit by gas, add ignite damage.
 	// TF2V exclusive: We only ignite when it's someone else hitting us, not ourselves.
-	if ( (pAttacker != this ) && !( info.GetDamageType() & DMG_IGNITE|DMG_BURN ) )
+	if ( (pAttacker != this ) && m_Shared.InCond(TF_COND_GAS) )
 	{
 		bitsDamage |= DMG_IGNITE;
 		info.AddDamageType( DMG_IGNITE );

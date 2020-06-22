@@ -5082,11 +5082,11 @@ void CTFPlayerShared::UpdateCloakMeter( void )
 				// Reduce Gas
 				if ( InCond( TF_COND_GAS ) )
 				{
-					m_flCondExpireTimeLeft.Set( TF_COND_MAD_MILK, max( m_flCondExpireTimeLeft[TF_COND_MAD_MILK] - flReduction, 0 ) );
+					m_flCondExpireTimeLeft.Set( TF_COND_GAS, max( m_flCondExpireTimeLeft[TF_COND_GAS] - flReduction, 0 ) );
 
-					if ( m_flCondExpireTimeLeft[TF_COND_MAD_MILK] == 0 )
+					if ( m_flCondExpireTimeLeft[TF_COND_GAS] == 0 )
 					{
-						RemoveCond( TF_COND_MAD_MILK );
+						RemoveCond( TF_COND_GAS );
 					}
 				}
 			}
