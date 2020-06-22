@@ -1435,17 +1435,21 @@ void CTFFlameEntity::ClientThink( void )
 {
 	if ( !m_pFlameEffect )
 	{
-		int nFireType = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(GetOwnerEntity(), nFireType, set_weapon_mode);
-	
 		const char *pszParticleEffect = "tf2v_new_flame_core";
 		if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_waterfall_core";
 		else if ( ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )  && !IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 			pszParticleEffect = "tf2v_new_flame_core_halloween";
-		else if ( nFireType == 1 )
-			pszParticleEffect = "tf2v_new_flame_phlo_core";
 
+		int nFireType = 0;
+		CTFFlameThrower *hFlamethrower = dynamic_cast<CTFFlameThrower *>(GetOwnerEntity());
+		if (hFlamethrower)
+		{
+			CALL_ATTRIB_HOOK_INT_ON_OTHER(hFlamethrower, nFireType, set_weapon_mode);
+			if ( nFireType == 1 )
+				pszParticleEffect = "tf2v_new_flame_phlo_core";
+		}
+		
 		m_pFlameEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_CUSTOMORIGIN );
 	}
 
