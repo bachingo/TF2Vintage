@@ -258,11 +258,11 @@ void CTFProjectile_Flare::Explode( trace_t *pTrace, CBaseEntity *pOther )
 			vecToVictim.z = 1.0;
 			
 			// Burning players get more knockback.
-			int iForce = 100;
+			int iForce = 1;
 			if (pPlayer->m_Shared.InCond(TF_COND_BURNING))
-				iForce *= 2;
+				iForce *= 4;
 			
-			Vector vecVelocityImpulse = vecToVictim;
+			Vector vecVelocityImpulse = vecToVictim / 20;
 			pPlayer->ApplyAirBlastImpulse( vecVelocityImpulse * iForce );
 			pPlayer->m_Shared.StunPlayer(0.5f, 1.0f, 1.0f, TF_STUNFLAG_LIMITMOVEMENT | TF_STUNFLAG_NOSOUNDOREFFECT , ToTFPlayer(pAttacker));
 			
