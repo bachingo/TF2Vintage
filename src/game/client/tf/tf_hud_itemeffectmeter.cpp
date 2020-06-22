@@ -534,12 +534,10 @@ float CHudItemEffectMeterTemp<C_TFSniperRifle>::GetProgress( void )
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer )
 	{
-		C_TFSniperRifle *pSniperRifle = GetWeapon();
-		if ( pSniperRifle && pSniperRifle->HasFocus() )
-			return pPlayer->m_Shared.GetFocusLevel() / 100;
+		return pPlayer->m_Shared.GetFocusLevel() / 100.0;
 	}
 
-	return 1.0;
+	return 0.0;
 }
 
 //-----------------------------------------------------------------------------

@@ -5204,8 +5204,7 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 // Purpose: Updates our Sniper's Focus level.
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::UpdateFocusLevel( void )
-{
-		
+{	
 	if ( InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF ) )
 	{
 		m_flFocusLevel = Max( m_flFocusLevel - ( gpGlobals->frametime * 10 ), 0.0f );	// Max is 10 seconds.

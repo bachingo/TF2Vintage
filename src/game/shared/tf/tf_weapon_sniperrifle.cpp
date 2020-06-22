@@ -544,7 +544,7 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	int nWeaponModeScope = 0;
 	CALL_ATTRIB_HOOK_INT( nWeaponModeScope, sniper_no_zoomout );
 	
-	if (nWeaponModeScope == 0 || pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF))
+	if (nWeaponModeScope == 0 && !pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF))
 	{
 		if ( IsZoomed() )
 		{
