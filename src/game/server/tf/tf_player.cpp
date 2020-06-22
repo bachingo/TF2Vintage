@@ -9000,7 +9000,7 @@ int	CTFPlayer::StartedBuildingObject( int iObjectType )
 void CTFPlayer::StoppedBuilding( int iObjectType )
 {
 	/*
-	int iCost = ModCalculateObjectCost( iObjectType );
+	int iCost = ModCalculateObjectCost( iObjectType, HasGunslinger() );
 
 	AddBuildResources( iCost );
 
