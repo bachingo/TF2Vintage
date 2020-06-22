@@ -10759,8 +10759,6 @@ void CTFPlayer::DoTauntAttack( void )
 			{
 				CTFLunchBox *pLunch = static_cast<CTFLunchBox *>( pWeapon );
 
-				int nLunchboxAddsMaxHealth = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pLunch, nLunchboxAddsMaxHealth, set_weapon_mode );
 				if ( pLunch->IsChocolateOrFishcake() && !m_Shared.InCond( TF_COND_LUNCHBOX_HEALTH_BUFF) )
 				{
 					m_Shared.AddCond( TF_COND_LUNCHBOX_HEALTH_BUFF, 30.0f );
