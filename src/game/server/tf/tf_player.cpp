@@ -1814,22 +1814,6 @@ void CTFPlayer::GiveDefaultItems()
 				continue;
 			}
 
-			// Can we Disguise?
-			int nCannotDisguise = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCannotDisguise, set_cannot_disguise );
-			if (!tf2v_use_new_yer.GetBool() )
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCannotDisguise, set_cannot_disguise_yer );
-			if ( IsPlayerClass( TF_CLASS_SPY ) && nCannotDisguise != 0 )
-			{
-				// Not allowed
-				if ( pWeapon == GetActiveWeapon() )
-					pWeapon->Holster();
-
-				Weapon_Detach( Weapon_GetWeaponByType( TF_WPN_TYPE_PDA ) );
-				UTIL_Remove( Weapon_GetWeaponByType( TF_WPN_TYPE_PDA ) );
-				continue;
-			}
-
 			// Regenerate
 			pWeapon->WeaponRegenerate();
 

@@ -114,6 +114,7 @@ public:
 
 	virtual const char *GetPanelName() { return ""; }
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_PDA_SPY; }
+	virtual bool	CanBeSelected();
 
 #ifdef CLIENT_DLL
 	virtual bool Deploy( void );

@@ -154,6 +154,16 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_pda_spy, CTFWeaponPDA_Spy );
 PRECACHE_WEAPON_REGISTER( tf_weapon_pda_spy );
 
+bool CTFWeaponPDA_Spy::CanBeSelected()
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner && !pOwner->CanDisguise() )
+	{
+		return false;
+	}
+	return BaseClass::CanBeSelected();
+}
+
 #ifdef CLIENT_DLL
 
 bool CTFWeaponPDA_Spy::Deploy( void )
