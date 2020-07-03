@@ -3844,7 +3844,6 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		}
 
 		// Add the player to the join Queue
-		// Add the player to the join Queue
 		if ( TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() && GetTeamNumber() <= LAST_SHARED_TEAM )
 		{
 			TFGameRules()->AddPlayerToQueue( this );
