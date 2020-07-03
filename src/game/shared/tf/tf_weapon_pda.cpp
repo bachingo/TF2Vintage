@@ -158,10 +158,17 @@ bool CTFWeaponPDA_Spy::CanBeSelected()
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner && !pOwner->CanDisguise() )
-	{
 		return false;
-	}
+	
 	return BaseClass::CanBeSelected();
+}
+
+bool CTFWeaponPDA_Spy::VisibleInWeaponSelection()
+{
+	if ( !CanBeSelected() )
+		return false;
+
+	return BaseClass::VisibleInWeaponSelection();
 }
 
 #ifdef CLIENT_DLL
