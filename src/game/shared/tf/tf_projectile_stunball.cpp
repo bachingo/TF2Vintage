@@ -300,7 +300,7 @@ bool CTFStunBall::CanStun( CTFPlayer *pOther )
 		return false;
 
 	// Don't stun players we can't damage
-	if ( ( pOther->m_Shared.InCond( TF_COND_INVULNERABLE ) && tf2v_sandman_stun_type.GetInt() == 0 ) || pOther->m_Shared.InCond( TF_COND_PHASE ) )
+	if ( ( pOther->m_Shared.InCond( TF_COND_INVULNERABLE ) && tf2v_sandman_stun_type.GetInt() != 0 ) || pOther->m_Shared.InCond( TF_COND_PHASE ) )
 		return false;
 	
 	// Don't stun players with megaheal.
