@@ -1824,9 +1824,14 @@ void CTFPlayer::GiveDefaultItems()
 				// Not allowed
 				if ( pWeapon == GetActiveWeapon() )
 					pWeapon->Holster();
+				CTFWeaponBase* pWeapon_PDA = Weapon_GetWeaponByType(TF_WPN_TYPE_PDA);
 
-				Weapon_Detach( Weapon_GetWeaponByType( TF_WPN_TYPE_PDA ) );
-				UTIL_Remove( Weapon_GetWeaponByType( TF_WPN_TYPE_PDA ) );
+				//Only do this if the PDA doesn't Return null.
+				if (pWeapon_PDA != NULL)
+				{
+					Weapon_Detach(pWeapon_PDA);
+					UTIL_Remove(pWeapon_PDA);
+				}
 				continue;
 			}
 
@@ -3838,6 +3843,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			return;
 		}
 
+		// Add the player to the join Queue
 		// Add the player to the join Queue
 		if ( TFGameRules()->IsInArenaMode() && tf_arena_use_queue.GetBool() && GetTeamNumber() <= LAST_SHARED_TEAM )
 		{
