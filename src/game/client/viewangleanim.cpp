@@ -14,6 +14,9 @@
 extern ConVar cl_pitchdown;
 extern ConVar cl_pitchup;
 
+#if defined ( TF_VINTAGE_CLIENT )
+extern ConVar tf2v_flips;
+#endif
 
 // ConCommands useful for creating view animations
 CViewAngleAnimation *g_pTestAnimation = NULL;
@@ -379,7 +382,16 @@ void CViewAngleAnimation::SetAngles( QAngle vecCalculatedAngles )
 		vecViewAngle[ROLL] = vecCalculatedAngles[ROLL];
 
 	// clamp pitch
+#if defined ( TF_VINTAGE_CLIENT )
+	if ( tf2v_flips.GetBool() && !( GetFlags() & FL_ONGROUND ) )
+		vecViewAngle[PITCH] = clamp( vecViewAngle[PITCH], -360, 360 );
+	else
+		vecViewAngle[PITCH] = clamp( vecViewAngle[PITCH], -cl_pitchup.GetFloat(), cl_pitchdown.GetFloat() );
+#else
 	vecViewAngle[PITCH] = clamp( vecViewAngle[PITCH], -cl_pitchup.GetFloat(), cl_pitchdown.GetFloat() );
+#endif
+
+
 
 	engine->SetViewAngles( vecViewAngle );
 }
