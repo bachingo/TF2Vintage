@@ -105,6 +105,7 @@ ConVar tf2v_use_spy_moveattrib ("tf2v_use_spy_moveattrib", "0", FCVAR_NOTIFY | F
 ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables movespeed matching for medics." );
 ConVar tf2v_allow_spy_sprint( "tf2v_allow_spy_sprint", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to override their disguise speed by holding reload." );
 ConVar tf2v_disguise_speed_match( "tf2v_disguise_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to always move at their disguised class' speed, including faster classes." );
+ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
 
 
 
@@ -3476,6 +3477,51 @@ void CTFPlayerShared::InvisibilityThink( void )
 float CTFPlayerShared::GetPercentInvisible(void)
 {
 	return m_flInvisibility;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::CanDisguise( void )
+{
+	if (!m_pOuter->IsAlive())
+		return false;
+
+	if (m_pOuter->GetPlayerClass()->GetClassIndex() != TF_CLASS_SPY)
+		return false;
+
+	if (m_pOuter->HasItem() && m_pOuter->GetItem()->GetItemID() == TF_ITEM_CAPTURE_FLAG)
+	{
+		m_pOuter->HintMessage(HINT_CANNOT_DISGUISE_WITH_FLAG);
+		return false;
+	}
+
+	int nCannotDisguise = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, nCannotDisguise, set_cannot_disguise);
+	if (!tf2v_use_new_yer.GetBool() )
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, nCannotDisguise, set_cannot_disguise_yer);
+	if ( nCannotDisguise != 0 )
+	{
+		// Not allowed
+		return false;
+	}
+	
+	int nRequiresCloak = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, nRequiresCloak, mod_disguise_consumes_cloak);
+	if (tf2v_use_new_yer.GetBool() )
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_pOuter, nRequiresCloak, mod_disguise_consumes_cloak_yer);
+	if ( nRequiresCloak != 0 )
+	{
+		// Check our cloak level.
+		// We need a full bar in order to cloak.
+		if ( GetSpyCloakMeter() != 100 )
+			return false;
+		else	// Deduct all of our cloak, but let us disguise.
+			SetSpyCloakMeter(0);
+	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------

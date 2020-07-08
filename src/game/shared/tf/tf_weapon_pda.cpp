@@ -157,7 +157,7 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_pda_spy );
 bool CTFWeaponPDA_Spy::CanBeSelected()
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && !pOwner->CanDisguise() )
+	if ( pOwner && !pOwner->m_Shared.CanDisguise() )
 		return false;
 	
 	return BaseClass::CanBeSelected();

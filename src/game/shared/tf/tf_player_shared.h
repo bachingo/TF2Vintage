@@ -155,6 +155,7 @@ public:
 	void	ClientShieldChargeThink( void );
 #endif
 
+	bool	CanDisguise( void );
 	void	Disguise( int nTeam, int nClass, CTFPlayer *pTarget = nullptr, bool b1 = true );
 	void	CompleteDisguise( void );
 	void	RemoveDisguise( void );
