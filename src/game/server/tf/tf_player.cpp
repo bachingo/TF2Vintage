@@ -214,6 +214,8 @@ ConVar tf2v_new_feign_death_stealth( "tf2v_new_feign_death_stealth", "0", FCVAR_
 
 ConVar tf2v_use_new_diamondback( "tf2v_use_new_diamondback", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allows Diamondback to earn crits by backstabs." );
 
+ConVar tf2v_use_new_big_earner( "tf2v_use_new_big_earner", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables the Speed Boost on backstab when using the Big Earner." );
+
 
 
 // -------------------------------------------------------------------------------- //
@@ -7086,6 +7088,10 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 					// Speed boost on kill
 					int nSpeedBoostOnKill = 0;
 					CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnKill, speed_boost_on_kill );
+					
+					if (tf2v_use_new_big_earner.GetBool())
+						CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nSpeedBoostOnKill, speed_boost_on_kill_bigearner );
+
 					if ( nSpeedBoostOnKill > 0)
 						m_Shared.AddCond( TF_COND_SPEED_BOOST, nSpeedBoostOnKill );
 					

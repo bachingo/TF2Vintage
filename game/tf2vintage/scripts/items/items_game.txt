@@ -6955,9 +6955,9 @@
 					"attribute_class"	"add_maxhealth"
 					"value" "-25"
 				}
-				"speed_boost_on_kill"
+				"speed_boost_on_kill_bigearner"
 				{
-					"attribute_class"	"speed_boost_on_kill"
+					"attribute_class"	"speed_boost_on_kill_bigearner"
 					"value"	"3"
 				}
 			}
@@ -18263,6 +18263,15 @@
 			"description_string"	"#Attrib_DmgVsBuilding_decreased"
 			"description_format"	"value_is_percentage"
 			"effect_type"	"negative"
+		}
+		"736"
+		{
+			"name"	"speed_boost_on_kill_bigearner"
+			"attribute_class"	"speed_boost_on_kill_bigearner"
+			"description_string"	"#Attrib_SpeedBoostOnKill"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
 		}
 	}
 	"attribute_controlled_attached_particles"
