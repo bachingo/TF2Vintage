@@ -64,6 +64,7 @@ ConVar tf_obj_ground_clearance( "tf_obj_ground_clearance", "32", FCVAR_CHEAT | F
 ConVar tf2v_building_upgrades( "tf2v_building_upgrades", "1", FCVAR_REPLICATED, "Toggles the ability to upgrade buildings other than the sentrygun" );
 
 extern ConVar tf2v_use_new_wrench_mechanics;
+extern ConVar tf2v_use_new_jag;
 
 extern short g_sModelIndexFireball;
 
@@ -1913,6 +1914,9 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 			flDamage *= 0.2;
 			
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDamage, mult_dmg_vs_buildings );
+		
+		if ( tf2v_use_new_jag.GetInt() > 1 )
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flDamage, mult_dmg_vs_buildings_jag );
 	}
 
 	// Objects build on other objects take less damage
@@ -2803,6 +2807,9 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 	{
 		float flRepairRate = 1;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
+		
+		if ( tf2v_use_new_jag.GetInt() > 0 )
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pActivator, flRepairRate, mult_repair_value_jag);
 		
 		int	iAmountToHeal = min( (int)(flRepairRate * 100) , GetMaxHealth() - GetHealth() );
 

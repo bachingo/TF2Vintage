@@ -68,6 +68,7 @@ ConVar tf2v_disguise_spy_teleport( "tf2v_disguise_spy_teleport", "1", FCVAR_NOTI
 
 
 extern ConVar tf2v_use_new_wrench_mechanics;
+extern ConVar tf2v_use_new_jag;
 
 LINK_ENTITY_TO_CLASS( obj_teleporter,	CObjectTeleporter );
 
@@ -1012,6 +1013,9 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 	
 	float flRepairRate = 1;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
+	
+	if ( tf2v_use_new_jag.GetInt() > 0 )
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value_jag );
 
 	// There's got to be a better way a shorter way to mirror repairs and such.
 	if ( GetHealth() < GetMaxHealth() )

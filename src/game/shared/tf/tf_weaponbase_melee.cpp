@@ -54,6 +54,7 @@ ConVar tf2v_speed_buff_duration( "tf2v_new_speed_buff_duration", "2.0", FCVAR_RE
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
 extern ConVar tf_weapon_criticals;
 extern ConVar tf2v_critchance_melee;
+extern ConVar tf2v_use_new_jag;
 
 //=============================================================================
 //
@@ -208,6 +209,9 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 	// Set next attack times.
 	float flFireDelay = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
 	CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay );
+	
+	if ( tf2v_use_new_jag.GetInt() > 0 )
+			CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay_jag );
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
 

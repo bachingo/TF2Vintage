@@ -5967,6 +5967,21 @@
 					"attribute_class"	"mult_dmg"
 					"value"	".75"
 				}
+				"fire rate bonus JAG"
+				{
+					"attribute_class"	"mult_postfiredelay_jag"
+					"value"	"0.85"
+				}
+				"Repair rate decreased JAG"
+				{
+					"attribute_class"	"mult_repair_value_jag"
+					"value"	"0.80"
+				}
+				"dmg penalty vs buildings JAG"
+				{
+					"attribute_class"	"mult_dmg_vs_buildings_jag"
+					"value" "0.67"
+				}
 			}
 		}
 		"331"
@@ -18220,6 +18235,34 @@
 			"hidden"	"1"
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
+		}
+		"10017"
+		{
+			"name"	"fire rate bonus JAG"
+			"attribute_class"	"mult_postfiredelay_jag"
+			"description_string"	"#Attrib_FireRate_Positive"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"10018"
+		{
+			"name"	"Repair rate decreased JAG"
+			"attribute_class"	"mult_repair_value_jag"
+			"description_string"	"#Attrib_RepairRate_Decreased"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10019"
+		{
+			"name"	"dmg penalty vs buildings JAG"
+			"attribute_class"	"mult_dmg_vs_buildings_jag"
+			"description_string"	"#Attrib_DmgVsBuilding_decreased"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"negative"
 		}
 	}
 	"attribute_controlled_attached_particles"

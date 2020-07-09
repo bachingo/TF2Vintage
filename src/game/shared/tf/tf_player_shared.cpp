@@ -106,6 +106,7 @@ ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTI
 ConVar tf2v_allow_spy_sprint( "tf2v_allow_spy_sprint", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to override their disguise speed by holding reload." );
 ConVar tf2v_disguise_speed_match( "tf2v_disguise_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to always move at their disguised class' speed, including faster classes." );
 ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
+ConVar tf2v_use_new_jag( "tf2v_use_new_jag", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Jag to work like the modern version.", true, 0, true, 2 );
 
 
 
