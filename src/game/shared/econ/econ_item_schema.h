@@ -101,9 +101,6 @@ public:
 
 	FORCEINLINE void Initialize( void )
 	{
-		if ( m_bInitialized )
-			Clear();
-
 		m_bInitialized = true;
 
 		if ( m_pString == &_default_value_ )
@@ -119,20 +116,12 @@ public:
 
 	void Assign( char const *src )
 	{
-		Assert( !m_bInitialized );
-
 		Initialize();
-		m_pString->Set( src );
-		m_nLength = V_strlen( src );
+
+		*m_pString = src;
 	}
 
-	void Clear( void )
-	{
-		if ( m_bInitialized )
-			m_pString->Clear();
-
-		m_bInitialized = false;
-	}
+	void Clear( void );
 
 	CAttribute_String &operator=( CAttribute_String const &src );
 	CAttribute_String &operator=( char const *src );
@@ -147,7 +136,6 @@ public:
 	// Inner string access
 	const char *Get( void ) const { return m_pString->Get(); }
 	CUtlConstString *GetForModify( void ) { return m_pString; }
-	size_t Length() const { return m_nLength; }
 
 	operator char const *( ) { return Get(); }
 	operator char const *( ) const { return Get(); }
@@ -157,9 +145,9 @@ public:
 	operator string_t ( ) const { return MAKE_STRING( Get() ); }
 #endif
 
+protected:
 	static CUtlConstString _default_value_;
 
-private:
 	CUtlConstString *m_pString;
 	int m_nLength;
 	bool m_bInitialized;
@@ -622,16 +610,17 @@ public:
 	int	 max_ilevel;
 	int	 image_inventory_size_w;
 	int	 image_inventory_size_h;
+	char model_player[128];
 	bool loadondemand;
 	int  attach_to_hands;
 	int  attach_to_hands_vm_only;
 	bool act_as_wearable;
 	CUtlDict< bool, unsigned short > capabilities;
-	CUtlDict< bool, unsigned short > tags;
 	int  hide_bodygroups_deployed_only;
 	bool is_reskin;
 	bool specialitem;
 	bool demoknight;
+	char holiday_restriction[128];
 	int drop_type;
 	int  year;
 	bool is_custom_content;
