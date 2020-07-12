@@ -18,6 +18,35 @@ public:
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned long long const & ) { return true; }
 };
 
+class CAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
+{
+public:
+	CAttributeIterator_ApplyAttributeFloat( EHANDLE hOwner, string_t iName, float *outValue, ProviderVector *outVector )
+		: m_hOwner( hOwner ), m_iName( iName ), m_flOut( outValue ), m_pOutProviders( outVector ) {}
+
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value );
+
+private:
+	EHANDLE m_hOwner;
+	string_t m_iName;
+	float *m_flOut;
+	ProviderVector *m_pOutProviders;
+};
+
+class CAttributeIterator_ApplyAttributeString : public CEconItemSpecificAttributeIterator
+{
+public:
+	CAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t *outValue, ProviderVector *outVector )
+		: m_hOwner( hOwner ), m_iName( iName ), m_pOut( outValue ), m_pOutProviders( outVector ) {}
+
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value );
+
+private:
+	EHANDLE m_hOwner;
+	string_t m_iName;
+	string_t *m_pOut;
+	ProviderVector *m_pOutProviders;
+};
 
 template<typename TArg, typename TOut=TArg>
 class CAttributeIterator_GetSpecificAttribute : public IEconAttributeIterator
