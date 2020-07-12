@@ -638,6 +638,14 @@ public:
 	bool is_cut_content;
 	bool is_multiclass_item;
 
+
+class IEconAttributeIterator
+{
+public:
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned int ) = 0;
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) = 0;
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) = 0;
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, uint64 const & ) = 0;
 	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
 };

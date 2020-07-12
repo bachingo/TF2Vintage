@@ -6,9 +6,73 @@
 #endif
 
 #include "gamestringpool.h"
-#include "econ_item_interface.h"
 
 typedef CUtlVector< CHandle<CBaseEntity> > ProviderVector;
+
+class CEconItemSpecificAttributeIterator : public IEconAttributeIterator
+{
+public:
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned int ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned long long const & ) { return true; }
+};
+
+
+template<typename TArg, typename TOut=TArg>
+class CAttributeIterator_GetSpecificAttribute : public IEconAttributeIterator
+{
+public:
+	CAttributeIterator_GetSpecificAttribute( CEconAttributeDefinition const *attribute, TOut *outValue )
+		: m_pAttribute( attribute ), m_pOut( outValue )
+	{
+		m_bFound = false;
+	}
+
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned int ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) { return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned long long const & ) { return true; }
+
+	bool Found( void ) const { return m_bFound; }
+
+private:
+	CEconAttributeDefinition const *m_pAttribute;
+	bool m_bFound;
+	TOut *m_pOut;
+};
+
+#define DEFINE_ATTRIBUTE_ITERATOR( overrideParam, outputType ) \
+	bool CAttributeIterator_GetSpecificAttribute<overrideParam, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value ) \
+	{ \
+		if ( m_pAttribute == pDefinition ) \
+		{ \
+			m_bFound = true; \
+			*m_pOut = *reinterpret_cast<const overrideParam *>( &value ); \
+		} \
+		return !m_bFound; \
+	}
+
+#define DEFINE_ATTRIBUTE_ITERATOR_REF( overrideParam, outputType ) \
+	bool CAttributeIterator_GetSpecificAttribute<overrideParam, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam const &value ) \
+	{ \
+		if ( m_pAttribute == pDefinition ) \
+		{ \
+			m_bFound = true; \
+			*m_pOut = *reinterpret_cast<const overrideParam *>( &value ); \
+		} \
+		return !m_bFound; \
+	}
+
+#define ATTRIBUTE_ITERATOR( paramType, outputType, overrideParam ) \
+	bool CAttributeIterator_GetSpecificAttribute<paramType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value )
+
+DEFINE_ATTRIBUTE_ITERATOR( float, float )
+DEFINE_ATTRIBUTE_ITERATOR( unsigned int, unsigned int )
+DEFINE_ATTRIBUTE_ITERATOR( float, unsigned int )
+DEFINE_ATTRIBUTE_ITERATOR( unsigned int, float )
+DEFINE_ATTRIBUTE_ITERATOR_REF( CAttribute_String, CAttribute_String )
+DEFINE_ATTRIBUTE_ITERATOR_REF( uint64, uint64 )
 
 // Client specific.
 #ifdef CLIENT_DLL
