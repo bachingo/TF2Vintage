@@ -228,8 +228,8 @@ void CTFFlareGunRevenge::ItemPostFrame( void )
 			CNewParticleEffect* pMuzzle = pModel->ParticleProp()->Create( "drg_bison_idle", PATTACH_POINT_FOLLOW, "muzzle" );
 			if ( pMuzzle )
 			{
-				pMuzzle->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
-				pMuzzle->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+				pMuzzle->SetControlPoint(CUSTOM_COLOR_CP1, pOwner->GetTeamNumber() == TF_TEAM_RED ? Vector( 0.5, 0.18, 0.125 ) : Vector( 0.345, 0.52, 0.635 ));
+				pMuzzle->SetControlPoint(CUSTOM_COLOR_CP2, pOwner->GetTeamNumber() == TF_TEAM_RED ? Vector( 0.72, 0.22, 0.23 ) : Vector( 0.145, 0.427, 0.55 ));
 			}
 			
 			pModel->ParticleProp()->Create( "drg_manmelter_idle", PATTACH_POINT_FOLLOW, "muzzle" );
@@ -255,8 +255,8 @@ void CTFFlareGunRevenge::ItemPostFrame( void )
 			
 			if (m_pVacuumEffect)
 			{
-				m_pVacuumEffect->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
-				m_pVacuumEffect->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+				m_pVacuumEffect->SetControlPoint(CUSTOM_COLOR_CP1, pOwner->GetTeamNumber() == TF_TEAM_RED ? Vector( 0.5, 0.18, 0.125 ) : Vector( 0.345, 0.52, 0.635 ));
+				m_pVacuumEffect->SetControlPoint(CUSTOM_COLOR_CP2, pOwner->GetTeamNumber() == TF_TEAM_RED ? Vector( 0.72, 0.22, 0.23 ) : Vector( 0.145, 0.427, 0.55 ));
 			}
 		}
 		else
@@ -497,8 +497,8 @@ void CTFFlareGunRevenge::SecondaryAttack( void )
 			pVacuum = pModel->ParticleProp()->Create("drg_manmelter_vacuum_flames", PATTACH_POINT_FOLLOW, "muzzle");
 			if (pVacuum)
 			{
-				pVacuum->SetControlPoint(CUSTOM_COLOR_CP1, GetEnergyWeaponColor(false));
-				pVacuum->SetControlPoint(CUSTOM_COLOR_CP2, GetEnergyWeaponColor(true));
+				pVacuum->SetControlPoint(CUSTOM_COLOR_CP1, pOwner->GetTeamNumber() == TF_TEAM_RED ? Vector( 0.5, 0.18, 0.125 ) : Vector( 0.345, 0.52, 0.635 ));
+				pVacuum->SetControlPoint(CUSTOM_COLOR_CP2, pOwner->GetTeamNumber() == TF_TEAM_RED ? Vector( 0.72, 0.22, 0.23 ) : Vector( 0.145, 0.427, 0.55 ));
 			}
 		}
 	}
@@ -544,4 +544,32 @@ bool CTFFlareGunRevenge::CanGetAirblastCrits(void) const
 	int nAirblastRevenge = 0;
 	CALL_ATTRIB_HOOK_INT( nAirblastRevenge, sentry_killed_revenge );
 	return nAirblastRevenge == 1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for coloring in Manmelter effects.
+//-----------------------------------------------------------------------------
+Vector CTFFlareGunRevenge::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( !pOwner )
+		return Vector(0,0,0);
+	
+	if (pOwner->GetTeamNumber() == TF_TEAM_RED)
+	{
+		if ( bUseAlternateColorPalette )
+			return Vector( 0.72, 0.22, 0.23 );
+		else
+			return Vector( 0.5, 0.18, 0.125 );	
+	}
+	else
+	{
+		if ( !bUseAlternateColorPalette )
+			return Vector( 0.345, 0.52, 0.635 );
+		else
+			return Vector( 0.145, 0.427, 0.55 );
+	}	
+	
+	// You shouldn't come here, at least in standard team mode.
+	return Vector(0,0,0);
 }
