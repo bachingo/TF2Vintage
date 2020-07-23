@@ -415,6 +415,7 @@ public:
 
 	float	m_flNextVoiceCommandTime;
 	float	m_flNextSpeakWeaponFire;
+	int 	m_iJIVoiceSpam;
 
 	virtual int			CalculateTeamBalanceScore( void );
 

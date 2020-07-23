@@ -112,6 +112,7 @@ ConVar tf_damage_lineardist( "tf_damage_lineardist", "0", FCVAR_DEVELOPMENTONLY 
 ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_NOTIFY, "Max time after a voice command until player can do another one" );
+ConVar tf2v_prevent_voice_spam( "tf2v_prevent_voice_spam", "0", FCVAR_NOTIFY, "Enables the Jungle Inferno voice spam prevention.", true, 0, true, 1 );
 
 ConVar tf_allow_player_use( "tf_allow_player_use", "0", FCVAR_NOTIFY, "Allow players to execute + use while playing." );
 
@@ -1393,6 +1394,7 @@ void CTFPlayer::Spawn()
 	m_flLastDamageTime = 0;
 
 	m_flNextVoiceCommandTime = gpGlobals->curtime;
+	m_iJIVoiceSpam = 0;
 
 	ClearZoomOwner();
 	SetFOV( this, 0 );
@@ -11482,7 +11484,23 @@ bool CTFPlayer::CanSpeakVoiceCommand( void )
 void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 {
 	Assert( pszScenePlayed );
-	m_flNextVoiceCommandTime = gpGlobals->curtime + min( GetSceneDuration( pszScenePlayed ), tf_max_voice_speak_delay.GetFloat() );
+	
+	// Jungle Inferno adds extra voice spam protection commands.
+	if ( tf2v_prevent_voice_spam.GetBool() )
+	{
+		// Reset our counter if we haven't spoke in more than 5 seconds
+		if ( ( gpGlobals->curtime - m_flNextVoiceCommandTime ) > 5 )
+			m_iJIVoiceSpam = 0;
+		// If we spoken in the past second, increase our spam counter.
+		else if ( ( gpGlobals->curtime - m_flNextVoiceCommandTime ) < 1 )
+			m_iJIVoiceSpam++;
+	}
+	// Reset our spam counter if we have this disabled and a nonzero value.
+	else if (m_iJIVoiceSpam)
+		m_iJIVoiceSpam = 0;
+	
+	// Set the next time a voice command can be played. Each voice command spammed adds a half second extra to the wait time.
+	m_flNextVoiceCommandTime = gpGlobals->curtime + min( GetSceneDuration( pszScenePlayed ), tf_max_voice_speak_delay.GetFloat() ) + (m_iJIVoiceSpam * 0.5f);
 }
 
 //-----------------------------------------------------------------------------
