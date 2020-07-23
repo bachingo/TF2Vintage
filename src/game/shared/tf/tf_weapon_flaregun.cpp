@@ -551,7 +551,7 @@ bool CTFFlareGunRevenge::CanGetAirblastCrits(void) const
 //-----------------------------------------------------------------------------
 Vector CTFFlareGunRevenge::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
 {
-	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( !pOwner )
 		return Vector(0,0,0);
 	

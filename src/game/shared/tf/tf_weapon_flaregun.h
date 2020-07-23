@@ -71,6 +71,7 @@ public:
 	
 	bool			bWaitingtoFire;
 	bool			CanGetAirblastCrits( void ) const;
+	Vector			GetEnergyWeaponColor(bool bUseAlternateColorPalette);
 	
 #ifdef CLIENT_DLL
 	CNewParticleEffect *m_pVacuumEffect;
