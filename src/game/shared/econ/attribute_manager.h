@@ -49,8 +49,6 @@ inline int AttributeConvertFromFloat( float flValue )
 	return RoundFloatToInt( flValue );
 }
 
-ConVar tf2v_attrib_mult( "tf2v_attrib_mult", "1" , FCVAR_NOTIFY | FCVAR_REPLICATED, "Amount to multiply on attribute values." );
-
 FORCEINLINE void ApplyAttribute( CEconAttributeDefinition const *pDefinition, float *pOutput, float flValue )
 {
 	switch ( pDefinition->description_format )
@@ -64,7 +62,7 @@ FORCEINLINE void ApplyAttribute( CEconAttributeDefinition const *pDefinition, fl
 		case ATTRIB_FORMAT_PERCENTAGE:
 		case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
 		{
-			*pOutput *= flValue * tf2v_attrib_mult.GetFloat();
+			*pOutput *= flValue;
 			break;
 		}
 		case ATTRIB_FORMAT_OR:
