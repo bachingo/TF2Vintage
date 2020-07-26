@@ -55,6 +55,7 @@ ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_NOTIFY
 extern ConVar tf_weapon_criticals;
 extern ConVar tf2v_critchance_melee;
 extern ConVar tf2v_use_new_jag;
+extern ConVar tf2v_use_new_axtinguisher;
 
 //=============================================================================
 //
@@ -213,6 +214,9 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 	if ( tf2v_use_new_jag.GetInt() > 0 )
 			CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay_jag );
 
+	if (tf2v_use_new_axtinguisher.GetInt() == 2)
+		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay_axtinguisher_2 );
+		
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
 
 	SetWeaponIdleTime( m_flNextPrimaryAttack + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdleEmpty );
@@ -512,6 +516,9 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageTyoe
 {
 	float flDamage = (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg );
+	
+	if ( tf2v_use_new_axtinguisher.GetInt() > 1 )
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, mult_dmg_axtinguisher_2_3 );
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer == nullptr || !pPlayer->IsAlive() )

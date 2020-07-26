@@ -4336,15 +4336,35 @@
 					"attribute_class"	"or_crit_vs_playercond"
 					"value"	"1"
 				}
-				"dmg penalty vs nonburning"
+				"dmg penalty vs nonburning AXTINGUISHER"
 				{
-					"attribute_class"	"mult_dmg_vs_nonburning"
+					"attribute_class"	"mult_dmg_vs_nonburning_axtinguisher_0_1"
 					"value"	"0.5"
 				}
 				"crit mod disabled"
 				{
 					"attribute_class"	"mult_crit_chance"
 					"value"	"0"
+				}
+				"damage penalty AXTINGUISHER"
+				{
+					"attribute_class" 	"mult_dmg_axtinguisher_2_3"
+					"value" "0.67"
+				}			
+				"single wep deploy time increased AXTINGUISHER 2"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_2"
+					"value"	"1.75"
+				}
+				"fire rate penalty AXTINGUISHER"
+				{
+					"attribute_class"	"mult_postfiredelay_axtinguisher_2"
+					"value"	"1.2"
+				}
+				"single wep deploy time increased AXTINGUISHER 3"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_3"
+					"value"	"1.35"
 				}
 			}
 		}
@@ -18264,7 +18284,7 @@
 			"description_format"	"value_is_percentage"
 			"effect_type"	"negative"
 		}
-		"736"
+		"10020"
 		{
 			"name"	"speed_boost_on_kill_bigearner"
 			"attribute_class"	"speed_boost_on_kill_bigearner"
@@ -18273,6 +18293,57 @@
 			"hidden"	"0"
 			"effect_type"	"positive"
 		}
+		"10021"
+		{
+			"name"	"dmg penalty vs nonburning AXTINGUISHER"
+			"attribute_class"	"mult_dmg_vs_nonburning_axtinguisher_0_1"
+			"description_string"	"#Attrib_DmgPenaltyVsNonBurning"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10022"
+		{
+			"name"	"damage penalty AXTINGUISHER"
+			"attribute_class"	"mult_dmg_axtinguisher_2_3"
+			"description_string"	"#Attrib_DamageDone_Negative"
+			"description_format"	"value_is_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10023"
+		{
+			"name"	"single wep deploy time increased AXTINGUISHER 2"
+			"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_2"
+			"description_string"	"#Attrib_SingleWepDeployPenalty"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10024"
+		{
+			"name"	"single wep deploy time increased AXTINGUISHER 3"
+			"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_3"
+			"description_string"	"#Attrib_SingleWepDeployPenalty"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10025"
+		{
+			"name"	"fire rate penalty AXTINGUISHER"
+			"attribute_class"	"mult_postfiredelay_axtinguisher_2"
+			"description_string"	"#Attrib_FireRate_Negative"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		
 	}
 	"attribute_controlled_attached_particles"
 	{

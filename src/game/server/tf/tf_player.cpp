@@ -143,6 +143,8 @@ extern ConVar tf2v_use_new_cleaners;
 extern ConVar tf2v_legacy_weapons;
 extern ConVar tf2v_force_year_weapons;
 extern ConVar tf2v_allowed_year_weapons;
+extern ConVar tf2v_new_flame_damage;
+extern ConVar tf2v_use_new_axtinguisher;
 
 // TF2V commands
 ConVar tf2v_randomizer( "tf2v_randomizer", "0", FCVAR_NOTIFY, "Makes players spawn with random loadout and class." );
@@ -216,7 +218,6 @@ ConVar tf2v_new_feign_death_stealth( "tf2v_new_feign_death_stealth", "0", FCVAR_
 ConVar tf2v_use_new_diamondback( "tf2v_use_new_diamondback", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allows Diamondback to earn crits by backstabs." );
 
 ConVar tf2v_use_new_big_earner( "tf2v_use_new_big_earner", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables the Speed Boost on backstab when using the Big Earner." );
-
 
 
 // -------------------------------------------------------------------------------- //
@@ -5296,8 +5297,62 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				int nFlag = ( 1 << i );
 				if ( ( nCritOnCond & nFlag ) && m_Shared.InCond( nCond ) )
 				{
-					bitsDamage |= DMG_CRITICAL;
-					info.AddDamageType( DMG_CRITICAL );
+					// If this is a melee hit and burning, check additional logic.
+					if ( nCritOnCond == 1 && ( info.GetDamageType() & DMG_CLUB ) )
+					{
+						switch (tf2v_use_new_axtinguisher.GetInt())
+						{
+							case 0:
+							default:
+							{
+								// Full crits, nothing special.
+								bitsDamage |= DMG_CRITICAL;
+								info.AddDamageType( DMG_CRITICAL );		
+							}
+							case 1:
+							case 2:
+							{
+								// Hits in the back full crit, hits from the front minicrit.
+								if ( pTFAttacker->IsBehindTarget(this) )
+								{
+									bitsDamage |= DMG_CRITICAL;
+									info.AddDamageType( DMG_CRITICAL );						
+								}
+								else
+								{
+									bitsDamage |= DMG_MINICRITICAL;
+									info.AddDamageType( DMG_MINICRITICAL );
+								}							
+							}
+							case 3:
+							{
+								// Minicrit, add extra damage with the amount of burn time left, and extinguish.
+								
+								// Add the minicrit.
+								bitsDamage |= DMG_MINICRITICAL;
+								info.AddDamageType( DMG_MINICRITICAL );
+								
+								// Calculate out the remaining ticks left on this burn.
+								int nFlameTicksRemaining = floor((m_Shared.m_flFlameRemoveTime / gpGlobals->curtime) / TF_BURNING_FREQUENCY);
+								int nBonusTicks = nFlameTicksRemaining / 4;
+								
+								// Do the afterburn damage we would have done, plus one bonus afterburn tick per four ticks.
+								int nExtinguishDamage = ( tf2v_new_flame_damage.GetBool() ? TF_BURNING_DMG_JI : TF_BURNING_DMG ) * ( nFlameTicksRemaining + nBonusTicks ) ;
+								info.SetDamage( info.GetDamage() + nExtinguishDamage );
+								
+								// Extinguish.
+								m_Shared.RemoveCond(TF_COND_BURNING);
+								if (m_Shared.InCond(TF_COND_BURNING_PYRO))
+									m_Shared.RemoveCond(TF_COND_BURNING_PYRO);
+							}
+						}
+
+					}
+					else
+					{
+						bitsDamage |= DMG_CRITICAL;
+						info.AddDamageType( DMG_CRITICAL );
+					}
 					break;
 				}
 			}
@@ -5340,6 +5395,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			float flPenaltyNonBurning = info.GetDamage();
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flPenaltyNonBurning, mult_dmg_vs_nonburning);
+			
+			if (tf2v_use_new_axtinguisher.GetInt() < 2)
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flPenaltyNonBurning, mult_dmg_vs_nonburning_axtinguisher_0_1);
+			
 			info.SetDamage( flPenaltyNonBurning );
 		}
 
