@@ -78,9 +78,9 @@ LINK_ENTITY_TO_CLASS( obj_teleporter,	CObjectTeleporter );
 const char *g_pszBreadModels[] = 
 {
 	"models/weapons/c_models/c_bread/c_bread_plainloaf.mdl",	// Scout
-	"models/weapons/c_models/c_bread/c_bread_crumpet.mdl",		// Sniper
+	"models/weapons/c_models/c_bread/c_bread_cinnamon.mdl",		// Sniper (Originally listed for Demo)
 	"models/weapons/c_models/c_bread/c_bread_ration.mdl",		// Soldier
-	"models/weapons/c_models/c_bread/c_bread_cinnamon.mdl",		// Demo
+	"models/weapons/c_models/c_bread/c_bread_crumpet.mdl",		// Demo (Originally listed for Sniper)
 	"models/weapons/c_models/c_bread/c_bread_pretzel.mdl",		// Medic
 	"models/weapons/c_models/c_bread/c_bread_russianblack.mdl",	// Heavy
 	"models/weapons/c_models/c_bread/c_bread_burnt.mdl",		// Pyro
@@ -843,7 +843,7 @@ void CObjectTeleporter::TeleporterThink( void )
 					}
 					else if ( tf2v_teleport_bread.GetBool() ) // Bread is spawned on probability when the command is on.
 					{
-						// Chance is 1/20, except for Soldier which is 1/3. "I have done nothing but teleport bread for the past three days."
+						// Chance is 1/20, except for Soldier which is 1/3. "I have done nothing but teleport bread for three days."
 						float nBreadProbability = pTeleportingPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SOLDIER ? (2 / 3) : (19 / 20);
 						if ( RandomFloat(0.0f, 1.0f) >= nBreadProbability )
 						{
