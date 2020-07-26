@@ -6747,7 +6747,7 @@ bool CTFGameRules::IsBreadUpdate( void )
 		{
 			// Love and War released June 18th, and ran to July 9th.
 			// Purposely skip over July 4th, because that is the TF2V birthday.
-			if ( ( today->tm_mon == (6-1) && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == (7-1) && ( ( ( today->tm_mday >= 1 ) && ( today->tm_mday <= 9 ) ) && ( today->tm_mday != 4 ) ) ) )
+			if ( ( today->tm_mon == (6-1) && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == (7-1) && ( ( ( today->tm_mday >= 1 ) && ( ( today->tm_mday <= 9 ) && ( today->tm_mday != 4 ) ) ) ) ) )
 			{
 				m_iBreadUpdateMode = HOLIDAY_ON;
 			}

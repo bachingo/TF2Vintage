@@ -17,6 +17,7 @@
 #include "tf_gamestats.h"
 #include "tf_weapon_sniperrifle.h"
 #include "tf_fx.h"
+#include "props.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -66,11 +67,26 @@ ConVar tf_teleporter_fov_time( "tf_teleporter_fov_time", "0.5", FCVAR_CHEAT | FC
 
 ConVar tf2v_disguise_spy_teleport( "tf2v_disguise_spy_teleport", "1", FCVAR_NOTIFY, "Allows disguised spies to travel through enemy teleporters." );
 
+ConVar tf2v_teleport_bread( "tf2v_teleport_bread", "0", FCVAR_NOTIFY, "Adds bread that spawns when exiting a teleporter. Always happens during the L&W time period, else uses standard probability." );
+
 
 extern ConVar tf2v_use_new_wrench_mechanics;
 extern ConVar tf2v_use_new_jag;
 
 LINK_ENTITY_TO_CLASS( obj_teleporter,	CObjectTeleporter );
+
+const char *g_pszBreadModels[] = 
+{
+	"models/weapons/c_models/c_bread/c_bread_plainloaf.mdl",	// Scout
+	"models/weapons/c_models/c_bread/c_bread_crumpet.mdl",		// Sniper
+	"models/weapons/c_models/c_bread/c_bread_ration.mdl",		// Soldier
+	"models/weapons/c_models/c_bread/c_bread_cinnamon.mdl",		// Demo
+	"models/weapons/c_models/c_bread/c_bread_pretzel.mdl",		// Medic
+	"models/weapons/c_models/c_bread/c_bread_russianblack.mdl",	// Heavy
+	"models/weapons/c_models/c_bread/c_bread_burnt.mdl",		// Pyro
+	"models/weapons/c_models/c_bread/c_bread_baguette.mdl",		// Spy
+	"models/weapons/c_models/c_bread/c_bread_cornbread.mdl",	// Engineer
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -324,6 +340,12 @@ void CObjectTeleporter::Precache()
 	PrecacheParticleSystem( "tpdamage_2" );
 	PrecacheParticleSystem( "tpdamage_3" );
 	PrecacheParticleSystem( "tpdamage_4" );
+	
+	// Precache breads
+	for( int i = 0; i < ARRAYSIZE( g_pszBreadModels ); i++ )
+	{
+		PrecacheModel( g_pszBreadModels[i] );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -813,6 +835,25 @@ void CObjectTeleporter::TeleporterThink( void )
 
 					color32 fadeColor = {255,255,255,100};
 					UTIL_ScreenFade( pTeleportingPlayer, fadeColor, 0.25, 0.4, FFADE_IN );
+					
+					if ( tf2v_teleport_bread.GetBool() )
+					{
+						// Love And War: Bread has a 100% chance to teleport.
+						if ( TFGameRules()->IsHolidayActive( kHoliday_BreadUpdate ) )
+						{
+							TeleportBread( pTeleportingPlayer );
+						}
+						else // Bread is spawned on probability.
+						{
+							// Chance is 1/20, except for Soldier which is 1/3. "I have done nothing but teleport bread for the past three days."
+							float nBreadProbability = pTeleportingPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SOLDIER ? (2 / 3) : (19 / 20);
+							if ( RandomFloat(0.0f, 1.0f) >= nBreadProbability )
+							{
+								TeleportBread( pTeleportingPlayer );
+							}
+						}
+					}
+			
 				}
 				else
 				{
@@ -1114,7 +1155,6 @@ bool CObjectTeleporter::Command_Repair( CTFPlayer *pActivator )
 	return bRepaired;
 }
 
-
 CObjectTeleporter* CObjectTeleporter::FindMatch( void )
 {
 	int iObjMode = GetObjectMode();
@@ -1152,4 +1192,55 @@ CObjectTeleporter* CObjectTeleporter::FindMatch( void )
 	}
 
 	return pMatch;
+}
+
+
+void CObjectTeleporter::TeleportBread( CTFPlayer *pPlayer )
+{
+	if( !pPlayer )
+		return;
+	
+	// Get our bread model.
+	const char* pszModelName = g_pszBreadModels[ RandomInt( 0, ARRAYSIZE( g_pszBreadModels ) ) ];
+	if (!pszModelName)
+	{
+		Assert(pszModelName);
+		return;
+	}
+	
+	// Grab the player's coordinates, but modify them so they come above the player.
+	Vector vecOrigin = pPlayer->GetAbsOrigin();
+	vecOrigin.z += TELEPORTER_MAXS.z + 50;
+	
+	// Spawn this like a healthkit/ammobox, except use the prop physics entity.
+	CPhysicsProp *pBread = static_cast<CPhysicsProp*>(CBaseAnimating::CreateNoSpawn("prop_physics_override", vecOrigin, pPlayer->GetAbsAngles(), pPlayer));
+	if ( pBread )
+	{
+		Vector vecRight, vecUp;
+		AngleVectors( GetAbsAngles(), NULL, &vecRight, &vecUp );
+
+		Vector vecImpulse( 0.0f, 0.0f, 0.0f );
+		vecImpulse += vecUp * random->RandomFloat( -0.25, 0.25 );
+		vecImpulse += vecRight * random->RandomFloat( -0.25, 0.25 );
+		VectorNormalize( vecImpulse );
+		vecImpulse *= random->RandomFloat( -100, 100 );
+		vecImpulse += GetAbsVelocity();
+
+		if ( pBread->VPhysicsGetObject() )
+		{
+			AngularImpulse angImpulse( RandomFloat( -100, 100 ), RandomFloat( -100, 100 ), RandomFloat( -100, 100 ) );
+			pBread->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+		}
+
+		pBread->SetAbsVelocity(vecImpulse + Vector(0.0f, 0.0f, 200.0f));
+
+		// Give the bread some health.
+		pBread->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+		pBread->AddFlag( FL_GRENADE );
+		pBread->m_takedamage = DAMAGE_YES;
+		pBread->SetHealth( 900 );
+		
+		// Remove this object in 10 seconds.
+		pBread->ThinkSet( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 10, "DieContext" );
+	}
 }
