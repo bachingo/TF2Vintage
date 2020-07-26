@@ -836,21 +836,18 @@ void CObjectTeleporter::TeleporterThink( void )
 					color32 fadeColor = {255,255,255,100};
 					UTIL_ScreenFade( pTeleportingPlayer, fadeColor, 0.25, 0.4, FFADE_IN );
 					
-					if ( tf2v_teleport_bread.GetBool() )
+					// Love And War Holiday: Bread has a 100% chance to teleport.
+					if ( TFGameRules()->IsHolidayActive( kHoliday_BreadUpdate ) )
 					{
-						// Love And War: Bread has a 100% chance to teleport.
-						if ( TFGameRules()->IsHolidayActive( kHoliday_BreadUpdate ) )
+						TeleportBread( pTeleportingPlayer );
+					}
+					else if ( tf2v_teleport_bread.GetBool() ) // Bread is spawned on probability when the command is on.
+					{
+						// Chance is 1/20, except for Soldier which is 1/3. "I have done nothing but teleport bread for the past three days."
+						float nBreadProbability = pTeleportingPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SOLDIER ? (2 / 3) : (19 / 20);
+						if ( RandomFloat(0.0f, 1.0f) >= nBreadProbability )
 						{
 							TeleportBread( pTeleportingPlayer );
-						}
-						else // Bread is spawned on probability.
-						{
-							// Chance is 1/20, except for Soldier which is 1/3. "I have done nothing but teleport bread for the past three days."
-							float nBreadProbability = pTeleportingPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SOLDIER ? (2 / 3) : (19 / 20);
-							if ( RandomFloat(0.0f, 1.0f) >= nBreadProbability )
-							{
-								TeleportBread( pTeleportingPlayer );
-							}
 						}
 					}
 			
