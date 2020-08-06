@@ -33,6 +33,8 @@ public:
 
 private:
 	bool CheckIfSentryIsOutOfPosition( CTFBot *actor ) const;
+	bool PickTeleportLocation( CTFBot *actor, Vector *pLocation, float &pYaw );
+	Vector FindHiddenSpot( CTFNavArea *pPointArea, const CUtlVector<CTFNavArea *> &surroundingAreas );
 	bool IsMetalSourceNearby( CTFBot *actor ) const;
 	void UpgradeAndMaintainBuildings( CTFBot *actor );
 

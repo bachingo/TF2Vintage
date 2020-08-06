@@ -186,7 +186,7 @@ void CTFBotEngineerMoveToBuild::CollectBuildAreas( CTFBot *actor )
 	}
 	else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 	{
-		CTeamTrainWatcher *pTrain;
+		CTeamTrainWatcher *pTrain = NULL;
 		switch ( actor->GetTeamNumber() )
 		{
 			case TF_TEAM_BLUE:
