@@ -14,7 +14,7 @@ public:
 	CTFBotEngineerBuilding( CTFBotHintSentrygun *hint=nullptr );
 	virtual ~CTFBotEngineerBuilding();
 
-	enum
+	enum eAvailability
 	{
 		UNKNOWN,
 		UNAVAILABLE,

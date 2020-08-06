@@ -166,8 +166,8 @@ void CTFBotEngineerMoveToBuild::CollectBuildAreas( CTFBot *actor )
 	// This is so mangled and fudged, but it collects areas near objectives, then runs through each of those areas to build a collection of areas from potentially visible
 	// If there are multiple objective points to pick from, the engineer will be biased to setup on a route immediately between them rather than best one
 
-	/*if ( DWORD( actor + 2517 ) )
-		return;*/
+	if ( actor->m_HomeArea )
+		return;
 
 	m_buildAreas.RemoveAll();
 
@@ -184,27 +184,23 @@ void CTFBotEngineerMoveToBuild::CollectBuildAreas( CTFBot *actor )
 		objectiveAreas.AddToTail( pArea );
 		vecCenter += pArea->GetCenter();
 	}
-
-	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
+	else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 	{
-		CTeamTrainWatcher *pTrain = TFGameRules()->GetPayloadToPush( actor->GetTeamNumber() );
+		CTeamTrainWatcher *pTrain;
+		switch ( actor->GetTeamNumber() )
+		{
+			case TF_TEAM_BLUE:
+				pTrain = TFGameRules()->GetPayloadToPush( actor->GetTeamNumber() );
+				break;
+			case TF_TEAM_RED:
+				pTrain = TFGameRules()->GetPayloadToBlock( actor->GetTeamNumber() );
+				break;
+		}
 		if ( !pTrain )
 			return;
 
 		Vector vecNextCheckpoint = pTrain->GetNextCheckpointPosition();
 		CTFNavArea *pArea = static_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( vecNextCheckpoint, false, 500.0f, true ) );
-		if ( !pArea )
-			return;
-
-		objectiveAreas.AddToTail( pArea );
-		vecCenter += pArea->GetCenter();
-
-		pTrain = TFGameRules()->GetPayloadToBlock( actor->GetTeamNumber() );
-		if ( !pTrain )
-			return;
-
-		vecNextCheckpoint = pTrain->GetNextCheckpointPosition();
-		pArea = static_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( vecNextCheckpoint, false, 500.0f, true ) );
 		if ( !pArea )
 			return;
 
@@ -241,13 +237,11 @@ void CTFBotEngineerMoveToBuild::CollectBuildAreas( CTFBot *actor )
 		for ( int j=0; j<func.m_area.Count(); ++j )
 		{
 			CTFNavArea *pOther = static_cast<CTFNavArea *>( func.m_area[j] );
-			if ( ( pOther->GetIncursionDistance( actor->GetTeamNumber() ) < 0.0f ||
-				 pOther->GetIncursionDistance( GetEnemyTeam( actor ) ) < 0.0f ||
-				 TFGameRules()->IsInKothMode() ) &&
-				 pOther->GetIncursionDistance( actor->GetTeamNumber() ) >= pOther->GetIncursionDistance( GetEnemyTeam( actor ) ) )
-			{
+			if ( pOther->GetIncursionDistance( actor->GetTeamNumber() ) < 0.0f || pOther->GetIncursionDistance( GetEnemyTeam( actor ) ) < 0.0f )
 				continue;
-			}
+
+			if( TFGameRules()->IsInKothMode() && pOther->GetIncursionDistance( actor->GetTeamNumber() ) >= pOther->GetIncursionDistance( GetEnemyTeam( actor ) ) )
+				continue;
 
 			if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CP )
 			{
@@ -292,13 +286,11 @@ void CTFBotEngineerMoveToBuild::SelectBuildLocation( CTFBot *actor )
 	m_hSentryHint = nullptr;
 	m_vecBuildLocation = vec3_origin;
 
-	// TODO
-	/*DWORD *v2 = DWORD( actor + 2517 );
-	if ( v2 )
+	if ( actor->m_HomeArea )
 	{
-		m_vecBuildLocation = DWORD( v2 + 11 );
+		m_vecBuildLocation = actor->m_HomeArea->GetCenter();
 		return;
-	}*/
+	}
 
 	CUtlVector<CTFBotHintSentrygun *> hints;
 	CTFBotHintSentrygun *pHint = dynamic_cast<CTFBotHintSentrygun *>( gEntList.FindEntityByClassname( NULL, "bot_hint_sentrygun" ) );
@@ -322,9 +314,9 @@ void CTFBotEngineerMoveToBuild::SelectBuildLocation( CTFBot *actor )
 	}
 
 	this->CollectBuildAreas( actor );
-	float flDesiredArea = RandomFloat( 0, m_flArea - 1.0f );
-	float flArea = 0.0f;
+	const float flDesiredArea = RandomFloat( 0, m_flArea - 1.0f );
 
+	float flArea = 0.0f;
 	for ( int i=0; i<m_buildAreas.Count(); ++i )
 	{
 		CTFNavArea *pArea = m_buildAreas[i];

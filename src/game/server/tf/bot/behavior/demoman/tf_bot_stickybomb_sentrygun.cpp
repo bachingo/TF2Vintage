@@ -169,8 +169,7 @@ ActionResult<CTFBot> CTFBotStickybombSentrygun::Update( CTFBot *me, float dt )
 		float flRandomPitch = RandomFloat( -85, 85 );
 		float flDesiredCharge = 0;
 
-		const float flRangeCoefficient = ( tf_bot_sticky_base_range.GetBool() >> 16 ) * 65536.0f + tf_bot_sticky_base_range.GetFloat();
-		if ( vecToSentry.LengthSqr() > Square( flRangeCoefficient ) )
+		if ( vecToSentry.LengthSqr() > Square( tf_bot_sticky_base_range.GetBool() ) )
 			flDesiredCharge = Square( RandomFloat( 0.1f, 1.0f ) );
 
 		if ( IsAimOnTarget( me, flRandomPitch, flYawVariance, flDesiredCharge ) && flCharge > flDesiredCharge )

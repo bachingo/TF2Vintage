@@ -124,18 +124,15 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 		}
 	}
 
-	float flBuildTeleTime = 30.0f;
-	if ( TFGameRules()->IsInTraining() )
-		flBuildTeleTime = 5.0f;
-
+	const float flBuildTeleTime = TFGameRules()->IsInTraining() ? 5.0f : 30.0f;
 	if ( pExit )
 	{
-		m_buildTeleportTimer.Reset();
+		m_buildTeleportTimer.Start( flBuildTeleTime );
 		
 		UpgradeAndMaintainBuildings( me );
 		return Action<CTFBot>::Continue();
 	}
-
+	
 	if ( m_buildTeleportTimer.IsElapsed() && pEntrance && !bPrioritizeRepair )
 	{
 		m_buildTeleportTimer.Start( flBuildTeleTime );
@@ -152,15 +149,22 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 				pEntity = (CBaseTFBotHintEntity *)gEntList.FindEntityByClassname( pEntity, "bot_hint_teleporter_exit" );
 			}
 
-			CBaseEntity *pHint = SelectClosestEntityByTravelDistance( me, hints, pSentry->GetLastKnownArea(), tf_bot_engineer_exit_near_sentry_range.GetFloat() );
+			if( !hints.IsEmpty() )
+			{
+				pSentry->UpdateLastKnownArea();
+				CBaseEntity *pHint = SelectClosestEntityByTravelDistance( me, hints, pSentry->GetLastKnownArea(), tf_bot_engineer_exit_near_sentry_range.GetFloat() );
 
-			Vector vecOrigin = pHint->GetAbsOrigin();
-			float flYaw = pHint->GetAbsAngles()[ YAW ];
-			return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit( vecOrigin, flYaw ), "Building teleporter exit at nearby hint" );
+				Vector vecOrigin = pHint->GetAbsOrigin();
+				float flYaw = pHint->GetAbsAngles()[ YAW ];
+				return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit( vecOrigin, flYaw ), "Building teleporter exit at nearby hint" );
+			}
 		}
+		else
+		{
 
-		if ( me->IsRangeLessThan( pSentry, 300.0f ) )
-			return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit(), "Building Teleporter exit" );
+			if( me->IsRangeLessThan( pSentry, 300.0 ) )
+				return Action<CTFBot>::SuspendFor( new CTFBotEngineerBuildTeleportExit(), "Building Teleporter exit" );
+		}
 	}
 	
 	UpgradeAndMaintainBuildings( me );
