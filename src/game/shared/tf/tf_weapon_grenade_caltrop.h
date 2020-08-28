@@ -12,41 +12,11 @@
 #include "tf_weaponbase_grenade.h"
 #include "tf_weaponbase_grenadeproj.h"
 
-// Client specific.
+
 #ifdef CLIENT_DLL
-#define CTFGrenadeCaltrop C_TFGrenadeCaltrop
 #define CTFGrenadeCaltropProjectile C_TFGrenadeCaltropProjectile
 #endif
 
-//=============================================================================
-//
-// TF Caltrop Grenade
-//
-class CTFGrenadeCaltrop : public CTFWeaponBaseGrenade
-{
-public:
-
-	DECLARE_CLASS( CTFGrenadeCaltrop, CTFWeaponBaseGrenade );
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-//	DECLARE_ACTTABLE();
-
-	CTFGrenadeCaltrop() {}
-
-	// Unique identifier.
-	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_CALTROP; }
-
-// Server specific.
-#ifdef GAME_DLL
-
-	DECLARE_DATADESC();
-
-	virtual CTFWeaponBaseGrenadeProj *EmitGrenade( Vector vecSrc, QAngle vecAngles, Vector vecVel, AngularImpulse angImpulse, CBasePlayer *pPlayer, float flTime, int iflags = 0 );
-
-#endif
-
-	CTFGrenadeCaltrop( const CTFGrenadeCaltrop & ) {}
-};
 
 //=============================================================================
 //
