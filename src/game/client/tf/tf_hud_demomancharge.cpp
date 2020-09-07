@@ -77,11 +77,16 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || ( !pPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) ) || !pPlayer->IsAlive() )
+	if ( !pPlayer || !pPlayer->IsAlive() )
 	{
 		return false;
 	}
 
+	/*if ( !pPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) )
+	{
+		return false;
+	}*/
+	
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
 
 	if ( !pWpn )
@@ -98,13 +103,10 @@ bool CHudDemomanChargeMeter::ShouldDraw( void )
 		{
 			CTFGrenadeLauncher *pLauncher = dynamic_cast< CTFGrenadeLauncher *>( pWpn );
 			if (pLauncher && pLauncher->IsMortar() )
-				CHudElement::ShouldDraw();
-		
-			return false;
-		
+				return CHudElement::ShouldDraw();
 		}
-		else
-			return false;
+			
+		return false;
 	}
 
 	return CHudElement::ShouldDraw();
