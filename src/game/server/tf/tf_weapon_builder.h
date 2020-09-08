@@ -102,8 +102,6 @@ public:
 	virtual const char *GetViewModel( int iViewModel ) const;
 	virtual const char *GetWorldModel( void ) const;
 
-	virtual Activity TranslateViewmodelHandActivity( Activity actBase );
-
 	// All the special Wheatley functionality for the Ap-Sap
 	void	WheatleySapperIdle( CTFPlayer *pOwner );
 	bool	IsWheatleySapper( void );

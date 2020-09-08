@@ -53,6 +53,7 @@
 #include "tf_wearable.h"
 #include "tf_weapon_medigun.h"
 #include "tf_weapon_pipebomblauncher.h"
+#include "c_tf_weapon_builder.h"
 #include "tf_hud_mediccallers.h"
 #include "in_main.h"
 #include "basemodelpanel.h"
@@ -1941,6 +1942,94 @@ public:
 };
 
 EXPOSE_INTERFACE( CProxyItemTintColor, IMaterialProxy, "ItemTintColor" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for pulsing the Wheatly Sappers eye glow when he talks
+//-----------------------------------------------------------------------------
+class CProxyWheatlyEyeGlow : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if ( !pPlayer )
+			return;
+
+		static float s_flCurr = 0.2f;
+		static float s_flDir = 0.2f;
+		static float s_flEyePose = 0.0f;
+		static float s_flNextEyeChange = 0;
+		static float s_flEyeDir = 0.005f;
+
+		// TODO: Name constants
+
+		C_TFWeaponSapper *pWeapon = dynamic_cast<C_TFWeaponSapper *>( pPlayer->Weapon_GetWeaponByType( TF_WPN_TYPE_BUILDING ) );
+		if ( pWeapon )
+		{
+			if ( pWeapon->IsWheatleyTalking() )
+			{
+				float flNoise = RandomGaussianFloat( 0.0f, 0.01f );
+				s_flCurr += s_flDir + flNoise;
+
+				if ( s_flCurr > 1.3f && s_flDir > 0 )
+				{
+					s_flDir = -0.006f;
+				}
+				else if ( s_flCurr < 0.6f && s_flDir < 0 )
+				{
+					s_flDir = 0.01f;
+				}
+
+				if ( s_flNextEyeChange < gpGlobals->curtime ) 
+				{
+					s_flEyePose += s_flEyeDir;
+
+					if ( s_flEyePose > 0.35f && s_flEyeDir > 0 )
+					{
+						s_flNextEyeChange = gpGlobals->curtime + 1.9f;
+						s_flEyeDir = -0.005f;
+					}
+
+					if ( s_flEyePose < 0.1f && s_flEyeDir < 0 )
+					{
+						s_flNextEyeChange = gpGlobals->curtime + 1.9f;
+						s_flEyeDir = 0.005f;
+					}
+				}
+			}
+			else
+			{
+				s_flCurr += -0.006f;
+
+				if ( s_flCurr < 0.4f )
+				{
+					s_flCurr = 0.4f;
+					s_flDir = 0.01f;
+				}
+
+				if ( s_flEyePose > 0 )
+				{
+					s_flEyePose -= 0.005f;
+				}
+
+				s_flEyeDir = 0.005f;
+			}
+
+			CBaseViewModel *pViewModel = pPlayer->GetViewModel( 0 );
+			if ( pViewModel )
+			{
+				pViewModel->SetPoseParameter( "eyelids", s_flEyePose );
+			}
+		}
+
+		m_pResult->SetFloatValue( s_flCurr );
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
+	}
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: Stub class for the CommunityWeapon material proxy used by live TF2

@@ -406,7 +406,7 @@ Activity C_TFWeaponBuilder::GetDrawActivity( void )
 
 
 
-BEGIN_NETWORK_TABLE( C_TFWeaponSapper, DT_TFWeaponSapper )
+IMPLEMENT_CLIENTCLASS_DT( C_TFWeaponSapper, DT_TFWeaponSapper, CTFWeaponSapper )
 	RecvPropTime( RECVINFO( m_flWheatleyTalkingUntil ) )
 END_NETWORK_TABLE()
 

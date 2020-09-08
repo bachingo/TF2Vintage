@@ -100,7 +100,7 @@ class C_TFWeaponSapper : public C_TFWeaponBuilder
 {
 	DECLARE_CLASS( C_TFWeaponSapper, C_TFWeaponBuilder );
 public:
-	DECLARE_NETWORKCLASS();
+	DECLARE_CLIENTCLASS();
 
 	C_TFWeaponSapper();
 
