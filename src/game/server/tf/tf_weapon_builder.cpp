@@ -725,6 +725,43 @@ const char *CTFWeaponSapper::GetWorldModel( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFWeaponSapper::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return false; 
+
+	if ( m_iObjectType == OBJ_ATTACHMENT_SAPPER && IsWheatleySapper() )
+	{
+		// pOwner gets some members cleared here
+
+		if ( pOwner->m_Shared.GetState() == TF_STATE_DYING )
+		{
+			if ( !RandomInt( 0, 4 ) )
+				WheatleyEmitSound( "PSap.DeathLong", true );
+			else
+				WheatleyEmitSound( "PSap.Death", true );
+		}
+		else
+		{
+			float flSoundDuration;
+			if ( ( gpGlobals->curtime - m_flWheatleyLastDeploy ) < 1.5 && ( gpGlobals->curtime - m_flWheatleyLastDeploy ) > -1.0 )
+				flSoundDuration = WheatleyEmitSound( "PSap.HolsterFast");
+			else
+				flSoundDuration = WheatleyEmitSound( "PSap.Holster");
+
+			m_flWheatleyLastHolster = gpGlobals->curtime + flSoundDuration;
+		}
+	}
+
+	m_flWheatleyIdleTime = -1.0f;
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponSapper::WeaponReset( void )
 {
 	if ( m_iObjectType == OBJ_ATTACHMENT_SAPPER )
@@ -791,7 +828,8 @@ void CTFWeaponSapper::WheatleyReset( bool bResetIntro )
 	m_iWheatleyState = 0;
 	m_flWheatleyTalkingUntil = 0;
 	m_flWheatleyLastDamage = 0;
-	unk1 = 0;
+	m_iNextWheatleyVoiceLine = 0;
+	m_flWheatleyIdleTime = -1.0f;
 	m_flWheatleyLastDeploy = 0;
 	m_flWheatleyLastHolster = 0;
 }
@@ -821,28 +859,28 @@ void CTFWeaponSapper::WheatleyDamage( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-float CTFWeaponSapper::WheatleyEmitSound( const char *pSound, bool bEmitToAll, bool bUnk )
+float CTFWeaponSapper::WheatleyEmitSound( const char *pSound, bool bEmitToAll, bool bNoRepeat )
 {
 	CSoundParameters params;
 	if ( !GetParametersForSound( pSound, params, NULL ) )
 		return 0;
 
-	//if ( bUnk && )
+	//if ( bNoRepeat && )
 
 	if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle38.mp3") == 0 )
 	{
 		SetWheatleyState( 6 );
-		unk1 = 0;
+		m_iNextWheatleyVoiceLine = 0;
 	}
 	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle41.mp3") == 0 )
 	{
 		SetWheatleyState( 7 );
-		unk1 = 0;
+		m_iNextWheatleyVoiceLine = 0;
 	}
 	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle35.mp3") == 0 )
 	{
 		SetWheatleyState( 5 );
-		unk1 = 0;
+		m_iNextWheatleyVoiceLine = 0;
 	}
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
@@ -868,7 +906,83 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 	// This is a doozy
 	if ( pOwner && m_iObjectType == OBJ_ATTACHMENT_SAPPER && IsWheatleySapper() )
 	{
+		if( m_flWheatleyIdleTime < 0.0f )
+		{			
+			// pOwner gets some members cleared here
 
+			float flDuration;
+			if ( ( gpGlobals->curtime - m_flWheatleyLastHolster ) < 2.0 && ( gpGlobals->curtime - m_flWheatleyLastHolster ) >= -1.0 )
+				flDuration = WheatleyEmitSound( "Psap.DeployAgain" );
+			else
+				flDuration = WheatleyEmitSound( m_bWheatleyIntroPlayed ? "Psap.Deploy" : "Psap.DeployIntro" );
+
+			m_flWheatleyLastDeploy = gpGlobals->curtime + flDuration;
+
+			if ( !m_bWheatleyIntroPlayed && !RandomInt( 0, 2 ) )
+			{
+				SetWheatleyState( 8 );
+				m_bWheatleyIntroPlayed = true;
+
+				m_iNextWheatleyVoiceLine = 0;
+				m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + 3.0;
+			}
+			else
+			{
+				SetWheatleyState( 0 );
+				m_bWheatleyIntroPlayed = true;
+
+				m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + GetWheatleyIdleWait();
+			}
+		}
+		// some check on a member of pOwner that gets reset all the time followed by a switch
+		// else if ( pOwner->0x8E1 != 0 )
+		else if ( m_iWheatleyState == 8 && m_flWheatleyIdleTime < gpGlobals->curtime )
+		{
+			if ( !IsWheatleyTalking() )
+			{
+				char szVoiceLine[128];
+				szVoiceLine[0] = 0;
+
+				if ( m_iNextWheatleyVoiceLine <= 3 )
+				{
+					V_sprintf_safe( szVoiceLine, "PSap.IdleIntro0%i", ++m_iNextWheatleyVoiceLine );
+
+					float flSoundDuration = WheatleyEmitSound( szVoiceLine );
+					if ( m_iNextWheatleyVoiceLine == 4 )
+						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait() + flSoundDuration;
+					else
+						m_flWheatleyIdleTime = gpGlobals->curtime + 1.0 + flSoundDuration;
+				}
+				else
+				{
+					SetWheatleyState( 0 );
+					m_iNextWheatleyVoiceLine = 0;
+				}
+			}
+		}
+		else if ( m_flWheatleyIdleTime < gpGlobals->curtime )
+		{
+			// No fucking clue
+			switch ( m_iWheatleyState )
+			{
+				case 3:
+				{
+
+				}
+				case 2:
+				{
+
+				}
+				case 1:
+				{
+
+				}
+				case 4:
+				{
+
+				}
+			}
+		}
 	}
 }
 

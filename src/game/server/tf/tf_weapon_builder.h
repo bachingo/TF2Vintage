@@ -98,7 +98,7 @@ public:
 
 	virtual void		WeaponReset( void );
 	virtual void		WeaponIdle( void );
-
+	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual const char *GetViewModel( int iViewModel ) const;
 	virtual const char *GetWorldModel( void ) const;
 
@@ -113,12 +113,13 @@ public:
 	int		GetWheatleyIdleWait() { return RandomInt( 10.0, 20.0 ); }
 
 private:
+	float		m_flWheatleyIdleTime;
 	CNetworkVar( float, m_flWheatleyTalkingUntil );
 	int			m_iWheatleyState;
 	float		m_flWheatleyLastDamage;
 	float		m_flWheatleyLastDeploy;
 	float		m_flWheatleyLastHolster;
-	int			unk1;
+	int			m_iNextWheatleyVoiceLine;
 	bool		m_bWheatleyIntroPlayed;
 };
 
