@@ -829,17 +829,17 @@ float CTFWeaponSapper::WheatleyEmitSound( const char *pSound, bool bEmitToAll, b
 
 	//if ( bUnk && )
 
-	if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle38.mp3") == NULL )
+	if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle38.mp3") == 0 )
 	{
 		SetWheatleyState( 6 );
 		unk1 = 0;
 	}
-	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle41.mp3") == NULL )
+	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle41.mp3") == 0 )
 	{
 		SetWheatleyState( 7 );
 		unk1 = 0;
 	}
-	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle35.mp3") == NULL )
+	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle35.mp3") == 0 )
 	{
 		SetWheatleyState( 5 );
 		unk1 = 0;
@@ -871,3 +871,18 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 
 	}
 }
+
+#ifdef _DEBUG
+
+CON_COMMAND( tf_wheatley_speak, "For testing; Force a line out of the Ap-Sap" )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetLocalPlayer() );
+	if ( !pPlayer )
+		return;
+
+	CTFWeaponSapper *pSapper = dynamic_cast<CTFWeaponSapper *>( pPlayer->Weapon_GetWeaponByType( TF_WPN_TYPE_BUILDING ) );
+	if ( pSapper && pSapper->IsWheatleySapper() )
+		pSapper->WheatleyEmitSound( "PSap.Hacked" );
+}
+
+#endif
