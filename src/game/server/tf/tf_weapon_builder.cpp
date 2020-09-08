@@ -308,6 +308,12 @@ void CTFWeaponBuilder::PrimaryAttack( void )
 				// Need to save this for later since StartBuilding will clear m_hObjectBeingBuilt.
 				CBaseObject *pParentObject = m_hObjectBeingBuilt->GetParentObject();
 
+				if ( pParentObject && m_iObjectType == OBJ_ATTACHMENT_SAPPER )
+				{
+					m_vLastSapPos = pParentObject->GetAbsOrigin();
+					m_hLastSappedBuilding = pParentObject;
+				}
+
 				StartBuilding();
 
 				// Attaching a sapper to a teleporter automatically saps another end.
@@ -680,4 +686,188 @@ bool CTFWeaponBuilder::AllowsAutoSwitchTo( void ) const
 {
 	// ask the object we're building
 	return GetObjectInfo( m_iObjectType )->m_bAutoSwitchTo;
+}
+
+
+IMPLEMENT_SERVERCLASS_ST( CTFWeaponSapper, DT_TFWeaponSapper )
+	SendPropFloat( SENDINFO( m_flWheatleyTalkingUntil ) ),
+END_SEND_TABLE()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_sapper, CTFWeaponSapper );
+PRECACHE_WEAPON_REGISTER( tf_weapon_sapper );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTFWeaponSapper::CTFWeaponSapper()
+{
+	WheatleyReset( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFWeaponSapper::GetViewModel( int iViewModel ) const
+{
+	// Skip over Builder's version
+	return CTFWeaponBase::GetViewModel();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFWeaponSapper::GetWorldModel( void ) const	
+{
+	// Skip over Builder's version
+	return CTFWeaponBase::GetWorldModel();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WeaponReset( void )
+{
+	if ( m_iObjectType == OBJ_ATTACHMENT_SAPPER )
+	{
+		if ( IsWheatleySapper() )
+		{
+			CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+			if ( pPlayer )
+			{
+				// Some members get reset
+			}
+
+			WheatleyReset();
+		}
+	}
+
+	BaseClass::WeaponReset();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WeaponIdle( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	WheatleySapperIdle( pOwner );
+
+	BaseClass::WeaponIdle();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Holding Wheatley?
+//-----------------------------------------------------------------------------
+bool CTFWeaponSapper::IsWheatleySapper( void )
+{
+	float flVoicePak = 0.0;
+	CALL_ATTRIB_HOOK_FLOAT( flVoicePak, sapper_voice_pak );
+
+	return flVoicePak == 1.0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: TODO: Enum for this
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::SetWheatleyState( int iNewState )
+{
+	m_iWheatleyState = iNewState;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Special Item Reset
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WheatleyReset( bool bResetIntro )
+{
+	if ( IsWheatleySapper() )
+		WheatleyEmitSound( "PSap.null" );
+
+	if ( bResetIntro )
+		m_bWheatleyIntroPlayed = false;
+
+	m_iWheatleyState = 0;
+	m_flWheatleyTalkingUntil = 0;
+	m_flWheatleyLastDamage = 0;
+	unk1 = 0;
+	m_flWheatleyLastDeploy = 0;
+	m_flWheatleyLastHolster = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WheatleyDamage( void )
+{
+	if ( ( gpGlobals->curtime - m_flWheatleyLastDamage ) > 10.0)
+	{
+		if ( RandomInt(0,2) == 0 )
+		{
+			CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+			if ( pOwner )
+			{
+				// Some members get reset
+			}
+
+			SetWheatleyState( 0 );
+			m_flWheatleyLastDamage = gpGlobals->curtime;
+			WheatleyEmitSound( "PSap.Damage" );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFWeaponSapper::WheatleyEmitSound( const char *pSound, bool bEmitToAll, bool bUnk )
+{
+	CSoundParameters params;
+	if ( !GetParametersForSound( pSound, params, NULL ) )
+		return 0;
+
+	//if ( bUnk && )
+
+	if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle38.mp3") == NULL )
+	{
+		SetWheatleyState( 6 );
+		unk1 = 0;
+	}
+	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle41.mp3") == NULL )
+	{
+		SetWheatleyState( 7 );
+		unk1 = 0;
+	}
+	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle35.mp3") == NULL )
+	{
+		SetWheatleyState( 5 );
+		unk1 = 0;
+	}
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( bEmitToAll )
+	{
+		CBroadcastNonOwnerRecipientFilter filter( pOwner );
+		EmitSound( filter, entindex(), pSound, &m_vLastSapPos );
+	}
+
+	CSingleUserRecipientFilter filter( pOwner );
+	EmitSound( filter, entindex(), params );
+
+	m_flWheatleyTalkingUntil = gpGlobals->curtime + 3.0f;
+
+	return 3.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Random sound handling
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
+{
+	// This is a doozy
+	if ( pOwner && m_iObjectType == OBJ_ATTACHMENT_SAPPER && IsWheatleySapper() )
+	{
+
+	}
 }
