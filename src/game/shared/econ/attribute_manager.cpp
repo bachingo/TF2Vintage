@@ -192,6 +192,7 @@ void CAttributeManager::AddProvider( CBaseEntity *pEntity )
 	Assert( pAttributes );
 
 	m_AttributeProviders.AddToTail( pEntity );
+	pAttributes->GetAttributeManager()->m_AttributeReceivers.AddToTail( m_hOuter.Get() );
 }
 
 void CAttributeManager::RemoveProvider( CBaseEntity *pEntity )
@@ -199,7 +200,8 @@ void CAttributeManager::RemoveProvider( CBaseEntity *pEntity )
 	IHasAttributes *pAttributes = GetAttribInterface( pEntity );
 	Assert( pAttributes );
 
-	m_AttributeProviders.FindAndRemove( pEntity );
+	m_AttributeProviders.FindAndFastRemove( pEntity );
+	pAttributes->GetAttributeManager()->m_AttributeReceivers.FindAndFastRemove( m_hOuter.Get() );
 }
 
 void CAttributeManager::ProvideTo( CBaseEntity *pEntity )
@@ -218,6 +220,8 @@ void CAttributeManager::ProvideTo( CBaseEntity *pEntity )
 	if ( prediction->InPrediction() )
 #endif
 	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ( ( 1 << ATTRIB_REAPPLY_PARITY_BITS ) - 1 );
+
+	NetworkStateChanged();
 }
 
 void CAttributeManager::StopProvidingTo( CBaseEntity *pEntity )
@@ -236,6 +240,8 @@ void CAttributeManager::StopProvidingTo( CBaseEntity *pEntity )
 	if ( prediction->InPrediction() )
 #endif
 	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ( ( 1 << ATTRIB_REAPPLY_PARITY_BITS ) - 1 );
+
+	NetworkStateChanged();
 }
 
 void CAttributeManager::InitializeAttributes( CBaseEntity *pEntity )

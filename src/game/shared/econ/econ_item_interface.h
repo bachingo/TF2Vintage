@@ -74,7 +74,7 @@ private:
 	template<typename TOther>
 	bool OnIterateAttributeValueOfType( CEconAttributeDefinition const *pDefinition, TOther const &value )
 	{
-		Assert( pDefinition && pDefinition == m_pAttribute );
+		Assert( pDefinition && pDefinition != m_pAttribute );
 		return true;
 	}
 
