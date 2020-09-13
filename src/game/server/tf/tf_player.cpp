@@ -6250,8 +6250,15 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	m_bitsDamageType |= info.GetDamageType();
 	float flDamage = info.GetDamage();
 
-	if ( flDamage == 0.0f )
+	if ( flDamage <= 0.0f )
 		return 0;
+
+	if ( ( info.GetDamageType() & DMG_BULLET ) && IsAlive() )
+	{
+		CTFWeaponSapper *pSapper = dynamic_cast<CTFWeaponSapper *>( GetActiveTFWeapon() );
+		if ( pSapper && pSapper->IsWheatleySapper() )
+			pSapper->WheatleyDamage();
+	}
 
 	// Self-damage modifiers.
 	if ( pTFAttacker == this )
