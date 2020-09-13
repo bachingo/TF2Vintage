@@ -6,7 +6,6 @@
 #endif
 
 #include "econ_item_schema.h"
-#include "econ_item_interface.h"
 #include "fmtstr.h"
 #include <string>
 

@@ -792,7 +792,7 @@ CEconItemSchema::~CEconItemSchema()
 	m_PrefabsValues.RemoveAll();
 
 	m_Items.PurgeAndDeleteElements();
-	m_Attributes.Purge();
+	m_Attributes.PurgeAndDeleteElements();
 
 	for ( attr_type_t const &atype : m_AttributeTypes )
 	{

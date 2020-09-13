@@ -10,17 +10,58 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define ATTRIB_REAPPLY_PARITY_BITS 3
+#define ATTRIB_REAPPLY_PARITY_BITS 6
 
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeManager, DT_AttributeManager )
 #ifdef CLIENT_DLL
 	RecvPropEHandle( RECVINFO( m_hOuter ) ),
+	RecvPropInt( RECVINFO( m_ProviderType ) ),
 	RecvPropInt( RECVINFO( m_iReapplyProvisionParity ) ),
 #else
 	SendPropEHandle( SENDINFO( m_hOuter ) ),
+	SendPropInt( SENDINFO( m_ProviderType ), 4, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iReapplyProvisionParity ), ATTRIB_REAPPLY_PARITY_BITS, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE();
+
+FORCEINLINE void ApplyAttribute( CEconAttributeDefinition const *pDefinition, float *pOutput, float flValue )
+{
+	switch ( pDefinition->description_format )
+	{
+		case ATTRIB_FORMAT_ADDITIVE:
+		case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
+		case ATTRIB_FORMAT_PARTICLE_INDEX:
+		{
+			*pOutput += flValue;
+			break;
+		}
+		case ATTRIB_FORMAT_PERCENTAGE:
+		case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
+		{
+			*pOutput *= flValue;
+			break;
+		}
+		case ATTRIB_FORMAT_OR:
+		{
+			// Oh, man...
+			int iValue = FloatBits( *pOutput );
+			iValue |= FloatBits( flValue );
+			*pOutput = BitsToFloat( iValue );
+			break;
+		}
+		case ATTRIB_FORMAT_KILLSTREAKEFFECT_INDEX:
+		case ATTRIB_FORMAT_KILLSTREAK_IDLEEFFECT_INDEX:
+		case ATTRIB_FORMAT_FROM_LOOKUP_TABLE:
+		{
+			*pOutput = flValue;
+			break;
+		}
+		default:
+		{
+			return;
+		}
+	}
+}
 
 class CAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
 {
@@ -107,6 +148,7 @@ CAttributeManager::CAttributeManager()
 {
 	m_bParsingMyself = false;
 	m_iReapplyProvisionParity = 0;
+	m_ProviderType = PROVIDER_ANY;
 }
 
 CAttributeManager::~CAttributeManager()
@@ -138,11 +180,17 @@ void CAttributeManager::OnDataChanged( DataUpdateType_t updateType )
 
 void CAttributeManager::AddProvider( CBaseEntity *pEntity )
 {
+	IHasAttributes *pAttributes = GetAttribInterface( pEntity );
+	Assert( pAttributes );
+
 	m_AttributeProviders.AddToTail( pEntity );
 }
 
 void CAttributeManager::RemoveProvider( CBaseEntity *pEntity )
 {
+	IHasAttributes *pAttributes = GetAttribInterface( pEntity );
+	Assert( pAttributes );
+
 	m_AttributeProviders.FindAndRemove( pEntity );
 }
 
@@ -151,7 +199,7 @@ void CAttributeManager::ProvideTo( CBaseEntity *pEntity )
 	if ( !pEntity || !m_hOuter.Get() )
 		return;
 
-	IHasAttributes *pAttributes = pEntity->GetHasAttributesInterfacePtr();
+	IHasAttributes *pAttributes = GetAttribInterface( pEntity );
 
 	if ( pAttributes )
 	{
@@ -169,7 +217,7 @@ void CAttributeManager::StopProvidingTo( CBaseEntity *pEntity )
 	if ( !pEntity || !m_hOuter.Get() )
 		return;
 
-	IHasAttributes *pAttributes = pEntity->GetHasAttributesInterfacePtr();
+	IHasAttributes *pAttributes = GetAttribInterface( pEntity );
 
 	if ( pAttributes )
 	{
@@ -200,27 +248,34 @@ float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *
 	// Safeguard to prevent potential infinite loops.
 	m_bParsingMyself = true;
 
+	IHasAttributes *pBaseAttributes = GetAttribInterface( pEntity );
+	Assert( pBaseAttributes );
+
 	for ( int i = 0; i < m_AttributeProviders.Count(); i++ )
 	{
 		CBaseEntity *pProvider = m_AttributeProviders[i].Get();
-
 		if ( !pProvider || pProvider == pEntity )
 			continue;
 
-		IHasAttributes *pAttributes = pProvider->GetHasAttributesInterfacePtr();
+		IHasAttributes *pAttributes = GetAttribInterface( pProvider );
+		Assert( pAttributes );
 
-		if ( pAttributes )
+		// Weapons can't provide to eachother
+		if ( pAttributes->GetAttributeManager()->GetProviderType() == PROVIDER_WEAPON &&
+				pBaseAttributes->GetAttributeManager()->GetProviderType() == PROVIDER_WEAPON )
 		{
-			flValue = pAttributes->GetAttributeManager()->ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
+			continue;
 		}
+
+		flValue = pAttributes->GetAttributeManager()->ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
 	}
 
-	IHasAttributes *pAttributes = m_hOuter->GetHasAttributesInterfacePtr();
+	IHasAttributes *pAttributes = GetAttribInterface( m_hOuter.Get() );
 	CBaseEntity *pOwner = pAttributes->GetAttributeOwner();
 
 	if ( pOwner )
 	{
-		IHasAttributes *pOwnerAttrib = pOwner->GetHasAttributesInterfacePtr();
+		IHasAttributes *pOwnerAttrib = GetAttribInterface( pOwner );
 		if ( pOwnerAttrib )
 		{
 			flValue = pOwnerAttrib->GetAttributeManager()->ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
@@ -245,6 +300,9 @@ string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBase
 	// Safeguard to prevent potential infinite loops.
 	m_bParsingMyself = true;
 
+	IHasAttributes *pBaseAttributes = GetAttribInterface( pEntity );
+	Assert( pBaseAttributes );
+
 	for ( int i = 0; i < m_AttributeProviders.Count(); i++ )
 	{
 		CBaseEntity *pProvider = m_AttributeProviders[i].Get();
@@ -252,18 +310,27 @@ string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBase
 			continue;
 
 		IHasAttributes *pAttributes = pProvider->GetHasAttributesInterfacePtr();
-		if ( pAttributes )
+		IHasAttributes *pAttributes = GetAttribInterface( pProvider );
+		Assert( pAttributes );
+
+		// Weapons can't provide to eachother
+		if ( pAttributes->GetAttributeManager()->GetProviderType() == PROVIDER_WEAPON &&
+				pBaseAttributes->GetAttributeManager()->GetProviderType() == PROVIDER_WEAPON )
 		{
 			strValue = pAttributes->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
+			continue;
 		}
+		strValue = pAttributes->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
 	}
 
 	IHasAttributes *pAttributes = m_hOuter->GetHasAttributesInterfacePtr();
+	IHasAttributes *pAttributes = GetAttribInterface( m_hOuter.Get() );
 	CBaseEntity *pOwner = pAttributes->GetAttributeOwner();
 
 	if ( pOwner )
 	{
 		IHasAttributes *pOwnerAttrib = pOwner->GetHasAttributesInterfacePtr();
+		IHasAttributes *pOwnerAttrib = GetAttribInterface( pOwner );
 		if ( pOwnerAttrib )
 		{
 			strValue = pOwnerAttrib->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
@@ -285,10 +352,12 @@ EXTERN_SEND_TABLE( DT_ScriptCreatedItem );
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainer, DT_AttributeContainer )
 #ifdef CLIENT_DLL
 	RecvPropEHandle( RECVINFO( m_hOuter ) ),
+	RecvPropInt( RECVINFO( m_ProviderType ) ),
 	RecvPropInt( RECVINFO( m_iReapplyProvisionParity ) ),
 	RecvPropDataTable( RECVINFO_DT( m_Item ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
 #else
 	SendPropEHandle( SENDINFO( m_hOuter ) ),
+	SendPropInt( SENDINFO( m_ProviderType ), 4, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iReapplyProvisionParity ), ATTRIB_REAPPLY_PARITY_BITS, SPROP_UNSIGNED ),
 	SendPropDataTable( SENDINFO_DT( m_Item ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 #endif
@@ -344,17 +413,21 @@ string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBa
 void CAttributeContainer::OnAttributesChanged( void )
 {
 	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	BaseClass::OnAttributesChanged();
+	m_Item.OnAttributesChanged();
 }
 
 
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainerPlayer, DT_AttributeContainerPlayer )
 #ifdef CLIENT_DLL
 	RecvPropEHandle( RECVINFO( m_hOuter ) ),
+	RecvPropInt( RECVINFO( m_ProviderType ) ),
 	RecvPropInt( RECVINFO( m_iReapplyProvisionParity ) ),
 	RecvPropEHandle( RECVINFO( m_hPlayer ) ),
 #else
 	SendPropEHandle( SENDINFO( m_hOuter ) ),
+	SendPropInt( SENDINFO( m_ProviderType ), 4, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iReapplyProvisionParity ), ATTRIB_REAPPLY_PARITY_BITS, SPROP_UNSIGNED ),
 	SendPropEHandle( SENDINFO( m_hPlayer ) ),
 #endif
@@ -408,5 +481,6 @@ string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, con
 void CAttributeContainerPlayer::OnAttributesChanged( void )
 {
 	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
-	m_hPlayer->NetworkStateChanged();
+	if( m_hPlayer )
+		m_hPlayer->NetworkStateChanged();
 }

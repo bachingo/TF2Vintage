@@ -483,7 +483,7 @@ CAttributeList::CAttributeList()
 //-----------------------------------------------------------------------------
 void CAttributeList::Init( void )
 {
-	m_Attributes.Purge();
+	m_Attributes.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------

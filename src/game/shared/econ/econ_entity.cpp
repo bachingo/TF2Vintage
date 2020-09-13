@@ -380,6 +380,7 @@ void CEconEntity::ReapplyProvision( void )
 void CEconEntity::InitializeAttributes( void )
 {
 	m_AttributeManager.InitializeAttributes( this );
+	m_AttributeManager.SetProvidrType( PROVIDER_WEAPON );
 }
 
 //-----------------------------------------------------------------------------

@@ -53,6 +53,11 @@ public:
 
 	CEconItemDefinition *GetStaticData( void ) const;
 
+	void OnAttributesChanged()
+	{
+		NetworkStateChanged();
+	}
+
 	const char* GetWorldDisplayModel( int iClass = 0 ) const;
 	const char* GetPlayerDisplayModel( int iClass = 0 ) const;
 	const char* GetEntityName( void );
