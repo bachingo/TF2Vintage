@@ -34,68 +34,25 @@ class CSchemaAttributeTypeBase : public ISchemaAttributeTypeBase<T>
 public:
 	virtual void InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const {}
 	virtual void UnloadEconAttributeValue( attrib_data_union_t *pValue ) const {}
-	virtual bool OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value ) const { return true; }
+
+	virtual bool OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value ) const
+	{
+		return pIterator->OnIterateAttributeValue( pAttrDef, GetTypedDataFromValue( value ) );
+	}
+
+private:
+	T const &GetTypedDataFromValue( const attrib_data_union_t &value ) const
+	{
+		if ( sizeof( T ) <= sizeof( uint32 ) )
+			return *reinterpret_cast<const T *>( &value.iVal );
+
+		if ( sizeof( T ) <= sizeof( void* ) )
+			return *reinterpret_cast<const T *>( &value.bVal );
+
+		Assert( value.bVal );
+		return *reinterpret_cast<const T *>( value.bVal );
+	}
 };
-
-inline void CSchemaAttributeTypeBase<unsigned int>::InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-	pValue->iVal = 0;
-}
-
-inline void CSchemaAttributeTypeBase<unsigned int>::UnloadEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-}
-
-inline bool CSchemaAttributeTypeBase<unsigned int>::OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value ) const
-{
-	return pIterator->OnIterateAttributeValue( pAttrDef, value.iVal );
-}
-
-inline void CSchemaAttributeTypeBase<unsigned long long>::InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-	pValue->lVal = new unsigned long long;
-}
-
-inline void CSchemaAttributeTypeBase<unsigned long long>::UnloadEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-	if ( pValue->lVal )
-		delete pValue->lVal;
-}
-
-inline bool CSchemaAttributeTypeBase<unsigned long long>::OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value ) const
-{
-	return pIterator->OnIterateAttributeValue( pAttrDef, *(value.lVal) );
-}
-
-inline void CSchemaAttributeTypeBase<float>::InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-	pValue->iVal = 0;
-}
-
-inline void CSchemaAttributeTypeBase<float>::UnloadEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-}
-
-inline bool CSchemaAttributeTypeBase<float>::OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value ) const
-{
-	return pIterator->OnIterateAttributeValue( pAttrDef, value.flVal );
-}
-
-inline void CSchemaAttributeTypeBase<CAttribute_String>::InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-	pValue->sVal = new CAttribute_String;
-}
-
-inline void CSchemaAttributeTypeBase<CAttribute_String>::UnloadEconAttributeValue( attrib_data_union_t *pValue ) const
-{
-	if ( pValue->sVal )
-		delete pValue->sVal;
-}
-
-inline bool CSchemaAttributeTypeBase<CAttribute_String>::OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value ) const
-{
-	return pIterator->OnIterateAttributeValue( pAttrDef, *(value.sVal) );
-}
 
 class CSchemaAttributeType_Default : public CSchemaAttributeTypeBase<unsigned int>
 {
@@ -149,6 +106,15 @@ public:
 class CSchemaAttributeType_UInt64 : public CSchemaAttributeTypeBase<unsigned long long>
 {
 public:
+	virtual void InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const
+	{
+		pValue->lVal = new unsigned long long;
+	}
+	virtual void UnloadEconAttributeValue( attrib_data_union_t *pValue ) const
+	{
+		delete pValue->lVal;
+	}
+
 	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
 	{
 		*(pValue->lVal) = V_atoui64( pString );
@@ -201,6 +167,15 @@ public:
 class CSchemaAttributeType_String : public CSchemaAttributeTypeBase<CAttribute_String>
 {
 public:
+	virtual void InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const
+	{
+		pValue->sVal = new CAttribute_String;
+	}
+	virtual void UnloadEconAttributeValue( attrib_data_union_t *pValue ) const
+	{
+		delete pValue->sVal;
+	}
+
 	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
 	{
 		CAttribute_String tmp;

@@ -105,9 +105,6 @@ public:
 			Clear();
 
 		m_bInitialized = true;
-
-		if ( m_pString == &_default_value_ )
-			m_pString = new CUtlConstString;
 	}
 
 	void CopyFrom( CAttribute_String const &src )
@@ -122,14 +119,14 @@ public:
 		Assert( !m_bInitialized );
 
 		Initialize();
-		m_pString->Set( src );
+		m_pString.Set( src );
 		m_nLength = V_strlen( src );
 	}
 
 	void Clear( void )
 	{
 		if ( m_bInitialized )
-			m_pString->Clear();
+			m_pString.Clear();
 
 		m_bInitialized = false;
 	}
@@ -145,8 +142,8 @@ public:
 #endif
 
 	// Inner string access
-	const char *Get( void ) const { return m_pString->Get(); }
-	CUtlConstString *GetForModify( void ) { return m_pString; }
+	const char *Get( void ) const { return m_pString.Get(); }
+	CUtlConstString *GetForModify( void ) { return &m_pString; }
 	size_t Length() const { return m_nLength; }
 
 	operator char const *( ) { return Get(); }
@@ -157,10 +154,8 @@ public:
 	operator string_t ( ) const { return MAKE_STRING( Get() ); }
 #endif
 
-	static CUtlConstString _default_value_;
-
 private:
-	CUtlConstString *m_pString;
+	CUtlConstString m_pString;
 	int m_nLength;
 	bool m_bInitialized;
 };
@@ -260,10 +255,11 @@ typedef union
 	float flVal;
 	uint64 *lVal;
 	CAttribute_String *sVal;
+	byte *bVal;
 } attrib_data_union_t;
 static_assert( sizeof( attrib_data_union_t ) == 4, "If the size changes you've done something wrong!" );
 
-typedef struct
+typedef struct static_attrib_s
 {
 	CEconAttributeDefinition const *GetStaticData( void ) const
 	{
@@ -272,10 +268,21 @@ typedef struct
 	bool BInitFromKV_SingleLine( KeyValues *const kv );
 	bool BInitFromKV_MultiLine( KeyValues *const kv );
 
+	static_attrib_s()
+	{
+		iAttribIndex = 0;
+		value.iVal = 0;
+	}
+
+	static_attrib_s( const static_attrib_s &rhs )
+	{
+		iAttribIndex = rhs.iAttribIndex;
+		value = rhs.value;
+	}
+
 	unsigned short iAttribIndex;
 	attrib_data_union_t value;
 } static_attrib_t;
-
 
 // Client specific.
 #ifdef CLIENT_DLL

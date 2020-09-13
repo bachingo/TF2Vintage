@@ -118,7 +118,7 @@ CEconItemDefinition::~CEconItemDefinition()
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
 		pDefinition->type->UnloadEconAttributeValue( &attributes[i].value );
 	}
-	attributes.Purge();
+	attributes.RemoveAll();
 
 	for ( int team = TEAM_UNASSIGNED; team < TF_TEAM_COUNT; team++ )
 	{
@@ -126,7 +126,8 @@ CEconItemDefinition::~CEconItemDefinition()
 			delete visual[ team ];
 	}
 
-	definition->deleteThis();
+	if( definition )
+		definition->deleteThis();
 }
 
 //-----------------------------------------------------------------------------
@@ -355,7 +356,6 @@ bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 //-----------------------------------------------------------------------------
 CAttribute_String::CAttribute_String()
 {
-	m_pString = &_default_value_;
 	m_nLength = 0;
 	m_bInitialized = false;
 }
@@ -375,8 +375,7 @@ CAttribute_String::CAttribute_String( CAttribute_String const &src )
 //-----------------------------------------------------------------------------
 CAttribute_String::~CAttribute_String()
 {
-	if ( m_pString != &_default_value_ && m_pString != nullptr )
-		delete m_pString;
+	m_pString.Clear();
 }
 
 
@@ -402,10 +401,8 @@ CAttribute_String &CAttribute_String::operator=( char const *src )
 {
 	Initialize();
 
-	m_pString->Set( src );
+	m_pString.Set( src );
 	m_nLength = V_strlen( src );
 
 	return *this;
 }
-
-CUtlConstString CAttribute_String::_default_value_;

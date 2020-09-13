@@ -66,82 +66,83 @@ FORCEINLINE void ApplyAttribute( CEconAttributeDefinition const *pDefinition, fl
 class CAttributeIterator_ApplyAttributeFloat : public CEconItemSpecificAttributeIterator
 {
 public:
-	CAttributeIterator_ApplyAttributeFloat( EHANDLE hOwner, string_t iName, float *outValue, ProviderVector *outVector )
+	CAttributeIterator_ApplyAttributeFloat( EHANDLE hOwner, string_t iName, float outValue, ProviderVector *outVector )
 		: m_hOwner( hOwner ), m_iName( iName ), m_flOut( outValue ), m_pOutProviders( outVector ) {}
 
-	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value );
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value )
+	{
+		string_t name = pDefinition->m_iAttributeClass;
+		if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+		{
+			name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
+			pDefinition ->m_iAttributeClass = name;
+		}
+
+		if ( m_iName == name )
+		{
+			if ( m_pOutProviders )
+			{
+				if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+					m_pOutProviders->AddToTail( m_hOwner );
+			}
+
+			ApplyAttribute( pDefinition, &m_flOut, BitsToFloat( value ) );
+		}
+
+		return true;
+	}
+
+	operator float() { return m_flOut; }
 
 private:
 	EHANDLE m_hOwner;
 	string_t m_iName;
-	float *m_flOut;
+	float m_flOut;
 	ProviderVector *m_pOutProviders;
 };
-
-bool CAttributeIterator_ApplyAttributeFloat::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value )
-{
-	string_t name = pDefinition->m_iAttributeClass;
-	if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
-	{
-		name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
-		pDefinition ->m_iAttributeClass = name;
-	}
-
-	if ( m_iName == name )
-	{
-		if ( m_pOutProviders )
-		{
-			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
-				m_pOutProviders->AddToTail( m_hOwner );
-		}
-
-		ApplyAttribute( pDefinition, m_flOut, BitsToFloat( value ) );
-	}
-
-	return true;
-}
 
 class CAttributeIterator_ApplyAttributeString : public CEconItemSpecificAttributeIterator
 {
 public:
-	CAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t *outValue, ProviderVector *outVector )
+	CAttributeIterator_ApplyAttributeString( EHANDLE hOwner, string_t iName, string_t outValue, ProviderVector *outVector )
 		: m_hOwner( hOwner ), m_iName( iName ), m_pOut( outValue ), m_pOutProviders( outVector ) {}
 
-	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value );
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value )
+	{
+		string_t name = pDefinition->m_iAttributeClass;
+		if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+		{
+			name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
+			pDefinition->m_iAttributeClass = name;
+		}
+
+		// Pointer comparison, bad
+		if ( m_iName == name )
+		{
+			if ( m_pOutProviders )
+			{
+				if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+					m_pOutProviders->AddToTail( m_hOwner );
+			}
+
+			m_pOut = AllocPooledString( value );
+
+			// Break off and only match once
+			return false;
+		}
+
+		return true;
+	}
+
+	operator string_t () { return m_pOut; }
 
 private:
 	EHANDLE m_hOwner;
 	string_t m_iName;
-	string_t *m_pOut;
+	string_t m_pOut;
 	ProviderVector *m_pOutProviders;
 };
 
-bool CAttributeIterator_ApplyAttributeString::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value )
-{
-	string_t name = pDefinition->m_iAttributeClass;
-	if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
-	{
-		name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
-		pDefinition->m_iAttributeClass = name;
-	}
-
-	// Pointer comparison, bad
-	if ( m_iName == name )
-	{
-		if ( m_pOutProviders )
-		{
-			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
-				m_pOutProviders->AddToTail( m_hOwner );
-		}
-
-		*m_pOut = value;
-
-		// Break off and only match once
-		return false;
-	}
-
-	return true;
-}
 
 
 CAttributeManager::CAttributeManager()
@@ -154,6 +155,7 @@ CAttributeManager::CAttributeManager()
 CAttributeManager::~CAttributeManager()
 {
 	m_AttributeProviders.Purge();
+	m_AttributeReceivers.Purge();
 }
 
 #ifdef CLIENT_DLL
@@ -309,7 +311,6 @@ string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBase
 		if ( !pProvider || pProvider == pEntity )
 			continue;
 
-		IHasAttributes *pAttributes = pProvider->GetHasAttributesInterfacePtr();
 		IHasAttributes *pAttributes = GetAttribInterface( pProvider );
 		Assert( pAttributes );
 
@@ -317,19 +318,17 @@ string_t CAttributeManager::ApplyAttributeString( string_t strValue, const CBase
 		if ( pAttributes->GetAttributeManager()->GetProviderType() == PROVIDER_WEAPON &&
 				pBaseAttributes->GetAttributeManager()->GetProviderType() == PROVIDER_WEAPON )
 		{
-			strValue = pAttributes->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
 			continue;
 		}
+
 		strValue = pAttributes->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
 	}
 
-	IHasAttributes *pAttributes = m_hOuter->GetHasAttributesInterfacePtr();
 	IHasAttributes *pAttributes = GetAttribInterface( m_hOuter.Get() );
 	CBaseEntity *pOwner = pAttributes->GetAttributeOwner();
 
 	if ( pOwner )
 	{
-		IHasAttributes *pOwnerAttrib = pOwner->GetHasAttributesInterfacePtr();
 		IHasAttributes *pOwnerAttrib = GetAttribInterface( pOwner );
 		if ( pOwnerAttrib )
 		{
@@ -382,13 +381,12 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 
 	m_bParsingMyself = true;
 
-	CAttributeIterator_ApplyAttributeFloat func( m_hOuter.Get(), strAttributeClass, &flValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeFloat func( m_hOuter.Get(), strAttributeClass, flValue, pOutProviders );
 	GetItem()->IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 
-	flValue = BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
-	return flValue;
+	return BaseClass::ApplyAttributeFloat( func, pEntity, strAttributeClass, pOutProviders );
 }
 
 //-----------------------------------------------------------------------------
@@ -401,13 +399,12 @@ string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBa
 
 	m_bParsingMyself = true;
 
-	CAttributeIterator_ApplyAttributeString func( m_hOuter.Get(), strAttributeClass, &strValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeString func( m_hOuter.Get(), strAttributeClass, strValue, pOutProviders );
 	GetItem()->IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 
-	strValue = BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
-	return strValue;
+	return BaseClass::ApplyAttributeString( func, pEntity, strAttributeClass, pOutProviders );
 }
 
 void CAttributeContainer::OnAttributesChanged( void )
@@ -445,13 +442,12 @@ float CAttributeContainerPlayer::ApplyAttributeFloat( float flValue, const CBase
 
 	m_bParsingMyself = true;
 
-	CAttributeIterator_ApplyAttributeFloat func( m_hPlayer.Get(), strAttributeClass, &flValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeFloat func( m_hPlayer.Get(), strAttributeClass, flValue, pOutProviders );
 	m_hPlayer->m_AttributeList.IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 
-	flValue = BaseClass::ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
-	return flValue;
+	return BaseClass::ApplyAttributeFloat( func, pEntity, strAttributeClass, pOutProviders );
 }
 
 //-----------------------------------------------------------------------------
@@ -466,13 +462,12 @@ string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, con
 
 	m_bParsingMyself = true;
 
-	CAttributeIterator_ApplyAttributeString func( m_hPlayer.Get(), strAttributeClass, &strValue, pOutProviders );
+	CAttributeIterator_ApplyAttributeString func( m_hPlayer.Get(), strAttributeClass, strValue, pOutProviders );
 	m_hPlayer->m_AttributeList.IterateAttributes( &func );
 
 	m_bParsingMyself = false;
 
-	strValue = BaseClass::ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
-	return strValue;
+	return BaseClass::ApplyAttributeString( func, pEntity, strAttributeClass, pOutProviders );
 }
 
 //-----------------------------------------------------------------------------

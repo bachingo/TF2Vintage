@@ -40,6 +40,12 @@ inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
 template<typename T>
 inline T AttributeConvertFromFloat( float flValue )
 {
+	return (T)flValue;
+}
+
+template<>
+inline float AttributeConvertFromFloat( float flValue )
+{
 	return flValue;
 }
 
@@ -110,6 +116,7 @@ protected:
 	CNetworkVarForDerived( int, m_ProviderType );
 
 	CUtlVector<EHANDLE> m_AttributeProviders;
+	CUtlVector<EHANDLE> m_AttributeReceivers;
 
 	friend class CEconEntity;
 };
