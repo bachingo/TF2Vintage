@@ -99,6 +99,7 @@ void CTFGrenadeLauncher::Spawn( void )
 //-----------------------------------------------------------------------------
 void CTFGrenadeLauncher::Precache()
 {
+	BaseClass::Precache();
 	PrecacheScriptSound("Weapon_LooseCannon.Charge");
 }
 
