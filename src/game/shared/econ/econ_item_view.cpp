@@ -15,6 +15,108 @@
 
 #define MAX_ATTRIBUTES_SENT 20
 
+//-----------------------------------------------------------------------------
+// CEconItemAttribute
+//-----------------------------------------------------------------------------
+
+BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
+#ifdef CLIENT_DLL
+	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
+	RecvPropInt( RECVINFO_NAME( m_flValue, m_iRawValue32 ) ),
+	RecvPropFloat( RECVINFO( m_flValue ), SPROP_NOSCALE ),
+#else
+	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ), -1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_NAME( m_flValue, m_iRawValue32 ), 32, SPROP_UNSIGNED ),
+#endif
+END_NETWORK_TABLE()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_flValue = src.m_flValue;
+	m_iAttributeClass = src.m_iAttributeClass;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttributeClass /*= NULL*/ )
+{
+	m_iAttributeDefinitionIndex = iIndex;
+
+	m_flValue = flValue;
+
+
+	if ( pszAttributeClass )
+	{
+		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
+	}
+	else
+	{
+		CEconAttributeDefinition const *pAttribDef = GetStaticData();
+		if ( pAttribDef )
+		{
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *pszAttributeClass /*= NULL*/ )
+{
+	m_iAttributeDefinitionIndex = iIndex;
+
+	m_flValue = *(float *)( (unsigned int *)STRING( AllocPooledString( pszValue ) ) );
+
+
+	if ( pszAttributeClass )
+	{
+		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
+	}
+	else
+	{
+		CEconAttributeDefinition const *pAttribDef = GetStaticData();
+		if ( pAttribDef )
+		{
+			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconItemAttribute &CEconItemAttribute::operator=( CEconItemAttribute const &src )
+{
+	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
+	m_flValue = src.m_flValue;
+	m_iAttributeClass = src.m_iAttributeClass;
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
+{
+	return GetItemSchema()->GetAttributeDefinition( m_iAttributeDefinitionIndex );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconAttributeDefinition const *CEconItemAttribute::GetStaticData( void ) const
+{
+	return GetItemSchema()->GetAttributeDefinition( m_iAttributeDefinitionIndex );
+}
+
+
 #ifdef CLIENT_DLL
 BEGIN_RECV_TABLE_NOBASE( CAttributeList, DT_AttributeList )
 	RecvPropUtlVectorDataTable( m_Attributes, MAX_ATTRIBUTES_SENT, DT_EconItemAttribute )
@@ -47,6 +149,14 @@ BEGIN_SEND_TABLE_NOBASE( CEconItemView, DT_ScriptCreatedItem )
 	SendPropDataTable( SENDINFO_DT( m_AttributeList ), &REFERENCE_SEND_TABLE( DT_AttributeList ) ),
 END_SEND_TABLE()
 #endif
+
+BEGIN_DATADESC_NO_BASE( CEconItemView )
+	DEFINE_FIELD( m_iItemDefinitionIndex, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iEntityQuality, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iEntityLevel, FIELD_INTEGER ),
+	DEFINE_FIELD( m_bOnlyIterateItemViewAttributes, FIELD_BOOLEAN ),
+	DEFINE_EMBEDDED( m_AttributeList ),
+END_DATADESC()
 
 #define FIND_ELEMENT(map, key, val)			\
 		unsigned int index = map.Find(key);	\
@@ -405,7 +515,7 @@ bool CEconItemView::HasTag( const char* name )
 bool CEconItemView::AddAttribute( CEconItemAttribute *pAttribute )
 {
 	// Make sure this attribute exists.
-	CEconAttributeDefinition *pAttribDef = pAttribute->GetStaticData();
+	CEconAttributeDefinition const *pAttribDef = pAttribute->GetStaticData();
 	if ( pAttribDef )
 		return m_AttributeList.SetRuntimeAttributeValue( pAttribDef, pAttribute->m_flValue );
 
@@ -423,7 +533,7 @@ void CEconItemView::SkipBaseAttributes( bool bSkip )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CEconItemView::IterateAttributes( IEconAttributeIterator *iter )
+void CEconItemView::IterateAttributes( IEconAttributeIterator *iter ) const
 {
 	m_AttributeList.IterateAttributes( iter );
 
@@ -519,7 +629,7 @@ CEconItemAttribute const *CAttributeList::GetAttribByName( char const *szName )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CAttributeList::IterateAttributes( IEconAttributeIterator *iter )
+void CAttributeList::IterateAttributes( IEconAttributeIterator *iter ) const
 {
 	FOR_EACH_VEC( m_Attributes, i )
 	{

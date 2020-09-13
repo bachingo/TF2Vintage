@@ -10,6 +10,44 @@
 class CAttributeManager;
 class IEconAttributeIterator;
 
+class CEconItemAttribute
+{
+public:
+	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_CLASS_NOBASE( CEconItemAttribute );
+
+	CEconAttributeDefinition *GetStaticData( void );
+	CEconAttributeDefinition const *GetStaticData( void ) const;
+
+	CEconItemAttribute()
+	{
+		Init( -1, 0.0f );
+	}
+	CEconItemAttribute( int iIndex, float flValue )
+	{
+		Init( iIndex, flValue );
+	}
+	CEconItemAttribute( int iIndex, float flValue, const char *pszAttributeClass )
+	{
+		Init( iIndex, flValue, pszAttributeClass );
+	}
+	CEconItemAttribute( int iIndex, const char *pszValue, const char *pszAttributeClass )
+	{
+		Init( iIndex, pszValue, pszAttributeClass );
+	}
+	CEconItemAttribute( CEconItemAttribute const &src );
+
+	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
+	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
+
+	CEconItemAttribute &operator=( CEconItemAttribute const &src );
+
+public:
+	CNetworkVar( uint16, m_iAttributeDefinitionIndex );
+	CNetworkVar( float, m_flValue );
+	string_t m_iAttributeClass;
+};
+
 class CAttributeList
 {
 	DECLARE_CLASS_NOBASE( CAttributeList );
@@ -22,7 +60,7 @@ public:
 
 	CEconItemAttribute const *GetAttribByID( int iNum );
 	CEconItemAttribute const *GetAttribByName( char const *szName );
-	void IterateAttributes( IEconAttributeIterator *iter );
+	void IterateAttributes( IEconAttributeIterator *iter ) const;
 
 	bool SetRuntimeAttributeValue( const CEconAttributeDefinition *pAttrib, float flValue );
 	bool RemoveAttribute( const CEconAttributeDefinition *pAttrib );
@@ -44,6 +82,7 @@ class CEconItemView
 public:
 	DECLARE_CLASS_NOBASE( CEconItemView );
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_DATADESC();
 
 	CEconItemView();
 	CEconItemView( CEconItemView const &other );
@@ -74,8 +113,9 @@ public:
 
 	bool AddAttribute( CEconItemAttribute *pAttribute );
 	void SkipBaseAttributes( bool bSkip );
-	void IterateAttributes( IEconAttributeIterator *iter );
+	void IterateAttributes( IEconAttributeIterator *iter ) const;
 	CAttributeList *GetAttributeList( void ) { return &m_AttributeList; }
+	CAttributeList const *GetAttributeList( void ) const { return &m_AttributeList; }
 
 	void SetItemDefIndex( int iItemID );
 	int GetItemDefIndex( void ) const;

@@ -79,7 +79,8 @@ public:
 	virtual void PlayAnimForPlaybackEvent(wearableanimplayback_t iPlayback) {};
 
 	void SetItem( CEconItemView const &pItem );
-	CEconItemView *GetItem() const { return m_AttributeManager.GetItem(); }
+	CEconItemView *GetItem() { return m_AttributeManager.GetItem(); }
+	CEconItemView const *GetItem() const { return m_AttributeManager.GetItem(); }
 	bool HasItemDefinition() const;
 	int GetItemID() const;
 

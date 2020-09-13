@@ -66,6 +66,7 @@ class CAttributeManager
 {
 public:
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_DATADESC();
 	DECLARE_CLASS_NOBASE( CAttributeManager );
 
 	CAttributeManager();
@@ -144,6 +145,7 @@ public:
 	DECLARE_PREDICTABLE();
 #endif
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_DATADESC();
 
 	virtual ~CAttributeContainer() {};
 	void	InitializeAttributes( CBaseEntity *pEntity );
@@ -151,12 +153,12 @@ public:
 	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 	void	OnAttributesChanged( void );
 
-	CEconItemView *GetItem( void ) const { return (CEconItemView *)&m_Item; }
+	void SetItem( CEconItemView const &pItem ) { m_Item.CopyFrom( pItem ); }
+	CEconItemView *GetItem( void ) { return &m_Item; }
+	CEconItemView const *GetItem( void ) const { return &m_Item; }
 
 protected:
 	CNetworkVarEmbedded( CEconItemView, m_Item );
-
-	friend class CEconEntity;
 };
 
 
@@ -165,6 +167,7 @@ class CAttributeContainerPlayer : public CAttributeManager
 public:
 	DECLARE_CLASS( CAttributeContainerPlayer, CAttributeManager );
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_DATADESC();
 
 	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
 	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;

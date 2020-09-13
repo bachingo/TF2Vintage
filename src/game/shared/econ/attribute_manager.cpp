@@ -12,6 +12,12 @@
 
 #define ATTRIB_REAPPLY_PARITY_BITS 6
 
+BEGIN_DATADESC_NO_BASE( CAttributeManager )
+	DEFINE_FIELD( m_iReapplyProvisionParity, FIELD_INTEGER ),
+	DEFINE_FIELD( m_hOuter, FIELD_EHANDLE ),
+	DEFINE_FIELD( m_ProviderType, FIELD_INTEGER ),
+END_DATADESC()
+
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeManager, DT_AttributeManager )
 #ifdef CLIENT_DLL
 	RecvPropEHandle( RECVINFO( m_hOuter ) ),
@@ -348,6 +354,10 @@ EXTERN_RECV_TABLE( DT_ScriptCreatedItem );
 EXTERN_SEND_TABLE( DT_ScriptCreatedItem );
 #endif
 
+BEGIN_DATADESC( CAttributeContainer )
+	DEFINE_EMBEDDED( m_Item ),
+END_DATADESC()
+
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainer, DT_AttributeContainer )
 #ifdef CLIENT_DLL
 	RecvPropEHandle( RECVINFO( m_hOuter ) ),
@@ -416,6 +426,10 @@ void CAttributeContainer::OnAttributesChanged( void )
 }
 
 
+BEGIN_DATADESC( CAttributeContainerPlayer )
+	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ),
+END_DATADESC()
+
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainerPlayer, DT_AttributeContainerPlayer )
 #ifdef CLIENT_DLL
 	RecvPropEHandle( RECVINFO( m_hOuter ) ),
@@ -476,6 +490,8 @@ string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, con
 void CAttributeContainerPlayer::OnAttributesChanged( void )
 {
 	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
+	BaseClass::OnAttributesChanged();
 	if( m_hPlayer )
 		m_hPlayer->NetworkStateChanged();
 }

@@ -324,7 +324,7 @@ void CEconEntity::UpdateModelToClass( void )
 //-----------------------------------------------------------------------------
 void CEconEntity::SetItem( CEconItemView const &pItem )
 {
-	m_AttributeManager.m_Item.CopyFrom( pItem );
+	m_AttributeManager.SetItem( pItem );
 }
 
 //-----------------------------------------------------------------------------

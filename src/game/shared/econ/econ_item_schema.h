@@ -284,51 +284,6 @@ typedef struct static_attrib_s
 	attrib_data_union_t value;
 } static_attrib_t;
 
-// Client specific.
-#ifdef CLIENT_DLL
-	EXTERN_RECV_TABLE( DT_EconItemAttribute );
-// Server specific.
-#else
-	EXTERN_SEND_TABLE( DT_EconItemAttribute );
-#endif
-
-class CEconItemAttribute
-{
-public:
-	DECLARE_EMBEDDED_NETWORKVAR();
-	DECLARE_CLASS_NOBASE( CEconItemAttribute );
-
-	CEconAttributeDefinition *GetStaticData( void );
-
-	CEconItemAttribute()
-	{
-		Init( -1, 0.0f );
-	}
-	CEconItemAttribute( int iIndex, float flValue )
-	{
-		Init( iIndex, flValue );
-	}
-	CEconItemAttribute( int iIndex, float flValue, const char *pszAttributeClass )
-	{
-		Init( iIndex, flValue, pszAttributeClass );
-	}
-	CEconItemAttribute( int iIndex, const char *pszValue, const char *pszAttributeClass )
-	{
-		Init( iIndex, pszValue, pszAttributeClass );
-	}
-	CEconItemAttribute( CEconItemAttribute const &src );
-
-	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
-	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
-
-	CEconItemAttribute &operator=( CEconItemAttribute const &src );
-
-public:
-	CNetworkVar( uint16, m_iAttributeDefinitionIndex );
-	CNetworkVar( float, m_flValue );
-	string_t m_iAttributeClass;
-};
-
 typedef struct EconItemStyle
 {
 	EconItemStyle()
