@@ -1846,6 +1846,13 @@ private:
 #define TF_CAMERA_DIST_RIGHT 30
 #define TF_CAMERA_DIST_UP 0
 
+typedef enum
+{
+	SAPPING_NONE,
+	SAPPING_PLACED,
+	SAPPING_DONE
+} sap_state_t;
+
 inline int GetEnemyTeam( CBaseEntity *ent )
 {
 	int myTeam = ent->GetTeamNumber();

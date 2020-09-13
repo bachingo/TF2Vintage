@@ -333,6 +333,9 @@ public:
 	void				StartBuildingObjectOfType( int iType, int iMode );
 	CBaseObject			*GetObjectOfType( int iType, int iMode );
 
+	void OnSapperPlaced( CBaseEntity *sappedObject );
+	bool IsPlacingSapper( void ) const;
+
 	CTFTeam				*GetTFTeam( void );
 	CTFTeam				*GetOpposingTFTeam( void );
 
@@ -757,6 +760,10 @@ private:
 	// Gunslinger taunt
 	short				m_nTauntDamageCount;
 
+	// Sapper events
+	bool				m_bSapping;
+	CountdownTimer		m_sapperTimer;
+
 	float				m_flNextCarryTalkTime;
 
 	int					m_nBlastJumpFlags;
@@ -775,6 +782,15 @@ private:
 public:
 	int				GetPlayerVIPRanking( void );
 };
+
+inline void CTFPlayer::OnSapperPlaced( CBaseEntity *sappedObject )
+{
+	m_sapperTimer.Start( 3.0f );
+}
+inline bool CTFPlayer::IsPlacingSapper( void ) const
+{
+	return !m_sapperTimer.IsElapsed();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Utility function to convert an entity into a tf player.

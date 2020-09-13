@@ -194,6 +194,13 @@ bool CTFWeaponBuilder::CanHolster( void ) const
 //-----------------------------------------------------------------------------
 bool CTFWeaponBuilder::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return false; 
+
+	if ( pOwner->m_Shared.IsCarryingObject() )
+		return false;
+
 	if ( m_iBuildState == BS_PLACING || m_iBuildState == BS_PLACING_INVALID )
 	{
 		SetCurrentState( BS_IDLE );
@@ -319,8 +326,9 @@ void CTFWeaponBuilder::PrimaryAttack( void )
 				// Attaching a sapper to a teleporter automatically saps another end.
 				if ( GetType() == OBJ_ATTACHMENT_SAPPER )
 				{
-					CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( pParentObject );
+					pOwner->OnSapperPlaced( pParentObject );
 
+					CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( pParentObject );
 					if ( pTeleporter )
 					{
 						CObjectTeleporter *pMatch = pTeleporter->GetMatchingTeleporter();
