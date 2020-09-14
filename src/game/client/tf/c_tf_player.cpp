@@ -2031,6 +2031,8 @@ public:
 	}
 };
 
+EXPOSE_INTERFACE( CProxyWheatlyEyeGlow, IMaterialProxy, "WheatlyEyeGlow" IMATERIAL_PROXY_INTERFACE_VERSION );
+
 //-----------------------------------------------------------------------------
 // Purpose: Stub class for the CommunityWeapon material proxy used by live TF2
 //-----------------------------------------------------------------------------

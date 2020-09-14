@@ -209,11 +209,7 @@ bool CTFWeaponBuilder::Holster( CBaseCombatWeapon *pSwitchingTo )
 	StopPlacement();
 
 	// Make sure hauling status is cleared.
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->m_Shared.IsCarryingObject() )
-	{
-		pOwner->m_Shared.SetCarriedObject( NULL );
-	}
+	pOwner->m_Shared.SetCarriedObject( NULL );
 
 	return BaseClass::Holster(pSwitchingTo);
 }
@@ -323,11 +319,11 @@ void CTFWeaponBuilder::PrimaryAttack( void )
 
 				StartBuilding();
 
-				// Attaching a sapper to a teleporter automatically saps another end.
 				if ( GetType() == OBJ_ATTACHMENT_SAPPER )
 				{
 					pOwner->OnSapperPlaced( pParentObject );
 
+					// Attaching a sapper to a teleporter automatically saps another end.
 					CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( pParentObject );
 					if ( pTeleporter )
 					{
@@ -741,7 +737,7 @@ bool CTFWeaponSapper::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 	if ( m_iObjectType == OBJ_ATTACHMENT_SAPPER && IsWheatleySapper() )
 	{
-		// pOwner gets some members cleared here
+		pOwner->ResetSappingState();
 
 		if ( pOwner->m_Shared.GetState() == TF_STATE_DYING )
 		{
@@ -776,11 +772,9 @@ void CTFWeaponSapper::WeaponReset( void )
 	{
 		if ( IsWheatleySapper() )
 		{
-			CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-			if ( pPlayer )
-			{
-				// Some members get reset
-			}
+			CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+			if ( pOwner )
+				pOwner->ResetSappingState();
 
 			WheatleyReset();
 		}
@@ -808,10 +802,10 @@ void CTFWeaponSapper::WeaponIdle( void )
 //-----------------------------------------------------------------------------
 bool CTFWeaponSapper::IsWheatleySapper( void )
 {
-	float flVoicePak = 0.0;
-	CALL_ATTRIB_HOOK_FLOAT( flVoicePak, sapper_voice_pak );
+	int nVoicePak = 0;
+	CALL_ATTRIB_HOOK_INT( nVoicePak, sapper_voice_pak );
 
-	return flVoicePak == 1.0;
+	return nVoicePak == 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -853,9 +847,7 @@ void CTFWeaponSapper::WheatleyDamage( void )
 		{
 			CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 			if ( pOwner )
-			{
-				// Some members get reset
-			}
+				pOwner->ClearSappingState();
 
 			SetWheatleyState( 0 );
 			m_flWheatleyLastDamage = gpGlobals->curtime;
@@ -912,39 +904,43 @@ float CTFWeaponSapper::WheatleyEmitSound( const char *pSound, bool bEmitToAll, b
 void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 {
 	// This is a doozy
-	if ( pOwner && m_iObjectType == OBJ_ATTACHMENT_SAPPER && IsWheatleySapper() )
-	{
-		if( m_flWheatleyIdleTime < 0.0f )
-		{			
-			// pOwner gets some members cleared here
+	if ( !pOwner || m_iObjectType != OBJ_ATTACHMENT_SAPPER || !IsWheatleySapper() )
+		return;
+	
+	if( m_flWheatleyIdleTime < 0.0f )
+	{			
+		pOwner->ResetSappingState();
 
-			float flDuration;
-			if ( ( gpGlobals->curtime - m_flWheatleyLastHolster ) < 2.0 && ( gpGlobals->curtime - m_flWheatleyLastHolster ) >= -1.0 )
-				flDuration = WheatleyEmitSound( "Psap.DeployAgain" );
-			else
-				flDuration = WheatleyEmitSound( m_bWheatleyIntroPlayed ? "Psap.Deploy" : "Psap.DeployIntro" );
+		float flDuration;
+		if ( ( gpGlobals->curtime - m_flWheatleyLastHolster ) < 2.0f && ( gpGlobals->curtime - m_flWheatleyLastHolster ) >= -1.0f )
+			flDuration = WheatleyEmitSound( "Psap.DeployAgain" );
+		else
+			flDuration = WheatleyEmitSound( m_bWheatleyIntroPlayed ? "Psap.Deploy" : "Psap.DeployIntro" );
 
-			m_flWheatleyLastDeploy = gpGlobals->curtime + flDuration;
+		m_flWheatleyLastDeploy = gpGlobals->curtime + flDuration;
 
-			if ( !m_bWheatleyIntroPlayed && !RandomInt( 0, 2 ) )
-			{
-				SetWheatleyState( 8 );
-				m_bWheatleyIntroPlayed = true;
+		if ( !m_bWheatleyIntroPlayed && !RandomInt( 0, 2 ) )
+		{
+			SetWheatleyState( 8 );
+			m_bWheatleyIntroPlayed = true;
 
-				m_iNextWheatleyVoiceLine = 0;
-				m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + 3.0;
-			}
-			else
-			{
-				SetWheatleyState( 0 );
-				m_bWheatleyIntroPlayed = true;
-
-				m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + GetWheatleyIdleWait();
-			}
+			m_iNextWheatleyVoiceLine = 0;
+			m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + 3.0f;
 		}
-		// some check on a member of pOwner that gets reset all the time followed by a switch
-		// else if ( pOwner->0x8E1 != 0 )
-		else if ( m_iWheatleyState == 8 && m_flWheatleyIdleTime < gpGlobals->curtime )
+		else
+		{
+			SetWheatleyState( 0 );
+			m_bWheatleyIntroPlayed = true;
+
+			m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + GetWheatleyIdleWait();
+		}
+
+		return;
+	}
+	
+	if ( pOwner->GetSappingState() == SAPPING_NONE )
+	{
+		if ( m_iWheatleyState == 8 && m_flWheatleyIdleTime < gpGlobals->curtime )
 		{
 			if ( !IsWheatleyTalking() )
 			{
@@ -959,7 +955,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 					if ( m_iNextWheatleyVoiceLine == 4 )
 						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait() + flSoundDuration;
 					else
-						m_flWheatleyIdleTime = gpGlobals->curtime + 1.0 + flSoundDuration;
+						m_flWheatleyIdleTime = gpGlobals->curtime + 1.0f + flSoundDuration;
 				}
 				else
 				{
@@ -970,28 +966,195 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 		}
 		else if ( m_flWheatleyIdleTime < gpGlobals->curtime )
 		{
-			// No fucking clue
-			switch ( m_iWheatleyState )
+			bool bEmitToAll = false;
+			bool bNoRepeats = false;
+			CUtlString szVoiceLine;
+
+			if ( m_iWheatleyState == 3 )
 			{
-				case 3:
-				{
+				bEmitToAll = true;
 
+				if ( IsWheatleyTalking() )
+					szVoiceLine = "PSap.HackedLoud";
+				else
+					szVoiceLine = "PSap.Hacked";
+
+				if ( !RandomInt( 0, 3 ) )
+				{
+					SetWheatleyState( 4 );
+					m_flWheatleyIdleTime = gpGlobals->curtime + 1.3f;
 				}
-				case 2:
+				else
 				{
-
-				}
-				case 1:
-				{
-
-				}
-				case 4:
-				{
-
+					SetWheatleyState( 0 );
+					m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 				}
 			}
+			else if ( m_iWheatleyState == 2 )
+			{
+				bEmitToAll = true;
+				SetWheatleyState( 0 );
+				szVoiceLine = "PSap.HackingPW";
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( m_iWheatleyState == 1 )
+			{
+				bEmitToAll = true;
+				SetWheatleyState( 0 );
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+
+				if ( !RandomInt( 0, 2 ) )
+					szVoiceLine = "PSap.HackingShort";
+				else
+					szVoiceLine = "PSap.Hacking";
+			}
+			else if ( m_iWheatleyState == 4 )
+			{
+				bEmitToAll = true;
+				SetWheatleyState( 0 );
+				szVoiceLine = "PSap.HackedFollowup";
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( IsWheatleyTalking() )
+			{
+				m_flWheatleyIdleTime = gpGlobals->curtime + 5.0f;
+			}
+			else if ( m_iWheatleyState == 7 )
+			{
+				if ( m_iNextWheatleyVoiceLine == 0 )
+				{
+					szVoiceLine = "PSap.IdleHack02";
+					m_iNextWheatleyVoiceLine++;
+				}
+				else
+				{
+					SetWheatleyState( 0 );
+					m_iNextWheatleyVoiceLine = 0;
+				}
+
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( m_iWheatleyState == 5 )
+			{
+				switch ( m_iNextWheatleyVoiceLine )
+				{
+					case 0:
+						szVoiceLine = "PSap.IdleKnife02";
+						m_iNextWheatleyVoiceLine++;
+						m_flWheatleyIdleTime = gpGlobals->curtime + 0.3f;
+						break;
+					case 1:
+						szVoiceLine = "PSap.IdleKnife03";
+						m_iNextWheatleyVoiceLine++;
+						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+						break;
+					default:
+						SetWheatleyState( 0 );
+						m_iNextWheatleyVoiceLine = 0;
+						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+						break;
+				}
+			}
+			else if ( m_iWheatleyState == 6 )
+			{
+				if ( m_iNextWheatleyVoiceLine == 0 )
+				{
+					szVoiceLine = "PSap.IdleHarmless02";
+					m_iNextWheatleyVoiceLine++;
+				}
+				else
+				{
+					SetWheatleyState( 0 );
+					m_iNextWheatleyVoiceLine = 0;
+				}
+
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( pOwner->m_Shared.IsStealthed() )
+			{
+				if ( !RandomInt( 0, 1 ) )
+					szVoiceLine = "PSap.Sneak";
+
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( m_iWheatleyState == 0 )
+			{
+				bNoRepeats = true;
+				szVoiceLine = "PSap.Idle";
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+
+			if ( szVoiceLine == NULL )
+			{
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+				return;
+			}
+
+			float flDuration = WheatleyEmitSound( szVoiceLine, bEmitToAll, bNoRepeats );
+			m_flWheatleyIdleTime += flDuration;
+		}
+
+		return;
+	}
+
+	CUtlString szVoiceLine;
+	if ( pOwner->GetSappingState() == SAPPING_PLACED )
+	{
+		if ( !RandomInt( 0, 1 ) )
+		{
+			if ( !RandomInt( 0, 3 ) )
+			{
+				szVoiceLine = "PSap.AttachedPW";
+				SetWheatleyState( 1 );
+			}
+			else
+			{
+				szVoiceLine = "PSap.Attached";
+				SetWheatleyState( 2 );
+			}
+
+			m_flWheatleyIdleTime = gpGlobals->curtime + 0.2f;
+		}
+		else
+		{
+			szVoiceLine = "PSap.Hacking";
+			SetWheatleyState( 0 );
+			m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 		}
 	}
+	else if ( pOwner->GetSappingState() == SAPPING_DONE )
+	{
+		if ( IsWheatleyTalking() )
+		{
+			if ( m_hLastSappedBuilding && m_hLastSappedBuilding->IsAlive() )
+				szVoiceLine = "PSap.Death";
+			else
+				szVoiceLine = "PSap.HackedLoud";
+
+			if ( !RandomInt( 0, 3 ) )
+			{
+				SetWheatleyState( 4 );
+				m_flWheatleyIdleTime = gpGlobals->curtime + 1.3f;
+			}
+			else
+			{
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+		}
+		else
+		{
+			SetWheatleyState( 3 );
+			m_flWheatleyIdleTime = gpGlobals->curtime + 0.5f;
+		}
+	}
+
+	pOwner->ClearSappingState();
+
+	if ( szVoiceLine == NULL )
+		return;
+
+	float flSoundDuration = WheatleyEmitSound( szVoiceLine, true );
+	m_flWheatleyIdleTime += flSoundDuration;
 }
 
 #ifdef _DEBUG

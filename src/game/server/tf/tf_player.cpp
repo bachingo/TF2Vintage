@@ -11887,6 +11887,7 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 	if ( !pItemDef )
 		return;
 
+	TFPlayerClassData_t *pData = pPlayer->GetPlayerClass()->GetData();
 	CEconItemView econItem( iItemID );
 
 	bool bAddedAttributes = false;
@@ -11942,7 +11943,14 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 		if ( pWeapon )
 		{
 			int iAmmo = pWeapon->GetPrimaryAmmoType();
-			pPlayer->SetAmmoCount( pPlayer->GetMaxAmmo( iAmmo ), iAmmo );
+			if( iAmmo > -1 )
+				pPlayer->SetAmmoCount( pPlayer->GetMaxAmmo( iAmmo ), iAmmo );
+		}
+
+		CTFWeaponBuilder *pBuilder = dynamic_cast<CTFWeaponBuilder *>( pEconEnt );
+		if ( pBuilder )
+		{
+			pBuilder->SetSubType( pData->m_aBuildable[0] );
 		}
 	}
 }
