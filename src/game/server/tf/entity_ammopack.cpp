@@ -86,7 +86,7 @@ bool CAmmoPack::MyTouch( CBasePlayer *pPlayer )
 		CALL_ATTRIB_HOOK_INT_ON_OTHER ( pTFPlayer, nAmmoGivesCharge, ammo_gives_charge );
 		if ( nAmmoGivesCharge != 0 )
 		{
-			if ( pTFPlayer->m_Shared.m_flChargeMeter != 100.0f )
+			if ( pTFPlayer->m_Shared.m_flChargeMeter < 100.0f )
 			{
 				pTFPlayer->m_Shared.m_flChargeMeter = min( ( pTFPlayer->m_Shared.m_flChargeMeter + ( ( PackRatios[GetPowerupSize()] ) * 100 ) ), 100.0f ) ;
 				bSuccess = true;
@@ -98,6 +98,16 @@ bool CAmmoPack::MyTouch( CBasePlayer *pPlayer )
 		{
 			CSingleUserRecipientFilter filter( pPlayer );
 			EmitSound( filter, entindex(), TF_AMMOPACK_PICKUP_SOUND );
+
+			//CTF_GameStats.Event_PlayerAmmokitPickup( pTFPlayer );
+
+			IGameEvent *event = gameeventmanager->CreateEvent( "item_pickup" );
+			if( event )
+			{
+				event->SetInt( "userid", pPlayer->GetUserID() );
+				event->SetString( "item", GetAmmoPackName() );
+				gameeventmanager->FireEvent( event );
+			}
 		}
 	}
 

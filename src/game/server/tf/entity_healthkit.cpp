@@ -67,15 +67,15 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		Assert( pTFPlayer );
 
-		int iHealthToAdd = ceil( pPlayer->GetMaxHealth() * PackRatios[GetPowerupSize()] );
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFPlayer, iHealthToAdd, mult_health_frompacks );
+		float flHealthToAdd = ceil( pPlayer->GetMaxHealth() * PackRatios[GetPowerupSize()] );
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFPlayer, flHealthToAdd, mult_health_frompacks );
 		int iHealthRestored = 0;
 
 		// Don't heal the player who dropped this healthkit, recharge his lunchbox instead
 		// This only applies to the 2nd lunchbox behavior type.
 		if ( ( pTFPlayer != GetOwnerEntity() ) || tf2v_sandvich_behavior.GetInt() != 2 )
 		{
-			iHealthRestored = pTFPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
+			iHealthRestored = pTFPlayer->TakeHealth( flHealthToAdd, DMG_GENERIC );
 			//iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_GENERIC );
 
 			if ( iHealthRestored )
@@ -84,11 +84,11 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			// Restore disguise health.
 			if ( pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 			{
-				int iFakeHealthToAdd = ceil( pTFPlayer->m_Shared.GetDisguiseClass() * PackRatios[ GetPowerupSize() ] );
+				float flFakeHealthToAdd = ceil( pTFPlayer->m_Shared.GetDisguiseClass() * PackRatios[ GetPowerupSize() ] );
 				CTFPlayer *pDisguiseTarget = ToTFPlayer(pTFPlayer->m_Shared.GetDisguiseTarget());
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pDisguiseTarget, iFakeHealthToAdd, mult_health_frompacks );
+				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pDisguiseTarget, flFakeHealthToAdd, mult_health_frompacks );
 
-				if ( pTFPlayer->m_Shared.AddDisguiseHealth( iFakeHealthToAdd ) )
+				if ( pTFPlayer->m_Shared.AddDisguiseHealth( flFakeHealthToAdd ) )
 					bSuccess = true;
 			}
 
@@ -113,6 +113,7 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			EmitSound( user, entindex(), pszSound );
 
 			pTFPlayer->m_Shared.HealthKitPickupEffects( iHealthRestored );
+			//CTF_GameStats.Event_PlayerHealthkitPickup( pTFPlayer );
 
 			CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
 			if ( pTFOwner && pTFOwner->InSameTeam( pTFPlayer ) )
@@ -133,13 +134,12 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 
 			if ( iHealthRestored  )
 			{
-				IGameEvent *event_healonhit = gameeventmanager->CreateEvent( "player_healonhit" );
-				if ( event_healonhit )
+				IGameEvent *event = gameeventmanager->CreateEvent( "item_pickup" );
+				if( event )
 				{
-					event_healonhit->SetInt( "amount", iHealthRestored );
-					event_healonhit->SetInt( "entindex", pPlayer->entindex() );
-
-					gameeventmanager->FireEvent( event_healonhit );
+					event->SetInt( "userid", pPlayer->GetUserID() );
+					event->SetString( "item", GetHealthKitName() );
+					gameeventmanager->FireEvent( event );
 				}
 
 				// Show healing to the one who dropped the healthkit.
