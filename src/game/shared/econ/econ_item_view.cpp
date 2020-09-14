@@ -432,33 +432,24 @@ unsigned int CEconItemView::GetModifiedRGBValue( bool bAlternate )
 	static CSchemaAttributeHandle pAttrDef_Paint( "set item tint rgb" );
 	static CSchemaAttributeHandle pAttrDef_Paint2( "set item tint rgb 2" );
 
-	float flResult = 0;
+	const int BCompatTeamColor = 1;
+
+	float flPaintRGB = 0, flPaintRGBAlt = 0;
 	if ( pAttrDef_Paint )
 	{
-		float flPaintRGB = 0;
-		CAttributeIterator_GetSpecificAttribute<unsigned int, float> iter( pAttrDef_Paint, &flPaintRGB );
-		IterateAttributes( &iter );
-		
-		if ( iter.Found() )
+		if ( FindAttribute<uint32>( this, pAttrDef_Paint, &flPaintRGB ) )
 		{
-			if ( (unsigned int)flPaintRGB == 1 )
+			if ( (uint32)flPaintRGB == BCompatTeamColor )
 				return bAlternate ? 0x005885A2 : 0x00B8383B;
 
 			if ( pAttrDef_Paint2 )
 			{
-				CAttributeIterator_GetSpecificAttribute<unsigned int, float> iter2( pAttrDef_Paint2, &flResult );
-				IterateAttributes( &iter2 );
-
-				if ( !iter2.Found() )
-					flResult = flPaintRGB;
+				FindAttribute<uint32>( this, pAttrDef_Paint2, &flPaintRGBAlt );
 			}
-
-			if ( !bAlternate )
-				flResult = flPaintRGB;
 		}
 	}
 
-	return (unsigned int)flResult;
+	return bAlternate ? (uint32)flPaintRGBAlt : (uint32)flPaintRGB;
 }
 
 //-----------------------------------------------------------------------------

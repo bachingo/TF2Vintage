@@ -123,10 +123,8 @@ private:
 	virtual bool OnIterateAttributeValueUntyped( const CEconAttributeDefinition *pAttrDef ) = 0;
 };
 
-template<typename T>
 class CAttributeIterator_HasAttribute : public IEconUntypedAttributeIterator
 {
-	DECLARE_CLASS( CAttributeIterator_HasAttribute, IEconUntypedAttributeIterator );
 public:
 	CAttributeIterator_HasAttribute( CEconAttributeDefinition const *pAttribute )
 		: m_pDefinition( pAttribute ), m_bFound( false ) {}
@@ -148,5 +146,30 @@ private:
 	CEconAttributeDefinition const *m_pDefinition;
 	bool m_bFound;
 };
+
+
+template <typename TIterator>
+bool FindAttribute( TIterator const *pAttributeIterator, CEconAttributeDefinition const *pAttrDef )
+{
+	if ( pAttrDef == NULL )
+		return false;
+
+	CAttributeIterator_HasAttribute func( pAttrDef );
+	pAttributeIterator->IterateAttributes( &func );
+
+	return func.Found();
+}
+
+template <typename TArg, typename TIterator, typename TOut>
+bool FindAttribute( TIterator const *pAttributeIterator, CEconAttributeDefinition const *pAttrDef, TOut *pOutput )
+{
+	if ( pAttrDef == NULL )
+		return false;
+
+	CAttributeIterator_GetSpecificAttribute<TArg, TOut> func( pAttrDef, pOutput );
+	pAttributeIterator->IterateAttributes( &func );
+
+	return func.Found();
+}
 
 #endif
