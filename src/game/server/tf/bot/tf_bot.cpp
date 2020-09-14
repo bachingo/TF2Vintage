@@ -2359,7 +2359,7 @@ const char *CTFBot::GetNextSpawnClassname( void )
 		iAllowedClasses |= ClassBits( pInfo->m_iClass );
 	}
 
-	if ( iAllowedClasses == 0 )
+	if ( iAllowedClasses == 0 && iDesiredClass == TF_CLASS_UNDEFINED )
 	{
 		Warning( "TFBot unable to get data for desired class, defaulting to 'auto'\n" );
 		return "auto";

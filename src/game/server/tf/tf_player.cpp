@@ -3759,7 +3759,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			bCanBeBoss = true;
 
 			
-		if ( stricmp( pClassName, "random" ) != 0 )
+		if ( stricmp( pClassName, "random" ) != 0 && stricmp( pClassName, "auto" ) != 0 )
 		{
 			int i = 0;
 				
