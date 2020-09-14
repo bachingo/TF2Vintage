@@ -12,6 +12,7 @@
 #include "explode.h"
 #include "tf_powerup.h"
 #include "entity_ammopack.h"
+#include "tf_gamestats.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -210,6 +211,18 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 				bSuccess = true;
 			}
 
+			int nAmmoGiveCharge = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, nAmmoGiveCharge, ammo_gives_charge );
+			if ( nAmmoGiveCharge )
+			{
+				float flCharge = pTFPlayer->m_Shared.GetShieldChargeMeter();
+				if ( flCharge < 100.0f )
+				{
+					pTFPlayer->m_Shared.SetShieldChargeMeter( Min( flCharge + 25.0f, 100.0f ) );
+					bSuccess = true;
+				}
+			}
+
 			switch ( iHoliday )
 			{
 				case kHoliday_Halloween: // Give player crits for three seconds
@@ -276,6 +289,16 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 	// did we give them anything?
 	if ( bSuccess )
 	{
+		//CTF_GameStats.Event_PlayerAmmokitPickup( pPlayer );
+
+		IGameEvent * event = gameeventmanager->CreateEvent( "item_pickup" );
+		if( event )
+		{
+			event->SetInt( "userid", pPlayer->GetUserID() );
+			event->SetString( "item", "tf_ammo_pack" );
+			gameeventmanager->FireEvent( event );
+		}
+
 		UTIL_Remove( this );
 	}
 #endif
