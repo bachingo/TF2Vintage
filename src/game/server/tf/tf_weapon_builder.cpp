@@ -809,14 +809,6 @@ bool CTFWeaponSapper::IsWheatleySapper( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: TODO: Enum for this
-//-----------------------------------------------------------------------------
-void CTFWeaponSapper::SetWheatleyState( int iNewState )
-{
-	m_iWheatleyState = iNewState;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Special Item Reset
 //-----------------------------------------------------------------------------
 void CTFWeaponSapper::WheatleyReset( bool bResetIntro )
@@ -849,7 +841,7 @@ void CTFWeaponSapper::WheatleyDamage( void )
 			if ( pOwner )
 				pOwner->ClearSappingState();
 
-			SetWheatleyState( 0 );
+			SetWheatleyState( P2RECSTATE_IDLE );
 			m_flWheatleyLastDamage = gpGlobals->curtime;
 			WheatleyEmitSound( "PSap.Damage" );
 		}
@@ -869,17 +861,17 @@ float CTFWeaponSapper::WheatleyEmitSound( const char *pSound, bool bEmitToAll, b
 
 	if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle38.mp3") == 0 )
 	{
-		SetWheatleyState( 6 );
+		SetWheatleyState( P2RECSTATE_IDLE_HARMLESS );
 		m_iNextWheatleyVoiceLine = 0;
 	}
 	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle41.mp3") == 0 )
 	{
-		SetWheatleyState( 7 );
+		SetWheatleyState( P2RECSTATE_IDLE_HACK );
 		m_iNextWheatleyVoiceLine = 0;
 	}
 	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle35.mp3") == 0 )
 	{
-		SetWheatleyState( 5 );
+		SetWheatleyState( P2RECSTATE_IDLE_KNIFE );
 		m_iNextWheatleyVoiceLine = 0;
 	}
 
@@ -921,7 +913,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 
 		if ( !m_bWheatleyIntroPlayed && !RandomInt( 0, 2 ) )
 		{
-			SetWheatleyState( 8 );
+			SetWheatleyState( P2RECSTATE_INTRO );
 			m_bWheatleyIntroPlayed = true;
 
 			m_iNextWheatleyVoiceLine = 0;
@@ -929,7 +921,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 		}
 		else
 		{
-			SetWheatleyState( 0 );
+			SetWheatleyState( P2RECSTATE_IDLE );
 			m_bWheatleyIntroPlayed = true;
 
 			m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + GetWheatleyIdleWait();
@@ -940,7 +932,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 	
 	if ( pOwner->GetSappingState() == SAPPING_NONE )
 	{
-		if ( m_iWheatleyState == 8 && m_flWheatleyIdleTime < gpGlobals->curtime )
+		if ( m_iWheatleyState == P2RECSTATE_INTRO && m_flWheatleyIdleTime < gpGlobals->curtime )
 		{
 			if ( !IsWheatleyTalking() )
 			{
@@ -959,7 +951,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 				}
 				else
 				{
-					SetWheatleyState( 0 );
+					SetWheatleyState( P2RECSTATE_IDLE );
 					m_iNextWheatleyVoiceLine = 0;
 				}
 			}
@@ -970,7 +962,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 			bool bNoRepeats = false;
 			CUtlString szVoiceLine;
 
-			if ( m_iWheatleyState == 3 )
+			if ( m_iWheatleyState == P2RECSTATE_HACKED )
 			{
 				bEmitToAll = true;
 
@@ -981,26 +973,26 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 
 				if ( !RandomInt( 0, 3 ) )
 				{
-					SetWheatleyState( 4 );
+					SetWheatleyState( P2RECSTATE_FOLLOWUP );
 					m_flWheatleyIdleTime = gpGlobals->curtime + 1.3f;
 				}
 				else
 				{
-					SetWheatleyState( 0 );
+					SetWheatleyState( P2RECSTATE_IDLE );
 					m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 				}
 			}
-			else if ( m_iWheatleyState == 2 )
+			else if ( m_iWheatleyState == P2RECSTATE_HACKINGPW )
 			{
 				bEmitToAll = true;
-				SetWheatleyState( 0 );
+				SetWheatleyState( P2RECSTATE_IDLE );
 				szVoiceLine = "PSap.HackingPW";
 				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 			}
-			else if ( m_iWheatleyState == 1 )
+			else if ( m_iWheatleyState == P2RECSTATE_HACKING )
 			{
 				bEmitToAll = true;
-				SetWheatleyState( 0 );
+				SetWheatleyState( P2RECSTATE_IDLE );
 				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 
 				if ( !RandomInt( 0, 2 ) )
@@ -1008,10 +1000,10 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 				else
 					szVoiceLine = "PSap.Hacking";
 			}
-			else if ( m_iWheatleyState == 4 )
+			else if ( m_iWheatleyState == P2RECSTATE_FOLLOWUP )
 			{
 				bEmitToAll = true;
-				SetWheatleyState( 0 );
+				SetWheatleyState( P2RECSTATE_IDLE );
 				szVoiceLine = "PSap.HackedFollowup";
 				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 			}
@@ -1019,7 +1011,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 			{
 				m_flWheatleyIdleTime = gpGlobals->curtime + 5.0f;
 			}
-			else if ( m_iWheatleyState == 7 )
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE_HACK )
 			{
 				if ( m_iNextWheatleyVoiceLine == 0 )
 				{
@@ -1028,13 +1020,13 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 				}
 				else
 				{
-					SetWheatleyState( 0 );
+					SetWheatleyState( P2RECSTATE_IDLE );
 					m_iNextWheatleyVoiceLine = 0;
 				}
 
 				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 			}
-			else if ( m_iWheatleyState == 5 )
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE_KNIFE )
 			{
 				switch ( m_iNextWheatleyVoiceLine )
 				{
@@ -1049,13 +1041,13 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 						break;
 					default:
-						SetWheatleyState( 0 );
+						SetWheatleyState( P2RECSTATE_IDLE );
 						m_iNextWheatleyVoiceLine = 0;
 						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 						break;
 				}
 			}
-			else if ( m_iWheatleyState == 6 )
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE_HARMLESS )
 			{
 				if ( m_iNextWheatleyVoiceLine == 0 )
 				{
@@ -1064,7 +1056,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 				}
 				else
 				{
-					SetWheatleyState( 0 );
+					SetWheatleyState( P2RECSTATE_IDLE );
 					m_iNextWheatleyVoiceLine = 0;
 				}
 
@@ -1077,7 +1069,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 
 				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 			}
-			else if ( m_iWheatleyState == 0 )
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE )
 			{
 				bNoRepeats = true;
 				szVoiceLine = "PSap.Idle";
@@ -1105,12 +1097,12 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 			if ( !RandomInt( 0, 3 ) )
 			{
 				szVoiceLine = "PSap.AttachedPW";
-				SetWheatleyState( 1 );
+				SetWheatleyState( P2RECSTATE_HACKING );
 			}
 			else
 			{
 				szVoiceLine = "PSap.Attached";
-				SetWheatleyState( 2 );
+				SetWheatleyState( P2RECSTATE_HACKINGPW );
 			}
 
 			m_flWheatleyIdleTime = gpGlobals->curtime + 0.2f;
@@ -1118,7 +1110,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 		else
 		{
 			szVoiceLine = "PSap.Hacking";
-			SetWheatleyState( 0 );
+			SetWheatleyState( P2RECSTATE_IDLE );
 			m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
 		}
 	}
@@ -1133,7 +1125,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 
 			if ( !RandomInt( 0, 3 ) )
 			{
-				SetWheatleyState( 4 );
+				SetWheatleyState( P2RECSTATE_FOLLOWUP );
 				m_flWheatleyIdleTime = gpGlobals->curtime + 1.3f;
 			}
 			else
@@ -1143,7 +1135,7 @@ void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
 		}
 		else
 		{
-			SetWheatleyState( 3 );
+			SetWheatleyState( P2RECSTATE_HACKED );
 			m_flWheatleyIdleTime = gpGlobals->curtime + 0.5f;
 		}
 	}

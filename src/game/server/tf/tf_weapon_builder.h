@@ -85,6 +85,7 @@ protected:
 	Vector   m_vLastSapPos;
 };
 
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -106,7 +107,7 @@ public:
 	void	WheatleySapperIdle( CTFPlayer *pOwner );
 	bool	IsWheatleySapper( void );
 	void	WheatleyReset( bool bResetIntro = false );
-	void	SetWheatleyState( int iNewState );
+	void	SetWheatleyState( int iNewState ) { m_iWheatleyState = iNewState; }
 	float	WheatleyEmitSound( const char *pSound , bool bEmitToAll = false, bool bNoRepeats = false );
 	bool	IsWheatleyTalking( void ) { return gpGlobals->curtime <= m_flWheatleyTalkingUntil; }
 	void	WheatleyDamage( void );
@@ -121,6 +122,19 @@ private:
 	float		m_flWheatleyLastHolster;
 	int			m_iNextWheatleyVoiceLine;
 	bool		m_bWheatleyIntroPlayed;
+};
+
+enum
+{
+	P2RECSTATE_IDLE,
+	P2RECSTATE_HACKING,
+	P2RECSTATE_HACKINGPW,
+	P2RECSTATE_HACKED,
+	P2RECSTATE_FOLLOWUP,
+	P2RECSTATE_IDLE_KNIFE,
+	P2RECSTATE_IDLE_HARMLESS,
+	P2RECSTATE_IDLE_HACK,
+	P2RECSTATE_INTRO
 };
 
 #endif // TF_WEAPON_BUILDER_H
