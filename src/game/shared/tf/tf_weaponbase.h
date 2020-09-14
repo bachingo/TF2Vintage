@@ -364,7 +364,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	
 	virtual bool OwnerCanTaunt( void ) const { return true; }
 
-	virtual bool GetProjectileModelOverride( CAttribute_String *pOut );
+	virtual const char *GetProjectileModelOverride( void );
 	
 // Client specific.
 #else
