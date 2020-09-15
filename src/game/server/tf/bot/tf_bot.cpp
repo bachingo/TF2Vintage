@@ -2627,53 +2627,70 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 {
 	if ( UTIL_IsCommandIssuedByServerAdmin() )
 	{
-		int count = Clamp( Q_atoi( args.Arg( 1 ) ), 1, gpGlobals->maxClients );
-		for ( int i = 0; i < count; ++i )
+		char const *pszBotName = NULL;
+		char const *pszTeamName = "auto";
+		char const *pszClassName = "random";
+		int nNumBots = 1;
+		bool bNoQuota = false;
+		int nSkill = tf_bot_difficulty.GetInt();
+
+		for ( int i=0; i < args.ArgC(); ++i )
 		{
-			char szBotName[64];
-			if ( args.ArgC() > 4 )
-				Q_snprintf( szBotName, sizeof szBotName, args.Arg( 4 ) );
-			else
-				V_strcpy_safe( szBotName, TheTFBots().GetRandomBotName() );
+			nSkill = NameToDifficulty( args[i] );
+			nNumBots = V_atoi( args[i] );
 
-			CTFBot *bot = NextBotCreatePlayerBot<CTFBot>( szBotName );
-			if ( bot == nullptr )
-				return;
-
-			char szTeam[10];
-			if ( args.ArgC() > 2 )
+			if ( IsPlayerClassName( args[i] ) )
 			{
-				if ( IsTeamName( args.Arg( 2 ) ) )
-					Q_snprintf( szTeam, sizeof szTeam, args.Arg( 2 ) );
-				else
-				{
-					Warning( "Invalid argument '%s'\n", args.Arg( 2 ) );
-					Q_snprintf( szTeam, sizeof szTeam, "auto" );
-				}
+				pszClassName = args[i];
+			}
+			else if ( IsTeamName( args[i] ) )
+			{
+				pszTeamName = args[i];
+			}
+			else if ( !V_stricmp( args[i], "noquota" ) )
+			{
+				bNoQuota = true;
+			}
+			else if ( nNumBots == 1 )
+			{
+				pszBotName = args[i];
 			}
 			else
-				Q_snprintf( szTeam, sizeof szTeam, "auto" );
-
-			bot->HandleCommand_JoinTeam( szTeam );
-
-			char szClassName[16];
-			if ( args.ArgC() > 3 )
 			{
-				if ( IsPlayerClassName( args.Arg( 3 ) ) )
-					Q_snprintf( szClassName, sizeof szClassName, args.Arg( 3 ) );
-				else
-				{
-					Warning( "Invalid argument '%s'\n", args.Arg( 3 ) );
-					Q_snprintf( szClassName, sizeof szClassName, "random" );
-				}
+				Warning( "Invalid argument '%s'\n", args[i] );
 			}
-			else
-				Q_snprintf( szClassName, sizeof szClassName, "random" );
-
-			bot->HandleCommand_JoinClass( szClassName );
 		}
 
-		TheTFBots().OnForceAddedBots( count );
+		pszClassName = FStrEq( tf_bot_force_class.GetString(), "" ) ? pszClassName : tf_bot_force_class.GetString();
+
+		int iTeam = TEAM_UNASSIGNED;
+		if ( FStrEq( pszTeamName, "red" ) )
+			iTeam = TF_TEAM_RED;
+		else if ( FStrEq( pszTeamName, "blue" ) )
+			iTeam = TF_TEAM_BLUE;
+
+		nNumBots = Clamp( nNumBots, 1, gpGlobals->maxClients );
+		char szBotName[128]; int nCount = 0;
+		for ( int i = 0; i < nNumBots; ++i )
+		{
+			if ( pszBotName == NULL )
+				CreateBotName( iTeam, GetClassIndexFromString( pszClassName ), nSkill, szBotName, sizeof szBotName );
+			else
+				V_strcpy_safe( szBotName, pszBotName );
+
+			CTFBot *pBot = NextBotCreatePlayerBot<CTFBot>( pszBotName );
+			if ( pBot == nullptr )
+				break;
+
+			pBot->HandleCommand_JoinTeam( pszTeamName );
+			pBot->HandleCommand_JoinClass( pszClassName );
+			pBot->m_iSkill = (CTFBot::DifficultyType)nSkill;
+
+			nCount++;
+		}
+
+		if( !bNoQuota )
+			TheTFBots().OnForceAddedBots( nCount );
 	}
 }
 
