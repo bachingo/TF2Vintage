@@ -2636,7 +2636,7 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 
 		for ( int i=0; i < args.ArgC(); ++i )
 		{
-			nSkill = NameToDifficulty( args[i] );
+			nSkill = Max( nSkill, NameToDifficulty( args[i] ) );
 			nNumBots = V_atoi( args[i] );
 
 			if ( IsPlayerClassName( args[i] ) )
