@@ -47,6 +47,7 @@ extern BOOL cease_fire;
 class CHealthKit;
 class CTeamControlPoint;
 class CTeamTrainWatcher;
+class CTFBotRoster;
 
 #endif
 
@@ -542,6 +543,9 @@ private:
 	CHandle<CTeamTrainWatcher> m_hBlueAttackTrain;
 	CHandle<CTeamTrainWatcher> m_hRedDefendTrain;
 	CHandle<CTeamTrainWatcher> m_hBlueDefendTrain;
+
+	CHandle<CTFBotRoster> m_hRedBotRoster;
+	CHandle<CTFBotRoster> m_hBlueBotRoster;
 
 	CUtlVector<EHANDLE> m_hAmmoEntities;
 	CUtlVector<EHANDLE> m_hHealthEntities;

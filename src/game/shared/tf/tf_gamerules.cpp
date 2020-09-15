@@ -58,6 +58,7 @@
 	#include "entity_wheelofdoom.h"
 	#include "player_vs_environment/merasmus.h"
 	#include "player_vs_environment/ghost.h"
+	#include "map_entities/tf_bot_roster.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1788,6 +1789,9 @@ void CTFGameRules::Activate()
 	m_hRedDefendTrain = NULL;
 	m_hBlueDefendTrain = NULL;
 
+	m_hBlueBotRoster = NULL;
+	m_hRedBotRoster = NULL;
+
 	CMedievalLogic *pMedieval = dynamic_cast<CMedievalLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval" ) );
 	if ( pMedieval )
 	{
@@ -1884,6 +1888,29 @@ void CTFGameRules::Activate()
 	if ( pHolidayEntity )
 	{
 		m_nMapHolidayType = pHolidayEntity->GetHolidayType();
+	}
+
+	CTFBotRoster *pRoster = dynamic_cast<CTFBotRoster *>( gEntList.FindEntityByClassname( NULL, "bot_roster" ) );
+	while ( pRoster )
+	{
+		if ( FStrEq( pRoster->GetTeamName(), "blue" ) )
+		{
+			m_hBlueBotRoster = pRoster;
+		}
+		else if ( FStrEq( pRoster->GetTeamName(), "red" ) )
+		{
+			m_hRedBotRoster = pRoster;
+		}
+		else
+		{
+			if ( !m_hBlueBotRoster )
+				m_hBlueBotRoster = pRoster;
+
+			if ( !m_hRedBotRoster )
+				m_hRedBotRoster = pRoster;
+		}
+
+		pRoster = dynamic_cast<CTFBotRoster *>( gEntList.FindEntityByClassname( pRoster, "bot_roster" ) );
 	}
 
 	CreateSoldierStatue();
@@ -2007,7 +2034,24 @@ bool CTFGameRules::CanPlayerChooseClass( CBasePlayer *pPlayer, int iDesiredClass
 //-----------------------------------------------------------------------------
 bool CTFGameRules::CanBotChooseClass( CBasePlayer *pBot, int iDesiredClassIndex )
 {
-	// TODO: Implement CTFBotRoster entity
+	switch ( pBot->GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+		{
+			if ( m_hRedBotRoster && !m_hRedBotRoster->IsClassAllowed( iDesiredClassIndex ) )
+				return false;
+
+			break;
+		}
+		case TF_TEAM_BLUE:
+		{
+			if ( m_hBlueBotRoster && !m_hBlueBotRoster->IsClassAllowed( iDesiredClassIndex ) )
+				return false;
+
+			break;
+		}
+	}
+
 	return CanPlayerChooseClass( pBot, iDesiredClassIndex );
 }
 
@@ -2023,7 +2067,24 @@ bool CTFGameRules::CanBotChangeClass( CBasePlayer *pBot )
 	if ( IsMannVsMachineMode() || IsInVSHMode() )
 		return false;
 
-	// TODO: Implement CTFBotRoster entity
+	switch ( pPlayer->GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+		{
+			if ( m_hRedBotRoster && !m_hRedBotRoster->IsClassChangeAllowed() )
+				return false;
+
+			break;
+		}
+		case TF_TEAM_BLUE:
+		{
+			if ( m_hBlueBotRoster && !m_hBlueBotRoster->IsClassChangeAllowed() )
+				return false;
+
+			break;
+		}
+	}
+
 	return true;
 }
 
