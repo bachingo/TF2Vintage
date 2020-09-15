@@ -697,7 +697,7 @@ void CTFNavMesh::ComputeIncursionDistances()
 	}
 
 	// Update RED incursion distance based on BLU's distance
-	float flMaxDistance = 0.0f;
+	/*float flMaxDistance = 0.0f;
 	for ( int i=0; i<TheNavAreas.Count(); ++i )
 	{
 		CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
@@ -710,7 +710,7 @@ void CTFNavMesh::ComputeIncursionDistances()
 		float flIncursionDist = area->GetIncursionDistance( TF_TEAM_BLUE );
 		if ( flIncursionDist >= 0.0f )
 			area->SetIncursionDistance( TF_TEAM_RED, ( flMaxDistance - flIncursionDist ) );
-	}
+	}*/
 }
 
 void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )

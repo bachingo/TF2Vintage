@@ -346,9 +346,6 @@ void CTFBot::PhysicsSimulate( void )
 {
 	BaseClass::PhysicsSimulate();
 
-	if ( m_HomeArea == nullptr )
-		m_HomeArea = GetLastKnownArea();
-
 	TeamFortress_SetSpeed();
 
 	if ( m_pSquad && ( m_pSquad->GetMemberCount() <= 1 || !m_pSquad->GetLeader() ) )
