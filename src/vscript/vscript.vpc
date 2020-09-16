@@ -14,9 +14,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	"$BASE;..\public\vscript;$SRCDIR\thirdparty\SQUIRREL2\include;$SRCDIR\thirdparty\SQUIRREL2\squirrel;$SRCDIR\thirdparty\SQUIRREL2\sqplus;$SRCDIR\thirdparty\lua-5.1.1"
-		$PreprocessorDefinitions		"$BASE;_CRT_SECURE_NO_WARNINGS"
-		$WarningLevel					"Level 3 (/W3)"
-		$TreatWarningsAsErrors			"No (/WX-)"
+		$PreprocessorDefinitions		"$BASE;VSCRIPT_DLL_EXPORT"
 	}
 }
 
