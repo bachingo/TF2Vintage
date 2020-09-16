@@ -26,6 +26,21 @@
 		{
 			"type"	"ignore"
 		}
+
+		"$TargetCopies"
+		{
+			"type"	"ignore"
+		}
+
+		"$BuildMultiArch"
+		{
+			"type"	"ignore"
+		}
+
+		"$BuildX64Only"
+		{
+			"type"	"ignore"
+		}
 	
 		"$InheritedProjectPropertySheets"
 		{
@@ -678,7 +693,7 @@
 			"type"	"bool"
 		}
 						
-		"$OmitDefaultLibraryName"
+		"$OmitDefaultLibName"
 		{
 			"type"		"bool"
 			"legacy"	"$OmitDefaultLibraryNames"
@@ -814,6 +829,16 @@
 		}
 
 		"$GCC_ExtraLinkerFlags"
+		{
+			"type"	"ignore"
+		}
+		
+		"$GCC_CustomVersionScript"
+		{
+			"type"	"ignore"
+		}
+
+		"$LinkAsBundle"
 		{
 			"type"	"ignore"
 		}
@@ -1239,7 +1264,6 @@
 		"$NoEntryPoint"
 		{
 			"type"		"bool"
-			"output"	"ResourceOnlyDLL"
 		}
 		
 		"$SetChecksum"
@@ -1268,10 +1292,9 @@
 			}
 		}
 		
-		"$DataExecutionPrevention(DEP)"
+		"$DataExecutionPrevention"
 		{
 			"type"	"bool"
-			"alias"	"DataExecutionPrevention"
 		}
 		
 		"$TurnOffAssemblyGeneration"
@@ -1832,7 +1855,7 @@
 
 		"$AdditionalDependencies"
 		{
-			"type"	"string"
+			"type"		"string"
 			"output"	"AdditionalInputs"
 		}
 		
