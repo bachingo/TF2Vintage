@@ -722,7 +722,15 @@ exception_restore:
 			{
 			case _OP_LINE:
 				if(type(_debughook) != OT_NULL && _rawval(_debughook) != _rawval(ci->_closure))
+				{
+					g_bDebugBreak = false;
 					CallDebugHook(_SC('l'),arg1);
+					if (g_bDebugBreak)
+					{
+						sq_throwerror(this, "terminated by debugger");
+						SQ_THROW();
+					}
+				}
 				continue;
 			case _OP_LOAD: TARGET = ci->_literals[arg1]; continue;
 			case _OP_LOADINT: TARGET = (SQInteger)arg1; continue;

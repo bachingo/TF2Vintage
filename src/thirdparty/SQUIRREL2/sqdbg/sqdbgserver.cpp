@@ -1,9 +1,12 @@
+#include "tier0/threadtools.h"
+
 #include <squirrel.h>
 #include <assert.h>
 #include <sqstdblob.h>
-#define _HAS_EXCEPTIONS 0
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
+
+#include "memdbgon.h"
 
 
 #ifndef _UNICODE
@@ -204,7 +207,7 @@ bool SQDbgServer::ReadMsg()
 void SQDbgServer::BusyWait()
 {
 	while( !ReadMsg() )
-		Sleep(0);
+		ThreadSleep(0);
 }
 
 void SQDbgServer::SendChunk(const SQChar *chunk)
@@ -227,7 +230,7 @@ void SQDbgServer::Terminated()
 {
 	BeginElement(_SC("terminated"));
 	EndElement(_SC("terminated"));
-	::Sleep(200);
+	ThreadSleep(200);
 }
 
 void SQDbgServer::Hook(int type,int line,const SQChar *src,const SQChar *func)
@@ -463,8 +466,11 @@ void SQDbgServer::BreakExecution()
 	_state=eDBG_Suspended;
 	while(_state==eDBG_Suspended){
 		if(SQ_FAILED(sq_rdbg_update(this)))
-			exit(0);
-		Sleep(10);
+		{
+			g_bDebugBreak = true;
+			return;
+		}
+		ThreadSleep(10);
 	}
 }
 

@@ -4,6 +4,8 @@
 //
 // $NoKeywords: $
 //=============================================================================
+#define MEM_OVERRIDE_ON
+#include "tier0/memdbgoff.h"
 
 #include "platform.h"
 #include "tier1.h"
@@ -456,6 +458,15 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 			pReturn->m_type = FIELD_VOID;
 
 		return SCRIPT_ERROR;
+	}
+
+	if ( m_pDbgServer )
+	{
+		if ( g_bDebugBreak )
+		{
+			DisconnectDebugger();
+			g_bDebugBreak = false;
+		}
 	}
 
 	HSQOBJECT *pClosure = (HSQOBJECT *)hFunction;
