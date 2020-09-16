@@ -30,10 +30,10 @@ const SQChar *IntToString(int n)
 	return temp;
 }
 
-int debug_hook(HSQUIRRELVM v);
-int error_handler(HSQUIRRELVM v);
+SQInteger debug_hook(HSQUIRRELVM v);
+SQInteger error_handler(HSQUIRRELVM v);
 
-int beginelement(HSQUIRRELVM v)
+SQInteger beginelement(HSQUIRRELVM v)
 {
 	SQUserPointer up;
 	const SQChar *name;
@@ -45,7 +45,7 @@ int beginelement(HSQUIRRELVM v)
 	return 0;
 }
 
-int endelement(HSQUIRRELVM v)
+SQInteger endelement(HSQUIRRELVM v)
 {
 	SQUserPointer up;
 	const SQChar *name;
@@ -57,7 +57,7 @@ int endelement(HSQUIRRELVM v)
 	return 0;
 }
 
-int attribute(HSQUIRRELVM v)
+SQInteger attribute(HSQUIRRELVM v)
 {
 	SQUserPointer up;
 	const SQChar *name,*value;
@@ -105,10 +105,15 @@ SQDbgServer::SQDbgServer(HSQUIRRELVM v)
 	_endpoint = INVALID_SOCKET;
 	_maxrecursion = 10;
 	sq_resetobject(&_debugroot);
+	sq_resetobject(&_serializefunc);
 }
 
 SQDbgServer::~SQDbgServer()
 {
+	sq_pushnull(_v);
+	sq_setdebughook(_v);
+	sq_pushnull(_v);
+	sq_seterrorhandler(_v);
 	sq_release(_v,&_debugroot);
 	if(_accept != INVALID_SOCKET)
 		sqdbg_closesocket(_accept);
@@ -167,6 +172,27 @@ bool SQDbgServer::Init()
 
 	//sets the error handlers
 	SetErrorHandlers();
+	return true;
+}
+
+bool SQDbgServer::IsConnected() const
+{
+	if ( _endpoint == INVALID_SOCKET )
+		return false;
+
+	FD_SET fdSet{};
+	FD_SET( _endpoint, &fdSet );
+
+	timeval timeout{};
+	timerclear( &timeout );
+
+	SOCKET sock = select( 0, &fdSet, NULL, NULL, &timeout );
+	if ( sock == INVALID_SOCKET )
+	{
+		DevMsg("Script debugger disconnected\n");
+		return false;
+	}
+
 	return true;
 }
 

@@ -11,7 +11,6 @@
 #define _SQ_PLUS_H_
 
 #include <stdlib.h>
-#include <assert.h>
 
 #define _HAS_EXCEPTIONS 0
 
@@ -21,8 +20,6 @@
   #include <malloc.h>
 #endif
 #include <memory.h>
-#include <memory>
-#include <limits.h>  // For INT_MAX on GCC
 
 #include "squirrel.h"   // Include to get SQUNICODE setting from here
 #ifndef _SC
@@ -88,6 +85,8 @@
   typedef int BOOL;
   typedef int INT;
   typedef float FLOAT;
+  #undef FALSE
+  #undef TRUE
   #define TRUE 1
   #define FALSE 0
 #endif

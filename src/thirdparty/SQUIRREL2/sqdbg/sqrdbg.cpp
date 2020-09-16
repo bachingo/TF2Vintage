@@ -5,8 +5,8 @@
 #define _HAS_EXCEPTIONS 0
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
-int debug_hook(HSQUIRRELVM v);
-int error_handler(HSQUIRRELVM v);
+SQInteger debug_hook(HSQUIRRELVM v);
+SQInteger error_handler(HSQUIRRELVM v);
 
 #include "serialize_state.inl"
 

@@ -4,9 +4,12 @@
 #define MAX_BP_PATH 512
 #define MAX_MSG_LEN 2049
 
+#undef type
 #include <set>
 #include <string>
 #include <vector>
+#define type sq_type
+
 /*
 	see copyright notice in sqrdbg.h
 */

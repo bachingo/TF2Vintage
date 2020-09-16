@@ -31,6 +31,11 @@ to the following restrictions:
 #ifndef _SQUIRREL_H_
 #define _SQUIRREL_H_
 
+#if defined(VSCRIPT_DLL_EXPORT)
+#include "dbg.h"
+#define printf	DevMsg
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -449,6 +454,9 @@ SQUIRREL_API void sq_setdebughook(HSQUIRRELVM v);
 
 #define SQ_FAILED(res) (res<0)
 #define SQ_SUCCEEDED(res) (res>=0)
+
+
+static bool g_bDebugBreak = false;
 
 #ifdef __cplusplus
 } /*extern "C"*/

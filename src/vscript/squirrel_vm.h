@@ -5,9 +5,6 @@
 #pragma once
 #endif
 
-
-#include "ivscript.h"
-
 extern IScriptVM *CreateSquirrelVM( void );
 
 

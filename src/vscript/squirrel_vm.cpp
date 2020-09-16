@@ -4,35 +4,40 @@
 //
 // $NoKeywords: $
 //=============================================================================
-#include "sqpcheader.h"
 
+#include "platform.h"
 #include "tier1.h"
 #include "utlvector.h"
 #include "utlhash.h"
 #include "utlbuffer.h"
 #include "fmtstr.h"
 
+#include "ivscript.h"
 #include "vscript_init_nut.h"
-#include "sq_vector.h"
 
+#ifdef _HAS_EXCEPTIONS
+#undef _HAS_EXCEPTIONS
+#endif
+
+#include "squirrel.h"
+#include "sqrdbg.h"
+#include "sqstdstring.h"
+#include "sqstdmath.h"
+#include "sqstdaux.h"
+#include "sqplus.h"
+#include "sqobject.h"
+#include "sqstate.h"
 #include "sqvm.h"
-#include "squirrel_vm.h"
 #include "sqtable.h"
 #include "sqclosure.h"
 #include "sqfuncproto.h"
 #include "sqclass.h"
 #include "sqstring.h"
 #include "squtils.h"
-#include "sqstdstring.h"
-#include "sqstdmath.h"
-#include "sqstdaux.h"
-
-#include "sq_vmstate.h"
-
-#include "sqrdbg.h"
 #include "sqdbgserver.h"
 
-#include "SquirrelObject.h"
+#include "sq_vector.h"
+#include "sq_vmstate.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -998,14 +1003,13 @@ void CSquirrelVM::ConvertToVariant( SQObject const &pValue, ScriptVariant_t *pVa
 			sq_pushobject( GetVM(), pObject );
 
 			SQUserPointer pInstance = NULL;
-			SQRESULT nResult = sq_getinstanceup( GetVM(), -1, &pInstance, (SQUserPointer)VECTOR_TYPE_TAG );
+			SQRESULT nResult = sq_getinstanceup( GetVM(), -1, &pInstance, VECTOR_TYPE_TAG );
 
 			sq_poptop( GetVM() );
 
 			if ( nResult == SQ_OK )
 			{
-				Vector *pVector = new Vector;
-				*pVariant = pVector;
+				*pVariant = new Vector( *(Vector *)pInstance );
 				pVariant->m_flags |= SV_FREE;
 
 				break;
@@ -1083,12 +1087,12 @@ void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiat
 				Vector *pVector = new Vector;
 				*pVector = pVariant;
 
-				sq_setinstanceup( GetVM(), -1, &pVector );
+				sq_setinstanceup( GetVM(), -1, (SQUserPointer)pVector );
 				sq_setreleasehook( GetVM(), -1, &VectorRelease );
 			}
 			else
 			{
-				sq_setinstanceup( GetVM(), -1, pVariant );
+				sq_setinstanceup( GetVM(), -1, (SQUserPointer)pVariant.m_pVector );
 			}
 
 			sq_remove( GetVM(), -2 );
@@ -1686,27 +1690,6 @@ HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bR
 	return pObject;
 }
 
-
-bool SQDbgServer::IsConnected() const
-{
-	if ( _endpoint == INVALID_SOCKET )
-		return false;
-
-	FD_SET fdSet{};
-	FD_SET( _endpoint, &fdSet );
-
-	timeval timeout{};
-	timerclear( &timeout );
-
-	SOCKET sock = select( 0, &fdSet, NULL, NULL, &timeout );
-	if ( sock == INVALID_SOCKET )
-	{
-		DevMsg("Script debugger disconnected\n");
-		return false;
-	}
-
-	return true;
-}
 
 
 IScriptVM *CreateSquirrelVM( void )
