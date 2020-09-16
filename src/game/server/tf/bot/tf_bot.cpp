@@ -720,7 +720,7 @@ bool CTFBot::IsNearPoint( CTeamControlPoint *point ) const
 		if ( !cpArea )
 			return false;
 
-		return abs( myArea->GetIncursionDistance( GetTeamNumber() ) - cpArea->GetIncursionDistance( GetTeamNumber() ) ) < tf_bot_near_point_travel_distance.GetFloat();
+		return fabs( myArea->GetIncursionDistance( GetTeamNumber() ) - cpArea->GetIncursionDistance( GetTeamNumber() ) ) < tf_bot_near_point_travel_distance.GetFloat();
 	}
 
 	return false;
@@ -1359,7 +1359,7 @@ bool CTFBot::ShouldFireCompressionBlast( void )
 			Vector vecVel = pEnt->GetAbsVelocity();
 			vecVel.NormalizeInPlace();
 
-			if ( vecVel.Dot( vecFwd.Normalized() ) <= abs( tf_bot_pyro_deflect_tolerance.GetFloat() ) )
+			if ( vecVel.Dot( vecFwd.Normalized() ) <= fabs( tf_bot_pyro_deflect_tolerance.GetFloat() ) )
 			{
 				if ( GetVisionInterface()->IsLineOfSightClear( pEnt->WorldSpaceCenter() ) )
 					return true;
@@ -2472,7 +2472,7 @@ void CTFBot::ManageRandomWeapons( void )
 		if ( pItem )
 		{
 			char szItemDefIndex[16];
-			itoa( pItem->GetItemDefIndex(), szItemDefIndex, sizeof szItemDefIndex );
+			_itoa_s( pItem->GetItemDefIndex(), szItemDefIndex, 10 );
 
 			float flChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "drop_chance" );
 			if ( ( flChance * 0.1f ) <= RandomFloat() )

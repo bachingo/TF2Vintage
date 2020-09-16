@@ -54,9 +54,9 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 		const Vector vecMins( 0, 0, StepHeight );
 
 		Vector vecStart, vecEnd, vecMaxs, vecTest;
-		if ( abs( nwCorner.z - neCorner.z ) >= 1.0f )
+		if ( fabs( nwCorner.z - neCorner.z ) >= 1.0f )
 		{
-			if ( abs( seCorner.z - swCorner.z ) >= 1.0f )
+			if ( fabs( seCorner.z - swCorner.z ) >= 1.0f )
 			{
 				vecTest = seCorner;
 				vecMaxs.x = 1.0f;

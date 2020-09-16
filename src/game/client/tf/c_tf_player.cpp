@@ -1661,7 +1661,7 @@ public:
 			}
 
 			// We have to do some more calc here instead of in materialvars.
-			flResult = 1.0 - abs( flTempResult - 1.0 );
+			flResult = 1.0 - fabs( flTempResult - 1.0 );
 		}
 
 		m_pResult->SetFloatValue( flResult );
