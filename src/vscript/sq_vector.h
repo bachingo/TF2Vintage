@@ -21,6 +21,7 @@ SQInteger VectorIterate( HSQUIRRELVM pVM );
 SQInteger VectorAdd( HSQUIRRELVM pVM );
 SQInteger VectorSubtract( HSQUIRRELVM pVM );
 SQInteger VectorMultiply( HSQUIRRELVM pVM );
+SQInteger VectorDivide( HSQUIRRELVM pVM );
 SQInteger VectorToKeyValue( HSQUIRRELVM pVM );
 SQInteger VectorLength( HSQUIRRELVM pVM );
 SQInteger VectorLengthSqr( HSQUIRRELVM pVM );

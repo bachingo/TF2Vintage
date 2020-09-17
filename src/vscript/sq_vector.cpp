@@ -49,6 +49,7 @@ static SQRegFunction g_VectorFuncs[] ={
 	{MM_ADD, 					VectorAdd,			2,		0},
 	{MM_SUB,					VectorSubtract,		2,		0},
 	{MM_MUL,					VectorMultiply,		2,		0},
+	{MM_DIV,					VectorDivide,		2,		0},
 	{_SC( "Length" ),			VectorLength				},
 	{_SC( "LengthSqr" ),		VectorLengthSqr				},
 	{_SC( "Length2D" ),			VectorLength2D				},
@@ -285,14 +286,26 @@ SQInteger VectorSubtract( HSQUIRRELVM pVM )
 
 SQInteger VectorMultiply( HSQUIRRELVM pVM )
 {
-	StackHandler hndl( pVM );
-	Vector vector = GetVectorByValue( pVM, 1 );
-
-	const float flScale = hndl.GetFloat( 2 );
+	Vector LHS = GetVectorByValue( pVM, 1 );
+	Vector RHS = GetVectorByValue( pVM, 2 );
 
 	// Create a new vector so we can keep the values of the other
 	Vector *pNewVector = new Vector;
-	*pNewVector = vector * flScale;
+	*pNewVector = LHS * RHS;
+
+	sq_pushvector( pVM, pNewVector );
+
+	return 1;
+}
+
+SQInteger VectorDivide( HSQUIRRELVM pVM )
+{
+	Vector LHS = GetVectorByValue( pVM, 1 );
+	Vector RHS = GetVectorByValue( pVM, 2 );
+
+	// Create a new vector so we can keep the values of the other
+	Vector *pNewVector = new Vector;
+	*pNewVector = LHS / RHS;
 
 	sq_pushvector( pVM, pNewVector );
 
