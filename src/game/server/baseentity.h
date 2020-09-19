@@ -452,6 +452,7 @@ public:
 	void					SetNavIgnore( float duration = FLT_MAX );
 	void					ClearNavIgnore();
 	bool					IsNavIgnored() const;
+	virtual bool			ShouldBlockNav() const { return true; }
 
 	// Is the entity floating?
 	bool					IsFloating();
@@ -1878,6 +1879,18 @@ public:
 	
 	static bool s_bAbsQueriesValid;
 
+	// Call this when hierarchy is not completely set up (such as during Restore) to throw asserts
+	// when people call GetAbsAnything. 
+	static inline void SetAbsQueriesValid( bool bValid )
+	{
+		s_bAbsQueriesValid = bValid;
+	}
+
+	static inline bool IsAbsQueriesValid()
+	{
+		return s_bAbsQueriesValid;
+	}
+
 	// VSCRIPT
 	HSCRIPT GetScriptInstance( void );
 	bool ValidateScriptScope( void );
@@ -1900,10 +1913,8 @@ public:
 	void ScriptSetAngles( float fPitch, float fYaw, float fRoll ) { QAngle angles( fPitch, fYaw, fRoll ); Teleport( NULL, &angles, NULL ); }
 	void ScriptSetAnglesVector( const Vector &v ) { QAngle angles( VectorExpand( v ) ); Teleport( NULL, &angles, NULL ); }
 	const Vector &ScriptGetAngles( void ) { static Vector vec; QAngle qa = GetAbsAngles(); vec.x = qa.x; vec.y = qa.y; vec.z = qa.z; return vec; }
-	// BenLubar
 	void ScriptSetLocalAngles( float fPitch, float fYaw, float fRoll ) { QAngle angles( fPitch, fYaw, fRoll ); SetLocalAngles( angles ); }
-	const Vector &ScriptGetLocalAngles() { static Vector vec; QAngle qa = GetLocalAngles(); vec.x = qa.x; vec.y = qa.y; vec.z = qa.z; return vec; }
-	//
+	const Vector &ScriptGetLocalAngles( void ) { static Vector vec; QAngle qa = GetLocalAngles(); vec.x = qa.x; vec.y = qa.y; vec.z = qa.z; return vec; }
 
 	void ScriptSetSize( const Vector &mins, const Vector &maxs ) { UTIL_SetSize( this, mins, maxs ); }
 	void ScriptUtilRemove( void ) { UTIL_Remove( this ); }
@@ -1922,20 +1933,6 @@ public:
 	HSCRIPT			m_hScriptInstance;
 	string_t		m_iszScriptId;
 	CScriptKeyValues *m_pScriptModelKeyValues;
-
-	// Call this when hierarchy is not completely set up (such as during Restore) to throw asserts
-	// when people call GetAbsAnything. 
-	static inline void SetAbsQueriesValid( bool bValid )
-	{
-		s_bAbsQueriesValid = bValid;
-	}
-	
-	static inline bool IsAbsQueriesValid()
-	{
-		return s_bAbsQueriesValid;
-	}
-
-	virtual bool ShouldBlockNav() const { return true; }
 };
 
 // Send tables exposed in this module.
