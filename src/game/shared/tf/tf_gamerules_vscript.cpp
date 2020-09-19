@@ -111,7 +111,7 @@ static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szNam
 		float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( value, pEntity, strAttributeClass, NULL );
 
 		if ( value.m_type == FIELD_INTEGER )
-			value = (int)flResult;
+			value = RoundFloatToInt( flResult );
 		else if ( value.m_type == FIELD_FLOAT )
 			value = flResult;
 	}
@@ -119,14 +119,6 @@ static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szNam
 	return value;
 }
 
-class CTFGameRulesScope : 
-	public CScriptScopeT<CDefScriptScopeBase>
-{
-public:
-
-	DEFINE_SCRIPT_PROXY_1V( RegisterWep );
-	DEFINE_SCRIPT_PROXY_1V( RegisterEnt );
-};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -147,24 +139,20 @@ void CTFGameRules::RegisterScriptFunctions( void )
 	char const *path = g_pFullFileSystem->FindFirst( root, &fh );
 	while ( path )
 	{
-		CTFGameRulesScope hTable{};
+		CScriptScope hTable{};
 		if ( g_pFullFileSystem->FindIsDirectory( fh ) && path[0] != '.' )
 			break;
 
 		HSCRIPT hScript = VScriptCompileScript( path, true );
 
-		char const *className = Q_strrchr( path, CORRECT_PATH_SEPARATOR );
+		char *className = Q_strrchr( path, CORRECT_PATH_SEPARATOR );
+		V_StripExtension( className, className, V_strlen( className ) );
 		if ( hTable.Init( className ) )
 		{
 			if ( hTable.Run( hScript ) == SCRIPT_ERROR )
 			{
 				Warning( "Error running script named %s\n", className );
-				Assert( "Error running script" );
-			}
-
-			if ( hTable.RegisterEnt( className ) || hTable.RegisterWep( className ) )
-			{
-				DevMsg( "Registering new entity {%s} for creation.", className );
+				AssertMsg( 0, "Error running script" );
 			}
 		}
 		else
