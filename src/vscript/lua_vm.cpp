@@ -663,9 +663,21 @@ void CLuaVM::ConvertToVariant( int nIndex, lua_State *L, ScriptVariant_t *pVaria
 
 			break;
 		}
+		case LUA_TUSERDATA:
+		{
+			if ( lua_tovec3( L, nIndex ) )
+			{
+				*pVariant = new Vector( *lua_tovec3( L, nIndex ) );
+				pVariant->m_flags |= SV_FREE;
+
+				return;
+			}
+
+			// fall through
+		}
 		default:
 		{
-			*pVariant = (HSCRIPT)lua_ref( L, true );
+			*pVariant = (HSCRIPT)luaL_ref( L, nIndex );
 			break;
 		}
 	}
