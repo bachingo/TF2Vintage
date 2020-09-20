@@ -424,6 +424,8 @@ public:
 			GET_BOOL( pItem, pDefinition, is_custom_content );
 			GET_BOOL( pItem, pDefinition, is_cut_content );
 			GET_BOOL( pItem, pDefinition, is_multiclass_item );
+
+			GET_STRING( pItem, pDefinition, item_script );
 			
 			const char *pszDropType = pDefinition->GetString("drop_type");
 			if ( pszDropType[0] )
@@ -825,12 +827,11 @@ CEconSchemaParser g_EconSchemaParser;
 //-----------------------------------------------------------------------------
 // Purpose: constructor
 //-----------------------------------------------------------------------------
-CEconItemSchema::CEconItemSchema()
+CEconItemSchema::CEconItemSchema() :
+	m_Items( DefLessFunc(uint32) ),
+	m_Attributes( DefLessFunc(uint32) ),
+	m_bInited( false )
 {
-	m_Items.SetLessFunc( schemaLessFunc );
-	m_Attributes.SetLessFunc( schemaLessFunc );
-
-	m_bInited = false;
 }
 
 CEconItemSchema::~CEconItemSchema()
@@ -982,7 +983,7 @@ void CEconItemSchema::Precache( void )
 			// Special case for custom_projectile_model attribute.
 			if ( pAttribute == pAttribDef_CustomProjectile )
 			{
-				CBaseEntity::PrecacheModel( attrib.value.sVal->Get() );
+				CBaseEntity::PrecacheModel( attrib.value );
 			}
 		}
 	}

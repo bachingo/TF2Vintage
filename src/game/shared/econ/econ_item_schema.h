@@ -273,6 +273,10 @@ typedef union
 	uint64 *lVal;
 	CAttribute_String *sVal;
 	byte *bVal;
+
+	operator uint64 const &( ) const { return *lVal; }
+	operator CAttribute_String const &( ) const { return *sVal; }
+	operator char const *( ) const { return *sVal; }
 } attrib_data_union_t;
 static_assert( sizeof( attrib_data_union_t ) == 4, "If the size changes you've done something wrong!" );
 
@@ -571,6 +575,13 @@ public:
 
 		return NULL;
 	}
+	char const *GetVScriptName( void ) const
+	{
+		if ( item_script && item_script[0] != '\0' )
+			return item_script;
+
+		return NULL;
+	}
 
 private:
 	char const *name;
@@ -588,6 +599,7 @@ private:
 	char const *image_inventory;
 	char const *equip_region;
 	char const *holiday_restriction;
+	char const *item_script;
 
 	KeyValues *definition;
 
