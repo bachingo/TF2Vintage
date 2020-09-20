@@ -25,7 +25,6 @@ CEconItemDefinition::~CEconItemDefinition()
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
 		pDefinition->type->UnloadEconAttributeValue( &attributes[i].value );
 	}
-	attributes.RemoveAll();
 
 	for ( int team = TEAM_UNASSIGNED; team < TF_TEAM_COUNT; team++ )
 	{
@@ -212,8 +211,11 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter )
 	FOR_EACH_VEC( attributes, i )
 	{
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
+		if ( pDefinition == nullptr )
+			continue;
+
 		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, attributes[i].value ) )
-			return;
+			break;
 	}
 }
 
