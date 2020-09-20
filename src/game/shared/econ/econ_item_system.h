@@ -61,8 +61,8 @@ protected:
 	CUtlDict< EconQuality, unsigned short >			m_Qualities;
 	CUtlDict< EconColor, unsigned short >			m_Colors;
 	CUtlDict< KeyValues *, unsigned short >			m_PrefabsValues;
-	CUtlMap< int, CEconItemDefinition * >			m_Items;
-	CUtlMap< int, CEconAttributeDefinition * >		m_Attributes;
+	CUtlMap< uint32, CEconItemDefinition * >			m_Items;
+	CUtlMap< uint32, CEconAttributeDefinition * >		m_Attributes;
 	CUtlVector< attr_type_t >						m_AttributeTypes;
 
 private:
