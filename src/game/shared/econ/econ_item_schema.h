@@ -261,10 +261,8 @@ static_assert( sizeof( attrib_data_union_t ) == 4, "If the size changes you've d
 
 typedef struct static_attrib_s
 {
-	CEconAttributeDefinition const *GetStaticData( void ) const
-	{
-		return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
-	}
+	CEconAttributeDefinition const *GetStaticData( void ) const;
+	ISchemaAttributeType const *GetAttributeType( void ) const;
 	bool BInitFromKV_SingleLine( KeyValues *const kv );
 	bool BInitFromKV_MultiLine( KeyValues *const kv );
 

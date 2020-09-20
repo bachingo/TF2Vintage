@@ -256,6 +256,24 @@ bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconAttributeDefinition const *static_attrib_s::GetStaticData( void ) const
+{
+	return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+ISchemaAttributeType const *static_attrib_s::GetAttributeType( void ) const
+{
+	CEconAttributeDefinition const *pAttrib = GetStaticData();
+	if ( pAttrib )
+		return pAttrib->type;
+	return nullptr;
+}
 
 
 //-----------------------------------------------------------------------------
