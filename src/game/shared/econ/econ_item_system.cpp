@@ -785,20 +785,18 @@ CEconItemSchema::CEconItemSchema()
 
 CEconItemSchema::~CEconItemSchema()
 {
+	m_Items.PurgeAndDeleteElements();
+	m_Attributes.PurgeAndDeleteElements();
+
 	FOR_EACH_DICT_FAST( m_PrefabsValues, i )
 	{
 		m_PrefabsValues[i]->deleteThis();
 	}
-	m_PrefabsValues.RemoveAll();
 
-	m_Items.PurgeAndDeleteElements();
-	m_Attributes.PurgeAndDeleteElements();
-
-	for ( attr_type_t const &atype : m_AttributeTypes )
+	FOR_EACH_VEC_BACK( m_AttributeTypes, i )
 	{
-		delete atype.pType;
+		delete m_AttributeTypes[i].pType;
 	}
-	m_AttributeTypes.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------

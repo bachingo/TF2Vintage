@@ -625,11 +625,13 @@ void CAttributeList::IterateAttributes( IEconAttributeIterator *iter ) const
 	FOR_EACH_VEC( m_Attributes, i )
 	{
 		CEconAttributeDefinition const *pDefinition = m_Attributes[i].GetStaticData();
+		if ( pDefinition == nullptr )
+			continue;
+
 		attrib_data_union_t value;
 		value.flVal = m_Attributes[i].m_flValue;
-
 		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, value ) )
-			return;
+			break;
 	}
 }
 
