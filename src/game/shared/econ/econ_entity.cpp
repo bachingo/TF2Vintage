@@ -309,6 +309,7 @@ void C_EconEntity::SetMaterialOverride( int iTeam, CMaterialReference &material 
 //-----------------------------------------------------------------------------
 void CEconEntity::UpdateModelToClass( void )
 {
+#if defined(TF_DLL) || defined(TF_VINTAGE)
 	MDLCACHE_CRITICAL_SECTION();
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
@@ -316,6 +317,7 @@ void CEconEntity::UpdateModelToClass( void )
 		return;
 
 
+#endif
 }
 
 //-----------------------------------------------------------------------------

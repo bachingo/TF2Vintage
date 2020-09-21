@@ -601,7 +601,20 @@ public:
 
 		for ( KeyValues *pVisualData = pData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
 		{
-			if ( !V_stricmp( pVisualData->GetName(), "player_bodygroups" ) )
+			if ( !V_stricmp( pVisualData->GetName(), "use_visualsblock_as_base" ) )
+			{
+				const char *pszBlockTeamName = pVisualData->GetString();
+				int iTeam = GetTeamVisualsFromString( pszBlockTeamName );
+				if ( iTeam != -1 )
+				{
+					*pVisuals = *pItem->GetVisuals( iTeam );
+				}
+				else
+				{
+					Error( "Unknown visuals block: %s", pszBlockTeamName );
+				}
+			}
+			else if ( !V_stricmp( pVisualData->GetName(), "player_bodygroups" ) )
 			{
 				GET_VALUES_FAST_BOOL( pVisuals->player_bodygroups, pVisualData );
 			}
@@ -645,7 +658,6 @@ public:
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "playback_activity" ) )
 			{
-				GET_VALUES_FAST_STRING( pVisuals->playback_activity, pVisualData );
 				for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
 				{
 					int iPlaybackType = UTIL_StringFieldToInt( pKeyData->GetName(), g_WearableAnimTypeStrings, NUM_WEARABLEANIM_TYPES );

@@ -22,11 +22,6 @@
 #include "c_tf_viewmodeladdon.h"
 #endif
 
-struct wearableanimplayback_t
-{
-	int iStub;
-};
-
 //-----------------------------------------------------------------------------
 // Purpose: BaseCombatWeapon is derived from this in live tf2.
 //-----------------------------------------------------------------------------
