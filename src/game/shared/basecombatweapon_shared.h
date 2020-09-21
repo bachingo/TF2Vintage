@@ -542,7 +542,7 @@ public:
 
 	virtual void			GetWeaponCrosshairScale( float &flScale ) { flScale = 1.f; }
 
-#if !defined USES_ECON_ITEMS
+#if !defined( USES_ECON_ITEMS ) && !defined( TF_VINTAGE_CLIENT )
 	// Viewmodel overriding
 	virtual bool			ViewModel_IsTransparent( void ) { return IsTransparent(); }
 	virtual bool			ViewModel_IsUsingFBTexture( void ) { return UsesPowerOfTwoFrameBufferTexture(); }
