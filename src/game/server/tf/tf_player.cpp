@@ -1817,7 +1817,7 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->WeaponRegenerate();
 
 			// player_bodygroups
-			pWeapon->UpdatePlayerBodygroups();
+			pWeapon->UpdatePlayerBodygroups( TURN_ON_BODYGROUPS );
 
 			// Extra wearables
 			const char *iszModel = pWeapon->GetExtraWearableModel();

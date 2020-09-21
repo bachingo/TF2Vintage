@@ -863,7 +863,7 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWeaponBase::UpdatePlayerBodygroups( bool bOnOff )
+void CTFWeaponBase::UpdatePlayerBodygroups( int bOnOff )
 {
 	if ( GetItem()->GetStaticData() && ( !GetItem()->GetStaticData()->hide_bodygroups_deployed_only || m_iState == WEAPON_IS_ACTIVE ) )
 	{

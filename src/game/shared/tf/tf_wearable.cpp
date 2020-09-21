@@ -65,7 +65,7 @@ void CTFWearable::UpdateModelToClass( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWearable::UpdatePlayerBodygroups( bool bOnOff )
+void CTFWearable::UpdatePlayerBodygroups( int bOnOff )
 {
 	BaseClass::UpdatePlayerBodygroups( bOnOff );
 	if ( m_bDisguiseWearable )
