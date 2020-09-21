@@ -123,7 +123,42 @@ bool C_EconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origi
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool C_EconEntity::IsOverridingViewmodel( void ) const
+bool C_EconEntity::IsTransparent( void )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( pPlayer )
+		return pPlayer->IsTransparent();
+
+	return BaseClass::IsTransparent();
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::ViewModel_IsTransparent( void )
+{
+	if ( m_hAttachmentParent && m_hAttachmentParent->IsTransparent() )
+		return true;
+	
+	return IsTransparent();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::ViewModel_IsUsingFBTexture( void )
+{
+	if ( m_hAttachmentParent && m_hAttachmentParent->UsesPowerOfTwoFrameBufferTexture() )
+		return true;
+	
+	return UsesPowerOfTwoFrameBufferTexture();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::IsOverridingViewmodel( void )
 {
 	if ( GetMaterialOverride( GetTeamNumber() ) )
 		return true;
@@ -143,6 +178,54 @@ bool C_EconEntity::IsOverridingViewmodel( void ) const
 		return true;
 
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int C_EconEntity::DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flags )
+{
+	int nRetval = 0;
+	bool bHadOverride = false, bAttachToHands = false;;
+	const int iTeam = GetTeamNumber();
+
+	CEconItemDefinition *pItem = GetItem()->GetStaticData();
+	if ( pItem )
+		bAttachToHands = pItem->attach_to_hands == VMTYPE_TF2 || pItem->attach_to_hands_vm_only == VMTYPE_TF2;
+
+	if ( m_hAttachmentParent && m_hAttachmentParent->IsTransparent() )
+		nRetval = pViewmodel->DrawOverriddenViewmodel( flags );
+
+	if ( flags & STUDIO_RENDER )
+	{
+		bHadOverride = GetMaterialOverride( iTeam ) != NULL;
+		if ( bHadOverride )
+		{
+			modelrender->ForcedMaterialOverride( GetMaterialOverride( iTeam ) );
+			// 0x200 is OR'd into flags here
+		}
+
+		if ( m_hAttachmentParent )
+		{
+			m_hAttachmentParent->RemoveEffects( EF_NODRAW );
+			m_hAttachmentParent->DrawModel( flags );
+			m_hAttachmentParent->AddEffects( EF_NODRAW );
+		}
+
+		if ( bAttachToHands && bHadOverride )
+		{
+			modelrender->ForcedMaterialOverride( NULL );
+			bHadOverride = false;
+		}
+	}
+
+	if ( !m_hAttachmentParent || !m_hAttachmentParent->IsTransparent() )
+		nRetval = pViewmodel->DrawOverriddenViewmodel( flags );
+
+	if ( bHadOverride )
+		modelrender->ForcedMaterialOverride( NULL );
+
+	return nRetval;
 }
 
 //-----------------------------------------------------------------------------
@@ -481,6 +564,8 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 {
 	if ( pAnimating && pEconEntity && pInfo )
 	{
+		// a check for pInfo->flags & 0x200 goes here
+
 		for ( int i=0; i<pEconEntity->m_Attachments.Count(); ++i )
 		{
 			if ( pEconEntity->m_Attachments[i].model && ( pEconEntity->m_Attachments[i].modeltype & iModelType ) )

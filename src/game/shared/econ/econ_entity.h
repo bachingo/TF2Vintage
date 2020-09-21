@@ -39,13 +39,21 @@ public:
 	virtual void OnDataChanged( DataUpdateType_t );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 	virtual bool OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options );
-	virtual bool IsOverridingViewmodel( void ) const;
+	virtual bool IsTransparent( void );
+
+	// Viewmodel overriding
+	virtual bool ViewModel_IsTransparent( void );
+	virtual bool ViewModel_IsUsingFBTexture( void );
+	virtual bool IsOverridingViewmodel( void );
+	virtual int	DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flags );
+	virtual void ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
 
 	C_ViewmodelAttachmentModel *GetViewmodelAddon( void ) const;
 
 	virtual int InternalDrawModel( int flags );
 	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
-	virtual void ViewModelAttachmentBlending( CStudioHdr *hdr, Vector pos[], Quaternion q[], float currentTime, int boneMask );
+
+	bool WantsToOverrideViewmodelAttachments( void ) { return GetViewmodelAddon() != NULL; }
 	virtual bool GetAttachment( char const *pszName, Vector &absOrigin ) { return BaseClass::GetAttachment( pszName, absOrigin ); }
 	virtual bool GetAttachment( char const *pszName, Vector &absOrigin, QAngle &absAngles ) { return BaseClass::GetAttachment( pszName, absOrigin, absAngles ); }
 	virtual bool GetAttachment( int iAttachment, Vector &absOrigin );

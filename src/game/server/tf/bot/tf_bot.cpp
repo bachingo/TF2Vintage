@@ -2804,7 +2804,7 @@ void CTFBotItemSchema::PostInit()
 			{
 				char const *pszName = pSubKey->GetName();
 				
-				CUtlVector<char *> indexTokens, rangeTokens;
+				CUtlStringList indexTokens, rangeTokens;
 				V_SplitString( pszName, ",", indexTokens );
 
 				for( int i=0; i < indexTokens.Count(); ++i )
