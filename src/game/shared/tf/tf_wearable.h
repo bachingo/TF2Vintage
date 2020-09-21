@@ -23,8 +23,6 @@ public:
 	DECLARE_CLASS( CTFWearable, CEconWearable );
 	DECLARE_NETWORKCLASS();
 
-	virtual bool	IsViewModelWearable( void ) const { return false; }
-
 #ifdef GAME_DLL
 	virtual void	Equip( CBasePlayer *pPlayer );
 	void			UpdateModelToClass( void );

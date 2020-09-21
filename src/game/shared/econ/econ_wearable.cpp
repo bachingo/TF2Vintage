@@ -178,13 +178,27 @@ void CEconWearable::Equip( CBasePlayer *pPlayer )
 {
 	if ( pPlayer )
 	{
-		FollowEntity( pPlayer, true );
+		SetAbsVelocity( vec3_origin );
+
+		CBaseEntity *pToFollow = pPlayer;
+		if ( IsViewModelWearable() )
+			pToFollow = pPlayer->GetViewModel();
+
+		FollowEntity( pToFollow, true );
+
+		SetTouch( NULL );
 		SetOwnerEntity( pPlayer );
 		ChangeTeam( pPlayer->GetTeamNumber() );
 
 		// Extra wearables don't provide attribute bonuses
 		if ( !IsExtraWearable() )
 			ReapplyProvision();
+
+	#ifdef GAME_DLL
+		UpdateModelToClass();
+		UpdatePlayerBodygroups();
+		PlayAnimForPlaybackEvent( WEARABLEANIM_EQUIP );
+	#endif
 	}
 }
 
@@ -192,6 +206,10 @@ void CEconWearable::UnEquip( CBasePlayer *pPlayer )
 {
 	if ( pPlayer )
 	{
+	#ifdef GAME_DLL
+		UpdatePlayerBodygroups();
+	#endif
+
 		StopFollowingEntity();
 
 		SetOwnerEntity( NULL );

@@ -7535,7 +7535,7 @@ void CBasePlayer::RemoveDisguiseWearable( CEconWearable *pItem )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-/*void CBasePlayer::PlayWearableAnimsForPlaybackEvent( wearableanimplayback_t iPlayback )
+void CBasePlayer::PlayWearableAnimsForPlaybackEvent( wearableanimplayback_t iPlayback )
 {
 	// Tell all our wearables to play their animations
 	FOR_EACH_VEC( m_hMyWearables, i )
@@ -7545,7 +7545,7 @@ void CBasePlayer::RemoveDisguiseWearable( CEconWearable *pItem )
 			m_hMyWearables[i]->PlayAnimForPlaybackEvent( iPlayback );
 		}
 	}
-}*/ //Commented until we get wearableanimplayback_t -danielmm8888
+}
 
 #endif  // USES_ECON_ITEMS
 

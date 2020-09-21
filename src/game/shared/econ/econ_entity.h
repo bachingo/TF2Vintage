@@ -76,8 +76,6 @@ public:
 
 	virtual int TranslateViewmodelHandActivity( int iActivity ) { return iActivity; }
 
-	virtual void PlayAnimForPlaybackEvent(wearableanimplayback_t iPlayback) {};
-
 	void SetItem( CEconItemView const &pItem );
 	CEconItemView *GetItem() { return m_AttributeManager.GetItem(); }
 	CEconItemView const *GetItem() const { return m_AttributeManager.GetItem(); }
@@ -95,6 +93,7 @@ public:
 
 #ifdef GAME_DLL
 	void UpdateModelToClass( void );
+	void PlayAnimForPlaybackEvent( wearableanimplayback_t iPlayback );
 #endif
 
 	virtual void UpdatePlayerBodygroups( void );

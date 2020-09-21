@@ -10,6 +10,7 @@
 #include "datacache/imdlcache.h"
 
 #ifdef GAME_DLL
+#include "activitylist.h"
 #include "tf_player.h"
 #else
 #include "c_tf_player.h"
@@ -317,6 +318,47 @@ void CEconEntity::UpdateModelToClass( void )
 
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconEntity::PlayAnimForPlaybackEvent( wearableanimplayback_t iPlayback )
+{
+	CBasePlayer *pOwner = ToBasePlayer( GetOwnerEntity() );
+	if ( pOwner == nullptr )
+		return;
+
+	CEconItemDefinition *pDefinition = GetItem()->GetStaticData();
+	if ( pDefinition == NULL )
+		return;
+
+	int iTeamNum = pOwner->GetTeamNumber();
+	PerTeamVisuals_t *pVisuals = pDefinition->GetVisuals( iTeamNum );
+	if ( pVisuals == NULL )
+		return;
+
+	const int nNumActs = pVisuals->playback_activity.Count();
+	for ( int i=0; i < nNumActs; ++i )
+	{
+		activity_on_wearable_t *pActivity = &pVisuals->playback_activity[i];
+		if ( pActivity->playback != iPlayback || !pActivity->activity_name || !pActivity->activity_name[0] )
+			continue;
+
+		if ( pActivity->activity == kActivityLookup_Unknown )
+			pActivity->activity = ActivityList_IndexForName( pActivity->activity_name );
+
+		const int nSequence = SelectWeightedSequence( (Activity)pActivity->activity );
+		if ( nSequence != -1 )
+		{
+			ResetSequence( nSequence );
+			SetCycle( 0 );
+
+			if ( IsUsingClientSideAnimation() )
+				ResetClientsideFrame();
+
+			break;
+		}
+	}
+}
 #endif
 
 //-----------------------------------------------------------------------------

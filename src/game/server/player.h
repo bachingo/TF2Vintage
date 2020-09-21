@@ -628,7 +628,7 @@ public:
 	virtual void			RemoveWearable( CEconWearable *pItem );
 	virtual void			EquipDisguiseWearable( CEconWearable *pItem );
 	virtual void			RemoveDisguiseWearable( CEconWearable *pItem );
-	//void					PlayWearableAnimsForPlaybackEvent( wearableanimplayback_t iPlayback ); Commented until we get wearableanimplayback_t -danielmm8888
+	void					PlayWearableAnimsForPlaybackEvent( wearableanimplayback_t iPlayback );
 #endif
 
 public:

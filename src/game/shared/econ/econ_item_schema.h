@@ -240,6 +240,23 @@ public:
 	friend class CEconSchemaParser;
 };
 
+typedef enum
+{
+	WEARABLEANIM_EQUIP,
+	WEARABLEANIM_STARTBUILDING,
+	WEARABLEANIM_STOPBUILDING,
+	WEARABLEANIM_STARTTAUNTING,
+	WEARABLEANIM_STOPTAUNTING,
+	NUM_WEARABLEANIM_TYPES
+} wearableanimplayback_t;
+
+typedef struct
+{
+	wearableanimplayback_t playback;
+	int activity;
+	char const *activity_name;
+} activity_on_wearable_t;
+
 // Attached Models
 #define AM_WORLDMODEL	(1 << 0)
 #define AM_VIEWMODEL	(1 << 1)
@@ -318,7 +335,7 @@ typedef struct EconPerTeamVisuals
 {
 	EconPerTeamVisuals()
 	{
-		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
+		animation_replacement.SetLessFunc( DefLessFunc( int ) );
 		V_memset( &aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
 		V_memset( &aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
@@ -330,8 +347,6 @@ typedef struct EconPerTeamVisuals
 	}
 	~EconPerTeamVisuals()
 	{
-		playback_activity.PurgeAndDeleteElements();
-		misc_info.PurgeAndDeleteElements();
 		styles.PurgeAndDeleteElements();
 	}
 
@@ -380,6 +395,8 @@ typedef struct EconPerTeamVisuals
 		return NULL;
 	}
 
+	void operator=( EconPerTeamVisuals const &src );
+
 private:
 	char const *aCustomWeaponSounds[ MAX_CUSTOM_WEAPON_SOUNDS ];
 	char const *aWeaponSounds[ NUM_SHOOT_SOUND_TYPES ];
@@ -389,14 +406,13 @@ private:
 	char const *material_override;
 
 public:
-	CUtlDict< bool, unsigned short > player_bodygroups;
+	CUtlMap< const char*, int > player_bodygroups;
 	CUtlMap< int, int > animation_replacement;
 	int skin;
 	int use_per_class_bodygroups;
-	CUtlDict< const char*, unsigned short > playback_activity;
-	CUtlDict< const char*, unsigned short > misc_info;
+	CUtlVector< activity_on_wearable_t > playback_activity;
 	CUtlVector< AttachedModel_t > attached_models;
-	CUtlDict< ItemStyle_t*, unsigned short > styles;
+	CUtlVector< ItemStyle_t* > styles;
 
 	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
