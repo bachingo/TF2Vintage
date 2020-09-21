@@ -120,15 +120,6 @@ const char *g_LoadoutDropTypes[] =
 	"break",
 };
 
-const char *g_TeamVisualSections[5] = 
-{
-	"visuals",		// TF_TEAM_UNASSIGNED. Visual changes applied to both teams.
-	NULL,			// TF_TEAM_SPECTATOR. Unused.
-	"visuals_red",	// TF_TEAM_RED
-	"visuals_blu",	// TF_TEAM_BLUE
-	"visuals_mvm_boss",	// Hack to override things in MvM at a general level
-};
-
 int GetTeamVisualsFromString( const char *pszString )
 {
 	for ( int i = 0; i < ARRAYSIZE( g_TeamVisualSections ); i++ )

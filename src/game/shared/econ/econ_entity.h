@@ -102,7 +102,7 @@ public:
 	void PlayAnimForPlaybackEvent( wearableanimplayback_t iPlayback );
 #endif
 
-	virtual void UpdatePlayerBodygroups( bool bOnOff );
+	virtual void UpdatePlayerBodygroups( int bOnOff );
 
 	virtual void UpdateOnRemove( void );
 

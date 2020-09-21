@@ -2865,7 +2865,7 @@ void C_BasePlayer::UpdateWearables( void )
 			pItem->ValidateModelIndex();
 			pItem->UpdateVisibility();
 			pItem->CreateShadow();
-			pItem->UpdatePlayerBodygroups();
+			pItem->UpdatePlayerBodygroups( true );
 		}
 	}
 }
@@ -2885,7 +2885,7 @@ void C_BasePlayer::UpdateDisguiseWearables( void )
 			pItem->ValidateModelIndex();
 			pItem->UpdateVisibility();
 			pItem->CreateShadow();
-			pItem->UpdatePlayerBodygroups();
+			pItem->UpdatePlayerBodygroups( true );
 		}
 	}
 }

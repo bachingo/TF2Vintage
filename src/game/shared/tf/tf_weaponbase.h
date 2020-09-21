@@ -234,7 +234,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Accessor for bodygroup switching
 	virtual void SwitchBodyGroups( void ) {}
 
-	virtual void UpdatePlayerBodygroups( bool bOnOff );
+	virtual void UpdatePlayerBodygroups( int bOnOff );
 
 	// Sound.
 	bool PlayEmptySound();

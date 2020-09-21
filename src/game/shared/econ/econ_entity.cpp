@@ -513,7 +513,7 @@ void CEconEntity::InitializeAttributes( void )
 //-----------------------------------------------------------------------------
 // Purpose: Update visible bodygroups
 //-----------------------------------------------------------------------------
-void CEconEntity::UpdatePlayerBodygroups( bool bOnOff )
+void CEconEntity::UpdatePlayerBodygroups( int bOnOff )
 {
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
 	if ( !pPlayer )
