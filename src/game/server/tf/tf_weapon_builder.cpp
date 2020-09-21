@@ -153,6 +153,8 @@ bool CTFWeaponBuilder::Deploy( void )
 			// We just pressed attack2, don't immediately rotate it.
 			m_bInAttack2 = true;
 		}
+
+		pPlayer->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STARTBUILDING );
 	}
 
 	return bDeploy;
@@ -210,6 +212,8 @@ bool CTFWeaponBuilder::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 	// Make sure hauling status is cleared.
 	pOwner->m_Shared.SetCarriedObject( NULL );
+
+	pOwner->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STOPBUILDING );
 
 	return BaseClass::Holster(pSwitchingTo);
 }

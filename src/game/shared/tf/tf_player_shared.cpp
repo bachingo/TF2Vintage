@@ -1972,6 +1972,10 @@ void CTFPlayerShared::OnAddTaunting(void)
 		// cancel any reload in progress.
 		pWpn->AbortReload();
 	}
+
+#ifdef GAME_DLL
+	m_pOuter->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STARTTAUNTING );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1981,6 +1985,7 @@ void CTFPlayerShared::OnRemoveTaunting(void)
 {
 #ifdef GAME_DLL
 	m_pOuter->ClearTauntAttack();
+	m_pOuter->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STOPTAUNTING );
 #endif
 }
 
@@ -3750,8 +3755,7 @@ void CTFPlayerShared::RemoveDisguise(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::CalculateDisguiseWearables(void)
 {
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
-
+#if defined( GAME_DLL )
 	// Remove our current disguise wearables.
 	for (int i = 0; i < m_pOuter->GetNumDisguiseWearables(); i++)
 	{
@@ -3761,6 +3765,7 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 
 		m_pOuter->RemoveDisguiseWearable(pWearable);
 	}
+#endif
 	
 	// Purge all of our disguise bodygroups.
 	SetDisguiseBodygroups(0);
@@ -3771,6 +3776,7 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 		CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 		if (pDisguiseTarget)
 		{
+#if defined( GAME_DLL )
 			// Get the wearables that they have.
 			for (int i = 0; i < pDisguiseTarget->GetNumWearables(); i++)
 			{
@@ -3782,13 +3788,12 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 				m_pOuter->EquipDisguiseWearable(pWearable);
 				
 			}
-		}
-		
-		// Update the disguise bodygroups as well.
-		SetDisguiseBodygroups(pDisguiseTarget->m_Shared.GetWearableBodygroups());
-	}
-	
 #endif
+
+			// Update the disguise bodygroups as well.
+			SetDisguiseBodygroups(pDisguiseTarget->m_Shared.GetWearableBodygroups());
+		}
+	}
 }
 
 

@@ -19,6 +19,15 @@ const char *g_TeamVisualSections[TF_TEAM_COUNT] =
 	//"visuals_mvm_boss"	// ???
 };
 
+const char *g_WearableAnimTypeStrings[NUM_WEARABLEANIM_TYPES] =
+{
+	"on_spawn",			// WAP_ON_SPAWN,
+	"start_building",	// WAP_START_BUILDING,
+	"stop_building",	// WAP_STOP_BUILDING,
+	"start_taunting",		// WAP_START_TAUNTING,
+	"stop_taunting",	// WAP_STOP_TAUNTING,
+};
+
 const char *g_AttributeDescriptionFormats[] =
 {
 	"value_is_percentage",
@@ -110,6 +119,26 @@ const char *g_LoadoutDropTypes[] =
 	"drop",
 	"break",
 };
+
+const char *g_TeamVisualSections[5] = 
+{
+	"visuals",		// TF_TEAM_UNASSIGNED. Visual changes applied to both teams.
+	NULL,			// TF_TEAM_SPECTATOR. Unused.
+	"visuals_red",	// TF_TEAM_RED
+	"visuals_blu",	// TF_TEAM_BLUE
+	"visuals_mvm_boss",	// Hack to override things in MvM at a general level
+};
+
+int GetTeamVisualsFromString( const char *pszString )
+{
+	for ( int i = 0; i < ARRAYSIZE( g_TeamVisualSections ); i++ )
+	{
+		// There's a NULL hidden in g_TeamVisualSections
+		if ( g_TeamVisualSections[i] && !V_stricmp( pszString, g_TeamVisualSections[i] ) )
+			return i;
+	}
+	return -1;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: for the UtlMap
@@ -617,6 +646,19 @@ public:
 			else if ( !V_stricmp( pVisualData->GetName(), "playback_activity" ) )
 			{
 				GET_VALUES_FAST_STRING( pVisuals->playback_activity, pVisualData );
+				for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
+				{
+					int iPlaybackType = UTIL_StringFieldToInt( pKeyData->GetName(), g_WearableAnimTypeStrings, NUM_WEARABLEANIM_TYPES );
+					if ( iPlaybackType != -1 )
+					{
+						activity_on_wearable_t activity;
+						activity.playback = (wearableanimplayback_t)iPlaybackType;
+						activity.activity = kActivityLookup_Unknown;
+						activity.activity_name = pKeyData->GetString();
+
+						pVisuals->playback_activity.AddToTail( activity );
+					}
+				}
 			}
 			else if ( !V_strnicmp( pVisualData->GetName(), "custom_sound", 12 ) )
 			{
@@ -642,16 +684,7 @@ public:
 			{
 				for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
 				{
-					ItemStyle_t *style;
-					IF_ELEMENT_FOUND( pVisuals->styles, pStyleData->GetName() )
-					{
-						style = pVisuals->styles.Element( index );
-					}
-					else
-					{
-						style = new ItemStyle_t;
-						pVisuals->styles.Insert( pStyleData->GetName(), style );
-					}
+					ItemStyle_t *style = new ItemStyle_t;
 
 					GET_STRING( style, pStyleData, name );
 					GET_STRING( style, pStyleData, model_player );
@@ -667,6 +700,8 @@ public:
 							GET_VALUES_FAST_STRING( style->model_player_per_class, pStyleModelData );
 						}
 					}
+
+					pVisuals->styles.AddToTail( style );
 				}
 			}
 			else if ( !V_stricmp( pVisualData->GetName(), "skin" ) )
@@ -680,10 +715,6 @@ public:
 			else if ( !V_stricmp( pVisualData->GetName(), "material_override" ) )
 			{
 				pVisuals->material_override = pVisualData->GetString();
-			}
-			else
-			{
-				GET_VALUES_FAST_STRING( pVisuals->misc_info, pVisualData );
 			}
 		}
 

@@ -333,3 +333,32 @@ CAttribute_String &CAttribute_String::operator=( char const *src )
 
 	return *this;
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void EconPerTeamVisuals::operator=( EconPerTeamVisuals const &src )
+{
+	DeepCopyMap( src.animation_replacement, &animation_replacement );
+	DeepCopyMap( src.player_bodygroups, &player_bodygroups );
+
+	playback_activity.Purge();
+	playback_activity = src.playback_activity;
+
+	attached_models.Purge();
+	attached_models = src.attached_models;
+
+	styles.PurgeAndDeleteElements();
+	styles = src.styles;
+
+	skin = src.skin;
+	use_per_class_bodygroups = src.use_per_class_bodygroups;
+
+	Q_memcpy( &custom_particlesystem, src.custom_particlesystem, sizeof(char *) );
+	Q_memcpy( &muzzle_flash, src.muzzle_flash, sizeof(char *) );
+	Q_memcpy( &tracer_effect, src.tracer_effect, sizeof(char *) );
+	Q_memcpy( &material_override, src.material_override, sizeof(char *) );
+	Q_memcpy( &aCustomWeaponSounds, src.aCustomWeaponSounds, sizeof( aCustomWeaponSounds ) );
+	Q_memcpy( &aWeaponSounds, src.aWeaponSounds, sizeof( aWeaponSounds ) );
+}
