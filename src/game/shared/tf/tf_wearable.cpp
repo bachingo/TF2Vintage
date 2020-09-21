@@ -65,6 +65,44 @@ void CTFWearable::UpdateModelToClass( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFWearable::UpdatePlayerBodygroups( bool bOnOff )
+{
+	BaseClass::UpdatePlayerBodygroups( bOnOff );
+	if ( m_bDisguiseWearable )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+		if ( !pOwner )
+			return;
+
+		CEconItemDefinition *pStatic = GetItem()->GetStaticData();
+		if ( !pStatic )
+			return;
+
+		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
+		if ( !pVisuals )
+			return;
+
+		CTFPlayer *pDisguiseTarget = ToTFPlayer( pOwner->m_Shared.GetDisguiseTarget() );
+		if ( !pDisguiseTarget )
+			return;
+
+		int iDisguiseBody = pOwner->m_Shared.GetDisguiseBody();
+		for ( int i = 0; i < pDisguiseTarget->GetNumBodyGroups(); i++ )
+		{
+			unsigned int nIndex = pVisuals->player_bodygroups.Find( pDisguiseTarget->GetBodygroupName( i ) );
+			if ( !pVisuals->player_bodygroups.IsValidIndex( nIndex ) )
+				continue;
+
+			::SetBodygroup( pDisguiseTarget->GetModelPtr(), iDisguiseBody, i, bOnOff );
+		}
+
+		pOwner->m_Shared.SetDisguiseBody( iDisguiseBody );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWearable::Break( void )
 {
 	CPVSFilter filter( GetAbsOrigin() );

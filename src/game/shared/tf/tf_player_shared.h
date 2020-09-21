@@ -181,8 +181,10 @@ public:
 	int		AddDisguiseHealth( int iHealthToAdd, bool bOverheal = false, float flOverhealAmount = 1.0f );
 	int		GetDisguiseMaxHealth( void );
 	int		GetDisguiseMaxBuffedHealth( void );
+	int		GetDisguiseBody( void )				{ return m_iDisguiseBody; }
+	void	SetDisguiseBody( int body )			{ m_iDisguiseBody = body; }
 
-	CEconItemView *GetDisguiseItem( void )				{ return &m_DisguiseItem; }
+	CEconItemView *GetDisguiseItem( void )		{ return &m_DisguiseItem; }
 	void	RecalcDisguiseWeapon( int iSlot = 0 );
 	void	CalculateDisguiseWearables(void);
 	
@@ -574,6 +576,7 @@ private:
 	CNetworkVar( int, m_iDisguiseTargetIndex );
 	CNetworkVar( int, m_iDisguiseHealth );		// Health to show our enemies in player id
 	CNetworkVar( int, m_iDisguiseMaxHealth );
+	CNetworkVar( int, m_iDisguiseBody );
 	CNetworkVar( float, m_flDisguiseChargeLevel );
 	CNetworkVar( int, m_nDesiredDisguiseClass );
 	CNetworkVar( int, m_nDesiredDisguiseTeam );
