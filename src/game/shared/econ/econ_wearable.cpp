@@ -109,7 +109,7 @@ void CEconWearable::UpdateWearableBodyGroups( CBasePlayer *pPlayer )
 	{
 		for ( unsigned int i = 0; i < pVisuals->player_bodygroups.Count(); i++ )
 		{
-			const char *szBodyGroupName = pVisuals->player_bodygroups.GetElementName(i);
+			const char *szBodyGroupName = pVisuals->player_bodygroups.Key(i);
 
 			if ( szBodyGroupName )
 			{

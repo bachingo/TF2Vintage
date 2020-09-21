@@ -35,10 +35,6 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 {
 	BaseClass::Equip( pPlayer );
 	UpdateModelToClass();
-
-	// player_bodygroups
-	if (!m_bDisguiseWearable)
-		UpdatePlayerBodygroups();
 }
 
 //-----------------------------------------------------------------------------

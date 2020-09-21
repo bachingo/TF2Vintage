@@ -728,6 +728,22 @@ public:
 			{
 				pVisuals->material_override = pVisualData->GetString();
 			}
+			else if ( !V_stricmp( pVisualData->GetName(), "vm_bodygroup_override" ) )
+			{
+				pVisuals->vm_bodygroup_override = pVisualData->GetInt();
+			}
+			else if ( !V_stricmp( pVisualData->GetName(), "vm_bodygroup_state_override" ) )
+			{
+				pVisuals->vm_bodygroup_state_override = pVisualData->GetInt();
+			}
+			else if ( !V_stricmp( pVisualData->GetName(), "wm_bodygroup_override" ) )
+			{
+				pVisuals->wm_bodygroup_override = pVisualData->GetInt();
+			}
+			else if ( !V_stricmp( pVisualData->GetName(), "wm_bodygroup_state_override" ) )
+			{
+				pVisuals->wm_bodygroup_state_override = pVisualData->GetInt();
+			}
 		}
 
 		pItem->visual[ iIndex ] = pVisuals;

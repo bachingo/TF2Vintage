@@ -863,12 +863,12 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWeaponBase::UpdatePlayerBodygroups( void )
+void CTFWeaponBase::UpdatePlayerBodygroups( bool bOnOff )
 {
 	if ( GetItem()->GetStaticData() && ( !GetItem()->GetStaticData()->hide_bodygroups_deployed_only || m_iState == WEAPON_IS_ACTIVE ) )
 	{
 		// Don't call for inactive weapons that hide bodygroups when deployed
-		BaseClass::UpdatePlayerBodygroups();
+		BaseClass::UpdatePlayerBodygroups( bOnOff );
 	}
 }
 
