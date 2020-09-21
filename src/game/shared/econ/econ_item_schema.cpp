@@ -354,6 +354,10 @@ void EconPerTeamVisuals::operator=( EconPerTeamVisuals const &src )
 
 	skin = src.skin;
 	use_per_class_bodygroups = src.use_per_class_bodygroups;
+	vm_bodygroup_override = src.vm_bodygroup_override;
+	vm_bodygroup_state_override = src.vm_bodygroup_state_override;
+	wm_bodygroup_override = src.wm_bodygroup_override;
+	wm_bodygroup_state_override = src.wm_bodygroup_state_override;
 
 	Q_memcpy( &custom_particlesystem, src.custom_particlesystem, sizeof(char *) );
 	Q_memcpy( &muzzle_flash, src.muzzle_flash, sizeof(char *) );

@@ -344,6 +344,10 @@ typedef struct EconPerTeamVisuals
 		CLEAR_STR( material_override );
 		skin = -1;
 		use_per_class_bodygroups = 0;
+		vm_bodygroup_override = -1;
+		vm_bodygroup_state_override = -1;
+		wm_bodygroup_override = -1;
+		wm_bodygroup_state_override = -1;
 	}
 	~EconPerTeamVisuals()
 	{
@@ -408,11 +412,15 @@ private:
 public:
 	CUtlMap< const char*, int > player_bodygroups;
 	CUtlMap< int, int > animation_replacement;
-	int skin;
-	int use_per_class_bodygroups;
 	CUtlVector< activity_on_wearable_t > playback_activity;
 	CUtlVector< AttachedModel_t > attached_models;
 	CUtlVector< ItemStyle_t* > styles;
+	int skin;
+	int use_per_class_bodygroups;
+	int vm_bodygroup_override;
+	int vm_bodygroup_state_override;
+	int wm_bodygroup_override;
+	int wm_bodygroup_state_override;
 
 	friend class CEconItemSchema;
 	friend class CEconSchemaParser;

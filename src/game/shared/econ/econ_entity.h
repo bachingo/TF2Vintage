@@ -22,6 +22,9 @@
 #include "c_tf_viewmodeladdon.h"
 #endif
 
+#define TURN_ON_BODYGROUPS		true
+#define TURN_OFF_BODYGROUPS		false
+
 //-----------------------------------------------------------------------------
 // Purpose: BaseCombatWeapon is derived from this in live tf2.
 //-----------------------------------------------------------------------------
@@ -99,7 +102,7 @@ public:
 	void PlayAnimForPlaybackEvent( wearableanimplayback_t iPlayback );
 #endif
 
-	virtual void UpdatePlayerBodygroups( void );
+	virtual void UpdatePlayerBodygroups( bool bOnOff );
 
 	virtual void UpdateOnRemove( void );
 

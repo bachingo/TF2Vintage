@@ -513,39 +513,49 @@ void CEconEntity::InitializeAttributes( void )
 //-----------------------------------------------------------------------------
 // Purpose: Update visible bodygroups
 //-----------------------------------------------------------------------------
-void CEconEntity::UpdatePlayerBodygroups( void )
+void CEconEntity::UpdatePlayerBodygroups( bool bOnOff )
 {
-	CTFPlayer *pPlayer = dynamic_cast < CTFPlayer * >( GetOwnerEntity() );
-
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
 	if ( !pPlayer )
-	{
 		return;
-	}
 
 	// bodygroup enabling/disabling
 	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
-	if ( pStatic )
+	if ( !pStatic )
+		return;
+
+	PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
+	if ( !pVisuals )
+		return;
+
+	for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
 	{
-		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
-		if ( pVisuals )
-		{
-			for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
-			{
-				unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
-				if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
-				{
-					bool bTrue = pVisuals->player_bodygroups.Element( index );
-					if ( bTrue )
-					{
-						pPlayer->SetBodygroup( i , 1 );
-					}
-					else
-					{
-						pPlayer->SetBodygroup( i , 0 );
-					}
-				}
-			}
-		}
+		unsigned int nIndex = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
+		if ( !pVisuals->player_bodygroups.IsValidIndex( nIndex ) )
+			continue;
+		
+		int nState = pVisuals->player_bodygroups.Element( nIndex );
+		if ( nState != bOnOff )
+			continue;
+
+		pPlayer->SetBodygroup( i, bOnOff );
+	}
+
+	const int iTeamNum = pPlayer->GetTeamNumber();
+	PerTeamVisuals_t *pTeamVisuals = pStatic->GetVisuals( iTeamNum );
+	if ( !pTeamVisuals )
+		return;
+
+	// world model overrides
+	if ( pTeamVisuals->wm_bodygroup_override != -1 && pTeamVisuals->wm_bodygroup_state_override != -1 )
+		pPlayer->SetBodygroup( pTeamVisuals->wm_bodygroup_override, pTeamVisuals->wm_bodygroup_state_override );
+
+	// view model overrides
+	if ( pTeamVisuals->vm_bodygroup_override != -1 && pTeamVisuals->vm_bodygroup_state_override != -1 )
+	{
+		CBaseViewModel *pVM = pPlayer->GetViewModel();
+		if ( pVM && pVM->GetModelPtr() )
+			pVM->SetBodygroup( pTeamVisuals->vm_bodygroup_override, pTeamVisuals->vm_bodygroup_state_override );
 	}
 }
 
