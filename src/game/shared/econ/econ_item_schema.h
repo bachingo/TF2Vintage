@@ -336,6 +336,7 @@ typedef struct EconPerTeamVisuals
 	EconPerTeamVisuals()
 	{
 		animation_replacement.SetLessFunc( DefLessFunc( int ) );
+		player_bodygroups.SetLessFunc( StringLessThan );
 		V_memset( &aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
 		V_memset( &aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
