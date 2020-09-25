@@ -3026,6 +3026,8 @@ BEGIN_ENT_SCRIPTDESC( CBaseCombatWeapon, CBaseAnimating, "Base that all weapons 
 	DEFINE_SCRIPTFUNC( GetDefaultClip2, "" )
 	DEFINE_SCRIPTFUNC( Clip1, "" )
 	DEFINE_SCRIPTFUNC( Clip2, "" )
+	DEFINE_SCRIPTFUNC( GetPrimaryAmmoType, "" )
+	DEFINE_SCRIPTFUNC( GetSecondaryAmmoType, "" )
 #ifdef GAME_DLL
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetClip1, "SetClip1", "" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetClip2, "SetClip2", "" )
