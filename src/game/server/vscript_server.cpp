@@ -23,8 +23,6 @@
 #endif
 
 extern ScriptClassDesc_t *GetScriptDesc( CBaseEntity * );
-/*extern */void RegisterScriptedWeapon( char const *szName ) {}
-/*extern */void RegisterScriptedEntity( char const *szName ) {}
 
 
 //-----------------------------------------------------------------------------
@@ -804,9 +802,6 @@ bool VScriptServerInit()
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PlayerInstanceFromIndex, "PlayerInstanceFromIndex", "Get a script handle of a player using the player index." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetPlayerFromUserID, "GetPlayerFromUserID", "Given a user id, return the entity, or null." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EntIndexToHScript, "EntIndexToHScript", "Returns the script handle for the given entity index." );
-
-				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedEntity, "RegisterEnt", "Register an entity by name that can be created" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, RegisterScriptedWeapon, "RegisterWep", "Register a weapon by name that can be created" );
 
 				
 				if ( GameRules() )
