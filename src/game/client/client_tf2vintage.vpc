@@ -422,6 +422,8 @@ $Project "Client (TF)"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_raygun.h"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_rocketpack.cpp"
 						$File	"$SRCDIR\game\shared\tf\tf_weapon_rocketpack.h"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_grapplinghook.cpp"
+						$File	"$SRCDIR\game\shared\tf\tf_weapon_grapplinghook.h"
 					}
 					$Folder	"Classic Content"
 					{

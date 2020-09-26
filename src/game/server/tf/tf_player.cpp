@@ -474,6 +474,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropInt( SENDINFO( m_nWaterLevel ), 2, SPROP_UNSIGNED ),
 
 	SendPropEHandle( SENDINFO( m_hItem ) ),
+	SendPropEHandle( SENDINFO(m_hGrapplingHookTarget) ),
 
 	SendPropVector( SENDINFO( m_vecPlayerColor ) ),
 

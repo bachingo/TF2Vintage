@@ -262,6 +262,9 @@ public:
 	// Gunslinger
 	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
 
+	C_BaseEntity	*GetGrapplingHookTarget( void ) { return m_hGrapplingHookTarget; }
+	void			SetGrapplingHookTarget( CBaseEntity *pTarget, bool bSomething = false );
+	
 public:
 	// Ragdolls.
 	virtual C_BaseAnimating *BecomeRagdollOnClient();
@@ -395,6 +398,7 @@ public:
 	CNetworkHandle( C_TFItem, m_hItem );
 
 	CNetworkHandle( C_TFWeaponBase, m_hOffHandWeapon );
+	CNetworkHandle( C_BaseEntity, m_hGrapplingHookTarget );
 
 	int				m_iOldPlayerClass;	// Used to detect player class changes
 	bool			m_bIsDisplayingNemesisIcon;

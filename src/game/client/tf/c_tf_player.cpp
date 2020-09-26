@@ -2378,6 +2378,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropDataTable( RECVINFO_DT( m_AttributeManager ), 0, &REFERENCE_RECV_TABLE( DT_AttributeManager ) ),
 	
 	RecvPropEHandle( RECVINFO( m_hItem ) ),
+	RecvPropEHandle( RECVINFO( m_hGrapplingHookTarget ) ),
 
 	RecvPropVector( RECVINFO( m_vecPlayerColor ) ),
 
