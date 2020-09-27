@@ -337,7 +337,7 @@ public:
 
 	virtual Vector			EyePosition( void );			// position of eyes
 	const QAngle&			EyeAngles( void );
-	const Vector&			ScriptEyeAngles( void ) { static QAngle angEyes; angEyes = EyeAngles(); return (Vector &)angEyes; }
+	const Vector&			ScriptEyeAngles( void );
 	void					EyePositionAndVectors( Vector *pPosition, Vector *pForward, Vector *pRight, Vector *pUp );
 	virtual const QAngle&	LocalEyeAngles( void );		// Direction of eyes
 	void					EyeVectors( Vector *pForward, Vector *pRight = NULL, Vector *pUp = NULL );
@@ -348,6 +348,7 @@ public:
 
 	// Sets the view angles
 	void					SnapEyeAngles( const QAngle &viewAngles );
+	void					ScriptSnapEyeAngles( const Vector &viewAngles );
 
 	virtual QAngle			BodyAngles();
 	virtual Vector			BodyTarget( const Vector &posSrc, bool bNoisy);
@@ -608,7 +609,9 @@ public:
 	virtual void 			ModifyOrAppendPlayerCriteria( AI_CriteriaSet& set );
 
 	const QAngle& GetPunchAngle();
+	const Vector& ScriptGetPunchAngle();
 	void SetPunchAngle( const QAngle &punchAngle );
+	void ScriptSetPunchAngle( const Vector &punchAngle );
 
 	virtual void DoMuzzleFlash();
 
@@ -1370,25 +1373,57 @@ inline bool CBasePlayer::IsFiringWeapon( void ) const
 	return m_weaponFiredTimer.HasStarted() && m_weaponFiredTimer.IsLessThen( 1.0f );
 }
 
+inline const Vector &CBasePlayer::ScriptEyeAngles(void)
+{
+	static Vector vecEyes;
+
+	QAngle ang = EyeAngles();
+	vecEyes.Init( ang.x, ang.y, ang.z );
+
+	return vecEyes;
+}
+
+inline void CBasePlayer::ScriptSnapEyeAngles( Vector const &viewAngles )
+{
+	QAngle angles( viewAngles.x, viewAngles.y, viewAngles.z );
+	SnapEyeAngles( angles );
+}
+
 inline const Vector &CBasePlayer::ScriptEyeForward( void )
 {
-	static Vector fwd;
-	EyeVectors( &fwd );
-	return fwd;
+	static Vector vecFwd;
+	EyeVectors( &vecFwd, NULL, NULL );
+	return vecFwd;
 }
 
 inline const Vector &CBasePlayer::ScriptEyeRight( void )
 {
-	static Vector right;
-	EyeVectors( NULL, &right );
-	return right;
+	static Vector vecRight;
+	EyeVectors( NULL, &vecRight, NULL );
+	return vecRight;
 }
 
 inline const Vector &CBasePlayer::ScriptEyeUp( void )
 {
-	static Vector up;
-	EyeVectors( NULL, NULL, &up );
-	return up;
+	static Vector vecUp;
+	EyeVectors( NULL, NULL, &vecUp );
+	return vecUp;
+}
+
+inline const Vector &CBasePlayer::ScriptGetPunchAngle(void)
+{
+	static Vector vecPunch;
+
+	QAngle ang = GetPunchAngle();
+	vecPunch.Init( ang.x, ang.y, ang.z );
+
+	return vecPunch;
+}
+
+inline void CBasePlayer::ScriptSetPunchAngle( Vector const &punchAngles )
+{
+	QAngle angles( punchAngles.x, punchAngles.y, punchAngles.z );
+	SetPunchAngle( angles );
 }
 
 
