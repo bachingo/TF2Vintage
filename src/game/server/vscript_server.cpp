@@ -89,7 +89,7 @@ public:
 	}
 } g_ScriptEntityIterator;
 
-BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptEntityIterator, "CEntities", SCRIPT_SINGLETON "The global list of entities" )
+BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptEntityIterator, "Entities", SCRIPT_SINGLETON "The global list of entities" )
 	DEFINE_SCRIPTFUNC( First, "Begin an iteration over the list of entities" )
 	DEFINE_SCRIPTFUNC( Next, "Continue an iteration over the list of entities, providing reference to a previously found entity" )
 	DEFINE_SCRIPTFUNC( CreateByClassname, "Creates an entity by classname" )
