@@ -1891,7 +1891,9 @@ public:
 		return s_bAbsQueriesValid;
 	}
 
-	// VSCRIPT
+	// ----------------------------------------------------------------------------
+	// VScript accessors
+	// ----------------------------------------------------------------------------
 	HSCRIPT GetScriptInstance( void );
 	bool ValidateScriptScope( void );
 	virtual void RunVScripts( void );
@@ -1903,29 +1905,28 @@ public:
 	HSCRIPT GetScriptScope( void );
 	void RunPrecacheScripts( void );
 	void RunOnPostSpawnScripts( void );
+	HSCRIPT ScriptGetModelKeyValues( void );
 
 	HSCRIPT ScriptGetMoveParent( void );
 	HSCRIPT ScriptGetRootMoveParent( void );
 	HSCRIPT ScriptFirstMoveChild( void );
 	HSCRIPT ScriptNextMovePeer( void );
 
-	const Vector &ScriptEyePosition( void ) { static Vector vec; vec = EyePosition(); return vec; }
-	void ScriptSetAngles( float fPitch, float fYaw, float fRoll ) { QAngle angles( fPitch, fYaw, fRoll ); Teleport( NULL, &angles, NULL ); }
-	void ScriptSetAnglesVector( const Vector &v ) { QAngle angles( VectorExpand( v ) ); Teleport( NULL, &angles, NULL ); }
-	const Vector &ScriptGetAngles( void ) { static Vector vec; QAngle qa = GetAbsAngles(); vec.x = qa.x; vec.y = qa.y; vec.z = qa.z; return vec; }
-	void ScriptSetLocalAngles( float fPitch, float fYaw, float fRoll ) { QAngle angles( fPitch, fYaw, fRoll ); SetLocalAngles( angles ); }
-	const Vector &ScriptGetLocalAngles( void ) { static Vector vec; QAngle qa = GetLocalAngles(); vec.x = qa.x; vec.y = qa.y; vec.z = qa.z; return vec; }
+	const Vector &ScriptEyePosition( void );
+	void ScriptSetAngles( float fPitch, float fYaw, float fRoll );
+	const Vector &ScriptGetAngles( void );
+	void ScriptSetLocalAngles( float fPitch, float fYaw, float fRoll );
+	const Vector &ScriptGetLocalAngles( void );
 
-	void ScriptSetSize( const Vector &mins, const Vector &maxs ) { UTIL_SetSize( this, mins, maxs ); }
-	void ScriptUtilRemove( void ) { UTIL_Remove( this ); }
-	void ScriptSetOwner( HSCRIPT hEntity ) { SetOwnerEntity( ToEnt( hEntity ) ); }
-	void ScriptSetOrigin( const Vector &v ) { Teleport( &v, NULL, NULL ); }
-	void ScriptSetForward( const Vector &v ) { QAngle angles; VectorAngles( v, angles ); Teleport( NULL, &angles, NULL ); }
-	const Vector &ScriptGetForward( void ) { static Vector vecForward; GetVectors( &vecForward, NULL, NULL ); return vecForward; }
-	const Vector &ScriptGetLeft( void ) { static Vector vecLeft; GetVectors( NULL, &vecLeft, NULL ); return vecLeft; }
-	const Vector &ScriptGetUp( void ) { static Vector vecUp; GetVectors( NULL, NULL, &vecUp ); return vecUp; }
+	void ScriptSetSize( const Vector &mins, const Vector &maxs );
+	void ScriptUtilRemove( void );
+	void ScriptSetOwner( HSCRIPT hEntity );
 
-	HSCRIPT ScriptGetModelKeyValues( void );
+	void ScriptSetOrigin( const Vector &v );
+	void ScriptSetForward( const Vector &v );
+	const Vector &ScriptGetForward( void );
+	const Vector &ScriptGetLeft( void );
+	const Vector &ScriptGetUp( void );
 
 	string_t		m_iszVScripts;
 	string_t		m_iszScriptThinkFunction;
@@ -2815,6 +2816,97 @@ inline void CBaseEntity::FireBullets( int cShots, const Vector &vecSrc,
 
 	FireBullets( info );
 }
+
+//-----------------------------------------------------------------------------
+// VScript accessors
+//-----------------------------------------------------------------------------
+inline Vector const &CBaseEntity::ScriptEyePosition( void )
+{
+	static Vector vec;
+	vec = EyePosition();
+	return vec;
+}
+
+inline void CBaseEntity::ScriptSetAngles( float fPitch, float fYaw, float fRoll )
+{
+	QAngle angles( fPitch, fYaw, fRoll );
+	Teleport( NULL, &angles, NULL );
+}
+
+inline Vector const &CBaseEntity::ScriptGetAngles( void )
+{
+	static Vector vecAng;
+
+	QAngle ang = GetAbsAngles();
+	vecAng.Init( ang.x, ang.y, ang.z );
+
+	return vecAng;
+}
+
+inline void CBaseEntity::ScriptSetLocalAngles( float fPitch, float fYaw, float fRoll )
+{
+	QAngle angles( fPitch, fYaw, fRoll );
+	SetLocalAngles( angles );
+}
+
+inline Vector const &CBaseEntity::ScriptGetLocalAngles( void )
+{
+	static Vector vecAng;
+
+	QAngle ang = GetLocalAngles();
+	vecAng.Init( ang.x, ang.y, ang.z );
+
+	return vecAng;
+}
+
+inline void CBaseEntity::ScriptSetSize( Vector const &mins, Vector const &maxs )
+{
+	UTIL_SetSize( this, mins, maxs );
+}
+
+inline void CBaseEntity::ScriptUtilRemove( void )
+{
+	UTIL_Remove( this );
+}
+
+inline void CBaseEntity::ScriptSetOwner( HSCRIPT hEntity )
+{
+	SetOwnerEntity( ToEnt( hEntity ) );
+}
+
+inline void CBaseEntity::ScriptSetOrigin( Vector const &v )
+{
+	Teleport( &v, NULL, NULL );
+}
+
+inline void CBaseEntity::ScriptSetForward( Vector const &v )
+{
+	QAngle a;
+	VectorAngles( v, a );
+	Teleport( NULL, &a, NULL );
+}
+
+inline Vector const &CBaseEntity::ScriptGetForward( void )
+{
+	static Vector vecFwd;
+	GetVectors( &vecFwd, NULL, NULL );
+	return vecFwd;
+}
+
+inline Vector const &CBaseEntity::ScriptGetLeft( void )
+{
+	static Vector vecLeft;
+	GetVectors( NULL, &vecLeft, NULL );
+	return vecLeft;
+}
+
+inline Vector const &CBaseEntity::ScriptGetUp( void )
+{
+	static Vector vecUp;
+	GetVectors( NULL, NULL, &vecUp );
+	return vecUp;
+}
+
 
 // Ugly technique to override base member functions
 // Normally it's illegal to cast a pointer to a member function of a derived class to a pointer to a 

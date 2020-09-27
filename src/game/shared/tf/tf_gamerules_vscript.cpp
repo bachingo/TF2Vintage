@@ -145,8 +145,8 @@ void CTFGameRules::RegisterScriptFunctions( void )
 
 		HSCRIPT hScript = VScriptCompileScript( path, true );
 
-		char *className = Q_strrchr( path, CORRECT_PATH_SEPARATOR );
-		V_StripExtension( className, className, V_strlen( className ) );
+		char className[96];
+		V_FileBase( path, className, sizeof className );
 		if ( hTable.Init( className ) )
 		{
 			if ( hTable.Run( hScript ) == SCRIPT_ERROR )
