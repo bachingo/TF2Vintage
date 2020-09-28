@@ -2039,6 +2039,71 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 #endif
 }
 
+void CBaseEntity::ScriptFireBullets( HSCRIPT hInfo )
+{
+	CScriptScope scope;
+	ScriptVariant_t variant;
+	if ( scope.Init( hInfo ) )
+	{
+		FireBulletsInfo_t info;
+
+		if ( scope.GetValue( "shots", &variant ) )
+		{
+			info.m_iShots = variant;
+		}
+		if ( scope.GetValue( "damage", &variant ) )
+		{
+			info.m_flDamage = variant;
+		}
+		if ( scope.GetValue( "distance", &variant ) )
+		{
+			info.m_flDistance = variant;
+		}
+		if ( scope.GetValue( "ammoType", &variant ) )
+		{
+			info.m_iAmmoType = variant;
+		}
+		if ( scope.GetValue( "tracerFreq", &variant ) )
+		{
+			info.m_iTracerFreq = variant;
+		}
+		if ( scope.GetValue( "damageForceScale", &variant ) )
+		{
+			info.m_flDamageForceScale = variant;
+		}
+		if ( scope.GetValue( "flags", &variant ) )
+		{
+			info.m_nFlags = variant;
+		}
+		if ( scope.GetValue( "source", &variant ) )
+		{
+			info.m_vecSrc = variant;
+			variant.Free();
+		}
+		if ( scope.GetValue( "dir", &variant ) )
+		{
+			info.m_vecDirShooting = variant;
+			variant.Free();
+		}
+		if ( scope.GetValue( "spread", &variant ) )
+		{
+			info.m_vecSpread = variant;
+			variant.Free()
+		}
+		if ( scope.GetValue( "attacker", &variant ) )
+		{
+			info.m_pAttacker = ToEnt( variant );
+			variant.Free();
+		}
+		if ( scope.GetValue( "ignoreEnt", &variant ) )
+		{
+			info.m_pAdditionalIgnoreEnt = ToEnt( variant );
+			variant.Free();
+		}
+
+		FireBullets( info );
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Should we draw bubbles underwater?

@@ -201,6 +201,7 @@ public:
 	
 	// FireBullets uses shared code for prediction.
 	virtual void					FireBullets( const FireBulletsInfo_t &info );
+	void							ScriptFireBullets( HSCRIPT info );
 	virtual void					ModifyFireBulletsDamage( CTakeDamageInfo* dmgInfo ) {}
 	virtual bool					ShouldDrawUnderwaterBulletBubbles();
 	virtual bool					ShouldDrawWaterImpacts( void ) { return true; }

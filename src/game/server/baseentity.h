@@ -1099,6 +1099,7 @@ public:
 	virtual void MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 	virtual int	GetTracerAttachment( void );
 	virtual void FireBullets( const FireBulletsInfo_t &info );
+	void ScriptFireBullets( HSCRIPT info );
 	virtual void DoImpactEffect( trace_t &tr, int nDamageType ); // give shooter a chance to do a custom impact.
 
 	// OLD VERSION! Use the struct version

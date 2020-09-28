@@ -732,6 +732,7 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC_NAMED( GetScriptOwnerEntity, "GetOwner", "Gets this entity's owner" )
 	DEFINE_SCRIPTFUNC_NAMED( SetScriptOwnerEntity, "SetOwner", "Sets this entity's owner" )
 	DEFINE_SCRIPTFUNC( entindex, "" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptFireBullets, "FireBullets", "" )
 END_SCRIPTDESC();
 
 // dynamic models

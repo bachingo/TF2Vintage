@@ -426,6 +426,7 @@ BEGIN_ENT_SCRIPTDESC_ROOT( C_BaseEntity, "Root class of all client-side entities
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetLeft, "GetLeftVector", "Get the left vector of the entity"  )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetUp, "GetUpVector", "Get the up vector of the entity"  )
 	DEFINE_SCRIPTFUNC( GetTeamNumber, "Gets this entity's team" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptFireBullets, "FireBullets", "" )
 END_SCRIPTDESC();
 
 #ifndef NO_ENTITY_PREDICTION
