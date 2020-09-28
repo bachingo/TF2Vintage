@@ -2088,7 +2088,7 @@ void CBaseEntity::ScriptFireBullets( HSCRIPT hInfo )
 		if ( scope.GetValue( "spread", &variant ) )
 		{
 			info.m_vecSpread = variant;
-			variant.Free()
+			variant.Free();
 		}
 		if ( scope.GetValue( "attacker", &variant ) )
 		{
