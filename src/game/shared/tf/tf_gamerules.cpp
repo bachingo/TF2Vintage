@@ -192,7 +192,15 @@ ConVar tf_medieval( "tf_medieval", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable
 					, MedievalModeChanged
 				#endif 
 );
-ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
+ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, ""
+				 #if defined( CLIENT_DLL )
+					 , HalloweenChanged
+				 #endif
+                   );
+ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_fullmoon( "tf_fullmoon", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "");
+//ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
+ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying.", true, 0, true, 1 );
 ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9
 						   #if defined( GAME_DLL )
 							   , ValidateCapturesPerRound
@@ -7527,23 +7535,6 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 //-----------------------------------------------------------------------------
 void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 {
-	// Medieval mode only
-	if ( IsInMedievalMode() && tf_medieval_autorp.GetBool() )
-	{
-		if ( !AutoRP() )
-		{
-			Warning( "AutoRP initialization failed!" );
-			return;
-		}
-
-		AutoRP()->ApplyRPTo( pBuf, iBufSize );
-	}
-	
-#ifdef CLIENT_DLL
-	if ( tf2v_censor_swears.GetBool() )
-		g_BannedWords.CensorBannedWordsInplace( pBuf );
-#endif
-
 	int i = 0;
 	while ( pBuf[i] )
 	{
@@ -7553,6 +7544,17 @@ void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 		}
 		i++;
 	}
+	
+	// Medieval mode only
+	if ( IsInMedievalMode() && tf_medieval_autorp.GetBool() )
+	{
+		AutoRP()->ApplyRPTo( pBuf, iBufSize );
+	}
+	
+#ifdef CLIENT_DLL
+	if ( tf2v_censor_swears.GetBool() )
+		g_BannedWords.CensorBannedWordsInplace( pBuf );
+#endif
 
 }
 
