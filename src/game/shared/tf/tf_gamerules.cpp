@@ -7548,7 +7548,13 @@ void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 	// Medieval mode only
 	if ( IsInMedievalMode() && tf_medieval_autorp.GetBool() )
 	{
-		AutoRP()->ApplyRPTo( pBuf, iBufSize );
+		if (AutoRP())
+			AutoRP()->ApplyRPTo( pBuf, iBufSize );
+		else
+		{
+			Warning( "AutoRP initialization failed!" );
+			return;
+		}
 	}
 	
 #ifdef CLIENT_DLL
