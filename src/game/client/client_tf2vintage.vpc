@@ -221,6 +221,10 @@ $Project "Client (TF)"
 			$File   "tf\c_merasmus_dancer.cpp"
 			$File	"tf\c_merasmus_bomb_effect.cpp"
 			$File	"tf\c_merasmus_bomb_effect.h"
+			$File	"worldlight.cpp"
+			$File	"worldlight.h"
+			$File	"tf\tf_autorp.cpp"
+			$File	"tf\tf_autorp.h"
 
 			$Folder "PvE"
 			{	

@@ -21,6 +21,7 @@
 	#include "c_tf_player.h"
 	#include "c_tf_objective_resource.h"
 	#include "c_user_message_register.h"
+	#include "tf_autorp.h"
 #else
 	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
@@ -7938,16 +7939,16 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 {
 	// Medieval mode only
-	/*if ( !IsInMedievalMode() || !tf_medieval_autorp.GetBool() )
-		return;
-
-	if ( !AutoRP() )
+	if ( IsInMedievalMode() && tf_medieval_autorp.GetBool() )
 	{
-		Warning( "AutoRP initialization failed!" );
-		return;
-	}
+		if ( !AutoRP() )
+		{
+			Warning( "AutoRP initialization failed!" );
+			return;
+		}
 
-	AutoRP()->ApplyRPTo( pBuf, iBufSize );
+		AutoRP()->ApplyRPTo( pBuf, iBufSize );
+	}
 
 	int i = 0;
 	while ( pBuf[i] )
@@ -7957,7 +7958,8 @@ void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 			pBuf[i] = '\'';
 		}
 		i++;
-	}*/
+	}
+
 }
 
 void AddSubKeyNamed( KeyValues *pKeys, const char *pszName )
