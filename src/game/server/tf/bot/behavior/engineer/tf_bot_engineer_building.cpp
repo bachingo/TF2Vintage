@@ -2,6 +2,7 @@
 #include "../../tf_bot.h"
 #include "tf_gamerules.h"
 #include "tf_obj.h"
+#include "tf_obj_sentrygun.h"
 #include "team_control_point.h"
 #include "team_train_watcher.h"
 #include "nav_mesh/tf_nav_mesh.h"
@@ -38,6 +39,7 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::OnStart( CTFBot *me, Action<CTFBot>
 	m_iTries = 5;
 	m_outOfPositionTimer.Invalidate();
 	m_bHadASentry = false;
+	m_bIsOutOfPosition = false;
 	m_iMetalSource = UNKNOWN;
 
 	return Action<CTFBot>::Continue();
@@ -45,7 +47,7 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::OnStart( CTFBot *me, Action<CTFBot>
 
 ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 {
-	CBaseObject *pSentry    = me->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
+	CObjectSentrygun *pSentry = (CObjectSentrygun *)me->GetObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
 	CBaseObject *pDispenser = me->GetObjectOfType( OBJ_DISPENSER, OBJECT_MODE_NONE );
 	CBaseObject *pEntrance  = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_ENTRANCE );
 	CBaseObject *pExit      = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_EXIT );
@@ -76,25 +78,43 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 
 	m_bHadASentry = true;
 
-	if ( !m_hHint )
+	if ( m_hHint && m_hHint->IsDisabled() )
+		m_hHint = NULL;
+
+	if( m_hHint == NULL || !m_hHint->m_isSticky )
 	{
-		// skipping some logic that seems entirely unused
-	}
-	else if ( m_hHint->IsDisabled() )
-	{
-		m_hHint = nullptr;
+		if ( m_outOfPositionTimer.IsElapsed() )
+		{
+			m_outOfPositionTimer.Start( RandomFloat( 3.0f, 5.0f ) );
+			m_bIsOutOfPosition = CheckIfSentryIsOutOfPosition( me );
+		}
+
+		if ( m_bIsOutOfPosition && pSentry->GetTimeSinceLastFired() > 10.0f )
+		{
+			pSentry->DetonateObject();
+
+			if ( m_hHint != NULL )
+			{
+				inputdata_t null;
+				m_hHint->InputDisable( null );
+
+				m_hHint = NULL;
+			}
+
+			me->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_MOVEUP );
+
+			return ChangeTo( new CTFBotEngineerMoveToBuild, "Need to move my gear closer to the point!" );
+		}
 	}
 
-	if ( m_outOfPositionTimer.IsElapsed() )
+	if ( pDispenser )
 	{
-		m_outOfPositionTimer.Start( RandomFloat( 3.0f, 5.0f ) );
-		CheckIfSentryIsOutOfPosition( me );
-	}
-
-	if ( pDispenser && pDispenser->GetAbsOrigin().DistToSqr( pSentry->GetAbsOrigin() ) > Square( 500.0f ) )
-	{
-		pDispenser->DestroyObject();
-		pDispenser = nullptr;
+		const Vector vecBetween = pDispenser->GetAbsOrigin() - pSentry->GetAbsOrigin();
+		if( vecBetween.IsLengthGreaterThan( 500.0 ) )
+		{
+			pDispenser->DestroyObject();
+			pDispenser = nullptr;
+		}
 	}
 
 	if ( pSentry->GetUpgradeLevel() <= 2 )
@@ -437,7 +457,7 @@ void CTFBotEngineerBuilding::UpgradeAndMaintainBuildings( CTFBot *me )
 	if ( flSentryDist < 90.0f && flDispenserDist < 90.0f )
 		me->PressCrouchButton( 0.5f );
 
-	if ( abs( flSentryDist - flDispenserDist ) > 25.0f || flSentryDist > 75.0f || flDispenserDist > 75.0f )
+	if ( fabs( flSentryDist - flDispenserDist ) > 25.0f || flSentryDist > 75.0f || flDispenserDist > 75.0f )
 	{
 		if ( m_recomputePathTimer.IsElapsed() )
 		{

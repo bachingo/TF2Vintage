@@ -248,7 +248,7 @@ public:
 		if ( adjArea->IsBlocked( team ) || travelDistanceSoFar > tf_bot_max_point_defend_range.GetFloat() )
 			return false;
 
-		if ( abs( currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) ) < 65.0f )
+		if ( fabs( currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) ) < 65.0f )
 			return true;
 
 		return false;

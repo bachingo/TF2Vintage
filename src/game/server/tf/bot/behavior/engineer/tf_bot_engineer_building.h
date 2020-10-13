@@ -47,6 +47,7 @@ private:
 	bool m_bHadASentry;
 	int m_iMetalSource;
 	CountdownTimer m_outOfPositionTimer;
+	bool m_bIsOutOfPosition;
 };
 
 #endif
