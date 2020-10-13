@@ -10,6 +10,10 @@
 #ifndef _SQ_PLUS_H_
 #define _SQ_PLUS_H_
 
+#ifndef _HAS_EXCEPTIONS
+#define _HAS_EXCEPTIONS 0
+#endif
+
 #include <stdlib.h>
 #include <assert.h>
 
@@ -86,6 +90,8 @@
   typedef int BOOL;
   typedef int INT;
   typedef float FLOAT;
+  #undef FALSE
+  #undef TRUE
   #define TRUE 1
   #define FALSE 0
 #endif
