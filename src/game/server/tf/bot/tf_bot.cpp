@@ -2636,8 +2636,8 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 
 		for ( int i=0; i < args.ArgC(); ++i )
 		{
-			nSkill = Max( nSkill, NameToDifficulty( args[i] ) );
-			nNumBots = V_atoi( args[i] );
+			int nParsedSkill = NameToDifficulty( args[i] );
+			int nParsedNumBots = V_atoi( args[i] );
 
 			if ( IsPlayerClassName( args[i] ) )
 			{
@@ -2650,6 +2650,14 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 			else if ( !V_stricmp( args[i], "noquota" ) )
 			{
 				bNoQuota = true;
+			}
+			else if ( nParsedSkill != -1 )
+			{
+				nSkill = nParsedSkill;
+			}
+			else if ( nParsedNumBots >= 1 )
+			{
+				nNumBots = nParsedNumBots;
 			}
 			else if ( nNumBots == 1 )
 			{
@@ -2816,7 +2824,7 @@ void CTFBotItemSchema::PostInit()
 						int iMin = atoi( rangeTokens[0] ), iMax = atoi( rangeTokens[1] );
 						if( iMin <= 0 && !FStrEq( "0", rangeTokens[0] ) || iMax <= 0 && !FStrEq( "0", rangeTokens[1] ) || iMin > iMax )
 						{
-							Warning("Error while parsing config file: invalid range of indexes '%s'", indexTokens[i]);
+							Warning("Error while parsing config file: invalid range of indexes '%s'\n", indexTokens[i]);
 							continue;
 						}
 
@@ -2827,7 +2835,7 @@ void CTFBotItemSchema::PostInit()
 
 							KeyValues *pItem = NULL;
 							if ( ( pItem = m_pSchema->FindKey( szIndex ) ) != NULL )
-								Warning( "Duplicate entry found in %s: '%d'", pszConfigName, j );
+								Warning( "Duplicate entry found in %s: '%d'\n", pszConfigName, j );
 							else
 								pItem = m_pSchema->FindKey( szIndex, true );
 
@@ -2864,13 +2872,13 @@ void CTFBotItemSchema::PostInit()
 						int nItemIndex = atoi( indexTokens[i] );
 						if ( nItemIndex <= 0 )
 						{
-							Warning( "Error while parsing %s: invalid item index '%d'", pszConfigName, nItemIndex );
+							Warning( "Error while parsing %s: invalid item index '%d'\n", pszConfigName, nItemIndex );
 							continue;
 						}
 
 						KeyValues *pItem = NULL;
 						if ( ( pItem = m_pSchema->FindKey( indexTokens[i] ) ) != NULL )
-							Warning( "Duplicate entry found in %s: '%d'", pszConfigName, nItemIndex );
+							Warning( "Duplicate entry found in %s: '%d'\n", pszConfigName, nItemIndex );
 						else
 							pItem = m_pSchema->FindKey( indexTokens[i], true );
 
