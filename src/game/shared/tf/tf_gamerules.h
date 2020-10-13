@@ -222,7 +222,7 @@ public:
 	void			RevertSingleConvar( ConVarRef &cvar );
 	void			RevertSavedConvars();
 
-	virtual void	RegisterScriptFunctions( void ) override;
+	virtual void	RegisterScriptFunctions( void ) OVERRIDE;
 
 #ifdef GAME_DLL
 public:
