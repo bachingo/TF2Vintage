@@ -13,8 +13,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define _HAS_EXCEPTIONS 0
-
 #ifdef __APPLE__
   #include <malloc/malloc.h>
 #else

@@ -94,7 +94,7 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 			}
 
 			flTurnRate *= 2.5f;
-			if ( abs( pTFPlayer->m_angPrevEyeAngles.y ) - abs( ucmd->viewangles.y ) > flTurnRate )
+			if ( fabs( pTFPlayer->m_angPrevEyeAngles.y ) - fabs( ucmd->viewangles.y ) > flTurnRate )
 			{
 				if ( ucmd->viewangles.y < pTFPlayer->m_angPrevEyeAngles.y )
 					ucmd->viewangles.y = pTFPlayer->m_angPrevEyeAngles.y - flTurnRate;

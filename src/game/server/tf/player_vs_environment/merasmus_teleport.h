@@ -27,7 +27,7 @@ public:
 	virtual ActionResult<CMerasmus> Update( CMerasmus *me, float dt ) override;
 
 private:
-	const Vector &GetTeleportPosition( CMerasmus *actor );
+	Vector GetTeleportPosition( CMerasmus *actor );
 
 	enum {
 		TELEPORT_OUT,

@@ -3924,7 +3924,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
+Vector CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
 {
 	if ( !weapon )
 		return GetAbsOrigin();
@@ -3940,7 +3940,7 @@ const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *wea
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
+Vector CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
 {
 	float initVel = charge * ( TF_PIPEBOMB_MAX_CHARGE_VEL - TF_PIPEBOMB_MIN_CHARGE_VEL ) + TF_PIPEBOMB_MIN_CHARGE_VEL;
 	CALL_ATTRIB_HOOK_FLOAT( initVel, mult_projectile_range );
@@ -3951,7 +3951,7 @@ const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
+Vector CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
 

@@ -2,7 +2,6 @@
 	see copyright notice in sqrdbg.h
 */
 #include <squirrel.h>
-#define _HAS_EXCEPTIONS 0
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
 int debug_hook(HSQUIRRELVM v);
