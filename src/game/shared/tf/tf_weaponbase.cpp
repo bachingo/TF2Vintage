@@ -49,6 +49,7 @@ extern ConVar tf2v_critchance_rapid;
 extern ConVar tf2v_crit_duration_rapid;
 extern ConVar tf2v_use_shortstop_slowdown;
 extern ConVar tf2v_use_new_beggars;
+extern ConVar tf2v_use_new_axtinguisher;
 
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
@@ -791,6 +792,12 @@ bool CTFWeaponBase::Deploy( void )
 		float flDeployTime = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTime, mult_deploy_time );
 		CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time );
+		
+		
+		if (tf2v_use_new_axtinguisher.GetInt() == 2)
+			CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time_axtinguisher_2 );
+		else if (tf2v_use_new_axtinguisher.GetInt() == 3)
+			CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time_axtinguisher_3 );
 
 		if ( pPlayer->GetLastWeapon() )
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer->GetLastWeapon(), flDeployTime, mult_switch_from_wep_deploy_time );
@@ -2282,34 +2289,6 @@ float CTFWeaponBase::GetEnergyPercentage(void)
 		return 1;
 	
 	return iClipT / 1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Used for coloring in energy weapon effects.
-//-----------------------------------------------------------------------------
-Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-	if ( !pOwner )
-		return Vector(0,0,0);
-	
-	if (pOwner->GetTeamNumber() == TF_TEAM_RED)
-	{
-		if ( bUseAlternateColorPalette )
-			return Vector( 0.72, 0.22, 0.23 );
-		else
-			return Vector( 0.5, 0.18, 0.125 );	
-	}
-	else
-	{
-		if ( !bUseAlternateColorPalette )
-			return Vector( 0.345, 0.52, 0.635 );
-		else
-			return Vector( 0.145, 0.427, 0.55 );
-	}	
-	
-	// You shouldn't come here, at least in standard team mode.
-	return Vector(0,0,0);
 }
 
 

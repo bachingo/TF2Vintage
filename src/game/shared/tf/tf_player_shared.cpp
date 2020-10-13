@@ -106,6 +106,7 @@ ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTI
 ConVar tf2v_allow_spy_sprint( "tf2v_allow_spy_sprint", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to override their disguise speed by holding reload." );
 ConVar tf2v_disguise_speed_match( "tf2v_disguise_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to always move at their disguised class' speed, including faster classes." );
 ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
+ConVar tf2v_use_new_jag( "tf2v_use_new_jag", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Jag to work like the modern version.", true, 0, true, 2 );
 
 
 
@@ -130,6 +131,8 @@ ConVar tf2v_use_new_cloak( "tf2v_use_new_cloak", "0", FCVAR_NOTIFY | FCVAR_REPLI
 ConVar tf2v_use_new_cleaners( "tf2v_use_new_cleaners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps Minicrit on Kill for the CRIKEY meter.", true, 0, true, 1);
 
 ConVar tf2v_use_new_beggars( "tf2v_use_new_beggars", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Deducts ammo from the Beggar's Bazooka when it misfires." );
+
+ConVar tf2v_use_new_axtinguisher("tf2v_use_new_axtinguisher", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Changes the behavior of the Axtinguisher.", true, 0, true, 3);
 
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );

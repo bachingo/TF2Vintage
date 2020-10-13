@@ -46,6 +46,8 @@ ConVar  tf2v_duckjump("tf2v_duckjump", "0", FCVAR_REPLICATED, "Toggles jumping w
 ConVar  tf2v_groundspeed_cap("tf2v_groundspeed_cap", "1", FCVAR_REPLICATED, "Toggles the max speed cap imposed when a player is standing on the ground");
 ConVar  tf2v_use_triple_jump_sound( "tf2v_use_triple_jump_sound", "1", FCVAR_REPLICATED, "Play the post MYM banana slip multijump sound?" );
 
+ConVar  tf2v_disable_updraft( "tf2v_disable_updraft", "1", FCVAR_REPLICATED, "Enables updraft effects when using a parachute on fire." );
+
 #define TF_MAX_SPEED   520
 
 #define TF_WATERJUMP_FORWARD  30
@@ -1605,7 +1607,7 @@ void CTFGameMovement::FullWalkMove()
 		if (TFPlayer->m_Shared.IsParachuting() && ( player->GetGroundEntity() == NULL && !InWater() ) )
 		{
 			int nMaxFallSpeed;
-			if ( TFPlayer->m_Shared.InCond(TF_COND_BURNING) )
+			if ( TFPlayer->m_Shared.InCond(TF_COND_BURNING) && !tf2v_disable_updraft.GetBool() )
 			{
 				// If we're on fire, we updraft from the fire and don't descend at all.
 				nMaxFallSpeed = 0;
