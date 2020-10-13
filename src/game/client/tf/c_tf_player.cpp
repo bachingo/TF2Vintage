@@ -1172,6 +1172,9 @@ bool C_TFRagdoll::IsDecapitation()
 	return false;
 }
 
+extern ConVar g_ragdoll_lvfadespeed;
+extern ConVar g_ragdoll_fadespeed;
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -1317,9 +1320,16 @@ void C_TFRagdoll::ClientThink( void )
 	if ( m_bFadingOut == true )
 	{
 		int iAlpha = GetRenderColor().a;
-		int iFadeSpeed = 600.0f;
+		int iFadeSpeed = (g_RagdollLVManager.IsLowViolence()) ? g_ragdoll_lvfadespeed.GetInt() : g_ragdoll_fadespeed.GetInt();
 
-		iAlpha = Max( iAlpha - (int)( iFadeSpeed * gpGlobals->frametime ), 0 );
+		if (iFadeSpeed < 1)
+		{
+			iAlpha = 0;
+		}
+		else
+		{
+			iAlpha = Max(iAlpha - (iFadeSpeed * gpGlobals->frametime), 0.0f);
+		}
 
 		SetRenderMode( kRenderTransAlpha );
 		SetRenderColorA( iAlpha );
@@ -1339,14 +1349,23 @@ void C_TFRagdoll::ClientThink( void )
 		{
 			m_bFadingOut = true;
 			float flDelay = cl_ragdoll_fade_time.GetFloat() * 0.33f;
-			m_fDeathTime = gpGlobals->curtime + flDelay;
 
 			// If we were just fully healed, remove all decals
 			RemoveAllDecals();
-		}
 
-		StartFadeOut( cl_ragdoll_fade_time.GetFloat() * 0.33f );
-		return;
+			if (flDelay > 0.01f)
+			{
+				m_fDeathTime = gpGlobals->curtime + flDelay;
+				return;
+			}
+			m_fDeathTime = -1;
+		}
+		else
+		{
+			// Fade out after the specified delay.
+			StartFadeOut(cl_ragdoll_fade_time.GetFloat() * 0.33f);
+			return;
+		}
 	}
 
 	if ( m_fDeathTime > gpGlobals->curtime )
@@ -3526,7 +3545,7 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 
 		//pTFWearable->OnWearerDeath();
 
-		if ( pTFWearable->GetDropType() > 1 ) // Fall off or break
+		if ( pTFWearable->GetDropType() > DROPTYPE_NONE ) // Fall off or break
 			continue;
 
 		if ( pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS || 
@@ -4875,8 +4894,8 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 			if ( pTFWearable == nullptr )
 				continue;
 
-			/*if ( pTFWearable->GetDropType() != 2 )
-				continue;*/
+			if ( pTFWearable->GetDropType() != DROPTYPE_DROP )
+				continue;
 
 			/*if ( bDisguised && !pTFWearable->m_bDisguiseWearable ||
 				 !bDisguised && pTFWearable->m_bDisguiseWearable )
@@ -4894,7 +4913,7 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 			if ( pWearable->IsDynamicModelLoading() || !pWearable->GetRootBone( root ) )
 				vecOrigin = pWearable->GetAbsOrigin();
 			else
-				MatrixGetColumn( root, 3, &vecOrigin );
+				MatrixPosition( root, vecOrigin );
 
 			if( IsEntityPositionReasonable( vecOrigin ) )
 			{
