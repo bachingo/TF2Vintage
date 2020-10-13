@@ -33,28 +33,30 @@ typedef struct
 //-----------------------------------------------------------------------------
 class CEconItemSchema
 {
-	friend class CEconSchemaParser;
-	friend class CTFInventory;
+	friend class CEconSchemaParser; friend class CTFInventory;
+	char const *const items_game = "scripts/items/items_game.txt";
 public:
 	CEconItemSchema();
 	~CEconItemSchema();
 
 	bool Init( void );
 	void InitAttributeTypes( void );
+	bool LoadFromFile( void );
+	bool LoadFromBuffer( CUtlBuffer &buf );
+	bool SaveToBuffer( CUtlBuffer &buf );
 	void Precache( void );
+	void Reset( void );
 
 	CEconItemDefinition* GetItemDefinition( int id );
 	CEconItemDefinition* GetItemDefinitionByName( const char* name );
 	CEconAttributeDefinition *GetAttributeDefinition( int id );
 	CEconAttributeDefinition *GetAttributeDefinitionByName( const char* name );
 	CEconAttributeDefinition *GetAttributeDefinitionByClass( const char* name );
-	int GetAttributeIndex( const char *classname );
 	ISchemaAttributeType *GetAttributeType( const char *type ) const;
 
-	virtual CEconItemDefinition *CreateNewItemDefinition( void );
-	virtual CEconAttributeDefinition *CreateNewAttribDefinition( void );
 
 	KeyValues *GetSchemaKeyValues( void ) const { return m_pSchema; }
+	uint GetResetCount( void ) const { return m_unSchemaResetCount; }
 
 protected:
 	CUtlDict< int, unsigned short >					m_GameInfo;
@@ -68,6 +70,9 @@ protected:
 private:
 	KeyValues *m_pSchema;
 	bool m_bInited;
+	uint m_unSchemaResetCount;
+
+	void ParseSchema( KeyValues *pKVData );
 };
 
 CEconItemSchema *GetItemSchema();

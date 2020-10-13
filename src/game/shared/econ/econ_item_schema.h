@@ -59,6 +59,7 @@ enum
 
 enum
 {
+	DROPTYPE_NULL, // same as none
 	DROPTYPE_NONE,
 	DROPTYPE_DROP,
 	DROPTYPE_BREAK,
@@ -199,8 +200,11 @@ public:
 	}
 	~CEconAttributeDefinition()
 	{
-		definition->deleteThis();
+		if( definition )
+			definition->deleteThis();
 	}
+
+	KeyValues *GetStaticDefinition( void ) const { return definition; }
 
 	char const *GetName( void ) const
 	{
@@ -217,6 +221,8 @@ public:
 		Assert( description_string && description_string[0] );
 		return description_string;
 	}
+
+	bool LoadFromKV( KeyValues *pKV );
 
 private:
 	char name[128];
@@ -236,7 +242,6 @@ public:
 
 	mutable string_t m_iAttributeClass;
 
-	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
 };
 
@@ -330,7 +335,6 @@ public:
 	bool selectable;
 	CUtlDict< const char*, unsigned short > model_player_per_class;
 
-	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
 } ItemStyle_t;
 
@@ -427,7 +431,6 @@ public:
 	int wm_bodygroup_override;
 	int wm_bodygroup_state_override;
 
-	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
 } PerTeamVisuals_t;
 
@@ -491,6 +494,8 @@ public:
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
 	void IterateAttributes( IEconAttributeIterator *iter );
+
+	KeyValues *GetStaticDefinition( void ) const { return definition; }
 
 	char const *GetName( void ) const
 	{
@@ -583,6 +588,8 @@ public:
 		return NULL;
 	}
 
+	bool LoadFromKV( KeyValues *pKV );
+
 private:
 	char const *name;
 	char const *model_player;
@@ -635,7 +642,6 @@ public:
 	bool is_cut_content;
 	bool is_multiclass_item;
 
-	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
 };
 

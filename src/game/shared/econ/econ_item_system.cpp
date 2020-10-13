@@ -21,11 +21,11 @@ const char *g_TeamVisualSections[TF_TEAM_COUNT] =
 
 const char *g_WearableAnimTypeStrings[NUM_WEARABLEANIM_TYPES] =
 {
-	"on_spawn",			// WAP_ON_SPAWN,
-	"start_building",	// WAP_START_BUILDING,
-	"stop_building",	// WAP_STOP_BUILDING,
-	"start_taunting",		// WAP_START_TAUNTING,
-	"stop_taunting",	// WAP_STOP_TAUNTING,
+	"on_spawn",
+	"start_building",
+	"stop_building",
+	"start_taunting",
+	"stop_taunting",
 };
 
 const char *g_AttributeDescriptionFormats[] =
@@ -113,8 +113,9 @@ const char *g_szQualityLocalizationStrings[] =
 	"#paintkitWeapon",
 };
 
-const char *g_LoadoutDropTypes[] =
+const char *g_szDropTypeStrings[] =
 {
+	"",
 	"none",
 	"drop",
 	"break",
@@ -131,13 +132,6 @@ int GetTeamVisualsFromString( const char *pszString )
 	return -1;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: for the UtlMap
-//-----------------------------------------------------------------------------
-static bool schemaLessFunc( const int &lhs, const int &rhs )
-{
-	return lhs < rhs;
-}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -213,7 +207,7 @@ public:
 			}												\
 		}	
 
-	void Parse( KeyValues *pKeyValuesData, bool bWildcard, const char *szFileWithoutEXT )
+	void Parse( KeyValues *pKeyValuesData, bool bWildcard = false, const char *szFileWithoutEXT = NULL ) OVERRIDE
 	{
 		GetItemSchema()->m_pSchema = pKeyValuesData->MakeCopy();
 
@@ -339,217 +333,19 @@ public:
 
 	void ParseItems( KeyValues *pKeyValuesData )
 	{
-		for ( KeyValues *pData = pKeyValuesData->GetFirstTrueSubKey(); pData != NULL; pData = pData->GetNextTrueSubKey() )
+		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
 		{
 			// Skip over default item, not sure why it's there.
-			if ( V_stricmp( pData->GetName(), "default" ) == 0 )
+			if ( V_stricmp( pSubData->GetName(), "default" ) == 0 )
 				continue;
 
-			CEconItemDefinition *pItem = GetItemSchema()->CreateNewItemDefinition();
-			int index = atoi( pData->GetName() );
+			CEconItemDefinition *pItem = new CEconItemDefinition;
+			int index = V_atoi( pSubData->GetName() );
 			pItem->index = index;
 
-			KeyValues *pDefinition = new KeyValues( pData->GetName() );
-			MergeDefinitionPrefabs( pDefinition, pData );
-			pItem->definition = pDefinition;
-
-			GET_STRING( pItem, pDefinition, name );
-			GET_BOOL( pItem, pDefinition, show_in_armory );
-
-			GET_STRING( pItem, pDefinition, item_class );
-			GET_STRING( pItem, pDefinition, item_name );
-			GET_STRING( pItem, pDefinition, item_description );
-			GET_STRING( pItem, pDefinition, item_type_name );
-
-			const char *pszQuality = pDefinition->GetString( "item_quality" );
-			if ( pszQuality[0] )
-			{
-				int iQuality = UTIL_StringFieldToInt( pszQuality, g_szQualityStrings, ARRAYSIZE( g_szQualityStrings ) );
-				if ( iQuality != -1 )
-				{
-					pItem->item_quality = iQuality;
-				}
-			}
-
-			// All items are vintage quality
-			//pItem->item_quality = QUALITY_VINTAGE;
-
-			GET_STRING( pItem, pDefinition, item_logname );
-			GET_STRING( pItem, pDefinition, item_iconname );
-
-			const char *pszLoadoutSlot = pDefinition->GetString( "item_slot" );
-
-			if ( pszLoadoutSlot[0] )
-			{
-				pItem->item_slot = UTIL_StringFieldToInt( pszLoadoutSlot, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
-			}
-
-			const char *pszAnimSlot = pDefinition->GetString( "anim_slot" );
-			if ( pszAnimSlot[0] )
-			{
-				if ( V_strcmp( pszAnimSlot, "FORCE_NOT_USED" ) != 0 )
-				{
-					pItem->anim_slot = UTIL_StringFieldToInt( pszAnimSlot, g_AnimSlots, TF_WPN_TYPE_COUNT );
-				}
-				else
-				{
-					pItem->anim_slot = -2;
-				}
-			}
-
-			GET_BOOL( pItem, pDefinition, baseitem );
-			GET_INT( pItem, pDefinition, min_ilevel );
-			GET_INT( pItem, pDefinition, max_ilevel );
-			GET_BOOL( pItem, pDefinition, loadondemand );
-
-			GET_STRING( pItem, pDefinition, image_inventory );
-			GET_INT( pItem, pDefinition, image_inventory_size_w );
-			GET_INT( pItem, pDefinition, image_inventory_size_h );
-
-			GET_STRING( pItem, pDefinition, model_player );
-			GET_STRING( pItem, pDefinition, model_vision_filtered );
-			GET_STRING( pItem, pDefinition, model_world );
-			GET_STRING( pItem, pDefinition, extra_wearable );
-
-			GET_INT( pItem, pDefinition, attach_to_hands );
-			GET_INT( pItem, pDefinition, attach_to_hands_vm_only );
-			GET_BOOL( pItem, pDefinition, act_as_wearable );
-			GET_INT( pItem, pDefinition, hide_bodygroups_deployed_only );
-
-			GET_BOOL( pItem, pDefinition, is_reskin );
-			GET_BOOL( pItem, pDefinition, specialitem );
-			GET_BOOL( pItem, pDefinition, demoknight );
-			GET_STRING( pItem, pDefinition, holiday_restriction );
-			GET_INT( pItem, pDefinition, year );
-			GET_BOOL( pItem, pDefinition, is_custom_content );
-			GET_BOOL( pItem, pDefinition, is_cut_content );
-			GET_BOOL( pItem, pDefinition, is_multiclass_item );
-
-			GET_STRING( pItem, pDefinition, item_script );
-			
-			const char *pszDropType = pDefinition->GetString("drop_type");
-			if ( pszDropType[0] )
-			{
-				int iDropType = UTIL_StringFieldToInt( pszDropType, g_LoadoutDropTypes, ARRAYSIZE( g_LoadoutDropTypes ) );
-				if (iDropType != -1)
-				{
-					pItem->drop_type = iDropType;
-				}
-			}
-
-
-			for ( KeyValues *pSubData = pDefinition->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
-			{
-				if ( !V_stricmp( pSubData->GetName(), "capabilities" ) )
-				{
-					GET_VALUES_FAST_BOOL( pItem->capabilities, pSubData );
-				}
-				else if ( !V_stricmp( pSubData->GetName(), "tags" ) )
-				{
-					GET_VALUES_FAST_BOOL( pItem->tags, pSubData );
-				}
-				else if ( !V_stricmp( pSubData->GetName(), "model_player_per_class" ) )
-				{
-					for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
-					{
-						const char *pszClass = pClassData->GetName();
-						
-						if ( !V_stricmp( pszClass, "basename" ) )
-						{
-							// Generic item, assign a model for every class.
-							for ( int i = TF_FIRST_NORMAL_CLASS; i <= TF_LAST_NORMAL_CLASS; i++ )
-							{
-								// Add to the player model per class.
-								pItem->model_player_per_class[i] = UTIL_VarArgs( pClassData->GetString(), g_aRawPlayerClassNamesShort[i] );
-							}
-						}
-						else
-						{
-							// Check the class this item is for and assign it to them.
-							int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-							if ( iClass != -1 )
-							{
-								// Valid class, assign to it.
-								pItem->model_player_per_class[iClass] = pClassData->GetString();
-							}
-						}
-					}
-				}
-				else if ( !V_stricmp( pSubData->GetName(), "used_by_classes" ) )
-				{
-					for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
-					{
-						const char *pszClass = pClassData->GetName();
-						int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
-
-						if ( iClass != -1 )
-						{
-							pItem->used_by_classes |= ( 1 << iClass );
-							const char *pszSlotname = pClassData->GetString();
-
-							if ( pszSlotname[0] != '1' )
-							{
-								int iSlot = UTIL_StringFieldToInt( pszSlotname, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
-
-								if ( iSlot != -1 )
-									pItem->item_slot_per_class[iClass] = iSlot;
-							}
-						}
-					}
-				}
-				else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
-				{
-					for ( KeyValues *pAttribData = pSubData->GetFirstTrueSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextTrueSubKey() )
-					{
-						static_attrib_t attribute;
-						if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
-							continue;
-
-						pItem->attributes.AddToTail( attribute );
-					}
-				}
-				else if ( !V_stricmp( pSubData->GetName(), "static_attrs" ) )
-				{
-					for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
-					{
-						static_attrib_t attribute;
-						if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
-							continue;
-
-						pItem->attributes.AddToTail( attribute );
-					}
-				}
-				else if ( !V_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
-				{
-					// Deliberately skipping this.
-				}
-				else if ( !V_strnicmp( pSubData->GetName(), "visuals", 7 ) )
-				{
-					// Figure out what team is this meant for.
-					int iVisuals = UTIL_StringFieldToInt( pSubData->GetName(), g_TeamVisualSections, TF_TEAM_COUNT );
-
-					if ( iVisuals != -1 )
-					{
-						if ( iVisuals == TEAM_UNASSIGNED )
-						{
-							// Hacky: for standard visuals block, assign it to all teams at once.
-							for ( int i = 0; i < TF_TEAM_COUNT; i++ )
-							{
-								if ( i == TEAM_SPECTATOR )
-									continue;
-
-								pItem->visual[i] = NULL;
-								ParseVisuals( pSubData, pItem, i );
-							}
-						}
-						else
-						{
-							pItem->visual[ iVisuals ] = NULL;
-							ParseVisuals( pSubData, pItem, iVisuals );
-						}
-					}
-				}
-			}
+			KeyValues *pDefinition = new KeyValues( pSubData->GetName() );
+			MergeDefinitionPrefabs( pDefinition, pSubData );
+			pItem->LoadFromKV( pDefinition );
 
 			GetItemSchema()->m_Items.Insert( index, pItem );
 		}
@@ -559,34 +355,16 @@ public:
 	{
 		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
 		{
-			CEconAttributeDefinition *pAttribute = GetItemSchema()->CreateNewAttribDefinition();
+			CEconAttributeDefinition *pAttribute = new CEconAttributeDefinition;
 			pAttribute->index = V_atoi( pSubData->GetName() );
 
-			V_strcpy_safe( pAttribute->name, pSubData->GetString( "name", "( unnamed )" ) );
-			V_strcpy_safe( pAttribute->attribute_class, pSubData->GetString( "attribute_class" ) );
-			V_strcpy_safe( pAttribute->description_string, pSubData->GetString( "description_string" ) );
-
-			pAttribute->string_attribute = ( V_stricmp( pSubData->GetString( "attribute_type" ), "string" ) == 0 );
-
-			const char *szFormat = pSubData->GetString( "description_format" );
-			pAttribute->description_format = UTIL_StringFieldToInt( szFormat, g_AttributeDescriptionFormats, ARRAYSIZE( g_AttributeDescriptionFormats ) );
-
-			const char *szEffect = pSubData->GetString( "effect_type" );
-			pAttribute->effect_type = UTIL_StringFieldToInt( szEffect, g_EffectTypes, ARRAYSIZE( g_EffectTypes ) );
-
-			const char *szType = pSubData->GetString( "attribute_type" );
-			pAttribute->type = GetItemSchema()->GetAttributeType( szType );
-
-			GET_BOOL( pAttribute, pSubData, hidden );
-			GET_BOOL( pAttribute, pSubData, stored_as_integer );
-
-			pAttribute->definition = pSubData->MakeCopy();
+			pAttribute->LoadFromKV( pSubData->MakeCopy() );
 
 			GetItemSchema()->m_Attributes.Insert( pAttribute->index, pAttribute );
 		}
 	};
 
-	bool ParseVisuals( KeyValues *pData, CEconItemDefinition *pItem, int iIndex )
+	static bool ParseVisuals( KeyValues *pData, CEconItemDefinition *pItem, int iIndex )
 	{
 		PerTeamVisuals_t *pVisuals = new PerTeamVisuals_t;
 
@@ -824,6 +602,237 @@ protected:
 };
 CEconSchemaParser g_EconSchemaParser;
 
+
+bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
+{
+	definition = pDefinition;
+
+	GET_STRING( this, pDefinition, name );
+	GET_BOOL( this, pDefinition, show_in_armory );
+
+	GET_STRING( this, pDefinition, item_class );
+	GET_STRING( this, pDefinition, item_name );
+	GET_STRING( this, pDefinition, item_description );
+	GET_STRING( this, pDefinition, item_type_name );
+
+	const char *pszQuality = pDefinition->GetString( "item_quality" );
+	if ( pszQuality[0] )
+	{
+		int iQuality = UTIL_StringFieldToInt( pszQuality, g_szQualityStrings, ARRAYSIZE( g_szQualityStrings ) );
+		if ( iQuality != -1 )
+		{
+			item_quality = iQuality;
+		}
+	}
+
+	// All items are vintage quality
+	//this->item_quality = QUALITY_VINTAGE;
+
+	GET_STRING( this, pDefinition, item_logname );
+	GET_STRING( this, pDefinition, item_iconname );
+
+	const char *pszLoadoutSlot = pDefinition->GetString( "item_slot" );
+
+	if ( pszLoadoutSlot[0] )
+	{
+		item_slot = UTIL_StringFieldToInt( pszLoadoutSlot, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
+	}
+
+	const char *pszAnimSlot = pDefinition->GetString( "anim_slot" );
+	if ( pszAnimSlot[0] )
+	{
+		if ( V_strcmp( pszAnimSlot, "FORCE_NOT_USED" ) != 0 )
+		{
+			anim_slot = UTIL_StringFieldToInt( pszAnimSlot, g_AnimSlots, TF_WPN_TYPE_COUNT );
+		}
+		else
+		{
+			anim_slot = -2;
+		}
+	}
+
+	GET_BOOL( this, pDefinition, baseitem );
+	GET_INT( this, pDefinition, min_ilevel );
+	GET_INT( this, pDefinition, max_ilevel );
+	GET_BOOL( this, pDefinition, loadondemand );
+
+	GET_STRING( this, pDefinition, image_inventory );
+	GET_INT( this, pDefinition, image_inventory_size_w );
+	GET_INT( this, pDefinition, image_inventory_size_h );
+
+	GET_STRING( this, pDefinition, model_player );
+	GET_STRING( this, pDefinition, model_vision_filtered );
+	GET_STRING( this, pDefinition, model_world );
+	GET_STRING( this, pDefinition, extra_wearable );
+
+	GET_INT( this, pDefinition, attach_to_hands );
+	GET_INT( this, pDefinition, attach_to_hands_vm_only );
+	GET_BOOL( this, pDefinition, act_as_wearable );
+	GET_INT( this, pDefinition, hide_bodygroups_deployed_only );
+
+	GET_BOOL( this, pDefinition, is_reskin );
+	GET_BOOL( this, pDefinition, specialitem );
+	GET_BOOL( this, pDefinition, demoknight );
+	GET_STRING( this, pDefinition, holiday_restriction );
+	GET_INT( this, pDefinition, year );
+	GET_BOOL( this, pDefinition, is_custom_content );
+	GET_BOOL( this, pDefinition, is_cut_content );
+	GET_BOOL( this, pDefinition, is_multiclass_item );
+
+	GET_STRING( this, pDefinition, item_script );
+
+	const char *pszDropType = pDefinition->GetString("drop_type");
+	if ( pszDropType[0] )
+	{
+		int iDropType = UTIL_StringFieldToInt( pszDropType, g_szDropTypeStrings, ARRAYSIZE( g_szDropTypeStrings ) );
+		if (iDropType != -1)
+		{
+			drop_type = iDropType;
+		}
+	}
+
+
+	for ( KeyValues *pSubData = pDefinition->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	{
+		if ( !V_stricmp( pSubData->GetName(), "capabilities" ) )
+		{
+			GET_VALUES_FAST_BOOL( capabilities, pSubData );
+		}
+		else if ( !V_stricmp( pSubData->GetName(), "tags" ) )
+		{
+			GET_VALUES_FAST_BOOL( tags, pSubData );
+		}
+		else if ( !V_stricmp( pSubData->GetName(), "model_player_per_class" ) )
+		{
+			for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
+			{
+				const char *pszClass = pClassData->GetName();
+
+				if ( !V_stricmp( pszClass, "basename" ) )
+				{
+					// Generic item, assign a model for every class.
+					for ( int i = TF_FIRST_NORMAL_CLASS; i <= TF_LAST_NORMAL_CLASS; i++ )
+					{
+						// Add to the player model per class.
+						model_player_per_class[i] = UTIL_VarArgs( pClassData->GetString(), g_aRawPlayerClassNamesShort[i] );
+					}
+				}
+				else
+				{
+					// Check the class this item is for and assign it to them.
+					int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+					if ( iClass != -1 )
+					{
+						// Valid class, assign to it.
+						model_player_per_class[iClass] = pClassData->GetString();
+					}
+				}
+			}
+		}
+		else if ( !V_stricmp( pSubData->GetName(), "used_by_classes" ) )
+		{
+			for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
+			{
+				const char *pszClass = pClassData->GetName();
+				int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
+
+				if ( iClass != -1 )
+				{
+					used_by_classes |= ( 1 << iClass );
+					const char *pszSlotname = pClassData->GetString();
+
+					if ( pszSlotname[0] != '1' )
+					{
+						int iSlot = UTIL_StringFieldToInt( pszSlotname, g_LoadoutSlots, TF_LOADOUT_SLOT_COUNT );
+
+						if ( iSlot != -1 )
+							item_slot_per_class[iClass] = iSlot;
+					}
+				}
+			}
+		}
+		else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
+		{
+			for ( KeyValues *pAttribData = pSubData->GetFirstTrueSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextTrueSubKey() )
+			{
+				static_attrib_t attribute;
+				if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
+					continue;
+
+				attributes.AddToTail( attribute );
+			}
+		}
+		else if ( !V_stricmp( pSubData->GetName(), "static_attrs" ) )
+		{
+			for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
+			{
+				static_attrib_t attribute;
+				if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
+					continue;
+
+				attributes.AddToTail( attribute );
+			}
+		}
+		else if ( !V_stricmp( pSubData->GetName(), "visuals_mvm_boss" ) )
+		{
+			// Deliberately skipping this.
+		}
+		else if ( !V_strnicmp( pSubData->GetName(), "visuals", 7 ) )
+		{
+			// Figure out what team is this meant for.
+			int iVisuals = UTIL_StringFieldToInt( pSubData->GetName(), g_TeamVisualSections, TF_TEAM_COUNT );
+
+			if ( iVisuals != -1 )
+			{
+				if ( iVisuals == TEAM_UNASSIGNED )
+				{
+					// Hacky: for standard visuals block, assign it to all teams at once.
+					for ( int i = 0; i < TF_TEAM_COUNT; i++ )
+					{
+						if ( i == TEAM_SPECTATOR )
+							continue;
+
+						visual[i] = NULL;
+						CEconSchemaParser::ParseVisuals( pSubData, this, i );
+					}
+				}
+				else
+				{
+					visual[ iVisuals ] = NULL;
+					CEconSchemaParser::ParseVisuals( pSubData, this, iVisuals );
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+bool CEconAttributeDefinition::LoadFromKV( KeyValues *pDefinition )
+{
+	definition = pDefinition;
+
+	V_strcpy_safe( name, pDefinition->GetString( "name", "( unnamed )" ) );
+	V_strcpy_safe( attribute_class, pDefinition->GetString( "attribute_class" ) );
+	V_strcpy_safe( description_string, pDefinition->GetString( "description_string" ) );
+
+	string_attribute = ( V_stricmp( pDefinition->GetString( "attribute_type" ), "string" ) == 0 );
+
+	const char *szFormat = pDefinition->GetString( "description_format" );
+	description_format = UTIL_StringFieldToInt( szFormat, g_AttributeDescriptionFormats, ARRAYSIZE( g_AttributeDescriptionFormats ) );
+
+	const char *szEffect = pDefinition->GetString( "effect_type" );
+	effect_type = UTIL_StringFieldToInt( szEffect, g_EffectTypes, ARRAYSIZE( g_EffectTypes ) );
+
+	const char *szType = pDefinition->GetString( "attribute_type" );
+	type = GetItemSchema()->GetAttributeType( szType );
+
+	GET_BOOL( this, pDefinition, hidden );
+	GET_BOOL( this, pDefinition, stored_as_integer );
+
+	return true;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: constructor
 //-----------------------------------------------------------------------------
@@ -864,37 +873,93 @@ bool CEconItemSchema::Init( void )
 		InitAttributeTypes();
 
 		float flStartTime = engine->Time();
-		g_EconSchemaParser.InitParser( "scripts/items/items_game.txt", true, false );
+		g_EconSchemaParser.InitParser( items_game, true, false );
 		float flEndTime = engine->Time();
 		Msg( "Processing item schema took %.02fms. Parsed %d items and %d attributes.\n", ( flEndTime - flStartTime ) * 1000.0f, m_Items.Count(), m_Attributes.Count() );
 
 		m_bInited = true;
 	}
-
+	
 	return true;
 }
 
 void CEconItemSchema::InitAttributeTypes( void )
 {
+	FOR_EACH_VEC( m_AttributeTypes, i )
+	{
+		delete m_AttributeTypes[i].pType;
+	}
+	m_AttributeTypes.Purge();
+
 	attr_type_t defaultType;
 	defaultType.szName = NULL;
 	defaultType.pType = new CSchemaAttributeType_Default;
-	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = defaultType;
+	m_AttributeTypes.AddToTail( defaultType );
 
 	attr_type_t longType;
 	longType.szName = "uint64";
 	longType.pType = new CSchemaAttributeType_UInt64;
-	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = longType;
+	m_AttributeTypes.AddToTail( longType );
 
 	attr_type_t floatType;
 	floatType.szName = "float";
 	floatType.pType = new CSchemaAttributeType_Float;
-	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = floatType;
+	m_AttributeTypes.AddToTail( floatType );
 
 	attr_type_t stringType;
 	stringType.szName = "string";
 	stringType.pType = new CSchemaAttributeType_String;
-	m_AttributeTypes[ m_AttributeTypes.AddToTail() ] = stringType;
+	m_AttributeTypes.AddToTail( stringType );
+}
+
+bool CEconItemSchema::LoadFromFile( void )
+{
+	Reset();
+
+	KeyValuesAD schema("KVDataFile");
+	if ( !schema->LoadFromFile( g_pFullFileSystem, items_game ) )
+		return false;
+
+	ParseSchema( schema );
+
+	return true;
+}
+
+bool CEconItemSchema::LoadFromBuffer( CUtlBuffer &buf )
+{
+	Reset();
+
+	KeyValuesAD schema("KVDataFile");
+	if ( !schema->ReadAsBinary( buf ) )
+		return false;
+
+	ParseSchema( schema );
+
+	return true;
+}
+
+bool CEconItemSchema::SaveToBuffer( CUtlBuffer &buf )
+{
+	m_pSchema->RecursiveSaveToFile( buf, 0 );
+	return true;
+}
+
+void CEconItemSchema::Reset( void )
+{
+	m_GameInfo.Purge();
+	m_Colors.Purge();
+	m_Qualities.Purge();
+
+	m_Items.PurgeAndDeleteElements();
+	m_Attributes.PurgeAndDeleteElements();
+
+	FOR_EACH_DICT_FAST( m_PrefabsValues, i )
+	{
+		m_PrefabsValues[i]->deleteThis();
+	}
+	m_PrefabsValues.Purge();
+
+	m_unSchemaResetCount++;
 }
 
 void CEconItemSchema::Precache( void )
@@ -907,21 +972,20 @@ void CEconItemSchema::Precache( void )
 		CEconItemDefinition *pItem = m_Items[i];
 		
 		// Precache models.
-		if ( pItem->model_world && pItem->model_world[0] != '\0' )
-			CBaseEntity::PrecacheModel( pItem->model_world );
+		if ( pItem->GetWorldModel() )
+			CBaseEntity::PrecacheModel( pItem->GetWorldModel() );
 
-		if ( pItem->model_player && pItem->model_player[0] != '\0' )
-			CBaseEntity::PrecacheModel( pItem->model_player );
+		if ( pItem->GetPlayerModel() )
+			CBaseEntity::PrecacheModel( pItem->GetPlayerModel() );
 
 		for ( int iClass = 0; iClass < TF_CLASS_COUNT_ALL; iClass++ )
 		{
-			const char *pszModel = pItem->model_player_per_class[iClass];
-			if ( pszModel && pszModel[0] != '\0' )
-				CBaseEntity::PrecacheModel( pszModel );
+			if ( pItem->GetPerClassModel( iClass ) )
+				CBaseEntity::PrecacheModel( pItem->GetPerClassModel( iClass ) );
 		}
 
-		if ( pItem->extra_wearable && pItem->extra_wearable[0] != '\0' )
-			CBaseEntity::PrecacheModel( pItem->extra_wearable );
+		if ( pItem->GetExtraWearableModel() )
+			CBaseEntity::PrecacheModel( pItem->GetExtraWearableModel() );
 		
 		// Precache visuals.
 		for ( int i = TEAM_UNASSIGNED; i < TF_TEAM_COUNT; i++ )
@@ -936,13 +1000,13 @@ void CEconItemSchema::Precache( void )
 			// Precache sounds.
 			for ( int i = 0; i < NUM_SHOOT_SOUND_TYPES; i++ )
 			{
-				if ( pVisuals->aWeaponSounds[i] && pVisuals->aWeaponSounds[i][0] != '\0' )
-					CBaseEntity::PrecacheScriptSound( pVisuals->aWeaponSounds[i] );
+				if ( pVisuals->GetWeaponShootSound( i ) )
+					CBaseEntity::PrecacheScriptSound( pVisuals->GetWeaponShootSound( i ) );
 			}
 			for ( int i = 0; i < MAX_CUSTOM_WEAPON_SOUNDS; i++ )
 			{
-				if ( pVisuals->aCustomWeaponSounds[i] && pVisuals->aCustomWeaponSounds[i][0] != '\0' )
-					CBaseEntity::PrecacheScriptSound( pVisuals->aCustomWeaponSounds[i] );
+				if ( pVisuals->GetCustomWeaponSound( i ) )
+					CBaseEntity::PrecacheScriptSound( pVisuals->GetCustomWeaponSound( i ) );
 			}
 
 			// Precache attachments.
@@ -955,22 +1019,19 @@ void CEconItemSchema::Precache( void )
 
 			// Precache particles
 			// Custom Particles
-			const char *pszParticle = pVisuals->custom_particlesystem;
-			if ( pszParticle && pszParticle[0] != '\0' )
+			if ( pVisuals->GetCustomParticleSystem() )
 			{
-				PrecacheParticleSystem( pszParticle );
+				PrecacheParticleSystem( pVisuals->GetCustomParticleSystem() );
 			}
 			// Muzzle Flash
-			const char *pszMuzzleFlash = pVisuals->muzzle_flash;
-			if ( pszMuzzleFlash && pszMuzzleFlash[0] != '\0' )
+			if ( pVisuals->GetMuzzleFlash() )
 			{
-				PrecacheParticleSystem( pszMuzzleFlash );
+				PrecacheParticleSystem( pVisuals->GetMuzzleFlash() );
 			}
 			// Tracer Effect
-			const char *pszTracerEffect = pVisuals->tracer_effect;
-			if ( pszTracerEffect && pszTracerEffect[0] != '\0' )
+			if ( pVisuals->GetTracerFX() )
 			{
-				PrecacheParticleSystem( pszTracerEffect );
+				PrecacheParticleSystem( pVisuals->GetTracerFX() );
 			}
 
 		}
@@ -989,6 +1050,11 @@ void CEconItemSchema::Precache( void )
 	}
 }
 
+void CEconItemSchema::ParseSchema( KeyValues *pKVData )
+{
+	g_EconSchemaParser.Parse( pKVData );
+}
+
 CEconItemDefinition *CEconItemSchema::GetItemDefinition( int id )
 {
 	if ( id < 0 )
@@ -1002,8 +1068,7 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name 
 {
 	FOR_EACH_MAP_FAST( m_Items, i )
 	{
-		Assert( m_Items[i]->index > -1 && m_Items[i]->name );
-		if ( m_Items[i]->index > -1 && !V_stricmp( m_Items[i]->name, name ) )
+		if ( !V_stricmp( m_Items[i]->GetName(), name ) )
 		{
 			return m_Items[i];
 		}
@@ -1025,8 +1090,7 @@ CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByName( const c
 {
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
-		Assert( m_Attributes[i]->name[0] );
-		if ( !V_stricmp( m_Attributes[i]->name, name ) )
+		if ( !V_stricmp( m_Attributes[i]->GetName(), name ) )
 		{
 			return m_Attributes[i];
 		}
@@ -1039,8 +1103,7 @@ CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const 
 {
 	FOR_EACH_MAP_FAST( m_Attributes, i )
 	{
-		Assert( m_Attributes[i]->attribute_class[0] );
-		if ( !V_stricmp( m_Attributes[i]->attribute_class, classname ) )
+		if ( !V_stricmp( m_Attributes[i]->GetClassName(), classname ) )
 		{
 			return m_Attributes[i];
 		}
@@ -1049,39 +1112,15 @@ CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinitionByClass( const 
 	return NULL;
 }
 
-int CEconItemSchema::GetAttributeIndex( const char *name )
-{
-	if ( !name )
-		return -1;
-
-	FOR_EACH_MAP_FAST( m_Attributes, i )
-	{
-		if ( !V_stricmp( m_Attributes[i]->name, name ) )
-		{
-			return m_Attributes.Key( i );
-		}
-	}
-
-	return -1;
-}
-
 ISchemaAttributeType *CEconItemSchema::GetAttributeType( const char *name ) const
 {
-	for ( attr_type_t const &type : m_AttributeTypes )
+	FOR_EACH_VEC( m_AttributeTypes, i )
 	{
-		if ( type.szName == name )
-			return type.pType;
+		if ( m_AttributeTypes[i].szName == name )
+			return m_AttributeTypes[i].pType;
 	}
 
-	return nullptr;
+	return NULL;
 }
 
-CEconItemDefinition *CEconItemSchema::CreateNewItemDefinition( void )
-{
-	return new CEconItemDefinition;
-}
 
-CEconAttributeDefinition *CEconItemSchema::CreateNewAttribDefinition( void )
-{
-	return new CEconAttributeDefinition;
-}
