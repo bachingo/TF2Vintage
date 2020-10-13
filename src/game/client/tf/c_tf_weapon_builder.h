@@ -92,4 +92,25 @@ public:
 private:
 	C_TFWeaponBuilder( const C_TFWeaponBuilder & );
 };
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class C_TFWeaponSapper : public C_TFWeaponBuilder
+{
+	DECLARE_CLASS( C_TFWeaponSapper, C_TFWeaponBuilder );
+public:
+	DECLARE_CLIENTCLASS();
+
+	C_TFWeaponSapper();
+
+	virtual const char *GetViewModel( int iViewModel ) const;
+	virtual const char *GetWorldModel( void ) const;
+
+	bool IsWheatleyTalking( void ) { return gpGlobals->curtime <= m_flWheatleyTalkingUntil; }
+
+private:
+	CNetworkVar( float, m_flWheatleyTalkingUntil );
+};
+
 #endif // C_TF_WEAPON_BUILDER_H

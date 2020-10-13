@@ -333,6 +333,15 @@ public:
 	void				StartBuildingObjectOfType( int iType, int iMode );
 	CBaseObject			*GetObjectOfType( int iType, int iMode );
 
+	void OnSapperPlaced( CBaseEntity *sappedObject );
+	bool IsPlacingSapper( void ) const;
+	void OnSapperStarted( float flStartTime );
+	void OnSapperFinished( float flStartTime );
+	bool IsSapping( void ) const						{ return m_bSapping; }
+	int GetSappingState( void ) const					{ return m_iSapState; }
+	void ClearSappingState( void );
+	void ResetSappingState( void );
+
 	CTFTeam				*GetTFTeam( void );
 	CTFTeam				*GetOpposingTFTeam( void );
 
@@ -758,6 +767,12 @@ private:
 	// Gunslinger taunt
 	short				m_nTauntDamageCount;
 
+	// Sapper events
+	bool				m_bSapping;
+	int					m_iSapState;
+	float				m_flSapTime;
+	CountdownTimer		m_sapperTimer;
+
 	float				m_flNextCarryTalkTime;
 
 	int					m_nBlastJumpFlags;
@@ -776,6 +791,43 @@ private:
 public:
 	int				GetPlayerVIPRanking( void );
 };
+
+inline void CTFPlayer::OnSapperPlaced( CBaseEntity *sappedObject )
+{
+	m_sapperTimer.Start( 3.0f );
+}
+inline bool CTFPlayer::IsPlacingSapper( void ) const
+{
+	return !m_sapperTimer.IsElapsed();
+}
+inline void CTFPlayer::OnSapperStarted( float flStartTime )
+{
+	if ( m_iSapState == SAPPING_NONE && m_flSapTime == 0.0f )
+	{
+		m_flSapTime = flStartTime;
+		m_bSapping = true;
+		m_iSapState = SAPPING_PLACED;
+	}
+}
+inline void CTFPlayer::OnSapperFinished( float flStartTime )
+{
+	if ( m_iSapState == SAPPING_NONE && flStartTime == m_flSapTime )
+	{
+		m_bSapping = false;
+		m_flSapTime = 0;
+		m_iSapState = SAPPING_DONE;
+	}
+}
+inline void CTFPlayer::ClearSappingState( void )
+{
+	m_iSapState = SAPPING_NONE;
+}
+inline void CTFPlayer::ResetSappingState( void )
+{
+	m_iSapState = SAPPING_NONE;
+	m_bSapping = false;
+	m_flSapTime = 0;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Utility function to convert an entity into a tf player.

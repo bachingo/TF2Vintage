@@ -353,9 +353,7 @@ const char *g_LoadoutSlots[] =
 	"taunt5",
 	"taunt6",
 	"taunt7",
-	"taunt8",
-	
-	"count"
+	"taunt8"
 };
 
 const char *g_LoadoutTranslations[] ={

@@ -232,6 +232,7 @@ public:
 	void			HolsterOffHandWeapon( void );
 
 	virtual int GetSkin();
+	virtual int GetBody();
 
 	virtual bool		Weapon_ShouldSetLast( C_BaseCombatWeapon *pOldWeapon, C_BaseCombatWeapon *pNewWeapon );
 	virtual	bool		Weapon_Switch( C_BaseCombatWeapon *pWeapon, int viewmodelindex = 0 );
@@ -267,7 +268,6 @@ public:
 	virtual IRagdoll *GetRepresentativeRagdoll() const;
 	EHANDLE	m_hRagdoll;
 	Vector m_vecRagdollVelocity;
-	virtual int GetBody(void);
 
 	// Objects
 	int CanBuild( int iObjectType, int iObjectMode );

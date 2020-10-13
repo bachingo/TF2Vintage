@@ -32,57 +32,68 @@ template<typename TArg, typename TOut=TArg>
 class CAttributeIterator_GetSpecificAttribute : public IEconAttributeIterator
 {
 public:
-	CAttributeIterator_GetSpecificAttribute( CEconAttributeDefinition const *attribute, TOut *outValue )
-		: m_pAttribute( attribute ), m_pOut( outValue )
+	CAttributeIterator_GetSpecificAttribute( CEconAttributeDefinition const *pAttribute, TOut *outValue )
+		: m_pAttribute( pAttribute ), m_pOut( outValue )
 	{
 		m_bFound = false;
 	}
 
-	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, unsigned int )					{ return true; }
-	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float )							{ return true; }
-	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & )		{ return true; }
-	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, uint64 const & )				{ return true; }
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pAttrDef, unsigned int value ) OVERRIDE
+	{ 
+		return OnIterateAttributeValueOfType( pAttrDef, value );
+	}
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pAttrDef, float value ) OVERRIDE
+	{ 
+		return OnIterateAttributeValueOfType( pAttrDef, value );
+	}
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pAttrDef, CAttribute_String const &value ) OVERRIDE
+	{ 
+		return OnIterateAttributeValueOfType( pAttrDef, value );
+	}
+	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pAttrDef, uint64 const &value ) OVERRIDE
+	{ 
+		return OnIterateAttributeValueOfType( pAttrDef, value );
+	}
+
+	bool OnIterateAttributeValueOfType( CEconAttributeDefinition const *pDefinition, TArg const &value )
+	{
+		COMPILE_TIME_ASSERT( sizeof( TArg ) == sizeof( TOut ) );
+
+		if ( m_pAttribute == pDefinition )
+		{
+			m_bFound = true;
+			*m_pOut = *reinterpret_cast<const TOut *>( &value );
+		}
+		return !m_bFound;
+	}
 
 	bool Found( void ) const { return m_bFound; }
 
 private:
+	// Catch type mismatch between our iterator functions and the types we are looking for
+	template<typename TOther>
+	bool OnIterateAttributeValueOfType( CEconAttributeDefinition const *pDefinition, TOther const &value )
+	{
+		Assert( pDefinition && pDefinition != m_pAttribute );
+		return true;
+	}
+
 	CEconAttributeDefinition const *m_pAttribute;
 	bool m_bFound;
 	TOut *m_pOut;
 };
 
-#define DEFINE_ATTRIBUTE_ITERATOR( overrideParam, outputType ) \
-	bool CAttributeIterator_GetSpecificAttribute<overrideParam, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value ) \
-	{ \
-		if ( m_pAttribute == pDefinition ) \
-		{ \
-			m_bFound = true; \
-			*m_pOut = *reinterpret_cast<const overrideParam *>( &value ); \
-		} \
-		return !m_bFound; \
+// Allow conversion between CAttribute_String to char pointer
+template<>
+inline bool CAttributeIterator_GetSpecificAttribute<CAttribute_String, char const *>::OnIterateAttributeValueOfType( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value )
+{
+	if ( m_pAttribute == pDefinition )
+	{
+		m_bFound = true;
+		*m_pOut = value.Get();
 	}
-
-#define DEFINE_ATTRIBUTE_ITERATOR_REF( overrideParam, outputType ) \
-	bool CAttributeIterator_GetSpecificAttribute<overrideParam, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam const &value ) \
-	{ \
-		if ( m_pAttribute == pDefinition ) \
-		{ \
-			m_bFound = true; \
-			*m_pOut = *reinterpret_cast<const overrideParam *>( &value ); \
-		} \
-		return !m_bFound; \
-	}
-
-#define ATTRIBUTE_ITERATOR( paramType, outputType, overrideParam ) \
-	bool CAttributeIterator_GetSpecificAttribute<paramType, outputType>::OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, overrideParam value )
-
-DEFINE_ATTRIBUTE_ITERATOR( float, float )
-DEFINE_ATTRIBUTE_ITERATOR( unsigned int, unsigned int )
-DEFINE_ATTRIBUTE_ITERATOR( float, unsigned int )
-DEFINE_ATTRIBUTE_ITERATOR( unsigned int, float )
-DEFINE_ATTRIBUTE_ITERATOR_REF( CAttribute_String, CAttribute_String )
-DEFINE_ATTRIBUTE_ITERATOR_REF( uint64, uint64 )
-
+	return !m_bFound;
+}
 
 class IEconUntypedAttributeIterator : public IEconAttributeIterator
 {
@@ -112,18 +123,16 @@ private:
 	virtual bool OnIterateAttributeValueUntyped( const CEconAttributeDefinition *pAttrDef ) = 0;
 };
 
-template<typename T>
 class CAttributeIterator_HasAttribute : public IEconUntypedAttributeIterator
 {
-	DECLARE_CLASS( CAttributeIterator_HasAttribute, IEconUntypedAttributeIterator );
 public:
-	CAttributeIterator_HasAttribute(CEconAttributeDefinition *pAttribute)
-		: m_pDefinition(pAttribute), m_bFound(false) {}
+	CAttributeIterator_HasAttribute( CEconAttributeDefinition const *pAttribute )
+		: m_pDefinition( pAttribute ), m_bFound( false ) {}
 
 	bool Found( void ) const { return m_bFound; }
 
 private:
-	virtual bool OnIterateAttributeValueUntyped( CEconAttributeDefinition const *pDefinition )
+	virtual bool OnIterateAttributeValueUntyped( CEconAttributeDefinition const *pDefinition ) OVERRIDE
 	{
 		if ( pDefinition == m_pDefinition )
 		{
@@ -137,5 +146,30 @@ private:
 	CEconAttributeDefinition const *m_pDefinition;
 	bool m_bFound;
 };
+
+
+template <typename TIterator>
+bool FindAttribute( TIterator const *pAttributeIterator, CEconAttributeDefinition const *pAttrDef )
+{
+	if ( pAttrDef == NULL )
+		return false;
+
+	CAttributeIterator_HasAttribute func( pAttrDef );
+	pAttributeIterator->IterateAttributes( &func );
+
+	return func.Found();
+}
+
+template <typename TArg, typename TIterator, typename TOut>
+bool FindAttribute( TIterator const *pAttributeIterator, CEconAttributeDefinition const *pAttrDef, TOut *pOutput )
+{
+	if ( pAttrDef == NULL )
+		return false;
+
+	CAttributeIterator_GetSpecificAttribute<TArg, TOut> func( pAttrDef, pOutput );
+	pAttributeIterator->IterateAttributes( &func );
+
+	return func.Found();
+}
 
 #endif

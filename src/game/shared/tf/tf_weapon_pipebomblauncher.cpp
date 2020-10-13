@@ -109,6 +109,7 @@ void CTFPipebombLauncher::Spawn( void )
 //-----------------------------------------------------------------------------
 void CTFPipebombLauncher::Precache()
 {
+	BaseClass::Precache();
 	PrecacheScriptSound("Weapon_StickyBombLauncher.ChargeUp");
 }
 

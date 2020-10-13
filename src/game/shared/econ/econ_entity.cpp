@@ -10,6 +10,7 @@
 #include "datacache/imdlcache.h"
 
 #ifdef GAME_DLL
+#include "activitylist.h"
 #include "tf_player.h"
 #else
 #include "c_tf_player.h"
@@ -122,7 +123,42 @@ bool C_EconEntity::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origi
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool C_EconEntity::IsOverridingViewmodel( void ) const
+bool C_EconEntity::IsTransparent( void )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( pPlayer )
+		return pPlayer->IsTransparent();
+
+	return BaseClass::IsTransparent();
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::ViewModel_IsTransparent( void )
+{
+	if ( m_hAttachmentParent && m_hAttachmentParent->IsTransparent() )
+		return true;
+	
+	return IsTransparent();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::ViewModel_IsUsingFBTexture( void )
+{
+	if ( m_hAttachmentParent && m_hAttachmentParent->UsesPowerOfTwoFrameBufferTexture() )
+		return true;
+	
+	return UsesPowerOfTwoFrameBufferTexture();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_EconEntity::IsOverridingViewmodel( void )
 {
 	if ( GetMaterialOverride( GetTeamNumber() ) )
 		return true;
@@ -142,6 +178,54 @@ bool C_EconEntity::IsOverridingViewmodel( void ) const
 		return true;
 
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int C_EconEntity::DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flags )
+{
+	int nRetval = 0;
+	bool bHadOverride = false, bAttachToHands = false;;
+	const int iTeam = GetTeamNumber();
+
+	CEconItemDefinition *pItem = GetItem()->GetStaticData();
+	if ( pItem )
+		bAttachToHands = pItem->attach_to_hands == VMTYPE_TF2 || pItem->attach_to_hands_vm_only == VMTYPE_TF2;
+
+	if ( m_hAttachmentParent && m_hAttachmentParent->IsTransparent() )
+		nRetval = pViewmodel->DrawOverriddenViewmodel( flags );
+
+	if ( flags & STUDIO_RENDER )
+	{
+		bHadOverride = GetMaterialOverride( iTeam ) != NULL;
+		if ( bHadOverride )
+		{
+			modelrender->ForcedMaterialOverride( GetMaterialOverride( iTeam ) );
+			// 0x200 is OR'd into flags here
+		}
+
+		if ( m_hAttachmentParent )
+		{
+			m_hAttachmentParent->RemoveEffects( EF_NODRAW );
+			m_hAttachmentParent->DrawModel( flags );
+			m_hAttachmentParent->AddEffects( EF_NODRAW );
+		}
+
+		if ( bAttachToHands && bHadOverride )
+		{
+			modelrender->ForcedMaterialOverride( NULL );
+			bHadOverride = false;
+		}
+	}
+
+	if ( !m_hAttachmentParent || !m_hAttachmentParent->IsTransparent() )
+		nRetval = pViewmodel->DrawOverriddenViewmodel( flags );
+
+	if ( bHadOverride )
+		modelrender->ForcedMaterialOverride( NULL );
+
+	return nRetval;
 }
 
 //-----------------------------------------------------------------------------
@@ -308,6 +392,7 @@ void C_EconEntity::SetMaterialOverride( int iTeam, CMaterialReference &material 
 //-----------------------------------------------------------------------------
 void CEconEntity::UpdateModelToClass( void )
 {
+#if defined(TF_DLL) || defined(TF_VINTAGE)
 	MDLCACHE_CRITICAL_SECTION();
 
 	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
@@ -315,8 +400,50 @@ void CEconEntity::UpdateModelToClass( void )
 		return;
 
 
+#endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CEconEntity::PlayAnimForPlaybackEvent( wearableanimplayback_t iPlayback )
+{
+	CBasePlayer *pOwner = ToBasePlayer( GetOwnerEntity() );
+	if ( pOwner == nullptr )
+		return;
+
+	CEconItemDefinition *pDefinition = GetItem()->GetStaticData();
+	if ( pDefinition == NULL )
+		return;
+
+	int iTeamNum = pOwner->GetTeamNumber();
+	PerTeamVisuals_t *pVisuals = pDefinition->GetVisuals( iTeamNum );
+	if ( pVisuals == NULL )
+		return;
+
+	const int nNumActs = pVisuals->playback_activity.Count();
+	for ( int i=0; i < nNumActs; ++i )
+	{
+		activity_on_wearable_t *pActivity = &pVisuals->playback_activity[i];
+		if ( pActivity->playback != iPlayback || !pActivity->activity_name || !pActivity->activity_name[0] )
+			continue;
+
+		if ( pActivity->activity == kActivityLookup_Unknown )
+			pActivity->activity = ActivityList_IndexForName( pActivity->activity_name );
+
+		const int nSequence = SelectWeightedSequence( (Activity)pActivity->activity );
+		if ( nSequence != -1 )
+		{
+			ResetSequence( nSequence );
+			SetCycle( 0 );
+
+			if ( IsUsingClientSideAnimation() )
+				ResetClientsideFrame();
+
+			break;
+		}
+	}
+}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -324,7 +451,7 @@ void CEconEntity::UpdateModelToClass( void )
 //-----------------------------------------------------------------------------
 void CEconEntity::SetItem( CEconItemView const &pItem )
 {
-	m_AttributeManager.m_Item.CopyFrom( pItem );
+	m_AttributeManager.SetItem( pItem );
 }
 
 //-----------------------------------------------------------------------------
@@ -380,44 +507,55 @@ void CEconEntity::ReapplyProvision( void )
 void CEconEntity::InitializeAttributes( void )
 {
 	m_AttributeManager.InitializeAttributes( this );
+	m_AttributeManager.SetProvidrType( PROVIDER_WEAPON );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Update visible bodygroups
 //-----------------------------------------------------------------------------
-void CEconEntity::UpdatePlayerBodygroups( void )
+void CEconEntity::UpdatePlayerBodygroups( int bOnOff )
 {
-	CTFPlayer *pPlayer = dynamic_cast < CTFPlayer * >( GetOwnerEntity() );
-
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
 	if ( !pPlayer )
-	{
 		return;
-	}
 
 	// bodygroup enabling/disabling
 	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
-	if ( pStatic )
+	if ( !pStatic )
+		return;
+
+	PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
+	if ( !pVisuals )
+		return;
+
+	for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
 	{
-		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
-		if ( pVisuals )
-		{
-			for ( int i = 0; i < pPlayer->GetNumBodyGroups(); i++ )
-			{
-				unsigned int index = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
-				if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
-				{
-					bool bTrue = pVisuals->player_bodygroups.Element( index );
-					if ( bTrue )
-					{
-						pPlayer->SetBodygroup( i , 1 );
-					}
-					else
-					{
-						pPlayer->SetBodygroup( i , 0 );
-					}
-				}
-			}
-		}
+		unsigned int nIndex = pVisuals->player_bodygroups.Find( pPlayer->GetBodygroupName( i ) );
+		if ( !pVisuals->player_bodygroups.IsValidIndex( nIndex ) )
+			continue;
+		
+		int nState = pVisuals->player_bodygroups.Element( nIndex );
+		if ( nState != bOnOff )
+			continue;
+
+		pPlayer->SetBodygroup( i, bOnOff );
+	}
+
+	const int iTeamNum = pPlayer->GetTeamNumber();
+	PerTeamVisuals_t *pTeamVisuals = pStatic->GetVisuals( iTeamNum );
+	if ( !pTeamVisuals )
+		return;
+
+	// world model overrides
+	if ( pTeamVisuals->wm_bodygroup_override != -1 && pTeamVisuals->wm_bodygroup_state_override != -1 )
+		pPlayer->SetBodygroup( pTeamVisuals->wm_bodygroup_override, pTeamVisuals->wm_bodygroup_state_override );
+
+	// view model overrides
+	if ( pTeamVisuals->vm_bodygroup_override != -1 && pTeamVisuals->vm_bodygroup_state_override != -1 )
+	{
+		CBaseViewModel *pVM = pPlayer->GetViewModel();
+		if ( pVM && pVM->GetModelPtr() )
+			pVM->SetBodygroup( pTeamVisuals->vm_bodygroup_override, pTeamVisuals->vm_bodygroup_state_override );
 	}
 }
 
@@ -436,6 +574,8 @@ void DrawEconEntityAttachedModels( C_BaseAnimating *pAnimating, C_EconEntity *pE
 {
 	if ( pAnimating && pEconEntity && pInfo )
 	{
+		// a check for pInfo->flags & 0x200 goes here
+
 		for ( int i=0; i<pEconEntity->m_Attachments.Count(); ++i )
 		{
 			if ( pEconEntity->m_Attachments[i].model && ( pEconEntity->m_Attachments[i].modeltype & iModelType ) )

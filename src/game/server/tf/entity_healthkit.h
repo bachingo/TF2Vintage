@@ -26,9 +26,9 @@ public:
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
 
-	virtual const char *GetDefaultPowerupModel( void );
-
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
+	virtual const char *GetDefaultPowerupModel( void );
+	virtual const char *GetHealthKitName( void ) { return "medkit_large"; }
 };
 
 class CHealthKitSmall : public CHealthKit
@@ -36,8 +36,8 @@ class CHealthKitSmall : public CHealthKit
 public:
 	DECLARE_CLASS( CHealthKitSmall, CHealthKit );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_SMALL; }
-
 	virtual const char *GetDefaultPowerupModel( void );
+	virtual const char *GetHealthKitName( void ) { return "medkit_small"; }
 };
 
 class CHealthKitMedium : public CHealthKit
@@ -45,8 +45,8 @@ class CHealthKitMedium : public CHealthKit
 public:
 	DECLARE_CLASS( CHealthKitMedium, CHealthKit );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_MEDIUM; }
-
 	virtual const char *GetDefaultPowerupModel( void );
+	virtual const char *GetHealthKitName( void ) { return "medkit_medium"; }
 };
 
 #endif // ENTITY_HEALTHKIT_H

@@ -1975,6 +1975,10 @@ void CTFPlayerShared::OnAddTaunting(void)
 		// cancel any reload in progress.
 		pWpn->AbortReload();
 	}
+
+#ifdef GAME_DLL
+	m_pOuter->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STARTTAUNTING );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1984,6 +1988,7 @@ void CTFPlayerShared::OnRemoveTaunting(void)
 {
 #ifdef GAME_DLL
 	m_pOuter->ClearTauntAttack();
+	m_pOuter->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STOPTAUNTING );
 #endif
 }
 
@@ -3753,8 +3758,7 @@ void CTFPlayerShared::RemoveDisguise(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::CalculateDisguiseWearables(void)
 {
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
-
+#if defined( GAME_DLL )
 	// Remove our current disguise wearables.
 	for (int i = 0; i < m_pOuter->GetNumDisguiseWearables(); i++)
 	{
@@ -3764,6 +3768,7 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 
 		m_pOuter->RemoveDisguiseWearable(pWearable);
 	}
+#endif
 	
 	// Purge all of our disguise bodygroups.
 	SetDisguiseBodygroups(0);
@@ -3774,6 +3779,7 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 		CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 		if (pDisguiseTarget)
 		{
+#if defined( GAME_DLL )
 			// Get the wearables that they have.
 			for (int i = 0; i < pDisguiseTarget->GetNumWearables(); i++)
 			{
@@ -3785,13 +3791,12 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 				m_pOuter->EquipDisguiseWearable(pWearable);
 				
 			}
-		}
-		
-		// Update the disguise bodygroups as well.
-		SetDisguiseBodygroups(pDisguiseTarget->m_Shared.GetWearableBodygroups());
-	}
-	
 #endif
+
+			// Update the disguise bodygroups as well.
+			SetDisguiseBodygroups(pDisguiseTarget->m_Shared.GetWearableBodygroups());
+		}
+	}
 }
 
 
@@ -3808,6 +3813,10 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 #endif
 		return;
 	}
+
+	CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
+	if ( !pDisguiseTarget )
+		return;
 #ifndef CLIENT_DLL
 	// IMPORTANT!!! - This whole function will need to be rewritten if we switch to using item schema.
 	// So please remind me about this when we do. (Nicknine)
@@ -3820,7 +3829,6 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 	Assert(m_pOuter->GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY);
 
 	CEconItemView *pDisguiseItem = NULL;
-	CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
 
 	// Find the weapon in the same slot
 	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; i++ )	
@@ -3897,18 +3905,13 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 			PerTeamVisuals_t *pVisuals = pStatic->GetVisuals();
 			if ( pVisuals )
 			{
-				for (int i = 0; i < ToTFPlayer(GetDisguiseTarget())->GetNumBodyGroups(); i++)
+				for (int i = 0; i < pDisguiseTarget->GetNumBodyGroups(); i++)
 				{
-					unsigned int index = pVisuals->player_bodygroups.Find(ToTFPlayer(GetDisguiseTarget())->GetBodygroupName(i));
+					unsigned int index = pVisuals->player_bodygroups.Find(pDisguiseTarget->GetBodygroupName(i));
 					if ( pVisuals->player_bodygroups.IsValidIndex( index ) )
 					{
-						bool bTrue = pVisuals->player_bodygroups.Element( index );
-						if ( bTrue )
-						{
-							SetBodygroup(ToTFPlayer(GetDisguiseTarget())->GetModelPtr(), m_iWeaponBodygroup, i, 1);
-						}
-						else
-							SetBodygroup(ToTFPlayer(GetDisguiseTarget())->GetModelPtr(), m_iWeaponBodygroup, i, 0);
+						int nState = pVisuals->player_bodygroups.Element( index );
+						SetBodygroup(pDisguiseTarget->GetModelPtr(), m_iWeaponBodygroup, i, nState);
 					}
 				}
 			}

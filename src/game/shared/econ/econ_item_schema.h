@@ -105,9 +105,6 @@ public:
 			Clear();
 
 		m_bInitialized = true;
-
-		if ( m_pString == &_default_value_ )
-			m_pString = new CUtlConstString;
 	}
 
 	void CopyFrom( CAttribute_String const &src )
@@ -122,14 +119,14 @@ public:
 		Assert( !m_bInitialized );
 
 		Initialize();
-		m_pString->Set( src );
+		m_pString.Set( src );
 		m_nLength = V_strlen( src );
 	}
 
 	void Clear( void )
 	{
 		if ( m_bInitialized )
-			m_pString->Clear();
+			m_pString.Clear();
 
 		m_bInitialized = false;
 	}
@@ -145,8 +142,8 @@ public:
 #endif
 
 	// Inner string access
-	const char *Get( void ) const { return m_pString->Get(); }
-	CUtlConstString *GetForModify( void ) { return m_pString; }
+	const char *Get( void ) const { return m_pString.Get(); }
+	CUtlConstString *GetForModify( void ) { return &m_pString; }
 	size_t Length() const { return m_nLength; }
 
 	operator char const *( ) { return Get(); }
@@ -157,10 +154,8 @@ public:
 	operator string_t ( ) const { return MAKE_STRING( Get() ); }
 #endif
 
-	static CUtlConstString _default_value_;
-
 private:
-	CUtlConstString *m_pString;
+	CUtlConstString m_pString;
 	int m_nLength;
 	bool m_bInitialized;
 };
@@ -245,6 +240,23 @@ public:
 	friend class CEconSchemaParser;
 };
 
+typedef enum
+{
+	WEARABLEANIM_EQUIP,
+	WEARABLEANIM_STARTBUILDING,
+	WEARABLEANIM_STOPBUILDING,
+	WEARABLEANIM_STARTTAUNTING,
+	WEARABLEANIM_STOPTAUNTING,
+	NUM_WEARABLEANIM_TYPES
+} wearableanimplayback_t;
+
+typedef struct
+{
+	wearableanimplayback_t playback;
+	int activity;
+	char const *activity_name;
+} activity_on_wearable_t;
+
 // Attached Models
 #define AM_WORLDMODEL	(1 << 0)
 #define AM_VIEWMODEL	(1 << 1)
@@ -260,67 +272,32 @@ typedef union
 	float flVal;
 	uint64 *lVal;
 	CAttribute_String *sVal;
+	byte *bVal;
 } attrib_data_union_t;
 static_assert( sizeof( attrib_data_union_t ) == 4, "If the size changes you've done something wrong!" );
 
-typedef struct
+typedef struct static_attrib_s
 {
-	CEconAttributeDefinition const *GetStaticData( void ) const
-	{
-		return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
-	}
+	CEconAttributeDefinition const *GetStaticData( void ) const;
+	ISchemaAttributeType const *GetAttributeType( void ) const;
 	bool BInitFromKV_SingleLine( KeyValues *const kv );
 	bool BInitFromKV_MultiLine( KeyValues *const kv );
+
+	static_attrib_s()
+	{
+		iAttribIndex = 0;
+		value.iVal = 0;
+	}
+
+	static_attrib_s( const static_attrib_s &rhs )
+	{
+		iAttribIndex = rhs.iAttribIndex;
+		value = rhs.value;
+	}
 
 	unsigned short iAttribIndex;
 	attrib_data_union_t value;
 } static_attrib_t;
-
-
-// Client specific.
-#ifdef CLIENT_DLL
-	EXTERN_RECV_TABLE( DT_EconItemAttribute );
-// Server specific.
-#else
-	EXTERN_SEND_TABLE( DT_EconItemAttribute );
-#endif
-
-class CEconItemAttribute
-{
-public:
-	DECLARE_EMBEDDED_NETWORKVAR();
-	DECLARE_CLASS_NOBASE( CEconItemAttribute );
-
-	CEconAttributeDefinition *GetStaticData( void );
-
-	CEconItemAttribute()
-	{
-		Init( -1, 0.0f );
-	}
-	CEconItemAttribute( int iIndex, float flValue )
-	{
-		Init( iIndex, flValue );
-	}
-	CEconItemAttribute( int iIndex, float flValue, const char *pszAttributeClass )
-	{
-		Init( iIndex, flValue, pszAttributeClass );
-	}
-	CEconItemAttribute( int iIndex, const char *pszValue, const char *pszAttributeClass )
-	{
-		Init( iIndex, pszValue, pszAttributeClass );
-	}
-	CEconItemAttribute( CEconItemAttribute const &src );
-
-	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
-	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
-
-	CEconItemAttribute &operator=( CEconItemAttribute const &src );
-
-public:
-	CNetworkVar( uint16, m_iAttributeDefinitionIndex );
-	CNetworkVar( float, m_flValue );
-	string_t m_iAttributeClass;
-};
 
 typedef struct EconItemStyle
 {
@@ -358,7 +335,8 @@ typedef struct EconPerTeamVisuals
 {
 	EconPerTeamVisuals()
 	{
-		animation_replacement.SetLessFunc( [ ] ( const int &lhs, const int &rhs ) -> bool { return lhs < rhs; } );
+		animation_replacement.SetLessFunc( DefLessFunc( int ) );
+		player_bodygroups.SetLessFunc( StringLessThan );
 		V_memset( &aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
 		V_memset( &aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
@@ -367,11 +345,13 @@ typedef struct EconPerTeamVisuals
 		CLEAR_STR( material_override );
 		skin = -1;
 		use_per_class_bodygroups = 0;
+		vm_bodygroup_override = -1;
+		vm_bodygroup_state_override = -1;
+		wm_bodygroup_override = -1;
+		wm_bodygroup_state_override = -1;
 	}
 	~EconPerTeamVisuals()
 	{
-		playback_activity.PurgeAndDeleteElements();
-		misc_info.PurgeAndDeleteElements();
 		styles.PurgeAndDeleteElements();
 	}
 
@@ -420,6 +400,8 @@ typedef struct EconPerTeamVisuals
 		return NULL;
 	}
 
+	void operator=( EconPerTeamVisuals const &src );
+
 private:
 	char const *aCustomWeaponSounds[ MAX_CUSTOM_WEAPON_SOUNDS ];
 	char const *aWeaponSounds[ NUM_SHOOT_SOUND_TYPES ];
@@ -429,14 +411,17 @@ private:
 	char const *material_override;
 
 public:
-	CUtlDict< bool, unsigned short > player_bodygroups;
+	CUtlMap< const char*, int > player_bodygroups;
 	CUtlMap< int, int > animation_replacement;
+	CUtlVector< activity_on_wearable_t > playback_activity;
+	CUtlVector< AttachedModel_t > attached_models;
+	CUtlVector< ItemStyle_t* > styles;
 	int skin;
 	int use_per_class_bodygroups;
-	CUtlDict< const char*, unsigned short > playback_activity;
-	CUtlDict< const char*, unsigned short > misc_info;
-	CUtlVector< AttachedModel_t > attached_models;
-	CUtlDict< ItemStyle_t*, unsigned short > styles;
+	int vm_bodygroup_override;
+	int vm_bodygroup_state_override;
+	int wm_bodygroup_override;
+	int wm_bodygroup_state_override;
 
 	friend class CEconItemSchema;
 	friend class CEconSchemaParser;

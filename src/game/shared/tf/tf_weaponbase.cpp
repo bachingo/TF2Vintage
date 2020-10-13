@@ -870,12 +870,12 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWeaponBase::UpdatePlayerBodygroups( void )
+void CTFWeaponBase::UpdatePlayerBodygroups( int bOnOff )
 {
 	if ( GetItem()->GetStaticData() && ( !GetItem()->GetStaticData()->hide_bodygroups_deployed_only || m_iState == WEAPON_IS_ACTIVE ) )
 	{
 		// Don't call for inactive weapons that hide bodygroups when deployed
-		BaseClass::UpdatePlayerBodygroups();
+		BaseClass::UpdatePlayerBodygroups( bOnOff );
 	}
 }
 
@@ -2582,21 +2582,18 @@ bool CTFWeaponBase::IsSilentKiller( void ) const
 //-----------------------------------------------------------------------------
 // Purpose:
 // ----------------------------------------------------------------------------
-bool CTFWeaponBase::GetProjectileModelOverride( CAttribute_String *pOut )
+const char *CTFWeaponBase::GetProjectileModelOverride( void )
 {
-	static CSchemaFieldHandle<CEconAttributeDefinition> pAttrDef_CustomProjectile( "custom projectile model" );
+	static CSchemaAttributeHandle pAttrDef_CustomProjectile( "custom projectile model" );
 
 	if ( pAttrDef_CustomProjectile )
 	{
-		CAttribute_String strProjectileModel;
-		CAttributeIterator_GetSpecificAttribute<CAttribute_String> func( pAttrDef_CustomProjectile, &strProjectileModel );
-		GetAttributeContainer()->GetItem()->IterateAttributes( &func );
-
-		*pOut = strProjectileModel;
-		return func.Found();
+		char const *pProjectileModel = NULL;
+		if ( FindAttribute<CAttribute_String>( GetItem(), pAttrDef_CustomProjectile, &pProjectileModel ) )
+			return pProjectileModel;
 	}
 
-	return false;
+	return NULL;
 }
 #else
 

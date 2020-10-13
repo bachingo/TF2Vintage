@@ -1822,7 +1822,7 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->WeaponRegenerate();
 
 			// player_bodygroups
-			pWeapon->UpdatePlayerBodygroups();
+			pWeapon->UpdatePlayerBodygroups( TURN_ON_BODYGROUPS );
 
 			// Extra wearables
 			const char *iszModel = pWeapon->GetExtraWearableModel();
@@ -3764,7 +3764,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			bCanBeBoss = true;
 
 			
-		if ( stricmp( pClassName, "random" ) != 0 )
+		if ( stricmp( pClassName, "random" ) != 0 && stricmp( pClassName, "auto" ) != 0 )
 		{
 			int i = 0;
 				
@@ -6313,8 +6313,15 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	m_bitsDamageType |= info.GetDamageType();
 	float flDamage = info.GetDamage();
 
-	if ( flDamage == 0.0f )
+	if ( flDamage <= 0.0f )
 		return 0;
+
+	if ( ( info.GetDamageType() & DMG_BULLET ) && IsAlive() )
+	{
+		CTFWeaponSapper *pSapper = dynamic_cast<CTFWeaponSapper *>( GetActiveTFWeapon() );
+		if ( pSapper && pSapper->IsWheatleySapper() )
+			pSapper->WheatleyDamage();
+	}
 
 	// Self-damage modifiers.
 	if ( pTFAttacker == this )
@@ -11963,6 +11970,7 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 	if ( !pItemDef )
 		return;
 
+	TFPlayerClassData_t *pData = pPlayer->GetPlayerClass()->GetData();
 	CEconItemView econItem( iItemID );
 
 	bool bAddedAttributes = false;
@@ -12018,7 +12026,14 @@ CON_COMMAND_F( give_econ, "Give ECON item with specified ID from item schema.\nF
 		if ( pWeapon )
 		{
 			int iAmmo = pWeapon->GetPrimaryAmmoType();
-			pPlayer->SetAmmoCount( pPlayer->GetMaxAmmo( iAmmo ), iAmmo );
+			if( iAmmo > -1 )
+				pPlayer->SetAmmoCount( pPlayer->GetMaxAmmo( iAmmo ), iAmmo );
+		}
+
+		CTFWeaponBuilder *pBuilder = dynamic_cast<CTFWeaponBuilder *>( pEconEnt );
+		if ( pBuilder )
+		{
+			pBuilder->SetSubType( pData->m_aBuildable[0] );
 		}
 	}
 }

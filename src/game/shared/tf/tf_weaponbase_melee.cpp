@@ -332,13 +332,13 @@ bool CTFWeaponBaseMelee::DoSwingTraceInternal( trace_t &trace, bool bCleave, Mel
 
 				if ( enumResults )
 				{
-					trace_t trace;
+					trace_t enumTrace;
 					UTIL_TraceModel( vecSwingStart, vecSwingEnd, 
 									 vecSwingMins * flBoundsMult, 
 									 vecSwingMaxs * flBoundsMult, 
-									 pList[i], COLLISION_GROUP_NONE, &trace );
+									 pList[i], COLLISION_GROUP_NONE, &enumTrace );
 
-					enumResults->Element( enumResults->AddToTail() ) = trace;
+					enumResults->Element( enumResults->AddToTail() ) = enumTrace;
 				}
 			}
 

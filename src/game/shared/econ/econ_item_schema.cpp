@@ -9,99 +9,6 @@
 #define UTIL_VarArgs  VarArgs
 #endif
 
-//-----------------------------------------------------------------------------
-// CEconItemAttribute
-//-----------------------------------------------------------------------------
-
-BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
-#ifdef CLIENT_DLL
-	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
-	RecvPropInt( RECVINFO_NAME( m_flValue, m_iRawValue32 ) ),
-	RecvPropFloat( RECVINFO( m_flValue ), SPROP_NOSCALE ),
-#else
-	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ), -1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO_NAME( m_flValue, m_iRawValue32 ), 32, SPROP_UNSIGNED ),
-#endif
-END_NETWORK_TABLE()
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
-{
-	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
-	m_flValue = src.m_flValue;
-	m_iAttributeClass = src.m_iAttributeClass;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttributeClass /*= NULL*/ )
-{
-	m_iAttributeDefinitionIndex = iIndex;
-	
-	m_flValue = flValue;
-
-
-	if ( pszAttributeClass )
-	{
-		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
-	}
-	else
-	{
-		CEconAttributeDefinition *pAttribDef = GetStaticData();
-		if ( pAttribDef )
-		{
-			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *pszAttributeClass /*= NULL*/ )
-{
-	m_iAttributeDefinitionIndex = iIndex;
-	
-	m_flValue = *(float *)( (unsigned int *)STRING( AllocPooledString( pszValue ) ) );
-
-
-	if ( pszAttributeClass )
-	{
-		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
-	}
-	else
-	{
-		CEconAttributeDefinition *pAttribDef = GetStaticData();
-		if ( pAttribDef )
-		{
-			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CEconItemAttribute &CEconItemAttribute::operator=( CEconItemAttribute const &src )
-{
-	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
-	m_flValue = src.m_flValue;
-	m_iAttributeClass = src.m_iAttributeClass;
-
-	return *this;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CEconAttributeDefinition *CEconItemAttribute::GetStaticData( void )
-{
-	return GetItemSchema()->GetAttributeDefinition( m_iAttributeDefinitionIndex );
-}
-
 
 
 //-----------------------------------------------------------------------------
@@ -118,7 +25,6 @@ CEconItemDefinition::~CEconItemDefinition()
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
 		pDefinition->type->UnloadEconAttributeValue( &attributes[i].value );
 	}
-	attributes.Purge();
 
 	for ( int team = TEAM_UNASSIGNED; team < TF_TEAM_COUNT; team++ )
 	{
@@ -126,7 +32,8 @@ CEconItemDefinition::~CEconItemDefinition()
 			delete visual[ team ];
 	}
 
-	definition->deleteThis();
+	if( definition )
+		definition->deleteThis();
 }
 
 //-----------------------------------------------------------------------------
@@ -304,8 +211,11 @@ void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter )
 	FOR_EACH_VEC( attributes, i )
 	{
 		CEconAttributeDefinition const *pDefinition = attributes[i].GetStaticData();
+		if ( pDefinition == nullptr )
+			continue;
+
 		if ( !pDefinition->type->OnIterateAttributeValue( iter, pDefinition, attributes[i].value ) )
-			return;
+			break;
 	}
 }
 
@@ -348,6 +258,24 @@ bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CEconAttributeDefinition const *static_attrib_s::GetStaticData( void ) const
+{
+	return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+ISchemaAttributeType const *static_attrib_s::GetAttributeType( void ) const
+{
+	CEconAttributeDefinition const *pAttrib = GetStaticData();
+	if ( pAttrib )
+		return pAttrib->type;
+	return nullptr;
+}
 
 
 //-----------------------------------------------------------------------------
@@ -355,7 +283,6 @@ bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 //-----------------------------------------------------------------------------
 CAttribute_String::CAttribute_String()
 {
-	m_pString = &_default_value_;
 	m_nLength = 0;
 	m_bInitialized = false;
 }
@@ -375,8 +302,7 @@ CAttribute_String::CAttribute_String( CAttribute_String const &src )
 //-----------------------------------------------------------------------------
 CAttribute_String::~CAttribute_String()
 {
-	if ( m_pString != &_default_value_ && m_pString != nullptr )
-		delete m_pString;
+	m_pString.Clear();
 }
 
 
@@ -402,10 +328,41 @@ CAttribute_String &CAttribute_String::operator=( char const *src )
 {
 	Initialize();
 
-	m_pString->Set( src );
+	m_pString.Set( src );
 	m_nLength = V_strlen( src );
 
 	return *this;
 }
 
-CUtlConstString CAttribute_String::_default_value_;
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void EconPerTeamVisuals::operator=( EconPerTeamVisuals const &src )
+{
+	DeepCopyMap( src.animation_replacement, &animation_replacement );
+	DeepCopyMap( src.player_bodygroups, &player_bodygroups );
+
+	playback_activity.Purge();
+	playback_activity = src.playback_activity;
+
+	attached_models.Purge();
+	attached_models = src.attached_models;
+
+	styles.PurgeAndDeleteElements();
+	styles = src.styles;
+
+	skin = src.skin;
+	use_per_class_bodygroups = src.use_per_class_bodygroups;
+	vm_bodygroup_override = src.vm_bodygroup_override;
+	vm_bodygroup_state_override = src.vm_bodygroup_state_override;
+	wm_bodygroup_override = src.wm_bodygroup_override;
+	wm_bodygroup_state_override = src.wm_bodygroup_state_override;
+
+	Q_memcpy( &custom_particlesystem, src.custom_particlesystem, sizeof(char *) );
+	Q_memcpy( &muzzle_flash, src.muzzle_flash, sizeof(char *) );
+	Q_memcpy( &tracer_effect, src.tracer_effect, sizeof(char *) );
+	Q_memcpy( &material_override, src.material_override, sizeof(char *) );
+	Q_memcpy( &aCustomWeaponSounds, src.aCustomWeaponSounds, sizeof( aCustomWeaponSounds ) );
+	Q_memcpy( &aWeaponSounds, src.aWeaponSounds, sizeof( aWeaponSounds ) );
+}

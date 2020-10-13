@@ -2036,7 +2036,7 @@
 		}
 		"weapon_builder_spy"
 		{
-			"item_class"	"tf_weapon_builder"
+			"item_class"	"tf_weapon_sapper"
 			"item_name"	"#TF_Weapon_Spy_Sapper"
 			"item_type_name"	"#TF_Weapon_Spy_Sapper"
 			"item_slot"	"building"

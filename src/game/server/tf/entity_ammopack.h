@@ -29,8 +29,8 @@ public:
 	bool	MyTouch( CBasePlayer *pPlayer );
 
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
-
 	virtual const char *GetDefaultPowerupModel( void );
+	virtual const char *GetAmmoPackName( void ) { return "ammopack_large"; }
 };
 
 class CAmmoPackSmall : public CAmmoPack
@@ -38,8 +38,8 @@ class CAmmoPackSmall : public CAmmoPack
 public:
 	DECLARE_CLASS( CAmmoPackSmall, CAmmoPack );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_SMALL; }
-
 	virtual const char *GetDefaultPowerupModel( void );
+	virtual const char *GetAmmoPackName( void ) { return "ammopack_small"; }
 };
 
 class CAmmoPackMedium : public CAmmoPack
@@ -47,8 +47,8 @@ class CAmmoPackMedium : public CAmmoPack
 public:
 	DECLARE_CLASS( CAmmoPackMedium, CAmmoPack );
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_MEDIUM; }
-
 	virtual const char *GetDefaultPowerupModel( void );
+	virtual const char *GetAmmoPackName( void ) { return "ammopack_medium"; }
 };
 
 #endif // ENTITY_AMMOPACK_H

@@ -153,6 +153,8 @@ bool CTFWeaponBuilder::Deploy( void )
 			// We just pressed attack2, don't immediately rotate it.
 			m_bInAttack2 = true;
 		}
+
+		pPlayer->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STARTBUILDING );
 	}
 
 	return bDeploy;
@@ -194,6 +196,13 @@ bool CTFWeaponBuilder::CanHolster( void ) const
 //-----------------------------------------------------------------------------
 bool CTFWeaponBuilder::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return false; 
+
+	if ( pOwner->m_Shared.IsCarryingObject() )
+		return false;
+
 	if ( m_iBuildState == BS_PLACING || m_iBuildState == BS_PLACING_INVALID )
 	{
 		SetCurrentState( BS_IDLE );
@@ -202,11 +211,9 @@ bool CTFWeaponBuilder::Holster( CBaseCombatWeapon *pSwitchingTo )
 	StopPlacement();
 
 	// Make sure hauling status is cleared.
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( pOwner && pOwner->m_Shared.IsCarryingObject() )
-	{
-		pOwner->m_Shared.SetCarriedObject( NULL );
-	}
+	pOwner->m_Shared.SetCarriedObject( NULL );
+
+	pOwner->PlayWearableAnimsForPlaybackEvent( WEARABLEANIM_STOPBUILDING );
 
 	return BaseClass::Holster(pSwitchingTo);
 }
@@ -308,13 +315,20 @@ void CTFWeaponBuilder::PrimaryAttack( void )
 				// Need to save this for later since StartBuilding will clear m_hObjectBeingBuilt.
 				CBaseObject *pParentObject = m_hObjectBeingBuilt->GetParentObject();
 
+				if ( pParentObject && m_iObjectType == OBJ_ATTACHMENT_SAPPER )
+				{
+					m_vLastSapPos = pParentObject->GetAbsOrigin();
+					m_hLastSappedBuilding = pParentObject;
+				}
+
 				StartBuilding();
 
-				// Attaching a sapper to a teleporter automatically saps another end.
 				if ( GetType() == OBJ_ATTACHMENT_SAPPER )
 				{
-					CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( pParentObject );
+					pOwner->OnSapperPlaced( pParentObject );
 
+					// Attaching a sapper to a teleporter automatically saps another end.
+					CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( pParentObject );
 					if ( pTeleporter )
 					{
 						CObjectTeleporter *pMatch = pTeleporter->GetMatchingTeleporter();
@@ -681,3 +695,475 @@ bool CTFWeaponBuilder::AllowsAutoSwitchTo( void ) const
 	// ask the object we're building
 	return GetObjectInfo( m_iObjectType )->m_bAutoSwitchTo;
 }
+
+
+IMPLEMENT_SERVERCLASS_ST( CTFWeaponSapper, DT_TFWeaponSapper )
+	SendPropFloat( SENDINFO( m_flWheatleyTalkingUntil ) ),
+END_SEND_TABLE()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_sapper, CTFWeaponSapper );
+PRECACHE_WEAPON_REGISTER( tf_weapon_sapper );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTFWeaponSapper::CTFWeaponSapper()
+{
+	WheatleyReset( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFWeaponSapper::GetViewModel( int iViewModel ) const
+{
+	// Skip over Builder's version
+	return CTFWeaponBase::GetViewModel();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFWeaponSapper::GetWorldModel( void ) const	
+{
+	// Skip over Builder's version
+	return CTFWeaponBase::GetWorldModel();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponSapper::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return false; 
+
+	if ( m_iObjectType == OBJ_ATTACHMENT_SAPPER && IsWheatleySapper() )
+	{
+		pOwner->ResetSappingState();
+
+		if ( pOwner->m_Shared.GetState() == TF_STATE_DYING )
+		{
+			if ( !RandomInt( 0, 4 ) )
+				WheatleyEmitSound( "PSap.DeathLong", true );
+			else
+				WheatleyEmitSound( "PSap.Death", true );
+		}
+		else
+		{
+			float flSoundDuration;
+			if ( ( gpGlobals->curtime - m_flWheatleyLastDeploy ) < 1.5 && ( gpGlobals->curtime - m_flWheatleyLastDeploy ) > -1.0 )
+				flSoundDuration = WheatleyEmitSound( "PSap.HolsterFast");
+			else
+				flSoundDuration = WheatleyEmitSound( "PSap.Holster");
+
+			m_flWheatleyLastHolster = gpGlobals->curtime + flSoundDuration;
+		}
+	}
+
+	m_flWheatleyIdleTime = -1.0f;
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WeaponReset( void )
+{
+	if ( m_iObjectType == OBJ_ATTACHMENT_SAPPER )
+	{
+		if ( IsWheatleySapper() )
+		{
+			CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+			if ( pOwner )
+				pOwner->ResetSappingState();
+
+			WheatleyReset();
+		}
+	}
+
+	BaseClass::WeaponReset();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WeaponIdle( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	WheatleySapperIdle( pOwner );
+
+	BaseClass::WeaponIdle();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Holding Wheatley?
+//-----------------------------------------------------------------------------
+bool CTFWeaponSapper::IsWheatleySapper( void )
+{
+	int nVoicePak = 0;
+	CALL_ATTRIB_HOOK_INT( nVoicePak, sapper_voice_pak );
+
+	return nVoicePak == 1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Special Item Reset
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WheatleyReset( bool bResetIntro )
+{
+	if ( IsWheatleySapper() )
+		WheatleyEmitSound( "PSap.null" );
+
+	if ( bResetIntro )
+		m_bWheatleyIntroPlayed = false;
+
+	m_iWheatleyState = 0;
+	m_flWheatleyTalkingUntil = 0;
+	m_flWheatleyLastDamage = 0;
+	m_iNextWheatleyVoiceLine = 0;
+	m_flWheatleyIdleTime = -1.0f;
+	m_flWheatleyLastDeploy = 0;
+	m_flWheatleyLastHolster = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WheatleyDamage( void )
+{
+	if ( ( gpGlobals->curtime - m_flWheatleyLastDamage ) > 10.0)
+	{
+		if ( RandomInt(0,2) == 0 )
+		{
+			CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+			if ( pOwner )
+				pOwner->ClearSappingState();
+
+			SetWheatleyState( P2RECSTATE_IDLE );
+			m_flWheatleyLastDamage = gpGlobals->curtime;
+			WheatleyEmitSound( "PSap.Damage" );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFWeaponSapper::WheatleyEmitSound( const char *pSound, bool bEmitToAll, bool bNoRepeat )
+{
+	CSoundParameters params;
+	if ( !GetParametersForSound( pSound, params, NULL ) )
+		return 0;
+
+	//if ( bNoRepeat && )
+
+	if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle38.mp3") == 0 )
+	{
+		SetWheatleyState( P2RECSTATE_IDLE_HARMLESS );
+		m_iNextWheatleyVoiceLine = 0;
+	}
+	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle41.mp3") == 0 )
+	{
+		SetWheatleyState( P2RECSTATE_IDLE_HACK );
+		m_iNextWheatleyVoiceLine = 0;
+	}
+	else if ( V_strcmp( params.soundname, "vo/items/wheatley_sapper/wheatley_sapper_idle35.mp3") == 0 )
+	{
+		SetWheatleyState( P2RECSTATE_IDLE_KNIFE );
+		m_iNextWheatleyVoiceLine = 0;
+	}
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( bEmitToAll )
+	{
+		CBroadcastNonOwnerRecipientFilter filter( pOwner );
+		EmitSound( filter, entindex(), pSound, &m_vLastSapPos );
+	}
+
+	CSingleUserRecipientFilter filter( pOwner );
+	EmitSound( filter, entindex(), params );
+
+	m_flWheatleyTalkingUntil = gpGlobals->curtime + 3.0f;
+
+	return 3.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Random sound handling
+//-----------------------------------------------------------------------------
+void CTFWeaponSapper::WheatleySapperIdle( CTFPlayer *pOwner )
+{
+	// This is a doozy
+	if ( !pOwner || m_iObjectType != OBJ_ATTACHMENT_SAPPER || !IsWheatleySapper() )
+		return;
+	
+	if( m_flWheatleyIdleTime < 0.0f )
+	{			
+		pOwner->ResetSappingState();
+
+		float flDuration;
+		if ( ( gpGlobals->curtime - m_flWheatleyLastHolster ) < 2.0f && ( gpGlobals->curtime - m_flWheatleyLastHolster ) >= -1.0f )
+			flDuration = WheatleyEmitSound( "Psap.DeployAgain" );
+		else
+			flDuration = WheatleyEmitSound( m_bWheatleyIntroPlayed ? "Psap.Deploy" : "Psap.DeployIntro" );
+
+		m_flWheatleyLastDeploy = gpGlobals->curtime + flDuration;
+
+		if ( !m_bWheatleyIntroPlayed && !RandomInt( 0, 2 ) )
+		{
+			SetWheatleyState( P2RECSTATE_INTRO );
+			m_bWheatleyIntroPlayed = true;
+
+			m_iNextWheatleyVoiceLine = 0;
+			m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + 3.0f;
+		}
+		else
+		{
+			SetWheatleyState( P2RECSTATE_IDLE );
+			m_bWheatleyIntroPlayed = true;
+
+			m_flWheatleyIdleTime = gpGlobals->curtime + flDuration + GetWheatleyIdleWait();
+		}
+
+		return;
+	}
+	
+	if ( pOwner->GetSappingState() == SAPPING_NONE )
+	{
+		if ( m_iWheatleyState == P2RECSTATE_INTRO && m_flWheatleyIdleTime < gpGlobals->curtime )
+		{
+			if ( !IsWheatleyTalking() )
+			{
+				char szVoiceLine[128];
+				szVoiceLine[0] = 0;
+
+				if ( m_iNextWheatleyVoiceLine <= 3 )
+				{
+					V_sprintf_safe( szVoiceLine, "PSap.IdleIntro0%i", ++m_iNextWheatleyVoiceLine );
+
+					float flSoundDuration = WheatleyEmitSound( szVoiceLine );
+					if ( m_iNextWheatleyVoiceLine == 4 )
+						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait() + flSoundDuration;
+					else
+						m_flWheatleyIdleTime = gpGlobals->curtime + 1.0f + flSoundDuration;
+				}
+				else
+				{
+					SetWheatleyState( P2RECSTATE_IDLE );
+					m_iNextWheatleyVoiceLine = 0;
+				}
+			}
+		}
+		else if ( m_flWheatleyIdleTime < gpGlobals->curtime )
+		{
+			bool bEmitToAll = false;
+			bool bNoRepeats = false;
+			CUtlString szVoiceLine;
+
+			if ( m_iWheatleyState == P2RECSTATE_HACKED )
+			{
+				bEmitToAll = true;
+
+				if ( IsWheatleyTalking() )
+					szVoiceLine = "PSap.HackedLoud";
+				else
+					szVoiceLine = "PSap.Hacked";
+
+				if ( !RandomInt( 0, 3 ) )
+				{
+					SetWheatleyState( P2RECSTATE_FOLLOWUP );
+					m_flWheatleyIdleTime = gpGlobals->curtime + 1.3f;
+				}
+				else
+				{
+					SetWheatleyState( P2RECSTATE_IDLE );
+					m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+				}
+			}
+			else if ( m_iWheatleyState == P2RECSTATE_HACKINGPW )
+			{
+				bEmitToAll = true;
+				SetWheatleyState( P2RECSTATE_IDLE );
+				szVoiceLine = "PSap.HackingPW";
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( m_iWheatleyState == P2RECSTATE_HACKING )
+			{
+				bEmitToAll = true;
+				SetWheatleyState( P2RECSTATE_IDLE );
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+
+				if ( !RandomInt( 0, 2 ) )
+					szVoiceLine = "PSap.HackingShort";
+				else
+					szVoiceLine = "PSap.Hacking";
+			}
+			else if ( m_iWheatleyState == P2RECSTATE_FOLLOWUP )
+			{
+				bEmitToAll = true;
+				SetWheatleyState( P2RECSTATE_IDLE );
+				szVoiceLine = "PSap.HackedFollowup";
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( IsWheatleyTalking() )
+			{
+				m_flWheatleyIdleTime = gpGlobals->curtime + 5.0f;
+			}
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE_HACK )
+			{
+				if ( m_iNextWheatleyVoiceLine == 0 )
+				{
+					szVoiceLine = "PSap.IdleHack02";
+					m_iNextWheatleyVoiceLine++;
+				}
+				else
+				{
+					SetWheatleyState( P2RECSTATE_IDLE );
+					m_iNextWheatleyVoiceLine = 0;
+				}
+
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE_KNIFE )
+			{
+				switch ( m_iNextWheatleyVoiceLine )
+				{
+					case 0:
+						szVoiceLine = "PSap.IdleKnife02";
+						m_iNextWheatleyVoiceLine++;
+						m_flWheatleyIdleTime = gpGlobals->curtime + 0.3f;
+						break;
+					case 1:
+						szVoiceLine = "PSap.IdleKnife03";
+						m_iNextWheatleyVoiceLine++;
+						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+						break;
+					default:
+						SetWheatleyState( P2RECSTATE_IDLE );
+						m_iNextWheatleyVoiceLine = 0;
+						m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+						break;
+				}
+			}
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE_HARMLESS )
+			{
+				if ( m_iNextWheatleyVoiceLine == 0 )
+				{
+					szVoiceLine = "PSap.IdleHarmless02";
+					m_iNextWheatleyVoiceLine++;
+				}
+				else
+				{
+					SetWheatleyState( P2RECSTATE_IDLE );
+					m_iNextWheatleyVoiceLine = 0;
+				}
+
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( pOwner->m_Shared.IsStealthed() )
+			{
+				if ( !RandomInt( 0, 1 ) )
+					szVoiceLine = "PSap.Sneak";
+
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+			else if ( m_iWheatleyState == P2RECSTATE_IDLE )
+			{
+				bNoRepeats = true;
+				szVoiceLine = "PSap.Idle";
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+
+			if ( szVoiceLine == NULL )
+			{
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+				return;
+			}
+
+			float flDuration = WheatleyEmitSound( szVoiceLine, bEmitToAll, bNoRepeats );
+			m_flWheatleyIdleTime += flDuration;
+		}
+
+		return;
+	}
+
+	CUtlString szVoiceLine;
+	if ( pOwner->GetSappingState() == SAPPING_PLACED )
+	{
+		if ( !RandomInt( 0, 1 ) )
+		{
+			if ( !RandomInt( 0, 3 ) )
+			{
+				szVoiceLine = "PSap.AttachedPW";
+				SetWheatleyState( P2RECSTATE_HACKING );
+			}
+			else
+			{
+				szVoiceLine = "PSap.Attached";
+				SetWheatleyState( P2RECSTATE_HACKINGPW );
+			}
+
+			m_flWheatleyIdleTime = gpGlobals->curtime + 0.2f;
+		}
+		else
+		{
+			szVoiceLine = "PSap.Hacking";
+			SetWheatleyState( P2RECSTATE_IDLE );
+			m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+		}
+	}
+	else if ( pOwner->GetSappingState() == SAPPING_DONE )
+	{
+		if ( IsWheatleyTalking() )
+		{
+			if ( m_hLastSappedBuilding && m_hLastSappedBuilding->IsAlive() )
+				szVoiceLine = "PSap.Death";
+			else
+				szVoiceLine = "PSap.HackedLoud";
+
+			if ( !RandomInt( 0, 3 ) )
+			{
+				SetWheatleyState( P2RECSTATE_FOLLOWUP );
+				m_flWheatleyIdleTime = gpGlobals->curtime + 1.3f;
+			}
+			else
+			{
+				m_flWheatleyIdleTime = gpGlobals->curtime + GetWheatleyIdleWait();
+			}
+		}
+		else
+		{
+			SetWheatleyState( P2RECSTATE_HACKED );
+			m_flWheatleyIdleTime = gpGlobals->curtime + 0.5f;
+		}
+	}
+
+	pOwner->ClearSappingState();
+
+	if ( szVoiceLine == NULL )
+		return;
+
+	float flSoundDuration = WheatleyEmitSound( szVoiceLine, true );
+	m_flWheatleyIdleTime += flSoundDuration;
+}
+
+#ifdef _DEBUG
+
+CON_COMMAND( tf_wheatley_speak, "For testing; Force a line out of the Ap-Sap" )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetLocalPlayer() );
+	if ( !pPlayer )
+		return;
+
+	CTFWeaponSapper *pSapper = dynamic_cast<CTFWeaponSapper *>( pPlayer->Weapon_GetWeaponByType( TF_WPN_TYPE_BUILDING ) );
+	if ( pSapper && pSapper->IsWheatleySapper() )
+		pSapper->WheatleyEmitSound( "PSap.Hacked" );
+}
+
+#endif

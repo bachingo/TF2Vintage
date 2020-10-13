@@ -95,7 +95,7 @@ ActionResult<CTFBot> CTFBotEngineerBuildTeleportExit::Update( CTFBot *me, float 
 			pTele->StartBuilding( me );
 			pTele->SetBuilder( me );
 
-			float flStepHeight = me->GetLocomotionInterface()->GetStepHeight();
+			const float flStepHeight = me->GetLocomotionInterface()->GetStepHeight();
 			me->SetAbsOrigin( pTele->GetAbsOrigin() + Vector( 0, 0, flStepHeight ) );
 
 			return Action<CTFBot>::Done( "Teleport exit built at precise location" );

@@ -54,9 +54,9 @@ void TestAndBlockOverlappingAreas( CBaseEntity *pBlocker )
 		const Vector vecMins( 0, 0, StepHeight );
 
 		Vector vecStart, vecEnd, vecMaxs, vecTest;
-		if ( abs( nwCorner.z - neCorner.z ) >= 1.0f )
+		if ( fabs( nwCorner.z - neCorner.z ) >= 1.0f )
 		{
-			if ( abs( seCorner.z - swCorner.z ) >= 1.0f )
+			if ( fabs( seCorner.z - swCorner.z ) >= 1.0f )
 			{
 				vecTest = seCorner;
 				vecMaxs.x = 1.0f;
@@ -697,7 +697,7 @@ void CTFNavMesh::ComputeIncursionDistances()
 	}
 
 	// Update RED incursion distance based on BLU's distance
-	float flMaxDistance = 0.0f;
+	/*float flMaxDistance = 0.0f;
 	for ( int i=0; i<TheNavAreas.Count(); ++i )
 	{
 		CTFNavArea *area = static_cast<CTFNavArea *>( TheNavAreas[i] );
@@ -710,7 +710,7 @@ void CTFNavMesh::ComputeIncursionDistances()
 		float flIncursionDist = area->GetIncursionDistance( TF_TEAM_BLUE );
 		if ( flIncursionDist >= 0.0f )
 			area->SetIncursionDistance( TF_TEAM_RED, ( flMaxDistance - flIncursionDist ) );
-	}
+	}*/
 }
 
 void CTFNavMesh::ComputeIncursionDistances( CTFNavArea *startArea, int teamNum )

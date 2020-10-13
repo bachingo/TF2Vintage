@@ -40,6 +40,12 @@ inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
 template<typename T>
 inline T AttributeConvertFromFloat( float flValue )
 {
+	return (T)flValue;
+}
+
+template<>
+inline float AttributeConvertFromFloat( float flValue )
+{
 	return flValue;
 }
 
@@ -49,48 +55,18 @@ inline int AttributeConvertFromFloat( float flValue )
 	return RoundFloatToInt( flValue );
 }
 
-FORCEINLINE void ApplyAttribute( CEconAttributeDefinition const *pDefinition, float *pOutput, float flValue )
+
+typedef enum
 {
-	switch ( pDefinition->description_format )
-	{
-		case ATTRIB_FORMAT_ADDITIVE:
-		case ATTRIB_FORMAT_ADDITIVE_PERCENTAGE:
-		{
-			*pOutput += flValue;
-			break;
-		}
-		case ATTRIB_FORMAT_PERCENTAGE:
-		case ATTRIB_FORMAT_INVERTED_PERCENTAGE:
-		{
-			*pOutput *= flValue;
-			break;
-		}
-		case ATTRIB_FORMAT_OR:
-		{
-			// Oh, man...
-			int iValue = FloatBits( *pOutput );
-			iValue |= FloatBits( flValue );
-			*pOutput = BitsToFloat( iValue );
-			break;
-		}
-		case ATTRIB_FORMAT_KILLSTREAKEFFECT_INDEX:
-		case ATTRIB_FORMAT_KILLSTREAK_IDLEEFFECT_INDEX:
-		case ATTRIB_FORMAT_FROM_LOOKUP_TABLE:
-		{
-			*pOutput = flValue;
-			break;
-		}
-		default:
-		{
-			return;
-		}
-	}
-}
+	PROVIDER_ANY,
+	PROVIDER_WEAPON
+} provider_type_t;
 
 class CAttributeManager
 {
 public:
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_DATADESC();
 	DECLARE_CLASS_NOBASE( CAttributeManager );
 
 	CAttributeManager();
@@ -119,21 +95,29 @@ public:
 	void			RemoveProvider( CBaseEntity *pEntity );
 	void			ProvideTo( CBaseEntity *pEntity );
 	void			StopProvidingTo( CBaseEntity *pEntity );
+	int				GetProviderType( void ) const { return m_ProviderType; }
+	void			SetProvidrType( int type ) { m_ProviderType = type; }
 	virtual void	InitializeAttributes( CBaseEntity *pEntity );
 	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 	virtual string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
-	virtual void	OnAttributesChanged( void ) {}
+
+	virtual void	OnAttributesChanged( void )
+	{
+		NetworkStateChanged();
+	}
 
 protected:
-	CNetworkHandle( CBaseEntity, m_hOuter );
+	CNetworkHandleForDerived( CBaseEntity, m_hOuter );
 	bool m_bParsingMyself;
 
-	CNetworkVar( int, m_iReapplyProvisionParity );
+	CNetworkVarForDerived( int, m_iReapplyProvisionParity );
 #ifdef CLIENT_DLL
 	int m_iOldReapplyProvisionParity;
 #endif
+	CNetworkVarForDerived( int, m_ProviderType );
 
 	CUtlVector<EHANDLE> m_AttributeProviders;
+	CUtlVector<EHANDLE> m_AttributeReceivers;
 
 	friend class CEconEntity;
 };
@@ -161,6 +145,7 @@ public:
 	DECLARE_PREDICTABLE();
 #endif
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_DATADESC();
 
 	virtual ~CAttributeContainer() {};
 	void	InitializeAttributes( CBaseEntity *pEntity );
@@ -168,12 +153,12 @@ public:
 	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 	void	OnAttributesChanged( void );
 
-	CEconItemView *GetItem( void ) const { return (CEconItemView *)&m_Item; }
+	void SetItem( CEconItemView const &pItem ) { m_Item.CopyFrom( pItem ); }
+	CEconItemView *GetItem( void ) { return &m_Item; }
+	CEconItemView const *GetItem( void ) const { return &m_Item; }
 
 protected:
 	CNetworkVarEmbedded( CEconItemView, m_Item );
-
-	friend class CEconEntity;
 };
 
 
@@ -182,6 +167,7 @@ class CAttributeContainerPlayer : public CAttributeManager
 public:
 	DECLARE_CLASS( CAttributeContainerPlayer, CAttributeManager );
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_DATADESC();
 
 	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
 	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;

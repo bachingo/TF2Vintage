@@ -12,6 +12,7 @@
 #include "tf_obj_sentrygun.h"
 #include "tf_obj_teleporter.h"
 #include "tf_obj_sapper.h"
+#include "tf_weapon_builder.h"
 #include "ndebugoverlay.h"
 #include "tf_gamestats.h"
 
@@ -62,6 +63,10 @@ CObjectSapper::CObjectSapper()
 	SetMaxHealth( GetBaseHealth() );
 
 	UseClientSideAnimation();
+
+	m_iszPlacedModel = NULL_STRING;
+	m_iszPlacementModel = NULL_STRING;
+	m_iszSapperSound = NULL_STRING;
 }
 
 //-----------------------------------------------------------------------------
@@ -69,11 +74,14 @@ CObjectSapper::CObjectSapper()
 //-----------------------------------------------------------------------------
 void CObjectSapper::UpdateOnRemove()
 {
-	if ( ReverseBuildingConstruction() )
-		StopSound( "Weapon_sd_sapper.Timer" );	// Red-Tape Recorder
-	else
-		StopSound( "Weapon_Sapper.Timer" );		// Standard Sapper
+	StopSound( "Weapon_Sapper.Timer" );
+	StopSound( "Weapon_sd_sapper.Timer" );
+	StopSound( "Weapon_p2rec.Timer" );
 
+	if( GetBuilder() )
+	{
+		GetBuilder()->OnSapperFinished( m_flSappingStartTime );
+	}
 
 	BaseClass::UpdateOnRemove();
 }
@@ -106,13 +114,58 @@ void CObjectSapper::Spawn()
 //-----------------------------------------------------------------------------
 void CObjectSapper::Precache()
 {
-	int iModelIndex = PrecacheModel( GetSapperModelName( SAPPER_MODEL_PLACED ) );
+	int iModelIndex = PrecacheModel( "models/buildables/sapper_placed.mdl" );
 	PrecacheGibsForModel( iModelIndex );
+	PrecacheModel( "models/buildables/sapper_placement.mdl" );
 
-	PrecacheModel( GetSapperModelName( SAPPER_MODEL_PLACEMENT ) );
+	iModelIndex = PrecacheModel( "models/buildables/sd_sapper_placed.mdl" );
+	PrecacheGibsForModel( iModelIndex );
+	PrecacheModel( "models/buildables/sd_sapper_placement.mdl" );
+
+	iModelIndex = PrecacheModel( "models/buildables/p2rec_placed.mdl" );
+	PrecacheGibsForModel( iModelIndex );
+	PrecacheModel( "models/buildables/p2rec_placement.mdl" );
+
+	iModelIndex = PrecacheModel( "models/buildables/sapper_xmas_placed.mdl" );
+	PrecacheGibsForModel( iModelIndex );
+	PrecacheModel( "models/buildables/sapper_xmas_placement.mdl" );
+
+	iModelIndex = PrecacheModel( "models/buildables/breadmonster_sapper_placed.mdl" );
+	PrecacheGibsForModel( iModelIndex );
+	PrecacheModel( "models/buildables/breadmonster_sapper_placement.mdl" );
+
 	PrecacheScriptSound( "Weapon_Sapper.Plant" );
 	PrecacheScriptSound( "Weapon_Sapper.Timer" );
 	PrecacheScriptSound( "Weapon_sd_sapper.Timer" );
+	PrecacheScriptSound( "Weapon_p2rec.Timer" );
+
+	PrecacheScriptSound( "PSap.null" );
+	PrecacheScriptSound( "Psap.Attached" );
+	PrecacheScriptSound( "Psap.AttachedPW" );
+	PrecacheScriptSound( "PSap.Damage" );
+	PrecacheScriptSound( "PSap.Death" );
+	PrecacheScriptSound( "PSap.DeathLong" );
+	PrecacheScriptSound( "PSap.Deploy" );
+	PrecacheScriptSound( "PSap.DeployAgain" );
+	PrecacheScriptSound( "PSap.DeployIntro" );
+	PrecacheScriptSound( "PSap.Hacked" );
+	PrecacheScriptSound( "Psap.HackedFollowup" );
+	PrecacheScriptSound( "Psap.HackedLoud" );
+	PrecacheScriptSound( "PSap.Hacking" );
+	PrecacheScriptSound( "PSap.HackingPW" );
+	PrecacheScriptSound( "PSap.HackingShort" );
+	PrecacheScriptSound( "PSap.Holster" );
+	PrecacheScriptSound( "PSap.HolsterFast" );
+	PrecacheScriptSound( "Psap.Idle" );
+	PrecacheScriptSound( "Psap.IdleHack02" );
+	PrecacheScriptSound( "Psap.IdleHarmless02" );
+	PrecacheScriptSound( "PSap.IdleIntro01" );
+	PrecacheScriptSound( "PSap.IdleIntro02" );
+	PrecacheScriptSound( "PSap.IdleIntro03" );
+	PrecacheScriptSound( "PSap.IdleIntro04" );
+	PrecacheScriptSound( "PSap.IdleKnife02" );
+	PrecacheScriptSound( "PSap.IdleKnife03" );
+	PrecacheScriptSound( "PSap.Sneak" );
 
 	BaseClass::Precache();
 }
@@ -132,10 +185,13 @@ void CObjectSapper::FinishedBuilding( void )
 	EmitSound( "Weapon_Sapper.Plant" );
 
 	// start looping "Weapon_Sapper.Timer", killed when we die
-	if ( ReverseBuildingConstruction() )
-		EmitSound( "Weapon_sd_sapper.Timer" );	// Red-Tape Recorder
-	else
-		EmitSound( "Weapon_Sapper.Timer" );		// Standard Sapper
+	EmitSound( GetSapperSoundName() );
+
+	if( GetBuilder() )
+	{
+		m_flSappingStartTime = gpGlobals->curtime;
+		GetBuilder()->OnSapperStarted( m_flSappingStartTime );
+	}
 
 	m_flSapperDamageAccumulator = 0;
 	m_flLastThinkTime = gpGlobals->curtime;
@@ -192,20 +248,68 @@ void CObjectSapper::OnGoActive( void )
 
 const char *CObjectSapper::GetSapperModelName( SapperModel_t iModelType )
 {
-	// Live gets builder model here for sapper model overrides.
-
-	if ( iModelType == SAPPER_MODEL_PLACEMENT )
+	if ( GetBuilder() == NULL )
 	{
-		if ( ReverseBuildingConstruction() != 0)
-			return g_sapperModelPlacementSD;	
-		else
+		if ( iModelType == SAPPER_MODEL_PLACEMENT )
 			return g_sapperModelPlacement;
+
+		return g_sapperModel;
 	}
 
-	if ( ReverseBuildingConstruction() != 0)
-		return g_sapperModelSD;	
-	else
-		return g_sapperModel;
+	if ( m_iszPlacementModel == NULL_STRING || m_iszPlacedModel == NULL_STRING )
+	{
+		CTFWeaponSapper *pSapper = dynamic_cast<CTFWeaponSapper *>( GetBuilder()->Weapon_GetWeaponByType( TF_WPN_TYPE_BUILDING ) );
+		if ( pSapper == NULL )
+		{
+			if ( iModelType == SAPPER_MODEL_PLACEMENT )
+				return g_sapperModelPlacement;
+
+			return g_sapperModel;
+		}
+
+		if ( ReverseBuildingConstruction() > 0.0f )
+		{
+			m_iszPlacementModel = AllocPooledString( "models/buildables/sd_sapper_placement.mdl" );
+			m_iszPlacedModel = AllocPooledString( "models/buildables/sd_sapper_placed.mdl" );
+		}
+		else if ( pSapper->IsWheatleySapper() )
+		{
+			m_iszPlacementModel = AllocPooledString( "models/buildables/p2rec_placement.mdl" );
+			m_iszPlacedModel = AllocPooledString( "models/buildables/p2rec_placed.mdl" );
+		}
+		else
+		{
+			m_iszPlacementModel = AllocPooledString( "models/buildables/sapper_placement.mdl" );
+			m_iszPlacedModel = AllocPooledString( "models/buildables/sapper_placed.mdl" );
+		}
+	}
+
+	if ( iModelType == SAPPER_MODEL_PLACEMENT )
+		return STRING( m_iszPlacementModel );
+
+	return STRING( m_iszPlacedModel );
+}
+
+char const *CObjectSapper::GetSapperSoundName( void )
+{
+	if ( GetBuilder() == NULL )
+		return "Weapon_Sapper.Timer";
+
+	if ( m_iszSapperSound == NULL_STRING )
+	{
+		CTFWeaponSapper *pSapper = dynamic_cast<CTFWeaponSapper *>( GetBuilder()->Weapon_GetWeaponByType( TF_WPN_TYPE_BUILDING ) );
+		if ( pSapper == NULL )
+			return "Weapon_Sapper.Timer";
+
+		if ( ReverseBuildingConstruction() > 0.0f )
+			m_iszSapperSound = AllocPooledString( "Weapon_sd_sapper.Timer" );
+		else if ( pSapper->IsWheatleySapper() )
+			m_iszSapperSound = AllocPooledString( "Weapon_p2rec.Timer" );
+		else
+			m_iszSapperSound = AllocPooledString( "Weapon_sapper.Timer" );
+	}
+
+	return STRING( m_iszSapperSound );
 }
 
 //-----------------------------------------------------------------------------

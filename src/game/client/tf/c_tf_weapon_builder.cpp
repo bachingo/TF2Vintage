@@ -33,14 +33,16 @@ void RecvProxy_ObjectType( const CRecvProxyData *pData, void *pStruct, void *pOu
 	pBuilder->SetupObjectSelectionSprite();
 }
 
+PRECACHE_WEAPON_REGISTER( tf_weapon_builder );
+
 BEGIN_NETWORK_TABLE_NOBASE( C_TFWeaponBuilder, DT_BuilderLocalData )
-	RecvPropInt( RECVINFO(m_iObjectType), 0, RecvProxy_ObjectType ),
-	RecvPropEHandle( RECVINFO(m_hObjectBeingBuilt) ),
+	RecvPropInt( RECVINFO( m_iObjectType ), 0, RecvProxy_ObjectType ),
+	RecvPropEHandle( RECVINFO( m_hObjectBeingBuilt ) ),
 END_NETWORK_TABLE()
 
 
-IMPLEMENT_CLIENTCLASS_DT(C_TFWeaponBuilder, DT_TFWeaponBuilder, CTFWeaponBuilder)
-	RecvPropInt( RECVINFO(m_iBuildState) ),
+IMPLEMENT_CLIENTCLASS_DT( C_TFWeaponBuilder, DT_TFWeaponBuilder, CTFWeaponBuilder )
+	RecvPropInt( RECVINFO( m_iBuildState ) ),
 	RecvPropDataTable( "BuilderLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_BuilderLocalData ) ),
 END_RECV_TABLE()
 
@@ -401,3 +403,35 @@ Activity C_TFWeaponBuilder::GetDrawActivity( void )
 		vm->RemoveViewmodelAddon();
 	}
 }*/
+
+
+
+IMPLEMENT_CLIENTCLASS_DT( C_TFWeaponSapper, DT_TFWeaponSapper, CTFWeaponSapper )
+	RecvPropTime( RECVINFO( m_flWheatleyTalkingUntil ) )
+END_NETWORK_TABLE()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_TFWeaponSapper::C_TFWeaponSapper()
+{
+	m_flWheatleyTalkingUntil = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *C_TFWeaponSapper::GetViewModel( int iViewModel ) const
+{
+	// Skip over Builder's version
+	return C_TFWeaponBase::GetViewModel();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *C_TFWeaponSapper::GetWorldModel( void ) const
+{
+	// Skip over Builder's version
+	return C_TFWeaponBase::GetWorldModel();
+}

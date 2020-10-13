@@ -234,7 +234,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Accessor for bodygroup switching
 	virtual void SwitchBodyGroups( void ) {}
 
-	virtual void UpdatePlayerBodygroups( void );
+	virtual void UpdatePlayerBodygroups( int bOnOff );
 
 	// Sound.
 	bool PlayEmptySound();
@@ -363,7 +363,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	
 	virtual bool OwnerCanTaunt( void ) const { return true; }
 
-	virtual bool GetProjectileModelOverride( CAttribute_String *pOut );
+	virtual const char *GetProjectileModelOverride( void );
 	
 // Client specific.
 #else

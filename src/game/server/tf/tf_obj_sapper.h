@@ -36,7 +36,8 @@ public:
 	virtual bool	IsHostileUpgrade( void ) { return true; }
 	virtual void	FinishedBuilding( void );
 	virtual void	SetupAttachedVersion( void );
-	const char		*GetSapperModelName( SapperModel_t iModelType );
+	char const		*GetSapperModelName( SapperModel_t iModelType );
+	char const		*GetSapperSoundName( void );
 	virtual void	DetachObjectFromObject( void );
 	virtual void	UpdateOnRemove( void );
 	virtual void	OnGoActive( void );
@@ -50,6 +51,11 @@ public:
 private:
 	float m_flSapperDamageAccumulator;
 	float m_flLastThinkTime;
+	float m_flSappingStartTime;
+
+	string_t m_iszPlacementModel;
+	string_t m_iszPlacedModel;
+	string_t m_iszSapperSound;
 };
 
 #endif // TF_OBJ_SAPPER_H

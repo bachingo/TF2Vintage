@@ -79,7 +79,62 @@ public:
 	int m_iValidBuildPoseParam;
 
 	float m_flNextDenySound;
+
+protected:
+	EHANDLE  m_hLastSappedBuilding;
+	Vector   m_vLastSapPos;
 };
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CTFWeaponSapper : public CTFWeaponBuilder
+{
+public:
+	DECLARE_CLASS( CTFWeaponSapper, CTFWeaponBuilder );
+	DECLARE_SERVERCLASS();
+
+	CTFWeaponSapper();
+
+	virtual void		WeaponReset( void );
+	virtual void		WeaponIdle( void );
+	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo );
+	virtual const char *GetViewModel( int iViewModel ) const;
+	virtual const char *GetWorldModel( void ) const;
+
+	// All the special Wheatley functionality for the Ap-Sap
+	void	WheatleySapperIdle( CTFPlayer *pOwner );
+	bool	IsWheatleySapper( void );
+	void	WheatleyReset( bool bResetIntro = false );
+	void	SetWheatleyState( int iNewState ) { m_iWheatleyState = iNewState; }
+	float	WheatleyEmitSound( const char *pSound , bool bEmitToAll = false, bool bNoRepeats = false );
+	bool	IsWheatleyTalking( void ) { return gpGlobals->curtime <= m_flWheatleyTalkingUntil; }
+	void	WheatleyDamage( void );
+	int		GetWheatleyIdleWait() { return RandomInt( 10.0, 20.0 ); }
+
+private:
+	float		m_flWheatleyIdleTime;
+	CNetworkVar( float, m_flWheatleyTalkingUntil );
+	int			m_iWheatleyState;
+	float		m_flWheatleyLastDamage;
+	float		m_flWheatleyLastDeploy;
+	float		m_flWheatleyLastHolster;
+	int			m_iNextWheatleyVoiceLine;
+	bool		m_bWheatleyIntroPlayed;
+};
+
+enum
+{
+	P2RECSTATE_IDLE,
+	P2RECSTATE_HACKING,
+	P2RECSTATE_HACKINGPW,
+	P2RECSTATE_HACKED,
+	P2RECSTATE_FOLLOWUP,
+	P2RECSTATE_IDLE_KNIFE,
+	P2RECSTATE_IDLE_HARMLESS,
+	P2RECSTATE_IDLE_HACK,
+	P2RECSTATE_INTRO
+};
 
 #endif // TF_WEAPON_BUILDER_H

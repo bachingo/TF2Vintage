@@ -40,6 +40,8 @@ public:
 	virtual void			UpdateWearableBodyGroups( CBasePlayer *pPlayer );
 	virtual void			GiveTo( CBaseEntity *pEntity );
 	virtual void			RemoveFrom( CBaseEntity *pEntity );
+
+	virtual bool			IsViewModelWearable( void ) const { return false; }
 	
 	virtual	int 			GetDropType( void );
 	virtual	int 			GetLoadoutSlot(void);
