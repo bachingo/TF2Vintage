@@ -81,15 +81,30 @@ template<class T>
 class CSchemaFieldHandle
 {
 public:
-	EXPLICIT CSchemaFieldHandle( char const *name );
+	EXPLICIT CSchemaFieldHandle( char const *name ) : m_pszName( name )
+	{
+		m_pHandle = GetHandleRef();
+		m_nSchemaVersion = GetItemSchema()->GetResetCount();
+	}
 
-	operator T const *();
-	T const *operator->();
+	operator T const *( ) const
+	{
+		uint nSchemaVersion = GetItemSchema()->GetResetCount();
+		if ( nSchemaVersion != m_nSchemaVersion )
+		{
+			m_nSchemaVersion = nSchemaVersion;
+			m_pHandle = GetHandleRef();
+		}
+		return m_pHandle;
+	}
+	T const *operator->() { return static_cast<const T *>( *this ); }
 
 private:
-	char const *m_pName;
-	T *m_pHandle;
-	mutable KeyValues const *m_pSchema;
+	T const *GetHandleRef( void ) const;
+
+	char const *m_pszName;
+	mutable T const *m_pHandle;
+	mutable uint m_nSchemaVersion;
 };
 
 typedef CSchemaFieldHandle<CEconAttributeDefinition>	CSchemaAttributeHandle;
@@ -98,52 +113,18 @@ typedef CSchemaFieldHandle<CEconItemDefinition>			CSchemaItemHandle;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-inline CSchemaFieldHandle<CEconAttributeDefinition>::CSchemaFieldHandle( char const *name )
-	: m_pName( name ), m_pSchema( GetItemSchema()->GetSchemaKeyValues() )
+inline const CEconAttributeDefinition *CSchemaFieldHandle<CEconAttributeDefinition>::GetHandleRef( void ) const
 {
-	m_pHandle = GetItemSchema()->GetAttributeDefinitionByName( name );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-inline CSchemaFieldHandle<CEconAttributeDefinition>::operator const CEconAttributeDefinition *( )
-{
-	return m_pHandle;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-inline CEconAttributeDefinition const *CSchemaFieldHandle<CEconAttributeDefinition>::operator ->( )
-{
-	return m_pHandle;
+	return GetItemSchema()->GetAttributeDefinitionByName( m_pszName );
 }
 
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-inline CSchemaFieldHandle<CEconItemDefinition>::CSchemaFieldHandle( char const *name )
-	: m_pName( name ), m_pSchema( GetItemSchema()->GetSchemaKeyValues() )
+inline const CEconItemDefinition *CSchemaFieldHandle<CEconItemDefinition>::GetHandleRef( void ) const
 {
-	m_pHandle = GetItemSchema()->GetItemDefinitionByName( name );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-inline CSchemaFieldHandle<CEconItemDefinition>::operator const CEconItemDefinition *( )
-{
-	return m_pHandle;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-inline CEconItemDefinition const *CSchemaFieldHandle<CEconItemDefinition>::operator ->( )
-{
-	return m_pHandle;
+	return GetItemSchema()->GetItemDefinitionByName( m_pszName );
 }
 
 #endif // ECON_ITEM_SYSTEM_H
