@@ -576,36 +576,122 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameDLL, IServerGameDLL, INTERFACEVERSI
 // When bumping the version to this interface, check that our assumption is still valid and expose the older version in the same way
 COMPILE_TIME_ASSERT( INTERFACEVERSION_SERVERGAMEDLL_INT == 10 );
 
+static int CaseInsensitiveStringSort( char * const * sz1, char * const * sz2 )
+{
+	return V_stricmp( *sz1, *sz2 );
+}
 static void MountAdditionalContent()
 {
-	KeyValues *pMainFile = new KeyValues( "gameinfo.txt" );
+#ifndef NO_STEAM
+	KeyValuesAD pMainFile( "gameinfo" );
+	bool bSuccess = false;
 #ifndef _WINDOWS
 	// case sensitivity
-	pMainFile->LoadFromFile( filesystem, "GameInfo.txt", "MOD" );
-	if ( !pMainFile )
-#endif
-		pMainFile->LoadFromFile( filesystem, "gameinfo.txt", "MOD" );
+	bSuccess = pMainFile->LoadFromFile( g_pFullFileSystem, "GameInfo.txt", "MOD" );
+	if ( !bSuccess )
+	#endif
+		bSuccess = pMainFile->LoadFromFile( g_pFullFileSystem, "gameinfo.txt", "MOD" );
 
-	if ( pMainFile )
+	if ( !bSuccess )
 	{
-		KeyValues* pFileSystemInfo = pMainFile->FindKey( "FileSystem" );
-		if ( pFileSystemInfo )
+		Error( "Unable to load GameInfo.txt, does it exist?" );
+		return;
+	}
+
+	KeyValues* pFileSystemInfo = pMainFile->FindKey( "FileSystem" );
+	if ( !pFileSystemInfo )
+	{
+		Error( "Error parsing GameInfo.txt, KV is malformed (Missing FileSystem key)" );
+		return;
+	}
+
+	FOR_EACH_SUBKEY( pFileSystemInfo, pSubKey )
+	{
+		if ( Q_stricmp( pSubKey->GetName(), "AdditionalContentId" ) )
+			continue;
+
+		int appid = abs( pSubKey->GetInt() );
+		if ( appid )
 		{
-			for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
+			if ( !steamapicontext->SteamApps() )
 			{
-				if ( Q_stricmp( pKey->GetName(), "AdditionalContentId" ) == 0 )
+				Error( "Unable to mount extra content, unkown error\n" );
+				return;
+			}
+			if ( !steamapicontext->SteamApps()->BIsAppInstalled( appid ) )
+			{
+				Warning( "Unable to mount extra content with appId: %i\n", appid );
+				return;
+			}
+
+			char szAppDirectory[ MAX_PATH ];
+			steamapicontext->SteamApps()->GetAppInstallDir( appid, szAppDirectory, sizeof( szAppDirectory ) );
+
+		#ifdef TF_VINTAGE // Hacky hack until we can pragmatically figure out the mod dir
+			V_AppendSlash( szAppDirectory, sizeof( szAppDirectory ) );
+			V_strcat_safe( szAppDirectory, "tf" );
+		#endif
+
+			g_pFullFileSystem->AddSearchPath( szAppDirectory, "MOD" );
+			g_pFullFileSystem->AddSearchPath( szAppDirectory, "GAME" );
+
+			V_AppendSlash( szAppDirectory, sizeof( szAppDirectory ) );
+			V_strcat_safe( szAppDirectory, "*" );
+
+			FileFindHandle_t hFind;
+			CUtlStringList fullFilePaths;
+
+			char const *pszFileFound = g_pFullFileSystem->FindFirst( szAppDirectory, &hFind );
+			while ( pszFileFound )
+			{
+				if ( pszFileFound[0] != '.' )
 				{
-					int appid = abs( pKey->GetInt() );
-					if ( appid )
+					if ( g_pFullFileSystem->FindIsDirectory( hFind ) || V_stristr( pszFileFound, "vpk" ) )
 					{
-						if ( filesystem->MountSteamContent( -appid ) != FILESYSTEM_MOUNT_OK )
-							Warning( "Unable to mount extra content with appId: %i\n", appid );
+						char szAbsPathName[ MAX_PATH ];
+						V_ExtractFilePath( szAppDirectory, szAbsPathName, sizeof( szAbsPathName ) );
+						V_AppendSlash( szAbsPathName, sizeof( szAbsPathName ) );
+						V_strcat_safe( szAbsPathName, pszFileFound, COPY_ALL_CHARACTERS );
+
+						fullFilePaths.CopyAndAddToTail( szAbsPathName );
+					}
+				}
+
+				pszFileFound = g_pFullFileSystem->FindNext( hFind );
+			}
+			g_pFullFileSystem->FindClose( hFind );
+
+			fullFilePaths.Sort( CaseInsensitiveStringSort );
+
+			FOR_EACH_VEC_BACK( fullFilePaths, i )
+			{
+				char ext[10];
+				V_ExtractFileExtension( fullFilePaths[i], ext, sizeof( ext ) );
+
+				if ( Q_stricmp( ext, "vpk" ) == 0 )
+				{
+					char *szDirVPK = Q_stristr( fullFilePaths[i], "_dir.vpk" );
+					if ( szDirVPK == NULL )
+					{
+						delete fullFilePaths[i];
+						fullFilePaths.Remove(i);
+					}
+					else
+					{
+						*szDirVPK = '\0';
+						V_strcat( szDirVPK, ".vpk", MAX_PATH );
 					}
 				}
 			}
+
+			FOR_EACH_VEC( fullFilePaths, i )
+			{
+				g_pFullFileSystem->AddSearchPath( fullFilePaths[i], "MOD" );
+				g_pFullFileSystem->AddSearchPath( fullFilePaths[i], "GAME" );
+			}
 		}
 	}
-	pMainFile->deleteThis();
+#endif
 }
 
 bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory, 
