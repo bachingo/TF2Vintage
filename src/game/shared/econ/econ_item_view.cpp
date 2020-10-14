@@ -2,7 +2,6 @@
 #include "econ_item_view.h"
 #include "econ_item_system.h"
 #include "activitylist.h"
-#include "attribute_types.h"
 
 #ifdef CLIENT_DLL
 #include "dt_utlvector_recv.h"

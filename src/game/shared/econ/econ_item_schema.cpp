@@ -1,7 +1,6 @@
 #include "cbase.h"
 #include "econ_item_schema.h"
 #include "econ_item_system.h"
-#include "attribute_types.h"
 #include "tier3/tier3.h"
 #include "vgui/ILocalize.h"
 

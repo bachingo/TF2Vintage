@@ -2,7 +2,6 @@
 #include "econ_item_system.h"
 #include "script_parser.h"
 #include "activitylist.h"
-#include "attribute_types.h"
 
 #if defined(CLIENT_DLL)
 #define UTIL_VarArgs  VarArgs
@@ -832,6 +831,151 @@ bool CEconAttributeDefinition::LoadFromKV( KeyValues *pDefinition )
 
 	return true;
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+template<typename T>
+class ISchemaAttributeTypeBase : public ISchemaAttributeType
+{
+public:
+	virtual void InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const
+	{
+		if ( sizeof( T ) <= sizeof( uint32 ) )
+			new( &pValue->iVal ) T;
+		else if ( sizeof( T ) <= sizeof( void * ) )
+			new( &pValue->bVal ) T;
+		else
+			pValue->bVal = (byte *)new T;
+	}
+
+	virtual void UnloadEconAttributeValue( attrib_data_union_t *pValue ) const
+	{
+		if ( sizeof( T ) <= sizeof( uint32 ) )
+			reinterpret_cast<T *>( &pValue->iVal )->~T();
+		else if ( sizeof( T ) <= sizeof( void * ) )
+			reinterpret_cast<T *>( &pValue->bVal )->~T();
+		else
+			delete pValue->bVal;
+	}
+
+	virtual bool OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value ) const
+	{
+		return pIterator->OnIterateAttributeValue( pAttrDef, GetTypedDataFromValue( value ) );
+	}
+
+private:
+	T const &GetTypedDataFromValue( const attrib_data_union_t &value ) const
+	{
+		if ( sizeof( T ) <= sizeof( uint32 ) )
+			return *reinterpret_cast<const T *>( &value.iVal );
+
+		if ( sizeof( T ) <= sizeof( void* ) )
+			return *reinterpret_cast<const T *>( &value.bVal );
+
+		Assert( value.bVal );
+		return *reinterpret_cast<const T *>( value.bVal );
+	}
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CSchemaAttributeType_Default : public ISchemaAttributeTypeBase<unsigned int>
+{
+public:
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
+	{
+		if ( bUnk )
+		{
+			double val = 0.0;
+			if ( pString && pString[0] )
+				val = strtod( pString, NULL );
+
+			pValue->flVal = val;
+		}
+		else if ( pAttrDef->stored_as_integer )
+		{
+			pValue->iVal = V_atoi64( pString );
+		}
+		else
+		{
+			pValue->flVal = V_atof( pString );
+		}
+
+		return true;
+	}
+
+	virtual void ConvertEconAttributeValueToString( const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value, char *pString ) const
+	{
+		if ( pAttrDef->stored_as_integer )
+		{
+			V_strcpy( pString, UTIL_VarArgs( "%u", value.iVal ) );
+		}
+		else
+		{
+			V_strcpy( pString, UTIL_VarArgs( "%f", value.flVal ) );
+		}
+	}
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CSchemaAttributeType_UInt64 : public ISchemaAttributeTypeBase<unsigned long long>
+{
+public:
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
+	{
+		*(pValue->lVal) = V_atoui64( pString );
+		return true;
+	}
+
+	virtual void ConvertEconAttributeValueToString( const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value, char *pString ) const
+	{
+		V_strcpy( pString, UTIL_VarArgs( "%llu", *(value.lVal) ) );
+	}
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CSchemaAttributeType_Float : public ISchemaAttributeTypeBase<float>
+{
+public:
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
+	{
+		pValue->flVal = V_atof( pString );
+		return true;
+	}
+
+	virtual void ConvertEconAttributeValueToString( const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value, char *pString ) const
+	{
+		V_strcpy( pString, UTIL_VarArgs( "%f", value.flVal ) );
+	}
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CSchemaAttributeType_String : public ISchemaAttributeTypeBase<CAttribute_String>
+{
+public:
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool bUnk = true ) const
+	{
+		*(pValue->sVal) = pString;
+		return true;
+	}
+
+	virtual void ConvertEconAttributeValueToString( const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t &value, char *pString ) const
+	{
+		if ( pAttrDef->string_attribute )
+		{
+			V_strcpy( pString, *(value.sVal) );
+		}
+	}
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor
