@@ -391,6 +391,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bHeadTransform = 0;
 	m_bStartedDying = 0;
 	m_flDeathDelay = 0.3f;
+	m_flHeadScale = 1.0f;
 
 	UseClientSideAnimation();
 }
@@ -448,9 +449,17 @@ void C_TFRagdoll::DissolveEntity( C_BaseEntity *pEntity )
 	else
 		pDissolver->SetEffectColor( Vector( BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD ) ) );
 
-	pDissolver->SetOwnerEntity( NULL );
+	pDissolver->m_nRenderFX = kRenderFxNone;
 	pDissolver->SetRenderMode( kRenderTransColor );
+	pDissolver->SetRenderColor( 255, 255, 255, 255 );
+
 	pDissolver->m_vDissolverOrigin = GetLocalOrigin();
+	pDissolver->m_flFadeInStart = 0.0f;
+	pDissolver->m_flFadeInLength = 1.0f;
+	pDissolver->m_flFadeOutModelStart = 1.9f;
+	pDissolver->m_flFadeOutModelLength = 0.1f;
+	pDissolver->m_flFadeOutStart = 2.0f;
+	pDissolver->m_flFadeOutLength = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
