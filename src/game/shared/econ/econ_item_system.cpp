@@ -983,12 +983,15 @@ public:
 CEconItemSchema::CEconItemSchema() :
 	m_Items( DefLessFunc(uint32) ),
 	m_Attributes( DefLessFunc(uint32) ),
+	m_PrefabsValues( StringLessThan ),
 	m_bInited( false )
 {
 }
 
 CEconItemSchema::~CEconItemSchema()
 {
+	m_pSchema->deleteThis();
+
 	m_Items.PurgeAndDeleteElements();
 	m_Attributes.PurgeAndDeleteElements();
 
@@ -997,7 +1000,7 @@ CEconItemSchema::~CEconItemSchema()
 		m_PrefabsValues[i]->deleteThis();
 	}
 
-	FOR_EACH_VEC_BACK( m_AttributeTypes, i )
+	FOR_EACH_VEC( m_AttributeTypes, i )
 	{
 		delete m_AttributeTypes[i].pType;
 	}
@@ -1058,12 +1061,11 @@ void CEconItemSchema::InitAttributeTypes( void )
 
 bool CEconItemSchema::LoadFromFile( void )
 {
-	Reset();
-
 	KeyValuesAD schema("KVDataFile");
 	if ( !schema->LoadFromFile( g_pFullFileSystem, items_game ) )
 		return false;
 
+	Reset();
 	ParseSchema( schema );
 
 	return true;
@@ -1071,12 +1073,11 @@ bool CEconItemSchema::LoadFromFile( void )
 
 bool CEconItemSchema::LoadFromBuffer( CUtlBuffer &buf )
 {
-	Reset();
-
 	KeyValuesAD schema("KVDataFile");
 	if ( !schema->ReadAsBinary( buf ) )
 		return false;
 
+	Reset();
 	ParseSchema( schema );
 
 	return true;
@@ -1090,6 +1091,8 @@ bool CEconItemSchema::SaveToBuffer( CUtlBuffer &buf )
 
 void CEconItemSchema::Reset( void )
 {
+	m_pSchema->deleteThis();
+
 	m_GameInfo.Purge();
 	m_Colors.Purge();
 	m_Qualities.Purge();
@@ -1097,7 +1100,7 @@ void CEconItemSchema::Reset( void )
 	m_Items.PurgeAndDeleteElements();
 	m_Attributes.PurgeAndDeleteElements();
 
-	FOR_EACH_DICT_FAST( m_PrefabsValues, i )
+	FOR_EACH_MAP_FAST( m_PrefabsValues, i )
 	{
 		m_PrefabsValues[i]->deleteThis();
 	}
@@ -1111,7 +1114,7 @@ void CEconItemSchema::Precache( void )
 	static CSchemaAttributeHandle pAttribDef_CustomProjectile( "custom projectile model" );
 
 	// Precache everything from schema.
-	FOR_EACH_MAP( m_Items, i )
+	FOR_EACH_MAP_FAST( m_Items, i )
 	{
 		CEconItemDefinition *pItem = m_Items[i];
 		
@@ -1201,8 +1204,6 @@ void CEconItemSchema::ParseSchema( KeyValues *pKVData )
 
 CEconItemDefinition *CEconItemSchema::GetItemDefinition( int id )
 {
-	if ( id < 0 )
-		return NULL;
 	CEconItemDefinition *itemdef = NULL;
 	FIND_ELEMENT( m_Items, id, itemdef );
 	return itemdef;
@@ -1223,8 +1224,6 @@ CEconItemDefinition *CEconItemSchema::GetItemDefinitionByName( const char *name 
 
 CEconAttributeDefinition *CEconItemSchema::GetAttributeDefinition( int id )
 {
-	if ( id < 0 )
-		return NULL;
 	CEconAttributeDefinition *itemdef = NULL;
 	FIND_ELEMENT( m_Attributes, id, itemdef );
 	return itemdef;

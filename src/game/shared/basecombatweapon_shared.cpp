@@ -1195,7 +1195,7 @@ void CBaseCombatWeapon::SetViewModel()
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::SendWeaponAnim( int iActivity )
 {
-#if defined( USES_ECON_ITEMS ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
+#if defined( USES_ECON_ITEMS )
 	iActivity = TranslateViewmodelHandActivity( (Activity)iActivity );
 #endif		
 	// NVNT notify the haptics system of this weapons new activity

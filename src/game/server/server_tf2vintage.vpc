@@ -16,7 +16,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\tf,.\tf,.\tf\bot,$SRCDIR\game\shared\Multiplayer,$SRCDIR\game\shared\econ"
-		$PreprocessorDefinitions		"$BASE;TF_VINTAGE;GLOWS_ENABLE;NEXT_BOT"
+		$PreprocessorDefinitions		"$BASE;USES_ECON_ITEMS;TF_VINTAGE;GLOWS_ENABLE;NEXT_BOT"
 	}
 }
 

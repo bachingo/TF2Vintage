@@ -5,6 +5,9 @@
 #pragma once
 #endif
 
+#ifndef NO_STEAM
+#include "steam/steam_api.h"
+#endif
 
 class ISchemaAttributeType;
 class CEconSchemaParser;
@@ -62,9 +65,9 @@ protected:
 	CUtlDict< int, unsigned short >					m_GameInfo;
 	CUtlDict< EconQuality, unsigned short >			m_Qualities;
 	CUtlDict< EconColor, unsigned short >			m_Colors;
-	CUtlDict< KeyValues *, unsigned short >			m_PrefabsValues;
-	CUtlMap< uint32, CEconItemDefinition * >			m_Items;
-	CUtlMap< uint32, CEconAttributeDefinition * >		m_Attributes;
+	CUtlMap< char const *, KeyValues * >			m_PrefabsValues;
+	CUtlMap< uint32, CEconItemDefinition * >		m_Items;
+	CUtlMap< uint32, CEconAttributeDefinition * >	m_Attributes;
 	CUtlVector< attr_type_t >						m_AttributeTypes;
 
 private:
@@ -76,6 +79,7 @@ private:
 };
 
 CEconItemSchema *GetItemSchema();
+
 
 template<class T>
 class CSchemaFieldHandle

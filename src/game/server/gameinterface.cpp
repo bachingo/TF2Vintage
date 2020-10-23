@@ -1108,14 +1108,6 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 {
 	VPROF("CServerGameDLL::LevelInit");
 
-#ifdef USES_ECON_ITEMS
-	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
-	if ( pItemSchema )
-	{
-		pItemSchema->BInitFromDelayedBuffer();
-	}
-#endif // USES_ECON_ITEMS
-
 	ResetWindspeed();
 	UpdateChapterRestrictions( pMapName );
 

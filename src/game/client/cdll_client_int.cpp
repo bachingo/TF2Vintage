@@ -430,7 +430,7 @@ public:
 
 	const char *GetHolidayString()
 	{
-		return UTIL_GetActiveHolidayString();
+		return NULL;
 	}
 };
 
@@ -1795,14 +1795,6 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	}
 
 	IGameSystem::LevelInitPreEntityAllSystems(pMapName);
-
-#ifdef USES_ECON_ITEMS
-	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
-	if ( pItemSchema )
-	{
-		pItemSchema->BInitFromDelayedBuffer();
-	}
-#endif // USES_ECON_ITEMS
 
 	ResetWindspeed();
 

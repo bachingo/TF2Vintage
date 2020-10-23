@@ -70,7 +70,7 @@
 #include "vote_controller.h"
 #include "ai_speech.h"
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 #include "econ_wearable.h"
 #endif
 
@@ -253,7 +253,7 @@ END_DATADESC()
 BEGIN_DATADESC( CBasePlayer )
 
 	DEFINE_EMBEDDED( m_Local ),
-#if defined USES_ECON_ITEMS || defined TF_VINTAGE
+#if defined( USES_ECON_ITEMS )
 	DEFINE_EMBEDDED( m_AttributeList ),
 #endif
 	DEFINE_UTLVECTOR( m_hTriggerSoundscapeList, FIELD_EHANDLE ),
@@ -7407,7 +7407,7 @@ CBaseEntity *CBasePlayer::HasNamedPlayerItem( const char *pszItemName )
 	return NULL;
 }
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 //-----------------------------------------------------------------------------
 // Purpose: Add this wearable to the players' equipment list.
 //-----------------------------------------------------------------------------
@@ -8070,13 +8070,13 @@ void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const voi
 // DT_BasePlayer sendtable.
 // -------------------------------------------------------------------------------- //
 	
-#if defined USES_ECON_ITEMS || defined TF_VINTAGE
+#if defined USES_ECON_ITEMS 
 	EXTERN_SEND_TABLE(DT_AttributeList);
 #endif
 
 	IMPLEMENT_SERVERCLASS_ST( CBasePlayer, DT_BasePlayer )
 
-#if defined USES_ECON_ITEMS || defined TF_VINTAGE
+#if defined USES_ECON_ITEMS 
 		SendPropDataTable(SENDINFO_DT(m_AttributeList), &REFERENCE_SEND_TABLE(DT_AttributeList)),
 #endif
 
@@ -8100,7 +8100,7 @@ void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const voi
 		SendPropArray	( SendPropEHandle( SENDINFO_ARRAY( m_hViewModel ) ), m_hViewModel ),
 		SendPropString	(SENDINFO(m_szLastPlaceName) ),
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 		SendPropUtlVector( SENDINFO_UTLVECTOR( m_hMyWearables ), MAX_WEARABLES_SENT_FROM_SERVER, SendPropEHandle( NULL, 0 ) ),
 		SendPropUtlVector( SENDINFO_UTLVECTOR( m_hDisguiseWearables ), MAX_WEARABLES_SENT_FROM_SERVER, SendPropEHandle( NULL, 0 ) ),
 #endif // USES_ECON_ITEMS

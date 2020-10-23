@@ -140,7 +140,7 @@ namespace vgui2
 // Purpose: Base weapon class, shared on client and server
 //-----------------------------------------------------------------------------
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 #define BASECOMBATWEAPON_DERIVED_FROM		CEconEntity
 #else 
 #define BASECOMBATWEAPON_DERIVED_FROM		CBaseAnimating
@@ -489,7 +489,7 @@ public:
 
 	virtual bool			OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options ) 
 	{ 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
+#if defined ( USES_ECON_ITEMS )
 		return BaseClass::OnFireEvent( pViewModel, origin, angles, event, options );
 #else
 		return false; 
@@ -542,7 +542,7 @@ public:
 
 	virtual void			GetWeaponCrosshairScale( float &flScale ) { flScale = 1.f; }
 
-#if !defined( USES_ECON_ITEMS ) && !defined( TF_VINTAGE_CLIENT )
+#if !defined( USES_ECON_ITEMS )
 	// Viewmodel overriding
 	virtual bool			ViewModel_IsTransparent( void ) { return IsTransparent(); }
 	virtual bool			ViewModel_IsUsingFBTexture( void ) { return UsesPowerOfTwoFrameBufferTexture(); }
