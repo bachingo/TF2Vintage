@@ -22,12 +22,17 @@ enum EServerMode
 	eServerModeAuthenticationAndSecure = 3, // Authenticate users, list on the server list and VAC protect clients
 };													
 
-// Initialize ISteamGameServer interface object, and set server properties which may not be changed.
+// Initialize SteamGameServer client and interface objects, and set server properties which may not be changed.
 //
 // After calling this function, you should set any additional server parameters, and then
 // call ISteamGameServer::LogOnAnonymous() or ISteamGameServer::LogOn()
 //
 // - usSteamPort is the local port used to communicate with the steam servers.
+//   NOTE: unless you are using ver old Steam client binaries, this parameter is ignored, and
+//         you should pass 0.  Gameservers now always use WebSockets to talk to Steam.
+//         This protocol is TCP-based and thus always uses an ephemeral local port.
+//         Older steam client binaries used UDP to talk to Steam, and this argument was useful.
+//         A future version of the SDK will remove this argument.
 // - usGamePort is the port that clients will connect to for gameplay.
 // - usQueryPort is the port that will manage server browser related duties and info
 //		pings from clients.  If you pass MASTERSERVERUPDATERPORT_USEGAMESOCKETSHARE for usQueryPort, then it
@@ -53,35 +58,11 @@ S_API bool SteamGameServer_Init( const SteamPS3Params_t *ps3Params, uint32 unIP,
 
 #endif
 
-#ifndef VERSION_SAFE_STEAM_API_INTERFACES
-S_API ISteamGameServer *SteamGameServer();
-S_API ISteamUtils *SteamGameServerUtils();
-S_API ISteamNetworking *SteamGameServerNetworking();
-S_API ISteamGameServerStats *SteamGameServerStats();
-S_API ISteamHTTP *SteamGameServerHTTP();
-S_API ISteamUGC *SteamGameServerUGC();
-#endif
-
+// Shutdown SteamGameSeverXxx interfaces, log out, and free resources.
 S_API void SteamGameServer_Shutdown();
-S_API void SteamGameServer_RunCallbacks();
 
 S_API bool SteamGameServer_BSecure();
 S_API uint64 SteamGameServer_GetSteamID();
-
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------//
-// These macros are similar to the STEAM_CALLBACK_* macros in steam_api.h, but only trigger for gameserver callbacks
-//----------------------------------------------------------------------------------------------------------------------------------------------------------//
-#define STEAM_GAMESERVER_CALLBACK( thisclass, func, /*callback_type, [deprecated] var*/... ) \
-	_STEAM_CALLBACK_SELECT( ( __VA_ARGS__, GS, 3 ), ( this->SetGameserverFlag();, thisclass, func, __VA_ARGS__ ) )
-
-#define STEAM_GAMESERVER_CALLBACK_MANUAL( thisclass, func, callback_type, var ) \
-	CCallbackManual< thisclass, callback_type, true > var; void func( callback_type *pParam )
-
-
-
-#define _STEAM_CALLBACK_GS( _, thisclass, func, param, var ) \
-	CCallback< thisclass, param, true > var; void func( param *pParam )
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------//
 //	steamclient.dll private wrapper functions
@@ -101,47 +82,8 @@ S_API HSteamPipe SteamGameServer_GetHSteamPipe();
 
 S_API HSteamUser SteamGameServer_GetHSteamUser();
 
-class CSteamGameServerAPIContext
-{
-public:
-	CSteamGameServerAPIContext();
-	void Clear();
-
-	bool Init();
-
-	ISteamGameServer *SteamGameServer() { return m_pSteamGameServer; }
-	ISteamUtils *SteamGameServerUtils() { return m_pSteamGameServerUtils; }
-	ISteamNetworking *SteamGameServerNetworking() { return m_pSteamGameServerNetworking; }
-	ISteamGameServerStats *SteamGameServerStats() { return m_pSteamGameServerStats; }
-	ISteamHTTP *SteamHTTP() { return m_pSteamHTTP; }
-	ISteamUGC *SteamUGC() { return m_pSteamUGC; }
-
-private:
-	ISteamGameServer			*m_pSteamGameServer;
-	ISteamUtils					*m_pSteamGameServerUtils;
-	ISteamNetworking			*m_pSteamGameServerNetworking;
-	ISteamGameServerStats		*m_pSteamGameServerStats;
-	ISteamHTTP					*m_pSteamHTTP;
-	ISteamUGC					*m_pSteamUGC;
-};
-
-inline CSteamGameServerAPIContext::CSteamGameServerAPIContext()
-{
-	Clear();
-}
-
-inline void CSteamGameServerAPIContext::Clear()
-{
-	m_pSteamGameServer = NULL;
-	m_pSteamGameServerUtils = NULL;
-	m_pSteamGameServerNetworking = NULL;
-	m_pSteamGameServerStats = NULL;
-	m_pSteamHTTP = NULL;
-	m_pSteamUGC = NULL;
-}
-
 S_API ISteamClient *g_pSteamClientGameServer;
-// This function must be inlined so the module using steam_api.dll gets the version names they want.
+// This function must be declared inline in the header so the module using steam_api.dll gets the version names they want.
 inline bool CSteamGameServerAPIContext::Init()
 {
 	if ( !g_pSteamClientGameServer )
