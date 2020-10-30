@@ -116,6 +116,10 @@ inline bool CSteamGameServerAPIContext::Init()
 	if ( !m_pSteamUGC )
 		return false;
 
+	m_pSteamApps = g_pSteamClientGameServer->GetISteamApps( hSteamUser, hSteamPipe, STEAMAPPS_INTERFACE_VERSION );
+	if ( !m_pSteamApps )
+		return false;
+
 	return true;
 }
 

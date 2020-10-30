@@ -158,7 +158,8 @@ S_API HSteamUser SteamAPI_GetHSteamUser();
 // This function must be inlined so the module using steam_api.dll gets the version names they want.
 inline bool CSteamAPIContext::Init()
 {
-	if ( !SteamClient() )
+	m_pSteamClient = ::SteamClient();
+	if ( !m_pSteamClient )
 		return false;
 
 	HSteamUser hSteamUser = SteamAPI_GetHSteamUser();

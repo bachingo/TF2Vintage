@@ -570,7 +570,6 @@ public:
 #define STEAMCONTROLLER_INTERFACE_VERSION "SteamController007"
 
 // Global interface accessor
-inline ISteamController *SteamController();
-STEAM_DEFINE_USER_INTERFACE_ACCESSOR( ISteamController *, SteamController, STEAMCONTROLLER_INTERFACE_VERSION );
+S_API ISteamController *S_CALLTYPE SteamController();
 
 #endif // ISTEAMCONTROLLER_H

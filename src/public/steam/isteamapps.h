@@ -10,6 +10,8 @@
 #pragma once
 #endif
 
+#include "steam_api_common.h"
+
 const int k_cubAppProofOfPurchaseKeyMax = 64;			// max bytes of a legacy cd key we support
 
 

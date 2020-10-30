@@ -140,7 +140,7 @@ public:
 	virtual bool GetHTTPRequestWasTimedOut( HTTPRequestHandle hRequest, bool *pbWasTimedOut ) = 0;
 };
 
-#define STEAMHTTP_INTERFACE_VERSION "STEAMHTTP_INTERFACE_VERSION003"
+#define STEAMHTTP_INTERFACE_VERSION "STEAMHTTP_INTERFACE_VERSION002"
 
 // Global interface accessor
 S_API ISteamHTTP *S_CALLTYPE SteamHTTP();

@@ -605,89 +605,132 @@ static void MountAdditionalContent()
 		return;
 	}
 
-	FOR_EACH_SUBKEY( pFileSystemInfo, pSubKey )
+	KeyValues* pAdditionaContentId = pFileSystemInfo->FindKey( "AdditionalContentId" );
+	if ( !pAdditionaContentId )
 	{
-		if ( Q_stricmp( pSubKey->GetName(), "AdditionalContentId" ) )
-			continue;
+		return;
+	}
+	KeyValues* pAdditionaContentRoot = pFileSystemInfo->FindKey( "AdditionalContentRoot" );
+	if ( !pAdditionaContentRoot )
+	{
+		Warning( "Unable to mount extra content, root folder was not provided \n" );
+		return;
+	}
 
-		int appid = abs( pSubKey->GetInt() );
-		if ( appid )
+	int appid = abs( pAdditionaContentId->GetInt() );
+	if ( appid )
+	{
+		if ( !steamapicontext->SteamApps() )
 		{
-			if ( !steamapicontext->SteamApps() )
+			Error( "Unable to mount extra content, unkown error\n" );
+			return;
+		}
+		if ( !steamapicontext->SteamApps()->BIsAppInstalled( appid ) )
+		{
+			Warning( "Unable to mount extra content with AppId: %i\n", appid );
+			return;
+		}
+
+		char szAppDirectory[ MAX_PATH ];
+		steamapicontext->SteamApps()->GetAppInstallDir( appid, szAppDirectory, sizeof( szAppDirectory ) );
+
+		V_AppendSlash( szAppDirectory, sizeof( szAppDirectory ) );
+		V_strcat_safe( szAppDirectory, pAdditionaContentRoot->GetString() );
+
+		g_pFullFileSystem->AddSearchPath( szAppDirectory, "MOD" );
+		g_pFullFileSystem->AddSearchPath( szAppDirectory, "GAME" );
+
+		KeyValues *pAdditionalContent = pFileSystemInfo->FindKey( "AdditionalContentPaths" );
+		if ( pAdditionalContent )
+		{
+			char szAbsPathName[ MAX_PATH ];
+			V_ExtractFilePath( szAppDirectory, szAbsPathName, sizeof( szAbsPathName ) );
+
+			FOR_EACH_VALUE( pAdditionalContent, pSubKey )
 			{
-				Error( "Unable to mount extra content, unkown error\n" );
-				return;
-			}
-			if ( !steamapicontext->SteamApps()->BIsAppInstalled( appid ) )
-			{
-				Warning( "Unable to mount extra content with appId: %i\n", appid );
-				return;
-			}
+				const char *pszLocation = pSubKey->GetString();
+				const char *pszBaseDir = szAbsPathName;
 
-			char szAppDirectory[ MAX_PATH ];
-			steamapicontext->SteamApps()->GetAppInstallDir( appid, szAppDirectory, sizeof( szAppDirectory ) );
-
-		#ifdef TF_VINTAGE // Hacky hack until we can pragmatically figure out the mod dir
-			V_AppendSlash( szAppDirectory, sizeof( szAppDirectory ) );
-			V_strcat_safe( szAppDirectory, "tf" );
-		#endif
-
-			g_pFullFileSystem->AddSearchPath( szAppDirectory, "MOD" );
-			g_pFullFileSystem->AddSearchPath( szAppDirectory, "GAME" );
-
-			V_AppendSlash( szAppDirectory, sizeof( szAppDirectory ) );
-			V_strcat_safe( szAppDirectory, "*" );
-
-			FileFindHandle_t hFind;
-			CUtlStringList fullFilePaths;
-
-			char const *pszFileFound = g_pFullFileSystem->FindFirst( szAppDirectory, &hFind );
-			while ( pszFileFound )
-			{
-				if ( pszFileFound[0] != '.' )
+				const char CONTENTROOT_TOKEN[] = "|content_root|";
+				if ( Q_stristr( pszLocation, CONTENTROOT_TOKEN ) == pszLocation )
 				{
-					if ( g_pFullFileSystem->FindIsDirectory( hFind ) || V_stristr( pszFileFound, "vpk" ) )
-					{
-						char szAbsPathName[ MAX_PATH ];
-						V_ExtractFilePath( szAppDirectory, szAbsPathName, sizeof( szAbsPathName ) );
-						V_AppendSlash( szAbsPathName, sizeof( szAbsPathName ) );
-						V_strcat_safe( szAbsPathName, pszFileFound, COPY_ALL_CHARACTERS );
+					pszLocation += strlen( CONTENTROOT_TOKEN );
+					pszBaseDir = szAppDirectory;
+				}
 
-						fullFilePaths.CopyAndAddToTail( szAbsPathName );
+				V_MakeAbsolutePath( szAbsPathName, sizeof( szAbsPathName ), pszLocation, pszBaseDir );
+
+				V_FixSlashes( szAbsPathName );
+				V_RemoveDotSlashes( szAbsPathName );
+				V_StripTrailingSlash( szAbsPathName );
+
+				CUtlStringList fullFilePaths;
+				if ( V_stristr( pszLocation, "?" ) == NULL && V_stristr( pszLocation, "*" ) == NULL )
+				{
+					fullFilePaths.CopyAndAddToTail( szAbsPathName );
+				}
+				else
+				{
+					FileFindHandle_t hFind;
+					char const *pszFileFound = g_pFullFileSystem->FindFirst( szAbsPathName, &hFind );
+					while ( pszFileFound )
+					{
+						if ( pszFileFound[0] != '.' )
+						{
+							if ( g_pFullFileSystem->FindIsDirectory( hFind ) || V_stristr( pszFileFound, "vpk" ) )
+							{
+								char szAbsPath[MAX_PATH];
+								V_ExtractFilePath( szAbsPathName, szAbsPath, sizeof( szAbsPath ) );
+								V_AppendSlash( szAbsPath, sizeof( szAbsPath ) );
+								V_strcat_safe( szAbsPath, pszFileFound, COPY_ALL_CHARACTERS );
+
+								fullFilePaths.CopyAndAddToTail( szAbsPath );
+							}
+						}
+
+						pszFileFound = g_pFullFileSystem->FindNext( hFind );
+					}
+					g_pFullFileSystem->FindClose( hFind );
+
+					fullFilePaths.Sort( CaseInsensitiveStringSort );
+
+					FOR_EACH_VEC_BACK( fullFilePaths, i )
+					{
+						char ext[10];
+						V_ExtractFileExtension( fullFilePaths[i], ext, sizeof( ext ) );
+
+						if ( Q_stricmp( ext, "vpk" ) == 0 )
+						{
+							char *szDirVPK = Q_stristr( fullFilePaths[i], "_dir.vpk" );
+							if ( szDirVPK == NULL )
+							{
+								delete fullFilePaths[i];
+								fullFilePaths.Remove(i);
+							}
+							else
+							{
+								*szDirVPK = '\0';
+								V_strcat( szDirVPK, ".vpk", MAX_PATH );
+							}
+						}
 					}
 				}
 
-				pszFileFound = g_pFullFileSystem->FindNext( hFind );
-			}
-			g_pFullFileSystem->FindClose( hFind );
-
-			fullFilePaths.Sort( CaseInsensitiveStringSort );
-
-			FOR_EACH_VEC_BACK( fullFilePaths, i )
-			{
-				char ext[10];
-				V_ExtractFileExtension( fullFilePaths[i], ext, sizeof( ext ) );
-
-				if ( Q_stricmp( ext, "vpk" ) == 0 )
+				// Parse Path ID list
+				CUtlStringList pathIDs;
+				V_SplitString( pSubKey->GetName(), "+", pathIDs );
+				FOR_EACH_VEC( pathIDs, i )
 				{
-					char *szDirVPK = Q_stristr( fullFilePaths[i], "_dir.vpk" );
-					if ( szDirVPK == NULL )
+					Q_StripPrecedingAndTrailingWhitespace( pathIDs[i] );
+				}
+
+				FOR_EACH_VEC( fullFilePaths, i )
+				{
+					FOR_EACH_VEC( pathIDs, j )
 					{
-						delete fullFilePaths[i];
-						fullFilePaths.Remove(i);
-					}
-					else
-					{
-						*szDirVPK = '\0';
-						V_strcat( szDirVPK, ".vpk", MAX_PATH );
+						g_pFullFileSystem->AddSearchPath( fullFilePaths[i], pathIDs[j] );
 					}
 				}
-			}
-
-			FOR_EACH_VEC( fullFilePaths, i )
-			{
-				g_pFullFileSystem->AddSearchPath( fullFilePaths[i], "MOD" );
-				g_pFullFileSystem->AddSearchPath( fullFilePaths[i], "GAME" );
 			}
 		}
 	}
