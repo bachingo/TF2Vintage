@@ -327,7 +327,7 @@ public:
 	CSteamAPIContext() { Clear(); }
 	inline void Clear() { memset( this, 0, sizeof(*this) ); }
 	inline bool Init(); // NOTE: This is defined in steam_api.h, to avoid this file having to include everything
-	ISteamClient*		SteamClient() const					{ return m_pSteamClient; }
+
 	ISteamUser*			SteamUser() const					{ return m_pSteamUser; }
 	ISteamFriends*		SteamFriends() const				{ return m_pSteamFriends; }
 	ISteamUtils*		SteamUtils() const					{ return m_pSteamUtils; }
@@ -386,7 +386,6 @@ public:
 	inline void Clear() { memset( this, 0, sizeof(*this) ); }
 	inline bool Init(); // NOTE: This is defined in steam_gameserver.h, to avoid this file having to include everything
 
-	ISteamClient *SteamClient() const					{ return m_pSteamClient; }
 	ISteamGameServer *SteamGameServer() const			{ return m_pSteamGameServer; }
 	ISteamUtils *SteamGameServerUtils() const			{ return m_pSteamGameServerUtils; }
 	ISteamNetworking *SteamGameServerNetworking() const	{ return m_pSteamGameServerNetworking; }
