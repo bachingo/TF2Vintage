@@ -11,13 +11,7 @@ public:
     using Token = int;
 
     Event() { slots_.reserve(4); }
-
-    Event(Event const&) = default;
-    Event(Event&&) = delete;
-    ~Event() = default;
-
-    Event& operator=(Event const&) = default;
-    Event& operator=(Event&&) = delete;
+    ~Event() {}
 
     template <typename EventHandler>
     Token Connect(EventHandler slot)
