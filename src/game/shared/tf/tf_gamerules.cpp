@@ -6384,13 +6384,19 @@ void CTFGameRules::CollectCapturePoints( CBasePlayer *pPlayer, CUtlVector<CTeamC
 	for ( int i = 0; i < pMaster->GetNumPoints(); ++i )
 	{
 		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
-		if ( pMaster->IsInRound( pPoint ) &&
-			ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != pPlayer->GetTeamNumber() &&
-			ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), pPlayer->GetTeamNumber() ) &&
-			TeamMayCapturePoint( pPlayer->GetTeamNumber(), pPoint->GetPointIndex() ) )
-		{
-			controlPointVector->AddToTail( pPoint );
-		}
+		if ( !pMaster->IsInRound( pPoint ) )
+			continue;
+
+		if ( ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) == pPlayer->GetTeamNumber() )
+			continue;
+
+		if ( !ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), pPlayer->GetTeamNumber() ) )
+			continue;
+
+		if ( !TeamMayCapturePoint( pPlayer->GetTeamNumber(), pPoint->GetPointIndex() ) )
+			continue;
+		
+		controlPointVector->AddToTail( pPoint );
 	}
 }
 
@@ -6414,16 +6420,23 @@ void CTFGameRules::CollectDefendPoints( CBasePlayer *pPlayer, CUtlVector<CTeamCo
 	if ( !pMaster || !pMaster->IsActive() )
 		return;
 
+	const int iEnemyTeam = GetEnemyTeam( pPlayer );
 	for ( int i = 0; i < pMaster->GetNumPoints(); ++i )
 	{
 		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
-		if ( pMaster->IsInRound( pPoint ) &&
-			ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) == pPlayer->GetTeamNumber() &&
-			ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), GetEnemyTeam( pPlayer ) ) &&
-			TeamMayCapturePoint( GetEnemyTeam( pPlayer ), pPoint->GetPointIndex() ) )
-		{
-			controlPointVector->AddToTail( pPoint );
-		}
+		if ( !pMaster->IsInRound( pPoint ) )
+			continue;
+
+		if ( ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != pPlayer->GetTeamNumber() )
+			continue;
+
+		if ( !ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), iEnemyTeam ) )
+			continue;
+
+		if ( !TeamMayCapturePoint( iEnemyTeam, pPoint->GetPointIndex() ) )
+			continue;
+		
+		controlPointVector->AddToTail( pPoint );
 	}
 }
 
@@ -6502,7 +6515,6 @@ CTeamTrainWatcher *CTFGameRules::GetPayloadToBlock( int iTeam )
 
 	if ( iTeam == TF_TEAM_RED )
 	{
-
 		if ( m_hRedDefendTrain )
 			return m_hRedDefendTrain;
 

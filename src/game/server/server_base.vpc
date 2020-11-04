@@ -248,6 +248,8 @@ $Project
 		$File	"$SRCDIR\game\shared\baseprojectile.cpp"
 		$File	"$SRCDIR\game\shared\baseprojectile.h"
 		$File	"BasePropDoor.h"
+		$File	"$SRCDIR\game\shared\basescriptedweapon.cpp"
+		$File	"$SRCDIR\game\shared\basescriptedweapon.h"
 		$File	"basetoggle.h"
 		$File	"baseviewmodel.cpp"
 		$File	"baseviewmodel.h"
