@@ -7,26 +7,22 @@
 #define MEM_OVERRIDE_ON
 #include "tier0/memdbgoff.h"
 
-#include "platform.h"
-#include "tier1.h"
-#include "utlvector.h"
-#include "utlhash.h"
-#include "utlbuffer.h"
-#include "fmtstr.h"
+#define _HAS_EXCEPTIONS 0
+#include <string>
 
-#include "ivscript.h"
-#include "vscript_init_nut.h"
-
-#ifdef _HAS_EXCEPTIONS
-#undef _HAS_EXCEPTIONS
-#endif
+#include "tier0/platform.h"
+#include "tier1/convar.h"
+#include "tier1/utlvector.h"
+#include "tier1/utlhash.h"
+#include "tier1/utlbuffer.h"
+#include "tier1/fmtstr.h"
 
 #include "squirrel.h"
-#include "sqrdbg.h"
+#include "sqstdaux.h"
 #include "sqstdstring.h"
 #include "sqstdmath.h"
-#include "sqstdaux.h"
 #include "sqplus.h"
+#include "sqrdbg.h"
 #include "sqobject.h"
 #include "sqstate.h"
 #include "sqvm.h"
@@ -38,15 +34,14 @@
 #include "squtils.h"
 #include "sqdbgserver.h"
 
+#include "vscript/ivscript.h"
+#include "vscript_init_nut.h"
+
 #include "sq_vector.h"
 #include "sq_vmstate.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-#ifdef RegisterClass
-	#undef RegisterClass
-#endif
 
 // we don't want bad actors being malicious
 extern "C" 
@@ -77,7 +72,10 @@ typedef struct
 
 
 
-const HSQOBJECT INVALID_HSQOBJECT = { OT_INVALID, (SQTable *)-1 };
+static HSQOBJECT INVALID_HSQOBJECT = { OT_INVALID, (SQTable *)-1 };
+inline bool operator==( HSQOBJECT const &lhs, HSQOBJECT const &rhs ) { return lhs._type == rhs._type && _table( lhs ) == _table( rhs ); }
+inline bool operator!=( HSQOBJECT const &lhs, HSQOBJECT const &rhs ) { return lhs._type != rhs._type || _table( lhs ) != _table( rhs ); }
+
 class CSquirrelVM : public IScriptVM
 {
 	typedef CSquirrelVM ThisClass;
@@ -100,7 +98,6 @@ public:
 	char const			*GetLanguageName()      { return "Squirrel"; }
 
 	ScriptStatus_t		Run( const char *pszScript, bool bWait = true );
-	inline ScriptStatus_t Run( const unsigned char *pszScript, bool bWait = true ) { return Run( (char *)pszScript, bWait ); }
 
 	void				AddSearchPath( const char *pszSearchPath ) {}
 
@@ -187,7 +184,7 @@ private:
 	CUtlHashFast<SQClass *, CUtlHashFastGenericHash> m_ScriptClasses;
 
 	// A reference to our Vector type to compare to
-	SQObjectPtr m_VectorTable;
+	SQObjectPtr m_VectorClass;
 
 	SQObjectPtr m_CreateScopeClosure;
 	SQObjectPtr m_ReleaseScopeClosure;
@@ -200,9 +197,9 @@ private:
 };
 
 CSquirrelVM::CSquirrelVM( void )
-	: m_pVirtualMachine( NULL ), m_hDeveloper( "developer" ), m_nUniqueKeyQueries( 0 ), m_pDbgServer( NULL )
+	: m_pVirtualMachine( NULL ), m_hDeveloper( "developer" ), m_nUniqueKeySerial( 0 ), m_pDbgServer( NULL )
 {
-	m_VectorTable = _null_;
+	m_VectorClass = _null_;
 	m_CreateScopeClosure = _null_;
 	m_ReleaseScopeClosure = _null_;
 	m_Error = _null_;
@@ -243,13 +240,13 @@ bool CSquirrelVM::Init( void )
 	sq_pushroottable( GetVM() );
 		sq_pushstring( GetVM(), "Vector", -1 );
 		sq_get( GetVM(), -2 );
-		sq_getstackobj( GetVM(), -1, &m_VectorTable );
-		sq_addref( GetVM(), &m_VectorTable );
+		sq_getstackobj( GetVM(), -1, &m_VectorClass );
+		sq_addref( GetVM(), &m_VectorClass );
 	sq_pop( GetVM(), 1 );
 
 	m_ScriptClasses.Init( 256 );
 
-	Run( g_Script_init );
+	Run( (char *)g_Script_init );
 
 	// store a reference to the scope utilities from the init script
 	m_CreateScopeClosure = LookupObject( "VSquirrel_OnCreateScope" );
@@ -469,20 +466,21 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 		}
 	}
 
-	HSQOBJECT *pClosure = (HSQOBJECT *)hFunction;
-	sq_pushobject( GetVM(), *pClosure );
+	SQInteger initialTop = GetVM()->_top;
+	HSQOBJECT &pClosure = *(HSQOBJECT *)hFunction;
+	sq_pushobject( GetVM(), pClosure );
 
 	// push the parent table to call from
 	if ( hScope )
 	{
-		HSQOBJECT *pTable = (HSQOBJECT *)hScope;
-		if ( !sq_istable( *pTable ) )
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
+		if ( pTable != INVALID_HSQOBJECT && !sq_istable( pTable ) )
 		{
 			sq_pop( GetVM(), 1 );
 			return SCRIPT_ERROR;
 		}
 
-		sq_pushobject( GetVM(), *pTable );
+		sq_pushobject( GetVM(), pTable );
 	}
 	else
 	{
@@ -700,7 +698,7 @@ bool CSquirrelVM::GenerateUniqueKey( const char *pszRoot, char *pBuf, int nBufSi
 		return false;
 	}
 
-	V_snprintf( pBuf, nBufSize, "%x%x%llx_%s", RandomInt(0, 4095), Plat_MSTime(), ++m_nUniqueKeyQueries, pszRoot );
+	V_snprintf( pBuf, nBufSize, "%x%x%llx_%s", RandomInt(0, 4095), Plat_MSTime(), ++m_nUniqueKeySerial, pszRoot );
 
 	return true;
 }
@@ -919,7 +917,7 @@ void CSquirrelVM::WriteState( CUtlBuffer *pBuffer )
 	sq_collectgarbage( GetVM() );
 
 	pBuffer->PutInt( SAVE_VERSION );
-	pBuffer->PutInt64( m_nUniqueKeyQueries );
+	pBuffer->PutInt64( m_nUniqueKeySerial );
 
 	SquirrelStateWriter writer( GetVM(), pBuffer ); writer.BeginWrite();
 }
@@ -935,7 +933,7 @@ void CSquirrelVM::ReadState( CUtlBuffer *pBuffer )
 	sq_collectgarbage( GetVM() );
 
 	int64 serial = pBuffer->GetInt64();
-	m_nUniqueKeyQueries = Max( m_nUniqueKeyQueries, serial );
+	m_nUniqueKeySerial = Max( m_nUniqueKeySerial, serial );
 
 	SquirrelStateReader reader( GetVM(), pBuffer ); reader.BeginRead();
 }
@@ -1090,7 +1088,7 @@ void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiat
 		}
 		case FIELD_VECTOR:
 		{
-			sq_pushobject( GetVM(), m_VectorTable );
+			sq_pushobject( GetVM(), m_VectorClass );
 			sq_createinstance( GetVM(), -1 );
 
 			if ( bInstantiate )
@@ -1580,10 +1578,10 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 			}
 			case FIELD_VECTOR:
 			{
-				sq_pushobject( pVM, pVM->GetVScript()->m_VectorTable );
+				sq_pushobject( pVM, pVM->GetVScript()->m_VectorClass );
 					sq_createinstance( pVM, -1 );
 					sq_setinstanceup( pVM, -1, returnValue );
-					sq_setreleasehook( pVM, -1, VectorRelease );
+					sq_setreleasehook( pVM, -1, &VectorRelease );
 				sq_remove( pVM, -2 );
 
 				break;

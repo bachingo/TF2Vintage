@@ -1,6 +1,6 @@
-#include "mathlib/mathlib.h"
-#include "fmtstr.h"
-#include "strtools.h"
+#include "mathlib/vector.h"
+#include "tier1/fmtstr.h"
+#include "tier1/strtools.h"
 
 #include "sqplus.h"
 #include "sqobject.h"
@@ -13,9 +13,9 @@ using namespace SqPlus;
 
 #define sq_pushvector(vm, vector) \
 	sq_getclass( vm, -1 ); \
-		sq_createinstance( vm, -1 ); \
-		sq_setinstanceup( vm, -1, vector ); \
-		sq_setreleasehook( vm, -1, VectorRelease ); \
+	sq_createinstance( vm, -1 ); \
+	sq_setinstanceup( vm, -1, vector ); \
+	sq_setreleasehook( vm, -1, &VectorRelease ); \
 	sq_remove( vm, -2 );
 
 Vector GetVectorByValue( HSQUIRRELVM pVM, int nIndex )
@@ -36,80 +36,6 @@ Vector GetVectorByValue( HSQUIRRELVM pVM, int nIndex )
 	}
 
 	return *pVector;
-}
-
-static SQRegFunction g_VectorFuncs[] ={
-	{_SC( "constructor" ),		VectorConstruct				},
-	{MM_GET,					VectorGet					},
-	{MM_SET,					VectorSet,			2,		_SC( ".." )},
-	{MM_TOSTRING,				VectorToString,		3,		_SC( "..n" )},
-	{MM_TYPEOF,					VectorTypeInfo				},
-	{MM_CMP,					VectorEquals,		2,		0},
-	{MM_NEXTI,					VectorIterate				},
-	{MM_ADD, 					VectorAdd,			2,		0},
-	{MM_SUB,					VectorSubtract,		2,		0},
-	{MM_MUL,					VectorMultiply,		2,		0},
-	{MM_DIV,					VectorDivide,		2,		0},
-	{_SC( "Length" ),			VectorLength				},
-	{_SC( "LengthSqr" ),		VectorLengthSqr				},
-	{_SC( "Length2D" ),			VectorLength2D				},
-	{_SC( "Length2DSqr" ),		VectorLength2DSqr			},
-	{_SC( "Dot" ),				VectorDotProduct,	2,		0},
-	{_SC( "Cross" ),			VectorCrossProduct,	2,		0},
-	{_SC( "Norm" ),				VectorNormalize				},
-	{_SC( "ToKVString" ),		VectorToKeyValue			}
-};
-
-SQRESULT RegisterVector( HSQUIRRELVM pVM )
-{
-	int nArgs = sq_gettop( pVM );
-
-	// Register a new class of name Vector
-	sq_pushstring( pVM, "Vector", -1 );
-
-	// Something went wrong, bail and reset
-	if ( SQ_FAILED( sq_newclass( pVM, false ) ) )
-	{
-		sq_settop( pVM, nArgs );
-		return SQ_ERROR;
-	}
-
-	SQObject pTable{};
-
-	// Setup class table
-	sq_getstackobj( pVM, -1, &pTable );
-	sq_settypetag( pVM, -1, VECTOR_TYPE_TAG );
-
-	// Add to VM
-	sq_createslot( pVM, -3 );
-
-	// Prepare table for insert
-	sq_pushobject( pVM, pTable );
-
-	for ( int i = 1; i < ARRAYSIZE( g_VectorFuncs ); ++i )
-	{
-		SQRegFunction *reg = &g_VectorFuncs[i];
-
-		// Register function
-		sq_pushstring( pVM, reg->name, -1 );
-		sq_newclosure( pVM, reg->f, 0 );
-
-		// Setup param enforcement if available
-		if ( reg->nparamscheck != 0 )
-			sq_setparamscheck( pVM, reg->nparamscheck, reg->typemask );
-
-		// for debugging
-		sq_setnativeclosurename( pVM, -1, reg->name );
-
-		// Add to table
-		sq_createslot( pVM, -3 );
-	}
-
-	// Reset vm
-	sq_pop( pVM, 1 );
-	sq_settop( pVM, nArgs );
-
-	return SQ_OK;
 }
 
 SQInteger VectorConstruct( HSQUIRRELVM pVM )
@@ -135,12 +61,9 @@ SQInteger VectorConstruct( HSQUIRRELVM pVM )
 	return SQ_OK;
 }
 
-SQInteger VectorRelease( SQUserPointer data, SQInteger size )
+SQInteger VectorRelease( SQUserPointer up, SQInteger size )
 {
-	if ( data )
-		delete data;
-
-	return SQ_OK;
+	SQ_DELETE_CLASS( Vector );
 }
 
 SQInteger VectorGet( HSQUIRRELVM pVM )
@@ -398,4 +321,80 @@ SQInteger VectorNormalize( HSQUIRRELVM pVM )
 	const float flLength = VectorNormalize( *pVector );
 
 	return hndl.Return( flLength );
+}
+
+
+SQRegFunction g_VectorFuncs[] ={
+	{_SC( "constructor" ),		VectorConstruct				},
+	{MM_GET,					VectorGet					},
+	{MM_SET,					VectorSet,			2,		_SC( ".." )},
+	{MM_TOSTRING,				VectorToString,		3,		_SC( "..n" )},
+	{MM_TYPEOF,					VectorTypeInfo				},
+	{MM_CMP,					VectorEquals,		2,		0},
+	{MM_NEXTI,					VectorIterate				},
+	{MM_ADD, 					VectorAdd,			2,		0},
+	{MM_SUB,					VectorSubtract,		2,		0},
+	{MM_MUL,					VectorMultiply,		2,		0},
+	{MM_DIV,					VectorDivide,		2,		0},
+	{_SC( "Length" ),			VectorLength				},
+	{_SC( "LengthSqr" ),		VectorLengthSqr				},
+	{_SC( "Length2D" ),			VectorLength2D				},
+	{_SC( "Length2DSqr" ),		VectorLength2DSqr			},
+	{_SC( "Dot" ),				VectorDotProduct,	2,		0},
+	{_SC( "Cross" ),			VectorCrossProduct,	2,		0},
+	{_SC( "Norm" ),				VectorNormalize				},
+	{_SC( "ToKVString" ),		VectorToKeyValue			}
+};
+
+SQRESULT RegisterVector( HSQUIRRELVM pVM )
+{
+	int nArgs = sq_gettop( pVM );
+
+	// Register a new class of name Vector
+	sq_pushroottable( pVM );
+	sq_pushstring( pVM, "Vector", -1 );
+
+	// Something went wrong, bail and reset
+	if ( SQ_FAILED( sq_newclass( pVM, SQFalse ) ) )
+	{
+		sq_settop( pVM, nArgs );
+		return SQ_ERROR;
+	}
+
+	HSQOBJECT pTable{};
+
+	// Setup class table
+	sq_getstackobj( pVM, -1, &pTable );
+	sq_settypetag( pVM, -1, VECTOR_TYPE_TAG );
+
+	// Add to VM
+	sq_createslot( pVM, -3 );
+
+	// Prepare table for insert
+	sq_pushobject( pVM, pTable );
+
+	for ( int i = 1; i < ARRAYSIZE( g_VectorFuncs ); ++i )
+	{
+		SQRegFunction *reg = &g_VectorFuncs[i];
+
+		// Register function
+		sq_pushstring( pVM, reg->name, -1 );
+		sq_newclosure( pVM, reg->f, 0 );
+
+		// Setup param enforcement if available
+		if ( reg->nparamscheck != 0 )
+			sq_setparamscheck( pVM, reg->nparamscheck, reg->typemask );
+
+		// for debugging
+		sq_setnativeclosurename( pVM, -1, reg->name );
+
+		// Add to table
+		sq_createslot( pVM, -3 );
+	}
+
+	// Reset vm
+	sq_pop( pVM, 1 );
+	sq_settop( pVM, nArgs );
+
+	return SQ_OK;
 }

@@ -10,9 +10,12 @@
 #ifndef _SQ_PLUS_H_
 #define _SQ_PLUS_H_
 
-#include <stdlib.h>
+#if defined(VSCRIPT_DLL_EXPORT)
+#include "platform.h"
+#include "dbg.h"
+#endif
 
-#define _HAS_EXCEPTIONS 0
+#include <stdlib.h>
 
 #ifdef __APPLE__
   #include <malloc/malloc.h>

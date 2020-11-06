@@ -32,6 +32,7 @@ to the following restrictions:
 #define _SQUIRREL_H_
 
 #if defined(VSCRIPT_DLL_EXPORT)
+#include "platform.h"
 #include "dbg.h"
 #define printf	DevMsg
 #endif

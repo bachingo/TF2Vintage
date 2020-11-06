@@ -20,7 +20,7 @@
 // Can also be useful for debugging, as class type information is
 // checked before dispatching instance function calls and before
 // accessing instance member variables.
-#define SQ_USE_CLASS_INHERITANCE
+//#define SQ_USE_CLASS_INHERITANCE
 
 
 // This is a new C++ template based inheritence scheme that uses no
@@ -29,10 +29,10 @@
 //    SQClassDef< MyClass, MyBaseClass >.
 // NOTE: For new code SQ_USE_CLASS_INHERITANCE_SIMPLE is more
 // efficient than above method.
-//#define SQ_USE_CLASS_INHERITANCE_SIMPLE
+#define SQ_USE_CLASS_INHERITANCE_SIMPLE
 
 // === Instance type info support ===
-#define SQ_SUPPORT_INSTANCE_TYPE_INFO
+//#define SQ_SUPPORT_INSTANCE_TYPE_INFO
 
 // === Constant argument and constant member function support ===
 // Define SQPLUS_CONST_OPT before including SqPlus.h for constant
@@ -54,7 +54,7 @@
 //#define SQPLUS_SUPPORT_STD_STRING
 
 // === Uncomment to support typedef std::basic_string<SQChar> sq_std_string ===
-#define SQPLUS_SUPPORT_SQ_STD_STRING
+//#define SQPLUS_SUPPORT_SQ_STD_STRING
 
 // === Uncomment to support NULL INSTANCE arguments ===
 #define SQPLUS_SUPPORT_NULL_INSTANCES

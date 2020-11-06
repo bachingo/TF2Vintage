@@ -192,7 +192,7 @@ bool SQDbgServer::IsConnected() const
 	SOCKET sock = select( 0, &fdSet, NULL, NULL, &timeout );
 	if ( sock == INVALID_SOCKET )
 	{
-		DevMsg("Script debugger disconnected\n");
+		scprintf(_SC("Script debugger disconnected\n"));
 		return false;
 	}
 
