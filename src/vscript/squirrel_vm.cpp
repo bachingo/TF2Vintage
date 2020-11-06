@@ -478,7 +478,7 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 	if ( hScope )
 	{
 		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
-		if ( pTable != INVALID_HSQOBJECT && !sq_istable( pTable ) )
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 		{
 			sq_pop( GetVM(), 1 );
 			return SCRIPT_ERROR;
@@ -550,7 +550,9 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 void CSquirrelVM::RegisterFunction( ScriptFunctionBinding_t *pScriptFunction )
 {
 	sq_pushroottable( GetVM() );
-		RegisterFunctionGuts( pScriptFunction );
+
+	RegisterFunctionGuts( pScriptFunction );
+
 	sq_pop( GetVM(), 1 );
 }
 
@@ -563,9 +565,9 @@ bool CSquirrelVM::RegisterClass( ScriptClassDesc_t *pClassDesc )
 	sq_pushroottable( GetVM() );
 	sq_pushstring( GetVM(), pClassDesc->m_pszScriptName, -1 );
 
-	if ( SQ_FAILED( sq_get( GetVM(), -2 ) ) )
+	if ( SQ_SUCCEEDED( sq_get( GetVM(), -2 ) ) )
 	{
-		sq_pop( GetVM(), 1 );
+		sq_pop( GetVM(), 2 );
 		return false;
 	}
 
@@ -579,7 +581,7 @@ bool CSquirrelVM::RegisterClass( ScriptClassDesc_t *pClassDesc )
 	HSQOBJECT pObject = CreateClass( pClassDesc );
 	SQClass *pClass = _class( pObject );
 
-	if ( sq_type( pObject ) != OT_INVALID )
+	if ( pObject != INVALID_HSQOBJECT )
 	{
 		sq_pushobject( GetVM(), pObject );
 
@@ -651,11 +653,11 @@ void CSquirrelVM::SetInstanceUniqeId( HSCRIPT hInstance, const char *pszId )
 		return;
 	}
 
-	HSQOBJECT *pObject = (HSQOBJECT *)hInstance;
-	if ( !sq_isinstance( *pObject ) )
+	HSQOBJECT &pObject = *(HSQOBJECT *)hInstance;
+	if ( !sq_isinstance( pObject ) )
 		return;
 
-	ScriptInstance_t *pInstance = (ScriptInstance_t *)_instance( *pObject )->_userpointer;
+	ScriptInstance_t *pInstance = (ScriptInstance_t *)_instance( pObject )->_userpointer;
 	SQObjectPtr pID = SQString::Create( _ss( GetVM() ), pszId, V_strlen( pszId ) );
 	pInstance->m_instanceUniqueId = pID;
 }
@@ -668,12 +670,12 @@ void CSquirrelVM::RemoveInstance( HSCRIPT hScript )
 		return;
 	}
 
-	HSQOBJECT *pObject = (HSQOBJECT *)hScript;
-	if ( sq_isinstance( *pObject ) )
-		_instance( *pObject )->_userpointer = NULL;
+	HSQOBJECT &pObject = *(HSQOBJECT *)hScript;
+	if ( sq_isinstance( pObject ) )
+		_instance( pObject )->_userpointer = NULL;
 
-	sq_release( GetVM(), pObject );
-	delete pObject;
+	sq_release( GetVM(), &pObject );
+	delete hScript;
 }
 
 void *CSquirrelVM::GetInstanceValue( HSCRIPT hInstance, ScriptClassDesc_t *pExpectedType )
@@ -684,11 +686,11 @@ void *CSquirrelVM::GetInstanceValue( HSCRIPT hInstance, ScriptClassDesc_t *pExpe
 		return NULL;
 	}
 
-	HSQOBJECT *pObject = (HSQOBJECT *)hInstance;
-	if ( !sq_isinstance( *pObject ) )
+	HSQOBJECT &pObject = *(HSQOBJECT *)hInstance;
+	if ( !sq_isinstance( pObject ) )
 		return NULL;
 
-	ScriptInstance_t *pInstance = (ScriptInstance_t *)_instance( *pObject )->_userpointer;
+	ScriptInstance_t *pInstance = (ScriptInstance_t *)_instance( pObject )->_userpointer;
 
 	ScriptClassDesc_t *pDescription = pInstance->m_pClassDesc;
 	while ( pDescription )
@@ -731,7 +733,7 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const char *pszV
 			return false;
 
 		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
-		if ( pTable._type != OT_TABLE )
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return false;
 
 		sq_pushobject( GetVM(), pTable );
@@ -758,7 +760,7 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVari
 			return false;
 
 		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
-		if ( pTable._type != OT_TABLE )
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return false;
 
 		sq_pushobject( GetVM(), pTable );
@@ -770,12 +772,12 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVari
 
 	sq_pushstring( GetVM(), pszKey, -1 );
 
-	if ( value.m_type == FIELD_HSCRIPT )
+	if ( value.m_type == FIELD_HSCRIPT && value.m_hScript )
 	{
-		HSQOBJECT *pObject = (HSQOBJECT *)value.m_hScript;
-		if ( pObject && sq_isinstance( *pObject ) )
+		HSQOBJECT &pObject = *(HSQOBJECT *)value.m_hScript;
+		if ( sq_isinstance( pObject ) && _instance( pObject )->_class->_typetag != VECTOR_TYPE_TAG )
 		{
-			ScriptInstance_t *pInstance = (ScriptInstance_t *)_instance( *pObject )->_userpointer;
+			ScriptInstance_t *pInstance = (ScriptInstance_t *)_instance( pObject )->_userpointer;
 			if ( sq_isnull( pInstance->m_instanceUniqueId ) )
 			{
 				// if we haven't been given a unique ID, we'll be assigned the key name
@@ -797,9 +799,12 @@ void CSquirrelVM::CreateTable( ScriptVariant_t &Table )
 {
 	HSQOBJECT pObject;
 	sq_newtable( GetVM() );
-		sq_getstackobj( GetVM(), -1, &pObject );
-		sq_addref( GetVM(), &pObject );
-		ConvertToVariant( pObject, &Table );
+
+	sq_getstackobj( GetVM(), -1, &pObject );
+	sq_addref( GetVM(), &pObject );
+
+	ConvertToVariant( pObject, &Table );
+
 	sq_pop( GetVM(), 1 );
 }
 
@@ -811,8 +816,8 @@ int CSquirrelVM::GetKeyValue( HSCRIPT hScope, int nIterator, ScriptVariant_t *pK
 		if ( hScope == INVALID_HSCRIPT )
 			return -1;
 
-		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
-		if ( pTable._type != OT_TABLE )
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return -1;
 
 		sq_pushobject( GetVM(), pTable );
@@ -864,10 +869,7 @@ void CSquirrelVM::ReleaseValue( ScriptVariant_t &value )
 			sq_release( GetVM(), (HSQOBJECT *)value.m_hScript );
 		case FIELD_VECTOR:
 		case FIELD_CSTRING:
-			if ( !( value.m_flags & SV_FREE ) )
-				break;
-			if ( value.m_pszString )
-				delete value.m_pszString;
+			value.Free();
 		default:
 			break;
 	}
@@ -882,8 +884,8 @@ bool CSquirrelVM::ClearValue( HSCRIPT hScope, const char *pszKey )
 		if ( hScope == INVALID_HSCRIPT )
 			return false;
 
-		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
-		if ( pTable._type != OT_TABLE )
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return false;
 
 		sq_pushobject( GetVM(), pTable );
@@ -908,8 +910,8 @@ int CSquirrelVM::GetNumTableEntries( HSCRIPT hScope )
 		if ( hScope == INVALID_HSCRIPT )
 			return 0;
 
-		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
-		if ( pTable._type != OT_TABLE )
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return 0;
 
 		sq_pushobject( GetVM(), pTable );
@@ -1028,7 +1030,7 @@ void CSquirrelVM::ConvertToVariant( SQObject const &pValue, ScriptVariant_t *pVa
 			SQUserPointer pInstance = NULL;
 			SQRESULT nResult = sq_getinstanceup( GetVM(), -1, &pInstance, VECTOR_TYPE_TAG );
 
-			sq_poptop( GetVM() );
+			sq_pop( GetVM(), -1 );
 
 			if ( nResult == SQ_OK )
 			{
@@ -1188,7 +1190,10 @@ bool CSquirrelVM::CreateInstance( ScriptClassDesc_t *pClassDesc, ScriptInstance_
 void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, ScriptClassDesc_t *pClassDesc )
 {
 	if ( pFunction->m_desc.m_Parameters.Count() > MAX_FUNCTION_PARAMS )
+	{
+		AssertMsg( 0, "Too many agruments provided for script function %s\n", pFunction->m_desc.m_pszFunction );
 		return;
+	}
 
 	char szParamCheck[ MAX_FUNCTION_PARAMS+1 ];
 	szParamCheck[0] = '.';
@@ -1231,6 +1236,7 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 			default:
 			{
 				*pCurrent = '\0';
+				AssertMsg( 0 , "Unsupported type" );
 				break;
 			}
 		}
@@ -1238,14 +1244,13 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 
 	// null terminate
 	*pCurrent = '\0';
-
-	HSQOBJECT pClosure;
 	
 	sq_pushstring( GetVM(), pFunction->m_desc.m_pszScriptName, -1 );
 	
 	ScriptFunctionBinding_t **pFunctionBinding = (ScriptFunctionBinding_t **)sq_newuserdata( GetVM(), sizeof( ScriptFunctionBinding_t * ) );
 	*pFunctionBinding = pFunction;
-	
+
+	HSQOBJECT pClosure;
 	sq_newclosure( GetVM(), &CSquirrelVM::TranslateCall, 1 );
 	sq_getstackobj( GetVM(), -1, &pClosure );
 	sq_setnativeclosurename( GetVM(), -1, pFunction->m_desc.m_pszScriptName );
@@ -1255,7 +1260,7 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 
 	if ( m_hDeveloper.GetInt() )
 	{
-		if ( !pFunction->m_desc.m_pszDescription || *pFunction->m_desc.m_pszDescription == *SCRIPT_HIDE )
+		if ( pFunction->m_desc.m_pszDescription && *pFunction->m_desc.m_pszDescription == *SCRIPT_HIDE )
 			return;
 
 		RegisterDocumentation( pClosure, pFunction, pClassDesc );
@@ -1267,10 +1272,10 @@ void CSquirrelVM::RegisterDocumentation( HSQOBJECT pClosure, ScriptFunctionBindi
 	char szName[128]{};
 	if ( pClassDesc )
 	{
-		V_strcat( szName, pClassDesc->m_pszScriptName, sizeof szName );
-		V_strcat( szName, "::", sizeof szName );
+		V_strcat_safe( szName, pClassDesc->m_pszScriptName );
+		V_strcat_safe( szName, "::" );
 	}
-	V_strcat( szName, pFunction->m_desc.m_pszScriptName, sizeof szName );
+	V_strcat_safe( szName, pFunction->m_desc.m_pszScriptName );
 
 	char const *pszReturnType = "void";
 	switch ( pFunction->m_desc.m_ReturnType )
@@ -1305,14 +1310,14 @@ void CSquirrelVM::RegisterDocumentation( HSQOBJECT pClosure, ScriptFunctionBindi
 	}
 
 	char szSignature[512]{};
-	V_strcat( szSignature, pszReturnType, sizeof szSignature );
-	V_strcat( szSignature, " ", sizeof szSignature );
-	V_strcat( szSignature, szName, sizeof szSignature );
-	V_strcat( szSignature, "(", sizeof szSignature );
+	V_strcat_safe( szSignature, pszReturnType );
+	V_strcat_safe( szSignature, " " );
+	V_strcat_safe( szSignature, szName );
+	V_strcat_safe( szSignature, "(" );
 	FOR_EACH_VEC( pFunction->m_desc.m_Parameters, i )
 	{
 		if ( i != 0 )
-			V_strcat( szSignature, ", ", sizeof szSignature );
+			V_strcat_safe( szSignature, ", " );
 
 		char const *pszArgumentType = "int";
 		switch ( pFunction->m_desc.m_Parameters[i] )
@@ -1343,9 +1348,9 @@ void CSquirrelVM::RegisterDocumentation( HSQOBJECT pClosure, ScriptFunctionBindi
 				break;
 		}
 
-		V_strcat( szSignature, pszArgumentType, sizeof szSignature );
+		V_strcat_safe( szSignature, pszArgumentType );
 	}
-	V_strcat( szSignature, ")", sizeof szSignature );
+	V_strcat_safe( szSignature, ")" );
 
 	SQObjectPtr pRegisterDocumentation = LookupObject( "RegisterFunctionDocumentation", NULL, false );
 	sq_pushobject( GetVM(), pRegisterDocumentation );
@@ -1703,7 +1708,7 @@ HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bR
 			return _null_;
 
 		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
-		if ( pTable._type != OT_TABLE )
+		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return _null_;
 
 		sq_pushobject( GetVM(), pTable );
