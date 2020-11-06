@@ -44,9 +44,7 @@ private:
 
 };
 
-struct DiscordUser;
-struct DiscordRichPresence;
-
+namespace discord { class Core; class Activity; class User; }
 #define DISCORD_FIELD_MAXLEN 128
 
 class CTFDiscordPresence : public CAutoGameSystemPerFrame, public CGameEventListener
@@ -69,14 +67,6 @@ public:
 	void				UpdatePresence( bool bForce = false, bool bIsDead = false );
 	void				SetLevelName( char const *pMapName ) { Q_strncpy( m_szMapName, pMapName, MAX_MAP_NAME ); }
 
-	// Discord handlers
-	static void			OnReady( const DiscordUser *request );
-	static void			OnDisconnected( int errorCode, const char *message );
-	static void			OnError( int errorCode, const char *message );
-	static void			OnJoinedGame( const char *joinSecret );
-	static void			OnSpectateGame( const char *spectateSecret );
-	static void			OnJoinRequested( const DiscordUser *request );
-
 private:
 	// Updates run asyncrhonous, so stack allocation in a no go
 	char m_szMapName[ MAX_MAP_NAME ];
@@ -87,9 +77,12 @@ private:
 	char m_szGameState[ DISCORD_FIELD_MAXLEN ];
 	char m_szClassName[ DISCORD_FIELD_MAXLEN ];
 
-	static RealTimeCountdownTimer m_updateThrottle;
-	static int64 m_iCreationTimestamp;
-	static DiscordRichPresence m_sPresence;
+	RealTimeCountdownTimer m_updateThrottle;
+	int64 m_iCreationTimestamp;
+
+	static discord::Core *m_pCore;
+	static discord::Activity m_Activity;
+	static discord::User m_CurrentUser;
 };
 
 extern CTFDiscordPresence *rpc;
