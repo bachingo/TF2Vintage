@@ -106,6 +106,8 @@ SQVM::SQVM(SQSharedState *ss)
 	_errorhandler = _null_;
 	_debughook = _null_;
 	ci = NULL;
+	_qs_cnt = 0;
+	_qs_fn = 0;
 	INIT_CHAIN();ADD_TO_CHAIN(&_ss(this)->_gc_chain,this);
 }
 
@@ -874,14 +876,32 @@ common_call:
 					outres = temp_reg;
 					return true;
 				}
+				if(_qs_fn && --_qs_cnt<0){
+query_suspend:
+					_qs_cnt = 100000;
+					int r = _qs_fn(this);
+					if(r==SQ_QUERY_BREAK){
+						Raise_Error(_SC("Script terminated by SQQuerySuspend"), NULL);
+						SQ_THROW();
+					}
+				}
 				continue;
 			case _OP_LOADNULLS:{ for(SQInt32 n=0; n < arg1; n++) STK(arg0+n) = _null_; }continue;
 			case _OP_LOADROOTTABLE:	TARGET = _roottable; continue;
 			case _OP_LOADBOOL: TARGET = arg1?_true_:_false_; continue;
 			case _OP_DMOVE: STK(arg0) = STK(arg1); STK(arg2) = STK(arg3); continue;
-			case _OP_JMP: ci->_ip += (sarg1); continue;
-			case _OP_JNZ: if(!IsFalse(STK(arg0))) ci->_ip+=(sarg1); continue;
-			case _OP_JZ: if(IsFalse(STK(arg0))) ci->_ip+=(sarg1); continue;
+			case _OP_JMP:
+				ci->_ip += (sarg1); 
+				if(_qs_fn && --_qs_cnt<0) goto query_suspend;
+				continue;
+			case _OP_JNZ:
+				if(!IsFalse(STK(arg0))) ci->_ip+=(sarg1); 
+				if(_qs_fn && --_qs_cnt<0) goto query_suspend;
+				continue;
+			case _OP_JZ:
+				if(IsFalse(STK(arg0))) ci->_ip+=(sarg1); 
+				if(_qs_fn && --_qs_cnt<0) goto query_suspend;
+				continue;
 			case _OP_LOADFREEVAR: TARGET = _closure(ci->_closure)->_outervalues[arg1]; continue;
 			case _OP_VARGC: TARGET = SQInteger(ci->_vargs.size); continue;
 			case _OP_GETVARGV: 

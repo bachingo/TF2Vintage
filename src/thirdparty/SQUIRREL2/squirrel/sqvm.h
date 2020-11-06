@@ -21,6 +21,12 @@ struct SQExceptionTrap{
 	SQInteger _extarget;
 };
 
+#define SQ_QUERY_CONTINUE		0
+#define SQ_QUERY_BREAK			1
+#define SQ_QUERY_SUSPEND		2
+
+typedef int (*SQQuerySuspendFn)( HSQUIRRELVM );
+
 #define _INLINE 
 
 #define STK(a) _stack._vals[_stackbase+(a)]
@@ -140,6 +146,11 @@ public:
 	SQObjectPtr &GetAt(SQInteger n);
 
 	CSquirrelVM *GetVScript() { return _sharedstate->_vscript; }
+	void SetVScript(CSquirrelVM *pVM) { _sharedstate->_vscript=pVM; }
+
+	void SetQuerySuspendFn( SQQuerySuspendFn qs_fn ) { _qs_fn=qs_fn; }
+	int				 _qs_cnt;
+	SQQuerySuspendFn _qs_fn;
 
 	SQObjectPtrVec _stack;
 	SQObjectPtrVec _vargsstack;

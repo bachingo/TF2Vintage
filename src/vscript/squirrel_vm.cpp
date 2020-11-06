@@ -175,6 +175,7 @@ private:
 	static SQInteger			InstanceToString( HSQUIRRELVM pVM );
 	static SQInteger			InstanceIsValid( HSQUIRRELVM pVM );
 	static void					PrintFunc( HSQUIRRELVM, const SQChar *, ... );
+	static int					QueryContinue( HSQUIRRELVM );
 
 	//---------------------------------------------------------------------------------------------
 
@@ -193,7 +194,8 @@ private:
 
 	ConVarRef m_hDeveloper;
 
-	long long m_nUniqueKeyQueries;
+	long long m_nUniqueKeySerial;
+	float m_flTimeStartedCall;
 };
 
 CSquirrelVM::CSquirrelVM( void )
@@ -208,7 +210,9 @@ CSquirrelVM::CSquirrelVM( void )
 bool CSquirrelVM::Init( void )
 {
 	m_pVirtualMachine = sq_open( 1024 );
-	_ss( m_pVirtualMachine )->_vscript = this;
+	
+	m_pVirtualMachine->SetVScript( this );
+	m_pVirtualMachine->SetQuerySuspendFn( &CSquirrelVM::QueryContinue );
 	
 	sq_setprintfunc( GetVM(), &CSquirrelVM::PrintFunc );
 
@@ -493,6 +497,7 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 			PushVariant( pArgs[i], true );
 	}
 
+	m_flTimeStartedCall = Plat_FloatTime();
 	if ( SQ_FAILED( sq_call( GetVM(), nArgs + 1, pReturn != NULL, SQTrue ) ) )
 	{
 		// pop off the closure
@@ -501,8 +506,12 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 		if ( pReturn )
 			pReturn->m_type = FIELD_VOID;
 
+		m_flTimeStartedCall = 0.0f;
+
 		return SCRIPT_ERROR;
 	}
+
+	m_flTimeStartedCall = 0.0f;
 
 	if ( pReturn )
 	{
@@ -516,6 +525,12 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 
 	// pop off the closure
 	sq_pop( GetVM(), 1 );
+
+	if ( GetVM()->_top != initialTop )
+	{
+		Warning( "Callstack mismatch in VScript/Squirrel!\n" );
+		Assert( GetVM()->_top == initialTop );
+	}
 
 	if ( !sq_isnull( m_Error ) )
 	{
@@ -728,7 +743,6 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const char *pszV
 
 	sq_pushstring( GetVM(), pszKey, -1 );
 	sq_pushstring( GetVM(), pszValue, -1 );
-
 	sq_createslot( GetVM(), -3 );
 
 	sq_pop( GetVM(), 1 );
@@ -1665,6 +1679,21 @@ void CSquirrelVM::PrintFunc( HSQUIRRELVM pVM, const SQChar *fmt, ... )
 	Msg( "%s", szMessage );
 }
 
+int CSquirrelVM::QueryContinue( HSQUIRRELVM pVM )
+{
+	CSquirrelVM *pVScript = pVM->GetVScript();
+	if ( !pVScript->m_pDbgServer && pVScript->m_flTimeStartedCall != 0.0f )
+	{
+		const float flTimeDelta = Plat_FloatTime() - pVScript->m_flTimeStartedCall;
+		if ( flTimeDelta > 0.03f )
+		{
+			scprintf(_sqT("Script running too long, terminating\n"));
+			return SQ_QUERY_BREAK;
+		}
+	}
+	return SQ_QUERY_CONTINUE;
+}
+
 HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bRefCount )
 {
 	SQObjectPtr pObject = _null_;
@@ -1685,7 +1714,7 @@ HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bR
 	}
 
 	sq_pushstring( GetVM(), szName, -1 );
-	if ( sq_get( GetVM(), -2 ) == SQ_OK )
+	if ( SQ_SUCCEEDED( sq_get( GetVM(), -2 ) ) )
 	{
 		sq_getstackobj( GetVM(), -1, &pObject );
 		if ( bRefCount )
