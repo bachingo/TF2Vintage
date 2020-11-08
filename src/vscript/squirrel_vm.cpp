@@ -935,7 +935,7 @@ void CSquirrelVM::WriteState( CUtlBuffer *pBuffer )
 	pBuffer->PutInt( SAVE_VERSION );
 	pBuffer->PutInt64( m_nUniqueKeySerial );
 
-	SquirrelStateWriter writer( GetVM(), pBuffer ); writer.BeginWrite();
+	SquirrelStateWriter writer( GetVM(), pBuffer );
 }
 
 void CSquirrelVM::ReadState( CUtlBuffer *pBuffer )
@@ -951,7 +951,7 @@ void CSquirrelVM::ReadState( CUtlBuffer *pBuffer )
 	int64 serial = pBuffer->GetInt64();
 	m_nUniqueKeySerial = Max( m_nUniqueKeySerial, serial );
 
-	SquirrelStateReader reader( GetVM(), pBuffer ); reader.BeginRead();
+	SquirrelStateReader reader( GetVM(), pBuffer );
 }
 
 bool CSquirrelVM::ConnectDebugger()

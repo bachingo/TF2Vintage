@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <assert.h>
 
 #ifdef SQUNICODE
 #define scstrchr wcschr
@@ -77,7 +76,7 @@ SQRESULT sqstd_format(HSQUIRRELVM v,SQInteger nformatstringidx,SQInteger *outlen
 	SQInteger n = 0,i = 0, nparam = nformatstringidx+1, w = 0;
 	while(format[n] != '\0') {
 		if(format[n] != '%') {
-			assert(i < allocated);
+			Assert(i < allocated);
 			dest[i++] = format[n];
 			n++;
 		}

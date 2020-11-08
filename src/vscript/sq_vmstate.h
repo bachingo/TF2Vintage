@@ -9,7 +9,10 @@ class SquirrelStateWriter
 {
 public:
 	SquirrelStateWriter( HSQUIRRELVM pVM, CUtlBuffer *pOutput )
-		: m_pVM(pVM), m_pBuffer(pOutput) {}
+		: m_pVM(pVM), m_pBuffer(pOutput)
+	{
+		BeginWrite();
+	}
 	~SquirrelStateWriter();
 
 	void BeginWrite( void );
@@ -39,7 +42,10 @@ class SquirrelStateReader
 {
 public:
 	SquirrelStateReader( HSQUIRRELVM pVM, CUtlBuffer *pOutput )
-		: m_pVM(pVM), m_pBuffer(pOutput) {}
+		: m_pVM(pVM), m_pBuffer(pOutput)
+	{
+		BeginRead();
+	}
 	~SquirrelStateReader();
 
 	void BeginRead( void );
