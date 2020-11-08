@@ -561,6 +561,8 @@ void SquirrelStateReader::BeginRead( void )
 {
 	m_pBuffer->GetInt();
 
+	_ss( m_pVM )->_gc_disableDepth++;
+
 	void *pOldVM = m_pBuffer->GetPtr();
 	s_Pointers.Insert( pOldVM, m_pVM );
 
@@ -577,6 +579,8 @@ void SquirrelStateReader::BeginRead( void )
 	stackSize = m_pBuffer->GetUnsignedInt();
 	for( int i=0; i < stackSize; i++ )
 		ReadObject( &m_pVM->_vargsstack[i] );
+
+	_ss( m_pVM )->_gc_disableDepth--;
 }
 
 bool SquirrelStateReader::ReadObject( SQObjectPtr *pObj, const char *pszName )

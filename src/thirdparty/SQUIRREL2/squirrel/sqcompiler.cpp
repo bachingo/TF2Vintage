@@ -321,7 +321,7 @@ public:
 		case TK_DIVEQ: oper = '/'; break;
 		case TK_MODEQ: oper = '%'; break;
 		default: oper = 0; //shut up compiler
-			assert(0); break;
+			Assert(0); break;
 		};
 		if(deref) {
 			SQInteger val = _fs->PopTarget();
@@ -826,7 +826,7 @@ public:
 			SQInteger val = _fs->PopTarget();
 			SQInteger key = _fs->PopTarget();
 			SQInteger attrs = hasattrs ? _fs->PopTarget():-1;
-			assert(hasattrs && attrs == key-1 || !hasattrs);
+			Assert(hasattrs && attrs == key-1 || !hasattrs);
 			unsigned char flags = (hasattrs?NEW_SLOT_ATTRIBUTES_FLAG:0)|(isstatic?NEW_SLOT_STATIC_FLAG:0);
 			SQInteger table = _fs->TopTarget(); //<<BECAUSE OF THIS NO COMMON EMIT FUNC IS POSSIBLE
 			_fs->AddInstruction(_OP_NEWSLOTA, flags, table, key, val);

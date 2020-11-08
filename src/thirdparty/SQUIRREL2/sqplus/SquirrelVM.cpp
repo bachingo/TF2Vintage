@@ -83,7 +83,7 @@ void SquirrelVMSys::Set( HSQUIRRELVM v ){
 }
 
 void SquirrelVMSys::Set( const SquirrelObject& ov ){
-    assert( ov.GetObjectHandle()._type==OT_THREAD );
+    Assert( ov.GetObjectHandle()._type==OT_THREAD );
     // Must take care to release object with the 'ref' VM
     PushRefVM( ov.GetObjectHandle()._unVal.pThread );
     _vm = ov;
@@ -93,7 +93,7 @@ void SquirrelVMSys::Set( const SquirrelObject& ov ){
 SquirrelVMSys::operator HSQUIRRELVM () const { 
     // Avoid const madness
     SquirrelObject *pvm = (SquirrelObject*)&_vm;
-    assert( pvm->GetObjectHandle()._type==OT_THREAD );
+    Assert( pvm->GetObjectHandle()._type==OT_THREAD );
     return pvm->GetObjectHandle()._unVal.pThread; 
 }
 
@@ -102,7 +102,7 @@ SquirrelVMSys::operator HSQUIRRELVM () const {
 // VM is done. 
 HSQUIRRELVM g_VM_pushed;
 void SquirrelVMSys::PushRefVM( HSQUIRRELVM v ){
-    assert( !g_VM_pushed );
+    Assert( !g_VM_pushed );
     g_VM_pushed = SquirrelVM::_VM;
     SquirrelVM::_VM = v;
 }

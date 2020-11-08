@@ -93,7 +93,7 @@ bool SQTable::Get(const SQObjectPtr &key,SQObjectPtr &val)
 }
 bool SQTable::NewSlot(const SQObjectPtr &key,const SQObjectPtr &val)
 {
-	assert(type(key) != OT_NULL);
+	Assert(type(key) != OT_NULL);
 	SQHash h = HashObj(key) & (_numofnodes - 1);
 	_HashNode *n = _Get(key, h);
 	if (n) {
@@ -115,7 +115,7 @@ bool SQTable::NewSlot(const SQObjectPtr &key,const SQObjectPtr &val)
 		if (mp > n && (othern = &_nodes[mph]) != mp){
 			/* yes; move colliding node into free position */
 			while (othern->next != mp){
-				assert(othern->next != NULL);
+				Assert(othern->next != NULL);
 				othern = othern->next;  /* find previous */
 			}
 			othern->next = n;  /* redo the chain with `n' in place of `mp' */

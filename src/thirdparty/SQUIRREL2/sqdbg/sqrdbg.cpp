@@ -2,7 +2,9 @@
 	see copyright notice in sqrdbg.h
 */
 #include <squirrel.h>
-#define _HAS_EXCEPTIONS 0
+#if !defined( POSIX )
+#include <winsock.h>
+#endif
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
 SQInteger debug_hook(HSQUIRRELVM v);
@@ -10,11 +12,15 @@ SQInteger error_handler(HSQUIRRELVM v);
 
 #include "serialize_state.inl"
 
+#if defined(VSCRIPT_DLL_EXPORT)
+#include "memdbgon.h"
+#endif
+
 HSQREMOTEDBG sq_rdbg_init(HSQUIRRELVM v,unsigned short port,SQBool autoupdate)
 {
-	WSADATA wsadata;
 	sockaddr_in bindaddr;
 #ifdef _WIN32
+	WSADATA wsadata;
 	if (WSAStartup (MAKEWORD(1,1), &wsadata) != 0){
 		return NULL;
 	}	
@@ -67,7 +73,11 @@ SQRESULT sq_rdbg_waitforconnections(HSQREMOTEDBG rdbg)
 
 SQRESULT sq_rdbg_update(HSQREMOTEDBG rdbg)
 {
+#ifdef _WIN32
 	TIMEVAL time;
+#else
+	struct timeval time;
+#endif
 	time.tv_sec=0;
 	time.tv_usec=0;
 	fd_set read_flags;
@@ -105,7 +115,7 @@ SQRESULT sq_rdbg_update(HSQREMOTEDBG rdbg)
 	return SQ_OK;
 }
 
-int debug_hook(HSQUIRRELVM v)
+SQInteger debug_hook(HSQUIRRELVM v)
 {
 	SQUserPointer up;
 	int event_type,line;
@@ -124,7 +134,7 @@ int debug_hook(HSQUIRRELVM v)
 	return 0;
 }
 
-int error_handler(HSQUIRRELVM v)
+SQInteger error_handler(HSQUIRRELVM v)
 {
 	SQUserPointer up;
 	const SQChar *sErr=NULL;

@@ -196,7 +196,7 @@ SQSharedState::~SQSharedState()
 			t->Release();
 		t=nx;
 	}
-	assert(_gc_chain==NULL); //just to proove a theory
+	Assert(_gc_chain==NULL); //just to proove a theory
 	while(_gc_chain){
 		_gc_chain->_uiRef++;
 		_gc_chain->Release();
@@ -243,6 +243,10 @@ void SQSharedState::MarkObject(SQObjectPtr &o,SQCollectable **chain)
 
 SQInteger SQSharedState::CollectGarbage(SQVM *vm)
 {
+	Assert( _gc_disableDepth >=0 );
+	if ( _gc_disableDepth > 0 )
+		return 0;
+
 	SQInteger n=0;
 	SQCollectable *tchain=NULL;
 	SQVM *vms = _thread(_root_vm);
@@ -283,7 +287,7 @@ SQInteger SQSharedState::CollectGarbage(SQVM *vm)
 	}
 	_gc_chain = tchain;
 	SQInteger z = _table(_thread(_root_vm)->_roottable)->CountUsed();
-	assert(z == x);
+	Assert(z == x);
 	return n;
 }
 #endif
@@ -389,7 +393,7 @@ SQBool RefTable::Release(SQObject &obj)
 		}
 	}
 	else {
-		assert(0);
+		Assert(0);
 	}
 	return SQFalse;
 }
@@ -405,7 +409,7 @@ void RefTable::Resize(SQUnsignedInteger size)
 	for(SQUnsignedInteger n = 0; n < oldnumofslots; n++) {
 		if(type(t->obj) != OT_NULL) {
 			//add back;
-			assert(t->refs != 0);
+			Assert(t->refs != 0);
 			RefNode *nn = Add(::HashObj(t->obj)&(_numofslots-1),t->obj);
 			nn->refs = t->refs; 
 			t->obj = _null_;
@@ -413,7 +417,7 @@ void RefTable::Resize(SQUnsignedInteger size)
 		}
 		t++;
 	}
-	assert(nfound == oldnumofslots);
+	Assert(nfound == oldnumofslots);
 	SQ_FREE(oldbucks,(oldnumofslots * sizeof(RefNode *)) + (oldnumofslots * sizeof(RefNode)));
 }
 
@@ -425,7 +429,7 @@ RefTable::RefNode *RefTable::Add(SQHash mainpos,SQObject &obj)
 	_buckets[mainpos] = newnode;
 	_freelist = _freelist->next;
 	newnode->next = t;
-	assert(newnode->refs == 0);
+	Assert(newnode->refs == 0);
 	_slotused++;
 	return newnode;
 }
@@ -443,7 +447,7 @@ RefTable::RefNode *RefTable::Get(SQObject &obj,SQHash &mainpos,RefNode **prev,bo
 	}
 	if(ref == NULL && add) {
 		if(_numofslots == _slotused) {
-			assert(_freelist == 0);
+			Assert(_freelist == 0);
 			Resize(_numofslots*2);
 			mainpos = ::HashObj(obj)&(_numofslots-1);
 		}
@@ -568,5 +572,5 @@ void StringTable::Remove(SQString *bs)
 		prev = s;
 		s = s->_next;
 	}
-	assert(0);//if this fail something is wrong
+	Assert(0);//if this fail something is wrong
 }

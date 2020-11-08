@@ -88,7 +88,7 @@ void sqstd_printcallstack(HSQUIRRELVM v)
 					pf(v,_SC("[%s] %s\n"),name,b?_SC("true"):_SC("false"));
 							 }
 					break;
-				default: assert(0); break;
+				default: Assert(0); break;
 				}
 				sq_pop(v,1);
 			}

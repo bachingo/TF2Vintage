@@ -361,7 +361,7 @@ void LexHexadecimal(const SQChar *s,SQUnsignedInteger *res)
 	{
 		if(scisdigit(*s)) *res = (*res)*16+((*s++)-'0');
 		else if(scisxdigit(*s)) *res = (*res)*16+(toupper(*s++)-'A'+10);
-		else { assert(0); }
+		else { Assert(0); }
 	}
 }
 
@@ -382,7 +382,7 @@ void LexOctal(const SQChar *s,SQUnsignedInteger *res)
 	while(*s != 0)
 	{
 		if(scisodigit(*s)) *res = (*res)*8+((*s++)-'0');
-		else { assert(0); }
+		else { Assert(0); }
 	}
 }
 

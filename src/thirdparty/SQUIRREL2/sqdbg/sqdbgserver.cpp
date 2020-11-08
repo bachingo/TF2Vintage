@@ -5,9 +5,9 @@
 #include <sqstdblob.h>
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
-
+#if defined(VSCRIPT_DLL_EXPORT)
 #include "memdbgon.h"
-
+#endif
 
 #ifndef _UNICODE
 #define scstrcpy strcpy
@@ -613,7 +613,7 @@ void SQDbgServer::BeginElement(const SQChar *name)
 void SQDbgServer::Attribute(const SQChar *name,const SQChar *value)
 {
 	XMLElementState *self = &xmlstate[_xmlcurrentement];
-	assert(!self->haschildren); //cannot have attributes if already has children
+	Assert(!self->haschildren); //cannot have attributes if already has children
 	const SQChar *escval = escape_xml(value);
 	_scratchstring.resize(5+scstrlen(name)+scstrlen(escval));
 	scsprintf(&_scratchstring[0],_SC(" %s=\"%s\""),name,escval);
@@ -623,7 +623,7 @@ void SQDbgServer::Attribute(const SQChar *name,const SQChar *value)
 void SQDbgServer::EndElement(const SQChar *name)
 {
 	XMLElementState *self = &xmlstate[_xmlcurrentement];
-	assert(scstrcmp(self->name,name) == 0);
+	Assert(scstrcmp(self->name,name) == 0);
 	if(self->haschildren) {
 		_scratchstring.resize(4+scstrlen(name));
 		scsprintf(&_scratchstring[0],_SC("</%s>"),name);

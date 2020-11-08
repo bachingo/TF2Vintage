@@ -675,13 +675,13 @@ void sq_settop(HSQUIRRELVM v, SQInteger newtop)
 
 void sq_pop(HSQUIRRELVM v, SQInteger nelemstopop)
 {
-	assert(v->_top >= nelemstopop);
+	Assert(v->_top >= nelemstopop);
 	v->Pop(nelemstopop);
 }
 
 void sq_poptop(HSQUIRRELVM v)
 {
-	assert(v->_top >= 1);
+	Assert(v->_top >= 1);
     v->Pop();
 }
 

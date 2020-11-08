@@ -13,6 +13,9 @@
 #include "squserdata.h"
 #include "sqarray.h"
 #include "sqclass.h"
+#if defined(VSCRIPT_DLL_EXPORT)
+#include "memdbgon.h"
+#endif
 
 #define TOP() (_stack._vals[_top-1])
 
@@ -140,7 +143,7 @@ bool SQVM::ArithMetaMethod(SQInteger op,const SQObjectPtr &o1,const SQObjectPtr 
 		case _SC('/'): mm=MT_DIV; break;
 		case _SC('*'): mm=MT_MUL; break;
 		case _SC('%'): mm=MT_MODULO; break;
-		default: mm = MT_ADD; assert(0); break; //shutup compiler
+		default: mm = MT_ADD; Assert(0); break; //shutup compiler
 	}
 	if(is_delegable(o1) && _delegable(o1)->_delegate) {
 		Push(o1);Push(o2);
@@ -221,7 +224,7 @@ bool SQVM::ObjCmp(const SQObjectPtr &o1,const SQObjectPtr &o2,SQInteger &result)
 		else { Raise_CompareError(o1,o2); return false; }
 		
 	}
-	assert(0);
+	Assert(0);
 	_RET_SUCCEED(0); //cannot happen
 }
 
@@ -236,7 +239,7 @@ bool SQVM::CMP_OP(CmpOP op, const SQObjectPtr &o1,const SQObjectPtr &o2,SQObject
 			case CMP_LE: res = (r <= 0)?_true_:_false_; return true;
 			
 		}
-		assert(0);
+		Assert(0);
 	}
 	return false;
 }
@@ -415,7 +418,7 @@ bool SQVM::Return(SQInteger _arg0, SQInteger _arg1, SQObjectPtr &retval)
 	}
 
 	CLEARSTACK(last_top);
-	assert(oldstackbase >= _stackbase); 
+	Assert(oldstackbase >= _stackbase); 
 	return broot?true:false;
 }
 
@@ -676,7 +679,7 @@ bool SQVM::Execute(SQObjectPtr &closure, SQInteger target, SQInteger nargs, SQIn
 	AutoDec ad(&_nnativecalls);
 	SQInteger traps = 0;
 	//temp_reg vars for OP_CALL
-	SQInteger ct_target;
+	SQInteger ct_target = 0;
 	SQInteger ct_stackbase;
 	bool ct_tailcall; 
 
@@ -699,7 +702,7 @@ bool SQVM::Execute(SQObjectPtr &closure, SQInteger target, SQInteger nargs, SQIn
 				return true;
 			}
 			ci->_root = SQTrue;
-					  }
+		}
 			break;
 		case ET_RESUME_GENERATOR: _generator(closure)->Resume(this, target); ci->_root = SQTrue; traps += ci->_etraps; break;
 		case ET_RESUME_VM:
@@ -718,8 +721,6 @@ exception_restore:
 		for(;;)
 		{
 			const SQInstruction &_i_ = *ci->_ip++;
-			//dumpstack(_stackbase);
-			//scprintf("\n[%d] %s %d %d %d %d\n",ci->_ip-ci->_iv->_vals,g_InstrDesc[_i_.op].name,arg0,arg1,arg2,arg3);
 			switch(_i_.op)
 			{
 			case _OP_LINE:
@@ -872,7 +873,7 @@ common_call:
 					ci->_generator->Kill();
 				}
 				if(Return(arg0, arg1, temp_reg)){
-					assert(traps==0);
+					Assert(traps==0);
 					outres = temp_reg;
 					return true;
 				}
@@ -961,7 +962,7 @@ query_suspend:
 				}
 				else { Raise_Error(_SC("trying to yield a '%s',only genenerator can be yielded"), GetTypeName(ci->_generator)); SQ_THROW();}
 				if(Return(arg0, arg1, temp_reg)){
-					assert(traps == 0);
+					Assert(traps == 0);
 					outres = temp_reg;
 					return true;
 				}
@@ -978,7 +979,7 @@ query_suspend:
 				ci->_ip += tojump; }
 				continue;
 			case _OP_POSTFOREACH:
-				assert(type(STK(arg0)) == OT_GENERATOR);
+				Assert(type(STK(arg0)) == OT_GENERATOR);
 				if(_generator(STK(arg0))->_state == SQGenerator::eDead) 
 					ci->_ip += (sarg1 - 1);
 				continue;
@@ -1076,7 +1077,8 @@ exception_trap:
 		_lasterror = currerror;
 		return false;
 	}
-	assert(0);
+	Assert(0);
+	return false;
 }
 
 bool SQVM::CreateClassInstance(SQClass *theclass, SQObjectPtr &inst, SQObjectPtr &constructor)
@@ -1450,7 +1452,7 @@ SQInteger prevstackbase = _stackbase;
 	}
 #ifdef _DEBUG
 	if(!_suspended) {
-		assert(_stackbase == prevstackbase);
+		Assert(_stackbase == prevstackbase);
 	}
 #endif
 	return true;
@@ -1526,7 +1528,7 @@ void SQVM::dumpstack(SQInteger stackbase,bool dumpall)
 		case OT_INSTANCE:		scprintf(_SC("INSTANCE %p"),_instance(obj));break;
 		case OT_WEAKREF:		scprintf(_SC("WEAKERF %p"),_weakref(obj));break;
 		default:
-			assert(0);
+			Assert(0);
 			break;
 		};
 		scprintf(_SC("\n"));

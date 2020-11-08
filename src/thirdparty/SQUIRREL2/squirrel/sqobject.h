@@ -58,7 +58,7 @@ struct SQRefCounted
 	SQRefCounted() { _uiRef = 0; _weakref = NULL; }
 	virtual ~SQRefCounted();
 	SQWeakRef *GetWeakRef(SQObjectType type);
-	SQUnsignedInteger _uiRef;
+	SQInteger _uiRef;
 	struct SQWeakRef *_weakref;
 	virtual void Release()=0;
 };
@@ -153,7 +153,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_TABLE;
 		_unVal.pTable=pTable;
-		assert(_unVal.pTable);
+		Assert(_unVal.pTable);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQClass *pClass)
@@ -161,7 +161,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_CLASS;
 		_unVal.pClass=pClass;
-		assert(_unVal.pClass);
+		Assert(_unVal.pClass);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQInstance *pInstance)
@@ -169,7 +169,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_INSTANCE;
 		_unVal.pInstance=pInstance;
-		assert(_unVal.pInstance);
+		Assert(_unVal.pInstance);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQArray *pArray)
@@ -177,7 +177,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_ARRAY;
 		_unVal.pArray=pArray;
-		assert(_unVal.pArray);
+		Assert(_unVal.pArray);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQClosure *pClosure)
@@ -185,7 +185,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_CLOSURE;
 		_unVal.pClosure=pClosure;
-		assert(_unVal.pClosure);
+		Assert(_unVal.pClosure);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQGenerator *pGenerator)
@@ -193,7 +193,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_GENERATOR;
 		_unVal.pGenerator=pGenerator;
-		assert(_unVal.pGenerator);
+		Assert(_unVal.pGenerator);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQNativeClosure *pNativeClosure)
@@ -201,7 +201,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_NATIVECLOSURE;
 		_unVal.pNativeClosure=pNativeClosure;
-		assert(_unVal.pNativeClosure);
+		Assert(_unVal.pNativeClosure);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQString *pString)
@@ -209,7 +209,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_STRING;
 		_unVal.pString=pString;
-		assert(_unVal.pString);
+		Assert(_unVal.pString);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQUserData *pUserData)
@@ -217,7 +217,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_USERDATA;
 		_unVal.pUserData=pUserData;
-		assert(_unVal.pUserData);
+		Assert(_unVal.pUserData);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQVM *pThread)
@@ -225,7 +225,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_THREAD;
 		_unVal.pThread=pThread;
-		assert(_unVal.pThread);
+		Assert(_unVal.pThread);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQWeakRef *pWeakRef)
@@ -233,7 +233,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_WEAKREF;
 		_unVal.pWeakRef=pWeakRef;
-		assert(_unVal.pWeakRef);
+		Assert(_unVal.pWeakRef);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQFunctionProto *pFunctionProto)
@@ -241,7 +241,7 @@ struct SQObjectPtr : public SQObject
 		SQ_OBJECT_RAWINIT()
 		_type=OT_FUNCPROTO;
 		_unVal.pFunctionProto=pFunctionProto;
-		assert(_unVal.pFunctionProto);
+		Assert(_unVal.pFunctionProto);
 		__AddRef(_type,_unVal);
 	}
 	SQObjectPtr(SQInteger nInteger)
@@ -325,7 +325,7 @@ struct SQObjectPtr : public SQObject
 };
 /////////////////////////////////////////////////////////////////////////////////////
 #ifndef NO_GARBAGE_COLLECTOR
-#define MARK_FLAG 0x80000000
+#define MARK_FLAG 0x40000000
 struct SQCollectable : public SQRefCounted {
 	SQCollectable *_next;
 	SQCollectable *_prev;

@@ -78,6 +78,7 @@ public:
 	SQObjectPtr _constructoridx;
 #ifndef NO_GARBAGE_COLLECTOR
 	SQCollectable *_gc_chain;
+	int _gc_disableDepth;
 #endif
 	SQObjectPtr _root_vm;
 	SQObjectPtr _table_default_delegate;

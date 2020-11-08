@@ -25,8 +25,9 @@ const SQChar *IdType2Name(SQObjectType type)
 	case _RT_ARRAY:return _SC("array");
 	case _RT_GENERATOR:return _SC("generator");
 	case _RT_CLOSURE:
-	case _RT_NATIVECLOSURE:
 		return _SC("function");
+	case _RT_NATIVECLOSURE:
+		return _SC("native function");
 	case _RT_USERDATA:
 	case _RT_USERPOINTER:
 		return _SC("userdata");
@@ -77,7 +78,7 @@ SQUnsignedInteger TranslateIndex(const SQObjectPtr &idx)
 			return 0;
 		case OT_INTEGER:
 			return (SQUnsignedInteger)_integer(idx);
-		default: assert(0); break;
+		default: Assert(0); break;
 	}
 	return 0;
 }
