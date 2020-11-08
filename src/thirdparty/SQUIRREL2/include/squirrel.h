@@ -50,15 +50,10 @@ extern "C" {
 #endif
 
 #ifdef _SQ64
-#ifdef _MSC_VER
-typedef __int64 SQInteger;
-typedef unsigned __int64 SQUnsignedInteger;
-typedef unsigned __int64 SQHash; /*should be the same size of a pointer*/
-#else
-typedef long SQInteger;
-typedef unsigned long SQUnsignedInteger;
-typedef unsigned long SQHash; /*should be the same size of a pointer*/
-#endif
+#define SQUSEDOUBLE
+typedef int64 SQInteger;
+typedef uint64 SQUnsignedInteger;
+typedef uint64 SQHash; /*should be the same size of a pointer*/
 typedef int SQInt32; 
 #else 
 typedef int SQInteger;
@@ -75,11 +70,7 @@ typedef float SQFloat;
 #endif
 
 #if defined(SQUSEDOUBLE) && !defined(_SQ64)
-#ifdef _MSC_VER
-typedef __int64 SQRawObjectVal; //must be 64bits
-#else
-typedef long SQRawObjectVal; //must be 64bits
-#endif
+typedef int64 SQRawObjectVal; //must be 64bits
 #define SQ_OBJECT_RAWINIT() { _unVal.raw = 0; }
 #else
 typedef SQUnsignedInteger SQRawObjectVal; //is 32 bits on 32 bits builds and 64 bits otherwise
