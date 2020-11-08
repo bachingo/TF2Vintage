@@ -259,6 +259,14 @@ void SQVM::ToString(const SQObjectPtr &o,SQObjectPtr &res)
 	case OT_BOOL:
 		scsprintf(_sp(rsl(6)),_integer(o)?_SC("true"):_SC("false"));
 		break;
+	case OT_WEAKREF:
+		if ( ISREFCOUNTED(o._unVal.pWeakRef->_obj._type) )
+			o._unVal.pWeakRef->_obj._unVal.pRefCounted->_uiRef++;
+		ToString( o._unVal.pWeakRef->_obj, res );
+		if ( ISREFCOUNTED(o._unVal.pWeakRef->_obj._type) )
+			o._unVal.pWeakRef->_obj._unVal.pRefCounted->_uiRef--;
+		scsprintf(_sp(rsl(sizeof(void*)+24+strlen(res._unVal.pString->_val))),_SC("(weakref : 0x%p [%s] )"),(void*)_rawval(o), res._unVal.pString->_val);
+		break;
 	case OT_TABLE:
 	case OT_USERDATA:
 	case OT_INSTANCE:
