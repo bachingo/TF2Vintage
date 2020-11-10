@@ -218,9 +218,11 @@ bool CSquirrelVM::Init( void )
 
 	// register libraries
 	sq_pushroottable( GetVM() );
-		sqstd_register_stringlib( GetVM() );
-		sqstd_register_mathlib( GetVM() );
-		sqstd_seterrorhandlers( GetVM() );
+
+	sqstd_register_stringlib( GetVM() );
+	sqstd_register_mathlib( GetVM() );
+	sqstd_seterrorhandlers( GetVM() );
+
 	sq_pop( GetVM(), 1 );
 
 	if ( IsDebug() || developer.GetInt() )
@@ -228,14 +230,17 @@ bool CSquirrelVM::Init( void )
 
 	// register root functions
 	sq_pushroottable( GetVM() );
-		sq_pushstring( GetVM(), "developer", -1 );
-		sq_newclosure( GetVM(), &CSquirrelVM::GetDeveloper, 0 );
-		sq_setnativeclosurename( GetVM(), -1, "developer" );
-		sq_createslot( GetVM(), -3 );
-		sq_pushstring( GetVM(), "GetFunctionSignature", -1 );
-		sq_newclosure( GetVM(), &CSquirrelVM::GetFunctionSignature, 0 );
-		sq_setnativeclosurename( GetVM(), -1, "GetFunctionSignature" );
-		sq_createslot( GetVM(), -3 );
+
+	sq_pushstring( GetVM(), "developer", -1 );
+	sq_newclosure( GetVM(), &CSquirrelVM::GetDeveloper, 0 );
+	sq_setnativeclosurename( GetVM(), -1, "developer" );
+	sq_createslot( GetVM(), -3 );
+
+	sq_pushstring( GetVM(), "GetFunctionSignature", -1 );
+	sq_newclosure( GetVM(), &CSquirrelVM::GetFunctionSignature, 0 );
+	sq_setnativeclosurename( GetVM(), -1, "GetFunctionSignature" );
+	sq_createslot( GetVM(), -3 );
+
 	sq_pop( GetVM(), 1 );
 
 	RegisterVector( GetVM() );
@@ -301,7 +306,7 @@ bool CSquirrelVM::Frame( float simTime )
 ScriptStatus_t CSquirrelVM::Run( const char *pszScript, bool bWait )
 {
 	HSQOBJECT pObject;
-	if ( SQ_FAILED( sq_compilebuffer( GetVM(), pszScript, V_strlen( pszScript ), "unnamed", SQTrue ) ) )
+	if ( SQ_FAILED( sq_compilebuffer( GetVM(), pszScript, V_strlen( pszScript ), "unnamed", SQ_CALL_RAISE_ERROR ) ) )
 		return SCRIPT_ERROR;
 
 	sq_getstackobj( GetVM(), -1, &pObject );
@@ -333,7 +338,7 @@ HSCRIPT CSquirrelVM::CompileScript( const char *pszScript, const char *pszId )
 		return NULL;
 
 	HSQOBJECT *pObject = NULL;
-	if ( SQ_SUCCEEDED( sq_compilebuffer( GetVM(), pszScript, V_strlen( pszScript ), pszId ? pszId : "unnamed", SQTrue ) ) )
+	if ( SQ_SUCCEEDED( sq_compilebuffer( GetVM(), pszScript, V_strlen( pszScript ), pszId ? pszId : "unnamed", SQ_CALL_RAISE_ERROR ) ) )
 	{
 		pObject = new SQObject;
 
@@ -373,7 +378,7 @@ HSCRIPT CSquirrelVM::CreateScope( const char *pszScope, HSCRIPT hParent )
 	sq_pushobject( GetVM(), pParent );
 
 	// this pops off the parameters automatically
-	if ( SQ_SUCCEEDED( sq_call( GetVM(), 3, SQTrue, SQTrue ) ) )
+	if ( SQ_SUCCEEDED( sq_call( GetVM(), 3, SQTrue, SQ_CALL_RAISE_ERROR ) ) )
 	{
 		sq_getstackobj( GetVM(), -1, &pScope );
 
@@ -409,7 +414,7 @@ void CSquirrelVM::ReleaseScope( HSCRIPT hScript )
 	sq_pushobject( GetVM(), pObject );
 
 	// this pops off the paramaeters automatically
-	sq_call( GetVM(), 2, SQFalse, SQTrue );
+	sq_call( GetVM(), 2, SQFalse, SQ_CALL_RAISE_ERROR );
 
 	// pop off the closure
 	sq_pop( GetVM(), 1 );
@@ -503,7 +508,7 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 	}
 
 	m_flTimeStartedCall = Plat_FloatTime();
-	if ( SQ_FAILED( sq_call( GetVM(), nArgs + 1, pReturn != NULL, SQTrue ) ) )
+	if ( SQ_FAILED( sq_call( GetVM(), nArgs + 1, pReturn != NULL, SQ_CALL_RAISE_ERROR ) ) )
 	{
 		// pop off the closure
 		sq_pop( GetVM(), 1 );
@@ -1367,7 +1372,7 @@ void CSquirrelVM::RegisterDocumentation( HSQOBJECT pClosure, ScriptFunctionBindi
 	sq_pushstring( GetVM(), szSignature, -1 );
 	sq_pushstring( GetVM(), pFunction->m_desc.m_pszDescription, -1 );
 	// this pops off the number of parameters automatically
-	sq_call( GetVM(), 5, SQFalse, SQTrue );
+	sq_call( GetVM(), 5, SQFalse, SQ_CALL_RAISE_ERROR );
 
 	// pop off the closure
 	sq_pop( GetVM(), 1 );
@@ -1604,9 +1609,12 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 			case FIELD_VECTOR:
 			{
 				sq_pushobject( pVM, pVM->GetVScript()->m_VectorClass );
-					sq_createinstance( pVM, -1 );
-					sq_setinstanceup( pVM, -1, returnValue );
-					sq_setreleasehook( pVM, -1, &VectorRelease );
+
+				sq_createinstance( pVM, -1 );
+				sq_setinstanceup( pVM, -1, (SQUserPointer)returnValue.m_pVector );
+				sq_setreleasehook( pVM, -1, &VectorRelease );
+
+				// Remove the class object from stack so we are aligned
 				sq_remove( pVM, -2 );
 
 				break;
