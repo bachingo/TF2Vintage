@@ -46,27 +46,6 @@ static void MapPtr( void *pOld, void *pNew )
 	s_Pointers.Insert( pOld, pNew );
 }
 
-static bool FindKeyForObject( const SQObjectPtr &table, void *p, SQObjectPtr &key )
-{
-	for( int i = 0; i < _table( table )->_numofnodes; i++ )
-	{
-		if ( _userpointer( _table( table )->_nodes[i].val ) == p )
-		{
-			key = _table( table )->_nodes[i].key;
-			return true;
-		}
-
-		if ( sq_istable( _table( table )->_nodes[i].val ) )
-		{
-			if ( FindKeyForObject( _table( table )->_nodes[i].val, p, key ) )
-			{
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 static HSQOBJECT LookupObject( char const *szName, HSQUIRRELVM pVM )
 {
 	SQObjectPtr pObject = _null_;
@@ -374,6 +353,27 @@ void SquirrelStateWriter::WriteWeakRef( SQWeakRef *pWeakRef )
 {
 	m_pBuffer->PutInt( OT_WEAKREF );
 	WriteObject( pWeakRef->_obj );
+}
+
+bool SquirrelStateWriter::FindKeyForObject( const SQObjectPtr &table, void *p, SQObjectPtr &key )
+{
+	for( int i = 0; i < _table( table )->_numofnodes; i++ )
+	{
+		if ( _userpointer( _table( table )->_nodes[i].val ) == p )
+		{
+			key = _table( table )->_nodes[i].key;
+			return true;
+		}
+
+		if ( sq_istable( _table( table )->_nodes[i].val ) )
+		{
+			if ( FindKeyForObject( _table( table )->_nodes[i].val, p, key ) )
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 void SquirrelStateWriter::WriteVM( HSQUIRRELVM pVM )

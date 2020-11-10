@@ -32,6 +32,7 @@ private:
 	void WriteUserPointer( SQUserPointer pUserPointer );
 	void WriteFuncProto( SQFunctionProto *pFuncProto );
 	void WriteWeakRef( SQWeakRef *pWeakRef );
+	bool FindKeyForObject( const SQObjectPtr &table, void *p, SQObjectPtr &key );
 
 	HSQUIRRELVM m_pVM;
 	CUtlBuffer *m_pBuffer;

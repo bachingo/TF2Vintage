@@ -190,21 +190,21 @@ private:
 	SQObjectPtr m_CreateScopeClosure;
 	SQObjectPtr m_ReleaseScopeClosure;
 
-	SQObjectPtr m_Error;
+	SQObjectPtr m_ErrorString;
 
-	ConVarRef m_hDeveloper;
+	ConVarRef developer;
 
 	long long m_nUniqueKeySerial;
 	float m_flTimeStartedCall;
 };
 
 CSquirrelVM::CSquirrelVM( void )
-	: m_pVirtualMachine( NULL ), m_hDeveloper( "developer" ), m_nUniqueKeySerial( 0 ), m_pDbgServer( NULL )
+	: m_pVirtualMachine( NULL ), developer( "developer" ), m_nUniqueKeySerial( 0 ), m_pDbgServer( NULL )
 {
 	m_VectorClass = _null_;
 	m_CreateScopeClosure = _null_;
 	m_ReleaseScopeClosure = _null_;
-	m_Error = _null_;
+	m_ErrorString = _null_;
 }
 
 bool CSquirrelVM::Init( void )
@@ -223,7 +223,7 @@ bool CSquirrelVM::Init( void )
 		sqstd_seterrorhandlers( GetVM() );
 	sq_pop( GetVM(), 1 );
 
-	if ( m_hDeveloper.GetInt() )
+	if ( IsDebug() || developer.GetInt() )
 		sq_enabledebuginfo( GetVM(), SQTrue );
 
 	// register root functions
@@ -242,10 +242,16 @@ bool CSquirrelVM::Init( void )
 
 	// store a reference to the Vector class for instancing
 	sq_pushroottable( GetVM() );
-		sq_pushstring( GetVM(), "Vector", -1 );
-		sq_get( GetVM(), -2 );
+
+	sq_pushstring( GetVM(), "Vector", -1 );
+	if( SQ_SUCCEEDED( sq_get( GetVM(), -2 ) ) )
+	{
 		sq_getstackobj( GetVM(), -1, &m_VectorClass );
 		sq_addref( GetVM(), &m_VectorClass );
+
+		sq_pop( GetVM(), 1 );
+	}
+
 	sq_pop( GetVM(), 1 );
 
 	m_ScriptClasses.Init( 256 );
@@ -275,7 +281,6 @@ void CSquirrelVM::Shutdown( void )
 		m_pVirtualMachine = NULL;
 	}
 
-	// BUGBUG! this could leave dangling SQClass pointers
 	m_ScriptClasses.Purge();
 }
 
@@ -353,11 +358,11 @@ void CSquirrelVM::ReleaseScript( HSCRIPT hScript )
 
 HSCRIPT CSquirrelVM::CreateScope( const char *pszScope, HSCRIPT hParent )
 {
-	SQObjectPtr *pParent = (SQObjectPtr *)hParent;
 	if ( hParent == NULL )
-		pParent = &GetVM()->_roottable;
+		hParent = (HSCRIPT)&GetVM()->_roottable;
 
-	SQObjectPtr pScope;
+	HSQOBJECT &pParent = *(HSQOBJECT *)hParent;
+	HSQOBJECT pScope = _null_;
 
 	// call the utility create function
 	sq_pushobject( GetVM(), m_CreateScopeClosure );
@@ -365,7 +370,7 @@ HSCRIPT CSquirrelVM::CreateScope( const char *pszScope, HSCRIPT hParent )
 	// push parameters
 	sq_pushroottable( GetVM() );
 	sq_pushstring( GetVM(), pszScope, -1 );
-	sq_pushobject( GetVM(), *pParent );
+	sq_pushobject( GetVM(), pParent );
 
 	// this pops off the parameters automatically
 	if ( SQ_SUCCEEDED( sq_call( GetVM(), 3, SQTrue, SQTrue ) ) )
@@ -394,14 +399,14 @@ HSCRIPT CSquirrelVM::CreateScope( const char *pszScope, HSCRIPT hParent )
 
 void CSquirrelVM::ReleaseScope( HSCRIPT hScript )
 {
-	HSQOBJECT *pObject = (HSQOBJECT *)hScript;
+	HSQOBJECT &pObject = *(HSQOBJECT *)hScript;
 
 	// call the utility release function
 	sq_pushobject( GetVM(), m_ReleaseScopeClosure );
 
 	// push parameters
 	sq_pushroottable( GetVM() );
-	sq_pushobject( GetVM(), *pObject );
+	sq_pushobject( GetVM(), pObject );
 
 	// this pops off the paramaeters automatically
 	sq_call( GetVM(), 2, SQFalse, SQTrue );
@@ -418,7 +423,7 @@ void CSquirrelVM::ReleaseScope( HSCRIPT hScript )
 
 HSCRIPT CSquirrelVM::LookupFunction( const char *pszFunction, HSCRIPT hScope )
 {
-	SQObjectPtr pFunc = LookupObject( pszFunction, hScope );
+	HSQOBJECT pFunc = LookupObject( pszFunction, hScope );
 	// did we find it?
 	if ( sq_isnull( pFunc ) )
 		return NULL;
@@ -532,14 +537,14 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 		Assert( GetVM()->_top == initialTop );
 	}
 
-	if ( !sq_isnull( m_Error ) )
+	if ( !sq_isnull( m_ErrorString ) )
 	{
-		if ( sq_isstring( m_Error ) )
-			sq_throwerror( GetVM(), _stringval( m_Error ) );
+		if ( sq_isstring( m_ErrorString ) )
+			sq_throwerror( GetVM(), _stringval( m_ErrorString ) );
 		else
 			sq_throwerror( GetVM(), "Internal error" );
 
-		m_Error = _null_;
+		m_ErrorString = _null_;
 
 		return SCRIPT_ERROR;
 	}
@@ -658,8 +663,7 @@ void CSquirrelVM::SetInstanceUniqeId( HSCRIPT hInstance, const char *pszId )
 		return;
 
 	ScriptInstance_t *pInstance = (ScriptInstance_t *)_instance( pObject )->_userpointer;
-	SQObjectPtr pID = SQString::Create( _ss( GetVM() ), pszId, V_strlen( pszId ) );
-	pInstance->m_instanceUniqueId = pID;
+	pInstance->m_instanceUniqueId = SQString::Create( _ss( GetVM() ), pszId, V_strlen( pszId ) );
 }
 
 void CSquirrelVM::RemoveInstance( HSCRIPT hScript )
@@ -781,8 +785,7 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVari
 			if ( sq_isnull( pInstance->m_instanceUniqueId ) )
 			{
 				// if we haven't been given a unique ID, we'll be assigned the key name
-				SQObjectPtr pStackObj = stack_get( GetVM(), -1 );
-				pInstance->m_instanceUniqueId = pStackObj;
+				pInstance->m_instanceUniqueId = stack_get( GetVM(), -1 );
 			}
 		}
 	}
@@ -810,7 +813,7 @@ void CSquirrelVM::CreateTable( ScriptVariant_t &Table )
 
 int CSquirrelVM::GetKeyValue( HSCRIPT hScope, int nIterator, ScriptVariant_t *pKey, ScriptVariant_t *pValue )
 {
-	SQObjectPtr pKeyObj, pValueObj;
+	HSQOBJECT pKeyObj, pValueObj;
 	if ( hScope )
 	{
 		if ( hScope == INVALID_HSCRIPT )
@@ -855,7 +858,7 @@ int CSquirrelVM::GetKeyValue( HSCRIPT hScope, int nIterator, ScriptVariant_t *pK
 
 bool CSquirrelVM::GetValue( HSCRIPT hScope, const char *pszKey, ScriptVariant_t *pValue )
 {
-	SQObjectPtr pObject = LookupObject( pszKey, hScope );
+	HSQOBJECT pObject = LookupObject( pszKey, hScope );
 	ConvertToVariant( pObject, pValue );
 
 	return !sq_isnull( pObject );
@@ -956,7 +959,7 @@ void CSquirrelVM::ReadState( CUtlBuffer *pBuffer )
 
 bool CSquirrelVM::ConnectDebugger()
 {
-	if( m_hDeveloper.GetInt() == 0 )
+	if( developer.GetInt() == 0 )
 		return false;
 
 	if ( m_pDbgServer == NULL )
@@ -982,12 +985,12 @@ void CSquirrelVM::DisconnectDebugger()
 
 bool CSquirrelVM::RaiseException( const char *pszExceptionText )
 {
-	m_Error = SQString::Create( _ss( GetVM() ), pszExceptionText );
+	m_ErrorString = SQString::Create( _ss( GetVM() ), pszExceptionText );
 
 	return true;
 }
 
-void CSquirrelVM::ConvertToVariant( SQObject const &pValue, ScriptVariant_t *pVariant )
+void CSquirrelVM::ConvertToVariant( HSQOBJECT const &pValue, ScriptVariant_t *pVariant )
 {
 	switch ( sq_type( pValue ) )
 	{
@@ -1024,13 +1027,12 @@ void CSquirrelVM::ConvertToVariant( SQObject const &pValue, ScriptVariant_t *pVa
 		}
 		case OT_INSTANCE:
 		{
-			SQObjectPtr pObject( _instance( pValue ) );
-			sq_pushobject( GetVM(), pObject );
+			sq_pushobject( GetVM(), pValue );
 
 			SQUserPointer pInstance = NULL;
 			SQRESULT nResult = sq_getinstanceup( GetVM(), -1, &pInstance, VECTOR_TYPE_TAG );
 
-			sq_pop( GetVM(), -1 );
+			sq_pop( GetVM(), 1 );
 
 			if ( nResult == SQ_OK )
 			{
@@ -1120,6 +1122,7 @@ void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiat
 				sq_setinstanceup( GetVM(), -1, (SQUserPointer)pVariant.m_pVector );
 			}
 
+			// Remove the clas object from stack so we are aligned
 			sq_remove( GetVM(), -2 );
 
 			break;
@@ -1172,10 +1175,13 @@ bool CSquirrelVM::CreateInstance( ScriptClassDesc_t *pClassDesc, ScriptInstance_
 	if ( index == m_ScriptClasses.InvalidHandle() )
 		return false;
 
-	SQObjectPtr pClass = m_ScriptClasses[ index ];
+	SQObjectPtr pClass( m_ScriptClasses[ index ] );
 	sq_pushobject( GetVM(), pClass );
 	if ( SQ_FAILED( sq_createinstance( GetVM(), -1 ) ) )
+	{
+		sq_pop( GetVM(), 1 );
 		return false;
+	}
 
 	sq_remove( GetVM(), -2 );
 
@@ -1258,7 +1264,7 @@ void CSquirrelVM::RegisterFunctionGuts( ScriptFunctionBinding_t *pFunction, Scri
 
 	sq_createslot( GetVM(), -3 );
 
-	if ( m_hDeveloper.GetInt() )
+	if ( developer.GetInt() )
 	{
 		if ( pFunction->m_desc.m_pszDescription && *pFunction->m_desc.m_pszDescription == *SCRIPT_HIDE )
 			return;
@@ -1352,7 +1358,7 @@ void CSquirrelVM::RegisterDocumentation( HSQOBJECT pClosure, ScriptFunctionBindi
 	}
 	V_strcat_safe( szSignature, ")" );
 
-	SQObjectPtr pRegisterDocumentation = LookupObject( "RegisterFunctionDocumentation", NULL, false );
+	HSQOBJECT pRegisterDocumentation = LookupObject( "RegisterFunctionDocumentation", NULL, false );
 	sq_pushobject( GetVM(), pRegisterDocumentation );
 	// push our parameters
 	sq_pushroottable( GetVM() );
@@ -1408,7 +1414,7 @@ SQInteger CSquirrelVM::ExternalReleaseHook( SQUserPointer data, SQInteger size )
 SQInteger CSquirrelVM::GetDeveloper( HSQUIRRELVM pVM )
 {
 	StackHandler hndl( pVM );
-	return hndl.Return( pVM->GetVScript()->m_hDeveloper.GetInt() );
+	return hndl.Return( pVM->GetVScript()->developer.GetInt() );
 }
 
 SQInteger CSquirrelVM::GetFunctionSignature( HSQUIRRELVM pVM )
@@ -1621,24 +1627,20 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 			}
 		}
 	}
-	else
-	{
-		sq_pushnull( pVM );
-	}
 
 	for ( int i=0; i < parameters.Count(); ++i )
 	{
 		parameters[i].Free();
 	}
 
-	if ( !sq_isnull( pVM->GetVScript()->m_Error ) )
+	if ( !sq_isnull( pVM->GetVScript()->m_ErrorString ) )
 	{
-		if ( sq_isstring( pVM->GetVScript()->m_Error ) )
-			sq_throwerror( pVM, _stringval( pVM->GetVScript()->m_Error ) );
+		if ( sq_isstring( pVM->GetVScript()->m_ErrorString ) )
+			sq_throwerror( pVM, _stringval( pVM->GetVScript()->m_ErrorString ) );
 		else
 			sq_throwerror( pVM, "Internal error" );
 
-		pVM->GetVScript()->m_Error = _null_;
+		pVM->GetVScript()->m_ErrorString = _null_;
 		return SQ_ERROR;
 	}
 
@@ -1656,7 +1658,7 @@ SQInteger CSquirrelVM::InstanceToString( HSQUIRRELVM pVM )
 		if ( pHelper )
 		{
 			char szInstance[64];
-			if ( pHelper->ToString( pInstance->m_pInstance, szInstance, sizeof szInstance ) )
+			if ( pHelper->ToString( pInstance->m_pInstance, szInstance, sizeof( szInstance ) ) )
 				return hndl.Return( szInstance );
 		}
 	}
@@ -1701,7 +1703,7 @@ int CSquirrelVM::QueryContinue( HSQUIRRELVM pVM )
 
 HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bRefCount )
 {
-	SQObjectPtr pObject = _null_;
+	HSQOBJECT pObject = _null_;
 	if ( hScope )
 	{
 		if ( hScope == INVALID_HSCRIPT )

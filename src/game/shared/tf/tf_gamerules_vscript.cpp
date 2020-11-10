@@ -97,23 +97,35 @@ BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptConvars, "Convars", SCRIPT_SINGLETON "Provid
 END_SCRIPTDESC();
 #endif
 
-static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szName, HSCRIPT hEntity )
+static float AttribHookValueFloat( float value, char const *szName, HSCRIPT hEntity )
 {
 	CBaseEntity *pEntity = ToEnt( hEntity );
 	if ( !pEntity )
 		return value;
 
 	IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
-
 	if ( pAttribInteface )
 	{
 		string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( szName );
 		float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( value, pEntity, strAttributeClass, NULL );
+		value = flResult;
+	}
 
-		if ( value.m_type == FIELD_INTEGER )
-			value = RoundFloatToInt( flResult );
-		else if ( value.m_type == FIELD_FLOAT )
-			value = flResult;
+	return value;
+}
+
+static int AttribHookValueInt( int value, char const *szName, HSCRIPT hEntity )
+{
+	CBaseEntity *pEntity = ToEnt( hEntity );
+	if ( !pEntity )
+		return value;
+
+	IHasAttributes *pAttribInteface = pEntity->GetHasAttributesInterfacePtr();
+	if ( pAttribInteface )
+	{
+		string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( szName );
+		float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( value, pEntity, strAttributeClass, NULL );
+		value = RoundFloatToInt( flResult );
 	}
 
 	return value;
@@ -125,14 +137,15 @@ static ScriptVariant_t AttribHookValue( ScriptVariant_t value, char const *szNam
 //-----------------------------------------------------------------------------
 void CTFGameRules::RegisterScriptFunctions( void )
 {
-	ScriptRegisterFunctionNamed( g_pScriptVM, AttribHookValue, "GetAttribValue", "Fetch an attribute that is assigned to the provided weapon" );
+	ScriptRegisterFunctionNamed( g_pScriptVM, AttribHookValueFloat, "GetAttribFloatValue", "Fetch an attribute that is assigned to the provided weapon" );
+	ScriptRegisterFunctionNamed( g_pScriptVM, AttribHookValueInt, "GetAttribIntValue", "Fetch an attribute that is assigned to the provided weapon" );
 
 #if defined( GAME_DLL )
 	g_pScriptVM->RegisterInstance( &g_ConvarsVScript, "Convars" );
 #endif
 
 	char root[ MAX_PATH ]{};
-	Q_strncpy( root, "scripts\\vscripts", sizeof root );
+	V_strcpy_safe( root, "scripts\\vscripts" );
 	Q_FixSlashes( root );
 
 	FileFindHandle_t fh;
@@ -145,7 +158,7 @@ void CTFGameRules::RegisterScriptFunctions( void )
 
 		HSCRIPT hScript = VScriptCompileScript( path, true );
 
-		char className[96];
+		char className[96]{};
 		V_FileBase( path, className, sizeof className );
 		if ( hTable.Init( className ) )
 		{

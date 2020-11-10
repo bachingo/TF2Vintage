@@ -55,6 +55,9 @@ void CScriptManager::DestroyVM( IScriptVM *pVM )
 			case SL_SQUIRREL:
 				DestroySquirrelVM( pVM );
 				break;
+			case SL_LUA:
+				DestroyLuaVM( pVM );
+				break;
 			default:
 				break;
 		}
