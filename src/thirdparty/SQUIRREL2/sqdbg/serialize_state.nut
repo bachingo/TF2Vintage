@@ -1,6 +1,12 @@
 /*
 	see copyright notice in sqrdbg.h
 */
+local currentscope;
+if ( ::getroottable().parent )
+{
+	currentscope = ::getroottable();
+	::setroottable( ::getroottable().parent );
+}
 try {
 	
 local objs_reg = { maxid=0 ,refs={} }
@@ -125,6 +131,9 @@ function build_tree():(objs_reg)
 				if(::type(val) == "function")
 					return;
 					
+				if ( ::type(idx) == "string" && idx.find( "__" ) == 0 )
+					return;
+
 				beginelement("e");	
 					emitvalue("kt","kv",idx);
 					emitvalue("vt","v",obj[idx]);
@@ -262,3 +271,7 @@ local si;
 	::print("ERROR"+e+"\n");
 }
 
+if ( currentscope )
+{
+	::setroottable( currentscope );
+}
