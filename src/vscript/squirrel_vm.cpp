@@ -1020,7 +1020,7 @@ void CSquirrelVM::ConvertToVariant( HSQOBJECT const &pValue, ScriptVariant_t *pV
 			char *pString = new char[ nLength ];
 
 			*pVariant = pString;
-			V_memcpy( &pVariant->m_pszString, _stringval( pValue ), nLength );
+			V_memcpy( (void *)pVariant->m_pszString, _stringval( pValue ), nLength );
 			pVariant->m_flags |= SV_FREE;
 
 			break;
@@ -1041,7 +1041,8 @@ void CSquirrelVM::ConvertToVariant( HSQOBJECT const &pValue, ScriptVariant_t *pV
 
 			if ( nResult == SQ_OK )
 			{
-				*pVariant = new Vector( *(Vector *)pInstance );
+				*pVariant = new Vector();
+				V_memcpy( (void *)pVariant->m_pVector, pInstance, sizeof( Vector ) );
 				pVariant->m_flags |= SV_FREE;
 
 				break;
@@ -1101,9 +1102,8 @@ void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiat
 		}
 		case FIELD_HSCRIPT:
 		{
-			HSQOBJECT *pObject = (HSQOBJECT *)pVariant.m_hScript;
-			if ( pObject )
-				sq_pushobject( GetVM(), *pObject );
+			if ( pVariant.m_hScript )
+				sq_pushobject( GetVM(), *(HSQOBJECT *)pVariant.m_hScript );
 			else
 				sq_pushnull( GetVM() );
 
