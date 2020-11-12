@@ -149,7 +149,7 @@ private:
 	HSQUIRRELVM GetVM( void )   { return m_pVirtualMachine; }
 
 	void						ConvertToVariant( SQObject const &pValue, ScriptVariant_t *pVariant );
-	void						PushVariant( ScriptVariant_t const &pVariant, bool bInstantiate );
+	void						PushVariant( ScriptVariant_t const &pVariant, bool bDuplicate );
 
 	HSQOBJECT					CreateClass( ScriptClassDesc_t *pClassDesc );
 	bool						CreateInstance( ScriptClassDesc_t *pClassDesc, ScriptInstance_t *pInstance, SQRELEASEHOOK fnRelease );
@@ -739,7 +739,7 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const char *pszV
 		if ( hScope == INVALID_HSCRIPT )
 			return false;
 
-		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
 		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return false;
 
@@ -766,7 +766,7 @@ bool CSquirrelVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptVari
 		if ( hScope == INVALID_HSCRIPT )
 			return false;
 
-		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
 		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return false;
 
@@ -1062,9 +1062,9 @@ void CSquirrelVM::ConvertToVariant( HSQOBJECT const &pValue, ScriptVariant_t *pV
 	}
 }
 
-void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiate )
+void CSquirrelVM::PushVariant( ScriptVariant_t const &Variant, bool bDuplicate )
 {
-	switch ( pVariant.m_type )
+	switch ( Variant.m_type )
 	{
 		case FIELD_VOID:
 		{
@@ -1073,35 +1073,35 @@ void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiat
 		}
 		case FIELD_INTEGER:
 		{
-			sq_pushinteger( GetVM(), pVariant.m_int );
+			sq_pushinteger( GetVM(), Variant.m_int );
 			break;
 		}
 		case FIELD_FLOAT:
 		{
-			sq_pushfloat( GetVM(), pVariant.m_float );
+			sq_pushfloat( GetVM(), Variant.m_float );
 			break;
 		}
 		case FIELD_BOOLEAN:
 		{
-			sq_pushbool( GetVM(), pVariant.m_bool );
+			sq_pushbool( GetVM(), Variant.m_bool );
 			break;
 		}
 		case FIELD_CHARACTER:
 		{
-			sq_pushstring( GetVM(), &pVariant.m_char, 1 );
+			sq_pushstring( GetVM(), &Variant.m_char, 1 );
 			break;
 		}
 		case FIELD_CSTRING:
 		{
-			char const *szString = pVariant.m_pszString ? pVariant : "";
+			char const *szString = Variant.m_pszString ? Variant : "";
 			sq_pushstring( GetVM(), szString, V_strlen( szString ) );
 
 			break;
 		}
 		case FIELD_HSCRIPT:
 		{
-			if ( pVariant.m_hScript )
-				sq_pushobject( GetVM(), *(HSQOBJECT *)pVariant.m_hScript );
+			if ( Variant.m_hScript )
+				sq_pushobject( GetVM(), *(HSQOBJECT *)Variant.m_hScript );
 			else
 				sq_pushnull( GetVM() );
 
@@ -1112,20 +1112,18 @@ void CSquirrelVM::PushVariant( ScriptVariant_t const &pVariant, bool bInstantiat
 			sq_pushobject( GetVM(), m_VectorClass );
 			sq_createinstance( GetVM(), -1 );
 
-			if ( bInstantiate )
+			if ( bDuplicate )
 			{
-				Vector *pVector = new Vector;
-				*pVector = pVariant;
-
+				Vector *pVector = new Vector( Variant );
 				sq_setinstanceup( GetVM(), -1, (SQUserPointer)pVector );
 				sq_setreleasehook( GetVM(), -1, &VectorRelease );
 			}
 			else
 			{
-				sq_setinstanceup( GetVM(), -1, (SQUserPointer)pVariant.m_pVector );
+				sq_setinstanceup( GetVM(), -1, (SQUserPointer)Variant.m_pVector );
 			}
 
-			// Remove the clas object from stack so we are aligned
+			// Remove the class object from stack so we are aligned
 			sq_remove( GetVM(), -2 );
 
 			break;
@@ -1487,17 +1485,17 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 		{
 			case FIELD_INTEGER:
 			{
-				parameters[ i ] = hndl.GetInt( i+2 );
+				parameters[i] = hndl.GetInt( i+2 );
 				break;
 			}
 			case FIELD_FLOAT:
 			{
-				parameters[ i ] = hndl.GetFloat( i+2 );
+				parameters[i] = hndl.GetFloat( i+2 );
 				break;
 			}
 			case FIELD_BOOLEAN:
 			{
-				parameters[ i ] = hndl.GetBool( i+2 ) == SQTrue;
+				parameters[i] = hndl.GetBool( i+2 ) == SQTrue;
 				break;
 			}
 			case FIELD_CHARACTER:
@@ -1506,12 +1504,12 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 				if ( pChar == NULL )
 					pChar = "\0";
 
-				parameters[ i ] = *pChar;
+				parameters[i] = *pChar;
 				break;
 			}
 			case FIELD_CSTRING:
 			{
-				parameters[ i ] = hndl.GetString( i+2 );
+				parameters[i] = hndl.GetString( i+2 );
 				break;
 			}
 			case FIELD_VECTOR:
@@ -1520,7 +1518,7 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 				if ( pInstance == NULL )
 					return hndl.ThrowError( "Vector argument expected" );
 
-				parameters[ i ] = (Vector *)pInstance;
+				parameters[i] = (Vector *)pInstance;
 				break;
 			}
 			case FIELD_HSCRIPT:
@@ -1528,7 +1526,7 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 				HSQOBJECT pObject = hndl.GetObjectHandle( i+2 );
 				if ( sq_isnull( pObject ) )
 				{
-					parameters[ i ] = (HSCRIPT)NULL;
+					parameters[i] = (HSCRIPT)NULL;
 				}
 				else
 				{
@@ -1536,8 +1534,8 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 					pScript->_type = pObject._type;
 					pScript->_unVal = pObject._unVal;
 
-					parameters[ i ] = (HSCRIPT)pScript;
-					parameters[ i ].m_flags |= SV_FREE;
+					parameters[i] = (HSCRIPT)pScript;
+					parameters[i].m_flags |= SV_FREE;
 				}
 
 				break;
@@ -1639,10 +1637,11 @@ SQInteger CSquirrelVM::TranslateCall( HSQUIRRELVM pVM )
 		parameters[i].Free();
 	}
 
-	if ( !sq_isnull( pVM->GetVScript()->m_ErrorString ) )
+	HSQOBJECT pErrorString = pVM->GetVScript()->m_ErrorString;
+	if ( !sq_isnull( pErrorString ) )
 	{
-		if ( sq_isstring( pVM->GetVScript()->m_ErrorString ) )
-			sq_throwerror( pVM, _stringval( pVM->GetVScript()->m_ErrorString ) );
+		if ( sq_isstring( pErrorString ) )
+			sq_throwerror( pVM, _stringval( pErrorString ) );
 		else
 			sq_throwerror( pVM, "Internal error" );
 
@@ -1695,9 +1694,10 @@ void CSquirrelVM::PrintFunc( HSQUIRRELVM pVM, const SQChar *fmt, ... )
 int CSquirrelVM::QueryContinue( HSQUIRRELVM pVM )
 {
 	CSquirrelVM *pVScript = pVM->GetVScript();
-	if ( !pVScript->m_pDbgServer && pVScript->m_flTimeStartedCall != 0.0f )
+	const float flStartTime = pVScript->m_flTimeStartedCall;
+	if ( !pVScript->m_pDbgServer && flStartTime != 0.0f )
 	{
-		const float flTimeDelta = Plat_FloatTime() - pVScript->m_flTimeStartedCall;
+		const float flTimeDelta = Plat_FloatTime() - flStartTime;
 		if ( flTimeDelta > 0.03f )
 		{
 			scprintf(_sqT("Script running too long, terminating\n"));
@@ -1715,7 +1715,7 @@ HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bR
 		if ( hScope == INVALID_HSCRIPT )
 			return _null_;
 
-		HSQOBJECT pTable = *(HSQOBJECT *)hScope;
+		HSQOBJECT &pTable = *(HSQOBJECT *)hScope;
 		if ( pTable == INVALID_HSQOBJECT || !sq_istable( pTable ) )
 			return _null_;
 
