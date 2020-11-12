@@ -4,11 +4,8 @@
 //
 // $NoKeywords: $
 //=============================================================================
-#define MEM_OVERRIDE_ON
-#include "tier0/memdbgoff.h"
-
 #define _HAS_EXCEPTIONS 0
-#include <string>
+#include <exception>
 
 #include "tier0/platform.h"
 #include "tier1/convar.h"
@@ -309,10 +306,11 @@ ScriptStatus_t CSquirrelVM::Run( const char *pszScript, bool bWait )
 	if ( SQ_FAILED( sq_compilebuffer( GetVM(), pszScript, V_strlen( pszScript ), "unnamed", SQ_CALL_RAISE_ERROR ) ) )
 		return SCRIPT_ERROR;
 
+	// a closure is pushed on success
 	sq_getstackobj( GetVM(), -1, &pObject );
 	sq_addref( GetVM(), &pObject );
 
-	// a result is pushed on success, pop it off
+	// pop it off
 	sq_pop( GetVM(), 1 );
 
 	ScriptStatus_t result = ExecuteFunction( (HSCRIPT)&pObject, NULL, 0, NULL, NULL, bWait );
@@ -473,10 +471,10 @@ ScriptStatus_t CSquirrelVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant_t 
 
 	if ( m_pDbgServer )
 	{
-		if ( g_bDebugBreak )
+		if ( g_bSqDebugBreak )
 		{
 			DisconnectDebugger();
-			g_bDebugBreak = false;
+			g_bSqDebugBreak = false;
 		}
 	}
 
