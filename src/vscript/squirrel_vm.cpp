@@ -69,7 +69,7 @@ typedef struct
 
 
 
-static HSQOBJECT INVALID_HSQOBJECT = { OT_INVALID, (SQTable *)-1 };
+static HSQOBJECT const INVALID_HSQOBJECT = { OT_INVALID, (SQTable *)-1 };
 inline bool operator==( HSQOBJECT const &lhs, HSQOBJECT const &rhs ) { return lhs._type == rhs._type && _table( lhs ) == _table( rhs ); }
 inline bool operator!=( HSQOBJECT const &lhs, HSQOBJECT const &rhs ) { return lhs._type != rhs._type || _table( lhs ) != _table( rhs ); }
 
@@ -182,10 +182,10 @@ private:
 	CUtlHashFast<SQClass *, CUtlHashFastGenericHash> m_ScriptClasses;
 
 	// A reference to our Vector type to compare to
-	SQObjectPtr m_VectorClass;
+	HSQOBJECT m_VectorClass;
 
-	SQObjectPtr m_CreateScopeClosure;
-	SQObjectPtr m_ReleaseScopeClosure;
+	HSQOBJECT m_CreateScopeClosure;
+	HSQOBJECT m_ReleaseScopeClosure;
 
 	SQObjectPtr m_ErrorString;
 
@@ -365,7 +365,7 @@ HSCRIPT CSquirrelVM::CreateScope( const char *pszScope, HSCRIPT hParent )
 		hParent = (HSCRIPT)&GetVM()->_roottable;
 
 	HSQOBJECT &pParent = *(HSQOBJECT *)hParent;
-	HSQOBJECT pScope = _null_;
+	HSQOBJECT pScope ={OT_NULL, NULL};
 
 	// call the utility create function
 	sq_pushobject( GetVM(), m_CreateScopeClosure );
@@ -1161,7 +1161,7 @@ HSQOBJECT CSquirrelVM::CreateClass( ScriptClassDesc_t *pClassDesc )
 		return INVALID_HSQOBJECT;
 	}
 
-	HSQOBJECT pObject = INVALID_HSQOBJECT;
+	HSQOBJECT pObject ={OT_NULL, NULL};
 	sq_getstackobj( GetVM(), -1, &pObject );
 	sq_addref( GetVM(), &pObject );
 	sq_settypetag( GetVM(), -1, pClassDesc );
@@ -1709,7 +1709,7 @@ int CSquirrelVM::QueryContinue( HSQUIRRELVM pVM )
 
 HSQOBJECT CSquirrelVM::LookupObject( char const *szName, HSCRIPT hScope, bool bRefCount )
 {
-	HSQOBJECT pObject = _null_;
+	HSQOBJECT pObject ={OT_NULL, NULL};
 	if ( hScope )
 	{
 		if ( hScope == INVALID_HSCRIPT )
