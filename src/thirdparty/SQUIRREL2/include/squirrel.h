@@ -448,7 +448,7 @@ SQUIRREL_API void sq_setdebughook(HSQUIRRELVM v);
 #define SQ_SUCCEEDED(res) (res>=0)
 
 
-static bool g_bDebugBreak = false;
+static bool g_bSqDebugBreak = false;
 
 #ifdef __cplusplus
 } /*extern "C"*/

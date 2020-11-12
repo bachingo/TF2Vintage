@@ -180,17 +180,17 @@ bool SQDbgServer::Init()
 
 bool SQDbgServer::IsConnected() const
 {
-	if ( _endpoint == INVALID_SOCKET )
+	if (_endpoint == INVALID_SOCKET)
 		return false;
 
 	FD_SET fdSet{};
-	FD_SET( _endpoint, &fdSet );
+	FD_SET(_endpoint,&fdSet);
 
 	timeval timeout{};
-	timerclear( &timeout );
+	timerclear(&timeout);
 
-	SOCKET sock = select( 0, &fdSet, NULL, NULL, &timeout );
-	if ( sock == INVALID_SOCKET )
+	SOCKET sock = select(0,&fdSet,NULL,NULL,&timeout);
+	if (sock == INVALID_SOCKET)
 	{
 		scprintf(_SC("Script debugger disconnected\n"));
 		return false;
@@ -206,7 +206,7 @@ bool SQDbgServer::ReadMsg()
 
 void SQDbgServer::BusyWait()
 {
-	while( !ReadMsg() )
+	while(!ReadMsg())
 		ThreadSleep(0);
 }
 
@@ -467,7 +467,7 @@ void SQDbgServer::BreakExecution()
 	while(_state==eDBG_Suspended){
 		if(SQ_FAILED(sq_rdbg_update(this)))
 		{
-			g_bDebugBreak = true;
+			g_bSqDebugBreak = true;
 			return;
 		}
 		ThreadSleep(10);

@@ -734,9 +734,9 @@ exception_restore:
 			case _OP_LINE:
 				if(type(_debughook) != OT_NULL && _rawval(_debughook) != _rawval(ci->_closure))
 				{
-					g_bDebugBreak = false;
+					g_bSqDebugBreak = false;
 					CallDebugHook(_SC('l'),arg1);
-					if (g_bDebugBreak)
+					if (g_bSqDebugBreak)
 					{
 						sq_throwerror(this, "terminated by debugger");
 						SQ_THROW();
