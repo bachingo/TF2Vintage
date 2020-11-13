@@ -347,6 +347,7 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	bShowUsageHint = false;
 	m_bAllowFlipping = true;
 	m_bBuiltRightHanded = true;
+	iconSmall = 0;
 }
 
 #ifdef CLIENT_DLL
