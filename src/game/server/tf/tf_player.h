@@ -19,12 +19,6 @@
 #include "Path/NextBotPathFollow.h"
 #include "NextBotUtil.h"
 
-struct foundPlayer
-{
-	foundPlayer *next;
-	CTFPlayer *player;
-};
-
 class CTFPlayer;
 class CTFBot;
 class CTFTeam;
