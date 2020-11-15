@@ -585,7 +585,9 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bCharged
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
-		pProjectile->SetIsCharged(bCharged);
+		pProjectile->SetIsCharged( bCharged );
+		pProjectile->SetColor( 1, GetEnergyWeaponColor( false ) );
+		pProjectile->SetColor( 2, GetEnergyWeaponColor( true ) );
 	}
 	return pProjectile;
 

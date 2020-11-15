@@ -24,7 +24,7 @@
 //
 
 CREATE_SIMPLE_WEAPON_TABLE( TFRaygun, tf_weapon_raygun )
-CREATE_SIMPLE_WEAPON_TABLE( TFPomson, tf_weapon_drg_pomson )
+CREATE_SIMPLE_WEAPON_TABLE( TFDRGPomson, tf_weapon_drg_pomson )
 
 //=============================================================================
 //
@@ -56,7 +56,20 @@ void CTFRaygun::PrimaryAttack()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFPomson::CTFPomson()
+float CTFRaygun::Energy_GetShotCost( void ) const
+{
+	int nNoDrain = 0;
+	CALL_ATTRIB_HOOK_INT( nNoDrain, energy_weapon_no_drain );
+	if ( nNoDrain != 0 )
+		return 0.0f;
+
+	return 5.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFDRGPomson::CTFDRGPomson()
 {
 	m_bReloadsSingly = true;
 }

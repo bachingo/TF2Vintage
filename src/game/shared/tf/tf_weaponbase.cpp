@@ -2438,7 +2438,7 @@ Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
 	
 	if (pOwner->GetTeamNumber() == TF_TEAM_RED)
 	{
-		if ( bUseAlternateColorPalette )
+		if ( !bUseAlternateColorPalette )
 			return Vector( 0.72, 0.22, 0.23 );
 		
 		return Vector( 0.5, 0.18, 0.125 );	
@@ -2453,6 +2453,11 @@ Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
 	
 	// You shouldn't come here, at least in standard team mode.
 	return Vector(0,0,0);
+}
+
+void CTFWeaponBase::WeaponRegenerate( void )
+{
+	m_flEnergy = Energy_GetMaxEnergy();
 }
 
 
@@ -2564,11 +2569,6 @@ void CTFWeaponBase::WeaponReset( void )
 
 	m_flEffectBarRegenTime = 0.0f;
 
-	m_flEnergy = Energy_GetMaxEnergy();
-}
-
-void CTFWeaponBase::WeaponRegenerate( void )
-{
 	m_flEnergy = Energy_GetMaxEnergy();
 }
 

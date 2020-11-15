@@ -22,15 +22,13 @@
 //
 // Particle Cannon Table.
 //
-IMPLEMENT_NETWORKCLASS_ALIASED( TFParticleCannon, DT_WeaponParticleCannon )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFParticleCannon, DT_ParticleCannon )
 
-BEGIN_NETWORK_TABLE( CTFParticleCannon, DT_WeaponParticleCannon )
+BEGIN_NETWORK_TABLE( CTFParticleCannon, DT_ParticleCannon )
 #ifndef CLIENT_DLL
-	//SendPropBool( SENDINFO(m_bLockedOn) ),
-	SendPropFloat(SENDINFO(m_flChargeUpTime), 0, SPROP_NOSCALE),
+	SendPropFloat( SENDINFO( m_flChargeBeginTime ), 0, SPROP_NOSCALE ),
 #else
-	//RecvPropInt( RECVINFO(m_bLockedOn) ),
-	RecvPropFloat( RECVINFO( m_flChargeUpTime ) ),
+	RecvPropFloat( RECVINFO( m_flChargeBeginTime ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -53,7 +51,7 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 bool CTFParticleCannon::CanHolster( void )
 {
-	if (m_flChargeUpTime != 0)
+	if ( m_flChargeBeginTime > 0 )
 		return false;
 	
 	return BaseClass::CanHolster();
@@ -64,74 +62,72 @@ bool CTFParticleCannon::CanHolster( void )
 //-----------------------------------------------------------------------------
 void CTFParticleCannon::ItemPostFrame( void )
 {
+	BaseClass::ItemPostFrame();
+
 	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	if ( !pOwner )
 		return;
 
-	BaseClass::ItemPostFrame();
-
-#ifdef GAME_DLL
-
-	/*
-	Vector forward;
-	AngleVectors( pOwner->EyeAngles(), &forward );
-	trace_t tr;
-	CTraceFilterSimple filter( pOwner, COLLISION_GROUP_NONE );
-	UTIL_TraceLine( pOwner->EyePosition(), pOwner->EyePosition() + forward * 2000, MASK_SOLID, &filter, &tr );
-
-	if ( tr.m_pEnt &&
-		tr.m_pEnt->IsPlayer() &&
-		tr.m_pEnt->IsAlive() &&
-		tr.m_pEnt->GetTeamNumber() != pOwner->GetTeamNumber() )
+	if ( ( m_flChargeBeginTime > 0 ) && ( m_flChargeBeginTime + TF_CANNON_CHARGEUP_TIME < gpGlobals->curtime ) )
 	{
-		m_bLockedOn = true;
+		FireChargeShot();
 	}
-	else
-	{
-		m_bLockedOn = false;
-	}
-	*/
-	
-#endif
 
-	if ( ( m_flChargeUpTime > 0 ) && gpGlobals->curtime >= m_flChargeUpTime )
-	{
-		m_flChargeUpTime = 0;
-		ChargeAttack();
-	}
 
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFParticleCannon::PrimaryAttack( void )
+{
+	// Have energy to shoot?
+	if ( !Energy_HasEnergy() )
+		return;
+
+	// Charging special attack?
+	if ( m_flChargeBeginTime > 0 )
+		return;
+
+	BaseClass::PrimaryAttack();
+}
 //-----------------------------------------------------------------------------
 // Purpose: Starts the charge up on the Cow Mangler.
 //-----------------------------------------------------------------------------
 void CTFParticleCannon::SecondaryAttack( void )
 {
 	// Need to have the attribute to use this.
-	if ( !HasChargeUp() )
+	if ( !CanChargeShot() )
 		return;
 	
 	// Are we capable of firing again?
 	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
 		return;
+
+	// Already charging?
+	if ( m_flChargeBeginTime > 0 )
+		return;
 	
 	// Do we have full energy to launch a charged shot?
-	if ( m_iClip1 < GetMaxClip1() )
+	if ( !Energy_FullyCharged() )
 	{
 		Reload();
 		return;
 	}
 	
 	// Set our charging time, and prevent us attacking until it is done.
-	m_flChargeUpTime = gpGlobals->curtime + TF_CANNON_CHARGEUP_TIME;
-	m_flNextSecondaryAttack = m_flNextPrimaryAttack = m_flChargeUpTime + m_pWeaponInfo->GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_flTimeFireDelay;
+	m_flChargeBeginTime = gpGlobals->curtime;
+	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+
+	SendWeaponAnim( ACT_PRIMARY_VM_PRIMARYATTACK_3 );
 	
 	// Slow down the player.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( pPlayer)
 	{
-		if (!pPlayer->m_Shared.InCond(TF_COND_AIMING))
-			pPlayer->m_Shared.AddCond(TF_COND_AIMING);
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY_SUPER );
+		pPlayer->m_Shared.AddCond( TF_COND_AIMING );
+		pPlayer->TeamFortress_SetSpeed();
 	}
 	
 	WeaponSound(SPECIAL1);
@@ -140,14 +136,14 @@ void CTFParticleCannon::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: Checks if we're allowed to charge up a shot.
 //-----------------------------------------------------------------------------
-bool CTFParticleCannon::HasChargeUp( void )
+bool CTFParticleCannon::CanChargeShot( void )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer)
 		return false;
 	
 	int nHasEnergyChargeUp = 0;
-	CALL_ATTRIB_HOOK_INT(nHasEnergyChargeUp,energy_weapon_charged_shot);
+	CALL_ATTRIB_HOOK_INT(nHasEnergyChargeUp, energy_weapon_charged_shot);
 	
 	return (nHasEnergyChargeUp != 0);
 }
@@ -155,7 +151,7 @@ bool CTFParticleCannon::HasChargeUp( void )
 //-----------------------------------------------------------------------------
 // Purpose: Launches a powerful energy ball that can stun buildings.
 //-----------------------------------------------------------------------------
-void CTFParticleCannon::ChargeAttack( void )
+void CTFParticleCannon::FireChargeShot( void )
 {
 	// Remove the slowdown.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
@@ -168,12 +164,33 @@ void CTFParticleCannon::ChargeAttack( void )
 	// We use a special Energy Ball call here to do the charged variant.
 	BaseClass::FireEnergyBall( pPlayer, true );
 	
-	// Clear our ammo.
-	m_iClip1 = 0;
+	// Drain energy, GetShotCost will handle amount
+	Energy_DrainEnergy();
 	
+	m_flChargeBeginTime = 0;
 }
 
-#ifdef CLIENT_DLL
+float CTFParticleCannon::Energy_GetShotCost( void ) const
+{
+	// if we were charging an attack, drain our entire battery
+	if ( m_flChargeBeginTime > 0 )
+		return Energy_GetMaxEnergy();
+
+	return 5.0f;
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFParticleCannon::OwnerCanTaunt( void ) const
+{
+	if ( m_flChargeBeginTime > 0 )
+		return false;
+
+	return true;
+}
+#else
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -183,37 +200,6 @@ void CTFParticleCannon::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int 
 	CTFWeaponBase::CreateMuzzleFlashEffects( pAttachEnt, nIndex );
 }
 
-/*
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFParticleCannon::DrawCrosshair( void )
-{
-	BaseClass::DrawCrosshair();
 
-	if ( m_bLockedOn )
-	{
-		int iXpos = XRES(340);
-		int iYpos = YRES(260);
-		int iWide = XRES(8);
-		int iTall = YRES(8);
-
-		Color col( 0, 255, 0, 255 );
-		vgui::surface()->DrawSetColor( col );
-
-		vgui::surface()->DrawFilledRect( iXpos, iYpos, iXpos + iWide, iYpos + iTall );
-
-		// Draw the charge level onscreen
-		vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
-		vgui::HFont hFont = vgui::scheme()->GetIScheme(scheme)->GetFont( "Default" );
-		vgui::surface()->DrawSetTextFont( hFont );
-		vgui::surface()->DrawSetTextColor( col );
-		vgui::surface()->DrawSetTextPos(iXpos + XRES(12), iYpos );
-		vgui::surface()->DrawPrintText(L"Lock", wcslen(L"Lock"));
-
-		vgui::surface()->DrawLine( XRES(320), YRES(240), iXpos, iYpos );
-	}
-}
-*/
 
 #endif

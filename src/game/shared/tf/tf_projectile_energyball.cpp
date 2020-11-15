@@ -9,6 +9,7 @@
 #include "tf_shareddefs.h"
 
 #ifdef GAME_DLL
+#include "soundent.h"
 #include "te_effect_dispatch.h"
 #include "tf_fx.h"
 #include "iscorer.h"
@@ -23,15 +24,19 @@
 LINK_ENTITY_TO_CLASS( tf_projectile_energy_ball, CTFEnergyBall );
 PRECACHE_REGISTER( tf_projectile_energy_ball );
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFEnergyBall, DT_TFEnergyBall )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFEnergyBall, DT_TFProjectile_EnergyBall )
 
-BEGIN_NETWORK_TABLE( CTFEnergyBall, DT_TFEnergyBall )
+BEGIN_NETWORK_TABLE( CTFEnergyBall, DT_TFProjectile_EnergyBall )
 #ifdef CLIENT_DLL
-	RecvPropBool(RECVINFO(m_bCritical)),
-	RecvPropBool(RECVINFO(m_bChargedBeam)),
+	RecvPropBool( RECVINFO( m_bCritical ) ),
+	RecvPropBool( RECVINFO( m_bChargedShot ) ),
+	RecvPropVector( RECVINFO( m_vColor1 ) ),
+	RecvPropVector( RECVINFO( m_vColor2 ) )
 #else
-	SendPropBool(SENDINFO(m_bCritical)),
-	SendPropBool(SENDINFO(m_bChargedBeam)),
+	SendPropBool( SENDINFO( m_bCritical ) ),
+	SendPropBool( SENDINFO( m_bChargedShot ) ),
+	SendPropVector( SENDINFO( m_vColor1 ), 8, 0, 0, 1 ),
+	SendPropVector( SENDINFO( m_vColor2 ), 8, 0, 0, 1 )
 #endif
 END_NETWORK_TABLE()
 
@@ -103,11 +108,22 @@ void CTFEnergyBall::Spawn()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+float CTFEnergyBall::GetDamage( void )
+{
+	float flDamage = BaseClass::GetDamage();
+	if ( m_bCritical )
+		flDamage *= 3.0f;
+	return flDamage;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 float CTFEnergyBall::GetRadius( void )
 {
 	float flRadius = BaseClass::GetRadius();
 	// Increase radius on charged shots.
-	if  ( ShotIsCharged() )
+	if  ( IsChargedShot() )
 		flRadius *= 1.3;
 	return flRadius;
 }
@@ -120,10 +136,70 @@ int	CTFEnergyBall::GetDamageType()
 	int iDmgType = BaseClass::GetDamageType();
 	
 	// Charged shots ignite targets.
-	if (ShotIsCharged() )
+	if (IsChargedShot() )
 		iDmgType |= DMG_IGNITE;
 
 	return iDmgType;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFEnergyBall::GetDamageCustom()
+{
+	return m_bChargedShot ? TF_DMG_CUSTOM_PLASMA_CHARGED : TF_DMG_CUSTOM_PLASMA;
+}
+
+void CTFEnergyBall::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
+{
+	CTFPlayer *pDeflector = ToTFPlayer( pDeflectedBy );
+	if ( !pDeflector )
+		return;
+
+	ChangeTeam( pDeflector->GetTeamNumber() );
+	SetLauncher( pDeflector->GetActiveWeapon() );
+
+	CTFPlayer* pOldOwner = ToTFPlayer( GetOwnerEntity() );
+	SetOwnerEntity( pDeflector );
+
+	if ( pOldOwner )
+	{
+		pOldOwner->SpeakConceptIfAllowed( MP_CONCEPT_DEFLECTED, "projectile:1,victim:1" );
+	}
+
+	if ( pDeflector->m_Shared.IsCritBoosted() )
+	{
+		SetCritical( true );
+	}
+
+	IncremenentDeflected();
+	SetScorer( pDeflector );
+
+	// Change particle color data.
+	if ( GetTeamNumber() == TF_TEAM_BLUE )
+	{
+		m_vColor1 = Vector( 0.345, 0.52, 0.635 );
+		m_vColor2 = Vector( 0.145, 0.427, 0.55 );
+	}
+	else
+	{
+		m_vColor1 = Vector( 0.72, 0.22, 0.23 );
+		m_vColor2 = Vector( 0.5, 0.18, 0.125 );
+	}
+
+	if ( pDeflector && pOldOwner )
+	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "object_deflected" );
+		if ( event )
+		{
+			event->SetInt( "userid", pDeflector->GetUserID() );
+			event->SetInt( "ownerid", pOldOwner->GetUserID() );
+			event->SetInt( "weaponid", GetWeaponID() );
+			event->SetInt( "object_entindex", entindex() );
+
+			gameeventmanager->FireEvent( event );
+		}
+	}
 }
 #endif
 
@@ -162,8 +238,18 @@ void CTFEnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
 	
+	QAngle angExplosion( 0.f, 0.f, 0.f );
+	VectorAngles( pTrace->plane.normal, angExplosion );
+	TE_TFParticleEffect( filter, 0.f, GetExplosionParticleName(), vecOrigin, pTrace->plane.normal, angExplosion, NULL );
+
+	// Screenshake
+	if ( m_bChargedShot )
+	{
+		UTIL_ScreenShake( WorldSpaceCenter(), 25.0f, 150.0f, 1.0f, 750.0f, SHAKE_START );
+	}
+
 	EmitSound("Weapon_CowMangler.Explode");
-	TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pOther->entindex(), iItemID );
+	CSoundEnt::InsertSound( SOUND_COMBAT, vecOrigin, 1024, 3.0 );
 
 	// Damage.
 	CBaseEntity *pAttacker = GetOwnerEntity();
@@ -175,20 +261,23 @@ void CTFEnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 
 	float flRadius = GetRadius();
 
-	CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = vecOrigin;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
-
-	TFGameRules()->RadiusDamage( radiusInfo );
-	
-	// If we directly hit an enemy building, EMP it.
-	CBaseObject *pBuilding = dynamic_cast<CBaseObject *>( pOther );
-	if (ShotIsCharged() && ( pBuilding && ( pBuilding->GetTeamNumber() != pAttacker->GetTeamNumber() ) ) )
+	if( pAttacker )
 	{
-		pBuilding->OnEMP();
+		CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), GetDamageType(), GetDamageCustom() );
+		CTFRadiusDamageInfo radiusInfo;
+		radiusInfo.info = &newInfo;
+		radiusInfo.m_vecSrc = vecOrigin;
+		radiusInfo.m_flRadius = flRadius;
+		radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO * m_bChargedShot ? 1.33f : 1.0f;
+
+		TFGameRules()->RadiusDamage( radiusInfo );
+
+		// If we directly hit an enemy building, EMP it.
+		CBaseObject *pBuilding = dynamic_cast<CBaseObject *>( pOther );
+		if ( IsChargedShot() && ( pBuilding && ( pBuilding->GetTeamNumber() != pAttacker->GetTeamNumber() ) ) )
+		{
+			pBuilding->OnEMP();
+		}
 	}
 
 	// Debug!
@@ -208,6 +297,21 @@ void CTFEnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFEnergyBall::GetExplosionParticleName( void )
+{
+	if ( m_bChargedShot )
+	{
+		return ( GetTeamNumber() == TF_TEAM_RED ) ? "drg_cow_explosioncore_charged" : "drg_cow_explosioncore_charged_blue";
+	}
+	else
+	{
+		return ( GetTeamNumber() == TF_TEAM_RED ) ? "drg_cow_explosioncore_normal" : "drg_cow_explosioncore_normal_blue";
+	}
+}
+
 #ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -220,7 +324,7 @@ void C_TFEnergyBall::CreateRocketTrails( void )
 	int iAttachment = LookupAttachment( "trail" );
 	if( iAttachment > -1 )
 	{
-		if (m_bCritical || ShotIsCharged())
+		if (m_bCritical || IsChargedShot())
 		{
 			if (m_hLauncher.Get() && m_hLauncher.Get()->GetTeamNumber() == TF_TEAM_BLUE)
 			{

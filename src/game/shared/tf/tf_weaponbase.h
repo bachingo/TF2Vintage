@@ -356,6 +356,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual float		Energy_GetShotCost( void ) const { return 4.f; }
 	virtual float		Energy_GetRechargeCost( void ) const { return 4.f; }
 	virtual Vector		GetEnergyWeaponColor( bool bUseAlternateColorPalette );
+	virtual float		GetEnergyPercentage( void ) const { return Energy_GetEnergy() / Energy_GetMaxEnergy(); }
 	
 // Server specific.
 #if !defined( CLIENT_DLL )

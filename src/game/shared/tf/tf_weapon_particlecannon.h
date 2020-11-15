@@ -31,20 +31,30 @@ public:
 #endif
 	
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_PARTICLE_CANNON; }
+	virtual float GetProjectileSpeed( void ) { return 1100.0f; }
+	virtual float GetProjectileGravity( void ) { return 0.0f; }
 
 	bool		CanHolster( void );
 	void		ItemPostFrame( void );
+	void		PrimaryAttack( void );
 	void		SecondaryAttack( void );
 
-	bool		HasChargeUp(void);
-	void		ChargeAttack( void );
+	bool		CanChargeShot(void);
+	void		FireChargeShot( void );
+
+#ifdef GAME_DLL
+	bool		OwnerCanTaunt( void ) const OVERRIDE;
+#endif
+
+	virtual float	Energy_GetShotCost( void ) const;
+	virtual float	Energy_GetRechargeCost( void ) const { return 5.f; }
 	
 #ifdef CLIENT_DLL
-	void		CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
+	void		CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex ) OVERRIDE;
 #endif
 	
 private:
-	CNetworkVar(float, m_flChargeUpTime);
+	CNetworkVar( float, m_flChargeBeginTime );
 };
 
 #endif // TF_WEAPON_PARTICLECANNON_H
