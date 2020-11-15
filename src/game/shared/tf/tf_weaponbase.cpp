@@ -903,6 +903,15 @@ void CTFWeaponBase::IncrementAmmo( void )
 	if ( pOwner == nullptr )
 		return;
 
+	if ( m_bReloadedThroughAnimEvent || CheckReloadMisfire() )
+		return;
+
+	if ( IsEnergyWeapon() )
+	{
+		Energy_Recharge();
+		return;
+	}
+
 	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 		return;
 
@@ -910,9 +919,7 @@ void CTFWeaponBase::IncrementAmmo( void )
 		return;
 
 	m_iClip1 = Min( m_iClip1 + 1, GetMaxClip1() );
-
-	if ( !IsEnergyWeapon() )
-		pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
 }
 
 //-----------------------------------------------------------------------------
@@ -1136,8 +1143,22 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+int CTFWeaponBase::Clip1( void )
+{
+	if ( IsEnergyWeapon() )
+		return Energy_GetEnergy();
+
+	return m_iClip1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CTFWeaponBase::GetMaxClip1( void ) const
 {
+	if ( IsEnergyWeapon() )
+		return Energy_GetMaxEnergy();
+
 	int iMaxClip = CBaseCombatWeapon::GetMaxClip1();
 	if ( iMaxClip < 0 )
 		return iMaxClip;
@@ -1168,6 +1189,28 @@ int CTFWeaponBase::GetDefaultClip1( void ) const
 
 //-----------------------------------------------------------------------------
 // Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::UsesPrimaryAmmo( void )
+{
+	if ( IsEnergyWeapon() )
+		return false;
+	
+	return BaseClass::UsesPrimaryAmmo();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::HasAmmo( void )
+{
+	if ( IsEnergyWeapon() )
+		return true;
+	
+	return BaseClass::HasAmmo();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::Reload( void )
@@ -1175,14 +1218,20 @@ bool CTFWeaponBase::Reload( void )
 	// Sorry, people, no speeding it up.
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return false;
+
+	if ( IsEnergyWeapon() && !Energy_FullyCharged() )
+	{
+		return ReloadSingly();
+	}
+
 	// If we're not already reloading, check to see if we have ammo to reload and check to see if we are max ammo.
 	if ( m_iReloadMode == TF_RELOAD_START ) 
 	{
 		// If I don't have any spare ammo, I can't reload
-		if (!IsEnergyWeapon() && GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
+		if ( GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) <= 0 )
 			return false;
 
-		if ( Clip1() >= GetMaxClip1())
+		if ( !CanOverload() && Clip1() >= GetMaxClip1() )
 			return false;
 	}
 
@@ -1287,6 +1336,8 @@ bool CTFWeaponBase::ReloadSingly( void )
 #ifdef CLIENT_DLL
 			// Play world reload.
 			if ( !UsingViewModel() )
+				WeaponSound( RELOAD );
+#else
 			WeaponSound( RELOAD );
 #endif
 
@@ -1301,33 +1352,31 @@ bool CTFWeaponBase::ReloadSingly( void )
 			if ( m_flTimeWeaponIdle > gpGlobals->curtime )
 				return false;
 
-			// If we have ammo, remove ammo and add it to clip
-			if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
-			{
-				if (!CanOverload())
-					m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
-				else
-					m_iClip1 = min((m_iClip1 + 1), (GetMaxClip1() + 1));
-				if (!IsEnergyWeapon())
-					pPlayer->RemoveAmmo(1, m_iPrimaryAmmoType);
-				if (CanOverload() && m_iClip1 > GetMaxClip1())
-				{
-					m_bIsOverLoaded = true;
-					m_iClip1 = GetMaxClip1();
-				}
-				if (m_bIsOverLoaded)
-					Overload();
-			}
+			IncrementAmmo();
 
 			SwitchBodyGroups(); // Update number of pills in the launcher
 
-			if ( ( Clip1() == GetMaxClip1() && !CanOverload() ) || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
+			if ( IsEnergyWeapon() )
 			{
-				m_iReloadMode.Set( TF_RELOAD_FINISH );
+				if ( Energy_FullyCharged() )
+				{
+					m_iReloadMode.Set( TF_RELOAD_FINISH );
+				}
+				else
+				{
+					m_iReloadMode.Set( TF_RELOADING );
+				}
 			}
 			else
 			{
-				m_iReloadMode.Set( TF_RELOADING );
+				if ( ( Clip1() == GetMaxClip1() || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 ) && !CanOverload() )
+				{
+					m_iReloadMode.Set( TF_RELOAD_FINISH );
+				}
+				else
+				{
+					m_iReloadMode.Set( TF_RELOADING );
+				}
 			}
 
 			return true;
@@ -1427,22 +1476,7 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 	{
 		if ( pEvent->event == AE_WPN_INCREMENTAMMO )
 		{
-			if ( pOperator->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
-			{
-				if (!CanOverload())
-					m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
-				else if (!m_bIsOverLoaded)
-					m_iClip1 = min((m_iClip1 + 1), (GetMaxClip1() + 1));
-				if (!IsEnergyWeapon())
-					pOperator->RemoveAmmo(1, m_iPrimaryAmmoType);
-				if (CanOverload() && m_iClip1 > GetMaxClip1())
-				{
-					m_bIsOverLoaded = true;
-					m_iClip1 = GetMaxClip1();
-				}
-				if (m_bIsOverLoaded)
-					Overload();
-			}
+			IncrementAmmo();
 
 			//if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
 				m_bReloadedThroughAnimEvent = true;
@@ -1470,9 +1504,7 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( UsesClipsForAmmo1() )
 	{
 		// need to reload primary clip?
-		int primary = Min(iClipSize1 - m_iClip1, pPlayer->GetAmmoCount(m_iPrimaryAmmoType));
-		if (IsEnergyWeapon())
-			primary = iClipSize1 - m_iClip1;
+		int primary = Min( iClipSize1 - m_iClip1, pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) );
 		if ( primary != 0 )
 		{
 			bReloadPrimary = true;
@@ -1524,6 +1556,59 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	m_bInReload = true;
 
 	return true;
+}
+
+void CTFWeaponBase::CheckReload( void )
+{
+	if ( IsEnergyWeapon() )
+	{
+		CTFPlayer *pOwner = GetTFPlayerOwner();
+		if ( !pOwner )
+			return;
+
+		if ( !Energy_HasEnergy() )
+		{
+			Reload();
+			return;
+		}
+
+		if ( m_bInReload && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
+		{
+			if ( pOwner->m_nButtons & ( IN_ATTACK|IN_ATTACK2 ) )
+			{
+				if( Energy_HasEnergy() )
+				{
+					m_bInReload = false;
+					return;
+				}
+			}
+
+			if ( Energy_FullyCharged() )
+			{
+				FinishReload();
+				m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime;
+			}
+			else
+			{
+				Reload();
+			}
+		}
+	}
+	else
+	{
+		BaseClass::CheckReload();
+	}
+}
+
+void CTFWeaponBase::FinishReload( void )
+{
+	if ( IsEnergyWeapon() )
+	{
+		m_bInReload = false;
+		return;
+	}
+
+	BaseClass::FinishReload();
 }
 
 //-----------------------------------------------------------------------------
@@ -1735,8 +1820,11 @@ void CTFWeaponBase::ReloadSinglyPostFrame( void )
 		return;
 
 	// if the clip is empty and we have ammo remaining, 
-	if (((Clip1() == 0) && (GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) > 0) && !IsEnergyWeapon() ) ||
-		 ( ( Clip1() == 0) && IsEnergyWeapon()) ||
+	if ( IsEnergyWeapon() )
+	{
+		Reload();
+	}
+	else if ( ( !AutoFiresFullClip() && (Clip1() == 0) && (GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) > 0) ) ||
 		// or we are already in the process of reloading but not finished
 		( m_iReloadMode != TF_RELOAD_START ) )
 	{
@@ -2209,6 +2297,9 @@ void CTFWeaponBase::OnControlStunned( void )
 		SetWeaponVisible( false );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 {
 	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
@@ -2223,6 +2314,9 @@ const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 }
 
 bool CTFWeaponBase::IsHonorBound( void ) const
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 {
 	int nHonorBound = 0;
 	CALL_ATTRIB_HOOK_INT( nHonorBound, "honorbound" );
@@ -2261,34 +2355,104 @@ bool CTFWeaponBase::CanDecapitate( void )
 //-----------------------------------------------------------------------------
 // Purpose: Used for calculating energy weapon logic.
 //-----------------------------------------------------------------------------
-bool CTFWeaponBase::IsEnergyWeapon(void)
+bool CTFWeaponBase::IsEnergyWeapon(void) const
 {
 	int iUseEnergyWeaponRules = 0;
-	CALL_ATTRIB_HOOK_INT(iUseEnergyWeaponRules, energy_weapon_no_ammo);
-	return (iUseEnergyWeaponRules != 0);
+	CALL_ATTRIB_HOOK_INT( iUseEnergyWeaponRules, energy_weapon_no_ammo );
+	return ( iUseEnergyWeaponRules != 0 );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Used for calculating out the percentage of charge left, from 0 to 1.
+// Purpose:
 //-----------------------------------------------------------------------------
-float CTFWeaponBase::GetEnergyPercentage(void)
+float CTFWeaponBase::Energy_GetMaxEnergy( void ) const
 {
-	// Check our magazine amount and convert to a percentage.
-	if ( UsesClipsForAmmo1() )
+	int iNumShots = 20 / Energy_GetShotCost();
+	CALL_ATTRIB_HOOK_FLOAT( iNumShots, mult_clipsize_upgrade );
+
+	return ( iNumShots * Energy_GetShotCost() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::Energy_FullyCharged( void ) const
+{
+	if ( m_flEnergy >= Energy_GetMaxEnergy() )
+		return true;
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::Energy_HasEnergy( void )
+{
+	if ( m_flEnergy >= Energy_GetShotCost() )
+		return true;
+	
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::Energy_DrainEnergy( void )
+{
+	m_flEnergy -= Energy_GetShotCost();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::Energy_DrainEnergy( float flDrain )
+{
+	m_flEnergy -= flDrain;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::Energy_Recharge( void )
+{
+	m_flEnergy += Energy_GetRechargeCost();
+	if ( Energy_FullyCharged() )
 	{
-		return ( m_iClip1 / GetMaxClip1() );
-	}
-	else if ( UsesClipsForAmmo2() )
-	{
-		return ( m_iClip2 / GetMaxClip2() );
+		m_flEnergy = Energy_GetMaxEnergy();
+		return true;
 	}
 	
-	// We either have all or nothing.
-	int iClipT = m_iClip1 + m_iClip2;
-	if (iClipT > 1) // In case we have more than one for some reason.
-		return 1;
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for coloring in energy weapon effects.
+//-----------------------------------------------------------------------------
+Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( !pOwner )
+		return Vector(0,0,0);
 	
-	return iClipT / 1;
+	if (pOwner->GetTeamNumber() == TF_TEAM_RED)
+	{
+		if ( bUseAlternateColorPalette )
+			return Vector( 0.72, 0.22, 0.23 );
+		
+		return Vector( 0.5, 0.18, 0.125 );	
+	}
+	else
+	{
+		if ( !bUseAlternateColorPalette )
+			return Vector( 0.345, 0.52, 0.635 );
+		
+		return Vector( 0.145, 0.427, 0.55 );
+	}	
+	
+	// You shouldn't come here, at least in standard team mode.
+	return Vector(0,0,0);
 }
 
 
@@ -2399,6 +2563,13 @@ void CTFWeaponBase::WeaponReset( void )
 	m_bResetParity = !m_bResetParity;
 
 	m_flEffectBarRegenTime = 0.0f;
+
+	m_flEnergy = Energy_GetMaxEnergy();
+}
+
+void CTFWeaponBase::WeaponRegenerate( void )
+{
+	m_flEnergy = Energy_GetMaxEnergy();
 }
 
 //-----------------------------------------------------------------------------

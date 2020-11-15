@@ -216,18 +216,25 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool CalcIsAttackCriticalHelper();
 	bool IsCurrentAttackACrit() { return m_bCurrentAttackIsCrit; }
 	bool IsCurrentAttackAMiniCrit() { return m_bCurrentAttackIsMiniCrit; }
+	virtual bool CanPerformSecondaryAttack() const;
 
 	// Ammo.
+	virtual int Clip1( void );
 	virtual int	GetMaxClip1( void ) const;
 	virtual int	GetDefaultClip1( void ) const;
+	virtual bool UsesPrimaryAmmo();
+	virtual bool HasAmmo( void );
 
 	// Reloads.
 	virtual bool Reload( void );
 	virtual void AbortReload( void );
 	virtual bool DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
+	virtual void CheckReload( void );
+	virtual void FinishReload( void );
 	void SendReloadEvents();
 	virtual bool CanAutoReload( void ) { return true; }
 	virtual bool ReloadOrSwitchWeapons( void );
+	virtual bool CheckReloadMisfire( void ) { return false; }
 
 	virtual bool CanDrop( void ) { return false; }
 
@@ -292,7 +299,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void	WeaponIdle( void );
 
 	virtual void	WeaponReset( void );
-	virtual void	WeaponRegenerate() {}
+	virtual void	WeaponRegenerate( void );
 
 	// Muzzleflashes
 	virtual const char *GetMuzzleFlashEffectName_3rd( void ) { return NULL; }
@@ -336,8 +343,19 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool		CanDecapitate( void );
 
 	// Energy Weapons
-	bool IsEnergyWeapon(void);
-	float GetEnergyPercentage(void);
+	virtual bool		IsEnergyWeapon(void) const;
+	virtual bool		IsBlastImpactWeapon( void ) const { return false; }
+	float				Energy_GetMaxEnergy( void ) const;
+	float				Energy_GetEnergy( void ) const { return m_flEnergy; }
+	void				Energy_SetEnergy( float flEnergy ) { m_flEnergy = flEnergy; }
+	bool				Energy_FullyCharged( void ) const;
+	bool				Energy_HasEnergy( void );
+	void				Energy_DrainEnergy( void );
+	void				Energy_DrainEnergy( float flDrain );
+	bool				Energy_Recharge( void );
+	virtual float		Energy_GetShotCost( void ) const { return 4.f; }
+	virtual float		Energy_GetRechargeCost( void ) const { return 4.f; }
+	virtual Vector		GetEnergyWeaponColor( bool bUseAlternateColorPalette );
 	
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -446,6 +464,7 @@ protected:
 
 	CNetworkVar( bool,	m_bReloadedThroughAnimEvent );
 	CNetworkVar( float, m_flEffectBarRegenTime );
+	CNetworkVar( float, m_flEnergy );
 
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
