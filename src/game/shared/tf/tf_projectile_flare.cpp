@@ -479,7 +479,7 @@ void CTFProjectile_Flare::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_Flare::OnDataChanged( DataUpdateType_t updateType )
+void C_TFProjectile_Flare::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 		
@@ -490,16 +490,7 @@ void CTFProjectile_Flare::OnDataChanged( DataUpdateType_t updateType )
 		if ( pLauncher )
 		{
 			pLauncher->AddFlare( this );
-		}
-	
-		CreateTrails();		
-	}
-
-	// Watch team changes and change trail accordingly.
-	if ( m_iOldTeamNum && m_iOldTeamNum != m_iTeamNum )
-	{
-		ParticleProp()->StopEmission();
-		CreateTrails();
+		}	
 	}
 }
 
