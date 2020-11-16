@@ -1143,6 +1143,20 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanPerformSecondaryAttack() const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+
+	// Demo shields are allowed to charge whenever
+	if ( pOwner->m_Shared.HasDemoShieldEquipped() )
+		return true;
+
+	return BaseClass::CanPerformSecondaryAttack();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CTFWeaponBase::Clip1( void )
 {
 	if ( IsEnergyWeapon() )

@@ -136,6 +136,10 @@ class ITFChargeUpWeapon
 public:
 	virtual float GetChargeBeginTime( void ) = 0;
 	virtual float GetChargeMaxTime( void ) = 0;
+	virtual float GetCurrentCharge( void )
+	{ 
+		return ( gpGlobals->curtime - GetChargeBeginTime() ) / GetChargeMaxTime();
+	}
 };
 
 //=============================================================================
