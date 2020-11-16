@@ -580,7 +580,7 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bCharged
 		angForward.y += RandomFloat(-flSpread, flSpread);
 	}
 
-	CTFEnergyBall *pProjectile = CTFEnergyBall::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	CTFProjectile_EnergyBall *pProjectile = CTFProjectile_EnergyBall::Create( this, vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );

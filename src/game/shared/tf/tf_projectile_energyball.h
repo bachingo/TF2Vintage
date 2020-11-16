@@ -16,7 +16,7 @@
 #endif
 
 #if defined CLIENT_DLL
-#define CTFEnergyBall C_TFEnergyBall
+#define CTFProjectile_EnergyBall C_TFProjectile_EnergyBall
 #endif
 
 
@@ -25,19 +25,19 @@
 // Generic rocket.
 //
 #ifdef GAME_DLL
-class CTFEnergyBall : public CTFBaseRocket, public IScorer
+class CTFProjectile_EnergyBall : public CTFBaseRocket, public IScorer
 #else
-class CTFEnergyBall : public CTFBaseRocket
+class CTFProjectile_EnergyBall : public CTFBaseRocket
 #endif
 {
 public:
 
-	DECLARE_CLASS( CTFEnergyBall, CTFBaseRocket );
+	DECLARE_CLASS( CTFProjectile_EnergyBall, CTFBaseRocket );
 	DECLARE_NETWORKCLASS();
 
 #ifdef GAME_DLL
 	// Creation.
-	static CTFEnergyBall *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
+	static CTFProjectile_EnergyBall *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
 	void	Spawn();
 	void	Precache();
 
@@ -79,7 +79,10 @@ private:
 public:
 
 #ifdef CLIENT_DLL
-	void 		CreateRocketTrails( void );
+	virtual void CreateTrails( void );
+	virtual const char *GetTrailParticleName( void );
+
+	HPARTICLEFFECT m_hEffect;
 #endif
 };
 

@@ -21,12 +21,12 @@
 //
 #define ENERGYBALL_MODEL "models/weapons/w_models/w_drg_ball.mdl"
 
-LINK_ENTITY_TO_CLASS( tf_projectile_energy_ball, CTFEnergyBall );
+LINK_ENTITY_TO_CLASS( tf_projectile_energy_ball, CTFProjectile_EnergyBall );
 PRECACHE_REGISTER( tf_projectile_energy_ball );
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFEnergyBall, DT_TFProjectile_EnergyBall )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_EnergyBall, DT_TFProjectile_EnergyBall )
 
-BEGIN_NETWORK_TABLE( CTFEnergyBall, DT_TFProjectile_EnergyBall )
+BEGIN_NETWORK_TABLE( CTFProjectile_EnergyBall, DT_TFProjectile_EnergyBall )
 #ifdef CLIENT_DLL
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 	RecvPropBool( RECVINFO( m_bChargedShot ) ),
@@ -46,7 +46,7 @@ extern ConVar tf_rocket_show_radius;
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFEnergyBall::Precache()
+void CTFProjectile_EnergyBall::Precache()
 {
 	PrecacheModel( ENERGYBALL_MODEL );
 	PrecacheScriptSound( "Weapon_CowMangler.Explode" );
@@ -63,9 +63,9 @@ void CTFEnergyBall::Precache()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFEnergyBall *CTFEnergyBall::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
+CTFProjectile_EnergyBall *CTFProjectile_EnergyBall::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
 {
-	CTFEnergyBall *pEnergyBall = static_cast<CTFEnergyBall*>( CTFBaseRocket::Create( pWeapon, "tf_projectile_energy_ball", vecOrigin, vecAngles, pOwner ) );
+	CTFProjectile_EnergyBall *pEnergyBall = static_cast<CTFProjectile_EnergyBall*>( CTFBaseRocket::Create( pWeapon, "tf_projectile_energy_ball", vecOrigin, vecAngles, pOwner ) );
 
 	if ( pEnergyBall )
 	{
@@ -79,7 +79,7 @@ CTFEnergyBall *CTFEnergyBall::Create( CBaseEntity *pWeapon, const Vector &vecOri
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CBasePlayer *CTFEnergyBall::GetScorer( void )
+CBasePlayer *CTFProjectile_EnergyBall::GetScorer( void )
 {
 	if (dynamic_cast<CBasePlayer *>( m_Scorer.Get() ))
 		return dynamic_cast<CBasePlayer *>( m_Scorer.Get() );
@@ -90,7 +90,7 @@ CBasePlayer *CTFEnergyBall::GetScorer( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFEnergyBall::SetScorer(CBaseEntity *pScorer)
+void CTFProjectile_EnergyBall::SetScorer(CBaseEntity *pScorer)
 {
 	m_Scorer = pScorer;
 }
@@ -98,7 +98,7 @@ void CTFEnergyBall::SetScorer(CBaseEntity *pScorer)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFEnergyBall::Spawn()
+void CTFProjectile_EnergyBall::Spawn()
 {
 	UseClientSideAnimation();
 	SetModel( ENERGYBALL_MODEL );
@@ -108,7 +108,7 @@ void CTFEnergyBall::Spawn()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-float CTFEnergyBall::GetDamage( void )
+float CTFProjectile_EnergyBall::GetDamage( void )
 {
 	float flDamage = BaseClass::GetDamage();
 	if ( m_bCritical )
@@ -119,7 +119,7 @@ float CTFEnergyBall::GetDamage( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-float CTFEnergyBall::GetRadius( void )
+float CTFProjectile_EnergyBall::GetRadius( void )
 {
 	float flRadius = BaseClass::GetRadius();
 	// Increase radius on charged shots.
@@ -131,7 +131,7 @@ float CTFEnergyBall::GetRadius( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int	CTFEnergyBall::GetDamageType() 
+int	CTFProjectile_EnergyBall::GetDamageType() 
 { 
 	int iDmgType = BaseClass::GetDamageType();
 	
@@ -145,12 +145,12 @@ int	CTFEnergyBall::GetDamageType()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFEnergyBall::GetDamageCustom()
+int CTFProjectile_EnergyBall::GetDamageCustom()
 {
 	return m_bChargedShot ? TF_DMG_CUSTOM_PLASMA_CHARGED : TF_DMG_CUSTOM_PLASMA;
 }
 
-void CTFEnergyBall::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
+void CTFProjectile_EnergyBall::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
 	CTFPlayer *pDeflector = ToTFPlayer( pDeflectedBy );
 	if ( !pDeflector )
@@ -206,7 +206,7 @@ void CTFEnergyBall::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFEnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
+void CTFProjectile_EnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 {
 #ifdef GAME_DLL
 	// Save this entity as enemy, they will take 100% damage.
@@ -300,7 +300,7 @@ void CTFEnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const char *CTFEnergyBall::GetExplosionParticleName( void )
+const char *CTFProjectile_EnergyBall::GetExplosionParticleName( void )
 {
 	if ( m_bChargedShot )
 	{
@@ -316,35 +316,51 @@ const char *CTFEnergyBall::GetExplosionParticleName( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFEnergyBall::CreateRocketTrails( void )
+const char *C_TFProjectile_EnergyBall::GetTrailParticleName( void )
+{
+	if ( m_bChargedShot )
+	{
+		return ( GetTeamNumber() == TF_TEAM_RED ) ? "drg_cow_rockettrail_charged" : "drg_cow_rockettrail_charged_blue";
+	}
+	else
+	{
+		return ( GetTeamNumber() == TF_TEAM_RED ) ? "drg_cow_rockettrail_normal" : "drg_cow_rockettrail_normal_blue";
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_EnergyBall::CreateTrails( void )
 {
 	if ( IsDormant() )
 		return;
 
-	int iAttachment = LookupAttachment( "trail" );
-	if( iAttachment > -1 )
+	if ( m_hEffect )
+		ParticleProp()->StopEmission( m_hEffect );
+
+	ParticleProp()->Init( this );
+	m_hEffect = ParticleProp()->Create( GetTrailParticleName(), PATTACH_ABSORIGIN_FOLLOW );
+
+	if ( m_hEffect != NULL )
 	{
-		if (m_bCritical || IsChargedShot())
+		if ( m_iDeflected != m_iOldDeflected )
 		{
-			if (m_hLauncher.Get() && m_hLauncher.Get()->GetTeamNumber() == TF_TEAM_BLUE)
+			if ( GetTeamNumber() == TF_TEAM_BLUE )
 			{
-				ParticleProp()->Create("drg_cow_rockettrail_normal_blue", PATTACH_POINT_FOLLOW, iAttachment);
+				m_hEffect->SetControlPoint( CUSTOM_COLOR_CP1, Vector( 0.345, 0.52, 0.635 ) );
+				m_hEffect->SetControlPoint( CUSTOM_COLOR_CP2, Vector( 0.145, 0.427, 0.55 ) );
 			}
 			else
 			{
-				ParticleProp()->Create("drg_cow_rockettrail_charged", PATTACH_POINT_FOLLOW, iAttachment);
+				m_hEffect->SetControlPoint( CUSTOM_COLOR_CP1, Vector( 0.72, 0.22, 0.23 ) );
+				m_hEffect->SetControlPoint( CUSTOM_COLOR_CP2, Vector( 0.5, 0.18, 0.125 ) );
 			}
 		}
 		else
 		{
-			if (m_hLauncher.Get() && m_hLauncher.Get()->GetTeamNumber() == TF_TEAM_BLUE)
-			{
-				ParticleProp()->Create("drg_cow_rockettrail_normal_blue", PATTACH_POINT_FOLLOW, iAttachment);
-			}
-			else
-			{
-				ParticleProp()->Create("drg_cow_rockettrail_normal", PATTACH_POINT_FOLLOW, iAttachment);
-			}
+			m_hEffect->SetControlPoint( CUSTOM_COLOR_CP1, m_vColor1 );
+			m_hEffect->SetControlPoint( CUSTOM_COLOR_CP2, m_vColor2 );
 		}
 	}
 }
