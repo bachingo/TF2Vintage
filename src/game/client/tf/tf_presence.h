@@ -44,7 +44,14 @@ private:
 
 };
 
-namespace discord { class Core; class Activity; class User; }
+namespace discord
+{
+	class Core;
+	class Activity;
+	class User;
+	enum class LogLevel;
+	enum class Result;
+}
 #define DISCORD_FIELD_MAXLEN 128
 
 class CTFDiscordPresence : public CAutoGameSystemPerFrame, public CGameEventListener
@@ -63,12 +70,11 @@ public:
 	virtual void		LevelInitPostEntity( void );
 	virtual void		LevelShutdownPreEntity( void );
 
-	void				Reset( void );
+	void				ResetPresence( void );
 	void				UpdatePresence( bool bForce = false, bool bIsDead = false );
 	void				SetLevelName( char const *pMapName ) { Q_strncpy( m_szMapName, pMapName, MAX_MAP_NAME ); }
 
 private:
-	// Updates run asyncrhonous, so stack allocation in a no go
 	char m_szMapName[ MAX_MAP_NAME ];
 	char m_szHostName[ DISCORD_FIELD_MAXLEN ];
 	char m_szServerInfo[ DISCORD_FIELD_MAXLEN ];
@@ -78,11 +84,18 @@ private:
 	char m_szClassName[ DISCORD_FIELD_MAXLEN ];
 
 	RealTimeCountdownTimer m_updateThrottle;
-	int64 m_iCreationTimestamp;
+	long m_iCreationTimestamp;
 
 	static discord::Core *m_pCore;
 	static discord::Activity m_Activity;
 	static discord::User m_CurrentUser;
+
+	static void OnReady();
+	static void OnJoinedGame( char const *joinSecret );
+	static void OnSpectateGame( char const *joinSecret );
+	static void OnJoinRequested( discord::User const &joinRequester );
+	static void OnLogMessage( discord::LogLevel logLevel, char const *pszMessage );
+	static void OnActivityUpdate( discord::Result result );
 };
 
 extern CTFDiscordPresence *rpc;

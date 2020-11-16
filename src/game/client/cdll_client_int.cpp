@@ -141,9 +141,6 @@
 #include "haptics/haptic_msgs.h"
 
 // Discord RPC
-#include "discord.h"
-ConVar cl_discord_appid( "cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_PROTECTED, "This is for your Client ID for Discord Applications and is unique per sourcemod." );
-
 #ifdef TF_VINTAGE_CLIENT
 #include "tf_presence.h"
 #endif
@@ -1321,14 +1318,14 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	// Discord RPC
 	if (!g_bTextMode)
 	{
-		discord::Core *core{};
+		/*discord::Core *core{};
 		auto result = discord::Core::Create( V_atoi64( cl_discord_appid.GetString() ), DiscordCreateFlags_NoRequireDiscord, &core );
 		if ( result != discord::Result::Ok )
 			return true;
 
 		char command[512];
 		V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
-		core->ActivityManager().RegisterCommand( command );
+		core->ActivityManager().RegisterCommand( command );*/
 	}
 
 	return true;

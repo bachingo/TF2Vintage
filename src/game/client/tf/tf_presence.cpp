@@ -22,8 +22,6 @@
 #include "steam/steam_api.h"
 #include "tier0/icommandline.h"
 #include "discord.h"
-#include <time.h>
-#include <functional>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -102,7 +100,7 @@ static s_PresenceTranslation s_PresenceValues[] = {
 //-----------------------------------------------------------------------------
 // Discord RPC
 //-----------------------------------------------------------------------------
-extern ConVar cl_discord_appid;
+ConVar cl_discord_appid( "cl_discord_appid", "451227888230858752", FCVAR_DEVELOPMENTONLY | FCVAR_PROTECTED, "This is for your Client ID for Discord Applications and is unique per sourcemod." );
 ConVar cl_discord_presence_enabled( "cl_discord_presence_enabled", "1", FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED );
 
 struct DRPClassImages_t
@@ -574,6 +572,9 @@ void CTFPresence::UploadStats()
 #endif
 }
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 
 discord::Core *CTFDiscordPresence::m_pCore{};
 discord::Activity CTFDiscordPresence::m_Activity{};
@@ -583,7 +584,7 @@ CTFDiscordPresence::CTFDiscordPresence()
 	: BaseClass( "TFDiscordPresence" )
 {
 	Q_memset( m_szMapName, 0, sizeof( m_szMapName ) );
-	m_iCreationTimestamp = time( NULL );
+	VCRHook_Time( &m_iCreationTimestamp );
 
 	ListenForGameEvent( "server_spawn" );
 }
@@ -665,18 +666,38 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------
 bool CTFDiscordPresence::Init( void )
 {
-	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
+	if ( !cl_discord_presence_enabled.GetBool() )
+		return true;
+
 	auto result = discord::Core::Create( V_atoi64( cl_discord_appid.GetString() ), DiscordCreateFlags_NoRequireDiscord, &m_pCore );
 	if ( result != discord::Result::Ok )
-		return false;
+		return true;
+
+	// Work around for contained pointers being garbage initialized,
+	// zero out memory *after* core is created, and offset past the inner core pointer
+	intp const nOffset = sizeof(IDiscordCore *) + sizeof(discord::Event<discord::LogLevel, char const *>);
+	Q_memset( (void *)((intp)m_pCore + nOffset), 0, sizeof(discord::Core) - sizeof(IDiscordCore *) );
+
+	m_pCore->SetLogHook(
+	#ifdef DEBUG
+		discord::LogLevel::Debug,
+	#else
+		discord::LogLevel::Warn,
+	#endif
+		&OnLogMessage
+	);
+
+	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
+	m_pCore->UserManager().OnCurrentUserUpdate.Connect( &OnReady );
 
 	char command[512];
 	V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
 	m_pCore->ActivityManager().RegisterCommand( command );
-	m_pCore->ActivityManager().RegisterSteam( engine->GetAppID() );
+	//m_pCore->ActivityManager().RegisterSteam( engine->GetAppID() );
 
-	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
-	m_pCore->UserManager().GetCurrentUser( &m_CurrentUser );
+	m_pCore->ActivityManager().OnActivityJoin.Connect( &OnJoinedGame );
+	m_pCore->ActivityManager().OnActivityJoinRequest.Connect( &OnJoinRequested );
+	m_pCore->ActivityManager().OnActivitySpectate.Connect( &OnSpectateGame );
 
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "localplayer_changeclass" );
@@ -686,8 +707,6 @@ bool CTFDiscordPresence::Init( void )
 	ListenForGameEvent( "player_disconnect" );
 	ListenForGameEvent( "client_fullconnect" );
 	ListenForGameEvent( "client_disconnect" );
-
-	Reset();
 
 	return true;
 }
@@ -713,23 +732,21 @@ void CTFDiscordPresence::Shutdown( void )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::Update( float frametime )
 {
-	if ( !engine->IsConnected() || m_szMapName[0] == '\0' )
-		return;
-
 	UpdatePresence();
 
 	if ( gpGlobals->tickcount % 2 )
 		m_pCore->RunCallbacks();
 }
-/*
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnReady( const DiscordUser* user )
+void CTFDiscordPresence::OnReady()
 {
-	if (!cl_discord_presence_enabled.GetBool())
+	if ( !cl_discord_presence_enabled.GetBool() )
 	{
-		Discord_Shutdown();
+		if ( m_pCore )
+			delete m_pCore;
 
 		if ( steamapicontext->SteamFriends() )
 			steamapicontext->SteamFriends()->ClearRichPresence();
@@ -737,26 +754,12 @@ void CTFDiscordPresence::OnReady( const DiscordUser* user )
 		return;
 	}
 
+	m_pCore->UserManager().GetCurrentUser( &m_CurrentUser );
+
 	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Ready!\n" );
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] User %s#%s - %s\n", user->username, user->discriminator, user->userId );
-	
-	rpc->Reset();
-}
+	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] User %s#%s - %lld\n", m_CurrentUser.GetUsername(), m_CurrentUser.GetDiscriminator(), m_CurrentUser.GetId() );
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnDisconnected( int errorCode, const char *szMessage )
-{
-	Warning( "[DRP] Rich presence disconnected. code %d - reason: %s\n", errorCode, szMessage );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnError( int errorCode, const char *szMessage )
-{
-	Warning( "[DRP] Rich presence failure. code %d - error: %s\n", errorCode, szMessage );
+	rpc->ResetPresence();
 }
 
 //-----------------------------------------------------------------------------
@@ -781,14 +784,42 @@ void CTFDiscordPresence::OnSpectateGame( const char *spectateSecret )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnJoinRequested( const DiscordUser *joinRequest )
+void CTFDiscordPresence::OnJoinRequested( const discord::User &joinRequester )
 {
 	// TODO: Popup dialog
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Request: %s#%s\n", joinRequest->username, joinRequest->discriminator );
+	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Request: %s#%s\n", joinRequester.GetUsername(), joinRequester.GetDiscriminator() );
 	ConColorMsg( Color( 114, 137, 218, 255 ), "[Rich Presence] Join Request Accepted\n" );
-	Discord_Respond( joinRequest->userId, DISCORD_REPLY_YES );
+	
+	m_pCore->ActivityManager().SendRequestReply( joinRequester.GetId(), discord::ActivityJoinRequestReply::Yes, [ ] ( discord::Result result ) {} );
 }
-*/
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnLogMessage( discord::LogLevel logLevel, char const *pszMessage )
+{
+	switch ( logLevel )
+	{
+		case discord::LogLevel::Error:
+		case discord::LogLevel::Warn:
+			Warning( "[DRP] %s\n", pszMessage );
+			break;
+		default:
+			ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] %s\n", pszMessage );
+			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnActivityUpdate( discord::Result result )
+{
+#ifdef DEBUG
+	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Activity update: %s\n", ( ( result == discord::Result::Ok ) ? "Succeeded" : "Failed" ) );
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Map initialization
 //-----------------------------------------------------------------------------
@@ -836,9 +867,7 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 		steamapicontext->SteamFriends()->SetRichPresence( "steam_display", m_szMapName );
 	}
 
-	m_pCore->ActivityManager().UpdateActivity( m_Activity, [ ] ( discord::Result result ) {
-		ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Activity update: %s\n", ( (result == discord::Result::Ok) ? "Ok" : "Failed" ) ); 
-	} );
+	m_pCore->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
 
 //-----------------------------------------------------------------------------
@@ -846,13 +875,20 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::LevelShutdownPreEntity( void )
 {
-	Reset();
+	ResetPresence();
+
+	long mapEndTime;
+	VCRHook_Time( &mapEndTime );
+
+	m_Activity.GetTimestamps().SetEnd( mapEndTime );
+
+	m_pCore->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Revert to default state
 //-----------------------------------------------------------------------------
-void CTFDiscordPresence::Reset( void )
+void CTFDiscordPresence::ResetPresence( void )
 {
 	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
 
@@ -868,9 +904,7 @@ void CTFDiscordPresence::Reset( void )
 	m_Activity.SetDetails( "Main Menu" );
 	m_Activity.GetAssets().SetLargeImage( "tf2v_drp_logo" );
 	m_Activity.GetTimestamps().SetStart( m_iCreationTimestamp );
-	m_pCore->ActivityManager().UpdateActivity( m_Activity, [ ] ( discord::Result result ) {
-		ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Activity update: %s\n", ( (result == discord::Result::Ok) ? "Ok" : "Failed" ) ); 
-	} );
+	m_pCore->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
 
 //-----------------------------------------------------------------------------
@@ -909,7 +943,5 @@ void CTFDiscordPresence::UpdatePresence( bool bForce, bool bIsDead )
 			break;
 	}
 
-	m_pCore->ActivityManager().UpdateActivity( m_Activity, [ ] ( discord::Result result ) {
-		ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Activity update: %s\n", ( (result == discord::Result::Ok) ? "Ok" : "Failed" ) ); 
-	} );
+	m_pCore->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
