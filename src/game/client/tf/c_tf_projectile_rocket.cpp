@@ -37,24 +37,12 @@ C_TFProjectile_Rocket::~C_TFProjectile_Rocket( void )
 void C_TFProjectile_Rocket::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged(updateType);
-
-	if ( updateType == DATA_UPDATE_CREATED )
-	{
-		CreateRocketTrails();		
-	}
-
-	// Watch team changes and change trail accordingly.
-	if ( m_iOldTeamNum && m_iOldTeamNum != m_iTeamNum )
-	{
-		ParticleProp()->StopEmission();
-		CreateRocketTrails();
-	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFProjectile_Rocket::CreateRocketTrails( void )
+void C_TFProjectile_Rocket::CreateTrails( void )
 {
 	if ( IsDormant() )
 		return;
@@ -103,13 +91,13 @@ void C_TFProjectile_Rocket::CreateRocketTrails( void )
 
 const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
 {
-	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
-		return "halloween_rockettrail";
-	
 	int nUseMiniRockets = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nUseMiniRockets, mini_rockets );
 	if ( nUseMiniRockets == 1 )
 		return "rockettrail_airstrike";
+
+	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
+		return "halloween_rockettrail";
 
 	return "rockettrail";
 }
