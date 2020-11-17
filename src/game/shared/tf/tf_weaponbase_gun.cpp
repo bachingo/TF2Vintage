@@ -1114,8 +1114,11 @@ int CTFWeaponBaseGun::GetAmmoPerShot( void ) const
 void CTFWeaponBaseGun::RemoveAmmo( CTFPlayer *pPlayer )
 {
 #ifndef CLIENT_DLL
-
-	if (UsesClipsForAmmo1())
+	if (IsEnergyWeapon())
+	{
+		Energy_DrainEnergy();
+	}
+	else if (UsesClipsForAmmo1())
 	{
 		m_iClip1 -= GetAmmoPerShot();
 	}
@@ -1123,14 +1126,14 @@ void CTFWeaponBaseGun::RemoveAmmo( CTFPlayer *pPlayer )
 	{
 		if (m_iWeaponMode == TF_WEAPON_PRIMARY_MODE)
 		{
-			if ( !BaseClass::IsEnergyWeapon() )
+			if (!IsEnergyWeapon())
 				pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iPrimaryAmmoType );
 			if (0 < m_iRefundedAmmo)
 				pPlayer->GiveAmmo( m_iRefundedAmmo, m_iPrimaryAmmoType );
 		}
 		else
 		{
-			if ( !BaseClass::IsEnergyWeapon() )
+			if (!IsEnergyWeapon())
 				pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iSecondaryAmmoType );
 			if (0 < m_iRefundedAmmo)
 				pPlayer->GiveAmmo( m_iRefundedAmmo, m_iSecondaryAmmoType );
