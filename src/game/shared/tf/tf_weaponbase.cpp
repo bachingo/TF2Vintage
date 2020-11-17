@@ -889,11 +889,20 @@ void CTFWeaponBase::UpdatePlayerBodygroups( int bOnOff )
 bool CTFWeaponBase::IsViewModelFlipped( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner == NULL )
+		return false;
 
-	if ( pOwner )
+#ifdef GAME_DLL
+	if ( m_bFlipViewModel != pOwner->ShouldFlipViewModel() )
 	{
-		return ( m_bFlipViewModel != pOwner->ShouldFlipViewModel() );
+		return true;
 	}
+#else
+	if ( m_bFlipViewModel != cl_flipviewmodels.GetBool() )
+	{
+		return true;
+	}
+#endif
 
 	return false;
 }
@@ -2484,7 +2493,6 @@ void CTFWeaponBase::WeaponRegenerate( void )
 // TFWeaponBase functions (Server specific).
 //
 #if !defined( CLIENT_DLL )
-
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
