@@ -1140,24 +1140,6 @@ void CTFWeaponBaseGun::RemoveAmmo( CTFPlayer *pPlayer )
 	}
 #endif
 }
-//-----------------------------------------------------------------------------
-// Purpose: Accessor for damage, so sniper etc can modify damage
-//-----------------------------------------------------------------------------
-float CTFWeaponBaseGun::GetProjectileSpeed( void )
-{
-	// placeholder for now
-	// grenade launcher and pipebomb launcher hook this to set variable pipebomb speed
-
-	return 0;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Accessor for gravity, so sniper etc can modify gravity
-//-----------------------------------------------------------------------------
-float CTFWeaponBaseGun::GetProjectileGravity(void)
-{
-	return 0.001f;
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: Accessor for huntsman flame arrow

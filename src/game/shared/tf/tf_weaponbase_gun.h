@@ -66,8 +66,9 @@ public:
 	CBaseEntity *FireGrenade( CTFPlayer *pPlayer );
 
 	virtual float GetWeaponSpread( void );
-	virtual float GetProjectileSpeed( void );
-	virtual float GetProjectileGravity( void );
+	virtual float GetProjectileSpeed( void ) { return 0.0f; }
+	virtual float GetProjectileGravity( void ) { return 0.001f; }
+	virtual float GetProjectileSpread( void ) { return 0.0f; }
 	virtual bool  IsFlameArrow( void );
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
