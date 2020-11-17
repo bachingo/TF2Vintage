@@ -116,6 +116,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	CalcIsAttackCritical();
 
 #ifndef CLIENT_DLL
+	pPlayer->RemoveInvisibility();
 
 	// Minigun has custom handling
 	if ( GetWeaponID() != TF_WEAPON_MINIGUN )
