@@ -150,6 +150,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bReloadedThroughAnimEvent ) ),
 	RecvPropTime( RECVINFO( m_flLastFireTime ) ),
 	RecvPropTime( RECVINFO( m_flEffectBarRegenTime ) ),
+	RecvPropFloat( RECVINFO( m_flEnergy ) ),
 
 	RecvPropInt( RECVINFO( m_nSequence ), 0, RecvProxy_WeaponSequence ),
 // Server specific.
@@ -160,6 +161,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropBool( SENDINFO( m_bReloadedThroughAnimEvent ) ),
 	SendPropTime( SENDINFO( m_flLastFireTime ) ),
 	SendPropTime( SENDINFO( m_flEffectBarRegenTime ) ),
+	SendPropFloat( SENDINFO( m_flEnergy ) ),
 
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropInt( SENDINFO( m_nSequence ), ANIMATION_SEQUENCE_BITS, SPROP_UNSIGNED ),
@@ -171,7 +173,10 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bLowered, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD_TOL( m_flLastCritCheckTime, FIELD_FLOAT, 0, TD_MSECTOLERANCE ),
 	DEFINE_PRED_FIELD_TOL( m_flLastFireTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),
+	DEFINE_PRED_FIELD( m_bCurrentAttackIsCrit, FIELD_BOOLEAN, 0 ),
+	DEFINE_PRED_FIELD( m_flEnergy, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flEffectBarRegenTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 #endif
 END_PREDICTION_DATA()
@@ -792,8 +797,7 @@ bool CTFWeaponBase::Deploy( void )
 		float flDeployTime = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTime, mult_deploy_time );
 		CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time );
-		
-		
+
 		if (tf2v_use_new_axtinguisher.GetInt() == 2)
 			CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time_axtinguisher_2 );
 		else if (tf2v_use_new_axtinguisher.GetInt() == 3)
