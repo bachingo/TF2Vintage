@@ -110,10 +110,7 @@ void CTFProjectile_EnergyBall::Spawn()
 //-----------------------------------------------------------------------------
 float CTFProjectile_EnergyBall::GetDamage( void )
 {
-	float flDamage = BaseClass::GetDamage();
-	if ( m_bCritical )
-		flDamage *= 3.0f;
-	return flDamage;
+	return m_flDamage;
 }
 
 //-----------------------------------------------------------------------------
@@ -136,7 +133,7 @@ int	CTFProjectile_EnergyBall::GetDamageType()
 	int iDmgType = BaseClass::GetDamageType();
 	
 	// Charged shots ignite targets.
-	if (IsChargedShot() )
+	if ( IsChargedShot() )
 		iDmgType |= DMG_IGNITE;
 
 	return iDmgType;
