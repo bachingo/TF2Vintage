@@ -139,7 +139,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay );
 	
 	if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-			CALL_ATTRIB_HOOK_FLOAT( flFireDelay, rocketjump_attackrate_bonus );
+		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, rocketjump_attackrate_bonus );
 		
 	float flHealthModFireBonus = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flHealthModFireBonus, mult_postfiredelay_with_reduced_health );
@@ -402,7 +402,7 @@ void CTFWeaponBaseGun::GetProjectileReflectSetup( CTFPlayer *pPlayer, const Vect
 void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates /* = true */, bool bUseHitboxes /* = false */ )
 {
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+	AngleVectors( GetSpreadAngles(), &vecForward, &vecRight, &vecUp );
 
 	Vector vecShootPos = pPlayer->Weapon_ShootPosition();
 
@@ -476,6 +476,22 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 		VectorAngles( endPos - *vecSrc, *angForward );
 	}
 	
+}
+
+QAngle CTFWeaponBaseGun::GetSpreadAngles( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	QAngle angSpread = pOwner->EyeAngles();
+
+	float flSpreadAngle = 0.0f; 
+	CALL_ATTRIB_HOOK_FLOAT( flSpreadAngle, projectile_spread_angle );
+	if ( flSpreadAngle )
+	{
+		angSpread.x += RandomFloat( -flSpreadAngle, flSpreadAngle );
+		angSpread.y += RandomFloat( -flSpreadAngle, flSpreadAngle );
+	}
+
+	return angSpread;
 }
 
 //-----------------------------------------------------------------------------
