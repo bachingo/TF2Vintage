@@ -59,7 +59,7 @@ extern ConVar tf2v_muzzlelight;
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
 ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
 ConVar tf2v_use_new_weapon_swap_speed( "tf2v_use_new_weapon_swap_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables faster weapon switching." );
-ConVar tf_dev_marked_for_death_lifetime( "tf_dev_marked_for_death_lifetime", "1", FCVAR_DEVELOPMENTONLY );
+ConVar tf_dev_marked_for_death_lifetime( "tf_dev_marked_for_death_lifetime", "1", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
 
 //=============================================================================
 //
@@ -2333,8 +2333,8 @@ bool CTFWeaponBase::IsHonorBound( void ) const
 //-----------------------------------------------------------------------------
 {
 	int nHonorBound = 0;
-	CALL_ATTRIB_HOOK_INT( nHonorBound, "honorbound" );
-	return nHonorBound == 1;
+	CALL_ATTRIB_HOOK_INT( nHonorBound, honorbound );
+	return ( nHonorBound != 0 );
 }
 
 
@@ -2362,7 +2362,7 @@ bool CTFWeaponBase::IsPenetrating(void)
 bool CTFWeaponBase::CanDecapitate( void )
 {			 
 	int nDecapitateType = 0;
-	CALL_ATTRIB_HOOK_INT(nDecapitateType, decapitate_type);
+	CALL_ATTRIB_HOOK_INT( nDecapitateType, decapitate_type );
 	return ( nDecapitateType != 0 );
 }
 
