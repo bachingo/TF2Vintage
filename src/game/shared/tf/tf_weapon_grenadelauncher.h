@@ -47,8 +47,13 @@ public:
 	virtual bool	Deploy( void );
 	virtual void	WeaponReset(void);
 	virtual void	PrimaryAttack( void );
+	virtual void	FireFullClipAtOnce( void );
+	virtual void	Misfire( void );
 	virtual void	WeaponIdle( void );
+	virtual void	ItemPostFrame( void );
 	virtual float	GetProjectileSpeed( void );
+
+	virtual bool	IsBlastImpactWeapon( void ) const { return true; }
 
 	virtual bool	Reload( void );
 
@@ -61,14 +66,23 @@ public:
 
 	// Mortar.
 	bool IsMortar(void) const;
-	int  MortarTime(void);
+	float GetMortarTimeLength(void);
 	
 	// ITFChargeUpWeapon
 	// These are inverted compared to the regular to compensate for HUD.
-	virtual float	GetChargeBeginTime(void) { return m_flChargeBeginTime + MortarTime(); }
+	virtual float	GetChargeBeginTime(void) { return m_flChargeBeginTime + GetMortarTimeLength(); }
 	virtual float	GetChargeMaxTime( void ) { return m_flChargeBeginTime; }
-	
-	float	m_flChargeBeginTime;
+
+public:
+
+	CBaseEntity *FireProjectileInternal( CTFPlayer *pPlayer );
+	void LaunchGrenade( void );
+
+private:
+
+	CTFGrenadeLauncher( const CTFGrenadeLauncher & ) {}
+
+	CNetworkVar( float, m_flChargeBeginTime );
 
 #ifdef CLIENT_DLL
 	void				ToggleCannonFuse();
@@ -81,15 +95,7 @@ public:
 		CHandle <CBaseEntity> m_hDonk;
 		float m_flDonkTime;
 	};
-
-public:
-
-	CBaseEntity *FireProjectileInternal( CTFPlayer *pPlayer );
-	void LaunchGrenade( void );
-
-private:
-
-	CTFGrenadeLauncher( const CTFGrenadeLauncher & ) {}
+	CUtlVector<Donk_t> m_DonkVictims;
 };
 
 // Cannon.
