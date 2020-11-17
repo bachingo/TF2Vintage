@@ -125,8 +125,12 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
 #endif
 
-	// Set the weapon mode.
-	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+	// Minigun has custom handling
+	if ( GetWeaponID() != TF_WEAPON_MINIGUN )
+	{
+		// Set the weapon mode.
+		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+	}
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
@@ -538,14 +542,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bCharged /* ==false */ )
 {
-	if ( IsCurrentAttackACrit() || bCharged )
-	{
-		WeaponSound( BURST );
-	}
-	else
-	{
-		WeaponSound( SINGLE );
-	}
+	PlayWeaponShootSound();
 
 	// Server only - create the rocket.
 #ifdef GAME_DLL
@@ -721,6 +718,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		pProjectile->SetWeaponID( GetWeaponID() );
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 #ifdef GAME_DLL
+		pProjectile->SetLauncher( this );
 		pProjectile->SetDamage( GetProjectileDamage() );
 #endif
 	}
