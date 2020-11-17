@@ -1427,72 +1427,6 @@ bool CTFWeaponBase::ReloadSingly( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Explodes the player if we cause a misfire.
-//-----------------------------------------------------------------------------
-void CTFWeaponBase::Overload(void)
-{
-	CTFPlayer *pTFOwner = GetTFPlayerOwner();
-
-	if (!pTFOwner)
-		return;
-
-	// Base logic.
-
-	// If we're empty, don't misfire.
-	if (m_iClip1 == 0)
-		m_bIsOverLoaded = false;
-
-	// If we're not overloaded, don't even bother to explode.
-	if (!m_bIsOverLoaded)
-		return;
-
-	// Deduct a round.
-	if (m_iClip1 > 0 && ( ( GetWeaponID() != TF_WEAPON_ROCKETLAUNCHER ) || ( ( GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER ) && tf2v_use_new_beggars.GetBool() ) ) )
-		m_iClip1 -= 1;
-
-#ifdef GAME_DLL
-
-	// Use a rocket launcher's explosion as a base.
-	// We essentially spawn a rocket's explosion where our weapon is attacking.
-
-	// Figure out Econ ID.
-	int iItemID = GetItemID();
-
-	// Play explosion sound and effect.
-
-	Vector vecOrigin = pTFOwner->Weapon_ShootPosition();
-	CPVSFilter filter(vecOrigin);
-	TE_TFExplosion(filter, 0.0f, vecOrigin, Vector(0.0f, 0.0f, 1.0f), GetWeaponID(), pTFOwner->entindex(), iItemID);
-	CSoundEnt::InsertSound(SOUND_COMBAT, vecOrigin, 1024, 3.0);
-
-
-	// Damage.
-	CBaseEntity *pAttacker = GetOwnerEntity();
-	IScorer *pScorerInterface = dynamic_cast<IScorer*>(pAttacker);
-	if (pScorerInterface)
-	{
-		pAttacker = pScorerInterface->GetScorer();
-	}
-
-	float flRadius = TF_ROCKET_RADIUS;
-	CALL_ATTRIB_HOOK_FLOAT(flRadius, mult_explosion_radius);
-	float flDamage = (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
-	CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg);
-
-	CTakeDamageInfo newInfo(pAttacker, pAttacker, this, vec3_origin, vecOrigin, flDamage, GetDamageType());
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = vecOrigin;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
-
-	TFGameRules()->RadiusDamage(radiusInfo);
-
-#endif
-
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pEvent - 
 //			*pOperator - 
@@ -1826,6 +1760,11 @@ void CTFWeaponBase::ItemPostFrame( void )
 	if ( ReloadsSingly() )
 	{
 		ReloadSinglyPostFrame();
+	}
+
+	if ( AutoFiresFullClip() && AutoFiresFullClipAllAtOnce() && m_iClip1 == GetMaxClip1() )
+	{
+		FireFullClipAtOnce();
 	}
 }
 
@@ -2340,16 +2279,47 @@ const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 	return "\0";
 }
 
-bool CTFWeaponBase::IsHonorBound( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFWeaponBase::AutoFiresFullClip( void ) const
+{
+	int nAutoFiresFullClip = 0;
+	CALL_ATTRIB_HOOK_INT( nAutoFiresFullClip, auto_fires_full_clip );
+
+	return ( nAutoFiresFullClip != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::AutoFiresFullClipAllAtOnce( void ) const
+{
+	int nAutoFiresFullClipAllAtOnce = 0;
+	CALL_ATTRIB_HOOK_INT( nAutoFiresFullClipAllAtOnce, auto_fires_full_clip_all_at_once );
+
+	return ( nAutoFiresFullClipAllAtOnce != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsHonorBound( void )
 {
 	int nHonorBound = 0;
 	CALL_ATTRIB_HOOK_INT( nHonorBound, honorbound );
 	return ( nHonorBound != 0 );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Return if we should not show death notices to enemy
+// ----------------------------------------------------------------------------
+bool CTFWeaponBase::IsSilentKiller( void )
+{
+	int nSilentKiller = 0;
+	CALL_ATTRIB_HOOK_INT( nSilentKiller, set_silent_killer );
+	return ( nSilentKiller != 0 );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for calculating penetrating shots.
@@ -2377,6 +2347,16 @@ bool CTFWeaponBase::CanDecapitate( void )
 	int nDecapitateType = 0;
 	CALL_ATTRIB_HOOK_INT( nDecapitateType, decapitate_type );
 	return ( nDecapitateType != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanOverload( void )
+{			 
+	int nCanOverload = 0;
+	CALL_ATTRIB_HOOK_INT( nCanOverload, can_overload );
+	return ( nCanOverload != 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -2764,16 +2744,6 @@ void CTFWeaponBase::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPl
 
 	if ( pAttacker != GetOwner() )
 		return;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Return if we should not show death notices to enemy
-// ----------------------------------------------------------------------------
-bool CTFWeaponBase::IsSilentKiller( void ) const
-{
-	int nSilentKiller = 0;
-	CALL_ATTRIB_HOOK_INT( nSilentKiller, set_silent_killer );
-	return nSilentKiller == 1;
 }
 
 //-----------------------------------------------------------------------------

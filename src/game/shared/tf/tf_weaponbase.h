@@ -213,14 +213,18 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void UpdateOnRemove( void );
 
 	// Attacks.
+	virtual void Misfire( void ) {}
 	virtual void PrimaryAttack();
 	virtual void SecondaryAttack();
+	virtual void FireFullClipAtOnce( void ) {}
 	void CalcIsAttackCritical( void );
 	void CalcIsAttackMiniCritical( void );
 	virtual bool CalcIsAttackCriticalHelper();
 	bool IsCurrentAttackACrit() { return m_bCurrentAttackIsCrit; }
 	bool IsCurrentAttackAMiniCrit() { return m_bCurrentAttackIsMiniCrit; }
 	virtual bool CanPerformSecondaryAttack() const;
+	virtual bool AutoFiresFullClip( void ) const;
+	virtual bool AutoFiresFullClipAllAtOnce( void ) const;
 
 	// Ammo.
 	virtual int Clip1( void );
@@ -340,10 +344,10 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual float		GetSpeedMod( void ) const { return 1.0f; }
 
-	bool				IsHonorBound( void ) const;
-
-	bool 				IsPenetrating(void);
-	
+	bool				IsHonorBound( void );
+	bool 				IsPenetrating( void );
+	virtual bool		CanOverload( void );
+	bool				IsSilentKiller( void );
 	virtual bool		CanDecapitate( void );
 
 	// Energy Weapons
@@ -381,8 +385,6 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// On hit effects.
 	virtual void ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info );
 	virtual void ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim );
-
-	bool IsSilentKiller( void ) const;
 	
 	virtual bool OwnerCanTaunt( void ) const { return true; }
 
@@ -428,7 +430,6 @@ protected:
 	void SetReloadTimer( float flReloadTime );
 	bool ReloadSingly( void );
 	void ReloadSinglyPostFrame( void );
-	void Overload(void);
 
 	virtual float InternalGetEffectBarRechargeTime( void ) { return 0.0f; }
 
