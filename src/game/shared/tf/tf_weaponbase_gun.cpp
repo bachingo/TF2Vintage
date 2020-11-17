@@ -134,8 +134,6 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	FireProjectile( pPlayer );
 
-	m_flLastFireTime  = gpGlobals->curtime;
-
 	// Set next attack times.
 	float flFireDelay = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
 	CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay );
@@ -143,9 +141,9 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
 			CALL_ATTRIB_HOOK_FLOAT( flFireDelay, rocketjump_attackrate_bonus );
 		
-	float flHealthModFireBonus = 1;
+	float flHealthModFireBonus = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flHealthModFireBonus, mult_postfiredelay_with_reduced_health );
-	if (flHealthModFireBonus != 1)
+	if (flHealthModFireBonus != 1.0f)
 	{
 		flFireDelay *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, flHealthModFireBonus, 1.0 );
 	}
@@ -161,12 +159,16 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 
 	AbortReload();
-	
-	// Put these at the end, so we get the disguise/invis bonuses.
+
 #ifndef CLIENT_DLL
-	pPlayer->RemoveInvisibility();
-	pPlayer->RemoveDisguise();
+	int nKeepDisguise = 0;
+	CALL_ATTRIB_HOOK_INT( nKeepDisguise, keep_disguise_on_attack );
+	if( nKeepDisguise == 0 )
+	{
+		pPlayer->RemoveDisguise();
+	}
 #endif
+	m_flLastFireTime = gpGlobals->curtime;
 }	
 
 //-----------------------------------------------------------------------------
