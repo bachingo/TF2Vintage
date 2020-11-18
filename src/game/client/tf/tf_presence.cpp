@@ -675,8 +675,9 @@ bool CTFDiscordPresence::Init( void )
 
 	// Work around for contained pointers being garbage initialized,
 	// zero out memory *after* core is created, and offset past the inner core pointer
-	intp const nOffset = sizeof(IDiscordCore *) + sizeof(discord::Event<discord::LogLevel, char const *>);
-	Q_memset( (void *)((intp)m_pCore + nOffset), 0, sizeof(discord::Core) - sizeof(IDiscordCore *) );
+	//
+	// This is dumb, and it should feel bad for itself
+	Q_memset( (void *)( (intp)m_pCore + sizeof(IDiscordCore *) ), 0, sizeof(discord::Core) - sizeof(IDiscordCore *) );
 
 	m_pCore->SetLogHook(
 	#ifdef DEBUG
@@ -830,7 +831,7 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 	char buffer[64];
 	Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", m_szMapName );
 	wchar *mapName = g_pVGuiLocalize->Find( buffer );
-	if ( mapName )
+	if ( mapName ) // We assume official maps to have a translation, and we only have images of official maps
 	{
 		g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
 		Q_snprintf( m_szGameState, sizeof( m_szGameState ), "Map: %s", buffer );
@@ -880,9 +881,6 @@ void CTFDiscordPresence::LevelShutdownPreEntity( void )
 	long mapEndTime;
 	VCRHook_Time( &mapEndTime );
 
-	m_Activity.GetTimestamps().SetEnd( mapEndTime );
-
-	m_pCore->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
 
 //-----------------------------------------------------------------------------
