@@ -877,10 +877,6 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 void CTFDiscordPresence::LevelShutdownPreEntity( void )
 {
 	ResetPresence();
-
-	long mapEndTime;
-	VCRHook_Time( &mapEndTime );
-
 }
 
 //-----------------------------------------------------------------------------
