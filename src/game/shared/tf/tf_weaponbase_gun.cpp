@@ -154,6 +154,22 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		flFireDelay *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, flHealthModFireBonus, 1.0 );
 	}
 
+	if ( !UsesClipsForAmmo1() )
+	{
+		float flBaseFireDelay = flFireDelay;
+		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, fast_reload );
+
+		float flPlaybackRate = flBaseFireDelay / (flFireDelay + FLT_EPSILON);
+		if ( pPlayer->GetViewModel( 0 ) )
+		{
+			pPlayer->GetViewModel( 0 )->SetPlaybackRate( flPlaybackRate );
+		}
+		if ( pPlayer->GetViewModel( 1 ) )
+		{
+			pPlayer->GetViewModel( 1 )->SetPlaybackRate( flPlaybackRate );
+		}
+	}
+
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
 
 	// Don't push out secondary attack, because our secondary fire
