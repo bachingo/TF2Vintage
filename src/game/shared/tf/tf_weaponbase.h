@@ -423,6 +423,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
+	virtual void DispatchMuzzleFlash( char const *effectName, C_BaseEntity *pAttachEnt );
 #endif // CLIENT_DLL
 
 	// Reloads.

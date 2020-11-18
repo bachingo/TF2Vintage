@@ -2844,9 +2844,17 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 
 		if ( pszMuzzleFlashParticleEffect ) 
 		{
-			DispatchParticleEffect( pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
+			DispatchMuzzleFlash( pszMuzzleFlashParticleEffect, pAttachEnt );
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::DispatchMuzzleFlash( char const *effectName, C_BaseEntity *pAttachEnt )
+{
+	DispatchParticleEffect( effectName, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
 }
 
 //-----------------------------------------------------------------------------

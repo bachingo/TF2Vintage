@@ -156,10 +156,10 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	if ( !UsesClipsForAmmo1() )
 	{
-		float flBaseFireDelay = flFireDelay;
+		const float flBaseFireDelay = flFireDelay;
 		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, fast_reload );
 
-		float flPlaybackRate = flBaseFireDelay / (flFireDelay + FLT_EPSILON);
+		const float flPlaybackRate = flBaseFireDelay / (flFireDelay + FLT_EPSILON);
 		if ( pPlayer->GetViewModel( 0 ) )
 		{
 			pPlayer->GetViewModel( 0 )->SetPlaybackRate( flPlaybackRate );
