@@ -661,7 +661,7 @@ $Project
 			$File	"game_controls\IconPanel.cpp"
 		}
 
-		$Folder "Discord RPC"
+		$Folder "Discord SDK"
 		{
 			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.cpp"
 			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.h"
@@ -694,6 +694,31 @@ $Project
 			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.h"
 			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.cpp"
 			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.h"
+
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\activity_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\application_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\core.cpp"					\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\image_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\lobby_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\network_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\overlay_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\relationship_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\storage_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\store_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\types.cpp"					\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.cpp"			
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+								$EnableC++Exceptions			"Yes (/EHsc)"
+							}
+						}
+					}
 		}
 	}
 
