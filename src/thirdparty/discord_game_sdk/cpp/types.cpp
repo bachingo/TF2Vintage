@@ -2,11 +2,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "cbase.h"
 #include "types.h"
 
-#include <cstring>
-#include <memory>
+#include <tier1/strtools.h>
+
+// memdbgon must be the last include file in a .cpp file!!!
+#include <tier0/memdbgon.h>
 
 namespace discord {
 
