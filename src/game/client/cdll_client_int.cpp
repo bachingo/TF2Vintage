@@ -141,9 +141,7 @@
 #include "haptics/haptic_msgs.h"
 
 // Discord RPC
-#ifdef TF_VINTAGE_CLIENT
-#include "tf_presence.h"
-#endif
+#include "irichpresenceclient.h"
 
 extern vgui::IInputInternal *g_InputInternal;
 
