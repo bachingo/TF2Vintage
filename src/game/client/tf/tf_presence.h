@@ -12,6 +12,7 @@
 
 #include "GameEventListener.h"
 #include "basepresence.h"
+#include "basediscordpresence.h"
 #include "hl2orange.spa.h"
 
 //-----------------------------------------------------------------------------
@@ -44,19 +45,10 @@ private:
 
 };
 
-namespace discord
-{
-	class Core;
-	class Activity;
-	class User;
-	enum class LogLevel;
-	enum class Result;
-}
-#define DISCORD_FIELD_MAXLEN 128
 
-class CTFDiscordPresence : public CAutoGameSystemPerFrame, public CGameEventListener
+class CTFDiscordPresence : public CBaseDiscordPresence, public CGameEventListener
 {
-	DECLARE_CLASS_GAMEROOT( CTFDiscordPresence, CAutoGameSystemPerFrame );
+	DECLARE_CLASS_GAMEROOT( CTFDiscordPresence, CBaseDiscordPresence );
 public:
 
 	CTFDiscordPresence();
@@ -66,16 +58,20 @@ public:
 
 	virtual bool		Init( void );
 	virtual void		Shutdown( void );
-	virtual void		Update( float frametime );
 	virtual void		LevelInitPostEntity( void );
 	virtual void		LevelShutdownPreEntity( void );
 
+	bool				InitPresence( void );
 	void				ResetPresence( void );
-	void				UpdatePresence( bool bForce = false, bool bIsDead = false );
-	void				SetLevelName( char const *pMapName ) { Q_strncpy( m_szMapName, pMapName, MAX_MAP_NAME ); }
+	void				UpdatePresence( void ) { UpdatePresence( false, false ); }
+	char const*			GetMatchSecret( void ) const;
+	char const*			GetJoinSecret( void ) const;
+	char const*			GetSpectateSecret( void ) const;
 
 private:
-	char m_szMapName[ MAX_MAP_NAME ];
+	void				UpdatePresence( bool bForce, bool bIsDead );
+	char const*			GetEncryptionKey( void ) const { return "XwRJxjCc"; }
+
 	char m_szHostName[ DISCORD_FIELD_MAXLEN ];
 	char m_szServerInfo[ DISCORD_FIELD_MAXLEN ];
 	char m_szSteamID[ DISCORD_FIELD_MAXLEN ];
@@ -86,7 +82,6 @@ private:
 	RealTimeCountdownTimer m_updateThrottle;
 	long m_iCreationTimestamp;
 
-	static discord::Core *m_pCore;
 	static discord::Activity m_Activity;
 	static discord::User m_CurrentUser;
 
@@ -97,7 +92,5 @@ private:
 	static void OnLogMessage( discord::LogLevel logLevel, char const *pszMessage );
 	static void OnActivityUpdate( discord::Result result );
 };
-
-extern CTFDiscordPresence *rpc;
 
 #endif // TF_PRESENCE_H
