@@ -61,23 +61,20 @@ public:
 	virtual void		LevelInitPostEntity( void );
 	virtual void		LevelShutdownPreEntity( void );
 
-	bool				InitPresence( void );
-	void				ResetPresence( void );
-	void				UpdatePresence( void ) { UpdatePresence( false, false ); }
-	char const*			GetMatchSecret( void ) const;
-	char const*			GetJoinSecret( void ) const;
-	char const*			GetSpectateSecret( void ) const;
+	bool				InitPresence( void ) OVERRIDE;
+	void				ResetPresence( void ) OVERRIDE;
+	void				UpdatePresence( void ) OVERRIDE { UpdatePresence( false, false ); }
+	char const*			GetMatchSecret( void ) const OVERRIDE;
+	char const*			GetJoinSecret( void ) const OVERRIDE;
+	char const*			GetSpectateSecret( void ) const OVERRIDE;
 
 private:
 	void				UpdatePresence( bool bForce, bool bIsDead );
-	char const*			GetEncryptionKey( void ) const { return "XwRJxjCc"; }
+	char const*			GetEncryptionKey( void ) const OVERRIDE { return "XwRJxjCc"; }
 
 	char m_szHostName[ DISCORD_FIELD_MAXLEN ];
 	char m_szServerInfo[ DISCORD_FIELD_MAXLEN ];
 	char m_szSteamID[ DISCORD_FIELD_MAXLEN ];
-	char m_szGameType[ DISCORD_FIELD_MAXLEN ];
-	char m_szGameState[ DISCORD_FIELD_MAXLEN ];
-	char m_szClassName[ DISCORD_FIELD_MAXLEN ];
 
 	RealTimeCountdownTimer m_updateThrottle;
 	long m_iCreationTimestamp;

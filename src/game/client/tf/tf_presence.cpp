@@ -670,8 +670,6 @@ bool CTFDiscordPresence::Init( void )
 	ListenForGameEvent( "client_fullconnect" );
 	ListenForGameEvent( "client_disconnect" );
 
-	m_updateThrottle.Start( 30.0f );
-
 	return BaseClass::Init();
 }
 
@@ -680,6 +678,8 @@ bool CTFDiscordPresence::Init( void )
 //-----------------------------------------------------------------------------
 bool CTFDiscordPresence::InitPresence( void )
 {
+	m_updateThrottle.Start( 30.0f );
+
 	g_pDiscord->SetLogHook(
 	#ifdef DEBUG
 		discord::LogLevel::Debug,
@@ -709,6 +709,8 @@ bool CTFDiscordPresence::InitPresence( void )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::Shutdown( void )
 {
+	BaseClass::Shutdown();
+
 	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
 	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
 
@@ -717,8 +719,6 @@ void CTFDiscordPresence::Shutdown( void )
 
 	Assert( rpc == this );
 	rpc = NULL;
-
-	BaseClass::Shutdown();
 }
 
 //-----------------------------------------------------------------------------
@@ -811,13 +811,13 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 {
 	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
 
-	char buffer[64];
+	char buffer[64], szGameState[ DISCORD_FIELD_MAXLEN ];
 	Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", GetLevelName() );
 	wchar *mapName = g_pVGuiLocalize->Find( buffer );
 	if ( mapName ) // We assume official maps to have a translation, and we only have images of official maps
 	{
 		g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
-		Q_snprintf( m_szGameState, sizeof( m_szGameState ), "Map: %s", buffer );
+		Q_snprintf( szGameState, sizeof( szGameState ), "Map: %s", buffer );
 		m_Activity.GetAssets().SetLargeImage( GetLevelName() );
 	}
 	else
@@ -831,13 +831,14 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 		wchar *gameType = g_pVGuiLocalize->Find( g_aGameTypeNames[ TFGameRules()->GetGameType() ] );
 		if ( gameType )
 		{
-			g_pVGuiLocalize->ConvertUnicodeToANSI( gameType, m_szGameType, DISCORD_FIELD_MAXLEN );
-			m_Activity.GetAssets().SetLargeText( m_szGameType );
+			char szGameType[ DISCORD_FIELD_MAXLEN ];
+			g_pVGuiLocalize->ConvertUnicodeToANSI( gameType, szGameType, DISCORD_FIELD_MAXLEN );
+			m_Activity.GetAssets().SetLargeText( szGameType );
 		}
 	}
 
 	m_Activity.SetDetails( m_szHostName );
-	m_Activity.SetState( m_szGameState );
+	m_Activity.SetState( szGameState );
 	m_Activity.GetAssets().SetSmallImage( "tf2v_drp_logo" );
 	m_Activity.GetTimestamps().SetStart( m_iCreationTimestamp );
 
@@ -921,8 +922,9 @@ void CTFDiscordPresence::UpdatePresence( bool bForce, bool bIsDead )
 	if ( !pLocalPlayer )
 		return;
 
-	Q_strncpy( m_szClassName, pLocalPlayer->GetPlayerClass()->GetName(), DISCORD_FIELD_MAXLEN );
-	Q_snprintf( m_szClassName, DISCORD_FIELD_MAXLEN, "%s%s", m_szClassName, bIsDead ? " (Dead)" : "" );
+	char szClassName[DISCORD_FIELD_MAXLEN];
+	Q_strncpy( szClassName, pLocalPlayer->GetPlayerClass()->GetName(), DISCORD_FIELD_MAXLEN );
+	Q_snprintf( szClassName, DISCORD_FIELD_MAXLEN, "%s%s", szClassName, bIsDead ? " (Dead)" : "" );
 
 	const int iClassNum = pLocalPlayer->GetPlayerClass()->GetClassIndex();
 	switch ( pLocalPlayer->GetTeamNumber() )
@@ -930,13 +932,13 @@ void CTFDiscordPresence::UpdatePresence( bool bForce, bool bIsDead )
 		case TF_TEAM_RED:
 		{
 			m_Activity.GetAssets().SetSmallImage( s_pClassImages[iClassNum].redTeamImage );
-			m_Activity.GetAssets().SetSmallText( m_szClassName );
+			m_Activity.GetAssets().SetSmallText( szClassName );
 			break;
 		}
 		case TF_TEAM_BLUE:
 		{
 			m_Activity.GetAssets().SetSmallImage( s_pClassImages[iClassNum].bluTeamImage );
-			m_Activity.GetAssets().SetSmallText( m_szClassName );
+			m_Activity.GetAssets().SetSmallText( szClassName );
 			break;
 		}
 		default:

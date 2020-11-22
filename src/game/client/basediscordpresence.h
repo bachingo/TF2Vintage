@@ -9,7 +9,7 @@
 // The maximum length for string fields in Discord's API
 #define DISCORD_FIELD_MAXLEN 128
 
-class CBaseDiscordPresence : public IRichPresenceClient, public CAutoGameSystemPerFrame
+class CBaseDiscordPresence : public CAutoGameSystemPerFrame, public IRichPresenceClient
 {
 public:
 	CBaseDiscordPresence();
