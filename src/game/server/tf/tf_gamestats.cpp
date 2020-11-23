@@ -136,10 +136,10 @@ void CTFGameStats::Event_LevelInit( void )
 		nPort = hostport->GetInt();
 	}			
 
-	m_reportedStats.m_pCurrentGame->Init( STRING( gpGlobals->mapname ), nIPAddr, nPort, gpGlobals->curtime );
+	m_reportedStats.m_pCurrentGame->Init( STRING( gpGlobals->mapname ), gpGlobals->mapversion, nIPAddr, nPort, gpGlobals->curtime );
 
 	TF_Gamestats_LevelStats_t *map = m_reportedStats.FindOrAddMapStats( STRING( gpGlobals->mapname ) );
-	map->Init( STRING( gpGlobals->mapname ), nIPAddr, nPort, gpGlobals->curtime );
+	map->Init( STRING( gpGlobals->mapname ), gpGlobals->mapversion, nIPAddr, nPort, gpGlobals->curtime );
 }
 
 //-----------------------------------------------------------------------------
@@ -354,8 +354,16 @@ void CTFGameStats::Event_PlayerDisconnected( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameStats::Event_PlayerChangedClass( CTFPlayer *pPlayer )
+void CTFGameStats::Event_PlayerChangedClass( CTFPlayer *pPlayer, int iOldClass, int iNewClass )
 {
+	if ( iNewClass >= TF_FIRST_NORMAL_CLASS && iNewClass <= TF_LAST_NORMAL_CLASS )
+	{
+		if ( m_reportedStats.m_pCurrentGame )
+		{
+			m_reportedStats.m_pCurrentGame->m_aClassStats[iNewClass].iClassChanges += 1;
+		}
+		IncrementStat( pPlayer, TFSTAT_CLASSCHANGES, 1 );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -714,6 +722,24 @@ void CTFGameStats::Event_PlayerDamage( CBasePlayer *pBasePlayer, const CTakeDama
 	{
 		m_reportedStats.m_pCurrentGame->m_aPlayerDamage.AddToTail( damage );
 	}	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameStats::Event_BossDamage( CBasePlayer *pAttacker, int iDamage )
+{
+	const int INSANE_DAMAGE = 5000;
+	Assert( iDamage >= 0 );
+	Assert( iDamage <= INSANE_DAMAGE );
+	if ( iDamage < 0 || iDamage > INSANE_DAMAGE )
+		return;
+
+	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
+	if ( pTFAttacker )
+	{
+		IncrementStat( pTFAttacker, TFSTAT_DAMAGE_BOSS, iDamage );
+	}
 }
 
 //-----------------------------------------------------------------------------

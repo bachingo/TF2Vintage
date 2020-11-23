@@ -62,7 +62,8 @@ struct RoundStats_t
 
 	RoundStats_t() { Reset(); };
 
-	void Reset() {
+	void Reset() 
+	{
 		for ( int i = 0; i < ARRAYSIZE( m_iStat ); i++ )
 		{
 			m_iStat[i] = 0;
@@ -112,6 +113,7 @@ struct TF_Gamestats_ClassStats_t
 	int iDeaths;												// total # of deaths by this class
 	int iAssists;												// total # of assists by this class
 	int iCaptures;												// total # of captures by this class
+	int iClassChanges;											// total # of times someone changed to this class
 
 	void Accumulate( TF_Gamestats_ClassStats_t &other )
 	{
@@ -122,6 +124,7 @@ struct TF_Gamestats_ClassStats_t
 		iDeaths += other.iDeaths;
 		iAssists += other.iAssists;
 		iCaptures += other.iCaptures;
+		iClassChanges += other.iClassChanges;
 	}
 };
 
@@ -159,7 +162,7 @@ public:
 	TF_Gamestats_LevelStats_t( const TF_Gamestats_LevelStats_t &stats );
 
 	// Level start and end
-	void Init( const char *pszMapName, int nIPAddr, short nPort, float flStartTime );
+	void Init( const char *pszMapName, int nMapVersion, int nIPAddr, short nPort, float flStartTime );
 	void Shutdown( float flEndTime );
 
 	void Accumulate( TF_Gamestats_LevelStats_t *pOther )
@@ -185,6 +188,7 @@ public:
 	{
 		static const unsigned short LumpId = TFSTATS_LUMP_MAPHEADER;	// Lump ids.
 		char			m_szMapName[64];							// Name of the map.
+		int				m_nMapRevision;								// Version number for the map.
 		unsigned int	m_nIPAddr;									// IP Address of the server - 4 bytes stored as an int.
 		unsigned short	m_nPort;									// Port the server is using.	
 		int				m_iRoundsPlayed;							// # of rounds played

@@ -8763,10 +8763,11 @@ void CTFPlayer::ForceRespawn( void )
 		// clean up any pipebombs/buildings in the world (no explosions)
 		RemoveAllOwnedEntitiesFromWorld();
 
+		int iOldClass = GetPlayerClass()->GetClassIndex();
 		GetPlayerClass()->Init( iDesiredClass );
 
 		if ( !bRandom )
-			CTF_GameStats.Event_PlayerChangedClass( this );
+			CTF_GameStats.Event_PlayerChangedClass( this, iOldClass, iDesiredClass );
 
 		m_PlayerAnimState = CreateTFPlayerAnimState( this );
 	}

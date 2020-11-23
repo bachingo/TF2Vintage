@@ -63,10 +63,11 @@ TF_Gamestats_LevelStats_t::TF_Gamestats_LevelStats_t( const TF_Gamestats_LevelSt
 //			nPort - 
 //			flStartTime - 
 //-----------------------------------------------------------------------------
-void TF_Gamestats_LevelStats_t::Init( const char *pszMapName, int nIPAddr, short nPort, float flStartTime  )
+void TF_Gamestats_LevelStats_t::Init( const char *pszMapName, int nMapVersion, int nIPAddr, short nPort, float flStartTime  )
 {
 	// Initialize.
 	Q_strncpy( m_Header.m_szMapName, pszMapName, sizeof( m_Header.m_szMapName ) );
+	m_Header.m_nMapRevision = nMapVersion;
 	m_Header.m_nIPAddr = nIPAddr;
 	m_Header.m_nPort = nPort;
 	
