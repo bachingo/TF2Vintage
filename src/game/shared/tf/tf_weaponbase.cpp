@@ -562,7 +562,7 @@ C_ViewmodelAttachmentModel *CTFWeaponBase::GetViewmodelAddon( void )
 C_BaseAnimating *CTFWeaponBase::GetAppropriateWorldOrViewModel( void )
 {
 	C_TFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( pPlayer && UsingViewModel() && GetItem() && GetItem()->GetStaticData() )
+	if ( pPlayer && UsingViewModel() && GetItem()->GetStaticData() )
 	{
 		// what kind of viewmodel is this?
 		int iType = GetItem()->GetStaticData()->attach_to_hands;
@@ -2605,9 +2605,27 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 	if ( pTFVictim )
 	{
 		// Afterburn shouldn't trigger on-hit effects.
+		if ( ( info.GetDamageType() & DMG_BURN ) )
+			return;
+
+		int nRevealCloaked = 0;
+		CALL_ATTRIB_HOOK_INT( nRevealCloaked, reveal_cloaked_victim_on_hit );
+		if ( nRevealCloaked != 0 )
+		{
+			pTFVictim->RemoveInvisibility();
+			UTIL_ScreenFade( pVictim, {255, 255, 255, 255}, 0.25f, 0.1f, FFADE_IN );
+		}
+
+		int nRevealDisguised = 0;
+		CALL_ATTRIB_HOOK_INT( nRevealDisguised, reveal_disguised_victim_on_hit );
+		if ( nRevealDisguised != 0 )
+		{
+			pTFVictim->RemoveDisguise();
+			UTIL_ScreenFade( pVictim, {255, 255, 255, 255}, 0.25f, 0.1f, FFADE_IN );
+		}
+
 		// Disguised spies shouldn't trigger on-hit effects.
-		if ( ( info.GetDamageType() & DMG_BURN ) ||
-			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() ) )
+		if ( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() )
 			return;
 
 		if ( !pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ) && !pTFVictim->m_Shared.InCond( TF_COND_MEGAHEAL ) )
@@ -2641,19 +2659,6 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 
 			pTFVictim->m_Shared.AddCond( TF_COND_MARKEDFORDEATH, tf_dev_marked_for_death_lifetime.GetFloat() );
 		}
-
-		int nRevealCloaked = 0;
-		CALL_ATTRIB_HOOK_INT( nRevealCloaked, reveal_cloaked_victim_on_hit );
-		if ( nRevealCloaked > 0 )
-		{
-			pTFVictim->RemoveInvisibility();
-			UTIL_ScreenFade( pVictim, {255, 255, 255, 255}, 0.25f, 0.1f, FFADE_IN );
-		}
-
-		int nRevealDisguised = 0;
-		CALL_ATTRIB_HOOK_INT( nRevealDisguised, reveal_disguised_victim_on_hit );
-		if ( nRevealDisguised > 0 )
-			pTFVictim->RemoveDisguise();
 
 		int nStunWaistHighAirborneTime = 0;
 		CALL_ATTRIB_HOOK_INT( nStunWaistHighAirborneTime, stun_waist_high_airborne );
