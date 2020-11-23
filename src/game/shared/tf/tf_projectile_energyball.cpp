@@ -265,13 +265,13 @@ void CTFProjectile_EnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		radiusInfo.info = &newInfo;
 		radiusInfo.m_vecSrc = vecOrigin;
 		radiusInfo.m_flRadius = flRadius;
-		radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO * m_bChargedShot ? 1.33f : 1.0f;
+		radiusInfo.m_flSelfDamageRadius = TF_ROCKET_SELF_DAMAGE_RADIUS * m_bChargedShot ? 1.33f : 1.0f;
 
 		TFGameRules()->RadiusDamage( radiusInfo );
 
 		// If we directly hit an enemy building, EMP it.
 		CBaseObject *pBuilding = dynamic_cast<CBaseObject *>( pOther );
-		if ( IsChargedShot() && ( pBuilding && ( pBuilding->GetTeamNumber() != pAttacker->GetTeamNumber() ) ) )
+		if ( IsChargedShot() && pBuilding && ( pBuilding->GetTeamNumber() != pAttacker->GetTeamNumber() ) )
 		{
 			pBuilding->OnEMP();
 		}
