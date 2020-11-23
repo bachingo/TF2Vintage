@@ -259,7 +259,7 @@ $Project "Server (TF)"
 				$File	"tf\tf_timer.h"
 			}
 			
-			$Folder	"NPC"
+			$Folder	"NPCs"
 			{
 				$File	"$SRCDIR\game\shared\tf\entity_bossresource.cpp"
 				$File	"$SRCDIR\game\shared\tf\entity_bossresource.h"
@@ -518,6 +518,8 @@ $Project "Server (TF)"
 				$File	"$SRCDIR\game\shared\tf\achievements_tf.cpp"
 				$File	"$SRCDIR\game\shared\tf\baseobject_shared.cpp"
 				$File	"$SRCDIR\game\shared\tf\baseobject_shared.h"
+				$File	"$SRCDIR\game\shared\tf\entity_bossresource.cpp"
+				$File	"$SRCDIR\game\shared\tf\entity_bossresource.h"
 				$File	"$SRCDIR\game\shared\tf\entity_capture_flag.cpp"
 				$File	"$SRCDIR\game\shared\tf\entity_capture_flag.h"
 				$File	"$SRCDIR\game\shared\tf\entity_teleportvortex.cpp"
