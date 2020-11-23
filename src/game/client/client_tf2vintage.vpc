@@ -87,10 +87,11 @@ $Project "Client (TF)"
 		{
 			$File	"NextBot\c_NextBot.cpp"
 			$File	"NextBot\c_NextBot.h"
-			$File	"tf\c_headless_hatman.cpp"
-			$File	"tf\c_headless_hatman.h"
-			$File	"tf\c_eyeball_boss.cpp"
-			$File	"tf\c_eyeball_boss.h"
+			$File	"tf\player_vs_environment\c_headless_hatman.cpp"
+			$File	"tf\player_vs_environment\c_headless_hatman.h"
+			$File	"tf\player_vs_environment\c_eyeball_boss.cpp"
+			$File	"tf\player_vs_environment\c_eyeball_boss.h"
+			$File	"tf\player_vs_environment\c_merasmus.cpp"
 		}
 
 		$Folder	"TF"
@@ -214,8 +215,7 @@ $Project "Client (TF)"
 			$File	"tf\c_tf_spymask.h"
 			$File   "tf\c_merasmus_dancer.cpp"
 			$File	"tf\c_merasmus_bomb_effect.cpp"
-			$File	"tf\c_merasmus_bomb_effect.h"	
-			$File	"tf\c_merasmus.cpp"
+			$File	"tf\c_merasmus_bomb_effect.h"
 			
 			$Folder	"Unused"
 			{
