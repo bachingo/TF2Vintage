@@ -579,6 +579,7 @@ CTFDiscordPresence::CTFDiscordPresence()
 {
 	VCRHook_Time( &m_iCreationTimestamp );
 
+	// Setup early so we catch it
 	ListenForGameEvent( "server_spawn" );
 
 	rpc = this;
@@ -601,22 +602,28 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 
 	if ( C_BasePlayer::GetLocalPlayer() == nullptr )
 		return;
-	
-	if ( name == "client_fullconnect" )
-	{
-		CSteamID steamID{};
-		if ( C_BasePlayer::GetLocalPlayer()->GetSteamID( &steamID ) )
-			V_sprintf_safe( m_szSteamID, "%llu", steamID.ConvertToUint64() );
-
-		m_Activity.GetSecrets().SetJoin( m_szServerInfo );
-		m_Activity.GetSecrets().SetMatch( m_szSteamID );
-	}
 
 	if ( !engine->IsConnected() )
 		return;
 
 	if ( name == "player_connect_client" || name == "player_disconnect" )
 	{
+		if ( name == "player_connect_client" )
+		{
+			int userid = event->GetInt( "userid" );
+			if ( UTIL_PlayerByUserId( userid ) == C_BasePlayer::GetLocalPlayer() )
+			{
+				CSteamID steamID{};
+				if ( C_BasePlayer::GetLocalPlayer()->GetSteamID( &steamID ) )
+					V_sprintf_safe( m_szSteamID, "%llu", steamID.ConvertToUint64() );
+
+				m_Activity.GetSecrets().SetJoin( m_szServerInfo );
+				m_Activity.GetSecrets().SetMatch( m_szSteamID );
+
+				bForceUpdate = true;
+			}
+		}
+
 		if ( !TFPlayerResource() )
 			return;
 
@@ -644,12 +651,8 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 		bIsDead = true;
 		bForceUpdate = true;
 	}
-	else
+	else // localplayer_changeteam || localplayer_changeclass || localplayer_respawn
 	{
-		int userid = event->GetInt( "userid" );
-		if ( UTIL_PlayerByUserId( userid ) != C_BasePlayer::GetLocalPlayer() )
-			return;
-
 		bForceUpdate = true;
 	}
 
@@ -663,8 +666,8 @@ bool CTFDiscordPresence::Init( void )
 {
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "localplayer_changeclass" );
+	ListenForGameEvent( "localplayer_respawn" );
 	ListenForGameEvent( "player_death" );
-	ListenForGameEvent( "player_spawn" );
 	ListenForGameEvent( "player_connect_client" );
 	ListenForGameEvent( "player_disconnect" );
 	ListenForGameEvent( "client_fullconnect" );
@@ -916,7 +919,7 @@ void CTFDiscordPresence::UpdatePresence( bool bForce, bool bIsDead )
 	if ( !m_updateThrottle.IsElapsed() && !bForce )
 		return;
 
-	m_updateThrottle.Start( 30.0f );
+	m_updateThrottle.Start( RandomFloat( 15.0, 20.0 ) );
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pLocalPlayer )
