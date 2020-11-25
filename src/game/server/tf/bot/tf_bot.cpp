@@ -1918,22 +1918,30 @@ void CTFBot::AccumulateSniperSpots( void )
 		if ( !IsLineOfFireClear( newInfo.m_vecVantage + vecOffset, newInfo.m_vecForward + vecOffset ) )
 			continue;
 
-		float flIncursion1 = newInfo.m_pHomeArea->GetIncursionDistance( GetEnemyTeam( this ) );
-		float flIncursion2 = newInfo.m_pForwardArea->GetIncursionDistance( GetEnemyTeam( this ) );
+		const float flIncursion1 = newInfo.m_pVantageArea->GetIncursionDistance( GetEnemyTeam( this ) );
+		const float flIncursion2 = newInfo.m_pForwardArea->GetIncursionDistance( GetEnemyTeam( this ) );
 
 		newInfo.m_flIncursionDiff = flIncursion1 - flIncursion2;
 
-		if ( m_sniperSpots.Count() < tf_bot_sniper_spot_max_count.GetInt() )
-			m_sniperSpots.AddToTail( newInfo );
-
-		for ( int j=0; j<m_sniperSpots.Count(); ++j )
+		if ( m_sniperSpots.Count() >= tf_bot_sniper_spot_max_count.GetInt() )
 		{
-			SniperSpotInfo *info = &m_sniperSpots[j];
+			int nWorst = -1;
+			for ( int j=0; j < m_sniperSpots.Count(); ++j )
+			{
+				SniperSpotInfo *info = &m_sniperSpots[j];
 
-			if ( flIncursion1 - flIncursion2 <= info->m_flIncursionDiff )
-				continue;
+				if ( m_sniperSpots[ nWorst ].m_flIncursionDiff <= info->m_flIncursionDiff )
+					continue;
 
-			*info = newInfo;
+				nWorst = j;
+			}
+
+			if ( newInfo.m_flIncursionDiff > m_sniperSpots[ nWorst ].m_flIncursionDiff )
+				m_sniperSpots[ nWorst ] = newInfo;
+		}
+		else
+		{
+			m_sniperSpots.AddToTail( newInfo );
 		}
 	}
 
@@ -1959,25 +1967,13 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 	{
 		CTeamTrainWatcher *pWatcher = TFGameRules()->GetPayloadToPush( GetTeamNumber() );
 		if ( !pWatcher )
-		{
 			pWatcher = TFGameRules()->GetPayloadToBlock( GetTeamNumber() );
-			if ( !pWatcher )
-			{
-				ClearSniperSpots();
-				return;
-			}
-		}
 
-		pObjective = pWatcher->GetTrainEntity();
+		if( pWatcher )
+			pObjective = pWatcher->GetTrainEntity();
 	}
-	else
+	else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CP )
 	{
-		if ( TFGameRules()->GetGameType() != TF_GAMETYPE_CP )
-		{
-			ClearSniperSpots();
-			return;
-		}
-
 		pObjective = GetMyControlPoint();
 	}
 
@@ -1987,8 +1983,12 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 		return;
 	}
 
-	if ( pObjective == m_sniperGoalEnt && Square( tf_bot_sniper_goal_entity_move_tolerance.GetFloat() ) > ( pObjective->WorldSpaceCenter() - m_sniperGoal ).LengthSqr() )
-		return;
+	if ( pObjective == m_sniperGoalEnt )
+	{
+		Vector vecToCart = pObjective->WorldSpaceCenter() - m_sniperGoal;
+		if ( Square( tf_bot_sniper_goal_entity_move_tolerance.GetFloat() ) > vecToCart.LengthSqr() )
+			return;
+	}
 
 	ClearSniperSpots();
 
