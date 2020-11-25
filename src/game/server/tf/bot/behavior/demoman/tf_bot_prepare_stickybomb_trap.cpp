@@ -95,7 +95,7 @@ ActionResult<CTFBot> CTFBotPrepareStickybombTrap::OnStart( CTFBot *me, Action<CT
 
 	this->InitBombTargetAreas( me );
 
-	me->m_bLookingAroundForEnemies = false;
+	me->StopLookingForEnemies();
 
 	return Action<CTFBot>::Continue();
 }
@@ -177,7 +177,7 @@ void CTFBotPrepareStickybombTrap::OnEnd( CTFBot *actor, Action<CTFBot> *newActio
 {
 	actor->GetBodyInterface()->ClearPendingAimReply();
 
-	actor->m_bLookingAroundForEnemies = true;
+	actor->WantsToLookForEnemies();
 }
 
 ActionResult<CTFBot> CTFBotPrepareStickybombTrap::OnSuspend( CTFBot *actor, Action<CTFBot> *newAction )

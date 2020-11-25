@@ -373,7 +373,7 @@ bool CTFBotSniperLurk::FindNewHome( CTFBot *actor )
 	if ( FindHint( actor ) )
 		return true;
 
-	if ( actor->m_sniperSpots.IsEmpty() )
+	if ( actor->GetSniperSpots().IsEmpty() )
 	{
 		m_bHasHome = false;
 
@@ -404,8 +404,7 @@ bool CTFBotSniperLurk::FindNewHome( CTFBot *actor )
 		return false;
 	}
 
-	CTFBot::SniperSpotInfo const& info = actor->m_sniperSpots.Random();
-	m_vecHome = info.m_vecHome;
+	m_vecHome = actor->GetSniperSpots().Random().m_vecVantage;
 	m_bHasHome = true;
 
 	return true;

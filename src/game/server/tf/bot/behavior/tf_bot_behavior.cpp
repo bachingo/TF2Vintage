@@ -152,8 +152,7 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnInjured( CTFBot *me, const CTakeD
 	{
 		if ( dynamic_cast<CObjectSentrygun *>( info.GetInflictor() ) )
 		{
-			me->m_hTargetSentry = (CBaseObject *)info.GetInflictor();
-			me->m_vecLastHurtBySentry = me->GetAbsOrigin();
+			me->NoteTargetSentry( info.GetInflictor() );
 		}
 
 		if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
@@ -230,10 +229,9 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnOtherKilled( CTFBot *me, CBaseCom
 		if ( me->IsFriend( who ) && me->IsLineOfSightClear( who->WorldSpaceCenter() ) )
 		{
 			CBaseEntity *pInflictor = info.GetInflictor();
-			if ( pInflictor && dynamic_cast<CObjectSentrygun *>( pInflictor ) && !me->m_hTargetSentry )
+			if ( pInflictor && dynamic_cast<CObjectSentrygun *>( pInflictor ) && !me->GetTargetSentry() )
 			{
-				me->m_hTargetSentry = (CBaseObject *)pInflictor;
-				me->m_vecLastHurtBySentry = who->GetAbsOrigin();
+				me->NoteTargetSentry( pInflictor );
 			}
 		}
 	}

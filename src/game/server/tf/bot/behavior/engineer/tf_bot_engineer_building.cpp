@@ -52,7 +52,7 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 	CBaseObject *pEntrance  = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_ENTRANCE );
 	CBaseObject *pExit      = me->GetObjectOfType( OBJ_TELEPORTER, TELEPORTER_TYPE_EXIT );
 
-	me->m_bLookingAroundForEnemies = true;
+	me->WantsToLookForEnemies();
 
 	bool bSentrySapped = pSentry ? pSentry->HasSapper() : false;
 	bool bDispenserSapped = pDispenser ? pDispenser->HasSapper() : false;
@@ -196,7 +196,7 @@ ActionResult<CTFBot> CTFBotEngineerBuilding::Update( CTFBot *me, float dt )
 
 void CTFBotEngineerBuilding::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
 {
-	me->m_bLookingAroundForEnemies = true;
+	me->WantsToLookForEnemies();
 }
 
 ActionResult<CTFBot> CTFBotEngineerBuilding::OnResume( CTFBot *me, Action<CTFBot> *priorAction )
@@ -441,7 +441,7 @@ void CTFBotEngineerBuilding::UpgradeAndMaintainBuildings( CTFBot *me )
 		}
 		else
 		{
-			me->m_bLookingAroundForEnemies = false;
+			me->StopLookingForEnemies();
 
 			me->GetBodyInterface()->AimHeadTowards( pSentry->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, nullptr, "Work on my Sentry" );
 			me->PressFireButton();
@@ -503,7 +503,7 @@ void CTFBotEngineerBuilding::UpgradeAndMaintainBuildings( CTFBot *me )
 			}
 		}
 
-		me->m_bLookingAroundForEnemies = false;
+		me->StopLookingForEnemies();
 
 		me->GetBodyInterface()->AimHeadTowards( workingObject->WorldSpaceCenter(), IBody::CRITICAL, 1.0f, nullptr, "Work on my buildings" );
 		me->PressFireButton();

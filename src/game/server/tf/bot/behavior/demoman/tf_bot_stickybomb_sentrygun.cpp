@@ -48,7 +48,7 @@ const char *CTFBotStickybombSentrygun::GetName() const
 ActionResult<CTFBot> CTFBotStickybombSentrygun::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
 {
 	me->PressAltFireButton();
-	me->m_bLookingAroundForEnemies = false;
+	me->StopLookingForEnemies();
 	me->SetAbsVelocity( vec3_origin );
 
 	m_bReload = true;
@@ -212,7 +212,7 @@ void CTFBotStickybombSentrygun::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
 {
 	me->PressAltFireButton();
 
-	me->m_bLookingAroundForEnemies = true;
+	me->WantsToLookForEnemies();
 }
 
 ActionResult<CTFBot> CTFBotStickybombSentrygun::OnSuspend( CTFBot *me, Action<CTFBot> *newAction )

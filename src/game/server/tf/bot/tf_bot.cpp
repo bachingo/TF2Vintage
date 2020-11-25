@@ -219,7 +219,7 @@ void CTFBot::Spawn( void )
 	m_bLookingAroundForEnemies = true;
 	m_suspectedSpies.PurgeAndDeleteElements();
 	m_cpChangedTimer.Invalidate();
-	m_requiredEquipStack.RemoveAll();
+	m_requiredEquipStack.Clear();
 	m_hMyControlPoint = NULL;
 	m_hMyCaptureZone = NULL;
 
@@ -260,7 +260,7 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 		if ( pSentry )
 		{
 			m_hTargetSentry = pSentry;
-			m_vecLastHurtBySentry = GetAbsOrigin();
+			m_vecLastNoticedSentry = GetAbsOrigin();
 		}
 	}
 }
@@ -1848,39 +1848,6 @@ bool CTFBot::EquipLongRangeWeapon( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBot::PushRequiredWeapon( CTFWeaponBase *weapon )
-{
-	CHandle<CTFWeaponBase> hndl;
-	if ( weapon ) hndl.Set( weapon );
-
-	m_requiredEquipStack.AddToTail( hndl );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBot::PopRequiredWeapon( void )
-{
-	m_requiredEquipStack.RemoveMultipleFromTail( 1 );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFBot::EquipRequiredWeapon( void )
-{
-	if ( m_requiredEquipStack.Count() <= 0 )
-		return false;
-
-	CHandle<CTFWeaponBase> &hndl = m_requiredEquipStack.Tail();
-	CTFWeaponBase *weapon = hndl.Get();
-
-	return Weapon_Switch( weapon );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool CTFBot::IsSquadmate( CTFPlayer *player ) const
 {
 	if ( m_pSquad == nullptr )
@@ -1937,17 +1904,18 @@ void CTFBot::AccumulateSniperSpots( void )
 	for ( int i=0; i<tf_bot_sniper_spot_search_count.GetInt(); ++i )
 	{
 		SniperSpotInfo newInfo{};
-		newInfo.m_pHomeArea = m_sniperStandAreas.Random();
-		newInfo.m_vecHome = newInfo.m_pHomeArea->GetRandomPoint();
+		newInfo.m_pVantageArea = m_sniperStandAreas.Random();
+		newInfo.m_vecVantage = newInfo.m_pVantageArea->GetRandomPoint();
 		newInfo.m_pForwardArea = m_sniperLookAreas.Random();
 		newInfo.m_vecForward = newInfo.m_pForwardArea->GetRandomPoint();
 
-		newInfo.m_flRange = ( newInfo.m_vecHome - newInfo.m_vecForward ).Length();
+		newInfo.m_flRange = ( newInfo.m_vecVantage - newInfo.m_vecForward ).Length();
 
 		if ( newInfo.m_flRange < tf_bot_sniper_spot_min_range.GetFloat() )
 			continue;
 
-		if ( !IsLineOfFireClear( newInfo.m_vecHome + Vector( 0, 0, 60.0f ), newInfo.m_vecForward + Vector( 0, 0, 60.0f ) ) )
+		const Vector vecOffset( 0, 0, 60.0f );
+		if ( !IsLineOfFireClear( newInfo.m_vecVantage + vecOffset, newInfo.m_vecForward + vecOffset ) )
 			continue;
 
 		float flIncursion1 = newInfo.m_pHomeArea->GetIncursionDistance( GetEnemyTeam( this ) );
@@ -1973,8 +1941,8 @@ void CTFBot::AccumulateSniperSpots( void )
 	{
 		for ( int i=0; i<m_sniperSpots.Count(); ++i )
 		{
-			NDebugOverlay::Cross3D( m_sniperSpots[i].m_vecHome, 5.0f, 255, 0, 255, true, 0.1f );
-			NDebugOverlay::Line( m_sniperSpots[i].m_vecHome, m_sniperSpots[i].m_vecForward, 0, 200, 0, true, 0.1f );
+			NDebugOverlay::Cross3D( m_sniperSpots[i].m_vecVantage, 5.0f, 255, 0, 255, true, 0.1f );
+			NDebugOverlay::Line( m_sniperSpots[i].m_vecVantage, m_sniperSpots[i].m_vecForward, 0, 200, 0, true, 0.1f );
 		}
 	}
 }
@@ -2766,6 +2734,10 @@ CON_COMMAND_F( tf_bot_kick, "Remove a TFBot by name, or all bots (\"all\").", FC
 }
 
 CTFBotItemSchema s_BotSchema( "TFBotItemSchema" );
+CTFBotItemSchema &TFBotItemSchema( void )
+{
+	return s_BotSchema;
+}
 
 // Based on https://forums.alliedmods.net/showthread.php?p=1539933
 void CTFBotItemSchema::PostInit()
