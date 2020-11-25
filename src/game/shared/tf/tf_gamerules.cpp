@@ -1650,6 +1650,7 @@ CTFGameRules::CTFGameRules()
 	else if ( !Q_strncmp( szMapname, "sd_doomsday_event", MAX_MAP_NAME ) )
 		m_halloweenScenario = HALLOWEEN_SCENARIO_DOOMSDAY;
 #endif
+	m_iGlobalAttributeCacheVersion = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -2786,7 +2787,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 		pEntity->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
 		Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
 
-		if ( vecDir.LengthSqr() > ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+		if ( vecDir.LengthSqr() > Square(radiusInfo.m_flRadius) )
 			continue;
 
 		if ( radiusInfo.ApplyToEntity( pEntity ) )
@@ -2820,7 +2821,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 			pAttacker->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
 			Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
 
-			if ( vecDir.LengthSqr() <= ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+			if ( vecDir.LengthSqr() <= Square(radiusInfo.m_flRadius) )
 			{
 				radiusInfo.ApplyToEntity( pAttacker );
 			}

@@ -201,6 +201,16 @@ public:
 
 	virtual bool	ShouldBalanceTeams( void );
 
+	int GetGlobalAttributeCacheVersion( void ) const
+	{
+		return m_iGlobalAttributeCacheVersion;
+	}
+
+	void FlushAllAttributeCaches( void )
+	{
+		m_iGlobalAttributeCacheVersion++;
+	}
+
 	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { if (IsInKothMode()) return m_hBlueKothTimer.Get(); else return NULL; }
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { if (IsInKothMode()) return m_hRedKothTimer.Get(); else return NULL; }
 	CTeamRoundTimer* GetGreenKothRoundTimer( void ) { return m_hGreenKothTimer.Get(); }
@@ -561,6 +571,7 @@ private:
 	CNetworkString( m_pszTeamGoalStringGreen, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringYellow, MAX_TEAMGOAL_STRING );
 	CNetworkVar( float, m_flCapturePointEnableTime );
+	CNetworkVar( uint32, m_iGlobalAttributeCacheVersion );
 	CNetworkVar( int, m_nHudType );
 	CNetworkVar( bool, m_bPlayingKoth );
 	CNetworkVar( bool, m_bPlayingVSH );

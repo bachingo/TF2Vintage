@@ -11,6 +11,7 @@
 #include "tier0/memdbgon.h"
 
 #define ATTRIB_REAPPLY_PARITY_BITS 6
+#define ATTRIB_REAPPLY_PARITY_MASK ( ( 1 << ATTRIB_REAPPLY_PARITY_BITS ) - 1 )
 
 BEGIN_DATADESC_NO_BASE( CAttributeManager )
 	DEFINE_FIELD( m_iReapplyProvisionParity, FIELD_INTEGER ),
@@ -78,22 +79,22 @@ public:
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value )
 	{
 		string_t name = pDefinition->m_iAttributeClass;
-		if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+		if ( !name && pDefinition->GetClassName() )
 		{
 			name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
 			pDefinition ->m_iAttributeClass = name;
 		}
 
-		if ( m_iName == name )
-		{
-			if ( m_pOutProviders )
-			{
-				if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
-					m_pOutProviders->AddToTail( m_hOwner );
-			}
+		if ( !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+			return true;
 
-			ApplyAttribute( pDefinition, &m_flOut, BitsToFloat( value ) );
+		if ( m_pOutProviders )
+		{
+			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+				m_pOutProviders->AddToTail( m_hOwner );
 		}
+
+		ApplyAttribute( pDefinition, &m_flOut, BitsToFloat( value ) );
 
 		return true;
 	}
@@ -116,31 +117,28 @@ public:
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value )
 	{
 		string_t name = pDefinition->m_iAttributeClass;
-		if ( !name && pDefinition->GetClassName() || !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+		if ( !name && pDefinition->GetClassName() )
 		{
 			name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
 			pDefinition->m_iAttributeClass = name;
 		}
 
-		// Pointer comparison, bad
-		if ( m_iName == name )
+		if ( !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+			return true;
+
+		if ( m_pOutProviders )
 		{
-			if ( m_pOutProviders )
-			{
-				if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
-					m_pOutProviders->AddToTail( m_hOwner );
-			}
-
-			m_pOut = AllocPooledString( value );
-
-			// Break off and only match once
-			return false;
+			if ( m_pOutProviders->Find( m_hOwner ) == m_pOutProviders->InvalidIndex() )
+				m_pOutProviders->AddToTail( m_hOwner );
 		}
 
-		return true;
+		m_pOut = AllocPooledString( value );
+
+		// Break off and only match once
+		return false;
 	}
 
-	operator string_t () { return m_pOut; }
+	operator string_t &() { return m_pOut; }
 
 private:
 	EHANDLE m_hOwner;
@@ -165,11 +163,17 @@ CAttributeManager::~CAttributeManager()
 }
 
 #ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::OnPreDataChanged( DataUpdateType_t updateType )
 {
 	m_iOldReapplyProvisionParity = m_iReapplyProvisionParity;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::OnDataChanged( DataUpdateType_t updateType )
 {
 	// If parity ever falls out of sync we can catch up here.
@@ -177,8 +181,12 @@ void CAttributeManager::OnDataChanged( DataUpdateType_t updateType )
 	{
 		if ( m_hOuter )
 		{
-			IHasAttributes *pAttributes = m_hOuter->GetHasAttributesInterfacePtr();
-			pAttributes->ReapplyProvision();
+			IHasAttributes *pAttributes = GetAttribInterface( m_hOuter );
+			if( pAttributes )
+			{
+				pAttributes->ReapplyProvision();
+			}
+			ClearCache();
 			m_iOldReapplyProvisionParity = m_iReapplyProvisionParity;
 		}
 	}
@@ -186,26 +194,64 @@ void CAttributeManager::OnDataChanged( DataUpdateType_t updateType )
 
 #endif
 
+//-----------------------------------------------------------------------------
+// Purpose: Invalidate cache if needed
+//-----------------------------------------------------------------------------
+int	CAttributeManager::GetGlobalCacheVersion() const
+{
+	//return TFGameRules() ? TFGameRules()->GetGlobalAttributeCacheVersion() : 0;
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::AddProvider( CBaseEntity *pEntity )
 {
 	IHasAttributes *pAttributes = GetAttribInterface( pEntity );
 	Assert( pAttributes );
 
 	m_AttributeProviders.AddToTail( pEntity );
-	pAttributes->GetAttributeManager()->m_AttributeReceivers.AddToTail( m_hOuter.Get() );
+	pAttributes->GetAttributeManager()->AddReceiver( m_hOuter.Get() );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::RemoveProvider( CBaseEntity *pEntity )
 {
 	IHasAttributes *pAttributes = GetAttribInterface( pEntity );
 	Assert( pAttributes );
 
 	m_AttributeProviders.FindAndFastRemove( pEntity );
-	pAttributes->GetAttributeManager()->m_AttributeReceivers.FindAndFastRemove( m_hOuter.Get() );
+	pAttributes->GetAttributeManager()->RemoveReceiver( m_hOuter.Get() );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAttributeManager::AddReceiver( CBaseEntity *pEntity )
+{
+	m_AttributeReceivers.AddToTail( pEntity );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAttributeManager::RemoveReceiver( CBaseEntity *pEntity )
+{
+	Assert( m_AttributeReceivers.Find( pEntity ) != m_AttributeReceivers.InvalidIndex() );
+
+	m_AttributeReceivers.FindAndFastRemove( pEntity );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::ProvideTo( CBaseEntity *pEntity )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( !pEntity || !m_hOuter.Get() )
 		return;
 
@@ -219,13 +265,18 @@ void CAttributeManager::ProvideTo( CBaseEntity *pEntity )
 #ifdef CLIENT_DLL
 	if ( prediction->InPrediction() )
 #endif
-	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ( ( 1 << ATTRIB_REAPPLY_PARITY_BITS ) - 1 );
+	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ATTRIB_REAPPLY_PARITY_MASK;
 
 	NetworkStateChanged();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::StopProvidingTo( CBaseEntity *pEntity )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( !pEntity || !m_hOuter.Get() )
 		return;
 
@@ -239,11 +290,55 @@ void CAttributeManager::StopProvidingTo( CBaseEntity *pEntity )
 #ifdef CLIENT_DLL
 	if ( prediction->InPrediction() )
 #endif
-	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ( ( 1 << ATTRIB_REAPPLY_PARITY_BITS ) - 1 );
+	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ATTRIB_REAPPLY_PARITY_MASK;
 
 	NetworkStateChanged();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAttributeManager::ClearCache( void )
+{
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
+	if ( m_bParsingMyself )
+		return;
+
+	m_CachedAttribs.Purge();
+
+	m_bParsingMyself = true;
+
+	// Tell the things we are providing to that they have been invalidated
+	FOR_EACH_VEC( m_AttributeReceivers, i )
+	{
+		IHasAttributes *pAttribInterface = GetAttribInterface( m_AttributeReceivers[i].Get() );
+		if ( pAttribInterface )
+		{
+			pAttribInterface->GetAttributeManager()->ClearCache();
+		}
+	}
+
+	// Also our owner
+	IHasAttributes *pMyAttribInterface = GetAttribInterface( m_hOuter.Get() );
+	if ( pMyAttribInterface )
+	{
+		pMyAttribInterface->GetAttributeManager()->ClearCache();
+	}
+
+	m_bParsingMyself = false;
+
+#ifdef CLIENT_DLL
+	if( prediction->InPrediction() )
+#endif
+	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ATTRIB_REAPPLY_PARITY_MASK;
+
+	NetworkStateChanged();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::InitializeAttributes( CBaseEntity *pEntity )
 {
 	Assert( pEntity->GetHasAttributesInterfacePtr() != NULL );
@@ -252,6 +347,95 @@ void CAttributeManager::InitializeAttributes( CBaseEntity *pEntity )
 	m_bParsingMyself = false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CAttributeManager::ApplyAttributeFloatWrapper( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
+{
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
+	if ( pOutProviders == NULL )
+	{
+		FOR_EACH_VEC_BACK( m_CachedAttribs, i )
+		{
+			if ( m_CachedAttribs[i].iAttribName == strAttributeClass )
+			{
+				if ( flValue == m_CachedAttribs[i].in )
+					return m_CachedAttribs[i].out;
+
+				// We are looking for another attribute of the same name,
+				// remove this cache so we can get a different value
+				m_CachedAttribs.Remove( i );
+				break;
+			}
+		}
+	}
+
+	// Uncached, loop our attribs now
+	float result = ApplyAttributeFloat( flValue, pEntity, strAttributeClass, pOutProviders );
+
+	if ( pOutProviders == NULL )
+	{
+		// Cache it out
+		int nCache = m_CachedAttribs.AddToTail();
+		m_CachedAttribs[nCache].iAttribName = strAttributeClass;
+		m_CachedAttribs[nCache].in.fVal = flValue;
+		m_CachedAttribs[nCache].out.fVal = result;
+	}
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+string_t CAttributeManager::ApplyAttributeStringWrapper( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
+{
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
+	// Have we requested a global attribute cache flush?
+	const int iGlobalCacheVersion = GetGlobalCacheVersion();
+	if ( m_iCacheVersion != iGlobalCacheVersion )
+	{
+		ClearCache();
+		m_iCacheVersion = iGlobalCacheVersion;
+	}
+
+	if ( pOutProviders == NULL )
+	{
+		FOR_EACH_VEC_BACK( m_CachedAttribs, i )
+		{
+			if ( m_CachedAttribs[i].iAttribName == strAttributeClass )
+			{
+				if ( strValue == m_CachedAttribs[i].in )
+					return m_CachedAttribs[i].out;
+
+				// We are looking for another attribute of the same name,
+				// remove this cache so we can get a different value
+				m_CachedAttribs.Remove( i );
+				break;
+			}
+		}
+	}
+
+	// Uncached, loop our attribs now
+	string_t result = ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutProviders );
+
+	if ( pOutProviders == NULL )
+	{
+		// Cache it out
+		int nCache = m_CachedAttribs.AddToTail();
+		m_CachedAttribs[nCache].iAttribName = strAttributeClass;
+		m_CachedAttribs[nCache].in.iVal = strValue;
+		m_CachedAttribs[nCache].out.iVal = result;
+	}
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CAttributeManager::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
 	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
@@ -384,14 +568,22 @@ BEGIN_PREDICTION_DATA_NO_BASE( CAttributeContainer )
 END_PREDICTION_DATA();
 #endif
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeContainer::InitializeAttributes( CBaseEntity *pEntity )
 {
 	BaseClass::InitializeAttributes( pEntity );
 	m_Item.GetAttributeList()->SetManager( this );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return flValue;
 
@@ -410,6 +602,8 @@ float CAttributeContainer::ApplyAttributeFloat( float flValue, const CBaseEntity
 //-----------------------------------------------------------------------------
 string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
 	if ( m_bParsingMyself || m_hOuter.Get() == NULL )
 		return strValue;
 
@@ -425,15 +619,12 @@ string_t CAttributeContainer::ApplyAttributeString( string_t strValue, const CBa
 
 void CAttributeContainer::OnAttributesChanged( void )
 {
-	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
-
 	BaseClass::OnAttributesChanged();
 	m_Item.OnAttributesChanged();
 }
 
 
 BEGIN_DATADESC( CAttributeContainerPlayer )
-	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ),
 END_DATADESC()
 
 BEGIN_NETWORK_TABLE_NOBASE( CAttributeContainerPlayer, DT_AttributeContainerPlayer )
@@ -495,8 +686,6 @@ string_t CAttributeContainerPlayer::ApplyAttributeString( string_t strValue, con
 //-----------------------------------------------------------------------------
 void CAttributeContainerPlayer::OnAttributesChanged( void )
 {
-	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
-
 	BaseClass::OnAttributesChanged();
 	if( m_hPlayer )
 		m_hPlayer->NetworkStateChanged();
