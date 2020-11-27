@@ -959,21 +959,19 @@ void CTFGameStats::Event_PlayerKilled( CBasePlayer *pPlayer, const CTakeDamageIn
 //-----------------------------------------------------------------------------
 void CTFGameStats::Event_PlayerAwardBonusPoints(CTFPlayer *pPlayer, CBaseEntity *pAwarder, int iAmount)
 {
-	IncrementStat(pPlayer, TFSTAT_BONUS, iAmount);
+	IncrementStat(pPlayer, TFSTAT_BONUS_POINTS, iAmount);
 
-#if 0
-	if (pAwarder)
+	if ( pAwarder )
 	{
-		CSingleUserRecipientFilter filter(pPlayer);
+		CSingleUserRecipientFilter filter( pPlayer );
 		filter.MakeReliable();
 
 		UserMessageBegin(filter, "PlayerBonusPoints");
-		WRITE_BYTE(iAmount);
-		WRITE_BYTE(pPlayer->entindex());
-		WRITE_BYTE(pAwarder->entindex());
+			WRITE_BYTE( iAmount );
+			WRITE_BYTE( pPlayer->entindex() );
+			WRITE_BYTE( pAwarder->entindex() );
 		MessageEnd();
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -981,16 +979,16 @@ void CTFGameStats::Event_PlayerAwardBonusPoints(CTFPlayer *pPlayer, CBaseEntity 
 //-----------------------------------------------------------------------------
 void CTFGameStats::Event_GameEnd(void)
 {
-		// Calculate score and send out stats to everyone.
-		for (int i = 1; i <= gpGlobals->maxClients; i++)
+	// Calculate score and send out stats to everyone.
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		CTFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
+		if (pPlayer && pPlayer->IsAlive())
 		{
-			CTFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
-			if (pPlayer && pPlayer->IsAlive())
-			{
-				AccumulateAndResetPerLifeStats(pPlayer);
-				SendStatsToPlayer(pPlayer, STATMSG_UPDATE);
-			}
+			AccumulateAndResetPerLifeStats(pPlayer);
+			SendStatsToPlayer(pPlayer, STATMSG_UPDATE);
 		}
+	}
 }
 
 
