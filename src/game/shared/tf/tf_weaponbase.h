@@ -493,4 +493,5 @@ private:
 															\
 	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
 	PRECACHE_WEAPON_REGISTER( entityname );
+
 #endif // TF_WEAPONBASE_H

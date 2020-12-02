@@ -317,7 +317,7 @@ public:
 	bool selectable;
 	CUtlDict< const char*, unsigned short > model_player_per_class;
 
-	friend class CEconSchemaParser;
+	friend class CEconItemDefinition;
 } ItemStyle_t;
 
 #define MAX_CUSTOM_WEAPON_SOUNDS   10
@@ -413,7 +413,7 @@ public:
 	int wm_bodygroup_override;
 	int wm_bodygroup_state_override;
 
-	friend class CEconSchemaParser;
+	friend class CEconItemDefinition;
 } PerTeamVisuals_t;
 
 class CEconItemDefinition
@@ -571,6 +571,7 @@ public:
 	}
 
 	bool LoadFromKV( KeyValues *pKV );
+	void ParseVisuals( KeyValues *pKVData, int iIndex );
 
 private:
 	char const *name;

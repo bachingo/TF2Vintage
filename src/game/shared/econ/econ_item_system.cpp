@@ -1,4 +1,5 @@
 #include "cbase.h"
+#include "filesystem.h"
 #include "econ_item_system.h"
 #include "script_parser.h"
 #include "activitylist.h"
@@ -141,11 +142,6 @@ CEconItemSchema *GetItemSchema()
 	return &g_EconItemSchema;
 }
 
-class CEconSchemaParser : public CScriptParser
-{
-public:
-	DECLARE_CLASS_GAMEROOT( CEconSchemaParser, CScriptParser );
-
 #define GET_STRING(copyto, from, name)													\
 		if (from->GetString(#name, NULL))												\
 			copyto->name = from->GetString(#name)
@@ -206,400 +202,62 @@ public:
 			}												\
 		}	
 
-	void Parse( KeyValues *pKeyValuesData, bool bWildcard = false, const char *szFileWithoutEXT = NULL ) OVERRIDE
+// Recursively inherit keys from parent KeyValues
+void InheritKVRec( KeyValues *pFrom, KeyValues *pTo )
+{
+	for ( KeyValues *pSubData = pFrom->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
 	{
-		GetItemSchema()->m_pSchema = pKeyValuesData->MakeCopy();
-
-		KeyValues *pPrefabs = pKeyValuesData->FindKey( "prefabs" );
-		if ( pPrefabs )
+		switch ( pSubData->GetDataType() )
 		{
-			ParsePrefabs( pPrefabs );
-		}
-
-		KeyValues *pGameInfo = pKeyValuesData->FindKey( "game_info" );
-		if ( pGameInfo )
-		{
-			ParseGameInfo( pGameInfo );
-		}
-
-		KeyValues *pQualities = pKeyValuesData->FindKey( "qualities" );
-		if ( pQualities )
-		{
-			ParseQualities( pQualities );
-		}
-
-		KeyValues *pColors = pKeyValuesData->FindKey( "colors" );
-		if ( pColors )
-		{
-			ParseColors( pColors );
-		}
-
-		KeyValues *pAttributes = pKeyValuesData->FindKey( "attributes" );
-		if ( pAttributes )
-		{
-			ParseAttributes( pAttributes );
-		}
-
-		KeyValues *pItems = pKeyValuesData->FindKey( "items" );
-		if ( pItems )
-		{
-			ParseItems( pItems );
-		}
-		
-		// TF2V exclusive lists start here.
-		// None of these are necessary but they help in organizing the item schema.
-		
-		// Stockweapons is just for cataloging stock content.
-		KeyValues *pStockItems = pKeyValuesData->FindKey( "stockitems" );
-		if ( pStockItems )
-		{
-			ParseItems( pStockItems );
-		}
-		
-		// Base Unlocks catalogs the standard unlock weapons.
-		KeyValues *pUnlockItems = pKeyValuesData->FindKey( "unlockitems" );
-		if ( pUnlockItems )
-		{
-			ParseItems( pUnlockItems );
-		}
-		
-		// Stock Cosmetics are for the typical cosmetics.
-		KeyValues *pCosmeticItems = pKeyValuesData->FindKey( "cosmeticitems" );
-		if ( pCosmeticItems )
-		{
-			ParseItems( pCosmeticItems );
-		}
-		
-		// Reskins is for reskin weapons.
-		KeyValues *pReskinItems = pKeyValuesData->FindKey( "reskinitems" );
-		if ( pReskinItems )
-		{
-			ParseItems( pReskinItems );
-		}
-		
-		// Special is for special items, like medals and zombies.
-		KeyValues *pSpecialItems = pKeyValuesData->FindKey( "specialitems" );
-		if ( pSpecialItems )
-		{
-			ParseItems( pSpecialItems );
-		}
-		
-	};
-
-	void ParseGameInfo( KeyValues *pKeyValuesData )
-	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
-		{
-			GetItemSchema()->m_GameInfo.Insert( pSubData->GetName(), pSubData->GetFloat() );
-		}
-	};
-
-	void ParseQualities( KeyValues *pKeyValuesData )
-	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
-		{
-			EconQuality Quality;
-			GET_INT( ( &Quality ), pSubData, value );
-			GetItemSchema()->m_Qualities.Insert( pSubData->GetName(), Quality );
-		}
-
-	};
-
-	void ParseColors( KeyValues *pKeyValuesData )
-	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
-		{
-			EconColor ColorDesc;
-			GET_STRING( ( &ColorDesc ), pSubData, color_name );
-			GetItemSchema()->m_Colors.Insert( pSubData->GetName(), ColorDesc );
-		}
-	};
-
-	void ParsePrefabs( KeyValues *pKeyValuesData )
-	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
-		{
-			if ( GetItemSchema()->m_PrefabsValues.IsValidIndex( GetItemSchema()->m_PrefabsValues.Find( pSubData->GetName() ) ) )
+			// Identifies the start of a subsection
+			case KeyValues::TYPE_NONE:
 			{
-				Error( "Duplicate prefab name (%s)\n", pSubData->GetName() );
-				continue;
-			}
-
-			KeyValues *Values = pSubData->MakeCopy();
-			GetItemSchema()->m_PrefabsValues.Insert( pSubData->GetName(), Values );
-		}
-	};
-
-	void ParseItems( KeyValues *pKeyValuesData )
-	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
-		{
-			// Skip over default item, not sure why it's there.
-			if ( V_stricmp( pSubData->GetName(), "default" ) == 0 )
-				continue;
-
-			CEconItemDefinition *pItem = new CEconItemDefinition;
-			int index = V_atoi( pSubData->GetName() );
-			pItem->index = index;
-
-			KeyValues *pDefinition = new KeyValues( pSubData->GetName() );
-			MergeDefinitionPrefabs( pDefinition, pSubData );
-			pItem->LoadFromKV( pDefinition );
-
-			GetItemSchema()->m_Items.Insert( index, pItem );
-		}
-	};
-
-	void ParseAttributes( KeyValues *pKeyValuesData )
-	{
-		for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
-		{
-			CEconAttributeDefinition *pAttribute = new CEconAttributeDefinition;
-			pAttribute->index = V_atoi( pSubData->GetName() );
-
-			pAttribute->LoadFromKV( pSubData->MakeCopy() );
-
-			GetItemSchema()->m_Attributes.Insert( pAttribute->index, pAttribute );
-		}
-	};
-
-	static bool ParseVisuals( KeyValues *pData, CEconItemDefinition *pItem, int iIndex )
-	{
-		PerTeamVisuals_t *pVisuals = new PerTeamVisuals_t;
-
-		for ( KeyValues *pVisualData = pData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
-		{
-			if ( !V_stricmp( pVisualData->GetName(), "use_visualsblock_as_base" ) )
-			{
-				const char *pszBlockTeamName = pVisualData->GetString();
-				int iTeam = GetTeamVisualsFromString( pszBlockTeamName );
-				if ( iTeam != -1 )
+				KeyValues *pKey = pTo->FindKey( pSubData->GetName() );
+				if ( pKey == NULL )
 				{
-					*pVisuals = *pItem->GetVisuals( iTeam );
-				}
-				else
-				{
-					Error( "Unknown visuals block: %s", pszBlockTeamName );
-				}
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "player_bodygroups" ) )
-			{
-				GET_VALUES_FAST_BOOL( pVisuals->player_bodygroups, pVisualData );
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "attached_models" ) )
-			{
-				for (KeyValues *pAttachment = pVisualData->GetFirstSubKey(); pAttachment != NULL; pAttachment = pAttachment->GetNextKey())
-				{
-					AttachedModel_t attached_model;
-					attached_model.model_display_flags = pAttachment->GetInt( "model_display_flags", AM_VIEWMODEL|AM_WORLDMODEL );
-					V_strncpy( attached_model.model, pAttachment->GetString( "model" ), sizeof( attached_model.model ) );
-
-					pVisuals->attached_models.AddToTail( attached_model );
-				}
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "custom_particlesystem" ) )
-			{
-				pVisuals->custom_particlesystem = pVisualData->GetString( "system" );
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "muzzle_flash" ) )
-			{
-				// Fetching this similar to weapon script file parsing.
-				pVisuals->muzzle_flash = pVisualData->GetString();
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "tracer_effect" ) )
-			{
-				// Fetching this similar to weapon script file parsing.
-				pVisuals->tracer_effect = pVisualData->GetString();
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
-			{
-				for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
-				{
-					int key = ActivityList_IndexForName( pKeyData->GetName() );
-					int value = ActivityList_IndexForName( pKeyData->GetString() );
-
-					if ( key != kActivityLookup_Missing && value != kActivityLookup_Missing )
-					{
-						pVisuals->animation_replacement.Insert( key, value );
-					}
-				}
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "playback_activity" ) )
-			{
-				for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
-				{
-					int iPlaybackType = UTIL_StringFieldToInt( pKeyData->GetName(), g_WearableAnimTypeStrings, NUM_WEARABLEANIM_TYPES );
-					if ( iPlaybackType != -1 )
-					{
-						activity_on_wearable_t activity;
-						activity.playback = (wearableanimplayback_t)iPlaybackType;
-						activity.activity = kActivityLookup_Unknown;
-						activity.activity_name = pKeyData->GetString();
-
-						pVisuals->playback_activity.AddToTail( activity );
-					}
-				}
-			}
-			else if ( !V_strnicmp( pVisualData->GetName(), "custom_sound", 12 ) )
-			{
-				int iSound = 0;
-				if ( pVisualData->GetName()[12] )
-				{
-					iSound = Clamp( V_atoi( pVisualData->GetName() + 12 ), 0, MAX_CUSTOM_WEAPON_SOUNDS - 1 );
+					pKey = pTo->CreateNewKey();
+					pKey->SetName( pSubData->GetName() );
 				}
 
-				pVisuals->aCustomWeaponSounds[ iSound ] = pVisualData->GetString();
+				InheritKVRec( pSubData, pKey );
+				break;
 			}
-			else if ( !V_strnicmp( pVisualData->GetName(), "sound_", 6 ) )
+			// Actual types
+			case KeyValues::TYPE_STRING:
 			{
-				// Advancing pointer past sound_ prefix... why couldn't they just make a subsection for sounds?
-				int iSound = GetWeaponSoundFromString( pVisualData->GetName() + 6 );
-
-				if ( iSound != -1 )
-				{
-					pVisuals->aWeaponSounds[ iSound ] = pVisualData->GetString();
-				}
+				pTo->SetString( pSubData->GetName(), pSubData->GetString() );
+				break;
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "styles" ) )
+			case KeyValues::TYPE_INT:
 			{
-				for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
-				{
-					ItemStyle_t *style = new ItemStyle_t;
-
-					GET_STRING( style, pStyleData, name );
-					GET_STRING( style, pStyleData, model_player );
-					GET_STRING( style, pStyleData, image_inventory );
-					GET_BOOL( style, pStyleData, selectable );
-					GET_INT( style, pStyleData, skin_red );
-					GET_INT( style, pStyleData, skin_blu );
-
-					for ( KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey() )
-					{
-						if ( !V_stricmp( pStyleModelData->GetName(), "model_player_per_class" ) )
-						{
-							GET_VALUES_FAST_STRING( style->model_player_per_class, pStyleModelData );
-						}
-					}
-
-					pVisuals->styles.AddToTail( style );
-				}
+				pTo->SetInt( pSubData->GetName(), pSubData->GetInt() );
+				break;
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "skin" ) )
+			case KeyValues::TYPE_FLOAT:
 			{
-				pVisuals->skin = pVisualData->GetInt();
+				pTo->SetFloat( pSubData->GetName(), pSubData->GetFloat() );
+				break;
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "use_per_class_bodygroups" ) )
+			case KeyValues::TYPE_WSTRING:
 			{
-				pVisuals->use_per_class_bodygroups = pVisualData->GetInt();
+				pTo->SetWString( pSubData->GetName(), pSubData->GetWString() );
+				break;
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "material_override" ) )
+			case KeyValues::TYPE_COLOR:
 			{
-				pVisuals->material_override = pVisualData->GetString();
+				pTo->SetColor( pSubData->GetName(), pSubData->GetColor() );
+				break;
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "vm_bodygroup_override" ) )
+			case KeyValues::TYPE_UINT64:
 			{
-				pVisuals->vm_bodygroup_override = pVisualData->GetInt();
+				pTo->SetUint64( pSubData->GetName(), pSubData->GetUint64() );
+				break;
 			}
-			else if ( !V_stricmp( pVisualData->GetName(), "vm_bodygroup_state_override" ) )
-			{
-				pVisuals->vm_bodygroup_state_override = pVisualData->GetInt();
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "wm_bodygroup_override" ) )
-			{
-				pVisuals->wm_bodygroup_override = pVisualData->GetInt();
-			}
-			else if ( !V_stricmp( pVisualData->GetName(), "wm_bodygroup_state_override" ) )
-			{
-				pVisuals->wm_bodygroup_state_override = pVisualData->GetInt();
-			}
-		}
-
-		pItem->visual[ iIndex ] = pVisuals;
-
-		return true;
-	}
-
-protected:
-	void MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues *pSchemeData )
-	{
-		char prefab[64]{0};
-		Q_snprintf( prefab, sizeof( prefab ), pSchemeData->GetString( "prefab" ) );
-
-		if ( prefab[0] != '\0' )
-		{
-			//check if there's prefab for prefab.. PREFABSEPTION
-			CUtlStringList strings;
-			V_SplitString( prefab, " ", strings );
-
-			FOR_EACH_VEC_BACK( strings, i )
-			{
-				KeyValues *pPrefabValues = NULL;
-				FIND_ELEMENT( GetItemSchema()->m_PrefabsValues, strings[i], pPrefabValues );
-				if ( pPrefabValues )
-					MergeDefinitionPrefabs( pDefinition, pPrefabValues );
-			}
-		}
-
-		InheritKVRec( pSchemeData, pDefinition );
-	}
-
-	void InheritKVRec( KeyValues *pFrom, KeyValues *pTo )
-	{
-		for ( KeyValues *pSubData = pFrom->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
-		{
-			switch ( pSubData->GetDataType() )
-			{
-				// Identifies the start of a subsection
-				case KeyValues::TYPE_NONE:
-				{
-					KeyValues *pKey = pTo->FindKey( pSubData->GetName() );
-					if ( pKey == NULL )
-					{
-						pKey = pTo->CreateNewKey();
-						pKey->SetName( pSubData->GetName() );
-					}
-
-					InheritKVRec( pSubData, pKey );
-					break;
-				}
-				// Actual types
-				case KeyValues::TYPE_STRING:
-				{
-					pTo->SetString( pSubData->GetName(), pSubData->GetString() );
-					break;
-				}
-				case KeyValues::TYPE_INT:
-				{
-					pTo->SetInt( pSubData->GetName(), pSubData->GetInt() );
-					break;
-				}
-				case KeyValues::TYPE_FLOAT:
-				{
-					pTo->SetFloat( pSubData->GetName(), pSubData->GetFloat() );
-					break;
-				}
-				case KeyValues::TYPE_WSTRING:
-				{
-					pTo->SetWString( pSubData->GetName(), pSubData->GetWString() );
-					break;
-				}
-				case KeyValues::TYPE_COLOR:
-				{
-					pTo->SetColor( pSubData->GetName(), pSubData->GetColor() );
-					break;
-				}
-				case KeyValues::TYPE_UINT64:
-				{
-					pTo->SetUint64( pSubData->GetName(), pSubData->GetUint64() );
-					break;
-				}
-				default:
-					break;
-			}
+			default:
+				break;
 		}
 	}
-};
-CEconSchemaParser g_EconSchemaParser;
+}
 
 
 bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
@@ -792,19 +450,173 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 							continue;
 
 						visual[i] = NULL;
-						CEconSchemaParser::ParseVisuals( pSubData, this, i );
+						ParseVisuals( pSubData, i );
 					}
 				}
 				else
 				{
 					visual[ iVisuals ] = NULL;
-					CEconSchemaParser::ParseVisuals( pSubData, this, iVisuals );
+					ParseVisuals( pSubData, iVisuals );
 				}
 			}
 		}
 	}
 
 	return true;
+}
+
+void CEconItemDefinition::ParseVisuals( KeyValues *pKVData, int iIndex )
+{
+	PerTeamVisuals_t *pVisuals = new PerTeamVisuals_t;
+
+	for ( KeyValues *pVisualData = pKVData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
+	{
+		if ( !V_stricmp( pVisualData->GetName(), "use_visualsblock_as_base" ) )
+		{
+			const char *pszBlockTeamName = pVisualData->GetString();
+			int iTeam = GetTeamVisualsFromString( pszBlockTeamName );
+			if ( iTeam != -1 )
+			{
+				*pVisuals = *GetVisuals( iTeam );
+			}
+			else
+			{
+				Warning( "Unknown visuals block: %s", pszBlockTeamName );
+			}
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "player_bodygroups" ) )
+		{
+			GET_VALUES_FAST_BOOL( pVisuals->player_bodygroups, pVisualData );
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "attached_models" ) )
+		{
+			for (KeyValues *pAttachment = pVisualData->GetFirstSubKey(); pAttachment != NULL; pAttachment = pAttachment->GetNextKey())
+			{
+				AttachedModel_t attached_model;
+				attached_model.model_display_flags = pAttachment->GetInt( "model_display_flags", AM_VIEWMODEL|AM_WORLDMODEL );
+				V_strncpy( attached_model.model, pAttachment->GetString( "model" ), sizeof( attached_model.model ) );
+
+				pVisuals->attached_models.AddToTail( attached_model );
+			}
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "custom_particlesystem" ) )
+		{
+			pVisuals->custom_particlesystem = pVisualData->GetString( "system" );
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "muzzle_flash" ) )
+		{
+			// Fetching this similar to weapon script file parsing.
+			pVisuals->muzzle_flash = pVisualData->GetString();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "tracer_effect" ) )
+		{
+			// Fetching this similar to weapon script file parsing.
+			pVisuals->tracer_effect = pVisualData->GetString();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
+		{
+			for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
+			{
+				int key = ActivityList_IndexForName( pKeyData->GetName() );
+				int value = ActivityList_IndexForName( pKeyData->GetString() );
+
+				if ( key != kActivityLookup_Missing && value != kActivityLookup_Missing )
+				{
+					pVisuals->animation_replacement.Insert( key, value );
+				}
+			}
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "playback_activity" ) )
+		{
+			for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
+			{
+				int iPlaybackType = UTIL_StringFieldToInt( pKeyData->GetName(), g_WearableAnimTypeStrings, NUM_WEARABLEANIM_TYPES );
+				if ( iPlaybackType != -1 )
+				{
+					activity_on_wearable_t activity;
+					activity.playback = (wearableanimplayback_t)iPlaybackType;
+					activity.activity = kActivityLookup_Unknown;
+					activity.activity_name = pKeyData->GetString();
+
+					pVisuals->playback_activity.AddToTail( activity );
+				}
+			}
+		}
+		else if ( !V_strnicmp( pVisualData->GetName(), "custom_sound", 12 ) )
+		{
+			int iSound = 0;
+			if ( pVisualData->GetName()[12] )
+			{
+				iSound = Clamp( V_atoi( pVisualData->GetName() + 12 ), 0, MAX_CUSTOM_WEAPON_SOUNDS - 1 );
+			}
+
+			pVisuals->aCustomWeaponSounds[ iSound ] = pVisualData->GetString();
+		}
+		else if ( !V_strnicmp( pVisualData->GetName(), "sound_", 6 ) )
+		{
+			// Advancing pointer past sound_ prefix... why couldn't they just make a subsection for sounds?
+			int iSound = GetWeaponSoundFromString( pVisualData->GetName() + 6 );
+
+			if ( iSound != -1 )
+			{
+				pVisuals->aWeaponSounds[ iSound ] = pVisualData->GetString();
+			}
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "styles" ) )
+		{
+			for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
+			{
+				ItemStyle_t *style = new ItemStyle_t;
+
+				GET_STRING( style, pStyleData, name );
+				GET_STRING( style, pStyleData, model_player );
+				GET_STRING( style, pStyleData, image_inventory );
+				GET_BOOL( style, pStyleData, selectable );
+				GET_INT( style, pStyleData, skin_red );
+				GET_INT( style, pStyleData, skin_blu );
+
+				for ( KeyValues *pStyleModelData = pStyleData->GetFirstSubKey(); pStyleModelData != NULL; pStyleModelData = pStyleModelData->GetNextKey() )
+				{
+					if ( !V_stricmp( pStyleModelData->GetName(), "model_player_per_class" ) )
+					{
+						GET_VALUES_FAST_STRING( style->model_player_per_class, pStyleModelData );
+					}
+				}
+
+				pVisuals->styles.AddToTail( style );
+			}
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "skin" ) )
+		{
+			pVisuals->skin = pVisualData->GetInt();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "use_per_class_bodygroups" ) )
+		{
+			pVisuals->use_per_class_bodygroups = pVisualData->GetInt();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "material_override" ) )
+		{
+			pVisuals->material_override = pVisualData->GetString();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "vm_bodygroup_override" ) )
+		{
+			pVisuals->vm_bodygroup_override = pVisualData->GetInt();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "vm_bodygroup_state_override" ) )
+		{
+			pVisuals->vm_bodygroup_state_override = pVisualData->GetInt();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "wm_bodygroup_override" ) )
+		{
+			pVisuals->wm_bodygroup_override = pVisualData->GetInt();
+		}
+		else if ( !V_stricmp( pVisualData->GetName(), "wm_bodygroup_state_override" ) )
+		{
+			pVisuals->wm_bodygroup_state_override = pVisualData->GetInt();
+		}
+	}
+
+	visual[ iIndex ] = pVisuals;
 }
 
 bool CEconAttributeDefinition::LoadFromKV( KeyValues *pDefinition )
@@ -1017,10 +829,16 @@ bool CEconItemSchema::Init( void )
 		ActivityList_Free();
 		ActivityList_RegisterSharedActivities();
 
+		KeyValuesAD schema("KVDataFile");
+		if ( !schema->LoadFromFile( g_pFullFileSystem, items_game ) )
+			return false;
+
 		InitAttributeTypes();
 
 		float flStartTime = engine->Time();
-		g_EconSchemaParser.InitParser( items_game, true, false );
+
+		ParseSchema( schema );
+
 		float flEndTime = engine->Time();
 		Msg( "Processing item schema took %.02fms. Parsed %d items and %d attributes.\n", ( flEndTime - flStartTime ) * 1000.0f, m_Items.Count(), m_Attributes.Count() );
 
@@ -1057,6 +875,32 @@ void CEconItemSchema::InitAttributeTypes( void )
 	stringType.szName = "string";
 	stringType.pType = new CSchemaAttributeType_String;
 	m_AttributeTypes.AddToTail( stringType );
+}
+
+void CEconItemSchema::MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues *pSchemeData )
+{
+	char prefab[64]{0};
+	Q_snprintf( prefab, sizeof( prefab ), pSchemeData->GetString( "prefab" ) );
+
+	if ( prefab[0] != '\0' )
+	{
+		//check if there's prefab for prefab.. PREFABSEPTION
+		CUtlStringList strings;
+		V_SplitString( prefab, " ", strings );
+
+		// traverse backwards in a adjective > noun style
+		FOR_EACH_VEC_BACK( strings, i )
+		{
+			KeyValues *pPrefabValues = NULL;
+			FIND_ELEMENT( m_PrefabsValues, strings[i], pPrefabValues );
+			AssertMsg( pPrefabValues, "Unable to find prefab \"%s\".", strings[i] );
+
+			if ( pPrefabValues )
+				MergeDefinitionPrefabs( pDefinition, pPrefabValues );
+		}
+	}
+
+	InheritKVRec( pSchemeData, pDefinition );
 }
 
 bool CEconItemSchema::LoadFromFile( void )
@@ -1197,9 +1041,163 @@ void CEconItemSchema::Precache( void )
 	}
 }
 
-void CEconItemSchema::ParseSchema( KeyValues *pKVData )
+void CEconItemSchema::ParseSchema( KeyValues *pKeyValuesData )
 {
-	g_EconSchemaParser.Parse( pKVData );
+	m_pSchema = pKeyValuesData->MakeCopy();
+
+	KeyValues *pPrefabs = pKeyValuesData->FindKey( "prefabs" );
+	if ( pPrefabs )
+	{
+		ParsePrefabs( pPrefabs );
+	}
+
+	KeyValues *pGameInfo = pKeyValuesData->FindKey( "game_info" );
+	if ( pGameInfo )
+	{
+		ParseGameInfo( pGameInfo );
+	}
+
+	KeyValues *pQualities = pKeyValuesData->FindKey( "qualities" );
+	if ( pQualities )
+	{
+		ParseQualities( pQualities );
+	}
+
+	KeyValues *pColors = pKeyValuesData->FindKey( "colors" );
+	if ( pColors )
+	{
+		ParseColors( pColors );
+	}
+
+	KeyValues *pAttributes = pKeyValuesData->FindKey( "attributes" );
+	if ( pAttributes )
+	{
+		ParseAttributes( pAttributes );
+	}
+
+	KeyValues *pItems = pKeyValuesData->FindKey( "items" );
+	if ( pItems )
+	{
+		ParseItems( pItems );
+	}
+
+#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
+	// TF2V exclusive lists start here.
+	// None of these are necessary but they help in organizing the item schema.
+
+	// Stockweapons is just for cataloging stock content.
+	KeyValues *pStockItems = pKeyValuesData->FindKey( "stockitems" );
+	if ( pStockItems )
+	{
+		ParseItems( pStockItems );
+	}
+
+	// Base Unlocks catalogs the standard unlock weapons.
+	KeyValues *pUnlockItems = pKeyValuesData->FindKey( "unlockitems" );
+	if ( pUnlockItems )
+	{
+		ParseItems( pUnlockItems );
+	}
+
+	// Stock Cosmetics are for the typical cosmetics.
+	KeyValues *pCosmeticItems = pKeyValuesData->FindKey( "cosmeticitems" );
+	if ( pCosmeticItems )
+	{
+		ParseItems( pCosmeticItems );
+	}
+
+	// Reskins is for reskin weapons.
+	KeyValues *pReskinItems = pKeyValuesData->FindKey( "reskinitems" );
+	if ( pReskinItems )
+	{
+		ParseItems( pReskinItems );
+	}
+
+	// Special is for special items, like medals and zombies.
+	KeyValues *pSpecialItems = pKeyValuesData->FindKey( "specialitems" );
+	if ( pSpecialItems )
+	{
+		ParseItems( pSpecialItems );
+	}
+#endif
+}
+
+void CEconItemSchema::ParseGameInfo( KeyValues *pKeyValuesData )
+{
+	for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	{
+		m_GameInfo.Insert( pSubData->GetName(), pSubData->GetFloat() );
+	}
+}
+
+void CEconItemSchema::ParseQualities( KeyValues *pKeyValuesData )
+{
+	for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	{
+		EconQuality Quality;
+		GET_INT( ( &Quality ), pSubData, value );
+		m_Qualities.Insert( pSubData->GetName(), Quality );
+	}
+
+}
+
+void CEconItemSchema::ParseColors( KeyValues *pKeyValuesData )
+{
+	for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	{
+		EconColor ColorDesc;
+		GET_STRING( ( &ColorDesc ), pSubData, color_name );
+		m_Colors.Insert( pSubData->GetName(), ColorDesc );
+	}
+}
+
+void CEconItemSchema::ParsePrefabs( KeyValues *pKeyValuesData )
+{
+	for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
+	{
+		if ( GetItemSchema()->m_PrefabsValues.IsValidIndex( GetItemSchema()->m_PrefabsValues.Find( pSubData->GetName() ) ) )
+		{
+			Warning( "Duplicate prefab name (%s)\n", pSubData->GetName() );
+			continue;
+		}
+
+		KeyValues *Values = pSubData->MakeCopy();
+		m_PrefabsValues.Insert( pSubData->GetName(), Values );
+	}
+}
+
+void CEconItemSchema::ParseItems( KeyValues *pKeyValuesData )
+{
+	for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
+	{
+		// Skip over default item, not sure why it's there.
+		if ( V_stricmp( pSubData->GetName(), "default" ) == 0 )
+			continue;
+
+		CEconItemDefinition *pItem = new CEconItemDefinition;
+		int index = V_atoi( pSubData->GetName() );
+		pItem->index = index;
+
+		KeyValues *pDefinition = new KeyValues( pSubData->GetName() );
+		MergeDefinitionPrefabs( pDefinition, pSubData );
+		pItem->LoadFromKV( pDefinition );
+
+		m_Items.Insert( index, pItem );
+	}
+}
+
+void CEconItemSchema::ParseAttributes( KeyValues *pKeyValuesData )
+{
+	for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
+	{
+		CEconAttributeDefinition *pAttribute = new CEconAttributeDefinition;
+		pAttribute->index = V_atoi( pSubData->GetName() );
+
+		pAttribute->LoadFromKV( pSubData->MakeCopy() );
+
+		m_Attributes.Insert( pAttribute->index, pAttribute );
+	}
+}
 }
 
 CEconItemDefinition *CEconItemSchema::GetItemDefinition( int id )

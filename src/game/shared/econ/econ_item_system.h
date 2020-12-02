@@ -5,6 +5,7 @@
 #pragma once
 #endif
 
+#include "tier1/utlbuffer.h"
 #ifndef NO_STEAM
 #include "steam/steam_api.h"
 #endif
@@ -76,6 +77,14 @@ private:
 	uint m_unSchemaResetCount;
 
 	void ParseSchema( KeyValues *pKVData );
+	void ParseGameInfo( KeyValues *pKeyValuesData );
+	void ParseQualities( KeyValues *pKeyValuesData );
+	void ParseColors( KeyValues *pKeyValuesData );
+	void ParsePrefabs( KeyValues *pKeyValuesData );
+	void ParseItems( KeyValues *pKeyValuesData );
+	void ParseAttributes( KeyValues *pKeyValuesData );
+
+	void MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues *pSchemeData );
 };
 
 CEconItemSchema *GetItemSchema();
