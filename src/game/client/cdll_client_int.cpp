@@ -122,11 +122,11 @@
 #endif
 #include "vscript/ivscript.h"
 #if defined( TF_CLIENT_DLL )
-#include "rtime.h"
 #include "tf_hud_disconnect_prompt.h"
 #include "../engine/audio/public/sound.h"
 #include "tf_shared_content_manager.h"
 #endif
+#include "rtime.h"
 #include "clientsteamcontext.h"
 #include "renamed_recvtable_compat.h"
 #include "mouthinfo.h"
@@ -1499,9 +1499,7 @@ void CHLClient::HudUpdate( bool bActive )
 {
 	float frametime = gpGlobals->frametime;
 
-#if defined( TF_CLIENT_DLL )
 	CRTime::UpdateRealTime();
-#endif
 
 	GetClientVoiceMgr()->Frame( frametime );
 

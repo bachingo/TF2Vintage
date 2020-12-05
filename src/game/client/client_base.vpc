@@ -552,7 +552,8 @@ $Project
 				"in_mouse.cpp"										\
 				"mumble.cpp"										\
 				"$SRCDIR\public\renamed_recvtable_compat.cpp"		\
-				"rendertexture.cpp"									
+				"rendertexture.cpp"									\
+				"$SRCDIR\public\rtime.cpp"
 				{
 					$Configuration
 					{

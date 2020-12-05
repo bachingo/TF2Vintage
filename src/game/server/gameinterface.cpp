@@ -93,6 +93,7 @@
 #include "vscript/ivscript.h"
 #include "vscript_server.h"
 #include "ScriptGameEventListener.h"
+#include "rtime.h"
 #ifdef _WIN32
 #include <direct.h> // getcwd
 #elif POSIX
@@ -1485,6 +1486,8 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 		DrawMeasuredSections();
 	}
 	*/
+
+	CRTime::UpdateRealTime();
 
 //#ifdef _DEBUG  - allow this in release for now
 	DrawAllDebugOverlays();

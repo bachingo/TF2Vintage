@@ -698,16 +698,17 @@ $Project
 				"$SRCDIR\public\simple_physics.cpp"					\
 				"$SRCDIR\public\stringregistry.cpp"					\
 				"$SRCDIR\public\studio.cpp"							\
-				"GameStats_BasicStatsFunctions.cpp"
-		{
-			$Configuration
-			{
-				$Compiler
+				"GameStats_BasicStatsFunctions.cpp"					\
+				"$SRCDIR\public\rtime.cpp"
 				{
-					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					$Configuration
+					{
+						$Compiler
+						{
+							$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+						}
+					}
 				}
-			}
-		}
 
 		$Folder	"Precompiled Header"
 		{
