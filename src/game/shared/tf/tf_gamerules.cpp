@@ -210,6 +210,8 @@ CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTON
 {
 	isZombieMobForceSpawning = true;
 }
+
+ConVar tf_particles_disable_weather( "tf_particles_disable_weather", "0", FCVAR_ARCHIVE, "Disable particles related to weather effects." );
 #endif
 
 void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
@@ -2417,6 +2419,24 @@ void CTFGameRules::SetupOnRoundStart( void )
 	if ( g_pMonsterResource )
 	{
 		g_pMonsterResource->HideBossHealthMeter();
+	}
+
+	if ( IsHolidayActive( kHoliday_EOTL ) )
+	{
+		for ( int i = 0; i < IPhysicsPropAutoList::AutoList().Count(); i++ )
+		{
+			CPhysicsProp *pPhysicsProp = static_cast<CPhysicsProp *>( IPhysicsPropAutoList::AutoList()[i] );
+			const char *pszModel = pPhysicsProp->GetModelName().ToCStr();
+
+			if ( FStrEq( pszModel, "models/props_trainyard/bomb_cart.mdl" ) )
+			{
+				pPhysicsProp->SetModel( "models/props_trainyard/bomb_eotl_blue.mdl" );
+			}
+			else if ( FStrEq( pszModel, "models/props_trainyard/bomb_cart_red.mdl" ) )
+			{
+				pPhysicsProp->SetModel( "models/props_trainyard/bomb_eotl_red.mdl" );
+			}
+		}
 	}
 }
 
