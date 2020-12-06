@@ -502,13 +502,13 @@ private:
 
 	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
 
+	void			BeginHaunting( int nDesiredCount, float flMinLifetime, float flMaxLifetime );
 	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
 
 private:
 
 	int				DefaultFOV( void ) { return 75; }
 
-	void			BeginHaunting( int nDesiredCount, float flMinLifetime, float flMaxLifetime );
 	void			SpawnHalloweenBoss( void );
 	void			SpawnZombieMob( void );
 	CountdownTimer	m_bossSpawnTimer;

@@ -2333,7 +2333,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_iNumCaps[i] = 0;
 	}
 
-	m_bossSpawnTimer.Invalidate();
 	SetIT( NULL );
 
 	m_hRedAttackTrain = NULL;
@@ -2407,6 +2406,18 @@ void CTFGameRules::SetupOnRoundStart( void )
 	}
 
 	m_szMostRecentCappers[0] = 0;
+
+	m_bossSpawnTimer.Invalidate();
+
+	m_hGhosts.RemoveAll();
+
+	m_mobSpawnTimer.Invalidate();
+	m_nZombiesToSpawn = 0;
+
+	if ( g_pMonsterResource )
+	{
+		g_pMonsterResource->HideBossHealthMeter();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -3163,7 +3174,6 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 	RunPlayerConditionThink();
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3174,47 +3184,67 @@ void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinLifetime, float 
 
 	if ( !IsHalloweenScenario( HALLOWEEN_SCENARIO_VIADUCT ) && !IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
 	{
-		CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity*> ( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
+		CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity *>( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
 		if ( !pHolidayEntity || !pHolidayEntity->ShouldAllowHaunting() )
 			return;
 	}
 
-	if ( IGhostAutoList::AutoList().Count() >= nDesiredCount )
+	m_hGhosts.RemoveAll();
+
+	// Just update existing ghosts
+	FOR_EACH_VEC( IGhostAutoList::AutoList(), i )
+	{
+		CGhost *pGhost = (CGhost *)IGhostAutoList::AutoList()[i];
+		pGhost->SetLifetime( RandomFloat( flMinLifetime, flMaxLifetime ) );
+		m_hGhosts.AddToTail( pGhost );
+	}
+
+	// If there was already too many existing
+	if ( m_hGhosts.Count() >= nDesiredCount )
 		return;
 
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, TF_TEAM_RED, true );
 	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
 
-	const int nNumToSpawn = nDesiredCount - IGhostAutoList::AutoList().Count();
-
-	CUtlVector<Vector> locations;
-	FOR_EACH_VEC( TheNavAreas, i )
-	{
-		CTFNavArea *pArea = (CTFNavArea *)TheNavAreas[ i ];
-		if ( pArea->HasTFAttributes( RED_SPAWN_ROOM | BLUE_SPAWN_ROOM ) )
-			continue;
-
-		Vector vecSpot = pArea->GetRandomPoint();
-
-		int j = 0;
-		for ( j; j < players.Count(); ++j )
+	auto IsPlayerNearby = [&]( Vector const &vecSpot ) -> bool {
+		FOR_EACH_VEC( players, i )
 		{
-			if ( ( players[ i ]->GetAbsOrigin() - vecSpot ).LengthSqr() < Square( 240.0 ) )
-				break;
+			if ( vecSpot.DistTo( players[i]->GetAbsOrigin() ) < 240.0f )
+				return true;
 		}
 
-		if ( j == players.Count() )
-			locations.AddToTail( vecSpot );
+		return false;
+	};
+
+	CUtlVector<Vector> spawnPoints;
+	FOR_EACH_VEC( TheNavAreas, i )
+	{
+		CTFNavArea *area = assert_cast<CTFNavArea *>( TheNavAreas[i] );
+		if ( area->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM ) )
+		{
+			// keep out of spawn rooms
+			continue;
+		}
+
+		const Vector vecSpot = area->GetRandomPoint();
+		if ( IsPlayerNearby( vecSpot ) )
+			continue;
+
+		spawnPoints.AddToTail( vecSpot );
 	}
 
-	if ( locations.IsEmpty() )
+	if ( spawnPoints.IsEmpty() )
 		return;
 
-	for ( int i=0; i < nNumToSpawn; ++i )
+	const int nTotalGhosts = nDesiredCount - m_hGhosts.Count();
+	for ( int i=0; i < nTotalGhosts; ++i )
 	{
-		int nLocation = RandomInt( 0, locations.Count() - 1 );
-		CGhost::Create( locations[ nLocation ], vec3_angle, RandomFloat( flMinLifetime, flMaxLifetime ) );
+		const int nSpawnPoint = RandomInt( 0, spawnPoints.Count()-1 );
+		const float flLifetime = RandomFloat( flMinLifetime, flMaxLifetime );
+
+		CGhost *pGhost = CGhost::Create( spawnPoints[nSpawnPoint], vec3_angle, flLifetime );
+		m_hGhosts.AddToTail( pGhost );
 	}
 }
 
@@ -3223,6 +3253,8 @@ void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinLifetime, float 
 //-----------------------------------------------------------------------------
 void CTFGameRules::SpawnHalloweenBoss( void )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBotSpiky" );
+
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
 		return SpawnZombieMob();
 
