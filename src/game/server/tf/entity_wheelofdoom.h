@@ -25,7 +25,7 @@ public:
 	DECLARE_DATADESC()
 
 	CWheelOfDoom();
-	virtual ~CWheelOfDoom() {}
+	virtual ~CWheelOfDoom();
 
 	typedef CUtlVector<CTFPlayer *> EffectData_t;
 	struct WOD_BaseEffect
@@ -42,13 +42,12 @@ public:
 		virtual void ActivateEffect( EffectData_t &data ) {}
 		virtual void UpdateEffect( EffectData_t &data ) {}
 		virtual void DeactivateEffect( EffectData_t &data ) {}
-		void SetListFlags( int flags ) { fFlags = flags; }
 
 		int nType;
 		float flDuration;
 		char const *szBroadcastSound;
 		int fFlags;
-		char const *szEffectName;
+		char const *szEffectName; // for debugging
 	};
 
 	static void SpeakMagicConceptToAllPlayers( char const *szConcept );
@@ -97,11 +96,12 @@ public:
 	}
 	m_EffectManager;
 
+private:
 	CUtlVectorAutoPurge<WOD_BaseEffect *> m_Effects;
 
 	CUtlVector<CWheelOfDoom *> m_Wheels;
 
-	WOD_BaseEffect *m_pEffect;
+	WOD_BaseEffect *m_pActiveEffect;
 	CHandle<CBaseAnimating> m_hSpiral;
 	bool			m_bHasSpiral;
 	float			m_flDuration;
