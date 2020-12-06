@@ -48,6 +48,7 @@ class CHealthKit;
 class CTeamControlPoint;
 class CTeamTrainWatcher;
 class CTFBotRoster;
+class CGhost;
 
 #endif
 
@@ -176,16 +177,10 @@ public:
 #endif
 	static int		CalcPlayerScore( RoundStats_t *pRoundStats );
 
-	bool			IsBirthday( void );
-	bool			IsHalloween( void );
-	bool			IsFullMoon( void );
-	bool			IsChristmas( void );
-	bool			IsValentinesDay( void );
-	bool			IsAprilFools( void );
-	bool			IsEOTL( void );
-	bool			IsBreadUpdate( void );
-	bool			IsRememberingSoldier( void );
-	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
+	bool			IsBirthday( void ) const;
+	bool			IsBirthdayOrPyroVision( void ) const;
+	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday ) const;
+	bool			IsHolidayMap( /*EHoliday*/ int eHoliday ) const { return m_nMapHolidayType == eHoliday; }
 
 	bool 			IsNormalClass(CBaseEntity *pPlayer);
 	bool 			IsBossClass(CBaseEntity *pPlayer);
@@ -520,6 +515,7 @@ private:
 	CountdownTimer	m_mobSpawnTimer;
 	int				m_nZombiesToSpawn;
 	Vector			m_vecMobSpawnLocation;
+	CUtlVector< CHandle<CGhost> > m_hGhosts;
 
 #endif
 
@@ -598,16 +594,6 @@ public:
 
 	bool m_bControlSpawnsPerTeam[MAX_TEAMS][MAX_CONTROL_POINTS];
 	int	 m_iPreviousRoundWinners;
-
-	int	m_iBirthdayMode;
-	int	m_iHalloweenMode;
-	int	m_iFullMoonMode;
-	int	m_iChristmasMode;
-	int	m_iValentinesDayMode;
-	int	m_iAprilFoolsMode;
-	int	m_iBreadUpdateMode;
-	int	m_iEOTLMode;
-	int m_iSoldierMemorialMode;
 
 	CNetworkVar( bool, m_bFourTeamMode );
 	
