@@ -409,6 +409,9 @@ public:
 	virtual void	HandleOvertimeBegin();
 	virtual void	GetTeamGlowColor( int nTeam, float &r, float &g, float &b );
 
+	virtual bool	AllowMapParticleEffect( const char *pszParticleEffect );
+	virtual bool	AllowWeatherParticles( void );
+
 	virtual bool	AllowMapVisionFilterShaders( void );
 	virtual const char *TranslateEffectForVisionFilter( const char *pchEffectType, const char *pchEffectName );
 	void			SetUpVisionFilterKeyValues( void );

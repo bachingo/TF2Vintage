@@ -124,6 +124,10 @@ ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, 
 						   #endif
                              );
 
+#ifdef CLIENT_DLL
+ConVar tf_particles_disable_weather( "tf_particles_disable_weather", "0", FCVAR_ARCHIVE, "Disable particles related to weather effects." );
+#endif
+
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
 ConVar tf2v_allow_thirdperson( "tf2v_allow_thirdperson", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow players to switch to third person mode." );
@@ -210,8 +214,6 @@ CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTON
 {
 	isZombieMobForceSpawning = true;
 }
-
-ConVar tf_particles_disable_weather( "tf_particles_disable_weather", "0", FCVAR_ARCHIVE, "Disable particles related to weather effects." );
 #endif
 
 void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
@@ -7508,6 +7510,43 @@ bool CTFGameRules::ShouldBalanceTeams( void )
 }
 
 #ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowMapParticleEffect( const char *pszParticleEffect )
+{
+	static const char *s_WeatherEffects[] =
+	{
+		"tf_gamerules",
+		"env_rain_001",
+		"env_rain_002_256",
+		"env_rain_ripples",
+		"env_snow_light_001",
+		"env_rain_gutterdrip",
+		"env_rain_guttersplash",
+		"", // END Marker
+	};
+
+	if ( !AllowWeatherParticles() )
+	{
+		if ( FindInList( s_WeatherEffects, pszParticleEffect ) )
+			return false;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowWeatherParticles()
+{
+	return tf_particles_disable_weather.GetBool() ? false : true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFGameRules::AllowMapVisionFilterShaders( void )
 {
 	if( m_pVisionFilterWhitelist )
@@ -7525,6 +7564,9 @@ bool CTFGameRules::AllowMapVisionFilterShaders( void )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 char const *CTFGameRules::TranslateEffectForVisionFilter( char const *pchEffectType, char const *pchEffectName )
 {
 	if ( pchEffectType == NULL || pchEffectName == NULL )
@@ -7554,6 +7596,9 @@ char const *CTFGameRules::TranslateEffectForVisionFilter( char const *pchEffectT
 	return strings[0];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::SetUpVisionFilterKeyValues( void )
 {
 	m_pVisionFilterWhitelist = new KeyValues( "VisionFilterShadersMapWhitelist" );
@@ -7853,6 +7898,9 @@ void CTFGameRules::SetUpVisionFilterKeyValues( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 {
 	char mapname[MAX_MAP_NAME];
@@ -7881,6 +7929,9 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 	return strFullpath;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 {
 	// Medieval mode only
