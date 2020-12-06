@@ -16,7 +16,7 @@ abstract_class IIsHolidayActive
 {
 public:
 	IIsHolidayActive( const char *pszHolidayName ) : m_pszHolidayName( pszHolidayName ) { }
-	virtual ~IIsHolidayActive ( ) { }
+	virtual ~IIsHolidayActive() { }
 	virtual bool IsActive( CRTime const& timeCurrent ) = 0;
 
 	const char *GetHolidayName() const { return m_pszHolidayName; }
@@ -142,7 +142,7 @@ public:
 	{
 		struct tm tm;
 		Q_memset( &tm, 0, sizeof( tm ) );
-		tm.tm_year = iYear - 1900;
+		tm.tm_year = iYear - 1900; // years since 1900
 		tm.tm_mon = iMonth - 1;
 		tm.tm_mday = iDay;
 		m_nStartTime = mktime( &tm );
@@ -151,12 +151,12 @@ public:
 	virtual bool IsActive( CRTime const &timeCurrent )
 	{
 		const int iCycleLength = m_flCycleLength * 60 * 60 * 24; // in seconds a day
-		const int iFudgeFactor = m_flFudgeTime * 60 * 60 * 24;
-		const int iSecondsPassed = ( timeCurrent.GetStartTime() - m_nStartTime ) % iCycleLength;
+		const int iBufferLength = m_flFudgeTime * 60 * 60 * 24; // in seconds a day
+		const int iSecondsPassedInCycle = ( timeCurrent.GetStartTime() - m_nStartTime ) % iCycleLength;
 
-		if ( iSecondsPassed < iFudgeFactor )
+		if ( iSecondsPassedInCycle < iBufferLength )
 			return true;
-		if ( iSecondsPassed > iCycleLength - iFudgeFactor )
+		if ( iSecondsPassedInCycle > (iCycleLength - iBufferLength) )
 			return true;
 
 		return false;
@@ -212,10 +212,10 @@ bool EconHolidays_IsHolidayActive( int eHoliday, CRTime const &timeCurrent )
 	if ( eHoliday < 0 || eHoliday >= kHolidayCount )
 		return false;
 
-	if ( s_HolidayChecks[eHoliday] )
-		return s_HolidayChecks[eHoliday]->IsActive( timeCurrent );
+	if ( !s_HolidayChecks[eHoliday] )
+		return false;
 
-	return false;
+	return s_HolidayChecks[eHoliday]->IsActive( timeCurrent );
 }
 
 //-----------------------------------------------------------------------------
@@ -235,7 +235,7 @@ int EconHolidays_GetHolidayForString( char const *pszHolidayName )
 	{
 		if ( !s_HolidayChecks[iHoliday] )
 			continue;
-		if ( !Q_strcmp( pszHolidayName, s_HolidayChecks[iHoliday]->GetHolidayName() ) )
+		if ( FStrEq( pszHolidayName, s_HolidayChecks[iHoliday]->GetHolidayName() ) )
 			return iHoliday;
 	}
 
