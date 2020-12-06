@@ -262,10 +262,9 @@ void CAttributeManager::ProvideTo( CBaseEntity *pEntity )
 		pAttributes->GetAttributeManager()->AddProvider( m_hOuter.Get() );
 	}
 
-#ifdef CLIENT_DLL
-	if ( prediction->InPrediction() )
-#endif
+#ifndef CLIENT_DLL
 	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ATTRIB_REAPPLY_PARITY_MASK;
+#endif
 
 	NetworkStateChanged();
 }
@@ -287,10 +286,9 @@ void CAttributeManager::StopProvidingTo( CBaseEntity *pEntity )
 		pAttributes->GetAttributeManager()->RemoveProvider( m_hOuter.Get() );
 	}
 
-#ifdef CLIENT_DLL
-	if ( prediction->InPrediction() )
-#endif
+#ifndef CLIENT_DLL
 	m_iReapplyProvisionParity = ( m_iReapplyProvisionParity + 1 ) & ATTRIB_REAPPLY_PARITY_MASK;
+#endif
 
 	NetworkStateChanged();
 }

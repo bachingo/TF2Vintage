@@ -608,5 +608,18 @@ char* ReadAndAllocStringValue( KeyValues *pSub, const char *pName, const char *p
 
 int UTIL_StringFieldToInt( const char *szValue, const char **pValueStrings, int iNumStrings );
 
+//-----------------------------------------------------------------------------
+// Holidays
+//-----------------------------------------------------------------------------
+
+// Used at level change and round start to re-calculate which holiday is active
+void				UTIL_CalculateHolidays();
+
+bool				UTIL_IsHolidayActive( /*EHoliday*/ int eHoliday );
+/*EHoliday*/ int	UTIL_GetHolidayForString( const char* pszHolidayName );
+
+// This will return the first active holiday string it can find. In the case of multiple
+// holidays overlapping, the list order will act as priority.
+const char		   *UTIL_GetActiveHolidayString();
 
 #endif // UTIL_SHARED_H

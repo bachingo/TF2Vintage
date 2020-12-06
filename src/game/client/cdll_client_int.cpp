@@ -425,7 +425,7 @@ public:
 
 	const char *GetHolidayString()
 	{
-		return NULL;
+		return UTIL_GetActiveHolidayString();
 	}
 };
 
