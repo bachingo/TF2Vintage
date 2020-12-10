@@ -7027,7 +7027,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			}
 
 			// Increase our killstreaks.
-			m_Shared.IncrementKillstreakCount();
 			if (pWeapon->GetSlot() && !bInflictor)
 				m_Shared.IncKillstreak( pWeapon->GetSlot() );
 			

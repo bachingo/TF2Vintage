@@ -230,12 +230,8 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropFloat( RECVINFO( m_flStunResistance ) ),
 	RecvPropEHandle( RECVINFO( m_hStunner ) ),
 	RecvPropInt( RECVINFO( m_iDecapitations ) ),
-	RecvPropInt( RECVINFO( m_iHeadshots ) ),
-	RecvPropInt( RECVINFO( m_iStrike ) ),
-	RecvPropInt( RECVINFO( m_iKillstreak ) ),
-	RecvPropInt( RECVINFO( m_iSapperKill ) ),
-	RecvPropInt( RECVINFO( m_iRevengeCrits ) ),
-	RecvPropInt( RECVINFO( m_iAirblastCrits ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_nKillCombo ), RecvPropInt( RECVINFO( m_nKillCombo[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_nRevengeCrits ), RecvPropInt( RECVINFO( m_nRevengeCrits[0] ) ) ),
 	RecvPropInt( RECVINFO( m_bShieldEquipped ) ),
 	RecvPropInt( RECVINFO( m_iNextMeleeCrit ) ),
 	RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
@@ -320,12 +316,8 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropFloat( SENDINFO( m_flStunResistance ), 0, SPROP_NOSCALE ),
 	SendPropEHandle( SENDINFO( m_hStunner ) ),
 	SendPropInt( SENDINFO( m_iDecapitations ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iHeadshots ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iStrike ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iKillstreak ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iSapperKill ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iRevengeCrits ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iAirblastCrits ), 8, SPROP_UNSIGNED ),
+	SendPropArray3( SENDINFO_ARRAY3( m_nKillCombo ), SendPropInt( SENDINFO_ARRAY( m_nKillCombo ), 8, SPROP_UNSIGNED ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_nRevengeCrits ), SendPropInt( SENDINFO_ARRAY( m_nRevengeCrits ), 8, SPROP_UNSIGNED ) ),
 	SendPropInt( SENDINFO( m_bShieldEquipped ), 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iNextMeleeCrit ) ),
 	SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
@@ -435,10 +427,9 @@ void CTFPlayerShared::ResetMeters( void )
 	SetRevengeCritCount( 0 );
 	SetAirblastCritCount( 0 );
 	SetHypeMeterAbsolute( 0 );
-	SetKillstreakCount( 0 );
 	SetFocusLevel( 0 );
-	SetFireRageMeter(0);
-	SetCrikeyMeter(0);	
+	SetFireRageMeter( 0 );
+	SetCrikeyMeter( 0 );	
 }
 
 //-----------------------------------------------------------------------------

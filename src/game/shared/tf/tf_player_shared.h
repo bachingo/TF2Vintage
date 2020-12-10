@@ -72,6 +72,22 @@ enum
 	STUN_PHASE_END,
 };
 
+enum EKillCombos
+{
+	k_Decapitations,
+	k_SRRechargeCombo,
+	k_ClipsizeCombo,
+	kEKillCombosMax
+};
+
+enum ERevengeCrits
+{
+	k_SentryRevenge,
+	k_ExtinguishRevenge,
+	k_SappedRevenge,
+	kERevengeCritsMax
+};
+
 //=============================================================================
 //
 // Shared player class.
@@ -396,43 +412,42 @@ public:
 	void	CalcChargeCrit( bool bForceFull );
 	
 	// Sniper rifle headshots (ie: Bazaar Bargin)
-	int		GetHeadshotCount( void ) const       { return m_iHeadshots; }
-	void	SetHeadshotCount( int count )        { m_iHeadshots = count; }
-	void	IncrementHeadshotCount( void )       { m_iHeadshots += 1; }
+	int		GetHeadshotCount( void ) const       { return m_nKillCombo[k_SRRechargeCombo]; }
+	void	SetHeadshotCount( int count )        { m_nKillCombo.Set( k_SRRechargeCombo, count ); }
+	void	IncrementHeadshotCount( void )       { m_nKillCombo.Set( k_SRRechargeCombo, m_nKillCombo[k_SRRechargeCombo] + 1 ); }
 	
 	// Killstreak for attribute items (ie: Air Strike)
-	int		GetStrikeCount( void ) const       { return m_iStrike; }
-	void	SetStrikeCount( int count )        { m_iStrike = count; }
-	void	IncrementStrikeCount( void )       { m_iStrike += 1; }
+	int		GetStrikeCount( void ) const       { return m_nKillCombo[k_ClipsizeCombo]; }
+	void	SetStrikeCount( int count )        { m_nKillCombo.Set( k_ClipsizeCombo, count ); }
+	void	IncrementStrikeCount( void )       { m_nKillCombo.Set( k_ClipsizeCombo, m_nKillCombo[k_ClipsizeCombo] + 1 ); }
 
 	// Sapper/Backstab content (ie: Diamondback)
-	int		GetSapperKillCount(void) const       { return m_iSapperKill; }
-	void	SetSapperKillCount(int count)        { m_iSapperKill = count; }
-	void	IncrementSapperKillCount(void)       { m_iSapperKill += 1; } // Not affected by TF_WEAPON_MAX_REVENGE
-	void	StoreSapperKillCount(void)			 { m_iSapperKill = Min( (m_iSapperKill + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
-	void	DeductSapperKillCount(void)			 { m_iSapperKill = Max( (m_iSapperKill - 1), 0 ); } // Affected by TF_WEAPON_MAX_REVENGE
+	int		GetSapperKillCount(void) const		     { return m_nRevengeCrits[k_SappedRevenge]; }
+	void	SetSapperKillCount(int count)			 { m_nRevengeCrits.Set( k_SappedRevenge, count ); }
+	void	IncrementSapperKillCount(void)			 { m_nRevengeCrits.Set( k_SappedRevenge, m_nRevengeCrits[k_SappedRevenge] + 1 ); } // Not affected by TF_WEAPON_MAX_REVENGE
+	void	StoreSapperKillCount(void)				 { m_nRevengeCrits.Set( k_SappedRevenge, Min( (m_nRevengeCrits[k_SappedRevenge] + 1), TF_WEAPON_MAX_REVENGE ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	void	DeductSapperKillCount(void)				 { m_nRevengeCrits.Set( k_SappedRevenge, Max( (m_nRevengeCrits[k_SappedRevenge] - 1), 0 ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	bool	HasSapperCrits( void )      			 { return m_nRevengeCrits[k_SappedRevenge] > 0; }
 	
 	// Revenge Crit Counter (ie: Frontier Justice)
-	int		GetRevengeCritCount( void ) const        { return m_iRevengeCrits; }
-	void	SetRevengeCritCount(int count)      	 { m_iRevengeCrits = count; }
-	void	IncrementRevengeCrit( void )     		 { m_iRevengeCrits += 1; }	
-	void	StoreRevengeCrit(void)					 { m_iRevengeCrits = Min( (m_iRevengeCrits + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
-	void	DeductRevengeCrit( void )     	 		 { m_iRevengeCrits = Max( (m_iRevengeCrits - 1), 0 ); }
-	bool	HasRevengeCrits( void )      			 { return m_iRevengeCrits > 0; }
+	int		GetRevengeCritCount( void ) const        { return m_nRevengeCrits[k_SentryRevenge]; }
+	void	SetRevengeCritCount(int count)      	 { m_nRevengeCrits.Set( k_SentryRevenge, count ); }
+	void	IncrementRevengeCritCount( void )		 { m_nRevengeCrits.Set( k_SentryRevenge, m_nRevengeCrits[k_SentryRevenge] + 1 ); }
+	void	StoreRevengeCrit(void)					 { m_nRevengeCrits.Set( k_SentryRevenge, Min( (m_nRevengeCrits[k_SentryRevenge] + 1), TF_WEAPON_MAX_REVENGE ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	void	DeductRevengeCrit( void )     	 		 { m_nRevengeCrits.Set( k_SentryRevenge, Max( (m_nRevengeCrits[k_SentryRevenge] - 1), 0 ) ); }
+	bool	HasRevengeCrits( void )      			 { return m_nRevengeCrits[k_SentryRevenge] > 0; }
 	
 	// Airblast Crit Counter (ie: Manmelter)
-	int		GetAirblastCritCount( void ) const        { return m_iAirblastCrits; }
-	void	SetAirblastCritCount(int count)      	 { m_iAirblastCrits = count; }
-	void	IncrementAirblastCrit( void )     		 { m_iAirblastCrits += 1; }	
-	void	StoreAirblastCrit(void)					 { m_iAirblastCrits = Min( (m_iAirblastCrits + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
-	void	DeductAirblastCrit( void )     	 		 { m_iAirblastCrits = Max( (m_iAirblastCrits - 1), 0 ); }
-	bool	HasAirblastCrits( void )      			 { return m_iAirblastCrits > 0; }
+	int		GetAirblastCritCount( void ) const       { return m_nRevengeCrits[k_ExtinguishRevenge]; }
+	void	SetAirblastCritCount(int count)      	 { m_nRevengeCrits.Set( k_ExtinguishRevenge, count ); }
+	void	IncrementAirblastCrit( void )     		 { m_nRevengeCrits.Set( k_ExtinguishRevenge, m_nRevengeCrits[k_ExtinguishRevenge] + 1 ); }	
+	void	StoreAirblastCrit(void)					 { m_nRevengeCrits.Set( k_ExtinguishRevenge, Min( (m_nRevengeCrits[k_ExtinguishRevenge] + 1), TF_WEAPON_MAX_REVENGE ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	void	DeductAirblastCrit( void )     	 		 { m_nRevengeCrits.Set( k_ExtinguishRevenge, Max( (m_nRevengeCrits[k_ExtinguishRevenge] - 1), 0 ) ); }
+	bool	HasAirblastCrits( void )      			 { return m_nRevengeCrits[k_ExtinguishRevenge] > 0; }
 	
 	
-	// Killstreak counter, for HUD.
-	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
-	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
-	void	IncrementKillstreakCount( void )       { m_iKillstreak += 1; }
+	// Get total streak across all weapons. This is our actual streak
+	int		GetKillstreakCount( void ) const       { return m_nStreaks[0] + m_nStreaks[1] + m_nStreaks[2]; }
 	
 	void	SetFocusLevel(float amount)        { m_flFocusLevel = amount; }
 	
@@ -705,12 +720,8 @@ private:
 	CNetworkVar( bool, m_bShieldEquipped );
 	CNetworkVar( int, m_iNextMeleeCrit );
 	
-	CNetworkVar( int, m_iHeadshots );
-	CNetworkVar( int, m_iStrike );
-	CNetworkVar( int, m_iKillstreak );
-	CNetworkVar( int, m_iSapperKill );
-	CNetworkVar( int, m_iRevengeCrits );
-	CNetworkVar( int, m_iAirblastCrits );
+	CNetworkArray( int, m_nKillCombo, kEKillCombosMax );
+	CNetworkArray( int, m_nRevengeCrits, kERevengeCritsMax );
 #ifdef GAME_DLL
 public:
 	CNetworkVar( float, m_flEnergyDrinkMeter );
