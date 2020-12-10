@@ -537,7 +537,7 @@ bool CTFPlayerShared::InCond(int nCond)
 	Assert(nCond >= 0 && nCond < TF_COND_LAST);
 
 	int nCondFlag = nCond;
-	const int *pVar = NULL;
+	int iVar = 0;
 	if ( nCond < 128 )
 	{
 		if ( nCond < 96 )
@@ -546,33 +546,33 @@ bool CTFPlayerShared::InCond(int nCond)
 			{
 				if ( nCond < 32 )
 				{
-					pVar = &m_nPlayerCond.GetForModify();
+					iVar = m_nPlayerCond.Get();
 				}
 				else
 				{
-					pVar = &m_nPlayerCondEx.GetForModify();
+					iVar = m_nPlayerCondEx.Get();
 					nCondFlag -= 32;
 				}
 			}
 			else
 			{
-				pVar = &m_nPlayerCondEx2.GetForModify();
+				iVar = m_nPlayerCondEx2.Get();
 				nCondFlag -= 64;
 			}
 		}
 		else
 		{
-			pVar = &m_nPlayerCondEx3.GetForModify();
+			iVar = m_nPlayerCondEx3.Get();
 			nCondFlag -= 96;
 		}
 	}
 	else
 	{
-		pVar = &m_nPlayerCondEx4.GetForModify();
+		iVar = m_nPlayerCondEx4.Get();
 		nCondFlag -= 128;
 	}
 
-	return ((*pVar & (1 << nCondFlag)) != 0);
+	return ((iVar & (1 << nCondFlag)) != 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -2940,6 +2940,20 @@ void CTFPlayerShared::MakeBleed( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, f
 bool CTFPlayerShared::IsControlStunned( void )
 {
 	if (InCond( TF_COND_STUNNED ) && ( m_nStunFlags & TF_STUNFLAG_BONKSTUCK ) != 0)
+		return true;
+
+	if (InCond( TF_COND_MVM_BOT_STUN_RADIOWAVE ))
+		return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsSnared( void )
+{
+	if (InCond( TF_COND_STUNNED ) && !IsControlStunned())
 		return true;
 	return false;
 }
