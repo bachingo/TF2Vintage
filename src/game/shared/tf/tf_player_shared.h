@@ -453,7 +453,6 @@ public:
 	
 #ifdef GAME_DLL
 	void	UpdateCloakMeter( void );
-	void 	UpdateSanguisugeHealth( void );
 	void	UpdateChargeMeter( void );
 	void	UpdateEnergyDrinkMeter( void );
 	

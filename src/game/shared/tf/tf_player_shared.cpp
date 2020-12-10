@@ -1684,7 +1684,6 @@ void CTFPlayerShared::ConditionThink( void )
 
 #ifdef GAME_DLL
 	UpdateCloakMeter();
-	UpdateSanguisugeHealth();
 	UpdateChargeMeter();
 	UpdateEnergyDrinkMeter();
 	UpdateFocusLevel();
