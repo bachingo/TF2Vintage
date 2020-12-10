@@ -53,16 +53,16 @@ private:
 	// TODO 3c
 	// TODO 40
 	// TODO 44
-	CountdownTimer m_sniperAimErrorTimer;
-	float m_flSniperAimError1;
-	float m_flSniperAimError2;
+	mutable CountdownTimer m_sniperAimErrorTimer;
+	mutable float m_flSniperAimErrorRadius;
+	mutable float m_flSniperAimErrorAngle;
 	float m_flYawDelta;
 	float m_flPreviousYaw;
 	IntervalTimer m_sniperSteadyInterval;
 	int m_iDesiredDisguise;
 	bool m_bReloadingBarrage;
-	// TODO 68 CHandle<CBaseEntity>, set in OnContact to the entity touching us
-	// TODO 6c float, set in OnContact to the time when we touched a solid non-player entity
+	CHandle<CBaseEntity> m_hLastTouch;
+	float m_flLastTouchTime;
 	IntervalTimer m_undergroundTimer;
 };
 
