@@ -189,8 +189,9 @@ void CTFKnife::PrimaryAttack( void )
 		{
 			pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
 			pPlayer->m_Shared.HealthKitPickupEffects( nHealthToAdd );
-			pPlayer->m_Shared.SetNextSanguisugeDecay();
-			pPlayer->m_Shared.ChangeSanguisugeHealth(nHealthToAdd);
+
+			if( pPlayer->m_Shared.GetBestOverhealDecayMult() == -1.0f )
+				pPlayer->m_Shared.SetBestOverhealDecayMult( 0.5f );
 		}
 	}
 #endif

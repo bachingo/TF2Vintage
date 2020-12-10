@@ -6016,15 +6016,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( nLoseHypeOnDamage != 0 )
 	m_Shared.RemoveHypeMeter( ( info.GetDamage() * nLoseHypeOnDamage ) );
 	
-	// If we have Sanguisuge health, reduce our pool by the damage we took.
-	if ( m_Shared.GetSanguisugeHealth() > 0 )
-	{
-		m_Shared.ChangeSanguisugeHealth( ( info.GetDamage() * -1 ) );
-		// We can't have a negative buff amount, so zero this out.
-		if ( m_Shared.GetSanguisugeHealth() < 0 )
-			m_Shared.SetSanguisugeHealth( 0 );
-	}
-	
 	// If we lose demo charge, reduce our charge level.
 	if ( m_Shared.InCond(TF_COND_SHIELD_CHARGE) )
 	{

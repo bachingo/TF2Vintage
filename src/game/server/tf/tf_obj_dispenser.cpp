@@ -792,7 +792,7 @@ void CObjectDispenser::StartHealing( CBaseEntity *pOther )
 	if ( pPlayer )
 	{
 		float flHealRate = GetHealRate();
-		pPlayer->m_Shared.Heal( GetOwner(), flHealRate, true );
+		pPlayer->m_Shared.Heal( this, flHealRate, 1.0f, 1.0f, true, GetBuilder() );
 	}
 }
 

@@ -119,7 +119,7 @@ public:
 	void	OnConditionRemoved( int nCond );
 	void	ConditionThink( void );
 	float	GetConditionDuration( int nCond );
-
+	// Condition helpers
 	bool	IsCritBoosted( void );
 	bool	IsMiniCritBoosted( void );
 	bool	IsSpeedBoosted( void );
@@ -135,12 +135,6 @@ public:
 	// Max Health
 	int		GetMaxHealth( void );
 	void	SetMaxHealth( int iMaxHealth )		{ m_iMaxHealth = iMaxHealth; }
-
-	// Sanguisuge
-	void	ChangeSanguisugeHealth(int value)		{ m_iLeechHealth += value; }
-	void	SetSanguisugeHealth( int iLeechHealth )		{ m_iLeechHealth = iLeechHealth; }
-	int		GetSanguisugeHealth( void )					{ return m_iLeechHealth; }
-	void	SetNextSanguisugeDecay()		{ m_iLeechDecayTime = gpGlobals->curtime + 0.5; }
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -215,32 +209,27 @@ public:
 #endif
 
 #ifdef GAME_DLL
-	void	Heal( CTFPlayer *pPlayer, float flAmount, bool bDispenserHeal = false );
+	void	Heal( CBaseEntity *pHealer, float flAmount, float flOverhealBonus, float flOverhealDecayMult, bool bDispenserHeal = false, CTFPlayer *pScorer = NULL );
 	void	StopHealing( CTFPlayer *pPlayer );
+	void	SetBestOverhealDecayMult( float fValue )	{ m_flLowestOverhealDecayRate = fValue; }
+	float	GetBestOverhealDecayMult() const			{ return m_flLowestOverhealDecayRate; }
 	void	RecalculateChargeEffects( bool bInstantRemove = false );
 	EHANDLE GetHealerByIndex( int index );
-	int		FindHealerIndex( CTFPlayer *pPlayer );
+	int		FindHealerIndex( CBaseEntity *pHealer );
 	EHANDLE	GetFirstHealer();
 	void	HealthKitPickupEffects( int iAmount );
 	bool	HealerIsDispenser( int index ) const;
-
-	// Jarate Player
-	EHANDLE	m_hUrineAttacker;
-
-	// Milk Player
-	EHANDLE	m_hMilkAttacker;
-
-	// Gas Player
-	EHANDLE m_hGasAttacker;
 #endif
 	int		GetNumHealers( void )				{ return m_nNumHealers; }
 
+	// Damage over time
 	void	Burn( CBaseCombatCharacter *pAttacker, float flFlameDuration = -1.0f );
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
-	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
 	void	MakeBleed( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float flBleedDuration, int iDamage );
-
+	// Stuns
+	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
 	bool	IsControlStunned( void );
+	bool	IsSnared( void );
 
 #ifdef GAME_DLL
 	void	AddPhaseEffects( void );
@@ -584,8 +573,6 @@ private:
 	EHANDLE m_hForcedDisguise;
 
 	CNetworkVar( int, m_iMaxHealth );
-	CNetworkVar(int, m_iLeechHealth);
-	float m_iLeechDecayTime;
 
 	bool m_bEnableSeparation;		// Keeps separation forces on when player stops moving, but still penetrating
 	Vector m_vSeparationVelocity;	// Velocity used to keep player seperate from teammates
@@ -609,13 +596,17 @@ private:
 	// Healer handling
 	struct healers_t
 	{
-		EHANDLE	pPlayer;
+		EHANDLE	pHealer;
 		float	flAmount;
 		bool	bDispenserHeal;
+		float	flOverhealBonus;
+		float	flOverhealDecayRate;
+		EHANDLE pScorer;
 	};
 	CUtlVector< healers_t >	m_aHealers;
 	float					m_flHealFraction;	// Store fractional health amounts
 	float					m_flDisguiseHealFraction;	// Same for disguised healing
+	float					m_flLowestOverhealDecayRate;
 
 	float		m_flInvulnerableOffTime;
 	float		m_flChargeOffTime[TF_CHARGE_COUNT];
@@ -630,7 +621,17 @@ private:
 	float					m_flFlameStack;
 	float					m_flFlameLife;
 	float					m_flFlameRemoveTime;
-	float					m_flTauntRemoveTime;
+public:
+	// Jarate Player
+	EHANDLE m_hUrineAttacker;
+
+	// Milk Player
+	EHANDLE m_hMilkAttacker;
+
+	// Gas Player
+	EHANDLE m_hGasAttacker;
+private:
+	float		m_flTauntRemoveTime;
 	
 
 #ifdef GAME_DLL
