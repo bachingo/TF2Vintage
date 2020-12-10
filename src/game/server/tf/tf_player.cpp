@@ -1322,7 +1322,7 @@ void CTFPlayer::Spawn()
 		EmitSound( "Player.Spawn" );
 		InitClass();
 		m_Shared.RemoveAllCond( NULL ); // Remove conc'd, burning, rotting, hallucinating, etc.
-				
+		m_Shared.ResetMeters();
 		UpdateSkin( GetTeamNumber() );
 		TeamFortress_SetSpeed();
 

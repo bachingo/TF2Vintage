@@ -2556,7 +2556,7 @@ void C_TFPlayer::UpdateOnRemove( void )
 	ParticleProp()->StopParticlesInvolving( this );
 
 	m_Shared.RemoveAllCond( this );
-
+	m_Shared.ResetMeters();
 	m_Shared.UpdateCritBoostEffect( true );
 
 	if ( IsLocalPlayer() )
