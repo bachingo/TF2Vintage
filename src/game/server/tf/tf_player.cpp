@@ -5540,9 +5540,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				for ( int i = 0; i < m_Shared.m_aHealers.Count(); i++ )
 				{
 					// Check to see if it's a player.
-					if (m_Shared.m_aHealers[i].pPlayer.IsValid())
+					if (m_Shared.m_aHealers[i].pHealer.IsValid())
 					{
-						CTFPlayer *pTFHealer = static_cast< CTFPlayer  *>(static_cast< CBaseEntity  *>(m_Shared.m_aHealers[i].pPlayer));
+						CTFPlayer *pTFHealer = ToTFPlayer(m_Shared.m_aHealers[i].pHealer);
 						if ( pTFHealer && ( pTFHealer != this ) && ( m_flRecursiveDamage - pTFHealer->GetRecursiveDamageTime() > 0.1 ) )
 						{
 							// Copy our damage to them!
@@ -6572,13 +6572,10 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	{
 		for (int i = 0; i < pTFAttacker->m_Shared.m_aHealers.Count(); i++)
 		{
-			if (!pTFAttacker->m_Shared.m_aHealers[i].pPlayer)
-				continue;
-				
-			if (!pTFAttacker->m_Shared.m_aHealers[i].pPlayer.IsValid())
+			if (!pTFAttacker->m_Shared.m_aHealers[i].pHealer)
 				continue;
 
-			CTFPlayer *pHealer = ToTFPlayer(pTFAttacker->m_Shared.m_aHealers[i].pPlayer);
+			CTFPlayer *pHealer = ToTFPlayer(pTFAttacker->m_Shared.m_aHealers[i].pHealer);
 			if (!pHealer)
 				continue;
 
