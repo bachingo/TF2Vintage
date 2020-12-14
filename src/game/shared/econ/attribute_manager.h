@@ -45,11 +45,11 @@ inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
 	if ( pEntity == nullptr )
 		return nullptr;
 
-	IHasAttributes *pInteface = pEntity->GetHasAttributesInterfacePtr();
-	if( pInteface )
+	IHasAttributes *pInterface = pEntity->GetHasAttributesInterfacePtr();
+	if( pInterface )
 	{
-		Assert( dynamic_cast<IHasAttributes *>( (CBaseEntity *)pEntity ) == pInteface );
-		return pInteface;
+		Assert( dynamic_cast<IHasAttributes *>( (CBaseEntity *)pEntity ) == pInterface );
+		return pInterface;
 	}
 
 	return nullptr;
@@ -126,19 +126,6 @@ public:
 	virtual void	OnAttributesChanged( void )
 	{
 		ClearCache();
-	}
-
-	void *operator new( size_t stAllocateBlock )
-	{
-		void *pMem = malloc( stAllocateBlock );
-		Q_memset( pMem, 0, stAllocateBlock );
-		return pMem;
-	}
-	void *operator new( size_t stAllocateBlock, int nBlockUse, const char *pFileName, int nLine )
-	{
-		void *pMem = malloc( stAllocateBlock );
-		Q_memset( pMem, 0, stAllocateBlock );
-		return pMem;
 	}
 
 protected:

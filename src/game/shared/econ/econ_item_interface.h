@@ -84,6 +84,7 @@ private:
 	template<typename TOther>
 	bool OnIterateAttributeValueOfType( CEconAttributeDefinition const *pDefinition, TOther const &value )
 	{
+		// If you hit this assert, you've got a bad attribute value type resolution
 		Assert( pDefinition && pDefinition != m_pAttribute );
 		return true;
 	}
