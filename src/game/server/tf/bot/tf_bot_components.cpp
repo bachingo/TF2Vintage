@@ -14,6 +14,9 @@
 #include "tf_bot_components.h"
 
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFBotBody::GetHeadAimTrackingInterval( void ) const
 {
 	CTFBot *me = static_cast<CTFBot *>( GetBot() );
@@ -33,6 +36,9 @@ float CTFBotBody::GetHeadAimTrackingInterval( void ) const
 }
 
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBotLocomotion::Update( void )
 {
 	CTFBot *me = ToTFBot( GetEntity() );
@@ -45,6 +51,9 @@ void CTFBotLocomotion::Update( void )
 		me->PressCrouchButton( 0.3f );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBotLocomotion::Approach( const Vector &pos, float goalWeight )
 {
 	if ( !IsOnGround() && !IsClimbingOrJumping() )
@@ -53,6 +62,9 @@ void CTFBotLocomotion::Approach( const Vector &pos, float goalWeight )
 	BaseClass::Approach( pos, goalWeight );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBotLocomotion::Jump( void )
 {
 	BaseClass::Jump();
@@ -68,22 +80,34 @@ void CTFBotLocomotion::Jump( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFBotLocomotion::GetMaxJumpHeight( void ) const
 {
 	return 72.0f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFBotLocomotion::GetDeathDropHeight( void ) const
 {
 	return 1000.0f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFBotLocomotion::GetRunSpeed( void ) const
 {
 	CTFBot *me = ToTFBot( GetEntity() );
 	return me->GetPlayerClass()->GetMaxSpeed();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFBotLocomotion::IsAreaTraversable( const CNavArea *baseArea ) const
 {
 	if ( !BaseClass::IsAreaTraversable( baseArea ) )
@@ -125,6 +149,9 @@ bool CTFBotLocomotion::IsAreaTraversable( const CNavArea *baseArea ) const
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFBotLocomotion::IsEntityTraversable( CBaseEntity *ent, TraverseWhenType when ) const
 {
 	if ( ent )
@@ -145,24 +172,35 @@ bool CTFBotLocomotion::IsEntityTraversable( CBaseEntity *ent, TraverseWhenType w
 }
 
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTFBotVision::CTFBotVision( INextBot *bot )
 	: BaseClass( bot )
 {
 	m_updateTimer.Start( RandomFloat( 2.0f, 4.0f ) );
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTFBotVision::~CTFBotVision()
 {
 	m_PVNPCs.RemoveAll();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBotVision::Reset( void )
 {
 	BaseClass::Reset();
 	m_PVNPCs.RemoveAll();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBotVision::Update( void )
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
@@ -188,6 +226,9 @@ void CTFBotVision::Update( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBotVision::CollectPotentiallyVisibleEntities( CUtlVector<CBaseEntity *> *ents )
 {
 	VPROF_BUDGET( __FUNCTION__, "NextBot" );
@@ -211,6 +252,9 @@ void CTFBotVision::CollectPotentiallyVisibleEntities( CUtlVector<CBaseEntity *> 
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFBotVision::IsVisibleEntityNoticed( CBaseEntity *ent ) const
 {
 	CTFBot *me = ToTFBot( GetBot()->GetEntity() );
@@ -273,6 +317,9 @@ bool CTFBotVision::IsVisibleEntityNoticed( CBaseEntity *ent ) const
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFBotVision::IsIgnored( CBaseEntity *ent ) const
 {
 	CTFBot *me = ToTFBot( GetBot()->GetEntity() );
@@ -321,11 +368,17 @@ bool CTFBotVision::IsIgnored( CBaseEntity *ent ) const
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFBotVision::GetMaxVisionRange() const
 {
 	return 6000.0f;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 float CTFBotVision::GetMinRecognizeTime( void ) const
 {
 	CTFBot *me = static_cast<CTFBot *>( GetBot() );
@@ -344,6 +397,9 @@ float CTFBotVision::GetMinRecognizeTime( void ) const
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBotVision::UpdatePotentiallyVisibleNPCs()
 {
 	if ( !m_updatePVNPCsTimer.IsElapsed() )
