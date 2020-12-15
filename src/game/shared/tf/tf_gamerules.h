@@ -388,6 +388,7 @@ public:
 
 	virtual bool	IsFourTeamGame( void ){ return m_bFourTeamMode; };
 	bool			IsMannVsMachineMode( void ) { return false; };
+	char const*		GetCustomUpgradesFile( void ) const { return m_pszCustomUpgradesFile; }
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
 	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
@@ -583,6 +584,7 @@ private:
 	CNetworkVar( bool, m_bCompetitiveMode );
 	CNetworkVar( bool, m_bPowerupMode );
 	CNetworkVar( float, m_flGravityScale );
+	CNetworkString( m_pszCustomUpgradesFile, MAX_PATH );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hGreenKothTimer );

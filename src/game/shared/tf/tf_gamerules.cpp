@@ -444,9 +444,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropInt( RECVINFO( m_nMapHolidayType ) ),
 	RecvPropEHandle( RECVINFO( m_itHandle ) ),
 	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
-
+	RecvPropString( RECVINFO( m_pszCustomUpgradesFile ) ),
 #else
-
 	SendPropInt( SENDINFO( m_nGameType ), 4, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
@@ -472,7 +471,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropInt( SENDINFO( m_nMapHolidayType ), 3, SPROP_UNSIGNED ),
 	SendPropEHandle( SENDINFO( m_itHandle ) ),
 	SendPropInt( SENDINFO( m_halloweenScenario ) ),
-
+	SendPropString( SENDINFO( m_pszCustomUpgradesFile ) ),
 #endif
 END_NETWORK_TABLE()
 
