@@ -61,6 +61,7 @@ public:
 	bool SetRuntimeAttributeValue( const CEconAttributeDefinition *pAttrib, float flValue );
 	bool RemoveAttribute( const CEconAttributeDefinition *pAttrib );
 	bool RemoveAttribByIndex( int iIndex );
+	void RemoveAllAttributes( void );
 
 	void SetRuntimeAttributeRefundableCurrency( const CEconAttributeDefinition *pAttrib, int nRefundableCurrency );
 	int	GetRuntimeAttributeRefundableCurrency( const CEconAttributeDefinition *pAttrib ) const;

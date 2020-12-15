@@ -6,9 +6,6 @@
 #endif
 
 #include "tier1/utlbuffer.h"
-#ifndef NO_STEAM
-#include "steam/steam_api.h"
-#endif
 
 class ISchemaAttributeType;
 class CEconSchemaParser;
@@ -50,6 +47,9 @@ public:
 	bool SaveToBuffer( CUtlBuffer &buf );
 	void Precache( void );
 	void Reset( void );
+
+	void ClientConnected( edict_t *pClient );
+	void ClientDisconnected( edict_t *pClient );
 
 	CEconItemDefinition* GetItemDefinition( int id );
 	CEconItemDefinition* GetItemDefinitionByName( const char* name );

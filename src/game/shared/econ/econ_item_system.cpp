@@ -1138,7 +1138,6 @@ void CEconItemSchema::ParseQualities( KeyValues *pKeyValuesData )
 		GET_INT( ( &Quality ), pSubData, value );
 		m_Qualities.Insert( pSubData->GetName(), Quality );
 	}
-
 }
 
 void CEconItemSchema::ParseColors( KeyValues *pKeyValuesData )
@@ -1198,6 +1197,17 @@ void CEconItemSchema::ParseAttributes( KeyValues *pKeyValuesData )
 		m_Attributes.Insert( pAttribute->index, pAttribute );
 	}
 }
+
+void CEconItemSchema::ClientConnected( edict_t *pClient )
+{
+#if defined( GAME_DLL )
+#endif
+}
+
+void CEconItemSchema::ClientDisconnected( edict_t *pClient )
+{
+#if defined( GAME_DLL )
+#endif
 }
 
 CEconItemDefinition *CEconItemSchema::GetItemDefinition( int id )

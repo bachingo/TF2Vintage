@@ -375,6 +375,9 @@ public:
 	void	RemoveAttributeFromPlayer( char const *szName );
 #endif
 
+	bool IsInUpgradeZone( void ) const { return m_bInUpgradeZone; }
+	void SetInUpgradeZone( bool bSet ) { m_bInUpgradeZone = bSet; }
+
 	// Banners
 	void	UpdateRageBuffsAndRage( void );
 	void	SetRageMeter( float flRagePercent, int iBuffType );
@@ -761,6 +764,8 @@ private:
 
 	// Gunslinger
 	CNetworkVar( bool, m_bGunslinger );
+
+	CNetworkVar( bool, m_bInUpgradeZone );
 
 #ifdef GAME_DLL
 

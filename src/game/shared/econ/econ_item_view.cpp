@@ -666,6 +666,18 @@ bool CAttributeList::RemoveAttribByIndex( int iIndex )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Clear out dynamic attributes
+//-----------------------------------------------------------------------------
+void CAttributeList::RemoveAllAttributes( void )
+{
+	if( !m_Attributes.IsEmpty() )
+	{
+		m_Attributes.Purge();
+		m_pManager->OnAttributesChanged();
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CAttributeList::SetRuntimeAttributeRefundableCurrency( CEconAttributeDefinition const *pAttrib, int iRefundableCurrency )
