@@ -44,6 +44,7 @@
 extern BOOL no_cease_fire_text;
 extern BOOL cease_fire;
 
+class CArenaLogic;
 class CHealthKit;
 class CTeamControlPoint;
 class CTeamTrainWatcher;
@@ -210,6 +211,8 @@ public:
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { if (IsInKothMode()) return m_hRedKothTimer.Get(); else return NULL; }
 	CTeamRoundTimer* GetGreenKothRoundTimer( void ) { return m_hGreenKothTimer.Get(); }
 	CTeamRoundTimer* GetYellowKothRoundTimer( void ) { return m_hYellowKothTimer.Get(); }
+
+	float			GetPointEnableTime( void ) const { return m_flCapturePointEnableTime; }
 
 	CBaseEntity*	GetIT( void ) const { return m_itHandle.Get(); }
 	void			SetIT( CBaseEntity *pPlayer );
@@ -387,7 +390,7 @@ public:
 	void			SetGravityMultiplier( float value ) { m_flGravityScale = value; }
 
 	virtual bool	IsFourTeamGame( void ){ return m_bFourTeamMode; };
-	bool			IsMannVsMachineMode( void ) { return false; };
+	bool			IsMannVsMachineMode( void ) { return m_bPlayingMannVsMachine; };
 	char const*		GetCustomUpgradesFile( void ) const { return m_pszCustomUpgradesFile; }
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
@@ -541,6 +544,7 @@ private:
 	int m_iCurrentMiniRoundMask;
 	float m_flTimerMayExpireAt;
 
+	CHandle<CArenaLogic> m_hArenaLogic;
 	bool m_bFirstBlood;
 	int	m_iArenaTeamCount;
 	float m_flArenaNotificationSend;
