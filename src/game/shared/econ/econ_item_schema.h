@@ -59,6 +59,7 @@ enum
 
 enum
 {
+	DROPTYPE_NULL, // same as none
 	DROPTYPE_NONE,
 	DROPTYPE_DROP,
 	DROPTYPE_BREAK,
@@ -66,24 +67,6 @@ enum
 
 extern const char *g_szQualityColorStrings[];
 extern const char *g_szQualityLocalizationStrings[];
-
-#define CALL_ATTRIB_HOOK_INT(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_FLOAT(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_STRING(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, ent, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, ent, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent, __VA_ARGS__)
 
 #define CLEAR_STR(name) \
 		name = NULL
@@ -199,8 +182,11 @@ public:
 	}
 	~CEconAttributeDefinition()
 	{
-		definition->deleteThis();
+		if( definition )
+			definition->deleteThis();
 	}
+
+	KeyValues *GetStaticDefinition( void ) const { return definition; }
 
 	char const *GetName( void ) const
 	{
@@ -217,6 +203,8 @@ public:
 		Assert( description_string && description_string[0] );
 		return description_string;
 	}
+
+	bool LoadFromKV( KeyValues *pKV );
 
 private:
 	char name[128];
@@ -236,7 +224,6 @@ public:
 
 	mutable string_t m_iAttributeClass;
 
-	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
 };
 
@@ -273,6 +260,10 @@ typedef union
 	uint64 *lVal;
 	CAttribute_String *sVal;
 	byte *bVal;
+
+	operator uint64 const &( ) const { return *lVal; }
+	operator CAttribute_String const &( ) const { return *sVal; }
+	operator char const *( ) const { return *sVal; }
 } attrib_data_union_t;
 static_assert( sizeof( attrib_data_union_t ) == 4, "If the size changes you've done something wrong!" );
 
@@ -326,8 +317,7 @@ public:
 	bool selectable;
 	CUtlDict< const char*, unsigned short > model_player_per_class;
 
-	friend class CEconItemSchema;
-	friend class CEconSchemaParser;
+	friend class CEconItemDefinition;
 } ItemStyle_t;
 
 #define MAX_CUSTOM_WEAPON_SOUNDS   10
@@ -423,8 +413,7 @@ public:
 	int wm_bodygroup_override;
 	int wm_bodygroup_state_override;
 
-	friend class CEconItemSchema;
-	friend class CEconSchemaParser;
+	friend class CEconItemDefinition;
 } PerTeamVisuals_t;
 
 class CEconItemDefinition
@@ -487,6 +476,8 @@ public:
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
 	void IterateAttributes( IEconAttributeIterator *iter );
+
+	KeyValues *GetStaticDefinition( void ) const { return definition; }
 
 	char const *GetName( void ) const
 	{
@@ -571,6 +562,16 @@ public:
 
 		return NULL;
 	}
+	char const *GetVScriptName( void ) const
+	{
+		if ( item_script && item_script[0] != '\0' )
+			return item_script;
+
+		return NULL;
+	}
+
+	bool LoadFromKV( KeyValues *pKV );
+	void ParseVisuals( KeyValues *pKVData, int iIndex );
 
 private:
 	char const *name;
@@ -588,6 +589,7 @@ private:
 	char const *image_inventory;
 	char const *equip_region;
 	char const *holiday_restriction;
+	char const *item_script;
 
 	KeyValues *definition;
 
@@ -623,7 +625,6 @@ public:
 	bool is_cut_content;
 	bool is_multiclass_item;
 
-	friend class CEconItemSchema;
 	friend class CEconSchemaParser;
 };
 

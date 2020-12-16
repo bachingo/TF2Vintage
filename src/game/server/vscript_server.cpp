@@ -705,8 +705,7 @@ static const char *Script_FileToString( const char *pszFileName )
 	g_pFullFileSystem->Read( szString, size, fh );
 	g_pFullFileSystem->Close(fh);
 
-	const char *pszString = (const char*)szString;
-	return pszString;
+	return szString;
 }
 
 static void Script_ScreenShake( const Vector &center, float amplitude, float frequency, float duration, float radius, int eCommand, bool bAirShake )

@@ -80,7 +80,7 @@ ActionResult<CTFBot> CTFBotEngineerMoveToBuild::Update( CTFBot *me, float dt )
 					pExit->UpdateLastKnownArea();
 					CTFNavArea *pTeleArea = static_cast<CTFNavArea *>( pExit->GetLastKnownArea() );
 
-					if ( pTeleArea && abs( pTeleArea->GetIncursionDistance( me->GetTeamNumber() ) - pCPArea->GetIncursionDistance( me->GetTeamNumber() ) ) > tf_bot_max_teleport_exit_travel_to_point.GetFloat() )
+					if ( pTeleArea && fabs( pTeleArea->GetIncursionDistance( me->GetTeamNumber() ) - pCPArea->GetIncursionDistance( me->GetTeamNumber() ) ) > tf_bot_max_teleport_exit_travel_to_point.GetFloat() )
 						pExit->DestroyObject();
 				}
 			}
@@ -94,7 +94,7 @@ ActionResult<CTFBot> CTFBotEngineerMoveToBuild::Update( CTFBot *me, float dt )
 				pEntrance->UpdateLastKnownArea();
 				CTFNavArea *pTeleArea = static_cast<CTFNavArea *>( pEntrance->GetLastKnownArea() );
 
-				if ( pTeleArea && abs( pTeleArea->GetIncursionDistance( me->GetTeamNumber() ) - pArea->GetIncursionDistance( me->GetTeamNumber() ) ) >= tf_bot_min_teleport_travel.GetFloat() )
+				if ( pTeleArea && fabs( pTeleArea->GetIncursionDistance( me->GetTeamNumber() ) - pArea->GetIncursionDistance( me->GetTeamNumber() ) ) >= tf_bot_min_teleport_travel.GetFloat() )
 				{
 					if ( me->GetVisionInterface()->GetPrimaryKnownThreat( true ) && !me->m_Shared.InCond( TF_COND_INVULNERABLE ) && ShouldRetreat( me ) == ANSWER_YES )
 						return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover( new CTFBotEngineerBuildTeleportExit ), "Retreating to a safe place to build my teleporter exit" );

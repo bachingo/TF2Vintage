@@ -14,9 +14,8 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	"$BASE;..\public\vscript;$SRCDIR\thirdparty\SQUIRREL2\include;$SRCDIR\thirdparty\SQUIRREL2\squirrel;$SRCDIR\thirdparty\SQUIRREL2\sqplus;$SRCDIR\thirdparty\lua-5.1.1"
-		$PreprocessorDefinitions		"$BASE;_CRT_SECURE_NO_WARNINGS"
+		$PreprocessorDefinitions		"$BASE;VSCRIPT_DLL_EXPORT"
 		$WarningLevel					"Level 3 (/W3)"
-		$TreatWarningsAsErrors			"No (/WX-)"
 	}
 }
 
@@ -139,6 +138,15 @@ $Project "VScript"
 		$File   "$SRCDIR\thirdparty\lua-5.1.1\ldebug.c"
 		$File   "$SRCDIR\thirdparty\lua-5.1.1\ldebug.h"
 		$File   "$SRCDIR\thirdparty\lua-5.1.1\ldo.c"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$AdditionalOptions					"$BASE /EHsc"
+				}
+			}
+		}
 		$File   "$SRCDIR\thirdparty\lua-5.1.1\ldo.h"
 		$File   "$SRCDIR\thirdparty\lua-5.1.1\ldump.c"
 		$File   "$SRCDIR\thirdparty\lua-5.1.1\lfunc.c"

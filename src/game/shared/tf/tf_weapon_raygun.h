@@ -11,31 +11,37 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
+#include "tf_weapon_rocketlauncher.h"
 
 #if defined( CLIENT_DLL )
 #define CTFRaygun C_TFRaygun
-#define CTFPomson C_TFPomson
+#define CTFDRGPomson C_TFDRGPomson
 #endif
 
 //=============================================================================
 //
 // Raygun Class.
 //
-class CTFRaygun : public CTFWeaponBaseGun
+class CTFRaygun : public CTFRocketLauncher
 {
 public:
 
-	DECLARE_CLASS( CTFRaygun, CTFWeaponBaseGun );
+	DECLARE_CLASS( CTFRaygun, CTFRocketLauncher );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
 	CTFRaygun();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_RAYGUN; }
+	virtual float	GetProjectileSpeed( void )			{ return 1200.0f; }
+	virtual float	GetProjectileGravity( void )		{ return 0.0f; }
 	virtual void	PrimaryAttack();
 	
 	virtual bool		HasChargeBar( void )				{ return true; }
 	virtual const char* GetEffectLabelText( void )			{ return "#TF_BISON"; }
+
+	virtual float		Energy_GetShotCost( void ) const;
+	virtual float		Energy_GetRechargeCost( void ) const { return 5.f; }
 
 private:
 
@@ -46,22 +52,22 @@ private:
 //
 // Pomson Class.
 //
-class CTFPomson : public CTFWeaponBaseGun
+class CTFDRGPomson : public CTFRaygun
 {
 public:
 
-	DECLARE_CLASS( CTFPomson, CTFWeaponBaseGun );
+	DECLARE_CLASS( CTFDRGPomson, CTFRaygun );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	CTFPomson();
+	CTFDRGPomson();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_DRG_POMSON; }
 	virtual const char* GetEffectLabelText( void )			{ return "#TF_POMSON_HUD"; }
 
 private:
 
-	CTFPomson( const CTFPomson & ) {}
+	CTFDRGPomson( const CTFDRGPomson & ) {}
 };
 
 

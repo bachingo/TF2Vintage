@@ -658,11 +658,31 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 				float flHealRate = GetHealRate();
 				
 				// Heal 3x faster if using the megaheal.
-				int nMegaHealMult = TF_MEGAHEAL_BOOST;
-				if (pTFPlayer->m_Shared.InCond(TF_COND_MEGAHEAL))
-					flHealRate *= nMegaHealMult;
+				if ( pTFPlayer->m_Shared.InCond(TF_COND_MEGAHEAL) )
+					flHealRate *= TF_MEGAHEAL_BOOST;
+
+				float flOverhealDecayRate = 1.0;
+				CALL_ATTRIB_HOOK_FLOAT( flOverhealDecayRate, mult_medigun_overheal_decay );
+
+				// This is a headache....
+				float flOverhealBonus = tf_max_health_boost.GetFloat() - 1.0f;
+
+				float flOverhealMult = 1.0f;
+				CALL_ATTRIB_HOOK_FLOAT( flOverhealMult, mult_medigun_overheal_amount );
+				if ( flOverhealMult >= 1.0f )
+				{
+					flOverhealBonus += flOverhealMult;
+				}
+				else if ( flOverhealMult < 1.0f && flOverhealBonus > 0.0f )
+				{
+					flOverhealBonus *= flOverhealMult;
+					flOverhealBonus += 1.0f;
+				}
+
+				if ( flOverhealBonus <= 1.0f )
+					flOverhealBonus = 1.0f;
 				
-				pTFPlayer->m_Shared.Heal( pOwner, flHealRate );
+				pTFPlayer->m_Shared.Heal( pOwner, flHealRate, flOverhealBonus, flOverhealDecayRate );
 				
 			}
 
@@ -1064,12 +1084,8 @@ void CWeaponMedigun::PrimaryAttack( void )
 	// Start boosting ourself if we're not
 	if (m_bChargeRelease && !m_bHealingSelf && iChargeType == TF_CHARGE_MEGAHEAL)
 	{
-		float flHealRate = GetHealRate();
-		int nMegaHealMult = TF_MEGAHEAL_BOOST;
-			if (pOwner->m_Shared.InCond(TF_COND_MEGAHEAL))
-				flHealRate *= nMegaHealMult;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pOwner, flHealRate, mult_health_fromhealers );
-		pOwner->m_Shared.Heal( pOwner, flHealRate );
+		float flHealRate = GetHealRate() * TF_MEGAHEAL_BOOST;
+		pOwner->m_Shared.Heal( pOwner, flHealRate, 1.0f, 0.0f );
 		m_bHealingSelf = true;
 	}
 

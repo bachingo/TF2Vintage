@@ -1331,6 +1331,31 @@ public:
 		return false; \
 	}
 
+#define DEFINE_SCRIPT_PROXY_0( FuncName ) \
+	CScriptFuncHolder m_hScriptFunc_##FuncName; \
+	template < typename RET_TYPE > \
+	bool FuncName( RET_TYPE *pRetVal ) \
+	{ \
+		if ( !m_hScriptFunc_##FuncName.IsValid() ) \
+		{ \
+			m_hScriptFunc_##FuncName.hFunction = LookupFunction( #FuncName ); \
+			m_FuncHandles.AddToTail( &m_hScriptFunc_##FuncName.hFunction ); \
+		} \
+		\
+		if ( !m_hScriptFunc_##FuncName.IsNull() ) \
+		{ \
+			ScriptVariant_t returnVal; \
+			ScriptStatus_t result = Call( m_hScriptFunc_##FuncName.hFunction, &returnVal ); \
+			if ( result != SCRIPT_ERROR ) \
+			{ \
+				returnVal.AssignTo( pRetVal ); \
+				returnVal.Free(); \
+				return true; \
+			} \
+		} \
+		return false; \
+	}
+
 #define DEFINE_SCRIPT_PROXY_GUTS_NO_RETVAL( FuncName, N ) \
 	CScriptFuncHolder m_hScriptFunc_##FuncName; \
 	template < FUNC_SOLO_TEMPLATE_ARG_PARAMS_##N> \
@@ -1374,7 +1399,6 @@ public:
 		return false; \
 	}
 
-#define DEFINE_SCRIPT_PROXY_0( FuncName ) DEFINE_SCRIPT_PROXY_GUTS( FuncName, 0 )
 #define DEFINE_SCRIPT_PROXY_1( FuncName ) DEFINE_SCRIPT_PROXY_GUTS( FuncName, 1 )
 #define DEFINE_SCRIPT_PROXY_2( FuncName ) DEFINE_SCRIPT_PROXY_GUTS( FuncName, 2 )
 #define DEFINE_SCRIPT_PROXY_3( FuncName ) DEFINE_SCRIPT_PROXY_GUTS( FuncName, 3 )

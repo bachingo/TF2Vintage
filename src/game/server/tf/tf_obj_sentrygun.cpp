@@ -1166,8 +1166,7 @@ void CObjectSentrygun::FoundTarget( CBaseEntity *pTarget, const Vector &vecSound
 			CTFBot *pBot = ToTFBot( pTarget );
 			if ( pBot )
 			{
-				pBot->m_hTargetSentry = this;
-				pBot->m_vecLastHurtBySentry = GetAbsOrigin();
+				pBot->NoteTargetSentry( this );
 			}
 		}
 

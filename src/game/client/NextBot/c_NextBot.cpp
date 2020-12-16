@@ -36,7 +36,8 @@ void C_NextBotCombatCharacter::UpdateShadowLOD( void )
 	else
 	{
 		Vector delta = GetAbsOrigin() - C_BasePlayer::GetLocalPlayer()->GetAbsOrigin();
-		if ( delta.LengthSqr() > Square( NextBotShadowDist.GetFloat() ) )
+		const float flDist = NextBotShadowDist.GetFloat();
+		if ( delta.LengthSqr() > Square( flDist ) )
 		{
 			m_nShadowType = SHADOWS_SIMPLE;
 		}

@@ -85,7 +85,7 @@ CTFBaseRocket::CTFBaseRocket()
 #ifdef CLIENT_DLL
 
 	m_flSpawnTime = 0.0f;
-	m_iOldTeamNum = TEAM_UNASSIGNED;
+	m_iOldDeflected = 0;
 		
 // Server specific.
 #else
@@ -168,17 +168,25 @@ void CTFBaseRocket::Spawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBaseRocket::OnPreDataChanged( DataUpdateType_t updateType )
+void C_TFBaseRocket::OnPreDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnPreDataChanged( updateType );
 
-	m_iOldTeamNum = m_iTeamNum;
+	m_iOldDeflected = m_iDeflected;
+}
+
+void C_TFBaseRocket::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	if ( updateType == DATA_UPDATE_CREATED || m_iDeflected != m_iOldDeflected )
+		CreateTrails();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
+void C_TFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 {
 	// Pass through to the base class.
 	BaseClass::PostDataUpdate( type );
@@ -213,7 +221,7 @@ void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFBaseRocket::DrawModel( int flags )
+int C_TFBaseRocket::DrawModel( int flags )
 {
 	// During the first 0.2 seconds of our life, don't draw ourselves.
 	if ( gpGlobals->curtime - m_flSpawnTime < 0.2f )

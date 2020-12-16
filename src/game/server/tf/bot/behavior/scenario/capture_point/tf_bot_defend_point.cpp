@@ -207,7 +207,7 @@ bool CTFBotDefendPoint::IsPointThreatened( CTFBot *actor )
 
 	if ( !point->HasBeenContested() || gpGlobals->curtime - point->LastContestedAt() >= 5.0f )
 	{
-		if ( !actor->m_cpChangedTimer.HasStarted() || actor->m_cpChangedTimer.IsElapsed() )
+		if ( !actor->HasPointRecentlyChanged() )
 			return false;
 	}
 
@@ -248,7 +248,7 @@ public:
 		if ( adjArea->IsBlocked( team ) || travelDistanceSoFar > tf_bot_max_point_defend_range.GetFloat() )
 			return false;
 
-		if ( abs( currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) ) < 65.0f )
+		if ( fabs( currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) ) < 65.0f )
 			return true;
 
 		return false;

@@ -68,13 +68,7 @@
 
 void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue );
 void ValidateCapturesPerRound( IConVar *var, const char *pOldValue, float flOldValue );
-
-enum
-{
-	HOLIDAY_RECALCULATE,
-	HOLIDAY_OFF,
-	HOLIDAY_ON,
-};
+void ForcedHolidayChanged( IConVar *var, const char *pOldValue, float flOldValue );
 
 static int g_TauntCamAchievements[] =
 {
@@ -108,14 +102,31 @@ ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, ""
 				 #endif
                    );
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
-ConVar tf_fullmoon( "tf_fullmoon", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "");
-//ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
+ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_REPLICATED, "Forced holiday, \n   Birthday = 1\n   Halloween = 2\n" //  Christmas = 3\n   Valentines = 4\n   MeetThePyro = 5\n   FullMoon=6
+					  #if defined( GAME_DLL )
+						  , ForcedHolidayChanged
+					  #endif
+);
+ConVar tf_item_based_forced_holiday( "tf_item_based_forced_holiday", "0", FCVAR_REPLICATED, "" 	// like a clone of tf_forced_holiday, but controlled by client consumable item use
+								 #if defined( GAME_DLL )
+									 , ForcedHolidayChanged
+								 #endif
+);
+ConVar tf_force_holidays_off( "tf_force_holidays_off", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, ""
+						  #if defined( GAME_DLL )
+							  , ForcedHolidayChanged
+						  #endif
+);
 ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
 ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9
 						   #if defined( GAME_DLL )
 							   , ValidateCapturesPerRound
 						   #endif
                              );
+
+#ifdef CLIENT_DLL
+ConVar tf_particles_disable_weather( "tf_particles_disable_weather", "0", FCVAR_ARCHIVE, "Disable particles related to weather effects." );
+#endif
 
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
@@ -254,6 +265,74 @@ void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flO
 #endif
 }
 
+void ForcedHolidayChanged( IConVar *var, const char *oldValue, float flOldValue )
+{
+#ifdef GAME_DLL
+	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+#endif
+}
+
+static bool BIsCvarIndicatingHolidayIsActive( int iCvarValue, /*EHoliday*/ int eHoliday )
+{
+	if ( iCvarValue == 0 )
+		return false;
+
+	// Some values can equal multiple things
+	switch ( eHoliday )
+	{
+		case kHoliday_Halloween:
+			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_ValentinesDay:
+			return iCvarValue == kHoliday_ValentinesDay || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_FullMoon:
+			return iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_HalloweenOrFullMoon:
+			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_HalloweenOrFullMoonOrValentines:
+			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_ValentinesDay || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		default:
+			return iCvarValue == eHoliday;
+	}
+
+	return false;
+}
+
+bool TF_IsHolidayActive( /*EHoliday*/ int eHoliday )
+{
+	if ( IsX360() || tf_force_holidays_off.GetBool() )
+		return false;
+
+	if ( BIsCvarIndicatingHolidayIsActive( tf_forced_holiday.GetInt(), eHoliday ) )
+		return true;
+
+	if ( BIsCvarIndicatingHolidayIsActive( tf_item_based_forced_holiday.GetInt(), eHoliday ) )
+		return true;
+
+	if ( ( eHoliday == kHoliday_TF2Birthday ) && tf_birthday.GetBool() )
+		return true;
+
+	if ( TFGameRules() )
+	{
+		if ( eHoliday == kHoliday_HalloweenOrFullMoon )
+		{
+			if ( TFGameRules()->IsHolidayMap( kHoliday_Halloween ) )
+				return true;
+			if ( TFGameRules()->IsHolidayMap( kHoliday_FullMoon ) )
+				return true;
+		}
+		if ( TFGameRules()->IsHolidayMap( eHoliday ) )
+		{
+			return true;
+		}
+	}
+
+	return UTIL_IsHolidayActive( eHoliday );
+}
+
 struct StatueInfo_t
 {
 	char const *pszMapName;
@@ -362,11 +441,11 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_hGreenKothTimer ) ), 
 	RecvPropEHandle( RECVINFO( m_hYellowKothTimer ) ),
+	RecvPropInt( RECVINFO( m_nMapHolidayType ) ),
 	RecvPropEHandle( RECVINFO( m_itHandle ) ),
 	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
-
+	RecvPropString( RECVINFO( m_pszCustomUpgradesFile ) ),
 #else
-
 	SendPropInt( SENDINFO( m_nGameType ), 4, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
@@ -389,9 +468,10 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_hGreenKothTimer ) ), 
 	SendPropEHandle( SENDINFO( m_hYellowKothTimer ) ),
+	SendPropInt( SENDINFO( m_nMapHolidayType ), 3, SPROP_UNSIGNED ),
 	SendPropEHandle( SENDINFO( m_itHandle ) ),
 	SendPropInt( SENDINFO( m_halloweenScenario ) ),
-
+	SendPropString( SENDINFO( m_pszCustomUpgradesFile ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -1595,6 +1675,7 @@ CTFGameRules::CTFGameRules()
 #else // GAME_DLL
 
 	ListenForGameEvent( "game_newmap" );
+	ListenForGameEvent( "recalculate_holidays" );
 
 	SetUpVisionFilterKeyValues();
 
@@ -1622,15 +1703,6 @@ CTFGameRules::CTFGameRules()
 	m_flGravityScale = 1.0;
 
 	m_iPreviousRoundWinners = TEAM_UNASSIGNED;
-	m_iBirthdayMode = HOLIDAY_RECALCULATE;
-	m_iHalloweenMode = HOLIDAY_RECALCULATE;
-	m_iFullMoonMode = HOLIDAY_RECALCULATE;
-	m_iChristmasMode = HOLIDAY_RECALCULATE;
-	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-	m_iEOTLMode = HOLIDAY_RECALCULATE;
-	m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
@@ -1650,6 +1722,7 @@ CTFGameRules::CTFGameRules()
 	else if ( !Q_strncmp( szMapname, "sd_doomsday_event", MAX_MAP_NAME ) )
 		m_halloweenScenario = HALLOWEEN_SCENARIO_DOOMSDAY;
 #endif
+	m_iGlobalAttributeCacheVersion = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1754,16 +1827,6 @@ static const char *s_PreserveEnts[] =
 //-----------------------------------------------------------------------------
 void CTFGameRules::Activate()
 {
-	m_iBirthdayMode = HOLIDAY_RECALCULATE;
-	m_iHalloweenMode = HOLIDAY_RECALCULATE;
-	m_iFullMoonMode = HOLIDAY_RECALCULATE;
-	m_iChristmasMode = HOLIDAY_RECALCULATE;
-	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-	m_iEOTLMode = HOLIDAY_RECALCULATE;
-	m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
-
 	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
 
 	tf_gamemode_arena.SetValue( 0 );
@@ -1791,6 +1854,8 @@ void CTFGameRules::Activate()
 
 	m_hBlueBotRoster = NULL;
 	m_hRedBotRoster = NULL;
+
+	m_nMapHolidayType.Set( kHoliday_None );
 
 	CMedievalLogic *pMedieval = dynamic_cast<CMedievalLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval" ) );
 	if ( pMedieval )
@@ -2271,7 +2336,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_iNumCaps[i] = 0;
 	}
 
-	m_bossSpawnTimer.Invalidate();
 	SetIT( NULL );
 
 	m_hRedAttackTrain = NULL;
@@ -2314,6 +2378,14 @@ void CTFGameRules::SetupOnRoundStart( void )
 		pEnt = gEntList.NextEnt( pEnt );
 	}
 
+	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+
+	UTIL_CalculateHolidays();
+
 	if ( g_pObjectiveResource && !g_pObjectiveResource->PlayingMiniRounds() )
 	{
 		// Find all the control points with associated spawnpoints
@@ -2335,9 +2407,38 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 		SetRoundOverlayDetails();
 	}
-#ifdef GAME_DLL
+
 	m_szMostRecentCappers[0] = 0;
-#endif
+
+	m_bossSpawnTimer.Invalidate();
+
+	m_hGhosts.RemoveAll();
+
+	m_mobSpawnTimer.Invalidate();
+	m_nZombiesToSpawn = 0;
+
+	if ( g_pMonsterResource )
+	{
+		g_pMonsterResource->HideBossHealthMeter();
+	}
+
+	if ( IsHolidayActive( kHoliday_EOTL ) )
+	{
+		for ( int i = 0; i < IPhysicsPropAutoList::AutoList().Count(); i++ )
+		{
+			CPhysicsProp *pPhysicsProp = static_cast<CPhysicsProp *>( IPhysicsPropAutoList::AutoList()[i] );
+			const char *pszModel = pPhysicsProp->GetModelName().ToCStr();
+
+			if ( FStrEq( pszModel, "models/props_trainyard/bomb_cart.mdl" ) )
+			{
+				pPhysicsProp->SetModel( "models/props_trainyard/bomb_eotl_blue.mdl" );
+			}
+			else if ( FStrEq( pszModel, "models/props_trainyard/bomb_cart_red.mdl" ) )
+			{
+				pPhysicsProp->SetModel( "models/props_trainyard/bomb_eotl_red.mdl" );
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2786,7 +2887,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 		pEntity->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
 		Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
 
-		if ( vecDir.LengthSqr() > ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+		if ( vecDir.LengthSqr() > Square(radiusInfo.m_flRadius) )
 			continue;
 
 		if ( radiusInfo.ApplyToEntity( pEntity ) )
@@ -2820,7 +2921,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 			pAttacker->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
 			Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
 
-			if ( vecDir.LengthSqr() <= ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+			if ( vecDir.LengthSqr() <= Square(radiusInfo.m_flRadius) )
 			{
 				radiusInfo.ApplyToEntity( pAttacker );
 			}
@@ -3094,7 +3195,6 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 	RunPlayerConditionThink();
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3105,47 +3205,67 @@ void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinLifetime, float 
 
 	if ( !IsHalloweenScenario( HALLOWEEN_SCENARIO_VIADUCT ) && !IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
 	{
-		CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity*> ( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
+		CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity *>( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
 		if ( !pHolidayEntity || !pHolidayEntity->ShouldAllowHaunting() )
 			return;
 	}
 
-	if ( IGhostAutoList::AutoList().Count() >= nDesiredCount )
+	m_hGhosts.RemoveAll();
+
+	// Just update existing ghosts
+	FOR_EACH_VEC( IGhostAutoList::AutoList(), i )
+	{
+		CGhost *pGhost = (CGhost *)IGhostAutoList::AutoList()[i];
+		pGhost->SetLifetime( RandomFloat( flMinLifetime, flMaxLifetime ) );
+		m_hGhosts.AddToTail( pGhost );
+	}
+
+	// If there was already too many existing
+	if ( m_hGhosts.Count() >= nDesiredCount )
 		return;
 
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, TF_TEAM_RED, true );
 	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
 
-	const int nNumToSpawn = nDesiredCount - IGhostAutoList::AutoList().Count();
-
-	CUtlVector<Vector> locations;
-	FOR_EACH_VEC( TheNavAreas, i )
-	{
-		CTFNavArea *pArea = (CTFNavArea *)TheNavAreas[ i ];
-		if ( pArea->HasTFAttributes( RED_SPAWN_ROOM | BLUE_SPAWN_ROOM ) )
-			continue;
-
-		Vector vecSpot = pArea->GetRandomPoint();
-
-		int j = 0;
-		for ( j; j < players.Count(); ++j )
+	auto IsPlayerNearby = [&]( Vector const &vecSpot ) -> bool {
+		FOR_EACH_VEC( players, i )
 		{
-			if ( ( players[ i ]->GetAbsOrigin() - vecSpot ).LengthSqr() < Square( 240.0 ) )
-				break;
+			if ( vecSpot.DistTo( players[i]->GetAbsOrigin() ) < 240.0f )
+				return true;
 		}
 
-		if ( j == players.Count() )
-			locations.AddToTail( vecSpot );
+		return false;
+	};
+
+	CUtlVector<Vector> spawnPoints;
+	FOR_EACH_VEC( TheNavAreas, i )
+	{
+		CTFNavArea *area = assert_cast<CTFNavArea *>( TheNavAreas[i] );
+		if ( area->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM ) )
+		{
+			// keep out of spawn rooms
+			continue;
+		}
+
+		const Vector vecSpot = area->GetRandomPoint();
+		if ( IsPlayerNearby( vecSpot ) )
+			continue;
+
+		spawnPoints.AddToTail( vecSpot );
 	}
 
-	if ( locations.IsEmpty() )
+	if ( spawnPoints.IsEmpty() )
 		return;
 
-	for ( int i=0; i < nNumToSpawn; ++i )
+	const int nTotalGhosts = nDesiredCount - m_hGhosts.Count();
+	for ( int i=0; i < nTotalGhosts; ++i )
 	{
-		int nLocation = RandomInt( 0, locations.Count() - 1 );
-		CGhost::Create( locations[ nLocation ], vec3_angle, RandomFloat( flMinLifetime, flMaxLifetime ) );
+		const int nSpawnPoint = RandomInt( 0, spawnPoints.Count()-1 );
+		const float flLifetime = RandomFloat( flMinLifetime, flMaxLifetime );
+
+		CGhost *pGhost = CGhost::Create( spawnPoints[nSpawnPoint], vec3_angle, flLifetime );
+		m_hGhosts.AddToTail( pGhost );
 	}
 }
 
@@ -3154,6 +3274,8 @@ void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinLifetime, float 
 //-----------------------------------------------------------------------------
 void CTFGameRules::SpawnHalloweenBoss( void )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBotSpiky" );
+
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
 		return SpawnZombieMob();
 
@@ -6384,13 +6506,19 @@ void CTFGameRules::CollectCapturePoints( CBasePlayer *pPlayer, CUtlVector<CTeamC
 	for ( int i = 0; i < pMaster->GetNumPoints(); ++i )
 	{
 		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
-		if ( pMaster->IsInRound( pPoint ) &&
-			ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != pPlayer->GetTeamNumber() &&
-			ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), pPlayer->GetTeamNumber() ) &&
-			TeamMayCapturePoint( pPlayer->GetTeamNumber(), pPoint->GetPointIndex() ) )
-		{
-			controlPointVector->AddToTail( pPoint );
-		}
+		if ( !pMaster->IsInRound( pPoint ) )
+			continue;
+
+		if ( ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) == pPlayer->GetTeamNumber() )
+			continue;
+
+		if ( !ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), pPlayer->GetTeamNumber() ) )
+			continue;
+
+		if ( !TeamMayCapturePoint( pPlayer->GetTeamNumber(), pPoint->GetPointIndex() ) )
+			continue;
+		
+		controlPointVector->AddToTail( pPoint );
 	}
 }
 
@@ -6414,16 +6542,23 @@ void CTFGameRules::CollectDefendPoints( CBasePlayer *pPlayer, CUtlVector<CTeamCo
 	if ( !pMaster || !pMaster->IsActive() )
 		return;
 
+	const int iEnemyTeam = GetEnemyTeam( pPlayer );
 	for ( int i = 0; i < pMaster->GetNumPoints(); ++i )
 	{
 		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
-		if ( pMaster->IsInRound( pPoint ) &&
-			ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) == pPlayer->GetTeamNumber() &&
-			ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), GetEnemyTeam( pPlayer ) ) &&
-			TeamMayCapturePoint( GetEnemyTeam( pPlayer ), pPoint->GetPointIndex() ) )
-		{
-			controlPointVector->AddToTail( pPoint );
-		}
+		if ( !pMaster->IsInRound( pPoint ) )
+			continue;
+
+		if ( ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != pPlayer->GetTeamNumber() )
+			continue;
+
+		if ( !ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), iEnemyTeam ) )
+			continue;
+
+		if ( !TeamMayCapturePoint( iEnemyTeam, pPoint->GetPointIndex() ) )
+			continue;
+		
+		controlPointVector->AddToTail( pPoint );
 	}
 }
 
@@ -6502,7 +6637,6 @@ CTeamTrainWatcher *CTFGameRules::GetPayloadToBlock( int iTeam )
 
 	if ( iTeam == TF_TEAM_RED )
 	{
-
 		if ( m_hRedDefendTrain )
 			return m_hRedDefendTrain;
 
@@ -6541,360 +6675,43 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 		( pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN ) +
 		( pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE ) +
 		( pRoundStats->m_iStat[TFSTAT_DAMAGE] / TF_SCORE_DAMAGE_PER_POINT ) +
-		( pRoundStats->m_iStat[TFSTAT_BONUS] / TF_SCORE_BONUS_PER_POINT );
+		( pRoundStats->m_iStat[TFSTAT_BONUS_POINTS] / TF_SCORE_BONUS_PER_POINT );
 	return Max( iScore, 0 );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFGameRules::IsBirthday( void )
+bool CTFGameRules::IsBirthday( void ) const
 {
 	if ( IsX360() )
 		return false;
 
-	if ( m_iBirthdayMode == HOLIDAY_RECALCULATE )
-	{
-		m_iBirthdayMode = HOLIDAY_OFF;
-		if ( tf_birthday.GetBool() )
-		{
-			m_iBirthdayMode = HOLIDAY_ON;
-		}
-		else
-		{
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = localtime( ptime );
-			if ( today )
-			{
-				// July 4th is the birthday of the first TF2V release, while May 27 was a milestone update.
-				// August 24th is the Team Fortress birthday.
-				if ( ( ( today->tm_mon == (5-1) && today->tm_mday == 27 ) || ( today->tm_mon == (7-1) && today->tm_mday == 4 ) ) || ( today->tm_mon == (8-1) && today->tm_mday == 24 ) )
-				{
-					m_iBirthdayMode = HOLIDAY_ON;
-				}
-			}
-		}
-	}
-
-	return ( m_iBirthdayMode == HOLIDAY_ON );
+	return tf_birthday.GetBool() || IsHolidayActive( kHoliday_TF2Birthday );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsHalloween( void )
+bool CTFGameRules::IsBirthdayOrPyroVision( void ) const
 {
-	if ( IsX360() )
-		return false;
+	if ( IsBirthday() )
+		return true;
 
-	if ( m_iHalloweenMode == HOLIDAY_RECALCULATE )
+#ifdef CLIENT_DLL
+	// Use birthday fun if the local player has an item that allows them to see it (Pyro Goggles)
+	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 	{
-		m_iHalloweenMode = HOLIDAY_OFF;
-		if ( tf_halloween.GetBool() )
-		{
-			m_iHalloweenMode = HOLIDAY_ON;
-		}
-		else
-		{
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = localtime( ptime );
-			if ( today )
-			{
-				// Just for Halloween: 10/31
-				// We use the week before Halloween to the end of Dia de Muertos for this range.
-				if ( ( today->tm_mon == (10-1) && ( ( today->tm_mday >= 23 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (11-1) ) && ( today->tm_mday <= 2 ) ) )
-				{
-					m_iHalloweenMode = HOLIDAY_ON;
-				}
-			}
-		}
+		return true;
 	}
+#endif
 
-	return ( m_iHalloweenMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsFullMoon( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iFullMoonMode == HOLIDAY_RECALCULATE )
-	{
-		m_iFullMoonMode = HOLIDAY_OFF;
-		if ( tf_fullmoon.GetBool() )
-		{
-			m_iFullMoonMode = HOLIDAY_ON;
-		}
-		else
-		{
-			// Check for Full Moon.
-			// Use UTC for this conversion for consistency.
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = gmtime( ptime );
-			if ( today )
-			{
-				// We convert our date to difference in days since 18:14 UTC on 01/6/2000, the first new moon of 2000. (Also referred to as Lunation Number 0/Brown Lunation Number 953)
-				// Year calculations are based on the difference since 1900, so offset for that.
-				float flDaysSinceMeeusMoon = ( ( ( ( today->tm_year + 1900 ) * 365.25 ) + ( today->tm_yday + ( ( today->tm_hour + ( today->tm_min / 60 ) ) / 24 ) ) ) - ( ( 2000 * 365.25 ) + ( 5 + ( ( 18 + ( 14 / 60 ) ) / 24 ) ) ) );
-					
-				// Check how many New Moons there have been, and find our Lunation Number.
-				float flMeanMoonDays = 29.530587981; // Mean difference between full moons, in days. Variation is -0.259/+0.302.
-				float flMeeusLunationDecimal = flDaysSinceMeeusMoon / flMeanMoonDays; 
-				int iMeeusLunationNumber = flDaysSinceMeeusMoon / flMeanMoonDays; // Amount of moon cycles since LN 0/BLN 953.
-					
-				// Check how close we are to a new lunar month.
-				// A New Moon is at 0.
-				float flCurrentMoonPhase = ( flMeeusLunationDecimal - iMeeusLunationNumber );
-					
-				// TF2 does their full moons for a 24 hour period, so it should be Full Moon +/- 12 hours.
-				// A Full Moon is halfway after a New Moon, so add 0.5 to our tolerances.
-				int iFullMoonHours = 12;
-				float flFullMoonTolerance = ( ( iFullMoonHours / 24 ) / flMeanMoonDays );
-				float iFullMoonPhaseMax = 0.5 + flFullMoonTolerance;
-				float iFullMoonPhaseMin = 0.5 - flFullMoonTolerance;
-				
-				if ( ( flCurrentMoonPhase >= iFullMoonPhaseMin ) && ( flCurrentMoonPhase <= iFullMoonPhaseMax ) )
-				{
-					m_iFullMoonMode = HOLIDAY_ON;
-				}
-			}
-		}
-	}
-
-	return ( m_iFullMoonMode == HOLIDAY_ON );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsChristmas( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iChristmasMode == HOLIDAY_RECALCULATE )
-	{
-		m_iChristmasMode = HOLIDAY_OFF;
-		if ( tf_christmas.GetBool() )
-		{
-			m_iChristmasMode = HOLIDAY_ON;
-		}
-		else
-		{
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = localtime( ptime );
-			if ( today )
-			{
-				// Just for Christmas: 12/25
-				// We use the day before Winter Solstice to the day after National Hangover Day for this range.
-				if ( ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 20 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (1-1) ) && ( today->tm_mday <= 1 ) ) )
-				{
-					m_iChristmasMode = HOLIDAY_ON;
-				}
-			}
-		}
-	}
-
-	return ( m_iChristmasMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsValentinesDay( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iValentinesDayMode == HOLIDAY_RECALCULATE )
-	{
-		m_iValentinesDayMode = HOLIDAY_OFF;
-		
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			if ( today->tm_mon == (2-1) && today->tm_mday == 14 )
-			{
-				m_iValentinesDayMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iValentinesDayMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsAprilFools( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iAprilFoolsMode == HOLIDAY_RECALCULATE )
-	{
-		m_iAprilFoolsMode = HOLIDAY_OFF;
-		
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			if ( ( today->tm_mon == (4-1) && today->tm_mday == 1 ) )
-			{
-				m_iAprilFoolsMode = HOLIDAY_ON;
-			}
-		}
-		
-	}
-
-	return ( m_iAprilFoolsMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsEOTL( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iEOTLMode == HOLIDAY_RECALCULATE )
-	{
-		m_iEOTLMode = HOLIDAY_OFF;
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			// End of the Line released December 8th. The event itself ended January 7th.
-			// We have the holidays run through the same time, so finish it beforehand.
-			if ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 8 ) && ( today->tm_mday <= 17 ) ) )
-			{
-				m_iEOTLMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iEOTLMode == HOLIDAY_ON );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsBreadUpdate( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iBreadUpdateMode == HOLIDAY_RECALCULATE )
-	{
-		m_iBreadUpdateMode = HOLIDAY_OFF;
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			// Love and War released June 18th, and ran to July 9th.
-			// Purposely skip over July 4th, because that is the TF2V birthday.
-			if ( ( today->tm_mon == (6-1) && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == (7-1) && ( ( ( today->tm_mday >= 1 ) && ( ( today->tm_mday <= 9 ) && ( today->tm_mday != 4 ) ) ) ) ) )
-			{
-				m_iBreadUpdateMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iBreadUpdateMode == HOLIDAY_ON );
-}
-
-bool CTFGameRules::IsRememberingSoldier( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iSoldierMemorialMode == HOLIDAY_RECALCULATE )
-	{
-		m_iSoldierMemorialMode = HOLIDAY_OFF;
-		
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			// April 8th till the end of May
-			if ( ( today->tm_mon == (4-1) && ( today->tm_mday >= 8 ) ) || today->tm_mon == (5-1) )
-			{
-				m_iSoldierMemorialMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iSoldierMemorialMode == HOLIDAY_ON );
+	return false;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFGameRules::IsHolidayActive( int eHoliday )
+bool CTFGameRules::IsHolidayActive( int eHoliday ) const
 {
-	bool bActive = false;
-	switch ( eHoliday )
-	{
-		case kHoliday_TF2Birthday:
-			bActive = IsBirthday();
-			break;
-		case kHoliday_Halloween:
-			bActive = IsHalloween();
-			break;
-		case kHoliday_Christmas:
-			bActive = IsChristmas();
-			break;
-		case kHoliday_CommunityUpdate:
-			break;
-		case kHoliday_EOTL:
-			bActive = IsEOTL();
-			break;			
-		case kHoliday_ValentinesDay:
-			bActive = IsValentinesDay();
-			break;
-		case kHoliday_MeetThePyro:
-			break;
-		case kHoliday_FullMoon:
-			bActive = IsFullMoon();
-			break;
-		case kHoliday_HalloweenOrFullMoon:
-			if ( IsHalloween() || IsFullMoon() )
-				bActive = true;
-			break;
-		case kHoliday_HalloweenOrFullMoonOrValentines:
-			if ( ( IsHalloween() || IsFullMoon() ) || IsValentinesDay() )
-				bActive = true;				
-			break;
-		case kHoliday_AprilFools:
-			bActive = IsAprilFools();
-			break;
-		case kHoliday_BreadUpdate:
-			bActive = IsBreadUpdate();
-			break;
-		case kHoliday_SoldierMemorial:
-			bActive = IsRememberingSoldier();
-			break;
-		default:
-			break;
-	}
-
-	return bActive;
+	return TF_IsHolidayActive( eHoliday );
 }
 
 // We can use these to check between normal and boss behavior without writing out individual massive if statements each time.
@@ -7237,22 +7054,14 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 			pArena->FireOnCapEnabled();
 		}
 	}
-#endif
-
-#ifdef CLIENT_DLL
-	if ( !Q_strcmp( eventName, "game_newmap" ) )
+#else
+	if ( !Q_strcmp( eventName, "recalculate_holidays" ) )
 	{
-		m_iBirthdayMode = HOLIDAY_RECALCULATE;
-		m_iHalloweenMode = HOLIDAY_RECALCULATE;
-		m_iFullMoonMode = HOLIDAY_RECALCULATE;
-		m_iChristmasMode = HOLIDAY_RECALCULATE;
-		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-		m_iEOTLMode = HOLIDAY_RECALCULATE;
-		m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
+		UTIL_CalculateHolidays();
 	}
 #endif
+
+	BaseClass::FireGameEvent( event );
 }
 
 //-----------------------------------------------------------------------------
@@ -7437,19 +7246,6 @@ bool EntityPlacementTest( CBaseEntity *pMainEnt, const Vector &vOrigin, Vector &
 void CTFGameRules::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
-
-	if ( State_Get() == GR_STATE_STARTGAME )
-	{
-		m_iBirthdayMode = HOLIDAY_RECALCULATE;
-		m_iHalloweenMode = HOLIDAY_RECALCULATE;
-		m_iFullMoonMode = HOLIDAY_RECALCULATE;
-		m_iChristmasMode = HOLIDAY_RECALCULATE;
-		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-		m_iEOTLMode = HOLIDAY_RECALCULATE;
-		m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
-	}
 }
 
 void CTFGameRules::HandleOvertimeBegin()
@@ -7713,6 +7509,43 @@ bool CTFGameRules::ShouldBalanceTeams( void )
 }
 
 #ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowMapParticleEffect( const char *pszParticleEffect )
+{
+	static const char *s_WeatherEffects[] =
+	{
+		"tf_gamerules",
+		"env_rain_001",
+		"env_rain_002_256",
+		"env_rain_ripples",
+		"env_snow_light_001",
+		"env_rain_gutterdrip",
+		"env_rain_guttersplash",
+		"", // END Marker
+	};
+
+	if ( !AllowWeatherParticles() )
+	{
+		if ( FindInList( s_WeatherEffects, pszParticleEffect ) )
+			return false;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowWeatherParticles()
+{
+	return tf_particles_disable_weather.GetBool() ? false : true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFGameRules::AllowMapVisionFilterShaders( void )
 {
 	if( m_pVisionFilterWhitelist )
@@ -7730,6 +7563,9 @@ bool CTFGameRules::AllowMapVisionFilterShaders( void )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 char const *CTFGameRules::TranslateEffectForVisionFilter( char const *pchEffectType, char const *pchEffectName )
 {
 	if ( pchEffectType == NULL || pchEffectName == NULL )
@@ -7759,6 +7595,9 @@ char const *CTFGameRules::TranslateEffectForVisionFilter( char const *pchEffectT
 	return strings[0];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::SetUpVisionFilterKeyValues( void )
 {
 	m_pVisionFilterWhitelist = new KeyValues( "VisionFilterShadersMapWhitelist" );
@@ -8058,6 +7897,9 @@ void CTFGameRules::SetUpVisionFilterKeyValues( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 {
 	char mapname[MAX_MAP_NAME];
@@ -8086,6 +7928,9 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 	return strFullpath;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 {
 	// Medieval mode only

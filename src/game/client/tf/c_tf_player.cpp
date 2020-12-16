@@ -391,6 +391,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bHeadTransform = 0;
 	m_bStartedDying = 0;
 	m_flDeathDelay = 0.3f;
+	m_flHeadScale = 1.0f;
 
 	UseClientSideAnimation();
 }
@@ -448,9 +449,17 @@ void C_TFRagdoll::DissolveEntity( C_BaseEntity *pEntity )
 	else
 		pDissolver->SetEffectColor( Vector( BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD ) ) );
 
-	pDissolver->SetOwnerEntity( NULL );
+	pDissolver->m_nRenderFX = kRenderFxNone;
 	pDissolver->SetRenderMode( kRenderTransColor );
+	pDissolver->SetRenderColor( 255, 255, 255, 255 );
+
 	pDissolver->m_vDissolverOrigin = GetLocalOrigin();
+	pDissolver->m_flFadeInStart = 0.0f;
+	pDissolver->m_flFadeInLength = 1.0f;
+	pDissolver->m_flFadeOutModelStart = 1.9f;
+	pDissolver->m_flFadeOutModelLength = 0.1f;
+	pDissolver->m_flFadeOutStart = 2.0f;
+	pDissolver->m_flFadeOutLength = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1172,6 +1181,9 @@ bool C_TFRagdoll::IsDecapitation()
 	return false;
 }
 
+extern ConVar g_ragdoll_lvfadespeed;
+extern ConVar g_ragdoll_fadespeed;
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -1317,9 +1329,16 @@ void C_TFRagdoll::ClientThink( void )
 	if ( m_bFadingOut == true )
 	{
 		int iAlpha = GetRenderColor().a;
-		int iFadeSpeed = 600.0f;
+		int iFadeSpeed = (g_RagdollLVManager.IsLowViolence()) ? g_ragdoll_lvfadespeed.GetInt() : g_ragdoll_fadespeed.GetInt();
 
-		iAlpha = Max( iAlpha - (int)( iFadeSpeed * gpGlobals->frametime ), 0 );
+		if (iFadeSpeed < 1)
+		{
+			iAlpha = 0;
+		}
+		else
+		{
+			iAlpha = Max(iAlpha - (iFadeSpeed * gpGlobals->frametime), 0.0f);
+		}
 
 		SetRenderMode( kRenderTransAlpha );
 		SetRenderColorA( iAlpha );
@@ -1339,14 +1358,23 @@ void C_TFRagdoll::ClientThink( void )
 		{
 			m_bFadingOut = true;
 			float flDelay = cl_ragdoll_fade_time.GetFloat() * 0.33f;
-			m_fDeathTime = gpGlobals->curtime + flDelay;
 
 			// If we were just fully healed, remove all decals
 			RemoveAllDecals();
-		}
 
-		StartFadeOut( cl_ragdoll_fade_time.GetFloat() * 0.33f );
-		return;
+			if (flDelay > 0.01f)
+			{
+				m_fDeathTime = gpGlobals->curtime + flDelay;
+				return;
+			}
+			m_fDeathTime = -1;
+		}
+		else
+		{
+			// Fade out after the specified delay.
+			StartFadeOut(cl_ragdoll_fade_time.GetFloat() * 0.33f);
+			return;
+		}
 	}
 
 	if ( m_fDeathTime > gpGlobals->curtime )
@@ -2528,7 +2556,7 @@ void C_TFPlayer::UpdateOnRemove( void )
 	ParticleProp()->StopParticlesInvolving( this );
 
 	m_Shared.RemoveAllCond( this );
-
+	m_Shared.ResetMeters();
 	m_Shared.UpdateCritBoostEffect( true );
 
 	if ( IsLocalPlayer() )
@@ -3526,7 +3554,7 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 
 		//pTFWearable->OnWearerDeath();
 
-		if ( pTFWearable->GetDropType() > 1 ) // Fall off or break
+		if ( pTFWearable->GetDropType() > DROPTYPE_NONE ) // Fall off or break
 			continue;
 
 		if ( pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS || 
@@ -4875,8 +4903,8 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 			if ( pTFWearable == nullptr )
 				continue;
 
-			/*if ( pTFWearable->GetDropType() != 2 )
-				continue;*/
+			if ( pTFWearable->GetDropType() != DROPTYPE_DROP )
+				continue;
 
 			/*if ( bDisguised && !pTFWearable->m_bDisguiseWearable ||
 				 !bDisguised && pTFWearable->m_bDisguiseWearable )
@@ -4894,7 +4922,7 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 			if ( pWearable->IsDynamicModelLoading() || !pWearable->GetRootBone( root ) )
 				vecOrigin = pWearable->GetAbsOrigin();
 			else
-				MatrixGetColumn( root, 3, &vecOrigin );
+				MatrixPosition( root, vecOrigin );
 
 			if( IsEntityPositionReasonable( vecOrigin ) )
 			{

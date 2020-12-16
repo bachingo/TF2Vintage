@@ -24,7 +24,7 @@ typedef unsigned char uint8;
 	#define POSIX 1
 #endif
 
-#if defined(__x86_64__) || defined(_WIN64)
+#if defined(__x86_64__) || defined(_WIN64) || defined(__aarch64__)
 #define X64BITS
 #endif
 
@@ -85,23 +85,26 @@ typedef unsigned int uintp;
 #endif // else _WIN32
 
 #ifdef __clang__
-# define CLANG_ATTR(ATTR) __attribute__((annotate( ATTR )))
+# define STEAM_CLANG_ATTR(ATTR) __attribute__((annotate( ATTR )))
 #else
-# define CLANG_ATTR(ATTR)
+# define STEAM_CLANG_ATTR(ATTR)
 #endif
 
-#define METHOD_DESC(DESC) CLANG_ATTR( "desc:" #DESC ";" )
-#define IGNOREATTR() CLANG_ATTR( "ignore" )
-#define OUT_STRUCT() CLANG_ATTR( "out_struct: ;" )
-#define OUT_ARRAY_CALL(COUNTER,FUNCTION,PARAMS) CLANG_ATTR( "out_array_call:" #COUNTER "," #FUNCTION "," #PARAMS ";" )
-#define OUT_ARRAY_COUNT(COUNTER, DESC) CLANG_ATTR( "out_array_count:" #COUNTER  ";desc:" #DESC )
-#define ARRAY_COUNT(COUNTER) CLANG_ATTR( "array_count:" #COUNTER ";" )
-#define ARRAY_COUNT_D(COUNTER, DESC) CLANG_ATTR( "array_count:" #COUNTER ";desc:" #DESC )
-#define BUFFER_COUNT(COUNTER) CLANG_ATTR( "buffer_count:" #COUNTER ";" )
-#define OUT_BUFFER_COUNT(COUNTER) CLANG_ATTR( "out_buffer_count:" #COUNTER ";" )
-#define OUT_STRING_COUNT(COUNTER) CLANG_ATTR( "out_string_count:" #COUNTER ";" )
-#define DESC(DESC) CLANG_ATTR("desc:" #DESC ";")
-
+#define STEAM_METHOD_DESC(DESC) STEAM_CLANG_ATTR( "desc:" #DESC ";" )
+#define STEAM_IGNOREATTR() STEAM_CLANG_ATTR( "ignore" )
+#define STEAM_OUT_STRUCT() STEAM_CLANG_ATTR( "out_struct: ;" )
+#define STEAM_OUT_STRING() STEAM_CLANG_ATTR( "out_string: ;" )
+#define STEAM_OUT_ARRAY_CALL(COUNTER,FUNCTION,PARAMS) STEAM_CLANG_ATTR( "out_array_call:" #COUNTER "," #FUNCTION "," #PARAMS ";" )
+#define STEAM_OUT_ARRAY_COUNT(COUNTER, DESC) STEAM_CLANG_ATTR( "out_array_count:" #COUNTER  ";desc:" #DESC )
+#define STEAM_ARRAY_COUNT(COUNTER) STEAM_CLANG_ATTR( "array_count:" #COUNTER ";" )
+#define STEAM_ARRAY_COUNT_D(COUNTER, DESC) STEAM_CLANG_ATTR( "array_count:" #COUNTER ";desc:" #DESC )
+#define STEAM_BUFFER_COUNT(COUNTER) STEAM_CLANG_ATTR( "buffer_count:" #COUNTER ";" )
+#define STEAM_OUT_BUFFER_COUNT(COUNTER) STEAM_CLANG_ATTR( "out_buffer_count:" #COUNTER ";" )
+#define STEAM_OUT_STRING_COUNT(COUNTER) STEAM_CLANG_ATTR( "out_string_count:" #COUNTER ";" )
+#define STEAM_DESC(DESC) STEAM_CLANG_ATTR("desc:" #DESC ";")
+#define STEAM_CALL_RESULT(RESULT_TYPE) STEAM_CLANG_ATTR("callresult:" #RESULT_TYPE ";")
+#define STEAM_CALL_BACK(RESULT_TYPE) STEAM_CLANG_ATTR("callback:" #RESULT_TYPE ";")
+#define STEAM_FLAT_NAME(NAME) STEAM_CLANG_ATTR("flat_name:" #NAME ";")
 
 const int k_cubSaltSize   = 8;
 typedef	uint8 Salt_t[ k_cubSaltSize ];
@@ -174,6 +177,88 @@ const PartnerId_t k_uPartnerIdInvalid = 0;
 typedef uint64 ManifestId_t; 
 const ManifestId_t k_uManifestIdInvalid = 0;
 
+// ID for cafe sites
+typedef uint64 SiteId_t;
+const SiteId_t k_ulSiteIdInvalid = 0;
+
+// Party Beacon ID
+typedef uint64 PartyBeaconID_t;
+const PartyBeaconID_t k_ulPartyBeaconIdInvalid = 0;
+
+enum ESteamIPType
+{
+	k_ESteamIPTypeIPv4 = 0,
+	k_ESteamIPTypeIPv6 = 1,
+};
+
+#pragma pack( push, 1 )
+
+struct SteamIPAddress_t
+{
+	union {
+
+		uint32			m_unIPv4;		// Host order
+		uint8			m_rgubIPv6[16];		// Network order! Same as inaddr_in6.  (0011:2233:4455:6677:8899:aabb:ccdd:eeff)
+
+		// Internal use only
+		uint64			m_ipv6Qword[2];	// big endian
+	};
+
+	ESteamIPType m_eType;
+
+	bool IsSet() const 
+	{ 
+		if ( k_ESteamIPTypeIPv4 == m_eType )
+		{
+			return m_unIPv4 != 0;
+		}
+		else 
+		{
+			return m_ipv6Qword[0] !=0 || m_ipv6Qword[1] != 0; 
+		}
+	}
+
+	static SteamIPAddress_t IPv4Any()
+	{
+		SteamIPAddress_t ipOut;
+		ipOut.m_eType = k_ESteamIPTypeIPv4;
+		ipOut.m_unIPv4 = 0;
+
+		return ipOut;
+	}
+
+	static SteamIPAddress_t IPv6Any()
+	{
+		SteamIPAddress_t ipOut;
+		ipOut.m_eType = k_ESteamIPTypeIPv6;
+		ipOut.m_ipv6Qword[0] = 0;
+		ipOut.m_ipv6Qword[1] = 0;
+
+		return ipOut;
+	}
+
+	static SteamIPAddress_t IPv4Loopback()
+	{
+		SteamIPAddress_t ipOut;
+		ipOut.m_eType = k_ESteamIPTypeIPv4;
+		ipOut.m_unIPv4 = 0x7f000001;
+
+		return ipOut;
+	}
+
+	static SteamIPAddress_t IPv6Loopback()
+	{
+		SteamIPAddress_t ipOut;
+		ipOut.m_eType = k_ESteamIPTypeIPv6;
+		ipOut.m_ipv6Qword[0] = 0;
+		ipOut.m_ipv6Qword[1] = 0;
+		ipOut.m_rgubIPv6[15] = 1;
+
+		return ipOut;
+	}
+};
+
+#pragma pack( pop )
 
 
 #endif // STEAMTYPES_H

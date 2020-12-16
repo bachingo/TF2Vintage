@@ -588,7 +588,7 @@ void CTFFourTeamScoreBoardDialog::UpdatePlayerDetails()
 	SetDialogVariable( "teleports", roundStats.m_iStat[TFSTAT_TELEPORTS] );
 	SetDialogVariable( "headshots", roundStats.m_iStat[TFSTAT_HEADSHOTS] );
 	SetDialogVariable( "backstabs", roundStats.m_iStat[TFSTAT_BACKSTABS] );
-	SetDialogVariable( "bonus", roundStats.m_iStat[TFSTAT_BONUS] );
+	SetDialogVariable( "bonus", roundStats.m_iStat[TFSTAT_BONUS_POINTS] );
 	SetDialogVariable( "playername", tf_PR->GetPlayerName( playerIndex ) );
 	SetDialogVariable( "playerscore", GetPointsString( tf_PR->GetTotalScore( playerIndex ) ) );
 	Color clr = g_PR->GetTeamColor( g_PR->GetTeam( playerIndex ) );

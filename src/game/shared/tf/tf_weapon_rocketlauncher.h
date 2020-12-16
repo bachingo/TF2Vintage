@@ -44,11 +44,18 @@ public:
 #ifndef CLIENT_DLL
 	virtual void	Precache();
 #endif
+	bool			ShouldBlockPrimaryFire() OVERRIDE	{ return !AutoFiresFullClip(); }
+
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROCKETLAUNCHER; }
+	virtual void	Misfire( void );
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
+
 	virtual void	ItemPostFrame( void );
-	virtual bool	Deploy( void );
+
 	virtual bool	DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
+	virtual bool	CheckReloadMisfire( void ) OVERRIDE;
+
+	void			ModifyEmitSoundParams( EmitSound_t &params ) OVERRIDE;
 
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
@@ -57,6 +64,11 @@ public:
 
 private:
 	float	m_flShowReloadHintAt;
+	int		m_nReloadPitchStep;
+
+#ifdef GAME_DLL
+	bool	m_bOverloading;
+#endif
 
 	//CNetworkVar( bool, m_bLockedOn );
 

@@ -200,7 +200,7 @@ ConVar tf2v_use_new_phlog_fill( "tf2v_use_new_phlog_fill", "0", FCVAR_NOTIFY | F
 
 ConVar tf2v_use_new_medic_regen( "tf2v_use_new_medic_regen", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Medic to use the old regen logic of 1HP/s-3HP/s.", true, 0, true, 1 );
 
-ConVar tf2v_use_spawn_glows( "tf2v_use_spawn_glows", "0.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows players to see the glow of teammates when spawning. Input is seconds." );
+ConVar tf2v_use_spawn_glows( "tf2v_use_spawn_glows", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows players to see the glow of teammates when spawning. Input is seconds." );
 
 ConVar tf2v_use_new_ambassador("tf2v_use_new_ambassador", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Adds damage falloff and crit falloff to long range Ambassador headshots.", true, 0, true, 2 );
 
@@ -1322,12 +1322,12 @@ void CTFPlayer::Spawn()
 		EmitSound( "Player.Spawn" );
 		InitClass();
 		m_Shared.RemoveAllCond( NULL ); // Remove conc'd, burning, rotting, hallucinating, etc.
-				
+		m_Shared.ResetMeters();
 		UpdateSkin( GetTeamNumber() );
 		TeamFortress_SetSpeed();
 
 		// If we just spawned and have the convar, add spawn glows.
-		if ( tf2v_use_spawn_glows.GetFloat() > 0.0f )
+		if ( tf2v_use_spawn_glows.GetInt() > 0 )
 			m_Shared.AddCond( TF_COND_TEAM_GLOWS, tf2v_use_spawn_glows.GetFloat() );	// Add team glows. (10 seconds is the default in 2015 onward)
 
 		// Prevent firing for a second so players don't blow their faces off
@@ -4894,18 +4894,10 @@ EHANDLE CTFPlayer::TeamFortress_GetDisguiseTarget( int nTeam, int nClass )
 		return this;
 	}
 
-	//CTFPlayer *pLastTarget = ToTFPlayer(m_Shared.GetDisguiseTarget()); // don't redisguise self as this person
-	CTFPlayer *pLastTarget = ToTFPlayer( m_Shared.m_hDisguiseTarget.Get() );
+	CUtlVector<int> vecCandidates;
+	CTFPlayer *pLastTarget = ToTFPlayer( m_Shared.GetDisguiseTarget() ); // don't redisguise self as this person
 	// Find a player on the team the spy is disguised as to pretend to be
 	CTFPlayer *pPlayer = NULL;
-	int foundPlayers = 0;
-	foundPlayer *root = new foundPlayer(), *current;
-	root->next = NULL;
-	if ( pLastTarget )
-		root->player = pLastTarget;
-	else
-		root->player = this;
-	current = root;
 
 	// Loop through players
 	int i;
@@ -4921,27 +4913,19 @@ EHANDLE CTFPlayer::TeamFortress_GetDisguiseTarget( int nTeam, int nClass )
 			}
 
 			// First, try to find a player with the same color AND skin
-			else if ( pPlayer->GetTeamNumber() == nTeam && pPlayer->GetPlayerClass()->GetClassIndex() == nClass )
+			if ( pPlayer->GetTeamNumber() == nTeam && pPlayer->GetPlayerClass()->GetClassIndex() == nClass )
 			{
-				foundPlayer *newPlayer = new foundPlayer();
-				newPlayer->player = pPlayer;
-				newPlayer->next = NULL;
-				current->next = newPlayer;
-				current = current->next;
-				foundPlayers++;
+				vecCandidates.AddToTail( i );
 			}
 		}
 	}
 
-	if ( foundPlayers > 0 )
+	if ( !vecCandidates.IsEmpty() )
 	{
-		current = root;
-		for ( i = 1; i <= random->RandomInt( 1, foundPlayers ); i++ )
-			current = current->next;
-		return current->player;
+		int nIndex = random->RandomInt( 0, vecCandidates.Count() - 1 );
+		return UTIL_PlayerByIndex( vecCandidates[ nIndex ] );
 	}
 
-	foundPlayers = 0;
 	// we didn't find someone with the same skin, so just find someone with the same color
 	for ( i = 1; i <= gpGlobals->maxClients; i++ )
 	{
@@ -4954,28 +4938,21 @@ EHANDLE CTFPlayer::TeamFortress_GetDisguiseTarget( int nTeam, int nClass )
 				continue;
 			}
 
-			else if ( pPlayer->GetTeamNumber() == nTeam )
+			if ( pPlayer->GetTeamNumber() == nTeam )
 			{
-				foundPlayer *newPlayer = new foundPlayer();
-				newPlayer->player = pPlayer;
-				newPlayer->next = NULL;
-				current->next = newPlayer;
-				current = current->next;
-				foundPlayers++;
+				vecCandidates.AddToTail( i );
 			}
 		}
 	}
 
-	if ( foundPlayers > 0 )
+	if ( !vecCandidates.IsEmpty() )
 	{
-		current = root;
-		for ( i = 1; i <= random->RandomInt( 1, foundPlayers ); i++ )
-			current = current->next;
-		return current->player;
+		int nIndex = random->RandomInt( 0, vecCandidates.Count() - 1 );
+		return UTIL_PlayerByIndex( vecCandidates[ nIndex ] );
 	}
 
 	// we didn't find anyone
-	return root->player;
+	return NULL;
 }
 
 static float DamageForce( const Vector &size, float damage, float scale )
@@ -5563,9 +5540,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				for ( int i = 0; i < m_Shared.m_aHealers.Count(); i++ )
 				{
 					// Check to see if it's a player.
-					if (m_Shared.m_aHealers[i].pPlayer.IsValid())
+					if (m_Shared.m_aHealers[i].pHealer.IsValid())
 					{
-						CTFPlayer *pTFHealer = static_cast< CTFPlayer  *>(static_cast< CBaseEntity  *>(m_Shared.m_aHealers[i].pPlayer));
+						CTFPlayer *pTFHealer = ToTFPlayer(m_Shared.m_aHealers[i].pHealer);
 						if ( pTFHealer && ( pTFHealer != this ) && ( m_flRecursiveDamage - pTFHealer->GetRecursiveDamageTime() > 0.1 ) )
 						{
 							// Copy our damage to them!
@@ -6038,15 +6015,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CALL_ATTRIB_HOOK_INT(nLoseHypeOnDamage, lose_hype_on_take_damage );
 	if ( nLoseHypeOnDamage != 0 )
 	m_Shared.RemoveHypeMeter( ( info.GetDamage() * nLoseHypeOnDamage ) );
-	
-	// If we have Sanguisuge health, reduce our pool by the damage we took.
-	if ( m_Shared.GetSanguisugeHealth() > 0 )
-	{
-		m_Shared.ChangeSanguisugeHealth( ( info.GetDamage() * -1 ) );
-		// We can't have a negative buff amount, so zero this out.
-		if ( m_Shared.GetSanguisugeHealth() < 0 )
-			m_Shared.SetSanguisugeHealth( 0 );
-	}
 	
 	// If we lose demo charge, reduce our charge level.
 	if ( m_Shared.InCond(TF_COND_SHIELD_CHARGE) )
@@ -6604,13 +6572,10 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	{
 		for (int i = 0; i < pTFAttacker->m_Shared.m_aHealers.Count(); i++)
 		{
-			if (!pTFAttacker->m_Shared.m_aHealers[i].pPlayer)
-				continue;
-				
-			if (!pTFAttacker->m_Shared.m_aHealers[i].pPlayer.IsValid())
+			if (!pTFAttacker->m_Shared.m_aHealers[i].pHealer)
 				continue;
 
-			CTFPlayer *pHealer = ToTFPlayer(pTFAttacker->m_Shared.m_aHealers[i].pPlayer);
+			CTFPlayer *pHealer = ToTFPlayer(pTFAttacker->m_Shared.m_aHealers[i].pHealer);
 			if (!pHealer)
 				continue;
 
@@ -7059,7 +7024,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			}
 
 			// Increase our killstreaks.
-			m_Shared.IncrementKillstreakCount();
 			if (pWeapon->GetSlot() && !bInflictor)
 				m_Shared.IncKillstreak( pWeapon->GetSlot() );
 			
@@ -8786,10 +8750,11 @@ void CTFPlayer::ForceRespawn( void )
 		// clean up any pipebombs/buildings in the world (no explosions)
 		RemoveAllOwnedEntitiesFromWorld();
 
+		int iOldClass = GetPlayerClass()->GetClassIndex();
 		GetPlayerClass()->Init( iDesiredClass );
 
 		if ( !bRandom )
-			CTF_GameStats.Event_PlayerChangedClass( this );
+			CTF_GameStats.Event_PlayerChangedClass( this, iOldClass, iDesiredClass );
 
 		m_PlayerAnimState = CreateTFPlayerAnimState( this );
 	}

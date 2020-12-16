@@ -131,9 +131,7 @@ const char *GetRandomBotName( void )
 	}
 
 	const char *name = nameList[nameIndex];
-
-	++nameIndex;
-	if ( nameIndex >= nameCount )
+	if ( ++nameIndex >= nameCount )
 		nameIndex = 0;
 
 	return name;

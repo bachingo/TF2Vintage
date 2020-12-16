@@ -73,9 +73,17 @@ END_DMXELEMENT_UNPACK( ClassStats_t, s_ClassStatsUnpack )
 // priority order of stats to display record for; earlier position in list is highest
 TFStatType_t g_statPriority[] = { TFSTAT_HEADSHOTS, TFSTAT_BACKSTABS, TFSTAT_MAXSENTRYKILLS, TFSTAT_HEALING, TFSTAT_KILLS, TFSTAT_KILLASSISTS,  
 	TFSTAT_DAMAGE, TFSTAT_DOMINATIONS, TFSTAT_INVULNS, TFSTAT_BUILDINGSDESTROYED, TFSTAT_CAPTURES, TFSTAT_DEFENSES, TFSTAT_REVENGE, TFSTAT_TELEPORTS, TFSTAT_BUILDINGSBUILT, 
-	TFSTAT_HEALTHLEACHED, TFSTAT_POINTSSCORED, TFSTAT_PLAYTIME };
+	TFSTAT_HEALTHLEACHED, TFSTAT_POINTSSCORED, TFSTAT_PLAYTIME, TFSTAT_BONUS_POINTS };
 // stat types that we don't display records for, kept in this list just so we can assert all stats appear in one list or the other
-TFStatType_t g_statUnused[] = { TFSTAT_DEATHS, TFSTAT_UNDEFINED, TFSTAT_SHOTS_FIRED, TFSTAT_SHOTS_HIT, TFSTAT_SUICIDES, TFSTAT_ENV_DEATHS, TFSTAT_BONUS };
+TFStatType_t g_statUnused[] = { TFSTAT_DEATHS, TFSTAT_UNDEFINED, TFSTAT_SHOTS_FIRED, TFSTAT_SHOTS_HIT, TFSTAT_FIREDAMAGE, TFSTAT_BLASTDAMAGE,
+	TFSTAT_DAMAGETAKEN, TFSTAT_HEALTHKITS, TFSTAT_AMMOKITS, TFSTAT_CLASSCHANGES, TFSTAT_CRITS, TFSTAT_SUICIDES, TFSTAT_CURRENCY_COLLECTED, TFSTAT_DAMAGE_ASSIST, TFSTAT_HEALING_ASSIST, 
+	TFSTAT_DAMAGE_BOSS, TFSTAT_DAMAGE_BLOCKED, TFSTAT_DAMAGE_RANGED, TFSTAT_DAMAGE_RANGED_CRIT_RANDOM, TFSTAT_DAMAGE_RANGED_CRIT_BOOSTED, TFSTAT_REVIVED, TFSTAT_THROWABLEHIT, TFSTAT_THROWABLEKILL, TFSTAT_KILLS_RUNECARRIER, TFSTAT_FLAGRETURNS,
+	TFSTAT_KILLSTREAK_MAX, TFSTAT_ENV_DEATHS };
+
+// priority order of stats to display record for; earlier position in list is highest
+TFMapStatType_t g_mapStatPriority[] = { TFMAPSTAT_PLAYTIME };
+// stat types that we don't display records for, kept in this list just so we can assert all stats appear in one list or the other
+TFMapStatType_t g_mapStatUnused[] = { TFMAPSTAT_UNDEFINED };
 
 // localization keys for stat panel text, must be in same order as TFStatType_t
 const char *g_szLocalizedRecordText[] =
@@ -101,10 +109,35 @@ const char *g_szLocalizedRecordText[] =
 	"#StatPanel_HealthLeached",
 	"#StatPanel_BuildingsBuilt",
 	"#StatPanel_SentryKills",		
-	"#StatPanel_Teleports"
-	"[environmental deaths]",
-	"[suicides]",
-	"[bonus]"
+	"#StatPanel_Teleports",
+	"#StatPanel_BonusPoints"
+};
+
+const char *g_szLocalizedMVMRecordText[] =
+{
+	"",
+	"[shots hit]",
+	"[shots fired]",
+	"#StatPanel_MVM_Kills",	
+	"[deaths]",
+	"#StatPanel_MVM_DamageDealt",
+	"#StatPanel_MVM_Captures",
+	"#StatPanel_MVM_Defenses",
+	"#StatPanel_MVM_Dominations",
+	"#StatPanel_MVM_Revenge",
+	"#StatPanel_MVM_PointsScored",
+	"#StatPanel_MVM_BuildingsDestroyed",
+	"#StatPanel_MVM_Headshots",
+	"#StatPanel_MVM_PlayTime",
+	"#StatPanel_MVM_Healing",
+	"#StatPanel_MVM_Invulnerable",
+	"#StatPanel_MVM_KillAssists",
+	"#StatPanel_MVM_Backstabs",
+	"#StatPanel_MVM_HealthLeached",
+	"#StatPanel_MVM_BuildingsBuilt",
+	"#StatPanel_MVM_SentryKills",		
+	"#StatPanel_MVM_Teleports",
+	"#StatPanel_MVM_BonusPoints"
 };
 
 
@@ -127,6 +160,7 @@ CTFStatPanel::CTFStatPanel( const char *pElementName )
 {
 	// Assert that all defined stats are in our prioritized list or explicitly unused
 	Assert( ARRAYSIZE( g_statPriority ) + ARRAYSIZE( g_statUnused ) == TFSTAT_MAX );
+	Assert( ARRAYSIZE( g_mapStatPriority ) + ARRAYSIZE( g_mapStatUnused ) == TFMAPSTAT_MAX );
 
 	ResetDisplayedStat();
 	m_bStatsChanged = false;

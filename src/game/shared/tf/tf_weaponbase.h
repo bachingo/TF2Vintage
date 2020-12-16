@@ -136,6 +136,10 @@ class ITFChargeUpWeapon
 public:
 	virtual float GetChargeBeginTime( void ) = 0;
 	virtual float GetChargeMaxTime( void ) = 0;
+	virtual float GetCurrentCharge( void )
+	{ 
+		return ( gpGlobals->curtime - GetChargeBeginTime() ) / GetChargeMaxTime();
+	}
 };
 
 //=============================================================================
@@ -199,7 +203,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	virtual bool Deploy( void );
 	virtual void Equip( CBaseCombatCharacter *pOwner );
-	bool IsViewModelFlipped( void );
+	virtual bool IsViewModelFlipped( void );
 
 	virtual void DepleteAmmo( void ) {} // accessor for consumables
 	void IncrementAmmo( void );
@@ -209,25 +213,36 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void UpdateOnRemove( void );
 
 	// Attacks.
+	virtual void Misfire( void ) {}
 	virtual void PrimaryAttack();
 	virtual void SecondaryAttack();
+	virtual void FireFullClipAtOnce( void ) {}
 	void CalcIsAttackCritical( void );
 	void CalcIsAttackMiniCritical( void );
 	virtual bool CalcIsAttackCriticalHelper();
 	bool IsCurrentAttackACrit() { return m_bCurrentAttackIsCrit; }
 	bool IsCurrentAttackAMiniCrit() { return m_bCurrentAttackIsMiniCrit; }
+	virtual bool CanPerformSecondaryAttack() const;
+	virtual bool AutoFiresFullClip( void ) const;
+	virtual bool AutoFiresFullClipAllAtOnce( void ) const;
 
 	// Ammo.
+	virtual int Clip1( void );
 	virtual int	GetMaxClip1( void ) const;
 	virtual int	GetDefaultClip1( void ) const;
+	virtual bool UsesPrimaryAmmo();
+	virtual bool HasAmmo( void );
 
 	// Reloads.
 	virtual bool Reload( void );
 	virtual void AbortReload( void );
 	virtual bool DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
+	virtual void CheckReload( void );
+	virtual void FinishReload( void );
 	void SendReloadEvents();
 	virtual bool CanAutoReload( void ) { return true; }
 	virtual bool ReloadOrSwitchWeapons( void );
+	virtual bool CheckReloadMisfire( void ) { return false; }
 
 	virtual bool CanDrop( void ) { return false; }
 
@@ -292,7 +307,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void	WeaponIdle( void );
 
 	virtual void	WeaponReset( void );
-	virtual void	WeaponRegenerate() {}
+	virtual void	WeaponRegenerate( void );
 
 	// Muzzleflashes
 	virtual const char *GetMuzzleFlashEffectName_3rd( void ) { return NULL; }
@@ -329,15 +344,27 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual float		GetSpeedMod( void ) const { return 1.0f; }
 
-	bool				IsHonorBound( void ) const;
-
-	bool 				IsPenetrating(void);
-	
+	bool				IsHonorBound( void );
+	bool 				IsPenetrating( void );
+	virtual bool		CanOverload( void );
+	bool				IsSilentKiller( void );
 	virtual bool		CanDecapitate( void );
 
 	// Energy Weapons
-	bool IsEnergyWeapon(void);
-	float GetEnergyPercentage(void);
+	virtual bool		IsEnergyWeapon(void) const;
+	virtual bool		IsBlastImpactWeapon( void ) const { return false; }
+	float				Energy_GetMaxEnergy( void ) const;
+	float				Energy_GetEnergy( void ) const { return m_flEnergy; }
+	void				Energy_SetEnergy( float flEnergy ) { m_flEnergy = flEnergy; }
+	bool				Energy_FullyCharged( void ) const;
+	bool				Energy_HasEnergy( void );
+	void				Energy_DrainEnergy( void );
+	void				Energy_DrainEnergy( float flDrain );
+	bool				Energy_Recharge( void );
+	virtual float		Energy_GetShotCost( void ) const { return 4.f; }
+	virtual float		Energy_GetRechargeCost( void ) const { return 4.f; }
+	virtual Vector		GetEnergyWeaponColor( bool bUseAlternateColorPalette );
+	virtual float		GetEnergyPercentage( void ) const { return Energy_GetEnergy() / Energy_GetMaxEnergy(); }
 	
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -358,8 +385,6 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// On hit effects.
 	virtual void ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info );
 	virtual void ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim );
-
-	bool IsSilentKiller( void ) const;
 	
 	virtual bool OwnerCanTaunt( void ) const { return true; }
 
@@ -398,6 +423,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
+	virtual void DispatchMuzzleFlash( char const *effectName, C_BaseEntity *pAttachEnt );
 #endif // CLIENT_DLL
 
 	// Reloads.
@@ -405,7 +431,6 @@ protected:
 	void SetReloadTimer( float flReloadTime );
 	bool ReloadSingly( void );
 	void ReloadSinglyPostFrame( void );
-	void Overload(void);
 
 	virtual float InternalGetEffectBarRechargeTime( void ) { return 0.0f; }
 
@@ -446,6 +471,7 @@ protected:
 
 	CNetworkVar( bool,	m_bReloadedThroughAnimEvent );
 	CNetworkVar( float, m_flEffectBarRegenTime );
+	CNetworkVar( float, m_flEnergy );
 
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
@@ -467,4 +493,5 @@ private:
 															\
 	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
 	PRECACHE_WEAPON_REGISTER( entityname );
+
 #endif // TF_WEAPONBASE_H

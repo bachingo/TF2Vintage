@@ -48,6 +48,7 @@ class CHealthKit;
 class CTeamControlPoint;
 class CTeamTrainWatcher;
 class CTFBotRoster;
+class CGhost;
 
 #endif
 
@@ -176,16 +177,10 @@ public:
 #endif
 	static int		CalcPlayerScore( RoundStats_t *pRoundStats );
 
-	bool			IsBirthday( void );
-	bool			IsHalloween( void );
-	bool			IsFullMoon( void );
-	bool			IsChristmas( void );
-	bool			IsValentinesDay( void );
-	bool			IsAprilFools( void );
-	bool			IsEOTL( void );
-	bool			IsBreadUpdate( void );
-	bool			IsRememberingSoldier( void );
-	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday );
+	bool			IsBirthday( void ) const;
+	bool			IsBirthdayOrPyroVision( void ) const;
+	virtual bool	IsHolidayActive( /*EHoliday*/ int eHoliday ) const;
+	bool			IsHolidayMap( /*EHoliday*/ int eHoliday ) const { return m_nMapHolidayType == eHoliday; }
 
 	bool 			IsNormalClass(CBaseEntity *pPlayer);
 	bool 			IsBossClass(CBaseEntity *pPlayer);
@@ -200,6 +195,16 @@ public:
 	virtual float	GetRespawnWaveMaxLength( int iTeam, bool bScaleWithNumPlayers = true );
 
 	virtual bool	ShouldBalanceTeams( void );
+
+	int GetGlobalAttributeCacheVersion( void ) const
+	{
+		return m_iGlobalAttributeCacheVersion;
+	}
+
+	void FlushAllAttributeCaches( void )
+	{
+		m_iGlobalAttributeCacheVersion++;
+	}
 
 	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { if (IsInKothMode()) return m_hBlueKothTimer.Get(); else return NULL; }
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { if (IsInKothMode()) return m_hRedKothTimer.Get(); else return NULL; }
@@ -222,7 +227,7 @@ public:
 	void			RevertSingleConvar( ConVarRef &cvar );
 	void			RevertSavedConvars();
 
-	virtual void	RegisterScriptFunctions( void ) override;
+	virtual void	RegisterScriptFunctions( void ) OVERRIDE;
 
 #ifdef GAME_DLL
 public:
@@ -383,6 +388,7 @@ public:
 
 	virtual bool	IsFourTeamGame( void ){ return m_bFourTeamMode; };
 	bool			IsMannVsMachineMode( void ) { return false; };
+	char const*		GetCustomUpgradesFile( void ) const { return m_pszCustomUpgradesFile; }
 	virtual bool	IsInArenaMode( void ) { return m_nGameType == TF_GAMETYPE_ARENA; }
 	virtual bool    IsInEscortMode( void ) { return m_nGameType == TF_GAMETYPE_ESCORT; }
 	virtual bool	IsInMedievalMode( void ) { return m_nGameType == TF_GAMETYPE_MEDIEVAL; }
@@ -403,6 +409,9 @@ public:
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	HandleOvertimeBegin();
 	virtual void	GetTeamGlowColor( int nTeam, float &r, float &g, float &b );
+
+	virtual bool	AllowMapParticleEffect( const char *pszParticleEffect );
+	virtual bool	AllowWeatherParticles( void );
 
 	virtual bool	AllowMapVisionFilterShaders( void );
 	virtual const char *TranslateEffectForVisionFilter( const char *pchEffectType, const char *pchEffectName );
@@ -497,19 +506,20 @@ private:
 
 	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
 
+	void			BeginHaunting( int nDesiredCount, float flMinLifetime, float flMaxLifetime );
 	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
 
 private:
 
 	int				DefaultFOV( void ) { return 75; }
 
-	void			BeginHaunting( int nDesiredCount, float flMinLifetime, float flMaxLifetime );
 	void			SpawnHalloweenBoss( void );
 	void			SpawnZombieMob( void );
 	CountdownTimer	m_bossSpawnTimer;
 	CountdownTimer	m_mobSpawnTimer;
 	int				m_nZombiesToSpawn;
 	Vector			m_vecMobSpawnLocation;
+	CUtlVector< CHandle<CGhost> > m_hGhosts;
 
 #endif
 
@@ -561,6 +571,7 @@ private:
 	CNetworkString( m_pszTeamGoalStringGreen, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringYellow, MAX_TEAMGOAL_STRING );
 	CNetworkVar( float, m_flCapturePointEnableTime );
+	CNetworkVar( uint32, m_iGlobalAttributeCacheVersion );
 	CNetworkVar( int, m_nHudType );
 	CNetworkVar( bool, m_bPlayingKoth );
 	CNetworkVar( bool, m_bPlayingVSH );
@@ -573,6 +584,7 @@ private:
 	CNetworkVar( bool, m_bCompetitiveMode );
 	CNetworkVar( bool, m_bPowerupMode );
 	CNetworkVar( float, m_flGravityScale );
+	CNetworkString( m_pszCustomUpgradesFile, MAX_PATH );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hGreenKothTimer );
@@ -587,16 +599,6 @@ public:
 
 	bool m_bControlSpawnsPerTeam[MAX_TEAMS][MAX_CONTROL_POINTS];
 	int	 m_iPreviousRoundWinners;
-
-	int	m_iBirthdayMode;
-	int	m_iHalloweenMode;
-	int	m_iFullMoonMode;
-	int	m_iChristmasMode;
-	int	m_iValentinesDayMode;
-	int	m_iAprilFoolsMode;
-	int	m_iBreadUpdateMode;
-	int	m_iEOTLMode;
-	int m_iSoldierMemorialMode;
 
 	CNetworkVar( bool, m_bFourTeamMode );
 	

@@ -31,29 +31,19 @@ obj*/
 !utils/smdlexp/smdlexp.mak
 
 # Specific Source build products
-client.pdb
-client.dll
-client.lib
-server.pdb
-server.dll
-server.lib
+game/bin
+game/*/bin
+
+[Dd]ebug*/
+[Rr]elease*/
+
 vscript.pdb
 vscript.dll
 vscript.lib
 
-client.so
-client.so.dbg
-server.so
-server.so.dbg
-server_srv.so
-server_srv.so.dbg
 vscript.so
 vscript.so.dbg
 
-client.dylib
-client.dylib.dSYM/
-server.dylib
-server.dylib.dSYM/
 vscript.dylib
 vscript.dylib.dSYM/
 
@@ -69,18 +59,13 @@ src/lib/public/raytrace.lib
 src/lib/public/tier1.lib
 src/lib/public/vgui_controls.lib
 src/thirdparty/bullet/build/lib
-src/vphysics/Release
-src/vphysics/Debug
-src/vscript/Release
-src/vscript/Debug
 
 # misc files
 fgdlib.lib
 src/utils/sapi51/Samples/VB/TTSAppVB/ttsapp.RES
 vc120.pdb
+vc140.pdb
 *.VC.*
 src/Output-Build.txt
 src/utils/vvis_launcher/vvis_launcher.vpc.sentinel
-game/bin/vscript.dll
-game/bin/vscript.pdb
-src/vscript/vscript.vpc.sentinel
+*.vpc.sentinel

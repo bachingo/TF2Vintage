@@ -233,7 +233,7 @@ void CreateTFCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection, 
 void StickTFRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, ClientEntityHandle_t const &pEntity, int iBone, int iPhysicsBone, int iOwner, int iHitGroup, int iVictim, int iProjType, byte nSkin )
 {
 	trace_t tr;
-	UTIL_TraceLine( vecOrigin, vecOrigin - vecDirection * 16.f, MASK_SOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceLine( vecOrigin - vecDirection * 16.f, vecOrigin + vecDirection * 64.f, MASK_SOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &tr );
 
 	if ( tr.surface.flags & SURF_SKY )
 		return;
@@ -242,14 +242,11 @@ void StickTFRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, Cli
 	if ( pModel && pModel->m_pRagdoll )
 	{
 		IPhysicsObject *pPhysics = NULL;
-		if ( iPhysicsBone >= 0 )
-		{
-			ragdoll_t *pRagdoll = pModel->m_pRagdoll->GetRagdoll();
 
-			if ( iPhysicsBone < pRagdoll->listCount )
-			{
-				pPhysics = pRagdoll->list[iPhysicsBone].pObject;
-			}
+		ragdoll_t *pRagdoll = pModel->m_pRagdoll->GetRagdoll();
+		if ( iPhysicsBone < pRagdoll->listCount )
+		{
+			pPhysics = pRagdoll->list[ iPhysicsBone ].pObject;
 		}
 
 		if ( GetWorldPhysObject() && pPhysics )
@@ -257,12 +254,28 @@ void StickTFRagdollNow( const Vector &vecOrigin, const Vector &vecDirection, Cli
 			Vector vecPhyOrigin; QAngle vecPhyAngle;
 			pPhysics->GetPosition( &vecPhyOrigin, &vecPhyAngle );
 
-			vecPhyOrigin = vecOrigin + ( vecDirection * ( rand() / VALVE_RAND_MAX ) ) * 7.f + vecDirection * 7.f;
+			const float flRand = (float)( rand() / VALVE_RAND_MAX );
+			vecPhyOrigin = vecOrigin - ( vecDirection * flRand * 7.f + vecDirection * 7.f );
 			pPhysics->SetPosition( vecPhyOrigin, vecPhyAngle, true );
 
 			pPhysics->EnableMotion( false );
 
+			float flMaxMass = 0;
+			for ( int i = 0; i < pRagdoll->listCount; i++ )
+				flMaxMass = Max( flMaxMass, pRagdoll->list[i].pObject->GetMass() );
 
+			// normalize masses across all bones to prevent attempts at breaking constraint
+			int nIndex = pRagdoll->list[ iPhysicsBone ].parentIndex;
+			while ( nIndex >= 0 )
+			{
+				if ( pRagdoll->list[ nIndex ].pConstraint )
+				{
+					const float flMass = Max( pRagdoll->list[ nIndex ].pObject->GetMass(), flMaxMass );
+					pRagdoll->list[ nIndex ].pObject->SetMass( flMass );
+				}
+
+				nIndex = pRagdoll->list[ nIndex ].parentIndex;
+			}
 		}
 	}
 

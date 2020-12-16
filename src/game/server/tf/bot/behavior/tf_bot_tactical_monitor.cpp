@@ -138,7 +138,7 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 		if ( me->IsAmmoLow() && CTFBotGetAmmo::IsPossible( me ) )
 			return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Grabbing nearby ammo" );
 
-		if ( me->m_hTargetSentry && CTFBotDestroyEnemySentry::IsPossible( me ) )
+		if ( me->GetTargetSentry() && CTFBotDestroyEnemySentry::IsPossible( me ) )
 			return BaseClass::SuspendFor( new CTFBotDestroyEnemySentry, "Going after an enemy sentry to destroy it" );
 	}
 

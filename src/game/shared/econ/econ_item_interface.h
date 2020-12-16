@@ -5,7 +5,6 @@
 #pragma once
 #endif
 
-class ISchemaAttributeType;
 class CEconAttributeDefinition;
 class CAttribute_String;
 
@@ -16,6 +15,17 @@ public:
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, float ) = 0;
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, CAttribute_String const & ) = 0;
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *, uint64 const & ) = 0;
+};
+
+class ISchemaAttributeType
+{
+public:
+	virtual ~ISchemaAttributeType() {}
+	virtual bool BConvertStringToEconAttributeValue( const CEconAttributeDefinition *pAttrDef, const char *pString, attrib_data_union_t *pValue, bool b1 = true ) const = 0;
+	virtual void ConvertEconAttributeValueToString( const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t& value, char *pString ) const = 0;
+	virtual void InitializeNewEconAttributeValue( attrib_data_union_t *pValue ) const = 0;
+	virtual void UnloadEconAttributeValue( attrib_data_union_t *pValue ) const = 0;
+	virtual bool OnIterateAttributeValue( IEconAttributeIterator *pIterator, const CEconAttributeDefinition *pAttrDef, const attrib_data_union_t& value ) const = 0;
 };
 
 class CEconItemSpecificAttributeIterator : public IEconAttributeIterator
@@ -74,6 +84,7 @@ private:
 	template<typename TOther>
 	bool OnIterateAttributeValueOfType( CEconAttributeDefinition const *pDefinition, TOther const &value )
 	{
+		// If you hit this assert, you've got a bad attribute value type resolution
 		Assert( pDefinition && pDefinition != m_pAttribute );
 		return true;
 	}

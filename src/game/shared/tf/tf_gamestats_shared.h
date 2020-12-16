@@ -42,14 +42,66 @@ enum TFStatType_t
 	TFSTAT_BUILDINGSBUILT,
 	TFSTAT_MAXSENTRYKILLS,
 	TFSTAT_TELEPORTS,
+	TFSTAT_FIREDAMAGE,
+	TFSTAT_BONUS_POINTS,
+	TFSTAT_BLASTDAMAGE,
+	TFSTAT_DAMAGETAKEN,
+	TFSTAT_HEALTHKITS,
+	TFSTAT_AMMOKITS,
+	TFSTAT_CLASSCHANGES,
+	TFSTAT_CRITS,
 	TFSTAT_SUICIDES,
+	TFSTAT_CURRENCY_COLLECTED,
+	TFSTAT_DAMAGE_ASSIST,
+	TFSTAT_HEALING_ASSIST,
+	TFSTAT_DAMAGE_BOSS,
+	TFSTAT_DAMAGE_BLOCKED,
+	TFSTAT_DAMAGE_RANGED,
+	TFSTAT_DAMAGE_RANGED_CRIT_RANDOM,
+	TFSTAT_DAMAGE_RANGED_CRIT_BOOSTED,
+	TFSTAT_REVIVED,
+	TFSTAT_THROWABLEHIT,
+	TFSTAT_THROWABLEKILL,
+	TFSTAT_KILLSTREAK_MAX,
+	TFSTAT_KILLS_RUNECARRIER,
+	TFSTAT_FLAGRETURNS,
 	TFSTAT_ENV_DEATHS,
-	TFSTAT_BONUS,
 	TFSTAT_MAX
 };
 
 #define TFSTAT_FIRST (TFSTAT_UNDEFINED+1)
 #define TFSTAT_LAST (TFSTAT_MAX-1)
+
+extern const char *s_pStatStrings[ TFSTAT_MAX ];
+
+enum TFMapStatType_t
+{
+	TFMAPSTAT_UNDEFINED = 0,
+	TFMAPSTAT_PLAYTIME,
+	TFMAPSTAT_MAX
+};
+
+#define TFMAPSTAT_FIRST (TFMAPSTAT_UNDEFINED+1)
+#define TFMAPSTAT_LAST (TFMAPSTAT_MAX-1)
+
+extern const char *s_pMapStatStrings[ TFMAPSTAT_MAX ];
+
+enum TFRoundEndReason_t
+{
+	TFRE_ROUND_END,
+	TFRE_CLIENT_DISCONNECT,
+	TFRE_CLIENT_QUIT,
+	TFRE_SERVER_MAP_CHANGE,
+	TFRE_SERVER_SHUTDOWN,
+	TFRE_TIME_LIMIT,
+	TFRE_WIN_LIMIT,
+	TFRE_WIN_DIFF_LIMIT,
+	TFRE_ROUND_LIMIT,
+	TFRE_NEXT_LEVEL_CVAR,
+	TFRE_MAX
+};
+
+extern const char *g_aRoundEndReasons[ TFRE_MAX ];
 
 
 //=============================================================================
@@ -62,7 +114,8 @@ struct RoundStats_t
 
 	RoundStats_t() { Reset(); };
 
-	void Reset() {
+	void Reset() 
+	{
 		for ( int i = 0; i < ARRAYSIZE( m_iStat ); i++ )
 		{
 			m_iStat[i] = 0;
@@ -70,6 +123,29 @@ struct RoundStats_t
 	};
 
 	void AccumulateRound( const RoundStats_t &other )
+	{
+		for ( int i = 0; i < ARRAYSIZE( m_iStat ); i++ )
+		{
+			m_iStat[i] += other.m_iStat[i];
+		}
+	};
+};
+
+struct RoundMapStats_t
+{
+	int m_iStat[ TFMAPSTAT_MAX ];
+
+	RoundMapStats_t() { Reset(); };
+
+	void Reset()
+	{
+		for ( int i = 0; i < ARRAYSIZE( m_iStat ); i++ )
+		{
+			m_iStat[i] = 0;
+		}
+	};
+
+	void AccumulateRound( const RoundMapStats_t &other )
 	{
 		for ( int i = 0; i < ARRAYSIZE( m_iStat ); i++ )
 		{
@@ -112,6 +188,7 @@ struct TF_Gamestats_ClassStats_t
 	int iDeaths;												// total # of deaths by this class
 	int iAssists;												// total # of assists by this class
 	int iCaptures;												// total # of captures by this class
+	int iClassChanges;											// total # of times someone changed to this class
 
 	void Accumulate( TF_Gamestats_ClassStats_t &other )
 	{
@@ -122,6 +199,7 @@ struct TF_Gamestats_ClassStats_t
 		iDeaths += other.iDeaths;
 		iAssists += other.iAssists;
 		iCaptures += other.iCaptures;
+		iClassChanges += other.iClassChanges;
 	}
 };
 
@@ -159,7 +237,7 @@ public:
 	TF_Gamestats_LevelStats_t( const TF_Gamestats_LevelStats_t &stats );
 
 	// Level start and end
-	void Init( const char *pszMapName, int nIPAddr, short nPort, float flStartTime );
+	void Init( const char *pszMapName, int nMapVersion, int nIPAddr, short nPort, float flStartTime );
 	void Shutdown( float flEndTime );
 
 	void Accumulate( TF_Gamestats_LevelStats_t *pOther )
@@ -185,6 +263,7 @@ public:
 	{
 		static const unsigned short LumpId = TFSTATS_LUMP_MAPHEADER;	// Lump ids.
 		char			m_szMapName[64];							// Name of the map.
+		int				m_nMapRevision;								// Version number for the map.
 		unsigned int	m_nIPAddr;									// IP Address of the server - 4 bytes stored as an int.
 		unsigned short	m_nPort;									// Port the server is using.	
 		int				m_iRoundsPlayed;							// # of rounds played
@@ -194,6 +273,7 @@ public:
 		int				m_iStalemates;								// # of stalemates
 		int				m_iBlueSuddenDeathWins;						// # of blue team wins during sudden death
 		int				m_iRedSuddenDeathWins;						// # of red team wins during sudden death
+		int				m_iLastCapChangedInRound[MAX_CONTROL_POINTS+1]; // # of times a round ended on each control point
 
 		void Accumulate( LevelHeader_t &other )
 		{
@@ -204,6 +284,10 @@ public:
 			m_iStalemates += other.m_iStalemates;
 			m_iBlueSuddenDeathWins += other.m_iBlueSuddenDeathWins;
 			m_iRedSuddenDeathWins += other.m_iRedSuddenDeathWins;
+			for ( int i = 0; i <= MAX_CONTROL_POINTS; i++ )
+			{
+				m_iLastCapChangedInRound[i] += other.m_iLastCapChangedInRound[i]; 
+			}
 		}
 	};
 
@@ -241,6 +325,8 @@ public:
 	TF_Gamestats_WeaponStats_t		m_aWeaponStats[TF_WEAPON_COUNT];	// Vector of weapon data
 	// Temporary data.
 	bool							m_bInitialized;		// Has the map Map Stat Data been initialized.
+	time_t							m_iMapStartTime;
+	time_t							m_iRoundStartTime;
 	float							m_flRoundStartTime;
 	int								m_iPeakPlayerCount[TF_TEAM_COUNT];
 };

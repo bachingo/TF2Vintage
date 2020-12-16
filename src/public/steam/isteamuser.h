@@ -10,28 +10,7 @@
 #pragma once
 #endif
 
-#include "isteamclient.h"
-
-// structure that contains client callback data
-// see callbacks documentation for more details
-#if defined( VALVE_CALLBACK_PACK_SMALL )
-#pragma pack( push, 4 )
-#elif defined( VALVE_CALLBACK_PACK_LARGE )
-#pragma pack( push, 8 )
-#else
-#error isteamclient.h must be included
-#endif 
-struct CallbackMsg_t
-{
-	HSteamUser m_hSteamUser;
-	int m_iCallback;
-	uint8 *m_pubParam;
-	int m_cubParam;
-};
-#pragma pack( pop )
-
-// reference to a steam call, to filter results by
-typedef int32 HSteamCall;
+#include "steam_api_common.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Functions for accessing and manipulating a steam account
@@ -153,6 +132,7 @@ public:
 	// Requests a ticket encrypted with an app specific shared key
 	// pDataToInclude, cbDataToInclude will be encrypted into the ticket
 	// ( This is asynchronous, you must wait for the ticket to be completed by the server )
+	STEAM_CALL_RESULT( EncryptedAppTicketResponse_t )
 	virtual SteamAPICall_t RequestEncryptedAppTicket( void *pDataToInclude, int cbDataToInclude ) = 0;
 
 	// retrieve a finished ticket
@@ -176,6 +156,7 @@ public:
 	// or else immediately navigate to the result URL using a hidden browser window.
 	// NOTE 2: The resulting authorization cookie has an expiration time of one day,
 	// so it would be a good idea to request and visit a new auth URL every 12 hours.
+	STEAM_CALL_RESULT( StoreAuthURLResponse_t )
 	virtual SteamAPICall_t RequestStoreAuthURL( const char *pchRedirectURL ) = 0;
 
 #ifdef _PS3
@@ -219,6 +200,8 @@ public:
 
 #define STEAMUSER_INTERFACE_VERSION "SteamUser018"
 
+// Global interface accessor
+S_API ISteamUser *S_CALLTYPE SteamUser();
 
 // callbacks
 #if defined( VALVE_CALLBACK_PACK_SMALL )
@@ -226,7 +209,7 @@ public:
 #elif defined( VALVE_CALLBACK_PACK_LARGE )
 #pragma pack( push, 8 )
 #else
-#error isteamclient.h must be included
+#error steam_api_common.h should define VALVE_CALLBACK_PACK_xxx
 #endif 
 
 //-----------------------------------------------------------------------------

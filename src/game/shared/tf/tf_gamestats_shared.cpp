@@ -13,6 +13,70 @@
 // memdbgon must be the last include file in a .cpp file!!!
 //#include "tier0/memdbgon.h"
 
+const char *s_pStatStrings[ TFSTAT_MAX ] =
+{
+	"TFSTAT_UNDEFINED",
+	"TFSTAT_SHOTS_HIT",
+	"TFSTAT_SHOTS_FIRED",
+	"TFSTAT_KILLS",
+	"TFSTAT_DEATHS",
+	"TFSTAT_DAMAGE",
+	"TFSTAT_CAPTURES",
+	"TFSTAT_DEFENSES",
+	"TFSTAT_DOMINATIONS",
+	"TFSTAT_REVENGE",
+	"TFSTAT_POINTSSCORED",
+	"TFSTAT_BUILDINGSDESTROYED",
+	"TFSTAT_HEADSHOTS",
+	"TFSTAT_PLAYTIME",
+	"TFSTAT_HEALING",
+	"TFSTAT_INVULNS",
+	"TFSTAT_KILLASSISTS",
+	"TFSTAT_BACKSTABS",
+	"TFSTAT_HEALTHLEACHED",
+	"TFSTAT_BUILDINGSBUILT",
+	"TFSTAT_MAXSENTRYKILLS",
+	"TFSTAT_TELEPORTS",
+	"TFSTAT_FIREDAMAGE",
+	"TFSTAT_BONUS_POINTS",
+	"TFSTAT_BLASTDAMAGE",
+	"TFSTAT_DAMAGETAKEN",
+	"TFSTAT_HEALTHKITS",
+	"TFSTAT_AMMOKITS",
+	"TFSTAT_CLASSCHANGES",
+	"TFSTAT_CRITS",
+	"TFSTAT_SUICIDES",
+	"TFSTAT_CURRENCY_COLLECTED",
+	"TFSTAT_DAMAGE_ASSIST",
+	"TFSTAT_HEALING_ASSIST",
+	"TFSTAT_DAMAGE_BOSS",
+	"TFSTAT_DAMAGE_BLOCKED",
+	"TFSTAT_DAMAGE_RANGED",
+	"TFSTAT_DAMAGE_RANGED_CRIT_RANDOM",
+	"TFSTAT_DAMAGE_RANGED_CRIT_BOOSTED",
+	"TFSTAT_REVIVED",
+};
+
+const char *s_pMapStatStrings[ TFMAPSTAT_MAX ] =
+{
+	"TFSTAT_UNDEFINED",
+	"TFSTAT_PLAYTIME",
+};
+
+const char *g_aRoundEndReasons[ TFRE_MAX ] =
+{
+	"round_end",
+	"client_disconnect",
+	"client_quit",
+	"server_map_change",
+	"server_shutdown",
+	"time_limit_reached",
+	"win_limit_reached",
+	"win_diff_limit_reached",
+	"round_limit_reached",
+	"next_level_cvar",
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 // Input  :  - 
@@ -63,10 +127,11 @@ TF_Gamestats_LevelStats_t::TF_Gamestats_LevelStats_t( const TF_Gamestats_LevelSt
 //			nPort - 
 //			flStartTime - 
 //-----------------------------------------------------------------------------
-void TF_Gamestats_LevelStats_t::Init( const char *pszMapName, int nIPAddr, short nPort, float flStartTime  )
+void TF_Gamestats_LevelStats_t::Init( const char *pszMapName, int nMapVersion, int nIPAddr, short nPort, float flStartTime  )
 {
 	// Initialize.
 	Q_strncpy( m_Header.m_szMapName, pszMapName, sizeof( m_Header.m_szMapName ) );
+	m_Header.m_nMapRevision = nMapVersion;
 	m_Header.m_nIPAddr = nIPAddr;
 	m_Header.m_nPort = nPort;
 	
