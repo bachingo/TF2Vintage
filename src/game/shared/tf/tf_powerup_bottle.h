@@ -44,6 +44,7 @@ public:
 
 	char const*		GetEffectLabelText( void );
 	char const*		GetEffectIconName( void );
+	float			GetEffectBarProgress( void ) { return 0; }
 
 	int				GetNumCharges() const;
 	void			SetNumCharges( int nNumCharges );

@@ -142,6 +142,15 @@ public:
 	}
 };
 
+// Interface for weapons that have an effect meter
+abstract_class ITFItemMeterUser
+{
+public:
+	virtual float GetEffectBarProgress( void ) = 0;
+	virtual const char *GetEffectLabelText( void ) = 0;
+	virtual const char *GetEffectIconName( void ) = 0;
+};
+
 //=============================================================================
 //
 // Base TF Weapon Class
@@ -332,6 +341,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual float		GetEffectBarProgress( void );
 	virtual void		SetEffectBarProgress( float flEffectBarRegenTime ) { m_flEffectBarRegenTime = flEffectBarRegenTime; }
 	virtual const char *GetEffectLabelText( void ) { return ""; }
+	virtual const char *GetEffectIconName( void ) { return ""; }
 	void				ReduceEffectBarRegenTime( float flTime ) { m_flEffectBarRegenTime -= flTime; }
 	virtual bool		EffectMeterShouldFlash( void ) { return false; }
 
