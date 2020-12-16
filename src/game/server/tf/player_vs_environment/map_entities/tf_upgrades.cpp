@@ -31,15 +31,15 @@ LINK_ENTITY_TO_CLASS( func_upgradestation, CUpgrades );
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *pPlayer, CEconItemView *pItem, int nCost, bool bDowngrade )
+attrib_def_index_t ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *pPlayer, CEconItemView *pItem, int nCost, bool bDowngrade )
 {
 	if ( pItem == nullptr )
-		return ~0U;
+		return INVALID_ATTRIBUTE_DEF_INDEX;
 
 	// Attribute must exist
 	CEconAttributeDefinition const *pAttribute = GetItemSchema()->GetAttributeDefinitionByName( upgrade.szAttribute );
 	if ( pAttribute == nullptr )
-		return ~0U;
+		return INVALID_ATTRIBUTE_DEF_INDEX;
 
 	// Determine source
 	CAttributeList *pAttribList = NULL;
@@ -50,7 +50,7 @@ uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *p
 
 	Assert( pAttribList );
 	if ( pAttribList == nullptr )
-		return ~0U; // Should never happen
+		return INVALID_ATTRIBUTE_DEF_INDEX; // Should never happen
 
 	float flBaseValue = ( pAttribute->description_format == ATTRIB_FORMAT_PERCENTAGE || pAttribute->description_format == ATTRIB_FORMAT_INVERTED_PERCENTAGE ) ? 1.0f : 0.0f;
 	// Get the starting value from our item's static data, if applicable
@@ -68,7 +68,7 @@ uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *p
 			 ( flIncrement > 0 && flCurrentValue >= flCap ) ||
 			 ( flIncrement < 0 && flCurrentValue <= flCap ) ) )
 		{
-			return ~0U;
+			return INVALID_ATTRIBUTE_DEF_INDEX;
 		}
 
 		float flNewValue = flBaseValue;
@@ -124,7 +124,7 @@ uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *p
 	if ( bDowngrade )
 	{
 		// Can't downgrade from here
-		return ~0U;
+		return INVALID_ATTRIBUTE_DEF_INDEX;
 	}
 
 	// Didn't exist, add it dynamically
@@ -266,16 +266,16 @@ void CUpgrades::ApplyUpgradeAttributeBlock( UpgradeAttribBlock_t *pUpgradeBlock,
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, int nUpgrade, int nCost, bool bDowngrade, bool bIsFresh )
+attrib_def_index_t CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, int nUpgrade, int nCost, bool bDowngrade, bool bIsFresh )
 {
 	if( pPlayer == nullptr )
-		return ~0U;
+		return INVALID_ATTRIBUTE_DEF_INDEX;
 
 	const CMannVsMachineUpgrades& upgrade = g_MannVsMachineUpgrades.GetUpgradeVector()[ nUpgrade ];
 
 	const CEconAttributeDefinition *pAttribute = GetItemSchema()->GetAttributeDefinitionByName( upgrade.szAttribute );
 	if ( pAttribute == nullptr )
-		return ~0U;
+		return INVALID_ATTRIBUTE_DEF_INDEX;
 
 	bool bIsBottle = upgrade.nUIGroup == UIGROUP_UPGRADE_POWERUP;
 	ReportUpgrade( pPlayer, 
@@ -289,13 +289,13 @@ uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, 
 		CEconEntity *pActionItem = pPlayer->GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ACTION );
 		CTFPowerupBottle *pPowerupBottle = dynamic_cast<CTFPowerupBottle *>( pActionItem );
 		if ( !pPowerupBottle )
-			return ~0U;
+			return INVALID_ATTRIBUTE_DEF_INDEX;
 
 		CAttributeList *pAttribList = pItem->GetAttributeList();
 
 		Assert( pAttribList );
 		if ( pAttribList == nullptr )
-			return ~0U; // Should never happen
+			return INVALID_ATTRIBUTE_DEF_INDEX; // Should never happen
 
 		if ( FindAttribute( pAttribList, pAttribute ) )
 		{
@@ -303,7 +303,7 @@ uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, 
 			const int nNewCharges =  pPowerupBottle->GetNumCharges() + nSign;
 
 			if ( nNewCharges < 0 || nNewCharges > pPowerupBottle->GetMaxNumCharges() )
-				return ~0U;
+				return INVALID_ATTRIBUTE_DEF_INDEX;
 
 			pPowerupBottle->SetNumCharges( nNewCharges );
 			pAttribList->SetRuntimeAttributeRefundableCurrency( pAttribute,
@@ -324,7 +324,7 @@ uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, 
 		if ( bDowngrade )
 		{
 			// Can't downgrade from here
-			return ~0U;
+			return INVALID_ATTRIBUTE_DEF_INDEX;
 		}
 
 		// Remove old powerup
@@ -359,7 +359,7 @@ char const *CUpgrades::GetUpgradeAttributeName( int iUpgrade ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CUpgrades::NotifyItemOnUpgrade( CTFPlayer *pPlayer, uint32 nAttrDefIndex, bool bDowngrade )
+void CUpgrades::NotifyItemOnUpgrade( CTFPlayer *pPlayer, attrib_def_index_t nAttrDefIndex, bool bDowngrade )
 {
 	static CSchemaAttributeHandle pAttrDef_BuffDuration( "mod buff duration" );
 	if ( pPlayer == nullptr )

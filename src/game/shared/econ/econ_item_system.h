@@ -14,20 +14,17 @@ class CEconAttributeDefinition;
 struct EconQuality;
 struct EconColor;
 
-enum
-{
-	ATTRTYPE_INVALID = -1,
-	ATTRTYPE_INT,
-	ATTRTYPE_UINT64,
-	ATTRTYPE_FLOAT,
-	ATTRTYPE_STRING
-};
 
 typedef struct
 {
 	CUtlConstString szName;
 	ISchemaAttributeType *pType;
 } attr_type_t;
+
+typedef uint16 attrib_def_index_t;
+typedef uint16 item_def_index_t;
+#define INVALID_ATTRIBUTE_DEF_INDEX		((attrib_def_index_t)-1)
+#define INVALID_ITEM_DEF_INDEX			((item_def_index_t)-1)
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -67,8 +64,8 @@ protected:
 	CUtlDict< EconQuality, unsigned short >			m_Qualities;
 	CUtlDict< EconColor, unsigned short >			m_Colors;
 	CUtlMap< char const *, KeyValues * >			m_PrefabsValues;
-	CUtlMap< uint32, CEconItemDefinition * >		m_Items;
-	CUtlMap< uint32, CEconAttributeDefinition * >	m_Attributes;
+	CUtlMap< item_def_index_t, CEconItemDefinition * > m_Items;
+	CUtlMap< attrib_def_index_t, CEconAttributeDefinition * > m_Attributes;
 	CUtlVector< attr_type_t >						m_AttributeTypes;
 
 private:

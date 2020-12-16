@@ -793,8 +793,8 @@ public:
 // Purpose: constructor
 //-----------------------------------------------------------------------------
 CEconItemSchema::CEconItemSchema() :
-	m_Items( DefLessFunc(uint32) ),
-	m_Attributes( DefLessFunc(uint32) ),
+	m_Items( DefLessFunc(item_def_index_t) ),
+	m_Attributes( DefLessFunc(attrib_def_index_t) ),
 	m_PrefabsValues( StringLessThan ),
 	m_bInited( false )
 {

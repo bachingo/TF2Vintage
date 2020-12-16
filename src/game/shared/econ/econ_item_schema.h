@@ -39,6 +39,15 @@ enum
 
 enum
 {
+	ATTRTYPE_INVALID = -1,
+	ATTRTYPE_INT,
+	ATTRTYPE_UINT64,
+	ATTRTYPE_FLOAT,
+	ATTRTYPE_STRING
+};
+
+enum
+{
 	QUALITY_NORMAL,
 	QUALITY_GENUINE,
 	QUALITY_RARITY2,
@@ -169,7 +178,7 @@ public:
 	CEconAttributeDefinition()
 	{
 		definition = NULL;
-		index = 0xFFFF;
+		index = INVALID_ATTRIBUTE_DEF_INDEX;
 		name[0] = '\0';
 		attribute_class[0] = '\0';
 		description_string[0] = '\0';
@@ -214,7 +223,7 @@ private:
 	KeyValues *definition;
 
 public:
-	unsigned short index;
+	attrib_def_index_t index;
 	ISchemaAttributeType *type;
 	bool string_attribute;
 	int description_format;
@@ -255,7 +264,7 @@ struct AttachedModel_t
 
 typedef union
 {
-	unsigned iVal;
+	uint32 iVal;
 	float flVal;
 	uint64 *lVal;
 	CAttribute_String *sVal;
@@ -286,7 +295,7 @@ typedef struct static_attrib_s
 		value = rhs.value;
 	}
 
-	unsigned short iAttribIndex;
+	attrib_def_index_t iAttribIndex;
 	attrib_data_union_t value;
 } static_attrib_t;
 
@@ -422,7 +431,7 @@ public:
 	CEconItemDefinition()
 	{
 		definition = NULL;
-		index = 0xFFFFFFFF;
+		index = INVALID_ITEM_DEF_INDEX;
 		CLEAR_STR( name );
 		used_by_classes = 0;
 
@@ -594,7 +603,7 @@ private:
 	KeyValues *definition;
 
 public:
-	unsigned int index;
+	item_def_index_t index;
 	CUtlVector<static_attrib_t> attributes;
 	PerTeamVisuals_t *visual[ TF_TEAM_COUNT ];
 	int used_by_classes;

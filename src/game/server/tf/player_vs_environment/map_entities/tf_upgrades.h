@@ -40,9 +40,9 @@ public:
 	void			InputReset( inputdata_t &inputdata );
 
 	void			ApplyUpgradeAttributeBlock( UpgradeAttribBlock_t *pUpgradeBlock, int nUpgradeCount, CTFPlayer *pPlayer, bool bDowngrade );
-	uint32			ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, int iUpgrade, int nCost, bool bDowngrade = false, bool bIsFresh = false );
+	attrib_def_index_t ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, int iUpgrade, int nCost, bool bDowngrade = false, bool bIsFresh = false );
 	char const*		GetUpgradeAttributeName( int iUpgrade ) const;
-	void			NotifyItemOnUpgrade( CTFPlayer *pPlayer, uint32 nAttrDefIndex, bool bDowngrade = false );
+	void			NotifyItemOnUpgrade( CTFPlayer *pPlayer, attrib_def_index_t nAttrDefIndex, bool bDowngrade = false );
 	void			ReportUpgrade ( CTFPlayer *pPlayer, int iItemDef, int iAttributeDef, int nQuality, int nCost, bool bDowngrade, bool bIsFresh, bool bIsBottle = false );
 	void			RestoreItemAttributeToBaseValue( CEconAttributeDefinition *pAttrib, CEconItemView *pItem );
 	void			RestorePlayerAttributeToBaseValue( CEconAttributeDefinition *pAttrib, CTFPlayer *pPlayer );
@@ -53,6 +53,6 @@ private:
 };
 extern CHandle<CUpgrades>	g_hUpgradeEntity;
 
-uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const& upgrade, CTFPlayer *pPlayer, CEconItemView *pItem, int nCost, bool bDowngrade );
+attrib_def_index_t ApplyUpgrade_Default( CMannVsMachineUpgrades const& upgrade, CTFPlayer *pPlayer, CEconItemView *pItem, int nCost, bool bDowngrade );
 
 #endif
