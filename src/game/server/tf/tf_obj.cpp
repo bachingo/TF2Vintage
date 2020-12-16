@@ -970,6 +970,19 @@ int	CBaseObject::ObjectType( ) const
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseObject::ApplyHealthUpgrade( void )
+{
+	CTFPlayer *pPlayer = GetOwner();
+	if ( !pPlayer )
+		return;
+
+	SetMaxHealth( GetMaxHealthForCurrentLevel() );
+	SetHealth( GetMaxHealth() );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Destroys the object, gives a chance to spawn an explosion
 //-----------------------------------------------------------------------------
 void CBaseObject::DetonateObject( void )
@@ -1034,7 +1047,17 @@ float CBaseObject::GetTotalTime( void )
 //-----------------------------------------------------------------------------
 int CBaseObject::GetMaxHealthForCurrentLevel( void )
 {
-	return GetBaseHealth() * pow( 1.2, GetUpgradeLevel() - 1 );
+	int iMaxHealth = m_bMiniBuilding ? GetMiniBuildingBaseHealth() : GetBaseHealth();
+	if ( GetOwner() && !m_bDisposableBuilding )
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOwner(), iMaxHealth, mult_engy_building_health );
+
+	if ( !m_bMiniBuilding && ( GetUpgradeLevel() > 1 ) )
+	{
+		const float flMultiplier = pow( 1.2, GetUpgradeLevel() - 1 );
+		iMaxHealth = (int)( iMaxHealth * flMultiplier );
+	}
+
+	return iMaxHealth;
 }
 
 //-----------------------------------------------------------------------------

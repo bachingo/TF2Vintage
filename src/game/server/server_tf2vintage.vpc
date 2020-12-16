@@ -226,7 +226,7 @@ $Project "Server (TF)"
 			$File	"tf\tf_team.cpp"
 			$File	"tf\tf_team.h"
 			$File	"tf\tf_turret.cpp"
-			$File	"tf\tf_turret.h"	
+			$File	"tf\tf_turret.h"
 			$File	"tf\tf_voteissues.cpp"
 			$File	"tf\tf_voteissues.h"	
 			$File	"tf\tf_weapon_builder.cpp"
@@ -263,8 +263,8 @@ $Project "Server (TF)"
 
 			$Folder "PvE"
 			{
-				//$File "tf\player_vs_environment\map_entities\tf_spawner.cpp"
-				//$File "tf\player_vs_environment\map_entities\tf_spawner.h"
+				$File 	"tf\player_vs_environment\map_entities\tf_upgrades.cpp"
+				$File 	"tf\player_vs_environment\map_entities\tf_upgrades.h"
 			}
 			
 			$Folder	"NPCs"

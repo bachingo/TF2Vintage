@@ -43,18 +43,26 @@ void CTFWrench::OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer,
 {
 	// Did this object hit do any work? repair or upgrade?
 	bool bUsefulHit = pObject->InputWrenchHit( pPlayer, this, vecHitPos );
-
+	
 	CDisablePredictionFiltering disabler;
 
-	if ( bUsefulHit )
+	if ( pObject->IsDisposableBuilding() )
 	{
-		// play success sound
-		WeaponSound( SPECIAL1 );
+		CSingleUserRecipientFilter singleFilter( pPlayer );
+		EmitSound( singleFilter, pObject->entindex(), "Player.UseDeny" );
 	}
 	else
 	{
-		// play failure sound
-		WeaponSound( SPECIAL2 );
+		if ( bUsefulHit )
+		{
+			// play success sound
+			WeaponSound( SPECIAL1 );
+		}
+		else
+		{
+			// play failure sound
+			WeaponSound( SPECIAL2 );
+		}
 	}
 }
 #endif
@@ -140,6 +148,25 @@ void CTFWrench::ItemPostFrame( void )
 }
 
 #ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWrench::ApplyBuildingHealthUpgrade( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+	for ( int i = pPlayer->GetObjectCount(); --i >= 0; )
+	{
+		CBaseObject *pObj = pPlayer->GetObject( i );
+		if ( pObj )
+		{
+			pObj->ApplyHealthUpgrade();
+		}		
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Sets up our teleporting.
 //-----------------------------------------------------------------------------

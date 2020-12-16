@@ -40,7 +40,9 @@ public:
 #ifdef GAME_DLL
 	virtual void		EurekaTeleport(void);
 
-	virtual void OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector vecHitPos );
+	void				ApplyBuildingHealthUpgrade( void );
+
+	virtual void		OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector vecHitPos );
 #endif
 
 private:

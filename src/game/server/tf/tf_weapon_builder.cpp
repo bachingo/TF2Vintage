@@ -699,6 +699,7 @@ bool CTFWeaponBuilder::AllowsAutoSwitchTo( void ) const
 
 IMPLEMENT_SERVERCLASS_ST( CTFWeaponSapper, DT_TFWeaponSapper )
 	SendPropFloat( SENDINFO( m_flWheatleyTalkingUntil ) ),
+	SendPropBool( SENDINFO( m_bRoboSapper ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_sapper, CTFWeaponSapper );
