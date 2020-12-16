@@ -30,9 +30,15 @@ public:
 	void			Break( void );
 #else
 	virtual int		InternalDrawModel( int flags );
-	void			UpdateModelToClass(void);
-	bool 			ShouldDraw(void);
+	virtual int		GetWorldModelIndex( void );
+	virtual void	ValidateModelIndex( void );
+	void			UpdateModelToClass( void );
+	virtual bool 	ShouldDraw( void );
+	virtual void	OnDataChanged( DataUpdateType_t updateType );
 #endif
+
+private:
+	short		m_nWorldModelIndex;
 };
 
 class CTFWearableVM : public CTFWearable

@@ -385,7 +385,6 @@ protected:
 	CNetworkVar( bool, m_bCarried );		
 	CNetworkVar( bool, m_bCarryDeploy );
 	CNetworkVar( bool, m_bMiniBuilding );
-	CNetworkVar( bool, m_bDisposableBuilding );
 
 	CNetworkVar( bool, m_bDisposableBuilding );
 	CNetworkVar( bool, m_bWasMapPlaced );

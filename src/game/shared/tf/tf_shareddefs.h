@@ -1877,6 +1877,17 @@ typedef enum
 	MVM_UPGRADE_QAULITY_HIGH
 } MvMUpgradeQualities_t;
 
+typedef enum
+{
+	POWERUP_BOTTLE_NONE,
+	POWERUP_BOTTLE_CRITBOOST,
+	POWERUP_BOTTLE_UBERCHARGE,
+	POWERUP_BOTTLE_RECALL,
+	POWERUP_BOTTLE_REFILL_AMMO,
+	POWERUP_BOTTLE_BUILDINGS_INSTANT_UPGRADE,
+	POWERUP_BOTTLE_TOTAL
+} PowerupBottleType_t;
+
 bool IsSpaceToSpawnHere( const Vector &vecPos );
 
 void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, class CBoneBitList &boneComputed, float flScale );

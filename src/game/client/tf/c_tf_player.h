@@ -98,6 +98,8 @@ public:
 	virtual int GetMaxHealth( void ) const;
 	virtual int	GetMaxHealthForBuffing( void ) const;
 
+	float GetLastDamageTime( void ) const { return m_flLastDamageTime; }
+
 	virtual int GetRenderTeamNumber( void );
 
 	bool IsWeaponLowered( void );
@@ -464,6 +466,7 @@ public:
 private:
 
 	float m_flWaterImpactTime;
+	float m_flLastDamageTime;
 
 	// Gibs.
 	CUtlVector<breakmodel_t>	m_aGibs;

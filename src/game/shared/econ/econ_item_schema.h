@@ -475,7 +475,7 @@ public:
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
-	void IterateAttributes( IEconAttributeIterator *iter );
+	void IterateAttributes( IEconAttributeIterator *iter ) const;
 
 	KeyValues *GetStaticDefinition( void ) const { return definition; }
 

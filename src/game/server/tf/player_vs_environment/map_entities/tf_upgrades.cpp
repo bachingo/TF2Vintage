@@ -12,6 +12,7 @@
 #include "tf_weapon_builder.h"
 #include "tf_weapon_wrench.h"
 #include "tf_obj.h"
+#include "tf_powerup_bottle.h"
 
 CHandle<CUpgrades> g_hUpgradeEntity;
 
@@ -33,12 +34,12 @@ LINK_ENTITY_TO_CLASS( func_upgradestation, CUpgrades );
 uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *pPlayer, CEconItemView *pItem, int nCost, bool bDowngrade )
 {
 	if ( pItem == nullptr )
-		return -1;
+		return ~0U;
 
 	// Attribute must exist
 	CEconAttributeDefinition const *pAttribute = GetItemSchema()->GetAttributeDefinitionByName( upgrade.szAttribute );
 	if ( pAttribute == nullptr )
-		return -1;
+		return ~0U;
 
 	// Determine source
 	CAttributeList *pAttribList = NULL;
@@ -49,7 +50,7 @@ uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *p
 
 	Assert( pAttribList );
 	if ( pAttribList == nullptr )
-		return -1; // Should never happen
+		return ~0U; // Should never happen
 
 	float flBaseValue = ( pAttribute->description_format == ATTRIB_FORMAT_PERCENTAGE || pAttribute->description_format == ATTRIB_FORMAT_INVERTED_PERCENTAGE ) ? 1.0f : 0.0f;
 	// Get the starting value from our item's static data, if applicable
@@ -67,7 +68,7 @@ uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *p
 			 ( flIncrement > 0 && flCurrentValue >= flCap ) ||
 			 ( flIncrement < 0 && flCurrentValue <= flCap ) ) )
 		{
-			return -1;
+			return ~0U;
 		}
 
 		float flNewValue = flBaseValue;
@@ -123,7 +124,7 @@ uint32 ApplyUpgrade_Default( CMannVsMachineUpgrades const &upgrade, CTFPlayer *p
 	if ( bDowngrade )
 	{
 		// Can't downgrade from here
-		return -1;
+		return ~0U;
 	}
 
 	// Didn't exist, add it dynamically
@@ -268,13 +269,13 @@ void CUpgrades::ApplyUpgradeAttributeBlock( UpgradeAttribBlock_t *pUpgradeBlock,
 uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, int nUpgrade, int nCost, bool bDowngrade, bool bIsFresh )
 {
 	if( pPlayer == nullptr )
-		return -1;
+		return ~0U;
 
 	const CMannVsMachineUpgrades& upgrade = g_MannVsMachineUpgrades.GetUpgradeVector()[ nUpgrade ];
 
 	const CEconAttributeDefinition *pAttribute = GetItemSchema()->GetAttributeDefinitionByName( upgrade.szAttribute );
 	if ( pAttribute == nullptr )
-		return -1;
+		return ~0U;
 
 	bool bIsBottle = upgrade.nUIGroup == UIGROUP_UPGRADE_POWERUP;
 	ReportUpgrade( pPlayer, 
@@ -288,13 +289,13 @@ uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, 
 		CEconEntity *pActionItem = pPlayer->GetEntityForLoadoutSlot( TF_LOADOUT_SLOT_ACTION );
 		CTFPowerupBottle *pPowerupBottle = dynamic_cast<CTFPowerupBottle *>( pActionItem );
 		if ( !pPowerupBottle )
-			return -1;
+			return ~0U;
 
 		CAttributeList *pAttribList = pItem->GetAttributeList();
 
 		Assert( pAttribList );
 		if ( pAttribList == nullptr )
-			return -1; // Should never happen
+			return ~0U; // Should never happen
 
 		if ( FindAttribute( pAttribList, pAttribute ) )
 		{
@@ -302,7 +303,7 @@ uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, 
 			const int nNewCharges =  pPowerupBottle->GetNumCharges() + nSign;
 
 			if ( nNewCharges < 0 || nNewCharges > pPowerupBottle->GetMaxNumCharges() )
-				return -1;
+				return ~0U;
 
 			pPowerupBottle->SetNumCharges( nNewCharges );
 			pAttribList->SetRuntimeAttributeRefundableCurrency( pAttribute,
@@ -313,8 +314,8 @@ uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, 
 				pPowerupBottle->RemoveEffect();
 				pAttribList->RemoveAllAttributes();
 
-				if ( g_pPopulationManager )
-					g_pPopulationManager->ForgetOtherBottleUpgrades( pPlayer, pItem, nUpgrade );
+				/*if ( g_pPopulationManager )
+					g_pPopulationManager->ForgetOtherBottleUpgrades( pPlayer, pItem, nUpgrade );*/
 			}
 
 			return pAttribute->index;
@@ -323,15 +324,15 @@ uint32 CUpgrades::ApplyUpgradeToItem( CTFPlayer *pPlayer, CEconItemView *pItem, 
 		if ( bDowngrade )
 		{
 			// Can't downgrade from here
-			return -1;
+			return ~0U;
 		}
 
 		// Remove old powerup
 		pPowerupBottle->RemoveEffect();
 		pAttribList->RemoveAllAttributes();
 
-		if ( g_pPopulationManager )
-			g_pPopulationManager->ForgetOtherBottleUpgrades( pPlayer, pItem, nUpgrade );
+		/*if ( g_pPopulationManager )
+			g_pPopulationManager->ForgetOtherBottleUpgrades( pPlayer, pItem, nUpgrade );*/
 
 		pPowerupBottle->SetNumCharges( 1 );
 

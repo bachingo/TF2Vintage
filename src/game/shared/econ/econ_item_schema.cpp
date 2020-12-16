@@ -205,7 +205,7 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter )
+void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter ) const
 {
 	FOR_EACH_VEC( attributes, i )
 	{

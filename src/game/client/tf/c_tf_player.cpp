@@ -2389,6 +2389,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropInt( RECVINFO( m_nForceTauntCam ) ),
 	RecvPropBool( RECVINFO( m_bTyping ) ),
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
+	RecvPropFloat( RECVINFO( m_flLastDamageTime ) ),
 END_RECV_TABLE()
 
 

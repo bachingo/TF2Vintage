@@ -119,6 +119,8 @@ public:
 	void			StopProvidingTo( CBaseEntity *pEntity );
 	int				GetProviderType( void ) const { return m_ProviderType; }
 	void			SetProvidrType( int type ) { m_ProviderType = type; }
+	bool			IsProvidingTo( CBaseEntity *pEntity ) const;
+	bool			IsBeingProvidedToBy( CBaseEntity *pEntity ) const;
 	virtual void	InitializeAttributes( CBaseEntity *pEntity );
 	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders = NULL );
 	virtual string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders = NULL );

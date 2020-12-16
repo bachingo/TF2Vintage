@@ -296,6 +296,29 @@ void CAttributeManager::StopProvidingTo( CBaseEntity *pEntity )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CAttributeManager::IsProvidingTo( CBaseEntity *pEntity ) const
+{
+	IHasAttributes *pAttribInterface = GetAttribInterface( pEntity );
+	if ( pAttribInterface )
+	{
+		if ( pAttribInterface->GetAttributeManager()->IsBeingProvidedToBy( m_hOuter.Get() ) )
+			return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CAttributeManager::IsBeingProvidedToBy( CBaseEntity *pEntity ) const
+{
+	return ( m_AttributeProviders.Find( pEntity ) != m_AttributeProviders.InvalidIndex() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CAttributeManager::ClearCache( void )
 {
 	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );

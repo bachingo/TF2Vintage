@@ -1,5 +1,6 @@
 #include "cbase.h"
 #include "tf_wearable.h"
+#include "tf_gamerules.h"
 
 #ifdef GAME_DLL
 #include "tf_player.h"
@@ -25,6 +26,10 @@ END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_wearable_vm, CTFWearableVM );
 PRECACHE_REGISTER( tf_wearable_vm );
+
+
+#define PARACHUTE_MODEL_OPEN	"models/workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack_open.mdl"
+#define PARACHUTE_MODEL_CLOSED	"models/workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack.mdl"
 
 #ifdef GAME_DLL
 
@@ -117,6 +122,52 @@ void CTFWearable::Break( void )
 #else
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int C_TFWearable::GetWorldModelIndex( void )
+{
+	if ( m_nWorldModelIndex == 0 )
+		return m_nModelIndex;
+
+	const int iParachuteOpen = modelinfo->GetModelIndex( PARACHUTE_MODEL_OPEN );
+	const int iParachuteClosed = modelinfo->GetModelIndex( PARACHUTE_MODEL_CLOSED );
+	if ( m_nModelIndex == iParachuteOpen || m_nModelIndex == iParachuteClosed )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+		if ( pPlayer )
+		{
+			if ( pPlayer->m_Shared.InCond( TF_COND_PARACHUTE_DEPLOYED ) )
+				return iParachuteOpen;
+			else
+				return iParachuteClosed;
+		}
+	}
+
+	if ( TFGameRules() )
+	{
+		const char *pBaseName = modelinfo->GetModelName( modelinfo->GetModel( m_nWorldModelIndex ) );
+		const char *pTranslatedName = TFGameRules()->TranslateEffectForVisionFilter( "weapons", pBaseName );
+
+		if ( pTranslatedName != pBaseName )
+		{
+			return modelinfo->GetModelIndex( pTranslatedName );
+		}
+	}
+
+	return m_nWorldModelIndex;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFWearable::ValidateModelIndex( void )
+{
+	m_nModelIndex = GetWorldModelIndex();
+
+	BaseClass::ValidateModelIndex();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Overlay Uber
 //-----------------------------------------------------------------------------
 int C_TFWearable::InternalDrawModel( int flags )
@@ -124,6 +175,8 @@ int C_TFWearable::InternalDrawModel( int flags )
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	bool bNotViewModel = ( ( pOwner && !pOwner->IsLocalPlayer() ) || C_BasePlayer::ShouldDrawLocalPlayer() );
 	bool bUseInvulnMaterial = ( bNotViewModel && pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
+	bUseInvulnMaterial |= ( !pOwner->m_Shared.InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGE ) || gpGlobals->curtime < (pOwner->GetLastDamageTime() + 2.0f) );
+
 	if ( bUseInvulnMaterial )
 	{
 		modelrender->ForcedMaterialOverride( pOwner->GetInvulnMaterial() );
@@ -197,6 +250,19 @@ bool C_TFWearable::ShouldDraw()
 		return BaseClass::ShouldDraw();
 	
 	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWearable::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		m_nWorldModelIndex = m_nModelIndex;
+	}
 }
 
 #endif

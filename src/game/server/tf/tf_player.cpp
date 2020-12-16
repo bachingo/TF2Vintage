@@ -495,6 +495,8 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropBool( SENDINFO( m_bTyping ) ),
 	
 	SendPropInt( SENDINFO( m_iSpawnCounter ) ),
+
+	SendPropFloat( SENDINFO( m_flLastDamageTime ), 16, SPROP_ROUNDUP ),
 END_SEND_TABLE()
 
 
