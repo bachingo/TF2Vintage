@@ -8145,6 +8145,63 @@
 			"prefab"	"weapon_quadball"
 			"year"			"2014"
 		}
+		"1152"
+		{
+			"name"		"TF_WEAPON_GRAPPLINGHOOK"
+			"item_class"	"tf_weapon_grapplinghook"
+			"item_type_name"	"#TF_Weapon_GrapplingHook"
+			"item_name"	"#TF_Weapon_GrapplingHook"
+			"item_description"	"#TF_Weapon_GrapplingHook_desc"
+			"item_logname"	"grappling_hook"
+			"item_iconname"	"grappling_hook"
+			"item_slot"	"action"
+			"item_quality"	"normal"
+			"image_inventory"	"backpack/weapons/c_models/c_grappling_hook/c_grappling_hook"
+			"model_player"	"models/weapons/c_models/c_grappling_hook/c_grappling_hook.mdl"
+			"attach_to_hands"	"1"
+			"anim_slot" "MELEE_ALLCLASS"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"sniper"	"1"
+				"soldier"	"1"
+				"demoman"	"1"
+				"medic"		"1"
+				"heavy"		"1"
+				"spy" 		"1"
+				"engineer" 	"1"
+				"pyro" 		"1"
+			}
+			"attributes"
+			{
+				"reload time increased hidden"
+				{
+					"attribute_class"	"mult_reload_time_hidden"
+					"value"	"0"
+				}
+				"override projectile type"
+				{
+					"attribute_class"	"override_projectile_type"
+					"value"				"26" 
+				}
+				"single wep deploy time decreased"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time"
+					"value"	"0"
+				}
+				"switch from wep deploy time decreased"
+				{
+					"attribute_class"	"mult_switch_from_wep_deploy_time"
+					"value"	"0.2"
+				}
+				"force weapon switch"
+				{
+					"attribute_class"	"force_weapon_switch"
+					"value"	"1"
+				}
+			}
+			"baseitem" "1"
+		}
 		"1153"
 		{
 			"name"	"Panic Attack Shotgun"

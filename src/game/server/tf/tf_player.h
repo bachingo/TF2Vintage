@@ -439,6 +439,9 @@ public:
 	void				InputSpeakResponseConcept( inputdata_t &inputdata );
 	void				InputSetForcedTauntCam( inputdata_t &inputdata );
 
+
+	CBaseEntity		*GetGrapplingHookTarget( void ) { return m_hGrapplingHookTarget; }
+	
 public:
 
 	CNetworkVector( m_vecPlayerColor );
@@ -682,6 +685,7 @@ private:
 
 	// Combat.
 	CNetworkHandle( CTFWeaponBase, m_hOffHandWeapon );
+	CNetworkHandle( CBaseEntity, m_hGrapplingHookTarget );
 
 	float					m_flHealthBuffTime;
 

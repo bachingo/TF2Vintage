@@ -21,6 +21,7 @@
 	#include "c_tf_player.h"
 	#include "c_tf_objective_resource.h"
 	#include "c_user_message_register.h"
+	#include "tf_autorp.h"
 #else
 	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
@@ -173,6 +174,7 @@ ConVar tf_gamemode_dr( "tf_gamemode_dr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | 
 ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
+ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat.", true, 0, true, 1 );
 ConVar tf_ctf_bonus_time( "tf_ctf_bonus_time", "10", FCVAR_NOTIFY, "Length of team crit time for CTF capture." );
 
 ConVar tf_tournament_classlimit_scout( "tf_tournament_classlimit_scout", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Scouts.\n" );
@@ -2960,14 +2962,17 @@ public:
 	virtual bool		CanPlayerHearPlayer( CBasePlayer *pListener, CBasePlayer *pTalker, bool &bProximity )
 	{
 		// Dead players can only be heard by other dead team mates but only if a match is in progress
-		if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN && TFGameRules()->State_Get() != GR_STATE_GAME_OVER )
+		if ( !tf_gravetalk.GetBool() )
 		{
-			if ( pTalker->IsAlive() == false )
+			if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN && TFGameRules()->State_Get() != GR_STATE_GAME_OVER )
 			{
-				if ( pListener->IsAlive() == false || tf_teamtalk.GetBool() )
-					return ( pListener->InSameTeam( pTalker ) );
+				if ( pTalker->IsAlive() == false )
+				{
+					if ( pListener->IsAlive() == false || tf_teamtalk.GetBool() )
+						return ( pListener->InSameTeam( pTalker ) );
 
-				return false;
+					return false;
+				}
 			}
 		}
 
@@ -7934,16 +7939,16 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 {
 	// Medieval mode only
-	/*if ( !IsInMedievalMode() || !tf_medieval_autorp.GetBool() )
-		return;
-
-	if ( !AutoRP() )
+	if ( IsInMedievalMode() && tf_medieval_autorp.GetBool() )
 	{
-		Warning( "AutoRP initialization failed!" );
-		return;
-	}
+		if ( !AutoRP() )
+		{
+			Warning( "AutoRP initialization failed!" );
+			return;
+		}
 
-	AutoRP()->ApplyRPTo( pBuf, iBufSize );
+		AutoRP()->ApplyRPTo( pBuf, iBufSize );
+	}
 
 	int i = 0;
 	while ( pBuf[i] )
@@ -7953,7 +7958,8 @@ void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 			pBuf[i] = '\'';
 		}
 		i++;
-	}*/
+	}
+
 }
 
 void AddSubKeyNamed( KeyValues *pKeys, const char *pszName )
