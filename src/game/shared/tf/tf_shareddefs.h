@@ -56,6 +56,16 @@ const char *GetTeamParticleName( int iTeam, bool bDummyBoolean = false, const ch
 const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
 void PrecacheTeamParticles( const char *pszFormat, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
 
+inline int GetEnemyTeam( CBaseEntity *ent )
+{
+	int myTeam = ent->GetTeamNumber();
+	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
+}
+inline int GetEnemyTeam( int myTeam )
+{
+	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
+}
+
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 #define CONTENTS_GREENTEAM	CONTENTS_UNUSED
@@ -1763,6 +1773,13 @@ typedef enum
 	NUM_STOCK_NOTIFICATIONS
 } HudNotification_t;
 
+typedef enum
+{
+	SAPPING_NONE,
+	SAPPING_PLACED,
+	SAPPING_DONE
+} sap_state_t;
+
 class CTraceFilterIgnorePlayers : public CTraceFilterSimple
 {
 public:
@@ -1848,16 +1865,17 @@ private:
 
 typedef enum
 {
-	SAPPING_NONE,
-	SAPPING_PLACED,
-	SAPPING_DONE
-} sap_state_t;
+	UIGROUP_UPGRADE_ITEM = 0,
+	UIGROUP_UPGRADE_PLAYER,
+	UIGROUP_UPGRADE_POWERUP
+} MvMUpgradeUIGroups_t;
 
-inline int GetEnemyTeam( CBaseEntity *ent )
+typedef enum
 {
-	int myTeam = ent->GetTeamNumber();
-	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
-}
+	MVM_UPGRADE_QUALITY_LOW = 1,
+	MVM_UPGRADE_QUALITY_NORMAL,
+	MVM_UPGRADE_QAULITY_HIGH
+} MvMUpgradeQualities_t;
 
 bool IsSpaceToSpawnHere( const Vector &vecPos );
 

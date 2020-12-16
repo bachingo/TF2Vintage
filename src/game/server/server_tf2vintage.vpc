@@ -265,6 +265,8 @@ $Project "Server (TF)"
 			{
 				$File 	"tf\player_vs_environment\map_entities\tf_upgrades.cpp"
 				$File 	"tf\player_vs_environment\map_entities\tf_upgrades.h"
+				$File	"$SRCDIR\game\shared\tf\tf_upgrades_shared.cpp"
+				$File	"$SRCDIR\game\shared\tf\tf_upgrades_shared.h"
 			}
 			
 			$Folder	"NPCs"
