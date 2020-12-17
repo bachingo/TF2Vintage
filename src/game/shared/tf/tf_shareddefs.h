@@ -1888,6 +1888,12 @@ typedef enum
 	POWERUP_BOTTLE_TOTAL
 } PowerupBottleType_t;
 
+typedef enum
+{
+	MVM_ANNOUNCEMENT_WAVE_COMPLETE,
+	MVM_ANNOUNCEMENT_WAVE_FAILED
+} MvMAnnouncement_t;
+
 bool IsSpaceToSpawnHere( const Vector &vecPos );
 
 void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, class CBoneBitList &boneComputed, float flScale );
