@@ -188,6 +188,11 @@ ConVar tf_force_holidays_off( "tf_force_holidays_off", "0", FCVAR_NOTIFY | FCVAR
 							  , ForcedHolidayChanged
 						  #endif
 );
+ConVar tf_medieval( "tf_medieval", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable Medieval Mode.\n", true, 0, true, 1
+				#ifdef GAME_DLL
+					, MedievalModeChanged
+				#endif 
+);
 ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
 ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9
 						   #if defined( GAME_DLL )
@@ -1344,7 +1349,7 @@ void CTFGameRules::Activate()
 	}
 
 	CMedievalLogic *pMedieval = dynamic_cast<CMedievalLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval" ) );
-	if ( pMedieval )
+	if ( pMedieval || tf_medieval.GetBool() )
 	{
 		m_nGameType.Set( TF_GAMETYPE_MEDIEVAL );
 		tf_gamemode_medieval.SetValue( 1 );
