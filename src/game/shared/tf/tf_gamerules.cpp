@@ -68,9 +68,84 @@
 
 #define ITEM_RESPAWN_TIME	10.0f
 
-void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue );
-void ValidateCapturesPerRound( IConVar *var, const char *pOldValue, float flOldValue );
-void ForcedHolidayChanged( IConVar *var, const char *pOldValue, float flOldValue );
+//=============================================================================
+void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
+{
+	ConVarRef cvar( var );
+	if ( cvar.IsValid() )
+	{
+	#if defined( GAME_DLL )
+		tf_halloween_zombie_mob_enabled.SetValue( cvar.GetBool() );
+	#endif
+		if( cvar.GetBool() )
+		{
+		#if defined( CLIENT_DLL )
+			C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+			if ( pLocal == nullptr )
+				return;
+
+			if ( RandomInt( 0, 100 ) <= 15 )
+			{
+				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeRare" );
+			}
+			else
+			{
+				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeCommon" );
+			}
+		#endif
+		}
+	}
+}
+
+void ForcedHolidayChanged( IConVar *var, const char *oldValue, float flOldValue )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+}
+
+void MedievalModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	ConVarRef var( pConVar );
+	bool bOldValue = flOldValue > 0;
+	if ( var.IsValid() && ( bOldValue != var.GetBool() ) )
+	{
+		Msg( "Medieval mode changes take effect after the next map change.\n" );
+	}
+}
+
+void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
+{
+#ifdef GAME_DLL
+	ConVarRef var( pConVar );
+
+	if ( var.GetInt() <= 0 )
+	{
+		// reset the flag captures being played in the current round
+		int nTeamCount = TFTeamMgr()->GetTeamCount();
+		for ( int iTeam = FIRST_GAME_TEAM; iTeam < nTeamCount; ++iTeam )
+		{
+			CTFTeam *pTeam = GetGlobalTFTeam( iTeam );
+			if ( !pTeam )
+				continue;
+
+			pTeam->SetFlagCaptures( 0 );
+		}
+	}
+#endif
+}
+
+void StopwatchChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( "stop_watch_changed" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+}
+//=============================================================================
 
 static int g_TauntCamAchievements[] =
 {
@@ -98,12 +173,6 @@ extern ConVar mp_tournament;
 ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
-ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, ""
-				 #if defined( CLIENT_DLL )
-					 , HalloweenChanged
-				 #endif
-                   );
-ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_REPLICATED, "Forced holiday, \n   Birthday = 1\n   Halloween = 2\n" //  Christmas = 3\n   Valentines = 4\n   MeetThePyro = 5\n   FullMoon=6
 					  #if defined( GAME_DLL )
 						  , ForcedHolidayChanged
@@ -124,11 +193,23 @@ ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, 
 						   #if defined( GAME_DLL )
 							   , ValidateCapturesPerRound
 						   #endif
-                             );
-
+);
 #ifdef CLIENT_DLL
 ConVar tf_particles_disable_weather( "tf_particles_disable_weather", "0", FCVAR_ARCHIVE, "Disable particles related to weather effects." );
 #endif
+
+ConVar tf_tournament_classlimit_scout( "tf_tournament_classlimit_scout", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Scouts.\n" );
+ConVar tf_tournament_classlimit_sniper( "tf_tournament_classlimit_sniper", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Snipers.\n" );
+ConVar tf_tournament_classlimit_soldier( "tf_tournament_classlimit_soldier", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Soldiers.\n" );
+ConVar tf_tournament_classlimit_demoman( "tf_tournament_classlimit_demoman", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Demomen.\n" );
+ConVar tf_tournament_classlimit_medic( "tf_tournament_classlimit_medic", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Medics.\n" );
+ConVar tf_tournament_classlimit_heavy( "tf_tournament_classlimit_heavy", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Heavies.\n" );
+ConVar tf_tournament_classlimit_pyro( "tf_tournament_classlimit_pyro", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Pyros.\n" );
+ConVar tf_tournament_classlimit_spy( "tf_tournament_classlimit_spy", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Spies.\n" );
+ConVar tf_tournament_classlimit_engineer( "tf_tournament_classlimit_engineer", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Engineers.\n" );
+ConVar tf_tournament_classchange_allowed( "tf_tournament_classchange_allowed", "1", FCVAR_REPLICATED, "Allow players to change class while the game is active?.\n" );
+ConVar tf_tournament_classchange_ready_allowed( "tf_tournament_classchange_ready_allowed", "1", FCVAR_REPLICATED, "Allow players to change class after they are READY?.\n" );
+ConVar tf_classlimit( "tf_classlimit", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Limit on how many players can be any class (i.e. tf_class_limit 2 would limit 2 players per class).\n" );
 
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
@@ -153,7 +234,7 @@ ConVar tf2v_remove_loser_disguise("tf2v_remove_loser_disguise", "0", FCVAR_NOTIF
 ConVar hide_server( "hide_server", "0", FCVAR_GAMEDLL, "Whether the server should be hidden from the master server" );
 
 // TF overrides the default value of this convar
-ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", ( IsX360() ? "15" : "30" ), FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
+ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", "30", FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
 
 ConVar mp_humans_must_join_team( "mp_humans_must_join_team", "any", FCVAR_GAMEDLL | FCVAR_REPLICATED, "Restricts human players to a single team {any, blue, red, spectator}" );
 
@@ -180,19 +261,6 @@ ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
 ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat.", true, 0, true, 1 );
 ConVar tf_ctf_bonus_time( "tf_ctf_bonus_time", "10", FCVAR_NOTIFY, "Length of team crit time for CTF capture." );
-
-ConVar tf_tournament_classlimit_scout( "tf_tournament_classlimit_scout", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Scouts.\n" );
-ConVar tf_tournament_classlimit_sniper( "tf_tournament_classlimit_sniper", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Snipers.\n" );
-ConVar tf_tournament_classlimit_soldier( "tf_tournament_classlimit_soldier", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Soldiers.\n" );
-ConVar tf_tournament_classlimit_demoman( "tf_tournament_classlimit_demoman", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Demomen.\n" );
-ConVar tf_tournament_classlimit_medic( "tf_tournament_classlimit_medic", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Medics.\n" );
-ConVar tf_tournament_classlimit_heavy( "tf_tournament_classlimit_heavy", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Heavies.\n" );
-ConVar tf_tournament_classlimit_pyro( "tf_tournament_classlimit_pyro", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Pyros.\n" );
-ConVar tf_tournament_classlimit_spy( "tf_tournament_classlimit_spy", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Spies.\n" );
-ConVar tf_tournament_classlimit_engineer( "tf_tournament_classlimit_engineer", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Engineers.\n" );
-ConVar tf_tournament_classchange_allowed( "tf_tournament_classchange_allowed", "1", FCVAR_NOTIFY, "Allow players to change class while the game is active?.\n" );
-ConVar tf_tournament_classchange_ready_allowed( "tf_tournament_classchange_ready_allowed", "1", FCVAR_NOTIFY, "Allow players to change class after they are READY?.\n" );
-ConVar tf_classlimit( "tf_classlimit", "0", FCVAR_NOTIFY, "Limit on how many players can be any class (i.e. tf_class_limit 2 would limit 2 players per class).\n" );
 
 extern ConVar tf_halloween_bot_min_player_count;
 
@@ -222,66 +290,6 @@ CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTON
 }
 #endif
 
-void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
-{
-	ConVarRef cvar( var );
-	if ( cvar.IsValid() )
-	{
-	#if defined( GAME_DLL )
-		tf_halloween_zombie_mob_enabled.SetValue( cvar.GetBool() );
-	#endif
-		if( cvar.GetBool() )
-		{
-		#if defined( CLIENT_DLL )
-			C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
-			if ( pLocal == nullptr )
-				return;
-
-			if ( RandomInt( 0, 100 ) <= 15 )
-			{
-				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeRare" );
-			}
-			else
-			{
-				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeCommon" );
-			}
-		#endif
-		}
-	}
-}
-
-void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
-{
-#ifdef GAME_DLL
-	ConVarRef var( pConVar );
-
-	if ( var.GetInt() <= 0 )
-	{
-		// reset the flag captures being played in the current round
-		int nTeamCount = TFTeamMgr()->GetTeamCount();
-		for ( int iTeam = FIRST_GAME_TEAM; iTeam < nTeamCount; ++iTeam )
-		{
-			CTFTeam *pTeam = GetGlobalTFTeam( iTeam );
-			if ( !pTeam )
-				continue;
-
-			pTeam->SetFlagCaptures( 0 );
-		}
-	}
-#endif
-}
-
-void ForcedHolidayChanged( IConVar *var, const char *oldValue, float flOldValue )
-{
-#ifdef GAME_DLL
-	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
-	if ( event )
-	{
-		gameeventmanager->FireEvent( event );
-	}
-#endif
-}
-
 static bool BIsCvarIndicatingHolidayIsActive( int iCvarValue, /*EHoliday*/ int eHoliday )
 {
 	if ( iCvarValue == 0 )
@@ -300,16 +308,14 @@ static bool BIsCvarIndicatingHolidayIsActive( int iCvarValue, /*EHoliday*/ int e
 			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
 		case kHoliday_HalloweenOrFullMoonOrValentines:
 			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_ValentinesDay || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
-		default:
-			return iCvarValue == eHoliday;
 	}
 
-	return false;
+	return iCvarValue == eHoliday;
 }
 
 bool TF_IsHolidayActive( /*EHoliday*/ int eHoliday )
 {
-	if ( IsX360() || tf_force_holidays_off.GetBool() )
+	if ( tf_force_holidays_off.GetBool() )
 		return false;
 
 	if ( BIsCvarIndicatingHolidayIsActive( tf_forced_holiday.GetInt(), eHoliday ) )
@@ -330,10 +336,9 @@ bool TF_IsHolidayActive( /*EHoliday*/ int eHoliday )
 			if ( TFGameRules()->IsHolidayMap( kHoliday_FullMoon ) )
 				return true;
 		}
+
 		if ( TFGameRules()->IsHolidayMap( eHoliday ) )
-		{
 			return true;
-		}
 	}
 
 	return UTIL_IsHolidayActive( eHoliday );
@@ -1358,6 +1363,8 @@ void CTFGameRules::Activate()
 	CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 	if ( pArena )
 	{
+		m_hArenaLogic = pArena;
+
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
 	/*
 		// VSH maps use arena logic, except with the map prefix changed.
@@ -1423,7 +1430,7 @@ void CTFGameRules::Activate()
 		return;
 	}
 
-	if ( g_hControlPointMasters.Count() )
+	if ( g_hControlPointMasters.Count() && m_nGameType != TF_GAMETYPE_ARENA )
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
 		tf_gamemode_cp.SetValue( 1 );
