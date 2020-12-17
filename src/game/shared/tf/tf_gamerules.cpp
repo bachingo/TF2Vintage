@@ -150,6 +150,8 @@ ConVar tf2v_console_grenadelauncher_magazine("tf2v_console_grenadelauncher_magaz
 ConVar tf2v_remove_loser_disguise("tf2v_remove_loser_disguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Forces spies on a losing team to undisguise.", true, 0, true, 1 );
 
 #ifdef GAME_DLL
+ConVar hide_server( "hide_server", "0", FCVAR_GAMEDLL, "Whether the server should be hidden from the master server" );
+
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", ( IsX360() ? "15" : "30" ), FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
 
@@ -164,6 +166,7 @@ ConVar tf_gamemode_cp( "tf_gamemode_cp", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | 
 ConVar tf_gamemode_ctf( "tf_gamemode_ctf", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_sd( "tf_gamemode_sd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_rd( "tf_gamemode_rd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_tc( "tf_gamemode_tc", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_payload( "tf_gamemode_payload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_plr( "tf_gamemode_plr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_mvm( "tf_gamemode_mvm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
@@ -1316,7 +1319,7 @@ void CTFGameRules::Activate()
 	tf_gamemode_vsh.SetValue( 0 );
 	tf_gamemode_dr.SetValue( 0 );
 	tf_gamemode_pd.SetValue( 0 );
-
+	tf_gamemode_tc.SetValue( 0 );
 
 	TeamplayRoundBasedRules()->SetMultipleTrains( false );
 
@@ -1329,6 +1332,11 @@ void CTFGameRules::Activate()
 	m_hRedBotRoster = NULL;
 
 	m_nMapHolidayType.Set( kHoliday_None );
+
+	if ( !Q_strncmp( STRING( gpGlobals->mapname ), "tc_", 3 )  )
+	{
+		tf_gamemode_tc.SetValue( 1 );
+	}
 
 	CMedievalLogic *pMedieval = dynamic_cast<CMedievalLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval" ) );
 	if ( pMedieval )
@@ -1452,6 +1460,11 @@ void CTFGameRules::Activate()
 	}
 
 	CreateSoldierStatue();
+
+	if ( IsInTraining() || TheTFBots().IsInOfflinePractice() || IsInItemTestingMode() )
+	{
+		hide_server.SetValue( true );
+	}
 }
 
 void CTFGameRules::OnNavMeshLoad( void )
