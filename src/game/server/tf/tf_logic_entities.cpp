@@ -6,7 +6,7 @@
 
 
 BEGIN_DATADESC( CArenaLogic )
-	DEFINE_KEYFIELD( m_iUnlockPoint, FIELD_INTEGER, "unlock_point" ),
+	DEFINE_KEYFIELD( m_flTimeToEnableCapPoint, FIELD_FLOAT, "CapEnableDelay" ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
 
@@ -68,18 +68,6 @@ LINK_ENTITY_TO_CLASS( tf_logic_holiday, CTFHolidayEntity );
 //=============================================================================
 // Arena Logic
 //=============================================================================
-CArenaLogic::CArenaLogic()
-{
-	m_iUnlockPoint = 60;
-	// If we're VSH mode, unlock time is scaled to player numbers.
-	if ( TFGameRules()->IsInVSHMode() )
-	{
-		CUtlVector<CTFPlayer *> pListPlayers;
-		int iPlayerScale = ( pListPlayers.Count() - 1 ); // Amount of active players, minus the boss player.
-		m_iUnlockPoint = 6 * iPlayerScale; // Unlocks at 6 * player count, in seconds.
-	}
-	m_bCapUnlocked = false;
-}
 
 void CArenaLogic::Spawn( void )
 {
@@ -88,7 +76,7 @@ void CArenaLogic::Spawn( void )
 	//SetNextThink( gpGlobals->curtime );
 }
 
-void CArenaLogic::FireOnCapEnabled( void )
+void CArenaLogic::OnCapEnabled( void )
 {
 	if ( m_bCapUnlocked == false )
 	{
@@ -122,7 +110,7 @@ void CArenaLogic::InputRoundActivate( inputdata_t &inputdata )
 		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
 
 		variant_t sVariant;
-		sVariant.SetInt( m_iUnlockPoint );
+		sVariant.SetInt( m_flTimeToEnableCapPoint );
 		pPoint->AcceptInput( "SetLocked", NULL, NULL, sVariant, 0 );
 		g_EventQueue.AddEvent( pPoint, "SetUnlockTime", sVariant, 0.1, NULL, NULL );
 	}

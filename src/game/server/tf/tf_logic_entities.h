@@ -12,16 +12,14 @@ public:
 	DECLARE_CLASS( CArenaLogic, CPointEntity );
 	DECLARE_DATADESC();
 
-	CArenaLogic();
-
 	virtual void	Spawn( void );
 	virtual int		UpdateTransmitState() { return SetTransmitState( FL_EDICT_ALWAYS ); }
-	void			FireOnCapEnabled( void );
+	void			OnCapEnabled( void );
 	//void			ArenaLogicThink( void );
 
 	void			InputRoundActivate( inputdata_t &inputdata );
 
-	int			m_iUnlockPoint;
+	float		m_flTimeToEnableCapPoint;
 	bool		m_bCapUnlocked;
 	COutputEvent m_OnArenaRoundStart;
 	COutputEvent m_OnCapEnabled;
