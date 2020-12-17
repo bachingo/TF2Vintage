@@ -85,7 +85,7 @@ public:
 			pDefinition ->m_iAttributeClass = name;
 		}
 
-		if ( !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+		if ( !FStrEq( STRING( name ), STRING( m_iName ) ) )
 			return true;
 
 		if ( m_pOutProviders )
@@ -123,7 +123,7 @@ public:
 			pDefinition->m_iAttributeClass = name;
 		}
 
-		if ( !FStrEq( STRING( name ), pDefinition->GetClassName() ) )
+		if ( !FStrEq( STRING( name ), STRING( m_iName ) ) )
 			return true;
 
 		if ( m_pOutProviders )
@@ -240,8 +240,6 @@ void CAttributeManager::AddReceiver( CBaseEntity *pEntity )
 //-----------------------------------------------------------------------------
 void CAttributeManager::RemoveReceiver( CBaseEntity *pEntity )
 {
-	Assert( m_AttributeReceivers.Find( pEntity ) != m_AttributeReceivers.InvalidIndex() );
-
 	m_AttributeReceivers.FindAndFastRemove( pEntity );
 }
 
@@ -374,6 +372,13 @@ void CAttributeManager::InitializeAttributes( CBaseEntity *pEntity )
 float CAttributeManager::ApplyAttributeFloatWrapper( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, ProviderVector *pOutProviders )
 {
 	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_ATTRIBUTES );
+
+	const int iGlobalCacheVersion = GetGlobalCacheVersion();
+	if ( m_iCacheVersion != iGlobalCacheVersion )
+	{
+		ClearCache();
+		m_iCacheVersion = iGlobalCacheVersion;
+	}
 
 	if ( pOutProviders == NULL )
 	{
