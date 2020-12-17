@@ -349,7 +349,7 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 	}
 
 
-	for ( KeyValues *pSubData = pDefinition->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	FOR_EACH_SUBKEY( pDefinition, pSubData )
 	{
 		if ( !V_stricmp( pSubData->GetName(), "capabilities" ) )
 		{
@@ -361,7 +361,7 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 		}
 		else if ( !V_stricmp( pSubData->GetName(), "model_player_per_class" ) )
 		{
-			for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
+			FOR_EACH_SUBKEY( pSubData, pClassData )
 			{
 				const char *pszClass = pClassData->GetName();
 
@@ -388,7 +388,7 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 		}
 		else if ( !V_stricmp( pSubData->GetName(), "used_by_classes" ) )
 		{
-			for ( KeyValues *pClassData = pSubData->GetFirstSubKey(); pClassData != NULL; pClassData = pClassData->GetNextKey() )
+			FOR_EACH_SUBKEY( pSubData, pClassData )
 			{
 				const char *pszClass = pClassData->GetName();
 				int iClass = UTIL_StringFieldToInt( pszClass, g_aPlayerClassNames_NonLocalized, TF_CLASS_COUNT_ALL );
@@ -410,7 +410,7 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 		}
 		else if ( !V_stricmp( pSubData->GetName(), "attributes" ) )
 		{
-			for ( KeyValues *pAttribData = pSubData->GetFirstTrueSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextTrueSubKey() )
+			FOR_EACH_TRUE_SUBKEY( pSubData, pAttribData )
 			{
 				static_attrib_t attribute;
 				if ( !attribute.BInitFromKV_MultiLine( pAttribData ) )
@@ -421,7 +421,7 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 		}
 		else if ( !V_stricmp( pSubData->GetName(), "static_attrs" ) )
 		{
-			for ( KeyValues *pAttribData = pSubData->GetFirstSubKey(); pAttribData != NULL; pAttribData = pAttribData->GetNextKey() )
+			FOR_EACH_SUBKEY( pSubData, pAttribData )
 			{
 				static_attrib_t attribute;
 				if ( !attribute.BInitFromKV_SingleLine( pAttribData ) )
@@ -469,7 +469,7 @@ void CEconItemDefinition::ParseVisuals( KeyValues *pKVData, int iIndex )
 {
 	PerTeamVisuals_t *pVisuals = new PerTeamVisuals_t;
 
-	for ( KeyValues *pVisualData = pKVData->GetFirstSubKey(); pVisualData != NULL; pVisualData = pVisualData->GetNextKey() )
+	FOR_EACH_SUBKEY( pKVData, pVisualData )
 	{
 		if ( !V_stricmp( pVisualData->GetName(), "use_visualsblock_as_base" ) )
 		{
@@ -490,11 +490,11 @@ void CEconItemDefinition::ParseVisuals( KeyValues *pKVData, int iIndex )
 		}
 		else if ( !V_stricmp( pVisualData->GetName(), "attached_models" ) )
 		{
-			for (KeyValues *pAttachment = pVisualData->GetFirstSubKey(); pAttachment != NULL; pAttachment = pAttachment->GetNextKey())
+			FOR_EACH_SUBKEY( pVisualData, pAttachData )
 			{
 				AttachedModel_t attached_model;
-				attached_model.model_display_flags = pAttachment->GetInt( "model_display_flags", AM_VIEWMODEL|AM_WORLDMODEL );
-				V_strncpy( attached_model.model, pAttachment->GetString( "model" ), sizeof( attached_model.model ) );
+				attached_model.model_display_flags = pAttachData->GetInt( "model_display_flags", AM_VIEWMODEL|AM_WORLDMODEL );
+				V_strncpy( attached_model.model, pAttachData->GetString( "model" ), sizeof( attached_model.model ) );
 
 				pVisuals->attached_models.AddToTail( attached_model );
 			}
@@ -515,10 +515,10 @@ void CEconItemDefinition::ParseVisuals( KeyValues *pKVData, int iIndex )
 		}
 		else if ( !V_stricmp( pVisualData->GetName(), "animation_replacement" ) )
 		{
-			for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
+			FOR_EACH_SUBKEY( pVisualData, pAnimData )
 			{
-				int key = ActivityList_IndexForName( pKeyData->GetName() );
-				int value = ActivityList_IndexForName( pKeyData->GetString() );
+				int key = ActivityList_IndexForName( pAnimData->GetName() );
+				int value = ActivityList_IndexForName( pAnimData->GetString() );
 
 				if ( key != kActivityLookup_Missing && value != kActivityLookup_Missing )
 				{
@@ -528,15 +528,15 @@ void CEconItemDefinition::ParseVisuals( KeyValues *pKVData, int iIndex )
 		}
 		else if ( !V_stricmp( pVisualData->GetName(), "playback_activity" ) )
 		{
-			for ( KeyValues *pKeyData = pVisualData->GetFirstSubKey(); pKeyData != NULL; pKeyData = pKeyData->GetNextKey() )
+			FOR_EACH_SUBKEY( pVisualData, pActivityData )
 			{
-				int iPlaybackType = UTIL_StringFieldToInt( pKeyData->GetName(), g_WearableAnimTypeStrings, NUM_WEARABLEANIM_TYPES );
+				int iPlaybackType = UTIL_StringFieldToInt( pActivityData->GetName(), g_WearableAnimTypeStrings, NUM_WEARABLEANIM_TYPES );
 				if ( iPlaybackType != -1 )
 				{
 					activity_on_wearable_t activity;
 					activity.playback = (wearableanimplayback_t)iPlaybackType;
 					activity.activity = kActivityLookup_Unknown;
-					activity.activity_name = pKeyData->GetString();
+					activity.activity_name = pActivityData->GetString();
 
 					pVisuals->playback_activity.AddToTail( activity );
 				}
@@ -564,7 +564,7 @@ void CEconItemDefinition::ParseVisuals( KeyValues *pKVData, int iIndex )
 		}
 		else if ( !V_stricmp( pVisualData->GetName(), "styles" ) )
 		{
-			for (KeyValues *pStyleData = pVisualData->GetFirstSubKey(); pStyleData != NULL; pStyleData = pStyleData->GetNextKey())
+			FOR_EACH_SUBKEY( pVisualData, pStyleData )
 			{
 				ItemStyle_t *style = new ItemStyle_t;
 
@@ -1041,41 +1041,41 @@ void CEconItemSchema::Precache( void )
 	}
 }
 
-void CEconItemSchema::ParseSchema( KeyValues *pKeyValuesData )
+void CEconItemSchema::ParseSchema( KeyValues *pKVData )
 {
-	m_pSchema = pKeyValuesData->MakeCopy();
+	m_pSchema = pKVData->MakeCopy();
 
-	KeyValues *pPrefabs = pKeyValuesData->FindKey( "prefabs" );
+	KeyValues *pPrefabs = pKVData->FindKey( "prefabs" );
 	if ( pPrefabs )
 	{
 		ParsePrefabs( pPrefabs );
 	}
 
-	KeyValues *pGameInfo = pKeyValuesData->FindKey( "game_info" );
+	KeyValues *pGameInfo = pKVData->FindKey( "game_info" );
 	if ( pGameInfo )
 	{
 		ParseGameInfo( pGameInfo );
 	}
 
-	KeyValues *pQualities = pKeyValuesData->FindKey( "qualities" );
+	KeyValues *pQualities = pKVData->FindKey( "qualities" );
 	if ( pQualities )
 	{
 		ParseQualities( pQualities );
 	}
 
-	KeyValues *pColors = pKeyValuesData->FindKey( "colors" );
+	KeyValues *pColors = pKVData->FindKey( "colors" );
 	if ( pColors )
 	{
 		ParseColors( pColors );
 	}
 
-	KeyValues *pAttributes = pKeyValuesData->FindKey( "attributes" );
+	KeyValues *pAttributes = pKVData->FindKey( "attributes" );
 	if ( pAttributes )
 	{
 		ParseAttributes( pAttributes );
 	}
 
-	KeyValues *pItems = pKeyValuesData->FindKey( "items" );
+	KeyValues *pItems = pKVData->FindKey( "items" );
 	if ( pItems )
 	{
 		ParseItems( pItems );
@@ -1086,35 +1086,35 @@ void CEconItemSchema::ParseSchema( KeyValues *pKeyValuesData )
 	// None of these are necessary but they help in organizing the item schema.
 
 	// Stockweapons is just for cataloging stock content.
-	KeyValues *pStockItems = pKeyValuesData->FindKey( "stockitems" );
+	KeyValues *pStockItems = pKVData->FindKey( "stockitems" );
 	if ( pStockItems )
 	{
 		ParseItems( pStockItems );
 	}
 
 	// Base Unlocks catalogs the standard unlock weapons.
-	KeyValues *pUnlockItems = pKeyValuesData->FindKey( "unlockitems" );
+	KeyValues *pUnlockItems = pKVData->FindKey( "unlockitems" );
 	if ( pUnlockItems )
 	{
 		ParseItems( pUnlockItems );
 	}
 
 	// Stock Cosmetics are for the typical cosmetics.
-	KeyValues *pCosmeticItems = pKeyValuesData->FindKey( "cosmeticitems" );
+	KeyValues *pCosmeticItems = pKVData->FindKey( "cosmeticitems" );
 	if ( pCosmeticItems )
 	{
 		ParseItems( pCosmeticItems );
 	}
 
 	// Reskins is for reskin weapons.
-	KeyValues *pReskinItems = pKeyValuesData->FindKey( "reskinitems" );
+	KeyValues *pReskinItems = pKVData->FindKey( "reskinitems" );
 	if ( pReskinItems )
 	{
 		ParseItems( pReskinItems );
 	}
 
 	// Special is for special items, like medals and zombies.
-	KeyValues *pSpecialItems = pKeyValuesData->FindKey( "specialitems" );
+	KeyValues *pSpecialItems = pKVData->FindKey( "specialitems" );
 	if ( pSpecialItems )
 	{
 		ParseItems( pSpecialItems );
@@ -1122,17 +1122,17 @@ void CEconItemSchema::ParseSchema( KeyValues *pKeyValuesData )
 #endif
 }
 
-void CEconItemSchema::ParseGameInfo( KeyValues *pKeyValuesData )
+void CEconItemSchema::ParseGameInfo( KeyValues *pKVData )
 {
-	for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	FOR_EACH_SUBKEY( pKVData, pSubData )
 	{
 		m_GameInfo.Insert( pSubData->GetName(), pSubData->GetFloat() );
 	}
 }
 
-void CEconItemSchema::ParseQualities( KeyValues *pKeyValuesData )
+void CEconItemSchema::ParseQualities( KeyValues *pKVData )
 {
-	for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	FOR_EACH_SUBKEY( pKVData, pSubData )
 	{
 		EconQuality Quality;
 		GET_INT( ( &Quality ), pSubData, value );
@@ -1140,9 +1140,9 @@ void CEconItemSchema::ParseQualities( KeyValues *pKeyValuesData )
 	}
 }
 
-void CEconItemSchema::ParseColors( KeyValues *pKeyValuesData )
+void CEconItemSchema::ParseColors( KeyValues *pKVData )
 {
-	for ( KeyValues *pSubData = pKeyValuesData->GetFirstSubKey(); pSubData != NULL; pSubData = pSubData->GetNextKey() )
+	FOR_EACH_SUBKEY( pKVData, pSubData )
 	{
 		EconColor ColorDesc;
 		GET_STRING( ( &ColorDesc ), pSubData, color_name );
@@ -1150,9 +1150,9 @@ void CEconItemSchema::ParseColors( KeyValues *pKeyValuesData )
 	}
 }
 
-void CEconItemSchema::ParsePrefabs( KeyValues *pKeyValuesData )
+void CEconItemSchema::ParsePrefabs( KeyValues *pKVData )
 {
-	for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
+	FOR_EACH_TRUE_SUBKEY( pKVData, pSubData )
 	{
 		if ( GetItemSchema()->m_PrefabsValues.IsValidIndex( GetItemSchema()->m_PrefabsValues.Find( pSubData->GetName() ) ) )
 		{
@@ -1165,9 +1165,9 @@ void CEconItemSchema::ParsePrefabs( KeyValues *pKeyValuesData )
 	}
 }
 
-void CEconItemSchema::ParseItems( KeyValues *pKeyValuesData )
+void CEconItemSchema::ParseItems( KeyValues *pKVData )
 {
-	for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
+	FOR_EACH_TRUE_SUBKEY( pKVData, pSubData )
 	{
 		// Skip over default item, not sure why it's there.
 		if ( V_stricmp( pSubData->GetName(), "default" ) == 0 )
@@ -1185,9 +1185,9 @@ void CEconItemSchema::ParseItems( KeyValues *pKeyValuesData )
 	}
 }
 
-void CEconItemSchema::ParseAttributes( KeyValues *pKeyValuesData )
+void CEconItemSchema::ParseAttributes( KeyValues *pKVData )
 {
-	for ( KeyValues *pSubData = pKeyValuesData->GetFirstTrueSubKey(); pSubData != NULL; pSubData = pSubData->GetNextTrueSubKey() )
+	FOR_EACH_TRUE_SUBKEY( pKVData, pSubData )
 	{
 		CEconAttributeDefinition *pAttribute = new CEconAttributeDefinition;
 		pAttribute->index = V_atoi( pSubData->GetName() );
