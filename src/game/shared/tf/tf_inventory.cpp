@@ -10,7 +10,7 @@
 #include "tf_shareddefs.h"
 #include "tf_inventory.h"
 #include "econ_item_system.h"
-
+#include "utlbuffer.h"
 #ifdef CLIENT_DLL
 
 #include "tier0/icommandline.h"

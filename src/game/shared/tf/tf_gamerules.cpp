@@ -1345,6 +1345,11 @@ void CTFGameRules::Activate()
 		tf_gamemode_tc.SetValue( 1 );
 	}
 
+	if ( !Q_strncmp( STRING( gpGlobals->mapname ), "sd_", 3 )  )
+	{
+		tf_gamemode_sd.SetValue( 1 );
+	}
+
 	CMedievalLogic *pMedieval = dynamic_cast<CMedievalLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval" ) );
 	if ( pMedieval || tf_medieval.GetBool() )
 	{

@@ -144,35 +144,32 @@ CEconItemSchema *GetItemSchema()
 
 #define GET_STRING(copyto, from, name)													\
 		if (from->GetString(#name, NULL))												\
-			copyto->name = from->GetString(#name)
+			(copyto)->name = from->GetString(#name)
 
 #define GET_STRING_DEFAULT(copyto, from, name, defaultstring) \
-		copyto->name = from->GetString(#name, #defaultstring)
+		(copyto)->name = from->GetString(#name, #defaultstring)
 
 #define GET_BOOL(copyto, from, name) \
-		copyto->name = from->GetBool(#name, copyto->name)
+		(copyto)->name = from->GetBool(#name, (copyto)->name)
 
 #define GET_FLOAT(copyto, from, name) \
-		copyto->name = from->GetFloat(#name, copyto->name)
+		(copyto)->name = from->GetFloat(#name, (copyto)->name)
 
 #define GET_INT(copyto, from, name) \
-		copyto->name = from->GetInt(#name, copyto->name)
-
-#define GET_STRING_CONVERT(copyto, from, name) \
-		if (from->GetString(#name, NULL))
+		(copyto)->name = from->GetInt(#name, (copyto)->name)
 
 #define FIND_ELEMENT(map, key, val)						\
-		unsigned int index = map.Find(key);				\
+		unsigned int index = map.Find(key);			\
 		if (index != map.InvalidIndex())				\
 			val = map.Element(index)				
 
 #define FIND_ELEMENT_STRING(map, key, val)						\
-		unsigned int index = map.Find(key);						\
+		unsigned int index = map.Find(key);					\
 		if (index != map.InvalidIndex())						\
 			Q_snprintf(val, sizeof(val), map.Element(index))
 
 #define IF_ELEMENT_FOUND(map, key)						\
-		unsigned int index = map.Find(key);				\
+		unsigned int index = map.Find(key);			\
 		if (index != map.InvalidIndex())			
 
 #define GET_VALUES_FAST_BOOL(dict, keys)\
@@ -830,7 +827,7 @@ bool CEconItemSchema::Init( void )
 		ActivityList_RegisterSharedActivities();
 
 		KeyValuesAD schema("KVDataFile");
-		if ( !schema->LoadFromFile( g_pFullFileSystem, items_game ) )
+		if ( !schema->LoadFromFile( filesystem, items_game ) )
 			return false;
 
 		InitAttributeTypes();
@@ -1135,7 +1132,7 @@ void CEconItemSchema::ParseQualities( KeyValues *pKVData )
 	FOR_EACH_SUBKEY( pKVData, pSubData )
 	{
 		EconQuality Quality;
-		GET_INT( ( &Quality ), pSubData, value );
+		GET_INT( &Quality , pSubData, value );
 		m_Qualities.Insert( pSubData->GetName(), Quality );
 	}
 }
@@ -1145,7 +1142,7 @@ void CEconItemSchema::ParseColors( KeyValues *pKVData )
 	FOR_EACH_SUBKEY( pKVData, pSubData )
 	{
 		EconColor ColorDesc;
-		GET_STRING( ( &ColorDesc ), pSubData, color_name );
+		GET_STRING( &ColorDesc, pSubData, color_name );
 		m_Colors.Insert( pSubData->GetName(), ColorDesc );
 	}
 }

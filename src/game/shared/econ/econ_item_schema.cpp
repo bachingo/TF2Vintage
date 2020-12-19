@@ -357,11 +357,11 @@ void EconPerTeamVisuals::operator=( EconPerTeamVisuals const &src )
 	vm_bodygroup_state_override = src.vm_bodygroup_state_override;
 	wm_bodygroup_override = src.wm_bodygroup_override;
 	wm_bodygroup_state_override = src.wm_bodygroup_state_override;
+	custom_particlesystem = src.custom_particlesystem;
+	muzzle_flash = src.muzzle_flash;
+	tracer_effect = src.tracer_effect;
+	material_override = src.material_override;
 
-	Q_memcpy( &custom_particlesystem, src.custom_particlesystem, sizeof(char *) );
-	Q_memcpy( &muzzle_flash, src.muzzle_flash, sizeof(char *) );
-	Q_memcpy( &tracer_effect, src.tracer_effect, sizeof(char *) );
-	Q_memcpy( &material_override, src.material_override, sizeof(char *) );
 	Q_memcpy( &aCustomWeaponSounds, src.aCustomWeaponSounds, sizeof( aCustomWeaponSounds ) );
 	Q_memcpy( &aWeaponSounds, src.aWeaponSounds, sizeof( aWeaponSounds ) );
 }
