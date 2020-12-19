@@ -535,6 +535,24 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageTyoe
 	return flDamage;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CTFWeaponBaseMelee::GetShootSound( int iIndex )
+{
+	if ( iIndex == MELEE_HIT )
+	{
+		if ( HasItemDefinition() )
+		{
+			char const *pszSound = GetItem()->GetCustomSound( 1 );
+			if ( pszSound && pszSound[0] )
+				return pszSound;
+		}
+	}
+
+	return BaseClass::GetShootSound( iIndex );
+}
+
 void CTFWeaponBaseMelee::OnEntityHit( CBaseEntity *pEntity )
 {
 #ifdef GAME_DLL
