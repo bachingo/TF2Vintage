@@ -3,8 +3,8 @@
 #include "econ_item_schema.h"
 #include "attribute_manager.h"
 
-#ifdef CLIENT_DLL
-#include "prediction.h"
+#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
+#include "tf_gamerules.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -187,8 +187,11 @@ void CAttributeManager::OnDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 int	CAttributeManager::GetGlobalCacheVersion() const
 {
-	//return TFGameRules() ? TFGameRules()->GetGlobalAttributeCacheVersion() : 0;
+#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
+	return TFGameRules() ? TFGameRules()->GetGlobalAttributeCacheVersion() : 0;
+#else
 	return 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------
