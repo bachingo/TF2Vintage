@@ -58,7 +58,7 @@ public:
 	const char*			Render( char( &buf )[k_ERTimeRenderBufSize] ) const;
 
 	static bool			BIsLeapYear( int nYear );
-	static int			FindTimeBoundaryCrossings( RTime32 nTime1, RTime32 nTime2, bool *pbWeekChanged );
+	static ETimeUnit	FindTimeBoundaryCrossings( RTime32 nTime1, RTime32 nTime2, bool *pbWeekChanged );
 	static char*		PchTimeCur() { return sm_rgchLocalTimeCur; }
 	static char*		PchDateCur() { return sm_rgchLocalDateCur; }
 	static const char*	Render( RTime32 nTime, char( &buf )[k_ERTimeRenderBufSize] );

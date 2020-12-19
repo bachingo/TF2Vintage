@@ -149,7 +149,7 @@ bool CRTime::BIsLeapYear( int nYear )
 //-----------------------------------------------------------------------------
 // Purpose: Return a unit length of time which 2 times have crossed (year, month, day etc.)
 //-----------------------------------------------------------------------------
-int CRTime::FindTimeBoundaryCrossings( RTime32 nTime1, RTime32 nTime2, bool *pWeekChanged )
+ETimeUnit CRTime::FindTimeBoundaryCrossings( RTime32 nTime1, RTime32 nTime2, bool *pWeekChanged )
 {
 	time_t time1 = nTime1;
 	time_t time2 = nTime2;
@@ -157,11 +157,11 @@ int CRTime::FindTimeBoundaryCrossings( RTime32 nTime1, RTime32 nTime2, bool *pWe
 
 	struct tm *pTime1 = Plat_localtime( &time1, &tmp );
 	if ( !pTime1 )
-		return 8;
+		return ETimeUnit::Forever;
 
 	struct tm *pTime2 = Plat_localtime( &time2, &tmp );
 	if ( !pTime2 )
-		return 8;
+		return ETimeUnit::Forever;
 
 	*pWeekChanged = false;
 
@@ -191,33 +191,33 @@ int CRTime::FindTimeBoundaryCrossings( RTime32 nTime1, RTime32 nTime2, bool *pWe
 	// so travel from largest to shortest
 
 	if ( pTime1->tm_year != pTime2->tm_year )
-		return 7;
+		return ETimeUnit::Year;
 
 	if ( pTime1->tm_mon != pTime2->tm_mon )
-		return 6;
+		return ETimeUnit::Month;
 
 	// If the week changed, return that now
 	if ( *pWeekChanged )
-		return 5;
+		return ETimeUnit::Week;
 
 	if ( pTime1->tm_yday != pTime2->tm_yday )
-		return 4;
+		return ETimeUnit::Day;
 
 	if ( pTime1->tm_hour != pTime2->tm_hour )
-		return 3;
+		return ETimeUnit::Hour;
 
 	// If DST changed but somehow hours didn't, check that here
 	if ( pTime1->tm_isdst != pTime2->tm_isdst )
-		return 3;
+		return ETimeUnit::Hour;
 
 	if ( pTime1->tm_min != pTime2->tm_min )
-		return 2;
+		return ETimeUnit::Minute;
 
 	if ( pTime1->tm_sec != pTime2->tm_sec )
-		return 1;
+		return ETimeUnit::Second;
 
 	// Nothing changed
-	return 0;
+	return ETimeUnit::None;
 }
 
 //-----------------------------------------------------------------------------
@@ -525,7 +525,7 @@ const char *CRTime::RTime32ToRFC3339UTCString( RTime32 nTime, char( &buf )[k_ERT
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Given a time, return "YYYY-MM-DD hh:mm:ss"
+// Purpose: Given a time, return "YYYY-MM-DD (hh:mm:ss)"
 //-----------------------------------------------------------------------------
 const char *CRTime::RTime32ToString( RTime32 nTime, char( &buf )[k_ERTimeRenderBufSize], bool bNoPunct, bool bNoTime )
 {
