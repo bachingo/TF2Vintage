@@ -133,4 +133,22 @@ private:
 	int m_nAllowHaunting;
 };
 
+class CLogicOnHoliday : public CLogicalEntity
+{
+public:
+	DECLARE_CLASS( CLogicOnHoliday, CLogicalEntity );
+	DECLARE_DATADESC();
+
+	void InputFire( inputdata_t & );
+
+private:
+	COutputEvent m_IsAprilFools;
+	COutputEvent m_IsFullMoon;
+	COutputEvent m_IsHalloween;
+	COutputEvent m_IsNothing;
+	COutputEvent m_IsSmissmas;
+	COutputEvent m_IsTFBirthday;
+	COutputEvent m_IsValentines;
+};
+
 #endif // TF_LOGIC_ENTITIES_H

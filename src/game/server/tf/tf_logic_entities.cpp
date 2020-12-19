@@ -57,6 +57,17 @@ BEGIN_DATADESC( CTFHolidayEntity )
 	DEFINE_INPUTFUNC( FIELD_VOID, "Halloween2013TeleportToHell", InputHalloweenTeleportToHell ),
 END_DATADESC()
 
+BEGIN_DATADESC( CLogicOnHoliday )
+	DEFINE_INPUTFUNC( FIELD_VOID, "Fire", InputFire ),
+	DEFINE_OUTPUT( m_IsAprilFools, "IsAprilFools" ),
+	DEFINE_OUTPUT( m_IsFullMoon, "IsFullMoon" ),
+	DEFINE_OUTPUT( m_IsHalloween, "IsHalloween" ),
+	DEFINE_OUTPUT( m_IsSmissmas, "IsSmissmas" ),
+	DEFINE_OUTPUT( m_IsTFBirthday, "IsTFBirthday" ),
+	DEFINE_OUTPUT( m_IsValentines, "IsValentines" ),
+	DEFINE_OUTPUT( m_IsNothing, "IsNothing" ),
+END_DATADESC()
+
 LINK_ENTITY_TO_CLASS( tf_logic_arena, CArenaLogic );
 LINK_ENTITY_TO_CLASS( tf_logic_koth, CKothLogic );
 LINK_ENTITY_TO_CLASS( tf_logic_cp_timer, CCPTimerLogic );
@@ -64,6 +75,7 @@ LINK_ENTITY_TO_CLASS( tf_logic_hybrid_ctf_cp, CHybridMap_CTF_CP );
 LINK_ENTITY_TO_CLASS( tf_logic_multiple_escort, CMultipleEscortLogic );
 LINK_ENTITY_TO_CLASS( tf_logic_medieval, CMedievalLogic );
 LINK_ENTITY_TO_CLASS( tf_logic_holiday, CTFHolidayEntity );
+LINK_ENTITY_TO_CLASS( tf_logic_on_holiday, CLogicOnHoliday );
 
 //=============================================================================
 // Arena Logic
@@ -384,4 +396,34 @@ void CTFHolidayEntity::InputHalloweenSetUsingSpells( inputdata_t &inputdata )
 
 void CTFHolidayEntity::InputHalloweenTeleportToHell( inputdata_t &inputdata )
 {
+}
+
+void CLogicOnHoliday::InputFire( inputdata_t & )
+{
+	bool isAprilFools = TF_IsHolidayActive( kHoliday_AprilFools );
+	bool isFullMoon = TF_IsHolidayActive( kHoliday_FullMoon );
+	bool isHalloween = TF_IsHolidayActive( kHoliday_Halloween );
+	bool isSmissmas = TF_IsHolidayActive( kHoliday_Christmas );
+	bool isTFBirthday = TF_IsHolidayActive( kHoliday_TF2Birthday );
+	bool isValentines = TF_IsHolidayActive( kHoliday_ValentinesDay );
+	bool isNothing = !(isTFBirthday || isHalloween || isSmissmas || isValentines || isFullMoon || isAprilFools);
+
+	if ( isNothing )
+	{ 
+		m_IsNothing.FireOutput( this, this );
+		return;
+	}
+
+	if ( isAprilFools )
+		m_IsAprilFools.FireOutput( this, this );
+	if ( isFullMoon )
+		m_IsFullMoon.FireOutput( this, this );
+	if ( isHalloween )
+		m_IsHalloween.FireOutput( this, this );
+	if ( isSmissmas )
+		m_IsSmissmas.FireOutput( this, this );
+	if ( isTFBirthday )
+		m_IsTFBirthday.FireOutput( this, this );
+	if ( isValentines )
+		m_IsValentines.FireOutput( this, this );
 }
