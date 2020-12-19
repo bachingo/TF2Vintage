@@ -538,7 +538,7 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iDamageTyoe
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-char const *CTFWeaponBaseMelee::GetShootSound( int iIndex )
+char const *CTFWeaponBaseMelee::GetShootSound( int iIndex ) const
 {
 	if ( iIndex == MELEE_HIT )
 	{

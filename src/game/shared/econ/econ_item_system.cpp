@@ -620,9 +620,9 @@ bool CEconAttributeDefinition::LoadFromKV( KeyValues *pDefinition )
 {
 	definition = pDefinition;
 
-	V_strcpy_safe( name, pDefinition->GetString( "name", "( unnamed )" ) );
-	V_strcpy_safe( attribute_class, pDefinition->GetString( "attribute_class" ) );
-	V_strcpy_safe( description_string, pDefinition->GetString( "description_string" ) );
+	name = pDefinition->GetString( "name", "( unnamed )" );
+	attribute_class = pDefinition->GetString( "attribute_class" );
+	description_string = pDefinition->GetString( "description_string" );
 
 	string_attribute = ( V_stricmp( pDefinition->GetString( "attribute_type" ), "string" ) == 0 );
 

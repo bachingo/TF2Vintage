@@ -12,9 +12,7 @@
 #include "econ_item_system.h"
 #include "utlbuffer.h"
 #ifdef CLIENT_DLL
-
 #include "tier0/icommandline.h"
-
 #endif
 
 static CTFInventory g_TFInventory;
@@ -67,7 +65,7 @@ bool CTFInventory::Init( void )
 
 		if ( pItemDef->item_slot == -1 )
 			continue;
-		
+
 		// Add it to each class that uses it.
 		for ( int iClass = 0; iClass < TF_CLASS_COUNT_ALL; iClass++ )
 		{
@@ -90,19 +88,19 @@ bool CTFInventory::Init( void )
 							}
 
 							CEconItemView *pNewItem = new CEconItemView( iItemID );
-						
-#if defined ( GAME_DLL )
+
+						#if defined ( GAME_DLL )
 							pNewItem->SetItemClassNumber( iClass );
-#endif
+						#endif
 							m_Items[iClass][iSlot][0] = pNewItem;
 						}
 						else if ( pItemDef->show_in_armory && ( pItemDef->is_reskin == 0 || bReskinsEnabled ) && ( pItemDef->specialitem == 0 || bSpecialsEnabled ) )
 						{
 							CEconItemView *pNewItem = new CEconItemView( iItemID );
 
-#if defined ( GAME_DLL )
+						#if defined ( GAME_DLL )
 							pNewItem->SetItemClassNumber( iClass );
-#endif
+						#endif
 							m_Items[iClass][iSlot].AddToTail( pNewItem );
 						}
 					}
@@ -115,16 +113,16 @@ bool CTFInventory::Init( void )
 								case 1:
 									iSlot = TF_LOADOUT_SLOT_MISC1;
 									break;
-									
+
 								case 2:
 									iSlot = TF_LOADOUT_SLOT_MISC2;
 									break;
-								
+
 								case 3:
 									iSlot = TF_LOADOUT_SLOT_MISC3;
 									break;
 							}
-		
+
 							if ( pItemDef->baseitem )
 							{
 								CEconItemView *pBaseItem = m_Items[iClass][iSlot][0];
@@ -135,19 +133,19 @@ bool CTFInventory::Init( void )
 								}
 
 								CEconItemView *pNewItem = new CEconItemView( iItemID );
-							
-#if defined ( GAME_DLL )
+
+							#if defined ( GAME_DLL )
 								pNewItem->SetItemClassNumber( iClass );
-#endif
+							#endif
 								m_Items[iClass][iSlot][0] = pNewItem;
 							}
 							else if ( pItemDef->show_in_armory && ( pItemDef->is_reskin == 0 || bReskinsEnabled ) && ( pItemDef->specialitem == 0 || bSpecialsEnabled ) )
 							{
 								CEconItemView *pNewItem = new CEconItemView( iItemID );
 
-#if defined ( GAME_DLL )
+							#if defined ( GAME_DLL )
 								pNewItem->SetItemClassNumber( iClass );
-#endif
+							#endif
 								m_Items[iClass][iSlot].AddToTail(pNewItem);
 							}
 						}
@@ -168,18 +166,18 @@ bool CTFInventory::Init( void )
 
 								CEconItemView *pNewItem = new CEconItemView(iItemID);
 
-#if defined ( GAME_DLL )
+							#if defined ( GAME_DLL )
 								pNewItem->SetItemClassNumber(iClass);
-#endif
+							#endif
 								m_Items[iClass][iSlot][0] = pNewItem;
 							}
 							else if (pItemDef->show_in_armory && (pItemDef->is_reskin == 0 || bReskinsEnabled) && (pItemDef->specialitem == 0 || bSpecialsEnabled))
 							{
 								CEconItemView *pNewItem = new CEconItemView(iItemID);
 
-#if defined ( GAME_DLL )
+							#if defined ( GAME_DLL )
 								pNewItem->SetItemClassNumber(iClass);
-#endif
+							#endif
 								m_Items[iClass][iSlot].AddToTail(pNewItem);
 							}
 
@@ -193,7 +191,6 @@ bool CTFInventory::Init( void )
 			}
 		}
 	}
-
 
 #if defined( CLIENT_DLL )
 	LoadInventory();
