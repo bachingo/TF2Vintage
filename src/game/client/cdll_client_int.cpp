@@ -1155,7 +1155,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	InitFbx();
 #endif
 
-	if ( CommandLine()->CheckParm( "-vscript" ) )
+	if ( !CommandLine()->CheckParm( "-noscripting" ) )
 	{
 	#if defined( TF_VINTAGE_CLIENT )
 		char szCwd[1024];
