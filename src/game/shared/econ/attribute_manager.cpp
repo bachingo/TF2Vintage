@@ -78,13 +78,7 @@ public:
 
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, unsigned int value )
 	{
-		string_t name = pDefinition->m_iAttributeClass;
-		if ( !name && pDefinition->GetClassName() )
-		{
-			name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
-			pDefinition ->m_iAttributeClass = name;
-		}
-
+		string_t name = pDefinition->GetCachedClass();
 		if ( !FStrEq( STRING( name ), STRING( m_iName ) ) )
 			return true;
 
@@ -116,13 +110,7 @@ public:
 
 	virtual bool OnIterateAttributeValue( CEconAttributeDefinition const *pDefinition, CAttribute_String const &value )
 	{
-		string_t name = pDefinition->m_iAttributeClass;
-		if ( !name && pDefinition->GetClassName() )
-		{
-			name = AllocPooledString_StaticConstantStringPointer( pDefinition->GetClassName() );
-			pDefinition->m_iAttributeClass = name;
-		}
-
+		string_t name = pDefinition->GetCachedClass();
 		if ( !FStrEq( STRING( name ), STRING( m_iName ) ) )
 			return true;
 
@@ -181,10 +169,10 @@ void CAttributeManager::OnDataChanged( DataUpdateType_t updateType )
 	{
 		if ( m_hOuter )
 		{
-			IHasAttributes *pAttributes = GetAttribInterface( m_hOuter );
-			if( pAttributes )
+			IHasAttributes *pAttribInterface = GetAttribInterface( m_hOuter );
+			if( pAttribInterface )
 			{
-				pAttributes->ReapplyProvision();
+				pAttribInterface->ReapplyProvision();
 			}
 			ClearCache();
 			m_iOldReapplyProvisionParity = m_iReapplyProvisionParity;

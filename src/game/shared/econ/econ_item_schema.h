@@ -6,6 +6,7 @@
 #endif
 
 #include "tf_shareddefs.h"
+#include "gamestringpool.h"
 #include "econ_item_system.h"
 
 class IEconAttributeIterator;
@@ -172,70 +173,6 @@ typedef struct EconColor
 	char const *color_name;
 } Color_t;
 
-class CEconAttributeDefinition
-{
-public:
-	CEconAttributeDefinition()
-	{
-		definition = NULL;
-		index = INVALID_ATTRIBUTE_DEF_INDEX;
-		name[0] = '\0';
-		attribute_class[0] = '\0';
-		description_string[0] = '\0';
-		string_attribute = false;
-		description_format = -1;
-		hidden = false;
-		effect_type = -1;
-		stored_as_integer = false;
-		m_iAttributeClass = NULL_STRING;
-	}
-	~CEconAttributeDefinition()
-	{
-		if( definition )
-			definition->deleteThis();
-	}
-
-	KeyValues *GetStaticDefinition( void ) const { return definition; }
-
-	char const *GetName( void ) const
-	{
-		Assert( name && name[0] );
-		return name;
-	}
-	char const *GetClassName( void ) const
-	{
-		Assert( attribute_class && attribute_class[0] );
-		return attribute_class;
-	}
-	char const *GetDescription( void ) const
-	{
-		Assert( description_string && description_string[0] );
-		return description_string;
-	}
-
-	bool LoadFromKV( KeyValues *pKV );
-
-private:
-	char name[128];
-	char attribute_class[64];
-	char description_string[64];
-
-	KeyValues *definition;
-
-public:
-	attrib_def_index_t index;
-	ISchemaAttributeType *type;
-	bool string_attribute;
-	int description_format;
-	int effect_type;
-	bool hidden;
-	bool stored_as_integer;
-
-	mutable string_t m_iAttributeClass;
-
-	friend class CEconSchemaParser;
-};
-
 typedef enum
 {
 	WEARABLEANIM_EQUIP,
@@ -336,8 +273,8 @@ typedef struct EconPerTeamVisuals
 	{
 		animation_replacement.SetLessFunc( DefLessFunc( int ) );
 		player_bodygroups.SetLessFunc( StringLessThan );
-		V_memset( &aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
-		V_memset( &aWeaponSounds, 0, sizeof( aWeaponSounds ) );
+		V_memset( aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
+		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
 		CLEAR_STR( muzzle_flash );
 		CLEAR_STR( tracer_effect );
@@ -424,6 +361,76 @@ public:
 
 	friend class CEconItemDefinition;
 } PerTeamVisuals_t;
+
+class CEconAttributeDefinition
+{
+public:
+	CEconAttributeDefinition()
+	{
+		definition = NULL;
+		index = INVALID_ATTRIBUTE_DEF_INDEX;
+		CLEAR_STR( name );
+		CLEAR_STR( attribute_class );
+		CLEAR_STR( description_string );
+		string_attribute = false;
+		description_format = -1;
+		hidden = false;
+		effect_type = -1;
+		stored_as_integer = false;
+		iAttrClass = NULL_STRING;
+	}
+	~CEconAttributeDefinition()
+	{
+		if( definition )
+			definition->deleteThis();
+	}
+
+	KeyValues *GetStaticDefinition( void ) const { return definition; }
+
+	char const *GetName( void ) const
+	{
+		Assert( name && name[0] );
+		return name;
+	}
+	char const *GetClassName( void ) const
+	{
+		Assert( attribute_class && attribute_class[0] );
+		return attribute_class;
+	}
+	char const *GetDescription( void ) const
+	{
+		Assert( description_string && description_string[0] );
+		return description_string;
+	}
+
+	string_t GetCachedClass( void ) const
+	{
+		if ( !iAttrClass && attribute_class )
+			iAttrClass = AllocPooledString( attribute_class );
+
+		return iAttrClass;
+	}
+
+	bool LoadFromKV( KeyValues *pKV );
+
+private:
+	char const *name;
+	char const *attribute_class;
+	char const *description_string;
+
+	mutable string_t iAttrClass;
+
+	KeyValues *definition;
+
+public:
+	attrib_def_index_t index;
+	ISchemaAttributeType *type;
+	bool string_attribute;
+	int description_format;
+	int effect_type;
+	bool hidden;
+	bool stored_as_integer;
+};
 
 class CEconItemDefinition
 {
