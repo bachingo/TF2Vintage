@@ -74,9 +74,6 @@ void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
 	ConVarRef cvar( var );
 	if ( cvar.IsValid() )
 	{
-	#if defined( GAME_DLL )
-		tf_halloween_zombie_mob_enabled.SetValue( cvar.GetBool() );
-	#endif
 		if( cvar.GetBool() )
 		{
 		#if defined( CLIENT_DLL )

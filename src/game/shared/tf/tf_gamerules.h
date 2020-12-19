@@ -78,6 +78,9 @@ public:
 };
 #endif
 
+bool TF_IsHolidayActive( /*EHoliday*/ int eHoliday );
+
+
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy
 {
 public:
