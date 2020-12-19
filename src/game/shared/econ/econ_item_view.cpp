@@ -400,6 +400,23 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+const char *CEconItemView::GetCustomSound( int iIndex, int iTeamNum /*= 0*/ ) const
+{
+	CEconItemDefinition *pStatic = GetStaticData();
+
+	if ( pStatic )
+	{
+		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( iTeamNum );
+		if( pVisuals )
+			return pVisuals->GetCustomWeaponSound( iIndex );
+	}
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 unsigned int CEconItemView::GetModifiedRGBValue( bool bAlternate )
 {
 	static CSchemaAttributeHandle pAttrDef_Paint( "set item tint rgb" );
