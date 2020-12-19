@@ -301,9 +301,9 @@ typedef struct EconPerTeamVisuals
 	}
 	char const *GetCustomWeaponSound( int sound )
 	{
-		Assert( sound >= 0 && sound <= MAX_CUSTOM_WEAPON_SOUNDS );
-		if ( aWeaponSounds[sound] && aWeaponSounds[sound][0] != '\0' )
-			return aWeaponSounds[sound];
+		Assert( sound >= 0 && sound < MAX_CUSTOM_WEAPON_SOUNDS );
+		if ( aCustomWeaponSounds[sound] && aCustomWeaponSounds[sound][0] != '\0' )
+			return aCustomWeaponSounds[sound];
 
 		return NULL;
 	}
@@ -640,8 +640,6 @@ public:
 	bool is_custom_content;
 	bool is_cut_content;
 	bool is_multiclass_item;
-
-	friend class CEconSchemaParser;
 };
 
 #endif // ECON_ITEM_SCHEMA_H

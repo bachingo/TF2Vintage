@@ -8,7 +8,6 @@
 #include "tier1/utlbuffer.h"
 
 class ISchemaAttributeType;
-class CEconSchemaParser;
 class CEconItemDefinition;
 class CEconAttributeDefinition;
 struct EconQuality;
@@ -31,7 +30,7 @@ typedef uint16 item_def_index_t;
 //-----------------------------------------------------------------------------
 class CEconItemSchema
 {
-	friend class CEconSchemaParser; friend class CTFInventory;
+	friend class CTFInventory;
 	char const *const items_game = "scripts/items/items_game.txt";
 public:
 	CEconItemSchema();
@@ -74,12 +73,12 @@ private:
 	uint m_unSchemaResetCount;
 
 	void ParseSchema( KeyValues *pKVData );
-	void ParseGameInfo( KeyValues *pKeyValuesData );
-	void ParseQualities( KeyValues *pKeyValuesData );
-	void ParseColors( KeyValues *pKeyValuesData );
-	void ParsePrefabs( KeyValues *pKeyValuesData );
-	void ParseItems( KeyValues *pKeyValuesData );
-	void ParseAttributes( KeyValues *pKeyValuesData );
+	void ParseGameInfo( KeyValues *pKVData );
+	void ParseQualities( KeyValues *pKVData );
+	void ParseColors( KeyValues *pKVData );
+	void ParsePrefabs( KeyValues *pKVData );
+	void ParseItems( KeyValues *pKVData );
+	void ParseAttributes( KeyValues *pKVData );
 
 	void MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues *pSchemeData );
 };
