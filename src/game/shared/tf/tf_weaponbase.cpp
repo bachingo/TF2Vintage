@@ -1360,13 +1360,12 @@ bool CTFWeaponBase::ReloadSingly( void )
 				UpdateReloadTimers( false );
 			}
 
-#ifdef CLIENT_DLL
-			// Play world reload.
-			if ( !UsingViewModel() )
+		#ifdef CLIENT_DLL
+			if ( ShouldPlayClientReloadSound() )
 				WeaponSound( RELOAD );
-#else
+		#else
 			WeaponSound( RELOAD );
-#endif
+		#endif
 
 			// Next continue to reload shells?
 			m_iReloadMode.Set( TF_RELOADING_CONTINUE );
@@ -1488,7 +1487,9 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 
 	// Play world reload.
 #ifdef CLIENT_DLL
-	if ( !UsingViewModel() )
+	if ( ShouldPlayClientReloadSound() )
+		WeaponSound( RELOAD );
+#else
 	WeaponSound( RELOAD );
 #endif
 	

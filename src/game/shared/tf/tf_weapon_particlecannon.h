@@ -68,6 +68,8 @@ public:
 	virtual void ClientEffectsThink( void );
 	void CreateChargeEffect( void );
 
+	virtual bool ShouldPlayClientReloadSound() { return true; }
+
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex ) OVERRIDE;
 	virtual void DispatchMuzzleFlash( char const *effectName, C_BaseEntity *pAttachEnt ) OVERRIDE;
 #endif

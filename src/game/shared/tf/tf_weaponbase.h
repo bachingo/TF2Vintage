@@ -421,6 +421,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int		GetSkin();
 	BobState_t		*GetBobState();
 
+	virtual bool	ShouldPlayClientReloadSound() { return false; }
+
 	bool OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options );
 
 	// Model muzzleflashes

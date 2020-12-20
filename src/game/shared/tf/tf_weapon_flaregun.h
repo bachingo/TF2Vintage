@@ -39,9 +39,16 @@ public:
 	void			DeathNotice( CBaseEntity *pVictim );
 	bool			HasKnockback() const;
 
+#if defined( CLIENT_DLL )
+	virtual bool	ShouldPlayClientReloadSound() { return true; }
+#endif
+
+private:
+#if defined( GAME_DLL )
 	// Used for tracking flares for Detonator.
 	typedef CHandle<CTFProjectile_Flare>	FlareHandle;
 	CUtlVector<FlareHandle> m_Flares;
+#endif
 };
 
 class CTFFlareGunRevenge : public CTFWeaponBaseGun

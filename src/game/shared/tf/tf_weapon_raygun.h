@@ -43,6 +43,10 @@ public:
 	virtual float		Energy_GetShotCost( void ) const;
 	virtual float		Energy_GetRechargeCost( void ) const { return 5.f; }
 
+#ifdef CLIENT_DLL
+	virtual bool	ShouldPlayClientReloadSound() { return true; }
+#endif
+
 private:
 
 	CTFRaygun( const CTFRaygun & ) {}
