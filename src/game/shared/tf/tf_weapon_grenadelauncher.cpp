@@ -63,7 +63,7 @@ END_DATADESC()
 
 
 CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Legacy, tf_weapon_grenadelauncher_legacy )
-CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Cannon, tf_weapon_cannon )
+CREATE_SIMPLE_WEAPON_TABLE( TFCannon, tf_weapon_cannon )
 
 extern ConVar tf2v_console_grenadelauncher_magazine;
 

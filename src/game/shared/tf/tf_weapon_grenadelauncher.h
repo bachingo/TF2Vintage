@@ -101,14 +101,14 @@ private:
 // Cannon.
 
 #if defined CLIENT_DLL
-#define CTFGrenadeLauncher_Cannon C_TFGrenadeLauncher_Cannon
+#define CTFCannon C_TFCannon
 #endif
 
-class CTFGrenadeLauncher_Cannon : public CTFGrenadeLauncher
+class CTFCannon : public CTFGrenadeLauncher
 {
 public:
 
-	DECLARE_CLASS( CTFGrenadeLauncher_Cannon, CTFGrenadeLauncher )
+	DECLARE_CLASS( CTFCannon, CTFGrenadeLauncher )
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
