@@ -242,6 +242,7 @@ public:
 	void	Burn( CBaseCombatCharacter *pAttacker, float flFlameDuration = -1.0f );
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
 	void	MakeBleed( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float flBleedDuration, int iDamage );
+	CTFPlayer *GetBurnAttacker( void ) const { return m_hBurnAttacker; }
 	// Stuns
 	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
 	bool	IsControlStunned( void );
