@@ -2165,7 +2165,9 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 
 	// Check that the explosion can 'see' this entity, trace through players.
 	vecSpot = pEntity->BodyTarget( m_vecSrc, false );
-	CTraceFilterHitPlayer filter( info->GetInflictor(), pEntity, COLLISION_GROUP_PROJECTILE );
+	CTraceFilterIgnorePlayers filterPlayers( pInflictor, COLLISION_GROUP_PROJECTILE );
+	CTraceFilterIgnoreFriendlyCombatItems filterItems( pInflictor, COLLISION_GROUP_PROJECTILE, pInflictor->GetTeamNumber() );
+	CTraceFilterChain filter( &filterPlayers, &filterItems );
 	UTIL_TraceLine( m_vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 
 	if ( tr.startsolid && tr.m_pEnt )
@@ -2176,7 +2178,7 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 				return false;
 		}
 
-		filter.SetPassEntity( tr.m_pEnt );
+		filterPlayers.SetPassEntity( tr.m_pEnt );
 		UTIL_TraceLine( m_vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 	}
 
@@ -2217,10 +2219,20 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 		flAdjustedDamage = info->GetDamage() - flAdjustedDamage;
 	}
 
-	// Take a little less damage from yourself
-	if ( tr.m_pEnt == info->GetAttacker() )
+	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( info->GetWeapon() );
+
+	// Grenades & Pipebombs do less damage to ourselves.
+	if ( pEntity == info->GetAttacker() && pWeapon )
 	{
-		flAdjustedDamage = flAdjustedDamage * 0.75;
+		switch( pWeapon->GetWeaponID() )
+		{
+			case TF_WEAPON_PIPEBOMBLAUNCHER :
+			case TF_WEAPON_GRENADELAUNCHER :
+			case TF_WEAPON_CANNON :
+			case TF_WEAPON_STICKBOMB :
+				flAdjustedDamage *= 0.75f;
+				break;
+		}
 	}
 
 	if ( flAdjustedDamage <= 0 )
