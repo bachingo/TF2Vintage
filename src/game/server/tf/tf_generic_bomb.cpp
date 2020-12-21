@@ -243,35 +243,22 @@ void CTFPumpkinBomb::Spawn( void )
 	m_iHealth = 1;
 	m_bKilled = false;
 	m_takedamage = DAMAGE_YES;
+	SetModelScale( m_flScale );
 
 	if ( m_flLifeTime > 0.0f )
 	{
 		SetThink( &CTFPumpkinBomb::RemovePumpkin );
 		SetNextThink( m_flLifeTime + gpGlobals->curtime );
 	}
+	SetTouch( &CTFPumpkinBombShim::Touch );
 }
 
 int CTFPumpkinBomb::OnTakeDamage( CTakeDamageInfo const &info )
 {
 	if ( m_iTeam != TF_TEAM_NPC )
 	{
-		const char *szEffectName;
-		switch ( m_iTeam )
-		{
-			case TF_TEAM_RED:
-				szEffectName = "spell_pumpkin_mirv_goop_red";
-				break;
-			case TF_TEAM_BLUE:
-				szEffectName = "spell_pumpkin_mirv_goop_blue";
-				break;
-
-			default:
-				szEffectName = "spell_pumpkin_mirv_goop_blue";
-				break;
-		}
-
 		CPVSFilter filter( GetAbsOrigin() );
-		TE_TFParticleEffect( filter, 0, szEffectName, GetAbsOrigin(), vec3_angle );
+		TE_TFParticleEffect( filter, 0, ConstructTeamParticle( "spell_pumpkin_mirv_goop_%s", m_iTeam ), GetAbsOrigin(), vec3_angle );
 	}
 
 	CBaseEntity *pAttacker = info.GetAttacker();
@@ -292,11 +279,12 @@ int CTFPumpkinBomb::OnTakeDamage( CTakeDamageInfo const &info )
 
 void CTFPumpkinBomb::Event_Killed( CTakeDamageInfo const &info )
 {
-	CBaseEntity *pAttacker = info.GetAttacker();
-
-	if ( m_bKilled ) return;
+	if ( m_bKilled )
+		return;
 	m_bKilled = true;
 
+	CBaseEntity *pAttacker = info.GetAttacker();
+	Vector vecOrigin = GetAbsOrigin();
 	if ( m_iTeam != TF_TEAM_NPC )
 	{
 		if ( pAttacker && pAttacker->GetTeamNumber() != m_iTeam )
@@ -307,17 +295,19 @@ void CTFPumpkinBomb::Event_Killed( CTakeDamageInfo const &info )
 	}
 
 	trace_t	tr;
-	UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + Vector( 0, 0, 8.0f ), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceLine( vecOrigin + Vector(0,0,6.0f), vecOrigin - Vector(0,0,32.0f), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr );
 
-	CPVSFilter filter( GetAbsOrigin() );
-	TE_TFExplosion( filter, 0, GetAbsOrigin(), tr.plane.normal, TF_WEAPON_PUMPKIN_BOMB, -1, -1 );
-	TE_TFParticleEffect( filter, 0, "pumpkin_explode", GetAbsOrigin(), vec3_angle );
+	CPVSFilter filter( vecOrigin );
+	TE_TFExplosion( filter, 0, vecOrigin, tr.plane.normal, TF_WEAPON_PUMPKIN_BOMB, -1, -1 );
+	TE_TFParticleEffect( filter, 0, "pumpkin_explode", vecOrigin, GetAbsAngles() );
 
 	if ( tr.m_pEnt && !tr.m_pEnt->IsPlayer() )
 		UTIL_DecalTrace( &tr, "Scorch");
 
 	SetSolid( SOLID_NONE );
 
+	if ( pAttacker )
+		ChangeTeam( pAttacker->GetTeamNumber() );
 
 	if ( TFGameRules() )
 	{
@@ -326,12 +316,7 @@ void CTFPumpkinBomb::Event_Killed( CTakeDamageInfo const &info )
 		TFGameRules()->RadiusDamage( radiusInfo );
 	}
 
-	UserMessageBegin( filter, "BreakModel" );
-		WRITE_SHORT( GetModelIndex() );
-		WRITE_VEC3COORD( GetAbsOrigin() );
-		WRITE_ANGLES( GetAbsAngles() );
-		WRITE_SHORT( m_nSkin );
-	MessageEnd();
+	Break();
 
 	BaseClass::Event_Killed( info );
 }
