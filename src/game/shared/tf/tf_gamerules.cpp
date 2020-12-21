@@ -1355,27 +1355,13 @@ void CTFGameRules::Activate()
 		tf_gamemode_tc.SetValue( 1 );
 	}
 
-	if ( !Q_strncmp( STRING( gpGlobals->mapname ), "sd_", 3 )  )
-	{
-		tf_gamemode_sd.SetValue( 1 );
-	}
-
 	CMedievalLogic *pMedieval = dynamic_cast<CMedievalLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval" ) );
 	if ( pMedieval || tf_medieval.GetBool() )
 	{
 		m_nGameType.Set( TF_GAMETYPE_MEDIEVAL );
 		tf_gamemode_medieval.SetValue( 1 );
-		return;
+		m_bPlayingMedieval = true;
 	}
-	
-	
-	/* CMvMLogic *pMvM = dynamic_cast<MvMLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_mann_vs_machine" ) );
-	if (pMvM)
-	{
-		m_nGameType.Set( TF_GAMETYPE_MVM );
-		tf_gamemode_mvm.SetValue( 1 );
-		return;
-	} */
 	
 	CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 	if ( pArena )
@@ -1383,75 +1369,70 @@ void CTFGameRules::Activate()
 		m_hArenaLogic = pArena;
 
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
-	/*
-		// VSH maps use arena logic, except with the map prefix changed.
-		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
-		{
-			tf_gamemode_vsh.SetValue(1);
-			m_bPlayingVSH = true;
-		}	// Ditto, but with DR for Deathrun.
-		else if ( !Q_strncmp( MapName(), "dr_", 3 ) )
-		{
-			tf_gamemode_dr.SetValue(1);
-			m_bPlayingDR = true;
-		}
-		else
-		{ */
-			tf_gamemode_arena.SetValue( 1 );
-			Msg( "Executing server arena config file\n", 1 );
-			engine->ServerCommand( "exec config_arena.cfg \n" );
-			engine->ServerExecute();
-		//}
-		return;
+		tf_gamemode_arena.SetValue( 1 );
+
+		Msg( "Executing server arena config file\n", 1 );
+		engine->ServerCommand( "exec config_arena.cfg \n" );
 	}
 
-	CKothLogic *pKoth = dynamic_cast<CKothLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_koth" ) );
-	if ( pKoth )
+	/*if ( CTFRobotDestructionLogic::GetRobotDestructionLogic() )
+	{
+		m_bPlayingRobotDestructionMode.Set( true );
+		if ( CTFRobotDestructionLogic::GetRobotDestructionLogic()->GetType() == CTFRobotDestructionLogic::TYPE_ROBOT_DESTRUCTION )
+		{
+			tf_gamemode_rd.SetValue( 1 );
+			m_nGameType.Set( TF_GAMETYPE_RD );
+		}
+		else
+		{
+			tf_gamemode_pd.SetValue( 1 );
+			m_nGameType.Set( TF_GAMETYPE_PD );
+		}
+	}
+	else if ( dynamic_cast<CMannVsMachineLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_mann_vs_machine" ) ) )
+	{
+		m_nGameType.Set( TF_GAMETYPE_MVM );
+		tf_gamemode_mvm.SetValue( 1 );
+		m_bPlayingMannVsMachine = true;
+	} 
+	else*/ if ( !Q_strncmp( STRING( gpGlobals->mapname ), "sd_", 3 )  )
+	{
+		tf_gamemode_sd.SetValue( 1 );
+		m_bPlayingSpecialDeliveryMode = true;
+	}
+	else if ( ICaptureFlagAutoList::AutoList().Count() > 0 )
+	{
+		m_nGameType.Set( TF_GAMETYPE_CTF );
+		tf_gamemode_ctf.SetValue( 1 );
+	}
+	else if ( dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) ) )
+	{
+		m_nGameType.Set( TF_GAMETYPE_ESCORT );
+		tf_gamemode_payload.SetValue( 1 );
+
+		if ( dynamic_cast<CMultipleEscortLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_multiple_escort" ) ) )
+		{
+			tf_gamemode_plr.SetValue( 1 );
+			TeamplayRoundBasedRules()->SetMultipleTrains( true );
+		}
+	}
+	else if ( g_hControlPointMasters.Count() && m_nGameType != TF_GAMETYPE_ARENA )
+	{
+		m_nGameType.Set( TF_GAMETYPE_CP );
+		tf_gamemode_cp.SetValue( 1 );
+	}
+
+	if ( dynamic_cast<CKothLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_koth" ) ) )
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
 		tf_gamemode_koth.SetValue( 1 );
 		m_bPlayingKoth = true;
-		return;
 	}
 
-	CHybridMap_CTF_CP *pHybridEnt = dynamic_cast<CHybridMap_CTF_CP *>( gEntList.FindEntityByClassname( NULL, "tf_logic_hybrid_ctf_cp" ) );
-	if ( pHybridEnt )
+	if ( dynamic_cast<CHybridMap_CTF_CP *>( gEntList.FindEntityByClassname( NULL, "tf_logic_hybrid_ctf_cp" ) ) )
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
 		m_bPlayingHybrid_CTF_CP = true;
-		return;
-	}
-
-	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag *>( gEntList.FindEntityByClassname( NULL, "item_teamflag" ) );
-	if ( pFlag )
-	{
-		m_nGameType.Set( TF_GAMETYPE_CTF );
-		tf_gamemode_ctf.SetValue( 1 );
-		return;
-	}
-
-	CMultipleEscortLogic *pMultipleEscort = dynamic_cast<CMultipleEscortLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_multiple_escort" ) );
-	if ( pMultipleEscort )
-	{
-		m_nGameType.Set( TF_GAMETYPE_ESCORT );
-		tf_gamemode_plr.SetValue( 1 );
-		TeamplayRoundBasedRules()->SetMultipleTrains( true );
-		return;
-	}
-
-	CTeamTrainWatcher *pTrain = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
-	if ( pTrain )
-	{
-		m_nGameType.Set( TF_GAMETYPE_ESCORT );
-		tf_gamemode_payload.SetValue( 1 );
-		return;
-	}
-
-	if ( g_hControlPointMasters.Count() && m_nGameType != TF_GAMETYPE_ARENA )
-	{
-		m_nGameType.Set( TF_GAMETYPE_CP );
-		tf_gamemode_cp.SetValue( 1 );
-		return;
 	}
 
 	CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity*> ( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );

@@ -1802,7 +1802,10 @@ public:
 	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-		return pEntity && !pEntity->IsPlayer();
+		if ( pEntity && pEntity->IsPlayer() )
+			return false;
+
+		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
 	}
 };
 
@@ -1820,15 +1823,13 @@ public:
 	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-
-		if ( pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam )
-		{
+		if ( pEntity && pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam )
 			return false;
-		}
 
-		return true;
+		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
 	}
 
+private:
 	int m_iIgnoreTeam;
 };
 
@@ -1839,23 +1840,21 @@ public:
 	DECLARE_CLASS( CTraceFilterIgnoreTeammatesAndTeamObjects, CTraceFilterSimple );
 
 	CTraceFilterIgnoreTeammatesAndTeamObjects( const IHandleEntity *passentity, int collisionGroup, int teamNumber )
-		: CTraceFilterSimple( passentity, collisionGroup )
+		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( teamNumber )
 	{
-		m_iTeamNumber = teamNumber;
 	}
 
 	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-
-		if ( pEntity && pEntity->GetTeamNumber() == m_iTeamNumber )
+		if ( pEntity && (pEntity->IsPlayer() || pEntity->IsCombatItem()) && pEntity->GetTeamNumber() == m_iIgnoreTeam )
 			return false;
 
 		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
 	}
 
 private:
-	int m_iTeamNumber;
+	int m_iIgnoreTeam;
 };
 
 // Unused
