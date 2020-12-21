@@ -2891,7 +2891,7 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResis
 		m_flStunExpireTime = flNextStunExpireTime;
 
 #ifdef GAME_DLL
-		if( !( m_nStunFlags & TF_STUNFLAG_THIRDPERSON ) )
+		if( !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) )
 			m_pOuter->PlayStunSound( m_hStunner, m_nStunFlags /*, current stun flags*/ );
 #endif
 	}

@@ -983,7 +983,7 @@ void CHudItemEffects::SetPlayer( void )
 			AddItemMeter( NEW_WEAPON_METER( C_TFLunchBox, true, NULL ) );
 			break;
 		case TF_CLASS_PYRO:
-			AddItemMeter( NEW_WEAPON_METER( C_TFFlareGunRevenge, false, "resource/UI/HudItemEffectMeter_Engineer.res" ) );
+			AddItemMeter( NEW_WEAPON_METER( C_TFFlareGun_Revenge, false, "resource/UI/HudItemEffectMeter_Engineer.res" ) );
 			AddItemMeter( NEW_WEAPON_METER( C_TFFlameThrower, true, NULL ) );
 			AddItemMeter( NEW_WEAPON_METER( C_TFRaygun, false, "resource/UI/HudItemEffectMeter_raygun.res" ) );
 			AddItemMeter( NEW_WEAPON_METER( C_TFJarGas, true, "resource/UI/HudItemEffectMeter_Pyro.res" ) );

@@ -66,6 +66,7 @@
 #include "tf_weapon_knife.h"
 #include "tf_weapon_syringe.h"
 #include "tf_weapon_shovel.h"
+#include "tf_weapon_flaregun.h"
 
 #ifndef _X360
 #include "steam/isteamuserstats.h"
@@ -5261,6 +5262,17 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		
 	}
 
+	if ( info.GetDamageCustom() == TF_DMG_CUSTOM_FLARE_PELLET )
+	{
+		CBaseEntity *pInflictor = info.GetInflictor();
+		CTFProjectile_Flare *pFlare = dynamic_cast< CTFProjectile_Flare* >( pInflictor );
+		if ( pFlare && pFlare->IsFromTaunt() && pFlare->GetLifeTime() < 0.05f )
+		{
+			// Taunt crits fired from the scorch shot at short range are super powerful!
+			info.SetDamage( 400.0f );
+		}
+	}
+
 	// Handle on-hit effects.
 	// Don't apply on-hit effects if a building did it, or if it's done by afterburn.
 	if ( ( pWeapon && pAttacker != this ) && (!bObject) && !( info.GetDamageType() & DMG_BURN ) )
@@ -5360,13 +5372,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				info.AddDamageType( DMG_MINICRITICAL );
 			}
 			
-			int nCritOnCond = 0;
-			CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nCritOnCond, crit_vs_burning_FLARES_DISPLAY_ONLY );
-			if ( nCritOnCond )
+			if ( ( info.GetDamageType() & DMG_IGNITE ) && info.GetDamageCustom() == TF_DMG_CUSTOM_BURNING_FLARE )
 			{
-				bitsDamage |= DMG_CRITICAL;
-				info.AddDamageType( DMG_CRITICAL );
-			}		
+				CTFFlareGun *pFlareGun = dynamic_cast< CTFFlareGun* >( pWeapon );
+				if ( pFlareGun && pFlareGun->GetFlareGunMode() != TF_FLARE_MODE_REVENGE )
+				{
+					bitsDamage |= DMG_MINICRITICAL;
+					info.AddDamageType( DMG_MINICRITICAL );
+				}
+			}
 		}		
 
 
@@ -6776,13 +6790,42 @@ void CTFPlayer::ApplyPushFromDamage( const CTakeDamageInfo &info, Vector &vecDir
 	else
 	{
 		// Sentryguns push a lot harder
-		if ( ( info.GetDamageType() & DMG_BULLET ) && info.GetInflictor()->IsBaseObject() )
+		if ( ( info.GetDamageType() & DMG_BULLET ) && info.GetInflictor() && info.GetInflictor()->IsBaseObject() )
 		{
 			vecForce = vecDir * -DamageForce( WorldAlignSize(), flDamage, 16 );
 		}
 		else
 		{
-			vecForce = vecDir * -DamageForce( WorldAlignSize(), flDamage, tf_damageforcescale_other.GetFloat() );
+			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( info.GetWeapon() );
+			if ( pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_COMPOUND_BOW )
+			{
+				vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_other.GetFloat() );
+				vecForce.z = 0;
+			}
+			else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_PLASMA_CHARGED )
+			{
+				vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_other.GetFloat() ) * 1.25f;
+			}
+			else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_FLARE_PELLET)
+			{
+				float flTimeAlive = 0.0f;
+				CTFProjectile_Flare *pFlare = dynamic_cast<CTFProjectile_Flare *>( info.GetInflictor() );
+				if ( pFlare )
+				{
+					flTimeAlive = pFlare->GetLifeTime();
+				}
+
+				vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), 20.0f * RemapValClamped( flTimeAlive, 0.1f, 1.0f, 1.0f, 3.75f ) );
+				vecForce.z = ( ( GetPlayerClass()->GetClassIndex() == TF_CLASS_HEAVYWEAPONS ) ? 525.0f : 275.0f );
+			}
+			else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_KART )
+			{
+				vecForce = info.GetDamageForce();
+			}
+			else
+			{
+				vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_other.GetFloat() );
+			}
 
 			if ( IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
 			{
@@ -11722,8 +11765,8 @@ int	CTFPlayer::CalculateTeamBalanceScore( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::PlayStunSound( CTFPlayer *pStunner, int nStunFlags/*, int nCurrentStunFlags*/ )
 {
-	// Don't play the stun sound if sounds are disabled or the stunner isn't a player
-	if ( pStunner == nullptr || ( nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) != 0 )
+	// Only play sounds for control inhibiting stuns
+	if ( !(nStunFlags & TF_STUNFLAG_GHOSTEFFECT) && !(nStunFlags & TF_STUNFLAG_BONKSTUCK) )
 		return;
 
 	const char *pszStunSound = "\0";
@@ -11743,6 +11786,9 @@ void CTFPlayer::PlayStunSound( CTFPlayer *pStunner, int nStunFlags/*, int nCurre
 		pszStunSound = "Halloween.PlayerScream";
 	}
 
+	CMultiplayer_Expresser *pExpresser = GetMultiplayerExpresser();
+	pExpresser->AllowMultipleScenes();
+
 	CRecipientFilter filter;
 	CSingleUserRecipientFilter filterAttacker( pStunner );
 	filter.AddRecipientsByPAS( GetAbsOrigin() );
@@ -11750,6 +11796,10 @@ void CTFPlayer::PlayStunSound( CTFPlayer *pStunner, int nStunFlags/*, int nCurre
 
 	EmitSound( filter, this->entindex(), pszStunSound );
 	EmitSound( filterAttacker, pStunner->entindex(), pszStunSound );
+
+	pExpresser->DisallowMultipleScenes();
+
+	m_flNextPainSoundTime = gpGlobals->curtime + 2.0f;
 }
 
 // ----------------------------------------------------------------------------

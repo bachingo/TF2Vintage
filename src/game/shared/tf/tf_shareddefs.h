@@ -276,6 +276,14 @@ enum
 	TF_GL_MODE_CANNONBALL,
 };
 
+enum
+{
+	TF_FLARE_MODE_NORMAL,
+	TF_FLARE_MODE_DETONATE,
+	TF_FLARE_MODE_REVENGE,
+	TF_FLARE_MODE_KNOCKBACK,
+};
+
 //-----------------------------------------------------------------------------
 // Weapon Types
 //-----------------------------------------------------------------------------

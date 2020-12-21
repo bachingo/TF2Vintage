@@ -28,6 +28,7 @@
 	#include "tf_weapon_mechanical_arm.h"
 	#include "tf_projectile_energyball.h"
 	#include "tf_projectile_energy_ring.h"
+	#include "tf_weapon_flaregun.h"
 	#include "te.h"
 
 	#include "tf_gamerules.h"
@@ -849,6 +850,12 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
+
+		CTFFlareGun *pFlareGun = dynamic_cast<CTFFlareGun *>( this );
+		if ( pFlareGun && pFlareGun->GetFlareGunMode() == TF_FLARE_MODE_DETONATE )
+		{
+			pFlareGun->AddFlare( pProjectile );
+		}
 	}
 	return pProjectile;
 #endif
