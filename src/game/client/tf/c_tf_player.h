@@ -250,6 +250,8 @@ public:
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
 
+	void				ModifyEmitSoundParams( EmitSound_t &params ) OVERRIDE;
+
 	bool	DoClassSpecialSkill( void );
 	bool	CanGoInvisible( bool bFeigning = false );
 

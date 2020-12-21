@@ -230,9 +230,10 @@ void CTFRocketLauncher::ModifyEmitSoundParams( EmitSound_t &params )
 	params.m_nFlags |= SND_CHANGE_PITCH;
 
 	m_nReloadPitchStep = Min( GetMaxClip1() - 1, m_nReloadPitchStep + 1 );
-	m_bReloadedThroughAnimEvent = true;
 
 	IncrementAmmo();
+
+	m_bReloadedThroughAnimEvent = true;
 }
 
 //-----------------------------------------------------------------------------

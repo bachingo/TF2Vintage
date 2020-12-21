@@ -395,6 +395,7 @@ public:
 	void				SetFlipViewModel( bool bFlip ) { m_bFlipViewModel = bFlip; }
 
 	virtual void		ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet );
+	void				ModifyEmitSoundParams( EmitSound_t &params ) OVERRIDE;
 
 	virtual bool		CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 

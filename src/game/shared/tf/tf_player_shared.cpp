@@ -6943,6 +6943,17 @@ void CTFPlayer::PlayStepSound(Vector &vecOrigin, surfacedata_t *psurface, float 
 	BaseClass::PlayStepSound(vecOrigin, psurface, fvol, force);
 }
 
+void CTFPlayer::ModifyEmitSoundParams( EmitSound_t &params )
+{
+	BaseClass::ModifyEmitSoundParams( params );
+
+	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+	if ( pWeapon )
+	{
+		pWeapon->ModifyEmitSoundParams( params );
+	}
+}
+
 #ifndef CLIENT_DLL
 
 CON_COMMAND_F( addcond, "", FCVAR_CHEAT )
