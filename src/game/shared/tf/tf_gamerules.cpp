@@ -243,6 +243,7 @@ ConVar mp_humans_must_join_team( "mp_humans_must_join_team", "any", FCVAR_GAMEDL
 ConVar tf_arena_force_class( "tf_arena_force_class", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force random classes in arena." );
 ConVar tf_arena_first_blood( "tf_arena_first_blood", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles first blood criticals" );
 ConVar tf_arena_first_blood_length( "tf_arena_first_blood_length", "5.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Duration of first blood criticals" );
+ConVar tf_arena_override_cap_enable_time( "tf_arena_override_cap_enable_time", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Overrides the time (in seconds) it takes for the capture point to become enable, -1 uses the level designer specified time." );
 
 ConVar tf_gamemode_arena( "tf_gamemode_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_cp( "tf_gamemode_cp", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
@@ -259,6 +260,7 @@ ConVar tf_gamemode_koth( "tf_gamemode_koth", "0", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf_gamemode_vsh( "tf_gamemode_vsh", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_dr( "tf_gamemode_dr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_misc( "tf_gamemode_misc", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
 ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat.", true, 0, true, 1 );
@@ -1328,6 +1330,14 @@ void CTFGameRules::Activate()
 	tf_gamemode_pd.SetValue( 0 );
 	tf_gamemode_tc.SetValue( 0 );
 
+	m_bPlayingKoth.Set( false );
+	m_bPlayingMedieval.Set( false );
+	m_bPlayingHybrid_CTF_CP.Set( false );
+	m_bPlayingSpecialDeliveryMode.Set( false );
+	m_bPlayingMannVsMachine.Set( false );
+	m_bPlayingRobotDestructionMode.Set( false );
+	m_bPowerupMode.Set( false );
+
 	TeamplayRoundBasedRules()->SetMultipleTrains( false );
 
 	m_hRedAttackTrain = NULL;
@@ -1478,6 +1488,11 @@ void CTFGameRules::Activate()
 	if ( IsInTraining() || TheTFBots().IsInOfflinePractice() || IsInItemTestingMode() )
 	{
 		hide_server.SetValue( true );
+	}
+
+	if ( tf_gamemode_tc.GetBool() || tf_gamemode_sd.GetBool() || tf_gamemode_pd.GetBool() || tf_gamemode_medieval.GetBool() )
+	{
+		tf_gamemode_misc.SetValue( 1 );
 	}
 }
 
@@ -1989,33 +2004,6 @@ void CTFGameRules::PreviousRoundEnd( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnStalemateStart( void )
 {
-	// Respawn all the players
-	RespawnPlayers( true );
-
-	if ( TFGameRules()->IsInArenaMode() )
-	{
-		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
-		if ( pArena )
-		{
-			pArena->m_OnArenaRoundStart.FireOutput( pArena, pArena );
-
-			IGameEvent *event = gameeventmanager->CreateEvent( "arena_round_start" );
-			if ( event )
-			{
-				gameeventmanager->FireEvent( event );
-			}
-
-			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
-			{
-				BroadcastSound( i, "Announcer.AM_RoundStartRandom" );
-				BroadcastSound( i, "Ambient.Siren" );
-			}
-
-			m_flStalemateStartTime = gpGlobals->curtime;
-		}
-		return;
-	}
-
 	// Remove everyone's objects
 	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 	{
@@ -2026,17 +2014,44 @@ void CTFGameRules::SetupOnStalemateStart( void )
 		}
 	}
 
-	// Disable all the active health packs in the world
-	m_hDisabledHealthKits.Purge();
-	CHealthKit *pHealthPack = gEntList.NextEntByClass( (CHealthKit *)NULL );
-	while ( pHealthPack )
+	if ( IsInArenaMode() )
 	{
-		if ( !pHealthPack->IsDisabled() )
+		if ( m_hArenaLogic.IsValid() )
 		{
-			pHealthPack->SetDisabled( true );
-			m_hDisabledHealthKits.AddToTail( pHealthPack );
+			m_hArenaLogic->m_OnArenaRoundStart.FireOutput( m_hArenaLogic.Get(), m_hArenaLogic.Get() );
+
+			IGameEvent *event = gameeventmanager->CreateEvent( "arena_round_start" );
+			if ( event )
+			{
+				gameeventmanager->FireEvent( event );
+			}
+
+			if ( tf_arena_override_cap_enable_time.GetFloat() > 0 )
+				m_flCapturePointEnableTime = gpGlobals->curtime + tf_arena_override_cap_enable_time.GetFloat();
+			else
+				m_flCapturePointEnableTime = gpGlobals->curtime + m_hArenaLogic->m_flTimeToEnableCapPoint;
+
+			BroadcastSound( 255, "Announcer.AM_RoundStartRandom" );
+			BroadcastSound( 255, "Ambient.Siren" );
 		}
-		pHealthPack = gEntList.NextEntByClass( pHealthPack );
+	}
+	else
+	{
+		// Respawn all the players
+		RespawnPlayers( true );
+
+		// Disable all the active health packs in the world
+		m_hDisabledHealthKits.Purge();
+		CHealthKit *pHealthPack = gEntList.NextEntByClass( (CHealthKit *)NULL );
+		while ( pHealthPack )
+		{
+			if ( !pHealthPack->IsDisabled() )
+			{
+				pHealthPack->SetDisabled( true );
+				m_hDisabledHealthKits.AddToTail( pHealthPack );
+			}
+			pHealthPack = gEntList.NextEntByClass( pHealthPack );
+		}
 	}
 
 	CTFPlayer *pPlayer;
@@ -2047,7 +2062,15 @@ void CTFGameRules::SetupOnStalemateStart( void )
 		if ( !pPlayer )
 			continue;
 
-		pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_SUDDENDEATH_START );
+		if ( IsInArenaMode() )
+		{
+			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_ROUND_START );
+			pPlayer->TeamFortress_SetSpeed();
+		}
+		else
+		{
+			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_SUDDENDEATH_START );
+		}
 	}
 
 	m_flStalemateStartTime = gpGlobals->curtime;
@@ -2237,6 +2260,8 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 		adjustedInfo.SetDamageForce( dir * flForce );
 		adjustedInfo.SetDamagePosition( m_vecSrc );
 	}
+
+	adjustedInfo.ScaleDamageForce( m_flPushbackScale );
 
 	if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt )
 	{
@@ -6537,11 +6562,10 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 	}
 	else if ( !Q_strcmp( eventName, "teamplay_point_unlocked" ) )
 	{
-		// if this is an unlock event and we're in arena, fire OnCapEnabled		
-		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
-		if ( pArena )
+		// if this is an unlock event and we're in arena, fire OnCapEnabled
+		if ( m_hArenaLogic.IsValid() )
 		{
-			pArena->FireOnCapEnabled();
+			m_hArenaLogic->OnCapEnabled();
 		}
 	}
 #else
