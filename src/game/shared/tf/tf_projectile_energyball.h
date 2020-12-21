@@ -67,7 +67,7 @@ public:
 	
 protected:
 #ifdef GAME_DLL
-	EHANDLE m_Scorer;
+	EHANDLE m_hScorer;
 #endif
 	
 private:

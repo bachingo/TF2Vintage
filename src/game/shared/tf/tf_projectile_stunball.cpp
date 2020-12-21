@@ -759,15 +759,7 @@ void CTFBauble::Shatter( trace_t *pTrace, int bitsDamageType )
 	Vector vecOrigin = GetAbsOrigin();
 	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin;
 	CTakeDamageInfo newInfo(this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, nDamage, GetDamageType(), TF_DMG_CUSTOM_BASEBALL, &vectorReported);
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = vecOrigin;
-
-	// Check the radius.
-	float flRadius = 50;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius;
-
+	CTFRadiusDamageInfo radiusInfo(&newInfo, vecOrigin, 50.0f, NULL, 50.0f);
 	TFGameRules()->RadiusDamage(radiusInfo);
 
 	// Remove.

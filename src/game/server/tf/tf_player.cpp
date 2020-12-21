@@ -3267,7 +3267,7 @@ float CTFPlayer::GetTimeSinceWasBombHead( void ) const
 
 void CTFPlayer::BombHeadExplode( bool bKilled )
 {
-	if ( TFGameRules()->m_hBosses.IsEmpty() || TFGameRules()->m_hBosses.Head() == nullptr )
+	if ( !TFGameRules()->GetActiveBoss() )
 		return;
 
 	if ( TFGameRules()->State_Get() != GR_STATE_RND_RUNNING )
@@ -3277,18 +3277,11 @@ void CTFPlayer::BombHeadExplode( bool bKilled )
 	CPVSFilter filter( vecOrigin );
 
 	TE_TFExplosion( filter, 0, vecOrigin, Vector( 0, 0, 1.0f ), -1, entindex() );
+	UTIL_ScreenShake( vecOrigin, 15.0, 5.0, 2.0, 750.0, SHAKE_START, true );
 
 	CTakeDamageInfo info( this, this, NULL, vecOrigin, vecOrigin, 40.f, DMG_BLAST | DMG_USEDISTANCEMOD, TF_DMG_CUSTOM_MERASMUS_PLAYER_BOMB, &vecOrigin );
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info	= &info;
-	radiusInfo.m_flRadius = 100.0;
-	radiusInfo.m_vecSrc = vecOrigin;
-
-	if ( bKilled )
-		radiusInfo.m_pEntityIgnore = this;
-
+	CTFRadiusDamageInfo radiusInfo( &info, vecOrigin, 100.0f, bKilled ? this : NULL );
 	TFGameRules()->RadiusDamage( radiusInfo );
-	UTIL_ScreenShake( vecOrigin, 15.0, 5.0, 2.0, 750.0, SHAKE_START, true );
 }
 
 //-----------------------------------------------------------------------------

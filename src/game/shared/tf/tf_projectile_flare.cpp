@@ -23,7 +23,7 @@
 #define TF_FLARE_SPEED				2000.0f
 #define TF_FLARE_DET_RADIUS			110.0f
 #define TF_FLARE_DET_RADIUS_OLD		92.0f
-#define TF_FLARE_RADIUS_FOR_FJS		100.0f
+#define TF_FLARE_SELF_DAMAGE_RADIUS	100.0f
 
 #ifdef GAME_DLL
 BEGIN_DATADESC( CTFProjectile_Flare )
@@ -65,7 +65,7 @@ CTFProjectile_Flare::CTFProjectile_Flare()
 CTFProjectile_Flare::~CTFProjectile_Flare()
 {
 #ifdef CLIENT_DLL
-	ParticleProp()->StopEmission( m_pEffect );
+	ParticleProp()->StopEmission( m_hEffect );
 #endif
 }
 
@@ -379,13 +379,7 @@ void CTFProjectile_Flare::Airburst( trace_t *pTrace, bool bSelfDamage )
 		}
 
 		CTakeDamageInfo info( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), nDamageType|DMG_HALF_FALLOFF, TF_DMG_CUSTOM_FLARE_EXPLOSION );
-		CTFRadiusDamageInfo radiusInfo;
-		radiusInfo.info = &info;
-		radiusInfo.m_vecSrc = vecOrigin;
-		radiusInfo.m_flRadius = flRadius;
-		// Consistent radius for flare jumps
-		radiusInfo.m_flSelfDamageRadius = TF_FLARE_RADIUS_FOR_FJS;
-
+		CTFRadiusDamageInfo radiusInfo( &info, vecOrigin, flRadius, NULL, TF_FLARE_SELF_DAMAGE_RADIUS );
 		TFGameRules()->RadiusDamage( radiusInfo );
 	}
 
@@ -548,8 +542,8 @@ void CTFProjectile_Flare::CreateTrails( void )
 	if ( IsDormant() )
 		return;
 
-	if ( m_pEffect )
-		ParticleProp()->StopEmissionAndDestroyImmediately( m_pEffect );
+	if ( m_hEffect )
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_hEffect );
 
 	const char *pszEffectName = nullptr;
 	CTFFlareGun *pLauncher = dynamic_cast<CTFFlareGun *>( m_hLauncher.Get() );
@@ -573,7 +567,7 @@ void CTFProjectile_Flare::CreateTrails( void )
 		pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber(), false );
 	}
 
-	m_pEffect = ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
+	m_hEffect = ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 }
 
 #endif

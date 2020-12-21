@@ -1958,15 +1958,10 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 			TE_TFExplosion(filter, 0.0f, where, Vector(0.0f, 0.0f, 1.0f),
 				TF_WEAPON_ROCKETLAUNCHER, ENTINDEX(m_pTFPlayer));
 
-			CTakeDamageInfo dmginfo( m_pTFPlayer, m_pTFPlayer, m_pTFPlayer, where, where, 50.0f, DMG_BLAST | DMG_USEDISTANCEMOD, TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING, &where );
-			
-			CTFRadiusDamageInfo radius;
-			radius.info       = &dmginfo;
-			radius.m_vecSrc   = where;
-			radius.m_flRadius = 100.0f;
-			radius.m_flSelfDamageRadius = 0.0f;
-			radius.m_pEntityIgnore = m_pTFPlayer;
-			TFGameRules()->RadiusDamage( radius );
+			CTakeDamageInfo dmgInfo( m_pTFPlayer, m_pTFPlayer, m_pTFPlayer, where, where, 50.0f, DMG_BLAST | DMG_USEDISTANCEMOD, TF_DMG_CUSTOM_TAUNTATK_BARBARIAN_SWING, &where );
+			CTFRadiusDamageInfo radiusInfo( &dmgInfo, where, 100.0f, m_pTFPlayer );
+			TFGameRules()->RadiusDamage( radiusInfo );
+
 			m_pTFPlayer->EmitSound( "Weapon_RocketPack.Land" );
 		}
 	}

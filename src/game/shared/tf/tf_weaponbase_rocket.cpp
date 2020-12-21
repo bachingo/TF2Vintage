@@ -382,15 +382,10 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		pAttacker = pScorerInterface->GetScorer();
 	}
 
-	float flRadius = GetRadius();
+	const float flRadius = GetRadius();
 
 	CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = vecOrigin;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
-
+	CTFRadiusDamageInfo radiusInfo( &newInfo, vecOrigin, flRadius, NULL, TF_ROCKET_SELF_DAMAGE_RADIUS );
 	TFGameRules()->RadiusDamage( radiusInfo );
 
 	// Debug!

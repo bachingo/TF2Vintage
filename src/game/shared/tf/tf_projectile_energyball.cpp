@@ -81,10 +81,7 @@ CTFProjectile_EnergyBall *CTFProjectile_EnergyBall::Create( CBaseEntity *pWeapon
 //-----------------------------------------------------------------------------
 CBasePlayer *CTFProjectile_EnergyBall::GetScorer( void )
 {
-	if (dynamic_cast<CBasePlayer *>( m_Scorer.Get() ))
-		return dynamic_cast<CBasePlayer *>( m_Scorer.Get() );
-
-	return NULL;
+	return assert_cast<CBasePlayer *>( m_hScorer.Get() );
 }
 
 //-----------------------------------------------------------------------------
@@ -92,7 +89,7 @@ CBasePlayer *CTFProjectile_EnergyBall::GetScorer( void )
 //-----------------------------------------------------------------------------
 void CTFProjectile_EnergyBall::SetScorer(CBaseEntity *pScorer)
 {
-	m_Scorer = pScorer;
+	m_hScorer = pScorer;
 }
 
 //-----------------------------------------------------------------------------
@@ -256,17 +253,13 @@ void CTFProjectile_EnergyBall::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		pAttacker = pScorerInterface->GetScorer();
 	}
 
-	float flRadius = GetRadius();
+	const float flRadius = GetRadius();
 
 	if( pAttacker )
 	{
+		const float flSelfRadius = TF_ROCKET_SELF_DAMAGE_RADIUS * ( (m_bChargedShot) ? 1.33f : 1.0f );
 		CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), GetDamageType(), GetDamageCustom() );
-		CTFRadiusDamageInfo radiusInfo;
-		radiusInfo.info = &newInfo;
-		radiusInfo.m_vecSrc = vecOrigin;
-		radiusInfo.m_flRadius = flRadius;
-		radiusInfo.m_flSelfDamageRadius = TF_ROCKET_SELF_DAMAGE_RADIUS * m_bChargedShot ? 1.33f : 1.0f;
-
+		CTFRadiusDamageInfo radiusInfo( &newInfo, vecOrigin, flRadius, NULL, flSelfRadius );
 		TFGameRules()->RadiusDamage( radiusInfo );
 
 		// If we directly hit an enemy building, EMP it.

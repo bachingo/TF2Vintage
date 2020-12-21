@@ -187,11 +187,7 @@ void CTFProjectile_Jar::Explode( trace_t *pTrace, int bitsDamageType )
 	float flRadius = GetDamageRadius();
 
 	CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = vecOrigin;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius;
+	CTFRadiusDamageInfo radiusInfo( &newInfo, vecOrigin, flRadius, NULL, flRadius );
 
 	// If we extinguish a friendly player reduce our recharge time by 20%
 	if ( TFGameRules()->RadiusJarEffect( radiusInfo, GetEffectCondition() ) && m_iDeflected == 0 && pWeapon ) 

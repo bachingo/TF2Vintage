@@ -64,7 +64,13 @@ extern Vector g_TFClassViewVectors[];
 class CTFRadiusDamageInfo
 {
 public:
-	CTFRadiusDamageInfo();
+	CTFRadiusDamageInfo( CTakeDamageInfo const *pInfo, Vector const &vecSrc, float flRadius, CBaseEntity *pIgnore = NULL, float flSelfDmgRadius = 0.0f )
+		: info(pInfo), m_vecSrc(vecSrc), m_flRadius(flRadius), m_flSelfDamageRadius(flSelfDmgRadius), m_pEntityIgnore(pIgnore)
+	{
+		m_iClassIgnore = 0;
+		m_flPushbackScale = 1.0f;
+		m_pTargetHit = NULL;
+	}
 
 	bool ApplyToEntity( CBaseEntity *pEntity );
 
@@ -75,6 +81,8 @@ public:
 	float m_flSelfDamageRadius;
 	int m_iClassIgnore;
 	CBaseEntity *m_pEntityIgnore;
+	float m_flPushbackScale;
+	CBaseEntity *m_pTargetHit;
 };
 #endif
 

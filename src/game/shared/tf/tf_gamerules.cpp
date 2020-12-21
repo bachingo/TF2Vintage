@@ -2110,14 +2110,6 @@ private:
 	const IHandleEntity *m_pHitEntity;
 };
 
-CTFRadiusDamageInfo::CTFRadiusDamageInfo()
-{
-	m_flRadius = 0.0f;
-	m_iClassIgnore = CLASS_NONE;
-	m_pEntityIgnore = NULL;
-	m_flSelfDamageRadius = 1.0f;
-}
-
 ConVar tf_fixedup_damage_radius( "tf_fixedup_damage_radius", "1", FCVAR_DEVELOPMENTONLY );
 
 bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
@@ -2165,12 +2157,11 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 		UTIL_TraceLine( m_vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 	}
 
-	if ( tr.fraction != 1.0 && tr.m_pEnt != pEntity )
+	if ( tr.fraction != 1.0f && tr.m_pEnt != pEntity )
 		return false;
 
 	// Adjust the damage - apply falloff.
 	float flAdjustedDamage = 0.0f;
-
 	float flDistanceToEntity;
 
 	// Rockets store the ent they hit as the enemy and have already
@@ -2440,13 +2431,9 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 //-----------------------------------------------------------------------------
 void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrcIn, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore )
 {
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &info;
-	radiusInfo.m_vecSrc = vecSrcIn;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_iClassIgnore = iClassIgnore;
-	radiusInfo.m_pEntityIgnore = pEntityIgnore;
+	Assert( false );
 
+	CTFRadiusDamageInfo radiusInfo( &info, vecSrcIn, flRadius, pEntityIgnore );
 	RadiusDamage( radiusInfo );
 }
 

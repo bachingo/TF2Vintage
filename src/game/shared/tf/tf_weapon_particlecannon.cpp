@@ -340,8 +340,8 @@ void CTFParticleCannon::ClientEffectsThink( void )
 	if ( WeaponState() != WEAPON_IS_ACTIVE )
 		return;
 
-	const int nTimeFudge = 2 + rand() % 5;
-	SetContextThink( &CTFParticleCannon::ClientEffectsThink, gpGlobals->curtime + nTimeFudge, "PC_EFFECTS_THINK" );
+	const int nRandomTime = 2 + rand() % 5;
+	SetContextThink( &CTFParticleCannon::ClientEffectsThink, gpGlobals->curtime + nRandomTime, "PC_EFFECTS_THINK" );
 
 	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
 		return;
@@ -363,9 +363,9 @@ void CTFParticleCannon::ClientEffectsThink( void )
 			break;
 	}
 
-	ParticleProp()->Init( this );
+	//ParticleProp()->Init( this );
 	const char *pszIdleParticle = ( GetTeamNumber() == TF_TEAM_RED ) ? "drg_cow_idle" : "drg_cow_idle_blue";
-	CNewParticleEffect* pEffect = ParticleProp()->Create( pszIdleParticle, PATTACH_POINT_FOLLOW, pszAttachPoint );
+	CNewParticleEffect *pEffect = ParticleProp()->Create( pszIdleParticle, PATTACH_POINT_FOLLOW, pszAttachPoint );
 	if ( pEffect )
 	{
 		pEffect->SetControlPoint( CUSTOM_COLOR_CP1, GetEnergyWeaponColor( false ) );

@@ -84,7 +84,7 @@ private:
 #else
 	bool		m_bCritical;
 
-	HPARTICLEFFECT m_pEffect;
+	HPARTICLEFFECT m_hEffect;
 #endif
 
 };

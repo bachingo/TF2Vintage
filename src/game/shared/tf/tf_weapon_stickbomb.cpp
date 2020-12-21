@@ -98,15 +98,12 @@ void CTFStickBomb::Smack()
 			
 			/* why is the damage force vector set to Weapon_ShootPosition()?
 			 * I dunno! */
-			CTakeDamageInfo dmginfo( owner, owner, this, where, where, flDamage,
+			CTakeDamageInfo dmgInfo( owner, owner, this, where, where, flDamage,
 				DMG_BLAST | DMG_CRITICAL | ( IsCurrentAttackACrit() ? DMG_USEDISTANCEMOD : 0 ),
 				TF_DMG_CUSTOM_STICKBOMB_EXPLOSION, &where );
 			
-			CTFRadiusDamageInfo radius;
-			radius.info       = &dmginfo;
-			radius.m_vecSrc   = where;
-			radius.m_flRadius = 100.0f;
-			TFGameRules()->RadiusDamage( radius );
+			CTFRadiusDamageInfo radiusInfo( &dmgInfo, where, 100.0f );
+			TFGameRules()->RadiusDamage( radiusInfo );
 		}
 #endif
 	}

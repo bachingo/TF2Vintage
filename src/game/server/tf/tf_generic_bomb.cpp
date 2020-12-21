@@ -236,8 +236,6 @@ void CTFPumpkinBomb::Spawn( void )
 		SetCollisionGroup( TFCOLLISION_GROUP_PUMPKIN_BOMB );
 		SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
 		SetSolid( SOLID_BBOX );
-
-
 	}
 
 	BaseClass::Spawn();
@@ -320,16 +318,13 @@ void CTFPumpkinBomb::Event_Killed( CTakeDamageInfo const &info )
 
 	SetSolid( SOLID_NONE );
 
-	CTakeDamageInfo newInfo( this, info.GetAttacker(), m_flDamage, DMG_BLAST | DMG_HALF_FALLOFF );
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	newInfo.SetDamageCustom( m_bSpell ? TF_DMG_CUSTOM_SPELL_MIRV : TF_DMG_CUSTOM_PUMPKIN_BOMB );
-	radiusInfo.m_flRadius = m_flRadius;
-	radiusInfo.m_flSelfDamageRadius = 0.0f;
-	radiusInfo.m_vecSrc = GetAbsOrigin();
 
 	if ( TFGameRules() )
+	{
+		CTakeDamageInfo newInfo( this, info.GetAttacker(), m_flDamage, DMG_BLAST|DMG_HALF_FALLOFF|DMG_NOCLOSEDISTANCEMOD, m_bSpell ? TF_DMG_CUSTOM_SPELL_MIRV : TF_DMG_CUSTOM_PUMPKIN_BOMB );
+		CTFRadiusDamageInfo radiusInfo( &newInfo, GetAbsOrigin(), m_flRadius );
 		TFGameRules()->RadiusDamage( radiusInfo );
+	}
 
 	UserMessageBegin( filter, "BreakModel" );
 		WRITE_SHORT( GetModelIndex() );
