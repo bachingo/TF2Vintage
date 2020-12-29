@@ -206,12 +206,12 @@ void C_SceneEntity::SetupClientOnlyScene( const char *pszFilename, C_BaseFlex *p
 
 	char szFilename[128];
 	Assert( V_strlen( pszFilename ) < 128 );
-	V_strcpy( szFilename, pszFilename );
+	V_strcpy_safe( szFilename, pszFilename );
 
 	char szSceneHWM[128];
 	if ( GetHWMorphSceneFileName( szFilename, szSceneHWM ) )
 	{
-		V_strcpy( szFilename, szSceneHWM );
+		V_strcpy_safe( szFilename, szSceneHWM );
 	}
 
 	Assert(  szFilename[ 0 ] );
@@ -320,7 +320,7 @@ void C_SceneEntity::PostDataUpdate( DataUpdateType_t updateType )
 	if ( str )
 	{
 		Assert( V_strlen( str ) < MAX_PATH );
-		V_strcpy( szFilename, str );
+		V_strcpy_safe( szFilename, str );
 	}
 	else
 	{
@@ -330,7 +330,7 @@ void C_SceneEntity::PostDataUpdate( DataUpdateType_t updateType )
 	char szSceneHWM[MAX_PATH];
 	if ( GetHWMorphSceneFileName( szFilename, szSceneHWM ) )
 	{
-		V_strcpy( szFilename, szSceneHWM );
+		V_strcpy_safe( szFilename, szSceneHWM );
 	}
 
 	if ( updateType == DATA_UPDATE_CREATED )
