@@ -600,6 +600,8 @@ private:
 	CNetworkVar( bool, m_bPowerupMode );
 	CNetworkVar( float, m_flGravityScale );
 	CNetworkString( m_pszCustomUpgradesFile, MAX_PATH );
+	CNetworkVar( bool, m_bMannVsMachineAlarmStatus );
+	CNetworkVar( bool, m_bHaveMinPlayersToEnableReady );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hGreenKothTimer );
