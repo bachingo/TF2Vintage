@@ -460,6 +460,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropEHandle( RECVINFO( m_itHandle ) ),
 	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
 	RecvPropString( RECVINFO( m_pszCustomUpgradesFile ) ),
+	RecvPropBool( RECVINFO( m_bMannVsMachineAlarmStatus ) ),
+	RecvPropBool( RECVINFO( m_bHaveMinPlayersToEnableReady ) ),
 #else
 	SendPropInt( SENDINFO( m_nGameType ), 4, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
@@ -487,6 +489,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropEHandle( SENDINFO( m_itHandle ) ),
 	SendPropInt( SENDINFO( m_halloweenScenario ) ),
 	SendPropString( SENDINFO( m_pszCustomUpgradesFile ) ),
+	SendPropBool( SENDINFO( m_bMannVsMachineAlarmStatus ) ),
+	SendPropBool( SENDINFO( m_bHaveMinPlayersToEnableReady ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -1335,6 +1339,7 @@ void CTFGameRules::Activate()
 	m_bPlayingHybrid_CTF_CP.Set( false );
 	m_bPlayingSpecialDeliveryMode.Set( false );
 	m_bPlayingMannVsMachine.Set( false );
+	m_bMannVsMachineAlarmStatus.Set( false );
 	m_bPlayingRobotDestructionMode.Set( false );
 	m_bPowerupMode.Set( false );
 
