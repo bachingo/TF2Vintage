@@ -15,15 +15,14 @@
 #define TF_STUNBALL_MODEL	  "models/weapons/w_models/w_baseball.mdl"
 #define TF_STUNBALL_LIFETIME  15.0f
 #define TF_BAUBLE_MODEL		  "models/weapons/c_models/c_xms_festive_ornament.mdl"
+#define TF_BAUBLE_DET_RADIUS  50.0f
 
 ConVar tf_scout_stunball_base_duration( "tf_scout_stunball_base_duration", "6.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies stun duration of stunball" );
 
 extern ConVar tf2v_minicrits_on_deflect;
-
 ConVar tf2v_sandman_stun_type( "tf2v_sandman_stun_type", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Modifies Sandman stun types.", true, 0, true, 2 );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFStunBall, DT_TFStunBall )
-
 BEGIN_NETWORK_TABLE( CTFStunBall, DT_TFStunBall )
 #ifdef CLIENT_DLL
 	RecvPropBool( RECVINFO( m_bCritical ) ),
@@ -37,8 +36,8 @@ BEGIN_DATADESC( CTFStunBall )
 END_DATADESC()
 #endif
 
-LINK_ENTITY_TO_CLASS( tf_projectile_stunball, CTFStunBall );
-PRECACHE_REGISTER( tf_projectile_stunball );
+LINK_ENTITY_TO_CLASS( tf_projectile_stun_ball, CTFStunBall );
+PRECACHE_WEAPON_REGISTER( tf_projectile_stun_ball );
 
 CTFStunBall::CTFStunBall()
 {
@@ -126,7 +125,7 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		SetAbsOrigin( pTrace->endpos + ( pTrace->plane.normal * 1.0f ) );
 	}
 
-	CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( m_hLauncher.Get() );
+	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
 
 	// Pull out a bit.
 	if ( pTrace->fraction != 1.0 )
@@ -135,8 +134,8 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	// Damage.
-	CTFPlayer *pAttacker = dynamic_cast< CTFPlayer * >( GetThrower() );
-	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( m_hEnemy.Get() );
+	CTFPlayer *pAttacker = dynamic_cast<CTFPlayer *>( GetThrower() );
+	CTFPlayer *pPlayer = dynamic_cast<CTFPlayer *>( m_hEnemy.Get() );
 
 	// Make sure the player is stunnable
 	if ( pPlayer && pAttacker && CanStun( pPlayer ) )
@@ -145,13 +144,13 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		float flStunDuration = tf_scout_stunball_base_duration.GetFloat();
 		Vector vecDir = GetAbsOrigin();
 		VectorNormalize( vecDir );
-		bool bIsMoonShot = ( tf2v_sandman_stun_type.GetInt() == 2 )  ? flAirTime >= 1.0f : flAirTime >= 0.8f;
-		
+		bool bIsMoonShot = ( tf2v_sandman_stun_type.GetInt() == 2 ) ? flAirTime >= 1.0f : flAirTime >= 0.8f;
+
 
 		int iDamageAmt = 15;	// Balls do a fixed damage amount.
-		if (tf2v_sandman_stun_type.GetInt() == 2 && bIsMoonShot)	// New Moonshot type increases damage by 50%.
+		if ( tf2v_sandman_stun_type.GetInt() == 2 && bIsMoonShot )	// New Moonshot type increases damage by 50%.
 			iDamageAmt *= 1.5;
-		
+
 		// Do damage.
 		CTakeDamageInfo info( this, pAttacker, pWeapon, iDamageAmt, GetDamageType(), TF_DMG_CUSTOM_BASEBALL );
 		CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, GetAbsOrigin() );
@@ -163,60 +162,60 @@ void CTFStunBall::Explode( trace_t *pTrace, int bitsDamageType )
 		{
 
 			int iBonus = 1;
-			switch (tf2v_sandman_stun_type.GetInt())
+			switch ( tf2v_sandman_stun_type.GetInt() )
 			{
-			case 0:							// Old, broken stun that full stunned everything including Ubers.
-				if (bIsMoonShot)
-				{
-					// Maximum stun is base duration + 1 second
-					flAirTime = 1.0f;
-					flStunDuration += 1.0f;
+				case 0:							// Old, broken stun that full stunned everything including Ubers.
+					if ( bIsMoonShot )
+					{
+						// Maximum stun is base duration + 1 second
+						flAirTime = 1.0f;
+						flStunDuration += 1.0f;
 
-					// 2 points for moonshots
-					iBonus++;
+						// 2 points for moonshots
+						iBonus++;
 
-					// Big stun
-					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.0f, 1.0f, TF_STUNFLAGS_BIGBONK, pAttacker);
-				}
-				else
-				{
-					// Big Stun (but no crowd cheer)
-					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.0f, 1.0f, TF_STUNFLAG_BONKSTUCK, pAttacker);
-				}
-				break;
-			case 1:							// The middle of the road version, featuring full stuns on Moonshots and loser state on everything else.
-				if (bIsMoonShot)
-				{
-					// Maximum stun is base duration + 1 second
-					flAirTime = 1.0f;
-					flStunDuration += 1.0f;
+						// Big stun
+						pPlayer->m_Shared.StunPlayer( flStunDuration * ( flAirTime ), 0.0f, 1.0f, TF_STUNFLAGS_BIGBONK, pAttacker );
+					}
+					else
+					{
+						// Big Stun (but no crowd cheer)
+						pPlayer->m_Shared.StunPlayer( flStunDuration * ( flAirTime ), 0.0f, 1.0f, TF_STUNFLAG_BONKSTUCK, pAttacker );
+					}
+					break;
+				case 1:							// The middle of the road version, featuring full stuns on Moonshots and loser state on everything else.
+					if ( bIsMoonShot )
+					{
+						// Maximum stun is base duration + 1 second
+						flAirTime = 1.0f;
+						flStunDuration += 1.0f;
 
-					// 2 points for moonshots
-					iBonus++;
+						// 2 points for moonshots
+						iBonus++;
 
-					// Big stun
-					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.0f, 0.75f, TF_STUNFLAGS_BIGBONK, pAttacker);
-				}
-				else
-				{
-					// Small stun
-					pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.8f, 0.0f, TF_STUNFLAGS_SMALLBONK, pAttacker);
-				}
-				break;
-			case 2:							// Modern variant that only slows down targets.
-				if (bIsMoonShot)
-				{
-					// Maximum stun is base duration + 1 second
-					flAirTime = 1.0f;
-					flStunDuration += 1.0f;
+						// Big stun
+						pPlayer->m_Shared.StunPlayer( flStunDuration * ( flAirTime ), 0.0f, 0.75f, TF_STUNFLAGS_BIGBONK, pAttacker );
+					}
+					else
+					{
+						// Small stun
+						pPlayer->m_Shared.StunPlayer( flStunDuration * ( flAirTime ), 0.8f, 0.0f, TF_STUNFLAGS_SMALLBONK, pAttacker );
+					}
+					break;
+				case 2:							// Modern variant that only slows down targets.
+					if ( bIsMoonShot )
+					{
+						// Maximum stun is base duration + 1 second
+						flAirTime = 1.0f;
+						flStunDuration += 1.0f;
 
-					// 2 points for moonshots
-					iBonus++;
+						// 2 points for moonshots
+						iBonus++;
 
-				}
-				// Slowdown only.
-				pPlayer->m_Shared.StunPlayer(flStunDuration * (flAirTime), 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN, pAttacker);
-				break;
+					}
+					// Slowdown only.
+					pPlayer->m_Shared.StunPlayer( flStunDuration * ( flAirTime ), 0.4f, 0.0f, TF_STUNFLAG_SLOWDOWN, pAttacker );
+					break;
 			}
 
 
@@ -252,7 +251,7 @@ void CTFStunBall::StunBallTouch( CBaseEntity *pOther )
 	Vector vecSpot = GetAbsOrigin() - velDir * 32;
 	UTIL_TraceLine( vecSpot, vecSpot + velDir * 64, MASK_SOLID, this, COLLISION_GROUP_NONE, &pTrace );
 
-	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( pOther );
+	CTFPlayer *pPlayer = ToTFPlayer( pOther );
 
 	// Make us solid once we reach our owner
 	if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE )
@@ -302,11 +301,11 @@ bool CTFStunBall::CanStun( CTFPlayer *pOther )
 	// Don't stun players we can't damage
 	if ( ( pOther->m_Shared.InCond( TF_COND_INVULNERABLE ) && tf2v_sandman_stun_type.GetInt() != 0 ) || pOther->m_Shared.InCond( TF_COND_PHASE ) )
 		return false;
-	
+
 	// Don't stun players with megaheal.
 	if ( pOther->m_Shared.InCond( TF_COND_MEGAHEAL ) )
 		return false;
-	
+
 	return true;
 }
 
@@ -335,7 +334,7 @@ void CTFStunBall::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 
 	// we've touched a surface
 	m_bTouched = true;
-	
+
 	// Handle hitting skybox (disappear).
 	surfacedata_t *pprops = physprops->GetSurfaceData( pEvent->surfaceProps[otherIndex] );
 	if ( pprops->game.material == 'X' )
@@ -361,18 +360,18 @@ void CTFStunBall::SetScorer( CBaseEntity *pScorer )
 //-----------------------------------------------------------------------------
 CBasePlayer *CTFStunBall::GetAssistant( void )
 {
-	return dynamic_cast<CBasePlayer *>( m_Scorer.Get() );
+	return assert_cast<CBasePlayer *>( m_hScorer.Get() );
 }
 
-bool CTFStunBall::IsDeflectable(void)
+bool CTFStunBall::IsDeflectable( void )
 {
 	// Don't deflect projectiles with non-deflect attributes.
-	if (m_hLauncher.Get())
+	if ( m_hLauncher.Get() )
 	{
 		// Check to see if this is a non-deflectable projectile, like an energy projectile.
 		int nCannotDeflect = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER(m_hLauncher.Get(), nCannotDeflect, energy_weapon_no_deflect);
-		if (nCannotDeflect != 0)
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher.Get(), nCannotDeflect, energy_weapon_no_deflect );
+		if ( nCannotDeflect != 0 )
 			return false;
 	}
 	return true;
@@ -492,7 +491,7 @@ void CTFStunBall::OnDataChanged( DataUpdateType_t updateType )
 void CTFStunBall::CreateTrails( void )
 {
 	if ( IsDormant() )
-	return;
+		return;
 
 	if ( m_bCritical )
 	{
@@ -534,9 +533,13 @@ BEGIN_DATADESC( CTFBauble )
 END_DATADESC()
 #endif
 
-LINK_ENTITY_TO_CLASS( tf_projectile_bauble, CTFBauble );
-PRECACHE_REGISTER( tf_projectile_bauble );
+LINK_ENTITY_TO_CLASS( tf_projectile_ball_ornament, CTFBauble );
+PRECACHE_WEAPON_REGISTER( tf_projectile_ball_ornament );
+
 #ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTFBauble *CTFBauble::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, const Vector &vecVelocity, CBaseCombatCharacter *pOwner, CBaseEntity *pScorer, const AngularImpulse &angVelocity, const CTFWeaponInfo &weaponInfo )
 {
 	CTFBauble *pBauble = static_cast<CTFBauble *>( CBaseEntity::CreateNoSpawn( "tf_projectile_bauble", vecOrigin, vecAngles, pOwner ) );
@@ -560,12 +563,23 @@ CTFBauble *CTFBauble::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, con
 	return pBauble;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
 //-----------------------------------------------------------------------------
 void CTFBauble::Precache( void )
 {
 	PrecacheModel( TF_BAUBLE_MODEL );
+
 	PrecacheScriptSound( "BallBuster.OrnamentImpactRange" );
 	PrecacheScriptSound( "BallBuster.OrnamentImpact" );
+	PrecacheScriptSound( "BallBuster.HitBall" );
+	PrecacheScriptSound( "BallBuster.HitFlesh" );
+	PrecacheScriptSound( "BallBuster.HitWorld" );
+	PrecacheScriptSound( "BallBuster.DrawCatch" );
+	PrecacheScriptSound( "BallBuster.Ornament_DrawCatch" );
+	PrecacheScriptSound( "BallBuster.Ball_HitWorld" );
+
 	PrecacheParticleSystem( "xms_ornament_glitter" );
 
 	BaseClass::Precache();
@@ -586,7 +600,7 @@ void CTFBauble::Spawn( void )
 
 	// Pumpkin Bombs
 	AddFlag( FL_GRENADE );
-	
+
 	// Set the team skin.
 	switch ( GetTeamNumber() )
 	{
@@ -627,6 +641,8 @@ void CTFBauble::BaubleTouch( CBaseEntity *pOther )
 	// Verify a correct "other."
 	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
 		return;
+	if ( pOther == GetThrower() )
+		return;
 
 	trace_t pTrace;
 	Vector velDir = GetAbsVelocity();
@@ -634,19 +650,9 @@ void CTFBauble::BaubleTouch( CBaseEntity *pOther )
 	Vector vecSpot = GetAbsOrigin() - velDir * 32;
 	UTIL_TraceLine( vecSpot, vecSpot + velDir * 64, MASK_SOLID, this, COLLISION_GROUP_NONE, &pTrace );
 
-	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( pOther );
-
-	// Make us solid once we reach our owner
-	if ( GetCollisionGroup() == TFCOLLISION_GROUP_NONE )
-	{
-		if ( pOther == GetThrower() )
-			SetCollisionGroup( COLLISION_GROUP_PROJECTILE );
-
-		return;
-	}
-
+	CTFPlayer *pPlayer = ToTFPlayer( pOther );
 	// Do direct hit and bleed damage to an enemy we hit.
-	if ( pPlayer && ( ( gpGlobals->curtime - m_flCreationTime > 0.2f ) || ( GetTeamNumber() != pPlayer->GetTeamNumber() ) ) )
+	if ( pPlayer && ( CanCollideWithTeammates() || !InSameTeam( pOther ) ) && pOther->m_takedamage != DAMAGE_NO )
 	{
 		// Save who we hit for calculations
 		m_hEnemy = pOther;
@@ -672,7 +678,7 @@ void CTFBauble::Explode( trace_t *pTrace, int bitsDamageType )
 		SetAbsOrigin( pTrace->endpos + ( pTrace->plane.normal * 1.0f ) );
 	}
 
-	CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( m_hLauncher.Get() );
+	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
 
 	// Pull out a bit.
 	if ( pTrace->fraction != 1.0 )
@@ -681,8 +687,8 @@ void CTFBauble::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	// Damage.
-	CTFPlayer *pAttacker = dynamic_cast< CTFPlayer * >( GetThrower() );
-	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >( m_hEnemy.Get() );
+	CTFPlayer *pAttacker = dynamic_cast<CTFPlayer *>( GetThrower() );
+	CTFPlayer *pPlayer = dynamic_cast<CTFPlayer *>( m_hEnemy.Get() );
 
 	// Apply damage+bleed.
 	if ( pPlayer && pAttacker )
@@ -690,10 +696,10 @@ void CTFBauble::Explode( trace_t *pTrace, int bitsDamageType )
 		float flAirTime = gpGlobals->curtime - m_flCreationTime;
 		Vector vecDir = GetAbsOrigin();
 		VectorNormalize( vecDir );
-		
+
 		// Fly longer than a second? Guaranteed critical.
 		bool bCriticalHit = false;
-		if (gpGlobals->curtime - flAirTime >= 1.0)
+		if ( gpGlobals->curtime - flAirTime >= 1.0 )
 			bCriticalHit = true;
 
 		int nDamageType = GetDamageType();
@@ -701,19 +707,19 @@ void CTFBauble::Explode( trace_t *pTrace, int bitsDamageType )
 		{
 			nDamageType |= DMG_CRITICAL;
 		}
-		
+
 		// Do damage.
 		CTakeDamageInfo info( this, pAttacker, pWeapon, GetDamage(), nDamageType, TF_DMG_CUSTOM_BASEBALL );
 		CalculateBulletDamageForce( &info, pWeapon ? pWeapon->GetTFWpnData().iAmmoType : 0, vecDir, GetAbsOrigin() );
 		info.SetReportedPosition( pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin );
 		pPlayer->DispatchTraceAttack( info, vecDir, pTrace );
 		ApplyMultiDamage();
-		
+
 		// Also make them bleed too!
-		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>(m_hLauncher.Get());
-		if (ToTFPlayer(pAttacker) && pTFWeapon)
-			pPlayer->m_Shared.MakeBleed(ToTFPlayer(pAttacker), pTFWeapon, 5.0, TF_BLEEDING_DAMAGE);
-		
+		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase *>( m_hLauncher.Get() );
+		if ( ToTFPlayer( pAttacker ) && pTFWeapon )
+			pPlayer->m_Shared.MakeBleed( ToTFPlayer( pAttacker ), pTFWeapon, 5.0, TF_BLEEDING_DAMAGE );
+
 		// Ornament does a unique snowflake effect around players.
 		DispatchParticleEffect( "xms_ornament_glitter", PATTACH_POINT_FOLLOW, pPlayer, "head" );
 	}
@@ -739,7 +745,7 @@ void CTFBauble::Shatter( trace_t *pTrace, int bitsDamageType )
 	}
 
 	// Damage.
-	CTFPlayer *pAttacker = dynamic_cast< CTFPlayer * >( GetThrower() );
+	CTFPlayer *pAttacker = dynamic_cast<CTFPlayer *>( GetThrower() );
 
 	// Add a small explosion.
 	if ( pAttacker && pAttacker->GetTeamNumber() == TF_TEAM_RED )
@@ -752,18 +758,17 @@ void CTFBauble::Shatter( trace_t *pTrace, int bitsDamageType )
 	}
 	// Add the glass breaking sound.
 	EmitSound( "BallBuster.OrnamentImpact" );
-	
-	int nDamage = (GetDamage() * 0.9);
-	
+
 	// We explode in a small radius, set us up as explosive damage.
 	Vector vecOrigin = GetAbsOrigin();
 	Vector vectorReported = pAttacker ? pAttacker->GetAbsOrigin() : vec3_origin;
-	CTakeDamageInfo newInfo(this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, nDamage, GetDamageType(), TF_DMG_CUSTOM_BASEBALL, &vectorReported);
-	CTFRadiusDamageInfo radiusInfo(&newInfo, vecOrigin, 50.0f, NULL, 50.0f);
-	TFGameRules()->RadiusDamage(radiusInfo);
+	const float flDamage = GetDamage() * 0.9f;
+	CTakeDamageInfo newInfo( this, pAttacker, m_hLauncher.Get(), vec3_origin, vecOrigin, flDamage, GetDamageType(), TF_DMG_CUSTOM_BASEBALL, &vectorReported );
+	CTFRadiusDamageInfo radiusInfo( &newInfo, vecOrigin, TF_BAUBLE_DET_RADIUS );
+	TFGameRules()->RadiusDamage( radiusInfo );
 
 	// Remove.
-	UTIL_Remove(this);
+	UTIL_Remove( this );
 }
 
 
