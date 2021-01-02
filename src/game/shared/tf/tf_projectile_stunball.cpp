@@ -352,7 +352,7 @@ void CTFStunBall::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
 //-----------------------------------------------------------------------------
 void CTFStunBall::SetScorer( CBaseEntity *pScorer )
 {
-	m_Scorer = pScorer;
+	m_hScorer = pScorer;
 }
 
 //-----------------------------------------------------------------------------
@@ -594,7 +594,6 @@ void CTFBauble::Spawn( void )
 	SetDetonateTimerLength( TF_STUNBALL_LIFETIME );
 
 	BaseClass::Spawn();
-	SetTouch( &CTFBauble::BaubleTouch );
 
 	CreateTrail();
 
@@ -636,7 +635,7 @@ void CTFBauble::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBauble::BaubleTouch( CBaseEntity *pOther )
+void CTFBauble::StunBallTouch( CBaseEntity *pOther )
 {
 	// Verify a correct "other."
 	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
@@ -663,6 +662,34 @@ void CTFBauble::BaubleTouch( CBaseEntity *pOther )
 
 	// Once we touched something (player/world) shatter the bauble.
 	Shatter( &pTrace, GetDamageType() );
+}
+
+void CTFBauble::VPhysicsCollision( int index, gamevcollisionevent_t *pEvent )
+{
+	BaseClass::VPhysicsCollision( index, pEvent );
+
+	int otherIndex = !index;
+	CBaseEntity *pHitEntity = pEvent->pEntities[otherIndex];
+	if ( !pHitEntity )
+		return;
+
+	// Break if we hit the world.
+	if ( pHitEntity->IsWorld() )
+	{
+		m_vecCollisionVelocity = pEvent->preVelocity[index];
+		SetContextThink( &CTFBauble::VPhysicsCollisionThink, gpGlobals->curtime, "OrnamentCollisionThink" );
+	}
+}
+
+void CTFBauble::VPhysicsCollisionThink( void )
+{
+	trace_t pTrace;
+	Vector velDir = m_vecCollisionVelocity;
+	VectorNormalize( velDir );
+	Vector vecSpot = GetAbsOrigin() - velDir * 16;
+	UTIL_TraceLine( vecSpot, vecSpot + velDir * 32, MASK_SOLID, this, COLLISION_GROUP_NONE, &pTrace );
+
+	Explode( &pTrace, DMG_BLAST|DMG_PREVENT_PHYSICS_FORCE );
 }
 
 //-----------------------------------------------------------------------------
