@@ -6384,6 +6384,14 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		if ( flDeductCloak && flDistMult != 0  )
 			m_Shared.RemoveFromSpyCloakMeter( ( flDeductCloak * flDistMult ), true );
 
+		int nForceLaughSameWeapon = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFWeapon, nForceLaughSameWeapon, tickle_enemies_wielding_same_weapon );
+		if ( nForceLaughSameWeapon != 0 )
+		{
+			// Check if we have the same weapon.
+			if ( ItemsMatch( pTFWeapon->GetItem(), GetActiveTFWeapon()->GetItem() ) )
+				Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
+		}
 	}
 	
 	// We check the original resistance first to see if it's a resistance/vurnerability.
@@ -6501,15 +6509,6 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 					flDamageAimMult = 1.0f;
 				flDamage *= flDamageAimMult;
 			}
-		}
-		
-		int nForceLaughSameWeapon = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pTFWeapon, nForceLaughSameWeapon, tickle_enemies_wielding_same_weapon );
-		if ( nForceLaughSameWeapon != 0 )
-		{
-			// Check if we have the same weapon.
-			if ( ItemsMatch( pTFWeapon->GetItem(), GetActiveTFWeapon()->GetItem() ) )
-				Taunt( TAUNT_LAUGH, MP_CONCEPT_TAUNT_LAUGH );
 		}
 	}
 	
