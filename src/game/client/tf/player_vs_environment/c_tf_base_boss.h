@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -7,7 +7,7 @@
 #ifndef C_TF_BASE_BOSS_H
 #define C_TF_BASE_BOSS_H
 
-#include "NextBot/C_NextBot.h"
+#include "NextBot/c_NextBot.h"
 #include "c_tf_mvm_boss_progress_user.h"
 
 class C_TFBaseBoss : public C_NextBotCombatCharacter, public C_TFMvMBossProgressUser

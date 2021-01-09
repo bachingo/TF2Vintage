@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -24,7 +24,7 @@ public:
 		: BaseClass( bot ) {}
 	virtual ~CTFBotBody() {}
 
-	virtual float GetHeadAimTrackingInterval( void ) const override;
+	virtual float GetHeadAimTrackingInterval( void ) const OVERRIDE;
 };
 
 
@@ -36,18 +36,18 @@ public:
 		: BaseClass( bot ) {}
 	virtual ~CTFBotLocomotion() {}
 
-	virtual void Update( void ) override;
+	virtual void Update( void ) OVERRIDE;
 
-	virtual void Approach( const Vector &pos, float goalWeight = 1.0f ) override;
+	virtual void Approach( const Vector &pos, float goalWeight = 1.0f ) OVERRIDE;
 
-	virtual void Jump( void ) override;
+	virtual void Jump( void ) OVERRIDE;
 
-	virtual float GetMaxJumpHeight( void ) const override;
-	virtual float GetDeathDropHeight( void ) const override;
-	virtual float GetRunSpeed( void ) const override;
+	virtual float GetMaxJumpHeight( void ) const OVERRIDE;
+	virtual float GetDeathDropHeight( void ) const OVERRIDE;
+	virtual float GetRunSpeed( void ) const OVERRIDE;
 
-	virtual bool IsAreaTraversable( const CNavArea *baseArea ) const override;
-	virtual bool IsEntityTraversable( CBaseEntity *ent, TraverseWhenType when = EVENTUALLY ) const override;
+	virtual bool IsAreaTraversable( const CNavArea *baseArea ) const OVERRIDE;
+	virtual bool IsEntityTraversable( CBaseEntity *ent, TraverseWhenType when = EVENTUALLY ) const OVERRIDE;
 };
 
 
@@ -58,16 +58,16 @@ public:
 	CTFBotVision( INextBot *nextbot );
 	virtual ~CTFBotVision();
 
-	virtual void Reset( void ) override;
-	virtual void Update( void ) override;
+	virtual void Reset( void ) OVERRIDE;
+	virtual void Update( void ) OVERRIDE;
 
-	virtual void CollectPotentiallyVisibleEntities( CUtlVector<CBaseEntity *> *ents ) override;
+	virtual void CollectPotentiallyVisibleEntities( CUtlVector<CBaseEntity *> *ents ) OVERRIDE;
 
-	virtual bool IsVisibleEntityNoticed( CBaseEntity *ent ) const override;
-	virtual bool IsIgnored( CBaseEntity *ent ) const override;
+	virtual bool IsVisibleEntityNoticed( CBaseEntity *ent ) const OVERRIDE;
+	virtual bool IsIgnored( CBaseEntity *ent ) const OVERRIDE;
 
-	virtual float GetMaxVisionRange( void ) const override;
-	virtual float GetMinRecognizeTime( void ) const override;
+	virtual float GetMaxVisionRange( void ) const OVERRIDE;
+	virtual float GetMinRecognizeTime( void ) const OVERRIDE;
 
 private:
 	void UpdatePotentiallyVisibleNPCs();

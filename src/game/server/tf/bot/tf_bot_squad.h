@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -22,8 +22,8 @@ public:
 	CTFBotSquad();
 	virtual ~CTFBotSquad();
 
-	virtual INextBotEventResponder *FirstContainedResponder( void ) const override;
-	virtual INextBotEventResponder *NextContainedResponder( INextBotEventResponder *prev ) const override;
+	virtual INextBotEventResponder *FirstContainedResponder( void ) const OVERRIDE;
+	virtual INextBotEventResponder *NextContainedResponder( INextBotEventResponder *prev ) const OVERRIDE;
 
 	struct Iterator
 	{

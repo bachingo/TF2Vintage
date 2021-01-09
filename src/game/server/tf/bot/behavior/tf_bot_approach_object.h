@@ -13,10 +13,10 @@ public:
 	CTFBotApproachObject( CBaseEntity *object, float dist );
 	virtual ~CTFBotApproachObject();
 
-	virtual const char *GetName() const override;
+	virtual const char *GetName() const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *actor, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *actor, float dt ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *actor, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *actor, float dt ) OVERRIDE;
 
 private:
 	CHandle<CBaseEntity> m_hObject;

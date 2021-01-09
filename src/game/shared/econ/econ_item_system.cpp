@@ -193,7 +193,7 @@ CEconItemSchema *GetItemSchema()
 		{													\
 			IF_ELEMENT_FOUND(dict, pKeyData->GetName())		\
 			{												\
-				Q_strncpy(dict.Element(index), pKeyData->GetString(), 128);\
+				Q_strncpy((char*)dict.Element(index), pKeyData->GetString(), 196);\
 			}												\
 			else											\
 			{												\

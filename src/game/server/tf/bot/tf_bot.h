@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -78,16 +78,16 @@ public:
 	virtual ~CTFBot();
 
 	DECLARE_INTENTION_INTERFACE( CTFBot )
-	virtual ILocomotion *GetLocomotionInterface( void ) const override { return m_locomotor; }
-	virtual IBody *GetBodyInterface( void ) const override { return m_body; }
-	virtual IVision *GetVisionInterface( void ) const override { return m_vision; }
+	virtual ILocomotion *GetLocomotionInterface( void ) const OVERRIDE { return m_locomotor; }
+	virtual IBody *GetBodyInterface( void ) const OVERRIDE { return m_body; }
+	virtual IVision *GetVisionInterface( void ) const OVERRIDE { return m_vision; }
 	virtual CBaseCombatCharacter *GetEntity( void ) const;
 	virtual bool	IsDormantWhenDead( void ) const { return false; }
 	virtual bool	IsDebugFilterMatch( const char *name ) const;
 
 	virtual void	Spawn( void );
 	virtual void	Event_Killed( const CTakeDamageInfo &info );
-	virtual void	UpdateOnRemove( void ) override;
+	virtual void	UpdateOnRemove( void ) OVERRIDE;
 	virtual void	FireGameEvent( IGameEvent *event );
 	virtual int		GetBotType() const { return TF_BOT_TYPE; }
 	virtual int		DrawDebugTextOverlays( void );
@@ -363,7 +363,7 @@ public:
 	CTFBotPathCost( CTFBot *actor, RouteType routeType = DEFAULT_ROUTE );
 	virtual ~CTFBotPathCost() { }
 
-	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const override;
+	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const OVERRIDE;
 
 private:
 	CTFBot *m_Actor;

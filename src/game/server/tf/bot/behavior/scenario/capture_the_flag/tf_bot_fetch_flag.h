@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -21,13 +21,13 @@ public:
 		: m_bGiveUpWhenDone( bGiveUp ) {}
 	virtual ~CTFBotFetchFlag() {}
 	
-	virtual const char *GetName() const override;
+	virtual const char *GetName() const OVERRIDE;
 	
-	virtual ActionResult<CTFBot> OnStart(CTFBot *me, Action<CTFBot> *priorAction) override;
-	virtual ActionResult<CTFBot> Update(CTFBot *me, float dt) override;
+	virtual ActionResult<CTFBot> OnStart(CTFBot *me, Action<CTFBot> *priorAction) OVERRIDE;
+	virtual ActionResult<CTFBot> Update(CTFBot *me, float dt) OVERRIDE;
 	
-	virtual QueryResultType ShouldHurry(const INextBot *me) const override;
-	virtual QueryResultType ShouldRetreat(const INextBot *me) const override;
+	virtual QueryResultType ShouldHurry(const INextBot *me) const OVERRIDE;
+	virtual QueryResultType ShouldRetreat(const INextBot *me) const OVERRIDE;
 	
 private:
 	bool m_bGiveUpWhenDone;           // +0x0032

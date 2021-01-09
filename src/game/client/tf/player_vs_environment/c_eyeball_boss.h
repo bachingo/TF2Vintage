@@ -29,7 +29,7 @@ public:
 	virtual void ClientThink( void );
 	virtual void FireEvent(const Vector& origin, const QAngle& angle, int event, const char* options);
 	virtual int InternalDrawModel( int flags );
-	virtual const QAngle& GetRenderAngles( void ) override;
+	virtual const QAngle& GetRenderAngles( void ) OVERRIDE;
 	virtual void OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void OnDataChanged( DataUpdateType_t updateType );
 

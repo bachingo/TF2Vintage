@@ -12,8 +12,8 @@ ConVar tf_bot_stickybomb_density( "tf_bot_stickybomb_density", "0.0001", FCVAR_C
 class PlaceStickyBombReply : public INextBotReply
 {
 public:
-	virtual void OnSuccess( INextBot *nextbot ) override;
-	virtual void OnFail( INextBot *nextbot, FailureReason reason ) override
+	virtual void OnSuccess( INextBot *nextbot ) OVERRIDE;
+	virtual void OnFail( INextBot *nextbot, FailureReason reason ) OVERRIDE
 	{
 		if ( m_pAimDuration )
 			m_pAimDuration->Invalidate();

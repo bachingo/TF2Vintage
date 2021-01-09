@@ -11,11 +11,11 @@ public:
 	CTFBotHintEngineerNest();
 	virtual ~CTFBotHintEngineerNest();
 	
-	virtual int UpdateTransmitState() override;
+	virtual int UpdateTransmitState() OVERRIDE;
 	
-	virtual void Spawn() override;
+	virtual void Spawn() OVERRIDE;
 	
-	virtual HintType GetHintType() const override;
+	virtual HintType GetHintType() const OVERRIDE;
 	
 	void DetonateStateNest();
 	

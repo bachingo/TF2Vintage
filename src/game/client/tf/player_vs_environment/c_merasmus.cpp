@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose:
 //
@@ -17,7 +17,7 @@ public:
 	C_Merasmus();
 	virtual ~C_Merasmus();
 
-	virtual Vector	GetObserverCamOrigin( void ) override	{ return EyePosition(); }
+	virtual Vector	GetObserverCamOrigin( void ) OVERRIDE	{ return EyePosition(); }
 
 	virtual void	Spawn( void );
 	virtual int		GetSkin( void );

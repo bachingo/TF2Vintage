@@ -18,7 +18,7 @@ class CZombieBehavior : public Action<CZombie>
 	DECLARE_CLASS( CZombieBehavior, Action<CZombie> );
 public:
 
-	virtual char const *GetName( void ) const;
+	virtual char const *GetName( void ) const OVERRIDE;
 
 	virtual ActionResult<CZombie> OnStart( CZombie *me, Action <CZombie> *priorAction ) OVERRIDE;
 	virtual ActionResult<CZombie> Update( CZombie *me, float dt ) OVERRIDE;

@@ -15,19 +15,19 @@ public:
 	CTFBotSpySap( CBaseObject *target );
 	virtual ~CTFBotSpySap();
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *action ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *action ) override;
-	virtual ActionResult<CTFBot> OnSuspend( CTFBot *me, Action<CTFBot> *action ) override;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *action ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual void OnEnd( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
+	virtual ActionResult<CTFBot> OnSuspend( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
+	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
 
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) override;
+	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
 
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const override;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const override;
-	virtual QueryResultType IsHindrance( const INextBot *me, CBaseEntity *it ) const override;
+	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual QueryResultType IsHindrance( const INextBot *me, CBaseEntity *it ) const OVERRIDE;
 
 private:
 	QueryResultType AreAllDangerousSentriesSapped( CTFBot *actor ) const;

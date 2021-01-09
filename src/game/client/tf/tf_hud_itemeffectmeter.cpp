@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -74,7 +74,7 @@ public:
 	virtual Color	GetFgColor( void )					{ return COLOR_WHITE; }
 	virtual bool    ShouldBeep( void );
 	virtual bool    ShouldFlash( void )                 { return false; }
-	virtual bool    IsEnabled( void ) override          { return m_bEnabled; }
+	virtual bool    IsEnabled( void ) OVERRIDE          { return m_bEnabled; }
 
 	virtual CBaseAnimating* GetItem( void ) const		{ return m_hItem; }
 	void            SetItem( CBaseAnimating *pItem )    { m_hItem = pItem; }

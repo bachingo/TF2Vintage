@@ -355,21 +355,21 @@ Vector CTFBotEngineerBuilding::FindHiddenSpot( CTFNavArea *pPointArea, const CUt
 	Vector vecLocation = vec3_origin;
 
 	CUtlVector<CTFNavArea *> validAreas;
-	for ( CTFNavArea *pArea : surroundingAreas )
+	FOR_EACH_VEC( surroundingAreas, i )
 	{
 		const float minDistance = 750.0f;
-		if ( pArea->GetCenter().DistToSqr( pPointArea->GetCenter() ) < Square( minDistance ) )
+		if ( surroundingAreas[i]->GetCenter().DistToSqr( pPointArea->GetCenter() ) < Square( minDistance ) )
 			continue;
 
-		validAreas.AddToTail( pArea );
+		validAreas.AddToTail( surroundingAreas[i] );
 	}
 
-	for ( CTFNavArea *pArea : validAreas )
+	FOR_EACH_VEC( validAreas, i )
 	{
 		const int tries = 10;
 		for ( int i = 0; i < tries; ++i )
 		{
-			Vector vecSpot = pArea->GetRandomPoint();
+			Vector vecSpot = validAreas[i]->GetRandomPoint();
 
 			// See if we can immediately see the capture point from here
 			trace_t trace;
@@ -396,15 +396,15 @@ bool CTFBotEngineerBuilding::IsMetalSourceNearby( CTFBot *me ) const
 	CollectSurroundingAreas( &areas, me->GetLastKnownArea(), 2000.0f, 
 							 me->GetLocomotionInterface()->GetStepHeight(), me->GetLocomotionInterface()->GetDeathDropHeight() );
 
-	for ( CTFNavArea *pArea : areas )
+	FOR_EACH_VEC( areas, i )
 	{
-		if ( pArea->HasTFAttributes( AMMO ) )
+		if ( areas[i]->HasTFAttributes( AMMO ) )
 			return true;
 
-		if ( me->GetTeamNumber() == TF_TEAM_RED && pArea->HasTFAttributes( RED_SPAWN_ROOM ) )
+		if ( me->GetTeamNumber() == TF_TEAM_RED && areas[i]->HasTFAttributes( RED_SPAWN_ROOM ) )
 			return true;
 
-		if ( me->GetTeamNumber() == TF_TEAM_BLUE && pArea->HasTFAttributes( BLUE_SPAWN_ROOM ) )
+		if ( me->GetTeamNumber() == TF_TEAM_BLUE && areas[i]->HasTFAttributes( BLUE_SPAWN_ROOM ) )
 			return true;
 	}
 

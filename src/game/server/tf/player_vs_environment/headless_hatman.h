@@ -26,7 +26,7 @@ public:
 	{
 	}
 
-	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const;
+	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const OVERRIDE;
 
 private:
 	CHeadlessHatman *m_Actor;
@@ -89,7 +89,7 @@ public:
 
 	virtual int OnTakeDamage_Alive( const CTakeDamageInfo& info );
 
-	virtual void Update( void );
+	virtual void Update( void ) OVERRIDE;
 	virtual IBody *GetBodyInterface( void ) const OVERRIDE { return m_body; }
 	virtual ILocomotion *GetLocomotionInterface( void ) const OVERRIDE { return m_locomotor; }
 

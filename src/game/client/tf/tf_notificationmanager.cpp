@@ -141,7 +141,7 @@ char* CTFNotificationManager::GetVersionString()
 
 		filesystem->Close( fh );
 
-		Q_snprintf( verString, sizeof( verString ), GameInfo + 8 );
+		V_strcpy_safe( verString, GameInfo + 8 );
 
 		delete[] GameInfo;
 	}

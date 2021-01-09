@@ -275,7 +275,7 @@ public:
 
 	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
 	virtual bool GetAttachment( int number, matrix3x4_t &matrix );
-	virtual bool GetAttachment( int number, Vector &origin, QAngle &angles ) override { return BaseClass::GetAttachment( number, origin, angles ); }
+	virtual bool GetAttachment( int number, Vector &origin, QAngle &angles ) OVERRIDE { return BaseClass::GetAttachment( number, origin, angles ); }
 
 	float GetInvisibilityLevel( void )
 	{
@@ -3538,9 +3538,9 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 	if ( bDisguised && !ShouldDrawSpyAsDisguised() )
 		return;
 
-	for ( C_EconWearable *pWearable : m_hMyWearables )
+	FOR_EACH_VEC( m_hMyWearables, i )
 	{
-		C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( pWearable );
+		C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( m_hMyWearables[i].Get() );
 		if ( pTFWearable == nullptr )
 			continue;
 
@@ -3565,7 +3565,7 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 			 pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION )
 		 {
 			// Don't put a hat on a decapitated corpse!
-			 if (pWearable->GetLoadoutSlot() == TF_LOADOUT_SLOT_HAT)
+			 if (pTFWearable->GetLoadoutSlot() == TF_LOADOUT_SLOT_HAT)
 				continue; 
 		 }
 
@@ -3573,7 +3573,7 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 		if ( pProp == nullptr )
 			return;
 
-		const model_t *pModel = pWearable->GetModel();
+		const model_t *pModel = pTFWearable->GetModel();
 		const char *szModel = modelinfo->GetModelName( pModel );
 		if ( !szModel || !*szModel || *szModel == '?' )
 			continue;
@@ -4899,9 +4899,9 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 
 	if ( bWearables )
 	{
-		for ( C_EconWearable *pWearable : m_hMyWearables )
+		FOR_EACH_VEC( m_hMyWearables, i )
 		{
-			C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( pWearable );
+			C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( m_hMyWearables[i].Get() );
 			if ( pTFWearable == nullptr )
 				continue;
 
@@ -4912,17 +4912,17 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 				 !bDisguised && pTFWearable->m_bDisguiseWearable )
 				continue;*/
 
-			if ( pWearable->IsDynamicModelLoading() && pWearable->GetModelPtr() == nullptr )
+			if ( pTFWearable->IsDynamicModelLoading() && pTFWearable->GetModelPtr() == nullptr )
 				continue;
 
-			const model_t *pModel = modelinfo->GetModel( pWearable->GetModelIndex() );
+			const model_t *pModel = modelinfo->GetModel( pTFWearable->GetModelIndex() );
 			const char *szModel = modelinfo->GetModelName( pModel );
 			if ( !szModel || !*szModel )
 				continue;
 
 			Vector vecOrigin; matrix3x4_t root;
-			if ( pWearable->IsDynamicModelLoading() || !pWearable->GetRootBone( root ) )
-				vecOrigin = pWearable->GetAbsOrigin();
+			if ( pTFWearable->IsDynamicModelLoading() || !pTFWearable->GetRootBone( root ) )
+				vecOrigin = pTFWearable->GetAbsOrigin();
 			else
 				MatrixPosition( root, vecOrigin );
 
@@ -4949,7 +4949,7 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 				pProp->SetModelName( iModel );
 
 				pProp->SetAbsOrigin( vecOrigin );
-				pProp->SetAbsAngles( pWearable->GetAbsAngles() );
+				pProp->SetAbsAngles( pTFWearable->GetAbsAngles() );
 
 				pProp->SetOwnerEntity( this );
 				pProp->ChangeTeam( GetTeamNumber() );
@@ -4992,9 +4992,9 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 			{
 				CUtlVector<breakmodel_t> list;
 				const int iClassIdx = GetPlayerClass()->GetClassIndex();
-				for ( int i=0; i < m_aGibs.Count(); ++i )
+				FOR_EACH_VEC( m_aGibs, i )
 				{
-					breakmodel_t const &breakModel = m_aGibs[ i ];
+					breakmodel_t const &breakModel = m_aGibs[i];
 					if ( !V_stricmp( breakModel.modelName, g_pszHeadGibs[ iClassIdx ] ) )
 						list.AddToHead( breakModel );
 				}
@@ -5066,7 +5066,7 @@ void C_TFPlayer::DropPartyHat( breakablepropparams_t const &breakParams, Vector 
 //-----------------------------------------------------------------------------
 void C_TFPlayer::DropHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity )
 {
-	for ( int i=0; i<m_hMyWearables.Count(); ++i )
+	FOR_EACH_VEC( m_hMyWearables, i )
 	{
 		CEconWearable* pItem = m_hMyWearables[i];
 		if ( pItem && pItem->GetItem()->GetStaticData() )

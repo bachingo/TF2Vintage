@@ -12,17 +12,17 @@ public:
 	CTFBotEscort(CBaseEntity *who);
 	virtual ~CTFBotEscort();
 	
-	virtual const char *GetName() const override;
+	virtual const char *GetName() const OVERRIDE;
 	
-	virtual ActionResult<CTFBot> OnStart(CTFBot *actor, Action<CTFBot> *action) override;
-	virtual ActionResult<CTFBot> Update(CTFBot *actor, float dt) override;
+	virtual ActionResult<CTFBot> OnStart(CTFBot *actor, Action<CTFBot> *action) OVERRIDE;
+	virtual ActionResult<CTFBot> Update(CTFBot *actor, float dt) OVERRIDE;
 	
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess(CTFBot *actor, const Path *path) override;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure(CTFBot *actor, const Path *path, MoveToFailureType fail) override;
-	virtual EventDesiredResult<CTFBot> OnStuck(CTFBot *actor) override;
-	virtual EventDesiredResult<CTFBot> OnCommandApproach(CTFBot *actor, const Vector& v1, float f1) override;
+	virtual EventDesiredResult<CTFBot> OnMoveToSuccess(CTFBot *actor, const Path *path) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnMoveToFailure(CTFBot *actor, const Path *path, MoveToFailureType fail) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnStuck(CTFBot *actor) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnCommandApproach(CTFBot *actor, const Vector& v1, float f1) OVERRIDE;
 	
-	virtual QueryResponse ShouldRetreat(const INextBot *nextbot) const override;
+	virtual QueryResponse ShouldRetreat(const INextBot *nextbot) const OVERRIDE;
 	
 	CBaseEntity *GetWho() const;
 	void SetWho(CBaseEntity *who);

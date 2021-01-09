@@ -17,19 +17,19 @@ public:
 	CTFNavMesh();
 	virtual ~CTFNavMesh();
 
-	virtual void FireGameEvent( IGameEvent *event ) override;
-	virtual CNavArea *CreateArea( void ) const override;
-	virtual void Update( void ) override;
-	virtual bool IsAuthoritative( void ) const override;
-	virtual unsigned int GetSubVersionNumber( void ) const override;
-	virtual void SaveCustomData( CUtlBuffer& fileBuffer ) const override;
-	virtual void LoadCustomData( CUtlBuffer& fileBuffer, unsigned int subVersion ) override;
-	virtual void OnServerActivate( void ) override;
-	virtual void OnRoundRestart( void ) override;
-	virtual unsigned int GetGenerationTraceMask( void ) const override;
-	virtual void PostCustomAnalysis( void ) override;
-	virtual void BeginCustomAnalysis( bool bIncremental ) override;
-	virtual void EndCustomAnalysis( void ) override;
+	virtual void FireGameEvent( IGameEvent *event ) OVERRIDE;
+	virtual CNavArea *CreateArea( void ) const OVERRIDE;
+	virtual void Update( void ) OVERRIDE;
+	virtual bool IsAuthoritative( void ) const OVERRIDE;
+	virtual unsigned int GetSubVersionNumber( void ) const OVERRIDE;
+	virtual void SaveCustomData( CUtlBuffer& fileBuffer ) const OVERRIDE;
+	virtual void LoadCustomData( CUtlBuffer& fileBuffer, unsigned int subVersion ) OVERRIDE;
+	virtual void OnServerActivate( void ) OVERRIDE;
+	virtual void OnRoundRestart( void ) OVERRIDE;
+	virtual unsigned int GetGenerationTraceMask( void ) const OVERRIDE;
+	virtual void PostCustomAnalysis( void ) OVERRIDE;
+	virtual void BeginCustomAnalysis( bool bIncremental ) OVERRIDE;
+	virtual void EndCustomAnalysis( void ) OVERRIDE;
 
 	void CollectAmbushAreas( CUtlVector<CTFNavArea *> *areas, CTFNavArea *startArea, int teamNum, float fMaxDist = -1.0f, float fIncursionDiff = 0.0f ) const;
 	//void CollectAreasWithinBombTravelRange( CUtlVector<CTFNavArea *> *areas, float f1, float f2 ) const;

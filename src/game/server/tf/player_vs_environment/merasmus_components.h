@@ -42,21 +42,21 @@ public:
 	}
 	virtual ~CMerasmusFlyingLocomotion() {}
 
-	virtual void            Update( void );
-	virtual void            Reset( void );
+	virtual void            Update( void ) OVERRIDE;
+	virtual void            Reset( void ) OVERRIDE;
 
-	virtual float           GetStepHeight( void ) const;
-	virtual float           GetMaxJumpHeight( void ) const;
-	virtual float           GetDeathDropHeight( void ) const;
+	virtual float           GetStepHeight( void ) const OVERRIDE;
+	virtual float           GetMaxJumpHeight( void ) const OVERRIDE;
+	virtual float           GetDeathDropHeight( void ) const OVERRIDE;
 
 	virtual bool			ShouldCollideWith( const CBaseEntity *other ) const OVERRIDE;
 
 	virtual void            Approach( const Vector& goalPos, float goalWeight = 1.0f );
 	virtual void            FaceTowards( const Vector& target );
 
-	virtual const Vector&   GetGroundNormal( void ) const;
+	virtual const Vector&   GetGroundNormal( void ) const OVERRIDE;
 
-	virtual const Vector&   GetVelocity( void ) const;
+	virtual const Vector&   GetVelocity( void ) const OVERRIDE;
 
 	virtual float           GetDesiredSpeed( void ) const;
 

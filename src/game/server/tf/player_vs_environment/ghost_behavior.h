@@ -13,10 +13,10 @@ class CGhostBehavior : public Action<CGhost>
 	DECLARE_CLASS( CGhostBehavior, Action<CGhost> );
 public:
 
-	virtual char const *GetName( void ) const;
+	virtual char const *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CGhost> OnStart( CGhost *me, Action< CGhost > *priorAction ) override;
-	virtual ActionResult<CGhost> Update( CGhost *me, float interval ) override;
+	virtual ActionResult<CGhost> OnStart( CGhost *me, Action< CGhost > *priorAction ) OVERRIDE;
+	virtual ActionResult<CGhost> Update( CGhost *me, float interval ) OVERRIDE;
 
 private:
 	void DriftAroundAndAvoidObstacles( CGhost *me );
