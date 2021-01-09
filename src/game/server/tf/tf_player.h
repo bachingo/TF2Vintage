@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef TF_PLAYER_H
@@ -136,12 +136,12 @@ public:
 
 	virtual void		LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExitAngles );
 
-	virtual CTFNavArea *GetLastKnownArea( void ) const override;
+	virtual CTFNavArea *GetLastKnownArea( void ) const OVERRIDE;
 
 	// Combats
 	virtual void		TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
 	virtual int			TakeHealth( float flHealth, int bitsDamageType );
-	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
+	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon );
 	virtual	void		Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 	virtual bool		Event_Gibbed( const CTakeDamageInfo &info );
@@ -631,6 +631,7 @@ private:
 
 	// Bots.
 	friend void Bot_Think( CTFPlayer *pBot );
+	friend void tf_bot_add( const CCommand &args );
 	friend class CTFBot; friend class CTFBotManager;
 
 	// Physics.

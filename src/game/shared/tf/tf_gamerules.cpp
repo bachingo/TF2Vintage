@@ -1390,7 +1390,7 @@ void CTFGameRules::Activate()
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
 		tf_gamemode_arena.SetValue( 1 );
 
-		Msg( "Executing server arena config file\n", 1 );
+		Msg( "Executing server arena config file\n" );
 		engine->ServerCommand( "exec config_arena.cfg \n" );
 	}
 
@@ -3008,9 +3008,9 @@ void CTFGameRules::SpawnZombieMob( void )
 	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
 
 	int nHumans = 0;
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
-		if ( !pPlayer->IsBot() )
+		if ( !players[i]->IsBot() )
 			++nHumans;
 	}
 
@@ -3023,26 +3023,26 @@ void CTFGameRules::SpawnZombieMob( void )
 	const float flSearchRange = 2000.0f;
 
 	// populate a vector of valid spawn locations
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
 		CUtlVector<CTFNavArea *> nearby;
 		// ignore bots
-		if ( pPlayer->IsBot() )
+		if ( players[i]->IsBot() )
 			continue;
 		// are they on mesh?
-		if ( pPlayer->GetLastKnownArea() == nullptr )
+		if ( players[i]->GetLastKnownArea() == nullptr )
 			continue;
 
-		CollectSurroundingAreas( &nearby, pPlayer->GetLastKnownArea(), flSearchRange );
-		for ( CTFNavArea *pArea : nearby )
+		CollectSurroundingAreas( &nearby, players[i]->GetLastKnownArea(), flSearchRange );
+		FOR_EACH_VEC( nearby, j )
 		{
-			if ( !pArea->IsValidForWanderingPopulation() )
+			if ( !nearby[j]->IsValidForWanderingPopulation() )
 				continue;
 
-			if ( pArea->IsBlocked( TF_TEAM_RED ) || pArea->IsBlocked( TF_TEAM_BLUE ) )
+			if ( nearby[j]->IsBlocked( TF_TEAM_RED ) || nearby[j]->IsBlocked( TF_TEAM_BLUE ) )
 				continue;
 
-			validAreas.AddToTail( pArea );
+			validAreas.AddToTail( nearby[j] );
 		}
 	}
 
@@ -6465,11 +6465,11 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		return false;
 
 	if ( ( collisionGroup1 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) &&
-		( collisionGroup0 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) || ( collisionGroup0 == TFCOLLISION_GROUP_ROCKETS ) )
+		( ( collisionGroup0 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) || ( collisionGroup0 == TFCOLLISION_GROUP_ROCKETS ) ) )
 		return false;
 
 	if ( ( collisionGroup1 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) &&
-		( collisionGroup0 == COLLISION_GROUP_WEAPON ) || ( collisionGroup0 == COLLISION_GROUP_PROJECTILE ) )
+		( ( collisionGroup0 == COLLISION_GROUP_WEAPON ) || ( collisionGroup0 == COLLISION_GROUP_PROJECTILE ) ) )
 		return false;
 
 	return BaseClass::ShouldCollide( collisionGroup0, collisionGroup1 );
@@ -6983,18 +6983,18 @@ void CTFGameRules::PushAllPlayersAway( Vector const &vecPos, float flRange, floa
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, iTeamNum, true );
 
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
-		Vector vecTo = pPlayer->EyePosition() - vecPos;
+		Vector vecTo = players[i]->EyePosition() - vecPos;
 		if ( vecTo.LengthSqr() > Square( flRange ) )
 			continue;
 
 		vecTo.NormalizeInPlace();
 
-		pPlayer->ApplyAbsVelocityImpulse( vecTo * flForce );
+		players[i]->ApplyAbsVelocityImpulse( vecTo * flForce );
 
 		if ( outVector )
-			outVector->AddToTail( pPlayer );
+			outVector->AddToTail( players[i] );
 	}
 }
 

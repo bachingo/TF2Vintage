@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -20,14 +20,14 @@ public:
 
 	virtual char const *GetName( void ) const;
 
-	virtual ActionResult<CZombie> OnStart( CZombie *me, Action <CZombie> *priorAction ) override;
-	virtual ActionResult<CZombie> Update( CZombie *me, float dt ) override;
+	virtual ActionResult<CZombie> OnStart( CZombie *me, Action <CZombie> *priorAction ) OVERRIDE;
+	virtual ActionResult<CZombie> Update( CZombie *me, float dt ) OVERRIDE;
 
-	virtual EventDesiredResult<CZombie> OnKilled( CZombie *me, CTakeDamageInfo const& info ) override;
+	virtual EventDesiredResult<CZombie> OnKilled( CZombie *me, CTakeDamageInfo const& info ) OVERRIDE;
 
-	virtual QueryResultType IsPositionAllowed( INextBot const *me, Vector const &position ) const override;
+	virtual QueryResultType IsPositionAllowed( INextBot const *me, Vector const &position ) const OVERRIDE;
 
-	virtual Action<CZombie> *InitialContainedAction( CZombie *me ) override;
+	virtual Action<CZombie> *InitialContainedAction( CZombie *me ) OVERRIDE;
 
 private:
 	CountdownTimer m_giggleTimer;

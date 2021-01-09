@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: TF implementation of the IPresence interface
 //
@@ -12,8 +12,11 @@
 
 #include "GameEventListener.h"
 #include "basepresence.h"
-#include "basediscordpresence.h"
 #include "hl2orange.spa.h"
+
+#ifndef POSIX
+#include "basediscordpresence.h"
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: TF implementation for setting user contexts and properties.
@@ -45,7 +48,7 @@ private:
 
 };
 
-
+#ifndef POSIX
 class CTFDiscordPresence : public CBaseDiscordPresence, public CGameEventListener
 {
 	DECLARE_CLASS_GAMEROOT( CTFDiscordPresence, CBaseDiscordPresence );
@@ -89,5 +92,6 @@ private:
 	static void OnLogMessage( discord::LogLevel logLevel, char const *pszMessage );
 	static void OnActivityUpdate( discord::Result result );
 };
+#endif // POSIX
 
 #endif // TF_PRESENCE_H

@@ -132,6 +132,8 @@ int GetTeamVisualsFromString( const char *pszString )
 	return -1;
 }
 
+#define ITEMS_GAME		"scripts/items/items_game.txt"
+
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -191,7 +193,7 @@ CEconItemSchema *GetItemSchema()
 		{													\
 			IF_ELEMENT_FOUND(dict, pKeyData->GetName())		\
 			{												\
-				Q_snprintf((char*)dict.Element(index), sizeof(dict.Element(index)), pKeyData->GetString());		\
+				Q_strncpy(dict.Element(index), pKeyData->GetString(), 128);\
 			}												\
 			else											\
 			{												\
@@ -493,7 +495,7 @@ void CEconItemDefinition::ParseVisuals( KeyValues *pKVData, int iIndex )
 			{
 				AttachedModel_t attached_model;
 				attached_model.model_display_flags = pAttachData->GetInt( "model_display_flags", AM_VIEWMODEL|AM_WORLDMODEL );
-				V_strncpy( attached_model.model, pAttachData->GetString( "model" ), sizeof( attached_model.model ) );
+				V_strcpy_safe( attached_model.model, pAttachData->GetString( "model" ) );
 
 				pVisuals->attached_models.AddToTail( attached_model );
 			}
@@ -829,7 +831,7 @@ bool CEconItemSchema::Init( void )
 		ActivityList_RegisterSharedActivities();
 
 		KeyValuesAD schema("KVDataFile");
-		if ( !schema->LoadFromFile( filesystem, items_game ) )
+		if ( !schema->LoadFromFile( filesystem, ITEMS_GAME ) )
 			return false;
 
 		InitAttributeTypes();
@@ -879,7 +881,7 @@ void CEconItemSchema::InitAttributeTypes( void )
 void CEconItemSchema::MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues *pSchemeData )
 {
 	char prefab[64]{0};
-	Q_snprintf( prefab, sizeof( prefab ), pSchemeData->GetString( "prefab" ) );
+	V_strcpy_safe( prefab, pSchemeData->GetString( "prefab" ) );
 
 	if ( prefab[0] != '\0' )
 	{
@@ -905,7 +907,7 @@ void CEconItemSchema::MergeDefinitionPrefabs( KeyValues *pDefinition, KeyValues 
 bool CEconItemSchema::LoadFromFile( void )
 {
 	KeyValuesAD schema("KVDataFile");
-	if ( !schema->LoadFromFile( g_pFullFileSystem, items_game ) )
+	if ( !schema->LoadFromFile( g_pFullFileSystem, ITEMS_GAME ) )
 		return false;
 
 	Reset();

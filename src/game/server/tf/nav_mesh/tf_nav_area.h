@@ -60,20 +60,20 @@ public:
 	CTFNavArea();
 	virtual ~CTFNavArea();
 
-	virtual void OnServerActivate() override;
-	virtual void OnRoundRestart() override;
+	virtual void OnServerActivate() OVERRIDE;
+	virtual void OnRoundRestart() OVERRIDE;
 
-	virtual void Save( CUtlBuffer &fileBuffer, unsigned int version ) const override;
-	virtual NavErrorType Load( CUtlBuffer &fileBuffer, unsigned int version, unsigned int subVersion ) override;
+	virtual void Save( CUtlBuffer &fileBuffer, unsigned int version ) const OVERRIDE;
+	virtual NavErrorType Load( CUtlBuffer &fileBuffer, unsigned int version, unsigned int subVersion ) OVERRIDE;
 
-	virtual void UpdateBlocked( bool force = false, int teamID = TEAM_ANY ) override;
-	virtual bool IsBlocked( int teamID, bool ignoreNavBlockers = false ) const override;
+	virtual void UpdateBlocked( bool force = false, int teamID = TEAM_ANY ) OVERRIDE;
+	virtual bool IsBlocked( int teamID, bool ignoreNavBlockers = false ) const OVERRIDE;
 
-	virtual void Draw() const override;
+	virtual void Draw() const OVERRIDE;
 
-	virtual void CustomAnalysis( bool isIncremental = false ) override;
+	virtual void CustomAnalysis( bool isIncremental = false ) OVERRIDE;
 
-	virtual bool IsPotentiallyVisibleToTeam( int iTeamNum ) const override
+	virtual bool IsPotentiallyVisibleToTeam( int iTeamNum ) const OVERRIDE
 	{
 		Assert( iTeamNum > -1 && iTeamNum < TF_TEAM_COUNT );
 		return !m_PVNPCs[ iTeamNum ].IsEmpty();
@@ -136,28 +136,28 @@ public:
 		return m_aIncursionDistances[ iTeamNum ];
 	}
 
-	inline void CTFNavArea::AddTFAttributes( int bits )
+	inline void AddTFAttributes( int bits )
 	{
 		m_nAttributes |= bits;
 	}
-	inline int CTFNavArea::GetTFAttributes( void ) const
+	inline int getTFAttributes( void ) const
 	{
 		return m_nAttributes;
 	}
-	inline bool CTFNavArea::HasTFAttributes( int bits ) const
+	inline bool HasTFAttributes( int bits ) const
 	{
 		return ( m_nAttributes & bits ) != 0;
 	}
-	inline void CTFNavArea::RemoveTFAttributes( int bits )
+	inline void RemoveTFAttributes( int bits )
 	{
 		m_nAttributes &= ~bits;
 	}
 
-	void CTFNavArea::SetBombTargetDistance( float distance )
+	void SetBombTargetDistance( float distance )
 	{
 		m_flBombTargetDistance = distance;
 	}
-	float CTFNavArea::GetBombTargetDistance( void ) const
+	float GetBombTargetDistance( void ) const
 	{
 		return m_flBombTargetDistance;
 	}

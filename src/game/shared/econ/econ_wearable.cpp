@@ -134,9 +134,9 @@ int CEconWearable::GetLoadoutSlot(void)
 void CEconWearable::SetParticle(const char* name)
 {
 #ifdef GAME_DLL
-	Q_snprintf(m_ParticleName.GetForModify(), PARTICLE_MODIFY_STRING_SIZE, name);
+	Q_strncpy( m_ParticleName.GetForModify(), name, PARTICLE_MODIFY_STRING_SIZE );
 #else
-	Q_snprintf(m_ParticleName, PARTICLE_MODIFY_STRING_SIZE, name);
+	V_strcpy_safe( m_ParticleName, name );
 #endif
 }
 
@@ -414,14 +414,14 @@ void CEconWearableGib::FinishModelInitialization( void )
 		solid_t solid;
 		if ( !PhysModelParseSolid( solid, this, GetModelIndex() ) )
 		{
-			DevMsg( __FUNCTION__ ": PhysModelParseSolid failed for entity %i.\n", GetModelIndex() );
+			DevMsg( "CEconWearableGib::FinishModelInitialization: PhysModelParseSolid failed for entity %i.\n", GetModelIndex() );
 			return;
 		}
 
 		m_pPhysicsObject = VPhysicsInitNormal( SOLID_VPHYSICS, 0, false );
 		if ( m_pPhysicsObject == nullptr )
 		{
-			DevMsg( __FUNCTION__ ": VPhysicsInitNormal() failed for %s.\n", GetModelName() );
+			DevMsg( "CEconWearableGib::FinishModelInitialization: VPhysicsInitNormal() failed for %s.\n", GetModelName() );
 			return;
 		}
 	}

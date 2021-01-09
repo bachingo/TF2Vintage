@@ -31,7 +31,6 @@ typedef uint16 item_def_index_t;
 class CEconItemSchema
 {
 	friend class CTFInventory;
-	char const *const items_game = "scripts/items/items_game.txt";
 public:
 	CEconItemSchema();
 	~CEconItemSchema();
@@ -122,6 +121,7 @@ typedef CSchemaFieldHandle<CEconItemDefinition>			CSchemaItemHandle;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+template<>
 inline const CEconAttributeDefinition *CSchemaFieldHandle<CEconAttributeDefinition>::GetHandleRef( void ) const
 {
 	return GetItemSchema()->GetAttributeDefinitionByName( m_pszName );
@@ -131,6 +131,7 @@ inline const CEconAttributeDefinition *CSchemaFieldHandle<CEconAttributeDefiniti
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+template<>
 inline const CEconItemDefinition *CSchemaFieldHandle<CEconItemDefinition>::GetHandleRef( void ) const
 {
 	return GetItemSchema()->GetItemDefinitionByName( m_pszName );

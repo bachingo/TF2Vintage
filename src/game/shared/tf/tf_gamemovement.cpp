@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2004, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -461,7 +461,7 @@ bool CTFGameMovement::CheckJumpButton()
 	}
 
 	// Cannot jump while in the unduck transition.
-	if ( ( player->m_Local.m_bDucking && (  player->GetFlags() & FL_DUCKING ) ) || ( player->m_Local.m_flDuckJumpTime > 0.0f ) && !tf2v_duckjump.GetBool() )
+	if ( ( player->m_Local.m_bDucking && (  player->GetFlags() & FL_DUCKING ) ) || ( ( player->m_Local.m_flDuckJumpTime > 0.0f ) && !tf2v_duckjump.GetBool() ) )
 		return false;
 
 	// Cannot jump again until the jump button has been released.

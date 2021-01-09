@@ -22,23 +22,21 @@ typedef CUtlVector< CHandle<CBaseEntity> > ProviderVector;
 	EXTERN_SEND_TABLE( DT_AttributeContainerPlayer );
 #endif
 
-#define CALL_ATTRIB_HOOK_INT(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, this, __VA_ARGS__)
+#define CALL_ATTRIB_HOOK(type, caller, value, name, items) \
+		value = CAttributeManager::AttribHookValue<type>(value, #name, caller, items)
 
-#define CALL_ATTRIB_HOOK_FLOAT(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_STRING(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, ent, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, ent, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent, __VA_ARGS__)
+#define CALL_ATTRIB_HOOK_INT(value, name)						CALL_ATTRIB_HOOK(int, this, value, name, NULL)
+#define CALL_ATTRIB_HOOK_INT_ITEMS(value, name, items)			CALL_ATTRIB_HOOK(int, this, value, name, items)
+#define CALL_ATTRIB_HOOK_FLOAT(value, name)						CALL_ATTRIB_HOOK(float, this, value, name, NULL)
+#define CALL_ATTRIB_HOOK_FLOAT_ITEMS(value, name, items)		CALL_ATTRIB_HOOK(float, this, value, name, items)
+#define CALL_ATTRIB_HOOK_STRING(value, name)					CALL_ATTRIB_HOOK(string_t, this, value, name, NULL)
+#define CALL_ATTRIB_HOOK_STRING_ITEMS(value, name, items)		CALL_ATTRIB_HOOK(string_t, this, value, name, items)
+#define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name)					CALL_ATTRIB_HOOK(int, ent, value, name, NULL)
+#define CALL_ATTRIB_HOOK_INT_ON_OTHER_ITEMS(ent, value, name, items)	CALL_ATTRIB_HOOK(int, ent, value, name, items)
+#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name)				CALL_ATTRIB_HOOK(float, ent, value, name, NULL)
+#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER_ITEMS(ent, value, name, items)	CALL_ATTRIB_HOOK(float, ent, value, name, items)
+#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name)				CALL_ATTRIB_HOOK(string_t, ent, value, name, NULL)
+#define CALL_ATTRIB_HOOK_STRING_ON_OTHER_ITEMS(ent, value, name, items)	CALL_ATTRIB_HOOK(string_t, ent, value, name, items)
 
 inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
 {

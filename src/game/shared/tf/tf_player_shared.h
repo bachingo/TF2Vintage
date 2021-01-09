@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: Shared player code.
 //
@@ -53,12 +53,6 @@ EXTERN_SEND_TABLE( DT_TFPlayerShared );
 class CTFDamageEvent
 {
 	DECLARE_EMBEDDED_NETWORKVAR()
-#ifdef CLIENT_DLL
-	DECLARE_CLIENTCLASS_NOBASE();
-#else
-	DECLARE_SERVERCLASS_NOBASE();
-#endif
-
 public:
 	float flDamage;
 	float flTime;

@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -20,9 +20,9 @@ public:
 	CTFBotManager();
 	virtual ~CTFBotManager();
 
-	virtual void Update( void ) override;
-	virtual void OnMapLoaded( void ) override;
-	virtual void OnRoundRestart( void ) override;
+	virtual void Update( void ) OVERRIDE;
+	virtual void OnMapLoaded( void ) OVERRIDE;
+	virtual void OnRoundRestart( void ) OVERRIDE;
 
 	void OnLevelShutdown( void );
 

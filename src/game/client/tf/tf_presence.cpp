@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Rich Presence support.
 // HACK: This file has also become the client wing of matchmaking. Matchmaking should
@@ -569,6 +569,7 @@ void CTFPresence::UploadStats()
 #endif
 }
 
+#ifndef POSIX
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 static CTFDiscordPresence s_drp;
@@ -952,3 +953,5 @@ void CTFDiscordPresence::UpdatePresence( bool bForce, bool bIsDead )
 
 	g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
+
+#endif // !POSIX

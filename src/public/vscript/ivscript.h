@@ -1,4 +1,4 @@
-//========== Copyright © 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright ï¿½ 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose: VScript
 //
@@ -105,6 +105,10 @@
 #pragma once
 #endif
 
+#if defined( GNUC )
+#pragma GCC diagnostic ignored "-fpermissive"
+#endif
+
 #ifdef VSCRIPT_DLL_EXPORT
 #define VSCRIPT_INTERFACE	DLL_EXPORT
 #define VSCRIPT_OVERLOAD	DLL_GLOBAL_EXPORT
@@ -189,7 +193,7 @@ DECLARE_DEDUCE_FIELDTYPE( FIELD_VARIANT,	ScriptVariant_t );
 template <typename T>
 inline const char * ScriptFieldTypeName() 
 {
-	T::using_unknown_script_type(); 
+	return T::using_unknown_script_type(); 
 }
 
 #define DECLARE_NAMED_FIELDTYPE( fieldType, strName ) template <> inline const char * ScriptFieldTypeName<fieldType>() { return strName; }

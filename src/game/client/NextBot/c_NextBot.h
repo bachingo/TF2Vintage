@@ -15,10 +15,10 @@ public:
 
 	C_NextBotCombatCharacter();
 
-	virtual bool IsNextBot( void ) override { return true; }
+	virtual bool IsNextBot( void ) OVERRIDE { return true; }
 
-	virtual void Spawn( void ) override;
-	virtual void UpdateClientSideAnimation( void ) override;
+	virtual void Spawn( void ) OVERRIDE;
+	virtual void UpdateClientSideAnimation( void ) OVERRIDE;
 
 	virtual ShadowType_t ShadowCastType( void );
 	void UpdateShadowLOD( void );

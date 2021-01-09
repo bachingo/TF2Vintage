@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -20,15 +20,15 @@ public:
 		: NextBotGroundLocomotion( actor ) {}
 	virtual ~CMerasmusLocomotion() { };
 
-	virtual void Update( void ) override;
+	virtual void Update( void ) OVERRIDE;
 
-	virtual float GetStepHeight( void ) const override { return 18.0f; }
-	virtual float GetMaxJumpHeight( void ) const override { return 18.0f; }
+	virtual float GetStepHeight( void ) const OVERRIDE { return 18.0f; }
+	virtual float GetMaxJumpHeight( void ) const OVERRIDE { return 18.0f; }
 
-	virtual float GetMaxYawRate( void ) const override { return 200.0f; }
-	virtual float GetRunSpeed( void ) const override;
+	virtual float GetMaxYawRate( void ) const OVERRIDE { return 200.0f; }
+	virtual float GetRunSpeed( void ) const OVERRIDE;
 
-	virtual bool ShouldCollideWith( const CBaseEntity *other ) const override;
+	virtual bool ShouldCollideWith( const CBaseEntity *other ) const OVERRIDE;
 };
 
 class CMerasmusFlyingLocomotion : public ILocomotion
@@ -49,7 +49,7 @@ public:
 	virtual float           GetMaxJumpHeight( void ) const;
 	virtual float           GetDeathDropHeight( void ) const;
 
-	virtual bool			ShouldCollideWith( const CBaseEntity *other ) const override;
+	virtual bool			ShouldCollideWith( const CBaseEntity *other ) const OVERRIDE;
 
 	virtual void            Approach( const Vector& goalPos, float goalWeight = 1.0f );
 	virtual void            FaceTowards( const Vector& target );
@@ -85,13 +85,13 @@ public:
 	}
 	virtual ~CMerasmusBody() { }
 
-	virtual void Update( void ) override;
+	virtual void Update( void ) OVERRIDE;
 
-	virtual unsigned int GetSolidMask( void ) const override { return MASK_NPCSOLID|CONTENTS_PLAYERCLIP; }
+	virtual unsigned int GetSolidMask( void ) const OVERRIDE { return MASK_NPCSOLID|CONTENTS_PLAYERCLIP; }
 
-	virtual Activity GetActivity( void ) const override { return m_Activity; }
-	virtual bool StartActivity( Activity act, unsigned int flags = 0 ) override;
-	virtual bool IsActivity( Activity act ) const override { return m_Activity == act; }
+	virtual Activity GetActivity( void ) const OVERRIDE { return m_Activity; }
+	virtual bool StartActivity( Activity act, unsigned int flags = 0 ) OVERRIDE;
+	virtual bool IsActivity( Activity act ) const OVERRIDE { return m_Activity == act; }
 
 private:
 	Activity m_Activity;
