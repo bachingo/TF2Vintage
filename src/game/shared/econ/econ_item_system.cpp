@@ -322,6 +322,7 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 	GET_INT( this, pDefinition, attach_to_hands );
 	GET_INT( this, pDefinition, attach_to_hands_vm_only );
 	GET_BOOL( this, pDefinition, act_as_wearable );
+	GET_BOOL( this, pDefinition, act_as_weapon );
 	GET_INT( this, pDefinition, hide_bodygroups_deployed_only );
 
 	GET_BOOL( this, pDefinition, is_reskin );

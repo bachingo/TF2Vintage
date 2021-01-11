@@ -629,6 +629,7 @@ public:
 	int  attach_to_hands;
 	int  attach_to_hands_vm_only;
 	bool act_as_wearable;
+	bool act_as_weapon;
 	CUtlDict< bool, unsigned short > capabilities;
 	CUtlDict< bool, unsigned short > tags;
 	int  hide_bodygroups_deployed_only;
