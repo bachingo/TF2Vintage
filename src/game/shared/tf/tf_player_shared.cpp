@@ -3795,7 +3795,7 @@ void CTFPlayerShared::RemoveDisguise(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::CalculateDisguiseWearables(void)
 {
-#if defined( GAME_DLL )
+/*#if defined( GAME_DLL )
 	// Remove our current disguise wearables.
 	for (int i = 0; i < m_pOuter->GetNumDisguiseWearables(); i++)
 	{
@@ -3833,7 +3833,7 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 			// Update the disguise bodygroups as well.
 			SetDisguiseBodygroups(pDisguiseTarget->m_Shared.GetWearableBodygroups());
 		}
-	}
+	}*/
 }
 
 

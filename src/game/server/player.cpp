@@ -7469,68 +7469,6 @@ void CBasePlayer::RemoveWearable( CEconWearable *pItem )
 #endif
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Add this wearable to the players' equipment list.
-//-----------------------------------------------------------------------------
-void CBasePlayer::EquipDisguiseWearable( CEconWearable *pItem )
-{
-	Assert( pItem );
-
-	if ( pItem )
-	{
-		m_hDisguiseWearables.AddToHead( pItem );
-		pItem->SetDisguiseWearable( true );
-		pItem->Equip( this );
-	}
-
-#ifdef DBGFLAG_ASSERT
-	// Double check list integrity.
-	for ( int i = m_hDisguiseWearables.Count()-1; i >= 0; --i )
-	{
-		Assert( m_hDisguiseWearables[i] != NULL );
-	}
-	// Networked Vector has a max size of MAX_WEARABLES_SENT_FROM_SERVER, should never have more then 7 wearables
-	// in public
-	// Search for : RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hDisguiseWearables ), MAX_WEARABLES_SENT_FROM_SERVER,	RecvPropEHandle(NULL, 0, 0) ),
-	Assert( m_hDisguiseWearables.Count() <= MAX_WEARABLES_SENT_FROM_SERVER );
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Remove this wearable from the player's equipment list.
-//-----------------------------------------------------------------------------
-void CBasePlayer::RemoveDisguiseWearable( CEconWearable *pItem )
-{
-	Assert( pItem );
-
-	for ( int i = m_hDisguiseWearables.Count()-1; i >= 0; --i )
-	{
-		CEconWearable *pWearable = m_hDisguiseWearables[i];
-		if ( pWearable == pItem )
-		{
-			pItem->UnEquip( this );
-			UTIL_Remove( pWearable );
-			m_hDisguiseWearables.Remove( i );
-			break;
-		}
-
-		// Integrety is failing, remove NULLs
-		if ( !pWearable )
-		{
-			m_hDisguiseWearables.Remove( i );
-			break;
-		}
-	}
-
-#ifdef DBGFLAG_ASSERT
-	// Double check list integrity.
-	for ( int i = m_hDisguiseWearables.Count()-1; i >= 0; --i )
-	{
-		Assert( m_hDisguiseWearables[i] != NULL );
-	}
-#endif
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -8102,7 +8040,6 @@ void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const voi
 
 #if defined ( USES_ECON_ITEMS )
 		SendPropUtlVector( SENDINFO_UTLVECTOR( m_hMyWearables ), MAX_WEARABLES_SENT_FROM_SERVER, SendPropEHandle( NULL, 0 ) ),
-		SendPropUtlVector( SENDINFO_UTLVECTOR( m_hDisguiseWearables ), MAX_WEARABLES_SENT_FROM_SERVER, SendPropEHandle( NULL, 0 ) ),
 #endif // USES_ECON_ITEMS
 
 		// Data that only gets sent to the local player.

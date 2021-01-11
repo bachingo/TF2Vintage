@@ -610,9 +610,9 @@ private:
 	// Think.
 	void				TFPlayerThink();
 	void				MedicRegenThink( void );
-	public:
+public:
 	void				AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer );
-	private:
+private:
 	void				UpdateTimers( void );
 
 public:

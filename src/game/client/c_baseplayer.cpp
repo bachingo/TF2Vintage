@@ -298,7 +298,6 @@ END_RECV_TABLE()
 
 #if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
 		RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hMyWearables ), MAX_WEARABLES_SENT_FROM_SERVER,	RecvPropEHandle(NULL, 0, 0) ),
-		RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hDisguiseWearables ), MAX_WEARABLES_SENT_FROM_SERVER,	RecvPropEHandle(NULL, 0, 0) ),
 #endif
 
 	END_RECV_TABLE()
@@ -2860,26 +2859,6 @@ void C_BasePlayer::UpdateWearables( void )
 	for ( int i=0; i<m_hMyWearables.Count(); ++i )
 	{
 		CEconWearable* pItem = m_hMyWearables[i];
-		if ( pItem )
-		{
-			pItem->ValidateModelIndex();
-			pItem->UpdateVisibility();
-			pItem->CreateShadow();
-			pItem->UpdatePlayerBodygroups( true );
-		}
-	}
-}
-#endif // USES_ECON_ITEMS
-
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
-//-----------------------------------------------------------------------------
-// Purpose: Update the visibility of our worn items.
-//-----------------------------------------------------------------------------
-void C_BasePlayer::UpdateDisguiseWearables( void )
-{
-	for ( int i=0; i<m_hDisguiseWearables.Count(); ++i )
-	{
-		CEconWearable* pItem = m_hDisguiseWearables[i];
 		if ( pItem )
 		{
 			pItem->ValidateModelIndex();
