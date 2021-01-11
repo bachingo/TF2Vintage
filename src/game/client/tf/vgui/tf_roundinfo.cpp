@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2007, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2007, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -270,7 +270,7 @@ void RoundInfoOverlay::Update( const char *szMapName )
 				{
 					roundinfo_control_point_t point;
 
-					Q_snprintf( point.m_szName, sizeof(point.m_szName), pData->GetName() );
+					V_strcpy_safe( point.m_szName, pData->GetName() );
 
 					// These x,y coords are relative to a 640x480 parent panel.
 					int wide, tall;

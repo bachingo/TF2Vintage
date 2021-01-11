@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -80,8 +80,9 @@ Vector CMerasmusTeleport::GetTeleportPosition( CMerasmus *actor )
 		return actor->m_vecHome + Vector( 0, 0, 75 );
 
 	CUtlVector<CNavArea *> areas;
-	for ( CNavArea *pArea : TheNavAreas )
+	FOR_EACH_VEC( TheNavAreas, i )
 	{
+		CNavArea *pArea = TheNavAreas[i];
 		if ( pArea->GetSizeX() < 100.0f || pArea->GetSizeY() < 100.0f )
 			continue;
 

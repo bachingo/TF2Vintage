@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -224,16 +224,16 @@ void CMerasmusAttack::SelectVictim( CMerasmus *me )
 		float flMinDist = FLT_MAX;
 		CTFPlayer *pClosest = nullptr;
 
-		for( CTFPlayer *pPlayer : victims )
+		FOR_EACH_VEC( victims, i )
 		{
-			if ( !IsPotentiallyChaseable( me, pPlayer ) )
+			if ( !IsPotentiallyChaseable( me, victims[i] ) )
 				continue;
 
-			float flDistance = me->GetRangeSquaredTo( pPlayer );
+			float flDistance = me->GetRangeSquaredTo( victims[i] );
 			if ( flDistance < flMinDist )
 			{
 				flMinDist = flDistance;
-				pClosest = pPlayer;
+				pClosest = victims[i];
 			}
 		}
 

@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -203,9 +203,9 @@ void CUpgrades::InputDisable( inputdata_t &inputdata )
 {
 	m_bEnabled = false;
 
-	for ( CBaseEntity *pEntity : m_hTouchingEntities )
+	FOR_EACH_VEC( m_hTouchingEntities, i )
 	{
-		CTFPlayer *pTFPlayer = ToTFPlayer( pEntity );
+		CTFPlayer *pTFPlayer = ToTFPlayer( m_hTouchingEntities[i].Get() );
 		if ( pTFPlayer )
 			pTFPlayer->m_Shared.SetInUpgradeZone( false );
 	}

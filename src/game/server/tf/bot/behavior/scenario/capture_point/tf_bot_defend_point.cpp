@@ -97,7 +97,7 @@ ActionResult<CTFBot> CTFBotDefendPoint::Update( CTFBot *me, float dt )
 			return Action<CTFBot>::SuspendFor( new CTFBotSeekAndDestroy( 15.0f ), "Going after an enemy" );
 
 		CTFWeaponBase *pWeapon = me->GetActiveTFWeapon();
-		if ( pWeapon && pWeapon->IsMeleeWeapon() || pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) )
+		if ( pWeapon && ( pWeapon->IsMeleeWeapon() || pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) ) )
 		{
 			RouteType iRouteType = me->IsPlayerClass( TF_CLASS_PYRO ) ? SAFEST_ROUTE : FASTEST_ROUTE;
 			CTFBotPathCost cost( me, iRouteType );
@@ -224,7 +224,7 @@ public:
 		m_flIncursionDist = area->GetIncursionDistance( iTeam ) <= 0.0f ? 249.0f : area->GetIncursionDistance( iTeam );
 	}
 
-	virtual bool operator()( CNavArea *a, CNavArea *priorArea, float travelDistanceSoFar ) override
+	virtual bool operator()( CNavArea *a, CNavArea *priorArea, float travelDistanceSoFar ) OVERRIDE
 	{
 		CTFNavArea *area = static_cast<CTFNavArea *>( a );
 		if ( TFGameRules()->IsInKothMode() || area->GetIncursionDistance( m_iTeam ) <= m_flIncursionDist )
@@ -241,7 +241,7 @@ public:
 		return true;
 	}
 
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) OVERRIDE
 	{
 		int team = ( TFGameRules()->IsInKothMode() ? TEAM_ANY : m_iTeam );
 

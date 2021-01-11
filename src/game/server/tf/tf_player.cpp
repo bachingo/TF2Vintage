@@ -2289,7 +2289,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			if ( myBot )
 			{
 				char szItemDefIndex[16];
-				itoa( pItem->GetItemDefIndex(), szItemDefIndex, sizeof szItemDefIndex );
+				V_sprintf_safe( szItemDefIndex, "%d", pItem->GetItemDefIndex() );
 
 				float flVintageChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "vintage_chance" );
 				if ( ( flVintageChance/100.f ) > RandomFloat() )
@@ -4168,8 +4168,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 					Msg( "ItemID %i:\nname %s\nitem_class %s\nitem_type_name %s\n",
 						pWeapon->GetItemID(), itemdef->GetName(), itemdef->GetClassName(), itemdef->GetTypeName() );
 					
-					Msg("Year: %s\n",
-						itemdef->year);
+					Msg("Year: %d\n", itemdef->year);
 
 					Msg( "Attributes:\n" );
 					for ( int i = 0; i < itemdef->attributes.Count(); i++ )
@@ -5608,7 +5607,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 	
 	// For Fire and burn damage, add to fire rage.
-	if ( pTFAttacker && ( ( pWeapon && pAttacker != this ) && (!bObject) && ( ( info.GetDamageType() & DMG_IGNITE|DMG_BURN ) ) ) )
+	if ( pTFAttacker && ( ( pWeapon && pAttacker != this ) && (!bObject) && ( ( info.GetDamageType() & (DMG_IGNITE|DMG_BURN) ) ) ) )
 	{
 		int nEarnFireRage = 0;
 		CALL_ATTRIB_HOOK_INT_ON_OTHER(pAttacker, nEarnFireRage, burn_damage_earns_rage);
@@ -6408,7 +6407,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		flDamage *= flDamageBlastMult;
 	}
 
-	if ( info.GetDamageType() & DMG_BURN|DMG_IGNITE )
+	if ( info.GetDamageType() & (DMG_BURN|DMG_IGNITE) )
 	{
 		float flDamageFireMult = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT( flDamageFireMult, mult_dmgtaken_from_fire );
@@ -6421,7 +6420,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			return 0;		
 	}
 
-	if ( info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT )
+	if ( info.GetDamageType() & (DMG_BULLET|DMG_BUCKSHOT) )
 	{
 		float flDamageBulletMult = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT( flDamageBulletMult, mult_dmgtaken_from_bullets );
@@ -6465,7 +6464,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			flDamage *= flDamageClubMult;
 		}
 
-		if ( info.GetDamageType() & DMG_BULLET|DMG_BUCKSHOT|DMG_IGNITE|DMG_BLAST|DMG_SONIC )
+		if ( info.GetDamageType() & (DMG_BULLET|DMG_BUCKSHOT|DMG_IGNITE|DMG_BLAST|DMG_SONIC) )
 		{
 			float flDamageRangedMult = 1.0f;
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamageRangedMult, dmg_from_ranged );
@@ -6474,7 +6473,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			flDamage *= flDamageRangedMult;
 		}
 		
-		if ( info.GetDamageType() & DMG_BURN|DMG_IGNITE )
+		if ( info.GetDamageType() & (DMG_BURN|DMG_IGNITE) )
 		{
 			float flDamageFireActiveMult = 1.0f;
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetActiveTFWeapon(), flDamageFireActiveMult, mult_dmgtaken_from_fire_active );

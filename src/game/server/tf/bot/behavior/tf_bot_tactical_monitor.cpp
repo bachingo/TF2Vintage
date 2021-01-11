@@ -336,10 +336,12 @@ void CTFBotTacticalMonitor::MonitorArmedStickybombs( CTFBot *actor )
 	CUtlVector<CKnownEntity> knowns;
 	actor->GetVisionInterface()->CollectKnownEntities( &knowns );
 	
-	for ( CTFGrenadePipebombProjectile *pGrenade : pLauncher->m_Pipebombs )
+	FOR_EACH_VEC( pLauncher->m_Pipebombs, i )
 	{
-		for ( const CKnownEntity &pKnown : knowns )
+		CTFGrenadePipebombProjectile *pGrenade = pLauncher->m_Pipebombs[i];
+		FOR_EACH_VEC( knowns, j )
 		{
+			const CKnownEntity &pKnown = knowns[j];
 			if ( pKnown.IsObsolete() || pKnown.GetEntity()->IsBaseObject() )
 				continue;
 

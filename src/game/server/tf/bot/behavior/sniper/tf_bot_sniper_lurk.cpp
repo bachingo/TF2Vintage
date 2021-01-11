@@ -238,12 +238,12 @@ QueryResultType CTFBotSniperLurk::ShouldAttack( const INextBot *me, const CKnown
 bool CTFBotSniperLurk::FindHint( CTFBot *actor )
 {
 	CUtlVector<CTFBotHint *> hints;
-	for ( CTFBotHint *pHint : m_Hints )
+	FOR_EACH_VEC( m_Hints, i )
 	{
-		if ( !pHint->IsFor( actor ) )
+		if ( !m_Hints[i]->IsFor( actor ) )
 			continue;
 
-		hints.AddToTail( pHint );
+		hints.AddToTail( m_Hints[i] );
 	}
 
 	if ( m_hHint )
@@ -264,18 +264,18 @@ bool CTFBotSniperLurk::FindHint( CTFBot *actor )
 
 		CUtlVector<CTFBotHint *> emptyHints;
 		CUtlVector<CTFBotHint *> dangerHints;
-		for ( CTFBotHint *pHint : hints )
+		FOR_EACH_VEC( hints, i )
 		{
-			if ( pHint->GetOwnerEntity() == nullptr )
+			if ( hints[i]->GetOwnerEntity() == nullptr )
 			{
-				emptyHints.AddToTail( pHint );
+				emptyHints.AddToTail( hints[i] );
 
-				for ( CTFPlayer *pPlayer : enemies )
+				FOR_EACH_VEC( enemies, j )
 				{
-					if ( !pPlayer->IsLineOfSightClear( pHint->WorldSpaceCenter(), CBaseCombatCharacter::IGNORE_ACTORS ) )
+					if ( !enemies[j]->IsLineOfSightClear( hints[i]->WorldSpaceCenter(), CBaseCombatCharacter::IGNORE_ACTORS ) )
 						continue;
 
-					dangerHints.AddToTail( pHint );
+					dangerHints.AddToTail( hints[i] );
 				}
 			}
 		}
@@ -329,15 +329,15 @@ bool CTFBotSniperLurk::FindHint( CTFBot *actor )
 		return false;
 	}
 
-	for ( CTFBotHint *pHint : hints )
+	FOR_EACH_VEC( hints, i )
 	{
-		if ( m_hHint == pHint )
+		if ( m_hHint == hints[i] )
 			continue;
 
-		if ( m_hHint->WorldSpaceCenter().DistToSqr( pHint->WorldSpaceCenter() ) > Square( 500.0f ) )
+		if ( m_hHint->WorldSpaceCenter().DistToSqr( hints[i]->WorldSpaceCenter() ) > Square( 500.0f ) )
 			continue;
 
-		backupHints.AddToTail( pHint );
+		backupHints.AddToTail( hints[i] );
 	}
 
 	if ( backupHints.IsEmpty() )

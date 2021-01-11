@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -125,8 +125,9 @@ void GetResolutionName( vmode_t *mode, char *sz, int sizeofsz )
 	}
 }
 
+#ifdef _WIN32
 static HWND s_hWnd = NULL;
-BOOL CALLBACK EnumProcs( HWND hwnd, LPARAM lParam )
+BOOL __stdcall EnumProcs( HWND hwnd, LPARAM lParam )
 {
 	HINSTANCE inst = GetModuleHandle( NULL );
 	if ( (HINSTANCE)GetWindowLongPtr( hwnd, GWL_HINSTANCE )==inst && IsWindowVisible( hwnd ) )
@@ -144,6 +145,7 @@ static void InitWindowHandle( void )
 	if ( s_hWnd == NULL )
 		Warning( "Unable to get process handle, borderless option disabled" );
 }
+#endif // _WIN32
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -789,12 +791,13 @@ void CTFOptionsVideoPanel::OnApplyChanges()
 		// set mode
 		char szCmd[ 256 ];
 		Q_snprintf( szCmd, sizeof( szCmd ), "mat_setvideomode %i %i %i\n", width, height, windowed ? 1 : 0 );
-		Msg(szCmd);
+		Msg( "%s", szCmd );
 		engine->ClientCmd_Unrestricted( szCmd );
 	}
 
 	if ( m_pWindowed->GetActiveItem() == 2 )
 	{
+	#ifdef _WIN32
 		if ( !s_hWnd )
 			InitWindowHandle();
 
@@ -810,6 +813,7 @@ void CTFOptionsVideoPanel::OnApplyChanges()
 
 			SetWindowPos( s_hWnd, 0, 0, 0, 0, 0, SWP_DRAWFRAME|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER );
 		}
+	#endif // _WIN32
 	}
 
 	if (config.m_VideoMode.m_Width != width || config.m_VideoMode.m_Height != height || config.Windowed() != windowed)

@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -23,9 +23,9 @@ class FindSafeSentryApproachAreaScan : public ISearchSurroundingAreasFunctor
 public:
 	virtual ~FindSafeSentryApproachAreaScan() {};
 
-	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override;
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override;
-	virtual void PostSearch() override;
+	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) OVERRIDE;
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) OVERRIDE;
+	virtual void PostSearch() OVERRIDE;
 
 	CTFBot *m_pActor;
 	CUtlVector<CTFNavArea *> m_Areas;
@@ -196,7 +196,7 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::Update( CTFBot *me, float dt )
 			m_PathFollower.Update( me );
 
 		float flDistToSpot = ( me->GetAbsOrigin() - m_vecAttackSpot ).LengthSqr();
-		if ( me->IsLineOfFireClear( m_vecAttackSpot ) && flDistToSpot < Square( 25.0f ) || me->IsLineOfFireClear( m_hSentry ) )
+		if ( me->IsLineOfFireClear( m_vecAttackSpot ) && ( flDistToSpot < Square( 25.0f ) || me->IsLineOfFireClear( m_hSentry ) ) )
 		{
 			if ( me->IsRangeLessThan( m_hSentry, 1000.0f ) )
 				return BaseClass::ChangeTo( new CTFBotStickybombSentrygun( m_hSentry ), "Destroying sentry with stickies." );
@@ -420,8 +420,10 @@ void CTFBotDestroyEnemySentry::ComputeSafeAttackSpot( CTFBot *actor )
 		return;
 	}
 
-	for ( CNavArea *pArea : func.m_area )
+	FOR_EACH_VEC( func.m_area, i )
 	{
+		CNavArea *pArea = func.m_area[i];
+
 		Vector vecClosest;
 		pArea->GetClosestPointOnArea( ( pArea->GetCenter() + pArea->GetCenter() ) - pSentryArea->GetCenter(), &vecClosest );
 
@@ -435,8 +437,10 @@ void CTFBotDestroyEnemySentry::ComputeSafeAttackSpot( CTFBot *actor )
 	}
 
 	CUtlVector<CTFNavArea *> validAreas;
-	for ( CNavArea *pArea : safeAreas )
+	FOR_EACH_VEC( safeAreas, i )
 	{
+		CNavArea *pArea = safeAreas[i];
+		
 		Vector vecClosest;
 		pArea->GetClosestPointOnArea( pSentryArea->GetCenter(), &vecClosest );
 

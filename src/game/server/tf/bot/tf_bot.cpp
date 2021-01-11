@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -250,8 +250,11 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 		NavAreaCollector visibleSet;
 		pArea->ForAllPotentiallyVisibleAreas( visibleSet );
 
-		for( CNavArea *pVisible : visibleSet.m_area )
-			static_cast<CTFNavArea *>( pVisible )->RemovePotentiallyVisibleActor( this );
+		FOR_EACH_VEC( visibleSet.m_area, i )
+		{
+			CTFNavArea *pVisible = (CTFNavArea *)visibleSet.m_area[i];
+			pVisible->RemovePotentiallyVisibleActor( this );
+		}
 	}
 
 	if ( info.GetInflictor() && info.GetInflictor()->GetTeamNumber() != GetTeamNumber() )
@@ -1009,8 +1012,9 @@ CCaptureFlag *CTFBot::GetFlagToFetch( void )
 	CCaptureFlag *pClosest = NULL;
 	CCaptureFlag *pClosestStolen = NULL;
 
-	for ( CCaptureFlag *pFlag : flags )
+	FOR_EACH_VEC( flags, i )
 	{
+		CCaptureFlag *pFlag = flags[i];
 		float flDistance = ( pFlag->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr();
 		if ( flDistance > flMinDist )
 		{
@@ -2440,7 +2444,7 @@ void CTFBot::ManageRandomWeapons( void )
 		if ( pItem )
 		{
 			char szItemDefIndex[16];
-			_itoa_s( pItem->GetItemDefIndex(), szItemDefIndex, 10 );
+			V_sprintf_safe( szItemDefIndex, "%d", pItem->GetItemDefIndex() );
 
 			float flChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "drop_chance" );
 			if ( ( flChance * 0.1f ) <= RandomFloat() )
@@ -2794,7 +2798,7 @@ void CTFBotItemSchema::PostInit()
 						V_SplitString( indexTokens[i], "..", rangeTokens );
 
 						int iMin = atoi( rangeTokens[0] ), iMax = atoi( rangeTokens[1] );
-						if( iMin <= 0 && !FStrEq( "0", rangeTokens[0] ) || iMax <= 0 && !FStrEq( "0", rangeTokens[1] ) || iMin > iMax )
+						if( ( iMin <= 0 && !FStrEq( "0", rangeTokens[0] ) ) || ( iMax <= 0 && !FStrEq( "0", rangeTokens[1] ) ) || iMin > iMax )
 						{
 							Warning("Error while parsing config file: invalid range of indexes '%s'\n", indexTokens[i]);
 							continue;
@@ -2803,7 +2807,7 @@ void CTFBotItemSchema::PostInit()
 						for ( int j=iMin; j <= iMax; ++j )
 						{
 							char szIndex[32];
-							itoa( j, szIndex, sizeof szIndex );
+							V_sprintf_safe( szIndex, "%d", j );
 
 							KeyValues *pItem = NULL;
 							if ( ( pItem = m_pSchema->FindKey( szIndex ) ) != NULL )

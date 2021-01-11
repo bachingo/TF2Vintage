@@ -52,7 +52,7 @@ void CTFToolTipPanel::ShowToolTip(char *sText)
 {
 	Show();
 
-	Q_snprintf(m_sText, sizeof(m_sText), sText);
+	V_strcpy_safe(m_sText, sText);
 
 	if (m_pText)
 	{

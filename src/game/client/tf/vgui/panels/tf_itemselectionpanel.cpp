@@ -1,5 +1,5 @@
 #include "cbase.h"
-#include "tf_ItemSelectionpanel.h"
+#include "tf_itemselectionpanel.h"
 #include "tf_mainmenu.h"
 #include "controls/tf_advitembutton.h"
 #include "controls/tf_advmodelpanel.h"
@@ -208,7 +208,7 @@ void CTFItemPanel::OnCommand(const char* command)
 			Q_strncpy ( strText, command, Q_strlen ( szText ) + 1 );
 			if ( !Q_strcmp ( strText, szText ) )
 			{
-				Q_snprintf ( buffer, sizeof ( buffer ), command + Q_strlen ( szText ) );
+				V_strcpy_safe ( buffer, command + Q_strlen ( szText ) );
 				SlideColumn ( atoi ( buffer ), (i == 0 ? -1 : 1) );
 				return;
 			}

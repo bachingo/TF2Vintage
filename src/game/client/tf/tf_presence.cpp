@@ -7,7 +7,9 @@
 //=====================================================================================//
 
 #include "cbase.h"
+#ifndef POSIX
 #include "discord.h"
+#endif
 #include "tf_presence.h"
 #include "c_team_objectiveresource.h"
 #include "tf_gamerules.h"
@@ -37,14 +39,14 @@ struct s_MapName
 
 // This array must match the define order in hl2orange.spa.h
 static s_MapName s_Scenarios[] = {
-								"ctf_2fort",	"2Fort",
-								"cp_dustbowl",	"Dustbowl",
-								"cp_granary",	"Granary",
-								"cp_well",		"Well",
-								"cp_gravelpit", "Gravel Pit",
-								"tc_hydro",		"Hydro",
-								"cloak",		"Cloak (CTF)",
-								"cp_cloak",		"Cloak (CP)",
+	{"ctf_2fort",	"2Fort"},
+	{"cp_dustbowl",	"Dustbowl"},
+	{"cp_granary",	"Granary"},
+	{"cp_well",		"Well"},
+	{"cp_gravelpit", "Gravel Pit"},
+	{"tc_hydro",	"Hydro"},
+	{"cloak",		"Cloak (CTF)"},
+	{"cp_cloak",	"Cloak (CP)"},
 };
 
 struct s_PresenceTranslation
@@ -55,42 +57,42 @@ struct s_PresenceTranslation
 
 // Only presence IDs can be searched by id number, because they're guaranteed to be unique
 static s_PresenceTranslation s_PresenceIds[] = {
-			CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO",							
-			PROPERTY_CAPS_OWNED,			 			"PROPERTY_CAPS_OWNED",						
-			PROPERTY_CAPS_TOTAL,			 			"PROPERTY_CAPS_TOTAL",						
-			PROPERTY_FLAG_CAPTURE_LIMIT,	 			"PROPERTY_FLAG_CAPTURE_LIMIT",				
-			PROPERTY_NUMBER_OF_ROUNDS,		 			"PROPERTY_NUMBER_OF_ROUNDS",				
-			PROPERTY_WIN_LIMIT,							"PROPERTY_WIN_LIMIT",				
-			PROPERTY_GAME_SIZE,				 			"PROPERTY_GAME_SIZE",						
-			PROPERTY_AUTOBALANCE,			 			"PROPERTY_AUTOBALANCE",						
-			PROPERTY_PRIVATE_SLOTS,			 			"PROPERTY_PRIVATE_SLOTS",					
-			PROPERTY_MAX_GAME_TIME,			 			"PROPERTY_MAX_GAME_TIME",
-			PROPERTY_NUMBER_OF_TEAMS,					"PROPERTY_NUMBER_OF_TEAMS",
-			PROPERTY_TEAM,								"PROPERTY_TEAM",
+	{CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO"},							
+	{PROPERTY_CAPS_OWNED,			 			"PROPERTY_CAPS_OWNED"},						
+	{PROPERTY_CAPS_TOTAL,			 			"PROPERTY_CAPS_TOTAL"},						
+	{PROPERTY_FLAG_CAPTURE_LIMIT,	 			"PROPERTY_FLAG_CAPTURE_LIMIT"},				
+	{PROPERTY_NUMBER_OF_ROUNDS,		 			"PROPERTY_NUMBER_OF_ROUNDS"},				
+	{PROPERTY_WIN_LIMIT,						"PROPERTY_WIN_LIMIT"},				
+	{PROPERTY_GAME_SIZE,				 		"PROPERTY_GAME_SIZE"},						
+	{PROPERTY_AUTOBALANCE,			 			"PROPERTY_AUTOBALANCE"},						
+	{PROPERTY_PRIVATE_SLOTS,			 		"PROPERTY_PRIVATE_SLOTS"},					
+	{PROPERTY_MAX_GAME_TIME,			 		"PROPERTY_MAX_GAME_TIME"},
+	{PROPERTY_NUMBER_OF_TEAMS,					"PROPERTY_NUMBER_OF_TEAMS"},
+	{PROPERTY_TEAM,								"PROPERTY_TEAM"},
 #if defined( _X360 )
-			X_CONTEXT_GAME_MODE,					  	"CONTEXT_GAME_MODE",						
-			X_CONTEXT_GAME_TYPE,					  	"CONTEXT_GAME_TYPE",						
+	{X_CONTEXT_GAME_MODE,					  	"CONTEXT_GAME_MODE"},						
+	{X_CONTEXT_GAME_TYPE,					  	"CONTEXT_GAME_TYPE"},						
 #endif
 };
 
 // Presence values cannot be searched by id number, because they are not unique
 static s_PresenceTranslation s_PresenceValues[] = {
-	SESSION_MATCH_QUERY_PLAYER_MATCH,			"SESSION_MATCH_QUERY_PLAYER_MATCH",			
-	CONTEXT_GAME_MODE_MULTIPLAYER,	 			"CONTEXT_GAME_MODE_MULTIPLAYER",			
-	CONTEXT_SCENARIO_CTF_2FORT,		 			"CONTEXT_SCENARIO_CTF_2FORT",				
-	CONTEXT_SCENARIO_CP_DUSTBOWL,	 			"CONTEXT_SCENARIO_CP_DUSTBOWL",				
-	CONTEXT_SCENARIO_CP_GRANARY,	 			"CONTEXT_SCENARIO_CP_GRANARY",				
-	CONTEXT_SCENARIO_CP_WELL,		 			"CONTEXT_SCENARIO_CP_WELL",					
-	CONTEXT_SCENARIO_CP_GRAVELPIT,	 			"CONTEXT_SCENARIO_CP_GRAVELPIT",			
-	CONTEXT_SCENARIO_TC_HYDRO,		 			"CONTEXT_SCENARIO_TC_HYDRO",				
-	CONTEXT_SCENARIO_CTF_CLOAK,		 			"CONTEXT_SCENARIO_CTF_CLOAK",				
-	CONTEXT_SCENARIO_CP_CLOAK,		 			"CONTEXT_SCENARIO_CP_CLOAK",				
+	{SESSION_MATCH_QUERY_PLAYER_MATCH,			"SESSION_MATCH_QUERY_PLAYER_MATCH"},			
+	{CONTEXT_GAME_MODE_MULTIPLAYER,	 			"CONTEXT_GAME_MODE_MULTIPLAYER"},			
+	{CONTEXT_SCENARIO_CTF_2FORT,		 		"CONTEXT_SCENARIO_CTF_2FORT"},				
+	{CONTEXT_SCENARIO_CP_DUSTBOWL,	 			"CONTEXT_SCENARIO_CP_DUSTBOWL"},				
+	{CONTEXT_SCENARIO_CP_GRANARY,	 			"CONTEXT_SCENARIO_CP_GRANARY"},				
+	{CONTEXT_SCENARIO_CP_WELL,		 			"CONTEXT_SCENARIO_CP_WELL"},					
+	{CONTEXT_SCENARIO_CP_GRAVELPIT,	 			"CONTEXT_SCENARIO_CP_GRAVELPIT"},			
+	{CONTEXT_SCENARIO_TC_HYDRO,		 			"CONTEXT_SCENARIO_TC_HYDRO"},				
+	{CONTEXT_SCENARIO_CTF_CLOAK,		 		"CONTEXT_SCENARIO_CTF_CLOAK"},				
+	{CONTEXT_SCENARIO_CP_CLOAK,		 			"CONTEXT_SCENARIO_CP_CLOAK"},				
 #if defined( _X360 )
-	XSESSION_CREATE_LIVE_MULTIPLAYER_STANDARD,	"SESSION_CREATE_LIVE_MULTIPLAYER_STANDARD",	
-	XSESSION_CREATE_LIVE_MULTIPLAYER_RANKED,  	"SESSION_CREATE_LIVE_MULTIPLAYER_RANKED",	
-	XSESSION_CREATE_SYSTEMLINK,				  	"SESSION_CREATE_SYSTEMLINK",				
-	X_CONTEXT_GAME_TYPE_STANDARD,			  	"CONTEXT_GAME_TYPE_STANDARD",					
-	X_CONTEXT_GAME_TYPE_RANKED,				  	"CONTEXT_GAME_TYPE_RANKED",						
+	{XSESSION_CREATE_LIVE_MULTIPLAYER_STANDARD,	"SESSION_CREATE_LIVE_MULTIPLAYER_STANDARD"},	
+	{XSESSION_CREATE_LIVE_MULTIPLAYER_RANKED,  	"SESSION_CREATE_LIVE_MULTIPLAYER_RANKED"},	
+	{XSESSION_CREATE_SYSTEMLINK,				"SESSION_CREATE_SYSTEMLINK"},				
+	{X_CONTEXT_GAME_TYPE_STANDARD,			  	"CONTEXT_GAME_TYPE_STANDARD"},					
+	{X_CONTEXT_GAME_TYPE_RANKED,				"CONTEXT_GAME_TYPE_RANKED"},						
 #endif
 };
 

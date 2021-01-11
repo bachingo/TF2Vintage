@@ -55,15 +55,15 @@ public:
 	CTFBotUberAttackEnemySentry( CObjectSentrygun *sentry );
 	virtual ~CTFBotUberAttackEnemySentry();
 
-	virtual const char *GetName() const override;
+	virtual const char *GetName() const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const override;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const override;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const override;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
 
 private:
 	bool m_bSavedIgnoreEnemies;

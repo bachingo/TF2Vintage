@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -214,8 +214,9 @@ void CTFBotVision::Update( void )
 	CUtlVector<CTFPlayer *> enemies;
 	CollectPlayers( &enemies, GetEnemyTeam( me ), true );
 
-	for ( CTFPlayer *pPlayer : enemies )
+	FOR_EACH_VEC( enemies, i )
 	{
+		CTFPlayer *pPlayer = enemies[i];
 		if ( pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
 		{
 			const CKnownEntity *known = GetKnown( pPlayer );
@@ -423,9 +424,9 @@ void CTFBotVision::UpdatePotentiallyVisibleNPCs()
 
 	CUtlVector<INextBot *> nextbots;
 	TheNextBots().CollectAllBots( &nextbots );
-	for ( INextBot *pBot : nextbots )
+	FOR_EACH_VEC( nextbots, i )
 	{
-		CBaseCombatCharacter *pEntity = pBot->GetEntity();
+		CBaseCombatCharacter *pEntity = nextbots[i]->GetEntity();
 		if ( pEntity && !pEntity->IsPlayer() )
 			m_PVNPCs.AddToTail( pEntity );
 	}

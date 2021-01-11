@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -383,8 +383,8 @@ void CWheelOfDoom::SpeakMagicConceptToAllPlayers( char const *szConcept )
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, TEAM_ANY );
 
-	for ( CTFPlayer *pPlayer : players )
-		pPlayer->SpeakConceptIfAllowed( iConcept );
+	FOR_EACH_VEC( players, i )
+		players[i]->SpeakConceptIfAllowed( iConcept );
 }
 
 //-----------------------------------------------------------------------------
@@ -465,8 +465,8 @@ void CWheelOfDoom::PlaySound( char const *szSound )
 {
 	EmitSound( szSound );
 
-	for ( CWheelOfDoom *pWheel : m_Wheels )
-		pWheel->EmitSound( szSound );
+	FOR_EACH_VEC( m_Wheels, i )
+		m_Wheels[i]->EmitSound( szSound );
 }
 
 //-----------------------------------------------------------------------------
@@ -476,8 +476,8 @@ void CWheelOfDoom::SetSkin( int skin )
 {
 	m_nSkin = skin;
 
-	for ( CWheelOfDoom *pWheel : m_Wheels )
-		pWheel->m_nSkin = skin;
+	FOR_EACH_VEC( m_Wheels, i )
+		m_Wheels[i]->m_nSkin = skin;
 }
 
 //-----------------------------------------------------------------------------
@@ -487,8 +487,8 @@ void CWheelOfDoom::SetScale( float scale )
 {
 	SetModelScale( scale );
 
-	for ( CWheelOfDoom *pWheel : m_Wheels )
-		pWheel->SetModelScale( scale );
+	FOR_EACH_VEC( m_Wheels, i )
+		m_Wheels[i]->SetModelScale( scale );
 }
 
 //-----------------------------------------------------------------------------
@@ -520,8 +520,9 @@ void CWheelOfDoom::StartSpin( void )
 		m_hSpiral->SetThink( &CWheelOfDoomSpiral::GrowThink );
 		m_hSpiral->SetNextThink( gpGlobals->curtime );
 
-		for ( CWheelOfDoom *pWheel : m_Wheels )
+		FOR_EACH_VEC( m_Wheels, i )
 		{
+			CWheelOfDoom *pWheel = m_Wheels[i];
 			pWheel->RemoveEffects( EF_NODRAW );
 
 			if ( pWheel->m_bHasSpiral )
@@ -632,8 +633,9 @@ void CWheelOfDoom::IdleThink( void )
 		m_hSpiral->SetThink( &CWheelOfDoomSpiral::ShrinkThink );
 		m_hSpiral->SetNextThink( gpGlobals->curtime );
 
-		for ( CWheelOfDoom *pWheel : m_Wheels )
+		FOR_EACH_VEC( m_Wheels, i )
 		{
+			CWheelOfDoom *pWheel = m_Wheels[i];
 			if ( !pWheel->m_bHasSpiral )
 				continue;
 
@@ -677,17 +679,17 @@ CWheelOfDoom::WOD_BaseEffect *CWheelOfDoom::GetRandomEffectWithFlags( void ) con
 	int nNumFlagged = 0;
 	int nNumOthers = 0;
 
-	for ( WOD_BaseEffect *pEffect : m_Effects )
+	FOR_EACH_VEC( m_Effects, i )
 	{
-		if ( ( pEffect->fFlags & WOD_BAD_EFFECT ) == 0 )
+		if ( ( m_Effects[i]->fFlags & WOD_BAD_EFFECT ) == 0 )
 		{
-			effectsToPickFrom.AddToHead( pEffect );
+			effectsToPickFrom.AddToHead( m_Effects[i] );
 			++nNumOthers;
 		}
 		else
 		{
 			++nNumFlagged;
-			effectsToPickFrom.AddToTail( pEffect );
+			effectsToPickFrom.AddToTail( m_Effects[i] );
 		}
 	}
 
@@ -760,8 +762,8 @@ void CWheelOfDoom::ApplyAttributeToAllPlayers( char const *szAtribName, float fl
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players );
 
-	for ( CTFPlayer *pPlayer : players )
-		ApplyAttributeToPlayer( pPlayer, szAtribName, flValue );
+	FOR_EACH_VEC( players, i )
+		ApplyAttributeToPlayer( players[i], szAtribName, flValue );
 }
 
 //-----------------------------------------------------------------------------
@@ -782,8 +784,8 @@ void CWheelOfDoom::RemoveAttributeFromAllPlayers( char const *szAtribName )
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players );
 
-	for ( CTFPlayer *pPlayer : players )
-		RemoveAttributeFromPlayer( pPlayer, szAtribName );
+	FOR_EACH_VEC( players, i )
+		RemoveAttributeFromPlayer( players[i], szAtribName );
 }
 
 //-----------------------------------------------------------------------------
@@ -921,8 +923,8 @@ void CWheelOfDoom::WOD_Burn::InitEffect( float flDuration )
 
 void CWheelOfDoom::WOD_Burn::ActivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
-		pPlayer->m_Shared.Burn( NULL, flDuration - gpGlobals->curtime );
+	FOR_EACH_VEC( data, i )
+		data[i]->m_Shared.Burn( NULL, flDuration - gpGlobals->curtime );
 }
 
 void CWheelOfDoom::WOD_Pee::ActivateEffect( EffectData_t &data )
@@ -991,44 +993,44 @@ void CWheelOfDoom::WOD_UberEffect::InitEffect( float flDuration )
 
 void CWheelOfDoom::WOD_UberEffect::ActivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
-		pPlayer->m_Shared.AddCond( TF_COND_INVULNERABLE, flDuration - gpGlobals->curtime );
+	FOR_EACH_VEC( data, i )
+		data[i]->m_Shared.AddCond( TF_COND_INVULNERABLE, flDuration - gpGlobals->curtime );
 }
 
 void CWheelOfDoom::WOD_CritsEffect::ActivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
-		pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED_PUMPKIN, flDuration - gpGlobals->curtime );
+	FOR_EACH_VEC( data, i )
+		data[i]->m_Shared.AddCond( TF_COND_CRITBOOSTED_PUMPKIN, flDuration - gpGlobals->curtime );
 }
 
 void CWheelOfDoom::WOD_SuperJumpEffect::ActivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
+	FOR_EACH_VEC( data, i )
 	{
-		ApplyAttributeToPlayer( pPlayer, "major increased jump height", 3.f );
-		ApplyAttributeToPlayer( pPlayer, "cancel falling damage", 1.f );
+		ApplyAttributeToPlayer( data[i], "major increased jump height", 3.f );
+		ApplyAttributeToPlayer( data[i], "cancel falling damage", 1.f );
 	}
 }
 
 void CWheelOfDoom::WOD_SuperJumpEffect::DeactivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
+	FOR_EACH_VEC( data, i )
 	{
-		RemoveAttributeFromPlayer( pPlayer, "major increased jump height" );
-		RemoveAttributeFromPlayer( pPlayer, "cancel falling damage" );
+		RemoveAttributeFromPlayer( data[i], "major increased jump height" );
+		RemoveAttributeFromPlayer( data[i], "cancel falling damage" );
 	}
 }
 
 void CWheelOfDoom::WOD_SuperSpeedEffect::ActivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
-		ApplyAttributeToPlayer( pPlayer, "major move speed bonus", 2.f );
+	FOR_EACH_VEC( data, i )
+		ApplyAttributeToPlayer( data[i], "major move speed bonus", 2.f );
 }
 
 void CWheelOfDoom::WOD_SuperSpeedEffect::DeactivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
-		RemoveAttributeFromPlayer( pPlayer, "major move speed bonus" );
+	FOR_EACH_VEC( data, i )
+		RemoveAttributeFromPlayer( data[i], "major move speed bonus" );
 }
 
 void CWheelOfDoom::WOD_LowGravityEffect::ActivateEffect( EffectData_t &data )
@@ -1043,37 +1045,37 @@ void CWheelOfDoom::WOD_LowGravityEffect::DeactivateEffect( EffectData_t &data )
 
 void CWheelOfDoom::WOD_SmallHeadEffect::ActivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
+	FOR_EACH_VEC( data, i )
 	{
-		ApplyAttributeToPlayer( pPlayer, "voice pitch scale", 1.3f );
-		ApplyAttributeToPlayer( pPlayer, "head scale", 0.5f );
+		ApplyAttributeToPlayer( data[i], "voice pitch scale", 1.3f );
+		ApplyAttributeToPlayer( data[i], "head scale", 0.5f );
 	}
 }
 
 void CWheelOfDoom::WOD_SmallHeadEffect::DeactivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
+	FOR_EACH_VEC( data, i )
 	{
-		RemoveAttributeFromPlayer( pPlayer, "voice pitch scale" );
-		RemoveAttributeFromPlayer( pPlayer, "head scale" );
+		RemoveAttributeFromPlayer( data[i], "voice pitch scale" );
+		RemoveAttributeFromPlayer( data[i], "head scale" );
 	}
 }
 
 void CWheelOfDoom::WOD_BigHeadEffect::ActivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
+	FOR_EACH_VEC( data, i )
 	{
-		ApplyAttributeToPlayer( pPlayer, "voice pitch scale", 0.85f );
-		ApplyAttributeToPlayer( pPlayer, "head scale", 3.0f );
+		ApplyAttributeToPlayer( data[i], "voice pitch scale", 0.85f );
+		ApplyAttributeToPlayer( data[i], "head scale", 3.0f );
 	}
 }
 
 void CWheelOfDoom::WOD_BigHeadEffect::DeactivateEffect( EffectData_t &data )
 {
-	for ( CTFPlayer *pPlayer : data )
+	FOR_EACH_VEC( data, i )
 	{
-		RemoveAttributeFromPlayer( pPlayer, "voice pitch scale" );
-		RemoveAttributeFromPlayer( pPlayer, "head scale" );
+		RemoveAttributeFromPlayer( data[i], "voice pitch scale" );
+		RemoveAttributeFromPlayer( data[i], "head scale" );
 	}
 }
 
@@ -1093,8 +1095,9 @@ void CWheelOfDoom::WOD_Dance::InitEffect( float flDuration )
 	float flAvgX = 0.0f;
 	float flZ = 0.0f;
 
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
+		CTFPlayer *pPlayer = players[i];
 		CBaseEntity *pPoint = gEntList.FindEntityByName( NULL, CFmtStr( "dance_teleport_%s%d", 
 																		pPlayer->GetTeamNumber() == TF_TEAM_RED ? "red" : "blue", 
 																		GetNumOfTeamDancing( pPlayer->GetTeamNumber() ) ) );
@@ -1181,8 +1184,8 @@ void CWheelOfDoom::WOD_Dance::UpdateEffect( EffectData_t &data )
 
 void CWheelOfDoom::WOD_Dance::DeactivateEffect( EffectData_t &data )
 {
-	for( CTFPlayer *pPlayer : data )
-		pPlayer->m_Shared.RemoveCond( TF_COND_HALLOWEEN_THRILLER );
+	FOR_EACH_VEC( data, i )
+		data[i]->m_Shared.RemoveCond( TF_COND_HALLOWEEN_THRILLER );
 
 	m_hDancer->BlastOff();
 
@@ -1193,9 +1196,9 @@ void CWheelOfDoom::WOD_Dance::DeactivateEffect( EffectData_t &data )
 int CWheelOfDoom::WOD_Dance::GetNumOfTeamDancing( int iTeam )
 {
 	int iCount = 0;
-	for ( Dancer_t &pDancer : m_Dancers )
+	FOR_EACH_VEC( m_Dancers, i )
 	{
-		if ( pDancer.hPlayer != nullptr && pDancer.hPlayer->GetTeamNumber() == iTeam )
+		if ( m_Dancers[i].hPlayer != nullptr && m_Dancers[i].hPlayer->GetTeamNumber() == iTeam )
 			++iCount;
 	}
 

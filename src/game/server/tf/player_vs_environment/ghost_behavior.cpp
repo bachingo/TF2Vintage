@@ -48,11 +48,9 @@ ActionResult<CGhost> CGhostBehavior::Update( CGhost *me, float interval )
 		CollectPlayers( &victims, TF_TEAM_RED, true );
 		CollectPlayers( &victims, TF_TEAM_BLUE, true, true );
 
-		for ( CTFPlayer *pVictim : victims )
+		FOR_EACH_VEC( victims, i )
 		{
-			if ( !pVictim )
-				continue;
-
+			CTFPlayer *pVictim = victims[i];
 			if ( pVictim->m_purgatoryDuration.HasStarted() && !pVictim->m_purgatoryDuration.IsElapsed() )
 				continue;
 

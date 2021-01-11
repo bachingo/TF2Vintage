@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -34,14 +34,14 @@ ActionResult<CMerasmus> CMerasmusThrowingGrenade::OnStart( CMerasmus *me, Action
 		CollectPlayers( &players, TF_TEAM_BLUE, true, true );
 
 		CUtlVector<CTFPlayer *> validPlayers;
-		for ( CTFPlayer *pPlayer : players )
+		FOR_EACH_VEC( players, i )
 		{
-			if ( pPlayer == m_hVictim )
+			if ( players[i] == m_hVictim )
 				continue;
-			if ( !me->IsLineOfSightClear( pPlayer ) )
+			if ( !me->IsLineOfSightClear( players[i] ) )
 				continue;
 
-			validPlayers.AddToTail( pPlayer );
+			validPlayers.AddToTail( players[i] );
 		}
 
 		if ( !validPlayers.IsEmpty() )
