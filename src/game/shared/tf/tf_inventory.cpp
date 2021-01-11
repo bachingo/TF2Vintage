@@ -9,6 +9,7 @@
 #include "cbase.h"
 #include "tf_shareddefs.h"
 #include "tf_inventory.h"
+#include "filesystem.h"
 #include "econ_item_system.h"
 #include "utlbuffer.h"
 #ifdef CLIENT_DLL
@@ -22,7 +23,7 @@ CTFInventory *GetTFInventory()
 	return &g_TFInventory;
 }
 
-CTFInventory::CTFInventory() : CAutoGameSystemPerFrame( "CTFInventory" )
+CTFInventory::CTFInventory()
 {
 #ifdef CLIENT_DLL
 	m_pInventory = NULL;
@@ -389,7 +390,7 @@ void CTFInventory::ChangeLoadoutSlot(int iClass, int iLoadoutSlot)
 	SaveInventory();
 }
 
-#endif
+#endif // CLIENT_DLL
 
 // Legacy array, used when we're forced to use old method of giving out weapons.
 const int CTFInventory::Weapons[TF_CLASS_COUNT_ALL][TF_PLAYER_WEAPON_COUNT] =
