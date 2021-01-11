@@ -35,6 +35,7 @@
 	#define CTFWeaponBase C_TFWeaponBase
 	#define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
 	#define CTFViewModel C_TFViewModel
+	#define CTFWearable C_TFWearable
 	#include "tf_fx_muzzleflash.h"
 	#include "c_tf_viewmodeladdon.h"
 #endif
@@ -46,6 +47,7 @@ CTFWeaponInfo *GetTFWeaponInfoForItem( int iItemID, int iClass );
 
 class CTFPlayer;
 class CBaseObject;
+class CTFWearable;
 class CTFWeaponBaseGrenadeProj;
 
 class CTraceFilterIgnoreFriendlyCombatItems : public CTraceFilterSimple
@@ -205,6 +207,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	// Stunball
 	virtual const char *GetStunballViewmodel( void ) { return NULL_STRING; }
+
+	virtual bool AttachmentModelsShouldBeVisible( void ) const OVERRIDE { return (m_iState == WEAPON_IS_ACTIVE) && !IsBeingRepurposedForTaunt(); }
 #endif
 
 	virtual void Drop( const Vector &vecVelocity );
@@ -259,6 +263,13 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void SwitchBodyGroups( void ) {}
 
 	virtual void UpdatePlayerBodygroups( int bOnOff );
+
+#if defined( GAME_DLL )
+	virtual void UpdateExtraWearables( void );
+	virtual void ExtraWearableEquipped( CTFWearable *pExtraWearableItem );
+	virtual void ExtraWearableViewModelEquipped( CTFWearable *pExtraWearableItem );
+#endif
+	virtual void RemoveExtraWearables( void );
 
 	// Sound.
 	bool PlayEmptySound();
@@ -487,6 +498,9 @@ protected:
 
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
+
+	CNetworkHandle( CTFWearable, m_hExtraWearable );
+	CNetworkHandle( CTFWearable, m_hExtraWearableViewModel );
 
 	CUtlVector< int > m_iHiddenBodygroups;
 };

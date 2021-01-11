@@ -275,3 +275,20 @@ void CTFWearable::OnDataChanged( DataUpdateType_t updateType )
 }
 
 #endif
+
+void CTFWearable::ReapplyProvision( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+	{
+		// Wearables worn by our disguise don't provide attribute bonuses
+		if ( IsDisguiseWearable() )
+			return;
+	}
+
+	// Extra wearables don't provide attribute bonuses
+	if ( IsExtraWearable() )
+		return;
+
+	BaseClass::ReapplyProvision();
+}

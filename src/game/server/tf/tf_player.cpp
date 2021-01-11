@@ -1765,12 +1765,6 @@ void CTFPlayer::GiveDefaultItems()
 	
 	// Manage our cosmetic items.
 	ManagePlayerCosmetics( pData );
-	
-	// Give ourselves zombie skins when it's Halloween.
-	ManagePlayerEventCosmetic( pData );
-	
-	// If we're a VIP player, give a medal.
-	ManageVIPMedal( pData );	
 
 	// Give grenades.
 	if( tf_enable_grenades.GetBool() )
@@ -1829,25 +1823,7 @@ void CTFPlayer::GiveDefaultItems()
 			pWeapon->UpdatePlayerBodygroups( TURN_ON_BODYGROUPS );
 
 			// Extra wearables
-			const char *iszModel = pWeapon->GetExtraWearableModel();
-			if ( iszModel )
-			{
-				CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable" );
-				pWearable->SetItem( *pWeapon->GetItem() );
-				pWearable->SetExtraWearable( true );
-
-				pWearable->SetLocalOrigin( GetLocalOrigin() );
-				pWearable->AddSpawnFlags( SF_NORESPAWN );
-
-				DispatchSpawn( pWearable );
-				pWearable->Activate();
-
-				if ( pWearable != NULL && !( pWearable->IsMarkedForDeletion() ) )
-				{
-					pWearable->Touch( this );
-					pWearable->GiveTo( this );
-				}
-			}
+			pWeapon->UpdateExtraWearables();
 		}
 	}
 
@@ -2207,8 +2183,9 @@ void CTFPlayer::ValidateWearableSlots( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
+	CBaseCombatWeapon *pActiveWeapon = m_hActiveWeapon.Get();
+
 	// Validate our inventory.
-	ValidateWeaponSlots();
 	ValidateWearables();
 	ValidateWeapons( true );
 
@@ -2315,14 +2292,14 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				itoa( pItem->GetItemDefIndex(), szItemDefIndex, sizeof szItemDefIndex );
 
 				float flVintageChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "vintage_chance" );
-				if ( ( flVintageChance * 0.1f ) > RandomFloat() )
+				if ( ( flVintageChance/100.f ) > RandomFloat() )
 				{
 					pItem->SetItemQuality( QUALITY_VINTAGE );
 				}
 				else
 				{
 					float flGenuineChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "genuine_chance" );
-					if ( ( flGenuineChance * 0.1f ) > RandomFloat() )
+					if ( ( flGenuineChance/100.f ) > RandomFloat() )
 						pItem->SetItemQuality( QUALITY_GENUINE );
 				}
 			}
@@ -2333,6 +2310,14 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				pEntity->GiveTo( this );
 			}
 		}
+	}
+
+	// We may have added weapons that make others invalid. Recheck.
+	ValidateWeapons( false );
+
+	if ( m_hActiveWeapon.Get() && pActiveWeapon != m_hActiveWeapon )
+	{
+		m_hActiveWeapon->WeaponSound( DEPLOY );
 	}
 }
 
@@ -2544,7 +2529,6 @@ void CTFPlayer::ManageGrenades( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 {
-	
 	if ( !tf2v_allow_cosmetics.GetBool() )
 	{
 		// Cosmetics disabled, nuke any cosmetic wearables we have.
@@ -2566,6 +2550,15 @@ void CTFPlayer::ManagePlayerCosmetics( TFPlayerClassData_t *pData )
 	
 	// Make sure we're allowed to have something here.
 	ValidateWearableSlots();
+
+	// Give ourselves zombie skins when it's Halloween.
+	ManagePlayerEventCosmetic( pData );
+
+	// If we're a VIP player, give a medal.
+	if( m_iPlayerVIPRanking != 0 )
+	{
+		ManageVIPMedal( pData );
+	}
 	
 	for (int iSlot = TF_FIRST_COSMETIC_SLOT; iSlot <= TF_LAST_COSMETIC_SLOT; ++iSlot)
 	{
@@ -8032,16 +8025,6 @@ void CTFPlayer::RemoveAllWeapons( void )
 			continue;
 
 		RemoveWearable( pWearable );
-	}
-	
-	// Remove all disguise wearables.
-	for ( int i = 0; i < GetNumDisguiseWearables(); i++ )
-	{
-		CEconWearable *pWearable = GetDisguiseWearable( i );
-		if ( !pWearable )
-			continue;
-
-		RemoveDisguiseWearable( pWearable );
 	}
 }
 

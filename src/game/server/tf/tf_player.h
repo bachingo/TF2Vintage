@@ -618,20 +618,19 @@ private:
 public:
 	void				RemoveMeleeCrit( void );
 
-private:
-	// Taunt.
-	EHANDLE	m_hTauntScene;
-	bool	m_bInitTaunt;
-
 	// Client commands.
 	void				HandleCommand_JoinTeam( const char *pTeamName );
 	void				HandleCommand_JoinClass( const char *pClassName );
 	void				HandleCommand_JoinTeam_NoMenus( const char *pTeamName );
 	void				HandleCommand_JoinTeam_NoKill( const char *pTeamName );
 
+private:
+	// Taunt.
+	EHANDLE	m_hTauntScene;
+	bool	m_bInitTaunt;
+
 	// Bots.
 	friend void Bot_Think( CTFPlayer *pBot );
-	friend static void tf_bot_add( const CCommand &args );
 	friend class CTFBot; friend class CTFBotManager;
 
 	// Physics.

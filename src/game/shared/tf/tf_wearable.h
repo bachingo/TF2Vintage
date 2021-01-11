@@ -37,6 +37,8 @@ public:
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 #endif
 
+	virtual void	ReapplyProvision( void ) OVERRIDE;
+
 	virtual void	SetExtraWearable( bool bExtraWearable ) { m_bExtraWearable = bExtraWearable; }
 	virtual bool	IsExtraWearable( void ) { return m_bExtraWearable; }
 	void			SetDisguiseWearable( bool bDisguiseWearable )	{ m_bDisguiseWearable = bDisguiseWearable; }

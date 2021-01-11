@@ -151,6 +151,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropTime( RECVINFO( m_flLastFireTime ) ),
 	RecvPropTime( RECVINFO( m_flEffectBarRegenTime ) ),
 	RecvPropFloat( RECVINFO( m_flEnergy ) ),
+	RecvPropEHandle( RECVINFO( m_hExtraWearable ) ),
+	RecvPropEHandle( RECVINFO( m_hExtraWearableViewModel ) ),
 
 	RecvPropInt( RECVINFO( m_nSequence ), 0, RecvProxy_WeaponSequence ),
 // Server specific.
@@ -162,6 +164,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropTime( SENDINFO( m_flLastFireTime ) ),
 	SendPropTime( SENDINFO( m_flEffectBarRegenTime ) ),
 	SendPropFloat( SENDINFO( m_flEnergy ) ),
+	SendPropEHandle( SENDINFO( m_hExtraWearable ) ),
+	SendPropEHandle( SENDINFO( m_hExtraWearableViewModel ) ),
 
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropInt( SENDINFO( m_nSequence ), ANIMATION_SEQUENCE_BITS, SPROP_UNSIGNED ),
@@ -880,6 +884,112 @@ void CTFWeaponBase::UpdatePlayerBodygroups( int bOnOff )
 	{
 		// Don't call for inactive weapons that hide bodygroups when deployed
 		BaseClass::UpdatePlayerBodygroups( bOnOff );
+	}
+}
+
+#if defined GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::UpdateExtraWearables( void )
+{
+	CBaseCombatCharacter *pOwner = GetOwner();
+	if ( pOwner && ( m_hExtraWearable.Get() || m_hExtraWearableViewModel.Get() ) )
+	{
+		const int nTeam = pOwner->GetTeamNumber();
+		if ( m_hExtraWearable.Get() && m_hExtraWearable->GetTeamNumber() == nTeam )
+		{
+			if ( m_hExtraWearableViewModel.Get() && m_hExtraWearableViewModel->GetTeamNumber() == nTeam )
+				return;
+		}
+	}
+
+	RemoveExtraWearables();
+	bool bViewModel = false;
+
+	/*if ( GetExtraWearableViewModel() )
+	{
+		CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable_vm" );
+		if( pWearable != nullptr )
+		{
+			pWearable->SetItem( *GetItem() );
+			pWearable->SetExtraWearable( true );
+			pWearable->AddSpawnFlags( SF_NORESPAWN );
+
+			DispatchSpawn( pWearable );
+			pWearable->GiveTo( pOwner );
+
+			pWearable->SetWeaponAssociatedWith( this );
+
+			ExtraWearableViewModelEquipped( pWearable );
+
+			bViewModel = true;
+		}
+	}*/
+
+	if ( GetExtraWearableModel() )
+	{
+		CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable" );
+		if( pWearable != nullptr )
+		{
+			pWearable->SetItem( *GetItem() );
+			pWearable->SetExtraWearable( true );
+			pWearable->AddSpawnFlags( SF_NORESPAWN );
+
+			DispatchSpawn( pWearable );
+			pWearable->GiveTo( pOwner );
+
+			if( bViewModel )
+				pWearable->SetWeaponAssociatedWith( this );
+
+			ExtraWearableEquipped( pWearable );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::ExtraWearableEquipped( CTFWearable *pExtraWearable )
+{
+	Assert( pExtraWearable );
+	m_hExtraWearable.Set( pExtraWearable );
+
+	CBasePlayer *pPlayerOwner = GetPlayerOwner();
+	if ( pPlayerOwner )
+	{
+		pExtraWearable->Equip( pPlayerOwner );
+	}
+}
+
+void CTFWeaponBase::ExtraWearableViewModelEquipped( CTFWearable *pExtraWearable )
+{
+	Assert( pExtraWearable );
+	m_hExtraWearableViewModel.Set( pExtraWearable );
+
+	CBasePlayer *pPlayerOwner = GetPlayerOwner();
+	if ( pPlayerOwner )
+	{
+		pExtraWearable->Equip( pPlayerOwner );
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::RemoveExtraWearables( void )
+{
+	if ( m_hExtraWearable.Get() )
+	{
+		m_hExtraWearable->RemoveFrom( GetOwnerEntity() );
+		m_hExtraWearable = NULL;
+	}
+
+	if ( m_hExtraWearableViewModel.Get() )
+	{
+		m_hExtraWearableViewModel->RemoveFrom( GetOwnerEntity() );
+		m_hExtraWearableViewModel = NULL;
 	}
 }
 
@@ -2940,6 +3050,34 @@ void CTFWeaponBase::ProcessMuzzleFlashEvent( void )
 		SetModelIndex( nWorldModelIndex );
 		CreateMuzzleFlashEffects( this, 1 );
 		SetModelIndex( nModelIndex );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+void CTFWeaponBase::UpdateVisibility( void )
+{
+	BaseClass::UpdateVisibility();
+
+	UpdateExtraWearablesVisibility();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+void CTFWeaponBase::UpdateExtraWearablesVisibility()
+{
+	if ( m_hExtraWearable.Get() )
+	{
+		m_hExtraWearable->ValidateModelIndex();
+		m_hExtraWearable->UpdateVisibility();
+		m_hExtraWearable->CreateShadow();
+	}
+
+	if ( m_hExtraWearableViewModel.Get() )
+	{
+		m_hExtraWearableViewModel->UpdateVisibility();
 	}
 }
 
