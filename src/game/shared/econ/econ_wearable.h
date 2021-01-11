@@ -49,22 +49,14 @@ public:
 #ifdef GAME_DLL
 	virtual void			Equip( CBasePlayer *pPlayer );
 	virtual void			UnEquip( CBasePlayer *pPlayer );
-	virtual void			SetExtraWearable( bool bExtraWearable ) { m_bExtraWearable = bExtraWearable; }
-	virtual bool			IsExtraWearable( void ) { return m_bExtraWearable; }
 #else
 	virtual void			OnDataChanged(DataUpdateType_t type);
 	virtual	ShadowType_t	ShadowCastType( void );
 	virtual bool			ShouldDraw( void );
 #endif
-
-	CNetworkVar( bool, m_bExtraWearable );
 	
-	virtual void			SetDisguiseWearable( bool bDisguiseWearable ) { m_bDisguiseWearable = bDisguiseWearable; }
-	virtual bool			IsDisguiseWearable( void ) { return m_bDisguiseWearable; }
-	CNetworkVar( bool, m_bDisguiseWearable );
 
 private:
-
 #ifdef GAME_DLL
 	CNetworkString(m_ParticleName, PARTICLE_MODIFY_STRING_SIZE);
 #else

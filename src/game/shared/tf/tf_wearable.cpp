@@ -14,6 +14,15 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWearable, DT_TFWearable );
 
 BEGIN_NETWORK_TABLE( CTFWearable, DT_TFWearable )
+#ifdef GAME_DLL
+	SendPropBool( SENDINFO( m_bExtraWearable ) ),
+	SendPropBool( SENDINFO( m_bDisguiseWearable ) ),
+	SendPropEHandle( SENDINFO( m_hWeaponAssociatedWith ) ),
+#else
+	RecvPropBool( RECVINFO( m_bExtraWearable ) ),
+	RecvPropBool( RECVINFO( m_bDisguiseWearable ) ),
+	RecvPropEHandle( RECVINFO( m_hWeaponAssociatedWith ) ),
+#endif
 END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_wearable, CTFWearable );
@@ -47,15 +56,15 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWearable::UpdateModelToClass( void )
 {
-	if ( m_bExtraWearable && GetItem()->GetStaticData() )
+	if ( IsExtraWearable() && GetItem()->GetStaticData() )
 	{
 		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
 	}
-	else 
+	else
 	{
 		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 
-		if ( pOwner && !m_bDisguiseWearable)
+		if ( pOwner && !IsDisguiseWearable() )
 		{
 			const char *pszModel = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 
@@ -197,7 +206,7 @@ int C_TFWearable::InternalDrawModel( int flags )
 //-----------------------------------------------------------------------------
 void C_TFWearable::UpdateModelToClass(void)
 {
-	if ( m_bExtraWearable && GetItem()->GetStaticData() )
+	if ( IsExtraWearable() && GetItem()->GetStaticData() )
 	{
 		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
 	}

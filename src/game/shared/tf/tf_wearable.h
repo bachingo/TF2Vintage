@@ -37,7 +37,17 @@ public:
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 #endif
 
+	virtual void	SetExtraWearable( bool bExtraWearable ) { m_bExtraWearable = bExtraWearable; }
+	virtual bool	IsExtraWearable( void ) { return m_bExtraWearable; }
+	void			SetDisguiseWearable( bool bDisguiseWearable )	{ m_bDisguiseWearable = bDisguiseWearable; }
+	bool			IsDisguiseWearable( void ) const				{ return m_bDisguiseWearable; }
+	void			SetWeaponAssociatedWith( CBaseEntity *pWeapon )	{ m_hWeaponAssociatedWith = pWeapon; }
+	CBaseEntity*	GetWeaponAssociatedWith( void ) const			{ return m_hWeaponAssociatedWith.Get(); }
+
 private:
+	CNetworkVar( bool, m_bExtraWearable );
+	CNetworkVar( bool, m_bDisguiseWearable );
+	CNetworkHandle( CBaseEntity, m_hWeaponAssociatedWith );
 	short		m_nWorldModelIndex;
 };
 

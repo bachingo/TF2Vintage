@@ -26,12 +26,8 @@ IMPLEMENT_NETWORKCLASS_ALIASED( EconWearable, DT_EconWearable )
 BEGIN_NETWORK_TABLE( CEconWearable, DT_EconWearable )
 #ifdef GAME_DLL
 	SendPropString( SENDINFO( m_ParticleName ) ),
-	SendPropBool( SENDINFO( m_bExtraWearable ) ),
-	SendPropBool( SENDINFO( m_bDisguiseWearable ) ),
 #else
 	RecvPropString( RECVINFO( m_ParticleName ) ),
-	RecvPropBool( RECVINFO( m_bExtraWearable ) ),
-	RecvPropBool( RECVINFO( m_bDisguiseWearable ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -41,19 +37,14 @@ void CEconWearable::Spawn( void )
 
 	Precache();
 
-	if ( m_bExtraWearable && GetItem()->GetStaticData() )
-	{
-		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
-	}
-	else
+	if ( GetItem()->GetPlayerDisplayModel() )
 	{
 		SetModel( GetItem()->GetPlayerDisplayModel() );
 	}
 	
 	BaseClass::Spawn();
 
-	AddEffects( EF_BONEMERGE );
-	AddEffects( EF_BONEMERGE_FASTCULL );
+	AddEffects( EF_BONEMERGE|EF_BONEMERGE_FASTCULL );
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 	SetBlocksLOS( false );
 }
@@ -190,9 +181,7 @@ void CEconWearable::Equip( CBasePlayer *pPlayer )
 		SetOwnerEntity( pPlayer );
 		ChangeTeam( pPlayer->GetTeamNumber() );
 
-		// Extra wearables don't provide attribute bonuses
-		if ( !IsExtraWearable() )
-			ReapplyProvision();
+		ReapplyProvision();
 
 	#ifdef GAME_DLL
 		UpdateModelToClass();
