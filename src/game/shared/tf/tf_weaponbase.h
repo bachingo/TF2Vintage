@@ -417,6 +417,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void	ProcessMuzzleFlashEvent( void );
 	virtual int		InternalDrawModel( int flags );
 	virtual bool	ShouldDraw( void );
+	virtual void	UpdateVisibility( void ) OVERRIDE;
 
 	virtual bool	ShouldPredict();
 	virtual void	OnDataChanged( DataUpdateType_t type );
@@ -447,6 +448,7 @@ protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
 	virtual void DispatchMuzzleFlash( char const *effectName, C_BaseEntity *pAttachEnt );
+	virtual void UpdateExtraWearablesVisibility( void );
 #endif // CLIENT_DLL
 
 	// Reloads.
