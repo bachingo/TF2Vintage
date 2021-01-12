@@ -405,10 +405,10 @@ public:
 
 	string_t GetCachedClass( void ) const
 	{
-		if ( !iAttrClass && attribute_class )
-			iAttrClass = AllocPooledString( attribute_class );
+		if ( !iszAttrClass && attribute_class )
+			iszAttrClass = AllocPooledString( attribute_class );
 
-		return iAttrClass;
+		return iszAttrClass;
 	}
 
 	bool LoadFromKV( KeyValues *pKV );
@@ -418,7 +418,7 @@ private:
 	char const *attribute_class;
 	char const *description_string;
 
-	mutable string_t iAttrClass;
+	mutable string_t iszAttrClass;
 
 	KeyValues *definition;
 
@@ -528,6 +528,13 @@ public:
 
 		return NULL;
 	}
+	char const *GetExtraWearableViewModel( void ) const
+	{
+		if ( extra_wearable_vm && extra_wearable_vm[0] != '\0' )
+			return extra_wearable_vm;
+
+		return NULL;
+	}
 	char const *GetLocalizationName( void ) const
 	{
 		Assert( item_name && *item_name );
@@ -596,6 +603,7 @@ private:
 	char const *model_world;
 	char const *model_player_per_class[ TF_CLASS_COUNT_ALL ];
 	char const *extra_wearable;
+	char const *extra_wearable_vm;
 	char const *item_class;
 	char const *item_type_name;
 	char const *item_name;

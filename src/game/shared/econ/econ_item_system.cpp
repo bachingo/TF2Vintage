@@ -147,7 +147,7 @@ CEconItemSchema *GetItemSchema()
 			(copyto)->name = from->GetString(#name)
 
 #define GET_STRING_DEFAULT(copyto, from, name, defaultstring) \
-		(copyto)->name = from->GetString(#name, #defaultstring)
+		(copyto)->name = from->GetString(#name, defaultstring)
 
 #define GET_BOOL(copyto, from, name) \
 		(copyto)->name = from->GetBool(#name, (copyto)->name)
@@ -318,6 +318,7 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 	GET_STRING( this, pDefinition, model_vision_filtered );
 	GET_STRING( this, pDefinition, model_world );
 	GET_STRING( this, pDefinition, extra_wearable );
+	GET_STRING( this, pDefinition, extra_wearable_vm );
 
 	GET_INT( this, pDefinition, attach_to_hands );
 	GET_INT( this, pDefinition, attach_to_hands_vm_only );
@@ -621,9 +622,9 @@ bool CEconAttributeDefinition::LoadFromKV( KeyValues *pDefinition )
 {
 	definition = pDefinition;
 
-	name = pDefinition->GetString( "name", "( unnamed )" );
-	attribute_class = pDefinition->GetString( "attribute_class" );
-	description_string = pDefinition->GetString( "description_string" );
+	GET_STRING_DEFAULT( this, pDefinition, name, "( unnamed )" );
+	GET_STRING( this, pDefinition, attribute_class );
+	GET_STRING( this, pDefinition, description_string );
 
 	string_attribute = ( V_stricmp( pDefinition->GetString( "attribute_type" ), "string" ) == 0 );
 

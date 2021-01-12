@@ -153,6 +153,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropFloat( RECVINFO( m_flEnergy ) ),
 	RecvPropEHandle( RECVINFO( m_hExtraWearable ) ),
 	RecvPropEHandle( RECVINFO( m_hExtraWearableViewModel ) ),
+	RecvPropBool( RECVINFO( m_bBeingRepurposedForTaunt ) ),
 
 	RecvPropInt( RECVINFO( m_nSequence ), 0, RecvProxy_WeaponSequence ),
 // Server specific.
@@ -166,6 +167,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropFloat( SENDINFO( m_flEnergy ) ),
 	SendPropEHandle( SENDINFO( m_hExtraWearable ) ),
 	SendPropEHandle( SENDINFO( m_hExtraWearableViewModel ) ),
+	SendPropBool( SENDINFO( m_bBeingRepurposedForTaunt ) ),
 
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropInt( SENDINFO( m_nSequence ), ANIMATION_SEQUENCE_BITS, SPROP_UNSIGNED ),
@@ -182,6 +184,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bCurrentAttackIsCrit, FIELD_BOOLEAN, 0 ),
 	DEFINE_PRED_FIELD( m_flEnergy, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flEffectBarRegenTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bBeingRepurposedForTaunt, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 #endif
 END_PREDICTION_DATA()
 
@@ -907,7 +910,7 @@ void CTFWeaponBase::UpdateExtraWearables( void )
 	RemoveExtraWearables();
 	bool bViewModel = false;
 
-	/*if ( GetExtraWearableViewModel() )
+	if ( GetExtraWearableViewModel() )
 	{
 		CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable_vm" );
 		if( pWearable != nullptr )
@@ -925,7 +928,7 @@ void CTFWeaponBase::UpdateExtraWearables( void )
 
 			bViewModel = true;
 		}
-	}*/
+	}
 
 	if ( GetExtraWearableModel() )
 	{
@@ -2387,7 +2390,23 @@ const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 		return pStatic->GetExtraWearableModel();
 	}
 
-	return "\0";
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFWeaponBase::GetExtraWearableViewModel( void ) const
+{
+	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
+
+	if ( pStatic )
+	{
+		// We have an extra wearable
+		return pStatic->GetExtraWearableViewModel();
+	}
+
+	return NULL;
 }
 
 //-----------------------------------------------------------------------------

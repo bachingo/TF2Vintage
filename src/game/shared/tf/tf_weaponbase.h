@@ -261,7 +261,6 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	// Accessor for bodygroup switching
 	virtual void SwitchBodyGroups( void ) {}
-
 	virtual void UpdatePlayerBodygroups( int bOnOff );
 
 #if defined( GAME_DLL )
@@ -362,6 +361,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool		PickedUpBall( CTFPlayer *pPlayer ) { return false; }
 
 	const char*			GetExtraWearableModel( void ) const;
+	const char*			GetExtraWearableViewModel( void ) const;
 
 	virtual float		GetSpeedMod( void ) const { return 1.0f; }
 
@@ -370,6 +370,9 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool		CanOverload( void );
 	bool				IsSilentKiller( void );
 	virtual bool		CanDecapitate( void );
+
+	void				SetIsBeingRepurposedForTaunt( bool bCanOverride ) { m_bBeingRepurposedForTaunt = bCanOverride; }
+	bool				IsBeingRepurposedForTaunt() const { return m_bBeingRepurposedForTaunt; }
 
 	// Energy Weapons
 	virtual bool		IsEnergyWeapon(void) const;
@@ -487,6 +490,8 @@ protected:
 	CNetworkVar(	bool, m_bResetParity );
 
 	int				m_iRefundedAmmo;
+
+	CNetworkVar( bool, m_bBeingRepurposedForTaunt );
 
 #ifdef CLIENT_DLL
 	bool m_bOldResetParity;
