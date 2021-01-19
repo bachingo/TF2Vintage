@@ -48,6 +48,75 @@ CTFInventory::~CTFInventory()
 
 bool CTFInventory::Init( void )
 {
+	GetItemSchema()->Init();
+
+	// Generate item list.
+	LoadInventory();
+
+	return true;
+}
+
+void CTFInventory::LevelInitPreEntity( void )
+{
+	GetItemSchema()->Precache();
+}
+
+int CTFInventory::GetNumPresets(int iClass, int iSlot)
+{
+	return m_Items[iClass][iSlot].Count();
+};
+
+int CTFInventory::GetWeapon(int iClass, int iSlot)
+{
+	return Weapons[iClass][iSlot];
+};
+
+CEconItemView *CTFInventory::GetItem( int iClass, int iSlot, int iNum )
+{
+	if ( CheckValidWeapon( iClass, iSlot, iNum ) == false )
+		return NULL;
+
+	return m_Items[iClass][iSlot][iNum];
+};
+
+bool CTFInventory::CheckValidSlot(int iClass, int iSlot, bool bHudCheck /*= false*/)
+{
+	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
+		return false;
+
+	int iCount = (bHudCheck ? INVENTORY_ROWNUM : TF_LOADOUT_SLOT_COUNT);
+
+	// Array bounds check.
+	if ( iSlot >= iCount || iSlot < 0 )
+		return false;
+
+	// Slot must contain a base item.
+	if ( m_Items[iClass][iSlot][0] == NULL )
+		return false;
+
+	return true;
+};
+
+bool CTFInventory::CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHudCheck /*= false*/)
+{
+	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
+		return false;
+
+	int iCount = ( bHudCheck ? INVENTORY_COLNUM : m_Items[iClass][iSlot].Count() );
+
+	// Array bounds check.
+	if ( iWeapon >= iCount || iWeapon < 0 )
+		return false;
+
+	// Don't allow switching if this class has no weapon at this position.
+	if ( m_Items[iClass][iSlot][iWeapon] == NULL )
+		return false;
+
+	return true;
+};
+
+void CTFInventory::LoadInventory()
+{
 #ifdef CLIENT_DLL
 	bool bReskinsEnabled = CommandLine()->CheckParm( "-showreskins" );
 	bool bSpecialsEnabled = CommandLine()->CheckParm( "-goldenboy" );
@@ -56,9 +125,6 @@ bool CTFInventory::Init( void )
 	bool bSpecialsEnabled = true;
 #endif
 
-	GetItemSchema()->Init();
-
-	// Generate item list.
 	FOR_EACH_MAP( GetItemSchema()->m_Items, i )
 	{
 		int iItemID = GetItemSchema()->m_Items.Key( i );
@@ -194,81 +260,6 @@ bool CTFInventory::Init( void )
 	}
 
 #if defined( CLIENT_DLL )
-	LoadInventory();
-#endif
-
-	return true;
-}
-
-void CTFInventory::LevelInitPreEntity( void )
-{
-	GetItemSchema()->Precache();
-}
-
-int CTFInventory::GetNumPresets(int iClass, int iSlot)
-{
-	return m_Items[iClass][iSlot].Count();
-};
-
-int CTFInventory::GetWeapon(int iClass, int iSlot)
-{
-	return Weapons[iClass][iSlot];
-};
-
-CEconItemView *CTFInventory::GetItem( int iClass, int iSlot, int iNum )
-{
-	if ( CheckValidWeapon( iClass, iSlot, iNum ) == false )
-		return NULL;
-
-	return m_Items[iClass][iSlot][iNum];
-};
-
-bool CTFInventory::CheckValidSlot(int iClass, int iSlot, bool bHudCheck /*= false*/)
-{
-	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
-		return false;
-
-	int iCount = (bHudCheck ? INVENTORY_ROWNUM : TF_LOADOUT_SLOT_COUNT);
-
-	// Array bounds check.
-	if ( iSlot >= iCount || iSlot < 0 )
-		return false;
-
-	// Slot must contain a base item.
-	if ( m_Items[iClass][iSlot][0] == NULL )
-		return false;
-
-	return true;
-};
-
-bool CTFInventory::CheckValidWeapon(int iClass, int iSlot, int iWeapon, bool bHudCheck /*= false*/)
-{
-	if (iClass < TF_CLASS_UNDEFINED || iClass > TF_CLASS_COUNT_ALL)
-		return false;
-
-	int iCount = ( bHudCheck ? INVENTORY_COLNUM : m_Items[iClass][iSlot].Count() );
-
-	// Array bounds check.
-	if ( iWeapon >= iCount || iWeapon < 0 )
-		return false;
-
-	// Don't allow switching if this class has no weapon at this position.
-	if ( m_Items[iClass][iSlot][iWeapon] == NULL )
-		return false;
-
-	return true;
-};
-
-#if defined( CLIENT_DLL )
-bool CTFInventory::CheckSpecialItemAccess()
-{
-	// Placeholder until we can implement SteamID checking here.
-	return false;
-	
-}
-
-void CTFInventory::LoadInventory()
-{
 	bool bExist = filesystem->FileExists("scripts/tf_inventory.txt", "MOD");
 	if (bExist)
 	{
@@ -282,7 +273,16 @@ void CTFInventory::LoadInventory()
 	{
 		ResetInventory();
 	}
-};
+#endif
+}
+
+#if defined( CLIENT_DLL )
+bool CTFInventory::CheckSpecialItemAccess()
+{
+	// Placeholder until we can implement SteamID checking here.
+	return false;
+	
+}
 
 void CTFInventory::SaveInventory()
 {

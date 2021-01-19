@@ -67,9 +67,9 @@ private:
 	static const int Weapons[TF_CLASS_COUNT_ALL][TF_PLAYER_WEAPON_COUNT];
 	CUtlVector<CEconItemView *> m_Items[TF_CLASS_COUNT_ALL][TF_LOADOUT_SLOT_COUNT];
 
-#if defined( CLIENT_DLL )
-	virtual bool CheckSpecialItemAccess( void );
 	void LoadInventory();
+#if defined( CLIENT_DLL )
+	bool CheckSpecialItemAccess( void );
 	void ResetInventory();
 	void SaveInventory();
 	KeyValues* m_pInventory;
