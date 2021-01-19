@@ -377,7 +377,7 @@ public:
 		hidden = false;
 		effect_type = -1;
 		stored_as_integer = false;
-		iAttrClass = NULL_STRING;
+		iszAttrClass = NULL_STRING;
 	}
 	~CEconAttributeDefinition()
 	{
