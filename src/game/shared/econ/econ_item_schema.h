@@ -472,6 +472,7 @@ public:
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
 		CLEAR_STR( extra_wearable );
+		CLEAR_STR( extra_wearable_vm );
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 		is_reskin = false;
