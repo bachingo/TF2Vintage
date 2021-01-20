@@ -18,15 +18,23 @@ $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
 $Include "$SRCDIR\game\protobuf_include.vpc"
 
+$CustomBuildStep "nut"
+{
+	$CommandLine	"$SRCDIR\devtools\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(IntDir)\$(InputName)_nut.h" [$WINDOWS]
+	$CommandLine	"perl $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(IntDir)\$(InputName)_nut.h" [$POSIX]
+	$Description	"$(InputFileName) produces $(InputName)_nut.h"
+	$Outputs		"$(IntDir)\$(InputName)_nut.h"
+}
+
 $Configuration	"Debug"
 {
 	$General
 	{
-		$OutputDirectory			".\Debug_$GAMENAME"			[$WIN32]
-		$IntermediateDirectory		".\Debug_$GAMENAME"			[$WIN32]
+		$OutputDirectory		".\Debug_$GAMENAME"			[$WIN32]
+		$IntermediateDirectory	".\Debug_$GAMENAME"			[$WIN32]
 
-		$OutputDirectory			".\Debug_$GAMENAME_360"		[$X360]
-		$IntermediateDirectory		".\Debug_$GAMENAME_360"		[$X360]
+		$OutputDirectory		".\Debug_$GAMENAME_360"		[$X360]
+		$IntermediateDirectory	".\Debug_$GAMENAME_360"		[$X360]
 	}
 }
 
@@ -34,11 +42,11 @@ $Configuration	"Release"
 {
 	$General
 	{
-		$OutputDirectory			".\Release_$GAMENAME"		[$WIN32]
-		$IntermediateDirectory		".\Release_$GAMENAME"		[$WIN32]
+		$OutputDirectory		".\Release_$GAMENAME"		[$WIN32]
+		$IntermediateDirectory	".\Release_$GAMENAME"		[$WIN32]
 
-		$OutputDirectory			".\Release_$GAMENAME_360"	[$X360]
-		$IntermediateDirectory		".\Release_$GAMENAME_360"	[$X360]
+		$OutputDirectory		".\Release_$GAMENAME_360"	[$X360]
+		$IntermediateDirectory	".\Release_$GAMENAME_360"	[$X360]
 	}
 }
 
