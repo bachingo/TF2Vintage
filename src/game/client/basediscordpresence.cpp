@@ -38,12 +38,6 @@ bool CBaseDiscordPresence::Init()
 		auto result = discord::Core::Create( V_atoi64( cl_discord_appid.GetString() ), DiscordCreateFlags_Default, &g_pDiscord );
 		if ( result != discord::Result::Ok )
 			return true;
-
-		// Work around for contained pointers being garbage initialized,
-		// zero out memory *after* core is created, and offset past the inner core pointer
-		//
-		// This is dumb, and it should feel bad for itself
-		Q_memset( (void *)( (intp)g_pDiscord + sizeof( IDiscordCore * ) ), 0, sizeof( discord::Core ) - sizeof( IDiscordCore * ) );
 	}
 
 	return InitPresence();

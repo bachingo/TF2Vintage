@@ -38,6 +38,9 @@ public:
     discord::VoiceManager& VoiceManager();
     discord::AchievementManager& AchievementManager();
 
+    inline void *operator new( size_t size ) { void *pBlock=malloc(size); memset(pBlock,0x00,size); return pBlock; }
+    inline void *operator new( size_t size, int nBlockUse, const char *pFileName, int nLine ) { void *pBlock=malloc(size); memset(pBlock,0x00,size); return pBlock; }
+
 private:
     Core() = default;
     Core(Core const& rhs) = delete;
