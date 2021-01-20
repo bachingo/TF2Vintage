@@ -33,6 +33,9 @@ private:
 	char m_szMapName[ MAX_MAP_NAME ];
 };
 
+#ifdef _WIN32
+namespace discord { class Core; }
 extern discord::Core *g_pDiscord;
+#endif
 
 #endif
