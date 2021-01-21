@@ -309,6 +309,9 @@ public:
 	void DestroyBombinomiconHint( void );
 	void UpdateHalloweenBombHead( void );
 
+	float m_flInspectTime;
+	bool IsInspecting() const;
+
 protected:
 
 	void ResetFlexWeights( CStudioHdr *pStudioHdr );

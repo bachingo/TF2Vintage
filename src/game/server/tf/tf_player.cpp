@@ -499,6 +499,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropInt( SENDINFO( m_iSpawnCounter ) ),
 
 	SendPropFloat( SENDINFO( m_flLastDamageTime ), 16, SPROP_ROUNDUP ),
+	SendPropTime( SENDINFO( m_flInspectTime ) ),
 END_SEND_TABLE()
 
 
@@ -598,7 +599,7 @@ CTFPlayer::CTFPlayer()
 	m_iTauntAttack = TAUNTATK_NONE;
 	m_flTauntEmitTime = 0;
 	m_iSpecialTauntType = 0;
-
+	m_flInspectTime = 0;
 	m_nBlastJumpFlags = 0;
 	m_bBlastLaunched = false;
 	m_bJumpEffect = false;
@@ -1397,6 +1398,7 @@ void CTFPlayer::Spawn()
 	ClearDamagerHistory();
 
 	m_flLastDamageTime = 0;
+	m_flInspectTime = 0;
 
 	m_flNextVoiceCommandTime = gpGlobals->curtime;
 	m_iJIVoiceSpam = 0;
@@ -12149,6 +12151,39 @@ int CTFPlayer::GetPlayerVIPRanking( void )
 	return 0;
 }
 
+bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
+{
+	// First, we parse the item_whitelist to see if it's on there.
+
+	KeyValues *pData = new KeyValues( "item_whitelist.txt" );
+
+	if ( !pData ) // If we don't have a whitelist, assume yes.
+		return true;
+
+	KeyValues *pFileSystemInfo = pData->FindKey("item_whitelist");
+
+	if ( !pFileSystemInfo ) // If we don't have a whitelist, assume yes.
+		return true;
+
+	if ( pFileSystemInfo )
+	{
+		// Find the weapon's name on our list.
+		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
+		{
+			if ( Q_stricmp( pKey->GetName(), pszClassname ) == 0 )
+				return pKey->GetInt() == 1;
+		}
+		// We didn't find the weapon, so check what we set unlisted items to.
+		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
+		{
+			if ( Q_stricmp( pKey->GetName(), "unlisted_items_default_to" ) == 0 )
+				return pKey->GetInt() == 1;
+		}
+	}
+
+	return false; // If we have a blank/incomplete whitelist, assume no.
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -12165,6 +12200,22 @@ bool CTFPlayer::ShouldAnnouceAchievement( void )
 	}
 
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::InspectButtonPressed()
+{
+	m_flInspectTime = gpGlobals->curtime;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::InspectButtonReleased()
+{
+	m_flInspectTime = 0;
 }
 
 
@@ -12238,37 +12289,4 @@ float CTFPlayerPathCost::operator()( CNavArea *area, CNavArea *fromArea, const C
 	}
 
 	return fromArea->GetCostSoFar() + length;
-}
-
-bool CTFPlayer::IsWhiteListed ( const char *pszClassname )
-{
-	// First, we parse the item_whitelist to see if it's on there.
-	
-	KeyValues *pData = new KeyValues( "item_whitelist.txt" );
-	
-	if ( !pData ) // If we don't have a whitelist, assume yes.
-		return true;
-	
-	KeyValues *pFileSystemInfo = pData->FindKey("item_whitelist");
-
-	if ( !pFileSystemInfo ) // If we don't have a whitelist, assume yes.
-		return true;
-	
-	if ( pFileSystemInfo )
-	{
-		// Find the weapon's name on our list.
-		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
-		{
-			if ( Q_stricmp( pKey->GetName(), pszClassname ) == 0 )
-				return pKey->GetInt() == 1;
-		}
-		// We didn't find the weapon, so check what we set unlisted items to.
-		for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
-		{
-			if ( Q_stricmp( pKey->GetName(), "unlisted_items_default_to" ) == 0 )
-				return pKey->GetInt() == 1;
-		}
-	}
-
-	return false; // If we have a blank/incomplete whitelist, assume no.
 }

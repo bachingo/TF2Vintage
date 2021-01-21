@@ -448,6 +448,7 @@ private:
 	virtual ~CTFGameRules();
 
 	virtual bool	ClientCommand( CBaseEntity *pEdict, const CCommand &args );
+	virtual void	ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValues );
 	virtual void	Think();
 
 	bool			CheckWinLimit();

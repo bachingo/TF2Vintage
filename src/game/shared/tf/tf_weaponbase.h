@@ -166,6 +166,16 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	DECLARE_DATADESC();
 #endif
 
+	enum EInspectStage
+	{
+		INSPECT_NONE = -1,
+		INSPECT_START,
+		INSPECT_IDLE,
+		INSPECT_END,
+
+		INSPECT_STAGE_COUNT
+	};
+
 	// Setup.
 	CTFWeaponBase();
 
@@ -190,6 +200,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	// World model.
 	virtual const char *GetWorldModel( void ) const;
+
+	virtual bool SendWeaponAnim( int iActivity );
 
 	virtual bool HideWhenStunned( void ) const { return true; }
 
@@ -389,6 +401,12 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual float		Energy_GetRechargeCost( void ) const { return 4.f; }
 	virtual Vector		GetEnergyWeaponColor( bool bUseAlternateColorPalette );
 	virtual float		GetEnergyPercentage( void ) const { return Energy_GetEnergy() / Energy_GetMaxEnergy(); }
+
+	// Inspecting
+	virtual bool		CanInspect() const;
+	void				HandleInspect();
+	EInspectStage		GetInspectStage() const { return m_nInspectStage; }
+	float				GetInspectAnimTime() const { return m_flInspectAnimTime; }
 	
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -505,6 +523,12 @@ protected:
 
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
+
+	Activity GetInspectActivity( EInspectStage eStage );
+	bool IsInspectActivity( int iActivity );
+	CNetworkVar( float, m_flInspectAnimTime );
+	CNetworkVar( EInspectStage, m_nInspectStage );
+	bool m_bInspecting;
 
 	CNetworkHandle( CTFWearable, m_hExtraWearable );
 	CNetworkHandle( CTFWearable, m_hExtraWearableViewModel );

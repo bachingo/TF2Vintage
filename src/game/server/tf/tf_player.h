@@ -394,6 +394,10 @@ public:
 	bool				ShouldFlipViewModel( void ) { return m_bFlipViewModel; }
 	void				SetFlipViewModel( bool bFlip ) { m_bFlipViewModel = bFlip; }
 
+	void				InspectButtonPressed();
+	void				InspectButtonReleased();
+	bool				IsInspecting() const;
+
 	virtual void		ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet );
 	void				ModifyEmitSoundParams( EmitSound_t &params ) OVERRIDE;
 
@@ -705,6 +709,7 @@ private:
 
 	// Networked.
 	CNetworkQAngle( m_angEyeAngles );					// Copied from EyeAngles() so we can send it to the client.
+	CNetworkVar( float, m_flInspectTime );
 
 public:
 	QAngle				m_angPrevEyeAngles;

@@ -6954,6 +6954,14 @@ void CTFPlayer::ModifyEmitSoundParams( EmitSound_t &params )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if player is inspecting
+//-----------------------------------------------------------------------------
+bool CTFPlayer::IsInspecting() const
+{
+	return m_flInspectTime != 0.f && gpGlobals->curtime - m_flInspectTime > 0.2f;
+}
+
 #ifndef CLIENT_DLL
 
 CON_COMMAND_F( addcond, "", FCVAR_CHEAT )

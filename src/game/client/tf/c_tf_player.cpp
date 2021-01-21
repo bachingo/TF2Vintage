@@ -2391,6 +2391,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropBool( RECVINFO( m_bTyping ) ),
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
 	RecvPropFloat( RECVINFO( m_flLastDamageTime ) ),
+	RecvPropFloat( RECVINFO( m_flInspectTime ) ),
 END_RECV_TABLE()
 
 

@@ -2680,6 +2680,54 @@ bool CTFGameRules::ClientCommand( CBaseEntity *pEdict, const CCommand &args )
 	return BaseClass::ClientCommand( pEdict, args );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValues )
+{
+	CTFPlayer *pTFPlayer = ToTFPlayer( CBaseEntity::Instance( pEntity ) );
+
+	if ( !pTFPlayer )
+		return;
+
+	char const *pcmd = pKeyValues->GetName();
+	if ( FStrEq( pcmd, "+inspect_server" ) )
+	{
+		pTFPlayer->InspectButtonPressed();
+	}
+	else if ( FStrEq( pcmd, "-inspect_server" ) )
+	{
+		pTFPlayer->InspectButtonReleased();
+	}
+	else if ( FStrEq( pcmd, "MVM_Upgrade" ) )
+	{
+		if ( IsMannVsMachineMode() )
+		{
+		}
+	}
+	else if ( FStrEq( pcmd, "MvM_UpgradesBegin" ) )
+	{
+		//pTFPlayer->BeginPurchasableUpgrades();
+	}
+	else if ( FStrEq( pcmd, "MvM_UpgradesDone" ) )
+	{
+		//pTFPlayer->EndPurchasableUpgrades();
+
+		if ( IsMannVsMachineMode() && pKeyValues->GetInt( "num_upgrades", 0 ) > 0 )
+		{
+			pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_UPGRADE_COMPLETE );
+		}
+	}
+	else if ( FStrEq( pcmd, "MVM_Revive_Response" ) )
+	{
+		
+	}
+	else if ( FStrEq( pcmd, "MVM_Respec" ) )
+	{
+
+	}
+}
+
 // Add the ability to ignore the world trace
 void CTFGameRules::Think()
 {

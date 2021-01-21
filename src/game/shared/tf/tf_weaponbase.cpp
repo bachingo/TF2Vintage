@@ -57,6 +57,7 @@ extern ConVar tf2v_muzzlelight;
 #endif
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
+ConVar tf_weapon_always_allow_inspect( "tf_weapon_always_allow_inspect", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE, "Allow the inspect animation on any weapon" );
 ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
 ConVar tf2v_use_new_weapon_swap_speed( "tf2v_use_new_weapon_swap_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables faster weapon switching." );
 ConVar tf_dev_marked_for_death_lifetime( "tf_dev_marked_for_death_lifetime", "1", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
@@ -156,6 +157,9 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bBeingRepurposedForTaunt ) ),
 
 	RecvPropInt( RECVINFO( m_nSequence ), 0, RecvProxy_WeaponSequence ),
+
+	RecvPropFloat( RECVINFO( m_flInspectAnimTime ) ),
+	RecvPropInt( RECVINFO( m_nInspectStage ) ),
 // Server specific.
 #else
 	SendPropBool( SENDINFO( m_bLowered ) ),
@@ -171,6 +175,9 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropInt( SENDINFO( m_nSequence ), ANIMATION_SEQUENCE_BITS, SPROP_UNSIGNED ),
+
+	SendPropFloat( SENDINFO( m_flInspectAnimTime ) ),
+	SendPropInt( SENDINFO( m_nInspectStage ), -1, SPROP_VARINT ),
 #endif
 END_NETWORK_TABLE()
 
@@ -681,6 +688,42 @@ const char *CTFWeaponBase::GetWorldModel( void ) const
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::SendWeaponAnim( int iActivity )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return BaseClass::SendWeaponAnim( iActivity );
+
+	if ( m_nInspectStage != INSPECT_NONE )
+	{
+		if ( iActivity == GetActivity() )
+			return true;
+
+		// ignore idle anim while inspect anim is still playing
+		if ( iActivity == ACT_VM_IDLE )	
+		{
+			return true;
+		}
+
+		// allow other activity to override the inspect
+		if ( !IsInspectActivity( iActivity ) )
+		{
+			m_flInspectAnimTime = -1.0f;
+			m_nInspectStage = INSPECT_NONE;
+			return BaseClass::SendWeaponAnim( iActivity );
+		}
+
+		// let the idle loop while the inspect key is pressed
+		if ( pPlayer->IsInspecting() && m_nInspectStage == INSPECT_IDLE )
+			return true;
+	}
+
+	return BaseClass::SendWeaponAnim( iActivity );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::Drop( const Vector &vecVelocity )
@@ -747,6 +790,9 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	}
 
 	AbortReload();
+
+	m_nInspectStage = INSPECT_NONE;
+	m_flInspectAnimTime = -1.0f;
 
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -915,6 +961,9 @@ void CTFWeaponBase::UpdateExtraWearables( void )
 		CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable_vm" );
 		if( pWearable != nullptr )
 		{
+			if ( modelinfo->GetModelIndex( GetExtraWearableViewModel() ) == -1 )
+				PrecacheModel( GetExtraWearableViewModel() );
+
 			pWearable->SetItem( *GetItem() );
 			pWearable->SetExtraWearable( true );
 			pWearable->AddSpawnFlags( SF_NORESPAWN );
@@ -935,6 +984,9 @@ void CTFWeaponBase::UpdateExtraWearables( void )
 		CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable" );
 		if( pWearable != nullptr )
 		{
+			if ( modelinfo->GetModelIndex( GetExtraWearableModel() ) == -1 )
+				PrecacheModel( GetExtraWearableModel() );
+
 			pWearable->SetItem( *GetItem() );
 			pWearable->SetExtraWearable( true );
 			pWearable->AddSpawnFlags( SF_NORESPAWN );
@@ -1850,6 +1902,13 @@ void CTFWeaponBase::ItemPostFrame( void )
 		return;
 	}
 
+#ifdef GAME_DLL
+	if ( WeaponState() == WEAPON_IS_ACTIVE )
+	{
+		HandleInspect();
+	}
+#endif // GAME_DLL
+
 	// debounce InAttack flags
 	if ( m_bInAttack && !( pOwner->m_nButtons & IN_ATTACK ) )
 	{
@@ -2595,6 +2654,121 @@ Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
 void CTFWeaponBase::WeaponRegenerate( void )
 {
 	m_flEnergy = Energy_GetMaxEnergy();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanInspect() const
+{
+	if ( tf_weapon_always_allow_inspect.GetBool() )
+		return true;
+
+	float flInspect = 0.f;
+	CALL_ATTRIB_HOOK_FLOAT( flInspect, weapon_allow_inspect );
+	return flInspect != 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+Activity CTFWeaponBase::GetInspectActivity( EInspectStage eStage )
+{
+	static Activity s_inspectActivities[TF_PLAYER_WEAPON_COUNT][INSPECT_STAGE_COUNT] =
+	{
+		{
+			ACT_PRIMARY_VM_INSPECT_START,
+			ACT_PRIMARY_VM_INSPECT_IDLE,
+			ACT_PRIMARY_VM_INSPECT_END
+		},
+		{
+			ACT_SECONDARY_VM_INSPECT_START,
+			ACT_SECONDARY_VM_INSPECT_IDLE,
+			ACT_SECONDARY_VM_INSPECT_END
+		},
+		{
+			ACT_MELEE_VM_INSPECT_START,
+			ACT_MELEE_VM_INSPECT_IDLE,
+			ACT_MELEE_VM_INSPECT_END
+		},
+	};
+
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner )
+	{
+		int iLoadoutSlot = GetItem()->GetItemSlot();
+		if ( iLoadoutSlot < TF_LOADOUT_SLOT_PRIMARY || iLoadoutSlot > TF_LOADOUT_SLOT_MELEE )
+			iLoadoutSlot = TF_LOADOUT_SLOT_PRIMARY;
+
+		return s_inspectActivities[ iLoadoutSlot ][ eStage ];
+	}
+
+	return s_inspectActivities[ TF_LOADOUT_SLOT_PRIMARY ][ eStage ];
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsInspectActivity( int iActivity )
+{
+	return iActivity == GetInspectActivity( INSPECT_START ) || iActivity == GetInspectActivity( INSPECT_IDLE ) || iActivity == GetInspectActivity( INSPECT_END );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::HandleInspect()
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+	if ( CanInspect() )
+	{
+		if ( !m_bInspecting && pPlayer->IsInspecting() )
+		{
+
+			Activity iActivity = GetInspectActivity( INSPECT_START );
+			if ( SendWeaponAnim( iActivity ) )
+			{
+				m_flInspectAnimTime = gpGlobals->curtime + SequenceDuration();
+				m_nInspectStage = INSPECT_START;
+			}
+		}
+		else if ( !pPlayer->IsInspecting() && m_nInspectStage == INSPECT_IDLE )
+		{
+			Activity iActivity = GetInspectActivity( INSPECT_END );
+			if ( SendWeaponAnim( iActivity ) )
+			{
+				m_flInspectAnimTime = gpGlobals->curtime + SequenceDuration();
+				m_nInspectStage = INSPECT_END;
+			}
+		}
+		else if ( m_nInspectStage != INSPECT_NONE )
+		{
+			if ( gpGlobals->curtime > m_flInspectAnimTime )
+			{
+				if ( m_nInspectStage == INSPECT_START )
+				{
+					EInspectStage eStage = pPlayer->IsInspecting() ? INSPECT_IDLE : INSPECT_END;
+					Activity iActivity = GetInspectActivity( eStage );
+					if ( SendWeaponAnim( iActivity ) )
+					{
+						m_flInspectAnimTime = gpGlobals->curtime + SequenceDuration();
+						m_nInspectStage = eStage;
+					}
+				}
+				else if ( m_nInspectStage == INSPECT_END )
+				{
+					m_flInspectAnimTime = -1.0f;
+					m_nInspectStage = INSPECT_NONE;
+					SendWeaponAnim( ACT_VM_IDLE );
+				}
+			}
+		}
+	}
+
+	m_bInspecting = pPlayer->IsInspecting();
 }
 
 
