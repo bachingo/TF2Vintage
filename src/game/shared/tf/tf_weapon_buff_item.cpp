@@ -405,6 +405,10 @@ void C_TFBuffItem::FireGameEvent(IGameEvent *event)
 
 #define TF_PARACHUTE_MODE		4
 
+CREATE_SIMPLE_WEAPON_TABLE( TFParachute, tf_weapon_parachute )
+CREATE_SIMPLE_WEAPON_TABLE( TFParachute_Primary, tf_weapon_parachute_primary )
+CREATE_SIMPLE_WEAPON_TABLE( TFParachute_Secondary, tf_weapon_parachute_secondary )
+
 const char *CTFParachute::GetWorldModel() const
 {
 	if ( m_iDeployed == TF_PARACHUTE_OPEN )

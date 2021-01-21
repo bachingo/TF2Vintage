@@ -78,6 +78,8 @@ private:
 
 #if defined CLIENT_DLL
 #define CTFParachute C_TFParachute
+#define CTFParachute_Primary C_TFParachute_Primary
+#define CTFParachute_Secondary C_TFParachute_Secondary
 #endif
 
 class CTFParachute : public CTFBuffItem
@@ -101,5 +103,20 @@ private:
 	CNetworkVar( int, m_iDeployed );
 };
 
+class CTFParachute_Primary : public CTFParachute
+{
+public:
+	DECLARE_CLASS( CTFParachute_Primary, CTFParachute );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+};
+
+class CTFParachute_Secondary : public CTFParachute
+{
+public:
+	DECLARE_CLASS( CTFParachute_Secondary, CTFParachute );
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+};
 
 #endif // TF_WEAPON_BUFF_ITEM_H
