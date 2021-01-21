@@ -17,6 +17,7 @@
 class CHudMenuEngyBuild;
 class CHudMenuEngyDestroy;
 class CHudMenuSpyDisguise;
+class CHudInspectPanel;
 class CTFFreezePanel;
 
 #if defined( _X360 )
@@ -73,6 +74,7 @@ private:
 	CHudMenuEngyDestroy *m_pMenuEngyDestroy;
 	CHudMenuSpyDisguise *m_pMenuSpyDisguise;
 	CTFFreezePanel		*m_pFreezePanel;
+	CHudInspectPanel	*m_pInspectPanel;
 	IGameUI			*m_pGameUI;
 
 #if defined( _X360 )
