@@ -42,7 +42,7 @@ void CTFWeaponSetPanel::OnCommand( const char* command )
 	GetParent()->OnCommand( command );
 }
 
-class CTFWeaponScriptParser : public C_ScriptParser
+static class CTFWeaponScriptParser : public C_ScriptParser
 {
 public:
 	DECLARE_CLASS_GAMEROOT( CTFWeaponScriptParser, C_ScriptParser );
@@ -87,8 +87,7 @@ public:
 
 private:
 	CUtlDict< _WeaponData, unsigned short > m_WeaponInfoDatabase;
-};
-CTFWeaponScriptParser g_TFWeaponScriptParser;
+} g_TFWeaponScriptParser;
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -158,10 +157,10 @@ void CTFLoadoutPanel::SetCurrentClass(int iClass)
 	if (m_iCurrentClass == iClass)
 		return;
 
-	if ( s_bShowItemMenu )
+	if ( g_bShowItemMenu )
 	{
 		m_pItemPanel->SetEnabled(false);
-		s_bShowItemMenu = false;
+		g_bShowItemMenu = false;
 		MAINMENU_ROOT->HidePanel(ITEMSELCTION_MENU);
 	}
 
@@ -217,11 +216,11 @@ void CTFLoadoutPanel::OnCommand ( const char* command )
 	}
 	else if ( !Q_strncmp ( command, "loadout", 7 ) )
 	{
-		if ( s_bShowItemMenu )
+		if ( g_bShowItemMenu )
 		{
 			CTFItemPanel *ItemPanel = dynamic_cast< CTFItemPanel* >(GetMenuPanel ( ITEMSELCTION_MENU ));
 			ItemPanel->SetEnabled ( false );
-			s_bShowItemMenu = false;
+			g_bShowItemMenu = false;
 			MAINMENU_ROOT->HidePanel ( ITEMSELCTION_MENU );
 			const char *sChar = strchr ( command, ' ' );
 			if ( sChar )
@@ -242,7 +241,7 @@ void CTFLoadoutPanel::OnCommand ( const char* command )
 			const char *sChar = strchr ( command, ' ' );
 			int iSlot = atoi ( sChar + 1 );
 			ItemPanel->SetCurrentClassAndSlot ( m_iCurrentClass, iSlot );
-			s_bShowItemMenu = true;
+			g_bShowItemMenu = true;
 			MAINMENU_ROOT->ShowPanel ( ITEMSELCTION_MENU );
 		}
 		return;
@@ -500,7 +499,7 @@ void CTFLoadoutPanel::Hide()
 	BaseClass::Hide();
 	GetMenuPanel(CURRENT_MENU)->Show();
 	vgui::GetAnimationController()->RunAnimationCommand(this, "Alpha", 0, 0.0f, 0.1f, vgui::AnimationController::INTERPOLATOR_LINEAR);
-	if (InGame() && !bFromPause)
+	if (InGame() && !g_bFromPause)
 		engine->ExecuteClientCmd("escape");
 };
 

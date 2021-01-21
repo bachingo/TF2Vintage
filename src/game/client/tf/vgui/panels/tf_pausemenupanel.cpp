@@ -8,6 +8,8 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+bool g_bFromPause = false;
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -88,7 +90,7 @@ void CTFPauseMenuPanel::OnCommand(const char* command)
 	}
 	else if (!Q_strcmp(command, "newloadout"))
 	{
-		bFromPause = true;
+		g_bFromPause = true;
 		MAINMENU_ROOT->ShowPanel(LOADOUT_MENU);
 	}
 	else if (!Q_strcmp(command, "newstats"))

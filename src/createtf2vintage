@@ -1,5 +1,5 @@
 #!/bin/bash
 
 pushd `dirname $0`
-devtools/bin/vpc /tf2vintage +gamedlls /mksln TF2Vintage
+devtools/bin/vpc /tf2vintage +game /mksln TF2Vintage
 popd

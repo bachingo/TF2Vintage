@@ -1,4 +1,4 @@
-//========== Copyright © 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright ï¿½ 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -13,7 +13,7 @@
 #include "characterset.h"
 #include "isaverestore.h"
 #include "gamerules.h"
-#ifdef _WIN32
+#if defined( _WIN32 ) || defined( POSIX )
 #include "vscript_client_nut.h"
 #endif
 

@@ -2959,7 +2959,7 @@ bool CTFPlayer::CheckBlockBackstab( CTFPlayer *pAttacker )
 	CUtlVector<EHANDLE> attribProviders;
 	int nBlocksBackstab = 0;
 
-	CALL_ATTRIB_HOOK_INT_ITEMS( nBlocksBackstab, set_blockbackstab_once, &attribProviders );
+	CALL_ATTRIB_HOOK_INT_LIST( nBlocksBackstab, set_blockbackstab_once, &attribProviders );
 	if ( nBlocksBackstab == 1 )
 	{
 		// Get the top most provider so we can destroy them in order

@@ -2595,7 +2595,7 @@ void PrefixNameChanged( IConVar *var, const char *pOldValue, float flOldValue )
 }
 
 
-CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
+CON_COMMAND_EXTERN_F( tf_bot_add, cc_tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 {
 	if ( UTIL_IsCommandIssuedByServerAdmin() )
 	{

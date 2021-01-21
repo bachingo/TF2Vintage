@@ -49,7 +49,7 @@ CON_COMMAND( showloadout, "Show loadout screen (new)" )
 {
 	if ( !guiroot )
 		return;
-	bFromPause = false;
+	g_bFromPause = false;
 	engine->ClientCmd( "gameui_activate" );
 	MAINMENU_ROOT->ShowPanel( LOADOUT_MENU, true );
 }

@@ -6,8 +6,8 @@ extern ConVar sv_vote_timer_duration;
 
 CKickIssue::CKickIssue(const char *typeString) : CBaseIssue(typeString)
 {
-	Q_snprintf(m_pzPlayerName, sizeof(m_pzPlayerName), "");
-	Q_snprintf(m_pzReason, sizeof(m_pzReason), "");
+	m_pzPlayerName[0] = '\0';
+	m_pzReason[0] = '\0';
 	m_iPlayerID = 0;
 }
 
@@ -67,17 +67,17 @@ void CKickIssue::OnVoteStarted()
 		return;
 
 	int i = pch - pDetails + 1;
-	Q_snprintf(m_pzReason, sizeof(m_pzReason), pDetails + i);
+	V_strcpy_safe(m_pzReason, pDetails + i);
 
 	char m_PlayerID[64];
-	Q_snprintf(m_PlayerID, i, pDetails);
+	V_strncpy(m_PlayerID, pDetails, i);
 
 	m_iPlayerID = atoi(m_PlayerID);
 	CBasePlayer *pVoteCaller = UTIL_PlayerByIndex(m_iPlayerID - 1);
 	if (!pVoteCaller)
 		return;
 
-	Q_snprintf(m_pzPlayerName, sizeof(m_pzPlayerName), pVoteCaller->GetPlayerName());
+	V_strcpy_safe(m_pzPlayerName, pVoteCaller->GetPlayerName());
 
 	g_voteController->TryCastVote(pVoteCaller->entindex(), "Option2");
 	CSteamID pSteamID;

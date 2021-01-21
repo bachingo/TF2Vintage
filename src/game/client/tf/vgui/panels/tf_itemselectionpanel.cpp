@@ -18,6 +18,8 @@ static CTFWeaponSelectPanel *s_pWeaponButton;
 static CTFWeaponSelectPanel *s_pScrollButtonDown;
 static CTFWeaponSelectPanel *s_pScrollButtonUp;
 
+bool g_bShowItemMenu = false;
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -30,7 +32,7 @@ void CTFWeaponSelectPanel::OnCommand(const char* command)
 	GetParent()->OnCommand(command);
 }
 
-class CTFWeaponSelectionScriptParser : public C_ScriptParser
+static class CTFWeaponSelectionScriptParser : public C_ScriptParser
 {
 public:
 	DECLARE_CLASS_GAMEROOT(CTFWeaponSelectionScriptParser, C_ScriptParser);
@@ -75,8 +77,7 @@ public:
 
 private:
 	CUtlDict< _WeaponData, unsigned short > m_WeaponInfoDatabase;
-};
-CTFWeaponSelectionScriptParser g_TFWeaponScriptParser;
+} g_TFWeaponScriptParser;
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -187,7 +188,7 @@ void CTFItemPanel::OnCommand(const char* command)
 {
 	if ( !Q_strcmp ( command, "back" ) || (!Q_strcmp ( command, "vguicancel" )) )
 	{
-		s_bShowItemMenu = false;
+		g_bShowItemMenu = false;
 		Hide ();
 	}
 	else if ( !Q_strncmp ( command, "loadout", 7 ) )

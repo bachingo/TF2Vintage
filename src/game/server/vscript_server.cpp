@@ -1,4 +1,4 @@
-//========== Copyright © 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright ï¿½ 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -18,7 +18,7 @@
 #include "netpropmanager.h"
 #include "AI_Criteria.h"
 #include "AI_ResponseSystem.h"
-#ifdef IS_WINDOWS_PC
+#if defined( _WIN32 ) || defined( POSIX )
 #include "vscript_server_nut.h"
 #endif
 
