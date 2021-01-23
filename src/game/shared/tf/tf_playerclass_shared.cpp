@@ -163,9 +163,14 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	}
 
 	// Grenades.
-	m_aGrenades[0] = GetWeaponId( pKeyValuesData->GetString( "grenade1" ) );
-	m_aGrenades[1] = GetWeaponId( pKeyValuesData->GetString( "grenade2" ) );
-
+	int j;
+	char bufg[32];
+	for ( j=0; j<TF_PLAYER_GRENADE_COUNT;j++ )
+	{
+		Q_snprintf( bufg, sizeof(bufg), "grenade%d", j+1 );		
+		m_aGrenades[j] = GetWeaponId( pKeyValuesData->GetString( bufg ) );
+	}
+	
 	// Ammo Max.
 	KeyValues *pAmmoKeyValuesData = pKeyValuesData->FindKey( "AmmoMax" );
 	if ( pAmmoKeyValuesData )
