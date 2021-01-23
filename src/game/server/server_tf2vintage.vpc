@@ -61,6 +61,8 @@ $Project "Server (TF)"
 		$File   "ScriptGameEventListener.h"
 		$File   "netpropmanager.cpp"
 		$File   "netpropmanager.h"
+		$File	"bannedwords.cpp"
+		$File	"bannedwords.h"
 		
 		$Folder	"Multiplayer"
 		{

@@ -246,6 +246,10 @@ ConVar tf2v_console_grenadelauncher_magazine("tf2v_console_grenadelauncher_magaz
 
 ConVar tf2v_remove_loser_disguise("tf2v_remove_loser_disguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Forces spies on a losing team to undisguise.", true, 0, true, 1 );
 
+#ifdef CLIENT_DLL
+ConVar tf2v_censor_swears( "tf2v_censor_swears", "0", FCVAR_GAMEDLL, "Automatically censor bad words.", true, 0, true, 1 );
+#endif
+
 #ifdef GAME_DLL
 ConVar hide_server( "hide_server", "0", FCVAR_GAMEDLL, "Whether the server should be hidden from the master server" );
 
@@ -7523,6 +7527,11 @@ void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 
 		AutoRP()->ApplyRPTo( pBuf, iBufSize );
 	}
+	
+#ifdef CLIENT_DLL
+	if ( tf2v_censor_swears.GetBool() )
+		g_BannedWords.CensorBannedWordsInplace( pBuf );
+#endif
 
 	int i = 0;
 	while ( pBuf[i] )

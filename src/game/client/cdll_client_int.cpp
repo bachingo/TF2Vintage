@@ -1325,6 +1325,9 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
 		core->ActivityManager().RegisterCommand( command );*/
 	}
+	
+	// Swear list.
+	g_BannedWords.InitFromFile( "bannedwords.txt" );
 
 	return true;
 }
