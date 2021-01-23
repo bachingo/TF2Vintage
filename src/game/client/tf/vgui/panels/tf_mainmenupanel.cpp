@@ -438,7 +438,29 @@ void CTFServerlistPanel::UpdateServerInfo()
 		m_pServerList->SetItemFont( itemID, Font );
 		curitem->deleteThis();
 	}
+	
+#ifdef _DEBUG
+	if ( m_pServerList->GetItemCount() < 1 )
+	{
+		// If we don't have any servers listed, make a dummy server for the debugger.
+		KeyValues *curitemDEBUG = new KeyValues( "data" );
 
+		curitemDEBUG->SetString( "Name", "DEBUG NAME" );
+		curitemDEBUG->SetString( "ServerIP", "127.0.0.1:27015" );
+		curitemDEBUG->SetString( "Players", "0/0" );
+		curitemDEBUG->SetInt( "Ping", "000" );
+		curitemDEBUG->SetInt( "CurPlayers", "0" );
+		curitemDEBUG->SetString( "Map", "DEBUG MAP" );
+
+		int itemID = m_pServerList->AddItem( 0, curitemDEBUG );
+
+		m_pServerList->SetItemFgColor( itemID, GETSCHEME()->GetColor( "AdvTextDefault", Color( 255, 255, 255, 255 ) ) );
+
+		m_pServerList->SetItemFont( itemID, Font );
+		curitemDEBUG->deleteThis();
+	}
+	SetVisible( true );
+#else
 	if ( m_pServerList->GetItemCount() > 0 )
 	{
 		SetVisible( true );
@@ -447,6 +469,7 @@ void CTFServerlistPanel::UpdateServerInfo()
 	{
 		SetVisible( false );
 	}
+#endif
 
 	int min, max;
 	m_pServerList->InvalidateLayout( 1, 0 );
