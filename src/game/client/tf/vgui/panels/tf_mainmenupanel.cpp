@@ -408,6 +408,14 @@ void CTFServerlistPanel::UpdateServerInfo()
 		if ( m_Server.m_steamID.GetAccountID() == 0 )
 			continue;
 
+		// Don't show passworded/locked servers.
+		if (m_Server.m_bPassword)
+			continue;
+
+		// Hide servers with zero human players.
+		if ( (m_Server.m_nPlayers - m_Server.m_nBotPlayers) < 1 )
+			continue;
+
 		char szServerName[128];
 		char szServerIP[32];
 		char szServerPlayers[16];
@@ -418,7 +426,7 @@ void CTFServerlistPanel::UpdateServerInfo()
 		Q_snprintf( szServerName, sizeof( szServerName ), "%s", m_Server.GetName() );
 		Q_snprintf( szServerIP, sizeof( szServerIP ), "%s", m_Server.m_NetAdr.GetQueryAddressString() );
 		Q_snprintf( szServerPlayers, sizeof( szServerPlayers ), "%i/%i", m_Server.m_nPlayers, m_Server.m_nMaxPlayers );
-		szServerCurPlayers = m_Server.m_nPlayers;
+		szServerCurPlayers = m_Server.m_nPlayers - m_Server.m_nBotPlayers; // Current HUMAN Players.
 		szServerPing = m_Server.m_nPing;
 		Q_snprintf( szServerMap, sizeof( szServerMap ), "%s", m_Server.m_szMap );
 
@@ -448,8 +456,8 @@ void CTFServerlistPanel::UpdateServerInfo()
 		curitemDEBUG->SetString( "Name", "DEBUG NAME" );
 		curitemDEBUG->SetString( "ServerIP", "127.0.0.1:27015" );
 		curitemDEBUG->SetString( "Players", "0/0" );
-		curitemDEBUG->SetInt( "Ping", "000" );
-		curitemDEBUG->SetInt( "CurPlayers", "0" );
+		curitemDEBUG->SetInt( "Ping", 000 );
+		curitemDEBUG->SetInt( "CurPlayers", 0 );
 		curitemDEBUG->SetString( "Map", "DEBUG MAP" );
 
 		int itemID = m_pServerList->AddItem( 0, curitemDEBUG );
