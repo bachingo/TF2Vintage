@@ -112,6 +112,8 @@ ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT,
 #endif
 
 static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
+static ConVar	tf2v_use_fp_legs("tf2v_use_fp_legs", "1", FCVAR_ARCHIVE, "Displays the player's legs when in firstperson mode.");
+
 
 ConVar demo_fov_override( "demo_fov_override", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD, "If nonzero, this value will be used to override FOV during demo playback." );
 
@@ -1961,6 +1963,19 @@ bool C_BasePlayer::ShouldDrawThisPlayer()
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Accessor used for determing showing our FP legs.
+//          This should display when the player is in firstperson and not showing another model already.
+//-----------------------------------------------------------------------------
+bool C_BasePlayer::ShouldDrawFirstPersonLegs()
+{
+	if (tf2v_use_fp_legs.GetBool())
+		return ( !ShouldDrawThisPlayer() && InFirstPersonView() && DrawingMainView() );
+	
+	return false;
+}
+
+
 
 
 //-----------------------------------------------------------------------------
@@ -2899,7 +2914,9 @@ void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vec
 	}
 
 	// If we aren't drawing the player anyway, don't mess with the bones. This can happen in Portal.
-	if( !ShouldDrawThisPlayer() )
+	// Also check here if we shouldn't draw the leg only variant either.
+	bool bLegOnlyTransform = ShouldDrawFirstPersonLegs();
+	if( !ShouldDrawThisPlayer() && !bLegOnlyTransform )
 	{
 		return;
 	}
@@ -2986,8 +3003,38 @@ void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vec
 		matrix3x4_t  &transformhelmet = GetBoneForWrite( iHelm );
 		MatrixScaleByZero( transformhelmet );
 	}
-}
+	
+	// Leg only transformations also need additional steps.
+	if ( bLegOnlyTransform && GetModelPtr() )
+	{
+		// Hide every bone that isn't the pelvis, hip, knee, foot, or toe.
+		
+		// This is suffering.
+		int iPelvis = LookupBone( "bip_pelvis" );
+		int iHipL = LookupBone( "bip_hip_L" );
+		int iHipR = LookupBone( "bip_hip_R" );
+		int iKneeL = LookupBone( "bip_knee_L" );
+		int iKneeR = LookupBone( "bip_knee_R" );
+		int iFootL = LookupBone( "bip_foot_L" );
+		int iFootR = LookupBone( "bip_foot_R" );
+		int iToeL = LookupBone( "bip_toe_L" );
+		int iToeR = LookupBone( "bip_toe_R" );
+		
+		// Now we have to go through and check to see if this isn't a leg related bone.
+		// Check all the bones in this model.
+		for (int i = 0; i < GetModelPtr()->numbones()-1; i++)
+		{
+			// If it's a leg bone, skip over it.
+			if (i == iPelvis || i == iHipL || i == iHipR || i == iKneeL || i == iKneeR ||
+				i == iFootL || i == iFootR || i == iToeL || i == iToeR)
+				continue;
 
+				// If we know this definitely is not a leg related item, shrink it.
+				matrix3x4_t  &transformnonleg = GetBoneForWrite(i);
+				MatrixScaleByZero(transformnonleg);
+		}
+	}
+}
 
 
 void CC_DumpClientSoundscapeData( const CCommand& args )
