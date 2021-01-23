@@ -191,7 +191,7 @@ int C_EconEntity::DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flag
 
 	CEconItemDefinition *pItem = GetItem()->GetStaticData();
 	if ( pItem )
-		bAttachToHands = pItem->attach_to_hands == VMTYPE_TF2 || pItem->attach_to_hands_vm_only == VMTYPE_TF2;
+		bAttachToHands = pItem->GetAttachToHands() == VMTYPE_TF2 || pItem->attach_to_hands_vm_only == VMTYPE_TF2;
 
 	if ( m_hAttachmentParent && m_hAttachmentParent->IsTransparent() )
 		nRetval = pViewmodel->DrawOverriddenViewmodel( flags );
@@ -294,7 +294,7 @@ void C_EconEntity::UpdateAttachmentModels( void )
 			}
 		}
 
-		if ( pItem->attach_to_hands || pItem->attach_to_hands_vm_only )
+		if ( pItem->GetAttachToHands() || pItem->attach_to_hands_vm_only )
 		{
 			C_BasePlayer *pPlayer = ToBasePlayer( GetOwnerEntity() );
 			if ( pPlayer && !pPlayer->ShouldDrawThisPlayer() )

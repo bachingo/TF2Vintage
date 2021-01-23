@@ -9,6 +9,8 @@
 #include "gamestringpool.h"
 #include "econ_item_system.h"
 
+#include "tf_gamerules.h"
+
 class IEconAttributeIterator;
 
 enum
@@ -484,6 +486,9 @@ public:
 		is_cut_content = false;
 		is_multiclass_item = false;
 		CLEAR_STR( holiday_restriction );
+		CLEAR_STR( v_model );
+		CLEAR_STR( w_model );
+		can_use_old_model = 0;
 	}
 	~CEconItemDefinition();
 
@@ -503,6 +508,9 @@ public:
 	}
 	char const *GetPlayerModel( void ) const
 	{
+		if ( v_model && v_model[0] != '\0' ) && UseOldWeaponModels() )
+			return v_model;
+			
 		if ( model_player && model_player[0] != '\0' )
 			return model_player;
 
@@ -510,6 +518,9 @@ public:
 	}
 	char const *GetWorldModel( void ) const
 	{
+		if ( w_model && w_model[0] != '\0' ) && UseOldWeaponModels() )
+			return w_model;
+			
 		if ( model_world && model_world[0] != '\0' )
 			return model_world;
 
@@ -593,9 +604,28 @@ public:
 
 		return NULL;
 	}
+	bool *CanUseOldModel( void ) const
+	{
+		// Need to check if our v/w models are defined.
+		if ( can_use_old_model == 1 )
+			return true;
+			
+			return false;
+	}
+	char const *GetAttachToHands( void ) const
+	{
+		// This only applies to base items right now, but this allows it to be expanded later.
+		if ( CanUseOldModel() )
+			if ( TFGameRules() && TFGameRules()->UseOldWeaponModels() )
+				return 0;
+
+		return attach_to_hands;
+	}
+
 
 	bool LoadFromKV( KeyValues *pKV );
 	void ParseVisuals( KeyValues *pKVData, int iIndex );
+		
 
 private:
 	char const *name;
@@ -615,6 +645,9 @@ private:
 	char const *equip_region;
 	char const *holiday_restriction;
 	char const *item_script;
+	
+	char const *v_model;
+	char const *w_model;
 
 	KeyValues *definition;
 
@@ -650,6 +683,7 @@ public:
 	bool is_custom_content;
 	bool is_cut_content;
 	bool is_multiclass_item;
+	int can_use_old_model;
 };
 
 #endif // ECON_ITEM_SCHEMA_H

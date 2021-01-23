@@ -86,6 +86,7 @@ public:
 };
 #endif
 
+bool UseOldWeaponModels( void );
 bool TF_IsHolidayActive( /*EHoliday*/ int eHoliday );
 
 

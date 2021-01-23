@@ -321,6 +321,11 @@ bool CEconItemDefinition::LoadFromKV( KeyValues *pDefinition )
 	GET_STRING( this, pDefinition, model_world );
 	GET_STRING( this, pDefinition, extra_wearable );
 	GET_STRING( this, pDefinition, extra_wearable_vm );
+	
+	GET_STRING( this, pDefinition, v_model );
+	GET_STRING( this, pDefinition, w_model );
+	if ( ( v_model && v_model[0] != '\0' ) && ( w_model && w_model[0] != '\0' ) )
+		can_use_old_model = 1;
 
 	GET_INT( this, pDefinition, attach_to_hands );
 	GET_INT( this, pDefinition, attach_to_hands_vm_only );

@@ -241,7 +241,7 @@ const char *CEconItemView::GetWorldDisplayModel( int iClass/* = 0*/ ) const
 		pszModelName = pStatic->GetWorldModel();
 
 		// Assuming we're using same model for both 1st person and 3rd person view.
-		if ( !pszModelName && pStatic->attach_to_hands == 1 )
+		if ( !pszModelName && pStatic->GetAttachToHands() == 1 )
 			pszModelName = pStatic->GetPlayerModel();
 		
 		if ( pStatic->GetPerClassModel( iClass ) )

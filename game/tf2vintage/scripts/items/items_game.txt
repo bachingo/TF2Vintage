@@ -3839,6 +3839,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_bat.mdl"
+			"v_model"	"models/weapons/v_models/v_bat_scout.mdl"
 		}
 		"1"
 		{
@@ -3847,6 +3849,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_bottle.mdl"
+			"v_model"	"models/weapons/v_models/v_bottle_demoman.mdl"
 		}
 		"2"
 		{
@@ -3855,6 +3859,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_fireaxe.mdl"
+			"v_model"	"models/weapons/v_models/v_fireaxe_pyro.mdl"
 		}
 		"3"
 		{
@@ -3863,6 +3869,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_machete.mdl"
+			"v_model"	"models/weapons/v_models/v_machete_sniper.mdl"
 		}
 		"4"
 		{
@@ -3871,6 +3879,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_knife.mdl"
+			"v_model"	"models/weapons/v_models/v_knife_spy.mdl"
 		}
 		"5"
 		{
@@ -3879,6 +3889,7 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"v_model"	"models/weapons/v_models/v_fist_heavy.mdl"
 		}
 		"6"
 		{
@@ -3887,6 +3898,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_shovel.mdl"
+			"v_model"	"models/weapons/v_models/v_shovel_soldier.mdl"
 		}
 		"7"
 		{
@@ -3895,6 +3908,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_wrench.mdl"
+			"v_model"	"models/weapons/v_models/v_wrench_engineer.mdl"
 		}
 		"8"
 		{
@@ -3903,6 +3918,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_bonesaw.mdl"
+			"v_model"	"models/weapons/v_models/v_bonesaw_medic.mdl
 		}
 		"9"
 		{
@@ -3916,6 +3933,8 @@
 			{
 				"engineer"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_engineer.mdl"
 		}
 		"10"
 		{
@@ -3929,6 +3948,8 @@
 			{
 				"soldier"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_soldier.mdl"
 		}
 		"11"
 		{
@@ -3942,6 +3963,8 @@
 			{
 				"heavy"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_heavy.mdl"
 		}
 		"12"
 		{
@@ -3955,6 +3978,8 @@
 			{
 				"pyro"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_pyro.mdl"
 		}
 		"13"
 		{
@@ -3963,6 +3988,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_scattergun.mdl"
+			"v_model"	"models/weapons/v_models/v_scattergun_scout.mdl"
 		}
 		"14"
 		{
@@ -3971,6 +3998,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_sniperrifle.mdl"
+			"v_model"	"models/weapons/v_models/v_sniperrifle_sniper.mdl"
 		}
 		"15"
 		{
@@ -3979,6 +4008,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model" "models/weapons/v_models/v_minigun_heavy.mdl"
+			"v_model" "models/weapons/v_models/v_minigun_heavy.mdl"
 		}
 		"16"
 		{
@@ -3987,6 +4018,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_smg.mdl"
+			"v_model"	"models/weapons/v_models/v_smg_sniper.mdl"
 		}
 		"17"
 		{
@@ -3995,6 +4028,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_syringegun.mdl"
+			"v_model"	"models/weapons/v_models/v_syringegun_medic.mdl"
 		}
 		"18"
 		{
@@ -4003,6 +4038,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_rocketlauncher.mdl"
+			"v_model"	"models/weapons/v_models/v_rocketlauncher_soldier.mdl"
 		}
 		"19"
 		{
@@ -4011,6 +4048,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_grenadelauncher.mdl"
+			"v_model"	"models/weapons/v_models/v_grenadelauncher_demo.mdl"
 		}
 		"20"
 		{
@@ -4019,6 +4058,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_stickybomb_launcher.mdl"
+			"v_model"	"models/weapons/v_models/v_stickybomb_launcher_demo.mdl"
 		}
 		"21"
 		{
@@ -4037,6 +4078,8 @@
 					}
 				}
 			}
+			"w_model"	"models/weapons/w_models/w_flamethrower.mdl"
+			"v_model"	"models/weapons/v_models/v_flamethrower_pyro.mdl"
 		}
 		"22"
 		{
@@ -4049,6 +4092,8 @@
 			{
 				"engineer"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_pistol.mdl"
+			"v_model"	"models/weapons/v_models/v_pistol_engineer.mdl"
 		}
 		"23"
 		{
@@ -4061,6 +4106,8 @@
 			{
 				"scout"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_pistol.mdl"
+			"v_model"	"models/weapons/v_models/v_pistol_scout.mdl"
 		}
 		"24"
 		{
@@ -4069,6 +4116,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_revolver.mdl"
+			"v_model"	"models/weapons/v_models/v_revolver_spy.mdl"
 		}
 		"25"
 		{
@@ -4077,6 +4126,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_builder.mdl"
+			"v_model"	"models/weapons/v_models/v_builder_engineer.mdl"
 		}
 		"26"
 		{
@@ -4085,6 +4136,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_pda_engineer.mdl"
+			"v_model"	"models/weapons/v_models/v_pda_engineer.mdl"
 		}
 		"27"
 		{
@@ -4093,6 +4146,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_cigarette_case.mdl"
+			"v_model"	"models/weapons/v_models/v_pda_spy.mdl"
 		}
 		"28"
 		{
@@ -4101,6 +4156,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_toolbox.mdl"
+			"v_model"	"models/weapons/v_models/v_wrench_engineer.mdl"
 		}
 		"29"
 		{
@@ -4109,6 +4166,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_medigun.mdl"
+			"v_model"	"models/weapons/v_models/v_medigun_medic.mdl"
 		}
 		"30"
 		{
@@ -4117,6 +4176,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_cigarette_case.mdl"
+			"v_model"	"models/weapons/v_models/v_watch_spy.mdl"
 		}
 		"735"
 		{
@@ -4125,6 +4186,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_sapper.mdl"
+			"v_model"	"models/weapons/v_models/v_sapper_spy.mdl"
 		}
 		"31"
 		{

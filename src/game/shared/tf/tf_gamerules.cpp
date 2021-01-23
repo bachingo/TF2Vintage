@@ -312,6 +312,16 @@ CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTON
 }
 #endif
 
+
+ConVar tf2v_use_old_models( "tf2v_use_old_models", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows servers to use the v/w model format instead of the modern c models.", true, 0, true, 1 );
+bool UseOldWeaponModels( void )
+{
+	if ( tf2v_use_old_models.GetBool() )
+		return int;
+		
+	return false;
+}
+
 static bool BIsCvarIndicatingHolidayIsActive( int iCvarValue, /*EHoliday*/ int eHoliday )
 {
 	if ( iCvarValue == 0 )

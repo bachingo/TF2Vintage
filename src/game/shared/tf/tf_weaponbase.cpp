@@ -579,7 +579,7 @@ C_BaseAnimating *CTFWeaponBase::GetAppropriateWorldOrViewModel( void )
 	if ( pPlayer && UsingViewModel() && GetItem()->GetStaticData() )
 	{
 		// what kind of viewmodel is this?
-		int iType = GetItem()->GetStaticData()->attach_to_hands;
+		int iType = GetItem()->GetStaticData()->GetAttachToHands();
 
 		// Is this a cmodel?
 		if ( iType == VMTYPE_TF2 )
@@ -635,7 +635,7 @@ const char *CTFWeaponBase::DetermineViewModelType( const char *vModel ) const
 
 	if ( pStatic )
 	{
-		int iType = pStatic->attach_to_hands;
+		int iType = pStatic->GetAttachToHands();
 
 		CTFViewModel *vm = dynamic_cast<CTFViewModel *>( pPlayer->GetViewModel( m_nViewModelIndex ) );
 		if ( vm )
