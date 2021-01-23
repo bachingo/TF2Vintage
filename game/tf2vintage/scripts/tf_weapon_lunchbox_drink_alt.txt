@@ -13,7 +13,7 @@ WeaponData
 	"MeleeWeapon"			"1"
 	
 	// Ammo & Clip
-	"primary_ammo"			"TF_AMMO_GRENADES2"
+	"primary_ammo"			"TF_AMMO_SPECIAL2"
 	"secondary_ammo"		"None"
 	default_clip			"5"
 

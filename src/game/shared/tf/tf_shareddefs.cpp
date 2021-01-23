@@ -382,7 +382,10 @@ const char *g_aAmmoNames[] =
 	"TF_AMMO_METAL",
 	"TF_AMMO_GRENADES1",
 	"TF_AMMO_GRENADES2",
-	"TF_AMMO_GRENADES3"
+	"TF_AMMO_GRENADES3",
+	"TF_AMMO_SPECIAL1",
+	"TF_AMMO_SPECIAL2",
+	"TF_AMMO_SPECIAL3"
 };
 
 struct pszWpnEntTranslationListEntry
