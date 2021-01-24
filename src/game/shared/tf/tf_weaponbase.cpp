@@ -2696,11 +2696,12 @@ Activity CTFWeaponBase::GetInspectActivity( EInspectStage eStage )
 	CTFPlayer *pOwner = GetTFPlayerOwner();
 	if ( pOwner )
 	{
-		int iLoadoutSlot = GetItem()->GetItemSlot();
-		if ( iLoadoutSlot < TF_LOADOUT_SLOT_PRIMARY || iLoadoutSlot > TF_LOADOUT_SLOT_MELEE )
-			iLoadoutSlot = TF_LOADOUT_SLOT_PRIMARY;
+		int nClassIndex = pOwner->GetPlayerClass()->GetClassIndex();
+		int nLoadoutSlot = GetItem()->GetStaticData()->GetLoadoutSlot( nClassIndex );
+		if ( nLoadoutSlot < TF_LOADOUT_SLOT_PRIMARY || nLoadoutSlot > TF_LOADOUT_SLOT_MELEE )
+			nLoadoutSlot = TF_LOADOUT_SLOT_PRIMARY;
 
-		return s_inspectActivities[ iLoadoutSlot ][ eStage ];
+		return s_inspectActivities[ nLoadoutSlot ][ eStage ];
 	}
 
 	return s_inspectActivities[ TF_LOADOUT_SLOT_PRIMARY ][ eStage ];
