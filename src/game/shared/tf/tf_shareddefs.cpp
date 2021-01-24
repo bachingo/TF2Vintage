@@ -967,6 +967,17 @@ const char *g_pszHintMessages[] =
 	"#Hint_enemy_using_tp_entrance",
 	"#Hint_enemy_using_tp_exit",
 };
+COMPILE_TIME_ASSERT( ARRAYSIZE( g_pszHintMessages ) == NUM_HINTS );
+
+const char *g_pszDeathCallingCardModels[] =
+{
+	"",
+	"models/props_gameplay/tombstone_specialdelivery.mdl",
+	"models/props_gameplay/tombstone_crocostyle.mdl",
+	"models/props_gameplay/tombstone_tankbuster.mdl",
+	"models/props_gameplay/tombstone_gasjockey.mdl",
+};
+COMPILE_TIME_ASSERT( ARRAYSIZE( g_pszDeathCallingCardModels ) == CALLING_CARD_COUNT );
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -1095,7 +1106,7 @@ int condition_to_attribute_translation[] =
 	TF_COND_LAST,
 };
 
-int ConditionExpiresFast( int nCond )
+bool ConditionExpiresFast( int nCond )
 {
 	// Damaging conds
 	if ( nCond == TF_COND_BURNING ||

@@ -945,7 +945,7 @@ enum
 
 extern int condition_to_attribute_translation[];
 
-int ConditionExpiresFast( int nCond );
+bool ConditionExpiresFast( int nCond );
 
 //-----------------------------------------------------------------------------
 // Mediguns.
@@ -1310,6 +1310,21 @@ enum ECritType
 	kCritType_MiniCrit,
 	kCritType_Crit
 };
+
+//-----------------------------------------------------------------------------
+// Deatf Calling Cards
+//-----------------------------------------------------------------------------
+enum
+{
+	CALLING_CARD_NONE = 0,
+	CALLING_CARD_MILKMAN = 1,	// Scout PolyCount Set
+	CALLING_CARD_CROC,			// Sniper PolyCount Set
+	CALLING_CARD_TANKBUSTER,	// Solider PolyCount Set
+	CALLING_CARD_GASJOCKEY,		// Pyro PolyCount Set 
+
+	CALLING_CARD_COUNT
+};
+extern const char *g_pszDeathCallingCardModels[CALLING_CARD_COUNT];
 
 #define TF_JUMP_ROCKET	( 1 << 0 )
 #define TF_JUMP_STICKY	( 1 << 1 )
