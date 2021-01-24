@@ -9,8 +9,6 @@
 #include "gamestringpool.h"
 #include "econ_item_system.h"
 
-#include "tf_gamerules.h"
-
 class IEconAttributeIterator;
 
 enum
