@@ -16,6 +16,7 @@
 #include "tf_zombie.h"
 #include "entity_bossresource.h"
 #include "vscript_shared.h"
+#include "bannedwords.h"
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
