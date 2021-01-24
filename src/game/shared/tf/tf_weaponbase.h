@@ -148,9 +148,12 @@ public:
 abstract_class ITFItemMeterUser
 {
 public:
-	virtual float GetEffectBarProgress( void ) = 0;
+	virtual float		GetEffectBarProgress( void ) = 0;
+	virtual int			GetEffectCount( void ) = 0;
 	virtual const char *GetEffectLabelText( void ) = 0;
 	virtual const char *GetEffectIconName( void ) = 0;
+	virtual bool		EffectMeterShouldFlash( void ) = 0;
+	virtual bool		EffectMeterShouldBeep( void ) = 0;
 };
 
 //=============================================================================
