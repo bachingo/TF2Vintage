@@ -493,6 +493,9 @@ public:
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
 	char const *GetPerClassModel( int iClass = TF_CLASS_UNDEFINED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
+	char const *GetPlayerModel( void ) const;
+	char const *GetWorldModel( void ) const;
+	int GetAttachToHands( void ) const;
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
 	void IterateAttributes( IEconAttributeIterator *iter ) const;
@@ -503,26 +506,6 @@ public:
 	{
 		Assert( name && *name );
 		return name;
-	}
-	char const *GetPlayerModel( void ) const
-	{
-		if ( ( v_model && v_model[0] != '\0' ) && UseOldWeaponModels() )
-			return v_model;
-			
-		if ( model_player && model_player[0] != '\0' )
-			return model_player;
-
-		return NULL;
-	}
-	char const *GetWorldModel( void ) const
-	{
-		if ( ( w_model && w_model[0] != '\0' ) && UseOldWeaponModels() )
-			return w_model;
-			
-		if ( model_world && model_world[0] != '\0' )
-			return model_world;
-
-		return NULL;
 	}
 	char const *GetVisionFilteredModel( void ) const
 	{
@@ -608,18 +591,7 @@ public:
 		if ( can_use_old_model == 1 )
 			return true;
 			
-			return false;
-	}
-	int GetAttachToHands( void ) const
-	{
-		// This only applies to base items right now, but this allows it to be expanded later.
-		if ( CanUseOldModel() )
-		{
-			if ( UseOldWeaponModels() )
-				return 0;
-		}
-
-		return attach_to_hands;
+		return false;
 	}
 
 
