@@ -317,8 +317,8 @@ ConVar tf2v_use_old_models( "tf2v_use_old_models", "0", FCVAR_NOTIFY | FCVAR_REP
 bool UseOldWeaponModels( void )
 {
 	if ( tf2v_use_old_models.GetBool() )
-		return int;
-		
+		return true;
+
 	return false;
 }
 

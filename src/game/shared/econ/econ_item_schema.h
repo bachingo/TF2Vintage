@@ -616,8 +616,10 @@ public:
 	{
 		// This only applies to base items right now, but this allows it to be expanded later.
 		if ( CanUseOldModel() )
-			if ( TFGameRules() && TFGameRules()->UseOldWeaponModels() )
+		{
+			if ( UseOldWeaponModels() )
 				return 0;
+		}
 
 		return attach_to_hands;
 	}
