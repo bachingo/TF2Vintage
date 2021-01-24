@@ -604,7 +604,7 @@ public:
 
 		return NULL;
 	}
-	bool *CanUseOldModel( void ) const
+	bool CanUseOldModel( void ) const
 	{
 		// Need to check if our v/w models are defined.
 		if ( can_use_old_model == 1 )
@@ -612,7 +612,7 @@ public:
 			
 			return false;
 	}
-	char const *GetAttachToHands( void ) const
+	int GetAttachToHands( void ) const
 	{
 		// This only applies to base items right now, but this allows it to be expanded later.
 		if ( CanUseOldModel() )
