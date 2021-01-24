@@ -574,6 +574,8 @@ void CTFPresence::UploadStats()
 //-----------------------------------------------------------------------------
 static CTFDiscordPresence s_drp;
 
+#define DISCORD_COLOR Color( 114, 137, 218, 255 )
+
 
 discord::Activity CTFDiscordPresence::m_Activity{};
 discord::User CTFDiscordPresence::m_CurrentUser{};
@@ -746,8 +748,8 @@ void CTFDiscordPresence::OnReady()
 
 	g_pDiscord->UserManager().GetCurrentUser( &m_CurrentUser );
 
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Ready!\n" );
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] User %s#%s - %lld\n", m_CurrentUser.GetUsername(), m_CurrentUser.GetDiscriminator(), m_CurrentUser.GetId() );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Ready!\n" );
+	ConColorMsg( DISCORD_COLOR, "[DRP] User %s#%s - %lld\n", m_CurrentUser.GetUsername(), m_CurrentUser.GetDiscriminator(), m_CurrentUser.GetId() );
 
 	rpc->ResetPresence();
 }
@@ -757,7 +759,7 @@ void CTFDiscordPresence::OnReady()
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::OnJoinedGame( const char *joinSecret )
 {
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Game: %s\n", joinSecret );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Join Game: %s\n", joinSecret );
 	char szCommand[128];
 	Q_snprintf( szCommand, sizeof( szCommand ), "connect %s\n", joinSecret );
 	engine->ExecuteClientCmd( szCommand );
@@ -768,7 +770,7 @@ void CTFDiscordPresence::OnJoinedGame( const char *joinSecret )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::OnSpectateGame( const char *spectateSecret )
 {
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Spectate Game: %s\n", spectateSecret );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Spectate Game: %s\n", spectateSecret );
 }
 
 //-----------------------------------------------------------------------------
@@ -777,10 +779,7 @@ void CTFDiscordPresence::OnSpectateGame( const char *spectateSecret )
 void CTFDiscordPresence::OnJoinRequested( discord::User const &joinRequester )
 {
 	// TODO: Popup dialog
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Request: %s#%s\n", joinRequester.GetUsername(), joinRequester.GetDiscriminator() );
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[Rich Presence] Join Request Accepted\n" );
-	
-	g_pDiscord->ActivityManager().SendRequestReply( joinRequester.GetId(), discord::ActivityJoinRequestReply::Yes, [ ] ( discord::Result result ) {} );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Join Request: %s#%s\n", joinRequester.GetUsername(), joinRequester.GetDiscriminator() );
 }
 
 //-----------------------------------------------------------------------------
@@ -795,7 +794,7 @@ void CTFDiscordPresence::OnLogMessage( discord::LogLevel logLevel, char const *p
 			Warning( "[DRP] %s\n", pszMessage );
 			break;
 		default:
-			ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] %s\n", pszMessage );
+			ConColorMsg( DISCORD_COLOR, "[DRP] %s\n", pszMessage );
 			break;
 	}
 }
@@ -806,7 +805,7 @@ void CTFDiscordPresence::OnLogMessage( discord::LogLevel logLevel, char const *p
 void CTFDiscordPresence::OnActivityUpdate( discord::Result result )
 {
 #ifdef DEBUG
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Activity update: %s\n", ( ( result == discord::Result::Ok ) ? "Succeeded" : "Failed" ) );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Activity update: %s\n", ( ( result == discord::Result::Ok ) ? "Succeeded" : "Failed" ) );
 #endif
 }
 
