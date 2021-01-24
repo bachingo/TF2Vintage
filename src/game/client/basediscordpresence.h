@@ -9,6 +9,7 @@
 // The maximum length for string fields in Discord's API
 #define DISCORD_FIELD_MAXLEN 128
 
+#ifndef POSIX
 class CBaseDiscordPresence : public CAutoGameSystemPerFrame, public IRichPresenceClient
 {
 public:
@@ -33,9 +34,8 @@ private:
 	char m_szMapName[ MAX_MAP_NAME ];
 };
 
-#ifdef _WIN32
 namespace discord { class Core; }
 extern discord::Core *g_pDiscord;
-#endif
+#endif // !POSIX
 
-#endif
+#endif // BASEDISCORDPRESENCE_H

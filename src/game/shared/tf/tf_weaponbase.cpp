@@ -2747,7 +2747,7 @@ void CTFWeaponBase::HandleInspect()
 		}
 		else if ( m_nInspectStage != INSPECT_NONE )
 		{
-			if ( gpGlobals->curtime > m_flInspectAnimTime )
+			if ( m_flInspectAnimTime < gpGlobals->curtime )
 			{
 				if ( m_nInspectStage == INSPECT_START )
 				{

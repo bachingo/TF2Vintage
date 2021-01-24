@@ -13,10 +13,7 @@
 #include "GameEventListener.h"
 #include "basepresence.h"
 #include "hl2orange.spa.h"
-
-#ifndef POSIX
 #include "basediscordpresence.h"
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: TF implementation for setting user contexts and properties.

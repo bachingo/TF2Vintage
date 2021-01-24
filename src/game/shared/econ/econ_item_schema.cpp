@@ -4,9 +4,8 @@
 #include "tier3/tier3.h"
 #include "vgui/ILocalize.h"
 
-#if defined( TF_VINTAGE ) || defined( TF_VINTAGE_CLIENT )
 #include "tf_gamerules.h"
-#endif
+
 
 #if defined(CLIENT_DLL)
 #define UTIL_VarArgs  VarArgs

@@ -738,7 +738,10 @@ void CTFDiscordPresence::OnReady()
 	if ( !cl_discord_presence_enabled.GetBool() )
 	{
 		if ( g_pDiscord )
+		{
 			delete g_pDiscord;
+			g_pDiscord = NULL;
+		}
 
 		if ( steamapicontext->SteamFriends() )
 			steamapicontext->SteamFriends()->ClearRichPresence();
