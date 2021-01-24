@@ -133,6 +133,7 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "mumble.h"
+#include "bannedwords.h"
 
 // NVNT includes
 #include "hud_macros.h"
