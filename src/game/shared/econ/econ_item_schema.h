@@ -508,7 +508,7 @@ public:
 	}
 	char const *GetPlayerModel( void ) const
 	{
-		if ( v_model && v_model[0] != '\0' ) && UseOldWeaponModels() )
+		if ( ( v_model && v_model[0] != '\0' ) && UseOldWeaponModels() )
 			return v_model;
 			
 		if ( model_player && model_player[0] != '\0' )
@@ -518,7 +518,7 @@ public:
 	}
 	char const *GetWorldModel( void ) const
 	{
-		if ( w_model && w_model[0] != '\0' ) && UseOldWeaponModels() )
+		if ( ( w_model && w_model[0] != '\0' ) && UseOldWeaponModels() )
 			return w_model;
 			
 		if ( model_world && model_world[0] != '\0' )
