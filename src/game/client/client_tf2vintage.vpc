@@ -50,8 +50,8 @@ $Project "Client (TF)"
 		$File	"hud_vote.h"
 		$File	"bsp_utils.cpp"
 		$File	"bsp_utils.h"
-		$File	"bannedwords.cpp"
-		$File	"bannedwords.h"
+		$File	"$SRCDIR\game\shared\bannedwords.cpp"
+		$File	"$SRCDIR\game\shared\bannedwords.h"
 		
 		$Folder	"game_controls"
 		{
