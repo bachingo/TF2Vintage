@@ -4894,6 +4894,7 @@ void CTFPlayerShared::UpdateRageBuffsAndRage( void )
 			}
 
 			m_flEffectBarProgress -= ( 100.0f / tf_soldier_buff_pulses.GetFloat() ) * gpGlobals->frametime;
+			m_flEffectBarProgress = Max( m_flEffectBarProgress.Get(), 0.0f );
 		}
 		else
 		{
