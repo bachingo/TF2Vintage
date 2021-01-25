@@ -17,6 +17,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFBuffItem C_TFBuffItem
+class C_TFBuffBanner;
 #endif
 
 //=============================================================================
@@ -39,6 +40,7 @@ public:
 #endif
 
 	CTFBuffItem();
+	~CTFBuffItem();
 	virtual int			GetWeaponID( void ) const	{ return TF_WEAPON_BUFF_ITEM; }
 
 	virtual void		Precache( void );
@@ -63,6 +65,7 @@ public:
 
 #ifdef CLIENT_DLL
 	void				CreateBanner( int iBuffType );
+	void				DestroyBanner( void );
 
 	virtual void		FireGameEvent( IGameEvent *event );
 #endif
@@ -72,6 +75,11 @@ private:
 	CTFBuffItem( const CTFBuffItem & ) {}
 
 	CNetworkVar( bool, m_bBuffUsed );
+
+#ifdef CLIENT_DLL
+	CHandle<C_TFBuffBanner> m_hBanner;
+	friend class C_TFBuffBanner;
+#endif
 };
 
 //Parachute base.
