@@ -3,32 +3,12 @@
 // Purpose: Implementation of China Government Censorship enforced on all user-generated strings
 //
 //=============================================================================
-
-//
-// Pre-compiled header (cbase.h in the game branch; none in Steam Client branch)
-//
 #include "cbase.h"
-
-//
-// Custom implementations for sharing code verbatim between Steam Client and the game branch
-//
-#ifdef CSTRIKE15
-static bool BannedWords_LoadFileIntoBuffer( char const *szFilename, CUtlBuffer &buf )
-{
-	return g_pFullFileSystem->ReadFile( szFilename, "MOD", buf );
-}
-#else
 #include "utlbuffer.h"
 #include "utlmap.h"
 #include "filesystem.h"
 #include "filesystem_helpers.h"
 #include "tier1/fileio.h"
-static bool BannedWords_LoadFileIntoBuffer( char const *szFilename, CUtlBuffer &buf )
-{
-	return LoadFileIntoBuffer( szFilename, buf, false );
-}
-#endif
-
 #include "bannedwords.h"
 #include "utlmemory.h"
 #include "utlbuffer.h"
@@ -36,6 +16,10 @@ static bool BannedWords_LoadFileIntoBuffer( char const *szFilename, CUtlBuffer &
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
 
+static bool BannedWords_LoadFileIntoBuffer( char const *szFilename, CUtlBuffer &buf )
+{
+	return g_pFullFileSystem->ReadFile( szFilename, "MOD", buf );
+}
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -58,7 +42,7 @@ public:
 		char m_chExternalString[256];
 		char m_chCensoredString[256];
 	};
-	typedef CUtlMap< uint64, ExternalStringCache_t *, int, CDefLess< uint64 > > KeyStringMap_t;
+	typedef CUtlMap< uint64, ExternalStringCache_t *, int > KeyStringMap_t;
 	KeyStringMap_t m_mapExternalStrings;
 };
 
