@@ -8,10 +8,12 @@
 #include "hudelement.h"
 #include "hud_macros.h"
 #include "iclientmode.h"
+#include "c_playerresource.h"
 #include <vgui/IVGui.h>
 #include <vgui_controls/EditablePanel.h>
 #include "c_tf_player.h"
 #include "vgui/controls/tf_advmodelpanel.h"
+#include "view.h"
 #include "tf_hud_inspectpanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -42,14 +44,14 @@ void InspectUp()
 	if ( !pLocalPlayer )
 		return;
 
-	/*if ( gpGlobals->curtime - s_flLastInspectDownTime <= 0.2f )
+	if ( gpGlobals->curtime - s_flLastInspectDownTime <= 0.2f )
 	{
-		CHudInspectPanel * *pElement = gHUD.FindElement( "CHudInspectPanel" );
+		CHudInspectPanel *pElement = GET_HUDELEMENT( CHudInspectPanel );
 		if ( pElement )
 		{
 			pElement->UserCmd_InspectTarget();
 		}
-	}*/
+	}
 
 	KeyValues *kv = new KeyValues( "-inspect_server" );
 	engine->ServerCmdKeyValues( kv );
@@ -130,4 +132,56 @@ void CHudInspectPanel::SetPanelVisible( bool bVisible )
 		LockInspectRenderGroup( bVisible );
 		m_pItemPanel->SetVisible( bVisible );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudInspectPanel::UserCmd_InspectTarget( void )
+{
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalPlayer )
+		return;
+
+	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_TFPlayer *CHudInspectPanel::GetInspectTarget( C_TFPlayer *pPlayer )
+{
+	if ( !pPlayer )
+		return NULL;
+
+	trace_t tr;
+	Vector vecStart, vecEnd;
+	VectorMA( MainViewOrigin(), 10, MainViewForward(), vecStart );
+	VectorMA( MainViewOrigin(), MAX_TRACE_LENGTH, MainViewForward(), vecEnd );
+
+	UTIL_TraceLine( vecStart, vecEnd, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
+
+	C_TFPlayer *pTarget = NULL;
+	if ( !tr.startsolid && tr.DidHitNonWorldEntity() )
+	{
+		if ( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
+		{
+			pTarget = ToTFPlayer( tr.m_pEnt );
+
+			// Inspect the person a spy is disguised as instead of the spy, no cheating!
+			if ( pTarget->IsPlayerClass( TF_CLASS_SPY ) )
+			{
+				if ( pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() && pTarget->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() )
+				{
+					C_TFPlayer *pDisguiseTarget = ToTFPlayer( pTarget->m_Shared.GetDisguiseTarget() );
+					if ( pDisguiseTarget && pDisguiseTarget->IsPlayerClass( pTarget->m_Shared.GetDisguiseClass() ) )
+					{
+						pTarget = pDisguiseTarget;
+					}
+				}
+			}
+		}
+	}
+
+	return pTarget;
 }
