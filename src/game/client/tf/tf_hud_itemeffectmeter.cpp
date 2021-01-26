@@ -236,6 +236,10 @@ void CHudItemEffectMeter::PerformLayout( void )
 		}
 	}
 
+	CTFPlayer *pPlayer = CTFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && pPlayer->Weapon_OwnsThisID( TF_WEAPON_MEDIGUN ) )
+		iNumPanels++;
+
 	if ( iNumPanels > 1 && pLastMeter )
 	{
 		int x = 0, y = 0;
@@ -889,14 +893,14 @@ bool CHudItemEffects::Init( void )
 //-----------------------------------------------------------------------------
 void CHudItemEffects::Shutdown( void )
 {
-	for ( int i = 0; i < m_pEffectBars.Count(); ++i )
+	FOR_EACH_VEC_BACK( m_pEffectBars, i )
 	{
-		if ( m_pEffectBars[i] )
-			delete m_pEffectBars[i].Get();
+		gHUD.RemoveHudElement( m_pEffectBars[i] );
+		delete m_pEffectBars[i].Get();
 	}
 
 	StopListeningForAllEvents();
-	m_pEffectBars.Purge();
+	m_pEffectBars.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------
