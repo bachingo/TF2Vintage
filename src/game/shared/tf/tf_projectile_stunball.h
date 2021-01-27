@@ -21,10 +21,10 @@
 #define CTFBauble C_TFBauble
 #endif
 
+
+class CTFStunBall : public CTFWeaponBaseGrenadeProj
 #ifdef GAME_DLL
-class CTFStunBall : public CTFWeaponBaseGrenadeProj, public IScorer
-#else
-class C_TFStunBall : public C_TFWeaponBaseGrenadeProj
+	,public IScorer
 #endif
 {
 public:
@@ -54,13 +54,15 @@ public:
 	virtual void	Detonate( void );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
 
-	void			StunBallTouch( CBaseEntity *pOther );
+	virtual void	StunBallTouch( CBaseEntity *pOther );
 	const char		*GetTrailParticleName( void );
 	void			CreateTrail( void );
 
 	void			SetScorer( CBaseEntity *pScorer );
 
 	void			SetCritical( bool bCritical )	{ m_bCritical = bCritical; }
+
+	bool			IsDestroyable( void ) OVERRIDE { return false; }
 
 	virtual bool	IsDeflectable();
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
@@ -75,12 +77,12 @@ public:
 	virtual int		DrawModel( int flags );
 #endif
 
-private:
+protected:
 #ifdef GAME_DLL
 	CNetworkVar( bool, m_bCritical );
 
 	CHandle<CBaseEntity>	m_hEnemy;
-	EHANDLE					m_Scorer;
+	EHANDLE					m_hScorer;
 	EHANDLE					m_hSpriteTrail;
 #else
 	bool					m_bCritical;
@@ -89,11 +91,7 @@ private:
 	float					m_flCreationTime;
 };
 
-#ifdef GAME_DLL
 class CTFBauble : public CTFStunBall
-#else
-class C_TFBauble : public C_TFStunBall
-#endif
 {
 public:
 	DECLARE_CLASS( CTFBauble, CTFStunBall );
@@ -112,7 +110,9 @@ public:
 	
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
-	void			BaubleTouch( CBaseEntity *pOther );
+	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
+	void			VPhysicsCollisionThink( void );
+	void			StunBallTouch( CBaseEntity *pOther ) OVERRIDE;
 
 	void			SetCritical( bool bCritical )	{ m_bCritical = bCritical; }
 
@@ -124,15 +124,10 @@ public:
 private:
 #ifdef GAME_DLL
 	CNetworkVar( bool, m_bCritical );
-
-	CHandle<CBaseEntity>	m_hEnemy;
-	EHANDLE					m_Scorer;
-	EHANDLE					m_hSpriteTrail;
 #else
-	bool					m_bCritical;
+	bool				m_bCritical;
 #endif
-
-	float					m_flCreationTime;
+	Vector				m_vecCollisionVelocity;
 };
 
 #endif // TF_PROJECTILE_STUNBALL_H

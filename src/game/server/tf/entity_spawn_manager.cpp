@@ -125,7 +125,7 @@ bool CEntitySpawnManager::SpawnEntityAt( int iSpawnPoint )
 		{
 			if ( UTIL_DropToFloor( pEntity, MASK_SOLID ) == 0 )
 			{
-				Error("TF Entity %s fell out of level at %f,%f,%f", pEntity->GetEntityName(), pEntity->GetAbsOrigin().x, pEntity->GetAbsOrigin().y, pEntity->GetAbsOrigin().z);
+				Error("TF Entity %s fell out of level at %f,%f,%f", STRING( pEntity->GetEntityName() ), pEntity->GetAbsOrigin().x, pEntity->GetAbsOrigin().y, pEntity->GetAbsOrigin().z);
 				UTIL_Remove( pEntity );
 				return false;
 			}

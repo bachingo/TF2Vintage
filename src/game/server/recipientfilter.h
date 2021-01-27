@@ -89,6 +89,19 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+// Purpose: Simple class to create a filter for a single player ( reliable )
+//-----------------------------------------------------------------------------
+class CSingleUserReliableRecipientFilter : public CRecipientFilter
+{
+public:
+	CSingleUserReliableRecipientFilter( CBasePlayer *player )
+	{
+		AddRecipient( player );
+		MakeReliable();
+	}
+};
+
+//-----------------------------------------------------------------------------
 // Purpose: Simple class to create a filter for all players on a given team 
 //-----------------------------------------------------------------------------
 class CTeamRecipientFilter : public CRecipientFilter

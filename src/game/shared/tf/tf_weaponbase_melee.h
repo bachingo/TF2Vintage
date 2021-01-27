@@ -60,6 +60,7 @@ public:
 
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iDamageType, int &iCustomDamage );
 	virtual int		GetCustomDamageType() const						{ return TF_DMG_CUSTOM_NONE; }
+	char const*		GetShootSound( int iIndex ) const OVERRIDE;
 
 #ifndef CLIENT_DLL
 	virtual float	GetForceScale( void );

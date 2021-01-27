@@ -1,4 +1,3 @@
-#include "..\public\tier1\utlbuffer.h"
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // $Header: $

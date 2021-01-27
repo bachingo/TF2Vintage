@@ -69,12 +69,17 @@ public:
 
 	virtual void	WeaponReset( void );
 
+	void	SetRoboSapper( bool bSet ) { m_bRoboSapper.Set( bSet ); }
+	bool	IsRoboSapper( void ) const { return m_bRoboSapper; }
+
 public:
 	CNetworkVar( int, m_iBuildState );
 	CNetworkVar( unsigned int, m_iObjectType );
 	CNetworkVar( unsigned int, m_iObjectMode );
 
 	CNetworkHandle( CBaseObject, m_hObjectBeingBuilt );
+
+	CNetworkVar( bool, m_bRoboSapper );
 
 	int m_iValidBuildPoseParam;
 

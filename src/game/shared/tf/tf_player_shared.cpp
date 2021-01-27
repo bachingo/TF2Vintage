@@ -106,6 +106,7 @@ ConVar tf2v_use_medic_speed_match( "tf2v_use_medic_speed_match", "0", FCVAR_NOTI
 ConVar tf2v_allow_spy_sprint( "tf2v_allow_spy_sprint", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to override their disguise speed by holding reload." );
 ConVar tf2v_disguise_speed_match( "tf2v_disguise_speed_match", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows spies to always move at their disguised class' speed, including faster classes." );
 ConVar tf2v_use_new_yer( "tf2v_use_new_yer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Your Eternal Reward + Reskins to allow for disguising at full cloak." );
+ConVar tf2v_use_new_jag( "tf2v_use_new_jag", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Changes Jag to work like the modern version.", true, 0, true, 2 );
 
 
 
@@ -130,6 +131,8 @@ ConVar tf2v_use_new_cloak( "tf2v_use_new_cloak", "0", FCVAR_NOTIFY | FCVAR_REPLI
 ConVar tf2v_use_new_cleaners( "tf2v_use_new_cleaners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Swaps Minicrit on Kill for the CRIKEY meter.", true, 0, true, 1);
 
 ConVar tf2v_use_new_beggars( "tf2v_use_new_beggars", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Deducts ammo from the Beggar's Bazooka when it misfires." );
+
+ConVar tf2v_use_new_axtinguisher("tf2v_use_new_axtinguisher", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Changes the behavior of the Axtinguisher.", true, 0, true, 3);
 
 #ifdef CLIENT_DLL
 ConVar tf2v_enable_burning_death( "tf2v_enable_burning_death", "0", FCVAR_REPLICATED, "Enables an animation that plays sometimes when dying to fire damage.", true, 0.0f, true, 1.0f );
@@ -201,6 +204,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
 	RecvPropTime( RECVINFO( m_flStealthNoAttackExpire ) ),
 	RecvPropTime( RECVINFO( m_flStealthNextChangeTime ) ),
 	RecvPropFloat(  RECVINFO( m_flCloakMeter ) ),
+	RecvPropBool( RECVINFO( m_bInUpgradeZone ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominated ), RecvPropBool( RECVINFO( m_bPlayerDominated[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominatingMe ), RecvPropBool( RECVINFO( m_bPlayerDominatingMe[0] ) ) ),
 	RecvPropInt( RECVINFO( m_iDesiredWeaponID ) ),
@@ -227,12 +231,8 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropFloat( RECVINFO( m_flStunResistance ) ),
 	RecvPropEHandle( RECVINFO( m_hStunner ) ),
 	RecvPropInt( RECVINFO( m_iDecapitations ) ),
-	RecvPropInt( RECVINFO( m_iHeadshots ) ),
-	RecvPropInt( RECVINFO( m_iStrike ) ),
-	RecvPropInt( RECVINFO( m_iKillstreak ) ),
-	RecvPropInt( RECVINFO( m_iSapperKill ) ),
-	RecvPropInt( RECVINFO( m_iRevengeCrits ) ),
-	RecvPropInt( RECVINFO( m_iAirblastCrits ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_nKillCombo ), RecvPropInt( RECVINFO( m_nKillCombo[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_nRevengeCrits ), RecvPropInt( RECVINFO( m_nRevengeCrits[0] ) ) ),
 	RecvPropInt( RECVINFO( m_bShieldEquipped ) ),
 	RecvPropInt( RECVINFO( m_iNextMeleeCrit ) ),
 	RecvPropEHandle( RECVINFO( m_hCarriedObject ) ),
@@ -256,7 +256,6 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_iDisguiseHealth ) ),
 	RecvPropInt( RECVINFO( m_iDisguiseMaxHealth ) ),
 	RecvPropFloat( RECVINFO( m_flDisguiseChargeLevel ) ),
-	RecvPropInt( RECVINFO( m_iLeechHealth ) ),
 	RecvPropDataTable( RECVINFO_DT( m_DisguiseItem ), 0, &REFERENCE_RECV_TABLE( DT_ScriptCreatedItem ) ),
 	// Local Data.
 	RecvPropDataTable( "tfsharedlocaldata", 0, 0, &REFERENCE_RECV_TABLE( DT_TFPlayerSharedLocal ) ),
@@ -292,6 +291,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
 	SendPropTime( SENDINFO( m_flStealthNoAttackExpire ) ),
 	SendPropTime( SENDINFO( m_flStealthNextChangeTime ) ),
 	SendPropFloat( SENDINFO( m_flCloakMeter ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0, 100.0 ),
+	SendPropBool( SENDINFO( m_bInUpgradeZone ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominated ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominated ) ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominatingMe ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominatingMe ) ) ),
 	SendPropInt( SENDINFO( m_iDesiredWeaponID ) ),
@@ -318,12 +318,8 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropFloat( SENDINFO( m_flStunResistance ), 0, SPROP_NOSCALE ),
 	SendPropEHandle( SENDINFO( m_hStunner ) ),
 	SendPropInt( SENDINFO( m_iDecapitations ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iHeadshots ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iStrike ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iKillstreak ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iSapperKill ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iRevengeCrits ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iAirblastCrits ), 8, SPROP_UNSIGNED ),
+	SendPropArray3( SENDINFO_ARRAY3( m_nKillCombo ), SendPropInt( SENDINFO_ARRAY( m_nKillCombo ), 8, SPROP_UNSIGNED ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_nRevengeCrits ), SendPropInt( SENDINFO_ARRAY( m_nRevengeCrits ), 8, SPROP_UNSIGNED ) ),
 	SendPropInt( SENDINFO( m_bShieldEquipped ), 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iNextMeleeCrit ) ),
 	SendPropEHandle( SENDINFO(m_hCarriedObject ) ),
@@ -347,7 +343,6 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iDisguiseHealth ), 10 ),
 	SendPropInt( SENDINFO( m_iDisguiseMaxHealth ), 10 ),
 	SendPropFloat( SENDINFO( m_flDisguiseChargeLevel ), 0, SPROP_NOSCALE ),
-	SendPropInt( SENDINFO( m_iLeechHealth ), 10 ),
 	SendPropDataTable( SENDINFO_DT( m_DisguiseItem ), &REFERENCE_SEND_TABLE( DT_ScriptCreatedItem ) ),
 	// Local Data.
 	SendPropDataTable( "tfsharedlocaldata", 0, &REFERENCE_SEND_TABLE( DT_TFPlayerSharedLocal ), SendProxy_SendLocalDataTable ),
@@ -403,9 +398,12 @@ CTFPlayerShared::CTFPlayerShared()
 	m_pDisguiseWeaponInfo = NULL;
 	m_pCritSound = NULL;
 	m_pCritEffect = NULL;
+	m_flShieldChargeEndTime = -1;
+	m_bShieldChargeStopped = false;
 #else
-	memset( m_flChargeOffTime, 0, sizeof( m_flChargeOffTime ) );
-	memset( m_bChargeSounds, 0, sizeof( m_bChargeSounds ) );
+	V_memset( m_flChargeOffTime, 0, sizeof( m_flChargeOffTime ) );
+	V_memset( m_bChargeSounds, 0, sizeof( m_bChargeSounds ) );
+	m_flLowestOverhealDecayRate = -1;
 #endif
 }
 
@@ -419,8 +417,7 @@ void CTFPlayerShared::Init( CTFPlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Add a condition and duration
-// duration of PERMANENT_CONDITION means infinite duration
+// Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::ResetMeters( void )
 {
@@ -432,11 +429,9 @@ void CTFPlayerShared::ResetMeters( void )
 	SetRevengeCritCount( 0 );
 	SetAirblastCritCount( 0 );
 	SetHypeMeterAbsolute( 0 );
-	SetSanguisugeHealth(0);
-	SetKillstreakCount( 0 );
 	SetFocusLevel( 0 );
-	SetFireRageMeter(0);
-	SetCrikeyMeter(0);	
+	SetFireRageMeter( 0 );
+	SetCrikeyMeter( 0 );	
 }
 
 //-----------------------------------------------------------------------------
@@ -544,7 +539,7 @@ bool CTFPlayerShared::InCond(int nCond)
 	Assert(nCond >= 0 && nCond < TF_COND_LAST);
 
 	int nCondFlag = nCond;
-	const int *pVar = NULL;
+	int iVar = 0;
 	if ( nCond < 128 )
 	{
 		if ( nCond < 96 )
@@ -553,33 +548,33 @@ bool CTFPlayerShared::InCond(int nCond)
 			{
 				if ( nCond < 32 )
 				{
-					pVar = &m_nPlayerCond.GetForModify();
+					iVar = m_nPlayerCond.Get();
 				}
 				else
 				{
-					pVar = &m_nPlayerCondEx.GetForModify();
+					iVar = m_nPlayerCondEx.Get();
 					nCondFlag -= 32;
 				}
 			}
 			else
 			{
-				pVar = &m_nPlayerCondEx2.GetForModify();
+				iVar = m_nPlayerCondEx2.Get();
 				nCondFlag -= 64;
 			}
 		}
 		else
 		{
-			pVar = &m_nPlayerCondEx3.GetForModify();
+			iVar = m_nPlayerCondEx3.Get();
 			nCondFlag -= 96;
 		}
 	}
 	else
 	{
-		pVar = &m_nPlayerCondEx4.GetForModify();
+		iVar = m_nPlayerCondEx4.Get();
 		nCondFlag -= 128;
 	}
 
-	return ((*pVar & (1 << nCondFlag)) != 0);
+	return ((iVar & (1 << nCondFlag)) != 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -1246,7 +1241,7 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 					}
 				}
 
-				m_flCondExpireTimeLeft.Set( i, max( m_flCondExpireTimeLeft[i] - flReduction, 0 ) );
+				m_flCondExpireTimeLeft.Set( i, Max( m_flCondExpireTimeLeft[i] - flReduction, 0.0f ) );
 
 				if ( m_flCondExpireTimeLeft[i] == 0 )
 				{
@@ -1260,23 +1255,24 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	// Our health will only decay ( from being medic buffed ) if we are not being healed by a medic
 	// Dispensers can give us the TF_COND_HEALTH_BUFF, but will not maintain or give us health above 100%s
 	bool bDecayHealth = true;
-	
-	
-	// Get our overheal differences, and our base overheal.
-	int iOverhealDifference = ( GetMaxBuffedHealth() - GetMaxHealth() );
+	bool bDecayDisguiseHealth = true;
 
 	// If we're being healed, heal ourselves
 	if ( InCond( TF_COND_HEALTH_BUFF ) )
 	{
-		// Start these off at 0 so we accept nerfs, but prefer buffs.
-		float flMaxOverhealRatio = 0.0;
-		float flOverhealAmount;
-	
 		// Heal faster if we haven't been in combat for a while
 		float flTimeSinceDamage = gpGlobals->curtime - m_pOuter->GetLastDamageTime();
 		float flScale = RemapValClamped( flTimeSinceDamage, 10, 15, 1.0, 3.0 );
 
-		bool bHasFullHealth = m_pOuter->GetHealth() >= m_pOuter->GetMaxHealth();
+		float flOverhealAmount = (float)m_pOuter->GetHealth() / m_pOuter->GetMaxHealth();
+		if ( flOverhealAmount > 1.0f )
+		{
+			float flMaxBuffedHealth = m_pOuter->GetMaxHealthForBuffing();
+			float flBuffableRange = m_pOuter->GetHealth() - ( m_pOuter->GetMaxHealth() - flMaxBuffedHealth );
+			flOverhealAmount = flBuffableRange / flMaxBuffedHealth;
+		}
+
+		float flDisguiseOverheal = ( GetDisguiseMaxHealth() != 0 ) ? (float)GetDisguiseHealth() / GetDisguiseMaxHealth() : flOverhealAmount;
 
 		float fTotalHealAmount = 0.0f;
 		for ( int i = 0; i < m_aHealers.Count(); i++ )
@@ -1287,14 +1283,44 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				AddToSpyCloakMeter( m_aHealers[i].flAmount * gpGlobals->frametime );
 			}
 
-			// Dispensers don't heal above 100%
-			if ( bHasFullHealth && m_aHealers[i].bDispenserHeal )
+			bool bHealDisguise = InCond( TF_COND_DISGUISED );
+			bool bHealActually = true;
+
+			if ( flOverhealAmount >= m_aHealers[i].flOverhealBonus )
 			{
+				// Don't heal over the healer's overheal
+				bHealActually = false;
+			}
+			if ( InCond( TF_COND_DISGUISED ) && flDisguiseOverheal >= m_aHealers[i].flOverhealBonus )
+			{
+				// Fake overheal limit hit
+				bHealDisguise = false;
+			}
+
+			CTFPlayer *pTFHealer = ToTFPlayer( m_aHealers[i].pHealer );
+			if ( !bHealActually && !bHealDisguise )
+			{
+				if ( pTFHealer )
+				{
+					// Quick fix never lets health decay, even when they're at or above max overheal
+					CWeaponMedigun *pMedigun = dynamic_cast< CWeaponMedigun* >( pTFHealer->GetActiveTFWeapon() );
+					if ( pMedigun && pMedigun->GetMedigunType() == TF_MEDIGUN_QUICKFIX )
+					{
+						bDecayHealth = false;
+						bDecayDisguiseHealth = false;
+					}
+				}
+
 				continue;
 			}
 			
 			// Being healed, don't decay our health
-			bDecayHealth = false;
+			if ( bHealActually )
+				bDecayHealth = false;
+
+			if ( bHealDisguise )
+				bDecayDisguiseHealth = false;
+
 			
 			// Dispensers heal at a constant rate
 			if ( m_aHealers[i].bDispenserHeal )
@@ -1302,69 +1328,60 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				// Dispensers heal at a slower rate, but ignore flScale
 				m_flHealFraction += gpGlobals->frametime * m_aHealers[i].flAmount;
 			}
-			else	// We're being healed by a medic
+			else // Player heals are affected by the last damage time
 			{
 				// We're being healed by a medic
-				flOverhealAmount = 1.0f;
-				// Check our overheal level, and cap if necessary.
-				if ( m_aHealers[i].pPlayer.IsValid() )
+				if( bHealActually )
 				{
-					// Check the mult_medigun_overheal_amount attribute.
-					CTFPlayer *pHealer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
-
-					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pHealer, flOverhealAmount, mult_medigun_overheal_amount);
-				}
-						
-				// Iterate our overheal amount, if we're a higher value.
-				if (flOverhealAmount > flMaxOverhealRatio)
-					flMaxOverhealRatio = flOverhealAmount;
-					
-				// Check our healer's overheal attribute.
-				if ( bHasFullHealth )
-				{			
-					// Calculate out the max health we can heal up to for the person.
-					int iMaxOverheal = floor( ( iOverhealDifference * flOverhealAmount ) + GetMaxHealth() );
-					// Don't heal if our health is above the overheal ratio.
-					if ( m_pOuter->GetHealth() > iMaxOverheal )
-						continue;
-				}
-					// Player heals are affected by the last damage time
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_pOuter, flScale, mult_healing_from_medics );
 					m_flHealFraction += gpGlobals->frametime * m_aHealers[i].flAmount * flScale;
+				}
 			}
 
 			fTotalHealAmount += m_aHealers[i].flAmount;
+
+			if ( m_flLowestOverhealDecayRate == -1 || m_aHealers[i].flOverhealDecayRate < m_flLowestOverhealDecayRate )
+				m_flLowestOverhealDecayRate = m_aHealers[i].flOverhealDecayRate;
 		}
 
 		int nHealthToAdd = ( int )m_flHealFraction;
-		if ( nHealthToAdd > 0 )
+		int nDisguiseHealthToAdd = (int)m_flDisguiseHealFraction;
+		if ( nHealthToAdd > 0 || nDisguiseHealthToAdd > 0 )
 		{
-			m_flHealFraction -= nHealthToAdd;
-
-			// Overheal modifier attributes
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( ToTFPlayer(m_pOuter), flMaxOverhealRatio, mult_patient_overheal_penalty );
-			CTFWeaponBase *pWeapon = m_pOuter->GetActiveTFWeapon();
-			if ( pWeapon )
-			{
-				CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flMaxOverhealRatio, mult_patient_overheal_penalty_active );
-			}
+			if ( nHealthToAdd > 0 )
+				m_flHealFraction -= nHealthToAdd;
+			else if ( nDisguiseHealthToAdd > 0 )
+				m_flDisguiseHealFraction -= nDisguiseHealthToAdd;
 
 			// Modify our max overheal.
-			int iBoostMax;
-			if ( flMaxOverhealRatio != 1.0f )
-				iBoostMax = ( ( iOverhealDifference ) * flMaxOverhealRatio ) + GetMaxHealth();
-			else
-				iBoostMax = GetMaxBuffedHealth();
+			int iBoostMax = GetMaxBuffedHealth();
+			for ( int i = 0; i < m_aHealers.Count(); i++ )
+			{
+				float flOverheal = m_pOuter->GetMaxHealthForBuffing() * m_aHealers[i].flOverhealBonus;
+				if ( (int)flOverheal > iBoostMax )
+				{
+					iBoostMax = flOverheal;
+				}
+			}
 
 			if ( InCond( TF_COND_DISGUISED ) )
 			{
 				// Separate cap for disguised health
-				//int iFakeBoostMax = GetDisguiseMaxBuffedHealth();
-				//int nFakeHealthToAdd = clamp(nHealthToAdd, 0, iFakeBoostMax - m_iDisguiseHealth);
-				//m_iDisguiseHealth += nFakeHealthToAdd;
-				CTFPlayer *pDisguiseTarget = ToTFPlayer(GetDisguiseTarget());
-				int nFakeHealthToAdd = nHealthToAdd;
+				int iFakeBoostMax = GetDisguiseMaxBuffedHealth();
+				for ( int i = 0; i < m_aHealers.Count(); i++ )
+				{
+					float flOverheal = GetDisguiseMaxHealth() * m_aHealers[i].flOverhealBonus;
+					if ( (int)flOverheal > iFakeBoostMax )
+					{
+						iFakeBoostMax = flOverheal;
+					}
+				}
+				int nFakeHealthToAdd = clamp(nHealthToAdd, 0, iFakeBoostMax - m_iDisguiseHealth);
+
+				CTFPlayer *pDisguiseTarget = ToTFPlayer( GetDisguiseTarget() );
 				CALL_ATTRIB_HOOK_INT_ON_OTHER( pDisguiseTarget, nFakeHealthToAdd, mult_health_fromhealers );
-				AddDisguiseHealth( nFakeHealthToAdd, true, flMaxOverhealRatio );
+
+				m_iDisguiseHealth += nFakeHealthToAdd;
 			}
 
 			// Cap it to the max we'll boost a player's health
@@ -1372,20 +1389,21 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 			nHealthToAdd = clamp( nHealthToAdd, 0, ( iBoostMax - m_pOuter->GetHealth() ) );
 			m_pOuter->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );			
 			
-
 			// split up total healing based on the amount each healer contributes
 			for ( int i = 0; i < m_aHealers.Count(); i++ )
 			{
-				if ( m_aHealers[i].pPlayer.IsValid() )
+				if ( m_aHealers[i].pHealer.IsValid() && m_aHealers[i].pScorer.IsValid() )
 				{
-					CTFPlayer *pPlayer = static_cast< CTFPlayer  *>( static_cast< CBaseEntity  *>( m_aHealers[i].pPlayer ) );
-					if ( IsAlly( pPlayer ) )
+					const float flHealAmount = nHealthToAdd * ( m_aHealers[i].flAmount / fTotalHealAmount );
+					CBaseEntity *pHealer = m_aHealers[i].pHealer;
+					if ( pHealer && IsAlly( pHealer ) )
 					{
-						CTF_GameStats.Event_PlayerHealedOther( pPlayer, nHealthToAdd * ( m_aHealers[i].flAmount / fTotalHealAmount ) );
+						CTFPlayer *pScorer = ToTFPlayer( m_aHealers[i].pScorer );
+						CTF_GameStats.Event_PlayerHealedOther( pScorer, flHealAmount );
 					}
 					else
 					{
-						CTF_GameStats.Event_PlayerLeachedHealth( m_pOuter, m_aHealers[i].bDispenserHeal, nHealthToAdd * ( m_aHealers[i].flAmount / fTotalHealAmount ) );
+						CTF_GameStats.Event_PlayerLeachedHealth( m_pOuter, m_aHealers[i].bDispenserHeal, flHealAmount );
 					}
 				}
 			}
@@ -1412,10 +1430,11 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 	if ( bDecayHealth )
 	{
 		// If we're not being buffed, our health drains back to our max
-		if ( m_pOuter->GetHealth() > ( m_pOuter->GetMaxHealth() + m_pOuter->m_Shared.GetSanguisugeHealth() ) )
+		if ( m_pOuter->GetHealth() > m_pOuter->GetMaxHealth() )
 		{
+			const float flDrainRateMult = ( m_flLowestOverhealDecayRate == -1.0f ) ? 1.0f : m_flLowestOverhealDecayRate;
 			float flBoostMaxAmount = GetMaxBuffedHealth() - m_pOuter->GetMaxHealth();
-			m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / ( tf_boost_drain_time.GetFloat() ) ) );
+			m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / ( tf_boost_drain_time.GetFloat() * flDrainRateMult ) ) );
 			int nHealthToDrain = ( int )m_flHealFraction;
 			if ( nHealthToDrain > 0 )
 			{
@@ -1425,12 +1444,20 @@ void CTFPlayerShared::ConditionGameRulesThink(void)
 				m_pOuter->m_iHealth -= nHealthToDrain;
 			}
 		}
-		
+		else
+		{
+			if ( m_flLowestOverhealDecayRate != -1.0f )
+				m_flLowestOverhealDecayRate = -1.0f;
+		}
+	}
 
+	if ( bDecayDisguiseHealth )
+	{
 		if ( InCond( TF_COND_DISGUISED ) && m_iDisguiseHealth > m_iDisguiseMaxHealth )
 		{
+			const float flDrainRateMult = ( m_flLowestOverhealDecayRate == -1.0f ) ? 1.0f : m_flLowestOverhealDecayRate;
 			float flBoostMaxAmount = GetDisguiseMaxBuffedHealth() - m_iDisguiseMaxHealth;
-			m_flDisguiseHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / tf_boost_drain_time.GetFloat() ) );
+			m_flDisguiseHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / ( tf_boost_drain_time.GetFloat() * flDrainRateMult ) ) );
 
 			int nHealthToDrain = ( int )m_flDisguiseHealFraction;
 			if ( nHealthToDrain > 0 )
@@ -1659,7 +1686,6 @@ void CTFPlayerShared::ConditionThink( void )
 
 #ifdef GAME_DLL
 	UpdateCloakMeter();
-	UpdateSanguisugeHealth();
 	UpdateChargeMeter();
 	UpdateEnergyDrinkMeter();
 	UpdateFocusLevel();
@@ -2865,7 +2891,7 @@ void CTFPlayerShared::StunPlayer( float flDuration, float flSpeed, float flResis
 		m_flStunExpireTime = flNextStunExpireTime;
 
 #ifdef GAME_DLL
-		if( !( m_nStunFlags & TF_STUNFLAG_THIRDPERSON ) )
+		if( !( m_nStunFlags & TF_STUNFLAG_NOSOUNDOREFFECT ) )
 			m_pOuter->PlayStunSound( m_hStunner, m_nStunFlags /*, current stun flags*/ );
 #endif
 	}
@@ -2915,6 +2941,20 @@ void CTFPlayerShared::MakeBleed( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, f
 bool CTFPlayerShared::IsControlStunned( void )
 {
 	if (InCond( TF_COND_STUNNED ) && ( m_nStunFlags & TF_STUNFLAG_BONKSTUCK ) != 0)
+		return true;
+
+	if (InCond( TF_COND_MVM_BOT_STUN_RADIOWAVE ))
+		return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsSnared( void )
+{
+	if (InCond( TF_COND_STUNNED ) && !IsControlStunned())
 		return true;
 	return false;
 }
@@ -3755,7 +3795,7 @@ void CTFPlayerShared::RemoveDisguise(void)
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::CalculateDisguiseWearables(void)
 {
-#if defined( GAME_DLL )
+/*#if defined( GAME_DLL )
 	// Remove our current disguise wearables.
 	for (int i = 0; i < m_pOuter->GetNumDisguiseWearables(); i++)
 	{
@@ -3793,7 +3833,7 @@ void CTFPlayerShared::CalculateDisguiseWearables(void)
 			// Update the disguise bodygroups as well.
 			SetDisguiseBodygroups(pDisguiseTarget->m_Shared.GetWearableBodygroups());
 		}
-	}
+	}*/
 }
 
 
@@ -4079,14 +4119,17 @@ CTFWeaponInfo *CTFPlayerShared::GetDisguiseWeaponInfo( void )
 // Purpose: Heal players.
 // pPlayer is person who healed us
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::Heal(CTFPlayer *pPlayer, float flAmount, bool bDispenserHeal /* = false */)
+void CTFPlayerShared::Heal(CBaseEntity *pHealer, float flAmount, float flOverhealBonus, float flOverhealDecayRate, bool bDispenserHeal /* = false */, CTFPlayer *pScorer /* = NULL */)
 {
-	Assert(FindHealerIndex(pPlayer) == m_aHealers.InvalidIndex());
+	Assert(FindHealerIndex(pHealer) == m_aHealers.InvalidIndex());
 
 	healers_t newHealer;
-	newHealer.pPlayer = pPlayer;
+	newHealer.pHealer = pHealer;
 	newHealer.flAmount = flAmount;
 	newHealer.bDispenserHeal = bDispenserHeal;
+	newHealer.flOverhealBonus = flOverhealBonus;
+	newHealer.flOverhealDecayRate = flOverhealDecayRate;
+	newHealer.pScorer = pScorer ? pScorer : pHealer;
 	m_aHealers.AddToTail(newHealer);
 
 	AddCond(TF_COND_HEALTH_BUFF, PERMANENT_CONDITION);
@@ -4178,10 +4221,10 @@ void CTFPlayerShared::RecalculateChargeEffects(bool bInstantRemove)
 		// Check players healing us.
 		for (int i = 0; i < m_aHealers.Count(); i++)
 		{
-			if (!m_aHealers[i].pPlayer)
+			if (!m_aHealers[i].pHealer)
 				continue;
 
-			CTFPlayer *pPlayer = ToTFPlayer(m_aHealers[i].pPlayer);
+			CTFPlayer *pPlayer = ToTFPlayer(m_aHealers[i].pHealer);
 			if (!pPlayer)
 				continue;
 
@@ -4221,10 +4264,10 @@ void CTFPlayerShared::RecalculateChargeEffects(bool bInstantRemove)
 		// Check players healing us.
 		for (int i = 0; i < m_aHealers.Count(); i++)
 		{
-			if (!m_aHealers[i].pPlayer)
+			if (!m_aHealers[i].pHealer)
 				continue;
 
-			CTFPlayer *pPlayer = ToTFPlayer(m_aHealers[i].pPlayer);
+			CTFPlayer *pPlayer = ToTFPlayer(m_aHealers[i].pHealer);
 			if (!pPlayer)
 				continue;
 
@@ -4411,7 +4454,7 @@ void CTFPlayerShared::TestAndExpireChargeEffect(medigun_charge_types chargeType)
 EHANDLE	CTFPlayerShared::GetHealerByIndex( int index )
 {
 	if (m_aHealers.IsValidIndex( index ))
-		return m_aHealers[index].pPlayer;
+		return m_aHealers[index].pHealer;
 
 	return NULL;
 }
@@ -4419,11 +4462,11 @@ EHANDLE	CTFPlayerShared::GetHealerByIndex( int index )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int	CTFPlayerShared::FindHealerIndex( CTFPlayer *pPlayer )
+int	CTFPlayerShared::FindHealerIndex( CBaseEntity *pPlayer )
 {
 	for ( int i = 0; i < m_aHealers.Count(); i++ )
 	{
-		if ( m_aHealers[i].pPlayer == pPlayer )
+		if ( m_aHealers[i].pHealer == pPlayer )
 			return i;
 	}
 
@@ -4437,7 +4480,7 @@ int	CTFPlayerShared::FindHealerIndex( CTFPlayer *pPlayer )
 EHANDLE CTFPlayerShared::GetFirstHealer()
 {
 	if ( m_aHealers.Count() > 0 )
-		return m_aHealers.Head().pPlayer;
+		return m_aHealers.Head().pHealer;
 
 	return NULL;
 }
@@ -4851,6 +4894,7 @@ void CTFPlayerShared::UpdateRageBuffsAndRage( void )
 			}
 
 			m_flEffectBarProgress -= ( 100.0f / tf_soldier_buff_pulses.GetFloat() ) * gpGlobals->frametime;
+			m_flEffectBarProgress = Max( m_flEffectBarProgress.Get(), 0.0f );
 		}
 		else
 		{
@@ -5157,24 +5201,6 @@ void CTFPlayerShared::UpdateCloakMeter( void )
 		}
 	}
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::UpdateSanguisugeHealth( void )
-{
-	// Drain our Sanguisuge health, but at a much slower rate. (2HP per second)
-	if ( (m_pOuter->m_Shared.GetSanguisugeHealth() > 0) && (gpGlobals->curtime >= m_pOuter->m_Shared.m_iLeechDecayTime ) )
-	{
-		float flHealthtoRemove = 1; // 2HP per second; 1HP two ticks a second.
-		// Manually subtract the health from our Sanguisuge pool as well.
-		m_pOuter->m_iHealth -= (int)flHealthtoRemove;
-		m_pOuter->m_Shared.ChangeSanguisugeHealth( (int)flHealthtoRemove * -1 );
-		m_pOuter->m_Shared.SetNextSanguisugeDecay();
-		if (m_pOuter->m_Shared.GetSanguisugeHealth() < 0) // Can't be below 0.
-			m_pOuter->m_Shared.SetSanguisugeHealth(0);
-	}
-}
 	
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -5243,7 +5269,7 @@ void CTFPlayerShared::UpdateEnergyDrinkMeter( void )
 		if ( m_flEnergyDrinkMeter >= 100.0f )
 			return;
 
-		if ( m_pOuter->GetAmmoCount( TF_AMMO_GRENADES2 ) != m_pOuter->GetMaxAmmo( TF_AMMO_GRENADES2 ) )
+		if ( m_pOuter->GetAmmoCount( TF_AMMO_SPECIAL2 ) != m_pOuter->GetMaxAmmo( TF_AMMO_SPECIAL2 ) )
 			return;
 	}
 	
@@ -6031,13 +6057,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// Check players healing us and update logic if needed.
 	for (int i = 0; i < m_Shared.m_aHealers.Count(); i++)
 	{
-		if (!m_Shared.m_aHealers[i].pPlayer)
-			continue;
-			
-		if (!m_Shared.m_aHealers[i].pPlayer.IsValid())
+		if (!m_Shared.m_aHealers[i].pHealer)
 			continue;
 
-		CTFPlayer *pHealer = ToTFPlayer(m_Shared.m_aHealers[i].pPlayer);
+		CTFPlayer *pHealer = ToTFPlayer(m_Shared.m_aHealers[i].pHealer);
 		if (!pHealer)
 			continue;
 
@@ -6903,6 +6926,9 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ ) const
 			CALL_ATTRIB_HOOK_INT( iMaxAmmo, mult_maxammo_grenades2 );
 			break;
 		case TF_AMMO_GRENADES3:
+		case TF_AMMO_SPECIAL1:	// Don't add ammo mults to specials.
+		case TF_AMMO_SPECIAL2:
+		case TF_AMMO_SPECIAL3:
 			iMaxAmmo = 1;
 			break;
 	}
@@ -6919,6 +6945,25 @@ void CTFPlayer::PlayStepSound(Vector &vecOrigin, surfacedata_t *psurface, float 
 #endif
 
 	BaseClass::PlayStepSound(vecOrigin, psurface, fvol, force);
+}
+
+void CTFPlayer::ModifyEmitSoundParams( EmitSound_t &params )
+{
+	BaseClass::ModifyEmitSoundParams( params );
+
+	CTFWeaponBase *pWeapon = GetActiveTFWeapon();
+	if ( pWeapon )
+	{
+		pWeapon->ModifyEmitSoundParams( params );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if player is inspecting
+//-----------------------------------------------------------------------------
+bool CTFPlayer::IsInspecting() const
+{
+	return m_flInspectTime != 0.f && gpGlobals->curtime - m_flInspectTime > 0.2f;
 }
 
 #ifndef CLIENT_DLL

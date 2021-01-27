@@ -117,7 +117,7 @@ public:
 		return true;
 	}
 
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) OVERRIDE
 	{
 		CTFNavArea *adjTFArea = static_cast<CTFNavArea *>( adjArea );
 		if ( !adjTFArea->HasTFAttributes( RED_SETUP_GATE|BLUE_SETUP_GATE|SPAWN_ROOM_EXIT ) && adjArea->IsBlocked( m_iTeam ) )
@@ -126,7 +126,7 @@ public:
 		return currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) <= 45.0f;
 	}
 
-	virtual void IterateAdjacentAreas( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override
+	virtual void IterateAdjacentAreas( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) OVERRIDE
 	{
 		// search adjacent outgoing connections
 		for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
@@ -203,7 +203,7 @@ public:
 		m_flIncursionDistance = fIncursion + area->GetIncursionDistance( iTeam );
 	}
 
-	bool operator()( CNavArea *a )
+	inline bool operator()( CNavArea *a )
 	{
 		CTFNavArea *area = static_cast<CTFNavArea *>( a );
 		if ( area->GetParent() && area->GetParent()->IsContiguous( area ) )

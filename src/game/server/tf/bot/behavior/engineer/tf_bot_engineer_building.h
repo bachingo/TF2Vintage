@@ -21,15 +21,15 @@ public:
 		AVAILABLE
 	};
 
-	virtual const char *GetName() const override;
+	virtual const char *GetName() const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) override;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
 
-	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int territoryID ) override;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int territoryID ) override;
+	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int territoryID ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int territoryID ) OVERRIDE;
 
 private:
 	bool CheckIfSentryIsOutOfPosition( CTFBot *actor ) const;
@@ -47,6 +47,7 @@ private:
 	bool m_bHadASentry;
 	int m_iMetalSource;
 	CountdownTimer m_outOfPositionTimer;
+	bool m_bIsOutOfPosition;
 };
 
 #endif

@@ -3,6 +3,9 @@
 // builds the analyze.vpc file will not be listed as a dependency.
 $Include "$SRCDIR\vpc_scripts\source_win32_analyze.vpc" [$ANALYZE]
 
+$Conditional	$AT_LEAST_VS2015	"true" [$VS2015]
+$Conditional	$AT_LEAST_VS2013	"true" [$VS2013 || $AT_LEAST_VS2015]
+
 $Configuration
 {
 	$General
@@ -33,13 +36,10 @@ $Configuration
 		$MultiProcessorCompilation "True"
 
 		// warning C4316: object allocated on the heap may not be aligned 16
-		$DisableSpecificWarnings	"$BASE;4316" [$VS2013]
+		$DisableSpecificWarnings	"$BASE;4316" [$AT_LEAST_VS2013]
 
-		// warning C4838: conversion requires a narrowing conversion
-		// warning C4595: class can never be instantiated - indirect virtual base class in inaccessible
-		// warning C4624: destructor was implicitly defined as deleted
-		// warning C4456: declaration hides previous local declaration
-		$DisableSpecificWarnings	"$BASE;4316;4838;4594;4626;4456" [$VS2015]
+		// following are needed for VS2015 using old Windows SDK. Would like to move to each include location
+		$DisableSpecificWarnings			"$BASE;4577;4091"	[$WINDOWS && $AT_LEAST_VS2015]
 
 		// Having lots of warnings makes it harder to notice new, and possibly
 		// important warnings, both on buildbot and in the output window. Lots
@@ -58,9 +58,13 @@ $Configuration
 		// reduces the client.dll size by about 1.14%. When linker optimizations are disabled this has no
 		// effect. This option does not show up in the IDE so we need to add it in $AdditionalOptions.
 		// http://blogs.msdn.com/b/vcblog/archive/2013/09/11/introducing-gw-compiler-switch.aspx
-		$AdditionalOptions	"$BASE /Gw" [$VS2013]
+		$AdditionalOptions	"$BASE /Gw" [$AT_LEAST_VS2013]
 		// Strip unreferenced inline functions from object files to shrink .obj files and .lib files,
 		// improve linker speed, and improve conformance. Requires VS 2013 Update 3
-		$AdditionalOptions	"$BASE /Zc:inline" [$VS2013]
+		$AdditionalOptions	"$BASE /Zc:inline" [$AT_LEAST_VS2013]
+
+		$AdditionalOptions	"$BASE /Zc:threadSafeInit-" [$AT_LEAST_VS2015] //thread-safe static initialization will crash on Windows XP if the dll is dynamically loaded
+
+		$AdditionalOptions	"$BASE /Wv:18" [$AT_LEAST_VS2015 && !$WARN_ALL] //warning C4456: declaration of 'accFactorZ' hides previous local declaration suppression
 	}
 }

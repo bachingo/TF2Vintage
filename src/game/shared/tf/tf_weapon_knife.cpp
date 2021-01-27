@@ -183,14 +183,15 @@ void CTFKnife::PrimaryAttack( void )
 		if ( !m_hBackstabVictim || m_hBackstabVictim->IsAlive() )
 			return;
 
-		int nHealthToSteal = Max( 5, iVictimHealth );
-		int nHealthToAdd = clamp(nHealthToSteal, 0, ((pPlayer->m_Shared.GetMaxBuffedHealth() * 2) - pPlayer->GetHealth()));
+		const int nHealthToSteal = Min( pPlayer->m_Shared.GetMaxBuffedHealth() * 2, iVictimHealth + pPlayer->GetHealth() );
+		const int nHealthToAdd = nHealthToSteal - pPlayer->GetHealth();
 		if ( nHealthToAdd > 0 )
 		{
 			pPlayer->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
 			pPlayer->m_Shared.HealthKitPickupEffects( nHealthToAdd );
-			pPlayer->m_Shared.SetNextSanguisugeDecay();
-			pPlayer->m_Shared.ChangeSanguisugeHealth(nHealthToAdd);
+
+			if( pPlayer->m_Shared.GetBestOverhealDecayMult() == -1.0f )
+				pPlayer->m_Shared.SetBestOverhealDecayMult( 0.5f );
 		}
 	}
 #endif

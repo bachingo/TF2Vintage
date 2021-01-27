@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "tier0/threadtools.h"
 typedef int SOCKET;
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR   -1
@@ -21,13 +22,12 @@ typedef int SOCKET;
 #include <vector>
 #define type sq_type
 
-#if !defined( POSIX )
-#include <winsock.h>
-#endif
-
 /*
 	see copyright notice in sqrdbg.h
 */
+#if !defined( POSIX )
+#include <winsock.h>
+#endif
 
 typedef std::basic_string<SQChar> SQDBGString;
 

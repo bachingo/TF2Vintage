@@ -42,8 +42,11 @@ PlayerClass
 		"tf_ammo_primary"	"16"
 		"tf_ammo_secondary"	"24"
 		"tf_ammo_metal"		"200"
-		"tf_ammo_grenades1"	"1"
-		"tf_ammo_grenades2"	"1"
+		"tf_ammo_grenades1"	"4"
+		"tf_ammo_grenades2"	"2"
+		"tf_ammo_special1"	"1"
+		"tf_ammo_special2"	"1"
+		"tf_ammo_special3"	"1"
 	}
 
 	// Death Sounds

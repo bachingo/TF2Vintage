@@ -51,7 +51,7 @@ int vec3_new( lua_State *L )
 
 	Vector *pVector = (Vector *)lua_newuserdata( L, sizeof Vector );
 
-	lua_getfield( L, LUA_GLOBALSINDEX, "Vec3" );
+	luaL_getmetatable( L, "Vec3" );
 	lua_setmetatable( L, -2 );
 
 	pVector->x = luaL_optnumber( L, 1, 0.0 );

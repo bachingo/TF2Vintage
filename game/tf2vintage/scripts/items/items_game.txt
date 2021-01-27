@@ -3839,6 +3839,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_bat.mdl"
+			"v_model"	"models/weapons/v_models/v_bat_scout.mdl"
 		}
 		"1"
 		{
@@ -3847,6 +3849,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_bottle.mdl"
+			"v_model"	"models/weapons/v_models/v_bottle_demoman.mdl"
 		}
 		"2"
 		{
@@ -3855,6 +3859,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_fireaxe.mdl"
+			"v_model"	"models/weapons/v_models/v_fireaxe_pyro.mdl"
 		}
 		"3"
 		{
@@ -3863,6 +3869,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_machete.mdl"
+			"v_model"	"models/weapons/v_models/v_machete_sniper.mdl"
 		}
 		"4"
 		{
@@ -3871,6 +3879,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_knife.mdl"
+			"v_model"	"models/weapons/v_models/v_knife_spy.mdl"
 		}
 		"5"
 		{
@@ -3879,6 +3889,7 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"v_model"	"models/weapons/v_models/v_fist_heavy.mdl"
 		}
 		"6"
 		{
@@ -3887,6 +3898,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_shovel.mdl"
+			"v_model"	"models/weapons/v_models/v_shovel_soldier.mdl"
 		}
 		"7"
 		{
@@ -3895,6 +3908,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_wrench.mdl"
+			"v_model"	"models/weapons/v_models/v_wrench_engineer.mdl"
 		}
 		"8"
 		{
@@ -3903,6 +3918,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_bonesaw.mdl"
+			"v_model"	"models/weapons/v_models/v_bonesaw_medic.mdl
 		}
 		"9"
 		{
@@ -3916,6 +3933,8 @@
 			{
 				"engineer"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_engineer.mdl"
 		}
 		"10"
 		{
@@ -3929,6 +3948,8 @@
 			{
 				"soldier"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_soldier.mdl"
 		}
 		"11"
 		{
@@ -3942,6 +3963,8 @@
 			{
 				"heavy"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_heavy.mdl"
 		}
 		"12"
 		{
@@ -3955,6 +3978,8 @@
 			{
 				"pyro"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_shotgun.mdl"
+			"v_model"	"models/weapons/v_models/v_shotgun_pyro.mdl"
 		}
 		"13"
 		{
@@ -3963,6 +3988,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_scattergun.mdl"
+			"v_model"	"models/weapons/v_models/v_scattergun_scout.mdl"
 		}
 		"14"
 		{
@@ -3971,6 +3998,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_sniperrifle.mdl"
+			"v_model"	"models/weapons/v_models/v_sniperrifle_sniper.mdl"
 		}
 		"15"
 		{
@@ -3979,6 +4008,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model" "models/weapons/v_models/v_minigun_heavy.mdl"
+			"v_model" "models/weapons/v_models/v_minigun_heavy.mdl"
 		}
 		"16"
 		{
@@ -3987,6 +4018,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_smg.mdl"
+			"v_model"	"models/weapons/v_models/v_smg_sniper.mdl"
 		}
 		"17"
 		{
@@ -3995,6 +4028,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_syringegun.mdl"
+			"v_model"	"models/weapons/v_models/v_syringegun_medic.mdl"
 		}
 		"18"
 		{
@@ -4003,6 +4038,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_rocketlauncher.mdl"
+			"v_model"	"models/weapons/v_models/v_rocketlauncher_soldier.mdl"
 		}
 		"19"
 		{
@@ -4011,6 +4048,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_grenadelauncher.mdl"
+			"v_model"	"models/weapons/v_models/v_grenadelauncher_demo.mdl"
 		}
 		"20"
 		{
@@ -4019,6 +4058,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_stickybomb_launcher.mdl"
+			"v_model"	"models/weapons/v_models/v_stickybomb_launcher_demo.mdl"
 		}
 		"21"
 		{
@@ -4037,6 +4078,8 @@
 					}
 				}
 			}
+			"w_model"	"models/weapons/w_models/w_flamethrower.mdl"
+			"v_model"	"models/weapons/v_models/v_flamethrower_pyro.mdl"
 		}
 		"22"
 		{
@@ -4049,6 +4092,8 @@
 			{
 				"engineer"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_pistol.mdl"
+			"v_model"	"models/weapons/v_models/v_pistol_engineer.mdl"
 		}
 		"23"
 		{
@@ -4061,6 +4106,8 @@
 			{
 				"scout"	"1"
 			}
+			"w_model"	"models/weapons/w_models/w_pistol.mdl"
+			"v_model"	"models/weapons/v_models/v_pistol_scout.mdl"
 		}
 		"24"
 		{
@@ -4069,6 +4116,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_revolver.mdl"
+			"v_model"	"models/weapons/v_models/v_revolver_spy.mdl"
 		}
 		"25"
 		{
@@ -4077,6 +4126,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_builder.mdl"
+			"v_model"	"models/weapons/v_models/v_builder_engineer.mdl"
 		}
 		"26"
 		{
@@ -4085,6 +4136,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_pda_engineer.mdl"
+			"v_model"	"models/weapons/v_models/v_pda_engineer.mdl"
 		}
 		"27"
 		{
@@ -4093,6 +4146,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_cigarette_case.mdl"
+			"v_model"	"models/weapons/v_models/v_pda_spy.mdl"
 		}
 		"28"
 		{
@@ -4101,6 +4156,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_toolbox.mdl"
+			"v_model"	"models/weapons/v_models/v_wrench_engineer.mdl"
 		}
 		"29"
 		{
@@ -4109,6 +4166,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_medigun.mdl"
+			"v_model"	"models/weapons/v_models/v_medigun_medic.mdl"
 		}
 		"30"
 		{
@@ -4117,6 +4176,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_cigarette_case.mdl"
+			"v_model"	"models/weapons/v_models/v_watch_spy.mdl"
 		}
 		"735"
 		{
@@ -4125,6 +4186,8 @@
 			"item_quality" "normal"
 			"year"			"2007"
 			"baseitem"	"1"
+			"w_model"	"models/weapons/w_models/w_sapper.mdl"
+			"v_model"	"models/weapons/v_models/v_sapper_spy.mdl"
 		}
 		"31"
 		{
@@ -4336,15 +4399,35 @@
 					"attribute_class"	"or_crit_vs_playercond"
 					"value"	"1"
 				}
-				"dmg penalty vs nonburning"
+				"dmg penalty vs nonburning AXTINGUISHER"
 				{
-					"attribute_class"	"mult_dmg_vs_nonburning"
+					"attribute_class"	"mult_dmg_vs_nonburning_axtinguisher_0_1"
 					"value"	"0.5"
 				}
 				"crit mod disabled"
 				{
 					"attribute_class"	"mult_crit_chance"
 					"value"	"0"
+				}
+				"damage penalty AXTINGUISHER"
+				{
+					"attribute_class" 	"mult_dmg_axtinguisher_2_3"
+					"value" "0.67"
+				}			
+				"single wep deploy time increased AXTINGUISHER 2"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_2"
+					"value"	"1.75"
+				}
+				"fire rate penalty AXTINGUISHER"
+				{
+					"attribute_class"	"mult_postfiredelay_axtinguisher_2"
+					"value"	"1.2"
+				}
+				"single wep deploy time increased AXTINGUISHER 3"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_3"
+					"value"	"1.35"
 				}
 			}
 		}
@@ -5967,6 +6050,21 @@
 					"attribute_class"	"mult_dmg"
 					"value"	".75"
 				}
+				"fire rate bonus JAG"
+				{
+					"attribute_class"	"mult_postfiredelay_jag"
+					"value"	"0.85"
+				}
+				"Repair rate decreased JAG"
+				{
+					"attribute_class"	"mult_repair_value_jag"
+					"value"	"0.80"
+				}
+				"dmg penalty vs buildings JAG"
+				{
+					"attribute_class"	"mult_dmg_vs_buildings_jag"
+					"value" "0.67"
+				}
 			}
 		}
 		"331"
@@ -6940,9 +7038,9 @@
 					"attribute_class"	"add_maxhealth"
 					"value" "-25"
 				}
-				"speed_boost_on_kill"
+				"speed_boost_on_kill_bigearner"
 				{
-					"attribute_class"	"speed_boost_on_kill"
+					"attribute_class"	"speed_boost_on_kill_bigearner"
 					"value"	"3"
 				}
 			}
@@ -8109,6 +8207,63 @@
 			"name"	"The Iron Bomber"
 			"prefab"	"weapon_quadball"
 			"year"			"2014"
+		}
+		"1152"
+		{
+			"name"		"TF_WEAPON_GRAPPLINGHOOK"
+			"item_class"	"tf_weapon_grapplinghook"
+			"item_type_name"	"#TF_Weapon_GrapplingHook"
+			"item_name"	"#TF_Weapon_GrapplingHook"
+			"item_description"	"#TF_Weapon_GrapplingHook_desc"
+			"item_logname"	"grappling_hook"
+			"item_iconname"	"grappling_hook"
+			"item_slot"	"action"
+			"item_quality"	"normal"
+			"image_inventory"	"backpack/weapons/c_models/c_grappling_hook/c_grappling_hook"
+			"model_player"	"models/weapons/c_models/c_grappling_hook/c_grappling_hook.mdl"
+			"attach_to_hands"	"1"
+			"anim_slot" "MELEE_ALLCLASS"
+			"used_by_classes"
+			{
+				"scout"		"1"
+				"sniper"	"1"
+				"soldier"	"1"
+				"demoman"	"1"
+				"medic"		"1"
+				"heavy"		"1"
+				"spy" 		"1"
+				"engineer" 	"1"
+				"pyro" 		"1"
+			}
+			"attributes"
+			{
+				"reload time increased hidden"
+				{
+					"attribute_class"	"mult_reload_time_hidden"
+					"value"	"0"
+				}
+				"override projectile type"
+				{
+					"attribute_class"	"override_projectile_type"
+					"value"				"26" 
+				}
+				"single wep deploy time decreased"
+				{
+					"attribute_class"	"mult_single_wep_deploy_time"
+					"value"	"0"
+				}
+				"switch from wep deploy time decreased"
+				{
+					"attribute_class"	"mult_switch_from_wep_deploy_time"
+					"value"	"0.2"
+				}
+				"force weapon switch"
+				{
+					"attribute_class"	"force_weapon_switch"
+					"value"	"1"
+				}
+			}
+			"baseitem" "1"
 		}
 		"1153"
 		{
@@ -18221,6 +18376,94 @@
 			"effect_type"	"positive"
 			"stored_as_integer"	"0"
 		}
+		"10017"
+		{
+			"name"	"fire rate bonus JAG"
+			"attribute_class"	"mult_postfiredelay_jag"
+			"description_string"	"#Attrib_FireRate_Positive"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"0"
+			"effect_type"	"positive"
+			"stored_as_integer"	"0"
+		}
+		"10018"
+		{
+			"name"	"Repair rate decreased JAG"
+			"attribute_class"	"mult_repair_value_jag"
+			"description_string"	"#Attrib_RepairRate_Decreased"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10019"
+		{
+			"name"	"dmg penalty vs buildings JAG"
+			"attribute_class"	"mult_dmg_vs_buildings_jag"
+			"description_string"	"#Attrib_DmgVsBuilding_decreased"
+			"description_format"	"value_is_percentage"
+			"effect_type"	"negative"
+		}
+		"10020"
+		{
+			"name"	"speed_boost_on_kill_bigearner"
+			"attribute_class"	"speed_boost_on_kill_bigearner"
+			"description_string"	"#Attrib_SpeedBoostOnKill"
+			"description_format"	"value_is_additive"
+			"hidden"	"0"
+			"effect_type"	"positive"
+		}
+		"10021"
+		{
+			"name"	"dmg penalty vs nonburning AXTINGUISHER"
+			"attribute_class"	"mult_dmg_vs_nonburning_axtinguisher_0_1"
+			"description_string"	"#Attrib_DmgPenaltyVsNonBurning"
+			"description_format"	"value_is_percentage"
+			"hidden"	"0"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10022"
+		{
+			"name"	"damage penalty AXTINGUISHER"
+			"attribute_class"	"mult_dmg_axtinguisher_2_3"
+			"description_string"	"#Attrib_DamageDone_Negative"
+			"description_format"	"value_is_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10023"
+		{
+			"name"	"single wep deploy time increased AXTINGUISHER 2"
+			"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_2"
+			"description_string"	"#Attrib_SingleWepDeployPenalty"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10024"
+		{
+			"name"	"single wep deploy time increased AXTINGUISHER 3"
+			"attribute_class"	"mult_single_wep_deploy_time_axtinguisher_3"
+			"description_string"	"#Attrib_SingleWepDeployPenalty"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		"10025"
+		{
+			"name"	"fire rate penalty AXTINGUISHER"
+			"attribute_class"	"mult_postfiredelay_axtinguisher_2"
+			"description_string"	"#Attrib_FireRate_Negative"
+			"description_format"	"value_is_inverted_percentage"
+			"hidden"	"1"
+			"effect_type"	"negative"
+			"stored_as_integer"	"0"
+		}
+		
 	}
 	"attribute_controlled_attached_particles"
 	{

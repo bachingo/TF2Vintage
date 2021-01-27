@@ -1,4 +1,4 @@
-//========== Copyright © 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright ï¿½ 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -18,7 +18,7 @@
 #include "netpropmanager.h"
 #include "AI_Criteria.h"
 #include "AI_ResponseSystem.h"
-#ifdef IS_WINDOWS_PC
+#if defined( _WIN32 ) || defined( POSIX )
 #include "vscript_server_nut.h"
 #endif
 
@@ -691,7 +691,7 @@ static const char *Script_FileToString( const char *pszFileName )
 	if ( fh == FILESYSTEM_INVALID_HANDLE )
 		return NULL;
 
-	char szString[16384];
+	static char szString[16384];
 	int size = g_pFullFileSystem->Size(fh) + 1;
 	if ( size > sizeof(szString) )
 	{
@@ -703,8 +703,7 @@ static const char *Script_FileToString( const char *pszFileName )
 	g_pFullFileSystem->Read( szString, size, fh );
 	g_pFullFileSystem->Close(fh);
 
-	const char *pszString = (const char*)szString;
-	return pszString;
+	return szString;
 }
 
 static void Script_ScreenShake( const Vector &center, float amplitude, float frequency, float duration, float radius, int eCommand, bool bAirShake )

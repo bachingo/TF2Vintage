@@ -79,6 +79,10 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #endif
 END_NETWORK_TABLE()
 
+#define TF_GRENADE_RADIUS					146.0f
+#define TF_GRENADE_RADIUS_OLD				159.0f
+#define TF_GRENADE_SELF_DAMAGE_RADIUS		146.0f
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor.
 //-----------------------------------------------------------------------------
@@ -131,19 +135,7 @@ int	CTFWeaponBaseGrenadeProj::GetDamageType()
 float CTFWeaponBaseGrenadeProj::GetDamageRadius( void )
 {
 	float flRadius = BaseClass::GetDamageRadius();
-	if ( tf2v_use_new_grenade_radius.GetBool() )
-		flRadius *= (146 / 159 );
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), flRadius, mult_explosion_radius );
-	// If we're blast jumping with an attack bonus, decrease radius by 20%.
-	CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-	{
-		float flRocketJumpBonus = 1.0f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( m_hLauncher.Get(), flRocketJumpBonus, rocketjump_attackrate_bonus );
-		if (flRocketJumpBonus != 1.0f)
-			flRadius *= 0.8;
-	}
-	
 	return flRadius;
 }
 
@@ -261,6 +253,8 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, 
 									CBaseCombatCharacter *pOwner, int nDamage, float flRadius )
 {
+	NOTE_UNUSED( flRadius );
+
 	// We can't use OwnerEntity for grenades, because then the owner can't shoot them with his hitscan weapons (due to collide rules)
 	// Thrower is used to store the person who threw the grenade, for damage purposes.
 	SetOwnerEntity( NULL );
@@ -268,13 +262,12 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 
 	SetupInitialTransmittedGrenadeVelocity( velocity );
 
-
 	SetGravity( 0.4f/*BaseClass::GetGrenadeGravity()*/ ); 
 	SetFriction( 0.2f ); /*BaseClass::GetGrenadeFriction()*/
 	SetElasticity( 0.45f );  /*BaseClass::GetGrenadeElasticity()*/
 
 	SetDamage( nDamage );
-	SetDamageRadius( flRadius );
+	SetDamageRadius( tf2v_use_new_grenade_radius.GetBool() ? TF_GRENADE_RADIUS : TF_GRENADE_RADIUS_OLD );
 
 	ChangeTeam( pOwner->GetTeamNumber() );
 
@@ -381,25 +374,18 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 		}
 	}
 
+	const float flRadius = GetDamageRadius();
+	
 	// Use the thrower's position as the reported position
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
-
-	float flRadius = GetDamageRadius();
-	int iDamage = GetDamage();
+	CTakeDamageInfo newInfo( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), GetDamage(), bitsDamageType, GetDamageCustom(), &vecReported );
+	CTFRadiusDamageInfo radiusInfo( &newInfo, GetAbsOrigin(), flRadius, NULL, TF_GRENADE_SELF_DAMAGE_RADIUS );
+	TFGameRules()->RadiusDamage( radiusInfo );
 
 	if ( tf_grenade_show_radius.GetBool() )
 	{
 		DrawRadius( flRadius );
 	}
-
-	CTakeDamageInfo newInfo( this, GetThrower(), m_hLauncher, GetBlastForce(), GetAbsOrigin(), iDamage, bitsDamageType, GetDamageCustom(), &vecReported );
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = vecOrigin;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius;
-
-	TFGameRules()->RadiusDamage( radiusInfo );
 
 	// Don't decal players with scorch.
 	if ( pTrace->m_pEnt && !pTrace->m_pEnt->IsPlayer() )

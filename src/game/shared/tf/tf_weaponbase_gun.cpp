@@ -28,6 +28,7 @@
 	#include "tf_weapon_mechanical_arm.h"
 	#include "tf_projectile_energyball.h"
 	#include "tf_projectile_energy_ring.h"
+	#include "tf_weapon_flaregun.h"
 	#include "te.h"
 
 	#include "tf_gamerules.h"
@@ -116,6 +117,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	CalcIsAttackCritical();
 
 #ifndef CLIENT_DLL
+	pPlayer->RemoveInvisibility();
 
 	// Minigun has custom handling
 	if ( GetWeaponID() != TF_WEAPON_MINIGUN )
@@ -125,8 +127,12 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACrit() );
 #endif
 
-	// Set the weapon mode.
-	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+	// Minigun has custom handling
+	if ( GetWeaponID() != TF_WEAPON_MINIGUN )
+	{
+		// Set the weapon mode.
+		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+	}
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
@@ -134,20 +140,35 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	FireProjectile( pPlayer );
 
-	m_flLastFireTime  = gpGlobals->curtime;
-
 	// Set next attack times.
 	float flFireDelay = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
 	CALL_ATTRIB_HOOK_FLOAT( flFireDelay, mult_postfiredelay );
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flFireDelay, hwn_mult_postfiredelay );
 	
 	if ( pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-			CALL_ATTRIB_HOOK_FLOAT( flFireDelay, rocketjump_attackrate_bonus );
+		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, rocketjump_attackrate_bonus );
 		
-	float flHealthModFireBonus = 1;
+	float flHealthModFireBonus = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( flHealthModFireBonus, mult_postfiredelay_with_reduced_health );
-	if (flHealthModFireBonus != 1)
+	if (flHealthModFireBonus != 1.0f)
 	{
 		flFireDelay *= RemapValClamped( pPlayer->GetHealth() / pPlayer->GetMaxHealth(), 0.2, 0.9, flHealthModFireBonus, 1.0 );
+	}
+
+	if ( !UsesClipsForAmmo1() )
+	{
+		const float flBaseFireDelay = flFireDelay;
+		CALL_ATTRIB_HOOK_FLOAT( flFireDelay, fast_reload );
+
+		const float flPlaybackRate = flBaseFireDelay / (flFireDelay + FLT_EPSILON);
+		if ( pPlayer->GetViewModel( 0 ) )
+		{
+			pPlayer->GetViewModel( 0 )->SetPlaybackRate( flPlaybackRate );
+		}
+		if ( pPlayer->GetViewModel( 1 ) )
+		{
+			pPlayer->GetViewModel( 1 )->SetPlaybackRate( flPlaybackRate );
+		}
 	}
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFireDelay;
@@ -161,12 +182,16 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 
 	AbortReload();
-	
-	// Put these at the end, so we get the disguise/invis bonuses.
+
 #ifndef CLIENT_DLL
-	pPlayer->RemoveInvisibility();
-	pPlayer->RemoveDisguise();
+	int nKeepDisguise = 0;
+	CALL_ATTRIB_HOOK_INT( nKeepDisguise, keep_disguise_on_attack );
+	if( nKeepDisguise == 0 )
+	{
+		pPlayer->RemoveDisguise();
+	}
 #endif
+	m_flLastFireTime = gpGlobals->curtime;
 }	
 
 //-----------------------------------------------------------------------------
@@ -399,8 +424,15 @@ void CTFWeaponBaseGun::GetProjectileReflectSetup( CTFPlayer *pPlayer, const Vect
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates /* = true */, bool bUseHitboxes /* = false */ )
 {
+	int nCenterFireProjectile = 0;
+	CALL_ATTRIB_HOOK_INT( nCenterFireProjectile, centerfire_projectile );
+	if ( nCenterFireProjectile == 1 )
+	{
+		vecOffset.y = 0;
+	}
+
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+	AngleVectors( GetSpreadAngles(), &vecForward, &vecRight, &vecUp );
 
 	Vector vecShootPos = pPlayer->Weapon_ShootPosition();
 
@@ -476,6 +508,22 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 	
 }
 
+QAngle CTFWeaponBaseGun::GetSpreadAngles( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	QAngle angSpread = pOwner->EyeAngles();
+
+	float flSpreadAngle = 0.0f; 
+	CALL_ATTRIB_HOOK_FLOAT( flSpreadAngle, projectile_spread_angle );
+	if ( flSpreadAngle )
+	{
+		angSpread.x += RandomFloat( -flSpreadAngle, flSpreadAngle );
+		angSpread.y += RandomFloat( -flSpreadAngle, flSpreadAngle );
+	}
+
+	return angSpread;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Fire a rocket
 //-----------------------------------------------------------------------------
@@ -486,37 +534,14 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	// Server only - create the rocket.
 #ifdef GAME_DLL
 	Vector vecSrc;
-	Vector vecOffset( 0.0f, 0.0f, 0.0f );
+	Vector vecOffset(23.5f, 12.0f, -3.0f);
 	QAngle angForward;
-
-	int isQuakeRL = 0;
-	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
-
-	if( isQuakeRL > 0 )
-	{
-		vecOffset.z = -3.0f;
-	}
-	else
-	{
-		vecOffset.x = 23.5f;
-		vecOffset.y = 12.0f;
-		vecOffset.z = -3.0f;
-	}
 
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
 		vecOffset.z = 8.0f;
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
-
-	// Add attribute spread.
-	float flSpread = 0;
-	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
-	if ( flSpread != 0)
-	{
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
 
 	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);
 	if ( pProjectile )
@@ -536,34 +561,13 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bCharged /* ==false */ )
 {
-	if ( IsCurrentAttackACrit() || bCharged )
-	{
-		WeaponSound( BURST );
-	}
-	else
-	{
-		WeaponSound( SINGLE );
-	}
+	PlayWeaponShootSound();
 
 	// Server only - create the rocket.
 #ifdef GAME_DLL
 	Vector vecSrc;
-	Vector vecOffset( 0.0f, 0.0f, 0.0f );
+	Vector vecOffset(23.5f, -8.0f, -3.0f);
 	QAngle angForward;
-
-	int isQuakeRL = 0;
-	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
-
-	if( isQuakeRL > 0 )
-	{
-		vecOffset.z = -3.0f;
-	}
-	else
-	{
-		vecOffset.x = 23.5f;
-		vecOffset.y = 12.0f;
-		vecOffset.z = -3.0f;
-	}
 
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
@@ -571,21 +575,14 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyBall( CTFPlayer *pPlayer, bool bCharged
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
-	// Add attribute spread.
-	float flSpread = 0;
-	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
-	if ( flSpread != 0)
-	{
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
-
-	CTFEnergyBall *pProjectile = CTFEnergyBall::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	CTFProjectile_EnergyBall *pProjectile = CTFProjectile_EnergyBall::Create( this, vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
-		pProjectile->SetIsCharged(bCharged);
+		pProjectile->SetIsCharged( bCharged );
+		pProjectile->SetColor( 1, GetEnergyWeaponColor( false ) );
+		pProjectile->SetColor( 2, GetEnergyWeaponColor( true ) );
 	}
 	return pProjectile;
 
@@ -604,22 +601,8 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyRing( CTFPlayer *pPlayer )
 	// Server only - create the rocket.
 #ifdef GAME_DLL
 	Vector vecSrc;
-	Vector vecOffset( 0.0f, 0.0f, 0.0f );
+	Vector vecOffset(23.5f, -8.0f, -3.0f);
 	QAngle angForward;
-
-	int isQuakeRL = 0;
-	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
-
-	if( isQuakeRL > 0 )
-	{
-		vecOffset.z = -3.0f;
-	}
-	else
-	{
-		vecOffset.x = 23.5f;
-		vecOffset.y = 12.0f;
-		vecOffset.z = -3.0f;
-	}
 
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
@@ -659,37 +642,14 @@ CBaseEntity *CTFWeaponBaseGun::FireFireBall( CTFPlayer *pPlayer )
 	// Server only - create the rocket.
 #ifdef GAME_DLL
 	Vector vecSrc;
-	Vector vecOffset( 0.0f, 0.0f, 0.0f );
+	Vector vecOffset(23.5f, 12.0f, -3.0f);
 	QAngle angForward;
-
-	int isQuakeRL = 0;
-	CALL_ATTRIB_HOOK_INT( isQuakeRL, centerfire_projectile );
-
-	if( isQuakeRL > 0 )
-	{
-		vecOffset.z = -3.0f;
-	}
-	else
-	{
-		vecOffset.x = 23.5f;
-		vecOffset.y = 12.0f;
-		vecOffset.z = -3.0f;
-	}
 
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
 		vecOffset.z = 8.0f;
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
-
-	// Add attribute spread.
-	float flSpread = 0;
-	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
-	if ( flSpread != 0)
-	{
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
 
 	CTFProjectile_BallOfFire *pProjectile = CTFProjectile_BallOfFire::Create( this, vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
@@ -714,37 +674,14 @@ CBaseEntity *CTFWeaponBaseGun::FireEnergyOrb(CTFPlayer *pPlayer)
 	// Server only - create the rocket.
 #ifdef GAME_DLL
 	Vector vecSrc;
-	Vector vecOffset(0.0f, 0.0f, 0.0f);
+	Vector vecOffset(23.5f, 12.0f, -3.0f);
 	QAngle angForward;
-
-	int isQuakeRL = 0;
-	CALL_ATTRIB_HOOK_INT(isQuakeRL, centerfire_projectile);
-
-	if (isQuakeRL > 0)
-	{
-		vecOffset.z = -3.0f;
-	}
-	else
-	{
-		vecOffset.x = 23.5f;
-		vecOffset.y = 12.0f;
-		vecOffset.z = -3.0f;
-	}
 
 	if (pPlayer->GetFlags() & FL_DUCKING)
 	{
 		vecOffset.z = 8.0f;
 	}
 	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
-
-	// Add attribute spread.
-	float flSpread = 0;
-	CALL_ATTRIB_HOOK_FLOAT(flSpread, projectile_spread_angle);
-	if (flSpread != 0)
-	{
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
 
 	CTFProjectile_MechanicalArmOrb *pOrb = CTFProjectile_MechanicalArmOrb::Create(this, vecSrc, angForward, pPlayer, pPlayer);
 	if (pOrb)
@@ -772,15 +709,14 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	GetProjectileFireSetup( pPlayer, Vector(16,6,-8), &vecSrc, &angForward );
 
 	// Add some extra spread to our nails.
-	float flSpread = 1.5;
-	CALL_ATTRIB_HOOK_FLOAT(flSpread, projectile_spread_angle);
-	angForward.x += RandomFloat(-flSpread, flSpread);
-	angForward.y += RandomFloat(-flSpread, flSpread);
+	const float flSpread = 1.5 + GetProjectileSpread();
 
 	CTFBaseProjectile *pProjectile = NULL;
 	switch( iSpecificNail )
 	{
 	case TF_PROJECTILE_SYRINGE:
+		angForward.x += RandomFloat(-flSpread, flSpread);
+		angForward.y += RandomFloat(-flSpread, flSpread);
 		pProjectile = CTFProjectile_Syringe::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit(), this );
 		break;
 
@@ -801,6 +737,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		pProjectile->SetWeaponID( GetWeaponID() );
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 #ifdef GAME_DLL
+		pProjectile->SetLauncher( this );
 		pProjectile->SetDamage( GetProjectileDamage() );
 #endif
 	}
@@ -908,20 +845,17 @@ CBaseEntity *CTFWeaponBaseGun::FireFlare( CTFPlayer *pPlayer )
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
-	// Add attribute spread.
-	float flSpread = 0;
-	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
-	if ( flSpread != 0)
-	{
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
-
 	CTFProjectile_Flare *pProjectile = CTFProjectile_Flare::Create( this, vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
+
+		CTFFlareGun *pFlareGun = dynamic_cast<CTFFlareGun *>( this );
+		if ( pFlareGun && pFlareGun->GetFlareGunMode() == TF_FLARE_MODE_DETONATE )
+		{
+			pFlareGun->AddFlare( pProjectile );
+		}
 	}
 	return pProjectile;
 #endif
@@ -1002,15 +936,6 @@ CBaseEntity *CTFWeaponBaseGun::FireArrow( CTFPlayer *pPlayer, int iType )
 		vecOffset.y *= -1.0f;
 	}*/
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false, true );
-	
-	// Add attribute spread.
-	float flSpread = 0;
-	CALL_ATTRIB_HOOK_FLOAT( flSpread, projectile_spread_angle );
-	if ( flSpread != 0)
-	{
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
 
 	CTFProjectile_Arrow *pProjectile = CTFProjectile_Arrow::Create( this, vecSrc, angForward, GetProjectileSpeed(), GetProjectileGravity(), IsFlameArrow(), pPlayer, pPlayer, iType );
 	if ( pProjectile )
@@ -1110,8 +1035,11 @@ int CTFWeaponBaseGun::GetAmmoPerShot( void ) const
 void CTFWeaponBaseGun::RemoveAmmo( CTFPlayer *pPlayer )
 {
 #ifndef CLIENT_DLL
-
-	if (UsesClipsForAmmo1())
+	if (IsEnergyWeapon())
+	{
+		Energy_DrainEnergy();
+	}
+	else if (UsesClipsForAmmo1())
 	{
 		m_iClip1 -= GetAmmoPerShot();
 	}
@@ -1119,14 +1047,14 @@ void CTFWeaponBaseGun::RemoveAmmo( CTFPlayer *pPlayer )
 	{
 		if (m_iWeaponMode == TF_WEAPON_PRIMARY_MODE)
 		{
-			if ( !BaseClass::IsEnergyWeapon() )
+			if (!IsEnergyWeapon())
 				pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iPrimaryAmmoType );
 			if (0 < m_iRefundedAmmo)
 				pPlayer->GiveAmmo( m_iRefundedAmmo, m_iPrimaryAmmoType );
 		}
 		else
 		{
-			if ( !BaseClass::IsEnergyWeapon() )
+			if (!IsEnergyWeapon())
 				pPlayer->RemoveAmmo( GetAmmoPerShot(), m_iSecondaryAmmoType );
 			if (0 < m_iRefundedAmmo)
 				pPlayer->GiveAmmo( m_iRefundedAmmo, m_iSecondaryAmmoType );
@@ -1135,24 +1063,6 @@ void CTFWeaponBaseGun::RemoveAmmo( CTFPlayer *pPlayer )
 		m_iRefundedAmmo = 0;
 	}
 #endif
-}
-//-----------------------------------------------------------------------------
-// Purpose: Accessor for damage, so sniper etc can modify damage
-//-----------------------------------------------------------------------------
-float CTFWeaponBaseGun::GetProjectileSpeed( void )
-{
-	// placeholder for now
-	// grenade launcher and pipebomb launcher hook this to set variable pipebomb speed
-
-	return 0;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Accessor for gravity, so sniper etc can modify gravity
-//-----------------------------------------------------------------------------
-float CTFWeaponBaseGun::GetProjectileGravity(void)
-{
-	return 0.001f;
 }
 
 //-----------------------------------------------------------------------------

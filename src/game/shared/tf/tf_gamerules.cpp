@@ -16,11 +16,13 @@
 #include "tf_zombie.h"
 #include "entity_bossresource.h"
 #include "vscript_shared.h"
+#include "bannedwords.h"
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
 	#include "c_tf_objective_resource.h"
 	#include "c_user_message_register.h"
+	#include "tf_autorp.h"
 #else
 	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
@@ -54,6 +56,7 @@
 	#include "tf_weaponbase_grenadeproj.h"
 	#include "eventqueue.h"
 	#include "nav_mesh.h"
+	#include "tf_logic_entities.h"
 	#include "bot/tf_bot_manager.h"
 	#include "entity_wheelofdoom.h"
 	#include "player_vs_environment/merasmus.h"
@@ -66,15 +69,81 @@
 
 #define ITEM_RESPAWN_TIME	10.0f
 
-void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue );
-void ValidateCapturesPerRound( IConVar *var, const char *pOldValue, float flOldValue );
-
-enum
+//=============================================================================
+void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
 {
-	HOLIDAY_RECALCULATE,
-	HOLIDAY_OFF,
-	HOLIDAY_ON,
-};
+	ConVarRef cvar( var );
+	if ( cvar.IsValid() )
+	{
+		if( cvar.GetBool() )
+		{
+		#if defined( CLIENT_DLL )
+			C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+			if ( pLocal == nullptr )
+				return;
+
+			if ( RandomInt( 0, 100 ) <= 15 )
+			{
+				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeRare" );
+			}
+			else
+			{
+				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeCommon" );
+			}
+		#endif
+		}
+	}
+}
+
+void ForcedHolidayChanged( IConVar *var, const char *oldValue, float flOldValue )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+}
+
+void MedievalModeChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	ConVarRef var( pConVar );
+	bool bOldValue = flOldValue > 0;
+	if ( var.IsValid() && ( bOldValue != var.GetBool() ) )
+	{
+		Msg( "Medieval mode changes take effect after the next map change.\n" );
+	}
+}
+
+void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
+{
+#ifdef GAME_DLL
+	ConVarRef var( pConVar );
+
+	if ( var.GetInt() <= 0 )
+	{
+		// reset the flag captures being played in the current round
+		int nTeamCount = TFTeamMgr()->GetTeamCount();
+		for ( int iTeam = FIRST_GAME_TEAM; iTeam < nTeamCount; ++iTeam )
+		{
+			CTFTeam *pTeam = GetGlobalTFTeam( iTeam );
+			if ( !pTeam )
+				continue;
+
+			pTeam->SetFlagCaptures( 0 );
+		}
+	}
+#endif
+}
+
+void StopwatchChanged( IConVar *pConVar, const char *pOldString, float flOldValue )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( "stop_watch_changed" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+}
+//=============================================================================
 
 static int g_TauntCamAchievements[] =
 {
@@ -101,7 +170,28 @@ extern ConVar mp_tournament;
 
 ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
+ConVar tf_spells_enabled( "tf_spells_enabled", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable to Allow Halloween Spells to be dropped and used by players" );
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_REPLICATED, "Forced holiday, \n   Birthday = 1\n   Halloween = 2\n" //  Christmas = 3\n   Valentines = 4\n   MeetThePyro = 5\n   FullMoon=6
+					  #if defined( GAME_DLL )
+						  , ForcedHolidayChanged
+					  #endif
+);
+ConVar tf_item_based_forced_holiday( "tf_item_based_forced_holiday", "0", FCVAR_REPLICATED, "" 	// like a clone of tf_forced_holiday, but controlled by client consumable item use
+								 #if defined( GAME_DLL )
+									 , ForcedHolidayChanged
+								 #endif
+);
+ConVar tf_force_holidays_off( "tf_force_holidays_off", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, ""
+						  #if defined( GAME_DLL )
+							  , ForcedHolidayChanged
+						  #endif
+);
+ConVar tf_medieval( "tf_medieval", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable Medieval Mode.\n", true, 0, true, 1
+				#ifdef GAME_DLL
+					, MedievalModeChanged
+				#endif 
+);
 ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, ""
 				 #if defined( CLIENT_DLL )
 					 , HalloweenChanged
@@ -110,12 +200,41 @@ ConVar tf_halloween( "tf_halloween", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, ""
 ConVar tf_christmas( "tf_christmas", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar tf_fullmoon( "tf_fullmoon", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "");
 //ConVar tf_forced_holiday( "tf_forced_holiday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED ); Live TF2 uses this instead but for now lets just use separate ConVars
-ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying." );
+ConVar tf_medieval_autorp( "tf_medieval_autorp", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable Medieval Mode auto-roleplaying.", true, 0, true, 1 );
 ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, "Number of flag captures per round on CTF maps. Set to 0 to disable.", true, 0, true, 9
 						   #if defined( GAME_DLL )
 							   , ValidateCapturesPerRound
 						   #endif
-                             );
+);
+#ifdef CLIENT_DLL
+ConVar tf_particles_disable_weather( "tf_particles_disable_weather", "0", FCVAR_ARCHIVE, "Disable particles related to weather effects." );
+#endif
+
+// Tournament mode
+ConVar mp_tournament_redteamname( "mp_tournament_redteamname", "RED", FCVAR_REPLICATED | FCVAR_HIDDEN );
+ConVar mp_tournament_blueteamname( "mp_tournament_blueteamname", "BLU", FCVAR_REPLICATED | FCVAR_HIDDEN );
+ConVar mp_tournament_stopwatch( "mp_tournament_stopwatch", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Use Stopwatch mode while using Tournament mode (mp_tournament)"
+							#ifdef GAME_DLL
+								, StopwatchChanged 
+							#endif
+);
+ConVar mp_tournament_readymode( "mp_tournament_readymode", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable per-player ready status for tournament mode." );
+ConVar mp_tournament_readymode_min( "mp_tournament_readymode_min", "2", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimum number of players required on the server before players can toggle ready status." );
+ConVar mp_tournament_readymode_team_size( "mp_tournament_readymode_team_size", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimum number of players required to be ready per-team before the game can begin." );
+ConVar mp_tournament_readymode_countdown( "mp_tournament_readymode_countdown", "10", FCVAR_REPLICATED | FCVAR_NOTIFY, "The number of seconds before a match begins when both teams are ready." );
+
+ConVar tf_tournament_classlimit_scout( "tf_tournament_classlimit_scout", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Scouts.\n" );
+ConVar tf_tournament_classlimit_sniper( "tf_tournament_classlimit_sniper", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Snipers.\n" );
+ConVar tf_tournament_classlimit_soldier( "tf_tournament_classlimit_soldier", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Soldiers.\n" );
+ConVar tf_tournament_classlimit_demoman( "tf_tournament_classlimit_demoman", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Demomen.\n" );
+ConVar tf_tournament_classlimit_medic( "tf_tournament_classlimit_medic", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Medics.\n" );
+ConVar tf_tournament_classlimit_heavy( "tf_tournament_classlimit_heavy", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Heavies.\n" );
+ConVar tf_tournament_classlimit_pyro( "tf_tournament_classlimit_pyro", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Pyros.\n" );
+ConVar tf_tournament_classlimit_spy( "tf_tournament_classlimit_spy", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Spies.\n" );
+ConVar tf_tournament_classlimit_engineer( "tf_tournament_classlimit_engineer", "-1", FCVAR_REPLICATED, "Tournament mode per-team class limit for Engineers.\n" );
+ConVar tf_tournament_classchange_allowed( "tf_tournament_classchange_allowed", "1", FCVAR_REPLICATED, "Allow players to change class while the game is active?.\n" );
+ConVar tf_tournament_classchange_ready_allowed( "tf_tournament_classchange_ready_allowed", "1", FCVAR_REPLICATED, "Allow players to change class after they are READY?.\n" );
+ConVar tf_classlimit( "tf_classlimit", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Limit on how many players can be any class (i.e. tf_class_limit 2 would limit 2 players per class).\n" );
 
 // tf2v specific cvars.
 ConVar tf2v_falldamage_disablespread( "tf2v_falldamage_disablespread", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles random 20% fall damage spread." );
@@ -136,21 +255,29 @@ ConVar tf2v_console_grenadelauncher_magazine("tf2v_console_grenadelauncher_magaz
 
 ConVar tf2v_remove_loser_disguise("tf2v_remove_loser_disguise", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Forces spies on a losing team to undisguise.", true, 0, true, 1 );
 
+#ifdef CLIENT_DLL
+ConVar tf2v_censor_swears( "tf2v_censor_swears", "0", FCVAR_GAMEDLL, "Automatically censor bad words.", true, 0, true, 1 );
+#endif
+
 #ifdef GAME_DLL
+ConVar hide_server( "hide_server", "0", FCVAR_GAMEDLL, "Whether the server should be hidden from the master server" );
+
 // TF overrides the default value of this convar
-ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", ( IsX360() ? "15" : "30" ), FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
+ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", "30", FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
 
 ConVar mp_humans_must_join_team( "mp_humans_must_join_team", "any", FCVAR_GAMEDLL | FCVAR_REPLICATED, "Restricts human players to a single team {any, blue, red, spectator}" );
 
 ConVar tf_arena_force_class( "tf_arena_force_class", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force random classes in arena." );
 ConVar tf_arena_first_blood( "tf_arena_first_blood", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles first blood criticals" );
 ConVar tf_arena_first_blood_length( "tf_arena_first_blood_length", "5.0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Duration of first blood criticals" );
+ConVar tf_arena_override_cap_enable_time( "tf_arena_override_cap_enable_time", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Overrides the time (in seconds) it takes for the capture point to become enable, -1 uses the level designer specified time." );
 
 ConVar tf_gamemode_arena( "tf_gamemode_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_cp( "tf_gamemode_cp", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_ctf( "tf_gamemode_ctf", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_sd( "tf_gamemode_sd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_rd( "tf_gamemode_rd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_tc( "tf_gamemode_tc", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_payload( "tf_gamemode_payload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_plr( "tf_gamemode_plr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_mvm( "tf_gamemode_mvm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
@@ -160,22 +287,11 @@ ConVar tf_gamemode_koth( "tf_gamemode_koth", "0", FCVAR_NOTIFY | FCVAR_REPLICATE
 ConVar tf_gamemode_vsh( "tf_gamemode_vsh", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_dr( "tf_gamemode_dr", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar tf_gamemode_pd( "tf_gamemode_pd", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar tf_gamemode_misc( "tf_gamemode_misc", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 
 ConVar tf_teamtalk( "tf_teamtalk", "1", FCVAR_NOTIFY, "Teammates can always chat with each other whether alive or dead." );
+ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat.", true, 0, true, 1 );
 ConVar tf_ctf_bonus_time( "tf_ctf_bonus_time", "10", FCVAR_NOTIFY, "Length of team crit time for CTF capture." );
-
-ConVar tf_tournament_classlimit_scout( "tf_tournament_classlimit_scout", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Scouts.\n" );
-ConVar tf_tournament_classlimit_sniper( "tf_tournament_classlimit_sniper", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Snipers.\n" );
-ConVar tf_tournament_classlimit_soldier( "tf_tournament_classlimit_soldier", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Soldiers.\n" );
-ConVar tf_tournament_classlimit_demoman( "tf_tournament_classlimit_demoman", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Demomen.\n" );
-ConVar tf_tournament_classlimit_medic( "tf_tournament_classlimit_medic", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Medics.\n" );
-ConVar tf_tournament_classlimit_heavy( "tf_tournament_classlimit_heavy", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Heavies.\n" );
-ConVar tf_tournament_classlimit_pyro( "tf_tournament_classlimit_pyro", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Pyros.\n" );
-ConVar tf_tournament_classlimit_spy( "tf_tournament_classlimit_spy", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Spies.\n" );
-ConVar tf_tournament_classlimit_engineer( "tf_tournament_classlimit_engineer", "-1", FCVAR_NOTIFY, "Tournament mode per-team class limit for Engineers.\n" );
-ConVar tf_tournament_classchange_allowed( "tf_tournament_classchange_allowed", "1", FCVAR_NOTIFY, "Allow players to change class while the game is active?.\n" );
-ConVar tf_tournament_classchange_ready_allowed( "tf_tournament_classchange_ready_allowed", "1", FCVAR_NOTIFY, "Allow players to change class after they are READY?.\n" );
-ConVar tf_classlimit( "tf_classlimit", "0", FCVAR_NOTIFY, "Limit on how many players can be any class (i.e. tf_class_limit 2 would limit 2 players per class).\n" );
 
 extern ConVar tf_halloween_bot_min_player_count;
 
@@ -205,53 +321,68 @@ CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_DEVELOPMENTON
 }
 #endif
 
-void HalloweenChanged( IConVar *var, const char *pOldValue, float flOldValue )
-{
-	ConVarRef cvar( var );
-	if ( cvar.IsValid() )
-	{
-	#if defined( GAME_DLL )
-		tf_halloween_zombie_mob_enabled.SetValue( cvar.GetBool() );
-	#endif
-		if( cvar.GetBool() )
-		{
-		#if defined( CLIENT_DLL )
-			C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
-			if ( pLocal == nullptr )
-				return;
 
-			if ( RandomInt( 0, 100 ) <= 15 )
-			{
-				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeRare" );
-			}
-			else
-			{
-				pLocal->EmitSound( "Halloween.MerasmusHalloweenModeCommon" );
-			}
-		#endif
-		}
-	}
+ConVar tf2v_use_old_models( "tf2v_use_old_models", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows servers to use the v/w model format instead of the modern c models.", true, 0, true, 1 );
+bool UseOldWeaponModels( void )
+{
+	if ( tf2v_use_old_models.GetBool() )
+		return true;
+
+	return false;
 }
 
-void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
+static bool BIsCvarIndicatingHolidayIsActive( int iCvarValue, /*EHoliday*/ int eHoliday )
 {
-#ifdef GAME_DLL
-	ConVarRef var( pConVar );
+	if ( iCvarValue == 0 )
+		return false;
 
-	if ( var.GetInt() <= 0 )
+	// Some values can equal multiple things
+	switch ( eHoliday )
 	{
-		// reset the flag captures being played in the current round
-		int nTeamCount = TFTeamMgr()->GetTeamCount();
-		for ( int iTeam = FIRST_GAME_TEAM; iTeam < nTeamCount; ++iTeam )
-		{
-			CTFTeam *pTeam = GetGlobalTFTeam( iTeam );
-			if ( !pTeam )
-				continue;
-
-			pTeam->SetFlagCaptures( 0 );
-		}
+		case kHoliday_Halloween:
+			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_ValentinesDay:
+			return iCvarValue == kHoliday_ValentinesDay || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_FullMoon:
+			return iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_HalloweenOrFullMoon:
+			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
+		case kHoliday_HalloweenOrFullMoonOrValentines:
+			return iCvarValue == kHoliday_Halloween || iCvarValue == kHoliday_FullMoon || iCvarValue == kHoliday_ValentinesDay || iCvarValue == kHoliday_HalloweenOrFullMoon || iCvarValue == kHoliday_HalloweenOrFullMoonOrValentines;
 	}
-#endif
+
+	return iCvarValue == eHoliday;
+}
+
+bool TF_IsHolidayActive( /*EHoliday*/ int eHoliday )
+{
+	if ( tf_force_holidays_off.GetBool() )
+		return false;
+
+	if ( BIsCvarIndicatingHolidayIsActive( tf_forced_holiday.GetInt(), eHoliday ) )
+		return true;
+
+	if ( BIsCvarIndicatingHolidayIsActive( tf_item_based_forced_holiday.GetInt(), eHoliday ) )
+		return true;
+
+	if ( ( eHoliday == kHoliday_TF2Birthday ) && tf_birthday.GetBool() )
+		return true;
+
+	if ( TFGameRules() )
+	{
+		if ( eHoliday == kHoliday_HalloweenOrFullMoon )
+		{
+			if ( TFGameRules()->IsHolidayMap( kHoliday_Halloween ) )
+				return true;
+			if ( TFGameRules()->IsHolidayMap( kHoliday_FullMoon ) )
+				return true;
+		}
+
+		if ( TFGameRules()->IsHolidayMap( eHoliday ) )
+			return true;
+	}
+
+	return UTIL_IsHolidayActive( eHoliday );
 }
 
 struct StatueInfo_t
@@ -362,11 +493,13 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_hGreenKothTimer ) ), 
 	RecvPropEHandle( RECVINFO( m_hYellowKothTimer ) ),
+	RecvPropInt( RECVINFO( m_nMapHolidayType ) ),
 	RecvPropEHandle( RECVINFO( m_itHandle ) ),
 	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
-
+	RecvPropString( RECVINFO( m_pszCustomUpgradesFile ) ),
+	RecvPropBool( RECVINFO( m_bMannVsMachineAlarmStatus ) ),
+	RecvPropBool( RECVINFO( m_bHaveMinPlayersToEnableReady ) ),
 #else
-
 	SendPropInt( SENDINFO( m_nGameType ), 4, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
@@ -389,9 +522,12 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_hGreenKothTimer ) ), 
 	SendPropEHandle( SENDINFO( m_hYellowKothTimer ) ),
+	SendPropInt( SENDINFO( m_nMapHolidayType ), 3, SPROP_UNSIGNED ),
 	SendPropEHandle( SENDINFO( m_itHandle ) ),
 	SendPropInt( SENDINFO( m_halloweenScenario ) ),
-
+	SendPropString( SENDINFO( m_pszCustomUpgradesFile ) ),
+	SendPropBool( SENDINFO( m_bMannVsMachineAlarmStatus ) ),
+	SendPropBool( SENDINFO( m_bHaveMinPlayersToEnableReady ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -840,536 +976,6 @@ void CTFGameRulesProxy::Activate()
 	BaseClass::Activate();
 }
 
-class CArenaLogic : public CPointEntity
-{
-public:
-	DECLARE_CLASS( CArenaLogic, CPointEntity );
-	DECLARE_DATADESC();
-
-	CArenaLogic();
-
-	void	Spawn( void );
-	void	FireOnCapEnabled( void );
-	//void	ArenaLogicThink( void );
-
-	virtual void InputRoundActivate( inputdata_t &inputdata );
-
-	COutputEvent m_OnArenaRoundStart;
-	COutputEvent m_OnCapEnabled;
-
-private:
-	int		m_iUnlockPoint;
-	bool	m_bCapUnlocked;
-
-};
-
-BEGIN_DATADESC( CArenaLogic )
-	DEFINE_KEYFIELD( m_iUnlockPoint, FIELD_INTEGER, "unlock_point" ),
-
-	DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
-
-	DEFINE_OUTPUT( m_OnArenaRoundStart, "OnArenaRoundStart" ),
-	DEFINE_OUTPUT( m_OnCapEnabled, "OnCapEnabled" ),
-
-	//DEFINE_THINKFUNC( ArenaLogicThink ),
-END_DATADESC()
-
-LINK_ENTITY_TO_CLASS( tf_logic_arena, CArenaLogic );
-
-CArenaLogic::CArenaLogic()
-{
-	m_iUnlockPoint = 60;
-	// If we're VSH mode, unlock time is scaled to player numbers.
-	if ( TFGameRules()->IsInVSHMode() )
-	{
-		CUtlVector<CTFPlayer *> pListPlayers;
-		int iPlayerScale = ( pListPlayers.Count() - 1 ); // Amount of active players, minus the boss player.
-		m_iUnlockPoint = 6 * iPlayerScale; // Unlocks at 6 * player count, in seconds.
-	}
-	m_bCapUnlocked = false;
-}
-
-void CArenaLogic::Spawn( void )
-{
-	BaseClass::Spawn();
-	//SetThink( &CArenaLogic::ArenaLogicThink );
-	//SetNextThink( gpGlobals->curtime );
-}
-
-void CArenaLogic::FireOnCapEnabled( void )
-{
-	if ( m_bCapUnlocked == false )
-	{
-		m_bCapUnlocked = true;
-		m_OnCapEnabled.FireOutput( this, this );
-	}
-}
-
-/*void CArenaLogic::ArenaLogicThink( void )
-{
-	// Live TF2 checks m_fCapEnableTime from TFGameRules here.
-	SetNextThink( gpGlobals->curtime + 0.1 );
-
-#ifdef GAME_DLL
-	if ( TFGameRules()->State_Get() == GR_STATE_STALEMATE )
-	{
-		m_bCapUnlocked = true;
-		m_OnCapEnabled.FireOutput(this, this);
-	}
-#endif
-}*/
-
-void CArenaLogic::InputRoundActivate( inputdata_t &inputdata )
-{
-	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
-	if ( !pMaster )
-		return;
-
-	for ( int i = 0; i < pMaster->GetNumPoints(); i++ )
-	{
-		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
-
-		variant_t sVariant;
-		sVariant.SetInt( m_iUnlockPoint );
-		pPoint->AcceptInput( "SetLocked", NULL, NULL, sVariant, 0 );
-		g_EventQueue.AddEvent( pPoint, "SetUnlockTime", sVariant, 0.1, NULL, NULL );
-	}
-}
-
-class CKothLogic : public CPointEntity
-{
-public:
-	DECLARE_CLASS( CKothLogic, CPointEntity );
-	DECLARE_DATADESC();
-
-	CKothLogic();
-
-	virtual void	InputAddBlueTimer( inputdata_t &inputdata );
-	virtual void	InputAddRedTimer( inputdata_t &inputdata );
-	virtual void	InputAddGreenTimer( inputdata_t &inputdata );
-	virtual void	InputAddYellowTimer( inputdata_t &inputdata );
-	virtual void	InputSetBlueTimer( inputdata_t &inputdata );
-	virtual void	InputSetRedTimer( inputdata_t &inputdata );
-	virtual void	InputSetGreenTimer( inputdata_t &inputdata );
-	virtual void	InputSetYellowTimer( inputdata_t &inputdata );
-	virtual void	InputRoundSpawn( inputdata_t &inputdata );
-	virtual void	InputRoundActivate( inputdata_t &inputdata );
-
-private:
-	int m_iTimerLength;
-	int m_iUnlockPoint;
-
-};
-
-BEGIN_DATADESC( CKothLogic )
-	DEFINE_KEYFIELD( m_iTimerLength, FIELD_INTEGER, "timer_length" ),
-	DEFINE_KEYFIELD( m_iUnlockPoint, FIELD_INTEGER, "unlock_point" ),
-
-	// Inputs.
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddBlueTimer", InputAddBlueTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddRedTimer", InputAddRedTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddGreenTimer", InputAddGreenTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddYellowTimer", InputAddYellowTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetBlueTimer", InputSetBlueTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRedTimer", InputSetRedTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetGreenTimer", InputSetGreenTimer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetYellowTimer", InputSetYellowTimer ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "RoundSpawn", InputRoundSpawn ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
-END_DATADESC()
-
-LINK_ENTITY_TO_CLASS( tf_logic_koth, CKothLogic );
-
-CKothLogic::CKothLogic()
-{
-	m_iTimerLength = 180;
-	m_iUnlockPoint = 30;
-}
-
-void CKothLogic::InputRoundSpawn( inputdata_t &inputdata )
-{
-	variant_t sVariant;
-
-	if ( TFGameRules() )
-	{
-		sVariant.SetInt( m_iTimerLength );
-
-		TFGameRules()->SetBlueKothRoundTimer( (CTeamRoundTimer *)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
-
-		if ( TFGameRules()->GetBlueKothRoundTimer() )
-		{
-			TFGameRules()->GetBlueKothRoundTimer()->SetName( MAKE_STRING( "zz_blue_koth_timer" ) );
-			TFGameRules()->GetBlueKothRoundTimer()->SetShowInHud( false );
-			TFGameRules()->GetBlueKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
-			TFGameRules()->GetBlueKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
-			TFGameRules()->GetBlueKothRoundTimer()->ChangeTeam( TF_TEAM_BLUE );
-		}
-
-		TFGameRules()->SetRedKothRoundTimer( (CTeamRoundTimer *)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
-
-		if ( TFGameRules()->GetRedKothRoundTimer() )
-		{
-			TFGameRules()->GetRedKothRoundTimer()->SetName( MAKE_STRING( "zz_red_koth_timer" ) );
-			TFGameRules()->GetRedKothRoundTimer()->SetShowInHud( false );
-			TFGameRules()->GetRedKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
-			TFGameRules()->GetRedKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
-			TFGameRules()->GetRedKothRoundTimer()->ChangeTeam( TF_TEAM_RED );
-		}
-		
-		if ( TFGameRules()->IsFourTeamGame() )
-		{
-			TFGameRules()->SetGreenKothRoundTimer( (CTeamRoundTimer*)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
-
-			if ( TFGameRules()->GetGreenKothRoundTimer() )
-			{
-				TFGameRules()->GetGreenKothRoundTimer()->SetName( MAKE_STRING( "zz_green_koth_timer" ) );
-				TFGameRules()->GetGreenKothRoundTimer()->SetShowInHud( false );
-				TFGameRules()->GetGreenKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetGreenKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetGreenKothRoundTimer()->ChangeTeam( TF_TEAM_GREEN );
-			}
-
-			TFGameRules()->SetYellowKothRoundTimer( (CTeamRoundTimer*)CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
-
-			if ( TFGameRules()->GetYellowKothRoundTimer() )
-			{
-				TFGameRules()->GetYellowKothRoundTimer()->SetName( MAKE_STRING( "zz_yellow_koth_timer" ) );
-				TFGameRules()->GetYellowKothRoundTimer()->SetShowInHud( false );
-				TFGameRules()->GetYellowKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetYellowKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
-				TFGameRules()->GetYellowKothRoundTimer()->ChangeTeam( TF_TEAM_RED );
-			}
-		}
-	}
-}
-
-void CKothLogic::InputRoundActivate( inputdata_t &inputdata )
-{
-	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
-	if ( !pMaster )
-		return;
-
-	for ( int i = 0; i < pMaster->GetNumPoints(); i++ )
-	{
-		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
-
-		variant_t sVariant;
-		sVariant.SetInt( m_iUnlockPoint );
-		pPoint->AcceptInput( "SetLocked", NULL, NULL, sVariant, 0 );
-		g_EventQueue.AddEvent( pPoint, "SetUnlockTime", sVariant, 0.1, NULL, NULL );
-	}
-}
-
-void CKothLogic::InputAddBlueTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetBlueKothRoundTimer() )
-	{
-		TFGameRules()->GetBlueKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputAddRedTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
-	{
-		TFGameRules()->GetRedKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputAddGreenTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetGreenKothRoundTimer() )
-	{
-		TFGameRules()->GetGreenKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputAddYellowTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetYellowKothRoundTimer() )
-	{
-		TFGameRules()->GetYellowKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputSetBlueTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetBlueKothRoundTimer() )
-	{
-		TFGameRules()->GetBlueKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputSetRedTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
-	{
-		TFGameRules()->GetRedKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputSetGreenTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetGreenKothRoundTimer() )
-	{
-		TFGameRules()->GetGreenKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
-	}
-}
-
-void CKothLogic::InputSetYellowTimer( inputdata_t &inputdata )
-{
-	if ( TFGameRules() && TFGameRules()->GetYellowKothRoundTimer() )
-	{
-		TFGameRules()->GetYellowKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
-	}
-}
-
-class CHybridMap_CTF_CP : public CPointEntity
-{
-public:
-	DECLARE_CLASS( CHybridMap_CTF_CP, CPointEntity );
-	void	Spawn( void );
-};
-
-LINK_ENTITY_TO_CLASS( tf_logic_hybrid_ctf_cp, CHybridMap_CTF_CP );
-
-void CHybridMap_CTF_CP::Spawn( void )
-{
-	BaseClass::Spawn();
-}
-
-class CMultipleEscortLogic : public CPointEntity
-{
-public:
-	DECLARE_CLASS( CMultipleEscortLogic, CPointEntity );
-	void Spawn( void );
-};
-
-void CMultipleEscortLogic::Spawn( void )
-{
-	BaseClass::Spawn();
-}
-
-LINK_ENTITY_TO_CLASS( tf_logic_multiple_escort, CMultipleEscortLogic );
-
-class CMedievalLogic : public CPointEntity
-{
-public:
-	DECLARE_CLASS( CMedievalLogic, CPointEntity );
-
-	void Spawn( void );
-};
-
-void CMedievalLogic::Spawn( void )
-{
-	BaseClass::Spawn();
-}
-
-LINK_ENTITY_TO_CLASS( tf_logic_medieval, CMedievalLogic );
-
-class CCPTimerLogic : public CPointEntity
-{
-public:
-	DECLARE_CLASS( CCPTimerLogic, CPointEntity );
-	DECLARE_DATADESC();
-
-	CCPTimerLogic();
-
-	void			Spawn( void );
-	void			Think( void );
-	virtual void	InputRoundSpawn( inputdata_t &inputdata );
-
-	COutputEvent m_onCountdownStart;
-	COutputEvent m_onCountdown15SecRemain;
-	COutputEvent m_onCountdown10SecRemain;
-	COutputEvent m_onCountdown5SecRemain;
-	COutputEvent m_onCountdownEnd;
-
-private:
-
-	string_t					m_iszControlPointName;
-	int							m_nTimerLength;
-	CHandle<CTeamControlPoint>	m_hPoint;
-
-	bool						m_bRestartTimer;
-	CountdownTimer				m_TimeRemaining;
-
-	bool						m_bOn15SecRemain;
-	bool						m_bOn10SecRemain;
-	bool						m_bOn5SecRemain;
-
-};
-
-BEGIN_DATADESC( CCPTimerLogic )
-	DEFINE_KEYFIELD( m_iszControlPointName, FIELD_STRING, "controlpoint" ),
-	DEFINE_KEYFIELD( m_nTimerLength, FIELD_INTEGER, "timer_length" ),
-
-	// Inputs.
-	DEFINE_INPUTFUNC( FIELD_VOID, "RoundSpawn", InputRoundSpawn ),
-
-	// Outputs.
-	DEFINE_OUTPUT( m_onCountdownStart, "OnCountdownStart" ),
-	DEFINE_OUTPUT( m_onCountdown15SecRemain, "OnCountdown15SecRemain" ),
-	DEFINE_OUTPUT( m_onCountdown10SecRemain, "OnCountdown10SecRemain" ),
-	DEFINE_OUTPUT( m_onCountdown5SecRemain, "OnCountdown5SecRemain" ),
-	DEFINE_OUTPUT( m_onCountdownEnd, "OnCountdownEnd" ),
-END_DATADESC()
-
-CCPTimerLogic::CCPTimerLogic()
-{
-	m_bOn5SecRemain = true;
-	m_bOn10SecRemain = true;
-	m_bOn15SecRemain = true;
-	m_bRestartTimer = true;
-}
-
-void CCPTimerLogic::Spawn( void )
-{
-	BaseClass::Spawn();
-	SetContextThink( &CCPTimerLogic::Think, gpGlobals->curtime + 0.15, "CCPTimerLogicThink" );
-}
-
-void CCPTimerLogic::Think( void )
-{
-	if ( !TFGameRules() || !ObjectiveResource() )
-		return;
-
-	const float flThinkInterval = 0.15f;
-
-	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
-	{
-		m_TimeRemaining.Invalidate();
-		SetNextThink( gpGlobals->curtime + flThinkInterval );
-	}
-
-	if ( m_hPoint )
-	{
-		int iIndex = m_hPoint->GetPointIndex();
-
-		if ( TFGameRules()->TeamMayCapturePoint( TF_TEAM_BLUE, iIndex ) )
-		{
-			if ( m_TimeRemaining.GetRemainingTime() <= 0.0 && m_bRestartTimer )
-			{
-				m_TimeRemaining.Start( flThinkInterval + m_nTimerLength );
-				m_onCountdownStart.FireOutput( this, this );
-				ObjectiveResource()->SetCPTimerTime( iIndex, gpGlobals->curtime + m_nTimerLength );
-				m_bRestartTimer = false;
-			}
-			else
-			{
-				if ( flThinkInterval <= m_TimeRemaining.GetRemainingTime() )
-				{
-					// I don't think is actually doing anything
-					float flTime = m_TimeRemaining.GetRemainingTime() - flThinkInterval;
-					if ( flTime <= 15.0 && m_bOn15SecRemain )
-					{
-						m_bOn15SecRemain = false;
-					}
-					else if ( flTime <= 10.0 && m_bOn10SecRemain )
-					{
-						m_bOn10SecRemain = false;
-					}
-					else if ( flTime <= 5.0 && m_bOn5SecRemain )
-					{
-						m_bOn5SecRemain = false;
-					}
-				}
-				else
-				{
-					if ( ObjectiveResource()->GetNumControlPoints() <= iIndex || ObjectiveResource()->GetCappingTeam( iIndex ) == TEAM_UNASSIGNED )
-					{
-						m_TimeRemaining.Invalidate();
-						m_onCountdownEnd.FireOutput( this, this );
-						m_bOn15SecRemain = true;
-						m_bOn10SecRemain = true;
-						m_bOn5SecRemain = true;
-						m_bRestartTimer = true;
-						ObjectiveResource()->SetCPTimerTime( iIndex, -1.0f );
-						SetNextThink( TICK_NEVER_THINK );
-					}
-				}
-			}
-		}
-		else
-		{
-			m_TimeRemaining.Invalidate();
-			m_bRestartTimer = true;
-		}
-	}
-
-	SetNextThink( gpGlobals->curtime + flThinkInterval );
-}
-
-void CCPTimerLogic::InputRoundSpawn( inputdata_t &inputdata )
-{
-	if ( m_iszControlPointName != NULL_STRING )
-	{
-		// We need to re-find our control point, because they're recreated over round restarts
-		m_hPoint = dynamic_cast<CTeamControlPoint *>( gEntList.FindEntityByName( NULL, m_iszControlPointName ) );
-		if ( !m_hPoint )
-		{
-			Warning( "%s failed to find control point named '%s'\n", GetClassname(), STRING( m_iszControlPointName ) );
-		}
-	}
-}
-
-LINK_ENTITY_TO_CLASS( tf_logic_cp_timer, CCPTimerLogic );
-
-// Barebone for now, just so maps don't complain
-class CTFHolidayEntity : public CPointEntity, public CGameEventListener
-{
-public:
-	DECLARE_CLASS( CTFHolidayEntity, CPointEntity );
-	DECLARE_DATADESC();
-
-	CTFHolidayEntity();
-	virtual ~CTFHolidayEntity() { }
-
-	virtual int UpdateTransmitState( void ) { return SetTransmitState( FL_EDICT_ALWAYS ); }
-	virtual void FireGameEvent( IGameEvent *event );
-
-	void InputHalloweenSetUsingSpells( inputdata_t &inputdata );
-	void InputHalloweenTeleportToHell( inputdata_t &inputdata );
-
-	int GetHolidayType( void ) const { return m_nHolidayType; }
-	bool ShouldAllowHaunting( void ) const { return m_nAllowHaunting != 0; }
-
-private:
-	int m_nHolidayType;
-	int m_nTauntInHell;
-	int m_nAllowHaunting;
-};
-
-CTFHolidayEntity::CTFHolidayEntity()
-{
-	ListenForGameEvent( "player_turned_to_ghost" );
-	ListenForGameEvent( "player_team" );
-	ListenForGameEvent( "player_disconnect" );
-}
-
-void CTFHolidayEntity::FireGameEvent( IGameEvent *event )
-{
-}
-
-void CTFHolidayEntity::InputHalloweenSetUsingSpells( inputdata_t &inputdata )
-{
-}
-
-void CTFHolidayEntity::InputHalloweenTeleportToHell( inputdata_t &inputdata )
-{
-}
-
-BEGIN_DATADESC( CTFHolidayEntity )
-	DEFINE_KEYFIELD( m_nHolidayType, FIELD_INTEGER, "holiday_type" ),
-	DEFINE_KEYFIELD( m_nTauntInHell, FIELD_INTEGER, "tauntInHell" ),
-	DEFINE_KEYFIELD( m_nAllowHaunting, FIELD_INTEGER, "allowHaunting" ),
-
-	DEFINE_INPUTFUNC( FIELD_VOID, "HalloweenSetUsingSpells", InputHalloweenSetUsingSpells ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "Halloween2013TeleportToHell", InputHalloweenTeleportToHell ),
-END_DATADESC()
-
-LINK_ENTITY_TO_CLASS( tf_logic_holiday, CTFHolidayEntity );
-
 #endif
 
 // (We clamp ammo ourselves elsewhere).
@@ -1595,6 +1201,7 @@ CTFGameRules::CTFGameRules()
 #else // GAME_DLL
 
 	ListenForGameEvent( "game_newmap" );
+	ListenForGameEvent( "recalculate_holidays" );
 
 	SetUpVisionFilterKeyValues();
 
@@ -1622,15 +1229,6 @@ CTFGameRules::CTFGameRules()
 	m_flGravityScale = 1.0;
 
 	m_iPreviousRoundWinners = TEAM_UNASSIGNED;
-	m_iBirthdayMode = HOLIDAY_RECALCULATE;
-	m_iHalloweenMode = HOLIDAY_RECALCULATE;
-	m_iFullMoonMode = HOLIDAY_RECALCULATE;
-	m_iChristmasMode = HOLIDAY_RECALCULATE;
-	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-	m_iEOTLMode = HOLIDAY_RECALCULATE;
-	m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
 
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
@@ -1650,6 +1248,7 @@ CTFGameRules::CTFGameRules()
 	else if ( !Q_strncmp( szMapname, "sd_doomsday_event", MAX_MAP_NAME ) )
 		m_halloweenScenario = HALLOWEEN_SCENARIO_DOOMSDAY;
 #endif
+	m_iGlobalAttributeCacheVersion = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1754,16 +1353,6 @@ static const char *s_PreserveEnts[] =
 //-----------------------------------------------------------------------------
 void CTFGameRules::Activate()
 {
-	m_iBirthdayMode = HOLIDAY_RECALCULATE;
-	m_iHalloweenMode = HOLIDAY_RECALCULATE;
-	m_iFullMoonMode = HOLIDAY_RECALCULATE;
-	m_iChristmasMode = HOLIDAY_RECALCULATE;
-	m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-	m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-	m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-	m_iEOTLMode = HOLIDAY_RECALCULATE;
-	m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
-
 	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
 
 	tf_gamemode_arena.SetValue( 0 );
@@ -1780,7 +1369,16 @@ void CTFGameRules::Activate()
 	tf_gamemode_vsh.SetValue( 0 );
 	tf_gamemode_dr.SetValue( 0 );
 	tf_gamemode_pd.SetValue( 0 );
+	tf_gamemode_tc.SetValue( 0 );
 
+	m_bPlayingKoth.Set( false );
+	m_bPlayingMedieval.Set( false );
+	m_bPlayingHybrid_CTF_CP.Set( false );
+	m_bPlayingSpecialDeliveryMode.Set( false );
+	m_bPlayingMannVsMachine.Set( false );
+	m_bMannVsMachineAlarmStatus.Set( false );
+	m_bPlayingRobotDestructionMode.Set( false );
+	m_bPowerupMode.Set( false );
 
 	TeamplayRoundBasedRules()->SetMultipleTrains( false );
 
@@ -1792,96 +1390,91 @@ void CTFGameRules::Activate()
 	m_hBlueBotRoster = NULL;
 	m_hRedBotRoster = NULL;
 
+	m_nMapHolidayType.Set( kHoliday_None );
+
+	if ( !Q_strncmp( STRING( gpGlobals->mapname ), "tc_", 3 )  )
+	{
+		tf_gamemode_tc.SetValue( 1 );
+	}
+
 	CMedievalLogic *pMedieval = dynamic_cast<CMedievalLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_medieval" ) );
-	if ( pMedieval )
+	if ( pMedieval || tf_medieval.GetBool() )
 	{
 		m_nGameType.Set( TF_GAMETYPE_MEDIEVAL );
 		tf_gamemode_medieval.SetValue( 1 );
-		return;
+		m_bPlayingMedieval = true;
 	}
-	
-	
-	/* CMvMLogic *pMvM = dynamic_cast<MvMLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_mann_vs_machine" ) );
-	if (pMvM)
-	{
-		m_nGameType.Set( TF_GAMETYPE_MVM );
-		tf_gamemode_mvm.SetValue( 1 );
-		return;
-	} */
 	
 	CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 	if ( pArena )
 	{
+		m_hArenaLogic = pArena;
+
 		m_nGameType.Set( TF_GAMETYPE_ARENA );
-	/*
-		// VSH maps use arena logic, except with the map prefix changed.
-		if ( !Q_strncmp( MapName(), "vsh_", 4 ) )
-		{
-			tf_gamemode_vsh.SetValue(1);
-			m_bPlayingVSH = true;
-		}	// Ditto, but with DR for Deathrun.
-		else if ( !Q_strncmp( MapName(), "dr_", 3 ) )
-		{
-			tf_gamemode_dr.SetValue(1);
-			m_bPlayingDR = true;
-		}
-		else
-		{ */
-			tf_gamemode_arena.SetValue( 1 );
-			Msg( "Executing server arena config file\n", 1 );
-			engine->ServerCommand( "exec config_arena.cfg \n" );
-			engine->ServerExecute();
-		//}
-		return;
+		tf_gamemode_arena.SetValue( 1 );
+
+		Msg( "Executing server arena config file\n" );
+		engine->ServerCommand( "exec config_arena.cfg \n" );
 	}
 
-	CKothLogic *pKoth = dynamic_cast<CKothLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_koth" ) );
-	if ( pKoth )
+	/*if ( CTFRobotDestructionLogic::GetRobotDestructionLogic() )
+	{
+		m_bPlayingRobotDestructionMode.Set( true );
+		if ( CTFRobotDestructionLogic::GetRobotDestructionLogic()->GetType() == CTFRobotDestructionLogic::TYPE_ROBOT_DESTRUCTION )
+		{
+			tf_gamemode_rd.SetValue( 1 );
+			m_nGameType.Set( TF_GAMETYPE_RD );
+		}
+		else
+		{
+			tf_gamemode_pd.SetValue( 1 );
+			m_nGameType.Set( TF_GAMETYPE_PD );
+		}
+	}
+	else if ( dynamic_cast<CMannVsMachineLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_mann_vs_machine" ) ) )
+	{
+		m_nGameType.Set( TF_GAMETYPE_MVM );
+		tf_gamemode_mvm.SetValue( 1 );
+		m_bPlayingMannVsMachine = true;
+	} 
+	else*/ if ( !Q_strncmp( STRING( gpGlobals->mapname ), "sd_", 3 )  )
+	{
+		tf_gamemode_sd.SetValue( 1 );
+		m_bPlayingSpecialDeliveryMode = true;
+	}
+	else if ( ICaptureFlagAutoList::AutoList().Count() > 0 )
+	{
+		m_nGameType.Set( TF_GAMETYPE_CTF );
+		tf_gamemode_ctf.SetValue( 1 );
+	}
+	else if ( dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) ) )
+	{
+		m_nGameType.Set( TF_GAMETYPE_ESCORT );
+		tf_gamemode_payload.SetValue( 1 );
+
+		if ( dynamic_cast<CMultipleEscortLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_multiple_escort" ) ) )
+		{
+			tf_gamemode_plr.SetValue( 1 );
+			TeamplayRoundBasedRules()->SetMultipleTrains( true );
+		}
+	}
+	else if ( g_hControlPointMasters.Count() && m_nGameType != TF_GAMETYPE_ARENA )
+	{
+		m_nGameType.Set( TF_GAMETYPE_CP );
+		tf_gamemode_cp.SetValue( 1 );
+	}
+
+	if ( dynamic_cast<CKothLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_koth" ) ) )
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
 		tf_gamemode_koth.SetValue( 1 );
 		m_bPlayingKoth = true;
-		return;
 	}
 
-	CHybridMap_CTF_CP *pHybridEnt = dynamic_cast<CHybridMap_CTF_CP *>( gEntList.FindEntityByClassname( NULL, "tf_logic_hybrid_ctf_cp" ) );
-	if ( pHybridEnt )
+	if ( dynamic_cast<CHybridMap_CTF_CP *>( gEntList.FindEntityByClassname( NULL, "tf_logic_hybrid_ctf_cp" ) ) )
 	{
 		m_nGameType.Set( TF_GAMETYPE_CP );
 		m_bPlayingHybrid_CTF_CP = true;
-		return;
-	}
-
-	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag *>( gEntList.FindEntityByClassname( NULL, "item_teamflag" ) );
-	if ( pFlag )
-	{
-		m_nGameType.Set( TF_GAMETYPE_CTF );
-		tf_gamemode_ctf.SetValue( 1 );
-		return;
-	}
-
-	CMultipleEscortLogic *pMultipleEscort = dynamic_cast<CMultipleEscortLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_multiple_escort" ) );
-	if ( pMultipleEscort )
-	{
-		m_nGameType.Set( TF_GAMETYPE_ESCORT );
-		tf_gamemode_plr.SetValue( 1 );
-		TeamplayRoundBasedRules()->SetMultipleTrains( true );
-		return;
-	}
-
-	CTeamTrainWatcher *pTrain = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
-	if ( pTrain )
-	{
-		m_nGameType.Set( TF_GAMETYPE_ESCORT );
-		tf_gamemode_payload.SetValue( 1 );
-		return;
-	}
-
-	if ( g_hControlPointMasters.Count() )
-	{
-		m_nGameType.Set( TF_GAMETYPE_CP );
-		tf_gamemode_cp.SetValue( 1 );
-		return;
 	}
 
 	CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity*> ( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
@@ -1914,6 +1507,21 @@ void CTFGameRules::Activate()
 	}
 
 	CreateSoldierStatue();
+
+	if ( IsInTraining() || TheTFBots().IsInOfflinePractice() || IsInItemTestingMode() )
+	{
+		hide_server.SetValue( true );
+	}
+
+	if ( tf_gamemode_tc.GetBool() || tf_gamemode_sd.GetBool() || tf_gamemode_pd.GetBool() || tf_gamemode_medieval.GetBool() )
+	{
+		tf_gamemode_misc.SetValue( 1 );
+	}
+
+	/*if ( IsPVEModeActive() && g_pPopulationManager == NULL )
+	{
+		CreateEntityByName( "info_populator" );
+	}*/
 }
 
 void CTFGameRules::OnNavMeshLoad( void )
@@ -2271,7 +1879,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_iNumCaps[i] = 0;
 	}
 
-	m_bossSpawnTimer.Invalidate();
 	SetIT( NULL );
 
 	m_hRedAttackTrain = NULL;
@@ -2314,6 +1921,14 @@ void CTFGameRules::SetupOnRoundStart( void )
 		pEnt = gEntList.NextEnt( pEnt );
 	}
 
+	IGameEvent *event = gameeventmanager->CreateEvent( "recalculate_holidays" );
+	if ( event )
+	{
+		gameeventmanager->FireEvent( event );
+	}
+
+	UTIL_CalculateHolidays();
+
 	if ( g_pObjectiveResource && !g_pObjectiveResource->PlayingMiniRounds() )
 	{
 		// Find all the control points with associated spawnpoints
@@ -2335,9 +1950,38 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 		SetRoundOverlayDetails();
 	}
-#ifdef GAME_DLL
+
 	m_szMostRecentCappers[0] = 0;
-#endif
+
+	m_bossSpawnTimer.Invalidate();
+
+	m_hGhosts.RemoveAll();
+
+	m_mobSpawnTimer.Invalidate();
+	m_nZombiesToSpawn = 0;
+
+	if ( g_pMonsterResource )
+	{
+		g_pMonsterResource->HideBossHealthMeter();
+	}
+
+	if ( IsHolidayActive( kHoliday_EOTL ) )
+	{
+		for ( int i = 0; i < IPhysicsPropAutoList::AutoList().Count(); i++ )
+		{
+			CPhysicsProp *pPhysicsProp = static_cast<CPhysicsProp *>( IPhysicsPropAutoList::AutoList()[i] );
+			const char *pszModel = pPhysicsProp->GetModelName().ToCStr();
+
+			if ( FStrEq( pszModel, "models/props_trainyard/bomb_cart.mdl" ) )
+			{
+				pPhysicsProp->SetModel( "models/props_trainyard/bomb_eotl_blue.mdl" );
+			}
+			else if ( FStrEq( pszModel, "models/props_trainyard/bomb_cart_red.mdl" ) )
+			{
+				pPhysicsProp->SetModel( "models/props_trainyard/bomb_eotl_red.mdl" );
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2388,33 +2032,6 @@ void CTFGameRules::PreviousRoundEnd( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnStalemateStart( void )
 {
-	// Respawn all the players
-	RespawnPlayers( true );
-
-	if ( TFGameRules()->IsInArenaMode() )
-	{
-		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
-		if ( pArena )
-		{
-			pArena->m_OnArenaRoundStart.FireOutput( pArena, pArena );
-
-			IGameEvent *event = gameeventmanager->CreateEvent( "arena_round_start" );
-			if ( event )
-			{
-				gameeventmanager->FireEvent( event );
-			}
-
-			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
-			{
-				BroadcastSound( i, "Announcer.AM_RoundStartRandom" );
-				BroadcastSound( i, "Ambient.Siren" );
-			}
-
-			m_flStalemateStartTime = gpGlobals->curtime;
-		}
-		return;
-	}
-
 	// Remove everyone's objects
 	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 	{
@@ -2425,17 +2042,44 @@ void CTFGameRules::SetupOnStalemateStart( void )
 		}
 	}
 
-	// Disable all the active health packs in the world
-	m_hDisabledHealthKits.Purge();
-	CHealthKit *pHealthPack = gEntList.NextEntByClass( (CHealthKit *)NULL );
-	while ( pHealthPack )
+	if ( IsInArenaMode() )
 	{
-		if ( !pHealthPack->IsDisabled() )
+		if ( m_hArenaLogic.IsValid() )
 		{
-			pHealthPack->SetDisabled( true );
-			m_hDisabledHealthKits.AddToTail( pHealthPack );
+			m_hArenaLogic->m_OnArenaRoundStart.FireOutput( m_hArenaLogic.Get(), m_hArenaLogic.Get() );
+
+			IGameEvent *event = gameeventmanager->CreateEvent( "arena_round_start" );
+			if ( event )
+			{
+				gameeventmanager->FireEvent( event );
+			}
+
+			if ( tf_arena_override_cap_enable_time.GetFloat() > 0 )
+				m_flCapturePointEnableTime = gpGlobals->curtime + tf_arena_override_cap_enable_time.GetFloat();
+			else
+				m_flCapturePointEnableTime = gpGlobals->curtime + m_hArenaLogic->m_flTimeToEnableCapPoint;
+
+			BroadcastSound( 255, "Announcer.AM_RoundStartRandom" );
+			BroadcastSound( 255, "Ambient.Siren" );
 		}
-		pHealthPack = gEntList.NextEntByClass( pHealthPack );
+	}
+	else
+	{
+		// Respawn all the players
+		RespawnPlayers( true );
+
+		// Disable all the active health packs in the world
+		m_hDisabledHealthKits.Purge();
+		CHealthKit *pHealthPack = gEntList.NextEntByClass( (CHealthKit *)NULL );
+		while ( pHealthPack )
+		{
+			if ( !pHealthPack->IsDisabled() )
+			{
+				pHealthPack->SetDisabled( true );
+				m_hDisabledHealthKits.AddToTail( pHealthPack );
+			}
+			pHealthPack = gEntList.NextEntByClass( pHealthPack );
+		}
 	}
 
 	CTFPlayer *pPlayer;
@@ -2446,7 +2090,15 @@ void CTFGameRules::SetupOnStalemateStart( void )
 		if ( !pPlayer )
 			continue;
 
-		pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_SUDDENDEATH_START );
+		if ( IsInArenaMode() )
+		{
+			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_ROUND_START );
+			pPlayer->TeamFortress_SetSpeed();
+		}
+		else
+		{
+			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_SUDDENDEATH_START );
+		}
 	}
 
 	m_flStalemateStartTime = gpGlobals->curtime;
@@ -2509,14 +2161,6 @@ private:
 	const IHandleEntity *m_pHitEntity;
 };
 
-CTFRadiusDamageInfo::CTFRadiusDamageInfo()
-{
-	m_flRadius = 0.0f;
-	m_iClassIgnore = CLASS_NONE;
-	m_pEntityIgnore = NULL;
-	m_flSelfDamageRadius = 1.0f;
-}
-
 ConVar tf_fixedup_damage_radius( "tf_fixedup_damage_radius", "1", FCVAR_DEVELOPMENTONLY );
 
 bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
@@ -2549,7 +2193,9 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 
 	// Check that the explosion can 'see' this entity, trace through players.
 	vecSpot = pEntity->BodyTarget( m_vecSrc, false );
-	CTraceFilterHitPlayer filter( info->GetInflictor(), pEntity, COLLISION_GROUP_PROJECTILE );
+	CTraceFilterIgnorePlayers filterPlayers( pInflictor, COLLISION_GROUP_PROJECTILE );
+	CTraceFilterIgnoreFriendlyCombatItems filterItems( pInflictor, COLLISION_GROUP_PROJECTILE, pInflictor->GetTeamNumber() );
+	CTraceFilterChain filter( &filterPlayers, &filterItems );
 	UTIL_TraceLine( m_vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 
 	if ( tr.startsolid && tr.m_pEnt )
@@ -2560,16 +2206,15 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 				return false;
 		}
 
-		filter.SetPassEntity( tr.m_pEnt );
+		filterPlayers.SetPassEntity( tr.m_pEnt );
 		UTIL_TraceLine( m_vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 	}
 
-	if ( tr.fraction != 1.0 && tr.m_pEnt != pEntity )
+	if ( tr.fraction != 1.0f && tr.m_pEnt != pEntity )
 		return false;
 
 	// Adjust the damage - apply falloff.
 	float flAdjustedDamage = 0.0f;
-
 	float flDistanceToEntity;
 
 	// Rockets store the ent they hit as the enemy and have already
@@ -2602,10 +2247,20 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 		flAdjustedDamage = info->GetDamage() - flAdjustedDamage;
 	}
 
-	// Take a little less damage from yourself
-	if ( tr.m_pEnt == info->GetAttacker() )
+	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase *>( info->GetWeapon() );
+
+	// Grenades & Pipebombs do less damage to ourselves.
+	if ( pEntity == info->GetAttacker() && pWeapon )
 	{
-		flAdjustedDamage = flAdjustedDamage * 0.75;
+		switch( pWeapon->GetWeaponID() )
+		{
+			case TF_WEAPON_PIPEBOMBLAUNCHER :
+			case TF_WEAPON_GRENADELAUNCHER :
+			case TF_WEAPON_CANNON :
+			case TF_WEAPON_STICKBOMB :
+				flAdjustedDamage *= 0.75f;
+				break;
+		}
 	}
 
 	if ( flAdjustedDamage <= 0 )
@@ -2645,6 +2300,8 @@ bool CTFRadiusDamageInfo::ApplyToEntity( CBaseEntity *pEntity )
 		adjustedInfo.SetDamageForce( dir * flForce );
 		adjustedInfo.SetDamagePosition( m_vecSrc );
 	}
+
+	adjustedInfo.ScaleDamageForce( m_flPushbackScale );
 
 	if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt )
 	{
@@ -2786,7 +2443,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 		pEntity->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
 		Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
 
-		if ( vecDir.LengthSqr() > ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+		if ( vecDir.LengthSqr() > Square(radiusInfo.m_flRadius) )
 			continue;
 
 		if ( radiusInfo.ApplyToEntity( pEntity ) )
@@ -2820,7 +2477,7 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 			pAttacker->CollisionProp()->CalcNearestPoint( radiusInfo.m_vecSrc, &vecHitPoint );
 			Vector vecDir = vecHitPoint - radiusInfo.m_vecSrc;
 
-			if ( vecDir.LengthSqr() <= ( radiusInfo.m_flRadius * radiusInfo.m_flRadius ) )
+			if ( vecDir.LengthSqr() <= Square(radiusInfo.m_flRadius) )
 			{
 				radiusInfo.ApplyToEntity( pAttacker );
 			}
@@ -2839,13 +2496,9 @@ void CTFGameRules::RadiusDamage( CTFRadiusDamageInfo &radiusInfo )
 //-----------------------------------------------------------------------------
 void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrcIn, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore )
 {
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &info;
-	radiusInfo.m_vecSrc = vecSrcIn;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_iClassIgnore = iClassIgnore;
-	radiusInfo.m_pEntityIgnore = pEntityIgnore;
+	Assert( false );
 
+	CTFRadiusDamageInfo radiusInfo( &info, vecSrcIn, flRadius, pEntityIgnore );
 	RadiusDamage( radiusInfo );
 }
 
@@ -2859,14 +2512,17 @@ public:
 	virtual bool		CanPlayerHearPlayer( CBasePlayer *pListener, CBasePlayer *pTalker, bool &bProximity )
 	{
 		// Dead players can only be heard by other dead team mates but only if a match is in progress
-		if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN && TFGameRules()->State_Get() != GR_STATE_GAME_OVER )
+		if ( !tf_gravetalk.GetBool() )
 		{
-			if ( pTalker->IsAlive() == false )
+			if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN && TFGameRules()->State_Get() != GR_STATE_GAME_OVER )
 			{
-				if ( pListener->IsAlive() == false || tf_teamtalk.GetBool() )
-					return ( pListener->InSameTeam( pTalker ) );
+				if ( pTalker->IsAlive() == false )
+				{
+					if ( pListener->IsAlive() == false || tf_teamtalk.GetBool() )
+						return ( pListener->InSameTeam( pTalker ) );
 
-				return false;
+					return false;
+				}
 			}
 		}
 
@@ -3047,6 +2703,54 @@ bool CTFGameRules::ClientCommand( CBaseEntity *pEdict, const CCommand &args )
 	return BaseClass::ClientCommand( pEdict, args );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValues )
+{
+	CTFPlayer *pTFPlayer = ToTFPlayer( CBaseEntity::Instance( pEntity ) );
+
+	if ( !pTFPlayer )
+		return;
+
+	char const *pcmd = pKeyValues->GetName();
+	if ( FStrEq( pcmd, "+inspect_server" ) )
+	{
+		pTFPlayer->InspectButtonPressed();
+	}
+	else if ( FStrEq( pcmd, "-inspect_server" ) )
+	{
+		pTFPlayer->InspectButtonReleased();
+	}
+	else if ( FStrEq( pcmd, "MVM_Upgrade" ) )
+	{
+		if ( IsMannVsMachineMode() )
+		{
+		}
+	}
+	else if ( FStrEq( pcmd, "MvM_UpgradesBegin" ) )
+	{
+		//pTFPlayer->BeginPurchasableUpgrades();
+	}
+	else if ( FStrEq( pcmd, "MvM_UpgradesDone" ) )
+	{
+		//pTFPlayer->EndPurchasableUpgrades();
+
+		if ( IsMannVsMachineMode() && pKeyValues->GetInt( "num_upgrades", 0 ) > 0 )
+		{
+			pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_UPGRADE_COMPLETE );
+		}
+	}
+	else if ( FStrEq( pcmd, "MVM_Revive_Response" ) )
+	{
+		
+	}
+	else if ( FStrEq( pcmd, "MVM_Respec" ) )
+	{
+
+	}
+}
+
 // Add the ability to ignore the world trace
 void CTFGameRules::Think()
 {
@@ -3094,7 +2798,6 @@ void CTFGameRules::FrameUpdatePostEntityThink()
 	RunPlayerConditionThink();
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3105,47 +2808,67 @@ void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinLifetime, float 
 
 	if ( !IsHalloweenScenario( HALLOWEEN_SCENARIO_VIADUCT ) && !IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
 	{
-		CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity*> ( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
+		CTFHolidayEntity *pHolidayEntity = dynamic_cast<CTFHolidayEntity *>( gEntList.FindEntityByClassname( NULL, "tf_logic_holiday" ) );
 		if ( !pHolidayEntity || !pHolidayEntity->ShouldAllowHaunting() )
 			return;
 	}
 
-	if ( IGhostAutoList::AutoList().Count() >= nDesiredCount )
+	m_hGhosts.RemoveAll();
+
+	// Just update existing ghosts
+	FOR_EACH_VEC( IGhostAutoList::AutoList(), i )
+	{
+		CGhost *pGhost = (CGhost *)IGhostAutoList::AutoList()[i];
+		pGhost->SetLifetime( RandomFloat( flMinLifetime, flMaxLifetime ) );
+		m_hGhosts.AddToTail( pGhost );
+	}
+
+	// If there was already too many existing
+	if ( m_hGhosts.Count() >= nDesiredCount )
 		return;
 
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, TF_TEAM_RED, true );
 	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
 
-	const int nNumToSpawn = nDesiredCount - IGhostAutoList::AutoList().Count();
-
-	CUtlVector<Vector> locations;
-	FOR_EACH_VEC( TheNavAreas, i )
-	{
-		CTFNavArea *pArea = (CTFNavArea *)TheNavAreas[ i ];
-		if ( pArea->HasTFAttributes( RED_SPAWN_ROOM | BLUE_SPAWN_ROOM ) )
-			continue;
-
-		Vector vecSpot = pArea->GetRandomPoint();
-
-		int j = 0;
-		for ( j; j < players.Count(); ++j )
+	auto IsPlayerNearby = [&]( Vector const &vecSpot ) -> bool {
+		FOR_EACH_VEC( players, i )
 		{
-			if ( ( players[ i ]->GetAbsOrigin() - vecSpot ).LengthSqr() < Square( 240.0 ) )
-				break;
+			if ( vecSpot.DistTo( players[i]->GetAbsOrigin() ) < 240.0f )
+				return true;
 		}
 
-		if ( j == players.Count() )
-			locations.AddToTail( vecSpot );
+		return false;
+	};
+
+	CUtlVector<Vector> spawnPoints;
+	FOR_EACH_VEC( TheNavAreas, i )
+	{
+		CTFNavArea *area = assert_cast<CTFNavArea *>( TheNavAreas[i] );
+		if ( area->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM ) )
+		{
+			// keep out of spawn rooms
+			continue;
+		}
+
+		const Vector vecSpot = area->GetRandomPoint();
+		if ( IsPlayerNearby( vecSpot ) )
+			continue;
+
+		spawnPoints.AddToTail( vecSpot );
 	}
 
-	if ( locations.IsEmpty() )
+	if ( spawnPoints.IsEmpty() )
 		return;
 
-	for ( int i=0; i < nNumToSpawn; ++i )
+	const int nTotalGhosts = nDesiredCount - m_hGhosts.Count();
+	for ( int i=0; i < nTotalGhosts; ++i )
 	{
-		int nLocation = RandomInt( 0, locations.Count() - 1 );
-		CGhost::Create( locations[ nLocation ], vec3_angle, RandomFloat( flMinLifetime, flMaxLifetime ) );
+		const int nSpawnPoint = RandomInt( 0, spawnPoints.Count()-1 );
+		const float flLifetime = RandomFloat( flMinLifetime, flMaxLifetime );
+
+		CGhost *pGhost = CGhost::Create( spawnPoints[nSpawnPoint], vec3_angle, flLifetime );
+		m_hGhosts.AddToTail( pGhost );
 	}
 }
 
@@ -3154,6 +2877,8 @@ void CTFGameRules::BeginHaunting( int nDesiredCount, float flMinLifetime, float 
 //-----------------------------------------------------------------------------
 void CTFGameRules::SpawnHalloweenBoss( void )
 {
+	VPROF_BUDGET( __FUNCTION__, "NextBotSpiky" );
+
 	if ( !IsHolidayActive( kHoliday_Halloween ) )
 		return SpawnZombieMob();
 
@@ -3354,9 +3079,9 @@ void CTFGameRules::SpawnZombieMob( void )
 	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
 
 	int nHumans = 0;
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
-		if ( !pPlayer->IsBot() )
+		if ( !players[i]->IsBot() )
 			++nHumans;
 	}
 
@@ -3369,26 +3094,26 @@ void CTFGameRules::SpawnZombieMob( void )
 	const float flSearchRange = 2000.0f;
 
 	// populate a vector of valid spawn locations
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
 		CUtlVector<CTFNavArea *> nearby;
 		// ignore bots
-		if ( pPlayer->IsBot() )
+		if ( players[i]->IsBot() )
 			continue;
 		// are they on mesh?
-		if ( pPlayer->GetLastKnownArea() == nullptr )
+		if ( players[i]->GetLastKnownArea() == nullptr )
 			continue;
 
-		CollectSurroundingAreas( &nearby, pPlayer->GetLastKnownArea(), flSearchRange );
-		for ( CTFNavArea *pArea : nearby )
+		CollectSurroundingAreas( &nearby, players[i]->GetLastKnownArea(), flSearchRange );
+		FOR_EACH_VEC( nearby, j )
 		{
-			if ( !pArea->IsValidForWanderingPopulation() )
+			if ( !nearby[j]->IsValidForWanderingPopulation() )
 				continue;
 
-			if ( pArea->IsBlocked( TF_TEAM_RED ) || pArea->IsBlocked( TF_TEAM_BLUE ) )
+			if ( nearby[j]->IsBlocked( TF_TEAM_RED ) || nearby[j]->IsBlocked( TF_TEAM_BLUE ) )
 				continue;
 
-			validAreas.AddToTail( pArea );
+			validAreas.AddToTail( nearby[j] );
 		}
 	}
 
@@ -6553,360 +6278,43 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 		( pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN ) +
 		( pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE ) +
 		( pRoundStats->m_iStat[TFSTAT_DAMAGE] / TF_SCORE_DAMAGE_PER_POINT ) +
-		( pRoundStats->m_iStat[TFSTAT_BONUS] / TF_SCORE_BONUS_PER_POINT );
+		( pRoundStats->m_iStat[TFSTAT_BONUS_POINTS] / TF_SCORE_BONUS_PER_POINT );
 	return Max( iScore, 0 );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFGameRules::IsBirthday( void )
+bool CTFGameRules::IsBirthday( void ) const
 {
 	if ( IsX360() )
 		return false;
 
-	if ( m_iBirthdayMode == HOLIDAY_RECALCULATE )
-	{
-		m_iBirthdayMode = HOLIDAY_OFF;
-		if ( tf_birthday.GetBool() )
-		{
-			m_iBirthdayMode = HOLIDAY_ON;
-		}
-		else
-		{
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = localtime( ptime );
-			if ( today )
-			{
-				// July 4th is the birthday of the first TF2V release, while May 27 was a milestone update.
-				// August 24th is the Team Fortress birthday.
-				if ( ( ( today->tm_mon == (5-1) && today->tm_mday == 27 ) || ( today->tm_mon == (7-1) && today->tm_mday == 4 ) ) || ( today->tm_mon == (8-1) && today->tm_mday == 24 ) )
-				{
-					m_iBirthdayMode = HOLIDAY_ON;
-				}
-			}
-		}
-	}
-
-	return ( m_iBirthdayMode == HOLIDAY_ON );
+	return tf_birthday.GetBool() || IsHolidayActive( kHoliday_TF2Birthday );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsHalloween( void )
+bool CTFGameRules::IsBirthdayOrPyroVision( void ) const
 {
-	if ( IsX360() )
-		return false;
+	if ( IsBirthday() )
+		return true;
 
-	if ( m_iHalloweenMode == HOLIDAY_RECALCULATE )
+#ifdef CLIENT_DLL
+	// Use birthday fun if the local player has an item that allows them to see it (Pyro Goggles)
+	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
 	{
-		m_iHalloweenMode = HOLIDAY_OFF;
-		if ( tf_halloween.GetBool() )
-		{
-			m_iHalloweenMode = HOLIDAY_ON;
-		}
-		else
-		{
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = localtime( ptime );
-			if ( today )
-			{
-				// Just for Halloween: 10/31
-				// We use the week before Halloween to the end of Dia de Muertos for this range.
-				if ( ( today->tm_mon == (10-1) && ( ( today->tm_mday >= 23 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (11-1) ) && ( today->tm_mday <= 2 ) ) )
-				{
-					m_iHalloweenMode = HOLIDAY_ON;
-				}
-			}
-		}
+		return true;
 	}
+#endif
 
-	return ( m_iHalloweenMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsFullMoon( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iFullMoonMode == HOLIDAY_RECALCULATE )
-	{
-		m_iFullMoonMode = HOLIDAY_OFF;
-		if ( tf_fullmoon.GetBool() )
-		{
-			m_iFullMoonMode = HOLIDAY_ON;
-		}
-		else
-		{
-			// Check for Full Moon.
-			// Use UTC for this conversion for consistency.
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = gmtime( ptime );
-			if ( today )
-			{
-				// We convert our date to difference in days since 18:14 UTC on 01/6/2000, the first new moon of 2000. (Also referred to as Lunation Number 0/Brown Lunation Number 953)
-				// Year calculations are based on the difference since 1900, so offset for that.
-				float flDaysSinceMeeusMoon = ( ( ( ( today->tm_year + 1900 ) * 365.25 ) + ( today->tm_yday + ( ( today->tm_hour + ( today->tm_min / 60 ) ) / 24 ) ) ) - ( ( 2000 * 365.25 ) + ( 5 + ( ( 18 + ( 14 / 60 ) ) / 24 ) ) ) );
-					
-				// Check how many New Moons there have been, and find our Lunation Number.
-				float flMeanMoonDays = 29.530587981; // Mean difference between full moons, in days. Variation is -0.259/+0.302.
-				float flMeeusLunationDecimal = flDaysSinceMeeusMoon / flMeanMoonDays; 
-				int iMeeusLunationNumber = flDaysSinceMeeusMoon / flMeanMoonDays; // Amount of moon cycles since LN 0/BLN 953.
-					
-				// Check how close we are to a new lunar month.
-				// A New Moon is at 0.
-				float flCurrentMoonPhase = ( flMeeusLunationDecimal - iMeeusLunationNumber );
-					
-				// TF2 does their full moons for a 24 hour period, so it should be Full Moon +/- 12 hours.
-				// A Full Moon is halfway after a New Moon, so add 0.5 to our tolerances.
-				int iFullMoonHours = 12;
-				float flFullMoonTolerance = ( ( iFullMoonHours / 24 ) / flMeanMoonDays );
-				float iFullMoonPhaseMax = 0.5 + flFullMoonTolerance;
-				float iFullMoonPhaseMin = 0.5 - flFullMoonTolerance;
-				
-				if ( ( flCurrentMoonPhase >= iFullMoonPhaseMin ) && ( flCurrentMoonPhase <= iFullMoonPhaseMax ) )
-				{
-					m_iFullMoonMode = HOLIDAY_ON;
-				}
-			}
-		}
-	}
-
-	return ( m_iFullMoonMode == HOLIDAY_ON );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsChristmas( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iChristmasMode == HOLIDAY_RECALCULATE )
-	{
-		m_iChristmasMode = HOLIDAY_OFF;
-		if ( tf_christmas.GetBool() )
-		{
-			m_iChristmasMode = HOLIDAY_ON;
-		}
-		else
-		{
-			time_t ltime = time( 0 );
-			const time_t *ptime = &ltime;
-			struct tm *today = localtime( ptime );
-			if ( today )
-			{
-				// Just for Christmas: 12/25
-				// We use the day before Winter Solstice to the day after National Hangover Day for this range.
-				if ( ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 20 ) && ( today->tm_mday <= 31 ) ) ) || ( ( today->tm_mon == (1-1) ) && ( today->tm_mday <= 1 ) ) )
-				{
-					m_iChristmasMode = HOLIDAY_ON;
-				}
-			}
-		}
-	}
-
-	return ( m_iChristmasMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsValentinesDay( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iValentinesDayMode == HOLIDAY_RECALCULATE )
-	{
-		m_iValentinesDayMode = HOLIDAY_OFF;
-		
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			if ( today->tm_mon == (2-1) && today->tm_mday == 14 )
-			{
-				m_iValentinesDayMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iValentinesDayMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsAprilFools( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iAprilFoolsMode == HOLIDAY_RECALCULATE )
-	{
-		m_iAprilFoolsMode = HOLIDAY_OFF;
-		
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			if ( ( today->tm_mon == (4-1) && today->tm_mday == 1 ) )
-			{
-				m_iAprilFoolsMode = HOLIDAY_ON;
-			}
-		}
-		
-	}
-
-	return ( m_iAprilFoolsMode == HOLIDAY_ON );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsEOTL( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iEOTLMode == HOLIDAY_RECALCULATE )
-	{
-		m_iEOTLMode = HOLIDAY_OFF;
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			// End of the Line released December 8th. The event itself ended January 7th.
-			// We have the holidays run through the same time, so finish it beforehand.
-			if ( today->tm_mon == (12-1) && ( ( today->tm_mday >= 8 ) && ( today->tm_mday <= 17 ) ) )
-			{
-				m_iEOTLMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iEOTLMode == HOLIDAY_ON );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsBreadUpdate( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iBreadUpdateMode == HOLIDAY_RECALCULATE )
-	{
-		m_iBreadUpdateMode = HOLIDAY_OFF;
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			// Love and War released June 18th, and ran to July 9th.
-			// Purposely skip over July 4th, because that is the TF2V birthday.
-			if ( ( today->tm_mon == (6-1) && ( ( today->tm_mday >= 18 ) && ( today->tm_mday <= 30 ) ) ) || ( today->tm_mon == (7-1) && ( ( ( today->tm_mday >= 1 ) && ( today->tm_mday <= 9 ) ) && ( today->tm_mday != 4 ) ) ) )
-			{
-				m_iBreadUpdateMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iBreadUpdateMode == HOLIDAY_ON );
-}
-
-bool CTFGameRules::IsRememberingSoldier( void )
-{
-	if ( IsX360() )
-		return false;
-
-	if ( m_iSoldierMemorialMode == HOLIDAY_RECALCULATE )
-	{
-		m_iSoldierMemorialMode = HOLIDAY_OFF;
-		
-		time_t ltime = time( 0 );
-		const time_t *ptime = &ltime;
-		struct tm *today = localtime( ptime );
-		if ( today )
-		{
-			// April 8th till the end of May
-			if ( ( today->tm_mon == (4-1) && ( today->tm_mday >= 8 ) ) || today->tm_mon == (5-1) )
-			{
-				m_iSoldierMemorialMode = HOLIDAY_ON;
-			}
-		}
-	}
-
-	return ( m_iSoldierMemorialMode == HOLIDAY_ON );
+	return false;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFGameRules::IsHolidayActive( int eHoliday )
+bool CTFGameRules::IsHolidayActive( int eHoliday ) const
 {
-	bool bActive = false;
-	switch ( eHoliday )
-	{
-		case kHoliday_TF2Birthday:
-			bActive = IsBirthday();
-			break;
-		case kHoliday_Halloween:
-			bActive = IsHalloween();
-			break;
-		case kHoliday_Christmas:
-			bActive = IsChristmas();
-			break;
-		case kHoliday_CommunityUpdate:
-			break;
-		case kHoliday_EOTL:
-			bActive = IsEOTL();
-			break;			
-		case kHoliday_ValentinesDay:
-			bActive = IsValentinesDay();
-			break;
-		case kHoliday_MeetThePyro:
-			break;
-		case kHoliday_FullMoon:
-			bActive = IsFullMoon();
-			break;
-		case kHoliday_HalloweenOrFullMoon:
-			if ( IsHalloween() || IsFullMoon() )
-				bActive = true;
-			break;
-		case kHoliday_HalloweenOrFullMoonOrValentines:
-			if ( ( IsHalloween() || IsFullMoon() ) || IsValentinesDay() )
-				bActive = true;				
-			break;
-		case kHoliday_AprilFools:
-			bActive = IsAprilFools();
-			break;
-		case kHoliday_BreadUpdate:
-			bActive = IsBreadUpdate();
-			break;
-		case kHoliday_SoldierMemorial:
-			bActive = IsRememberingSoldier();
-			break;
-		default:
-			break;
-	}
-
-	return bActive;
+	return TF_IsHolidayActive( eHoliday );
 }
 
 // We can use these to check between normal and boss behavior without writing out individual massive if statements each time.
@@ -7128,11 +6536,11 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		return false;
 
 	if ( ( collisionGroup1 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) &&
-		( collisionGroup0 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) || ( collisionGroup0 == TFCOLLISION_GROUP_ROCKETS ) )
+		( ( collisionGroup0 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) || ( collisionGroup0 == TFCOLLISION_GROUP_ROCKETS ) ) )
 		return false;
 
 	if ( ( collisionGroup1 == TFCOLLISION_GROUP_PUMPKIN_BOMB ) &&
-		( collisionGroup0 == COLLISION_GROUP_WEAPON ) || ( collisionGroup0 == COLLISION_GROUP_PROJECTILE ) )
+		( ( collisionGroup0 == COLLISION_GROUP_WEAPON ) || ( collisionGroup0 == COLLISION_GROUP_PROJECTILE ) ) )
 		return false;
 
 	return BaseClass::ShouldCollide( collisionGroup0, collisionGroup1 );
@@ -7242,29 +6650,20 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 	}
 	else if ( !Q_strcmp( eventName, "teamplay_point_unlocked" ) )
 	{
-		// if this is an unlock event and we're in arena, fire OnCapEnabled		
-		CArenaLogic *pArena = dynamic_cast<CArenaLogic *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
-		if ( pArena )
+		// if this is an unlock event and we're in arena, fire OnCapEnabled
+		if ( m_hArenaLogic.IsValid() )
 		{
-			pArena->FireOnCapEnabled();
+			m_hArenaLogic->OnCapEnabled();
 		}
+	}
+#else
+	if ( !Q_strcmp( eventName, "recalculate_holidays" ) )
+	{
+		UTIL_CalculateHolidays();
 	}
 #endif
 
-#ifdef CLIENT_DLL
-	if ( !Q_strcmp( eventName, "game_newmap" ) )
-	{
-		m_iBirthdayMode = HOLIDAY_RECALCULATE;
-		m_iHalloweenMode = HOLIDAY_RECALCULATE;
-		m_iFullMoonMode = HOLIDAY_RECALCULATE;
-		m_iChristmasMode = HOLIDAY_RECALCULATE;
-		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-		m_iEOTLMode = HOLIDAY_RECALCULATE;
-		m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
-	}
-#endif
+	BaseClass::FireGameEvent( event );
 }
 
 //-----------------------------------------------------------------------------
@@ -7449,19 +6848,6 @@ bool EntityPlacementTest( CBaseEntity *pMainEnt, const Vector &vOrigin, Vector &
 void CTFGameRules::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
-
-	if ( State_Get() == GR_STATE_STARTGAME )
-	{
-		m_iBirthdayMode = HOLIDAY_RECALCULATE;
-		m_iHalloweenMode = HOLIDAY_RECALCULATE;
-		m_iFullMoonMode = HOLIDAY_RECALCULATE;
-		m_iChristmasMode = HOLIDAY_RECALCULATE;
-		m_iValentinesDayMode = HOLIDAY_RECALCULATE;
-		m_iAprilFoolsMode = HOLIDAY_RECALCULATE;
-		m_iBreadUpdateMode = HOLIDAY_RECALCULATE;
-		m_iEOTLMode = HOLIDAY_RECALCULATE;
-		m_iSoldierMemorialMode = HOLIDAY_RECALCULATE;
-	}
 }
 
 void CTFGameRules::HandleOvertimeBegin()
@@ -7668,18 +7054,18 @@ void CTFGameRules::PushAllPlayersAway( Vector const &vecPos, float flRange, floa
 	CUtlVector<CTFPlayer *> players;
 	CollectPlayers( &players, iTeamNum, true );
 
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
-		Vector vecTo = pPlayer->EyePosition() - vecPos;
+		Vector vecTo = players[i]->EyePosition() - vecPos;
 		if ( vecTo.LengthSqr() > Square( flRange ) )
 			continue;
 
 		vecTo.NormalizeInPlace();
 
-		pPlayer->ApplyAbsVelocityImpulse( vecTo * flForce );
+		players[i]->ApplyAbsVelocityImpulse( vecTo * flForce );
 
 		if ( outVector )
-			outVector->AddToTail( pPlayer );
+			outVector->AddToTail( players[i] );
 	}
 }
 
@@ -7725,6 +7111,43 @@ bool CTFGameRules::ShouldBalanceTeams( void )
 }
 
 #ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowMapParticleEffect( const char *pszParticleEffect )
+{
+	static const char *s_WeatherEffects[] =
+	{
+		"tf_gamerules",
+		"env_rain_001",
+		"env_rain_002_256",
+		"env_rain_ripples",
+		"env_snow_light_001",
+		"env_rain_gutterdrip",
+		"env_rain_guttersplash",
+		"", // END Marker
+	};
+
+	if ( !AllowWeatherParticles() )
+	{
+		if ( FindInList( s_WeatherEffects, pszParticleEffect ) )
+			return false;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowWeatherParticles()
+{
+	return tf_particles_disable_weather.GetBool() ? false : true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CTFGameRules::AllowMapVisionFilterShaders( void )
 {
 	if( m_pVisionFilterWhitelist )
@@ -7742,6 +7165,9 @@ bool CTFGameRules::AllowMapVisionFilterShaders( void )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 char const *CTFGameRules::TranslateEffectForVisionFilter( char const *pchEffectType, char const *pchEffectName )
 {
 	if ( pchEffectType == NULL || pchEffectName == NULL )
@@ -7771,6 +7197,9 @@ char const *CTFGameRules::TranslateEffectForVisionFilter( char const *pchEffectT
 	return strings[0];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::SetUpVisionFilterKeyValues( void )
 {
 	m_pVisionFilterWhitelist = new KeyValues( "VisionFilterShadersMapWhitelist" );
@@ -8070,6 +7499,9 @@ void CTFGameRules::SetUpVisionFilterKeyValues( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 {
 	char mapname[MAX_MAP_NAME];
@@ -8098,20 +7530,11 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 	return strFullpath;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 {
-	// Medieval mode only
-	/*if ( !IsInMedievalMode() || !tf_medieval_autorp.GetBool() )
-		return;
-
-	if ( !AutoRP() )
-	{
-		Warning( "AutoRP initialization failed!" );
-		return;
-	}
-
-	AutoRP()->ApplyRPTo( pBuf, iBufSize );
-
 	int i = 0;
 	while ( pBuf[i] )
 	{
@@ -8120,7 +7543,25 @@ void CTFGameRules::ModifySentChat( char *pBuf, int iBufSize )
 			pBuf[i] = '\'';
 		}
 		i++;
-	}*/
+	}
+	
+	// Medieval mode only
+	if ( IsInMedievalMode() && tf_medieval_autorp.GetBool() )
+	{
+		if (AutoRP())
+			AutoRP()->ApplyRPTo( pBuf, iBufSize );
+		else
+		{
+			Warning( "AutoRP initialization failed!" );
+			return;
+		}
+	}
+	
+#ifdef CLIENT_DLL
+	if ( tf2v_censor_swears.GetBool() )
+		g_BannedWords.CensorBannedWordsInplace( pBuf );
+#endif
+
 }
 
 void AddSubKeyNamed( KeyValues *pKeys, const char *pszName )

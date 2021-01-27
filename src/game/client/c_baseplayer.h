@@ -227,6 +227,7 @@ public:
 	// Specific queries about this player.
 	bool						InFirstPersonView();
 	bool						ShouldDrawThisPlayer();
+	bool						ShouldDrawFirstPersonLegs();
 
 	// Called by the view model if its rendering is being overridden.
 	virtual bool				ViewModel_IsTransparent( void );
@@ -385,15 +386,11 @@ public:
 	bool					ShouldAnnounceAchievement( void ){ return m_flNextAchievementAnnounceTime < gpGlobals->curtime; }
 	void					SetNextAchievementAnnounceTime( float flTime ){ m_flNextAchievementAnnounceTime = flTime; }
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
+#if defined ( USES_ECON_ITEMS )
 	// Wearables
 	virtual void			UpdateWearables();
 	C_EconWearable			*GetWearable( int i ) { return m_hMyWearables[i]; }
 	int						GetNumWearables( void ) { return m_hMyWearables.Count(); }
-	
-	virtual void			UpdateDisguiseWearables();
-	C_EconWearable			*GetDisguiseWearable( int i ) { return m_hDisguiseWearables[i]; }
-	int						GetNumDisguiseWearables( void ) { return m_hDisguiseWearables.Count(); }
 #endif
 
 	bool					HasFiredWeapon( void ) { return m_bFiredWeapon; }
@@ -616,10 +613,9 @@ protected:
 	int				m_nForceVisionFilterFlags; // Force our vision filter to a specific setting
 	int				m_nLocalPlayerVisionFlags;
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE_CLIENT )
+#if defined ( USES_ECON_ITEMS )
 	// Wearables
 	CUtlVector< CHandle<C_EconWearable > >	m_hMyWearables;
-	CUtlVector<CHandle<C_EconWearable > >	m_hDisguiseWearables;
 #endif
 
 private:

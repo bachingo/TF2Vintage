@@ -61,7 +61,7 @@ public:
 	virtual bool CanBeSelected( void );
 	virtual bool VisibleInWeaponSelection( void );
 
-	//virtual void UpdateViewModel( void );
+	bool			IsRoboSapper( void ) const			{ return m_bRoboSapper; }
 
 	virtual bool HasAmmo( void );
 
@@ -86,6 +86,8 @@ public:
 
 	// Our placement model
 	CHandle<C_BaseObject>	m_hObjectBeingBuilt;
+
+	bool		m_bRoboSapper;
 
 	int m_iValidBuildPoseParam;
 

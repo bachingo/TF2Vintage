@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -22,7 +22,7 @@ public:
 
 	DECLARE_DATADESC();
 	
-	virtual HintType GetHintType() const override;
+	virtual HintType GetHintType() const OVERRIDE;
 };
 
 #endif

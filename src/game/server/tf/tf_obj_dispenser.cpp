@@ -792,7 +792,7 @@ void CObjectDispenser::StartHealing( CBaseEntity *pOther )
 	if ( pPlayer )
 	{
 		float flHealRate = GetHealRate();
-		pPlayer->m_Shared.Heal( GetOwner(), flHealRate, true );
+		pPlayer->m_Shared.Heal( this, flHealRate, 1.0f, 1.0f, true, GetBuilder() );
 	}
 }
 
@@ -890,7 +890,7 @@ int CObjectDispenser::DrawDebugTextOverlays( void )
 	if (m_debugOverlays & OVERLAY_TEXT_BIT) 
 	{
 		char tempstr[512];
-		Q_snprintf( tempstr, sizeof( tempstr ),"Metal: %d", m_iAmmoMetal );
+		Q_snprintf( tempstr, sizeof( tempstr ),"Metal: %d", m_iAmmoMetal.Get() );
 		EntityText(text_offset,tempstr,0);
 		text_offset++;
 	}

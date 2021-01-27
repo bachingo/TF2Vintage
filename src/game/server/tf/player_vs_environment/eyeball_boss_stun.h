@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -20,13 +20,13 @@ public:
 	CEyeBallBossStunned();
 	virtual ~CEyeBallBossStunned() { }
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CEyeBallBoss> OnStart( CEyeBallBoss *me, Action<CEyeBallBoss> *priorAction ) override;
-	virtual ActionResult<CEyeBallBoss> Update( CEyeBallBoss *me, float dt ) override;
-	virtual void OnEnd( CEyeBallBoss *me, Action<CEyeBallBoss> *newAction ) override;
+	virtual ActionResult<CEyeBallBoss> OnStart( CEyeBallBoss *me, Action<CEyeBallBoss> *priorAction ) OVERRIDE;
+	virtual ActionResult<CEyeBallBoss> Update( CEyeBallBoss *me, float dt ) OVERRIDE;
+	virtual void OnEnd( CEyeBallBoss *me, Action<CEyeBallBoss> *newAction ) OVERRIDE;
 
-	virtual EventDesiredResult<CEyeBallBoss> OnInjured( CEyeBallBoss *me, const CTakeDamageInfo& info ) override;
+	virtual EventDesiredResult<CEyeBallBoss> OnInjured( CEyeBallBoss *me, const CTakeDamageInfo& info ) OVERRIDE;
 
 private:
 	CountdownTimer m_stunDuration;

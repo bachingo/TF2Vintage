@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -19,15 +19,15 @@ public:
 	CTFPathFollower();
 	virtual ~CTFPathFollower();
 
-	virtual void Invalidate( void ) override;
+	virtual void Invalidate( void ) OVERRIDE;
 
-	virtual void OnPathChanged( INextBot *bot, Path::ResultType result ) override;
+	virtual void OnPathChanged( INextBot *bot, Path::ResultType result ) OVERRIDE;
 
-	virtual void Update( INextBot *bot ) override;
+	virtual void Update( INextBot *bot ) OVERRIDE;
 
-	virtual const Path::Segment *GetCurrentGoal( void ) const override;
+	virtual const Path::Segment *GetCurrentGoal( void ) const OVERRIDE;
 
-	virtual void SetMinLookAheadDistance( float value ) override;
+	virtual void SetMinLookAheadDistance( float value ) OVERRIDE;
 
 private:
 	const Path::Segment *m_Goal;

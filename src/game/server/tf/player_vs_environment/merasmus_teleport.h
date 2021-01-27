@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -21,13 +21,13 @@ public:
 	CMerasmusTeleport( bool, bool );
 	virtual ~CMerasmusTeleport() {}
 
-	virtual char const *GetName( void ) const;
+	virtual char const *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CMerasmus> OnStart( CMerasmus *me, Action<CMerasmus> *priorAction ) override;
-	virtual ActionResult<CMerasmus> Update( CMerasmus *me, float dt ) override;
+	virtual ActionResult<CMerasmus> OnStart( CMerasmus *me, Action<CMerasmus> *priorAction ) OVERRIDE;
+	virtual ActionResult<CMerasmus> Update( CMerasmus *me, float dt ) OVERRIDE;
 
 private:
-	const Vector &GetTeleportPosition( CMerasmus *actor );
+	Vector GetTeleportPosition( CMerasmus *actor );
 
 	enum {
 		TELEPORT_OUT,

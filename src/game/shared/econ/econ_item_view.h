@@ -27,25 +27,21 @@ public:
 	{
 		Init( iIndex, flValue );
 	}
-	CEconItemAttribute( int iIndex, float flValue, const char *pszAttributeClass )
+	CEconItemAttribute( int iIndex, uint32 unValue )
 	{
-		Init( iIndex, flValue, pszAttributeClass );
-	}
-	CEconItemAttribute( int iIndex, const char *pszValue, const char *pszAttributeClass )
-	{
-		Init( iIndex, pszValue, pszAttributeClass );
+		Init( iIndex, unValue );
 	}
 	CEconItemAttribute( CEconItemAttribute const &src );
 
-	void Init( int iIndex, float flValue, const char *pszAttributeClass = NULL );
-	void Init( int iIndex, const char *iszValue, const char *pszAttributeClass = NULL );
+	void Init( int iIndex, float flValue );
+	void Init( int iIndex, uint32 unValue );
 
 	CEconItemAttribute &operator=( CEconItemAttribute const &src );
 
 public:
 	CNetworkVar( uint16, m_iAttributeDefinitionIndex );
 	CNetworkVar( float, m_flValue );
-	string_t m_iAttributeClass;
+	CNetworkVar( int, m_nRefundableCurrency );
 };
 
 class CAttributeList
@@ -65,6 +61,10 @@ public:
 	bool SetRuntimeAttributeValue( const CEconAttributeDefinition *pAttrib, float flValue );
 	bool RemoveAttribute( const CEconAttributeDefinition *pAttrib );
 	bool RemoveAttribByIndex( int iIndex );
+	void RemoveAllAttributes( void );
+
+	void SetRuntimeAttributeRefundableCurrency( const CEconAttributeDefinition *pAttrib, int nRefundableCurrency );
+	int	GetRuntimeAttributeRefundableCurrency( const CEconAttributeDefinition *pAttrib ) const;
 
 	void SetManager( CAttributeManager *pManager );
 	void NotifyManagerOfAttributeValueChanges( void );
@@ -106,6 +106,7 @@ public:
 	Activity GetActivityOverride( int iTeamNumber, Activity actOriginalActivity );
 	const char* GetActivityOverride( int iTeamNumber, const char *name );
 	const char* GetSoundOverride( int iIndex, int iTeamNum = TEAM_UNASSIGNED ) const;
+	const char* GetCustomSound( int iIndex, int iTeamNum = TEAM_UNASSIGNED ) const;
 	unsigned int GetModifiedRGBValue( bool bAlternate );
 	int GetSkin( int iTeamNum, bool bViewmodel ) const;
 	bool HasCapability( const char* name );

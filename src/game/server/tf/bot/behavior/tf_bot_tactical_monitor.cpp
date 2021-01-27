@@ -138,7 +138,7 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 		if ( me->IsAmmoLow() && CTFBotGetAmmo::IsPossible( me ) )
 			return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Grabbing nearby ammo" );
 
-		if ( me->m_hTargetSentry && CTFBotDestroyEnemySentry::IsPossible( me ) )
+		if ( me->GetTargetSentry() && CTFBotDestroyEnemySentry::IsPossible( me ) )
 			return BaseClass::SuspendFor( new CTFBotDestroyEnemySentry, "Going after an enemy sentry to destroy it" );
 	}
 
@@ -336,10 +336,12 @@ void CTFBotTacticalMonitor::MonitorArmedStickybombs( CTFBot *actor )
 	CUtlVector<CKnownEntity> knowns;
 	actor->GetVisionInterface()->CollectKnownEntities( &knowns );
 	
-	for ( CTFGrenadePipebombProjectile *pGrenade : pLauncher->m_Pipebombs )
+	FOR_EACH_VEC( pLauncher->m_Pipebombs, i )
 	{
-		for ( const CKnownEntity &pKnown : knowns )
+		CTFGrenadePipebombProjectile *pGrenade = pLauncher->m_Pipebombs[i];
+		FOR_EACH_VEC( knowns, j )
 		{
+			const CKnownEntity &pKnown = knowns[j];
 			if ( pKnown.IsObsolete() || pKnown.GetEntity()->IsBaseObject() )
 				continue;
 

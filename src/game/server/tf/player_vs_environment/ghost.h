@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -34,7 +34,7 @@ class CGhost : public NextBotCombatCharacter, IGhostAutoList
 	DECLARE_CLASS( CGhost, NextBotCombatCharacter );
 public:
 	
-	DECLARE_INTENTION_INTERFACE( CGhost );
+	DECLARE_INTENTION_INTERFACE( CGhost )
 
 	CGhost();
 	virtual ~CGhost();

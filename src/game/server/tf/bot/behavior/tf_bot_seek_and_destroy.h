@@ -15,21 +15,21 @@ public:
 	CTFBotSeekAndDestroy( float duration = -1.0f );
 	virtual ~CTFBotSeekAndDestroy();
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *interruptingAction ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *interruptingAction ) OVERRIDE;
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) override;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason ) override;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) override;
-	virtual EventDesiredResult<CTFBot> OnTerritoryContested( CTFBot *me, int i1 ) override;
-	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int i1 ) override;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int i1 ) override;
+	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnTerritoryContested( CTFBot *me, int i1 ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int i1 ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int i1 ) OVERRIDE;
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const override;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const override;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
 
 private:
 	CTFNavArea *ChooseGoalArea( CTFBot *actor );

@@ -49,6 +49,7 @@ extern ConVar tf2v_critchance_rapid;
 extern ConVar tf2v_crit_duration_rapid;
 extern ConVar tf2v_use_shortstop_slowdown;
 extern ConVar tf2v_use_new_beggars;
+extern ConVar tf2v_use_new_axtinguisher;
 
 #ifdef CLIENT_DLL
 extern ConVar tf2v_model_muzzleflash;
@@ -56,9 +57,10 @@ extern ConVar tf2v_muzzlelight;
 #endif
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
+ConVar tf_weapon_always_allow_inspect( "tf_weapon_always_allow_inspect", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE, "Allow the inspect animation on any weapon" );
 ConVar tf2v_allcrit( "tf2v_allcrit", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables or disables always on criticals." );
 ConVar tf2v_use_new_weapon_swap_speed( "tf2v_use_new_weapon_swap_speed", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enables faster weapon switching." );
-ConVar tf_dev_marked_for_death_lifetime( "tf_dev_marked_for_death_lifetime", "1", FCVAR_DEVELOPMENTONLY );
+ConVar tf_dev_marked_for_death_lifetime( "tf_dev_marked_for_death_lifetime", "1", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );
 
 //=============================================================================
 //
@@ -149,8 +151,15 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bReloadedThroughAnimEvent ) ),
 	RecvPropTime( RECVINFO( m_flLastFireTime ) ),
 	RecvPropTime( RECVINFO( m_flEffectBarRegenTime ) ),
+	RecvPropFloat( RECVINFO( m_flEnergy ) ),
+	RecvPropEHandle( RECVINFO( m_hExtraWearable ) ),
+	RecvPropEHandle( RECVINFO( m_hExtraWearableViewModel ) ),
+	RecvPropBool( RECVINFO( m_bBeingRepurposedForTaunt ) ),
 
 	RecvPropInt( RECVINFO( m_nSequence ), 0, RecvProxy_WeaponSequence ),
+
+	RecvPropFloat( RECVINFO( m_flInspectAnimTime ) ),
+	RecvPropInt( RECVINFO( m_nInspectStage ) ),
 // Server specific.
 #else
 	SendPropBool( SENDINFO( m_bLowered ) ),
@@ -159,9 +168,16 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropBool( SENDINFO( m_bReloadedThroughAnimEvent ) ),
 	SendPropTime( SENDINFO( m_flLastFireTime ) ),
 	SendPropTime( SENDINFO( m_flEffectBarRegenTime ) ),
+	SendPropFloat( SENDINFO( m_flEnergy ) ),
+	SendPropEHandle( SENDINFO( m_hExtraWearable ) ),
+	SendPropEHandle( SENDINFO( m_hExtraWearableViewModel ) ),
+	SendPropBool( SENDINFO( m_bBeingRepurposedForTaunt ) ),
 
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropInt( SENDINFO( m_nSequence ), ANIMATION_SEQUENCE_BITS, SPROP_UNSIGNED ),
+
+	SendPropFloat( SENDINFO( m_flInspectAnimTime ) ),
+	SendPropInt( SENDINFO( m_nInspectStage ), -1, SPROP_VARINT ),
 #endif
 END_NETWORK_TABLE()
 
@@ -170,8 +186,12 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bLowered, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD_TOL( m_flLastCritCheckTime, FIELD_FLOAT, 0, TD_MSECTOLERANCE ),
 	DEFINE_PRED_FIELD_TOL( m_flLastFireTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),
+	DEFINE_PRED_FIELD( m_bCurrentAttackIsCrit, FIELD_BOOLEAN, 0 ),
+	DEFINE_PRED_FIELD( m_flEnergy, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flEffectBarRegenTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bBeingRepurposedForTaunt, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 #endif
 END_PREDICTION_DATA()
 
@@ -556,10 +576,10 @@ C_ViewmodelAttachmentModel *CTFWeaponBase::GetViewmodelAddon( void )
 C_BaseAnimating *CTFWeaponBase::GetAppropriateWorldOrViewModel( void )
 {
 	C_TFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( pPlayer && UsingViewModel() && GetItem() && GetItem()->GetStaticData() )
+	if ( pPlayer && UsingViewModel() && GetItem()->GetStaticData() )
 	{
 		// what kind of viewmodel is this?
-		int iType = GetItem()->GetStaticData()->attach_to_hands;
+		int iType = GetItem()->GetStaticData()->GetAttachToHands();
 
 		// Is this a cmodel?
 		if ( iType == VMTYPE_TF2 )
@@ -615,7 +635,7 @@ const char *CTFWeaponBase::DetermineViewModelType( const char *vModel ) const
 
 	if ( pStatic )
 	{
-		int iType = pStatic->attach_to_hands;
+		int iType = pStatic->GetAttachToHands();
 
 		CTFViewModel *vm = dynamic_cast<CTFViewModel *>( pPlayer->GetViewModel( m_nViewModelIndex ) );
 		if ( vm )
@@ -665,6 +685,42 @@ const char *CTFWeaponBase::GetWorldModel( void ) const
 	}
 
 	return BaseClass::GetWorldModel();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::SendWeaponAnim( int iActivity )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return BaseClass::SendWeaponAnim( iActivity );
+
+	if ( m_nInspectStage != INSPECT_NONE )
+	{
+		if ( iActivity == GetActivity() )
+			return true;
+
+		// ignore idle anim while inspect anim is still playing
+		if ( iActivity == ACT_VM_IDLE )	
+		{
+			return true;
+		}
+
+		// allow other activity to override the inspect
+		if ( !IsInspectActivity( iActivity ) )
+		{
+			m_flInspectAnimTime = -1.0f;
+			m_nInspectStage = INSPECT_NONE;
+			return BaseClass::SendWeaponAnim( iActivity );
+		}
+
+		// let the idle loop while the inspect key is pressed
+		if ( pPlayer->IsInspecting() && m_nInspectStage == INSPECT_IDLE )
+			return true;
+	}
+
+	return BaseClass::SendWeaponAnim( iActivity );
 }
 
 //-----------------------------------------------------------------------------
@@ -735,6 +791,9 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 	AbortReload();
 
+	m_nInspectStage = INSPECT_NONE;
+	m_flInspectAnimTime = -1.0f;
+
 	return BaseClass::Holster( pSwitchingTo );
 }
 
@@ -791,6 +850,11 @@ bool CTFWeaponBase::Deploy( void )
 		float flDeployTime = 1.0f;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flDeployTime, mult_deploy_time );
 		CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time );
+
+		if (tf2v_use_new_axtinguisher.GetInt() == 2)
+			CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time_axtinguisher_2 );
+		else if (tf2v_use_new_axtinguisher.GetInt() == 3)
+			CALL_ATTRIB_HOOK_FLOAT( flDeployTime, mult_single_wep_deploy_time_axtinguisher_3 );
 
 		if ( pPlayer->GetLastWeapon() )
 			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer->GetLastWeapon(), flDeployTime, mult_switch_from_wep_deploy_time );
@@ -872,17 +936,138 @@ void CTFWeaponBase::UpdatePlayerBodygroups( int bOnOff )
 	}
 }
 
+#if defined GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::UpdateExtraWearables( void )
+{
+	CBaseCombatCharacter *pOwner = GetOwner();
+	if ( pOwner && ( m_hExtraWearable.Get() || m_hExtraWearableViewModel.Get() ) )
+	{
+		const int nTeam = pOwner->GetTeamNumber();
+		if ( m_hExtraWearable.Get() && m_hExtraWearable->GetTeamNumber() == nTeam )
+		{
+			if ( m_hExtraWearableViewModel.Get() && m_hExtraWearableViewModel->GetTeamNumber() == nTeam )
+				return;
+		}
+	}
+
+	RemoveExtraWearables();
+	bool bViewModel = false;
+
+	if ( GetExtraWearableViewModel() )
+	{
+		CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable_vm" );
+		if( pWearable != nullptr )
+		{
+			if ( modelinfo->GetModelIndex( GetExtraWearableViewModel() ) == -1 )
+				PrecacheModel( GetExtraWearableViewModel() );
+
+			pWearable->SetItem( *GetItem() );
+			pWearable->SetExtraWearable( true );
+			pWearable->AddSpawnFlags( SF_NORESPAWN );
+
+			DispatchSpawn( pWearable );
+			pWearable->GiveTo( pOwner );
+
+			pWearable->SetWeaponAssociatedWith( this );
+
+			ExtraWearableViewModelEquipped( pWearable );
+
+			bViewModel = true;
+		}
+	}
+
+	if ( GetExtraWearableModel() )
+	{
+		CTFWearable *pWearable = (CTFWearable *)CreateEntityByName( "tf_wearable" );
+		if( pWearable != nullptr )
+		{
+			if ( modelinfo->GetModelIndex( GetExtraWearableModel() ) == -1 )
+				PrecacheModel( GetExtraWearableModel() );
+
+			pWearable->SetItem( *GetItem() );
+			pWearable->SetExtraWearable( true );
+			pWearable->AddSpawnFlags( SF_NORESPAWN );
+
+			DispatchSpawn( pWearable );
+			pWearable->GiveTo( pOwner );
+
+			if( bViewModel )
+				pWearable->SetWeaponAssociatedWith( this );
+
+			ExtraWearableEquipped( pWearable );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::ExtraWearableEquipped( CTFWearable *pExtraWearable )
+{
+	Assert( pExtraWearable );
+	m_hExtraWearable.Set( pExtraWearable );
+
+	CBasePlayer *pPlayerOwner = GetPlayerOwner();
+	if ( pPlayerOwner )
+	{
+		pExtraWearable->Equip( pPlayerOwner );
+	}
+}
+
+void CTFWeaponBase::ExtraWearableViewModelEquipped( CTFWearable *pExtraWearable )
+{
+	Assert( pExtraWearable );
+	m_hExtraWearableViewModel.Set( pExtraWearable );
+
+	CBasePlayer *pPlayerOwner = GetPlayerOwner();
+	if ( pPlayerOwner )
+	{
+		pExtraWearable->Equip( pPlayerOwner );
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::RemoveExtraWearables( void )
+{
+	if ( m_hExtraWearable.Get() )
+	{
+		m_hExtraWearable->RemoveFrom( GetOwnerEntity() );
+		m_hExtraWearable = NULL;
+	}
+
+	if ( m_hExtraWearableViewModel.Get() )
+	{
+		m_hExtraWearableViewModel->RemoveFrom( GetOwnerEntity() );
+		m_hExtraWearableViewModel = NULL;
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::IsViewModelFlipped( void )
 {
 	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner == NULL )
+		return false;
 
-	if ( pOwner )
+#ifdef GAME_DLL
+	if ( m_bFlipViewModel != pOwner->ShouldFlipViewModel() )
 	{
-		return ( m_bFlipViewModel != pOwner->ShouldFlipViewModel() );
+		return true;
 	}
+#else
+	if ( m_bFlipViewModel != cl_flipviewmodels.GetBool() )
+	{
+		return true;
+	}
+#endif
 
 	return false;
 }
@@ -896,6 +1081,15 @@ void CTFWeaponBase::IncrementAmmo( void )
 	if ( pOwner == nullptr )
 		return;
 
+	if ( m_bReloadedThroughAnimEvent || CheckReloadMisfire() )
+		return;
+
+	if ( IsEnergyWeapon() )
+	{
+		Energy_Recharge();
+		return;
+	}
+
 	if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
 		return;
 
@@ -903,9 +1097,7 @@ void CTFWeaponBase::IncrementAmmo( void )
 		return;
 
 	m_iClip1 = Min( m_iClip1 + 1, GetMaxClip1() );
-
-	if ( !IsEnergyWeapon() )
-		pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
 }
 
 //-----------------------------------------------------------------------------
@@ -1129,8 +1321,36 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanPerformSecondaryAttack() const
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+
+	// Demo shields are allowed to charge whenever
+	if ( pOwner->m_Shared.HasDemoShieldEquipped() )
+		return true;
+
+	return BaseClass::CanPerformSecondaryAttack();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFWeaponBase::Clip1( void )
+{
+	if ( IsEnergyWeapon() )
+		return Energy_GetEnergy();
+
+	return m_iClip1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CTFWeaponBase::GetMaxClip1( void ) const
 {
+	if ( IsEnergyWeapon() )
+		return Energy_GetMaxEnergy();
+
 	int iMaxClip = CBaseCombatWeapon::GetMaxClip1();
 	if ( iMaxClip < 0 )
 		return iMaxClip;
@@ -1161,6 +1381,28 @@ int CTFWeaponBase::GetDefaultClip1( void ) const
 
 //-----------------------------------------------------------------------------
 // Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::UsesPrimaryAmmo( void )
+{
+	if ( IsEnergyWeapon() )
+		return false;
+	
+	return BaseClass::UsesPrimaryAmmo();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::HasAmmo( void )
+{
+	if ( IsEnergyWeapon() )
+		return true;
+	
+	return BaseClass::HasAmmo();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::Reload( void )
@@ -1168,14 +1410,20 @@ bool CTFWeaponBase::Reload( void )
 	// Sorry, people, no speeding it up.
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return false;
+
+	if ( IsEnergyWeapon() && !Energy_FullyCharged() )
+	{
+		return ReloadSingly();
+	}
+
 	// If we're not already reloading, check to see if we have ammo to reload and check to see if we are max ammo.
 	if ( m_iReloadMode == TF_RELOAD_START ) 
 	{
 		// If I don't have any spare ammo, I can't reload
-		if (!IsEnergyWeapon() && GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
+		if ( GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) <= 0 )
 			return false;
 
-		if ( Clip1() >= GetMaxClip1())
+		if ( !CanOverload() && Clip1() >= GetMaxClip1() )
 			return false;
 	}
 
@@ -1277,11 +1525,12 @@ bool CTFWeaponBase::ReloadSingly( void )
 				UpdateReloadTimers( false );
 			}
 
-#ifdef CLIENT_DLL
-			// Play world reload.
-			if ( !UsingViewModel() )
+		#ifdef CLIENT_DLL
+			if ( ShouldPlayClientReloadSound() )
+				WeaponSound( RELOAD );
+		#else
 			WeaponSound( RELOAD );
-#endif
+		#endif
 
 			// Next continue to reload shells?
 			m_iReloadMode.Set( TF_RELOADING_CONTINUE );
@@ -1294,33 +1543,31 @@ bool CTFWeaponBase::ReloadSingly( void )
 			if ( m_flTimeWeaponIdle > gpGlobals->curtime )
 				return false;
 
-			// If we have ammo, remove ammo and add it to clip
-			if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
-			{
-				if (!CanOverload())
-					m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
-				else
-					m_iClip1 = min((m_iClip1 + 1), (GetMaxClip1() + 1));
-				if (!IsEnergyWeapon())
-					pPlayer->RemoveAmmo(1, m_iPrimaryAmmoType);
-				if (CanOverload() && m_iClip1 > GetMaxClip1())
-				{
-					m_bIsOverLoaded = true;
-					m_iClip1 = GetMaxClip1();
-				}
-				if (m_bIsOverLoaded)
-					Overload();
-			}
+			IncrementAmmo();
 
 			SwitchBodyGroups(); // Update number of pills in the launcher
 
-			if ( ( Clip1() == GetMaxClip1() && !CanOverload() ) || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
+			if ( IsEnergyWeapon() )
 			{
-				m_iReloadMode.Set( TF_RELOAD_FINISH );
+				if ( Energy_FullyCharged() )
+				{
+					m_iReloadMode.Set( TF_RELOAD_FINISH );
+				}
+				else
+				{
+					m_iReloadMode.Set( TF_RELOADING );
+				}
 			}
 			else
 			{
-				m_iReloadMode.Set( TF_RELOADING );
+				if ( ( Clip1() == GetMaxClip1() || pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 ) && !CanOverload() )
+				{
+					m_iReloadMode.Set( TF_RELOAD_FINISH );
+				}
+				else
+				{
+					m_iReloadMode.Set( TF_RELOADING );
+				}
 			}
 
 			return true;
@@ -1344,72 +1591,6 @@ bool CTFWeaponBase::ReloadSingly( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Explodes the player if we cause a misfire.
-//-----------------------------------------------------------------------------
-void CTFWeaponBase::Overload(void)
-{
-	CTFPlayer *pTFOwner = GetTFPlayerOwner();
-
-	if (!pTFOwner)
-		return;
-
-	// Base logic.
-
-	// If we're empty, don't misfire.
-	if (m_iClip1 == 0)
-		m_bIsOverLoaded = false;
-
-	// If we're not overloaded, don't even bother to explode.
-	if (!m_bIsOverLoaded)
-		return;
-
-	// Deduct a round.
-	if (m_iClip1 > 0 && ( ( GetWeaponID() != TF_WEAPON_ROCKETLAUNCHER ) || ( ( GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER ) && tf2v_use_new_beggars.GetBool() ) ) )
-		m_iClip1 -= 1;
-
-#ifdef GAME_DLL
-
-	// Use a rocket launcher's explosion as a base.
-	// We essentially spawn a rocket's explosion where our weapon is attacking.
-
-	// Figure out Econ ID.
-	int iItemID = GetItemID();
-
-	// Play explosion sound and effect.
-
-	Vector vecOrigin = pTFOwner->Weapon_ShootPosition();
-	CPVSFilter filter(vecOrigin);
-	TE_TFExplosion(filter, 0.0f, vecOrigin, Vector(0.0f, 0.0f, 1.0f), GetWeaponID(), pTFOwner->entindex(), iItemID);
-	CSoundEnt::InsertSound(SOUND_COMBAT, vecOrigin, 1024, 3.0);
-
-
-	// Damage.
-	CBaseEntity *pAttacker = GetOwnerEntity();
-	IScorer *pScorerInterface = dynamic_cast<IScorer*>(pAttacker);
-	if (pScorerInterface)
-	{
-		pAttacker = pScorerInterface->GetScorer();
-	}
-
-	float flRadius = TF_ROCKET_RADIUS;
-	CALL_ATTRIB_HOOK_FLOAT(flRadius, mult_explosion_radius);
-	float flDamage = (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
-	CALL_ATTRIB_HOOK_FLOAT(flDamage, mult_dmg);
-
-	CTakeDamageInfo newInfo(pAttacker, pAttacker, this, vec3_origin, vecOrigin, flDamage, GetDamageType());
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = vecOrigin;
-	radiusInfo.m_flRadius = flRadius;
-	radiusInfo.m_flSelfDamageRadius = flRadius * TF_ROCKET_SELF_RADIUS_RATIO; // Original rocket radius?
-
-	TFGameRules()->RadiusDamage(radiusInfo);
-
-#endif
-
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pEvent - 
 //			*pOperator - 
@@ -1420,22 +1601,7 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 	{
 		if ( pEvent->event == AE_WPN_INCREMENTAMMO )
 		{
-			if ( pOperator->GetAmmoCount( m_iPrimaryAmmoType ) > 0 && !m_bReloadedThroughAnimEvent )
-			{
-				if (!CanOverload())
-					m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
-				else if (!m_bIsOverLoaded)
-					m_iClip1 = min((m_iClip1 + 1), (GetMaxClip1() + 1));
-				if (!IsEnergyWeapon())
-					pOperator->RemoveAmmo(1, m_iPrimaryAmmoType);
-				if (CanOverload() && m_iClip1 > GetMaxClip1())
-				{
-					m_bIsOverLoaded = true;
-					m_iClip1 = GetMaxClip1();
-				}
-				if (m_bIsOverLoaded)
-					Overload();
-			}
+			IncrementAmmo();
 
 			//if ( GetWeaponID() != TF_WEAPON_COMPOUND_BOW ) // Hacky reload fix for huntsman
 				m_bReloadedThroughAnimEvent = true;
@@ -1463,9 +1629,7 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( UsesClipsForAmmo1() )
 	{
 		// need to reload primary clip?
-		int primary = Min(iClipSize1 - m_iClip1, pPlayer->GetAmmoCount(m_iPrimaryAmmoType));
-		if (IsEnergyWeapon())
-			primary = iClipSize1 - m_iClip1;
+		int primary = Min( iClipSize1 - m_iClip1, pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) );
 		if ( primary != 0 )
 		{
 			bReloadPrimary = true;
@@ -1488,7 +1652,9 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 
 	// Play world reload.
 #ifdef CLIENT_DLL
-	if ( !UsingViewModel() )
+	if ( ShouldPlayClientReloadSound() )
+		WeaponSound( RELOAD );
+#else
 	WeaponSound( RELOAD );
 #endif
 	
@@ -1517,6 +1683,59 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	m_bInReload = true;
 
 	return true;
+}
+
+void CTFWeaponBase::CheckReload( void )
+{
+	if ( IsEnergyWeapon() )
+	{
+		CTFPlayer *pOwner = GetTFPlayerOwner();
+		if ( !pOwner )
+			return;
+
+		if ( !Energy_HasEnergy() )
+		{
+			Reload();
+			return;
+		}
+
+		if ( m_bInReload && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
+		{
+			if ( pOwner->m_nButtons & ( IN_ATTACK|IN_ATTACK2 ) )
+			{
+				if( Energy_HasEnergy() )
+				{
+					m_bInReload = false;
+					return;
+				}
+			}
+
+			if ( Energy_FullyCharged() )
+			{
+				FinishReload();
+				m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime;
+			}
+			else
+			{
+				Reload();
+			}
+		}
+	}
+	else
+	{
+		BaseClass::CheckReload();
+	}
+}
+
+void CTFWeaponBase::FinishReload( void )
+{
+	if ( IsEnergyWeapon() )
+	{
+		m_bInReload = false;
+		return;
+	}
+
+	BaseClass::FinishReload();
 }
 
 //-----------------------------------------------------------------------------
@@ -1683,6 +1902,13 @@ void CTFWeaponBase::ItemPostFrame( void )
 		return;
 	}
 
+#ifdef GAME_DLL
+	if ( WeaponState() == WEAPON_IS_ACTIVE )
+	{
+		HandleInspect();
+	}
+#endif // GAME_DLL
+
 	// debounce InAttack flags
 	if ( m_bInAttack && !( pOwner->m_nButtons & IN_ATTACK ) )
 	{
@@ -1708,6 +1934,11 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		ReloadSinglyPostFrame();
 	}
+
+	if ( AutoFiresFullClip() && AutoFiresFullClipAllAtOnce() && m_iClip1 == GetMaxClip1() )
+	{
+		FireFullClipAtOnce();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1728,8 +1959,11 @@ void CTFWeaponBase::ReloadSinglyPostFrame( void )
 		return;
 
 	// if the clip is empty and we have ammo remaining, 
-	if (((Clip1() == 0) && (GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) > 0) && !IsEnergyWeapon() ) ||
-		 ( ( Clip1() == 0) && IsEnergyWeapon()) ||
+	if ( IsEnergyWeapon() )
+	{
+		Reload();
+	}
+	else if ( ( !AutoFiresFullClip() && (Clip1() == 0) && (GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) > 0) ) ||
 		// or we are already in the process of reloading but not finished
 		( m_iReloadMode != TF_RELOAD_START ) )
 	{
@@ -2202,6 +2436,9 @@ void CTFWeaponBase::OnControlStunned( void )
 		SetWeaponVisible( false );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 {
 	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
@@ -2212,16 +2449,66 @@ const char *CTFWeaponBase::GetExtraWearableModel( void ) const
 		return pStatic->GetExtraWearableModel();
 	}
 
-	return "\0";
+	return NULL;
 }
 
-bool CTFWeaponBase::IsHonorBound( void ) const
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CTFWeaponBase::GetExtraWearableViewModel( void ) const
+{
+	CEconItemDefinition *pStatic = GetItem()->GetStaticData();
+
+	if ( pStatic )
+	{
+		// We have an extra wearable
+		return pStatic->GetExtraWearableViewModel();
+	}
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::AutoFiresFullClip( void ) const
+{
+	int nAutoFiresFullClip = 0;
+	CALL_ATTRIB_HOOK_INT( nAutoFiresFullClip, auto_fires_full_clip );
+
+	return ( nAutoFiresFullClip != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::AutoFiresFullClipAllAtOnce( void ) const
+{
+	int nAutoFiresFullClipAllAtOnce = 0;
+	CALL_ATTRIB_HOOK_INT( nAutoFiresFullClipAllAtOnce, auto_fires_full_clip_all_at_once );
+
+	return ( nAutoFiresFullClipAllAtOnce != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsHonorBound( void )
 {
 	int nHonorBound = 0;
-	CALL_ATTRIB_HOOK_INT( nHonorBound, "honorbound" );
-	return nHonorBound == 1;
+	CALL_ATTRIB_HOOK_INT( nHonorBound, honorbound );
+	return ( nHonorBound != 0 );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Return if we should not show death notices to enemy
+// ----------------------------------------------------------------------------
+bool CTFWeaponBase::IsSilentKiller( void )
+{
+	int nSilentKiller = 0;
+	CALL_ATTRIB_HOOK_INT( nSilentKiller, set_silent_killer );
+	return ( nSilentKiller != 0 );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for calculating penetrating shots.
@@ -2247,41 +2534,93 @@ bool CTFWeaponBase::IsPenetrating(void)
 bool CTFWeaponBase::CanDecapitate( void )
 {			 
 	int nDecapitateType = 0;
-	CALL_ATTRIB_HOOK_INT(nDecapitateType, decapitate_type);
+	CALL_ATTRIB_HOOK_INT( nDecapitateType, decapitate_type );
 	return ( nDecapitateType != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanOverload( void )
+{			 
+	int nCanOverload = 0;
+	CALL_ATTRIB_HOOK_INT( nCanOverload, can_overload );
+	return ( nCanOverload != 0 );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for calculating energy weapon logic.
 //-----------------------------------------------------------------------------
-bool CTFWeaponBase::IsEnergyWeapon(void)
+bool CTFWeaponBase::IsEnergyWeapon(void) const
 {
 	int iUseEnergyWeaponRules = 0;
-	CALL_ATTRIB_HOOK_INT(iUseEnergyWeaponRules, energy_weapon_no_ammo);
-	return (iUseEnergyWeaponRules != 0);
+	CALL_ATTRIB_HOOK_INT( iUseEnergyWeaponRules, energy_weapon_no_ammo );
+	return ( iUseEnergyWeaponRules != 0 );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Used for calculating out the percentage of charge left, from 0 to 1.
+// Purpose:
 //-----------------------------------------------------------------------------
-float CTFWeaponBase::GetEnergyPercentage(void)
+float CTFWeaponBase::Energy_GetMaxEnergy( void ) const
 {
-	// Check our magazine amount and convert to a percentage.
-	if ( UsesClipsForAmmo1() )
+	int iNumShots = 20 / Energy_GetShotCost();
+	CALL_ATTRIB_HOOK_FLOAT( iNumShots, mult_clipsize_upgrade );
+
+	return ( iNumShots * Energy_GetShotCost() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::Energy_FullyCharged( void ) const
+{
+	if ( m_flEnergy >= Energy_GetMaxEnergy() )
+		return true;
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::Energy_HasEnergy( void )
+{
+	if ( m_flEnergy >= Energy_GetShotCost() )
+		return true;
+	
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::Energy_DrainEnergy( void )
+{
+	m_flEnergy -= Energy_GetShotCost();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::Energy_DrainEnergy( float flDrain )
+{
+	m_flEnergy -= flDrain;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::Energy_Recharge( void )
+{
+	m_flEnergy += Energy_GetRechargeCost();
+	if ( Energy_FullyCharged() )
 	{
-		return ( m_iClip1 / GetMaxClip1() );
-	}
-	else if ( UsesClipsForAmmo2() )
-	{
-		return ( m_iClip2 / GetMaxClip2() );
+		m_flEnergy = Energy_GetMaxEnergy();
+		return true;
 	}
 	
-	// We either have all or nothing.
-	int iClipT = m_iClip1 + m_iClip2;
-	if (iClipT > 1) // In case we have more than one for some reason.
-		return 1;
-	
-	return iClipT / 1;
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -2295,21 +2634,142 @@ Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
 	
 	if (pOwner->GetTeamNumber() == TF_TEAM_RED)
 	{
-		if ( bUseAlternateColorPalette )
+		if ( !bUseAlternateColorPalette )
 			return Vector( 0.72, 0.22, 0.23 );
-		else
-			return Vector( 0.5, 0.18, 0.125 );	
+		
+		return Vector( 0.5, 0.18, 0.125 );	
 	}
 	else
 	{
 		if ( !bUseAlternateColorPalette )
 			return Vector( 0.345, 0.52, 0.635 );
-		else
-			return Vector( 0.145, 0.427, 0.55 );
+		
+		return Vector( 0.145, 0.427, 0.55 );
 	}	
 	
 	// You shouldn't come here, at least in standard team mode.
 	return Vector(0,0,0);
+}
+
+void CTFWeaponBase::WeaponRegenerate( void )
+{
+	m_flEnergy = Energy_GetMaxEnergy();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanInspect() const
+{
+	if ( tf_weapon_always_allow_inspect.GetBool() )
+		return true;
+
+	float flInspect = 0.f;
+	CALL_ATTRIB_HOOK_FLOAT( flInspect, weapon_allow_inspect );
+	return flInspect != 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+Activity CTFWeaponBase::GetInspectActivity( EInspectStage eStage )
+{
+	static Activity s_inspectActivities[TF_PLAYER_WEAPON_COUNT][INSPECT_STAGE_COUNT] =
+	{
+		{
+			ACT_PRIMARY_VM_INSPECT_START,
+			ACT_PRIMARY_VM_INSPECT_IDLE,
+			ACT_PRIMARY_VM_INSPECT_END
+		},
+		{
+			ACT_SECONDARY_VM_INSPECT_START,
+			ACT_SECONDARY_VM_INSPECT_IDLE,
+			ACT_SECONDARY_VM_INSPECT_END
+		},
+		{
+			ACT_MELEE_VM_INSPECT_START,
+			ACT_MELEE_VM_INSPECT_IDLE,
+			ACT_MELEE_VM_INSPECT_END
+		},
+	};
+
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( pOwner )
+	{
+		int nClassIndex = pOwner->GetPlayerClass()->GetClassIndex();
+		int nLoadoutSlot = GetItem()->GetStaticData()->GetLoadoutSlot( nClassIndex );
+		if ( nLoadoutSlot < TF_LOADOUT_SLOT_PRIMARY || nLoadoutSlot > TF_LOADOUT_SLOT_MELEE )
+			nLoadoutSlot = TF_LOADOUT_SLOT_PRIMARY;
+
+		return s_inspectActivities[ nLoadoutSlot ][ eStage ];
+	}
+
+	return s_inspectActivities[ TF_LOADOUT_SLOT_PRIMARY ][ eStage ];
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::IsInspectActivity( int iActivity )
+{
+	return iActivity == GetInspectActivity( INSPECT_START ) || iActivity == GetInspectActivity( INSPECT_IDLE ) || iActivity == GetInspectActivity( INSPECT_END );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::HandleInspect()
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+	if ( CanInspect() )
+	{
+		if ( !m_bInspecting && pPlayer->IsInspecting() )
+		{
+
+			Activity iActivity = GetInspectActivity( INSPECT_START );
+			if ( SendWeaponAnim( iActivity ) )
+			{
+				m_flInspectAnimTime = gpGlobals->curtime + SequenceDuration();
+				m_nInspectStage = INSPECT_START;
+			}
+		}
+		else if ( !pPlayer->IsInspecting() && m_nInspectStage == INSPECT_IDLE )
+		{
+			Activity iActivity = GetInspectActivity( INSPECT_END );
+			if ( SendWeaponAnim( iActivity ) )
+			{
+				m_flInspectAnimTime = gpGlobals->curtime + SequenceDuration();
+				m_nInspectStage = INSPECT_END;
+			}
+		}
+		else if ( m_nInspectStage != INSPECT_NONE )
+		{
+			if ( m_flInspectAnimTime < gpGlobals->curtime )
+			{
+				if ( m_nInspectStage == INSPECT_START )
+				{
+					EInspectStage eStage = pPlayer->IsInspecting() ? INSPECT_IDLE : INSPECT_END;
+					Activity iActivity = GetInspectActivity( eStage );
+					if ( SendWeaponAnim( iActivity ) )
+					{
+						m_flInspectAnimTime = gpGlobals->curtime + SequenceDuration();
+						m_nInspectStage = eStage;
+					}
+				}
+				else if ( m_nInspectStage == INSPECT_END )
+				{
+					m_flInspectAnimTime = -1.0f;
+					m_nInspectStage = INSPECT_NONE;
+					SendWeaponAnim( ACT_VM_IDLE );
+				}
+			}
+		}
+	}
+
+	m_bInspecting = pPlayer->IsInspecting();
 }
 
 
@@ -2318,7 +2778,6 @@ Vector CTFWeaponBase::GetEnergyWeaponColor( bool bUseAlternateColorPalette )
 // TFWeaponBase functions (Server specific).
 //
 #if !defined( CLIENT_DLL )
-
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
@@ -2420,6 +2879,8 @@ void CTFWeaponBase::WeaponReset( void )
 	m_bResetParity = !m_bResetParity;
 
 	m_flEffectBarRegenTime = 0.0f;
+
+	m_flEnergy = Energy_GetMaxEnergy();
 }
 
 //-----------------------------------------------------------------------------
@@ -2449,9 +2910,27 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 	if ( pTFVictim )
 	{
 		// Afterburn shouldn't trigger on-hit effects.
+		if ( ( info.GetDamageType() & DMG_BURN ) )
+			return;
+
+		int nRevealCloaked = 0;
+		CALL_ATTRIB_HOOK_INT( nRevealCloaked, reveal_cloaked_victim_on_hit );
+		if ( nRevealCloaked != 0 )
+		{
+			pTFVictim->RemoveInvisibility();
+			UTIL_ScreenFade( pVictim, {255, 255, 255, 255}, 0.25f, 0.1f, FFADE_IN );
+		}
+
+		int nRevealDisguised = 0;
+		CALL_ATTRIB_HOOK_INT( nRevealDisguised, reveal_disguised_victim_on_hit );
+		if ( nRevealDisguised != 0 )
+		{
+			pTFVictim->RemoveDisguise();
+			UTIL_ScreenFade( pVictim, {255, 255, 255, 255}, 0.25f, 0.1f, FFADE_IN );
+		}
+
 		// Disguised spies shouldn't trigger on-hit effects.
-		if ( ( info.GetDamageType() & DMG_BURN ) ||
-			( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() ) )
+		if ( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && !pTFVictim->m_Shared.IsStealthed() )
 			return;
 
 		if ( !pTFVictim->m_Shared.InCond( TF_COND_HEALTH_BUFF ) && !pTFVictim->m_Shared.InCond( TF_COND_MEGAHEAL ) )
@@ -2485,19 +2964,6 @@ void CTFWeaponBase::ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAtta
 
 			pTFVictim->m_Shared.AddCond( TF_COND_MARKEDFORDEATH, tf_dev_marked_for_death_lifetime.GetFloat() );
 		}
-
-		int nRevealCloaked = 0;
-		CALL_ATTRIB_HOOK_INT( nRevealCloaked, reveal_cloaked_victim_on_hit );
-		if ( nRevealCloaked > 0 )
-		{
-			pTFVictim->RemoveInvisibility();
-			UTIL_ScreenFade( pVictim, {255, 255, 255, 255}, 0.25f, 0.1f, FFADE_IN );
-		}
-
-		int nRevealDisguised = 0;
-		CALL_ATTRIB_HOOK_INT( nRevealDisguised, reveal_disguised_victim_on_hit );
-		if ( nRevealDisguised > 0 )
-			pTFVictim->RemoveDisguise();
 
 		int nStunWaistHighAirborneTime = 0;
 		CALL_ATTRIB_HOOK_INT( nStunWaistHighAirborneTime, stun_waist_high_airborne );
@@ -2588,16 +3054,6 @@ void CTFWeaponBase::ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPl
 
 	if ( pAttacker != GetOwner() )
 		return;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Return if we should not show death notices to enemy
-// ----------------------------------------------------------------------------
-bool CTFWeaponBase::IsSilentKiller( void ) const
-{
-	int nSilentKiller = 0;
-	CALL_ATTRIB_HOOK_INT( nSilentKiller, set_silent_killer );
-	return nSilentKiller == 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -2698,9 +3154,17 @@ void CTFWeaponBase::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nInd
 
 		if ( pszMuzzleFlashParticleEffect ) 
 		{
-			DispatchParticleEffect( pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
+			DispatchMuzzleFlash( pszMuzzleFlashParticleEffect, pAttachEnt );
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::DispatchMuzzleFlash( char const *effectName, C_BaseEntity *pAttachEnt )
+{
+	DispatchParticleEffect( effectName, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
 }
 
 //-----------------------------------------------------------------------------
@@ -2780,6 +3244,34 @@ void CTFWeaponBase::ProcessMuzzleFlashEvent( void )
 		SetModelIndex( nWorldModelIndex );
 		CreateMuzzleFlashEffects( this, 1 );
 		SetModelIndex( nModelIndex );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+void CTFWeaponBase::UpdateVisibility( void )
+{
+	BaseClass::UpdateVisibility();
+
+	UpdateExtraWearablesVisibility();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// ----------------------------------------------------------------------------
+void CTFWeaponBase::UpdateExtraWearablesVisibility()
+{
+	if ( m_hExtraWearable.Get() )
+	{
+		m_hExtraWearable->ValidateModelIndex();
+		m_hExtraWearable->UpdateVisibility();
+		m_hExtraWearable->CreateShadow();
+	}
+
+	if ( m_hExtraWearableViewModel.Get() )
+	{
+		m_hExtraWearableViewModel->UpdateVisibility();
 	}
 }
 

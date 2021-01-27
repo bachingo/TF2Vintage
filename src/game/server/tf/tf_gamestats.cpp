@@ -136,10 +136,10 @@ void CTFGameStats::Event_LevelInit( void )
 		nPort = hostport->GetInt();
 	}			
 
-	m_reportedStats.m_pCurrentGame->Init( STRING( gpGlobals->mapname ), nIPAddr, nPort, gpGlobals->curtime );
+	m_reportedStats.m_pCurrentGame->Init( STRING( gpGlobals->mapname ), gpGlobals->mapversion, nIPAddr, nPort, gpGlobals->curtime );
 
 	TF_Gamestats_LevelStats_t *map = m_reportedStats.FindOrAddMapStats( STRING( gpGlobals->mapname ) );
-	map->Init( STRING( gpGlobals->mapname ), nIPAddr, nPort, gpGlobals->curtime );
+	map->Init( STRING( gpGlobals->mapname ), gpGlobals->mapversion, nIPAddr, nPort, gpGlobals->curtime );
 }
 
 //-----------------------------------------------------------------------------
@@ -354,8 +354,16 @@ void CTFGameStats::Event_PlayerDisconnected( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameStats::Event_PlayerChangedClass( CTFPlayer *pPlayer )
+void CTFGameStats::Event_PlayerChangedClass( CTFPlayer *pPlayer, int iOldClass, int iNewClass )
 {
+	if ( iNewClass >= TF_FIRST_NORMAL_CLASS && iNewClass <= TF_LAST_NORMAL_CLASS )
+	{
+		if ( m_reportedStats.m_pCurrentGame )
+		{
+			m_reportedStats.m_pCurrentGame->m_aClassStats[iNewClass].iClassChanges += 1;
+		}
+		IncrementStat( pPlayer, TFSTAT_CLASSCHANGES, 1 );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -719,6 +727,24 @@ void CTFGameStats::Event_PlayerDamage( CBasePlayer *pBasePlayer, const CTakeDama
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTFGameStats::Event_BossDamage( CBasePlayer *pAttacker, int iDamage )
+{
+	const int INSANE_DAMAGE = 5000;
+	Assert( iDamage >= 0 );
+	Assert( iDamage <= INSANE_DAMAGE );
+	if ( iDamage < 0 || iDamage > INSANE_DAMAGE )
+		return;
+
+	CTFPlayer *pTFAttacker = ToTFPlayer( pAttacker );
+	if ( pTFAttacker )
+	{
+		IncrementStat( pTFAttacker, TFSTAT_DAMAGE_BOSS, iDamage );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFGameStats::Event_PlayerKilledOther( CBasePlayer *pAttacker, CBaseEntity *pVictim, const CTakeDamageInfo &info )
 {
 	// This also gets called when the victim is a building.  That gets tracked separately as building destruction, don't count it here
@@ -933,21 +959,19 @@ void CTFGameStats::Event_PlayerKilled( CBasePlayer *pPlayer, const CTakeDamageIn
 //-----------------------------------------------------------------------------
 void CTFGameStats::Event_PlayerAwardBonusPoints(CTFPlayer *pPlayer, CBaseEntity *pAwarder, int iAmount)
 {
-	IncrementStat(pPlayer, TFSTAT_BONUS, iAmount);
+	IncrementStat(pPlayer, TFSTAT_BONUS_POINTS, iAmount);
 
-#if 0
-	if (pAwarder)
+	if ( pAwarder )
 	{
-		CSingleUserRecipientFilter filter(pPlayer);
+		CSingleUserRecipientFilter filter( pPlayer );
 		filter.MakeReliable();
 
 		UserMessageBegin(filter, "PlayerBonusPoints");
-		WRITE_BYTE(iAmount);
-		WRITE_BYTE(pPlayer->entindex());
-		WRITE_BYTE(pAwarder->entindex());
+			WRITE_BYTE( iAmount );
+			WRITE_BYTE( pPlayer->entindex() );
+			WRITE_BYTE( pAwarder->entindex() );
 		MessageEnd();
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -955,16 +979,16 @@ void CTFGameStats::Event_PlayerAwardBonusPoints(CTFPlayer *pPlayer, CBaseEntity 
 //-----------------------------------------------------------------------------
 void CTFGameStats::Event_GameEnd(void)
 {
-		// Calculate score and send out stats to everyone.
-		for (int i = 1; i <= gpGlobals->maxClients; i++)
+	// Calculate score and send out stats to everyone.
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		CTFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
+		if (pPlayer && pPlayer->IsAlive())
 		{
-			CTFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
-			if (pPlayer && pPlayer->IsAlive())
-			{
-				AccumulateAndResetPerLifeStats(pPlayer);
-				SendStatsToPlayer(pPlayer, STATMSG_UPDATE);
-			}
+			AccumulateAndResetPerLifeStats(pPlayer);
+			SendStatsToPlayer(pPlayer, STATMSG_UPDATE);
 		}
+	}
 }
 
 

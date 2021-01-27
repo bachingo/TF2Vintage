@@ -228,8 +228,10 @@ enum CastVote
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				65  // Absolute max players supported
-#elif defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
-	#define MAX_PLAYERS				129 
+#elif ( defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT ) ) && defined _DEBUG
+	#define MAX_PLAYERS				255	// Absolute max for source engine.
+#elif ( defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT ) ) && !defined _DEBUG
+	#define MAX_PLAYERS				65  // Defined to 65 for stability with mods and features.
 #else
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif

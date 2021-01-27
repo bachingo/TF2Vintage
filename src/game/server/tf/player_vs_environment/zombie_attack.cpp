@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -163,8 +163,9 @@ void CZombieAttack::SelectVictim( CZombie *actor )
 	CBaseCombatCharacter *pClosest = nullptr;
 	float flMinDist = FLT_MAX;
 
-	for ( CTFPlayer *pPlayer : players )
+	FOR_EACH_VEC( players, i )
 	{
+		CTFPlayer *pPlayer = players[i];
 		if ( !IsPotentiallyChaseable( actor, pPlayer ) )
 			continue;
 

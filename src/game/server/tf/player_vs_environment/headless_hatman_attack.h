@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -25,13 +25,13 @@ public:
 	CHeadlessHatmanAttack();
 	virtual ~CHeadlessHatmanAttack() { };
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CHeadlessHatman> OnStart( CHeadlessHatman *me, Action<CHeadlessHatman> *priorAction ) override;
-	virtual ActionResult<CHeadlessHatman> Update( CHeadlessHatman *me, float dt ) override;
+	virtual ActionResult<CHeadlessHatman> OnStart( CHeadlessHatman *me, Action<CHeadlessHatman> *priorAction ) OVERRIDE;
+	virtual ActionResult<CHeadlessHatman> Update( CHeadlessHatman *me, float dt ) OVERRIDE;
 
-	virtual EventDesiredResult<CHeadlessHatman> OnStuck( CHeadlessHatman *me ) override;
-	virtual EventDesiredResult<CHeadlessHatman> OnContact( CHeadlessHatman *me, CBaseEntity *other, CGameTrace *result = NULL ) override;
+	virtual EventDesiredResult<CHeadlessHatman> OnStuck( CHeadlessHatman *me ) OVERRIDE;
+	virtual EventDesiredResult<CHeadlessHatman> OnContact( CHeadlessHatman *me, CBaseEntity *other, CGameTrace *result = NULL ) OVERRIDE;
 
 private:
 	void AttackTarget( CHeadlessHatman *actor, CBaseCombatCharacter *victim, float dist );

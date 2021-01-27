@@ -62,13 +62,12 @@ public:
 	virtual int		DrawModel( int flags );
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	PostDataUpdate( DataUpdateType_t type );
+	virtual void	OnDataChanged( DataUpdateType_t updateType );
+	virtual void	CreateTrails( void ) { }
 
 protected:
-	int		m_iOldTeamNum;
-
-private:
-
-	float	 m_flSpawnTime;
+	int		m_iOldDeflected;
+	float	m_flSpawnTime;
 
 //=============================================================================
 //

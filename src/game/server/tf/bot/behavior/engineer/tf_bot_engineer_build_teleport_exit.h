@@ -14,13 +14,13 @@ public:
 	CTFBotEngineerBuildTeleportExit( const Vector& vecSpot, float yaw );
 	virtual ~CTFBotEngineerBuildTeleportExit();
 
-	virtual const char *GetName() const override;
+	virtual const char *GetName() const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
 
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) override;
+	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
 
 private:
 	PathFollower m_PathFollower;

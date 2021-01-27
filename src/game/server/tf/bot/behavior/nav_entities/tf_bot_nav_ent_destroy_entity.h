@@ -16,11 +16,11 @@ public:
 	CTFBotNavEntDestroyEntity( const CFuncNavPrerequisite *prereq );
 	virtual ~CTFBotNavEntDestroyEntity();
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
 
 private:
 	void DetonateStickiesWhenSet( CTFBot *actor, CTFPipebombLauncher *launcher ) const;

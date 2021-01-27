@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Rich Presence support.
 // HACK: This file has also become the client wing of matchmaking. Matchmaking should
@@ -7,6 +7,9 @@
 //=====================================================================================//
 
 #include "cbase.h"
+#ifndef POSIX
+#include "discord.h"
+#endif
 #include "tf_presence.h"
 #include "c_team_objectiveresource.h"
 #include "tf_gamerules.h"
@@ -21,18 +24,12 @@
 #include "steam/isteamfriends.h"
 #include "steam/steam_api.h"
 #include "tier0/icommandline.h"
-#include "discord_rpc.h"
-#include "discord_register.h"
-#include <time.h>
-#include <functional>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 // Global singleton
 static CTFPresence s_presence;
-static CTFDiscordPresence s_drp;
-CTFDiscordPresence *rpc = &s_drp;
 
 struct s_MapName
 {
@@ -42,14 +39,14 @@ struct s_MapName
 
 // This array must match the define order in hl2orange.spa.h
 static s_MapName s_Scenarios[] = {
-								"ctf_2fort",	"2Fort",
-								"cp_dustbowl",	"Dustbowl",
-								"cp_granary",	"Granary",
-								"cp_well",		"Well",
-								"cp_gravelpit", "Gravel Pit",
-								"tc_hydro",		"Hydro",
-								"cloak",		"Cloak (CTF)",
-								"cp_cloak",		"Cloak (CP)",
+	{"ctf_2fort",	"2Fort"},
+	{"cp_dustbowl",	"Dustbowl"},
+	{"cp_granary",	"Granary"},
+	{"cp_well",		"Well"},
+	{"cp_gravelpit", "Gravel Pit"},
+	{"tc_hydro",	"Hydro"},
+	{"cloak",		"Cloak (CTF)"},
+	{"cp_cloak",	"Cloak (CP)"},
 };
 
 struct s_PresenceTranslation
@@ -60,42 +57,42 @@ struct s_PresenceTranslation
 
 // Only presence IDs can be searched by id number, because they're guaranteed to be unique
 static s_PresenceTranslation s_PresenceIds[] = {
-			CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO",							
-			PROPERTY_CAPS_OWNED,			 			"PROPERTY_CAPS_OWNED",						
-			PROPERTY_CAPS_TOTAL,			 			"PROPERTY_CAPS_TOTAL",						
-			PROPERTY_FLAG_CAPTURE_LIMIT,	 			"PROPERTY_FLAG_CAPTURE_LIMIT",				
-			PROPERTY_NUMBER_OF_ROUNDS,		 			"PROPERTY_NUMBER_OF_ROUNDS",				
-			PROPERTY_WIN_LIMIT,							"PROPERTY_WIN_LIMIT",				
-			PROPERTY_GAME_SIZE,				 			"PROPERTY_GAME_SIZE",						
-			PROPERTY_AUTOBALANCE,			 			"PROPERTY_AUTOBALANCE",						
-			PROPERTY_PRIVATE_SLOTS,			 			"PROPERTY_PRIVATE_SLOTS",					
-			PROPERTY_MAX_GAME_TIME,			 			"PROPERTY_MAX_GAME_TIME",
-			PROPERTY_NUMBER_OF_TEAMS,					"PROPERTY_NUMBER_OF_TEAMS",
-			PROPERTY_TEAM,								"PROPERTY_TEAM",
+	{CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO"},							
+	{PROPERTY_CAPS_OWNED,			 			"PROPERTY_CAPS_OWNED"},						
+	{PROPERTY_CAPS_TOTAL,			 			"PROPERTY_CAPS_TOTAL"},						
+	{PROPERTY_FLAG_CAPTURE_LIMIT,	 			"PROPERTY_FLAG_CAPTURE_LIMIT"},				
+	{PROPERTY_NUMBER_OF_ROUNDS,		 			"PROPERTY_NUMBER_OF_ROUNDS"},				
+	{PROPERTY_WIN_LIMIT,						"PROPERTY_WIN_LIMIT"},				
+	{PROPERTY_GAME_SIZE,				 		"PROPERTY_GAME_SIZE"},						
+	{PROPERTY_AUTOBALANCE,			 			"PROPERTY_AUTOBALANCE"},						
+	{PROPERTY_PRIVATE_SLOTS,			 		"PROPERTY_PRIVATE_SLOTS"},					
+	{PROPERTY_MAX_GAME_TIME,			 		"PROPERTY_MAX_GAME_TIME"},
+	{PROPERTY_NUMBER_OF_TEAMS,					"PROPERTY_NUMBER_OF_TEAMS"},
+	{PROPERTY_TEAM,								"PROPERTY_TEAM"},
 #if defined( _X360 )
-			X_CONTEXT_GAME_MODE,					  	"CONTEXT_GAME_MODE",						
-			X_CONTEXT_GAME_TYPE,					  	"CONTEXT_GAME_TYPE",						
+	{X_CONTEXT_GAME_MODE,					  	"CONTEXT_GAME_MODE"},						
+	{X_CONTEXT_GAME_TYPE,					  	"CONTEXT_GAME_TYPE"},						
 #endif
 };
 
 // Presence values cannot be searched by id number, because they are not unique
 static s_PresenceTranslation s_PresenceValues[] = {
-	SESSION_MATCH_QUERY_PLAYER_MATCH,			"SESSION_MATCH_QUERY_PLAYER_MATCH",			
-	CONTEXT_GAME_MODE_MULTIPLAYER,	 			"CONTEXT_GAME_MODE_MULTIPLAYER",			
-	CONTEXT_SCENARIO_CTF_2FORT,		 			"CONTEXT_SCENARIO_CTF_2FORT",				
-	CONTEXT_SCENARIO_CP_DUSTBOWL,	 			"CONTEXT_SCENARIO_CP_DUSTBOWL",				
-	CONTEXT_SCENARIO_CP_GRANARY,	 			"CONTEXT_SCENARIO_CP_GRANARY",				
-	CONTEXT_SCENARIO_CP_WELL,		 			"CONTEXT_SCENARIO_CP_WELL",					
-	CONTEXT_SCENARIO_CP_GRAVELPIT,	 			"CONTEXT_SCENARIO_CP_GRAVELPIT",			
-	CONTEXT_SCENARIO_TC_HYDRO,		 			"CONTEXT_SCENARIO_TC_HYDRO",				
-	CONTEXT_SCENARIO_CTF_CLOAK,		 			"CONTEXT_SCENARIO_CTF_CLOAK",				
-	CONTEXT_SCENARIO_CP_CLOAK,		 			"CONTEXT_SCENARIO_CP_CLOAK",				
+	{SESSION_MATCH_QUERY_PLAYER_MATCH,			"SESSION_MATCH_QUERY_PLAYER_MATCH"},			
+	{CONTEXT_GAME_MODE_MULTIPLAYER,	 			"CONTEXT_GAME_MODE_MULTIPLAYER"},			
+	{CONTEXT_SCENARIO_CTF_2FORT,		 		"CONTEXT_SCENARIO_CTF_2FORT"},				
+	{CONTEXT_SCENARIO_CP_DUSTBOWL,	 			"CONTEXT_SCENARIO_CP_DUSTBOWL"},				
+	{CONTEXT_SCENARIO_CP_GRANARY,	 			"CONTEXT_SCENARIO_CP_GRANARY"},				
+	{CONTEXT_SCENARIO_CP_WELL,		 			"CONTEXT_SCENARIO_CP_WELL"},					
+	{CONTEXT_SCENARIO_CP_GRAVELPIT,	 			"CONTEXT_SCENARIO_CP_GRAVELPIT"},			
+	{CONTEXT_SCENARIO_TC_HYDRO,		 			"CONTEXT_SCENARIO_TC_HYDRO"},				
+	{CONTEXT_SCENARIO_CTF_CLOAK,		 		"CONTEXT_SCENARIO_CTF_CLOAK"},				
+	{CONTEXT_SCENARIO_CP_CLOAK,		 			"CONTEXT_SCENARIO_CP_CLOAK"},				
 #if defined( _X360 )
-	XSESSION_CREATE_LIVE_MULTIPLAYER_STANDARD,	"SESSION_CREATE_LIVE_MULTIPLAYER_STANDARD",	
-	XSESSION_CREATE_LIVE_MULTIPLAYER_RANKED,  	"SESSION_CREATE_LIVE_MULTIPLAYER_RANKED",	
-	XSESSION_CREATE_SYSTEMLINK,				  	"SESSION_CREATE_SYSTEMLINK",				
-	X_CONTEXT_GAME_TYPE_STANDARD,			  	"CONTEXT_GAME_TYPE_STANDARD",					
-	X_CONTEXT_GAME_TYPE_RANKED,				  	"CONTEXT_GAME_TYPE_RANKED",						
+	{XSESSION_CREATE_LIVE_MULTIPLAYER_STANDARD,	"SESSION_CREATE_LIVE_MULTIPLAYER_STANDARD"},	
+	{XSESSION_CREATE_LIVE_MULTIPLAYER_RANKED,  	"SESSION_CREATE_LIVE_MULTIPLAYER_RANKED"},	
+	{XSESSION_CREATE_SYSTEMLINK,				"SESSION_CREATE_SYSTEMLINK"},				
+	{X_CONTEXT_GAME_TYPE_STANDARD,			  	"CONTEXT_GAME_TYPE_STANDARD"},					
+	{X_CONTEXT_GAME_TYPE_RANKED,				"CONTEXT_GAME_TYPE_RANKED"},						
 #endif
 };
 
@@ -103,9 +100,6 @@ static s_PresenceTranslation s_PresenceValues[] = {
 //-----------------------------------------------------------------------------
 // Discord RPC
 //-----------------------------------------------------------------------------
-extern ConVar cl_discord_appid;
-ConVar cl_discord_presence_enabled( "cl_discord_presence_enabled", "1", FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED );
-
 struct DRPClassImages_t
 {
 	const char *redTeamImage;
@@ -575,19 +569,25 @@ void CTFPresence::UploadStats()
 #endif
 }
 
-#define DECL_DISCORD_HANDLER(obj, name, handler)	obj.##name = &rpc->##handler
+#ifndef POSIX
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+static CTFDiscordPresence s_drp;
 
-DiscordRichPresence CTFDiscordPresence::m_sPresence;
-RealTimeCountdownTimer CTFDiscordPresence::m_updateThrottle;
-int64 CTFDiscordPresence::m_iCreationTimestamp;
+#define DISCORD_COLOR Color( 114, 137, 218, 255 )
+
+
+discord::Activity CTFDiscordPresence::m_Activity{};
+discord::User CTFDiscordPresence::m_CurrentUser{};
 
 CTFDiscordPresence::CTFDiscordPresence()
-	: BaseClass( "TFDiscordPresence" )
 {
-	Q_memset( m_szMapName, 0, sizeof( m_szMapName ) );
-	m_iCreationTimestamp = time( NULL );
+	VCRHook_Time( &m_iCreationTimestamp );
 
+	// Setup early so we catch it
 	ListenForGameEvent( "server_spawn" );
+
+	rpc = this;
 }
 
 //-----------------------------------------------------------------------------
@@ -607,26 +607,32 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 
 	if ( C_BasePlayer::GetLocalPlayer() == nullptr )
 		return;
-	
-	if ( name == "client_fullconnect" )
-	{
-		CSteamID steamID{};
-		if ( C_BasePlayer::GetLocalPlayer()->GetSteamID( &steamID ) )
-			Q_snprintf( m_szSteamID, 65, "%d", steamID.ConvertToUint64() );
-
-		m_sPresence.joinSecret = m_szServerInfo;
-		m_sPresence.partyId = m_szSteamID;
-	}
 
 	if ( !engine->IsConnected() )
 		return;
 
 	if ( name == "player_connect_client" || name == "player_disconnect" )
 	{
+		if ( name == "player_connect_client" )
+		{
+			int userid = event->GetInt( "userid" );
+			if ( UTIL_PlayerByUserId( userid ) == C_BasePlayer::GetLocalPlayer() )
+			{
+				CSteamID steamID{};
+				if ( C_BasePlayer::GetLocalPlayer()->GetSteamID( &steamID ) )
+					V_sprintf_safe( m_szSteamID, "%llu", steamID.ConvertToUint64() );
+
+				m_Activity.GetSecrets().SetJoin( m_szServerInfo );
+				m_Activity.GetSecrets().SetMatch( m_szSteamID );
+
+				bForceUpdate = true;
+			}
+		}
+
 		if ( !TFPlayerResource() )
 			return;
 
-		int maxPlayers = gpGlobals->maxClients;
+		const int maxPlayers = gpGlobals->maxClients;
 		int curPlayers = 0;
 
 		for ( int i = 0; i < maxPlayers; ++i )
@@ -635,8 +641,8 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 				curPlayers++;
 		}
 
-		m_sPresence.partySize = curPlayers;
-		m_sPresence.partyMax = maxPlayers;
+		m_Activity.GetParty().GetSize().SetCurrentSize( curPlayers );
+		m_Activity.GetParty().GetSize().SetMaxSize( maxPlayers );
 	}
 	else if ( name == "player_death" )
 	{
@@ -650,12 +656,8 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 		bIsDead = true;
 		bForceUpdate = true;
 	}
-	else
+	else // localplayer_changeteam || localplayer_changeclass || localplayer_respawn
 	{
-		int userid = event->GetInt( "userid" );
-		if ( UTIL_PlayerByUserId( userid ) != C_BasePlayer::GetLocalPlayer() )
-			return;
-
 		bForceUpdate = true;
 	}
 
@@ -667,31 +669,45 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------
 bool CTFDiscordPresence::Init( void )
 {
-	Q_memset( &m_sPresence, 0, sizeof( m_sPresence ) );
-
-	DiscordEventHandlers handlers{};
-	DECL_DISCORD_HANDLER( handlers, ready, OnReady );
-	DECL_DISCORD_HANDLER( handlers, disconnected, OnDisconnected );
-	DECL_DISCORD_HANDLER( handlers, errored, OnError );
-	DECL_DISCORD_HANDLER( handlers, joinGame, OnJoinedGame );
-	DECL_DISCORD_HANDLER( handlers, spectateGame, OnSpectateGame );
-	DECL_DISCORD_HANDLER( handlers, joinRequest, OnJoinRequested );
-
-	char command[512];
-	V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam\n", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
-	Discord_Register( cl_discord_appid.GetString(), command );
-	Discord_Initialize( cl_discord_appid.GetString(), &handlers, false, CFmtStr( "%d", engine->GetAppID() ) );
-
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "localplayer_changeclass" );
+	ListenForGameEvent( "localplayer_respawn" );
 	ListenForGameEvent( "player_death" );
-	ListenForGameEvent( "player_spawn" );
 	ListenForGameEvent( "player_connect_client" );
 	ListenForGameEvent( "player_disconnect" );
 	ListenForGameEvent( "client_fullconnect" );
 	ListenForGameEvent( "client_disconnect" );
 
-	Reset();
+	return BaseClass::Init();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFDiscordPresence::InitPresence( void )
+{
+	m_updateThrottle.Start( 30.0f );
+
+	g_pDiscord->SetLogHook(
+	#ifdef DEBUG
+		discord::LogLevel::Debug,
+	#else
+		discord::LogLevel::Warn,
+	#endif
+		&OnLogMessage
+	);
+
+	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
+	g_pDiscord->UserManager().OnCurrentUserUpdate.Connect( &OnReady );
+
+	char command[512];
+	V_snprintf( command, sizeof( command ), "%s -game \"%s\" -novid -steam", CommandLine()->GetParm( 0 ), CommandLine()->ParmValue( "-game" ) );
+	g_pDiscord->ActivityManager().RegisterCommand( command );
+	//discord->ActivityManager().RegisterSteam( engine->GetAppID() );
+
+	g_pDiscord->ActivityManager().OnActivityJoin.Connect( &OnJoinedGame );
+	g_pDiscord->ActivityManager().OnActivityJoinRequest.Connect( &OnJoinRequested );
+	g_pDiscord->ActivityManager().OnActivitySpectate.Connect( &OnSpectateGame );
 
 	return true;
 }
@@ -701,37 +717,31 @@ bool CTFDiscordPresence::Init( void )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::Shutdown( void )
 {
-	Assert( rpc == this );
-	rpc = NULL;
+	BaseClass::Shutdown();
 
-	Discord_Shutdown();
+	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
+	Q_memset( &m_CurrentUser, 0, sizeof( discord::User ) );
 
 	if ( steamapicontext->SteamFriends() )
 		steamapicontext->SteamFriends()->ClearRichPresence();
+
+	Assert( rpc == this );
+	rpc = NULL;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFDiscordPresence::Update( float frametime )
+void CTFDiscordPresence::OnReady()
 {
-	if ( !engine->IsConnected() || m_szMapName[0] == '\0' )
-		return;
-
-	UpdatePresence();
-
-	if ( gpGlobals->tickcount % 2 )
-		Discord_RunCallbacks();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnReady( const DiscordUser* user )
-{
-	if (!cl_discord_presence_enabled.GetBool())
+	extern ConVar cl_discord_presence_enabled;
+	if ( !cl_discord_presence_enabled.GetBool() )
 	{
-		Discord_Shutdown();
+		if ( g_pDiscord )
+		{
+			delete g_pDiscord;
+			g_pDiscord = NULL;
+		}
 
 		if ( steamapicontext->SteamFriends() )
 			steamapicontext->SteamFriends()->ClearRichPresence();
@@ -739,26 +749,12 @@ void CTFDiscordPresence::OnReady( const DiscordUser* user )
 		return;
 	}
 
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Ready!\n" );
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] User %s#%s - %s\n", user->username, user->discriminator, user->userId );
-	
-	rpc->Reset();
-}
+	g_pDiscord->UserManager().GetCurrentUser( &m_CurrentUser );
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnDisconnected( int errorCode, const char *szMessage )
-{
-	Warning( "[DRP] Rich presence disconnected. code %d - reason: %s\n", errorCode, szMessage );
-}
+	ConColorMsg( DISCORD_COLOR, "[DRP] Ready!\n" );
+	ConColorMsg( DISCORD_COLOR, "[DRP] User %s#%s - %lld\n", m_CurrentUser.GetUsername(), m_CurrentUser.GetDiscriminator(), m_CurrentUser.GetId() );
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnError( int errorCode, const char *szMessage )
-{
-	Warning( "[DRP] Rich presence failure. code %d - error: %s\n", errorCode, szMessage );
+	rpc->ResetPresence();
 }
 
 //-----------------------------------------------------------------------------
@@ -766,7 +762,7 @@ void CTFDiscordPresence::OnError( int errorCode, const char *szMessage )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::OnJoinedGame( const char *joinSecret )
 {
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Game: %s\n", joinSecret );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Join Game: %s\n", joinSecret );
 	char szCommand[128];
 	Q_snprintf( szCommand, sizeof( szCommand ), "connect %s\n", joinSecret );
 	engine->ExecuteClientCmd( szCommand );
@@ -777,18 +773,43 @@ void CTFDiscordPresence::OnJoinedGame( const char *joinSecret )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::OnSpectateGame( const char *spectateSecret )
 {
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Spectate Game: %s\n", spectateSecret );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Spectate Game: %s\n", spectateSecret );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFDiscordPresence::OnJoinRequested( const DiscordUser *joinRequest )
+void CTFDiscordPresence::OnJoinRequested( discord::User const &joinRequester )
 {
 	// TODO: Popup dialog
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[DRP] Join Request: %s#%s\n", joinRequest->username, joinRequest->discriminator );
-	ConColorMsg( Color( 114, 137, 218, 255 ), "[Rich Presence] Join Request Accepted\n" );
-	Discord_Respond( joinRequest->userId, DISCORD_REPLY_YES );
+	ConColorMsg( DISCORD_COLOR, "[DRP] Join Request: %s#%s\n", joinRequester.GetUsername(), joinRequester.GetDiscriminator() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnLogMessage( discord::LogLevel logLevel, char const *pszMessage )
+{
+	switch ( logLevel )
+	{
+		case discord::LogLevel::Error:
+		case discord::LogLevel::Warn:
+			Warning( "[DRP] %s\n", pszMessage );
+			break;
+		default:
+			ConColorMsg( DISCORD_COLOR, "[DRP] %s\n", pszMessage );
+			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFDiscordPresence::OnActivityUpdate( discord::Result result )
+{
+#ifdef DEBUG
+	ConColorMsg( DISCORD_COLOR, "[DRP] Activity update: %s\n", ( ( result == discord::Result::Ok ) ? "Succeeded" : "Failed" ) );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -796,38 +817,38 @@ void CTFDiscordPresence::OnJoinRequested( const DiscordUser *joinRequest )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::LevelInitPostEntity( void )
 {
-	Q_memset( &m_sPresence, 0, sizeof( m_sPresence ) );
+	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
 
-	char buffer[64];
-	Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", m_szMapName );
+	char buffer[64], szGameState[ DISCORD_FIELD_MAXLEN ];
+	Q_snprintf( buffer, sizeof( buffer ), "#TF_Map_%s", GetLevelName() );
 	wchar *mapName = g_pVGuiLocalize->Find( buffer );
-	if ( mapName )
+	if ( mapName ) // We assume official maps to have a translation, and we only have images of official maps
 	{
 		g_pVGuiLocalize->ConvertUnicodeToANSI( mapName, buffer, sizeof( buffer ) );
-		Q_snprintf( m_szGameState, sizeof( m_szGameState ), "Map: %s", buffer );
-		m_sPresence.largeImageKey = m_szMapName;
+		Q_snprintf( szGameState, sizeof( szGameState ), "Map: %s", buffer );
+		m_Activity.GetAssets().SetLargeImage( GetLevelName() );
 	}
 	else
 	{
-		Q_snprintf( m_szGameState, sizeof( m_szGameState ), "Map: %s", m_szMapName );
-		m_sPresence.largeImageKey = "default";
+		Q_snprintf( szGameState, sizeof( szGameState ), "Map: %s", GetLevelName() );
+		m_Activity.GetAssets().SetLargeImage( "default" );
 	}
-
 
 	if ( TFGameRules() )
 	{
 		wchar *gameType = g_pVGuiLocalize->Find( g_aGameTypeNames[ TFGameRules()->GetGameType() ] );
 		if ( gameType )
 		{
-			g_pVGuiLocalize->ConvertUnicodeToANSI( gameType, m_szGameType, DISCORD_FIELD_MAXLEN );
-			m_sPresence.largeImageText = m_szGameType;
+			char szGameType[ DISCORD_FIELD_MAXLEN ];
+			g_pVGuiLocalize->ConvertUnicodeToANSI( gameType, szGameType, DISCORD_FIELD_MAXLEN );
+			m_Activity.GetAssets().SetLargeText( szGameType );
 		}
 	}
 
-	m_sPresence.details = m_szHostName;
-	m_sPresence.state = m_szGameState;
-	m_sPresence.smallImageKey = "tf2v_drp_logo";
-	m_sPresence.startTimestamp = m_iCreationTimestamp;
+	m_Activity.SetDetails( m_szHostName );
+	m_Activity.SetState( szGameState );
+	m_Activity.GetAssets().SetSmallImage( "tf2v_drp_logo" );
+	m_Activity.GetTimestamps().SetStart( m_iCreationTimestamp );
 
 	if ( steamapicontext->SteamFriends() )
 	{
@@ -835,10 +856,10 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 		steamapicontext->SteamFriends()->SetRichPresence( "steam_player_group", NULL );
 		steamapicontext->SteamFriends()->SetRichPresence( "steam_player_group_size", NULL );
 		steamapicontext->SteamFriends()->SetRichPresence( "status", m_szHostName );
-		steamapicontext->SteamFriends()->SetRichPresence( "steam_display", m_szMapName );
+		steamapicontext->SteamFriends()->SetRichPresence( "steam_display", GetLevelName() );
 	}
 
-	Discord_UpdatePresence( &m_sPresence );
+	g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
 
 //-----------------------------------------------------------------------------
@@ -846,15 +867,15 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 //-----------------------------------------------------------------------------
 void CTFDiscordPresence::LevelShutdownPreEntity( void )
 {
-	Reset();
+	ResetPresence();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Revert to default state
 //-----------------------------------------------------------------------------
-void CTFDiscordPresence::Reset( void )
+void CTFDiscordPresence::ResetPresence( void )
 {
-	Q_memset( &m_sPresence, 0, sizeof( m_sPresence ) );
+	Q_memset( &m_Activity, 0, sizeof( discord::Activity ) );
 
 	if ( steamapicontext->SteamFriends() )
 	{
@@ -865,10 +886,34 @@ void CTFDiscordPresence::Reset( void )
 		steamapicontext->SteamFriends()->SetRichPresence( "steam_player_group_size", NULL );
 	}
 
-	m_sPresence.details = "Main Menu";
-	m_sPresence.largeImageKey = "tf2v_drp_logo";
-	m_sPresence.startTimestamp = m_iCreationTimestamp;
-	Discord_UpdatePresence( &m_sPresence );
+	m_Activity.SetDetails( "Main Menu" );
+	m_Activity.GetAssets().SetLargeImage( "tf2v_drp_logo" );
+	m_Activity.GetTimestamps().SetStart( m_iCreationTimestamp );
+	g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CTFDiscordPresence::GetMatchSecret( void ) const
+{
+	return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CTFDiscordPresence::GetJoinSecret( void ) const
+{
+	return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CTFDiscordPresence::GetSpectateSecret( void ) const
+{
+	return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -879,33 +924,36 @@ void CTFDiscordPresence::UpdatePresence( bool bForce, bool bIsDead )
 	if ( !m_updateThrottle.IsElapsed() && !bForce )
 		return;
 
-	m_updateThrottle.Start( 8.0f );
+	m_updateThrottle.Start( RandomFloat( 15.0, 20.0 ) );
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pLocalPlayer )
 		return;
 
-	Q_strncpy( m_szClassName, pLocalPlayer->GetPlayerClass()->GetName(), DISCORD_FIELD_MAXLEN );
-	Q_snprintf( m_szClassName, DISCORD_FIELD_MAXLEN, "%s%s", m_szClassName, bIsDead ? " (Dead)" : "" );
+	char szClassName[DISCORD_FIELD_MAXLEN];
+	Q_strncpy( szClassName, pLocalPlayer->GetPlayerClass()->GetName(), DISCORD_FIELD_MAXLEN );
+	Q_snprintf( szClassName, DISCORD_FIELD_MAXLEN, "%s%s", szClassName, bIsDead ? " (Dead)" : "" );
 
 	const int iClassNum = pLocalPlayer->GetPlayerClass()->GetClassIndex();
 	switch ( pLocalPlayer->GetTeamNumber() )
 	{
 		case TF_TEAM_RED:
 		{
-			m_sPresence.smallImageKey = s_pClassImages[iClassNum].redTeamImage;
-			m_sPresence.smallImageText = m_szClassName;
+			m_Activity.GetAssets().SetSmallImage( s_pClassImages[iClassNum].redTeamImage );
+			m_Activity.GetAssets().SetSmallText( szClassName );
 			break;
 		}
 		case TF_TEAM_BLUE:
 		{
-			m_sPresence.smallImageKey = s_pClassImages[iClassNum].bluTeamImage;
-			m_sPresence.smallImageText = m_szClassName;
+			m_Activity.GetAssets().SetSmallImage( s_pClassImages[iClassNum].bluTeamImage );
+			m_Activity.GetAssets().SetSmallText( szClassName );
 			break;
 		}
 		default:
 			break;
 	}
 
-	Discord_UpdatePresence( &m_sPresence );
+	g_pDiscord->ActivityManager().UpdateActivity( m_Activity, &OnActivityUpdate );
 }
+
+#endif // !POSIX

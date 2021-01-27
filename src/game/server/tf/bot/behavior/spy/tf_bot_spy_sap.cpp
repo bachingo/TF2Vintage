@@ -25,7 +25,7 @@ ActionResult<CTFBot> CTFBotSpySap::OnStart( CTFBot *me, Action<CTFBot> *priorAct
 {
 	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
 
-	me->m_bLookingAroundForEnemies = false;
+	me->StopLookingForEnemies();
 
 	if ( me->m_Shared.IsStealthed() )
 		me->PressAltFireButton();
@@ -122,19 +122,19 @@ ActionResult<CTFBot> CTFBotSpySap::Update( CTFBot *me, float dt )
 
 void CTFBotSpySap::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
 {
-	me->m_bLookingAroundForEnemies = true;
+	me->WantsToLookForEnemies();
 }
 
 ActionResult<CTFBot> CTFBotSpySap::OnSuspend( CTFBot *me, Action<CTFBot> *newAction )
 {
-	me->m_bLookingAroundForEnemies = true;
+	me->WantsToLookForEnemies();
 
 	return Action<CTFBot>::Continue();
 }
 
 ActionResult<CTFBot> CTFBotSpySap::OnResume( CTFBot *me, Action<CTFBot> *priorAction )
 {
-	me->m_bLookingAroundForEnemies = false;
+	me->StopLookingForEnemies();
 
 	return Action<CTFBot>::Continue();
 }

@@ -2,9 +2,6 @@
 	see copyright notice in sqrdbg.h
 */
 #include <squirrel.h>
-#if !defined( POSIX )
-#include <winsock.h>
-#endif
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
 SQInteger debug_hook(HSQUIRRELVM v);

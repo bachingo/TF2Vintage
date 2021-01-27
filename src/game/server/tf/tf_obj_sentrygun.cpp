@@ -29,6 +29,7 @@ extern bool IsInCommentaryMode();
 extern ConVar tf_cheapobjects;
 extern ConVar tf_obj_upgrade_per_hit;
 extern ConVar tf2v_use_new_wrench_mechanics;
+extern ConVar tf2v_use_new_jag;
 ConVar tf2v_use_new_sapper_damage( "tf2v_use_new_sapper_damage", "0", FCVAR_NOTIFY, "Decreases the damage resistance of a sapped sentry from 66% to 33%." );
 ConVar tf2v_use_new_sapper_disable( "tf2v_use_new_sapper_disable", "0", FCVAR_NOTIFY, "Sapped sentries will be disabled for a few seconds after removing the sapper." );
 ConVar tf2v_use_new_sentry_minigun_resist( "tf2v_use_new_sentry_minigun_resist", "0", FCVAR_NOTIFY, "Swaps from the original 20% and 33% resistance on level 2 and 3 sentries to the newer 15% and 20% respectively." );
@@ -616,6 +617,9 @@ bool CObjectSentrygun::OnWrenchHit( CTFPlayer *pPlayer, CTFWrench *pWrench, Vect
 
 	float flRepairRate = 1;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flRepairRate, mult_repair_value);
+	
+	if ( tf2v_use_new_jag.GetInt() > 0 )
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pPlayer, flRepairRate, mult_repair_value_jag );
 		
 	// Wrangled sentries have 33% of normal repair rate (as of Gun Mettle)
 	if ( ( m_iState == SENTRY_STATE_WRANGLED || m_iState == SENTRY_STATE_WRANGLED_RECOVERY ) && tf2v_use_new_wrangler_repair.GetBool() )
@@ -703,6 +707,9 @@ bool CObjectSentrygun::Command_Repair( CTFPlayer *pActivator )
 		
 		float flRepairRate = 1;
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value );
+		
+		if ( tf2v_use_new_jag.GetInt() > 0 )
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pActivator, flRepairRate, mult_repair_value_jag );
 
 
 		// Wrangled sentries have 33% of normal repair rate (as of Gun Mettle)
@@ -822,22 +829,22 @@ int CObjectSentrygun::DrawDebugTextOverlays( void )
 	{
 		char tempstr[512];
 
-		Q_snprintf( tempstr, sizeof( tempstr ), "Level: %d", m_iUpgradeLevel );
+		Q_snprintf( tempstr, sizeof( tempstr ), "Level: %d", m_iUpgradeLevel.Get() );
 		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 
-		Q_snprintf( tempstr, sizeof( tempstr ), "Shells: %d / %d", m_iAmmoShells, m_iMaxAmmoShells );
+		Q_snprintf( tempstr, sizeof( tempstr ), "Shells: %d / %d", m_iAmmoShells.Get(), m_iMaxAmmoShells.Get() );
 		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 
 		if ( m_iUpgradeLevel == 3 )
 		{
-			Q_snprintf( tempstr, sizeof( tempstr ), "Rockets: %d / %d", m_iAmmoRockets, m_iMaxAmmoRockets );
+			Q_snprintf( tempstr, sizeof( tempstr ), "Rockets: %d / %d", m_iAmmoRockets.Get(), m_iMaxAmmoRockets.Get() );
 			EntityText( text_offset, tempstr, 0 );
 			text_offset++;
 		}
 
-		Q_snprintf( tempstr, sizeof( tempstr ), "Upgrade metal %d", m_iUpgradeMetal );
+		Q_snprintf( tempstr, sizeof( tempstr ), "Upgrade metal %d", m_iUpgradeMetal.Get() );
 		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 
@@ -1159,8 +1166,7 @@ void CObjectSentrygun::FoundTarget( CBaseEntity *pTarget, const Vector &vecSound
 			CTFBot *pBot = ToTFBot( pTarget );
 			if ( pBot )
 			{
-				pBot->m_hTargetSentry = this;
-				pBot->m_vecLastHurtBySentry = GetAbsOrigin();
+				pBot->NoteTargetSentry( this );
 			}
 		}
 

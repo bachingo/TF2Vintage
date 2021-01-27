@@ -8,6 +8,7 @@
 #include "utlvector.h"
 #include "utlhash.h"
 #include "fmtstr.h"
+#include "ivscript.h"
 
 #include "lauxlib.h"
 #include "lualib.h"
@@ -887,7 +888,7 @@ int CLuaVM::PrintFunc( lua_State *L )
 	int nArgs = lua_gettop( L );
 
 	lua_getfield( L, LUA_REGISTRYINDEX, "tostring" );
-	for ( int i=0; i < nArgs; ++i )
+	for ( int i=1; i <= nArgs; ++i )
 	{
 		lua_pushvalue( L, -1 );
 		lua_pushvalue( L, i );
@@ -902,7 +903,7 @@ int CLuaVM::PrintFunc( lua_State *L )
 
 		string += pString;
 
-		lua_settop( L, -2 );
+		lua_pop( L, 1 );
 	}
 	
 	Msg( "%s", string.Get() );

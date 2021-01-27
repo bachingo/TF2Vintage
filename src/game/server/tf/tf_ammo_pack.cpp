@@ -205,6 +205,19 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 				bSuccess = true;
 			}
 
+			// Add grenades if we are missing them.
+			int iMaxGrenade1 = pTFPlayer->GetMaxAmmo( TF_AMMO_GRENADES1 );
+			if (pPlayer->GiveAmmo(ceil(iMaxGrenade1 * PackRatios[POWERUP_MEDIUM]), TF_AMMO_GRENADES1, true))
+			{
+				bSuccess = true;
+			}
+			
+			int iMaxGrenade2 = pTFPlayer->GetMaxAmmo( TF_AMMO_GRENADES2 );
+			if (pPlayer->GiveAmmo(ceil(iMaxGrenade2 * PackRatios[POWERUP_MEDIUM]), TF_AMMO_GRENADES2, true))
+			{
+				bSuccess = true;
+			}
+		
 			// Unlike medium ammo packs, restore only 25% cloak.
 			if (pTFPlayer->m_Shared.AddToSpyCloakMeter( 25.0f ))
 			{

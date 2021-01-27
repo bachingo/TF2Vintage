@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -50,11 +50,11 @@ public:
 	CZombieLocomotion(INextBot *bot)
 		: BaseClass( bot ) {}
 
-	virtual float GetMaxJumpHeight( void ) const override { return 18.0f; }
-	virtual float GetStepHeight( void ) const override { return 18.0f; }
-	virtual float GetMaxYawRate( void ) const override { return 200.0f; }
-	virtual float GetRunSpeed( void ) const override { return 300.0f; }
-	virtual bool ShouldCollideWith( CBaseEntity const *other ) const override { return false; }
+	virtual float GetMaxJumpHeight( void ) const OVERRIDE { return 18.0f; }
+	virtual float GetStepHeight( void ) const OVERRIDE { return 18.0f; }
+	virtual float GetMaxYawRate( void ) const OVERRIDE { return 200.0f; }
+	virtual float GetRunSpeed( void ) const OVERRIDE { return 300.0f; }
+	virtual bool ShouldCollideWith( CBaseEntity const *other ) const OVERRIDE { return false; }
 };
 
 float CZombiePathCost::operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const

@@ -200,7 +200,7 @@ void CTFHudEscort::PerformLayout( void )
 		int x, y, wide, tall;
 		m_pLevelBar->GetBounds( x, y, wide, tall );
 
-		float flStart, flEnd;
+		float flStart = 0, flEnd = 0;
 		ObjectiveResource()->GetHillData( m_iTeamNum, i, flStart, flEnd );
 
 		int iStartPos = flStart * wide;

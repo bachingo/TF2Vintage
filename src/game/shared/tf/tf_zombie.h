@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -53,7 +53,7 @@ public:
 	DECLARE_NETWORKCLASS();
 
 #if !defined( CLIENT_DLL )
-	DECLARE_INTENTION_INTERFACE( CZombie );
+	DECLARE_INTENTION_INTERFACE( CZombie )
 
 	typedef enum
 	{
@@ -90,8 +90,8 @@ public:
 	CountdownTimer m_timeTillDeath;
 	bool m_bNoteShouldDie;
 #else
-	virtual bool ShouldCollide( int contentsMask, int collisionGroup ) const override;
-	virtual void BuildTransformations( CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const& cameraTransformation, int boneMask, CBoneBitList &boneComputed) override;
+	virtual bool ShouldCollide( int contentsMask, int collisionGroup ) const OVERRIDE;
+	virtual void BuildTransformations( CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const& cameraTransformation, int boneMask, CBoneBitList &boneComputed) OVERRIDE;
 #endif
 
 	CNetworkVar( float, m_flHeadScale );

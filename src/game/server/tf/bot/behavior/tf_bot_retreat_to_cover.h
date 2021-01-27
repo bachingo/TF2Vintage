@@ -19,16 +19,16 @@ public:
 	CTFBotRetreatToCover( float duration = -1.0f );
 	virtual ~CTFBotRetreatToCover();
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) override;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason ) override;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) override;
+	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const override;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
 
 private:
 	CTFNavArea *FindCoverArea( CTFBot *actor );

@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -21,7 +21,7 @@ public:
 	CCollectPayloadGuardVantagePoints( CTFBot *actor, CBaseEntity *target ) :
 		m_pActor( actor ), m_hTarget( target ) {}
 
-	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override;
+	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) OVERRIDE;
 
 	Vector const& GetResult( void ) const;
 

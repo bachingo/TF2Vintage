@@ -22,19 +22,30 @@ typedef CUtlVector< CHandle<CBaseEntity> > ProviderVector;
 	EXTERN_SEND_TABLE( DT_AttributeContainerPlayer );
 #endif
 
+#define CALL_ATTRIB_HOOK(type, caller, value, name, items) \
+			value = CAttributeManager::AttribHookValue<type>(value, #name, caller, items)
+
+#define CALL_ATTRIB_HOOK_INT(value, name)                       CALL_ATTRIB_HOOK(int, this, value, name, NULL)
+#define CALL_ATTRIB_HOOK_INT_LIST(value, name, items)           CALL_ATTRIB_HOOK(int, this, value, name, items)
+#define CALL_ATTRIB_HOOK_FLOAT(value, name)                     CALL_ATTRIB_HOOK(float, this, value, name, NULL)
+#define CALL_ATTRIB_HOOK_FLOAT_LIST(value, name, items)         CALL_ATTRIB_HOOK(float, this, value, name, items)
+#define CALL_ATTRIB_HOOK_STRING(value, name)                    CALL_ATTRIB_HOOK(string_t, this, value, name, NULL)
+#define CALL_ATTRIB_HOOK_STRING_LIST(value, name, items)        CALL_ATTRIB_HOOK(string_t, this, value, name, items)
+#define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name)                 CALL_ATTRIB_HOOK(int, ent, value, name, NULL)
+#define CALL_ATTRIB_HOOK_INT_ON_OTHER_LIST(ent, value, name, items)     CALL_ATTRIB_HOOK(int, ent, value, name, items)
+#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name)               CALL_ATTRIB_HOOK(float, ent, value, name, NULL)
+#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER_LIST(ent, value, name, items)   CALL_ATTRIB_HOOK(float, ent, value, name, items)
+#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name)              CALL_ATTRIB_HOOK(string_t, ent, value, name, NULL)
+#define CALL_ATTRIB_HOOK_STRING_ON_OTHER_LIST(ent, value, name, items)  CALL_ATTRIB_HOOK(string_t, ent, value, name, items)
+
 inline IHasAttributes *GetAttribInterface( CBaseEntity const *pEntity )
 {
 	if ( pEntity == nullptr )
 		return nullptr;
 
-	IHasAttributes *pInteface = pEntity->GetHasAttributesInterfacePtr();
-	if( pInteface )
-	{
-		Assert( dynamic_cast<IHasAttributes *>( (CBaseEntity *)pEntity ) == pInteface );
-		return pInteface;
-	}
-
-	return nullptr;
+	IHasAttributes *pInterface = pEntity->GetHasAttributesInterfacePtr();
+	Assert( dynamic_cast<IHasAttributes const *>( pEntity ) == pInterface );
+	return pInterface;
 }
 
 template<typename T>
@@ -72,19 +83,21 @@ public:
 	CAttributeManager();
 	virtual ~CAttributeManager();
 
-	template <typename type>
-	static type AttribHookValue( type value, const char* text, const CBaseEntity *pEntity, CUtlVector<EHANDLE> *pOutList = NULL )
+	template <typename T>
+	static T AttribHookValue( T inValue, const char* text, const CBaseEntity *pEntity, CUtlVector<EHANDLE> *pOutList = NULL )
 	{
 		IHasAttributes *pAttribInteface = GetAttribInterface( pEntity );
-
+		AssertMsg( pAttribInteface, "What are you doing trying to get an attribute of something that doesn't have an interface?" );
 		if ( pAttribInteface )
 		{
 			string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
-			float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloat( (float)value, pEntity, strAttributeClass, pOutList );
-			value = AttributeConvertFromFloat<type>( flResult );
+			
+			T outValue;
+			TypedAttribHookValue( outValue, inValue, strAttributeClass, pEntity, pAttribInteface, pOutList );
+			return outValue;
 		}
 
-		return value;
+		return inValue;
 	}
 
 #ifdef CLIENT_DLL
@@ -93,17 +106,21 @@ public:
 #endif
 	void			AddProvider( CBaseEntity *pEntity );
 	void			RemoveProvider( CBaseEntity *pEntity );
+	void			AddReceiver( CBaseEntity *pEntity );
+	void			RemoveReceiver( CBaseEntity *pEntity );
 	void			ProvideTo( CBaseEntity *pEntity );
 	void			StopProvidingTo( CBaseEntity *pEntity );
 	int				GetProviderType( void ) const { return m_ProviderType; }
 	void			SetProvidrType( int type ) { m_ProviderType = type; }
+	bool			IsProvidingTo( CBaseEntity *pEntity ) const;
+	bool			IsBeingProvidedToBy( CBaseEntity *pEntity ) const;
 	virtual void	InitializeAttributes( CBaseEntity *pEntity );
-	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
-	virtual string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	virtual float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders = NULL );
+	virtual string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders = NULL );
 
 	virtual void	OnAttributesChanged( void )
 	{
-		NetworkStateChanged();
+		ClearCache();
 	}
 
 protected:
@@ -119,22 +136,45 @@ protected:
 	CUtlVector<EHANDLE> m_AttributeProviders;
 	CUtlVector<EHANDLE> m_AttributeReceivers;
 
-	friend class CEconEntity;
-};
+	int m_iCacheVersion;
 
-template<>
-inline string_t CAttributeManager::AttribHookValue<string_t>( string_t strValue, const char *text, const CBaseEntity *pEntity, CUtlVector<EHANDLE> *pOutList )
-{
-	IHasAttributes *pAttribInteface = GetAttribInterface( pEntity );
+private:
+	void	ClearCache();
+	int		GetGlobalCacheVersion() const;
 
-	if ( pAttribInteface )
+	virtual float	ApplyAttributeFloatWrapper( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders = NULL );
+	virtual string_t ApplyAttributeStringWrapper( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders = NULL );
+
+	template<class T>
+	static void TypedAttribHookValue( T &outPut, T const &value, string_t strAttributeClass, const CBaseEntity *pEntity, IHasAttributes *pAttribInteface, CUtlVector<EHANDLE> *pOutList )
 	{
-		string_t strAttributeClass = AllocPooledString_StaticConstantStringPointer( text );
-		strValue = pAttribInteface->GetAttributeManager()->ApplyAttributeString( strValue, pEntity, strAttributeClass, pOutList );
+		float flResult = pAttribInteface->GetAttributeManager()->ApplyAttributeFloatWrapper( (float)value, pEntity, strAttributeClass, pOutList );
+		outPut = AttributeConvertFromFloat<T>( flResult );
 	}
 
-	return strValue;
-}
+	static void TypedAttribHookValue( string_t &outPut, string_t const &value, string_t strAttributeClass, const CBaseEntity *pEntity, IHasAttributes *pAttribInterface, CUtlVector<EHANDLE> *pOutList )
+	{
+		outPut = pAttribInterface->GetAttributeManager()->ApplyAttributeStringWrapper( value, pEntity, strAttributeClass, pOutList );
+	}
+
+	typedef union
+	{
+		string_t iVal;
+		float fVal;
+
+		operator string_t const &() const { return iVal; }
+		operator float() const { return fVal; }
+	} cached_attribute_value_t;
+	struct cached_attribute_t
+	{
+		string_t	iAttribName;
+		cached_attribute_value_t in;
+		cached_attribute_value_t out;
+	};
+	CUtlVector<cached_attribute_t>	m_CachedAttribs;
+
+	friend class CEconEntity;
+};
 
 
 class CAttributeContainer : public CAttributeManager
@@ -151,7 +191,7 @@ public:
 	void	InitializeAttributes( CBaseEntity *pEntity );
 	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
 	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
-	void	OnAttributesChanged( void );
+	void	OnAttributesChanged( void ) OVERRIDE;
 
 	void SetItem( CEconItemView const &pItem ) { m_Item.CopyFrom( pItem ); }
 	CEconItemView *GetItem( void ) { return &m_Item; }
@@ -169,9 +209,9 @@ public:
 	DECLARE_EMBEDDED_NETWORKVAR();
 	DECLARE_DATADESC();
 
-	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
-	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders ) override;
-	void	OnAttributesChanged( void ) override;
+	float	ApplyAttributeFloat( float flValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	string_t ApplyAttributeString( string_t strValue, const CBaseEntity *pEntity, string_t strAttributeClass, CUtlVector<EHANDLE> *pOutProviders );
+	void	OnAttributesChanged( void ) OVERRIDE;
 
 protected:
 	CNetworkHandle( CBasePlayer, m_hPlayer );

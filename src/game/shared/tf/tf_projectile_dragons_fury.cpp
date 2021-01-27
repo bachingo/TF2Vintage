@@ -385,7 +385,7 @@ CTFProjectile_BallOfFire *CTFProjectile_BallOfFire::Create( CBaseEntity *pWeapon
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::OnDataChanged( DataUpdateType_t updateType )
+void C_TFProjectile_BallOfFire::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
@@ -396,7 +396,7 @@ void CTFProjectile_BallOfFire::OnDataChanged( DataUpdateType_t updateType )
 	}
 
 	// Watch team changes and change trail accordingly.
-	if ( m_iOldTeamNum && m_iOldTeamNum != m_iTeamNum )
+	if ( m_iDeflected != m_iOldDeflected )
 	{
 		ParticleProp()->StopEmission();
 		CreateTrails();
@@ -407,7 +407,7 @@ void CTFProjectile_BallOfFire::OnDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::CreateTrails( void )
+void C_TFProjectile_BallOfFire::CreateTrails( void )
 {
 	if ( IsDormant() )
 		return;
@@ -425,7 +425,7 @@ void CTFProjectile_BallOfFire::CreateTrails( void )
 	}
 }
 
-void CTFProjectile_BallOfFire::CreateLightEffects( void )
+void C_TFProjectile_BallOfFire::CreateLightEffects( void )
 {
 	// Handle the dynamic light
 	if (tf2v_muzzlelight.GetBool())

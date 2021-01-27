@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -382,7 +382,10 @@ const char *g_aAmmoNames[] =
 	"TF_AMMO_METAL",
 	"TF_AMMO_GRENADES1",
 	"TF_AMMO_GRENADES2",
-	"TF_AMMO_GRENADES3"
+	"TF_AMMO_GRENADES3",
+	"TF_AMMO_SPECIAL1",
+	"TF_AMMO_SPECIAL2",
+	"TF_AMMO_SPECIAL3"
 };
 
 struct pszWpnEntTranslationListEntry
@@ -401,6 +404,7 @@ struct pszWpnEntTranslationListEntry
 };
 static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 {
+	{
 	"tf_weapon_shotgun",			// Base weapon to translate
 	NULL,
 	"tf_weapon_shotgun_primary",	// Scout
@@ -412,7 +416,9 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_shotgun_pyro",		// Pyro
 	"tf_weapon_shotgun_primary",	// Spy
 	"tf_weapon_shotgun_primary",	// Engineer
+	},
 
+	{
 	"tf_weapon_pistol",				// Base weapon to translate
 	NULL,
 	"tf_weapon_pistol_scout",		// Scout
@@ -424,7 +430,9 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_pistol",				// Pyro
 	"tf_weapon_pistol",				// Spy
 	"tf_weapon_pistol",				// Engineer
+	},
 
+	{
 	"tf_weapon_shovel",				// Base weapon to translate
 	NULL,
 	"tf_weapon_shovel",				// Scout
@@ -436,7 +444,9 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_shovel",				// Pyro
 	"tf_weapon_shovel",				// Spy
 	"tf_weapon_shovel",				// Engineer
+	},
 
+	{
 	"tf_weapon_bottle",				// Base weapon to translate
 	NULL,
 	"tf_weapon_bottle",				// Scout
@@ -448,7 +458,9 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_bottle",				// Pyro
 	"tf_weapon_bottle",				// Spy
 	"tf_weapon_bottle",				// Engineer
+	},
 
+	{
 	"saxxy",						// Base weapon to translate
 	NULL,
 	"tf_weapon_bat",				// Scout
@@ -460,7 +472,9 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_fireaxe",			// Pyro
 	"tf_weapon_knife",				// Spy
 	"tf_weapon_wrench",				// Engineer
+	},
 
+	{
 	"tf_weapon_throwable",			// Base weapon to translate
 	NULL,
 	"tf_weapon_throwable", //UNK_10D88B2
@@ -472,7 +486,9 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_throwable", //UNK_10D88B2
 	"tf_weapon_throwable", //UNK_10D88B2
 	"tf_weapon_throwable", //UNK_10D88B2
+	},
 
+	{
 	"tf_weapon_parachute",			// Base weapon to translate
 	NULL,
 	"tf_weapon_parachute_secondary",	// Scout
@@ -484,7 +500,9 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_parachute_secondary",	// Pyro
 	"tf_weapon_parachute_secondary",	// Spy
 	0,									// Engineer
+	},
 
+	{
 	"tf_weapon_revolver",			// Base weapon to translate
 	NULL,
 	"tf_weapon_revolver_secondary", // Scout
@@ -496,6 +514,7 @@ static pszWpnEntTranslationListEntry pszWpnEntTranslationList[] =
 	"tf_weapon_revolver_secondary",	// Pyro
 	"tf_weapon_revolver",			// Spy
 	"tf_weapon_revolver_secondary",	// Engineer
+	},
 };
 
 //-----------------------------------------------------------------------------
@@ -505,7 +524,7 @@ const char *g_aWeaponNames[] =
 {
 	"TF_WEAPON_NONE",
 	"TF_WEAPON_BAT",
-	"TF_WEAPON_BOTTLE", 
+	"TF_WEAPON_BOTTLE",
 	"TF_WEAPON_FIREAXE",
 	"TF_WEAPON_CLUB",
 	"TF_WEAPON_CROWBAR",
@@ -562,8 +581,8 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_LUNCHBOX",
 	"TF_WEAPON_LUNCHBOX_DRINK",
 	"TF_WEAPON_COMPOUND_BOW",
-	"TF_WEAPON_JAR", 
-	"TF_WEAPON_LASER_POINTER", 
+	"TF_WEAPON_JAR",
+	"TF_WEAPON_LASER_POINTER",
 	"TF_WEAPON_HANDGUN_SCOUT_PRIMARY",
 	"TF_WEAPON_STICKBOMB",
 	"TF_WEAPON_BAT_WOOD",
@@ -637,7 +656,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_FLAME_BALL",
 	"TF_WEAPON_FLAREGUN_REVENGE",
 	"TF_WEAPON_ROCKETLAUNCHER_FIREBALL",
-	
+
 	"TF_WEAPON_COUNT",	// end marker, do not add below here
 };
 
@@ -948,6 +967,17 @@ const char *g_pszHintMessages[] =
 	"#Hint_enemy_using_tp_entrance",
 	"#Hint_enemy_using_tp_exit",
 };
+COMPILE_TIME_ASSERT( ARRAYSIZE( g_pszHintMessages ) == NUM_HINTS );
+
+const char *g_pszDeathCallingCardModels[] =
+{
+	"",
+	"models/props_gameplay/tombstone_specialdelivery.mdl",
+	"models/props_gameplay/tombstone_crocostyle.mdl",
+	"models/props_gameplay/tombstone_tankbuster.mdl",
+	"models/props_gameplay/tombstone_gasjockey.mdl",
+};
+COMPILE_TIME_ASSERT( ARRAYSIZE( g_pszDeathCallingCardModels ) == CALLING_CARD_COUNT );
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -1076,7 +1106,7 @@ int condition_to_attribute_translation[] =
 	TF_COND_LAST,
 };
 
-int ConditionExpiresFast( int nCond )
+bool ConditionExpiresFast( int nCond )
 {
 	// Damaging conds
 	if ( nCond == TF_COND_BURNING ||

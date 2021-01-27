@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -21,10 +21,10 @@ public:
 	CEyeBallBossEmote( int sequence, const char *sound = nullptr, Action<CEyeBallBoss> *nextAction = nullptr );
 	virtual ~CEyeBallBossEmote() { }
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CEyeBallBoss> OnStart( CEyeBallBoss *me, Action<CEyeBallBoss> *priorAction ) override;
-	virtual ActionResult<CEyeBallBoss> Update( CEyeBallBoss *me, float dt ) override;
+	virtual ActionResult<CEyeBallBoss> OnStart( CEyeBallBoss *me, Action<CEyeBallBoss> *priorAction ) OVERRIDE;
+	virtual ActionResult<CEyeBallBoss> Update( CEyeBallBoss *me, float dt ) OVERRIDE;
 
 private:
 	int m_iSequence;

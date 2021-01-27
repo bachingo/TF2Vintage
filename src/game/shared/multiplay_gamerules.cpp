@@ -42,6 +42,10 @@
 	#include "NextBotManager.h"
 #endif
 
+#ifdef USES_ECON_ITEMS
+	#include "econ_item_system.h"
+#endif
+
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -585,6 +589,10 @@ ConVarRef suitcharger( "sk_suitcharger" );
 	bool CMultiplayRules::ClientConnected( edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen )
 	{
 		GetVoiceGameMgr()->ClientConnected( pEntity );
+
+#if defined( USES_ECON_ITEMS )
+		GetItemSchema()->ClientConnected( pEntity );
+#endif
 		return true;
 	}
 
@@ -596,6 +604,10 @@ ConVarRef suitcharger( "sk_suitcharger" );
 	//=========================================================
 	void CMultiplayRules::ClientDisconnected( edict_t *pClient )
 	{
+#if defined( USES_ECON_ITEMS )
+		GetItemSchema()->ClientDisconnected( pClient );
+#endif
+
 		if ( pClient )
 		{
 			CBasePlayer *pPlayer = (CBasePlayer *)CBaseEntity::Instance( pClient );

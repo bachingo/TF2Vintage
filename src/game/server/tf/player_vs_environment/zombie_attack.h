@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -17,14 +17,14 @@ class CZombieAttack : public Action<CZombie>
 {
 	DECLARE_CLASS( CZombieAttack, Action<CZombie> )
 public:
-	virtual const char *GetName( void ) const;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CZombie> OnStart( CZombie *me, Action<CZombie> *priorAction ) override;
-	virtual ActionResult<CZombie> Update( CZombie *me, float dt ) override;
+	virtual ActionResult<CZombie> OnStart( CZombie *me, Action<CZombie> *priorAction ) OVERRIDE;
+	virtual ActionResult<CZombie> Update( CZombie *me, float dt ) OVERRIDE;
 
-	virtual EventDesiredResult<CZombie> OnContact( CZombie *me, CBaseEntity *other, CGameTrace *result = NULL ) override;
-	virtual EventDesiredResult<CZombie> OnStuck( CZombie *me ) override;
-	virtual EventDesiredResult<CZombie> OnOtherKilled( CZombie *me, CBaseCombatCharacter *victim, CTakeDamageInfo const &info ) override;
+	virtual EventDesiredResult<CZombie> OnContact( CZombie *me, CBaseEntity *other, CGameTrace *result = NULL ) OVERRIDE;
+	virtual EventDesiredResult<CZombie> OnStuck( CZombie *me ) OVERRIDE;
+	virtual EventDesiredResult<CZombie> OnOtherKilled( CZombie *me, CBaseCombatCharacter *victim, CTakeDamageInfo const &info ) OVERRIDE;
 
 private:
 	bool IsPotentiallyChaseable( CZombie *actor, CBaseCombatCharacter *other );

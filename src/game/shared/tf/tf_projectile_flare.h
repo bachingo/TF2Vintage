@@ -19,21 +19,20 @@
 #define CTFProjectile_Flare C_TFProjectile_Flare
 #endif
 
+class CTFProjectile_Flare : public CTFBaseRocket
 #ifdef GAME_DLL
-class CTFProjectile_Flare : public CTFBaseRocket, public IScorer
-#else
-class C_TFProjectile_Flare : public C_TFBaseRocket
+	, public IScorer
 #endif
 {
 public:
 	DECLARE_CLASS( CTFProjectile_Flare, CTFBaseRocket );
-	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS();
 
 	CTFProjectile_Flare();
 	~CTFProjectile_Flare();
 
 #ifdef GAME_DLL
+	DECLARE_DATADESC();
 
 	static CTFProjectile_Flare 	*Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
 	virtual void				Spawn();
@@ -53,28 +52,39 @@ public:
 	virtual bool 				IsDeflectable();
 	virtual void 				Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
+	bool						IsDestroyable( void ) OVERRIDE { return false; }
+
 	// Overrides.
 	virtual void				Explode(trace_t *pTrace, CBaseEntity *pOther);
-	virtual void				Airburst(trace_t *pTrace, CBaseEntity *pOther);
-	virtual void				Detonate( void );
-	virtual float				GetFlareRadius( void );
+	virtual void				Airburst(trace_t *pTrace, bool bSelf);
+	virtual void				Detonate( bool bSelf = false );
+	virtual float				GetFlareRadius( void ) const;
+	virtual float				GetProjectileSpeed( void ) const;
 	
 	virtual void				UpdateOnRemove( void );
-#else
 
+	void						ImpactThink( void );
+
+	bool						IsFromTaunt( void ) const { return m_bTauntShot; }
+	float						GetLifeTime( void ) const { return gpGlobals->curtime - m_flCreateTime; }
+#else
 	virtual void				OnDataChanged( DataUpdateType_t updateType );
 	virtual void				CreateTrails( void );
-
 #endif
 
 private:
 #ifdef GAME_DLL
-	CBaseHandle m_Scorer;
+	CBaseHandle m_hScorer;
 	CNetworkVar( bool,	m_bCritical );
 
 	bool m_bTauntShot;
+
+	float m_flImpactTime;
+	Vector m_vecImpactNormal;
 #else
 	bool		m_bCritical;
+
+	HPARTICLEFFECT m_hEffect;
 #endif
 
 };

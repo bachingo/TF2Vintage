@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -219,7 +219,7 @@ void CTFBot::Spawn( void )
 	m_bLookingAroundForEnemies = true;
 	m_suspectedSpies.PurgeAndDeleteElements();
 	m_cpChangedTimer.Invalidate();
-	m_requiredEquipStack.RemoveAll();
+	m_requiredEquipStack.Clear();
 	m_hMyControlPoint = NULL;
 	m_hMyCaptureZone = NULL;
 
@@ -250,8 +250,11 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 		NavAreaCollector visibleSet;
 		pArea->ForAllPotentiallyVisibleAreas( visibleSet );
 
-		for( CNavArea *pVisible : visibleSet.m_area )
-			static_cast<CTFNavArea *>( pVisible )->RemovePotentiallyVisibleActor( this );
+		FOR_EACH_VEC( visibleSet.m_area, i )
+		{
+			CTFNavArea *pVisible = (CTFNavArea *)visibleSet.m_area[i];
+			pVisible->RemovePotentiallyVisibleActor( this );
+		}
 	}
 
 	if ( info.GetInflictor() && info.GetInflictor()->GetTeamNumber() != GetTeamNumber() )
@@ -260,7 +263,7 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 		if ( pSentry )
 		{
 			m_hTargetSentry = pSentry;
-			m_vecLastHurtBySentry = GetAbsOrigin();
+			m_vecLastNoticedSentry = GetAbsOrigin();
 		}
 	}
 }
@@ -1009,8 +1012,9 @@ CCaptureFlag *CTFBot::GetFlagToFetch( void )
 	CCaptureFlag *pClosest = NULL;
 	CCaptureFlag *pClosestStolen = NULL;
 
-	for ( CCaptureFlag *pFlag : flags )
+	FOR_EACH_VEC( flags, i )
 	{
+		CCaptureFlag *pFlag = flags[i];
 		float flDistance = ( pFlag->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr();
 		if ( flDistance > flMinDist )
 		{
@@ -1848,39 +1852,6 @@ bool CTFBot::EquipLongRangeWeapon( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFBot::PushRequiredWeapon( CTFWeaponBase *weapon )
-{
-	CHandle<CTFWeaponBase> hndl;
-	if ( weapon ) hndl.Set( weapon );
-
-	m_requiredEquipStack.AddToTail( hndl );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFBot::PopRequiredWeapon( void )
-{
-	m_requiredEquipStack.RemoveMultipleFromTail( 1 );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFBot::EquipRequiredWeapon( void )
-{
-	if ( m_requiredEquipStack.Count() <= 0 )
-		return false;
-
-	CHandle<CTFWeaponBase> &hndl = m_requiredEquipStack.Tail();
-	CTFWeaponBase *weapon = hndl.Get();
-
-	return Weapon_Switch( weapon );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool CTFBot::IsSquadmate( CTFPlayer *player ) const
 {
 	if ( m_pSquad == nullptr )
@@ -1937,35 +1908,44 @@ void CTFBot::AccumulateSniperSpots( void )
 	for ( int i=0; i<tf_bot_sniper_spot_search_count.GetInt(); ++i )
 	{
 		SniperSpotInfo newInfo{};
-		newInfo.m_pHomeArea = m_sniperStandAreas.Random();
-		newInfo.m_vecHome = newInfo.m_pHomeArea->GetRandomPoint();
+		newInfo.m_pVantageArea = m_sniperStandAreas.Random();
+		newInfo.m_vecVantage = newInfo.m_pVantageArea->GetRandomPoint();
 		newInfo.m_pForwardArea = m_sniperLookAreas.Random();
 		newInfo.m_vecForward = newInfo.m_pForwardArea->GetRandomPoint();
 
-		newInfo.m_flRange = ( newInfo.m_vecHome - newInfo.m_vecForward ).Length();
+		newInfo.m_flRange = ( newInfo.m_vecVantage - newInfo.m_vecForward ).Length();
 
 		if ( newInfo.m_flRange < tf_bot_sniper_spot_min_range.GetFloat() )
 			continue;
 
-		if ( !IsLineOfFireClear( newInfo.m_vecHome + Vector( 0, 0, 60.0f ), newInfo.m_vecForward + Vector( 0, 0, 60.0f ) ) )
+		const Vector vecOffset( 0, 0, 60.0f );
+		if ( !IsLineOfFireClear( newInfo.m_vecVantage + vecOffset, newInfo.m_vecForward + vecOffset ) )
 			continue;
 
-		float flIncursion1 = newInfo.m_pHomeArea->GetIncursionDistance( GetEnemyTeam( this ) );
-		float flIncursion2 = newInfo.m_pForwardArea->GetIncursionDistance( GetEnemyTeam( this ) );
+		const float flIncursion1 = newInfo.m_pVantageArea->GetIncursionDistance( GetEnemyTeam( this ) );
+		const float flIncursion2 = newInfo.m_pForwardArea->GetIncursionDistance( GetEnemyTeam( this ) );
 
 		newInfo.m_flIncursionDiff = flIncursion1 - flIncursion2;
 
-		if ( m_sniperSpots.Count() < tf_bot_sniper_spot_max_count.GetInt() )
-			m_sniperSpots.AddToTail( newInfo );
-
-		for ( int j=0; j<m_sniperSpots.Count(); ++j )
+		if ( m_sniperSpots.Count() >= tf_bot_sniper_spot_max_count.GetInt() )
 		{
-			SniperSpotInfo *info = &m_sniperSpots[j];
+			int nWorst = -1;
+			for ( int j=0; j < m_sniperSpots.Count(); ++j )
+			{
+				SniperSpotInfo *info = &m_sniperSpots[j];
 
-			if ( flIncursion1 - flIncursion2 <= info->m_flIncursionDiff )
-				continue;
+				if ( m_sniperSpots[ nWorst ].m_flIncursionDiff <= info->m_flIncursionDiff )
+					continue;
 
-			*info = newInfo;
+				nWorst = j;
+			}
+
+			if ( newInfo.m_flIncursionDiff > m_sniperSpots[ nWorst ].m_flIncursionDiff )
+				m_sniperSpots[ nWorst ] = newInfo;
+		}
+		else
+		{
+			m_sniperSpots.AddToTail( newInfo );
 		}
 	}
 
@@ -1973,8 +1953,8 @@ void CTFBot::AccumulateSniperSpots( void )
 	{
 		for ( int i=0; i<m_sniperSpots.Count(); ++i )
 		{
-			NDebugOverlay::Cross3D( m_sniperSpots[i].m_vecHome, 5.0f, 255, 0, 255, true, 0.1f );
-			NDebugOverlay::Line( m_sniperSpots[i].m_vecHome, m_sniperSpots[i].m_vecForward, 0, 200, 0, true, 0.1f );
+			NDebugOverlay::Cross3D( m_sniperSpots[i].m_vecVantage, 5.0f, 255, 0, 255, true, 0.1f );
+			NDebugOverlay::Line( m_sniperSpots[i].m_vecVantage, m_sniperSpots[i].m_vecForward, 0, 200, 0, true, 0.1f );
 		}
 	}
 }
@@ -1991,25 +1971,13 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 	{
 		CTeamTrainWatcher *pWatcher = TFGameRules()->GetPayloadToPush( GetTeamNumber() );
 		if ( !pWatcher )
-		{
 			pWatcher = TFGameRules()->GetPayloadToBlock( GetTeamNumber() );
-			if ( !pWatcher )
-			{
-				ClearSniperSpots();
-				return;
-			}
-		}
 
-		pObjective = pWatcher->GetTrainEntity();
+		if( pWatcher )
+			pObjective = pWatcher->GetTrainEntity();
 	}
-	else
+	else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CP )
 	{
-		if ( TFGameRules()->GetGameType() != TF_GAMETYPE_CP )
-		{
-			ClearSniperSpots();
-			return;
-		}
-
 		pObjective = GetMyControlPoint();
 	}
 
@@ -2019,8 +1987,12 @@ void CTFBot::SetupSniperSpotAccumulation( void )
 		return;
 	}
 
-	if ( pObjective == m_sniperGoalEnt && Square( tf_bot_sniper_goal_entity_move_tolerance.GetFloat() ) > ( pObjective->WorldSpaceCenter() - m_sniperGoal ).LengthSqr() )
-		return;
+	if ( pObjective == m_sniperGoalEnt )
+	{
+		Vector vecToCart = pObjective->WorldSpaceCenter() - m_sniperGoal;
+		if ( Square( tf_bot_sniper_goal_entity_move_tolerance.GetFloat() ) > vecToCart.LengthSqr() )
+			return;
+	}
 
 	ClearSniperSpots();
 
@@ -2472,7 +2444,7 @@ void CTFBot::ManageRandomWeapons( void )
 		if ( pItem )
 		{
 			char szItemDefIndex[16];
-			_itoa_s( pItem->GetItemDefIndex(), szItemDefIndex, 10 );
+			V_sprintf_safe( szItemDefIndex, "%d", pItem->GetItemDefIndex() );
 
 			float flChance = TFBotItemSchema().GetItemChance( szItemDefIndex, "drop_chance" );
 			if ( ( flChance * 0.1f ) <= RandomFloat() )
@@ -2623,7 +2595,7 @@ void PrefixNameChanged( IConVar *var, const char *pOldValue, float flOldValue )
 }
 
 
-CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
+CON_COMMAND_EXTERN_F( tf_bot_add, cc_tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 {
 	if ( UTIL_IsCommandIssuedByServerAdmin() )
 	{
@@ -2636,8 +2608,8 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 
 		for ( int i=0; i < args.ArgC(); ++i )
 		{
-			nSkill = Max( nSkill, NameToDifficulty( args[i] ) );
-			nNumBots = V_atoi( args[i] );
+			int nParsedSkill = NameToDifficulty( args[i] );
+			int nParsedNumBots = V_atoi( args[i] );
 
 			if ( IsPlayerClassName( args[i] ) )
 			{
@@ -2650,6 +2622,14 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 			else if ( !V_stricmp( args[i], "noquota" ) )
 			{
 				bNoQuota = true;
+			}
+			else if ( nParsedSkill != -1 )
+			{
+				nSkill = nParsedSkill;
+			}
+			else if ( nParsedNumBots >= 1 )
+			{
+				nNumBots = nParsedNumBots;
 			}
 			else if ( nNumBots == 1 )
 			{
@@ -2758,6 +2738,10 @@ CON_COMMAND_F( tf_bot_kick, "Remove a TFBot by name, or all bots (\"all\").", FC
 }
 
 CTFBotItemSchema s_BotSchema( "TFBotItemSchema" );
+CTFBotItemSchema &TFBotItemSchema( void )
+{
+	return s_BotSchema;
+}
 
 // Based on https://forums.alliedmods.net/showthread.php?p=1539933
 void CTFBotItemSchema::PostInit()
@@ -2814,20 +2798,20 @@ void CTFBotItemSchema::PostInit()
 						V_SplitString( indexTokens[i], "..", rangeTokens );
 
 						int iMin = atoi( rangeTokens[0] ), iMax = atoi( rangeTokens[1] );
-						if( iMin <= 0 && !FStrEq( "0", rangeTokens[0] ) || iMax <= 0 && !FStrEq( "0", rangeTokens[1] ) || iMin > iMax )
+						if( ( iMin <= 0 && !FStrEq( "0", rangeTokens[0] ) ) || ( iMax <= 0 && !FStrEq( "0", rangeTokens[1] ) ) || iMin > iMax )
 						{
-							Warning("Error while parsing config file: invalid range of indexes '%s'", indexTokens[i]);
+							Warning("Error while parsing config file: invalid range of indexes '%s'\n", indexTokens[i]);
 							continue;
 						}
 
 						for ( int j=iMin; j <= iMax; ++j )
 						{
 							char szIndex[32];
-							itoa( j, szIndex, sizeof szIndex );
+							V_sprintf_safe( szIndex, "%d", j );
 
 							KeyValues *pItem = NULL;
 							if ( ( pItem = m_pSchema->FindKey( szIndex ) ) != NULL )
-								Warning( "Duplicate entry found in %s: '%d'", pszConfigName, j );
+								Warning( "Duplicate entry found in %s: '%d'\n", pszConfigName, j );
 							else
 								pItem = m_pSchema->FindKey( szIndex, true );
 
@@ -2864,13 +2848,13 @@ void CTFBotItemSchema::PostInit()
 						int nItemIndex = atoi( indexTokens[i] );
 						if ( nItemIndex <= 0 )
 						{
-							Warning( "Error while parsing %s: invalid item index '%d'", pszConfigName, nItemIndex );
+							Warning( "Error while parsing %s: invalid item index '%d'\n", pszConfigName, nItemIndex );
 							continue;
 						}
 
 						KeyValues *pItem = NULL;
 						if ( ( pItem = m_pSchema->FindKey( indexTokens[i] ) ) != NULL )
-							Warning( "Duplicate entry found in %s: '%d'", pszConfigName, nItemIndex );
+							Warning( "Duplicate entry found in %s: '%d'\n", pszConfigName, nItemIndex );
 						else
 							pItem = m_pSchema->FindKey( indexTokens[i], true );
 

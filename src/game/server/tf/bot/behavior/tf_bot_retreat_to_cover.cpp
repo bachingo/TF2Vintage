@@ -155,9 +155,9 @@ public:
 		m_iMaxVisible = 9999;
 	}
 
-	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override;
+	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) OVERRIDE;
 
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) OVERRIDE
 	{
 		if ( travelDistanceSoFar > tf_bot_retreat_to_cover_range.GetFloat() )
 		{
@@ -167,7 +167,7 @@ public:
 		return ( m_pActor->GetLocomotionInterface()->GetStepHeight() > currentArea->ComputeAdjacentConnectionHeightChange( adjArea ) );
 	}
 
-	virtual void PostSearch() override
+	virtual void PostSearch() OVERRIDE
 	{
 		if ( tf_bot_debug_retreat_to_cover.GetBool() )
 		{
@@ -209,7 +209,7 @@ public:
 		m_nVisible = 0;
 	}
 
-	virtual bool Inspect( const CKnownEntity& known ) override
+	virtual bool Inspect( const CKnownEntity& known ) OVERRIDE
 	{
 		VPROF_BUDGET( __FUNCTION__, "NextBot" );
 

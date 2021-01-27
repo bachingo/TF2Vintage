@@ -198,8 +198,8 @@ bool CHealthFilter::IsSelected( const CBaseEntity *ent ) const
 	if ( FClassnameIs( const_cast<CBaseEntity *>( ent ), "func_regenerate" ) )
 	{
 		if ( pArea->HasTFAttributes( BLUE_SPAWN_ROOM|RED_SPAWN_ROOM ) &&
-			( m_pActor->GetTeamNumber() == TF_TEAM_RED && pArea->HasTFAttributes( BLUE_SPAWN_ROOM ) ||
-			  m_pActor->GetTeamNumber() == TF_TEAM_BLUE && pArea->HasTFAttributes( RED_SPAWN_ROOM ) ) )
+			( ( m_pActor->GetTeamNumber() == TF_TEAM_RED && pArea->HasTFAttributes( BLUE_SPAWN_ROOM ) ) ||
+			  ( m_pActor->GetTeamNumber() == TF_TEAM_BLUE && pArea->HasTFAttributes( RED_SPAWN_ROOM ) ) ) )
 		{
 			return false;
 		}

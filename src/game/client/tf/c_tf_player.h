@@ -98,6 +98,8 @@ public:
 	virtual int GetMaxHealth( void ) const;
 	virtual int	GetMaxHealthForBuffing( void ) const;
 
+	float GetLastDamageTime( void ) const { return m_flLastDamageTime; }
+
 	virtual int GetRenderTeamNumber( void );
 
 	bool IsWeaponLowered( void );
@@ -248,6 +250,8 @@ public:
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
 
+	void				ModifyEmitSoundParams( EmitSound_t &params ) OVERRIDE;
+
 	bool	DoClassSpecialSkill( void );
 	bool	CanGoInvisible( bool bFeigning = false );
 
@@ -262,6 +266,9 @@ public:
 	// Gunslinger
 	bool				HasGunslinger( void ) { return m_Shared.m_bGunslinger; }
 
+	C_BaseEntity	*GetGrapplingHookTarget( void ) { return m_hGrapplingHookTarget; }
+	void			SetGrapplingHookTarget( CBaseEntity *pTarget, bool bSomething = false );
+	
 public:
 	// Ragdolls.
 	virtual C_BaseAnimating *BecomeRagdollOnClient();
@@ -301,6 +308,9 @@ public:
 	void CreateBombinomiconHint( void );
 	void DestroyBombinomiconHint( void );
 	void UpdateHalloweenBombHead( void );
+
+	float m_flInspectTime;
+	bool IsInspecting() const;
 
 protected:
 
@@ -395,6 +405,7 @@ public:
 	CNetworkHandle( C_TFItem, m_hItem );
 
 	CNetworkHandle( C_TFWeaponBase, m_hOffHandWeapon );
+	CNetworkHandle( C_BaseEntity, m_hGrapplingHookTarget );
 
 	int				m_iOldPlayerClass;	// Used to detect player class changes
 	bool			m_bIsDisplayingNemesisIcon;
@@ -464,6 +475,7 @@ public:
 private:
 
 	float m_flWaterImpactTime;
+	float m_flLastDamageTime;
 
 	// Gibs.
 	CUtlVector<breakmodel_t>	m_aGibs;

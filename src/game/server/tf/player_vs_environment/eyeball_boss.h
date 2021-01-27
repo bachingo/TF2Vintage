@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -118,9 +118,9 @@ public:
 	virtual int				GetBossType( void ) const { return EYEBALL_BOSS; }
 	virtual int				GetLevel( void ) const { return m_level; }
 
-	virtual CEyeBallBossLocomotion *GetLocomotionInterface( void ) const override { return m_locomotor; }
-	virtual CEyeBallBossBody *GetBodyInterface( void ) const override { return m_body; }
-	virtual IVision*		GetVisionInterface( void ) const override { return m_vision; }
+	virtual CEyeBallBossLocomotion *GetLocomotionInterface( void ) const OVERRIDE { return m_locomotor; }
+	virtual CEyeBallBossBody *GetBodyInterface( void ) const OVERRIDE { return m_body; }
+	virtual IVision*		GetVisionInterface( void ) const OVERRIDE { return m_vision; }
 
 	void					JarateNearbyPlayer( float range );
 	CBaseCombatCharacter*	GetVictim( void ) const;

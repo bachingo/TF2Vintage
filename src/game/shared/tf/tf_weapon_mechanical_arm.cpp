@@ -708,7 +708,7 @@ void CTFProjectile_MechanicalArmOrb::ExplodeAndRemove( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::OnDataChanged( DataUpdateType_t updateType )
+void C_TFProjectile_MechanicalArmOrb::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
@@ -729,20 +729,12 @@ void CTFProjectile_MechanicalArmOrb::OnDataChanged( DataUpdateType_t updateType 
 				m_pOrbLightning->SetControlPoint( 1, GetAbsOrigin() );
 		}
 	}*/
-
-	// Watch team changes and change trail accordingly.
-	if ( m_iOldTeamNum && m_iOldTeamNum != m_iTeamNum )
-	{
-		ParticleProp()->StopEmission();
-		CreateTrails();
-		CreateLightEffects();
-	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::CreateTrails( void )
+void C_TFProjectile_MechanicalArmOrb::CreateTrails( void )
 {
 	if ( IsDormant() )
 		return;
@@ -754,7 +746,7 @@ void CTFProjectile_MechanicalArmOrb::CreateTrails( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_MechanicalArmOrb::CreateLightEffects( void )
+void C_TFProjectile_MechanicalArmOrb::CreateLightEffects( void )
 {
 	// Handle the dynamic light
 	if ( tf2v_muzzlelight.GetBool() )

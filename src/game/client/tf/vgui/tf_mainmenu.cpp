@@ -12,7 +12,7 @@
 #include "panels/tf_statsummarydialog.h"
 #include "panels/tf_tooltippanel.h"
 #include "panels/tf_itemtooltippanel.h"
-#include "panels/tf_ItemSelectionpanel.h"
+#include "panels/tf_itemselectionpanel.h"
 #include "engine/IEngineSound.h"
 #include "tf_hud_statpanel.h"
 #include "tier0/icommandline.h"
@@ -49,7 +49,7 @@ CON_COMMAND( showloadout, "Show loadout screen (new)" )
 {
 	if ( !guiroot )
 		return;
-	bFromPause = false;
+	g_bFromPause = false;
 	engine->ClientCmd( "gameui_activate" );
 	MAINMENU_ROOT->ShowPanel( LOADOUT_MENU, true );
 }

@@ -35,8 +35,9 @@ void CEntitySoldierStatue::StatueThink( void )
 		CUtlVector<CTFPlayer *> players;
 		CollectPlayers( &players, TF_TEAM_RED, true );
 		CollectPlayers( &players, TF_TEAM_BLUE, true, true );
-		for ( CTFPlayer *pPlayer : players )
+		FOR_EACH_VEC( players, i )
 		{
+			CTFPlayer *pPlayer = players[i];
 			if ( !pPlayer->GetAbsVelocity().IsZero() )
 				continue;
 

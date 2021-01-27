@@ -14,7 +14,7 @@
 	"TimeIdle"				"5.0"
 
 	// Ammo & Clip
-	"primary_ammo"			"TF_AMMO_GRENADES1"
+	"primary_ammo"			"TF_AMMO_SPECIAL2"
 	"secondary_ammo"		"None"
 	clip_size				"-1"
 	default_clip			"2"

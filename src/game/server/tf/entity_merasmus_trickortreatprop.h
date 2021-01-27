@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -28,7 +28,7 @@ public:
 	virtual void		Event_Killed( CTakeDamageInfo const &info );
 	virtual int			OnTakeDamage( CTakeDamageInfo const &info );
 
-	virtual void		Touch( CBaseEntity *pOther ) override;
+	virtual void		Touch( CBaseEntity *pOther ) OVERRIDE;
 
 	void				SpawnTrickOrTreatItem( void );
 };

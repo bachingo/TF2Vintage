@@ -2,7 +2,6 @@
 #include "econ_item_view.h"
 #include "econ_item_system.h"
 #include "activitylist.h"
-#include "attribute_types.h"
 
 #ifdef CLIENT_DLL
 #include "dt_utlvector_recv.h"
@@ -24,9 +23,11 @@ BEGIN_NETWORK_TABLE_NOBASE( CEconItemAttribute, DT_EconItemAttribute )
 	RecvPropInt( RECVINFO( m_iAttributeDefinitionIndex ) ),
 	RecvPropInt( RECVINFO_NAME( m_flValue, m_iRawValue32 ) ),
 	RecvPropFloat( RECVINFO( m_flValue ), SPROP_NOSCALE ),
+	RecvPropInt( RECVINFO( m_nRefundableCurrency ) ),
 #else
 	SendPropInt( SENDINFO( m_iAttributeDefinitionIndex ), -1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO_NAME( m_flValue, m_iRawValue32 ), 32, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nRefundableCurrency ), -1, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -37,55 +38,27 @@ CEconItemAttribute::CEconItemAttribute( CEconItemAttribute const &src )
 {
 	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
 	m_flValue = src.m_flValue;
-	m_iAttributeClass = src.m_iAttributeClass;
+	m_nRefundableCurrency = src.m_nRefundableCurrency;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconItemAttribute::Init( int iIndex, float flValue, const char *pszAttributeClass /*= NULL*/ )
+void CEconItemAttribute::Init( int iIndex, float flValue )
 {
 	m_iAttributeDefinitionIndex = iIndex;
-
 	m_flValue = flValue;
-
-
-	if ( pszAttributeClass )
-	{
-		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
-	}
-	else
-	{
-		CEconAttributeDefinition const *pAttribDef = GetStaticData();
-		if ( pAttribDef )
-		{
-			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
-		}
-	}
+	m_nRefundableCurrency = 0;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconItemAttribute::Init( int iIndex, const char *pszValue, const char *pszAttributeClass /*= NULL*/ )
+void CEconItemAttribute::Init( int iIndex, uint32 unValue )
 {
 	m_iAttributeDefinitionIndex = iIndex;
-
-	m_flValue = *(float *)( (unsigned int *)STRING( AllocPooledString( pszValue ) ) );
-
-
-	if ( pszAttributeClass )
-	{
-		m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pszAttributeClass );
-	}
-	else
-	{
-		CEconAttributeDefinition const *pAttribDef = GetStaticData();
-		if ( pAttribDef )
-		{
-			m_iAttributeClass = AllocPooledString_StaticConstantStringPointer( pAttribDef->GetClassName() );
-		}
-	}
+	m_flValue = *(float*)&unValue;
+	m_nRefundableCurrency = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -95,7 +68,7 @@ CEconItemAttribute &CEconItemAttribute::operator=( CEconItemAttribute const &src
 {
 	m_iAttributeDefinitionIndex = src.m_iAttributeDefinitionIndex;
 	m_flValue = src.m_flValue;
-	m_iAttributeClass = src.m_iAttributeClass;
+	m_nRefundableCurrency = src.m_nRefundableCurrency;
 
 	return *this;
 }
@@ -268,7 +241,7 @@ const char *CEconItemView::GetWorldDisplayModel( int iClass/* = 0*/ ) const
 		pszModelName = pStatic->GetWorldModel();
 
 		// Assuming we're using same model for both 1st person and 3rd person view.
-		if ( !pszModelName && pStatic->attach_to_hands == 1 )
+		if ( !pszModelName && pStatic->GetAttachToHands() == 1 )
 			pszModelName = pStatic->GetPlayerModel();
 		
 		if ( pStatic->GetPerClassModel( iClass ) )
@@ -419,6 +392,23 @@ const char *CEconItemView::GetSoundOverride( int iIndex, int iTeamNum /*= 0*/ ) 
 		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( iTeamNum );
 		if( pVisuals )
 			return pVisuals->GetWeaponShootSound( iIndex );
+	}
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+const char *CEconItemView::GetCustomSound( int iIndex, int iTeamNum /*= 0*/ ) const
+{
+	CEconItemDefinition *pStatic = GetStaticData();
+
+	if ( pStatic )
+	{
+		PerTeamVisuals_t *pVisuals = pStatic->GetVisuals( iTeamNum );
+		if( pVisuals )
+			return pVisuals->GetCustomWeaponSound( iIndex );
 	}
 
 	return NULL;
@@ -690,6 +680,51 @@ bool CAttributeList::RemoveAttribByIndex( int iIndex )
 	m_Attributes.Remove( iIndex );
 	m_pManager->OnAttributesChanged();
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Clear out dynamic attributes
+//-----------------------------------------------------------------------------
+void CAttributeList::RemoveAllAttributes( void )
+{
+	if( !m_Attributes.IsEmpty() )
+	{
+		m_Attributes.Purge();
+		m_pManager->OnAttributesChanged();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAttributeList::SetRuntimeAttributeRefundableCurrency( CEconAttributeDefinition const *pAttrib, int iRefundableCurrency )
+{
+	for ( int i = 0; i < m_Attributes.Count(); i++ )
+	{
+		CEconItemAttribute *pAttribute = &m_Attributes[i];
+
+		if ( pAttribute->m_iAttributeDefinitionIndex == pAttrib->index )
+		{
+			// Found existing attribute -- change value.
+			pAttribute->m_nRefundableCurrency = iRefundableCurrency;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CAttributeList::GetRuntimeAttributeRefundableCurrency( CEconAttributeDefinition const *pAttrib ) const
+{
+	for ( int i = 0; i < m_Attributes.Count(); i++ )
+	{
+		CEconItemAttribute const &pAttribute = m_Attributes[i];
+
+		if ( pAttribute.m_iAttributeDefinitionIndex == pAttrib->index )
+			return pAttribute.m_nRefundableCurrency;
+	}
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------

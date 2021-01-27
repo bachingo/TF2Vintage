@@ -1,7 +1,8 @@
-//=========== Copyright © 2018, LFE-Team, Not All rights reserved. ============
+//========= Copyright © Valve LLC, All rights reserved. =======================
 //
-// Purpose: 
+// Purpose:		
 //
+// $NoKeywords: $
 //=============================================================================
 #include "cbase.h"
 #include "tf_weapon_buff_item.h"
@@ -30,11 +31,113 @@
 
 const char *g_BannerModels[] =
 {
+	"",
 	"models/weapons/c_models/c_buffbanner/c_buffbanner.mdl", 
 	"models/workshop/weapons/c_models/c_battalion_buffbanner/c_battalion_buffbanner.mdl",
 	"models/workshop_partner/weapons/c_models/c_shogun_warbanner/c_shogun_warbanner.mdl",
 	"models/workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_parachute.mdl",
 };
+
+#define TF_PARA_MDL_CLOSED			"workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack.mdl"
+#define TF_PARA_MDL_OPENED			"workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack_open.mdl"
+#define TF_PARACHUTE_CLOSED			0
+#define TF_PARACHUTE_OPEN 			1
+#define TF_PARACHUTE_MODE			4
+
+#ifdef CLIENT_DLL
+class C_TFBuffBanner : public CBaseAnimating
+{
+	DECLARE_CLASS( C_TFBuffBanner, CBaseAnimating );
+public:
+	DECLARE_NETWORKCLASS();
+
+	virtual void	NotifyBoneAttached( CBaseAnimating* attachTarget );
+	virtual void	ClientThink( void );
+
+	void			SetBuffItem( CTFBuffItem *pBuffItem )	{ m_hBuffItem = pBuffItem; }
+	void			SetDieTime( float flDieTime ) 			{ m_flDieTime = flDieTime; }
+	void			SetBuffType( int iBuffType )			{ m_iBuffType = iBuffType; }
+private:
+	float				m_flDieTime;
+	int					m_iBuffType;
+	CHandle<CTFBuffItem> m_hBuffItem;
+};
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFBuffBanner, DT_TFBuffBanner )
+
+BEGIN_NETWORK_TABLE( C_TFBuffBanner, DT_TFBuffBanner )
+END_NETWORK_TABLE()
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+void C_TFBuffBanner::NotifyBoneAttached( CBaseAnimating *attachTarget )
+{
+	if ( m_hBuffItem )
+	{
+		if ( attachTarget != m_hBuffItem->GetOwner() )
+		{
+			// Notify our removal from the parent
+			m_hBuffItem->m_hBanner = NULL;
+		}
+		else
+		{
+			float flDuration = 10.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( attachTarget, flDuration, mod_buff_duration );
+			SetDieTime( gpGlobals->curtime + flDuration );
+
+			SetNextClientThink( CLIENT_THINK_ALWAYS );
+		}
+	}
+
+	BaseClass::NotifyBoneAttached( attachTarget );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFBuffBanner::ClientThink( void )
+{
+	BaseClass::ClientThink();
+
+	if ( !m_pAttachedTo || !m_hBuffItem )
+	{
+		if ( m_hBuffItem )
+			m_hBuffItem->m_hBanner = NULL;
+
+		Release();
+		return;
+	}
+
+	if ( m_iBuffType == TF_PARACHUTE_MODE )
+	{
+		// Never expire
+		SetDieTime( gpGlobals->curtime + 1.0f );
+	}
+
+	if ( m_pAttachedTo )
+	{	
+		if ( m_flDieTime < gpGlobals->curtime || !m_hBuffItem )
+		{
+			// Destroy us automatically after a period of time.
+			if ( m_hBuffItem )
+				m_hBuffItem->m_hBanner = NULL;
+			
+			Release();
+		}
+		else if ( m_pAttachedTo->IsEffectActive( EF_NODRAW ) && !IsEffectActive( EF_NODRAW ) )
+		{
+			AddEffects( EF_NODRAW );
+			UpdateVisibility();
+		}
+		else if ( !m_pAttachedTo->IsEffectActive( EF_NODRAW ) && IsEffectActive( EF_NODRAW ) )
+		{
+			RemoveEffects( EF_NODRAW );
+			UpdateVisibility();
+		}
+	}
+}
+#endif
 
 //=============================================================================
 //
@@ -76,6 +179,13 @@ CTFBuffItem::CTFBuffItem()
 #endif
 }
 
+CTFBuffItem::~CTFBuffItem()
+{
+#ifdef CLIENT_DLL
+	DestroyBanner();
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -109,12 +219,12 @@ void CTFBuffItem::Precache( void )
 //-----------------------------------------------------------------------------
 bool CTFBuffItem::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
-	if ( !m_bBuffUsed )
+	if ( m_bBuffUsed )
 	{
-		return BaseClass::Holster( pSwitchingTo );
+		return false;
 	}
 
-	return false;
+	return BaseClass::Holster( pSwitchingTo );
 }
 
 //-----------------------------------------------------------------------------
@@ -125,6 +235,10 @@ void CTFBuffItem::WeaponReset( void )
 	m_bBuffUsed = false;
 
 	BaseClass::WeaponReset();
+
+#ifdef CLIENT_DLL
+	DestroyBanner();
+#endif
 }
 
 // ---------------------------------------------------------------------------- -
@@ -297,8 +411,6 @@ bool CTFBuffItem::SendWeaponAnim( int iActivity )
 			RaiseFlag();
 			iNewActivity = ACT_RESET;
 		}
-		else
-
 		break;
 	case ACT_VM_PULLBACK:
 		iNewActivity = ACT_ITEM1_VM_PULLBACK;
@@ -336,46 +448,51 @@ void C_TFBuffItem::CreateBanner( int iBuffType )
 	if ( !pOwner || !pOwner->IsAlive() )
 		return;
 
-	C_EconWearable *pWearable = pOwner->GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_SECONDARY );
+	if ( m_hBanner != NULL )
+		return;
 
+	C_EconWearable *pWearable = pOwner->GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_SECONDARY );
 	// if we don't have a backpack for some reason don't make a banner
 	if ( !pWearable )
 		return;
 
-	// yes I really am using the arrow class as a base
 	// create the flag
-	C_TFProjectile_Arrow *pBanner = new C_TFProjectile_Arrow();
+	C_TFBuffBanner *pBanner = new C_TFBuffBanner;
 	if ( pBanner )
 	{
-		pBanner->InitializeAsClientEntity( g_BannerModels[iBuffType - 1], RENDER_GROUP_OPAQUE_ENTITY );
+		if ( !pBanner->InitializeAsClientEntity( g_BannerModels[ iBuffType ], RENDER_GROUP_OPAQUE_ENTITY ) )
+		{
+			pBanner->Release();
+			return;
+		}
+
+		pBanner->SetBuffType( iBuffType );
+		pBanner->SetDieTime( gpGlobals->curtime + 10.0f );
+		pBanner->SetBuffItem( this );
+		pBanner->ChangeTeam( pOwner->GetTeamNumber() );
 
 		// Attach the flag to the backpack
-		int bone = pWearable->LookupBone( "bip_spine_3" );
+		int bone = pOwner->LookupBone( "bip_spine_3" );
 		if ( bone != -1 )
 		{
-			pBanner->SetDieTime( gpGlobals->curtime + 10.0f );
-			pBanner->AttachEntityToBone( pWearable, bone );
+			pBanner->AttachEntityToBone( pOwner, bone );
 		}
+
+		m_hBanner = pBanner;
 	}
 }
 
-/*//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Purpose: Destroy the banner addon for the backpack
 //-----------------------------------------------------------------------------
 void C_TFBuffItem::DestroyBanner( void )
 {
-	C_TFPlayer *pOwner = GetTFPlayerOwner();
-
-	if ( !pOwner )
-		return;
-
-	C_EconWearable *pWearable = pOwner->GetWearableForLoadoutSlot( TF_LOADOUT_SLOT_SECONDARY );
-
-	if ( !pWearable )
-		return;
-
-	pWearable->DestroyBoneAttachments();
-}*/
+	if ( m_hBanner )
+	{
+		m_hBanner->Release();
+		m_hBanner = NULL;
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -396,20 +513,15 @@ void C_TFBuffItem::FireGameEvent(IGameEvent *event)
 }
 #endif
 
-
-#define MODEL_CLOSED	"workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack.mdl"
-#define MODEL_OPENED	"workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack_open.mdl"
-
-#define TF_PARACHUTE_CLOSED		0
-#define TF_PARACHUTE_OPEN 		1
-
-#define TF_PARACHUTE_MODE		4
+CREATE_SIMPLE_WEAPON_TABLE( TFParachute, tf_weapon_parachute )
+CREATE_SIMPLE_WEAPON_TABLE( TFParachute_Primary, tf_weapon_parachute_primary )
+CREATE_SIMPLE_WEAPON_TABLE( TFParachute_Secondary, tf_weapon_parachute_secondary )
 
 const char *CTFParachute::GetWorldModel() const
 {
 	if ( m_iDeployed == TF_PARACHUTE_OPEN )
 	{
-		return MODEL_OPENED;
+		return TF_PARA_MDL_OPENED;
 	}
 	
 	return BaseClass::GetWorldModel();
@@ -419,8 +531,8 @@ void CTFParachute::Precache()
 {
 	BaseClass::Precache();
 	
-	PrecacheModel( MODEL_CLOSED );
-	PrecacheModel( MODEL_OPENED );
+	PrecacheModel( TF_PARA_MDL_CLOSED );
+	PrecacheModel( TF_PARA_MDL_OPENED );
 }
 
 void CTFParachute::DeployParachute()

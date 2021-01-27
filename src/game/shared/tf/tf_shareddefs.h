@@ -56,6 +56,16 @@ const char *GetTeamParticleName( int iTeam, bool bDummyBoolean = false, const ch
 const char *ConstructTeamParticle( const char *pszFormat, int iTeam, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
 void PrecacheTeamParticles( const char *pszFormat, bool bDummyBoolean = false, const char **pNames = g_aTeamParticleNames );
 
+inline int GetEnemyTeam( CBaseEntity *ent )
+{
+	int myTeam = ent->GetTeamNumber();
+	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
+}
+inline int GetEnemyTeam( int myTeam )
+{
+	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
+}
+
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 #define CONTENTS_GREENTEAM	CONTENTS_UNUSED
@@ -243,6 +253,9 @@ enum
 	TF_AMMO_GRENADES1,
 	TF_AMMO_GRENADES2,
 	TF_AMMO_GRENADES3, // Spells etc.
+	TF_AMMO_SPECIAL1,	// Consumables by slot
+	TF_AMMO_SPECIAL2,
+	TF_AMMO_SPECIAL3,	
 	TF_AMMO_COUNT
 };
 
@@ -264,6 +277,14 @@ enum
 	TF_GL_MODE_FIZZLE,
 	TF_GL_MODE_BETA_DETONATE,
 	TF_GL_MODE_CANNONBALL,
+};
+
+enum
+{
+	TF_FLARE_MODE_NORMAL,
+	TF_FLARE_MODE_DETONATE,
+	TF_FLARE_MODE_REVENGE,
+	TF_FLARE_MODE_KNOCKBACK,
 };
 
 //-----------------------------------------------------------------------------
@@ -924,7 +945,7 @@ enum
 
 extern int condition_to_attribute_translation[];
 
-int ConditionExpiresFast( int nCond );
+bool ConditionExpiresFast( int nCond );
 
 //-----------------------------------------------------------------------------
 // Mediguns.
@@ -1289,6 +1310,21 @@ enum ECritType
 	kCritType_MiniCrit,
 	kCritType_Crit
 };
+
+//-----------------------------------------------------------------------------
+// Deatf Calling Cards
+//-----------------------------------------------------------------------------
+enum
+{
+	CALLING_CARD_NONE = 0,
+	CALLING_CARD_MILKMAN = 1,	// Scout PolyCount Set
+	CALLING_CARD_CROC,			// Sniper PolyCount Set
+	CALLING_CARD_TANKBUSTER,	// Solider PolyCount Set
+	CALLING_CARD_GASJOCKEY,		// Pyro PolyCount Set 
+
+	CALLING_CARD_COUNT
+};
+extern const char *g_pszDeathCallingCardModels[CALLING_CARD_COUNT];
 
 #define TF_JUMP_ROCKET	( 1 << 0 )
 #define TF_JUMP_STICKY	( 1 << 1 )
@@ -1763,6 +1799,13 @@ typedef enum
 	NUM_STOCK_NOTIFICATIONS
 } HudNotification_t;
 
+typedef enum
+{
+	SAPPING_NONE,
+	SAPPING_PLACED,
+	SAPPING_DONE
+} sap_state_t;
+
 class CTraceFilterIgnorePlayers : public CTraceFilterSimple
 {
 public:
@@ -1777,7 +1820,10 @@ public:
 	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-		return pEntity && !pEntity->IsPlayer();
+		if ( pEntity && pEntity->IsPlayer() )
+			return false;
+
+		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
 	}
 };
 
@@ -1795,15 +1841,13 @@ public:
 	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-
-		if ( pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam )
-		{
+		if ( pEntity && pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam )
 			return false;
-		}
 
-		return true;
+		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
 	}
 
+private:
 	int m_iIgnoreTeam;
 };
 
@@ -1814,23 +1858,21 @@ public:
 	DECLARE_CLASS( CTraceFilterIgnoreTeammatesAndTeamObjects, CTraceFilterSimple );
 
 	CTraceFilterIgnoreTeammatesAndTeamObjects( const IHandleEntity *passentity, int collisionGroup, int teamNumber )
-		: CTraceFilterSimple( passentity, collisionGroup )
+		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( teamNumber )
 	{
-		m_iTeamNumber = teamNumber;
 	}
 
 	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
-
-		if ( pEntity && pEntity->GetTeamNumber() == m_iTeamNumber )
+		if ( pEntity && (pEntity->IsPlayer() || pEntity->IsCombatItem()) && pEntity->GetTeamNumber() == m_iIgnoreTeam )
 			return false;
 
 		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
 	}
 
 private:
-	int m_iTeamNumber;
+	int m_iIgnoreTeam;
 };
 
 // Unused
@@ -1848,16 +1890,34 @@ private:
 
 typedef enum
 {
-	SAPPING_NONE,
-	SAPPING_PLACED,
-	SAPPING_DONE
-} sap_state_t;
+	UIGROUP_UPGRADE_ITEM = 0,
+	UIGROUP_UPGRADE_PLAYER,
+	UIGROUP_UPGRADE_POWERUP
+} MvMUpgradeUIGroups_t;
 
-inline int GetEnemyTeam( CBaseEntity *ent )
+typedef enum
 {
-	int myTeam = ent->GetTeamNumber();
-	return ( myTeam == TF_TEAM_BLUE ? TF_TEAM_RED : ( myTeam == TF_TEAM_RED ? TF_TEAM_BLUE : TEAM_ANY ) );
-}
+	MVM_UPGRADE_QUALITY_LOW = 1,
+	MVM_UPGRADE_QUALITY_NORMAL,
+	MVM_UPGRADE_QAULITY_HIGH
+} MvMUpgradeQualities_t;
+
+typedef enum
+{
+	POWERUP_BOTTLE_NONE,
+	POWERUP_BOTTLE_CRITBOOST,
+	POWERUP_BOTTLE_UBERCHARGE,
+	POWERUP_BOTTLE_RECALL,
+	POWERUP_BOTTLE_REFILL_AMMO,
+	POWERUP_BOTTLE_BUILDINGS_INSTANT_UPGRADE,
+	POWERUP_BOTTLE_TOTAL
+} PowerupBottleType_t;
+
+typedef enum
+{
+	MVM_ANNOUNCEMENT_WAVE_COMPLETE,
+	MVM_ANNOUNCEMENT_WAVE_FAILED
+} MvMAnnouncement_t;
 
 bool IsSpaceToSpawnHere( const Vector &vecPos );
 

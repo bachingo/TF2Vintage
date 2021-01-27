@@ -19,7 +19,7 @@ ConVar tf_bot_medic_cover_test_resolution( "tf_bot_medic_cover_test_resolution",
 class CKnownCollector : public IVision::IForEachKnownEntity
 {
 public:
-	virtual bool Inspect( const CKnownEntity &known ) override
+	virtual bool Inspect( const CKnownEntity &known ) OVERRIDE
 	{
 		m_KnownEnts.AddToTail( &known );
 		return true;
@@ -42,7 +42,7 @@ public:
 		m_bIsOnFire = false;
 	}
 
-	virtual bool Inspect( const CKnownEntity &known ) override;
+	virtual bool Inspect( const CKnownEntity &known ) OVERRIDE;
 
 	CTFBot *m_pMedic;
 	CTFPlayer *m_pMostInjured;
@@ -120,7 +120,7 @@ public:
 		m_pPatient = currPatient;
 	}
 
-	virtual bool Inspect( const CKnownEntity &known ) override;
+	virtual bool Inspect( const CKnownEntity &known ) OVERRIDE;
 
 	CTFPlayer *SelectPreferred( CTFPlayer *player1, CTFPlayer *player2 );
 
@@ -759,7 +759,7 @@ CTFPlayer *CTFBotMedicHeal::SelectPatient( CTFBot *actor, CTFPlayer *currPatient
 				pBestPatient = ToTFPlayer( pMedigun->GetHealTarget() );
 		}
 
-		if ( pMedigun->IsReleasingCharge() || IsReadyToDeployUber( pMedigun ) && pBestPatient && IsGoodUberTarget( pBestPatient ) )
+		if ( ( pMedigun->IsReleasingCharge() || IsReadyToDeployUber( pMedigun ) ) && pBestPatient && IsGoodUberTarget( pBestPatient ) )
 			return pBestPatient;
 	}
 

@@ -394,15 +394,10 @@ void CTFMinigun::FireAttack( int nDamageAmount )
 	DispatchParticleEffect("heavy_ring_of_fire", pOwner->GetAbsOrigin(), vec3_angle);
 	// We explode in a small radius, set us up as an explosion.
 	CTakeDamageInfo newInfo(pOwner, pOwner, this, vec3_origin, pOwner->GetAbsOrigin(), nDamageAmount, DMG_IGNITE);
-	CTFRadiusDamageInfo radiusInfo;
-	radiusInfo.info = &newInfo;
-	radiusInfo.m_vecSrc = pOwner->GetAbsOrigin();
-	radiusInfo.m_flRadius = 135;
-	radiusInfo.m_flSelfDamageRadius = 0;
-
+	CTFRadiusDamageInfo radiusInfo(&newInfo, pOwner->GetAbsOrigin(), 135.0f);
 	TFGameRules()->RadiusDamage( radiusInfo );
-		
 #endif
+
 	// Update the time for the next fire attack.
 	m_flNextFireAttack = gpGlobals->curtime + 0.5;
 }

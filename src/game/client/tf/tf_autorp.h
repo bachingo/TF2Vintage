@@ -1,75 +1,88 @@
-//====== Copyright © 1996-2013, Valve Corporation, All rights reserved. ========//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: AutoRP remake.
+// Purpose: 
 //
-//==============================================================================//
-#ifndef TF_AUTORP
-#define TF_AUTORP
+//=============================================================================
+
+#ifndef TF_AUTORP_H
+#define TF_AUTORP_H
 #ifdef _WIN32
 #pragma once
 #endif
 
 #include "igamesystem.h"
-#include "c_tf_player.h"
+#include "utlvector.h"
+#include "utlmap.h"
 
-struct wordreplacement_t
+enum matchresult_t
 {
-	int chance;
-	int prepend_count;
-	char prev[256];
-
-	// These vectors should store the associated IDs of the
-	// strings in the Symbol Table of the main class
-	CUtlVector<CUtlSymbol> m_hWords;
-	CUtlVector<CUtlSymbol> m_hWordsPlural;
-	CUtlVector<CUtlSymbol> m_hReplacements;
-	CUtlVector<CUtlSymbol> m_hReplacementsPlural;
-	CUtlVector<CUtlSymbol> m_hReplacementPrepends;
+	MATCHES_NOT,
+	MATCHES_SINGULAR,
+	MATCHES_PLURAL,
 };
 
-struct replacementcheck_t
-{
-	// ???
-};
-
-class CTFAutoRP : CAutoGameSystem
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CTFAutoRP : public CAutoGameSystem
 {
 public:
-	
-	CTFAutoRP();
-	~CTFAutoRP();
+	CTFAutoRP() : CAutoGameSystem( "CTFAutoRP" )
+	{
+		m_pDataFileKV = NULL;
+		m_pWordTable = new CUtlSymbolTable( 0, 32, true );
+	}
 
-	void ParseDataFile( void );
-	void ApplyRPTo( char *pBuf, int iBufSize );
-	void ModifySpeech( /*const char a1, */char *pBuf, unsigned int iBufSize, bool bAllowPrepend/*, bool b5*/ );
-
-	bool WordMatches( wordreplacement_t *, replacementcheck_t * );
-	bool ReplaceWord( replacementcheck_t *, char *, int, bool, bool );
-	bool PerformReplacement( char const*, replacementcheck_t *, char *, int, char *, int );
+	void	ParseDataFile( void );
+	void	ApplyRPTo( char *pBuf, int iBufSize );
 
 private:
-	
-	// Word banks
-	CUtlSymbolTable s_Words; // words we're looking to filter
-	CUtlSymbolTable s_WordsPlural; // plural words we're looking to filter
-	CUtlSymbolTable s_Replacements; // replacements for anything we filter
+	struct wordreplacement_t
+	{
+		int		iChance;
+		int		iPrePendCount;
+		CUtlVector<const char*> a_pszPrepended;				// Words that prepend the replacement
+		CUtlVector<const char*> a_pszReplacements;			// Words that replace the original word
+		CUtlVector<const char*> a_pszPluralReplacements;	// If the match was a plural match, use these replacements instead, if they exist. Otherwise, use a_pszReplacements.
+		CUtlVector<CUtlSymbol>	m_Words;		// Word that matches this replacement
+		CUtlVector<CUtlSymbol>	m_Plurals;	// Word that must come before to match this replacement, for double word replacements (i.e. "it is" -> "'tis")
+		CUtlVector<CUtlSymbol>	m_PrevWords;	// Word that must come before to match this replacement, for double word replacements (i.e. "it is" -> "'tis")
+	};
 
-	CUtlVector<wordreplacement_t *> m_hWordReplacements;
-	CUtlVector<CUtlSymbol> m_hPrependedWords;
-	CUtlVector<CUtlSymbol> m_hAppendedWords;
+	struct replacementcheck_t
+	{
+		char		szWord[128];
+		int			iWordLen;
+		char		szPrevWord[128];
+		int			iPrevLen;
+
+		bool		bUsedPrevWord;
+	};
+
+private:
+	const char		*GetRandomPre( void );
+	const char		*GetRandomPost( void );
+	void			ModifySpeech( const char *pszInText, char *pszOutText, int iOutLen, bool bGeneratePreAndPost, bool bInPrePost );
+	matchresult_t	WordMatches( wordreplacement_t *pRep, replacementcheck_t *pCheck );
+	bool			ReplaceWord( replacementcheck_t *pCheck, char *szRep, int iRepSize, bool bSymbols, bool bWordListOnly );
+	bool			PerformReplacement( const char *pszReplacement, replacementcheck_t *pRepCheck, char *szStoredWord, int iStoredWordSize, char *pszOutText, int iOutLen );
+
+private:
+	// Database
+	KeyValues *m_pDataFileKV;
+	// Storage of all replacement blocks
+	CUtlVector<wordreplacement_t>	m_a_Replacements;
+	CUtlSymbolTable				*m_pWordTable;
+
+	// Extra lists for random selection
+	CUtlVector<const char*>		 m_a_pszPrependedWords;
+	CUtlVector<const char*>		 m_a_pszAppendedWords;
+
+	// Current application
+	CUtlVector<const char*>		 *m_pszCurrentList;
+	int							 m_iCurrentReplacement;
 };
 
-extern CTFAutoRP *g_pAutoRP;
+extern CTFAutoRP *AutoRP( void );
 
-inline CTFAutoRP *AutoRP( void )
-{
-	if ( !g_pAutoRP )
-	{
-		g_pAutoRP = new CTFAutoRP;
-		g_pAutoRP->ParseDataFile();
-	}
-	
-	return g_pAutoRP;
-}
-
-#endif //TF_AUTORP
+#endif // TF_AUTORP_H

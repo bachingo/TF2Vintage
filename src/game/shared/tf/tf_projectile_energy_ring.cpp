@@ -340,7 +340,7 @@ CTFProjectile_EnergyRing *CTFProjectile_EnergyRing::Create( CBaseEntity *pWeapon
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFProjectile_EnergyRing::OnDataChanged( DataUpdateType_t updateType )
+void C_TFProjectile_EnergyRing::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
@@ -351,7 +351,7 @@ void CTFProjectile_EnergyRing::OnDataChanged( DataUpdateType_t updateType )
 	}
 
 	// Watch team changes and change trail accordingly.
-	if ( m_iOldTeamNum && m_iOldTeamNum != m_iTeamNum )
+	if ( m_iDeflected != m_iOldDeflected )
 	{
 		ParticleProp()->StopEmission();
 		CreateTrails();

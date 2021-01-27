@@ -18,15 +18,23 @@ $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
 $Include "$SRCDIR\game\protobuf_include.vpc"
 
+$CustomBuildStep "nut"
+{
+	$CommandLine	"$SRCDIR\devtools\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(IntDir)\$(InputName)_nut.h" [$WINDOWS]
+	$CommandLine	"perl $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(IntDir)\$(InputName)_nut.h" [$POSIX]
+	$Description	"$(InputFileName) produces $(InputName)_nut.h"
+	$Outputs		"$(IntDir)\$(InputName)_nut.h"
+}
+
 $Configuration	"Debug"
 {
 	$General
 	{
-		$OutputDirectory			".\Debug_$GAMENAME"			[$WIN32]
-		$IntermediateDirectory		".\Debug_$GAMENAME"			[$WIN32]
+		$OutputDirectory		".\Debug_$GAMENAME"			[$WIN32]
+		$IntermediateDirectory	".\Debug_$GAMENAME"			[$WIN32]
 
-		$OutputDirectory			".\Debug_$GAMENAME_360"		[$X360]
-		$IntermediateDirectory		".\Debug_$GAMENAME_360"		[$X360]
+		$OutputDirectory		".\Debug_$GAMENAME_360"		[$X360]
+		$IntermediateDirectory	".\Debug_$GAMENAME_360"		[$X360]
 	}
 }
 
@@ -34,11 +42,11 @@ $Configuration	"Release"
 {
 	$General
 	{
-		$OutputDirectory			".\Release_$GAMENAME"		[$WIN32]
-		$IntermediateDirectory		".\Release_$GAMENAME"		[$WIN32]
+		$OutputDirectory		".\Release_$GAMENAME"		[$WIN32]
+		$IntermediateDirectory	".\Release_$GAMENAME"		[$WIN32]
 
-		$OutputDirectory			".\Release_$GAMENAME_360"	[$X360]
-		$IntermediateDirectory		".\Release_$GAMENAME_360"	[$X360]
+		$OutputDirectory		".\Release_$GAMENAME_360"	[$X360]
+		$IntermediateDirectory	".\Release_$GAMENAME_360"	[$X360]
 	}
 }
 
@@ -51,7 +59,7 @@ $Configuration
 
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	".\;$BASE;$SRCDIR\vgui2\include;$SRCDIR\vgui2\controls;$SRCDIR\game\shared;.\game_controls;$SRCDIR\thirdparty\sixensesdk\include"
+		$AdditionalIncludeDirectories	".\;$BASE;$SRCDIR\vgui2\include;$SRCDIR\vgui2\controls;$SRCDIR\game\shared;.\game_controls;$SRCDIR\thirdparty\sixensesdk\include;$SRCDIR\thirdparty\discord_game_sdk\cpp"
 		$PreprocessorDefinitions		"$BASE;NO_STRING_T;CLIENT_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead" 
 		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WIN32]
 		$PreprocessorDefinitions		"$BASE;USE_WEBM_FOR_REPLAY;" [$LINUXALL]
@@ -430,6 +438,7 @@ $Project
 		$File	"recvproxy.cpp"
 		$File	"basepresence.cpp"			[$WIN32||$POSIX]
 		$File	"basepresence_xbox.cpp"		[$X360]
+		$File 	"basediscordpresence.cpp"	[$WIN32||$POSIX]
 		$File	"$SRCDIR\game\shared\rope_helpers.cpp"
 		$File	"$SRCDIR\game\shared\saverestore.cpp"
 		$File	"$SRCDIR\game\shared\sceneentity_shared.cpp"
@@ -551,9 +560,10 @@ $Project
 				"$SRCDIR\public\jigglebones.cpp"					\
 				"hud_lcd.cpp"										\
 				"in_mouse.cpp"										\
-				"mumble.cpp"						\
+				"mumble.cpp"										\
 				"$SRCDIR\public\renamed_recvtable_compat.cpp"		\
-				"rendertexture.cpp"									
+				"rendertexture.cpp"									\
+				"$SRCDIR\public\rtime.cpp"
 				{
 					$Configuration
 					{
@@ -663,6 +673,65 @@ $Project
 			$File	"game_controls\IconPanel.cpp"
 		}
 
+		$Folder "Discord SDK" [$WIN32]
+		{
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\activity_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\activity_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\application_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\application_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\core.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\core.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\discord.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\event.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\ffi.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\image_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\image_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\lobby_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\lobby_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\network_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\network_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\overlay_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\overlay_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\relationship_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\relationship_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\storage_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\storage_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\store_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\store_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\types.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\types.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.h"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.cpp"
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.h"
+
+			$File 	"$SRCDIR\thirdparty\discord_game_sdk\cpp\achievement_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\activity_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\application_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\core.cpp"					\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\image_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\lobby_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\network_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\overlay_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\relationship_manager.cpp"	\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\storage_manager.cpp"		\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\store_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\types.cpp"					\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\user_manager.cpp"			\
+					"$SRCDIR\thirdparty\discord_game_sdk\cpp\voice_manager.cpp"			
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+								$EnableC++Exceptions			"Yes (/EHsc)"
+							}
+						}
+					}
+		}
 	}
 
 	$Folder	"MP3" [$WIN32||$POSIX]
@@ -1258,7 +1327,7 @@ $Project
 		$Lib		vgui_controls
 		$Lib		vtf
 		$ImpLib		steam_api
-		$Lib 		discord-rpc
+		$Lib 		"discord_game_sdk.dll" [$WIN32]
 		
 		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal "$SRCDIR\lib\common\$(CRYPTOPPDIR)\libcrypto" [$LINUXALL]

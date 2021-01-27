@@ -171,7 +171,7 @@ QueryResultType CTFBotDefendPointBlockCapture::ShouldRetreat( const INextBot *me
 
 bool CTFBotDefendPointBlockCapture::IsPointSafe( CTFBot *actor )
 {
-	if ( !actor->m_cpChangedTimer.HasStarted() || actor->m_cpChangedTimer.IsElapsed() )
+	if ( !actor->HasPointRecentlyChanged() )
 	{
 		if ( m_pPoint && m_pPoint->GetTeamCapPercentage( actor->GetTeamNumber() ) >= tf_bot_defend_owned_point_percent.GetFloat() &&
 			( !m_pPoint->HasBeenContested() || gpGlobals->curtime - m_pPoint->LastContestedAt() >= 5.0f ) )

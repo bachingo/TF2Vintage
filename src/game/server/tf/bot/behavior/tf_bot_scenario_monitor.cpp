@@ -144,5 +144,5 @@ Action<CTFBot> *CTFBotScenarioMonitor::DesiredScenarioAndClassAction( CTFBot *ac
 		return new CTFBotCapturePoint;
 	}
 
-	return new CTFBotSeekAndDestroy( -1.0f );
+	return new CTFBotSeekAndDestroy;
 }

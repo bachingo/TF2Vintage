@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: Shared player code.
 //
@@ -53,12 +53,6 @@ EXTERN_SEND_TABLE( DT_TFPlayerShared );
 class CTFDamageEvent
 {
 	DECLARE_EMBEDDED_NETWORKVAR()
-#ifdef CLIENT_DLL
-	DECLARE_CLIENTCLASS_NOBASE();
-#else
-	DECLARE_SERVERCLASS_NOBASE();
-#endif
-
 public:
 	float flDamage;
 	float flTime;
@@ -70,6 +64,22 @@ enum
 	STUN_PHASE_NONE,
 	STUN_PHASE_LOOP,
 	STUN_PHASE_END,
+};
+
+enum EKillCombos
+{
+	k_Decapitations,
+	k_SRRechargeCombo,
+	k_ClipsizeCombo,
+	kEKillCombosMax
+};
+
+enum ERevengeCrits
+{
+	k_SentryRevenge,
+	k_ExtinguishRevenge,
+	k_SappedRevenge,
+	kERevengeCritsMax
 };
 
 //=============================================================================
@@ -119,7 +129,7 @@ public:
 	void	OnConditionRemoved( int nCond );
 	void	ConditionThink( void );
 	float	GetConditionDuration( int nCond );
-
+	// Condition helpers
 	bool	IsCritBoosted( void );
 	bool	IsMiniCritBoosted( void );
 	bool	IsSpeedBoosted( void );
@@ -135,12 +145,6 @@ public:
 	// Max Health
 	int		GetMaxHealth( void );
 	void	SetMaxHealth( int iMaxHealth )		{ m_iMaxHealth = iMaxHealth; }
-
-	// Sanguisuge
-	void	ChangeSanguisugeHealth(int value)		{ m_iLeechHealth += value; }
-	void	SetSanguisugeHealth( int iLeechHealth )		{ m_iLeechHealth = iLeechHealth; }
-	int		GetSanguisugeHealth( void )					{ return m_iLeechHealth; }
-	void	SetNextSanguisugeDecay()		{ m_iLeechDecayTime = gpGlobals->curtime + 0.5; }
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -215,32 +219,28 @@ public:
 #endif
 
 #ifdef GAME_DLL
-	void	Heal( CTFPlayer *pPlayer, float flAmount, bool bDispenserHeal = false );
+	void	Heal( CBaseEntity *pHealer, float flAmount, float flOverhealBonus, float flOverhealDecayMult, bool bDispenserHeal = false, CTFPlayer *pScorer = NULL );
 	void	StopHealing( CTFPlayer *pPlayer );
+	void	SetBestOverhealDecayMult( float fValue )	{ m_flLowestOverhealDecayRate = fValue; }
+	float	GetBestOverhealDecayMult() const			{ return m_flLowestOverhealDecayRate; }
 	void	RecalculateChargeEffects( bool bInstantRemove = false );
 	EHANDLE GetHealerByIndex( int index );
-	int		FindHealerIndex( CTFPlayer *pPlayer );
+	int		FindHealerIndex( CBaseEntity *pHealer );
 	EHANDLE	GetFirstHealer();
 	void	HealthKitPickupEffects( int iAmount );
 	bool	HealerIsDispenser( int index ) const;
-
-	// Jarate Player
-	EHANDLE	m_hUrineAttacker;
-
-	// Milk Player
-	EHANDLE	m_hMilkAttacker;
-
-	// Gas Player
-	EHANDLE m_hGasAttacker;
 #endif
 	int		GetNumHealers( void )				{ return m_nNumHealers; }
 
+	// Damage over time
 	void	Burn( CBaseCombatCharacter *pAttacker, float flFlameDuration = -1.0f );
 	void	Burn( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon = NULL, float flFlameDuration = -1.0f );
-	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
 	void	MakeBleed( CTFPlayer *pAttacker, CTFWeaponBase *pWeapon, float flBleedDuration, int iDamage );
-
+	CTFPlayer *GetBurnAttacker( void ) const { return m_hBurnAttacker; }
+	// Stuns
+	void	StunPlayer( float flDuration, float flSpeed, float flResistance, int nStunFlags, CTFPlayer *pStunner );
 	bool	IsControlStunned( void );
+	bool	IsSnared( void );
 
 #ifdef GAME_DLL
 	void	AddPhaseEffects( void );
@@ -370,6 +370,9 @@ public:
 	void	RemoveAttributeFromPlayer( char const *szName );
 #endif
 
+	bool IsInUpgradeZone( void ) const { return m_bInUpgradeZone; }
+	void SetInUpgradeZone( bool bSet ) { m_bInUpgradeZone = bSet; }
+
 	// Banners
 	void	UpdateRageBuffsAndRage( void );
 	void	SetRageMeter( float flRagePercent, int iBuffType );
@@ -407,49 +410,47 @@ public:
 	void	CalcChargeCrit( bool bForceFull );
 	
 	// Sniper rifle headshots (ie: Bazaar Bargin)
-	int		GetHeadshotCount( void ) const       { return m_iHeadshots; }
-	void	SetHeadshotCount( int count )        { m_iHeadshots = count; }
-	void	IncrementHeadshotCount( void )       { m_iHeadshots += 1; }
+	int		GetHeadshotCount( void ) const       { return m_nKillCombo[k_SRRechargeCombo]; }
+	void	SetHeadshotCount( int count )        { m_nKillCombo.Set( k_SRRechargeCombo, count ); }
+	void	IncrementHeadshotCount( void )       { m_nKillCombo.Set( k_SRRechargeCombo, m_nKillCombo[k_SRRechargeCombo] + 1 ); }
 	
 	// Killstreak for attribute items (ie: Air Strike)
-	int		GetStrikeCount( void ) const       { return m_iStrike; }
-	void	SetStrikeCount( int count )        { m_iStrike = count; }
-	void	IncrementStrikeCount( void )       { m_iStrike += 1; }
+	int		GetStrikeCount( void ) const       { return m_nKillCombo[k_ClipsizeCombo]; }
+	void	SetStrikeCount( int count )        { m_nKillCombo.Set( k_ClipsizeCombo, count ); }
+	void	IncrementStrikeCount( void )       { m_nKillCombo.Set( k_ClipsizeCombo, m_nKillCombo[k_ClipsizeCombo] + 1 ); }
 
 	// Sapper/Backstab content (ie: Diamondback)
-	int		GetSapperKillCount(void) const       { return m_iSapperKill; }
-	void	SetSapperKillCount(int count)        { m_iSapperKill = count; }
-	void	IncrementSapperKillCount(void)       { m_iSapperKill += 1; } // Not affected by TF_WEAPON_MAX_REVENGE
-	void	StoreSapperKillCount(void)			 { m_iSapperKill = Min( (m_iSapperKill + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
-	void	DeductSapperKillCount(void)			 { m_iSapperKill = Max( (m_iSapperKill - 1), 0 ); } // Affected by TF_WEAPON_MAX_REVENGE
+	int		GetSapperKillCount(void) const		     { return m_nRevengeCrits[k_SappedRevenge]; }
+	void	SetSapperKillCount(int count)			 { m_nRevengeCrits.Set( k_SappedRevenge, count ); }
+	void	IncrementSapperKillCount(void)			 { m_nRevengeCrits.Set( k_SappedRevenge, m_nRevengeCrits[k_SappedRevenge] + 1 ); } // Not affected by TF_WEAPON_MAX_REVENGE
+	void	StoreSapperKillCount(void)				 { m_nRevengeCrits.Set( k_SappedRevenge, Min( (m_nRevengeCrits[k_SappedRevenge] + 1), TF_WEAPON_MAX_REVENGE ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	void	DeductSapperKillCount(void)				 { m_nRevengeCrits.Set( k_SappedRevenge, Max( (m_nRevengeCrits[k_SappedRevenge] - 1), 0 ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	bool	HasSapperCrits( void )      			 { return m_nRevengeCrits[k_SappedRevenge] > 0; }
 	
 	// Revenge Crit Counter (ie: Frontier Justice)
-	int		GetRevengeCritCount( void ) const        { return m_iRevengeCrits; }
-	void	SetRevengeCritCount(int count)      	 { m_iRevengeCrits = count; }
-	void	IncrementRevengeCrit( void )     		 { m_iRevengeCrits += 1; }	
-	void	StoreRevengeCrit(void)					 { m_iRevengeCrits = Min( (m_iRevengeCrits + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
-	void	DeductRevengeCrit( void )     	 		 { m_iRevengeCrits = Max( (m_iRevengeCrits - 1), 0 ); }
-	bool	HasRevengeCrits( void )      			 { return m_iRevengeCrits > 0; }
+	int		GetRevengeCritCount( void ) const        { return m_nRevengeCrits[k_SentryRevenge]; }
+	void	SetRevengeCritCount(int count)      	 { m_nRevengeCrits.Set( k_SentryRevenge, count ); }
+	void	IncrementRevengeCritCount( void )		 { m_nRevengeCrits.Set( k_SentryRevenge, m_nRevengeCrits[k_SentryRevenge] + 1 ); }
+	void	StoreRevengeCrit(void)					 { m_nRevengeCrits.Set( k_SentryRevenge, Min( (m_nRevengeCrits[k_SentryRevenge] + 1), TF_WEAPON_MAX_REVENGE ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	void	DeductRevengeCrit( void )     	 		 { m_nRevengeCrits.Set( k_SentryRevenge, Max( (m_nRevengeCrits[k_SentryRevenge] - 1), 0 ) ); }
+	bool	HasRevengeCrits( void )      			 { return m_nRevengeCrits[k_SentryRevenge] > 0; }
 	
 	// Airblast Crit Counter (ie: Manmelter)
-	int		GetAirblastCritCount( void ) const        { return m_iAirblastCrits; }
-	void	SetAirblastCritCount(int count)      	 { m_iAirblastCrits = count; }
-	void	IncrementAirblastCrit( void )     		 { m_iAirblastCrits += 1; }	
-	void	StoreAirblastCrit(void)					 { m_iAirblastCrits = Min( (m_iAirblastCrits + 1), TF_WEAPON_MAX_REVENGE ); } // Affected by TF_WEAPON_MAX_REVENGE
-	void	DeductAirblastCrit( void )     	 		 { m_iAirblastCrits = Max( (m_iAirblastCrits - 1), 0 ); }
-	bool	HasAirblastCrits( void )      			 { return m_iAirblastCrits > 0; }
+	int		GetAirblastCritCount( void ) const       { return m_nRevengeCrits[k_ExtinguishRevenge]; }
+	void	SetAirblastCritCount(int count)      	 { m_nRevengeCrits.Set( k_ExtinguishRevenge, count ); }
+	void	IncrementAirblastCrit( void )     		 { m_nRevengeCrits.Set( k_ExtinguishRevenge, m_nRevengeCrits[k_ExtinguishRevenge] + 1 ); }	
+	void	StoreAirblastCrit(void)					 { m_nRevengeCrits.Set( k_ExtinguishRevenge, Min( (m_nRevengeCrits[k_ExtinguishRevenge] + 1), TF_WEAPON_MAX_REVENGE ) ); } // Affected by TF_WEAPON_MAX_REVENGE
+	void	DeductAirblastCrit( void )     	 		 { m_nRevengeCrits.Set( k_ExtinguishRevenge, Max( (m_nRevengeCrits[k_ExtinguishRevenge] - 1), 0 ) ); }
+	bool	HasAirblastCrits( void )      			 { return m_nRevengeCrits[k_ExtinguishRevenge] > 0; }
 	
 	
-	// Killstreak counter, for HUD.
-	int		GetKillstreakCount( void ) const       { return m_iKillstreak; }
-	void	SetKillstreakCount( int count )        { m_iKillstreak = count; }
-	void	IncrementKillstreakCount( void )       { m_iKillstreak += 1; }
+	// Get total streak across all weapons. This is our actual streak
+	int		GetKillstreakCount( void ) const       { return m_nStreaks[0] + m_nStreaks[1] + m_nStreaks[2]; }
 	
 	void	SetFocusLevel(float amount)        { m_flFocusLevel = amount; }
 	
 #ifdef GAME_DLL
 	void	UpdateCloakMeter( void );
-	void 	UpdateSanguisugeHealth( void );
 	void	UpdateChargeMeter( void );
 	void	UpdateEnergyDrinkMeter( void );
 	
@@ -584,8 +585,6 @@ private:
 	EHANDLE m_hForcedDisguise;
 
 	CNetworkVar( int, m_iMaxHealth );
-	CNetworkVar(int, m_iLeechHealth);
-	float m_iLeechDecayTime;
 
 	bool m_bEnableSeparation;		// Keeps separation forces on when player stops moving, but still penetrating
 	Vector m_vSeparationVelocity;	// Velocity used to keep player seperate from teammates
@@ -609,13 +608,17 @@ private:
 	// Healer handling
 	struct healers_t
 	{
-		EHANDLE	pPlayer;
+		EHANDLE	pHealer;
 		float	flAmount;
 		bool	bDispenserHeal;
+		float	flOverhealBonus;
+		float	flOverhealDecayRate;
+		EHANDLE pScorer;
 	};
 	CUtlVector< healers_t >	m_aHealers;
 	float					m_flHealFraction;	// Store fractional health amounts
 	float					m_flDisguiseHealFraction;	// Same for disguised healing
+	float					m_flLowestOverhealDecayRate;
 
 	float		m_flInvulnerableOffTime;
 	float		m_flChargeOffTime[TF_CHARGE_COUNT];
@@ -630,7 +633,17 @@ private:
 	float					m_flFlameStack;
 	float					m_flFlameLife;
 	float					m_flFlameRemoveTime;
-	float					m_flTauntRemoveTime;
+public:
+	// Jarate Player
+	EHANDLE m_hUrineAttacker;
+
+	// Milk Player
+	EHANDLE m_hMilkAttacker;
+
+	// Gas Player
+	EHANDLE m_hGasAttacker;
+private:
+	float		m_flTauntRemoveTime;
 	
 
 #ifdef GAME_DLL
@@ -704,12 +717,8 @@ private:
 	CNetworkVar( bool, m_bShieldEquipped );
 	CNetworkVar( int, m_iNextMeleeCrit );
 	
-	CNetworkVar( int, m_iHeadshots );
-	CNetworkVar( int, m_iStrike );
-	CNetworkVar( int, m_iKillstreak );
-	CNetworkVar( int, m_iSapperKill );
-	CNetworkVar( int, m_iRevengeCrits );
-	CNetworkVar( int, m_iAirblastCrits );
+	CNetworkArray( int, m_nKillCombo, kEKillCombosMax );
+	CNetworkArray( int, m_nRevengeCrits, kERevengeCritsMax );
 #ifdef GAME_DLL
 public:
 	CNetworkVar( float, m_flEnergyDrinkMeter );
@@ -750,6 +759,8 @@ private:
 
 	// Gunslinger
 	CNetworkVar( bool, m_bGunslinger );
+
+	CNetworkVar( bool, m_bInUpgradeZone );
 
 #ifdef GAME_DLL
 

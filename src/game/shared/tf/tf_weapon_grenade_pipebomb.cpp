@@ -952,7 +952,7 @@ void CProxyStickyBombGlowColor::OnBind( void *pObject )
 		return;
 	}
 
-	Vector vecColor;
+	Vector vecColor{};
 
 	if ( pProjectile->m_bGlowing )
 	{

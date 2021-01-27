@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -165,7 +165,7 @@ protected:
 	EHANDLE				m_hChargeEffectHost;
 	CSoundPatch			*m_pChargedSound;
 #else
-	int					m_nVaccinatorUberChunks = 0;
+	int					m_nVaccinatorUberChunks;
 #endif
 
 private:														

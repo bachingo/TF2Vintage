@@ -14,10 +14,10 @@ public:
 	CTFBotMeleeAttack( float flAbandonRange = -1.0f );
 	virtual ~CTFBotMeleeAttack();
 
-	virtual const char *GetName() const override;
+	virtual const char *GetName() const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *actor, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *actor, float dt ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *actor, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *actor, float dt ) OVERRIDE;
 
 private:
 	float m_flAbandonRange;

@@ -56,6 +56,7 @@ CREATE_SIMPLE_WEAPON_TABLE( TFRocketLauncher_Airstrike, tf_weapon_rocketlauncher
 CTFRocketLauncher::CTFRocketLauncher()
 {
 	m_bReloadsSingly = true;
+	m_nReloadPitchStep = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -74,8 +75,36 @@ void CTFRocketLauncher::Precache()
 {
 	BaseClass::Precache();
 	PrecacheParticleSystem( "rocketbackblast" );
+
+	PrecacheScriptSound( "Weapon_Airstrike.AltFire" );
+	PrecacheScriptSound( "Weapon_Airstrike.Fail" );
 }
 #endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFRocketLauncher::Misfire( void )
+{
+	CalcIsAttackCritical();
+
+#ifdef GAME_DLL
+	if ( CanOverload() )
+	{
+		CTFPlayer *pPlayer = GetTFPlayerOwner();
+		if ( !pPlayer )
+			return;
+
+		CTFBaseRocket *pRocket = dynamic_cast<CTFBaseRocket *>( BaseClass::FireProjectile( pPlayer ) );
+		if ( pRocket )
+		{
+			trace_t tr;
+			UTIL_TraceLine( pRocket->GetAbsOrigin(), pPlayer->EyePosition(), MASK_SOLID, pRocket, COLLISION_GROUP_NONE, &tr );
+			pRocket->Explode( &tr, pPlayer );
+		}
+	}
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -83,6 +112,12 @@ void CTFRocketLauncher::Precache()
 CBaseEntity *CTFRocketLauncher::FireProjectile( CTFPlayer *pPlayer )
 {
 	m_flShowReloadHintAt = gpGlobals->curtime + 30;
+	m_nReloadPitchStep = Max( 0, m_nReloadPitchStep - 1 );
+
+#ifdef GAME_DLL
+	m_bOverloading = false;
+#endif
+
 	return BaseClass::FireProjectile( pPlayer );
 }
 
@@ -98,7 +133,6 @@ void CTFRocketLauncher::ItemPostFrame( void )
 	BaseClass::ItemPostFrame();
 
 #ifdef GAME_DLL
-
 	if ( m_flShowReloadHintAt && m_flShowReloadHintAt < gpGlobals->curtime )
 	{
 		if ( Clip1() < GetMaxClip1() )
@@ -107,41 +141,7 @@ void CTFRocketLauncher::ItemPostFrame( void )
 		}
 		m_flShowReloadHintAt = 0;
 	}
-
-	/*
-	Vector forward;
-	AngleVectors( pOwner->EyeAngles(), &forward );
-	trace_t tr;
-	CTraceFilterSimple filter( pOwner, COLLISION_GROUP_NONE );
-	UTIL_TraceLine( pOwner->EyePosition(), pOwner->EyePosition() + forward * 2000, MASK_SOLID, &filter, &tr );
-
-	if ( tr.m_pEnt &&
-		tr.m_pEnt->IsPlayer() &&
-		tr.m_pEnt->IsAlive() &&
-		tr.m_pEnt->GetTeamNumber() != pOwner->GetTeamNumber() )
-	{
-		m_bLockedOn = true;
-	}
-	else
-	{
-		m_bLockedOn = false;
-	}
-	*/
-
 #endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFRocketLauncher::Deploy( void )
-{
-	if ( BaseClass::Deploy() )
-	{
-		return true;
-	}
-
-	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -151,6 +151,39 @@ bool CTFRocketLauncher::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 {
 	m_flShowReloadHintAt = 0;
 	return BaseClass::DefaultReload( iClipSize1, iClipSize2, iActivity );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFRocketLauncher::CheckReloadMisfire( void )
+{
+#ifdef GAME_DLL
+	if ( !CanOverload() )
+		return false;
+
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer == NULL )
+		return false;
+
+	if ( m_bOverloading )
+	{
+		if ( Clip1() > 0 )
+		{
+			Misfire();
+			return true;
+		}
+		
+		m_bOverloading = false;
+	}
+	else if ( Clip1() >= GetMaxClip1() || ( Clip1() > 0 && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) == 0 ) )
+	{
+		Misfire();
+		m_bOverloading = true;
+		return true;
+	}
+#endif // GAME_DLL
+	return false;
 }
 
 #ifdef CLIENT_DLL
@@ -168,41 +201,40 @@ void CTFRocketLauncher::CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int 
 
 	ParticleProp()->Create( "rocketbackblast", PATTACH_POINT_FOLLOW, "backblast" );
 }
+#endif
 
-/*
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFRocketLauncher::DrawCrosshair( void )
+void CTFRocketLauncher::ModifyEmitSoundParams( EmitSound_t &params )
 {
-	BaseClass::DrawCrosshair();
+	if ( !AutoFiresFullClip() )
+		return;
 
-	if ( m_bLockedOn )
+	if ( V_strcmp( params.m_pSoundName, "Weapon_RPG.Reload" ) && V_strcmp( params.m_pSoundName, "Weapon_DumpsterRocket.Reload" ) )
+		return;
+
+	float flMaxClip = GetMaxClip1();
+	float flAmmoPercentage = m_nReloadPitchStep / flMaxClip;
+
+	if ( V_strcmp( params.m_pSoundName, "Weapon_RPG.Reload" ) == 0 )
 	{
-		int iXpos = XRES(340);
-		int iYpos = YRES(260);
-		int iWide = XRES(8);
-		int iTall = YRES(8);
-
-		Color col( 0, 255, 0, 255 );
-		vgui::surface()->DrawSetColor( col );
-
-		vgui::surface()->DrawFilledRect( iXpos, iYpos, iXpos + iWide, iYpos + iTall );
-
-		// Draw the charge level onscreen
-		vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
-		vgui::HFont hFont = vgui::scheme()->GetIScheme(scheme)->GetFont( "Default" );
-		vgui::surface()->DrawSetTextFont( hFont );
-		vgui::surface()->DrawSetTextColor( col );
-		vgui::surface()->DrawSetTextPos(iXpos + XRES(12), iYpos );
-		vgui::surface()->DrawPrintText(L"Lock", wcslen(L"Lock"));
-
-		vgui::surface()->DrawLine( XRES(320), YRES(240), iXpos, iYpos );
+		params.m_pSoundName = "Weapon_DumpsterRocket.Reload_FP";
 	}
-}
-*/
+	else
+	{
+		params.m_pSoundName = "Weapon_DumpsterRocket.Reload";
+	}
 
-#endif
+	params.m_nPitch *= RemapVal( flAmmoPercentage, 0.0f, ( flMaxClip - 1.0f ) / flMaxClip, 0.79f, 1.19f );
+	params.m_nFlags |= SND_CHANGE_PITCH;
+
+	m_nReloadPitchStep = Min( GetMaxClip1() - 1, m_nReloadPitchStep + 1 );
+
+	IncrementAmmo();
+
+	m_bReloadedThroughAnimEvent = true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

@@ -93,6 +93,7 @@
 #include "vscript/ivscript.h"
 #include "vscript_server.h"
 #include "ScriptGameEventListener.h"
+#include "rtime.h"
 #ifdef _WIN32
 #include <direct.h> // getcwd
 #elif POSIX
@@ -576,36 +577,165 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameDLL, IServerGameDLL, INTERFACEVERSI
 // When bumping the version to this interface, check that our assumption is still valid and expose the older version in the same way
 COMPILE_TIME_ASSERT( INTERFACEVERSION_SERVERGAMEDLL_INT == 10 );
 
+static int CaseInsensitiveStringSort( char * const * sz1, char * const * sz2 )
+{
+	return V_stricmp( *sz1, *sz2 );
+}
 static void MountAdditionalContent()
 {
-	KeyValues *pMainFile = new KeyValues( "gameinfo.txt" );
+#ifndef NO_STEAM
+	KeyValuesAD pMainFile( "gameinfo" );
+	bool bSuccess = false;
 #ifndef _WINDOWS
 	// case sensitivity
-	pMainFile->LoadFromFile( filesystem, "GameInfo.txt", "MOD" );
-	if ( !pMainFile )
-#endif
-		pMainFile->LoadFromFile( filesystem, "gameinfo.txt", "MOD" );
+	bSuccess = pMainFile->LoadFromFile( g_pFullFileSystem, "GameInfo.txt", "MOD" );
+	if ( !bSuccess )
+	#endif
+		bSuccess = pMainFile->LoadFromFile( g_pFullFileSystem, "gameinfo.txt", "MOD" );
 
-	if ( pMainFile )
+	if ( !bSuccess )
 	{
-		KeyValues* pFileSystemInfo = pMainFile->FindKey( "FileSystem" );
-		if ( pFileSystemInfo )
+		Error( "Unable to load GameInfo.txt, does it exist?" );
+		return;
+	}
+
+	KeyValues* pFileSystemInfo = pMainFile->FindKey( "FileSystem" );
+	if ( !pFileSystemInfo )
+	{
+		Error( "Error parsing GameInfo.txt, KV is malformed (Missing FileSystem key)" );
+		return;
+	}
+
+	KeyValues* pAdditionaContentId = pFileSystemInfo->FindKey( "AdditionalContentId" );
+	if ( !pAdditionaContentId )
+	{
+		return;
+	}
+	KeyValues* pAdditionaContentRoot = pFileSystemInfo->FindKey( "AdditionalContentRoot" );
+	if ( !pAdditionaContentRoot )
+	{
+		Warning( "Unable to mount extra content, root folder was not provided \n" );
+		return;
+	}
+
+	int appid = abs( pAdditionaContentId->GetInt() );
+	if ( appid )
+	{
+		if ( !steamapicontext->SteamApps() )
 		{
-			for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
+			Error( "Unable to mount extra content, unkown error\n" );
+			return;
+		}
+		if ( !steamapicontext->SteamApps()->BIsAppInstalled( appid ) )
+		{
+			Warning( "Unable to mount extra content with AppId: %i\n", appid );
+			return;
+		}
+
+		char szAppDirectory[ MAX_PATH ];
+		steamapicontext->SteamApps()->GetAppInstallDir( appid, szAppDirectory, sizeof( szAppDirectory ) );
+
+		V_AppendSlash( szAppDirectory, sizeof( szAppDirectory ) );
+		V_strcat_safe( szAppDirectory, pAdditionaContentRoot->GetString() );
+
+		g_pFullFileSystem->AddSearchPath( szAppDirectory, "MOD" );
+		g_pFullFileSystem->AddSearchPath( szAppDirectory, "GAME" );
+
+		KeyValues *pAdditionalContent = pFileSystemInfo->FindKey( "AdditionalContentPaths" );
+		if ( pAdditionalContent )
+		{
+			char szAbsPathName[ MAX_PATH ];
+			V_ExtractFilePath( szAppDirectory, szAbsPathName, sizeof( szAbsPathName ) );
+
+			FOR_EACH_VALUE( pAdditionalContent, pSubKey )
 			{
-				if ( Q_stricmp( pKey->GetName(), "AdditionalContentId" ) == 0 )
+				const char *pszLocation = pSubKey->GetString();
+				const char *pszBaseDir = szAbsPathName;
+
+				const char CONTENTROOT_TOKEN[] = "|content_root|";
+				if ( Q_stristr( pszLocation, CONTENTROOT_TOKEN ) == pszLocation )
 				{
-					int appid = abs( pKey->GetInt() );
-					if ( appid )
+					pszLocation += strlen( CONTENTROOT_TOKEN );
+					pszBaseDir = szAppDirectory;
+				}
+
+				V_MakeAbsolutePath( szAbsPathName, sizeof( szAbsPathName ), pszLocation, pszBaseDir );
+
+				V_FixSlashes( szAbsPathName );
+				V_RemoveDotSlashes( szAbsPathName );
+				V_StripTrailingSlash( szAbsPathName );
+
+				CUtlStringList fullFilePaths;
+				if ( V_stristr( pszLocation, "?" ) == NULL && V_stristr( pszLocation, "*" ) == NULL )
+				{
+					fullFilePaths.CopyAndAddToTail( szAbsPathName );
+				}
+				else
+				{
+					FileFindHandle_t hFind;
+					char const *pszFileFound = g_pFullFileSystem->FindFirst( szAbsPathName, &hFind );
+					while ( pszFileFound )
 					{
-						if ( filesystem->MountSteamContent( -appid ) != FILESYSTEM_MOUNT_OK )
-							Warning( "Unable to mount extra content with appId: %i\n", appid );
+						if ( pszFileFound[0] != '.' )
+						{
+							if ( g_pFullFileSystem->FindIsDirectory( hFind ) || V_stristr( pszFileFound, "vpk" ) )
+							{
+								char szAbsPath[MAX_PATH];
+								V_ExtractFilePath( szAbsPathName, szAbsPath, sizeof( szAbsPath ) );
+								V_AppendSlash( szAbsPath, sizeof( szAbsPath ) );
+								V_strcat_safe( szAbsPath, pszFileFound, COPY_ALL_CHARACTERS );
+
+								fullFilePaths.CopyAndAddToTail( szAbsPath );
+							}
+						}
+
+						pszFileFound = g_pFullFileSystem->FindNext( hFind );
+					}
+					g_pFullFileSystem->FindClose( hFind );
+
+					fullFilePaths.Sort( CaseInsensitiveStringSort );
+
+					FOR_EACH_VEC_BACK( fullFilePaths, i )
+					{
+						char ext[10];
+						V_ExtractFileExtension( fullFilePaths[i], ext, sizeof( ext ) );
+
+						if ( Q_stricmp( ext, "vpk" ) == 0 )
+						{
+							char *szDirVPK = Q_stristr( fullFilePaths[i], "_dir.vpk" );
+							if ( szDirVPK == NULL )
+							{
+								delete fullFilePaths[i];
+								fullFilePaths.Remove(i);
+							}
+							else
+							{
+								*szDirVPK = '\0';
+								V_strcat( szDirVPK, ".vpk", MAX_PATH );
+							}
+						}
+					}
+				}
+
+				// Parse Path ID list
+				CUtlStringList pathIDs;
+				V_SplitString( pSubKey->GetName(), "+", pathIDs );
+				FOR_EACH_VEC( pathIDs, i )
+				{
+					Q_StripPrecedingAndTrailingWhitespace( pathIDs[i] );
+				}
+
+				FOR_EACH_VEC( fullFilePaths, i )
+				{
+					FOR_EACH_VEC( pathIDs, j )
+					{
+						g_pFullFileSystem->AddSearchPath( fullFilePaths[i], pathIDs[j] );
 					}
 				}
 			}
 		}
 	}
-	pMainFile->deleteThis();
+#endif
 }
 
 bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory, 
@@ -1022,14 +1152,6 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 {
 	VPROF("CServerGameDLL::LevelInit");
 
-#ifdef USES_ECON_ITEMS
-	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
-	if ( pItemSchema )
-	{
-		pItemSchema->BInitFromDelayedBuffer();
-	}
-#endif // USES_ECON_ITEMS
-
 	ResetWindspeed();
 	UpdateChapterRestrictions( pMapName );
 
@@ -1364,6 +1486,8 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 		DrawMeasuredSections();
 	}
 	*/
+
+	CRTime::UpdateRealTime();
 
 //#ifdef _DEBUG  - allow this in release for now
 	DrawAllDebugOverlays();

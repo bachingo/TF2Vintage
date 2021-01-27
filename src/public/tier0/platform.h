@@ -84,13 +84,6 @@
 	#endif
 #endif
 
-#ifdef PLATFORM_POSIX
-typedef unsigned int DWORD;
-typedef unsigned short WORD;
-typedef void * HINSTANCE;
-#define _MAX_PATH PATH_MAX
-#endif
-
 #endif // CROSS_PLATFORM_VERSION < 1
 
 #ifdef _DEBUG
@@ -310,6 +303,16 @@ typedef double				float64;
 // for when we don't care about how many bits we use
 typedef unsigned int		uint;
 
+#ifdef PLATFORM_POSIX
+typedef unsigned int DWORD;
+typedef unsigned short WORD;
+typedef void * HINSTANCE;
+#define _MAX_PATH PATH_MAX
+#define __cdecl
+#define __stdcall
+#define __declspec
+#endif
+
 
 #ifdef GNUC
 #undef offsetof
@@ -421,7 +424,6 @@ typedef unsigned int		uint;
 		#define  STDCALL			__attribute__ ((__stdcall__))
 	#else
 		#define  STDCALL
-		#define  __stdcall			__attribute__ ((__stdcall__))
 	#endif
 
 	#define  FASTCALL

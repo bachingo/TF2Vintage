@@ -5,7 +5,7 @@
 //==========================================================================================//
 #include "cbase.h"
 #include "filesystem.h"
-#include "scriptgameeventlistener.h"
+#include "ScriptGameEventListener.h"
 #include "vscript_server.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

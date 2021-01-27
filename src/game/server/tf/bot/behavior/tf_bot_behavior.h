@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -20,25 +20,25 @@ class CTFBotMainAction : public Action<CTFBot>
 public:
 	virtual ~CTFBotMainAction() {}
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
 
-	virtual Action<CTFBot> *InitialContainedAction( CTFBot *actor ) override;
+	virtual Action<CTFBot> *InitialContainedAction( CTFBot *actor ) OVERRIDE;
 
-	virtual EventDesiredResult<CTFBot> OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *trace ) override;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) override;
-	virtual EventDesiredResult<CTFBot> OnInjured( CTFBot *me, const CTakeDamageInfo& info ) override;
-	virtual EventDesiredResult<CTFBot> OnKilled( CTFBot *me, const CTakeDamageInfo& info ) override;
-	virtual EventDesiredResult<CTFBot> OnOtherKilled( CTFBot *me, CBaseCombatCharacter *who, const CTakeDamageInfo& info ) override;
+	virtual EventDesiredResult<CTFBot> OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *trace ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnInjured( CTFBot *me, const CTakeDamageInfo& info ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnKilled( CTFBot *me, const CTakeDamageInfo& info ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnOtherKilled( CTFBot *me, CBaseCombatCharacter *who, const CTakeDamageInfo& info ) OVERRIDE;
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const override;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const override;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const override;
-	virtual Vector SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter *them ) const override;
-	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector& pos ) const override;
-	virtual const CKnownEntity *SelectMoreDangerousThreat( const INextBot *me, const CBaseCombatCharacter *them, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const override;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual Vector SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter *them ) const OVERRIDE;
+	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector& pos ) const OVERRIDE;
+	virtual const CKnownEntity *SelectMoreDangerousThreat( const INextBot *me, const CBaseCombatCharacter *them, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const OVERRIDE;
 
 private:
 	void Dodge( CTFBot *actor );
@@ -53,16 +53,16 @@ private:
 	// TODO 3c
 	// TODO 40
 	// TODO 44
-	CountdownTimer m_sniperAimErrorTimer;
-	float m_flSniperAimError1;
-	float m_flSniperAimError2;
+	mutable CountdownTimer m_sniperAimErrorTimer;
+	mutable float m_flSniperAimErrorRadius;
+	mutable float m_flSniperAimErrorAngle;
 	float m_flYawDelta;
 	float m_flPreviousYaw;
 	IntervalTimer m_sniperSteadyInterval;
 	int m_iDesiredDisguise;
 	bool m_bReloadingBarrage;
-	// TODO 68 CHandle<CBaseEntity>, set in OnContact to the entity touching us
-	// TODO 6c float, set in OnContact to the time when we touched a solid non-player entity
+	CHandle<CBaseEntity> m_hLastTouch;
+	float m_flLastTouchTime;
 	IntervalTimer m_undergroundTimer;
 };
 

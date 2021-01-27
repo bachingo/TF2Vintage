@@ -7,6 +7,7 @@
 #include "tf_weapon_grenadelauncher.h"
 #include "tf_fx_shared.h"
 #include "tf_gamerules.h"
+#include "in_buttons.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -15,7 +16,10 @@
 #else
 #include "tf_player.h"
 #include "tf_gamestats.h"
+#include "tf_fx.h"
 #endif
+
+ConVar tf_double_donk_window( "tf_double_donk_window", "0.5", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "How long after an impact from a cannonball that an explosion will count as a double-donk." );
 
 //=============================================================================
 //
@@ -24,13 +28,18 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFGrenadeLauncher, DT_WeaponGrenadeLauncher )
 
 BEGIN_NETWORK_TABLE( CTFGrenadeLauncher, DT_WeaponGrenadeLauncher )
+#ifndef CLIENT_DLL
+	SendPropTime( SENDINFO( m_flChargeBeginTime ) )
+#else
+	RecvPropTime( RECVINFO( m_flChargeBeginTime ) )
+#endif
 END_NETWORK_TABLE()
 
 
 
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA(CTFGrenadeLauncher)
-DEFINE_FIELD(m_flChargeBeginTime, FIELD_FLOAT)
+	DEFINE_PRED_FIELD( m_flChargeBeginTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE )
 END_PREDICTION_DATA()
 #else
 BEGIN_PREDICTION_DATA(CTFGrenadeLauncher)
@@ -54,7 +63,7 @@ END_DATADESC()
 
 
 CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Legacy, tf_weapon_grenadelauncher_legacy )
-CREATE_SIMPLE_WEAPON_TABLE( TFGrenadeLauncher_Cannon, tf_weapon_cannon )
+CREATE_SIMPLE_WEAPON_TABLE( TFCannon, tf_weapon_cannon )
 
 extern ConVar tf2v_console_grenadelauncher_magazine;
 
@@ -70,7 +79,10 @@ extern ConVar tf2v_console_grenadelauncher_magazine;
 CTFGrenadeLauncher::CTFGrenadeLauncher()
 {
 	m_bReloadsSingly = true;
-	m_flChargeBeginTime = 0.0f;
+
+#ifdef CLIENT_DLL
+	m_pCannonFuse = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -81,7 +93,7 @@ CTFGrenadeLauncher::~CTFGrenadeLauncher()
 {
 #ifdef CLIENT_DLL
 	if (m_pCannonFuse)
-	ToggleCannonFuse();
+		ToggleCannonFuse();
 #endif
 }
 
@@ -92,6 +104,8 @@ void CTFGrenadeLauncher::Spawn( void )
 {
 	m_iAltFireHint = HINT_ALTFIRE_GRENADELAUNCHER;
 	BaseClass::Spawn();
+
+	m_flChargeBeginTime = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -110,6 +124,11 @@ bool CTFGrenadeLauncher::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 	m_flChargeBeginTime = 0;
 	StopSound("Weapon_LooseCannon.Charge");
+
+#ifdef CLIENT_DLL
+	if (m_pCannonFuse)
+		ToggleCannonFuse();
+#endif
 
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -131,7 +150,7 @@ void CTFGrenadeLauncher::WeaponReset(void)
 {
 	BaseClass::WeaponReset();
 
-	m_flChargeBeginTime = 0.0f;
+	m_flChargeBeginTime = 0;
 }
 
 
@@ -210,49 +229,47 @@ void CTFGrenadeLauncher::PrimaryAttack( void )
 
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 
-	if (IsMortar())
+	if ( IsMortar() )
 	{
-		if (m_flChargeBeginTime <= 0)
+		if ( m_flChargeBeginTime == 0.0f )
 		{
 			// save that we had the attack button down
 			m_flChargeBeginTime = gpGlobals->curtime;
 			// Turn on the cannon fuse.
 #ifdef CLIENT_DLL
 			if (!m_pCannonFuse)
-			ToggleCannonFuse();
+				ToggleCannonFuse();
+
+			EmitSound( "Weapon_LooseCannon.Charge" );
 #endif
-			EmitSound("Weapon_LooseCannon.Charge");
 
-			SendWeaponAnim(ACT_VM_PULLBACK);
-
-		}
-		else
-		{
-			// Check how long we've been holding down the charge.
-			float flTotalChargeTime = gpGlobals->curtime - m_flChargeBeginTime;
-
-			// Held too long, blow yourself up dummy!
-			if (flTotalChargeTime >= MortarTime())
-			{
-				Overload();
-				// Reset charging time.
-				m_flChargeBeginTime = 0;
-#ifdef CLIENT_DLL
-				if (m_pCannonFuse)
-					ToggleCannonFuse();
-#endif
-				StopSound("Weapon_LooseCannon.Charge");
-
-				// Set next attack times.
-				float flDelay = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_flTimeFireDelay;
-				CALL_ATTRIB_HOOK_FLOAT(flDelay, mult_postfiredelay);
-				m_flNextPrimaryAttack = gpGlobals->curtime + flDelay;
-			}
+			SendWeaponAnim( ACT_VM_PULLBACK );
 		}
 	}
 	else
+	{
 		LaunchGrenade();
 
+		SwitchBodyGroups();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGrenadeLauncher::FireFullClipAtOnce( void )
+{
+	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+
+	LaunchGrenade();	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGrenadeLauncher::Misfire( void )
+{
+	LaunchGrenade();
 	SwitchBodyGroups();
 }
 
@@ -261,20 +278,35 @@ void CTFGrenadeLauncher::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFGrenadeLauncher::WeaponIdle( void )
 {
-	if (IsMortar() && ( m_flChargeBeginTime > 0 && m_iClip1 > 0) )
+	BaseClass::WeaponIdle();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGrenadeLauncher::ItemPostFrame( void )
+{
+	BaseClass::ItemPostFrame();
+
+	if ( m_flChargeBeginTime > 0.0f )
 	{
+		if ( gpGlobals->curtime < m_flChargeBeginTime + GetMortarTimeLength() )
+		{
+			CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+			if ( !pPlayer )
+				return;
 
-#ifdef CLIENT_DLL
-		if (m_pCannonFuse)
-			ToggleCannonFuse();
-#endif
-		StopSound("Weapon_LooseCannon.Charge");
-
-		LaunchGrenade();
-
+			// If we're not holding down the attack button, launch our grenade
+			if ( m_iClip1 > 0  && !(pPlayer->m_nButtons & IN_ATTACK) )
+			{
+				LaunchGrenade();
+			}
+		}
+		else
+		{
+			Misfire();
+		}
 	}
-	else
-		BaseClass::WeaponIdle();
 }
 
 CBaseEntity *CTFGrenadeLauncher::FireProjectileInternal( CTFPlayer *pPlayer )
@@ -284,13 +316,32 @@ CBaseEntity *CTFGrenadeLauncher::FireProjectileInternal( CTFPlayer *pPlayer )
 	{
 #ifdef GAME_DLL
 		// Mortar weapons have a custom detonator time.
-		if (IsMortar())
-			pGrenade->SetDetonateTimerLength(gpGlobals->curtime - m_flChargeBeginTime );
+		if ( IsMortar() )
+		{
+			float flDetonateTimeLength = gpGlobals->curtime - m_flChargeBeginTime;
+			pGrenade->SetDetonateTimerLength( flDetonateTimeLength );
+			if ( flDetonateTimeLength <= 0.0f )
+			{
+				trace_t tr;
+				UTIL_TraceLine( pGrenade->GetAbsOrigin(), pPlayer->EyePosition(), MASK_SOLID, pGrenade, COLLISION_GROUP_NONE, &tr );
+				pGrenade->Explode( &tr, GetDamageType() );
+			}
+		}
 
 		/*if ( GetDetonateMode() == TF_GL_MODE_FIZZLE )
 			pGrenade->m_bFizzle = true;*/
+
+		float flDetonationPenalty = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDetonationPenalty, grenade_detonation_damage_penalty );
+		if ( flDetonationPenalty != 1.0f )
+		{
+			// Setting the initial damage of a grenade lower will set its fused time damage lower
+			// on contact detonations reset the damage to max
+			pGrenade->SetDamage( pGrenade->GetDamage() * flDetonationPenalty );
+		}
 #endif
 	}
+
 	return pGrenade;
 }
 
@@ -311,37 +362,27 @@ void CTFGrenadeLauncher::LaunchGrenade( void )
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
 	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 
-	FireProjectileInternal(pPlayer);
-
-#if 0
-	CBaseEntity *pPipeBomb = 
-
-	if (pPipeBomb)
+	if( !AutoFiresFullClipAllAtOnce() )
 	{
-#ifdef GAME_DLL
-		// If we've gone over the max pipebomb count, detonate the oldest
-		if (m_Pipebombs.Count() >= TF_WEAPON_PIPEBOMB_COUNT)
-		{
-			CTFGrenadePipebombProjectile *pTemp = m_Pipebombs[0];
-			if (pTemp)
-			{
-				pTemp->SetTimer(gpGlobals->curtime); // explode NOW
-			}
-
-			m_Pipebombs.Remove(0);
-		}
-
-		CTFGrenadePipebombProjectile *pPipebomb = (CTFGrenadePipebombProjectile*)pProjectile;
-		pPipebomb->SetLauncher(this);
-
-		PipebombHandle hHandle;
-		hHandle = pPipebomb;
-		m_Pipebombs.AddToTail(hHandle);
-
-		m_iPipebombCount = m_Pipebombs.Count();
-#endif
+		FireProjectileInternal( pPlayer );
 	}
-#endif
+	else
+	{
+		int nNumShots = m_iClip1;
+		int iSeed = CBaseEntity::GetPredictionRandomSeed() & 255;
+		QAngle punchAngle = pPlayer->GetPunchAngle();
+		for ( int i=0; i<nNumShots; ++i, ++iSeed )
+		{
+			RandomSeed( iSeed );
+			FireProjectileInternal( pPlayer );
+			if ( i == 0 )
+			{
+				// store the punch from the first shot
+				punchAngle = pPlayer->GetPunchAngle();
+			}
+		}
+		pPlayer->SetPunchAngle( punchAngle );
+	}
 
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
@@ -360,6 +401,26 @@ void CTFGrenadeLauncher::LaunchGrenade( void )
 	{
 		m_iReloadMode.Set( TF_RELOAD_START );
 	}
+
+	m_flChargeBeginTime = 0;
+
+#ifndef CLIENT_DLL
+	if ( IsMortar() )
+	{
+		Vector vPosition;
+		QAngle qAngles;
+		if ( GetAttachment( "muzzle", vPosition, qAngles ) )
+		{
+			CPVSFilter filter( vPosition );
+			TE_TFParticleEffect( filter, 0.f, "loose_cannon_bang", PATTACH_POINT, this, "muzzle" );
+		}
+	}
+#else
+	if (m_pCannonFuse)
+		ToggleCannonFuse();
+
+	StopSound( "Weapon_LooseCannon.Charge" );
+#endif
 }
 
 float CTFGrenadeLauncher::GetProjectileSpeed( void )
@@ -427,11 +488,11 @@ bool CTFGrenadeLauncher::IsMortar(void) const
 	return ( nMortarMode != 0 );
 }
 
-int CTFGrenadeLauncher::MortarTime(void)
+float CTFGrenadeLauncher::GetMortarTimeLength(void)
 {
-	int nMortarMode = 0;
-	CALL_ATTRIB_HOOK_INT(nMortarMode, grenade_launcher_mortar_mode);
-	return (nMortarMode);
+	float flMortarMode = 0;
+	CALL_ATTRIB_HOOK_FLOAT( flMortarMode, grenade_launcher_mortar_mode );
+	return flMortarMode;
 }
 
 

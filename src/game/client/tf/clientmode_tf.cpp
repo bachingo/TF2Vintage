@@ -44,6 +44,7 @@
 #include "tf_hud_menu_spy_disguise.h"
 #include "tf_statsummary.h"
 #include "tf_hud_freezepanel.h"
+#include "tf_hud_inspectpanel.h"
 #include "clienteffectprecachesystem.h"
 #include "glow_outline_effect.h"
 #include "cam_thirdperson.h"
@@ -277,6 +278,7 @@ ClientModeTFNormal::ClientModeTFNormal()
 	m_pMenuSpyDisguise = NULL;
 	m_pGameUI = NULL;
 	m_pFreezePanel = NULL;
+	m_pInspectPanel = NULL;
 	MessageHooks();
 
 #if defined( _X360 )
@@ -311,6 +313,9 @@ void ClientModeTFNormal::Init()
 
 	m_pFreezePanel = ( CTFFreezePanel * )GET_HUDELEMENT( CTFFreezePanel );
 	Assert( m_pFreezePanel );
+
+	m_pInspectPanel = (CHudInspectPanel *)GET_HUDELEMENT( CHudInspectPanel );
+	Assert( m_pInspectPanel );
 
 	CreateInterfaceFn gameUIFactory = g_GameUI.GetFactory();
 	if ( gameUIFactory )
@@ -715,6 +720,11 @@ int	ClientModeTFNormal::HudElementKeyInput( int down, ButtonCode_t keynum, const
 	if ( m_pFreezePanel )
 	{
 		m_pFreezePanel->HudElementKeyInput( down, keynum, pszCurrentBinding );
+	}
+
+	if ( m_pInspectPanel )
+	{
+		m_pInspectPanel->HudElementKeyInput( down, keynum, pszCurrentBinding );
 	}
 
 	return BaseClass::HudElementKeyInput( down, keynum, pszCurrentBinding );

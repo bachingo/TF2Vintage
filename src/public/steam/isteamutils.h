@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "isteamclient.h"
+#include "steam_api_common.h"
 
 
 // Steam API call failure results
@@ -42,6 +42,16 @@ enum EGamepadTextInputLineMode
 };
 
 
+// The context where text filtering is being done
+enum ETextFilteringContext
+{
+	k_ETextFilteringContextUnknown = 0,	// Unknown context
+	k_ETextFilteringContextGameContent = 1,	// Game content, only legally required filtering is performed
+	k_ETextFilteringContextChat = 2,	// Chat from another player
+	k_ETextFilteringContextName = 3,	// Character or item name
+};
+
+
 // function prototype for warning message hook
 #if defined( POSIX )
 #define __cdecl
@@ -61,7 +71,7 @@ public:
 	// the universe this client is connecting to
 	virtual EUniverse GetConnectedUniverse() = 0;
 
-	// Steam server time - in PST, number of seconds since January 1, 1970 (i.e unix time)
+	// Steam server time.  Number of seconds since January 1, 1970, GMT (i.e unix time)
 	virtual uint32 GetServerRealTime() = 0;
 
 	// returns the 2 digit ISO 3166-1-alpha-2 format country code this client is running in (as looked up via an IP-to-location database)
@@ -95,9 +105,8 @@ public:
 	virtual ESteamAPICallFailure GetAPICallFailureReason( SteamAPICall_t hSteamAPICall ) = 0;
 	virtual bool GetAPICallResult( SteamAPICall_t hSteamAPICall, void *pCallback, int cubCallback, int iCallbackExpected, bool *pbFailed ) = 0;
 
-	// this needs to be called every frame to process matchmaking results
-	// redundant if you're already calling SteamAPI_RunCallbacks()
-	virtual void RunFrame() = 0;
+	// Deprecated. Applications should use SteamAPI_RunCallbacks() instead. Game servers do not need to call this function.
+	STEAM_PRIVATE_API( virtual void RunFrame() = 0; )
 
 	// returns the number of IPC calls made since the last time this function was called
 	// Used for perf debugging so you can understand how many IPC calls your game makes per frame
@@ -135,6 +144,7 @@ public:
 	//   k_ECheckFileSignatureFileNotFound - The file does not exist on disk.
 	//   k_ECheckFileSignatureInvalidSignature - The file exists, and the signing tab has been set for this file, but the file is either not signed or the signature does not match.
 	//   k_ECheckFileSignatureValidSignature - The file is signed and the signature is valid.
+	STEAM_CALL_RESULT( CheckFileSignature_t )
 	virtual SteamAPICall_t CheckFileSignature( const char *szFileName ) = 0;
 #endif
 
@@ -167,6 +177,11 @@ public:
 
 #define STEAMUTILS_INTERFACE_VERSION "SteamUtils007"
 
+// Global interface accessor
+S_API ISteamUtils *S_CALLTYPE SteamUtils();
+
+// Global accessor for the gameserver client
+S_API ISteamUtils *S_CALLTYPE SteamGameServerUtils();
 
 // callbacks
 #if defined( VALVE_CALLBACK_PACK_SMALL )
@@ -174,7 +189,7 @@ public:
 #elif defined( VALVE_CALLBACK_PACK_LARGE )
 #pragma pack( push, 8 )
 #else
-#error isteamclient.h must be included
+#error steam_api_common.h should define VALVE_CALLBACK_PACK_xxx
 #endif 
 
 //-----------------------------------------------------------------------------
@@ -203,6 +218,8 @@ struct SteamAPICallCompleted_t
 {
 	enum { k_iCallback = k_iSteamUtilsCallbacks + 3 };
 	SteamAPICall_t m_hAsyncCall;
+	int m_iCallback;
+	uint32 m_cubParam;
 };
 
 

@@ -1,9 +1,11 @@
 #include "cbase.h"
 #include "econ_item_schema.h"
 #include "econ_item_system.h"
-#include "attribute_types.h"
 #include "tier3/tier3.h"
 #include "vgui/ILocalize.h"
+
+#include "tf_gamerules.h"
+
 
 #if defined(CLIENT_DLL)
 #define UTIL_VarArgs  VarArgs
@@ -74,6 +76,49 @@ int CEconItemDefinition::GetLoadoutSlot( int iClass /*= TF_CLASS_UNDEFINED*/ )
 	}
 
 	return item_slot;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CEconItemDefinition::GetPlayerModel( void ) const
+{
+	if ( ( v_model && v_model[0] != '\0' ) && UseOldWeaponModels() )
+		return v_model;
+
+	if ( model_player && model_player[0] != '\0' )
+		return model_player;
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+char const *CEconItemDefinition::GetWorldModel( void ) const
+{
+	if ( ( w_model && w_model[0] != '\0' ) && UseOldWeaponModels() )
+		return w_model;
+
+	if ( model_world && model_world[0] != '\0' )
+		return model_world;
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CEconItemDefinition::GetAttachToHands( void ) const
+{
+	// This only applies to base items right now, but this allows it to be expanded later.
+	if ( CanUseOldModel() )
+	{
+		if ( UseOldWeaponModels() )
+			return 0;
+	}
+
+	return attach_to_hands;
 }
 
 //-----------------------------------------------------------------------------
@@ -206,7 +251,7 @@ const wchar_t *CEconItemDefinition::GenerateLocalizedItemNameNoQuality( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter )
+void CEconItemDefinition::IterateAttributes( IEconAttributeIterator *iter ) const
 {
 	FOR_EACH_VEC( attributes, i )
 	{
@@ -261,7 +306,7 @@ bool static_attrib_t::BInitFromKV_MultiLine( KeyValues *const kv )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CEconAttributeDefinition const *static_attrib_s::GetStaticData( void ) const
+CEconAttributeDefinition const *static_attrib_t::GetStaticData( void ) const
 {
 	return GetItemSchema()->GetAttributeDefinition( iAttribIndex );
 }
@@ -269,7 +314,7 @@ CEconAttributeDefinition const *static_attrib_s::GetStaticData( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-ISchemaAttributeType const *static_attrib_s::GetAttributeType( void ) const
+ISchemaAttributeType const *static_attrib_t::GetAttributeType( void ) const
 {
 	CEconAttributeDefinition const *pAttrib = GetStaticData();
 	if ( pAttrib )
@@ -358,11 +403,11 @@ void EconPerTeamVisuals::operator=( EconPerTeamVisuals const &src )
 	vm_bodygroup_state_override = src.vm_bodygroup_state_override;
 	wm_bodygroup_override = src.wm_bodygroup_override;
 	wm_bodygroup_state_override = src.wm_bodygroup_state_override;
+	custom_particlesystem = src.custom_particlesystem;
+	muzzle_flash = src.muzzle_flash;
+	tracer_effect = src.tracer_effect;
+	material_override = src.material_override;
 
-	Q_memcpy( &custom_particlesystem, src.custom_particlesystem, sizeof(char *) );
-	Q_memcpy( &muzzle_flash, src.muzzle_flash, sizeof(char *) );
-	Q_memcpy( &tracer_effect, src.tracer_effect, sizeof(char *) );
-	Q_memcpy( &material_override, src.material_override, sizeof(char *) );
 	Q_memcpy( &aCustomWeaponSounds, src.aCustomWeaponSounds, sizeof( aCustomWeaponSounds ) );
 	Q_memcpy( &aWeaponSounds, src.aWeaponSounds, sizeof( aWeaponSounds ) );
 }

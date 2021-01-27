@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -19,16 +19,16 @@ class CMerasmusBehavior : public Action<CMerasmus>
 public:
 	virtual ~CMerasmusBehavior() { };
 
-	virtual const char *GetName( void ) const;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual Action<CMerasmus> *InitialContainedAction( CMerasmus *me ) override;
+	virtual Action<CMerasmus> *InitialContainedAction( CMerasmus *me ) OVERRIDE;
 
-	virtual ActionResult<CMerasmus> OnStart( CMerasmus *me, Action<CMerasmus> *priorAction ) override;
-	virtual ActionResult<CMerasmus> Update( CMerasmus *me, float dt ) override;
+	virtual ActionResult<CMerasmus> OnStart( CMerasmus *me, Action<CMerasmus> *priorAction ) OVERRIDE;
+	virtual ActionResult<CMerasmus> Update( CMerasmus *me, float dt ) OVERRIDE;
 
-	virtual EventDesiredResult<CMerasmus> OnInjured( CMerasmus *me, const CTakeDamageInfo &info ) override;
+	virtual EventDesiredResult<CMerasmus> OnInjured( CMerasmus *me, const CTakeDamageInfo &info ) OVERRIDE;
 
-	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector& pos ) const override;
+	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector& pos ) const OVERRIDE;
 };
 
 #endif

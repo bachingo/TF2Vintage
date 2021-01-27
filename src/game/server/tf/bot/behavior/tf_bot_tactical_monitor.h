@@ -15,16 +15,16 @@ class CTFBotTacticalMonitor : public Action<CTFBot>
 public:
 	virtual ~CTFBotTacticalMonitor() {}
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) override;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) override;
+	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
 
-	virtual Action<CTFBot> *InitialContainedAction( CTFBot *actor ) override;
+	virtual Action<CTFBot> *InitialContainedAction( CTFBot *actor ) OVERRIDE;
 
-	virtual EventDesiredResult<CTFBot> OnOtherKilled( CTFBot *me, CBaseCombatCharacter *who, const CTakeDamageInfo& info ) override;
-	virtual EventDesiredResult<CTFBot> OnNavAreaChanged( CTFBot *me, CNavArea *area1, CNavArea *area2 ) override;
-	virtual EventDesiredResult<CTFBot> OnCommandString( CTFBot *me, const char *cmd ) override;
+	virtual EventDesiredResult<CTFBot> OnOtherKilled( CTFBot *me, CBaseCombatCharacter *who, const CTakeDamageInfo& info ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnNavAreaChanged( CTFBot *me, CNavArea *area1, CNavArea *area2 ) OVERRIDE;
+	virtual EventDesiredResult<CTFBot> OnCommandString( CTFBot *me, const char *cmd ) OVERRIDE;
 
 private:
 	void AvoidBumpingEnemies( CTFBot *actor );

@@ -87,6 +87,8 @@ public:
 	bool			IsBeingCarried( void ) { return m_bCarried; }
 	bool			IsRedeploying( void ) { return m_bCarryDeploy; }
 
+	void			ApplyHealthUpgrade( void );
+
 	// Override this method per object to set your local stuff up.
 	virtual void	SetObjectMode( int iObjectMode )
 	{
@@ -256,9 +258,11 @@ public:
 	virtual void	DropCarriedObject( CTFPlayer *pPlayer );
 
 	virtual int		GetBaseHealth( void ) { return 0; }
+	virtual int		GetMiniBuildingBaseHealth( void ) { return 100; }
 
 	void	MakeMiniBuilding( void );
 	bool	IsMiniBuilding( void ) { return m_bMiniBuilding; }
+	bool	IsDisposableBuilding( void ) { return m_bDisposableBuilding; }
 
 public:		
 
@@ -315,6 +319,9 @@ protected:
 	virtual void DeterminePlaybackRate( void );
 
 	void UpdateDesiredBuildRotation( float flFrameTime );
+
+	virtual bool	CanBeRepaired( void ) const { return !m_bDisposableBuilding; }
+	virtual bool	CanBeUpgraded( void ) const { return !( m_bDisposableBuilding || m_bMiniBuilding ); }
 
 private:
 	// Purpose: Spawn any objects specified inside the mdl

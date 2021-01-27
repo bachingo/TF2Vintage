@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -21,13 +21,13 @@ public:
 	CHeadlessHatmanBehavior();
 	virtual ~CHeadlessHatmanBehavior() { };
 
-	virtual const char *GetName( void ) const override;
+	virtual const char *GetName( void ) const OVERRIDE;
 
-	virtual Action<CHeadlessHatman> *InitialContainedAction( CHeadlessHatman *me ) override;
+	virtual Action<CHeadlessHatman> *InitialContainedAction( CHeadlessHatman *me ) OVERRIDE;
 
-	virtual ActionResult<CHeadlessHatman> Update( CHeadlessHatman *me, float dt ) override;
+	virtual ActionResult<CHeadlessHatman> Update( CHeadlessHatman *me, float dt ) OVERRIDE;
 
-	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector& pos ) const override;
+	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector& pos ) const OVERRIDE;
 };
 
 #endif

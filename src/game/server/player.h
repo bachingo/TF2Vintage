@@ -19,7 +19,7 @@
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "util_shared.h"
 
-#if defined USES_ECON_ITEMS || defined TF_VINTAGE
+#if defined USES_ECON_ITEMS
 #include "game_item_schema.h"
 #include "econ_item_view.h"
 #endif
@@ -88,7 +88,7 @@ class CNavArea;
 class CHintSystem;
 class CAI_Expresser;
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 class CEconWearable;
 #endif // USES_ECON_ITEMS
 
@@ -625,12 +625,10 @@ public:
 
 	virtual bool			ShouldAnnounceAchievement( void );
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 	// Wearables
 	virtual void			EquipWearable( CEconWearable *pItem );
 	virtual void			RemoveWearable( CEconWearable *pItem );
-	virtual void			EquipDisguiseWearable( CEconWearable *pItem );
-	virtual void			RemoveDisguiseWearable( CEconWearable *pItem );
 	void					PlayWearableAnimsForPlaybackEvent( wearableanimplayback_t iPlayback );
 #endif
 
@@ -848,7 +846,7 @@ public:
 	//  the player and not to other players.
 	CNetworkVarEmbedded( CPlayerLocalData, m_Local );
 
-#if defined USES_ECON_ITEMS || defined TF_VINTAGE
+#if defined USES_ECON_ITEMS
 	CNetworkVarEmbedded( CAttributeList, m_AttributeList );
 #endif
 
@@ -904,14 +902,10 @@ public:
 
 	void		AdjustDrownDmg( int nAmount );
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 	CEconWearable			*GetWearable( int i ) { return m_hMyWearables[i]; }
 	const CEconWearable		*GetWearable( int i ) const { return m_hMyWearables[i]; }
 	int						GetNumWearables( void ) const { return m_hMyWearables.Count(); }
-	
-	CEconWearable			*GetDisguiseWearable( int i ) { return m_hDisguiseWearables[i]; }
-	const CEconWearable		*GetDisguiseWearable( int i ) const { return m_hDisguiseWearables[i]; }
-	int						GetNumDisguiseWearables( void ) const { return m_hDisguiseWearables.Count(); }
 #endif
 
 private:
@@ -1085,10 +1079,9 @@ protected:
 
 	bool					m_bAllowInstantSpawn;
 
-#if defined ( USES_ECON_ITEMS ) || defined ( TF_VINTAGE )
+#if defined ( USES_ECON_ITEMS )
 	// Wearables
 	CUtlVector<CHandle<CEconWearable > >	m_hMyWearables;
-	CUtlVector<CHandle<CEconWearable > >	m_hDisguiseWearables;
 #endif
 
 private:

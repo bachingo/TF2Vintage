@@ -141,6 +141,9 @@ void CTFSword::OnDecapitation( CTFPlayer *pVictim )
 	pOwner->TeamFortress_SetSpeed();
 
 #ifdef GAME_DLL
+	if ( pOwner->m_Shared.GetBestOverhealDecayMult() == -1.f )
+		pOwner->m_Shared.SetBestOverhealDecayMult( 0.25f );
+
 	if ( pOwner->m_Shared.GetMaxBuffedHealth() > pOwner->GetHealth() )
 		pOwner->TakeHealth( 15.0f, DMG_IGNORE_MAXHEALTH );
 

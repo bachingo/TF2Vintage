@@ -51,6 +51,7 @@ int g_cl_particle_show_bbox_cost = 0;
 
 static void StatsParticlesStart();
 static void StatsParticlesStop();
+extern void AddCustomParticleOps( void );
 
 static ConCommand cl_particle_stats_start( "cl_particle_stats_start", StatsParticlesStart, "Start or restart particle stats - also dumps to particle_stats.csv") ;
 static ConCommand cl_particle_stats_stop( "cl_particle_stats_stop", StatsParticlesStop, "Stop particle stats, or snapshot this frame - also dumps to particle_stats.csv") ;
@@ -1079,6 +1080,10 @@ bool CParticleMgr::Init(unsigned long count, IMaterialSystem *pMaterials)
 	// tell particle mgr to add the default simulation + rendering ops
 	g_pParticleSystemMgr->AddBuiltinSimulationOperators();
 	g_pParticleSystemMgr->AddBuiltinRenderingOperators();
+
+#if defined( CUSTOM_OPS ) || defined( TF_VINTAGE_CLIENT )
+	AddCustomParticleOps();
+#endif
 
 	// Send true to load the sheets
 	ParseParticleEffects( true, false );

@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -23,9 +23,9 @@ class FindSafeSentryApproachAreaScan : public ISearchSurroundingAreasFunctor
 public:
 	virtual ~FindSafeSentryApproachAreaScan() {};
 
-	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override;
-	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) override;
-	virtual void PostSearch() override;
+	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) OVERRIDE;
+	virtual bool ShouldSearch( CNavArea *adjArea, CNavArea *currentArea, float travelDistanceSoFar ) OVERRIDE;
+	virtual void PostSearch() OVERRIDE;
 
 	CTFBot *m_pActor;
 	CUtlVector<CTFNavArea *> m_Areas;
@@ -96,17 +96,17 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::OnStart( CTFBot *me, Action<CTFBo
 	else
 		ComputeSafeAttackSpot( me );
 
-	m_hSentry = me->m_hTargetSentry;
+	m_hSentry = me->GetTargetSentry();
 
 	return BaseClass::Continue();
 }
 
 ActionResult<CTFBot> CTFBotDestroyEnemySentry::Update( CTFBot *me, float dt )
 {
-	if ( !me->m_hTargetSentry )
+	if ( !me->GetTargetSentry() )
 		return BaseClass::Done( "Enemy sentry is destroyed." );
 
-	if ( me->m_hTargetSentry != m_hSentry )
+	if ( me->GetTargetSentry() != m_hSentry )
 		return BaseClass::ChangeTo( new CTFBotDestroyEnemySentry, "Changed sentry target." );
 
 	if ( me->m_Shared.IsInvulnerable() )
@@ -196,7 +196,7 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::Update( CTFBot *me, float dt )
 			m_PathFollower.Update( me );
 
 		float flDistToSpot = ( me->GetAbsOrigin() - m_vecAttackSpot ).LengthSqr();
-		if ( me->IsLineOfFireClear( m_vecAttackSpot ) && flDistToSpot < Square( 25.0f ) || me->IsLineOfFireClear( m_hSentry ) )
+		if ( me->IsLineOfFireClear( m_vecAttackSpot ) && ( flDistToSpot < Square( 25.0f ) || me->IsLineOfFireClear( m_hSentry ) ) )
 		{
 			if ( me->IsRangeLessThan( m_hSentry, 1000.0f ) )
 				return BaseClass::ChangeTo( new CTFBotStickybombSentrygun( m_hSentry ), "Destroying sentry with stickies." );
@@ -228,9 +228,9 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::Update( CTFBot *me, float dt )
 		}
 	}
 
-	me->GetBodyInterface()->AimHeadTowards( me->m_hTargetSentry );
+	me->GetBodyInterface()->AimHeadTowards( me->GetTargetSentry() );
 
-	Vector vecToSentry = me->EyePosition() - me->m_hTargetSentry->WorldSpaceCenter();
+	Vector vecToSentry = me->EyePosition() - me->GetTargetSentry()->WorldSpaceCenter();
 	vecToSentry.NormalizeInPlace();
 
 	Vector vecFwd;
@@ -249,7 +249,7 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::Update( CTFBot *me, float dt )
 		m_bAtSafeSpot = false;
 	}
 
-	if( me->IsRangeGreaterThan( me->m_hTargetSentry, 1210.0f ) )
+	if( me->IsRangeGreaterThan( me->GetTargetSentry(), SENTRYGUN_BASE_RANGE * 1.1f ) )
 		return BaseClass::Continue();
 
 	if ( m_hSentry->GetTimeSinceLastFired() < 1.0f )
@@ -340,7 +340,7 @@ void CTFBotDestroyEnemySentry::ComputeCornerAttackSpot( CTFBot *actor )
 	m_bFoundAttackSpot = false;
 	m_vecAttackSpot = vec3_origin;
 
-	if ( !actor->m_hTargetSentry || actor->m_hTargetSentry != m_hSentry )
+	if ( !actor->GetTargetSentry() || actor->GetTargetSentry() != m_hSentry )
 		return;
 
 	m_hSentry->UpdateLastKnownArea();
@@ -402,7 +402,7 @@ void CTFBotDestroyEnemySentry::ComputeSafeAttackSpot( CTFBot *actor )
 {
 	m_bFoundAttackSpot = false;
 
-	if ( !actor->m_hTargetSentry || actor->m_hTargetSentry != m_hSentry )
+	if ( !actor->GetTargetSentry() || actor->GetTargetSentry() != m_hSentry )
 		return;
 
 	m_hSentry->UpdateLastKnownArea();
@@ -420,8 +420,10 @@ void CTFBotDestroyEnemySentry::ComputeSafeAttackSpot( CTFBot *actor )
 		return;
 	}
 
-	for ( CNavArea *pArea : func.m_area )
+	FOR_EACH_VEC( func.m_area, i )
 	{
+		CNavArea *pArea = func.m_area[i];
+
 		Vector vecClosest;
 		pArea->GetClosestPointOnArea( ( pArea->GetCenter() + pArea->GetCenter() ) - pSentryArea->GetCenter(), &vecClosest );
 
@@ -435,8 +437,10 @@ void CTFBotDestroyEnemySentry::ComputeSafeAttackSpot( CTFBot *actor )
 	}
 
 	CUtlVector<CTFNavArea *> validAreas;
-	for ( CNavArea *pArea : safeAreas )
+	FOR_EACH_VEC( safeAreas, i )
 	{
+		CNavArea *pArea = safeAreas[i];
+		
 		Vector vecClosest;
 		pArea->GetClosestPointOnArea( pSentryArea->GetCenter(), &vecClosest );
 
@@ -532,7 +536,7 @@ ActionResult<CTFBot> CTFBotUberAttackEnemySentry::Update( CTFBot *me, float dt )
 	{
 		me->GetBodyInterface()->AimHeadTowards( m_hSentry );
 
-		Vector vecToSentry = me->EyePosition() - me->m_hTargetSentry->WorldSpaceCenter();
+		Vector vecToSentry = me->EyePosition() - me->GetTargetSentry()->WorldSpaceCenter();
 		vecToSentry.NormalizeInPlace();
 
 		Vector vecFwd;
@@ -546,7 +550,7 @@ ActionResult<CTFBot> CTFBotUberAttackEnemySentry::Update( CTFBot *me, float dt )
 			me->PressFireButton();
 		}
 
-		if( me->IsRangeLessThan( me->m_hTargetSentry, 100.0f ) )
+		if( me->IsRangeLessThan( me->GetTargetSentry(), 100.0f ) )
 			return BaseClass::Continue();
 	}
 

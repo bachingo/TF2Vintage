@@ -33,7 +33,6 @@ int SendProxyArrayLength_TeamObjects( const void *pStruct, int objectID )
 {
 	CTFTeam *pTeam = (CTFTeam*)pStruct;
 	int iObjects = pTeam->GetNumObjects();
-	Assert( iObjects <= MAX_OBJECTS_PER_PLAYER );
 	return iObjects;
 }
 

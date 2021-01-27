@@ -218,8 +218,30 @@ bool CHudAccountPanel::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	
-	if ( !pPlayer || !pPlayer->IsAlive() || !pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) )
+	if ( !pPlayer || !pPlayer->IsAlive() )
 	{
+		return false;
+	}
+	
+	// Check if we own any weapons that use metal, if we're not an engineer.
+	if ( !pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) )
+	{
+		// Check if we have either a wrench or builder PDA.
+		for (int i = 0; i < pPlayer->WeaponCount(); i++)
+		{
+			CTFWeaponBase *pWpn = ( CTFWeaponBase *)pPlayer->GetWeapon( i );
+
+			if ( pWpn == NULL )
+				continue;
+			
+			int iWeaponID = pWpn->GetWeaponID();
+			
+			if ( iWeaponID == TF_WEAPON_WRENCH || iWeaponID == TF_WEAPON_PDA_ENGINEER_BUILD )
+			{
+				return CHudElement::ShouldDraw();
+			}
+		}
+		
 		return false;
 	}
 	

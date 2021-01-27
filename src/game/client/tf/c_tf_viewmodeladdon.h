@@ -10,6 +10,7 @@
 #include "c_baseviewmodel.h"
 
 class C_TFViewModel;
+class C_EconEntity;
 
 class C_ViewmodelAttachmentModel : public C_BaseViewModel
 {

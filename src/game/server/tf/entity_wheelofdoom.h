@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -25,7 +25,7 @@ public:
 	DECLARE_DATADESC()
 
 	CWheelOfDoom();
-	virtual ~CWheelOfDoom() {}
+	virtual ~CWheelOfDoom();
 
 	typedef CUtlVector<CTFPlayer *> EffectData_t;
 	struct WOD_BaseEffect
@@ -42,13 +42,12 @@ public:
 		virtual void ActivateEffect( EffectData_t &data ) {}
 		virtual void UpdateEffect( EffectData_t &data ) {}
 		virtual void DeactivateEffect( EffectData_t &data ) {}
-		void SetListFlags( int flags ) { fFlags = flags; }
 
 		int nType;
 		float flDuration;
 		char const *szBroadcastSound;
 		int fFlags;
-		char const *szEffectName;
+		char const *szEffectName; // for debugging
 	};
 
 	static void SpeakMagicConceptToAllPlayers( char const *szConcept );
@@ -97,11 +96,12 @@ public:
 	}
 	m_EffectManager;
 
+private:
 	CUtlVectorAutoPurge<WOD_BaseEffect *> m_Effects;
 
 	CUtlVector<CWheelOfDoom *> m_Wheels;
 
-	WOD_BaseEffect *m_pEffect;
+	WOD_BaseEffect *m_pActiveEffect;
 	CHandle<CBaseAnimating> m_hSpiral;
 	bool			m_bHasSpiral;
 	float			m_flDuration;
@@ -115,27 +115,27 @@ public:
 
 	class WOD_Burn : public WOD_BaseEffect
 	{
-		void InitEffect( float flDuration ) override;
-		void ActivateEffect( EffectData_t &data ) override;
+		void InitEffect( float flDuration ) OVERRIDE;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_Pee : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
-		void UpdateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
+		void UpdateEffect( EffectData_t &data ) OVERRIDE;
 
 		CUtlVector<EHANDLE> m_SpawnPoints;
 		float m_flNextSpawn;
 	};
 	class WOD_Ghosts : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
-		void DeactivateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
+		void DeactivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_Dance : public WOD_BaseEffect
 	{
-		void InitEffect( float flDuration ) override;
-		void UpdateEffect( EffectData_t &data ) override;
-		void DeactivateEffect( EffectData_t &data ) override;
+		void InitEffect( float flDuration ) OVERRIDE;
+		void UpdateEffect( EffectData_t &data ) OVERRIDE;
+		void DeactivateEffect( EffectData_t &data ) OVERRIDE;
 		int GetNumOfTeamDancing( int iTeam );
 		inline void SlamPosAndAngles( CTFPlayer *pTarget, Vector const &pos, QAngle const &ang );
 
@@ -163,37 +163,37 @@ public:
 	};
 	class WOD_UberEffect : public WOD_BaseEffect
 	{
-		void InitEffect( float flDuration ) override;
-		void ActivateEffect( EffectData_t &data ) override;
+		void InitEffect( float flDuration ) OVERRIDE;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_CritsEffect : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_SuperJumpEffect : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
-		void DeactivateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
+		void DeactivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_SuperSpeedEffect : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
-		void DeactivateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
+		void DeactivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_LowGravityEffect : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
-		void DeactivateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
+		void DeactivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_SmallHeadEffect : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
-		void DeactivateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
+		void DeactivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 	class WOD_BigHeadEffect : public WOD_BaseEffect
 	{
-		void ActivateEffect( EffectData_t &data ) override;
-		void DeactivateEffect( EffectData_t &data ) override;
+		void ActivateEffect( EffectData_t &data ) OVERRIDE;
+		void DeactivateEffect( EffectData_t &data ) OVERRIDE;
 	};
 };
 

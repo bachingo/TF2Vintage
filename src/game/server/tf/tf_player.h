@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef TF_PLAYER_H
@@ -18,12 +18,6 @@
 #include "nav_mesh/tf_nav_area.h"
 #include "Path/NextBotPathFollow.h"
 #include "NextBotUtil.h"
-
-struct foundPlayer
-{
-	foundPlayer *next;
-	CTFPlayer *player;
-};
 
 class CTFPlayer;
 class CTFBot;
@@ -142,12 +136,12 @@ public:
 
 	virtual void		LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExitAngles );
 
-	virtual CTFNavArea *GetLastKnownArea( void ) const override;
+	virtual CTFNavArea *GetLastKnownArea( void ) const OVERRIDE;
 
 	// Combats
 	virtual void		TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
 	virtual int			TakeHealth( float flHealth, int bitsDamageType );
-	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
+	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon );
 	virtual	void		Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 	virtual bool		Event_Gibbed( const CTakeDamageInfo &info );
@@ -400,7 +394,12 @@ public:
 	bool				ShouldFlipViewModel( void ) { return m_bFlipViewModel; }
 	void				SetFlipViewModel( bool bFlip ) { m_bFlipViewModel = bFlip; }
 
+	void				InspectButtonPressed();
+	void				InspectButtonReleased();
+	bool				IsInspecting() const;
+
 	virtual void		ModifyOrAppendCriteria( AI_CriteriaSet &criteriaSet );
+	void				ModifyEmitSoundParams( EmitSound_t &params ) OVERRIDE;
 
 	virtual bool		CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 
@@ -424,6 +423,7 @@ public:
 
 	float	m_flNextVoiceCommandTime;
 	float	m_flNextSpeakWeaponFire;
+	int 	m_iJIVoiceSpam;
 
 	virtual int			CalculateTeamBalanceScore( void );
 
@@ -444,6 +444,9 @@ public:
 	void				InputSpeakResponseConcept( inputdata_t &inputdata );
 	void				InputSetForcedTauntCam( inputdata_t &inputdata );
 
+
+	CBaseEntity		*GetGrapplingHookTarget( void ) { return m_hGrapplingHookTarget; }
+	
 public:
 
 	CNetworkVector( m_vecPlayerColor );
@@ -518,9 +521,9 @@ public:
 
 	bool				IsCapturingPoint( void );
 
-	const Vector		&EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
-	const Vector		&EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
-	const Vector		&EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
+	Vector				EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
+	Vector				EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
+	Vector				EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
 
 	// Taunts.
 	void				Taunt( taunts_t eTaunt = TAUNT_NORMAL, int iConcept = MP_CONCEPT_PLAYER_TAUNT );
@@ -611,18 +614,13 @@ private:
 	// Think.
 	void				TFPlayerThink();
 	void				MedicRegenThink( void );
-	public:
+public:
 	void				AOEHeal( CTFPlayer *pPatient, CTFPlayer *pHealer );
-	private:
+private:
 	void				UpdateTimers( void );
 
 public:
 	void				RemoveMeleeCrit( void );
-
-private:
-	// Taunt.
-	EHANDLE	m_hTauntScene;
-	bool	m_bInitTaunt;
 
 	// Client commands.
 	void				HandleCommand_JoinTeam( const char *pTeamName );
@@ -630,9 +628,14 @@ private:
 	void				HandleCommand_JoinTeam_NoMenus( const char *pTeamName );
 	void				HandleCommand_JoinTeam_NoKill( const char *pTeamName );
 
+private:
+	// Taunt.
+	EHANDLE	m_hTauntScene;
+	bool	m_bInitTaunt;
+
 	// Bots.
 	friend void Bot_Think( CTFPlayer *pBot );
-	friend static void tf_bot_add( const CCommand &args );
+	friend void cc_tf_bot_add( const CCommand &args );
 	friend class CTFBot; friend class CTFBotManager;
 
 	// Physics.
@@ -687,6 +690,7 @@ private:
 
 	// Combat.
 	CNetworkHandle( CTFWeaponBase, m_hOffHandWeapon );
+	CNetworkHandle( CBaseEntity, m_hGrapplingHookTarget );
 
 	float					m_flHealthBuffTime;
 
@@ -705,6 +709,7 @@ private:
 
 	// Networked.
 	CNetworkQAngle( m_angEyeAngles );					// Copied from EyeAngles() so we can send it to the client.
+	CNetworkVar( float, m_flInspectTime );
 
 public:
 	QAngle				m_angPrevEyeAngles;
@@ -717,9 +722,9 @@ private:
 	CTFPlayerAnimState *m_PlayerAnimState;
 	int					m_iLastWeaponFireUsercmd;				// Firing a weapon.  Last usercmd we shot a bullet on.
 	int					m_iLastSkin;
-	public:
-	float				m_flLastDamageTime;
-	private:
+public:
+	CNetworkVar( float, m_flLastDamageTime );
+private:
 	float				m_flNextPainSoundTime;
 	int					m_LastDamageType;
 	int					m_iDeathFlags;				// TF_DEATH_* flags with additional death info

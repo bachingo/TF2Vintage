@@ -1,5 +1,6 @@
 #include "cbase.h"
 #include "tf_wearable.h"
+#include "tf_gamerules.h"
 
 #ifdef GAME_DLL
 #include "tf_player.h"
@@ -13,6 +14,15 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWearable, DT_TFWearable );
 
 BEGIN_NETWORK_TABLE( CTFWearable, DT_TFWearable )
+#ifdef GAME_DLL
+	SendPropBool( SENDINFO( m_bExtraWearable ) ),
+	SendPropBool( SENDINFO( m_bDisguiseWearable ) ),
+	SendPropEHandle( SENDINFO( m_hWeaponAssociatedWith ) ),
+#else
+	RecvPropBool( RECVINFO( m_bExtraWearable ) ),
+	RecvPropBool( RECVINFO( m_bDisguiseWearable ) ),
+	RecvPropEHandle( RECVINFO( m_hWeaponAssociatedWith ) ),
+#endif
 END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_wearable, CTFWearable );
@@ -25,6 +35,10 @@ END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_wearable_vm, CTFWearableVM );
 PRECACHE_REGISTER( tf_wearable_vm );
+
+
+#define PARACHUTE_MODEL_OPEN	"models/workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack_open.mdl"
+#define PARACHUTE_MODEL_CLOSED	"models/workshop/weapons/c_models/c_paratooper_pack/c_paratrooper_pack.mdl"
 
 #ifdef GAME_DLL
 
@@ -42,15 +56,15 @@ void CTFWearable::Equip( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWearable::UpdateModelToClass( void )
 {
-	if ( m_bExtraWearable && GetItem()->GetStaticData() )
+	if ( IsExtraWearable() && GetItem()->GetStaticData() )
 	{
 		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
 	}
-	else 
+	else
 	{
 		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 
-		if ( pOwner && !m_bDisguiseWearable)
+		if ( pOwner && !IsDisguiseWearable() )
 		{
 			const char *pszModel = GetItem()->GetPlayerDisplayModel( pOwner->GetPlayerClass()->GetClassIndex() );
 
@@ -117,6 +131,52 @@ void CTFWearable::Break( void )
 #else
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int C_TFWearable::GetWorldModelIndex( void )
+{
+	if ( m_nWorldModelIndex == 0 )
+		return m_nModelIndex;
+
+	const int iParachuteOpen = modelinfo->GetModelIndex( PARACHUTE_MODEL_OPEN );
+	const int iParachuteClosed = modelinfo->GetModelIndex( PARACHUTE_MODEL_CLOSED );
+	if ( m_nModelIndex == iParachuteOpen || m_nModelIndex == iParachuteClosed )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+		if ( pPlayer )
+		{
+			if ( pPlayer->m_Shared.InCond( TF_COND_PARACHUTE_DEPLOYED ) )
+				return iParachuteOpen;
+			else
+				return iParachuteClosed;
+		}
+	}
+
+	if ( TFGameRules() )
+	{
+		const char *pBaseName = modelinfo->GetModelName( modelinfo->GetModel( m_nWorldModelIndex ) );
+		const char *pTranslatedName = TFGameRules()->TranslateEffectForVisionFilter( "weapons", pBaseName );
+
+		if ( pTranslatedName != pBaseName )
+		{
+			return modelinfo->GetModelIndex( pTranslatedName );
+		}
+	}
+
+	return m_nWorldModelIndex;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFWearable::ValidateModelIndex( void )
+{
+	m_nModelIndex = GetWorldModelIndex();
+
+	BaseClass::ValidateModelIndex();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Overlay Uber
 //-----------------------------------------------------------------------------
 int C_TFWearable::InternalDrawModel( int flags )
@@ -124,6 +184,8 @@ int C_TFWearable::InternalDrawModel( int flags )
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	bool bNotViewModel = ( ( pOwner && !pOwner->IsLocalPlayer() ) || C_BasePlayer::ShouldDrawLocalPlayer() );
 	bool bUseInvulnMaterial = ( bNotViewModel && pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
+	bUseInvulnMaterial |= ( pOwner->m_Shared.InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGE ) && gpGlobals->curtime < (pOwner->GetLastDamageTime() + 2.0f) );
+
 	if ( bUseInvulnMaterial )
 	{
 		modelrender->ForcedMaterialOverride( pOwner->GetInvulnMaterial() );
@@ -144,7 +206,7 @@ int C_TFWearable::InternalDrawModel( int flags )
 //-----------------------------------------------------------------------------
 void C_TFWearable::UpdateModelToClass(void)
 {
-	if ( m_bExtraWearable && GetItem()->GetStaticData() )
+	if ( IsExtraWearable() && GetItem()->GetStaticData() )
 	{
 		SetModel( GetItem()->GetStaticData()->GetExtraWearableModel() );
 	}
@@ -199,4 +261,34 @@ bool C_TFWearable::ShouldDraw()
 	
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWearable::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		m_nWorldModelIndex = m_nModelIndex;
+	}
+}
+
 #endif
+
+void CTFWearable::ReapplyProvision( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+	{
+		// Wearables worn by our disguise don't provide attribute bonuses
+		if ( IsDisguiseWearable() )
+			return;
+	}
+
+	// Extra wearables don't provide attribute bonuses
+	if ( IsExtraWearable() )
+		return;
+
+	BaseClass::ReapplyProvision();
+}

@@ -275,7 +275,7 @@ public:
 
 	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
 	virtual bool GetAttachment( int number, matrix3x4_t &matrix );
-	virtual bool GetAttachment( int number, Vector &origin, QAngle &angles ) override { return BaseClass::GetAttachment( number, origin, angles ); }
+	virtual bool GetAttachment( int number, Vector &origin, QAngle &angles ) OVERRIDE { return BaseClass::GetAttachment( number, origin, angles ); }
 
 	float GetInvisibilityLevel( void )
 	{
@@ -391,6 +391,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bHeadTransform = 0;
 	m_bStartedDying = 0;
 	m_flDeathDelay = 0.3f;
+	m_flHeadScale = 1.0f;
 
 	UseClientSideAnimation();
 }
@@ -448,9 +449,17 @@ void C_TFRagdoll::DissolveEntity( C_BaseEntity *pEntity )
 	else
 		pDissolver->SetEffectColor( Vector( BitsToFloat( 0x42AFF333 ), BitsToFloat( 0x43049999 ), BitsToFloat( 0x4321ECCD ) ) );
 
-	pDissolver->SetOwnerEntity( NULL );
+	pDissolver->m_nRenderFX = kRenderFxNone;
 	pDissolver->SetRenderMode( kRenderTransColor );
+	pDissolver->SetRenderColor( 255, 255, 255, 255 );
+
 	pDissolver->m_vDissolverOrigin = GetLocalOrigin();
+	pDissolver->m_flFadeInStart = 0.0f;
+	pDissolver->m_flFadeInLength = 1.0f;
+	pDissolver->m_flFadeOutModelStart = 1.9f;
+	pDissolver->m_flFadeOutModelLength = 0.1f;
+	pDissolver->m_flFadeOutStart = 2.0f;
+	pDissolver->m_flFadeOutLength = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1172,6 +1181,9 @@ bool C_TFRagdoll::IsDecapitation()
 	return false;
 }
 
+extern ConVar g_ragdoll_lvfadespeed;
+extern ConVar g_ragdoll_fadespeed;
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -1317,9 +1329,16 @@ void C_TFRagdoll::ClientThink( void )
 	if ( m_bFadingOut == true )
 	{
 		int iAlpha = GetRenderColor().a;
-		int iFadeSpeed = 600.0f;
+		int iFadeSpeed = (g_RagdollLVManager.IsLowViolence()) ? g_ragdoll_lvfadespeed.GetInt() : g_ragdoll_fadespeed.GetInt();
 
-		iAlpha = Max( iAlpha - (int)( iFadeSpeed * gpGlobals->frametime ), 0 );
+		if (iFadeSpeed < 1)
+		{
+			iAlpha = 0;
+		}
+		else
+		{
+			iAlpha = Max(iAlpha - (iFadeSpeed * gpGlobals->frametime), 0.0f);
+		}
 
 		SetRenderMode( kRenderTransAlpha );
 		SetRenderColorA( iAlpha );
@@ -1339,14 +1358,23 @@ void C_TFRagdoll::ClientThink( void )
 		{
 			m_bFadingOut = true;
 			float flDelay = cl_ragdoll_fade_time.GetFloat() * 0.33f;
-			m_fDeathTime = gpGlobals->curtime + flDelay;
 
 			// If we were just fully healed, remove all decals
 			RemoveAllDecals();
-		}
 
-		StartFadeOut( cl_ragdoll_fade_time.GetFloat() * 0.33f );
-		return;
+			if (flDelay > 0.01f)
+			{
+				m_fDeathTime = gpGlobals->curtime + flDelay;
+				return;
+			}
+			m_fDeathTime = -1;
+		}
+		else
+		{
+			// Fade out after the specified delay.
+			StartFadeOut(cl_ragdoll_fade_time.GetFloat() * 0.33f);
+			return;
+		}
 	}
 
 	if ( m_fDeathTime > gpGlobals->curtime )
@@ -2350,6 +2378,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropDataTable( RECVINFO_DT( m_AttributeManager ), 0, &REFERENCE_RECV_TABLE( DT_AttributeManager ) ),
 	
 	RecvPropEHandle( RECVINFO( m_hItem ) ),
+	RecvPropEHandle( RECVINFO( m_hGrapplingHookTarget ) ),
 
 	RecvPropVector( RECVINFO( m_vecPlayerColor ) ),
 
@@ -2361,6 +2390,8 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropInt( RECVINFO( m_nForceTauntCam ) ),
 	RecvPropBool( RECVINFO( m_bTyping ) ),
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
+	RecvPropFloat( RECVINFO( m_flLastDamageTime ) ),
+	RecvPropFloat( RECVINFO( m_flInspectTime ) ),
 END_RECV_TABLE()
 
 
@@ -2528,7 +2559,7 @@ void C_TFPlayer::UpdateOnRemove( void )
 	ParticleProp()->StopParticlesInvolving( this );
 
 	m_Shared.RemoveAllCond( this );
-
+	m_Shared.ResetMeters();
 	m_Shared.UpdateCritBoostEffect( true );
 
 	if ( IsLocalPlayer() )
@@ -3508,9 +3539,9 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 	if ( bDisguised && !ShouldDrawSpyAsDisguised() )
 		return;
 
-	for ( C_EconWearable *pWearable : m_hMyWearables )
+	FOR_EACH_VEC( m_hMyWearables, i )
 	{
-		C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( pWearable );
+		C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( m_hMyWearables[i].Get() );
 		if ( pTFWearable == nullptr )
 			continue;
 
@@ -3526,7 +3557,7 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 
 		//pTFWearable->OnWearerDeath();
 
-		if ( pTFWearable->GetDropType() > 1 ) // Fall off or break
+		if ( pTFWearable->GetDropType() > DROPTYPE_NONE ) // Fall off or break
 			continue;
 
 		if ( pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS || 
@@ -3535,7 +3566,7 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 			 pRagdoll->m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION )
 		 {
 			// Don't put a hat on a decapitated corpse!
-			 if (pWearable->GetLoadoutSlot() == TF_LOADOUT_SLOT_HAT)
+			 if (pTFWearable->GetLoadoutSlot() == TF_LOADOUT_SLOT_HAT)
 				continue; 
 		 }
 
@@ -3543,7 +3574,7 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 		if ( pProp == nullptr )
 			return;
 
-		const model_t *pModel = pWearable->GetModel();
+		const model_t *pModel = pTFWearable->GetModel();
 		const char *szModel = modelinfo->GetModelName( pModel );
 		if ( !szModel || !*szModel || *szModel == '?' )
 			continue;
@@ -4869,32 +4900,32 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 
 	if ( bWearables )
 	{
-		for ( C_EconWearable *pWearable : m_hMyWearables )
+		FOR_EACH_VEC( m_hMyWearables, i )
 		{
-			C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( pWearable );
+			C_TFWearable *pTFWearable = dynamic_cast<C_TFWearable *>( m_hMyWearables[i].Get() );
 			if ( pTFWearable == nullptr )
 				continue;
 
-			/*if ( pTFWearable->GetDropType() != 2 )
-				continue;*/
+			if ( pTFWearable->GetDropType() != DROPTYPE_DROP )
+				continue;
 
 			/*if ( bDisguised && !pTFWearable->m_bDisguiseWearable ||
 				 !bDisguised && pTFWearable->m_bDisguiseWearable )
 				continue;*/
 
-			if ( pWearable->IsDynamicModelLoading() && pWearable->GetModelPtr() == nullptr )
+			if ( pTFWearable->IsDynamicModelLoading() && pTFWearable->GetModelPtr() == nullptr )
 				continue;
 
-			const model_t *pModel = modelinfo->GetModel( pWearable->GetModelIndex() );
+			const model_t *pModel = modelinfo->GetModel( pTFWearable->GetModelIndex() );
 			const char *szModel = modelinfo->GetModelName( pModel );
 			if ( !szModel || !*szModel )
 				continue;
 
 			Vector vecOrigin; matrix3x4_t root;
-			if ( pWearable->IsDynamicModelLoading() || !pWearable->GetRootBone( root ) )
-				vecOrigin = pWearable->GetAbsOrigin();
+			if ( pTFWearable->IsDynamicModelLoading() || !pTFWearable->GetRootBone( root ) )
+				vecOrigin = pTFWearable->GetAbsOrigin();
 			else
-				MatrixGetColumn( root, 3, &vecOrigin );
+				MatrixPosition( root, vecOrigin );
 
 			if( IsEntityPositionReasonable( vecOrigin ) )
 			{
@@ -4919,7 +4950,7 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 				pProp->SetModelName( iModel );
 
 				pProp->SetAbsOrigin( vecOrigin );
-				pProp->SetAbsAngles( pWearable->GetAbsAngles() );
+				pProp->SetAbsAngles( pTFWearable->GetAbsAngles() );
 
 				pProp->SetOwnerEntity( this );
 				pProp->ChangeTeam( GetTeamNumber() );
@@ -4962,9 +4993,9 @@ void C_TFPlayer::CreatePlayerGibs( const Vector &vecOrigin, const Vector &vecVel
 			{
 				CUtlVector<breakmodel_t> list;
 				const int iClassIdx = GetPlayerClass()->GetClassIndex();
-				for ( int i=0; i < m_aGibs.Count(); ++i )
+				FOR_EACH_VEC( m_aGibs, i )
 				{
-					breakmodel_t const &breakModel = m_aGibs[ i ];
+					breakmodel_t const &breakModel = m_aGibs[i];
 					if ( !V_stricmp( breakModel.modelName, g_pszHeadGibs[ iClassIdx ] ) )
 						list.AddToHead( breakModel );
 				}
@@ -5036,18 +5067,15 @@ void C_TFPlayer::DropPartyHat( breakablepropparams_t const &breakParams, Vector 
 //-----------------------------------------------------------------------------
 void C_TFPlayer::DropHat( breakablepropparams_t const &breakParams, Vector const &vecBreakVelocity )
 {
-	for ( int i=0; i<m_hMyWearables.Count(); ++i )
+	FOR_EACH_VEC( m_hMyWearables, i )
 	{
 		CEconWearable* pItem = m_hMyWearables[i];
 		if ( pItem && pItem->GetItem()->GetStaticData() )
 		{
-			if ( pItem->GetDropType() > 0 )
+			if ( pItem->GetDropType() > DROPTYPE_NONE )
 			{
 				breakmodel_t breakModel;
-				if (pItem->m_bExtraWearable)
-					V_strcpy_safe(breakModel.modelName, pItem->GetItem()->GetStaticData()->GetExtraWearableModel() );
-				else
-					V_strcpy_safe(breakModel.modelName, pItem->GetItem()->GetStaticData()->GetPlayerModel() );
+				V_strcpy_safe( breakModel.modelName, STRING( pItem->GetModelName() ) );
 
 				breakModel.health = 1;
 				breakModel.fadeTime = RandomFloat( 5, 10 );

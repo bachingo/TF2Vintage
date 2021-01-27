@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "gameeventlistener.h"
+#include "GameEventListener.h"
 #include <igamesystem.h>
 
 template<typename T, typename I = unsigned short>

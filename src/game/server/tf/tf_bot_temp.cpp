@@ -93,12 +93,12 @@ CBasePlayer *BotPutInServer( bool bFrozen, int iTeam, int iClass, const char *ps
 	{
 		switch( RandomInt(0,5) )
 		{
-		case 0: Q_snprintf( botname, sizeof( botname ), "Bot", BotNumber ); break;
-		case 1: Q_snprintf( botname, sizeof( botname ), "This is a medium Bot", BotNumber ); break;
-		case 2: Q_snprintf( botname, sizeof( botname ), "This is a super long bot name that is too long for the game to allow", BotNumber ); break;
-		case 3: Q_snprintf( botname, sizeof( botname ), "Another bot", BotNumber ); break;
-		case 4: Q_snprintf( botname, sizeof( botname ), "Yet more Bot names, medium sized", BotNumber ); break;
-		default: Q_snprintf( botname, sizeof( botname ), "B", BotNumber ); break;
+		case 0: Q_snprintf( botname, sizeof( botname ), "Bot" ); break;
+		case 1: Q_snprintf( botname, sizeof( botname ), "This is a medium Bot" ); break;
+		case 2: Q_snprintf( botname, sizeof( botname ), "This is a super long bot name that is too long for the game to allow" ); break;
+		case 3: Q_snprintf( botname, sizeof( botname ), "Another bot" ); break;
+		case 4: Q_snprintf( botname, sizeof( botname ), "Yet more Bot names, medium sized" ); break;
+		default: Q_snprintf( botname, sizeof( botname ), "B" ); break;
 		}
 	}
 	else

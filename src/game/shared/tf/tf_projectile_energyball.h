@@ -16,7 +16,7 @@
 #endif
 
 #if defined CLIENT_DLL
-#define CTFEnergyBall C_TFEnergyBall
+#define CTFProjectile_EnergyBall C_TFProjectile_EnergyBall
 #endif
 
 
@@ -25,51 +25,64 @@
 // Generic rocket.
 //
 #ifdef GAME_DLL
-class CTFEnergyBall : public CTFBaseRocket,  public IScorer
+class CTFProjectile_EnergyBall : public CTFBaseRocket, public IScorer
 #else
-class CTFEnergyBall : public CTFBaseRocket
+class CTFProjectile_EnergyBall : public CTFBaseRocket
 #endif
 {
 public:
 
-	DECLARE_CLASS( CTFEnergyBall, CTFBaseRocket );
+	DECLARE_CLASS( CTFProjectile_EnergyBall, CTFBaseRocket );
 	DECLARE_NETWORKCLASS();
 
 #ifdef GAME_DLL
 	// Creation.
-	static CTFEnergyBall *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
-	virtual void Spawn();
-	virtual void Precache();
+	static CTFProjectile_EnergyBall *Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );
+	void	Spawn();
+	void	Precache();
 
 	// IScorer interface
-	virtual CBasePlayer			*GetScorer(void);
-	virtual CBasePlayer			*GetAssistant(void) { return NULL; }
+	CBasePlayer	*GetScorer(void);
+	CBasePlayer	*GetAssistant(void) { return NULL; }
 	void	SetScorer(CBaseEntity *pScorer);
-
-	float 			GetRadius(void);
-	virtual int		GetDamageType();
-#endif
-
-	void	SetIsCharged(bool bCharged)			{ m_bChargedBeam = bCharged; }
-	bool	ShotIsCharged(void)					{ return m_bChargedBeam; }
-
 	void	SetCritical( bool bCritical ) { m_bCritical = bCritical; }
 
-	void 			Explode( trace_t *pTrace, CBaseEntity *pOther );
+	float	GetDamage( void );
+	float 	GetRadius( void );
+	int		GetDamageType( void );
+	int		GetDamageCustom( void );
+	int		GetWeaponID( void ) const OVERRIDE { return TF_WEAPON_PARTICLE_CANNON; }
+
+	bool	IsDeflectable() OVERRIDE { return true; }
+	void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir ) OVERRIDE;
+
+	void	SetColor( int iColor, Vector vColor ) { if ( iColor==1 ) m_vColor1=vColor; else m_vColor2=vColor; }
+#endif
+
+	void	SetIsCharged(bool bCharged)			{ m_bChargedShot = bCharged; }
+	bool	IsChargedShot(void)					{ return m_bChargedShot; }
+	char const *GetExplosionParticleName( void );
+
+	void 	Explode( trace_t *pTrace, CBaseEntity *pOther );
 	
 protected:
 #ifdef GAME_DLL
-	EHANDLE m_Scorer;
+	EHANDLE m_hScorer;
 #endif
 	
 private:
-	CNetworkVar(bool, m_bCritical);
-	CNetworkVar(bool, m_bChargedBeam);
+	CNetworkVar( bool, m_bCritical );
+	CNetworkVar( bool, m_bChargedShot );
+	CNetworkVector( m_vColor1 );
+	CNetworkVector( m_vColor2 );
 	
 public:
 
 #ifdef CLIENT_DLL
-	void 		CreateRocketTrails( void );
+	virtual void CreateTrails( void );
+	virtual const char *GetTrailParticleName( void );
+
+	HPARTICLEFFECT m_hEffect;
 #endif
 };
 

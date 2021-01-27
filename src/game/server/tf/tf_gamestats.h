@@ -51,7 +51,7 @@ public:
 	void Event_RoundEnd( int iWinningTeam, bool bFullRound, float flRoundTime, bool bWasSuddenDeathWin );
 	void Event_PlayerConnected( CBasePlayer *pPlayer );
 	void Event_PlayerDisconnected( CBasePlayer *pPlayer );
-	void Event_PlayerChangedClass( CTFPlayer *pPlayer );
+	void Event_PlayerChangedClass( CTFPlayer *pPlayer, int iOldClass, int iNewClass );
 	void Event_PlayerSpawned( CTFPlayer *pPlayer );
 	void Event_PlayerForceRespawn( CTFPlayer *pPlayer );
 	void Event_PlayerLeachedHealth( CTFPlayer *pPlayer, bool bDispenserHeal, float amount );
@@ -66,6 +66,7 @@ public:
 	void Event_PlayerUsedTeleport( CTFPlayer *pTeleportOwner, CTFPlayer *pTeleportingPlayer );
 	void Event_PlayerFiredWeapon( CTFPlayer *pPlayer, bool bCritical );
 	void Event_PlayerDamage( CBasePlayer *pPlayer, const CTakeDamageInfo &info, int iDamageTaken );
+	void Event_BossDamage( CBasePlayer *pAttacker, int iDamage );
 	void Event_PlayerKilledOther( CBasePlayer *pAttacker, CBaseEntity *pVictim, const CTakeDamageInfo &info );
 	void Event_PlayerSuicide( CBasePlayer *pPlayer );
 	void Event_PlayerCapturedPoint( CTFPlayer *pPlayer );
@@ -96,12 +97,8 @@ protected:
 	void						AccumulateAndResetPerLifeStats( CTFPlayer *pPlayer );
 	void						TrackKillStats( CBasePlayer *pAttacker, CBasePlayer *pVictim );
 
-protected:
-
 public:
 	TFReportedStats_t			m_reportedStats;		// Stats which are uploaded from TF server to Steam
-protected:
-
 	PlayerStats_t				m_aPlayerStats[MAX_PLAYERS+1];	// List of stats for each player for current life - reset after each death or class change
 };
 

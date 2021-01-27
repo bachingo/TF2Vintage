@@ -61,8 +61,8 @@ ActionResult<CTFBot> CTFBotSpyInfiltrate::Update( CTFBot *me, float dt )
 			return Action<CTFBot>::SuspendFor( new CTFBotSpySap( obj ), "Sapping an enemy object" );
 	}
 
-	if ( me->m_hTargetSentry && !me->m_hTargetSentry->HasSapper() )
-		return Action<CTFBot>::SuspendFor( new CTFBotSpySap( me->m_hTargetSentry ), "Sapping a Sentry" );
+	if ( me->GetTargetSentry() && !me->GetTargetSentry()->HasSapper() )
+		return Action<CTFBot>::SuspendFor( new CTFBotSpySap( me->GetTargetSentry() ), "Sapping a Sentry" );
 
 	if ( !m_HidingArea && m_findHidingAreaDelay.IsElapsed() )
 	{

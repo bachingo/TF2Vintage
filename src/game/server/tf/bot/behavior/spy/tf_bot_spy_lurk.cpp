@@ -43,8 +43,8 @@ ActionResult<CTFBot> CTFBotSpyLurk::Update( CTFBot *actor, float dt )
 			return Action<CTFBot>::SuspendFor( new CTFBotSpySap( obj ), "Sapping an enemy object" );
 	}
 
-	if ( actor->m_hTargetSentry != nullptr && !actor->m_hTargetSentry->HasSapper() )
-		return Action<CTFBot>::SuspendFor( new CTFBotSpySap( actor->m_hTargetSentry ), "Sapping a Sentry" );
+	if ( actor->GetTargetSentry() != nullptr && !actor->GetTargetSentry()->HasSapper() )
+		return Action<CTFBot>::SuspendFor( new CTFBotSpySap( actor->GetTargetSentry() ), "Sapping a Sentry" );
 
 	if ( m_patienceDuration.IsElapsed() )
 		return Action<CTFBot>::Done( "Lost patience with my hiding spot" );

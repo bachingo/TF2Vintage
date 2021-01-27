@@ -46,6 +46,10 @@ int ScreenTransform( const Vector& point, Vector& screen );
 DECLARE_HUDELEMENT( CHudCrosshair );
 #endif
 
+#if defined( TF_VINTAGE_CLIENT )
+ConVar tf2v_use_real_crosshair_location( "tf2v_use_real_crosshair_location", "0", FCVAR_ARCHIVE, "Enables the crosshair to move around at aimed surfaces for a more accurate shot." );
+#endif
+
 CHudCrosshair::CHudCrosshair( const char *pElementName ) :
 		CHudElement( pElementName ), BaseClass( NULL, "HudCrosshair" )
 {
@@ -196,7 +200,7 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 #endif
 
 #ifdef TF_VINTAGE_CLIENT
-		if ( g_ThirdPersonManager.WantToUseGameThirdPerson() )
+		if ( g_ThirdPersonManager.WantToUseGameThirdPerson() || ( !g_ThirdPersonManager.WantToUseGameThirdPerson() && tf2v_use_real_crosshair_location.GetBool() ) )
 		{
 			vecStart = pPlayer->Weapon_ShootPosition();
 			Vector vecDir;

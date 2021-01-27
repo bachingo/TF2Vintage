@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -120,8 +120,9 @@ void CMerasmusDisguise::TryToDisguiseSpawn( CMerasmus *me )
 
 	CUtlVector<CTFNavArea *> areas;
 	// Pick a set of appropriately sized, playerless areas
-	for ( CNavArea *pArea : TheNavAreas )
+	FOR_EACH_VEC( TheNavAreas, i )
 	{
+		CNavArea *pArea = TheNavAreas[i];
 		if ( !pArea->HasFuncNavPrefer() )
 			continue;
 
@@ -149,8 +150,8 @@ void CMerasmusDisguise::TryToDisguiseSpawn( CMerasmus *me )
 		me->OnDisguise();
 		m_bDidSpawnProps = true;
 
-		for ( CTFNavArea *pArea : shuffledSet )
-			pArea->DrawFilled( 0, 255, 0, 0 );
+		FOR_EACH_VEC( shuffledSet, i )
+			shuffledSet[i]->DrawFilled( 0, 255, 0, 0 );
 
 		return;
 	}

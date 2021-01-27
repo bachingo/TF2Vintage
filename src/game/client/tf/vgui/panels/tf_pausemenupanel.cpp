@@ -8,6 +8,8 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+bool g_bFromPause = false;
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -63,8 +65,7 @@ void CTFPauseMenuPanel::PerformLayout()
 	}
 
 	char szNickName[64];
-	Q_snprintf(szNickName, sizeof(szNickName),
-		(steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown"));
+	V_strcpy_safe(szNickName, ( steamapicontext->SteamFriends() ) ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown");
 	//SetDialogVariable( "nickname", szNickName ); 
 	SetDialogVariable("playername", szNickName); // easier than changing all the language resource files
 
@@ -89,7 +90,7 @@ void CTFPauseMenuPanel::OnCommand(const char* command)
 	}
 	else if (!Q_strcmp(command, "newloadout"))
 	{
-		bFromPause = true;
+		g_bFromPause = true;
 		MAINMENU_ROOT->ShowPanel(LOADOUT_MENU);
 	}
 	else if (!Q_strcmp(command, "newstats"))

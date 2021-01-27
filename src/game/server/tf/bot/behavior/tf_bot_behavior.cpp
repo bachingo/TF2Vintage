@@ -49,8 +49,8 @@ Action<CTFBot> *CTFBotMainAction::InitialContainedAction( CTFBot *actor )
 
 ActionResult<CTFBot> CTFBotMainAction::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
 {
-	m_flSniperAimError1 = 0;
-	m_flSniperAimError2 = 0;
+	m_flSniperAimErrorRadius = 0;
+	m_flSniperAimErrorAngle = 0;
 	m_flYawDelta = 0;
 	m_flPreviousYaw = 0;
 	m_iDesiredDisguise = 0;
@@ -110,29 +110,46 @@ ActionResult<CTFBot> CTFBotMainAction::Update( CTFBot *me, float dt )
 
 EventDesiredResult<CTFBot> CTFBotMainAction::OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *trace )
 {
+	if ( !other || other->IsSolidFlagSet( FSOLID_NOT_SOLID ) )
+		return BaseClass::TryContinue();
+
 	// some miniboss crush logic for MvM happens
+	if ( !other->IsWorld() && !other->IsPlayer() )
+	{
+		m_hLastTouch = other;
+		m_flLastTouchTime = gpGlobals->curtime;
+	}
 	return BaseClass::TryContinue();
 }
 
 EventDesiredResult<CTFBot> CTFBotMainAction::OnStuck( CTFBot *me )
 {
-	me->GetLocomotionInterface()->ClearStuckStatus();
+	if ( me->m_Shared.IsControlStunned() )
+	{
+		// bot is stunned, not stuck
+		return TryContinue();
+	}
 
 	UTIL_LogPrintf( "\"%s<%i><%s><%s>\" stuck (position \"%3.2f %3.2f %3.2f\") (duration \"%3.2f\") ",
 					me->GetPlayerName(), me->entindex(), me->GetNetworkIDString(), me->GetTeam()->GetName(),
-					VecToString( me->GetAbsOrigin() ),
+					me->GetAbsOrigin().x, me->GetAbsOrigin().y, me->GetAbsOrigin().z,
 					me->GetLocomotionInterface()->GetStuckDuration() );
 	if ( me->GetCurrentPath() && me->GetCurrentPath()->IsValid() )
 	{
 		UTIL_LogPrintf( "   path_goal ( \"%3.2f %3.2f %3.2f\" )\n",
-						me->GetCurrentPath()->GetEndPosition() );
+						VectorExpand( me->GetCurrentPath()->GetEndPosition() ) );
 	}
 	else
 	{
 		UTIL_LogPrintf( "   path_goal ( \"NULL\" )\n" );
 	}
 
-	me->GetLocomotionInterface()->Stop();
+	me->GetLocomotionInterface()->Jump();
+
+	if ( RandomInt( 0, 100 ) < 50 )
+		me->PressLeftButton();
+	else
+		me->PressRightButton();
 
 	return BaseClass::TryContinue();
 }
@@ -152,8 +169,7 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnInjured( CTFBot *me, const CTakeD
 	{
 		if ( dynamic_cast<CObjectSentrygun *>( info.GetInflictor() ) )
 		{
-			me->m_hTargetSentry = (CBaseObject *)info.GetInflictor();
-			me->m_vecLastHurtBySentry = me->GetAbsOrigin();
+			me->NoteTargetSentry( info.GetInflictor() );
 		}
 
 		if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
@@ -230,10 +246,9 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnOtherKilled( CTFBot *me, CBaseCom
 		if ( me->IsFriend( who ) && me->IsLineOfSightClear( who->WorldSpaceCenter() ) )
 		{
 			CBaseEntity *pInflictor = info.GetInflictor();
-			if ( pInflictor && dynamic_cast<CObjectSentrygun *>( pInflictor ) && !me->m_hTargetSentry )
+			if ( pInflictor && dynamic_cast<CObjectSentrygun *>( pInflictor ) && !me->GetTargetSentry() )
 			{
-				me->m_hTargetSentry = (CBaseObject *)pInflictor;
-				me->m_vecLastHurtBySentry = who->GetAbsOrigin();
+				me->NoteTargetSentry( pInflictor );
 			}
 		}
 	}
@@ -378,21 +393,21 @@ Vector CTFBotMainAction::SelectTargetPoint( const INextBot *me, const CBaseComba
 	{
 		if ( m_sniperAimErrorTimer.IsElapsed() )
 		{
-			const_cast<CTFBotMainAction *>( this )->m_sniperAimErrorTimer.Start( RandomFloat( 0.5f, 1.5f ) );
+			m_sniperAimErrorTimer.Start( RandomFloat( 0.5f, 1.5f ) );
 
-			const_cast<CTFBotMainAction *>( this )->m_flSniperAimError1 = RandomFloat( 0.0f, tf_bot_sniper_aim_error.GetFloat() );
-			const_cast<CTFBotMainAction *>( this )->m_flSniperAimError2 = RandomFloat( -M_PI_F, M_PI_F );
+			m_flSniperAimErrorRadius = RandomFloat( 0.0f, tf_bot_sniper_aim_error.GetFloat() );
+			m_flSniperAimErrorAngle = RandomFloat( -M_PI_F, M_PI_F );
 		}
 
 		Vector vecToActor = them->GetAbsOrigin() - actor->GetAbsOrigin();
 
 
 		float flErrorSin, flErrorCos;
-		FastSinCos( m_flSniperAimError1, &flErrorSin, &flErrorCos );
+		FastSinCos( m_flSniperAimErrorRadius, &flErrorSin, &flErrorCos );
 
 		float flError = vecToActor.NormalizeInPlace() * flErrorSin;
 
-		FastSinCos( m_flSniperAimError2, &flErrorSin, &flErrorCos );
+		FastSinCos( m_flSniperAimErrorAngle, &flErrorSin, &flErrorCos );
 
 		Vector vecTarget = vec3_origin;
 		switch ( actor->m_iSkill )
@@ -820,10 +835,10 @@ const CKnownEntity *CTFBotMainAction::SelectMoreDangerousThreatInternal( const I
 	}
 
 	bool sentry1_danger =
-		( sentry1 && actor->IsRangeLessThan( sentry1, 1100.0f ) &&
+		( sentry1 && actor->IsRangeLessThan( sentry1, SENTRYGUN_BASE_RANGE ) &&
 		  !sentry1->HasSapper() && !sentry1->IsPlacing() );
 	bool sentry2_danger =
-		( sentry2 && actor->IsRangeLessThan( sentry2, 1100.0f ) &&
+		( sentry2 && actor->IsRangeLessThan( sentry2, SENTRYGUN_BASE_RANGE ) &&
 		  !sentry2->HasSapper() && !sentry2->IsPlacing() );
 
 	if ( sentry1_danger && sentry2_danger )

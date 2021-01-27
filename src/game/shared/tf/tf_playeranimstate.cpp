@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2003, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -565,7 +565,7 @@ bool CTFPlayerAnimState::HandleSwimming( Activity &idealActivity )
 				idealActivity = ACT_MP_SWIM_DEPLOYED;
 			}
 			// Check for sniper deployed underwater - should only be when standing on something
-			else if ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE_DECAP )
+			else if ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE_DECAP ) )
 			{
 				if ( m_pTFPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 				{

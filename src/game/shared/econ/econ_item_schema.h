@@ -6,6 +6,7 @@
 #endif
 
 #include "tf_shareddefs.h"
+#include "gamestringpool.h"
 #include "econ_item_system.h"
 
 class IEconAttributeIterator;
@@ -39,6 +40,15 @@ enum
 
 enum
 {
+	ATTRTYPE_INVALID = -1,
+	ATTRTYPE_INT,
+	ATTRTYPE_UINT64,
+	ATTRTYPE_FLOAT,
+	ATTRTYPE_STRING
+};
+
+enum
+{
 	QUALITY_NORMAL,
 	QUALITY_GENUINE,
 	QUALITY_RARITY2,
@@ -59,6 +69,7 @@ enum
 
 enum
 {
+	DROPTYPE_NULL, // same as none
 	DROPTYPE_NONE,
 	DROPTYPE_DROP,
 	DROPTYPE_BREAK,
@@ -66,24 +77,6 @@ enum
 
 extern const char *g_szQualityColorStrings[];
 extern const char *g_szQualityLocalizationStrings[];
-
-#define CALL_ATTRIB_HOOK_INT(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_FLOAT(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_STRING(value, name, ...) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, this, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_INT_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<int>(value, #name, ent, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<float>(value, #name, ent, __VA_ARGS__)
-
-#define CALL_ATTRIB_HOOK_STRING_ON_OTHER(ent, value, name, ...) \
-		value = CAttributeManager::AttribHookValue<string_t>(value, #name, ent, __VA_ARGS__)
 
 #define CLEAR_STR(name) \
 		name = NULL
@@ -180,65 +173,22 @@ typedef struct EconColor
 	char const *color_name;
 } Color_t;
 
-class CEconAttributeDefinition
+typedef enum
 {
-public:
-	CEconAttributeDefinition()
-	{
-		definition = NULL;
-		index = 0xFFFF;
-		name[0] = '\0';
-		attribute_class[0] = '\0';
-		description_string[0] = '\0';
-		string_attribute = false;
-		description_format = -1;
-		hidden = false;
-		effect_type = -1;
-		stored_as_integer = false;
-		m_iAttributeClass = NULL_STRING;
-	}
-	~CEconAttributeDefinition()
-	{
-		definition->deleteThis();
-	}
+	WEARABLEANIM_EQUIP,
+	WEARABLEANIM_STARTBUILDING,
+	WEARABLEANIM_STOPBUILDING,
+	WEARABLEANIM_STARTTAUNTING,
+	WEARABLEANIM_STOPTAUNTING,
+	NUM_WEARABLEANIM_TYPES
+} wearableanimplayback_t;
 
-	char const *GetName( void ) const
-	{
-		Assert( name && name[0] );
-		return name;
-	}
-	char const *GetClassName( void ) const
-	{
-		Assert( attribute_class && attribute_class[0] );
-		return attribute_class;
-	}
-	char const *GetDescription( void ) const
-	{
-		Assert( description_string && description_string[0] );
-		return description_string;
-	}
-
-private:
-	char name[128];
-	char attribute_class[64];
-	char description_string[64];
-
-	KeyValues *definition;
-
-public:
-	unsigned short index;
-	ISchemaAttributeType *type;
-	bool string_attribute;
-	int description_format;
-	int effect_type;
-	bool hidden;
-	bool stored_as_integer;
-
-	mutable string_t m_iAttributeClass;
-
-	friend class CEconItemSchema;
-	friend class CEconSchemaParser;
-};
+typedef struct
+{
+	wearableanimplayback_t playback;
+	int activity;
+	char const *activity_name;
+} activity_on_wearable_t;
 
 typedef enum
 {
@@ -268,7 +218,7 @@ struct AttachedModel_t
 
 typedef union
 {
-	unsigned iVal;
+	uint32 iVal;
 	float flVal;
 	uint64 *lVal;
 	CAttribute_String *sVal;
@@ -299,7 +249,7 @@ typedef struct static_attrib_s
 		value = rhs.value;
 	}
 
-	unsigned short iAttribIndex;
+	attrib_def_index_t iAttribIndex;
 	attrib_data_union_t value;
 } static_attrib_t;
 
@@ -330,8 +280,7 @@ public:
 	bool selectable;
 	CUtlDict< const char*, unsigned short > model_player_per_class;
 
-	friend class CEconItemSchema;
-	friend class CEconSchemaParser;
+	friend class CEconItemDefinition;
 } ItemStyle_t;
 
 #define MAX_CUSTOM_WEAPON_SOUNDS   10
@@ -341,8 +290,8 @@ typedef struct EconPerTeamVisuals
 	{
 		animation_replacement.SetLessFunc( DefLessFunc( int ) );
 		player_bodygroups.SetLessFunc( StringLessThan );
-		V_memset( &aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
-		V_memset( &aWeaponSounds, 0, sizeof( aWeaponSounds ) );
+		V_memset( aCustomWeaponSounds, 0, sizeof( aCustomWeaponSounds ) );
+		V_memset( aWeaponSounds, 0, sizeof( aWeaponSounds ) );
 		CLEAR_STR( custom_particlesystem );
 		CLEAR_STR( muzzle_flash );
 		CLEAR_STR( tracer_effect );
@@ -369,9 +318,9 @@ typedef struct EconPerTeamVisuals
 	}
 	char const *GetCustomWeaponSound( int sound )
 	{
-		Assert( sound >= 0 && sound <= MAX_CUSTOM_WEAPON_SOUNDS );
-		if ( aWeaponSounds[sound] && aWeaponSounds[sound][0] != '\0' )
-			return aWeaponSounds[sound];
+		Assert( sound >= 0 && sound < MAX_CUSTOM_WEAPON_SOUNDS );
+		if ( aCustomWeaponSounds[sound] && aCustomWeaponSounds[sound][0] != '\0' )
+			return aCustomWeaponSounds[sound];
 
 		return NULL;
 	}
@@ -427,9 +376,78 @@ public:
 	int wm_bodygroup_override;
 	int wm_bodygroup_state_override;
 
-	friend class CEconItemSchema;
-	friend class CEconSchemaParser;
+	friend class CEconItemDefinition;
 } PerTeamVisuals_t;
+
+class CEconAttributeDefinition
+{
+public:
+	CEconAttributeDefinition()
+	{
+		definition = NULL;
+		index = INVALID_ATTRIBUTE_DEF_INDEX;
+		CLEAR_STR( name );
+		CLEAR_STR( attribute_class );
+		CLEAR_STR( description_string );
+		string_attribute = false;
+		description_format = -1;
+		hidden = false;
+		effect_type = -1;
+		stored_as_integer = false;
+		iszAttrClass = NULL_STRING;
+	}
+	~CEconAttributeDefinition()
+	{
+		if( definition )
+			definition->deleteThis();
+	}
+
+	KeyValues *GetStaticDefinition( void ) const { return definition; }
+
+	char const *GetName( void ) const
+	{
+		Assert( name && name[0] );
+		return name;
+	}
+	char const *GetClassName( void ) const
+	{
+		Assert( attribute_class && attribute_class[0] );
+		return attribute_class;
+	}
+	char const *GetDescription( void ) const
+	{
+		Assert( description_string && description_string[0] );
+		return description_string;
+	}
+
+	string_t GetCachedClass( void ) const
+	{
+		if ( !iszAttrClass && attribute_class )
+			iszAttrClass = AllocPooledString( attribute_class );
+
+		return iszAttrClass;
+	}
+
+	bool LoadFromKV( KeyValues *pKV );
+
+private:
+	char const *name;
+	char const *attribute_class;
+	char const *description_string;
+
+	mutable string_t iszAttrClass;
+
+	KeyValues *definition;
+
+public:
+	attrib_def_index_t index;
+	ISchemaAttributeType *type;
+	bool string_attribute;
+	int description_format;
+	int effect_type;
+	bool hidden;
+	bool stored_as_integer;
+};
 
 class CEconItemDefinition
 {
@@ -437,7 +455,7 @@ public:
 	CEconItemDefinition()
 	{
 		definition = NULL;
-		index = 0xFFFFFFFF;
+		index = INVALID_ITEM_DEF_INDEX;
 		CLEAR_STR( name );
 		used_by_classes = 0;
 
@@ -471,6 +489,7 @@ public:
 		attach_to_hands = 1;
 		attach_to_hands_vm_only = 0;
 		CLEAR_STR( extra_wearable );
+		CLEAR_STR( extra_wearable_vm );
 		act_as_wearable = false;
 		hide_bodygroups_deployed_only = 0;
 		is_reskin = false;
@@ -482,34 +501,28 @@ public:
 		is_cut_content = false;
 		is_multiclass_item = false;
 		CLEAR_STR( holiday_restriction );
+		CLEAR_STR( v_model );
+		CLEAR_STR( w_model );
+		can_use_old_model = 0;
 	}
 	~CEconItemDefinition();
 
 	PerTeamVisuals_t *GetVisuals( int iTeamNum = TEAM_UNASSIGNED );
 	char const *GetPerClassModel( int iClass = TF_CLASS_UNDEFINED );
 	int GetLoadoutSlot( int iClass = TF_CLASS_UNDEFINED );
+	char const *GetPlayerModel( void ) const;
+	char const *GetWorldModel( void ) const;
+	int GetAttachToHands( void ) const;
 	const wchar_t *GenerateLocalizedFullItemName( void );
 	const wchar_t *GenerateLocalizedItemNameNoQuality( void );
-	void IterateAttributes( IEconAttributeIterator *iter );
+	void IterateAttributes( IEconAttributeIterator *iter ) const;
+
+	KeyValues *GetStaticDefinition( void ) const { return definition; }
 
 	char const *GetName( void ) const
 	{
 		Assert( name && *name );
 		return name;
-	}
-	char const *GetPlayerModel( void ) const
-	{
-		if ( model_player && model_player[0] != '\0' )
-			return model_player;
-
-		return NULL;
-	}
-	char const *GetWorldModel( void ) const
-	{
-		if ( model_world && model_world[0] != '\0' )
-			return model_world;
-
-		return NULL;
 	}
 	char const *GetVisionFilteredModel( void ) const
 	{
@@ -522,6 +535,13 @@ public:
 	{
 		if ( extra_wearable && extra_wearable[0] != '\0' )
 			return extra_wearable;
+
+		return NULL;
+	}
+	char const *GetExtraWearableViewModel( void ) const
+	{
+		if ( extra_wearable_vm && extra_wearable_vm[0] != '\0' )
+			return extra_wearable_vm;
 
 		return NULL;
 	}
@@ -582,6 +602,17 @@ public:
 
 		return NULL;
 	}
+	bool CanUseOldModel( void ) const
+	{
+		// Need to check if our v/w models are defined.
+		if ( can_use_old_model == 1 )
+			return true;
+			
+		return false;
+	}
+
+	bool LoadFromKV( KeyValues *pKV );
+	void ParseVisuals( KeyValues *pKVData, int iIndex );
 
 private:
 	char const *name;
@@ -590,6 +621,7 @@ private:
 	char const *model_world;
 	char const *model_player_per_class[ TF_CLASS_COUNT_ALL ];
 	char const *extra_wearable;
+	char const *extra_wearable_vm;
 	char const *item_class;
 	char const *item_type_name;
 	char const *item_name;
@@ -600,11 +632,13 @@ private:
 	char const *equip_region;
 	char const *holiday_restriction;
 	char const *item_script;
+	char const *v_model;
+	char const *w_model;
 
 	KeyValues *definition;
 
 public:
-	unsigned int index;
+	item_def_index_t index;
 	CUtlVector<static_attrib_t> attributes;
 	PerTeamVisuals_t *visual[ TF_TEAM_COUNT ];
 	int used_by_classes;
@@ -623,6 +657,7 @@ public:
 	int  attach_to_hands;
 	int  attach_to_hands_vm_only;
 	bool act_as_wearable;
+	bool act_as_weapon;
 	CUtlDict< bool, unsigned short > capabilities;
 	CUtlDict< bool, unsigned short > tags;
 	int  hide_bodygroups_deployed_only;
@@ -634,9 +669,7 @@ public:
 	bool is_custom_content;
 	bool is_cut_content;
 	bool is_multiclass_item;
-
-	friend class CEconItemSchema;
-	friend class CEconSchemaParser;
+	int can_use_old_model;
 };
 
 #endif // ECON_ITEM_SCHEMA_H

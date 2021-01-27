@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -26,7 +26,7 @@ public:
 	{
 	}
 
-	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const;
+	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const OVERRIDE;
 
 private:
 	CHeadlessHatman *m_Actor;
@@ -40,13 +40,13 @@ public:
 		: NextBotGroundLocomotion( actor ) {}
 	virtual ~CHeadlessHatmanLocomotion() { };
 
-	virtual float GetStepHeight( void ) const override { return 18.0f; }
-	virtual float GetMaxJumpHeight( void ) const override { return 18.0f; }
+	virtual float GetStepHeight( void ) const OVERRIDE { return 18.0f; }
+	virtual float GetMaxJumpHeight( void ) const OVERRIDE { return 18.0f; }
 
-	virtual float GetMaxYawRate( void ) const override { return 200.0f; }
-	virtual float GetRunSpeed( void ) const override;
+	virtual float GetMaxYawRate( void ) const OVERRIDE { return 200.0f; }
+	virtual float GetRunSpeed( void ) const OVERRIDE;
 
-	virtual bool ShouldCollideWith( const CBaseEntity *other ) const override;
+	virtual bool ShouldCollideWith( const CBaseEntity *other ) const OVERRIDE;
 };
 
 
@@ -56,13 +56,13 @@ public:
 	CHeadlessHatmanBody( INextBot *actor );
 	virtual ~CHeadlessHatmanBody() { };
 
-	virtual void Update( void ) override;
+	virtual void Update( void ) OVERRIDE;
 
-	virtual unsigned int GetSolidMask( void ) const override { return MASK_NPCSOLID|CONTENTS_PLAYERCLIP; }
+	virtual unsigned int GetSolidMask( void ) const OVERRIDE { return MASK_NPCSOLID|CONTENTS_PLAYERCLIP; }
 
-	virtual Activity GetActivity( void ) const override { return m_Activity; }
-	virtual bool StartActivity( Activity act, unsigned int flags = 0 ) override;
-	virtual bool IsActivity( Activity act ) const override { return m_Activity == act; }
+	virtual Activity GetActivity( void ) const OVERRIDE { return m_Activity; }
+	virtual bool StartActivity( Activity act, unsigned int flags = 0 ) OVERRIDE;
+	virtual bool IsActivity( Activity act ) const OVERRIDE { return m_Activity == act; }
 
 private:
 	Activity m_Activity;
@@ -89,9 +89,9 @@ public:
 
 	virtual int OnTakeDamage_Alive( const CTakeDamageInfo& info );
 
-	virtual void Update( void );
-	virtual IBody *GetBodyInterface( void ) const override { return m_body; }
-	virtual ILocomotion *GetLocomotionInterface( void ) const override { return m_locomotor; }
+	virtual void Update( void ) OVERRIDE;
+	virtual IBody *GetBodyInterface( void ) const OVERRIDE { return m_body; }
+	virtual ILocomotion *GetLocomotionInterface( void ) const OVERRIDE { return m_locomotor; }
 
 public:
 	virtual int GetBossType( void ) const { return HEADLESS_HATMAN; }

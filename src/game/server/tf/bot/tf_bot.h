@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -13,6 +13,8 @@
 
 
 #include "NextBot/Player/NextBotPlayer.h"
+#include "tier1/utlstack.h"
+#include "tf_obj.h"
 #include "tf_player.h"
 #include "tf_gamerules.h"
 #include "tf_path_follower.h"
@@ -76,9 +78,101 @@ public:
 	virtual ~CTFBot();
 
 	DECLARE_INTENTION_INTERFACE( CTFBot )
-	ILocomotion *m_locomotor;
-	IBody *m_body;
-	IVision *m_vision;
+	virtual ILocomotion *GetLocomotionInterface( void ) const OVERRIDE { return m_locomotor; }
+	virtual IBody *GetBodyInterface( void ) const OVERRIDE { return m_body; }
+	virtual IVision *GetVisionInterface( void ) const OVERRIDE { return m_vision; }
+	virtual CBaseCombatCharacter *GetEntity( void ) const;
+	virtual bool	IsDormantWhenDead( void ) const { return false; }
+	virtual bool	IsDebugFilterMatch( const char *name ) const;
+
+	virtual void	Spawn( void );
+	virtual void	Event_Killed( const CTakeDamageInfo &info );
+	virtual void	UpdateOnRemove( void ) OVERRIDE;
+	virtual void	FireGameEvent( IGameEvent *event );
+	virtual int		GetBotType() const { return TF_BOT_TYPE; }
+	virtual int		DrawDebugTextOverlays( void );
+	virtual void	PhysicsSimulate( void );
+	virtual void	Touch( CBaseEntity *other );
+	virtual void	AvoidPlayers( CUserCmd *pCmd );
+	virtual bool	IsAllowedToPickUpFlag( void );
+
+	virtual void	PressFireButton( float duration = -1.0f );
+	virtual void	PressAltFireButton( float duration = -1.0f );
+	virtual void	PressSpecialFireButton( float duration = -1.0f );
+
+	bool			IsCombatWeapon( CTFWeaponBase *weapon = nullptr ) const;
+	bool			IsQuietWeapon( CTFWeaponBase *weapon = nullptr ) const;
+	bool			IsHitScanWeapon( CTFWeaponBase *weapon = nullptr ) const;
+	bool			IsExplosiveProjectileWeapon( CTFWeaponBase *weapon = nullptr ) const;
+	bool			IsContinuousFireWeapon( CTFWeaponBase *weapon = nullptr ) const;
+	bool			IsBarrageAndReloadWeapon( CTFWeaponBase *weapon = nullptr ) const;
+
+	float			GetMaxAttackRange( void ) const;
+	float			GetDesiredAttackRange( void ) const;
+
+	float			GetDesiredPathLookAheadRange( void ) const;
+
+	bool			ShouldFireCompressionBlast( void );
+
+	CTFNavArea*		FindVantagePoint( float flMaxDist );
+
+	bool			IsLineOfFireClear( CBaseEntity *to );
+	bool			IsLineOfFireClear( const Vector& to );
+	bool			IsLineOfFireClear( const Vector& from, CBaseEntity *to );
+	bool			IsLineOfFireClear( const Vector& from, const Vector& to );
+	bool			IsAnyEnemySentryAbleToAttackMe( void ) const;
+	bool			IsThreatAimingTowardsMe( CBaseEntity *threat, float dotTolerance = 0.8 ) const;
+	bool			IsThreatFiringAtMe( CBaseEntity *threat ) const;
+	bool			IsEntityBetweenTargetAndSelf( CBaseEntity *blocker, CBaseEntity *target ) const;
+
+	bool			IsAmmoLow( void ) const;
+	bool			IsAmmoFull( void ) const;
+
+	bool			AreAllPointsUncontestedSoFar( void ) const;
+	bool			IsNearPoint( CTeamControlPoint *point ) const;
+	void			ClearMyControlPoint( void ) { m_hMyControlPoint = nullptr; }
+	CTeamControlPoint *GetMyControlPoint( void );
+	bool			IsAnyPointBeingCaptured( void ) const;
+	bool			IsPointBeingContested( CTeamControlPoint *point ) const;
+	float			GetTimeLeftToCapture( void );
+	bool			HasPointRecentlyChanged( void ) const;
+	CTeamControlPoint *SelectPointToCapture( const CUtlVector<CTeamControlPoint *> &candidates );
+	CTeamControlPoint *SelectPointToDefend( const CUtlVector<CTeamControlPoint *> &candidates );
+	CTeamControlPoint *SelectClosestPointByTravelDistance( const CUtlVector<CTeamControlPoint *> &candidates ) const;
+
+	CCaptureZone*	GetFlagCaptureZone( void );
+	CCaptureFlag*	GetFlagToFetch( void );
+
+	float			TransientlyConsistentRandomValue( float duration, int seed ) const;
+
+	Action<CTFBot> *OpportunisticallyUseWeaponAbilities( void );
+
+	void			DisguiseAsEnemy( void );
+	CBaseObject*	GetNearestKnownSappableTarget( void ) const;
+
+	void			SelectReachableObjects( CUtlVector<EHANDLE> const& append, CUtlVector<EHANDLE> *outVector, INextBotFilter const& func, CNavArea *pStartArea, float flMaxRange );
+	CTFPlayer *		SelectRandomReachableEnemy( void );
+
+	bool			CanChangeClass( void );
+	const char*		GetNextSpawnClassname( void );
+
+	void			WantsToLookForEnemies( void );
+	bool			IsLookingForEnemies( void ) const;
+	void			StopLookingForEnemies( void );
+	void			UpdateLookingAroundForEnemies( void );
+	void			UpdateLookingForIncomingEnemies( bool );
+
+	bool			EquipBestWeaponForThreat( const CKnownEntity *threat );
+	bool			EquipLongRangeWeapon( void );
+
+	void			PushRequiredWeapon( CTFWeaponBase *weapon );
+	bool			EquipRequiredWeapon( void );
+	void			PopRequiredWeapon( void );
+
+	CTFBotSquad*	GetSquad( void ) const { return m_pSquad; }
+	bool			IsSquadmate( CTFPlayer *player ) const;
+	void			JoinSquad( CTFBotSquad *squad );
+	void			LeaveSquad();
 
 	struct DelayedNoticeInfo
 	{
@@ -127,18 +221,18 @@ public:
 
 			checks.SetCount( tf_bot_suspect_spy_touch_interval.GetInt() );
 			for ( int i=0; i < checks.Count(); ++i )
-				checks[ i ] = false;
+				checks[i] = false;
 
 			for ( int i=0; i<m_times.Count(); ++i )
 			{
 				int idx = nCurTime - m_times[i];
 				if ( checks.IsValidIndex( idx ) )
-					checks[ idx ] = true;
+					checks[idx] = true;
 			}
 
 			for ( int i=0; i<checks.Count(); ++i )
 			{
-				if ( !checks[ i ] )
+				if ( !checks[i] )
 					return false;
 			}
 
@@ -152,101 +246,10 @@ public:
 	void			RealizeSpy( CTFPlayer *spy );
 	void			ForgetSpy( CTFPlayer *spy );
 
-	virtual void	Spawn( void );
-	virtual void	Event_Killed( const CTakeDamageInfo &info );
-	virtual void	UpdateOnRemove( void ) override;
-	virtual void	FireGameEvent( IGameEvent *event );
-	virtual int		GetBotType() const { return TF_BOT_TYPE; }
-	virtual int		DrawDebugTextOverlays( void );
-	virtual void	PhysicsSimulate( void );
-	virtual void	Touch( CBaseEntity *other );
-
-	virtual bool	IsDormantWhenDead( void ) const { return false; }
-	virtual bool	IsDebugFilterMatch( const char *name ) const;
-
-	virtual void	PressFireButton( float duration = -1.0f );
-	virtual void	PressAltFireButton( float duration = -1.0f );
-	virtual void	PressSpecialFireButton( float duration = -1.0f );
-
-	virtual void	AvoidPlayers( CUserCmd *pCmd );
-
-	virtual CBaseCombatCharacter *GetEntity( void ) const;
-
-	virtual bool	IsAllowedToPickUpFlag( void );
-
-	void			DisguiseAsEnemy( void );
-
-	bool			IsCombatWeapon( CTFWeaponBase *weapon = nullptr ) const;
-	bool			IsQuietWeapon( CTFWeaponBase *weapon = nullptr ) const;
-	bool			IsHitScanWeapon( CTFWeaponBase *weapon = nullptr ) const;
-	bool			IsExplosiveProjectileWeapon( CTFWeaponBase *weapon = nullptr ) const;
-	bool			IsContinuousFireWeapon( CTFWeaponBase *weapon = nullptr ) const;
-	bool			IsBarrageAndReloadWeapon( CTFWeaponBase *weapon = nullptr ) const;
-
-	float			GetMaxAttackRange( void ) const;
-	float			GetDesiredAttackRange( void ) const;
-
-	float			GetDesiredPathLookAheadRange( void ) const;
-
-	bool			ShouldFireCompressionBlast( void );
-
-	CTFNavArea*		FindVantagePoint( float flMaxDist );
-
-	virtual ILocomotion *GetLocomotionInterface( void ) const override { return m_locomotor; }
-	virtual IBody *GetBodyInterface( void ) const override { return m_body; }
-	virtual IVision *GetVisionInterface( void ) const override { return m_vision; }
-
-	bool			IsLineOfFireClear( CBaseEntity *to );
-	bool			IsLineOfFireClear( const Vector& to );
-	bool			IsLineOfFireClear( const Vector& from, CBaseEntity *to );
-	bool			IsLineOfFireClear( const Vector& from, const Vector& to );
-	bool			IsAnyEnemySentryAbleToAttackMe( void ) const;
-	bool			IsThreatAimingTowardsMe( CBaseEntity *threat, float dotTolerance = 0.8 ) const;
-	bool			IsThreatFiringAtMe( CBaseEntity *threat ) const;
-	bool			IsEntityBetweenTargetAndSelf( CBaseEntity *blocker, CBaseEntity *target ) const;
-
-	bool			IsAmmoLow( void ) const;
-	bool			IsAmmoFull( void ) const;
-
-	bool			AreAllPointsUncontestedSoFar( void ) const;
-	bool			IsNearPoint( CTeamControlPoint *point ) const;
-	void			ClearMyControlPoint( void ) { m_hMyControlPoint = nullptr; }
-	CTeamControlPoint *GetMyControlPoint( void );
-	bool			IsAnyPointBeingCaptured( void ) const;
-	bool			IsPointBeingContested( CTeamControlPoint *point ) const;
-	float			GetTimeLeftToCapture( void );
-	CTeamControlPoint *SelectPointToCapture( const CUtlVector<CTeamControlPoint *> &candidates );
-	CTeamControlPoint *SelectPointToDefend( const CUtlVector<CTeamControlPoint *> &candidates );
-	CTeamControlPoint *SelectClosestPointByTravelDistance( const CUtlVector<CTeamControlPoint *> &candidates ) const;
-
-	CCaptureZone*	GetFlagCaptureZone( void );
-	CCaptureFlag*	GetFlagToFetch( void );
-
-	float			TransientlyConsistentRandomValue( float duration, int seed ) const;
-
-	Action<CTFBot> *OpportunisticallyUseWeaponAbilities( void );
-
-	CBaseObject*	GetNearestKnownSappableTarget( void ) const;
-
-	void			UpdateLookingAroundForEnemies( void );
-	void			UpdateLookingForIncomingEnemies( bool );
-
-	bool			EquipBestWeaponForThreat( const CKnownEntity *threat );
-	bool			EquipLongRangeWeapon( void );
-
-	void			PushRequiredWeapon( CTFWeaponBase *weapon );
-	bool			EquipRequiredWeapon( void );
-	void			PopRequiredWeapon( void );
-
-	CTFBotSquad*	GetSquad( void ) const { return m_pSquad; }
-	bool			IsSquadmate( CTFPlayer *player ) const;
-	void			JoinSquad( CTFBotSquad *squad );
-	void			LeaveSquad();
-
 	struct SniperSpotInfo
 	{
-		CTFNavArea *m_pHomeArea;
-		Vector m_vecHome;
+		CTFNavArea *m_pVantageArea;
+		Vector m_vecVantage;
 		CTFNavArea *m_pForwardArea;
 		Vector m_vecForward;
 		float m_flRange;
@@ -255,15 +258,14 @@ public:
 	void			AccumulateSniperSpots( void );
 	void			SetupSniperSpotAccumulation( void );
 	void			ClearSniperSpots( void );
-
-	void			SelectReachableObjects( CUtlVector<EHANDLE> const& append, CUtlVector<EHANDLE> *outVector, INextBotFilter const& func, CNavArea *pStartArea, float flMaxRange );
-	CTFPlayer *		SelectRandomReachableEnemy( void );
-
-	bool			CanChangeClass( void );
-	const char*		GetNextSpawnClassname( void );
+	CUtlVector<SniperSpotInfo> const &GetSniperSpots( void );
 
 	float			GetUberDeployDelayDuration( void ) const;
 	float			GetUberHealthThreshold( void ) const;
+
+	void			NoteTargetSentry( EHANDLE hSentry );
+	ObjectHandle	GetTargetSentry( void ) const;
+	Vector const&	GetLastKnownSentryLocation( void ) const;
 
 	friend class CTFBotSquad;
 	CTFBotSquad *m_pSquad;
@@ -271,10 +273,6 @@ public:
 	bool m_bIsInFormation;
 
 	CTFNavArea *m_HomeArea;
-	CUtlVector<SniperSpotInfo> m_sniperSpots;
-
-	CHandle<CBaseObject> m_hTargetSentry;
-	Vector m_vecLastHurtBySentry;
 
 	enum DifficultyType
 	{
@@ -318,10 +316,6 @@ public:
 		FIREIMMUNE              = (1 << 25),
 	}
 	m_nBotAttrs;
-
-	bool m_bLookingAroundForEnemies;
-
-	CountdownTimer m_cpChangedTimer;
 	
 
 private:
@@ -329,24 +323,33 @@ private:
 
 	bool m_bWantsToChangeClass;
 
+	bool m_bLookingAroundForEnemies;
 	CountdownTimer m_lookForEnemiesTimer;
 
 	CTFPlayer *m_controlling;
 
+	ILocomotion *m_locomotor;
+	IBody *m_body;
+	IVision *m_vision;
+
+	CHandle<CBaseObject> m_hTargetSentry;
+	Vector m_vecLastNoticedSentry;
+
 	CHandle<CTeamControlPoint> m_hMyControlPoint;
 	CountdownTimer m_myCPValidDuration;
-
+	CountdownTimer m_cpChangedTimer;
 	CHandle<CCaptureZone> m_hMyCaptureZone;
 
 	CountdownTimer m_useWeaponAbilityTimer;
 
-	CUtlVector< CHandle<CTFWeaponBase> > m_requiredEquipStack;
+	CUtlStack< CHandle<CTFWeaponBase> > m_requiredEquipStack;
 
 	CUtlVector<DelayedNoticeInfo> m_delayedThreatNotices;
 
 	CUtlVectorAutoPurge<SuspectedSpyInfo *> m_suspectedSpies;
 	CUtlVector< CHandle<CTFPlayer> > m_knownSpies;
 
+	CUtlVector<SniperSpotInfo> m_sniperSpots;
 	CUtlVector<CTFNavArea *> m_sniperStandAreas;
 	CUtlVector<CTFNavArea *> m_sniperLookAreas;
 	CBaseEntity *m_sniperGoalEnt;
@@ -360,7 +363,7 @@ public:
 	CTFBotPathCost( CTFBot *actor, RouteType routeType = DEFAULT_ROUTE );
 	virtual ~CTFBotPathCost() { }
 
-	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const override;
+	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const OVERRIDE;
 
 private:
 	CTFBot *m_Actor;
@@ -370,15 +373,97 @@ private:
 	float m_flDeathDropHeight;
 };
 
-DEFINE_ENUM_BITWISE_OPERATORS( CTFBot::AttributeType )
-inline bool operator!( CTFBot::AttributeType const &rhs )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline void CTFBot::WantsToLookForEnemies( void )
 {
-	return (int const &)rhs == 0;
+	m_bLookingAroundForEnemies = true;
 }
-inline bool operator!=( CTFBot::AttributeType const &rhs, int const &lhs )
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline bool CTFBot::IsLookingForEnemies( void ) const
 {
-	return (int const &)rhs != lhs;
+	return m_bLookingAroundForEnemies;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline void CTFBot::StopLookingForEnemies( void )
+{
+	m_bLookingAroundForEnemies = false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline void CTFBot::PushRequiredWeapon( CTFWeaponBase *pWeapon )
+{
+	m_requiredEquipStack.Push( pWeapon );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline void CTFBot::PopRequiredWeapon( void )
+{
+	m_requiredEquipStack.Pop();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline bool CTFBot::EquipRequiredWeapon( void )
+{
+	if ( m_requiredEquipStack.Count() <= 0 )
+		return false;
+	return Weapon_Switch( m_requiredEquipStack.Top() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline void CTFBot::NoteTargetSentry( EHANDLE hSentry )
+{
+	m_hTargetSentry = hSentry;
+	m_vecLastNoticedSentry = GetAbsOrigin();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline ObjectHandle CTFBot::GetTargetSentry( void ) const
+{
+	return m_hTargetSentry;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline Vector const &CTFBot::GetLastKnownSentryLocation( void ) const
+{
+	return m_vecLastNoticedSentry;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline CUtlVector<CTFBot::SniperSpotInfo> const &CTFBot::GetSniperSpots( void )
+{
+	return m_sniperSpots;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+inline bool CTFBot::HasPointRecentlyChanged( void ) const
+{
+	return m_cpChangedTimer.HasStarted() && !m_cpChangedTimer.IsElapsed();
+}
+
 
 inline CTFBot *ToTFBot( CBaseEntity *ent )
 {
@@ -392,6 +477,7 @@ inline CTFBot *ToTFBot( CBaseEntity *ent )
 	Assert( dynamic_cast<CTFBot *>( ent ) );
 	return static_cast<CTFBot *>( ent );
 }
+
 
 class CTFBotItemSchema : public CAutoGameSystem
 {
@@ -417,10 +503,17 @@ private:
 	KeyValues *m_pSchema;
 };
 
-extern CTFBotItemSchema s_BotSchema;
-inline CTFBotItemSchema &TFBotItemSchema( void )
+extern CTFBotItemSchema &TFBotItemSchema( void );
+
+
+DEFINE_ENUM_BITWISE_OPERATORS( CTFBot::AttributeType )
+inline bool operator!( CTFBot::AttributeType const &rhs )
 {
-	return s_BotSchema;
+	return (int const &)rhs == 0;
+}
+inline bool operator!=( CTFBot::AttributeType const &rhs, int const &lhs )
+{
+	return (int const &)rhs != lhs;
 }
 
 #endif

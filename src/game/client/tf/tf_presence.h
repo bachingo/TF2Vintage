@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: TF implementation of the IPresence interface
 //
@@ -13,6 +13,7 @@
 #include "GameEventListener.h"
 #include "basepresence.h"
 #include "hl2orange.spa.h"
+#include "basediscordpresence.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: TF implementation for setting user contexts and properties.
@@ -44,14 +45,10 @@ private:
 
 };
 
-struct DiscordUser;
-struct DiscordRichPresence;
-
-#define DISCORD_FIELD_MAXLEN 128
-
-class CTFDiscordPresence : public CAutoGameSystemPerFrame, public CGameEventListener
+#ifndef POSIX
+class CTFDiscordPresence : public CBaseDiscordPresence, public CGameEventListener
 {
-	DECLARE_CLASS_GAMEROOT( CTFDiscordPresence, CAutoGameSystemPerFrame );
+	DECLARE_CLASS_GAMEROOT( CTFDiscordPresence, CBaseDiscordPresence );
 public:
 
 	CTFDiscordPresence();
@@ -61,37 +58,37 @@ public:
 
 	virtual bool		Init( void );
 	virtual void		Shutdown( void );
-	virtual void		Update( float frametime );
 	virtual void		LevelInitPostEntity( void );
 	virtual void		LevelShutdownPreEntity( void );
 
-	void				Reset( void );
-	void				UpdatePresence( bool bForce = false, bool bIsDead = false );
-	void				SetLevelName( char const *pMapName ) { Q_strncpy( m_szMapName, pMapName, MAX_MAP_NAME ); }
-
-	// Discord handlers
-	static void			OnReady( const DiscordUser *request );
-	static void			OnDisconnected( int errorCode, const char *message );
-	static void			OnError( int errorCode, const char *message );
-	static void			OnJoinedGame( const char *joinSecret );
-	static void			OnSpectateGame( const char *spectateSecret );
-	static void			OnJoinRequested( const DiscordUser *request );
+	bool				InitPresence( void ) OVERRIDE;
+	void				ResetPresence( void ) OVERRIDE;
+	void				UpdatePresence( void ) OVERRIDE { UpdatePresence( false, false ); }
+	char const*			GetMatchSecret( void ) const OVERRIDE;
+	char const*			GetJoinSecret( void ) const OVERRIDE;
+	char const*			GetSpectateSecret( void ) const OVERRIDE;
 
 private:
-	// Updates run asyncrhonous, so stack allocation in a no go
-	char m_szMapName[ MAX_MAP_NAME ];
+	void				UpdatePresence( bool bForce, bool bIsDead );
+	char const*			GetEncryptionKey( void ) const OVERRIDE { return "XwRJxjCc"; }
+
 	char m_szHostName[ DISCORD_FIELD_MAXLEN ];
 	char m_szServerInfo[ DISCORD_FIELD_MAXLEN ];
 	char m_szSteamID[ DISCORD_FIELD_MAXLEN ];
-	char m_szGameType[ DISCORD_FIELD_MAXLEN ];
-	char m_szGameState[ DISCORD_FIELD_MAXLEN ];
-	char m_szClassName[ DISCORD_FIELD_MAXLEN ];
 
-	static RealTimeCountdownTimer m_updateThrottle;
-	static int64 m_iCreationTimestamp;
-	static DiscordRichPresence m_sPresence;
+	RealTimeCountdownTimer m_updateThrottle;
+	long m_iCreationTimestamp;
+
+	static discord::Activity m_Activity;
+	static discord::User m_CurrentUser;
+
+	static void OnReady();
+	static void OnJoinedGame( char const *joinSecret );
+	static void OnSpectateGame( char const *joinSecret );
+	static void OnJoinRequested( discord::User const &joinRequester );
+	static void OnLogMessage( discord::LogLevel logLevel, char const *pszMessage );
+	static void OnActivityUpdate( discord::Result result );
 };
-
-extern CTFDiscordPresence *rpc;
+#endif // POSIX
 
 #endif // TF_PRESENCE_H

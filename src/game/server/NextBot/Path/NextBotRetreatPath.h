@@ -9,7 +9,6 @@
 #include "nav.h"
 #include "NextBotInterface.h"
 #include "NextBotLocomotionInterface.h"
-#include "NextBotRetreatPath.h"
 #include "NextBotUtil.h"
 #include "NextBotPathFollow.h"
 #include "tier0/vprof.h"

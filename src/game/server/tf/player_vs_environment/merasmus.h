@@ -1,4 +1,4 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright ï¿½ Valve LLC, All rights reserved. =======================
 //
 // Purpose:		
 //
@@ -60,7 +60,7 @@ public:
 	{
 	}
 
-	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const;
+	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const OVERRIDE;
 
 private:
 	CMerasmus *m_Actor;
@@ -71,7 +71,7 @@ class CMerasmus : public CHalloweenBaseBoss, public CGameEventListener
 {
 	DECLARE_CLASS( CMerasmus, CHalloweenBaseBoss )
 public:
-	DECLARE_INTENTION_INTERFACE( CMerasmus );
+	DECLARE_INTENTION_INTERFACE( CMerasmus )
 
 	CMerasmus();
 	virtual ~CMerasmus();
@@ -86,12 +86,12 @@ public:
 	virtual void			UpdateOnRemove( void );
 	virtual int				OnTakeDamage_Alive( CTakeDamageInfo const &info );
 
-	virtual void			FireGameEvent( IGameEvent *event );
+	virtual void			FireGameEvent( IGameEvent *event ) OVERRIDE;
 
-	virtual void			Update( void );
+	virtual void			Update( void ) OVERRIDE;
 
-	virtual IBody			*GetBodyInterface( void ) const override { return m_body; }
-	virtual ILocomotion		*GetLocomotionInterface( void ) const override;
+	virtual IBody			*GetBodyInterface( void ) const OVERRIDE { return m_body; }
+	virtual ILocomotion		*GetLocomotionInterface( void ) const OVERRIDE;
 
 	void					PushPlayer( CTFPlayer *pTarget, float flStrength );
 
@@ -121,8 +121,8 @@ public:
 	void					AddFakeProp( CBaseEntity *pProp )     { m_hTrickProps.AddToTail( pProp ); }
 	void					NotifyFound( CTFPlayer *pPlayer )     { m_hHideNSeekWinner = pPlayer; }
 
-	virtual int				GetBossType( void ) const override    { return MERASMUS; }
-	virtual int				GetLevel( void ) const                { return m_level; }
+	virtual int				GetBossType( void ) const OVERRIDE    { return MERASMUS; }
+	virtual int				GetLevel( void ) const OVERRIDE       { return m_level; }
 
 	void					StartRespawnTimer( void );
 

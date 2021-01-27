@@ -3,7 +3,7 @@
 
 #include "tf_menupanelbase.h"
 #include "tf_inventory.h"
-#include "panels/tf_ItemSelectionpanel.h"
+#include "panels/tf_itemselectionpanel.h"
 
 class CTFAdvModelPanel;
 class CTFWeaponSetPanel;
