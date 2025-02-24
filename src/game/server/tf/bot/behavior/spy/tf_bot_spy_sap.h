@@ -1,40 +1,42 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_spy_sap.h
+// Sap nearby enemy buildings
+// Michael Booth, June 2010
+
 #ifndef TF_BOT_SPY_SAP_H
 #define TF_BOT_SPY_SAP_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotPathFollow.h"
 
-#include "NextBotBehavior.h"
-
-class CBaseObject;
-
-class CTFBotSpySap : public Action<CTFBot>
+class CTFBotSpySap : public Action< CTFBot >
 {
 public:
-	CTFBotSpySap( CBaseObject *target );
-	virtual ~CTFBotSpySap();
+	CTFBotSpySap( CBaseObject *sapTarget );
+	virtual ~CTFBotSpySap() { }
 
-	virtual const char *GetName( void ) const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnSuspend( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *action ) OVERRIDE;
+	virtual ActionResult< CTFBot >	OnSuspend( CTFBot *me, Action< CTFBot > *interruptingAction );
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
 
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
-	virtual QueryResultType IsHindrance( const INextBot *me, CBaseEntity *it ) const OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;	// should we attack "them"?
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;							// is it time to retreat?
+	virtual QueryResultType IsHindrance( const INextBot *me, CBaseEntity *blocker ) const;		// use this to signal the enemy we are focusing on, so we dont avoid them
+
+	virtual const char *GetName( void ) const	{ return "SpySap"; };
 
 private:
-	QueryResultType AreAllDangerousSentriesSapped( CTFBot *actor ) const;
+	CHandle< CBaseObject > m_sapTarget;
 
-	CHandle<CBaseObject> m_hTarget;
-	CountdownTimer m_recomputePath;
-	PathFollower m_PathFollower;
+	CountdownTimer m_repathTimer;
+	PathFollower m_path;
+
+	CBaseObject *GetNearestKnownSappableTarget( CTFBot *me );
+	bool AreAllDangerousSentriesSapped( CTFBot *me ) const;
 };
 
-#endif
+#endif // TF_BOT_SPY_SAP_H

@@ -144,6 +144,23 @@ private:
 	int								m_nVectorTypeID;
 	int								m_nQuaternionTypeID;
 	int								m_nMatrixTypeID;
+
+	// Inherited via IScriptVM
+	HSCRIPT LookupFunction(const char *pszFunction, HSCRIPT hScope, bool bNoDelegation) override
+	{
+		return HSCRIPT();
+	}
+	CSquirrelMetamethodDelegateImpl *MakeSquirrelMetamethod_Get(HSCRIPT &hParentObject, const char *pszSlotName, ISquirrelMetamethodDelegate *pDelegate, bool bDeleteDelegateWhenIAmDeleted) override
+	{
+		return nullptr;
+	}
+	void DestroySquirrelMetamethod_Get(CSquirrelMetamethodDelegateImpl *pMetaMethodImpl) override
+	{
+	}
+	int GetKeyValue2(HSCRIPT hScope, int nIterator, ScriptVariant_t *pKey, ScriptVariant_t *pValue) override
+	{
+		return 0;
+	}
 };
 
 
@@ -202,7 +219,7 @@ private:
 	ScriptClassDesc_t *m_pClassDesc;
 	void *m_pInstance;
 	char m_szUniqueId[256];
-	mutable volatile long m_unRefCount;
+	mutable volatile uint32 m_unRefCount;
 };
 DEFINE_FIXEDSIZE_ALLOCATOR( CScriptClass, 1, UTLMEMORYPOOL_GROW_FAST );
 
@@ -477,10 +494,10 @@ ScriptStatus_t CAngelScriptVM::ExecuteFunction( HSCRIPT hFunction, ScriptVariant
 				pCtx->SetArgVarType( i, (void *)pArgs[i].m_pVector, m_nVectorTypeID );
 				break;
 			case FIELD_MATRIX3X4:
-				pCtx->SetArgVarType( i, (void *)pArgs[i].m_pMatrix, m_nMatrixTypeID );
+				pCtx->SetArgVarType( i, pArgs[i].m_pData, m_nMatrixTypeID );
 				break;
 			case FIELD_QUATERNION:
-				pCtx->SetArgVarType( i, (void *)pArgs[i].m_pQuat, m_nQuaternionTypeID );
+				pCtx->SetArgVarType( i, pArgs[i].m_pData, m_nQuaternionTypeID );
 				break;
 			case FIELD_HSCRIPT:
 				pCtx->SetArgAddress( i, pArgs[i].m_hScript );
@@ -800,10 +817,10 @@ bool CAngelScriptVM::SetValue( HSCRIPT hScope, const char *pszKey, const ScriptV
 					pScope->pTable->Set( pszKey, (void *)value.m_pVector, m_nVectorTypeID );
 					return true;
 				case FIELD_QUATERNION:
-					pScope->pTable->Set( pszKey, (void *)value.m_pQuat, m_nQuaternionTypeID );
+					pScope->pTable->Set( pszKey, value.m_pData, m_nQuaternionTypeID );
 					return true;
 				case FIELD_MATRIX3X4:
-					pScope->pTable->Set( pszKey, (void *)value.m_pMatrix, m_nMatrixTypeID );
+					pScope->pTable->Set( pszKey, value.m_pData, m_nMatrixTypeID );
 					return true;
 				case FIELD_CSTRING:
 				{
@@ -1407,7 +1424,7 @@ void CAngelScriptVM::TranslateCall( asIScriptGeneric *gen )
 		IScriptInstanceHelper *pHelper = pClassDesc->pHelper;
 		if ( pHelper )
 		{
-			pContext = pHelper->GetProxied( pObject->GetInstance() );
+			pContext = pHelper->GetProxied( pObject->GetInstance(), pFuncBinding );
 			if ( pContext == NULL )
 			{
 				ctx->SetException( "Accessed null instance" );

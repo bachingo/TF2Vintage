@@ -674,11 +674,11 @@ public:
 	virtual bool					GetAttachmentVelocity( int number, Vector &originVel, Quaternion &angleVel );
 
 	// Team handling
-	virtual C_Team					*GetTeam( void );
+	virtual C_Team					*GetTeam( void ) const;
 	virtual int						GetTeamNumber( void ) const;
 	virtual void					ChangeTeam( int iTeamNum );			// Assign this entity to a team.
 	virtual int						GetRenderTeamNumber( void );
-	virtual bool					InSameTeam( C_BaseEntity *pEntity );	// Returns true if the specified entity is on the same team as this one
+	virtual bool					InSameTeam( const C_BaseEntity *pEntity ) const;	// Returns true if the specified entity is on the same team as this one
 	virtual bool					InLocalTeam( void );
 
 	// ID Target handling
@@ -918,6 +918,7 @@ public:
 	void							PreEntityPacketReceived( int commands_acknowledged );
 	void							PostEntityPacketReceived( void );
 	bool							PostNetworkDataReceived( int commands_acknowledged );
+	virtual bool					PredictionErrorShouldResetLatchedForAllPredictables( void ) { return true; } //legacy behavior is that any prediction error causes all predictables to reset latched
 	bool							GetPredictionEligible( void ) const;
 	void							SetPredictionEligible( bool canpredict );
 
@@ -1255,6 +1256,9 @@ public:
 
 	int		GetCreationTick() const;
 
+	virtual void ClientAdjustStartSoundParams( EmitSound_t &params ) {}
+	virtual void ClientAdjustStartSoundParams( StartSoundParams_t& params ) {}
+
 #ifdef _DEBUG
 	void FunctionCheck( void *pFunction, const char *name );
 
@@ -1437,7 +1441,7 @@ public:
 	// Object model index
 	short							m_nModelIndex;
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_VINTAGE_CLIENT )
+#ifdef TF_CLIENT_DLL
 	int								m_nModelIndexOverrides[MAX_VISION_MODES];
 #endif
 
@@ -1795,6 +1799,23 @@ protected:
 
 	CThreadFastMutex m_CalcAbsolutePositionMutex;
 	CThreadFastMutex m_CalcAbsoluteVelocityMutex;
+
+#ifdef TF_CLIENT_DLL
+	// TF prevents drawing of any entity attached to players that aren't items in the inventory of the player.
+	// This is to prevent servers creating fake cosmetic items and attaching them to players.
+public:
+	virtual bool ValidateEntityAttachedToPlayer( bool &bShouldRetry );
+	bool EntityDeemedInvalid( void ) { return (m_bValidatedOwner && m_bDeemedInvalid); }
+protected:
+	bool m_bValidatedOwner;
+	bool m_bDeemedInvalid;
+	bool m_bWasDeemedInvalid;
+	RenderMode_t m_PreviousRenderMode;
+	color32 m_PreviousRenderColor;
+#endif
+
+private:
+	bool	m_bOldShouldDraw;
 };
 
 EXTERN_RECV_TABLE(DT_BaseEntity);

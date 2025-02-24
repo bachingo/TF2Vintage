@@ -59,6 +59,7 @@ class CFuncTrackTrain : public CBaseEntity
 {
 	DECLARE_CLASS( CFuncTrackTrain, CBaseEntity );
 	DECLARE_SERVERCLASS();
+	DECLARE_ENT_SCRIPTDESC();
 
 public:
 	CFuncTrackTrain();
@@ -114,7 +115,7 @@ public:
 
 	static CFuncTrackTrain *Instance( edict_t *pent );
 
-#if defined( TF_DLL ) || defined( TF_VINTAGE )
+#ifdef TF_DLL
 	int UpdateTransmitState()
 	{
 		return SetTransmitState( FL_EDICT_ALWAYS );
@@ -132,6 +133,7 @@ public:
 	float GetDesiredSpeed() const { return m_flDesiredSpeed;}
 
 	virtual bool IsBaseTrain( void ) const { return true; }
+	Vector ScriptGetFuturePosition( float flSeconds, float flMinSpeed );
 
 	void SetSpeedForwardModifier( float flModifier );
 	void SetBlockDamage( float flDamage ) { m_flBlockDamage = flDamage; }

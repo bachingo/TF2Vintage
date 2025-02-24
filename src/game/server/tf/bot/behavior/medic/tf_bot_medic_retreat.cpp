@@ -1,123 +1,143 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_retreat.cpp
+// Retreat towards our spawn to find another patient
+// Michael Booth, May 2009
+
 #include "cbase.h"
-#include "../../tf_bot.h"
-#include "tf_bot_medic_retreat.h"
-#include "nav_mesh/tf_nav_area.h"
+#include "tf_player.h"
+#include "tf_gamerules.h"
+#include "tf_weapon_medigun.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/medic/tf_bot_medic_retreat.h"
+
+#include "nav_mesh.h"
+
+extern ConVar tf_bot_path_lookahead_range;
+extern ConVar tf_bot_medic_follow_range;
 
 
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMedicRetreat::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
+{
+	CTFNavArea *homeArea = me->GetSpawnArea();
+
+	if ( homeArea == NULL )
+	{
+		return Done( "No home area!" );
+	}
+
+	m_path.SetMinLookAheadDistance( tf_bot_path_lookahead_range.GetFloat() );
+
+	CTFBotPathCost cost( me, FASTEST_ROUTE );
+	m_path.Compute( me, homeArea->GetCenter(), cost );
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
 class CUsefulHealTargetFilter : public INextBotEntityFilter
 {
 public:
-	CUsefulHealTargetFilter( int teamNum )
-		: m_iTeamNum( teamNum )
+	CUsefulHealTargetFilter( int team )
 	{
-	};
-
-	virtual bool IsAllowed( CBaseEntity *ent ) const
-	{
-		if ( ent == nullptr || !ent->IsPlayer() || ent->GetTeamNumber() != m_iTeamNum )
-			return false;
-
-		if ( ToTFPlayer( ent )->IsPlayerClass( TF_CLASS_MEDIC ) ||
-			 ToTFPlayer( ent )->IsPlayerClass( TF_CLASS_SNIPER ) )
-		{
-			return false;
-		}
-
-		return true;
+		m_team = team;
 	}
 
-private:
-	int m_iTeamNum;
+	virtual bool IsAllowed( CBaseEntity *entity ) const
+	{
+		if ( entity && entity->IsPlayer() && entity->GetTeamNumber() == m_team )
+		{
+			return !ToTFPlayer( entity )->IsPlayerClass( TF_CLASS_MEDIC ) && !ToTFPlayer( entity )->IsPlayerClass( TF_CLASS_SNIPER );
+		}
+		return false;
+	}
+
+	int m_team;
 };
 
 
-CTFBotMedicRetreat::CTFBotMedicRetreat()
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMedicRetreat::Update( CTFBot *me, float interval )
 {
-}
-
-CTFBotMedicRetreat::~CTFBotMedicRetreat()
-{
-}
-
-
-const char *CTFBotMedicRetreat::GetName( void ) const
-{
-	return "MedicRetreat";
-}
-
-
-ActionResult<CTFBot> CTFBotMedicRetreat::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	if ( me->m_HomeArea == nullptr )
-		return Action<CTFBot>::Done( "No home area!" );
-
-	CTFBotPathCost cost( me, FASTEST_ROUTE );
-	m_PathFollower.Compute( me, me->m_HomeArea->GetCenter(), cost );
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotMedicRetreat::Update( CTFBot *me, float dt )
-{
-	CTFWeaponBase *weapon = me->m_Shared.GetActiveTFWeapon();
-	if ( weapon && weapon->GetWeaponID() != TF_WEAPON_SYRINGEGUN_MEDIC )
+	// equip the syringegun and defend ourselves!
+	CTFWeaponBase *myWeapon = me->m_Shared.GetActiveTFWeapon();
+	if ( myWeapon )
 	{
-		CBaseCombatWeapon *primary = me->Weapon_GetSlot( 0 );
-		if ( primary )
-			me->Weapon_Switch( primary );
+		if ( myWeapon->GetWeaponID() != TF_WEAPON_SYRINGEGUN_MEDIC )
+		{
+			CBaseCombatWeapon *syringeGun = me->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY );
+
+			if ( syringeGun )
+			{
+				me->Weapon_Switch( syringeGun );
+			}
+		}
 	}
 
-	m_PathFollower.Update( me );
+	m_path.Update( me );
 
-	if ( m_lookForPatientsTimer.IsElapsed() )
+	// look around to try to spot a friend to heal
+	if ( m_lookAroundTimer.IsElapsed() )
 	{
-		m_lookForPatientsTimer.Start( RandomFloat( 0.33f, 1.0f ) );
+		m_lookAroundTimer.Start( RandomFloat( 0.33f, 1.0f ) );
 
-		Vector fwd;
-		AngleVectors( QAngle( 0.0f, RandomFloat( -180.0f, 180.0f ), 0.0f ), &fwd );
+		QAngle angle;
+		angle.x = 0.0f;
+		angle.y = RandomFloat( -180.0f, 180.0f );
+		angle.z = 0.0f;
 
-		me->GetBodyInterface()->AimHeadTowards( me->EyePosition() + fwd, IBody::IMPORTANT, 0.1f, nullptr, "Looking for someone to heal" );
+		Vector forward;
+		AngleVectors( angle, &forward );
+
+		me->GetBodyInterface()->AimHeadTowards( me->EyePosition() + forward, IBody::IMPORTANT, 0.1f, NULL, "Looking for someone to heal" );
 	}
 
+	// if we see a friend, heal them
 	CUsefulHealTargetFilter filter( me->GetTeamNumber() );
-	if ( me->GetVisionInterface()->GetClosestKnown( filter ) != nullptr )
-		return Action<CTFBot>::Done( "I know of a teammate" );
+	const CKnownEntity *known = me->GetVisionInterface()->GetClosestKnown( filter );
+	if ( known )
+	{
+		return Done( "I know of a teammate" );
+	}
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotMedicRetreat::OnResume( CTFBot *me, Action<CTFBot> *priorAction )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotMedicRetreat::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
 {
 	CTFBotPathCost cost( me, FASTEST_ROUTE );
-	m_PathFollower.Compute( me, me->m_HomeArea->GetCenter(), cost );
+	m_path.Compute( me, me->GetSpawnArea()->GetCenter(), cost );
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotMedicRetreat::OnMoveToSuccess( CTFBot *me, const Path *path )
-{
-	return Action<CTFBot>::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotMedicRetreat::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotMedicRetreat::OnStuck( CTFBot *me )
 {
 	CTFBotPathCost cost( me, FASTEST_ROUTE );
-	m_PathFollower.Compute( me, me->m_HomeArea->GetCenter(), cost );
+	m_path.Compute( me, me->GetSpawnArea()->GetCenter(), cost );
 
-	return Action<CTFBot>::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotMedicRetreat::OnStuck( CTFBot *me )
-{
-	CTFBotPathCost func( me, FASTEST_ROUTE );
-	m_PathFollower.Compute( me, me->m_HomeArea->GetCenter(), func );
-
-	return Action<CTFBot>::TryContinue();
+	return TryContinue();
 }
 
 
-QueryResultType CTFBotMedicRetreat::ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotMedicRetreat::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
 {
+	CTFBotPathCost cost( me, FASTEST_ROUTE );
+	m_path.Compute( me, me->GetSpawnArea()->GetCenter(), cost );
+
+	return TryContinue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotMedicRetreat::ShouldAttack( const INextBot *me, const CKnownEntity *them ) const
+{
+	// defend ourselves!
 	return ANSWER_YES;
 }

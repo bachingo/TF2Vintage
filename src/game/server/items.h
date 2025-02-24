@@ -74,9 +74,13 @@ public:
 	bool	CreateItemVPhysicsObject( void );
 	virtual bool	ItemCanBeTouchedByPlayer( CBasePlayer *pPlayer );
 
-#if defined( HL2MP ) || defined( TF_DLL ) || defined ( TF_VINTAGE )
+#if defined( HL2MP ) || defined( TF_DLL )
 	void	FallThink( void );
 	float  m_flNextResetCheckTime;
+#endif
+
+#if defined( HL2MP )
+	virtual const char *GetWeaponClassForAmmo() const { return NULL; }
 #endif
 
 	DECLARE_DATADESC();

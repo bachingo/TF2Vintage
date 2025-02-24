@@ -1,81 +1,80 @@
-//========= Copyright � Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_destroy_enemy_sentry.h
+// Destroy an enemy sentry gun
+// Michael Booth, June 2010
+
 #ifndef TF_BOT_DESTROY_ENEMY_SENTRY_H
 #define TF_BOT_DESTROY_ENEMY_SENTRY_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotChasePath.h"
 
-#include "NextBotBehavior.h"
-#include "NextBotUtil.h"
-
-class CObjectSentrygun;
-
-class CTFBotDestroyEnemySentry : public Action<CTFBot>
+//---------------------------------------------------------------------------------
+class CTFBotDestroyEnemySentry : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotDestroyEnemySentry, Action<CTFBot> )
 public:
-	virtual ~CTFBotDestroyEnemySentry() {}
+	static bool IsPossible( CTFBot *me );			// return true if this Action has what it needs to perform right now
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;					// are we in a hurry?
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;					// is it time to retreat?
+	virtual QueryResultType	ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;	// should we attack "them"?
 
-	static bool IsPossible( CTFBot *actor );
+	virtual const char *GetName( void ) const	{ return "DestroyEnemySentry"; };
 
 private:
-	void ComputeCornerAttackSpot( CTFBot *actor );
-	void ComputeSafeAttackSpot( CTFBot *actor );
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+	CountdownTimer m_abandonTimer;
 
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
-	bool m_bWalkToSpot;
-	Vector m_vecAttackSpot;
-	bool m_bFoundAttackSpot;
-	bool m_bAtSafeSpot;
-	bool m_bUbered;
-	CHandle<CObjectSentrygun> m_hSentry;
+	bool m_canMove;
+
+#ifdef TF_CREEP_MODE
+	CountdownTimer m_creepTimer;
+#endif
+
+	Vector m_safeAttackSpot;
+	bool m_hasSafeAttackSpot;
+	void ComputeSafeAttackSpot( CTFBot *me );
+	void ComputeCornerAttackSpot( CTFBot *me );
+
+	bool m_isAttackingSentry;
+	bool m_wasUber;
+
+	ActionResult< CTFBot > EquipLongRangeWeapon( CTFBot *me );
+
+	CHandle< CObjectSentrygun > m_targetSentry;
 };
 
 
-
-class CTFBotUberAttackEnemySentry : public Action<CTFBot>
+//---------------------------------------------------------------------------------
+class CTFBotUberAttackEnemySentry : public Action< CTFBot >
 {
-	DECLARE_CLASS( CTFBotUberAttackEnemySentry, Action<CTFBot> )
 public:
-	CTFBotUberAttackEnemySentry( CObjectSentrygun *sentry );
-	virtual ~CTFBotUberAttackEnemySentry();
+	CTFBotUberAttackEnemySentry( CObjectSentrygun *sentryTarget );
+	virtual ~CTFBotUberAttackEnemySentry() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;					// are we in a hurry?
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;					// is it time to retreat?
+	virtual QueryResultType	ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;	// should we attack "them"?
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "UberAttackEnemySentry"; };
 
 private:
-	bool m_bSavedIgnoreEnemies;
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
-	CHandle<CObjectSentrygun> m_hSentry;
+	bool m_wasIgnoringEnemies;
+
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+
+	CHandle< CObjectSentrygun > m_targetSentry;
 };
 
 
-bool FindGrenadeAim( CTFBot *actor, CBaseEntity *target, float *pYaw, float *pPitch );
-bool FindStickybombAim( CTFBot *actor, CBaseEntity *target, float *pYaw, float *pPitch, float *f3 );
-
-#endif
+#endif // TF_BOT_DESTROY_ENEMY_SENTRY_H

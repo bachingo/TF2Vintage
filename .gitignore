@@ -72,6 +72,8 @@ src/Output-Build.txt
 src/utils/vvis_launcher/vvis_launcher.vpc.sentinel
 *.vpc.sentinel
 *_nut.h
+*.vpc_cache
+src/*/_vpc_/*
 
 
 # Files to ignore when considering what GIT should commit.
@@ -176,3 +178,4 @@ src/materialsystem/stdshaders/filestocopy.txt
 src/materialsystem/stdshaders/inclist.txt
 src/materialsystem/stdshaders/filelistgen.txt
 src/materialsystem/stdshaders/filelist.txt
+game/tf2vintage/bin/x64/vscript.dll

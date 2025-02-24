@@ -28,6 +28,7 @@ public:
 	{
 		m_pMsg = NULL;
 		m_Hdr.m_eMsgType = k_EInvalidMsg;
+		m_cRefCount = 1;
 	}
 
 	void *Data( void ) const { return (byte *)m_pMsg; }

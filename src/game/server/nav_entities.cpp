@@ -24,7 +24,7 @@
 #include "AmbientLight.h"
 #endif
 
-#if defined( TF_DLL ) || defined( TF_VINTAGE )
+#ifdef TF_DLL
 #include "tf_player.h"
 #include "bot/tf_bot.h"
 #endif
@@ -46,6 +46,7 @@ BEGIN_DATADESC( CFuncNavCost )
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Toggle", InputToggle ),
 	DEFINE_KEYFIELD( m_iszTags, FIELD_STRING, "tags" ),
 	DEFINE_KEYFIELD( m_team, FIELD_INTEGER, "team" ),
 	DEFINE_KEYFIELD( m_isDisabled, FIELD_BOOLEAN, "start_disabled" ),
@@ -130,6 +131,13 @@ void CFuncNavCost::InputDisable( inputdata_t &inputdata )
 
 
 //--------------------------------------------------------------------------------------------------------
+void CFuncNavCost::InputToggle( inputdata_t &inputdata )
+{
+	m_isDisabled = !m_isDisabled;
+	gm_dirtyTimer.Start( UPDATE_DIRTY_TIME );
+}
+
+//--------------------------------------------------------------------------------------------------------
 void CFuncNavCost::CostThink( void )
 {
 	SetNextThink( gpGlobals->curtime + UPDATE_DIRTY_TIME );
@@ -176,7 +184,7 @@ bool CFuncNavCost::IsApplicableTo( CBaseCombatCharacter *who ) const
 		}
 	}
 
-#if defined( TF_DLL ) || defined( TF_VINTAGE )
+#ifdef TF_DLL
 	// TODO: Make group comparison efficient and move to base combat character
 	CTFBot *bot = ToTFBot( who );
 	if ( bot )
@@ -205,7 +213,7 @@ bool CFuncNavCost::IsApplicableTo( CBaseCombatCharacter *who ) const
 			return false;
 		}
 
-		if ( bot->HasMission( CTFBot::MissionType::DESTROY_SENTRIES ) )
+		if ( bot->HasMission( CTFBot::MISSION_DESTROY_SENTRIES ) )
 		{
 			if ( HasTag( "mission_sentry_buster" ) )
 			{
@@ -213,7 +221,7 @@ bool CFuncNavCost::IsApplicableTo( CBaseCombatCharacter *who ) const
 			}
 		}
 		
-		if ( bot->HasMission( CTFBot::MissionType::SNIPER ) )
+		if ( bot->HasMission( CTFBot::MISSION_SNIPER ) )
 		{
 			if ( HasTag( "mission_sniper" ) )
 			{
@@ -221,7 +229,7 @@ bool CFuncNavCost::IsApplicableTo( CBaseCombatCharacter *who ) const
 			}
 		}
 		
-		if ( bot->HasMission( CTFBot::MissionType::SPY ) )
+		if ( bot->HasMission( CTFBot::MISSION_SPY ) )
 		{
 			if ( HasTag( "mission_spy" ) )
 			{
@@ -229,7 +237,7 @@ bool CFuncNavCost::IsApplicableTo( CBaseCombatCharacter *who ) const
 			}
 		}
 
-		if ( bot->HasMission( CTFBot::MissionType::REPROGRAMMED ) )
+		if ( bot->HasMission( CTFBot::MISSION_REPROGRAMMED ) )
 		{
 			return false;
 		}

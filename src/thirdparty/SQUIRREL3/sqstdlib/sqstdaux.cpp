@@ -1,5 +1,6 @@
 /* see copyright notice in squirrel.h */
 #include <squirrel.h>
+#include <basehandle.h>
 #include <sqstdaux.h>
 #include <stdio.h>
 #include <assert.h>
@@ -90,6 +91,12 @@ void sqstd_printcallstack(HSQUIRRELVM v)
                     pf(v,_SC("[%s] %s\n"),name,bval == SQTrue ? _SC("true"):_SC("false"));
                              }
                     break;
+                case OT_EHANDLE:{
+                    CBaseHandle h = INVALID_EHANDLE;
+                    sq_getehandle(v,-1,&h);
+                    pf(v,_SC("[%s] %d\n"),name,h.ToInt());
+				                }
+					break;
                 default: Assert(0); break;
                 }
                 sq_pop(v,1);

@@ -40,6 +40,8 @@ public:
 
 	void SetGoalTolerance( float range );			// set tolerance within at which we're considered to be at our goal
 
+	Path::ResultType GetResult() const { return m_result;  }
+
 private:
 	const Path::Segment *m_goal;					// our current goal along the path
 	float m_minLookAheadRange;
@@ -49,6 +51,8 @@ private:
 
 	//bool IsOnStairs( INextBot *bot ) const;		// return true if bot is standing on a stairway
 	bool m_isOnStairs;
+
+	Path::ResultType m_result = NO_PATH;
 
 	CountdownTimer m_avoidTimer;					// do avoid check more often if we recently avoided
 

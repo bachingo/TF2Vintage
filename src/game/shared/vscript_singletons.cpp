@@ -13,6 +13,7 @@
 #include <vgui/ILocalize.h>
 #include "ammodef.h"
 #include "tier1/utlcommon.h"
+#include "tier1/utlbuffer.h"
 
 #ifndef CLIENT_DLL
 #include "ai_squad.h"
@@ -903,498 +904,196 @@ BEGIN_SCRIPTDESC_ROOT( CDebugOverlayScriptHelper, SCRIPT_SINGLETON "CDebugOverla
 END_SCRIPTDESC();
 
 
-#if 0
 //=============================================================================
 // ConVars
 //=============================================================================
-class CScriptConCommand : public ICommandCallback, public ICommandCompletionCallback
-{
-public:
-	~CScriptConCommand()
-	{
-		Unregister();
-		delete m_cmd;
-	}
-
-	CScriptConCommand( const char *name, HSCRIPT fn, const char *helpString, int flags )
-	{
-		m_cmd = new ConCommand( name, this, helpString, flags, 0 );
-		m_hCallback = fn;
-		m_hCompletionCallback = NULL;
-		m_nCmdNameLen = V_strlen(name) + 1;
-
-		Assert( m_nCmdNameLen - 1 <= 128 );
-	}
-
-	void CommandCallback( const CCommand &command )
-	{
-		int count = command.ArgC();
-		ScriptVariant_t *vArgv = (ScriptVariant_t*)stackalloc( sizeof(ScriptVariant_t) * count );
-		for ( int i = 0; i < count; ++i )
-		{
-			vArgv[i] = command[i];
-		}
-		if ( g_pScriptVM->ExecuteFunction( m_hCallback, vArgv, count, NULL, NULL, true ) == SCRIPT_ERROR )
-		{
-			DevWarning( 1, "CScriptConCommand: invalid callback for '%s'\n", command[0] );
-		}
-	}
-
-	int CommandCompletionCallback( const char *partial, CUtlVector< CUtlString > &commands )
-	{
-		Assert( g_pScriptVM );
-		Assert( m_hCompletionCallback );
-
-		ScriptVariant_t hArray;
-		g_pScriptVM->CreateArray( hArray );
-
-		// split command name from partial, pass both separately to the script function
-		char *cmdname = (char*)stackalloc( m_nCmdNameLen );
-		V_memcpy( cmdname, partial, m_nCmdNameLen - 1 );
-		cmdname[ m_nCmdNameLen - 1 ] = 0;
-
-		char argPartial[256];
-		V_StrRight( partial, V_strlen(partial) - m_nCmdNameLen, argPartial, sizeof(argPartial) );
-
-		ScriptVariant_t args[3] = { cmdname, argPartial, hArray };
-		if ( g_pScriptVM->ExecuteFunction( m_hCompletionCallback, args, 3, NULL, NULL, true ) == SCRIPT_ERROR )
-		{
-			DevWarning( 1, "CScriptConCommand: invalid command completion callback for '%s'\n", cmdname );
-			g_pScriptVM->ReleaseScript( hArray );
-			return 0;
-		}
-
-		int count = 0;
-		ScriptVariant_t val;
-		int it = -1;
-		while ( ( it = g_pScriptVM->GetKeyValue( hArray, it, NULL, &val ) ) != -1 )
-		{
-			if ( val.m_type == FIELD_CSTRING )
-			{
-				CUtlString s = val.m_pszString;
-				//s.SetLength( COMMAND_COMPLETION_ITEM_LENGTH - 1 );
-				commands.AddToTail( s );
-				++count;
-			}
-			g_pScriptVM->ReleaseValue(val);
-
-			if ( count == COMMAND_COMPLETION_MAXITEMS )
-				break;
-		}
-		g_pScriptVM->ReleaseScript( hArray );
-		return count;
-	}
-
-	void SetCompletionCallback( HSCRIPT fn )
-	{
-		if ( m_hCompletionCallback )
-			g_pScriptVM->ReleaseScript( m_hCompletionCallback );
-
-		if (fn)
-		{
-			if ( !m_cmd->IsRegistered() )
-				return;
-
-			m_cmd->m_pCommandCompletionCallback = this;
-			m_cmd->m_bHasCompletionCallback = true;
-			m_hCompletionCallback = fn;
-		}
-		else
-		{
-			m_cmd->m_pCommandCompletionCallback = NULL;
-			m_cmd->m_bHasCompletionCallback = false;
-			m_hCompletionCallback = NULL;
-		}
-	}
-
-	void SetCallback( HSCRIPT fn )
-	{
-		if (fn)
-		{
-			if ( !m_cmd->IsRegistered() )
-				Register();
-
-			if ( m_hCallback )
-				g_pScriptVM->ReleaseScript( m_hCallback );
-			m_hCallback = fn;
-		}
-		else
-		{
-			Unregister();
-		}
-	}
-
-	inline void Unregister()
-	{
-		if ( g_pCVar && m_cmd->IsRegistered() )
-			g_pCVar->UnregisterConCommand( m_cmd );
-
-		if ( g_pScriptVM )
-		{
-			if ( m_hCallback )
-			{
-				g_pScriptVM->ReleaseScript( m_hCallback );
-				m_hCallback = NULL;
-			}
-
-			SetCompletionCallback( NULL );
-		}
-	}
-
-	inline void Register()
-	{
-		if ( g_pCVar )
-			g_pCVar->RegisterConCommand( m_cmd );
-	}
-
-	HSCRIPT m_hCallback;
-	HSCRIPT m_hCompletionCallback;
-	int m_nCmdNameLen;
-	ConCommand *m_cmd;
-};
-
-class CScriptConVar
-{
-public:
-	~CScriptConVar()
-	{
-		Unregister();
-		delete m_cvar;
-	}
-
-	CScriptConVar( const char *pName, const char *pDefaultValue, const char *pHelpString, int flags/*, float fMin, float fMax*/ )
-	{
-		m_cvar = new ConVar( pName, pDefaultValue, flags, pHelpString );
-	}
-
-	inline void Unregister()
-	{
-		if ( g_pCVar && m_cvar->IsRegistered() )
-			g_pCVar->UnregisterConCommand( m_cvar );
-	}
-
-	ConVar *m_cvar;
-};
+#define VSCRIPT_CONVAR_ALLOWLIST_NAME "cfg/vscript_convar_allowlist.txt"
 
 class CScriptConvarAccessor : public CAutoGameSystem
 {
 public:
-	static CUtlMap< unsigned int, bool > g_ConVarsBlocked;
-	static CUtlMap< unsigned int, bool > g_ConCommandsOverridable;
-	static CUtlMap< unsigned int, CScriptConCommand* > g_ScriptConCommands;
-	static CUtlMap< unsigned int, CScriptConVar* > g_ScriptConVars;
-	static inline unsigned int Hash( const char*sz ){ return HashStringCaseless(sz); }
+	ScriptVariant_t GetBool( const char *cvar );
+	ScriptVariant_t GetInt( const char *cvar );
+	ScriptVariant_t GetFloat( const char *cvar );
+	ScriptVariant_t GetStr( const char *cvar );
+	const char *GetClientConvarValue( const char *cvar, int entindex );
+	void SetValue( const char *cvar, ScriptVariant_t value );
 
-public:
-	inline void AddOverridable( const char *name )
-	{
-		g_ConCommandsOverridable.InsertOrReplace( Hash(name), true );
-	}
+	void LevelInitPreEntity() OVERRIDE;
+	void LevelShutdownPostEntity() OVERRIDE;
 
-	inline bool IsOverridable( unsigned int hash )
-	{
-		int idx = g_ConCommandsOverridable.Find( hash );
-		if ( idx == g_ConCommandsOverridable.InvalidIndex() )
-			return false;
-		return g_ConCommandsOverridable[idx];
-	}
+	bool IsConVarOnAllowList( const char *cvar );
 
-	inline void AddBlockedConVar( const char *name )
-	{
-		g_ConVarsBlocked.InsertOrReplace( Hash(name), true );
-	}
+	CUtlSymbolTable m_AllowedConVars;
+};
+CScriptConvarAccessor g_ScriptConvars;
 
-	inline bool IsBlockedConvar( const char *name )
-	{
-		int idx = g_ConVarsBlocked.Find( Hash(name) );
-		if ( idx == g_ConVarsBlocked.InvalidIndex() )
-			return false;
-		return g_ConVarsBlocked[idx];
-	}
+#define FCVAR_SCRIPT_NONO ( FCVAR_PROTECTED | FCVAR_SERVER_CANNOT_QUERY )
 
-public:
-	void RegisterCommand( const char *name, HSCRIPT fn, const char *helpString, int flags );
-	void SetCompletionCallback( const char *name, HSCRIPT fn );
-	void UnregisterCommand( const char *name );
-	void RegisterConvar( const char *name, const char *pDefaultValue, const char *helpString, int flags );
-
-	HSCRIPT GetCommandClient()
-	{
-#ifdef GAME_DLL
-		return ToHScript( UTIL_GetCommandClient() );
-#else
-		return ToHScript( C_BasePlayer::GetLocalPlayer() );
-#endif
-	}
-#ifdef GAME_DLL
-	const char *GetClientConvarValue( int index, const char* cvar )
-	{
-		return engine->GetClientConVarValue( index, cvar );
-	}
-#endif
-public:
-	bool Init();
-
-	void LevelShutdownPostEntity()
-	{
-		g_ScriptConCommands.PurgeAndDeleteElements();
-		g_ScriptConVars.PurgeAndDeleteElements();
-	}
-
-public:
-	float GetFloat( const char *pszConVar )
-	{
-		ConVarRef cvar( pszConVar );
-		if ( cvar.IsFlagSet( FCVAR_SERVER_CANNOT_QUERY ) )
-			return NULL;
-		return cvar.GetFloat();
-	}
-
-	int GetInt( const char *pszConVar )
-	{
-		ConVarRef cvar( pszConVar );
-		if ( cvar.IsFlagSet( FCVAR_SERVER_CANNOT_QUERY ) )
-			return NULL;
-		return cvar.GetInt();
-	}
-
-	bool GetBool( const char *pszConVar )
-	{
-		ConVarRef cvar( pszConVar );
-		if ( cvar.IsFlagSet( FCVAR_SERVER_CANNOT_QUERY ) )
-			return NULL;
-		return cvar.GetBool();
-	}
-
-	const char *GetStr( const char *pszConVar )
-	{
-		ConVarRef cvar( pszConVar );
-		if ( cvar.IsFlagSet( FCVAR_SERVER_CANNOT_QUERY ) )
-			return NULL;
-		return cvar.GetString();
-	}
-
-	const char *GetDefaultValue( const char *pszConVar )
-	{
-		ConVarRef cvar( pszConVar );
-		return cvar.GetDefault();
-	}
-
-	bool IsFlagSet( const char *pszConVar, int nFlags )
-	{
-		ConVarRef cvar( pszConVar );
-		return cvar.IsFlagSet( nFlags );
-	}
-
-	void SetFloat( const char *pszConVar, float value )
-	{
-		SetValue( pszConVar, value );
-	}
-
-	void SetInt( const char *pszConVar, int value )
-	{
-		SetValue( pszConVar, value );
-	}
-
-	void SetBool( const char *pszConVar, bool value )
-	{
-		SetValue( pszConVar, value );
-	}
-
-	void SetStr( const char *pszConVar, const char *value )
-	{
-		SetValue( pszConVar, value );
-	}
-
-	template <typename T>
-	void SetValue( const char *pszConVar, T value )
-	{
-		ConVarRef cvar( pszConVar );
-		if ( !cvar.IsValid() )
-			return;
-
-		if ( cvar.IsFlagSet( FCVAR_NOT_CONNECTED | FCVAR_SERVER_CANNOT_QUERY ) )
-			return;
-
-		if ( IsBlockedConvar( pszConVar ) )
-			return;
-
-		cvar.SetValue( value );
-	}
-
-} g_ScriptConvarAccessor;
-
-
-CUtlMap< unsigned int, bool > CScriptConvarAccessor::g_ConVarsBlocked( DefLessFunc(unsigned int) );
-CUtlMap< unsigned int, bool > CScriptConvarAccessor::g_ConCommandsOverridable( DefLessFunc(unsigned int) );
-CUtlMap< unsigned int, CScriptConCommand* > CScriptConvarAccessor::g_ScriptConCommands( DefLessFunc(unsigned int) );
-CUtlMap< unsigned int, CScriptConVar* > CScriptConvarAccessor::g_ScriptConVars( DefLessFunc(unsigned int) );
-
-void CScriptConvarAccessor::RegisterCommand( const char *name, HSCRIPT fn, const char *helpString, int flags )
+ScriptVariant_t CScriptConvarAccessor::GetBool( const char *cvar )
 {
-	unsigned int hash = Hash(name);
-	int idx = g_ScriptConCommands.Find(hash);
-	if ( idx == g_ScriptConCommands.InvalidIndex() )
+	if ( !cvar || !*cvar )
+		return ScriptVariant_t();
+
+	ConVarRef cref( cvar );
+	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
 	{
-		if ( g_pCVar->FindVar(name) || ( g_pCVar->FindCommand(name) && !IsOverridable(hash) ) )
-		{
-			DevWarning( 1, "CScriptConvarAccessor::RegisterCommand unable to register blocked ConCommand: %s\n", name );
-			return;
-		}
-
-		if ( !fn )
-			return;
-
-		CScriptConCommand *p = new CScriptConCommand( name, fn, helpString, flags );
-		g_ScriptConCommands.Insert( hash, p );
+		return cref.GetBool();
 	}
 	else
 	{
-		CScriptConCommand *pCmd = g_ScriptConCommands[idx];
-		pCmd->SetCallback( fn );
-		pCmd->m_cmd->AddFlags( flags );
-		//CGMsg( 1, CON_GROUP_VSCRIPT, "CScriptConvarAccessor::RegisterCommand replacing command already registered: %s\n", name );
+		return ScriptVariant_t(); // default ctor is NULL
 	}
 }
 
-void CScriptConvarAccessor::SetCompletionCallback( const char *name, HSCRIPT fn )
+ScriptVariant_t CScriptConvarAccessor::GetInt( const char *cvar )
 {
-	unsigned int hash = Hash(name);
-	int idx = g_ScriptConCommands.Find(hash);
-	if ( idx != g_ScriptConCommands.InvalidIndex() )
-	{
-		g_ScriptConCommands[idx]->SetCompletionCallback( fn );
-	}
-}
+	if ( !cvar || !*cvar )
+		return ScriptVariant_t();
 
-void CScriptConvarAccessor::UnregisterCommand( const char *name )
-{
-	unsigned int hash = Hash(name);
-	int idx = g_ScriptConCommands.Find(hash);
-	if ( idx != g_ScriptConCommands.InvalidIndex() )
+	ConVarRef cref( cvar );
+	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
 	{
-		g_ScriptConCommands[idx]->Unregister();
-	}
-}
-
-void CScriptConvarAccessor::RegisterConvar( const char *name, const char *pDefaultValue, const char *helpString, int flags )
-{
-	Assert( g_pCVar );
-	unsigned int hash = Hash(name);
-	int idx = g_ScriptConVars.Find(hash);
-	if ( idx == g_ScriptConVars.InvalidIndex() )
-	{
-		if ( g_pCVar->FindVar(name) || g_pCVar->FindCommand(name) )
-		{
-			DevWarning( 1, "CScriptConvarAccessor::RegisterConvar unable to register blocked ConCommand: %s\n", name );
-			return;
-		}
-
-		CScriptConVar *p = new CScriptConVar( name, pDefaultValue, helpString, flags );
-		g_ScriptConVars.Insert( hash, p );
+		return cref.GetInt();
 	}
 	else
 	{
-		g_ScriptConVars[idx]->m_cvar->AddFlags( flags );
-		//CGMsg( 1, CON_GROUP_VSCRIPT, "CScriptConvarAccessor::RegisterConvar convar %s already registered\n", name );
+		return ScriptVariant_t(); // default ctor is NULL
 	}
 }
 
-bool CScriptConvarAccessor::Init()
+ScriptVariant_t CScriptConvarAccessor::GetFloat( const char *cvar )
 {
-	static bool bExecOnce = false;
-	if ( bExecOnce )
-		return true;
-	bExecOnce = true;
+	if ( !cvar || !*cvar )
+		return ScriptVariant_t();
 
-	AddOverridable( "+attack" );
-	AddOverridable( "+attack2" );
-	AddOverridable( "+attack3" );
-	AddOverridable( "+forward" );
-	AddOverridable( "+back" );
-	AddOverridable( "+moveleft" );
-	AddOverridable( "+moveright" );
-	AddOverridable( "+use" );
-	AddOverridable( "+jump" );
-	AddOverridable( "+zoom" );
-	AddOverridable( "+reload" );
-	AddOverridable( "+speed" );
-	AddOverridable( "+walk" );
-	AddOverridable( "+duck" );
-	AddOverridable( "+strafe" );
-	AddOverridable( "+alt1" );
-	AddOverridable( "+alt2" );
-	AddOverridable( "+grenade1" );
-	AddOverridable( "+grenade2" );
-	AddOverridable( "+showscores" );
-
-	AddOverridable( "-attack" );
-	AddOverridable( "-attack2" );
-	AddOverridable( "-attack3" );
-	AddOverridable( "-forward" );
-	AddOverridable( "-back" );
-	AddOverridable( "-moveleft" );
-	AddOverridable( "-moveright" );
-	AddOverridable( "-use" );
-	AddOverridable( "-jump" );
-	AddOverridable( "-zoom" );
-	AddOverridable( "-reload" );
-	AddOverridable( "-speed" );
-	AddOverridable( "-walk" );
-	AddOverridable( "-duck" );
-	AddOverridable( "-strafe" );
-	AddOverridable( "-alt1" );
-	AddOverridable( "-alt2" );
-	AddOverridable( "-grenade1" );
-	AddOverridable( "-grenade2" );
-	AddOverridable( "-showscores" );
-
-	AddOverridable( "toggle_duck" );
-	AddOverridable( "lastinv" );
-	AddOverridable( "invnext" );
-	AddOverridable( "invprev" );
-	AddOverridable( "phys_swap" );
-	AddOverridable( "slot1" );
-	AddOverridable( "slot2" );
-	AddOverridable( "slot3" );
-	AddOverridable( "slot4" );
-	AddOverridable( "slot5" );
-	AddOverridable( "slot6" );
-	AddOverridable( "slot7" );
-
-	AddOverridable( "save" );
-	AddOverridable( "load" );
-
-
-	AddBlockedConVar( "con_enable" );
-	AddBlockedConVar( "cl_allowdownload" );
-	AddBlockedConVar( "cl_allowupload" );
-	AddBlockedConVar( "cl_downloadfilter" );
-
-	return true;
+	ConVarRef cref( cvar );
+	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
+	{
+		return cref.GetFloat();
+	}
+	else
+	{
+		return ScriptVariant_t(); // default ctor is NULL
+	}
 }
 
-BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptConvarAccessor, "CConvars", SCRIPT_SINGLETON "Provides an interface to convars." )
-	DEFINE_SCRIPTFUNC( RegisterConvar, "register a new console variable." )
-	DEFINE_SCRIPTFUNC( RegisterCommand, "register a console command." )
-	DEFINE_SCRIPTFUNC( SetCompletionCallback, "callback is called with 3 parameters (cmdname, partial, commands), user strings must be appended to 'commands' array" )
-	DEFINE_SCRIPTFUNC( UnregisterCommand, "unregister a console command." )
-	DEFINE_SCRIPTFUNC( GetCommandClient, "returns the player who issued this console command." )
-#ifdef GAME_DLL
-	DEFINE_SCRIPTFUNC( GetClientConvarValue, "Get a convar keyvalue for a specified client" )
-#endif
-	DEFINE_SCRIPTFUNC( GetFloat, "Returns the convar as a float. May return null if no such convar." )
-	DEFINE_SCRIPTFUNC( GetInt, "Returns the convar as an int. May return null if no such convar." )
-	DEFINE_SCRIPTFUNC( GetBool, "Returns the convar as a bool. May return null if no such convar." )
-	DEFINE_SCRIPTFUNC( GetStr, "Returns the convar as a string. May return null if no such convar." )
-	DEFINE_SCRIPTFUNC( GetDefaultValue, "Returns the convar's default value as a string. May return null if no such convar." )
-	DEFINE_SCRIPTFUNC( IsFlagSet, "Returns the convar's flags. May return null if no such convar." )
-	DEFINE_SCRIPTFUNC( SetFloat, "Sets the value of the convar as a float." )
-	DEFINE_SCRIPTFUNC( SetInt, "Sets the value of the convar as an int." )
-	DEFINE_SCRIPTFUNC( SetBool, "Sets the value of the convar as a bool." )
-	DEFINE_SCRIPTFUNC( SetStr, "Sets the value of the convar as a string." )
-END_SCRIPTDESC();
-#endif
+ScriptVariant_t CScriptConvarAccessor::GetStr( const char *cvar )
+{
+	if ( !cvar || !*cvar )
+		return ScriptVariant_t();
+
+	ConVarRef cref( cvar );
+	if ( cref.IsValid() )
+	{
+		if ( cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
+		{
+			// the funny.
+			return "hunter2";
+		}
+		return cref.GetString();
+	}
+	else
+	{
+		return ScriptVariant_t(); // default ctor is NULL
+	}
+}
+
+const char *CScriptConvarAccessor::GetClientConvarValue( const char *cvar, int entindex )
+{
+	if ( !cvar || !*cvar )
+		return "";
+
+	return engine->GetClientConVarValue( entindex, cvar );
+}
+
+void CScriptConvarAccessor::SetValue( const char *cvar, ScriptVariant_t value )
+{
+	if ( !cvar || !*cvar )
+		return;
+
+	if ( !IsConVarOnAllowList( cvar ) )
+	{
+		DevMsg( "Convar %s was not in " VSCRIPT_CONVAR_ALLOWLIST_NAME "\n", cvar );
+		return;
+	}
+
+	ConVarRef cref( cvar );
+	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
+	{
+		bool bSave = true;
+		switch( value.GetType() )
+		{
+			case FIELD_BOOLEAN:
+				cref.SetValue( (bool)value );
+				break;
+			case FIELD_INTEGER:
+				cref.SetValue( (int)value );
+				break;
+			case FIELD_FLOAT:
+				cref.SetValue( (float)value );
+				break;
+			case FIELD_CSTRING:
+				cref.SetValue( (const char *)value );
+				break;
+			default:
+				Warning( "%s.SetValue() unsupported value type %s\n", cvar, ScriptFieldTypeName( value.GetType() ) );
+				bSave = false;
+				break;
+		}
+
+		if ( bSave )
+		{
+			GameRules()->SaveConvar( cref );
+		}
+	}
+}
+
+void CScriptConvarAccessor::LevelInitPreEntity()
+{
+	m_AllowedConVars.RemoveAll();
+
+	KeyValues *kv = new KeyValues( "vscript_convar_allowlist" );
+	bool bLoaded = kv->LoadFromFile( g_pFullFileSystem, VSCRIPT_CONVAR_ALLOWLIST_NAME, "MOD" );
+	if ( bLoaded )
+	{
+		for ( KeyValues *pCurItem = kv->GetFirstValue(); pCurItem; pCurItem = pCurItem->GetNextValue() )
+		{
+			const char *pName = pCurItem->GetName();
+			const char *pValue = pCurItem->GetString();
+
+			if ( !V_stricmp( pValue, "allowed" ) )
+				m_AllowedConVars.AddString( pName );
+		}
+	}
+
+	if ( !bLoaded )
+		Warning( "Error loading " VSCRIPT_CONVAR_ALLOWLIST_NAME "\n" );
+	kv->deleteThis();
+}
+
+void CScriptConvarAccessor::LevelShutdownPostEntity()
+{
+	m_AllowedConVars.RemoveAll();
+}
+
+bool CScriptConvarAccessor::IsConVarOnAllowList( const char *cvar )
+{
+	if ( !cvar || !*cvar )
+		return false;
+
+	return m_AllowedConVars.Find( cvar ) != UTL_INVAL_SYMBOL;
+}
+
+BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptConvarAccessor, "Convars", SCRIPT_SINGLETON "Access to convar functions" )
+	DEFINE_SCRIPTFUNC( GetBool, "GetBool(name) : returns the convar as a bool. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetInt, "GetInt(name) : returns the convar as an int. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetFloat, "GetFloat(name) : returns the convar as a float. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetStr, "GetStr(name) : returns the convar as a string. May return null if no such convar." )
+	DEFINE_SCRIPTFUNC( GetClientConvarValue, "GetClientConvarValue(name) : returns the convar value for the entindex as a string." )
+	DEFINE_SCRIPTFUNC( SetValue, "SetValue(name, value) : sets the value of the convar. The convar must be in " VSCRIPT_CONVAR_ALLOWLIST_NAME " to be set. Supported types are bool, int, float, string." )
+	DEFINE_SCRIPTFUNC( IsConVarOnAllowList, "IsConVarOnAllowList(name) : checks if the convar is allowed to be used and is in " VSCRIPT_CONVAR_ALLOWLIST_NAME ". Please be nice with this and use it for *compatibility* if you need check support and NOT to force server owners to allow hostname to be set... or else this will simply lie and return true in future. ;-) You have been warned!"  )
+END_SCRIPTDESC()
 
 //=============================================================================
 // Effects
@@ -1565,9 +1264,8 @@ void RegisterScriptSingletons()
 #endif
 
 	g_pScriptVM->RegisterInstance( &g_ScriptLocalize, "Localize" );
-	//g_pScriptVM->RegisterInstance( g_ScriptNetMsg, "NetMsg" );
 	g_pScriptVM->RegisterInstance( &g_ScriptDebugOverlay, "debugoverlay" );
-	//g_pScriptVM->RegisterInstance( &g_ScriptConvarAccessor, "Convars" );
+	g_pScriptVM->RegisterInstance( &g_ScriptConvars, "Convars" );
 #ifdef CLIENT_DLL
 	g_pScriptVM->RegisterInstance( &g_ScriptEffectsHelper, "effects" );
 #endif
@@ -1575,6 +1273,4 @@ void RegisterScriptSingletons()
 	// Singletons not unique to VScript (not declared or defined here)
 	g_pScriptVM->RegisterInstance( GameRules(), "GameRules" );
 	g_pScriptVM->RegisterInstance( GetAmmoDef(), "AmmoDef" );
-
-	//g_ScriptNetMsg->InitPostVM();
 }

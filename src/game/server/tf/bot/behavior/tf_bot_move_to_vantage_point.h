@@ -1,32 +1,33 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_move_to_vantage_point.h
+// Move to a position where at least one enemy is visible
+// Michael Booth, November 2009
+
 #ifndef TF_BOT_MOVE_TO_VANTAGE_POINT_H
 #define TF_BOT_MOVE_TO_VANTAGE_POINT_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotChasePath.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotMoveToVantagePoint : public Action<CTFBot>
+class CTFBotMoveToVantagePoint : public Action< CTFBot >
 {
 public:
-	CTFBotMoveToVantagePoint( float max_cost );
-	virtual ~CTFBotMoveToVantagePoint();
+	CTFBotMoveToVantagePoint( float maxTravelDistance = 2000.0f );
+	virtual ~CTFBotMoveToVantagePoint() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "MoveToVantagePoint"; };
 
 private:
-	float m_flMaxCost;                // +0x0034
-	PathFollower m_PathFollower;      // +0x0038
-	CountdownTimer m_recomputePathTimer; // +0x480c
-	CTFNavArea *m_VantagePoint;       // +0x4818
+	float m_maxTravelDistance;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+	CTFNavArea *m_vantageArea;
 };
 
-#endif
+#endif // TF_BOT_MOVE_TO_VANTAGE_POINT_H

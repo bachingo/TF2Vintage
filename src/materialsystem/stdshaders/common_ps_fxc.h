@@ -68,6 +68,7 @@ const float4 cLightScale : register( c30 );
 #define PIXEL_FOG_TYPE_NONE -1 //MATERIAL_FOG_NONE is handled by PIXEL_FOG_TYPE_RANGE, this is for explicitly disabling fog in the shader
 #define PIXEL_FOG_TYPE_RANGE 0 //range+none packed together in ps2b. Simply none in ps20 (instruction limits)
 #define PIXEL_FOG_TYPE_HEIGHT 1
+#define PIXEL_FOG_TYPE_RANGE_RADIAL 2
 
 // If you change these, make the corresponding change in hardwareconfig.cpp
 #define NVIDIA_PCF_POISSON	0
@@ -192,7 +193,7 @@ float4 DecompressNormal( sampler NormalSampler, float2 tc, int nDecompressionMod
 HALF3 NormalizeWithCubemap( sampler normalizeSampler, HALF3 input )
 {
 //	return texCUBE( normalizeSampler, input ) * 2.0f - 1.0f;
-	return texCUBE( normalizeSampler, input ).rgb;
+	return texCUBE( normalizeSampler, input );
 }
 
 /*
@@ -211,8 +212,6 @@ HALF4 EnvReflect( sampler envmapSampler,
 
 float CalcWaterFogAlpha( const float flWaterZ, const float flEyePosZ, const float flWorldPosZ, const float flProjPosZ, const float flFogOORange )
 {
-#if 1
-	// This version is what you use if you want a line-integral throught he water for water fog.
 //	float flDepthFromWater = flWaterZ - flWorldPosZ + 2.0f; // hackity hack . .this is for the DF_FUDGE_UP in view_scene.cpp
 	float flDepthFromWater = flWaterZ - flWorldPosZ;
 
@@ -228,13 +227,6 @@ float CalcWaterFogAlpha( const float flWaterZ, const float flEyePosZ, const floa
 
 	// $tmp.w is now the distance that we see through water.
 	return saturate(f * flProjPosZ * flFogOORange);
-#else
-	// This version is simply using the depth of the water to determine fog factor,
-	// which is cheaper than doing the line integral and also fixes some problems with having 
-	// a hard line on the shore when the water surface is viewed tangentially.
-	// hackity hack . .the 2.0 is for the DF_FUDGE_UP in view_scene.cpp
-	return saturate( ( flWaterZ - flWorldPosZ - 2.0f ) * flFogOORange );
-#endif
 }
 
 float CalcRangeFog( const float flProjPosZ, const float flFogStartOverRange, const float flFogMaxDensity, const float flFogOORange )
@@ -253,13 +245,17 @@ float CalcPixelFogFactor( int iPIXELFOGTYPE, const float4 fogParams, const float
 	{
 		retVal = 0.0f;
 	}
-	if ( iPIXELFOGTYPE == PIXEL_FOG_TYPE_RANGE ) //range fog, or no fog depending on fog parameters
+	else if ( iPIXELFOGTYPE == PIXEL_FOG_TYPE_RANGE ) //range fog, or no fog depending on fog parameters
 	{
-		// This is one only path that we go down for L4D.
+		retVal = CalcRangeFog( flProjPosZ, fogParams.x, fogParams.z, fogParams.w );
+	}
+	else if ( iPIXELFOGTYPE == PIXEL_FOG_TYPE_RANGE_RADIAL )
+	{
 		float flFogMaxDensity = fogParams.z;
-		float flFogStartOverRange = fogParams.x;
+		float flFogEndOverRange = fogParams.x;
 		float flFogOORange = fogParams.w;
-		retVal = CalcRangeFogFactorNonFixedFunction( vWorldPos, vEyePos, flFogMaxDensity, flFogStartOverRange, flFogOORange );
+
+		retVal = CalcRadialFog_NonFixedFunction( vWorldPos, vEyePos, flFogMaxDensity, flFogEndOverRange, flFogOORange );
 	}
 	else if ( iPIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT ) //height fog
 	{
@@ -267,6 +263,16 @@ float CalcPixelFogFactor( int iPIXELFOGTYPE, const float4 fogParams, const float
 	}
 
 	return retVal;
+}
+
+// Legacy support overload, without range fog support.
+float CalcPixelFogFactor( int iPIXELFOGTYPE, const float4 fogParams, const float flEyePosZ, const float flWorldPosZ, const float flProjPosZ )
+{
+	// Old HLSL hack support... Can't just set here.
+	if ( iPIXELFOGTYPE == PIXEL_FOG_TYPE_RANGE_RADIAL )
+		return CalcPixelFogFactor( PIXEL_FOG_TYPE_RANGE, fogParams, float3( 0, 0, flEyePosZ ), float3( 0, 0, flWorldPosZ ), flProjPosZ );
+
+	return CalcPixelFogFactor( iPIXELFOGTYPE, fogParams, float3( 0, 0, flEyePosZ ), float3( 0, 0, flWorldPosZ ), flProjPosZ );
 }
 
 //g_FogParams not defined by default, but this is the same layout for every shader that does define it
@@ -277,7 +283,7 @@ float CalcPixelFogFactor( int iPIXELFOGTYPE, const float4 fogParams, const float
 
 float3 BlendPixelFog( const float3 vShaderColor, float pixelFogFactor, const float3 vFogColor, const int iPIXELFOGTYPE )
 {
-	if( iPIXELFOGTYPE == PIXEL_FOG_TYPE_RANGE ) //either range fog or no fog depending on fog parameters and whether this is ps20 or ps2b
+	if( iPIXELFOGTYPE == PIXEL_FOG_TYPE_RANGE || iPIXELFOGTYPE == PIXEL_FOG_TYPE_RANGE_RADIAL ) //either range fog or no fog depending on fog parameters and whether this is ps20 or ps2b
 	{
 #	if !(defined(SHADER_MODEL_PS_1_1) || defined(SHADER_MODEL_PS_1_4) || defined(SHADER_MODEL_PS_2_0)) //Minimum requirement of ps2b
 		pixelFogFactor = saturate( pixelFogFactor );
@@ -288,11 +294,7 @@ float3 BlendPixelFog( const float3 vShaderColor, float pixelFogFactor, const flo
 	}
 	else if( iPIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT )
 	{
-#	if !(defined(SHADER_MODEL_PS_1_1) || defined(SHADER_MODEL_PS_1_4) || defined(SHADER_MODEL_PS_2_0)) //Minimum requirement of ps2b
 		return lerp( vShaderColor.rgb, vFogColor.rgb, saturate( pixelFogFactor ) );
-#	else
-		return vShaderColor;
-#	endif
 	}
 	else if( iPIXELFOGTYPE == PIXEL_FOG_TYPE_NONE )
 	{
@@ -691,7 +693,7 @@ float4 HSLtoRGB( float4 hsl )
 #define TCOMBINE_MULTIPLY 8
 #define TCOMBINE_MASK_BASE_BY_DETAIL_ALPHA 9                // use alpha channel of detail to mask base
 #define TCOMBINE_SSBUMP_BUMP 10								// use detail to modulate lighting as an ssbump
-#define TCOMBINE_SSBUMP_NOBUMP 11							// detail is an ssbump but use it as an albedo. shader does the magic here - no user needs to specify mode 11
+#define TCOMBINE_SSBUMP_NOBUMP 11					// detail is an ssbump but use it as an albedo. shader does the magic here - no user needs to specify mode 11
 
 float4 TextureCombine( float4 baseColor, float4 detailColor, int combine_mode,
 					   float fBlendFactor )

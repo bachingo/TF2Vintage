@@ -1,53 +1,64 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_engineer_building.h
+// At building location, constructing buildings
+// Michael Booth, May 2010
+
 #ifndef TF_BOT_ENGINEER_BUILDING_H
 #define TF_BOT_ENGINEER_BUILDING_H
-#ifdef _WIN32
-#pragma once
-#endif
 
-#include "NextBotBehavior.h"
-#include "map_entities/tf_hint_sentrygun.h"
+class CTFBotHintSentrygun;
 
 
-class CTFBotEngineerBuilding : public Action<CTFBot>
+class CTFBotEngineerBuilding : public Action< CTFBot >
 {
 public:
-	CTFBotEngineerBuilding( CTFBotHintSentrygun *hint=nullptr );
-	virtual ~CTFBotEngineerBuilding();
+	CTFBotEngineerBuilding( void );
+	CTFBotEngineerBuilding( CTFBotHintSentrygun *sentryBuildHint );
 
-	enum eAvailability
-	{
-		UNKNOWN,
-		UNAVAILABLE,
-		AVAILABLE
-	};
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnTerritoryLost( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryCaptured( CTFBot *me, int territoryID );
 
-	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int territoryID ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int territoryID ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "EngineerBuilding"; };
 
 private:
-	bool CheckIfSentryIsOutOfPosition( CTFBot *actor ) const;
-	bool PickTeleportLocation( CTFBot *actor, Vector *pLocation, float &pYaw );
-	Vector FindHiddenSpot( CTFNavArea *pPointArea, const CUtlVector<CTFNavArea *> &surroundingAreas );
-	bool IsMetalSourceNearby( CTFBot *actor ) const;
-	void UpgradeAndMaintainBuildings( CTFBot *actor );
+	CountdownTimer m_searchTimer;
+	CountdownTimer m_getAmmoTimer;
+	CountdownTimer m_repathTimer;
+	CountdownTimer m_buildTeleporterExitTimer;
 
-	int m_iTries;
-	CountdownTimer m_recomputePathTimer;
-	CountdownTimer m_buildDispenserTimer;
-	CountdownTimer m_buildTeleportTimer;
-	PathFollower m_PathFollower;
-	CHandle<CTFBotHintSentrygun> m_hHint;
-	bool m_bHadASentry;
-	int m_iMetalSource;
-	CountdownTimer m_outOfPositionTimer;
-	bool m_bIsOutOfPosition;
+	int m_sentryTriesLeft;
+
+	CountdownTimer m_dispenserRetryTimer;
+	CountdownTimer m_teleportExitRetryTimer;
+
+	PathFollower m_path;
+
+	CHandle< CTFBotHintSentrygun > m_sentryBuildHint;
+
+	bool m_hasBuiltSentry;
+
+	enum NearbyMetalType
+	{
+		NEARBY_METAL_UNKNOWN,
+		NEARBY_METAL_NONE,
+		NEARBY_METAL_EXISTS
+	};
+
+	NearbyMetalType m_nearbyMetalStatus;
+
+	CountdownTimer m_territoryRangeTimer;
+	bool m_isSentryOutOfPosition;
+	bool CheckIfSentryIsOutOfPosition( CTFBot *me ) const;
+
+	void UpgradeAndMaintainBuildings( CTFBot *me );
+	bool IsMetalSourceNearby( CTFBot *me ) const;
 };
 
-#endif
+
+#endif // TF_BOT_ENGINEER_BUILDING_H

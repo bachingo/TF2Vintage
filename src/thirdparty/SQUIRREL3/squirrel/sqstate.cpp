@@ -55,6 +55,7 @@ bool CompileTypemask(SQIntVec &res,const SQChar *typemask)
             case 'x': mask |= _RT_INSTANCE; break;
             case 'y': mask |= _RT_CLASS; break;
             case 'r': mask |= _RT_WEAKREF; break;
+            case 'h': mask |= _RT_EHANDLE; break;
             case '.': mask = -1; res.push_back(mask); i++; mask = 0; continue;
             case ' ': i++; continue; //ignores spaces
             default:
@@ -148,6 +149,7 @@ void SQSharedState::Init()
     _array_default_delegate = CreateDefaultDelegate(this,_array_default_delegate_funcz);
     _string_default_delegate = CreateDefaultDelegate(this,_string_default_delegate_funcz);
     _number_default_delegate = CreateDefaultDelegate(this,_number_default_delegate_funcz);
+    _handle_default_delegate = CreateDefaultDelegate(this,_handle_default_delegate_funcz);
     _closure_default_delegate = CreateDefaultDelegate(this,_closure_default_delegate_funcz);
     _generator_default_delegate = CreateDefaultDelegate(this,_generator_default_delegate_funcz);
     _thread_default_delegate = CreateDefaultDelegate(this,_thread_default_delegate_funcz);
@@ -176,6 +178,7 @@ SQSharedState::~SQSharedState()
     _array_default_delegate.Null();
     _string_default_delegate.Null();
     _number_default_delegate.Null();
+    _handle_default_delegate.Null();
     _closure_default_delegate.Null();
     _generator_default_delegate.Null();
     _thread_default_delegate.Null();
@@ -258,6 +261,7 @@ void SQSharedState::RunMark(SQVM* SQ_UNUSED_ARG(vm),SQCollectable **tchain)
     MarkObject(_array_default_delegate,tchain);
     MarkObject(_string_default_delegate,tchain);
     MarkObject(_number_default_delegate,tchain);
+    MarkObject(_handle_default_delegate,tchain);
     MarkObject(_generator_default_delegate,tchain);
     MarkObject(_thread_default_delegate,tchain);
     MarkObject(_closure_default_delegate,tchain);

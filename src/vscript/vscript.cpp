@@ -33,7 +33,7 @@ IScriptVM *CScriptManager::CreateVM( ScriptLanguage_t language )
 			pVM = CreateLuaVM();
 			break;
 		case SL_ANGELSCRIPT:
-			pVM = CreateAngelScriptVM();
+			//pVM = CreateAngelScriptVM();
 			break;
 		default:
 			return NULL;
@@ -71,7 +71,7 @@ void CScriptManager::DestroyVM( IScriptVM *pVM )
 				DestroyLuaVM( pVM );
 				break;
 			case SL_ANGELSCRIPT:
-				DestroyAngelScriptVM( pVM );
+				//DestroyAngelScriptVM( pVM );
 				break;
 		}
 	}

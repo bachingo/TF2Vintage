@@ -81,8 +81,6 @@ public:
 
 	virtual const Vector &GetVelocity( void ) const;		// return current world space velocity
 
-	virtual CBaseCombatCharacter *GetEntity( void ) const;	// get the entity
-
 protected:
 	virtual void AdjustPosture( const Vector &moveGoal );
 

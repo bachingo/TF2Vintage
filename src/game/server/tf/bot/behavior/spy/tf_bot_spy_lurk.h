@@ -1,27 +1,26 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_lurk.h
+// Wait for victims
+// Michael Booth, September 2011
+
 #ifndef TF_BOT_SPY_LURK_H
 #define TF_BOT_SPY_LURK_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotPathFollow.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotSpyLurk : public Action<CTFBot>
+class CTFBotSpyLurk : public Action< CTFBot >
 {
 public:
-	CTFBotSpyLurk();
-	virtual ~CTFBotSpyLurk();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;	// should we attack "them"?
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "SpyLurk"; };
 
 private:
-	CountdownTimer m_patienceDuration;
+	CountdownTimer m_lurkTimer;
 };
 
-#endif
+
+#endif // TF_BOT_SPY_LURK_H

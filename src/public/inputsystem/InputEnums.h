@@ -55,8 +55,6 @@ enum JoystickAxis_t
 };
 #endif
 
-
-
 //-----------------------------------------------------------------------------
 // Extra mouse codes
 //-----------------------------------------------------------------------------
@@ -184,7 +182,7 @@ enum GameActionSet_t
 enum GameActionSetFlags_t
 {
 	GAME_ACTION_SET_FLAGS_NONE = 0,
-	GAME_ACTION_SET_FLAGS_TAUNTING = ( 1 << 0 ),
+	GAME_ACTION_SET_FLAGS_TAUNTING = (1<<0),
 };
 
 enum JoystickType_t

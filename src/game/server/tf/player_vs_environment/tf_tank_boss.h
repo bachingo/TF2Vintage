@@ -1,37 +1,15 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 #ifndef TF_TANK_BOSS_H
 #define TF_TANK_BOSS_H
 
-
-#include "NextBotBodyInterface.h"
+#include "tf_population_manager.h"
 #include "tf_base_boss.h"
-#include "pathtrack.h"
-#include "tf_populators.h"
+#include "tf_tank_boss_body.h"
+#include "tf_achievementdata.h"
 
-class INextBot;
-
-
-class CTFTankBossBody : public IBody
-{
-public:
-	CTFTankBossBody( INextBot *bot );
-	virtual ~CTFTankBossBody() { }
-
-	virtual void Update( void );
-	virtual unsigned int GetSolidMask( void ) const;
-
-	bool StartSequence( const char *name );
-	void SetSkin( int nSkin );
-};
-
+//----------------------------------------------------------------------------
 class CTFTankBoss : public CTFBaseBoss
 {
-	static float sm_flLastTankAlert;
 public:
 	DECLARE_CLASS( CTFTankBoss, CTFBaseBoss );
 	DECLARE_SERVERCLASS();
@@ -42,97 +20,112 @@ public:
 
 	virtual void Precache( void );
 	virtual void Spawn( void );
-	virtual void SetSkin( int nSkin );
+	virtual void SetSkin( int nSkin ) { if ( m_body ) m_body->SetSkin( nSkin ); }
+
 	virtual void UpdateOnRemove( void );
+
 	virtual void UpdateCollisionBounds( void );
 
-	virtual CTFTankBossBody *GetBodyInterface( void ) const OVERRIDE { return m_body; }
+	virtual CTFTankBossBody *GetBodyInterface( void ) const { return m_body; }
 
 	virtual int OnTakeDamage_Alive( const CTakeDamageInfo &rawInfo );
+
 	virtual void Event_Killed( const CTakeDamageInfo &info );
-	virtual int GetCurrencyValue( void );
 
 	void TankBossThink( void );
 
+	void SetStartingPathTrackNode( char *name );
+
+	void DefineOnKilledOutput( EventInfo *eventInfo );
+	void DefineOnBombDroppedOutput( EventInfo *eventInfo );
+
+	void SetWaveSpawnPopulator( CWaveSpawnPopulator *pWave ){ m_pWaveSpawnPopulator = pWave; }
+
+	virtual int GetCurrencyValue( void );
+
+	// Input handlers
 	void InputDestroyIfAtCapturePoint( inputdata_t &inputdata );
 	void InputAddCaptureDestroyPostfix( inputdata_t &inputdata );
 
-	void SetStartingPathTrackNode( char *pszName );
-
-	inline void SetOnKilledEvent( EventInfo *eventInfo )
-	{
-		if ( eventInfo )
-		{
-			m_onKilledEventInfo.m_action = eventInfo->m_action;
-			m_onKilledEventInfo.m_target = eventInfo->m_target;
-		}
-	}
-
-	inline void SetOnBombDroppedEvent( EventInfo *eventInfo )
-	{
-		if ( eventInfo )
-		{
-			m_onBombDroppedEventInfo.m_action = eventInfo->m_action;
-			m_onBombDroppedEventInfo.m_target = eventInfo->m_target;
-		}
-	}
-
-	inline void SetWaveSpawnPopulator( CWaveSpawnPopulator *pWave ) { m_pWaveSpawnPopulator = pWave; }
+	void UpdatePingSound( void );
 
 protected:
-	virtual void ModifyDamage( CTakeDamageInfo *info ) OVERRIDE;
+	virtual void ModifyDamage( CTakeDamageInfo *info ) const;
 
 private:
-	void Explode( void );
-	void FirePopFileEvent( EventInfo *eventInfo );
-	void UpdatePingSound( void );
-	float m_flLastPingTime;
 
+	void Explode();
+
+private:
 	CTFTankBossBody *m_body;
 
-	int m_nLastHealth;
-	int m_iDamageModelIndex;
-	int m_nDeathAnimPick;
-	char m_szDeathPostfix[8];
-	bool m_bKilledByPlayers;
-	bool m_bDroppingBomb;
+	CHandle< CPathTrack > m_startNode;
+	CHandle< CPathTrack > m_endNode;
+	CHandle< CPathTrack > m_goalNode;
+	CUtlVector< float > m_CumulativeDistances;
+	float m_fTotalDistance;
+	int m_nNodeNumber;
+
+	float m_flSpawnTime;
+
+	bool m_isDroppingBomb;
 	float m_flDroppingStart;
-	int m_iExhaustAttachment;
-	bool m_bSmoking;
+
+	int m_exhaustAttachment;
+	bool m_isSmoking;
+
+	bool m_bIsPlayerKilled;
+	bool m_bPlayedHalfwayAlert;
+	bool m_bPlayedNearAlert;
+
+	int m_lastHealth;
+	int m_damageModelIndex;
+	int m_nDeathAnimPick;
+	char m_szDeathPostfix[ 8 ];
+
+	Vector m_lastRightTrackPos;
+	Vector m_lastLeftTrackPos;
+
+	CountdownTimer m_rumbleTimer;
 
 	EventInfo m_onKilledEventInfo;
 	EventInfo m_onBombDroppedEventInfo;
+	void FirePopFileEvent( EventInfo *eventInfo );
 
-	CHandle<CPathTrack> m_hStartNode;
-	CHandle<CPathTrack> m_hEndNode;
-	CHandle<CPathTrack> m_hGoalNode;
-	int m_nNodeNumber;
+	CHandle< CBaseAnimating > m_bomb;
+	CHandle< CBaseAnimating > m_leftTracks;
+	CHandle< CBaseAnimating > m_rightTracks;
 
-	CUtlVector< float > m_CumulativeDistances;
-	float m_flTotalDistance;
-	bool m_bPlayedNearAlert;
-	bool m_bPlayedHalfwayAlert;
-
-	CHandle<CBaseAnimating> m_hBomb;
-	CHandle<CBaseAnimating> m_hLeftTrack;
-	CHandle<CBaseAnimating> m_hRightTrack;
-
-	Vector m_vecRightTrackPrevPos;
-	Vector m_vecLeftTrackPrevPos;
-
-	CountdownTimer m_rumbleTimer;
 	CountdownTimer m_crushTimer;
-
 	CWaveSpawnPopulator *m_pWaveSpawnPopulator;
 
-	Vector m_vecCollisionMins;
-	Vector m_vecCollisionMaxs;
+	Vector m_vCollisionMins;
+	Vector m_vCollisionMaxs;
+
+	float m_flLastPingTime;
+
+	static float m_flLastTankAlert;
+
+	CHistoryVector< EntityHistory_t, CEntityHistoryLess, 12 > m_vecDamagers;
 };
 
-inline void CTFTankBoss::SetSkin( int nSkin )
+
+inline void CTFTankBoss::DefineOnKilledOutput( EventInfo *eventInfo )
 {
-	if ( m_body )
-		m_body->SetSkin( nSkin );
+	if ( eventInfo )
+	{
+		m_onKilledEventInfo.m_action = eventInfo->m_action;
+		m_onKilledEventInfo.m_target = eventInfo->m_target;
+	}
 }
 
-#endif
+inline void CTFTankBoss::DefineOnBombDroppedOutput( EventInfo *eventInfo )
+{
+	if ( eventInfo )
+	{
+		m_onBombDroppedEventInfo.m_action = eventInfo->m_action;
+		m_onBombDroppedEventInfo.m_target = eventInfo->m_target;
+	}
+}
+
+#endif // TF_TANK_BOSS_H

@@ -146,36 +146,6 @@ public:
 	}
 };
 
-template <class T>
-class CScriptedFactory : public IEntityFactory
-{
-public:
-	CScriptedFactory( const char *pClassName )
-	{
-		EntityFactoryDictionary()->InstallFactory( this, pClassName );
-	}
-
-	IServerNetworkable *Create( const char *pClassName )
-	{
-		T *pEnt = _CreateEntityTemplate((T *)NULL, pClassName);
-		pEnt->m_szScriptedClassname = AllocPooledString( pClassName );
-		return pEnt->NetworkProp();
-	}
-
-	void Destroy( IServerNetworkable *pNetworkable )
-	{
-		if ( pNetworkable )
-		{
-			pNetworkable->Release();
-		}
-	}
-
-	virtual size_t GetEntitySize()
-	{
-		return sizeof(T);
-	}
-};
-
 #define LINK_ENTITY_TO_CLASS(mapClassName,DLLClassName) \
 	static CEntityFactory<DLLClassName> mapClassName( #mapClassName );
 
@@ -230,8 +200,6 @@ inline bool FStrEq( string_t str1, string_t str2 )
 }
 #endif
 
-const char *nexttoken(char *token, const char *str, char sep);
-
 // Misc. Prototypes
 void		UTIL_SetSize			(CBaseEntity *pEnt, const Vector &vecMin, const Vector &vecMax);
 void		UTIL_ClearTrace			( trace_t &trace );
@@ -277,9 +245,6 @@ inline CBasePlayer *UTIL_GetLocalPlayerOrListenServerHost( void )
 
 	return UTIL_GetLocalPlayer();
 }
-
-CBasePlayer* UTIL_PlayerByUserId( int userID );
-CBasePlayer* UTIL_PlayerByName( const char *name ); // not case sensitive
 
 // Returns true if the command was issued by the listenserver host, or by the dedicated server, via rcon or the server console.
 // This is valid during ConCommand execution.
@@ -383,7 +348,7 @@ bool		UTIL_CheckBottom( CBaseEntity *pEntity, ITraceFilter *pTraceFilter, float 
 
 void		UTIL_SetOrigin			( CBaseEntity *entity, const Vector &vecOrigin, bool bFireTriggers = false );
 void		UTIL_EmitAmbientSound	( int entindex, const Vector &vecOrigin, const char *samp, float vol, soundlevel_t soundlevel, int fFlags, int pitch, float soundtime = 0.0f, float *duration = NULL );
-void		UTIL_ParticleEffect		( const Vector &vecOrigin, const Vector &vecDirection, ULONG ulColor, ULONG ulCount );
+void		UTIL_ParticleEffect		( const Vector &vecOrigin, const Vector &vecDirection, uint32 ulColor, uint32 ulCount );
 void		UTIL_ScreenShake		( const Vector &center, float amplitude, float frequency, float duration, float radius, ShakeCommand_t eCommand, bool bAirShake=false );
 void		UTIL_ScreenShakeObject	( CBaseEntity *pEnt, const Vector &center, float amplitude, float frequency, float duration, float radius, ShakeCommand_t eCommand, bool bAirShake=false );
 void		UTIL_ViewPunch			( const Vector &center, QAngle angPunch, float radius, bool bInAir );
@@ -527,7 +492,7 @@ void			UTIL_LogPrintf( PRINTF_FORMAT_STRING const char *fmt, ... ) FMTFUNCTION( 
 // Sorta like FInViewCone, but for nonNPCs. 
 float UTIL_DotPoints ( const Vector &vecSrc, const Vector &vecCheck, const Vector &vecDir );
 
-void UTIL_StripToken( const char *pKey, char *pDest );// for redundant keynames
+void UTIL_StripToken( const char *pKey, char *pDest, int nDestLength );// for redundant keynames
 
 // Misc functions
 int BuildChangeList( levellist_t *pLevelList, int maxList );

@@ -37,7 +37,6 @@
 	#define CTFViewModel C_TFViewModel
 	#define CTFWearable C_TFWearable
 	#include "tf_fx_muzzleflash.h"
-	#include "c_tf_viewmodeladdon.h"
 #endif
 
 #define MAX_TRACER_NAME		128

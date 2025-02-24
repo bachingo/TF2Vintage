@@ -81,10 +81,10 @@ struct SQOuter;
 
 #include "sqconfig.h"
 
-#define SQUIRREL_VERSION    _SC("Squirrel 3.2 VScript")
-#define SQUIRREL_COPYRIGHT  _SC("Copyright (C) 2003-2017 Alberto Demichelis")
+#define SQUIRREL_VERSION    _SC("Squirrel 3.3 VScript")
+#define SQUIRREL_COPYRIGHT  _SC("Copyright (C) 2003-2021 Alberto Demichelis")
 #define SQUIRREL_AUTHOR     _SC("Alberto Demichelis")
-#define SQUIRREL_VERSION_NUMBER 310
+#define SQUIRREL_VERSION_NUMBER 320
 
 #define SQ_VMSTATE_IDLE         0
 #define SQ_VMSTATE_RUNNING      1
@@ -123,6 +123,7 @@ struct SQOuter;
 #define _RT_INSTANCE        0x00008000
 #define _RT_WEAKREF         0x00010000
 #define _RT_OUTER           0x00020000
+#define _RT_EHANDLE         0x00040000
 
 typedef enum tagSQObjectType{
     OT_NULL =           (_RT_NULL|SQOBJECT_CANBEFALSE),
@@ -142,7 +143,8 @@ typedef enum tagSQObjectType{
     OT_CLASS =          (_RT_CLASS|SQOBJECT_REF_COUNTED),
     OT_INSTANCE =       (_RT_INSTANCE|SQOBJECT_REF_COUNTED|SQOBJECT_DELEGABLE),
     OT_WEAKREF =        (_RT_WEAKREF|SQOBJECT_REF_COUNTED),
-    OT_OUTER =          (_RT_OUTER|SQOBJECT_REF_COUNTED) //internal usage only
+    OT_OUTER =          (_RT_OUTER|SQOBJECT_REF_COUNTED), //internal usage only
+    OT_EHANDLE =        _RT_EHANDLE
 }SQObjectType;
 
 #define ISREFCOUNTED(t) (t&SQOBJECT_REF_COUNTED)
@@ -169,6 +171,7 @@ typedef union tagSQObjectValue
     struct SQInstance *pInstance;
     struct SQWeakRef *pWeakRef;
     SQRawObjectVal raw;
+    SQInt32 pEHandle;
 }SQObjectValue;
 
 
@@ -274,6 +277,7 @@ SQUIRREL_API void sq_pushbool(HSQUIRRELVM v,SQBool b);
 SQUIRREL_API void sq_pushuserpointer(HSQUIRRELVM v,SQUserPointer p);
 SQUIRREL_API void sq_pushnull(HSQUIRRELVM v);
 SQUIRREL_API void sq_pushthread(HSQUIRRELVM v, HSQUIRRELVM thread);
+SQUIRREL_API void sq_pushehandle(HSQUIRRELVM v,class CBaseHandle const &p);
 SQUIRREL_API SQObjectType sq_gettype(HSQUIRRELVM v,SQInteger idx);
 SQUIRREL_API SQRESULT sq_typeof(HSQUIRRELVM v,SQInteger idx);
 SQUIRREL_API SQInteger sq_getsize(HSQUIRRELVM v,SQInteger idx);
@@ -290,6 +294,7 @@ SQUIRREL_API SQRESULT sq_getbool(HSQUIRRELVM v,SQInteger idx,SQBool *b);
 SQUIRREL_API SQRESULT sq_getthread(HSQUIRRELVM v,SQInteger idx,HSQUIRRELVM *thread);
 SQUIRREL_API SQRESULT sq_getuserpointer(HSQUIRRELVM v,SQInteger idx,SQUserPointer *p);
 SQUIRREL_API SQRESULT sq_getuserdata(HSQUIRRELVM v,SQInteger idx,SQUserPointer *p,SQUserPointer *typetag);
+SQUIRREL_API SQRESULT sq_getehandle(HSQUIRRELVM v,SQInteger idx,class CBaseHandle *p);
 SQUIRREL_API SQRESULT sq_settypetag(HSQUIRRELVM v,SQInteger idx,SQUserPointer typetag);
 SQUIRREL_API SQRESULT sq_gettypetag(HSQUIRRELVM v,SQInteger idx,SQUserPointer *typetag);
 SQUIRREL_API void sq_setreleasehook(HSQUIRRELVM v,SQInteger idx,SQRELEASEHOOK hook);
@@ -300,7 +305,7 @@ SQUIRREL_API SQRESULT sq_getclosureinfo(HSQUIRRELVM v,SQInteger idx,SQInteger *n
 SQUIRREL_API SQRESULT sq_getclosurename(HSQUIRRELVM v,SQInteger idx);
 SQUIRREL_API SQRESULT sq_setnativeclosurename(HSQUIRRELVM v,SQInteger idx,const SQChar *name);
 SQUIRREL_API SQRESULT sq_setinstanceup(HSQUIRRELVM v, SQInteger idx, SQUserPointer p);
-SQUIRREL_API SQRESULT sq_getinstanceup(HSQUIRRELVM v, SQInteger idx, SQUserPointer *p,SQUserPointer typetag);
+SQUIRREL_API SQRESULT sq_getinstanceup(HSQUIRRELVM v, SQInteger idx, SQUserPointer *p,SQUserPointer typetag,SQBool throwerror);
 SQUIRREL_API SQRESULT sq_setclassudsize(HSQUIRRELVM v, SQInteger idx, SQInteger udsize);
 SQUIRREL_API SQRESULT sq_newclass(HSQUIRRELVM v,SQBool hasbase);
 SQUIRREL_API SQRESULT sq_createinstance(HSQUIRRELVM v,SQInteger idx);

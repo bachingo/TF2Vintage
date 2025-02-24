@@ -1,7 +1,7 @@
 //	STATIC: "ONLY_PROJECT_POSITION"	"0..1" [XBOX]
 //	STATIC: "ONLY_PROJECT_POSITION"	"0..0" [PC]
 //  STATIC: "COLOR_DEPTH"			"0..1"
-//	STATIC: "TREESWAY"				"0..2"
+//  STATIC: "TREESWAY"				"0..2"
 
 //	DYNAMIC: "COMPRESSED_VERTS"		"0..1"
 //	DYNAMIC: "SKINNING"				"0..1"
@@ -17,7 +17,7 @@ static const bool g_bSkinning = SKINNING ? true : false;
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_6 );
 const float4 cMorphSubrect					: register( SHADER_SPECIFIC_CONST_7 );
 
-sampler2D morphSampler : register( D3DVERTEXTEXTURESAMPLER0, s0 );
+sampler2D morphSampler : register( s0 );
 #endif
 
 #if ( TREESWAY )
@@ -48,8 +48,6 @@ sampler2D morphSampler : register( D3DVERTEXTEXTURESAMPLER0, s0 );
 
 	#define g_flWindSpeedLerpStart	g_vTreeSwayParams4.x
 	#define g_flWindSpeedLerpEnd	g_vTreeSwayParams4.y
-	
-	#include "tree_sway.h"
 #endif
 
 struct VS_INPUT
@@ -80,6 +78,8 @@ struct VS_OUTPUT
 #endif
 
 };
+
+#include "tree_sway.h"
 
 VS_OUTPUT main( const VS_INPUT v )
 {

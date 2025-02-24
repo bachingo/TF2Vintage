@@ -1,51 +1,60 @@
-// ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-
-#ifndef SCREENSPACEEFFECT_VS20_H
-#define SCREENSPACEEFFECT_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#include "shaderlib/cshader.h"
 class screenspaceeffect_vs20_Static_Index
 {
-	unsigned int m_nX360APPCHOOSER : 2;
+private:
+	int m_nX360APPCHOOSER;
+#ifdef _DEBUG
+	bool m_bX360APPCHOOSER;
+#endif
 public:
 	void SetX360APPCHOOSER( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nX360APPCHOOSER = i;
+#ifdef _DEBUG
+		m_bX360APPCHOOSER = true;
+#endif
 	}
-
-	screenspaceeffect_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	void SetX360APPCHOOSER( bool i )
 	{
-		m_nX360APPCHOOSER = 0;
+		m_nX360APPCHOOSER = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bX360APPCHOOSER = true;
+#endif
 	}
-
-	int GetIndex() const
+public:
+	screenspaceeffect_vs20_Static_Index( )
 	{
+#ifdef _DEBUG
+		m_bX360APPCHOOSER = true;
+#endif // _DEBUG
+		m_nX360APPCHOOSER =  0;
+	}
+	int GetIndex()
+	{
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllStaticVarsDefined = m_bX360APPCHOOSER;
+		Assert( bAllStaticVarsDefined );
+#endif // _DEBUG
 		return ( 1 * m_nX360APPCHOOSER ) + 0;
 	}
 };
-
-#define shaderStaticTest_screenspaceeffect_vs20 1
-
-
+#define shaderStaticTest_screenspaceeffect_vs20 0
 class screenspaceeffect_vs20_Dynamic_Index
 {
 public:
-	screenspaceeffect_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	screenspaceeffect_vs20_Dynamic_Index()
 	{
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+#endif // _DEBUG
 		return 0;
 	}
 };
-
-#define shaderDynamicTest_screenspaceeffect_vs20 1
-
-
-#endif	// SCREENSPACEEFFECT_VS20_H
+#define shaderDynamicTest_screenspaceeffect_vs20 0

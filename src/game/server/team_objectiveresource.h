@@ -12,7 +12,7 @@
 
 #include "shareddefs.h"
 
-#define TEAM_ARRAY( index, team )		( index + ( team * MAX_CONTROL_POINTS ) )
+#define TEAM_ARRAY( index, team )		(index + (team * MAX_CONTROL_POINTS))
 
 //-----------------------------------------------------------------------------
 // Purpose: An entity that networks the state of the game's objectives.
@@ -30,7 +30,7 @@ public:
 	~CBaseTeamObjectiveResource();
 
 	virtual void Spawn( void );
-	virtual int  UpdateTransmitState( void );
+	virtual int  UpdateTransmitState(void);
 
 	virtual void ObjectiveThink( void );
 
@@ -38,7 +38,7 @@ public:
 	// CONTROL POINT DATA
 	//--------------------------------------------------------------------
 public:
-	void ResetControlPoints (void );
+	void ResetControlPoints( void );
 
 	// Data functions, called to set up the state at the beginning of a round
 	void SetNumControlPoints( int num );
@@ -57,7 +57,7 @@ public:
 	void SetPreviousPoint( int index, int iTeam, int iPrevIndex, int iPrevPoint );
 	int GetPreviousPointForPoint( int index, int team, int iPrevIndex );
 	bool TeamCanCapPoint( int index, int team );
-	void SetCapLayoutInHUD( const char *pszLayout ) { Q_strncpy( m_pszCapLayoutInHUD.GetForModify(), pszLayout, MAX_CAPLAYOUT_LENGTH ); }
+	void SetCapLayoutInHUD( const char *pszLayout ) { Q_strncpy(m_pszCapLayoutInHUD.GetForModify(), pszLayout, MAX_CAPLAYOUT_LENGTH ); }
 	void SetCapLayoutCustomPosition( float flPositionX, float flPositionY ) { m_flCustomPositionX = flPositionX; m_flCustomPositionY = flPositionY; }
 	void SetWarnOnCap( int index, int iWarnLevel );
 	void SetWarnSound( int index, string_t iszSound );
@@ -82,10 +82,10 @@ public:
 		Assert( 0 <= index && index <= MAX_CONTROL_POINTS && index < m_iNumControlPoints );
 	}
 
-	int GetBaseControlPointForTeam( int iTeam )
-	{
+	int GetBaseControlPointForTeam( int iTeam ) 
+	{ 
 		Assert( iTeam < MAX_TEAMS );
-		return m_iBaseControlPoints[iTeam];
+		return m_iBaseControlPoints[iTeam]; 
 	}
 
 	int GetCappingTeam( int index )
@@ -107,7 +107,9 @@ public:
 		m_iStopWatchTimer = pTimer ? pTimer->entindex() : 0;
 	}
 
-	int GetTimerInHUD( void ) { return m_iTimerToShowInHUD; }
+	int GetStopWatchTimer( void ) { return m_iStopWatchTimer; }
+
+	int GetTimerToShowInHUD( void ) { return m_iTimerToShowInHUD; }
 
 	// Mini-rounds data
 	void SetPlayingMiniRounds( bool bPlayingMiniRounds ){ m_bPlayingMiniRounds = bPlayingMiniRounds; }
@@ -132,9 +134,9 @@ public:
 		{
 			m_nNumNodeHillData.Set( team, 0 );
 
-			int nNumEntriesPerTeam = TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL;
+			int nNumEntriesPerTeam = TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL; 
 			int iStartingIndex = team * nNumEntriesPerTeam;
-			for ( int i = 0; i < nNumEntriesPerTeam; i++ )
+			for ( int i = 0 ; i < nNumEntriesPerTeam ; i++ )
 			{
 				m_flNodeHillData.Set( iStartingIndex + i, 0 );
 			}
@@ -142,7 +144,7 @@ public:
 			iStartingIndex = team * TEAM_TRAIN_MAX_HILLS;
 			for ( int i = 0; i < TEAM_TRAIN_MAX_HILLS; i++ )
 			{
-				m_bHillIsDownhill.Set(iStartingIndex + i, 0);
+				m_bHillIsDownhill.Set( iStartingIndex + i, 0 );
 			}
 		}
 	}
@@ -161,7 +163,8 @@ public:
 				{
 					m_bHillIsDownhill.Set( m_nNumNodeHillData[team] + ( team * TEAM_TRAIN_MAX_HILLS ), bDownhill );
 				}
-				m_nNumNodeHillData.Set( team, m_nNumNodeHillData[team] + 1 );
+
+				m_nNumNodeHillData.Set( team, m_nNumNodeHillData[team] + 1);
 			}
 		}
 	}

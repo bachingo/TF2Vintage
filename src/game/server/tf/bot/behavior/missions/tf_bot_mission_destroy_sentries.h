@@ -1,33 +1,30 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_mission_destroy_sentries.h
+// Seek and destroy enemy sentries and ignore everything else
+// Michael Booth, June 2011
+
 #ifndef TF_BOT_MISSION_DESTROY_SENTRIES_H
 #define TF_BOT_MISSION_DESTROY_SENTRIES_H
 
-#include "NextBotBehavior.h"
 
-class CObjectSentrygun;
-
-// sizeof: TODO (>=0x38)
-class CTFBotMissionDestroySentries : public Action<CTFBot>
+//-----------------------------------------------------------------------------
+class CTFBotMissionDestroySentries : public Action< CTFBot >
 {
 public:
-	CTFBotMissionDestroySentries( CObjectSentrygun *sentry );
-	virtual ~CTFBotMissionDestroySentries();
+	CTFBotMissionDestroySentries( CObjectSentrygun *goalSentry = NULL );
+	virtual ~CTFBotMissionDestroySentries() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "MissionDestroySentries"; };
 
 private:
-	CObjectSentrygun *SelectSentryTarget( CTFBot *actor );
+	CHandle< CObjectSentrygun > m_goalSentry;
 
-	CHandle<CObjectSentrygun> m_hSentry; // +0x34
+	CObjectSentrygun *SelectSentryTarget( CTFBot *me );
 };
 
-#endif
+
+#endif // TF_BOT_MISSION_DESTROY_SENTRIES_H

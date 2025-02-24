@@ -352,7 +352,10 @@ public:
 		InitCommentary();
 
 		IGameEvent *event = gameeventmanager->CreateEvent( "playing_commentary" );
-		gameeventmanager->FireEventClientSide( event );
+		if ( event )
+		{
+			gameeventmanager->FireEventClientSide( event );
+		}
 	}
 
 	CPointCommentaryNode *GetNodeUnderCrosshair()
@@ -662,7 +665,6 @@ public:
 		{
 			Msg( "Commentary: Could not find commentary data file '%s'. \n", szFullName );
 		}
-		pkvFile->deleteThis();
 
 		engine->LockNetworkStringTables( oldLock );
 	}

@@ -1,216 +1,250 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_seek_and_destroy.h
+// Roam the environment, attacking victims
+// Michael Booth, January 2010
+
 #include "cbase.h"
-#include "../tf_bot.h"
-#include "tf_bot_seek_and_destroy.h"
-#include "tf_bot_attack.h"
-#include "nav_mesh/tf_nav_mesh.h"
-#include "team_control_point.h"
+#include "tf_player.h"
 #include "tf_gamerules.h"
+#include "team_control_point_master.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/tf_bot_attack.h"
+#include "bot/behavior/tf_bot_seek_and_destroy.h"
+#include "bot/behavior/sniper/tf_bot_sniper_attack.h"
+#include "nav_mesh.h"
+
+extern ConVar tf_bot_path_lookahead_range;
+extern ConVar tf_bot_offense_must_push_time;
+extern ConVar tf_bot_defense_must_defend_time;
+
+ConVar tf_bot_debug_seek_and_destroy( "tf_bot_debug_seek_and_destroy", "0", FCVAR_CHEAT );
 
 
-ConVar tf_bot_debug_seek_and_destroy( "tf_bot_debug_seek_and_destroy", "0", FCVAR_CHEAT, "", true, 0.0f, true, 1.0f );
-
-
+//---------------------------------------------------------------------------------------------
 CTFBotSeekAndDestroy::CTFBotSeekAndDestroy( float duration )
 {
 	if ( duration > 0.0f )
 	{
-		m_actionDuration.Start( duration );
+		m_giveUpTimer.Start( duration );
 	}
 }
 
-CTFBotSeekAndDestroy::~CTFBotSeekAndDestroy()
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSeekAndDestroy::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-}
-
-
-const char *CTFBotSeekAndDestroy::GetName() const
-{
-	return "SeekAndDestroy";
-}
-
-
-ActionResult<CTFBot> CTFBotSeekAndDestroy::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	m_path.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
 
 	RecomputeSeekPath( me );
 
 	CTeamControlPoint *point = me->GetMyControlPoint();
-	if ( point != nullptr )
+	m_isPointLocked = ( point && point->IsLocked() );
+
+	// restart the timer if we have one
+	if ( m_giveUpTimer.HasStarted() )
 	{
-		m_bPointLocked = point->IsLocked();
+		m_giveUpTimer.Reset();
+	}
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSeekAndDestroy::Update( CTFBot *me, float interval )
+{
+	if ( m_giveUpTimer.HasStarted() && m_giveUpTimer.IsElapsed() )
+	{
+		return Done( "Behavior duration elapsed" );
+	}
+
+	if ( TFGameRules()->IsInTraining() )
+	{
+		// if the trainee has started capturing the point, assist them
+		if ( me->IsAnyPointBeingCaptured() )
+		{
+			return Done( "Assist trainee in capturing the point" );
+		}
 	}
 	else
 	{
-		m_bPointLocked = false;
+		if ( me->IsCapturingPoint() )
+		{
+			return Done( "Keep capturing point I happened to stumble upon" );
+		}
+
+		if ( m_isPointLocked )
+		{
+			CTeamControlPoint *point = me->GetMyControlPoint();
+
+			if ( point && !point->IsLocked() )
+			{
+				return Done( "The point just unlocked" );
+			}
+		}
+		
+		if ( !TFGameRules()->RoundHasBeenWon() && me->GetTimeLeftToCapture() < tf_bot_offense_must_push_time.GetFloat() )
+		{
+			return Done( "Time to push for the objective" );
+		}
 	}
-
-	/* start the countdown timer back to the beginning */
-	if ( m_actionDuration.HasStarted() )
-		m_actionDuration.Reset();
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotSeekAndDestroy::Update( CTFBot *me, float dt )
-{
-	if ( TFGameRules()->IsInTraining() && me->IsAnyPointBeingCaptured() )
-		return Action<CTFBot>::Done( "Assist trainee in capturing the point" );
-
-	if ( me->IsCapturingPoint() )
-		return Action<CTFBot>::Done( "Keep capturing point I happened to stumble upon" );
-
-	if ( m_bPointLocked )
-	{
-		CTeamControlPoint *point = me->GetMyControlPoint();
-		if ( point != nullptr && !point->IsLocked() )
-			return Action<CTFBot>::Done( "The point just unlocked" );
-	}
-
-	/*extern ConVar tf_bot_offense_must_push_time;
-	if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN &&
-		 me->GetTimeLeftToCapture() < tf_bot_offense_must_push_time.GetFloat() )
-	{
-		return Action<CTFBot>::Done( "Time to push for the objective" );
-	}*/
 
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
-	if ( threat != nullptr )
+	if ( threat )
 	{
-		if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
+		if ( TFGameRules()->RoundHasBeenWon() )
 		{
-			return Action<CTFBot>::SuspendFor( new CTFBotAttack(), "Chasing down the losers" );
+			// hunt down the losers
+			return SuspendFor( new CTFBotAttack, "Chasing down the losers" );
 		}
 
-		if ( me->IsRangeLessThan( threat->GetLastKnownPosition(), 1000.0f ) )
+		const float engageRange = 1000.0f;
+		if ( me->IsRangeLessThan( threat->GetLastKnownPosition(), engageRange ) )
 		{
-			return Action<CTFBot>::SuspendFor( new CTFBotAttack(), "Going after an enemy" );
+			return SuspendFor( new CTFBotAttack, "Going after an enemy" );
 		}
 	}
 
-	if ( m_actionDuration.HasStarted() && m_actionDuration.IsElapsed() )
-		return Action<CTFBot>::Done( "Behavior duration elapsed" );
+	// move towards our seek goal
+	m_path.Update( me );
 
-	m_PathFollower.Update( me );
-
-	if ( !m_PathFollower.IsValid() && m_recomputeTimer.IsElapsed() )
+	if ( !m_path.IsValid() && m_repathTimer.IsElapsed() )
 	{
-		m_recomputeTimer.Start( 1.0f );
+		m_repathTimer.Start( 1.0f );
+
 		RecomputeSeekPath( me );
 	}
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotSeekAndDestroy::OnResume( CTFBot *me, Action<CTFBot> *interruptingAction )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotSeekAndDestroy::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
 {
 	RecomputeSeekPath( me );
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotSeekAndDestroy::OnMoveToSuccess( CTFBot *me, const Path *path )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSeekAndDestroy::OnStuck( CTFBot *me )
 {
 	RecomputeSeekPath( me );
 
-	return Action<CTFBot>::TryContinue();
+	return TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotSeekAndDestroy::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSeekAndDestroy::OnMoveToSuccess( CTFBot *me, const Path *path )
 {
 	RecomputeSeekPath( me );
 
-	return Action<CTFBot>::TryContinue();
+	return TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotSeekAndDestroy::OnStuck( CTFBot *me )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSeekAndDestroy::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
 {
 	RecomputeSeekPath( me );
 
-	return Action<CTFBot>::TryContinue();
+	return TryContinue();
 }
 
-EventDesiredResult<CTFBot> CTFBotSeekAndDestroy::OnTerritoryContested( CTFBot *me, int pointID )
+
+//---------------------------------------------------------------------------------------------
+QueryResultType	CTFBotSeekAndDestroy::ShouldRetreat( const INextBot *meBot ) const
 {
-	return Action<CTFBot>::TryDone( RESULT_IMPORTANT, "Defending the point" );
-}
+	CTFBot *me = (CTFBot *)meBot->GetEntity();
 
-EventDesiredResult<CTFBot> CTFBotSeekAndDestroy::OnTerritoryCaptured( CTFBot *me, int pointID )
-{
-	return Action<CTFBot>::TryDone( RESULT_IMPORTANT, "Giving up due to point capture" );
-}
+	if ( me->IsPlayerClass( TF_CLASS_PYRO ) )
+	{
+		return ANSWER_NO;
+	}
 
-EventDesiredResult<CTFBot> CTFBotSeekAndDestroy::OnTerritoryLost( CTFBot *me, int pointID )
-{
-	return Action<CTFBot>::TryDone( RESULT_IMPORTANT, "Giving up due to point lost" );
+	return ANSWER_UNDEFINED;
 }
 
 
+//---------------------------------------------------------------------------------------------
 QueryResultType CTFBotSeekAndDestroy::ShouldHurry( const INextBot *me ) const
 {
 	return ANSWER_UNDEFINED;
 }
 
-QueryResultType CTFBotSeekAndDestroy::ShouldRetreat( const INextBot *me ) const
+
+//---------------------------------------------------------------------------------------------
+CTFNavArea *CTFBotSeekAndDestroy::ChooseGoalArea( CTFBot *me )
 {
-	if ( ToTFPlayer( me->GetEntity() )->IsPlayerClass( TF_CLASS_PYRO ) )
-	{
-		return ANSWER_NO;
-	}
-	else
-	{
-		return ANSWER_UNDEFINED;
-	}
-}
+	CUtlVector< CTFNavArea * > goalVector;
 
+	TheTFNavMesh()->CollectSpawnRoomThresholdAreas( &goalVector, GetEnemyTeam( me->GetTeamNumber() ) );
 
-CTFNavArea *CTFBotSeekAndDestroy::ChooseGoalArea( CTFBot *actor )
-{
-	CUtlVector<CTFNavArea *> areas;
-	TFNavMesh()->CollectSpawnRoomThresholdAreas( &areas, GetEnemyTeam( actor ) );
-
-	CTeamControlPoint *point = actor->GetMyControlPoint();
+	CTeamControlPoint *point = me->GetMyControlPoint();
 	if ( point && !point->IsLocked() )
 	{
-		int index = point->GetPointIndex();
-		if ( index < MAX_CONTROL_POINTS )
-		{	// this is somewhat what's happening, no idea what (TheNavMesh + 20 * index + 1536) is, it's between m_sentryAreas & m_CPAreas
-			const CUtlVector<CTFNavArea *> &cpAreas = TFNavMesh()->GetControlPointAreas( index );
-			if ( cpAreas.Count() > 0 )
-			{
-				CTFNavArea *area = cpAreas.Random();
-				areas.AddToHead( area );
-			}
+		// add current control point as a seek goal
+		const CUtlVector< CTFNavArea * > *controlPointAreas = TheTFNavMesh()->GetControlPointAreas( point->GetPointIndex() );
+		if ( controlPointAreas && controlPointAreas->Count() > 0 )
+		{
+			goalVector.AddToTail( controlPointAreas->Element( RandomInt( 0, controlPointAreas->Count()-1 ) ) );
 		}
 	}
 
 	if ( tf_bot_debug_seek_and_destroy.GetBool() )
 	{
-		FOR_EACH_VEC( areas, i )
+		for( int i=0; i<goalVector.Count(); ++i )
 		{
-			TheNavMesh->AddToSelectedSet( areas[i] );
+			TheNavMesh->AddToSelectedSet( goalVector[i] );
 		}
 	}
 
-	if ( !areas.IsEmpty() )
+	// pick a new goal
+	if ( goalVector.Count() > 0 )
 	{
-		return areas.Random();
+		return goalVector[ RandomInt( 0, goalVector.Count()-1 ) ];
+	}
+
+	return NULL;
+}
+
+
+//---------------------------------------------------------------------------------------------
+void CTFBotSeekAndDestroy::RecomputeSeekPath( CTFBot *me )
+{
+	m_goalArea = ChooseGoalArea( me );
+	if ( m_goalArea )
+	{
+		CTFBotPathCost cost( me, SAFEST_ROUTE );
+		m_path.Compute( me, m_goalArea->GetCenter(), cost );
 	}
 	else
 	{
-		return nullptr;
+		m_path.Invalidate();
 	}
 }
 
-void CTFBotSeekAndDestroy::RecomputeSeekPath( CTFBot *actor )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSeekAndDestroy::OnTerritoryContested( CTFBot *me, int territoryID )
 {
-	if ( ( m_GoalArea = ChooseGoalArea( actor ) ) == nullptr )
-	{
-		m_PathFollower.Invalidate();
-		return;
-	}
-
-	CTFBotPathCost func( actor, SAFEST_ROUTE );
-	m_PathFollower.Compute( actor, m_GoalArea->GetCenter(), func );
+	return TryDone( RESULT_IMPORTANT, "Defending the point" );
 }
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSeekAndDestroy::OnTerritoryCaptured( CTFBot *me, int territoryID )
+{
+	return TryDone( RESULT_IMPORTANT, "Giving up due to point capture" );
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSeekAndDestroy::OnTerritoryLost( CTFBot *me, int territoryID )
+{
+	return TryDone( RESULT_IMPORTANT, "Giving up due to point lost" );
+}
+

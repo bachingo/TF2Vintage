@@ -6,7 +6,7 @@
 #include "tier0/memdbgon.h"
 #endif
 #ifndef SQ_EXCLUDE_DEFAULT_MEMFUNCTIONS
-void *sq_vm_malloc(SQUnsignedInteger size){ return malloc(size); }
+void *sq_vm_malloc(SQUnsignedInteger size){ return calloc(size, 1); }
 
 void *sq_vm_realloc(void *p, SQUnsignedInteger SQ_UNUSED_ARG(oldsize), SQUnsignedInteger size){ return realloc(p, size); }
 

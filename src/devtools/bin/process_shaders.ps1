@@ -17,15 +17,15 @@ while ($null -ne ($line = $fileList.ReadLine())) {
 	}
 
 	if ($Dynamic) {
-		& "$PSScriptRoot\ShaderCompile" "-dynamic" "-ver" $Version "-shaderpath" $File.DirectoryName $line
+		& "$PSScriptRoot\ShaderCompile2" "-dynamic" "-ver" $Version "-shaderpath" $File.DirectoryName $line
 		continue
 	}
 
 	if ($Threads -ne 0) {
-		& "$PSScriptRoot\ShaderCompile" "-threads" $Threads "-ver" $Version "-shaderpath" $File.DirectoryName $line
+		& "$PSScriptRoot\ShaderCompile2" "-threads" $Threads "-ver" $Version "-shaderpath" $File.DirectoryName $line
 		continue
 	}
 
-	& "$PSScriptRoot\ShaderCompile" "-ver" $Version "-shaderpath" $File.DirectoryName $line
+	& "$PSScriptRoot\ShaderCompile2" "-ver" $Version "-shaderpath" $File.DirectoryName $line
 }
 $fileList.Close()

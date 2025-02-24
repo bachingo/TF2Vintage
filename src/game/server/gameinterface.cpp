@@ -7,7 +7,6 @@
 //===========================================================================//
 
 #include "cbase.h"
-#include "fmtstr.h"
 #include "gamestringpool.h"
 #include "mapentities_shared.h"
 #include "game.h"
@@ -90,24 +89,14 @@
 #include "tier3/tier3.h"
 #include "serverbenchmark_base.h"
 #include "querycache.h"
-#include "vscript/ivscript.h"
-#include "vscript_server.h"
-#include "ScriptGameEventListener.h"
-#include "rtime.h"
-#ifdef _WIN32
-#include <direct.h> // getcwd
-#elif POSIX
-#include <dlfcn.h>
-#include <unistd.h>
-#define _getcwd getcwd
-#endif
+#include "player_voice_listener.h"
+
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
 #include "econ_item_inventory.h"
 #include "steamworks_gamestats.h"
 #include "tf/tf_gc_server.h"
 #include "tf_gamerules.h"
-#include "tf_lobby.h"
 #include "player_vs_environment/tf_population_manager.h"
 #include "workshop/maps_workshop.h"
 
@@ -125,8 +114,6 @@ extern ConVar tf_mm_servermode;
 
 #ifdef USES_ECON_ITEMS
 #include "econ_item_system.h"
-#include "econ_networking.h"
-#include "tf_inventory.h"
 #endif // USES_ECON_ITEMS
 
 #ifdef CSTRIKE_DLL // BOTPORT: TODO: move these ifdefs out
@@ -234,7 +221,7 @@ INetworkStringTable *g_pStringTableInfoPanel = NULL;
 INetworkStringTable *g_pStringTableClientSideChoreoScenes = NULL;
 INetworkStringTable *g_pStringTableServerMapCycle = NULL;
 
-#if defined( TF_DLL ) || defined( TF_VINTAGE )
+#ifdef TF_DLL
 INetworkStringTable *g_pStringTableServerPopFiles = NULL;
 INetworkStringTable *g_pStringTableServerMapCycleMvM = NULL;
 #endif
@@ -249,9 +236,9 @@ static int		g_nCommandClientIndex = 0;
 // The chapter number of the current
 static int		g_nCurrentChapterIndex = -1;
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 static ConVar sv_showhitboxes( "sv_showhitboxes", "-1", FCVAR_CHEAT, "Send server-side hitboxes for specified entity to client (NOTE:  this uses lots of bandwidth, use on listen server only)." );
-//#endif
+#endif
 
 void PrecachePointTemplates();
 
@@ -259,20 +246,6 @@ static ClientPutInServerOverrideFn g_pClientPutInServerOverride = NULL;
 static void UpdateChapterRestrictions( const char *mapname );
 
 static void UpdateRichPresence ( void );
-
-#ifdef TF_VINTAGE
-//#pragma message(FILE_LINE_STRING " !!FIXME!! replace all this with Sys_LoadGameModule")
-static class DllOverride
-{
-public:
-	DllOverride() {
-		Sys_LoadInterface( "filesystem_stdio.dll", FILESYSTEM_INTERFACE_VERSION, nullptr, (void **)&g_pFullFileSystem );
-		const char *pGameDir = CommandLine()->ParmValue( "-game", "hl2" );
-		pGameDir = UTIL_VarArgs( "%s/bin", pGameDir );
-		g_pFullFileSystem->AddSearchPath( pGameDir, "EXECUTABLE_PATH", PATH_ADD_TO_HEAD );
-	}
-} g_DllOverride;
-#endif
 
 
 #if !defined( _XBOX ) // Don't doubly define this symbol.
@@ -591,8 +564,7 @@ CServerGameDLL g_ServerGameDLL;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameDLL, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL, g_ServerGameDLL);
 
 // When bumping the version to this interface, check that our assumption is still valid and expose the older version in the same way
-COMPILE_TIME_ASSERT( INTERFACEVERSION_SERVERGAMEDLL_INT == 10 );
-
+COMPILE_TIME_ASSERT( INTERFACEVERSION_SERVERGAMEDLL_INT == 12 );
 
 bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory, 
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
@@ -624,7 +596,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		return false;
 	if ( (enginesound = (IEngineSound *)appSystemFactory(IENGINESOUND_SERVER_INTERFACE_VERSION, NULL)) == NULL )
 		return false;
-	if ( (partition = (ISpatialPartition *)appSystemFactory(INTERFACEVERSION_SPATIALPARTITION, NULL)) == NULL )
+	if ( (::partition = (ISpatialPartition *)appSystemFactory(INTERFACEVERSION_SPATIALPARTITION, NULL)) == NULL )
 		return false;
 	if ( (modelinfo = (IVModelInfo *)appSystemFactory(VMODELINFO_SERVER_INTERFACE_VERSION, NULL)) == NULL )
 		return false;
@@ -683,7 +655,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	// Yes, both the client and game .dlls will try to Connect, the soundemittersystem.dll will handle this gracefully
 	if ( !soundemitterbase->Connect( appSystemFactory ) )
 		return false;
-	
+
 	// cache the globals
 	gpGlobals = pGlobals;
 
@@ -777,9 +749,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	InvalidateQueryCache();
 
-	// Parse the particle manifest file & register the effects within it
-	ParseParticleEffects( false, false );
-
 	// try to get debug overlay, may be NULL if on HLDS
 	debugoverlay = (IVDebugOverlay *)appSystemFactory( VDEBUG_OVERLAY_INTERFACE_VERSION, NULL );
 
@@ -799,10 +768,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 void CServerGameDLL::PostInit()
 {
 	IGameSystem::PostInitAllSystems();
-
-#ifdef USES_ECON_ITEMS
-	g_pNetworking->Init();
-#endif
 }
 
 void CServerGameDLL::DLLShutdown( void )
@@ -842,10 +807,6 @@ void CServerGameDLL::DLLShutdown( void )
 		delete TheNavMesh;
 		TheNavMesh = NULL;
 	}
-#endif
-
-#ifdef USES_ECON_ITEMS
-	g_pNetworking->Shutdown();
 #endif
 	// reset (shutdown) the gamestatsupload connection
 	gamestatsuploader->InitConnection();
@@ -892,7 +853,6 @@ float CServerGameDLL::GetTickInterval( void ) const
 // [Forrest] For Counter-Strike, set default tick rate of 66 and removed -tickrate command line parameter.
 //=============================================================================
 // Ignoring this for now, server ops are abusing it
-//#if !defined( TF_DLL ) && !defined( TF_VINTAGE ) && !defined( CSTRIKE_DLL ) && !defined( DOD_DLL )
 #if !defined( TF_DLL ) && !defined( CSTRIKE_DLL ) && !defined( DOD_DLL )
 //=============================================================================
 // HPE_END
@@ -1009,14 +969,21 @@ bool CServerGameDLL::IsRestoring()
 	return g_InRestore;
 }
 
+float g_flServerCurTime = 0.0f;
+
 // Called any time a new level is started (after GameInit() also on level transitions within a game)
 bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, char const *pOldLevel, char const *pLandmarkName, bool loadGame, bool background )
 {
 	VPROF("CServerGameDLL::LevelInit");
 
+	g_flServerCurTime = gpGlobals->curtime;
+
 #ifdef USES_ECON_ITEMS
-	// Reload the inventory on a new map.
-	GetTFInventory()->Init();
+	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
+	if ( pItemSchema )
+	{
+		pItemSchema->BInitFromDelayedBuffer();
+	}
 #endif // USES_ECON_ITEMS
 
 	ResetWindspeed();
@@ -1027,6 +994,9 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 		// Single player games tell xbox live what game & chapter the user is playing
 		UpdateRichPresence();
 	}
+
+	// Parse the particle manifest file & register the effects within it
+	ParseParticleEffects( false, false );
 
 	//Tony; parse custom manifest if exists!
 	ParseParticleEffectsMap( pMapName, false );
@@ -1262,6 +1232,7 @@ void CServerGameDLL::GameFrame( bool simulating )
 		gpGlobals->frametime *= 2.0f;
 	}
 
+	g_flServerCurTime = gpGlobals->curtime;
 	float oldframetime = gpGlobals->frametime;
 
 #ifdef _DEBUG
@@ -1283,10 +1254,6 @@ void CServerGameDLL::GameFrame( bool simulating )
 #ifndef _XBOX
 #ifdef USE_NAV_MESH
 	TheNavMesh->Update();
-#endif
-
-#ifdef USES_ECON_ITEMS
-	g_pNetworking->Update( oldframetime );
 #endif
 
 #ifdef NEXT_BOT
@@ -1358,15 +1325,13 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 	}
 	*/
 
-	CRTime::UpdateRealTime();
-
 //#ifdef _DEBUG  - allow this in release for now
 	DrawAllDebugOverlays();
 //#endif
 	
 	IGameSystem::PreClientUpdateAllSystems();
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 	if ( sv_showhitboxes.GetInt() == -1 )
 		return;
 
@@ -1396,7 +1361,7 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 		return;
 
 	anim->DrawServerHitboxes();
-//#endif
+#endif
 }
 
 void CServerGameDLL::Think( bool finalTick )
@@ -1454,6 +1419,12 @@ void CServerGameDLL::LevelShutdown( void )
 	// In case we quit out during initial load
 	CBaseEntity::SetAllowPrecache( false );
 
+	// Josh: Uncache all the particle systems on level shutdown
+	// otherwise we leak them constantly on changelevel in the
+	// particle precache stringtable list.
+	g_pParticleSystemMgr->UncacheAllParticleSystems();
+	g_pParticleSystemMgr->RecreateDictionary();
+
 	g_nCurrentChapterIndex = -1;
 
 #ifndef _XBOX
@@ -1495,7 +1466,7 @@ void CServerGameDLL::CreateNetworkStringTables( void )
 	g_pStringTableClientSideChoreoScenes = networkstringtable->CreateStringTable( "Scenes", MAX_CHOREO_SCENES_STRINGS );
 	g_pStringTableServerMapCycle = networkstringtable->CreateStringTable( "ServerMapCycle", 128 );
 
-#if defined( TF_DLL ) || defined( TF_VINTAGE )
+#ifdef TF_DLL
 	g_pStringTableServerPopFiles = networkstringtable->CreateStringTable( "ServerPopFiles", 128 );
 	g_pStringTableServerMapCycleMvM = networkstringtable->CreateStringTable( "ServerMapCycleMvM", 128 );
 #endif
@@ -1503,7 +1474,7 @@ void CServerGameDLL::CreateNetworkStringTables( void )
 	bool bPopFilesValid = true;
 	(void)bPopFilesValid; // Avoid unreferenced variable warning
 
-#if defined( TF_DLL ) || defined( TF_VINTAGE )
+#ifdef TF_DLL
 	bPopFilesValid = ( g_pStringTableServerPopFiles != NULL );
 #endif
 
@@ -1960,6 +1931,9 @@ const char *CServerGameDLL::GetServerBrowserMapOverride()
 			return pszFilenameShort;
 		}
 	}
+
+	static char maptmp[256];
+	return GetCleanMapName( STRING( gpGlobals->mapname ), maptmp );
 #endif
 	return NULL;
 }
@@ -1971,18 +1945,19 @@ const char *CServerGameDLL::GetServerBrowserGameData()
 #ifdef TF_DLL
 	sResult.Format( "tf_mm_trusted:%d,tf_mm_servermode:%d", tf_mm_trusted.GetInt(), tf_mm_servermode.GetInt() );
 
-	CTFLobby *pLobby = GTFGCClientSystem()->GetLobby();
-	if ( pLobby == NULL )
+	CMatchInfo *pMatch = GTFGCClientSystem()->GetMatch();
+	if ( !pMatch )
 	{
 		sResult.Append( ",lobby:0" );
 	}
 	else
 	{
-		sResult.Append( CFmtStr( ",lobby:%016llx", pLobby->GetGroupID() ) );
+		sResult.Append( CFmtStr( ",lobby:%016llx", pMatch->m_nLobbyID ) );
 	}
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 	{
-		sResult.Append( CFmtStr( ",mannup:%d", ( pLobby && pLobby->GetPlayingForBraggingRights() ) ? 1 : 0  ) );
+		bool bMannup = pMatch && pMatch->m_eMatchGroup == k_eTFMatchGroup_MvM_MannUp;
+		sResult.Append( CFmtStr( ",mannup:%d", (int)bMannup ) );
 	}
 #endif
 
@@ -2044,6 +2019,15 @@ bool CServerGameDLL::IsManualMapChangeOkay( const char **pszReason )
 	}
 
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+bool CServerGameDLL::GetWorkshopMap( uint32 uIndex, WorkshopMapDesc_t *pDesc )
+{
+#ifdef TF_DLL
+	return TFMapsWorkshop()->GetWorkshopMapDesc( uIndex, pDesc );
+#endif // TF_DLL
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -2708,6 +2692,7 @@ void CServerGameEnts::CheckTransmit( CCheckTransmitInfo *pInfo, const unsigned s
 CServerGameClients g_ServerGameClients;
 // INTERFACEVERSION_SERVERGAMECLIENTS_VERSION_3 is compatible with the latest since we're only adding things to the end, so expose that as well.
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameClients, IServerGameClients003, INTERFACEVERSION_SERVERGAMECLIENTS_VERSION_3, g_ServerGameClients );
+EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameClients, IServerGameClients004, INTERFACEVERSION_SERVERGAMECLIENTS_VERSION_4, g_ServerGameClients );
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameClients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS, g_ServerGameClients );
 
 
@@ -2881,75 +2866,11 @@ void CServerGameClients::ClientSettingsChanged( edict_t *pEdict )
 		return;
 
 	CBasePlayer *player = ( CBasePlayer * )CBaseEntity::Instance( pEdict );
-	
+
 	if ( !player )
 		return;
 
-	bool bAllowNetworkingClientSettingsChange = g_pGameRules->IsConnectedUserInfoChangeAllowed( player );
-	if ( bAllowNetworkingClientSettingsChange )
-	{
-
-#define QUICKGETCVARVALUE(v) (engine->GetClientConVarValue( player->entindex(), v ))
-
-	// get network setting for prediction & lag compensation
-	
-	// Unfortunately, we have to duplicate the code in cdll_bounded_cvars.cpp here because the client
-	// doesn't send the virtualized value up (because it has no way to know when the virtualized value
-	// changes). Possible todo: put the responsibility on the bounded cvar to notify the engine when
-	// its virtualized value has changed.		
-	
-	player->m_nUpdateRate = Q_atoi( QUICKGETCVARVALUE("cl_updaterate") );
-	static const ConVar *pMinUpdateRate = g_pCVar->FindVar( "sv_minupdaterate" );
-	static const ConVar *pMaxUpdateRate = g_pCVar->FindVar( "sv_maxupdaterate" );
-	if ( pMinUpdateRate && pMaxUpdateRate )
-		player->m_nUpdateRate = clamp( player->m_nUpdateRate, (int) pMinUpdateRate->GetFloat(), (int) pMaxUpdateRate->GetFloat() );
-
-	bool useInterpolation = Q_atoi( QUICKGETCVARVALUE("cl_interpolate") ) != 0;
-	if ( useInterpolation )
-	{
-		float flLerpRatio = Q_atof( QUICKGETCVARVALUE("cl_interp_ratio") );
-		if ( flLerpRatio == 0 )
-			flLerpRatio = 1.0f;
-		float flLerpAmount = Q_atof( QUICKGETCVARVALUE("cl_interp") );
-
-		static const ConVar *pMin = g_pCVar->FindVar( "sv_client_min_interp_ratio" );
-		static const ConVar *pMax = g_pCVar->FindVar( "sv_client_max_interp_ratio" );
-		if ( pMin && pMax && pMin->GetFloat() != -1 )
-		{
-			flLerpRatio = clamp( flLerpRatio, pMin->GetFloat(), pMax->GetFloat() );
-		}
-		else
-		{
-			if ( flLerpRatio == 0 )
-				flLerpRatio = 1.0f;
-		}
-		// #define FIXME_INTERP_RATIO
-		player->m_fLerpTime = MAX( flLerpAmount, flLerpRatio / player->m_nUpdateRate );
-	}
-	else
-	{
-		player->m_fLerpTime = 0.0f;
-	}
-	
-#if !defined( NO_ENTITY_PREDICTION )
-	bool usePrediction = Q_atoi( QUICKGETCVARVALUE("cl_predict")) != 0;
-
-	if ( usePrediction )
-	{
-		player->m_bPredictWeapons  = Q_atoi( QUICKGETCVARVALUE("cl_predictweapons")) != 0;
-		player->m_bLagCompensation = Q_atoi( QUICKGETCVARVALUE("cl_lagcompensation")) != 0;
-	}
-	else
-#endif
-	{
-		player->m_bPredictWeapons  = false;
-		player->m_bLagCompensation = false;
-	}
-	
-
-#undef QUICKGETCVARVALUE
-	}
-
+	player->ClientSettingsChanged();
 	g_pGameRules->ClientSettingsChanged( player );
 }
 
@@ -3125,6 +3046,8 @@ void CServerGameClients::ClientSetupVisibility( edict_t *pViewEntity, edict_t *p
 //-----------------------------------------------------------------------------
 #define CMD_MAXBACKUP 64
 
+static ConVar sv_max_usercmd_move_magnitude( "sv_max_usercmd_move_magnitude", "1000", 0, "Maximum move magnitude that can be requested by client." );	
+
 float CServerGameClients::ProcessUsercmds( edict_t *player, bf_read *buf, int numcmds, int totalcmds,
 	int dropped_packets, bool ignore, bool paused )
 {
@@ -3147,7 +3070,7 @@ float CServerGameClients::ProcessUsercmds( edict_t *player, bf_read *buf, int nu
 		pPlayer = static_cast< CBasePlayer * >( pEnt );
 	}
 	// Too many commands?
-	if ( totalcmds < 0 || totalcmds >= ( CMD_MAXBACKUP - 1 ) )
+	if ( totalcmds < 0 || totalcmds >= ( CMD_MAXBACKUP - 1 ) || numcmds < 0 || numcmds > totalcmds )
 	{
 		const char *name = "unknown";
 		if ( pPlayer )
@@ -3170,6 +3093,15 @@ float CServerGameClients::ProcessUsercmds( edict_t *player, bf_read *buf, int nu
 		to = &cmds[ i ];
 		ReadUsercmd( buf, to, from );
 		from = to;
+
+		if ( ( fabs( to->forwardmove ) > sv_max_usercmd_move_magnitude.GetFloat() ) ||
+			( fabs( to->sidemove ) > sv_max_usercmd_move_magnitude.GetFloat() ) ||
+			( fabs( to->upmove ) > sv_max_usercmd_move_magnitude.GetFloat() ) )
+		{
+			to->forwardmove = 0;
+			to->sidemove = 0;
+			to->upmove = 0;
+		}
 	}
 
 	// Client not fully connected or server has gone inactive  or is paused, just ignore
@@ -3281,6 +3213,21 @@ void CServerGameClients::GetBugReportInfo( char *buf, int buflen )
 			}
 			Q_snprintf( buf, buflen, "%sCurrent time: %6.3f\n", buf, gpGlobals->curtime );
 		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: A player sent a voice packet
+//-----------------------------------------------------------------------------
+void CServerGameClients::ClientVoice( edict_t *pEdict )
+{
+	CBasePlayer *pPlayer = ( CBasePlayer * )CBaseEntity::Instance( pEdict );
+	if (pPlayer)
+	{
+		pPlayer->OnVoiceTransmit();
+		
+		// Notify the voice listener that we've spoken
+		PlayerVoiceListener().AddPlayerSpeakTime( pPlayer );
 	}
 }
 
@@ -3508,7 +3455,6 @@ public:
 	{
 		AddAppSystem( "soundemittersystem" DLL_EXT_STRING, SOUNDEMITTERSYSTEM_INTERFACE_VERSION );
 		AddAppSystem( "scenefilecache" DLL_EXT_STRING, SCENE_FILE_CACHE_INTERFACE_VERSION );
-		//AddAppSystem( "vscript" DLL_EXT_STRING, VSCRIPT_INTERFACE_VERSION );
 	}
 
 	virtual int	Count()

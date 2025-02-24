@@ -13,9 +13,13 @@
 #include "squserdata.h"
 #include "sqarray.h"
 #include "sqclass.h"
+#include "tier0/vprof.h"
+#include "tier1/convar.h"
 #if defined(VSCRIPT_DLL_EXPORT)
 #include "tier0/memdbgon.h"
 #endif
+
+ConVar vscript_perf_warning_spew_ms( "vscript_perf_warning_spew_ms", "1.5" );
 
 #define TOP() (_stack._vals[_top-1])
 #define TARGET _stack._vals[_stackbase+arg0]
@@ -647,7 +651,7 @@ bool SQVM::DELEGATE_OP(SQObjectPtr &trg,SQObjectPtr &o1,SQObjectPtr &o2)
 
 #define _GUARD(exp) { if(!exp) { SQ_THROW();} }
 
-bool SQVM::CLOSURE_OP(SQObjectPtr &target, SQFunctionProto *func)
+bool SQVM::CLOSURE_OP(SQObjectPtr &target,SQFunctionProto *func,SQInteger boundtarget)
 {
     SQInteger nouters;
     SQClosure *closure = SQClosure::Create(_ss(this), func,_table(_roottable)->GetWeakRef(OT_TABLE));
@@ -671,6 +675,19 @@ bool SQVM::CLOSURE_OP(SQObjectPtr &target, SQFunctionProto *func)
             closure->_defaultparams[i] = _stack._vals[_stackbase + spos];
         }
     }
+	if (boundtarget != 0xFF) {
+		SQObjectPtr &val = _stack._vals[_stackbase+boundtarget];
+		SQObjectType t = sq_type(val);
+		if (t == OT_TABLE || t == OT_CLASS || t == OT_INSTANCE || t == OT_ARRAY) {
+			closure->_env = _refcounted(val)->GetWeakRef(t);
+			__ObjAddRef(closure->_env);
+		}
+		else {
+			Raise_Error(_SC("cannot bind a %s as environment object"), IdType2Name(t));
+			closure->Release();
+			return false;
+		}
+	}
     target = closure;
     return true;
 
@@ -778,7 +795,13 @@ bool SQVM::Execute(SQObjectPtr &closure, SQInteger nargs, SQInteger stackbase,SQ
             ci->_root = SQTrue;
                       }
             break;
-        case ET_RESUME_GENERATOR: _generator(closure)->Resume(this, outres); ci->_root = SQTrue; traps += ci->_etraps; break;
+        case ET_RESUME_GENERATOR: 
+            if(!_generator(closure)->Resume(this, outres)) {
+                return false;
+            }
+            ci->_root = SQTrue;
+            traps += ci->_etraps;
+            break;
         case ET_RESUME_VM:
         case ET_RESUME_THROW_VM:
             traps = _suspended_traps;
@@ -1110,7 +1133,7 @@ query_suspend:
             case _OP_CLOSURE: {
                 SQClosure *c = ci->_closure._unVal.pClosure;
                 SQFunctionProto *fp = c->_function;
-                if(!CLOSURE_OP(TARGET,fp->_functions[arg1]._unVal.pFunctionProto)) { SQ_THROW(); }
+                if(!CLOSURE_OP(TARGET,fp->_functions[arg1]._unVal.pFunctionProto,arg2)) { SQ_THROW(); }
                 continue;
             }
             case _OP_YIELD:{
@@ -1262,6 +1285,7 @@ void SQVM::CallDebugHook(SQInteger type,SQInteger forcedline)
 
 bool SQVM::CallNative(SQNativeClosure *nclosure, SQInteger nargs, SQInteger newbase, SQObjectPtr &retval, SQInt32 target,bool &suspend, bool &tailcall)
 {
+    VPROF( "SQVM::CallNative" );
     SQInteger nparamscheck = nclosure->_nparamscheck;
     SQInteger newtop = newbase + nargs + nclosure->_noutervalues;
 
@@ -1418,6 +1442,7 @@ bool SQVM::InvokeDefaultDelegate(const SQObjectPtr &self,const SQObjectPtr &key,
         case OT_CLOSURE: case OT_NATIVECLOSURE: ddel = _closure_ddel; break;
         case OT_THREAD: ddel = _thread_ddel; break;
         case OT_WEAKREF: ddel = _weakref_ddel; break;
+        case OT_EHANDLE: ddel = _handle_ddel; break;
         default: return false;
     }
     return  ddel->Get(key,dest);
@@ -1431,7 +1456,7 @@ SQInteger SQVM::FallBackGet(const SQObjectPtr &self,const SQObjectPtr &key,SQObj
     case OT_USERDATA:
         //delegation
         if(_delegable(self)->_delegate) {
-            if(Get(SQObjectPtr(_delegable(self)->_delegate),key,dest,0,DONT_FALL_BACK)) return FALLBACK_OK;
+            if(Get(SQObjectPtr(_delegable(self)->_delegate),key,dest,GET_FLAG_DO_NOT_RAISE_ERROR,DONT_FALL_BACK)) return FALLBACK_OK;
         }
         else {
             return FALLBACK_NO_MATCH;
@@ -1691,8 +1716,22 @@ bool SQVM::Call(SQObjectPtr &closure,SQInteger nparams,SQInteger stackbase,SQObj
 SQInteger prevstackbase = _stackbase;
 #endif
     switch(sq_type(closure)) {
-    case OT_CLOSURE:
-        return Execute(closure, nparams, stackbase, outres, raiseerror);
+    case OT_CLOSURE: {
+		VPROF( "SQVM::Call" );
+		CFastTimer timer;
+
+		timer.Start();
+		bool bSuccess = Execute(closure, nparams, stackbase, outres, raiseerror);
+		timer.End();
+
+		if ( timer.GetDuration().GetMillisecondsF() > vscript_perf_warning_spew_ms.GetFloat() )
+		{
+			SQString *name = _string( _closure( closure )->_function->_name );
+			char const *funcName = name && name->_len != 0 ? name->_val : "<lambda or free run script>";
+			Msg( "SCRIPT PERF WARNING --- \"%s\" ran long at %fms\n", funcName, timer.GetDuration().GetMillisecondsF() );
+		}
+		return bSuccess;
+		}
         break;
     case OT_NATIVECLOSURE:{
         bool dummy;
@@ -1788,6 +1827,11 @@ bool SQVM::EnterFrame(SQInteger newbase, SQInteger newtop, bool tailcall)
         _stack.resize(newtop + (MIN_STACK_OVERHEAD << 2));
         RelocateOuters();
     }
+
+	if (_debughook) {
+		CallDebugHook(_SC('e'));
+	}
+
     return true;
 }
 

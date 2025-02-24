@@ -21,7 +21,6 @@
 
 extern CServerGameDLL g_ServerGameDLL;
 
-
 //-----------------------------------------------------------------------------
 // Purpose: An entity that acts as a container for game scripts.
 //-----------------------------------------------------------------------------
@@ -37,27 +36,27 @@ public:
 	void RunVScripts()
 	{
 		/*
-		EntityGroup <- [];
-		function __AppendToScriptGroup( name ) 
-		{
-			if ( name.len() == 0 ) 
-			{ 
-				EntityGroup.append( null ); 
-			} 
-			else
-			{ 
-				local ent = Entities.FindByName( null, name );
-				EntityGroup.append( ent );
-				if ( ent != null )
-				{
-					ent.ValidateScriptScope();
-					ent.GetScriptScope().EntityGroup <- EntityGroup;
+			EntityGroup <- [];
+			function __AppendToScriptGroup( name ) 
+			{
+				if ( name.len() == 0 ) 
+				{ 
+					EntityGroup.append( null ); 
+				} 
+				else
+				{ 
+					local ent = Entities.FindByName( null, name );
+					EntityGroup.append( ent );
+					if ( ent != 0 )
+					{
+						ent.ValidateScriptScope();
+						ent.GetScriptScope().EntityGroup <- EntityGroup;
+					}
 				}
 			}
-		}
 		*/
 
-		static const byte szAddCode[] =
+ 		static const char szAddCode[] =
 		{
 			0x45,0x6e,0x74,0x69,0x74,0x79,0x47,0x72,0x6f,0x75,0x70,0x20,0x3c,0x2d,0x20,0x5b,0x5d,0x3b,0x0d,0x0a,
 			0x66,0x75,0x6e,0x63,0x74,0x69,0x6f,0x6e,0x20,0x5f,0x5f,0x41,0x70,0x70,0x65,0x6e,0x64,0x54,0x6f,0x53,
@@ -83,7 +82,9 @@ public:
 		for ( iLastMember = MAX_SCRIPT_GROUP - 1; iLastMember >= 0; iLastMember-- )
 		{
 			if ( m_iszGroupMembers[iLastMember] != NULL_STRING )
+			{
 				break;
+			}
 		}
 
 		if ( iLastMember >= 0 )
@@ -92,9 +93,7 @@ public:
 			if ( hAddScript )
 			{
 				ValidateScriptScope();
-
 				m_ScriptScope.Run( hAddScript );
-
 				HSCRIPT hAddFunc = m_ScriptScope.LookupFunction( "__AppendToScriptGroup" );
 				if ( hAddFunc )
 				{
@@ -102,7 +101,6 @@ public:
 					{
 						m_ScriptScope.Call( hAddFunc, NULL, STRING(m_iszGroupMembers[i]) );
 					}
-
 					g_pScriptVM->ReleaseFunction( hAddFunc );
 					m_ScriptScope.ClearValue( "__AppendToScriptGroup" );
 				}
@@ -110,7 +108,6 @@ public:
 				g_pScriptVM->ReleaseScript( hAddScript );
 			}
 		}
-
 		BaseClass::RunVScripts();
 	}
 
@@ -121,6 +118,9 @@ public:
 LINK_ENTITY_TO_CLASS( logic_script, CLogicScript );
 
 BEGIN_DATADESC( CLogicScript )
+	// Silence, Classcheck!
+	// DEFINE_ARRAY( m_iszGroupMembers, FIELD_STRING, MAX_NUM_TEMPLATES ),
+
 	DEFINE_KEYFIELD( m_iszGroupMembers[0], FIELD_STRING, "Group00"),
 	DEFINE_KEYFIELD( m_iszGroupMembers[1], FIELD_STRING, "Group01"),
 	DEFINE_KEYFIELD( m_iszGroupMembers[2], FIELD_STRING, "Group02"),
@@ -137,8 +137,8 @@ BEGIN_DATADESC( CLogicScript )
 	DEFINE_KEYFIELD( m_iszGroupMembers[13], FIELD_STRING, "Group13"),
 	DEFINE_KEYFIELD( m_iszGroupMembers[14], FIELD_STRING, "Group14"),
 	DEFINE_KEYFIELD( m_iszGroupMembers[15], FIELD_STRING, "Group16"),
-END_DATADESC()
 
+END_DATADESC()
 
 //-----------------------------------------------------------------------------
 // Purpose: Compares a set of integer inputs to the one main input

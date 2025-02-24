@@ -1,48 +1,38 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_get_ammo.h
+// Pick up any nearby ammo
+// Michael Booth, May 2009
+
 #ifndef TF_BOT_GET_AMMO_H
 #define TF_BOT_GET_AMMO_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "tf_powerup.h"
 
-#include "NextBotBehavior.h"
-
-class CTFBotGetAmmo : public Action<CTFBot>
+class CTFBotGetAmmo : public Action< CTFBot >
 {
 public:
-	CTFBotGetAmmo();
-	virtual ~CTFBotGetAmmo();
+	CTFBotGetAmmo( void );
 
-	virtual const char *GetName() const OVERRIDE;
+	static bool IsPossible( CTFBot *me );			// return true if this Action has what it needs to perform right now
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual EventDesiredResult<CTFBot> OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *trace ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnContact( CTFBot *me, CBaseEntity *other, CGameTrace *result = NULL );
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	static bool IsPossible( CTFBot *actor );
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;					// are we in a hurry?
 
-private:
-	PathFollower m_PathFollower;
-	CHandle<CBaseEntity> m_hAmmo;
-	bool m_bUsingDispenser;
-};
-
-class CAmmoFilter : public INextBotFilter
-{
-public:
-	CAmmoFilter( CTFPlayer *actor );
-
-	virtual bool IsSelected( const CBaseEntity *ent ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "GetAmmo"; };
 
 private:
-	CTFPlayer *m_pActor;
-	mutable float m_flMinCost;
+	PathFollower m_path;
+	CHandle< CBaseEntity > m_ammo;
+	bool m_isGoalDispenser;
 };
 
-#endif
+
+#endif // TF_BOT_GET_AMMO_H

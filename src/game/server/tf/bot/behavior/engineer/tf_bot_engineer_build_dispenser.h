@@ -1,31 +1,31 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_engineer_build_dispenser.h
+// Engineer building his Dispenser near his Sentry
+// Michael Booth, May 2010
+
 #ifndef TF_BOT_ENGINEER_BUILD_DISPENSER_H
 #define TF_BOT_ENGINEER_BUILD_DISPENSER_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 
-#include "NextBotBehavior.h"
-
-class CTFBotEngineerBuildDispenser : public Action<CTFBot>
+class CTFBotEngineerBuildDispenser : public Action< CTFBot >
 {
 public:
-	CTFBotEngineerBuildDispenser();
-	virtual ~CTFBotEngineerBuildDispenser();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual void					OnEnd( CTFBot *me, Action< CTFBot > *nextAction );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual void OnEnd( CTFBot *me, Action<CTFBot> *newAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "EngineerBuildDispenser"; };
 
 private:
-	CountdownTimer m_retryTimer;
-	CountdownTimer m_fetchAmmoTimer;
-	CountdownTimer m_recomputePathTimer;
-	int m_iTries;
-	PathFollower m_PathFollower;
+	CountdownTimer m_searchTimer;
+	CountdownTimer m_getAmmoTimer;
+	CountdownTimer m_repathTimer;
+
+	int m_placementTriesLeft;
+	PathFollower m_path;
 };
 
-#endif
+
+#endif // TF_BOT_ENGINEER_BUILD_DISPENSER_H

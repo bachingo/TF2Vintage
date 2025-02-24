@@ -33,6 +33,15 @@ public:
 
 	virtual void SetVScriptEventValues( IGameEvent *event, HSCRIPT table );
 
+	void CollectGameEventCallbacksInScope( HSCRIPT scope );
+	void RunGameEventCallbacks( char const *pszEvent, HSCRIPT params );
+
+	void ListenForScriptHook( char const *pszHook );
+	bool HasScriptHook( char const *pszHook );
+	bool FireScriptHook( char const *pszHook, HSCRIPT params );
+	bool RunScriptHookCallbacks( char const *pszHook, HSCRIPT params );
+	void ClearAllScriptHooks();
+
 	enum
 	{
 		TYPE_LOCAL, 
@@ -59,8 +68,14 @@ private:
 		ParamMap_t m_EventParams;
 	} GameEvents_t;
 	CUtlDict<GameEvents_t> m_GameEvents;
+
+	CUtlSymbolTable m_symScriptHooks;
+
+	HSCRIPT m_hCollectGameEventCallbacks;
+	HSCRIPT m_hRunGameEventCallbacks;
+	HSCRIPT m_hRunScriptHookCallbacks;
 };
 
-extern CScriptGameEventListener *ScriptGameEventListener();
+extern CScriptGameEventListener &ScriptGameEventListener();
 
 #endif

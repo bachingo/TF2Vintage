@@ -23,8 +23,8 @@ public:
 	IAttention( INextBot *bot ) : INextBotComponent( bot ) { }
 	virtual ~IAttention() { }
 
-	virtual void Reset( void );// {}										// reset to initial state
-	virtual void Update( void );// {}										// update internal state
+	virtual void Reset( void )	{ }										// reset to initial state
+	virtual void Update( void ) { }										// update internal state
 
 	enum SignificanceLevel
 	{

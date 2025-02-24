@@ -55,7 +55,7 @@ public:
 		
 	#if defined( CLIENT_DLL )
 		if ( !engine->IsConnected() )
-			return false;
+			return true;
 
 		uint unVersion = 0;
 		if ( msg->has_version() )

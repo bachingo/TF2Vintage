@@ -89,7 +89,7 @@ int C_TFSpyMask::InternalDrawModel( int flags )
 {
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	bool bUseInvulnMaterial = ( pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
-	bUseInvulnMaterial |= ( pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGE ) && gpGlobals->curtime < ( pOwner->GetLastDamageTime() + 2.0f ) );
+	bUseInvulnMaterial |= ( pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGED ) && gpGlobals->curtime < ( pOwner->GetLastDamageTime() + 2.0f ) );
 
 	if ( bUseInvulnMaterial )
 	{

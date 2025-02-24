@@ -108,7 +108,7 @@ public:
     _INLINE bool BW_OP(SQUnsignedInteger op,SQObjectPtr &trg,const SQObjectPtr &o1,const SQObjectPtr &o2);
     _INLINE bool NEG_OP(SQObjectPtr &trg,const SQObjectPtr &o1);
     _INLINE bool CMP_OP(CmpOP op, const SQObjectPtr &o1,const SQObjectPtr &o2,SQObjectPtr &res);
-    bool CLOSURE_OP(SQObjectPtr &target, SQFunctionProto *func);
+    bool CLOSURE_OP(SQObjectPtr &target,SQFunctionProto *func,SQInteger boundtarget);
     bool GETVARGV_OP(SQObjectPtr &target,SQObjectPtr &idx,CallInfo *ci);
     bool CLASS_OP(SQObjectPtr &target,SQInteger base,SQInteger attrs);
     bool GETPARENT_OP(SQObjectPtr &o,SQObjectPtr &target);

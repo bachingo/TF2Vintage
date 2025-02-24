@@ -116,6 +116,17 @@ bool SQTable::Get(const SQObjectPtr &key,SQObjectPtr &val)
     }
     return false;
 }
+bool SQTable::GetIncludingWeakref(const SQObjectPtr &key,SQObjectPtr &val)
+{
+    if(sq_type(key) == OT_NULL)
+        return false;
+    _HashNode *n = _Get(key, HashObj(key) & (_numofnodes - 1));
+    if (n) {
+        val = n->val;
+        return true;
+    }
+    return false;
+}
 bool SQTable::NewSlot(const SQObjectPtr &key,const SQObjectPtr &val)
 {
     Assert(sq_type(key) != OT_NULL);

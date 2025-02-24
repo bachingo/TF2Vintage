@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -52,18 +52,18 @@ BEGIN_VS_SHADER_FLAGS( Bloom, "Help for Bloom", SHADER_NOT_EDITABLE )
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
-			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
+			DECLARE_STATIC_VERTEX_SHADER( screenspaceeffect_vs20 );
+			SET_STATIC_VERTEX_SHADER( screenspaceeffect_vs20 );
 
 			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 			{
-				DECLARE_STATIC_PIXEL_SHADER( sdk_bloom_ps20b );
-				SET_STATIC_PIXEL_SHADER( sdk_bloom_ps20b );
+				DECLARE_STATIC_PIXEL_SHADER( bloom_ps20b );
+				SET_STATIC_PIXEL_SHADER( bloom_ps20b );
 			}
 			else
 			{
-				DECLARE_STATIC_PIXEL_SHADER( sdk_bloom_ps20 );
-				SET_STATIC_PIXEL_SHADER( sdk_bloom_ps20 );
+				DECLARE_STATIC_PIXEL_SHADER( bloom_ps20 );
+				SET_STATIC_PIXEL_SHADER( bloom_ps20 );
 			}
 		}
 
@@ -71,18 +71,18 @@ BEGIN_VS_SHADER_FLAGS( Bloom, "Help for Bloom", SHADER_NOT_EDITABLE )
 		{
 			BindTexture( SHADER_SAMPLER0, FBTEXTURE, -1 );
 			BindTexture( SHADER_SAMPLER1, BLURTEXTURE, -1 );
-			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
-			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( screenspaceeffect_vs20 );
 
 			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( sdk_bloom_ps20b );
-				SET_DYNAMIC_PIXEL_SHADER( sdk_bloom_ps20b );
+				DECLARE_DYNAMIC_PIXEL_SHADER( bloom_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER( bloom_ps20b );
 			}
 			else
 			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( sdk_bloom_ps20 );
-				SET_DYNAMIC_PIXEL_SHADER( sdk_bloom_ps20 );
+				DECLARE_DYNAMIC_PIXEL_SHADER( bloom_ps20 );
+				SET_DYNAMIC_PIXEL_SHADER( bloom_ps20 );
 			}
 		}
 		Draw();

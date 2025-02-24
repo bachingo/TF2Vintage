@@ -9,6 +9,7 @@
 #include "basecombatweapon_shared.h"
 #include "vscript/ivscript.h"
 #include "tier1/utlhashtable.h"
+#include "vscript_shared.h"
 
 
 #if defined( CLIENT_DLL )

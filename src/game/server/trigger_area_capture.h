@@ -163,7 +163,6 @@ private:
 	COutputEvent m_OnStartTeam2;
 	COutputEvent m_OnBreakTeam1;
 	COutputEvent m_OnBreakTeam2;
-
 	COutputEvent m_OnCapTeam1;
 	COutputEvent m_OnCapTeam2;
 

@@ -1,173 +1,236 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_spy_hide.cpp
+// Move to a hiding spot
+// Michael Booth, September 2011
+
 #include "cbase.h"
-#include "UtlSortVector.h"
-#include "../../tf_bot.h"
-#include "tf_bot_spy_hide.h"
-#include "tf_bot_spy_attack.h"
-#include "tf_bot_spy_lurk.h"
-#include "nav_mesh/tf_nav_mesh.h"
+#include "tf_player.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/spy/tf_bot_spy_hide.h"
+#include "bot/behavior/spy/tf_bot_spy_lurk.h"
+#include "bot/behavior/spy/tf_bot_spy_attack.h"
 
 
+//---------------------------------------------------------------------------------------------
 CTFBotSpyHide::CTFBotSpyHide( CTFPlayer *victim )
 {
-	m_hVictim = victim;
-}
-
-CTFBotSpyHide::~CTFBotSpyHide()
-{
+	m_initialVictim = victim;
 }
 
 
-const char *CTFBotSpyHide::GetName() const
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpyHide::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	return "SpyHide";
-}
+	m_hidingSpot = NULL;
+	m_findTimer.Invalidate();
+	m_isAtGoal = false;
 
+	CTFNavArea *myArea = me->GetLastKnownArea();
 
-ActionResult<CTFBot> CTFBotSpyHide::OnStart( CTFBot *me, Action<CTFBot> *action )
-{
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	int enemyTeam = GetEnemyTeam( me->GetTeamNumber() );
 
-	m_HidingSpot = nullptr;
-	m_findHidingSpotDelay.Invalidate();
-	m_bAtHidingSpot = false;
-
-	/* assigns FLT_MAX instead if last known area is nullptr or if function returns negative */
-	m_flEnemyIncursionDistance = me->GetLastKnownArea()->GetIncursionDistance( GetEnemyTeam(me) );
-
-	m_teaseTimer.Start( RandomFloat( 5.0f, 10.0f ) );
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotSpyHide::Update( CTFBot *me, float dt )
-{
-	if ( m_hVictim != nullptr && !me->GetVisionInterface()->IsIgnored( m_hVictim ) )
-		return Action<CTFBot>::SuspendFor( new CTFBotSpyAttack( m_hVictim ), "Going after our initial victim" );
-
-	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat( false );
-	if ( threat != nullptr && threat->GetTimeSinceLastKnown() < 3.0f )
+	m_incursionThreshold = myArea ? myArea->GetIncursionDistance( enemyTeam ) : FLT_MAX;
+	if ( m_incursionThreshold < 0.0f )
 	{
-		CTFPlayer *enemy = ToTFPlayer( threat->GetEntity() );
-		if ( enemy != nullptr && me->IsRangeLessThan( enemy, 750.0f ) &&
-			 enemy->IsLookingTowards( me ) )
+		m_incursionThreshold = FLT_MAX;
+	}
+
+	m_talkTimer.Start( RandomFloat( 5.0f, 10.0f ) );
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpyHide::Update( CTFBot *me, float interval )
+{
+	if ( m_initialVictim != NULL && !me->GetVisionInterface()->IsIgnored( m_initialVictim ) )
+	{
+		return SuspendFor( new CTFBotSpyAttack( m_initialVictim ), "Going after our initial victim" );
+	}
+
+	// go after victims we've gotten behind
+	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
+	if ( threat && threat->GetTimeSinceLastKnown() < 3.0f )
+	{
+		CTFPlayer *victim = ToTFPlayer( threat->GetEntity() );
+		if ( victim )
 		{
-			return Action<CTFBot>::SuspendFor( new CTFBotSpyAttack( enemy ), "Opportunistic attack or self defense!" );
+			const float attackRange = 750.0f;
+			if ( me->IsRangeLessThan( victim, attackRange ) )
+			{
+				if ( !victim->IsLookingTowards( me ) || victim->IsFiringWeapon() )
+				{
+					return SuspendFor( new CTFBotSpyAttack( victim ), "Opportunistic attack or self defense!" );
+				}
+			}
 		}
 	}
 
-	if ( m_teaseTimer.IsElapsed() )
+	if ( m_talkTimer.IsElapsed() )
 	{
-		m_teaseTimer.Start( RandomFloat( 5.0f, 10.0f ) );
-
+		m_talkTimer.Start( RandomFloat( 5.0f, 10.0f ) );
 		me->EmitSound( "Spy.TeaseVictim" );
 	}
 
-	if ( m_bAtHidingSpot )
+	if ( m_isAtGoal )
 	{
-		CTFNavArea *area = me->GetLastKnownArea();
-		if ( area != nullptr )
-			m_flEnemyIncursionDistance = area->GetIncursionDistance( GetEnemyTeam( me ) );
+		// Quiet everyone! We are hiding now!
+		CTFNavArea *myArea = me->GetLastKnownArea();
+		if ( myArea )
+		{
+			int enemyTeam = GetEnemyTeam( me->GetTeamNumber() );
 
-		return Action<CTFBot>::SuspendFor( new CTFBotSpyLurk, "Reached hiding spot - lurking" );
+	  		m_incursionThreshold = myArea->GetIncursionDistance( enemyTeam );
+		}
+
+		return SuspendFor( new CTFBotSpyLurk, "Reached hiding spot - lurking" );
 	}
 
-	if ( m_HidingSpot == nullptr && m_findHidingSpotDelay.IsElapsed() )
+	if ( m_hidingSpot == NULL && m_findTimer.IsElapsed() )
+	{
 		FindHidingSpot( me );
-
-	m_PathFollower.Update( me );
-
-	if ( m_HidingSpot != nullptr && m_recomputePath.IsElapsed() )
-	{
-		m_recomputePath.Start( RandomFloat( 0.3f, 0.5f ) );
-
-		CTFBotPathCost func( me, SAFEST_ROUTE );
-		m_PathFollower.Compute( me, m_HidingSpot->GetPosition(), func );
 	}
 
-	return Action<CTFBot>::Continue();
+	// move to our hiding spot
+	m_path.Update( me );
+
+	// path following may invalidate our hiding spot (OnMoveToFailure())
+	if ( m_hidingSpot == NULL )
+	{
+		return Continue();
+	}
+
+	if ( m_repathTimer.IsElapsed() )
+	{
+		m_repathTimer.Start( RandomFloat( 0.3f, 0.5f ) );
+
+		CTFBotPathCost cost( me, SAFEST_ROUTE );
+		m_path.Compute( me, m_hidingSpot->GetPosition(), cost );
+	}
+
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotSpyHide::OnResume( CTFBot *me, Action<CTFBot> *action )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotSpyHide::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
 {
-	m_HidingSpot = nullptr;
-	m_bAtHidingSpot = false;
-	m_hVictim = nullptr;
+	m_hidingSpot = NULL;
+	m_isAtGoal = false;
+	m_initialVictim = NULL;
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
 
-EventDesiredResult<CTFBot> CTFBotSpyHide::OnMoveToSuccess( CTFBot *me, const Path *path )
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSpyHide::OnMoveToSuccess( CTFBot *me, const Path *path )
 {
-	m_bAtHidingSpot = true;
+	m_isAtGoal = true;
 
-	return Action<CTFBot>::TryContinue( RESULT_CRITICAL );
+	return TryContinue( RESULT_CRITICAL );
 }
 
-EventDesiredResult<CTFBot> CTFBotSpyHide::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSpyHide::OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason )
 {
-	m_HidingSpot = nullptr;
-	m_bAtHidingSpot = false;
+	m_hidingSpot = NULL;
+	m_isAtGoal = false;
 
-	return Action<CTFBot>::TryContinue( RESULT_IMPORTANT );
+	return TryContinue( RESULT_IMPORTANT );
 }
 
 
-QueryResultType CTFBotSpyHide::ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotSpyHide::ShouldAttack( const INextBot *me, const CKnownEntity *them ) const
 {
 	return ANSWER_NO;
 }
 
-
-bool CTFBotSpyHide::FindHidingSpot( CTFBot *actor )
+struct IncursionEntry_t
 {
-	if ( actor->GetLastKnownArea() == nullptr )
+	int team;
+	CTFNavArea *area;
+};
+
+//---------------------------------------------------------------------------------------------
+class SpyHideIncursionDistanceLess
+{
+public:
+	bool Less( const IncursionEntry_t &src1, const IncursionEntry_t &src2, void *pCtx )
+	{
+		return src1.area->GetIncursionDistance( src1.team ) < src2.area->GetIncursionDistance( src2.team );
+	}
+};
+
+
+//---------------------------------------------------------------------------------------------
+bool CTFBotSpyHide::FindHidingSpot( CTFBot *me )
+{
+	CTFNavArea *myArea = me->GetLastKnownArea();
+	if ( !myArea )
+	{
 		return false;
-
-	m_HidingSpot = nullptr;
-
-	CUtlVector<CNavArea *> nearby;
-	CollectSurroundingAreas( &nearby, actor->GetLastKnownArea(), 3500.0f, 500.0f, 500.0f );
-
-	CUtlSortVector<IncursionEntry_t, SpyHideIncursionDistanceLess> entries;
-
-	float incursion_max = m_flEnemyIncursionDistance + 1000.0f;
-	int enemy_team = GetEnemyTeam( actor->GetTeamNumber() );
-
-	if ( actor->GetLastKnownArea()->GetIncursionDistance( enemy_team ) < 0.0f )
-	{
-		incursion_max = 999999.0f;
 	}
 
-	FOR_EACH_VEC( nearby, i )
-	{
-		auto area = static_cast<CTFNavArea *>( nearby[i] );
+	m_hidingSpot = NULL;
 
-		if ( area->GetHidingSpots()->Count() &&
-				area->GetIncursionDistance( enemy_team ) >= 0.0f && area->GetIncursionDistance( enemy_team ) <= incursion_max )
+	// find a spot to hide
+	const float maxRange = 3500.0f;
+	CUtlVector< CNavArea * > nearbyVector;
+	CollectSurroundingAreas( &nearbyVector, me->GetLastKnownArea(), maxRange, 
+							 500.0f, 500.0f );
+
+	CUtlSortVector< IncursionEntry_t, SpyHideIncursionDistanceLess > hidingSpotVector;
+
+	float maxIncursion = m_incursionThreshold + 1000.0f;
+
+	int enemyTeam = GetEnemyTeam( me->GetTeamNumber() );
+
+	// if we are standing in an area the defenders can't reach, don't limit
+	if ( myArea->GetIncursionDistance( enemyTeam ) < 0.0f )
+	{
+		maxIncursion = 9999999;
+	}
+
+	for( int i=0; i<nearbyVector.Count(); ++i )
+	{
+		CTFNavArea *area = (CTFNavArea *)nearbyVector[i];
+
+		if ( area->GetHidingSpots()->Count() <= 0 )
 		{
-			IncursionEntry_t entry;
-
-			entry.teamnum = enemy_team;
-			entry.area    = area;
-
-			entries.Insert( entry );
+			continue;
 		}
+
+		if ( area->GetIncursionDistance( enemyTeam ) < 0 )
+		{
+			continue;
+		}
+
+		// keep pushing inwards towards defender's spawn
+		if ( area->GetIncursionDistance( enemyTeam ) > maxIncursion )
+		{
+			continue;
+		}
+
+		IncursionEntry_t entry = { enemyTeam, area };
+		hidingSpotVector.Insert( entry );
 	}
 
-	if ( !entries.IsEmpty() )
+	if ( hidingSpotVector.Count() <= 0 )
 	{
-		const HidingSpotVector *spots = entries.Random().area->GetHidingSpots();
-		m_HidingSpot = spots->Element( RandomInt( 0, spots->Count()-1 ) );
-
-		return true;
+		return false;
 	}
 
-	return false;
-}
+	// penetrate as far as we can
+	int which = RandomInt( 0, hidingSpotVector.Count()/2 );
+	CTFNavArea *whichArea = hidingSpotVector[ which ].area;
 
+	const HidingSpotVector *hidingSpots = whichArea->GetHidingSpots();
 
-bool SpyHideIncursionDistanceLess::Less( const IncursionEntry_t& lhs, const IncursionEntry_t& rhs, void* )
-{
-	return ( lhs.area->GetIncursionDistance( lhs.teamnum ) < rhs.area->GetIncursionDistance( rhs.teamnum ) );
+	m_hidingSpot = hidingSpots->Element( RandomInt( 0, hidingSpots->Count()-1 ) );
+
+	return true;
 }

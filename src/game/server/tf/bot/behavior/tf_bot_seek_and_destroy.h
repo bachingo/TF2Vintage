@@ -1,45 +1,51 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_seek_and_destroy.h
+// Roam the environment, attacking victims
+// Michael Booth, January 2010
+
 #ifndef TF_BOT_SEEK_AND_DESTROY_H
 #define TF_BOT_SEEK_AND_DESTROY_H
-#ifdef _WIN32
-#pragma once
-#endif
+
+#include "Path/NextBotChasePath.h"
 
 
-#include "NextBotBehavior.h"
-
-class CTFNavArea;
-
-class CTFBotSeekAndDestroy : public Action<CTFBot>
+//
+// Roam around the map attacking enemies
+//
+class CTFBotSeekAndDestroy : public Action< CTFBot >
 {
 public:
 	CTFBotSeekAndDestroy( float duration = -1.0f );
-	virtual ~CTFBotSeekAndDestroy();
 
-	virtual const char *GetName( void ) const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *interruptingAction ) OVERRIDE;
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryContested( CTFBot *me, int i1 ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryCaptured( CTFBot *me, int i1 ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int i1 ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	virtual QueryResultType ShouldHurry( const INextBot *me ) const OVERRIDE;
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;					// is it time to retreat?
+	virtual QueryResultType ShouldHurry( const INextBot *me ) const;					// are we in a hurry?
+
+	virtual EventDesiredResult< CTFBot > OnTerritoryCaptured( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryLost( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryContested( CTFBot *me, int territoryID );
+
+	virtual const char *GetName( void ) const	{ return "SeekAndDestroy"; };
 
 private:
-	CTFNavArea *ChooseGoalArea( CTFBot *actor );
-	void RecomputeSeekPath( CTFBot *actor );
+	CTFNavArea *m_goalArea;
+	CTFNavArea *ChooseGoalArea( CTFBot *me );
+	bool m_isPointLocked;
 
-	CTFNavArea *m_GoalArea;
-	bool m_bPointLocked;
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputeTimer;
-	CountdownTimer m_actionDuration;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+	void RecomputeSeekPath( CTFBot *me );
+
+	CountdownTimer m_giveUpTimer;
 };
 
-#endif
+
+#endif // TF_BOT_SEEK_AND_DESTROY_H

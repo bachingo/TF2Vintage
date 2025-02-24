@@ -3,6 +3,14 @@
 #ifndef _TREE_SWAY_H
 #define _TREE_SWAY_H
 
+#if defined( _PS3 )
+#define hlsl_float4x3_element( MATRIX,ROW4,COL3 ) ((MATRIX)[COL3][ROW4])
+#define hlsl_float4x3 float3x4
+#else
+#define hlsl_float4x3_element( MATRIX,ROW4,COL3 ) ((MATRIX)[ROW4][COL3])
+#define hlsl_float4x3 float4x3
+#endif
+
 // Tree sway vertex animation function. Requires a number of global variables to be defined. See vertexlit_and_unlit_generic_vs20.fxc or depthwrite_vs20.fxc for details.
 
 // Tree sway mode 2:
@@ -19,10 +27,14 @@
 		float flWindIntensity = length( g_vWindDir );
 
 		// Model root position is the translation component of the model to world matrix
-		float3 vModelRoot = float3( cModel[0][3].x, cModel[0][3].y, cModel[0][3].z );
+		float3 vModelRoot = float3( hlsl_float4x3_element( cModel[0],3,0 ), hlsl_float4x3_element( cModel[0],3,1 ), hlsl_float4x3_element( cModel[0],3,2 ) );
 
 		// Transform the wind direction into model space
+#ifdef _PS3
+		float3 vWindDirAndIntensityOS = mul( float3( g_vWindDir, 0 ), ( float3x3 )cModel[0] );
+#else
 		float3 vWindDirAndIntensityOS = mul( ( float3x3 )cModel[0], float3( g_vWindDir, 0 ) );
+#endif // !_PS3
 
 		float flSwayScaleHeight = saturate( ( vPositionOS.z - g_flHeight * g_flStartHeight ) /
 											( ( 1.0 - g_flStartHeight ) * g_flHeight ) );

@@ -37,7 +37,7 @@
 #include "voice_gamemgr.h"
 #include "fmtstr.h"
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 #include "tf_player.h"
 #include "tf_gamerules.h"
 #endif
@@ -58,13 +58,7 @@ extern bool IsInCommentaryMode( void );
 
 ConVar  *sv_cheats = NULL;
 
-enum eAllowPointServerCommand {
-	eAllowNever,
-	eAllowOfficial,
-	eAllowAlways
-};
-
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 // The default value here should match the default of the convar
 eAllowPointServerCommand sAllowPointServerCommand = eAllowOfficial;
 #else
@@ -84,7 +78,7 @@ void sv_allow_point_servercommand_changed( IConVar *pConVar, const char *pOldStr
 	{
 		sAllowPointServerCommand = eAllowAlways;
 	}
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 	else if ( V_strcasecmp ( pNewValue, "official" ) == 0 )
 	{
 		sAllowPointServerCommand = eAllowOfficial;
@@ -97,7 +91,7 @@ void sv_allow_point_servercommand_changed( IConVar *pConVar, const char *pOldStr
 }
 
 ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
                                       // The default value here should match the default of the convar
                                       "official",
 #else
@@ -107,7 +101,7 @@ ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
                                       FCVAR_NONE,
                                       "Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.\n"
                                       "  disallow : Always disallow\n"
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
                                       "  official : Allowed for valve maps only\n"
 #endif // TF_DLL
                                       "  always   : Allow for all maps", sv_allow_point_servercommand_changed );
@@ -135,6 +129,32 @@ char * CheckChatText( CBasePlayer *pPlayer, char *text )
 		length -=2;
 		p[length] = 0;
 	}
+
+	// Josh:
+	// Cheaters can send us whatever data they want through this channel
+	// Let's validate they aren't trying to clear the chat.
+	// If we detect any of these blacklisted characters (which players cannot type anyway.)
+	// Let's just end the string here.
+	static const char s_blacklist[] = {
+	//	CLRF   LF    ESC
+		'\r',  '\n', '\x1b'
+	};
+
+	int oldLength = length;
+	for (int i = 0; i < length && oldLength == length; i++) {
+		for (int j = 0; j < ARRAYSIZE(s_blacklist); j++) {
+			if (p[i] == s_blacklist[j]) {
+				p[i] = '\0';
+				length = i;
+			}
+		}
+	}
+
+	// Josh:
+	// If the whole string was garbage characters
+	// Let's just not print anything.
+	if ( !*p )
+		return NULL;
 
 	// cut off after 127 chars
 	if ( length > 127 )
@@ -214,6 +234,12 @@ void Host_Say( edict_t *pEdict, const CCommand &args, bool teamonly )
 		// See if the player wants to modify of check the text
 		pPlayer->CheckChatText( p, 127 );	// though the buffer szTemp that p points to is 256, 
 											// chat text is capped to 127 in CheckChatText above
+
+		// make sure the text has valid content
+		p = CheckChatText( pPlayer, p );
+
+		if ( !p )
+			return;
 
 		Assert( strlen( pPlayer->GetPlayerName() ) > 0 );
 
@@ -370,10 +396,7 @@ void ClientPrecache( void )
 	CBaseEntity::PrecacheScriptSound( "Hud.Hint" );
 #endif // HL2MP
 	CBaseEntity::PrecacheScriptSound( "Player.FallDamage" );
-	CBaseEntity::PrecacheScriptSound( "Player.FallDamageBeta" );
-	CBaseEntity::PrecacheScriptSound( "Player.FallDamageNew" );
 	CBaseEntity::PrecacheScriptSound( "Player.Swim" );
-	CBaseEntity::PrecacheScriptSound( "Weapon_Mantreads.Impact" );
 
 	// General HUD sounds
 	CBaseEntity::PrecacheScriptSound( "Player.PickupWeapon" );
@@ -628,7 +651,7 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 		return;
 
 	bool bAllowed = ( sAllowPointServerCommand == eAllowAlways );
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 	if ( sAllowPointServerCommand == eAllowOfficial )
 	{
 		bAllowed = TFGameRules() && TFGameRules()->IsValveMap();
@@ -661,12 +684,12 @@ void CC_DrawLine( const CCommand &args )
 	Vector startPos;
 	Vector endPos;
 
-	startPos.x = atof(args[1]);
-	startPos.y = atof(args[2]);
-	startPos.z = atof(args[3]);
-	endPos.x = atof(args[4]);
-	endPos.y = atof(args[5]);
-	endPos.z = atof(args[6]);
+	startPos.x = clamp( atof(args[1]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	startPos.y = clamp( atof(args[2]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	startPos.z = clamp( atof(args[3]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	endPos.x = clamp( atof(args[4]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	endPos.y = clamp( atof(args[5]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	endPos.z = clamp( atof(args[6]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
 
 	UTIL_AddDebugLine(startPos,endPos,true,true);
 }
@@ -681,9 +704,9 @@ void CC_DrawCross( const CCommand &args )
 {
 	Vector vPosition;
 
-	vPosition.x = atof(args[1]);
-	vPosition.y = atof(args[2]);
-	vPosition.z = atof(args[3]);
+	vPosition.x = clamp( atof(args[1]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	vPosition.y = clamp( atof(args[2]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	vPosition.z = clamp( atof(args[3]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
 
 	// Offset since min and max z in not about center
 	Vector mins = Vector(-5,-5,-5);
@@ -816,8 +839,6 @@ CON_COMMAND_F( buddha, "Toggle.  Player takes damage but won't die. (Shows red c
 	}
 }
 
-
-#define TALK_INTERVAL 0.66 // min time between say commands from a client
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 CON_COMMAND( say, "Display player message" )
@@ -825,7 +846,7 @@ CON_COMMAND( say, "Display player message" )
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( pPlayer )
 	{
-		if (( pPlayer->LastTimePlayerTalked() + TALK_INTERVAL ) < gpGlobals->curtime) 
+		if ( pPlayer->CanPlayerTalk() )
 		{
 			Host_Say( pPlayer->edict(), args, 0 );
 			pPlayer->NotePlayerTalked();
@@ -849,7 +870,7 @@ CON_COMMAND( say_team, "Display player message to team" )
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if (pPlayer)
 	{
-		if (( pPlayer->LastTimePlayerTalked() + TALK_INTERVAL ) < gpGlobals->curtime) 
+		if ( pPlayer->CanPlayerTalk() )
 		{
 			Host_Say( pPlayer->edict(), args, 1 );
 			pPlayer->NotePlayerTalked();
@@ -1211,7 +1232,7 @@ void CC_God_f (void)
 	if ( !pPlayer )
 		return;
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
    if ( TFGameRules() && ( TFGameRules()->IsPVEModeActive() == false ) )
    {
 	   if ( gpGlobals->deathmatch )
@@ -1253,9 +1274,9 @@ CON_COMMAND_F( setpos, "Move player to specified origin (must have sv_cheats).",
 	Vector oldorigin = pPlayer->GetAbsOrigin();
 
 	Vector newpos;
-	newpos.x = atof( args[1] );
-	newpos.y = atof( args[2] );
-	newpos.z = args.ArgC() == 4 ? atof( args[3] ) : oldorigin.z;
+	newpos.x = clamp( atof( args[1] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	newpos.y = clamp( atof( args[2] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	newpos.z = args.ArgC() == 4 ?  clamp( atof( args[3] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT ) : oldorigin.z;
 
 	pPlayer->SetAbsOrigin( newpos );
 
@@ -1369,7 +1390,7 @@ CON_COMMAND_F( setang_exact, "Snap player eyes and orientation to specified pitc
 	pPlayer->Teleport( NULL, &newang, NULL );
 	pPlayer->SnapEyeAngles( newang );
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#ifdef TF_DLL
 	static_cast<CTFPlayer*>( pPlayer )->DoAnimationEvent( PLAYERANIMEVENT_SNAP_YAW );
 #endif
 }

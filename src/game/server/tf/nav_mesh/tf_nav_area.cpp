@@ -1,544 +1,671 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_nav_area.h
+// TF specific nav area
+// Michael Booth, February 2009
 
 #include "cbase.h"
-
-#include "nav_mesh.h"
-#include "nav_colors.h"
-#include "fmtstr.h"
-#include "props_shared.h"
-
-#include "functorutils.h"
-#include "team.h"
-#include "nav_entities.h"
-
+#include "tf_nav_mesh.h"
 #include "tf_nav_area.h"
+#include "tf_gamerules.h"
+#include "bot/tf_bot.h"
+#include "nav_pathfind.h"
+#include "vscript_server.h"
 
-#include "tf_bot.h"
-
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
+ConVar tf_nav_show_incursion_distance( "tf_nav_show_incursion_distance", "0", FCVAR_CHEAT, "Display travel distances from current spawn room (1=red, 2=blue)" );
+ConVar tf_nav_show_bomb_target_distance( "tf_nav_show_bomb_target_distance", "0", FCVAR_CHEAT, "Display travel distances to bomb target (MvM mode)" );
+ConVar tf_nav_show_turf_ownership( "tf_nav_show_turf_ownership", "0", FCVAR_CHEAT, "Color nav area by smallest incursion distance" );
 
 ConVar tf_nav_in_combat_duration( "tf_nav_in_combat_duration", "30", FCVAR_CHEAT, "How long after gunfire occurs is this area still considered to be 'in combat'" );
+
 ConVar tf_nav_combat_build_rate( "tf_nav_combat_build_rate", "0.05", FCVAR_CHEAT, "Gunfire/second increase (combat caps at 1.0)" );
 ConVar tf_nav_combat_decay_rate( "tf_nav_combat_decay_rate", "0.022", FCVAR_CHEAT, "Decay/second toward zero" );
 
-ConVar tf_nav_show_incursion_distances( "tf_nav_show_incursion_distance", "0", FCVAR_CHEAT, "Display travel distances from current spawn room (1=red, 2=blue)" );
-ConVar tf_nav_show_turf_ownership( "tf_nav_show_turf_ownership", "0", FCVAR_CHEAT, "Color nav area by smallest incursion distance" );
-ConVar tf_nav_show_bomb_target_distance( "tf_nav_show_bomb_target_distance", "0", FCVAR_CHEAT, "Display travel distances to bomb target (MvM mode)" );
-ConVar tf_show_incursion_range( "tf_show_incursion_range", "0", FCVAR_CHEAT, "1 = red, 2 = blue" );
-ConVar tf_show_incursion_range_min( "tf_show_incursion_range_min", "0", FCVAR_CHEAT, "Highlight areas with incursion distances between min and max cvar values" );
-ConVar tf_show_incursion_range_max( "tf_show_incursion_range_max", "0", FCVAR_CHEAT, "Highlight areas with incursion distances between min and max cvar values" );
 ConVar tf_show_sniper_areas( "tf_show_sniper_areas", "0", FCVAR_CHEAT );
 ConVar tf_show_sniper_areas_safety_range( "tf_show_sniper_areas_safety_range", "1000", FCVAR_CHEAT );
 
-int CTFNavArea::m_masterTFMark = 1;
+ConVar tf_show_incursion_range( "tf_show_incursion_range", "0", FCVAR_CHEAT, "1 = red, 2 = blue" );
+ConVar tf_show_incursion_range_min( "tf_show_incursion_range_min", "0", FCVAR_CHEAT, "Highlight areas with incursion distances between min and max cvar values" );
+ConVar tf_show_incursion_range_max( "tf_show_incursion_range_max", "0", FCVAR_CHEAT, "Highlight areas with incursion distances between min and max cvar values" );
+
+//--------------------------------------------------------------------------------------------------------------
+// Script access to manipulate the nav
+//--------------------------------------------------------------------------------------------------------------
+
+BEGIN_SCRIPTENUM( ETFNavAttributeType, "Team Fortress nav attributes" )
+	DEFINE_ENUMCONST( TF_NAV_INVALID, "" )
+	DEFINE_ENUMCONST( TF_NAV_BLOCKED, "" )
+	DEFINE_ENUMCONST( TF_NAV_SPAWN_ROOM_RED, "" )
+	DEFINE_ENUMCONST( TF_NAV_SPAWN_ROOM_BLUE, "" )
+	DEFINE_ENUMCONST( TF_NAV_SPAWN_ROOM_EXIT, "" )
+	DEFINE_ENUMCONST( TF_NAV_HAS_AMMO, "" )
+	DEFINE_ENUMCONST( TF_NAV_HAS_HEALTH, "" )
+	DEFINE_ENUMCONST( TF_NAV_CONTROL_POINT, "" )
+	DEFINE_ENUMCONST( TF_NAV_BLUE_SENTRY_DANGER, "" )
+	DEFINE_ENUMCONST( TF_NAV_RED_SENTRY_DANGER, "" )
+	DEFINE_ENUMCONST( TF_NAV_BLUE_SETUP_GATE, "" )
+	DEFINE_ENUMCONST( TF_NAV_RED_SETUP_GATE, "" )
+	DEFINE_ENUMCONST( TF_NAV_BLOCKED_AFTER_POINT_CAPTURE, "" )
+	DEFINE_ENUMCONST( TF_NAV_BLOCKED_UNTIL_POINT_CAPTURE, "" )
+	DEFINE_ENUMCONST( TF_NAV_BLUE_ONE_WAY_DOOR, "" )
+	DEFINE_ENUMCONST( TF_NAV_RED_ONE_WAY_DOOR, "" )
+	DEFINE_ENUMCONST( TF_NAV_WITH_SECOND_POINT, "" )
+	DEFINE_ENUMCONST( TF_NAV_WITH_THIRD_POINT, "" )
+	DEFINE_ENUMCONST( TF_NAV_WITH_FOURTH_POINT, "" )
+	DEFINE_ENUMCONST( TF_NAV_WITH_FIFTH_POINT, "" )
+	DEFINE_ENUMCONST( TF_NAV_SNIPER_SPOT, "" )
+	DEFINE_ENUMCONST( TF_NAV_SENTRY_SPOT, "" )
+	DEFINE_ENUMCONST( TF_NAV_ESCAPE_ROUTE, "" )
+	DEFINE_ENUMCONST( TF_NAV_ESCAPE_ROUTE_VISIBLE, "" )
+	DEFINE_ENUMCONST( TF_NAV_NO_SPAWNING, "" )
+	DEFINE_ENUMCONST( TF_NAV_RESCUE_CLOSET, "" )
+	DEFINE_ENUMCONST( TF_NAV_BOMB_CAN_DROP_HERE, "" )
+	DEFINE_ENUMCONST( TF_NAV_DOOR_NEVER_BLOCKS, "" )
+	DEFINE_ENUMCONST( TF_NAV_DOOR_ALWAYS_BLOCKS, "" )
+	DEFINE_ENUMCONST( TF_NAV_UNBLOCKABLE, "" )
+	DEFINE_ENUMCONST( TF_NAV_PERSISTENT_ATTRIBUTES, "" )
+END_SCRIPTENUM()
 
 
-class CollectInvasionAreas
+BEGIN_SCRIPTDESC( CTFNavArea, CNavArea, "TF navigation area" )
+	DEFINE_SCRIPTFUNC( SetAttributeTF, "Set TF-specific area attributes" )
+	DEFINE_SCRIPTFUNC( HasAttributeTF, "Has TF-specific area attribute bits" )
+	DEFINE_SCRIPTFUNC( ClearAttributeTF, "Clear TF-specific area attribute bits" )
+
+	DEFINE_SCRIPTFUNC( FindRandomSpot, "Get random origin within extent of area" )
+	DEFINE_SCRIPTFUNC( IsPotentiallyVisibleToTeam, "( team ) - Return true if any portion of this area is visible to anyone on the given team" )
+	DEFINE_SCRIPTFUNC( IsCompletelyVisibleToTeam, "( team ) - Return true if given area is completely visible from somewhere in this area by someone on the team" )
+	DEFINE_SCRIPTFUNC( IsBottleneck, "Returns true if area is a bottleneck" )
+	DEFINE_SCRIPTFUNC( IsValidForWanderingPopulation, "Returns true if area is valid for wandering population" )
+	DEFINE_SCRIPTFUNC( GetTravelDistanceToBombTarget, "Gets the travel distance to the MvM bomb target" )
+	DEFINE_SCRIPTFUNC( IsReachableByTeam,"Is this area reachable by the given team?" )
+
+	DEFINE_SCRIPTFUNC( IsTFMarked, "Is this nav area marked with the current marking scope?" )
+	DEFINE_SCRIPTFUNC( TFMark, "Mark this nav area with the current marking scope." )
+END_SCRIPTDESC()
+
+//--------------------------------------------------------------------------------------------------------
+/**
+ * Invoked when a door is created
+ */
+void CTFNavArea::OnDoorCreated( CBaseEntity *door )
 {
-public:
-	CollectInvasionAreas( CTFNavArea *startArea, CUtlVector<CTFNavArea *> *redAreas, CUtlVector<CTFNavArea *> *blueAreas, int marker )
-		: m_redAreas( redAreas ), m_blueAreas( blueAreas ), m_pArea( startArea )
+	m_hDoor = door;
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+// return a door contained in this area
+CBaseEntity *CTFNavArea::GetDoor( void ) const
+{
+	return m_hDoor;
+}
+
+//--------------------------------------------------------------------------------------------------------
+/**
+ * Return a random spot in this area
+ */
+Vector CTFNavArea::FindRandomSpot( void ) const
+{
+	const float margin = 25.0f;
+	Vector spot;
+	
+	if (GetSizeX() < 2.0f * margin || GetSizeY() < 2.0f * margin)
 	{
-		m_iMarker = marker;
-	}
-
-	inline bool operator()( CNavArea *a )
-	{
-		CTFNavArea *area = static_cast<CTFNavArea *>( a );
-		for ( int dir=0; dir<NUM_DIRECTIONS; ++dir )
-		{
-			for ( int i=0; i<area->GetAdjacentAreas( (NavDirType)dir )->Count(); ++i )
-			{
-				CTFNavArea *other = static_cast<CTFNavArea *>( ( *area->GetAdjacentAreas( (NavDirType)dir ) )[i].area );
-				if ( other->GetSearchMarker() == m_iMarker )
-					continue;
-
-				if ( area->GetIncursionDistance( TF_TEAM_BLUE ) <= other->GetIncursionDistance( TF_TEAM_BLUE ) ||
-					 area->GetIncursionDistance( TF_TEAM_BLUE ) > m_pArea->GetIncursionDistance( TF_TEAM_BLUE ) + 100.0f )
-					continue;
-
-				m_redAreas->AddToTail( other );
-
-				if ( area->GetIncursionDistance( TF_TEAM_RED ) <= other->GetIncursionDistance( TF_TEAM_RED ) ||
-					 area->GetIncursionDistance( TF_TEAM_RED ) > m_pArea->GetIncursionDistance( TF_TEAM_RED ) + 100.0f )
-					continue;
-
-				m_blueAreas->AddToTail( other );
-			}
-
-			for ( int i=0; i<area->GetIncomingConnections( (NavDirType)dir )->Count(); ++i )
-			{
-				CTFNavArea *other = static_cast<CTFNavArea *>( ( *area->GetIncomingConnections( (NavDirType)dir ) )[i].area );
-				if ( other->GetSearchMarker() == m_iMarker )
-					continue;
-
-				if ( area->GetIncursionDistance( TF_TEAM_BLUE ) <= other->GetIncursionDistance( TF_TEAM_BLUE ) ||
-					 area->GetIncursionDistance( TF_TEAM_BLUE ) > m_pArea->GetIncursionDistance( TF_TEAM_BLUE ) + 100.0f )
-					continue;
-
-				m_redAreas->AddToTail( other );
-
-				if ( area->GetIncursionDistance( TF_TEAM_RED ) <= other->GetIncursionDistance( TF_TEAM_RED ) ||
-					 area->GetIncursionDistance( TF_TEAM_RED ) > m_pArea->GetIncursionDistance( TF_TEAM_RED ) + 100.0f )
-					continue;
-
-				m_blueAreas->AddToTail( other );
-			}
-		}
-
-		return true;
-	}
-
-private:
-	CTFNavArea *const m_pArea;
-	CUtlVector<CTFNavArea *> *m_redAreas;
-	CUtlVector<CTFNavArea *> *m_blueAreas;
-	int m_iMarker;
-};
-
-
-CTFNavArea::CTFNavArea()
-{
-	Q_memset( &m_aIncursionDistances, 0, sizeof( m_aIncursionDistances ) );
-	m_flBombTargetDistance = -1.0f;
-}
-
-CTFNavArea::~CTFNavArea()
-{
-	for ( int i = 0; i < 4; i++ )
-		m_InvasionAreas[i].Purge();
-}
-
-void CTFNavArea::OnServerActivate()
-{
-	CNavArea::OnServerActivate();
-
-	for ( int i = 0; i < 4; i++ )
-		m_InvasionAreas[i].RemoveAll();
-
-	m_fCombatIntensity = 0;
-}
-
-void CTFNavArea::OnRoundRestart()
-{
-	CNavArea::OnRoundRestart();
-
-	m_fCombatIntensity = 0;
-}
-
-void CTFNavArea::Save( CUtlBuffer &fileBuffer, unsigned int version ) const
-{
-	CNavArea::Save( fileBuffer, version );
-	fileBuffer.PutUnsignedInt( m_nAttributes );
-}
-
-NavErrorType CTFNavArea::Load( CUtlBuffer &fileBuffer, unsigned int version, unsigned int subVersion )
-{
-	if ( subVersion > TheNavMesh->GetSubVersionNumber() )
-	{
-		Warning( "Unknown NavArea sub-version number\n" );
-		return NAV_INVALID_FILE;
+		spot = GetCenter();
+		spot.z += 10.0f;
 	}
 	else
 	{
-		CNavArea::Load( fileBuffer, version, subVersion );
-		if ( subVersion <= 1 )
+		spot.x = GetCorner( NORTH_WEST ).x + margin + RandomFloat( 0.0f, GetSizeX() - 2.0f * margin );
+		spot.y = GetCorner( NORTH_WEST ).y + margin + RandomFloat( 0.0f, GetSizeY() - 2.0f * margin );
+		spot.z = GetZ( spot.x, spot.y ) + 10.0f;
+	}
+	
+	return spot;
+}
+
+//--------------------------------------------------------------------------------------------------------
+/**
+ * A bottleneck is a small nav area with connections on only two opposing sides (ie: a doorway)
+ */
+bool CTFNavArea::IsBottleneck( void ) const
+{
+	const float narrow = 2.1f * GenerationStepSize;
+
+	if ( GetAdjacentCount( NORTH ) == 0 && GetAdjacentCount( SOUTH ) == 0 && 
+		 GetAdjacentCount( EAST ) > 0 && GetAdjacentCount( WEST ) > 0 )
+	{
+		if ( GetSizeY() < narrow )
 		{
-			m_nAttributes = 0;
-			return NAV_OK;
-		}
-		else
-		{
-			m_nAttributes = fileBuffer.GetUnsignedInt();
-			if ( !fileBuffer.IsValid() )
-			{
-				Warning( "Can't read TF-specific attributes\n" );
-				return NAV_INVALID_FILE;
-			}
+			return true;
 		}
 	}
-
-	return NAV_OK;
-}
-
-void CTFNavArea::UpdateBlocked( bool force, int teamID )
-{
-	//CNavArea::UpdateBlocked( force, teamID );
-}
-
-bool CTFNavArea::IsBlocked( int teamID, bool ignoreNavBlockers ) const
-{
-	if ( !( m_nAttributes & TF_NAV_UNBLOCKABLE ) )
+	else if ( GetAdjacentCount( NORTH ) > 0 && GetAdjacentCount( SOUTH ) > 0 && 
+			 GetAdjacentCount( EAST ) == 0 && GetAdjacentCount( WEST ) == 0 )
 	{
-		if ( !( m_nAttributes & TF_NAV_BLOCKED ) )
+		if ( GetSizeX() < narrow )
 		{
-			if ( teamID != TF_TEAM_RED )
-			{
-				if ( teamID == TF_TEAM_BLUE && ( m_nAttributes & TF_NAV_RED_ONE_WAY_DOOR ) )
-					return true;
-
-				return CNavArea::IsBlocked( teamID, ignoreNavBlockers );
-			}
-
-			if ( !( m_nAttributes & TF_NAV_BLUE_ONE_WAY_DOOR ) )
-				return CNavArea::IsBlocked( teamID, ignoreNavBlockers );
+			return true;
 		}
-
-		return true;
 	}
 
 	return false;
 }
 
-void CTFNavArea::Draw() const
+//------------------------------------------------------------------------------------------------
+CTFNavArea::CTFNavArea( void )
+{
+	m_attributeFlags = 0;
+	m_wanderCount = 0;
+	m_combatIntensity = 0.0f;
+	m_distanceToBombTarget = 0.0f;
+	m_TFMark = 0;
+	m_invasionSearchMarker = (unsigned int)-1;
+	m_hScriptInstance = NULL;
+}
+
+CTFNavArea::~CTFNavArea( void )
+{
+	if ( g_pScriptVM && m_hScriptInstance )
+	{
+		g_pScriptVM->RemoveInstance( m_hScriptInstance );
+		m_hScriptInstance = NULL;
+	}
+}
+
+//------------------------------------------------------------------------------------------------
+/**
+ * (EXTEND) invoked when map is initially loaded
+ */
+void CTFNavArea::OnServerActivate( void )
+{
+	BaseClass::OnServerActivate();
+
+	ClearAllPotentiallyVisibleActors();
+}
+
+//------------------------------------------------------------------------------------------------
+/**
+ * (EXTEND) invoked for each area when the round restarts
+ */
+void CTFNavArea::OnRoundRestart( void )
+{
+	BaseClass::OnRoundRestart();
+
+	ClearAllPotentiallyVisibleActors();
+
+	m_combatIntensity = 0.0f;
+}
+
+//------------------------------------------------------------------------------------------------
+/**
+ * For game-specific analysis
+ */
+void CTFNavArea::CustomAnalysis( bool isIncremental )
+{
+
+}
+
+
+//------------------------------------------------------------------------------------------------
+/**
+ * Draw area for debugging & editing
+ */
+void CTFNavArea::Draw( void ) const
 {
 	CNavArea::Draw();
 
-	if ( tf_nav_show_incursion_distances.GetBool() )
+#ifdef TF_RAID_MODE
+	if ( TFGameRules()->IsRaidMode() && m_wanderCount > 0 )
 	{
-		NDebugOverlay::Text( GetCenter(),
-							 UTIL_VarArgs( "R:%3.1f   B:%3.1f", m_aIncursionDistances[TF_TEAM_RED], m_aIncursionDistances[TF_TEAM_BLUE] ),
-							 false, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+		NDebugOverlay::Text( GetCenter(), UTIL_VarArgs( "%d", m_wanderCount ), false, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+	}
+#endif // TF_RAID_MODE
+
+	if ( tf_nav_show_incursion_distance.GetBool() )
+	{
+		NDebugOverlay::Text( GetCenter(), UTIL_VarArgs( "R:%3.1f   B:%3.1f", GetIncursionDistance( TF_TEAM_RED ), GetIncursionDistance( TF_TEAM_BLUE ) ), false, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 	}
 
 	if ( tf_nav_show_bomb_target_distance.GetBool() )
 	{
-		NDebugOverlay::Text( GetCenter(), UTIL_VarArgs( "%3.1f", GetBombTargetDistance() ), 
-							 false, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+		NDebugOverlay::Text( GetCenter(), UTIL_VarArgs( "%3.1f", GetTravelDistanceToBombTarget() ), false, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 	}
 
-	if ( tf_nav_show_turf_ownership.GetBool() )
+	if ( tf_show_sniper_areas.GetBool() )
 	{
-		float flRadius = 500.0f; //tf_nav_show_turf_ownership_range.GetFloat(); // this is some development-only cvar that I can't find
-		bool bRedOwnsMe = IsAwayFromInvasionAreas( TF_TEAM_RED, flRadius );
-		bool bBluOwnsMe = IsAwayFromInvasionAreas( TF_TEAM_BLUE, flRadius );
+		bool redSniper = IsAwayFromInvasionAreas( TF_TEAM_RED, tf_show_sniper_areas_safety_range.GetFloat() );
+		bool blueSniper = IsAwayFromInvasionAreas( TF_TEAM_BLUE, tf_show_sniper_areas_safety_range.GetFloat() );
 
-		if ( bBluOwnsMe )
+		if ( blueSniper )
 		{
-			if ( bRedOwnsMe )
+			if ( redSniper )
 			{
-				DrawFilled( 255, 0, 255, 255 );
+				// both teams like this spot?
+				DrawFilled( 255, 0, 255, 255, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 			}
 			else
 			{
-				DrawFilled( 0, 0, 255, 255 );
+				// blue sniper area
+				DrawFilled( 0, 0, 255, 255, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 			}
 		}
-		else
+		else if ( redSniper )
 		{
-			DrawFilled( 255, 0, 0, 255 );
+			// red sniper area
+			DrawFilled( 255, 0, 0, 255, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 		}
 	}
 
-	if ( tf_show_incursion_range.GetInt() )
+	int rangeTeam = tf_show_incursion_range.GetInt();
+	if ( rangeTeam > 0 )
 	{
-		float flIncursion = -1.0f;
-		if ( tf_show_incursion_range.GetInt() <= 3 )
+		rangeTeam += ( TF_TEAM_RED - 1);
+
+		float range = GetIncursionDistance( rangeTeam );
+		if ( range >= tf_show_incursion_range_min.GetFloat() && range <= tf_show_incursion_range_max.GetFloat() )
 		{
-			flIncursion = GetIncursionDistance( tf_show_incursion_range.GetInt() );
-			if ( flIncursion < tf_show_incursion_range_min.GetFloat() )
-				return;
-		}
-		else
-		{
-			if ( tf_show_incursion_range_min.GetFloat() > -1.0f )
-				return;
-		}
-
-		if ( flIncursion <= tf_show_incursion_range_max.GetFloat() )
-			DrawFilled( 0, 255, 0, 255 );
-	}
-
-	extern ConVar tf_show_blocked_areas;
-	if ( tf_show_blocked_areas.GetBool() )
-	{
-		if ( HasTFAttributes( TF_NAV_BLOCKED ) )
-			DrawFilled( 255, 0, 0, 255 );
-
-		if ( IsBlocked( TF_TEAM_RED ) && IsBlocked( TF_TEAM_BLUE ) )
-			DrawFilled( 100, 0, 100, 255 );
-		else if ( IsBlocked( TF_TEAM_RED ) )
-			DrawFilled( 100, 0, 0, 255 );
-		else if ( IsBlocked( TF_TEAM_BLUE ) )
-			DrawFilled( 0, 0, 100, 255 );
-	}
-
-	// moved here from CTFNavMesh::UpdateDebugDisplay
-	extern ConVar tf_show_mesh_decoration;
-	extern ConVar tf_show_mesh_decoration_manual;
-	if ( tf_show_mesh_decoration.GetBool() || tf_show_mesh_decoration_manual.GetBool() )
-	{
-		if ( !tf_show_mesh_decoration_manual.GetBool() )
-		{
-			if ( HasTFAttributes( TF_NAV_RESCUE_CLOSET ) )
-			{
-				DrawFilled( 0, 255, 255, 255 );
-				return;
-			}
-
-			if ( HasTFAttributes( TF_NAV_BLUE_SPAWN_ROOM ) )
-			{
-				if ( HasTFAttributes( TF_NAV_SPAWN_ROOM_EXIT ) )
-				{
-					DrawFilled( 100, 100, 255, 255 );
-					return;
-				}
-
-				DrawFilled( 0, 0, 100, 255 );
-				return;
-			}
-
-			if ( HasTFAttributes( TF_NAV_RED_SPAWN_ROOM ) )
-			{
-				if ( HasTFAttributes( TF_NAV_SPAWN_ROOM_EXIT ) )
-				{
-					DrawFilled( 255, 100, 100, 255 );
-					return;
-				}
-
-				DrawFilled( 100, 0, 0, 255 );
-				return;
-			}
-
-			if ( HasTFAttributes( TF_NAV_HEALTH ) || HasTFAttributes( TF_NAV_AMMO ) )
-			{
-				if ( !HasTFAttributes( TF_NAV_AMMO ) )
-				{
-					DrawFilled( 255, 150, 150, 255 );
-					return;
-				}
-
-				if ( !HasTFAttributes( TF_NAV_HEALTH ) )
-				{
-					DrawFilled( 100, 100, 100, 255 );
-					return;
-				}
-
-				DrawFilled( 255, 0, 255, 255 );
-				return;
-			}
-
-			if ( HasTFAttributes( TF_NAV_CONTROL_POINT ) )
-			{
-				DrawFilled( 0, 255, 0, 255 );
-				return;
-			}
-		}
-
-		if ( HasTFAttributes( TF_NAV_BLUE_ONE_WAY_DOOR ) )
-		{
-			DrawFilled( 100, 100, 255, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_RED_ONE_WAY_DOOR ) )
-		{
-			DrawFilled( 255, 100, 100, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_BLUE_SETUP_GATE ) )
-		{
-			DrawFilled( 0, 0, 100, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_RED_SETUP_GATE ) )
-		{
-			DrawFilled( 100, 0, 0, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_NO_SPAWNING ) )
-		{
-			DrawFilled( 100, 100, 0, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_DOOR_NEVER_BLOCKS ) )
-		{
-			DrawFilled( 0, 100, 0, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_DOOR_ALWAYS_BLOCKS ) )
-		{
-			DrawFilled( 100, 0, 100, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_UNBLOCKABLE ) )
-		{
-			DrawFilled( 0, 200, 100, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_SNIPER_SPOT ) )
-		{
-			DrawFilled( 255, 255, 0, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_SENTRY_SPOT ) )
-		{
-			DrawFilled( 255, 100, 0, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_BLOCKED_UNTIL_POINT_CAPTURE ) )
-		{
-			DrawFilled( 0, 255, 255, 255 );
-			return;
-		}
-
-		if ( HasTFAttributes( TF_NAV_BLOCKED_AFTER_POINT_CAPTURE ) )
-		{
-			DrawFilled( 255, 255, 0, 255 );
-			return;
+			DrawFilled( 0, 255, 0, 255, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 		}
 	}
 }
 
-void CTFNavArea::CustomAnalysis( bool isIncremental )
-{
-	;
-}
 
-void CTFNavArea::CollectNextIncursionAreas( int teamNum, CUtlVector<CTFNavArea *> *areas )
+//------------------------------------------------------------------------------------------------
+/**
+ * Return adjacent area with largest increase in incursion distance
+ */
+CTFNavArea *CTFNavArea::GetNextIncursionArea( int team ) const
 {
-	areas->RemoveAll();
-	
-	for ( int dir=0; dir < NUM_DIRECTIONS; ++dir )
+	CTFNavArea *nextIncursionArea = NULL;
+	float nextIncursionDistance = GetIncursionDistance( team );
+
+	for( int dir=0; dir<NUM_DIRECTIONS; ++dir )
 	{
 		const NavConnectVector *adjVector = GetAdjacentAreas( (NavDirType)dir );
-		FOR_EACH_VEC( ( *adjVector ), bit )
+		FOR_EACH_VEC( (*adjVector), bit )
 		{
-			CTFNavArea *adjArea = static_cast<CTFNavArea *>( ( *adjVector )[bit].area );
+			CTFNavArea *adjArea = static_cast< CTFNavArea * >( (*adjVector)[ bit ].area );
 
-			if ( adjArea->GetIncursionDistance( teamNum ) > GetIncursionDistance( teamNum ) )
+			if ( adjArea->GetIncursionDistance( team ) > nextIncursionDistance )
 			{
-				areas->AddToTail( adjArea );
+				nextIncursionArea = adjArea;
+				nextIncursionDistance = adjArea->GetIncursionDistance( team );
 			}
 		}
 	}
+
+	return nextIncursionArea;
 }
 
-void CTFNavArea::CollectPriorIncursionAreas( int teamNum, CUtlVector<CTFNavArea *> *areas )
+
+//-----------------------------------------------------------------------------
+// Populate 'priorVector' with a collection of adjacent areas that have a lower incursion distance that this area
+void CTFNavArea::CollectPriorIncursionAreas( int team, CUtlVector< CTFNavArea * > *priorVector )
 {
-	areas->RemoveAll();
+	float myIncursionDistance = GetIncursionDistance( team );
 	
-	for ( int dir=0; dir < NUM_DIRECTIONS; ++dir )
+	priorVector->RemoveAll();
+
+	for( int dir=0; dir<NUM_DIRECTIONS; ++dir )
 	{
 		const NavConnectVector *adjVector = GetAdjacentAreas( (NavDirType)dir );
-		FOR_EACH_VEC( ( *adjVector ), bit )
+		FOR_EACH_VEC( (*adjVector), bit )
 		{
-			CTFNavArea *adjArea = static_cast<CTFNavArea *>( ( *adjVector )[bit].area );
+			CTFNavArea *adjArea = static_cast< CTFNavArea * >( (*adjVector)[ bit ].area );
 
-			if ( adjArea->GetIncursionDistance( teamNum ) < GetIncursionDistance( teamNum ) )
+			if ( adjArea->GetIncursionDistance( team ) < myIncursionDistance )
 			{
-				areas->AddToTail( adjArea );
+				priorVector->AddToTail( adjArea );
 			}
 		}
 	}
 }
 
-CTFNavArea *CTFNavArea::GetNextIncursionArea( int teamNum ) const
+
+//-----------------------------------------------------------------------------
+// Populate 'priorVector' with a collection of adjacent areas that have a higher incursion distance that this area
+void CTFNavArea::CollectNextIncursionAreas( int team, CUtlVector< CTFNavArea * > *priorVector )
 {
-	CTFNavArea *result = NULL;
+	float myIncursionDistance = GetIncursionDistance( team );
 
-	float incursionDist = GetIncursionDistance( teamNum );
+	priorVector->RemoveAll();
 
-	for ( int i = 0; i < 4; i++ )
+	for( int dir=0; dir<NUM_DIRECTIONS; ++dir )
 	{
-		for ( int j = 0; j < m_InvasionAreas[i].Count(); j++ )
+		const NavConnectVector *adjVector = GetAdjacentAreas( (NavDirType)dir );
+		FOR_EACH_VEC( (*adjVector), bit )
 		{
-			float otherIncursionDist = m_InvasionAreas[i][j]->GetIncursionDistance( teamNum );
+			CTFNavArea *adjArea = static_cast< CTFNavArea * >( (*adjVector)[ bit ].area );
 
-			if ( otherIncursionDist > incursionDist )
+			if ( adjArea->GetIncursionDistance( team ) > myIncursionDistance )
 			{
-				incursionDist = fmaxf( incursionDist, otherIncursionDist );
-				result = m_InvasionAreas[i].Element( j );
+				priorVector->AddToTail( adjArea );
 			}
 		}
 	}
-	
-	return result;
 }
 
-void CTFNavArea::ComputeInvasionAreaVectors()
+
+//-----------------------------------------------------------------------------
+/**
+ * Return true if this area is at least safetyRange units away from all invasion areas
+ */
+bool CTFNavArea::IsAwayFromInvasionAreas( int myTeam, float safetyRange ) const
 {
-	for ( int i=0; i<4; ++i )
-		m_InvasionAreas[i].RemoveAll();
-
-	static int searchMarker = RandomInt( 0, Square( 1024 ) );
-	searchMarker++;
-
-	auto MarkVisibleSet = []( CNavArea *a ) {
-		CTFNavArea *area = static_cast<CTFNavArea *>( a );
-		area->SetSearchMarker( searchMarker );
-
-		return true;
-	};
-	ForAllCompletelyVisibleAreas( MarkVisibleSet );
-
-	CollectInvasionAreas functor( this, &m_InvasionAreas[TF_TEAM_RED], &m_InvasionAreas[TF_TEAM_BLUE], searchMarker );
-	ForAllCompletelyVisibleAreas( functor );
-}
-
-bool CTFNavArea::IsAwayFromInvasionAreas( int teamNum, float radius ) const
-{
-	Assert( teamNum >= 0 && teamNum < 4 );
-	if ( teamNum < 4 )
+	const CUtlVector< CTFNavArea * > &invasionVector = GetEnemyInvasionAreaVector( myTeam );
+	FOR_EACH_VEC( invasionVector, vit )
 	{
-		const CUtlVector<CTFNavArea *> &invasionAreas = m_InvasionAreas[teamNum];
-		for ( int i=0; i<invasionAreas.Count(); ++i )
+		CTFNavArea *invasionArea = invasionVector[ vit ];
+
+		if ( ( invasionArea->GetCenter() - GetCenter() ).IsLengthLessThan( safetyRange ) )
 		{
-			CTFNavArea *area = invasionAreas[i];
-			if ( Square( radius ) > ( m_center - area->GetCenter() ).LengthSqr() )
-				return false;
-		}
+			// too close to incoming enemy route to snipe
+			return false;
+		}			
 	}
 
 	return true;
 }
 
-void CTFNavArea::AddPotentiallyVisibleActor( CBaseCombatCharacter *actor )
+
+//-----------------------------------------------------------------------------
+class MarkVisibleSet
 {
-	int team;
-	if (!actor || ( team = actor->GetTeamNumber() ) > 3)
-		return;
-
-	if ( ToTFBot( actor ) )
-		return;
-
-	for ( int i=0; i<m_PVActors[team].Count(); ++i )
+public:
+	MarkVisibleSet( unsigned int marker )
 	{
-		CBaseCombatCharacter *npc = m_PVActors[team][i];
-		if ( actor == npc )
+		m_marker = marker;
+	}
+
+	bool operator() ( CNavArea *baseArea )
+	{
+		CTFNavArea *area = static_cast< CTFNavArea * >( baseArea );
+		area->SetInvasionSearchMarker( m_marker );
+		return true;
+	}
+
+	unsigned int m_marker;
+};
+
+		
+//-----------------------------------------------------------------------------
+class CollectInvasionAreas
+{
+public:
+	CollectInvasionAreas( unsigned int marker, CTFNavArea *homeArea, CUtlVector< CTFNavArea * > *redInvasionAreaVector, CUtlVector< CTFNavArea * > *blueInvasionAreaVector )
+	{
+		m_homeArea = homeArea;
+		m_visibleMarker = marker;
+		m_redInvasionAreaVector = redInvasionAreaVector;
+		m_blueInvasionAreaVector = blueInvasionAreaVector;
+	}
+
+	void FilterArea( CTFNavArea *area, CTFNavArea *adjArea )
+	{
+		if ( adjArea->IsInvasionSearchMarked( m_visibleMarker ) )
+		{
+			// also in PVS - can't be invasion area
 			return;
+		}
+
+		const float behindTolerance = 100.0;
+
+		// adjacent area is not in PVS, test if adjacent area not penetrated as far, if so it is an invasion area
+		if ( area->GetIncursionDistance( TF_TEAM_BLUE ) > adjArea->GetIncursionDistance( TF_TEAM_BLUE ) )
+		{
+			if ( area->GetIncursionDistance( TF_TEAM_BLUE ) > m_homeArea->GetIncursionDistance( TF_TEAM_BLUE ) + behindTolerance )
+			{
+				// this area is farther "in" than we are - don't search further
+				return;
+			}
+
+			m_redInvasionAreaVector->AddToTail( adjArea );
+		}
+
+		if ( area->GetIncursionDistance( TF_TEAM_RED ) > adjArea->GetIncursionDistance( TF_TEAM_RED ) )
+		{
+			if ( area->GetIncursionDistance( TF_TEAM_RED ) > m_homeArea->GetIncursionDistance( TF_TEAM_RED ) + behindTolerance )
+			{
+				// this area is farther "in" than we are - don't search further
+				return;
+			}
+
+			m_blueInvasionAreaVector->AddToTail( adjArea );
+		}
 	}
 
-	m_PVActors[team].AddToTail( actor );
-}
-
-float CTFNavArea::GetCombatIntensity() const
-{
-	float intensity = 0.0f;
-	if ( m_combatTimer.HasStarted() )
+	bool operator() ( CNavArea *baseArea )
 	{
-		const float combatTime = m_combatTimer.GetElapsedTime();
-		intensity = fmax( m_fCombatIntensity - ( combatTime * tf_nav_combat_decay_rate.GetFloat() ), 0.0f );
+		CTFNavArea *area = static_cast< CTFNavArea * >( baseArea );
+
+		// explore adjacent floor areas
+		int dir;
+		for( dir=0; dir<NUM_DIRECTIONS; ++dir )
+		{
+			int count = area->GetAdjacentCount( (NavDirType)dir );
+			for( int i=0; i<count; ++i )
+			{
+				CTFNavArea *adjArea = static_cast< CTFNavArea * >( area->GetAdjacentArea( (NavDirType)dir, i ) );
+
+				FilterArea( area, adjArea );
+			}
+		}
+
+		// include areas that connect TO this area via a one-way link, since the enemy is coming TO us
+		for( dir=0; dir<NUM_DIRECTIONS; ++dir )
+		{
+			const NavConnectVector *list = area->GetIncomingConnections( (NavDirType)dir );
+
+			FOR_EACH_VEC( (*list), it )
+			{
+				NavConnect connect = (*list)[ it ];				
+
+				FilterArea( area, static_cast< CTFNavArea * >( connect.area ) );
+			}
+		}
+
+		return true;
 	}
-	return intensity;
+
+	CTFNavArea *m_homeArea;
+	CUtlVector< CTFNavArea * > *m_redInvasionAreaVector;
+	CUtlVector< CTFNavArea * > *m_blueInvasionAreaVector;
+	unsigned int m_visibleMarker;
+};
+
+
+//------------------------------------------------------------------------------------------------
+/**
+ * Find invasion areas where enemies enter from
+ */
+void CTFNavArea::ComputeInvasionAreaVectors( void )
+{
+	static unsigned int searchMarker = RandomInt( 0, 1024*1024 );
+
+	for( int i=0; i<TF_TEAM_COUNT; ++i )
+	{
+		m_invasionAreaVector[ i ].RemoveAll();
+	}
+
+	++searchMarker;
+
+	// mark all potentially visible areas for quick testing during the search
+	MarkVisibleSet marker( searchMarker );
+	ForAllCompletelyVisibleAreas( marker );
+
+	// search boundary of potentially visible area set for area pairs where
+	// the area in the PVS has a higher incursion distance than an adjacent
+	// area outside of the PVS - an invasion area
+
+	CollectInvasionAreas collector( searchMarker, this, &m_invasionAreaVector[ TF_TEAM_RED ], &m_invasionAreaVector[ TF_TEAM_BLUE ] );
+	ForAllCompletelyVisibleAreas( collector );
 }
 
-bool CTFNavArea::IsInCombat() const
+
+//------------------------------------------------------------------------------------------------
+bool CTFNavArea::IsBlocked( int teamID, bool ignoreNavBlockers ) const
+{
+	if ( HasAttributeTF( TF_NAV_UNBLOCKABLE ) )
+		return false;
+
+	if ( HasAttributeTF( TF_NAV_BLOCKED ) )
+		return true;
+
+	// temporary fix:
+	if ( teamID == TF_TEAM_RED && HasAttributeTF( TF_NAV_BLUE_ONE_WAY_DOOR ) )
+		return true;
+
+	if ( teamID == TF_TEAM_BLUE && HasAttributeTF( TF_NAV_RED_ONE_WAY_DOOR ) )
+		return true;
+
+	return CNavArea::IsBlocked( teamID, ignoreNavBlockers );
+}
+
+
+//------------------------------------------------------------------------------------------------
+void CTFNavArea::Save( CUtlBuffer &fileBuffer, unsigned int version ) const
+{
+	CNavArea::Save( fileBuffer, version );
+
+	// save attribute flags
+	unsigned int attributes = m_attributeFlags & TF_NAV_PERSISTENT_ATTRIBUTES;
+	fileBuffer.PutUnsignedInt( attributes );
+}
+
+
+//------------------------------------------------------------------------------------------------
+NavErrorType CTFNavArea::Load( CUtlBuffer &fileBuffer, unsigned int version, unsigned int subVersion )
+{
+	// load base class data
+	CNavArea::Load( fileBuffer, version, subVersion );
+
+	if ( subVersion > TheNavMesh->GetSubVersionNumber() )
+	{
+		Warning( "Unknown NavArea sub-version number\n" );
+		return NAV_INVALID_FILE;
+	}
+	else if ( subVersion <= 1 )
+	{
+		// no data
+		m_attributeFlags = 0;
+		return NAV_OK;
+	}
+
+	m_attributeFlags = fileBuffer.GetUnsignedInt();
+	if ( !fileBuffer.IsValid() )
+	{
+		Warning( "Can't read TF-specific attributes\n" );
+		return NAV_INVALID_FILE;
+	}
+
+	return NAV_OK;
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+unsigned int CTFNavArea::m_masterTFMark = 1;
+
+
+//--------------------------------------------------------------------------------------------------------
+void CTFNavArea::MakeNewTFMarker( void )
+{
+	++m_masterTFMark;
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+void CTFNavArea::ResetTFMarker( void )
+{
+	m_masterTFMark = 1;
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+bool CTFNavArea::IsTFMarked( void ) const
+{
+	return ( m_TFMark == m_masterTFMark );
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+void CTFNavArea::TFMark( void )
+{
+	m_TFMark = m_masterTFMark;
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+bool CTFNavArea::IsValidForWanderingPopulation( void ) const
+{
+	if ( HasAttributeTF( TF_NAV_BLOCKED | TF_NAV_SPAWN_ROOM_RED | TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_NO_SPAWNING | TF_NAV_RESCUE_CLOSET ) )
+		return false;
+		
+	return true;
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+void CTFNavArea::AddPotentiallyVisibleActor( CBaseCombatCharacter *who )
+{
+	if ( who == NULL )
+	{
+		return;
+	}
+
+	int team = who->GetTeamNumber();
+	if ( team < 0 || team >= TF_TEAM_COUNT )
+		return;
+
+	CTFBot *bot = ToTFBot( who );
+	if ( bot && bot->HasAttribute( CTFBot::IS_NPC ) )
+		return;
+
+	if ( m_potentiallyVisibleActor[ team ].Find( who ) == m_potentiallyVisibleActor[ team ].InvalidIndex() )
+	{
+		m_potentiallyVisibleActor[ team ].AddToTail( who );
+	}
+}
+
+
+
+//--------------------------------------------------------------------------------------------------------
+float CTFNavArea::GetCombatIntensity( void ) const
+{
+	if ( !m_combatTimer.HasStarted() )
+	{
+		return 0.0f;
+	}
+
+	float actualIntensity = m_combatIntensity - m_combatTimer.GetElapsedTime() * tf_nav_combat_decay_rate.GetFloat();
+
+	if ( actualIntensity < 0.0f )
+	{
+		actualIntensity = 0.0f;
+	}
+
+	return actualIntensity;
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+// Invoked when combat happens in/near this area
+void CTFNavArea::OnCombat( void )
+{
+	m_combatIntensity += tf_nav_combat_build_rate.GetFloat();
+	if ( m_combatIntensity > 1.0f )
+	{
+		m_combatIntensity = 1.0f;
+	}
+
+	m_combatTimer.Start();
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+bool CTFNavArea::IsInCombat( void ) const
 {
 	return GetCombatIntensity() > 0.01f;
 }
 
-void CTFNavArea::OnCombat()
-{
-	m_combatTimer.Reset();
-	m_fCombatIntensity = fmin( m_fCombatIntensity + tf_nav_combat_build_rate.GetFloat(), 1.0f );
-}
+

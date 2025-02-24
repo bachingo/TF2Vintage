@@ -47,6 +47,10 @@ public:
 	// Locomotion modifiers
 	//
 	virtual bool ClimbUpToLedge( const Vector &landingGoal, const Vector &landingForward, const CBaseEntity *obstacle ) { return true; }	// initiate a jump to an adjacent high ledge, return false if climb can't start
+	bool ScriptClimbUpToLedge( const Vector &landingGoal, const Vector &landingForward, HSCRIPT hObstacle )
+	{
+		return this->ClimbUpToLedge( landingGoal, landingForward, ToEnt( hObstacle ) );
+	}
 	virtual void JumpAcrossGap( const Vector &landingGoal, const Vector &landingForward ) { }	// initiate a jump across an empty volume of space to far side
 	virtual void Jump( void ) { }							// initiate a simple undirected jump in the air
 	virtual bool IsClimbingOrJumping( void ) const;			// is jumping in any form
@@ -66,8 +70,11 @@ public:
 
 	virtual bool IsOnGround( void ) const;					// return true if standing on something
 	virtual void OnLeaveGround( CBaseEntity *ground ) { }	// invoked when bot leaves ground for any reason
+	void ScriptOnLeaveGround( HSCRIPT hGround ) { this->OnLeaveGround( ToEnt( hGround ) ); }
 	virtual void OnLandOnGround( CBaseEntity *ground ) { }	// invoked when bot lands on the ground after being in the air
+	void ScriptOnLandOnGround( HSCRIPT hGround ) { this->OnLandOnGround( ToEnt( hGround ) ); }
 	virtual CBaseEntity *GetGround( void ) const;			// return the current ground entity or NULL if not on the ground
+	HSCRIPT ScriptGetGround( void ) const { return ToHScript( this->GetGround() ); }
 	virtual const Vector &GetGroundNormal( void ) const;	// surface normal of the ground we are in contact with
 	virtual float GetGroundSpeed( void ) const;				// return current world space speed in XY plane
 	virtual const Vector &GetGroundMotionVector( void ) const;	// return unit vector in XY plane describing our direction of motion - even if we are currently not moving
@@ -107,6 +114,7 @@ public:
 	virtual const Vector &GetMotionVector( void ) const;	// return unit vector describing our direction of motion - even if we are currently not moving
 
 	virtual bool IsAreaTraversable( const CNavArea *baseArea ) const;	// return true if given area can be used for navigation
+	bool ScriptIsAreaTraversable( HSCRIPT hBaseArea ) const { return this->IsAreaTraversable( ToNavArea( hBaseArea ) ); }
 
 	virtual float GetTraversableSlopeLimit( void ) const;	// return Z component of unit normal of steepest traversable slope
 
@@ -122,17 +130,45 @@ public:
 	 * If false is returned, fraction of walkable ray is returned in 'fraction'
 	 */
 	virtual bool IsPotentiallyTraversable( const Vector &from, const Vector &to, TraverseWhenType when = EVENTUALLY, float *fraction = NULL ) const;
+	float ScriptFractionPotentiallyTraversable( const Vector &from, const Vector &to, bool bImmediately )
+	{
+		float flFraction = 0.0f;
+		this->IsPotentiallyTraversable( from, to, bImmediately ? IMMEDIATELY : EVENTUALLY, &flFraction );
+		return flFraction;
+	}
+	float ScriptIsPotentiallyTraversable( const Vector &from, const Vector &to, bool bImmediately )
+	{
+		return this->IsPotentiallyTraversable( from, to, bImmediately ? IMMEDIATELY : EVENTUALLY, NULL );
+	}
 
 	/**
 	 * Return true if there is a possible "gap" that will need to be jumped over
 	 * If true is returned, fraction of ray before gap is returned in 'fraction'
 	 */
 	virtual bool HasPotentialGap( const Vector &from, const Vector &to, float *fraction = NULL ) const;
+	float ScriptFractionPotentialGap( const Vector &from, const Vector &to )
+	{
+		float flFraction = 0.0f;
+		this->HasPotentialGap( from, to, &flFraction );
+		return flFraction;
+	}
+	float ScriptHasPotentialGap( const Vector &from, const Vector &to )
+	{
+		return this->HasPotentialGap( from, to, NULL );
+	}
 
 	// return true if there is a "gap" here when moving in the given direction
 	virtual bool IsGap( const Vector &pos, const Vector &forward ) const;
 
 	virtual bool IsEntityTraversable( CBaseEntity *obstacle, TraverseWhenType when = EVENTUALLY ) const;
+	bool ScriptIsEntityTraversable( HSCRIPT hObstable, bool bImmediately ) const
+	{
+		CBaseEntity *pEntity = ToEnt( hObstable );
+		if ( !pEntity )
+			return false;
+		
+		return this->IsEntityTraversable( pEntity, bImmediately ? IMMEDIATELY : EVENTUALLY );
+	}
 
 	//
 	// Stuck state.  If the locomotor cannot make progress, it becomes "stuck" and can only leave 
@@ -151,6 +187,8 @@ public:
 	 */
 	virtual bool ShouldCollideWith( const CBaseEntity *object ) const	{ return true; }
 
+	//- Script access to locomotion functions ------------------------------------------------------------------
+	DECLARE_ENT_SCRIPTDESC();
 
 protected:
 	virtual void AdjustPosture( const Vector &moveGoal );
@@ -328,8 +366,6 @@ inline void ILocomotion::TraceHull( const Vector& start, const Vector& end, cons
 	ray.Init( start, end, mins, maxs );
 	enginetrace->TraceRay( ray, fMask, pFilter, pTrace );
 }
-
-
 
 #endif // _NEXT_BOT_LOCOMOTION_INTERFACE_H_
 

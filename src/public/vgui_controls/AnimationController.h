@@ -18,9 +18,6 @@
 
 namespace vgui
 {
-#ifdef TF_VINTAGE_CLIENT
-	static CUtlSymbolTable g_ScriptSymbols(0, 128, true);
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Handles controlling panel animation
@@ -52,8 +49,8 @@ public:
 	void CancelAllAnimations();
 
 	// starts an animation sequence script
-	bool StartAnimationSequence(const char *sequenceName);
-	bool StartAnimationSequence(Panel *pWithinParent, const char *sequenceName);
+	bool StartAnimationSequence(const char *sequenceName, bool bCanBeCancelled = true );
+	bool StartAnimationSequence(Panel *pWithinParent, const char *sequenceName, bool bCanBeCancelled = true );
 
 	bool StopAnimationSequence( Panel *pWithinParent, const char *sequenceName );
 	void CancelAnimationsForPanel( Panel *pWithinParent );
@@ -74,43 +71,13 @@ public:
 		INTERPOLATOR_FLICKER,
 		INTERPOLATOR_SIMPLESPLINE, // ease in / out
 		INTERPOLATOR_BOUNCE,	   // gravitational bounce
+		INTERPOLATOR_BIAS,
+		INTERPOLATOR_GAIN,
 	};
 
 	// runs the specific animation command (doesn't use script file at all)
-	void RunAnimationCommand(vgui::Panel *panel, const char *variable, float targetValue, float startDelaySeconds, float durationSeconds, Interpolators_e interpolator, float animParameter = 0 );
-	void RunAnimationCommand(vgui::Panel *panel, const char *variable, Color targetValue, float startDelaySeconds, float durationSeconds, Interpolators_e interpolator, float animParameter = 0 );
-#ifdef TF_VINTAGE_CLIENT
-	struct PublicValue_t
-	{
-		PublicValue_t(float _a = 0.0f, float _b = 0.0f, float _c = 0.0f, float _d = 0.0f) :
-			a(_a), b(_b), c(_c), d(_d) {};
-		float a, b, c, d;
-	};
-	void RunAnimationCommand(vgui::Panel *panel, const char *variable, PublicValue_t targetValue, float startDelaySeconds, float duration, Interpolators_e interpolator, float animParameter)
-	{
-		// clear any previous animations of this variable
-		UtlSymId_t var = g_ScriptSymbols.AddString(variable);
-		RemoveQueuedAnimationByType(panel, var, UTL_INVAL_SYMBOL);
-
-		// build a new animation
-		AnimCmdAnimate_t animateCmd;
-		memset(&animateCmd, 0, sizeof(animateCmd));
-		animateCmd.panel = 0;
-		animateCmd.variable = var;
-		animateCmd.target.a = targetValue.a;
-		animateCmd.target.b = targetValue.b;
-		animateCmd.target.c = targetValue.c;
-		animateCmd.target.d = targetValue.d;
-		animateCmd.interpolationFunction = interpolator;
-		animateCmd.interpolationParameter = animParameter;
-		animateCmd.startTime = startDelaySeconds;
-		animateCmd.duration = duration;
-
-		// start immediately
-		StartCmd_Animate(panel, 0, animateCmd);
-	}
-#endif
- 
+	void RunAnimationCommand(vgui::Panel *panel, const char *variable, float targetValue, float startDelaySeconds, float durationSeconds, Interpolators_e interpolator, float animParameter = 0, bool bClearValueQueue = true, bool bCanBeCancelled = true );
+	void RunAnimationCommand(vgui::Panel *panel, const char *variable, Color targetValue, float startDelaySeconds, float durationSeconds, Interpolators_e interpolator, float animParameter = 0, bool bClearValueQueue = true, bool bCanBeCancelled = true );
 
 private:
 	bool UpdateScreenSize();
@@ -136,7 +103,9 @@ private:
 		CMD_SETSTRING,
 		CMD_RUNEVENTCHILD,
 		CMD_FIRECOMMAND,
+		CMD_PLAYSOUND,
 		CMD_SETVISIBLE,
+		CMD_SETINPUTENABLED,
 	};
 
 	enum RelativeAlignment
@@ -232,6 +201,7 @@ private:
 		float interpolatorParam;
 		float startTime;
 		float endTime;
+		bool canBeCancelled;
 
 		AnimAlign_t align;
 	};
@@ -247,6 +217,7 @@ private:
 		UtlSymId_t variable2;
 		float startTime;
 		PHandle parent;
+		bool canBeCancelled;
 	};
 	CUtlVector<PostedMessage_t> m_PostedMessages;
 
@@ -270,15 +241,15 @@ private:
 	CUtlVector<UtlSymId_t>	m_ScriptFileNames;
 
 	// runs a single line of the script
-	void ExecAnimationCommand(UtlSymId_t seqName, AnimCommand_t &animCommand, Panel *pWithinParent);
+	void ExecAnimationCommand(UtlSymId_t seqName, AnimCommand_t &animCommand, Panel *pWithinParent, bool bCanBeCancelled);
 	// removes all commands belonging to a script
 	void RemoveQueuedAnimationCommands(UtlSymId_t seqName, vgui::Panel *panel = NULL);
 	// removes an existing instance of a command
 	void RemoveQueuedAnimationByType(vgui::Panel *panel, UtlSymId_t variable, UtlSymId_t sequenceToIgnore);
 
 	// handlers
-	void StartCmd_Animate(UtlSymId_t seqName, AnimCmdAnimate_t &cmd, Panel *pWithinParent);
-	void StartCmd_Animate(Panel *panel, UtlSymId_t seqName, AnimCmdAnimate_t &cmd);
+	void StartCmd_Animate(UtlSymId_t seqName, AnimCmdAnimate_t &cmd, Panel *pWithinParent, bool bCanBeCancelled);
+	void StartCmd_Animate(Panel *panel, UtlSymId_t seqName, AnimCmdAnimate_t &cmd, bool bCanBeCancelled);
 	void RunCmd_RunEvent(PostedMessage_t &msg);
 	void RunCmd_StopEvent(PostedMessage_t &msg);
 	void RunCmd_StopPanelAnimations(PostedMessage_t &msg);

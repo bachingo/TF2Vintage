@@ -20,7 +20,7 @@
 #endif
 // NVNT end extra includes
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
 #include "tf_shareddefs.h"
 #endif
 
@@ -92,12 +92,13 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 
 #if !defined( CLIENT_DLL )
 	m_pConstraint = NULL;
+	m_bSoundsEnabled = true;
 	OnBaseCombatWeaponCreated( this );
 #endif
 
 	m_hWeaponFileInfo = GetInvalidWeaponInfoHandle();
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#if defined( TF_DLL )
 	UseClientSideAnimation();
 #endif
 
@@ -106,6 +107,8 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	m_nCritChecks = 1;
 	m_nCritSeedRequests = 0;
 #endif // TF
+
+	m_nCustomViewmodelModelIndex = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -265,7 +268,7 @@ void CBaseCombatWeapon::Precache( void )
 			{
 				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
 			}
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
+ #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
 			// Ammo override
 			int iModUseMetalOverride = 0;
 			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
@@ -363,7 +366,7 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetMaxClip1( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
 	int iModMaxClipOverride = 0;
 	CALL_ATTRIB_HOOK_INT( iModMaxClipOverride, mod_max_primary_clip_override );
 	if ( iModMaxClipOverride != 0 )
@@ -1088,7 +1091,11 @@ int CBaseCombatWeapon::UpdateClientData( CBasePlayer *pPlayer )
 		int iOldState = m_iState;
 		m_iState = iNewState;
 		OnActiveStateChanged( iOldState );
+#if defined( CLIENT_DLL )
+		UpdateVisibility();
+#endif
 	}
+
 	return 1;
 }
 
@@ -1096,10 +1103,10 @@ int CBaseCombatWeapon::UpdateClientData( CBasePlayer *pPlayer )
 // Purpose: 
 // Input  : index - 
 //-----------------------------------------------------------------------------
-void CBaseCombatWeapon::SetViewModelIndex( int index )
+void CBaseCombatWeapon::SetViewModelIndex( int index_ )
 {
-	Assert( index >= 0 && index < MAX_VIEWMODELS );
-	m_nViewModelIndex = index;
+	Assert( index_ >= 0 && index_ < MAX_VIEWMODELS );
+	m_nViewModelIndex = index_;
 }
 
 //-----------------------------------------------------------------------------
@@ -1183,9 +1190,21 @@ void CBaseCombatWeapon::SetViewModel()
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 	if ( pOwner == NULL )
 		return;
+
 	CBaseViewModel *vm = pOwner->GetViewModel( m_nViewModelIndex, false );
 	if ( vm == NULL )
 		return;
+
+    if ( m_nCustomViewmodelModelIndex > 0 )
+    {
+        const model_t *pViewModel = modelinfo->GetModel( m_nCustomViewmodelModelIndex );
+        if ( pViewModel )
+        {
+            vm->SetWeaponModel( modelinfo->GetModelName( pViewModel ), this );    
+            return;
+        }
+    }
+
 	Assert( vm->ViewModelIndex() == m_nViewModelIndex );
 	vm->SetWeaponModel( GetViewModel( m_nViewModelIndex ), this );
 }
@@ -1196,7 +1215,7 @@ void CBaseCombatWeapon::SetViewModel()
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::SendWeaponAnim( int iActivity )
 {
-#if defined( USES_ECON_ITEMS )
+#ifdef USES_ECON_ITEMS
 	iActivity = TranslateViewmodelHandActivity( (Activity)iActivity );
 #endif		
 	// NVNT notify the haptics system of this weapons new activity
@@ -1289,13 +1308,6 @@ bool CBaseCombatWeapon::HasSecondaryAmmo( void )
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::UsesPrimaryAmmo( void )
 {
-	int iNotRegularAmmo = 0;
-	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, energy_weapon_no_ammo);
-	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, mod_use_metal_ammo_type);
-
-	if (iNotRegularAmmo > 0)
-		return false;
-
 	if ( m_iPrimaryAmmoType < 0 )
 		return false;
 	return true;
@@ -1306,13 +1318,6 @@ bool CBaseCombatWeapon::UsesPrimaryAmmo( void )
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::UsesSecondaryAmmo( void )
 {
-	int iNotRegularAmmo = 0;
-	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, energy_weapon_no_ammo);
-	CALL_ATTRIB_HOOK_INT(iNotRegularAmmo, mod_use_metal_ammo_type);
-
-	if (iNotRegularAmmo > 0)
-		return false;
-
 	if ( m_iSecondaryAmmoType < 0 )
 		return false;
 	return true;
@@ -1471,9 +1476,6 @@ bool CBaseCombatWeapon::Deploy( )
 	MDLCACHE_CRITICAL_SECTION();
 	bool bResult = DefaultDeploy( (char*)GetViewModel(), (char*)GetWorldModel(), GetDrawActivity(), (char*)GetAnimPrefix() );
 
-	// override pose parameters
-	PoseParameterOverride( false );
-
 	return bResult;
 }
 
@@ -1533,9 +1535,6 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 		if( m_bReloadHudHintDisplayed )
 			RescindReloadHudHint();
 	}
-
-	// reset pose parameters
-	PoseParameterOverride( true );
 
 	return true;
 }
@@ -1683,6 +1682,9 @@ void CBaseCombatWeapon::ItemPreFrame( void )
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::CanPerformSecondaryAttack() const
 {
 	return m_flNextSecondaryAttack <= gpGlobals->curtime;
@@ -1712,9 +1714,9 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	bool bFired = false;
 
 	// Secondary attack has priority
-	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && CanPerformSecondaryAttack() )
+	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) )
 	{
-		if ( UsesSecondaryAmmo() && pOwner->GetAmmoCount( m_iSecondaryAmmoType )<=0 )
+		if ( UsesSecondaryAmmo() && pOwner->GetAmmoCount(m_iSecondaryAmmoType) <= 0 )
 		{
 			if ( m_flNextEmptySoundTime < gpGlobals->curtime )
 			{
@@ -1722,20 +1724,20 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
 			}
 		}
-		else if ( pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false )
+		else if ( pOwner->GetWaterLevel() == 3 && !m_bAltFiresUnderwater )
 		{
 			// This weapon doesn't fire underwater
 			WeaponSound( EMPTY );
-			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
+			m_flNextSecondaryAttack = gpGlobals->curtime + 0.2;
 			return;
 		}
-		else
+		else if ( CanPerformSecondaryAttack() )
 		{
 			// FIXME: This isn't necessarily true if the weapon doesn't have a secondary fire!
 			// For instance, the crossbow doesn't have a 'real' secondary fire, but it still 
 			// stops the crossbow from firing on the 360 if the player chooses to hold down their
 			// zoom button. (sjb) Orange Box 7/25/2007
-#if !defined( CLIENT_DLL )
+#if !defined(CLIENT_DLL)
 			if( !IsX360() || !ClassMatches("weapon_crossbow") )
 #endif
 			{
@@ -1903,6 +1905,11 @@ float CBaseCombatWeapon::GetFireRate( void )
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::WeaponSound( WeaponSound_t sound_type, float soundtime /* = 0.0f */ )
 {
+#if !defined( CLIENT_DLL )
+	if ( !m_bSoundsEnabled )
+		return;
+#endif
+
 	// If we have some sounds from the weapon classname.txt file, play a random one of them
 	const char *shootsound = GetShootSound( sound_type );
 	if ( !shootsound || !shootsound[0] )
@@ -2061,7 +2068,7 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 
 bool CBaseCombatWeapon::ReloadsSingly( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_VINTAGE ) || defined ( TF_VINTAGE_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
 	float fHasReload = 1.0f;
 	CALL_ATTRIB_HOOK_FLOAT( fHasReload, mod_no_reload_display_only );
 	if ( fHasReload != 1.0f )
@@ -2136,7 +2143,6 @@ char *CBaseCombatWeapon::GetDeathNoticeName( void )
 //====================================================================================
 void CBaseCombatWeapon::CheckReload( void )
 {
-	
 	if ( m_bReloadsSingly )
 	{
 		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
@@ -2354,6 +2360,7 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 	// If my clip is empty (and I use clips) start reload
 	if ( UsesClipsForAmmo1() && !m_iClip1 ) 
 	{
+		Reload();
 		return;
 	}
 
@@ -2554,34 +2561,6 @@ Activity CBaseCombatWeapon::ActivityOverride( Activity baseAct, bool *pRequired 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CBaseCombatWeapon::PoseParameterOverride( bool bReset )
-{
-	CBaseCombatCharacter *pOwner = GetOwner();
-	if ( !pOwner )
-		return;
-
-	CStudioHdr *pStudioHdr = pOwner->GetModelPtr();
-	if ( !pStudioHdr )
-		return;
-	
-	int iCount = 0;
-	poseparamtable_t *pPoseParamList = PoseParamList( iCount );
-	if ( pPoseParamList )
-	{
-		for ( int i=0; i<iCount; ++i )
-		{
-			int iPoseParam = pOwner->LookupPoseParameter( pStudioHdr, pPoseParamList[i].pszName );
-		
-			if ( iPoseParam != -1 )
-				pOwner->SetPoseParameter( iPoseParam, bReset ? 0 : pPoseParamList[i].flValue );
-		}
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
 CDmgAccumulator::CDmgAccumulator( void )
 {
 #ifdef GAME_DLL
@@ -2694,7 +2673,7 @@ void CBaseCombatWeapon::ScriptSetOwner(HSCRIPT hScriptOwner)
 
 BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 
-	DEFINE_PRED_FIELD( m_nNextThinkTick, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nNextThinkTick, FIELD_INTEGER, FTYPEDESC_INSENDTABLE | FTYPEDESC_NOERRORCHECK ),
 	// Networked
 	DEFINE_PRED_FIELD( m_hOwner, FIELD_EHANDLE, FTYPEDESC_INSENDTABLE ),
 	// DEFINE_FIELD( m_hWeaponFileInfo, FIELD_SHORT ),
@@ -2714,7 +2693,6 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 
 	// Not networked
 
-	DEFINE_PRED_FIELD( m_flTimeWeaponIdle, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_FIELD( m_bInReload, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFireOnEmpty, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFiringWholeClip, FIELD_BOOLEAN ),
@@ -2808,6 +2786,8 @@ BEGIN_DATADESC( CBaseCombatWeapon )
 	DEFINE_FIELD( m_bAltFireHudHintDisplayed, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flHudHintPollTime, FIELD_TIME ),
 	DEFINE_FIELD( m_flHudHintMinDisplayTime, FIELD_TIME ),
+
+	DEFINE_FIELD( m_nCustomViewmodelModelIndex, FIELD_SHORT ),
 
 	// Just to quiet classcheck.. this field exists only on the client
 //	DEFINE_FIELD( m_iOldState, FIELD_INTEGER ),
@@ -2913,6 +2893,22 @@ void CBaseCombatWeapon::RecvProxy_WeaponState( const CRecvProxyData *pData, void
 }
 #endif
 
+//-----------------------------------------------------------------------------
+// Purpose: Resets weapon visible on a new weapon
+//-----------------------------------------------------------------------------
+#if defined( CLIENT_DLL )
+static void RecvProxy_WeaponOwner ( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	// Chain through to the default recieve proxy ...
+	RecvProxy_IntToEHandle(pData, pStruct, pOut);
+	CBaseCombatWeapon *pNewWeapon = (CBaseCombatWeapon*)pStruct;
+	if (pNewWeapon)
+	{
+		pNewWeapon->UpdateVisibility();
+	}
+}
+#endif
+
 #if PREDICTION_ERROR_CHECK_LEVEL > 1
 #define SendPropTime SendPropFloat
 #define RecvPropTime RecvPropFloat
@@ -2928,8 +2924,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
-	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
+#if defined( TF_DLL )
+	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 
 #else
@@ -2951,10 +2947,11 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 	SendPropInt( SENDINFO( m_iSecondaryAmmoType ), 8 ),
 
 	SendPropInt( SENDINFO( m_nViewModelIndex ), VIEWMODEL_INDEX_BITS, SPROP_UNSIGNED ),
+	SendPropModelIndex( SENDINFO( m_nCustomViewmodelModelIndex ) ),
 
 	SendPropInt( SENDINFO( m_bFlipViewModel ) ),
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#if defined( TF_DLL )
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
 #endif
 
@@ -2965,27 +2962,28 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 	RecvPropInt( RECVINFO( m_iSecondaryAmmoType ) ),
 
 	RecvPropInt( RECVINFO( m_nViewModelIndex ) ),
+	RecvPropInt( RECVINFO( m_nCustomViewmodelModelIndex ) ),
 
 	RecvPropBool( RECVINFO( m_bFlipViewModel ) ),
 
 #endif
 END_NETWORK_TABLE()
 
-BEGIN_NETWORK_TABLE( CBaseCombatWeapon, DT_BaseCombatWeapon )
+BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 #if !defined( CLIENT_DLL )
-	SendPropDataTable( "LocalWeaponData", 0, &REFERENCE_SEND_TABLE( DT_LocalWeaponData ), SendProxy_SendLocalWeaponDataTable ),
-	SendPropDataTable( "LocalActiveWeaponData", 0, &REFERENCE_SEND_TABLE( DT_LocalActiveWeaponData ), SendProxy_SendActiveLocalWeaponDataTable ),
-	SendPropModelIndex( SENDINFO( m_iViewModelIndex ) ),
-	SendPropModelIndex( SENDINFO( m_iWorldModelIndex ) ),
-	SendPropInt( SENDINFO( m_iState ), 8, SPROP_UNSIGNED ),
-	SendPropEHandle( SENDINFO( m_hOwner ) ),
+	SendPropDataTable("LocalWeaponData", 0, &REFERENCE_SEND_TABLE(DT_LocalWeaponData), SendProxy_SendLocalWeaponDataTable ),
+	SendPropDataTable("LocalActiveWeaponData", 0, &REFERENCE_SEND_TABLE(DT_LocalActiveWeaponData), SendProxy_SendActiveLocalWeaponDataTable ),
+	SendPropModelIndex( SENDINFO(m_iViewModelIndex) ),
+	SendPropModelIndex( SENDINFO(m_iWorldModelIndex) ),
+	SendPropInt( SENDINFO(m_iState ), 8, SPROP_UNSIGNED ),
+	SendPropEHandle( SENDINFO(m_hOwner) ),
 #else
-	RecvPropDataTable( "LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE( DT_LocalWeaponData ) ),
-	RecvPropDataTable( "LocalActiveWeaponData", 0, 0, &REFERENCE_RECV_TABLE( DT_LocalActiveWeaponData ) ),
-	RecvPropInt( RECVINFO( m_iViewModelIndex ) ),
-	RecvPropInt( RECVINFO( m_iWorldModelIndex ) ),
-	RecvPropInt( RECVINFO( m_iState ), 0, &CBaseCombatWeapon::RecvProxy_WeaponState ),
-	RecvPropEHandle( RECVINFO( m_hOwner ) ),
+	RecvPropDataTable("LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalWeaponData)),
+	RecvPropDataTable("LocalActiveWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalActiveWeaponData)),
+	RecvPropInt( RECVINFO(m_iViewModelIndex)),
+	RecvPropInt( RECVINFO(m_iWorldModelIndex)),
+	RecvPropInt( RECVINFO(m_iState), 0, &CBaseCombatWeapon::RecvProxy_WeaponState ),
+	RecvPropEHandle( RECVINFO(m_hOwner ), RecvProxy_WeaponOwner ),
 #endif
 END_NETWORK_TABLE()
 

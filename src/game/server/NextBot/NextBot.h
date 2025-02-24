@@ -9,6 +9,10 @@
 #include "NextBotInterface.h"
 #include "NextBotManager.h"
 
+#ifdef TERROR
+#include "player_lagcompensation.h"
+#endif
+
 class NextBotCombatCharacter;
 struct animevent_t;
 
@@ -26,6 +30,7 @@ public:
 	DECLARE_CLASS( NextBotCombatCharacter, CBaseCombatCharacter );
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
+	DECLARE_ENT_SCRIPTDESC();
 	
 	NextBotCombatCharacter( void );
 	virtual ~NextBotCombatCharacter() { }
@@ -35,7 +40,6 @@ public:
 	virtual Vector EyePosition( void );
 
 	virtual INextBot *MyNextBotPointer( void ) { return this; }
-	virtual bool IsNextBot( void ) OVERRIDE { return true; }
 
 	// Event hooks into NextBot system ---------------------------------------
 	virtual int OnTakeDamage_Alive( const CTakeDamageInfo &info );
@@ -70,7 +74,6 @@ public:
 	// begin INextBot public interface ----------------------------------------------------------------
 	virtual NextBotCombatCharacter *GetEntity( void ) const			{ return const_cast< NextBotCombatCharacter * >( this ); }
 	virtual NextBotCombatCharacter *GetNextBotCombatCharacter( void ) const	{ return const_cast< NextBotCombatCharacter * >( this ); }
-	
 
 private:
 	EHANDLE m_lastAttacker;

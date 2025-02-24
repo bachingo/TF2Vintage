@@ -1,201 +1,250 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_spy_sap.cpp
+// Sap nearby enemy buildings
+// Michael Booth, June 2010
+
 #include "cbase.h"
-#include "../../tf_bot.h"
-#include "tf_bot_spy_sap.h"
-#include "tf_bot_spy_attack.h"
-#include "tf_obj.h"
+#include "tf_player.h"
+#include "tf_obj_sentrygun.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/spy/tf_bot_spy_sap.h"
+#include "bot/behavior/tf_bot_approach_object.h"
+#include "bot/behavior/spy/tf_bot_spy_attack.h"
+
+extern ConVar tf_bot_path_lookahead_range;
+extern ConVar tf_bot_debug_spy;
 
 
-CTFBotSpySap::CTFBotSpySap( CBaseObject *target )
+//---------------------------------------------------------------------------------------------
+CTFBotSpySap::CTFBotSpySap( CBaseObject *sapTarget )
 {
-	m_hTarget = target;
-}
-
-CTFBotSpySap::~CTFBotSpySap()
-{
-}
-
-
-const char *CTFBotSpySap::GetName( void ) const
-{
-	return "SpySap";
+	m_sapTarget = sapTarget;
 }
 
 
-ActionResult<CTFBot> CTFBotSpySap::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpySap::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
+	me->StopLookingAroundForEnemies();
 
-	me->StopLookingForEnemies();
-
+	// uncloak so we can sap
 	if ( me->m_Shared.IsStealthed() )
+	{
 		me->PressAltFireButton();
+	}
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotSpySap::Update( CTFBot *me, float dt )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpySap::Update( CTFBot *me, float interval )
 {
-	if ( me->GetNearestKnownSappableTarget() )
-		m_hTarget = me->GetNearestKnownSappableTarget();
+	CBaseObject *newSapTarget = me->GetNearestKnownSappableTarget();
 
-	if ( m_hTarget == nullptr )
-		return Action<CTFBot>::Done( "Sap target gone" );
-
-	CUtlVector<CKnownEntity> knowns;
-	me->GetVisionInterface()->CollectKnownEntities( &knowns );
-
-	CTFPlayer *engie = nullptr;
-
-	FOR_EACH_VEC( knowns, i )
+	if ( newSapTarget )
 	{
-		CTFPlayer *player = ToTFPlayer( knowns[i].GetEntity() );
-		if ( player == nullptr ) continue;
+		m_sapTarget = newSapTarget;
+	}
 
-		/* why does this only consider the first known player? */
-		if ( me->IsEnemy( player ) )
+	if ( m_sapTarget == NULL )
+	{
+		return Done( "Sap target gone" );
+	}
+
+	CTFPlayer *victim = NULL;
+
+	CUtlVector< CKnownEntity > knownVector;
+	me->GetVisionInterface()->CollectKnownEntities( &knownVector );
+
+	for( int i=0; i<knownVector.Count(); ++i )
+	{
+		CTFPlayer *playerThreat = ToTFPlayer( knownVector[i].GetEntity() );
+		if ( playerThreat && me->IsEnemy( playerThreat ) )
 		{
-			engie = player;
-
-			if ( player->IsPlayerClass( TF_CLASS_ENGINEER ) && m_hTarget->GetOwner() == player &&
-				 me->IsRangeLessThan( player, 150.0f ) && me->IsEntityBetweenTargetAndSelf( engie, m_hTarget ) )
-			{
-				return Action<CTFBot>::SuspendFor( new CTFBotSpyAttack( engie ), "Backstabbing the engineer before I sap his buildings" );
-			}
-
+			victim = playerThreat;
 			break;
 		}
 	}
 
-	if ( me->IsRangeLessThan( m_hTarget, 80.0f ) )
+	// opportunistic backstab if engineer is between me and my sap target
+	if ( victim && victim->IsPlayerClass( TF_CLASS_ENGINEER ) )
 	{
-		CBaseCombatWeapon *sapper = me->Weapon_GetWeaponByType( TF_WPN_TYPE_BUILDING );
-		if ( sapper == nullptr )
-			return Action<CTFBot>::Done( "I have no sapper" );
+		const float nearbyRange = 150.0f;
+		if ( m_sapTarget->GetOwner() == victim && me->IsRangeLessThan( victim, nearbyRange ) )
+		{
+			if ( me->IsEntityBetweenTargetAndSelf( victim, m_sapTarget ) )
+			{
+				return SuspendFor( new CTFBotSpyAttack( victim ), "Backstabbing the engineer before I sap his buildings" );
+			}
+		}
+	}
 
-		me->Weapon_Switch( sapper );
+	const float sapRange = 40.0f;
 
+	if ( me->IsRangeLessThan( m_sapTarget, 2.0f * sapRange ) )
+	{
+		// switch to our sapper and spam it
+		CBaseCombatWeapon *mySapper = me->Weapon_GetWeaponByType( TF_WPN_TYPE_BUILDING );
+		if ( !mySapper )
+		{
+			return Done( "I have no sapper" );
+		}
+
+		me->Weapon_Switch( mySapper );
+
+		// uncloak
 		if ( me->m_Shared.IsStealthed() )
+		{
 			me->PressAltFireButton();
+		}
 
-		me->GetBodyInterface()->AimHeadTowards( m_hTarget, IBody::MANDATORY, 0.1f, nullptr, "Aiming my sapper" );
+		// sap our target
+		me->GetBodyInterface()->AimHeadTowards( m_sapTarget, IBody::MANDATORY, 0.1f, NULL, "Aiming my sapper" );
 
 		me->PressFireButton();
 	}
 
-	if ( !me->IsRangeGreaterThan( m_hTarget, 40.0f ) )
+	if ( me->IsRangeGreaterThan( m_sapTarget, sapRange ) )
 	{
-		if ( m_hTarget->HasSapper() )
+		if ( m_repathTimer.IsElapsed() )
 		{
-			CBaseObject *new_target = me->GetNearestKnownSappableTarget();
-			if ( new_target != nullptr )
+			m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+
+			CTFBotPathCost cost( me, FASTEST_ROUTE );
+			if ( m_path.Compute( me, m_sapTarget, cost ) == false )
 			{
-				m_hTarget = new_target;
-			}
-			else
-			{
-				if ( engie != nullptr && engie->IsPlayerClass( TF_CLASS_ENGINEER ) )
-				{
-					return Action<CTFBot>::SuspendFor( new CTFBotSpyAttack( engie ), "Attacking an engineer" );
-				}
-				else
-				{
-					return Action<CTFBot>::Done( "All targets sapped" );
-				}
+				return Done( "No path to sap target!" );
 			}
 		}
 
-		return Action<CTFBot>::Continue();
+		m_path.Update( me );
+
+		return Continue();
 	}
 
-	if ( m_recomputePath.IsElapsed() )
+	// if our target is sapped, look for other nearby buildings to sap
+	if ( m_sapTarget->HasSapper() )
 	{
-		m_recomputePath.Start( RandomFloat( 1.0f, 2.0f ) );
-
-		CTFBotPathCost func( me, FASTEST_ROUTE );
-		m_PathFollower.Compute( me, this->m_hTarget, func );
-	}
-
-	m_PathFollower.Update( me );
-
-	return Action<CTFBot>::Continue();
-}
-
-void CTFBotSpySap::OnEnd( CTFBot *me, Action<CTFBot> *newAction )
-{
-	me->WantsToLookForEnemies();
-}
-
-ActionResult<CTFBot> CTFBotSpySap::OnSuspend( CTFBot *me, Action<CTFBot> *newAction )
-{
-	me->WantsToLookForEnemies();
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotSpySap::OnResume( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	me->StopLookingForEnemies();
-
-	return Action<CTFBot>::Continue();
-}
-
-
-EventDesiredResult<CTFBot> CTFBotSpySap::OnStuck( CTFBot *me )
-{
-	return Action<CTFBot>::TryDone( RESULT_CRITICAL, "I'm stuck, probably on a sapped building that hasn't exploded yet" );
-}
-
-
-QueryResultType CTFBotSpySap::ShouldRetreat( const INextBot *me ) const
-{
-	return ANSWER_NO;
-}
-
-QueryResultType CTFBotSpySap::ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const
-{
-	CTFBot *actor = ToTFBot( me->GetEntity() );
-
-	if ( m_hTarget == nullptr || m_hTarget->HasSapper() )
-	{
-		if ( actor->m_Shared.InCond( TF_COND_DISGUISED ) || actor->m_Shared.InCond( TF_COND_DISGUISING ) || actor->m_Shared.IsStealthed() )
+		CBaseObject *nextTarget = me->GetNearestKnownSappableTarget();
+		if ( nextTarget )
 		{
-			return AreAllDangerousSentriesSapped( actor );
+			m_sapTarget = nextTarget;
 		}
 		else
 		{
-			return ANSWER_YES;
+			// everything is sapped - explicitly attack nearby enemy Engineers
+			if ( victim && victim->IsPlayerClass( TF_CLASS_ENGINEER ) )
+			{
+				return SuspendFor( new CTFBotSpyAttack( victim ), "Attacking an engineer" );
+			}
+
+			return Done( "All targets sapped" );
 		}
 	}
 
-	return ANSWER_NO;
+	return Continue();
 }
 
-QueryResultType CTFBotSpySap::IsHindrance( const INextBot *me, CBaseEntity *it ) const
-{
-	if ( m_hTarget != nullptr && me->IsRangeLessThan( m_hTarget, 300.0f ) )
-		return ANSWER_NO;
 
+//---------------------------------------------------------------------------------------------
+void CTFBotSpySap::OnEnd( CTFBot *me, Action< CTFBot > *nextAction )
+{
+	me->StartLookingAroundForEnemies();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotSpySap::OnSuspend( CTFBot *me, Action< CTFBot > *interruptingAction )
+{
+	me->StartLookingAroundForEnemies();
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotSpySap::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
+{
+	me->StopLookingAroundForEnemies();
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSpySap::OnStuck( CTFBot *me )
+{
+	return TryDone( RESULT_CRITICAL, "I'm stuck, probably on a sapped building that hasn't exploded yet" );
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotSpySap::ShouldAttack( const INextBot *meBot, const CKnownEntity *them ) const
+{
+	CTFBot *me = ToTFBot( meBot->GetEntity() );
+
+	if ( m_sapTarget && !m_sapTarget->HasSapper() )
+	{
+		// mission not accomplished
+		return ANSWER_NO;
+	}
+
+	if ( !me->m_Shared.InCond( TF_COND_DISGUISED ) &&
+		 !me->m_Shared.InCond( TF_COND_DISGUISING ) &&
+		 !me->m_Shared.IsStealthed() )
+	{
+		// our cover is blown!
+		return ANSWER_YES;
+	}
+
+	// if we've sapped, attack
+	return AreAllDangerousSentriesSapped( me ) ? ANSWER_YES : ANSWER_NO;
+}
+
+
+//---------------------------------------------------------------------------------------------
+// Don't avoid enemies when we're going in for the sap
+QueryResultType CTFBotSpySap::IsHindrance( const INextBot *me, CBaseEntity *blocker ) const
+{
+	if ( m_sapTarget.Get() && me->IsRangeLessThan( m_sapTarget, 300.0f ) )
+	{
+		// we're almost to our sap target - don't avoid anyone
+		return ANSWER_NO;
+	}
+
+	// avoid everyone while we move to our sap target
 	return ANSWER_UNDEFINED;
 }
 
 
-QueryResultType CTFBotSpySap::AreAllDangerousSentriesSapped( CTFBot *actor ) const
+//---------------------------------------------------------------------------------------------
+QueryResultType	CTFBotSpySap::ShouldRetreat( const INextBot *me ) const
 {
-	CUtlVector<CKnownEntity> knowns;
-	actor->GetVisionInterface()->CollectKnownEntities( &knowns );
+	return ANSWER_NO;
+}
 
-	FOR_EACH_VEC( knowns, i )
+
+//---------------------------------------------------------------------------------------------
+bool CTFBotSpySap::AreAllDangerousSentriesSapped( CTFBot *me ) const
+{
+	CUtlVector< CKnownEntity > knownVector;
+	me->GetVisionInterface()->CollectKnownEntities( &knownVector );
+
+	for( int i=0; i<knownVector.Count(); ++i )
 	{
-		CBaseObject *obj = dynamic_cast<CBaseObject *>( knowns[i].GetEntity() );
-		if ( !obj )
-			continue;
-
-		if ( obj->ObjectType() == OBJ_SENTRYGUN && !obj->HasSapper() && actor->IsEnemy( obj ) &&
-			 actor->IsRangeLessThan( obj, 1100.0f ) && actor->IsLineOfFireClear( obj ) )
+		CBaseObject *enemyObject = dynamic_cast< CBaseObject * >( knownVector[i].GetEntity() );
+		if ( enemyObject && enemyObject->ObjectType() == OBJ_SENTRYGUN && !enemyObject->HasSapper() && me->IsEnemy( enemyObject ) )
 		{
-			return ANSWER_NO;
+			// this is an active enemy sentry, are we in range and line of fire?
+			if ( me->IsRangeLessThan( enemyObject, SENTRY_MAX_RANGE ) && me->IsLineOfFireClear( enemyObject ) )
+			{
+				return false;
+			}
 		}
 	}
 
-	return ANSWER_YES;
+	return true;
 }
+
+

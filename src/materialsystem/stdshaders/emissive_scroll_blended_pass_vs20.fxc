@@ -1,9 +1,8 @@
-//========== Copyright (c) Valve Corporation, All rights reserved. ==========//
+//========= Copyright � 1996-2006, Valve Corporation, All rights reserved. ============//
 
 // DYNAMIC: "COMPRESSED_VERTS"			"0..1"
 // DYNAMIC: "SKINNING"					"0..1"
-
-// DYNAMIC: "MORPHING"					"0..1" [vs30] [ = pShaderAPI->IsHWMorphingEnabled() ]
+// DYNAMIC: "MORPHING"					"0..1" [vs30]
 
 // Includes
 #include "common_vs_fxc.h"
@@ -17,7 +16,7 @@ static const bool g_bSkinning = SKINNING ? true : false;
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_6 );
 const float4 cMorphSubrect					: register( SHADER_SPECIFIC_CONST_7 );
 
-sampler2D morphSampler : register( D3DVERTEXTEXTURESAMPLER0, s0 );
+sampler2D morphSampler : register( s0 );
 #endif
 
 // Structs

@@ -1,31 +1,28 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
 //
-// $NoKeywords: $
+//
 //=============================================================================
+
 #ifndef TF_BOT_MVM_ENGINEER_TELEPORT_SPAWN_H
 #define TF_BOT_MVM_ENGINEER_TELEPORT_SPAWN_H
 
-#include "NextBotBehavior.h"
-#include "map_entities/tf_hint_entity.h"
+class CBaseTFBotHintEntity;
 
-
-class CTFBotMvMEngineerTeleportSpawn : public Action<CTFBot>
+class CTFBotMvMEngineerTeleportSpawn : public Action< CTFBot >
 {
 public:
-	CTFBotMvMEngineerTeleportSpawn( CBaseTFBotHintEntity *hint, bool non_silent );
-	virtual ~CTFBotMvMEngineerTeleportSpawn();
+	CTFBotMvMEngineerTeleportSpawn( CBaseTFBotHintEntity* pHint, bool bFirstTeleportSpawn );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "MvMEngineerTeleportSpawn"; };
 
 private:
-	CountdownTimer m_ctPushAway;
-	CHandle<CBaseTFBotHintEntity> m_hintEntity;
-	bool m_bNonSilent;
+	CountdownTimer m_teleportDelay;
+	CHandle< CBaseTFBotHintEntity > m_hintEntity;
+	bool m_bFirstTeleportSpawn;
 };
 
-#endif
+#endif // TF_BOT_MVM_ENGINEER_TELEPORT_SPAWN_H

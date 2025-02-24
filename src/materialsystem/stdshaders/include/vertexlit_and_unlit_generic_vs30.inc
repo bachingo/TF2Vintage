@@ -1,21 +1,13 @@
 // ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// ($CASCADED_SHADOW) && ($FLASHLIGHT)
-// ($CASCADED_SHADOW) && ($SEAMLESS_BASE)
-// ($CASCADED_SHADOW) && ($SEAMLESS_DETAIL)
-// $CASCADED_SHADOW && $VERTEXCOLOR
 // ($SEPARATE_DETAIL_UVS) && ($SEAMLESS_DETAIL)
 // ($DONT_GAMMA_CONVERT_VERTEX_COLOR && ( ! $VERTEXCOLOR ) )
 // ($TREESWAY) && ($MORPHING)
+// ($TREESWAY) && ($TESSELLATION)
 // ( $TREESWAY ) && ( $SEAMLESS_DETAIL || $SEAMLESS_BASE )
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 
-#ifndef VERTEXLIT_AND_UNLIT_GENERIC_VS30_H
-#define VERTEXLIT_AND_UNLIT_GENERIC_VS30_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class vertexlit_and_unlit_generic_vs30_Static_Index
 {
 	unsigned int m_nVERTEXCOLOR : 2;
@@ -27,7 +19,6 @@ class vertexlit_and_unlit_generic_vs30_Static_Index
 	unsigned int m_nSEPARATE_DETAIL_UVS : 2;
 	unsigned int m_nDECAL : 2;
 	unsigned int m_nDONT_GAMMA_CONVERT_VERTEX_COLOR : 2;
-	unsigned int m_nTWO_SIDED_LIGHTING : 2;
 	unsigned int m_nTREESWAY : 2;
 #ifdef _DEBUG
 	bool m_bVERTEXCOLOR : 1;
@@ -39,7 +30,6 @@ class vertexlit_and_unlit_generic_vs30_Static_Index
 	bool m_bSEPARATE_DETAIL_UVS : 1;
 	bool m_bDECAL : 1;
 	bool m_bDONT_GAMMA_CONVERT_VERTEX_COLOR : 1;
-	bool m_bTWO_SIDED_LIGHTING : 1;
 	bool m_bTREESWAY : 1;
 #endif	// _DEBUG
 public:
@@ -124,15 +114,6 @@ public:
 #endif	// _DEBUG
 	}
 
-	void SetTWO_SIDED_LIGHTING( int i )
-	{
-		Assert( i >= 0 && i <= 1 );
-		m_nTWO_SIDED_LIGHTING = i;
-#ifdef _DEBUG
-		m_bTWO_SIDED_LIGHTING = true;
-#endif	// _DEBUG
-	}
-
 	void SetTREESWAY( int i )
 	{
 		Assert( i >= 0 && i <= 2 );
@@ -142,7 +123,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	vertexlit_and_unlit_generic_vs30_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	vertexlit_and_unlit_generic_vs30_Static_Index(  )
 	{
 		m_nVERTEXCOLOR = 0;
 		m_nCUBEMAP = 0;
@@ -153,7 +134,6 @@ public:
 		m_nSEPARATE_DETAIL_UVS = 0;
 		m_nDECAL = 0;
 		m_nDONT_GAMMA_CONVERT_VERTEX_COLOR = 0;
-		m_nTWO_SIDED_LIGHTING = 0;
 		m_nTREESWAY = 0;
 #ifdef _DEBUG
 		m_bVERTEXCOLOR = false;
@@ -165,19 +145,21 @@ public:
 		m_bSEPARATE_DETAIL_UVS = false;
 		m_bDECAL = false;
 		m_bDONT_GAMMA_CONVERT_VERTEX_COLOR = false;
-		m_bTWO_SIDED_LIGHTING = false;
 		m_bTREESWAY = false;
 #endif	// _DEBUG
 	}
 
 	int GetIndex() const
 	{
-		Assert( m_bVERTEXCOLOR && m_bCUBEMAP && m_bHALFLAMBERT && m_bFLASHLIGHT && m_bSEAMLESS_BASE && m_bSEAMLESS_DETAIL && m_bSEPARATE_DETAIL_UVS && m_bDECAL && m_bDONT_GAMMA_CONVERT_VERTEX_COLOR && m_bTWO_SIDED_LIGHTING && m_bTREESWAY );
-		return ( 512 * m_nVERTEXCOLOR ) + ( 1024 * m_nCUBEMAP ) + ( 2048 * m_nHALFLAMBERT ) + ( 4096 * m_nFLASHLIGHT ) + ( 8192 * m_nSEAMLESS_BASE ) + ( 16384 * m_nSEAMLESS_DETAIL ) + ( 32768 * m_nSEPARATE_DETAIL_UVS ) + ( 65536 * m_nDECAL ) + ( 131072 * m_nDONT_GAMMA_CONVERT_VERTEX_COLOR ) + ( 262144 * m_nTWO_SIDED_LIGHTING ) + ( 524288 * m_nTREESWAY ) + 0;
+		Assert( m_bVERTEXCOLOR && m_bCUBEMAP && m_bHALFLAMBERT && m_bFLASHLIGHT && m_bSEAMLESS_BASE && m_bSEAMLESS_DETAIL && m_bSEPARATE_DETAIL_UVS && m_bDECAL && m_bDONT_GAMMA_CONVERT_VERTEX_COLOR && m_bTREESWAY );
+		AssertMsg( !( m_nSEPARATE_DETAIL_UVS && m_nSEAMLESS_DETAIL ), "Invalid combo combination ( SEPARATE_DETAIL_UVS && SEAMLESS_DETAIL )" );
+		AssertMsg( !( m_nDONT_GAMMA_CONVERT_VERTEX_COLOR && !m_nVERTEXCOLOR ), "Invalid combo combination ( DONT_GAMMA_CONVERT_VERTEX_COLOR && !VERTEXCOLOR )" );
+		AssertMsg( !( m_nTREESWAY && ( m_nSEAMLESS_DETAIL || m_nSEAMLESS_BASE ) ), "Invalid combo combination ( TREESWAY && ( SEAMLESS_DETAIL || SEAMLESS_BASE ) )" );
+		return ( 256 * m_nVERTEXCOLOR ) + ( 512 * m_nCUBEMAP ) + ( 1024 * m_nHALFLAMBERT ) + ( 2048 * m_nFLASHLIGHT ) + ( 4096 * m_nSEAMLESS_BASE ) + ( 8192 * m_nSEAMLESS_DETAIL ) + ( 16384 * m_nSEPARATE_DETAIL_UVS ) + ( 32768 * m_nDECAL ) + ( 65536 * m_nDONT_GAMMA_CONVERT_VERTEX_COLOR ) + ( 131072 * m_nTREESWAY ) + 0;
 	}
 };
 
-#define shaderStaticTest_vertexlit_and_unlit_generic_vs30 vsh_forgot_to_set_static_VERTEXCOLOR + vsh_forgot_to_set_static_CUBEMAP + vsh_forgot_to_set_static_HALFLAMBERT + vsh_forgot_to_set_static_FLASHLIGHT + vsh_forgot_to_set_static_SEAMLESS_BASE + vsh_forgot_to_set_static_SEAMLESS_DETAIL + vsh_forgot_to_set_static_SEPARATE_DETAIL_UVS + vsh_forgot_to_set_static_DECAL + vsh_forgot_to_set_static_DONT_GAMMA_CONVERT_VERTEX_COLOR + vsh_forgot_to_set_static_TWO_SIDED_LIGHTING + vsh_forgot_to_set_static_TREESWAY
+#define shaderStaticTest_vertexlit_and_unlit_generic_vs30 vsh_forgot_to_set_static_VERTEXCOLOR + vsh_forgot_to_set_static_CUBEMAP + vsh_forgot_to_set_static_HALFLAMBERT + vsh_forgot_to_set_static_FLASHLIGHT + vsh_forgot_to_set_static_SEAMLESS_BASE + vsh_forgot_to_set_static_SEAMLESS_DETAIL + vsh_forgot_to_set_static_SEPARATE_DETAIL_UVS + vsh_forgot_to_set_static_DECAL + vsh_forgot_to_set_static_DONT_GAMMA_CONVERT_VERTEX_COLOR + vsh_forgot_to_set_static_TREESWAY
 
 
 class vertexlit_and_unlit_generic_vs30_Dynamic_Index
@@ -190,7 +172,6 @@ class vertexlit_and_unlit_generic_vs30_Dynamic_Index
 	unsigned int m_nSKINNING : 2;
 	unsigned int m_nLIGHTING_PREVIEW : 2;
 	unsigned int m_nMORPHING : 2;
-	unsigned int m_nCASCADED_SHADOW : 2;
 #ifdef _DEBUG
 	bool m_bCOMPRESSED_VERTS : 1;
 	bool m_bDYNAMIC_LIGHT : 1;
@@ -200,7 +181,6 @@ class vertexlit_and_unlit_generic_vs30_Dynamic_Index
 	bool m_bSKINNING : 1;
 	bool m_bLIGHTING_PREVIEW : 1;
 	bool m_bMORPHING : 1;
-	bool m_bCASCADED_SHADOW : 1;
 #endif	// _DEBUG
 public:
 	void SetCOMPRESSED_VERTS( int i )
@@ -275,16 +255,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	void SetCASCADED_SHADOW( int i )
-	{
-		Assert( i >= 0 && i <= 1 );
-		m_nCASCADED_SHADOW = i;
-#ifdef _DEBUG
-		m_bCASCADED_SHADOW = true;
-#endif	// _DEBUG
-	}
-
-	vertexlit_and_unlit_generic_vs30_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	vertexlit_and_unlit_generic_vs30_Dynamic_Index(  )
 	{
 		m_nCOMPRESSED_VERTS = 0;
 		m_nDYNAMIC_LIGHT = 0;
@@ -294,7 +265,6 @@ public:
 		m_nSKINNING = 0;
 		m_nLIGHTING_PREVIEW = 0;
 		m_nMORPHING = 0;
-		m_nCASCADED_SHADOW = 0;
 #ifdef _DEBUG
 		m_bCOMPRESSED_VERTS = false;
 		m_bDYNAMIC_LIGHT = false;
@@ -304,18 +274,15 @@ public:
 		m_bSKINNING = false;
 		m_bLIGHTING_PREVIEW = false;
 		m_bMORPHING = false;
-		m_bCASCADED_SHADOW = false;
 #endif	// _DEBUG
 	}
 
 	int GetIndex() const
 	{
-		Assert( m_bCOMPRESSED_VERTS && m_bDYNAMIC_LIGHT && m_bSTATIC_LIGHT_VERTEX && m_bSTATIC_LIGHT_LIGHTMAP && m_bDOWATERFOG && m_bSKINNING && m_bLIGHTING_PREVIEW && m_bMORPHING && m_bCASCADED_SHADOW );
-		return ( 1 * m_nCOMPRESSED_VERTS ) + ( 2 * m_nDYNAMIC_LIGHT ) + ( 4 * m_nSTATIC_LIGHT_VERTEX ) + ( 8 * m_nSTATIC_LIGHT_LIGHTMAP ) + ( 16 * m_nDOWATERFOG ) + ( 32 * m_nSKINNING ) + ( 64 * m_nLIGHTING_PREVIEW ) + ( 128 * m_nMORPHING ) + ( 256 * m_nCASCADED_SHADOW ) + 0;
+		Assert( m_bCOMPRESSED_VERTS && m_bDYNAMIC_LIGHT && m_bSTATIC_LIGHT_VERTEX && m_bSTATIC_LIGHT_LIGHTMAP && m_bDOWATERFOG && m_bSKINNING && m_bLIGHTING_PREVIEW && m_bMORPHING );
+		return ( 1 * m_nCOMPRESSED_VERTS ) + ( 2 * m_nDYNAMIC_LIGHT ) + ( 4 * m_nSTATIC_LIGHT_VERTEX ) + ( 8 * m_nSTATIC_LIGHT_LIGHTMAP ) + ( 16 * m_nDOWATERFOG ) + ( 32 * m_nSKINNING ) + ( 64 * m_nLIGHTING_PREVIEW ) + ( 128 * m_nMORPHING ) + 0;
 	}
 };
 
-#define shaderDynamicTest_vertexlit_and_unlit_generic_vs30 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DYNAMIC_LIGHT + vsh_forgot_to_set_dynamic_STATIC_LIGHT_VERTEX + vsh_forgot_to_set_dynamic_STATIC_LIGHT_LIGHTMAP + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_LIGHTING_PREVIEW + vsh_forgot_to_set_dynamic_MORPHING + vsh_forgot_to_set_dynamic_CASCADED_SHADOW
+#define shaderDynamicTest_vertexlit_and_unlit_generic_vs30 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DYNAMIC_LIGHT + vsh_forgot_to_set_dynamic_STATIC_LIGHT_VERTEX + vsh_forgot_to_set_dynamic_STATIC_LIGHT_LIGHTMAP + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_LIGHTING_PREVIEW + vsh_forgot_to_set_dynamic_MORPHING
 
-
-#endif	// VERTEXLIT_AND_UNLIT_GENERIC_VS30_H

@@ -14,13 +14,8 @@
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 // ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
 
-#ifndef TEETH_PS30_H
-#define TEETH_PS30_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class teeth_ps30_Static_Index
 {
 	unsigned int m_nCONVERT_TO_SRGB : 2;
@@ -31,14 +26,14 @@ public:
 		m_nCONVERT_TO_SRGB = i;
 	}
 
-	teeth_ps30_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	teeth_ps30_Static_Index(  )
 	{
 		m_nCONVERT_TO_SRGB = g_pHardwareConfig->NeedsShaderSRGBConversion();
 	}
 
 	int GetIndex() const
 	{
-		return ( 4 * m_nCONVERT_TO_SRGB ) + 0;
+		return ( 6 * m_nCONVERT_TO_SRGB ) + 0;
 	}
 };
 
@@ -56,7 +51,7 @@ class teeth_ps30_Dynamic_Index
 public:
 	void SetPIXELFOGTYPE( int i )
 	{
-		Assert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 2 );
 		m_nPIXELFOGTYPE = i;
 #ifdef _DEBUG
 		m_bPIXELFOGTYPE = true;
@@ -72,7 +67,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	teeth_ps30_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	teeth_ps30_Dynamic_Index(  )
 	{
 		m_nPIXELFOGTYPE = 0;
 		m_nWRITE_DEPTH_TO_DESTALPHA = 0;
@@ -85,11 +80,9 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bPIXELFOGTYPE && m_bWRITE_DEPTH_TO_DESTALPHA );
-		return ( 1 * m_nPIXELFOGTYPE ) + ( 2 * m_nWRITE_DEPTH_TO_DESTALPHA ) + 0;
+		return ( 1 * m_nPIXELFOGTYPE ) + ( 3 * m_nWRITE_DEPTH_TO_DESTALPHA ) + 0;
 	}
 };
 
 #define shaderDynamicTest_teeth_ps30 psh_forgot_to_set_dynamic_PIXELFOGTYPE + psh_forgot_to_set_dynamic_WRITE_DEPTH_TO_DESTALPHA
 
-
-#endif	// TEETH_PS30_H

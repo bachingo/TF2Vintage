@@ -1,4 +1,4 @@
-//========== Copyright � 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright (c) 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -14,85 +14,64 @@
 #include "isaverestore.h"
 #include "gamerules.h"
 #include "vscript_client_nut.h"
-#include "matchers.h"
-#include "c_world.h"
-#include "proxyentity.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
-#include "vscript_singletons.h"
+#include "gameui/gameui_interface.h"
 
+#ifdef PANORAMA_ENABLE
+#include "panorama/panorama.h"
+#include "panorama/uijsregistration.h"
+#endif
 
+#include "usermessages.h"
+#include "hud_macros.h"
+
+#if defined( PORTAL2_PUZZLEMAKER )
+#include "matchmaking/imatchframework.h"
+#endif // PORTAL2_PUZZLEMAKER
+
+extern IScriptManager *scriptmanager;
 extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 
-static ConVar cl_mapspawn_nut_exec( "cl_mapspawn_nut_exec", "0", FCVAR_NONE, "If set to 1, client will execute scripts/vscripts/mapspawn.nut file" );
+// #define VMPROFILE 1
 
+#ifdef VMPROFILE
+
+#define VMPROF_START double debugStartTime = Plat_FloatTime();
+#define VMPROF_SHOW( funcname, funcdesc  ) DevMsg("***VSCRIPT PROFILE***: %s %s: %6.4f milliseconds\n", (##funcname), (##funcdesc), (Plat_FloatTime() - debugStartTime)*1000.0 );
+
+#else // !VMPROFILE
+
+#define VMPROF_START
+#define VMPROF_SHOW
+
+#endif // VMPROFILE
 
 //-----------------------------------------------------------------------------
-// Purpose: A clientside variant of CScriptEntityIterator.
+//
 //-----------------------------------------------------------------------------
-class CScriptClientEntityIterator
+
+#ifdef PANORAMA_ENABLE
+
+DECLARE_PANORAMA_EVENT2( VScriptTrigger, const char *, const char * );
+DEFINE_PANORAMA_EVENT( VScriptTrigger );
+
+class CScriptPanorama
 {
 public:
-	HSCRIPT GetLocalPlayer()
+
+	void DispatchEvent( const char *pszEventName, const char *pszMessage )
 	{
-		return ToHScript( C_BasePlayer::GetLocalPlayer() );
+		panorama::DispatchEvent( VScriptTrigger(), nullptr, pszEventName, pszMessage );
 	}
 
-	HSCRIPT First() { return Next( NULL ); }
-
-	HSCRIPT Next( HSCRIPT hStartEntity )
-	{
-		return ToHScript( ClientEntityList().NextBaseEntity( ToEnt( hStartEntity ) ) );
-	}
-
-	HSCRIPT CreateByClassname( const char *className )
-	{
-		return ToHScript( CreateEntityByName( className ) );
-	}
-
-	HSCRIPT FindByClassname( HSCRIPT hStartEntity, const char *szName )
-	{
-		const CEntInfo *pInfo = hStartEntity ? ClientEntityList().GetEntInfoPtr( ToEnt( hStartEntity )->GetRefEHandle() )->m_pNext : ClientEntityList().FirstEntInfo();
-		for ( ; pInfo; pInfo = pInfo->m_pNext )
-		{
-			C_BaseEntity *ent = (C_BaseEntity *)pInfo->m_pEntity;
-			if ( !ent )
-				continue;
-
-			if ( Matcher_Match( szName, ent->GetClassname() ) )
-				return ToHScript( ent );
-		}
-
-		return NULL;
-	}
-
-	HSCRIPT FindByName( HSCRIPT hStartEntity, const char *szName )
-	{
-		const CEntInfo *pInfo = hStartEntity ? ClientEntityList().GetEntInfoPtr( ToEnt( hStartEntity )->GetRefEHandle() )->m_pNext : ClientEntityList().FirstEntInfo();
-		for ( ; pInfo; pInfo = pInfo->m_pNext )
-		{
-			C_BaseEntity *ent = (C_BaseEntity *)pInfo->m_pEntity;
-			if ( !ent )
-				continue;
-
-			if ( Matcher_Match( szName, ent->GetEntityName() ) )
-				return ToHScript( ent );
-		}
-
-		return NULL;
-	}
 
 private:
-} g_ScriptEntityIterator;
+} g_ScriptPanorama;
 
-BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptClientEntityIterator, "CEntities", SCRIPT_SINGLETON "The global list of entities" )
-	DEFINE_SCRIPTFUNC( GetLocalPlayer, "Get local player" )
-	DEFINE_SCRIPTFUNC( First, "Begin an iteration over the list of entities" )
-	DEFINE_SCRIPTFUNC( Next, "Continue an iteration over the list of entities, providing reference to a previously found entity" )
-	DEFINE_SCRIPTFUNC( CreateByClassname, "Creates an entity by classname" )
-	DEFINE_SCRIPTFUNC( FindByClassname, "Find entities by class name. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search" )
-	DEFINE_SCRIPTFUNC( FindByName, "Find entities by name. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search" )
+BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptPanorama, "CPanorama", SCRIPT_SINGLETON "Panorama VScript Interface" )
+	DEFINE_SCRIPTFUNC( DispatchEvent, "Trigger a panorama event" )
 END_SCRIPTDESC();
+
+#endif
 
 //-----------------------------------------------------------------------------
 //
@@ -124,67 +103,27 @@ bool DoIncludeScript( const char *pszScript, HSCRIPT hScope )
 	return true;
 }
 
-static float FrameTime()
+#if defined( PORTAL2_PUZZLEMAKER )
+void RequestMapRating( void )
 {
-	return gpGlobals->frametime;
+	g_pMatchFramework->GetEventsSubscription()->BroadcastEvent( new KeyValues( "OnRequestMapRating" ) );		
 }
 
-static bool Con_IsVisible()
+//
+//  Hack solution for the moment
+//
+
+void OpenVoteDialog( void )
 {
-	return engine->Con_IsVisible();
+	RequestMapRating();
 }
 
-static bool IsWindowedMode()
+ConCommand cm_open_vote_dialog( "cm_open_vote_dialog", OpenVoteDialog, "Opens the map voting dialog for testing purposes" );
+#endif // PORTAL2_PUZZLEMAKER
+
+int GetDeveloperLevel()
 {
-	return engine->IsWindowedMode();
-}
-
-int ScreenTransform( const Vector &point, Vector &screen );
-
-//-----------------------------------------------------------------------------
-// Input array [x,y], set normalised screen space pos. Return true if on screen
-//-----------------------------------------------------------------------------
-static bool ScriptScreenTransform( const Vector &pos, HSCRIPT hArray )
-{
-	if ( g_pScriptVM->GetNumTableEntries( hArray ) >= 2 )
-	{
-		Vector v;
-		bool r = ScreenTransform( pos, v );
-		float x = 0.5f * ( 1.0f + v[0] );
-		float y = 0.5f * ( 1.0f - v[1] );
-
-		g_pScriptVM->SetValue( hArray, "0", x);
-		g_pScriptVM->SetValue( hArray, "1", y);
-		return !r;
-	}
-	return false;
-}
-
-// Creates a client-side prop
-HSCRIPT CreateProp( const char *pszEntityName, const Vector &vOrigin, const char *pszModelName, int iAnim )
-{
-	C_BaseAnimating *pBaseEntity = (C_BaseAnimating *)CreateEntityByName( pszEntityName );
-	if ( !pBaseEntity )
-		return NULL;
-
-	pBaseEntity->SetAbsOrigin( vOrigin );
-	pBaseEntity->SetModelName( pszModelName );
-	if ( !pBaseEntity->InitializeAsClientEntity( pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) )
-	{
-		Warning( "Can't initialize %s as client entity\n", pszEntityName );
-		return NULL;
-	}
-
-	pBaseEntity->SetPlaybackRate( 1.0f );
-
-	int iSequence = pBaseEntity->SelectWeightedSequence( (Activity)iAnim );
-
-	if ( iSequence != -1 )
-	{
-		pBaseEntity->SetSequence( iSequence );
-	}
-
-	return ToHScript( pBaseEntity );
+	return developer.GetInt();
 }
 
 bool VScriptClientInit()
@@ -198,25 +137,25 @@ bool VScriptClientInit()
 		char const *pszScriptLanguage;
 		if ( CommandLine()->CheckParm( "-scriptlang", &pszScriptLanguage ) )
 		{
-			if( !Q_stricmp(pszScriptLanguage, "squirrel") )
+			if( !Q_stricmp(pszScriptLanguage, "gamemonkey") )
+			{
+				scriptLanguage = SL_GAMEMONKEY;
+			}
+			else if( !Q_stricmp(pszScriptLanguage, "squirrel") )
 			{
 				scriptLanguage = SL_SQUIRREL;
 			}
-			else if( !Q_stricmp(pszScriptLanguage, "lua") )
+			else if( !Q_stricmp(pszScriptLanguage, "python") )
 			{
-				scriptLanguage = SL_LUA;
-			}
-			else if ( !Q_stricmp(pszScriptLanguage, "angelscript") )
-			{
-				scriptLanguage = SL_ANGELSCRIPT;
+				scriptLanguage = SL_PYTHON;
 			}
 			else
 			{
 				DevWarning("-scriptlang does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
 				scriptLanguage = SL_NONE;
 			}
-		}
 
+		}
 		if( scriptLanguage != SL_NONE )
 		{
 			if ( g_pScriptVM == NULL )
@@ -224,41 +163,32 @@ bool VScriptClientInit()
 
 			if( g_pScriptVM )
 			{
-				Log( "VSCRIPT CLIENT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
-
+				Log_Msg( LOG_VScript, "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 				ScriptRegisterFunction( g_pScriptVM, GetMapName, "Get the name of the map.");
 				ScriptRegisterFunction( g_pScriptVM, Time, "Get the current server time" );
-				ScriptRegisterFunction( g_pScriptVM, DoUniqueString, SCRIPT_ALIAS( "UniqueString", "Generate a string guaranteed to be unique across the life of the script VM, with an optional root string." ) );
-				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, SCRIPT_ALIAS( "IncludeScript", "Execute a script (internal)" ) );
-				ScriptRegisterFunction( g_pScriptVM, FrameTime, "Get the time spent on the client in the last frame" );
-				ScriptRegisterFunction( g_pScriptVM, Con_IsVisible, "Returns true if the console is visible" );
-				ScriptRegisterFunction( g_pScriptVM, ScreenWidth, "Width of the screen in pixels" );
-				ScriptRegisterFunction( g_pScriptVM, ScreenHeight, "Height of the screen in pixels" );
-				ScriptRegisterFunction( g_pScriptVM, IsWindowedMode, "" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptScreenTransform, "ScreenTransform", "Get the x & y positions of a world position in screen space. Returns true if it's onscreen" );
-				ScriptRegisterFunction( g_pScriptVM, CreateProp, "Create an animating prop" );
+				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, "Execute a script (internal)" );
+				ScriptRegisterFunction( g_pScriptVM, GetDeveloperLevel, "Gets the level of 'develoer'" );
+#if defined( PORTAL2_PUZZLEMAKER )
+				ScriptRegisterFunction( g_pScriptVM, RequestMapRating, "Pops up the map rating dialog for user input" );
+#endif // PORTAL2_PUZZLEMAKER
 				
 				if ( GameRules() )
 				{
 					GameRules()->RegisterScriptFunctions();
 				}
 
-				g_pScriptVM->RegisterInstance( &g_ScriptEntityIterator, "Entities" );
-
-				RegisterSharedScriptConstants();
-				RegisterSharedScriptFunctions();
+#ifdef PANORAMA_ENABLE
+				g_pScriptVM->RegisterInstance( &g_ScriptPanorama, "Panorama" );
+#endif
 
 				if ( scriptLanguage == SL_SQUIRREL )
 				{
 					g_pScriptVM->Run( g_Script_vscript_client );
 				}
 
-				if ( cl_mapspawn_nut_exec.GetBool() )
-				{
-					VScriptRunScript( "mapspawn", false );
-				}
+				VScriptRunScript( "mapspawn", false );
 
-				VMPROF_SHOW( __FUNCTION__, "virtual machine startup" );
+				VMPROF_SHOW( pszScriptLanguage, "virtual machine startup" );
 
 				return true;
 			}
@@ -270,16 +200,15 @@ bool VScriptClientInit()
 	}
 	else
 	{
-		Msg( "\nVSCRIPT: Scripting is disabled.\n" );
+		Log_Msg( LOG_VScript, "\nVSCRIPT: Scripting is disabled.\n" );
 	}
-
 	g_pScriptVM = NULL;
 	return false;
 }
 
 void VScriptClientTerm()
 {
-	if( scriptmanager != NULL )
+	if( g_pScriptVM != NULL )
 	{
 		if( g_pScriptVM )
 		{
@@ -296,6 +225,11 @@ public:
 	// Inherited from IAutoServerSystem
 	virtual void LevelInitPreEntity( void )
 	{
+		// <sergiy> Note: we may need script VM garbage collection at this point in the future. Currently, VM does not persist 
+		//          across level boundaries. GC is not necessary because our scripts are supposed to never create circular references
+		//          and everything else is handled with ref counting. For the case of bugs creating circular references, the plan is to add
+		//          diagnostics that detects such loops and warns the developer.
+
 		m_bAllowEntityCreationInScripts = true;
 		VScriptClientInit();
 	}
@@ -326,4 +260,69 @@ bool IsEntityCreationAllowedInScripts( void )
 	return g_VScriptGameSystem.m_bAllowEntityCreationInScripts;
 }
 
+//
+// Slart: These were Portal 2 only, now they're not
+//
 
+bool __MsgFunc_SetMixLayerTriggerFactor(const CCSUsrMsg_SetMixLayerTriggerFactor &msg)
+{
+	int iLayerID = engine->GetMixLayerIndex(msg.layer().c_str());
+	if (iLayerID < 0)
+	{
+		Warning("Invalid mix layer passed to SetMixLayerTriggerFactor: '%s'\n", msg.layer().c_str());
+		return true;
+	}
+	int iGroupID = engine->GetMixGroupIndex(msg.group().c_str());
+	if (iGroupID < 0)
+	{
+		Warning("Invalid mix group passed to SetMixLayerTriggerFactor: '%s'\n", msg.group().c_str());
+		return true;
+	}
+
+	engine->SetMixLayerTriggerFactor(iLayerID, iGroupID, msg.factor());
+	return true;
+}
+
+class CSetMixLayerTriggerHelper : public CAutoGameSystem 
+{
+	virtual bool Init()
+	{
+		for( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+		{
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD( i );
+			HOOK_MESSAGE( SetMixLayerTriggerFactor );
+		}
+		return true;
+	}
+
+	CUserMessageBinder m_UMCMsgSetMixLayerTriggerFactor;
+};
+
+static CSetMixLayerTriggerHelper g_SetMixLayerTriggerHelper;
+
+#ifdef PANORAMA_ENABLE
+
+bool __MsgFunc_PanoramaDispatchEvent( const CCSUsrMsg_PanoramaDispatchEvent &msg )
+{
+	g_ScriptPanorama.DispatchEvent( msg.event().c_str(), msg.message().c_str() );
+	return true;
+}
+
+class CVScriptPanoramaHelper : public CAutoGameSystem 
+{
+	virtual bool Init()
+	{
+		for( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+		{
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD( i );
+			HOOK_MESSAGE( PanoramaDispatchEvent );
+		}
+		return true;
+	}
+
+	CUserMessageBinder m_UMCMsgPanoramaDispatchEvent;
+};
+
+static CVScriptPanoramaHelper g_VScriptPanoramaHelper;
+
+#endif

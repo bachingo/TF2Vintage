@@ -1,4 +1,4 @@
-//======= Copyright © 1996-2007, Valve Corporation, All rights reserved. ======
+//======= Copyright ï¿½ 1996-2007, Valve Corporation, All rights reserved. ======
 
 //  STATIC: "VERTEXCOLOR"				"0..1"
 //	STATIC: "CUBEMAP"					"0..1"
@@ -10,9 +10,7 @@
 //  STATIC: "DECAL"						"0..1" [vs30]
 //  STATIC: "USE_STATIC_CONTROL_FLOW"	"0..1" [vs20]
 //  STATIC: "DONT_GAMMA_CONVERT_VERTEX_COLOR" "0..1"
-//  STATIC: "TWO_SIDED_LIGHTING"		"0..1" [vs30]
-//	STATIC: "TREESWAY"              	"0..2"
-
+//  STATIC: "TREESWAY"					"0..2" [PC]
 //  DYNAMIC: "COMPRESSED_VERTS"			"0..1"
 //	DYNAMIC: "DYNAMIC_LIGHT"			"0..1"
 //	DYNAMIC: "STATIC_LIGHT_VERTEX"		"0..1"
@@ -23,27 +21,17 @@
 //  DYNAMIC: "LIGHTING_PREVIEW"			"0..0"	[XBOX]
 //  DYNAMIC: "MORPHING"					"0..1"  [vs30]
 //  DYNAMIC: "NUM_LIGHTS"				"0..2"	[vs20]
-//  DYNAMIC: "CASCADED_SHADOW"			"0..1"  [vs30]
-
-// SKIP: ($CASCADED_SHADOW) && ($FLASHLIGHT)
-// SKIP: ($CASCADED_SHADOW) && ($SEAMLESS_BASE)
-// SKIP: ($CASCADED_SHADOW) && ($SEAMLESS_DETAIL)
-// SKIP: $CASCADED_SHADOW && $VERTEXCOLOR
-
-#if CASCADED_SHADOW
-#define USE_SEPARATE_DIRECTIONAL_LIGHT
-#endif
 
 // If using static control flow on Direct3D, we should use the NUM_LIGHTS=0 combo
 // SKIP: $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 ) [vs20]
 // SKIP: ($SEPARATE_DETAIL_UVS) && ($SEAMLESS_DETAIL)
 // SKIP: ($DONT_GAMMA_CONVERT_VERTEX_COLOR && ( ! $VERTEXCOLOR ) )
-
-//	SKIP: ($TREESWAY) && ($MORPHING)
-//	SKIP: ( $TREESWAY ) && ( $SEAMLESS_DETAIL || $SEAMLESS_BASE )
+// SKIP: ($TREESWAY) && ($MORPHING)
+// SKIP: ($TREESWAY) && ($TESSELLATION)
+// SKIP: ( $TREESWAY ) && ( $SEAMLESS_DETAIL || $SEAMLESS_BASE )
 
 #include "common_vs_fxc.h"
- 
+
 static const bool g_bSkinning		= SKINNING ? true : false;
 static const int  g_FogType			= DOWATERFOG;
 static const bool g_bVertexColor	= VERTEXCOLOR ? true : false;
@@ -64,45 +52,44 @@ const float cSeamlessScale					: register( SHADER_SPECIFIC_CONST_2);
 
 const float4 cDetailTexCoordTransform[2]	:  register( SHADER_SPECIFIC_CONST_4 );
 
-#if defined ( _X360 ) || CASCADED_SHADOW
+#if defined ( _X360 )
 const float4x4 g_FlashlightWorldToTexture :  register( SHADER_SPECIFIC_CONST_6 ); // 6, 7, 8, 9
 #endif
 
-#if ( TREESWAY )
-const float4 g_vMiscParams1					: register( SHADER_SPECIFIC_CONST_3 );
-const float4 g_vMiscParams2					: register( SHADER_SPECIFIC_CONST_12 );
-const float4 g_vMiscParams3					: register( SHADER_SPECIFIC_CONST_10 );
-const float4 g_vMiscParams4					: register( SHADER_SPECIFIC_CONST_11 );
-#define g_flTime g_vMiscParams2.y
-#define g_vWindDir g_vMiscParams2.zw
-
-#define g_flFastSwaySpeedScale g_vMiscParams1.x
-#define g_flScrumbleFalloffCurve g_vMiscParams1.y
-#define g_flSwayFalloffCurve g_vMiscParams1.z
-#define g_flScrumbleSpeed g_vMiscParams1.w
-
-#define g_flHeight g_vMiscParams3.x
-#define g_flStartHeight g_vMiscParams3.y
-#define g_flRadius g_vMiscParams3.z
-#define g_flStartRadius g_vMiscParams3.w
-
-#define g_flSwaySpeed g_vMiscParams4.x
-#define g_flSwayIntensity g_vMiscParams4.y
-#define g_flScrumbleWaveCount g_vMiscParams4.z
-#define g_flScrumbleIntensity g_vMiscParams4.w
-
-#define g_flWindSpeedLerpStart cDetailTexCoordTransform[0].x
-#define g_flWindSpeedLerpEnd cDetailTexCoordTransform[0].y
-
-#include "tree_sway.h"
-#endif
-
-#if defined(SHADER_MODEL_VS_3_0) && MORPHING
+#ifdef SHADER_MODEL_VS_3_0
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_10 );
 const float4 cMorphSubrect					: register( SHADER_SPECIFIC_CONST_11 );
-sampler2D morphSampler						: register( D3DVERTEXTEXTURESAMPLER0, s0 );
+sampler2D morphSampler						: register( s0 );
+#endif
+
+#if ( TREESWAY )
+	const float4 g_vMiscParams1				: register( SHADER_SPECIFIC_CONST_3 );
+	const float4 g_vMiscParams2				: register( SHADER_SPECIFIC_CONST_2 );
+	const float4 g_vMiscParams3				: register( SHADER_SPECIFIC_CONST_10 );
+	const float4 g_vMiscParams4				: register( SHADER_SPECIFIC_CONST_11 );
+
+	#define g_flTime g_vMiscParams2.y
+	#define g_vWindDir g_vMiscParams2.zw
+
+	#define g_flFastSwaySpeedScale g_vMiscParams1.x
+	#define g_flScrumbleFalloffCurve g_vMiscParams1.y
+	#define g_flSwayFalloffCurve g_vMiscParams1.z
+	#define g_flScrumbleSpeed g_vMiscParams1.w
+
+	#define g_flHeight g_vMiscParams3.x
+	#define g_flStartHeight g_vMiscParams3.y
+	#define g_flRadius g_vMiscParams3.z
+	#define g_flStartRadius g_vMiscParams3.w
+
+	#define g_flSwaySpeed g_vMiscParams4.x
+	#define g_flSwayIntensity g_vMiscParams4.y
+	#define g_flScrumbleWaveCount g_vMiscParams4.z
+	#define g_flScrumbleIntensity g_vMiscParams4.w
+
+	#define g_flWindSpeedLerpStart cDetailTexCoordTransform[0].x
+	#define g_flWindSpeedLerpEnd cDetailTexCoordTransform[0].y
 #endif
 
 struct VS_INPUT
@@ -123,7 +110,7 @@ struct VS_INPUT
 	// Position and normal/tangent deltas
 	float3 vPosFlex			: POSITION1;
 	float3 vNormalFlex		: NORMAL1;
-#if defined(SHADER_MODEL_VS_3_0) && MORPHING
+#ifdef SHADER_MODEL_VS_3_0
 	float vVertexID			: POSITION2;
 #endif
 };
@@ -142,23 +129,19 @@ struct VS_OUTPUT
 	HALF2 baseTexCoord				: TEXCOORD0;		// Base texture coordinate
 #endif
 #if SEAMLESS_DETAIL
-	HALF3 SeamlessDetailTexCoord	: TEXCOORD1;		// Detail texture coordinate
-#elif CASCADED_SHADOW
-	float4 detailTexCoord			: TEXCOORD1;
+	HALF3 SeamlessDetailTexCoord			: TEXCOORD1;		// Detail texture coordinate
 #else
 	HALF2 detailTexCoord			: TEXCOORD1;		// Detail texture coordinate
 #endif
 	float4 color					: TEXCOORD2;		// Vertex color (from lighting or unlit)
 
-#if CASCADED_SHADOW
-	float4 worldVertToEyeVector		: TEXCOORD3;
-#elif CUBEMAP || _X360
+#if CUBEMAP || _X360
 	float3 worldVertToEyeVector		: TEXCOORD3;		// Necessary for cubemaps
 #endif
 
 	float3 worldSpaceNormal			: TEXCOORD4;		// Necessary for cubemaps and flashlight
 
-#if defined ( _X360 ) && FLASHLIGHT || CASCADED_SHADOW
+#if defined ( _X360 ) && FLASHLIGHT
 	float4 flashlightSpacePos		: TEXCOORD5;
 #endif
 
@@ -170,6 +153,8 @@ struct VS_OUTPUT
 #endif
 
 };
+
+#include "tree_sway.h"
 
 VS_OUTPUT main( const VS_INPUT v )
 {
@@ -199,13 +184,13 @@ VS_OUTPUT main( const VS_INPUT v )
 	ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, 
 		v.vVertexID, v.vTexCoord2, vPosition.xyz, vNormal );
 #endif
-
+	  
 	#if ( TREESWAY )
 	{
-		vPosition.xyz = ComputeTreeSway( vPosition.xyz, g_flTime );
+		vPosition.xyz = ComputeTreeSway( vPosition.xyz, g_flTime ) + 0;
 	}
 	#endif
-	  
+
 	// Perform skinning
 	float3 worldNormal, worldPos;
 	SkinPositionAndNormal( 
@@ -242,23 +227,9 @@ VS_OUTPUT main( const VS_INPUT v )
 	// Needed for cubemaps 
 #if CUBEMAP
 	o.worldVertToEyeVector.xyz = VSHADER_VECT_SCALE * (cEyePos - worldPos);
-#elif CASCADED_SHADOW
-	o.worldVertToEyeVector.xyz = float3(0,0,0);
 #endif
 
-#if CASCADED_SHADOW
-	float3 directionalLight;
-	o.color.xyz = DoLighting( worldPos, worldNormal, v.vSpecular, bStaticLight, bDynamicLight, g_bHalfLambert, directionalLight );
-
-#if TWO_SIDED_LIGHTING
-	float3 directionalLight2;
-	o.color.xyz += DoLighting( worldPos, -worldNormal, v.vSpecular, bStaticLight, bDynamicLight, g_bHalfLambert, directionalLight2 );
-	directionalLight += directionalLight2;
-#endif
-
-	o.detailTexCoord.zw = directionalLight.xy;
-	o.worldVertToEyeVector.w = directionalLight.z;
-#elif !defined (_X360) && FLASHLIGHT
+#if !defined (_X360) && FLASHLIGHT
 	o.color = float4( 0.0f, 0.0f, 0.0f, 0.0f );
 #else
 	if ( g_bVertexColor )
@@ -310,7 +281,7 @@ VS_OUTPUT main( const VS_INPUT v )
 	o.color.xyz=float3(dot,dot,dot);
 #endif
 
-#if defined ( _X360 ) && FLASHLIGHT || CASCADED_SHADOW
+#if defined ( _X360 ) && FLASHLIGHT
 	o.flashlightSpacePos = mul( float4( worldPos, 1.0f ), g_FlashlightWorldToTexture );
 #endif
 

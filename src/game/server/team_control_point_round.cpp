@@ -10,7 +10,7 @@
 #include "teamplayroundbased_gamerules.h"
 #include "team_control_point_round.h"
 
-#if defined ( TF_DLL ) || defined( TF_VINTAGE )
+#if defined ( TF_DLL )
 #include "tf_gamerules.h"
 #endif
 
@@ -21,7 +21,7 @@ BEGIN_DATADESC( CTeamControlPointRound )
 	DEFINE_KEYFIELD( m_nPriority,			FIELD_INTEGER,	"cpr_priority" ),
 	DEFINE_KEYFIELD( m_iInvalidCapWinner,	FIELD_INTEGER,	"cpr_restrict_team_cap_win" ),
 	DEFINE_KEYFIELD( m_iszPrintName,		FIELD_STRING,	"cpr_printname" ),
-	//DEFINE_FIELD( m_ControlPoints, CUtlVector < CHandle < CTeamControlPoint > > ),
+//	DEFINE_FIELD( m_ControlPoints, CUtlVector < CHandle < CTeamControlPoint > > ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
@@ -118,7 +118,7 @@ int CTeamControlPointRound::CheckWinConditions( void )
 	{
 		bool bWinner = true;
 
-#if defined( TF_DLL) || defined ( TF_VINTAGE )
+#if defined( TF_DLL)
 		if ( TFGameRules() && TFGameRules()->IsInKothMode() )
 		{
 			CTeamRoundTimer *pTimer = NULL;
@@ -130,16 +130,6 @@ int CTeamControlPointRound::CheckWinConditions( void )
 			{
 				pTimer = TFGameRules()->GetBlueKothRoundTimer();
 			}
-#ifdef TF_VINTAGE
-			else if ( iWinners == TF_TEAM_GREEN )
-			{
-				pTimer = TFGameRules()->GetGreenKothRoundTimer();
-			}
-			else if ( iWinners == TF_TEAM_YELLOW )
-			{
-				pTimer = TFGameRules()->GetYellowKothRoundTimer();
-			}
-#endif
 
 			if ( pTimer )
 			{
@@ -204,7 +194,7 @@ int CTeamControlPointRound::GetPointOwner( int point )
 //			number will be used for that cp. Used to predict if that CP changing would
 //			win the game.
 //-----------------------------------------------------------------------------
-int CTeamControlPointRound::TeamOwnsAllPoints( CTeamControlPoint *pOverridePoint /* = NULL */, int iOverrideNewTeam /* = TEAM_UNASSIGNED */ )
+int CTeamControlPointRound::TeamOwnsAllPoints( CTeamControlPoint *pOverridePoint /* = NULL */, int iOverrideNewTeam /* = TEAM_UNASSIGNED */ ) const
 {
 	int i;
 

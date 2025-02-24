@@ -24,7 +24,7 @@
 #endif
 
 // Hacky
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_VINTAGE_CLIENT ) || defined ( TF_VINTAGE )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
 #include "econ_entity.h"
 #endif // TF_CLIENT_DLL || TF_DLL
 
@@ -81,29 +81,6 @@ typedef struct
 	bool		required;
 } acttable_t;
 
-
-struct poseparamtable_t
-{
-	const char *pszName;
-	float		flValue;
-};
-
-// Put this in your derived class definition to declare it's poseparam table
-#define DECLARE_POSEPARAMTABLE()	static poseparamtable_t m_poseparamtable[];\
-	virtual poseparamtable_t* PoseParamList( int &iPoseParamCount ) { return NULL; }
-
-// You also need to include the activity table itself in your class' implementation:
-// e.g.
-//	acttable_t	CTFGrapplingHook::m_poseparamtable[] = 
-//	{
-//		{ "r_arm", 2 },
-//	};
-//
-// The grapplinghook overrides the r_arm pose param, value to 2.
-
-#define IMPLEMENT_POSEPARAMTABLE(className)\
-	poseparamtable_t* className::PoseParamList( int &iPoseParamCount ) { iPoseParamCount = ARRAYSIZE(m_poseparamtable); return m_poseparamtable; }
-
 class CHudTexture;
 class Color;
 
@@ -140,7 +117,7 @@ namespace vgui2
 // Purpose: Base weapon class, shared on client and server
 //-----------------------------------------------------------------------------
 
-#if defined ( USES_ECON_ITEMS )
+#if defined USES_ECON_ITEMS
 #define BASECOMBATWEAPON_DERIVED_FROM		CEconEntity
 #else 
 #define BASECOMBATWEAPON_DERIVED_FROM		CBaseAnimating
@@ -276,6 +253,9 @@ public:
 #ifdef CLIENT_DLL
 	virtual void			CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles ) {}
 	virtual int				CalcOverrideModelIndex() OVERRIDE;
+
+	// misyl: If weapon mispred's don't reset all the player's variables.
+	virtual bool PredictionErrorShouldResetLatchedForAllPredictables( void ) OVERRIDE;
 #endif
 
 	virtual bool			IsWeaponZoomed() { return false; }		// Is this weapon in its 'zoomed in' mode?
@@ -413,9 +393,6 @@ public:
 	virtual Activity		ActivityOverride( Activity baseAct, bool *pRequired );
 	virtual	acttable_t*		ActivityList( int &iActivityCount ) { return NULL; }
 
-	virtual void			PoseParameterOverride( bool bReset );
-	virtual poseparamtable_t* PoseParamList( int &iPoseParamCount ) { return NULL; }
-
 	virtual void			Activate( void );
 
 	virtual bool ShouldUseLargeViewModelVROverride() { return false; }
@@ -516,6 +493,11 @@ public:
 
 	virtual CDmgAccumulator	*GetDmgAccumulator( void ) { return NULL; }
 
+	void					SetSoundsEnabled( bool bSoundsEnabled ) { m_bSoundsEnabled = bSoundsEnabled; }
+
+	void					SetCustomViewModel( const char *pszCustomViewModel );
+	void					SetCustomViewModelModelIndex( int nCustomViewModelModelIndex );
+
 // Client only methods
 #else
 
@@ -523,7 +505,7 @@ public:
 
 	virtual bool			OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options ) 
 	{ 
-#if defined ( USES_ECON_ITEMS )
+#if defined USES_ECON_ITEMS
 		return BaseClass::OnFireEvent( pViewModel, origin, angles, event, options );
 #else
 		return false; 
@@ -576,7 +558,7 @@ public:
 
 	virtual void			GetWeaponCrosshairScale( float &flScale ) { flScale = 1.f; }
 
-#if !defined( USES_ECON_ITEMS )
+#if !defined USES_ECON_ITEMS
 	// Viewmodel overriding
 	virtual bool			ViewModel_IsTransparent( void ) { return IsTransparent(); }
 	virtual bool			ViewModel_IsUsingFBTexture( void ) { return UsesPowerOfTwoFrameBufferTexture(); }
@@ -593,6 +575,33 @@ public:
 
 	virtual void			HideThink( void );
 	virtual bool			CanReload( void );
+
+	virtual float			GetNextSecondaryAttackDelay( void ) { return 0.5f; } // This is for setting the next attack timer from inside SecondaryAttack()
+
+	void SetClip1( int nClip )
+	{
+		if ( UsesClipsForAmmo1() )
+		{
+			m_iClip1 = nClip;
+		}
+		else
+		{
+			SetPrimaryAmmoCount( m_iClip1 );
+			m_iClip1 = WEAPON_NOCLIP;
+		}
+	}
+	void SetClip2( int nClip )
+	{
+		if ( UsesClipsForAmmo1() )
+		{
+			m_iClip2 = nClip;
+		}
+		else
+		{
+			SetPrimaryAmmoCount( m_iClip2 );
+			m_iClip2 = WEAPON_NOCLIP;
+		}
+	}
 
 private:
 	typedef CHandle< CBaseCombatCharacter > CBaseCombatCharacterHandle;
@@ -635,6 +644,12 @@ public:
 
 	bool					SetIdealActivity( Activity ideal );
 	void					MaintainIdealActivity( void );
+
+#ifdef CLIENT_DLL
+	virtual const Vector&	GetViewmodelOffset() { return vec3_origin; }
+#endif // CLIENT_DLL
+
+	virtual bool			UsesCenterFireProjectile( void ) const { return false; }
 
 private:
 	Activity				m_Activity;
@@ -690,8 +705,12 @@ private:
 	float					m_flHudHintPollTime;	// When to poll the weapon again for whether it should display a hud hint.
 	float					m_flHudHintMinDisplayTime; // if the hint is squelched before this, reset my counter so we'll display it again.
 	
+	CNetworkVar( short, m_nCustomViewmodelModelIndex );
+
 	// Server only
 #if !defined( CLIENT_DLL )
+
+	bool					m_bSoundsEnabled;
 
 	// Outputs
 protected:

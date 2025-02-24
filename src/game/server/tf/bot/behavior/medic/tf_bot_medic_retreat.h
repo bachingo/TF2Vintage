@@ -1,34 +1,29 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_retreat.cpp
+// Retreat towards our spawn to find another patient
+// Michael Booth, May 2009
+
 #ifndef TF_BOT_MEDIC_RETREAT_H
 #define TF_BOT_MEDIC_RETREAT_H
-#ifdef _WIN32
-#pragma once
-#endif
 
+#include "Path/NextBotChasePath.h"
 
-#include "NextBotBehavior.h"
-#include "NextBotUtil.h"
-
-class CTFBotMedicRetreat : public Action<CTFBot>
+class CTFBotMedicRetreat : public Action< CTFBot >
 {
 public:
-	CTFBotMedicRetreat();
-	virtual ~CTFBotMedicRetreat();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
+	virtual ActionResult< CTFBot >	OnResume( CTFBot *me, Action< CTFBot > *interruptingAction );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
+	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
-	virtual ActionResult<CTFBot> OnResume( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-
-	virtual QueryResultType ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "Retreat"; };
 
 private:
-	PathFollower m_PathFollower;
-	CountdownTimer m_lookForPatientsTimer;
+	PathFollower m_path;
+	CountdownTimer m_lookAroundTimer;
 };
 
-#endif
+#endif // TF_BOT_MEDIC_RETREAT_H

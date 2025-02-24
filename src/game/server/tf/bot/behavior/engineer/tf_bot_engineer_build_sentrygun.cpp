@@ -1,140 +1,194 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_engineer_build_sentrygun.cpp
+// Engineer building his Sentry gun
+// Michael Booth, May 2010
+
 #include "cbase.h"
-#include "tf_bot.h"
+#include "nav_mesh.h"
+#include "tf_player.h"
 #include "tf_obj.h"
+#include "tf_obj_sentrygun.h"
+#include "tf_obj_dispenser.h"
+#include "tf_gamerules.h"
 #include "tf_weapon_builder.h"
-#include "tf_bot_engineer_build_sentrygun.h"
-#include "../tf_bot_get_ammo.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/engineer/tf_bot_engineer_move_to_build.h"
+#include "bot/behavior/engineer/tf_bot_engineer_build_sentrygun.h"
+#include "bot/behavior/tf_bot_get_ammo.h"
+#include "bot/map_entities/tf_bot_hint_sentrygun.h"
+
+extern ConVar tf_bot_path_lookahead_range;
 
 
-CTFBotEngineerBuildSentryGun::CTFBotEngineerBuildSentryGun( CTFBotHintSentrygun *hint )
+//---------------------------------------------------------------------------------------------
+CTFBotEngineerBuildSentryGun::CTFBotEngineerBuildSentryGun( void )
 {
-	m_pHint = hint;
-}
-
-CTFBotEngineerBuildSentryGun::~CTFBotEngineerBuildSentryGun()
-{
-}
-
-
-const char *CTFBotEngineerBuildSentryGun::GetName() const
-{
-	return "EngineerBuildSentryGun";
+	m_sentryBuildHint = NULL;
 }
 
 
-ActionResult<CTFBot> CTFBotEngineerBuildSentryGun::OnStart( CTFBot *me, Action<CTFBot> *priorAction )
+//---------------------------------------------------------------------------------------------
+CTFBotEngineerBuildSentryGun::CTFBotEngineerBuildSentryGun( CTFBotHintSentrygun *sentryBuildHint )
 {
-	m_iTries = 5;
-
-	m_fetchAmmoTimer.Invalidate();
-	// ct 0034 Invalidate()
-
-	// 4858 = 1
-	// 485c = true
-
-	if ( m_pHint )
-		m_vecTarget = m_pHint->GetAbsOrigin();
-	else
-		m_vecTarget = me->GetAbsOrigin();
-
-	return Action<CTFBot>::Continue();
+	m_sentryBuildHint = sentryBuildHint;
 }
 
-ActionResult<CTFBot> CTFBotEngineerBuildSentryGun::Update( CTFBot *me, float dt )
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotEngineerBuildSentryGun::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
+{
+	m_sentryTriesLeft = 5;
+	m_giveUpTimer.Invalidate();
+
+	m_searchTimer.Invalidate();
+	m_wanderWay = 1;
+	m_needToAimSentry = true;
+
+	m_sentryBuildLocation = ( m_sentryBuildHint == NULL ) ? me->GetAbsOrigin() : m_sentryBuildHint->GetAbsOrigin();
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotEngineerBuildSentryGun::Update( CTFBot *me, float interval )
 {
 	if ( me->GetTimeSinceLastInjury() < 1.0f )
-		return Action<CTFBot>::Done( "Ouch! I'm under attack" );
-
-	if ( me->GetObjectOfType( OBJ_SENTRYGUN, 0 ) )
-		return Action<CTFBot>::Done( "Sentry built" );
-
-	if ( me->CanBuild( OBJ_SENTRYGUN, OBJECT_MODE_NONE ) == CB_NEED_RESOURCES )
 	{
-		if ( m_fetchAmmoTimer.IsElapsed() && CTFBotGetAmmo::IsPossible( me ) )
+		return Done( "Ouch! I'm under attack" );
+	}
+
+	CObjectSentrygun *mySentry = (CObjectSentrygun *)me->GetObjectOfType( OBJ_SENTRYGUN );
+	if ( mySentry )
+	{
+		return Done( "Sentry built" );
+	}
+
+	// collect metal as we move to our build location
+	if ( me->CanBuild( OBJ_SENTRYGUN ) == CB_NEED_RESOURCES )
+	{
+		if ( m_getAmmoTimer.IsElapsed() && CTFBotGetAmmo::IsPossible( me ) )
 		{
-			m_fetchAmmoTimer.Start( 1.0f );
-			return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Need more metal to build my Sentry" );
+			// need more metal - get some
+			m_getAmmoTimer.Start( 1.0f );
+			return SuspendFor( new CTFBotGetAmmo, "Need more metal to build my Sentry" );
 		}
 	}
 
-	if ( me->IsRangeGreaterThan( m_vecTarget, 25.0f ) )
+	// various interruptions could mean we're away from our build location - move to it
+	if ( me->IsRangeGreaterThan( m_sentryBuildLocation, 25.0f ) )
 	{
-		if ( m_recomputePathTimer.IsElapsed() )
+		if ( m_repathTimer.IsElapsed() )
 		{
+			m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+
 			CTFBotPathCost cost( me, FASTEST_ROUTE );
-			m_PathFollower.Compute( me, m_vecTarget, cost );
-
-			m_recomputePathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+			m_path.Compute( me, m_sentryBuildLocation, cost );
 		}
 
-		if ( !m_PathFollower.IsValid() )
-			return Action<CTFBot>::Done( "Path failed" );
+		m_path.Update( me );
 
-		m_PathFollower.Update( me );
-		return Action<CTFBot>::Continue();
+		if ( !m_path.IsValid() )
+		{
+			return Done( "Path failed" );
+		}
+
+		return Continue();
 	}
 
-	if ( m_iTries <= 0 )
-		return Action<CTFBot>::Done( "Couldn't find a place to build" );
-
-	if ( m_pHint )
+	// we are at our build location
+	if ( m_sentryTriesLeft <= 0 )
 	{
-		CBaseObject *pSentry = (CBaseObject *)CreateEntityByName( "obj_sentrygun" );
-		if ( pSentry )
-		{
-			m_pHint->m_nSentriesHere++;
-
-			pSentry->SetAbsOrigin( m_pHint->GetAbsOrigin() );
-			pSentry->SetAbsAngles( m_pHint->GetAbsAngles() );
-
-			pSentry->Spawn();
-
-			pSentry->SetBuilder( me );
-			pSentry->StartBuilding( me );
-		}
-
-		return Action<CTFBot>::Continue();
+		// couldn't build here
+		return Done( "Couldn't find a place to build" );
 	}
 
-	CTFWeaponBuilder *pBuilder = dynamic_cast<CTFWeaponBuilder *>( me->GetActiveTFWeapon() );
-	if ( pBuilder && pBuilder->GetType() == OBJ_SENTRYGUN && pBuilder->m_hObjectBeingBuilt )
+	// attempt to build a Sentry here
+	if ( m_sentryBuildHint != NULL )
 	{
-		if ( me->GetBodyInterface()->IsHeadSteady() )
+		// directly create a sentry gun at the precise position and orientation desired
+		CObjectSentrygun *mySentry = (CObjectSentrygun *)CreateEntityByName( "obj_sentrygun" );
+		if ( mySentry )
 		{
-			me->PressFireButton();
-		}
-		else
-		{
-			if ( m_shimmyTimer.IsElapsed() )
-			{
-				m_shimmyTimer.Start( RandomFloat( 0.1f, 0.25f ) );
-				m_iShimmyDirection = RandomInt( 0, 3 );
+			m_sentryBuildHint->IncrementUseCount();
 
-				--m_iTries;
-			}
+			mySentry->SetAbsOrigin( m_sentryBuildHint->GetAbsOrigin() );
+			mySentry->SetAbsAngles( QAngle( 0, m_sentryBuildHint->GetAbsAngles().y, 0 ) );
+			mySentry->Spawn();
 
-			if( m_iShimmyDirection == 0 )
-				me->PressForwardButton();
-			else if ( m_iShimmyDirection == 1 )
-				me->PressBackwardButton();
-			else if ( m_iShimmyDirection == 2 )
-				me->PressLeftButton();
-			else if ( m_iShimmyDirection == 3 )
-				me->PressRightButton();
+			mySentry->StartPlacement( me );
+			mySentry->StartBuilding( me );
 		}
 	}
 	else
 	{
-		me->StartBuildingObjectOfType( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
+		// no precise build location - go through the normal build process
+
+		CTFWeaponBuilder *builder = dynamic_cast< CTFWeaponBuilder * >( me->GetActiveTFWeapon() );
+		if ( !builder || builder->GetType() != OBJ_SENTRYGUN || builder->m_hObjectBeingBuilt == NULL )
+		{
+			// at home position, build a sentry (switch to the sentry builder "gun")
+			me->StartBuildingObjectOfType( OBJ_SENTRYGUN );
+			return Continue();
+		}
+
+		// orient sentry towards where enemies enter this region
+		if ( m_needToAimSentry )
+		{
+			CTFNavArea *myArea = (CTFNavArea *)me->GetLastKnownArea();
+			if ( myArea )
+			{
+				CUtlVector< CTFNavArea * > invasionVector;
+				myArea->GetEnemyInvasionAreaVector( me->GetTeamNumber() );
+
+				if ( invasionVector.Count() > 0 )
+				{
+					// orient sentry towards where enemies enter this region
+					int which = RandomInt( 0, invasionVector.Count()-1 );
+					me->GetBodyInterface()->AimHeadTowards( invasionVector[ which ]->GetCenter(), IBody::CRITICAL, 1.0f, NULL, "Sentry build orientation" );
+					m_needToAimSentry = false;
+				}
+			}
+		}
+
+		if ( me->GetBodyInterface()->IsHeadSteady() )
+		{
+			if ( builder->IsValidPlacement() )
+			{
+				// build the sentry
+				me->PressFireButton();
+			}
+			else
+			{
+				// move around a bit to find valid spot
+				if ( m_searchTimer.IsElapsed() )
+				{
+					m_wanderWay = RandomInt( 0, 3 );
+					m_needToAimSentry = true;
+					m_searchTimer.Start( RandomFloat( 0.1f, 0.25f ) );
+					--m_sentryTriesLeft;
+				}
+
+				switch( m_wanderWay )
+				{
+				case 0:	me->PressForwardButton();	break;
+				case 1:	me->PressBackwardButton();	break;
+				case 2: me->PressRightButton();		break;
+				case 3: me->PressLeftButton();		break;
+				}
+			}
+		}
 	}
 
-	return Action<CTFBot>::Continue();
+	return Continue();
 }
 
-ActionResult<CTFBot> CTFBotEngineerBuildSentryGun::OnResume( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	m_PathFollower.Invalidate();
-	m_recomputePathTimer.Invalidate();
 
-	return Action<CTFBot>::Continue();
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot > CTFBotEngineerBuildSentryGun::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
+{
+	m_path.Invalidate();
+	m_repathTimer.Invalidate();
+
+	return Continue();
 }

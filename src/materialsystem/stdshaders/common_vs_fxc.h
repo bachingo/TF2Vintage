@@ -44,6 +44,7 @@
 
 #define FOGTYPE_RANGE				0
 #define FOGTYPE_HEIGHT				1
+#define FOGTYPE_RANGE_RADIAL		2
 
 #define COMPILE_ERROR ( 1/0; )
 
@@ -93,6 +94,9 @@ const float4 cFogParams					: register(c16);
 #define cFogEndOverFogRange cFogParams.x
 #define cFogOne cFogParams.y
 #define cFogMaxDensity cFogParams.z
+// Radial fog max density in fractional portion.
+// Height fog max density stored in integer portion and is multiplied by 1e10
+#define cRadialFogMaxDensity cFogParams.z
 #define cOOFogRange cFogParams.w
 
 const float4x4 cViewModel				: register(c17);
@@ -160,7 +164,6 @@ const float4 cModulationColor			: register( c47 );
 #define SHADER_SPECIFIC_CONST_9 c57
 #define SHADER_SPECIFIC_CONST_10 c14
 #define SHADER_SPECIFIC_CONST_11 c15
-#define SHADER_SPECIFIC_CONST_12 c218
 
 static const int cModel0Index = 58;
 const float4x3 cModel[53]				: register( c58 );
@@ -520,39 +523,6 @@ bool ApplyMorph( sampler2D morphSampler, const float3 vMorphTargetTextureDim, co
 
 #endif   // SHADER_MODEL_VS_3_0
 
-float CalcFixedFunctionFog( const float3 worldPos, const bool bWaterFog )
-{
-	if( !bWaterFog )
-	{
-		return CalcRangeFogFactorFixedFunction( worldPos, cEyePos, cFogMaxDensity, cFogEndOverFogRange, cOOFogRange );
-	}
-	else
-	{
-		return 0.0f; //all done in the pixel shader as of ps20 (current min-spec)
-	}
-}
-
-float CalcFixedFunctionFog( const float3 worldPos, const int fogType )
-{
-	return CalcFixedFunctionFog( worldPos, fogType != FOGTYPE_RANGE );
-}
-
-float CalcNonFixedFunctionFog( const float3 worldPos, const bool bWaterFog )
-{
-	if( !bWaterFog )
-	{
-		return CalcRangeFogFactorNonFixedFunction( worldPos, cEyePos, cFogMaxDensity, cFogEndOverFogRange, cOOFogRange );
-	}
-	else
-	{
-		return 0.0f; //all done in the pixel shader as of ps20 (current min-spec)
-	}
-}
-
-float CalcNonFixedFunctionFog( const float3 worldPos, const int fogType )
-{
-	return CalcNonFixedFunctionFog( worldPos, fogType != FOGTYPE_RANGE );
-}
 
 float RangeFog( const float3 projPos )
 {
@@ -594,6 +564,10 @@ float CalcFog( const float3 worldPos, const float3 projPos, const int fogType )
 	{
 		return RangeFog( projPos );
 	}
+	else if ( fogType == FOGTYPE_RANGE_RADIAL )
+	{
+		return CalcRadialFog_FixedFunction( worldPos, cEyePos, cRadialFogMaxDensity, cFogEndOverFogRange, cOOFogRange );
+	}
 	else
 	{
 #if SHADERMODEL_VS_2_0 == 1
@@ -605,30 +579,32 @@ float CalcFog( const float3 worldPos, const float3 projPos, const int fogType )
 	}
 }
 
-float CalcFog( const float3 worldPos, const float3 projPos, const bool bWaterFog )
-{
-#if defined( _X360 )
-	// 360 only does pixel fog
-	return 1.0f;
-#endif
+// Unused.
+//
+// float CalcFog( const float3 worldPos, const float3 projPos, const bool bWaterFog )
+// {
+// #if defined( _X360 )
+// 	// 360 only does pixel fog
+// 	return 1.0f;
+// #endif
 
-	float flFog;
-	if( !bWaterFog )
-	{
-		flFog = RangeFog( projPos );
-	}
-	else
-	{
-#if SHADERMODEL_VS_2_0 == 1
-		// We do this work in the pixel shader in dx9, so don't do any fog here.
-		flFog = 1.0f;
-#else
-		flFog = WaterFog( worldPos, projPos );
-#endif
-	}
+// 	float flFog;
+// 	if( !bWaterFog )
+// 	{
+// 		flFog = RangeFog( projPos );
+// 	}
+// 	else
+// 	{
+// #if SHADERMODEL_VS_2_0 == 1
+// 		// We do this work in the pixel shader in dx9, so don't do any fog here.
+// 		flFog = 1.0f;
+// #else
+// 		flFog = WaterFog( worldPos, projPos );
+// #endif
+// 	}
 
-	return flFog;
-}
+// 	return flFog;
+// }
 
 float4 DecompressBoneWeights( const float4 weights )
 {
@@ -832,52 +808,6 @@ float VertexAttenInternal( const float3 worldPos, int lightNum )
 	return result;
 }
 
-void SplitVertexAttenInternal( const float3 worldPos, int lightNum, const float3 colorIn,
-							   out float3 pointSpotOut, inout float3 directionalOut )
-{
-	// Get light direction
-	float3 lightDir = cLightInfo[lightNum].pos - worldPos;
-
-	// Get light distance squared.
-	float lightDistSquared = dot( lightDir, lightDir );
-
-	// Get 1/lightDistance
-	float ooLightDist = rsqrt( lightDistSquared );
-
-	// Normalize light direction
-	lightDir *= ooLightDist;
-
-	float3 vDist;
-#	if defined( _X360 )
-	{
-		//X360 dynamic compile hits an internal compiler error using dst(), this is the breakdown of how dst() works from the 360 docs.
-		vDist.x = 1;
-		vDist.y = lightDistSquared * ooLightDist;
-		vDist.z = lightDistSquared;
-		//flDist.w = ooLightDist;
-	}
-#	else
-	{
-		vDist = dst( lightDistSquared, ooLightDist );
-	}
-#	endif
-
-	float flDistanceAtten = 1.0f / dot( cLightInfo[lightNum].atten.xyz, vDist );
-
-	// Spot attenuation
-	float flCosTheta = dot( cLightInfo[lightNum].dir.xyz, -lightDir );
-	float flSpotAtten = (flCosTheta - cLightInfo[lightNum].spotParams.z) * cLightInfo[lightNum].spotParams.w;
-	flSpotAtten = max( 0.0001f, flSpotAtten );
-	flSpotAtten = pow( flSpotAtten, cLightInfo[lightNum].spotParams.x );
-	flSpotAtten = saturate( flSpotAtten );
-
-	// Select between point and spot
-	float flAtten = lerp( flDistanceAtten, flDistanceAtten * flSpotAtten, cLightInfo[lightNum].dir.w );
-
-	pointSpotOut = colorIn * flAtten * ( 1.0f - cLightInfo[lightNum].color.w );
-	directionalOut += colorIn * cLightInfo[lightNum].color.w;
-}
-
 float CosineTermInternal( const float3 worldPos, const float3 worldNormal, int lightNum, bool bHalfLambert )
 {
 	// Calculate light direction assuming this is a point or spot
@@ -922,40 +852,20 @@ float GetVertexAttenForLight( const float3 worldPos, int lightNum, bool bUseStat
 	return result;
 }
 
-float3 DoLightInternal( const float3 worldPos, const float3 worldNormal, int lightNum, bool bHalfLambert
-#if defined( USE_SEPARATE_DIRECTIONAL_LIGHT )
-					    , inout float3 directionalLight
-#endif
-					  )
+float3 DoLightInternal( const float3 worldPos, const float3 worldNormal, int lightNum, bool bHalfLambert )
 {
-#if defined( USE_SEPARATE_DIRECTIONAL_LIGHT )
-	float3 pointSpotColor;
-	float3 color = cLightInfo[lightNum].color *
-		CosineTermInternal( worldPos, worldNormal, lightNum, bHalfLambert );
-	SplitVertexAttenInternal( worldPos, lightNum, color, pointSpotColor, directionalLight );
-	return pointSpotColor;
-#else
 	return cLightInfo[lightNum].color *
 		CosineTermInternal( worldPos, worldNormal, lightNum, bHalfLambert ) *
 		VertexAttenInternal( worldPos, lightNum );
-#endif
 }
 
 float3 DoLighting( const float3 worldPos, const float3 worldNormal,
 				   const float3 staticLightingColor, const bool bStaticLight,
-				   const bool bDynamicLight, bool bHalfLambert
-#if defined( USE_SEPARATE_DIRECTIONAL_LIGHT )
-				   , out float3 directionalLight
-#endif
-				   )
+				   const bool bDynamicLight, bool bHalfLambert )
 {
 	float3 linearColor = float3( 0.0f, 0.0f, 0.0f );
 
-#if defined( USE_SEPARATE_DIRECTIONAL_LIGHT )
-	directionalLight = (float3)0;
-#endif
-
-	if ( bStaticLight )			// Static light
+	if( bStaticLight )			// Static light
 	{
 		float3 col = staticLightingColor * cOverbright;
 #if defined ( _X360 )
@@ -965,19 +875,15 @@ float3 DoLighting( const float3 worldPos, const float3 worldNormal,
 #endif
 	}
 
-	if ( bDynamicLight )			// Dynamic light
+	if( bDynamicLight )			// Dynamic light
 	{
-		for ( int i = 0; i < g_nLightCount; i++ )
+		for (int i = 0; i < g_nLightCount; i++)
 		{
-			linearColor += DoLightInternal( worldPos, worldNormal, i, bHalfLambert
-#if defined( USE_SEPARATE_DIRECTIONAL_LIGHT )
-			, directionalLight
-#endif
-			);
-		}
+			linearColor += DoLightInternal( worldPos, worldNormal, i, bHalfLambert );
+		}		
 	}
 
-	if ( bDynamicLight )
+	if( bDynamicLight )
 	{
 		linearColor += AmbientLight( worldNormal ); //ambient light is already remapped
 	}
@@ -996,7 +902,6 @@ float3 DoLightingUnrolled( const float3 worldPos, const float3 worldNormal,
 		linearColor += GammaToLinear( staticLightingColor * cOverbright );
 	}
 
-#if !defined( USE_SEPARATE_DIRECTIONAL_LIGHT )
 	if( bDynamicLight )			// Ambient light
 	{
 		if ( nNumLights >= 1 )
@@ -1008,7 +913,6 @@ float3 DoLightingUnrolled( const float3 worldPos, const float3 worldNormal,
 		if ( nNumLights >= 4 )
 			linearColor += DoLightInternal( worldPos, worldNormal, 3, bHalfLambert );
 	}
-#endif
 
 	if( bDynamicLight )
 	{

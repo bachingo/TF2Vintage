@@ -10,51 +10,51 @@
 
 $Project "captioncompiler"
 {
-	"utils\captioncompiler\captioncompiler.vpc" [$WIN32]
+	"utils\captioncompiler\captioncompiler.vpc" [$WINDOWS]
 }
 
 
 $Project "client"
 {
-	"game\client\client_hl2mp.vpc"		[($WIN32||$POSIX) && $HL2MP]
-	"game\client\client_tf2vintage.vpc"		[($WIN32||$POSIX) && $TF2VINTAGE]
+	"game\client\client_hl2mp.vpc"		[$HL2MP]
+	"game\client\client_tf2vintage.vpc"		[$TF2VINTAGE]
 }
 
 $Project "fgdlib"
 {
-	"fgdlib\fgdlib.vpc" [$WIN32]
+	"fgdlib\fgdlib.vpc" [$WINDOWS]
 }
 
 $Project "game_shader_dx9"
 {
 	"materialsystem\stdshaders\game_shader_dx9_hl2mp.vpc" [$HL2MP]
-	"materialsystem\stdshaders\game_shader_dx9_tf2vintage.vpc" [($WIN32||$POSIX) && $TF2VINTAGE]
+	"materialsystem\stdshaders\game_shader_dx9_tf2vintage.vpc" [$TF2VINTAGE]
 }
 
 $Project "glview"
 {
-	"utils\glview\glview.vpc" [$WIN32]
+	"utils\glview\glview.vpc" [$WINDOWS]
 }
 
 $Project "height2normal"
 {
-	"utils\height2normal\height2normal.vpc" [$WIN32]
+	"utils\height2normal\height2normal.vpc" [$WINDOWS]
 }
 
 $Project "server"
 {
-	"game\server\server_hl2mp.vpc"		[($WIN32||$POSIX) && $HL2MP]
-	"game\server\server_tf2vintage.vpc"		[($WIN32||$POSIX) && $TF2VINTAGE]
+	"game\server\server_hl2mp.vpc"		[$HL2MP]
+	"game\server\server_tf2vintage.vpc"		[$TF2VINTAGE]
 }
 
 $Project "mathlib"
 {
-	"mathlib\mathlib.vpc" [$WINDOWS||$X360||$POSIX]
+	"mathlib\mathlib.vpc"
 }
 
 $Project "motionmapper"
 {
-	"utils\motionmapper\motionmapper.vpc" [$WIN32]
+	"utils\motionmapper\motionmapper.vpc" [$WINDOWS]
 }
 
 $Project "phonemeextractor"
@@ -64,72 +64,72 @@ $Project "phonemeextractor"
 
 $Project "raytrace"
 {
-	"raytrace\raytrace.vpc" [$WIN32||$X360||$POSIX]
+	"raytrace\raytrace.vpc"
 }
 
 $Project "qc_eyes"
 {
-	"utils\qc_eyes\qc_eyes.vpc" [$WIN32]
+	"utils\qc_eyes\qc_eyes.vpc" [$WINDOWS]
 }
 
 $Project "serverplugin_empty"
 {
-	"utils\serverplugin_sample\serverplugin_empty.vpc" [$WIN32||$POSIX]
+	"utils\serverplugin_sample\serverplugin_empty.vpc"
 }
 
 $Project "tgadiff"
 {
-	"utils\tgadiff\tgadiff.vpc" [$WIN32]
+	"utils\tgadiff\tgadiff.vpc" [$WINDOWS]
 }
 
 $Project "tier1"
 {
-	"tier1\tier1.vpc" 	[$WINDOWS || $X360||$POSIX]
+	"tier1\tier1.vpc"
 }
 
 $Project "vbsp"
 {
-	"utils\vbsp\vbsp.vpc" [$WIN32]
+	"utils\vbsp\vbsp.vpc" [$WINDOWS]
 }
 
 $Project "vgui_controls"
 {
-	"vgui2\vgui_controls\vgui_controls.vpc" [$WIN32||$X360||$POSIX]
+	"vgui2\vgui_controls\vgui_controls.vpc"
 }
 
 $Project "vice"
 {
-	"utils\vice\vice.vpc" [$WIN32]
+	"utils\vice\vice.vpc" [$WINDOWS]
 }
 
 $Project "vrad_dll"
 {
-	"utils\vrad\vrad_dll.vpc" [$WIN32]
+	"utils\vrad\vrad_dll.vpc" [$WINDOWS]
 }
 
 $Project "vrad_launcher"
 {
-	"utils\vrad_launcher\vrad_launcher.vpc" [$WIN32]
+	"utils\vrad_launcher\vrad_launcher.vpc" [$WINDOWS]
 }
 
 $Project "vtf2tga"
 {
-	"utils\vtf2tga\vtf2tga.vpc" [$WIN32]
+	"utils\vtf2tga\vtf2tga.vpc" [$WINDOWS]
 }
 
 $Project "vtfdiff"
 {
-	"utils\vtfdiff\vtfdiff.vpc" [$WIN32]
+	"utils\vtfdiff\vtfdiff.vpc" [$WINDOWS]
 }
 
 $Project "vvis_dll"
 {
-	"utils\vvis\vvis_dll.vpc" [$WIN32]
+	"utils\vvis\vvis_dll.vpc" [$WINDOWS]
 }
 
 $Project "vvis_launcher"
 {
-	"utils\vvis_launcher\vvis_launcher.vpc" [$WIN32]
+	"utils\vvis_launcher\vvis_launcher.vpc" [$WINDOWS]
 }
 
 $Project "vscript"

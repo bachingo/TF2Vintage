@@ -1,40 +1,40 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
-//
-// Purpose:		
-//
-// $NoKeywords: $
-//=============================================================================
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_escort.cpp
+// Move near an entity and protect it
+// Michael Booth, April 2011
+
 #ifndef TF_BOT_ESCORT_H
 #define TF_BOT_ESCORT_H
 
-#include "NextBotBehavior.h"
+#include "Path/NextBotChasePath.h"
 
-class CTFBotEscort : public Action<CTFBot>
+class CTFBotEscort : public Action< CTFBot >
 {
 public:
-	CTFBotEscort( CBaseCombatCharacter *who );
-	virtual ~CTFBotEscort();
+	CTFBotEscort( CBaseEntity *who );
+	virtual ~CTFBotEscort() { }
 
-	virtual const char *GetName() const OVERRIDE;
+	void SetWho( CBaseEntity *who );
+	CBaseEntity *GetWho( void ) const;
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnCommandApproach( CTFBot *me, const Vector &v1, float f1 ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	virtual QueryResultType ShouldRetreat( const INextBot *me ) const OVERRIDE;
+	virtual QueryResultType	ShouldRetreat( const INextBot *me ) const;							// is it time to retreat?
 
-	CBaseCombatCharacter *GetWho() const;
-	void SetWho( CBaseCombatCharacter *who );
+	virtual EventDesiredResult< CTFBot > OnCommandApproach( CTFBot *me, const Vector &pos, float range );
+
+	virtual const char *GetName( void ) const	{ return "Escort"; }
 
 private:
-	CBaseCombatCharacter *m_hWho;
-	PathFollower m_PathFollower;
-	// 480c CountdownTimer
-	CountdownTimer m_ctRecomputePath;
+	CHandle< CBaseEntity > m_who;
+	PathFollower m_pathToWho;
+	CountdownTimer m_vocalizeTimer;
+	CountdownTimer m_repathTimer;
 };
 
-#endif
+#endif // TF_BOT_ESCORT_H

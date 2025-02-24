@@ -1,40 +1,44 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_engineer_move_to_build.h
+// Engineer moving into position to build
+// Michael Booth, February 2009
+
 #ifndef TF_BOT_ENGINEER_MOVE_TO_BUILD_H
 #define TF_BOT_ENGINEER_MOVE_TO_BUILD_H
-#ifdef _WIN32
-#pragma once
-#endif
+
+#include "Path/NextBotPathFollow.h"
+
+class CTFBotHintSentrygun;
 
 
-#include "NextBotBehavior.h"
-#include "map_entities/tf_hint_sentrygun.h"
-
-class CTFBotEngineerMoveToBuild : public Action<CTFBot>
+class CTFBotEngineerMoveToBuild : public Action< CTFBot >
 {
 public:
-	CTFBotEngineerMoveToBuild();
-	virtual ~CTFBotEngineerMoveToBuild();
+	virtual ActionResult< CTFBot >	OnStart( CTFBot *me, Action< CTFBot > *priorAction );
+	virtual ActionResult< CTFBot >	Update( CTFBot *me, float interval );
 
-	virtual const char *GetName() const OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnStuck( CTFBot *me );
+	virtual EventDesiredResult< CTFBot > OnMoveToSuccess( CTFBot *me, const Path *path );
+	virtual EventDesiredResult< CTFBot > OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType reason );
 
-	virtual ActionResult<CTFBot> OnStart( CTFBot *me, Action<CTFBot> *priorAction ) OVERRIDE;
-	virtual ActionResult<CTFBot> Update( CTFBot *me, float dt ) OVERRIDE;
+	virtual EventDesiredResult< CTFBot > OnTerritoryLost( CTFBot *me, int territoryID );
+	virtual EventDesiredResult< CTFBot > OnTerritoryCaptured( CTFBot *me, int territoryID );
 
-	virtual EventDesiredResult<CTFBot> OnMoveToSuccess( CTFBot *me, const Path *path ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnMoveToFailure( CTFBot *me, const Path *path, MoveToFailureType fail ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnStuck( CTFBot *me ) OVERRIDE;
-	virtual EventDesiredResult<CTFBot> OnTerritoryLost( CTFBot *me, int territoryID ) OVERRIDE;
+	virtual const char *GetName( void ) const	{ return "EngineerMoveToBuild"; };
 
 private:
-	void CollectBuildAreas( CTFBot *actor );
-	void SelectBuildLocation( CTFBot *actor );
+	CHandle< CTFBotHintSentrygun > m_sentryBuildHint;
+	Vector m_sentryBuildLocation;
 
-	CHandle<CTFBotHintSentrygun> m_hSentryHint;
-	Vector m_vecBuildLocation;
-	PathFollower m_PathFollower;
-	CountdownTimer m_recomputePathTimer;
-	CUtlVector<CTFNavArea *> m_buildAreas;
-	float m_flArea;
-	CountdownTimer m_resetBuildLocationTimer;
+	PathFollower m_path;
+	CountdownTimer m_repathTimer;
+
+	CUtlVector< CTFNavArea * > m_sentryAreaVector;
+	float m_totalSurfaceArea;
+	void CollectBuildAreas( CTFBot *me );
+
+	void SelectBuildLocation( CTFBot *me );
+	CountdownTimer m_fallBackTimer;
 };
 
-#endif
+#endif // TF_BOT_ENGINEER_MOVE_TO_BUILD_H

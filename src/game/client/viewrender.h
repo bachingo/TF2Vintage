@@ -33,6 +33,10 @@ class C_BaseEntity;
 struct WriteReplayScreenshotParams_t;
 class CReplayScreenshotTaker;
 
+#ifdef HL2_EPISODIC
+	class CStunEffect;
+#endif // HL2_EPISODIC
+
 //-----------------------------------------------------------------------------
 // Data specific to intro mode to control rendering.
 //-----------------------------------------------------------------------------
@@ -216,7 +220,7 @@ public:
 	CRendering3dView( CViewRender *pMainView );
 	virtual ~CRendering3dView() { ReleaseLists(); }
 
-	virtual void	Setup( const CViewSetup &setup );
+	void Setup( const CViewSetup &setup );
 
 	// What are we currently rendering? Returns a combination of DF_ flags.
 	virtual int		GetDrawFlags();
@@ -245,7 +249,7 @@ protected:
 	// More concise version of the above BuildRenderableRenderLists().  Called for shadow depth map rendering
 	void			BuildShadowDepthRenderableRenderLists();
 
-	 void			DrawWorld( float waterZAdjust );
+	void			DrawWorld( float waterZAdjust );
 
 	// Draws all opaque/translucent renderables in leaves that were rendered
 	void			DrawOpaqueRenderables( ERenderDepthMode DepthMode );
@@ -353,8 +357,6 @@ protected:
 
 	virtual IReplayScreenshotSystem *GetReplayScreenshotSystem() { return this; }
 
-	//virtual void	PostSimulate();
-
 	// IReplayScreenshot implementation
 	virtual void	WriteReplayScreenshot( WriteReplayScreenshotParams_t &params );
 	virtual void	UpdateReplayScreenshotCache();
@@ -452,7 +454,8 @@ public:
 private:
 	int				m_BuildWorldListsNumber;
 
-// General draw methods
+
+	// General draw methods
 	// baseDrawFlags is a combination of DF_ defines. DF_MONITOR is passed into here while drawing a monitor.
 	void			ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxVisible, const CViewSetup &view, int nClearFlags, view_id_t viewID, bool bDrawViewModel = false, int baseDrawFlags = 0, ViewCustomVisibility_t *pCustomVisibility = NULL );
 	void			ViewDrawScene_Intro(const CViewSetup &view, int nClearFlags, const IntroData_t &introData);
@@ -467,9 +470,8 @@ private:
 
 	// Drawing primitives
 	bool			ShouldDrawViewModel( bool drawViewmodel );
-public:
 	void			DrawViewModels( const CViewSetup &view, bool drawViewmodel );
-private:
+
 	void			PerformScreenSpaceEffects( int x, int y, int w, int h );
 
 	// Overlays
@@ -481,7 +483,6 @@ private:
 
 	// Water-related methods
 	void			DrawWorldAndEntities( bool drawSkybox, const CViewSetup &view, int nClearFlags, ViewCustomVisibility_t *pCustomVisibility = NULL );
-
 #ifdef PORTAL 
 	// Intended for use in the middle of another ViewDrawScene call, this allows stencils to be drawn after opaques but before translucents are drawn in the main view.
 	void			ViewDrawScene_PortalStencil( const CViewSetup &view, ViewCustomVisibility_t *pCustomVisibility );
@@ -493,7 +494,7 @@ private:
 
 	bool			UpdateRefractIfNeededByList( CUtlVector< IClientRenderable * > &list );
 	void			DrawRenderablesInList( CUtlVector< IClientRenderable * > &list, int flags = 0 );
-	
+
 	// Sets up, cleans up the main 3D view
 	void			SetupMain3DView( const CViewSetup &view, int &nClearFlags );
 	void			CleanupMain3DView( const CViewSetup &view );
@@ -516,6 +517,9 @@ private:
 	CMaterialReference	m_ModulateSingleColor;
 	CMaterialReference	m_ScreenOverlayMaterial;
 	CMaterialReference m_UnderWaterOverlayMaterial;
+
+	CMaterialReference	m_ScriptOverlayMaterial;
+	char m_szCurrentScriptMaterialName[ MAX_PATH ];
 
 	Vector			m_vecLastFacing;
 	float			m_flCheapWaterStartDistance;

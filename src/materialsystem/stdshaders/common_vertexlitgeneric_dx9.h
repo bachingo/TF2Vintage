@@ -64,9 +64,17 @@ float3 VertexShaderAmbientLight( const float3 worldNormal, const float3 cAmbient
 
 float3 AmbientLight( const float3 worldNormal, const float3 cAmbientCube[6] )
 {
-#if defined( SHADER_MODEL_VS_1_0 ) || defined( SHADER_MODEL_VS_1_1 ) || defined( SHADER_MODEL_VS_2_0 ) || defined( SHADER_MODEL_VS_3_0 )
+	// Vertex shader cases
+#ifdef SHADER_MODEL_VS_1_0
+	return VertexShaderAmbientLight( worldNormal, cAmbientCube );
+#elif SHADER_MODEL_VS_1_1
+	return VertexShaderAmbientLight( worldNormal, cAmbientCube );
+#elif SHADER_MODEL_VS_2_0
+	return VertexShaderAmbientLight( worldNormal, cAmbientCube );
+#elif SHADER_MODEL_VS_3_0
 	return VertexShaderAmbientLight( worldNormal, cAmbientCube );
 #else
+	// Pixel shader case
 	return PixelShaderAmbientLight( worldNormal, cAmbientCube );
 #endif
 }
@@ -108,7 +116,7 @@ float3 DiffuseTerm(const bool bHalfLambert, const float3 worldNormal, const floa
 	float3 fOut = float3( fResult, fResult, fResult );
 	if ( bDoLightingWarp )
 	{
-		fOut = 2.0f * tex1D( lightWarpSampler, fResult ).xyz;
+		fOut = 2.0f * tex1D( lightWarpSampler, fResult );
 	}
 
 	return fOut;
@@ -138,7 +146,7 @@ float3 PixelShaderGetLightVector( const float3 worldPos, PixelShaderLightInfo cL
 	}
 	else
 	{
-		return normalize( cLightInfo[nLightIndex].pos.xyz - worldPos );
+		return normalize( cLightInfo[nLightIndex].pos - worldPos );
 	}
 }
 
@@ -166,13 +174,14 @@ void SpecularAndRimTerms( const float3 vWorldNormal, const float3 vLightDir, con
 {
 	rimLighting = float3(0.0f, 0.0f, 0.0f);
 
-	float3 vReflect = reflect( -vEyeDir, vWorldNormal );				// Reflect view through normal
+	//float3 vReflect = reflect( -vEyeDir, vWorldNormal );				// Reflect view through normal
+	float3 vReflect = 2 * vWorldNormal * dot( vWorldNormal , vEyeDir ) - vEyeDir; // Reflect view through normal
 	float LdotR = saturate(dot( vReflect, vLightDir ));					// L.R	(use half-angle instead?)
 	specularLighting = pow( LdotR, fSpecularExponent );					// Raise to specular exponent
 
 	// Optionally warp as function of scalar specular and fresnel
 	if ( bDoSpecularWarp )
-		specularLighting *= tex2D( specularWarpSampler, float2(specularLighting.x, fFresnel) ).xyz; // Sample at { (L.R)^k, fresnel }
+		specularLighting *= tex2D( specularWarpSampler, float2(specularLighting.x, fFresnel) ); // Sample at { (L.R)^k, fresnel }
 
 	specularLighting *= saturate(dot( vWorldNormal, vLightDir ));		// Mask with N.L
 	specularLighting *= color;											// Modulate with light color
@@ -191,14 +200,14 @@ void SpecularAndRimTerms( const float3 vWorldNormal, const float3 vLightDir, con
 // Traditional fresnel term approximation
 float Fresnel( const float3 vNormal, const float3 vEyeDir )
 {
-	float fresnel = 1 - saturate( dot( vNormal, vEyeDir ) );				// 1-(N.V) for Fresnel term
+	float fresnel = saturate( 1 - dot( vNormal, vEyeDir ) );			// 1-(N.V) for Fresnel term
 	return fresnel * fresnel;											// Square for a more subtle look
 }
 
 // Traditional fresnel term approximation which uses 4th power (square twice)
 float Fresnel4( const float3 vNormal, const float3 vEyeDir )
 {
-	float fresnel = 1 - saturate( dot( vNormal, vEyeDir ) );				// 1-(N.V) for Fresnel term
+	float fresnel = saturate( 1 - dot( vNormal, vEyeDir ) );			// 1-(N.V) for Fresnel term
 	fresnel = fresnel * fresnel;										// Square
 	return fresnel * fresnel;											// Square again for a more subtle look
 }
@@ -219,14 +228,16 @@ float Fresnel4( const float3 vNormal, const float3 vEyeDir )
 //
 float Fresnel( const float3 vNormal, const float3 vEyeDir, float3 vRanges )
 {
-	float result, f = Fresnel( vNormal, vEyeDir );			// Traditional Fresnel
+	//float result, f = Fresnel( vNormal, vEyeDir );			// Traditional Fresnel
+	//if ( f > 0.5f )
+	//	result = lerp( vRanges.y, vRanges.z, (2*f)-1 );		// Blend between mid and high values
+	//else
+	//	result = lerp( vRanges.x, vRanges.y, 2*f );			// Blend between low and mid values
 
-	if ( f > 0.5f )
-		result = lerp( vRanges.y, vRanges.z, (2*f)-1 );		// Blend between mid and high values
-	else
-        	result = lerp( vRanges.x, vRanges.y, 2*f );			// Blend between low and mid values
-
-	return result;
+	// note: vRanges is now encoded as ((mid-min)*2, mid, (max-mid)*2) to optimize math
+	float f = saturate( 1 - dot( vNormal, vEyeDir ) );
+	f = f*f - 0.5;
+	return vRanges.y + (f >= 0.0 ? vRanges.z : vRanges.x) * f;
 }
 
 void PixelShaderDoSpecularLight( const float3 vWorldPos, const float3 vWorldNormal, const float fSpecularExponent, const float3 vEyeDir,
@@ -275,19 +286,19 @@ float3 PixelShaderDoLightingLinear( const float3 worldPos, const float3 worldNor
 	if ( nNumLights > 0 )
 	{
 		linearColor += PixelShaderDoGeneralDiffuseLight( lightAtten.x, worldPos, worldNormal, NormalizeSampler,
-														 cLightInfo[0].pos.xyz, cLightInfo[0].color.xyz, bHalfLambert,
+														 cLightInfo[0].pos, cLightInfo[0].color, bHalfLambert,
 														 bDoAmbientOcclusion, fAmbientOcclusion,
 														 bDoLightingWarp, lightWarpSampler );
 		if ( nNumLights > 1 )
 		{
 			linearColor += PixelShaderDoGeneralDiffuseLight( lightAtten.y, worldPos, worldNormal, NormalizeSampler,
-															 cLightInfo[1].pos.xyz, cLightInfo[1].color.xyz, bHalfLambert,
+															 cLightInfo[1].pos, cLightInfo[1].color, bHalfLambert,
 															 bDoAmbientOcclusion, fAmbientOcclusion,
 															 bDoLightingWarp, lightWarpSampler );
 			if ( nNumLights > 2 )
 			{
 				linearColor += PixelShaderDoGeneralDiffuseLight( lightAtten.z, worldPos, worldNormal, NormalizeSampler,
-																 cLightInfo[2].pos.xyz, cLightInfo[2].color.xyz, bHalfLambert,
+																 cLightInfo[2].pos, cLightInfo[2].color, bHalfLambert,
 																 bDoAmbientOcclusion, fAmbientOcclusion,
 																 bDoLightingWarp, lightWarpSampler );
 				if ( nNumLights > 3 )

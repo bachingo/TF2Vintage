@@ -5,6 +5,7 @@
 #pragma once
 
 #include "steamnetworkingtypes.h"
+#include "steam_api_common.h"
 
 //-----------------------------------------------------------------------------
 /// The non-connection-oriented interface to send and receive messages
@@ -72,10 +73,12 @@ public:
 	///
 	/// Returns:
 	/// - k_EREsultOK on success.
-	/// - k_EResultNoConnection will be returned if the session has failed or was closed by the peer,
-	///   and k_nSteamNetworkingSend_AutoRestartBrokenSession is not used.  (You can use
-	///   GetSessionConnectionInfo to get the details.)  In order to acknowledge the broken session
-	///   and start a new one, you must call CloseSessionWithUser
+	/// - k_EResultNoConnection, if the session has failed or was closed by the peer and
+	///   k_nSteamNetworkingSend_AutoRestartBrokenSession was not specified.  (You can
+	///   use GetSessionConnectionInfo to get the details.)  In order to acknowledge the
+	///   broken session and start a new one, you must call CloseSessionWithUser, or you may
+	///   repeat the call with k_nSteamNetworkingSend_AutoRestartBrokenSession.  See
+	///   k_nSteamNetworkingSend_AutoRestartBrokenSession for more details.
 	/// - See ISteamNetworkingSockets::SendMessageToConnection for more possible return values
 	virtual EResult SendMessageToUser( const SteamNetworkingIdentity &identityRemote, const void *pubData, uint32 cubData, int nSendFlags, int nRemoteChannel ) = 0;
 
@@ -119,7 +122,7 @@ public:
 	/// you do not need the corresponding details.  Note that sessions time out after a while,
 	/// so if a connection fails, or SendMessageToUser returns k_EResultNoConnection, you cannot wait
 	/// indefinitely to obtain the reason for failure.
-	virtual ESteamNetworkingConnectionState GetSessionConnectionInfo( const SteamNetworkingIdentity &identityRemote, SteamNetConnectionInfo_t *pConnectionInfo, SteamNetworkingQuickConnectionStatus *pQuickStatus ) = 0;
+	virtual ESteamNetworkingConnectionState GetSessionConnectionInfo( const SteamNetworkingIdentity &identityRemote, SteamNetConnectionInfo_t *pConnectionInfo, SteamNetConnectionRealTimeStatus_t *pQuickStatus ) = 0;
 };
 #define STEAMNETWORKINGMESSAGES_INTERFACE_VERSION "SteamNetworkingMessages002"
 
@@ -159,31 +162,37 @@ struct SteamNetworkingMessagesSessionFailed_t
 
 #pragma pack(pop)
 
-//
-// Global accessor
-//
+// Global accessors
 
-#if defined( STEAMNETWORKINGSOCKETS_PARTNER )
+// Using standalone lib
+#ifdef STEAMNETWORKINGSOCKETS_STANDALONELIB
 
-	// Standalone lib.  Use different symbol name, so that we can dynamically switch between steamclient.dll
-	// and the standalone lib
-	STEAMNETWORKINGSOCKETS_INTERFACE ISteamNetworkingMessages *SteamNetworkingMessages_Lib();
-	STEAMNETWORKINGSOCKETS_INTERFACE ISteamNetworkingMessages *SteamGameServerNetworkingMessages_Lib();
-	inline ISteamNetworkingMessages *SteamNetworkingMessages() { return SteamNetworkingMessages_Lib(); }
-	inline ISteamNetworkingMessages *SteamGameServerNetworkingMessages() { return SteamGameServerNetworkingMessages_Lib(); }
+	static_assert( STEAMNETWORKINGMESSAGES_INTERFACE_VERSION[25] == '2', "Version mismatch" );
 
-#elif defined( STEAMNETWORKINGSOCKETS_OPENSOURCE )
+	STEAMNETWORKINGSOCKETS_INTERFACE ISteamNetworkingMessages *SteamNetworkingMessages_LibV2();
+	inline ISteamNetworkingMessages *SteamNetworkingMessages_Lib() { return SteamNetworkingMessages_LibV2(); }
 
-	// Opensource GameNetworkingSockets
-	STEAMNETWORKINGSOCKETS_INTERFACE ISteamNetworkingMessages *SteamNetworkingMessages();
+	// If running in context of steam, we also define a gameserver instance.
+	STEAMNETWORKINGSOCKETS_INTERFACE ISteamNetworkingMessages *SteamGameServerNetworkingMessages_LibV2();
+	inline ISteamNetworkingMessages *SteamGameServerNetworkingMessages_Lib() { return SteamGameServerNetworkingMessages_LibV2(); }
 
-#else
+	#ifndef STEAMNETWORKINGSOCKETS_STEAMAPI
+		inline ISteamNetworkingMessages *SteamNetworkingMessages() { return SteamNetworkingMessages_LibV2(); }
+		inline ISteamNetworkingMessages *SteamGameServerNetworkingMessages() { return SteamGameServerNetworkingMessages_LibV2(); }
+	#endif
+#endif
+
+// Using Steamworks SDK
+#ifdef STEAMNETWORKINGSOCKETS_STEAMAPI
 
 	// Steamworks SDK
-	inline ISteamNetworkingMessages *SteamNetworkingMessages();
-	STEAM_DEFINE_USER_INTERFACE_ACCESSOR( ISteamNetworkingMessages *, SteamNetworkingMessages, STEAMNETWORKINGMESSAGES_INTERFACE_VERSION );
-	inline ISteamNetworkingMessages *SteamGameServerNetworkingMessages();
-	STEAM_DEFINE_GAMESERVER_INTERFACE_ACCESSOR( ISteamNetworkingMessages *, SteamGameServerNetworkingMessages, STEAMNETWORKINGMESSAGES_INTERFACE_VERSION );
+	STEAM_DEFINE_USER_INTERFACE_ACCESSOR( ISteamNetworkingMessages *, SteamNetworkingMessages_SteamAPI, STEAMNETWORKINGMESSAGES_INTERFACE_VERSION );
+	STEAM_DEFINE_GAMESERVER_INTERFACE_ACCESSOR( ISteamNetworkingMessages *, SteamGameServerNetworkingMessages_SteamAPI, STEAMNETWORKINGMESSAGES_INTERFACE_VERSION );
+
+	#ifndef STEAMNETWORKINGSOCKETS_STANDALONELIB
+		inline ISteamNetworkingMessages *SteamNetworkingMessages() { return SteamNetworkingMessages_SteamAPI(); }
+		inline ISteamNetworkingMessages *SteamGameServerNetworkingMessages() { return SteamGameServerNetworkingMessages_SteamAPI(); }
+	#endif
 #endif
 
 #endif // ISTEAMNETWORKINGMESSAGES

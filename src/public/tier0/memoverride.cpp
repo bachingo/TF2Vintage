@@ -22,9 +22,13 @@
 // To disable this, we gotta define _DEBUG before including it.. BLEAH!
 #define _DEBUG 1
 #include "crtdbg.h"
+#ifdef NDEBUG
+#undef _DEBUG
+#endif
 // Turn this back off in release mode.
 #ifdef NDEBUG
 #undef _DEBUG
+#endif
 #endif
 
 #include "tier0/dbg.h"
@@ -33,14 +37,15 @@
 #include <stdio.h>
 #include "memdbgoff.h"
 
-#elif POSIX
+
+#if POSIX
 #define __cdecl
 #endif
 
 #if defined( _WIN32 ) && !defined( _X360 )
 const char *MakeModuleFileName()
 {
-	if ( g_pMemAlloc->IsDebugHeap() )
+	if ( g_pMemAlloc && g_pMemAlloc->IsDebugHeap() )
 	{
 		char *pszModuleName = (char *)HeapAlloc( GetProcessHeap(), 0, MAX_PATH ); // small leak, debug only
 
@@ -87,9 +92,10 @@ const char *GetModuleFileName()
 	return pszOwner;
 }
 
+
 static void *AllocUnattributed( size_t nSize )
 {
-	static const char *pszOwner = GetModuleFileName();
+	const char *pszOwner = GetModuleFileName();
 
 	if ( !pszOwner )
 		return g_pMemAlloc->Alloc(nSize);
@@ -99,19 +105,9 @@ static void *AllocUnattributed( size_t nSize )
 
 static void *ReallocUnattributed( void *pMem, size_t nSize )
 {
-	static const char *pszOwner = GetModuleFileName();
+	const char *pszOwner = GetModuleFileName();
 
 	if ( !pszOwner )
-		return g_pMemAlloc->Realloc(pMem, nSize);
-	else
-		return g_pMemAlloc->Realloc(pMem, nSize, pszOwner, 0);
-}
-
-static void *ReallocUnattributedMultiple( void *pMem, size_t nCount, size_t nSize )
-{
-	const char* pszOwner = GetModuleFileName();
-
-	if (!pszOwner)
 		return g_pMemAlloc->Realloc(pMem, nSize);
 	else
 		return g_pMemAlloc->Realloc(pMem, nSize, pszOwner, 0);
@@ -128,11 +124,6 @@ inline void *ReallocUnattributed( void *pMem, size_t nSize )
 {
 	return g_pMemAlloc->Realloc(pMem, nSize);
 }
-
-inline void* ReallocUnattributedMultiple( void *pMem, size_t nCount, size_t nSize )
-{
-	return g_pMemAlloc->Realloc(pMem, nSize);
-}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -145,7 +136,7 @@ inline void* ReallocUnattributedMultiple( void *pMem, size_t nCount, size_t nSiz
 #if _MSC_VER >= 1900
 #define SUPPRESS_INVALID_PARAMETER_NO_INFO
 #define ALLOC_CALL  __declspec(restrict)
-#define FREE_CALL
+#define FREE_CALL 
 #elif _MSC_VER >= 1400
 #define ALLOC_CALL _CRTNOALIAS _CRTRESTRICT 
 #define FREE_CALL _CRTNOALIAS 
@@ -189,6 +180,9 @@ extern "C"
 
 // 64-bit
 #ifdef _WIN64
+#if ( defined ( _MSC_VER ) && _MSC_VER >= 1900 )
+	_CRTRESTRICT
+#endif
 void* __cdecl _malloc_base( size_t nSize )
 {
 	return AllocUnattributed( nSize );
@@ -200,10 +194,10 @@ ALLOC_CALL void *_malloc_base( size_t nSize )
 }
 #endif
 
-ALLOC_CALL void *_calloc_base( size_t nSize, size_t nCount )
+ALLOC_CALL void *_calloc_base( size_t nCount, size_t nSize )
 {
-	void *pMem = AllocUnattributed( nSize *nCount );
-	memset(pMem, 0, nSize * nCount);
+	void *pMem = AllocUnattributed( nSize*nCount );
+	memset(pMem, 0, nSize*nCount );
 	return pMem;
 }
 
@@ -212,12 +206,27 @@ ALLOC_CALL void *_realloc_base( void *pMem, size_t nSize )
 	return ReallocUnattributed( pMem, nSize );
 }
 
-ALLOC_CALL void *_recalloc_base( void *pMem, size_t nCount, size_t nSize )
+#if ( defined ( _MSC_VER ) && _MSC_VER >= 1920 )
+ALLOC_CALL void* _recalloc_base( void* pMem, size_t nCount, size_t nSize )
 {
-	void *pMemOut = ReallocUnattributed( pMem, nSize * nCount );
-	memset(pMemOut, 0, nSize * nCount);
+	void* pMemOut = ReallocUnattributed( pMem, nSize * nCount );
+	if ( !pMem )
+	{
+		memset( pMemOut, 0, nSize * nCount );
+	}
 	return pMemOut;
 }
+#else
+ALLOC_CALL void *_recalloc_base( void *pMem, size_t nSize )
+{
+	void *pMemOut = ReallocUnattributed( pMem, nSize );
+	if ( !pMem )
+	{
+		memset( pMemOut, 0, nSize );
+	}
+	return pMemOut;
+}
+#endif
 
 void _free_base( void *pMem )
 {
@@ -248,17 +257,28 @@ void * __cdecl _realloc_crt(void *ptr, size_t size)
 
 void * __cdecl _recalloc_crt(void *ptr, size_t count, size_t size)
 {
+#if ( defined ( _MSC_VER ) && _MSC_VER >= 1920 )
 	return _recalloc_base( ptr, count, size );
+#else
+	return _recalloc_base( ptr, size * count );
+#endif
 }
 
 ALLOC_CALL void * __cdecl _recalloc ( void * memblock, size_t count, size_t size )
 {
 	void *pMem = ReallocUnattributed( memblock, size * count );
-	memset( pMem, 0, size * count );
+	if ( !memblock )
+	{
+		memset( pMem, 0, size * count );
+	}
 	return pMem;
 }
 
-size_t _msize_base( void *pMem ) noexcept
+#if ( defined ( _MSC_VER ) && _MSC_VER >= 1930 )
+size_t _msize_base( void* pMem ) noexcept
+#else
+size_t _msize_base( void *pMem )
+#endif
 {
 	return g_pMemAlloc->GetSize(pMem);
 }
@@ -417,6 +437,15 @@ void __cdecl operator delete( void *pMem )
 }
 
 #ifdef OSX
+void operator delete(void*pMem, std::size_t)
+#else
+void operator delete(void*pMem, std::size_t) throw()
+#endif
+{
+	g_pMemAlloc->Free( pMem );
+}
+
+#ifdef OSX
 void *__cdecl operator new[]( size_t nSize ) throw (std::bad_alloc)
 #else
 void *__cdecl operator new[]( size_t nSize )
@@ -557,17 +586,44 @@ size_t __cdecl _msize_dbg( void *pMem, int nBlockUse )
 #ifdef _WIN32
 
 #if defined(_DEBUG) && _MSC_VER >= 1300
-// X360TBD: aligned and offset allocations may be important on the 360
-
 // aligned base
 ALLOC_CALL void *__cdecl _aligned_malloc_base( size_t size, size_t align )
 {
 	return MemAlloc_AllocAligned( size, align );
 }
 
+inline void *MemAlloc_Unalign( void *pMemBlock )
+{
+	unsigned *pAlloc = (unsigned *)pMemBlock;
+
+	// pAlloc points to the pointer to starting of the memory block
+	pAlloc = (unsigned *)(((size_t)pAlloc & ~(sizeof( void * ) - 1)) - sizeof( void * ));
+
+	// pAlloc is the pointer to the start of memory block
+	return *((unsigned **)pAlloc);
+}
+
 ALLOC_CALL void *__cdecl _aligned_realloc_base( void *ptr, size_t size, size_t align )
 {
-	return MemAlloc_ReallocAligned( ptr, size, align );
+	if ( ptr && !size )
+	{
+		MemAlloc_FreeAligned( ptr );
+		return NULL;
+	}
+
+	void *pNew = MemAlloc_AllocAligned( size, align );
+	if ( ptr )
+	{
+		void *ptrUnaligned = MemAlloc_Unalign( ptr );
+		size_t oldSize = g_pMemAlloc->GetSize( ptrUnaligned );
+		size_t oldOffset = (uintp)ptr - (uintp)ptrUnaligned;
+		size_t copySize = oldSize - oldOffset;
+		if ( copySize > size )
+			copySize = size;
+		memcpy( pNew, ptr, copySize );
+		MemAlloc_FreeAligned( ptr );
+	}
+	return pNew;
 }
 
 ALLOC_CALL void *__cdecl _aligned_recalloc_base( void *ptr, size_t size, size_t align )
@@ -667,7 +723,6 @@ int _CrtSetDbgFlag( int nNewFlag )
 	return g_pMemAlloc->CrtSetDbgFlag( nNewFlag );
 }
 
-// 64-bit port.
 // 64-bit port.
 #define AFNAME(var) __p_##var
 #define AFRET(var)  &var
@@ -952,7 +1007,7 @@ int __cdecl _VCrtDbgReportA( int nRptType, void* ReturnAddress, const char * szF
 }
 #else
 int __cdecl _VCrtDbgReportA( int nRptType, const wchar_t * szFile, int nLine,
-							 const wchar_t * szModule, const wchar_t * szFormat, va_list arglist )
+	const wchar_t * szModule, const wchar_t * szFormat, va_list arglist )
 {
 	Assert( 0 );
 	return 0;
@@ -986,7 +1041,10 @@ extern "C" void * __cdecl _aligned_offset_recalloc_dbg( void * memblock, size_t 
 {
 	Assert( IsPC() || 0 );
 	void *pMem = ReallocUnattributed( memblock, size * count );
-	memset( pMem, 0, size * count );
+	if ( !memblock )
+	{
+		memset( pMem, 0, size * count );
+	}
 	return pMem;
 }
 
@@ -1220,7 +1278,7 @@ wchar_t * __cdecl _wcsdup ( const wchar_t * string )
 // 	XBox Memory Allocator Override
 //-----------------------------------------------------------------------------
 #if defined( _X360 )
-#if defined( _DEBUG ) || defined( USE_MEM_DEBUG )
+#if defined( USE_MEM_DEBUG )
 #include "utlmap.h"
 
 MEMALLOC_DEFINE_EXTERNAL_TRACKING( XMem );
@@ -1359,8 +1417,7 @@ SIZE_T WINAPI XMemSize( PVOID pAddress, DWORD dwAllocAttributes )
 
 	return XMemSizeDefault( pAddress, dwAllocAttributes );
 }
-#endif // _X360
-
+#endif 
 
 #pragma warning(push)
 #pragma warning(disable: 4483)

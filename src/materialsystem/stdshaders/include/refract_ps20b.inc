@@ -15,13 +15,8 @@
 // defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 // ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
 
-#ifndef REFRACT_PS20B_H
-#define REFRACT_PS20B_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#pragma once
+#include "shaderlib/cshader.h"
 class refract_ps20b_Static_Index
 {
 	unsigned int m_nCONVERT_TO_SRGB : 2;
@@ -133,7 +128,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	refract_ps20b_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	refract_ps20b_Static_Index(  )
 	{
 		m_nCONVERT_TO_SRGB = g_pHardwareConfig->NeedsShaderSRGBConversion();
 		m_nBLUR = 0;
@@ -161,7 +156,8 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bBLUR && m_bFADEOUTONSILHOUETTE && m_bCUBEMAP && m_bREFRACTTINTTEXTURE && m_bMASKED && m_bCOLORMODULATE && m_bSECONDARY_NORMAL && m_bNORMAL_DECODE_MODE && m_bSHADER_SRGB_READ );
-		return ( 4 * m_nCONVERT_TO_SRGB ) + ( 8 * m_nBLUR ) + ( 16 * m_nFADEOUTONSILHOUETTE ) + ( 32 * m_nCUBEMAP ) + ( 64 * m_nREFRACTTINTTEXTURE ) + ( 128 * m_nMASKED ) + ( 256 * m_nCOLORMODULATE ) + ( 512 * m_nSECONDARY_NORMAL ) + ( 1024 * m_nNORMAL_DECODE_MODE ) + ( 1024 * m_nSHADER_SRGB_READ ) + 0;
+		AssertMsg( !( m_nMASKED && m_nBLUR ), "Invalid combo combination ( MASKED && BLUR )" );
+		return ( 6 * m_nCONVERT_TO_SRGB ) + ( 12 * m_nBLUR ) + ( 24 * m_nFADEOUTONSILHOUETTE ) + ( 48 * m_nCUBEMAP ) + ( 96 * m_nREFRACTTINTTEXTURE ) + ( 192 * m_nMASKED ) + ( 384 * m_nCOLORMODULATE ) + ( 768 * m_nSECONDARY_NORMAL ) + ( 1536 * m_nNORMAL_DECODE_MODE ) + ( 1536 * m_nSHADER_SRGB_READ ) + 0;
 	}
 };
 
@@ -179,7 +175,7 @@ class refract_ps20b_Dynamic_Index
 public:
 	void SetPIXELFOGTYPE( int i )
 	{
-		Assert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 2 );
 		m_nPIXELFOGTYPE = i;
 #ifdef _DEBUG
 		m_bPIXELFOGTYPE = true;
@@ -195,7 +191,7 @@ public:
 #endif	// _DEBUG
 	}
 
-	refract_ps20b_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	refract_ps20b_Dynamic_Index(  )
 	{
 		m_nPIXELFOGTYPE = 0;
 		m_nWRITE_DEPTH_TO_DESTALPHA = 0;
@@ -208,11 +204,9 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bPIXELFOGTYPE && m_bWRITE_DEPTH_TO_DESTALPHA );
-		return ( 1 * m_nPIXELFOGTYPE ) + ( 2 * m_nWRITE_DEPTH_TO_DESTALPHA ) + 0;
+		return ( 1 * m_nPIXELFOGTYPE ) + ( 3 * m_nWRITE_DEPTH_TO_DESTALPHA ) + 0;
 	}
 };
 
 #define shaderDynamicTest_refract_ps20b psh_forgot_to_set_dynamic_PIXELFOGTYPE + psh_forgot_to_set_dynamic_WRITE_DEPTH_TO_DESTALPHA
 
-
-#endif	// REFRACT_PS20B_H

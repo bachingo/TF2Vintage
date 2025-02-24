@@ -1,35 +1,27 @@
-// ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-
-#ifndef SHADOW_VS20_H
-#define SHADOW_VS20_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#include "shaderlib/cshader.h"
 class shadow_vs20_Static_Index
 {
 public:
-	shadow_vs20_Static_Index( IShaderShadow* pShaderShadow, IMaterialVar** params )
+	shadow_vs20_Static_Index( )
 	{
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+#endif // _DEBUG
 		return 0;
 	}
 };
-
-#define shaderStaticTest_shadow_vs20 1
-
-
+#define shaderStaticTest_shadow_vs20 0
 class shadow_vs20_Dynamic_Index
 {
-	unsigned int m_nDOWATERFOG : 2;
+private:
+	int m_nDOWATERFOG;
 #ifdef _DEBUG
-	bool m_bDOWATERFOG : 1;
-#endif	// _DEBUG
+	bool m_bDOWATERFOG;
+#endif
 public:
 	void SetDOWATERFOG( int i )
 	{
@@ -37,25 +29,32 @@ public:
 		m_nDOWATERFOG = i;
 #ifdef _DEBUG
 		m_bDOWATERFOG = true;
-#endif	// _DEBUG
+#endif
 	}
-
-	shadow_vs20_Dynamic_Index( IShaderDynamicAPI* pShaderAPI )
+	void SetDOWATERFOG( bool i )
 	{
-		m_nDOWATERFOG = 0;
+		m_nDOWATERFOG = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDOWATERFOG = true;
+#endif
+	}
+public:
+	shadow_vs20_Dynamic_Index()
+	{
 #ifdef _DEBUG
 		m_bDOWATERFOG = false;
-#endif	// _DEBUG
+#endif // _DEBUG
+		m_nDOWATERFOG = 0;
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
-		Assert( m_bDOWATERFOG );
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllDynamicVarsDefined = m_bDOWATERFOG;
+		Assert( bAllDynamicVarsDefined );
+#endif // _DEBUG
 		return ( 1 * m_nDOWATERFOG ) + 0;
 	}
 };
-
-#define shaderDynamicTest_shadow_vs20 vsh_forgot_to_set_dynamic_DOWATERFOG
-
-
-#endif	// SHADOW_VS20_H
+#define shaderDynamicTest_shadow_vs20 vsh_forgot_to_set_dynamic_DOWATERFOG + 0

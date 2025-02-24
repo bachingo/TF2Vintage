@@ -39,6 +39,10 @@
 #include "saverestoretypes.h"
 #include "nav_mesh.h"
 
+#ifdef TF_DLL
+#include "nav_mesh/tf_nav_area.h"
+#endif
+
 #ifdef NEXT_BOT
 #include "NextBot/NextBotManager.h"
 #endif
@@ -151,6 +155,8 @@ BEGIN_ENT_SCRIPTDESC( CBaseCombatCharacter, CBaseAnimating, "The base class shar
 	DEFINE_SCRIPTFUNC( EyeDirection2D, "Get the eyes' 2D direction." )
 	DEFINE_SCRIPTFUNC( EyeDirection3D, "Get the eyes' 3D direction." )
 
+	DEFINE_SCRIPTFUNC_WRAPPED( GetLastKnownArea, "Return the last nav area occupied - NULL if unknown" )
+
 END_SCRIPTDESC();
 
 BEGIN_SIMPLE_DATADESC( Relationship_t )
@@ -232,9 +238,9 @@ END_SEND_TABLE();
 // This table encodes the CBaseCombatCharacter
 //-----------------------------------------------------------------------------
 IMPLEMENT_SERVERCLASS_ST(CBaseCombatCharacter, DT_BaseCombatCharacter)
-
+#ifdef GLOWS_ENABLE
 	SendPropBool( SENDINFO( m_bGlowEnabled ) ),
-
+#endif // GLOWS_ENABLE
 	// Data that only gets sent to the local player.
 	SendPropDataTable( "bcc_localdata", 0, &REFERENCE_SEND_TABLE(DT_BCCLocalPlayerExclusive), SendProxy_SendBaseCombatCharacterLocalDataTable ),
 
@@ -786,9 +792,9 @@ CBaseCombatCharacter::CBaseCombatCharacter( void )
 
 	m_bForceServerRagdoll = ai_force_serverside_ragdoll.GetBool();
 
-
+#ifdef GLOWS_ENABLE
 	m_bGlowEnabled.Set( false );
-
+#endif // GLOWS_ENABLE
 }
 
 //------------------------------------------------------------------------------
@@ -893,9 +899,9 @@ void CBaseCombatCharacter::UpdateOnRemove( void )
 		SetOwnerEntity( NULL );
 	}
 
-
+#ifdef GLOWS_ENABLE
 	RemoveGlowEffect();
-
+#endif // GLOWS_ENABLE
 
 	// Chain at end to mimic destructor unwind order
 	BaseClass::UpdateOnRemove();
@@ -1362,10 +1368,11 @@ CBaseEntity *CBaseCombatCharacter::CheckTraceHullAttack( const Vector &vStart, c
 bool  CBaseCombatCharacter::Event_Gibbed( const CTakeDamageInfo &info )
 {
 	bool fade = false;
+
 	if ( HasHumanGibs() )
 	{
 		ConVarRef violence_hgibs( "violence_hgibs" );
-		if ( violence_hgibs.IsValid() && ( violence_hgibs.GetInt() == 0 ) )
+		if ( violence_hgibs.IsValid() && violence_hgibs.GetInt() == 0 )
 		{
 			fade = true;
 		}
@@ -1373,7 +1380,7 @@ bool  CBaseCombatCharacter::Event_Gibbed( const CTakeDamageInfo &info )
 	else if ( HasAlienGibs() )
 	{
 		ConVarRef violence_agibs( "violence_agibs" );
-		if ( violence_agibs.IsValid() && ( violence_agibs.GetInt() == 0 ) )
+		if ( violence_agibs.IsValid() && violence_agibs.GetInt() == 0 )
 		{
 			fade = true;
 		}
@@ -1718,9 +1725,9 @@ void CBaseCombatCharacter::Event_Killed( const CTakeDamageInfo &info )
 	TheNextBots().OnKilled( this, info );
 #endif
 
-
+#ifdef GLOWS_ENABLE
 	RemoveGlowEffect();
-
+#endif // GLOWS_ENABLE
 }
 
 void CBaseCombatCharacter::Event_Dying( const CTakeDamageInfo &info )
@@ -2205,7 +2212,20 @@ void CBaseCombatCharacter::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 
 	// Pass the lighting origin over to the weapon if we have one
 	pWeapon->SetLightingOriginRelative( GetLightingOriginRelative() );
+
+	if ( IsPlayer() )
+	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "weapon_equipped" );
+		if ( event )
+		{
+			event->SetString( "class", pWeapon->GetClassname() );
+			event->SetInt( "entindex", pWeapon->entindex() );
+			event->SetInt( "owner_entindex", entindex() );
+			gameeventmanager->FireEvent( event );
+		}
+	}
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose:	Leaves weapon, giving only ammo to the character
@@ -3070,6 +3090,18 @@ int CBaseCombatCharacter::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSo
 
 	m_iAmmo.Set( iAmmoIndex, m_iAmmo[iAmmoIndex] + iAdd );
 
+	if ( IsPlayer() )
+	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "ammo_pickup" );
+		if ( event )
+		{
+			event->SetInt( "ammo_index", iAmmoIndex );
+			event->SetInt( "amount", iAdd );
+			event->SetInt( "total", m_iAmmo[ iAmmoIndex ] );
+			gameeventmanager->FireEvent( event );
+		}
+	}
+
 	return iAdd;
 }
 
@@ -3319,7 +3351,7 @@ float CBaseCombatCharacter::GetSpreadBias( CBaseCombatWeapon *pWeapon, CBaseEnti
 	return 1.0;
 }
 
-
+#ifdef GLOWS_ENABLE
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3344,7 +3376,7 @@ bool CBaseCombatCharacter::IsGlowEffectActive( void )
 {
 	return m_bGlowEnabled;
 }
-
+#endif // GLOWS_ENABLE
 
 //-----------------------------------------------------------------------------
 // Assume everyone is average with every weapon. Override this to make exceptions.
@@ -3779,9 +3811,9 @@ void CBaseCombatCharacter::ChangeTeam( int iTeamNum )
 	// old team member no longer in the nav mesh
 	ClearLastKnownArea();
 
-
+#ifdef GLOWS_ENABLE
 	RemoveGlowEffect();
-
+#endif // GLOWS_ENABLE
 
 	BaseClass::ChangeTeam( iTeamNum );
 }

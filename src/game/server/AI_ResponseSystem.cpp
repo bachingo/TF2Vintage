@@ -1457,7 +1457,7 @@ int CResponseSystem::SelectWeightedResponseFromResponseGroup( ResponseGroup *g, 
 	{
 		for ( i = 0; i < fakedDepletes.Count(); i++ )
 		{
-			g->group[ fakedDepletes[ i ] ].depletioncount = 0;;
+			g->group[ fakedDepletes[ i ] ].depletioncount = 0;
 		}
 	}
 
@@ -3041,7 +3041,7 @@ CON_COMMAND( rr_reloadresponsesystems, "Reload all response system scripts." )
 
 	defaultresponsesytem.ReloadAllResponseSystems();
 
-#if defined( TF_DLL ) || defined ( TF_VINTAGE )
+#if defined( TF_DLL )
 	// This is kind of hacky, but I need to get it in for now!
 	if( g_pGameRules->IsMultiplayer() )
 	{
@@ -3049,14 +3049,6 @@ CON_COMMAND( rr_reloadresponsesystems, "Reload all response system scripts." )
 		pMultiplayRules->InitCustomResponseRulesDicts();
 	}
 #endif
-}
-
-bool ResponseSystemCompare( const char *criterion, const char *value )
-{
-	Criteria criteria;
-	criteria.value = CopyString( criterion );
-	defaultresponsesytem.ComputeMatcher( &criteria, criteria.matcher );
-	return defaultresponsesytem.CompareUsingMatcher( value, criteria.matcher, true );
 }
 
 static short RESPONSESYSTEM_SAVE_RESTORE_VERSION = 1;

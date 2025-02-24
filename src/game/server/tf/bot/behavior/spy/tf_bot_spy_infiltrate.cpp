@@ -1,255 +1,335 @@
-#include "cbase.h"
-#include "../../tf_bot.h"
-#include "tf_bot_spy_infiltrate.h"
-#include "tf_bot_spy_sap.h"
-#include "tf_bot_spy_attack.h"
-#include "../tf_bot_retreat_to_cover.h"
-#include "tf_gamerules.h"
-#include "tf_obj.h"
-#include "nav_mesh/tf_nav_mesh.h"
+//========= Copyright Valve Corporation, All rights reserved. ============//
+// tf_bot_spy_infiltrate.cpp
+// Move into position behind enemy lines and wait for victims
+// Michael Booth, June 2010
 
+#include "cbase.h"
+#include "tf_player.h"
+#include "tf_obj_sentrygun.h"
+#include "bot/tf_bot.h"
+#include "bot/behavior/spy/tf_bot_spy_infiltrate.h"
+#include "bot/behavior/spy/tf_bot_spy_sap.h"
+#include "bot/behavior/spy/tf_bot_spy_attack.h"
+#include "bot/behavior/tf_bot_retreat_to_cover.h"
+
+#include "nav_mesh.h"
+
+extern ConVar tf_bot_path_lookahead_range;
 
 ConVar tf_bot_debug_spy( "tf_bot_debug_spy", "0", FCVAR_CHEAT );
 
-
-CTFBotSpyInfiltrate::CTFBotSpyInfiltrate()
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpyInfiltrate::OnStart( CTFBot *me, Action< CTFBot > *priorAction )
 {
-}
+	m_hideArea = NULL;
 
-CTFBotSpyInfiltrate::~CTFBotSpyInfiltrate()
-{
-}
+	m_hasEnteredCombatZone = false;
 
-
-const char *CTFBotSpyInfiltrate::GetName( void ) const
-{
-	return "SpyInfiltrate";
+	return Continue();
 }
 
 
-ActionResult<CTFBot> CTFBotSpyInfiltrate::OnStart( CTFBot *me, Action<CTFBot> *action )
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpyInfiltrate::Update( CTFBot *me, float interval )
 {
-	m_PathFollower.SetMinLookAheadDistance( me->GetDesiredPathLookAheadRange() );
-
-	m_HidingArea = nullptr;
-	m_bCloaked = false;
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotSpyInfiltrate::Update( CTFBot *me, float dt )
-{
-	CBaseCombatWeapon *revolver = me->Weapon_GetWeaponByType( TF_WPN_TYPE_PRIMARY );
-	if ( revolver )
-		me->Weapon_Switch( revolver );
-
-	CTFNavArea *area = me->GetLastKnownArea();
-	if ( area == nullptr )
-		return Action<CTFBot>::Continue();
-
-	if ( !me->m_Shared.IsStealthed() && !area->HasTFAttributes( TF_NAV_RED_SPAWN_ROOM|TF_NAV_BLUE_SPAWN_ROOM|TF_NAV_SPAWN_ROOM_EXIT ) && area->IsInCombat() && !m_bCloaked )
+	// switch to our pistol
+	CBaseCombatWeapon *myGun = me->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY );
+	if ( myGun )
 	{
-		m_bCloaked = true;
+		me->Weapon_Switch( myGun );
+	}
+
+	CTFNavArea *myArea = me->GetLastKnownArea();
+
+	if ( !myArea )
+	{
+		return Continue();
+	}
+
+	bool isInMySpawn = myArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_BLUE | TF_NAV_SPAWN_ROOM_RED );
+	if ( myArea->HasAttributeTF( TF_NAV_SPAWN_ROOM_EXIT ) )
+	{
+		// don't count exits so we cloak as we leave
+		isInMySpawn = false;
+	}
+
+	// cloak when we first enter an area of active combat
+	if ( !me->m_Shared.IsStealthed() && 
+		 !isInMySpawn && 
+		 myArea->IsInCombat() && 
+		 !m_hasEnteredCombatZone )
+	{
+		m_hasEnteredCombatZone = true;
 		me->PressAltFireButton();
 	}
 
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
 	if ( threat && threat->GetEntity() && threat->GetEntity()->IsBaseObject() )
 	{
-		CBaseObject *obj = static_cast<CBaseObject *>( threat->GetEntity() );
-		if ( !obj->HasSapper() && me->IsEnemy( obj ) )
-			return Action<CTFBot>::SuspendFor( new CTFBotSpySap( obj ), "Sapping an enemy object" );
+		CBaseObject *enemyObject = (CBaseObject *)threat->GetEntity();
+		if ( !enemyObject->HasSapper() && me->IsEnemy( enemyObject ) )
+		{
+			return SuspendFor( new CTFBotSpySap( enemyObject ), "Sapping an enemy object" );
+		}
 	}
 
-	if ( me->GetTargetSentry() && !me->GetTargetSentry()->HasSapper() )
-		return Action<CTFBot>::SuspendFor( new CTFBotSpySap( me->GetTargetSentry() ), "Sapping a Sentry" );
+	if ( me->GetEnemySentry() && !me->GetEnemySentry()->HasSapper() )
+	{
+		return SuspendFor( new CTFBotSpySap( me->GetEnemySentry() ), "Sapping a Sentry" );
+	}
 
-	if ( !m_HidingArea && m_findHidingAreaDelay.IsElapsed() )
+	if ( !m_hideArea && m_findHidingSpotTimer.IsElapsed() )
 	{
 		FindHidingSpot( me );
-
-		m_findHidingAreaDelay.Start( 3.0f );
+		m_findHidingSpotTimer.Start( 3.0f );
 	}
 
-	if ( !TFGameRules()->InSetup() && threat && threat->GetTimeSinceLastKnown() < 3.0f )
+	if ( !TFGameRules()->InSetup() )
 	{
-		CTFPlayer *victim = ToTFPlayer( threat->GetEntity() );
-		if ( victim != nullptr )
+		// go after victims we've gotten behind
+		if ( threat && threat->GetTimeSinceLastKnown() < 3.0f )
 		{
-			CTFNavArea *victim_area = static_cast<CTFNavArea *>( victim->GetLastKnownArea() );
-			if ( victim_area && victim_area->GetIncursionDistance( victim->GetTeamNumber() ) > area->GetIncursionDistance( victim->GetTeamNumber() ) )
+			CTFPlayer *victim = ToTFPlayer( threat->GetEntity() );
+			if ( victim )
 			{
-				if ( me->m_Shared.IsStealthed() )
-					return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover( new CTFBotSpyAttack( victim ) ), "Hiding to decloak before going after a backstab victim" );
-				else
-					return Action<CTFBot>::SuspendFor( new CTFBotSpyAttack( victim ), "Going after a backstab victim" );
+				CTFNavArea *victimArea = (CTFNavArea *)victim->GetLastKnownArea();
+				if ( victimArea )
+				{
+					int victimTeam = victim->GetTeamNumber();
+
+					if ( victimArea->GetIncursionDistance( victimTeam ) > myArea->GetIncursionDistance( victimTeam ) )
+					{
+						if ( me->m_Shared.IsStealthed() )
+						{
+							return SuspendFor( new CTFBotRetreatToCover( new CTFBotSpyAttack( victim ) ), "Hiding to decloak before going after a backstab victim" );
+						}
+						else
+						{
+							return SuspendFor( new CTFBotSpyAttack( victim ), "Going after a backstab victim" );
+						}
+					}
+				}					
 			}
 		}
 	}
 
-	if ( m_HidingArea == nullptr )
-		return Action<CTFBot>::Continue();
-
-	if ( tf_bot_debug_spy.GetBool() )
+	if ( m_hideArea )
 	{
-		m_HidingArea->DrawFilled( 255, 255, 0, 255 );
-	}
-
-	if ( m_HidingArea == area )
-	{
-		if ( TFGameRules()->InSetup() )
+		if ( tf_bot_debug_spy.GetBool() )
 		{
-			m_waitDuration.Start( RandomFloat( 0.0f, 5.0f ) );
+			m_hideArea->DrawFilled( 255, 255, 0, 255, NDEBUG_PERSIST_TILL_NEXT_SERVER );
 		}
-		else
+
+		if ( myArea == m_hideArea )
 		{
-			if ( m_waitDuration.HasStarted() && m_waitDuration.IsElapsed() )
+			// stay hidden during setup time
+			if ( TFGameRules()->InSetup() )
 			{
-				m_HidingArea = nullptr;
-				return Action<CTFBot>::Continue();
+				m_waitTimer.Start( RandomFloat( 0.0f, 5.0f ) );
 			}
 			else
 			{
-				m_waitDuration.Start( RandomFloat( 5.0f, 10.0f ) );
+				// wait in our hiding spot for a bit, then try another
+				if ( !m_waitTimer.HasStarted() )
+				{
+					m_waitTimer.Start( RandomFloat( 5.0f, 10.0f ) );
+				}
+				else if ( m_waitTimer.IsElapsed() )
+				{
+					// time to find a new hiding spot
+					m_hideArea = NULL;
+				}
 			}
 		}
+		else
+		{
+			// move to our ambush position
+			if ( m_repathTimer.IsElapsed() )
+			{
+				m_repathTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+
+				// we may not be able to path to our hiding spot, but get as close as we can
+				// (dropdown mid spawn in cp_gorge)
+				CTFBotPathCost cost( me, SAFEST_ROUTE );
+				m_path.Compute( me, m_hideArea->GetCenter(), cost );
+			}
+
+			m_path.Update( me );
+
+			m_waitTimer.Invalidate();
+		}
 	}
-	
-	if ( !m_recomputePath.IsElapsed() )
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+void CTFBotSpyInfiltrate::OnEnd( CTFBot *me, Action< CTFBot > *nextAction )
+{
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpyInfiltrate::OnSuspend( CTFBot *me, Action< CTFBot > *interruptingAction )
+{
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+ActionResult< CTFBot >	CTFBotSpyInfiltrate::OnResume( CTFBot *me, Action< CTFBot > *interruptingAction )
+{
+	m_repathTimer.Invalidate();
+	m_hideArea = NULL;
+
+	return Continue();
+}
+
+
+//---------------------------------------------------------------------------------------------
+bool CTFBotSpyInfiltrate::FindHidingSpot( CTFBot *me )
+{
+	m_hideArea = NULL;
+
+	if ( me->GetAliveDuration() < 5.0f && TFGameRules()->InSetup() )
 	{
-		m_PathFollower.Update( me );
-
-		m_waitDuration.Invalidate();
-
-		return Action<CTFBot>::Continue();
+		// wait a bit until the nav mesh has updated itself
+		return false;
 	}
 
-	m_recomputePath.Start( RandomFloat( 1.0f, 2.0f ) );
+	int myTeam = me->GetTeamNumber();
+	const CUtlVector< CTFNavArea * > *enemySpawnExitVector = TheTFNavMesh()->GetSpawnRoomExitAreas( GetEnemyTeam( myTeam ) );
 
-	CTFBotPathCost func( me, SAFEST_ROUTE );
-	m_PathFollower.Compute( me, m_HidingArea->GetCenter(), func );
-
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotSpyInfiltrate::OnSuspend( CTFBot *me, Action<CTFBot> *newAction )
-{
-	return Action<CTFBot>::Continue();
-}
-
-ActionResult<CTFBot> CTFBotSpyInfiltrate::OnResume( CTFBot *me, Action<CTFBot> *priorAction )
-{
-	m_recomputePath.Invalidate();
-
-	return Action<CTFBot>::Continue();
-}
-
-
-EventDesiredResult<CTFBot> CTFBotSpyInfiltrate::OnStuck( CTFBot *me )
-{
-	m_HidingArea = nullptr;
-	m_findHidingAreaDelay.Invalidate();
-
-	return Action<CTFBot>::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotSpyInfiltrate::OnTerritoryCaptured( CTFBot *me, int territoryID )
-{
-	m_findHidingAreaDelay.Start( 5.0f );
-
-	return Action<CTFBot>::TryContinue();
-}
-
-EventDesiredResult<CTFBot> CTFBotSpyInfiltrate::OnTerritoryLost( CTFBot *me, int territoryID )
-{
-	m_findHidingAreaDelay.Start( 5.0f );
-
-	return Action<CTFBot>::TryContinue();
-}
-
-
-QueryResultType CTFBotSpyInfiltrate::ShouldAttack( const INextBot *me, const CKnownEntity *threat ) const
-{
-	return ANSWER_NO;
-}
-
-
-bool CTFBotSpyInfiltrate::FindHidingSpot( CTFBot *actor )
-{
-	m_HidingArea = nullptr;
-
-	if ( actor->GetAliveDuration() < 5.0f && TFGameRules()->InSetup() )
+#ifdef TF_RAID_MODE
+	if ( TFGameRules()->IsRaidMode() )
+	{
+		// for now, just lurk where we are
 		return false;
+	}
+#endif
 
-	const CUtlVector<CTFNavArea *> &exits = TFNavMesh()->GetSpawnRoomExitsForTeam( GetEnemyTeam( actor ) );
-	if ( exits.IsEmpty() )
+	if ( !enemySpawnExitVector || enemySpawnExitVector->Count() == 0 )
 	{
 		if ( tf_bot_debug_spy.GetBool() )
+		{
 			DevMsg( "%3.2f: No enemy spawn room exit areas found\n", gpGlobals->curtime );
-
+		}
 		return false;
 	}
 
-	CUtlVector<CNavArea *> surrounding;
-	FOR_EACH_VEC( exits, i )
+	// find nearby place to hide hear enemy spawn exit(s)
+	CUtlVector< CNavArea * > nearbyAreaVector;
+	const float nearbyHideRange = 2500.0f;
+	for( int x=0; x<enemySpawnExitVector->Count(); ++x )
 	{
-		CUtlVector<CNavArea *> temp;
-		CollectSurroundingAreas( &temp, exits[i], 2500.0f,
-								 actor->GetLocomotionInterface()->GetStepHeight(), 
-								 actor->GetLocomotionInterface()->GetStepHeight() );
+		CTFNavArea *enemySpawnExitArea = enemySpawnExitVector->Element( x );
 
-		surrounding.AddVectorToTail( temp );
+		CUtlVector< CNavArea * > nearbyThisExitAreaVector;
+		CollectSurroundingAreas( &nearbyThisExitAreaVector, enemySpawnExitArea, nearbyHideRange, me->GetLocomotionInterface()->GetStepHeight(), me->GetLocomotionInterface()->GetStepHeight() );
+
+		// concat vectors (assuming N^2 unique search would cost more than ripping through some duplicates)
+		nearbyAreaVector.AddVectorToTail( nearbyThisExitAreaVector );
 	}
 
-	CUtlVector<CNavArea *> areas;
-	FOR_EACH_VEC( surrounding, i )
+	// find area not visible to any enemy spawn exits
+	CUtlVector< CTFNavArea * > hideAreaVector;
+	int i;
+
+	for( i=0; i<nearbyAreaVector.Count(); ++i )
 	{
-		if ( !actor->GetLocomotionInterface()->IsAreaTraversable( surrounding[i] ) )
+		CTFNavArea *area = (CTFNavArea *)nearbyAreaVector[i];
+
+		if ( !me->GetLocomotionInterface()->IsAreaTraversable( area ) )
 			continue;
 
-		bool visible = false;
-		FOR_EACH_VEC( exits, j )
+		bool isHidden = true;
+		for( int j=0; j<enemySpawnExitVector->Count(); ++j )
 		{
-			if ( surrounding[i]->IsPotentiallyVisible( exits[j] ) )
+			if ( area->IsPotentiallyVisible( enemySpawnExitVector->Element(j) ) )
 			{
-				visible = true;
+				isHidden = false;
 				break;
 			}
 		}
 
-		if ( !visible )
-			areas.AddToTail( surrounding[i] );
+		if ( isHidden )
+		{
+			hideAreaVector.AddToTail( area );
+		}
 	}
 
-	if ( areas.IsEmpty() )
+	if ( hideAreaVector.Count() == 0 )
 	{
 		if ( tf_bot_debug_spy.GetBool() )
 		{
-			DevMsg( "%3.2f: Can't find any non-visible hiding areas, "
-					"trying for anything near the spawn exit...\n", gpGlobals->curtime );
+			DevMsg( "%3.2f: Can't find any non-visible hiding areas, trying for anything near the spawn exit...\n", gpGlobals->curtime );
 		}
 
-		FOR_EACH_VEC( surrounding, i )
+		for( i=0; i<nearbyAreaVector.Count(); ++i )
 		{
-			if ( actor->GetLocomotionInterface()->IsAreaTraversable( surrounding[i] ) )
-				areas.AddToTail( surrounding[i] );
-		}
+			CTFNavArea *area = (CTFNavArea *)nearbyAreaVector[i];
 
-		if ( areas.IsEmpty() )
-		{
-			if ( tf_bot_debug_spy.GetBool() )
-			{
-				DevMsg( "%3.2f: Can't find any areas near the enemy spawn exit - "
-						"just heading to the enemy spawn and hoping...\n", gpGlobals->curtime );
-			}
+			if ( !me->GetLocomotionInterface()->IsAreaTraversable( area ) )
+				continue;
 
-			m_HidingArea = exits.Random();
-
-			return false;
+			hideAreaVector.AddToTail( area );
 		}
 	}
 
-	m_HidingArea = static_cast<CTFNavArea *>( areas.Random() );
+	if ( hideAreaVector.Count() == 0 )
+	{
+		if ( tf_bot_debug_spy.GetBool() )
+		{
+			DevMsg( "%3.2f: Can't find any areas near the enemy spawn exit - just heading to the enemy spawn and hoping...\n", gpGlobals->curtime );
+		}
+
+		m_hideArea = enemySpawnExitVector->Element( RandomInt( 0, enemySpawnExitVector->Count()-1 ) );
+
+		return false;
+	}
+
+	// pick a specific hiding spot
+	m_hideArea = hideAreaVector[ RandomInt( 0, hideAreaVector.Count()-1 ) ];
 
 	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSpyInfiltrate::OnStuck( CTFBot *me )
+{
+	m_hideArea = NULL;
+	m_findHidingSpotTimer.Invalidate();
+
+	return TryContinue( RESULT_TRY );
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSpyInfiltrate::OnTerritoryCaptured( CTFBot *me, int territoryID )
+{
+	// enemy spawn likely changed - find new hiding spot after internal data has updated
+	m_hideArea = NULL;
+	m_findHidingSpotTimer.Start( 5.0f );
+
+	return TryContinue( RESULT_TRY );
+}
+
+
+//---------------------------------------------------------------------------------------------
+EventDesiredResult< CTFBot > CTFBotSpyInfiltrate::OnTerritoryLost( CTFBot *me, int territoryID )
+{
+	// enemy spawn likely changed - find new hiding spot after internal data has updated
+	m_hideArea = NULL;
+	m_findHidingSpotTimer.Start( 5.0f );
+
+	return TryContinue( RESULT_TRY );
+}
+
+
+//---------------------------------------------------------------------------------------------
+QueryResultType CTFBotSpyInfiltrate::ShouldAttack( const INextBot *me, const CKnownEntity *them ) const
+{
+	return ANSWER_NO;
 }

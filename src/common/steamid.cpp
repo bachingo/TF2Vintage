@@ -1,15 +1,25 @@
-//========= Copyright Valve LLC, All rights reserved. ============
+//========= Copyright � 1996-2004, Valve LLC, All rights reserved. ============
+//
+// Purpose:
+//
+// $NoKeywords: $
+//=============================================================================
 
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#if defined( STEAM ) || defined( HL1 )
+#include "stdafx.h"
+#else
 #include <stdio.h>
+#include "dbg.h"
+#include "steamcommon.h"
+#include "steam/steamclientpublic.h"
+#include "strtools.h"
+#endif
 
-#include <tier0/dbg.h>
-#include <tier1/strtools.h>
-
-#include "steamid.h"
+#ifdef HL1
+#include "steamcommon.h"
+#include "steam/steamclientpublic.h"
+#endif
 
 #ifndef UINT64_MAX
 #define UINT64_MAX ((uint64)-1)
@@ -71,7 +81,8 @@ void CSteamID::SetFromString( const char *pchSteamID, EUniverse eDefaultUniverse
 	EUniverse eUniverse = eDefaultUniverse;
 	EAccountType eAccountType = k_EAccountTypeIndividual;
 #ifdef DBGFLAG_ASSERT
-	const char *pchSteamIDString = pchSteamID;
+	// TF Merge -- Assert is debug-only and we have unused variable warnings on :-/
+    const char *pchSteamIDString = pchSteamID;
 #endif
     CSteamID StrictID;
 
@@ -122,7 +133,7 @@ void CSteamID::SetFromString( const char *pchSteamID, EUniverse eDefaultUniverse
 		}
         // Catch cases where we're allowing sloppy input that we
         // might not want to allow.
-        AssertMsg1( *this == StrictID, "Steam ID does not pass strict parsing: '%s'", pchSteamIDString );
+        AssertMsg1( this->operator==( StrictID ), "Steam ID does not pass strict parsing: '%s'", pchSteamIDString );
 		return;
 	}
 	else if (*pchSteamID == 'G')
@@ -201,13 +212,13 @@ void CSteamID::SetFromString( const char *pchSteamID, EUniverse eDefaultUniverse
         uint64 unVal64 = 0;
         
 		sscanf( pchSteamID, "%llu", &unVal64 );
-        if ( unVal64 > UINT_MAX )
+        if ( unVal64 > UINT32_MAX )
         {
             // Assume a full 64-bit Steam ID.
             SetFromUint64( unVal64 );
             // Catch cases where we're allowing sloppy input that we
             // might not want to allow.
-            AssertMsg1( *this == StrictID, "Steam ID does not pass strict parsing: '%s'", pchSteamIDString );
+            AssertMsg1( this->operator==( StrictID ), "Steam ID does not pass strict parsing: '%s'", pchSteamIDString );
             return;
         }
         else
@@ -222,7 +233,7 @@ void CSteamID::SetFromString( const char *pchSteamID, EUniverse eDefaultUniverse
 
     // Catch cases where we're allowing sloppy input that we
     // might not want to allow.
-    AssertMsg1( *this == StrictID, "Steam ID does not pass strict parsing: '%s'", pchSteamIDString );
+    AssertMsg1( this->operator==( StrictID ), "Steam ID does not pass strict parsing: '%s'", pchSteamIDString );
 }
 
 // SetFromString allows many partially-correct strings, constraining how
@@ -487,7 +498,7 @@ bool CSteamID::SetFromStringStrict( const char *pchSteamID, EUniverse eDefaultUn
 //			eUniverse -		universe this ID belongs to
 // Output:	true if successful, false otherwise
 //-----------------------------------------------------------------------------
-bool CSteamID::SetFromSteam2String( const char *pchSteam2ID, EUniverse eUniverse )
+bool SteamIDFromSteam2String( const char *pchSteam2ID, EUniverse eUniverse, CSteamID *pSteamIDOut )
 {
 	Assert( pchSteam2ID );
 
@@ -514,7 +525,7 @@ bool CSteamID::SetFromSteam2String( const char *pchSteam2ID, EUniverse eUniverse
 		return false;
 
 	// Now convert to steam ID from the Steam2 ID structure
-	SetFromSteam2( &steam2ID, eUniverse );
+	*pSteamIDOut = SteamIDFromSteam2UserID( &steam2ID, eUniverse );
 	return true;
 }
 #endif
@@ -689,14 +700,14 @@ CGameID::CGameID( const char *pchGameID )
 
 	switch ( m_gameID.m_nType )
 	{
-	default:
-		AssertMsg( false, "Unknown GameID type" );
-		m_ulGameID = 0;
-		break;
 	case k_EGameIDTypeApp:
 	case k_EGameIDTypeGameMod:
 	case k_EGameIDTypeShortcut:
 	case k_EGameIDTypeP2P:
+		break;
+	default:
+		AssertMsg( false, "Unknown GameID type" );
+		m_ulGameID = 0;
 		break;
 	}
 }

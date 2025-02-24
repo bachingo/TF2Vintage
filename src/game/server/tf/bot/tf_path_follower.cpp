@@ -6,12 +6,14 @@
 //=============================================================================
 
 #include "cbase.h"
+#include "mathlib/mathlib.h"
 #include "tf_path_follower.h"
+
 
 
 CTFPathFollower::CTFPathFollower()
 {
-	m_Goal = nullptr;
+	Q_memset( &m_Detour, 0, sizeof( m_Detour ) );
 	m_flMinLookAheadDistance = -1.0f;
 }
 
@@ -21,15 +23,26 @@ CTFPathFollower::~CTFPathFollower()
 
 void CTFPathFollower::Invalidate( void )
 {
-	Path::Invalidate();
+	BaseClass::Invalidate();
 
-	m_Goal = nullptr;
+	Q_memset( &m_Detour, 0, sizeof( m_Detour ) );
 }
 
 void CTFPathFollower::OnPathChanged( INextBot *bot, Path::ResultType result )
 {
-	m_Goal = FirstSegment();
+	BaseClass::OnPathChanged( bot, result );
+	Q_memset( &m_Detour, 0, sizeof( m_Detour ) );
 	MoveCursorToStart();
+}
+
+const Path::Segment *CTFPathFollower::NextSegment( const Path::Segment *currentSegment ) const
+{
+	return nullptr;
+}
+
+const Path::Segment *CTFPathFollower::PriorSegment( const Path::Segment *currentSegment ) const
+{
+	return nullptr;
 }
 
 void CTFPathFollower::Update( INextBot *bot )
@@ -40,7 +53,7 @@ void CTFPathFollower::Update( INextBot *bot )
 
 	bot->SetCurrentPath( this );
 
-	if ( !IsValid() || m_Goal == nullptr )
+	if ( !IsValid() )
 		return;
 
 	if ( loco->IsOnGround() )
@@ -72,14 +85,12 @@ void CTFPathFollower::Update( INextBot *bot )
 		return;
 	}
 
-	const Path::Segment *nextSegment = NextSegment( data.segmentPrior );
-	m_Goal = nextSegment;
-
+	Segment const *nextSegment = NextSegment( data.segmentPrior );
 	if ( !nextSegment )
-		m_Goal = data.segmentPrior;
+		nextSegment = data.segmentPrior;
 
-	Vector vecGoal = m_Goal->pos;
-	Vector vecNewGoal = m_Goal->pos;
+	Vector vecGoal = nextSegment->pos;
+	Vector vecNewGoal = nextSegment->pos;
 
 	if ( m_flMinLookAheadDistance > 0.0f )
 	{
@@ -106,4 +117,42 @@ void CTFPathFollower::Update( INextBot *bot )
 		NDebugOverlay::Cross3D( vecGoal, 5.0f, 150, 150, 255, true, 0.1 );
 		NDebugOverlay::Line( bot->GetEntity()->WorldSpaceCenter(), vecGoal, 255, 255, 0, true, 0.1 );
 	}
+}
+
+Path::Segment const *CTFPathFollower::GetClosestSegment( Vector const &vecStart )
+{
+	float flMinDist = FLT_MAX;
+	Segment const *pSegment = NULL;
+
+	// First check out detour route
+	// We don't check first/lastSegment due to checking whole route after this
+	for ( int i = 0; i < MAX_DETOUR_LENGTH; ++i )
+	{
+		float flDistance = ( m_Detour.detour[i].pos - vecStart ).LengthSqr();
+		if ( flDistance < flMinDist )
+		{
+			flMinDist = flDistance;
+			pSegment = &m_Detour.detour[i];
+		}
+	}
+
+	// Then our original route
+	Segment const *pStart = FirstSegment();
+	if ( pStart )
+	{
+		Segment const *pNext = Path::NextSegment( pStart ); // Skipping our override
+		while ( pNext )
+		{
+			float flDistance = ( pNext->pos - vecStart ).LengthSqr();
+			if ( flDistance < flMinDist )
+			{
+				flMinDist = flDistance;
+				pSegment = pNext;
+			}
+
+			pNext = Path::NextSegment( pNext );
+		}
+	}
+
+	return pSegment;
 }
