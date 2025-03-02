@@ -9,25 +9,25 @@ public:
     ~StorageManager() = default;
 
     Result Read(char const* name,
-                uint8_t* data,
-                uint32_t dataLength,
-                uint32_t* read);
+                std::uint8_t* data,
+                std::uint32_t dataLength,
+                std::uint32_t* read);
     void ReadAsync(char const* name,
-                   std::function<void(Result, uint8_t*, uint32_t)> callback);
+                   std::function<void(Result, std::uint8_t*, std::uint32_t)> callback);
     void ReadAsyncPartial(char const* name,
-                          uint64_t offset,
-                          uint64_t length,
-                          std::function<void(Result, uint8_t*, uint32_t)> callback);
-    Result Write(char const* name, uint8_t* data, uint32_t dataLength);
+                          std::uint64_t offset,
+                          std::uint64_t length,
+                          std::function<void(Result, std::uint8_t*, std::uint32_t)> callback);
+    Result Write(char const* name, std::uint8_t* data, std::uint32_t dataLength);
     void WriteAsync(char const* name,
-                    uint8_t* data,
-                    uint32_t dataLength,
+                    std::uint8_t* data,
+                    std::uint32_t dataLength,
                     std::function<void(Result)> callback);
     Result Delete(char const* name);
     Result Exists(char const* name, bool* exists);
-    void Count(int32_t* count);
+    void Count(std::int32_t* count);
     Result Stat(char const* name, FileStat* stat);
-    Result StatAt(int32_t index, FileStat* stat);
+    Result StatAt(std::int32_t index, FileStat* stat);
     Result GetPath(char path[4096]);
 
 private:

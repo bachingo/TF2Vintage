@@ -9,14 +9,12 @@
 #include <cstring>
 #include <memory>
 
-// memdbgon must be the last include file in a .cpp file!!!
-#include <tier0/memdbgon.h>
-
 namespace discord {
 
 class AchievementEvents final {
 public:
-    static void OnUserAchievementUpdate(void* callbackData, DiscordUserAchievement* userAchievement)
+    static void DISCORD_CALLBACK OnUserAchievementUpdate(void* callbackData,
+                                                         DiscordUserAchievement* userAchievement)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -33,7 +31,7 @@ IDiscordAchievementEvents AchievementManager::events_{
 };
 
 void AchievementManager::SetUserAchievement(Snowflake achievementId,
-                                            uint8_t percentComplete,
+                                            std::uint8_t percentComplete,
                                             std::function<void(Result)> callback)
 {
     static auto wrapper = [](void* callbackData, EDiscordResult result) -> void {
@@ -65,7 +63,7 @@ void AchievementManager::FetchUserAchievements(std::function<void(Result)> callb
     internal_->fetch_user_achievements(internal_, cb.release(), wrapper);
 }
 
-void AchievementManager::CountUserAchievements(int32_t* count)
+void AchievementManager::CountUserAchievements(std::int32_t* count)
 {
     if (!count) {
         return;
@@ -86,7 +84,7 @@ Result AchievementManager::GetUserAchievement(Snowflake userAchievementId,
     return static_cast<Result>(result);
 }
 
-Result AchievementManager::GetUserAchievementAt(int32_t index,
+Result AchievementManager::GetUserAchievementAt(std::int32_t index,
                                                 UserAchievement* userAchievement)
 {
     if (!userAchievement) {

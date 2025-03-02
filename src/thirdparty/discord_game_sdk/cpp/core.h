@@ -18,7 +18,7 @@ namespace discord {
 
 class Core final {
 public:
-    static Result Create(ClientId clientId, uint64_t flags, Core** instance);
+    static Result Create(ClientId clientId, std::uint64_t flags, Core** instance);
 
     ~Core();
 

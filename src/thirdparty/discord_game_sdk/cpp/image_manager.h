@@ -10,7 +10,7 @@ public:
 
     void Fetch(ImageHandle handle, bool refresh, std::function<void(Result, ImageHandle)> callback);
     Result GetDimensions(ImageHandle handle, ImageDimensions* dimensions);
-    Result GetData(ImageHandle handle, uint8_t* data, uint32_t dataLength);
+    Result GetData(ImageHandle handle, std::uint8_t* data, std::uint32_t dataLength);
 
 private:
     friend class Core;

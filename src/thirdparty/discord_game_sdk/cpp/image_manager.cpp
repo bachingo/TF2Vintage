@@ -48,7 +48,7 @@ Result ImageManager::GetDimensions(ImageHandle handle, ImageDimensions* dimensio
     return static_cast<Result>(result);
 }
 
-Result ImageManager::GetData(ImageHandle handle, uint8_t* data, uint32_t dataLength)
+Result ImageManager::GetData(ImageHandle handle, std::uint8_t* data, std::uint32_t dataLength)
 {
     auto result = internal_->get_data(internal_,
                                       *reinterpret_cast<DiscordImageHandle const*>(&handle),

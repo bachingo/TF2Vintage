@@ -9,14 +9,11 @@
 #include <cstring>
 #include <memory>
 
-// memdbgon must be the last include file in a .cpp file!!!
-#include <tier0/memdbgon.h>
-
 namespace discord {
 
 class ActivityEvents final {
 public:
-    static void OnActivityJoin(void* callbackData, char const* secret)
+    static void DISCORD_CALLBACK OnActivityJoin(void* callbackData, char const* secret)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -27,7 +24,7 @@ public:
         module.OnActivityJoin(static_cast<const char*>(secret));
     }
 
-    static void OnActivitySpectate(void* callbackData, char const* secret)
+    static void DISCORD_CALLBACK OnActivitySpectate(void* callbackData, char const* secret)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -38,7 +35,7 @@ public:
         module.OnActivitySpectate(static_cast<const char*>(secret));
     }
 
-    static void OnActivityJoinRequest(void* callbackData, DiscordUser* user)
+    static void DISCORD_CALLBACK OnActivityJoinRequest(void* callbackData, DiscordUser* user)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -49,10 +46,10 @@ public:
         module.OnActivityJoinRequest(*reinterpret_cast<User const*>(user));
     }
 
-    static void OnActivityInvite(void* callbackData,
-                                 EDiscordActivityActionType type,
-                                 DiscordUser* user,
-                                 DiscordActivity* activity)
+    static void DISCORD_CALLBACK OnActivityInvite(void* callbackData,
+                                                  EDiscordActivityActionType type,
+                                                  DiscordUser* user,
+                                                  DiscordActivity* activity)
     {
         auto* core = reinterpret_cast<Core*>(callbackData);
         if (!core) {
@@ -79,7 +76,7 @@ Result ActivityManager::RegisterCommand(char const* command)
     return static_cast<Result>(result);
 }
 
-Result ActivityManager::RegisterSteam(uint32_t steamId)
+Result ActivityManager::RegisterSteam(std::uint32_t steamId)
 {
     auto result = internal_->register_steam(internal_, steamId);
     return static_cast<Result>(result);
