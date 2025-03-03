@@ -33,12 +33,12 @@ jobs:
       - name: Checkout game assets
         uses: actions/checkout@v2
       - name: Download Windows Binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: tf2vintage-windows
           path: game/tf2vintage/bin/
       #- name: Download Linux Binary
-      #  uses: actions/download-artifact@v3
+      #  uses: actions/download-artifact@v4
       #  with:
       #    name: tf2vintage-linux
       #    path: game/tf2vintage/bin/
@@ -47,7 +47,7 @@ jobs:
         with:
           args: 7z a -t7z -mx=9 tf2vintage.7z ./game/tf2vintage/
       - name: Upload product [7z]
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tf2vintage
           path: tf2vintage.7z
