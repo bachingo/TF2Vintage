@@ -40,33 +40,28 @@ game/bin
 #game/*/bin
 
 # Manual override of bin folder
-game/*/bin/client.dll
-game/*/bin/client.pdb
-game/*/bin/server.dll
-game/*/bin/server.pdb
-game/*/bin/vscript.dll
-game/*/bin/vscript.pdb
-game/*/bin/x64/client.dll
-game/*/bin/x64/client.pdb
-game/*/bin/x64/server.dll
-game/*/bin/x64/server.pdb
-game/*/bin/x64/vscript.dll
-game/*/bin/x64/vscript.pdb
+client.dll
+client.pdb
+server.dll
+server.pdb
+vscript.dll
+vscript.pdb
 
 # generated protobuf sources
 generated_proto*/
 
 # library files
-src/lib/public/mathlib.lib
-src/lib/public/mathlib.pdb
-src/lib/public/raytrace.lib
-src/lib/public/raytrace.pdb
-src/lib/public/tier1.lib
-src/lib/public/tier1.pdb
-src/lib/public/vgui_controls.lib
-src/lib/public/vgui_controls.pdb
-src/thirdparty/bullet/build/lib
-src/lib/common/angelscript.lib
+mathlib.lib
+mathlib.pdb
+raytrace.lib
+raytrace.pdb
+tier1.lib
+tier1.pdb
+vgui_controls.lib
+vgui_controls.pdb
+thirdparty/bullet/build/lib
+angelscript.lib
+angelscript.pdb
 
 # misc files
 fgdlib.lib
