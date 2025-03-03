@@ -46,6 +46,12 @@ game/*/bin/server.dll
 game/*/bin/server.pdb
 game/*/bin/vscript.dll
 game/*/bin/vscript.pdb
+game/*/bin/x64/client.dll
+game/*/bin/x64/client.pdb
+game/*/bin/x64/server.dll
+game/*/bin/x64/server.pdb
+game/*/bin/x64/vscript.dll
+game/*/bin/x64/vscript.pdb
 
 # generated protobuf sources
 generated_proto*/
