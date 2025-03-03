@@ -20,8 +20,8 @@ jobs:
   build-windows:
     uses: ./.github/workflows/windows.yml
 
-  #build-linux:
-  # uses: ./.github/workflows/linux.yml
+  build-linux:
+   uses: ./.github/workflows/linux.yml
 
 
   build-game:
@@ -37,11 +37,11 @@ jobs:
         with:
           name: tf2vintage-windows
           path: game/tf2vintage/bin/
-      #- name: Download Linux Binary
-      #  uses: actions/download-artifact@v3
-      #  with:
-      #    name: tf2vintage-linux
-      #    path: game/tf2vintage/bin/
+      - name: Download Linux Binary
+        uses: actions/download-artifact@v3
+        with:
+          name: tf2vintage-linux
+          path: game/tf2vintage/bin/
       - name: Pack [7z]
         uses: edgarrc/action-7z@v1
         with:
@@ -56,4 +56,4 @@ jobs:
         with:
           name: |
             tf2vintage-windows
-      #     tf2vintage-linux
+            tf2vintage-linux
