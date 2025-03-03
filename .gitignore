@@ -184,6 +184,3 @@ src/materialsystem/stdshaders/filestocopy.txt
 src/materialsystem/stdshaders/inclist.txt
 src/materialsystem/stdshaders/filelistgen.txt
 src/materialsystem/stdshaders/filelist.txt
-game/tf2vintage/bin/x64/vscript.dll
-game/mod_tf/bin/x64/client.dll
-game/mod_tf/bin/x64/server.dll
