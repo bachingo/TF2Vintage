@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: HUD Target ID element
 //
@@ -24,6 +24,9 @@
 #include "c_obj_dispenser.h"
 #include "c_obj_teleporter.h"
 #include "c_obj_sapper.h"
+
+#include "tf_gamerules.h"
+#include "tf_logic_halloween_2014.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -102,8 +105,8 @@ void CBuildingHealthBar::ApplySchemeSettings(vgui::IScheme *pScheme)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CBuildingStatusItem::CBuildingStatusItem( Panel *parent, const char *szLayout, int iObjectType, int iObjectMode ) :
-	BaseClass( parent, "BuildingStatusItem" )
+CBuildingStatusItem::CBuildingStatusItem( Panel *parent, const char *szLayout, int iObjectType, int iObjectMode=0 ) :
+BaseClass( parent, "BuildingStatusItem" )
 {
 	SetProportional( true );
 
@@ -137,13 +140,15 @@ CBuildingStatusItem::CBuildingStatusItem( Panel *parent, const char *szLayout, i
 
 	m_pBuildingProgress = new vgui::ContinuousProgressBar( m_pBuildingPanel, "BuildingProgress" ); 
 
-	m_pLevelIcons[0] = new CIconPanel( m_pBuiltPanel, "Icon_Upgrade_1" );
-	m_pLevelIcons[1] = new CIconPanel( m_pBuiltPanel, "Icon_Upgrade_2" );
-	m_pLevelIcons[2] = new CIconPanel( m_pBuiltPanel, "Icon_Upgrade_3" );
-
 	m_pAlertTray = new CBuildingStatusAlertTray( m_pBuiltPanel, "AlertTray" );
 	m_pWrenchIcon = new CIconPanel( m_pBuiltPanel, "WrenchIcon" );
 	m_pSapperIcon = new CIconPanel( m_pBuiltPanel, "SapperIcon" );
+
+	m_pUpgradeIcons[0] = new CIconPanel( m_pBuiltPanel, "Icon_Upgrade_1" );
+	m_pUpgradeIcons[1] = new CIconPanel( m_pBuiltPanel, "Icon_Upgrade_2" );
+	m_pUpgradeIcons[2] = new CIconPanel( m_pBuiltPanel, "Icon_Upgrade_3" );
+
+	m_iUpgradeLevel = 1;
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 }
@@ -184,21 +189,34 @@ void CBuildingStatusItem::PerformLayout( void )
 	{
 		// redo the background
 		m_pBackground->SetIcon( GetBackgroundImage() );
-		m_pLevelIcons[0]->SetVisible( false );
-		m_pLevelIcons[1]->SetVisible( false );
-		m_pLevelIcons[2]->SetVisible( false );
 
 		if ( pObj->IsBuilding() )
 		{
 			m_pBuildingPanel->SetVisible( true );
 			m_pRunningPanel->SetVisible( false );
 
+			m_pUpgradeIcons[0]->SetVisible( false );
+			m_pUpgradeIcons[1]->SetVisible( false );
+			m_pUpgradeIcons[2]->SetVisible( false );
 		}
 		else
 		{
 			m_pBuildingPanel->SetVisible( false );
 			m_pRunningPanel->SetVisible( true );
-			m_pLevelIcons[pObj->GetUpgradeLevel() - 1]->SetVisible( true );
+
+			int iUpgradeLevel = pObj->GetUpgradeLevel();
+
+			Assert( iUpgradeLevel >= 1 && iUpgradeLevel <= 3 );
+
+			m_pUpgradeIcons[0]->SetVisible( false );
+			m_pUpgradeIcons[1]->SetVisible( false );
+			m_pUpgradeIcons[2]->SetVisible( false );
+
+			// show the correct upgrade level icon
+			if ( !pObj->IsMiniBuilding() )
+			{
+				m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
+			}
 		}
 	}
 	else
@@ -211,10 +229,6 @@ void CBuildingStatusItem::PerformLayout( void )
 			m_pAlertTray->HideTray();
 			m_pWrenchIcon->SetVisible( false );
 			m_pSapperIcon->SetVisible( false );
-
-			m_pLevelIcons[0]->SetVisible( false );
-			m_pLevelIcons[1]->SetVisible( false );
-			m_pLevelIcons[2]->SetVisible( false );
 		}
 	}
 }
@@ -278,17 +292,11 @@ const char *CBuildingStatusItem::GetBackgroundImage( void )
 
 	switch( pLocalPlayer->GetTeamNumber() )
 	{
-	case TF_TEAM_RED:
-		pResult = "obj_status_background_red";
-		break;
 	case TF_TEAM_BLUE:
 		pResult = "obj_status_background_blue";
 		break;
-	case TF_TEAM_GREEN:
-		pResult = "obj_status_background_green";
-		break;
-	case TF_TEAM_YELLOW:
-		pResult = "obj_status_background_yellow";
+	case TF_TEAM_RED:
+		pResult = "obj_status_background_red";
 		break;
 	default:
 		break;
@@ -325,7 +333,7 @@ void CBuildingStatusItem::OnTick()
 			if ( event )
 			{
 				event->SetInt( "building_type", GetRepresentativeObjectType() );
-				event->SetInt( "object_mode", GetRepresentativeObjectType() );
+				event->SetInt( "object_mode", GetRepresentativeObjectMode() );
 				gameeventmanager->FireEventClientSide( event );
 			}
 		}
@@ -366,36 +374,53 @@ void CBuildingStatusItem::OnTick()
 	}
 	else
 	{
-		if ( !m_pAlertTray->IsTrayOut() )
-		{
-			m_pAlertTray->ShowTray();
-		}
-
-		m_pAlertTray->SetAlertType( alertLevel );
-
 		m_pWrenchIcon->SetVisible( false );
 		m_pSapperIcon->SetVisible( false );
 
-		if ( m_pAlertTray->GetAlertType() != BUILDING_HUD_ALERT_NONE &&
-			m_pAlertTray->GetPercentDeployed() >= 1.0f )
+		bool bShowAlertTray = false;
+		bool bAlertTrayFullyDeployed = m_pAlertTray->GetPercentDeployed() >= 1.0f;
+		switch( alertLevel )
 		{
-			switch( m_pAlertTray->GetAlertType() )
+			// show low ammo for normal sentry and mini-sentry
+		case BUILDING_HUD_ALERT_LOW_AMMO:
+		case BUILDING_HUD_ALERT_VERY_LOW_AMMO:
+			bShowAlertTray = true;
+			m_pWrenchIcon->SetVisible( bAlertTrayFullyDeployed );
+			break;
+
+			// do not show low health for the disposable mini-sentry
+		case BUILDING_HUD_ALERT_LOW_HEALTH:
+		case BUILDING_HUD_ALERT_VERY_LOW_HEALTH:
+			bShowAlertTray = pObj->IsDisposableBuilding() == false;
+			m_pWrenchIcon->SetVisible( bAlertTrayFullyDeployed && bShowAlertTray );
+			break;
+
+			// always show when being sapped
+		case BUILDING_HUD_ALERT_SAPPER:
+			bShowAlertTray = true;
+			m_pSapperIcon->SetVisible( bAlertTrayFullyDeployed );
+			break;
+
+		default:
+			bShowAlertTray = false;
+			break;
+		}
+
+		if ( bShowAlertTray && !pObj->IsDisposableBuilding() )
+		{
+			if ( !m_pAlertTray->IsTrayOut() )
 			{
-			case BUILDING_HUD_ALERT_LOW_AMMO:
-			case BUILDING_HUD_ALERT_LOW_HEALTH:
-			case BUILDING_HUD_ALERT_VERY_LOW_AMMO:
-			case BUILDING_HUD_ALERT_VERY_LOW_HEALTH:
-				m_pWrenchIcon->SetVisible( true );
-				break;
-
-			case BUILDING_HUD_ALERT_SAPPER:
-				m_pSapperIcon->SetVisible( true );
-				break;
-
-			case BUILDING_HUD_ALERT_NONE:
-			default:
-				break;
+				m_pAlertTray->ShowTray();
 			}
+			m_pAlertTray->SetAlertType( alertLevel );
+		}
+		else
+		{
+			if ( m_pAlertTray->IsTrayOut() )
+			{
+				m_pAlertTray->HideTray();
+			}
+			m_pAlertTray->SetAlertType( BUILDING_HUD_ALERT_NONE );
 		}
 	}	
 }
@@ -436,7 +461,15 @@ int CBuildingStatusItem::GetRepresentativeObjectMode( void )
 //-----------------------------------------------------------------------------
 int CBuildingStatusItem::GetObjectPriority( void )
 {
-	return GetObjectInfo( GetRepresentativeObjectType() )->m_iDisplayPriority;	
+	int nPriority = GetObjectInfo( GetRepresentativeObjectType() )->m_iDisplayPriority;
+
+	// MvM hack to sort buildings properly since we can have more than one sentry via upgrades
+	if ( GetRepresentativeObjectType() == OBJ_SENTRYGUN && GetRepresentativeObjectMode() == MODE_SENTRYGUN_DISPOSABLE )
+	{
+		nPriority = 0;
+	}
+
+	return nPriority;	
 }
 
 //============================================================================
@@ -608,24 +641,20 @@ void CBuildingStatusAlertTray::SetAlertType( BuildingHudAlert_t alertLevel )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CBuildingStatusItem_SentryGun::CBuildingStatusItem_SentryGun( Panel *parent ) :
-	CBuildingStatusItem( parent, "resource/UI/hud_obj_sentrygun.res", OBJ_SENTRYGUN, OBJECT_MODE_NONE )
+CBuildingStatusItem( parent, "resource/UI/hud_obj_sentrygun.res", OBJ_SENTRYGUN, MODE_SENTRYGUN_NORMAL )
 {
 	m_pShellsProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Shells" );
 	m_pRocketsProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Rockets" );
 	m_pUpgradeProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Upgrade" );
 
-	m_pRocketsIcon = new vgui::ImagePanel( GetRunningPanel(), "RocketIcon" );
+	m_pRocketIcon = new vgui::ImagePanel( GetRunningPanel(), "RocketIcon" );
 	m_pUpgradeIcon = new CIconPanel( GetRunningPanel(), "UpgradeIcon" );
-
-	m_pKillsLabel = new CExLabel( GetRunningPanel(), "KillsLabel", "0" );
 
 	m_pSentryIcons[0] = new CIconPanel( this, "Icon_Sentry_1" );
 	m_pSentryIcons[1] = new CIconPanel( this, "Icon_Sentry_2" );
 	m_pSentryIcons[2] = new CIconPanel( this, "Icon_Sentry_3" );
 
 	m_iUpgradeLevel = 1;
-
-	m_iKills = -1;
 }
 
 
@@ -649,7 +678,7 @@ void CBuildingStatusItem_SentryGun::PerformLayout( void )
 
 	C_ObjectSentrygun *pSentrygun = dynamic_cast<C_ObjectSentrygun *>( GetRepresentativeObject() );
 
-	if ( !pSentrygun )
+	if ( !pSentrygun || ( pSentrygun && pSentrygun->IsDisposableBuilding() ) )
 	{
 		return;
 	}
@@ -703,21 +732,12 @@ void CBuildingStatusItem_SentryGun::PerformLayout( void )
 	float flUpgrade = (float)iMetal / (float)iMetalRequired;
 	m_pUpgradeProgress->SetProgress( flUpgrade );
 
-	if ( pSentrygun->IsMiniBuilding() )
-	{
-		// No upgrade labels for mini sentries
-		m_pUpgradeIcon->SetVisible( false);
-		m_pUpgradeProgress->SetVisible( false );
-	}
-	else
-	{
-		// upgrade label only in 1 or 2
-		m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
-		m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
-	}
+	// upgrade label only in 1 or 2
+	m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
+	m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
 
 	// rockets label only in 3
-	m_pRocketsIcon->SetVisible( iUpgradeLevel == 3 );
+	m_pRocketIcon->SetVisible( iUpgradeLevel == 3 );
 	m_pRocketsProgress->SetVisible( iUpgradeLevel == 3 );
 }
 
@@ -745,17 +765,11 @@ const char *CBuildingStatusItem_SentryGun::GetBackgroundImage( void )
 
 	switch( pLocalPlayer->GetTeamNumber() )
 	{
-	case TF_TEAM_RED:
-		pResult = "obj_status_background_tall_red";
-		break;
 	case TF_TEAM_BLUE:
 		pResult = "obj_status_background_tall_blue";
 		break;
-	case TF_TEAM_GREEN:
-		pResult = "obj_status_background_tall_green";
-		break;
-	case TF_TEAM_YELLOW:
-		pResult = "obj_status_background_tall_yellow";
+	case TF_TEAM_RED:
+		pResult = "obj_status_background_tall_red";
 		break;
 	default:
 		break;
@@ -777,12 +791,137 @@ const char *CBuildingStatusItem_SentryGun::GetInactiveBackgroundImage( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+CBuildingStatusItem_SentryGun_Disposable::CBuildingStatusItem_SentryGun_Disposable( Panel *parent ) :
+CBuildingStatusItem( parent, "resource/UI/hud_obj_sentrygun_disp.res", OBJ_SENTRYGUN, MODE_SENTRYGUN_DISPOSABLE )
+{
+	m_pShellsProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Shells" );
+
+	m_pUpgradeIcon = new CIconPanel( GetRunningPanel(), "UpgradeIcon" );
+
+	m_pSentryIcons[0] = new CIconPanel( this, "Icon_Sentry_1" );
+	m_pSentryIcons[1] = new CIconPanel( this, "Icon_Sentry_2" );
+	m_pSentryIcons[2] = new CIconPanel( this, "Icon_Sentry_3" );
+
+	m_iUpgradeLevel = 1;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBuildingStatusItem_SentryGun_Disposable::ApplySchemeSettings( vgui::IScheme *scheme )
+{
+	BaseClass::ApplySchemeSettings( scheme );
+
+	m_cLowAmmoColor = scheme->GetColor( "LowHealthRed", Color(255,0,0,255) );
+	m_cNormalAmmoColor = scheme->GetColor( "ProgressOffWhite", Color(255,255,255,255) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Calc visibility of subpanels
+//-----------------------------------------------------------------------------
+void CBuildingStatusItem_SentryGun_Disposable::PerformLayout( void )
+{
+	BaseClass::PerformLayout();
+
+	C_ObjectSentrygun *pSentrygun = dynamic_cast<C_ObjectSentrygun *>( GetRepresentativeObject() );
+
+	if ( !pSentrygun || ( pSentrygun && !pSentrygun->IsDisposableBuilding() ) )
+	{
+		return;
+	}
+
+	GetRunningPanel()->SetDialogVariable( "numkills", pSentrygun->GetKills() );
+	GetRunningPanel()->SetDialogVariable( "numassists", pSentrygun->GetAssists() );
+
+	int iShells, iMaxShells;
+	int iRockets, iMaxRockets;
+	pSentrygun->GetAmmoCount( iShells, iMaxShells, iRockets, iMaxRockets );
+
+	// Shells label
+	float flShells = (float)iShells / (float)iMaxShells;
+	m_pShellsProgress->SetProgress( flShells );
+
+	if ( flShells < 0.25f )
+	{
+		m_pShellsProgress->SetFgColor( m_cLowAmmoColor );
+	}
+	else
+	{
+		m_pShellsProgress->SetFgColor( m_cNormalAmmoColor );
+	}
+
+	int iUpgradeLevel = pSentrygun->GetUpgradeLevel();
+
+	Assert( iUpgradeLevel >= 1 && iUpgradeLevel <= 3 );
+
+	// show the correct icon
+	m_pSentryIcons[0]->SetVisible( false );
+	m_pSentryIcons[1]->SetVisible( false );
+	m_pSentryIcons[2]->SetVisible( false );
+	m_pSentryIcons[iUpgradeLevel-1]->SetVisible( true );
+
+	m_pUpgradeIcon->SetEnabled( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBuildingStatusItem_SentryGun_Disposable::OnTick()
+{
+	BaseClass::OnTick();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CBuildingStatusItem_SentryGun_Disposable::GetBackgroundImage( void )
+{
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	const char *pResult = "obj_status_background_tall_blue";
+
+	if ( !pLocalPlayer )
+	{
+		return pResult;
+	}
+
+	switch( pLocalPlayer->GetTeamNumber() )
+	{
+	case TF_TEAM_BLUE:
+		pResult = "obj_status_background_blue";
+		break;
+	case TF_TEAM_RED:
+		pResult = "obj_status_background_red";
+		break;
+	default:
+		break;
+	}
+
+	return pResult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const char *CBuildingStatusItem_SentryGun_Disposable::GetInactiveBackgroundImage( void )
+{
+	return "obj_status_background_disabled";
+}
+
+//============================================================================
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CBuildingStatusItem_Dispenser::CBuildingStatusItem_Dispenser( Panel *parent ) :
-	CBuildingStatusItem( parent, "resource/UI/hud_obj_dispenser.res", OBJ_DISPENSER, OBJECT_MODE_NONE )
+CBuildingStatusItem( parent, "resource/UI/hud_obj_dispenser.res", OBJ_DISPENSER )
 {
 	m_pAmmoProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Ammo" );
 	m_pUpgradeProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Upgrade" );
+
 	m_pUpgradeIcon = new CIconPanel( GetRunningPanel(), "UpgradeIcon" );
+
 }
 
 //-----------------------------------------------------------------------------
@@ -801,22 +940,28 @@ void CBuildingStatusItem_Dispenser::PerformLayout( void )
 
 	int iAmmo = pDispenser->GetMetalAmmoCount();
 
-	float flProgress = (float)iAmmo / (float)DISPENSER_MAX_METAL_AMMO;
+	float flMaxMetal = pDispenser->IsMiniBuilding() ? MINI_DISPENSER_MAX_METAL : DISPENSER_MAX_METAL_AMMO;
+	float flProgress = (float)iAmmo / flMaxMetal;
 	m_pAmmoProgress->SetProgress( flProgress );
 
 	int iUpgradeLevel = pDispenser->GetUpgradeLevel();
 
+	Assert( iUpgradeLevel >= 1 && iUpgradeLevel <= 3 );
+
 	// upgrade progress
 	int iMetal = pDispenser->GetUpgradeMetal();
 	int iMetalRequired = pDispenser->GetUpgradeMetalRequired();
-	float flUpgrade = (float)iMetal / (float)iMetalRequired;
-	m_pUpgradeProgress->SetProgress(flUpgrade);
-
+	flProgress = (float)iMetal / (float)iMetalRequired;
+	
+	m_pUpgradeProgress->SetProgress( flProgress );
+	
 	// upgrade label only in 1 or 2
-	m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
-	m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
-
+	bool bShowUpgradeInfo = iUpgradeLevel < 3;
+	m_pUpgradeIcon->SetVisible( bShowUpgradeInfo );
+	m_pUpgradeProgress->SetVisible( bShowUpgradeInfo );
 }
+
+
 
 //============================================================================
 
@@ -824,7 +969,7 @@ void CBuildingStatusItem_Dispenser::PerformLayout( void )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CBuildingStatusItem_TeleporterEntrance::CBuildingStatusItem_TeleporterEntrance( Panel *parent ) :
-CBuildingStatusItem( parent, "resource/UI/hud_obj_tele_entrance.res", OBJ_TELEPORTER, TELEPORTER_TYPE_ENTRANCE )
+CBuildingStatusItem( parent, "resource/UI/hud_obj_tele_entrance.res", OBJ_TELEPORTER, MODE_TELEPORTER_ENTRANCE )
 {
 	// Panel and children when we are charging
 	m_pChargingPanel = new vgui::EditablePanel( GetRunningPanel(), "ChargingPanel" );
@@ -833,12 +978,11 @@ CBuildingStatusItem( parent, "resource/UI/hud_obj_tele_entrance.res", OBJ_TELEPO
 	// Panel and children when we are fully charged
 	m_pFullyChargedPanel = new vgui::EditablePanel( GetRunningPanel(), "FullyChargedPanel" );
 
-	m_pUpgradeProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Upgrade" );
-
-	m_pUpgradeIcon = new CIconPanel( GetRunningPanel(), "UpgradeIcon" );
-
 	m_iTimesUsed = -1;	// force first update of 0
 	m_iTeleporterState = -1;
+
+	m_pUpgradeProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Upgrade" );
+	m_pUpgradeIcon = new CIconPanel( GetRunningPanel(), "UpgradeIcon" );
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 }
@@ -853,25 +997,13 @@ void CBuildingStatusItem_TeleporterEntrance::OnTick( void )
 
 	if ( pTeleporter && IsActive() )
 	{
-		int iUpgradeLevel = pTeleporter->GetUpgradeLevel();
-
 		if ( pTeleporter->GetState() == TELEPORTER_STATE_RECHARGING )
 		{
 			// Update the recharge
-			float flMaxRecharge = 0.5 + g_flTeleporterRechargeTimes[iUpgradeLevel - 1];
+			float flMaxRecharge = pTeleporter->GetCurrentRechargeDuration();
 			float flChargeTime = pTeleporter->GetChargeTime();
 			m_pRechargeTimer->SetProgress( 1.0 - ( flChargeTime / flMaxRecharge ) );
 		}
-
-		// upgrade progress
-		int iMetal = pTeleporter->GetUpgradeMetal();
-		int iMetalRequired = pTeleporter->GetUpgradeMetalRequired();
-		float flUpgrade = (float)iMetal / (float)iMetalRequired;
-		m_pUpgradeProgress->SetProgress( flUpgrade );
-
-		// upgrade label only in 1 or 2
-		m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
-		m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
 	}
 
 	BaseClass::OnTick();
@@ -899,12 +1031,26 @@ void CBuildingStatusItem_TeleporterEntrance::PerformLayout( void )
 
 	// How many times has this teleporter been used?
 	m_pFullyChargedPanel->SetDialogVariable( "timesused", pTeleporter->GetTimesUsed() );		
+
+	int iUpgradeLevel = pTeleporter->GetUpgradeLevel();
+
+	Assert( iUpgradeLevel >= 1 && iUpgradeLevel <= 3 );
+
+	// upgrade progress
+	int iMetal = pTeleporter->GetUpgradeMetal();
+	int iMetalRequired = pTeleporter->GetUpgradeMetalRequired();
+	float flUpgrade = (float)iMetal / (float)iMetalRequired;
+	m_pUpgradeProgress->SetProgress( flUpgrade );
+
+	// upgrade label only in 1 or 2
+	m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
+	m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
 }
 
 //============================================================================
 
 CBuildingStatusItem_TeleporterExit::CBuildingStatusItem_TeleporterExit( Panel *parent ) :
-	CBuildingStatusItem( parent, "resource/UI/hud_obj_tele_exit.res", OBJ_TELEPORTER, TELEPORTER_TYPE_EXIT )
+CBuildingStatusItem( parent, "resource/UI/hud_obj_tele_exit.res", OBJ_TELEPORTER, MODE_TELEPORTER_EXIT )
 {
 	m_pUpgradeProgress = new vgui::ContinuousProgressBar( GetRunningPanel(), "Upgrade" );
 	m_pUpgradeIcon = new CIconPanel( GetRunningPanel(), "UpgradeIcon" );
@@ -913,7 +1059,7 @@ CBuildingStatusItem_TeleporterExit::CBuildingStatusItem_TeleporterExit( Panel *p
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CBuildingStatusItem_TeleporterExit::PerformLayout(void)
+void CBuildingStatusItem_TeleporterExit::PerformLayout( void )
 {
 	BaseClass::PerformLayout();
 
@@ -925,28 +1071,27 @@ void CBuildingStatusItem_TeleporterExit::PerformLayout(void)
 		return;
 	}
 
+	int iUpgradeLevel = pTeleporter->GetUpgradeLevel();
+
+	Assert( iUpgradeLevel >= 1 && iUpgradeLevel <= 3 );
+
 	// upgrade progress
 	int iMetal = pTeleporter->GetUpgradeMetal();
 	int iMetalRequired = pTeleporter->GetUpgradeMetalRequired();
 	float flUpgrade = (float)iMetal / (float)iMetalRequired;
+	m_pUpgradeProgress->SetProgress( flUpgrade );
 
-	if ( m_pUpgradeProgress )
-	{ 
-		m_pUpgradeProgress->SetProgress( flUpgrade );
-		m_pUpgradeProgress->SetVisible( pTeleporter->GetUpgradeLevel() < 3 );
-	}
-		
-	if ( m_pUpgradeIcon )
-		m_pUpgradeIcon->SetVisible( pTeleporter->GetUpgradeLevel() < 3 );
+	// upgrade label only in 1 or 2
+	m_pUpgradeIcon->SetVisible( iUpgradeLevel < 3 );
+	m_pUpgradeProgress->SetVisible( iUpgradeLevel < 3 );
 }
 
-//============================================================================
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 CBuildingStatusItem_Sapper::CBuildingStatusItem_Sapper( Panel *parent ) :
-	CBuildingStatusItem( parent, "resource/UI/hud_obj_sapper.res", OBJ_ATTACHMENT_SAPPER, OBJECT_MODE_NONE )
+CBuildingStatusItem( parent, "resource/UI/hud_obj_sapper.res", OBJ_ATTACHMENT_SAPPER )
 {
 	// health of target building
 	m_pTargetHealthBar = new ContinuousProgressBar( GetRunningPanel(), "TargetHealth" );
@@ -1006,9 +1151,9 @@ DECLARE_HUDELEMENT( CHudBuildingStatusContainer_Spy );
 // Purpose: 
 //-----------------------------------------------------------------------------
 CHudBuildingStatusContainer_Spy::CHudBuildingStatusContainer_Spy( const char *pElementName ) :
-	BaseClass( "BuildingStatus_Spy" )
+BaseClass( "BuildingStatus_Spy" )
 {
-	AddBuildingPanel( OBJ_ATTACHMENT_SAPPER, OBJECT_MODE_NONE );
+	AddBuildingPanel( OBJ_ATTACHMENT_SAPPER );
 }
 
 //-----------------------------------------------------------------------------
@@ -1039,12 +1184,15 @@ DECLARE_HUDELEMENT( CHudBuildingStatusContainer_Engineer );
 // Purpose: 
 //-----------------------------------------------------------------------------
 CHudBuildingStatusContainer_Engineer::CHudBuildingStatusContainer_Engineer( const char *pElementName ) :
-	BaseClass( "BuildingStatus_Engineer" )
+BaseClass( "BuildingStatus_Engineer" )
 {
-	AddBuildingPanel( OBJ_SENTRYGUN, OBJECT_MODE_NONE );
-	AddBuildingPanel( OBJ_DISPENSER, OBJECT_MODE_NONE );
-	AddBuildingPanel( OBJ_TELEPORTER, TELEPORTER_TYPE_ENTRANCE );
-	AddBuildingPanel( OBJ_TELEPORTER, TELEPORTER_TYPE_EXIT );
+	AddBuildingPanel( OBJ_SENTRYGUN, MODE_SENTRYGUN_NORMAL );
+	AddBuildingPanel( OBJ_DISPENSER );
+	AddBuildingPanel( OBJ_TELEPORTER, MODE_TELEPORTER_ENTRANCE );
+	AddBuildingPanel( OBJ_TELEPORTER, MODE_TELEPORTER_EXIT );
+	AddBuildingPanel( OBJ_SENTRYGUN, MODE_SENTRYGUN_DISPOSABLE );
+
+	vgui::ivgui()->AddTickSignal( GetVPanel(), 500 );
 }
 
 //-----------------------------------------------------------------------------
@@ -1055,16 +1203,62 @@ bool CHudBuildingStatusContainer_Engineer::ShouldDraw( void )
 	// Don't draw in freezecam
 	C_TFPlayer *pPlayer = CTFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer || !pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) || pPlayer->GetObserverMode() == OBS_MODE_FREEZECAM )
-	{
 		return false;
-	}
 
 	if ( pPlayer->GetTeamNumber() <= TEAM_SPECTATOR )
-	{
 		return false;
-	}
+
+	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
+		return false;
+
+	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
+		return false;
 
 	return CHudElement::ShouldDraw();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudBuildingStatusContainer_Engineer::OnTick()
+{
+	BaseClass::OnTick();
+	
+	if ( !ShouldDraw() )
+		return;
+
+	C_TFPlayer *pLocalPlayer = CTFPlayer::GetLocalTFPlayer();
+	if ( pLocalPlayer )
+	{
+		bool bDisposableSentriesVisible = false;
+
+		if ( TFGameRules() && TFGameRules()->GameModeUsesUpgrades() )
+		{
+			int nDisposableSentries = 0;
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pLocalPlayer, nDisposableSentries, engy_disposable_sentries );
+			if ( nDisposableSentries )
+			{
+				bDisposableSentriesVisible = true;
+			}
+		}
+
+
+		for ( int i = 0 ; i < m_BuildingPanels.Count() ; i++ )
+		{
+			CBuildingStatusItem *pItem = m_BuildingPanels.Element( i );
+
+			if ( pItem && ( pItem->GetRepresentativeObjectType() == OBJ_SENTRYGUN ) && ( pItem->GetRepresentativeObjectMode() == MODE_SENTRYGUN_DISPOSABLE ) )
+			{
+				if ( pItem->IsVisible() != bDisposableSentriesVisible )
+				{
+					pItem->SetVisible( bDisposableSentriesVisible );
+				}
+
+				break;
+			}
+
+		}
+	}
 }
 
 //============================================================================
@@ -1073,19 +1267,19 @@ bool CHudBuildingStatusContainer_Engineer::ShouldDraw( void )
 typedef CBuildingStatusItem *BUILDINGSTATUSITEM_PTR;
 static bool BuildingOrderLessFunc( const BUILDINGSTATUSITEM_PTR &left, const BUILDINGSTATUSITEM_PTR &right )
 {
-	return ( left->GetObjectPriority() < right->GetObjectPriority() );
+	return ( left->GetObjectPriority() <= right->GetObjectPriority() );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 CHudBuildingStatusContainer::CHudBuildingStatusContainer( const char *pElementName ) :
-	CHudElement( pElementName ), BaseClass( NULL, pElementName )
+CHudElement( pElementName ), BaseClass( NULL, pElementName )
 {
 	vgui::Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
-	SetHiddenBits( HIDEHUD_MISCSTATUS );
+	SetHiddenBits( HIDEHUD_MISCSTATUS | HIDEHUD_BUILDING_STATUS );
 
 	SetProportional(true);
 
@@ -1137,21 +1331,32 @@ void CHudBuildingStatusContainer::LevelInit( void )
 //-----------------------------------------------------------------------------
 CBuildingStatusItem *CHudBuildingStatusContainer::CreateItemPanel( int iObjectType, int iObjectMode )
 {
-	CBuildingStatusItem *pBuildingItem;
+	CBuildingStatusItem *pBuildingItem = NULL;
 	
 	switch( iObjectType )
 	{
 	case OBJ_SENTRYGUN:
-		pBuildingItem = new CBuildingStatusItem_SentryGun( this );
+		if ( iObjectMode == 0 )
+		{
+			pBuildingItem = new CBuildingStatusItem_SentryGun( this );
+		}
+		else
+		{
+			pBuildingItem = new CBuildingStatusItem_SentryGun_Disposable( this );
+		}
 		break;
 	case OBJ_DISPENSER:
 		pBuildingItem = new CBuildingStatusItem_Dispenser( this );
 		break;
 	case OBJ_TELEPORTER:
-		if ( iObjectMode == TELEPORTER_TYPE_ENTRANCE )
+		if ( iObjectMode == 0 )
+		{
 			pBuildingItem = new CBuildingStatusItem_TeleporterEntrance( this );
-		else /*if ( iObjectMode == TELEPORTER_TYPE_EXIT )*/
+		}
+		else if ( iObjectMode == 1 )
+		{
 			pBuildingItem = new CBuildingStatusItem_TeleporterExit( this );
+		}
 		break;
 	case OBJ_ATTACHMENT_SAPPER:
 		pBuildingItem = new CBuildingStatusItem_Sapper( this );
@@ -1169,9 +1374,9 @@ CBuildingStatusItem *CHudBuildingStatusContainer::CreateItemPanel( int iObjectTy
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudBuildingStatusContainer::AddBuildingPanel( int iBuildingType, int iBuildingMode )
+void CHudBuildingStatusContainer::AddBuildingPanel( int iObjectType, int iObjectMode )
 {
-	CBuildingStatusItem *pBuildingItem = CreateItemPanel( iBuildingType, iBuildingMode );
+	CBuildingStatusItem *pBuildingItem = CreateItemPanel( iObjectType, iObjectMode );
 
 	Assert( pBuildingItem );
 
@@ -1200,27 +1405,29 @@ void CHudBuildingStatusContainer::UpdateAllBuildings( void )
 		{
 			// find the item that represents this building type
 			C_BaseObject *pObj = NULL;
+			if ( pObj )
+			{
+				// find the object
+				pObj = pLocalPlayer->GetObjectOfType( pItem->GetRepresentativeObjectType(), pItem->GetRepresentativeObjectMode() );
 
-			// find the object
-			pObj = pLocalPlayer->GetObjectOfType( pItem->GetRepresentativeObjectType(), pItem->GetRepresentativeObjectMode() );
+				pItem->SetObject( pObj );
 
-			pItem->SetObject( pObj );
-
-			pItem->InvalidateLayout( true );
-			RecalculateAlertState();
+				pItem->InvalidateLayout( true );
+				RecalculateAlertState();
+			}
 		}
 	}
 }
 
 
-void CHudBuildingStatusContainer::OnBuildingChanged( int iBuildingType, int iObjectMode )
+void CHudBuildingStatusContainer::OnBuildingChanged( int iBuildingType, int iBuildingMode, bool bBuildingIsDead )
 {
 	bool bFound = false;
 	for ( int i = 0; i < m_BuildingPanels.Count() && !bFound; i++ )
 	{
 		CBuildingStatusItem *pItem = m_BuildingPanels.Element(i);
 
-		if ( pItem && pItem->GetRepresentativeObjectType() == iBuildingType && pItem->GetRepresentativeObjectMode() == iObjectMode )
+		if ( pItem && pItem->GetRepresentativeObjectType() == iBuildingType && pItem->GetRepresentativeObjectMode() == iBuildingMode )
 		{
 			// find the item that represents this building type
 			C_BaseObject *pObj = NULL;
@@ -1229,14 +1436,13 @@ void CHudBuildingStatusContainer::OnBuildingChanged( int iBuildingType, int iObj
 			C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 			if ( pLocalPlayer )
 			{
-				pObj = pLocalPlayer->GetObjectOfType( iBuildingType, iObjectMode );
+				pObj = pLocalPlayer->GetObjectOfType( iBuildingType, iBuildingMode );
 				pItem->SetObject( pObj );
+				pItem->InvalidateLayout( true );
+				bFound = true;
+
+				RecalculateAlertState();
 			}
-
-			pItem->InvalidateLayout( true );
-			bFound = true;
-
-			RecalculateAlertState();
 		}
 	}
 }
@@ -1261,6 +1467,10 @@ void CHudBuildingStatusContainer::RepositionObjectPanels( void )
 	float flXPos = XRES(9);
 	float flYPos = YRES(9);
 
+	float flTeleEntranceY = YRES(9);
+	float flTeleExitY = YRES(9);
+
+	// Regular Panels
 	for ( int i = 0; i < m_BuildingPanels.Count(); i++ )
 	{
 		CBuildingStatusItem *pItem = m_BuildingPanels.Element(i);
@@ -1270,7 +1480,26 @@ void CHudBuildingStatusContainer::RepositionObjectPanels( void )
 			// set position directly
 			pItem->SetPos( flXPos, flYPos );
 
-			flYPos += pItem->GetTall();	// the fade around the panels gives a gap
+			// do not increment for speed pad (this is a minor hack)
+			// OBJ_TELEPORTER, MODE_TELEPORTER_SPEED
+			if ( pItem->GetRepresentativeObjectType() == OBJ_TELEPORTER )
+			{
+				switch ( pItem->GetRepresentativeObjectMode() )
+				{
+					case MODE_TELEPORTER_ENTRANCE:
+						flTeleEntranceY = flYPos;
+						flYPos += pItem->GetTall();
+						break;
+					case MODE_TELEPORTER_EXIT:
+						flTeleExitY = flYPos;
+						flYPos += pItem->GetTall();
+						break;
+				}
+			}
+			else
+			{
+				flYPos += pItem->GetTall();	// the fade around the panels gives a gap
+			}
 		}
 	}
 }
@@ -1285,14 +1514,13 @@ void CHudBuildingStatusContainer::FireGameEvent( IGameEvent *event )
 	if ( Q_strcmp(type, "building_info_changed" ) == 0 )
 	{
 		int iBuildingType = event->GetInt( "building_type" );
-		int iObjectMode= event->GetInt( "object_mode" );
+		int iBuildingMode = event->GetInt( "object_mode" );
 
 		if ( iBuildingType >= 0 )
 		{
 			bool bRemove = ( event->GetInt( "remove" ) > 0 );
-			bRemove;
 
-			OnBuildingChanged( iBuildingType, iObjectMode );
+			OnBuildingChanged( iBuildingType, iBuildingMode, bRemove );
 		}
 		else
 		{
@@ -1320,6 +1548,8 @@ void CHudBuildingStatusContainer::RecalculateAlertState( void )
 			BuildingHudAlert_t alertLevel = pObj->GetBuildingAlertLevel();
 			if ( alertLevel > maxAlertLevel )
 			{
+				if ( pObj->IsMiniBuilding() && alertLevel != BUILDING_HUD_ALERT_LOW_HEALTH && alertLevel != BUILDING_HUD_ALERT_VERY_LOW_HEALTH && alertLevel != BUILDING_HUD_ALERT_SAPPER )
+					continue;
 				maxAlertLevel = alertLevel;
 			}
 		}
@@ -1349,19 +1579,19 @@ void CHudBuildingStatusContainer::OnTick( void )
 			return;
 
 		pLocalPlayer->EmitSound( "Hud.Warning" );
-			
+
 		switch( m_AlertLevel )
 		{
-			case BUILDING_HUD_ALERT_VERY_LOW_AMMO:
-			case BUILDING_HUD_ALERT_VERY_LOW_HEALTH:
-				m_flNextBeep = gpGlobals->curtime + 2.0f;
-				m_iNumBeepsToBeep--;
-				break;
+		case BUILDING_HUD_ALERT_VERY_LOW_AMMO:
+		case BUILDING_HUD_ALERT_VERY_LOW_HEALTH:
+			m_flNextBeep = gpGlobals->curtime + 2.0f;
+			m_iNumBeepsToBeep--;
+			break;
 
-			case BUILDING_HUD_ALERT_SAPPER:
-				m_flNextBeep = gpGlobals->curtime + 1.0f;
-				// don't decrement beeps, we want them to go on forever
-				break;
+		case BUILDING_HUD_ALERT_SAPPER:
+			m_flNextBeep = gpGlobals->curtime + 1.0f;
+			// don't decrement beeps, we want them to go on forever
+			break;
 		}
 	}
 }

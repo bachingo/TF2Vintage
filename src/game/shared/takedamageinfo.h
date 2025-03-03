@@ -116,7 +116,7 @@ public:
 	static void		DebugGetDamageTypeString(unsigned int DamageType, char *outbuf, int outbuflength );
 
 	void			SetCritType( ECritType eType ); 
-
+	
 	ECritType		GetCritType() const { return m_eCritType; }
 
 //private:
@@ -130,6 +130,8 @@ public:
 	void			ScriptSetWeapon( HSCRIPT hWeapon );
 	HSCRIPT			ScriptGetDamageBonusProvider() const;
 	void			ScriptSetDamageBonus( float flBonus, HSCRIPT hProvider );
+	void			ScriptSetCritType( int eType );
+	int				ScriptGetCritType() const;
 
 protected:
 	void			Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBaseEntity *pWeapon, const Vector &damageForce, const Vector &damagePosition, const Vector &reportedPosition, float flDamage, int bitsDamageType, int iKillType );

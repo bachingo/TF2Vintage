@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF Caltrop Grenade.
 //
@@ -142,7 +142,7 @@ void CTFGrenadeCaltropProjectile::Detonate()
 {
 	if ( ShouldNotDetonate() )
 	{
-		RemoveGrenade();
+		Destroy();
 		return;
 	}
 
@@ -182,7 +182,7 @@ void CTFGrenadeCaltropProjectile::Touch( CBaseEntity *pOther )
 
 #ifdef GAME_DLL
 	// Do the leg damage to the player
-	CTakeDamageInfo info( this, GetThrower(), GRENADE_CALTROP_DAMAGE, /*DMG_LEG_DAMAGE | */ DMG_PREVENT_PHYSICS_FORCE );
+	CTakeDamageInfo info( this, GetThrower(), GRENADE_CALTROP_DAMAGE, DMG_PREVENT_PHYSICS_FORCE );
 	pOther->TakeDamage( info );
 
 	// have the caltrop disappear

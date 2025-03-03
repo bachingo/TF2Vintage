@@ -352,14 +352,6 @@ void CViewRender::LevelInit( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Called once per level change
-//-----------------------------------------------------------------------------
-void CViewRender::LevelShutdown( void )
-{
-	g_pScreenSpaceEffects->ShutdownScreenSpaceEffects( );
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Called at shutdown
 //-----------------------------------------------------------------------------
 void CViewRender::Shutdown( void )

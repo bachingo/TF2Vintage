@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //  
 //
@@ -7,6 +7,7 @@
 #include "tf_fx_shared.h"
 #include "tf_weaponbase.h"
 #include "takedamageinfo.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -15,9 +16,10 @@
 #else
 #include "tf_fx.h"
 #include "ilagcompensationmanager.h"
+#include "tf_passtime_logic.h"
 #endif
 
-ConVar tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads", "0", FCVAR_NOTIFY|FCVAR_REPLICATED, "If set to 1, weapons that fire multiple pellets per shot will use a non-random pellet distribution." );
+ConVar tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "If set to 1, weapons that fire multiple pellets per shot will use a non-random pellet distribution." );
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -106,15 +108,72 @@ void EndGroupingSounds() {}
 
 #endif
 
+// 10, Square
+Vector g_vecFixedWpnSpreadPellets[] = 
+{
+	Vector( 0,0,0 ),	// First pellet goes down the middle
+	Vector( 1,0,0 ),	
+	Vector( -1,0,0 ),	
+	Vector( 0,-1,0 ),	
+	Vector( 0,1,0 ),	
+	Vector( 0.85,-0.85,0 ),	
+	Vector( 0.85,0.85,0 ),	
+	Vector( -0.85,-0.85,0 ),	
+	Vector( -0.85,0.85,0 ),	
+	Vector( 0,0,0 ),	// last pellet goes down the middle as well to reward fine aim
+};
+
+// 15, Rectangle - slight noise applied below (+/- 0.07)
+Vector g_vecFixedWpnSpreadPelletsWideLarge[] =
+{
+	Vector( 0.f, 0.f, 0.f ),
+	Vector( -0.5f, 0.f, 0.f ),
+	Vector( -1.f, 0.f, 0.f ),
+	Vector( 0.5f, 0.f, 0.f ),
+	Vector( 1.f, 0.f, 0.f ),
+
+	Vector( 0.f, 0.5f, 0.f ),
+	Vector( -0.5f, 0.5f, 0.f ),
+	Vector( -1.f, 0.5f, 0.f ),
+	Vector( 0.5f, 0.5f, 0.f ),
+	Vector( 1.f, 0.5f, 0.f ),
+
+	Vector( 0.f, -0.5f, 0.f ),
+	Vector( -0.5f, -0.5f, 0.f ),
+	Vector( -1.f, -0.5f, 0.f ),
+	Vector( 0.5f, -0.5f, 0.f ),
+	Vector( 1.f, -0.5f, 0.f ),
+
+// 	Vector( 0.f, 0.f, 0.f ),
+// 	Vector( 0.25f, 0.f, 0.f ),
+// 	Vector( -0.25f, 0.f, 0.f ),
+// 	Vector( 0.f, -0.25f, 0.f ),
+// 	Vector( 0.f, 0.25f, 0.f ),
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: This runs on both the client and the server.  On the server, it 
 // only does the damage calculations.  On the client, it does all the effects.
 //-----------------------------------------------------------------------------
-void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngles,
+void FX_FireBullets( CTFWeaponBase *pWpn, int iPlayer, const Vector &vecOrigin, const QAngle &vecAngles,
 					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, bool bCritical /* = false*/ )
 {
 	// Get the weapon information.
-	CTFWeaponInfo *pWeaponInfo = GetTFWeaponInfo( iWeapon );
+	const char *pszWeaponAlias = WeaponIdToAlias( iWeapon );
+	if ( !pszWeaponAlias )
+	{
+		DevMsg( 1, "FX_FireBullets: weapon alias for ID %i not found\n", iWeapon );
+		return;
+	}
+
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pszWeaponAlias );
+	if ( hWpnInfo == GetInvalidWeaponInfoHandle() )
+	{
+		DevMsg( 1, "FX_FireBullets: LookupWeaponInfoSlot failed for weapon %s\n", pszWeaponAlias );
+		return;
+	}
+
+	CTFWeaponInfo *pWeaponInfo = static_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 	if( !pWeaponInfo )
 		return;
 
@@ -133,10 +192,11 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	bDoEffects = true;
 
 	// The minigun has custom sound & animation code to deal with its windup/down.
-	if ( pPlayer->ShouldDrawThisPlayer() && ( iWeapon != TF_WEAPON_MINIGUN && iWeapon != TF_WEAPON_MINIGUN_REAL ) )
+	if ( !pPlayer->IsLocalPlayer() 
+		&& iWeapon != TF_WEAPON_MINIGUN )
 	{
 		// Fire the animation event.
-		if ( !pPlayer->IsDormant() )
+		if ( pPlayer && !pPlayer->IsDormant() )
 		{
 			if ( iMode == TF_WEAPON_PRIMARY_MODE )
 			{
@@ -168,6 +228,13 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 #if !defined (CLIENT_DLL)
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
+	
+	// PASSTIME custom lag compensation for the ball; see also tf_weapon_flamethrower.cpp
+	// it would be better if all entities could opt-in to this, or a way for lagcompensation to handle non-players automatically
+	if ( g_pPasstimeLogic && g_pPasstimeLogic->GetBall() )
+	{
+		g_pPasstimeLogic->GetBall()->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
+	}
 #endif
 
 	// Get the shooting angles.
@@ -183,18 +250,25 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	}
 	else
 	{
-		fireInfo.m_flDamage = static_cast<int>(flDamage);
+		fireInfo.m_flDamage = flDamage;
 	}
 	fireInfo.m_flDistance = pWeaponInfo->GetWeaponData( iMode ).m_flRange;
 	fireInfo.m_iShots = 1;
 	fireInfo.m_vecSpread.Init( flSpread, flSpread, 0.0f );
 	fireInfo.m_iAmmoType = pWeaponInfo->iAmmoType;
 
+	// Ammo override
+	int iModUseMetalOverride = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWpn, iModUseMetalOverride, mod_use_metal_ammo_type );
+	if ( iModUseMetalOverride )
+	{
+		fireInfo.m_iAmmoType = TF_AMMO_METAL;
+	}
+
 	// Setup the bullet damage type & roll for crit.
 	int	nDamageType	= DMG_GENERIC;
 	int nCustomDamageType = TF_DMG_CUSTOM_NONE;
-	bool bBuckshot = false;
-	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon(); // FIXME: Should this be pWpn?
 	if ( pWeapon )
 	{
 		nDamageType	= pWeapon->GetDamageType();
@@ -202,120 +276,159 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 		{
 			nDamageType |= DMG_CRITICAL;
 		}
-		if ( pWeapon->IsCurrentAttackAMiniCrit() )
-		{
-			nDamageType |= DMG_MINICRITICAL;
-		}
 
 		nCustomDamageType = pWeapon->GetCustomDamageType();
-		bBuckshot = ( nDamageType & DMG_BUCKSHOT ) != 0;
 	}
 
 	if ( iWeapon != TF_WEAPON_MINIGUN )
 	{
 		fireInfo.m_iTracerFreq = 2;
-	}	
-	if ( iWeapon == TF_WEAPON_MINIGUN_REAL )
-	{
-		fireInfo.m_iTracerFreq = 2;
-	}	
-
-	int nShouldFireTracer = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nShouldFireTracer, sniper_fires_tracer );
-	if ( !nShouldFireTracer )
-	{
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nShouldFireTracer, sniper_fires_tracer_HIDDEN );
-	}
-	// Check for heatmaker
-	if ( !nShouldFireTracer )
-	{
-		nShouldFireTracer = pPlayer->m_Shared.InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF );
 	}
 
-	if ( nShouldFireTracer )
-	{
-		fireInfo.m_iTracerFreq = 1;
-	}
-		
 	// Reset multi-damage structures.
 	ClearMultiDamage();
 
-	int nBulletsPerShot = pWeaponInfo->GetWeaponData( iMode ).m_nBulletsPerShot;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, nBulletsPerShot, mult_bullets_per_shot );
-
-	// Only shotguns should get fixed spread pattern.
-	bool bFixedSpread = false;
-
-	if ( bBuckshot && nBulletsPerShot > 1 )
+#if !defined (CLIENT_DLL)
+	// If this weapon fires multiple projectiles per shot, and can penetrate multiple
+	// targets, aggregate CTakeDamageInfo events and send them off as one event
+	CDmgAccumulator *pDmgAccumulator = pWpn ? pWpn->GetDmgAccumulator() : NULL;
+	if ( pDmgAccumulator )
 	{
-		bFixedSpread = tf_use_fixed_weaponspreads.GetBool();
+		pDmgAccumulator->Start();
 	}
+#endif // !CLIENT
 
+	int nBulletsPerShot = pWeaponInfo->GetWeaponData( iMode ).m_nBulletsPerShot;
+	bool bFixedSpread = ( nDamageType & DMG_BUCKSHOT ) && ( nBulletsPerShot > 1 ) && IsFixedWeaponSpreadEnabled( pWpn );
+	if ( pWeapon )
+	{
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, nBulletsPerShot, mult_bullets_per_shot );
+	}
 	for ( int iBullet = 0; iBullet < nBulletsPerShot; ++iBullet )
 	{
 		// Initialize random system with this seed.
 		RandomSeed( iSeed );	
 
-		float x = 0.0f;
-		float y = 0.0f;
+		float x = 0.f;
+		float y = 0.f;
 
-		// Determine if the first bullet should be perfectly accurate.
-		bool bPerfectAccuracy = false;
-
-		if ( pWeapon && ( iBullet == 0 && nBulletsPerShot == 1 ) )
-		{
-			// Ambassador
-			if ( pWeapon->GetWeaponID() == TF_WEAPON_REVOLVER )
-			{
-				int iMode = 0;
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iMode, set_weapon_mode );
-				if ( iMode == 1 )
-				{
-					bPerfectAccuracy = ( gpGlobals->curtime - pWeapon->GetLastFireTime() ) >= 1.00f;
-					if ( bPerfectAccuracy )
-						nDamageType |= DMG_USE_HITLOCATIONS;
-				}
-			}
-		}
-
-		// See if we're using pre-determined spread pattern.
 		if ( bFixedSpread )
 		{
-			int iIndex = iBullet;
-			while ( iIndex > 9 )
+			if ( nBulletsPerShot >= 15 )
 			{
-				iIndex -= 10;
+				int iSpread = iBullet;
+				while ( iSpread >= ARRAYSIZE( g_vecFixedWpnSpreadPelletsWideLarge ) )
+				{
+					iSpread -= ARRAYSIZE( g_vecFixedWpnSpreadPelletsWideLarge );
+				}
+				float flScalar = 1.f;
+				x = ( g_vecFixedWpnSpreadPelletsWideLarge[iSpread].x + random->RandomFloat( -0.07f, 0.07f ) ) * flScalar;
+				y = ( g_vecFixedWpnSpreadPelletsWideLarge[iSpread].y + random->RandomFloat( -0.07f, 0.07f ) ) * flScalar;
+			}
+			else
+			{
+				int iSpread = iBullet;
+				while ( iSpread >= ARRAYSIZE( g_vecFixedWpnSpreadPellets ) )
+				{
+					iSpread -= ARRAYSIZE( g_vecFixedWpnSpreadPellets );
+				}
+				float flScalar = 0.5f;
+				x = g_vecFixedWpnSpreadPellets[iSpread].x * flScalar;
+				y = g_vecFixedWpnSpreadPellets[iSpread].y * flScalar;
+			}
+		}
+		else
+		{
+			float flVariance = 0.5f;
+
+			if ( iBullet == 0 && pWpn )
+			{
+				bool bAccuracyBonus = false;
+				float flTimeSinceLastShot = ( gpGlobals->curtime - pWpn->m_flLastFireTime );
+
+				if ( nBulletsPerShot > 1 && flTimeSinceLastShot > 0.25f )
+				{
+					bAccuracyBonus = true;
+				}
+				else if ( nBulletsPerShot == 1 && flTimeSinceLastShot > 1.25f )
+				{
+					bAccuracyBonus = true;
+				}
+
+				if ( bAccuracyBonus )
+				{
+					float flMult = 0.f;
+
+					// By default, all guns have perfect accuracy on the first shot (unless this attribute is present).
+					CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWpn, flMult, mult_spread_scale_first_shot );
+
+					flVariance = flMult;
+				}
 			}
 
-			x = 0.5f * g_vecFixedWpnSpreadPellets[iIndex].x;
-			y = 0.5f * g_vecFixedWpnSpreadPellets[iIndex].y;
-		}
-
-		// Apply random spread if none of the above conditions are true.
-		if ( !bPerfectAccuracy && !bFixedSpread )
-		{
-			// Get circular gaussian spread.
-			x = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
-			y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
+			if ( flVariance != 0.f )
+			{
+				x = RandomFloat( -flVariance, flVariance ) + RandomFloat( -flVariance, flVariance );
+				y = RandomFloat( -flVariance, flVariance ) + RandomFloat( -flVariance, flVariance );
+			}
 		}
 
 		// Initialize the variable firing information.
 		fireInfo.m_vecDirShooting = vecShootForward + ( x *  flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
 		fireInfo.m_vecDirShooting.NormalizeInPlace();
+		fireInfo.m_bUseServerRandomSeed = pWpn && pWpn->UseServerRandomSeed();
 
 		// Fire a bullet.
-		pPlayer->FireBullet( fireInfo, bDoEffects, nDamageType, nCustomDamageType );
+		pPlayer->FireBullet( pWpn, fireInfo, bDoEffects, nDamageType, nCustomDamageType );
 
 		// Use new seed for next bullet.
 		++iSeed; 
 	}
+
+#if !defined (CLIENT_DLL)
+	if ( pDmgAccumulator )
+	{
+		pDmgAccumulator->Process();
+	}
+#endif	// !CLIENT
 
 	// Apply damage if any.
 	ApplyMultiDamage();
 
 #if !defined (CLIENT_DLL)
 	lagcompensation->FinishLagCompensation( pPlayer );
+
+	// PASSTIME custom lag compensation for the ball; see also tf_weapon_flamethrower.cpp
+	// it would be better if all entities could opt-in to this, or a way for lagcompensation to handle non-players automatically
+	if ( g_pPasstimeLogic && g_pPasstimeLogic->GetBall() )
+	{
+		g_pPasstimeLogic->GetBall()->FinishLagCompensation( pPlayer );
+	}
 #endif
 
 	EndGroupingSounds();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Should we make this a per-weapon property?
+//-----------------------------------------------------------------------------
+bool IsFixedWeaponSpreadEnabled( CTFWeaponBase *pWeapon /*= NULL*/ )
+{
+	bool bFixedSpread = tf_use_fixed_weaponspreads.GetBool();
+
+	const IMatchGroupDescription *pMatchDesc = GetMatchGroupDescription( TFGameRules()->GetCurrentMatchGroup() );
+	if ( pMatchDesc )
+	{
+		bFixedSpread = pMatchDesc->BUsesFixedWeaponSpread();
+	}
+
+	if ( pWeapon && !bFixedSpread )
+	{
+		int iFixedSpread = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pWeapon, iFixedSpread, fixed_shot_pattern );
+		if ( iFixedSpread )
+			return true;
+	}
+
+	return bFixedSpread;
 }

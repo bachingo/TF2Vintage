@@ -90,6 +90,7 @@
 #include "serverbenchmark_base.h"
 #include "querycache.h"
 #include "player_voice_listener.h"
+#include "ScriptGameEventListener.h"
 
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
@@ -721,7 +722,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	IGameSystem::Add( SoundEmitterSystem() );
 
 	// Add VScript game event listener system
-	IGameSystem::Add( ScriptGameEventListener() );
+	IGameSystem::Add( &ScriptGameEventListener() );
 
 	// load Mod specific game events ( MUST be before InitAllSystems() so it can pickup the mod specific events)
 	gameeventmanager->LoadEventsFromFile("resource/ModEvents.res");

@@ -78,8 +78,8 @@ BEGIN_SCRIPTDESC_ROOT( CTakeDamageInfo, "Info provided from entities that deal d
 	DEFINE_SCRIPTFUNC( AdjustPlayerDamageInflictedForSkillLevel, "" )
 	DEFINE_SCRIPTFUNC( AdjustPlayerDamageTakenForSkillLevel, "" )
 	DEFINE_SCRIPTFUNC( CopyDamageToBaseDamage, "" )
-	DEFINE_SCRIPTFUNC( GetCritType, "" )
-	DEFINE_SCRIPTFUNC( SetCritType, "" )
+	DEFINE_SCRIPTFUNC_WRAPPED( GetCritType, "" )
+	DEFINE_SCRIPTFUNC_WRAPPED( SetCritType, "" )
 END_SCRIPTDESC();
 
 void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBaseEntity *pWeapon, const Vector &damageForce, const Vector &damagePosition, const Vector &reportedPosition, float flDamage, int bitsDamageType, int iCustomDamage )
@@ -258,6 +258,16 @@ inline void CTakeDamageInfo::ScriptSetDamageBonus( float flBonus, HSCRIPT hProvi
 {
 	m_flDamageBonus = flBonus;
 	m_hDamageBonusProvider = ToEnt( hProvider );
+}
+
+void CTakeDamageInfo::ScriptSetCritType( int eType )
+{
+	SetCritType( (ECritType)eType );
+}
+
+int CTakeDamageInfo::ScriptGetCritType() const
+{
+	return m_eCritType;
 }
 
 // -------------------------------------------------------------------------------------------------- //

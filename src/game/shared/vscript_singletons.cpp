@@ -93,12 +93,13 @@ static void FireGameEvent( const char* szEvent, HSCRIPT hTable )
 		int nIterator = -1;
 		while ( ( nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &key, &val ) ) != -1 )
 		{
-			switch ( val.m_type )
+			switch ( val.GetType() )
 			{
-				case FIELD_FLOAT:   event->SetFloat ( key.m_pszString, val.m_float     ); break;
-				case FIELD_INTEGER: event->SetInt   ( key.m_pszString, val.m_int       ); break;
-				case FIELD_BOOLEAN: event->SetBool  ( key.m_pszString, val.m_bool      ); break;
-				case FIELD_CSTRING: event->SetString( key.m_pszString, val.m_pszString ); break;
+				case FIELD_FLOAT:   event->SetFloat ( key, val ); break;
+				case FIELD_INTEGER: event->SetInt   ( key, val ); break;
+				case FIELD_BOOLEAN: event->SetBool  ( key, val ); break;
+				case FIELD_CSTRING: event->SetString( key, val ); break;
+				case FIELD_UINT64:  event->SetUint64( key, val ); break;
 			}
 
 			g_pScriptVM->ReleaseValue(key);
@@ -126,12 +127,13 @@ static void FireGameEventLocal( const char* szEvent, HSCRIPT hTable )
 		int nIterator = -1;
 		while ( ( nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &key, &val ) ) != -1 )
 		{
-			switch ( val.m_type )
+			switch ( val.GetType() )
 			{
-				case FIELD_FLOAT:   event->SetFloat ( key.m_pszString, val.m_float     ); break;
-				case FIELD_INTEGER: event->SetInt   ( key.m_pszString, val.m_int       ); break;
-				case FIELD_BOOLEAN: event->SetBool  ( key.m_pszString, val.m_bool      ); break;
-				case FIELD_CSTRING: event->SetString( key.m_pszString, val.m_pszString ); break;
+				case FIELD_FLOAT:   event->SetFloat ( key, val ); break;
+				case FIELD_INTEGER: event->SetInt   ( key, val ); break;
+				case FIELD_BOOLEAN: event->SetBool  ( key, val ); break;
+				case FIELD_CSTRING: event->SetString( key, val ); break;
+				case FIELD_UINT64:  event->SetUint64( key, val ); break;
 			}
 
 			g_pScriptVM->ReleaseValue(key);
@@ -235,12 +237,13 @@ void CScriptSaveRestoreUtil::SaveTable( const char *szId, HSCRIPT hTable )
 	int nIterator = -1;
 	while ( ( nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &key, &val ) ) != -1 )
 	{
-		switch ( val.m_type )
+		switch ( val.GetType() )
 		{
-			case FIELD_FLOAT:   pKV->SetFloat ( key.m_pszString, val.m_float     ); break;
-			case FIELD_INTEGER: pKV->SetInt   ( key.m_pszString, val.m_int       ); break;
-			case FIELD_BOOLEAN: pKV->SetBool  ( key.m_pszString, val.m_bool      ); break;
-			case FIELD_CSTRING: pKV->SetString( key.m_pszString, val.m_pszString ); break;
+			case FIELD_FLOAT:   pKV->SetFloat ( key, val ); break;
+			case FIELD_INTEGER: pKV->SetInt   ( key, val ); break;
+			case FIELD_BOOLEAN: pKV->SetBool  ( key, val ); break;
+			case FIELD_CSTRING: pKV->SetString( key, val ); break;
+			case FIELD_UINT64:  pKV->SetUint64( key, val ); break;
 		}
 
 		g_pScriptVM->ReleaseValue(key);
@@ -268,6 +271,7 @@ void CScriptSaveRestoreUtil::RestoreTable( const char *szId, HSCRIPT hTable )
 			case KeyValues::TYPE_STRING: g_pScriptVM->SetValue( hTable, key->GetName(), key->GetString() ); break;
 			case KeyValues::TYPE_INT:    g_pScriptVM->SetValue( hTable, key->GetName(), key->GetInt()    ); break;
 			case KeyValues::TYPE_FLOAT:  g_pScriptVM->SetValue( hTable, key->GetName(), key->GetFloat()  ); break;
+			case KeyValues::TYPE_UINT64: g_pScriptVM->SetValue( hTable, key->GetName(), key->GetUint64()  ); break;
 		}
 	}
 }
@@ -933,7 +937,7 @@ CScriptConvarAccessor g_ScriptConvars;
 ScriptVariant_t CScriptConvarAccessor::GetBool( const char *cvar )
 {
 	if ( !cvar || !*cvar )
-		return ScriptVariant_t();
+		return VARIANT_NULL;
 
 	ConVarRef cref( cvar );
 	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
@@ -942,14 +946,14 @@ ScriptVariant_t CScriptConvarAccessor::GetBool( const char *cvar )
 	}
 	else
 	{
-		return ScriptVariant_t(); // default ctor is NULL
+		return VARIANT_NULL;
 	}
 }
 
 ScriptVariant_t CScriptConvarAccessor::GetInt( const char *cvar )
 {
 	if ( !cvar || !*cvar )
-		return ScriptVariant_t();
+		return VARIANT_NULL;
 
 	ConVarRef cref( cvar );
 	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
@@ -958,14 +962,14 @@ ScriptVariant_t CScriptConvarAccessor::GetInt( const char *cvar )
 	}
 	else
 	{
-		return ScriptVariant_t(); // default ctor is NULL
+		return VARIANT_NULL;
 	}
 }
 
 ScriptVariant_t CScriptConvarAccessor::GetFloat( const char *cvar )
 {
 	if ( !cvar || !*cvar )
-		return ScriptVariant_t();
+		return VARIANT_NULL;
 
 	ConVarRef cref( cvar );
 	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
@@ -974,14 +978,14 @@ ScriptVariant_t CScriptConvarAccessor::GetFloat( const char *cvar )
 	}
 	else
 	{
-		return ScriptVariant_t(); // default ctor is NULL
+		return VARIANT_NULL;
 	}
 }
 
 ScriptVariant_t CScriptConvarAccessor::GetStr( const char *cvar )
 {
 	if ( !cvar || !*cvar )
-		return ScriptVariant_t();
+		return VARIANT_NULL;
 
 	ConVarRef cref( cvar );
 	if ( cref.IsValid() )
@@ -995,7 +999,7 @@ ScriptVariant_t CScriptConvarAccessor::GetStr( const char *cvar )
 	}
 	else
 	{
-		return ScriptVariant_t(); // default ctor is NULL
+		return VARIANT_NULL;
 	}
 }
 
@@ -1003,8 +1007,11 @@ const char *CScriptConvarAccessor::GetClientConvarValue( const char *cvar, int e
 {
 	if ( !cvar || !*cvar )
 		return "";
-
+#ifndef CLIENT_DLL
 	return engine->GetClientConVarValue( entindex, cvar );
+#else
+	return "";
+#endif
 }
 
 void CScriptConvarAccessor::SetValue( const char *cvar, ScriptVariant_t value )

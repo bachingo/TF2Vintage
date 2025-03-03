@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -18,17 +18,10 @@
 #include "tf_imagepanel.h"
 #include "c_tf_player.h"
 
-enum
-{
-	DRAW_ARROW_UP,
-	DRAW_ARROW_LEFT,
-	DRAW_ARROW_RIGHT
-};
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CTFMedicCallerPanel : public vgui::EditablePanel
+class CTFMedicCallerPanel : public vgui::EditablePanel, public CGameEventListener
 {
 	DECLARE_CLASS_SIMPLE( CTFMedicCallerPanel, vgui::EditablePanel );
 public:
@@ -41,17 +34,29 @@ public:
 	virtual void PaintBackground( void );
 	virtual void Paint( void );
 
+	virtual const char *GetControlSettingFile() const { return "resource/UI/MedicCallerPanel.res"; }
+	
 	void	GetCallerPosition( const Vector &vecDelta, float flRadius, float *xpos, float *ypos, float *flRotation );
-	void	SetPlayer( C_TFPlayer *pPlayer, float flDuration, Vector &vecOffset );
-	static void AddMedicCaller( C_TFPlayer *pPlayer, float flDuration, Vector &vecOffset );
+	void	SetEntity( C_BaseEntity *pEntity, float flDuration, Vector &vecOffset );
+	void	SetMedicCallerType( MedicCallerType nType );
+	static void AddMedicCaller( C_BaseEntity *pEntity, float flDuration, Vector &vecOffset, MedicCallerType nType = CALLER_TYPE_NORMAL );
+	
+	virtual void FireGameEvent( IGameEvent *event );
+
+protected:
+	C_BaseEntity	*GetEntity() const { return m_hEntity; }
 
 private:
 	IMaterial		*m_pArrowMaterial;
 	float			m_flRemoveAt;
 	Vector			m_vecOffset;
-	CHandle<C_TFPlayer> m_hPlayer;
+	CHandle<C_BaseEntity> m_hEntity;
 	int				m_iDrawArrow;
 	bool			m_bOnscreen;
+	bool			m_bBurning;
+	bool			m_bBleeding;
+	float			m_flPanelScale;
+	int				m_nCallerType;
 };
 
 #endif // TF_HUD_MEDICCALLERS_H

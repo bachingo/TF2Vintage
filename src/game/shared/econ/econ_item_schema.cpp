@@ -2275,6 +2275,7 @@ m_unNumConcreteItems( 0 ),
 m_nPopularitySeed( 0 ),
 m_pszDefinitionName( NULL ),
 m_pszItemClassname( NULL ),
+m_pszItemScriptName( NULL ),
 m_pszClassToken( NULL ),
 m_pszSlotToken( NULL ),
 m_pszItemBaseName( NULL ),
@@ -3095,6 +3096,7 @@ bool CEconItemDefinition::BInitFromKV( KeyValues *pKVItem, CUtlVector<CUtlString
 
 	// Get the item class
 	m_pszItemClassname = m_pKVItem->GetString( "item_class", NULL );
+	m_pszItemScriptName = m_pKVItem->GetString( "item_script", NULL );
 
 	m_pszClassToken = m_pKVItem->GetString( "class_token_id", NULL );
 	m_pszSlotToken = m_pKVItem->GetString( "slot_token_id", NULL );

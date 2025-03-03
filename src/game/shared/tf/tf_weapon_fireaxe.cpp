@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,5 +20,22 @@ BEGIN_PREDICTION_DATA( CTFFireAxe )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_fireaxe, CTFFireAxe );
-
 PRECACHE_WEAPON_REGISTER( tf_weapon_fireaxe );
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFFireAxe::GetInitialAfterburnDuration() const 
+{ 
+	int iAddBurningDamageType = 0;
+	CALL_ATTRIB_HOOK_INT( iAddBurningDamageType, set_dmgtype_ignite );
+	if ( iAddBurningDamageType )
+	{
+		return 7.5f;
+	}
+
+	return BaseClass::GetInitialAfterburnDuration();
+}
+#endif
+

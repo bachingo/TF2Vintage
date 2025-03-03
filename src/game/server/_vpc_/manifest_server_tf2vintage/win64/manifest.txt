@@ -8,6 +8,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\g
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\replay_gamestats_shared.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\replay_gamestats_shared.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\replay_gamestats_shared.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\achievement_saverestore.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\achievement_saverestore.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\achievement_saverestore.cpp
@@ -533,6 +539,12 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\baseprojectile.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\baseprojectile.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\baseprojectile.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\basescriptedweapon.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\basescriptedweapon.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\basescriptedweapon.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -2504,6 +2516,36 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map_node.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map_node.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map_node.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map_utils.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map_utils.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_map_utils.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_restriction.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_restriction.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_quest_restriction.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wardata.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wardata.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wardata.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\weapon_ifmbase.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\weapon_ifmbase.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\weapon_ifmbase.cpp
@@ -3039,6 +3081,78 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_demoman.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_demoman.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_demoman.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_engineer.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_engineer.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_engineer.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_halloween.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_halloween.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_halloween.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_heavy.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_heavy.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_heavy.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_maps.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_maps.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_maps.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_medic.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_medic.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_medic.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_mvm.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_mvm.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_mvm.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_pyro.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_pyro.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_pyro.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_scout.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_scout.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_scout.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_sniper.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_sniper.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_sniper.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_soldier.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_soldier.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_soldier.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_spy.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_spy.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\achievements_tf_spy.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\baseobject_shared.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\baseobject_shared.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\baseobject_shared.cpp
@@ -3054,6 +3168,12 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_armor.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_armor.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_armor.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_bird.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_bird.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_bird.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3087,6 +3207,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\entity_halloween_pickup.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\entity_halloween_pickup.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\entity_halloween_pickup.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_healthkit.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_healthkit.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_healthkit.cpp
@@ -3099,9 +3225,21 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_passtime_ball_spawn.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_passtime_ball_spawn.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_passtime_ball_spawn.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_roundwin.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_roundwin.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_roundwin.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_rune.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_rune.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_rune.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3117,6 +3255,18 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_training_annotations.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_training_annotations.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\entity_training_annotations.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_achievement.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_achievement.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_achievement.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_capture_zone.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_capture_zone.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_capture_zone.cpp
@@ -3129,6 +3279,24 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_croc.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_croc.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_croc.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_flag_alert.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_flag_alert.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_flag_alert.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_forcefield.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_forcefield.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_forcefield.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_no_build.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_no_build.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_no_build.cpp
@@ -3138,6 +3306,30 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_nogrenades.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_nogrenades.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_nogrenades.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_goal.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_goal.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_goal.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_goalie_zone.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_goalie_zone.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_goalie_zone.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_no_ball_zone.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_no_ball_zone.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_passtime_no_ball_zone.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_powerupvolume.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_powerupvolume.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_powerupvolume.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3159,9 +3351,69 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_suggested_build.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_suggested_build.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\func_suggested_build.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\Multiplayer\multiplayer_animstate.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\Multiplayer\multiplayer_animstate.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\Multiplayer\multiplayer_animstate.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller_homing.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller_homing.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller_homing.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller_playerseek.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller_playerseek.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\passtime_ballcontroller_playerseek.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\passtime_convars.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\passtime_convars.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\passtime_convars.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\passtime_game_events.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\passtime_game_events.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\passtime_game_events.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\quest_objective_manager.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\quest_objective_manager.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\quest_objective_manager.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\quest_objective_trackers.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\quest_objective_trackers.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\quest_objective_trackers.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\serverbenchmark_tf.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\serverbenchmark_tf.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\serverbenchmark_tf.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\shared_object_tracker.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\shared_object_tracker.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\shared_object_tracker.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3183,9 +3435,21 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_autobalance.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_autobalance.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_autobalance.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_bot_temp.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_bot_temp.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_bot_temp.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_classdata.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_classdata.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_classdata.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3195,15 +3459,45 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_condition.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_condition.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_condition.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_duckleaderboard.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_duckleaderboard.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_duckleaderboard.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_entity_spawner.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_entity_spawner.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_entity_spawner.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_eventlog.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_eventlog.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_eventlog.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_extra_map_entity.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_extra_map_entity.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_extra_map_entity.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_filters.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_filters.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_filters.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_flame.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_flame.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_flame.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3249,6 +3543,24 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_generic_bomb.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_generic_bomb.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_generic_bomb.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_glow.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_glow.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_glow.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_halloween_souls_pickup.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_halloween_souls_pickup.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_halloween_souls_pickup.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_hltvdirector.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_hltvdirector.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_hltvdirector.cpp
@@ -3279,6 +3591,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_logic_on_holiday.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_logic_on_holiday.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_logic_on_holiday.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_logic_player_destruction.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_logic_player_destruction.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_logic_player_destruction.cpp
@@ -3288,6 +3606,12 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_logic_robot_destruction.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_logic_robot_destruction.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_logic_robot_destruction.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_mapinfo.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_mapinfo.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_mapinfo.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3345,6 +3669,18 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_passtime_ball.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_passtime_ball.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_passtime_ball.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_passtime_logic.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_passtime_logic.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_passtime_logic.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_player.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_player.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_player.cpp
@@ -3393,6 +3729,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_point_manager.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_point_manager.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_point_manager.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_powerup.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_powerup.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_powerup.cpp
@@ -3423,9 +3765,27 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_props.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_props.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_props.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_pumpkin_bomb.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_pumpkin_bomb.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_pumpkin_bomb.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_pushentity.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_pushentity.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_pushentity.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_revive.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_revive.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_revive.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3441,9 +3801,33 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_tactical_mission.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_tactical_mission.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_tactical_mission.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_target_dummy.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_target_dummy.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_target_dummy.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_taunt_prop.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_taunt_prop.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_taunt_prop.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_team.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_team.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_team.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_triggers.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_triggers.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_triggers.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -3470,6 +3854,42 @@ Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_voteissues.cpp
 Containing unity file:  
 PCH file:               
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_wartracker.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_wartracker.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_wartracker.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_passtime_gun.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_passtime_gun.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_passtime_gun.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wheel_of_doom.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wheel_of_doom.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wheel_of_doom.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\trigger_catapult.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\trigger_catapult.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\trigger_catapult.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\trigger_catapult_shared.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\trigger_catapult_shared.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\trigger_catapult_shared.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\trigger_passtime_ball.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\trigger_passtime_ball.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\trigger_passtime_ball.cpp
+Containing unity file:  
+PCH file:               cbase.h
 
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_bot.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_bot.cpp
@@ -3504,12 +3924,6 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_bot_vision.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_bot_vision.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_bot_vision.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_path_follower.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_path_follower.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\bot\tf_path_follower.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -4065,6 +4479,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\halloween\eyeball_boss\teleport_vortex.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\halloween\eyeball_boss\teleport_vortex.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\halloween\eyeball_boss\teleport_vortex.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\halloween\eyeball_boss\eyeball_behavior\eyeball_boss_approach_target.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\halloween\eyeball_boss\eyeball_behavior\eyeball_boss_approach_target.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\halloween\eyeball_boss\eyeball_behavior\eyeball_boss_approach_target.cpp
@@ -4215,6 +4635,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\halloween\tf_weapon_spellbook.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\halloween\tf_weapon_spellbook.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\halloween\tf_weapon_spellbook.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\halloween\zombie\zombie.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\halloween\zombie\zombie.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\halloween\zombie\zombie.cpp
@@ -4251,6 +4677,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\l
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_gc_server.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_gc_server.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_gc_server.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gc_shared.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gc_shared.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gc_shared.cpp
@@ -4266,6 +4698,72 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_lobby_shared.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_lobby_shared.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_lobby_shared.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_casual.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_casual.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_casual.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_comp.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_comp.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_comp.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_mvm.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_mvm.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_mvm.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_shared.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_shared.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_match_description_shared.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_matchmaking_shared.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_matchmaking_shared.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_matchmaking_shared.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_party.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_party.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_party.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description_casual.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description_casual.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description_casual.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description_comp.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description_comp.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_progression_description_comp.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -4308,6 +4806,12 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\player_vs_environment\archer_proxy.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\player_vs_environment\archer_proxy.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\player_vs_environment\archer_proxy.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\player_vs_environment\monster_resource.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\player_vs_environment\monster_resource.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\player_vs_environment\monster_resource.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -4485,9 +4989,33 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_dropped_weapon.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_dropped_weapon.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_dropped_weapon.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_arrow.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_arrow.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_arrow.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_energy_ball.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_energy_ball.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_energy_ball.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_projectile_energy_ring.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_projectile_energy_ring.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_projectile_energy_ring.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_flare.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_flare.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\tf\tf_projectile_flare.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -4683,6 +5211,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_jar_gas.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_jar_gas.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_jar_gas.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_knife.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_knife.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_knife.cpp
@@ -4731,9 +5265,21 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_parachute.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_parachute.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_parachute.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_parse.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_parse.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_parse.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_particle_cannon.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_particle_cannon.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_particle_cannon.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -4827,6 +5373,12 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_throwable.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_throwable.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_throwable.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
@@ -4875,9 +5427,33 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_merasmus_grenade.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_merasmus_grenade.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_merasmus_grenade.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_rocket.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_rocket.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_rocket.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_campaign_item.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_campaign_item.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_campaign_item.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_levelable_item.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_levelable_item.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_levelable_item.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_weapons.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_weapons.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_weapons.cpp
 Containing unity file:  
 PCH file:               cbase.h
 

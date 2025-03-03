@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Game-specific impact effect hooks
 //
@@ -9,24 +9,45 @@
 #include "c_te_legacytempents.h"
 #include "tf_shareddefs.h"
 #include "tf_weapon_parse.h"
+#include "econ_item_system.h"
 
 #define TE_RIFLE_SHELL 1024
 #define TE_PISTOL_SHELL 2048
 
 extern CTFWeaponInfo *GetTFWeaponInfo( int iWeapon );
 
-ConVar cl_brass_fade_time( "cl_brass_fade_time", "10", FCVAR_CLIENTDLL );
-
-
 //-----------------------------------------------------------------------------
 // Purpose: TF Eject Brass
 //-----------------------------------------------------------------------------
 void TF_EjectBrassCallback( const CEffectData &data )
 {
-	CTFWeaponInfo *pWeaponInfo = GetTFWeaponInfo( data.m_nHitBox );
-	if ( !pWeaponInfo )
-		return;
-	if ( !pWeaponInfo->m_szBrassModel || !pWeaponInfo->m_szBrassModel[0] )
+	const char *pszBrassModel = NULL;
+
+	// If we got given a definition index, see if it has a brass model override
+	if ( data.m_nDamageType )
+	{
+		CEconItemDefinition *pDef = ItemSystem()->GetStaticDataForItemByDefIndex( data.m_nDamageType );
+		if ( pDef )
+		{
+			pszBrassModel = pDef->GetBrassModelOverride();
+
+			// Allow weapon definitions to disable brass ejection
+			if ( pszBrassModel && !pszBrassModel[0] )
+				return;
+		}
+	}
+
+	// Otherwise, use the weapon default
+	if ( !pszBrassModel || !pszBrassModel[0] )
+	{
+		CTFWeaponInfo *pWeaponInfo = GetTFWeaponInfo( data.m_nHitBox );
+		if ( pWeaponInfo )
+		{
+			pszBrassModel = pWeaponInfo->m_szBrassModel;
+		}
+	}
+
+	if ( !pszBrassModel || !pszBrassModel[0] )
 		return;
 
 	Vector vForward, vRight, vUp;
@@ -38,10 +59,10 @@ void TF_EjectBrassCallback( const CEffectData &data )
 	Vector vecVelocity = random->RandomFloat( 130, 180 ) * vForward +
 						 random->RandomFloat( -30, 30 ) * vRight +
 						 random->RandomFloat( -30, 30 ) * vUp;
-		
-		
-	float flLifeTime = cl_brass_fade_time.GetFloat();
-	model_t *pModel = (model_t *)engine->LoadModel( pWeaponInfo->m_szBrassModel );
+
+	float flLifeTime = 10.0f;
+
+	model_t *pModel = (model_t *)engine->LoadModel( pszBrassModel );
 	if ( !pModel )
 		return;
 	

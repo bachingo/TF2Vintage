@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,13 +11,14 @@
 #include "c_tf_player.h"
 #include "iclientmode.h"
 #include "ienginevgui.h"
+#include "tf_gamerules.h"
+#include "tf_logic_halloween_2014.h"
 #include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
 #include <vgui/IVGui.h>
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
-#include "engine/IEngineSound.h"
-#include "tf_controls.h"
+#include <vgui_controls/Label.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -41,11 +42,13 @@ public:
 private:
 	vgui::EditablePanel *m_pPipesPresent;
 	vgui::EditablePanel *m_pNoPipesPresent;
-	vgui::ContinuousProgressBar *m_pChargeMeter;
-	CExLabel *m_pChargeLabel;
-	
 
-	float m_flOldCharge;
+	vgui::Label *m_pChargeLabel;
+	vgui::ContinuousProgressBar *m_pChargeMeter;
+
+	bool m_bChargeMode;
+	float m_flOldProgress;
+	int m_iLastPipes;
 };
 
 DECLARE_HUDELEMENT( CHudDemomanPipes );
@@ -60,13 +63,26 @@ CHudDemomanPipes::CHudDemomanPipes( const char *pElementName ) : CHudElement( pE
 
 	m_pPipesPresent = new EditablePanel( this, "PipesPresentPanel" );
 	m_pNoPipesPresent = new EditablePanel( this, "NoPipesPresentPanel" );
-	m_pChargeMeter = new ContinuousProgressBar( this, "ChargeMeter" );
-	m_pChargeLabel = new CExLabel( this, "ChargeLabel", "#TF_Charge" );
-	m_flOldCharge = 1.0f;
 
-	SetHiddenBits( HIDEHUD_MISCSTATUS );
+	SetHiddenBits( HIDEHUD_MISCSTATUS | HIDEHUD_PIPES_AND_CHARGE );
 
-	vgui::ivgui()->AddTickSignal( GetVPanel() );
+	vgui::ivgui()->AddTickSignal( GetVPanel(), 100 );
+
+	m_bChargeMode = false;
+	m_flOldProgress = 1.f;
+	m_iLastPipes = -1;
+
+	if ( !m_pChargeMeter )
+	{
+		m_pChargeMeter = new ContinuousProgressBar( this, "ChargeMeter" );
+	}
+
+	if ( !m_pChargeLabel )
+	{
+		m_pChargeLabel = new Label( this, "ChargeLabel", "" );
+	}
+
+	RegisterForRenderGroup( "inspect_panel" );
 }
 
 //-----------------------------------------------------------------------------
@@ -87,20 +103,20 @@ bool CHudDemomanPipes::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer )
-	{
+	if ( !pPlayer || !pPlayer->IsPlayerClass( TF_CLASS_DEMOMAN ) )
 		return false;
-	}
-
-	if ( !pPlayer->Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER ) && !pPlayer->m_Shared.HasDemoShieldEquipped() )
-	{
-		return false;
-	}
 
 	if ( !pPlayer->IsAlive() )
-	{
 		return false;
-	}
+
+	if ( pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
+		return false;
+
+	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
+		return false;
+
+	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
+		return false;
 
 	return CHudElement::ShouldDraw();
 }
@@ -110,66 +126,82 @@ bool CHudDemomanPipes::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 void CHudDemomanPipes::OnTick( void )
 {
+	if ( !IsVisible() )
+		return;
+
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if ( !pPlayer )
 		return;
 
-	// We're using a shield
-	if ( !pPlayer->Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER ) ) 
+	int iPipes = pPlayer->GetNumActivePipebombs();
+	if ( iPipes != m_iLastPipes )
 	{
-		m_pPipesPresent->SetVisible( false );
-		m_pNoPipesPresent->SetVisible( false );
-		m_pChargeMeter->SetVisible( true );
-		m_pChargeLabel->SetVisible( true );
+		// SetDialogVariable is expensive as it does lots of localization work, so only call it if we need to
+		m_pPipesPresent->SetDialogVariable( "activepipes", iPipes );
+		m_pNoPipesPresent->SetDialogVariable( "activepipes", iPipes );
+		m_pPipesPresent->SetVisible( iPipes > 0 );
+		m_pNoPipesPresent->SetVisible( iPipes <= 0 );
+		m_iLastPipes = iPipes;
+	}
+	m_pChargeMeter->SetVisible( false );
+	m_pChargeLabel->SetVisible( false );
 
-		float flCharge = pPlayer->m_Shared.GetShieldChargeMeter() / 100.0f;
-		m_pChargeMeter->SetProgress( flCharge );
-
-		// Play a ding when full charged.
-		if ( m_flOldCharge < 1.0f && flCharge >= 1.0f )
+	if ( !m_bChargeMode )
+	{
+		if ( pPlayer->m_Shared.IsShieldEquipped() )
 		{
-			CLocalPlayerFilter filter;
-			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "TFPlayer.Recharged" );
-		}
-
-		m_flOldCharge = flCharge;
-
-		// We're currently in the middle of a shield charge
-		if ( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE) )
-		{
-			// Set the charge color based on how far into the charge we are
-			if ( flCharge > 0.66 )
-			{
-				// GREEN
-				m_pChargeMeter->SetFgColor( Color( 153, 255, 153, 255 ) );
-			}
-			else if ( flCharge > 0.33 )
-			{
-				// YELLOW
-				m_pChargeMeter->SetFgColor( Color( 255, 178, 0, 255 ) );
-			}
-			else
-			{
-				// RED
-				m_pChargeMeter->SetFgColor( Color( 255, 0, 0, 255 ) );
-			}
-		}
-		else
-		{
-			m_pChargeMeter->SetFgColor( COLOR_WHITE );
+			m_bChargeMode = true;
 		}
 	}
 	else
 	{
-		int iPipes = pPlayer->GetNumActivePipebombs();
+		if ( !pPlayer->m_Shared.IsShieldEquipped() )
+		{
+			m_bChargeMode = false;
+		}
+		else
+		{
+			m_pChargeMeter->SetVisible( true );
+			m_pChargeLabel->SetVisible( true );
+			m_pPipesPresent->SetVisible( false );
+			m_pNoPipesPresent->SetVisible( false );
 
-		m_pPipesPresent->SetDialogVariable( "activepipes", iPipes );
-		m_pNoPipesPresent->SetDialogVariable( "activepipes", iPipes );
+			float flProgress = pPlayer->m_Shared.GetDemomanChargeMeter() / 100.f;
+			m_pChargeMeter->SetProgress( flProgress );
+			if ( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+			{
+				if ( flProgress <= 0.33f )
+				{
+					m_pChargeMeter->SetFgColor( Color( 255, 0, 0, 255 ) );
+				}
+				else if ( flProgress <= 0.75f )
+				{
+					m_pChargeMeter->SetFgColor( Color( 255, 178, 0, 255 ) );
+				}
+				else
+				{
+					m_pChargeMeter->SetFgColor( Color( 153, 255, 153, 255 ) );
+				}
+			}
+			else
+			{
+				m_pChargeMeter->SetFgColor( Color( 255, 255, 255, 255 ) );
 
-		m_pPipesPresent->SetVisible( iPipes > 0 );
-		m_pNoPipesPresent->SetVisible( iPipes <= 0 );
-		m_pChargeMeter->SetVisible( false );
-		m_pChargeLabel->SetVisible( false );
+				// Play a sound if we are newly ready.
+				if ( C_TFPlayer::GetLocalTFPlayer() && flProgress >= 1.f && m_flOldProgress < 1.f )
+				{
+					m_flOldProgress = flProgress;
+					if ( C_TFPlayer::GetLocalTFPlayer()->IsAlive() )
+					{
+						C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
+					}
+				}
+				else
+				{
+					m_flOldProgress = flProgress;
+				}
+			}
+		}
 	}
 }

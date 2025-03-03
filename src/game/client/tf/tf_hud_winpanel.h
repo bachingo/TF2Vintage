@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,6 +16,8 @@
 #include <vgui/IScheme.h>
 #include "hud.h"
 #include "hudelement.h"
+#include "econ_controls.h"
+#include "vgui_avatarimage.h"
 
 using namespace vgui;
 
@@ -43,13 +45,20 @@ public:
 	virtual int GetRenderGroupPriority() { return 70; }
 
 private:
-	EditablePanel *m_pTeamScorePanel;
+	void UpdateTeamInfo();
+
+private:
+	EditablePanel		*m_pTeamScorePanel;
+	CExLabel			*m_pRedTeamName;
+	CExLabel			*m_pBlueTeamName;
+	CAvatarImagePanel	*m_pRedLeaderAvatarImage;
+	CAvatarImagePanel	*m_pBlueLeaderAvatarImage;
+	EditablePanel		*m_pRedLeaderAvatarBG;
+	EditablePanel		*m_pBlueLeaderAvatarBG;
 
 	float	m_flTimeUpdateTeamScore;
 	int		m_iBlueTeamScore;
 	int		m_iRedTeamScore;
-	int		m_iGreenTeamScore;
-	int		m_iYellowTeamScore;
 
 	bool	m_bShouldBeVisible;
 };

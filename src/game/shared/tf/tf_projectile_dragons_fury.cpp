@@ -1,576 +1,612 @@
-//====== Copyright © 1996-2013, Valve Corporation, All rights reserved. ========//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: Flare used by the flaregun.
+// Purpose: 
 //
-//=============================================================================//
+//=============================================================================
+
 #include "cbase.h"
-#include "tf_projectile_dragons_fury.h"
-#include "tf_weapon_compound_bow.h"
-#include "tf_projectile_arrow.h"
-// Client specific.
+
+#include "tf_weapon_dragons_fury.h"
+
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "particles_new.h"
-#include "iefx.h"
-#include "dlight.h"
-#include "tempent.h"
-#include "c_te_legacytempents.h"
+	#include "c_tf_player.h"
+	#include "dlight.h"
+	#include "iefx.h"
+	#include "tempent.h"
+	#include "debugoverlay_shared.h"
 #else
-#include "tf_player.h"
-#include "tf_fx.h"
-#include "effect_dispatch_data.h"
-#include "collisionutils.h"
-#include "tf_team.h"
-#include "props.h"
+	#include "tf_player.h"
+	#include "tf_fx.h"
+	#include "tf_projectile_rocket.h"
+	#include "tf_logic_robot_destruction.h"
+	#include "tf_weapon_compound_bow.h"
+	#include "tf_pumpkin_bomb.h"
+	#include "halloween/merasmus/merasmus_trick_or_treat_prop.h"
+	#include "tf_robot_destruction_robot.h"
+	#include "tf_generic_bomb.h"
 #endif
 
 #ifdef CLIENT_DLL
+	#define CTFProjectile_BallOfFire				C_TFProjectile_BallOfFire
 	extern ConVar tf2v_muzzlelight;
 #endif
 
+ConVar tf_fireball_distance( "tf_fireball_distance", "500", FCVAR_REPLICATED | FCVAR_CHEAT ); // 375 = 3000 * 0.125, which is the speed and lifetime we tested with
+ConVar tf_fireball_speed( "tf_fireball_speed", "3000", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_damage( "tf_fireball_damage", "25", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_burn_duration( "tf_fireball_burn_duration", "2", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_radius( "tf_fireball_radius", "22.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_draw_debug_radius( "tf_fireball_draw_debug_radius", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_burning_bonus( "tf_fireball_burning_bonus", "3", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar tf_fireball_max_lifetime( "tf_fireball_max_lifetime", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+
+
+class CTFProjectile_BallOfFire : public CTFProjectile_Rocket
+{
+public:
+	DECLARE_CLASS( CTFProjectile_BallOfFire, CTFProjectile_Rocket );
+	DECLARE_NETWORKCLASS();
+
+	CTFProjectile_BallOfFire() {}
+
+	~CTFProjectile_BallOfFire()
+	{
+		if ( tf_fireball_draw_debug_radius.GetBool() )
+		{
+			NDebugOverlay::Sphere( GetAbsOrigin(), tf_fireball_radius.GetFloat() * 3.f, 255, 0, 255, false, 2.f );
+		}
+	}
+
+	virtual void Precache() OVERRIDE
+	{
+		PrecacheModel( "models/empty.mdl" );
+		PrecacheScriptSound( "Weapon_DragonsFury.Nearmiss" );
+	}
+
+	virtual void Spawn() OVERRIDE
+	{
+		BaseClass::Spawn();
+
 #ifdef GAME_DLL
-ConVar  tf_fireball_burn_duration("tf_fireball_burn_duration", "2", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-ConVar  tf_fireball_burning_bonus("tf_fireball_burning_bonus", "3", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-ConVar  tf_fireball_damage("tf_fireball_damage", "25.0", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-ConVar  tf_fireball_distance("tf_fireball_distance", "500", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-ConVar  tf_fireball_draw_debug_radius("tf_fireball_draw_debug_radius", "0", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-ConVar  tf_fireball_radius("tf_fireball_radius", "22.5", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
-ConVar  tf_fireball_speed("tf_fireball_speed", "3000", FCVAR_CHEAT | FCVAR_REPLICATED, "" );
+		SetRenderMode( kRenderNone );
+
+		SetSolid( SOLID_BBOX );
+		SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
+		SetSolidFlags( FSOLID_TRIGGER | FSOLID_NOT_SOLID );
+		SetCollisionGroup( TFCOLLISION_GROUP_ROCKETS );
+		// The fireball's collision is *much* larger than the actual fireball itself.  We don't want just expand the collision
+		// bounds or else it'd hit walls and things when it seems like it shouldn't.  Using UseTriggerBounds allows us to get
+		// touches with players in a radius larger than our collision bounds.
+		const float flRadius = tf_fireball_radius.GetFloat();
+		CollisionProp()->SetCollisionBounds( Vector( -1, -1, -1 ), Vector( 1, 1, 1 ) );
+		CollisionProp()->UseTriggerBounds( true, flRadius, true );
+
+		m_vecInitialVelocity = GetAbsVelocity().Normalized() * tf_fireball_speed.GetFloat();
+		SetAbsVelocity( m_vecInitialVelocity );
+
+		float flDamage = tf_fireball_damage.GetFloat();
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetLauncher(), flDamage, mult_dmg );
+		SetDamage( flDamage );
+
+		m_vecSpawnOrigin = GetAbsOrigin();
+		// This will limit how far we can go
+		SetContextThink( &CTFProjectile_BallOfFire::DistanceLimitThink, gpGlobals->curtime, "DistanceLimitThink" );
+
+		// This will limit how long we're alive (in case we get stuck somewhere)
+		SetContextThink( &CTFProjectile_BallOfFire::ExpireDelayThink, gpGlobals->curtime + tf_fireball_max_lifetime.GetFloat(), "ExpireDelayThink" );
+#endif
+	}
+
+#ifdef GAME_DLL
+	void ExpireDelayThink()
+	{
+		SetContextThink( &CBaseGrenade::SUB_Remove, gpGlobals->curtime, "RemoveThink" );
+	}
+
+	// This gets called *BEFORE* the physics move, so we have a chance to update our velocity
+	// so that physics won't move us beyond our distance limit
+	void DistanceLimitThink()
+	{
+		if ( m_bFizzling )
+			return;
+
+		if ( UTIL_PointContents( GetAbsOrigin() ) & MASK_WATER )
+		{
+			StopAndFizzle();
+			return;
+		}
+
+		const float flMaxDist = tf_fireball_distance.GetFloat();
+		float flDistance = ( GetAbsOrigin() - m_vecSpawnOrigin ).Length();
+		const float flDt = gpGlobals->frametime;
+
+		// Get where our new position will be
+		Vector vecVelThisFrame;
+		Vector vecAbsVelocity = GetAbsVelocity();
+		vecAbsVelocity += GetBaseVelocity();
+		VectorScale( vecAbsVelocity, gpGlobals->frametime, vecVelThisFrame );
+		Vector vecNewPos = GetAbsOrigin() + vecVelThisFrame;
+
+		// Check if we're about to go too far, and clip our velocity so that we don't
+		float flNewDistSqr = ( vecNewPos - m_vecSpawnOrigin ).LengthSqr();
+		if ( flNewDistSqr > ( flMaxDist * flMaxDist ) )
+		{
+			float flDistToGo = flMaxDist - flDistance;
+			
+			// CloseEnough is close enough
+			if ( CloseEnough( flDistToGo, 0.f, 1.f ) )
+			{
+				m_bFizzling = true;
+				SetAbsVelocity( vec3_origin );
+
+				// Put the projectile to sleep while we wait for the cl_interp window to expire (keeps the dlight effect in sync)
+				CBaseEntity *pOwner = GetOwnerEntity();
+				float flLerpAmount = Q_atof( engine->GetClientConVarValue( pOwner->entindex(), "cl_interp" ) );
+				SetContextThink( &CTFProjectile_BallOfFire::ExpireDelayThink, gpGlobals->curtime + flLerpAmount, "ExpireDelayThink" );
+			}
+			else
+			{
+				Vector vecDirection = vecAbsVelocity.Normalized();
+				SetAbsVelocity( vecDirection * ( flDistToGo / flDt ) );
+			}
+		}
+
+		// Always do this think
+		SetContextThink( &CTFProjectile_BallOfFire::DistanceLimitThink, gpGlobals->curtime, "DistanceLimitThink" );
+	}
+
+	void StopAndFizzle()
+	{
+		if ( m_bFizzling )
+			return;
+
+		SetAbsVelocity( vec3_origin );
+
+		m_bFizzling = true;
+		SetContextThink( &CBaseGrenade::SUB_Remove, gpGlobals->curtime + 0.1f, "RemoveThink" );
+	}
+	virtual const char *GetProjectileModelName( void ) { return "models/empty.mdl"; } // We dont have a model by default, and that's OK
+
+	virtual float		GetDamageRadius()	const			{ return tf_fireball_radius.GetFloat(); }
+	virtual int			GetCustomDamageType() const OVERRIDE { Assert( false ); return TF_DMG_CUSTOM_DRAGONS_FURY_IGNITE; }
+
+	virtual void RocketTouch( CBaseEntity *pOther ) OVERRIDE
+	{
+		if ( m_bFizzling )
+			return;
+
+		// Verify a correct "other."
+		Assert( pOther );
+		if ( !pOther->IsSolid() ||
+			 pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) ||
+			 pOther->IsSolidFlagSet( FSOLID_NOT_SOLID ) ||
+			 ( pOther->GetCollisionGroup() == TFCOLLISION_GROUP_RESPAWNROOMS ) ||
+			 pOther->IsFuncLOD() ||
+			 pOther->IsBaseProjectile() )
+		{
+			return;
+		}
+
+		CBaseEntity *pOwner = GetOwnerEntity();
+		// Don't shoot ourselves
+		if ( pOwner == pOther )
+			return;
+
+		// Handle hitting skybox (disappear).
+		const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
+		if ( pTrace->surface.flags & SURF_SKY )
+		{
+			UTIL_Remove( this );
+			return;
+		}
+
+		// pass through ladders
+		if ( pTrace->surface.flags & CONTENTS_LADDER )
+			return;
+
+		if ( !ShouldTouchNonWorldSolid( pOther, pTrace ) )
+			return;
+
+		// The stuff we collide with
+		bool bCombatEntity = pOther->IsPlayer() ||
+			pOther->IsBaseObject() ||
+			pOther->IsCombatCharacter() ||
+			pOther->IsCombatItem() ||
+			pOther->IsProjectileCollisionTarget();
+
+		if ( bCombatEntity )
+		{
+			Burn( pOther );
+			return;
+		}
+
+		// Die if we hit a thing that's not a player, building, or projectile target
+		StopAndFizzle();
+	}
+
+	void RefundAmmo()
+	{
+		if ( !m_bRefunded )
+		{
+			CTFWeaponFlameBall* pFlameLauncher = dynamic_cast< CTFWeaponFlameBall* >( GetLauncher() );
+			if ( pFlameLauncher )
+			{
+				pFlameLauncher->RefundAmmo( 1 );
+				m_bRefunded = true;
+			}
+		}
+	}
+
+	virtual const char *GetExplodeEffectSound()	const		{ return "Halloween.spell_fireball_impact"; }
+
+	void OnCollideWithTeammate( CTFPlayer *pTFPlayer )
+	{
+		// Only care about Snipers
+		if ( !pTFPlayer->IsPlayerClass( TF_CLASS_SNIPER ) )
+			return;
+
+		int nEntIndex = pTFPlayer->entindex();
+		if ( m_vecHitPlayers.Find( nEntIndex ) != m_vecHitPlayers.InvalidIndex() )
+			return;
+
+		m_vecHitPlayers.AddToTail( nEntIndex );
+
+		// Does he have the bow?
+		CTFWeaponBase *pWpn = pTFPlayer->GetActiveTFWeapon();
+		if ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_COMPOUND_BOW ) )
+		{
+			CTFCompoundBow *pBow = static_cast< CTFCompoundBow* >( pWpn );
+			pBow->SetArrowAlight( true );
+		}
+	}
+
+	void Burn( CBaseEntity* pTarget )
+	{
+		CBaseEntity *pOwner = GetOwnerEntity();
+		CTFPlayer* pTFOwner = ToTFPlayer( pOwner );
+		CTFPlayer *pTFPlayer = ToTFPlayer( pTarget );
+		
+		if ( pOwner->InSameTeam( pTarget ) )
+		{
+			if ( pTFPlayer )
+			{
+				OnCollideWithTeammate( pTFPlayer );
+			}
+			return;
+		}
+		
+		int nEntIndex = pTarget->entindex();
+		if ( m_vecHitPlayers.Find( nEntIndex ) != m_vecHitPlayers.InvalidIndex() )
+			return;
+
+		m_vecHitPlayers.AddToTail( nEntIndex );
+
+		if ( !pOwner )
+			return;
+
+		if ( !pTarget->IsAlive() )
+			return;
+
+		if ( !IsEntityVisible( pTarget ) )
+			return;
+
+		CTakeDamageInfo info;
+		info.SetAttacker( pOwner );
+		info.SetInflictor( this ); 
+		info.SetWeapon( GetLauncher() );
+		info.SetDamagePosition( GetAbsOrigin() );
+		info.SetDamageType( DMG_IGNITE | DMG_USEDISTANCEMOD | DMG_NOCLOSEDISTANCEMOD );
+
+		// CRITS!
+		if ( IsCritical() )
+		{
+			info.SetDamageType( info.GetDamageType() | DMG_CRITICAL );
+		}
+
+		CTraceFilterIgnoreTeammates tracefilter( this, COLLISION_GROUP_NONE, GetTeamNumber() );
+		trace_t trace;
+		UTIL_TraceLine( GetAbsOrigin(), pTarget->GetAbsOrigin(), ( MASK_SHOT & ~( CONTENTS_HITBOX ) ), &tracefilter, &trace );
+		if ( trace.DidHitWorld() )
+			return;
+
+		// Show a little burn particle
+		CPVSFilter filter( pTarget->WorldSpaceCenter() );
+		Vector vStart = WorldSpaceCenter();
+		Vector vEnd = vStart + ( pTarget->WorldSpaceCenter() - vStart ).Normalized() * GetDamageRadius();
+		const char *pszHitEffect = "torch_player_burn";
+		te_tf_particle_effects_control_point_t controlPoint = { PATTACH_ABSORIGIN, vEnd };
+		TE_TFParticleEffectComplex( filter, 0.0f, pszHitEffect, vEnd, QAngle( 0, 0, 0 ), NULL, &controlPoint, pTarget, PATTACH_CUSTOMORIGIN );
+
+		bool bBonusDamage = false;
+
+		if ( pTFPlayer )
+		{
+			if ( pTFPlayer->m_Shared.InCond( TF_COND_PHASE ) || pTFPlayer->m_Shared.InCond( TF_COND_PASSTIME_INTERCEPTION ) )
+				return;
+
+			if ( pTFPlayer->m_Shared.IsInvulnerable() )
+				return;
+
+			// Trace forward and see if we would touch a hitbox if we kept going
+			CTraceFilterCollisionArrows filterHitBox( this, GetOwnerEntity() );
+			trace_t trForward;
+			UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + GetAbsVelocity() * gpGlobals->frametime * 1.5f, ( MASK_SHOT & ~( CONTENTS_HITBOX ) ), this, COLLISION_GROUP_PLAYER, &trForward );
+			bool bHitBBox = trForward.DidHit() && trForward.m_pEnt && trForward.m_pEnt == pTFPlayer;
+			//NDebugOverlay::Line( GetAbsOrigin(), GetAbsOrigin() + GetAbsVelocity() * gpGlobals->frametime, 255.f, 0.f, 0.f, false, 2.5f );
+			//NDebugOverlay::Cross3D( trForward.endpos, 32.f, 0.f, 255.f, 0.f, false, 2.5f );
+
+			bBonusDamage = ( pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) && bHitBBox );
+			float flDamageBonusScale = ( bBonusDamage ) ? tf_fireball_burning_bonus.GetFloat() : 1.f;
+			info.SetDamage( GetDamage() * flDamageBonusScale );
+			info.SetDamageCustom( bBonusDamage ? TF_DMG_CUSTOM_DRAGONS_FURY_BONUS_BURNING : TF_DMG_CUSTOM_DRAGONS_FURY_IGNITE );
+
+			float flBurnDuration = tf_fireball_burn_duration.GetFloat();
+
+			// This burn affects pyros, too, but only half as long
+			if ( pTFPlayer->IsPlayerClass( TF_CLASS_PYRO ) )
+			{
+				pTFPlayer->m_Shared.AddCond( TF_COND_BURNING_PYRO, ( flBurnDuration * 0.5f ), pOwner );
+			}
+
+			// Ignite them AFTER we figure out the damage.  We do extra damage to burning players.
+			pTFPlayer->m_Shared.Burn( ToTFPlayer( pOwner ), (CTFWeaponBase*)GetLauncher(), flBurnDuration );
+		}
+		else
+		{
+			// This weapon sucks against non-players since it can't light them on fire, but if you've managed
+			// to get in range as a Pyro you deserve to destroy it.  We're going to give the bonus
+			// damage always against these targets to help with this.
+			bBonusDamage = true;
+			info.SetDamage( GetDamage() * tf_fireball_burning_bonus.GetFloat() );
+			info.SetDamageCustom( TF_DMG_CUSTOM_DRAGONS_FURY_BONUS_BURNING );
+		}
+
+
+		RefundAmmo();
+		
+		// Hurt 'em.
+		Vector dir;
+		AngleVectors( GetAbsAngles(), &dir );
+		pTarget->DispatchTraceAttack( info, dir, &trace );
+		ApplyMultiDamage();
+
+		// Impact sound.  We only play it once per projectile.  It's so fast, nobody will notice
+		// there's only one, but their ears will thank us that there is only one.
+		if ( !m_bImpactSoundPlayed )
+		{
+			m_bImpactSoundPlayed = true;
+
+			if ( bBonusDamage )
+			{
+				CRecipientFilter filterImpact;
+				filterImpact.AddAllPlayers();
+				// When we're doing bonus damage, don't play this sound to
+				// the victim and the attacker.  They're going to get special
+				// sounds in their ears.
+				if ( pTFPlayer )
+				{
+					filterImpact.RemoveRecipient( pTFPlayer );
+				}
+				
+				if ( pTFOwner )
+				{
+					filterImpact.RemoveRecipient( pTFOwner );
+				}
+
+				// Bonus damage hit sound
+				{
+					EmitSound_t params;
+					params.m_flSoundTime = 0;
+					params.m_pflSoundDuration = 0;
+					params.m_pSoundName = "Weapon_DragonsFury.BonusDamage";
+					pTarget->EmitSound( filterImpact, pTarget->entindex(), params );
+				}
+
+				// Special pain sound for bonus damage
+				if ( pTFPlayer )
+				{
+					EmitSound_t params;
+					params.m_flSoundTime = 0;
+					params.m_pflSoundDuration = 0;
+					params.m_pSoundName = "Weapon_DragonsFury.BonusDamagePain";
+
+					CSingleUserRecipientFilter filterVictim( pTFPlayer );
+					EmitSound( filterVictim, pTFPlayer->entindex(), params );
+				}
+			}
+		}
+
+		// Special sound in the shooter's ears to let them know they got the Bonus Damage
+		if ( bBonusDamage && !m_bBonusSoundPlayed )
+		{
+			m_bBonusSoundPlayed = true;
+			// sound effects
+			EmitSound_t params;
+			params.m_flSoundTime = 0;
+			params.m_pflSoundDuration = 0;
+			params.m_pSoundName = "Weapon_DragonsFury.BonusDamageHit";
+
+			CSingleUserRecipientFilter filterShooter( pTFOwner );
+			EmitSound( filterShooter, pTFOwner->entindex(), params );
+		}
+	}
+
+	bool IsEntityVisible( CBaseEntity *pEntity )
+	{
+		const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
+		
+		trace_t trace;
+		UTIL_TraceLine( WorldSpaceCenter(), pTrace->endpos, MASK_OPAQUE, this, COLLISION_GROUP_NONE, &trace );
+		if ( trace.fraction < 1.f )
+			return false;
+
+		return true;
+	}
+
+	CUtlVector< int > m_vecHitPlayers;
 #endif
 
-#define TF_WEAPON_FIREBALL_MODEL	"models/empty.mdl"
+#ifdef CLIENT_DLL
+	
+	// Do nothing
+	virtual void CreateTrails( void ) OVERRIDE
+	{}
 
-//=============================================================================
-//
-// Dragon's Fury Projectile
-//
+	const char* GetParticle( bool bCrit ) const { return bCrit ? ( GetTeamNumber()==TF_TEAM_BLUE ? "projectile_fireball_crit_blue" : "projectile_fireball_crit_red" ) : "projectile_fireball"; }
 
-BEGIN_DATADESC( CTFProjectile_BallOfFire )
-END_DATADESC()
+	virtual void OnDataChanged( DataUpdateType_t updateType ) OVERRIDE
+	{
+		BaseClass::OnDataChanged( updateType );
 
-LINK_ENTITY_TO_CLASS( tf_projectile_balloffire, CTFProjectile_BallOfFire );
-PRECACHE_REGISTER( tf_projectile_balloffire );
+		if ( updateType == DATA_UPDATE_CREATED )
+		{
+			SetNextClientThink(CLIENT_THINK_ALWAYS);
+			CreateLightEffects();
 
+			// Create the particle on the empty attachment
+			int iAttachment = LookupAttachment( "empty" );
+			if ( iAttachment == INVALID_PARTICLE_ATTACHMENT )
+				return;
+
+			CTFPlayer* pTFPlayerOwner = ToTFPlayer( GetOwnerEntity() );
+			if ( !pTFPlayerOwner )
+				return;
+
+			// We're going to emit a local temp ent that has the particle
+			// attached to it, just as we learn about the real entity being
+			// created on the client.  The reason being we don't lerp the deletion
+			// of entities on the client, which causes the particle effect to
+			// end in very strange/unexpected ways to the shooter.  This way,
+			// the projectile always travels as it should.
+			m_flTempProjCreationTime = gpGlobals->curtime + GetInterpolationAmount( 0 );
+		}
+	}
+
+	virtual void ClientThink() OVERRIDE
+	{
+		BaseClass::ClientThink();
+
+		SetNextClientThink( CLIENT_THINK_ALWAYS );
+
+		if ( gpGlobals->curtime >= m_flTempProjCreationTime && !m_bTempProjCreated )
+		{
+			m_bTempProjCreated = true;
+
+			int nModelIndex = modelinfo->GetModelIndex( "models/empty.mdl" );
+			C_LocalTempEntity* pClientFireball = tempents->ClientProjectile( m_vecSpawnOrigin, m_vecInitialVelocity, vec3_origin, nModelIndex, 2.f, GetOwnerEntity(), NULL, GetParticle( IsCritical() ) );
+			Assert( pClientFireball );
+			if ( pClientFireball )
+			{
+				pClientFireball->SetAbsAngles( GetAbsAngles() );
+				pClientFireball->flags |= FTENT_COLLISIONGROUP;
+				pClientFireball->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+			}
+		}
+
+		if ( tf_fireball_draw_debug_radius.GetBool() )
+		{
+			NDebugOverlay::Sphere( GetAbsOrigin(), tf_fireball_radius.GetFloat() * 3.f, 0, 255, 255, false, 0.f );
+		}
+
+		if ( GetOwnerEntity() == C_BasePlayer::GetLocalPlayer() )
+		{
+			// Deal with the environment light
+			if ( !m_pDynamicLight || (m_pDynamicLight->key != index) )
+			{
+				m_pDynamicLight = effects->CL_AllocDlight( index );
+				assert (m_pDynamicLight);
+			}
+
+			ColorRGBExp32 color;
+			color.r	= 255;
+			color.g	= 100;
+			color.b	= 30;
+			color.exponent = 8;
+
+			//m_pDynamicLight->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+			m_pDynamicLight->radius		= 100.f;
+			m_pDynamicLight->origin		= GetAbsOrigin() + Vector( 0, 0, 0 );
+			m_pDynamicLight->die		= gpGlobals->curtime + 0.05f;
+			m_pDynamicLight->color		= color;
+		}
+		else if ( !m_bNearMiss && ( gpGlobals->curtime - m_flLastNearMissCheck >= 0.05f ) )
+		{
+			m_bNearMiss = UTIL_BPerformNearMiss( this, "Weapon_DragonsFury.Nearmiss", 200.f );
+			m_flLastNearMissCheck = gpGlobals->curtime;
+		}
+	}
+
+	void CreateLightEffects( void )
+	{
+		// Handle the dynamic light
+		if ( tf2v_muzzlelight.GetBool() )
+		{
+			AddEffects( EF_DIMLIGHT );
+
+			dlight_t *dl;
+			if ( IsEffectActive( EF_DIMLIGHT ) )
+			{
+				dl = effects->CL_AllocDlight( LIGHT_INDEX_TE_DYNAMIC + index );
+				dl->origin = GetAbsOrigin();
+				switch ( GetTeamNumber() )
+				{
+					case TF_TEAM_RED:
+						if ( !IsCritical() )
+						{ dl->color.r = 255; dl->color.g = 30; dl->color.b = 10; }
+						else
+						{ dl->color.r = 255; dl->color.g = 10; dl->color.b = 10; }
+						break;
+
+					case TF_TEAM_BLUE:
+						if ( !IsCritical() )
+						{ dl->color.r = 10; dl->color.g = 30; dl->color.b = 255; }
+						else
+						{ dl->color.r = 10; dl->color.g = 10; dl->color.b = 255; }
+						break;
+				}
+				dl->radius = 256.0f;
+				dl->die = gpGlobals->curtime + 0.1;
+
+				tempents->RocketFlare( GetAbsOrigin() );
+			}
+		}
+	}
+#endif // CLIENT_DLL
+
+protected:
+	virtual float GetFireballScale() const { return 1.f; }
+
+private:
+#ifdef CLIENT_DLL
+	dlight_t*			m_pDynamicLight = NULL;
+	bool				m_bNearMiss = false;
+	float				m_flLastNearMissCheck = 0.f;
+	float				m_flTempProjCreationTime = 0.f;
+	bool				m_bTempProjCreated = false;
+#endif // CLIENT_DLL
+
+	CNetworkVector( m_vecSpawnOrigin );
+	CNetworkVector( m_vecInitialVelocity );
+
+#ifdef GAME_DLL
+	bool m_bRefunded = false;
+	bool m_bFizzling = false;
+	bool m_bImpactSoundPlayed = false;
+	bool m_bBonusSoundPlayed = false;
+#endif
+};
+
+// Lightning ball
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_BallOfFire, DT_TFProjectile_BallOfFire )
 BEGIN_NETWORK_TABLE( CTFProjectile_BallOfFire, DT_TFProjectile_BallOfFire )
-#ifdef GAME_DLL
-	SendPropBool( SENDINFO( m_bCritical ) ),
+#if !defined( CLIENT_DLL )
+	SendPropVector( SENDINFO( m_vecInitialVelocity ), 0, SPROP_NOSCALE ), 
+	SendPropVector( SENDINFO( m_vecSpawnOrigin ), 0, SPROP_NOSCALE ), 
 #else
-	RecvPropBool( RECVINFO( m_bCritical ) ),
+	RecvPropVector( RECVINFO(m_vecInitialVelocity), 0 ),
+	RecvPropVector( RECVINFO(m_vecSpawnOrigin), 0 ),
 #endif
 END_NETWORK_TABLE()
 
-//-----------------------------------------------------------------------------
-// Purpose: Constructor
-//-----------------------------------------------------------------------------
-CTFProjectile_BallOfFire::CTFProjectile_BallOfFire()
-{
-
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Destructor
-//-----------------------------------------------------------------------------
-CTFProjectile_BallOfFire::~CTFProjectile_BallOfFire()
-{
-#ifdef CLIENT_DLL
-	ParticleProp()->StopEmission();
-#else
-	m_bCollideWithTeammates = false;
-#endif
-}
-
-#ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::Precache()
-{
-	PrecacheModel( TF_WEAPON_FIREBALL_MODEL );
-
-	PrecacheParticleSystem( "projectile_fireball" );
-	PrecacheParticleSystem( "projectile_fireball_pyrovision" );
-	PrecacheParticleSystem( "rockettrail_waterbubbles" );
-	PrecacheTeamParticles( "projectile_fireball_crit_%s" );
-
-	PrecacheScriptSound( "Weapon_DragonsFury.Impact" );
-	PrecacheScriptSound( "Weapon_DragonsFury.BonusDamageHit" );
-	BaseClass::Precache();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Spawn function
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::Spawn()
-{
-	SetModel( TF_WEAPON_FIREBALL_MODEL );
-	BaseClass::Spawn();
-	SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
-	AddEFlags( EFL_NO_WATER_VELOCITY_CHANGE );
-	SetGravity( 0.0f );
-
-	SetSolid( SOLID_NONE );
-	SetSolidFlags( FSOLID_NOT_SOLID );
-	SetCollisionGroup( COLLISION_GROUP_NONE );
-
-	//float flRadius = GetDamageRadius();
-	float flRadius = GetFireballScale();
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( GetOwnerEntity(), flRadius, mult_flame_size );
-	UTIL_SetSize( this, -Vector( flRadius, flRadius, flRadius ), Vector( flRadius, flRadius, flRadius ) );
-
-	// Setup attributes.
-	m_takedamage = DAMAGE_NO;
-	m_vecInitialPos = GetOwnerEntity()->GetAbsOrigin();
-	m_vecPrevPos = m_vecInitialPos;
-
-	// Setup the think function.
-	SetThink( &CTFProjectile_BallOfFire::ExpireDelayThink );
-	SetNextThink( gpGlobals->curtime );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Think method
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::ExpireDelayThink( void )
-{
-	// Render debug visualization if convar on
-	if ( tf_fireball_draw_debug_radius.GetBool() )
-	{
-		NDebugOverlay::Sphere( GetAbsOrigin(), GetAbsAngles(), GetDamageRadius(), 0, 255, 0, 0, false, 0 );
-	}
-
-	SetNextThink( gpGlobals->curtime );
-
-	m_vecPrevPos = GetAbsOrigin();
-
- 	CBaseEntity *pEntity = NULL;
-	Vector vecOrigin = GetAbsOrigin();
-	CBaseEntity *pBaseAttacker = GetOwnerEntity();
-	IScorer *pScorerInterface = dynamic_cast<IScorer*>( pBaseAttacker );
-	if ( pScorerInterface )
-		pBaseAttacker = pScorerInterface->GetScorer();
-
-	CTFPlayer *pAttacker = dynamic_cast<CTFPlayer *>( pBaseAttacker );
-	if ( !pAttacker )
-		return;
-
- 	for ( CEntitySphereQuery sphere( vecOrigin, GetDamageRadius() ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
-	{
-		if ( !pEntity )
-			continue;
-
-		// if we've already burnt this entity, don't do more damage, so skip even checking for collision with the entity
-		int iIndex = m_hEntitiesBurnt.Find( pEntity );
-		if ( iIndex != m_hEntitiesBurnt.InvalidIndex() )
-			continue;
-
- 		Vector vecHitPoint;
-		pEntity->CollisionProp()->CalcNearestPoint( vecOrigin, &vecHitPoint );
-		Vector vecDir = vecHitPoint - vecOrigin;
- 		if ( vecDir.LengthSqr() < ( GetDamageRadius() * GetDamageRadius() ) )
-		{
-			if ( pEntity && !pEntity->InSameTeam( pAttacker ) )
-			{
-				Burn( pEntity );
-			}
-		}
-	}
-
-	// Render debug visualization if convar on
-	if ( tf_fireball_draw_debug_radius.GetBool() )
-	{
-		if ( m_hEntitiesBurnt.Count() > 0 )
-		{
-			int val = ( (int) ( gpGlobals->curtime * 10 ) ) % 255;
-			NDebugOverlay::Sphere( GetAbsOrigin(), GetAbsAngles(), GetDamageRadius(), val, 255, val, 0, false, 0 );
-		} 
-		else 
-		{
-			NDebugOverlay::Sphere( GetAbsOrigin(), GetAbsAngles(), GetDamageRadius(), 0, 100, 0, 0, false, 0 );
-		}
-	}
-
-	// if we've expired, remove ourselves
-	float flDistance = GetAbsOrigin().DistTo( m_vecInitialPos );
-	if ( flDistance >= tf_fireball_distance.GetFloat() )
-	{
-		#ifdef GAME_DLL
-		CEffectData	data;
-		data.m_nHitBox = GetParticleSystemIndex( "projectile_fireball_end" );
-		data.m_vOrigin = WorldSpaceCenter();
-		data.m_vAngles = vec3_angle;
-		data.m_nEntIndex = 0;
-
-		CPVSFilter filter( WorldSpaceCenter() );
-		te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
-		#endif
-		UTIL_Remove( this );
-		if ( tf_fireball_draw_debug_radius.GetBool() )
-			NDebugOverlay::Sphere( GetAbsOrigin(), GetAbsAngles(), GetDamageRadius(), 0, 100, 0, 0, false, 1 );
-
-		return;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::RocketTouch( CBaseEntity *pOther )
-{
-	BaseClass::RocketTouch( pOther );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::SetScorer( CBaseEntity *pScorer )
-{
-	m_Scorer = pScorer;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CBasePlayer *CTFProjectile_BallOfFire::GetScorer( void )
-{
-	return dynamic_cast<CBasePlayer *>( m_Scorer.Get() );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int	CTFProjectile_BallOfFire::GetDamageType() 
-{ 
-	int iDmgType = BaseClass::GetDamageType();
-
-	// Buff banner mini-crit calculations
-	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
-	if ( pWeapon )
-	{
-		pWeapon->CalcIsAttackMiniCritical();
-		if ( pWeapon->IsCurrentAttackAMiniCrit() )
-		{
-			iDmgType |= DMG_MINICRITICAL;
-		}
-	}
-
-	if ( m_bCritical )
-	{
-		iDmgType |= DMG_CRITICAL;
-	}
-	if ( m_iDeflected > 0 )
-	{
-		iDmgType |= DMG_MINICRITICAL;
-	}
-
-	return iDmgType;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
-{
-	// Get rocket's speed.
-	float flVel = GetAbsVelocity().Length();
-
-	QAngle angForward;
-	VectorAngles( vecDir, angForward );
-
-	// Now change rocket's direction.
-	SetAbsAngles( angForward );
-	SetAbsVelocity( vecDir * flVel );
-
-	// And change owner.
-	IncremenentDeflected();
-	SetOwnerEntity( pDeflectedBy );
-	ChangeTeam( pDeflectedBy->GetTeamNumber() );
-	SetScorer( pDeflectedBy );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::Explode( trace_t *pTrace, CBaseEntity *pOther )
-{
-	// Save this entity as enemy, they will take 100% damage.
-	m_hEnemy = pOther;
-
-	// Invisible.
-	SetModelName( NULL_STRING );
-	AddSolidFlags( FSOLID_NOT_SOLID );
-	m_takedamage = DAMAGE_NO;
-
-	// Pull out a bit.
-	if ( pTrace->fraction != 1.0 )
-	{
-		SetAbsOrigin( pTrace->endpos + ( pTrace->plane.normal * 1.0f ) );
-	}
-
-	// Don't decal players with scorch.
-	if ( !pOther->IsPlayer() )
-	{
-		UTIL_DecalTrace( pTrace, "Scorch" );
-	}
-
-	/*#ifdef GAME_DLL
-	CEffectData	data;
-	data.m_nHitBox = GetParticleSystemIndex( "projectile_fireball_end" );
-	data.m_vOrigin = WorldSpaceCenter();
-	data.m_vAngles = vec3_angle;
-	data.m_nEntIndex = 0;
-
-	CPVSFilter filter( WorldSpaceCenter() );
-	te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
-	#endif*/
-
-	// Remove.
-	UTIL_Remove( this );
-	if ( tf_fireball_draw_debug_radius.GetBool() )
-		NDebugOverlay::Sphere( GetAbsOrigin(), GetAbsAngles(), GetDamageRadius(), 0, 100, 0, 0, false, 1 );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CTFProjectile_BallOfFire *CTFProjectile_BallOfFire::Create( CBaseEntity *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
-{
-	CTFProjectile_BallOfFire *pFireball = static_cast<CTFProjectile_BallOfFire*>( CBaseEntity::CreateNoSpawn( "tf_projectile_balloffire", vecOrigin, vecAngles, pOwner ) );
-
-	if ( pFireball )
-	{
-		// Set team.
-		pFireball->ChangeTeam( pOwner->GetTeamNumber() );
-
-		// Set scorer.
-		pFireball->SetScorer( pScorer );
-
-		// Set firing weapon.
-		pFireball->SetLauncher( pWeapon );
-
-		// Spawn.
-		DispatchSpawn( pFireball );
-
-		// Setup the initial velocity.
-		Vector vecForward, vecRight, vecUp;
-		AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
-
-		float flVelocity = tf_fireball_speed.GetFloat();
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flVelocity, mult_projectile_speed );
-
-		Vector vecVelocity = vecForward * flVelocity;
-		pFireball->SetAbsVelocity( vecVelocity );
-		pFireball->SetupInitialTransmittedGrenadeVelocity( vecVelocity );
-
-		// Setup the initial angles.
-		QAngle angles;
-		VectorAngles( vecVelocity, angles );
-		pFireball->SetAbsAngles( angles );
-		
-		float flGravity = 0.0f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWeapon, flGravity, mod_rocket_gravity );
-		if ( flGravity )
-		{
-			pFireball->SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
-			pFireball->SetGravity( flGravity );
-		}
-
-		return pFireball;
-	}
-
-	return pFireball;
-}
-#else
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFProjectile_BallOfFire::OnDataChanged( DataUpdateType_t updateType )
-{
-	BaseClass::OnDataChanged( updateType );
-
-	if ( updateType == DATA_UPDATE_CREATED )
-	{
-		CreateTrails();
-		CreateLightEffects();
-	}
-
-	// Watch team changes and change trail accordingly.
-	if ( m_iDeflected != m_iOldDeflected )
-	{
-		ParticleProp()->StopEmission();
-		CreateTrails();
-		CreateLightEffects();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_TFProjectile_BallOfFire::CreateTrails( void )
-{
-	if ( IsDormant() )
-		return;
-
-	if ( enginetrace->GetPointContents( GetAbsOrigin() ) & MASK_WATER )
-	{
-		ParticleProp()->Create( "rockettrail_waterbubbles", PATTACH_POINT_FOLLOW, "empty" );
-	}
-	else
-	{
-		const char *pszFormat = m_bCritical ? "projectile_fireball_crit_%s" : "projectile_fireball";
-		const char *pszEffectName = ConstructTeamParticle( pszFormat, GetTeamNumber() );
-
-		ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "empty" );
-	}
-}
-
-void C_TFProjectile_BallOfFire::CreateLightEffects( void )
-{
-	// Handle the dynamic light
-	if (tf2v_muzzlelight.GetBool())
-	{
-		AddEffects( EF_DIMLIGHT );
-
-		dlight_t *dl;
-		if ( IsEffectActive( EF_DIMLIGHT ) )
-		{	
-			dl = effects->CL_AllocDlight( LIGHT_INDEX_TE_DYNAMIC + index );
-			dl->origin = GetAbsOrigin();
-			switch ( GetTeamNumber() )
-			{
-			case TF_TEAM_RED:
-				if ( !m_bCritical )
-				{	dl->color.r = 255; dl->color.g = 30; dl->color.b = 10; }
-				else
-				{	dl->color.r = 255; dl->color.g = 10; dl->color.b = 10; }
-				break;
-
-			case TF_TEAM_BLUE:
-				if ( !m_bCritical )
-				{	dl->color.r = 10; dl->color.g = 30; dl->color.b = 255; }
-				else
-				{	dl->color.r = 10; dl->color.g = 10; dl->color.b = 255; }
-				break;
-			}
-			dl->radius = 256.0f;
-			dl->die = gpGlobals->curtime + 0.1;
-
-			tempents->RocketFlare( GetAbsOrigin() );
-		}
-	}
-}
-#endif
-
-#ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: Called when we've collided with another entity
-//-----------------------------------------------------------------------------
-void CTFProjectile_BallOfFire::Burn( CBaseEntity *pOther )
-{
-	// remember that we've burnt this one
- 	m_hEntitiesBurnt.AddToTail( pOther );
-
-	// Save this entity as enemy, they will take 100% damage.
-	m_hEnemy = pOther;
-
-	// Invisible.
-	SetModelName( NULL_STRING );
-	AddSolidFlags( FSOLID_NOT_SOLID );
-	m_takedamage = DAMAGE_NO;
-
-	// Damage.
-	CBaseEntity *pAttacker = GetOwnerEntity();
-	IScorer *pScorerInterface = dynamic_cast<IScorer*>( pAttacker );
-	if ( pScorerInterface )
-	{
-		pAttacker = pScorerInterface->GetScorer();
-	}
-
-	// Play explosion sound and effect.
-	Vector vecOrigin = GetAbsOrigin();
-	CTFPlayer *pPlayer = ToTFPlayer( pOther );
-	CBreakableProp *pProp = dynamic_cast< CBreakableProp * >( pOther );
-
-	float flDamage = tf_fireball_damage.GetFloat();
-	int iDamageCustom = TF_DMG_CUSTOM_DRAGONS_FURY_IGNITE;
-
-	CTFWeaponBase *pWeapon = ( CTFWeaponBase * )m_hLauncher.Get();
-
-	if ( pPlayer )
-	{
-		// Hit player, do impact sound and more damage
-		if ( m_hEntitiesBurnt.Count() > 0 )
-		{
-			if ( pPlayer->m_Shared.InCond( TF_COND_BURNING ) )
-			{
-				flDamage = tf_fireball_damage.GetFloat() * tf_fireball_burning_bonus.GetFloat();
-
-				iDamageCustom = TF_DMG_CUSTOM_DRAGONS_FURY_BONUS_BURNIN;
-				#ifdef GAME_DLL
-				CEffectData	data;
-				data.m_nHitBox = GetParticleSystemIndex( "dragons_fury_effect_parent" );
-				data.m_vOrigin = pPlayer->GetAbsOrigin();
-				data.m_vAngles = vec3_angle;
-				data.m_nEntIndex = 0;
-
-				CPVSFilter filter( vecOrigin );
-				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
-
-				EmitSound_t params;
-				params.m_flSoundTime = 0;
-				params.m_pSoundName = GetExplodeEffectSound();
-				EmitSound( filter, pAttacker->entindex(), params );
-				#endif
-			}
-		}
-
-		if ( pWeapon )
-			pWeapon->m_flNextPrimaryAttack = gpGlobals->curtime - 0.4f;
-	}
-	else if ( pProp )
-	{
-		// If we won't be able to break it, don't burn
-		if ( pProp->m_takedamage == DAMAGE_YES )
-		{
-			pProp->IgniteLifetime( tf_fireball_burn_duration.GetFloat() );
-			ApplyMultiDamage();
-		}
-	}
-	else
-	{
-		ApplyMultiDamage();
-	}
-
-	CTakeDamageInfo info( GetOwnerEntity(), pAttacker, pWeapon, flDamage, GetDamageType(), iDamageCustom );
-	pOther->TakeDamage( info );
-
-	info.SetReportedPosition( pAttacker->GetAbsOrigin() );	
-		
-	// We collided with pOther, so try to find a place on their surface to show blood
-	trace_t pTrace;
-	UTIL_TraceLine(WorldSpaceCenter(), pOther->WorldSpaceCenter(), /*MASK_SOLID*/ MASK_SHOT | CONTENTS_HITBOX, this, COLLISION_GROUP_DEBRIS, &pTrace);
-
-	pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
-
-	ApplyMultiDamage();
-}
-#endif
-
-#ifdef GAME_DLL
-float CTFProjectile_BallOfFire::GetDamageRadius( void ) const
-{
-	return tf_fireball_radius.GetFloat();
-}
-
-// need correct number
-float CTFProjectile_BallOfFire::GetFireballScale( void ) const
-{
-	return 0.01f;
-}
-
-const char *CTFProjectile_BallOfFire::GetExplodeEffectSound( void )
-{ 
-	return "Weapon_DragonsFury.BonusDamageHit";
-}
-#endif
+LINK_ENTITY_TO_CLASS( tf_projectile_balloffire, CTFProjectile_BallOfFire );
+PRECACHE_WEAPON_REGISTER( tf_projectile_balloffire );

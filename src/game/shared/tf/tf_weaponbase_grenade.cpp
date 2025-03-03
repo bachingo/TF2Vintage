@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF Base Grenade.
 //
@@ -109,7 +109,8 @@ bool CTFWeaponBaseGrenade::Deploy( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenade::Prime() 
 {
-	m_flThrowTime = gpGlobals->curtime + GetTFWpnData().m_flPrimerTime;
+	CTFWeaponInfo weaponInfo = GetTFWpnData();
+	m_flThrowTime = gpGlobals->curtime + weaponInfo.m_flPrimerTime;
 	m_bPrimed = true;
 
 #ifndef CLIENT_DLL
@@ -330,7 +331,7 @@ bool CTFWeaponBaseGrenade::ShouldDraw( void )
 			return false;
 
 		// Don't draw primed grenades for local player in first person players
-		if ( GetOwner() == C_BasePlayer::GetLocalPlayer() && !C_BasePlayer::ShouldDrawLocalPlayer() )
+		if ( !(ToTFPlayer(GetOwner())->ShouldDrawThisPlayer()) )
 			return false;
 	}
 

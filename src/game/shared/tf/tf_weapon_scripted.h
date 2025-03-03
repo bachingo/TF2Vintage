@@ -27,7 +27,7 @@ public:
 
 #if defined(GAME_DLL)
 	void ApplyOnHitAttributes( CBaseEntity *pVictim, CTFPlayer *pAttacker, const CTakeDamageInfo &info ) OVERRIDE;
-	void ApplyPostOnHitAttributes( CTakeDamageInfo const &info, CTFPlayer *pVictim ) OVERRIDE;
+	void ApplyPostHitEffects( CTakeDamageInfo const &info, CTFPlayer *pVictim ) OVERRIDE;
 #endif
 };
 

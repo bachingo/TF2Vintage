@@ -2326,7 +2326,7 @@ void CBaseCombatWeapon::UpdateAutoFire( void )
 //-----------------------------------------------------------------------------
 // Purpose: Used for calculating if we fire a clip all at once.
 //-----------------------------------------------------------------------------
-bool CBaseCombatWeapon::AutoFiresFullClip(void)
+bool CBaseCombatWeapon::AutoFiresFullClip(void) const
 {
 	int iUseAutoFireRules = 0;
 	CALL_ATTRIB_HOOK_INT(iUseAutoFireRules, auto_fires_full_clip);
@@ -2336,7 +2336,7 @@ bool CBaseCombatWeapon::AutoFiresFullClip(void)
 //-----------------------------------------------------------------------------
 // Purpose: Used for calculating if we fire a clip all at once.
 //-----------------------------------------------------------------------------
-bool CBaseCombatWeapon::CanOverload(void)
+bool CBaseCombatWeapon::CanOverload(void) const
 {
 	int iCanOverload = 0;
 	CALL_ATTRIB_HOOK_INT(iCanOverload, can_overload);

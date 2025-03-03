@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -12,49 +12,72 @@
 
 #include "items.h"
 
+typedef enum
+{	
+	AP_NORMAL = 0,
+	AP_HALLOWEEN,
+	AP_CHRISTMAS,
+
+} AmmoPackType_t;
+
 class CTFAmmoPack : public CItem
 {
 public:
 	DECLARE_CLASS( CTFAmmoPack, CItem );
 	DECLARE_SERVERCLASS();
 
-	CTFAmmoPack() {}
+	CTFAmmoPack()
+	{
+		m_PackType = AP_NORMAL;
+	}
 
-	virtual void			Spawn();
-	virtual void			Precache();		
+	virtual void Spawn();
+	virtual void Precache();		
 
-	void EXPORT				FlyThink( void );
-	void EXPORT				PackTouch( CBaseEntity *pOther );
+	void EXPORT DropSoundThink( void );
+	void EXPORT FlyThink( void );
+	void EXPORT PackTouch( CBaseEntity *pOther );
 
-	void					SetIsLunchbox( bool bIsLunchbox ) { m_bIsLunchbox = bIsLunchbox; }
+	void InitAmmoPack( CTFPlayer *pPlayer, CTFWeaponBase *pWeapon, int nSkin, bool bEmpty, bool bIsSuicide, float flAmmoRatio = 0.5f );
 
-	virtual unsigned int	PhysicsSolidMaskForEntity( void ) const;
+	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
 
-	int						GiveAmmo( int iCount, int iAmmoType );
+	int GiveAmmo( int iCount, int iAmmoType );
 
-	static CTFAmmoPack		*Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, bool bUseCustomAmmoCount = false );
+	void MakeEmptyPack( void ) { m_bEmptyPack = true; }
+	void MakeHolidayPack( void );
+	void SetBonusScale( float flBonusScale = 1.f );
+	void SetPickupThinkTime( float flNewThinkTime );
 
-	float					GetCreationTime( void ) { return m_flCreationTime; }
-	void					SetInitialVelocity( Vector &vecVelocity );
+	static CTFAmmoPack *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName );
 
-	void					MakeHolidayPack( void );
-	void					DropSoundThink( void );
+	float GetCreationTime( void ) { return m_flCreationTime; }
+	void  SetInitialVelocity( Vector &vecVelocity );
+	void  SetHealthInstead( bool bHealth ) { m_bHealthInstead = bHealth; }
+
+	const char* MakeHolidayAmmoPack( const char* inModelName, CBaseEntity *pOwner, const CTakeDamageInfo &info );
+
+	bool m_bObjGib;
 
 private:
-	int		m_iAmmo[MAX_AMMO_SLOTS];
+	int m_iAmmo[TF_AMMO_COUNT];
 
-	float	m_flCreationTime;
+	float m_flCreationTime;
+	float m_flAmmoRatio;
 
-	bool	m_bIsLunchbox;
-	bool	m_bUseCustomAmmoCount;
-	bool	m_bAllowOwnerPickup;
+	bool m_bEmptyPack;		// If true, the pack gives nothing when picked up.
+
+	bool m_bHealthInstead;	// If true, the pack gives health instead of ammo
+	bool m_bAllowOwnerPickup;
+	bool m_bNoPickup;
+	float m_flBonusScale;
+	AmmoPackType_t m_PackType;
 	CNetworkVector( m_vecInitialVelocity );
-
-	int iHoliday;
 
 private:
 	CTFAmmoPack( const CTFAmmoPack & );
 
 	DECLARE_DATADESC();
 };
+
 #endif //TF_AMMO_PACK_H

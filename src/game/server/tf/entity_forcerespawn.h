@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF Reset Entity (resets the teams).
 //
@@ -23,11 +23,12 @@ public:
 	CTFForceRespawn();
 	void Reset( void );
 
-	void ForceRespawn( bool bSwitchTeams );
+	void ForceRespawn( bool bSwitchTeams, int nTeam = TEAM_UNASSIGNED, bool bRemoveEverything = true );
 
 	// Input.
 	void InputForceRespawn( inputdata_t &inputdata );
 	void InputForceRespawnSwitchTeams( inputdata_t &inputdata );
+	void InputForceTeamRespawn( inputdata_t &inputdata );
 
 private:
 

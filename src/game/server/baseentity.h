@@ -2605,11 +2605,6 @@ inline float CBaseEntity::GetFriction( void ) const
 	return m_flFriction; 
 }
 
-inline void CBaseEntity::SetFriction( float flFriction )
-{ 
-	m_flFriction = flFriction; 
-}
-
 inline void	CBaseEntity::SetElasticity( float flElasticity )
 { 
 	m_flElasticity = flElasticity; 

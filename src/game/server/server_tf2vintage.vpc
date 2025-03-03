@@ -22,6 +22,8 @@ $Project "Server (TF)"
 {
 	$Folder	"Source Files"
 	{	
+		$File   "$SRCDIR\game\shared\basescriptedweapon.cpp"
+		$File   "$SRCDIR\game\shared\basescriptedweapon.h"
 		$File   "ScriptGameEventListener.cpp"
 		$File   "ScriptGameEventListener.h"
 		$File   "netpropmanager.cpp"
@@ -121,8 +123,8 @@ $Project "Server (TF)"
 
 			$Folder "Bot"
 			{
-				$File "tf\bot\tf_path_follower.cpp"
-				$File "tf\bot\tf_path_follower.h"
+				$File "tf\nav_mesh\tf_path_follower.cpp"
+				$File "tf\nav_mesh\tf_path_follower.h"
 			}
 		}
 	}

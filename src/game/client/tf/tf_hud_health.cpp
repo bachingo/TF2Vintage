@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implementation of CHudHealth class.
 //
@@ -20,10 +20,8 @@ using namespace vgui;
 
 #include "hudelement.h"
 #include "hud_numericdisplay.h"
-#include "convar.h"
+#include "ConVar.h"
 #include "c_tf_player.h"
-
-#if 0
 
 //=============================================================================
 //
@@ -127,7 +125,7 @@ void CHudHealth::OnThink()
 		return; 
 
 	// Never below zero.
-	int nHealth = max( pPlayer->GetHealth(), 0 );
+	int nHealth = MAX( pPlayer->GetHealth(), 0 );
 
 	// Only update the fade if we've changed health
 	if ( nHealth == m_nHealth )
@@ -219,7 +217,7 @@ private:
 	float			m_flArmorIconHeight;
 };
 
-
+#if 0
 DECLARE_HUDELEMENT( CHudArmor );
 
 //-----------------------------------------------------------------------------
@@ -313,5 +311,4 @@ void CHudArmor::Paint()
 	// Base class paint.
 	BaseClass::Paint();
 }
-
 #endif

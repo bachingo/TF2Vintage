@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -25,8 +25,7 @@ public:
 	virtual void OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void OnDataChanged( DataUpdateType_t updateType );
 
-	virtual void GetStatusText( wchar_t *pStatus, int iMaxStatusLen );
-	virtual void GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInBytes );
+	virtual void GetTargetIDDataString( OUT_Z_BYTECAP(iMaxLenInBytes) wchar_t *sDataString, int iMaxLenInBytes );
 
 	virtual void ClientThink( void );
 
@@ -38,36 +37,53 @@ public:
 
 	float GetChargeTime( void );
 
+	float GetCurrentRechargeDuration( void ) { return m_flCurrentRechargeDuration; }
+
 	int GetState( void ) { return m_iState; }
 
 	int GetTimesUsed( void );
 
-	void StartBuildingEffects( void );
 	void StartChargedEffects( void );
 	void StopChargedEffects( void );
 
 	void StartActiveEffects( void );
 	void StopActiveEffects( void );
 
+	void StartBuildingEffects( void );
+	void StopBuildingEffects( void );
+
+	virtual void SetInvisibilityLevel( float flValue );
+	void UpdateTeleporterEffects( void );
+
 	virtual void UpdateDamageEffects( BuildingDamageLevel_t damageLevel );
+
+	virtual int		GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
+	int				GetUpgradeMetal( void ) { return m_iUpgradeMetal; }
+	//virtual int		GetUpgradeMetalRequired( void ) { return GetObjectInfo( GetType() )->m_UpgradeCost; }
+	virtual void	UpgradeLevelChanged( void );
+
+	virtual void	OnGoInactive( void ) OVERRIDE;
 
 private:
 	int m_iState;
 	int m_iOldState;
-	int m_iOldLevel;
 	float m_flRechargeTime;
+	float m_flCurrentRechargeDuration;
 	int m_iTimesUsed;
 	float m_flYawToExit;
+	bool m_bMatchBuilding;
+	bool m_bOldMatchBuilding;
 
 	int m_iDirectionArrowPoseParam;
 
-	CNewParticleEffect			*m_pChargedEffect;
-	CNewParticleEffect			*m_pDirectionEffect;
+	HPARTICLEFFECT	m_hChargedEffect;
+	HPARTICLEFFECT	m_hDirectionEffect;
 
-	CNewParticleEffect			*m_pChargedLeftArmEffect;
-	CNewParticleEffect			*m_pChargedRightArmEffect;
+	HPARTICLEFFECT	m_hChargedLeftArmEffect;
+	HPARTICLEFFECT	m_hChargedRightArmEffect;
 
-	CNewParticleEffect			*m_pDamageEffects;
+	HPARTICLEFFECT	m_hBuildingLeftArmEffect;
+	HPARTICLEFFECT	m_hBuildingRightArmEffect;
 
 	CSoundPatch		*m_pSpinSound;
 

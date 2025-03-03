@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,23 +8,77 @@
 #include "tf_weapon_wrench.h"
 #include "decals.h"
 #include "baseobject_shared.h"
-#include "in_buttons.h"
+#include "tf_viewmodel.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
+	#include "in_buttons.h"
+	#include "tf_hud_menu_eureka_teleport.h"
+	// NVNT haptics system interface
+	#include "haptics/ihaptics.h"
 // Server specific.
 #else
 	#include "tf_player.h"
 	#include "variant_t.h"
+	#include "tf_gamerules.h"
+	#include "particle_parse.h"
+	#include "tf_fx.h"
+	#include "tf_obj_sentrygun.h"
+	#include "ilagcompensationmanager.h"
 #endif
+
+// Maximum time between robo arm hits to maintain the three-hit-combo
+#define ROBOARM_COMBO_TIMEOUT 1.0f
+
+extern ConVar tf2v_use_new_jag;
 
 //=============================================================================
 //
 // Weapon Wrench tables.
 //
-CREATE_SIMPLE_WEAPON_TABLE( TFWrench, tf_weapon_wrench )
-CREATE_SIMPLE_WEAPON_TABLE( TFRobotArm, tf_weapon_robot_arm )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFWrench, DT_TFWeaponWrench )
+
+BEGIN_NETWORK_TABLE( CTFWrench, DT_TFWeaponWrench )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFWrench )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_wrench, CTFWrench );
+PRECACHE_WEAPON_REGISTER( tf_weapon_wrench );
+
+//=============================================================================
+//
+// Robot Arm tables.
+//
+IMPLEMENT_NETWORKCLASS_ALIASED( TFRobotArm, DT_TFWeaponRobotArm )
+
+BEGIN_NETWORK_TABLE( CTFRobotArm, DT_TFWeaponRobotArm )
+#ifdef GAME_DLL
+SendPropEHandle(SENDINFO(m_hRobotArm)),
+#else
+RecvPropEHandle(RECVINFO(m_hRobotArm)),
+#endif
+END_NETWORK_TABLE()
+
+#ifdef CLIENT_DLL
+BEGIN_PREDICTION_DATA( CTFRobotArm )
+// DEFINE_PRED_FIELD( name, fieldtype, flags )
+DEFINE_PRED_FIELD( m_iComboCount, FIELD_INTEGER, 0 ),
+DEFINE_PRED_FIELD( m_flLastComboHit, FIELD_FLOAT, 0 ),
+END_PREDICTION_DATA()
+#endif
+
+LINK_ENTITY_TO_CLASS( tf_weapon_robot_arm, CTFRobotArm );
+PRECACHE_WEAPON_REGISTER( tf_weapon_robot_arm );
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFWearableRobotArm, DT_TFWearableRobotArm )
+
+BEGIN_NETWORK_TABLE( CTFWearableRobotArm, DT_TFWearableRobotArm )
+END_NETWORK_TABLE()
+
+LINK_ENTITY_TO_CLASS( tf_wearable_robot_arm, CTFWearableRobotArm );
 
 //=============================================================================
 //
@@ -35,15 +89,38 @@ CREATE_SIMPLE_WEAPON_TABLE( TFRobotArm, tf_weapon_robot_arm )
 // Purpose:
 //-----------------------------------------------------------------------------
 CTFWrench::CTFWrench()
+	: m_bReloadDown( false )
+{}
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFWrench::Spawn()
 {
+	BaseClass::Spawn();
 }
 
+
 #ifdef GAME_DLL
-void CTFWrench::OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector vecHitPos )
+void CTFWrench::OnFriendlyBuildingHit( CBaseObject *pObject, CTFPlayer *pPlayer, Vector hitLoc )
 {
+	bool bHelpTeammateBuildStructure = pObject->IsBuilding() && pObject->GetOwner() != GetOwner();
+
 	// Did this object hit do any work? repair or upgrade?
-	bool bUsefulHit = pObject->InputWrenchHit( pPlayer, this, vecHitPos );
-	
+	bool bUsefulHit = pObject->InputWrenchHit( pPlayer, this, hitLoc );
+
+	// award achievement if we helped a teammate build a structure
+	if ( bUsefulHit && bHelpTeammateBuildStructure )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+		if ( pOwner && pOwner->IsPlayerClass( TF_CLASS_ENGINEER ) )
+		{
+			pOwner->AwardAchievement( ACHIEVEMENT_TF_ENGINEER_HELP_BUILD_STRUCTURE );
+		}
+	}
+
 	CDisablePredictionFiltering disabler;
 
 	if ( pObject->IsDisposableBuilding() )
@@ -109,6 +186,11 @@ void CTFWrench::Smack( void )
 	{
 #ifdef GAME_DLL
 		OnFriendlyBuildingHit( dynamic_cast< CBaseObject * >( trace.m_pEnt ), pPlayer, trace.endpos );
+#else
+		// NVNT if the local player is the owner of this wrench 
+		//   Notify the haptics system we just repaired something.
+		if(pPlayer==C_TFPlayer::GetLocalTFPlayer() && haptics)
+			haptics->ProcessHapticEvent(2,"Weapons","tf_weapon_wrench_fix");
 #endif
 	}
 	else
@@ -118,42 +200,118 @@ void CTFWrench::Smack( void )
 	}
 }
 
+#ifdef CLIENT_DLL
 //-----------------------------------------------------------------------------
-// Purpose: Checks if our wrench is the Eureka Effect variant.
+// Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFWrench::IsEurekaEffect( void )
+void CTFWrench::ItemPostFrame()
 {
-	int nEureka = 0;
-	CALL_ATTRIB_HOOK_INT(nEureka, alt_fire_teleport_to_spawn);
-	
-	return (nEureka != 0);
-}
+	BaseClass::ItemPostFrame();
 
-//-----------------------------------------------------------------------------
-// Purpose: Checks if our wrench is the Eureka Effect variant.
-//-----------------------------------------------------------------------------
-void CTFWrench::ItemPostFrame( void )
-{
-
-	if (IsEurekaEffect())
+	if ( !CanAttack() )
 	{
-		// Eureka Effect checks if we pressed the reload key.
-		CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-		if ( pOwner->m_nButtons & IN_RELOAD )
+		return;
+	}
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+	if ( !pOwner )
+	{
+		return;
+	}
+
+	// Just pressed reload?
+	if ( pOwner->m_nButtons & IN_RELOAD && !m_bReloadDown )
+	{
+		m_bReloadDown = true;
+		int iAltFireTeleportToSpawn = 0;
+		CALL_ATTRIB_HOOK_INT( iAltFireTeleportToSpawn, alt_fire_teleport_to_spawn );
+		if ( iAltFireTeleportToSpawn )
 		{
-			// If we had the Eureka HUD, this is where we would tell the client to pull up the HUD.
-			// Also a convar here to swapping between the new and old one. Old one will do, for now...
-#ifdef GAME_DLL
-		EurekaTeleport(false);
-#endif
+			// Tell the teleport menu to show
+			CHudEurekaEffectTeleportMenu *pTeleportMenu = ( CHudEurekaEffectTeleportMenu * )GET_HUDELEMENT( CHudEurekaEffectTeleportMenu );
+			if ( pTeleportMenu )
+			{
+				pTeleportMenu->WantsToTeleport();
+			}
 		}
 	}
-	BaseClass::ItemPostFrame();
+	else if ( !(pOwner->m_nButtons & IN_RELOAD) && m_bReloadDown )
+	{
+		m_bReloadDown = false;
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: Kill all buildings when wrench is changed.
+//-----------------------------------------------------------------------------
+#ifdef GAME_DLL
+void CTFWrench::Equip( CBaseCombatCharacter *pOwner )
+{
+	// STAGING_ENGY
+	CTFPlayer *pPlayer = ToTFPlayer( pOwner );
+	if ( pPlayer )
+	{
+		// if switching too gunslinger, blow up other sentry
+		int iMiniSentry = 0;
+		CALL_ATTRIB_HOOK_INT( iMiniSentry, wrench_builds_minisentry );
+		if ( iMiniSentry )
+		{
+			// Just detonate Sentries
+			CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pPlayer->GetObjectOfType( OBJ_SENTRYGUN ) );
+			if ( pSentry )
+			{
+				pSentry->DetonateObject();
+			}
+		}
+	}
+
+	BaseClass::Equip( pOwner );
+}
+//-----------------------------------------------------------------------------
+// Purpose: Kill all buildings when wrench is changed.
+//-----------------------------------------------------------------------------
+void CTFWrench::Detach( void )
+{
+	// STAGING_ENGY
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer )
+	{
+		bool bDetonateObjects = true;
+
+		// In MvM mode, leave engineer's buildings after he dies
+		if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+		{
+			if ( pPlayer->GetTeamNumber() != TF_TEAM_PVE_DEFENDERS )
+			{
+				bDetonateObjects = false;
+			}
+		}
+
+		// Only detonate if we are unequipping gunslinger
+		if ( bDetonateObjects )
+		{
+			// if switching off of gunslinger detonate
+			int iMiniSentry = 0;
+			CALL_ATTRIB_HOOK_INT( iMiniSentry, wrench_builds_minisentry );
+			if ( iMiniSentry )
+			{
+				// Just detonate Sentries
+				CObjectSentrygun *pSentry = dynamic_cast<CObjectSentrygun*>( pPlayer->GetObjectOfType( OBJ_SENTRYGUN ) );
+				if ( pSentry )
+				{
+					pSentry->DetonateObject();
+				}
+			}
+		}
+	}
+
+	BaseClass::Detach();
 }
 
-#ifdef GAME_DLL
+
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Apply health upgrade to our existing buildings
 //-----------------------------------------------------------------------------
 void CTFWrench::ApplyBuildingHealthUpgrade( void )
 {
@@ -161,9 +319,9 @@ void CTFWrench::ApplyBuildingHealthUpgrade( void )
 	if ( !pPlayer )
 		return;
 
-	for ( int i = pPlayer->GetObjectCount(); --i >= 0; )
+	for ( int i = pPlayer->GetObjectCount()-1; i >= 0; i-- )
 	{
-		CBaseObject *pObj = pPlayer->GetObject( i );
+		CBaseObject *pObj = pPlayer->GetObject(i);
 		if ( pObj )
 		{
 			pObj->ApplyHealthUpgrade();
@@ -171,69 +329,161 @@ void CTFWrench::ApplyBuildingHealthUpgrade( void )
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Sets up our teleporting.
-//-----------------------------------------------------------------------------
-void CTFWrench::EurekaTeleport( bool bToTeleporter /* == false*/ )
-{
-	// Get our owner.
-	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-	if (!pOwner)
-		return;
-	
-	if ( pOwner->IsAllowedToTaunt() )
-	{
-		pOwner->StartEurekaTeleport();
-		pOwner->SetEurekaTeleportTime();
-		pOwner->SetEurekaToTeleporter(bToTeleporter);
-		pOwner->Taunt( TAUNT_EUREKA, MP_CONCEPT_TAUNT_EUREKA_EFFECT_TELEPORT );
-	}
-	
-}
 #endif
 
-//=============================================================================
-//
-// Weapon Robot Arm functions.
-//
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFRobotArm::Smack( void )
+// STAGING_ENGY
+ConVar tf_construction_build_rate_multiplier( "tf_construction_build_rate_multiplier", "1.5f", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+float CTFWrench::GetConstructionValue( void )
 {
-	//TODO: check if this needs lag compensation
+	float flValue = tf_construction_build_rate_multiplier.GetFloat();
+	CALL_ATTRIB_HOOK_FLOAT( flValue, mult_construction_value );
+	return flValue;
+}
 
-	trace_t tr;
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+float CTFWrench::GetRepairAmount( void )
+{
+	float flRepairAmount = 100.f;
 
-	// Did we hit an enemy player?
-	if ( DoSwingTrace( tr ) && tr.DidHitNonWorldEntity() && tr.m_pEnt && tr.m_pEnt->IsPlayer() && tr.m_pEnt->GetTeamNumber() != GetTeamNumber() )
+	float flMod = 1.f;
+	CALL_ATTRIB_HOOK_FLOAT( flMod, mult_repair_value );
+
+	if ( tf2v_use_new_jag.GetInt() > 0 )
+		CALL_ATTRIB_HOOK_FLOAT( flMod, mult_repair_value_jag );
+
+#ifdef GAME_DLL
+	if ( GetOwner() )
 	{
-		m_iConsecutivePunches++;
-		m_flComboDecayTime = gpGlobals->curtime;
-
-		if ( m_iConsecutivePunches > 2 )
-			m_bComboKill = true;
+		CBaseCombatWeapon* pWpn = GetOwner()->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY );
+		if ( pWpn )
+		{
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pWpn, flMod, mult_repair_value );
+		}
 	}
-	else
+#endif
+
+	return flRepairAmount * flMod;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFWrench::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFRobotArm::CTFRobotArm()
+{
+	m_iComboCount = 0;
+	m_flLastComboHit = 0.f;
+	m_bBigIdle = false;
+	m_bBigHit = false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFRobotArm::Precache()
+{
+	BaseClass::Precache();
+
+	extern const char *g_HACK_GunslingerEngineerArmsOverride;
+	PrecacheModel( g_HACK_GunslingerEngineerArmsOverride );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+#ifdef GAME_DLL
+void CTFRobotArm::Equip( CBaseCombatCharacter* pOwner )
+{
+	BaseClass::Equip( pOwner );
+
+	if ( !IsPDQ() )
+		return;
+
+	CTFWearable* pArmItem = dynamic_cast<CTFWearable*>( CreateEntityByName( "tf_wearable_robot_arm" ) );
+	if ( pArmItem )
 	{
-		m_bComboKill = false;
-		m_iConsecutivePunches = 0;
+		pArmItem->AddSpawnFlags( SF_NORESPAWN );
+		pArmItem->SetAlwaysAllow( true );
+		DispatchSpawn( pArmItem );
+		pArmItem->GiveTo( pOwner );
+		pArmItem->AddHiddenBodyGroup( "rightarm" );
+		pArmItem->SetOwnerEntity( pOwner );
+		m_hRobotArm.Set( pArmItem );
 	}
+}
 
-	BaseClass::Smack();
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFRobotArm::Drop( const Vector &vecVelocity )
+{
+	RemoveRobotArm();
+
+	BaseClass::Drop( vecVelocity );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFRobotArm::PrimaryAttack( void )
+void CTFRobotArm::UpdateOnRemove( void )
 {
-	// reset the combo if we've already hit 3 times or exceeded the decay time
-	if ( gpGlobals->curtime - m_flComboDecayTime > 1.0f || m_iConsecutivePunches > 2  )
+	RemoveRobotArm();
+
+	BaseClass::UpdateOnRemove();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFRobotArm::RemoveRobotArm( void )
+{
+	if ( m_hRobotArm )
 	{
-		m_iConsecutivePunches = 0;
-		m_bComboKill = false;
+		m_hRobotArm->RemoveFrom( GetOwnerEntity() );
+		m_hRobotArm = NULL;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFRobotArm::OnActiveStateChanged( int iOldState )
+{
+	if ( m_iState == WEAPON_NOT_CARRIED )
+	{
+		RemoveRobotArm();
+	}
+}
+
+#endif
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+void CTFRobotArm::PrimaryAttack()
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+	if ( gpGlobals->curtime - m_flLastComboHit > ROBOARM_COMBO_TIMEOUT )
+	{
+		m_iComboCount = 0;
+	}
+
+	if ( m_iComboCount == 2 && CanAttack() )
+	{
+		pPlayer->m_Shared.SetNextMeleeCrit( MELEE_CRIT );
 	}
 
 	BaseClass::PrimaryAttack();
@@ -242,35 +492,43 @@ void CTFRobotArm::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFRobotArm::WeaponIdle( void )
+void CTFRobotArm::Smack( void )
 {
-	if ( m_bComboKill )
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
+#if !defined (CLIENT_DLL)
+	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
+#endif
+
+	trace_t trace;
+	bool btrace = DoSwingTrace( trace );
+	if ( btrace && trace.DidHitNonWorldEntity() && trace.m_pEnt && trace.m_pEnt->IsPlayer() &&
+		 trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() )
 	{
-		SendWeaponAnim( ACT_ITEM2_VM_IDLE_2 );
-		m_bComboKill = false;
+		m_iComboCount++;
+		m_flLastComboHit = gpGlobals->curtime;
+
+		if ( m_iComboCount == 3 )
+		{
+			m_iComboCount = 0;
+			m_bBigIdle = true;
+			m_bBigHit = true;
+		}
+	}
+	else
+	{
+		m_iComboCount = 0;
 	}
 
-	BaseClass::WeaponIdle();
-}
+#if !defined (CLIENT_DLL)	
+	lagcompensation->FinishLagCompensation( pPlayer );
+#endif
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int CTFRobotArm::GetCustomDamageType( void ) const
-{
-	if ( m_iConsecutivePunches == 3 )
-		return TF_DMG_CUSTOM_COMBO_PUNCH;
+	BaseClass::Smack();
 
-	return TF_DMG_CUSTOM_NONE;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFRobotArm::CalcIsAttackCriticalHelper( void )
-{
-	// punch after 2 consecutive hits always crits
-	return ( m_iConsecutivePunches == 2 );
+	m_bBigHit = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -278,23 +536,63 @@ bool CTFRobotArm::CalcIsAttackCriticalHelper( void )
 //-----------------------------------------------------------------------------
 void CTFRobotArm::DoViewModelAnimation( void )
 {
-	if ( m_iConsecutivePunches == 2 )
+	if ( m_iComboCount == 2 )
+	{
 		SendWeaponAnim( ACT_ITEM2_VM_SWINGHARD );
+	}
 	else
+	{
 		SendWeaponAnim( ACT_ITEM2_VM_HITCENTER );
+	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 #ifdef GAME_DLL
+int CTFRobotArm::GetDamageCustom()
+{
+	if ( m_bBigHit )
+	{
+		return TF_DMG_CUSTOM_COMBO_PUNCH;
+	}
+	else
+	{
+		return BaseClass::GetDamageCustom();
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 float CTFRobotArm::GetForceScale( void )
 {
-	if ( m_iConsecutivePunches == 3 )
+	if ( m_bBigHit )
 	{
-		return 500.0f;
+		return 500.f;
 	}
-	
-	return BaseClass::GetForceScale();
+	else
+	{
+		return BaseClass::GetForceScale();
+	}
 }
+
 #endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFRobotArm::WeaponIdle( void )
+{
+#ifdef GAME_DLL
+	if ( m_bBigIdle )
+	{
+		m_bBigIdle = false;
+		SendWeaponAnim( ACT_ITEM2_VM_IDLE_2 );
+		m_flTimeWeaponIdle = gpGlobals->curtime + SequenceDuration();
+		return;
+	}
+#endif
+
+	BaseClass::WeaponIdle();
+}

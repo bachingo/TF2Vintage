@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF basic grenade projectile functionality.
 //
@@ -12,11 +12,13 @@
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
 #include "basegrenade_shared.h"
+#include "networkstringtabledefs.h"
+
+#define TF_GRENADE_DESTROYABLE_TIMER	(0.25)
 
 // Client specific.
 #ifdef CLIENT_DLL
 #define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
-#define CTFWeaponBaseMerasmusGrenade C_TFWeaponBaseMerasmusGrenade
 #endif
 
 //=============================================================================
@@ -33,50 +35,60 @@ public:
 							CTFWeaponBaseGrenadeProj();
 	virtual					~CTFWeaponBaseGrenadeProj();
 	virtual void			Spawn();
-	virtual void			Precache();
+	virtual void			Precache() OVERRIDE;
+
+#ifdef GAME_DLL
+	virtual void			InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo );
+	virtual void			InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const int iDamage, const float flRadius );
+
+	virtual int				GetBaseProjectileType() const { return TF_BASE_PROJECTILE_GRENADE; }
+#endif
 
 	// Unique identifier.
-	virtual int GetWeaponID( void ) const				{ return TF_WEAPON_NONE; }
-	
-	virtual int GetCustomParticleIndex( void ) const;
+	virtual int GetWeaponID( void ) const { return TF_WEAPON_NONE; }
+	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_NONE; }
 
 	// This gets sent to the client and placed in the client's interpolation history
 	// so the projectile starts out moving right off the bat.
 	CNetworkVector( m_vInitialVelocity );
 
-	virtual float		GetShakeAmplitude( void )		{ return 10.0; }
-	virtual float		GetShakeRadius( void )			{ return 300.0; }
+	virtual float		GetShakeAmplitude( void ) { return 10.0; }
+	virtual float		GetShakeRadius( void ) { return 300.0; }
 
-	void				SetCritical( bool bCritical )	{ m_bCritical = bCritical; }
+	void				SetCritical( bool bCritical ) { m_bCritical = bCritical; }
 	virtual int			GetDamageType();
-	virtual float		GetDamageRadius( void );
-	virtual int			GetDamageCustom( void )			{ return TF_DMG_CUSTOM_NONE; }
-	bool				Touched( void ) const			{ return m_bTouched; }
 
-	CNetworkVar( int, m_iDeflected );
-	CNetworkHandle( CBaseEntity, m_hLauncher );
-	CNetworkHandle( CBaseEntity, m_hDeflectOwner );
+	virtual void		SetLauncher( CBaseEntity *pLauncher ) OVERRIDE { m_hLauncher = pLauncher; BaseClass::SetLauncher( pLauncher ); }
+	CBaseEntity			*GetLauncher( void ) { return m_hLauncher; }
+	virtual void		IncrementDeflected( void ) { m_iDeflected++; }
+	void				ResetDeflected( void ) { m_iDeflected = 0; }
+	int					GetDeflected( void ) { return m_iDeflected; }
+	void				SetDeflectOwner( CBaseEntity *pPlayer ) { m_hDeflectOwner = pPlayer; }
+	CBaseEntity			*GetDeflectOwner( void ) { return m_hDeflectOwner; }
+	virtual float		GetDamageRadius();
+	virtual int			GetDamageCustom();
+	virtual int			GetCustomParticleIndex() { return INVALID_STRING_INDEX; }
+	void				BounceOff( IPhysicsObject *pPhysics );
 
 protected:
-
-	// Touch fix
-	CNetworkVar( bool,		m_bTouched );
+	CNetworkHandleForDerived( CBaseEntity, m_hLauncher );
 
 private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );
+	CNetworkVar( int,	m_iDeflected );
+
+	CNetworkHandle( CBaseEntity, m_hDeflectOwner );
 
 	// Client specific.
 #ifdef CLIENT_DLL
 
 public:
 
-	virtual void			OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void			OnDataChanged( DataUpdateType_t type );
 
 	float					m_flSpawnTime;
 	bool					m_bCritical;
-	int						m_iOldTeamNum;
 
 	// Server specific.
 #else
@@ -87,11 +99,7 @@ public:
 
 	static CTFWeaponBaseGrenadeProj *Create( const char *szName, const Vector &position, const QAngle &angles, 
 				const Vector &velocity, const AngularImpulse &angVelocity, 
-				CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags = 0 );
-
-
-	void					InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo );
-	virtual void			InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, int nDamage, float flRadius );
+				CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float flTimer, int iFlags );
 
 	int						OnTakeDamage( const CTakeDamageInfo &info );
 
@@ -101,25 +109,25 @@ public:
 	void					SetupInitialTransmittedGrenadeVelocity( const Vector &velocity )	{ m_vInitialVelocity = velocity; }
 
 	bool					ShouldNotDetonate( void );
-	void					RemoveGrenade( bool bBlinkOut = true );
+	virtual void 			Destroy( bool bBlinkOut = true, bool bBreak = false ) OVERRIDE;
 
 	void					SetTimer( float time ){ m_flDetonateTime = time; }
-	virtual float			GetDetonateTime( void ){ return m_flDetonateTime; }
+	float					GetDetonateTime( void ){ return m_flDetonateTime; }
 
 	void					SetDetonateTimerLength( float timer );
 
 	void					VPhysicsUpdate( IPhysicsObject *pPhysics );
 
-	virtual void			Explode( trace_t *pTrace, int bitsDamageType );
+	virtual bool			IsAllowedToExplode( void ) { return true; }
+	void					Explode( trace_t *pTrace, int bitsDamageType );
 
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }
 
-	virtual void			SetLauncher( CBaseEntity *pLauncher );
+	bool					IsCritical() { return m_bCritical; }
+	virtual bool			IsDestroyable( bool bOrbAttack = false ) OVERRIDE { return ( !bOrbAttack ? ( gpGlobals->curtime > m_flDestroyableTime ) : true ); }
 
-	virtual bool			IsDeflectable();
-	virtual void			Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
-	virtual void			IncremenentDeflected( void );
+	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 
 protected:
 
@@ -128,38 +136,20 @@ protected:
 	bool					m_bUseImpactNormal;
 	Vector					m_vecImpactNormal;
 
-private:
-
 	// Custom collision to allow for constant elasticity on hit surfaces.
-	virtual void			ResolveFlyCollisionCustom( trace_t &trace, Vector &vecVelocity );
+	virtual void			ResolveFlyCollisionCustom( trace_t &trace, Vector &vecVelocity ) OVERRIDE;
 
 	float					m_flDetonateTime;
+	CHandle<CBaseEntity>	m_hEnemy;
+private:
 
 	bool					m_bInSolid;
 
 	CNetworkVar( bool,		m_bCritical );
 
-	float					m_flCollideWithTeammatesTime;
-	bool					m_bCollideWithTeammates;
+	float					m_flDestroyableTime;
+	bool					m_bIsMerasmusGrenade;
 
-#endif
-};
-
-
-class CTFWeaponBaseMerasmusGrenade : public CTFWeaponBaseGrenadeProj
-{
-public:
-
-	DECLARE_CLASS( CTFWeaponBaseMerasmusGrenade, CTFWeaponBaseGrenadeProj );
-	DECLARE_NETWORKCLASS();
-
-	virtual					~CTFWeaponBaseMerasmusGrenade() {}
-
-	virtual int				GetDamageCustom( void ) const { return TF_DMG_CUSTOM_MERASMUS_GRENADE; }
-	virtual int				GetCustomParticleIndex( void );
-
-#ifdef CLIENT_DLL
-	virtual int				DrawModel( int flags );
 #endif
 };
 

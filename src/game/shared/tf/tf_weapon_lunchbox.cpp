@@ -1,407 +1,575 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
 //
 //=============================================================================
 #include "cbase.h"
 #include "tf_weapon_lunchbox.h"
+#include "tf_fx_shared.h"
 
-#ifdef GAME_DLL
-#include "tf_player.h"
-#include "tf_powerup.h"
-#else
+// Client specific.
+#ifdef CLIENT_DLL
 #include "c_tf_player.h"
-#include "c_tf_viewmodeladdon.h"
+#include "prediction.h"
+// Server specific.
+#else
+#include "tf_player.h"
+#include "entity_healthkit.h"
+#include "econ_item_view.h"
+#include "econ_item_system.h"
+#include "tf_gamestats.h"
 #endif
 
-CREATE_SIMPLE_WEAPON_TABLE( TFLunchBox, tf_weapon_lunchbox )
+ConVar tf2v_new_chocolate_behavior( "tf2v_new_chocolate_behavior", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Use Gun Mettle rebalancing on chocolates." );
+ConVar tf2v_sandvich_behavior( "tf2v_sandvich_behavior", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Changes Sandvich mechanics.", true, 0, true, 2 );
 
-#define TF_SANDVICH_PLATE_MODEL "models/items/plate.mdl"
-#define TF_ROBOSANDVICH_PLATE_MODEL "models/items/plate_robo_sandwich.mdl"
-#define TF_SANDVICH_FESTIVE_PLATE_MODEL "models/items/plate_sandwich_xmas.mdl"
-#define TF_DALOKOH_PLATE_MODEL "models/workshop/weapons/c_models/c_chocolate/plate_chocolate.mdl"
-#define TF_FISHCAKE_PLATE_MODEL "models/workshop/weapons/c_models/c_fishcake/plate_fishcake.mdl"
-#define TF_STEAK_PLATE_MODEL "models/items/plate_steak.mdl"
-#define TF_BANANA_PLATE_MODEL "models/items/banana/plate_banana.mdl"
-#define SANDVICH_BODYGROUP_BITE 0
-#define SANDVICH_STATE_BITTEN 1
-#define SANDVICH_STATE_NORMAL 0
+//=============================================================================
+//
+// Weapon Lunchbox tables.
+//
+IMPLEMENT_NETWORKCLASS_ALIASED( TFLunchBox, DT_WeaponLunchBox )
 
-ConVar tf2v_new_chocolate_behavior( "tf2v_new_chocolate_behavior", "0", FCVAR_REPLICATED|FCVAR_NOTIFY, "Use Gun Mettle rebalancing on chocolates." );
-ConVar tf2v_sandvich_behavior("tf2v_sandvich_behavior", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Changes Sandvich mechanics.", true, 0, true, 2);
+BEGIN_NETWORK_TABLE( CTFLunchBox, DT_WeaponLunchBox )
+#if defined( CLIENT_DLL )
+RecvPropBool( RECVINFO( m_bBroken ), 0, CTFLunchBox::RecvProxy_Broken )
+#else
+SendPropBool( SENDINFO( m_bBroken ) )
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFLunchBox )
+#ifdef CLIENT_DLL
+DEFINE_PRED_FIELD( m_bBroken, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_nBody, FIELD_INTEGER, FTYPEDESC_OVERRIDE | FTYPEDESC_INSENDTABLE )
+#endif // CLIENT_DLL
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_lunchbox, CTFLunchBox );
+PRECACHE_WEAPON_REGISTER( tf_weapon_lunchbox );
+
+//=============================================================================
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFLunchBox_Drink, DT_TFLunchBox_Drink )
+
+BEGIN_NETWORK_TABLE( CTFLunchBox_Drink, DT_TFLunchBox_Drink )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFLunchBox_Drink )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_lunchbox_drink, CTFLunchBox_Drink );
+PRECACHE_WEAPON_REGISTER( tf_weapon_lunchbox_drink );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFLunchBox )
+END_DATADESC()
+#endif
+
+#define LUNCHBOX_DROP_MODEL  "models/items/plate.mdl"
+#define LUNCHBOX_STEAK_DROP_MODEL  "models/workshop/weapons/c_models/c_buffalo_steak/plate_buffalo_steak.mdl"
+#define LUNCHBOX_ROBOT_DROP_MODEL  "models/items/plate_robo_sandwich.mdl"
+#define LUNCHBOX_FESTIVE_DROP_MODEL  "models/items/plate_sandwich_xmas.mdl"
+#define LUNCHBOX_CHOCOLATE_BAR_DROP_MODEL		"models/workshop/weapons/c_models/c_chocolate/plate_chocolate.mdl"
+#define LUNCHBOX_BANANA_DROP_MODEL  "models/items/banana/plate_banana.mdl"
+#define LUNCHBOX_FISHCAKE_DROP_MODEL	"models/workshop/weapons/c_models/c_fishcake/plate_fishcake.mdl"
+
+#define LUNCHBOX_DROPPED_MINS	Vector( -17, -17, -10 )
+#define LUNCHBOX_DROPPED_MAXS	Vector( 17, 17, 10 )
+
+#define LUNCHBOX_BREAK_BODYGROUP 0
+// Absolute body number of broken/not-broken since the server can't figure them out from the studiohdr.  Would only
+// matter if we had other body groups going on anyway
+#define LUNCHBOX_BODY_NOTBROKEN 0
+#define LUNCHBOX_BODY_BROKEN 1
+
+static const char *s_pszLunchboxMaxHealThink = "LunchboxMaxHealThink";
+
+//=============================================================================
+//
+// Weapon Lunchbox functions.
+//
 
 //-----------------------------------------------------------------------------
-// Purpose: Give us a fresh sandwich.
+// Purpose:
 //-----------------------------------------------------------------------------
 CTFLunchBox::CTFLunchBox()
 {
-	m_bBitten = false;
-	m_flBiteTime = 0;
+	m_bBroken = false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFLunchBox::PrimaryAttack( void )
+void CTFLunchBox::UpdateOnRemove( void )
 {
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( !pOwner )
+#ifndef CLIENT_DLL
+	// If we're removed, we remove any dropped powerups. This prevents an exploit
+	// where they switch classes away & back to get another lunchbox to drop with.
+	if ( m_hThrownPowerup )
 	{
-		return;
-	}
-
-#ifdef GAME_DLL
-	pOwner->Taunt();
-#endif
-	m_flNextPrimaryAttack = gpGlobals->curtime + 0.5f;
-	
-	BiteLunch();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Times our bite to make it look more authentic.
-//-----------------------------------------------------------------------------
-void CTFLunchBox::BiteLunch( void )
-{
-	if (m_bBitten)	//If we already bit the sandwich, this is redundant.
-		return;
-	
-	// Our bite happens around the 25th frame of animation.
-	m_flBiteTime = gpGlobals->curtime + (25 / 30);
-
-	return;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Times our bite to make it look more authentic.
-//-----------------------------------------------------------------------------
-void CTFLunchBox::ItemPostFrame( void )
-{
-	BiteLunchThink();
-	BaseClass::ItemPostFrame();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Times our bite to make it look more authentic.
-//-----------------------------------------------------------------------------
-void CTFLunchBox::WeaponIdle( void )
-{
-	BiteLunchThink();
-	return BaseClass::WeaponIdle();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Check for bite swap conditions.
-//-----------------------------------------------------------------------------
-void CTFLunchBox::BiteLunchThink( void )
-{
-	// Only bother checking the bite when we're not bitten already.
-	if ( !m_bBitten )
-	{
-		// If we have a bite time and aren't using the bitten model, swap.
-		if ( gpGlobals->curtime >= m_flBiteTime && m_flBiteTime > 0 )
-		{
-			// We waited for the bite, switch bodygroups.
-			m_bBitten = true;
-			m_flBiteTime = 0;
-			SwitchBodyGroups();	
-			return;
-		}
-	}
-	return;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFLunchBox::SecondaryAttack( void )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( !pOwner )
-		return;
-
-	if ( !CanAttack() || !CanDrop() )
-		return;
-
-#ifdef GAME_DLL
-	// Remove the previous dropped lunch box.
-	if ( m_hDroppedLunch.Get() )
-	{
-		UTIL_Remove( m_hDroppedLunch.Get() );
-		m_hDroppedLunch = NULL;
-	}
-
-	// Throw a sandvich plate down on the ground.
-	Vector vecSrc, vecThrow;
-	QAngle angThrow;
-	vecSrc = pOwner->EyePosition();
-
-	// A bit below the eye position.
-	vecSrc.z -= 8.0f;
-
-	const char *pszItemName = "item_healthkit_medium";
-
-	int nLunchboxAddsMaxHealth = 0;
-	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
-	if ( IsChocolateOrFishcake() || ( nLunchboxAddsMaxHealth == 6 ) ) // Chocolate, Fishcake and Banana are small health drops
-		pszItemName = "item_healthkit_small";
-
-	CTFPowerup *pPowerup = static_cast<CTFPowerup *>( CBaseEntity::Create( pszItemName, vecSrc, vec3_angle, pOwner ) );
-	if ( !pPowerup )
-		return;
-
-	// Don't collide with the player owner for the first portion of its life
-	pPowerup->m_flNextCollideTime = gpGlobals->curtime + 0.5f;
-	
-	switch ( nLunchboxAddsMaxHealth)
-	{
-		case 1:
-			pPowerup->SetModel( TF_DALOKOH_PLATE_MODEL );
-			break;
-		case 2:
-			pPowerup->SetModel( TF_STEAK_PLATE_MODEL );
-			break;
-		case 3:
-			pPowerup->SetModel( TF_ROBOSANDVICH_PLATE_MODEL );
-			break;
-		case 4:
-			pPowerup->SetModel( TF_SANDVICH_FESTIVE_PLATE_MODEL );
-			break;
-		case 6:
-			pPowerup->SetModel( TF_BANANA_PLATE_MODEL );
-			break;
-		case 7:
-			pPowerup->SetModel( TF_FISHCAKE_PLATE_MODEL );
-			break;
-		default:
-			if ( GameRules()->IsHolidayActive( kHoliday_Christmas ) )
-				pPowerup->SetModel( TF_SANDVICH_FESTIVE_PLATE_MODEL );
-			else
-				pPowerup->SetModel( TF_SANDVICH_PLATE_MODEL );
-			break;
-	}
-	
-	UTIL_SetSize( pPowerup, -Vector( 17, 17, 10 ), Vector( 17, 17, 10 ) );
-
-	// Throw it down.
-	angThrow = pOwner->EyeAngles();
-	angThrow[PITCH] -= 10.0f;
-	AngleVectors( angThrow, &vecThrow );
-	vecThrow *= 500;
-
-	pPowerup->DropSingleInstance( vecThrow, pOwner, 0.3f, 0.1f );
-
-	m_hDroppedLunch = pPowerup;
-#endif
-
-	// Switch away from it immediately, don't want it to stick around.
-	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
-	pOwner->SwitchToNextBestWeapon( this );
-
-	StartEffectBarRegen();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFLunchBox::DepleteAmmo( void )
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if ( !pOwner )
-		return;
-
-	int nLunchboxAddsMaxHealth = 0;
-	CALL_ATTRIB_HOOK_INT( nLunchboxAddsMaxHealth, set_weapon_mode );
-	
-	if ( !tf2v_new_chocolate_behavior.GetBool() && IsChocolateOrFishcake() )
-	{
-		return;
-	}
-
-	if ( pOwner->HealthFraction() >= 1.0f && ( nLunchboxAddsMaxHealth != 2 ) )
-		return;
-
-	// Switch away from it immediately, don't want it to stick around.
-	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
-	pOwner->SwitchToNextBestWeapon( this );
-
-	StartEffectBarRegen();
-}
-
-bool CTFLunchBox::UsesPrimaryAmmo( void )
-{
-	if (!tf2v_new_chocolate_behavior.GetBool() && IsChocolateOrFishcake() )
-		return false;
-
-	return BaseClass::UsesPrimaryAmmo();
-}
-
-float CTFLunchBox::InternalGetEffectBarRechargeTime( void )
-{
-	// If we're using the Dalokoh, regen in 10 seconds.
-	if ( IsChocolateOrFishcake() )
-		return 10.0f;
-	
-	// Everything else is 30 seconds.
-	return 30.0f;
-	
-}
-
-bool CTFLunchBox::HasChargeBar( void )
-{
-	// Chocolate and Fishcake do not have a bar when they have infinite ammo.
-	if ( !tf2v_new_chocolate_behavior.GetBool() && IsChocolateOrFishcake() )
-		return false;
-	
-	// This item probably has a bar, return true.
-	return true;
-}
-
-bool CTFLunchBox::IsChocolateOrFishcake()
-{
-	int nSetLunchboxMode = 0;
-		CALL_ATTRIB_HOOK_INT( nSetLunchboxMode, set_weapon_mode );
-		if ( ( nSetLunchboxMode == 1 ) || ( nSetLunchboxMode == 7 ) )
-			return true;
-	
-	return false;
-	
-}
-	
-bool CTFLunchBox::IsSteak()
-{
-	int nSetLunchboxMode = 0;
-		CALL_ATTRIB_HOOK_INT( nSetLunchboxMode, set_weapon_mode );
-		if ( nSetLunchboxMode == 2 )
-			return true;
-	
-	return false;
-	
-}	
-//-----------------------------------------------------------------------------
-// Purpose: Update the sandvich bite effects
-//-----------------------------------------------------------------------------
-void CTFLunchBox::SwitchBodyGroups( void )
-{
-	int iState = m_bBitten ? SANDVICH_STATE_BITTEN : SANDVICH_STATE_NORMAL;
-	SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
-	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
-	if ( pTFPlayer && pTFPlayer->GetActiveWeapon() == this )
-	{
-		if ( pTFPlayer->GetViewModel() )
-		{
-			pTFPlayer->GetViewModel()->SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
-		}
-	}
-#ifndef GAME_DLL
-	C_ViewmodelAttachmentModel *pAttach = GetViewmodelAddon();
-	if ( pAttach )
-	{
-		pAttach->SetBodygroup( SANDVICH_BODYGROUP_BITE, iState );
+		UTIL_Remove( m_hThrownPowerup );
 	}
 #endif
-}
 
-void CTFLunchBox::WeaponRegenerate()
-{
-	BaseClass::WeaponRegenerate();
+	BaseClass::UpdateOnRemove();
 }
-
-void CTFLunchBox::WeaponReset()
-{
-	m_bBitten = false;
-	m_flBiteTime = 0;
-	SwitchBodyGroups();
-	BaseClass::WeaponReset();
-}
-
-#ifdef GAME_DLL
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFLunchBox::Precache( void )
 {
-	UTIL_PrecacheOther( "item_healthkit_medium" );
-	PrecacheModel( TF_SANDVICH_PLATE_MODEL );
-	PrecacheModel( TF_ROBOSANDVICH_PLATE_MODEL );
-	PrecacheModel( TF_SANDVICH_FESTIVE_PLATE_MODEL );
-	PrecacheModel( TF_DALOKOH_PLATE_MODEL );
-	PrecacheModel( TF_FISHCAKE_PLATE_MODEL );
-	PrecacheModel( TF_STEAK_PLATE_MODEL );
-	PrecacheModel( TF_BANANA_PLATE_MODEL );
-						
+	if ( DropAllowed() )
+	{
+		PrecacheModel( "models/items/medkit_medium.mdl" );
+		PrecacheModel( "models/items/medkit_medium_bday.mdl" );
+		PrecacheModel( LUNCHBOX_DROP_MODEL );
+		PrecacheModel( LUNCHBOX_STEAK_DROP_MODEL );
+		PrecacheModel( LUNCHBOX_ROBOT_DROP_MODEL );
+		PrecacheModel( LUNCHBOX_FESTIVE_DROP_MODEL );
+		PrecacheModel( LUNCHBOX_CHOCOLATE_BAR_DROP_MODEL );
+		PrecacheModel( LUNCHBOX_BANANA_DROP_MODEL );
+		PrecacheModel( LUNCHBOX_FISHCAKE_DROP_MODEL );
+	}
+
 	BaseClass::Precache();
 }
 
+
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CTFLunchBox::ApplyBiteEffects( bool bHurt )
+void CTFLunchBox::WeaponReset( void )
 {
-	bool bIsSteak = IsSteak();
-	
-	if ( !bHurt && !bIsSteak )
-		return;
+	BaseClass::WeaponReset();
 
-	// Heal 25% of the player's max health per second for a total of 100%.
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	
-	if (!pOwner)
-		return;
-	
-	
-	// All these values are per bite.
-	// A whole cycle lasts four bites, one per second, for a total of four bites.
-	
-	float flAmt = 75.0;	// Heals 300HP total
-	
-	if ( IsChocolateOrFishcake() )
+	if ( !GetOwner() || !GetOwner()->IsAlive() )
 	{
-		if ( tf2v_new_chocolate_behavior.GetBool() )
-			flAmt = 25.0;	// Heals 100HP total
-		else
-			flAmt = 15.0;	// Heals 60HP total
-	}
-	else
-	{
-		if ( tf2v_sandvich_behavior.GetInt() == 0 )
-			flAmt = 30.0; // Heals 120HP total
-	}
-	
-	
-	// Adjust our healing scale if defined.
-	CALL_ATTRIB_HOOK_FLOAT( flAmt, lunchbox_healing_scale );
-
-	if ( !bIsSteak )
-	{
-		pOwner->TakeHealth( flAmt, DMG_GENERIC );
+		m_bBroken = false;
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-bool CTFLunchBox::CanDrop( void ) const
+bool CTFLunchBox::UsesPrimaryAmmo( void )
 {
-	// Old Sandwich can't throw at all.
-	if ( tf2v_sandvich_behavior.GetInt() == 0 )
-			return false;
-	
-	// Old chocolates can't throw.
-	if (!tf2v_new_chocolate_behavior.GetBool() )
-	{
-		int nSetLunchboxMode = 0;
-		CALL_ATTRIB_HOOK_INT( nSetLunchboxMode, set_weapon_mode );
-		if ( ( nSetLunchboxMode == 1 ) || ( nSetLunchboxMode == 7 ) )
-			return false;
-	}
-	
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-	if (pOwner && pOwner->IsAlive())
-		return !pOwner->m_Shared.InCond( TF_COND_TAUNTING );
+	if ( !tf2v_new_chocolate_behavior.GetBool() && ( GetLunchboxType() == LUNCHBOX_CHOCOLATE_BAR || GetLunchboxType() == LUNCHBOX_FISHCAKE ) )
+		return false;
 
-	return false;
+	return CBaseCombatWeapon::UsesPrimaryAmmo();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFLunchBox::DropAllowed( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner )
+	{
+		if ( pOwner->m_Shared.InCond( TF_COND_TAUNTING ) )
+			return false;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLunchBox::PrimaryAttack( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( !HasAmmo() )
+		return;
+
+#if GAME_DLL
+	pOwner->Taunt();
+	m_flNextPrimaryAttack = pOwner->GetTauntRemoveTime() + 0.1f;
+#else
+	m_flNextPrimaryAttack = gpGlobals->curtime + 2.0f; // this will be corrected by the game server
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLunchBox::SecondaryAttack( void )
+{
+	if ( !DropAllowed() )
+		return;
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+	if ( !pPlayer )
+		return;
+
+	if ( !HasAmmo() )
+		return;
+
+#ifndef CLIENT_DLL
+
+	if ( m_hThrownPowerup )
+	{
+		UTIL_Remove( m_hThrownPowerup );
+	}
+
+	// Throw out the medikit
+	Vector vecSrc = pPlayer->EyePosition() + Vector(0,0,-8);
+	QAngle angForward = pPlayer->EyeAngles() + QAngle(-10,0,0);
+
+	int nLunchBoxType = GetLunchboxType();
+
+	const char *pszHealthKit;	
+	switch ( nLunchBoxType )
+	{
+	case LUNCHBOX_CHOCOLATE_BAR:
+	case LUNCHBOX_BANANA:
+	case LUNCHBOX_FISHCAKE:
+		pszHealthKit = "item_healthkit_small";
+		break;
+
+	case LUNCHBOX_ADDS_AMMO:
+		pszHealthKit = "item_healthammokit";
+		break;
+
+	default:
+		pszHealthKit = "item_healthkit_medium";
+	}
+
+	CHealthKit *pMedKit = assert_cast<CHealthKit*>( CBaseEntity::Create( pszHealthKit, vecSrc, angForward, pPlayer ) );
+
+	if ( pMedKit )
+	{
+		Vector vecForward, vecRight, vecUp;
+		AngleVectors( angForward, &vecForward, &vecRight, &vecUp );
+		Vector vecVelocity = vecForward * 500.0;
+		
+		if ( nLunchBoxType == LUNCHBOX_ADDS_MINICRITS )
+		{
+			pMedKit->SetModel( LUNCHBOX_STEAK_DROP_MODEL );
+		}
+		else if ( nLunchBoxType == LUNCHBOX_STANDARD_ROBO )
+		{
+			pMedKit->SetModel( LUNCHBOX_ROBOT_DROP_MODEL );
+			pMedKit->m_nSkin = ( pPlayer->GetTeamNumber() == TF_TEAM_RED ) ? 0 : 1;
+		}
+		else if ( nLunchBoxType == LUNCHBOX_STANDARD_FESTIVE )
+		{
+			pMedKit->SetModel( LUNCHBOX_FESTIVE_DROP_MODEL );
+			pMedKit->m_nSkin = ( pPlayer->GetTeamNumber() == TF_TEAM_RED ) ? 0 : 1;
+		}
+		else if ( nLunchBoxType == LUNCHBOX_CHOCOLATE_BAR )
+		{
+			pMedKit->SetModel( LUNCHBOX_CHOCOLATE_BAR_DROP_MODEL );
+			pMedKit->m_nSkin = ( pPlayer->GetTeamNumber() == TF_TEAM_RED ) ? 0 : 1;
+		}
+		else if ( nLunchBoxType == LUNCHBOX_BANANA )
+		{
+			pMedKit->SetModel( LUNCHBOX_BANANA_DROP_MODEL );
+		}
+		else if ( nLunchBoxType == LUNCHBOX_FISHCAKE )
+		{
+			pMedKit->SetModel( LUNCHBOX_FISHCAKE_DROP_MODEL );
+			pMedKit->m_nSkin = ( pPlayer->GetTeamNumber() == TF_TEAM_RED ) ? 0 : 1;
+		}
+		else
+		{
+			pMedKit->SetModel( LUNCHBOX_DROP_MODEL );
+		}
+
+		// clear out the overrides so the thrown sandvich/steak look correct in either vision mode
+		pMedKit->ClearModelIndexOverrides();
+
+		pMedKit->SetAbsAngles( vec3_angle );
+		pMedKit->SetSize( LUNCHBOX_DROPPED_MINS, LUNCHBOX_DROPPED_MAXS );
+
+		// the thrower has to wait 0.3 to pickup the powerup (so he can throw it while running forward)
+		pMedKit->DropSingleInstance( vecVelocity, pPlayer, 0.3 );
+	}
+
+	m_hThrownPowerup = pMedKit;
+#endif
+
+	pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iPrimaryAmmoType );
+	g_pGameRules->SwitchToNextBestWeapon( pPlayer, this );
+
+	pPlayer->m_Shared.SetItemChargeMeter( LOADOUT_POSITION_SECONDARY, 0.f );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLunchBox::DrainAmmo( bool bForceCooldown )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+#ifdef GAME_DLL
+
+	int iLunchboxType = GetLunchboxType();
+	if ( !tf2v_new_chocolate_behavior.GetBool() && ( iLunchboxType == LUNCHBOX_CHOCOLATE_BAR || iLunchboxType == LUNCHBOX_FISHCAKE ) )
+		return;
+
+	// If we're damaged while eating/taunting, bForceCooldown will be true
+	if ( pOwner->IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
+	{
+		if ( pOwner->GetHealth() < pOwner->GetMaxHealth() || GetLunchboxType() == LUNCHBOX_ADDS_MINICRITS || iLunchboxType == LUNCHBOX_CHOCOLATE_BAR || iLunchboxType == LUNCHBOX_FISHCAKE || bForceCooldown )
+		{
+			pOwner->m_Shared.SetItemChargeMeter( LOADOUT_POSITION_SECONDARY, 0.f );
+		}
+		else	// Full health regular sandwhich, I can eat forever
+		{	
+			return;
+		}
+	}
+	else if ( pOwner->IsPlayerClass( TF_CLASS_SCOUT ) )
+	{
+		StartEffectBarRegen();
+	}
+
+	// Strange Tracking.  Only go through if we have ammo at this point.
+	if ( !pOwner->IsBot() && pOwner->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
+	{
+		EconEntity_OnOwnerKillEaterEventNoPartner( dynamic_cast<CEconEntity *>( this ), pOwner, kKillEaterEvent_FoodEaten );
+	}
+
+	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+#else
+	
+	pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+
+	if ( pOwner->IsPlayerClass( TF_CLASS_SCOUT ) )
+	{
+		StartEffectBarRegen();
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLunchBox::Detach( void )
+{
+#ifdef GAME_DLL
+	// Terrible - but for now, we're the only place that adds this (custom) attribute
+	if ( GetLunchboxType() == LUNCHBOX_CHOCOLATE_BAR || GetLunchboxType() == LUNCHBOX_FISHCAKE )
+	{
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+		if ( pOwner )
+		{
+			// Prevents use-then-switch-class exploit (heavy->scout)
+			// Not a big deal in pubs, but it can mess with competitive
+			pOwner->RemoveCustomAttribute( "hidden maxhealth non buffed" );
+		}
+	}
+#endif
+
+	BaseClass::Detach();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFLunchBox::Holster( CBaseCombatWeapon *pSwitchingTo /* = NULL */ )
+{ 
+//	SetBroken( false );
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLunchBox::ApplyBiteEffects( CTFPlayer *pPlayer )
+{
+	SetBroken( true );
+
+	int nLunchBoxType = GetLunchboxType();
+
+	const float DALOKOHS_MAXHEALTH_BUFF = 50.f;
+
+	if ( nLunchBoxType == LUNCHBOX_CHOCOLATE_BAR || nLunchBoxType == LUNCHBOX_FISHCAKE )
+	{
+		// add 50 health to player for 30 seconds
+		pPlayer->AddCustomAttribute( "hidden maxhealth non buffed", DALOKOHS_MAXHEALTH_BUFF, 30.f );
+	}
+	else if ( nLunchBoxType == LUNCHBOX_ADDS_MINICRITS )
+	{
+		static const float s_fSteakSandwichDuration = 16.0f;
+
+		// Steak sandvich.
+		pPlayer->m_Shared.AddCond( TF_COND_ENERGY_BUFF, s_fSteakSandwichDuration );
+		pPlayer->m_Shared.AddCond( TF_COND_CANNOT_SWITCH_FROM_MELEE, s_fSteakSandwichDuration );
+		pPlayer->m_Shared.SetBiteEffectWasApplied();
+
+		return;
+	}
+	
+	// Then heal the player
+	int iHeal = ( nLunchBoxType == LUNCHBOX_CHOCOLATE_BAR || nLunchBoxType == LUNCHBOX_FISHCAKE ) ? 25 : 75;
+	int iHealType = DMG_GENERIC;
+	if ( ( nLunchBoxType == LUNCHBOX_CHOCOLATE_BAR || nLunchBoxType == LUNCHBOX_FISHCAKE ) && pPlayer->GetHealth() < ( 300.f + DALOKOHS_MAXHEALTH_BUFF ) )
+	{
+		iHealType = DMG_IGNORE_MAXHEALTH;
+		iHeal = Min( 25, 350 - pPlayer->GetHealth() );
+	}
+
+	float flHealScale = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flHealScale, lunchbox_healing_scale );
+	iHeal = iHeal * flHealScale;
+
+	int iHealed = pPlayer->TakeHealth( iHeal, iHealType );
+
+	if ( iHealed > 0 )
+	{
+		CTF_GameStats.Event_PlayerHealedOther( pPlayer, iHealed );
+	}
+
+	// Restore ammo if applicable
+	if ( nLunchBoxType == LUNCHBOX_ADDS_AMMO )
+	{
+		int maxPrimary = pPlayer->GetMaxAmmo( TF_AMMO_PRIMARY );
+		pPlayer->GiveAmmo( maxPrimary * 0.25, TF_AMMO_PRIMARY, true );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLunchBox::OnResourceMeterFilled()
+{
+	CTFPlayer *pOwner = GetTFPlayerOwner();
+	if ( !pOwner )
+		return;
+
+	pOwner->GiveAmmo( 1, m_iPrimaryAmmoType, false, kAmmoSource_ResourceMeter );
+}
+#endif // GAME_DLL
+
+//-----------------------------------------------------------------------------
+// Purpose:  
+//-----------------------------------------------------------------------------
+void CTFLunchBox::SwitchBodyGroups( void )
+{
+	int iState = 0;
+
+	if ( m_bBroken )
+	{
+		iState = 1;
+	}
+
+#ifdef CLIENT_DLL
+	// We'll successfully predict m_nBody along with m_bBroken, but this can be called outside prediction, in which case
+	// we want to use the networked m_nBody value -- but still fixup our viewmodel which is clientside only.
+	if ( prediction->InPrediction() )
+	{
+		SetBodygroup( LUNCHBOX_BREAK_BODYGROUP, iState );
+	}
+
+	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
+	if ( pTFPlayer && pTFPlayer->GetActiveWeapon() == this )
+	{
+		C_BaseAnimating *pViewWpn = GetAppropriateWorldOrViewModel();
+		if ( pViewWpn != this )
+		{
+			pViewWpn->SetBodygroup( LUNCHBOX_BREAK_BODYGROUP, iState );
+		}
+	}
+#else // CLIENT_DLL
+	m_nBody = iState ? LUNCHBOX_BODY_BROKEN : LUNCHBOX_BODY_NOTBROKEN;
+#endif // CLIENT_DLL
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:  
+//-----------------------------------------------------------------------------
+bool CTFLunchBox::UpdateBodygroups( CBaseCombatCharacter* pOwner, int iState )
+{
+	SwitchBodyGroups();
+
+	return BaseClass::UpdateBodygroups( pOwner, iState );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:  
+//-----------------------------------------------------------------------------
+void CTFLunchBox::SetBroken( bool bBroken )
+{
+	m_bBroken = bBroken;
+	SwitchBodyGroups();
+}
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose:  
+//-----------------------------------------------------------------------------
+/* static */ void CTFLunchBox::RecvProxy_Broken( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	CTFLunchBox* pLunchBox = ( CTFLunchBox* ) pStruct;
+
+	if ( !!pData->m_Value.m_Int != pLunchBox->m_bBroken )
+	{
+		pLunchBox->m_bBroken = !!pData->m_Value.m_Int;
+		pLunchBox->SwitchBodyGroups();
+	}
+}
+#endif // CLIENT_DLL
+
+//-----------------------------------------------------------------------------
+// Purpose:  Energy Drink
+//-----------------------------------------------------------------------------
+CTFLunchBox_Drink::CTFLunchBox_Drink()
+{
+}
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFLunchBox_Drink::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( pOwner && pOwner->IsLocalPlayer() )
+	{
+		C_BaseEntity *pParticleEnt = pOwner->GetViewModel(0);
+		if ( pParticleEnt )
+		{
+			pOwner->StopViewModelParticles( pParticleEnt );
+		}
+	}
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+const char* CTFLunchBox_Drink::ModifyEventParticles( const char* token )
+{
+	if ( GetLunchboxType() == LUNCHBOX_ADDS_MINICRITS )
+	{
+		if ( FStrEq( token, "energydrink_splash") )
+		{
+			CEconItemView *pItem = m_AttributeManager.GetItem();
+			int iSystems = pItem->GetStaticData()->GetNumAttachedParticles( GetTeamNumber() );
+			for ( int i = 0; i < iSystems; i++ )
+			{
+				attachedparticlesystem_t *pSystem = pItem->GetStaticData()->GetAttachedParticleData( GetTeamNumber(),i );
+				if ( pSystem->iCustomType == 1 )
+				{
+					return pSystem->pszSystemName;
+				}
+			}
+		}
+	}
+
+	return BaseClass::ModifyEventParticles( token );
+}
+
+#endif // CLIENT_DLL

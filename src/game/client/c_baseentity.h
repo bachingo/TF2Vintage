@@ -27,7 +27,7 @@
 #if !defined( NO_ENTITY_PREDICTION )
 #include "predictableid.h"
 #endif
-#include "soundflags.h"
+#include "../engine/audio/public/sound.h"
 #include "shareddefs.h"
 #include "networkvar.h"
 #include "interpolatedvar.h"

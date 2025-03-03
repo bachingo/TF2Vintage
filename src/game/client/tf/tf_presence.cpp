@@ -1,4 +1,4 @@
-//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Rich Presence support.
 // HACK: This file has also become the client wing of matchmaking. Matchmaking should
@@ -31,7 +31,7 @@
 #include "tier0/memdbgon.h"
 
 // Global singleton
-static CTFPresence s_presence;
+static CTF_Presence s_presence;
 
 struct s_MapName
 {
@@ -41,14 +41,14 @@ struct s_MapName
 
 // This array must match the define order in hl2orange.spa.h
 static s_MapName s_Scenarios[] = {
-	{"ctf_2fort",	"2Fort"},
-	{"cp_dustbowl",	"Dustbowl"},
-	{"cp_granary",	"Granary"},
-	{"cp_well",		"Well"},
-	{"cp_gravelpit", "Gravel Pit"},
-	{"tc_hydro",	"Hydro"},
-	{"cloak",		"Cloak (CTF)"},
-	{"cp_cloak",	"Cloak (CP)"},
+								{ "ctf_2fort",	"2Fort" },
+								{ "cp_dustbowl",	"Dustbowl" },
+								{ "cp_granary",	"Granary" },
+								{ "cp_well",		"Well" },
+								{ "cp_gravelpit", "Gravel Pit" },
+								{ "tc_hydro",		"Hydro" },
+								{ "cloak",		"Cloak (CTF)" },
+								{ "cp_cloak",		"Cloak (CP)" },
 };
 
 struct s_PresenceTranslation
@@ -59,42 +59,42 @@ struct s_PresenceTranslation
 
 // Only presence IDs can be searched by id number, because they're guaranteed to be unique
 static s_PresenceTranslation s_PresenceIds[] = {
-	{CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO"},							
-	{PROPERTY_CAPS_OWNED,			 			"PROPERTY_CAPS_OWNED"},						
-	{PROPERTY_CAPS_TOTAL,			 			"PROPERTY_CAPS_TOTAL"},						
-	{PROPERTY_FLAG_CAPTURE_LIMIT,	 			"PROPERTY_FLAG_CAPTURE_LIMIT"},				
-	{PROPERTY_NUMBER_OF_ROUNDS,		 			"PROPERTY_NUMBER_OF_ROUNDS"},				
-	{PROPERTY_WIN_LIMIT,						"PROPERTY_WIN_LIMIT"},				
-	{PROPERTY_GAME_SIZE,				 		"PROPERTY_GAME_SIZE"},						
-	{PROPERTY_AUTOBALANCE,			 			"PROPERTY_AUTOBALANCE"},						
-	{PROPERTY_PRIVATE_SLOTS,			 		"PROPERTY_PRIVATE_SLOTS"},					
-	{PROPERTY_MAX_GAME_TIME,			 		"PROPERTY_MAX_GAME_TIME"},
-	{PROPERTY_NUMBER_OF_TEAMS,					"PROPERTY_NUMBER_OF_TEAMS"},
-	{PROPERTY_TEAM,								"PROPERTY_TEAM"},
+			{ CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO" },
+			{ PROPERTY_CAPS_OWNED,			 			"PROPERTY_CAPS_OWNED" },
+			{ PROPERTY_CAPS_TOTAL,			 			"PROPERTY_CAPS_TOTAL" },
+			{ PROPERTY_FLAG_CAPTURE_LIMIT,	 			"PROPERTY_FLAG_CAPTURE_LIMIT" },
+			{ PROPERTY_NUMBER_OF_ROUNDS,	 			"PROPERTY_NUMBER_OF_ROUNDS" },
+			{ PROPERTY_WIN_LIMIT,						"PROPERTY_WIN_LIMIT" },
+			{ PROPERTY_GAME_SIZE,						"PROPERTY_GAME_SIZE" },
+			{ PROPERTY_AUTOBALANCE,			 			"PROPERTY_AUTOBALANCE" },
+			{ PROPERTY_PRIVATE_SLOTS,		 			"PROPERTY_PRIVATE_SLOTS" },
+			{ PROPERTY_MAX_GAME_TIME,		 			"PROPERTY_MAX_GAME_TIME" },
+			{ PROPERTY_NUMBER_OF_TEAMS,					"PROPERTY_NUMBER_OF_TEAMS" },
+			{ PROPERTY_TEAM,							"PROPERTY_TEAM" },
 #if defined( _X360 )
-	{X_CONTEXT_GAME_MODE,					  	"CONTEXT_GAME_MODE"},						
-	{X_CONTEXT_GAME_TYPE,					  	"CONTEXT_GAME_TYPE"},						
+			{ X_CONTEXT_GAME_MODE,					  	"CONTEXT_GAME_MODE" },
+			{ X_CONTEXT_GAME_TYPE,					  	"CONTEXT_GAME_TYPE" },
 #endif
 };
 
 // Presence values cannot be searched by id number, because they are not unique
 static s_PresenceTranslation s_PresenceValues[] = {
-	{SESSION_MATCH_QUERY_PLAYER_MATCH,			"SESSION_MATCH_QUERY_PLAYER_MATCH"},			
-	{CONTEXT_GAME_MODE_MULTIPLAYER,	 			"CONTEXT_GAME_MODE_MULTIPLAYER"},			
-	{CONTEXT_SCENARIO_CTF_2FORT,		 		"CONTEXT_SCENARIO_CTF_2FORT"},				
-	{CONTEXT_SCENARIO_CP_DUSTBOWL,	 			"CONTEXT_SCENARIO_CP_DUSTBOWL"},				
-	{CONTEXT_SCENARIO_CP_GRANARY,	 			"CONTEXT_SCENARIO_CP_GRANARY"},				
-	{CONTEXT_SCENARIO_CP_WELL,		 			"CONTEXT_SCENARIO_CP_WELL"},					
-	{CONTEXT_SCENARIO_CP_GRAVELPIT,	 			"CONTEXT_SCENARIO_CP_GRAVELPIT"},			
-	{CONTEXT_SCENARIO_TC_HYDRO,		 			"CONTEXT_SCENARIO_TC_HYDRO"},				
-	{CONTEXT_SCENARIO_CTF_CLOAK,		 		"CONTEXT_SCENARIO_CTF_CLOAK"},				
-	{CONTEXT_SCENARIO_CP_CLOAK,		 			"CONTEXT_SCENARIO_CP_CLOAK"},				
+	{ SESSION_MATCH_QUERY_PLAYER_MATCH,				"SESSION_MATCH_QUERY_PLAYER_MATCH" },
+	{ CONTEXT_GAME_MODE_MULTIPLAYER,	 			"CONTEXT_GAME_MODE_MULTIPLAYER" },
+	{ CONTEXT_SCENARIO_CTF_2FORT,		 			"CONTEXT_SCENARIO_CTF_2FORT" },
+	{ CONTEXT_SCENARIO_CP_DUSTBOWL,	 				"CONTEXT_SCENARIO_CP_DUSTBOWL" },
+	{ CONTEXT_SCENARIO_CP_GRANARY,	 				"CONTEXT_SCENARIO_CP_GRANARY" },
+	{ CONTEXT_SCENARIO_CP_WELL,		 				"CONTEXT_SCENARIO_CP_WELL" },
+	{ CONTEXT_SCENARIO_CP_GRAVELPIT,	 			"CONTEXT_SCENARIO_CP_GRAVELPIT" },
+	{ CONTEXT_SCENARIO_TC_HYDRO,		 			"CONTEXT_SCENARIO_TC_HYDRO" },
+	{ CONTEXT_SCENARIO_CTF_CLOAK,		 			"CONTEXT_SCENARIO_CTF_CLOAK" },
+	{ CONTEXT_SCENARIO_CP_CLOAK,		 			"CONTEXT_SCENARIO_CP_CLOAK" },
 #if defined( _X360 )
-	{XSESSION_CREATE_LIVE_MULTIPLAYER_STANDARD,	"SESSION_CREATE_LIVE_MULTIPLAYER_STANDARD"},	
-	{XSESSION_CREATE_LIVE_MULTIPLAYER_RANKED,  	"SESSION_CREATE_LIVE_MULTIPLAYER_RANKED"},	
-	{XSESSION_CREATE_SYSTEMLINK,				"SESSION_CREATE_SYSTEMLINK"},				
-	{X_CONTEXT_GAME_TYPE_STANDARD,			  	"CONTEXT_GAME_TYPE_STANDARD"},					
-	{X_CONTEXT_GAME_TYPE_RANKED,				"CONTEXT_GAME_TYPE_RANKED"},						
+	{ XSESSION_CREATE_LIVE_MULTIPLAYER_STANDARD,	"SESSION_CREATE_LIVE_MULTIPLAYER_STANDARD" },
+	{ XSESSION_CREATE_LIVE_MULTIPLAYER_RANKED,  	"SESSION_CREATE_LIVE_MULTIPLAYER_RANKED" },
+	{ XSESSION_CREATE_SYSTEMLINK,				  	"SESSION_CREATE_SYSTEMLINK" },
+	{ X_CONTEXT_GAME_TYPE_STANDARD,			  		"CONTEXT_GAME_TYPE_STANDARD" },
+	{ X_CONTEXT_GAME_TYPE_RANKED,				  	"CONTEXT_GAME_TYPE_RANKED" },
 #endif
 };
 
@@ -143,7 +143,7 @@ static unsigned int GetMapID( const char *pMapName )
 //-----------------------------------------------------------------------------
 // Convert a session property string to a display string for gameUI.
 //-----------------------------------------------------------------------------
-void CTFPresence::GetPropertyDisplayString( uint id, uint value, char *pOutput, int nBytes )
+void CTF_Presence::GetPropertyDisplayString( uint id, uint value, char *pOutput, int nBytes )
 {
 	const char *pDisplayString = "";
 
@@ -212,7 +212,7 @@ void CTFPresence::GetPropertyDisplayString( uint id, uint value, char *pOutput, 
 //-----------------------------------------------------------------------------
 // Convert a presence ID to a string.
 //-----------------------------------------------------------------------------
-const char *CTFPresence::GetPropertyIdString( const uint id )
+const char *CTF_Presence::GetPropertyIdString( const uint id )
 {
 	for ( int i = 0; i < ARRAYSIZE( s_PresenceIds ); ++i )
 	{
@@ -227,7 +227,7 @@ const char *CTFPresence::GetPropertyIdString( const uint id )
 //-----------------------------------------------------------------------------
 // Convert a session property string to an ID.
 //-----------------------------------------------------------------------------
-uint CTFPresence::GetPresenceID( const char *pIDName )
+uint CTF_Presence::GetPresenceID( const char *pIDName )
 {
 	for ( int i = 0; i < ARRAYSIZE( s_PresenceIds ); ++i )
 	{
@@ -252,7 +252,7 @@ uint CTFPresence::GetPresenceID( const char *pIDName )
 //-----------------------------------------------------------------------------
 // Purpose: Level init
 //-----------------------------------------------------------------------------
-void CTFPresence::LevelInitPreEntity( void )
+void CTF_Presence::LevelInitPreEntity( void )
 {
 	m_bIsInCommentary = false;
 	const char *pMapName = MapName();
@@ -266,7 +266,7 @@ void CTFPresence::LevelInitPreEntity( void )
 //-----------------------------------------------------------------------------
 // Purpose: Init
 //-----------------------------------------------------------------------------
-bool CTFPresence::Init()
+bool CTF_Presence::Init()
 {
 	presence = &s_presence;
 
@@ -284,7 +284,7 @@ bool CTFPresence::Init()
 //-----------------------------------------------------------------------------
 // Get game session properties from matchmaking.
 //-----------------------------------------------------------------------------
-void CTFPresence::SetupGameProperties( CUtlVector< XUSER_CONTEXT > &contexts, CUtlVector< XUSER_PROPERTY > &properties )
+void CTF_Presence::SetupGameProperties( CUtlVector< XUSER_CONTEXT > &contexts, CUtlVector< XUSER_PROPERTY > &properties )
 {
 	// Session properties have been set for this game.  Use our knowledge of
 	// the properties that have been defined for this game to set rules, cvars, etc.
@@ -352,7 +352,7 @@ void CTFPresence::SetupGameProperties( CUtlVector< XUSER_CONTEXT > &contexts, CU
 //-----------------------------------------------------------------------------
 // Respond to TF game events.
 //-----------------------------------------------------------------------------
-void CTFPresence::FireGameEvent( IGameEvent *event )
+void CTF_Presence::FireGameEvent( IGameEvent *event )
 {
 	const char *eventname = event->GetName();
 
@@ -469,7 +469,7 @@ void CTFPresence::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------
 // Purpose: Upload player stats to Live.
 //-----------------------------------------------------------------------------
-void CTFPresence::UploadStats()
+void CTF_Presence::UploadStats()
 {
 #if defined( _X360 )
 	if ( m_bReportingStats )
@@ -480,8 +480,7 @@ void CTFPresence::UploadStats()
 
 		CUtlVector< XUSER_PROPERTY > skillStats;
 
-		C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
-		if ( !tf_PR )
+		if ( !g_TF_PR )
 			return;
 
 		XUID localId = matchmaking->PlayerIdToXuid( GetLocalPlayerIndex() );
@@ -504,7 +503,7 @@ void CTFPresence::UploadStats()
 				Msg( "XUID: %d\n", id );
 				XUSER_PROPERTY prop;
 
-				int nScore = tf_PR->GetTotalScore( i );
+				int nScore = g_TF_PR->GetTotalScore( i );
 
 				// Write the player's skill stats
 				prop.dwPropertyId = X_PROPERTY_RELATIVE_SCORE;
@@ -615,7 +614,7 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 
 	if ( FStrEq( name, "player_connect" ) || FStrEq( name, "player_disconnect" ) )
 	{
-		if ( !TFPlayerResource() )
+		if ( !g_TF_PR )
 			return;
 
 		const int maxPlayers = gpGlobals->maxClients;
@@ -623,7 +622,7 @@ void CTFDiscordPresence::FireGameEvent( IGameEvent *event )
 
 		for ( int i = 1; i <= maxPlayers; ++i )
 		{
-			if ( TFPlayerResource()->IsConnected( i ) )
+			if ( g_TF_PR->IsConnected( i ) )
 				curPlayers++;
 		}
 
@@ -855,7 +854,8 @@ void CTFDiscordPresence::LevelInitPostEntity( void )
 
 	if ( TFGameRules() )
 	{
-		wchar *gameType = g_pVGuiLocalize->Find( g_aGameTypeNames[ TFGameRules()->GetGameType() ] );
+		extern const char *s_aGameTypeNames[];
+		wchar *gameType = g_pVGuiLocalize->Find( s_aGameTypeNames[ TFGameRules()->GetGameType() ] );
 		if ( gameType )
 		{
 			char szGameType[ DISCORD_FIELD_MAXLEN ];

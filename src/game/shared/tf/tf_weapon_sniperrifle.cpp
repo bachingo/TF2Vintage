@@ -1,4 +1,4 @@
-﻿//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: TF Sniper Rifle
 //
@@ -7,7 +7,7 @@
 #include "tf_fx_shared.h"
 #include "tf_weapon_sniperrifle.h"
 #include "in_buttons.h"
-
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -21,21 +21,21 @@
 #include "materialsystem/imaterialvar.h"
 #include "toolframework_client.h"
 #include "input.h"
-
-// For TFGameRules() and Player resources
-#include "tf_gamerules.h"
-#include "c_tf_playerresource.h"
+#include "client_virtualreality.h"
+#include "sourcevr/isourcevirtualreality.h"
 
 // forward declarations
 void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
-
 #else
+#include "tf_gamerules.h"
+#include "tf_fx.h"
 #include "beam_shared.h"
 #endif
 
-#define TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC	75.0f
-#define	TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN		50.0f
-#define TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX		150.0f
+#define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0
+#define TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC	75.0
+#define	TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN		50
+#define TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX		150
 #define TF_WEAPON_SNIPERRIFLE_RELOAD_TIME		1.5f
 #define TF_WEAPON_SNIPERRIFLE_ZOOM_TIME			0.3f
 
@@ -46,13 +46,17 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #define SNIPER_DOT_SPRITE_GREEN		"effects/sniperdot_green.vmt"
 #define SNIPER_DOT_SPRITE_YELLOW	"effects/sniperdot_yellow.vmt"
 #define SNIPER_DOT_SPRITE_CLEAR		"effects/sniperdot_clear.vmt"
+#define SNIPER_CHARGE_BEAM_RED		"tfc_sniper_charge_red"
+#define SNIPER_CHARGE_BEAM_BLUE		"tfc_sniper_charge_blue"
+#define SNIPER_CHARGE_BEAM_GREEN	"tfc_sniper_charge_green"
+#define SNIPER_CHARGE_BEAM_YELLOW	"tfc_sniper_charge_yellow"
 
 #ifdef CLIENT_DLL
-	ConVar tf2v_sniper_crosshair( "tf2v_sniper_crosshair", "1", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Shows the crosshair on Sniper Rifles.", true, 0, true, 1 );
+ConVar tf_sniper_fullcharge_bell( "tf_sniper_fullcharge_bell", "0", FCVAR_ARCHIVE );
+ConVar tf2v_sniper_crosshair( "tf2v_sniper_crosshair", "1", FCVAR_CLIENTDLL|FCVAR_ARCHIVE, "Shows the crosshair on Sniper Rifles.", true, 0, true, 1 );
 #endif
 ConVar tf2v_allow_sniper_crosshairs( "tf2v_allow_sniper_crosshairs", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows clients to enable crosshairs on their sniper rifles.", true, 0, true, 1 );
 ConVar tf2v_use_sniper_beams( "tf2v_use_sniper_beams", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Draws a beam on the sniper dot.", true, 0, true, 1 );
-
 
 //=============================================================================
 //
@@ -63,9 +67,9 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFSniperRifle, DT_TFSniperRifle )
 
 BEGIN_NETWORK_TABLE_NOBASE( CTFSniperRifle, DT_SniperRifleLocalData )
 #if !defined( CLIENT_DLL )
-	SendPropFloat( SENDINFO( m_flChargedDamage ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+	SendPropFloat( SENDINFO(m_flChargedDamage), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 #else
-	RecvPropFloat( RECVINFO( m_flChargedDamage ) ),
+	RecvPropFloat( RECVINFO(m_flChargedDamage) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -89,14 +93,52 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle, CTFSniperRifle );
 PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle );
 
+BEGIN_DATADESC( CTFSniperRifle )
+	DEFINE_FIELD( m_flUnzoomTime, FIELD_FLOAT ),
+	DEFINE_FIELD( m_flRezoomTime, FIELD_FLOAT ),
+	DEFINE_FIELD( m_bRezoomAfterShot, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_flChargedDamage, FIELD_FLOAT ),
+END_DATADESC()
 
-CREATE_SIMPLE_WEAPON_TABLE( TFSniperRifle_Real, tf_weapon_sniperrifle_real )
-CREATE_SIMPLE_WEAPON_TABLE( TFSniperRifle_Decap, tf_weapon_sniperrifle_decap )
-CREATE_SIMPLE_WEAPON_TABLE( TFSniperRifle_Classic, tf_weapon_sniperrifle_classic )
+//=============================================================================
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFSniperRifleDecap, DT_TFSniperRifleDecap )
+
+BEGIN_NETWORK_TABLE( CTFSniperRifleDecap, DT_TFSniperRifleDecap )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFSniperRifleDecap )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle_decap, CTFSniperRifleDecap );
+PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle_decap );
+
+//=============================================================================
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFSniperRifleClassic, DT_TFSniperRifleClassic )
+
+BEGIN_NETWORK_TABLE( CTFSniperRifleClassic, DT_TFSniperRifleClassic )
+#if !defined( CLIENT_DLL )
+	SendPropBool( SENDINFO(m_bCharging) ),
+#else
+	RecvPropBool( RECVINFO(m_bCharging) ),
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFSniperRifleClassic )
+#ifdef CLIENT_DLL
+	DEFINE_PRED_FIELD( m_bCharging, FIELD_BOOLEAN, 0 ),
+#endif
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle_classic, CTFSniperRifleClassic );
+PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle_classic );
+//=============================================================================
+
 
 //=============================================================================
 //
-// Weapon Sniper Rifles funcions.
+// Weapon Sniper Rifles functions.
 //
 
 //-----------------------------------------------------------------------------
@@ -107,8 +149,15 @@ CTFSniperRifle::CTFSniperRifle()
 // Server specific.
 #ifdef GAME_DLL
 	m_hSniperDot = NULL;
-	m_pBeam = NULL;
+#else
+	m_bPlayedBell = false;
 #endif
+
+	m_bCurrentShotIsHeadshot = false;
+	m_flChargedDamage = 0.0f;
+	m_flChargePerSec = TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
+
+	m_bWasAimedAtEnemy = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -145,7 +194,12 @@ void CTFSniperRifle::Precache()
 	BaseClass::Precache();
 	PrecacheModel( SNIPER_DOT_SPRITE_RED );
 	PrecacheModel( SNIPER_DOT_SPRITE_BLUE );
-	PrecacheModel("effects/beam_neutral.vmt");	
+	PrecacheModel( SNIPER_DOT_SPRITE_GREEN );
+	PrecacheModel( SNIPER_DOT_SPRITE_YELLOW );
+	PrecacheModel( SNIPER_DOT_SPRITE_CLEAR );
+	PrecacheModel( "effects/beam_neutral.vmt" );
+
+	PrecacheScriptSound( "doomsday.warhead" );
 }
 
 //-----------------------------------------------------------------------------
@@ -153,7 +207,7 @@ void CTFSniperRifle::Precache()
 //-----------------------------------------------------------------------------
 void CTFSniperRifle::ResetTimers( void )
 {
-	m_flUnzoomTime = -1;
+	SetInternalUnzoomTime( -1 );
 	m_flRezoomTime = -1;
 	m_bRezoomAfterShot = false;
 }
@@ -163,19 +217,6 @@ void CTFSniperRifle::ResetTimers( void )
 //-----------------------------------------------------------------------------
 bool CTFSniperRifle::Reload( void )
 {
-	//Enable reloading, but only if our clipsize is defined.
-	if ( Clip1() >= 0 )
-	{
-		if ( BaseClass::Reload() == true )
-		{
-			if ( IsZoomed() )
-			ZoomOut();
-			return true;
-		}
-		else
-		return false;
-	}
-	else
 	// We currently don't reload.
 	return true;
 }
@@ -188,6 +229,10 @@ bool CTFSniperRifle::CanHolster( void ) const
  	CTFPlayer *pPlayer = GetTFPlayerOwner();
  	if ( pPlayer )
 	{
+		// TF_COND_MELEE_ONLY need to be able to immediately holster and switch to melee weapon
+		if ( pPlayer->m_Shared.InCond( TF_COND_MELEE_ONLY ) )
+			return true;
+
 		// don't allow us to holster this weapon if we're in the process of zooming and 
 		// we've just fired the weapon (next primary attack is only 1.5 seconds after firing)
 		if ( ( pPlayer->GetFOV() < pPlayer->GetDefaultFOV() ) && ( m_flNextPrimaryAttack > gpGlobals->curtime ) )
@@ -218,6 +263,9 @@ bool CTFSniperRifle::Holster( CBaseCombatWeapon *pSwitchingTo )
 	}
 
 	m_flChargedDamage = 0.0f;
+#ifdef CLIENT_DLL
+	m_bPlayedBell = false;
+#endif
 	ResetTimers();
 
 	return BaseClass::Holster( pSwitchingTo );
@@ -228,6 +276,9 @@ void CTFSniperRifle::WeaponReset( void )
 	BaseClass::WeaponReset();
 
 	ZoomOut();
+
+	m_bCurrentShotIsHeadshot = false;
+	m_flChargePerSec = TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
 }
 
 //-----------------------------------------------------------------------------
@@ -241,7 +292,7 @@ void CTFSniperRifle::HandleZooms( void )
 		return;
 
 	// Handle the zoom when taunting.
-	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || pPlayer->m_Shared.InCond( TF_COND_STUNNED ) )
+	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
 		{
@@ -264,7 +315,7 @@ void CTFSniperRifle::HandleZooms( void )
 			ZoomOut();
 		}
 
-		m_flUnzoomTime = -1;
+		SetInternalUnzoomTime( -1 );
 	}
 
 	if ( m_flRezoomTime > 0 )
@@ -305,8 +356,6 @@ void CTFSniperRifle::ItemPostFrame( void )
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( !pPlayer )
 		return;
-	
-	CheckReload();
 
 	if ( !CanAttack() )
 	{
@@ -343,19 +392,37 @@ void CTFSniperRifle::ItemPostFrame( void )
 
 		m_flChargedDamage = 0.0f;
 		m_bRezoomAfterShot = false;
+		m_flRezoomTime = -1.f;
 	}
 	else if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
 	{
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
-		if ( ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot ) || ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF) ) ) 
+		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
 		{
-			float flChargeRate = GetChargingRate();
-			CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_sniper_charge_per_sec );
-			m_flChargedDamage = Min( m_flChargedDamage + gpGlobals->frametime * flChargeRate, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
+			float fSniperRifleChargePerSec = m_flChargePerSec;
+			ApplyChargeSpeedModifications( fSniperRifleChargePerSec );
+			fSniperRifleChargePerSec += SniperRifleChargeRateMod();
+
+			// we don't want sniper charge rate to go too high.
+			fSniperRifleChargePerSec = clamp( fSniperRifleChargePerSec, 0, 2.f * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC );
+
+			m_flChargedDamage = MIN( m_flChargedDamage + gpGlobals->frametime * fSniperRifleChargePerSec, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
+
+#ifdef CLIENT_DLL
+			// play the recharged bell if we're fully charged
+			if ( IsFullyCharged() && !m_bPlayedBell )
+			{
+				m_bPlayedBell = true;
+				if ( tf_sniper_fullcharge_bell.GetBool() )
+				{
+					C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
+				}
+			}
+#endif
 		}
 		else
 		{
-			m_flChargedDamage = Max( 0.0f, m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC );
+			m_flChargedDamage = MAX( 0, m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC );
 		}
 	}
 
@@ -363,16 +430,6 @@ void CTFSniperRifle::ItemPostFrame( void )
 	if ( pPlayer->m_nButtons & IN_ATTACK )
 	{
 		Fire( pPlayer );
-	}
-	
-	//  Reload pressed / Clip Empty
-	if ( ( pPlayer->m_nButtons & IN_RELOAD ) && !m_bInReload ) 
-	{
-		// reload when reload is pressed, or if no buttons are down and weapon is empty.
-		if ( HasFocus() )
-			ActivateFocus();
-		else
-			Reload();
 	}
 
 	// Idle.
@@ -384,6 +441,43 @@ void CTFSniperRifle::ItemPostFrame( void )
 			WeaponIdle();
 		}
 	}
+
+	// Sniper Rage (Hitman's heatmaker)
+	// Activate on 'R'
+	// no longer need full charge
+	if ( (pPlayer->m_nButtons & IN_RELOAD ) && pPlayer->m_Shared.GetRageMeter() > 1.0f )
+	{
+		int iBuffType = 0;
+		CALL_ATTRIB_HOOK_INT( iBuffType, set_buff_type );
+		if ( iBuffType > 0 )
+		{
+			pPlayer->m_Shared.ActivateRageBuff( pPlayer, iBuffType );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::PlayWeaponShootSound( void )
+{
+	if ( TFGameRules()->GameModeUsesUpgrades() )
+	{
+		PlayUpgradedShootSound( "Weapon_Upgrade.DamageBonus" );
+	}
+
+	if ( !IsFullyCharged() )
+	{
+		float flDamageBonus = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT( flDamageBonus, sniper_full_charge_damage_bonus );
+		if ( flDamageBonus > 1.0f )
+		{
+			WeaponSound( SPECIAL3 );
+			return;
+		}
+	}
+
+	BaseClass::PlayWeaponShootSound();
 }
 
 //-----------------------------------------------------------------------------
@@ -420,7 +514,7 @@ void CTFSniperRifle::Zoom( void )
 	ToggleZoom();
 
 	// at least 0.1 seconds from now, but don't stomp a previous value
-	m_flNextPrimaryAttack = Max( m_flNextPrimaryAttack.Get(), gpGlobals->curtime + 0.1f );
+	m_flNextPrimaryAttack = MAX( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
 	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 }
 
@@ -434,7 +528,13 @@ void CTFSniperRifle::ZoomOutIn( void )
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer && pPlayer->ShouldAutoRezoom() )
 	{
-		m_flRezoomTime = gpGlobals->curtime + 0.9;
+		float flRezoomDelay = 0.9f;
+		if ( !UsesClipsForAmmo1() )
+		{
+			// Since sniper rifles don't actually use clips the fast reload hook also affects unzoom and zoom delays
+			ApplyScopeSpeedModifications( flRezoomDelay );
+		}
+		m_flRezoomTime = gpGlobals->curtime + flRezoomDelay;
 	}
 	else
 	{
@@ -461,22 +561,15 @@ void CTFSniperRifle::ZoomIn( void )
 	pPlayer->m_Shared.AddCond( TF_COND_AIMING );
 	pPlayer->TeamFortress_SetSpeed();
 
-	int nWeaponModeDot = 0;
-	CALL_ATTRIB_HOOK_INT(nWeaponModeDot, sniper_no_dot);
-	
 #ifdef GAME_DLL
-	if (nWeaponModeDot == 0)
-	{
-		// Create the sniper dot.
-		if ( !m_hSniperDot )
-			CreateSniperDot();
-		if ( !m_pBeam )
-			CreateSniperBeam();
-	}
+	// Create the sniper dot.
+	CreateSniperDot();
 	pPlayer->ClearExpression();
 #endif
 }
 
+
+//-----------------------------------------------------------------------------
 bool CTFSniperRifle::IsZoomed( void )
 {
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
@@ -489,30 +582,16 @@ bool CTFSniperRifle::IsZoomed( void )
 	return false;
 }
 
+
+//-----------------------------------------------------------------------------
+//
+// Have we been zoomed in long enough for our shot to do max damage
+//
 bool CTFSniperRifle::IsFullyCharged( void ) const
 {
 	return m_flChargedDamage >= TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX;
 }
 
-void CTFSniperRifle::DoFireEffects(void)
-{
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if (!pPlayer)
-		return;
-
-	// Muzzle flash on weapon.
-	bool bMuzzleFlash = true;
-
-	if (IsZoomed())
-	{
-		bMuzzleFlash = false;
-	}
-
-	if (bMuzzleFlash)
-	{
-		pPlayer->DoMuzzleFlash();
-	}
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -529,19 +608,200 @@ void CTFSniperRifle::ZoomOut( void )
 
 	pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
 	pPlayer->TeamFortress_SetSpeed();
-	
+
 #ifdef GAME_DLL
-		// Destroy the sniper dot.
-		DestroySniperDot();
-		DestroySniperBeam();
+	// Destroy the sniper dot.
+	DestroySniperDot();
+	pPlayer->ClearExpression();
 #endif
 
 	// if we are thinking about zooming, cancel it
-	m_flUnzoomTime = -1;
+	SetInternalUnzoomTime( -1 );
 	m_flRezoomTime = -1;
 	m_bRezoomAfterShot = false;
-	m_flChargedDamage = 0.0f;	
+	m_flChargedDamage = 0.0f;
+
+#ifdef CLIENT_DLL
+	m_bPlayedBell = false;
+#endif
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::ApplyScopeSpeedModifications( float &flBaseRef )
+{
+	CALL_ATTRIB_HOOK_FLOAT( flBaseRef, fast_reload );
+
+	// Prototype hack
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( pPlayer )
+	{
+		if ( pPlayer->m_Shared.GetCarryingRuneType() == RUNE_HASTE || pPlayer->m_Shared.GetCarryingRuneType() == RUNE_PRECISION )
+		{
+			if ( pPlayer->m_Shared.InCond( TF_COND_POWERUPMODE_DOMINANT ) )
+			{
+				flBaseRef *= 0.75f;
+			}
+			else
+			{
+				flBaseRef *= 0.5f;
+			}
+		}
+		else if ( pPlayer->m_Shared.GetCarryingRuneType() == RUNE_KING || pPlayer->m_Shared.InCond( TF_COND_KING_BUFFED ) )
+		{
+			flBaseRef *= 0.75f;
+		}
+		
+		int iMaster = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iMaster, ability_master_sniper );
+		if ( iMaster )
+		{
+			flBaseRef *= RemapValClamped( iMaster, 1, 2, 0.6f, 0.3f );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::ApplyChargeSpeedModifications( float &flBaseRef )
+{
+	CALL_ATTRIB_HOOK_FLOAT( flBaseRef, mult_sniper_charge_per_sec );
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( pPlayer )
+	{
+		Vector vForward;
+		AngleVectors( pPlayer->EyeAngles() + pPlayer->GetPunchAngle(), &vForward );
+
+		Vector vShootPos = pPlayer->Weapon_ShootPosition();
+		trace_t tr;
+		UTIL_TraceLine( vShootPos, vShootPos + vForward * m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flRange, MASK_BLOCKLOS_AND_NPCS, pPlayer, COLLISION_GROUP_NONE, &tr );
+		
+		CTFPlayer *pTarget = ToTFPlayer( tr.m_pEnt );
+		if ( pTarget && pTarget->IsAlive() && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() && 
+			 !( pTarget->m_Shared.IsStealthed() && !pTarget->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) ) )
+		{
+			CALL_ATTRIB_HOOK_FLOAT( flBaseRef, mult_sniper_charge_per_sec_with_enemy_under_crosshair );
+
+			int nBeep = 0;
+			CALL_ATTRIB_HOOK_FLOAT( nBeep, sniper_beep_with_enemy_under_crosshair );
+
+			if ( nBeep > 0 && !m_bWasAimedAtEnemy )
+			{
+				pPlayer->EmitSound( "doomsday.warhead" );
+			}
+
+			m_bWasAimedAtEnemy = true;
+		}
+		else
+		{
+			m_bWasAimedAtEnemy = false;
+		}
+
+		if ( pPlayer && ( pPlayer->m_Shared.GetCarryingRuneType() == RUNE_PRECISION || pPlayer->m_Shared.GetCarryingRuneType() == RUNE_HASTE ) )
+		{
+			if ( pPlayer->m_Shared.InCond( TF_COND_POWERUPMODE_DOMINANT ) )
+			{
+				flBaseRef *= 2.0f;
+			}
+			else
+			{
+				flBaseRef *= 3.0f;
+			}
+		}
+		else if ( pPlayer->m_Shared.GetCarryingRuneType() == RUNE_KING || pPlayer->m_Shared.InCond( TF_COND_KING_BUFFED ) )
+		{
+			flBaseRef *= 1.5f;
+		}
+
+
+		// Prototype hack
+		int iMaster = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( pPlayer, iMaster, ability_master_sniper );
+		if ( iMaster )
+		{
+			flBaseRef *= RemapValClamped( iMaster, 1, 2, 1.5f, 3.f );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::MustBeZoomedToFire( void )
+{
+	int iModOnlyFireZoomed = 0;
+	CALL_ATTRIB_HOOK_INT( iModOnlyFireZoomed, sniper_only_fire_zoomed );
+	return ( iModOnlyFireZoomed != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::HandleNoScopeFireDeny( void )
+{ 
+	if ( m_flNextEmptySoundTime < gpGlobals->curtime )
+	{
+		WeaponSound( SPECIAL2 );
+
+#ifdef CLIENT_DLL
+		ParticleProp()->Init( this );
+		ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
+#endif
+
+		m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::SetInternalUnzoomTime( float flUnzoomTime )
+{
+#ifdef GAME_DLL
+	if ( m_flUnzoomTime == flUnzoomTime )
+		return;
+
+	if ( flUnzoomTime > gpGlobals->curtime )
+	{
+		DisableJump();
+	}
+	else
+	{
+		EnableJump();
+	}
+#endif // GAME_DLL
+
+	m_flUnzoomTime = flUnzoomTime;
+}
+  
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+ETFDmgCustom CTFSniperRifle::GetPenetrateType() const
+{
+	if ( IsFullyCharged() )
+	{
+		int iPenetrate = 0;
+		CALL_ATTRIB_HOOK_INT( iPenetrate, sniper_penetrate_players_when_charged ); 
+		if ( iPenetrate > 0 )
+			return TF_DMG_CUSTOM_PENETRATE_ALL_PLAYERS;
+	}
+
+	return BaseClass::GetPenetrateType();
+}
+
+#ifdef SIXENSE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFSniperRifle::GetRezoomTime() const
+{
+	return m_flRezoomTime;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -554,13 +814,15 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 		HandleFireOnEmpty();
 		return;
 	}
-	
-	int nRequiresZoom = 0;
-	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
-	if ( nRequiresZoom && !IsZoomed() )
+
+	// Some weapons can only fire while zoomed
+	if ( MustBeZoomedToFire() )
 	{
-		DenySniperShot();
-		return;
+		if ( !IsZoomed() )
+		{
+			HandleNoScopeFireDeny();
+			return;
+		}
 	}
 
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
@@ -571,27 +833,42 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 
 	int nWeaponModeScope = 0;
 	CALL_ATTRIB_HOOK_INT( nWeaponModeScope, sniper_no_zoomout );
-	
-	if (nWeaponModeScope == 0 && !pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF))
+
+	if ( nWeaponModeScope == 0 && IsZoomed() )
 	{
-		if ( IsZoomed() )
+		// If we have more bullets, zoom out, play the bolt animation and zoom back in
+		if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
 		{
-				// If we have more bullets, zoom out, play the bolt animation and zoom back in
-				if( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) > 0 )
+			// do not zoom out if we're under rage or about to enter it
+			if ( !pPlayer->m_Shared.InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF ) )
+			{
+				float flUnzoomDelay = 0.5f;
+				if ( !UsesClipsForAmmo1() )
 				{
-					SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
+					// Since sniper rifles don't actually use clips the fast reload hook also affects unzoom and zoom delays
+					ApplyScopeSpeedModifications( flUnzoomDelay );
 				}
-				else	
-				{
-					//just zoom out
-					SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
-				}
+				SetRezoom( true, flUnzoomDelay );	// zoom out in 0.5 seconds, then rezoom
+#ifdef GAME_DLL
+				SetContextThink( &CTFSniperRifleClassic::EnableJump, gpGlobals->curtime + flUnzoomDelay, "RenableJump" );
+#endif
+			}
 		}
-		else
+		else	
 		{
-			// Prevent primary fire preventing zooms
-			m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+			//just zoom out
+			SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
 		}
+	}
+	else
+	{
+		float flZoomDelay = SequenceDuration();
+
+		// Since sniper rifles don't actually use clips the fast reload hook also affects zoom delays
+		ApplyScopeSpeedModifications( flZoomDelay );
+
+		// Prevent primary fire preventing zooms
+		m_flNextSecondaryAttack = gpGlobals->curtime + flZoomDelay;
 	}
 
 	m_flChargedDamage = 0.0f;
@@ -605,34 +882,11 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFSniperRifle::DenySniperShot( void )
-{
-		// Play this effect only when we can play the empty clip sound to prevent endless SPAM
-		if ( m_flNextEmptySoundTime < gpGlobals->curtime )
-		{
-#ifdef CLIENT_DLL
-			// Make a fizzing noise, and draw sparks.
-			WeaponSound( SPECIAL2 );
-			C_BaseEntity *pModel = GetWeaponForEffect();
-			if ( pModel )
-			{
-				pModel->ParticleProp()->Create( "dxhr_sniper_fizzle", PATTACH_POINT_FOLLOW, "muzzle" );
-			}
-#endif	
-			// Delay the next empty clip sound.
-			m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
-			return;
-		}
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 {
-	m_flUnzoomTime = gpGlobals->curtime + flDelay;
+	SetInternalUnzoomTime( gpGlobals->curtime + flDelay );
 
 	m_bRezoomAfterShot = bRezoom;
 }
@@ -643,12 +897,35 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 //-----------------------------------------------------------------------------
 float CTFSniperRifle::GetProjectileDamage( void )
 {
-	// Uncharged? Min damage.
-	float flDamage = Max( m_flChargedDamage.Get(), TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
-	// Fully charged? Add extra damage attribute.
-	if ( m_flChargedDamage == TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX )
-		CALL_ATTRIB_HOOK_FLOAT (flDamage, sniper_full_charge_damage_bonus);
+	float flDamage = MAX( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+
+	float flDamageMod = 1.f;
+	CALL_ATTRIB_HOOK_FLOAT( flDamageMod, mult_dmg );
+	flDamage *= flDamageMod;
+
 	
+	if ( TFGameRules() && TFGameRules()->IsPowerupMode() )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() ); 
+
+		if ( pPlayer && pPlayer->m_Shared.GetCarryingRuneType() == RUNE_PRECISION )
+		{
+			if ( pPlayer->m_Shared.InCond( TF_COND_POWERUPMODE_DOMINANT ) )
+			{
+				flDamage *= 1.5f;
+			}
+			else
+			{
+				flDamage *= 2.f;
+			}
+		}
+	}
+
+	if ( IsFullyCharged() )
+	{
+		CALL_ATTRIB_HOOK_FLOAT( flDamage, sniper_full_charge_damage_bonus );
+	}
+
 	return flDamage;
 }
 
@@ -662,7 +939,9 @@ int	CTFSniperRifle::GetDamageType( void ) const
 	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 		return BaseClass::GetDamageType();
 
-	return ( BaseClass::GetDamageType() & ~DMG_USE_HITLOCATIONS );
+	int nDamageType = BaseClass::GetDamageType() & ~DMG_USE_HITLOCATIONS;
+
+	return nDamageType;
 }
 
 //-----------------------------------------------------------------------------
@@ -682,10 +961,14 @@ void CTFSniperRifle::CreateSniperDot( void )
 	if ( !pPlayer )
 		return;
 
-	// Create the sniper dot, but do not make it visible yet.
-	m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), pPlayer, true );
-	m_hSniperDot->ChangeTeam( pPlayer->GetTeamNumber() );
-
+	int nWeaponModeDot = 0;
+	CALL_ATTRIB_HOOK_INT( nWeaponModeDot, sniper_no_dot );
+	if ( nWeaponModeDot == 0 )
+	{
+		// Create the sniper dot, but do not make it visible yet.
+		m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), pPlayer, true );
+		m_hSniperDot->ChangeTeam( pPlayer->GetTeamNumber() );
+	}
 #endif
 }
 
@@ -760,7 +1043,7 @@ bool CTFSniperRifle::UseSniperBeams( void )
 //-----------------------------------------------------------------------------
 void CTFSniperRifle::CreateSniperBeam( void )
 {
-// Server specific.
+	// Server specific.
 #ifdef GAME_DLL
 	// If beams are disabled or already exist, do not create one.
 	if ( UseSniperBeams() && !m_pBeam )
@@ -773,7 +1056,7 @@ void CTFSniperRifle::CreateSniperBeam( void )
 
 		// Create the sniper beam...
 		m_pBeam = CBeam::BeamCreate("effects/beam_neutral.vmt", 1.0f);
-		Vector vBeamColor = GetEnergyWeaponColor(false);
+		Vector vBeamColor = GetParticleColor( 0 );
 		m_pBeam->SetColor(vBeamColor[0], vBeamColor[1], vBeamColor[2]);
 
 		m_pBeam->SetNoise(0);
@@ -795,7 +1078,6 @@ void CTFSniperRifle::CreateSniperBeam( void )
 		// Now that we initialized, properly update the parameters of the beam.
 		UpdateSniperBeam();
 		return;
-
 	}
 
 #endif
@@ -806,7 +1088,7 @@ void CTFSniperRifle::CreateSniperBeam( void )
 //-----------------------------------------------------------------------------
 void CTFSniperRifle::DestroySniperBeam( void )
 {
-// Server specific.
+	// Server specific.
 #ifdef GAME_DLL
 	// Destroy the sniper beam
 	if ( m_pBeam )
@@ -822,7 +1104,7 @@ void CTFSniperRifle::DestroySniperBeam( void )
 //-----------------------------------------------------------------------------
 void CTFSniperRifle::UpdateSniperBeam( void )
 {
-// Server specific.
+	// Server specific.
 #ifdef GAME_DLL
 	if ( m_pBeam && !UseSniperBeams() )
 	{
@@ -831,7 +1113,7 @@ void CTFSniperRifle::UpdateSniperBeam( void )
 	}
 	else if ( !m_pBeam )
 		return;
-	
+
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 	if ( !pPlayer )
 		return;
@@ -849,7 +1131,7 @@ void CTFSniperRifle::UpdateSniperBeam( void )
 	m_pBeam->SetEndPos( vecStartPos );
 	m_pBeam->SetStartPos( trace.endpos );
 	m_pBeam->RelinkBeam();
-	
+
 	// Also update the size and brightness of the beam as the shot gets stronger.
 	float nBeamStrength = ( m_flChargedDamage / TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
 	m_pBeam->SetBrightness( (int)(nBeamStrength) * 255 );
@@ -863,8 +1145,7 @@ void CTFSniperRifle::UpdateSniperBeam( void )
 //-----------------------------------------------------------------------------
 Vector CTFSniperRifle::GetMuzzlePosition( void )
 {
-
-	Vector vecMuzzlePos;
+	Vector vecMuzzlePos = vec3_origin;
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( pOwner )
 	{
@@ -874,549 +1155,314 @@ Vector CTFSniperRifle::GetMuzzlePosition( void )
 		//vecMuzzlePos +=  vecUp + 2;
 	}
 	return vecMuzzlePos;
-
 }
 #endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
+bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget /*= NULL*/ )
 {
-	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot ) )
+	m_bCurrentAttackIsCrit = false;
+	m_bCurrentShotIsHeadshot = false;
+
+	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot, pTarget ) )
 		return false;
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-
-	// are we being damage boosted?
-	if ( !pPlayer || pPlayer->m_Shared.IsCritBoosted() )
+	if ( pPlayer && pPlayer->m_Shared.IsCritBoosted() )
+	{
+		m_bCurrentShotIsHeadshot = bIsHeadshot;
 		return true;
+	}
 
-	int nSniperNoHeadshot = 0;
-	CALL_ATTRIB_HOOK_INT( nSniperNoHeadshot, set_weapon_mode );
-	if ( nSniperNoHeadshot == 1 )
-		return false;
+	// If we don't auto crit on a headshot, use standard criteria to determine other crits.
+	if ( GetRifleType() == RIFLE_JARATE )
+	{
+		return false; // Never auto crit on headshot.
+	}
 
 	// can only fire a crit shot if this is a headshot, unless we're critboosted
 	if ( !bIsHeadshot )
 		return false;
 
-	int nSniperFullChargeHeadShotOnly = 0;
-	CALL_ATTRIB_HOOK_INT( nSniperFullChargeHeadShotOnly, sniper_no_headshot_without_full_charge );
-	if ( nSniperFullChargeHeadShotOnly == 1 && m_flChargedDamage < TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX )
-		return false;
-
-	int nSniperNoScopeCrits = 0;
-	CALL_ATTRIB_HOOK_INT( nSniperNoScopeCrits, sniper_crit_no_scope );
-	if ( nSniperNoScopeCrits == 0 )
+	int iFullChargeHeadShotPenalty = 0;
+	CALL_ATTRIB_HOOK_INT( iFullChargeHeadShotPenalty, sniper_no_headshot_without_full_charge );
+	if ( iFullChargeHeadShotPenalty != 0 )
 	{
-		// no crits if they're not zoomed
-		if ( pPlayer->GetFOV() >= pPlayer->GetDefaultFOV() )
-		{
+		if ( !IsFullyCharged() )
 			return false;
-		}
+	}
 
-		// no crits for 0.2 seconds after starting to zoom
-		if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME )
+	int iCanCritNoScope = 0;
+	CALL_ATTRIB_HOOK_INT( iCanCritNoScope, sniper_crit_no_scope );
+	if ( iCanCritNoScope == 0 )
+	{
+		if ( pPlayer )
 		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-float CTFSniperRifle::GetJarateTime( void )
-{
-	float flJarateDuration = 0;
-	CALL_ATTRIB_HOOK_FLOAT( flJarateDuration, jarate_duration );
-	if ( flJarateDuration > 0.0 )
-		return RemapValClamped( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX, 2.0, flJarateDuration );
-
-	return 0.0f;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Used for calculating penetrating shots.
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle::IsPenetrating(void)
-{
-	// If we penetrate on full charges, check our charge level.
-	if ( m_flChargedDamage == TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX )
-	{
-		int nFullChargePenetrate = 0;
-		CALL_ATTRIB_HOOK_INT(nFullChargePenetrate, sniper_penetrate_players_when_charged);
-		
-		if ( nFullChargePenetrate != 0 )
-			return true;
-		
-	}
-	
-	return BaseClass::IsPenetrating();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Used for calculating Focus.
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle::HasFocus(void)
-{
-	int nHasFocus = 0;
-	CALL_ATTRIB_HOOK_INT(nHasFocus, sniper_rage_DISPLAY_ONLY);
-		
-	if ( nHasFocus != 0 )
-		return true;
-	
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Displays the Charge bar.
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle::HasChargeBar(void)
-{
-	if ( HasFocus() )
-		return true;
-	
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Activates focus on our sniper rifle.
-//-----------------------------------------------------------------------------
-void CTFSniperRifle::ActivateFocus(void)
-{
-		CTFPlayer *pPlayer = GetTFPlayerOwner();
-		if (!pPlayer)
-			return;
-		
-		if (!pPlayer->m_Shared.InCond(TF_COND_SNIPERCHARGE_RAGE_BUFF) && pPlayer->m_Shared.HasFocusCharge())
-			pPlayer->m_Shared.AddCond(TF_COND_SNIPERCHARGE_RAGE_BUFF);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Enables or disables the sniper crosshair.
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle::ShouldDrawCrosshair( void )
-{
-#ifdef CLIENT_DLL
-	if (tf2v_sniper_crosshair.GetBool() && tf2v_allow_sniper_crosshairs.GetBool())
-	{
-		CTFPlayer *pPlayer = GetTFPlayerOwner();
-		if (pPlayer)
-		{
-			if (!pPlayer->m_Shared.InCond(TF_COND_AIMING) && !pPlayer->m_Shared.InCond(TF_COND_ZOOMED))
-				return true;
-		}
-
-	}
-#endif
-	
-	return false;
-	
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle_Decap::Deploy( void )
-{
-	if ( CTFSniperRifle::Deploy() )
-	{
-#ifdef GAME_DLL
-		SetupGameEventListeners();
-#endif
-		return true;
-	}
-
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle_Decap::Holster( CBaseCombatWeapon *pSwitchingTo )
-{
-	if (CTFSniperRifle::Holster(pSwitchingTo))
-	{
-#ifdef GAME_DLL
-		StopListeningForAllEvents();
-#endif
-		return true;
-	}
-
-	return false;
-}
-
-#ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Decap::SetupGameEventListeners( void )
-{
-	ListenForGameEvent( "player_death" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Decap::FireGameEvent( IGameEvent *event )
-{
-	if (FStrEq( event->GetName(), "player_death" ))
-	{
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if ( pOwner && engine->GetPlayerUserId( pOwner->edict() ) == event->GetInt( "attacker" ) && 
-			 ( event->GetInt( "weaponid" ) == TF_WEAPON_SNIPERRIFLE_DECAP && event->GetInt( "customkill" ) == TF_DMG_CUSTOM_HEADSHOT ) )
-		{
-			OnHeadshot();
-		}
-	}
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Decap::OnHeadshot( void )
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( pOwner == nullptr )
-		return;
-
-	pOwner->m_Shared.IncrementHeadshotCount();
-
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Tracks the current charging rate, from 50% at 0 Headshots to 200% at 6 Headshots.
-//-----------------------------------------------------------------------------
-float CTFSniperRifle_Decap::GetChargingRate( void )
-{
-	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
-	if (pOwner == nullptr)
-		return TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
-
-	return 	( TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC * ( 0.5 + Min((pOwner->m_Shared.GetHeadshotCount()), 6 ) * 0.25 ) );
-}
-
-
-// Weapon Classic Start
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Constructor.
-//-----------------------------------------------------------------------------
-CTFSniperRifle_Classic::CTFSniperRifle_Classic()
-{
-	m_bIsChargingAttack = false;
-#ifdef CLIENT_DLL
-	m_pLaserSight = NULL;
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Destructor.
-//-----------------------------------------------------------------------------
-CTFSniperRifle_Classic::~CTFSniperRifle_Classic()
-{
-	m_bIsChargingAttack = false;
-#ifdef CLIENT_DLL
-	if (m_pLaserSight)
-		ToggleLaser();
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:	Precaches the laser sights.
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Classic::Precache()
-{
-	BaseClass::Precache();
-	PrecacheParticleSystem( "tfc_sniper_charge_red" );
-	PrecacheParticleSystem( "tfc_sniper_charge_blue" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Handles our charging.
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Classic::ItemPostFrame( void )
-{
-	// If we're lowered, we're not allowed to fire
-	if ( m_bLowered )
-		return;
-
-	// Get the owning player.
-	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if ( !pPlayer )
-		return;
-	
-	CheckReload();
-
-	if ( !CanAttack() )
-	{
-		if ( IsZoomed() )
-		{
-			ToggleZoom();
-		}
-		return;
-	}
-
-	HandleZooms();
-
-#ifdef GAME_DLL
-	// Update the sniper dot position if we have one
-	if ( m_hSniperDot )
-	{
-		UpdateSniperDot();
-	}
-	// Update the sniper beam position if we have one
-	if ( m_pBeam )
-	{
-		UpdateSniperBeam();
-	}
-#endif
-
-	// Start charging when we're zoomed in, and allowed to fire
-	if ( pPlayer->m_Shared.IsJumping() )
-	{
-		// Unzoom if we're jumping
-		if ( IsZoomed() )
-		{
-			ToggleZoom();
-		}
-	}
-
-	// We're holding down the attack button, charge up our shot.
-	if ( pPlayer->m_nButtons & IN_ATTACK )
-	{
-#ifdef GAME_DLL
-		if ( !m_hSniperDot )
-			CreateSniperDot();
-		if ( !m_pBeam )
-			CreateSniperBeam();
-#endif
-#ifdef CLIENT_DLL
-		if (!m_pLaserSight)
-			ToggleLaser();
-#endif
-		float flChargeRate = GetChargingRate();
-		CALL_ATTRIB_HOOK_FLOAT( flChargeRate, mult_sniper_charge_per_sec );
-		m_flChargedDamage = Min( m_flChargedDamage + gpGlobals->frametime * flChargeRate, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
-		if (!m_bIsChargingAttack)
-			m_bIsChargingAttack = true;
-		// We're now charging our shot, slow us down.
-		if ( !pPlayer->m_Shared.InCond(TF_COND_AIMING) )
-		{
-			pPlayer->m_Shared.AddCond( TF_COND_AIMING );
-			pPlayer->TeamFortress_SetSpeed();
-		}
-	}
-	else
-	{
-		// We charged up our shot and released the primary, fire.
-		if (m_bIsChargingAttack)
-			Fire( pPlayer );
-	}
-	
-	//  Reload pressed / Clip Empty
-	if ( ( pPlayer->m_nButtons & IN_RELOAD ) && !m_bInReload ) 
-	{
-		// reload when reload is pressed, or if no buttons are down and weapon is empty.
-		Reload();
-	}
-
-	// Idle.
-	if ( !( ( pPlayer->m_nButtons & IN_ATTACK) || ( pPlayer->m_nButtons & IN_ATTACK2 ) ) )
-	{
-		// No fire buttons down or reloading
-		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
-		{
-			WeaponIdle();
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFSniperRifle_Classic::Holster( CBaseCombatWeapon *pSwitchingTo )
-{
-// Server specific.
-#ifdef GAME_DLL
-	// Destroy the sniper dot.
-	DestroySniperDot();
-	DestroySniperBeam();
-#endif
-#ifdef CLIENT_DLL
-	// Destroy the laser sight.
-	if (m_pLaserSight)
-		ToggleLaser();
-#endif
-
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
-	{
-		ZoomOut();
-	}
-	
-	// Remove our charging.
-	m_bIsChargingAttack = false;	
-	if ( pPlayer && pPlayer->m_Shared.InCond(TF_COND_AIMING) )
-	{
-		pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
-		pPlayer->TeamFortress_SetSpeed();
-	}
-
-	m_flChargedDamage = 0.0f;
-	ResetTimers();
-
-
-	return BaseClass::Holster( pSwitchingTo );
-}
-
-bool CTFSniperRifle_Classic::CanFire( void )
-{
-	// Get the owning player.
-	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if ( !pPlayer )
-		return true;
-	
-	// Can't shoot while jumping/airborne.
-	if (!(pPlayer->GetFlags() & FL_ONGROUND))
-		return false;
-	
-	return true;
-	
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Classic::Fire(CTFPlayer *pPlayer)
-{
-	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
-	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
-	{
-		HandleFireOnEmpty();
-		return;
-	}
-	
-	int nRequiresZoom = 0;
-	CALL_ATTRIB_HOOK_INT(nRequiresZoom, sniper_only_fire_zoomed);
-	if ( nRequiresZoom && !IsZoomed() )
-	{
-		DenySniperShot();
-		return;
-	}
-
-	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
-		return;
-
-	// Fire the sniper shot.
-	// If we are airborne then skip over this.
-	if ( CanFire() )
-		PrimaryAttack();
-	
-	// Reset our attack status.
-	m_flChargedDamage = 0.0f;
-	m_bIsChargingAttack = false;	
-	if ( pPlayer->m_Shared.InCond(TF_COND_AIMING) )
-	{
-		pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
-		pPlayer->TeamFortress_SetSpeed();
-	}
-
-#ifdef GAME_DLL
-	// Destroy the sniper dot.
-	// This is implicit; since we just fired we're not charging the rifle.
-	DestroySniperDot();
-	DestroySniperBeam();
-#endif
-#ifdef CLIENT_DLL
-	// Destroy the laser sight as well.
-	if (m_pLaserSight)
-		ToggleLaser();
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Classic::ZoomIn( void )
-{
-	// Start aiming.
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
-
-	if ( !pPlayer )
-		return;
-
-	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
-		return;
-
-	CTFWeaponBaseGun::ZoomIn();
-	
-#ifdef GAME_DLL
-	pPlayer->ClearExpression();
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Classic::ZoomOut( void )
-{
-	CTFWeaponBaseGun::ZoomOut();
-}
-
-#ifdef CLIENT_DLL
-//-----------------------------------------------------------------------------
-// Purpose: Used for creating or destroying the laser sight.
-//-----------------------------------------------------------------------------
-void CTFSniperRifle_Classic::ToggleLaser( void )
-{
-	C_BaseEntity *pModel = GetWeaponForEffect();
-		if ( !pModel )
-		return;
-			
-	if ( m_bIsChargingAttack )
-	{
-		if ( !m_pLaserSight )
-		{
-			switch ( GetTeamNumber() )
+			// no crits if they're not zoomed
+			if ( pPlayer->GetFOV() >= pPlayer->GetDefaultFOV() )
 			{
-				case TF_TEAM_RED:
-					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
-					break;
-				case TF_TEAM_BLUE:
-					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_blue", PATTACH_POINT_FOLLOW, "laser" );
-					break;
-				case TF_TEAM_GREEN:
-					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_green", PATTACH_POINT_FOLLOW, "laser" );
-					break;
-				case TF_TEAM_YELLOW:
-					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_yellow", PATTACH_POINT_FOLLOW, "laser" );
-					break;
-				default:
-					m_pLaserSight = pModel->ParticleProp()->Create( "tfc_sniper_charge_red", PATTACH_POINT_FOLLOW, "laser" );
-					break;
+				return false;
+			}
+
+			// no crits for 0.2 seconds after starting to zoom
+			if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME )
+			{
+				return false;
 			}
 		}
 	}
-	else
+
+	m_bCurrentAttackIsCrit = true;
+	m_bCurrentShotIsHeadshot = bIsHeadshot;
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Our owner was stunned.
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::OnControlStunned( void )
+{
+	BaseClass::OnControlStunned();
+
+	ZoomOut();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFSniperRifle::GetCustomDamageType() const
+{
+	if ( IsJarateRifle() )
 	{
-		if ( m_pLaserSight )
+		return TF_DMG_CUSTOM_PENETRATE_NONBURNING_TEAMMATE;
+	}
+
+	return TF_DMG_CUSTOM_PENETRATE_MY_TEAM;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::Detach( void )
+{
+	if ( IsZoomed() )
+	{
+		ToggleZoom();
+	}
+
+	BaseClass::Detach();
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::OnPlayerKill( CTFPlayer *pVictim, const CTakeDamageInfo &info )
+{
+	BaseClass::OnPlayerKill( pVictim, info );
+
+	if ( m_iConsecutiveKills == 3 )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+		if ( pPlayer )
 		{
-			pModel->ParticleProp()->StopEmissionAndDestroyImmediately( m_pLaserSight );
-			m_pLaserSight = NULL;
+			pPlayer->AwardAchievement( ACHIEVEMENT_TF_SNIPER_RIFLE_NO_MISSING );
 		}
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::OnBulletFire( int iEnemyPlayersHit )
+{
+	BaseClass::OnBulletFire( iEnemyPlayersHit );
+
+	// Did we completely miss?
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if( iEnemyPlayersHit == 0 && pPlayer && pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
+	{
+		EconEntity_OnOwnerKillEaterEventNoPartner( assert_cast<CEconEntity *>( this ), pPlayer, kKillEaterEvent_NEGATIVE_SniperShotsMissed );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::ExplosiveHeadShot( CTFPlayer *pAttacker, CTFPlayer *pVictim )
+{
+	if ( !pAttacker )
+		return;
+
+	if ( !pVictim )
+		return;
+
+	int iExplosiveShot = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER ( pAttacker, iExplosiveShot, explosive_sniper_shot );
+
+	// Stun the source
+	float flStunDuration = 1.f + ( ( (float)iExplosiveShot - 1.f ) * 0.5f );
+	float flStunAmt = pVictim->IsMiniBoss() ? 0.5f : RemapValClamped( iExplosiveShot, 1, 3, 0.5f, 0.8f );
+	pVictim->m_Shared.StunPlayer( flStunDuration, flStunAmt, TF_STUN_MOVEMENT, pAttacker );
+
+	// Generate an explosion and look for nearby bots
+	float flDmgRange = 125.f + iExplosiveShot * 25.f;
+	float flDmg = 130.f + iExplosiveShot * 20.f;
+
+	CBaseEntity	*pObjects[MAX_PLAYERS_ARRAY_SAFE ];
+	int nCount = UTIL_EntitiesInSphere( pObjects, ARRAYSIZE( pObjects ), pVictim->GetAbsOrigin(), flDmgRange, FL_CLIENT );
+	for ( int i = 0; i < nCount; i++ )
+	{
+		if ( !pObjects[i] )
+			continue;
+
+		if ( !pObjects[i]->IsAlive() )
+			continue;
+
+		if ( pObjects[i] == pVictim )
+			continue;
+
+		if ( pAttacker->InSameTeam( pObjects[i] ) )
+			continue;
+
+		if ( !pVictim->FVisible( pObjects[i], MASK_OPAQUE ) )
+			continue;
+
+		CTFPlayer *pTFPlayer = static_cast<CTFPlayer *>( pObjects[i] );
+		if ( !pTFPlayer )
+			continue;
+
+		if ( pTFPlayer->m_Shared.InCond( TF_COND_PHASE ) || pTFPlayer->m_Shared.InCond( TF_COND_PASSTIME_INTERCEPTION ) )
+			continue;
+
+		if ( pTFPlayer->m_Shared.IsInvulnerable() )
+			continue;
+
+		// Stun			
+		flStunAmt = pTFPlayer->IsMiniBoss() ? 0.5f : RemapValClamped( iExplosiveShot, 1, 3, 0.5f, 0.8f );
+		pTFPlayer->m_Shared.StunPlayer( flStunDuration, flStunAmt, TF_STUN_MOVEMENT, pAttacker );
+
+		// DoT
+		pTFPlayer->m_Shared.MakeBleed( pAttacker, this, 0.1f, flDmg );
+
+		// Shoot a beam at them
+		CPVSFilter filter( pTFPlayer->WorldSpaceCenter() );
+		Vector vStart = pVictim->EyePosition();
+		Vector vEnd = pTFPlayer->EyePosition();
+		te_tf_particle_effects_control_point_t controlPoint = { PATTACH_ABSORIGIN, vEnd };
+		TE_TFParticleEffectComplex( filter, 0.0f, "dxhr_arm_muzzleflash", vStart, QAngle( 0, 0, 0 ), NULL, &controlPoint, pTFPlayer, PATTACH_CUSTOMORIGIN );
+
+		pTFPlayer->EmitSound( "Weapon_Upgrade.ExplosiveHeadshot" );
+	}
+}
+
 #endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::IsJarateRifle( void ) const
+{
+	return GetJarateTimeInternal() > 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFSniperRifle::GetJarateTime( void ) const
+{
+	if ( m_flChargedDamage > 0.f )
+	{
+		return GetJarateTimeInternal();
+	}
+	else
+		return 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFSniperRifle::GetJarateTimeInternal( void ) const
+{
+	float flMaxJarateTime = 0.0f;
+	CALL_ATTRIB_HOOK_FLOAT( flMaxJarateTime, jarate_duration );
+	if ( flMaxJarateTime > 0 )
+	{
+		const float flMinJarateTime = 2.f;
+		float flDuration = RemapValClamped( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX, flMinJarateTime, flMaxJarateTime );
+		return flDuration;
+	}
+
+	return 0.f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: UI Progress (same as GetProgress() without the division by 100.0f)
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::IsRageFull( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer ) 
+	{
+		return false;
+	}
+
+	return ( pPlayer->m_Shared.GetRageMeter() >= 100.0f );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::EffectMeterShouldFlash( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+	{
+		return false;
+	}
+
+	if ( pPlayer && ( IsRageFull() || pPlayer->m_Shared.IsRageDraining() ) )
+	{
+		return true;
+	}
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: UI Progress
+//-----------------------------------------------------------------------------
+float CTFSniperRifle::GetProgress( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer ) 
+	{
+		return 0.f;
+	}
+
+	return pPlayer->m_Shared.GetRageMeter() / 100.0f;
+}
 
 //=============================================================================
 //
 // Client specific functions.
 //
 #ifdef CLIENT_DLL
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFSniperRifle::ShouldEjectBrass()
+{
+	if ( GetJarateTimeInternal() > 0.f )
+		return false;
+	else
+		return true;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1447,7 +1493,7 @@ void CProxySniperRifleCharge::OnBind( void *pC_BaseEntity )
 
 	if ( pPlayer )
 	{
-		CTFSniperRifle *pWeapon = static_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+		CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
 		if ( pWeapon )
 		{
 			float flChargeValue = ( ( 1.0 - pWeapon->GetHUDDamagePerc() ) * 0.8 ) + 0.6;
@@ -1519,7 +1565,9 @@ CSniperDot::CSniperDot( void )
 
 #ifdef CLIENT_DLL
 	m_hSpriteMaterial = NULL;
+	m_laserBeamEffect = NULL;
 #endif
+
 
 	ResetChargeTime();
 }
@@ -1529,6 +1577,14 @@ CSniperDot::CSniperDot( void )
 //-----------------------------------------------------------------------------
 CSniperDot::~CSniperDot( void )
 {
+#ifdef CLIENT_DLL
+	if ( m_laserBeamEffect )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_laserBeamEffect );
+
+		m_laserBeamEffect = NULL;
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1563,6 +1619,7 @@ CSniperDot *CSniperDot::Create( const Vector &origin, CBaseEntity *pOwner, bool 
 	// Force updates even though we don't have a model.
 	pDot->AddEFlags( EFL_FORCE_CHECK_TRANSMIT );
 
+
 	return pDot;
 
 #endif
@@ -1578,31 +1635,35 @@ void CSniperDot::Update( CBaseEntity *pTarget, const Vector &vecOrigin, const Ve
 	m_hTargetEnt = pTarget;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Vector CSniperDot::GetChasePosition()
+{
+	return GetAbsOrigin() - m_vecSurfaceNormal * 10;
+}
+
 //=============================================================================
 //
 // Client specific functions.
 //
 #ifdef CLIENT_DLL
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// TFTODO: Make the sniper dot get brighter the more damage it will do.
-//-----------------------------------------------------------------------------
-int CSniperDot::DrawModel( int flags )
+bool CSniperDot::GetRenderingPositions( C_TFPlayer *pPlayer, Vector &vecAttachment, Vector &vecEndPos, float &flSize )
 {
-	// Get the owning player.
-	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
 	if ( !pPlayer )
-		return -1;
+		return false;
 
 	// Get the sprite rendering position.
-	Vector vecEndPos;
+	flSize = 6.0;
+	bool bScaleSizeByDistance = false;
 
-	float flSize = 6.0;
+	const float c_fMaxSizeDistVR = 384.0f;
+	const float	c_flMaxSizeDistUnzoomed = 200.0f;
 
 	if ( !pPlayer->IsDormant() )
 	{
-		Vector vecAttachment, vecDir;
+		Vector vecDir;
 		QAngle angles;
 
 		float flDist = MAX_TRACE_LENGTH;
@@ -1615,45 +1676,125 @@ int CSniperDot::DrawModel( int flags )
 			vecDir = CurrentViewForward();
 
 			// Clamp the forward distance for the sniper's firstperson
-			flDist = 384;
-
+			flDist = c_fMaxSizeDistVR;
 			flSize = 2.0;
+
+			// Make the dot bigger when charging and not zoomed in (The Classic)
+			if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !pPlayer->m_Shared.InCond( TF_COND_ZOOMED ))
+			{
+				flSize = 4.0f;
+				bScaleSizeByDistance = true;
+			}
+
+			if ( UseVR() )
+			{
+				// The view direction is not exactly the same as the weapon direction because of stereo, calibration, etc.
+				g_ClientVirtualReality.OverrideWeaponHudAimVectors ( &vecAttachment, &vecDir );
+
+				// No clamping, thanks - we need the distance to be correct so that
+				// vergence works properly, and we'll scale the size up accordingly.
+				flDist = MAX_TRACE_LENGTH;
+				bScaleSizeByDistance = true;
+			}
 		}
 		else
 		{
 			// Take the owning player eye position and direction.
 			vecAttachment = pPlayer->EyePosition();
-			QAngle angles = pPlayer->EyeAngles();
-			AngleVectors( angles, &vecDir );
+			QAngle anglesEye = pPlayer->EyeAngles();
+			AngleVectors( anglesEye, &vecDir );
 		}
 
 		trace_t tr;
-		UTIL_TraceLine( vecAttachment, GetAbsOrigin(), MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
+		CTraceFilterIgnoreFriendlyCombatItems filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+		UTIL_TraceLine( vecAttachment, vecAttachment + ( vecDir * flDist ), MASK_SHOT, &filter, &tr );
 
 		// Backup off the hit plane, towards the source
 		vecEndPos = tr.endpos + vecDir * -4;
+		if ( UseVR() )
+		{
+			float fDist = ( vecEndPos - vecAttachment ).Length();
+			if ( fDist > c_fMaxSizeDistVR )
+			{
+				// Scale the dot up so it's still visible in first person.
+				flSize *= ( fDist * ( 1.0f / c_fMaxSizeDistVR ) );
+			}
+		}
+		else if ( bScaleSizeByDistance )
+		{
+			float fDist = ( vecEndPos - vecAttachment ).Length();
+			if ( fDist > c_flMaxSizeDistUnzoomed )
+			{
+				// Scale the dot up so it's still visible in first person.
+				flSize *= ( fDist * ( 1.0f / c_flMaxSizeDistUnzoomed ) );
+			}
+		}
 	}
 	else
 	{
 		// Just use our position if we can't predict it otherwise.
+		vecAttachment = GetAbsOrigin();
 		vecEndPos = GetAbsOrigin();
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// TFTODO: Make the sniper dot get brighter the more damage it will do.
+//-----------------------------------------------------------------------------
+int CSniperDot::DrawModel( int flags )
+{
+	// Get the owning player.
+	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( !pPlayer )
+		return -1;
+
+	Vector vecAttachement;
+	Vector vecEndPos;
+	float flSize;
+
+	if ( !GetRenderingPositions( pPlayer, vecAttachement, vecEndPos, flSize ) )
+	{
+		return -1;
 	}
 
 	// Draw our laser dot in space.
 	CMatRenderContextPtr pRenderContext( materials );
 	pRenderContext->Bind( m_hSpriteMaterial, this );
 
+	CTFWeaponBase *pBaseWeapon = pPlayer->GetActiveTFWeapon();
+	CTFSniperRifle *pWeapon = dynamic_cast< CTFSniperRifle* >( pBaseWeapon );
+
 	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
-	
-	float flSniperChargeRatio;
-	CTFSniperRifle *pWeapon = static_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
-		if ( pWeapon )
-			flSniperChargeRatio = (TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / pWeapon->GetChargingRate());
-		else
-			flSniperChargeRatio = (TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC);
-		
-	float flStrength = RemapValClamped(flLifeTime, 0.0, flSniperChargeRatio, 0.1, 1.0);
-	
+	float flChargePerSec = TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
+	if ( pWeapon )
+	{
+		pWeapon->ApplyChargeSpeedModifications( flChargePerSec );
+	}
+
+	// Sniper Rage
+	if ( pPlayer->m_Shared.InCond( TF_COND_SNIPERCHARGE_RAGE_BUFF ) ) 
+	{
+		flChargePerSec *= 1.25f;
+	}
+
+	float flStrength;
+
+	if ( pWeapon )
+	{
+		flStrength = pWeapon->GetHUDDamagePerc();
+
+		// FIXME: We should find out what's causing this and fix it.
+		AssertMsg1( flStrength >= ( 0.0f - FLT_EPSILON ) && flStrength <= ( 1.0f + FLT_EPSILON ), "GetHUDDamagePerc returned out of range value: %f", flStrength );
+		flStrength = clamp( flStrength, 0.1f, 1.0f );
+	}
+	else
+	{
+		flStrength = RemapValClamped( flLifeTime, 0.0, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / flChargePerSec, 0.1f, 1.0f );
+	}
+
 	color32 innercolor = { 255, 255, 255, 255 };
 	color32 outercolor = { 255, 255, 255, 128 };
 
@@ -1671,13 +1812,47 @@ bool CSniperDot::ShouldDraw( void )
 {
 	if ( IsEffectActive( EF_NODRAW ) )
 		return false;
-#if 0
+
 	// Don't draw the sniper dot when in thirdperson.
 	if ( ::input->CAM_IsThirdPerson() )
 		return false;
-#endif
 
 	return true;
+}
+
+void CSniperDot::ClientThink( void )
+{
+	// snipers have laser sights in PvE mode
+	if ( TFGameRules()->IsPVEModeActive() && GetTeamNumber() == TF_TEAM_PVE_INVADERS )
+	{
+		C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+		if ( pPlayer )
+		{
+			if ( !m_laserBeamEffect )
+			{
+				m_laserBeamEffect = ParticleProp()->Create( "laser_sight_beam", PATTACH_ABSORIGIN_FOLLOW );
+			}
+
+			if ( m_laserBeamEffect )
+			{
+				m_laserBeamEffect->SetSortOrigin( m_laserBeamEffect->GetRenderOrigin() );
+				m_laserBeamEffect->SetControlPoint( 2, Vector( 0, 0, 255 ) );
+
+				Vector vecAttachment;
+				Vector vecEndPos;
+				float flSize;
+
+				if ( pPlayer->GetAttachment( "eye_1", vecAttachment ) )
+				{
+					m_laserBeamEffect->SetControlPoint( 1, vecAttachment );
+				}
+				else if ( GetRenderingPositions( pPlayer, vecAttachment, vecEndPos, flSize ) )
+				{
+					m_laserBeamEffect->SetControlPoint( 1, vecAttachment );
+				}
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1687,22 +1862,398 @@ void CSniperDot::OnDataChanged( DataUpdateType_t updateType )
 {
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		switch (GetTeamNumber())
+		switch ( GetTeamNumber() )
 		{
-		case TF_TEAM_RED:
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS);
-			break;
-		case TF_TEAM_BLUE:
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS);
-			break;
-		case TF_TEAM_GREEN:
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_GREEN, TEXTURE_GROUP_CLIENT_EFFECTS);
-			break;
-		case TF_TEAM_YELLOW:
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_YELLOW, TEXTURE_GROUP_CLIENT_EFFECTS);
-			break;
+			case TF_TEAM_RED:
+				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS );
+				break;
+			case TF_TEAM_BLUE:
+				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS );
+				break;
+			case TF_TEAM_GREEN:
+				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_GREEN, TEXTURE_GROUP_CLIENT_EFFECTS );
+				break;
+			case TF_TEAM_YELLOW:
+				m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_YELLOW, TEXTURE_GROUP_CLIENT_EFFECTS );
+				break;
+		}
+
+		SetNextClientThink( CLIENT_THINK_ALWAYS );
+	}
+}
+
+#endif // CLIENT_DLL
+
+#ifdef GAME_DLL
+
+void CTFSniperRifleDecap::OnPlayerKill( CTFPlayer *pVictim, const CTakeDamageInfo &info )
+{
+	BaseClass::OnPlayerKill( pVictim, info );
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( pPlayer && IsHeadshot( info.GetDamageCustom() ) )
+	{
+		// If we got a headshot kill, increment our number of decapitations.
+		int iDecaps = pPlayer->m_Shared.GetDecapitations() + 1;
+		pPlayer->m_Shared.SetDecapitations( iDecaps );
+	}
+}
+
+#endif // GAME_DLL
+
+static const int MAX_HEAD_BONUS = 6;
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFSniperRifleDecap::SniperRifleChargeRateMod()
+{
+	return ( .25f * ( MIN( GetCount(), MAX_HEAD_BONUS ) - 2 ) ) * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CTFSniperRifleDecap::GetCount( void )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( pPlayer )
+	{
+		return pPlayer->m_Shared.GetDecapitations();
+	}
+
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor.
+//-----------------------------------------------------------------------------
+CTFSniperRifleClassic::CTFSniperRifleClassic()
+{
+	m_bCharging = false;
+#ifdef CLIENT_DLL
+	m_pChargedEffect = NULL;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor.
+//-----------------------------------------------------------------------------
+CTFSniperRifleClassic::~CTFSniperRifleClassic()
+{
+#ifdef CLIENT_DLL
+	if ( m_pChargedEffect )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pChargedEffect );
+		m_pChargedEffect = NULL;
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::Precache()
+{
+	BaseClass::Precache();
+	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_RED );
+	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_BLUE );
+	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_GREEN );
+	PrecacheParticleSystem( SNIPER_CHARGE_BEAM_YELLOW );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::ZoomOut( void )
+{
+	CTFWeaponBaseGun::ZoomOut(); // intentionally skipping CTFSniperRifle::ZoomOut()
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::ZoomIn( void )
+{
+	// Start aiming.
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if ( !pPlayer )
+		return;
+
+	if ( pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
+		return;
+
+	CTFWeaponBaseGun::ZoomIn(); // intentionally skipping CTFSniperRifle::ZoomIn()
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Secondary attack.
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::Zoom( void )
+{
+	ToggleZoom();
+
+	// at least 0.1 seconds from now, but don't stomp a previous value
+	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::HandleZooms( void )
+{
+	// Get the owning player.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+
+	// Handle the zoom when taunting.
+	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+	{
+		if ( IsZoomed() )
+		{
+			ToggleZoom();
+			return;
+		}
+	}
+
+	if ( ( pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime ) )
+	{
+		Zoom();
+	}
+}
+
+#ifdef CLIENT_DLL
+void CTFSniperRifleClassic::OnDataChanged( DataUpdateType_t updateType )
+{
+	BaseClass::OnDataChanged( updateType );
+
+	ManageChargeBeam();
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::ItemPostFrame( void )
+{
+	// If we're lowered, we're not allowed to fire
+	if ( m_bLowered )
+		return;
+
+	// Get the owning player.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+
+	if ( !CanAttack() )
+	{
+		if ( IsZoomed() )
+		{
+			ToggleZoom();
+		}
+		WeaponReset();
+		return;
+	}
+
+	HandleZooms();
+
+#ifdef GAME_DLL
+	// Update the sniper dot position if we have one
+	if ( m_hSniperDot )
+	{
+		UpdateSniperDot();
+	}
+#endif
+
+	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+	{
+		WeaponReset();
+		return;
+	}
+
+	if ( ( pPlayer->m_nButtons & IN_ATTACK ) && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
+	{
+		if ( !m_bCharging )
+		{
+			pPlayer->m_Shared.AddCond( TF_COND_AIMING );
+			pPlayer->TeamFortress_SetSpeed();
+
+			m_bCharging = true;
+#ifdef GAME_DLL
+			// Create the sniper dot.
+			CreateSniperDot();
+			pPlayer->ClearExpression();	
+#endif
+		}
+
+		float fSniperRifleChargePerSec = m_flChargePerSec;
+		ApplyChargeSpeedModifications( fSniperRifleChargePerSec );
+		fSniperRifleChargePerSec += SniperRifleChargeRateMod();
+
+		// we don't want sniper charge rate to go too high.
+		fSniperRifleChargePerSec = clamp( fSniperRifleChargePerSec, 0, 2.f * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC );
+
+		m_flChargedDamage = MIN( m_flChargedDamage + gpGlobals->frametime * fSniperRifleChargePerSec, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
+
+#ifdef CLIENT_DLL
+		// play the recharged bell if we're fully charged
+		if ( IsFullyCharged() && !m_bPlayedBell )
+		{
+			m_bPlayedBell = true;
+			if ( tf_sniper_fullcharge_bell.GetBool() )
+			{
+				C_TFPlayer::GetLocalTFPlayer()->EmitSound( "TFPlayer.ReCharged" );
+			}
+		}
+#endif
+	}
+	else if ( m_bCharging )
+	{
+		if ( pPlayer->GetGroundEntity() )
+		{
+			Fire( pPlayer );
+		}
+		else
+		{
+			pPlayer->EmitSound( "Player.DenyWeaponSelection" );
+		}
+
+		WeaponReset();
+	}
+	else
+	{
+		// Idle.
+		// No fire buttons down or reloading
+		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
+		{
+			WeaponIdle();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CTFSniperRifleClassic::GetDamageType( void ) const
+{
+	return CTFWeaponBaseGun::GetDamageType(); // intentionally skipping CTFSniperRifle::GetDamageType()
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFSniperRifleClassic::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	WeaponReset();
+
+	return BaseClass::Holster( pSwitchingTo );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFSniperRifleClassic::Deploy( void )
+{
+	WeaponReset();
+
+	return BaseClass::Deploy();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::WeaponReset( void )
+{
+	m_flChargedDamage = 0.0f;
+	m_bCharging = false;
+#ifdef CLIENT_DLL
+	ManageChargeBeam();
+#endif
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
+		pPlayer->TeamFortress_SetSpeed();
+	}
+#ifdef GAME_DLL
+	// Destroy the sniper dot.
+	DestroySniperDot();
+	if ( pPlayer )
+	{
+		pPlayer->ClearExpression();
+	}
+#else
+	m_bPlayedBell = false;
+#endif
+
+	m_bCurrentShotIsHeadshot = false;
+	m_flChargePerSec = TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC; 
+	
+	CTFWeaponBase::WeaponReset(); // intentionally skipping CTFSniperRifle::WeaponReset()
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFSniperRifleClassic::Lower( void )
+{
+	if ( BaseClass::Lower() )
+	{
+		WeaponReset();
+		return true;
+	}
+
+	return false;
+}
+
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::ManageChargeBeam( void )
+{
+	if ( m_bCharging )
+	{
+		if ( !m_pChargedEffect )
+		{
+			switch ( GetTeamNumber() )
+			{
+				case TF_TEAM_RED:
+					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_RED, PATTACH_POINT_FOLLOW, "laser" );
+					break;
+				case TF_TEAM_BLUE:
+					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_BLUE, PATTACH_POINT_FOLLOW, "laser" );
+					break;
+				case TF_TEAM_GREEN:
+					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_GREEN, PATTACH_POINT_FOLLOW, "laser" );
+					break;
+				case TF_TEAM_YELLOW:
+					m_pChargedEffect = ParticleProp()->Create( SNIPER_CHARGE_BEAM_YELLOW, PATTACH_POINT_FOLLOW, "laser" );
+					break;
+			}
+		}
+	}
+	else
+	{
+		if ( m_pChargedEffect )
+		{
+			ParticleProp()->StopEmissionAndDestroyImmediately( m_pChargedEffect );
+			m_pChargedEffect = NULL;
 		}
 	}
 }
 
 #endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifleClassic::Detach( void )
+{
+	WeaponReset();
+	BaseClass::Detach();
+}
+

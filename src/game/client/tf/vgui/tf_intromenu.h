@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -60,8 +60,19 @@ public:
 	virtual void OnCommand( const char *command );
 	virtual void OnKeyCodePressed( KeyCode code );
 
-	void OnTick();
+	virtual void OnTick() OVERRIDE;
+	virtual void OnThink() OVERRIDE;
 
+	//=============================================================================
+	// HPE_BEGIN
+	// [msmith] Some refactoring.
+	//=============================================================================
+	void StartVideo();
+	void ShutdownVideo();
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
+	
 	MESSAGE_FUNC( OnIntroFinished, "IntroFinished" );
 
 private:
@@ -69,8 +80,20 @@ private:
 	void Shutdown( void );
 	bool LoadCaptions( void );
 	void UpdateCaptions( void );
+	
+	
 
-private:
+	//=============================================================================
+	// HPE_BEGIN
+	// [msmith] Added support for in game videos.
+	//=============================================================================
+	bool PendingInGameVideo( void );
+	const char *GetVideoFileName( bool withExtension = true );
+	void UnpauseGame( void );
+	void PauseGame( void );
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
 
 	CTFVideoPanel	*m_pVideo;
 	CModelPanel		*m_pModel;
@@ -81,6 +104,8 @@ private:
 #else
 	CExButton		*m_pBack;
 	CExButton		*m_pOK;
+	CExButton		*m_pReplayVideo;
+	CExButton		*m_pContinue;
 #endif
 
 	float			m_flActionThink;
@@ -89,6 +114,14 @@ private:
 	CUtlVector< CVideoCaption* > m_Captions;
 	int				m_iCurrentCaption;
 	float			m_flVideoStartTime;
+	//=============================================================================
+	// HPE_BEGIN
+	// [msmith] Added support for in game videos.
+	//=============================================================================
+	bool			m_bPlayingInGameVideo;
+	//=============================================================================
+	// HPE_END
+	//=============================================================================
 };
 
 

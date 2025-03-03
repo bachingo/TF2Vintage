@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF Armor.
 //
@@ -25,6 +25,8 @@ public:
 	void	Spawn( void );
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
+
+	virtual const char *GetDefaultPowerupModel( void ) { return "models/items/car_battery01.mdl"; }
 };
 
 #endif // ENTITY_ARMOR_H

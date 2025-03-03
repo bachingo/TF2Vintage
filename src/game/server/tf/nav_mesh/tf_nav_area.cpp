@@ -77,10 +77,11 @@ BEGIN_SCRIPTDESC( CTFNavArea, CNavArea, "TF navigation area" )
 	DEFINE_SCRIPTFUNC( IsBottleneck, "Returns true if area is a bottleneck" )
 	DEFINE_SCRIPTFUNC( IsValidForWanderingPopulation, "Returns true if area is valid for wandering population" )
 	DEFINE_SCRIPTFUNC( GetTravelDistanceToBombTarget, "Gets the travel distance to the MvM bomb target" )
-	DEFINE_SCRIPTFUNC( IsReachableByTeam,"Is this area reachable by the given team?" )
-
+	DEFINE_SCRIPTFUNC( IsReachableByTeam, "Is this area reachable by the given team?" )
 	DEFINE_SCRIPTFUNC( IsTFMarked, "Is this nav area marked with the current marking scope?" )
 	DEFINE_SCRIPTFUNC( TFMark, "Mark this nav area with the current marking scope." )
+
+	DEFINE_SCRIPTFUNC_WRAPPED( GetDoor, "Returns the door entity above the area" )
 END_SCRIPTDESC()
 
 //--------------------------------------------------------------------------------------------------------
@@ -668,4 +669,8 @@ bool CTFNavArea::IsInCombat( void ) const
 	return GetCombatIntensity() > 0.01f;
 }
 
-
+//--------------------------------------------------------------------------------------------------------
+ScriptClassDesc_t *CTFNavArea::GetScriptDesc( void )
+{
+	return ::GetScriptDesc( this );
+}

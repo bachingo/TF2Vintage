@@ -53,6 +53,7 @@
 #include "clientmode_shared.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
+#include "c_lights.h"
 #ifdef TF_CLIENT_DLL
 #include "tf/c_tf_player.h"
 #endif
@@ -1383,13 +1384,13 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 	// Shadowed flashlights supported on ps_2_b and up...
 	if ( r_flashlightdepthtexture.GetBool() && (viewID == VIEW_MAIN) )
 	{
-		g_pClientShadowMgr->ComputeShadowDepthTextures( view );
+		g_pClientShadowMgr->ComputeShadowDepthTextures( viewRender );
 		CMatRenderContextPtr pRenderContext( materials );
 
 		// GSTRINGMIGRATION
 		if ( g_pCSMEnvLight != NULL && g_pCSMEnvLight->IsCascadedShadowMappingEnabled() )
 		{
-			UpdateCascadedShadow( view );
+			UpdateCascadedShadow( viewRender );
 		}
 		else
 		{

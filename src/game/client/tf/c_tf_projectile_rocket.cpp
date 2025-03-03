@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,12 +15,12 @@ BEGIN_NETWORK_TABLE( C_TFProjectile_Rocket, DT_TFProjectile_Rocket )
 	RecvPropBool( RECVINFO( m_bCritical ) ),
 END_NETWORK_TABLE()
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 C_TFProjectile_Rocket::C_TFProjectile_Rocket( void )
 {
+	pEffect = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -28,13 +28,16 @@ C_TFProjectile_Rocket::C_TFProjectile_Rocket( void )
 //-----------------------------------------------------------------------------
 C_TFProjectile_Rocket::~C_TFProjectile_Rocket( void )
 {
-	ParticleProp()->StopEmission();
+	if ( pEffect )
+	{
+		ParticleProp()->StopEmission( pEffect );
+	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFProjectile_Rocket::OnDataChanged( DataUpdateType_t updateType )
+void C_TFProjectile_Rocket::OnDataChanged(DataUpdateType_t updateType)
 {
 	BaseClass::OnDataChanged(updateType);
 }
@@ -47,57 +50,114 @@ void C_TFProjectile_Rocket::CreateTrails( void )
 	if ( IsDormant() )
 		return;
 
-	int iAttachment = LookupAttachment( "trail" );
-	if( iAttachment > -1 )
+	bool bUsingCustom = false;
+
+	if ( pEffect )
 	{
-		if ( enginetrace->GetPointContents( GetAbsOrigin() ) & MASK_WATER )
+		ParticleProp()->StopEmission( pEffect );
+		pEffect = NULL;
+	}
+
+	int iAttachment = LookupAttachment( "trail" );
+	if ( iAttachment == INVALID_PARTICLE_ATTACHMENT )
+		return;
+
+	if ( enginetrace->GetPointContents( GetAbsOrigin() ) & MASK_WATER )
+	{
+		ParticleProp()->Create( "rockettrail_underwater", PATTACH_POINT_FOLLOW, "trail" );
+		bUsingCustom = true;
+	}
+	else if ( GetTeamNumber() == TEAM_UNASSIGNED )
+	{
+		ParticleProp()->Create( "rockettrail_underwater", PATTACH_POINT_FOLLOW, "trail" );
+		bUsingCustom = true;
+	}
+	else
+	{
+		// Halloween Spell Effect Check
+		int iHalloweenSpell = 0;
+		// if the owner is a Sentry, Check its owner
+		CBaseObject *pSentry = GetOwnerEntity() && GetOwnerEntity()->IsBaseObject() ? assert_cast<CBaseObject*>( GetOwnerEntity() ) : NULL;
+		if ( TF_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
 		{
-			ParticleProp()->Create( "rockettrail_underwater", PATTACH_POINT_FOLLOW, iAttachment );
-		}
-		else
-		{	
-			ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, iAttachment );
+			if ( pSentry )
+			{
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( pSentry->GetOwner(), iHalloweenSpell, halloween_pumpkin_explosions );
+			}
+			else
+			{
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( GetOwnerEntity(), iHalloweenSpell, halloween_pumpkin_explosions );
+			}
 		}
 
-		int nUseMiniRockets = 0;
-		CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nUseMiniRockets, mini_rockets );
-		if ( nUseMiniRockets == 1 )
+		// Mini rockets from airstrike RL
+		if ( iHalloweenSpell > 0 )
 		{
-			C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-			if( pOwner && pOwner->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
-				ParticleProp()->Create( "rockettrail_airstrike_line", PATTACH_POINT_FOLLOW, iAttachment );
+			ParticleProp()->Create( "halloween_rockettrail", PATTACH_POINT_FOLLOW, iAttachment );
+			bUsingCustom = true;
+		}
+		else if ( !pSentry )
+		{
+			if ( GetLauncher() )
+			{
+				int iMiniRocket = 0;
+				CALL_ATTRIB_HOOK_INT_ON_OTHER( GetLauncher(), iMiniRocket, mini_rockets );
+				if ( iMiniRocket )
+				{
+					ParticleProp()->Create( "rockettrail_airstrike", PATTACH_POINT_FOLLOW, iAttachment );
+					bUsingCustom = true;
+
+					// rockettrail_airstrike_line
+					CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+					if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_BLASTJUMPING ) )
+					{
+						ParticleProp()->Create( "rockettrail_airstrike_line", PATTACH_POINT_FOLLOW, iAttachment );
+					}
+				}
+			}
+		}
+	}
+
+	if ( !bUsingCustom )
+	{
+		if ( GetTrailParticleName() )
+		{
+			ParticleProp()->Create( GetTrailParticleName(), PATTACH_POINT_FOLLOW, iAttachment );
 		}
 	}
 
 	if ( m_bCritical )
 	{
-		const char *pszEffectName = "";
-		switch ( GetTeamNumber() )
+		switch( GetTeamNumber() )
 		{
-			case TF_TEAM_RED:
-				pszEffectName = "critical_rocket_red";
-				break;
-			case TF_TEAM_BLUE:
-				pszEffectName = "critical_rocket_blue";
-				break;
-			default:
-				pszEffectName = "eyeboss_projectile";
-				break;
+		case TF_TEAM_BLUE:
+			pEffect = ParticleProp()->Create( "critical_rocket_blue", PATTACH_ABSORIGIN_FOLLOW );
+			break;
+		case TF_TEAM_RED:
+			pEffect = ParticleProp()->Create( "critical_rocket_red", PATTACH_ABSORIGIN_FOLLOW );
+			break;
+		default:
+			pEffect = ParticleProp()->Create( "eyeboss_projectile", PATTACH_ABSORIGIN_FOLLOW );
+			break;
 		}
-		
-		ParticleProp()->Create( pszEffectName, PATTACH_ABSORIGIN_FOLLOW );
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 const char *C_TFProjectile_Rocket::GetTrailParticleName( void )
 {
-	int nUseMiniRockets = 0;
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( m_hLauncher, nUseMiniRockets, mini_rockets );
-	if ( nUseMiniRockets == 1 )
-		return "rockettrail_airstrike";
-
-	if ( TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
-		return "halloween_rockettrail";
-
-	return "rockettrail";
+	if ( GetLauncher() )
+	{
+		int iNoSelfBlastDamage = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER( GetLauncher(), iNoSelfBlastDamage, no_self_blast_dmg );
+		if ( iNoSelfBlastDamage )
+		{
+			return "rockettrail_RocketJumper";
+		}
+	}
+	
+	return "rockettrail"; 
 }

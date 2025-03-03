@@ -1,108 +1,198 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 //
 //=============================================================================
 #include "cbase.h"
 #include "tf_weapon_smg.h"
-#include "in_buttons.h"
 
-#if defined( CLIENT_DLL )
+static const float DAMAGE_TO_FILL_MINICRIT_METER = 100.0f;
+
+// Client specific.
+#ifdef CLIENT_DLL
 #include "c_tf_player.h"
 // Server specific.
 #else
 #include "tf_player.h"
 #endif
-
 //=============================================================================
 //
-// Weapon SMG tables.
+// Weapon tables.
 //
-#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
-																	\
-	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
-															\
-	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
-	END_NETWORK_TABLE()										\
-															\
-	BEGIN_PREDICTION_DATA( C##WpnName )						\
-	END_PREDICTION_DATA()									\
-															\
-	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
-	PRECACHE_WEAPON_REGISTER( entityname );
 
+// ---------- Regular SMG -------------
 
 CREATE_SIMPLE_WEAPON_TABLE( TFSMG, tf_weapon_smg )
-CREATE_SIMPLE_WEAPON_TABLE( TFSMG_Primary, tf_weapon_smg_primary )
-CREATE_SIMPLE_WEAPON_TABLE( TFSMG_Charged, tf_weapon_charged_smg )
 
 // Server specific.
-//#ifndef CLIENT_DLL
-//BEGIN_DATADESC( CTFSMG )
-//END_DATADESC()
-//#endif
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFSMG )
+END_DATADESC()
+#endif
+
+// ---------- Charged SMG -------------
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFChargedSMG, DT_WeaponChargedSMG )
+
+BEGIN_NETWORK_TABLE( CTFChargedSMG, DT_WeaponChargedSMG )
+// Client specific.
+#ifdef CLIENT_DLL
+RecvPropFloat( RECVINFO( m_flMinicritCharge ) ),
+// Server specific.
+#else
+SendPropFloat( SENDINFO( m_flMinicritCharge ), 4, SPROP_NOSCALE, 0.0f, DAMAGE_TO_FILL_MINICRIT_METER ),
+#endif
+END_NETWORK_TABLE()
+
+// Server specific
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFChargedSMG )
+END_DATADESC()
+#endif
+
+// Client specific
+#ifdef CLIENT_DLL
+BEGIN_PREDICTION_DATA( CTFChargedSMG )
+DEFINE_FIELD(  m_flMinicritCharge, FIELD_FLOAT )
+END_PREDICTION_DATA()
+#endif
+
+LINK_ENTITY_TO_CLASS( tf_weapon_charged_smg, CTFChargedSMG );
+PRECACHE_WEAPON_REGISTER( tf_weapon_charged_smg );
 
 //=============================================================================
 //
 // Weapon SMG functions.
-//
-
 extern ConVar tf2v_use_new_cleaners;
 
-//=============================================================================
-//
-// Weapon SMG_Charged functions.
-//
-
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFSMG_Charged::HasChargeBar(void)
+int	CTFSMG::GetDamageType( void ) const
 {
-	if (tf2v_use_new_cleaners.GetBool())
-		return true;
-	
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-float CTFSMG_Charged::GetEffectBarProgress(void)
-{
-	CTFPlayer *pOwner = GetTFPlayerOwner();
-
-	if ( pOwner)
+	if ( CanHeadshot() )
 	{
-		return pOwner->m_Shared.GetCrikeyMeter() / 100.0f;
+		int iDamageType = BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
+		return iDamageType;
 	}
 
-	return 0.0f;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Activate special ability
-//-----------------------------------------------------------------------------
-void CTFSMG_Charged::SecondaryAttack(void)
-{
-	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
-	if ( !pOwner )
-		return;
-
-	if ( ( pOwner->m_Shared.GetCrikeyMeter() >= 100.0f ) && tf2v_use_new_cleaners.GetBool() )
-			pOwner->m_Shared.AddCond( TF_COND_MINICRITBOOSTED_RAGE_BUFF );
+	return BaseClass::GetDamageType();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFSMG_Charged::ItemBusyFrame( void )
+bool CTFSMG::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget /*= NULL*/ )
 {
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return;
+	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot, pTarget ) )
+		return false;
 
-	if ( ( pOwner->m_nButtons & IN_ATTACK2 ) )
-		SecondaryAttack();
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer && pPlayer->m_Shared.IsCritBoosted() )
+		return true;
 
-	BaseClass::ItemBusyFrame();
+	if ( !bIsHeadshot )
+		return !CanHeadshot();
+
+	return true;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:	Determine if secondary fire is available.
+//-----------------------------------------------------------------------------
+bool CTFChargedSMG::CanPerformSecondaryAttack() const
+{
+	return ( m_flMinicritCharge >= DAMAGE_TO_FILL_MINICRIT_METER && BaseClass::CanPerformSecondaryAttack() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Determine whether to flash the HUD element showing the charge bar
+//-----------------------------------------------------------------------------
+bool CTFChargedSMG::ShouldFlashChargeBar()
+{
+	return m_flMinicritCharge >= DAMAGE_TO_FILL_MINICRIT_METER;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get HUD charge bar progress amount
+//-----------------------------------------------------------------------------
+float CTFChargedSMG::GetProgress( void )
+{
+	// Progress bar shows charge amount if we're charging up, otherwise drains over time if we're mini-crit boosted.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ENERGY_BUFF ) )
+	{
+		int flBuffDuration = 0;
+		CALL_ATTRIB_HOOK_FLOAT( flBuffDuration, minicrit_boost_when_charged );
+		if ( flBuffDuration > 0 )
+		{
+			float flElapsed = gpGlobals->curtime - m_flMinicritStartTime;
+			float flRemainingPortion = Clamp( (flBuffDuration - flElapsed) / flBuffDuration, 0.0f, 1.0f );
+			return flRemainingPortion;
+		}
+		else
+		{
+			return 0.0f;
+		}
+	}
+	else
+	{
+		return m_flMinicritCharge / DAMAGE_TO_FILL_MINICRIT_METER;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Reset weapon state
+//-----------------------------------------------------------------------------
+void CTFChargedSMG::WeaponReset()
+{
+	BaseClass::WeaponReset();
+	m_flMinicritCharge = 0.0f;
+	m_flMinicritStartTime = 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Perform secondary attack
+//-----------------------------------------------------------------------------
+void CTFChargedSMG::SecondaryAttack()
+{
+	BaseClass::SecondaryAttack();
+
+	m_flMinicritCharge = 0.0f;
+
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( pPlayer )
+	{
+		float flBuffDuration = 0;
+		CALL_ATTRIB_HOOK_FLOAT( flBuffDuration, minicrit_boost_when_charged );
+		if ( flBuffDuration > 0 )
+		{
+			pPlayer->m_Shared.AddCond( TF_COND_ENERGY_BUFF, flBuffDuration );
+			m_flMinicritStartTime = gpGlobals->curtime;
+		}
+	}
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Update state when we score a hit with this weapon
+//-----------------------------------------------------------------------------
+void CTFChargedSMG::ApplyOnHitAttributes( CBaseEntity *pVictimBaseEntity, CTFPlayer *pAttacker, const CTakeDamageInfo &info )
+{
+	BaseClass::ApplyOnHitAttributes( pVictimBaseEntity, pAttacker, info );
+	if ( pAttacker )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+		if ( pPlayer && !pPlayer->m_Shared.InCond( TF_COND_ENERGY_BUFF ) )
+		{
+			float damage = info.GetDamage();
+			float flChargeRate = 0.0f;
+			CALL_ATTRIB_HOOK_FLOAT( flChargeRate, minicrit_boost_charge_rate );
+			m_flMinicritCharge += damage * flChargeRate;
+			if ( m_flMinicritCharge > DAMAGE_TO_FILL_MINICRIT_METER )
+			{
+				m_flMinicritCharge = DAMAGE_TO_FILL_MINICRIT_METER;
+			}
+		}
+	}
+}
+#endif

@@ -3764,6 +3764,11 @@ void CBaseCombatCharacter::UpdateLastKnownArea( void )
 #endif
 }
 
+HSCRIPT CBaseCombatCharacter::ScriptGetLastKnownArea(void) const
+{
+	return ToHScript( m_lastNavArea );
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Return true if we can use (walk through) the given area 

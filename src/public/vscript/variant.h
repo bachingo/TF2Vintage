@@ -588,7 +588,7 @@ inline bool CVariantBase<CValueAllocator>::AssignTo( T *pDest ) const
 	}
 
 	if ( m_type != FIELD_VECTOR2D && m_type != FIELD_VECTOR && /*m_type != FIELD_VECTOR4D &&*/ m_type != FIELD_QANGLE &&m_type != FIELD_QUATERNION && m_type != FIELD_CSTRING && 
-		destType != FIELD_VECTOR2D && destType != FIELD_VECTOR && /*destType != FIELD_VECTOR4D &&*/ destType != FIELD_QANGLE && destType != FIELD_QUATERNION && destType != FIELD_CSTRING )
+		destType != FIELD_VECTOR2D && destType != FIELD_VECTOR && /*destType != FIELD_VECTOR4D &&*/ destType != FIELD_QANGLE && destType != FIELD_QUATERNION && destType != FIELD_CSTRING && destType != FIELD_MATRIX3X4 )
 	{
 		switch ( m_type )
 		{

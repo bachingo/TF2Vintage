@@ -164,13 +164,14 @@ void CScriptKeyValues::TableToSubKeys( HSCRIPT hTable )
 	ScriptVariant_t varKey, varValue;
 	while ((nIterator = g_pScriptVM->GetKeyValue( hTable, nIterator, &varKey, &varValue )) != -1)
 	{
-		switch (varValue.m_type)
+		switch (varValue.GetType())
 		{
-			case FIELD_CSTRING:		m_pKeyValues->SetString( varKey.m_pszString, varValue.m_pszString ); break;
-			case FIELD_INTEGER:		m_pKeyValues->SetInt( varKey.m_pszString, varValue.m_int ); break;
-			case FIELD_FLOAT:		m_pKeyValues->SetFloat( varKey.m_pszString, varValue.m_float ); break;
-			case FIELD_BOOLEAN:		m_pKeyValues->SetBool( varKey.m_pszString, varValue.m_bool ); break;
-			case FIELD_VECTOR:		m_pKeyValues->SetString( varKey.m_pszString, CFmtStr( "%f %f %f", varValue.m_pVector->x, varValue.m_pVector->y, varValue.m_pVector->z ) ); break;
+			case FIELD_CSTRING:		m_pKeyValues->SetString( varKey, varValue ); break;
+			case FIELD_INTEGER:		m_pKeyValues->SetInt( varKey, varValue ); break;
+			case FIELD_FLOAT:		m_pKeyValues->SetFloat( varKey, varValue ); break;
+			case FIELD_BOOLEAN:		m_pKeyValues->SetBool( varKey, varValue ); break;
+			case FIELD_VECTOR:		m_pKeyValues->SetString( varKey, CFmtStr( "%f %f %f", varValue.Get<Vector>().x, varValue.Get<Vector>().y, varValue.Get<Vector>().z)); break;
+			case FIELD_UINT64:		m_pKeyValues->SetUint64( varKey, varValue );
 		}
 
 		g_pScriptVM->ReleaseValue( varKey );
@@ -187,6 +188,7 @@ void CScriptKeyValues::SubKeysToTable( HSCRIPT hTable )
 			case KeyValues::TYPE_STRING: g_pScriptVM->SetValue( hTable, key->GetName(), key->GetString() ); break;
 			case KeyValues::TYPE_INT:    g_pScriptVM->SetValue( hTable, key->GetName(), key->GetInt()    ); break;
 			case KeyValues::TYPE_FLOAT:  g_pScriptVM->SetValue( hTable, key->GetName(), key->GetFloat()  ); break;
+			case KeyValues::TYPE_UINT64: g_pScriptVM->SetValue( hTable, key->GetName(), key->GetUint64() ); break;
 		}
 	}
 }

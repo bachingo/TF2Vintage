@@ -101,7 +101,7 @@ void ParseScriptTableKeyValues( CBaseEntity *pEntity, HSCRIPT hKV )
 	{
 		switch (varValue.GetType())
 		{
-			case FIELD_CSTRING:		pEntity->KeyValue( varKey, varValue.Get<char *>() ); break;
+			case FIELD_CSTRING:		pEntity->KeyValue( varKey, varValue.Get<CUtlString>() ); break;
 			case FIELD_INTEGER:		pEntity->KeyValueFromInt( varKey, varValue.Get<int>() ); break;
 			case FIELD_FLOAT:		pEntity->KeyValue( varKey, varValue.Get<float>() ); break;
 			case FIELD_VECTOR:		pEntity->KeyValue( varKey, varValue.Get<Vector>() ); break;
@@ -126,7 +126,7 @@ void ParseScriptTableKeyValues( CBaseEntity *pEntity, HSCRIPT hKV )
 				break;
 			}
 			default:
-				Warning( "Unsupported KeyValue type for key %s (type %s)\n", varKey.Get<char *>(), ScriptFieldTypeName(varValue.GetType()));
+				Warning( "Unsupported KeyValue type for key %s (type %s)\n", varKey.Get<CUtlString>(), ScriptFieldTypeName(varValue.GetType()));
 				break;
 		}
 

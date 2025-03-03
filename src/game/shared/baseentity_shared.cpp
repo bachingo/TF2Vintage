@@ -1611,7 +1611,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 			ScriptVariant_t functionReturn;
 			if ( m_ScriptScope.Call( m_hFireBullets, &functionReturn, hInfo ) == SCRIPT_DONE )
 			{
-				if ( !functionReturn.m_bool )
+				if ( !functionReturn.Get<bool>() )
 					return;
 			}
 

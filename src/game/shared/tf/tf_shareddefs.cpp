@@ -20,7 +20,9 @@ const char *g_aTeamNames[TF_TEAM_COUNT] =
 	"Unassigned",
 	"Spectator",
 	"Red",
-	"Blue"
+	"Blue",
+	"Green",
+	"Yellow"
 };
 
 color32 g_aTeamColors[TF_TEAM_COUNT] = 
@@ -28,7 +30,9 @@ color32 g_aTeamColors[TF_TEAM_COUNT] =
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },
 	{ 255, 0, 0, 0 },
-	{ 0, 0, 255, 0 }
+	{ 0, 0, 255, 0 },
+	{ 0, 255, 0, 0 },
+	{ 128, 128, 0, 0 }
 };
 
 //-----------------------------------------------------------------------------
@@ -461,7 +465,7 @@ ETFCond GetTFConditionFromName( const char *pszCondName )
 //-----------------------------------------------------------------------------
 // Gametypes.
 //-----------------------------------------------------------------------------
-static const char *s_aGameTypeNames[] =
+const char *s_aGameTypeNames[] =
 {
 	"Undefined",
 	"#Gametype_CTF",
@@ -708,6 +712,12 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_JAR_GAS",
 	"TF_WEAPON_GRENADE_JAR_GAS",
 	"TF_WEPON_FLAME_BALL",
+	"TF_WEAPON_UMBRELLA",
+	"TF_WEAPON_HAMMERFISTS",
+	"TF_WEAPON_HEAVYARTILLERY",
+	"TF_WEAPON_CHAINSAW",
+	"TF_WEAPON_DEFIB",
+	"TF_WEAPON_MINIGUN_REAL",
 
 };
 COMPILE_TIME_ASSERT( ARRAYSIZE( g_aWeaponNames ) == TF_WEAPON_COUNT );
@@ -824,7 +834,12 @@ int g_aWeaponDamageTypes[] =
 	DMG_GENERIC, // TF_WEAPON_JAR_GAS
 	DMG_GENERIC, // TF_WEAPON_GRENADE_JAR_GAS
 	DMG_GENERIC | DMG_PREVENT_PHYSICS_FORCE, // TF_WEAPON_FLAME_BALL
-
+	DMG_CLUB, 
+	DMG_CLUB, 
+	DMG_BLAST,
+	DMG_SLASH,
+	DMG_GENERIC,
+	DMG_BULLET | DMG_USEDISTANCEMOD, 
 };
 
 const char *g_szSpecialDamageNames[] =

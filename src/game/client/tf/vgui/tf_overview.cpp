@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -19,7 +19,6 @@
 #include "voice_status.h"
 #include "spectatorgui.h"
 #include "c_team_objectiveresource.h"
-#include "clientmode_tf.h"
 
 using namespace vgui;
 
@@ -101,7 +100,7 @@ ConVar tf_overview_voice_icon_size( "tf_overview_voice_icon_size", "64", FCVAR_A
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFMapOverview::CTFMapOverview( const char *pElementName ) : CMapOverview(pElementName)
+CTFMapOverview::CTFMapOverview( const char *pElementName ) : BaseClass( pElementName )
 {
 	InitTeamColorsAndIcons();
 	m_flIconSize = 96.0f;
@@ -459,7 +458,12 @@ ConVar cl_overview_chat_time( "cl_overview_chat_time", "2.0", FCVAR_ARCHIVE );
 //-----------------------------------------------------------------------------
 void CTFMapOverview::PlayerChat( int index )
 {
-	m_flPlayerChatTime[index-1] = gpGlobals->curtime + cl_overview_chat_time.GetFloat();
+	index = index-1;
+
+	if ( !IsIndexIntoPlayerArrayValid(index) )
+		return;
+		
+	m_flPlayerChatTime[index] = gpGlobals->curtime + cl_overview_chat_time.GetFloat();
 }
 
 //-----------------------------------------------------------------------------
@@ -639,7 +643,7 @@ bool CTFMapOverview::DrawCapturePoint( int iCP, MapObject_t *obj )
 
 		if ( requiredPlayers > 1 )
 		{
-			numPlayers = min( numPlayers, requiredPlayers );
+			numPlayers = MIN( numPlayers, requiredPlayers );
 
 			wchar_t wText[6];
 			_snwprintf( wText, sizeof(wText)/sizeof(wchar_t), L"%d", numPlayers );
@@ -815,10 +819,10 @@ void CTFMapOverview::DrawMapOverlayTexture()
 
 	Vertex_t points[4] =
 	{
-		Vertex_t( MapToPanel ( Vector2D(0, 0) ), Vector2D(0, 0) ),
-		Vertex_t( MapToPanel ( Vector2D(OVERVIEW_MAP_SIZE-1, 0) ), Vector2D(1, 0) ),
-		Vertex_t( MapToPanel ( Vector2D(OVERVIEW_MAP_SIZE-1, OVERVIEW_MAP_SIZE-1) ), Vector2D(1, 1) ),
-		Vertex_t( MapToPanel ( Vector2D(0, OVERVIEW_MAP_SIZE-1) ), Vector2D(0, 1) )
+		Vertex_t( MapToPanel ( Vector2D(0,0) ), Vector2D(0,0) ),
+			Vertex_t( MapToPanel ( Vector2D(OVERVIEW_MAP_SIZE-1,0) ), Vector2D(1,0) ),
+			Vertex_t( MapToPanel ( Vector2D(OVERVIEW_MAP_SIZE-1,OVERVIEW_MAP_SIZE-1) ), Vector2D(1,1) ),
+			Vertex_t( MapToPanel ( Vector2D(0,OVERVIEW_MAP_SIZE-1) ), Vector2D(0,1) )
 	};
 
 	int alpha = 255.0f * overview_alpha.GetFloat(); clamp( alpha, 1, 255 );

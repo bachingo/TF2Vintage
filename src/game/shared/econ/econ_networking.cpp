@@ -233,27 +233,7 @@ void CEconNetworking::Update( float frametime )
 //-----------------------------------------------------------------------------
 void CEconNetworking::OnClientConnected( CSteamID const &steamID )
 {
-	CProtobufMsg<CServerHelloMsg> msg;
-	CSteamID const *remoteID = engine->GetGameServerSteamID();
-
-	uint unVersion = 0;
-	FileHandle_t fh = filesystem->Open( "version.txt", "r", "MOD" );
-	if ( fh && filesystem->Size( fh ) > 0 )
-	{
-		char version[48];
-		filesystem->ReadLine( version, sizeof( version ), fh );
-		unVersion = CRC32_ProcessSingleBuffer( version, Q_strlen( version ) + 1 );
-	}
-	filesystem->Close( fh );
-
-	msg->set_version( unVersion );
-	msg->set_remote_steamid( remoteID->ConvertToUint64() );
-
-	const int nLength = msg->ByteSize();
-	CArrayAutoPtr<byte> array( new byte[ nLength ]() );
-	msg->SerializeWithCachedSizesToArray( array.Get() );
-
-	SendMessage( steamID, k_EServerHelloMsg, array.Get(), nLength );
+	
 }
 
 //-----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-//========= Copyright � 1996-2007, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,7 +35,7 @@
 
 using namespace vgui;
 
-const char *GetMapDisplayName( const char *mapName );
+const char *GetMapDisplayName( const char *mapName, bool bTitleCase = false );
 
 class RoundInfoOverlay : public vgui::EditablePanel
 {
@@ -63,6 +63,30 @@ public:
 		m_iNextRoundPoints[1] = -1;
 
 		m_iLastCappedPoint = -1;
+	}
+
+	virtual ~RoundInfoOverlay( void )
+	{
+		if ( vgui::surface() )
+		{
+			if ( m_iBlueTeamTexture != -1 )
+			{
+				vgui::surface()->DestroyTextureID( m_iBlueTeamTexture );
+				m_iBlueTeamTexture = -1;
+			}
+
+			if ( m_iRedTeamTexture != -1 )
+			{
+				vgui::surface()->DestroyTextureID( m_iRedTeamTexture );
+				m_iRedTeamTexture = -1;
+			}
+
+			if ( m_iCapArrowTexture != -1 )
+			{
+				vgui::surface()->DestroyTextureID( m_iCapArrowTexture );
+				m_iCapArrowTexture = -1;
+			}
+		}
 	}
 
 	void Update( const char *szMapName );
@@ -270,7 +294,7 @@ void RoundInfoOverlay::Update( const char *szMapName )
 				{
 					roundinfo_control_point_t point;
 
-					V_strcpy_safe( point.m_szName, pData->GetName() );
+					Q_snprintf( point.m_szName, sizeof(point.m_szName), "%s", pData->GetName() );
 
 					// These x,y coords are relative to a 640x480 parent panel.
 					int wide, tall;
@@ -423,9 +447,8 @@ CTFRoundInfo::CTFRoundInfo( IViewPort *pViewPort ) : Frame( NULL, PANEL_ROUNDINF
 	SetProportional( true );
 	SetVisible( false );
 	SetKeyBoardInputEnabled( true );
-	SetMouseInputEnabled( true );
 
-	m_pTitle = new CExLabel(this, "RoundTitle", " ");
+	m_pTitle = new CExLabel( this, "RoundTitle", " " );
 	m_pMapImage = new ImagePanel( this, "MapImage" );
 
 #ifdef _X360
@@ -478,18 +501,15 @@ void CTFRoundInfo::ShowPanel( bool bShow )
 		if ( pMapMaterial && !IsErrorMaterial( pMapMaterial ) )
 		{
 			Activate();
-			SetMouseInputEnabled( true );
 		}
 		else
 		{
 			SetVisible( false );
-			SetMouseInputEnabled( false );
 		}
 	}
 	else
 	{
 		SetVisible( false );
-		SetMouseInputEnabled( false );
 	}
 }
 
@@ -567,7 +587,9 @@ void CTFRoundInfo::OnKeyCodePressed( KeyCode code )
 	if( code == KEY_SPACE ||
 		code == KEY_ENTER ||
 		code == KEY_XBUTTON_A ||
-		code == KEY_XBUTTON_B )
+		code == KEY_XBUTTON_B ||
+		code == STEAMCONTROLLER_A ||
+		code == STEAMCONTROLLER_B )
 	{
 		OnCommand( "continue" );
 	}

@@ -617,7 +617,7 @@ const Vector &CBaseEntity::ScriptGetBoundingMaxs( void )
 //-----------------------------------------------------------------------------
 const Vector &CBaseEntity::ScriptGetBoundingMinsOriented( void )
 {
-	Vector vecResult;
+	static Vector vecResult;
 	vecResult.Init( FLT_MAX, FLT_MAX, FLT_MAX );
 
 	// Build a rotation matrix from orientation
@@ -647,7 +647,7 @@ const Vector &CBaseEntity::ScriptGetBoundingMinsOriented( void )
 //-----------------------------------------------------------------------------
 const Vector &CBaseEntity::ScriptGetBoundingMaxsOriented( void )
 {
-	Vector vecResult;
+	static Vector vecResult;
 	vecResult.Init( -FLT_MAX, -FLT_MAX, -FLT_MAX );
 
 	// Build a rotation matrix from orientation
@@ -2418,14 +2418,8 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC( GetCollisionGroup, "" )
 	DEFINE_SCRIPTFUNC( SetCollisionGroup, "" )
 
-	DEFINE_SCRIPTFUNC( GetGravity, "" )
-	DEFINE_SCRIPTFUNC( SetGravity, "" )
-
 	DEFINE_SCRIPTFUNC( GetMass, "" )
 	DEFINE_SCRIPTFUNC( SetMass, "" )
-
-	DEFINE_SCRIPTFUNC( GetFriction, "" )
-	DEFINE_SCRIPTFUNC( SetFriction, "" )
 
 	DEFINE_SCRIPTFUNC( GetWaterLevel, "" )
 	DEFINE_SCRIPTFUNC( SetWaterLevel, "" )
@@ -4658,14 +4652,6 @@ bool CBaseEntity::ScriptInputHook( const char *szInputName, CBaseEntity *pActiva
 	g_pScriptVM->ClearValue( "parameter" );
 
 	return bHandled;
-}
-
-bool CBaseEntity::ScriptAcceptInput( const char *szInputName, const char *szValue, HSCRIPT hActivator, HSCRIPT hCaller )
-{
-	variant_t value;
-	value.SetString( MAKE_STRING( szValue ) );
-
-	return AcceptInput( szInputName, ToEnt( hActivator ), ToEnt( hCaller ), value, 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -7843,41 +7829,6 @@ HSCRIPT CBaseEntity::ScriptNextMovePeer( void )
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-HSCRIPT CBaseEntity::ScriptGetModelKeyValues( void )
-{
-	KeyValues *pModelKeyValues = new KeyValues( "" );
-	HSCRIPT hScript = NULL;
-	const char *pszModelName = modelinfo->GetModelName( GetModel() );
-	const char *pBuffer = modelinfo->GetModelKeyValueText( GetModel() );
-
-	if ( pModelKeyValues->LoadFromBuffer( pszModelName, pBuffer ) )
-	{
-		// UNDONE: how does destructor get called on this
-		m_pScriptModelKeyValues = new CScriptKeyValues( pModelKeyValues );
-
-		// UNDONE: who calls ReleaseInstance on this??? Does name need to be unique???
-
-		hScript = g_pScriptVM->RegisterInstance( m_pScriptModelKeyValues );
-
-		/*
-		KeyValues *pParticleEffects = pModelKeyValues->FindKey("Particles");
-		if ( pParticleEffects )
-		{
-			// Start grabbing the sounds and slotting them in
-			for ( KeyValues *pSingleEffect = pParticleEffects->GetFirstSubKey(); pSingleEffect; pSingleEffect = pSingleEffect->GetNextKey() )
-			{
-				const char *pParticleEffectName = pSingleEffect->GetString( "name", "" );
-				PrecacheParticleSystem( pParticleEffectName );
-			}
-		}
-		*/
-	}
-
-	return hScript;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Load, compile, and run a script file from disk.
 // Input  : *pScriptFile - The filename of the script file.
 //			bUseRootScope - If true, runs this script in the root scope, not
@@ -8833,6 +8784,11 @@ void CBaseEntity::RunOnPostSpawnScripts( void )
 		g_EventQueue.AddEvent( this, "CallScriptFunction", variant, 0, this, this );
 		m_ScriptScope.ReleaseFunction( hFuncDisp );
 	}
+}
+
+void CBaseEntity::ScriptDispatchSpawn(void)
+{
+	::DispatchSpawn( this );
 }
 
 //-----------------------------------------------------------------------------

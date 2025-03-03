@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,6 +8,7 @@
 #include "weapon_selection.h"
 #include "iclientmode.h"
 #include "history_resource.h"
+#include "hud_macros.h"
 
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
@@ -16,16 +17,25 @@
 #include <vgui_controls/AnimationController.h>
 #include <vgui_controls/Panel.h>
 #include <vgui_controls/Label.h>
+#include <vgui_controls/TextImage.h>
 #include <vgui_controls/EditablePanel.h>
 
 #include "vgui/ILocalize.h"
-#include "controls/tf_advbuttonbase.h"
 
 #include <string.h>
 #include "baseobject_shared.h"
 #include "tf_imagepanel.h"
+#include "item_model_panel.h"
 #include "c_tf_player.h"
 #include "c_tf_weapon_builder.h"
+#include "tf_spectatorgui.h"
+#include "tf_gamerules.h"
+#include "tf_logic_halloween_2014.h"
+#include "inputsystem/iinputsystem.h"
+
+#ifndef WIN32
+#define _cdecl
+#endif
 
 #define SELECTION_TIMEOUT_THRESHOLD		2.5f	// Seconds
 #define SELECTION_FADEOUT_TIME			3.0f
@@ -37,191 +47,6 @@ ConVar tf_weapon_select_demo_start_delay( "tf_weapon_select_demo_start_delay", "
 ConVar tf_weapon_select_demo_time( "tf_weapon_select_demo_time", "0.5", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Time to pulse each weapon bucket upon spawning as a new class. 0 to turn off." );
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-class CItemModelPanel : public vgui::EditablePanel
-{
-	DECLARE_CLASS_SIMPLE(CItemModelPanel, vgui::Panel);
-public:
-	CItemModelPanel(Panel *parent, const char* name);
-	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
-	virtual void PerformLayout();
-	virtual void SetWeapon(C_BaseCombatWeapon *pWeapon, int iBorderStyle = -1, int ID = -1);
-	virtual void SetWeapon(CEconItemDefinition *pItemDefinition, int iBorderStyle = -1, int ID = -1);
-private:
-	C_BaseCombatWeapon	*m_pWeapon;
-	vgui::Label			*m_pWeaponName;
-	vgui::Label			*m_pSlotID;
-	vgui::ImagePanel	*m_pWeaponImage;
-	vgui::HFont			 m_pDefaultFont;
-	vgui::HFont			 m_pSelectedFont;
-	vgui::HFont			 m_pNumberDefaultFont;
-	vgui::HFont			 m_pNumberSelectedFont;
-	vgui::IBorder		*m_pDefaultBorder;
-	vgui::IBorder		*m_pSelectedRedBorder;
-	vgui::IBorder		*m_pSelectedBlueBorder;
-	int					 m_iBorderStyle;
-	int					 m_ID;
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: Constructor
-//-----------------------------------------------------------------------------
-CItemModelPanel::CItemModelPanel(Panel *parent, const char* name) : EditablePanel(parent, name)
-{
-	m_pWeapon = NULL;
-	m_pWeaponName = new vgui::Label(this, "WeaponName", "text");
-	m_pSlotID = new vgui::Label(this, "SlotID", "0");
-	m_pWeaponImage = new vgui::ImagePanel(this, "WeaponImage");
-	m_iBorderStyle = -1;
-	m_ID = -1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CItemModelPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
-{
-	m_pSlotID->SetFgColor(pScheme->GetColor("TanLight", Color(255, 255, 255, 255)));
-	m_pDefaultFont = pScheme->GetFont("ItemFontNameSmallest", true);
-	m_pSelectedFont = pScheme->GetFont("ItemFontNameSmall", true);
-	m_pNumberDefaultFont = pScheme->GetFont("FontStorePromotion", true);
-	m_pNumberSelectedFont = pScheme->GetFont("HudFontSmall", true);
-	m_pDefaultBorder = pScheme->GetBorder("TFFatLineBorder");
-	m_pSelectedRedBorder = pScheme->GetBorder("TFFatLineBorderRedBG");
-	m_pSelectedBlueBorder = pScheme->GetBorder("TFFatLineBorderBlueBG");
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CItemModelPanel::PerformLayout()
-{
-	if (m_iBorderStyle == -1)
-	{
-		SetPaintBorderEnabled(false);
-	}
-	else if (m_iBorderStyle == 0)
-	{
-		SetPaintBorderEnabled(true);
-		IBorder *border = m_pDefaultBorder;
-		SetBorder(border);
-	}
-	else if (m_iBorderStyle == 1)
-	{
-		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-		IBorder *border;
-		if (!pPlayer)
-			return;
-		int iTeam = pPlayer->GetTeamNumber();
-		if (iTeam == TF_TEAM_RED)
-		{
-			border = m_pSelectedRedBorder;
-		}
-		else
-		{
-			border = m_pSelectedBlueBorder;
-		}
-		SetBorder(border);
-	}
-	m_pWeaponImage->SetShouldScaleImage(true);
-	m_pWeaponImage->SetZPos(-1);
-	m_pWeaponName->SetBounds(XRES(5), GetTall() - YRES(20), GetWide() - XRES(10), YRES(20));
-	m_pWeaponName->SetFont(m_iBorderStyle ? m_pSelectedFont : m_pDefaultFont);
-	m_pWeaponName->SetContentAlignment(CTFAdvButtonBase::GetAlignment("center"));
-	m_pWeaponName->SetCenterWrap(true);
-	if (m_pWeapon && !m_pWeapon->CanBeSelected())
-	{
-		wchar_t *pText = g_pVGuiLocalize->Find("#TF_OUT_OF_AMMO");
-		m_pWeaponName->SetText(pText);
-		m_pWeaponName->SetFgColor(GETSCHEME()->GetColor("RedSolid", Color(255, 255, 255, 255)));
-	}
-	else
-	{
-		m_pWeaponName->SetFgColor(GETSCHEME()->GetColor("TanLight", Color(255, 255, 255, 255)));
-	}
-	m_pSlotID->SetBounds(0, YRES(5), GetWide() - XRES(5), YRES(10));
-	m_pSlotID->SetFont(m_iBorderStyle ? m_pNumberSelectedFont : m_pNumberDefaultFont);
-	m_pSlotID->SetContentAlignment(CTFAdvButtonBase::GetAlignment("east"));
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CItemModelPanel::SetWeapon(C_BaseCombatWeapon *pWeapon, int iBorderStyle, int ID)
-{
-	m_pWeapon = pWeapon;
-	m_ID = ID;
-	m_iBorderStyle = iBorderStyle;
-
-	int iItemID = m_pWeapon->GetItemID();
-	CEconItemDefinition *pItemDefinition = GetItemSchema()->GetItemDefinition(iItemID);
-	wchar_t *pText = NULL;
-	if (pItemDefinition)
-	{
-		pText = g_pVGuiLocalize->Find(pItemDefinition->GetLocalizationName());
-		char szImage[128];
-		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->GetInventoryImage());
-		m_pWeaponImage->SetImage(szImage);
-		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 5.0) + XRES(4), GetWide() - XRES(8), GetWide() - XRES(8));
-	}
-	else
-	{
-		pText = g_pVGuiLocalize->Find(m_pWeapon->GetWpnData().szPrintName);
-		const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
-		if (pTexture)
-		{
-			char szImage[64];
-			Q_snprintf(szImage, sizeof(szImage), "../%s", pTexture->szTextureFile);
-			m_pWeaponImage->SetImage(szImage);
-		}
-		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 10.0) + XRES(4), (GetWide() * 1.5) - XRES(8), (GetWide() * 0.75) - XRES(8));
-	}
-	m_pWeaponName->SetText(pText);
-	if (ID != -1)
-	{
-		char szSlotID[8];
-		Q_snprintf( szSlotID, sizeof(szSlotID), "%d", m_ID + 1 );
-		m_pSlotID->SetText(szSlotID);
-	}
-	else
-	{
-		m_pSlotID->SetText("");
-	}
-	PerformLayout();
-}
-
-void CItemModelPanel::SetWeapon(CEconItemDefinition *pItemDefinition, int iBorderStyle, int ID)
-{
-	m_pWeapon = NULL;
-	m_ID = ID;
-	m_iBorderStyle = iBorderStyle;
-
-	wchar_t *pText = NULL;
-	if (pItemDefinition)
-	{
-		pText = g_pVGuiLocalize->Find(pItemDefinition->GetLocalizationName());
-		char szImage[128];
-		Q_snprintf(szImage, sizeof(szImage), "../%s_large", pItemDefinition->GetInventoryImage());
-		m_pWeaponImage->SetImage(szImage);
-		m_pWeaponImage->SetBounds(XRES(4), -1 * (GetTall() / 5.0) + XRES(4), GetWide() - XRES(8), GetWide() - XRES(8));
-	}
-
-	m_pWeaponName->SetText(pText);
-	if ( ID != -1 )
-	{
-		char szSlotID[8];
-		Q_snprintf( szSlotID, sizeof(szSlotID), "%d", m_ID + 1 );
-		m_pSlotID->SetText( szSlotID );
-	}
-	else
-	{
-		m_pSlotID->SetText("");
-	}
-	PerformLayout();
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: tf weapon selection hud element
 //-----------------------------------------------------------------------------
 class CHudWeaponSelection : public CBaseHudWeaponSelection, public vgui::EditablePanel
@@ -229,11 +54,12 @@ class CHudWeaponSelection : public CBaseHudWeaponSelection, public vgui::Editabl
 	DECLARE_CLASS_SIMPLE( CHudWeaponSelection, vgui::Panel );
 
 public:
-	CHudWeaponSelection(const char *pElementName );
+	CHudWeaponSelection( const char *pElementName );
+	virtual ~CHudWeaponSelection( void );
 
 	virtual bool ShouldDraw();
 	virtual void OnWeaponPickup( C_BaseCombatWeapon *pWeapon );
-
+	virtual void SwitchToLastWeapon( void ) OVERRIDE;
 	virtual void CycleToNextWeapon( void );
 	virtual void CycleToPrevWeapon( void );
 
@@ -247,6 +73,7 @@ public:
 
 	virtual void Init();
 	virtual void LevelInit();
+	virtual void LevelShutdown( void );
 
 	virtual void FireGameEvent( IGameEvent *event );
 
@@ -258,10 +85,26 @@ public:
 		m_flSelectionTime = gpGlobals->curtime - ( FASTSWITCH_DISPLAY_TIMEOUT + FASTSWITCH_FADEOUT_TIME + 0.1 );
 	}
 
+	virtual void SelectSlot( int iSlot );
+
+	void _cdecl UserCmd_Slot11( void );
+	void _cdecl UserCmd_Slot12( void );
+
 protected:
+	struct SlotLayout_t
+	{
+		float x, y;
+		float wide, tall;
+
+	};
+	void ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlot, int nSelectionMode );
+
 	virtual void OnThink();
+	virtual void PerformLayout( void );
 	virtual void PostChildPaint();
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
+
+	void		 DrawSelection( C_BaseCombatWeapon *pSelectedWeapon );
 
 	virtual bool IsWeaponSelectable()
 	{ 
@@ -276,7 +119,7 @@ private:
 	C_BaseCombatWeapon *FindPrevWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition);
 
 	void FastWeaponSwitch( int iWeaponSlot );
-	void PlusTypeFastWeaponSwitch( int iWeaponSlot );
+	void PlusTypeFastWeaponSwitch( int iWeaponSlot, bool *pbPlaySwitchSound );
 	int GetNumVisibleSlots();
 	bool ShouldDrawInternal();
 
@@ -290,10 +133,8 @@ private:
 		m_iSelectedSlot = slot;
 	}
 
-	void DrawBox(int x, int y, int wide, int tall, Color color, float normalizedAlpha, int number);
 	void DrawString( wchar_t *text, int xpos, int ypos, Color col, bool bCenter = false );
-
-	void DrawPlusStyleBox(int x, int y, int wide, int tall, bool bSelected, float normalizedAlpha, int number, bool bOutOfAmmo );
+	void DrawWeaponTexture( C_TFPlayer *pPlayer, C_BaseCombatWeapon *pWeapon, int xpos, int ypos, float flLargeBoxWide, float flLargeBoxTall );
 
 	CPanelAnimationVar( vgui::HFont, m_hNumberFont, "NumberFont", "HudSelectionText" );
 	CPanelAnimationVar( vgui::HFont, m_hTextFont, "TextFont", "HudSelectionText" );
@@ -317,7 +158,7 @@ private:
 	CPanelAnimationVarAliasType( float, m_flIconXPos, "IconXPos", "16", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_flIconYPos, "IconYPos", "8", "proportional_float" );
 
-	CPanelAnimationVarAliasType( float, m_flTextYPos, "TextYPos", "35", "proportional_float" );
+	CPanelAnimationVarAliasType( float, m_flTextYPos, "TextYPos", "54", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_flErrorYPos, "ErrorYPos", "60", "proportional_float" );
 
 	CPanelAnimationVar( float, m_flAlphaOverride, "Alpha", "255" );
@@ -336,6 +177,11 @@ private:
 	CPanelAnimationVar( int, m_iMaxSlots, "MaxSlots", "6" );
 	CPanelAnimationVar( bool, m_bPlaySelectionSounds, "PlaySelectSounds", "1" );
 
+	CTFImagePanel *m_pActiveWeaponBG;
+
+	CItemModelPanel	*m_pModelPanels[MAX_WEAPON_SLOTS];
+
+
 	float m_flDemoStartTime;
 	float m_flDemoModeChangeTime;
 	int m_iDemoModeSlot;
@@ -345,10 +191,25 @@ private:
 	int						m_iSelectedSlot;			// in HUDTYPE_PLUS, the slot we're currently moving in
 	CPanelAnimationVar( float, m_flHorizWeaponSelectOffsetPoint, "WeaponBoxOffset", "0" );
 
-	CUtlVector<CItemModelPanel*>pModelPanels;
+	int m_iActiveSlot;  // used to store the active slot to refresh the layout when using hud_fastswitch
 };
 
 DECLARE_HUDELEMENT( CHudWeaponSelection );
+
+DECLARE_HUD_COMMAND_NAME( CHudWeaponSelection, Slot11, "CHudWeaponSelection");
+DECLARE_HUD_COMMAND_NAME( CHudWeaponSelection, Slot12, "CHudWeaponSelection");
+
+HOOK_COMMAND( slot11, Slot11 );
+HOOK_COMMAND( slot12, Slot12 );
+
+void CHudWeaponSelection::UserCmd_Slot11(void)
+{
+	SelectSlot( 11 );
+}
+void CHudWeaponSelection::UserCmd_Slot12(void)
+{
+	SelectSlot( 12 );
+}
 
 using namespace vgui;
 
@@ -360,20 +221,23 @@ CHudWeaponSelection::CHudWeaponSelection( const char *pElementName ) : CBaseHudW
 	vgui::Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
-	for (int i = 0; i < MAX_WEAPON_SLOTS; i++)
-	{
-		char name[32];
-		Q_snprintf(name, sizeof(name), "modelpanel%i", i);
-		pModelPanels.AddToTail(new CItemModelPanel(this, name));
-	}
-
 	SetPostChildPaintEnabled( true );
 
 	m_flDemoStartTime = -1;
 	m_flDemoModeChangeTime = 0;
 	m_iDemoModeSlot = -1;
+	m_iActiveSlot = -1;
 
 	ListenForGameEvent( "localplayer_changeclass" );
+
+	for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
+	{
+		m_pModelPanels[i] = new CItemModelPanel( this, VarArgs( "modelpanel%d", i ) );
+	}
+}
+
+CHudWeaponSelection::~CHudWeaponSelection( void )
+{
 }
 
 //-----------------------------------------------------------------------------
@@ -396,7 +260,7 @@ void CHudWeaponSelection::OnThink()
 {
 	float flSelectionTimeout = SELECTION_TIMEOUT_THRESHOLD;
 	float flSelectionFadeoutTime = SELECTION_FADEOUT_TIME;
-	if ( hud_fastswitch.GetBool() )
+	if ( hud_fastswitch.GetBool() || (::input->IsSteamControllerActive()) )
 	{
 		flSelectionTimeout = FASTSWITCH_DISPLAY_TIMEOUT;
 		flSelectionFadeoutTime = FASTSWITCH_FADEOUT_TIME;
@@ -420,9 +284,34 @@ bool CHudWeaponSelection::ShouldDraw()
 {
 	bool bShouldDraw = ShouldDrawInternal();
 
+	if ( !bShouldDraw && m_pActiveWeaponBG && m_pActiveWeaponBG->IsVisible() )
+	{
+		m_pActiveWeaponBG->SetVisible( false );
+	}
+
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_GHOST_MODE ) )
+	{
+		bShouldDraw = false;
+
+	}
+
+	if ( TFGameRules() && TFGameRules()->ShowMatchSummary() )
+	{
+		bShouldDraw = false;
+	}
+
+	if ( CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() )
+	{
+		bShouldDraw = false;
+	}
+
 	return bShouldDraw;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 bool CHudWeaponSelection::ShouldDrawInternal()
 {
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
@@ -443,7 +332,7 @@ bool CHudWeaponSelection::ShouldDrawInternal()
 		return false;
 
 	// we only show demo mode in hud_fastswitch 0
-	if ( hud_fastswitch.GetInt() == 0 && ( m_iDemoModeSlot >= 0 || m_flDemoStartTime > 0 ) )
+	if ( hud_fastswitch.GetInt() == 0 && !::input->IsSteamControllerActive() && ( m_iDemoModeSlot >= 0 || m_flDemoStartTime > 0 ) )
 	{
 		return true;
 	}
@@ -453,7 +342,7 @@ bool CHudWeaponSelection::ShouldDrawInternal()
 		return false;
 
 	// draw weapon selection a little longer if in fastswitch so we can see what we've selected
-	if ( hud_fastswitch.GetBool() && ( gpGlobals->curtime - m_flSelectionTime ) < (FASTSWITCH_DISPLAY_TIMEOUT + FASTSWITCH_FADEOUT_TIME) )
+	if ( (hud_fastswitch.GetBool() || ::input->IsSteamControllerActive()) && ( gpGlobals->curtime - m_flSelectionTime ) < (FASTSWITCH_DISPLAY_TIMEOUT + FASTSWITCH_FADEOUT_TIME) )
 		return true;
 
 	return ( m_bSelectionVisible ) ? true : false;
@@ -475,6 +364,29 @@ void CHudWeaponSelection::LevelInit()
 	CHudElement::LevelInit();
 	
 	m_iMaxSlots = clamp( m_iMaxSlots, 0, MAX_WEAPON_SLOTS );
+
+	for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
+	{
+		m_pModelPanels[i]->SetVisible( false );
+	}
+	InvalidateLayout( false, true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::LevelShutdown( void )
+{
+	CHudElement::LevelShutdown();
+
+	// Clear out our weaponry on level change
+	for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
+	{
+		if ( m_pModelPanels[i] )
+		{
+			m_pModelPanels[i]->SetItem( NULL );
+		}
+	}
 }
 
 //-------------------------------------------------------------------------
@@ -496,52 +408,120 @@ int CHudWeaponSelection::GetNumVisibleSlots()
 	return nCount;
 }
 
-//-------------------------------------------------------------------------
-// Purpose: draws the selection area
-//-------------------------------------------------------------------------
-void CHudWeaponSelection::PostChildPaint()
+
+//-----------------------------------------------------------------------------
+// Purpose: Figure out where to put the item model panels for this weapon
+//			selection slot layout
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlot, int nSelectionMode )
 {
+	int nNumSlots = GetNumVisibleSlots();
+	if ( nNumSlots <= 0 )
+		return;
+
+	switch( nSelectionMode )
+	{
+	case HUDTYPE_CAROUSEL:
+	case HUDTYPE_BUCKETS:
+	case HUDTYPE_FASTSWITCH:
+		{
+			// calculate where to start drawing
+			int nTotalHeight = ( nNumSlots - 1 ) * ( m_flSmallBoxTall + m_flBoxGap ) + m_flLargeBoxTall;
+			int xStartPos = GetWide() - m_flBoxGap - m_flRightMargin;
+			int ypos = ( GetTall() - nTotalHeight ) / 2;
+
+			// iterate over all the weapon slots
+			for ( int i = 0; i < m_iMaxSlots; i++ )
+			{
+				if ( i == nActiveSlot )
+				{
+					rSlot[i].wide = m_flLargeBoxWide;
+					rSlot[i].tall = m_flLargeBoxTall;
+				}
+				else
+				{
+					rSlot[i].wide = m_flSmallBoxWide;
+					rSlot[i].tall = m_flSmallBoxTall;
+				}
+
+				rSlot[i].x = xStartPos - ( rSlot[i].wide + m_flBoxGap );
+				rSlot[i].y = ypos;
+
+				ypos += ( rSlot[i].tall + m_flBoxGap );	
+			}
+		}
+		break;
+
+	case HUDTYPE_PLUS:
+		{
+			// bucket style
+			int screenCenterX = GetWide() / 2;
+			int screenCenterY = GetTall() / 2; // Height isn't quite screen height, so adjust for center alignement
+
+			// Modifiers for the four directions. Used to change the x and y offsets
+			// of each box based on which bucket we're drawing. Bucket directions are
+			// 0 = UP, 1 = RIGHT, 2 = DOWN, 3 = LEFT
+
+			int xModifiers[] = { 0, 1, 0, -1, -1, 1 };
+			int yModifiers[] = { -1, 0, 1, 0, 1, 1 };
+
+			int boxWide = m_flPlusStyleBoxWide;
+			int boxTall = m_flPlusStyleBoxTall;
+			int boxWideSelected = m_flPlusStyleBoxWide * ( 1.f + m_flPlusStyleExpandPercent );
+			int boxTallSelected = m_flPlusStyleBoxTall * ( 1.f + m_flPlusStyleExpandPercent );
+
+			// Draw the four buckets
+			for ( int i = 0; i < m_iMaxSlots; ++i )
+			{
+				if( i == nActiveSlot )
+				{
+					rSlot[i].wide = boxWideSelected;
+					rSlot[i].tall = boxTallSelected;
+				}
+				else
+				{
+					rSlot[i].wide = boxWide;
+					rSlot[i].tall = boxTall;
+				}
+
+				// Set the top left corner so the first box would be centered in the screen.
+				int xPos = screenCenterX -( rSlot[i].wide / 2 );
+				int yPos = screenCenterY -( rSlot[i].tall / 2 );
+
+				// Offset the box position
+				rSlot[ i ].x = xPos + ( rSlot[i].wide + 5 ) * xModifiers[ i ];
+				rSlot[ i ].y = yPos + ( rSlot[i].tall + 5 ) * yModifiers[ i ];
+			}
+		}
+		break;
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::PerformLayout( void )
+{
+	BaseClass::PerformLayout();
+
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
 
-	if ( hud_fastswitch.GetInt() == 0 )
-	{
-		// See if we should start the bucket demo
-		if ( m_flDemoStartTime > 0 && m_flDemoStartTime < gpGlobals->curtime )
-		{
-			float flDemoTime = tf_weapon_select_demo_time.GetFloat();
-
-			if ( flDemoTime > 0 )
-			{
-				m_iDemoModeSlot = 0;
-				m_flDemoModeChangeTime = gpGlobals->curtime + flDemoTime;
-			}
-
-			m_flDemoStartTime = -1;
-			m_iSelectedSlot = m_iDemoModeSlot;
-		}
-
-		// scroll through the slots for demo mode
-		if ( m_iDemoModeSlot >= 0 && m_flDemoModeChangeTime < gpGlobals->curtime )
-		{
-			// Keep iterating until we find a slot that has a weapon in it
-			while ( !GetFirstPos( ++m_iDemoModeSlot ) && m_iDemoModeSlot < m_iMaxSlots )
-			{
-				// blank
-			}			
-			m_flDemoModeChangeTime = gpGlobals->curtime + tf_weapon_select_demo_time.GetFloat();
-		}
-
-		if ( m_iDemoModeSlot >= m_iMaxSlots )
-		{
-			m_iDemoModeSlot = -1;
-		}
-	}	
+	int nNumSlots = GetNumVisibleSlots();
+	if ( nNumSlots <= 0 )
+		return;
 
 	// find and display our current selection
 	C_BaseCombatWeapon *pSelectedWeapon = NULL;
-	switch ( hud_fastswitch.GetInt() )
+	int fastswitch = hud_fastswitch.GetInt();
+	if ( ::input->IsSteamControllerActive() )
+	{
+		fastswitch = HUDTYPE_FASTSWITCH;
+	}
+
+	switch ( fastswitch )
 	{
 	case HUDTYPE_FASTSWITCH:
 		pSelectedWeapon = pPlayer->GetActiveWeapon();
@@ -553,7 +533,138 @@ void CHudWeaponSelection::PostChildPaint()
 	if ( !pSelectedWeapon )
 		return;
 
-	if ( hud_fastswitch.GetInt() == 0 )
+
+	// calculate where to start drawing
+
+	int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
+
+	SlotLayout_t rSlot[ MAX_WEAPON_SLOTS ];
+	ComputeSlotLayout( rSlot, iActiveSlot, fastswitch );
+
+	// iterate over all the weapon slots
+	for ( int i = 0; i < m_iMaxSlots; i++ )
+	{
+		m_pModelPanels[i]->SetVisible( false );
+
+		if ( i == iActiveSlot )
+		{
+			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
+			{
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				if ( !pWeapon )
+					continue;
+
+				if ( !pWeapon->VisibleInWeaponSelection() )
+					continue;
+
+				m_pModelPanels[i]->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
+
+				m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[ i ].tall );
+
+				vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
+				if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
+				{
+					m_pModelPanels[i]->SetBorder( pScheme->GetBorder("TFFatLineBorderBlueBG") );
+				}
+				else
+				{
+					m_pModelPanels[i]->SetBorder( pScheme->GetBorder("TFFatLineBorderRedBG") );
+				}
+
+				m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
+				m_pModelPanels[i]->SetVisible( true );
+			}
+		}
+		else
+		{
+			// check to see if there is a weapons in this bucket
+			if ( GetFirstPos( i ) )
+			{
+				C_BaseCombatWeapon *pWeapon = GetFirstPos( i );
+				if ( !pWeapon )
+					continue;
+
+				m_pModelPanels[i]->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
+				
+				m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[ i ].tall );
+				vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
+				m_pModelPanels[i]->SetBorder( pScheme->GetBorder("TFFatLineBorder") );
+				m_pModelPanels[i]->SetVisible( true );
+				m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
+			}
+		}
+	}
+}
+
+//-------------------------------------------------------------------------
+// Purpose: draws the selection area
+//-------------------------------------------------------------------------
+void CHudWeaponSelection::PostChildPaint()
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer )
+		return;
+
+	int fastswitch = hud_fastswitch.GetInt();
+	if ( ::input->IsSteamControllerActive() )
+	{
+		fastswitch = HUDTYPE_FASTSWITCH;
+	}
+
+	if ( fastswitch == 0 )
+	{
+		// See if we should start the bucket demo
+		if ( m_flDemoStartTime > 0 && m_flDemoStartTime < gpGlobals->curtime )
+		{
+			float flDemoTime = tf_weapon_select_demo_time.GetFloat();
+
+			if ( flDemoTime > 0 )
+			{
+				m_iDemoModeSlot = 0;
+				m_flDemoModeChangeTime = gpGlobals->curtime + flDemoTime;
+				gHUD.LockRenderGroup( gHUD.LookupRenderGroupIndexByName( "weapon_selection" ) );
+			}
+
+			m_flDemoStartTime = -1;
+			m_iSelectedSlot = m_iDemoModeSlot;
+
+			InvalidateLayout();
+		}
+
+		// scroll through the slots for demo mode
+		if ( m_iDemoModeSlot >= 0 && m_flDemoModeChangeTime < gpGlobals->curtime )
+		{
+			// Keep iterating until we find a slot that has a weapon in it
+			while ( !GetFirstPos( ++m_iDemoModeSlot ) && m_iDemoModeSlot < m_iMaxSlots )
+			{
+				// blank
+			}			
+			m_flDemoModeChangeTime = gpGlobals->curtime + tf_weapon_select_demo_time.GetFloat();
+			InvalidateLayout();
+		}
+
+		if ( m_iDemoModeSlot >= m_iMaxSlots )
+		{
+			m_iDemoModeSlot = -1;
+			gHUD.UnlockRenderGroup( gHUD.LookupRenderGroupIndexByName( "weapon_selection" ) );
+		}
+	}	
+
+	// find and display our current selection
+	C_BaseCombatWeapon *pSelectedWeapon = NULL;
+	switch ( fastswitch )
+	{
+	case HUDTYPE_FASTSWITCH:
+		pSelectedWeapon = pPlayer->GetActiveWeapon();
+		break;
+	default:
+		pSelectedWeapon = GetSelectedWeapon();
+		break;
+	}
+	if ( !pSelectedWeapon )
+		return;
+
+	if ( fastswitch == 0 )
 	{
 		if ( m_iDemoModeSlot > -1 )
 		{
@@ -563,140 +674,154 @@ void CHudWeaponSelection::PostChildPaint()
 		}
 	}
 
+	if ( m_pActiveWeaponBG )
+	{
+		m_pActiveWeaponBG->SetVisible( fastswitch != HUDTYPE_PLUS && pSelectedWeapon != NULL );
+	}
+
 	int nNumSlots = GetNumVisibleSlots();
 	if ( nNumSlots <= 0 )
 		return;
 
-	switch ( hud_fastswitch.GetInt() )
-	{
-	case HUDTYPE_PLUS:
-	{
-			// calculate where to start drawing
-			int nTotalHeight = (nNumSlots - 1) * (m_flSmallBoxTall + m_flBoxGap) + m_flLargeBoxTall;
-			int xStartPos = GetWide() - m_flBoxGap - m_flRightMargin;
-			int xpos = xStartPos;
-			int ypos = (GetTall() - nTotalHeight) / 2;
-
-			// Draw the four buckets
-			for ( int i = 0; i < MAX_WEAPON_SLOTS; ++i )
-			{
-				pModelPanels[i]->SetVisible(false);
-
-				// Find out how many positions to draw - an empty position should still
-				// be drawn if there is an active weapon in any slots past it.
-				int lastSlotPos = -1;
-				int iMaxSlotPositions = 3;	//MAX_WEAPON_POSITIONS	- no need to do this 20 times, we only have 1 weapon usually
-				for ( int slotPos = 0; slotPos < iMaxSlotPositions; ++slotPos )
-				{
-					C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( i, slotPos );
-					if ( pWeapon )
-					{
-						lastSlotPos = slotPos;
-					}
-				}
-
-				// Draw the weapons in this bucket
-				for ( int slotPos = 0; slotPos <= lastSlotPos; ++slotPos )
-				{
-					C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( i, slotPos );
-
-					bool bSelectedWeapon = ( i == m_iSelectedSlot && slotPos == m_iSelectedBoxPosition );
-
-					if ( pWeapon && pWeapon->VisibleInWeaponSelection() )
-					{
-
-						// draw selected weapon
-						pModelPanels[i]->SetVisible(true);
-						if (bSelectedWeapon)
-						{
-							xpos = xStartPos - m_flLargeBoxWide;
-							pModelPanels[i]->SetBounds(xpos, ypos, m_flLargeBoxWide, m_flLargeBoxTall);
-							ypos += (m_flLargeBoxTall + m_flBoxGap);
-						}
-						else
-						{
-							xpos = xStartPos - m_flSmallBoxWide;
-							pModelPanels[i]->SetBounds(xpos, ypos, m_flSmallBoxWide, m_flSmallBoxTall);
-							ypos += (m_flSmallBoxTall + m_flBoxGap);
-						}
-						pModelPanels[i]->SetWeapon(pWeapon, bSelectedWeapon, i);
-
-					}
-				}
-			}
-		}
-	break;
-
-	case HUDTYPE_BUCKETS:
-	default:
-		{
-			// calculate where to start drawing
-			int nTotalHeight = ( nNumSlots - 1 ) * ( m_flSmallBoxTall + m_flBoxGap ) + m_flLargeBoxTall;
-			int xStartPos = GetWide() - m_flBoxGap - m_flRightMargin;
-			int xpos = xStartPos;
-			int ypos = ( GetTall() - nTotalHeight ) / 2;
-
-			int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
-
-			// draw the bucket set
-			// iterate over all the weapon slots
-			for ( int i = 0; i < m_iMaxSlots; i++ )
-			{
-				pModelPanels[i]->SetVisible(false);
-
-				if ( i == iActiveSlot )
-				{
-					xpos = xStartPos - m_flLargeBoxWide;
-
-					bool bFirstItem = true;
-					for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
-					{
-
-						C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
-
-						if ( !pWeapon )
-							continue;
-
-						if ( !pWeapon->VisibleInWeaponSelection() )
-							continue;
-
-						// draw selected weapon
-						pModelPanels[i]->SetVisible(true);
-						pModelPanels[i]->SetBounds(xpos, ypos, m_flLargeBoxWide, m_flLargeBoxTall);
-						pModelPanels[i]->SetWeapon(pWeapon, true, i);
-
-						xpos -= ( m_flLargeBoxWide + m_flBoxGap );
-						bFirstItem = false;
-					}
-
-					ypos += ( m_flLargeBoxTall + m_flBoxGap );
-				}
-				else
-				{
-					xpos = xStartPos - m_flSmallBoxWide;
-
-					// check to see if there is a weapons in this bucket
-					if ( GetFirstPos( i ) )
-					{
-
-						C_BaseCombatWeapon *pWeapon = GetFirstPos( i );
-						if ( !pWeapon )
-							continue;
-
-						// draw has weapon in slot
-						pModelPanels[i]->SetVisible(true);
-						pModelPanels[i]->SetBounds(xpos, ypos, m_flSmallBoxWide, m_flSmallBoxTall);
-						pModelPanels[i]->SetWeapon(pWeapon, false, i);
-						
-						ypos += ( m_flSmallBoxTall + m_flBoxGap );	
-					}
-				}
-			}
-		}
-		break;
-	}	
+	DrawSelection( pSelectedWeapon );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Draws the vertical style weapon selection buckets, for PC/mousewheel controls
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
+{
+	// if we're not supposed to draw the selection, the don't draw the selection
+	if( !m_bSelectionVisible )
+		return;
+
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer )
+		return;
+
+	int nNumSlots = GetNumVisibleSlots();
+	if ( nNumSlots <= 0 )
+		return;
+
+	// calculate where to start drawing
+	int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
+	int nFastswitchMode = hud_fastswitch.GetInt();
+	if ( ::input->IsSteamControllerActive() )
+	{
+		nFastswitchMode = HUDTYPE_FASTSWITCH;
+	}
+
+	if ( nFastswitchMode == HUDTYPE_FASTSWITCH )
+	{
+		if ( m_iActiveSlot != iActiveSlot )
+		{
+			m_iActiveSlot = iActiveSlot;
+			InvalidateLayout( true );
+		}
+	}
+
+	// draw the bucket set
+	// iterate over all the weapon slots
+	for ( int i = 0; i < m_iMaxSlots; i++ )
+	{
+		int xpos, ypos;
+		m_pModelPanels[i]->GetPos( xpos, ypos );
+		
+		int wide, tall;
+		m_pModelPanels[i]->GetSize( wide, tall );
+
+		if ( i == iActiveSlot )
+		{
+			bool bFirstItem = true;
+			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
+			{
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				if ( !pWeapon )
+					continue;
+
+				if ( !pWeapon->VisibleInWeaponSelection() )
+					continue;
+
+				if ( !pWeapon->CanBeSelected() )
+				{
+					int msgX = xpos + ( m_flLargeBoxWide * 0.5 );
+					int msgY = ypos + (int)m_flErrorYPos;
+					Color ammoColor = Color( 255, 0, 0, 255 );
+					wchar_t *pText = g_pVGuiLocalize->Find( "#TF_OUT_OF_AMMO" );
+					DrawString( pText, msgX, msgY, ammoColor, true );
+				}
+
+				if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
+				{
+					// draw the number
+					int shortcut = bFirstItem ? i + 1 : -1;
+					if ( IsPC() && shortcut >= 0 && nFastswitchMode != HUDTYPE_PLUS )
+					{
+						Color numberColor = m_NumberColor;
+						numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+						surface()->DrawSetTextColor(numberColor);
+						surface()->DrawSetTextFont(m_hNumberFont);
+						wchar_t wch = '0' + shortcut;
+						surface()->DrawSetTextPos( xpos + wide - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
+						surface()->DrawUnicodeChar(wch);
+					}
+				}
+				bFirstItem = false;
+			}
+		}
+		else
+		{
+			// check to see if there is a weapons in this bucket
+			if ( GetFirstPos( i ) )
+			{
+				C_BaseCombatWeapon *pWeapon = GetFirstPos( i );
+				if ( !pWeapon )
+					continue;
+
+				// draw the number
+				if ( IsPC() && nFastswitchMode != HUDTYPE_PLUS )
+				{
+					int x = xpos + XRES(5);
+					int y = ypos + YRES(5);
+
+					Color numberColor = m_NumberColor;
+					numberColor[3] *= m_flAlphaOverride / 255.0f;
+					surface()->DrawSetTextColor(numberColor);
+					surface()->DrawSetTextFont(m_hNumberFont);
+					wchar_t wch = '0' + i + 1;
+					surface()->DrawSetTextPos(x + m_flSmallBoxWide - XRES(10) - m_flSelectionNumberXPos, y + m_flSelectionNumberYPos);
+					surface()->DrawUnicodeChar(wch);
+				}
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::DrawWeaponTexture( C_TFPlayer *pPlayer, C_BaseCombatWeapon *pWeapon, int xpos, int ypos, float flLargeBoxWide, float flLargeBoxTall )
+{
+	// draw icon
+	const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
+	if ( pPlayer )
+	{
+		if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
+		{
+			pTexture = pWeapon->GetSpriteActive();
+		}
+	}
+
+	if ( pTexture )
+	{
+		Color col( 255, 255, 255, 255 );
+		pTexture->DrawSelf( xpos, ypos, flLargeBoxWide, flLargeBoxTall, col );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CHudWeaponSelection::DrawString( wchar_t *text, int xpos, int ypos, Color col, bool bCenter )
 {
 	surface()->DrawSetTextColor( col );
@@ -762,86 +887,6 @@ void CHudWeaponSelection::DrawString( wchar_t *text, int xpos, int ypos, Color c
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: draws a selection box
-//-----------------------------------------------------------------------------
-void CHudWeaponSelection::DrawBox(int x, int y, int wide, int tall, Color color, float normalizedAlpha, int number)
-{
-	BaseClass::DrawBox( x, y, wide, tall, color, normalizedAlpha / 255.0f );
-
-	// draw the number
-	if ( IsPC() && number >= 0)
-	{
-		Color numberColor = m_NumberColor;
-		numberColor[3] *= normalizedAlpha / 255.0f;
-		surface()->DrawSetTextColor(numberColor);
-		surface()->DrawSetTextFont(m_hNumberFont);
-		wchar_t wch = '0' + number;
-		surface()->DrawSetTextPos(x + wide - m_flSelectionNumberXPos, y + m_flSelectionNumberYPos);
-		surface()->DrawUnicodeChar(wch);
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: draws a selection box
-//-----------------------------------------------------------------------------
-void CHudWeaponSelection::DrawPlusStyleBox(int x, int y, int wide, int tall, bool bSelected, float normalizedAlpha, int number, bool bOutOfAmmo )
-{
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-
-	if ( !pLocalPlayer )
-		return;
-
-	/*
-	int iMaterial;
-
-	if ( bSelected && !bOutOfAmmo )
-	{
-		switch (pLocalPlayer->GetTeamNumber())
-		{
-			case TF_TEAM_RED:
-				iMaterial = m_iBGImage_Red;
-				break;
-
-			case TF_TEAM_BLUE:
-				iMaterial = m_iBGImage_Blue;
-				break;
-				
-			case TF_TEAM_GREEN:
-				iMaterial = m_iBGImage_Green;
-				break;
-
-			case TF_TEAM_YELLOW:
-				iMaterial = m_iBGImage_Yellow;
-				break;
-
-			default:
-				iMaterial = m_iBGImage_Blue;
-				break;
-		}
-	}
-	else
-	{
-		iMaterial = m_iBGImage_Inactive;
-	}
-
-	vgui::surface()->DrawSetTexture( iMaterial );
-	vgui::surface()->DrawSetColor( 255, 255, 255, 255 );
-
-	if ( bSelected )
-	{
-		float flExpandWide = m_flPlusStyleBoxWide * m_flPlusStyleExpandPercent * 0.5;
-		float flExpandTall = m_flPlusStyleBoxTall * m_flPlusStyleExpandPercent * 0.5;
-
-		vgui::surface()->DrawTexturedRect( x-flExpandWide, y-flExpandTall, x+wide+flExpandWide, y+tall+flExpandTall );
-	}
-	else
-	{
-		vgui::surface()->DrawTexturedRect( x, y, x+wide, y+tall );
-	}
-	*/
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: hud scheme settings
 //-----------------------------------------------------------------------------
 void CHudWeaponSelection::ApplySchemeSettings(vgui::IScheme *pScheme)
@@ -858,6 +903,12 @@ void CHudWeaponSelection::ApplySchemeSettings(vgui::IScheme *pScheme)
 
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudWeaponSelection.res" );
+
+	m_pActiveWeaponBG = dynamic_cast<CTFImagePanel*>( FindChildByName("ActiveWeapon") );
+	if ( m_pActiveWeaponBG )
+	{
+		m_pActiveWeaponBG->SetVisible( false );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -866,6 +917,8 @@ void CHudWeaponSelection::ApplySchemeSettings(vgui::IScheme *pScheme)
 void CHudWeaponSelection::OpenSelection( void )
 {
 	Assert(!IsInSelectionMode());
+
+	InvalidateLayout();
 
 	CBaseHudWeaponSelection::OpenSelection();
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("OpenWeaponSelectionMenu");
@@ -878,6 +931,14 @@ void CHudWeaponSelection::OpenSelection( void )
 //-----------------------------------------------------------------------------
 void CHudWeaponSelection::HideSelection( void )
 {
+	for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
+	{
+		if ( m_pModelPanels[i] )
+		{
+			m_pModelPanels[i]->SetVisible( false );
+		}
+	}
+
 	m_flSelectionTime = 0;
 	CBaseHudWeaponSelection::HideSelection();
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("CloseWeaponSelectionMenu");
@@ -978,6 +1039,10 @@ void CHudWeaponSelection::CycleToNextWeapon( void )
 	if ( pPlayer->IsAlive() == false )
 		return;
 
+	// PASSTIME don't CycleToNextWeapon if it's not allowed
+	if ( !pPlayer->IsAllowedToSwitchWeapons() )
+		return;
+
 	C_BaseCombatWeapon *pNextWeapon = NULL;
 	if ( IsInSelectionMode() )
 	{
@@ -1013,6 +1078,8 @@ void CHudWeaponSelection::CycleToNextWeapon( void )
 			OpenSelection();
 		}
 
+		InvalidateLayout();
+
 		// cancel demo mode
 		m_iDemoModeSlot = -1;
 		m_flDemoStartTime = -1;
@@ -1034,6 +1101,10 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 		return;
 
 	if ( pPlayer->IsAlive() == false )
+		return;
+
+	// PASSTIME don't CycleToNextWeapon if it's not allowed
+	if ( !pPlayer->IsAllowedToSwitchWeapons() )
 		return;
 
 	C_BaseCombatWeapon *pNextWeapon = NULL;
@@ -1071,6 +1142,8 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 			OpenSelection();
 		}
 
+		InvalidateLayout();
+
 		// cancel demo mode
 		m_iDemoModeSlot = -1;
 		m_flDemoStartTime = -1;
@@ -1106,7 +1179,7 @@ C_BaseCombatWeapon *CHudWeaponSelection::GetWeaponInSlot( int iSlot, int iSlotPo
 
 C_BaseCombatWeapon *CHudWeaponSelection::GetSelectedWeapon( void )
 { 
-	if ( hud_fastswitch.GetInt() == 0 && m_iDemoModeSlot >= 0 )
+	if ( hud_fastswitch.GetInt() == 0 && !::input->IsSteamControllerActive() && m_iDemoModeSlot >= 0 )
 	{
 		C_BaseCombatWeapon *pWeapon = GetFirstPos( m_iDemoModeSlot );
 		return pWeapon;
@@ -1123,10 +1196,14 @@ void CHudWeaponSelection::FireGameEvent( IGameEvent *event )
 
 	if ( Q_strcmp(type, "localplayer_changeclass") == 0 )
 	{
-		for (int i = 0; i < m_iMaxSlots; i++)
+		for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
 		{
-			pModelPanels[i]->SetVisible(false);
+			if ( m_pModelPanels[i] )
+			{
+				m_pModelPanels[i]->SetVisible( false );
+			}
 		}
+
 		int nUpdateType = event->GetInt( "updateType" );
 		bool bIsCreationUpdate = ( nUpdateType == DATA_UPDATE_CREATED );
 		// Don't demo selection in minmode
@@ -1194,7 +1271,7 @@ void CHudWeaponSelection::FastWeaponSwitch( int iWeaponSlot )
 //-----------------------------------------------------------------------------
 // Purpose: Opens the next weapon in the slot
 //-----------------------------------------------------------------------------
-void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
+void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot, bool *pbPlaySwitchSound )
 {
 	// get the slot the player's weapon is in
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
@@ -1249,6 +1326,7 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 		{
 			// error sound
 			pPlayer->EmitSound( "Player.DenyWeaponSelection" );
+			*pbPlaySwitchSound = false;
 			return;
 		}
 	}
@@ -1289,32 +1367,36 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 		return;
 
 	// Don't try and read past our possible number of slots
-	if ( iSlot > MAX_WEAPON_SLOTS )
+	if ( iSlot >= MAX_WEAPON_SLOTS )
 		return;
 	
 	// Make sure the player's allowed to switch weapons
 	if ( pPlayer->IsAllowedToSwitchWeapons() == false )
 		return;
 
-	switch( hud_fastswitch.GetInt() )
+	bool bPlaySwitchSound = true;
+	int nFastswitchMode = hud_fastswitch.GetInt();
+	if ( ::input->IsSteamControllerActive() )
+	{
+		nFastswitchMode = HUDTYPE_FASTSWITCH;
+	}
+
+	switch( nFastswitchMode )
 	{
 	case HUDTYPE_FASTSWITCH:
 		{
 			FastWeaponSwitch( iSlot );
 			return;
 		}
-		
+
 	case HUDTYPE_PLUS:
-		{
-			if ( !IsInSelectionMode() )
-			{
-				// open the weapon selection
-				OpenSelection();
-			}
-				
-			PlusTypeFastWeaponSwitch( iSlot );
-		}
-		break;
+		PlusTypeFastWeaponSwitch( iSlot, &bPlaySwitchSound );
+
+		// ------------------------------------------------------
+		// FALLTHROUGH! Plus and buckets both use the item model
+		// panels so fix them up in both cases.
+		// ------------------------------------------------------
+
 
 	case HUDTYPE_BUCKETS:
 		{
@@ -1342,6 +1424,8 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 					OpenSelection();
 				}
 
+				InvalidateLayout();
+
 				// Mark the change
 				SetSelectedWeapon( pActiveWeapon );
 				m_iDemoModeSlot = -1;
@@ -1354,6 +1438,60 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 		break;
 	}
 
-	if( m_bPlaySelectionSounds )
+	if( m_bPlaySelectionSounds && bPlaySwitchSound )
 		pPlayer->EmitSound( "Player.WeaponSelectionMoveSlot" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Menu Selection Code
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::SelectSlot( int iSlot )
+{
+	// A menu may be overriding weapon selection commands
+	if ( HandleHudMenuInput( iSlot ) )
+	{
+		return;
+	}
+
+	// If we're in observer mode, see if the spectator GUI wants to use it
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer && pPlayer->IsObserver() )
+	{
+		CTFSpectatorGUI *pPanel = (CTFSpectatorGUI*)gViewPortInterface->FindPanelByName( PANEL_SPECGUI );
+		if ( pPanel )
+		{
+			pPanel->SelectSpec( iSlot );
+		}
+		return;
+	}
+
+	// If we're not allowed to draw, ignore weapon selections
+	if ( !CHudElement::ShouldDraw() )
+	{
+		return;
+	}
+
+	// iSlot is one higher than it should be, since it's the number key, not the 0-based index into the weapons
+	if ( !IsInSelectionMode() && ( iSlot - 1 >= MAX_WEAPON_SLOTS ) )
+	{
+		OpenSelection();
+	}
+
+	UpdateSelectionTime();
+	SelectWeaponSlot( iSlot );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Menu Selection Code
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::SwitchToLastWeapon()
+{
+	C_TFPlayer *pTFPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( !pTFPlayer )
+		return;
+
+	if (TFGameRules() && TFGameRules()->IsPasstimeMode() && pTFPlayer->m_Shared.HasPasstimeBall() )
+		return;
+
+	CBaseHudWeaponSelection::SwitchToLastWeapon();
 }

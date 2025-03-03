@@ -268,9 +268,9 @@ public:
 	bool					DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 	bool					ReloadsSingly( void ) const;
 
-	virtual bool			AutoFiresFullClip( void );
+	virtual bool			AutoFiresFullClip( void ) const;
 	virtual void			UpdateAutoFire( void );
-	virtual bool			CanOverload(void);
+	bool					CanOverload(void) const;
 	void					Overload(void);
 
 	// Weapon firing

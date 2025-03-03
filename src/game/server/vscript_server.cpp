@@ -614,115 +614,6 @@ BEGIN_SCRIPTDESC_ROOT_NAMED( CScriptPanorama, "CPanorama", SCRIPT_SINGLETON "Pan
 END_SCRIPTDESC();
 #endif
 
-// ----------------------------------------------------------------------------
-// KeyValues access - CBaseEntity::ScriptGetKeyFromModel returns root KeyValues
-// ----------------------------------------------------------------------------
-
-BEGIN_SCRIPTDESC_ROOT( CScriptKeyValues, "Wrapper class over KeyValues instance" )
-	DEFINE_SCRIPT_CONSTRUCTOR()	
-	DEFINE_SCRIPTFUNC_NAMED( ScriptFindKey, "FindKey", "Given a KeyValues object and a key name, find a KeyValues object associated with the key name" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFirstSubKey, "GetFirstSubKey", "Given a KeyValues object, return the first sub key object" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetNextKey, "GetNextKey", "Given a KeyValues object, return the next key object in a sub key group" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueInt, "GetKeyInt", "Given a KeyValues object and a key name, return associated integer value" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueFloat, "GetKeyFloat", "Given a KeyValues object and a key name, return associated float value" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueBool, "GetKeyBool", "Given a KeyValues object and a key name, return associated bool value" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetKeyValueString, "GetKeyString", "Given a KeyValues object and a key name, return associated string value" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptIsKeyValueEmpty, "IsKeyEmpty", "Given a KeyValues object and a key name, return true if key name has no value" );
-	DEFINE_SCRIPTFUNC_NAMED( ScriptReleaseKeyValues, "ReleaseKeyValues", "Given a root KeyValues object, release its contents" );
-END_SCRIPTDESC();
-
-HSCRIPT CScriptKeyValues::ScriptFindKey( const char *pszName )
-{
-	KeyValues *pKeyValues = m_pKeyValues->FindKey(pszName);
-	if ( pKeyValues == NULL )
-		return NULL;
-
-	CScriptKeyValues *pScriptKey = new CScriptKeyValues( pKeyValues );
-
-	// UNDONE: who calls ReleaseInstance on this??
-	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pScriptKey );
-	return hScriptInstance;
-}
-
-HSCRIPT CScriptKeyValues::ScriptGetFirstSubKey( void )
-{
-	KeyValues *pKeyValues = m_pKeyValues->GetFirstSubKey();
-	if ( pKeyValues == NULL )
-		return NULL;
-
-	CScriptKeyValues *pScriptKey = new CScriptKeyValues( pKeyValues );
-
-	// UNDONE: who calls ReleaseInstance on this??
-	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pScriptKey );
-	return hScriptInstance;
-}
-
-HSCRIPT CScriptKeyValues::ScriptGetNextKey( void )
-{
-	KeyValues *pKeyValues = m_pKeyValues->GetNextKey();
-	if ( pKeyValues == NULL )
-		return NULL;
-
-	CScriptKeyValues *pScriptKey = new CScriptKeyValues( pKeyValues );
-
-	// UNDONE: who calls ReleaseInstance on this??
-	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pScriptKey );
-	return hScriptInstance;
-}
-
-int CScriptKeyValues::ScriptGetKeyValueInt( const char *pszName )
-{
-	int i = m_pKeyValues->GetInt( pszName );
-	return i;
-}
-
-float CScriptKeyValues::ScriptGetKeyValueFloat( const char *pszName )
-{
-	float f = m_pKeyValues->GetFloat( pszName );
-	return f;
-}
-
-const char *CScriptKeyValues::ScriptGetKeyValueString( const char *pszName )
-{
-	const char *psz = m_pKeyValues->GetString( pszName );
-	return psz;
-}
-
-bool CScriptKeyValues::ScriptIsKeyValueEmpty( const char *pszName )
-{
-	bool b = m_pKeyValues->IsEmpty( pszName );
-	return b;
-}
-
-bool CScriptKeyValues::ScriptGetKeyValueBool( const char *pszName )
-{
-	bool b = m_pKeyValues->GetBool( pszName );
-	return b;
-}
-
-void CScriptKeyValues::ScriptReleaseKeyValues( )
-{
-	m_pKeyValues->deleteThis();
-	m_pKeyValues = NULL;
-}
-
-
-// constructors
-CScriptKeyValues::CScriptKeyValues( KeyValues *pKeyValues )
-{
-	m_pKeyValues = pKeyValues;
-}
-
-// destructor
-CScriptKeyValues::~CScriptKeyValues( )
-{
-	if (m_pKeyValues)
-	{
-		m_pKeyValues->deleteThis();
-	}
-	m_pKeyValues = NULL;
-}
-
 
 
 
@@ -824,13 +715,6 @@ static void DoEntFire( const char *pszTarget, const char *pszAction, const char 
 	}
 
 	g_EventQueue.AddEvent( target, action, value, delay, ToEnt(hActivator), ToEnt(hCaller) );
-}
-
-// Some game events pass entity's by their entindex. This lets scripts translate that
-// into a handle to the entity's script instance.
-HSCRIPT EntIndexToHScript( int entityIndex )
-{
-	return ToHScript( UTIL_EntityByIndex( entityIndex ) );
 }
 
 HSCRIPT PlayerInstanceFromIndex( int idx )
@@ -2237,27 +2121,18 @@ bool VScriptServerInit()
 				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, "Execute a script (internal)" );
 				ScriptRegisterFunction( g_pScriptVM, RegisterScriptGameEventListener, "Register as a listener for a game event from script." );
 				ScriptRegisterFunction( g_pScriptVM, RegisterScriptHookListener, "Register as a listener for a script hook from script." );
-				ScriptRegisterFunction( g_pScriptVM, EntIndexToHScript, "Turn an entity index integer to an HScript representing that entity's script instance." );
 				ScriptRegisterFunction( g_pScriptVM, PlayerInstanceFromIndex, "Get a script instance of a player by index." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptFireGameEvent, "FireGameEvent", "Fire a game event to a listening callback function in script. Parameters are passed in a squirrel table." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptFireScriptHook, "FireScriptHook", "Fire a script hoook to a listening callback function in script. Parameters are passed in a squirrel table." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSendGlobalGameEvent, "SendGlobalGameEvent", "Sends a real game event to everything. Parameters are passed in a squirrel table." );
 				ScriptRegisterFunction( g_pScriptVM, ScriptHooksEnabled, "Returns whether script hooks are currently enabled." );
 
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_SpawnEntityFromTable, "SpawnEntityFromTable", "Spawn entity from KeyValues in table - 'name' is entity name, rest are KeyValues for spawn." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_SpawnEntityGroupFromTable, "SpawnEntityGroupFromTable", "Hierarchically spawn an entity group from a set of spawn tables." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PrecacheItemFromTable, "PrecacheEntityFromTable", "Precache an entity from KeyValues in table" );
-
 				ScriptRegisterFunction( g_pScriptVM, RotatePosition, "Rotate a Vector around a point." );
 				ScriptRegisterFunction( g_pScriptVM, RotateOrientation, "Rotate a QAngle by another QAngle." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOn, "EmitSoundOn", "Play named sound on Entity. Legacy only, use EmitSoundEx." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundOnClient, "EmitSoundOnClient", "Play named sound only on the client for the passed in player. NOTE: This only supports soundscripts. Legacy only, use EmitSoundEx." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_EmitSoundEx, "EmitSoundEx", "Play a sound. Takes in a script table of params." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_StopSoundOn, "StopSoundOn", "Stop named sound on Entity." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetPhysVelocity, "GetPhysVelocity","Get Velocity for VPHYS or normal object" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetPhysAngularVelocity, "GetPhysAngularVelocity","Get Angular Velocity for VPHYS or normal object" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_Say, "Say", "Have Entity say string, and teamOnly or not" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_AddThinkToEnt, "AddThinkToEnt", "Adds a late bound think function to the C++ think tables for the obj" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetFriction, "GetFriction", "Returns the Friction on a player entity, meaningless if not a player");
 
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetPlayerFromUserID, "GetPlayerFromUserID", "Given a user id, return the entity, or null");

@@ -1,4 +1,4 @@
-//======= Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CTF Regenerate Zone.
 //
@@ -103,6 +103,9 @@ void CRegenerateZone::Touch( CBaseEntity *pOther )
 			if ( pPlayer->GetNextRegenTime() > gpGlobals->curtime )
 				return;
 
+			if ( pPlayer->IsTaunting() )
+				return;
+
 			int iTeam = GetTeamNumber();
 
 			if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN )
@@ -121,8 +124,26 @@ void CRegenerateZone::Touch( CBaseEntity *pOther )
 				return;
 
 			Regenerate( pPlayer );
+
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CRegenerateZone::EndTouch( CBaseEntity *pOther )
+{
+	if ( pOther->IsPlayer() )
+	{
+		CTFPlayer *pTFPlayer = ToTFPlayer( pOther );
+		if ( pTFPlayer )
+		{
+			pTFPlayer->m_Shared.SetInUpgradeZone( false );
+		}
+	}
+
+	BaseClass::EndTouch( pOther );
 }
 
 //-----------------------------------------------------------------------------

@@ -500,7 +500,9 @@ ScriptEnumDesc_t *GetScriptEnumDesc( T* );
 // 
 //-----------------------------------------------------------------------------
 
-#define ALLOW_SCRIPT_ACCESS() 																template <typename T> friend ScriptClassDesc_t *GetScriptDesc(T *);
+#define ALLOW_SCRIPT_ACCESS() \
+		template <typename T> friend ScriptClassDesc_t *GetScriptDesc(T *); \
+		template <typename T> friend void InitScriptDesc();
 
 #define BEGIN_SCRIPTDESC( className, baseClass, description )								BEGIN_SCRIPTDESC_NAMED( className, baseClass, #className, description )
 #define BEGIN_SCRIPTDESC_ROOT( className, description )										BEGIN_SCRIPTDESC_ROOT_NAMED( className, #className, description )
@@ -532,19 +534,23 @@ inline IScriptInstanceHelper *GetScriptInstanceHelper_ScriptNoBase_t()
 	return NULL;
 }
 
+template < typename TScriptClass >
+inline void InitScriptDesc();
+
 #define BEGIN_SCRIPTDESC_NAMED( className, baseClass, scriptName, description ) \
 	IScriptInstanceHelper *GetScriptInstanceHelper_##baseClass(); \
 	IScriptInstanceHelper *GetScriptInstanceHelper_##className() \
 	{ \
 		return GetScriptInstanceHelperOverride<className>( GetScriptInstanceHelper_##baseClass() ); \
 	}; \
-	extern void Init##className##ScriptDesc(); \
-	ScriptClassDesc_t g_##className##_ScriptDesc( &Init##className##ScriptDesc ); \
+	template <> extern void InitScriptDesc<className>(); \
+	ScriptClassDesc_t g_##className##_ScriptDesc( &InitScriptDesc<className> ); \
 	DEFINE_SCRIPTDESC_FUNCTION( className, baseClass ) \
 	{ \
 		return &g_##className##_ScriptDesc; \
 	} \
-	void Init##className##ScriptDesc() \
+	template <> \
+	void InitScriptDesc<className>() \
 	{ \
 		static bool bInitialized; \
 		if ( bInitialized ) \

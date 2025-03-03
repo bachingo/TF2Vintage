@@ -1,3 +1,8 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: Dove entity for the Meet the Medic tease.
+//
+//=============================================================================//
 #ifndef ENTITY_SOLDIER_STATUE_H
 #define ENTITY_SOLDIER_STATUE_H
 
@@ -5,21 +10,25 @@
 #pragma once
 #endif
 
+DECLARE_AUTO_LIST( ISoldierStatueAutoList );
 
-class CEntitySoldierStatue : public CBaseAnimating
+
+class CEntitySoldierStatue : public CBaseAnimating, public ISoldierStatueAutoList
 {
 	DECLARE_CLASS( CEntitySoldierStatue, CBaseAnimating );
+
 public:
-
-	virtual ~CEntitySoldierStatue() {}
-
-	virtual void Precache();
-	virtual void Spawn();
-
-	void		StatueThink( void );
+	virtual void	Spawn( void ) OVERRIDE;
+	virtual void	Precache( void ) OVERRIDE;
 
 private:
-	CountdownTimer m_voiceLineTimer;
+	void			StatueThink();
+	void			PlaySound( void );
+
+private: 
+	float m_flNextSpeakTime = -1.f;
 };
 
-#endif
+#endif // ENTITY_SOLDIER_STATUE_H
+
+

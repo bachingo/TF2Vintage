@@ -1,15 +1,10 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
 //
-// $NoKeywords: $
+//
 //=============================================================================
 #ifndef C_TF_MVM_BOSS_HEALTH_USER_H
 #define C_TF_MVM_BOSS_HEALTH_USER_H
-
-#ifdef _WIN32
-#pragma once
-#endif
 
 DECLARE_AUTO_LIST( ITFMvMBossProgressUserAutoList );
 
@@ -20,4 +15,4 @@ public:
 	virtual float GetBossStatusProgress() const { return 0.f; }
 };
 
-#endif
+#endif // C_TF_MVM_BOSS_HEALTH_USER_H

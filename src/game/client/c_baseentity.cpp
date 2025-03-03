@@ -55,6 +55,8 @@
 	bool g_bRestoreInterpolatedVarValues = false;
 #endif
 
+extern IScriptManager *scriptmanager;
+
 
 static bool g_bWasSkipping = (bool)-1;
 static bool g_bWasThreaded =(bool)-1;

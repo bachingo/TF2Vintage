@@ -101,7 +101,6 @@ BEGIN_SCRIPTDESC_ROOT( CGameRules, SCRIPT_SINGLETON "The container of the game's
 	DEFINE_SCRIPTFUNC( AllowMapVisionFilterShaders, "" )
 	DEFINE_SCRIPTFUNC( TranslateEffectForVisionFilter, "" )
 	DEFINE_SCRIPTFUNC( IsLocalPlayer, "" )
-	DEFINE_SCRIPTFUNC( ShouldWarnOfAbandonOnQuit, "" )
 #else
 	DEFINE_SCRIPTFUNC( RefreshSkillData, "" )
 
@@ -891,7 +890,7 @@ void CGameRules::CheckHaptics(CBasePlayer* pPlayer)
 	}
 }
 
-extern ConVar tf2v_restrict_fov_max;
+ConVar tf2v_restrict_fov_max( "tf2v_restrict_fov_max", CNumStr( MAX_FOV_UNLOCKED ) );
 
 void CGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 {

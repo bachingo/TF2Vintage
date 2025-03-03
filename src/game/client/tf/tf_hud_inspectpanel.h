@@ -1,35 +1,43 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose: 
 //
-// $NoKeywords: $
 //=============================================================================
+
 #ifndef TF_HUD_INSPECTPANEL_H
 #define TF_HUD_INSPECTPANEL_H
 #ifdef _WIN32
 #pragma once
 #endif
 
-class CTFAdvModelPanel;
+using namespace vgui;
 
-class CHudInspectPanel : public CHudElement, public vgui::EditablePanel
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CHudInspectPanel : public CHudElement, public EditablePanel
 {
-	DECLARE_CLASS_SIMPLE( CHudInspectPanel, vgui::EditablePanel );
-public:
-	CHudInspectPanel( char const *pszElementName );
+	DECLARE_CLASS_SIMPLE( CHudInspectPanel, EditablePanel );
 
-	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual bool ShouldDraw( void );
-	virtual int GetRenderGroupPriority( void ) { return 35; }
+public:
+	CHudInspectPanel( const char *pElementName );
+
+	virtual void	ApplySchemeSettings( IScheme *scheme );
+	virtual bool	ShouldDraw( void );
+
+	virtual int		GetRenderGroupPriority( void ) { return 35; }	// less than statpanel
 	void		UserCmd_InspectTarget( void );
-	C_TFPlayer	*GetInspectTarget( C_TFPlayer *pPlayer );
-	int			HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
+	C_TFPlayer		*GetInspectTarget( C_TFPlayer *pLocalTFPlayer );
+
+	int	HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
 
 private:
 	void LockInspectRenderGroup( bool bLock );
 	void SetPanelVisible( bool bVisible );
 
-	CTFAdvModelPanel *m_pItemPanel;
+	CItemModelPanel		*m_pItemPanel;
+	CHandle<C_TFPlayer>	m_hTarget;
+	int					m_iTargetItemIterator;
 };
 
-#endif
+#endif // TF_HUD_INSPECTPANEL_H

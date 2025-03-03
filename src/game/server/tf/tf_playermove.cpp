@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,13 +11,10 @@
 #include "in_buttons.h"
 #include "ipredictionsystem.h"
 #include "tf_player.h"
-#include "iservervehicle.h"
 
 
 static CMoveData g_MoveData;
 CMoveData *g_pMoveData = &g_MoveData;
-
-ConVar tf_demoman_charge_frametime_scaling( "tf_demoman_charge_frametime_scaling", "1", FCVAR_CHEAT, "When enabled, scale yaw limiting based on client performance (frametime)" );
 
 IPredictionSystem *IPredictionSystem::g_pPredictionSystems = NULL;
 
@@ -68,56 +65,52 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		// Check to see if we are a crouched, heavy, firing his weapons and zero out movement.
 		if ( pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_HEAVYWEAPONS ) )
 		{
-			if ( ( pTFPlayer->GetFlags() & FL_DUCKING ) && ( pTFPlayer->m_Shared.InCond( TF_COND_AIMING ) ) )
+			if ( pTFPlayer->m_Shared.InCond( TF_COND_AIMING ) )
 			{
-				ucmd->forwardmove = 0.0f;
-				ucmd->sidemove = 0.0f;
+				if ( pTFPlayer->GetFlags() & FL_DUCKING )
+				{
+					ucmd->forwardmove = 0.0f;
+					ucmd->sidemove = 0.0f;
+				}
+
+				// Don't allow jumping while firing (unless the design changes)
+				ucmd->buttons &= ~IN_JUMP;
 			}
 		}
 
-		if ( pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) || pTFPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) )
-		{
-			ucmd->forwardmove = 0;
-			ucmd->upmove = 0;
-			ucmd->sidemove = 0;
-			ucmd->viewangles = pTFPlayer->pl.v_angle;
-		}
-
+		// targe Exploit fix. Clients sending higher view angle changes then allowed
+		// Clamp their YAW Movement
 		if ( pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 		{
-			float flTurnRate = 0.45f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pTFPlayer, flTurnRate, charge_turn_control );
-
-			if ( tf_demoman_charge_frametime_scaling.GetBool() )
+			// Get the view deltas and clamp them if they are too high, give a high tolerance (lag)
+			float flCap = pTFPlayer->m_Shared.CalculateChargeCap();
+			flCap *= 2.5f;
+			QAngle qAngle = pTFPlayer->m_qPreviousChargeEyeAngle;
+			float flDiff = abs( qAngle[YAW] ) - abs( ucmd->viewangles[YAW] );
+			if ( flDiff > flCap )
 			{
-				flTurnRate *= RemapValClamped( gpGlobals->frametime, TICKS_TO_TIME( 0.2 ), TICKS_TO_TIME( 2.0 ), 0.25, 2.0 );
+				//float flReportedPitchDelta = qAngle[YAW] - ucmd->viewangles[YAW];
+				if ( ucmd->viewangles[YAW] > qAngle[YAW] )
+				{
+					ucmd->viewangles[YAW] = qAngle[YAW] + flCap;
+					pTFPlayer->SnapEyeAngles( ucmd->viewangles );
+				}
+				else // smaller values
+				{
+					ucmd->viewangles[YAW] = qAngle[YAW] - flCap;
+					pTFPlayer->SnapEyeAngles( ucmd->viewangles );
+				}
 			}
-
-			flTurnRate *= 2.5f;
-			if ( fabs( pTFPlayer->m_angPrevEyeAngles.y ) - fabs( ucmd->viewangles.y ) > flTurnRate )
-			{
-				if ( ucmd->viewangles.y < pTFPlayer->m_angPrevEyeAngles.y )
-					ucmd->viewangles.y = pTFPlayer->m_angPrevEyeAngles.y - flTurnRate;
-				else
-					ucmd->viewangles.y = flTurnRate + pTFPlayer->m_angPrevEyeAngles.y;
-
-				pTFPlayer->SnapEyeAngles( ucmd->viewangles );
-				pTFPlayer->m_angPrevEyeAngles = ucmd->viewangles;
-			}
+			
+			pTFPlayer->m_qPreviousChargeEyeAngle = ucmd->viewangles;
 		}
 		else
 		{
-			pTFPlayer->m_angPrevEyeAngles = pTFPlayer->EyeAngles();
+			pTFPlayer->m_qPreviousChargeEyeAngle = pTFPlayer->EyeAngles();
 		}
 	}
 
 	BaseClass::SetupMove( player, ucmd, pHelper, move );
-
-	IServerVehicle *pVehicle = player->GetVehicle();
-	if ( pVehicle && gpGlobals->frametime != 0 )
-	{
-		pVehicle->SetupMove( player, ucmd, pHelper, move );
-	}
 }
 
 
@@ -131,10 +124,4 @@ void CTFPlayerMove::FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *
 {
 	// Call the default FinishMove code.
 	BaseClass::FinishMove( player, ucmd, move );
-
-	IServerVehicle *pVehicle = player->GetVehicle();
-	if ( pVehicle && gpGlobals->frametime != 0 )
-	{
-		pVehicle->FinishMove( player, ucmd, move );
-	}
 }

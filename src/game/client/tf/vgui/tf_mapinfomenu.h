@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -40,7 +40,7 @@ public:
 	virtual bool IsVisible(){ return BaseClass::IsVisible(); }
 	virtual void SetParent( vgui::VPANEL parent ){ BaseClass::SetParent( parent ); }
 
-	// static const char *GetMapType( const char *mapName );
+	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_IN_GAME_HUD; }
 
 protected:
 	virtual void OnKeyCodePressed(vgui::KeyCode code);
@@ -51,7 +51,7 @@ protected:
 	
 private:
 	// helper functions
-	void LoadMapPage( const char *mapName );
+	void LoadMapPage();
 	void SetMapTitle();
 	bool HasViewedMovieForMap();
 	bool CheckForIntroMovie();
@@ -69,6 +69,9 @@ protected:
 	CExButton			*m_pContinue;
 	CExButton			*m_pBack;
 	CExButton			*m_pIntro;
+	CSCHintIcon			*m_pContinueHintIcon;
+	CSCHintIcon			*m_pBackHintIcon;
+	CSCHintIcon			*m_pIntroHintIcon;
 #endif
 
 	vgui::ImagePanel	*m_pMapImage;

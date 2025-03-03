@@ -140,39 +140,39 @@ void CBaseScriptedWeapon::Detach()
 #define SIMPLE_VOID_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
-	if (result != SCRIPT_ERROR && retVal.m_bool == false) \
+	if (result != SCRIPT_ERROR && retVal.Get<bool>() == false) \
 		return;
 
 #define SIMPLE_BOOL_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
-	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_BOOLEAN) \
-		return retVal.m_bool;
+	if (result != SCRIPT_ERROR && retVal.GetType() == FIELD_BOOLEAN) \
+		return retVal;
 
 #define SIMPLE_FLOAT_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
-	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_FLOAT) \
-		return retVal.m_float;
+	if (result != SCRIPT_ERROR && retVal.GetType() == FIELD_FLOAT) \
+		return retVal;
 
 #define SIMPLE_INT_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
-	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_INTEGER) \
-		return retVal.m_int;
+	if (result != SCRIPT_ERROR && retVal.GetType() == FIELD_INTEGER) \
+		return retVal;
 
 #define SIMPLE_VECTOR_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
-	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_VECTOR) \
-		return *retVal.m_pVector;
+	if (result != SCRIPT_ERROR && retVal.GetType() == FIELD_VECTOR) \
+		return retVal;
 
 #define SIMPLE_VECTOR_REF_OVERRIDE( name ) \
 	ScriptVariant_t retVal; \
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
-	if (result != SCRIPT_ERROR && retVal.m_type == FIELD_VECTOR) \
+	if (result != SCRIPT_ERROR && retVal.GetType() == FIELD_VECTOR) \
 	{ \
-		static Vector vec = *retVal.m_pVector; \
+		static Vector vec = retVal; \
 		return vec; \
 	}
 
@@ -321,15 +321,15 @@ void CBaseScriptedWeapon::SecondaryAttack( void )
 	ScriptStatus_t result = m_ScriptScope.CallFunc( #name, &retVal ); \
 	if (result != SCRIPT_ERROR) \
 	{ \
-		if (retVal.m_type == FIELD_INTEGER) \
+		if (retVal.GetType() == FIELD_INTEGER) \
 		{ \
-			Activity activity = (Activity)retVal.m_int; \
+			Activity activity = (Activity)retVal.Get<int>(); \
 			if (activity != ACT_INVALID) \
-				return (Activity)retVal.m_int; \
+				return activity; \
 		} \
-		else if (retVal.m_type == FIELD_CSTRING) \
+		else if (retVal.GetType() == FIELD_CSTRING) \
 		{ \
-			Activity activity = (Activity)LookupActivity( retVal.m_pszString ); \
+			Activity activity = (Activity)LookupActivity( retVal ); \
 			if (activity != ACT_INVALID) \
 				return activity; \
 		} \
@@ -453,10 +453,10 @@ char const *CBaseScriptedWeapon::GetWeaponScriptName()
 #if defined( USES_ECON_ITEMS )
 	// If we were Econ generated then setup our weapon name using it,
 	// else rely on the mapper to name their entities correctly
-	CEconItemDefinition *pItemDef = GetItem()->GetStaticData();
+	CEconItemDefinition *pItemDef = GetAttributeContainer()->GetItem()->GetStaticData();
 	if ( pItemDef )
 	{
-		if ( pItemDef->GetVScriptName() )
+		if ( pItemDef->GetVScriptName() && pItemDef->GetVScriptName()[0] )
 			return pItemDef->GetVScriptName();
 	}
 #endif

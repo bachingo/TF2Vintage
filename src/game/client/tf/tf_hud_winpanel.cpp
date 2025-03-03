@@ -1,4 +1,5 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -23,6 +24,9 @@
 #include "fmtstr.h"
 #include "teamplayroundbased_gamerules.h"
 #include "tf_gamerules.h"
+#include "tf_logic_halloween_2014.h"
+#include "c_tf_team.h"
+#include "tf_badge_panel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -41,12 +45,16 @@ CTFWinPanel::CTFWinPanel( const char *pElementName ) : EditablePanel( NULL, "Win
 	SetScheme( "ClientScheme" );
 
 	m_pTeamScorePanel = new EditablePanel( this, "TeamScoresPanel" );
+	m_pRedTeamName = new CExLabel( m_pTeamScorePanel, "RedTeamLabel", "" );
+	m_pBlueTeamName = new CExLabel( m_pTeamScorePanel, "BlueTeamLabel", "" );
+	m_pRedLeaderAvatarImage = new CAvatarImagePanel( m_pTeamScorePanel, "RedLeaderAvatar" );
+	m_pBlueLeaderAvatarImage = new CAvatarImagePanel( m_pTeamScorePanel, "BlueLeaderAvatar" );
+	m_pRedLeaderAvatarBG = new EditablePanel( m_pTeamScorePanel, "RedLeaderAvatarBG" );
+	m_pBlueLeaderAvatarBG = new EditablePanel( m_pTeamScorePanel, "BlueLeaderAvatarBG" );
 	m_flTimeUpdateTeamScore = 0;
 	m_iBlueTeamScore = 0;
 	m_iRedTeamScore = 0;
-	m_iGreenTeamScore = 0;
-	m_iYellowTeamScore = 0;
-	
+
 	RegisterForRenderGroup( "mid" );
 }
 
@@ -76,6 +84,8 @@ void CTFWinPanel::Init()
 	ListenForGameEvent( "teamplay_round_start" );
 	ListenForGameEvent( "teamplay_game_over" );
 	ListenForGameEvent( "tf_game_over" );
+	ListenForGameEvent( "training_complete" );
+	ListenForGameEvent( "show_match_summary" );
 
 	m_bShouldBeVisible = false;
 
@@ -106,15 +116,11 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 {
 	const char *pEventName = event->GetName();
 
-	if ( Q_strcmp( "teamplay_round_start", pEventName ) == 0 )
-	{
-		m_bShouldBeVisible = false;
-	}
-	else if ( Q_strcmp( "teamplay_game_over", pEventName ) == 0 )
-	{
-		m_bShouldBeVisible = false;
-	}
-	else if ( Q_strcmp( "tf_game_over", pEventName ) == 0 )
+	if ( FStrEq( "teamplay_round_start", pEventName ) ||
+	     FStrEq( "teamplay_game_over", pEventName ) ||
+		 FStrEq( "tf_game_over", pEventName ) ||
+		 FStrEq( "training_complete", pEventName ) ||
+		 FStrEq( "show_match_summary", pEventName ) )
 	{
 		m_bShouldBeVisible = false;
 	}
@@ -123,11 +129,45 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		if ( !g_PR )
 			return;
 
+		vgui::IScheme* pScheme = scheme()->GetIScheme( GetScheme() );
 		int iWinningTeam = event->GetInt( "winning_team" );
 		int iWinReason = event->GetInt( "winreason" );
 		int iFlagCapLimit = event->GetInt( "flagcaplimit" );
 		bool bRoundComplete = (bool) event->GetInt( "round_complete" );
 		int iRoundsRemaining = event->GetInt( "rounds_remaining" );
+		bool bGameOver = event->GetBool( "game_over", false );
+		bool bUseMoreOpaqueBorder = false;
+		if ( TFGameRules() && bGameOver )
+		{
+			if ( TFGameRules()->IsMatchTypeCompetitive() )
+			{
+				bUseMoreOpaqueBorder = true;
+			}
+		}
+
+		// non-final rounds of stopwatch mode should say something different
+		CTeamRoundTimer *pTimer = NULL;
+		if ( TFGameRules() && TFGameRules()->IsInTournamentMode() && TFGameRules()->IsInStopWatch() )
+		{
+			int iActiveTimer = ObjectiveResource()->GetStopWatchTimer();
+			pTimer = dynamic_cast< CTeamRoundTimer* >( ClientEntityList().GetEnt( iActiveTimer ) );
+			if ( pTimer )
+			{
+				if ( pTimer->IsWatchingTimeStamps() )
+				{
+					iWinningTeam = TEAM_INVALID;
+					iWinReason = bRoundComplete ? WINREASON_STOPWATCH_WATCHING_FINAL_ROUND : WINREASON_STOPWATCH_WATCHING_ROUNDS;
+				}
+				else
+				{
+					if ( !TFGameRules()->HaveStopWatchWinner() && !bRoundComplete )
+					{
+						iWinningTeam = TEAM_INVALID;
+						iWinReason = WINREASON_STOPWATCH_PLAYING_ROUNDS;
+					}
+				}
+			}
+		}
 
 		LoadControlSettings( "resource/UI/WinPanel.res" );		
 		InvalidateLayout( false, true );
@@ -137,92 +177,257 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		SetDialogVariable( "WinReasonLabel", "" );
 		SetDialogVariable( "DetailsLabel", "" );
 
-		vgui::ImagePanel *pImagePanelBG = dynamic_cast<vgui::ImagePanel *>( FindChildByName("WinPanelBG") );
-		Assert( pImagePanelBG );
-		if ( !pImagePanelBG )
+		EditablePanel *pBGPanel = dynamic_cast<EditablePanel *>( FindChildByName("WinPanelBGBorder") );
+		Assert( pBGPanel );
+		if ( !pBGPanel )
 			return;
 
-		// set the appropriate background image and label text
-		const char *pTeamLabel = NULL;
-		const char *pTopPlayersLabel = NULL;
-		const wchar_t *pLocalizedTeamName = NULL;
+		EditablePanel *pBlueBGPanel = FindControl< EditablePanel >( "BlueScoreBG", true );
+		Assert( pBlueBGPanel );
+		EditablePanel *pRedBGPanel = FindControl< EditablePanel >( "RedScoreBG", true );
+		Assert( pRedBGPanel );
+		if( !pBlueBGPanel || !pRedBGPanel )
+			return;
+
+		pBlueBGPanel->SetBorder( pScheme->GetBorder( bUseMoreOpaqueBorder ? "TFFatLineBorderBlueBGMoreOpaque" : "TFFatLineBorderBlueBG" ) );
+		pRedBGPanel->SetBorder( pScheme->GetBorder( bUseMoreOpaqueBorder ? "TFFatLineBorderRedBGMoreOpaque" : "TFFatLineBorderRedBG" ) ) ;
+
+		// we want to suppress the winreason for sd_doomsday_event and plr_hightower_event
+		if ( TFGameRules() )
+		{
+			if ( ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) && CTFMinigameLogic::GetMinigameLogic() && CTFMinigameLogic::GetMinigameLogic()->GetActiveMinigame() ) ||
+				 ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_HIGHTOWER ) ) )
+			{
+				iWinReason = WINREASON_NONE;
+			}
+		}
+
 		// this is an area defense, but not a round win, if this was a successful defend until time limit but not a complete round
 		bool bIsAreaDefense = ( ( WINREASON_DEFEND_UNTIL_TIME_LIMIT == iWinReason ) && !bRoundComplete );
+
+		// set the appropriate background image and label text
+		const wchar_t *pTeamLabel = L"";
+		const wchar_t *pTopPlayersLabel = L"";
+		const wchar_t *pLocalizedTeamName = L"";
+		const char *pWinTeamLabel = ( bRoundComplete ? "#Winpanel_TeamWins" : ( bIsAreaDefense ? "#Winpanel_TeamDefends" : "#Winpanel_TeamAdvances" ) );
+
+		C_TFTeam *pBlueTeam = GetGlobalTFTeam( TF_TEAM_BLUE );
+		const wchar_t *pBlueTeamName = pBlueTeam ? pBlueTeam->Get_Localized_Name() : L"BLU";
+
+		C_TFTeam *pRedTeam = GetGlobalTFTeam( TF_TEAM_RED );
+		const wchar_t *pRedTeamName = pRedTeam ? pRedTeam->Get_Localized_Name() : L"RED";
+
+		if ( TFGameRules() && TFGameRules()->IsInTournamentMode() )
+		{
+			pWinTeamLabel = ( bRoundComplete ? "#Winpanel_TournamentTeamWins" : ( bIsAreaDefense ? "#Winpanel_TournamentTeamDefends" : "#Winpanel_TournamentTeamAdvances" ) );
+		}
+
+		wchar_t wzTeamWin[256] = L"";
 		switch ( iWinningTeam )
 		{
 		case TF_TEAM_BLUE:
-			pImagePanelBG->SetImage( "../hud/winpanel_blue_bg_main.vmt" );
-			pTeamLabel = ( bRoundComplete ? "#Winpanel_BlueWins" : ( bIsAreaDefense ? "#Winpanel_BlueDefends" : "#Winpanel_BlueAdvances" ) );
-			pTopPlayersLabel = "#Winpanel_BlueMVPs";
-			pLocalizedTeamName =  g_pVGuiLocalize->Find( "TF_BlueTeam_Name" );
+			pBGPanel->SetBorder( pScheme->GetBorder( bUseMoreOpaqueBorder ? "TFFatLineBorderBlueBGMoreOpaque" : "TFFatLineBorderBlueBG" ) );
+			pTopPlayersLabel = g_pVGuiLocalize->Find( "#Winpanel_BlueMVPs" );
+			pLocalizedTeamName = pBlueTeamName;
+			g_pVGuiLocalize->ConstructString_safe( wzTeamWin, g_pVGuiLocalize->Find( pWinTeamLabel ), 2, pLocalizedTeamName, g_pVGuiLocalize->Find( "#Winpanel_Team1" ) );
+			pTeamLabel = wzTeamWin;
 			break;
 		case TF_TEAM_RED:
-			pImagePanelBG->SetImage( "../hud/winpanel_red_bg_main.vmt" );
-			pTeamLabel = ( bRoundComplete ? "#Winpanel_RedWins" : ( bIsAreaDefense ? "#Winpanel_RedDefends" : "#Winpanel_RedAdvances" ) );
-			pTopPlayersLabel = "#Winpanel_RedMVPs";
-			pLocalizedTeamName =  g_pVGuiLocalize->Find( "TF_RedTeam_Name" );
-			break;
-		case TF_TEAM_GREEN:
-			pImagePanelBG->SetImage("../hud/winpanel_green_bg_main.vmt");
-			pTeamLabel = (bRoundComplete ? "#Winpanel_GreenWins" : (bIsAreaDefense ? "#Winpanel_GreenDefends" : "#Winpanel_GreenAdvances"));
-			pTopPlayersLabel = "#Winpanel_GreenMVPs";
-			pLocalizedTeamName = g_pVGuiLocalize->Find("TF_GreenTeam_Name");
-			break;
-		case TF_TEAM_YELLOW:
-			pImagePanelBG->SetImage("../hud/winpanel_yellow_bg_main.vmt");
-			pTeamLabel = (bRoundComplete ? "#Winpanel_YellowWins" : (bIsAreaDefense ? "#Winpanel_YellowDefends" : "#Winpanel_YellowAdvances"));
-			pTopPlayersLabel = "#Winpanel_YellowMVPs";
-			pLocalizedTeamName = g_pVGuiLocalize->Find("TF_YellowTeam_Name");
+			pBGPanel->SetBorder( pScheme->GetBorder( bUseMoreOpaqueBorder ? "TFFatLineBorderRedBGMoreOpaque" : "TFFatLineBorderRedBG" ) );
+			pTopPlayersLabel = g_pVGuiLocalize->Find( "#Winpanel_RedMVPs" );
+			pLocalizedTeamName = pRedTeamName;
 			break;
 		case TEAM_UNASSIGNED:	// stalemate
-			pImagePanelBG->SetImage( "../hud/winpanel_black_bg_main.vmt" );
-			pTeamLabel = "#Winpanel_Stalemate";
-			pTopPlayersLabel = "#Winpanel_TopPlayers";
+			pBGPanel->SetBorder( pScheme->GetBorder( "TFFatLineBorder" ) );
+			pTeamLabel = g_pVGuiLocalize->Find( "#Winpanel_Stalemate" );
+			pTopPlayersLabel = g_pVGuiLocalize->Find( "#Winpanel_TopPlayers" );
+			break;
+		case TEAM_INVALID:		// used for stopwatch mode when it's not the final victory yet
+			pBGPanel->SetBorder( pScheme->GetBorder( "TFFatLineBorder" ) );
+			pTopPlayersLabel = g_pVGuiLocalize->Find( "#Winpanel_TopPlayers" );
+			pTeamLabel = L"";
+			if ( pBlueTeam && pBlueTeamName && pRedTeamName )
+			{
+				if ( bRoundComplete )
+				{
+					pTeamLabel = g_pVGuiLocalize->Find( "#WinPanel_StopWatch_Watching_RoundFinal" );
+				}
+				else
+				{
+					bool bBlueAttackers = ( pBlueTeam->GetRole() == TEAM_ROLE_ATTACKERS );
+					g_pVGuiLocalize->ConstructString_safe( wzTeamWin,
+						g_pVGuiLocalize->Find( "#WinPanel_StopWatch_Round_Complete" ),
+						1,
+						bBlueAttackers ? pBlueTeamName : pRedTeamName );
+
+					pTeamLabel = wzTeamWin;
+				}
+			}
 			break;
 		default:
 			Assert( false );
 			break;
 		}
 
-		SetDialogVariable( bRoundComplete ? "WinningTeamLabel" : "AdvancingTeamLabel", g_pVGuiLocalize->Find( pTeamLabel ) );
-		SetDialogVariable( "TopPlayersLabel", g_pVGuiLocalize->Find( pTopPlayersLabel ) );
+		SetDialogVariable( "TopPlayersLabel", pTopPlayersLabel );
 
-		wchar_t wzWinReason[256]=L"";
+		if ( TFGameRules() && TFGameRules()->IsInTournamentMode() && !TFGameRules()->IsInStopWatch() )
+		{
+			g_pVGuiLocalize->ConstructString_safe( wzTeamWin, g_pVGuiLocalize->Find( pWinTeamLabel ), 1, pLocalizedTeamName );
+
+			wchar_t wzTeamMPVs[256];
+			g_pVGuiLocalize->ConstructString_safe( wzTeamMPVs, g_pVGuiLocalize->Find( "#Winpanel_TournamentMVPs" ), 1, pLocalizedTeamName );
+
+			if ( iWinningTeam != TEAM_UNASSIGNED )
+			{
+				SetDialogVariable( "TopPlayersLabel", wzTeamMPVs );
+			}
+		}
+		else if ( ( iWinningTeam != TEAM_UNASSIGNED ) && ( iWinningTeam != TEAM_INVALID ) )
+		{
+			g_pVGuiLocalize->ConstructString_safe( wzTeamWin, g_pVGuiLocalize->Find( pWinTeamLabel ), 2, pLocalizedTeamName, g_pVGuiLocalize->Find( "#Winpanel_Team1" ) );
+		}
+
+		if ( ( iWinningTeam != TEAM_UNASSIGNED ) && ( iWinningTeam != TEAM_INVALID ) )
+		{
+			pTeamLabel = wzTeamWin;
+		}
+
+		SetDialogVariable( bRoundComplete ? "WinningTeamLabel" : "AdvancingTeamLabel", pTeamLabel );
+
+		wchar_t wzWinReason[256] = L"";
 		switch ( iWinReason )
 		{
 		case WINREASON_ALL_POINTS_CAPTURED:
-			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_AllPointsCaptured" ), 1, pLocalizedTeamName );
+			{
+				if ( TFGameRules() && ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT ) && ( TFGameRules()->HasMultipleTrains() == true ) && ( iRoundsRemaining == 0 ) )
+				{
+					g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_PayloadRace" ), 1, pLocalizedTeamName );
+				}
+				else
+				{
+					g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_AllPointsCaptured" ), 1, pLocalizedTeamName );
+				}
+			}
 			break;
 		case WINREASON_FLAG_CAPTURE_LIMIT:
 			{
 				wchar_t wzFlagCaptureLimit[16];
 				_snwprintf( wzFlagCaptureLimit, ARRAYSIZE( wzFlagCaptureLimit), L"%i", iFlagCapLimit );
-				g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_FlagCaptureLimit" ), 2, 
+
+				const wchar_t *wpszFormatString = NULL;
+				if ( iFlagCapLimit == 1 )
+				{
+					wpszFormatString = g_pVGuiLocalize->Find( "#Winreason_FlagCaptureLimit_One" );
+				}
+				if ( !wpszFormatString )
+				{
+					wpszFormatString = g_pVGuiLocalize->Find( "#Winreason_FlagCaptureLimit" );
+				}
+
+				g_pVGuiLocalize->ConstructString_safe( wzWinReason, wpszFormatString, 2,
 					pLocalizedTeamName, wzFlagCaptureLimit );
 			}			
 			break;
 		case WINREASON_OPPONENTS_DEAD:
-			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_OpponentsDead" ), 1, pLocalizedTeamName );
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_OpponentsDead" ), 1, pLocalizedTeamName );
 			break;
 		case WINREASON_DEFEND_UNTIL_TIME_LIMIT:
-			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_DefendedUntilTimeLimit" ), 1, pLocalizedTeamName );
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_DefendedUntilTimeLimit" ), 1, pLocalizedTeamName );
 			break;
 		case WINREASON_STALEMATE:
-			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_Stalemate" ), 0 );
+			if ( !TFGameRules() || !TFGameRules()->IsCompetitiveMode() )
+			{
+				g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_Stalemate" ), 0 );
+			}
 			break;	
+		case WINREASON_TIMELIMIT:
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_TimeLimit" ), 1, pLocalizedTeamName );
+			break;
+		case WINREASON_WINLIMIT:
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_WinLimit" ), 1, pLocalizedTeamName );
+			break;
+		case WINREASON_WINDIFFLIMIT:
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_WinDiffLimit" ), 1, pLocalizedTeamName );
+			break;
+		case WINREASON_RD_REACTOR_CAPTURED:
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_ReactorCaptured" ), 1, pLocalizedTeamName );
+			break;
+		case WINREASON_RD_CORES_COLLECTED:
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_CoresCollected" ), 1, pLocalizedTeamName );
+			break;
+		case WINREASON_RD_REACTOR_RETURNED:
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_ReactorReturned" ), 1, pLocalizedTeamName );
+			break;
+		case WINREASON_PD_POINTS:
+			g_pVGuiLocalize->ConstructString_safe( wzWinReason, g_pVGuiLocalize->Find( "#Winreason_PlayerDestructionPoints" ), 1, pLocalizedTeamName );
+			break;
+		case WINREASON_SCORED:
+			{
+				wchar_t wzScoreLimit[16];
+				_snwprintf( wzScoreLimit, ARRAYSIZE( wzScoreLimit ), L"%i", iFlagCapLimit );
+
+				const wchar_t *wpszFormatString = NULL;
+				if ( iFlagCapLimit == 1 )
+				{
+					wpszFormatString = g_pVGuiLocalize->Find( "#Winreason_ScoreLimit_One" );
+				}
+				if ( !wpszFormatString )
+				{
+					wpszFormatString = g_pVGuiLocalize->Find( "#Winreason_ScoreLimit" );
+				}
+
+				g_pVGuiLocalize->ConstructString_safe( wzWinReason, wpszFormatString, 2,
+					pLocalizedTeamName, wzScoreLimit );
+			}			
+			break;
+		case WINREASON_STOPWATCH_WATCHING_ROUNDS:
+			if ( pBlueTeam && pBlueTeamName && pRedTeamName )
+			{
+				bool bBlueAttackers = ( pBlueTeam->GetRole() == TEAM_ROLE_ATTACKERS );
+				g_pVGuiLocalize->ConstructString_safe( wzWinReason,
+					g_pVGuiLocalize->Find( "#Winreason_Stopwatch_Watching_Rounds" ),
+					2,
+					bBlueAttackers ? pBlueTeamName : pRedTeamName,
+					bBlueAttackers ? pRedTeamName : pBlueTeamName );
+			}
+			break;
+		case WINREASON_STOPWATCH_WATCHING_FINAL_ROUND:
+			if ( pBlueTeam && pBlueTeamName && pRedTeamName )
+			{
+				bool bBlueAttackers = ( pBlueTeam->GetRole() == TEAM_ROLE_ATTACKERS );
+				g_pVGuiLocalize->ConstructString_safe( wzWinReason,
+					g_pVGuiLocalize->Find( "#Winreason_Stopwatch_SwitchSides" ),
+					2,
+					bBlueAttackers ? pRedTeamName : pBlueTeamName,
+					bBlueAttackers ? pBlueTeamName : pRedTeamName );
+			}
+			break;
+		case WINREASON_STOPWATCH_PLAYING_ROUNDS:
+			if ( pBlueTeam && pBlueTeamName && pRedTeamName )
+			{
+				bool bBlueAttackers = ( pBlueTeam->GetRole() == TEAM_ROLE_ATTACKERS );
+				g_pVGuiLocalize->ConstructString_safe( wzWinReason,
+					g_pVGuiLocalize->Find( "#Winreason_Stopwatch_Playing_Rounds" ),
+					2,
+					bBlueAttackers ? pBlueTeamName : pRedTeamName,
+					bBlueAttackers ? pRedTeamName : pBlueTeamName );
+			}
+			break;
 		default:
+			// This happens at the end of the Soldier training mission, FYI
 			Assert( false );
 			break;
 		}
 		SetDialogVariable( "WinReasonLabel", wzWinReason );
 
-		if ( !bRoundComplete && ( WINREASON_STALEMATE != iWinReason ) )
+		if ( !bRoundComplete && ( WINREASON_STALEMATE != iWinReason ) && ( WINREASON_STOPWATCH_WATCHING_ROUNDS != iWinReason ) && ( WINREASON_STOPWATCH_WATCHING_FINAL_ROUND != iWinReason ) && ( WINREASON_STOPWATCH_PLAYING_ROUNDS != iWinReason ) )
 		{			
 			// if this was a mini-round, show # of capture points remaining
 			wchar_t wzNumCapturesRemaining[16];
 			wchar_t wzCapturesRemainingMsg[256]=L"";
 			_snwprintf( wzNumCapturesRemaining, ARRAYSIZE( wzNumCapturesRemaining ), L"%i", iRoundsRemaining );
-			g_pVGuiLocalize->ConstructString( wzCapturesRemainingMsg, sizeof( wzCapturesRemainingMsg ), 
+			g_pVGuiLocalize->ConstructString_safe( wzCapturesRemainingMsg,  
 				g_pVGuiLocalize->Find( 1 == iRoundsRemaining ? "#Winpanel_CapturePointRemaining" : "Winpanel_CapturePointsRemaining" ),
 				1, wzNumCapturesRemaining );
 			SetDialogVariable( "DetailsLabel", wzCapturesRemainingMsg );
@@ -246,7 +451,7 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 					}
 				}
 				g_pVGuiLocalize->ConvertANSIToUnicode( szPlayerNames, wzPlayerNames, sizeof( wzPlayerNames ) );
-				g_pVGuiLocalize->ConstructString( wzCapMsg, sizeof( wzCapMsg ), g_pVGuiLocalize->Find( "#Winpanel_WinningCapture" ), 1, wzPlayerNames );
+				g_pVGuiLocalize->ConstructString_safe( wzCapMsg, g_pVGuiLocalize->Find( "#Winpanel_WinningCapture" ), 1, wzPlayerNames );
 				SetDialogVariable( "DetailsLabel", wzCapMsg );
 			}
 		}
@@ -256,50 +461,19 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		int iRedTeamPrevScore = event->GetInt( "red_score_prev", 0 );
 		m_iBlueTeamScore = event->GetInt( "blue_score", 0 );
 		m_iRedTeamScore = event->GetInt( "red_score", 0 );
-		
+
 		if ( m_pTeamScorePanel )
-		{			
+		{
+			m_pTeamScorePanel->SetDialogVariable( "blueteamname", pBlueTeamName );
+			m_pTeamScorePanel->SetDialogVariable( "redteamname", pRedTeamName );
+
 			if ( bRoundComplete )
 			{
 				// set the previous team scores in scoreboard
 				m_pTeamScorePanel->SetDialogVariable( "blueteamscore", iBlueTeamPrevScore );
 				m_pTeamScorePanel->SetDialogVariable( "redteamscore", iRedTeamPrevScore );
 
-				m_pTeamScorePanel->SetDialogVariable( "blueteamname", GetGlobalTeam(TF_TEAM_BLUE)->Get_Name() );
-				m_pTeamScorePanel->SetDialogVariable( "redteamname", GetGlobalTeam(TF_TEAM_RED)->Get_Name() );
-
-				if (TFGameRules()->IsFourTeamGame())
-				{
-					vgui::ImagePanel *pGreenBG = dynamic_cast<vgui::ImagePanel *>(m_pTeamScorePanel->FindChildByName("GreenScoreBG"));
-					vgui::ImagePanel *pYellowBG = dynamic_cast<vgui::ImagePanel *>(m_pTeamScorePanel->FindChildByName("YellowScoreBG"));
-
-					if (pGreenBG && pYellowBG)
-					{
-						pGreenBG->SetEnabled(true);
-						pGreenBG->SetVisible(true);
-						pYellowBG->SetEnabled(true);
-						pYellowBG->SetVisible(true);
-					}
-
-					int iGreenTeamPrevScore = event->GetInt("green_score_prev", 0);
-					int iYellowTeamPrevScore = event->GetInt("yellow_score_prev", 0);
-					m_iGreenTeamScore = event->GetInt("green_score", 0);
-					m_iYellowTeamScore = event->GetInt("yellow_score", 0);
-
-					m_pTeamScorePanel->SetDialogVariable("greenteamscore", iGreenTeamPrevScore);
-					m_pTeamScorePanel->SetDialogVariable("yellowteamscore", iYellowTeamPrevScore);
-
-					m_pTeamScorePanel->SetDialogVariable("greenteamname", GetGlobalTeam(TF_TEAM_GREEN)->Get_Name());
-					m_pTeamScorePanel->SetDialogVariable("yellowteamname", GetGlobalTeam(TF_TEAM_YELLOW)->Get_Name());
-
-					if ((m_iBlueTeamScore != iBlueTeamPrevScore) || (m_iRedTeamScore != iRedTeamPrevScore) || (m_iGreenTeamScore != iGreenTeamPrevScore) || (m_iYellowTeamScore != iYellowTeamPrevScore))
-					{
-						// if the new scores are different, set ourselves to update the scoreboard to the new values after a short delay, so players
-						// see the scores tick up
-						m_flTimeUpdateTeamScore = gpGlobals->curtime + 2.0f;
-					}
-				}
-				else if ( ( m_iBlueTeamScore != iBlueTeamPrevScore ) || ( m_iRedTeamScore != iRedTeamPrevScore ) )
+				if ( ( m_iBlueTeamScore != iBlueTeamPrevScore ) || ( m_iRedTeamScore != iRedTeamPrevScore ) )
 				{
 					// if the new scores are different, set ourselves to update the scoreboard to the new values after a short delay, so players
 					// see the scores tick up
@@ -310,8 +484,7 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 			m_pTeamScorePanel->SetVisible( bRoundComplete );
 		}
 
-		C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
-		if ( !tf_PR )
+		if ( !g_TF_PR )
 			return;
 
 		// look for the top 3 players sent in the event
@@ -328,24 +501,58 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 			if ( iRoundScore > 0 )
 				bShow = true;
 
-#if !defined( _X360 )
 			CAvatarImagePanel *pPlayerAvatar = dynamic_cast<CAvatarImagePanel *>( FindChildByName( CFmtStr( "Player%dAvatar", i ) ) );
-
 			if ( pPlayerAvatar )
 			{
-				if (bShow)
+				pPlayerAvatar->SetShouldScaleImage( true );
+				pPlayerAvatar->SetShouldDrawFriendIcon( false );
+
+				if ( bShow )
 				{
-					pPlayerAvatar->SetShouldDrawFriendIcon(false);
-					pPlayerAvatar->SetPlayer(iPlayerIndex);
+					CBasePlayer *pPlayer = UTIL_PlayerByIndex( iPlayerIndex );
+					pPlayerAvatar->SetPlayer( pPlayer );
 				}
 
-				pPlayerAvatar->SetVisible(bShow);
+				pPlayerAvatar->SetVisible( bShow );
 			}
-#endif
+
+			CTFBadgePanel *pBadgePanel = dynamic_cast<CTFBadgePanel *>( FindChildByName( CFmtStr( "Player%dBadge", i ) ) );
+			if ( pBadgePanel )
+			{
+				const IMatchGroupDescription *pMatchDesc = TFGameRules() ? GetMatchGroupDescription( TFGameRules()->GetCurrentMatchGroup() ) : NULL;
+
+				bool bVisible = pMatchDesc && pMatchDesc->m_pProgressionDesc;
+				if ( bVisible )
+				{
+					if ( !bGameOver && TFGameRules()->IsMatchTypeCompetitive() )
+					{
+						bVisible = false;
+					}
+				}
+
+				if ( bVisible )
+				{
+					const CSteamID steamID = GetSteamIDForPlayerIndex( iPlayerIndex );
+					if ( steamID.IsValid() )
+					{
+						pBadgePanel->SetupBadge( pMatchDesc, steamID );
+					}
+					else
+					{
+						bVisible = false;
+					}
+				}
+
+				if ( pBadgePanel->IsVisible() != bVisible )
+				{
+					pBadgePanel->SetVisible( bVisible );
+				}
+			}
+
 			vgui::Label *pPlayerName = dynamic_cast<Label *>( FindChildByName( CFmtStr( "Player%dName", i ) ) );
 			vgui::Label *pPlayerClass = dynamic_cast<Label *>( FindChildByName( CFmtStr( "Player%dClass", i ) ) );
 			vgui::Label *pPlayerScore = dynamic_cast<Label *>( FindChildByName( CFmtStr( "Player%dScore", i ) ) );
-			
+
 			if ( !pPlayerName || !pPlayerClass || !pPlayerScore )
 				return;
 
@@ -359,8 +566,16 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 
 				// set label contents
 				pPlayerName->SetText( g_PR->GetPlayerName( iPlayerIndex ) );
-				pPlayerClass->SetText( g_aPlayerClassNames[tf_PR->GetPlayerClass( iPlayerIndex )] );
+				pPlayerClass->SetText( g_aPlayerClassNames[g_TF_PR->GetPlayerClass( iPlayerIndex )] );
 				pPlayerScore->SetText( CFmtStr( "%d", iRoundScore ) );
+
+				// send an achievement event
+				IGameEvent *pEvent = gameeventmanager->CreateEvent( "player_mvp" );
+				if ( pEvent )
+				{
+					pEvent->SetInt( "player", iPlayerIndex );
+					gameeventmanager->FireEventClientSide( pEvent );
+				}
 			}
 
 			// show or hide labels for this player position
@@ -369,10 +584,109 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 			pPlayerScore->SetVisible( bShow );
 		}
 
+		// Top killstreak
+		const int nMaxKillStreaks = 1;
+		for ( int i = 1; i <= nMaxKillStreaks; ++i )
+		{
+			char szPlayerIndexVal[64]="", szPlayerScoreVal[64]="";
+			Q_snprintf( szPlayerIndexVal, ARRAYSIZE( szPlayerIndexVal ), "killstreak_player_%d", i );
+			Q_snprintf( szPlayerScoreVal, ARRAYSIZE( szPlayerScoreVal ), "killstreak_player_%d_count", i );
+			int iPlayerIndex = event->GetInt( szPlayerIndexVal, 0 );
+			int iCount = event->GetInt( szPlayerScoreVal, 0 );
+			
+			vgui::Label *pKillStreakPlayerName = dynamic_cast<Label *>( FindChildByName( CFmtStr( "KillStreakPlayer%dName", i ) ) );
+			vgui::Label *pKillStreakPlayerClass = dynamic_cast<Label *>( FindChildByName( CFmtStr( "KillStreakPlayer%dClass", i ) ) );
+			vgui::Label *pKillStreakPlayerScore = dynamic_cast<Label *>( FindChildByName( CFmtStr( "KillStreakPlayer%dScore", i ) ) );
+			if ( !pKillStreakPlayerName || !pKillStreakPlayerClass || !pKillStreakPlayerScore )
+				continue;
+
+			bool bShow = iCount > 0;
+			if ( bShow )
+			{
+				CAvatarImagePanel *pPlayerAvatar = dynamic_cast<CAvatarImagePanel *>( FindChildByName( CFmtStr( "KillStreakPlayer%dAvatar", i ) ) );
+				if ( pPlayerAvatar )
+				{
+					pPlayerAvatar->SetShouldScaleImage( true );
+					pPlayerAvatar->SetShouldDrawFriendIcon( false );
+
+					CBasePlayer *pPlayer = UTIL_PlayerByIndex( iPlayerIndex );
+					pPlayerAvatar->SetPlayer( pPlayer );
+					pPlayerAvatar->SetVisible( true );
+				}
+
+				// set the player labels to team color
+				Color clr = g_PR->GetTeamColor( g_PR->GetTeam( iPlayerIndex ) );				
+				pKillStreakPlayerName->SetFgColor( clr );
+				pKillStreakPlayerClass->SetFgColor( clr );
+				pKillStreakPlayerScore->SetFgColor( clr );
+
+				// set label contents
+				pKillStreakPlayerName->SetText( g_PR->GetPlayerName( iPlayerIndex ) );
+				pKillStreakPlayerClass->SetText( g_aPlayerClassNames[g_TF_PR->GetPlayerClass( iPlayerIndex )] );
+				pKillStreakPlayerScore->SetText( CFmtStr( "%d", iCount ) );
+			}
+
+			CTFBadgePanel *pBadgePanel = dynamic_cast<CTFBadgePanel *>( FindChildByName( CFmtStr( "KillStreakPlayer%dBadge", i ) ) );
+			if ( pBadgePanel )
+			{
+				const IMatchGroupDescription *pMatchDesc = GetMatchGroupDescription( TFGameRules()->GetCurrentMatchGroup() );
+
+				bool bVisible = ( bShow && pMatchDesc );
+				if ( bVisible )
+				{
+					const CSteamID steamID = GetSteamIDForPlayerIndex( iPlayerIndex );
+					if ( steamID.IsValid() )
+					{
+						pBadgePanel->SetupBadge( pMatchDesc, steamID );
+					}
+					else
+					{
+						bVisible = false;
+					}
+				}
+
+				if ( pBadgePanel->IsVisible() != bVisible )
+				{
+					pBadgePanel->SetVisible( bVisible );
+				}
+			}
+
+			// show or hide labels for this player position
+			pKillStreakPlayerName->SetVisible( bShow );
+			pKillStreakPlayerClass->SetVisible( bShow );
+			pKillStreakPlayerScore->SetVisible( bShow );
+		}
+
+		UpdateTeamInfo();
+
 		m_bShouldBeVisible = true;
 
 		MoveToFront();
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFWinPanel::UpdateTeamInfo()
+{
+	bool bShowAvatars = g_TF_PR && g_TF_PR->HasPremadeParties();
+
+	if ( bShowAvatars )
+	{
+		m_pRedLeaderAvatarImage->SetPlayer( GetSteamIDForPlayerIndex( g_TF_PR->GetPartyLeaderRedTeamIndex() ), k_EAvatarSize64x64 );
+		m_pRedLeaderAvatarImage->SetShouldDrawFriendIcon( false );
+		m_pBlueLeaderAvatarImage->SetPlayer( GetSteamIDForPlayerIndex( g_TF_PR->GetPartyLeaderBlueTeamIndex() ), k_EAvatarSize64x64 );
+		m_pBlueLeaderAvatarImage->SetShouldDrawFriendIcon( false );
+	}
+
+	m_pRedLeaderAvatarImage->SetVisible( bShowAvatars );
+	m_pRedLeaderAvatarBG->SetVisible( bShowAvatars );
+	m_pRedTeamName->SetVisible( !bShowAvatars );
+
+	m_pBlueLeaderAvatarImage->SetVisible( bShowAvatars );
+	m_pBlueLeaderAvatarBG->SetVisible( bShowAvatars );
+	m_pBlueTeamName->SetVisible( !bShowAvatars );
 }
 
 //-----------------------------------------------------------------------------
@@ -402,18 +716,22 @@ void CTFWinPanel::OnThink()
 	// if we've scheduled ourselves to update the team scores, handle it now
 	if ( m_flTimeUpdateTeamScore > 0 && ( gpGlobals->curtime > 	m_flTimeUpdateTeamScore ) && m_pTeamScorePanel )
 	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "winpanel_show_scores" );
+		if ( event )
+		{
+			gameeventmanager->FireEventClientSide( event );
+		}
+
 		// play a sound
 		CLocalPlayerFilter filter;
 		C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "Hud.EndRoundScored" );
 
 		// update the team scores
-		m_pTeamScorePanel->SetDialogVariable( "blueteamscore", m_iBlueTeamScore );
-		m_pTeamScorePanel->SetDialogVariable( "redteamscore", m_iRedTeamScore );
-
-		// update the team names
-		m_pTeamScorePanel->SetDialogVariable( "blueteamname", GetGlobalTeam(TF_TEAM_BLUE)->Get_Name() );
-		m_pTeamScorePanel->SetDialogVariable( "redteamname", GetGlobalTeam(TF_TEAM_RED)->Get_Name() );
-
+		if ( m_pTeamScorePanel )
+		{
+			m_pTeamScorePanel->SetDialogVariable( "blueteamscore", m_iBlueTeamScore );
+			m_pTeamScorePanel->SetDialogVariable( "redteamscore", m_iRedTeamScore );
+		}
 		m_flTimeUpdateTeamScore = 0;
 	}
 }

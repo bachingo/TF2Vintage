@@ -1624,10 +1624,9 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 
 				ScriptVariant_t varTable;
 				g_pScriptVM->CreateTable( varTable );
-				HSCRIPT hTable = varTable.m_hScript;
 				for ( int i = 0; i < args.ArgC(); i++ )
 				{
-					g_pScriptVM->SetValue( hTable, CNumStr( i ), ScriptVariant_t( args[i] ) );
+					g_pScriptVM->SetValue( varTable, CNumStr( i ), ScriptVariant_t( args[i] ) );
 				}
 				g_pScriptVM->SetValue( "args", varTable );
 
@@ -1637,7 +1636,7 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 				g_pScriptVM->ClearValue( "args" );
 				g_pScriptVM->ReleaseValue( varTable );
 
-				if ( functionReturn.m_bool )
+				if ( functionReturn.Get<bool>() )
 					return;
 			}
 

@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,14 +11,7 @@
 #pragma once
 #endif
 
-#include "hudelement.h"
 #include "hud_crosshair.h"
-#include <vgui_controls/Panel.h>
-
-namespace vgui
-{
-	class IScheme;
-};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -26,34 +19,26 @@ namespace vgui
 class CHudTFCrosshair : public CHudCrosshair
 {
 public:
-	DECLARE_CLASS_SIMPLE(CHudTFCrosshair, CHudCrosshair);
+	DECLARE_CLASS_SIMPLE( CHudTFCrosshair, CHudCrosshair );
 
-	CHudTFCrosshair(const char *pElementName);
+	CHudTFCrosshair( const char *name );
+	virtual ~CHudTFCrosshair( void );
 
-	virtual void Paint();
-	virtual void Init();
-	virtual bool ShouldDraw();
-	virtual void ApplySchemeSettings( vgui::IScheme *scheme );
+	virtual void Init() OVERRIDE;
+	virtual void LevelShutdown( void ) OVERRIDE;
+	virtual bool ShouldDraw() OVERRIDE;
 
-	virtual void LevelShutdown( void );
-
-	//stub
-	void SetCrosshair( CHudTexture *texture, Color& clr );
-	void ResetCrosshair() {}
+protected:
+	virtual void Paint() OVERRIDE;
+	virtual void FireGameEvent( IGameEvent * event ) OVERRIDE;
 
 private:
 	int					m_iCrosshairTextureID;
-	IVguiMatInfo		*m_pCrosshairOverride;
-	IVguiMatInfoVar		*m_pFrameVar;				// interface for material frame
-	int					m_nNumFrames;				// how many frames this crosshair has
+	IVguiMatInfo		*m_pCrosshairMaterial;
 
 	char				m_szPreviousCrosshair[256];	// name of the current crosshair
-	float				m_flAccuracy;
+	float				m_flTimeToHideUntil;
 };
-
-
-// Enable/disable crosshair rendering.
-extern ConVar crosshair;
 
 
 #endif // HUD_TF_CROSSHAIR_H

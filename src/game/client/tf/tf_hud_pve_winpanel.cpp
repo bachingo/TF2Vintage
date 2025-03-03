@@ -1,31 +1,40 @@
-//========= Copyright © Valve LLC, All rights reserved. =======================
+
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================
+//=============================================================================//
+
 #include "cbase.h"
-#include <vgui/ILocalize.h>
-#include <vgui_controls/AnimationController.h>
 #include "tf_hud_pve_winpanel.h"
 #include "tf_hud_statpanel.h"
-#include "tf_controls.h"
+#include "tf_spectatorgui.h"
+#include "vgui_controls/AnimationController.h"
 #include "iclientmode.h"
+#include "engine/IEngineSound.h"
 #include "c_tf_playerresource.h"
+#include "c_team.h"
+#include "tf_clientscoreboard.h"
+#include <vgui_controls/Label.h>
+#include <vgui_controls/ImagePanel.h>
+#include <vgui/ILocalize.h>
+#include <vgui/ISurface.h>
+#include "vgui_avatarimage.h"
+#include "fmtstr.h"
+#include "teamplayroundbased_gamerules.h"
+#include "tf_hud_mann_vs_machine_status.h"
 #include "tf_gamerules.h"
-#include "tf_mann_vs_machine_stats.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-using namespace vgui;
-
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFPVEWinPanel::CTFPVEWinPanel( IViewPort *pViewPort ) 
-	: EditablePanel( NULL, "PVEWinPanel" )
+CTFPVEWinPanel::CTFPVEWinPanel( IViewPort *pViewPort ) : EditablePanel( NULL, "PVEWinPanel" )
 {
+	//SetAlpha( 0 );
 	SetScheme( "ClientScheme" );
 
 	ListenForGameEvent( "pve_win_panel" );
@@ -34,30 +43,13 @@ CTFPVEWinPanel::CTFPVEWinPanel( IViewPort *pViewPort )
 	ListenForGameEvent( "tf_game_over" );
 
 	m_bShouldBeVisible = false;
+
 	m_pRespecContainerPanel = NULL;
 	m_pRespecBackground = NULL;
 	m_pRespecCountLabel = NULL;
 	m_pRespecTextLabel = NULL;
 
 	vgui::ivgui()->AddTickSignal( GetVPanel(), 50 );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPVEWinPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
-{
-	BaseClass::ApplySchemeSettings( pScheme );
-
-	LoadControlSettings( "resource/UI/HudPVEWinPanel.res" );
-
-	m_pRespecBackground = dynamic_cast<vgui::ScalableImagePanel *>( FindChildByName( "RespecBackground" ) );
-	m_pRespecContainerPanel = dynamic_cast<vgui::EditablePanel *>( FindChildByName( "RespecContainer" ) );
-	if ( m_pRespecContainerPanel )
-	{
-		m_pRespecTextLabel = dynamic_cast<vgui::Label *>( m_pRespecContainerPanel->FindChildByName( "RespecTextLabelLoss" ) );
-		m_pRespecCountLabel = dynamic_cast<vgui::Label *>( m_pRespecContainerPanel->FindChildByName( "RespecCountLabel" ) );
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -71,56 +63,86 @@ void CTFPVEWinPanel::ApplySettings( KeyValues *inResourceData )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPVEWinPanel::FireGameEvent( IGameEvent *event )
+void CTFPVEWinPanel::FireGameEvent( IGameEvent * event )
 {
-	const char *pszEventName = event->GetName();
+	const char *pEventName = event->GetName();
 
-	if ( !V_strcmp( "teamplay_round_start", pszEventName ) || !V_strcmp( "teamplay_game_over", pszEventName ) ||
-		 !V_strcmp( "tf_game_over", pszEventName ) || !V_strcmp( "training_complete", pszEventName ) )
+	if ( Q_strcmp( "teamplay_round_start", pEventName ) == 0 || 
+		 Q_strcmp( "teamplay_game_over", pEventName ) == 0 || 
+		 Q_strcmp( "tf_game_over", pEventName ) == 0 || 
+		 Q_strcmp( "training_complete", pEventName ) == 0 )
 	{
 		m_bShouldBeVisible = false;
 	}
-	else if ( !V_strcmp( "pve_win_panel", pszEventName ) )
+	else if ( Q_strcmp( "pve_win_panel", pEventName ) == 0 )
 	{
 		if ( !g_PR )
 			return;
 
 		int iWinningTeam = event->GetInt( "winning_team" );
-		if ( iWinningTeam == TF_TEAM_MVM_BOTS )
+		int iWinReason = event->GetInt( "winreason" );
+
+		if ( iWinningTeam != TF_TEAM_PVE_INVADERS )
 		{
-			LoadControlSettings( "resource/UI/HudPVEWinPanel.res" );
-
-			InvalidateLayout( false, true );
-
-			SetDialogVariable( "WinningTeamLabel", L"" );
-
-			wchar_t *pwchWinReason = g_pVGuiLocalize->Find( "#Winpanel_PVE_Bomb_Deployed" );
-			SetDialogVariable( "WinReasonLabel", pwchWinReason );
-
-			wchar_t *pwchDetails = g_pVGuiLocalize->Find( "#TF_PVE_RestoreToCheckpointDetailed" );
-			SetDialogVariable( "DetailsLabel", pwchDetails );
-
-			MoveToFront();
-
-			m_bShouldBeVisible = true;
+			// Only show this when the robots win
+			return;
 		}
+
+		LoadControlSettings( "resource/UI/HudPVEWinPanel.res" );	
+		InvalidateLayout( false, true );
+
+		SetDialogVariable( "WinningTeamLabel", "" );
+		SetDialogVariable( "WinReasonLabel", "" );
+		SetDialogVariable( "DetailsLabel", "" );
+
+		wchar_t *pwchWinReason = L"";
+		switch ( iWinReason )
+		{
+		case 0:
+		default:
+			pwchWinReason = g_pVGuiLocalize->Find( "#Winpanel_PVE_Bomb_Deployed" );
+		}
+
+		SetDialogVariable( "WinReasonLabel", pwchWinReason );
+
+		SetDialogVariable( "DetailsLabel", g_pVGuiLocalize->Find( "#TF_PVE_RestoreToCheckpointDetailed" ) );
+
+		m_bShouldBeVisible = true;
+
+		MoveToFront();
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Applies scheme settings
 //-----------------------------------------------------------------------------
-void CTFPVEWinPanel::OnTick( void )
+void CTFPVEWinPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
-	if ( m_bShouldBeVisible )
+	BaseClass::ApplySchemeSettings( pScheme );
+
+	LoadControlSettings( "resource/UI/HudPVEWinPanel.res" );
+
+	m_pRespecBackground = dynamic_cast< vgui::ScalableImagePanel* >( FindChildByName( "RespecBackground" ) );
+	m_pRespecContainerPanel = dynamic_cast< vgui::EditablePanel* >( FindChildByName( "RespecContainer" ) );
+	if ( m_pRespecContainerPanel )
 	{
-		IViewPortPanel *pScoreboard = gViewPortInterface->FindPanelByName( PANEL_SCOREBOARD );
-		if ( ( pScoreboard && pScoreboard->IsVisible() ) || IsInFreezeCam() )
+		m_pRespecTextLabel = dynamic_cast< vgui::Label* >( m_pRespecContainerPanel->FindChildByName( "RespecTextLabelLoss" ) );
+		m_pRespecCountLabel = dynamic_cast< vgui::Label* >( m_pRespecContainerPanel->FindChildByName( "RespecCountLabel" ) );
+	}
+}
+
+void CTFPVEWinPanel::OnTick()
+{
+	if ( m_bShouldBeVisible == true )
+	{
+		IViewPortPanel *scoreboard = gViewPortInterface->FindPanelByName( PANEL_SCOREBOARD );
+		if ( (scoreboard && scoreboard->IsVisible() == true) || IsInFreezeCam() == true )
 		{
 			SetVisible( false );
 			return;
 		}
 
+		// We dont want the stats panel showing up at the same time
 		CTFStatPanel *pStatPanel = GetStatPanel();
 		if ( pStatPanel && pStatPanel->IsVisible() )
 		{
@@ -132,49 +154,52 @@ void CTFPVEWinPanel::OnTick( void )
 			m_bShouldBeVisible = false;
 		}
 
+		// Respec
 		if ( m_pRespecContainerPanel && m_pRespecBackground && m_pRespecCountLabel && m_pRespecTextLabel )
 		{
 			CMannVsMachineStats *pStats = MannVsMachineStats_GetInstance();
-			if ( pStats == nullptr )
-				return;
-
-			uint16 nRespecs = pStats->GetNumRespecsEarnedInWave();
-			bool bHasRespecs = nRespecs > 0;
-
-			if ( bHasRespecs && !m_pRespecBackground->IsVisible() )
+			if ( pStats )
 			{
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "RespecEarnedPulseLoss" );
+				uint16 nRespecs = pStats->GetNumRespecsEarnedInWave();
 
-				C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
-				if ( pLocalTFPlayer )
+				bool bRespecVisible = nRespecs > 0;
+
+				// Do this only once
+				if ( bRespecVisible && !m_pRespecBackground->IsVisible() )
 				{
-					pLocalTFPlayer->EmitSound( "MVM.RespecAwarded" );
+					g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "RespecEarnedPulseLoss" );
+				
+					C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+					if ( pLocalTFPlayer )
+					{
+						pLocalTFPlayer->EmitSound( "MVM.RespecAwarded" );
+					}
 				}
-			}
 
-			if ( m_pRespecContainerPanel->IsVisible() != bHasRespecs )
-			{
-				m_pRespecContainerPanel->SetVisible( bHasRespecs );
-			}
+				if ( m_pRespecContainerPanel->IsVisible() != bRespecVisible )
+				{
+					m_pRespecContainerPanel->SetVisible( bRespecVisible );
+				}
 
-			if ( m_pRespecBackground->IsVisible() != bHasRespecs )
-			{
-				m_pRespecBackground->SetVisible( bHasRespecs );
-			}
+				if (  m_pRespecBackground->IsVisible() != bRespecVisible )
+				{
+					m_pRespecBackground->SetVisible( bRespecVisible );
+				}
 
-			if ( m_pRespecCountLabel->IsVisible() != bHasRespecs )
-			{
-				m_pRespecCountLabel->SetVisible( bHasRespecs );
-			}
+				if ( m_pRespecCountLabel->IsVisible() != bRespecVisible )
+				{
+					m_pRespecCountLabel->SetVisible( bRespecVisible );
+				}
 
-			if ( m_pRespecTextLabel->IsVisible() != bHasRespecs )
-			{
-				m_pRespecTextLabel->SetVisible( bHasRespecs );
-			}
+				if ( m_pRespecTextLabel->IsVisible() != bRespecVisible )
+				{
+					m_pRespecTextLabel->SetVisible( bRespecVisible );
+				}
 
-			if ( bHasRespecs )
-			{
-				m_pRespecContainerPanel->SetDialogVariable( "respeccount", nRespecs );
+				if ( bRespecVisible )
+				{
+					m_pRespecContainerPanel->SetDialogVariable( "respeccount", nRespecs );
+				}
 			}
 		}
 	}
@@ -182,19 +207,12 @@ void CTFPVEWinPanel::OnTick( void )
 	SetVisible( m_bShouldBeVisible );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFPVEWinPanel::Reset( void )
 {
 	Update();
-
 	m_bShouldBeVisible = false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFPVEWinPanel::Update( void )
 {
 }

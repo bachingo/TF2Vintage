@@ -771,20 +771,6 @@ bool CTriggerHurt::HurtEntity( CBaseEntity *pOther, float damage )
 	bool bPlayerDisconnected = pOther->IsPlayer() && ( ((CBasePlayer *)pOther)->IsConnected() == false );
 	if ( bPlayerDisconnected )
 		return false;
-	
-	// If the entity is a boss, we need to respawn them.
-	if (TFGameRules()->IsBossClass(pOther))
-	{
-		if (pOther->IsAlive())
-		{
-			CTFPlayer *pTFOther = ToTFPlayer(pOther);
-			int iHealthDifference = ( ( pTFOther->GetMaxHealth() ) - ( pTFOther->GetHealth() ) );
-			pTFOther->ForceRespawn();
-			// Instead of calculating trigger damage, we just subtract the lost health from their spawn health.
-			pOther->TakeHealth(iHealthDifference, m_bitsDamageInflict );
-		}
-		return false;
-	}
 
 	if ( damage < 0 )
 	{

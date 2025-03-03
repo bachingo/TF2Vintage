@@ -73,7 +73,7 @@ int C_TFSpyMask::GetSkin( void )
 	// If this is an enemy spy disguised as a spy show a fake disguise class.
 	if ( pOwner->IsEnemyPlayer() && pOwner->m_Shared.GetDisguiseClass() == TF_CLASS_SPY )
 	{
-		return ( pOwner->m_Shared.GetMaskClass() - 1 );
+		return ( pOwner->m_Shared.GetDisguiseMask() - 1 );
 	}
 	else
 	{
@@ -89,11 +89,11 @@ int C_TFSpyMask::InternalDrawModel( int flags )
 {
 	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	bool bUseInvulnMaterial = ( pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE ) );
-	bUseInvulnMaterial |= ( pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGED ) && gpGlobals->curtime < ( pOwner->GetLastDamageTime() + 2.0f ) );
+	bUseInvulnMaterial |= ( pOwner && pOwner->m_Shared.InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGED ) && gpGlobals->curtime < ( pOwner->GetLastDamageTimeMvMOnly() + 2.0f ) );
 
 	if ( bUseInvulnMaterial )
 	{
-		modelrender->ForcedMaterialOverride( pOwner->GetInvulnMaterial() );
+		modelrender->ForcedMaterialOverride( *pOwner->GetInvulnMaterialRef() );
 	}
 
 	int ret = BaseClass::InternalDrawModel( flags );

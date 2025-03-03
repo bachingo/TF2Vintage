@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -31,6 +31,7 @@ private:
 
 public:
 	TFViewport();
+	~TFViewport();
 
 	IViewPortPanel* CreatePanelByName(const char *szPanelName);
 	void CreateDefaultPanels( void );
@@ -42,7 +43,7 @@ public:
 
 	virtual void OnScreenSizeChanged( int iOldWide, int iOldTall );
 
-	virtual void OnTick();
+	virtual void OnTick() OVERRIDE;
 
 private:
 	void CenterWindow( vgui::Frame *win );

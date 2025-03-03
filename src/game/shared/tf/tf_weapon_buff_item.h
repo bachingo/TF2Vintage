@@ -1,4 +1,4 @@
-﻿//=========== Copyright © 2018, LFE-Team, Not All rights reserved. ============
+//========= Copyright Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,120 +11,96 @@
 #endif
 
 #include "tf_weaponbase_melee.h"
-#ifdef CLIENT_DLL
+#include "tf_item_wearable.h"
 #include "GameEventListener.h"
-#endif
 
 #ifdef CLIENT_DLL
+#include "c_tf_buff_banner.h"
 #define CTFBuffItem C_TFBuffItem
 class C_TFBuffBanner;
 #endif
 
 //=============================================================================
 //
-// BUFF item class.
+// Buff item weapon class.
 //
-#ifdef GAME_DLL
+enum EBuffItemTypes
+{
+	EBuffBanner = 1,
+	EBattalion,
+	EConcheror,
+	EParachute,
+
+	NUM_BUFF_ITEM_TYPES = EParachute
+};
+
+enum EParachuteStates
+{
+	EParachuteDeployed,
+	EParachuteDeployed_Idle,
+	EParachuteRetracted,
+	EParachuteRetracted_Idle,
+};
+
 class CTFBuffItem : public CTFWeaponBaseMelee
-#else
-class C_TFBuffItem : public C_TFWeaponBaseMelee, public CGameEventListener
-#endif
 {
 public:
 
 	DECLARE_CLASS( CTFBuffItem, CTFWeaponBaseMelee );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
-#ifdef GAME_DLL
-	DECLARE_DATADESC();
-#endif
 
 	CTFBuffItem();
 	~CTFBuffItem();
-	virtual int			GetWeaponID( void ) const	{ return TF_WEAPON_BUFF_ITEM; }
 
-	virtual void		Precache( void );
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_BUFF_ITEM; }
 
-	virtual bool		Holster( CBaseCombatWeapon *pSwitchingTo );
-	virtual void		WeaponReset( void );
-	virtual void		PrimaryAttack( void );
+	virtual void	Precache();
 
-	int					GetBuffType( void );
-	void				BlowHorn( void );
-	void				RaiseFlag( void );
-	bool				IsFull( void ) 				{ return GetEffectBarProgress() >= 1.0f; }
+	virtual void	PrimaryAttack();
 
-	virtual bool		HasChargeBar( void )		{ return true; }
-	virtual const char* GetEffectLabelText( void )	{ return "#TF_Rage"; }
-	virtual float		GetEffectBarProgress( void );
-	virtual bool		EffectMeterShouldFlash( void );
+	virtual void	Equip( CBaseCombatCharacter *pOwner ) OVERRIDE;
+	virtual void	Detach( void ) OVERRIDE;
 
-	virtual bool		CanReload( void ) { return false; }
+	void			FireGameEvent( IGameEvent* event );
+	virtual void	CreateBanner();
 
-	virtual bool		SendWeaponAnim( int iActivity );
+	virtual Activity TranslateViewmodelHandActivityInternal( Activity actBase ) OVERRIDE;
+
+	void			BlowHorn( void );
+	void			RaiseFlag( void );
+
+	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
+
+	virtual bool	CanReload( void );
+
+	virtual int		GetBuffType() { int iBuffType = 0; CALL_ATTRIB_HOOK_INT( iBuffType, set_buff_type ); return iBuffType; }
 
 #ifdef CLIENT_DLL
-	void				CreateBanner( int iBuffType );
-	void				DestroyBanner( void );
-
-	virtual void		FireGameEvent( IGameEvent *event );
+	void			SetBanner( C_TFBuffBanner* pNewBanner ) { m_hBannerEntity.Set( pNewBanner ); }
+	virtual void	NotifyShouldTransmit( ShouldTransmitState_t state );
+	virtual void	OnDataChanged( DataUpdateType_t updateType );
+	virtual void	ClientThink( void );
 #endif
+
+	virtual void	WeaponReset( void );
+
+	float			GetProgress( void );
+	bool			IsFull( void ); // same as GetProgress() without the division by 100.0f
+	const char*		GetEffectLabelText( void ) { return "#TF_RAGE"; }
+	bool			EffectMeterShouldFlash( void );
+
+protected:
+#ifdef CLIENT_DLL
+	CHandle<C_TFBuffBanner>		m_hBannerEntity;
+	int							m_iBuffType;
+#endif // CLIENT_DLL
 
 private:
 
 	CTFBuffItem( const CTFBuffItem & ) {}
 
-	CNetworkVar( bool, m_bBuffUsed );
-
-#ifdef CLIENT_DLL
-	CHandle<C_TFBuffBanner> m_hBanner;
-	friend class C_TFBuffBanner;
-#endif
-};
-
-//Parachute base.
-
-#if defined CLIENT_DLL
-#define CTFParachute C_TFParachute
-#define CTFParachute_Primary C_TFParachute_Primary
-#define CTFParachute_Secondary C_TFParachute_Secondary
-#endif
-
-class CTFParachute : public CTFBuffItem
-{
-public:
-
-	DECLARE_CLASS( CTFParachute, CTFBuffItem )
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	virtual int GetWeaponID( void ) const { return TF_WEAPON_PARACHUTE; }
-	virtual bool	HasChargeBar( void )			{ return false; }
-
-	virtual const char	*GetWorldModel() const;
-	virtual void		Precache();
-	virtual void	DeployParachute(void);
-	virtual void	RetractParachute(void);
-	
-	virtual bool	IsOpened(void)		{ return m_iDeployed == 1; }
-private:
-	CNetworkVar( int, m_iDeployed );
-};
-
-class CTFParachute_Primary : public CTFParachute
-{
-public:
-	DECLARE_CLASS( CTFParachute_Primary, CTFParachute );
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-};
-
-class CTFParachute_Secondary : public CTFParachute
-{
-public:
-	DECLARE_CLASS( CTFParachute_Secondary, CTFParachute );
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
+	bool						m_bPlayingHorn;
 };
 
 #endif // TF_WEAPON_BUFF_ITEM_H
