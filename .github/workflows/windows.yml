@@ -41,7 +41,7 @@ jobs:
         run: cd src;devenv TF2vintage.sln /Build Release
 
       - name: Upload product
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-windows
           path: game/tf2vintage/bin/
