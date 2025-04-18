@@ -53,7 +53,7 @@ jobs:
         run: cd src && sudo make -f TF2vintage.mak
 
       - name: Upload product
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tf2vintage-linux
           path: game/tf2vintage/bin/
