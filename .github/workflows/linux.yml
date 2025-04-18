@@ -6,6 +6,7 @@ on:
 env:
   CCACHE_VERSION: 3.7.7
   CCACHE_DIR: ${{ github.workspace }}/src/ccache
+  LDFLAGS: -lm
 
 jobs:
   build:
