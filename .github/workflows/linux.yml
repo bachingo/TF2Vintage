@@ -50,7 +50,7 @@ jobs:
         run: cd src && sudo devtools/bin/vpc /tf2vintage +game /mksln TF2vintage
 
       - name: Build project
-        run: cd src && sudo make -f TF2vintage.mak
+        run: cd src && sudo make -f TF2vintage.mak -Wno-class-memaccess
 
       - name: Upload product
         uses: actions/upload-artifact@v4
