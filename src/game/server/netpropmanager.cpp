@@ -24,7 +24,7 @@ CNetPropManager::~CNetPropManager()
 	m_PropCache.PurgeAndDeleteElements();
 }
 
-SendProp *CNetPropManager::SearchSendTable( SendTable *pSendTable, const char *pszProperty ) const
+FORCEINLINE SendProp *CNetPropManager::SearchSendTable( SendTable *pSendTable, const char *pszProperty ) const
 {
 	// Iterate through the send table and find the prop that we are looking for
 	for ( int nPropIdx = 0; nPropIdx < pSendTable->GetNumProps(); nPropIdx++ )
@@ -49,7 +49,7 @@ SendProp *CNetPropManager::SearchSendTable( SendTable *pSendTable, const char *p
 	return NULL;
 }
 
-inline typedescription_t *CNetPropManager::SearchDataMap( datamap_t *pMap, const char *pszProperty ) const
+FORCEINLINE typedescription_t *CNetPropManager::SearchDataMap( datamap_t *pMap, const char *pszProperty ) const
 {
 	while ( pMap )
 	{
@@ -76,7 +76,7 @@ inline typedescription_t *CNetPropManager::SearchDataMap( datamap_t *pMap, const
 	return NULL; 
 }
 
-inline CNetPropManager::PropInfo_t CNetPropManager::GetEntityPropInfo( CBaseEntity* pBaseEntity, const char *pszProperty, int element )
+FORCEINLINE CNetPropManager::PropInfo_t CNetPropManager::GetEntityPropInfo( CBaseEntity* pBaseEntity, const char *pszProperty, int element )
 {
 	ServerClass *pServerClass       = pBaseEntity->GetServerClass();
 	const char  *pszServerClassName = pServerClass->GetName();

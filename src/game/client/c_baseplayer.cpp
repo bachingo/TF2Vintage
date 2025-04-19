@@ -3046,9 +3046,9 @@ void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vec
 				i == iFootL || i == iFootR || i == iToeL || i == iToeR)
 				continue;
 
-				// If we know this definitely is not a leg related item, shrink it.
-				matrix3x4_t  &transformnonleg = GetBoneForWrite(i);
-				MatrixScaleByZero(transformnonleg);
+			// If we know this definitely is not a leg related item, shrink it.
+			matrix3x4_t  &transformnonleg = GetBoneForWrite(i);
+			MatrixScaleByZero(transformnonleg);
 		}
 	}
 }

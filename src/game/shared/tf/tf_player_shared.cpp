@@ -3890,7 +3890,6 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 	// Find the weapon in the same slot
 	for ( int i = 0; i < TF_PLAYER_WEAPON_COUNT; i++ )	
 	{
-			
 		// Use disguise target's weapons if possible.
 		CEconItemView *pItem = NULL;
 
@@ -3902,12 +3901,12 @@ void CTFPlayerShared::RecalcDisguiseWeapon(int iSlot /*= 0*/)
 		if ( !pItem )
 			continue;
 
-			CTFWeaponInfo *pWeaponInfo = GetTFWeaponInfoForItem( pItem->GetItemDefIndex(), m_nDisguiseClass );
+		CTFWeaponInfo *pWeaponInfo = GetTFWeaponInfoForItem( pItem->GetItemDefIndex(), m_nDisguiseClass );
 		if ( pWeaponInfo && pWeaponInfo->iSlot == iSlot )
-			{
-				pDisguiseItem = pItem;
-				break;
-			}
+		{
+			pDisguiseItem = pItem;
+			break;
+		}
 	}
 
 	// Can't find the disguise item in this loadout, cycle the next one.

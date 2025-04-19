@@ -680,6 +680,20 @@ FIXME: Enable this when we no longer fear change =)
 	#define stackalloc( _size )		alloca( ALIGN_VALUE( _size, 16 ) )
 #ifdef _LINUX
 	#define mallocsize( _p )	( malloc_usable_size( _p ) )
+
+	extern "C" {
+		double __exp_finite(double x) { return exp(x); }
+		double __log_finite(double x) { return log(x); }
+		double __pow_finite(double x, double y) { return pow(x, y); }
+		double __acos_finite(double x) { return acos(x); }
+		double __atan2_finite(double y, double x) { return atan2( y, x ); }
+
+		float __expf_finite(float x) { return expf(x); }
+		float __logf_finite(float x) { return logf(x); }
+		float __powf_finite(float x, float y) { return powf(x, y); }
+		float __acosf_finite(float x) { return acosf( x ); }
+		float __atan2f_finite(float y, float x) { return atan2f( y, x ); }
+	}
 #elif defined(OSX)
 	#define mallocsize( _p )	( malloc_size( _p ) )
 #else

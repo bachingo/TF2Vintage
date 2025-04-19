@@ -145,7 +145,7 @@ static void BuildNeckScaleTransformations( CBaseAnimating *pAnimating, CStudioHd
 
 	matrix3x4_t &neck = pAnimating->GetBoneForWrite( neckBone );
 
-	Vector spine_position, neck_position, head_position, position, offset;
+	Vector spine_position{ 0 }, neck_position{ 0 }, head_position{ 0 }, position{ 0 }, offset{ 0 };
 	if ( iClass != TF_CLASS_HEAVYWEAPONS )
 	{
 		// Compress the neck into the spine.
@@ -3748,8 +3748,8 @@ void C_TFPlayer::CreateBoneAttachmentsFromWearables( C_TFRagdoll *pRagdoll, bool
 		if ( pTFWearable->IsViewModelWearable() )
 			continue;
 
-		if ( bDisguised && !pTFWearable->IsDisguiseWearable() ||
-			 !bDisguised && pTFWearable->IsDisguiseWearable() )
+		if ( ( bDisguised && !pTFWearable->IsDisguiseWearable() ) ||
+			 ( !bDisguised && pTFWearable->IsDisguiseWearable() ) )
 			continue;
 
 		if ( pTFWearable->GetFlags() & EF_NODRAW )
@@ -6268,13 +6268,6 @@ void C_TFPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, f
 
 	BaseClass::CalcView( eyeOrigin, eyeAngles, zNear, zFar, fov );
 }
-
-static void cc_tf_crashclient()
-{
-	C_TFPlayer *pPlayer = NULL;
-	pPlayer->ComputeFxBlend();
-}
-static ConCommand tf_crashclient( "tf_crashclient", cc_tf_crashclient, "Crashes this client for testing.", FCVAR_DEVELOPMENTONLY );
 
 //-----------------------------------------------------------------------------
 // Purpose:

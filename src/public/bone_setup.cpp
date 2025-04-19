@@ -2625,14 +2625,14 @@ public:
          X[i] = P[i];
       normalize(X);
 
-// Its y axis is perpendicular to P, so Y = unit( E - X(E·X) ).
+// Its y axis is perpendicular to P, so Y = unit( E - X(Eï¿½X) ).
 
       float dDOTx = dot(D,X);
       for (i = 0 ; i < 3 ; i++)
          Y[i] = D[i] - dDOTx * X[i];
       normalize(Y);
 
-// Its z axis is perpendicular to both X and Y, so Z = X×Y.
+// Its z axis is perpendicular to both X and Y, so Z = Xï¿½Y.
 
       cross(X,Y,Z);
 
@@ -3978,7 +3978,7 @@ void CIKContext::AutoIKRelease( void )
 			}
 			if (pTarget->error.ramp > 0.0)
 			{
-				ikcontextikrule_t ikrule;
+				ikcontextikrule_t ikrule{};
 
 				ikrule.chain = pTarget->chain;
 				ikrule.bone = 0;
