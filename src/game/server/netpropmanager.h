@@ -66,7 +66,7 @@ private:
 	typedescription_t *SearchDataMap( datamap_t *pMap, const char *pstrProperty ) const;
 
 	// Searches a ServerClass's SendTable and datamap and returns pertinent prop info
-	PropInfo_t GetEntityPropInfo( CBaseEntity *pBaseEntity, const char *pstrProperty, int element );
+	FORCEINLINE PropInfo_t GetEntityPropInfo( CBaseEntity *pBaseEntity, const char *pstrProperty, int element );
 
 
 private:
