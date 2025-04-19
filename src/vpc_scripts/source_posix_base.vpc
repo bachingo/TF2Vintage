@@ -58,6 +58,7 @@ $Configuration
 	$Linker
 	{
 		$GCC_ExtraLinkerFlags			"$BASE -arch x86_64"		[$OSX64]
+		$GCC_ExtraLinkerFlags			"$BASE -lm"
 	}
 
 }
