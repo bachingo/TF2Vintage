@@ -76,7 +76,7 @@ typedescription_t *CNetPropManager::SearchDataMap( datamap_t *pMap, const char *
 	return NULL; 
 }
 
-FORCEINLINE CNetPropManager::PropInfo_t CNetPropManager::GetEntityPropInfo( CBaseEntity* pBaseEntity, const char *pszProperty, int element )
+CNetPropManager::PropInfo_t CNetPropManager::GetEntityPropInfo( CBaseEntity* pBaseEntity, const char *pszProperty, int element )
 {
 	ServerClass *pServerClass       = pBaseEntity->GetServerClass();
 	const char  *pszServerClassName = pServerClass->GetName();
