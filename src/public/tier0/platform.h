@@ -681,6 +681,7 @@ FIXME: Enable this when we no longer fear change =)
 #ifdef _LINUX
 	#define mallocsize( _p )	( malloc_usable_size( _p ) )
 
+	#include <math>
 	extern "C" {
 		double __exp_finite(double x) { return exp(x); }
 		double __log_finite(double x) { return log(x); }
