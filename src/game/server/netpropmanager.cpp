@@ -24,7 +24,7 @@ CNetPropManager::~CNetPropManager()
 	m_PropCache.PurgeAndDeleteElements();
 }
 
-FORCEINLINE SendProp *CNetPropManager::SearchSendTable( SendTable *pSendTable, const char *pszProperty ) const
+SendProp *CNetPropManager::SearchSendTable( SendTable *pSendTable, const char *pszProperty ) const
 {
 	// Iterate through the send table and find the prop that we are looking for
 	for ( int nPropIdx = 0; nPropIdx < pSendTable->GetNumProps(); nPropIdx++ )
@@ -49,7 +49,7 @@ FORCEINLINE SendProp *CNetPropManager::SearchSendTable( SendTable *pSendTable, c
 	return NULL;
 }
 
-FORCEINLINE typedescription_t *CNetPropManager::SearchDataMap( datamap_t *pMap, const char *pszProperty ) const
+typedescription_t *CNetPropManager::SearchDataMap( datamap_t *pMap, const char *pszProperty ) const
 {
 	while ( pMap )
 	{
