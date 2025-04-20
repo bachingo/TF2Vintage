@@ -29,7 +29,8 @@ function run_in_sniper() {
             --env "CCACHE_DIR=${CCACHE_DIR:-$HOME/.ccache}" \
             --userns=keep-id \
             --rm -it \
-			--group-add keep-groups \
+            --group-add keep-groups \
+            --privileged \
             --mount type=bind,\"source="${CCACHE_DIR:-$HOME/.ccache}"\",\"target="${CCACHE_DIR:-$HOME/.ccache}"\" \
             --mount type=bind,\"source="$mod_base_dir"\",target=/TF2Vintage/ \
             "$image" \
