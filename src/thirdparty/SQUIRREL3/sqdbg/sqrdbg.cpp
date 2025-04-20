@@ -55,7 +55,7 @@ SQRESULT sq_rdbg_waitforconnections(HSQREMOTEDBG rdbg)
 	sq_pop(rdbg->_v,1);
 
 	sockaddr_in cliaddr;
-	socklen_t addrlen=sizeof(cliaddr);
+	unsigned int addrlen=sizeof(cliaddr);
 	if(listen(rdbg->_accept,0)==SOCKET_ERROR)
 		return sq_throwerror(rdbg->_v,_SC("error on listen(socket)"));
 	rdbg->_endpoint = accept(rdbg->_accept,(sockaddr*)&cliaddr,&addrlen);
