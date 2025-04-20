@@ -4,7 +4,7 @@
 #include <squirrel.h>
 #if !defined( POSIX )
 #include <winsock.h>
-typedef socklen_t int;
+typedef int socklen_t;
 #endif
 #include "sqrdbg.h"
 #include "sqdbgserver.h"
