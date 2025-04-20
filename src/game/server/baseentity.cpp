@@ -7768,7 +7768,7 @@ void CBaseEntity::ScriptSetThinkFunction( const char *szFunc, float flTime )
 	else
 	{
 		m_iszScriptThinkFunction = AllocPooledString( szFunc );
-		flTime = max( 0, flTime );
+		flTime = max( 0.f, flTime );
 		SetContextThink( &CBaseEntity::ScriptThink, gpGlobals->curtime + flTime, "ScriptThink" );
 	}
 }

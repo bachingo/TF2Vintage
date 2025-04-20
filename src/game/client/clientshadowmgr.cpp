@@ -4127,7 +4127,7 @@ void CClientShadowMgr::ComputeShadowDepthTextures( const CViewSetup &viewSetup )
 
 		if ( j <= ( INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_LAST - INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_FIRST ) )
 		{
-			pRenderContext->SetIntRenderingParameter( INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_FIRST + j, reinterpret_cast<int>( &(*shadowDepthTexture) )  );
+			pRenderContext->SetIntRenderingParameter( INT_FLASHLIGHT_DEPTHTEXTURE_FALLBACK_FIRST + j, *reinterpret_cast<int *>( &(*shadowDepthTexture) )  );
 
 			FlashlightState_t state = shadowmgr->GetFlashlightState( shadow.m_ShadowHandle );
 

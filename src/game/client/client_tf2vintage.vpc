@@ -8,7 +8,7 @@ $Macro SRCDIR		"..\.."
 $Macro GAMENAME 	"tf2vintage"
 
 $Include "$SRCDIR\game\client\client_tf.vpc"
-$Include "$SRCDIR\coplay\src\coplay.vpc"
+//$Include "$SRCDIR\coplay\src\coplay.vpc"
 
 $Configuration
 {
@@ -16,96 +16,5 @@ $Configuration
 	{
 		$AdditionalIncludeDirectories		"$BASE;tf\vgui"
 		$PreprocessorDefinitions			"$BASE;TF_VINTAGE_CLIENT"
-	}
-}
-
-$Project "Client (TF)"
-{
-	$Folder	"Source Files"
-	{
-		$File   "$SRCDIR\game\shared\basescriptedweapon.cpp"
-		$File   "$SRCDIR\game\shared\basescriptedweapon.h"
-		$File	"$SRCDIR\game\shared\bannedwords.cpp"
-		$File	"$SRCDIR\game\shared\bannedwords.h"
-		$File	"$SRCDIR\game\shared\tf\script_parser.cpp"
-		$File	"$SRCDIR\game\shared\tf\script_parser.h"
-		
-		$Folder	"Economy"
-		{
-			$File	"$SRCDIR\game\shared\econ\econ_networking.cpp"
-			$File	"$SRCDIR\game\shared\econ\econ_networking.h"
-			$File	"$SRCDIR\game\shared\econ\econ_networking_messages.cpp"
-			$File	"$SRCDIR\game\shared\econ\econ_networking_messages.h"
-		}
-
-		$Folder	"TF"
-		{
-			$File	"tf\c_sdkversionchecker.cpp"
-			$File	"tf\c_sdkversionchecker.h"
-			$File	"tf\tf_presence.cpp"
-			$File	"tf\tf_presence.h"
-			$File	"tf\c_tf_spymask.cpp"
-			$File	"tf\c_tf_spymask.h"
-			
-			$Folder	"Unused"
-			{
-				$File	"tf\tf_hud_health.cpp"
-			}			
-			
-			$Folder	"vgui"
-			{
-				$Folder	"Unused"
-				{
-					$File	"tf\vgui\tf_overview.cpp"
-					$File	"tf\vgui\tf_overview.h"	
-				}
-			}
-			
-			$Folder	"Weapon"
-			{
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_defib.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_defib.h"	
-			
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_tranq.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_tranq.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_hunterrifle.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_hunterrifle.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_umbrella.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_umbrella.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.h"		
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.h"	
-			
-				$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_concussion.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_concussion.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_emp.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_emp.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_gas.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_gas.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_heal.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_heal.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_mirv.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_mirv.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_nail.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_nail.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_napalm.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_napalm.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.h"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_mirv.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_mirv.h"
-			}
-		}
 	}
 }

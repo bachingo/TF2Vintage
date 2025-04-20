@@ -14,7 +14,6 @@ $Macro GENERATED_PROTO_DIR	"$SRCDIR\game\server\generated_proto_$GAMENAME"
 $MacroRequired "GAMENAME"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
-$include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
 $Include "$SRCDIR\game\protobuf_include.vpc"
 
@@ -45,7 +44,7 @@ $Configuration	"Release"
 
 $CustomBuildStep "nut"
 {
-	$CommandLine	"$SRCDIR\devtools\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
+	$CommandLine	"$SRCDIR\devtools\srcsrv\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
 	$CommandLine	"perl $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
 	$Description	"$(InputFileName) produces $(InputName)_nut.h"
 	$Outputs		"$(InputName)_nut.h"

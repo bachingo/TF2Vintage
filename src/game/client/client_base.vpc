@@ -14,7 +14,6 @@ $Macro GENERATED_PROTO_DIR	"$SRCDIR\game\client\generated_proto_$GAMENAME"
 $MacroRequired "GAMENAME"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
-$include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
 $Include "$SRCDIR\game\protobuf_include.vpc"
 
@@ -543,6 +542,9 @@ $Project
 		$File	"$SRCDIR\game\shared\logic_script_client.cpp"
 		$File	"$SRCDIR\game\shared\matchers.cpp"
 
+		$File	"basediscordpresence.cpp"
+		$File	"basediscordpresence.h"
+
 
 		$Folder	"Sixense"
 		{
@@ -586,7 +588,7 @@ $Project
 				"in_mouse.cpp"										\
 				"mumble.cpp"						\
 				"$SRCDIR\public\renamed_recvtable_compat.cpp"		\
-				"rendertexture.cpp"									
+				"rendertexture.cpp"
 				{
 					$Configuration
 					{
@@ -1354,7 +1356,7 @@ $Project
 		$Lib		vgui_controls
 		$Lib		vtf
 
-		$ImpLib 	"discord_game_sdk.dll"
+		$ImpLib 	discord_game_sdk
 
 		$ImpLibexternal steam_api	[!$WIN64]
 		$ImpLibexternal steam_api64	[$WIN64]

@@ -543,7 +543,7 @@ inline void InitScriptDesc();
 	{ \
 		return GetScriptInstanceHelperOverride<className>( GetScriptInstanceHelper_##baseClass() ); \
 	}; \
-	template <> extern void InitScriptDesc<className>(); \
+	template <> void InitScriptDesc<className>(); \
 	ScriptClassDesc_t g_##className##_ScriptDesc( &InitScriptDesc<className> ); \
 	DEFINE_SCRIPTDESC_FUNCTION( className, baseClass ) \
 	{ \

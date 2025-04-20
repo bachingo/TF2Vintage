@@ -30,7 +30,7 @@ $Configuration
 	}
 }
 
-$Project // "Coplay"
+$Project "Coplay"
 {
     $Folder "Source Files"
     {

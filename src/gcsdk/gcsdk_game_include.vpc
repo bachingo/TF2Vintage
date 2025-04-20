@@ -10,14 +10,6 @@ $MacroRequired GENERATED_PROTO_DIR
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $include "$SRCDIR\gcsdk\steammessages_include.vpc"
 
-$Configuration
-{
-	$General
-	{
-		$AdditionalProjectDependencies			"gcsdk"
-	}
-}
-
 $Project
 {
 	$Folder "Link Libraries"

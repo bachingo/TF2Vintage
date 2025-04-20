@@ -47,8 +47,8 @@ $Project "VScript"
 		$File   "languages/squirrel/vsquirrel.cpp"
 		$File   "languages/squirrel/vsquirrel_math.cpp"
 		$File   "languages/squirrel/sq_vmstate.cpp"
-		$File	"languages/lua/lua_vm.cpp"
-		$File	"languages/lua/lua_vector.cpp"
+		//$File	"languages/lua/lua_vm.cpp"
+		//$File	"languages/lua/lua_vector.cpp"
 		//$File	"languages/angelscript/vangelscript.cpp"
 		//$File	"languages/angelscript/as_vector.cpp"
 	}
@@ -243,8 +243,8 @@ $Project "VScript"
 	{
 		$Lib 	mathlib
 		$Lib 	tier1
-		$Lib	"$LIBCOMMON\lua51"			[$WINDOWS]
-		$Lib	"$LIBCOMMON\libluajit"		[$POSIX]
+		//$Lib	"$LIBCOMMON\lua51"			[$WINDOWS]
+		//$Lib	"$LIBCOMMON\libluajit"		[$POSIX]
 		//$Lib	"$LIBCOMMON\angelscript"
 	}
 }

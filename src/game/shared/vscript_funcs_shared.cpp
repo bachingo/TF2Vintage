@@ -126,7 +126,7 @@ void ParseScriptTableKeyValues( CBaseEntity *pEntity, HSCRIPT hKV )
 				break;
 			}
 			default:
-				Warning( "Unsupported KeyValue type for key %s (type %s)\n", varKey.Get<CUtlString>(), ScriptFieldTypeName(varValue.GetType()));
+				Warning( "Unsupported KeyValue type for key %s (type %s)\n", varKey.Get<CUtlString>().Get(), ScriptFieldTypeName(varValue.GetType()));
 				break;
 		}
 

@@ -1982,7 +1982,7 @@ void CViewRender::UpdateCascadedShadow( const CViewSetup &view )
 
 	ITexture *pDepthTexture = s_CascadedShadowDepthTexture;
 	CMatRenderContextPtr pRenderContext( materials );
-	pRenderContext->SetIntRenderingParameter( INT_CASCADED_DEPTHTEXTURE, int( pDepthTexture ) );
+	pRenderContext->SetIntRenderingParameter( INT_CASCADED_DEPTHTEXTURE, *reinterpret_cast<int *>( pDepthTexture ) );
 
 	QAngle angCascadedAngles;
 	Vector vecLight, vecAmbient;
@@ -2146,7 +2146,7 @@ void CViewRender::UpdateCascadedShadow( const CViewSetup &view )
 
 			VMatrix &currentSwapMatrix = s_CSMSwapMatrix[s_iCSMSwapIndex];
 			MatrixMultiply( tmp, worldToProjection, currentSwapMatrix );
-			pRenderContext->SetIntRenderingParameter( INT_CASCADED_MATRIX_ADDRESS_0, reinterpret_cast<int>( &currentSwapMatrix ) );
+			pRenderContext->SetIntRenderingParameter( INT_CASCADED_MATRIX_ADDRESS_0, *reinterpret_cast<int *>( &currentSwapMatrix ) );
 		}
 
 		cascadedShadowView.origin -= vecFwd * shadowConfig.flViewDepthBiasHack;

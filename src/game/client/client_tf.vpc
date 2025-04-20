@@ -6,15 +6,15 @@
 
 $Macro SRCDIR		"..\.."
 $Macro GAMENAME 	"tf" [!$SOURCESDK]
-//$Macro GAMENAME 	"mod_tf" [$SOURCESDK]
+$Macro GAMENAME 	"tf2vintage" [$SOURCESDK]
 
 // This code currently only builds on Windows (itemtest_lib and dependencies)
 $Conditional WORKSHOP_IMPORT_ENABLE	1 [$WINDOWS && !$SOURCESDK]
 
 $Include "$SRCDIR\game\client\client_base.vpc"
+$Include "$SRCDIR\game\client\client_econ_base.vpc"
 $include "$SRCDIR\game\shared\tf\tf_gcmessages_include.vpc"
 $include "$SRCDIR\game\shared\tf\tf_proto_def_messages_include.vpc"
-$Include "$SRCDIR\game\client\client_econ_base.vpc"
 $Include "$SRCDIR\vpc_scripts\source_saxxyawards.vpc" [!$SOURCESDK]
 $Include "$SRCDIR\utils\itemtest_lib\itemtest_lib_support.vpc" [$WORKSHOP_IMPORT_ENABLE]
 
@@ -23,7 +23,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\tf;.\tf\vgui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\tf;$SRCDIR\gcsdk\steamextra;$BASE;.\econ"
-		$PreprocessorDefinitions		"$BASE;TF_CLIENT_DLL;USES_ECON_ITEMS;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;VOTING_ENABLED;NEXT_BOT"
+		$PreprocessorDefinitions		"$BASE;TF_CLIENT_DLL;ENABLE_GC_MATCHMAKING;GLOWS_ENABLE;USE_DYNAMIC_ASSET_LOADING;VOTING_ENABLED;NEXT_BOT;TF_VINTAGE_CLIENT"
 		$PreprocessorDefinitions		"$BASE;SAXXYMAINMENU_ENABLED" [$SAXXYAWARDS_ENABLE]
 		$PreprocessorDefinitions		"$BASE;WORKSHOP_IMPORT_ENABLED" [$WORKSHOP_IMPORT_ENABLE]
 		$PreprocessorDefinitions		"$BASE;SIXENSE" [!$SOURCESDK]
@@ -68,6 +68,13 @@ $Project "Client (TF)"
 		$File	"$SRCDIR\game\shared\playerclass_info_parse.h"
 		$File	"$SRCDIR\game\shared\teamplay_round_timer.cpp"
 		$File	"$SRCDIR\game\shared\teamplay_round_timer.h"
+
+		$File   "$SRCDIR\game\shared\basescriptedweapon.cpp"
+		$File   "$SRCDIR\game\shared\basescriptedweapon.h"
+		$File	"$SRCDIR\game\shared\bannedwords.cpp"
+		$File	"$SRCDIR\game\shared\bannedwords.h"
+		$File	"$SRCDIR\game\shared\tf\script_parser.cpp"
+		$File	"$SRCDIR\game\shared\tf\script_parser.h"
 
 		$Folder "Common"
 		{
@@ -553,8 +560,63 @@ $Project "Client (TF)"
 				}
 			}
 
+			$File	"tf\c_sdkversionchecker.cpp"
+			$File	"tf\c_sdkversionchecker.h"
+			$File	"tf\c_tf_spymask.cpp"
+			$File	"tf\c_tf_spymask.h"
+
+			$Folder	"Unused"
+			{
+				$File	"tf\tf_hud_health.cpp"
+			}
+
 			$Folder	"Weapon"
 			{
+				$Folder "Custom"
+				{
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_defib.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_defib.h"
+
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_crowbar.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_chainsaw.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_tranq.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_tranq.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_hunterrifle.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_hunterrifle.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_umbrella.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_umbrella.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_heavyartillery.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_hammerfists.h"
+
+					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weaponbase_grenade.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_caltrop.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_concussion.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_concussion.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_emp.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_emp.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_gas.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_gas.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_heal.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_heal.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_mirv.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_mirv.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_nail.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_nail.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_napalm.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_napalm.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_smoke_bomb.h"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_mirv.cpp"
+					$File	"$SRCDIR\game\shared\tf\tf_weapon_mirv.h"
+				}
 				$File	"tf\c_tf_projectile_arrow.cpp"
 				$File	"tf\c_tf_projectile_arrow.h"
 				$File	"tf\c_tf_projectile_energy_ball.cpp"
@@ -694,6 +756,12 @@ $Project "Client (TF)"
 
 			$Folder	"vgui"
 			{
+				$Folder	"Unused"
+				{
+					$File	"tf\vgui\tf_overview.cpp"
+					$File	"tf\vgui\tf_overview.h"
+				}
+
 				$File	"tf\vgui\backgroundpanel.cpp"
 				$File	"tf\vgui\backgroundpanel.h"
 				$File	"tf\vgui\blueprint_panel.cpp"
