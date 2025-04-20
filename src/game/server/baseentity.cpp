@@ -4334,7 +4334,7 @@ const char *CBaseEntity::GetDebugName(void)
 	if ( this == NULL )
 		return "<<null>>";
 
-	if ( m_iName.Get() != NULL_STRING ) 
+	if ( m_iName != NULL_STRING ) 
 	{
 		return STRING(m_iName);
 	}
