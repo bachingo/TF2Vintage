@@ -48,13 +48,13 @@ public:
 	{
 		// This is not at all the right method to do this, but pushing a
 		// "void" type as a argument is an error anyway, c'est la vie
-		COMPILE_TIME_ASSERT( ScriptDeduceType( Arg ) );
+		COMPILE_TIME_ASSERT( ScriptDeduceType( Arg ) != FIELD_VOID );
 		m_vecPushedArgs.AddToTail( arg );
 	}
 	template<class Arg, typename ...Rest>
 	void PushArg( Arg const &arg, Rest const &...args )
 	{
-		COMPILE_TIME_ASSERT( ScriptDeduceType( Arg ) );
+		COMPILE_TIME_ASSERT( ScriptDeduceType( Arg ) != FIELD_VOID );
 		m_vecPushedArgs.AddToTail( arg );
 
 		PushArg( args... );

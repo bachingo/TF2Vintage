@@ -63,7 +63,6 @@ SendProp *CNetPropManager::SearchSendTable( SendTable *pSendTable, const char *p
 	return NULL;
 }
 
-
 //-----------------------------------------------------------------------------
 inline typedescription_t *CNetPropManager::SearchDataMap( datamap_t *pMap, const char *pszProperty ) const
 {
