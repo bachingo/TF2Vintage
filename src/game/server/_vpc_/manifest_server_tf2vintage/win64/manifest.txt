@@ -2426,18 +2426,6 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\e
 Containing unity file:  
 PCH file:               cbase.h
 
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_networking.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_networking.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_networking.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_networking_messages.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_networking_messages.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_networking_messages.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_paintkit.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_paintkit.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\econ\econ_paintkit.cpp
@@ -3528,6 +3516,12 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gamerules.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gamerules.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gamerules.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gamerules_vscript.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gamerules_vscript.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_gamerules_vscript.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -5049,12 +5043,6 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\server\t
 Containing unity file:  
 PCH file:               cbase.h
 
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_chainsaw.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_chainsaw.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_chainsaw.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_club.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_club.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_club.cpp
@@ -5064,18 +5052,6 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_compound_bow.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_compound_bow.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_compound_bow.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_crowbar.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_crowbar.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_crowbar.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_defib.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_defib.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_defib.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -5115,87 +5091,15 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_caltrop.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_caltrop.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_caltrop.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_concussion.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_concussion.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_concussion.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_emp.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_emp.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_emp.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_gas.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_gas.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_gas.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_heal.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_heal.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_heal.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_mirv.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_mirv.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_mirv.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_nail.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_nail.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_nail.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_napalm.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_napalm.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_napalm.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_pipebomb.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_pipebomb.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_pipebomb.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenadelauncher.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenadelauncher.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenadelauncher.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hammerfists.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hammerfists.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hammerfists.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_heavyartillery.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_heavyartillery.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_heavyartillery.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hunterrifle.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hunterrifle.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hunterrifle.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -5250,18 +5154,6 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_minigun.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_minigun.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_minigun.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_mirv.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_mirv.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_mirv.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_nailgun.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_nailgun.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_nailgun.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -5325,12 +5217,6 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_scripted.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_scripted.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_scripted.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_shotgun.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_shotgun.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_shotgun.cpp
@@ -5379,18 +5265,6 @@ Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\t
 Containing unity file:  
 PCH file:               cbase.h
 
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_umbrella.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_umbrella.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_umbrella.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_wrench.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_wrench.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_wrench.cpp
@@ -5400,12 +5274,6 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase.cpp
-Containing unity file:  
-PCH file:               cbase.h
-
-Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_grenade.cpp
-Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_grenade.cpp
-Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_grenade.cpp
 Containing unity file:  
 PCH file:               cbase.h
 
@@ -5454,6 +5322,132 @@ PCH file:               cbase.h
 Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_weapons.cpp
 Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_weapons.cpp
 Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_wearable_weapons.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_chainsaw.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_chainsaw.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_chainsaw.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_crowbar.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_crowbar.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_crowbar.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_defib.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_defib.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_defib.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_caltrop.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_caltrop.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_caltrop.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_concussion.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_concussion.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_concussion.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_emp.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_emp.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_emp.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_gas.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_gas.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_gas.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_heal.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_heal.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_heal.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_mirv.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_mirv.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_mirv.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_nail.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_nail.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_nail.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_napalm.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_napalm.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_napalm.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_grenade_smoke_bomb.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hammerfists.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hammerfists.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hammerfists.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_heavyartillery.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_heavyartillery.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_heavyartillery.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hunterrifle.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hunterrifle.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_hunterrifle.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_mirv.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_mirv.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_mirv.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_nailgun.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_nailgun.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_nailgun.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_scripted.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_scripted.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_scripted.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_tranq.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_umbrella.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_umbrella.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weapon_umbrella.cpp
+Containing unity file:  
+PCH file:               cbase.h
+
+Source file:            E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_grenade.cpp
+Debug output file:      E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_grenade.cpp
+Release output file:    E:\Documents\GitHub\TF2VintageUpstream\src\game\shared\tf\tf_weaponbase_grenade.cpp
 Containing unity file:  
 PCH file:               cbase.h
 

@@ -2,13 +2,16 @@
 #include "tf_gamerules.h"
 #include "takedamageinfo.h"
 #include "vscript_shared.h"
+#ifdef GAME_DLL
+#include "player_voice_listener.h"
+#endif
 
 
 BEGIN_SCRIPTENUM( ECritType, "" )
 
-	DEFINE_ENUMCONST_NAMED( kCritType_None,  "CRIT_NONE", "" )
-	DEFINE_ENUMCONST_NAMED( kCritType_MiniCrit,  "CRIT_MINI", "" )
-	DEFINE_ENUMCONST_NAMED( kCritType_Crit,  "CRIT_FULL", "" )
+	DEFINE_ENUMCONST( CTakeDamageInfo::CRIT_NONE, "" )
+	DEFINE_ENUMCONST( CTakeDamageInfo::CRIT_MINI, "" )
+	DEFINE_ENUMCONST( CTakeDamageInfo::CRIT_FULL, "" )
 
 END_SCRIPTENUM()
 
@@ -340,19 +343,19 @@ bool ScriptPointsMayBeCaptured()
 	return TFGameRules()->PointsMayBeCaptured();
 }
 
-int ScriptGetClassLimit(int iClass, int iTeam)
+int ScriptGetClassLimit( int iClass )
 {
-	return TFGameRules()->GetClassLimit( iClass, iTeam );
+	return TFGameRules()->GetClassLimit( iClass );
 }
 
-bool ScriptFlagsMayNeCapped()
+bool ScriptFlagsMayBeCapped()
 {
 	return TFGameRules()->FlagsMayBeCapped();
 }
 
 int ScriptGetStopWatchState()
 {
-	return 0; //TFGameRules()->GetStopWatchState();
+	return TFGameRules()->GetStopWatchState();
 }
 
 bool ScriptIsInArenaMode()
@@ -380,7 +383,7 @@ bool ScriptIsMannVsMachineMode()
 	return TFGameRules()->IsMannVsMachineMode();
 }
 
-bool ScriptGetMannVsmachineAlarmStatus()
+bool ScriptGetMannVsMachineAlarmStatus()
 {
 	return TFGameRules()->GetMannVsMachineAlarmStatus();
 }
@@ -393,37 +396,37 @@ void ScriptSetMannVsMachineAlarmStatus( bool bActive )
 
 bool ScriptIsQuickBuildTime()
 {
-	return false; //TFGameRules()->IsQuickBuildTime()
+	return TFGameRules()->IsQuickBuildTime();
 }
 
 bool ScriptGameModeUsesUpgrades()
 {
-	return false; //TFGameRules()->GameModeUsesUpgrades();
+	return TFGameRules()->GameModeUsesUpgrades();
 }
 
 bool ScriptGameModeUsesCurrency()
 {
-	return false; //TFGameRules()->GameModeUsesCurrency();
+	return TFGameRules()->GameModeUsesCurrency();
 }
 
 bool ScriptGameModeUsesMiniBosses()
 {
-	return false; //TFGameRules()->GameModeUsesMiniBosses();
+	return TFGameRules()->GameModeUsesMiniBosses();
 }
 
 bool ScriptIsPasstimeMode()
 {
-	return false; //TFGameRules()->IsPasstimeMode();
+	return TFGameRules()->IsPasstimeMode();
 }
 
 bool ScriptIsMannVsMachineRespecEnabled()
 {
-	return false; //TFGameRules()->IsMannVsMachineRespectEnabled();
+	return TFGameRules()->IsMannVsMachineRespecEnabled();
 }
 
 bool ScriptIsPowerupMode()
 {
-	return false; //TFGameRules()->IsPowerupMode();
+	return TFGameRules()->IsPowerupMode();
 }
 
 bool ScriptIsCompetitiveMode()
@@ -433,27 +436,27 @@ bool ScriptIsCompetitiveMode()
 
 bool ScriptIsMatchTypeCasual()
 {
-	return false; //TFGameRules()->IsMatchTypeCasual();
+	return TFGameRules()->IsMatchTypeCasual();
 }
 
 bool ScriptIsMatchTypeCompetitive()
 {
-	return false; //TFGameRules()->IsMatchTypeCompetitive();
+	return TFGameRules()->IsMatchTypeCompetitive();
 }
 
 bool ScriptInMatchStartCountdown()
 {
-	return false; //TFGameRules()->BInMatchStartCountdown();
+	return TFGameRules()->BInMatchStartCountdown();
 }
 
 bool ScriptMatchmakingShouldUseStopwatchMode()
 {
-	return false; //TFGameRules()->IsAttackDefenseMode();
+	return TFGameRules()->IsAttackDefenseMode();
 }
 
 bool ScriptIsAttackDefenseMode()
 {
-	return false; //TFGameRules()->IsAttackDefenseMode();
+	return TFGameRules()->IsAttackDefenseMode();
 }
 
 bool ScriptUsePlayerReadyStatusMode()
@@ -478,7 +481,7 @@ void ScriptPlayerReadyStatus_ResetState()
 
 bool ScriptIsDefaultGameMode()
 {
-	return false; //TFGameRules()->IsDefaultGameMode();
+	return TFGameRules()->IsDefaultGameMode();
 }
 
 bool ScriptIsPVEModeActive()
@@ -493,77 +496,77 @@ bool ScriptAllowThirdPersonCamera()
 
 void ScriptSetGravityMultiplier( float flMultiplier )
 {
-	//TFGameRules()->SetGravityMultiplier( flMultiplier );
+	TFGameRules()->SetGravityMultiplier( flMultiplier );
 }
 
 float ScriptGetGravityMultiplier( float flMultiplier )
 {
-	return 1.0f; //TFGameRules()->GetGravityMultiplier();
+	return TFGameRules()->GetGravityMultiplier();
 }
 
 void ScriptSetPlayersInHell( bool bInHell )
 {
-	//TFGameRules()->SetPlayersInHell( bInHell );
+	TFGameRules()->SetPlayersInHell( bInHell );
 }
 
 bool ScriptArePlayersInHell()
 {
-	return false; //TFGameRules()->ArePlayersInHell();
+	return TFGameRules()->ArePlayersInHell();
 }
 
 void ScriptSetUsingSpells( bool bUseSpells )
 {
-	//TFGameRules()->SetUsingSpells( bUseSpells );
+	TFGameRules()->SetUsingSpells( bUseSpells );
 }
 
 bool ScriptIsUsingSpells()
 {
-	return false; //TFGameRules()->IsUsingSpells();
+	return TFGameRules()->IsUsingSpells();
 }
 
 bool ScriptIsUsingGrapplingHook()
 {
-	return false; //TFGameRules()->IsUsingGrapplingHook();
+	return TFGameRules()->IsUsingGrapplingHook();
 }
 
 bool ScriptIsTruceActive()
 {
-	return false; //TFGameRules()->IsTruceActive();
+	return TFGameRules()->IsTruceActive();
 }
 
 bool ScriptMapHasMatchSummaryStage()
 {
-	return false; //TFGameRules()->MapHasMatchSummaryStage();
+	return TFGameRules()->MapHasMatchSummaryStage();
 }
 
 bool ScriptPlayersAreOnMatchSummaryStage()
 {
-	return false; //TFGameRules()->PlayersAreOnMatchSummaryStage();
+	return TFGameRules()->PlayersAreOnMatchSummaryStage();
 }
 
 bool ScriptHaveStopWatchWinner()
 {
-	return false; //TFGameRules()->HaveStopWatchWinner();
+	return TFGameRules()->HaveStopWatchWinner();
 }
 
 bool ScriptGetOvertimeAllowedForCTF()
 {
-	return false; //TFGameRules()->GetOvertimeAllowedForCTF();
+	return TFGameRules()->GetOvertimeAllowedForCTF();
 }
 
 void ScriptSetOvertimeAllowedForCTF( bool bAllowed )
 {
-	//TFGameRules()->SetOvertimeAllowedForCTF( bAllowed );
+	TFGameRules()->SetOvertimeAllowedForCTF( bAllowed );
 }
 
 void ScriptForceEnableUpgrades( int iForce )
 {
-	//TFGameRules()->ForceEnableUpgrades( iForce );
+	TFGameRules()->ForceEnableUpgrades( iForce );
 }
 
 void ScriptForceEscortPushLogic( int iForce )
 {
-	//TFGameRules()->ForceEscortPushLogic( iForce );
+	TFGameRules()->ForceEscortPushLogic( iForce );
 }
 #endif
 //=============================================================================
@@ -575,63 +578,77 @@ END_SCRIPTDESC()
 void CTFGameRules::RegisterScriptFunctions( void )
 {
 #ifdef GAME_DLL
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetRoundState, "GetRoundState", "Get current round state. See Constants.ERoundState" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsInWaitingForPlayers, "IsInWaitingForPlayers", "Are we waiting for some stragglers?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetWinningTeam, "GetWinningTeam", "Who won!" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptInOvertime, "InOvertime", "Currently in overtime?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsBirthday, "IsBirthday", "Are we in birthday mode?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsHolidayActive, "IsHolidayActive", "Is the given holiday active? See Constants.EHoliday" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPointsMayBeCaptured, "PointsMayBeCaptured", "Are points able to be captured?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetClassLimit, "GetClassLimit", "Get class limit for class. See Constants.ETFClass" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptFlagsMayNeCapped, "FlagsMayBeCapped", "May a flag be captured?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetStopWatchState, "GetStopWatchState", "Get the current stopwatch state. See Constants.EStopwatchState" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsInArenaMode, "IsInArenaMode", "Playing arena mode?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsInKothMode, "IsInKothMode", "Playing king of the hill mode?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsInMedievalMode, "IsInMedievalMode", "Playing medieval mode?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsHolidayMap, "IsHolidayMap", "Playing a holiday map? See Constants.EHoliday" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsMannVsMachineMode, "IsMannVsMachineMode", "Playing MvM? Beep boop" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetMannVsmachineAlarmStatus, "GetMannVsMachineAlarmStatus", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetMannVsMachineAlarmStatus, "SetMannVsMachineAlarmStatus", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsQuickBuildTime, "IsQuickBuildTime", "If an engie places a building, will it immediately upgrade? Eg. MvM pre-round etc." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGameModeUsesUpgrades, "GameModeUsesUpgrades", "Does the current gamemode have upgrades?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGameModeUsesCurrency, "GameModeUsesCurrency", "Does the current gamemode have currency?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGameModeUsesMiniBosses, "GameModeUsesMiniBosses", "Does the current gamemode have minibosses?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsPasstimeMode, "IsPasstimeMode", "No ball games." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsMannVsMachineRespecEnabled, "IsMannVsMachineRespecEnabled", "Are players allowed to refund their upgrades?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsPowerupMode, "IsPowerupMode", "Playing powerup mode? Not compatible with MvM" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsCompetitiveMode, "IsCompetitiveMode", "Playing competitive?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsMatchTypeCasual, "IsMatchTypeCasual", "Playing casual?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsMatchTypeCompetitive, "IsMatchTypeCompetitive", "Playing competitive?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptInMatchStartCountdown, "InMatchStartCountdown", "Are we in the pre-match state?" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptMatchmakingShouldUseStopwatchMode, "MatchmakingShouldUseStopwatchMode", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsAttackDefenseMode, "IsAttackDefenseMode", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptUsePlayerReadyStatusMode, "UsePlayerReadyStatusMode", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPlayerReadyStatus_HaveMinPlayersToEnable, "PlayerReadyStatus_HaveMinPlayersToEnable", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPlayerReadyStatus_ArePlayersOnTeamReady, "PlayerReadyStatus_ArePlayersOnTeamReady", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPlayerReadyStatus_ResetState, "PlayerReadyStatus_ResetState", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsDefaultGameMode, "IsDefaultGameMode", "The absence of arena, mvm, tournament mode, etc" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsPVEModeActive, "IsPVEModeActive", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptAllowThirdPersonCamera, "AllowThirdPersonCamera", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetGravityMultiplier, "GetGravityMultiplier", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetGravityMultiplier, "SetGravityMultiplier", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetPlayersInHell, "SetPlayersInHell", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptArePlayersInHell, "ArePlayersInHell", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetUsingSpells, "SetUsingSpells", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsUsingSpells, "IsUsingSpells", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsUsingGrapplingHook, "IsUsingGrapplingHook", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsTruceActive, "IsTruceActive", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptMapHasMatchSummaryStage, "MapHasMatchSummaryStage", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPlayersAreOnMatchSummaryStage, "PlayersAreOnMatchSummaryStage", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptHaveStopWatchWinner, "HaveStopWatchWinner", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetOvertimeAllowedForCTF, "GetOvertimeAllowedForCTF", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetOvertimeAllowedForCTF, "SetOvertimeAllowedForCTF", "" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptForceEnableUpgrades, "ForceEnableUpgrades", "Whether to force on MvM-styled upgrades on/off. 0 -> default, 1 -> force off, 2 -> force on" );
-	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptForceEscortPushLogic, "ForceEscortPushLogic", "Forces payload pushing logic. 0 -> default, 1 -> force off, 2 -> force on" );
+#define TF_GAMERULES_SCRIPT_FUNC( function, desc ) \
+		ScriptRegisterFunctionNamed( g_pScriptVM, Script##function, #function, desc )
+
+	TF_GAMERULES_SCRIPT_FUNC( GetRoundState,							"Get current round state. See Constants.ERoundState" );
+	TF_GAMERULES_SCRIPT_FUNC( IsInWaitingForPlayers,					"Are we waiting for some stragglers?" );
+	TF_GAMERULES_SCRIPT_FUNC( GetWinningTeam,							"Who won!" );
+	TF_GAMERULES_SCRIPT_FUNC( InOvertime,								"Currently in overtime?" );
+
+	TF_GAMERULES_SCRIPT_FUNC( IsBirthday,								"Are we in birthday mode?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsHolidayActive,							"Is the given holiday active? See Constants.EHoliday" );
+	TF_GAMERULES_SCRIPT_FUNC( PointsMayBeCaptured,						"Are points able to be captured?" );
+	TF_GAMERULES_SCRIPT_FUNC( GetClassLimit,							"Get class limit for class. See Constants.ETFClass" );
+	TF_GAMERULES_SCRIPT_FUNC( FlagsMayBeCapped,							"May a flag be captured?" );
+	TF_GAMERULES_SCRIPT_FUNC( GetStopWatchState,						"Get the current stopwatch state. See Constants.EStopwatchState" );
+	TF_GAMERULES_SCRIPT_FUNC( IsInArenaMode,							"Playing arena mode?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsInKothMode,								"Playing king of the hill mode?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsInMedievalMode,							"Playing medieval mode?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsHolidayMap,								"Playing a holiday map? See Constants.EHoliday" );
+	TF_GAMERULES_SCRIPT_FUNC( IsMannVsMachineMode,						"Playing MvM? Beep boop" );
+	TF_GAMERULES_SCRIPT_FUNC( GetMannVsMachineAlarmStatus,				"" );
+	TF_GAMERULES_SCRIPT_FUNC( SetMannVsMachineAlarmStatus,				"" );
+	TF_GAMERULES_SCRIPT_FUNC( IsQuickBuildTime,							"If an engie places a building, will it immediately upgrade? Eg. MvM pre-round etc." );
+	TF_GAMERULES_SCRIPT_FUNC( GameModeUsesUpgrades,						"Does the current gamemode have upgrades?" );
+	TF_GAMERULES_SCRIPT_FUNC( GameModeUsesCurrency,						"Does the current gamemode have currency?" );
+	TF_GAMERULES_SCRIPT_FUNC( GameModeUsesMiniBosses,					"Does the current gamemode have minibosses?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsPasstimeMode,							"No ball games." );
+	TF_GAMERULES_SCRIPT_FUNC( IsMannVsMachineRespecEnabled,				"Are players allowed to refund their upgrades?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsPowerupMode,							"Playing powerup mode? Not compatible with MvM" );
+	TF_GAMERULES_SCRIPT_FUNC( IsCompetitiveMode,						"Playing competitive?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsMatchTypeCasual,						"Playing casual?" );
+	TF_GAMERULES_SCRIPT_FUNC( IsMatchTypeCompetitive,					"Playing competitive?" );
+	TF_GAMERULES_SCRIPT_FUNC( InMatchStartCountdown,					"Are we in the pre-match state?" );
+	TF_GAMERULES_SCRIPT_FUNC( MatchmakingShouldUseStopwatchMode,		"" );
+	TF_GAMERULES_SCRIPT_FUNC( IsAttackDefenseMode,						"" );
+	TF_GAMERULES_SCRIPT_FUNC( UsePlayerReadyStatusMode,					"" );
+	TF_GAMERULES_SCRIPT_FUNC( PlayerReadyStatus_HaveMinPlayersToEnable,	"" );
+	TF_GAMERULES_SCRIPT_FUNC( PlayerReadyStatus_ArePlayersOnTeamReady,	"" );
+	TF_GAMERULES_SCRIPT_FUNC( PlayerReadyStatus_ResetState,				"" );
+	TF_GAMERULES_SCRIPT_FUNC( IsDefaultGameMode,						"The absence of arena, mvm, tournament mode, etc" );
+	TF_GAMERULES_SCRIPT_FUNC( IsPVEModeActive,							"" );
+	TF_GAMERULES_SCRIPT_FUNC( AllowThirdPersonCamera,					"" );
+	TF_GAMERULES_SCRIPT_FUNC( SetGravityMultiplier,						"" );
+	TF_GAMERULES_SCRIPT_FUNC( GetGravityMultiplier,						"" );
+	TF_GAMERULES_SCRIPT_FUNC( SetPlayersInHell,							"" );
+	TF_GAMERULES_SCRIPT_FUNC( ArePlayersInHell,							"" );
+	TF_GAMERULES_SCRIPT_FUNC( SetUsingSpells,							"" );
+	TF_GAMERULES_SCRIPT_FUNC( IsUsingSpells,							"" );
+	TF_GAMERULES_SCRIPT_FUNC( IsUsingGrapplingHook,						"" );
+	TF_GAMERULES_SCRIPT_FUNC( IsTruceActive,							"" );
+	TF_GAMERULES_SCRIPT_FUNC( MapHasMatchSummaryStage,					"" );
+	TF_GAMERULES_SCRIPT_FUNC( PlayersAreOnMatchSummaryStage,			"" );
+	TF_GAMERULES_SCRIPT_FUNC( HaveStopWatchWinner,						"" );
+	TF_GAMERULES_SCRIPT_FUNC( GetOvertimeAllowedForCTF,					"" );
+	TF_GAMERULES_SCRIPT_FUNC( SetOvertimeAllowedForCTF,					"" );
+
+	TF_GAMERULES_SCRIPT_FUNC( ForceEnableUpgrades,						"Whether to force on MvM-styled upgrades on/off. 0 -> default, 1 -> force off, 2 -> force on" );
+	TF_GAMERULES_SCRIPT_FUNC( ForceEscortPushLogic,						"Forces payload pushing logic. 0 -> default, 1 -> force off, 2 -> force on" );
+
+	g_pScriptVM->RegisterInstance( &PlayerVoiceListener(), "PlayerVoiceListener" );
 #endif
-	//g_pScriptVM->RegisterInstance( PlayerVoiceListener() );
 
 	if ( GetItemSchema() )
 	{
 		GetItemSchema()->RegisterScriptFunctions();
 	}
+}
+
+void CTFItemSchema::RegisterScriptFunctions( void )
+{
+#ifdef GAME_DLL
+#define TF_ECON_SCRIPT_FUNC( function, desc ) \
+		ScriptRegisterFunctionNamed( g_pScriptVM, Script##function, #function, desc )
+#endif
 }

@@ -2818,6 +2818,9 @@ protected:
 	virtual int CalculateNumberOfConcreteItems( const CEconItemDefinition *pItemDef );	// Let derived classes handle custom item types
 #endif // TF_CLIENT_DLL
 
+public:
+	virtual void RegisterScriptFunctions() { }
+
 private:
 	bool BInitGameInfo( KeyValues *pKVGameInfo, CUtlVector<CUtlString> *pVecErrors );
 	bool BInitAttributeTypes( CUtlVector<CUtlString> *pVecErrors );

@@ -345,6 +345,8 @@ public:
 
 	virtual bool	PointsMayBeCaptured( void ) OVERRIDE;
 
+	void			RegisterScriptFunctions() OVERRIDE;
+
 #ifdef GAME_DLL
 public:
 	virtual void	Precache( void );
@@ -504,8 +506,6 @@ public:
 	void			CreateSoldierStatue();
 
 	virtual void	BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags = 0, CBasePlayer *pPlayer = NULL ) override;
-
-	void			RegisterScriptFunctions() override;
 
 	int				GetRoundState() { return (int)State_Get(); }
 
