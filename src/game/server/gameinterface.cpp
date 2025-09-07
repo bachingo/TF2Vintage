@@ -632,7 +632,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		char szCwd[MAX_PATH];
 		engine->GetGameDir( szCwd, MAX_PATH );
 
-		static CDllDemandLoader s_VScript( CFmtStr( "%s/bin/vscript%s", szCwd, DLL_EXT_STRING ) );
+		static CDllDemandLoader s_VScript( CFmtStr( "%s\\bin\\%svscript%s", szCwd, PLATFORM_64BITS ? "x64\\" : "", DLL_EXT_STRING ) );
 	#else
 		static CDllDemandLoader s_VScript( "vscript" DLL_EXT_STRING );
 	#endif
