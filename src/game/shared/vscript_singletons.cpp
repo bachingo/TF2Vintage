@@ -1060,7 +1060,7 @@ void CScriptConvarAccessor::LevelInitPreEntity()
 {
 	m_AllowedConVars.RemoveAll();
 
-	KeyValues *kv = new KeyValues( "vscript_convar_allowlist" );
+	KeyValuesAD kv( "vscript_convar_allowlist" );
 	bool bLoaded = kv->LoadFromFile( g_pFullFileSystem, VSCRIPT_CONVAR_ALLOWLIST_NAME, "MOD" );
 	if ( bLoaded )
 	{
@@ -1076,7 +1076,6 @@ void CScriptConvarAccessor::LevelInitPreEntity()
 
 	if ( !bLoaded )
 		Warning( "Error loading " VSCRIPT_CONVAR_ALLOWLIST_NAME "\n" );
-	kv->deleteThis();
 }
 
 void CScriptConvarAccessor::LevelShutdownPostEntity()

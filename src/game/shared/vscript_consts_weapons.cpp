@@ -15,7 +15,7 @@
 //=============================================================================
 //=============================================================================
 
-BEGIN_SCRIPTENUM( WeaponSound, "Weapon sounds." )
+BEGIN_SCRIPTENUM( EWeaponSound, "Weapon sounds." )
 
 	DEFINE_ENUMCONST( EMPTY, "" )
 	DEFINE_ENUMCONST( SINGLE, "" )
