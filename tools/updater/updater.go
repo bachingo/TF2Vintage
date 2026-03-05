@@ -87,7 +87,7 @@ func main() {
 
 func updateBin(modDir string, latest *ghRelease) error {
 	remoteCommit := latest.TagName
-	localCommit := readField(filepath.Join(modDir, "bin", "version-bin.txt"), "commit")
+	localCommit := readField(filepath.Join(modDir, "bin", "x64", "version-bin.txt"), "commit")
 
 	if remoteCommit == localCommit {
 		fmt.Println("Binaries are up to date.")
@@ -110,7 +110,7 @@ func updateBin(modDir string, latest *ghRelease) error {
 	defer os.Remove(tmp)
 
 	fmt.Println("Extracting binaries...")
-	binDir := filepath.Join(modDir, "bin")
+	binDir := filepath.Join(modDir, "bin", "x64")
 	if err := extractZip(tmp, binDir); err != nil {
 		return err
 	}

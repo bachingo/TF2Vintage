@@ -282,7 +282,7 @@ jobs:
         with:
           fetch-depth: 0
           sparse-checkout: |
-            game/tf2vintage/bin/
+            game/tf2vintage/bin/x64/
             tools/updater/
 
       - name: Set up Go
@@ -294,18 +294,18 @@ jobs:
       - name: Build updater (Windows)
         run: |
           cd tools/updater
-          GOOS=windows GOARCH=386 go build -o ../../game/tf2vintage/bin/tf2vintage-updater.exe .
+          GOOS=windows GOARCH=amd64 go build -o ../../game/tf2vintage/bin/x64/tf2vintage-updater.exe .
 
       - name: Download Windows binary
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-windows
-          path: game/tf2vintage/bin/
+          path: game/tf2vintage/bin/x64/
 
       - name: Stage Windows bin files
         run: |
-          mkdir -p staging/bin
-          find game/tf2vintage/bin/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/
+          mkdir -p staging/bin/x64
+          find game/tf2vintage/bin/x64/ -name "*.dll" -o -name "*.exe" | xargs -I{} cp {} staging/bin/x64/
 
       - name: Upload Windows staging artifact
         uses: actions/upload-artifact@v4
@@ -329,7 +329,7 @@ jobs:
         with:
           fetch-depth: 0
           sparse-checkout: |
-            game/tf2vintage/bin/
+            game/tf2vintage/bin/x64/
             tools/updater/
 
       - name: Set up Go
@@ -341,18 +341,18 @@ jobs:
       - name: Build updater (Linux)
         run: |
           cd tools/updater
-          GOOS=linux GOARCH=386 go build -o ../../game/tf2vintage/bin/tf2vintage-updater .
+          GOOS=linux GOARCH=amd64 go build -o ../../game/tf2vintage/bin/x64/tf2vintage-updater .
 
       - name: Download Linux binary
         uses: actions/download-artifact@v4
         with:
           name: tf2vintage-linux
-          path: game/tf2vintage/bin/
+          path: game/tf2vintage/bin/x64/
 
       - name: Stage Linux bin files
         run: |
-          mkdir -p staging/bin
-          find game/tf2vintage/bin/ -name "*.so" -o -name "tf2vintage-updater" | xargs -I{} cp {} staging/bin/
+          mkdir -p staging/bin/x64
+          find game/tf2vintage/bin/x64/ -name "*.so" -o -name "tf2vintage-updater" | xargs -I{} cp {} staging/bin/x64/
 
       - name: Upload Linux staging artifact
         uses: actions/upload-artifact@v4
@@ -390,21 +390,21 @@ jobs:
           BUILD_DATE=$(date +'%m.%d.%Y')
           BUILD_TYPE="${{ needs.classify.outputs.build_type }}"
           # Single version.txt covering both platforms
-          echo "Version=${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > staging/bin/version.txt
+          echo "Version=${BUILD_TYPE} | ${BUILD_DATE} | ${SHORT_SHA} | ${{ github.ref_name }}" > staging/bin/x64/version.txt
           {
             echo "commit=${{ github.sha }}"
             echo "short=${SHORT_SHA}"
             echo "date=${BUILD_DATE}"
-          } > staging/bin/version-bin.txt
+          } > staging/bin/x64/version-bin.txt
 
       - name: Generate combined checksums
         run: |
-          find staging/bin/ -name "*.dll" -o -name "*.so" -o -name "*.exe" | sort | xargs md5sum > staging/bin/checksums.md5
+          find staging/bin/x64/ -name "*.dll" -o -name "*.so" -o -name "*.exe" | sort | xargs md5sum > staging/bin/x64/checksums.md5
 
       - name: Pack combined bin [zip]
         run: |
           cd staging
-          zip -r ../tf2vintage-bin.zip bin/
+          zip -r ../tf2vintage-bin.zip bin/x64/
 
       - name: Upload combined bin artifact
         uses: actions/upload-artifact@v4

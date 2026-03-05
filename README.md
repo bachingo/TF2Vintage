@@ -12,10 +12,10 @@ Development may be slow at times — consider becoming a contributor!
 
 TF2 Vintage is distributed as two packages. You need both for a working install.
 
-| Package | File | Description |
-|---|---|--|
-| **Base** | `tf2vintage-base.zip` | Game assets. Download once; only re-downloads changed files on update. |
-| **Binaries** | `tf2vintage-bin.zip` | Compiled game code. Updates frequently with every code change. |
+| Package | Description |
+|---|---|
+| `tf2vintage-base.zip` | Game assets. Download once; only re-downloads changed files on update. |
+| `tf2vintage-bin.zip` | Compiled game code for your platform. Updates frequently with every code change. |
 
 **[→ Latest Release](https://github.com/TF2V/TF2Vintage/releases/latest)**
 
@@ -71,15 +71,15 @@ The updater runs transparently before the game if you set it as a Steam launch o
 
 **Windows:**
 ```
-"C:\Program Files (x86)\Steam\steamapps\sourcemods\tf2vintage\bin\tf2vintage-updater.exe" %command%
+"C:\Program Files (x86)\Steam\steamapps\sourcemods\tf2vintage\bin\x64\tf2vintage-updater.exe" %command%
 ```
 
 **Linux:**
 ```
-~/.steam/steam/steamapps/sourcemods/tf2vintage/bin/tf2vintage-updater %command%
+~/.steam/steam/steamapps/sourcemods/tf2vintage/bin/x64/tf2vintage-updater %command%
 ```
 
-> **Note:** If your Steam library is in a non-default location, adjust the path accordingly. The path must point to `tf2vintage-updater` inside your `tf2vintage/bin/` folder. On Windows, wrap the full path in quotes if it contains spaces.
+> **Note:** If your Steam library is in a non-default location, adjust the path accordingly. The path must point to `tf2vintage-updater` inside your `tf2vintage/bin/x64/` folder. On Windows, wrap the full path in quotes if it contains spaces.
 
 ### What the Updater Does
 
