@@ -14,8 +14,8 @@ TF2 Vintage is distributed as two packages. You need both for a working install.
 
 | Package | File | Description |
 |---|---|--|
-| **Base** | `tf2vintage-base.zip` | Game assets — maps, models, sounds, configs. Download once; only re-downloads changed files on update. |
-| **Binaries** | `tf2vintage-bin.zip` | Compiled game code for your platform. Updates frequently with every code change. |
+| **Base** | `tf2vintage-base.zip` | Game assets. Download once; only re-downloads changed files on update. |
+| **Binaries** | `tf2vintage-bin.zip` | Compiled game code. Updates frequently with every code change. |
 
 **[→ Latest Release](https://github.com/TF2V/TF2Vintage/releases/latest)**
 
