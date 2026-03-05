@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 //	PROJECTS.VGC
 //
 //	Project Configurations for all Source(TM) Projects
@@ -39,6 +39,11 @@ $Project "glview"
 $Project "height2normal"
 {
 	"utils\height2normal\height2normal.vpc" [$WINDOWS]
+}
+
+$Project "crash_handler"
+{
+	"game\crash_handler\tf2vintage_crash.vpc"	[$TF2VINTAGE]
 }
 
 $Project "server"

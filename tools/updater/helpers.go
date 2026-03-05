@@ -242,6 +242,48 @@ func extractZip(src, destDir string) error {
 	return nil
 }
 
+// extractZipFiltered extracts a zip, calling filter(entryName) for each entry.
+// filter returns (destRelPath, include) — if include is false the entry is skipped,
+// otherwise it is extracted to destDir/destRelPath.
+func extractZipFiltered(src, destDir string, filter func(string) (string, bool)) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		relPath, include := filter(filepath.ToSlash(f.Name))
+		if !include || relPath == "" {
+			continue
+		}
+
+		target := filepath.Join(destDir, filepath.FromSlash(relPath))
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(target, 0755)
+			continue
+		}
+
+		os.MkdirAll(filepath.Dir(target), 0755)
+		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+		rc, err := f.Open()
+		if err != nil {
+			out.Close()
+			return err
+		}
+		_, cerr := copyIO(rc, out)
+		rc.Close()
+		out.Close()
+		if cerr != nil {
+			return cerr
+		}
+	}
+	return nil
+}
+
 func copyIO(r io.Reader, w io.Writer) (int64, error) {
 	return io.Copy(w, r)
 }

@@ -12,6 +12,33 @@ func runUpdateMode(exe string) {
 	// bin/x64 → bin → tf2vintage
 	modDir := filepath.Dir(filepath.Dir(filepath.Dir(exe)))
 	binDir := filepath.Join(modDir, "bin", "x64")
+
+	// Handle config flags before anything else — these exit immediately
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "--enable-symbols":
+			cfg := loadConfig(binDir)
+			cfg.DownloadSymbols = true
+			if err := saveConfig(binDir, cfg); err != nil {
+				termFatal("Could not save config: %v", err)
+			}
+			fmt.Println("Symbol downloads enabled.")
+			fmt.Println("Debug symbols will be downloaded on the next update.")
+			fmt.Println("To disable: run tf2vintage-updater --disable-symbols")
+			termPause()
+			os.Exit(0)
+		case "--disable-symbols":
+			cfg := loadConfig(binDir)
+			cfg.DownloadSymbols = false
+			if err := saveConfig(binDir, cfg); err != nil {
+				termFatal("Could not save config: %v", err)
+			}
+			fmt.Println("Symbol downloads disabled.")
+			termPause()
+			os.Exit(0)
+		}
+	}
+
 	steamArgs := os.Args[1:]
 	standaloneMode := len(steamArgs) == 0
 
@@ -23,6 +50,9 @@ func runUpdateMode(exe string) {
 		termFatal("%v", err)
 	}
 	defer release()
+
+	// ── Load user config ─────────────────────────────────────────────────────
+	cfg := loadConfig(binDir)
 
 	// ── Fetch latest release (cached) ─────────────────────────────────────────
 	termPrint("Checking for updates...")
@@ -48,6 +78,13 @@ func runUpdateMode(exe string) {
 	// ── Base update ───────────────────────────────────────────────────────────
 	if err := updateBase(modDir, latest); err != nil {
 		termWarn("Base update failed: %v", err)
+	}
+
+	// ── Symbol update (opt-in) ────────────────────────────────────────────────
+	if cfg.DownloadSymbols {
+		if err := updateSymbols(binDir, latest); err != nil {
+			termWarn("Symbol update failed: %v", err)
+		}
 	}
 
 	fmt.Println()

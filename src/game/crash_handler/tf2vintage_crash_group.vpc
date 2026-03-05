@@ -1,0 +1,19 @@
+//-----------------------------------------------------------------------------
+//	TF2VINTAGE_CRASH GROUP ENTRY
+//
+//	Add this block to the existing tf2vintage group definition in:
+//	  src/game/tf2vintage_games.vpc  (or wherever /tf2vintage is defined)
+//
+//	It must appear BEFORE the client and server entries so the crash DLL
+//	is listed first in the solution and built before the game DLLs.
+//-----------------------------------------------------------------------------
+
+//
+// Paste this inside the $Group "tf2vintage" { ... } block,
+// before the existing $GameProject entries for client and server:
+//
+
+$GameProject "game\crash_handler\tf2vintage_crash.vpc" [WINDOWS]
+{
+	"Crash Handler (TF2V)"
+}

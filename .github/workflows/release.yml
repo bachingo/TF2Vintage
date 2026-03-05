@@ -375,6 +375,25 @@ jobs:
           mkdir -p standalone-updater-linux
           cp game/tf2vintage/bin/x64/tf2vintage-updater standalone-updater-linux/tf2vintage-updater
 
+      - name: Collect Linux debug symbols
+        run: |
+          mkdir -p symbols/linux
+          # Extract DWARF debug info into separate .debug files
+          # Includes tf2vintage_crash.so automatically
+          find game/tf2vintage/bin/x64/ -name "*.so" | while read lib; do
+            base=$(basename "$lib")
+            objcopy --only-keep-debug "$lib" "symbols/linux/${base}.debug" 2>/dev/null || true
+          done
+          echo "commit=${{ github.sha }}" > symbols/linux/symbols-build.txt
+          echo "date=$(date +'%m.%d.%Y')" >> symbols/linux/symbols-build.txt
+          echo "platform=linux" >> symbols/linux/symbols-build.txt
+
+      - name: Upload Linux symbols artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-symbols-linux
+          path: symbols/linux/
+
       - name: Upload Linux staging artifact
         uses: actions/upload-artifact@v4
         with:
@@ -439,12 +458,38 @@ jobs:
           name: tf2vintage-bin
           path: tf2vintage-bin.zip
 
+      - name: Download Windows symbols
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-symbols-windows
+          path: symbols/windows/
+
+      - name: Download Linux symbols
+        uses: actions/download-artifact@v4
+        with:
+          name: tf2vintage-symbols-linux
+          path: symbols/linux/
+
+      - name: Pack combined symbols zip
+        run: |
+          zip -r tf2vintage-symbols.zip symbols/
+          echo "Symbols:"
+          unzip -l tf2vintage-symbols.zip | tail -20
+
+      - name: Upload combined symbols artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2vintage-symbols
+          path: tf2vintage-symbols.zip
+
       - name: Clean up staging artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
           name: |
             tf2vintage-windows-staging
             tf2vintage-linux-staging
+            tf2vintage-symbols-windows
+            tf2vintage-symbols-linux
 
   # ── GitHub Release: only on schedule or manual dispatch ─────────────────────
   publish-release:
@@ -458,6 +503,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist/
+
+      - name: Generate SHA-256 checksums for release assets
+        run: |
+          cd dist
+          # Hash every file that players or the updater will download
+          sha256sum             tf2vintage-updater-windows/tf2vintage-updater.exe             tf2vintage-updater-linux/tf2vintage-updater             tf2vintage-bin/tf2vintage-bin.zip             tf2vintage-base/tf2vintage-base.zip             tf2vintage-base/base-manifest.json             tf2vintage-base/base-patch.zip             tf2vintage-symbols/tf2vintage-symbols.zip             2>/dev/null | sed 's|.*/||' > checksums.sha256
+          cat checksums.sha256
 
       - name: Set release metadata
         id: meta
@@ -476,6 +528,11 @@ Your copy will update automatically next time you launch the game.
 ## Manual Download
 - `tf2vintage-base.zip` — full game assets
 - `tf2vintage-bin.zip` — game binaries (Windows + Linux)
+
+## For Contributors
+- `tf2vintage-symbols.zip` — debug symbols for crash report analysis (not needed by players)
+  - Windows: PDB files, load in WinDbg or Visual Studio alongside a `.dmp`
+  - Linux: `.debug` files, use with `addr2line` alongside a `.map`
 NOTES
           else
             echo "release_name=Update ${BUILD_DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
@@ -485,6 +542,9 @@ release_notes=Weekly update — your copy will update automatically next time yo
 ## Manual Download
 - `tf2vintage-bin.zip` — updated game binaries
 - `base-patch.zip` — base asset changes since last release (if any)
+
+## For Contributors
+- `tf2vintage-symbols.zip` — debug symbols for crash report analysis (not needed by players)
 NOTES
           fi
 
@@ -501,6 +561,8 @@ NOTES
             dist/tf2vintage-bin/tf2vintage-bin.zip
             dist/tf2vintage-base/tf2vintage-base.zip
             dist/tf2vintage-base/base-manifest.json
+            dist/tf2vintage-symbols/tf2vintage-symbols.zip
+            dist/checksums.sha256
 
       - name: Publish GitHub Release (weekly — no standalone installers)
         if: needs.classify.outputs.full_base != 'true'
@@ -513,3 +575,5 @@ NOTES
             dist/tf2vintage-bin/tf2vintage-bin.zip
             dist/tf2vintage-base/base-manifest.json
             dist/tf2vintage-base/base-patch.zip
+            dist/tf2vintage-symbols/tf2vintage-symbols.zip
+            dist/checksums.sha256

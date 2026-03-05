@@ -31,7 +31,7 @@ func runInstallMode() {
 
 // doInstall is called by the GUI on a background goroutine.
 // askAltPath blocks until the GUI responds with a path (empty = use default).
-func doInstall(report func(InstallState), askAltPath func() string) {
+func doInstall(report func(InstallState), askAltPath func() string, askSymbols func() bool) {
 	report(InstallState{Status: "Locating Steam..."})
 
 	steamPath, err := findSteamPath()
@@ -93,6 +93,12 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 			return
 		}
 		binDir := filepath.Join(installDir, "bin", "x64")
+		existingCfg := loadConfig(binDir)
+		// Re-ask symbol preference only if config doesn't exist yet
+		if _, statErr := os.Stat(configPath(binDir)); os.IsNotExist(statErr) {
+			existingCfg.DownloadSymbols = askSymbols()
+			saveConfig(binDir, existingCfg)
+		}
 		if err := updateBin(installDir, binDir, latest); err != nil {
 			report(InstallState{Err: fmt.Errorf("Update failed: %v", err)})
 			return
@@ -100,6 +106,11 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 		if err := updateBase(installDir, latest); err != nil {
 			report(InstallState{Err: fmt.Errorf("Update failed: %v", err)})
 			return
+		}
+		if existingCfg.DownloadSymbols {
+			if err := updateSymbols(binDir, latest); err != nil {
+				termWarn("Symbol update failed: %v", err)
+			}
 		}
 		finalize(report, steamPath, filepath.Join(binDir, updaterName()))
 		return
@@ -228,6 +239,10 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 		}
 	}
 
+	// ── Ask about symbol downloads ───────────────────────────────────────────
+	wantsSymbols := askSymbols()
+	cfg := UpdaterConfig{DownloadSymbols: wantsSymbols}
+
 	// ── Copy updater into install location ────────────────────────────────────
 	report(InstallState{Status: "Installing updater...", Progress: 0.88})
 	exe, _ := os.Executable()
@@ -242,6 +257,21 @@ func doInstall(report func(InstallState), askAltPath func() string) {
 	}
 	if runtime.GOOS != "windows" {
 		os.Chmod(updaterDest, 0755)
+	}
+
+	// Save config so the updater remembers symbol preference on future runs
+	if err := saveConfig(binDir, cfg); err != nil {
+		termWarn("Could not save updater config: %v", err)
+	}
+
+	// Download symbols immediately if opted in
+	if cfg.DownloadSymbols {
+		report(InstallState{Status: "Downloading debug symbols...", Progress: 0.89})
+		if latest != nil {
+			if err := updateSymbols(binDir, latest); err != nil {
+				termWarn("Symbol download failed: %v — you can retry with --enable-symbols", err)
+			}
+		}
 	}
 
 	finalize(report, steamPath, updaterDest)

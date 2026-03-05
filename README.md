@@ -14,10 +14,15 @@ TF2 Vintage is distributed as two packages. You need both for a working install.
 
 | Package | Description |
 |---|---|
-| `tf2vintage-base.zip` | Game assets. Download once; only re-downloads changed files on update. |
+| `tf2vintage-base.zip` | Game assets — maps, models, sounds, configs. Download once; only re-downloads changed files on update. |
 | `tf2vintage-bin.zip` | Compiled game code for your platform. Updates frequently with every code change. |
 
 **[→ Latest Release](https://github.com/TF2V/TF2Vintage/releases/latest)**
+
+| File | Platform |
+|---|---|
+| `tf2vintage-base.zip` | Both (download once) |
+| `tf2vintage-bin.zip` | Both (Windows .dll + Linux .so included) |
 
 > **Release schedule:** Full releases publish every 90 days. Weekly updates publish every Thursday at 08:00 UTC if there are new commits — if nothing has changed, no release is published. Dev builds are available as CI artifacts on every commit (90 day expiry) for testing purposes.
 
@@ -165,12 +170,12 @@ GOOS=windows go build -o tf2vintage-updater.exe .   # Windows cross-compile
 
 **Windows:**
 ```bat
-srcds.exe -game tf2vintage +map ctf_2fort +maxplayers 24 -port 27015 -insecure
+srcds.exe -game tf2vintage +map ctf_2fort +maxplayers 24 -port 27015
 ```
 
 **Linux:**
 ```bash
-./srcds_run -game tf2vintage +map ctf_2fort +maxplayers 24 -port 27015 -insecure
+./srcds_run -game tf2vintage +map ctf_2fort +maxplayers 24 -port 27015
 ```
 
 > **Note:** `srcds_run` automatically restarts the server on crash. Use `./srcds_linux` directly if you prefer to manage restarts yourself.
@@ -276,6 +281,80 @@ mapcyclefile maps/mapcycle_custom.txt
 ```
 
 Only one `mapcyclefile` line should be active at a time — later entries override earlier ones.
+
+
+---
+
+## Crash Reports
+
+When TF2 Vintage crashes, files are automatically saved to:
+
+```
+tf2vintage/logs/crashes/
+  crash_YYYYMMDD_HHMMSS.txt        ← human-readable report (all platforms)
+  crash_YYYYMMDD_HHMMSS.dmp        ← minidump (Windows only)
+  crash_YYYYMMDD_HHMMSS.map        ← address list for addr2line (Linux only)
+```
+
+The crash handler registers before the game engine loads, so it catches startup crashes — including the "loads libraries then immediately exits" case that the engine's own handler misses.
+
+> **Players:** You do not need to download anything extra. Crash files are saved automatically. If you encounter a crash, open an issue and paste the `.txt` file.
+
+> **Debug symbols are opt-in.** During installation you are asked whether to download them. Most players should say no. If you change your mind later, run `tf2vintage-updater.exe --enable-symbols` (Windows) or `./tf2vintage-updater --enable-symbols` (Linux) from `bin/x64/`. Symbols are stored in `bin/x64/symbols/` and updated automatically alongside the game on each release.
+
+### For players — reporting a crash
+
+Open an issue at https://github.com/TF2V/TF2Vintage/issues/new and paste the full contents of the `.txt` file. Include what you were doing when it happened and whether it is reproducible.
+
+The `.txt` file alone — without any extra tools — contains enough information to identify most crashes:
+
+- The signal or exception type and address
+- A stack trace showing module name and offset for each frame
+- A full list of loaded modules at crash time
+- The exact TF2 Vintage build version
+
+### For contributors — reading a crash with symbols
+
+Symbols give you function names, source file names, and line numbers on top of the module+offset the `.txt` already provides. They are published for **every release** (weekly and full) as `tf2vintage-symbols.zip`.
+
+**Windows (.dmp + symbols):**
+
+1. Find the release matching the crash — build date and commit are in the `.txt` under `TF2Vintage:`
+2. Download `tf2vintage-symbols.zip` from that release and extract it
+3. Open the `.dmp` in WinDbg: run `.sympath+ <path to extracted symbols\windows>` then `!analyze -v`
+4. Or in Visual Studio: open the `.dmp`, set symbol path in Debug → Options → Debugging → Symbols, click "Run Native Only"
+
+**Linux (.map + symbols):**
+
+The `.map` file contains one `libpath 0xoffset` entry per stack frame. Two options:
+
+Option 1 — using `.so` files already on your system (no download, approximate):
+```bash
+while IFS=' ' read -r lib offset; do
+  echo "$lib $offset:"
+  addr2line -e "$lib" -f -C "$offset"
+done < crash_YYYYMMDD_HHMMSS.map
+```
+
+Option 2 — using published `.debug` files (exact source lines):
+```bash
+# Download tf2vintage-symbols.zip from the matching release, then:
+addr2line -e symbols/linux/server.so.debug -f -C 0x<offset>
+```
+
+### For server operators — Linux symbol quality
+
+The crash report notes whether the stack walk used `libunwind` or the fallback `backtrace()`. Installs with `libunwind` produce more reliable stack traces through signal frames:
+
+```bash
+# Debian/Ubuntu
+apt install libunwind-dev
+
+# RHEL/Fedora
+dnf install libunwind
+```
+
+This is optional — the crash handler works without it, but the stack trace will be shallower on some crash types.
 
 ---
 

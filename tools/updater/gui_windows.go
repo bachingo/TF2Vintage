@@ -10,7 +10,7 @@ import (
 	. "github.com/lxn/walk/declarative"
 )
 
-func startInstallUI(install func(func(InstallState), func() string)) {
+func startInstallUI(install func(func(InstallState), func() string, func() bool)) {
 	var (
 		mw          *walk.MainWindow
 		statusLabel *walk.Label
@@ -125,6 +125,33 @@ func startInstallUI(install func(func(InstallState), func() string)) {
 		return <-ch
 	}
 
-	go install(report, askAltPath)
+	askSymbols := func() bool {
+		ch := make(chan bool, 1)
+		mw.Synchronize(func() {
+			result := walk.MsgBox(mw,
+				"Debug Symbols",
+				"Would you like to download debug symbols?
+
+"+
+					"Symbols let contributors read crash reports with full function names
+"+
+					"and source file locations instead of just memory addresses.
+
+"+
+					"Not needed for normal play. Adds ~50–200 MB per update.
+
+"+
+					"You can change this later by running:
+"+
+					"  tf2vintage-updater.exe --enable-symbols
+"+
+					"  tf2vintage-updater.exe --disable-symbols",
+				walk.MsgBoxIconQuestion|walk.MsgBoxYesNo)
+			ch <- result == walk.DlgCmdYes
+		})
+		return <-ch
+	}
+
+	go install(report, askAltPath, askSymbols)
 	mw.Run()
 }
